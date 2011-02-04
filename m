@@ -1,88 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============8914600850361536962=="
+Content-Type: multipart/mixed; boundary="===============0235058476772874604=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 2/5] hfpmodem: Use defined call_status enum
-Date: Fri, 04 Feb 2011 12:35:40 -0800
-Message-ID: <1296851743-14483-3-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 5/5] stemodem: Use defined call_status enum
+Date: Fri, 04 Feb 2011 12:35:43 -0800
+Message-ID: <1296851743-14483-6-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1296851743-14483-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8914600850361536962==
+--===============0235058476772874604==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/hfpmodem/voicecall.c |   12 +++++++-----
- 1 files changed, 7 insertions(+), 5 deletions(-)
+ drivers/stemodem/voicecall.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index a87ddbe..32fc290 100644
---- a/drivers/hfpmodem/voicecall.c
-+++ b/drivers/hfpmodem/voicecall.c
-@@ -33,7 +33,7 @@
- #include <ofono/log.h>
- #include <ofono/modem.h>
- #include <ofono/voicecall.h>
--#include <common.h>
-+#include "common.h"
- #include "gatchat.h"
- #include "gatresult.h"
- =
-
-@@ -337,7 +337,7 @@ static void atd_cb(gboolean ok, GAtResult *result, gpoi=
-nter user_data)
- 	for (l =3D vd->calls; l; l =3D l->next) {
- 		call =3D l->data;
- =
-
--		if (call->status !=3D 0)
-+		if (call->status !=3D CALL_STATUS_ACTIVE)
- 			continue;
- =
-
- 		call->status =3D CALL_STATUS_HELD;
-@@ -436,7 +436,7 @@ static void hfp_release_all_held(struct ofono_voicecall=
- *vc,
- 				ofono_voicecall_cb_t cb, void *data)
- {
- 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
--	unsigned int held_status =3D 0x1 << 1;
-+	unsigned int held_status =3D 0x1 << CALL_STATUS_HELD;
- =
-
- 	if (vd->ag_mpty_features & AG_CHLD_0) {
- 		hfp_template("AT+CHLD=3D0", vc, generic_cb, held_status,
-@@ -451,7 +451,8 @@ static void hfp_set_udub(struct ofono_voicecall *vc,
+diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+index 4a3a83d..3ca106e 100644
+--- a/drivers/stemodem/voicecall.c
++++ b/drivers/stemodem/voicecall.c
+@@ -356,7 +356,8 @@ static void ste_deflect(struct ofono_voicecall *vc,
  			ofono_voicecall_cb_t cb, void *data)
  {
- 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+ 	char buf[128];
 -	unsigned int incoming_or_waiting =3D (0x1 << 4) | (0x1 << 5);
 +	unsigned int incoming_or_waiting =3D
 +		(0x1 << CALL_STATUS_INCOMING) | (0x1 << CALL_STATUS_WAITING);
  =
 
- 	if (vd->ag_mpty_features & AG_CHLD_0) {
- 		hfp_template("AT+CHLD=3D0", vc, generic_cb, incoming_or_waiting,
-@@ -647,7 +648,8 @@ static void ccwa_notify(GAtResult *result, gpointer use=
-r_data)
- =
-
- 	DBG("ccwa_notify: %s %d %d", num, num_type, validity);
- =
-
--	call =3D create_call(vc, 0, 1, 5, num, num_type, validity);
-+	call =3D create_call(vc, 0, 1, CALL_STATUS_WAITING, num, num_type,
-+			    validity);
- =
-
- 	if (call =3D=3D NULL) {
- 		ofono_error("malloc call struct failed.  "
+ 	snprintf(buf, sizeof(buf), "AT+CTFR=3D\"%s\",%d", ph->number, ph->type);
+ 	ste_template(buf, vc, ste_generic_cb, incoming_or_waiting, cb, data);
 -- =
 
 1.7.0.4
 
 
---===============8914600850361536962==--
+--===============0235058476772874604==--
 
