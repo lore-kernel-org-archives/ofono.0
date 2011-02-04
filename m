@@ -1,456 +1,483 @@
-Content-Type: multipart/mixed; boundary="===============8746035934459718243=="
+Content-Type: multipart/mixed; boundary="===============5267335700233555271=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 1/2] bluetooth: Add bluetooth server support
-Date: Fri, 04 Feb 2011 15:44:03 +0100
-Message-ID: <1296830644-15768-2-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1296830644-15768-1-git-send-email-frederic.danis@linux.intel.com>
+From: Amit Mendapara <mendapara.amit@gmail.com>
+Subject: [PATCH] plugin: add plugin for Linktop/Teracom LW273 data card
+Date: Fri, 04 Feb 2011 20:18:58 +0530
+Message-ID: <1296830938-4673-1-git-send-email-mendapara.amit@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8746035934459718243==
+--===============5267335700233555271==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Signed-off-by: Amit Mendapara <mendapara.amit@gmail.com>
 ---
- Makefile.am         |    1 +
- plugins/bluetooth.c |  281 +++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- plugins/bluetooth.h |    9 ++
- 3 files changed, 288 insertions(+), 3 deletions(-)
+ Makefile.am         |    3 +
+ plugins/linktop.c   |  357 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ plugins/ofono.rules |    3 +
+ plugins/udev.c      |   32 +++++
+ 4 files changed, 395 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/linktop.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 758fb10..e402de4 100644
+index 758fb10..2fb8962 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -321,6 +321,7 @@ builtin_sources +=3D plugins/bluetooth.c plugins/blueto=
-oth.h
- builtin_modules +=3D hfp
- builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
+@@ -314,6 +314,9 @@ builtin_sources +=3D plugins/nokia.c
+ builtin_modules +=3D nokiacdma
+ builtin_sources +=3D plugins/nokiacdma.c
  =
 
-+builtin_sources +=3D $(btio_sources)
- builtin_cflags +=3D @BLUEZ_CFLAGS@
- builtin_libadd +=3D @BLUEZ_LIBS@
- endif
-diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index 93dd7a1..b489dad 100644
---- a/plugins/bluetooth.c
-+++ b/plugins/bluetooth.c
-@@ -35,12 +35,30 @@
- =
-
- #include <ofono/dbus.h>
- =
-
-+#include <btio.h>
- #include "bluetooth.h"
- =
-
- static DBusConnection *connection;
- static GHashTable *uuid_hash =3D NULL;
- static GHashTable *adapter_address_hash =3D NULL;
- static gint bluetooth_refcount;
-+static GSList *server_list =3D NULL;
++builtin_modules +=3D linktop
++builtin_sources +=3D plugins/linktop.c
 +
-+struct server {
-+	guint8 channel;
-+	char *sdp_record;
-+	GIOChannel *io;
-+	GHashTable *adapter_hash;
-+	ConnectFunc connect_cb;
-+	gpointer user_data;
-+	GSList *client_list;
+ if BLUETOOTH
+ builtin_modules +=3D bluetooth
+ builtin_sources +=3D plugins/bluetooth.c plugins/bluetooth.h
+diff --git a/plugins/linktop.c b/plugins/linktop.c
+new file mode 100644
+index 0000000..7f552b5
+--- /dev/null
++++ b/plugins/linktop.c
+@@ -0,0 +1,357 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <stdio.h>
++#include <errno.h>
++#include <stdlib.h>
++
++#include <glib.h>
++#include <gatchat.h>
++#include <gattty.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/modem.h>
++#include <ofono/call-barring.h>
++#include <ofono/call-forwarding.h>
++#include <ofono/call-meter.h>
++#include <ofono/call-settings.h>
++#include <ofono/devinfo.h>
++#include <ofono/message-waiting.h>
++#include <ofono/netreg.h>
++#include <ofono/sim.h>
++#include <ofono/cbs.h>
++#include <ofono/sms.h>
++#include <ofono/ssn.h>
++#include <ofono/ussd.h>
++#include <ofono/call-volume.h>
++#include <ofono/voicecall.h>
++#include <ofono/gprs.h>
++#include <ofono/gprs-context.h>
++#include <ofono/phonebook.h>
++#include <ofono/radio-settings.h>
++#include <ofono/log.h>
++
++#include <drivers/atmodem/vendor.h>
++#include <drivers/atmodem/atutil.h>
++
++static const char *none_prefix[] =3D { NULL };
++
++struct linktop_data {
++	GAtChat *modem;
++	GAtChat *control;
++	struct ofono_gprs *gprs;
++	struct ofono_gprs_context *gc;
 +};
 +
-+struct cb_data {
-+	struct server *server;
-+	char *path;
-+	guint source;
-+};
- =
-
- void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,
- 				char *buf, int size)
-@@ -409,6 +427,202 @@ done:
- 	dbus_message_unref(reply);
- }
- =
-
-+static void get_adapter_properties(const char *path, const char *handle,
-+						gpointer user_data)
++static int linktop_probe(struct ofono_modem *modem)
 +{
-+	bluetooth_send_with_reply(path, BLUEZ_ADAPTER_INTERFACE,
-+			"GetProperties", adapter_properties_cb,
-+			g_strdup(path), g_free, -1, DBUS_TYPE_INVALID);
++	struct linktop_data *data;
++
++	DBG("%p", modem);
++
++	data =3D g_try_new0(struct linktop_data, 1);
++	if (data =3D=3D NULL)
++		return -ENOMEM;
++
++	ofono_modem_set_data(modem, data);
++
++	return 0;
 +}
 +
-+static void remove_record(char *path, guint handle, struct server *server)
++static void linktop_remove(struct ofono_modem *modem)
 +{
-+	DBusMessage *msg;
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
 +
-+	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, path,
-+					BLUEZ_SERVICE_INTERFACE,
-+					"RemoveRecord");
-+	if (msg =3D=3D NULL) {
-+		ofono_error("Unable to allocate D-Bus RemoveRecord message");
-+		return;
-+	}
++	DBG("%p", modem);
 +
-+	dbus_message_append_args(msg, DBUS_TYPE_UINT32, &handle,
-+					DBUS_TYPE_INVALID);
-+	g_dbus_send_message(connection, msg);
++	ofono_modem_set_data(modem, NULL);
 +
-+	ofono_info("Unregistered handle for %s, channel %d: 0x%x", path,
-+			server->channel, handle);
++	g_at_chat_unref(data->modem);
++	g_at_chat_unref(data->control);
++
++	g_free(data);
 +}
 +
-+static void server_stop(struct server *server)
++static void linktop_debug(const char *str, void *user_data)
 +{
-+	/* Remove all client sources related to server */
-+	while (server->client_list) {
-+		g_source_remove(GPOINTER_TO_UINT(server->client_list->data));
-+		server->client_list =3D g_slist_remove(server->client_list,
-+						server->client_list->data);
-+	}
++        const char *prefix =3D user_data;
 +
-+	g_hash_table_foreach_remove(server->adapter_hash,
-+					(GHRFunc) remove_record, server);
-+
-+	if (server->io !=3D NULL) {
-+		g_io_channel_shutdown(server->io, TRUE, NULL);
-+		g_io_channel_unref(server->io);
-+		server->io =3D NULL;
-+	}
++        ofono_info("%s%s", prefix, str);
 +}
 +
-+static void cb_data_destroy(gpointer data)
++static GAtChat *open_device(struct ofono_modem *modem,
++				const char *key, char *debug)
 +{
-+	struct cb_data *cb_data =3D data;
++	const char *device;
++	GAtSyntax *syntax;
++	GIOChannel *channel;
++	GAtChat *chat;
 +
-+	if (cb_data->path !=3D NULL)
-+		g_free(cb_data->path);
-+	g_free(cb_data);
++	device =3D ofono_modem_get_string(modem, key);
++	if (device =3D=3D NULL)
++		return NULL;
++
++	DBG("%s %s", key, device);
++
++	channel =3D g_at_tty_open(device, NULL);
++	if (channel =3D=3D NULL)
++		return NULL;
++
++	syntax =3D g_at_syntax_new_gsm_permissive();
++	chat =3D g_at_chat_new(channel, syntax);
++	g_at_syntax_unref(syntax);
++	g_io_channel_unref(channel);
++
++	if (chat =3D=3D NULL)
++		return NULL;
++
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(chat, linktop_debug, debug);
++
++	return chat;
 +}
 +
-+static gboolean client_event(GIOChannel *chan, GIOCondition cond, gpointer=
- data)
++static void linktop_disconnect(gpointer user_data)
 +{
-+	struct cb_data *cb_data =3D data;
-+	struct server *server =3D cb_data->server;
++	struct ofono_modem *modem =3D user_data;
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
 +
-+	server->client_list =3D g_slist_remove(server->client_list,
-+					GUINT_TO_POINTER(cb_data->source));
++	DBG("");
 +
-+	cb_data_destroy(cb_data);
++	if (data->gc)
++		ofono_gprs_context_remove(data->gc);
 +
-+	return FALSE;
-+}
++	g_at_chat_unref(data->modem);
++	data->modem =3D NULL;
 +
-+static void confirm_event(GIOChannel *io, gpointer user_data)
-+{
-+	struct server *server =3D user_data;
-+	struct cb_data *client_data;
-+	GError *err =3D NULL;
-+	char laddress[18], raddress[18];
-+	guint8 channel;
-+
-+	bt_io_get(io, BT_IO_RFCOMM, &err, BT_IO_OPT_SOURCE, laddress,
-+					BT_IO_OPT_DEST, raddress,
-+					BT_IO_OPT_CHANNEL, &channel,
-+					BT_IO_OPT_INVALID);
-+	if (err) {
-+		ofono_error("%s", err->message);
-+		g_error_free(err);
-+		return;
-+	}
-+
-+	ofono_info("New connection for %s on channel %u from: %s,", laddress,
-+							channel, raddress);
-+
-+	if (!bt_io_accept(io, server->connect_cb, server->user_data,
-+						NULL, &err)) {
-+		ofono_error("%s", err->message);
-+		g_error_free(err);
-+		g_io_channel_unref(io);
-+		return;
-+	}
-+
-+	client_data =3D g_try_new0(struct cb_data, 1);
-+	if (client_data =3D=3D NULL) {
-+		ofono_error("Unable to allocate client cb_data structure");
-+		return;
-+	}
-+
-+	client_data->server =3D server;
-+	client_data->source =3D g_io_add_watch(io,
-+					G_IO_HUP | G_IO_ERR | G_IO_NVAL,
-+					client_event, client_data);
-+	server->client_list =3D g_slist_prepend(server->client_list,
-+					GUINT_TO_POINTER(client_data->source));
-+}
-+
-+static void add_record_cb(DBusPendingCall *call, gpointer user_data)
-+{
-+	struct cb_data *cb_data =3D user_data;
-+	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
-+	DBusError derr;
-+	guint32 handle;
-+
-+	dbus_error_init(&derr);
-+
-+	if (dbus_set_error_from_message(&derr, reply)) {
-+		ofono_error("Replied with an error: %s, %s",
-+					derr.name, derr.message);
-+		dbus_error_free(&derr);
-+		g_free(cb_data->path);
-+		goto done;
-+	}
-+
-+	dbus_message_get_args(reply, NULL, DBUS_TYPE_UINT32, &handle,
-+					DBUS_TYPE_INVALID);
-+
-+	g_hash_table_insert(cb_data->server->adapter_hash, cb_data->path,
-+				GUINT_TO_POINTER(handle));
-+
-+	ofono_info("Registered handle for %s, channel %d: 0x%x", cb_data->path,
-+			cb_data->server->channel, handle);
-+
-+done:
-+	/* Do not free cb_data->path, it is used in adapter_hash */
-+	g_free(cb_data);
-+	dbus_message_unref(reply);
-+}
-+
-+static void server_add_record(const char *path, const char *handle,
-+				struct server *server)
-+{
-+	struct cb_data *cb_data;
-+
-+	cb_data =3D g_try_new0(struct cb_data, 1);
-+	if (cb_data =3D=3D NULL) {
-+		ofono_error("Unable to allocate cb_data structure");
-+		return;
-+	}
-+
-+	cb_data->server =3D server;
-+	cb_data->path =3D g_strdup(path);
-+
-+	bluetooth_send_with_reply(path, BLUEZ_SERVICE_INTERFACE, "AddRecord",
-+				add_record_cb, cb_data, NULL, -1,
-+				DBUS_TYPE_STRING, &server->sdp_record,
-+				DBUS_TYPE_INVALID);
-+}
-+
-+static void server_start(struct server *server, char *path)
-+{
-+	GError *err =3D NULL;
-+
-+	if (server->io !=3D NULL)
-+		goto out;
-+
-+	server->io =3D bt_io_listen(BT_IO_RFCOMM, NULL, confirm_event,
-+					server, NULL, &err,
-+					BT_IO_OPT_CHANNEL, server->channel,
-+					BT_IO_OPT_SEC_LEVEL, BT_IO_SEC_MEDIUM,
-+					BT_IO_OPT_INVALID);
-+	if (server->io =3D=3D NULL) {
-+		ofono_error("Bluetooth channel %d register failed: %s",
-+					server->channel, err->message);
-+		g_error_free(err);
-+		server_stop(server);
-+		return;
-+	}
-+
-+out:
-+	if (server->sdp_record =3D=3D NULL)
++	data->modem =3D open_device(modem, "Modem", "Modem: ");
++	if (data->modem =3D=3D NULL)
 +		return;
 +
-+	if (path !=3D NULL)
-+		server_add_record(path, NULL, server);
++	g_at_chat_set_disconnect_function(data->modem,
++						linktop_disconnect, modem);
++
++	ofono_info("Reopened GPRS context channel");
++
++	data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
++
++	if (data->gprs && data->gc)
++		ofono_gprs_add_context(data->gprs, data->gc);
++}
++
++static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++
++	DBG("");
++
++	ofono_modem_set_powered(modem, ok);
++}
++
++static int linktop_enable(struct ofono_modem *modem)
++{
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	data->modem =3D open_device(modem, "Modem", "Modem: ");
++	if (data->modem =3D=3D NULL)
++		return -EINVAL;
++
++	g_at_chat_set_disconnect_function(data->modem,
++						linktop_disconnect, modem);
++
++	data->control =3D open_device(modem, "Control", "Control: ");
++	if (data->control =3D=3D NULL) {
++		g_at_chat_unref(data->modem);
++		data->modem =3D NULL;
++		return -EIO;
++	}
++
++	g_at_chat_send(data->control, "ATE0 +CMEE=3D1", none_prefix,
++						NULL, NULL, NULL);
++
++	g_at_chat_send(data->modem, "AT", none_prefix,
++						NULL, NULL, NULL);
++
++	g_at_chat_send(data->modem, "AT &F", none_prefix,
++						NULL, NULL, NULL);
++
++	g_at_chat_send(data->control, "AT+CFUN=3D1", none_prefix,
++					cfun_enable, modem, NULL);
++
++	return -EINPROGRESS;
++}
++
++static void cfun_disable(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("");
++
++	g_at_chat_unref(data->control);
++	data->control =3D NULL;
++
++	if (ok)
++		ofono_modem_set_powered(modem, FALSE);
++}
++
++static int linktop_disable(struct ofono_modem *modem)
++{
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	if (data->modem) {
++		g_at_chat_cancel_all(data->modem);
++		g_at_chat_unregister_all(data->modem);
++		g_at_chat_unref(data->modem);
++		data->modem =3D NULL;
++	}
++
++	if (data->control =3D=3D NULL)
++		return 0;
++
++	g_at_chat_cancel_all(data->control);
++	g_at_chat_unregister_all(data->control);
++	g_at_chat_send(data->control, "AT+CFUN=3D4", none_prefix,
++					cfun_disable, modem, NULL);
++
++	return -EINPROGRESS;
++}
++
++static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_modem_online_cb_t cb =3D cbd->cb;
++
++	if (ok)
++		CALLBACK_WITH_SUCCESS(cb, cbd->data);
 +	else
-+		g_hash_table_foreach(adapter_address_hash,
-+					(GHFunc) server_add_record, server);
-+
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
 +}
 +
- static gboolean adapter_added(DBusConnection *connection, DBusMessage *mes=
-sage,
- 				void *user_data)
- {
-@@ -422,6 +636,10 @@ static gboolean adapter_added(DBusConnection *connecti=
-on, DBusMessage *message,
- 			"GetProperties", adapter_properties_cb, g_strdup(path),
- 			g_free, -1, DBUS_TYPE_INVALID);
- =
-
-+	if (server_list)
-+		g_slist_foreach(server_list, (GFunc) server_start,
-+				(gpointer) path);
-+
- 	return TRUE;
- }
- =
-
-@@ -429,11 +647,19 @@ static gboolean adapter_removed(DBusConnection *conne=
-ction,
- 				DBusMessage *message, void *user_data)
- {
- 	const char *path;
-+	GSList *l;
- =
-
- 	if (dbus_message_get_args(message, NULL, DBUS_TYPE_OBJECT_PATH, &path,
- 				DBUS_TYPE_INVALID) =3D=3D TRUE)
- 		g_hash_table_remove(adapter_address_hash, path);
- =
-
-+	for (l =3D server_list; l; l =3D l->next) {
-+		struct server *server =3D l->data;
-+
-+		/* Handle have already been removed, so removing related path */
-+		g_hash_table_remove(server->adapter_hash, path);
-+	}
-+
- 	return TRUE;
- }
- =
-
-@@ -460,6 +686,10 @@ static void parse_adapters(DBusMessageIter *array, gpo=
-inter user_data)
- 				"GetProperties", adapter_properties_cb,
- 				g_strdup(path), g_free, -1, DBUS_TYPE_INVALID);
- =
-
-+		if (server_list)
-+			g_slist_foreach(server_list, (GFunc) server_start,
-+					(gpointer) path);
-+
- 		dbus_message_iter_next(&value);
- 	}
- }
-@@ -541,6 +771,10 @@ static void bluetooth_ref(void)
- 	adapter_address_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
- 						g_free, g_free);
- =
-
-+	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
-+				manager_properties_cb, NULL, NULL, -1,
-+				DBUS_TYPE_INVALID);
-+
- increment:
- 	g_atomic_int_inc(&bluetooth_refcount);
- =
-
-@@ -576,9 +810,8 @@ int bluetooth_register_uuid(const char *uuid, struct bl=
-uetooth_profile *profile)
- =
-
- 	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
- =
-
--	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
--				manager_properties_cb, NULL, NULL, -1,
--				DBUS_TYPE_INVALID);
-+	g_hash_table_foreach(adapter_address_hash,
-+				(GHFunc) get_adapter_properties, NULL);
- =
-
- 	return 0;
- }
-@@ -590,5 +823,47 @@ void bluetooth_unregister_uuid(const char *uuid)
- 	bluetooth_unref();
- }
- =
-
-+struct server *bluetooth_register_server(guint8 channel, const char *sdp_r=
-ecord,
-+					ConnectFunc cb, gpointer user_data)
++static void linktop_set_online(struct ofono_modem *modem, ofono_bool_t onl=
+ine,
++				ofono_modem_online_cb_t cb, void *user_data)
 +{
-+	struct server *server;
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
++	GAtChat *chat =3D data->control;
++	struct cb_data *cbd =3D cb_data_new(cb, user_data);
++	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
 +
-+	server =3D g_try_new0(struct server, 1);
-+	if (!server)
-+		return NULL;
++	DBG("modem %p %s", modem, online ? "online" : "offline");
 +
-+	bluetooth_ref();
++	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
++		return;
 +
-+	if (bluetooth_refcount =3D=3D 0) {
-+		g_free(server);
-+		return NULL;
-+	}
++	g_free(cbd);
 +
-+	server->channel =3D channel;
-+	if (sdp_record !=3D NULL)
-+		server->sdp_record =3D g_strdup(sdp_record);
-+	server->connect_cb =3D cb;
-+	server->user_data =3D user_data;
-+	server->adapter_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+						g_free, NULL);
-+
-+	server_start(server, NULL);
-+
-+	server_list =3D g_slist_prepend(server_list, server);
-+
-+	return server;
++	CALLBACK_WITH_FAILURE(cb, cbd->data);
 +}
 +
-+void bluetooth_unregister_server(struct server *server)
++static void linktop_pre_sim(struct ofono_modem *modem)
 +{
-+	server_list =3D g_slist_remove(server_list, server);
-+	server_stop(server);
-+	g_hash_table_destroy(server->adapter_hash);
-+	g_free(server->sdp_record);
-+	g_free(server);
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_sim *sim;
 +
-+	bluetooth_unref();
++	DBG("%p", modem);
++
++	ofono_devinfo_create(modem, 0, "atmodem", data->control);
++	sim =3D ofono_sim_create(modem, 0, "atmodem", data->control);
++	ofono_voicecall_create(modem, 0, "stemodem", data->control);
++
++	if (sim)
++		ofono_sim_inserted_notify(sim, TRUE);
 +}
 +
- OFONO_PLUGIN_DEFINE(bluetooth, "Bluetooth Utils Plugins", VERSION,
- 			OFONO_PLUGIN_PRIORITY_DEFAULT, NULL, NULL)
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index 42b0d13..505d908 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -23,6 +23,7 @@
- #define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
- #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
- #define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
-+#define	BLUEZ_SERVICE_INTERFACE		BLUEZ_SERVICE ".Service"
- =
-
- #define DBUS_TIMEOUT 15
- =
-
-@@ -39,10 +40,18 @@ struct bluetooth_profile {
- 	void (*set_alias)(const char *device, const char *);
- };
- =
-
-+struct server;
++static void linktop_post_sim(struct ofono_modem *modem)
++{
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
 +
-+typedef void (*ConnectFunc)(GIOChannel *io, GError *err, gpointer user_dat=
-a);
++	DBG("%p", modem);
 +
- int bluetooth_register_uuid(const char *uuid,
- 				struct bluetooth_profile *profile);
- void bluetooth_unregister_uuid(const char *uuid);
++	ofono_radio_settings_create(modem, 0, "stemodem", data->control);
++	ofono_phonebook_create(modem, 0, "atmodem", data->control);
++	ofono_sms_create(modem, 0, "atmodem", data->control);
++}
++
++static void linktop_post_online(struct ofono_modem *modem)
++{
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_message_waiting *mw;
++	struct ofono_gprs *gprs;
++	struct ofono_gprs_context *gc;
++
++	DBG("%p", modem);
++
++	ofono_ussd_create(modem, 0, "atmodem", data->control);
++	ofono_call_forwarding_create(modem, 0, "atmodem", data->control);
++	ofono_call_settings_create(modem, 0, "atmodem", data->control);
++	ofono_netreg_create(modem, OFONO_VENDOR_MBM, "atmodem", data->control);
++	ofono_call_meter_create(modem, 0, "atmodem", data->control);
++	ofono_call_barring_create(modem, 0, "atmodem", data->control);
++	ofono_ssn_create(modem, 0, "atmodem", data->control);
++	ofono_call_volume_create(modem, 0, "atmodem", data->control);
++	ofono_cbs_create(modem, 0, "atmodem", data->control);
++
++	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
++					"atmodem", data->control);
++	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
++
++	if (gprs && gc)
++		ofono_gprs_add_context(gprs, gc);
++
++	mw =3D ofono_message_waiting_create(modem);
++
++	if (mw)
++		ofono_message_waiting_register(mw);
++}
++
++static struct ofono_modem_driver linktop_driver =3D {
++	.name		=3D "linktop",
++	.probe		=3D linktop_probe,
++	.remove		=3D linktop_remove,
++	.enable		=3D linktop_enable,
++	.disable	=3D linktop_disable,
++	.set_online =3D linktop_set_online,
++	.pre_sim	=3D linktop_pre_sim,
++	.post_sim	=3D linktop_post_sim,
++	.post_online	=3D linktop_post_online,
++};
++
++static int linktop_init(void)
++{
++	return ofono_modem_driver_register(&linktop_driver);
++}
++
++static void linktop_exit(void)
++{
++	ofono_modem_driver_unregister(&linktop_driver);
++}
++
++OFONO_PLUGIN_DEFINE(linktop, "Linktop Datacard modem driver", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, linktop_init, linktop_exit)
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index 111f071..c7a77fe 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -451,4 +451,7 @@ ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"062=
+3", ENV{OFONO_DRIVER}=3D"nokia"
+ ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"023e", ENV{OFONO_DRIVE=
+R}=3D"nokiacdma"
+ ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"00b6", ENV{OFONO_DRIVE=
+R}=3D"nokiacdma"
  =
 
-+struct server *bluetooth_register_server(guint8 channel, const char *sdp_r=
-ecord,
-+					ConnectFunc cb, gpointer user_data);
-+void bluetooth_unregister_server(struct server *server);
+++# Teracom (Linktop/273) 3G Data Card
+++ATTRS{idVendor}=3D=3D"230d", ATTRS{idProduct}=3D=3D"0001", ENV{OFONO_DRIV=
+ER}=3D"linktop"
 +
- void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,
- 							char *buf, int size);
+ LABEL=3D"ofono_end"
+diff --git a/plugins/udev.c b/plugins/udev.c
+index ce1efe6..84478d7 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -552,6 +552,36 @@ static void add_nokiacdma(struct ofono_modem *modem,
+ 	ofono_modem_register(modem);
+ }
  =
 
++static void add_linktop(struct ofono_modem *modem,
++					struct udev_device *udev_device)
++{
++	const char *devnode, *intfnum;
++	struct udev_device *parent;
++	int registered;
++
++	DBG("modem %p", modem);
++
++	registered =3D ofono_modem_get_integer(modem, "Registered");
++	if (registered !=3D 0)
++		return;
++
++	parent =3D udev_device_get_parent(udev_device);
++	intfnum =3D udev_device_get_sysattr_value(parent, "bInterfaceNumber");
++
++	DBG("intfnum %s", intfnum);
++
++	if (g_strcmp0(intfnum, "01") =3D=3D 0) {
++		devnode =3D udev_device_get_devnode(udev_device);
++		ofono_modem_set_string(modem, "Modem", devnode);
++	} else if (g_strcmp0(intfnum, "03") =3D=3D 0) {
++		devnode =3D udev_device_get_devnode(udev_device);
++		ofono_modem_set_string(modem, "Control", devnode);
++
++		ofono_modem_set_integer(modem, "Registered", 1);
++		ofono_modem_register(modem);
++	}
++}
++
+ static void add_modem(struct udev_device *udev_device)
+ {
+ 	struct ofono_modem *modem;
+@@ -646,6 +676,8 @@ done:
+ 		add_tc65(modem, udev_device);
+ 	else if (g_strcmp0(driver, "nokiacdma") =3D=3D 0)
+ 		add_nokiacdma(modem, udev_device);
++        else if (g_strcmp0(driver, "linktop") =3D=3D 0)
++		add_linktop(modem, udev_device);
+ }
+ =
+
+ static gboolean devpath_remove(gpointer key, gpointer value, gpointer user=
+_data)
 -- =
 
 1.7.1
 
 
---===============8746035934459718243==--
+--===============5267335700233555271==--
 
