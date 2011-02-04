@@ -1,143 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============8748988890996546430=="
+Content-Type: multipart/mixed; boundary="===============8154154922221071512=="
 MIME-Version: 1.0
-From: Ramakrishna, AnandX <anandx.ramakrishna@intel.com>
-Subject: [PATCH v9] ifx: Adding modem selftest for Infineon modem
-Date: Thu, 03 Feb 2011 16:28:49 -0800
-Message-ID: <8F72E7245587B740B3CF41CCF57DAF3757A4C1BF31@orsmsx508.amr.corp.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 0/2] Add Sim Toolkit overview and feature list
+Date: Thu, 03 Feb 2011 19:03:07 -0600
+Message-ID: <4D4B504B.2000303@gmail.com>
+In-Reply-To: <1296773952-5242-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8748988890996546430==
+--===============8154154922221071512==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Infineon modem selftest, during ifx_enable().
-Two steps trigger, with timeout. In case one fails, modem will not power up.
----
- plugins/ifx.c |   77 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++-
- 1 files changed, 75 insertions(+), 2 deletions(-)
+Hi Jeevaka,
 
-diff --git a/plugins/ifx.c b/plugins/ifx.c
-index 411c012..18250b0 100644
---- a/plugins/ifx.c
-+++ b/plugins/ifx.c
-@@ -524,7 +524,7 @@ static gboolean mux_timeout_cb(gpointer user_data)
- 	struct ofono_modem *modem =3D user_data;
- 	struct ifx_data *data =3D ofono_modem_get_data(modem);
- =
+On 02/03/2011 04:59 PM, Jeevaka Badrappan wrote:
+> Hi,
+> =
 
--	ofono_error("Timeout with multiplexer setup");
-+	ofono_error("Timeout with modem and multiplexer setup");
- =
-
- 	data->mux_init_timeout =3D 0;
- =
-
-@@ -539,6 +539,68 @@ static gboolean mux_timeout_cb(gpointer user_data)
- 	return FALSE;
- }
- =
-
-+static void dev_ver_selftest_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+
-+	struct ofono_modem *modem =3D user_data;
-+	struct ifx_data *data =3D ofono_modem_get_data(modem);
-+
-+	if (ok)
-+		return;
-+
-+	ofono_error("at(a)vers:device_version_id()-FAILED");
-+
-+	g_at_chat_cancel_all(data->dlcs[AUX_DLC]);
-+
-+	if (data->mux_init_timeout > 0) {
-+		g_source_remove(data->mux_init_timeout);
-+		data->mux_init_timeout =3D 0;
-+	}
-+
-+	if (data->dlcs[AUX_DLC]) {
-+		g_at_chat_unref(data->dlcs[AUX_DLC]);
-+		data->dlcs[AUX_DLC] =3D NULL;
-+	}
-+
-+	if (data->device) {
-+		g_io_channel_unref(data->device);
-+		data->device =3D NULL;
-+	}
-+
-+	ofono_modem_set_powered(modem, FALSE);
-+}
-+
-+static void rtc_gti_selftest_cb(gboolean ok, GAtResult *result,
-+			gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct ifx_data *data =3D ofono_modem_get_data(modem);
-+
-+	if (ok)
-+		return;
-+
-+	ofono_error("at(a)rtc:rtc_gti_test_verify_32khz()-FAILED");
-+
-+	g_at_chat_cancel_all(data->dlcs[AUX_DLC]);
-+
-+	if (data->mux_init_timeout > 0) {
-+		g_source_remove(data->mux_init_timeout);
-+		data->mux_init_timeout =3D 0;
-+	}
-+
-+	if (data->dlcs[AUX_DLC]) {
-+		g_at_chat_unref(data->dlcs[AUX_DLC]);
-+		data->dlcs[AUX_DLC] =3D NULL;
-+	}
-+
-+	if (data->device) {
-+		g_io_channel_unref(data->device);
-+		data->device =3D NULL;
-+	}
-+
-+	ofono_modem_set_powered(modem, FALSE);
-+}
- static int ifx_enable(struct ofono_modem *modem)
- {
- 	struct ifx_data *data =3D ofono_modem_get_data(modem);
-@@ -592,12 +654,23 @@ static int ifx_enable(struct ofono_modem *modem)
- 	g_at_chat_send(chat, "ATE0 +CMEE=3D1", NULL,
- 					NULL, NULL, NULL);
- =
-
-+	/* Execute Modem Self tests */
-+	g_at_chat_send(chat, "at(a)rtc:rtc_gti_test_verify_32khz()",
-+		NULL, rtc_gti_selftest_cb, modem, NULL);
-+
-+	g_at_chat_send(chat, "at(a)vers:device_version_id()",
-+		NULL, dev_ver_selftest_cb, modem, NULL);
-+
-+	/* Enable  MUX Channels */
- 	data->frame_size =3D 1509;
- =
-
- 	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
- 					mux_setup_cb, modem, NULL);
- =
-
--	data->mux_init_timeout =3D g_timeout_add_seconds(5, mux_timeout_cb,
-+	/* Total Self-test execution time is less than 2s, used 10s
-+	 * to cover both Self-test and Mux setup time
-+	 */
-+	data->mux_init_timeout =3D g_timeout_add_seconds(10, mux_timeout_cb,
- 								modem);
- =
-
- 	data->dlcs[AUX_DLC] =3D chat;
--- =
-
-1.7.2.3
+>    This patch adds the Sim Toolkit overview and feature list table.
+> Fixes the indentation issue observed in the 1st version.
+> =
 
 
---===============8748988890996546430==--
+Excellent stuff, thanks for doing this.
+
+Both patches have been applied.
+
+Regards,
+-Denis
+
+--===============8154154922221071512==--
 
