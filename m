@@ -1,46 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============2559577690486614402=="
+Content-Type: multipart/mixed; boundary="===============6262695976301508463=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH v2 8/8] sms: remove check for impossible NULL condition
-Date: Fri, 04 Feb 2011 17:40:38 -0200
-Message-ID: <1296848438-5584-9-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <1296848438-5584-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: [RFC 2/2] doc: Add description for history agent interface
+Date: Fri, 04 Feb 2011 11:48:54 -0800
+Message-ID: <1296848934.1520.400.camel@aeonflux>
+In-Reply-To: <A459777776EB4841B844E1134E7928740157CA57@008-AM1MPN1-016.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2559577690486614402==
+--===============6262695976301508463==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-tx_next() must never be called with entry =3D=3D NULL and currently it
-was already being dereferenced before making this check. Thus just
-remove it.
----
- src/sms.c |    3 ---
- 1 files changed, 0 insertions(+), 3 deletions(-)
+Hi Mikhail,
 
-diff --git a/src/sms.c b/src/sms.c
-index 212a470..be7132a5 100644
---- a/src/sms.c
-+++ b/src/sms.c
-@@ -675,9 +675,6 @@ static gboolean tx_next(gpointer user_data)
- =
+> > > And the failure mode of the agent disconnecting is... to drop events
+> > on the floor???
+> > =
 
- 	sms->tx_source =3D 0;
- =
+> > Who said that? D-Bus is an asynchronous message bus with a method call
+> > and a method return message. Where do you see events being dropped?
+> =
 
--	if (entry =3D=3D NULL)
--		return FALSE;
--
- 	if (sms->registered =3D=3D FALSE)
- 		return FALSE;
- =
+> When you receive a callback on NameOwnerChanged for the agent, the propos=
+ed patch, AFAICS, just nullifies the agent data in the history structure. A=
+ny history event handler called after that simply returns silently because =
+the agent is not available.
+> This is a lousy failure mode, and you'll need to improve it. Presumably, =
+by spooling whole messages until there is an agent ready to receive them.
 
--- =
+you do understand the concept of sending something as RFC, do you?
 
-1.7.4
+And I did clearly mentioned that the whole part of spooling call history
+and message history when agent is not present is missing. That is a TODO
+item and hence this was a RFC.
+
+Regards
+
+Marcel
 
 
---===============2559577690486614402==--
+
+--===============6262695976301508463==--
 
