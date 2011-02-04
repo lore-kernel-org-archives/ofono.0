@@ -1,290 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============2675082431364623202=="
+Content-Type: multipart/mixed; boundary="===============6871103092974591970=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH v2 2/2] doc: add Sim Toolkit feature list table
-Date: Thu, 03 Feb 2011 14:59:12 -0800
-Message-ID: <1296773952-5242-3-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1296773952-5242-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Robertino Benis <robertino.benis@intel.com>
+Subject: Re: [RFC] ifxmodem: integrating new kernel-space MUX driver
+Date: Thu, 03 Feb 2011 16:06:33 -0800
+Message-ID: <1296777993.5027.7.camel@think03>
+In-Reply-To: <1296558001.1520.262.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2675082431364623202==
+--===============6871103092974591970==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/features.txt |  249 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 249 insertions(+), 0 deletions(-)
+Hi Marcel,
 
-diff --git a/doc/features.txt b/doc/features.txt
-index 0862fa7..ed4c058 100644
---- a/doc/features.txt
-+++ b/doc/features.txt
-@@ -175,6 +175,255 @@ The following commands are expected to be handled by =
-the modem:
-   display the necessary user information for this time period if this
-   information is included in the proactive command.
- =
+> I am doing just a basic review here to get things going into the right
+> direction.
 
-+ -----------------------------------------------------------------------
-+|	Feature			|	Support	|	Implemented by	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|Profile Download		|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SMS-PP Data Download		|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|Cell Broadcast data Download	|	YES	|	BASEBAND or ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|CALL CONTROL BY SIM		|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|DISPLAY TEXT			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET INPUT			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET INKEY			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|MORE TIME			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PLAY TONE			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|POLL INTERVAL			|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|POLLING OFF			|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|REFRESH			|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SELECT ITEM			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SEND SHORT MESSAGE		|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SEND SS			|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SEND USSD			|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SET UP CALL			|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SET UP MENU			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(MCC, MNC, LAC, cellId &	|		|			|
-+|IMEI)				|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(NMR)				|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SET UP EVENT LIST		|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: MT CALL			|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: CALL CONNECTED		|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: CALL DISCONNECTED	|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: LOCATION STATUS		|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: USER ACTIVITY		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: IDLE SCREEN AVAILABLE	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: CARD READER STATUS	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: LANGUAGE SELECTION	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: BROWSER TERMINATION	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: DATA AVAILABLE		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: CHANNEL STATUS		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: ACCESS TECHNOLOGY	|	YES	|	BASEBAND	|
-+|	CHANGE			|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: DISPLAY PARAMETERS	|	NO	|			|
-+|	CHANGED			|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: LOCAL CONNECTION	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: NETWORK SEARCH MODE	|	YES	|	BASEBAND	|
-+|	CHANGE			|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|POWER ON CARD			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|POWER OFF CARD			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PERFORM CARD APDU		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET READER STATUS		|	NO	|			|
-+|(Card reader status)		|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET READER STATUS		|	NO	|			|
-+|(Card reader identifier)	|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|TIMER MANAGEMENT		|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	ME		|
-+|(Date, Time, & Time Zone)	|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SET UP IDLE MODE TEXT		|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|RUN AT COMMAND			|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SEND DTMF			|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	ME		|
-+|(Language)			|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(Timing Advance)		|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|Language Notification		|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|LAUNCH BROWSER			|	YES	|	ME		|
-+|				|	(MIN)	|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(ACCESS TECHNOLOGY)		|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|OPEN CHANNEL			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|CLOSE CHANNEL			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|RECEIVE DATA			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SEND DATA			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET CHANNEL STATUS		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SERVICE SEARCH			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET SERVICE INFORMATION	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|DECLARE SERVICE		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|Text Attributes		|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|ICONS				|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|Bearer Independent Protocol	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|VARIABLE TIMEOUT		|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(IMEISV)			|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(SEARCH MODE CHANGE)		|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|Extended Launch Browser	|	NO	|			|
-+|Capability			|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(battery state)		|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|RETRIEVE MULTIMEDIA MESSAGE	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SUBMIT MULTIMEDIA MESSAGE	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|DISPLAY MULTIMEDIA MESSAGE	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SET FRAMES			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET FRAMES STATUS		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(NMR(UTRAN))			|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|USSD Data Download and		|	NO	|			|
-+|application mode		|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: BROWSING STATUS		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: MMS TRANSFER STATUS	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
- =
-
- Modem
- =3D=3D=3D=3D=3D
--- =
-
-1.7.0.4
+I'll try to hash this out a bit, so maybe there won't many patch
+re-submissions... =
 
 
---===============2675082431364623202==--
+> > +	gboolean use_ofono_mux;
+> =
+
+> This is the thing I'd rather not do. We can just have a second GPRS
+> context driver. Not sure about the naming, but one could be "ifxmodem"
+> and the other "ifxmodem-internal" or similar. Maybe someone comes up
+> with some better names.
+
+We had little internal discussion about this. We would like to use the
+same gprs context driver instead, just as proposed. however, if you
+insist on another gprs context driver ... Let me know what you think.
+
+> > +	char if_name[IF_NAMESIZE];
+> =
+
+> This should not be needed. You can just reference the stack variable.
+
+Ok.
+
+> > +
+> > +#define GSMIOC_ENABLE_NET       _IOW('G', 2, struct gsm_netconfig)
+> > +#define GSMIOC_DISABLE_NET      _IO('G', 3)
+> > +
+> =
+
+> This should be in drivers/ifxmodem/gsmmux.h and be a literal copy from
+> what the kernel has. Check STE and how it does it for CAIF.
+
+Ok, I'll pull gsmmux.h into patch submission. =
+
+
+> >  	chat =3D g_at_chat_get_slave(gcd->chat);
+> > @@ -475,6 +549,10 @@ static void ifx_gprs_context_remove(struct ofono_g=
+prs_context *gc)
+> >  		g_at_chat_resume(gcd->chat);
+> >  	}
+> >  =
+
+> > +	if (gcd->state !=3D STATE_IDLE && gcd->use_ofono_mux =3D=3D FALSE) {
+> > +		g_at_chat_resume(gcd->chat);
+> > +	}
+> > +
+> =
+
+> What is this trying to fix? Either it is a general bug or not. Seems
+> more like a general bug that we tie rawip existence with the state.
+
+It was just resuming chat when kernel mux was used.
+
+
+> Check if remove() will be actually ever called without calling
+> deactivate() first. It might be well that this is an oversight on my
+> part.
+
+I'll test this. =
+
+
+> > +	int ret;
+> =
+
+> As a general rule I prefer err as variable name.
+
+Sure.
+
+> > +		ofono_error("Failed to get configuration on n_gsm multiplexer: %d", =
+ret);
+> > +		goto error;
+> =
+
+> You forgot to restore the line discipline here.
+
+Right, I'll inject this into the patch in those places where we can have
+error... and watch for re-base.
+
+There is updated patch in the works for MUX itself, as you know, once
+it's in the kernel, I'll resubmit updated patch. =
+
+
+Thanks,
+-- r.
+
+
+
+
+--===============6871103092974591970==--
 
