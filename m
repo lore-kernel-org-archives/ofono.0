@@ -1,108 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============9099366038564408092=="
+Content-Type: multipart/mixed; boundary="===============6622044194703077631=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: Re: [PATCH 2/2] bluetooth: Add Bluetooth service authorization support
-Date: Fri, 04 Feb 2011 16:08:59 -0200
-Message-ID: <20110204180859.GA2370@joana>
-In-Reply-To: <1296830644-15768-3-git-send-email-frederic.danis@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: [RFC 2/2] doc: Add description for history agent interface
+Date: Fri, 04 Feb 2011 10:13:07 -0800
+Message-ID: <1296843187.1520.391.camel@aeonflux>
+In-Reply-To: <A459777776EB4841B844E1134E7928740157C97A@008-AM1MPN1-016.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9099366038564408092==
+--===============6622044194703077631==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Mikhail,
 
-* Fr=C3=A9d=C3=A9ric Danis <frederic.danis@linux.intel.com> [2011-02-04 1=
-5:44:04 +0100]:
+> > > I totally agree. But it means that you have code in oFono to reliably
+> > store an ordered collection of stuff in a filesystem. I wouldn't like
+> > MeeGo developers to maintain very similar code in a different
+> > component, just for API adaptation reasons.
+> > =
 
-> ---
->  plugins/bluetooth.c |  125 +++++++++++++++++++++++++++++++++++++++++++++=
-+----
->  1 files changed, 115 insertions(+), 10 deletions(-)
+> > No we do not.  We have code to reliably store tpdus, fragments not
+> > re-assembled messages.  It is not ordered or anything else you make it
+> > out to be.  Why don't you actually read the sms_assembly code and tell
+> > me if it is usable for anything else.  The code for storing assembled
+> > messages would be _completely_ different.
 > =
 
-> diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-> index b489dad..8d28b07 100644
-> --- a/plugins/bluetooth.c
-> +++ b/plugins/bluetooth.c
-> @@ -44,6 +44,8 @@ static GHashTable *adapter_address_hash =3D NULL;
->  static gint bluetooth_refcount;
->  static GSList *server_list =3D NULL;
->  =
+> Why, you already cache fragments by their respective message refs efficie=
+ntly.
+> The only thing missing is a thin API to provide a view on complete messag=
+es.
 
-> +#define TIMEOUT (60) /* Timeout for user response (seconds) */
-> +
->  struct server {
->  	guint8 channel;
->  	char *sdp_record;
-> @@ -58,6 +60,8 @@ struct cb_data {
->  	struct server *server;
->  	char *path;
->  	guint source;
-> +	GIOChannel *io;
-> +	gboolean pending_auth;
->  };
->  =
+we are not storing the complete message. We give it to the history API.
 
->  void bluetooth_create_path(const char *dev_addr, const char *adapter_add=
-r,
-> @@ -483,26 +487,104 @@ static void cb_data_destroy(gpointer data)
->  	g_free(cb_data);
->  }
->  =
+> > > D-Bus messages at initialization of a storage-capable client:
+> > >
+> > > 1. client connects to the oFono signal NewMessage.
+> > > 2a. client calls ListMessages.
+> > > 2b. oFono returns spooled messages.
+> > >
+> > > If there are any messages, two more are needed:
+> > >
+> > > 3a. client calls ExpungeMessages.
+> > > 3b. oFono returns.
+> > >
+> > > When a new message is received:
+> > >
+> > > 1. oFono emits a NewMessage signal.
+> > > 2a. client calls ExpungeMessages.
+> > > 2b. oFono returns.
+> > >
+> > > Now if we implement a history plugin to serve this API, there will be
+> > all of the above plus the history plugin registration and event storage
+> > roundtrips.
+> > =
 
-> +static void cancel_authorization(struct cb_data *user_data)
-> +{
-> +	DBusMessage *msg;
-> +
-> +	if (user_data->path =3D=3D NULL)
-> +		return;
-> +
-> +	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, user_data->path,
-> +						BLUEZ_SERVICE_INTERFACE,
-> +						"CancelAuthorization");
-> +
-> +	if (msg =3D=3D NULL) {
-> +		ofono_error("Unable to allocate D-Bus CancelAuthorization"
-> +				" message");
-> +		return;
-> +	}
-> +
-> +	g_dbus_send_message(connection, msg);
-> +}
-> +
->  static gboolean client_event(GIOChannel *chan, GIOCondition cond, gpoint=
-er data)
->  {
->  	struct cb_data *cb_data =3D data;
->  	struct server *server =3D cb_data->server;
->  =
+> > You are proving Marcel's point here, the Agent has about 1/2 as many
+> > round trips as your proposal.
+> > =
 
-> -	server->client_list =3D g_slist_remove(server->client_list,
-> +	if (cb_data->pending_auth =3D=3D TRUE) {
-> +		cancel_authorization(cb_data);
-> +
-> +		cb_data->pending_auth =3D FALSE;
-> +	} else {
-> +		server->client_list =3D g_slist_remove(server->client_list,
->  					GUINT_TO_POINTER(cb_data->source));
->  =
+> > 1. client calls RegisterAgent()
+> =
 
-> -	cb_data_destroy(cb_data);
-> +		cb_data_destroy(cb_data);
-> +	}
+> An interesting question here: should oFono core monitor NameOwnerChanged =
+for the agent's service name, just in case it disappears from the bus? What=
+'s the failure mode for this case?
 
-Don't you have to call g_slist_remove and cb_data_destroy for both cases? w=
-hen
-pending_auth is TRUE or FALSE.
+You do have read my RFC patch, right? It does exactly this.
 
--- =
+> > 2. For each new message the agent's HandleMessage() method is called
+> =
 
-Gustavo F. Padovan
-http://profusion.mobi
+> 2a. agent returns.
+> =
 
---===============9099366038564408092==--
+> So the ratio is 2/3 for the only event flow that is relevant for performa=
+nce, more likely.
+> But I agree, it's a bit more efficient for simple plugins, provided that =
+they never fall off the bus.
+
+What has falling off the bus to do with this?
+
+Regards
+
+Marcel
+
+
+
+--===============6622044194703077631==--
 
