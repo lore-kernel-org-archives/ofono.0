@@ -1,44 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============3586396334421617461=="
+Content-Type: multipart/mixed; boundary="===============4720377670969823784=="
 MIME-Version: 1.0
-From: mikhail.zabaluev@nokia.com
-Subject: RE: [RFC 2/2] doc: Add description for history agent interface
-Date: Fri, 04 Feb 2011 19:33:48 +0000
-Message-ID: <A459777776EB4841B844E1134E7928740157CA57@008-AM1MPN1-016.mgdnok.nokia.com>
-In-Reply-To: <1296846099.1520.394.camel@aeonflux>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH v2 0/8] sms: Cancel pending message
+Date: Fri, 04 Feb 2011 17:40:30 -0200
+Message-ID: <1296848438-5584-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3586396334421617461==
+--===============4720377670969823784==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+In this version I fixed some issues pointed out by Andrzej and added another
+patch, not so related, but that would conflict with these ones if applied to
+current master branch. Difference from previous version:
 
-> -----Original Message-----
-> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On
-> Behalf Of ext Marcel Holtmann
-> Sent: Friday, February 04, 2011 9:02 PM
-> To: ofono(a)ofono.org
-> Subject: RE: [RFC 2/2] doc: Add description for history agent interface
-> =
+Tested with phonesim, slightly changing its plugin in oFono in order to hold
+messages for a certain period.
 
-> > And the failure mode of the agent disconnecting is... to drop events
-> on the floor???
-> =
+Lucas De Marchi (8):
+  history: add cancelled status
+  examples: handle cancelled history status
+  message: add cancelled state
+  sms: factor out 'remove entry' from tx_finished()
+  sms: allow message submission to be cancelled
+  doc: add CancelMessage to MessageManager
+  TODO: mark task 'cancel pending SMS' as done
+  sms: remove check for impossible NULL condition
 
-> Who said that? D-Bus is an asynchronous message bus with a method call
-> and a method return message. Where do you see events being dropped?
+ TODO                       |    9 --
+ doc/messagemanager-api.txt |   12 +++
+ examples/history.c         |    5 +
+ include/history.h          |    1 +
+ src/message.c              |    2 +
+ src/message.h              |    3 +-
+ src/sms.c                  |  196 +++++++++++++++++++++++++++++++++-------=
+---
+ 7 files changed, 172 insertions(+), 56 deletions(-)
 
-When you receive a callback on NameOwnerChanged for the agent, the proposed=
- patch, AFAICS, just nullifies the agent data in the history structure. Any=
- history event handler called after that simply returns silently because th=
-e agent is not available.
-This is a lousy failure mode, and you'll need to improve it. Presumably, by=
- spooling whole messages until there is an agent ready to receive them.
+-- =
 
-Best regards,
-  Mikhail
+1.7.4
 
---===============3586396334421617461==--
+
+--===============4720377670969823784==--
 
