@@ -1,70 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============5994723414490697922=="
+Content-Type: multipart/mixed; boundary="===============7132528340602021822=="
 MIME-Version: 1.0
-From: mikhail.zabaluev@nokia.com
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: RE: [RFC 2/2] doc: Add description for history agent interface
-Date: Fri, 04 Feb 2011 19:17:43 +0000
-Message-ID: <A459777776EB4841B844E1134E7928740157CA1B@008-AM1MPN1-016.mgdnok.nokia.com>
-In-Reply-To: <4D4C450B.7060905@gmail.com>
+Date: Fri, 04 Feb 2011 11:22:07 -0800
+Message-ID: <1296847327.1520.397.camel@aeonflux>
+In-Reply-To: <A459777776EB4841B844E1134E7928740157CA1B@008-AM1MPN1-016.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5994723414490697922==
+--===============7132528340602021822==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Mikhail,
 
-> -----Original Message-----
-> From: ext Denis Kenzior [mailto:denkenz(a)gmail.com]
-> Sent: Friday, February 04, 2011 8:27 PM
-> To: Zabaluev Mikhail (Nokia-MS/Helsinki)
-> Cc: ofono(a)ofono.org
-> Subject: Re: [RFC 2/2] doc: Add description for history agent interface
+> > In the text message case we already provide the history plugin with
+> > _everything_ that it needs.  If you want to implement a particular API,
+> > then history is the right avenue to do so.  There is no inherent
+> > benefit
+> > of having oFono core do so and we do not want to introduce the concept
+> > of a message store into oFono anyway.
+> > =
+
+> > > So the ratio is 2/3 for the only event flow that is relevant for
+> > performance, more likely.
+> > > But I agree, it's a bit more efficient for simple plugins, provided
+> > that they never fall off the bus.
+> > =
+
+> > Lets put it this way, your proposal is 1.5x slower in the absolute best
+> > case; worse if multiple clients subscribe to the signal, purposefully
+> > or otherwise.
 > =
 
-> Moreover, you have to realize that there are non-text messages in that
-> tpdu store that go via an entirely different path and unless there's a
-> relevant plugin handling these, they will not go through history.
+> Nah, a signal delivery works like a multicast, whereas if you have multip=
+le history agents to get notified about one event, you have to make a full =
+method roundtrip to every one of them.
 
-The relevant consumers could pull those just as well...
-But this is a good argument: with plugins there is no need for a "janitor" =
-to purge messages that nobody knows what to do with. Also helps if we don't=
- want unrelated consumers know about certain events.
+So how many consumers of history events to you expect in a system. My
+proposal limited this clearly to 1 and only 1. That was on purpose.
 
-> In the text message case we already provide the history plugin with
-> _everything_ that it needs.  If you want to implement a particular API,
-> then history is the right avenue to do so.  There is no inherent
-> benefit
-> of having oFono core do so and we do not want to introduce the concept
-> of a message store into oFono anyway.
+> > Falling off the bus has nothing to do with this performance.  You can
+> > make your history plugin detect the 'falling off the bus' events and
+> > handle them appropriately (e.g. spool messages internally until the
+> > consumer comes back.)
 > =
 
-> > So the ratio is 2/3 for the only event flow that is relevant for
-> performance, more likely.
-> > But I agree, it's a bit more efficient for simple plugins, provided
-> that they never fall off the bus.
-> =
+> This is not implemented in the proposed patch. But I like how we are slow=
+ly getting to the idea that spooling whole messages in oFono core is necess=
+ary anyhow :)
 
-> Lets put it this way, your proposal is 1.5x slower in the absolute best
-> case; worse if multiple clients subscribe to the signal, purposefully
-> or otherwise.
+Let me repeat this. The oFono core is not a message spooling system or a
+message storage. If spooling is needed it needs to be done in the
+history plugin.
 
-Nah, a signal delivery works like a multicast, whereas if you have multiple=
- history agents to get notified about one event, you have to make a full me=
-thod roundtrip to every one of them.
+Regards
 
-> Falling off the bus has nothing to do with this performance.  You can
-> make your history plugin detect the 'falling off the bus' events and
-> handle them appropriately (e.g. spool messages internally until the
-> consumer comes back.)
+Marcel
 
-This is not implemented in the proposed patch. But I like how we are slowly=
- getting to the idea that spooling whole messages in oFono core is necessar=
-y anyhow :)
 
-Best regards,
-  Mikhail
 
---===============5994723414490697922==--
+--===============7132528340602021822==--
 
