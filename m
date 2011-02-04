@@ -1,32 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============0576439670556492728=="
+Content-Type: multipart/mixed; boundary="===============5967883219686660387=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 6/6] doc: Add documentation for Alphabet property
-Date: Fri, 04 Feb 2011 12:49:33 -0600
-Message-ID: <4D4C4A3D.4020702@gmail.com>
-In-Reply-To: <1296739236-24391-7-git-send-email-aki.niemi@nokia.com>
+From: mikhail.zabaluev@nokia.com
+Subject: RE: [RFC 2/2] doc: Add description for history agent interface
+Date: Fri, 04 Feb 2011 18:52:34 +0000
+Message-ID: <A459777776EB4841B844E1134E7928740157C9DC@008-AM1MPN1-016.mgdnok.nokia.com>
+In-Reply-To: <1296843187.1520.391.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0576439670556492728==
+--===============5967883219686660387==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi,
 
-On 02/03/2011 07:20 AM, Aki Niemi wrote:
-> ---
->  doc/message-api.txt |   14 ++++++++++++++
->  1 files changed, 14 insertions(+), 0 deletions(-)
+> -----Original Message-----
+> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On
+> Behalf Of ext Marcel Holtmann
+> Sent: Friday, February 04, 2011 8:13 PM
+> To: ofono(a)ofono.org
+> Subject: RE: [RFC 2/2] doc: Add description for history agent interface
 > =
 
+> > Why, you already cache fragments by their respective message refs
+> efficiently.
+> > The only thing missing is a thin API to provide a view on complete
+> messages.
+> =
 
-So this patch was actually against the wrong file.  I went ahead and
-fixed it up for you.
+> we are not storing the complete message. We give it to the history API.
+
+Somehow we never got to the "because" part in this discussion. Or is it a d=
+ogma in oFono?
+
+> > > > D-Bus messages at initialization of a storage-capable client:
+> > > >
+> > > > 1. client connects to the oFono signal NewMessage.
+> > > > 2a. client calls ListMessages.
+> > > > 2b. oFono returns spooled messages.
+> > > >
+> > > > If there are any messages, two more are needed:
+> > > >
+> > > > 3a. client calls ExpungeMessages.
+> > > > 3b. oFono returns.
+> > > >
+> > > > When a new message is received:
+> > > >
+> > > > 1. oFono emits a NewMessage signal.
+> > > > 2a. client calls ExpungeMessages.
+> > > > 2b. oFono returns.
+> > > >
+> > > > Now if we implement a history plugin to serve this API, there
+> will be
+> > > all of the above plus the history plugin registration and event
+> storage
+> > > roundtrips.
+> > >
+> > > You are proving Marcel's point here, the Agent has about 1/2 as
+> many
+> > > round trips as your proposal.
+> > >
+> > > 1. client calls RegisterAgent()
+> >
+> > An interesting question here: should oFono core monitor
+> NameOwnerChanged for the agent's service name, just in case it
+> disappears from the bus? What's the failure mode for this case?
+> =
+
+> You do have read my RFC patch, right? It does exactly this.
+
+Sorry, I only jumped into the discussion after it has started and did not r=
+ead the patch.
+But now that I do, I see an additional AddMatch and a GetOwnerName in this =
+flow.
+
+And the failure mode of the agent disconnecting is... to drop events on the=
+ floor???
+
+> > > 2. For each new message the agent's HandleMessage() method is
+> called
+> >
+> > 2a. agent returns.
+> >
+> > So the ratio is 2/3 for the only event flow that is relevant for
+> performance, more likely.
+> > But I agree, it's a bit more efficient for simple plugins, provided
+> that they never fall off the bus.
+> =
+
+> What has falling off the bus to do with this?
+
+If the whole setup is unreliable, advantages in performance are less pertin=
+ent.
 
 Regards,
--Denis
+  Mikhail
 
---===============0576439670556492728==--
+--===============5967883219686660387==--
 
