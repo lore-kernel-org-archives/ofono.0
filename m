@@ -1,51 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============1815001555098138325=="
+Content-Type: multipart/mixed; boundary="===============2559577690486614402=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH v2 6/8] doc: add CancelMessage to MessageManager
-Date: Fri, 04 Feb 2011 17:40:36 -0200
-Message-ID: <1296848438-5584-7-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH v2 8/8] sms: remove check for impossible NULL condition
+Date: Fri, 04 Feb 2011 17:40:38 -0200
+Message-ID: <1296848438-5584-9-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1296848438-5584-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1815001555098138325==
+--===============2559577690486614402==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+tx_next() must never be called with entry =3D=3D NULL and currently it
+was already being dereferenced before making this check. Thus just
+remove it.
 ---
- doc/messagemanager-api.txt |   12 ++++++++++++
- 1 files changed, 12 insertions(+), 0 deletions(-)
+ src/sms.c |    3 ---
+ 1 files changed, 0 insertions(+), 3 deletions(-)
 
-diff --git a/doc/messagemanager-api.txt b/doc/messagemanager-api.txt
-index 0723e9c..29453c3 100644
---- a/doc/messagemanager-api.txt
-+++ b/doc/messagemanager-api.txt
-@@ -32,6 +32,18 @@ Methods		dict GetProperties()
- 			Possible Errors: [service].Error.InvalidArguments
- 					 [service].Error.DoesNotExist
+diff --git a/src/sms.c b/src/sms.c
+index 212a470..be7132a5 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -675,9 +675,6 @@ static gboolean tx_next(gpointer user_data)
  =
 
-+		void CancelMessage(object path)
-+
-+			Cancel a message that was previously sent. Only
-+			messages that are waiting on queue can be cancelled and
-+			it's not possible to cancel messages that already had
-+			some parts delivered.
-+
-+			Possible Errors: [service].Error.InvalidArguments
-+					 [service].Error.InProgress
-+					 [service].Error.NotFound
-+					 [service].Error.Failed
-+
- 		object SendMessage(string to, string text)
+ 	sms->tx_source =3D 0;
  =
 
- 			Send the message in text to the number in to.  If the
+-	if (entry =3D=3D NULL)
+-		return FALSE;
+-
+ 	if (sms->registered =3D=3D FALSE)
+ 		return FALSE;
+ =
+
 -- =
 
 1.7.4
 
 
---===============1815001555098138325==--
+--===============2559577690486614402==--
 
