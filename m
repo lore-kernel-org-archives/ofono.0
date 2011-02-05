@@ -1,61 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============5900189945510630659=="
+Content-Type: multipart/mixed; boundary="===============5741350789306653456=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 6/7] modem: M16 coding style fix
-Date: Sat, 05 Feb 2011 06:29:10 -0800
-Message-ID: <1296916151-21778-7-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 7/7] smsutil: M16 coding style fix
+Date: Sat, 05 Feb 2011 06:29:11 -0800
+Message-ID: <1296916151-21778-8-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1296916151-21778-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5900189945510630659==
+--===============5741350789306653456==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/modem.c |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
+ src/smsutil.h |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/src/modem.c b/src/modem.c
-index 8e243d8..6cb8fab 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -121,7 +121,7 @@ unsigned int __ofono_modem_callid_next(struct ofono_mod=
-em *modem)
- 	unsigned int i;
+diff --git a/src/smsutil.h b/src/smsutil.h
+index fc81eb1..42d2e9e 100644
+--- a/src/smsutil.h
++++ b/src/smsutil.h
+@@ -423,13 +423,13 @@ struct txq_backup_entry {
  =
 
- 	for (i =3D 1; i < sizeof(modem->call_ids) * 8; i++) {
--		if (modem->call_ids & (0x1 << i))
-+		if (modem->call_ids & (1 << i))
- 			continue;
- =
-
- 		return i;
-@@ -132,12 +132,12 @@ unsigned int __ofono_modem_callid_next(struct ofono_m=
-odem *modem)
- =
-
- void __ofono_modem_callid_hold(struct ofono_modem *modem, int id)
+ static inline gboolean is_bit_set(unsigned char oct, int bit)
  {
--	modem->call_ids |=3D (0x1 << id);
-+	modem->call_ids |=3D (1 << id);
+-	int mask =3D 0x1 << bit;
++	int mask =3D 1 << bit;
+ 	return oct & mask ? TRUE : FALSE;
  }
  =
 
- void __ofono_modem_callid_release(struct ofono_modem *modem, int id)
+ static inline unsigned char bit_field(unsigned char oct, int start, int nu=
+m)
  {
--	modem->call_ids &=3D ~(0x1 << id);
-+	modem->call_ids &=3D ~(1 << id);
- }
+-	unsigned char mask =3D (0x1 << num) - 1;
++	unsigned char mask =3D (1 << num) - 1;
  =
 
- void ofono_modem_set_data(struct ofono_modem *modem, void *data)
+ 	return (oct >> start) & mask;
+ }
 -- =
 
 1.7.0.4
 
 
---===============5900189945510630659==--
+--===============5741350789306653456==--
 
