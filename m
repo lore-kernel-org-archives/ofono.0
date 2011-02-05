@@ -1,43 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============4747445739067091903=="
+Content-Type: multipart/mixed; boundary="===============9206177609256750603=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 0/7] Coding style fix
-Date: Sat, 05 Feb 2011 06:29:04 -0800
-Message-ID: <1296916151-21778-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 1/7] coding-style: Don't use hex with shift operator
+Date: Sat, 05 Feb 2011 06:29:05 -0800
+Message-ID: <1296916151-21778-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1296916151-21778-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4747445739067091903==
+--===============9206177609256750603==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ doc/coding-style.txt |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
 
- Following patch adds a new mandatory coding rule and provides
-the coding style fixes according to the new rule.
+diff --git a/doc/coding-style.txt b/doc/coding-style.txt
+index 40bb36b..287e9e9 100644
+--- a/doc/coding-style.txt
++++ b/doc/coding-style.txt
+@@ -294,6 +294,18 @@ void foo()	// Wrong
+ {
+ }
+ =
 
-Regards,
-Jeevaka
++M16: Don't use hex value with shift operators
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++The expression argument to the shift operators should not be in hex.
++
++Example:
++
++1)
++1 << y
++
++2)
++0x1 << y	// Wrong
++
+ O1: Shorten the name
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ Better to use abbreviation, rather than full name, to name a variable,
+-- =
 
-Jeevaka Badrappan (7):
-  coding-style: Don't use hex with shift operator
-  atmodem: M16 coding style fix
-  hfpmodem: M16 coding style fix
-  ifxmodem: M16 coding style fix
-  stemodem: M16 coding style fix
-  modem: M16 coding style fix
-  smsutil: M16 coding style fix
-
- doc/coding-style.txt         |   12 ++++++++++++
- drivers/atmodem/voicecall.c  |    8 ++++----
- drivers/hfpmodem/voicecall.c |    2 +-
- drivers/ifxmodem/voicecall.c |   10 +++++-----
- drivers/stemodem/voicecall.c |    8 ++++----
- src/modem.c                  |    6 +++---
- src/smsutil.h                |    4 ++--
- 7 files changed, 31 insertions(+), 19 deletions(-)
+1.7.0.4
 
 
---===============4747445739067091903==--
+--===============9206177609256750603==--
 
