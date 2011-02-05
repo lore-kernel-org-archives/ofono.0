@@ -1,88 +1,119 @@
-Content-Type: multipart/mixed; boundary="===============0190705319590019822=="
+Content-Type: multipart/mixed; boundary="===============6769146741723723212=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH v2 2/5] hfpmodem: Use defined call_status enum
-Date: Sat, 05 Feb 2011 05:03:00 -0800
-Message-ID: <1296910983-20402-3-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH v2 3/5] huaweimodem: Use defined call_status enum
+Date: Sat, 05 Feb 2011 05:03:01 -0800
+Message-ID: <1296910983-20402-4-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1296910983-20402-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0190705319590019822==
+--===============6769146741723723212==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/hfpmodem/voicecall.c |   12 +++++++-----
- 1 files changed, 7 insertions(+), 5 deletions(-)
+ drivers/huaweimodem/voicecall.c |   20 ++++++++++++--------
+ 1 files changed, 12 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index a87ddbe..f247bea 100644
---- a/drivers/hfpmodem/voicecall.c
-+++ b/drivers/hfpmodem/voicecall.c
-@@ -33,7 +33,7 @@
- #include <ofono/log.h>
- #include <ofono/modem.h>
- #include <ofono/voicecall.h>
--#include <common.h>
-+#include "common.h"
+diff --git a/drivers/huaweimodem/voicecall.c b/drivers/huaweimodem/voicecal=
+l.c
+index 53377d9..1800763 100644
+--- a/drivers/huaweimodem/voicecall.c
++++ b/drivers/huaweimodem/voicecall.c
+@@ -38,6 +38,7 @@
  #include "gatchat.h"
  #include "gatresult.h"
  =
 
-@@ -337,7 +337,7 @@ static void atd_cb(gboolean ok, GAtResult *result, gpoi=
-nter user_data)
- 	for (l =3D vd->calls; l; l =3D l->next) {
- 		call =3D l->data;
++#include "common.h"
+ #include "huaweimodem.h"
  =
 
--		if (call->status !=3D 0)
-+		if (call->status !=3D CALL_STATUS_ACTIVE)
- 			continue;
+ static const char *none_prefix[] =3D { NULL };
+@@ -170,8 +171,9 @@ static void cring_notify(GAtResult *result, gpointer us=
+er_data)
+ 	int id;
  =
 
- 		call->status =3D CALL_STATUS_HELD;
-@@ -436,7 +436,7 @@ static void hfp_release_all_held(struct ofono_voicecall=
- *vc,
- 				ofono_voicecall_cb_t cb, void *data)
- {
- 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
--	unsigned int held_status =3D 0x1 << 1;
-+	unsigned int held_status =3D 1 << CALL_STATUS_HELD;
+ 	/* CRING can repeat, ignore if we already have an incoming call */
+-	if (g_slist_find_custom(vd->calls, GINT_TO_POINTER(4),
+-					at_util_call_compare_by_status))
++	if (g_slist_find_custom(vd->calls,
++				GINT_TO_POINTER(CALL_STATUS_INCOMING),
++				at_util_call_compare_by_status))
+ 		return;
  =
 
- 	if (vd->ag_mpty_features & AG_CHLD_0) {
- 		hfp_template("AT+CHLD=3D0", vc, generic_cb, held_status,
-@@ -451,7 +451,8 @@ static void hfp_set_udub(struct ofono_voicecall *vc,
- 			ofono_voicecall_cb_t cb, void *data)
- {
- 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
--	unsigned int incoming_or_waiting =3D (0x1 << 4) | (0x1 << 5);
-+	unsigned int incoming_or_waiting =3D
-+		(1 << CALL_STATUS_INCOMING) | (1 << CALL_STATUS_WAITING);
+ 	g_at_result_iter_init(&iter, result);
+@@ -192,7 +194,7 @@ static void cring_notify(GAtResult *result, gpointer us=
+er_data)
+ 	id =3D ofono_voicecall_get_next_callid(vc);
  =
 
- 	if (vd->ag_mpty_features & AG_CHLD_0) {
- 		hfp_template("AT+CHLD=3D0", vc, generic_cb, incoming_or_waiting,
-@@ -647,7 +648,8 @@ static void ccwa_notify(GAtResult *result, gpointer use=
+ 	/* Generate an incoming call */
+-	create_call(vc, type, 1, 4, NULL, 128, 2, id);
++	create_call(vc, type, 1, CALL_STATUS_INCOMING, NULL, 128, 2, id);
+ =
+
+ 	/* Assume the CLIP always arrives, and we signal the call there */
+ 	DBG("%d", type);
+@@ -208,8 +210,9 @@ static void clip_notify(GAtResult *result, gpointer use=
+r_data)
+ 	GSList *l;
+ 	struct ofono_call *call;
+ =
+
+-	l =3D g_slist_find_custom(vd->calls, GINT_TO_POINTER(4),
+-					at_util_call_compare_by_status);
++	l =3D g_slist_find_custom(vd->calls,
++				GINT_TO_POINTER(CALL_STATUS_INCOMING),
++				at_util_call_compare_by_status);
+ 	if (l =3D=3D NULL) {
+ 		ofono_error("CLIP for unknown call");
+ 		return;
+@@ -307,7 +310,8 @@ static void orig_notify(GAtResult *result, gpointer use=
 r_data)
  =
 
- 	DBG("ccwa_notify: %s %d %d", num, num_type, validity);
+ 	ofono_info("Call origin: id %d type %d", call_id, call_type);
  =
 
--	call =3D create_call(vc, 0, 1, 5, num, num_type, validity);
-+	call =3D create_call(vc, 0, 1, CALL_STATUS_WAITING, num, num_type,
-+			    validity);
- =
-
+-	call =3D create_call(vc, call_type, 0, 2, NULL, 128, 2, call_id);
++	call =3D create_call(vc, call_type, 0, CALL_STATUS_DIALING, NULL, 128, 2,
++			    call_id);
  	if (call =3D=3D NULL) {
- 		ofono_error("malloc call struct failed.  "
+ 		ofono_error("Unable to malloc, call tracking will fail!");
+ 		return;
+@@ -345,7 +349,7 @@ static void conf_notify(GAtResult *result, gpointer use=
+r_data)
+ =
+
+ 	/* Set call to alerting */
+ 	call =3D l->data;
+-	call->status =3D 3;
++	call->status =3D CALL_STATUS_ALERTING;
+ =
+
+ 	if (call->type =3D=3D 0)
+ 		ofono_voicecall_notify(vc, call);
+@@ -382,7 +386,7 @@ static void conn_notify(GAtResult *result, gpointer use=
+r_data)
+ =
+
+ 	/* Set call to active */
+ 	call =3D l->data;
+-	call->status =3D 0;
++	call->status =3D CALL_STATUS_ACTIVE;
+ =
+
+ 	if (call->type =3D=3D 0)
+ 		ofono_voicecall_notify(vc, call);
 -- =
 
 1.7.0.4
 
 
---===============0190705319590019822==--
+--===============6769146741723723212==--
 
