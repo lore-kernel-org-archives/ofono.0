@@ -1,52 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============7912441934421082297=="
+Content-Type: multipart/mixed; boundary="===============3198654448713816679=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] voicecall: fix transfer
-Date: Mon, 07 Feb 2011 13:46:46 -0600
-Message-ID: <4D504C26.4030504@gmail.com>
-In-Reply-To: <1297079813-26573-1-git-send-email-andre.matos.ste@gmail.com>
+Subject: Re: [PATCH 1/4] Add SIM filesystem watch api.
+Date: Mon, 07 Feb 2011 13:48:57 -0600
+Message-ID: <4D504CA9.4010608@gmail.com>
+In-Reply-To: <1296782434-11008-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7912441934421082297==
+--===============3198654448713816679==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andre,
+Hi Andrew,
 
-> @@ -1350,11 +1351,12 @@ static DBusMessage *manager_transfer(DBusConnecti=
-on *conn,
->  	 * implementing the call transfer operation for a call that is
->  	 * still dialing/alerting.
->  	 */
-> -	numactive +=3D voicecalls_num_connecting(vc);
-> +	numconn =3D voicecalls_num_connecting(vc);
->  =
+On 02/03/2011 07:20 PM, Andrzej Zaborowski wrote:
+> This allows code that reads files from the SIM card to also watch for
+> changes in these files signalled in a Refresh command by the SIM.
+> ---
+>  include/sim.h |    9 +++++++++
+>  1 files changed, 9 insertions(+), 0 deletions(-)
+> =
 
->  	numheld =3D voicecalls_num_held(vc);
->  =
 
-> -	if ((numactive !=3D 1) && (numheld !=3D 1))
-
-I don't get it, isn't the above condition taking care of this already?
-Its been a while but the precondition of ECT is:
-
-Held Call
-Outgoing or an Active call.  You cannot have an Outgoing and an Active
-call at the same time.  Hence numactive =3D=3D 1 && numheld =3D=3D 1 should=
- work
-just fine.
-
-> +	if ((numactive > 1 || numheld > 1) ||
-> +		((numheld + numactive + numconn) !=3D 2))
->  		return __ofono_error_failed(msg);
->  =
-
->  	if (vc->driver->transfer =3D=3D NULL)
+So I pushed my own implementation of these based on ofono_watchlist.  I
+think it was a bit cleaner than your proposal.  Can you check that these
+patches make sense to you?
 
 Regards,
 -Denis
 
---===============7912441934421082297==--
+--===============3198654448713816679==--
 
