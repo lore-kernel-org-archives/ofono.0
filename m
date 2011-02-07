@@ -1,45 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============4820113450710551844=="
+Content-Type: multipart/mixed; boundary="===============5107820368409948760=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 0/7] Move GPRS attach logic to the modem
-Date: Mon, 07 Feb 2011 16:03:51 +0200
-Message-ID: <201102071603.51596.remi.denis-courmont@nokia.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 0/2] Add handling of XCOLP and refactor call status handling
+Date: Mon, 07 Feb 2011 16:05:34 +0200
+Message-ID: <1297087536-3100-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4820113450710551844==
+--===============5107820368409948760==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-	Hello,
+Hi,
 
-This series moves responsibility for GPRS attach to the modem.
+ Incase of ifxmodem, COLP is not an intermediate status for ATD. Vendor
+specific AT command XCOLP is used for the connected line presentation.
+Since XCALLSTAT reports the voice call status information, there is no need=
+ to
+listen for CRING notification. Following patch refactors the handling of =
 
-In most cases, the modem will attach on-demand when a first context is
-activated. This simplifies the oFono interface and implementation.
+call status information and also removes the CRING handling.
 
-Some operators require the device be always attached. This is managed
-by a new driver callback to set the attach policy.
+Regards,
+Jeevaka
 
-TBD: configuration option for the policy
+Jeevaka Badrappan (2):
+  ifxmodem: add handling of XCOLP notification
+  ifxmodem: refactor handling of call status
 
- doc/connman-api.txt     |    8 -
- drivers/atmodem/gprs.c  |   30 +-----
- drivers/isimodem/gprs.c |  131 ++++-----------------------
- include/gprs.h          |    3 =
+ drivers/ifxmodem/voicecall.c |  240 +++++++++++++++++++-------------------=
+----
+ 1 files changed, 109 insertions(+), 131 deletions(-)
 
- src/dbus.c              |   13 --
- src/gprs.c              |  232 ++-----------------------------------------=
------
- src/ofono.h             |    2 =
 
- 7 files changed, 45 insertions(+), 374 deletions(-)
-
--- =
-
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
-
---===============4820113450710551844==--
+--===============5107820368409948760==--
 
