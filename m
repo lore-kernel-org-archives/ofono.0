@@ -1,90 +1,173 @@
-Content-Type: multipart/mixed; boundary="===============2564673467678310156=="
+Content-Type: multipart/mixed; boundary="===============3435769501515810131=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH 02/12] gprs: driver interface changes for IPv6
-Date: Mon, 07 Feb 2011 11:09:17 -0800
-Message-ID: <1297105757.1520.436.camel@aeonflux>
-In-Reply-To: <CB0EE8641411214CBAFF8AEBB26ABCEC2985A8@008-AM1MPN1-001.mgdnok.nokia.com>
+Subject: Re: [PATCH 5/5 v3] Cell-info: Documentation
+Date: Mon, 07 Feb 2011 11:24:58 -0800
+Message-ID: <1297106698.1520.444.camel@aeonflux>
+In-Reply-To: <1294833919-1510-6-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2564673467678310156==
+--===============3435769501515810131==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mika,
+Hi Antti,
 
-> > > +enum ofono_gprs_addrconf {
-> > > +	OFONO_GPRS_ADDRCONF_NONE,
-> > > +	OFONO_GPRS_ADDRCONF_STATIC,
-> > > +	OFONO_GPRS_ADDRCONF_DHCP,
-> > > +};
-> > > +
-> > =
-
-> > What exactly is the _NONE addrconf for?  And why don't we use =
-
-> > a gboolean
-> > here like before?
+>  doc/cell-info.txt |  121 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 121 insertions(+), 0 deletions(-)
+>  create mode 100644 doc/cell-info.txt
 > =
 
-> Neither "static" nor "DHCP" makes sense for IPv6. If we have an IPv6 only=
- context, the "Method" property will not show up at all.
-> =
+> diff --git a/doc/cell-info.txt b/doc/cell-info.txt
+> new file mode 100644
+> index 0000000..64d9db6
+> --- /dev/null
+> +++ b/doc/cell-info.txt
+> @@ -0,0 +1,121 @@
+> +Cell Info hierarchy
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> +
+> +Service		org.ofono
+> +Interface	org.ofono.CellInfo
+> +Object path	[variable prefix]/{modem0,modem1,...}
+> +
+> +Methods 	aa{sv} GetNeighbors()
+> +
+> +			Calling this procedure returns properties of serving
+> +			and neighboring cells in GSM or WCDMA networks. This
+> +			information can be used to determine current location
+> +			using triangulation over neighboring cell tower
+> +			locations and estimated distances.
+> +
+> +			The returned array consists of two parts: 1) first
+> +			element of the array contains a dictionary of
+> +			common information about network and serving cell 2)
+> +			rest of the array comprises dictionaries containing
+> +			measurement results of neighboring cells. The contents
+> +			of the dictionaries follow the specification
+> +			OMA-TS-ULP-V2_0-20100816-C for user plane Location and
+> +			is described in properties section.
 
-> I also wanted to leave the door open for additional address configuration=
- protocols in case e.g. IPv6 capable modems with virtual ethernet intefaces=
- require some weird quirks. I also felt this was a bit cleaner, although th=
-at is a matter of opinion, of course.
-> =
+I am having a little bit of a problem calling this GetNeighbors and then
+also retrieving the serving cell at the same time.
 
-> Normally, IPv6 addresses and routes are autoconfigured using IPv6 statele=
-ss address autoconfiguration followed optionally by DHCPv6 to get additiona=
-l settings. The kernel actually starts stateless address autoconfiguration =
-immediately when the interface is configured up (which oFono does), assumin=
-g the interface already has a link-local IPv6 address (which all Ethernet i=
-nterface do have, as it is calculated from the MAC address and added automa=
-tically).
-> =
+I am just spinning some idea here, but maybe calling the interface
+org.ofono.NeighborCellInfo and the method AquireMeasurment() would be
+better.
 
-> Point-to-point interfaces, on the other, require the link-local address t=
-o be added manually to the interface before the autoconfiguration can happe=
-n. oFono should probably add the address to be consistent with Ethernet int=
-erfaces.
+> +			Possible errors: org.ofono.Error.Failed
+> +
+> +Properties
+> +
+> +Serving cell
+> +		string Type
+> +			Radio access network type of neighbor cell information.
+> +			The possible values are:
+> +			"geran"	Measurement results are for the GSM EDGE Radio
+> +				Access Network.
+> +			"utran"	Measurement results are for UMTS Radio Access
+> +				Network.
+> +
+> +		string MobileCountryCode
+> +			Mobile Country Code of serving cell. Possible values:
+> +			Values: 0...999
+> +
+> +		string MobileNetworkCode
+> +			Mobile Network Code of serving cell.
+> +			Values: 0...999
+> +
+> +		uint16 LocationAreaCode [GERAN]
+> +			Location area code of serving cell.
+> +			Values: 0...65535
+> +
+> +		uint16 CellId [GERAN]
+> +			Cell Id of serving cell.
+> +			Values: 0...65535
+> +
+> +		byte TimingAdvance [GERAN, optional]
+> +			Timing advance.
+> +			Values: 0...63
+> +
+> +		uint32 UniqueCellId [UTRA-FDD]
+> +			Serving WCDMA unique cell ID.
+> +			Values: 0...268435455
+> +
+> +		uint16 ScramblingCode [UTRA-FDD]
+> +			Primary scrambling code.
+> +			Values: 0...511
+> +
+> +		uint16 UARFCN-DL [UTRA-FDD]
+> +			Downlink UTRA Absolute Radio Frequency Channel Number
+> +			of serving cell.
+> +			Values: 0...16383
 
-I am not sure we really wanna be consistent with how Ethernet works
-since we are not actually Ethernet.
+Do we wanna keep the UARFCN acronym?
 
-So I can see benefits for having ConnMan control the link-local in case
-of point-to-point, but then I also do see the benefit oFono doing it.
+> +		uint16 UARFCN-UL [UTRA-FDD, optional]
+> +			Uplink UTRA Absolute Radio Frequency Channel Number.
+> +			Values: 0...16383
 
-We might have to spin of ideas and see what is the most logical one and
-what works best. Especially also in the context of LTE support in the
-future.
+I am still going forth and back if it is a good idea to make cell[0]
+special as the serving cell. There are common fields, but also other
+fields that are totally different.
 
-> The upshot would be that IPv6 could be autoconfigured immediately without=
- connman's intervention. IPv6 does not have private address spaces, so in t=
-heory connman does not really have to care about IPv6 addresses and routes.=
- However, the optional DHCPv6 step would probably be controlled by connman.=
- Configuration of IPv6 tethering would be another optional followup step co=
-ntrolled by connman.
+So one question that came to my mind is how this mixes when the serving
+cell is UMTS, can the neighbors cells also report GSM? Do we have a mix
+of values in the dictionary anyway?
 
-Yes, DHCPv6 step needs to be done by ConnMan. We do not have DHCPv6
-support right now. We only plan to use it for extra settings like
-proxies, timeservers etc.
+> +Neighbor cell measurement results
+> +
+> +		uint16 AbsoluteRadioFrequencyChannelNumber [GERAN]
+> +			Absolute radio frequency channel number.
+> +			Values: 0...1023
+> +
+> +		byte BaseStationIdentityCode [GERAN]
+> +			Base station identity code.
+> +			Values: 0...63.
+> +
+> +		byte RXLEV [GERAN]
+> +			Measured power of the channel.
+> +			Values: 0...63
 
-> On the other hand, if we want connman to be fully in charge, we could cha=
-nge oFono to always leave the network interface down and let connman do eve=
-rything. Marcels input on this would be welcome as well.
+I think we can find something better name than RXLEV.
 
-This is something we need to figure out. And of course this all needs to
-be aligned with IPv4 and IPv6. Right now we are treating this similar to
-how wpa_supplicant for WiFi does this.
+> +		byte ReceivedSignalStrengthIndicator [UTRA-FDD]
+> +			RX power level.
+> +			Values: 0...127
+> +
+> +		uint16 UARFCN-DL [UTRA-FDD]
+> +			Downlink UARFCN.
+> +			Values: 0...16383
+> +
+> +		uint16 UARFCN-UL [UTRA-FDD, optional]
+> +			Uplink UARFCN.
+> +			Values: 0...16383
+> +
+> +		uint16 ScramblingCode [UTRA-FDD]
+> +			Primary scrambling code.
+> +			Values: 0...511
+> +
+> +		uint32 UniqueCellId [UTRA-FDD, optional]
+> +			Unique cell ID.
+> +			Values: 0...268435455
+> +
+> +		byte CPICH-ECN0 [UTRA-FDD, optional]
+> +			 Common pilot channel RX energy per chip over noise
+> +			 density in dB.
+> +			 Values: 0...63
 
-So going back to potential LTE and IMS support; if that runs IPv6 then
-it might make sense to just autoconfigure it without ConnMan
-interaction.
+Any better name than CPICH?
+
+> +		int16 CPICH-RSCP [UTRA-FDD, optional]
+> +			Common pilot channel RX carrier power in dBm
+> +			Values: -4...127
+> +
+> +		byte Pathloss [UTRA-FDD, optional]
+> +			Measured path loss in dB.
+> +			Values: 46...173
 
 Regards
 
@@ -92,5 +175,5 @@ Marcel
 
 
 
---===============2564673467678310156==--
+--===============3435769501515810131==--
 
