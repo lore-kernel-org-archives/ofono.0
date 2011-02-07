@@ -1,36 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============8678946961361402980=="
+Content-Type: multipart/mixed; boundary="===============7912441934421082297=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC] voicecall API changes (proposal v3)
-Date: Mon, 07 Feb 2011 13:39:57 -0600
-Message-ID: <4D504A8D.2000101@gmail.com>
-In-Reply-To: <81add181a302fa6af74f4bc4e25a4db5f72085b0.1297098487.git.Andras.Domokos@nokia.com>
+Subject: Re: [PATCH] voicecall: fix transfer
+Date: Mon, 07 Feb 2011 13:46:46 -0600
+Message-ID: <4D504C26.4030504@gmail.com>
+In-Reply-To: <1297079813-26573-1-git-send-email-andre.matos.ste@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8678946961361402980==
+--===============7912441934421082297==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andras,
+Hi Andre,
 
-On 02/07/2011 11:09 AM, Andras Domokos wrote:
-> ---
->  doc/call-barring-api.txt     |   10 ----------
->  doc/voicecall-api.txt        |   11 +++++++++++
->  doc/voicecallmanager-api.txt |   25 +++++++++++++++++++++++++
->  3 files changed, 36 insertions(+), 10 deletions(-)
-> =
+> @@ -1350,11 +1351,12 @@ static DBusMessage *manager_transfer(DBusConnecti=
+on *conn,
+>  	 * implementing the call transfer operation for a call that is
+>  	 * still dialing/alerting.
+>  	 */
+> -	numactive +=3D voicecalls_num_connecting(vc);
+> +	numconn =3D voicecalls_num_connecting(vc);
+>  =
 
+>  	numheld =3D voicecalls_num_held(vc);
+>  =
 
-Your patch still didn't apply due to whitespace at EOF, but I was nice
-and enough and fixed it for you.  Patch has been applied.  I went ahead
-and marked the properties / signals as experimental until an
-implementation arrives.
+> -	if ((numactive !=3D 1) && (numheld !=3D 1))
+
+I don't get it, isn't the above condition taking care of this already?
+Its been a while but the precondition of ECT is:
+
+Held Call
+Outgoing or an Active call.  You cannot have an Outgoing and an Active
+call at the same time.  Hence numactive =3D=3D 1 && numheld =3D=3D 1 should=
+ work
+just fine.
+
+> +	if ((numactive > 1 || numheld > 1) ||
+> +		((numheld + numactive + numconn) !=3D 2))
+>  		return __ofono_error_failed(msg);
+>  =
+
+>  	if (vc->driver->transfer =3D=3D NULL)
 
 Regards,
 -Denis
 
---===============8678946961361402980==--
+--===============7912441934421082297==--
 
