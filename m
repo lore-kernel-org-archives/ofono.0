@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============0744201069758378452=="
+Content-Type: multipart/mixed; boundary="===============4820113450710551844=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
 Subject: [PATCH 0/7] Move GPRS attach logic to the modem
-Date: Mon, 07 Feb 2011 16:02:19 +0200
-Message-ID: <201102071602.20179.remi.denis-courmont@nokia.com>
+Date: Mon, 07 Feb 2011 16:03:51 +0200
+Message-ID: <201102071603.51596.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0744201069758378452==
+--===============4820113450710551844==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -41,5 +41,5 @@ TBD: configuration option for the policy
 R=C3=A9mi Denis-Courmont
 Nokia Devices R&D, Maemo Software, Helsinki
 
---===============0744201069758378452==--
+--===============4820113450710551844==--
 
