@@ -1,301 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============8238553422389305006=="
+Content-Type: multipart/mixed; boundary="===============7083026213883000987=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH -v2 5/7] dun_gw: Add DUN server plugin for oFono
-Date: Mon, 07 Feb 2011 10:21:58 +0100
-Message-ID: <4D4FB9B6.9070606@linux.intel.com>
-In-Reply-To: <1296855983-24868-5-git-send-email-padovan@profusion.mobi>
+From: Mika.Liljeberg@nokia.com
+Subject: RE: [PATCH 02/12] gprs: driver interface changes for IPv6
+Date: Mon, 07 Feb 2011 09:55:30 +0000
+Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC2985A8@008-AM1MPN1-001.mgdnok.nokia.com>
+In-Reply-To: <4D4C364D.90201@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8238553422389305006==
+--===============7083026213883000987==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Padovan,
+Hi Denis,
 
-One comment below.
-
-Kind regards,
-Guillaume
-
-On 04/02/2011 22:46, Gustavo F. Padovan wrote:
-> DUN server is probed when modem state changes to online. It registers
-> DUN record to Bluetooth adapter and wait for incoming DUN connection.
->
-> Based on a patch from Zhenhua Zhang<zhenhua.zhang@intel.com>
-> ---
->   Makefile.am         |    3 +
->   plugins/bluetooth.h |    3 +
->   plugins/dun_gw.c    |  189 ++++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   3 files changed, 195 insertions(+), 0 deletions(-)
->   create mode 100644 plugins/dun_gw.c
->
-> diff --git a/Makefile.am b/Makefile.am
-> index 047a85f..8a845fa 100644
-> --- a/Makefile.am
-> +++ b/Makefile.am
-> @@ -321,6 +321,9 @@ builtin_sources +=3D plugins/bluetooth.c plugins/blue=
-tooth.h
->   builtin_modules +=3D hfp
->   builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
->
-> +builtin_modules +=3D dun_gw
-> +builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
-> +
->   builtin_sources +=3D $(btio_sources)
->   builtin_cflags +=3D @BLUEZ_CFLAGS@
->   builtin_libadd +=3D @BLUEZ_LIBS@
-> diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-> index 505d908..79e1a4a 100644
-> --- a/plugins/bluetooth.h
-> +++ b/plugins/bluetooth.h
-> @@ -32,6 +32,9 @@
->   /* Profiles bitfield */
->   #define HFP_AG 0x01
->
-> +/* Server bitfield */
-> +#define DUN_GW 0x01
-> +
->   struct bluetooth_profile {
->   	const char *name;
->   	int (*create)(const char *device, const char *dev_addr,
-> diff --git a/plugins/dun_gw.c b/plugins/dun_gw.c
-> new file mode 100644
-> index 0000000..32c199e
-> --- /dev/null
-> +++ b/plugins/dun_gw.c
-> @@ -0,0 +1,189 @@
-> +/*
-> + *  oFono - Open Source Telephony
-> + *
-> + *  Copyright (C) 2010  Intel Corporation. All rights reserved.
-> + *
-> + *  This program is free software; you can redistribute it and/or modify
-> + *  it under the terms of the GNU General Public License version 2 as
-> + *  published by the Free Software Foundation.
-> + *
-> + *  This program is distributed in the hope that it will be useful,
-> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + *  GNU General Public License for more details.
-> + *
-> + *  You should have received a copy of the GNU General Public License
-> + *  along with this program; if not, write to the Free Software
-> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
-1  USA
-> + *
-> + */
-> +
-> +#ifdef HAVE_CONFIG_H
-> +#include<config.h>
-> +#endif
-> +#include<stdio.h>
-> +#include<string.h>
-> +#include<errno.h>
-> +#include<glib.h>
-> +#include<ofono.h>
-> +
-> +#define OFONO_API_SUBJECT_TO_CHANGE
-> +#include<ofono/plugin.h>
-> +#include<ofono/log.h>
-> +#include<ofono/modem.h>
-> +#include<gdbus.h>
-> +
-> +#include "bluetooth.h"
-> +
-> +#define DUN_GW_CHANNEL	1
-> +
-> +static struct server *server;
-> +static guint modemwatch_id;
-> +static guint channel_watch;
-> +
-> +static const gchar *dun_record =3D "<?xml version=3D\"1.0\" encoding=3D\=
-"UTF-8\" ?>   \
-> +<record>                                                                =
-        \
-> +<attribute id=3D\"0x0001\">                                             =
-        \
-> +<sequence>                                                              =
-    \
-> +<uuid value=3D\"0x1103\"/>                                              =
-    \
-> +</sequence>                                                             =
-    \
-> +</attribute>                                                            =
-      \
-> +                                                                        =
-       \
-> +<attribute id=3D\"0x0004\">                                             =
-        \
-> +<sequence>                                                              =
-    \
-> +<sequence>                                                              =
-  \
-> +<uuid value=3D\"0x0100\"/>                                              =
-  \
-> +</sequence>                                                             =
-  \
-> +<sequence>                                                              =
-  \
-> +<uuid value=3D\"0x0003\"/>                                              =
-  \
-> +<uint8 value=3D\"1\" name=3D\"channel\"/>                               =
-   \
-> +</sequence>                                                             =
-  \
-> +</sequence>                                                             =
-    \
-> +</attribute>                                                            =
-      \
-> +                                                                        =
-       \
-> +<attribute id=3D\"0x0009\">                                             =
-        \
-> +<sequence>                                                              =
-    \
-> +<sequence>                                                              =
-  \
-> +<uuid value=3D\"0x1103\"/>                                              =
-  \
-> +<uint16 value=3D\"0x0100\" name=3D\"version\"/>                         =
-    \
-> +</sequence>                                                             =
-  \
-> +</sequence>                                                             =
-    \
-> +</attribute>                                                            =
-      \
-> +                                                                        =
-       \
-> +<attribute id=3D\"0x0100\">                                             =
-        \
-> +<text value=3D\"Dial-up Networking\" name=3D\"name\"/>                  =
-        \
-> +</attribute>                                                            =
-      \
-> +</record>";
-> +
-> +
-> +static gboolean dun_gw_disconnect_cb(GIOChannel *io, GIOCondition cond,
-> +							gpointer user_data)
-> +{
-> +	g_io_channel_unref(io);
-> +
-> +	return FALSE;
-> +}
-> +
-> +static void dun_gw_connect_cb(GIOChannel *io, GError *err, gpointer user=
-_data)
-> +{
-> +	struct ofono_emulator *emulator =3D user_data;
-> +	int fd;
-> +
-> +	DBG("");
-> +
-> +	if (err) {
-> +		DBG("%s", err->message);
-> +		return;
-> +	}
-> +
-> +	fd =3D g_io_channel_unix_get_fd(io);
-> +	io =3D g_io_channel_ref(io);
-> +
-> +	if (ofono_emulator_enable(emulator, fd)<  0)
-> +		goto failed;
-> +
-> +	channel_watch =3D g_io_add_watch(io, G_IO_NVAL | G_IO_HUP | G_IO_ERR,
-> +					dun_gw_disconnect_cb, NULL);
-I don't understand why you put a second level of watcher here as we =
-
-already register a disconnect function when we create the GAtServer.
-> +	return;
-> +
-> +failed:
-> +	g_io_channel_shutdown(io, TRUE, NULL);
-> +}
-> +
-> +static int dun_gw_probe(struct ofono_emulator *emulator)
-> +{
-> +	if (server)
-> +		return -EEXIST;
-> +
-> +	DBG("");
-> +
-> +	server =3D bluetooth_register_server(DUN_GW_CHANNEL, dun_record,
-> +						dun_gw_connect_cb, emulator);
-> +
-> +	return 0;
-> +}
-> +
-> +static void dun_gw_remove(void)
-> +{
-> +	if (server =3D=3D NULL)
-> +		return;
-> +
-> +	DBG("");
-> +
-> +	bluetooth_unregister_server(server);
-> +	server =3D NULL;
-> +}
-> +
-> +static void gprs_watch(struct ofono_atom *atom,
-> +				enum ofono_atom_watch_condition cond,
-> +				void *data)
-> +{
-> +	struct ofono_modem *modem =3D data;
-> +
-> +	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED)
-> +		return;
-> +
-> +	__ofono_emulator_probe_drivers(modem);
-> +}
-> +
-> +static void modem_watch(struct ofono_modem *modem, gboolean added, void =
-*user)
-> +{
-> +	DBG("modem: %p, added: %d", modem, added);
-> +
-> +	if (added =3D=3D FALSE)
-> +		return;
-> +
-> +	__ofono_modem_add_atom_watch(modem, OFONO_ATOM_TYPE_GPRS,
-> +					gprs_watch, modem, NULL);
-> +}
-> +
-> +static void call_modemwatch(struct ofono_modem *modem, void *user)
-> +{
-> +	modem_watch(modem, TRUE, user);
-> +}
-> +
-> +static struct ofono_emulator_driver emulator_driver =3D {
-> +	.name =3D "Dial-Up Networking",
-> +	.type =3D OFONO_ATOM_TYPE_EMULATOR_DUN,
-> +	.probe =3D dun_gw_probe,
-> +	.remove =3D dun_gw_remove,
-> +};
-> +
-> +static int dun_gw_init(void)
-> +{
-> +	modemwatch_id =3D __ofono_modemwatch_add(modem_watch, NULL, NULL);
-> +	__ofono_modem_foreach(call_modemwatch, NULL);
-> +
-> +	return ofono_emulator_driver_register(&emulator_driver);
-> +}
-> +
-> +static void dun_gw_exit(void)
-> +{
-> +	__ofono_modemwatch_remove(modemwatch_id);
-> +
-> +	ofono_emulator_driver_unregister(&emulator_driver);
-> +}
-> +
-> +OFONO_PLUGIN_DEFINE(dun_gw, "Dial-up Networking Profile Plugins", VERSIO=
-N,
-> +			OFONO_PLUGIN_PRIORITY_DEFAULT, dun_gw_init, dun_gw_exit)
+Thanks for the comments. =
 
 
---===============8238553422389305006==--
+> > +enum ofono_gprs_addrconf {
+> > +	OFONO_GPRS_ADDRCONF_NONE,
+> > +	OFONO_GPRS_ADDRCONF_STATIC,
+> > +	OFONO_GPRS_ADDRCONF_DHCP,
+> > +};
+> > +
+> =
+
+> What exactly is the _NONE addrconf for?  And why don't we use =
+
+> a gboolean
+> here like before?
+
+Neither "static" nor "DHCP" makes sense for IPv6. If we have an IPv6 only c=
+ontext, the "Method" property will not show up at all.
+
+I also wanted to leave the door open for additional address configuration p=
+rotocols in case e.g. IPv6 capable modems with virtual ethernet intefaces r=
+equire some weird quirks. I also felt this was a bit cleaner, although that=
+ is a matter of opinion, of course.
+
+Normally, IPv6 addresses and routes are autoconfigured using IPv6 stateless=
+ address autoconfiguration followed optionally by DHCPv6 to get additional =
+settings. The kernel actually starts stateless address autoconfiguration im=
+mediately when the interface is configured up (which oFono does), assuming =
+the interface already has a link-local IPv6 address (which all Ethernet int=
+erface do have, as it is calculated from the MAC address and added automati=
+cally).
+
+Point-to-point interfaces, on the other, require the link-local address to =
+be added manually to the interface before the autoconfiguration can happen.=
+ oFono should probably add the address to be consistent with Ethernet inter=
+faces.
+
+The upshot would be that IPv6 could be autoconfigured immediately without c=
+onnman's intervention. IPv6 does not have private address spaces, so in the=
+ory connman does not really have to care about IPv6 addresses and routes. H=
+owever, the optional DHCPv6 step would probably be controlled by connman. C=
+onfiguration of IPv6 tethering would be another optional followup step cont=
+rolled by connman.
+
+On the other hand, if we want connman to be fully in charge, we could chang=
+e oFono to always leave the network interface down and let connman do every=
+thing. Marcels input on this would be welcome as well.
+
+Regards,
+
+	MikaL
+
+--===============7083026213883000987==--
 
