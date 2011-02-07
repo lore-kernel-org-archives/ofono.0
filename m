@@ -1,321 +1,114 @@
-Content-Type: multipart/mixed; boundary="===============4518882763040201799=="
+Content-Type: multipart/mixed; boundary="===============3394575610990212963=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH v3 4/4] ifxmodem: move call creation to xcallstat_notify
-Date: Mon, 07 Feb 2011 13:07:38 -0800
-Message-ID: <1297112858-12002-5-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1297112858-12002-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/4] sim: Implement file watching and basic refresh.
+Date: Mon, 07 Feb 2011 15:13:22 -0600
+Message-ID: <4D506072.2090300@gmail.com>
+In-Reply-To: <AANLkTi=tjQm8n9igfyN8DDFjXpchdVYf+P=dWHh5z7uO@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4518882763040201799==
+--===============3394575610990212963==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/ifxmodem/voicecall.c |  170 ++++++++++++++++++++++++--------------=
----
- 1 files changed, 99 insertions(+), 71 deletions(-)
+Hi Andrew,
 
-diff --git a/drivers/ifxmodem/voicecall.c b/drivers/ifxmodem/voicecall.c
-index 648f46b..c94698b 100644
---- a/drivers/ifxmodem/voicecall.c
-+++ b/drivers/ifxmodem/voicecall.c
-@@ -117,7 +117,8 @@ static void xcallstat_notify(GAtResult *result, gpointe=
-r user_data)
- 	int id;
- 	int status;
- 	GSList *l;
--	struct ofono_call *call;
-+	struct ofono_call *new_call;
-+	struct ofono_call *existing_call =3D NULL;
- =
+>> if full_file_change or changed ef in (EFbdn, EFfdn, EFest, EFust, EFsst,
+>> EFphase, EFad, EFcphs_info):
+>>        Remove all atoms in post_sim and post_online
+>>        Restart SIM initialization procedure
+> =
 
- 	g_at_result_iter_init(&iter, result);
- =
-
-@@ -133,53 +134,83 @@ static void xcallstat_notify(GAtResult *result, gpoin=
-ter user_data)
- 	l =3D g_slist_find_custom(vd->calls, GINT_TO_POINTER(id),
- 				at_util_call_compare_by_id);
- =
-
--	if (l =3D=3D NULL) {
--		/*
--		 * We should only receive XCALLSTAT on waiting and incoming
--		 * In the case of waiting, we will get the rest of the info
--		 * from CCWA indication.
--		 * In the case of incoming, we will get the info from CLIP
--		 * indications.
--		 */
--		if (status !=3D CALL_STATUS_INCOMING &&
--				    status !=3D CALL_STATUS_WAITING) {
--			ofono_info("Received an XCALLSTAT for an untracked"
--					" call, this indicates a bug!");
--			return;
--		}
--
-+	if (l =3D=3D NULL && status !=3D CALL_STATUS_DIALING &&
-+				status !=3D CALL_STATUS_INCOMING &&
-+				status !=3D CALL_STATUS_WAITING) {
-+		ofono_error("Received an XCALLSTAT for an untracked"
-+				" call, this indicates a bug!");
- 		return;
- 	}
- =
-
--	call =3D l->data;
-+	if (l)
-+		existing_call =3D l->data;
- =
-
--	/* Check if call has been disconnected */
--	if (status =3D=3D CALL_STATUS_DISCONNECTED) {
--		enum ofono_disconnect_reason r;
-+	switch (status) {
-+	case CALL_STATUS_DISCONNECTED:
-+	{
-+		enum ofono_disconnect_reason reason;
- =
-
--		if (vd->local_release & (1 << call->id))
--			r =3D OFONO_DISCONNECT_REASON_LOCAL_HANGUP;
--		else
--			r =3D OFONO_DISCONNECT_REASON_REMOTE_HANGUP;
-+		existing_call->status =3D status;
- =
-
--		if (call->type =3D=3D 0)
--			ofono_voicecall_disconnected(vc, call->id, r, NULL);
-+		if (vd->local_release & (1 << existing_call->id))
-+			reason =3D OFONO_DISCONNECT_REASON_LOCAL_HANGUP;
-+		else
-+			reason =3D OFONO_DISCONNECT_REASON_REMOTE_HANGUP;
- =
-
--		vd->local_release &=3D ~(1 << call->id);
--		vd->calls =3D g_slist_remove(vd->calls, call);
--		g_free(call);
-+		ofono_voicecall_disconnected(vc, existing_call->id,
-+						reason, NULL);
- =
-
--		return;
-+		vd->local_release &=3D ~(1 << existing_call->id);
-+		vd->calls =3D g_slist_remove(vd->calls, l->data);
-+		g_free(existing_call);
-+		break;
- 	}
-+	case CALL_STATUS_DIALING:
-+	case CALL_STATUS_WAITING:
-+	case CALL_STATUS_INCOMING:
-+	{
-+		int direction;
-+
-+		/* Handle the following situation:
-+		 * Active Call + Waiting Call. Active Call is Released.
-+		 * The Waiting call becomes Incoming. In this case, no
-+		 * need to create a new call. Call status change will be
-+		 * triggered from clip_notify.
-+		 */
-+		if (existing_call) {
-+			existing_call->status =3D status;
-+			return;
-+		}
- =
-
--	/* For connected status, simply reset back to active */
--	if (status =3D=3D 7)
--		status =3D 0;
-+		if (status =3D=3D CALL_STATUS_DIALING)
-+			direction =3D CALL_DIRECTION_MOBILE_ORIGINATED;
-+		else
-+			direction =3D CALL_DIRECTION_MOBILE_TERMINATED;
-+
-+		new_call =3D create_call(vc, 0, direction, status,
-+					NULL, 128,
-+					CLIP_VALIDITY_NOT_AVAILABLE);
-+		if (new_call =3D=3D NULL) {
-+			ofono_error("Unable to malloc. "
-+					"Call management is fubar");
-+			return;
-+		}
- =
-
--	call->status =3D status;
-+		new_call->id =3D id;
-+		break;
-+	}
-+	case CALL_STATUS_ALERTING:
-+	case CALL_STATUS_ACTIVE:
-+	case CALL_STATUS_HELD:
-+	default:
-+		/* For connected status, simply reset back to active */
-+		if (status =3D=3D 7)
-+			status =3D CALL_STATUS_ACTIVE;
- =
-
--	if (call->type =3D=3D 0)
--		ofono_voicecall_notify(vc, call);
-+		existing_call->status =3D status;
-+		ofono_voicecall_notify(vc, existing_call);
-+		break;
-+	}
- }
- =
-
- static void xem_notify(GAtResult *result, gpointer user_data)
-@@ -250,25 +281,11 @@ static void release_id_cb(gboolean ok, GAtResult *res=
-ult,
- static void atd_cb(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct cb_data *cbd =3D user_data;
--	struct ofono_voicecall *vc =3D cbd->user;
- 	ofono_voicecall_cb_t cb =3D cbd->cb;
- 	struct ofono_error error;
--	struct ofono_call *call;
- =
-
- 	decode_at_error(&error, g_at_result_final_response(result));
- =
-
--	if (!ok) {
--		cb(&error, cbd->data);
--		return;
--	}
--
--	/* Generate a voice call that was just dialed, we guess the ID */
--	call =3D create_call(vc, 0, 0, CALL_STATUS_DIALING, NULL, 128, 2);
--	if (call =3D=3D NULL) {
--		ofono_error("Unable to malloc, call tracking will fail!");
--		return;
--	}
--
- 	/* Let oFono core will generate a call with the dialed number
- 	 * inside its dial callback.
- 	 */
-@@ -512,25 +529,28 @@ static void cring_notify(GAtResult *result, gpointer =
-user_data)
- 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
- 	GAtResultIter iter;
- 	const char *line;
--	int type;
-+	GSList *l;
-+	struct ofono_call *call;
- =
-
- 	/* Handle the following situation:
- 	 * Active Call + Waiting Call.  Active Call is Released.  The Waiting
--	 * call becomes Incoming and RING/CRING indications are signaled.
--	 * Sometimes these arrive before we managed to poll CLCC to find about
--	 * the stage change.  If this happens, simply ignore the RING/CRING
--	 * when a waiting call exists (cannot have waiting + incoming in GSM)
-+	 * call becomes Incoming and CRING indications are signaled.
-+	 * Sometimes these arrive before the actual state change notification.
-+	 * If this happens, simply ignore the CRING when a waiting call
-+	 * exists (cannot have waiting + incoming in GSM)
- 	 */
- 	if (g_slist_find_custom(vd->calls,
- 				GINT_TO_POINTER(CALL_STATUS_WAITING),
- 				at_util_call_compare_by_status))
- 		return;
- =
-
--	/* CRING can repeat, ignore if we already have an incoming call */
--	if (g_slist_find_custom(vd->calls,
-+	l =3D g_slist_find_custom(vd->calls,
- 				GINT_TO_POINTER(CALL_STATUS_INCOMING),
--				at_util_call_compare_by_status))
-+				at_util_call_compare_by_status);
-+	if (l =3D=3D NULL) {
-+		ofono_error("CRING received before XCALLSTAT!!!");
- 		return;
-+	}
- =
-
- 	g_at_result_iter_init(&iter, result);
- =
-
-@@ -541,14 +561,13 @@ static void cring_notify(GAtResult *result, gpointer =
-user_data)
- 	if (line =3D=3D NULL)
- 		return;
- =
-
-+	call =3D l->data;
-+
- 	/* Ignore everything that is not voice for now */
- 	if (!strcasecmp(line, "VOICE"))
--		type =3D 0;
-+		call->type =3D 0;
- 	else
--		type =3D 9;
--
--	/* Generate an incoming call */
--	create_call(vc, type, 1, CALL_STATUS_INCOMING, NULL, 128, 2);
-+		call->type =3D 9;
- =
-
- 	/* Assume the CLIP always arrives, and we signal the call there */
- 	DBG("cring_notify");
-@@ -617,13 +636,16 @@ static void ccwa_notify(GAtResult *result, gpointer u=
-ser_data)
- 	GAtResultIter iter;
- 	const char *num;
- 	int num_type, validity, cls;
-+	GSList *l;
- 	struct ofono_call *call;
- =
-
--	/* Some modems resend CCWA, ignore it the second time around */
--	if (g_slist_find_custom(vd->calls,
-+	l =3D g_slist_find_custom(vd->calls,
- 				GINT_TO_POINTER(CALL_STATUS_WAITING),
--				at_util_call_compare_by_status))
-+				at_util_call_compare_by_status);
-+	if (l =3D=3D NULL) {
-+		ofono_error("CCWA received before XCALLSTAT!!!");
- 		return;
-+	}
- =
-
- 	g_at_result_iter_init(&iter, result);
- =
-
-@@ -652,13 +674,19 @@ static void ccwa_notify(GAtResult *result, gpointer u=
-ser_data)
- =
-
- 	DBG("ccwa_notify: %s %d %d %d", num, num_type, cls, validity);
- =
-
--	call =3D create_call(vc, class_to_call_type(cls), 1, CALL_STATUS_WAITING,
--				num, num_type, validity);
--	if (call =3D=3D NULL) {
--		ofono_error("Unable to malloc. Call management is fubar");
--		return;
-+	call =3D l->data;
-+
-+	call->type =3D class_to_call_type(cls);
-+
-+	if (validity !=3D 2) {
-+		strncpy(call->phone_number.number, num,
-+			OFONO_MAX_PHONE_NUMBER_LENGTH);
-+		call->phone_number.number[OFONO_MAX_PHONE_NUMBER_LENGTH] =3D '\0';
-+		call->phone_number.type =3D num_type;
- 	}
- =
-
-+	call->clip_validity =3D validity;
-+
- 	if (call->type =3D=3D 0) /* Only notify voice calls */
- 		ofono_voicecall_notify(vc, call);
- }
--- =
-
-1.7.0.4
+> I guess that is okay, as long as we remember to keep this list updated
+> (there are various other important files which we may not be using
+> yet)
+> =
 
 
---===============4518882763040201799==--
+That is fine, we fix these during the pre-certification / certification,
+etc.
+
+>>
+>> if full_file_change:
+>>        notify all remaining watches
+> =
+
+> In this case we have already reinitialised the SIM, so I think we
+> don't need to do that.
+
+Actually we should for files that are read during pre-sim but are not
+important enough.  E.g. EFecc, EFli, EFpl, EFiccid, etc.
+
+> =
+
+>> else
+>>        for each file changed:
+>>                notify matching remaining watches
+> =
+
+> What if a file is changed which doesn't have a handler implemented?
+> Shouldn't we fall back to removing the atom? That was the idea of
+> those "complicated" loops above.
+
+If it should be handled, then its a bug.  Removing all atoms just
+because someone forgot to handle a file is bad anyway.
+
+> =
+
+>>
+>> Incidentally the above list of files to re-read is exactly the same
+>> files we need to re-initialize when we lock ourselves out when trying to
+>> lock/unlock/change the PIN.
+>>
+>>> +     switch (reset_state) {
+>>> +     case RESET_REMOVE_ATOMS:
+>>> +             /*
+>>> +              * REVISIT: There's some concern that on re-insertion the
+>>> +              * atoms will start to talk to the SIM before it becomes
+>>> +              * ready, on certain SIMs.
+>>> +              */
+>>> +             ofono_sim_inserted_notify(sim, FALSE);
+>>> +             ofono_sim_inserted_notify(sim, TRUE);
+>>> +             break;
+>>
+>> This is not really a good idea semantics wise.  The SIM hasn't really
+>> been removed and a UICC reset / NAA application reset / NAA session
+>> reset is not being performed either.
+> =
+
+> Hmm probably.  Although from our point of view the NAA initialisation
+> looks the same as sim re-insertion so we end up inlining that fuction.
+>
+
+I'm still fuzzy on what NAA initialization actually does.  Right now my
+interpretation is that EFpl/EFli and EFiccid have not changed.  So it is
+not quite the same as a reset.
+
+>>
+>>> +     case RESET_SIGNAL_READY:
+>>> +             sim->state =3D OFONO_SIM_STATE_INSERTED;
+>>> +             sim_set_ready(sim);
+>>> +             break;
+>>
+>> I still don't see a reason for this one, isn't the file_changed watch
+>> enough?
+> =
+
+> In the long range I guess it should be enough but for the moment we
+> only have the handler for EFmsisdn and two more files, for other files
+> we rely on the atom's sim_ready notifier to re-read the files, which
+> should have the the same effect (right?)
+
+or they can just install a file watch and remove it in case a sim
+re-init condition is triggered.  That way if only EFmsisdn is changed,
+then the file watch is fired.  If a complete re-init has to be done,
+then this watch is removed and the file is re-read during regular
+re-initialization procedure.
+
+Regards,
+-Denis
+
+--===============3394575610990212963==--
 
