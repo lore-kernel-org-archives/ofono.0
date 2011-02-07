@@ -1,110 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============6563933603977668417=="
+Content-Type: multipart/mixed; boundary="===============0386243824318869003=="
 MIME-Version: 1.0
-From: Andras Domokos <Andras.Domokos@nokia.com>
-Subject: [RFC] voicecall API changes (proposal v3)
-Date: Mon, 07 Feb 2011 13:18:34 +0200
-Message-ID: <3150a4f74efe520f7c0dc81da26b016739b28784.1297076002.git.Andras.Domokos@nokia.com>
-In-Reply-To: <4D4AD7DF.6060401@gmail.com>
+From: Andre Matos <andre.matos.ste@gmail.com>
+Subject: [PATCH] voicecall: fix transfer
+Date: Mon, 07 Feb 2011 12:56:53 +0100
+Message-ID: <1297079813-26573-1-git-send-email-andre.matos.ste@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6563933603977668417==
+--===============0386243824318869003==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Andre Carvalho de Matos <andre.carvalho.matos@stericsson.com>
+
+transfer method should fail if you have a multiparty call, according to 22.=
+091
+section 8.11
 ---
- doc/call-barring-api.txt     |   10 ----------
- doc/voicecall-api.txt        |   11 +++++++++++
- doc/voicecallmanager-api.txt |   26 ++++++++++++++++++++++++++
- 3 files changed, 37 insertions(+), 10 deletions(-)
+ src/voicecall.c |    6 ++++--
+ 1 files changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/doc/call-barring-api.txt b/doc/call-barring-api.txt
-index 41ae4b1..1534494 100644
---- a/doc/call-barring-api.txt
-+++ b/doc/call-barring-api.txt
-@@ -37,16 +37,6 @@ Signals		PropertyChanged(string property, variant value)
- 			Signal is emitted whenever a property has changed.
- 			The new value is passed as the signal argument.
+diff --git a/src/voicecall.c b/src/voicecall.c
+index f3f6a9b..f959f55 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -1339,6 +1339,7 @@ static DBusMessage *manager_transfer(DBusConnection *=
+conn,
+ 	struct ofono_voicecall *vc =3D data;
+ 	int numactive;
+ 	int numheld;
++	int numconn;
  =
 
--		IncomingBarringInEffect()
--
--			Signal is emitted when a call is made and an
--			incoming call barring supplementary service is in use.
--
--		OutgoingBarringInEffect()
--
--			Signal is emitted when a call is made and an
--			outgoing call barring supplementary service is in use.
--
- Properties	string VoiceIncoming [readwrite]
+ 	if (vc->pending)
+ 		return __ofono_error_busy(msg);
+@@ -1350,11 +1351,12 @@ static DBusMessage *manager_transfer(DBusConnection=
+ *conn,
+ 	 * implementing the call transfer operation for a call that is
+ 	 * still dialing/alerting.
+ 	 */
+-	numactive +=3D voicecalls_num_connecting(vc);
++	numconn =3D voicecalls_num_connecting(vc);
  =
 
- 			Contains the value of the barrings for the incoming
-diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-index 047b8cb..6a72386 100644
---- a/doc/voicecall-api.txt
-+++ b/doc/voicecall-api.txt
-@@ -145,3 +145,14 @@ Properties	string LineIdentification [readonly]
+ 	numheld =3D voicecalls_num_held(vc);
  =
 
- 			Contains the indication if the voice call is an
- 			emergency call or not.
-+
-+		boolean RemoteHeld
-+
-+			Contains the indication whether the voice call is put on
-+			hold by the remote party or not.
-+
-+		boolean RemoteMultiparty
-+
-+			Contains the indication whether the voice call is joined
-+			in a multiparty call by the remote party or not.
-+
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index 5415345..1d49a42 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -144,6 +144,32 @@ Signals		CallAdded(object path, dict properties)
- 			Signal is emitted whenever a property has changed.
- 			The new value is passed as the signal argument.
+-	if ((numactive !=3D 1) && (numheld !=3D 1))
++	if ((numactive > 1 || numheld > 1) ||
++		((numheld + numactive + numconn) !=3D 2))
+ 		return __ofono_error_failed(msg);
  =
 
-+		BarringActive(string type)
-+
-+			Signal emitted when an outgoing voice call is made and
-+			the call has been barred by the network due to the
-+			remote party's "Call Barring" Supplementary Services
-+			settings for incoming calls. In this case the type
-+			parameter in the signal set to "remote".
-+			The signal is also emitted when an outgoing voice call
-+			is made and the call has been barred by the network due
-+			to the local "Call Barring" Supplementary Services
-+			settings for outgoing calls. In this case the type
-+			parameter in the signal is set to "local".
-+
-+		CallForwarded(string type)
-+
-+			Signal emitted when an outgoing voice call is made and
-+			the call has been redirected to another number due to
-+			the remote party's "Call Forwarding" Supplementary
-+			Services settings. In this case the type parameter in
-+			the signal is set to "outgoing".
-+			The signal is also emitted when the incoming voice call
-+			is a redirected call due to a call forwarding operation.
-+			In this case the type parameter in the signal is set to
-+			"incoming".
-+
-+
- Properties	array{string} EmergencyNumbers [readonly]
- =
-
- 			Contains the list of emergency numbers recognized
+ 	if (vc->driver->transfer =3D=3D NULL)
 -- =
 
 1.7.0.4
 
 
---===============6563933603977668417==--
+--===============0386243824318869003==--
 
