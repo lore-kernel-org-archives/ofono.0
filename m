@@ -1,45 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============6714089522383045599=="
+Content-Type: multipart/mixed; boundary="===============7175260629526922902=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] voicecall: fix transfer
-Date: Mon, 07 Feb 2011 16:30:05 -0600
-Message-ID: <4D50726D.9090102@gmail.com>
-In-Reply-To: <AANLkTin7-jU3z7nhLmfHBsVeBTZkRjQb5-zzKAc4uX0m@mail.gmail.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] stemodem: fix possible memory leak
+Date: Mon, 07 Feb 2011 15:02:52 -0800
+Message-ID: <1297119772-17987-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6714089522383045599==
+--===============7175260629526922902==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andre,
+---
+ drivers/stemodem/voicecall.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
->     when submitting patches please follow our coding style guidelines.  Y=
-ou
->     had at least 1 style violation, namely rule M4.
-> =
+diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+index ca275cd..dd5d009 100644
+--- a/drivers/stemodem/voicecall.c
++++ b/drivers/stemodem/voicecall.c
+@@ -491,6 +491,7 @@ static void ecav_notify(GAtResult *result, gpointer use=
+r_data)
+ =
 
-> =
+ 		vd->local_release &=3D ~(1 << existing_call->id);
+ 		vd->calls =3D g_slist_remove(vd->calls, l->data);
++		g_free(existing_call);
+ 		break;
+ 	}
+ =
 
-> That is strange i run checkpatch  on the code i did not get any warning.
-> Is there a  better script for the checking the patches before sending?
+-- =
 
-We follow Linux kernel coding style + a few extra rules.  These are not
-covered by checkpatch.  See doc/coding-style.txt for a fairly
-comprehensive list of them.
+1.7.0.4
 
-Nobody has yet volunteered to maintain a checkpatch style script for
-oFono specifically, so today we rely on the review process to find most
-of these violations.  Much of the codebase is consistent with these
-rules, but you will find some inconsistencies in the code that was
-written before some of these rules went into effect.  If you do, then
-feel free to send a patch ;)
 
-If in doubt check doc/coding-style.txt or the rest of the code.
-
-Regards,
--Denis
-
---===============6714089522383045599==--
+--===============7175260629526922902==--
 
