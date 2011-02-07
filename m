@@ -1,71 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============7083026213883000987=="
+Content-Type: multipart/mixed; boundary="===============9094782752660544561=="
 MIME-Version: 1.0
-From: Mika.Liljeberg@nokia.com
-Subject: RE: [PATCH 02/12] gprs: driver interface changes for IPv6
-Date: Mon, 07 Feb 2011 09:55:30 +0000
-Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC2985A8@008-AM1MPN1-001.mgdnok.nokia.com>
-In-Reply-To: <4D4C364D.90201@gmail.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH 1/1] gisi: Updated subscriptions and pipe handling to
+ accomodate additional isimodem versions
+Date: Mon, 07 Feb 2011 12:01:03 +0200
+Message-ID: <AANLkTi=dEMKzXy9F8oG19AkevUaAZMG9pJEkpip9KZD1@mail.gmail.com>
+In-Reply-To: <AANLkTinWrKLgWUTgcTPEKObc8bp2qBrmD=AaaoPgOqd5@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7083026213883000987==
+--===============9094782752660544561==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi,
 
-Thanks for the comments. =
+2011/2/4 Aki Niemi <aki@protocolpolice.com>:
+> This is problematic, since there is no version query by default for
+> the PN_COMMGR because creating the GIsiModem is not async. Also, even
+> the N900 modem supports both of these INDs, but the
+> PNS_SUBSCRIBED_RESOURCES_EXTEND_IND is blocked by a modem side
+> firewall.
+>
+> So I think we need something different here, like flags that the
+> plugin can set to control which IND type gets used.
 
+I just pushed a new API to set flags on a modem instance, and also
+refactored the indication subscription logic based on this patch.
 
-> > +enum ofono_gprs_addrconf {
-> > +	OFONO_GPRS_ADDRCONF_NONE,
-> > +	OFONO_GPRS_ADDRCONF_STATIC,
-> > +	OFONO_GPRS_ADDRCONF_DHCP,
-> > +};
-> > +
-> =
+Please check that it works like you want it to.
 
-> What exactly is the _NONE addrconf for?  And why don't we use =
+Cheers,
+Aki
 
-> a gboolean
-> here like before?
-
-Neither "static" nor "DHCP" makes sense for IPv6. If we have an IPv6 only c=
-ontext, the "Method" property will not show up at all.
-
-I also wanted to leave the door open for additional address configuration p=
-rotocols in case e.g. IPv6 capable modems with virtual ethernet intefaces r=
-equire some weird quirks. I also felt this was a bit cleaner, although that=
- is a matter of opinion, of course.
-
-Normally, IPv6 addresses and routes are autoconfigured using IPv6 stateless=
- address autoconfiguration followed optionally by DHCPv6 to get additional =
-settings. The kernel actually starts stateless address autoconfiguration im=
-mediately when the interface is configured up (which oFono does), assuming =
-the interface already has a link-local IPv6 address (which all Ethernet int=
-erface do have, as it is calculated from the MAC address and added automati=
-cally).
-
-Point-to-point interfaces, on the other, require the link-local address to =
-be added manually to the interface before the autoconfiguration can happen.=
- oFono should probably add the address to be consistent with Ethernet inter=
-faces.
-
-The upshot would be that IPv6 could be autoconfigured immediately without c=
-onnman's intervention. IPv6 does not have private address spaces, so in the=
-ory connman does not really have to care about IPv6 addresses and routes. H=
-owever, the optional DHCPv6 step would probably be controlled by connman. C=
-onfiguration of IPv6 tethering would be another optional followup step cont=
-rolled by connman.
-
-On the other hand, if we want connman to be fully in charge, we could chang=
-e oFono to always leave the network interface down and let connman do every=
-thing. Marcels input on this would be welcome as well.
-
-Regards,
-
-	MikaL
-
---===============7083026213883000987==--
+--===============9094782752660544561==--
 
