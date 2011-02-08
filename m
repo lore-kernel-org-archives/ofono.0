@@ -1,120 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============1849757171483893199=="
+Content-Type: multipart/mixed; boundary="===============8023509900309499122=="
 MIME-Version: 1.0
 From: Mika.Liljeberg@nokia.com
 Subject: RE: [PATCH 02/12] gprs: driver interface changes for IPv6
-Date: Tue, 08 Feb 2011 08:36:34 +0000
-Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC29913D@008-AM1MPN1-001.mgdnok.nokia.com>
-In-Reply-To: <1297105757.1520.436.camel@aeonflux>
+Date: Tue, 08 Feb 2011 08:55:30 +0000
+Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC2991E7@008-AM1MPN1-001.mgdnok.nokia.com>
+In-Reply-To: <4D501E8E.4020100@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1849757171483893199==
+--===============8023509900309499122==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel, =
+Hi Denis, =
 
 
-Thanks for the comments.
+> >>> +enum ofono_gprs_addrconf {
+> >>> +	OFONO_GPRS_ADDRCONF_NONE,
+> >>> +	OFONO_GPRS_ADDRCONF_STATIC,
+> >>> +	OFONO_GPRS_ADDRCONF_DHCP,
+> >>> +};
+> >>> +
+> >>
+> >> What exactly is the _NONE addrconf for?  And why don't we use =
 
-> > Normally, IPv6 addresses and routes are autoconfigured =
-
-> using IPv6 stateless address autoconfiguration followed =
-
-> optionally by DHCPv6 to get additional settings. The kernel =
-
-> actually starts stateless address autoconfiguration =
-
-> immediately when the interface is configured up (which oFono =
-
-> does), assuming the interface already has a link-local IPv6 =
-
-> address (which all Ethernet interface do have, as it is =
-
-> calculated from the MAC address and added automatically).
+> >> a gboolean
+> >> here like before?
 > > =
 
-> > Point-to-point interfaces, on the other, require the =
+> > Neither "static" nor "DHCP" makes sense for IPv6. If we =
 
-> link-local address to be added manually to the interface =
+> have an IPv6 only context, the "Method" property will not =
 
-> before the autoconfiguration can happen. oFono should =
-
-> probably add the address to be consistent with Ethernet interfaces.
+> show up at all.
 > =
 
-> I am not sure we really wanna be consistent with how Ethernet works
-> since we are not actually Ethernet.
-> =
+> What about combined V4 V6 contexts? What method do you use =
 
-> So I can see benefits for having ConnMan control the =
+> there, since
+> NONE doesn't exactly fit?
 
-> link-local in case
-> of point-to-point, but then I also do see the benefit oFono doing it.
-> =
+The driver will call the ofono_gprs_context_set_ip_addrconf() method to set=
+ either STATIC or DHCP configuration method for IPv4. NONE is just a deault=
+ intializer, so the "Method" property doesn't show up in the "Settings" dic=
+t, unless actually set by the driver.
 
-> We might have to spin of ideas and see what is the most =
+> I'd rather see this be ignored for IPv6
+> contexts or that we separate the IPv4 and IPv6 configuration into two =
 
-> logical one and
-> what works best. Especially also in the context of LTE support in the
-> future.
+> separate batches.
 
-I agree. The pragmatic way would be to just choose one option now and see h=
-ow that works for us. We can revisit the issue later when we understand the=
- requirements better.
-
-> > The upshot would be that IPv6 could be autoconfigured =
-
-> immediately without connman's intervention. IPv6 does not =
-
-> have private address spaces, so in theory connman does not =
-
-> really have to care about IPv6 addresses and routes. However, =
-
-> the optional DHCPv6 step would probably be controlled by =
-
-> connman. Configuration of IPv6 tethering would be another =
-
-> optional followup step controlled by connman.
-> =
-
-> Yes, DHCPv6 step needs to be done by ConnMan. We do not have DHCPv6
-> support right now. We only plan to use it for extra settings like
-> proxies, timeservers etc.
-> =
-
-> > On the other hand, if we want connman to be fully in =
-
-> charge, we could change oFono to always leave the network =
-
-> interface down and let connman do everything. Marcels input =
-
-> on this would be welcome as well.
-> =
-
-> This is something we need to figure out. And of course this =
-
-> all needs to
-> be aligned with IPv4 and IPv6. Right now we are treating this =
-
-> similar to
-> how wpa_supplicant for WiFi does this.
-> =
-
-> So going back to potential LTE and IMS support; if that runs IPv6 then
-> it might make sense to just autoconfigure it without ConnMan
-> interaction.
-
-Ok. If you agree, I'll add link-local address configuration to my patches f=
-or all IPv6 contexts for the time being. Autonomous autoconfiguration is in=
- accordance with IPv6 philosophy anyway. Might as well see how far it takes=
- us. We can always move to a connman controlled approach later if that turn=
-s out to be necessary.
+That's the idea. If we find that IPv6 needs some additional support, the pl=
+an is to add a new ofono_gprs_context_set_ipv6_addrconf() method, which set=
+s the the address configuration method for IPv6. That would be associated w=
+ith a new "IPv6Method" property in the settings dict. At the moment I don't=
+ know if we need this, until the driver writers start implemeting IPv6 supp=
+ort for their modems.
 
 Regards,
 
 	MikaL
 
---===============1849757171483893199==--
+--===============8023509900309499122==--
 
