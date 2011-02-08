@@ -1,92 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============6166415707522919649=="
+Content-Type: multipart/mixed; boundary="===============0446256104688267378=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v3 4/7] emulator: Add emulator atom in oFono
-Date: Tue, 08 Feb 2011 20:01:01 -0200
-Message-ID: <1297202464-19155-4-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1297202464-19155-3-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH -v3 5/7] dun_gw: Add DUN server plugin for oFono
+Date: Tue, 08 Feb 2011 20:01:02 -0200
+Message-ID: <1297202464-19155-5-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1297202464-19155-4-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6166415707522919649==
+--===============0446256104688267378==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Create emulator atom when modem state changes to online. The emulator
-driver probes each driver to create specific emulator like DUN, HFP AG,
-etc. Once get client connection request, create GAtServer to talk AT
-commands with client side.
+DUN server is probed when modem state changes to online. It registers
+DUN record to Bluetooth adapter and wait for incoming DUN connection.
 
 Based on a patch from Zhenhua Zhang <zhenhua.zhang@intel.com>
 ---
- Makefile.am        |    5 +-
- include/emulator.h |    6 +-
- src/emulator.c     |  173 ++++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am         |    3 +
+ plugins/bluetooth.h |    3 +
+ plugins/dun_gw.c    |  189 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- src/ofono.h        |    5 ++
- 4 files changed, 183 insertions(+), 6 deletions(-)
- create mode 100644 src/emulator.c
+ 3 files changed, 195 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/dun_gw.c
 
 diff --git a/Makefile.am b/Makefile.am
-index e402de4..047a85f 100644
+index 047a85f..8a845fa 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -14,7 +14,7 @@ pkginclude_HEADERS =3D include/log.h include/plugin.h inc=
-lude/history.h \
- 			include/audio-settings.h include/nettime.h \
- 			include/ctm.h include/cdma-voicecall.h \
- 			include/cdma-sms.h include/sim-auth.h \
--			include/gprs-provision.h
-+			include/gprs-provision.h include/emulator.h
+@@ -321,6 +321,9 @@ builtin_sources +=3D plugins/bluetooth.c plugins/blueto=
+oth.h
+ builtin_modules +=3D hfp
+ builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
  =
 
- nodist_pkginclude_HEADERS =3D include/version.h
++builtin_modules +=3D dun_gw
++builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
++
+ builtin_sources +=3D $(btio_sources)
+ builtin_cflags +=3D @BLUEZ_CFLAGS@
+ builtin_libadd +=3D @BLUEZ_LIBS@
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index 505d908..79e1a4a 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -32,6 +32,9 @@
+ /* Profiles bitfield */
+ #define HFP_AG 0x01
  =
 
-@@ -363,7 +363,8 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
-es) src/ofono.ver \
- 			src/simfs.c src/simfs.h src/audio-settings.c \
- 			src/smsagent.c src/smsagent.h src/ctm.c \
- 			src/cdma-voicecall.c src/sim-auth.c \
--			src/message.h src/message.c src/gprs-provision.c
-+			src/message.h src/message.c src/gprs-provision.c \
-+			src/emulator.c
- =
-
- src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
-@ -ldl
- =
-
-diff --git a/include/emulator.h b/include/emulator.h
-index 1287b47..2de2069 100644
---- a/include/emulator.h
-+++ b/include/emulator.h
-@@ -33,13 +33,11 @@ struct ofono_emulator;
- struct ofono_emulator_driver {
++/* Server bitfield */
++#define DUN_GW 0x01
++
+ struct bluetooth_profile {
  	const char *name;
- 	enum ofono_atom_type type;
--	int (*probe)(struct ofono_emulator *emulator,
--			struct ofono_modem *modem);
--	void (*remove)();
-+	int (*probe)(struct ofono_emulator *emulator);
-+	void (*remove)(void);
- };
- =
-
- int ofono_emulator_enable(struct ofono_emulator *emulator, int fd);
--void ofono_emulator_disable(struct ofono_emulator *emulator);
- void ofono_emulator_remove(struct ofono_emulator *emulator);
- struct ofono_emulator *ofono_emulator_create(struct ofono_modem *modem,
- 					struct ofono_emulator_driver *driver);
-diff --git a/src/emulator.c b/src/emulator.c
+ 	int (*create)(const char *device, const char *dev_addr,
+diff --git a/plugins/dun_gw.c b/plugins/dun_gw.c
 new file mode 100644
-index 0000000..49b129b
+index 0000000..32c199e
 --- /dev/null
-+++ b/src/emulator.c
-@@ -0,0 +1,173 @@
++++ b/plugins/dun_gw.c
+@@ -0,0 +1,189 @@
 +/*
-+ *
 + *  oFono - Open Source Telephony
 + *
 + *  Copyright (C) 2010  Intel Corporation. All rights reserved.
@@ -110,182 +86,210 @@ index 0000000..49b129b
 +#ifdef HAVE_CONFIG_H
 +#include <config.h>
 +#endif
-+
 +#include <stdio.h>
 +#include <string.h>
 +#include <errno.h>
 +#include <glib.h>
++#include <ofono.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
 +#include <gdbus.h>
 +
-+#include "ofono.h"
-+#include "common.h"
-+#include "gatserver.h"
++#include "bluetooth.h"
 +
-+struct ofono_emulator {
-+	struct ofono_modem *modem;
-+	struct ofono_atom *atom;
-+	GAtServer *server;
-+	struct ofono_emulator_driver *driver;
++#define DUN_GW_CHANNEL	1
++
++static struct server *server;
++static guint modemwatch_id;
++static guint channel_watch;
++
++static const gchar *dun_record =3D "<?xml version=3D\"1.0\" encoding=3D\"U=
+TF-8\" ?>  \
++<record>                                                                  =
+     \
++  <attribute id=3D\"0x0001\">                                             =
+       \
++    <sequence>                                                            =
+     \
++      <uuid value=3D\"0x1103\"/>                                          =
+       \
++    </sequence>                                                           =
+     \
++  </attribute>                                                            =
+     \
++                                                                          =
+     \
++  <attribute id=3D\"0x0004\">                                             =
+       \
++    <sequence>                                                            =
+     \
++      <sequence>                                                          =
+     \
++        <uuid value=3D\"0x0100\"/>                                        =
+       \
++      </sequence>                                                         =
+     \
++      <sequence>                                                          =
+     \
++        <uuid value=3D\"0x0003\"/>                                        =
+       \
++        <uint8 value=3D\"1\" name=3D\"channel\"/>                         =
+        \
++      </sequence>                                                         =
+     \
++    </sequence>                                                           =
+     \
++  </attribute>                                                            =
+     \
++                                                                          =
+     \
++  <attribute id=3D\"0x0009\">                                             =
+       \
++    <sequence>                                                            =
+     \
++      <sequence>                                                          =
+     \
++        <uuid value=3D\"0x1103\"/>                                        =
+       \
++        <uint16 value=3D\"0x0100\" name=3D\"version\"/>                   =
+         \
++      </sequence>                                                         =
+     \
++    </sequence>                                                           =
+     \
++  </attribute>                                                            =
+     \
++                                                                          =
+     \
++  <attribute id=3D\"0x0100\">                                             =
+       \
++    <text value=3D\"Dial-up Networking\" name=3D\"name\"/>                =
+         \
++  </attribute>                                                            =
+     \
++</record>";
++
++
++static gboolean dun_gw_disconnect_cb(GIOChannel *io, GIOCondition cond,
++							gpointer user_data)
++{
++	g_io_channel_unref(io);
++
++	return FALSE;
++}
++
++static void dun_gw_connect_cb(GIOChannel *io, GError *err, gpointer user_d=
+ata)
++{
++	struct ofono_emulator *emulator =3D user_data;
++	int fd;
++
++	DBG("");
++
++	if (err) {
++		DBG("%s", err->message);
++		return;
++	}
++
++	fd =3D g_io_channel_unix_get_fd(io);
++	io =3D g_io_channel_ref(io);
++
++	if (ofono_emulator_enable(emulator, fd) < 0)
++		goto failed;
++
++	channel_watch =3D g_io_add_watch(io, G_IO_NVAL | G_IO_HUP | G_IO_ERR,
++					dun_gw_disconnect_cb, NULL);
++
++	return;
++
++failed:
++	g_io_channel_shutdown(io, TRUE, NULL);
++}
++
++static int dun_gw_probe(struct ofono_emulator *emulator)
++{
++	if (server)
++		return -EEXIST;
++
++	DBG("");
++
++	server =3D bluetooth_register_server(DUN_GW_CHANNEL, dun_record,
++						dun_gw_connect_cb, emulator);
++
++	return 0;
++}
++
++static void dun_gw_remove(void)
++{
++	if (server =3D=3D NULL)
++		return;
++
++	DBG("");
++
++	bluetooth_unregister_server(server);
++	server =3D NULL;
++}
++
++static void gprs_watch(struct ofono_atom *atom,
++				enum ofono_atom_watch_condition cond,
++				void *data)
++{
++	struct ofono_modem *modem =3D data;
++
++	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED)
++		return;
++
++	__ofono_emulator_probe_drivers(modem);
++}
++
++static void modem_watch(struct ofono_modem *modem, gboolean added, void *u=
+ser)
++{
++	DBG("modem: %p, added: %d", modem, added);
++
++	if (added =3D=3D FALSE)
++		return;
++
++	__ofono_modem_add_atom_watch(modem, OFONO_ATOM_TYPE_GPRS,
++					gprs_watch, modem, NULL);
++}
++
++static void call_modemwatch(struct ofono_modem *modem, void *user)
++{
++	modem_watch(modem, TRUE, user);
++}
++
++static struct ofono_emulator_driver emulator_driver =3D {
++	.name =3D "Dial-Up Networking",
++	.type =3D OFONO_ATOM_TYPE_EMULATOR_DUN,
++	.probe =3D dun_gw_probe,
++	.remove =3D dun_gw_remove,
 +};
 +
-+static GSList *emulator_drivers =3D NULL;
-+
-+static void ofono_emulator_debug(const char *str, void *data)
++static int dun_gw_init(void)
 +{
-+	g_print("%s: %s\n", (char *)data, str);
++	modemwatch_id =3D __ofono_modemwatch_add(modem_watch, NULL, NULL);
++	__ofono_modem_foreach(call_modemwatch, NULL);
++
++	return ofono_emulator_driver_register(&emulator_driver);
 +}
 +
-+void ofono_emulator_remove(struct ofono_emulator *emulator)
++static void dun_gw_exit(void)
 +{
-+	if (emulator =3D=3D NULL)
-+		return;
++	__ofono_modemwatch_remove(modemwatch_id);
 +
-+	__ofono_atom_free(emulator->atom);
++	ofono_emulator_driver_unregister(&emulator_driver);
 +}
 +
-+static void emulator_disable(struct ofono_emulator *e)
-+{
-+	DBG("");
-+
-+	g_at_server_shutdown(e->server);
-+	g_at_server_unref(e->server);
-+	e->server =3D NULL;
-+}
-+
-+static void emulator_disconnect_cb(gpointer user_data)
-+{
-+	struct ofono_emulator *e =3D user_data;
-+
-+	if (e =3D=3D NULL)
-+		return;
-+
-+	emulator_disable(e);
-+}
-+
-+int ofono_emulator_enable(struct ofono_emulator *e, int fd)
-+{
-+	GIOChannel *io;
-+
-+	if (fd < 0)
-+		return -EIO;
-+
-+	io =3D g_io_channel_unix_new(fd);
-+
-+	e->server =3D g_at_server_new(io);
-+	if (!e->server) {
-+		g_free(e);
-+		return -ENOMEM;
-+	}
-+
-+	g_at_server_set_debug(e->server, ofono_emulator_debug, "Server");
-+	g_at_server_set_disconnect_function(e->server,
-+						emulator_disconnect_cb, e);
-+
-+	return 0;
-+}
-+
-+static void emulator_remove(struct ofono_atom *atom)
-+{
-+	struct ofono_emulator *e =3D  __ofono_atom_get_data(atom);
-+
-+	DBG("");
-+
-+	if (e->server)
-+		emulator_disable(e);
-+
-+	if (e->driver->remove)
-+		e->driver->remove();
-+
-+	g_free(e);
-+}
-+
-+struct ofono_emulator *ofono_emulator_create(struct ofono_modem *modem,
-+					struct ofono_emulator_driver *driver)
-+{
-+	struct ofono_emulator *e;
-+
-+	DBG("");
-+
-+	if (driver->probe =3D=3D NULL)
-+		return NULL;
-+
-+	e =3D g_try_new0(struct ofono_emulator, 1);
-+	if (!e)
-+		return NULL;
-+
-+	e->modem =3D modem;
-+	e->driver =3D driver;
-+
-+	if (driver->probe(e) < 0) {
-+		g_free(e);
-+		return NULL;
-+	}
-+
-+	return e;
-+}
-+
-+void __ofono_emulator_probe_drivers(struct ofono_modem *modem)
-+{
-+	struct ofono_emulator_driver *driver;
-+	GSList *l;
-+
-+	for (l =3D emulator_drivers; l; l =3D l->next) {
-+		struct ofono_emulator *e;
-+
-+		driver =3D l->data;
-+
-+		e =3D ofono_emulator_create(modem, driver);
-+		if (!e)
-+			continue;
-+
-+		e->atom =3D __ofono_modem_add_atom(modem, driver->type,
-+							emulator_remove, e);
-+	}
-+}
-+
-+int ofono_emulator_driver_register(const struct ofono_emulator_driver *dri=
-ver)
-+{
-+	DBG("driver: %p name: %s", driver, driver->name);
-+
-+	emulator_drivers =3D g_slist_prepend(emulator_drivers, (void *)driver);
-+
-+	return 0;
-+}
-+
-+void ofono_emulator_driver_unregister(
-+				const struct ofono_emulator_driver *driver)
-+{
-+	DBG("driver: %p name: %s", driver, driver->name);
-+
-+	emulator_drivers =3D g_slist_remove(emulator_drivers, driver);
-+}
-diff --git a/src/ofono.h b/src/ofono.h
-index 4f0b7c2..e334df1 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -128,6 +128,7 @@ enum ofono_atom_type {
- 	OFONO_ATOM_TYPE_CTM,
- 	OFONO_ATOM_TYPE_CDMA_VOICECALL_MANAGER,
- 	OFONO_ATOM_TYPE_SIM_AUTH,
-+	OFONO_ATOM_TYPE_EMULATOR_DUN,
- };
- =
-
- enum ofono_atom_watch_condition {
-@@ -435,3 +436,7 @@ ofono_bool_t __ofono_gprs_provision_get_settings(const =
-char *mcc,
- void __ofono_gprs_provision_free_settings(
- 				struct ofono_gprs_provision_data *settings,
- 				int count);
-+
-+#include <ofono/emulator.h>
-+
-+void __ofono_emulator_probe_drivers(struct ofono_modem *modem);
++OFONO_PLUGIN_DEFINE(dun_gw, "Dial-up Networking Profile Plugins", VERSION,
++			OFONO_PLUGIN_PRIORITY_DEFAULT, dun_gw_init, dun_gw_exit)
 -- =
 
 1.7.4
 
 
---===============6166415707522919649==--
+--===============0446256104688267378==--
 
