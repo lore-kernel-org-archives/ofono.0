@@ -1,78 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============2595160578797780333=="
+Content-Type: multipart/mixed; boundary="===============4394987492160319382=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/4] nettime: Network time plugin implementation
-Date: Tue, 08 Feb 2011 07:46:30 -0800
-Message-ID: <1297179990.1520.457.camel@aeonflux>
-In-Reply-To: <1297167915.8586.7.camel@apaila-ThinkPad-T410>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] sim: enable usage of SIM pass codes longer than 8 digits
+Date: Tue, 08 Feb 2011 10:22:11 -0600
+Message-ID: <4D516DB3.5040406@gmail.com>
+In-Reply-To: <1297169298-26209-1-git-send-email-jussi.kangas@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2595160578797780333==
+--===============4394987492160319382==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antti,
+Hi Jussi,
 
-> > >  plugins/nettime.c |  326 +++++++++++++++++++++++++++++++++++++++++++=
-++++++++++
-> > >  1 files changed, 326 insertions(+), 0 deletions(-)
-> > >  create mode 100644 plugins/nettime.c
-> > =
-
-> > I would prefer if we call this nokia-timed.c or in case this actually
-> > becomes default part of MeeGo, them maybe meego-timed.c. I would be also
-> > fine with {nokia,meego}-nettime.c.
-> > =
-
-> > Just calling it nettime.c is too generic. It needs to be clear what this
-> > is for.
-> > =
-
-> > > +#define TIMED_PATH "/com/meego/time"
-> > > +#define TIMED_SERVICE "com.meego.time"
-> > =
-
-> > So the intention is to convert the Nokia timed into a MeeGo specific
-> > daemon? I would have expected to see com.nokia.timed here.
+On 02/08/2011 06:48 AM, Jussi Kangas wrote:
+> ---
 > =
 
-> My understanding is that this will be Meego specific plugin since timed
-> is part of Meego. Hence, the service 'com.meego.timed'.  =
-
-
-this is fine with me, but so far the timed.git tree has nothing alike
-this mentioned. It currently still uses com.nokia.timed.
-
-> > > +struct nt_data {
-> > > +	gboolean time_available;
-> > > +	gboolean time_pending;
-> > > +	time_t nw_time_utc;
-> > > +	time_t received;
-> > > +	int dst;
-> > > +	int time_zone;
-> > > +	const char *mcc;
-> > > +	const char *mnc;
-> > =
-
-> > Why do you bother with these here. You might better just reference the
-> > netreg atom. The memory is only valid if netreg atom is present.
 > =
 
-> Timed expects to receive the mcc and mnc in the time notification.
-> However, if the mcc and mnc don't change we don't resend the
-> information. These fields contain the mnc and mcc that oFono sent
-> in the previous time notification.
+> Hi,
+> =
 
-But this const pointer points to memory inside netreg. It will never
-change. It always points to the same address.
+> On Tue, 2011-02-08 at 06:17 +0200, Denis Kenzior wrote:
+> =
 
-Regards
+> Why don't we keep things simple.  Modify is_valid_pin to take a pin and
+>> a min and max number of digits.
+>>
+>> gboolean is_valid_pin_with_limits(const char *pin, int min, int max)
+>> (feel free to pick some better name)
+>>
+>> Then just add two functions:
+>>
+>> __ofono_valid_net_pin(const char *pin)
+>> __ofono_valid_sim_pin(const char *pin, enum ofono_sim_password_type type)
+>>
+>> Stick both in ofono.h / sim.c somewhere
+>>
+> =
 
-Marcel
+> Right. Here it is. =
 
 
+I applied your patch, but it did have multiple problems, namely blank
+line at EOF in sim.c, mixing tab/space for indentation and a compilation
+warning.  I was nice enough and fixed all these for you, but please pay
+attention to this the next time.
 
---===============2595160578797780333==--
+Regards,
+-Denis
+
+--===============4394987492160319382==--
 
