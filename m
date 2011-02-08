@@ -1,57 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============4394987492160319382=="
+Content-Type: multipart/mixed; boundary="===============8802615893205585463=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim: enable usage of SIM pass codes longer than 8 digits
-Date: Tue, 08 Feb 2011 10:22:11 -0600
-Message-ID: <4D516DB3.5040406@gmail.com>
-In-Reply-To: <1297169298-26209-1-git-send-email-jussi.kangas@tieto.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: Re: [RFCv2] doc: Proposal for LTE/IMS API
+Date: Tue, 08 Feb 2011 17:22:43 +0100
+Message-ID: <AANLkTi=Jt0w-UqJ8MtqDae83A6U6baAbzhh6YtR5+mc5@mail.gmail.com>
+In-Reply-To: <201102081647.26748.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4394987492160319382==
+--===============8802615893205585463==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jussi,
+Hi R=C3=A9mi,
 
-On 02/08/2011 06:48 AM, Jussi Kangas wrote:
-> ---
-> =
+> > +Service =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0org.ofono
+> > +Interface =C2=A0 =C2=A0org.ofono.IpMultimediaSubsystem
+> > +Object path =C2=A0[variable prefix]
+>
+> I guess this is meant to be a modem object path, but it seems the oFono
+> documentation is already a bit sloppy on this point.
 
-> =
+Yes, this should be the modem object path. I'll fix this in the next patch.
 
-> Hi,
-> =
+> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 void Register(string type)
+> > +
+> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ Register a IMS Application. It must register
+> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ with one of the types:
+> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ "voice", "messaging", "voice_messaging".
+>
+> I am not very familiar with the underlying protocol... If it really makes
+> sense to register both services simultaneously, then I think we should ha=
+ve an
+> array of strings. Or if there are no benefits, then why bother with
+> 'voice_messaging' anyway.
 
-> On Tue, 2011-02-08 at 06:17 +0200, Denis Kenzior wrote:
-> =
+Yes, an array of strings might be a good idea here.
 
-> Why don't we keep things simple.  Modify is_valid_pin to take a pin and
->> a min and max number of digits.
->>
->> gboolean is_valid_pin_with_limits(const char *pin, int min, int max)
->> (feel free to pick some better name)
->>
->> Then just add two functions:
->>
->> __ofono_valid_net_pin(const char *pin)
->> __ofono_valid_sim_pin(const char *pin, enum ofono_sim_password_type type)
->>
->> Stick both in ofono.h / sim.c somewhere
->>
-> =
+....
+> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 boolean PreConditionCheck(s=
+tring Type, string PeerAddress,
+> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 uint16 PeerPort, =
+=C2=A0uint16 LocalPort)
+> > +
+> That stuff is per context. Should it not be in the context object rather =
+than
+> in the IMS manager?
 
-> Right. Here it is. =
+oFono should only consider QoS information from the IMS
+Default and Dedicated bearers when checking the precondition.
 
+In theory there might be more than one IMS APN for a operator,
+but I really don't see this as a real life scenario for this.
+If anyone disagrees please speak out and explain...
 
-I applied your patch, but it did have multiple problems, namely blank
-line at EOF in sim.c, mixing tab/space for indentation and a compilation
-warning.  I was nice enough and fixed all these for you, but please pay
-attention to this the next time.
+> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 array{string} PcscfAddresse=
+s [readonly]
+> Should this be in the context object? The AT command is per CID. Would it=
+ make
+> any sense for a network to have different P-CSCF based on the bearer?
+
+As mentioned above, I don't see why an operator would ever have more than
+one IMS APN. If we only have one IMS APN, then we might as well present
+this information here in the IMS API.
+
 
 Regards,
--Denis
+Sjur
 
---===============4394987492160319382==--
+--===============8802615893205585463==--
 
