@@ -1,39 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============1710815605963877634=="
+Content-Type: multipart/mixed; boundary="===============3969129896960363688=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] atmodem: close the list in clvl_range_query
-Date: Tue, 08 Feb 2011 12:14:19 +0200
-Message-ID: <1297160059-15548-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Marit Henriksen <maritsofie.henriksen8@gmail.com>
+Subject: [PATCH 1/2] ste: Add support for multiple pdp contexts.
+Date: Tue, 08 Feb 2011 12:17:26 +0100
+Message-ID: <1297163846-27817-1-git-send-email-maritsofie.henriksen8@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1710815605963877634==
+--===============3969129896960363688==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/atmodem/call-volume.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+From: Marit Henriksen <marit.henriksen@stericsson.com>
 
-diff --git a/drivers/atmodem/call-volume.c b/drivers/atmodem/call-volume.c
-index 6d87276..1e32a69 100644
---- a/drivers/atmodem/call-volume.c
-+++ b/drivers/atmodem/call-volume.c
-@@ -114,6 +114,7 @@ static void clvl_range_query(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 	/* Try opening the list, but don't fail */
- 	g_at_result_iter_open_list(&iter);
- 	g_at_result_iter_next_range(&iter, &cvd->clvl_min, &cvd->clvl_max);
-+	g_at_result_iter_close_list(&iter);
- }
+---
+ plugins/ste.c |   17 ++++++++++++-----
+ 1 files changed, 12 insertions(+), 5 deletions(-)
+
+diff --git a/plugins/ste.c b/plugins/ste.c
+index cf8aed8..749c4f3 100644
+--- a/plugins/ste.c
++++ b/plugins/ste.c
+@@ -66,6 +66,7 @@
+ #include <drivers/stemodem/if_caif.h>
  =
 
- static void cv_generic_set_cb(gboolean ok, GAtResult *result,
+ #define NUM_CHAT	1
++#define MAX_PDP_CONTEXTS	4
+ =
+
+ static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
+ =
+
+@@ -363,6 +364,7 @@ static void ste_post_online(struct ofono_modem *modem)
+ 	struct ofono_message_waiting *mw;
+ 	struct ofono_gprs *gprs;
+ 	struct ofono_gprs_context *gc;
++	int i;
+ =
+
+ 	DBG("%p", modem);
+ =
+
+@@ -378,13 +380,18 @@ static void ste_post_online(struct ofono_modem *modem)
+ =
+
+ 	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
+ 					"atmodem", data->chat);
+-	gc =3D ofono_gprs_context_create(modem, 0, "stemodem", data->chat);
+-
+-	if (gprs && gc)
+-		ofono_gprs_add_context(gprs, gc);
++	if (gprs) {
++		for (i =3D 0; i < MAX_PDP_CONTEXTS; i++) {
++			gc =3D ofono_gprs_context_create(
++					modem, 0, "stemodem", data->chat);
++			if (gc =3D=3D NULL)
++				break;
++
++			ofono_gprs_add_context(gprs, gc);
++		}
++	}
+ =
+
+ 	mw =3D ofono_message_waiting_create(modem);
+-
+ 	if (mw)
+ 		ofono_message_waiting_register(mw);
+ }
 -- =
 
-1.7.0.4
+1.7.1
 
 
---===============1710815605963877634==--
+--===============3969129896960363688==--
 
