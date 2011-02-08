@@ -1,133 +1,226 @@
-Content-Type: multipart/mixed; boundary="===============8800424761188362730=="
+Content-Type: multipart/mixed; boundary="===============0958784536384614482=="
 MIME-Version: 1.0
-From: Soum, RedouaneX <redouanex.soum@intel.com>
-Subject: RE: [RFCv2] doc: Proposal for LTE/IMS API
-Date: Tue, 08 Feb 2011 15:20:23 +0000
-Message-ID: <8281606748F03E4390BB98A3F47F2E948A9CB41FD5@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <1297175357-28145-1-git-send-email-sjurbren@gmail.com>
+From: Mika Liljeberg <mika.liljeberg@nokia.com>
+Subject: [PATCH 01/13] gprs: factor out common code
+Date: Tue, 08 Feb 2011 17:22:14 +0200
+Message-ID: <1297178546-9371-2-git-send-email-mika.liljeberg@nokia.com>
+In-Reply-To: <1297178546-9371-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8800424761188362730==
+--===============0958784536384614482==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+---
+ src/gprs.c |  111 +++++++++++++++++++++++++++-----------------------------=
+----
+ 1 files changed, 50 insertions(+), 61 deletions(-)
+
+diff --git a/src/gprs.c b/src/gprs.c
+index 7d36633..fa56f62 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -255,6 +255,49 @@ static void gprs_cid_release(struct ofono_gprs *gprs, =
+unsigned int id)
+ 	idmap_put(gprs->cid_map, id);
+ }
+ =
+
++static gboolean assign_context(struct pri_context *ctx)
++{
++	struct idmap *cidmap =3D ctx->gprs->cid_map;
++	unsigned int cid_min;
++	GSList *l;
++
++	if (cidmap =3D=3D NULL)
++		return FALSE;
++
++	cid_min =3D idmap_get_min(cidmap);
++
++	ctx->context.cid =3D gprs_cid_alloc(ctx->gprs);
++	if (ctx->context.cid =3D=3D 0)
++		return FALSE;
++
++	for (l =3D ctx->gprs->context_drivers; l; l =3D l->next) {
++		struct ofono_gprs_context *gc =3D l->data;
++
++		if (gc->inuse =3D=3D TRUE)
++			continue;
++
++		if (gc->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_ANY ||
++						gc->type =3D=3D ctx->type) {
++			ctx->context_driver =3D gc;
++			ctx->context_driver->inuse =3D TRUE;
++			return TRUE;
++		}
++	}
++
++	return FALSE;
++}
++
++static void release_context(struct pri_context *ctx)
++{
++	if (ctx =3D=3D NULL || ctx->gprs =3D=3D NULL || ctx->context_driver =3D=
+=3D NULL)
++		return;
++
++	gprs_cid_release(ctx->gprs, ctx->context.cid);
++	ctx->context.cid =3D 0;
++	ctx->context_driver->inuse =3D FALSE;
++	ctx->context_driver =3D NULL;
++}
++
+ static struct pri_context *gprs_context_by_path(struct ofono_gprs *gprs,
+ 						const char *ctx_path)
+ {
+@@ -703,12 +746,7 @@ static void pri_activate_callback(const struct ofono_e=
+rror *error,
+ 				telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&ctx->pending,
+ 					__ofono_error_failed(ctx->pending));
+-
+-		gprs_cid_release(ctx->gprs, ctx->context.cid);
+-		ctx->context.cid =3D 0;
+-		ctx->context_driver->inuse =3D FALSE;
+-		ctx->context_driver =3D NULL;
+-
++		release_context(ctx);
+ 		return;
+ 	}
+ =
+
+@@ -744,11 +782,8 @@ static void pri_deactivate_callback(const struct ofono=
+_error *error, void *data)
+ 		return;
+ 	}
+ =
+
+-	gprs_cid_release(ctx->gprs, ctx->context.cid);
+-	ctx->context.cid =3D 0;
++	release_context(ctx);
+ 	ctx->active =3D FALSE;
+-	ctx->context_driver->inuse =3D FALSE;
+-	ctx->context_driver =3D NULL;
+ =
+
+ 	__ofono_dbus_pending_reply(&ctx->pending,
+ 				dbus_message_new_method_return(ctx->pending));
+@@ -995,38 +1030,6 @@ static DBusMessage *pri_set_message_center(struct pri=
+_context *ctx,
+ 	return NULL;
+ }
+ =
+
+-static gboolean assign_context(struct pri_context *ctx)
+-{
+-	struct idmap *cidmap =3D ctx->gprs->cid_map;
+-	unsigned int cid_min;
+-	GSList *l;
+-
+-	if (cidmap =3D=3D NULL)
+-		return FALSE;
+-
+-	cid_min =3D idmap_get_min(cidmap);
+-
+-	ctx->context.cid =3D gprs_cid_alloc(ctx->gprs);
+-	if (ctx->context.cid =3D=3D 0)
+-		return FALSE;
+-
+-	for (l =3D ctx->gprs->context_drivers; l; l =3D l->next) {
+-		struct ofono_gprs_context *gc =3D l->data;
+-
+-		if (gc->inuse =3D=3D TRUE)
+-			continue;
+-
+-		if (gc->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_ANY ||
+-						gc->type =3D=3D ctx->type) {
+-			ctx->context_driver =3D gc;
+-			ctx->context_driver->inuse =3D TRUE;
+-			return TRUE;
+-		}
+-	}
+-
+-	return FALSE;
+-}
+-
+ static DBusMessage *pri_set_property(DBusConnection *conn,
+ 					DBusMessage *msg, void *data)
+ {
+@@ -1344,14 +1347,9 @@ static void gprs_attached_update(struct ofono_gprs *=
+gprs)
+ 			if (ctx->active =3D=3D FALSE)
+ 				continue;
+ =
+
+-			gprs_cid_release(gprs, ctx->context.cid);
+-			ctx->context.cid =3D 0;
++			release_context(ctx);
+ 			ctx->active =3D FALSE;
+-			ctx->context_driver->inuse =3D FALSE;
+-			ctx->context_driver =3D NULL;
+-
+ 			pri_reset_context_settings(ctx);
+-
+ 			value =3D FALSE;
+ 			ofono_dbus_signal_property_changed(conn, ctx->path,
+ 					OFONO_CONNECTION_CONTEXT_INTERFACE,
+@@ -1736,10 +1734,7 @@ static void gprs_deactivate_for_remove(const struct =
+ofono_error *error,
+ 		return;
+ 	}
+ =
+
+-	gprs_cid_release(gprs, ctx->context.cid);
+-	ctx->context.cid =3D 0;
+-	ctx->context_driver->inuse =3D FALSE;
+-	ctx->context_driver =3D NULL;
++	release_context(ctx);
+ =
+
+ 	if (gprs->settings) {
+ 		g_key_file_remove_group(gprs->settings, ctx->key, NULL);
+@@ -1831,12 +1826,9 @@ static void gprs_deactivate_for_all(const struct ofo=
+no_error *error,
+ 		return;
+ 	}
+ =
+
+-	gprs_cid_release(gprs, ctx->context.cid);
+-	ctx->active =3D FALSE;
+-	ctx->context.cid =3D 0;
+-	ctx->context_driver->inuse =3D FALSE;
+-	ctx->context_driver =3D NULL;
++	release_context(ctx);
+ =
+
++	ctx->active =3D FALSE;
+ 	pri_reset_context_settings(ctx);
+ =
+
+ 	value =3D ctx->active;
+@@ -2087,11 +2079,8 @@ void ofono_gprs_context_deactivated(struct ofono_gpr=
+s_context *gc,
+ 		if (ctx->active =3D=3D FALSE)
+ 			break;
+ =
+
+-		gprs_cid_release(ctx->gprs, ctx->context.cid);
+-		ctx->context.cid =3D 0;
++		release_context(ctx);
+ 		ctx->active =3D FALSE;
+-		ctx->context_driver->inuse =3D FALSE;
+-		ctx->context_driver =3D NULL;
+ =
+
+ 		pri_reset_context_settings(ctx);
+ =
+
+-- =
+
+1.7.1
 
 
-> +		void Register(string type)
-> +
-> +			Register a IMS Application. It must register
-> +			with one of the types:
-> +			"voice", "messaging", "voice_messaging".
-> +
-> +			This registration will inform modem's radio
-> +			stack that the IMS application has registered
-> +			for Voice and/or Messaging over IMS.
-> +			This registration may impact "UE Mode of operation"
-> +			and the ISR feature in the radio stack.
-> +
-> +			The registered application is tracked, if the
-> +			application exits the registration will be
-> +			automatically released.
-> +
-> +			Related AT command: AT+EISR.
-> +
-> +			Possible Errors: [service].Error.InvalidArguments
-> +
-> +		void UnRegister(object path)
-> +
-> +			Un-register a IpMultimediaSubsystemAgent.
-
-Register and UnRegister functions are not really symmetric here ...
-How object path is used by UnRegister function ??
-
-Maybe we should have :
-
-void UnRegister(string type)
-
-> +
-> +			Possible Errors: [service].Error.InvalidArguments
-> +
-> +		boolean PreConditionCheck(string Type, string PeerAddress,
-> +					uint16 PeerPort,  uint16 LocalPort)
-> +
-> +			This method is used by the IMS application to check
-> +			if the QoS SIP precondition is fulfilled.
-> +
-> +			The IMS application should call this method when
-> +			receiving a PreConditionChanged() signal.
-> +			The IMS Application is not allowed to start alerting
-> +			before it has confirmed that it has a voice-ready
-> +			Dedicated Bearer and QoS set up in the network.
-> +
-> +			The legal parameter for Type currently is currently
-> +			"voice" only. In future "video" (Conversational Video,
-> +			Live Streaming) will be added.
-> +
-> +			PeerAddress can be IPv4 or IPv6 address. PeerPort and
-> +			LocalPort is the RTP port used for the media stream.
-> +
-> +			This method returns true if the Traffic Flow Template
-> +			read from the modem matches the address information
-> +			provided, and the QCI and Bit Rates fulfills the
-> +			requirements for the specified type.
-> +
-> +			Related AT commands: AT+CGEQOSRDP, AT+CGTFTRDP
-> +
-> +			NOTE:	Should the "Type" parameter be removed?
-> +				Maybe IMS-video still is a bit futuristic.
-> +
-
-How to make the link between the primary context (or default bearer) activa=
-ted by the IMS client , =
-
-and the TFT and QOS.
-
-We can imagine that we have a good QOS / TFT but it doesn't belong to the p=
-rimary context (or default bearer) activated by the IMS client.
-
-
-> +Signals		PropertyChanged(string property, variant value)
-> +
-> +			This signal indicates a changed value of the given
-> +			property.
-> +
-> +		void PreConditionChanged()
-> +
-> +			This signal is sent when the network has changed
-> +			the QoS or Packet Filters for a Bearer.
-> +			The IMS application can then check the QoS SIP
-> +			preconditions by calling PreConditionCheck().
-> +
-> +			Only QoS information relevant for IMS will be
-> +			signaled, i.e. QCI=3D1 for voice and QCI=3D2 for video.
-> +
-> +			Related AT commands: AT+CGEREP,
-> +			+CGEV: NW ACT, +CGEV: NW MODIFY
-> +
-
-Same here , IMS client will be notified for all dedicated bearer ?
-
-I agree with R=C3=A9mi, it 'll be better if we can put QOS/TFT somewhere un=
-der primary context.
-
-
-
-Regards,
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============8800424761188362730==--
+--===============0958784536384614482==--
 
