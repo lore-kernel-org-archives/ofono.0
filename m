@@ -1,106 +1,338 @@
-Content-Type: multipart/mixed; boundary="===============1896560992247298497=="
+Content-Type: multipart/mixed; boundary="===============3718014200634583613=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] sim: Implement file watching and basic refresh.
-Date: Mon, 07 Feb 2011 20:44:28 -0600
-Message-ID: <4D50AE0C.8010704@gmail.com>
-In-Reply-To: <AANLkTikfzUHRWtWRzOo07FNXoJ9-53JeEen2hNTZg+_0@mail.gmail.com>
+Subject: Re: [PATCH v3 4/4] ifxmodem: move call creation to xcallstat_notify
+Date: Mon, 07 Feb 2011 21:56:22 -0600
+Message-ID: <4D50BEE6.1070901@gmail.com>
+In-Reply-To: <1297112858-12002-5-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1896560992247298497==
+--===============3718014200634583613==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Jeevaka,
 
-On 02/07/2011 08:22 PM, Andrzej Zaborowski wrote:
-> On 8 February 2011 02:25, Denis Kenzior <denkenz@gmail.com> wrote:
->>>> Actually we should for files that are read during pre-sim but are not
->>>> important enough.  E.g. EFecc, EFli, EFpl, EFiccid, etc.
->>>
->>> But if we "restart SIM initialization procedure", we already re-read
->>> those files so there's nothing more we need to do.  The sim
->>> initialization in 51.011 includes reading those files if I remember
->>> correctly.
->>>
->>
->> I'm still fuzzy on this one.  EFpl/EFli and EFiccid are in a different
->> DF than the rest of the files, so they might not need to be initialized
->> again in practice, unless we're performing a full reset.
+On 02/07/2011 03:07 PM, Jeevaka Badrappan wrote:
+> ---
+>  drivers/ifxmodem/voicecall.c |  170 ++++++++++++++++++++++++------------=
+-----
+>  1 files changed, 99 insertions(+), 71 deletions(-)
 > =
 
-> Maybe, although it's such a rare situation that I don't think we're
-> gaining anything here by making an assumption that is not documented
-> in any spec.
-> =
+> diff --git a/drivers/ifxmodem/voicecall.c b/drivers/ifxmodem/voicecall.c
+> index 648f46b..c94698b 100644
+> --- a/drivers/ifxmodem/voicecall.c
+> +++ b/drivers/ifxmodem/voicecall.c
+> @@ -117,7 +117,8 @@ static void xcallstat_notify(GAtResult *result, gpoin=
+ter user_data)
+>  	int id;
+>  	int status;
+>  	GSList *l;
+> -	struct ofono_call *call;
+> +	struct ofono_call *new_call;
+> +	struct ofono_call *existing_call =3D NULL;
+>  =
 
-> I'm also fuzzy on what the differences between the Refresh types are
-> for us but we can't go wrong by re-reading all files.
+>  	g_at_result_iter_init(&iter, result);
+>  =
 
-And you might be right, but at the very least we still need to handle
-simple File Change notifications that affect files critical to system
-init.  Today that is e.g. EFfdn, EFbdn, etc.  There's no need to re-read
-EFecc, or EFiccid, etc.
+> @@ -133,53 +134,83 @@ static void xcallstat_notify(GAtResult *result, gpo=
+inter user_data)
+>  	l =3D g_slist_find_custom(vd->calls, GINT_TO_POINTER(id),
+>  				at_util_call_compare_by_id);
+>  =
 
->> Honestly I think we should handle all of them, one by one.  It might
->> take a little while, but we have to anyway in the long run.  We can
->> concentrate on the important ones first, e.g. EFcsp, EFspn, EFopl,
->> EFecc, etc.  Sure, in the short term we might not handle each and every
->> file that could be sent via Refresh.  But then we just acknowledge it as
->> a bug and fix it later.  Re-initializing everything just because e.g.
->> EFmbdn or some other unimportant file changed and we're too lazy to fix
->> it is just not a good idea anyway.
-> =
+> -	if (l =3D=3D NULL) {
+> -		/*
+> -		 * We should only receive XCALLSTAT on waiting and incoming
+> -		 * In the case of waiting, we will get the rest of the info
+> -		 * from CCWA indication.
+> -		 * In the case of incoming, we will get the info from CLIP
+> -		 * indications.
+> -		 */
+> -		if (status !=3D CALL_STATUS_INCOMING &&
+> -				    status !=3D CALL_STATUS_WAITING) {
+> -			ofono_info("Received an XCALLSTAT for an untracked"
+> -					" call, this indicates a bug!");
+> -			return;
+> -		}
+> -
+> +	if (l =3D=3D NULL && status !=3D CALL_STATUS_DIALING &&
+> +				status !=3D CALL_STATUS_INCOMING &&
+> +				status !=3D CALL_STATUS_WAITING) {
+> +		ofono_error("Received an XCALLSTAT for an untracked"
+> +				" call, this indicates a bug!");
+>  		return;
+>  	}
+>  =
 
-> So maybe we should return "Not capable" to a refresh that touches any
-> of those files?  At the very least we would need to log some kind of
-> warning.  (Then again these user-writable files are so unlikely to be
-> changed that I don't think we're losing anything by being safe and
-> re-reading everything)
+> -	call =3D l->data;
+> +	if (l)
+> +		existing_call =3D l->data;
+>  =
 
-A lot of times we simply don't have a choice to send a 'Not Capable'.
-And sure we can add simple dummy handlers for all of the ones we don't
-currently handle, so at least we know if something comes up.
+> -	/* Check if call has been disconnected */
+> -	if (status =3D=3D CALL_STATUS_DISCONNECTED) {
+> -		enum ofono_disconnect_reason r;
+> +	switch (status) {
+> +	case CALL_STATUS_DISCONNECTED:
+> +	{
+> +		enum ofono_disconnect_reason reason;
+>  =
 
->> Your guess is as good as mine right now, however we need this
->> functionality anyway for the 'SIM PIN locked out after we're in
->> sim_ready state' case anyway.  Or if lets say we get a File Changed
->> Notification with EFfdn for example.  There's no sense in re-reading
->> EFiccid, EFpl/EFli as well.
-> =
+> -		if (vd->local_release & (1 << call->id))
+> -			r =3D OFONO_DISCONNECT_REASON_LOCAL_HANGUP;
+> -		else
+> -			r =3D OFONO_DISCONNECT_REASON_REMOTE_HANGUP;
+> +		existing_call->status =3D status;
+>  =
 
-> In case of EFfdn I think we should eventually have a handler which
-> will do the right thing and remove or create the affected atoms as
-> necessary.
+> -		if (call->type =3D=3D 0)
+> -			ofono_voicecall_disconnected(vc, call->id, r, NULL);
+> +		if (vd->local_release & (1 << existing_call->id))
+> +			reason =3D OFONO_DISCONNECT_REASON_LOCAL_HANGUP;
+> +		else
+> +			reason =3D OFONO_DISCONNECT_REASON_REMOTE_HANGUP;
+>  =
 
-We do not allow EFfdn enabled SIMs, so if this file is being changed
-then likely we're going from FDN disabled to FDN enabled.
+> -		vd->local_release &=3D ~(1 << call->id);
+> -		vd->calls =3D g_slist_remove(vd->calls, call);
+> -		g_free(call);
+> +		ofono_voicecall_disconnected(vc, existing_call->id,
+> +						reason, NULL);
+>  =
 
-> =
+> -		return;
+> +		vd->local_release &=3D ~(1 << existing_call->id);
+> +		vd->calls =3D g_slist_remove(vd->calls, l->data);
+> +		g_free(existing_call);
+> +		break;
+>  	}
+> +	case CALL_STATUS_DIALING:
+> +	case CALL_STATUS_WAITING:
+> +	case CALL_STATUS_INCOMING:
+> +	{
+> +		int direction;
+> +
+> +		/* Handle the following situation:
+> +		 * Active Call + Waiting Call. Active Call is Released.
+> +		 * The Waiting call becomes Incoming. In this case, no
+> +		 * need to create a new call. Call status change will be
+> +		 * triggered from clip_notify.
+> +		 */
+> +		if (existing_call) {
+> +			existing_call->status =3D status;
+> +			return;
+> +		}
+>  =
 
-> But I don't see why EFpl shouldn't change during a Refresh with Full
-> file change notification.  I wouldn't call it a guess as much as being
-> ready for anything :)  It's not like this is not allowed to happen, so
-> there's no reason to think it can't happen.
+> -	/* For connected status, simply reset back to active */
+> -	if (status =3D=3D 7)
+> -		status =3D 0;
+> +		if (status =3D=3D CALL_STATUS_DIALING)
+> +			direction =3D CALL_DIRECTION_MOBILE_ORIGINATED;
+> +		else
+> +			direction =3D CALL_DIRECTION_MOBILE_TERMINATED;
+> +
+> +		new_call =3D create_call(vc, 0, direction, status,
+> +					NULL, 128,
+> +					CLIP_VALIDITY_NOT_AVAILABLE);
+> +		if (new_call =3D=3D NULL) {
+> +			ofono_error("Unable to malloc. "
+> +					"Call management is fubar");
+> +			return;
+> +		}
+>  =
 
-You are probably right, but see the simple File Change notification case
-above.
+> -	call->status =3D status;
+> +		new_call->id =3D id;
 
-> =
+So if you really insist on creating the call with a particular id, you
+might as well make that a parameter of the create_call function.
+However, do note that you still have one potential problem.  If the ATD
+callback returns before the call is signaled, then oFono synthesizes an
+outgoing call and picks an ID for you (according to the rules I
+outlined).  If the ID that oFono picked doesn't match the ID you have,
+you're in trouble.  So I'm not sure if you still want to go through all
+this trouble or not...
 
-> Any of those files can also be explicitly speciied in the changed
-> files list.  Maybe the solution is to just use a different reset_level
-> value when calling sim_add_file_watch for such files.
-> =
+> +		break;
+> +	}
+> +	case CALL_STATUS_ALERTING:
+> +	case CALL_STATUS_ACTIVE:
+> +	case CALL_STATUS_HELD:
+> +	default:
+> +		/* For connected status, simply reset back to active */
+> +		if (status =3D=3D 7)
+> +			status =3D CALL_STATUS_ACTIVE;
+>  =
 
+> -	if (call->type =3D=3D 0)
+> -		ofono_voicecall_notify(vc, call);
+> +		existing_call->status =3D status;
+> +		ofono_voicecall_notify(vc, existing_call);
+> +		break;
+> +	}
+>  }
+>  =
 
-Why complicate these things with reset level? Only the SIM atom has to
-care, and we can take care of these things inside...
+>  static void xem_notify(GAtResult *result, gpointer user_data)
+> @@ -250,25 +281,11 @@ static void release_id_cb(gboolean ok, GAtResult *r=
+esult,
+>  static void atd_cb(gboolean ok, GAtResult *result, gpointer user_data)
+>  {
+>  	struct cb_data *cbd =3D user_data;
+> -	struct ofono_voicecall *vc =3D cbd->user;
+>  	ofono_voicecall_cb_t cb =3D cbd->cb;
+>  	struct ofono_error error;
+> -	struct ofono_call *call;
+>  =
+
+>  	decode_at_error(&error, g_at_result_final_response(result));
+>  =
+
+> -	if (!ok) {
+> -		cb(&error, cbd->data);
+> -		return;
+> -	}
+> -
+> -	/* Generate a voice call that was just dialed, we guess the ID */
+> -	call =3D create_call(vc, 0, 0, CALL_STATUS_DIALING, NULL, 128, 2);
+> -	if (call =3D=3D NULL) {
+> -		ofono_error("Unable to malloc, call tracking will fail!");
+> -		return;
+> -	}
+> -
+>  	/* Let oFono core will generate a call with the dialed number
+>  	 * inside its dial callback.
+>  	 */
+> @@ -512,25 +529,28 @@ static void cring_notify(GAtResult *result, gpointe=
+r user_data)
+>  	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+>  	GAtResultIter iter;
+>  	const char *line;
+> -	int type;
+> +	GSList *l;
+> +	struct ofono_call *call;
+>  =
+
+>  	/* Handle the following situation:
+>  	 * Active Call + Waiting Call.  Active Call is Released.  The Waiting
+> -	 * call becomes Incoming and RING/CRING indications are signaled.
+> -	 * Sometimes these arrive before we managed to poll CLCC to find about
+> -	 * the stage change.  If this happens, simply ignore the RING/CRING
+> -	 * when a waiting call exists (cannot have waiting + incoming in GSM)
+> +	 * call becomes Incoming and CRING indications are signaled.
+> +	 * Sometimes these arrive before the actual state change notification.
+> +	 * If this happens, simply ignore the CRING when a waiting call
+> +	 * exists (cannot have waiting + incoming in GSM)
+>  	 */
+>  	if (g_slist_find_custom(vd->calls,
+>  				GINT_TO_POINTER(CALL_STATUS_WAITING),
+>  				at_util_call_compare_by_status))
+>  		return;
+>  =
+
+> -	/* CRING can repeat, ignore if we already have an incoming call */
+> -	if (g_slist_find_custom(vd->calls,
+> +	l =3D g_slist_find_custom(vd->calls,
+>  				GINT_TO_POINTER(CALL_STATUS_INCOMING),
+> -				at_util_call_compare_by_status))
+> +				at_util_call_compare_by_status);
+> +	if (l =3D=3D NULL) {
+> +		ofono_error("CRING received before XCALLSTAT!!!");
+>  		return;
+> +	}
+>  =
+
+>  	g_at_result_iter_init(&iter, result);
+>  =
+
+> @@ -541,14 +561,13 @@ static void cring_notify(GAtResult *result, gpointe=
+r user_data)
+>  	if (line =3D=3D NULL)
+>  		return;
+>  =
+
+> +	call =3D l->data;
+> +
+>  	/* Ignore everything that is not voice for now */
+>  	if (!strcasecmp(line, "VOICE"))
+> -		type =3D 0;
+> +		call->type =3D 0;
+>  	else
+> -		type =3D 9;
+> -
+> -	/* Generate an incoming call */
+> -	create_call(vc, type, 1, CALL_STATUS_INCOMING, NULL, 128, 2);
+> +		call->type =3D 9;
+>  =
+
+>  	/* Assume the CLIP always arrives, and we signal the call there */
+>  	DBG("cring_notify");
+> @@ -617,13 +636,16 @@ static void ccwa_notify(GAtResult *result, gpointer=
+ user_data)
+>  	GAtResultIter iter;
+>  	const char *num;
+>  	int num_type, validity, cls;
+> +	GSList *l;
+>  	struct ofono_call *call;
+>  =
+
+> -	/* Some modems resend CCWA, ignore it the second time around */
+> -	if (g_slist_find_custom(vd->calls,
+> +	l =3D g_slist_find_custom(vd->calls,
+
+Can CCWA repeat on IFX?
+
+>  				GINT_TO_POINTER(CALL_STATUS_WAITING),
+> -				at_util_call_compare_by_status))
+> +				at_util_call_compare_by_status);
+> +	if (l =3D=3D NULL) {
+> +		ofono_error("CCWA received before XCALLSTAT!!!");
+>  		return;
+> +	}
+>  =
+
+>  	g_at_result_iter_init(&iter, result);
+>  =
+
+> @@ -652,13 +674,19 @@ static void ccwa_notify(GAtResult *result, gpointer=
+ user_data)
+>  =
+
+>  	DBG("ccwa_notify: %s %d %d %d", num, num_type, cls, validity);
+>  =
+
+> -	call =3D create_call(vc, class_to_call_type(cls), 1, CALL_STATUS_WAITIN=
+G,
+> -				num, num_type, validity);
+> -	if (call =3D=3D NULL) {
+> -		ofono_error("Unable to malloc. Call management is fubar");
+> -		return;
+> +	call =3D l->data;
+> +
+> +	call->type =3D class_to_call_type(cls);
+> +
+> +	if (validity !=3D 2) {
+> +		strncpy(call->phone_number.number, num,
+> +			OFONO_MAX_PHONE_NUMBER_LENGTH);
+> +		call->phone_number.number[OFONO_MAX_PHONE_NUMBER_LENGTH] =3D '\0';
+> +		call->phone_number.type =3D num_type;
+>  	}
+>  =
+
+> +	call->clip_validity =3D validity;
+> +
+>  	if (call->type =3D=3D 0) /* Only notify voice calls */
+>  		ofono_voicecall_notify(vc, call);
+>  }
 
 Regards,
 -Denis
 
---===============1896560992247298497==--
+--===============3718014200634583613==--
 
