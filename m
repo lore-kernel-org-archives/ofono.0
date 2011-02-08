@@ -1,107 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============0329498230872678092=="
+Content-Type: multipart/mixed; boundary="===============6556993005414554301=="
 MIME-Version: 1.0
-From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 13/13] phonesim: add IPv6 support
-Date: Tue, 08 Feb 2011 17:22:26 +0200
-Message-ID: <1297178546-9371-14-git-send-email-mika.liljeberg@nokia.com>
-In-Reply-To: <1297178546-9371-1-git-send-email-mika.liljeberg@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/2] ste: Add support for multiple pdp contexts.
+Date: Tue, 08 Feb 2011 07:42:01 -0800
+Message-ID: <1297179721.1520.454.camel@aeonflux>
+In-Reply-To: <1297163846-27817-1-git-send-email-maritsofie.henriksen8@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0329498230872678092==
+--===============6556993005414554301==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/phonesim.c |   32 +++++++++++++++++++++++++-------
- 1 files changed, 25 insertions(+), 7 deletions(-)
+Hi Marit,
 
-diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-index 2b36fe0..2634d23 100644
---- a/plugins/phonesim.c
-+++ b/plugins/phonesim.c
-@@ -83,14 +83,17 @@ struct gprs_context_data {
- static void at_cgact_up_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
- {
- 	struct cb_data *cbd =3D user_data;
--	ofono_gprs_context_up_cb_t cb =3D cbd->cb;
-+	ofono_gprs_context_cb_t cb =3D cbd->cb;
- 	struct ofono_gprs_context *gc =3D cbd->user;
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	struct ofono_error error;
- =
+> diff --git a/plugins/ste.c b/plugins/ste.c
+> index cf8aed8..749c4f3 100644
+> --- a/plugins/ste.c
+> +++ b/plugins/ste.c
+> @@ -66,6 +66,7 @@
+>  #include <drivers/stemodem/if_caif.h>
+>  =
 
- 	decode_at_error(&error, g_at_result_final_response(result));
--	cb(&error, ok ? gcd->interface : NULL, FALSE,
--			NULL, NULL, NULL, NULL, cbd->data);
-+
-+	if (ok)
-+		ofono_gprs_context_set_interface(gc, gcd->interface);
-+
-+	cb(&error, cbd->data);
- }
- =
+>  #define NUM_CHAT	1
+> +#define MAX_PDP_CONTEXTS	4
+>  =
 
- static void at_cgact_down_cb(gboolean ok, GAtResult *result, gpointer user=
-_data)
-@@ -105,16 +108,31 @@ static void at_cgact_down_cb(gboolean ok, GAtResult *=
-result, gpointer user_data)
- =
+>  static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
+>  =
 
- static void phonesim_activate_primary(struct ofono_gprs_context *gc,
- 				const struct ofono_gprs_primary_context *ctx,
--				ofono_gprs_context_up_cb_t cb, void *data)
-+				ofono_gprs_context_cb_t cb, void *data)
- {
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[OFONO_GPRS_MAX_APN_LENGTH + 128];
--	int len;
-+	int len =3D 0;
- =
+> @@ -363,6 +364,7 @@ static void ste_post_online(struct ofono_modem *modem)
+>  	struct ofono_message_waiting *mw;
+>  	struct ofono_gprs *gprs;
+>  	struct ofono_gprs_context *gc;
+> +	int i;
+>  =
 
- 	cbd->user =3D gc;
- =
+>  	DBG("%p", modem);
+>  =
 
--	len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
-+	switch (ctx->proto) {
-+	case OFONO_GPRS_PROTO_IP:
-+		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"",
-+				ctx->cid);
-+		break;
-+
-+	case OFONO_GPRS_PROTO_IPV6:
-+		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IPV6\"",
-+				ctx->cid);
-+		break;
-+
-+	case OFONO_GPRS_PROTO_IPV4V6:
-+		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IPV4V6\"",
-+				ctx->cid);
-+		break;
-+	}
- =
+> @@ -378,13 +380,18 @@ static void ste_post_online(struct ofono_modem *mod=
+em)
+>  =
 
- 	if (ctx->apn)
- 		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
-@@ -132,7 +150,7 @@ static void phonesim_activate_primary(struct ofono_gprs=
-_context *gc,
- error:
- 	g_free(cbd);
- =
+>  	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
+>  					"atmodem", data->chat);
+> -	gc =3D ofono_gprs_context_create(modem, 0, "stemodem", data->chat);
+> -
+> -	if (gprs && gc)
+> -		ofono_gprs_add_context(gprs, gc);
+> +	if (gprs) {
+> +		for (i =3D 0; i < MAX_PDP_CONTEXTS; i++) {
+> +			gc =3D ofono_gprs_context_create(
+> +					modem, 0, "stemodem", data->chat);
+> +			if (gc =3D=3D NULL)
+> +				break;
+> +
+> +			ofono_gprs_add_context(gprs, gc);
+> +		}
+> +	}
 
--	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, data);
-+	CALLBACK_WITH_FAILURE(cb, data);
- }
- =
+you do not need to create the GPRS context atom multiple times. You can
+just add the gc multiple times.
 
- static void phonesim_deactivate_primary(struct ofono_gprs_context *gc,
--- =
+So I just wanna make sure that you guys wanna have multiple GPRS context
+atom instances. For things like PPP and RawIP we have no other choice,
+but for example ISI is a bit more flexible here. That is the reason why
+we do allow it. Maybe CAIF is as flexible.
 
-1.7.1
+It is a bit question about resources that are used. I am fine either
+way, but I need you to at least think about it ;)
+
+Regards
+
+Marcel
 
 
---===============0329498230872678092==--
+
+--===============6556993005414554301==--
 
