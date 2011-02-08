@@ -1,77 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============8802615893205585463=="
+Content-Type: multipart/mixed; boundary="===============5462768249258808619=="
 MIME-Version: 1.0
 From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
 Subject: Re: [RFCv2] doc: Proposal for LTE/IMS API
-Date: Tue, 08 Feb 2011 17:22:43 +0100
-Message-ID: <AANLkTi=Jt0w-UqJ8MtqDae83A6U6baAbzhh6YtR5+mc5@mail.gmail.com>
-In-Reply-To: <201102081647.26748.remi.denis-courmont@nokia.com>
+Date: Tue, 08 Feb 2011 17:42:45 +0100
+Message-ID: <AANLkTi=0aM+gQvUxtEH8wV-EPvpW-XxEYqyJtGKw9ZyC@mail.gmail.com>
+In-Reply-To: <8281606748F03E4390BB98A3F47F2E948A9CB41FD5@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8802615893205585463==
+--===============5462768249258808619==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi R=C3=A9mi,
+Hi Redouane,
 
-> > +Service =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0org.ofono
-> > +Interface =C2=A0 =C2=A0org.ofono.IpMultimediaSubsystem
-> > +Object path =C2=A0[variable prefix]
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 void UnRegister(object path)
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+Un-register a IpMultimediaSubsystemAgent.
 >
-> I guess this is meant to be a modem object path, but it seems the oFono
-> documentation is already a bit sloppy on this point.
+> Register and UnRegister functions are not really symmetric here ...
+> How object path is used by UnRegister function ??
+> Maybe we should have :
+> void UnRegister(string type)
 
-Yes, this should be the modem object path. I'll fix this in the next patch.
+Thanks for spotting this, it's a bug. It should have been
+"void UnRegister()". I'll fix this in the next patch.
 
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 void Register(string type)
-> > +
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- Register a IMS Application. It must register
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- with one of the types:
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- "voice", "messaging", "voice_messaging".
->
-> I am not very familiar with the underlying protocol... If it really makes
-> sense to register both services simultaneously, then I think we should ha=
-ve an
-> array of strings. Or if there are no benefits, then why bother with
-> 'voice_messaging' anyway.
-
-Yes, an array of strings might be a good idea here.
-
-....
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 boolean PreConditionCheck(s=
-tring Type, string PeerAddress,
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 uint16 PeerPort, =
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 boolean PreConditionCheck(st=
+ring Type, string PeerAddress,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 uint16 PeerPort, =
 =C2=A0uint16 LocalPort)
-> > +
-> That stuff is per context. Should it not be in the context object rather =
-than
-> in the IMS manager?
+>
+> How to make the link between the primary context (or default bearer) acti=
+vated by the IMS client ,
+> and the TFT and QOS.
 
-oFono should only consider QoS information from the IMS
-Default and Dedicated bearers when checking the precondition.
+When Dedicated bearers are created  +CGEV: NW ACT reports both the
+Default Bearer and the Dedicated bearer.
 
-In theory there might be more than one IMS APN for a operator,
-but I really don't see this as a real life scenario for this.
-If anyone disagrees please speak out and explain...
+> We can imagine that we have a good QOS / TFT but it doesn't belong to the=
+ primary context (or default bearer) activated by the IMS client.
 
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 array{string} PcscfAddresse=
-s [readonly]
-> Should this be in the context object? The AT command is per CID. Would it=
- make
-> any sense for a network to have different P-CSCF based on the bearer?
+As mentioned to R=C3=A9mi, we should only consider the QoS/TFT for the IMS
+ConnectionContext
+and related Dedicated Bearers. So oFono core only needs to keep track
+of the QoS/TFTs for IMS.
 
-As mentioned above, I don't see why an operator would ever have more than
-one IMS APN. If we only have one IMS APN, then we might as well present
-this information here in the IMS API.
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 void PreConditionChanged()
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+This signal is sent when the network has changed
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+the QoS or Packet Filters for a Bearer.
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+The IMS application can then check the QoS SIP
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+preconditions by calling PreConditionCheck().
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+Only QoS information relevant for IMS will be
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+signaled, i.e. QCI=3D1 for voice and QCI=3D2 for video.
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+Related AT commands: AT+CGEREP,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
++CGEV: NW ACT, +CGEV: NW MODIFY
+>> +
+>
+> Same here , IMS client will be notified for all dedicated bearer ?
+> I agree with R=C3=A9mi, it 'll be better if we can put QOS/TFT somewhere =
+under primary context.
+
+I believe we will have only one IMS APN for each operator, so we might
+as well keep it here in
+the IMS Interface.
 
 
 Regards,
 Sjur
 
---===============8802615893205585463==--
+--===============5462768249258808619==--
 
