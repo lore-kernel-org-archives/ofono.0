@@ -1,81 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============7425134605229181744=="
+Content-Type: multipart/mixed; boundary="===============8353995310070726160=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v3 7/7] gsmdial: add option for Bluetooth DUN dialing
-Date: Tue, 08 Feb 2011 20:01:04 -0200
-Message-ID: <1297202464-19155-7-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1297202464-19155-6-git-send-email-padovan@profusion.mobi>
+From: anandx.ramakrishna@intel.com
+Subject: [PATCH v1] ifx: Selftest at command syntax fix to support latest fw
+Date: Tue, 08 Feb 2011 14:34:22 -0800
+Message-ID: <1297204462-9766-1-git-send-email-anandx.ramakrishna@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7425134605229181744==
+--===============8353995310070726160==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Anand Ramakrishna <anandx.ramakrishna@intel.com>
+
+It is a fix to support the selftest at command syntax changed in latest =
+
+IFX fw version
+
 ---
- gatchat/gsmdial.c |   17 ++++++++++++++---
- 1 files changed, 14 insertions(+), 3 deletions(-)
+ plugins/ifx.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index 1be80e3..d54a26e 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -56,6 +56,7 @@ static gboolean option_legacy =3D FALSE;
- static gchar *option_username =3D NULL;
- static gchar *option_password =3D NULL;
- static gchar *option_pppdump =3D NULL;
-+static gboolean option_bluetooth =3D 0;
+diff --git a/plugins/ifx.c b/plugins/ifx.c
+index 2a95720..a41fc36 100644
+--- a/plugins/ifx.c
++++ b/plugins/ifx.c
+@@ -573,7 +573,7 @@ static void rtc_gti_selftest_cb(gboolean ok, GAtResult =
+*result,
+ 	if (ok)
+ 		return;
  =
 
- static GAtPPP *ppp;
- static GAtChat *control;
-@@ -266,6 +267,9 @@ static void no_carrier_notify(GAtResult *result, gpoint=
-er user_data)
- {
- 	char buf[64];
+-	ofono_error("at(a)rtc:rtc_gti_test_verify_32khz()-FAILED");
++	ofono_error("at(a)rtc_drv:rtc_gti_test_verify_32khz()-FAILED");
  =
 
-+	if (option_bluetooth)
-+		return;
-+
- 	sprintf(buf, "AT+CFUN=3D%u", option_offmode);
- 	g_at_chat_send(control, buf, none_prefix, power_down, NULL, NULL);
- }
-@@ -612,6 +616,8 @@ static GOptionEntry options[] =3D {
- 				"Specify CFUN offmode" },
- 	{ "legacy", 'l', 0, G_OPTION_ARG_NONE, &option_legacy,
- 				"Use ATD*99***<cid>#" },
-+	{ "bluetooth", 'b', 0, G_OPTION_ARG_NONE, &option_bluetooth,
-+				"Use only ATD*99" },
- 	{ "username", 'u', 0, G_OPTION_ARG_STRING, &option_username,
- 				"Specify PPP username" },
- 	{ "password", 'w', 0, G_OPTION_ARG_STRING, &option_password,
-@@ -700,9 +706,14 @@ int main(int argc, char **argv)
+ 	if (data->mux_init_timeout > 0) {
+ 		g_source_remove(data->mux_init_timeout);
+@@ -643,7 +643,7 @@ static int ifx_enable(struct ofono_modem *modem)
+ 					NULL, NULL, NULL);
  =
 
- 	event_loop =3D g_main_loop_new(NULL, FALSE);
+ 	/* Execute modem self tests */
+-	g_at_chat_send(chat, "at(a)rtc:rtc_gti_test_verify_32khz()", NULL,
++	g_at_chat_send(chat, "at(a)rtc_drv:rtc_gti_test_verify_32khz()", NULL,
+ 					rtc_gti_selftest_cb, modem, NULL);
  =
 
--	g_at_chat_send(control, "ATE0Q0V1", NULL, NULL, NULL, NULL);
--	g_at_chat_send(control, "AT+CFUN?", cfun_prefix,
--						check_mode, NULL, NULL);
-+	if (option_bluetooth) {
-+		g_at_chat_send(control, "ATD*99", none_prefix, connect_cb,
-+				NULL, NULL);
-+	} else {
-+		g_at_chat_send(control, "ATE0Q0V1", NULL, NULL, NULL, NULL);
-+		g_at_chat_send(control, "AT+CFUN?", cfun_prefix,
-+							check_mode, NULL, NULL);
-+	}
- =
-
- 	g_main_loop_run(event_loop);
- 	g_source_remove(signal_source);
+ 	g_at_chat_send(chat, "at(a)vers:device_version_id()", NULL,
 -- =
 
-1.7.4
+1.7.2.3
 
 
---===============7425134605229181744==--
+--===============8353995310070726160==--
 
