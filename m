@@ -1,58 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============6931296366980012034=="
+Content-Type: multipart/mixed; boundary="===============1710815605963877634=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: [PATCH 3/3] gprs-provision: update example with SPN
-Date: Tue, 08 Feb 2011 12:03:48 +0200
-Message-ID: <1297159428-2409-4-git-send-email-jukka.saunamaki@nokia.com>
-In-Reply-To: <1297159428-2409-1-git-send-email-jukka.saunamaki@nokia.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] atmodem: close the list in clvl_range_query
+Date: Tue, 08 Feb 2011 12:14:19 +0200
+Message-ID: <1297160059-15548-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6931296366980012034==
+--===============1710815605963877634==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- examples/provision.c |    8 +++++---
- 1 files changed, 5 insertions(+), 3 deletions(-)
+ drivers/atmodem/call-volume.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/examples/provision.c b/examples/provision.c
-index 356b0b3..546a161 100644
---- a/examples/provision.c
-+++ b/examples/provision.c
-@@ -37,6 +37,7 @@
- #include <ofono/log.h>
+diff --git a/drivers/atmodem/call-volume.c b/drivers/atmodem/call-volume.c
+index 6d87276..1e32a69 100644
+--- a/drivers/atmodem/call-volume.c
++++ b/drivers/atmodem/call-volume.c
+@@ -114,6 +114,7 @@ static void clvl_range_query(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ 	/* Try opening the list, but don't fail */
+ 	g_at_result_iter_open_list(&iter);
+ 	g_at_result_iter_next_range(&iter, &cvd->clvl_min, &cvd->clvl_max);
++	g_at_result_iter_close_list(&iter);
+ }
  =
 
- static int example_provision_get_settings(const char *mcc, const char *mnc,
-+				const char *spn,
- 				struct ofono_gprs_provision_data **settings,
- 				int *count)
- {
-@@ -44,10 +45,11 @@ static int example_provision_get_settings(const char *m=
-cc, const char *mnc,
- 	*count =3D 0;
- 	*settings =3D NULL;
- =
-
--	ofono_debug("Finding settings for MCC %s, MNC %s",
--			mcc, mnc);
-+	ofono_debug("Finding settings for MCC %s, MNC %s, SPN '%s'",
-+			mcc, mnc, spn);
- =
-
--	if (strcmp(mcc, "246") !=3D 0 || strcmp(mnc, "81") !=3D 0)
-+	if (strcmp(mcc, "246") !=3D 0 || strcmp(mnc, "81") !=3D 0 ||
-+						strcmp(spn, "oFono") !=3D 0)
- 		return -ENOENT;
- =
-
- 	ofono_debug("Creating example settings for phonesim");
+ static void cv_generic_set_cb(gboolean ok, GAtResult *result,
 -- =
 
-1.7.1
+1.7.0.4
 
 
---===============6931296366980012034==--
+--===============1710815605963877634==--
 
