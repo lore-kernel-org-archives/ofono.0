@@ -1,72 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============0382076369417666695=="
+Content-Type: multipart/mixed; boundary="===============7235716480101194621=="
 MIME-Version: 1.0
-From: Antti Paila <antti.paila@nokia.com>
-Subject: Re: [PATCH 1/4] nettime: Network time plugin implementation
-Date: Tue, 08 Feb 2011 14:25:15 +0200
-Message-ID: <1297167915.8586.7.camel@apaila-ThinkPad-T410>
-In-Reply-To: <1297105120.1520.427.camel@aeonflux>
+From: mikhail.zabaluev@nokia.com
+Subject: RE: [RFC 0/1] use fsync in storage
+Date: Tue, 08 Feb 2011 12:25:17 +0000
+Message-ID: <A459777776EB4841B844E1134E7928740157FC4A@008-AM1MPN1-016.mgdnok.nokia.com>
+In-Reply-To: <201102081403.51243.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0382076369417666695==
+--===============7235716480101194621==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi,
 
-On Mon, 2011-02-07 at 10:58 -0800, ext Marcel Holtmann wrote:
-> Hi Antti,
+> -----Original Message-----
+> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On
+> Behalf Of ext R=C3=A9mi Denis-Courmont
+> Sent: Tuesday, February 08, 2011 2:04 PM
+> To: ofono(a)ofono.org
+> Subject: Re: [RFC 0/1] use fsync in storage
 > =
 
-> >  plugins/nettime.c |  326 +++++++++++++++++++++++++++++++++++++++++++++=
-++++++++
-> >  1 files changed, 326 insertions(+), 0 deletions(-)
-> >  create mode 100644 plugins/nettime.c
+> On Tuesday 08 February 2011 13:47:51 ext Kai Vehmanen, you wrote:
+> > 3) Is it ok, build-wise, for ofono to require availability
+> fdatasync()
+> >    (which I think would be sufficient in this case and slightly
+> >    less expensive).
 > =
 
-> I would prefer if we call this nokia-timed.c or in case this actually
-> becomes default part of MeeGo, them maybe meego-timed.c. I would be also
-> fine with {nokia,meego}-nettime.c.
-> =
+> I would use fdatasync().
 
-> Just calling it nettime.c is too generic. It needs to be clear what this
-> is for.
-> =
+What about ensuring that file metadata are synced as well (e.g. the file it=
+self cannot be lost on the filesystem)?
 
-> > +#define TIMED_PATH "/com/meego/time"
-> > +#define TIMED_SERVICE "com.meego.time"
-> =
+Best regards,
+  Mikhail
 
-> So the intention is to convert the Nokia timed into a MeeGo specific
-> daemon? I would have expected to see com.nokia.timed here.
-
-My understanding is that this will be Meego specific plugin since timed
-is part of Meego. Hence, the service 'com.meego.timed'.  =
-
-
-> > +struct nt_data {
-> > +	gboolean time_available;
-> > +	gboolean time_pending;
-> > +	time_t nw_time_utc;
-> > +	time_t received;
-> > +	int dst;
-> > +	int time_zone;
-> > +	const char *mcc;
-> > +	const char *mnc;
-> =
-
-> Why do you bother with these here. You might better just reference the
-> netreg atom. The memory is only valid if netreg atom is present.
-
-Timed expects to receive the mcc and mnc in the time notification.
-However, if the mcc and mnc don't change we don't resend the
-information. These fields contain the mnc and mcc that oFono sent
-in the previous time notification.
-
-Best Regards,
-  Antti
-
-
---===============0382076369417666695==--
+--===============7235716480101194621==--
 
