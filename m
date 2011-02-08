@@ -1,157 +1,354 @@
-Content-Type: multipart/mixed; boundary="===============6088486942896336092=="
+Content-Type: multipart/mixed; boundary="===============3376852755188295625=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [sim-ready-nofify-v5 PATCH 1/3] sim: add ofono_sim_ready_notify
-Date: Tue, 08 Feb 2011 14:32:57 +0200
-Message-ID: <1297168379-16400-2-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1297168379-16400-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [sim-ready-nofify-v5 PATCH 2/3] atmodem/sim: use
+ ofono_sim_ready_notify
+Date: Tue, 08 Feb 2011 14:32:58 +0200
+Message-ID: <1297168379-16400-3-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1297168379-16400-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6088486942896336092==
+--===============3376852755188295625==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-The sim atom waits for ofono_sim_ready_notify() after the callback
-to query_passwd_state.
+Schedule a call to ofono_sim_ready_notify after pin code query returns
+SIM READY.
 
-Upon call to ofono_sim_ready_notify(), SIM atom either continues
-initialization or rechecks if the SIM still requires a pin code.
-
-Based on patches by Kristen Accardi and Denis Kenzior.
+Vendor quirks:
+- IFX: register unsolicated +XSIM result code
+- MBM: register unsolicated *EPEV result code
 ---
- include/sim.h |    1 +
- src/sim.c     |   35 +++++++++++++++++++++++++++++------
- 2 files changed, 30 insertions(+), 6 deletions(-)
+ drivers/atmodem/sim.c |  166 ++++++++++++++++++++++++++++++++++-----------=
+---
+ 1 files changed, 117 insertions(+), 49 deletions(-)
 
-diff --git a/include/sim.h b/include/sim.h
-index 412ae44..b33cf8c 100644
---- a/include/sim.h
-+++ b/include/sim.h
-@@ -196,6 +196,7 @@ void ofono_sim_remove_state_watch(struct ofono_sim *sim=
-, unsigned int id);
- enum ofono_sim_state ofono_sim_get_state(struct ofono_sim *sim);
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index d9c0d8d..666edbe 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -46,10 +46,14 @@
  =
 
- void ofono_sim_inserted_notify(struct ofono_sim *sim, ofono_bool_t inserte=
-d);
-+void ofono_sim_ready_notify(struct ofono_sim *sim);
+ #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
  =
 
- struct ofono_sim_context *ofono_sim_context_create(struct ofono_sim *sim);
- void ofono_sim_context_free(struct ofono_sim_context *context);
-diff --git a/src/sim.c b/src/sim.c
-index 3350166..818d813 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -45,6 +45,8 @@
- #include "simfs.h"
- #include "stkutil.h"
- =
-
-+#define SIM_FLAG_WAIT_FOR_READY (1 << 0)
++#define READY_TIMEOUT		5000
 +
- static GSList *g_drivers =3D NULL;
+ struct sim_data {
+ 	GAtChat *chat;
+ 	unsigned int vendor;
+ 	guint ready_id;
++	guint ready_source;
++	ofono_bool_t ready;
+ };
  =
 
- static void sim_own_numbers_update(struct ofono_sim *sim);
-@@ -76,6 +78,7 @@ struct ofono_sim {
- 	unsigned char efsst_length;
- 	gboolean fixed_dialing;
- 	gboolean barred_dialing;
-+	guint flags;
- =
-
- 	char *imsi;
- 	char mcc[OFONO_MAX_MCC_LENGTH + 1];
-@@ -1621,6 +1624,8 @@ static void sim_efphase_read_cb(int ok, int length, i=
-nt record,
- =
-
- static void sim_initialize_after_pin(struct ofono_sim *sim)
- {
-+	sim->flags &=3D ~SIM_FLAG_WAIT_FOR_READY;
-+
- 	ofono_sim_read(sim->context, SIM_EFPHASE_FILEID,
- 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
- 			sim_efphase_read_cb, sim);
-@@ -1647,10 +1652,11 @@ static void sim_pin_query_cb(const struct ofono_err=
-or *error,
- 	const char *path =3D __ofono_atom_get_path(sim->atom);
- 	const char *pin_name;
- =
-
-+	sim->flags |=3D SIM_FLAG_WAIT_FOR_READY;
-+
- 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
- 		ofono_error("Querying PIN authentication state failed");
--
--		goto checkdone;
-+		return;
- 	}
- =
-
- 	if (sim->pin_type !=3D pin_type) {
-@@ -1671,10 +1677,6 @@ static void sim_pin_query_cb(const struct ofono_erro=
-r *error,
- 	}
- =
-
- 	sim_pin_retries_check(sim);
--
--checkdone:
--	if (pin_type =3D=3D OFONO_SIM_PASSWORD_NONE)
--		sim_initialize_after_pin(sim);
+ static const char *crsm_prefix[] =3D { "+CRSM:", NULL };
+@@ -679,10 +683,55 @@ static void at_pin_retries_query(struct ofono_sim *si=
+m,
+ 	CALLBACK_WITH_FAILURE(cb, NULL, data);
  }
  =
 
- static void sim_pin_check(struct ofono_sim *sim)
-@@ -1687,6 +1689,25 @@ static void sim_pin_check(struct ofono_sim *sim)
- 	sim->driver->query_passwd_state(sim, sim_pin_query_cb, sim);
- }
- =
-
-+void ofono_sim_ready_notify(struct ofono_sim *sim)
++static void ready_unregister_and_notify(struct ofono_sim *sim)
 +{
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
++
 +	DBG("");
 +
-+	if (sim =3D=3D NULL)
-+		return;
++	if (sd->ready_source > 0) {
++		g_source_remove(sd->ready_source);
++		sd->ready_source =3D 0;
++	}
 +
-+	if (sim->state !=3D OFONO_SIM_STATE_INSERTED)
-+		return;
-+
-+	if (!(sim->flags & SIM_FLAG_WAIT_FOR_READY))
-+		return;
-+
-+	if (sim->pin_type =3D=3D OFONO_SIM_PASSWORD_NONE)
-+		sim_initialize_after_pin(sim);
-+	else
-+		sim_pin_check(sim);
++	ofono_sim_ready_notify(sim);
 +}
 +
- static void sim_efli_read_cb(int ok, int length, int record,
- 				const unsigned char *data,
- 				int record_length, void *userdata)
-@@ -2146,6 +2167,8 @@ static void sim_free_state(struct ofono_sim *sim)
++static gboolean ready_timeout(gpointer user_data)
++{
++	struct ofono_sim *sim =3D user_data;
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
++
++	DBG("");
++
++	sd->ready_source =3D 0;
++
++	ofono_sim_ready_notify(sim);
++
++	return FALSE;
++}
++
++static void at_wait_for_ready(struct ofono_sim *sim)
++{
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
++	guint timeout;
++
++	if (sd->ready_source > 0)
++		return;
++
++	if (!sd->ready && sd->ready_id > 0)
++		timeout =3D READY_TIMEOUT;
++	else
++		timeout =3D 0;
++
++	sd->ready_source =3D g_timeout_add(timeout, ready_timeout, sim);
++}
++
+ static void at_cpin_cb(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+ 	struct cb_data *cbd =3D user_data;
+-	struct sim_data *sd =3D ofono_sim_get_data(cbd->user);
++	struct ofono_sim *sim =3D cbd->user;
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
+ 	GAtResultIter iter;
+ 	ofono_sim_passwd_cb_t cb =3D cbd->cb;
+ 	struct ofono_error error;
+@@ -729,6 +778,11 @@ static void at_cpin_cb(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 		return;
+ 	}
  =
 
- 	sim->fixed_dialing =3D FALSE;
- 	sim->barred_dialing =3D FALSE;
++	if (pin_type =3D=3D OFONO_SIM_PASSWORD_NONE)
++		at_wait_for_ready(sim);
++	else
++		sd->ready =3D FALSE;
 +
-+	sim->flags =3D 0;
+ 	DBG("crsm_pin_cb: %s", pin_required);
+ =
+
+ 	cb(&error, pin_type, cbd->data);
+@@ -753,13 +807,13 @@ static void at_pin_query(struct ofono_sim *sim, ofono=
+_sim_passwd_cb_t cb,
+ =
+
+ static void at_xsim_notify(GAtResult *result, gpointer user_data)
+ {
+-	struct cb_data *cbd =3D user_data;
+-	struct sim_data *sd =3D cbd->user;
+-	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
+-	struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_NO_ERROR };
++	struct ofono_sim *sim =3D user_data;
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
+ 	GAtResultIter iter;
+ 	int state;
+ =
+
++	DBG("");
++
+ 	g_at_result_iter_init(&iter, result);
+ =
+
+ 	if (!g_at_result_iter_next(&iter, "+XSIM:"))
+@@ -776,65 +830,40 @@ static void at_xsim_notify(GAtResult *result, gpointe=
+r user_data)
+ 		return;
+ 	}
+ =
+
+-	cb(&error, cbd->data);
++	sd->ready =3D TRUE;
+ =
+
+-	g_at_chat_unregister(sd->chat, sd->ready_id);
+-	sd->ready_id =3D 0;
++	if (sd->ready_source > 0)
++		ready_unregister_and_notify(sim);
  }
  =
 
- void ofono_sim_inserted_notify(struct ofono_sim *sim, ofono_bool_t inserte=
-d)
+ static void at_epev_notify(GAtResult *result, gpointer user_data)
+ {
+-	struct cb_data *cbd =3D user_data;
+-	struct sim_data *sd =3D cbd->user;
+-	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
+-	struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_NO_ERROR };
++	struct ofono_sim *sim =3D user_data;
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
+ =
+
+-	cb(&error, cbd->data);
++	DBG("");
+ =
+
+-	g_at_chat_unregister(sd->chat, sd->ready_id);
+-	sd->ready_id =3D 0;
++	sd->ready =3D TRUE;
++
++	if (sd->ready_source > 0)
++		ready_unregister_and_notify(sim);
+ }
+ =
+
+ static void at_pin_send_cb(gboolean ok, GAtResult *result,
+ 				gpointer user_data)
+ {
+ 	struct cb_data *cbd =3D user_data;
+-	struct sim_data *sd =3D cbd->user;
++	struct ofono_sim *sim =3D cbd->user;
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
+ 	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
+ 	struct ofono_error error;
+ =
+
+-	decode_at_error(&error, g_at_result_final_response(result));
++	if (ok && sd->ready_id)
++		at_wait_for_ready(sim);
+ =
+
+-	if (!ok)
+-		goto done;
+-
+-	switch (sd->vendor) {
+-	case OFONO_VENDOR_IFX:
+-		/*
+-		 * On the IFX modem, AT+CPIN? can return READY too
+-		 * early and so use +XSIM notification to detect
+-		 * the ready state of the SIM.
+-		 */
+-		sd->ready_id =3D g_at_chat_register(sd->chat, "+XSIM",
+-							at_xsim_notify,
+-							FALSE, cbd, g_free);
+-		return;
+-	case OFONO_VENDOR_MBM:
+-		/*
+-		 * On the MBM modem, AT+CPIN? keeps returning SIM PIN
+-		 * for a moment after successful AT+CPIN=3D"..", but then
+-		 * sends *EPEV when that changes.
+-		 */
+-		sd->ready_id =3D g_at_chat_register(sd->chat, "*EPEV",
+-							at_epev_notify,
+-							FALSE, cbd, g_free);
+-		return;
+-	}
++	decode_at_error(&error, g_at_result_final_response(result));
+ =
+
+-done:
+ 	cb(&error, cbd->data);
+-
+-	g_free(cbd);
+ }
+ =
+
+ static void at_pin_send(struct ofono_sim *sim, const char *passwd,
+@@ -845,12 +874,14 @@ static void at_pin_send(struct ofono_sim *sim, const =
+char *passwd,
+ 	char buf[64];
+ 	int ret;
+ =
+
+-	cbd->user =3D sd;
++	cbd->user =3D sim;
++
++	sd->ready =3D FALSE;
+ =
+
+ 	snprintf(buf, sizeof(buf), "AT+CPIN=3D\"%s\"", passwd);
+ =
+
+ 	ret =3D g_at_chat_send(sd->chat, buf, none_prefix,
+-				at_pin_send_cb, cbd, NULL);
++				at_pin_send_cb, cbd, g_free);
+ =
+
+ 	memset(buf, 0, sizeof(buf));
+ =
+
+@@ -871,12 +902,14 @@ static void at_pin_send_puk(struct ofono_sim *sim, co=
+nst char *puk,
+ 	char buf[64];
+ 	int ret;
+ =
+
+-	cbd->user =3D sd;
++	cbd->user =3D sim;
++
++	sd->ready =3D FALSE;
+ =
+
+ 	snprintf(buf, sizeof(buf), "AT+CPIN=3D\"%s\",\"%s\"", puk, passwd);
+ =
+
+ 	ret =3D g_at_chat_send(sd->chat, buf, none_prefix,
+-				at_pin_send_cb, cbd, NULL);
++				at_pin_send_cb, cbd, g_free);
+ =
+
+ 	memset(buf, 0, sizeof(buf));
+ =
+
+@@ -1038,6 +1071,35 @@ static gboolean at_sim_register(gpointer user)
+ 	return FALSE;
+ }
+ =
+
++static void at_register_ready(struct ofono_sim *sim)
++{
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
++
++	switch (sd->vendor) {
++	case OFONO_VENDOR_IFX:
++		/*
++		 * On the IFX modem, AT+CPIN? can return READY too
++		 * early and so use +XSIM notification to detect
++		 * the ready state of the SIM.
++		 */
++		sd->ready_id =3D g_at_chat_register(sd->chat, "+XSIM",
++							at_xsim_notify,
++							FALSE, sim, NULL);
++		break;
++
++	case OFONO_VENDOR_MBM:
++		/*
++		 * On the MBM modem, AT+CPIN? keeps returning SIM PIN
++		 * for a moment after successful AT+CPIN=3D"..", but then
++		 * sends *EPEV when that changes.
++		 */
++		sd->ready_id =3D g_at_chat_register(sd->chat, "*EPEV",
++							at_epev_notify,
++							FALSE, sim, NULL);
++		break;
++	}
++}
++
+ static int at_sim_probe(struct ofono_sim *sim, unsigned int vendor,
+ 				void *data)
+ {
+@@ -1060,6 +1122,9 @@ static int at_sim_probe(struct ofono_sim *sim, unsign=
+ed int vendor,
+ 	}
+ =
+
+ 	ofono_sim_set_data(sim, sd);
++
++	at_register_ready(sim);
++
+ 	g_idle_add(at_sim_register, sim);
+ =
+
+ 	return 0;
+@@ -1071,6 +1136,9 @@ static void at_sim_remove(struct ofono_sim *sim)
+ =
+
+ 	ofono_sim_set_data(sim, NULL);
+ =
+
++	if (sd->ready_source > 0)
++		g_source_remove(sd->ready_source);
++
+ 	g_at_chat_unref(sd->chat);
+ 	g_free(sd);
+ }
 -- =
 
 1.7.1
 
 
---===============6088486942896336092==--
+--===============3376852755188295625==--
 
