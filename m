@@ -1,152 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============2370437246927874738=="
+Content-Type: multipart/mixed; boundary="===============0329498230872678092=="
 MIME-Version: 1.0
 From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 11/13] ifxmodem: update to new gprs context interface
-Date: Tue, 08 Feb 2011 17:22:24 +0200
-Message-ID: <1297178546-9371-12-git-send-email-mika.liljeberg@nokia.com>
+Subject: [PATCH 13/13] phonesim: add IPv6 support
+Date: Tue, 08 Feb 2011 17:22:26 +0200
+Message-ID: <1297178546-9371-14-git-send-email-mika.liljeberg@nokia.com>
 In-Reply-To: <1297178546-9371-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2370437246927874738==
+--===============0329498230872678092==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/ifxmodem/gprs-context.c |   36 +++++++++++++++++++++---------------
- 1 files changed, 21 insertions(+), 15 deletions(-)
+ plugins/phonesim.c |   32 +++++++++++++++++++++++++-------
+ 1 files changed, 25 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
-t.c
-index 2c68b44..91dee8c 100644
---- a/drivers/ifxmodem/gprs-context.c
-+++ b/drivers/ifxmodem/gprs-context.c
-@@ -67,10 +67,7 @@ struct gprs_context_data {
- 	char address[32];
- 	char dns1[32];
- 	char dns2[32];
--	union {
--		ofono_gprs_context_cb_t down_cb;        /* Down callback */
--		ofono_gprs_context_up_cb_t up_cb;       /* Up callback */
--	};
-+	ofono_gprs_context_cb_t cb;
- 	void *cb_data;                                  /* Callback data */
- };
- =
-
-@@ -123,13 +120,12 @@ static void failed_setup(struct ofono_gprs_context *g=
-c,
- 	gcd->state =3D STATE_IDLE;
- =
-
- 	if (result =3D=3D NULL) {
--		CALLBACK_WITH_FAILURE(gcd->up_cb, NULL, 0, NULL, NULL,
--						NULL, NULL, gcd->cb_data);
-+		CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
- 		return;
- 	}
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index 2b36fe0..2634d23 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -83,14 +83,17 @@ struct gprs_context_data {
+ static void at_cgact_up_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
+ {
+ 	struct cb_data *cbd =3D user_data;
+-	ofono_gprs_context_up_cb_t cb =3D cbd->cb;
++	ofono_gprs_context_cb_t cb =3D cbd->cb;
+ 	struct ofono_gprs_context *gc =3D cbd->user;
+ 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+ 	struct ofono_error error;
  =
 
  	decode_at_error(&error, g_at_result_final_response(result));
--	gcd->up_cb(&error, NULL, 0, NULL, NULL, NULL, NULL, gcd->cb_data);
-+	gcd->cb(&error, gcd->cb_data);
- }
- =
-
- static void session_cb(gboolean ok, GAtResult *result, gpointer user_data)
-@@ -157,10 +153,15 @@ static void session_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 	if (interface =3D=3D NULL)
- 		interface =3D "invalid";
- =
-
--	CALLBACK_WITH_SUCCESS(gcd->up_cb, interface, TRUE, gcd->address,
--				STATIC_IP_NETMASK, NULL, dns, gcd->cb_data);
-+	ofono_gprs_context_set_interface(gc, interface);
-+	ofono_gprs_context_set_ip_addrconf(gc, OFONO_GPRS_ADDRCONF_STATIC);
-+	ofono_gprs_context_set_ip_address(gc, gcd->address);
-+	ofono_gprs_context_set_ip_netmask(gc, STATIC_IP_NETMASK);
-+	ofono_gprs_context_set_dns_servers(gc, dns);
- =
-
--	gcd->up_cb =3D NULL;
-+	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
+-	cb(&error, ok ? gcd->interface : NULL, FALSE,
+-			NULL, NULL, NULL, NULL, cbd->data);
 +
-+	gcd->cb =3D NULL;
- 	gcd->cb_data =3D NULL;
++	if (ok)
++		ofono_gprs_context_set_interface(gc, gcd->interface);
++
++	cb(&error, cbd->data);
  }
  =
 
-@@ -316,16 +317,20 @@ error:
+ static void at_cgact_down_cb(gboolean ok, GAtResult *result, gpointer user=
+_data)
+@@ -105,16 +108,31 @@ static void at_cgact_down_cb(gboolean ok, GAtResult *=
+result, gpointer user_data)
  =
 
- static void ifx_gprs_activate_primary(struct ofono_gprs_context *gc,
+ static void phonesim_activate_primary(struct ofono_gprs_context *gc,
  				const struct ofono_gprs_primary_context *ctx,
 -				ofono_gprs_context_up_cb_t cb, void *data)
 +				ofono_gprs_context_cb_t cb, void *data)
  {
  	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
  	char buf[OFONO_GPRS_MAX_APN_LENGTH + 128];
- 	int len;
+-	int len;
++	int len =3D 0;
  =
 
-+	/* IPv6 support not implemented */
-+	if (ctx->proto !=3D OFONO_GPRS_PROTO_IP)
-+		goto error;
+ 	cbd->user =3D gc;
+ =
+
+-	len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
++	switch (ctx->proto) {
++	case OFONO_GPRS_PROTO_IP:
++		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"",
++				ctx->cid);
++		break;
 +
- 	DBG("cid %u", ctx->cid);
++	case OFONO_GPRS_PROTO_IPV6:
++		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IPV6\"",
++				ctx->cid);
++		break;
++
++	case OFONO_GPRS_PROTO_IPV4V6:
++		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IPV4V6\"",
++				ctx->cid);
++		break;
++	}
  =
 
- 	gcd->active_context =3D ctx->cid;
--	gcd->up_cb =3D cb;
-+	gcd->cb =3D cb;
- 	gcd->cb_data =3D data;
- 	memcpy(gcd->username, ctx->username, sizeof(ctx->username));
- 	memcpy(gcd->password, ctx->password, sizeof(ctx->password));
-@@ -342,7 +347,8 @@ static void ifx_gprs_activate_primary(struct ofono_gprs=
+ 	if (ctx->apn)
+ 		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
+@@ -132,7 +150,7 @@ static void phonesim_activate_primary(struct ofono_gprs=
 _context *gc,
- 				setup_cb, gc, NULL) > 0)
- 		return;
+ error:
+ 	g_free(cbd);
  =
 
 -	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, data);
-+error:
 +	CALLBACK_WITH_FAILURE(cb, data);
  }
  =
 
- static void deactivate_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-@@ -360,7 +366,7 @@ static void deactivate_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- =
-
- 	g_at_chat_resume(gcd->chat);
- =
-
--	CALLBACK_WITH_SUCCESS(gcd->down_cb, gcd->cb_data);
-+	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
- }
- =
-
- static void ifx_gprs_deactivate_primary(struct ofono_gprs_context *gc,
-@@ -374,7 +380,7 @@ static void ifx_gprs_deactivate_primary(struct ofono_gp=
-rs_context *gc,
- 	DBG("cid %u", cid);
- =
-
- 	gcd->state =3D STATE_DISABLING;
--	gcd->down_cb =3D cb;
-+	gcd->cb =3D cb;
- 	gcd->cb_data =3D data;
- =
-
- 	g_at_rawip_shutdown(gcd->rawip);
+ static void phonesim_deactivate_primary(struct ofono_gprs_context *gc,
 -- =
 
 1.7.1
 
 
---===============2370437246927874738==--
+--===============0329498230872678092==--
 
