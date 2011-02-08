@@ -1,32 +1,190 @@
-Content-Type: multipart/mixed; boundary="===============3943184440277430155=="
+Content-Type: multipart/mixed; boundary="===============8966480711363368420=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4 1/1] ifxmodem: move call creation to xcallstat_notify
-Date: Tue, 08 Feb 2011 11:54:16 -0600
-Message-ID: <4D518348.2080209@gmail.com>
-In-Reply-To: <1297184654-23800-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: Re: [PATCH -v2 6/7] emulator: Implement dialing up for DUN
+Date: Tue, 08 Feb 2011 16:46:58 -0200
+Message-ID: <20110208184658.GC2160@joana>
+In-Reply-To: <4D514AE3.3090903@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3943184440277430155==
+--===============8966480711363368420==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+HI Guillaume,
 
-On 02/08/2011 11:04 AM, Jeevaka Badrappan wrote:
-> ---
->  drivers/ifxmodem/voicecall.c |  172 ++++++++++++++++++++++++------------=
-------
->  1 files changed, 98 insertions(+), 74 deletions(-)
+* Guillaume Zajac <guillaume.zajac@linux.intel.com> [2011-02-08 14:53:39 =
++0100]:
+
+> Hi Gustavo,
 > =
 
+> On 04/02/2011 22:46, Gustavo F. Padovan wrote:
+> > It handles client ATD*99# request and then initiate the PPP negotiation.
+> > IP forward through the new ppp interface is not done yet.
+> >
+> > Initially based on patches from Zhenhua Zhang<zhenhua.zhang@intel.com>
+> > ---
+> >   src/emulator.c |  123 +++++++++++++++++++++++++++++++++++++++++++++++=
++++++++++
+> >   1 files changed, 123 insertions(+), 0 deletions(-)
+> >
+> > diff --git a/src/emulator.c b/src/emulator.c
+> > index 49b129b..f1a079d 100644
+> > --- a/src/emulator.c
+> > +++ b/src/emulator.c
+> > @@ -32,11 +32,18 @@
+> >   #include "ofono.h"
+> >   #include "common.h"
+> >   #include "gatserver.h"
+> > +#include "gatppp.h"
+> > +
+> > +#define DUN_SERVER_ADDRESS	"192.168.1.1"
+> > +#define DUN_PEER_ADDRESS	"192.168.1.2"
+> > +#define DUN_DNS_SERVER_1	"10.10.10.10"
+> > +#define DUN_DNS_SERVER_2	"10.10.10.11"
+> >
+> >   struct ofono_emulator {
+> >   	struct ofono_modem *modem;
+> >   	struct ofono_atom *atom;
+> >   	GAtServer *server;
+> > +	GAtPPP *ppp;
+> >   	struct ofono_emulator_driver *driver;
+> >   };
+> >
+> > @@ -55,10 +62,124 @@ void ofono_emulator_remove(struct ofono_emulator *=
+emulator)
+> >   	__ofono_atom_free(emulator->atom);
+> >   }
+> >
+> > +static void ppp_connect(const char *iface, const char *local,
+> > +			const char *remote,
+> > +			const char *dns1, const char *dns2,
+> > +			gpointer user_data)
+> > +{
+> > +	DBG("Network Device: %s\n", iface);
+> > +	DBG("IP Address: %s\n", local);
+> > +	DBG("Remote IP Address: %s\n", remote);
+> > +	DBG("Primary DNS Server: %s\n", dns1);
+> > +	DBG("Secondary DNS Server: %s\n", dns2);
+> > +}
+> > +
+> > +static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer use=
+r_data)
+> > +{
+> > +	struct ofono_emulator *e =3D user_data;
+> > +
+> > +	DBG("");
+> > +
+> > +	g_at_ppp_unref(e->ppp);
+> > +	e->ppp =3D NULL;
+> > +
+> > +	if (e->server =3D=3D NULL)
+> > +		return;
+> > +
+> > +	g_at_server_resume(e->server);
+> > +
+> > +	g_at_server_send_final(e->server, G_AT_SERVER_RESULT_NO_CARRIER);
+> > +}
+> > +
+> > +static gboolean setup_ppp(gpointer user_data)
+> > +{
+> > +	struct ofono_emulator *e =3D user_data;
+> > +	GAtServer *server =3D e->server;
+> > +	GAtIO *io;
+> > +
+> > +	DBG("");
+> > +
+> > +	io =3D g_at_server_get_io(server);
+> > +
+> > +	g_at_server_suspend(server);
+> > +
+> > +	e->ppp =3D g_at_ppp_server_new_from_io(io, DUN_SERVER_ADDRESS);
+> > +	if (e->ppp =3D=3D NULL) {
+> > +		g_at_server_resume(server);
+> > +		return FALSE;
+> > +	}
+> > +
+> > +	g_at_ppp_set_server_info(e->ppp, DUN_PEER_ADDRESS,
+> > +					DUN_DNS_SERVER_1, DUN_DNS_SERVER_2);
+> > +
+> > +	g_at_ppp_set_credentials(e->ppp, "", "");
+> > +	g_at_ppp_set_debug(e->ppp, ofono_emulator_debug, "PPP");
+> > +
+> > +	g_at_ppp_set_connect_function(e->ppp, ppp_connect, e);
+> > +	g_at_ppp_set_disconnect_function(e->ppp, ppp_disconnect, e);
+> > +
+> > +	return FALSE;
+> > +}
+> > +
+> > +static gboolean dial_call(struct ofono_emulator *e, const char *dial_s=
+tr)
+> > +{
+> > +	char c =3D *dial_str;
+> > +
+> > +	DBG("dial call %s", dial_str);
+> > +
+> > +	if (c =3D=3D '*' || c =3D=3D '#' || c =3D=3D 'T' || c =3D=3D 't') {
+> > +
+> > +		g_at_server_send_intermediate(e->server, "CONNECT");
+> > +		g_idle_add(setup_ppp, e);
+> > +	}
+> > +
+> > +	return TRUE;
+> > +}
+> > +
+> > +static void dial_cb(GAtServerRequestType type, GAtResult *result,
+> > +					gpointer user_data)
+> > +{
+> > +	struct ofono_emulator *e =3D user_data;
+> > +	GAtServer *server =3D e->server;
+> > +	GAtResultIter iter;
+> > +	const char *dial_str;
+> > +
+> > +	DBG("");
+> > +
+> > +	if (type !=3D G_AT_SERVER_REQUEST_TYPE_SET)
+> > +		goto error;
+> > +
+> > +	g_at_result_iter_init(&iter, result);
+> > +
+> > +	if (!g_at_result_iter_next(&iter, "D"))
+> > +		goto error;
+> > +
+> > +	dial_str =3D g_at_result_iter_raw_line(&iter);
+> > +	if (!dial_str)
+> > +		goto error;
+> > +
+> > +	if (e->ppp)
+> > +		goto error;
+> > +
+> > +	if (!dial_call(e, dial_str))
+> > +		goto error;
+> > +
+> > +	return;
+> > +
+> > +error:
+> > +	g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
+> > +}
+> > +
+> =
 
-Patch has been applied, thanks.
+> Shouldn't we register a generic dial_cb() and separate it in 2 cases:
+>      OFONO_ATOM_TYPE_DUN_EMULATOR, we do a dun_dial() that would look =
 
-Regards,
--Denis
+> like the dial_cb() you have implemented.
+>      OFONO_ATOM_TYPE_HFP_AG, we do a hfp_dial() e.g. dial a number for a =
 
---===============3943184440277430155==--
+> voice call.
+
+Yes, once we have HFP AG support we can do that.
+
+-- =
+
+Gustavo F. Padovan
+http://profusion.mobi
+
+--===============8966480711363368420==--
 
