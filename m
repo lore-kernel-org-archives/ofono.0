@@ -1,76 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============6556993005414554301=="
+Content-Type: multipart/mixed; boundary="===============2595160578797780333=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/2] ste: Add support for multiple pdp contexts.
-Date: Tue, 08 Feb 2011 07:42:01 -0800
-Message-ID: <1297179721.1520.454.camel@aeonflux>
-In-Reply-To: <1297163846-27817-1-git-send-email-maritsofie.henriksen8@gmail.com>
+Subject: Re: [PATCH 1/4] nettime: Network time plugin implementation
+Date: Tue, 08 Feb 2011 07:46:30 -0800
+Message-ID: <1297179990.1520.457.camel@aeonflux>
+In-Reply-To: <1297167915.8586.7.camel@apaila-ThinkPad-T410>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6556993005414554301==
+--===============2595160578797780333==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marit,
+Hi Antti,
 
-> diff --git a/plugins/ste.c b/plugins/ste.c
-> index cf8aed8..749c4f3 100644
-> --- a/plugins/ste.c
-> +++ b/plugins/ste.c
-> @@ -66,6 +66,7 @@
->  #include <drivers/stemodem/if_caif.h>
->  =
+> > >  plugins/nettime.c |  326 +++++++++++++++++++++++++++++++++++++++++++=
+++++++++++
+> > >  1 files changed, 326 insertions(+), 0 deletions(-)
+> > >  create mode 100644 plugins/nettime.c
+> > =
 
->  #define NUM_CHAT	1
-> +#define MAX_PDP_CONTEXTS	4
->  =
+> > I would prefer if we call this nokia-timed.c or in case this actually
+> > becomes default part of MeeGo, them maybe meego-timed.c. I would be also
+> > fine with {nokia,meego}-nettime.c.
+> > =
 
->  static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
->  =
+> > Just calling it nettime.c is too generic. It needs to be clear what this
+> > is for.
+> > =
 
-> @@ -363,6 +364,7 @@ static void ste_post_online(struct ofono_modem *modem)
->  	struct ofono_message_waiting *mw;
->  	struct ofono_gprs *gprs;
->  	struct ofono_gprs_context *gc;
-> +	int i;
->  =
+> > > +#define TIMED_PATH "/com/meego/time"
+> > > +#define TIMED_SERVICE "com.meego.time"
+> > =
 
->  	DBG("%p", modem);
->  =
+> > So the intention is to convert the Nokia timed into a MeeGo specific
+> > daemon? I would have expected to see com.nokia.timed here.
+> =
 
-> @@ -378,13 +380,18 @@ static void ste_post_online(struct ofono_modem *mod=
-em)
->  =
+> My understanding is that this will be Meego specific plugin since timed
+> is part of Meego. Hence, the service 'com.meego.timed'.  =
 
->  	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
->  					"atmodem", data->chat);
-> -	gc =3D ofono_gprs_context_create(modem, 0, "stemodem", data->chat);
-> -
-> -	if (gprs && gc)
-> -		ofono_gprs_add_context(gprs, gc);
-> +	if (gprs) {
-> +		for (i =3D 0; i < MAX_PDP_CONTEXTS; i++) {
-> +			gc =3D ofono_gprs_context_create(
-> +					modem, 0, "stemodem", data->chat);
-> +			if (gc =3D=3D NULL)
-> +				break;
-> +
-> +			ofono_gprs_add_context(gprs, gc);
-> +		}
-> +	}
 
-you do not need to create the GPRS context atom multiple times. You can
-just add the gc multiple times.
+this is fine with me, but so far the timed.git tree has nothing alike
+this mentioned. It currently still uses com.nokia.timed.
 
-So I just wanna make sure that you guys wanna have multiple GPRS context
-atom instances. For things like PPP and RawIP we have no other choice,
-but for example ISI is a bit more flexible here. That is the reason why
-we do allow it. Maybe CAIF is as flexible.
+> > > +struct nt_data {
+> > > +	gboolean time_available;
+> > > +	gboolean time_pending;
+> > > +	time_t nw_time_utc;
+> > > +	time_t received;
+> > > +	int dst;
+> > > +	int time_zone;
+> > > +	const char *mcc;
+> > > +	const char *mnc;
+> > =
 
-It is a bit question about resources that are used. I am fine either
-way, but I need you to at least think about it ;)
+> > Why do you bother with these here. You might better just reference the
+> > netreg atom. The memory is only valid if netreg atom is present.
+> =
+
+> Timed expects to receive the mcc and mnc in the time notification.
+> However, if the mcc and mnc don't change we don't resend the
+> information. These fields contain the mnc and mcc that oFono sent
+> in the previous time notification.
+
+But this const pointer points to memory inside netreg. It will never
+change. It always points to the same address.
 
 Regards
 
@@ -78,5 +74,5 @@ Marcel
 
 
 
---===============6556993005414554301==--
+--===============2595160578797780333==--
 
