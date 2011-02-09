@@ -1,68 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============2538329651137547037=="
+Content-Type: multipart/mixed; boundary="===============2683238043350864362=="
 MIME-Version: 1.0
-From: Antti Paila <antti.paila@nokia.com>
-Subject: [PATCH 3/3] nettime: Mock Timed for testing
-Date: Wed, 09 Feb 2011 21:12:51 +0200
-Message-ID: <1297278771-14468-4-git-send-email-antti.paila@nokia.com>
-In-Reply-To: <1297278771-14468-1-git-send-email-antti.paila@nokia.com>
+From: Joly, Frederic <frederic.joly@intel.com>
+Subject: RE: [PATCHv2] doc: Assisted Satellite Navigation API and Agent API
+Date: Wed, 09 Feb 2011 19:25:59 +0000
+Message-ID: <129600E5E5FB004392DDC3FB599660D701096093D2@irsmsx504.ger.corp.intel.com>
+In-Reply-To: <1296344683-7967-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2538329651137547037==
+--===============2683238043350864362==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- test/test-nettime |   35 +++++++++++++++++++++++++++++++++++
- 1 files changed, 35 insertions(+), 0 deletions(-)
- create mode 100755 test/test-nettime
+Hi Sjur,
 
-diff --git a/test/test-nettime b/test/test-nettime
-new file mode 100755
-index 0000000..acdd167
---- /dev/null
-+++ b/test/test-nettime
-@@ -0,0 +1,35 @@
-+#!/usr/bin/python
-+
-+import gobject
-+import dbus
-+import sys
-+import time
-+import dbus.service
-+import dbus.mainloop.glib
-+
-+
-+class NetworkTime(dbus.service.Object):
-+	def __init__(self):
-+		busName =3D dbus.service.BusName('com.meego.timed',
-+					bus =3D dbus.SystemBus())
-+		dbus.service.Object.__init__(self, busName, '/com/meego/timed')
-+	@dbus.service.method(dbus_interface=3D"com.meego.NetworkTime",
-+					in_signature=3D"a{sv}", out_signature=3D"")
-+	def Notify(self, arg):
-+		print arg
-+		print
-+		print "Time from mobile: %d" % arg["UTC"]
-+		print "DST: %d" % arg["DST"]
-+		print "Timezone: %d" % arg["Timezone"]
-+		print "MNC: %s" % arg["MobileNetworkCode"]
-+		print "MCC: %s" % arg["MobileCountryCode"]
-+
-+if __name__ =3D=3D '__main__':
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+	agent =3D NetworkTime()
-+
-+	mainloop =3D gobject.MainLoop()
-+	mainloop.run()
-+
-+
-+
--- =
+-----Original Message-----
+From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
+f Of Sjur Br=C3=A6ndeland
+Sent: Sunday, January 30, 2011 12:45 AM
+To: remi.denis-courmont(a)nokia.com; Denis Kenzior; ofono(a)ofono.org
+Cc: Simon Lethbridge
+Subject: [PATCHv2] doc: Assisted Satellite Navigation API and Agent API
 
-1.7.1
++		void ResetAssistanceData()
++
++			A request has been received from the network that all
++			assistance data should be reset.  This is used for 3gpp
++			performance tests.
++
+
+Sorry to come back so late of this. By assistance data reset, you meant a r=
+eset of all positioning stored information? Like used in 3GPP conformance t=
+esting (44.014 =C2=A7 8.15 for instance)?
+The knowledge of positioning information is somehow "Assistance" informatio=
+n, but this is not the wording I'm used to.
+
+Thanks,
+
+Fred
+
+ =
+
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
 
---===============2538329651137547037==--
+--===============2683238043350864362==--
 
