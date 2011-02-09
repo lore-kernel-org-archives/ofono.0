@@ -1,356 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============5360311176805351481=="
+Content-Type: multipart/mixed; boundary="===============9218390203195385021=="
 MIME-Version: 1.0
-From: Carlos Pargada <carlos.pargada@intel.com>
-Subject: [PATCH] Fix Uplink data transfer in RawIP mode
-Date: Wed, 09 Feb 2011 12:04:28 +0100
-Message-ID: <1297249468-2479-1-git-send-email-carlos.pargada@intel.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH] TODO: Add vCard export to SM/ME stores
+Date: Wed, 09 Feb 2011 14:57:26 +0200
+Message-ID: <AANLkTi=uBh=3q4n822sODLzbrSApPU-zCgDamFx3RRv4@mail.gmail.com>
+In-Reply-To: <1290494233.13641.3.camel@aeonflux.mpl.access-company.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5360311176805351481==
+--===============9218390203195385021==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Fix Uplink Data transfer in RawIP mode with IFX Modem
+Hi Marcel,
 
-Change Data flow from stream mode to Packet mode between GatRawIP and GatMu=
-x.
+2010/11/23 Marcel Holtmann <marcel@holtmann.org>:
+>> So the aa{sv} parameter/return value would be of format:
+>> {
+>> =C2=A0 'name' =C2=A0 =C2=A0: string,
+>> =C2=A0 'group' =C2=A0 : string, =C2=A0 // optional, for eg. organization
+>> =C2=A0 'hidden' =C2=A0: integer, =C2=A0// boolean value: defaults to 0
+>> =C2=A0 'numbers' : array of dict {
+>> =C2=A0 =C2=A0 'number' =C2=A0 : string,
+>> =C2=A0 =C2=A0 'category' : integer
+>> =C2=A0 },
+>> =C2=A0 'emails' : array of dict {
+>> =C2=A0 =C2=A0 'address' =C2=A0: string,
+>> =C2=A0 =C2=A0 'category' : integer
+>> =C2=A0 },
+>> =C2=A0 'voip_uris' : array of dict {
+>> =C2=A0 =C2=A0 'uri' =C2=A0 =C2=A0 =C2=A0: string,
+>> =C2=A0 =C2=A0 'category' : integer
+>> =C2=A0 },
+>> }
+>>
+>> category : enum { // like existing "enum phonebook_number_type"
+>> =C2=A0 HOME, MOBILE, FAX, WORK, OTHER
+>> }
+>
+> this feels a bit too complicated for me. I actually don't want to
+> over-design this feature, but it does have to be consistent with our
+> other key names.
 
+I agree, how about a strict subset of the spec, like a dict of name -> numb=
+er?
 
----
- gatchat/gatio.c    |   98 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++-
- gatchat/gatio.h    |    1 +
- gatchat/gatrawip.c |   75 ++++++++++++++++++++++++++++++---------
- 3 files changed, 155 insertions(+), 19 deletions(-)
+> To be honest, the more and more I think about this, the more my
+> conclusion is to not support phonebook export. It is a bad idea. It is
+> highly complex and it is not a feature that will be used anyway.
 
-diff --git a/gatchat/gatio.c b/gatchat/gatio.c
-index 9d44a78..5ad640d 100644
---- a/gatchat/gatio.c
-+++ b/gatchat/gatio.c
-@@ -77,7 +77,7 @@ static void read_watcher_destroy_notify(gpointer user_dat=
-a)
- 		io->user_disconnect(io->user_disconnect_data);
- }
- =
+I tend to agree. However, people seem to really want to have this
+export(), so we need to arrive at some reasonable conclusion here.
 
--static gboolean received_data(GIOChannel *channel, GIOCondition cond,
-+static gboolean stream_received_data(GIOChannel *channel, GIOCondition con=
-d,
- 				gpointer data)
- {
- 	unsigned char *buf;
-@@ -132,6 +132,51 @@ static gboolean received_data(GIOChannel *channel, GIO=
-Condition cond,
- 	return TRUE;
- }
- =
+Cheers,
+Aki
 
-+static gboolean packet_received_data(GIOChannel *channel, GIOCondition con=
-d,
-+				gpointer data)
-+{
-+	unsigned char *buf;
-+	GAtIO *io =3D data;
-+	GIOStatus status;
-+	gsize rbytes;
-+	gsize toread;
-+
-+
-+	if (cond & G_IO_NVAL)
-+		return FALSE;
-+
-+	toread=3D 2048;
-+	rbytes =3D 0;
-+
-+	ring_buffer_reset(io->buf);
-+	buf =3D ring_buffer_write_ptr(io->buf, 0);
-+
-+	if (buf =3D=3D NULL)
-+		return FALSE;
-+
-+	status =3D g_io_channel_read_chars(channel, (char *) buf,
-+						toread, &rbytes, NULL);
-+
-+	if (status =3D=3D G_IO_STATUS_ERROR)
-+		return FALSE;
-+
-+	if (rbytes > 0)
-+		ring_buffer_write_advance(io->buf, rbytes);
-+
-+
-+
-+	if (rbytes > 0 && io->read_handler)
-+		io->read_handler(io->buf, io->read_data);
-+
-+	if (cond & (G_IO_HUP | G_IO_ERR))
-+		return FALSE;
-+
-+	if (rbytes =3D=3D 0 && status !=3D G_IO_STATUS_AGAIN)
-+		return FALSE;
-+
-+	return TRUE;
-+}
-+
- gsize g_at_io_write(GAtIO *io, const gchar *data, gsize count)
- {
- 	GIOStatus status;
-@@ -175,6 +220,50 @@ static gboolean can_write_data(GIOChannel *channel, GI=
-OCondition cond,
- =
-
- }
- =
-
-+static GAtIO *create_packet_io(GIOChannel *channel, GIOFlags flags)
-+{
-+	GAtIO *io;
-+
-+	if (channel =3D=3D NULL)
-+		return NULL;
-+
-+	io =3D g_try_new0(GAtIO, 1);
-+
-+	if (io =3D=3D NULL)
-+		return io;
-+
-+	io->ref_count =3D 1;
-+	io->debugf =3D NULL;
-+
-+
-+	io->max_read_attempts =3D 1;
-+	io->use_write_watch =3D TRUE;
-+
-+	io->buf =3D ring_buffer_new(2048);
-+
-+	if (!io->buf)
-+		goto error;
-+
-+	if (!g_at_util_setup_io(channel, flags))
-+		goto error;
-+
-+	io->channel =3D channel;
-+	io->read_watch =3D g_io_add_watch_full(channel, G_PRIORITY_DEFAULT,
-+				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
-+				packet_received_data, io,
-+				read_watcher_destroy_notify);
-+
-+	return io;
-+
-+error:
-+	if (io->buf)
-+		ring_buffer_free(io->buf);
-+
-+	g_free(io);
-+
-+	return NULL;
-+}
-+
- static GAtIO *create_io(GIOChannel *channel, GIOFlags flags)
- {
- 	GAtIO *io;
-@@ -208,7 +297,7 @@ static GAtIO *create_io(GIOChannel *channel, GIOFlags f=
-lags)
- 	io->channel =3D channel;
- 	io->read_watch =3D g_io_add_watch_full(channel, G_PRIORITY_DEFAULT,
- 				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
--				received_data, io,
-+				stream_received_data, io,
- 				read_watcher_destroy_notify);
- =
-
- 	return io;
-@@ -222,6 +311,11 @@ error:
- 	return NULL;
- }
- =
-
-+GAtIO *g_raw_io_new(GIOChannel *channel)
-+{
-+	return create_packet_io(channel, G_IO_FLAG_NONBLOCK);
-+}
-+
- GAtIO *g_at_io_new(GIOChannel *channel)
- {
- 	return create_io(channel, G_IO_FLAG_NONBLOCK);
-diff --git a/gatchat/gatio.h b/gatchat/gatio.h
-index 5a9f9f9..4b8bc00 100644
---- a/gatchat/gatio.h
-+++ b/gatchat/gatio.h
-@@ -37,6 +37,7 @@ struct ring_buffer;
- typedef void (*GAtIOReadFunc)(struct ring_buffer *buffer, gpointer user_da=
-ta);
- typedef gboolean (*GAtIOWriteFunc)(gpointer user_data);
- =
-
-+GAtIO *g_raw_io_new(GIOChannel *channel);
- GAtIO *g_at_io_new(GIOChannel *channel);
- GAtIO *g_at_io_new_blocking(GIOChannel *channel);
- =
-
-diff --git a/gatchat/gatrawip.c b/gatchat/gatrawip.c
-index 539f71f..ab72035 100644
---- a/gatchat/gatrawip.c
-+++ b/gatchat/gatrawip.c
-@@ -42,10 +42,17 @@ struct _GAtRawIP {
- 	char *ifname;
- 	struct ring_buffer *write_buffer;
- 	struct ring_buffer *tun_write_buffer;
-+	GQueue *packet_queue;
- 	GAtDebugFunc debugf;
- 	gpointer debug_data;
- };
- =
-
-+struct PacketRaw {
-+	unsigned char *buf;
-+	int len;
-+};
-+
-+
- GAtRawIP *g_at_rawip_new(GIOChannel *channel)
- {
- 	GAtRawIP *rawip;
-@@ -112,24 +119,22 @@ void g_at_rawip_unref(GAtRawIP *rawip)
- static gboolean can_write_data(gpointer data)
- {
- 	GAtRawIP *rawip =3D data;
--	unsigned int len;
--	unsigned char *buf;
--	gsize bytes_written;
-+	gsize bytes_written;
-+	struct PacketRaw *packetbuf;
- =
-
--	if (rawip->write_buffer =3D=3D NULL)
-+	if (rawip->packet_queue =3D=3D NULL)
- 		return FALSE;
-+
-+	while(g_queue_is_empty(rawip->packet_queue)!=3D TRUE)
-+	{
-+		packetbuf=3D g_queue_pop_head(rawip->packet_queue);
-+		bytes_written =3D g_at_io_write(rawip->io, (gchar *) packetbuf->buf, pac=
-ketbuf->len);
-+
-+		g_free(packetbuf->buf);
-+		g_free(packetbuf);
- =
-
--	len =3D ring_buffer_len_no_wrap(rawip->write_buffer);
--	buf =3D ring_buffer_read_ptr(rawip->write_buffer, 0);
--
--	bytes_written =3D g_at_io_write(rawip->io, (gchar *) buf, len);
--	ring_buffer_drain(rawip->write_buffer, bytes_written);
--
--	if (ring_buffer_len(rawip->write_buffer) > 0)
--		return TRUE;
--
--	rawip->write_buffer =3D NULL;
--
-+	}
-+	return TRUE;
- 	return FALSE;
- }
- =
-
-@@ -169,9 +174,22 @@ static void new_bytes(struct ring_buffer *rbuf, gpoint=
-er user_data)
- static void tun_bytes(struct ring_buffer *rbuf, gpointer user_data)
- {
- 	GAtRawIP *rawip =3D user_data;
-+	struct PacketRaw *packetbuf;
-+
- =
-
--	rawip->write_buffer =3D rbuf;
-+	packetbuf=3D g_try_new0(struct PacketRaw, 1);
-+	if (packetbuf =3D=3D NULL)
-+		return;
-+
-+	packetbuf-> len=3D ring_buffer_len_no_wrap(rbuf);
- =
-
-+	packetbuf->buf=3D g_try_malloc(packetbuf-> len);
-+	if (packetbuf->buf =3D=3D NULL)
-+		return;
-+
-+	ring_buffer_read(rbuf, packetbuf->buf, 2048);
-+
-+	g_queue_push_head(rawip->packet_queue, packetbuf);
- 	g_at_io_set_write_handler(rawip->io, can_write_data, rawip);
- }
- =
-
-@@ -203,7 +221,11 @@ static void create_tun(GAtRawIP *rawip)
- 		return;
- 	}
- =
-
--	rawip->tun_io =3D g_at_io_new(channel);
-+	rawip->tun_io =3D g_raw_io_new(channel);
-+
-+	rawip->packet_queue =3D g_queue_new();
-+	if (rawip->packet_queue =3D=3D NULL)
-+		return;
- =
-
- 	g_io_channel_unref(channel);
- }
-@@ -224,6 +246,8 @@ void g_at_rawip_open(GAtRawIP *rawip)
- =
-
- void g_at_rawip_shutdown(GAtRawIP *rawip)
- {
-+	struct PacketRaw *packetbuf;
-+
- 	if (rawip =3D=3D NULL)
- 		return;
- =
-
-@@ -238,6 +262,23 @@ void g_at_rawip_shutdown(GAtRawIP *rawip)
- =
-
- 	g_at_io_unref(rawip->tun_io);
- 	rawip->tun_io =3D NULL;
-+
-+	if(rawip->packet_queue =3D=3D NULL)
-+		return;
-+
-+	while(g_queue_is_empty(rawip->packet_queue)!=3D TRUE)
-+	{
-+		packetbuf=3D g_queue_pop_head(rawip->packet_queue);
-+		if(packetbuf->buf !=3D NULL)
-+			g_free(packetbuf->buf);
-+
-+		g_free(packetbuf);
-+	}
-+
-+	g_queue_free(rawip->packet_queue);
-+	rawip->packet_queue=3D NULL;
-+
-+
- }
- =
-
- const char *g_at_rawip_get_interface(GAtRawIP *rawip)
--- =
-
-1.6.6.1
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============5360311176805351481==--
+--===============9218390203195385021==--
 
