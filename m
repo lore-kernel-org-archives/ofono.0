@@ -1,221 +1,95 @@
-Content-Type: multipart/mixed; boundary="===============1670857831200464116=="
+Content-Type: multipart/mixed; boundary="===============3935899271660134687=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 7/7] isi: implement set_attach_policy
-Date: Wed, 09 Feb 2011 16:28:57 +0200
-Message-ID: <1297261737-20372-7-git-send-email-remi.denis-courmont@nokia.com>
-In-Reply-To: <1297261737-20372-1-git-send-email-remi.denis-courmont@nokia.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: Re: [RFCv2] doc: Proposal for LTE/IMS API
+Date: Wed, 09 Feb 2011 17:35:52 +0100
+Message-ID: <AANLkTi=Lgkzj6m=zzG6+OxfDmN_=mCJnV1bnHV+jj4hD@mail.gmail.com>
+In-Reply-To: <201102090902.43928.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1670857831200464116==
+--===============3935899271660134687==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/isimodem/gprs.c |  131 ++++++++-----------------------------------=
----
- 1 files changed, 23 insertions(+), 108 deletions(-)
+Hi R=C3=A9mi,
 
-diff --git a/drivers/isimodem/gprs.c b/drivers/isimodem/gprs.c
-index ea90704..ad5a768 100644
---- a/drivers/isimodem/gprs.c
-+++ b/drivers/isimodem/gprs.c
-@@ -62,6 +62,8 @@ struct gprs_data {
- =
+>> > > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 boolean PreConditionChec=
+k(string Type, string
+>> > > PeerAddress, + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 u=
+int16 PeerPort,
+>> > > =C2=A0uint16 LocalPort) +
+>> >
+>> > That stuff is per context. Should it not be in the context object rath=
+er
+>> > than in the IMS manager?
+>>
+>> oFono should only consider QoS information from the IMS
+>> Default and Dedicated bearers when checking the precondition.
+>>
+>> In theory there might be more than one IMS APN for a operator,
+>> but I really don't see this as a real life scenario for this.
+>> If anyone disagrees please speak out and explain...
+>
+> Well, I don't care if it is part of the normal context interface, or if i=
+t is
+> an extra IMS-specific interface on the IMS context object path. But this =
+is
+> clearly a per-context thing so it should be in the context.
+>
+> I don't want to end up in a 'woops' situation down the line. And I don't =
+trust
+> operators not to actually implement those useless in real life scenarii...
 
- static void configure_resp_cb(const GIsiMessage *msg, void *opaque)
- {
-+	struct isi_cb_data *cbd =3D opaque;
-+	ofono_gprs_cb_t cb =3D cbd->cb;
- 	const uint8_t *data =3D g_isi_msg_data(msg);
- =
+One option could be to keep it here in the IMS API but
+to include the Local IP Address as a argument to the PreConditionCheck.
+This fits quite nicely with the QoS SIP Precondition operation and can
+easily be used
+by oFono core to map to the right APN.
 
- 	if (g_isi_msg_error(msg) < 0) {
-@@ -75,26 +77,13 @@ static void configure_resp_cb(const GIsiMessage *msg, v=
-oid *opaque)
- 	if (g_isi_msg_data_len(msg) < 1)
- 		return;
- =
+There is still a theoretical problem here if you get the same Home Address =
+from
+two IMS APN, If anyone think this is an issue I'll throw in the towel
+and move the
+PreConditionCheck to the ConnectionContext object ;-)
 
--	if (data[0] !=3D GPDS_OK)
-+	if (data[0] !=3D GPDS_OK) {
- 		DBG("GPDS configure failed: %s", gpds_status_name(data[0]));
--}
--
--static void set_attach_mode(struct ofono_gprs *gprs, int attached)
--{
--	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
--
--	const unsigned char msg[] =3D {
--		GPDS_CONFIGURE_REQ,
--		attached ? GPDS_ATTACH_MODE_AUTOMATIC : GPDS_ATTACH_MODE_MANUAL,
--		GPDS_MT_ACT_MODE_REJECT,
--		GPDS_CLASSC_MODE_DEFAULT,
--		GPDS_AOL_CTX_DEFAULT,
--		0x00,
--		0x00
--	};
-+		CALLBACK_WITH_FAILURE(cb, cbd->data);
-+		return;
-+	}
- =
+Anyway, I think either solution would work just fine.
+In terms of the "separation of concern" i think keeping it here is the
+best solution,
+but putting it in the ConnectionContext is more flexible.
 
--	g_isi_client_send(gd->client, msg, sizeof(msg),
--				configure_resp_cb, gprs, NULL);
-+	CALLBACK_WITH_SUCCESS(cb, cbd->data);
- }
- =
+I'm not going to keep arguing for this forever ;-)
 
- static void detach_ind_cb(const GIsiMessage *msg, void *opaque)
-@@ -114,8 +103,6 @@ static void detach_ind_cb(const GIsiMessage *msg, void =
-*opaque)
- 	DBG("detached: %s (0x%02"PRIx8")",
- 		gpds_isi_cause_name(data[0]), data[0]);
- =
+>> > > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 array{string} PcscfAddre=
+sses [readonly]
+>> >
+>> > Should this be in the context object? The AT command is per CID. Would=
+ it
+>> > make any sense for a network to have different P-CSCF based on the
+>> > bearer?
+>>
+>> As mentioned above, I don't see why an operator would ever have more than
+>> one IMS APN. If we only have one IMS APN, then we might as well present
+>> this information here in the IMS API.
+>
+> How do you cope with two connections to the same APN?
 
--	set_attach_mode(gprs, FALSE);
--
- 	ofono_gprs_detached_notify(gprs);
- }
- =
+3GPP TS 24.229,  B.2.2.1 "PDP context activation and P-CSCF discovery",
+describes that the P-CSCF can be provided as dynamic parameter with the
+PDN connection, stored on the ISIM, or by provisioning. As far as I underst=
+and
+this It is up to the IMS application to select which one of the P-CSCF
+addresses it should use.
 
-@@ -324,101 +311,29 @@ static void isi_gprs_remove(struct ofono_gprs *gprs)
- 	g_free(gd);
- }
- =
-
--static void attach_resp_cb(const GIsiMessage *msg, void *opaque)
--{
--	struct isi_cb_data *cbd =3D opaque;
--	ofono_gprs_cb_t cb =3D cbd->cb;
--	const uint8_t *data =3D g_isi_msg_data(msg);
--
--	if (g_isi_msg_error(msg) < 0) {
--		DBG("ISI message error: %d", g_isi_msg_error(msg));
--		goto error;
--	}
--
--	if (g_isi_msg_id(msg) !=3D GPDS_ATTACH_RESP)
--		return;
--
--	if (g_isi_msg_data_len(msg) < 2)
--		goto error;
--
--	if (data[0] !=3D GPDS_OK) {
--		DBG("attach failed: %s", gpds_status_name(data[0]));
--		goto error;
--	}
--
--	set_attach_mode(cbd->user, TRUE);
--
--	CALLBACK_WITH_SUCCESS(cb, cbd->data);
--	return;
--
--error:
--	CALLBACK_WITH_FAILURE(cb, cbd->data);
--}
--
--static void detach_resp_cb(const GIsiMessage *msg, void *opaque)
--{
--	struct isi_cb_data *cbd =3D opaque;
--	ofono_gprs_cb_t cb =3D cbd->cb;
--	const uint8_t *data =3D g_isi_msg_data(msg);
--
--	if (g_isi_msg_error(msg) < 0) {
--		DBG("ISI client error: %d", g_isi_msg_error(msg));
--		goto error;
--	}
--
--	if (g_isi_msg_id(msg) !=3D GPDS_DETACH_RESP)
--		return;
--
--	if (g_isi_msg_data_len(msg) < 2)
--		goto error;
--
--	if (data[0] !=3D GPDS_OK) {
--		DBG("detach failed: %s", gpds_status_name(data[0]));
--		goto error;
--	}
--
--	set_attach_mode(cbd->user, FALSE);
--
--	CALLBACK_WITH_SUCCESS(cb, cbd->data);
--	return;
--
--error:
--	CALLBACK_WITH_FAILURE(cb, cbd->data);
--}
--
--static void isi_gprs_set_attached(struct ofono_gprs *gprs, int attached,
-+static void isi_gprs_set_attach_policy(struct ofono_gprs *gprs,
-+					ofono_bool_t always_on,
- 					ofono_gprs_cb_t cb, void *data)
- {
- 	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
- 	struct isi_cb_data *cbd =3D isi_cb_data_new(gprs, cb, data);
-+	const unsigned char msg[] =3D {
-+		GPDS_CONFIGURE_REQ,
-+		always_on ? GPDS_ATTACH_MODE_AUTOMATIC
-+				: GPDS_ATTACH_MODE_MANUAL,
-+		GPDS_MT_ACT_MODE_REJECT,
-+		GPDS_CLASSC_MODE_DEFAULT,
-+		GPDS_AOL_CTX_DEFAULT,
-+		0x00,
-+		0x00
-+	};
- =
-
- 	if (cbd =3D=3D NULL || gd =3D=3D NULL)
- 		goto error;
- =
-
--	if (attached) {
--		const unsigned char msg[] =3D {
--			GPDS_ATTACH_REQ,
--			GPDS_FOLLOW_OFF
--		};
--
--		if (g_isi_client_send_with_timeout(gd->client,
--				msg, sizeof(msg),
--				GPDS_ATTACH_TIMEOUT, attach_resp_cb,
--				cbd, g_free))
--			return;
--	} else {
--		const unsigned char msg[] =3D {
--			GPDS_DETACH_REQ,
--			0x00, /* filler */
--			0x00  /* sub-blocks */
--		};
--
--		if (g_isi_client_send_with_timeout(gd->client,
--				msg, sizeof(msg),
--				GPDS_DETACH_TIMEOUT, detach_resp_cb,
--				cbd, g_free))
--			return;
--	}
-+	if (g_isi_client_send(gd->client, msg, sizeof(msg),
-+				configure_resp_cb, cbd, g_free))
-+		return;
- =
-
- error:
- 	CALLBACK_WITH_FAILURE(cb, data);
-@@ -493,7 +408,7 @@ static struct ofono_gprs_driver driver =3D {
- 	.name			=3D "isimodem",
- 	.probe			=3D isi_gprs_probe,
- 	.remove			=3D isi_gprs_remove,
--	.set_attached		=3D isi_gprs_set_attached,
-+	.set_attach_policy	=3D isi_gprs_set_attach_policy,
- 	.attached_status	=3D isi_gprs_attached_status,
- };
- =
-
--- =
-
-1.7.1
+So I think the best would be to expose the P-CSCF address stored on ISIM
+in the IMS API, and move add the P-CSCF provided with the PDN Connection
+to the ConnectionContext API.
 
 
---===============1670857831200464116==--
+Regards,
+Sjur
+
+--===============3935899271660134687==--
 
