@@ -1,51 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============5789848124454661481=="
+Content-Type: multipart/mixed; boundary="===============6752087748300796755=="
 MIME-Version: 1.0
-From: Antti Paila <antti.paila@nokia.com>
-Subject: Re: [PATCH 2/5 v3] Cell-info: Header file for Neighbor cell info
-Date: Wed, 09 Feb 2011 08:54:42 +0200
-Message-ID: <1297234482.8586.24.camel@apaila-ThinkPad-T410>
-In-Reply-To: <1297107012.1520.446.camel@aeonflux>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [RFCv2] doc: Proposal for LTE/IMS API
+Date: Wed, 09 Feb 2011 09:02:43 +0200
+Message-ID: <201102090902.43928.remi.denis-courmont@nokia.com>
+In-Reply-To: <AANLkTi=Jt0w-UqJ8MtqDae83A6U6baAbzhh6YtR5+mc5@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5789848124454661481==
+--===============6752087748300796755==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+On Tuesday 08 February 2011 18:22:43 ext Sjur Br=C3=A6ndeland, you wrote:
+> > > +             boolean PreConditionCheck(string Type, string
+> > > PeerAddress, +                                     uint16 PeerPort,
+> > >  uint16 LocalPort) +
+> > =
 
-On Mon, 2011-02-07 at 11:30 -0800, ext Marcel Holtmann wrote:
-> Hi Antti,
+> > That stuff is per context. Should it not be in the context object rather
+> > than in the IMS manager?
 > =
 
-> > +#define OFONO_CI_FIELD_TA_UNDEFINED 0xFF
-> > +#define OFONO_CI_FIELD_UCID_UNDEFINED 0xFFFFFFFF
-> > +#define OFONO_CI_FIELD_ECN0_UNDEFINED 0xFF
-> > +#define OFONO_CI_FIELD_RSCP_UNDEFINED -127
-> > +#define OFONO_CI_FIELD_PATHLOSS_UNDEFINED 0xFF
-> > +#define OFONO_CI_FIELD_FREQ_UNDEFINED 0xFFFF
-> > +
-> > +#define OFONO_MAX_NMR_COUNT 15
-> > +#define OFONO_MAX_MEASURED_CELL_COUNT 32
-> > +#define OFONO_MAX_MEAS_RES_LIST_COUNT 8
-> > +
-> > +enum ofono_cell_type {
-> > +	OFONO_CELL_TYPE_GERAN,
-> > +	OFONO_CELL_TYPE_UTRAN_FDD
-> > +};
+> oFono should only consider QoS information from the IMS
+> Default and Dedicated bearers when checking the precondition.
 > =
 
-> anything we have to keep in mind for LTE here? Or does LTE not matter
-> for neighbor cell info?
+> In theory there might be more than one IMS APN for a operator,
+> but I really don't see this as a real life scenario for this.
+> If anyone disagrees please speak out and explain...
 
-Neighbor cell info does matter for LTE. I quickly browsed through the
-OMA spec and it seems that eutra follows the same format as geran and
-utran. Have not had time to get the details yet.
+Well, I don't care if it is part of the normal context interface, or if it =
+is =
 
-Best Regards,
-  Antti
+an extra IMS-specific interface on the IMS context object path. But this is =
 
+clearly a per-context thing so it should be in the context.
 
---===============5789848124454661481==--
+I don't want to end up in a 'woops' situation down the line. And I don't tr=
+ust =
+
+operators not to actually implement those useless in real life scenarii...
+
+> > > +             array{string} PcscfAddresses [readonly]
+> > =
+
+> > Should this be in the context object? The AT command is per CID. Would =
+it
+> > make any sense for a network to have different P-CSCF based on the
+> > bearer?
+> =
+
+> As mentioned above, I don't see why an operator would ever have more than
+> one IMS APN. If we only have one IMS APN, then we might as well present
+> this information here in the IMS API.
+
+How do you cope with two connections to the same APN?
+
+-- =
+
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
+
+--===============6752087748300796755==--
 
