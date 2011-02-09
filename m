@@ -1,85 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============9033303297743725121=="
+Content-Type: multipart/mixed; boundary="===============0347923526585369074=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 3/7] gprs: let the modems automatically attach when activating
- a context
-Date: Wed, 09 Feb 2011 16:28:53 +0200
-Message-ID: <1297261737-20372-3-git-send-email-remi.denis-courmont@nokia.com>
+Subject: [PATCH 6/7] atmodem: dummy set_attach_policy
+Date: Wed, 09 Feb 2011 16:28:56 +0200
+Message-ID: <1297261737-20372-6-git-send-email-remi.denis-courmont@nokia.com>
 In-Reply-To: <1297261737-20372-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9033303297743725121==
+--===============0347923526585369074==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If some really stupid modem does not support attach on demand, this
-really should be worked around in the specific driver (at least
-AT and ISI modems support this).
 ---
- src/dbus.c  |   13 -------------
- src/gprs.c  |    6 ------
- src/ofono.h |    2 --
- 3 files changed, 0 insertions(+), 21 deletions(-)
+ drivers/atmodem/gprs.c |   30 ++++++++----------------------
+ 1 files changed, 8 insertions(+), 22 deletions(-)
 
-diff --git a/src/dbus.c b/src/dbus.c
-index 01d43cf..a635121 100644
---- a/src/dbus.c
-+++ b/src/dbus.c
-@@ -336,19 +336,6 @@ DBusMessage *__ofono_error_in_use(DBusMessage *msg)
- 			"The resource is currently in use");
- }
+diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
+index 6e01994..3fcf17d 100644
+--- a/drivers/atmodem/gprs.c
++++ b/drivers/atmodem/gprs.c
+@@ -51,31 +51,17 @@ struct gprs_data {
+ 	unsigned int vendor;
+ };
  =
 
--DBusMessage *__ofono_error_not_attached(DBusMessage *msg)
+-static void at_cgatt_cb(gboolean ok, GAtResult *result, gpointer user_data)
 -{
--	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE ".NotAttached",
--			"GPRS is not attached");
+-	struct cb_data *cbd =3D user_data;
+-	ofono_gprs_cb_t cb =3D cbd->cb;
+-	struct ofono_error error;
+-
+-	decode_at_error(&error, g_at_result_final_response(result));
+-
+-	cb(&error, cbd->data);
 -}
 -
--DBusMessage *__ofono_error_attach_in_progress(DBusMessage *msg)
--{
--	return g_dbus_create_error(msg,
--				OFONO_ERROR_INTERFACE ".AttachInProgress",
--				"GPRS Attach is in progress");
--}
--
- DBusMessage *__ofono_error_canceled(DBusMessage *msg)
+-static void at_gprs_set_attached(struct ofono_gprs *gprs, int attached,
++static void at_gprs_set_attach_policy(struct ofono_gprs *gprs,
++					ofono_bool_t always_on,
+ 					ofono_gprs_cb_t cb, void *data)
  {
- 	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE ".Canceled",
-diff --git a/src/gprs.c b/src/gprs.c
-index ee66b2a..f8d0fb5 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -1068,12 +1068,6 @@ static DBusMessage *pri_set_property(DBusConnection =
-*conn,
- 		if (ctx->active =3D=3D (ofono_bool_t) value)
- 			return dbus_message_new_method_return(msg);
+-	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
+-	struct cb_data *cbd =3D cb_data_new(cb, data);
+-	char buf[64];
+-
+-	snprintf(buf, sizeof(buf), "AT+CGATT=3D%i", attached ? 1 : 0);
++	/* TODO: vendor specific stuff */
  =
 
--		if (value && !ctx->gprs->attached)
--			return __ofono_error_not_attached(msg);
+-	if (g_at_chat_send(gd->chat, buf, none_prefix,
+-				at_cgatt_cb, cbd, g_free) > 0)
++	/* Pure standard modems only support demand-attach policy */
++	if (!always_on) {
++		CALLBACK_WITH_SUCCESS(cb, data);
+ 		return;
 -
--		if (ctx->gprs->flags & GPRS_FLAG_ATTACHING)
--			return __ofono_error_attach_in_progress(msg);
--
- 		if (value) {
- 			if (assign_context(ctx) =3D=3D FALSE)
- 				return __ofono_error_not_implemented(msg);
-diff --git a/src/ofono.h b/src/ofono.h
-index 229fcb2..f44f3ad 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -54,8 +54,6 @@ DBusMessage *__ofono_error_not_available(DBusMessage *msg=
-);
- DBusMessage *__ofono_error_timed_out(DBusMessage *msg);
- DBusMessage *__ofono_error_sim_not_ready(DBusMessage *msg);
- DBusMessage *__ofono_error_in_use(DBusMessage *msg);
--DBusMessage *__ofono_error_not_attached(DBusMessage *msg);
--DBusMessage *__ofono_error_attach_in_progress(DBusMessage *msg);
- DBusMessage *__ofono_error_canceled(DBusMessage *msg);
- DBusMessage *__ofono_error_access_denied(DBusMessage *msg);
+-	g_free(cbd);
++	}
+ =
+
+ 	CALLBACK_WITH_FAILURE(cb, data);
+ }
+@@ -401,7 +387,7 @@ static struct ofono_gprs_driver driver =3D {
+ 	.name			=3D "atmodem",
+ 	.probe			=3D at_gprs_probe,
+ 	.remove			=3D at_gprs_remove,
+-	.set_attached		=3D at_gprs_set_attached,
++	.set_attach_policy	=3D at_gprs_set_attach_policy,
+ 	.attached_status	=3D at_gprs_registration_status,
+ };
  =
 
 -- =
@@ -87,5 +78,5 @@ index 229fcb2..f44f3ad 100644
 1.7.1
 
 
---===============9033303297743725121==--
+--===============0347923526585369074==--
 
