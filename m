@@ -1,52 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============8677770098515758038=="
+Content-Type: multipart/mixed; boundary="===============5789848124454661481=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/3] gprs-provision: Add SPN to provision API
-Date: Tue, 08 Feb 2011 21:58:07 -0600
-Message-ID: <4D5210CF.2030307@gmail.com>
-In-Reply-To: <1297159428-2409-1-git-send-email-jukka.saunamaki@nokia.com>
+From: Antti Paila <antti.paila@nokia.com>
+Subject: Re: [PATCH 2/5 v3] Cell-info: Header file for Neighbor cell info
+Date: Wed, 09 Feb 2011 08:54:42 +0200
+Message-ID: <1297234482.8586.24.camel@apaila-ThinkPad-T410>
+In-Reply-To: <1297107012.1520.446.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8677770098515758038==
+--===============5789848124454661481==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jukka,
+Hi Marcel,
 
-On 02/08/2011 04:03 AM, Jukka Saunamaki wrote:
-> Hello
+On Mon, 2011-02-07 at 11:30 -0800, ext Marcel Holtmann wrote:
+> Hi Antti,
 > =
 
-> This patchset adds Service Provider Name (SPN) into GPRS context provisio=
-ning API.
-> SPN is read (asynchronously) in the middle of gprs atom registration, if =
-provisioning is needed.
+> > +#define OFONO_CI_FIELD_TA_UNDEFINED 0xFF
+> > +#define OFONO_CI_FIELD_UCID_UNDEFINED 0xFFFFFFFF
+> > +#define OFONO_CI_FIELD_ECN0_UNDEFINED 0xFF
+> > +#define OFONO_CI_FIELD_RSCP_UNDEFINED -127
+> > +#define OFONO_CI_FIELD_PATHLOSS_UNDEFINED 0xFF
+> > +#define OFONO_CI_FIELD_FREQ_UNDEFINED 0xFFFF
+> > +
+> > +#define OFONO_MAX_NMR_COUNT 15
+> > +#define OFONO_MAX_MEASURED_CELL_COUNT 32
+> > +#define OFONO_MAX_MEAS_RES_LIST_COUNT 8
+> > +
+> > +enum ofono_cell_type {
+> > +	OFONO_CELL_TYPE_GERAN,
+> > +	OFONO_CELL_TYPE_UTRAN_FDD
+> > +};
 > =
 
-> --Jukka
-> =
+> anything we have to keep in mind for LTE here? Or does LTE not matter
+> for neighbor cell info?
 
-> Jukka Saunamaki (3):
->       gprs-provision: add SPN to provisioning API header
->       gprs,gprs-provision: add SPN to provisioning API
->       gprs-provision: update example with SPN
-> =
+Neighbor cell info does matter for LTE. I quickly browsed through the
+OMA spec and it seems that eutra follows the same format as geran and
+utran. Have not had time to get the details yet.
 
->  examples/provision.c     |    8 +++--
->  include/gprs-provision.h |    2 +-
->  src/gprs-provision.c     |    4 +-
->  src/gprs.c               |   87 ++++++++++++++++++++++++++++++++++------=
------
->  src/ofono.h              |    2 +-
->  5 files changed, 74 insertions(+), 29 deletions(-)
+Best Regards,
+  Antti
 
-All patches in this series have been applied, however I made one small
-fix after patch 2.  Let me know if I broke anything by any chance.
 
-Regards,
--Denis
-
---===============8677770098515758038==--
+--===============5789848124454661481==--
 
