@@ -1,87 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============3391287999413230486=="
+Content-Type: multipart/mixed; boundary="===============8677770098515758038=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH -v3 7/7] gsmdial: add option for Bluetooth DUN dialing
-Date: Tue, 08 Feb 2011 21:25:05 -0600
-Message-ID: <4D520911.8090809@gmail.com>
-In-Reply-To: <1297202464-19155-7-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH 0/3] gprs-provision: Add SPN to provision API
+Date: Tue, 08 Feb 2011 21:58:07 -0600
+Message-ID: <4D5210CF.2030307@gmail.com>
+In-Reply-To: <1297159428-2409-1-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3391287999413230486==
+--===============8677770098515758038==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Jukka,
 
-On 02/08/2011 04:01 PM, Gustavo F. Padovan wrote:
-> ---
->  gatchat/gsmdial.c |   17 ++++++++++++++---
->  1 files changed, 14 insertions(+), 3 deletions(-)
+On 02/08/2011 04:03 AM, Jukka Saunamaki wrote:
+> Hello
 > =
 
-> diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-> index 1be80e3..d54a26e 100644
-> --- a/gatchat/gsmdial.c
-> +++ b/gatchat/gsmdial.c
-> @@ -56,6 +56,7 @@ static gboolean option_legacy =3D FALSE;
->  static gchar *option_username =3D NULL;
->  static gchar *option_password =3D NULL;
->  static gchar *option_pppdump =3D NULL;
-> +static gboolean option_bluetooth =3D 0;
->  =
+> This patchset adds Service Provider Name (SPN) into GPRS context provisio=
+ning API.
+> SPN is read (asynchronously) in the middle of gprs atom registration, if =
+provisioning is needed.
+> =
 
->  static GAtPPP *ppp;
->  static GAtChat *control;
-> @@ -266,6 +267,9 @@ static void no_carrier_notify(GAtResult *result, gpoi=
-nter user_data)
->  {
->  	char buf[64];
->  =
+> --Jukka
+> =
 
-> +	if (option_bluetooth)
-> +		return;
-> +
+> Jukka Saunamaki (3):
+>       gprs-provision: add SPN to provisioning API header
+>       gprs,gprs-provision: add SPN to provisioning API
+>       gprs-provision: update example with SPN
+> =
 
-Should the return be quit_eventloop by any chance?
+>  examples/provision.c     |    8 +++--
+>  include/gprs-provision.h |    2 +-
+>  src/gprs-provision.c     |    4 +-
+>  src/gprs.c               |   87 ++++++++++++++++++++++++++++++++++------=
+-----
+>  src/ofono.h              |    2 +-
+>  5 files changed, 74 insertions(+), 29 deletions(-)
 
->  	sprintf(buf, "AT+CFUN=3D%u", option_offmode);
->  	g_at_chat_send(control, buf, none_prefix, power_down, NULL, NULL);
->  }
-> @@ -612,6 +616,8 @@ static GOptionEntry options[] =3D {
->  				"Specify CFUN offmode" },
->  	{ "legacy", 'l', 0, G_OPTION_ARG_NONE, &option_legacy,
->  				"Use ATD*99***<cid>#" },
-> +	{ "bluetooth", 'b', 0, G_OPTION_ARG_NONE, &option_bluetooth,
-> +				"Use only ATD*99" },
->  	{ "username", 'u', 0, G_OPTION_ARG_STRING, &option_username,
->  				"Specify PPP username" },
->  	{ "password", 'w', 0, G_OPTION_ARG_STRING, &option_password,
-> @@ -700,9 +706,14 @@ int main(int argc, char **argv)
->  =
-
->  	event_loop =3D g_main_loop_new(NULL, FALSE);
->  =
-
-> -	g_at_chat_send(control, "ATE0Q0V1", NULL, NULL, NULL, NULL);
-> -	g_at_chat_send(control, "AT+CFUN?", cfun_prefix,
-> -						check_mode, NULL, NULL);
-> +	if (option_bluetooth) {
-> +		g_at_chat_send(control, "ATD*99", none_prefix, connect_cb,
-> +				NULL, NULL);
-> +	} else {
-> +		g_at_chat_send(control, "ATE0Q0V1", NULL, NULL, NULL, NULL);
-> +		g_at_chat_send(control, "AT+CFUN?", cfun_prefix,
-> +							check_mode, NULL, NULL);
-> +	}
->  =
-
->  	g_main_loop_run(event_loop);
->  	g_source_remove(signal_source);
+All patches in this series have been applied, however I made one small
+fix after patch 2.  Let me know if I broke anything by any chance.
 
 Regards,
 -Denis
 
---===============3391287999413230486==--
+--===============8677770098515758038==--
 
