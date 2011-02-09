@@ -1,358 +1,315 @@
-Content-Type: multipart/mixed; boundary="===============7239157751862777618=="
+Content-Type: multipart/mixed; boundary="===============2390709039719465904=="
 MIME-Version: 1.0
-From: Andras Domokos <Andras.Domokos@nokia.com>
-Subject: [RFC PATCH 3/3] voicecall: handle voice call SS notifications
-Date: Wed, 09 Feb 2011 12:34:10 +0200
-Message-ID: <6e4f5ac41cd92177d1334896d7ac5b41e1979f36.1297244230.git.Andras.Domokos@nokia.com>
-In-Reply-To: <cover.1297244229.git.Andras.Domokos@nokia.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH -v3 5/7] dun_gw: Add DUN server plugin for oFono
+Date: Wed, 09 Feb 2011 11:43:09 +0100
+Message-ID: <4D526FBD.5010303@linux.intel.com>
+In-Reply-To: <1297202464-19155-5-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7239157751862777618==
+--===============2390709039719465904==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- include/types.h |    2 +
- src/voicecall.c |  242 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 2 files changed, 241 insertions(+), 3 deletions(-)
+Hi Gustavo,
 
-diff --git a/include/types.h b/include/types.h
-index d25f409..b639c8a 100644
---- a/include/types.h
-+++ b/include/types.h
-@@ -96,6 +96,8 @@ struct ofono_call {
- 	char name[OFONO_MAX_CALLER_NAME_LENGTH + 1];
- 	int clip_validity;
- 	int cnap_validity;
-+	ofono_bool_t remote_held;
-+	ofono_bool_t remote_multiparty;
- };
- =
+On 08/02/2011 23:01, Gustavo F. Padovan wrote:
+> DUN server is probed when modem state changes to online. It registers
+> DUN record to Bluetooth adapter and wait for incoming DUN connection.
+>
+> Based on a patch from Zhenhua Zhang<zhenhua.zhang@intel.com>
+> ---
+>   Makefile.am         |    3 +
+>   plugins/bluetooth.h |    3 +
+>   plugins/dun_gw.c    |  189 ++++++++++++++++++++++++++++++++++++++++++++=
++++++++
+>   3 files changed, 195 insertions(+), 0 deletions(-)
+>   create mode 100644 plugins/dun_gw.c
+>
+> diff --git a/Makefile.am b/Makefile.am
+> index 047a85f..8a845fa 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -321,6 +321,9 @@ builtin_sources +=3D plugins/bluetooth.c plugins/blue=
+tooth.h
+>   builtin_modules +=3D hfp
+>   builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
+>
+> +builtin_modules +=3D dun_gw
+> +builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
+> +
+>   builtin_sources +=3D $(btio_sources)
+>   builtin_cflags +=3D @BLUEZ_CFLAGS@
+>   builtin_libadd +=3D @BLUEZ_LIBS@
+> diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+> index 505d908..79e1a4a 100644
+> --- a/plugins/bluetooth.h
+> +++ b/plugins/bluetooth.h
+> @@ -32,6 +32,9 @@
+>   /* Profiles bitfield */
+>   #define HFP_AG 0x01
+>
+> +/* Server bitfield */
+> +#define DUN_GW 0x01
+> +
+>   struct bluetooth_profile {
+>   	const char *name;
+>   	int (*create)(const char *device, const char *dev_addr,
+> diff --git a/plugins/dun_gw.c b/plugins/dun_gw.c
+> new file mode 100644
+> index 0000000..32c199e
+> --- /dev/null
+> +++ b/plugins/dun_gw.c
+> @@ -0,0 +1,189 @@
+> +/*
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2010  Intel Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifdef HAVE_CONFIG_H
+> +#include<config.h>
+> +#endif
+> +#include<stdio.h>
+> +#include<string.h>
+> +#include<errno.h>
+> +#include<glib.h>
+> +#include<ofono.h>
+> +
+> +#define OFONO_API_SUBJECT_TO_CHANGE
+> +#include<ofono/plugin.h>
+> +#include<ofono/log.h>
+> +#include<ofono/modem.h>
+> +#include<gdbus.h>
+> +
+> +#include "bluetooth.h"
+> +
+> +#define DUN_GW_CHANNEL	1
+> +
+> +static struct server *server;
+> +static guint modemwatch_id;
+> +static guint channel_watch;
+> +
+> +static const gchar *dun_record =3D "<?xml version=3D\"1.0\" encoding=3D\=
+"UTF-8\" ?>   \
+> +<record>                                                                =
+        \
+> +<attribute id=3D\"0x0001\">                                             =
+        \
+> +<sequence>                                                              =
+    \
+> +<uuid value=3D\"0x1103\"/>                                              =
+    \
+> +</sequence>                                                             =
+    \
+> +</attribute>                                                            =
+      \
+> +                                                                        =
+       \
+> +<attribute id=3D\"0x0004\">                                             =
+        \
+> +<sequence>                                                              =
+    \
+> +<sequence>                                                              =
+  \
+> +<uuid value=3D\"0x0100\"/>                                              =
+  \
+> +</sequence>                                                             =
+  \
+> +<sequence>                                                              =
+  \
+> +<uuid value=3D\"0x0003\"/>                                              =
+  \
+> +<uint8 value=3D\"1\" name=3D\"channel\"/>                               =
+   \
+> +</sequence>                                                             =
+  \
+> +</sequence>                                                             =
+    \
+> +</attribute>                                                            =
+      \
+> +                                                                        =
+       \
+> +<attribute id=3D\"0x0009\">                                             =
+        \
+> +<sequence>                                                              =
+    \
+> +<sequence>                                                              =
+  \
+> +<uuid value=3D\"0x1103\"/>                                              =
+  \
+> +<uint16 value=3D\"0x0100\" name=3D\"version\"/>                         =
+    \
+> +</sequence>                                                             =
+  \
+> +</sequence>                                                             =
+    \
+> +</attribute>                                                            =
+      \
+> +                                                                        =
+       \
+> +<attribute id=3D\"0x0100\">                                             =
+        \
+> +<text value=3D\"Dial-up Networking\" name=3D\"name\"/>                  =
+        \
+> +</attribute>                                                            =
+      \
+> +</record>";
+> +
+> +
+> +static gboolean dun_gw_disconnect_cb(GIOChannel *io, GIOCondition cond,
+> +							gpointer user_data)
+> +{
+> +	g_io_channel_unref(io);
+> +
+> +	return FALSE;
+> +}
+> +
+> +static void dun_gw_connect_cb(GIOChannel *io, GError *err, gpointer user=
+_data)
+> +{
+> +	struct ofono_emulator *emulator =3D user_data;
+> +	int fd;
+> +
+> +	DBG("");
+> +
+> +	if (err) {
+> +		DBG("%s", err->message);
+> +		return;
+> +	}
+> +
+> +	fd =3D g_io_channel_unix_get_fd(io);
+> +	io =3D g_io_channel_ref(io);
+> +
+> +	if (ofono_emulator_enable(emulator, fd)<  0)
+> +		goto failed;
+> +
+> +	channel_watch =3D g_io_add_watch(io, G_IO_NVAL | G_IO_HUP | G_IO_ERR,
+> +					dun_gw_disconnect_cb, NULL);
+> +
+> +	return;
+> +
+> +failed:
+> +	g_io_channel_shutdown(io, TRUE, NULL);
+> +}
+> +
+> +static int dun_gw_probe(struct ofono_emulator *emulator)
+> +{
+> +	if (server)
+> +		return -EEXIST;
+> +
+> +	DBG("");
+> +
+> +	server =3D bluetooth_register_server(DUN_GW_CHANNEL, dun_record,
+> +						dun_gw_connect_cb, emulator);
+> +
+> +	return 0;
+> +}
+> +
+> +static void dun_gw_remove(void)
+> +{
+> +	if (server =3D=3D NULL)
+> +		return;
+> +
+> +	DBG("");
+> +
+> +	bluetooth_unregister_server(server);
+> +	server =3D NULL;
+> +}
+> +
+> +static void gprs_watch(struct ofono_atom *atom,
+> +				enum ofono_atom_watch_condition cond,
+> +				void *data)
+> +{
+> +	struct ofono_modem *modem =3D data;
+> +
+> +	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED)
+> +		return;
+> +
+> +	__ofono_emulator_probe_drivers(modem);
+> +}
+> +
+> +static void modem_watch(struct ofono_modem *modem, gboolean added, void =
+*user)
+> +{
+> +	DBG("modem: %p, added: %d", modem, added);
+> +
+> +	if (added =3D=3D FALSE)
+> +		return;
+> +
+> +	__ofono_modem_add_atom_watch(modem, OFONO_ATOM_TYPE_GPRS,
+> +					gprs_watch, modem, NULL);
+> +}
 
- struct ofono_network_time {
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 4606668..7178714 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -53,6 +53,15 @@ struct ofono_voicecall {
- 	struct ofono_sim_context *sim_context;
- 	unsigned int sim_watch;
- 	unsigned int sim_state_watch;
-+	struct ofono_ssn *ssn;
-+	unsigned int ssn_watch;
-+	unsigned int ssn_mt_fwd_watch;
-+	unsigned int ssn_mt_hold_watch;
-+	unsigned int ssn_mt_unhold_watch;
-+	unsigned int ssn_mt_mpty_watch;
-+	unsigned int ssn_mo_fwd_watch;
-+	unsigned int ssn_mo_local_bar_watch;
-+	unsigned int ssn_mo_remote_bar_watch;
- 	const struct ofono_voicecall_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-@@ -400,6 +409,12 @@ static void append_voicecall_properties(struct voiceca=
-ll *v,
- =
+Something is bothering me here, because even if you have no GPRS atom or =
 
- 	ofono_dbus_dict_append(dict, "Multiparty", DBUS_TYPE_BOOLEAN, &mpty);
- =
+you are not registered on any network, the cell phone should be able to =
 
-+	ofono_dbus_dict_append(dict, "RemoteHeld", DBUS_TYPE_BOOLEAN,
-+				&v->call->remote_held);
-+
-+	ofono_dbus_dict_append(dict, "RemoteMultiparty", DBUS_TYPE_BOOLEAN,
-+				&v->call->remote_multiparty);
-+
- 	if (v->message)
- 		ofono_dbus_dict_append(dict, "Information",
- 						DBUS_TYPE_STRING, &v->message);
-@@ -1869,9 +1884,11 @@ static GDBusMethodTable manager_methods[] =3D {
- };
- =
+answer to a DUN connection request from a computer for instance (and =
 
- static GDBusSignalTable manager_signals[] =3D {
--	{ "PropertyChanged",	"sv" },
--	{ "CallAdded",		"oa{sv}" },
--	{ "CallRemoved",	"o" },
-+	{ "Forwarded",	 	 "s" },
-+	{ "BarringActive",	 "s" },
-+	{ "PropertyChanged",	 "sv" },
-+	{ "CallAdded",		 "oa{sv}" },
-+	{ "CallRemoved",	 "o" },
- 	{ }
- };
- =
+return ERROR to ATD*99#...). However you are triggering the emulator =
 
-@@ -2182,6 +2199,11 @@ static void voicecall_unregister(struct ofono_atom *=
-atom)
- 		vc->sim_watch =3D 0;
- 	}
- =
+creation only when the modem is online (GPRS atom is registered).
+So it means if we have a DUN request without the GPRS atom there will be =
 
-+	if (vc->ssn_watch) {
-+		__ofono_modem_remove_atom_watch(modem, vc->ssn_watch);
-+		vc->ssn_watch =3D 0;
-+	}
-+
- 	if (vc->dial_req)
- 		dial_request_finish(vc);
- =
+no answer to the data terminal because we have no emulator.
+There is no info into DUN specifications about the recommended behavior =
 
-@@ -2225,6 +2247,29 @@ static void voicecall_remove(struct ofono_atom *atom)
- 		vc->sim =3D NULL;
- 	}
- =
+but on current devices with DUn feature we are able to answer to DUN =
 
-+	if (vc->ssn_mt_fwd_watch)
-+		__ofono_ssn_mt_watch_remove(vc->ssn, vc->ssn_mt_fwd_watch);
-+
-+	if (vc->ssn_mt_hold_watch)
-+		__ofono_ssn_mt_watch_remove(vc->ssn, vc->ssn_mt_hold_watch);
-+
-+	if (vc->ssn_mt_unhold_watch)
-+		__ofono_ssn_mt_watch_remove(vc->ssn, vc->ssn_mt_unhold_watch);
-+
-+	if (vc->ssn_mt_mpty_watch)
-+		__ofono_ssn_mt_watch_remove(vc->ssn, vc->ssn_mt_mpty_watch);
-+
-+	if (vc->ssn_mo_fwd_watch)
-+		__ofono_ssn_mt_watch_remove(vc->ssn, vc->ssn_mo_fwd_watch);
-+
-+	if (vc->ssn_mo_local_bar_watch)
-+		__ofono_ssn_mt_watch_remove(vc->ssn,
-+						vc->ssn_mo_local_bar_watch);
-+
-+	if (vc->ssn_mo_remote_bar_watch)
-+		__ofono_ssn_mo_watch_remove(vc->ssn,
-+						vc->ssn_mo_remote_bar_watch);
-+
- 	if (vc->tone_source) {
- 		g_source_remove(vc->tone_source);
- 		vc->tone_source =3D 0;
-@@ -2341,12 +2386,194 @@ static void sim_watch(struct ofono_atom *atom,
- 	sim_state_watch(ofono_sim_get_state(sim), vc);
- }
- =
+request even with no gprs registration.
 
-+static void ssn_mt_forwarded_notify(unsigned int id, int code1, int idx,
-+					const struct ofono_phone_number *ph,
-+					void *data)
-+{
-+	struct ofono_voicecall *vc =3D data;
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path =3D __ofono_atom_get_path(vc->atom);
-+	char *info =3D "incoming";
-+
-+	g_dbus_emit_signal(conn, path, OFONO_VOICECALL_MANAGER_INTERFACE,
-+				"Forwarded",
-+				DBUS_TYPE_STRING, &info,
-+				DBUS_TYPE_INVALID);
-+}
-+
-+static struct voicecall *voicecall_select(struct ofono_voicecall *vc,
-+						unsigned int id, int code)
-+{
-+	struct voicecall *v =3D NULL;
-+	GSList *l;
-+
-+	for (l =3D vc->call_list; l; l =3D l->next) {
-+		struct voicecall *v1 =3D l->data;
-+
-+		if (id =3D=3D 0 && g_slist_length(vc->call_list) =3D=3D 1) {
-+			if (code =3D=3D SS_MT_VOICECALL_RETRIEVED &&
-+					v1->call->remote_held =3D=3D TRUE) {
-+				v =3D v1;
-+				break;
-+			} else if (code =3D=3D SS_MT_VOICECALL_ON_HOLD &&
-+					v1->call->remote_held =3D=3D FALSE) {
-+				v =3D v1;
-+				break;
-+			} else if (code =3D=3D SS_MT_MULTIPARTY_VOICECALL &&
-+					v1->call->remote_multiparty =3D=3D FALSE) {
-+				v =3D v1;
-+				break;
-+			}
-+		} else if (v1->call->id =3D=3D id) {
-+			v =3D v1;
-+			break;
-+		}
-+	}
-+
-+	return v;
-+}
-+
-+static void ssn_mt_remote_held_notify(unsigned int id, int code1, int idx,
-+					const struct ofono_phone_number *ph,
-+					void *data)
-+{
-+	struct ofono_voicecall *vc =3D data;
-+	struct voicecall *v =3D voicecall_select(vc, id, code1);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path;
-+
-+	if (v =3D=3D NULL)
-+		return;
-+
-+	if (code1 =3D=3D SS_MT_VOICECALL_ON_HOLD)
-+		v->call->remote_held =3D TRUE;
-+	else
-+		v->call->remote_held =3D FALSE;
-+
-+	path =3D voicecall_build_path(vc, v->call);
-+
-+	ofono_dbus_signal_property_changed(conn, path,
-+						OFONO_VOICECALL_INTERFACE,
-+						"RemoteHeld", DBUS_TYPE_BOOLEAN,
-+						&v->call->remote_held);
-+}
-+
-+static void ssn_mt_remote_multiparty_notify(unsigned int id, int code1, in=
-t idx,
-+					const struct ofono_phone_number *ph,
-+					void *data)
-+{
-+	struct ofono_voicecall *vc =3D data;
-+	struct voicecall *v =3D voicecall_select(vc, id, code1);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path;
-+
-+	if (v =3D=3D NULL)
-+		return;
-+
-+	v->call->remote_multiparty =3D TRUE;
-+
-+	path =3D voicecall_build_path(vc, v->call);
-+
-+	ofono_dbus_signal_property_changed(conn, path,
-+					OFONO_VOICECALL_INTERFACE,
-+					"RemoteMultiparty", DBUS_TYPE_BOOLEAN,
-+					&v->call->remote_multiparty);
-+}
-+
-+static void ssn_mo_call_barred_notify(unsigned int id, int code2,
-+					int idx, void *data)
-+{
-+	struct ofono_voicecall *vc =3D data;
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path =3D __ofono_atom_get_path(vc->atom);
-+	const char *info;
-+
-+	if (code2 =3D=3D SS_MO_INCOMING_BARRING)
-+		info =3D "remote";
-+	else
-+		info =3D "local";
-+
-+	g_dbus_emit_signal(conn, path, OFONO_VOICECALL_MANAGER_INTERFACE,
-+				"BarringActive",
-+				DBUS_TYPE_STRING, &info,
-+				DBUS_TYPE_INVALID);
-+}
-+
-+static void ssn_mo_forwarded_notify(unsigned int id, int code2,
-+					int idx, void *data)
-+{
-+	struct ofono_voicecall *vc =3D data;
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path =3D __ofono_atom_get_path(vc->atom);
-+	char *info =3D "outgoing";
-+
-+	g_dbus_emit_signal(conn, path, OFONO_VOICECALL_MANAGER_INTERFACE,
-+				"Forwarded",
-+				DBUS_TYPE_STRING, &info,
-+				DBUS_TYPE_INVALID);
-+}
-+
-+static void ssn_watch_notify(struct ofono_atom *atom,
-+			enum ofono_atom_watch_condition cond, void *data)
-+{
-+	struct ofono_voicecall *vc =3D data;
-+
-+	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		vc->ssn_mt_fwd_watch =3D 0;
-+		vc->ssn_mt_hold_watch =3D 0;
-+		vc->ssn_mt_unhold_watch =3D 0;
-+		vc->ssn_mt_mpty_watch =3D 0;
-+		vc->ssn_mo_local_bar_watch =3D 0;
-+		vc->ssn_mo_remote_bar_watch =3D 0;
-+		vc->ssn =3D NULL;
-+		return;
-+	}
-+
-+	vc->ssn =3D __ofono_atom_get_data(atom);
-+
-+	vc->ssn_mt_fwd_watch =3D __ofono_ssn_mt_watch_add(vc->ssn,
-+						SS_MT_CALL_FORWARDED,
-+						ssn_mt_forwarded_notify,
-+						vc, NULL);
-+
-+	vc->ssn_mt_hold_watch =3D __ofono_ssn_mt_watch_add(vc->ssn,
-+						SS_MT_VOICECALL_ON_HOLD,
-+						ssn_mt_remote_held_notify,
-+						vc, NULL);
-+
-+	vc->ssn_mt_unhold_watch =3D __ofono_ssn_mt_watch_add(vc->ssn,
-+						SS_MT_VOICECALL_RETRIEVED,
-+						ssn_mt_remote_held_notify,
-+						vc, NULL);
-+
-+	vc->ssn_mt_mpty_watch =3D __ofono_ssn_mt_watch_add(vc->ssn,
-+						SS_MT_MULTIPARTY_VOICECALL,
-+						ssn_mt_remote_multiparty_notify,
-+						vc, NULL);
-+
-+	vc->ssn_mo_fwd_watch =3D __ofono_ssn_mo_watch_add(vc->ssn,
-+						SS_MO_CALL_FORWARDED,
-+						ssn_mo_forwarded_notify,
-+						vc, NULL);
-+
-+	vc->ssn_mo_local_bar_watch =3D __ofono_ssn_mo_watch_add(vc->ssn,
-+						SS_MO_OUTGOING_BARRING,
-+						ssn_mo_call_barred_notify,
-+						vc, NULL);
-+
-+	vc->ssn_mo_remote_bar_watch =3D __ofono_ssn_mo_watch_add(vc->ssn,
-+						SS_MO_INCOMING_BARRING,
-+						ssn_mo_call_barred_notify,
-+						vc, NULL);
-+}
-+
- void ofono_voicecall_register(struct ofono_voicecall *vc)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
- 	const char *path =3D __ofono_atom_get_path(vc->atom);
- 	struct ofono_atom *sim_atom;
-+	struct ofono_atom *ssn_atom;
- =
+> +
+> +static void call_modemwatch(struct ofono_modem *modem, void *user)
+> +{
+> +	modem_watch(modem, TRUE, user);
+> +}
+> +
+> +static struct ofono_emulator_driver emulator_driver =3D {
+> +	.name =3D "Dial-Up Networking",
+> +	.type =3D OFONO_ATOM_TYPE_EMULATOR_DUN,
+> +	.probe =3D dun_gw_probe,
+> +	.remove =3D dun_gw_remove,
+> +};
+> +
+> +static int dun_gw_init(void)
+> +{
+> +	modemwatch_id =3D __ofono_modemwatch_add(modem_watch, NULL, NULL);
+> +	__ofono_modem_foreach(call_modemwatch, NULL);
+> +
+> +	return ofono_emulator_driver_register(&emulator_driver);
+> +}
+> +
+> +static void dun_gw_exit(void)
+> +{
+> +	__ofono_modemwatch_remove(modemwatch_id);
+> +
+> +	ofono_emulator_driver_unregister(&emulator_driver);
+> +}
+> +
+> +OFONO_PLUGIN_DEFINE(dun_gw, "Dial-up Networking Profile Plugins", VERSIO=
+N,
+> +			OFONO_PLUGIN_PRIORITY_DEFAULT, dun_gw_init, dun_gw_exit)
 
- 	if (!g_dbus_register_interface(conn, path,
- 					OFONO_VOICECALL_MANAGER_INTERFACE,
-@@ -2376,6 +2603,15 @@ void ofono_voicecall_register(struct ofono_voicecall=
- *vc)
- 	if (sim_atom && __ofono_atom_get_registered(sim_atom))
- 		sim_watch(sim_atom, OFONO_ATOM_WATCH_CONDITION_REGISTERED, vc);
- =
+Kind regards,
+Guillaume
 
-+	vc->ssn_watch =3D __ofono_modem_add_atom_watch(modem, OFONO_ATOM_TYPE_SSN,
-+					ssn_watch_notify, vc, NULL);
-+
-+	ssn_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SSN);
-+
-+	if (ssn_atom && __ofono_atom_get_registered(ssn_atom))
-+		ssn_watch_notify(ssn_atom,
-+				OFONO_ATOM_WATCH_CONDITION_REGISTERED, vc);
-+
- 	__ofono_atom_register(vc->atom, voicecall_unregister);
- }
- =
-
--- =
-
-1.7.0.4
-
-
---===============7239157751862777618==--
+--===============2390709039719465904==--
 
