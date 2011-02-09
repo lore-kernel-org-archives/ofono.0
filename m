@@ -1,37 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============9006359168987360661=="
+Content-Type: multipart/mixed; boundary="===============6846492583117879662=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH -v3 1/7] bluetooth: Add bluetooth server support
-Date: Tue, 08 Feb 2011 21:20:08 -0600
-Message-ID: <4D5207E8.1010008@gmail.com>
-In-Reply-To: <1297202464-19155-1-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH -v3 2/7] bluetooth: Add Bluetooth service authorization
+ support
+Date: Tue, 08 Feb 2011 21:20:55 -0600
+Message-ID: <4D520817.5020606@gmail.com>
+In-Reply-To: <1297202464-19155-2-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9006359168987360661==
+--===============6846492583117879662==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Gustavo,
 
-On 02/08/2011 04:00 PM, Gustavo F. Padovan wrote:
-> From: Fr=C3=A9d=C3=A9ric Danis <frederic.danis@linux.intel.com>
-> =
+This patch has been applied, but I refactored it heavily afterwards.
+Can you make sure I didn't screw anything up?
 
-> ---
->  Makefile.am         |    1 +
->  plugins/bluetooth.c |  247 +++++++++++++++++++++++++++++++++++++++++++++=
-+++++-
->  plugins/bluetooth.h |    9 ++
->  3 files changed, 254 insertions(+), 3 deletions(-)
-> =
-
-
-Patch has been applied, thanks.
-
-Regards,
+Thanks,
 -Denis
 
---===============9006359168987360661==--
+
+--===============6846492583117879662==--
 
