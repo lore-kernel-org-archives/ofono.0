@@ -1,315 +1,356 @@
-Content-Type: multipart/mixed; boundary="===============2390709039719465904=="
+Content-Type: multipart/mixed; boundary="===============5360311176805351481=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH -v3 5/7] dun_gw: Add DUN server plugin for oFono
-Date: Wed, 09 Feb 2011 11:43:09 +0100
-Message-ID: <4D526FBD.5010303@linux.intel.com>
-In-Reply-To: <1297202464-19155-5-git-send-email-padovan@profusion.mobi>
+From: Carlos Pargada <carlos.pargada@intel.com>
+Subject: [PATCH] Fix Uplink data transfer in RawIP mode
+Date: Wed, 09 Feb 2011 12:04:28 +0100
+Message-ID: <1297249468-2479-1-git-send-email-carlos.pargada@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2390709039719465904==
+--===============5360311176805351481==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Fix Uplink Data transfer in RawIP mode with IFX Modem
 
-On 08/02/2011 23:01, Gustavo F. Padovan wrote:
-> DUN server is probed when modem state changes to online. It registers
-> DUN record to Bluetooth adapter and wait for incoming DUN connection.
->
-> Based on a patch from Zhenhua Zhang<zhenhua.zhang@intel.com>
-> ---
->   Makefile.am         |    3 +
->   plugins/bluetooth.h |    3 +
->   plugins/dun_gw.c    |  189 ++++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   3 files changed, 195 insertions(+), 0 deletions(-)
->   create mode 100644 plugins/dun_gw.c
->
-> diff --git a/Makefile.am b/Makefile.am
-> index 047a85f..8a845fa 100644
-> --- a/Makefile.am
-> +++ b/Makefile.am
-> @@ -321,6 +321,9 @@ builtin_sources +=3D plugins/bluetooth.c plugins/blue=
-tooth.h
->   builtin_modules +=3D hfp
->   builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
->
-> +builtin_modules +=3D dun_gw
-> +builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
-> +
->   builtin_sources +=3D $(btio_sources)
->   builtin_cflags +=3D @BLUEZ_CFLAGS@
->   builtin_libadd +=3D @BLUEZ_LIBS@
-> diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-> index 505d908..79e1a4a 100644
-> --- a/plugins/bluetooth.h
-> +++ b/plugins/bluetooth.h
-> @@ -32,6 +32,9 @@
->   /* Profiles bitfield */
->   #define HFP_AG 0x01
->
-> +/* Server bitfield */
-> +#define DUN_GW 0x01
-> +
->   struct bluetooth_profile {
->   	const char *name;
->   	int (*create)(const char *device, const char *dev_addr,
-> diff --git a/plugins/dun_gw.c b/plugins/dun_gw.c
-> new file mode 100644
-> index 0000000..32c199e
-> --- /dev/null
-> +++ b/plugins/dun_gw.c
-> @@ -0,0 +1,189 @@
-> +/*
-> + *  oFono - Open Source Telephony
-> + *
-> + *  Copyright (C) 2010  Intel Corporation. All rights reserved.
-> + *
-> + *  This program is free software; you can redistribute it and/or modify
-> + *  it under the terms of the GNU General Public License version 2 as
-> + *  published by the Free Software Foundation.
-> + *
-> + *  This program is distributed in the hope that it will be useful,
-> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + *  GNU General Public License for more details.
-> + *
-> + *  You should have received a copy of the GNU General Public License
-> + *  along with this program; if not, write to the Free Software
-> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
-1  USA
-> + *
-> + */
-> +
-> +#ifdef HAVE_CONFIG_H
-> +#include<config.h>
-> +#endif
-> +#include<stdio.h>
-> +#include<string.h>
-> +#include<errno.h>
-> +#include<glib.h>
-> +#include<ofono.h>
-> +
-> +#define OFONO_API_SUBJECT_TO_CHANGE
-> +#include<ofono/plugin.h>
-> +#include<ofono/log.h>
-> +#include<ofono/modem.h>
-> +#include<gdbus.h>
-> +
-> +#include "bluetooth.h"
-> +
-> +#define DUN_GW_CHANNEL	1
-> +
-> +static struct server *server;
-> +static guint modemwatch_id;
-> +static guint channel_watch;
-> +
-> +static const gchar *dun_record =3D "<?xml version=3D\"1.0\" encoding=3D\=
-"UTF-8\" ?>   \
-> +<record>                                                                =
-        \
-> +<attribute id=3D\"0x0001\">                                             =
-        \
-> +<sequence>                                                              =
-    \
-> +<uuid value=3D\"0x1103\"/>                                              =
-    \
-> +</sequence>                                                             =
-    \
-> +</attribute>                                                            =
-      \
-> +                                                                        =
-       \
-> +<attribute id=3D\"0x0004\">                                             =
-        \
-> +<sequence>                                                              =
-    \
-> +<sequence>                                                              =
-  \
-> +<uuid value=3D\"0x0100\"/>                                              =
-  \
-> +</sequence>                                                             =
-  \
-> +<sequence>                                                              =
-  \
-> +<uuid value=3D\"0x0003\"/>                                              =
-  \
-> +<uint8 value=3D\"1\" name=3D\"channel\"/>                               =
-   \
-> +</sequence>                                                             =
-  \
-> +</sequence>                                                             =
-    \
-> +</attribute>                                                            =
-      \
-> +                                                                        =
-       \
-> +<attribute id=3D\"0x0009\">                                             =
-        \
-> +<sequence>                                                              =
-    \
-> +<sequence>                                                              =
-  \
-> +<uuid value=3D\"0x1103\"/>                                              =
-  \
-> +<uint16 value=3D\"0x0100\" name=3D\"version\"/>                         =
-    \
-> +</sequence>                                                             =
-  \
-> +</sequence>                                                             =
-    \
-> +</attribute>                                                            =
-      \
-> +                                                                        =
-       \
-> +<attribute id=3D\"0x0100\">                                             =
-        \
-> +<text value=3D\"Dial-up Networking\" name=3D\"name\"/>                  =
-        \
-> +</attribute>                                                            =
-      \
-> +</record>";
-> +
-> +
-> +static gboolean dun_gw_disconnect_cb(GIOChannel *io, GIOCondition cond,
-> +							gpointer user_data)
-> +{
-> +	g_io_channel_unref(io);
-> +
-> +	return FALSE;
-> +}
-> +
-> +static void dun_gw_connect_cb(GIOChannel *io, GError *err, gpointer user=
-_data)
-> +{
-> +	struct ofono_emulator *emulator =3D user_data;
-> +	int fd;
-> +
-> +	DBG("");
-> +
-> +	if (err) {
-> +		DBG("%s", err->message);
-> +		return;
-> +	}
-> +
-> +	fd =3D g_io_channel_unix_get_fd(io);
-> +	io =3D g_io_channel_ref(io);
-> +
-> +	if (ofono_emulator_enable(emulator, fd)<  0)
-> +		goto failed;
-> +
-> +	channel_watch =3D g_io_add_watch(io, G_IO_NVAL | G_IO_HUP | G_IO_ERR,
-> +					dun_gw_disconnect_cb, NULL);
-> +
-> +	return;
-> +
-> +failed:
-> +	g_io_channel_shutdown(io, TRUE, NULL);
-> +}
-> +
-> +static int dun_gw_probe(struct ofono_emulator *emulator)
-> +{
-> +	if (server)
-> +		return -EEXIST;
-> +
-> +	DBG("");
-> +
-> +	server =3D bluetooth_register_server(DUN_GW_CHANNEL, dun_record,
-> +						dun_gw_connect_cb, emulator);
-> +
-> +	return 0;
-> +}
-> +
-> +static void dun_gw_remove(void)
-> +{
-> +	if (server =3D=3D NULL)
-> +		return;
-> +
-> +	DBG("");
-> +
-> +	bluetooth_unregister_server(server);
-> +	server =3D NULL;
-> +}
-> +
-> +static void gprs_watch(struct ofono_atom *atom,
-> +				enum ofono_atom_watch_condition cond,
-> +				void *data)
-> +{
-> +	struct ofono_modem *modem =3D data;
-> +
-> +	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED)
-> +		return;
-> +
-> +	__ofono_emulator_probe_drivers(modem);
-> +}
-> +
-> +static void modem_watch(struct ofono_modem *modem, gboolean added, void =
-*user)
-> +{
-> +	DBG("modem: %p, added: %d", modem, added);
-> +
-> +	if (added =3D=3D FALSE)
-> +		return;
-> +
-> +	__ofono_modem_add_atom_watch(modem, OFONO_ATOM_TYPE_GPRS,
-> +					gprs_watch, modem, NULL);
-> +}
+Change Data flow from stream mode to Packet mode between GatRawIP and GatMu=
+x.
 
-Something is bothering me here, because even if you have no GPRS atom or =
 
-you are not registered on any network, the cell phone should be able to =
+---
+ gatchat/gatio.c    |   98 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++-
+ gatchat/gatio.h    |    1 +
+ gatchat/gatrawip.c |   75 ++++++++++++++++++++++++++++++---------
+ 3 files changed, 155 insertions(+), 19 deletions(-)
 
-answer to a DUN connection request from a computer for instance (and =
+diff --git a/gatchat/gatio.c b/gatchat/gatio.c
+index 9d44a78..5ad640d 100644
+--- a/gatchat/gatio.c
++++ b/gatchat/gatio.c
+@@ -77,7 +77,7 @@ static void read_watcher_destroy_notify(gpointer user_dat=
+a)
+ 		io->user_disconnect(io->user_disconnect_data);
+ }
+ =
 
-return ERROR to ATD*99#...). However you are triggering the emulator =
+-static gboolean received_data(GIOChannel *channel, GIOCondition cond,
++static gboolean stream_received_data(GIOChannel *channel, GIOCondition con=
+d,
+ 				gpointer data)
+ {
+ 	unsigned char *buf;
+@@ -132,6 +132,51 @@ static gboolean received_data(GIOChannel *channel, GIO=
+Condition cond,
+ 	return TRUE;
+ }
+ =
 
-creation only when the modem is online (GPRS atom is registered).
-So it means if we have a DUN request without the GPRS atom there will be =
++static gboolean packet_received_data(GIOChannel *channel, GIOCondition con=
+d,
++				gpointer data)
++{
++	unsigned char *buf;
++	GAtIO *io =3D data;
++	GIOStatus status;
++	gsize rbytes;
++	gsize toread;
++
++
++	if (cond & G_IO_NVAL)
++		return FALSE;
++
++	toread=3D 2048;
++	rbytes =3D 0;
++
++	ring_buffer_reset(io->buf);
++	buf =3D ring_buffer_write_ptr(io->buf, 0);
++
++	if (buf =3D=3D NULL)
++		return FALSE;
++
++	status =3D g_io_channel_read_chars(channel, (char *) buf,
++						toread, &rbytes, NULL);
++
++	if (status =3D=3D G_IO_STATUS_ERROR)
++		return FALSE;
++
++	if (rbytes > 0)
++		ring_buffer_write_advance(io->buf, rbytes);
++
++
++
++	if (rbytes > 0 && io->read_handler)
++		io->read_handler(io->buf, io->read_data);
++
++	if (cond & (G_IO_HUP | G_IO_ERR))
++		return FALSE;
++
++	if (rbytes =3D=3D 0 && status !=3D G_IO_STATUS_AGAIN)
++		return FALSE;
++
++	return TRUE;
++}
++
+ gsize g_at_io_write(GAtIO *io, const gchar *data, gsize count)
+ {
+ 	GIOStatus status;
+@@ -175,6 +220,50 @@ static gboolean can_write_data(GIOChannel *channel, GI=
+OCondition cond,
+ =
 
-no answer to the data terminal because we have no emulator.
-There is no info into DUN specifications about the recommended behavior =
+ }
+ =
 
-but on current devices with DUn feature we are able to answer to DUN =
++static GAtIO *create_packet_io(GIOChannel *channel, GIOFlags flags)
++{
++	GAtIO *io;
++
++	if (channel =3D=3D NULL)
++		return NULL;
++
++	io =3D g_try_new0(GAtIO, 1);
++
++	if (io =3D=3D NULL)
++		return io;
++
++	io->ref_count =3D 1;
++	io->debugf =3D NULL;
++
++
++	io->max_read_attempts =3D 1;
++	io->use_write_watch =3D TRUE;
++
++	io->buf =3D ring_buffer_new(2048);
++
++	if (!io->buf)
++		goto error;
++
++	if (!g_at_util_setup_io(channel, flags))
++		goto error;
++
++	io->channel =3D channel;
++	io->read_watch =3D g_io_add_watch_full(channel, G_PRIORITY_DEFAULT,
++				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
++				packet_received_data, io,
++				read_watcher_destroy_notify);
++
++	return io;
++
++error:
++	if (io->buf)
++		ring_buffer_free(io->buf);
++
++	g_free(io);
++
++	return NULL;
++}
++
+ static GAtIO *create_io(GIOChannel *channel, GIOFlags flags)
+ {
+ 	GAtIO *io;
+@@ -208,7 +297,7 @@ static GAtIO *create_io(GIOChannel *channel, GIOFlags f=
+lags)
+ 	io->channel =3D channel;
+ 	io->read_watch =3D g_io_add_watch_full(channel, G_PRIORITY_DEFAULT,
+ 				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
+-				received_data, io,
++				stream_received_data, io,
+ 				read_watcher_destroy_notify);
+ =
 
-request even with no gprs registration.
+ 	return io;
+@@ -222,6 +311,11 @@ error:
+ 	return NULL;
+ }
+ =
 
-> +
-> +static void call_modemwatch(struct ofono_modem *modem, void *user)
-> +{
-> +	modem_watch(modem, TRUE, user);
-> +}
-> +
-> +static struct ofono_emulator_driver emulator_driver =3D {
-> +	.name =3D "Dial-Up Networking",
-> +	.type =3D OFONO_ATOM_TYPE_EMULATOR_DUN,
-> +	.probe =3D dun_gw_probe,
-> +	.remove =3D dun_gw_remove,
-> +};
-> +
-> +static int dun_gw_init(void)
-> +{
-> +	modemwatch_id =3D __ofono_modemwatch_add(modem_watch, NULL, NULL);
-> +	__ofono_modem_foreach(call_modemwatch, NULL);
-> +
-> +	return ofono_emulator_driver_register(&emulator_driver);
-> +}
-> +
-> +static void dun_gw_exit(void)
-> +{
-> +	__ofono_modemwatch_remove(modemwatch_id);
-> +
-> +	ofono_emulator_driver_unregister(&emulator_driver);
-> +}
-> +
-> +OFONO_PLUGIN_DEFINE(dun_gw, "Dial-up Networking Profile Plugins", VERSIO=
-N,
-> +			OFONO_PLUGIN_PRIORITY_DEFAULT, dun_gw_init, dun_gw_exit)
++GAtIO *g_raw_io_new(GIOChannel *channel)
++{
++	return create_packet_io(channel, G_IO_FLAG_NONBLOCK);
++}
++
+ GAtIO *g_at_io_new(GIOChannel *channel)
+ {
+ 	return create_io(channel, G_IO_FLAG_NONBLOCK);
+diff --git a/gatchat/gatio.h b/gatchat/gatio.h
+index 5a9f9f9..4b8bc00 100644
+--- a/gatchat/gatio.h
++++ b/gatchat/gatio.h
+@@ -37,6 +37,7 @@ struct ring_buffer;
+ typedef void (*GAtIOReadFunc)(struct ring_buffer *buffer, gpointer user_da=
+ta);
+ typedef gboolean (*GAtIOWriteFunc)(gpointer user_data);
+ =
 
-Kind regards,
-Guillaume
++GAtIO *g_raw_io_new(GIOChannel *channel);
+ GAtIO *g_at_io_new(GIOChannel *channel);
+ GAtIO *g_at_io_new_blocking(GIOChannel *channel);
+ =
 
---===============2390709039719465904==--
+diff --git a/gatchat/gatrawip.c b/gatchat/gatrawip.c
+index 539f71f..ab72035 100644
+--- a/gatchat/gatrawip.c
++++ b/gatchat/gatrawip.c
+@@ -42,10 +42,17 @@ struct _GAtRawIP {
+ 	char *ifname;
+ 	struct ring_buffer *write_buffer;
+ 	struct ring_buffer *tun_write_buffer;
++	GQueue *packet_queue;
+ 	GAtDebugFunc debugf;
+ 	gpointer debug_data;
+ };
+ =
+
++struct PacketRaw {
++	unsigned char *buf;
++	int len;
++};
++
++
+ GAtRawIP *g_at_rawip_new(GIOChannel *channel)
+ {
+ 	GAtRawIP *rawip;
+@@ -112,24 +119,22 @@ void g_at_rawip_unref(GAtRawIP *rawip)
+ static gboolean can_write_data(gpointer data)
+ {
+ 	GAtRawIP *rawip =3D data;
+-	unsigned int len;
+-	unsigned char *buf;
+-	gsize bytes_written;
++	gsize bytes_written;
++	struct PacketRaw *packetbuf;
+ =
+
+-	if (rawip->write_buffer =3D=3D NULL)
++	if (rawip->packet_queue =3D=3D NULL)
+ 		return FALSE;
++
++	while(g_queue_is_empty(rawip->packet_queue)!=3D TRUE)
++	{
++		packetbuf=3D g_queue_pop_head(rawip->packet_queue);
++		bytes_written =3D g_at_io_write(rawip->io, (gchar *) packetbuf->buf, pac=
+ketbuf->len);
++
++		g_free(packetbuf->buf);
++		g_free(packetbuf);
+ =
+
+-	len =3D ring_buffer_len_no_wrap(rawip->write_buffer);
+-	buf =3D ring_buffer_read_ptr(rawip->write_buffer, 0);
+-
+-	bytes_written =3D g_at_io_write(rawip->io, (gchar *) buf, len);
+-	ring_buffer_drain(rawip->write_buffer, bytes_written);
+-
+-	if (ring_buffer_len(rawip->write_buffer) > 0)
+-		return TRUE;
+-
+-	rawip->write_buffer =3D NULL;
+-
++	}
++	return TRUE;
+ 	return FALSE;
+ }
+ =
+
+@@ -169,9 +174,22 @@ static void new_bytes(struct ring_buffer *rbuf, gpoint=
+er user_data)
+ static void tun_bytes(struct ring_buffer *rbuf, gpointer user_data)
+ {
+ 	GAtRawIP *rawip =3D user_data;
++	struct PacketRaw *packetbuf;
++
+ =
+
+-	rawip->write_buffer =3D rbuf;
++	packetbuf=3D g_try_new0(struct PacketRaw, 1);
++	if (packetbuf =3D=3D NULL)
++		return;
++
++	packetbuf-> len=3D ring_buffer_len_no_wrap(rbuf);
+ =
+
++	packetbuf->buf=3D g_try_malloc(packetbuf-> len);
++	if (packetbuf->buf =3D=3D NULL)
++		return;
++
++	ring_buffer_read(rbuf, packetbuf->buf, 2048);
++
++	g_queue_push_head(rawip->packet_queue, packetbuf);
+ 	g_at_io_set_write_handler(rawip->io, can_write_data, rawip);
+ }
+ =
+
+@@ -203,7 +221,11 @@ static void create_tun(GAtRawIP *rawip)
+ 		return;
+ 	}
+ =
+
+-	rawip->tun_io =3D g_at_io_new(channel);
++	rawip->tun_io =3D g_raw_io_new(channel);
++
++	rawip->packet_queue =3D g_queue_new();
++	if (rawip->packet_queue =3D=3D NULL)
++		return;
+ =
+
+ 	g_io_channel_unref(channel);
+ }
+@@ -224,6 +246,8 @@ void g_at_rawip_open(GAtRawIP *rawip)
+ =
+
+ void g_at_rawip_shutdown(GAtRawIP *rawip)
+ {
++	struct PacketRaw *packetbuf;
++
+ 	if (rawip =3D=3D NULL)
+ 		return;
+ =
+
+@@ -238,6 +262,23 @@ void g_at_rawip_shutdown(GAtRawIP *rawip)
+ =
+
+ 	g_at_io_unref(rawip->tun_io);
+ 	rawip->tun_io =3D NULL;
++
++	if(rawip->packet_queue =3D=3D NULL)
++		return;
++
++	while(g_queue_is_empty(rawip->packet_queue)!=3D TRUE)
++	{
++		packetbuf=3D g_queue_pop_head(rawip->packet_queue);
++		if(packetbuf->buf !=3D NULL)
++			g_free(packetbuf->buf);
++
++		g_free(packetbuf);
++	}
++
++	g_queue_free(rawip->packet_queue);
++	rawip->packet_queue=3D NULL;
++
++
+ }
+ =
+
+ const char *g_at_rawip_get_interface(GAtRawIP *rawip)
+-- =
+
+1.6.6.1
+
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============5360311176805351481==--
 
