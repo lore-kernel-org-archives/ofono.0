@@ -1,163 +1,149 @@
-Content-Type: multipart/mixed; boundary="===============3438723786017520334=="
+Content-Type: multipart/mixed; boundary="===============0937104821889138136=="
 MIME-Version: 1.0
 From: Andras Domokos <Andras.Domokos@nokia.com>
-Subject: [RFC PATCH 1/3] call-barring: removed +CSSI type SS notifications
-Date: Wed, 09 Feb 2011 12:33:58 +0200
-Message-ID: <7f7cc862a685786b014377e6e97c789d8d65666b.1297244230.git.Andras.Domokos@nokia.com>
+Subject: [RFC PATCH 2/3] ssn: add code and call id to notifications
+Date: Wed, 09 Feb 2011 12:34:04 +0200
+Message-ID: <a562a3e40e5acbb640fefca65b33e3bdf4d6e61b.1297244230.git.Andras.Domokos@nokia.com>
 In-Reply-To: <cover.1297244229.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3438723786017520334==
+--===============0937104821889138136==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/call-barring.c |   74 ------------------------------------------------=
-----
- 1 files changed, 0 insertions(+), 74 deletions(-)
+ drivers/atmodem/ssn.c |    4 ++--
+ include/ssn.h         |    7 ++++---
+ src/ofono.h           |    6 ++++--
+ src/ssn.c             |   11 ++++++-----
+ 4 files changed, 16 insertions(+), 12 deletions(-)
 
-diff --git a/src/call-barring.c b/src/call-barring.c
-index 649826e..84ed277 100644
---- a/src/call-barring.c
-+++ b/src/call-barring.c
-@@ -58,9 +58,6 @@ struct ofono_call_barring {
- 	int ss_req_lock;
- 	struct ofono_ssn *ssn;
- 	struct ofono_ussd *ussd;
--	unsigned int incoming_bar_watch;
--	unsigned int outgoing_bar_watch;
--	unsigned int ssn_watch;
- 	unsigned int ussd_watch;
- 	const struct ofono_call_barring_driver *driver;
- 	void *driver_data;
-@@ -987,41 +984,10 @@ static GDBusMethodTable cb_methods[] =3D {
- };
+diff --git a/drivers/atmodem/ssn.c b/drivers/atmodem/ssn.c
+index b7a9df4..b00871d 100644
+--- a/drivers/atmodem/ssn.c
++++ b/drivers/atmodem/ssn.c
+@@ -56,7 +56,7 @@ static void cssi_notify(GAtResult *result, gpointer user_=
+data)
+ 	if (!g_at_result_iter_next_number(&iter, &index))
+ 		index =3D 0;
  =
 
- static GDBusSignalTable cb_signals[] =3D {
--	{ "IncomingBarringInEffect",	"" },
--	{ "OutgoingBarringInEffect",	"" },
- 	{ "PropertyChanged",		"sv" },
- 	{ }
- };
- =
-
--static void call_barring_incoming_enabled_notify(int idx, void *userdata)
--{
--	struct ofono_call_barring *cb =3D userdata;
--	DBusConnection *conn =3D ofono_dbus_get_connection();
--	const char *path =3D __ofono_atom_get_path(cb->atom);
--
--	g_dbus_emit_signal(conn, path, OFONO_CALL_BARRING_INTERFACE,
--			"IncomingBarringInEffect", DBUS_TYPE_INVALID);
--}
--
--static void call_barring_outgoing_enabled_notify(int idx, void *userdata)
--{
--	struct ofono_call_barring *cb =3D userdata;
--	DBusConnection *conn =3D ofono_dbus_get_connection();
--	const char *path =3D __ofono_atom_get_path(cb->atom);
--	DBusMessage *signal;
--
--	signal =3D dbus_message_new_signal(path, OFONO_CALL_BARRING_INTERFACE,
--						"OutgoingBarringInEffect");
--
--	if (signal =3D=3D NULL) {
--		ofono_error("Unable to allocate new %s.OutgoingBarringInEffect"
--				" signal", OFONO_CALL_BARRING_INTERFACE);
--		return;
--	}
--
--	g_dbus_send_message(conn, signal);
--}
--
- int ofono_call_barring_driver_register(const struct ofono_call_barring_dri=
-ver *d)
- {
- 	DBG("driver: %p, name: %s", d, d->name);
-@@ -1054,14 +1020,6 @@ static void call_barring_unregister(struct ofono_ato=
-m *atom)
- 	if (cb->ussd)
- 		cb_unregister_ss_controls(cb);
- =
-
--	if (cb->incoming_bar_watch)
--		__ofono_ssn_mo_watch_remove(cb->ssn, cb->incoming_bar_watch);
--	if (cb->outgoing_bar_watch)
--		__ofono_ssn_mt_watch_remove(cb->ssn, cb->outgoing_bar_watch);
--
--	if (cb->ssn_watch)
--		__ofono_modem_remove_atom_watch(modem, cb->ssn_watch);
--
- 	if (cb->ussd_watch)
- 		__ofono_modem_remove_atom_watch(modem, cb->ussd_watch);
- }
-@@ -1116,29 +1074,6 @@ struct ofono_call_barring *ofono_call_barring_create=
-(struct ofono_modem *modem,
- 	return cb;
+-	ofono_ssn_cssi_notify(ssn, code1, index);
++	ofono_ssn_cssi_notify(ssn, 0, code1, index);
  }
  =
 
--static void ssn_watch(struct ofono_atom *atom,
--			enum ofono_atom_watch_condition cond, void *data)
--{
--	struct ofono_call_barring *cb =3D data;
--
--	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
--		cb->ssn =3D NULL;
--		cb->incoming_bar_watch =3D 0;
--		cb->outgoing_bar_watch =3D 0;
--		return;
--	}
--
--	cb->ssn =3D __ofono_atom_get_data(atom);
--
--	cb->incoming_bar_watch =3D
--		__ofono_ssn_mo_watch_add(cb->ssn, SS_MO_INCOMING_BARRING,
--				call_barring_incoming_enabled_notify, cb, NULL);
--
--	cb->outgoing_bar_watch =3D
--		__ofono_ssn_mo_watch_add(cb->ssn, SS_MO_OUTGOING_BARRING,
--				call_barring_outgoing_enabled_notify, cb, NULL);
--}
--
- static void ussd_watch(struct ofono_atom *atom,
- 			enum ofono_atom_watch_condition cond, void *data)
+ static void cssu_notify(GAtResult *result, gpointer user_data)
+@@ -93,7 +93,7 @@ static void cssu_notify(GAtResult *result, gpointer user_=
+data)
+ 		return;
+ =
+
+ out:
+-	ofono_ssn_cssu_notify(ssn, code2, index, &ph);
++	ofono_ssn_cssu_notify(ssn, 0, code2, index, &ph);
+ }
+ =
+
+ static void at_ssn_initialized(gboolean ok, GAtResult *result,
+diff --git a/include/ssn.h b/include/ssn.h
+index d640cad..ba3701b 100644
+--- a/include/ssn.h
++++ b/include/ssn.h
+@@ -37,9 +37,10 @@ struct ofono_ssn_driver {
+ };
+ =
+
+ /* SSN notifications (CSSI and CSSU).  */
+-void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, int code, int index);
+-void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, int code, int index,
+-				const struct ofono_phone_number *number);
++void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, unsigned int id,
++				int code1, int index);
++void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, unsigned int id, int cod=
+e2,
++			int index, const struct ofono_phone_number *number);
+ =
+
+ int ofono_ssn_driver_register(const struct ofono_ssn_driver *d);
+ void ofono_ssn_driver_unregister(const struct ofono_ssn_driver *d);
+diff --git a/src/ofono.h b/src/ofono.h
+index 6ba0187..eafab21 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -314,8 +314,10 @@ int __ofono_sms_sim_download(struct ofono_stk *stk, co=
+nst struct sms *msg,
+ =
+
+ #include <ofono/ssn.h>
+ =
+
+-typedef void (*ofono_ssn_mo_notify_cb)(int index, void *user);
+-typedef void (*ofono_ssn_mt_notify_cb)(int index,
++typedef void (*ofono_ssn_mo_notify_cb)(unsigned int id, int code1, int ind=
+ex,
++					void *user);
++
++typedef void (*ofono_ssn_mt_notify_cb)(unsigned int id, int code2, int ind=
+ex,
+ 					const struct ofono_phone_number *ph,
+ 					void *user);
+ =
+
+diff --git a/src/ssn.c b/src/ssn.c
+index 64c94b7..065e4fd 100644
+--- a/src/ssn.c
++++ b/src/ssn.c
+@@ -112,7 +112,8 @@ gboolean __ofono_ssn_mt_watch_remove(struct ofono_ssn *=
+ssn, unsigned int id)
+ 	return __ofono_watchlist_remove_item(ssn->mt_handler_list, id);
+ }
+ =
+
+-void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, int code1, int index)
++void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, unsigned int id,
++				int code1, int index)
  {
-@@ -1158,7 +1093,6 @@ void ofono_call_barring_register(struct ofono_call_ba=
-rring *cb)
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
- 	const char *path =3D __ofono_atom_get_path(cb->atom);
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(cb->atom);
--	struct ofono_atom *ssn_atom;
- 	struct ofono_atom *ussd_atom;
+ 	struct ssn_handler *h;
+ 	GSList *l;
+@@ -123,12 +124,12 @@ void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, int=
+ code1, int index)
+ 		notify =3D h->item.notify;
  =
 
- 	if (!g_dbus_register_interface(conn, path,
-@@ -1173,14 +1107,6 @@ void ofono_call_barring_register(struct ofono_call_b=
-arring *cb)
+ 		if (h->code =3D=3D code1)
+-			notify(index, h->item.notify_data);
++			notify(id, code1, index, h->item.notify_data);
+ 	}
+ }
  =
 
- 	ofono_modem_add_interface(modem, OFONO_CALL_BARRING_INTERFACE);
+-void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, int code2, int index,
+-				const struct ofono_phone_number *ph)
++void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, unsigned int id, int cod=
+e2,
++				int index, const struct ofono_phone_number *ph)
+ {
+ 	struct ssn_handler *h;
+ 	GSList *l;
+@@ -139,7 +140,7 @@ void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, int c=
+ode2, int index,
+ 		notify =3D h->item.notify;
  =
 
--	cb->ssn_watch =3D __ofono_modem_add_atom_watch(modem, OFONO_ATOM_TYPE_SSN,
--					ssn_watch, cb, NULL);
--
--	ssn_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SSN);
--
--	if (ssn_atom && __ofono_atom_get_registered(ssn_atom))
--		ssn_watch(ssn_atom, OFONO_ATOM_WATCH_CONDITION_REGISTERED, cb);
--
- 	cb->ussd_watch =3D __ofono_modem_add_atom_watch(modem,
- 					OFONO_ATOM_TYPE_USSD,
- 					ussd_watch, cb, NULL);
+ 		if (h->code =3D=3D code2)
+-			notify(index, ph, h->item.notify_data);
++			notify(id, code2, index, ph, h->item.notify_data);
+ 	}
+ }
+ =
+
 -- =
 
 1.7.0.4
 
 
---===============3438723786017520334==--
+--===============0937104821889138136==--
 
