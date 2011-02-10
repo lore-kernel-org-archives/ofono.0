@@ -1,54 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============6350355827544256798=="
+Content-Type: multipart/mixed; boundary="===============4804167901729700039=="
 MIME-Version: 1.0
-From: Olivier Guiter <olivier.guiter@linux.intel.com>
-Subject: [PATCH 1/1] gatserver: Add ATS5 command feature
-Date: Thu, 10 Feb 2011 14:59:42 +0100
-Message-ID: <1297346382-20135-1-git-send-email-olivier.guiter@linux.intel.com>
+From: Simon LETHBRIDGE <simon.lethbridge@stericsson.com>
+Subject: [PATCHv2] doc: Assisted Satellite Navigation API and Agent API
+Date: Thu, 10 Feb 2011 15:48:07 +0100
+Message-ID: <B4268AAFAFA3E244B5B0641D5914917048CB1F3765@EXDCVYMBSTM006.EQ1STM.local>
+In-Reply-To: <mailman.1.1297281601.22675.ofono@ofono.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6350355827544256798==
+--===============4804167901729700039==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- gatchat/gatserver.c |    7 ++++++-
- 1 files changed, 6 insertions(+), 1 deletions(-)
+Hi Fred,
 
-diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-index be9f79a..25b7ba4 100644
---- a/gatchat/gatserver.c
-+++ b/gatchat/gatserver.c
-@@ -796,6 +796,7 @@ static char *extract_line(GAtServer *p, struct ring_buf=
-fer *rbuf)
- 	int line_length =3D 0;
- 	gboolean in_string =3D FALSE;
- 	char s3 =3D p->v250.s3;
-+	char s5 =3D p->v250.s5;
- 	char *line;
- 	int i;
- =
-
-@@ -837,7 +838,11 @@ static char *extract_line(GAtServer *p, struct ring_bu=
-ffer *rbuf)
- 		if (*buf =3D=3D '"')
- 			in_string =3D !in_string;
- =
-
--		if ((*buf =3D=3D ' ' || *buf =3D=3D '\t') && in_string =3D=3D FALSE)
-+		if (*buf =3D=3D s5) {
-+			if (i !=3D 0)
-+				i -=3D 1;
-+		}
-+		else if ((*buf =3D=3D ' ' || *buf =3D=3D '\t') && in_string =3D=3D FALSE)
- 			; /* Skip */
- 		else if (*buf !=3D s3)
- 			line[i++] =3D *buf;
--- =
-
-1.7.1
+> +		void ResetAssistanceData()
+> +
+> +			A request has been received from the network that all
+> +			assistance data should be reset.  This is used for 3gpp
+> +			performance tests.
+>
+> Sorry to come back so late of this. By assistance data reset, you meant a=
+ reset of all positioning stored information? Like used in 3GPP conformance=
+ testing (44.014 ? 8.15 for instance)?
+> The knowledge of positioning information is somehow "Assistance" informat=
+ion, but this is not the wording I'm used to.
+>
+Yes.  Since this is a 3GPP performance test most of the stored information =
+will have been received from the network as assistance data. =
 
 
---===============6350355827544256798==--
+The recs that I have in mind are 34.123 and 51.10 Section 70
+
+Regards,
+
+Simon
+
+--===============4804167901729700039==--
 
