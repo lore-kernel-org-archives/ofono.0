@@ -1,62 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============6318789199565900812=="
+Content-Type: multipart/mixed; boundary="===============4636892574154306326=="
 MIME-Version: 1.0
-From: Andras Domokos <andras.domokos@nokia.com>
-Subject: Re: [RFC PATCH 2/3] ssn: add code and call id to notifications
-Date: Thu, 10 Feb 2011 11:12:06 +0200
-Message-ID: <4D53ABE6.7000709@nokia.com>
-In-Reply-To: <4D535694.3030505@gmail.com>
+From: Kjetil ASDAL <kjetil.asdal@stericsson.com>
+Subject: RE: [RFCv2] doc: Proposal for LTE/IMS API
+Date: Thu, 10 Feb 2011 10:30:08 +0100
+Message-ID: <24601CEAED63B94588D46990641D59241B7B5CE964@EXDCVYMBSTM005.EQ1STM.local>
+In-Reply-To: <201102081647.26748.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6318789199565900812==
+--===============4636892574154306326==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi R=C3=A9mi,
 
-On 02/10/2011 05:08 AM, ext Denis Kenzior wrote:
-> Hi Andras,
->
->> diff --git a/include/ssn.h b/include/ssn.h
->> index d640cad..ba3701b 100644
->> --- a/include/ssn.h
->> +++ b/include/ssn.h
->> @@ -37,9 +37,10 @@ struct ofono_ssn_driver {
->>   };
->>
->>   /* SSN notifications (CSSI and CSSU).  */
->> -void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, int code, int index);
->> -void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, int code, int index,
->> -				const struct ofono_phone_number *number);
->> +void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, unsigned int id,
->> +				int code1, int index);
->> +void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, unsigned int id, int =
-code2,
->> +			int index, const struct ofono_phone_number *number);
->>
->>   int ofono_ssn_driver_register(const struct ofono_ssn_driver *d);
->>   void ofono_ssn_driver_unregister(const struct ofono_ssn_driver *d);
-> Right now I'm not seeing any users (or even potential ones) of the SSN
-> atom besides voicecall.  What do you think of removing the SSN atom and
-> moving these to the voicecall atom?
-Yes, we talked about removing the SSN atom, but I thought I would
-keep it for now, it can be removed any time later, anyways, doesn't
-save much removing it.
+R=C3=A9mi wrote:
+> > +			The registered application is tracked, if the
+> > +			application exits the registration will be
+> > +			automatically released.
+> > +
+> > +			Related AT command: AT+EISR.
+> =
 
-> The only one I'm not sure about is<code2>  from 27.007:
-> 6	forward check SS message received (can be received whenever)
->
-> Any idea what this one is about?
->
-Never encountered this message, and I am not sure what is it for.
-A patch for handling this message can be submitted later, if a real
-life case is found for it.
+> Is this a standard command? As it is not in the 3GPP namespace
+> (AT+C...), it
+> might be nice to provide a reference pointer.
 
-> Regards,
-> -Denis
-Regards,
-Andras
+We should remove the reference above as it is incorrect. There is =
 
---===============6318789199565900812==--
+no standard AT command specified for this as of today, however, we =
+
+will be entering a CR on 3GPP TS 27.007 in the upcoming meeting to =
+
+address the lack of such a command.
+
+BR
+Kjetil
+
+--===============4636892574154306326==--
 
