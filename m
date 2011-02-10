@@ -1,44 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============5323508158350520015=="
+Content-Type: multipart/mixed; boundary="===============3830721280925824437=="
 MIME-Version: 1.0
-From: Amit Mendapara <mendapara.amit@gmail.com>
-Subject: [PATCH 3/3] udev: Add Teracom (Linktop/LW27x) device detection
-Date: Thu, 10 Feb 2011 10:45:40 +0530
-Message-ID: <1297314940-4315-3-git-send-email-mendapara.amit@gmail.com>
-In-Reply-To: <1297314940-4315-1-git-send-email-mendapara.amit@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] modem:Add powered watches on modem.
+Date: Thu, 10 Feb 2011 00:38:36 -0600
+Message-ID: <4D5387EC.3070102@gmail.com>
+In-Reply-To: <1296468108-8347-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5323508158350520015==
+--===============3830721280925824437==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Signed-off-by: Amit Mendapara <mendapara.amit@gmail.com>
----
- plugins/ofono.rules |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+Hi Guillaume,
 
-diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-index 111f071..f01b739 100644
---- a/plugins/ofono.rules
-+++ b/plugins/ofono.rules
-@@ -451,4 +451,7 @@ ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"062=
-3", ENV{OFONO_DRIVER}=3D"nokia"
- ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"023e", ENV{OFONO_DRIVE=
-R}=3D"nokiacdma"
- ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"00b6", ENV{OFONO_DRIVE=
-R}=3D"nokiacdma"
- =
-
-++# Teracom (Linktop/LW27x) 3G Data Card
-++ATTRS{idVendor}=3D=3D"230d", ATTRS{idProduct}=3D=3D"0001", ENV{OFONO_DRIV=
-ER}=3D"linktop"
-+
- LABEL=3D"ofono_end"
--- =
-
-1.7.1
+On 01/31/2011 04:01 AM, Guillaume Zajac wrote:
+> ---
+>  src/modem.c |   47 +++++++++++++++++++++++++++++++++++++++++++++++
+>  src/ofono.h |    7 +++++++
+>  2 files changed, 54 insertions(+), 0 deletions(-)
+> =
 
 
---===============5323508158350520015==--
+Patch has been applied, but I did have to fix up some minor issues with
+it in a follow-on commit.
+
+Regards,
+-Denis
+
+--===============3830721280925824437==--
 
