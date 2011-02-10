@@ -1,41 +1,132 @@
-Content-Type: multipart/mixed; boundary="===============4804167901729700039=="
+Content-Type: multipart/mixed; boundary="===============2027403134789912800=="
 MIME-Version: 1.0
-From: Simon LETHBRIDGE <simon.lethbridge@stericsson.com>
-Subject: [PATCHv2] doc: Assisted Satellite Navigation API and Agent API
-Date: Thu, 10 Feb 2011 15:48:07 +0100
-Message-ID: <B4268AAFAFA3E244B5B0641D5914917048CB1F3765@EXDCVYMBSTM006.EQ1STM.local>
-In-Reply-To: <mailman.1.1297281601.22675.ofono@ofono.org>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] ifx: Remove modem selftest
+Date: Thu, 10 Feb 2011 17:59:30 +0200
+Message-ID: <1297353570-9453-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4804167901729700039==
+--===============2027403134789912800==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fred,
+Command used for self test is not working for all
+versions of the modem firmware.
+---
+ plugins/ifx.c |   65 +----------------------------------------------------=
+---
+ 1 files changed, 2 insertions(+), 63 deletions(-)
 
-> +		void ResetAssistanceData()
-> +
-> +			A request has been received from the network that all
-> +			assistance data should be reset.  This is used for 3gpp
-> +			performance tests.
->
-> Sorry to come back so late of this. By assistance data reset, you meant a=
- reset of all positioning stored information? Like used in 3GPP conformance=
- testing (44.014 ? 8.15 for instance)?
-> The knowledge of positioning information is somehow "Assistance" informat=
-ion, but this is not the wording I'm used to.
->
-Yes.  Since this is a 3GPP performance test most of the stored information =
-will have been received from the network as assistance data. =
+diff --git a/plugins/ifx.c b/plugins/ifx.c
+index a41fc36..527a8c4 100644
+--- a/plugins/ifx.c
++++ b/plugins/ifx.c
+@@ -524,7 +524,7 @@ static gboolean mux_timeout_cb(gpointer user_data)
+ 	struct ofono_modem *modem =3D user_data;
+ 	struct ifx_data *data =3D ofono_modem_get_data(modem);
+ =
+
+-	ofono_error("Timeout with modem or multiplexer setup");
++	ofono_error("Timeout with multiplexer setup");
+ =
+
+ 	data->mux_init_timeout =3D 0;
+ =
+
+@@ -539,56 +539,6 @@ static gboolean mux_timeout_cb(gpointer user_data)
+ 	return FALSE;
+ }
+ =
+
+-static void dev_ver_selftest_cb(gboolean ok, GAtResult *result,
+-				gpointer user_data)
+-{
+-	struct ofono_modem *modem =3D user_data;
+-	struct ifx_data *data =3D ofono_modem_get_data(modem);
+-
+-	if (ok)
+-		return;
+-
+-	ofono_error("at(a)vers:device_version_id()-FAILED");
+-
+-	if (data->mux_init_timeout > 0) {
+-		g_source_remove(data->mux_init_timeout);
+-		data->mux_init_timeout =3D 0;
+-	}
+-
+-	g_at_chat_unref(data->dlcs[AUX_DLC]);
+-	data->dlcs[AUX_DLC] =3D NULL;
+-
+-	g_io_channel_unref(data->device);
+-	data->device =3D NULL;
+-
+-	ofono_modem_set_powered(modem, FALSE);
+-}
+-
+-static void rtc_gti_selftest_cb(gboolean ok, GAtResult *result,
+-				gpointer user_data)
+-{
+-	struct ofono_modem *modem =3D user_data;
+-	struct ifx_data *data =3D ofono_modem_get_data(modem);
+-
+-	if (ok)
+-		return;
+-
+-	ofono_error("at(a)rtc_drv:rtc_gti_test_verify_32khz()-FAILED");
+-
+-	if (data->mux_init_timeout > 0) {
+-		g_source_remove(data->mux_init_timeout);
+-		data->mux_init_timeout =3D 0;
+-	}
+-
+-	g_at_chat_unref(data->dlcs[AUX_DLC]);
+-	data->dlcs[AUX_DLC] =3D NULL;
+-
+-	g_io_channel_unref(data->device);
+-	data->device =3D NULL;
+-
+-	ofono_modem_set_powered(modem, FALSE);
+-}
+-
+ static int ifx_enable(struct ofono_modem *modem)
+ {
+ 	struct ifx_data *data =3D ofono_modem_get_data(modem);
+@@ -642,24 +592,13 @@ static int ifx_enable(struct ofono_modem *modem)
+ 	g_at_chat_send(chat, "ATE0 +CMEE=3D1", NULL,
+ 					NULL, NULL, NULL);
+ =
+
+-	/* Execute modem self tests */
+-	g_at_chat_send(chat, "at(a)rtc_drv:rtc_gti_test_verify_32khz()", NULL,
+-					rtc_gti_selftest_cb, modem, NULL);
+-
+-	g_at_chat_send(chat, "at(a)vers:device_version_id()", NULL,
+-					dev_ver_selftest_cb, modem, NULL);
+-
+ 	/* Enable multiplexer */
+ 	data->frame_size =3D 1509;
+ =
+
+ 	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
+ 					mux_setup_cb, modem, NULL);
+ =
+
+-	/*
+-	 * Total self test execution time is around 2 seconds. Use
+-	 * 10 seconds timeout to cover self tests and multiplexer setup.
+-	 */
+-	data->mux_init_timeout =3D g_timeout_add_seconds(10, mux_timeout_cb,
++	data->mux_init_timeout =3D g_timeout_add_seconds(5, mux_timeout_cb,
+ 								modem);
+ =
+
+ 	data->dlcs[AUX_DLC] =3D chat;
+-- =
+
+1.7.0.4
 
 
-The recs that I have in mind are 34.123 and 51.10 Section 70
-
-Regards,
-
-Simon
-
---===============4804167901729700039==--
+--===============2027403134789912800==--
 
