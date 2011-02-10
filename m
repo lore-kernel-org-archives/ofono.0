@@ -1,48 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8158910099426686251=="
+Content-Type: multipart/mixed; boundary="===============3782664413766662517=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 1/3] call-barring: removed +CSSI type SS notifications
-Date: Wed, 09 Feb 2011 21:04:54 -0600
-Message-ID: <4D5355D6.9000503@gmail.com>
-In-Reply-To: <7f7cc862a685786b014377e6e97c789d8d65666b.1297244230.git.Andras.Domokos@nokia.com>
+Subject: Re: [RFC PATCH 2/3] ssn: add code and call id to notifications
+Date: Wed, 09 Feb 2011 21:08:04 -0600
+Message-ID: <4D535694.3030505@gmail.com>
+In-Reply-To: <a562a3e40e5acbb640fefca65b33e3bdf4d6e61b.1297244230.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8158910099426686251==
+--===============3782664413766662517==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andras
+Hi Andras,
 
-On 02/09/2011 04:33 AM, Andras Domokos wrote:
-> ---
->  src/call-barring.c |   74 ----------------------------------------------=
-------
->  1 files changed, 0 insertions(+), 74 deletions(-)
-> =
+> diff --git a/include/ssn.h b/include/ssn.h
+> index d640cad..ba3701b 100644
+> --- a/include/ssn.h
+> +++ b/include/ssn.h
+> @@ -37,9 +37,10 @@ struct ofono_ssn_driver {
+>  };
+>  =
 
-> diff --git a/src/call-barring.c b/src/call-barring.c
-> index 649826e..84ed277 100644
-> --- a/src/call-barring.c
-> +++ b/src/call-barring.c
-> @@ -58,9 +58,6 @@ struct ofono_call_barring {
->  	int ss_req_lock;
->  	struct ofono_ssn *ssn;
+>  /* SSN notifications (CSSI and CSSU).  */
+> -void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, int code, int index);
+> -void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, int code, int index,
+> -				const struct ofono_phone_number *number);
+> +void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, unsigned int id,
+> +				int code1, int index);
+> +void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, unsigned int id, int c=
+ode2,
+> +			int index, const struct ofono_phone_number *number);
+>  =
 
-You forgot to remove this part in your patch.  I applied your patch and
-fixed this in a follow on patch.
+>  int ofono_ssn_driver_register(const struct ofono_ssn_driver *d);
+>  void ofono_ssn_driver_unregister(const struct ofono_ssn_driver *d);
 
->  	struct ofono_ussd *ussd;
-> -	unsigned int incoming_bar_watch;
-> -	unsigned int outgoing_bar_watch;
-> -	unsigned int ssn_watch;
->  	unsigned int ussd_watch;
->  	const struct ofono_call_barring_driver *driver;
->  	void *driver_data;
+Right now I'm not seeing any users (or even potential ones) of the SSN
+atom besides voicecall.  What do you think of removing the SSN atom and
+moving these to the voicecall atom?
+
+The only one I'm not sure about is <code2> from 27.007:
+6	forward check SS message received (can be received whenever)
+
+Any idea what this one is about?
 
 Regards,
 -Denis
 
---===============8158910099426686251==--
+--===============3782664413766662517==--
 
