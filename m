@@ -1,33 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============3830721280925824437=="
+Content-Type: multipart/mixed; boundary="===============7354935698913881292=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] modem:Add powered watches on modem.
-Date: Thu, 10 Feb 2011 00:38:36 -0600
-Message-ID: <4D5387EC.3070102@gmail.com>
-In-Reply-To: <1296468108-8347-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Jeevaka.Badrappan@elektrobit.com
+Subject: RE: [PATCH] plugin: add plugin for Linktop/Teracom LW273 data card
+Date: Thu, 10 Feb 2011 10:02:26 +0200
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802DEBEE9@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <4D5359B2.7080106@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3830721280925824437==
+--===============7354935698913881292==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Amit,
 
-On 01/31/2011 04:01 AM, Guillaume Zajac wrote:
-> ---
->  src/modem.c |   47 +++++++++++++++++++++++++++++++++++++++++++++++
->  src/ofono.h |    7 +++++++
->  2 files changed, 54 insertions(+), 0 deletions(-)
+ofono-bounces(a)ofono.org wrote:
+> Hi Amit,
 > =
 
+> On 02/09/2011 10:56 AM, Amit Mendapara wrote:
+>> Hi Danis,
+>> =
 
-Patch has been applied, but I did have to fix up some minor issues with
-it in a follow-on commit.
+>> I have submitted three patches as you suggested but no one has
+>> reviewed it. Would you tell me what else I can do to ensure it's
+>> been integrated in ofono? =
+
+>> =
+
+> =
+
+> So it looks like GMail is losing patches again.  Your patches
+> do show up on the mailing list archives but not in my
+> mailbox.  Can you resend them again, and CC my private Email as well:
+> denkenz(a)gmail.com. =
+
+
+Your patches neither showed up in my GMail nor in my company outlook.
+Only place it can be seen is in ofono mail archives. :(
 
 Regards,
--Denis
+Jeevaka
 
---===============3830721280925824437==--
+--===============7354935698913881292==--
 
