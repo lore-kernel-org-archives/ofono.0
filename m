@@ -1,53 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============3782664413766662517=="
+Content-Type: multipart/mixed; boundary="===============5843754613388327120=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 2/3] ssn: add code and call id to notifications
-Date: Wed, 09 Feb 2011 21:08:04 -0600
-Message-ID: <4D535694.3030505@gmail.com>
-In-Reply-To: <a562a3e40e5acbb640fefca65b33e3bdf4d6e61b.1297244230.git.Andras.Domokos@nokia.com>
+Subject: Re: [PATCH] plugin: add plugin for Linktop/Teracom LW273 data card
+Date: Wed, 09 Feb 2011 21:21:22 -0600
+Message-ID: <4D5359B2.7080106@gmail.com>
+In-Reply-To: <AANLkTinngYLwFHB0jT=rg7joRz=PA6jOiM6ArNpRQhkW@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3782664413766662517==
+--===============5843754613388327120==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andras,
+Hi Amit,
 
-> diff --git a/include/ssn.h b/include/ssn.h
-> index d640cad..ba3701b 100644
-> --- a/include/ssn.h
-> +++ b/include/ssn.h
-> @@ -37,9 +37,10 @@ struct ofono_ssn_driver {
->  };
->  =
+On 02/09/2011 10:56 AM, Amit Mendapara wrote:
+> Hi Danis,
+> =
 
->  /* SSN notifications (CSSI and CSSU).  */
-> -void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, int code, int index);
-> -void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, int code, int index,
-> -				const struct ofono_phone_number *number);
-> +void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, unsigned int id,
-> +				int code1, int index);
-> +void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, unsigned int id, int c=
-ode2,
-> +			int index, const struct ofono_phone_number *number);
->  =
+> I have submitted three patches as you suggested but no one has reviewed
+> it. Would you tell me what else I can do to ensure it's been integrated
+> in ofono?
+> =
 
->  int ofono_ssn_driver_register(const struct ofono_ssn_driver *d);
->  void ofono_ssn_driver_unregister(const struct ofono_ssn_driver *d);
 
-Right now I'm not seeing any users (or even potential ones) of the SSN
-atom besides voicecall.  What do you think of removing the SSN atom and
-moving these to the voicecall atom?
+So it looks like GMail is losing patches again.  Your patches do show up
+on the mailing list archives but not in my mailbox.  Can you resend them
+again, and CC my private Email as well: denkenz(a)gmail.com.
 
-The only one I'm not sure about is <code2> from 27.007:
-6	forward check SS message received (can be received whenever)
-
-Any idea what this one is about?
-
-Regards,
+Thanks,
 -Denis
 
---===============3782664413766662517==--
+--===============5843754613388327120==--
 
