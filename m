@@ -1,1135 +1,163 @@
-Content-Type: multipart/mixed; boundary="===============6888830592012878413=="
+Content-Type: multipart/mixed; boundary="===============1643517409851534357=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 1/1] doc: Update possible errors
-Date: Fri, 11 Feb 2011 03:34:31 -0800
-Message-ID: <1297424071-5464-2-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1297424071-5464-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Tomasz Gregorek <tomasz.gregorek@gmail.com>
+Subject: Re: [RFC PATCH v3] gprs: add function to handle activated context
+Date: Fri, 11 Feb 2011 15:08:51 +0100
+Message-ID: <AANLkTimaSGuXs23p+LSocMhKdtybZcC1tyBb5Q1Qouk2@mail.gmail.com>
+In-Reply-To: <8281606748F03E4390BB98A3F47F2E948A9F71E69A@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6888830592012878413==
+--===============1643517409851534357==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/audio-settings-api.txt         |    2 -
- doc/call-barring-api.txt           |   31 ++++++++++++++++++++++
- doc/call-forwarding-api.txt        |   16 +++++++++++
- doc/call-meter-api.txt             |   14 ++++++++++
- doc/call-settings-api.txt          |    8 ++++++
- doc/call-volume-api.txt            |    9 +++---
- doc/cdma-voicecall-manager-api.txt |   10 +++++++
- doc/cell-broadcast-api.txt         |    7 ++---
- doc/connman-api.txt                |   25 ++++++++++++++----
- doc/manager-api.txt                |    2 -
- doc/message-api.txt                |    2 -
- doc/message-waiting-api.txt        |    7 +++--
- doc/messagemanager-api.txt         |   14 ++++++++--
- doc/modem-api.txt                  |   10 ++++---
- doc/network-api.txt                |   16 +++++++----
- doc/phonebook-api.txt              |    2 +-
- doc/pushnotification-api.txt       |    8 ++++++
- doc/radio-settings-api.txt         |    9 +++---
- doc/sim-api.txt                    |   37 +++++++++++++++++++++++++-
- doc/stk-api.txt                    |   17 +++++++-----
- doc/supplementaryservices-api.txt  |   20 +++++++++++---
- doc/voicecall-api.txt              |   17 +++++++++++-
- doc/voicecallmanager-api.txt       |   49 ++++++++++++++++++++++++++++++++=
-++-
- 23 files changed, 273 insertions(+), 59 deletions(-)
-
-diff --git a/doc/audio-settings-api.txt b/doc/audio-settings-api.txt
-index 0f60306..49d7909 100644
---- a/doc/audio-settings-api.txt
-+++ b/doc/audio-settings-api.txt
-@@ -10,8 +10,6 @@ Methods		dict GetProperties()
- 			Returns all audio settings properties. See the
- 			properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- Signals		PropertyChanged(string property, variant value)
- =
-
- 			This signal indicates a changed value of the given
-diff --git a/doc/call-barring-api.txt b/doc/call-barring-api.txt
-index 1534494..a80bf61 100644
---- a/doc/call-barring-api.txt
-+++ b/doc/call-barring-api.txt
-@@ -9,29 +9,60 @@ Methods		dict GetProperties()
- =
-
- 			Contains the properties for this object.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+
- 		void ChangePassword(string old_password, string new_password)
- =
-
- 			Register new network password for the barring
- 			services.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void DisableAll(string password)
- =
-
- 			Disables all call barrings.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void DisableAllIncoming(string password)
- =
-
- 			Disables barrings for incoming calls.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void DisableAllOutgoing(string password)
- =
-
- 			Disables barrings for outgoing calls.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void SetProperty(string property, variant value, string pin2)
- =
-
- 			Sets the given property value to that specified in
- 			call parameter.  For all properties, the password
- 			(typically PIN2) must be provided.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- Signals		PropertyChanged(string property, variant value)
- =
-
- 			Signal is emitted whenever a property has changed.
-diff --git a/doc/call-forwarding-api.txt b/doc/call-forwarding-api.txt
-index e8b4b9f..335637f 100644
---- a/doc/call-forwarding-api.txt
-+++ b/doc/call-forwarding-api.txt
-@@ -8,6 +8,9 @@ Methods		dict GetProperties()
- =
-
- 			Contains the properties for this object.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+
- 		void DisableAll(string type)
- =
-
- 			Disables all call forwarding rules for type.
-@@ -16,11 +19,24 @@ Methods		dict GetProperties()
- 				"conditional" - Disables all conditional rules,
- 					e.g. busy, no reply and not reachable.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void SetProperty(string property, variant value)
- =
-
- 			Sets the given property value to that specified in
- 			call parameter.
- =
-
-+			Possible Errors: [service].Error.NotAvailable
-+					 [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- Signals		PropertyChanged(string property, variant value)
- =
-
- 			Signal is emitted whenever a property has changed.
-diff --git a/doc/call-meter-api.txt b/doc/call-meter-api.txt
-index 045343b..b668f79 100644
---- a/doc/call-meter-api.txt
-+++ b/doc/call-meter-api.txt
-@@ -8,6 +8,8 @@ Methods		dict GetProperties()
- =
-
- 			Contains the properties for this object.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+
- 		void SetProperty(string property, variant value,
- 				 string password)
- =
-
-@@ -16,12 +18,24 @@ Methods		dict GetProperties()
- 			to pass the SIM PIN2 code which may be
- 			required by the SIM.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void Reset(string password)
- =
-
- 			Attempts to reset the Accumulated Call Meter.
- 			Reseting this value requires SIM PIN2, provided
- 			by the password parameter.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- Signals		PropertyChanged(string property, variant value)
- =
-
- 			Signal is emitted whenever a property has changed.
-diff --git a/doc/call-settings-api.txt b/doc/call-settings-api.txt
-index ed2a099..de9f314 100644
---- a/doc/call-settings-api.txt
-+++ b/doc/call-settings-api.txt
-@@ -8,11 +8,19 @@ Methods		dict GetProperties()
- =
-
- 			Contains the properties for this object.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+
- 		void SetProperty(string property, variant value)
- =
-
- 			Sets the given property value to that specified in
- 			call parameter.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- Signals		PropertyChanged(string property, variant value)
- =
-
- 			Signal is emitted whenever a property has changed.
-diff --git a/doc/call-volume-api.txt b/doc/call-volume-api.txt
-index 6db0132..320b25f 100644
---- a/doc/call-volume-api.txt
-+++ b/doc/call-volume-api.txt
-@@ -10,8 +10,6 @@ Methods		dict GetProperties()
- 			Returns properties for the CallVolume object. See
- 			the properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- 		void SetProperty(string property, variant value)
- =
-
- 			Changes the value of the specified property. Only
-@@ -19,8 +17,11 @@ Methods		dict GetProperties()
- 			changeable. On success a PropertyChanged signal
- 			will be emitted.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--					 [service].Error.DoesNotExist
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
- =
-
- Signals		PropertyChanged(string name, variant value)
- =
-
-diff --git a/doc/cdma-voicecall-manager-api.txt b/doc/cdma-voicecall-manage=
-r-api.txt
-index 2fd74da..535909a 100644
---- a/doc/cdma-voicecall-manager-api.txt
-+++ b/doc/cdma-voicecall-manager-api.txt
-@@ -15,10 +15,20 @@ Methods		dict GetProperties()
- 			Initiates a new outgoing call.  This is usually
- 			implemented using the ATD AT command.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- 		void Hangup()
- =
-
- 			Hangup all active calls.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- 		void Answer()
- =
-
- 			Answer the incoming call.  This only affects the
-diff --git a/doc/cell-broadcast-api.txt b/doc/cell-broadcast-api.txt
-index ec5f14c..52618eb 100644
---- a/doc/cell-broadcast-api.txt
-+++ b/doc/cell-broadcast-api.txt
-@@ -10,8 +10,6 @@ Methods		dict GetProperties()
- 			Returns properties for the cell broadcast object. See
- 			the properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- 		void SetProperty(string property, variant value)
- =
-
- 			Changes the value of the specified property. Only
-@@ -19,8 +17,9 @@ Methods		dict GetProperties()
- 			changeable. On success a PropertyChanged signal
- 			will be emitted.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--					 [service].Error.DoesNotExist
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.Failed
- =
-
- Signals		PropertyChanged(string name, variant value)
- =
-
-diff --git a/doc/connman-api.txt b/doc/connman-api.txt
-index 22c59dc..ece5bd3 100644
---- a/doc/connman-api.txt
-+++ b/doc/connman-api.txt
-@@ -10,20 +10,23 @@ Methods		dict GetProperties()
- 			Returns all global system properties. See the
- 			properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- 		void SetProperty(string property, variant value)
- =
-
- 			Sets the property to a desired value
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--					 [service].Error.InvalidFormat
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
- 					 [service].Error.Failed
- =
-
- 		void DeactivateAll()
- =
-
- 			Deactivates all active contexts.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.Failed
-+
- 		array{object,dict} GetContexts()
- =
-
- 			Get array of context objects and properties.
-@@ -41,12 +44,22 @@ Methods		dict GetProperties()
- 			Type documentation of ConnectionContext interface.
- 			Returns the object path of the created context.
- =
-
-+			Possible Errors: [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void RemoveContext(object context)
- =
-
- 			Removes a primary context.  All secondary contexts, if
- 			any, associated with the primary context are also
- 			removed.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.NotFound
-+					 [service].Error.Failed
-+
- Signals		PropertyChanged(string property, variant value)
- =
-
- 			This signal indicates a changed value of the given
-@@ -130,8 +143,6 @@ Object path	[variable]
- Methods		dict GetProperties()
- 			Returns all properties for the context object.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- 		void SetProperty(string property, variant value)
- =
-
- 			Sets the property to a desired value
-@@ -139,8 +150,10 @@ Methods		dict GetProperties()
- 			Possible Errors: [service].Error.InvalidArguments
- 					 [service].Error.InvalidFormat
- 					 [service].Error.Failed
-+					 [service].Error.InProgress
- 					 [service].Error.NotAttached
- 					 [service].Error.AttachInProgress
-+					 [service].Error.NotImplemented
- =
-
- Signals		PropertyChanged(string property, variant value)
- =
-
-diff --git a/doc/manager-api.txt b/doc/manager-api.txt
-index c231245..1cdedec 100644
---- a/doc/manager-api.txt
-+++ b/doc/manager-api.txt
-@@ -15,8 +15,6 @@ Methods		array{object,dict} GetModems()
- 			and removal shall be monitored via ModemAdded and
- 			ModemRemoved signals.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- Signals		ModemAdded(object path, dict properties)
- =
-
- 			Signal that is sent when a new modem is added.  It
-diff --git a/doc/message-api.txt b/doc/message-api.txt
-index 1c68aee..8d962fd 100644
---- a/doc/message-api.txt
-+++ b/doc/message-api.txt
-@@ -10,8 +10,6 @@ Methods		dict GetProperties()
- 			Returns properties for the message object. See
- 			the properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- Signals		PropertyChanged(string name, variant value)
- =
-
- 			This signal indicates a changed value of the given
-diff --git a/doc/message-waiting-api.txt b/doc/message-waiting-api.txt
-index e381923..83c030b 100644
---- a/doc/message-waiting-api.txt
-+++ b/doc/message-waiting-api.txt
-@@ -10,8 +10,6 @@ Methods		dict GetProperties()
- 			Returns properties for the MessageWaiting object. See
- 			the properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- 		void SetProperty(string property, variant value)
- =
-
- 			Changes the value of the specified property. Only
-@@ -20,7 +18,10 @@ Methods		dict GetProperties()
- 			will be emitted.
- =
-
- 			Possible Errors: [service].Error.InvalidArguments
--					 [service].Error.DoesNotExist
-+					 [service].Error.InvalidFormat
-+					 [service].Error.NotSupported
-+					 [service].Error.SimNotReady
-+					 [service].Error.Failed
- =
-
- Signals		PropertyChanged(string name, variant value)
- =
-
-diff --git a/doc/messagemanager-api.txt b/doc/messagemanager-api.txt
-index 848d6e3..43c4d07 100644
---- a/doc/messagemanager-api.txt
-+++ b/doc/messagemanager-api.txt
-@@ -10,7 +10,8 @@ Methods		dict GetProperties()
- 			Returns properties for the manager object. See
- 			the properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
- =
-
- 		array{object,dict} GetMessages()
- =
-
-@@ -29,8 +30,11 @@ Methods		dict GetProperties()
- 			changeable. On success a PropertyChanged signal
- 			will be emitted.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--					 [service].Error.DoesNotExist
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
- =
-
- 		object SendMessage(string to, string text)
- =
-
-@@ -38,6 +42,10 @@ Methods		dict GetProperties()
- 			message could be queued successfully, this method
- 			returns an object path to the created Message object.
- =
-
-+			Possible Errors: [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- Signals		PropertyChanged(string name, variant value)
- =
-
- 			This signal indicates a changed value of the given
-diff --git a/doc/modem-api.txt b/doc/modem-api.txt
-index 45043b0..fa400a2 100644
---- a/doc/modem-api.txt
-+++ b/doc/modem-api.txt
-@@ -10,8 +10,6 @@ Methods		dict GetProperties()
- 			Returns properties for the modem object. See
- 			the properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- 		void SetProperty(string property, variant value)
- =
-
- 			Changes the value of the specified property. Only
-@@ -19,8 +17,12 @@ Methods		dict GetProperties()
- 			changeable. On success a PropertyChanged signal
- 			will be emitted.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--					 [service].Error.DoesNotExist
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.NotAvailable
-+					 [service].Error.AccessDenied
-+					 [service].Error.Failed
- =
-
- Signals		PropertyChanged(string name, variant value)
- =
-
-diff --git a/doc/network-api.txt b/doc/network-api.txt
-index 4cb6366..159debc 100644
---- a/doc/network-api.txt
-+++ b/doc/network-api.txt
-@@ -10,8 +10,6 @@ Methods		dict GetProperties()
- 			Returns all network registration properties. See the
- 			properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- 		void SetProperty(string name, variant value)
- =
-
- 			Changes the value of the specified property. Only
-@@ -28,7 +26,9 @@ Methods		dict GetProperties()
- 			default network is normally selected by the settings
- 			from the SIM card.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
- =
-
- 		array{object,dict} GetOperators()
- =
-
-@@ -56,6 +56,10 @@ Methods		dict GetProperties()
- 			GPRS contexts.  Expect the context to be unavailable
- 			for the duration of the operator scan.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- Signals		PropertyChanged(string property, variant value)
- =
-
- 			This signal indicates a changed value of the given
-@@ -158,8 +162,6 @@ Methods		dict GetProperties()
- 			Returns all network operator properties. See the
- 			properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- 		void Register()
- =
-
- 			Attempts to register to this network operator.
-@@ -168,7 +170,9 @@ Methods		dict GetProperties()
- 			be observed by tracking the NetworkRegistration Status
- 			property.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
- =
-
- Signals		PropertyChanged(string property, variant value)
- =
-
-diff --git a/doc/phonebook-api.txt b/doc/phonebook-api.txt
-index dc8b95d..92c0e0b 100644
---- a/doc/phonebook-api.txt
-+++ b/doc/phonebook-api.txt
-@@ -15,4 +15,4 @@ Methods		string Import()
- 			The phonebook is returned as a single UTF8 encoded
- 			string with zero or more VCard entries.
- =
-
--			Possible Errors: [service].Error.Failed
-+			Possible Errors: [service].Error.InProgress
-diff --git a/doc/pushnotification-api.txt b/doc/pushnotification-api.txt
-index 942ba0f..6938826 100644
---- a/doc/pushnotification-api.txt
-+++ b/doc/pushnotification-api.txt
-@@ -10,10 +10,18 @@ Methods		void RegisterAgent(object path)
- 			Registers an agent which will be called whenever a
- 			new Smart Messaging based SMS arrives.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void UnregisterAgent(object path)
- =
-
- 			Unregisters an agent.
- =
-
-+			Possible Errors: [service].Error.InvalidArguments
-+					 [service].Error.Failed
-+
- PushNotificationAgent Hierarchy [experimental]
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- =
-
-diff --git a/doc/radio-settings-api.txt b/doc/radio-settings-api.txt
-index da46ffe..d2dd319 100644
---- a/doc/radio-settings-api.txt
-+++ b/doc/radio-settings-api.txt
-@@ -10,9 +10,8 @@ Methods		dict GetProperties()
- 			Returns all radio access properties. See the
- 			properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
-+			Possible Errors: [service].Error.InProgress
- 					 [service].Error.NotImplemented
--					 [service].Error.InProgress
- 					 [service].Error.Failed
- =
-
- 		void SetProperty(string name, variant value)
-@@ -22,9 +21,9 @@ Methods		dict GetProperties()
- 			changeable. On success a PropertyChanged signal
- 			will be emitted.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--					 [service].Error.DoesNotExist
--					 [service].Error.InProgress
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
- 					 [service].Error.Failed
- =
-
- Signals		PropertyChanged(string property, variant value)
-diff --git a/doc/sim-api.txt b/doc/sim-api.txt
-index c8091f7..22fe22b 100644
---- a/doc/sim-api.txt
-+++ b/doc/sim-api.txt
-@@ -10,23 +10,39 @@ Methods		dict GetProperties()
- 			Returns SIM properties for the modem object.  See
- 			the properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- 		void ChangePin(string type, string oldpin, string newpin)
- =
-
- 			Changes the pin given by string type.
- =
-
-+			Possible Errors: [service].Error.NotImplemented
-+					 [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void EnterPin(string type, string pin)
- =
-
- 			Enters the currently pending pin.  The type value must
- 			match the pin type being asked in the PinRequired
- 			property.
- =
-
-+			Possible Errors: [service].Error.NotImplemented
-+					 [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void ResetPin(string type, string puk, string newpin)
- =
-
- 			Provides the unblock key to the modem and if correct
- 			resets the pin to the new value of newpin.
- =
-
-+			Possible Errors: [service].Error.NotImplemented
-+					 [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void LockPin(string type, string pin)
- =
-
- 			Activates the lock for the particular pin type.  The
-@@ -35,17 +51,34 @@ Methods		dict GetProperties()
- 			re-inserted.  The current PIN is required for the
- 			operation to succeed.
- =
-
-+			Possible Errors: [service].Error.NotImplemented
-+					 [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void UnlockPin(string type, string pin)
- =
-
- 			Deactivates the lock for the particular pin type.  The
- 			current PIN is required for the operation to succeed.
- =
-
-+			Possible Errors: [service].Error.NotImplemented
-+					 [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		array{byte} GetIcon(byte id)
- =
-
- 			Obtain the icon given by id.  Only ids greater than 1
- 			are valid.  XPM format is currently used to return the
- 			icon data.
- =
-
-+			Possible Errors: [service].Error.NotImplemented
-+					 [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.Failed
-+
- Signals		PropertyChanged(string name, variant value)
- =
-
- 			This signal indicates a changed value of the given
-diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-index 93a2434..054821b 100644
---- a/doc/stk-api.txt
-+++ b/doc/stk-api.txt
-@@ -10,8 +10,6 @@ Methods		dict GetProperties()
- 			Returns properties for the SimToolkit object.  See the
- 			properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- 		array{byte} GetIcon(byte id)
- =
-
- 			Returns the icon data for icon identified by id.
-@@ -27,6 +25,12 @@ Methods		dict GetProperties()
- 			a new agent to be used for the duration of the
- 			user session.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotSupported
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void RegisterAgent(object path)
- =
-
- 			Registers a default agent to be used for SIM initiated
-@@ -35,9 +39,10 @@ Methods		dict GetProperties()
- 			received and might not involve interaction from the
- 			user.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidArguments
- 					 [service].Error.InvalidFormat
--					 [service].Error.InUse
-+					 [service].Error.Failed
- =
-
- 		void UnregisterAgent(object path)
- =
-
-@@ -46,9 +51,7 @@ Methods		dict GetProperties()
- 			are rejected.
- =
-
- 			Possible Errors: [service].Error.InvalidArguments
--					 [service].Error.InvalidFormat
--					 [service].Error.NotFound
--					 [service].Error.NotAuthorized
-+					 [service].Error.Failed
- =
-
- Signals		PropertyChanged(string property, variant value)
- =
-
-diff --git a/doc/supplementaryservices-api.txt b/doc/supplementaryservices-=
-api.txt
-index 820cce1..e855ead 100644
---- a/doc/supplementaryservices-api.txt
-+++ b/doc/supplementaryservices-api.txt
-@@ -23,8 +23,11 @@ Methods		string, variant Initiate(string command)
- 			The output arguments are described in section
- 			"Initiate method outptut arguments" below.
- =
-
--			Possible Errors: [service].Error.Timedout
--			Possible Errors: [service].Error.Canceled
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
- =
-
- 		string Respond(string reply)
- =
-
-@@ -32,14 +35,23 @@ Methods		string, variant Initiate(string command)
- 			it is awaiting further input after Initiate()
- 			was called or after a network-initiated request.
- =
-
--			Possible Errors: [service].Error.Timedout
--			Possible Errors: [service].Error.Canceled
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotActive
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
- =
-
- 		void Cancel()
- =
-
- 			Cancel an ongoing USSD session, mobile- or
- 			network-initiated.
- =
-
-+			Possible Errors: [service].Error.NotActive
-+					 [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- 		dict GetProperties()
- =
-
- 			Returns Supplementary Services related properties. See
-diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-index 253c30d..7eb41aa 100644
---- a/doc/voicecall-api.txt
-+++ b/doc/voicecall-api.txt
-@@ -10,8 +10,6 @@ Methods		dict GetProperties()
- 			Returns all properties for this object. See the
- 			properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- 		void Deflect(string number)
- =
-
- 			Deflects the incoming or waiting call to number given
-@@ -25,6 +23,12 @@ Methods		dict GetProperties()
- 			This method should not be confused with the Transfer()
- 			method.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- 		void Hangup()
- =
-
- 			Hangs up the voice call.
-@@ -43,6 +47,10 @@ Methods		dict GetProperties()
- 			of a held multiparty call might not be possible on some
- 			implementations.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.Failed
-+					 [service].Error.NotImplemented
-+
- 		void Answer()
- =
-
- 			Answers the incoming call.  Only valid if the state
-@@ -51,6 +59,11 @@ Methods		dict GetProperties()
- 			This functionality is generally implemented by ATA
- 			AT command.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.Failed
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- Signals		PropertyChanged(string property, variant value)
- =
-
- 			Signal is emitted whenever a property has changed.
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index ca8aaec..73205f0 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -10,8 +10,6 @@ Methods		dict GetProperties()
- 			Returns properties for the VoiceCallManager Interface.
- 			See the properties section for available properties.
- =
-
--			Possible Errors: [service].Error.InvalidArguments
--
- 		array{object,dict} GetCalls()
- =
-
- 			Get an array of call object paths and properties
-@@ -37,6 +35,12 @@ Methods		dict GetProperties()
- =
-
- 			This is usually implemented using the ATD AT command.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- 		void Transfer()
- =
-
- 			Joins the currently Active (or Outgoing, depending
-@@ -49,6 +53,10 @@ Methods		dict GetProperties()
- 			This functionality is generally implemented by using
- 			the +CHLD=3D4 AT command.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- 		void SwapCalls()
- =
-
- 			Swaps Active and Held calls.  The effect of this
-@@ -65,6 +73,10 @@ Methods		dict GetProperties()
- 			This functionality is generally implemented by using
- 			the +CHLD=3D2 AT command.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- 		void ReleaseAndAnswer()
- =
-
- 			Releases currently active call (0 or more) and
-@@ -72,6 +84,10 @@ Methods		dict GetProperties()
- 			if the current call is a multiparty call, then all
- 			parties in the multi-party call will be released.
- =
-
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- 		void HoldAndAnswer()
- =
-
- 			Puts the current call (including multi-party calls) on
-@@ -80,10 +96,18 @@ Methods		dict GetProperties()
- 			Held calls is invalid, since in GSM a user can have
- 			only a single Held call at a time.
- =
-
-+                        Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- 		void HangupAll()
- =
-
- 			Releases all calls.
- =
-
-+                        Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- 		array{object} PrivateChat(object call)
- =
-
- 			Places the multi-party call on hold and makes desired
-@@ -97,6 +121,13 @@ Methods		dict GetProperties()
- =
-
- 			This is usually implemented using the +CHLD=3D2X command.
- =
-
-+                        Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.NotFound
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- 		array{object} CreateMultiparty()
- =
-
- 			Joins active and held calls together into a multi-party
-@@ -111,11 +142,19 @@ Methods		dict GetProperties()
- 			This is usually implemented using the +CHLD=3D3 AT
- 			command.
- =
-
-+                        Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- 		void HangupMultiparty()
- =
-
- 			Hangs up the multi-party call.  All participating
- 			calls are released.
- =
-
-+                        Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- 		void SendTones(string tones)
- =
-
- 			Sends the DTMF tones to the network.  The tones have
-@@ -123,6 +162,12 @@ Methods		dict GetProperties()
- 			'*', '#', 'A', 'B', 'C', 'D'.  The last four are
- 			typically not used in normal circumstances.
- =
-
-+                        Possible Errors: [service].Error.InProgress
-+					 [service].Error.NotImplemented
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.Failed
-+
- Signals		CallAdded(object path, dict properties)
- =
-
- 			Signal that is sent when a new call is added.  It
--- =
-
-1.7.0.4
-
-
---===============6888830592012878413==--
+Hi Redouane
+Find some comments below.
+
+2011/2/9 Soum, RedouaneX <redouanex.soum@intel.com>
+
+> The purpose of the patch is to handle Network Initiated Context Activation
+> and PDN connection request as part of EPS Attach procedure (LTE) in oFono
+> core.
+>
+> In order to avoid issue regarding CID allocation :
+> - driver should call the core using ofono_gprs_set_cid_range function to
+> specify CID range for UE initiated PDN connection
+> - driver could use a new function to check if the CID is already used or
+> not : ofono_gprs_is_cid_used, usefull in case the modem is not using a
+> specific range for UE initiated PDN connection.
+> - driver will use a new function to notify the gprs atom of a new PDN
+> connection with all the ip parameters from AT+CGCONTRDP (I can provide an
+> update later to handle PCSCF and IMS Signaling Flag as well) commmand :
+> ofono_gprs_context_activated
+>
+> ofono_gprs_context_activated is similar to ofono_gprs_context_deactivated.
+> This function must be call by any gprs driver when :
+>  - a context has been activated without explicit request as part of attach
+> procedure in LTE (PDN ACT X and X is a unused CID)
+>  - a context has been activated by the Network (NW PDN ACT X, NW ACT X,Y)
+>
+> Behavior of the function :
+>
+> List all the context and try to find correct APN with empty username and
+> empty password.
+> If such context is not found then create a new one with "Internet" type
+> only if we are in LTE with no Active context.
+> Otherwise deactivate the connection.
+>
+> For the context (found or created):
+>        Update the settings
+>        Set to active
+>
+> The function will also assign the context to a context driver.
+> ---
+>  include/gprs-context.h |    7 +++
+>  include/gprs.h         |    3 +
+>  src/gprs.c             |  139
+> ++++++++++++++++++++++++++++++++++++++++++++++++
+>  src/idmap.c            |   12 ++++
+>  src/idmap.h            |    1 +
+>  5 files changed, 162 insertions(+), 0 deletions(-)
+>
+> diff --git a/include/gprs-context.h b/include/gprs-context.h
+> index c29c0dc..e208b66 100644
+> --- a/include/gprs-context.h
+> +++ b/include/gprs-context.h
+> @@ -76,6 +76,13 @@ struct ofono_gprs_context_driver {
+>                                        ofono_gprs_context_cb_t cb, void
+> *data);
+>  };
+>
+> +
+> +void ofono_gprs_context_activated(struct ofono_gprs_context *gc,
+> +               const int cid, const char *apn,
+> +               const char *interface, ofono_bool_t static_ip,
+> +               const char *address, const char *netmask,
+> +               const char *gw, const char **dns);
+> +
+>
+
+When this function is called we don't know *interface yet, as it is *gc
+specific.
+You look for a proper *gc_driver later on.
+Maybe we should address found *gc_driver for a *interface?
+
+Also looking at incoming IPv6 patches, maybe we should consider sending
+connection data with separate functions?
+
+<snip>
+
+Br
+Tomasz Gregorek
+ST-Ericsson
+
+--===============1643517409851534357==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+SGkgUmVkb3VhbmU8YnI+RmluZCBzb21lIGNvbW1lbnRzIGJlbG93Ljxicj48YnI+PGRpdiBjbGFz
+cz0iZ21haWxfcXVvdGUiPjIwMTEvMi85IFNvdW0sIFJlZG91YW5lWCA8c3BhbiBkaXI9Imx0ciI+
+Jmx0OzxhIGhyZWY9Im1haWx0bzpyZWRvdWFuZXguc291bUBpbnRlbC5jb20iIHRhcmdldD0iX2Js
+YW5rIj5yZWRvdWFuZXguc291bUBpbnRlbC5jb208L2E+Jmd0Ozwvc3Bhbj48YnI+PGJsb2NrcXVv
+dGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOiAwcHQgMHB0IDBwdCAwLjhleDsg
+Ym9yZGVyLWxlZnQ6IDFweCBzb2xpZCByZ2IoMjA0LCAyMDQsIDIwNCk7IHBhZGRpbmctbGVmdDog
+MWV4OyI+CgpUaGUgcHVycG9zZSBvZiB0aGUgcGF0Y2ggaXMgdG8gaGFuZGxlIE5ldHdvcmsgSW5p
+dGlhdGVkIENvbnRleHQgQWN0aXZhdGlvbiBhbmQgUEROIGNvbm5lY3Rpb24gcmVxdWVzdCBhcyBw
+YXJ0IG9mIEVQUyBBdHRhY2ggcHJvY2VkdXJlIChMVEUpIGluIG9Gb25vIGNvcmUuPGJyPgo8YnI+
+CkluIG9yZGVyIHRvIGF2b2lkIGlzc3VlIHJlZ2FyZGluZyBDSUQgYWxsb2NhdGlvbiA6PGJyPgot
+IGRyaXZlciBzaG91bGQgY2FsbCB0aGUgY29yZSB1c2luZyBvZm9ub19ncHJzX3NldF9jaWRfcmFu
+Z2UgZnVuY3Rpb24gdG8gc3BlY2lmeSBDSUQgcmFuZ2UgZm9yIFVFIGluaXRpYXRlZCBQRE4gY29u
+bmVjdGlvbjxicj4KLSBkcml2ZXIgY291bGQgdXNlIGEgbmV3IGZ1bmN0aW9uIHRvIGNoZWNrIGlm
+IHRoZSBDSUQgaXMgYWxyZWFkeSB1c2VkIG9yIG5vdCA6IG9mb25vX2dwcnNfaXNfY2lkX3VzZWQs
+IHVzZWZ1bGwgaW4gY2FzZSB0aGUgbW9kZW0gaXMgbm90IHVzaW5nIGEgc3BlY2lmaWMgcmFuZ2Ug
+Zm9yIFVFIGluaXRpYXRlZCBQRE4gY29ubmVjdGlvbi48YnI+Ci0gZHJpdmVyIHdpbGwgdXNlIGEg
+bmV3IGZ1bmN0aW9uIHRvIG5vdGlmeSB0aGUgZ3BycyBhdG9tIG9mIGEgbmV3IFBETiBjb25uZWN0
+aW9uIHdpdGggYWxsIHRoZSBpcCBwYXJhbWV0ZXJzIGZyb20gQVQrQ0dDT05UUkRQIChJIGNhbiBw
+cm92aWRlIGFuIHVwZGF0ZSBsYXRlciB0byBoYW5kbGUgUENTQ0YgYW5kIElNUyBTaWduYWxpbmcg
+RmxhZyBhcyB3ZWxsKSBjb21tbWFuZCA6IG9mb25vX2dwcnNfY29udGV4dF9hY3RpdmF0ZWQ8YnI+
+CgoKPGJyPgpvZm9ub19ncHJzX2NvbnRleHRfYWN0aXZhdGVkIGlzIHNpbWlsYXIgdG8gb2Zvbm9f
+Z3Byc19jb250ZXh0X2RlYWN0aXZhdGVkLjxicj4KVGhpcyBmdW5jdGlvbiBtdXN0IGJlIGNhbGwg
+YnkgYW55IGdwcnMgZHJpdmVyIHdoZW4gOjxicj4KoC0gYSBjb250ZXh0IGhhcyBiZWVuIGFjdGl2
+YXRlZCB3aXRob3V0IGV4cGxpY2l0IHJlcXVlc3QgYXMgcGFydCBvZiBhdHRhY2ggcHJvY2VkdXJl
+IGluIExURSAoUEROIEFDVCBYIGFuZCBYIGlzIGEgdW51c2VkIENJRCk8YnI+CqAtIGEgY29udGV4
+dCBoYXMgYmVlbiBhY3RpdmF0ZWQgYnkgdGhlIE5ldHdvcmsgKE5XIFBETiBBQ1QgWCwgTlcgQUNU
+IFgsWSk8YnI+Cjxicj4KQmVoYXZpb3Igb2YgdGhlIGZ1bmN0aW9uIDo8YnI+Cjxicj4KTGlzdCBh
+bGwgdGhlIGNvbnRleHQgYW5kIHRyeSB0byBmaW5kIGNvcnJlY3QgQVBOIHdpdGggZW1wdHkgdXNl
+cm5hbWUgYW5kIGVtcHR5IHBhc3N3b3JkLjxicj4KSWYgc3VjaCBjb250ZXh0IGlzIG5vdCBmb3Vu
+ZCB0aGVuIGNyZWF0ZSBhIG5ldyBvbmUgd2l0aCAmcXVvdDtJbnRlcm5ldCZxdW90OyB0eXBlIG9u
+bHkgaWYgd2UgYXJlIGluIExURSB3aXRoIG5vIEFjdGl2ZSBjb250ZXh0Ljxicj4KT3RoZXJ3aXNl
+IGRlYWN0aXZhdGUgdGhlIGNvbm5lY3Rpb24uPGJyPgo8YnI+CkZvciB0aGUgY29udGV4dCAoZm91
+bmQgb3IgY3JlYXRlZCk6PGJyPgogoCCgIKAgoFVwZGF0ZSB0aGUgc2V0dGluZ3M8YnI+CiCgIKAg
+oCCgU2V0IHRvIGFjdGl2ZTxicj4KPGJyPgpUaGUgZnVuY3Rpb24gd2lsbCBhbHNvIGFzc2lnbiB0
+aGUgY29udGV4dCB0byBhIGNvbnRleHQgZHJpdmVyLjxicj4KLS0tPGJyPgqgaW5jbHVkZS9ncHJz
+LWNvbnRleHQuaCB8IKAgoDcgKysrPGJyPgqgaW5jbHVkZS9ncHJzLmggoCCgIKAgoCB8IKAgoDMg
+Kzxicj4KoHNyYy9ncHJzLmMgoCCgIKAgoCCgIKAgfCCgMTM5ICsrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKzxicj4KoHNyYy9pZG1hcC5jIKAgoCCgIKAgoCCg
+fCCgIDEyICsrKys8YnI+CqBzcmMvaWRtYXAuaCCgIKAgoCCgIKAgoHwgoCCgMSArPGJyPgqgNSBm
+aWxlcyBjaGFuZ2VkLCAxNjIgaW5zZXJ0aW9ucygrKSwgMCBkZWxldGlvbnMoLSk8YnI+Cjxicj4K
+ZGlmZiAtLWdpdCBhL2luY2x1ZGUvZ3Bycy1jb250ZXh0LmggYi9pbmNsdWRlL2dwcnMtY29udGV4
+dC5oPGJyPgppbmRleCBjMjljMGRjLi5lMjA4YjY2IDEwMDY0NDxicj4KLS0tIGEvaW5jbHVkZS9n
+cHJzLWNvbnRleHQuaDxicj4KKysrIGIvaW5jbHVkZS9ncHJzLWNvbnRleHQuaDxicj4KQEAgLTc2
+LDYgKzc2LDEzIEBAIHN0cnVjdCBvZm9ub19ncHJzX2NvbnRleHRfZHJpdmVyIHs8YnI+CiCgIKAg
+oCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKBvZm9ub19ncHJzX2NvbnRleHRfY2Jf
+dCBjYiwgdm9pZCAqZGF0YSk7PGJyPgqgfTs8YnI+Cjxicj4KKzxicj4KK3ZvaWQgb2Zvbm9fZ3By
+c19jb250ZXh0X2FjdGl2YXRlZChzdHJ1Y3Qgb2Zvbm9fZ3Byc19jb250ZXh0ICpnYyw8YnI+Cisg
+oCCgIKAgoCCgIKAgoCBjb25zdCBpbnQgY2lkLCBjb25zdCBjaGFyICphcG4sPGJyPgorIKAgoCCg
+IKAgoCCgIKAgY29uc3QgY2hhciAqaW50ZXJmYWNlLCBvZm9ub19ib29sX3Qgc3RhdGljX2lwLDxi
+cj4KKyCgIKAgoCCgIKAgoCCgIGNvbnN0IGNoYXIgKmFkZHJlc3MsIGNvbnN0IGNoYXIgKm5ldG1h
+c2ssPGJyPgorIKAgoCCgIKAgoCCgIKAgY29uc3QgY2hhciAqZ3csIGNvbnN0IGNoYXIgKipkbnMp
+Ozxicj4KKzxicj48L2Jsb2NrcXVvdGU+PGRpdj48YnI+V2hlbiB0aGlzIGZ1bmN0aW9uIGlzIGNh
+bGxlZCB3ZSBkb24mIzM5O3Qga25vdyAqaW50ZXJmYWNlIHlldCwgYXMgaXQgaXMgKmdjIHNwZWNp
+ZmljLjxicj5Zb3UgbG9vayBmb3IgYSBwcm9wZXIgKmdjX2RyaXZlciBsYXRlciBvbi48YnI+TWF5
+YmUgd2Ugc2hvdWxkIGFkZHJlc3MgZm91bmQgKmdjX2RyaXZlciBmb3IgYSAqaW50ZXJmYWNlPzxi
+cj4KCjxicj5BbHNvIGxvb2tpbmcgYXQgaW5jb21pbmcgSVB2NiBwYXRjaGVzLCBtYXliZSB3ZSBz
+aG91bGQgY29uc2lkZXIgc2VuZGluZyA8YnI+Y29ubmVjdGlvbiBkYXRhIHdpdGggc2VwYXJhdGUg
+ZnVuY3Rpb25zPzxicj48YnI+Jmx0O3NuaXAmZ3Q7PGJyPjwvZGl2PjwvZGl2Pjxicj5Ccjxicj5U
+b21hc3ogR3JlZ29yZWs8YnI+U1QtRXJpY3Nzb248YnI+Cg==
+
+--===============1643517409851534357==--
 
