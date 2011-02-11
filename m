@@ -1,42 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============2950968421699511643=="
+Content-Type: multipart/mixed; boundary="===============8423404936408144486=="
 MIME-Version: 1.0
-From: cy xie <chengy.xie@gmail.com>
-Subject: use phonesim to receive incoming call
-Date: Fri, 11 Feb 2011 10:01:45 +0800
-Message-ID: <AANLkTimspktNNT=SZWh129ZOSUFVdqgmhZAtX7zpbXgH@mail.gmail.com>
+From: Robertino Benis <robertino.benis@intel.com>
+Subject: Issue with GPRS not attached?
+Date: Thu, 10 Feb 2011 23:01:53 -0800
+Message-ID: <1297407713.2181.8.camel@think03>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2950968421699511643==
+--===============8423404936408144486==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-      I have some questions about phonesim.
-I want to create voice call in emulator, and receive the call in the
-emulator also.
-Can phonesim  do that? if the phonesim can finish this, please help me or
-give some details.
-Thanks very much.
+Hi there,
+
+Has anyone seen this issue with oFono:
+Error activating /ifx0/context1: org.ofono.Error.NotAttached: GPRS is
+not attached
+
+I am using IFX modem with specific hardware board. I have not seen this
+issue before. I was using latest oFono from git (cloned sometimes on
+Thursday, Feb 10, 2011). Maybe SIM card changed features? :-) =
+
+
+[root(a)localhost test]# ./list-contexts
+[ /ifx0 ]
+    [ /ifx0/context1 ]
+        Username =3D =
+
+        Protocol =3D ip
+        Name =3D Internet
+        Settings =3D { }
+        Active =3D 0
+        AccessPointName =3D wap.cingular
+        Password =3D =
+
+        Type =3D internet
+[root(a)localhost test]# =
+
+
+Context has been created, and APN was added. Log file did not look
+suspicious, so it should run fine. =
+
+
+However, when I try =
+
+[root(a)localhost test]# ./enable-gprs =
+
+Connecting modem /ifx0...
+[root(a)localhost test]#
+
+- no error
+
+But
+
+[root(a)localhost test]# ./activate-context =
+
+Error activating /ifx0/context1: org.ofono.Error.NotAttached: GPRS is
+not attached
+
+GPRS driver was successful loaded, and several GPRS channels created
+during the ifx_enable(), from plugin. Each GPRS context seems to be
+added properly. =
+
+
+I have not seen any particular error in the log, that would hint
+something more solid. =
+
+
+Connman does not see the celular profile, as well.
+
+Thanks for hints,
+-- r.  =
 
 
 
-Chengyong Xie
-BR
-
---===============2950968421699511643==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-SGksPGJyPqCgoKCgIEkgaGF2ZSBzb21lIHF1ZXN0aW9ucyBhYm91dCBwaG9uZXNpbS48YnI+SSB3
-YW50IHRvIGNyZWF0ZSB2b2ljZSBjYWxsIGluIGVtdWxhdG9yLCBhbmQgcmVjZWl2ZSB0aGUgY2Fs
-bCBpbiB0aGUgZW11bGF0b3IgYWxzby48YnI+Q2FuIHBob25lc2ltoCBkbyB0aGF0PyBpZiB0aGUg
-cGhvbmVzaW0gY2FuIGZpbmlzaCB0aGlzLCBwbGVhc2UgaGVscCBtZSBvciBnaXZlIHNvbWUgZGV0
-YWlscy48YnI+ClRoYW5rcyB2ZXJ5IG11Y2guPGJyPjxicj48YnI+PGJyPkNoZW5neW9uZyBYaWU8
-YnI+QlI8YnI+Cg==
-
---===============2950968421699511643==--
+--===============8423404936408144486==--
 
