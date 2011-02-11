@@ -1,31 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============2613195370338555028=="
+Content-Type: multipart/mixed; boundary="===============7326390833225815779=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] doc: remove unused GetIcon from SimToolKit
-Date: Fri, 11 Feb 2011 11:16:09 -0600
-Message-ID: <4D556ED9.70805@gmail.com>
-In-Reply-To: <1297444439-8084-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: Re: [PATCH] plugin: add plugin for Linktop/Teracom LW273 data card
+Date: Fri, 11 Feb 2011 11:17:36 -0600
+Message-ID: <4D556F30.2060306@gmail.com>
+In-Reply-To: <AANLkTimonyQs5EySXiQ8VMsSwZemz8moCTD3wGt3FLA3@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2613195370338555028==
+--===============7326390833225815779==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi Amit,
 
-On 02/11/2011 11:13 AM, Jeevaka Badrappan wrote:
-> ---
->  doc/stk-api.txt |    8 --------
->  1 files changed, 0 insertions(+), 8 deletions(-)
+Just a gentle reminder that you should not top-post on this mailing list.
+
+On 02/10/2011 04:24 AM, Amit Mendapara wrote:
+> I have have sent the patches again this morning (with cc to Denis).
+> Would you please tell me what could be the reason here? I am sending the
+> patches with git-send-email like this:
+> =
+
+> git send-email --to ofono(a)ofono.org <mailto:ofono@ofono.org> origin
+> =
+
+> I have configured `msmtp-mta` to send email through my GMail account.
 > =
 
 
-Patch has been applied, thanks.
+Your patches have now showed up (as mentioned earlier this was likely a
+GMail screwup.)  Give us some time to review them.
 
-Regards,
+Thanks,
 -Denis
 
---===============2613195370338555028==--
+--===============7326390833225815779==--
 
