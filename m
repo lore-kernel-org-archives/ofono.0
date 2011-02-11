@@ -1,54 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============8933224727303956521=="
+Content-Type: multipart/mixed; boundary="===============3267461869767816433=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/1] doc: Update possible errors
-Date: Fri, 11 Feb 2011 10:31:06 -0600
-Message-ID: <4D55644A.5000602@gmail.com>
-In-Reply-To: <1297424071-5464-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] doc: remove unused GetIcon from SimToolKit
+Date: Fri, 11 Feb 2011 09:13:59 -0800
+Message-ID: <1297444439-8084-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8933224727303956521==
+--===============3267461869767816433==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+---
+ doc/stk-api.txt |    8 --------
+ 1 files changed, 0 insertions(+), 8 deletions(-)
 
-On 02/11/2011 05:34 AM, Jeevaka Badrappan wrote:
-> ---
->  doc/audio-settings-api.txt         |    2 -
->  doc/call-barring-api.txt           |   31 ++++++++++++++++++++++
->  doc/call-forwarding-api.txt        |   16 +++++++++++
->  doc/call-meter-api.txt             |   14 ++++++++++
->  doc/call-settings-api.txt          |    8 ++++++
->  doc/call-volume-api.txt            |    9 +++---
->  doc/cdma-voicecall-manager-api.txt |   10 +++++++
->  doc/cell-broadcast-api.txt         |    7 ++---
->  doc/connman-api.txt                |   25 ++++++++++++++----
->  doc/manager-api.txt                |    2 -
->  doc/message-api.txt                |    2 -
->  doc/message-waiting-api.txt        |    7 +++--
->  doc/messagemanager-api.txt         |   14 ++++++++--
->  doc/modem-api.txt                  |   10 ++++---
->  doc/network-api.txt                |   16 +++++++----
->  doc/phonebook-api.txt              |    2 +-
->  doc/pushnotification-api.txt       |    8 ++++++
->  doc/radio-settings-api.txt         |    9 +++---
->  doc/sim-api.txt                    |   37 +++++++++++++++++++++++++-
->  doc/stk-api.txt                    |   17 +++++++-----
->  doc/supplementaryservices-api.txt  |   20 +++++++++++---
->  doc/voicecall-api.txt              |   17 +++++++++++-
->  doc/voicecallmanager-api.txt       |   49 ++++++++++++++++++++++++++++++=
-++++-
->  23 files changed, 273 insertions(+), 59 deletions(-)
-> =
+diff --git a/doc/stk-api.txt b/doc/stk-api.txt
+index 054821b..529c734 100644
+--- a/doc/stk-api.txt
++++ b/doc/stk-api.txt
+@@ -10,14 +10,6 @@ Methods		dict GetProperties()
+ 			Returns properties for the SimToolkit object.  See the
+ 			properties section for available properties.
+ =
+
+-		array{byte} GetIcon(byte id)
+-
+-			Returns the icon data for icon identified by id.
+-
+-			Possible Errors: [service].Error.InvalidArguments
+-					 [service].Error.InvalidFormat
+-					 [service].Error.NotFound
+-
+ 		void SelectItem(byte item, object agent)
+ =
+
+ 			Selects an item from the main menu, thus triggering
+-- =
+
+1.7.0.4
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============8933224727303956521==--
+--===============3267461869767816433==--
 
