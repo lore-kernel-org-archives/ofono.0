@@ -1,32 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============5942546444385983709=="
+Content-Type: multipart/mixed; boundary="===============1301414436828360587=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] ifxmodem: add CNAP support
-Date: Fri, 11 Feb 2011 11:23:03 -0600
-Message-ID: <4D557077.1090106@gmail.com>
-In-Reply-To: <1297354576-10011-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 0/1] Fix issue in ifxmodem set rat mode
+Date: Fri, 11 Feb 2011 11:20:28 -0800
+Message-ID: <1297452029-13911-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5942546444385983709==
+--===============1301414436828360587==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi,
+ =
 
-On 02/10/2011 10:16 AM, Jeevaka Badrappan wrote:
-> ---
->  drivers/ifxmodem/voicecall.c |   51 ++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 51 insertions(+), 0 deletions(-)
-> =
+  Find the syntax of the XRAT set command:
 
+Defined values
 
-Patch has been applied, thanks.
+<AcT> indicates the radio access technology and may be
+
+0 GSM single mode
+1 GSM / UMTS Dual mode
+2 UTRAN (UMTS)
+
+< PreferredAct > This parameter is used for network registration in case of=
+ <AcT>=3D1.
+
+0 RAT GSM
+2 RAT UMTS
 
 Regards,
--Denis
+Jeevaka
 
---===============5942546444385983709==--
+Jeevaka Badrappan (1):
+  ifxmodem: fix issue in set rat mode
+
+ drivers/ifxmodem/radio-settings.c |    5 ++++-
+ 1 files changed, 4 insertions(+), 1 deletions(-)
+
+
+--===============1301414436828360587==--
 
