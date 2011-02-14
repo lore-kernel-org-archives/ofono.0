@@ -1,40 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============6973760016358761795=="
+Content-Type: multipart/mixed; boundary="===============4724007439293718455=="
 MIME-Version: 1.0
 From: Antti Paila <antti.paila@nokia.com>
-Subject: [PATCH 1/5] cell-info: CellInfo DBUS interface definition
-Date: Mon, 14 Feb 2011 16:56:48 +0200
-Message-ID: <1297695412-22259-2-git-send-email-antti.paila@nokia.com>
-In-Reply-To: <1297695412-22259-1-git-send-email-antti.paila@nokia.com>
+Subject: [PATCH 0/5 v4] Neighbor Cell Info Atom
+Date: Mon, 14 Feb 2011 16:56:47 +0200
+Message-ID: <1297695412-22259-1-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6973760016358761795==
+--===============4724007439293718455==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- include/dbus.h |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ This series of patches implements an interface for client
+ applications to fetch the ECID information of neighboring
+ cells using DBUS. Since the 1st version the DBUS api has
+ been refactored to use new naming for method and to use
+ flat data format for the cell information. Also, the
+ internal datatypes have been optimized. Since the 2nd
+ version MNC and MCC are converted to strings and CPICH-RSCP
+ re-typed. Since 3rd version multiradio support is added and
+ interfaces are renamed.
 
-diff --git a/include/dbus.h b/include/dbus.h
-index 19a138a..52514bb 100644
---- a/include/dbus.h
-+++ b/include/dbus.h
-@@ -46,6 +46,7 @@ extern "C" {
- #define OFONO_SUPPLEMENTARY_SERVICES_INTERFACE "org.ofono.SupplementarySer=
-vices"
- #define OFONO_NETWORK_REGISTRATION_INTERFACE "org.ofono.NetworkRegistratio=
-n"
- #define OFONO_NETWORK_OPERATOR_INTERFACE "org.ofono.NetworkOperator"
-+#define OFONO_CELL_INFO_INTERFACE "org.ofono.NeighborCellInfo"
- #define OFONO_PHONEBOOK_INTERFACE "org.ofono.Phonebook"
- #define OFONO_RADIO_SETTINGS_INTERFACE "org.ofono.RadioSettings"
- #define OFONO_AUDIO_SETTINGS_INTERFACE "org.ofono.AudioSettings"
--- =
+Antti Paila (5):
+  cell-info: CellInfo DBUS interface definition
+  cell-info: Header files for neighbor cell info
+  cell-info: Atom for neighbor cell info
+  cell-info: New files included in compilation
+  cell-info: Documentation
 
-1.7.1
+ Makefile.am         |    9 +-
+ doc/cell-info.txt   |  122 +++++++++++++
+ include/cell-info.h |  126 ++++++++++++++
+ include/dbus.h      |    1 +
+ src/cell-info.c     |  475 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/ofono.h         |    1 +
+ 6 files changed, 731 insertions(+), 3 deletions(-)
+ create mode 100644 doc/cell-info.txt
+ create mode 100644 include/cell-info.h
+ create mode 100644 src/cell-info.c
 
 
---===============6973760016358761795==--
+--===============4724007439293718455==--
 
