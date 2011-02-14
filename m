@@ -1,38 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============8161238373061707943=="
+Content-Type: multipart/mixed; boundary="===============3032287299588245392=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [V3 PATCH 3/3] Huawei: set Huawei EM770W modem device to 00
-Date: Mon, 14 Feb 2011 14:28:25 -0600
-Message-ID: <4D599069.3010501@gmail.com>
-In-Reply-To: <1297503675-32491-3-git-send-email-martin.xu@intel.com>
+Subject: Re: [PATCH] atmodem: close the list in clvl_range_query
+Date: Mon, 14 Feb 2011 14:37:00 -0600
+Message-ID: <4D59926C.5070705@gmail.com>
+In-Reply-To: <1297160059-15548-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8161238373061707943==
+--===============3032287299588245392==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Hi Jeevaka,
 
-On 02/12/2011 03:41 AM, martin.xu(a)intel.com wrote:
-> From: Martin Xu <martin.xu@intel.com>
-> =
-
-> Device 00 is ppp port. Setting it as 01, my Huawei EM770W modem PPP
-> connection can't work
+On 02/08/2011 04:14 AM, Jeevaka Badrappan wrote:
 > ---
->  plugins/ofono.rules |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
+>  drivers/atmodem/call-volume.c |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
 > =
 
 
-This contradicts commit bb58a729073abcb6c5b0b2fb8b120973dfa42a07.
-
-We really need a proper fix for this.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============8161238373061707943==--
+--===============3032287299588245392==--
 
