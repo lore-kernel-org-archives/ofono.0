@@ -1,313 +1,226 @@
-Content-Type: multipart/mixed; boundary="===============4347991267961594016=="
+Content-Type: multipart/mixed; boundary="===============1373916428132123061=="
 MIME-Version: 1.0
-From: Jussi Kangas <jussi.kangas@tieto.com>
-Subject: [PATCH] ste: preparation for hotswap
-Date: Mon, 14 Feb 2011 10:40:53 +0200
-Message-ID: <1297672853-10527-1-git-send-email-jussi.kangas@tieto.com>
+From: Mika Liljeberg <mika.liljeberg@nokia.com>
+Subject: [RESEND PATCH 01/13] gprs: factor out common code
+Date: Mon, 14 Feb 2011 13:50:33 +0200
+Message-ID: <1297684245-9737-2-git-send-email-mika.liljeberg@nokia.com>
+In-Reply-To: <1297684245-9737-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4347991267961594016==
+--===============1373916428132123061==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
+ src/gprs.c |  111 +++++++++++++++++++++++++++-----------------------------=
+----
+ 1 files changed, 50 insertions(+), 61 deletions(-)
 
-
-Hi ,
-
-This is a second attempt to enable hotswap support in oFono with ste modem. =
-
-
-On Mon, 2011-01-31 at 11:52 +0200, Marcel Holtmann wrote: =
-
-Hi Jussi,
-> =
-
-> > > I am a bit lost in how you fit this into the existing SIM pin check.
-> > > Maybe it would be cleaner to remove that check first. And then add a
-> > > patch for the SIM notification handling.
-> > =
-
-> > I don't understand this comment. Patch in original mail shows how it
-> > fits to simpin_check. ( Line 91 ). =
-
-> =
-
-> is the simpin_check still needed after your patch?
-> =
-
-I seem to have totally missed this response. Sorry for the delay. =
-
-
-Content of the method is different than it used to be. Old solution checked=
- the return value of CPIN query when new one handles the result of ESIMSR s=
-etting. In other words it's not needed as it used to be. It was replaced wi=
-th new method with same name. =
-
-
-In this proposal I changed the name. Hopefully that clarifies the  case. =
-
-
-
-> > > Also this seems pretty much similar to what IFX does. Can we make sure
-> > > that it is handled similar as well?
-> > =
-
-> > I can't. I don't have such modem. =
-
-> =
-
-> You have the source code in plugins/ifx.c to look at how we did it
-> there.
-> =
-
-> =
-
-I'm little bit reluctant to say something to be "sure" without running the =
-code. But it seems your "xsim_notify" has different opinions about when sim=
- is present than my "handle_sim_status". =
-
-
-I changed the method to do more like ifx does
-
-Br,
-Jussi
-
- plugins/ste.c |  117 +++++++++++++++++++++++++++++++++++++++++------------=
----
- 1 files changed, 85 insertions(+), 32 deletions(-)
-
-diff --git a/plugins/ste.c b/plugins/ste.c
-index cf8aed8..efaa75f 100644
---- a/plugins/ste.c
-+++ b/plugins/ste.c
-@@ -67,15 +67,23 @@
- =
-
- #define NUM_CHAT	1
- =
-
--static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
--
- static char *chat_prefixes[NUM_CHAT] =3D { "Default: " };
- =
-
- struct ste_data {
- 	GAtChat *chat;
--	guint cpin_poll_source;
--	guint cpin_poll_count;
- 	gboolean have_sim;
-+	struct ofono_sim *sim;
-+};
-+
-+enum ste_sim_state {
-+	SIM_STATE_NULL =3D 0,
-+	SIM_STATE_AWAITING_APP,
-+	SIM_STATE_BLOCKED,
-+	SIM_STATE_BLOCKED_FOREVER,
-+	SIM_STATE_WAIT_FOR_PIN,
-+	SIM_STATE_ACTIVE,
-+	SIM_STATE_TERMINATING,
-+	SIM_STATE_POWER_OFF
- };
- =
-
- static int ste_probe(struct ofono_modem *modem)
-@@ -103,9 +111,6 @@ static void ste_remove(struct ofono_modem *modem)
- =
-
- 	g_at_chat_unref(data->chat);
- =
-
--	if (data->cpin_poll_source > 0)
--		g_source_remove(data->cpin_poll_source);
--
- 	g_free(data);
+diff --git a/src/gprs.c b/src/gprs.c
+index 33711dc..b478f88 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -256,6 +256,49 @@ static void gprs_cid_release(struct ofono_gprs *gprs, =
+unsigned int id)
+ 	idmap_put(gprs->cid_map, id);
  }
  =
 
-@@ -116,39 +121,70 @@ static void ste_debug(const char *str, void *user_dat=
-a)
- 	ofono_info("%s%s", prefix, str);
- }
- =
-
--static gboolean init_simpin_check(gpointer user_data);
-+static void handle_sim_status(int status, struct ofono_modem *modem)
++static gboolean assign_context(struct pri_context *ctx)
 +{
-+	struct ste_data *data =3D ofono_modem_get_data(modem);
-+	DBG("SIM status:%d\n", status);
++	struct idmap *cidmap =3D ctx->gprs->cid_map;
++	unsigned int cid_min;
++	GSList *l;
 +
-+	switch (status) {
-+	case SIM_STATE_WAIT_FOR_PIN:
-+	case SIM_STATE_ACTIVE:
-+	case SIM_STATE_NULL:
-+	case SIM_STATE_AWAITING_APP:
-+	case SIM_STATE_BLOCKED:
-+	case SIM_STATE_BLOCKED_FOREVER:
-+	case SIM_STATE_TERMINATING:
-+		if (data->have_sim =3D=3D FALSE) {
-+			if (data->sim)
-+				ofono_sim_inserted_notify(data->sim, TRUE);
-+			data->have_sim =3D TRUE;
++	if (cidmap =3D=3D NULL)
++		return FALSE;
++
++	cid_min =3D idmap_get_min(cidmap);
++
++	ctx->context.cid =3D gprs_cid_alloc(ctx->gprs);
++	if (ctx->context.cid =3D=3D 0)
++		return FALSE;
++
++	for (l =3D ctx->gprs->context_drivers; l; l =3D l->next) {
++		struct ofono_gprs_context *gc =3D l->data;
++
++		if (gc->inuse =3D=3D TRUE)
++			continue;
++
++		if (gc->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_ANY ||
++						gc->type =3D=3D ctx->type) {
++			ctx->context_driver =3D gc;
++			ctx->context_driver->inuse =3D TRUE;
++			return TRUE;
 +		}
-+		break;
-+	case SIM_STATE_POWER_OFF:
-+		if (data->have_sim =3D=3D TRUE) {
-+			if (data->sim)
-+				ofono_sim_inserted_notify(data->sim, FALSE);
-+			data->have_sim =3D FALSE;
-+		}
-+		break;
 +	}
++
++	return FALSE;
 +}
- =
-
--static void simpin_check(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-+static void handle_sim_state(gboolean ok, GAtResult *result, gpointer user=
-_data)
++
++static void release_context(struct pri_context *ctx)
++{
++	if (ctx =3D=3D NULL || ctx->gprs =3D=3D NULL || ctx->context_driver =3D=
+=3D NULL)
++		return;
++
++	gprs_cid_release(ctx->gprs, ctx->context.cid);
++	ctx->context.cid =3D 0;
++	ctx->context_driver->inuse =3D FALSE;
++	ctx->context_driver =3D NULL;
++}
++
+ static struct pri_context *gprs_context_by_path(struct ofono_gprs *gprs,
+ 						const char *ctx_path)
  {
- 	struct ofono_modem *modem =3D user_data;
--	struct ste_data *data =3D ofono_modem_get_data(modem);
-+	int simnr, status;
-+	GAtResultIter iter;
- =
-
--	/* Modem returns +CME ERROR: 10 if SIM is not ready. */
--	if (!ok && result->final_or_pdu &&
--			!strcmp(result->final_or_pdu, "+CME ERROR: 10") &&
--			data->cpin_poll_count++ < 5) {
--		data->cpin_poll_source =3D
--			g_timeout_add_seconds(1, init_simpin_check, modem);
--		return;
--	}
-+	DBG("ok:%d", ok);
- =
-
--	data->cpin_poll_count =3D 0;
-+	if (!ok)
-+		return;
- =
-
--	/* Modem returns ERROR if there is no SIM in slot. */
--	data->have_sim =3D ok;
-+	g_at_result_iter_init(&iter, result);
- =
-
- 	ofono_modem_set_powered(modem, TRUE);
-+
-+	if (!g_at_result_iter_next(&iter, "*ESIMSR:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &simnr))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &status))
-+		return;
-+
-+	handle_sim_status(status, modem);
- }
- =
-
--static gboolean init_simpin_check(gpointer user_data)
-+static gboolean init_sim_reporting(gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
- 	struct ste_data *data =3D ofono_modem_get_data(modem);
- =
-
--	data->cpin_poll_source =3D 0;
+@@ -704,12 +747,7 @@ static void pri_activate_callback(const struct ofono_e=
+rror *error,
+ 				telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&ctx->pending,
+ 					__ofono_error_failed(ctx->pending));
 -
--	g_at_chat_send(data->chat, "AT+CPIN?", cpin_prefix,
--			simpin_check, modem, NULL);
-+	g_at_chat_send(data->chat, "AT*ESIMSR=3D1;*ESIMSR?", NULL,
-+			handle_sim_state,
-+			modem, NULL);
- =
-
- 	return FALSE;
- }
-@@ -164,7 +200,7 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
- gpointer user_data)
+-		gprs_cid_release(ctx->gprs, ctx->context.cid);
+-		ctx->context.cid =3D 0;
+-		ctx->context_driver->inuse =3D FALSE;
+-		ctx->context_driver =3D NULL;
+-
++		release_context(ctx);
  		return;
  	}
  =
 
--	init_simpin_check(modem);
-+	init_sim_reporting(modem);
+@@ -745,11 +783,8 @@ static void pri_deactivate_callback(const struct ofono=
+_error *error, void *data)
+ 		return;
+ 	}
+ =
+
+-	gprs_cid_release(ctx->gprs, ctx->context.cid);
+-	ctx->context.cid =3D 0;
++	release_context(ctx);
+ 	ctx->active =3D FALSE;
+-	ctx->context_driver->inuse =3D FALSE;
+-	ctx->context_driver =3D NULL;
+ =
+
+ 	__ofono_dbus_pending_reply(&ctx->pending,
+ 				dbus_message_new_method_return(ctx->pending));
+@@ -996,38 +1031,6 @@ static DBusMessage *pri_set_message_center(struct pri=
+_context *ctx,
+ 	return NULL;
  }
  =
 
- static GIOChannel *ste_create_channel(struct ofono_modem *modem)
-@@ -235,6 +271,23 @@ static GIOChannel *ste_create_channel(struct ofono_mod=
-em *modem)
- 	return channel;
- }
- =
-
-+static void esimsr_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	int status;
-+	GAtResultIter iter;
-+	DBG("");
-+
-+	g_at_result_iter_init(&iter, result);
-+	if (!g_at_result_iter_next(&iter, "*ESIMSR:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &status))
-+		return;
-+
-+	handle_sim_status(status, modem);
-+}
-+
- static int ste_enable(struct ofono_modem *modem)
- {
- 	struct ste_data *data =3D ofono_modem_get_data(modem);
-@@ -266,6 +319,9 @@ static int ste_enable(struct ofono_modem *modem)
- =
-
- 	g_at_chat_send(data->chat, "AT+CFUN=3D4", NULL, cfun_enable, modem, NULL);
- =
-
-+	g_at_chat_register(data->chat, "*ESIMSR:", esimsr_notify,
-+			FALSE, modem, NULL);
-+
- 	return -EINPROGRESS;
- }
- =
-
-@@ -332,16 +388,13 @@ static void ste_set_online(struct ofono_modem *modem,=
- ofono_bool_t online,
- static void ste_pre_sim(struct ofono_modem *modem)
- {
- 	struct ste_data *data =3D ofono_modem_get_data(modem);
--	struct ofono_sim *sim;
- =
-
- 	DBG("%p", modem);
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
--	sim =3D ofono_sim_create(modem, OFONO_VENDOR_MBM, "atmodem", data->chat);
-+	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_MBM, "atmodem",
-+			data->chat);
- 	ofono_voicecall_create(modem, 0, "stemodem", data->chat);
+-static gboolean assign_context(struct pri_context *ctx)
+-{
+-	struct idmap *cidmap =3D ctx->gprs->cid_map;
+-	unsigned int cid_min;
+-	GSList *l;
 -
--	if (sim)
--		ofono_sim_inserted_notify(sim, TRUE);
- }
+-	if (cidmap =3D=3D NULL)
+-		return FALSE;
+-
+-	cid_min =3D idmap_get_min(cidmap);
+-
+-	ctx->context.cid =3D gprs_cid_alloc(ctx->gprs);
+-	if (ctx->context.cid =3D=3D 0)
+-		return FALSE;
+-
+-	for (l =3D ctx->gprs->context_drivers; l; l =3D l->next) {
+-		struct ofono_gprs_context *gc =3D l->data;
+-
+-		if (gc->inuse =3D=3D TRUE)
+-			continue;
+-
+-		if (gc->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_ANY ||
+-						gc->type =3D=3D ctx->type) {
+-			ctx->context_driver =3D gc;
+-			ctx->context_driver->inuse =3D TRUE;
+-			return TRUE;
+-		}
+-	}
+-
+-	return FALSE;
+-}
+-
+ static DBusMessage *pri_set_property(DBusConnection *conn,
+ 					DBusMessage *msg, void *data)
+ {
+@@ -1345,14 +1348,9 @@ static void gprs_attached_update(struct ofono_gprs *=
+gprs)
+ 			if (ctx->active =3D=3D FALSE)
+ 				continue;
  =
 
- static void ste_post_sim(struct ofono_modem *modem)
+-			gprs_cid_release(gprs, ctx->context.cid);
+-			ctx->context.cid =3D 0;
++			release_context(ctx);
+ 			ctx->active =3D FALSE;
+-			ctx->context_driver->inuse =3D FALSE;
+-			ctx->context_driver =3D NULL;
+-
+ 			pri_reset_context_settings(ctx);
+-
+ 			value =3D FALSE;
+ 			ofono_dbus_signal_property_changed(conn, ctx->path,
+ 					OFONO_CONNECTION_CONTEXT_INTERFACE,
+@@ -1737,10 +1735,7 @@ static void gprs_deactivate_for_remove(const struct =
+ofono_error *error,
+ 		return;
+ 	}
+ =
+
+-	gprs_cid_release(gprs, ctx->context.cid);
+-	ctx->context.cid =3D 0;
+-	ctx->context_driver->inuse =3D FALSE;
+-	ctx->context_driver =3D NULL;
++	release_context(ctx);
+ =
+
+ 	if (gprs->settings) {
+ 		g_key_file_remove_group(gprs->settings, ctx->key, NULL);
+@@ -1832,12 +1827,9 @@ static void gprs_deactivate_for_all(const struct ofo=
+no_error *error,
+ 		return;
+ 	}
+ =
+
+-	gprs_cid_release(gprs, ctx->context.cid);
+-	ctx->active =3D FALSE;
+-	ctx->context.cid =3D 0;
+-	ctx->context_driver->inuse =3D FALSE;
+-	ctx->context_driver =3D NULL;
++	release_context(ctx);
+ =
+
++	ctx->active =3D FALSE;
+ 	pri_reset_context_settings(ctx);
+ =
+
+ 	value =3D ctx->active;
+@@ -2088,11 +2080,8 @@ void ofono_gprs_context_deactivated(struct ofono_gpr=
+s_context *gc,
+ 		if (ctx->active =3D=3D FALSE)
+ 			break;
+ =
+
+-		gprs_cid_release(ctx->gprs, ctx->context.cid);
+-		ctx->context.cid =3D 0;
++		release_context(ctx);
+ 		ctx->active =3D FALSE;
+-		ctx->context_driver->inuse =3D FALSE;
+-		ctx->context_driver =3D NULL;
+ =
+
+ 		pri_reset_context_settings(ctx);
+ =
+
 -- =
 
 1.7.1
 
 
---===============4347991267961594016==--
+--===============1373916428132123061==--
 
