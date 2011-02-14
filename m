@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5464227682615400063=="
+Content-Type: multipart/mixed; boundary="===============3275051183157784673=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] plugin: Add plugin for Linktop LW27x data cards
-Date: Mon, 14 Feb 2011 13:54:16 -0600
-Message-ID: <4D598868.5060403@gmail.com>
-In-Reply-To: <1297314940-4315-1-git-send-email-mendapara.amit@gmail.com>
+Subject: Re: [PATCH 2/3] udev: Handle Linktop data card
+Date: Mon, 14 Feb 2011 13:55:50 -0600
+Message-ID: <4D5988C6.6060701@gmail.com>
+In-Reply-To: <1297314940-4315-2-git-send-email-mendapara.amit@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5464227682615400063==
+--===============3275051183157784673==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,62 +17,52 @@ Hi Amit,
 
 On 02/09/2011 11:15 PM, Amit Mendapara wrote:
 > Signed-off-by: Amit Mendapara <mendapara.amit@gmail.com>
-
-Please note that we do not use the Signed-off-by.  Configure your git
-settings not to send this.
-
 > ---
->  Makefile.am       |    3 +
->  plugins/linktop.c |  357 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  2 files changed, 360 insertions(+), 0 deletions(-)
->  create mode 100644 plugins/linktop.c
+>  plugins/udev.c |   32 ++++++++++++++++++++++++++++++++
+>  1 files changed, 32 insertions(+), 0 deletions(-)
+> =
 
-So I applied this patch, however there's one thing I'd like you to fix:
 
-> +static int linktop_enable(struct ofono_modem *modem)
+Patch has been applied, thanks.
+
+Some comments on further improvements:
+
+> +static void add_linktop(struct ofono_modem *modem,
+> +					struct udev_device *udev_device)
 > +{
-> +	struct linktop_data *data =3D ofono_modem_get_data(modem);
+> +	const char *devnode, *intfnum;
+> +	struct udev_device *parent;
+> +	int registered;
 > +
-> +	DBG("%p", modem);
+> +	DBG("modem %p", modem);
 > +
-> +	data->modem =3D open_device(modem, "Modem", "Modem: ");
-> +	if (data->modem =3D=3D NULL)
-> +		return -EINVAL;
+> +	registered =3D ofono_modem_get_integer(modem, "Registered");
+> +	if (registered !=3D 0)
+> +		return;
 > +
-> +	g_at_chat_set_disconnect_function(data->modem,
-> +						linktop_disconnect, modem);
+> +	parent =3D udev_device_get_parent(udev_device);
+> +	intfnum =3D udev_device_get_sysattr_value(parent, "bInterfaceNumber");
 > +
-> +	data->control =3D open_device(modem, "Control", "Control: ");
-> +	if (data->control =3D=3D NULL) {
-> +		g_at_chat_unref(data->modem);
-> +		data->modem =3D NULL;
-> +		return -EIO;
+> +	DBG("intfnum %s", intfnum);
+> +
+> +	if (g_strcmp0(intfnum, "01") =3D=3D 0) {
+> +		devnode =3D udev_device_get_devnode(udev_device);
+> +		ofono_modem_set_string(modem, "Modem", devnode);
+> +	} else if (g_strcmp0(intfnum, "03") =3D=3D 0) {
+> +		devnode =3D udev_device_get_devnode(udev_device);
+> +		ofono_modem_set_string(modem, "Control", devnode);
+> +
+> +		ofono_modem_set_integer(modem, "Registered", 1);
+> +		ofono_modem_register(modem);
 > +	}
-> +
-> +	g_at_chat_send(data->control, "ATE0 +CMEE=3D1", none_prefix,
-> +						NULL, NULL, NULL);
-> +
-> +	g_at_chat_send(data->modem, "AT", none_prefix,
-> +						NULL, NULL, NULL);
-> +
-> +	g_at_chat_send(data->modem, "AT &F", none_prefix,
-> +						NULL, NULL, NULL);
-> +
-> +	g_at_chat_send(data->control, "AT+CFUN=3D1", none_prefix,
-> +					cfun_enable, modem, NULL);
-> +
 
-oFono expects the modem driver to power up the modem in an 'offline'
-state.  So using CFUN=3D1 is fine, but it might need to be followed by a
-CFUN=3D4 afterward.  Look at a few other drivers to see the creative ways
-we have tried to address this.
-
-> +	return -EINPROGRESS;
-> +}
+Instead of hardcoding this info, you might want to use an approach
+similar to how the Huawei udev rules are structured.  However, this
+really depends on how many variations of this Linktop card there are.
+Since there's only 1 right now, this is fine.
 
 Regards,
 -Denis
 
---===============5464227682615400063==--
+--===============3275051183157784673==--
 
