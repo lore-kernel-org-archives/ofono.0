@@ -1,71 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============1195498920431786578=="
+Content-Type: multipart/mixed; boundary="===============2255897369829413162=="
 MIME-Version: 1.0
-From: martin.xu@intel.com
-Subject: [V3 PATCH 2/3] PPP: Use default ACCM (0xffffffff) to trasmit package
-Date: Tue, 15 Feb 2011 14:53:16 +0800
-Message-ID: <1297752796-9547-1-git-send-email-martin.xu@intel.com>
-In-Reply-To: <martin.xu@intel.com>
+From: Xu, Martin <martin.xu@intel.com>
+Subject: RE: [V3 PATCH 3/3] Huawei: set Huawei EM770W modem device to 00
+Date: Tue, 15 Feb 2011 15:03:13 +0800
+Message-ID: <FC2FB65B4D919844ADE4BE3C2BB739AD369E4E97@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <4D599069.3010501@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1195498920431786578==
+--===============2255897369829413162==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Martin Xu <martin.xu@intel.com>
+Denis/Marcel:
+> -----Original Message-----
+> From: Denis Kenzior [mailto:denkenz(a)gmail.com]
+> Sent: Tuesday, February 15, 2011 4:28 AM
+> To: ofono(a)ofono.org
+> Cc: Xu, Martin
+> Subject: Re: [V3 PATCH 3/3] Huawei: set Huawei EM770W modem device to 00
+> =
 
-Using my Huawei EM770W modem, if set ACCM as 0x00000000, RXJ-
-event breaks PPP link, after IP package transmit for a while.
-Using default ACCM, the issue can be fixed.
-I tested it at China Unicom networks.
----
- gatchat/ppp_lcp.c |    8 +++++---
- 1 files changed, 5 insertions(+), 3 deletions(-)
+> Hi Martin,
+> =
 
-diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
-index cc3e231..91a8b67 100644
---- a/gatchat/ppp_lcp.c
-+++ b/gatchat/ppp_lcp.c
-@@ -105,8 +105,7 @@ static void lcp_generate_config_options(struct lcp_data=
- *lcp)
- =
+> On 02/12/2011 03:41 AM, martin.xu(a)intel.com wrote:
+> > From: Martin Xu <martin.xu@intel.com>
+> >
+> > Device 00 is ppp port. Setting it as 01, my Huawei EM770W modem PPP
+> > connection can't work
+> > ---
+> >  plugins/ofono.rules |    2 +-
+> >  1 files changed, 1 insertions(+), 1 deletions(-)
+> >
+> =
 
- static void lcp_reset_config_options(struct lcp_data *lcp)
- {
--	lcp->req_options =3D REQ_OPTION_ACCM;
--	lcp->accm =3D 0;
-+	/* Using the default ACCM */
- =
+> This contradicts commit bb58a729073abcb6c5b0b2fb8b120973dfa42a07.
+I can't quite understand why Dietrich needs to this commit. We formal confi=
+gure can just make EM770W works.
+Could you help on this?
 
- 	lcp_generate_config_options(lcp);
- }
-@@ -147,6 +146,7 @@ static void lcp_rca(struct pppcp_data *pppcp, const str=
-uct pppcp_packet *packet)
- 	ppp_option_iter_init(&iter, packet);
- =
-
- 	while (ppp_option_iter_next(&iter) =3D=3D TRUE) {
-+		const guint8 *data =3D ppp_option_iter_get_data(&iter);
- 		switch (ppp_option_iter_get_type(&iter)) {
- 		case ACCM:
- 			/*
-@@ -155,7 +155,9 @@ static void lcp_rca(struct pppcp_data *pppcp, const str=
-uct pppcp_packet *packet)
- 			 * which control characters MUST remain mapped when
- 			 * the peer sends them.
- 			 */
--			ppp_set_recv_accm(pppcp_get_ppp(pppcp), 0);
-+
-+			ppp_set_recv_accm(pppcp_get_ppp(pppcp),
-+					get_host_long(data));
- 			break;
- 		default:
- 			break;
--- =
-
-1.6.1.3
-
-
---===============1195498920431786578==--
+--===============2255897369829413162==--
 
