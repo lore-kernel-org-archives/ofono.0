@@ -1,32 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============3745726099346740069=="
+Content-Type: multipart/mixed; boundary="===============2864789062690383433=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] bluetooth: single SDP record for all adapters
-Date: Tue, 15 Feb 2011 13:23:45 -0600
-Message-ID: <4D5AD2C1.3020609@gmail.com>
-In-Reply-To: <1297416665-26621-1-git-send-email-frederic.dalleau@linux.intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] Makefile: rerun genbuiltin on reconfigure.
+Date: Tue, 15 Feb 2011 09:55:52 +0100
+Message-ID: <1297760152-19815-2-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1297760152-19815-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3745726099346740069==
+--===============2864789062690383433==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Make builtin.h depend on config.status to force regeneration when
+plugins may have been enabled or disabled.  There may be a better
+way to do that.  The dependency on builtin_sources is not needed.
+---
+ Makefile.am |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-On 02/11/2011 03:31 AM, Fr=C3=A9d=C3=A9ric Dalleau wrote:
-> ---
->  plugins/bluetooth.c |  140 +++++++++++++++++++++++----------------------=
------
->  1 files changed, 64 insertions(+), 76 deletions(-)
-> =
+diff --git a/Makefile.am b/Makefile.am
+index 42ad86f..3182fbb 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -571,7 +571,7 @@ MAINTAINERCLEANFILES =3D Makefile.in \
+ =
+
+ src/plugin.$(OBJEXT): src/builtin.h
+ =
+
+-src/builtin.h: src/genbuiltin $(builtin_sources)
++src/builtin.h: src/genbuiltin config.status
+ 	$(AM_V_GEN)$(srcdir)/src/genbuiltin $(builtin_modules) > $@
+ =
+
+ plugins/%.rules:
+-- =
+
+1.7.1.86.g0e460.dirty
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============3745726099346740069==--
+--===============2864789062690383433==--
 
