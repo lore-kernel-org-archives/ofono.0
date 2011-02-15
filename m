@@ -1,40 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============8165130059454664221=="
+Content-Type: multipart/mixed; boundary="===============2247801750777560868=="
 MIME-Version: 1.0
-From: Amit Mendapara <mendapara.amit@gmail.com>
-Subject: [PATCH] linktop: power up the modem in 'offline' state
-Date: Wed, 16 Feb 2011 02:34:32 +0530
-Message-ID: <1297803872-30760-1-git-send-email-mendapara.amit@gmail.com>
+From: andrzej zaborowski <balrogg@gmail.com>
+Subject: Re: [PATCH] Makefile: rerun genbuiltin on reconfigure.
+Date: Wed, 16 Feb 2011 00:34:10 +0100
+Message-ID: <AANLkTinHd+yrYdcEY7NWWztB53aOtByrTKdwPPseYAJ2@mail.gmail.com>
+In-Reply-To: <1297803329.2519.6.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8165130059454664221==
+--===============2247801750777560868==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/linktop.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Hi,
 
-diff --git a/plugins/linktop.c b/plugins/linktop.c
-index 61db9a7..2fb3896 100644
---- a/plugins/linktop.c
-+++ b/plugins/linktop.c
-@@ -200,7 +200,7 @@ static int linktop_enable(struct ofono_modem *modem)
- 	g_at_chat_send(data->modem, "AT &F", none_prefix,
- 						NULL, NULL, NULL);
- =
+On 15 February 2011 21:55, Marcel Holtmann <marcel@holtmann.org> wrote:
+>> -src/builtin.h: src/genbuiltin $(builtin_sources)
+>> +src/builtin.h: src/genbuiltin config.status
+>> =C2=A0 =C2=A0 =C2=A0 $(AM_V_GEN)$(srcdir)/src/genbuiltin $(builtin_modul=
+es) > $@
+>
+> so depending on config.status is fine, but why no longer on
+> $(builtin_sources)?
 
--	g_at_chat_send(data->control, "AT+CFUN=3D1", none_prefix,
-+	g_at_chat_send(data->control, "AT+CFUN=3D4", none_prefix,
- 					cfun_enable, modem, NULL);
- =
+I didn't see a point for that dependency, it triggers unneeded
+rerunning of genbuiltin as far as I see?
 
- 	return -EINPROGRESS;
--- =
+Best regards
 
-1.7.1
-
-
---===============8165130059454664221==--
+--===============2247801750777560868==--
 
