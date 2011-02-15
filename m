@@ -1,111 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============7289425467388393003=="
+Content-Type: multipart/mixed; boundary="===============6148798910574982427=="
 MIME-Version: 1.0
-From: Olivier Guiter <olivier.guiter@linux.intel.com>
-Subject: [PATCH 2/2] emulator: Add +CGMI and +CGDCONT commands
-Date: Tue, 15 Feb 2011 14:19:23 +0100
-Message-ID: <1297775963-3426-3-git-send-email-olivier.guiter@linux.intel.com>
-In-Reply-To: <1297775963-3426-1-git-send-email-olivier.guiter@linux.intel.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 01/18] gisi: pipe and pep for wgmodem2.5
+Date: Tue, 15 Feb 2011 15:23:28 +0200
+Message-ID: <201102151523.28930.remi.denis-courmont@nokia.com>
+In-Reply-To: <f492c9a7397b927f36e345450bd884bbb37a10fd.1297772944.git.andreas.westin@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7289425467388393003==
+--===============6148798910574982427==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- include/emulator.h |    7 ++++++-
- src/emulator.c     |   28 ++++++++++++++++++++++++----
- 2 files changed, 30 insertions(+), 5 deletions(-)
+On Tuesday 15 February 2011 14:30:55 ext Andreas Westin, you wrote:
+> From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
 
-diff --git a/include/emulator.h b/include/emulator.h
-index 2334e02..94053f1 100644
---- a/include/emulator.h
-+++ b/include/emulator.h
-@@ -27,8 +27,13 @@ extern "C" {
- #endif
- =
+I don't understand why you put a pipe controller in user-space. Why do we n=
+eed =
 
- #include <ofono/types.h>
-+#include <gatserver.h>
- =
+a pipe controller at all? As far as I can tell, implementing connect() on P=
+EP =
 
--struct ofono_emulator;
-+struct ofono_emulator {
-+	struct ofono_atom *atom;
-+	GAtServer *server;
-+	struct ofono_atom *gprs_atom;
-+};
- =
+sockets would be much more elegant (and symmetric).
 
- enum ofono_emulator_type {
- 	OFONO_EMULATOR_TYPE_DUN,
-diff --git a/src/emulator.c b/src/emulator.c
-index c49283d..0ed2ae5 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -28,10 +28,23 @@
- #include "ofono.h"
- #include "gatserver.h"
- =
-
--struct ofono_emulator {
--	struct ofono_atom *atom;
--	GAtServer *server;
--};
-+static void cgmi_cb(GAtServerRequestType type, GAtResult *cmd, gpointer us=
-er)
-+{
-+	struct ofono_emulator *em =3D user;
-+	GAtServer *server =3D em->server;
-+
-+	switch (type) {
-+	case G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY:
-+		g_at_server_send_info(server, "oFono", TRUE);
-+		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
-+		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-+		break;
-+	default:
-+		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
-+	};
-+}
- =
-
- static void emulator_debug(const char *str, void *data)
- {
-@@ -76,6 +89,12 @@ void ofono_emulator_register(struct ofono_emulator *em, =
-int fd)
- 	g_at_server_set_disconnect_function(em->server,
- 						emulator_disconnect, em);
- =
-
-+	/* Register local callbacks */
-+	g_at_server_register(em->server, "+CGMI", cgmi_cb, em, NULL);
-+
-+	/* Register external (atoms) callbacks */
-+	ofono_gprs_add_emulator_handler(em);
-+
- 	__ofono_atom_register(em->atom, emulator_unregister);
- }
- =
-
-@@ -102,6 +121,7 @@ struct ofono_emulator *ofono_emulator_create(struct ofo=
-no_modem *modem,
- =
-
- 	em->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_EMULATOR_DUN,
- 						emulator_remove, em);
-+	em->gprs_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_GPRS);
- =
-
- 	return em;
- }
 -- =
 
-1.7.1
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
 
-
---===============7289425467388393003==--
+--===============6148798910574982427==--
 
