@@ -1,46 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============3265816277969593162=="
+Content-Type: multipart/mixed; boundary="===============2832828027032628274=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [RFCv3] doc: Proposal for LTE/IMS API
-Date: Tue, 15 Feb 2011 16:02:44 +0200
-Message-ID: <AANLkTikUHiVe2BBNxjOWc81Mx5T=9XAw8-9FSxwhs2r7@mail.gmail.com>
-In-Reply-To: <1297377234-5056-1-git-send-email-sjurbren@gmail.com>
+From: yanni <neelslotter@vodamail.co.za>
+Subject: ofonod keeps on dying v0.42
+Date: Tue, 15 Feb 2011 16:48:22 +0200
+Message-ID: <1297781302.9120.15.camel@yanni-laptop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3265816277969593162==
+--===============2832828027032628274==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+Good Day
 
-2011/2/11 Sjur Br=C3=A6ndeland <sjurbren@gmail.com>:
-> With latest changes the P-CSCF addresses from ISIM can be read
-> from the IpMultimediaIdentity objects and the P-CSCF addresses
-> returned as dynamic parameters for the PDN Connection are avilable
-> in the ConnectionContext object.
->
-> I have also added LocalAddress to the IMS QoS SIP PreCondiction check.
-> The Local IP address identifies the APN, so that PreCondition check
-> in effect can be done per IMS APN.
+I'm running ofono-4.2 with 2 Huawei E180 modems, one modem is performing
+basic SMS tests and the other modem is doing some ussd tests. =
 
-This looks pretty good to me.
 
-I take that an application that does
-IpMultimediaSubsystem.Register("voice") implicitly support SR-VCC? Or
-should you add a separate register-token for it, too?
+below is the output from ofonod if it dies.
+any idea what's going wrong?
+ =
 
-Another issue is the list of ISIMs, the current oFono way of providing
-list of objects is via separate Get* method returning an
-array{object,dict}. What about of adding GetImsIdentities() into
-SimManager API?
+ofonod -d -n =
 
---Pekka
+###
+ofonod[10792]: src/gprs.c:registration_status_cb() /huawei5 error 0
+status 1
+ofonod[10792]: src/gprs.c:ofono_gprs_status_notify() /huawei5 status 1
+ofonod[10792]: drivers/atmodem/sms.c:at_cmgs_cb() Got MR: 21
+ofonod[10792]: src/sms.c:tx_finished() tx_finished
+ofonod[10792]: Aborting (signal 11)
+ofonod[10792]: ++++++++ backtrace ++++++++
+ofonod[10792]: [0]: [0xa0e400]
+ofonod[10792]: [1]: ofonod [0x8079de7]
+ofonod[10792]: [2]: ofonod [0x806d251]
+ofonod[10792]: [3]: ofonod [0x806df51]
+ofonod[10792]: [4]: ofonod [0x806fbb7]
+ofonod[10792]: [5]: /lib/libglib-2.0.so.0 [0x549dab]
+ofonod[10792]: [6]: /lib/libglib-2.0.so.0(g_main_context_dispatch+0x1f8)
+[0x512e88]
+ofonod[10792]: [7]: /lib/libglib-2.0.so.0 [0x516730]
+ofonod[10792]: [8]: /lib/libglib-2.0.so.0(g_main_loop_run+0x1bf)
+[0x516b9f]
+ofonod[10792]: [9]: ofonod [0x80b0cd9]
+ofonod[10792]: [10]: /lib/tls/i686/cmov/libc.so.6(__libc_start_main
++0xe6) [0x13db56]
+ofonod[10792]: [11]: ofonod [0x8052961]
+ofonod[10792]: +++++++++++++++++++++++++++
 
--- =
 
-Pekka.Pessi mail at nokia.com
-
---===============3265816277969593162==--
+--===============2832828027032628274==--
 
