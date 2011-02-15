@@ -1,54 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============2832828027032628274=="
+Content-Type: multipart/mixed; boundary="===============8598703700470185983=="
 MIME-Version: 1.0
-From: yanni <neelslotter@vodamail.co.za>
-Subject: ofonod keeps on dying v0.42
-Date: Tue, 15 Feb 2011 16:48:22 +0200
-Message-ID: <1297781302.9120.15.camel@yanni-laptop>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH 0/3] bluetooth: add HFP AG plugin
+Date: Tue, 15 Feb 2011 16:06:30 +0100
+Message-ID: <1297782393-9898-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2832828027032628274==
+--===============8598703700470185983==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Good Day
+Add the HFP AG plugin
+Add partial support for +CIND command: currently,
+only network registration part is suported
+(status and roaming)
 
-I'm running ofono-4.2 with 2 Huawei E180 modems, one modem is performing
-basic SMS tests and the other modem is doing some ussd tests. =
+Fr=C3=A9d=C3=A9ric Danis (3):
+  bluetooth: add HFP AG plugin
+  emulator: add HFP emulator type
+  emulator: add +CIND support
 
-
-below is the output from ofonod if it dies.
-any idea what's going wrong?
- =
-
-ofonod -d -n =
-
-###
-ofonod[10792]: src/gprs.c:registration_status_cb() /huawei5 error 0
-status 1
-ofonod[10792]: src/gprs.c:ofono_gprs_status_notify() /huawei5 status 1
-ofonod[10792]: drivers/atmodem/sms.c:at_cmgs_cb() Got MR: 21
-ofonod[10792]: src/sms.c:tx_finished() tx_finished
-ofonod[10792]: Aborting (signal 11)
-ofonod[10792]: ++++++++ backtrace ++++++++
-ofonod[10792]: [0]: [0xa0e400]
-ofonod[10792]: [1]: ofonod [0x8079de7]
-ofonod[10792]: [2]: ofonod [0x806d251]
-ofonod[10792]: [3]: ofonod [0x806df51]
-ofonod[10792]: [4]: ofonod [0x806fbb7]
-ofonod[10792]: [5]: /lib/libglib-2.0.so.0 [0x549dab]
-ofonod[10792]: [6]: /lib/libglib-2.0.so.0(g_main_context_dispatch+0x1f8)
-[0x512e88]
-ofonod[10792]: [7]: /lib/libglib-2.0.so.0 [0x516730]
-ofonod[10792]: [8]: /lib/libglib-2.0.so.0(g_main_loop_run+0x1bf)
-[0x516b9f]
-ofonod[10792]: [9]: ofonod [0x80b0cd9]
-ofonod[10792]: [10]: /lib/tls/i686/cmov/libc.so.6(__libc_start_main
-+0xe6) [0x13db56]
-ofonod[10792]: [11]: ofonod [0x8052961]
-ofonod[10792]: +++++++++++++++++++++++++++
+ Makefile.am        |    3 +
+ include/emulator.h |    1 +
+ plugins/hfp_ag.c   |  188 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/emulator.c     |  132 ++++++++++++++++++++++++++++++++++++-
+ src/ofono.h        |    1 +
+ 5 files changed, 323 insertions(+), 2 deletions(-)
+ create mode 100644 plugins/hfp_ag.c
 
 
---===============2832828027032628274==--
+--===============8598703700470185983==--
 
