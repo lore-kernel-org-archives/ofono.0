@@ -1,99 +1,253 @@
-Content-Type: multipart/mixed; boundary="===============2020246683039406822=="
+Content-Type: multipart/mixed; boundary="===============7258928407028243191=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 8/9] call-forwarding: Watch for changes to relevant SIM files.
-Date: Tue, 15 Feb 2011 08:58:58 +0100
-Message-ID: <1297756739-2958-8-git-send-email-andrew.zaborowski@intel.com>
-In-Reply-To: <1297756739-2958-1-git-send-email-andrew.zaborowski@intel.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH] dun_gw: Add DUN server plugin for oFono
+Date: Tue, 15 Feb 2011 16:21:03 -0300
+Message-ID: <1297797663-29684-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2020246683039406822==
+--===============7258928407028243191==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+DUN server is probed when modem state changes to online. It registers
+DUN record to Bluetooth adapter and wait for incoming DUN connection.
+
+Based on a patch from Zhenhua Zhang <zhenhua.zhang@intel.com>
 ---
- src/call-forwarding.c |   39 +++++++++++++++++++++++++++++++++++++--
- 1 files changed, 37 insertions(+), 2 deletions(-)
+ Makefile.am      |    3 +
+ plugins/dun_gw.c |  164 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 167 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/dun_gw.c
 
-diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index d13f990..d610521 100644
---- a/src/call-forwarding.c
-+++ b/src/call-forwarding.c
-@@ -74,6 +74,7 @@ static void get_query_next_cf_cond(struct ofono_call_forw=
-arding *cf);
- static void set_query_next_cf_cond(struct ofono_call_forwarding *cf);
- static void ss_set_query_next_cf_cond(struct ofono_call_forwarding *cf);
- static void cf_unregister_ss_controls(struct ofono_call_forwarding *cf);
-+static void sim_read_cf_indicator(struct ofono_call_forwarding *cf);
+diff --git a/Makefile.am b/Makefile.am
+index 1d7f32b..47ebc8f 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -324,6 +324,9 @@ builtin_sources +=3D plugins/bluetooth.c plugins/blueto=
+oth.h
+ builtin_modules +=3D hfp
+ builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
  =
 
- struct cf_ss_request {
- 	int ss_type;
-@@ -1358,18 +1359,52 @@ static void sim_cphs_cff_read_cb(int ok, int total_=
-length, int record,
- 					DBUS_TYPE_BOOLEAN, &cfu_voice);
- }
- =
-
-+static void sim_cfis_changed(int id, void *userdata)
++builtin_modules +=3D dun_gw
++builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
++
+ builtin_sources +=3D $(btio_sources)
+ builtin_cflags +=3D @BLUEZ_CFLAGS@
+ builtin_libadd +=3D @BLUEZ_LIBS@
+diff --git a/plugins/dun_gw.c b/plugins/dun_gw.c
+new file mode 100644
+index 0000000..2b6979a
+--- /dev/null
++++ b/plugins/dun_gw.c
+@@ -0,0 +1,164 @@
++/*
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++#include <stdio.h>
++#include <string.h>
++#include <errno.h>
++#include <glib.h>
++#include <ofono.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <gdbus.h>
++
++#include "bluetooth.h"
++
++#define DUN_GW_CHANNEL	1
++
++static struct server *server;
++static guint modemwatch_id;
++static GList *modems;
++
++static const gchar *dun_record =3D "<?xml version=3D\"1.0\" encoding=3D\"U=
+TF-8\" ?>  \
++<record>                                                                  =
+     \
++  <attribute id=3D\"0x0001\">                                             =
+       \
++    <sequence>                                                            =
+     \
++      <uuid value=3D\"0x1103\"/>                                          =
+       \
++    </sequence>                                                           =
+     \
++  </attribute>                                                            =
+     \
++                                                                          =
+     \
++  <attribute id=3D\"0x0004\">                                             =
+       \
++    <sequence>                                                            =
+     \
++      <sequence>                                                          =
+     \
++        <uuid value=3D\"0x0100\"/>                                        =
+       \
++      </sequence>                                                         =
+     \
++      <sequence>                                                          =
+     \
++        <uuid value=3D\"0x0003\"/>                                        =
+       \
++        <uint8 value=3D\"1\" name=3D\"channel\"/>                         =
+        \
++      </sequence>                                                         =
+     \
++    </sequence>                                                           =
+     \
++  </attribute>                                                            =
+     \
++                                                                          =
+     \
++  <attribute id=3D\"0x0009\">                                             =
+       \
++    <sequence>                                                            =
+     \
++      <sequence>                                                          =
+     \
++        <uuid value=3D\"0x1103\"/>                                        =
+       \
++        <uint16 value=3D\"0x0100\" name=3D\"version\"/>                   =
+         \
++      </sequence>                                                         =
+     \
++    </sequence>                                                           =
+     \
++  </attribute>                                                            =
+     \
++                                                                          =
+     \
++  <attribute id=3D\"0x0100\">                                             =
+       \
++    <text value=3D\"Dial-up Networking\" name=3D\"name\"/>                =
+         \
++  </attribute>                                                            =
+     \
++</record>";
++
++static void dun_gw_connect_cb(GIOChannel *io, GError *err, gpointer user_d=
+ata)
 +{
-+	struct ofono_call_forwarding *cf =3D userdata;
++	struct ofono_emulator *em =3D user_data;
++	struct ofono_modem *modem;
++	int fd;
 +
-+	if (((cf->flags & CALL_FORWARDING_FLAG_CPHS_CFF) ||
-+			cf->cfis_record_id > 0) && is_cfu_enabled(cf, NULL)) {
-+		DBusConnection *conn =3D ofono_dbus_get_connection();
-+		const char *path =3D __ofono_atom_get_path(cf->atom);
-+		ofono_bool_t status =3D FALSE;
++	DBG("");
 +
-+		ofono_dbus_signal_property_changed(conn, path,
-+					OFONO_CALL_FORWARDING_INTERFACE,
-+					"ForwardingFlagOnSim",
-+					DBUS_TYPE_BOOLEAN, &status);
++	if (err) {
++		DBG("%s", err->message);
++		g_io_channel_shutdown(io, TRUE, NULL);
++		return;
 +	}
 +
-+	cf->cfis_record_id =3D 0;
-+	cf->flags &=3D ~CALL_FORWARDING_FLAG_CPHS_CFF;
++	/* Pick the first powered modem */
++	modem =3D modems->data;
++	DBG("Picked modem %p for emulator", modem);
 +
-+	/*
-+	 * TODO: remove forwarding rules in
-+	 * cf->cf_conditions[CALL_FORWARDING_TYPE_UNCONDITIONAL] that
-+	 * originate from EFcfis before adding the new rules?
-+	 */
++	em =3D ofono_emulator_create(modem, OFONO_EMULATOR_TYPE_DUN);
++	if (em =3D=3D NULL) {
++		g_io_channel_shutdown(io, TRUE, NULL);
++		return;
++	}
 +
-+	sim_read_cf_indicator(cf);
++	fd =3D g_io_channel_unix_get_fd(io);
++	g_io_channel_set_close_on_unref(io, TRUE);
++
++	ofono_emulator_register(em, fd);
 +}
 +
- static void sim_read_cf_indicator(struct ofono_call_forwarding *cf)
- {
- 	if (__ofono_sim_service_available(cf->sim,
- 			SIM_UST_SERVICE_CFIS,
--			SIM_SST_SERVICE_CFIS) =3D=3D TRUE)
-+			SIM_SST_SERVICE_CFIS) =3D=3D TRUE) {
- 		ofono_sim_read(cf->sim_context, SIM_EFCFIS_FILEID,
- 				OFONO_SIM_FILE_STRUCTURE_FIXED,
- 				sim_cfis_read_cb, cf);
--	else
-+		ofono_sim_add_file_watch(cf->sim_context, SIM_EFCFIS_FILEID,
-+						sim_cfis_changed, cf, NULL);
++static void gprs_watch(struct ofono_atom *atom,
++				enum ofono_atom_watch_condition cond,
++				void *data)
++{
++	struct ofono_modem *modem =3D data;
++
++	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_REGISTERED) {
++		modems =3D g_list_append(modems, modem);
++
++		if (modems->next =3D=3D NULL)
++			server =3D bluetooth_register_server(DUN_GW_CHANNEL,
++					dun_record,
++					dun_gw_connect_cb,
++					NULL);
 +	} else {
- 		ofono_sim_read(cf->sim_context, SIM_EF_CPHS_CFF_FILEID,
- 				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
- 				sim_cphs_cff_read_cb, cf);
-+		ofono_sim_add_file_watch(cf->sim_context,
-+						SIM_EF_CPHS_CFF_FILEID,
-+						sim_cfis_changed, cf, NULL);
++		modems =3D g_list_remove(modems, modem);
++		if (modems =3D=3D NULL &&  server !=3D NULL) {
++			bluetooth_unregister_server(server);
++			server =3D NULL;
++		}
 +	}
- }
- =
-
- int ofono_call_forwarding_driver_register(const struct ofono_call_forwardi=
-ng_driver *d)
++}
++
++static void modem_watch(struct ofono_modem *modem, gboolean added, void *u=
+ser)
++{
++	DBG("modem: %p, added: %d", modem, added);
++
++	if (added =3D=3D FALSE)
++		return;
++
++	__ofono_modem_add_atom_watch(modem, OFONO_ATOM_TYPE_GPRS,
++						gprs_watch, modem, NULL);
++}
++
++static void call_modemwatch(struct ofono_modem *modem, void *user)
++{
++	modem_watch(modem, TRUE, user);
++}
++
++static int dun_gw_init(void)
++{
++	DBG("");
++
++	modemwatch_id =3D __ofono_modemwatch_add(modem_watch, NULL, NULL);
++
++	__ofono_modem_foreach(call_modemwatch, NULL);
++
++	return 0;
++}
++
++static void dun_gw_exit(void)
++{
++	__ofono_modemwatch_remove(modemwatch_id);
++}
++
++OFONO_PLUGIN_DEFINE(dun_gw, "Dial-up Networking Profile Plugins", VERSION,
++			OFONO_PLUGIN_PRIORITY_DEFAULT, dun_gw_init, dun_gw_exit)
 -- =
 
-1.7.1.86.g0e460.dirty
+1.7.4
 
 
---===============2020246683039406822==--
+--===============7258928407028243191==--
 
