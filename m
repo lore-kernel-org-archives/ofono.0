@@ -1,146 +1,197 @@
-Content-Type: multipart/mixed; boundary="===============5760021062399242059=="
+Content-Type: multipart/mixed; boundary="===============8510064455692659596=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 2/3] emulator: add HFP emulator type
-Date: Tue, 15 Feb 2011 16:06:32 +0100
-Message-ID: <1297782393-9898-3-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH 3/3] emulator: add +CIND support
+Date: Tue, 15 Feb 2011 16:06:33 +0100
+Message-ID: <1297782393-9898-4-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1297782393-9898-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5760021062399242059==
+--===============8510064455692659596==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+currently, only network registration is supported (service, roaming)
 ---
- include/emulator.h |    1 +
- plugins/hfp_ag.c   |   17 +++++++++++++++++
- src/emulator.c     |   14 ++++++++++++--
- src/ofono.h        |    1 +
- 4 files changed, 31 insertions(+), 2 deletions(-)
-
-diff --git a/include/emulator.h b/include/emulator.h
-index 2334e02..a080399 100644
---- a/include/emulator.h
-+++ b/include/emulator.h
-@@ -32,6 +32,7 @@ struct ofono_emulator;
- =
-
- enum ofono_emulator_type {
- 	OFONO_EMULATOR_TYPE_DUN,
-+	OFONO_EMULATOR_TYPE_HFP,
- };
- =
-
- struct ofono_emulator *ofono_emulator_create(struct ofono_modem *modem,
-diff --git a/plugins/hfp_ag.c b/plugins/hfp_ag.c
-index c43275b..a45c8c1 100644
---- a/plugins/hfp_ag.c
-+++ b/plugins/hfp_ag.c
-@@ -94,6 +94,10 @@ static gboolean hfp_ag_disconnect_cb(GIOChannel *io, GIO=
-Condition cond,
- =
-
- static void hfp_ag_connect_cb(GIOChannel *io, GError *err, gpointer user_d=
-ata)
- {
-+	struct ofono_modem *modem;
-+	struct ofono_emulator *em;
-+	int fd;
-+
- 	DBG("");
- =
-
- 	if (err) {
-@@ -101,6 +105,19 @@ static void hfp_ag_connect_cb(GIOChannel *io, GError *=
-err, gpointer user_data)
- 		goto failed;
- 	}
- =
-
-+	/* Pick the first voicecall capable modem */
-+	modem =3D modems->data;
-+	if (modem =3D=3D NULL)
-+		goto failed;
-+	DBG("Picked modem %p for emulator", modem);
-+
-+	em =3D ofono_emulator_create(modem, OFONO_EMULATOR_TYPE_HFP);
-+	if (em =3D=3D NULL)
-+		goto failed;
-+
-+	fd =3D g_io_channel_unix_get_fd(io);
-+	ofono_emulator_register(em, fd);
-+
- 	channel_watch =3D g_io_add_watch(io, G_IO_NVAL | G_IO_HUP | G_IO_ERR,
- 					hfp_ag_disconnect_cb, NULL);
- =
+ src/emulator.c |  118 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 118 insertions(+), 0 deletions(-)
 
 diff --git a/src/emulator.c b/src/emulator.c
-index c49283d..232b314 100644
+index 232b314..96c55d4 100644
 --- a/src/emulator.c
 +++ b/src/emulator.c
-@@ -30,6 +30,7 @@
+@@ -23,15 +23,21 @@
+ #include <config.h>
+ #endif
+ =
+
++#include <stdio.h>
+ #include <glib.h>
+ =
+
+ #include "ofono.h"
++#include "common.h"
+ #include "gatserver.h"
  =
 
  struct ofono_emulator {
  	struct ofono_atom *atom;
-+	enum ofono_emulator_type type;
+ 	enum ofono_emulator_type type;
  	GAtServer *server;
++	struct ofono_netreg *netreg;
++	unsigned int netreg_watch;
++	unsigned int status_watch;
++	int netreg_status;
  };
  =
 
-@@ -92,16 +93,25 @@ struct ofono_emulator *ofono_emulator_create(struct ofo=
-no_modem *modem,
- 						enum ofono_emulator_type type)
- {
- 	struct ofono_emulator *em;
-+	enum ofono_atom_type atom_t;
- =
-
- 	DBG("modem: %p, type: %d", modem, type);
- =
-
-+	if (type =3D=3D OFONO_EMULATOR_TYPE_DUN)
-+		atom_t =3D OFONO_ATOM_TYPE_EMULATOR_DUN;
-+	else if (type =3D=3D OFONO_EMULATOR_TYPE_HFP)
-+		atom_t =3D OFONO_ATOM_TYPE_EMULATOR_HFP;
-+	else
-+		return NULL;
-+
- 	em =3D g_try_new0(struct ofono_emulator, 1);
- =
-
- 	if (em =3D=3D NULL)
- 		return NULL;
- =
-
--	em->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_EMULATOR_DUN,
--						emulator_remove, em);
-+	em->type =3D type;
-+
-+	em->atom =3D __ofono_modem_add_atom(modem, atom_t, emulator_remove, em);
- =
-
- 	return em;
+ static void emulator_debug(const char *str, void *data)
+@@ -39,6 +45,98 @@ static void emulator_debug(const char *str, void *data)
+ 	ofono_info("%s: %s\n", (char *)data, str);
  }
-diff --git a/src/ofono.h b/src/ofono.h
-index dbe1862..f52356e 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -129,6 +129,7 @@ enum ofono_atom_type {
- 	OFONO_ATOM_TYPE_CDMA_VOICECALL_MANAGER,
- 	OFONO_ATOM_TYPE_SIM_AUTH,
- 	OFONO_ATOM_TYPE_EMULATOR_DUN,
-+	OFONO_ATOM_TYPE_EMULATOR_HFP,
- };
  =
 
- enum ofono_atom_watch_condition {
++static void cind_update(struct ofono_emulator *em, gboolean final)
++{
++	int status;
++	int roam;
++	char buf[30];
++
++	switch (em->netreg_status) {
++	case NETWORK_REGISTRATION_STATUS_REGISTERED:
++		status =3D 1;
++		roam =3D 0;
++		break;
++	case NETWORK_REGISTRATION_STATUS_ROAMING:
++		status =3D 1;
++		roam =3D 1;
++		break;
++	default:
++		status =3D 0;
++		roam =3D 0;
++		break;
++	}
++
++	call =3D 0;
++	callsetup =3D 0;
++	callheld =3D 0;
++	signal =3D (em->netreg_signal + 20) / 21;
++	battchg =3D 0;
++
++	sprintf(buf, "+CIND: %d,0,0,0,0,%d,0", status, roam);
++	g_at_server_send_info(em->server, buf, final);
++}
++
++static void netreg_status_changed(int status, int lac, int ci, int tech,
++					const char *mcc, const char *mnc,
++					void *data)
++{
++	struct ofono_emulator *em =3D data;
++
++	DBG("%d", status);
++
++	if (em->netreg_status =3D=3D status)
++		return;
++
++	em->netreg_status =3D status;
++
++	cind_update(em, TRUE);
++}
++
++static void netreg_watch(struct ofono_atom *atom,
++				enum ofono_atom_watch_condition cond,
++				void *data)
++{
++	struct ofono_emulator *em =3D data;
++
++	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
++		em->status_watch =3D 0;
++		em->netreg_status =3D NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
++		return;
++	}
++
++	em->netreg =3D __ofono_atom_get_data(atom);
++	em->netreg_status =3D ofono_netreg_get_status(em->netreg);
++	em->status_watch =3D __ofono_netreg_add_status_watch(em->netreg,
++					netreg_status_changed, em, NULL);
++
++	cind_update(em, TRUE);
++}
++
++static void at_cind_cb(GAtServerRequestType type, GAtResult *result,
++			gpointer user_data)
++{
++	struct ofono_emulator *em =3D user_data;
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		cind_update(em, FALSE);
++		g_at_server_send_final(em->server, G_AT_SERVER_RESULT_OK);
++		break;
++
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		g_at_server_send_info(em->server, "+CIND: (\"service\",(0,1))"
++				",(\"call\",(0,1)),(\"callsetup\",(0-3))"
++				",(\"callheld\",(0-2)),(\"signal\",(0-5))"
++				",(\"roam\",(0,1)),(\"battchg\",(0-5))", FALSE);
++		g_at_server_send_final(em->server, G_AT_SERVER_RESULT_OK);
++		break;
++
++	default:
++		g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
++		break;
++	}
++}
++
+ static void emulator_disconnect(gpointer user_data)
+ {
+ 	struct ofono_emulator *em =3D user_data;
+@@ -61,6 +159,8 @@ static void emulator_unregister(struct ofono_atom *atom)
+ void ofono_emulator_register(struct ofono_emulator *em, int fd)
+ {
+ 	GIOChannel *io;
++	struct ofono_modem *modem;
++	struct ofono_atom *netreg_atom;
+ =
+
+ 	DBG("%p, %d", em, fd);
+ =
+
+@@ -77,6 +177,24 @@ void ofono_emulator_register(struct ofono_emulator *em,=
+ int fd)
+ 	g_at_server_set_disconnect_function(em->server,
+ 						emulator_disconnect, em);
+ =
+
++	if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP) {
++		g_at_server_register(em->server, "+CIND", at_cind_cb, em, NULL);
++
++		modem =3D __ofono_atom_get_modem(em->atom);
++
++		em->netreg_watch =3D __ofono_modem_add_atom_watch(modem,
++						OFONO_ATOM_TYPE_NETREG,
++						netreg_watch, em, NULL);
++
++		netreg_atom =3D __ofono_modem_find_atom(modem,
++							OFONO_ATOM_TYPE_NETREG);
++
++		if (netreg_atom && __ofono_atom_get_registered(netreg_atom))
++			netreg_watch(netreg_atom,
++					OFONO_ATOM_WATCH_CONDITION_REGISTERED,
++					em);
++	}
++
+ 	__ofono_atom_register(em->atom, emulator_unregister);
+ }
+ =
+
 -- =
 
 1.7.1
 
 
---===============5760021062399242059==--
+--===============8510064455692659596==--
 
