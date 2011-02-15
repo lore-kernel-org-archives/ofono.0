@@ -1,43 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============6387700005039701135=="
+Content-Type: multipart/mixed; boundary="===============8088941864881939646=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] configure: Check for bluez >= 4.30.
-Date: Tue, 15 Feb 2011 09:55:51 +0100
-Message-ID: <1297760152-19815-1-git-send-email-andrew.zaborowski@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] Makefile: rerun genbuiltin on reconfigure.
+Date: Tue, 15 Feb 2011 12:55:29 -0800
+Message-ID: <1297803329.2519.6.camel@aeonflux>
+In-Reply-To: <1297760152-19815-2-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6387700005039701135==
+--===============8088941864881939646==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Earlier versions lack struct sockaddr_l2::l2_cid and/or
-struct bt_security.
----
- configure.ac |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+Hi Andrew,
 
-diff --git a/configure.ac b/configure.ac
-index 4f0348d..810b9f2 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -184,8 +184,8 @@ AC_ARG_ENABLE(bluetooth, AC_HELP_STRING([--disable-blue=
-tooth],
- 				[disable Bluetooth modem support]),
- 					[enable_bluetooth=3D${enableval}])
- if (test "${enable_bluetooth}" !=3D "no"); then
--	PKG_CHECK_MODULES(BLUEZ, bluez, dummy=3Dyes,
--				AC_MSG_ERROR(Bluetooth library is required))
-+	PKG_CHECK_MODULES(BLUEZ, bluez >=3D 4.30, dummy=3Dyes,
-+			AC_MSG_ERROR(Bluez >=3D 4.30 is required without --disable-bluetooth))
- fi
- AC_SUBST(BLUEZ_CFLAGS)
- AC_SUBST(BLUEZ_LIBS)
--- =
+> Make builtin.h depend on config.status to force regeneration when
+> plugins may have been enabled or disabled.  There may be a better
+> way to do that.  The dependency on builtin_sources is not needed.
+> ---
+>  Makefile.am |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
+> =
 
-1.7.1.86.g0e460.dirty
+> diff --git a/Makefile.am b/Makefile.am
+> index 42ad86f..3182fbb 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -571,7 +571,7 @@ MAINTAINERCLEANFILES =3D Makefile.in \
+>  =
+
+>  src/plugin.$(OBJEXT): src/builtin.h
+>  =
+
+> -src/builtin.h: src/genbuiltin $(builtin_sources)
+> +src/builtin.h: src/genbuiltin config.status
+>  	$(AM_V_GEN)$(srcdir)/src/genbuiltin $(builtin_modules) > $@
+
+so depending on config.status is fine, but why no longer on
+$(builtin_sources)?
+
+Regards
+
+Marcel
 
 
---===============6387700005039701135==--
+
+--===============8088941864881939646==--
 
