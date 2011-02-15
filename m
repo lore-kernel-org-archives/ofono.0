@@ -1,129 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============1672567942821543575=="
+Content-Type: multipart/mixed; boundary="===============8187054740867567708=="
 MIME-Version: 1.0
-From: Andreas Westin <andreas.westin@stericsson.com>
-Subject: [PATCH 14/18] isimodem: wgmodem2.5 added to call-forwarding
-Date: Tue, 15 Feb 2011 13:31:08 +0100
-Message-ID: <6e731acbb0593e0e28ba3e244eed9c98bf2514b9.1297772944.git.andreas.westin@stericsson.com>
-In-Reply-To: <cover.1297772944.git.andreas.westin@stericsson.com>
+From: Olivier Guiter <olivier.guiter@linux.intel.com>
+Subject: [PATCH 0/2] Add AT commands handler in emulator
+Date: Tue, 15 Feb 2011 14:19:21 +0100
+Message-ID: <1297775963-3426-1-git-send-email-olivier.guiter@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1672567942821543575==
+--===============8187054740867567708==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
+Hi,
+This series of patches implements a skeleton for handling AT commands.
+These handlers can be local to emulator or stored in a specific atom (e.g. =
+gprs).
+Registration mechanism is subject to change.
 
----
- drivers/isimodem/call-forwarding.c |   31 +++++++++++++++++++++++++++----
- 1 files changed, 27 insertions(+), 4 deletions(-)
+Olivier Guiter (2):
+  gprs:Add code to handle AT+CGDCONT
+  emulator: Add +CGMI and +CGDCONT commands
 
-diff --git a/drivers/isimodem/call-forwarding.c b/drivers/isimodem/call-for=
-warding.c
-index 89a03dc..74645c3 100644
---- a/drivers/isimodem/call-forwarding.c
-+++ b/drivers/isimodem/call-forwarding.c
-@@ -212,6 +212,7 @@ static void isi_registration(struct ofono_call_forwardi=
-ng *cf, int type,
- 	int ss_code;
- 	int num_filler;
- 	char *ucs2 =3D NULL;
-+	GIsiModem *modem;
- =
-
- 	unsigned char msg[100] =3D {
- 		SS_SERVICE_REQ,
-@@ -230,11 +231,17 @@ static void isi_registration(struct ofono_call_forwar=
-ding *cf, int type,
- 	/* Followed by number in UCS-2, zero sub address bytes, and 0
- 	 * to 3 bytes of filler */
- =
-
--	DBG("forwarding type %d class %d\n", type, cls);
- =
-
- 	if (cbd =3D=3D NULL || fd =3D=3D NULL || strlen(number->number) > 28)
- 		goto error;
- =
-
-+	DBG("forwarding type %d class %d\n", type, cls);
-+	modem =3D g_isi_client_modem(fd->client);
-+
-+	if (g_isi_modem_version_major(modem) =3D=3D 2 &&
-+		g_isi_modem_version_minor(modem) >=3D 0)
-+		msg[10] =3D SS_UNDEFINED_TIME;
-+
- 	ss_code =3D forw_type_to_isi_code(type);
- 	if (ss_code < 0)
- 		goto error;
-@@ -248,6 +255,10 @@ static void isi_registration(struct ofono_call_forward=
-ing *cf, int type,
- =
-
- 	msg[8]  =3D 6 + 2 * strlen(number->number) + num_filler;
- =
-
-+	/* Time must not be set for any other than NoReply for ISI2.5 */
-+	if (ss_code =3D=3D SS_GSM_FORW_NO_REPLY)
-+		msg[10] =3D time;
-+
- 	ucs2 =3D g_convert(number->number, strlen(number->number), "UCS-2BE",
- 				"UTF-8//TRANSLIT", NULL, NULL, NULL);
- 	if (ucs2 =3D=3D NULL)
-@@ -330,10 +341,12 @@ error:
- =
-
- static void query_resp_cb(const GIsiMessage *msg, void *data)
- {
--
- 	struct isi_cb_data *cbd =3D data;
- 	ofono_call_forwarding_query_cb_t cb =3D cbd->cb;
-+	struct ofono_call_forwarding *cf =3D cbd->user;
-+	struct forw_data *fd =3D ofono_call_forwarding_get_data(cf);
- 	GIsiSubBlockIter iter;
-+	GIsiModem *modem;
- =
-
- 	struct ofono_call_forwarding_condition list =3D {
- 		.status =3D 0,
-@@ -366,8 +379,17 @@ static void query_resp_cb(const GIsiMessage *msg, void=
- *data)
- 						&number))
- 			goto error;
- =
-
--		/* As in 27.007 section 7.11 */
--		list.status =3D status & SS_GSM_ACTIVE;
-+		modem =3D g_isi_client_modem(fd->client);
-+
-+		if (g_isi_modem_version_major(modem) =3D=3D 2 &&
-+			g_isi_modem_version_minor(modem) >=3D 0) {
-+			list.status =3D status & (SS_GSM_ACTIVE |
-+						SS_GSM_REGISTERED |
-+						SS_GSM_PROVISIONED);
-+		} else {
-+			/* As in 27.007 section 7.11 */
-+			list.status =3D status & SS_GSM_ACTIVE;
-+		}
- 		list.time =3D noreply;
- 		list.phone_number.type =3D ton | 0x80;
- =
-
-@@ -447,6 +469,7 @@ static int isi_call_forwarding_probe(struct ofono_call_=
-forwarding *cf,
- 		return -ENOMEM;
- =
-
- 	fd->client =3D g_isi_client_create(modem, PN_SS);
-+
- 	if (fd->client =3D=3D NULL) {
- 		g_free(fd);
- 		return -ENOMEM;
--- =
-
-1.7.3.5
+ include/emulator.h |    7 +++++-
+ include/gprs.h     |    2 +
+ src/emulator.c     |   28 +++++++++++++++++++---
+ src/gprs.c         |   63 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 4 files changed, 95 insertions(+), 5 deletions(-)
 
 
---===============1672567942821543575==--
+--===============8187054740867567708==--
 
