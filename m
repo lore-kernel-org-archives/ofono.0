@@ -1,120 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============6603462366863219431=="
+Content-Type: multipart/mixed; boundary="===============2020246683039406822=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 9/9] stk: Partially handle Refresh command.
-Date: Tue, 15 Feb 2011 08:58:59 +0100
-Message-ID: <1297756739-2958-9-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 8/9] call-forwarding: Watch for changes to relevant SIM files.
+Date: Tue, 15 Feb 2011 08:58:58 +0100
+Message-ID: <1297756739-2958-8-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1297756739-2958-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6603462366863219431==
+--===============2020246683039406822==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Only the four "NAA initialisation" modes are handled at the moment.
 ---
- src/stk.c |   65 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 65 insertions(+), 0 deletions(-)
+ src/call-forwarding.c |   39 +++++++++++++++++++++++++++++++++++++--
+ 1 files changed, 37 insertions(+), 2 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index 199e02b..bc46b2f 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -1973,10 +1973,22 @@ static gboolean handle_command_send_ussd(const stru=
-ct stk_command *cmd,
- 	return FALSE;
+diff --git a/src/call-forwarding.c b/src/call-forwarding.c
+index d13f990..d610521 100644
+--- a/src/call-forwarding.c
++++ b/src/call-forwarding.c
+@@ -74,6 +74,7 @@ static void get_query_next_cf_cond(struct ofono_call_forw=
+arding *cf);
+ static void set_query_next_cf_cond(struct ofono_call_forwarding *cf);
+ static void ss_set_query_next_cf_cond(struct ofono_call_forwarding *cf);
+ static void cf_unregister_ss_controls(struct ofono_call_forwarding *cf);
++static void sim_read_cf_indicator(struct ofono_call_forwarding *cf);
+ =
+
+ struct cf_ss_request {
+ 	int ss_type;
+@@ -1358,18 +1359,52 @@ static void sim_cphs_cff_read_cb(int ok, int total_=
+length, int record,
+ 					DBUS_TYPE_BOOLEAN, &cfu_voice);
  }
  =
 
-+static void free_idle_mode_text(struct ofono_stk *stk)
++static void sim_cfis_changed(int id, void *userdata)
 +{
-+	g_free(stk->idle_mode_text);
-+	stk->idle_mode_text =3D NULL;
++	struct ofono_call_forwarding *cf =3D userdata;
 +
-+	memset(&stk->idle_mode_icon, 0, sizeof(stk->idle_mode_icon));
++	if (((cf->flags & CALL_FORWARDING_FLAG_CPHS_CFF) ||
++			cf->cfis_record_id > 0) && is_cfu_enabled(cf, NULL)) {
++		DBusConnection *conn =3D ofono_dbus_get_connection();
++		const char *path =3D __ofono_atom_get_path(cf->atom);
++		ofono_bool_t status =3D FALSE;
++
++		ofono_dbus_signal_property_changed(conn, path,
++					OFONO_CALL_FORWARDING_INTERFACE,
++					"ForwardingFlagOnSim",
++					DBUS_TYPE_BOOLEAN, &status);
++	}
++
++	cf->cfis_record_id =3D 0;
++	cf->flags &=3D ~CALL_FORWARDING_FLAG_CPHS_CFF;
++
++	/*
++	 * TODO: remove forwarding rules in
++	 * cf->cf_conditions[CALL_FORWARDING_TYPE_UNCONDITIONAL] that
++	 * originate from EFcfis before adding the new rules?
++	 */
++
++	sim_read_cf_indicator(cf);
 +}
 +
- static gboolean handle_command_refresh(const struct stk_command *cmd,
- 					struct stk_response *rsp,
- 					struct ofono_stk *stk)
+ static void sim_read_cf_indicator(struct ofono_call_forwarding *cf)
  {
-+	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
-+	struct ofono_sim *sim =3D NULL;
-+	struct ofono_atom *sim_atom;
-+	int err;
- 	GSList *l;
- =
-
- 	DBG("");
-@@ -2030,6 +2042,59 @@ static gboolean handle_command_refresh(const struct =
-stk_command *cmd,
- 					cmd->refresh.icon_id.qualifier);
- 	DBG("Alpha ID: %s", cmd->refresh.alpha_id);
- =
-
-+	sim_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
-+						OFONO_ATOM_TYPE_SIM);
-+	if (sim_atom)
-+		sim =3D __ofono_atom_get_data(sim_atom);
-+
-+	if (sim =3D=3D NULL) {
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
+ 	if (__ofono_sim_service_available(cf->sim,
+ 			SIM_UST_SERVICE_CFIS,
+-			SIM_SST_SERVICE_CFIS) =3D=3D TRUE)
++			SIM_SST_SERVICE_CFIS) =3D=3D TRUE) {
+ 		ofono_sim_read(cf->sim_context, SIM_EFCFIS_FILEID,
+ 				OFONO_SIM_FILE_STRUCTURE_FIXED,
+ 				sim_cfis_read_cb, cf);
+-	else
++		ofono_sim_add_file_watch(cf->sim_context, SIM_EFCFIS_FILEID,
++						sim_cfis_changed, cf, NULL);
++	} else {
+ 		ofono_sim_read(cf->sim_context, SIM_EF_CPHS_CFF_FILEID,
+ 				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+ 				sim_cphs_cff_read_cb, cf);
++		ofono_sim_add_file_watch(cf->sim_context,
++						SIM_EF_CPHS_CFF_FILEID,
++						sim_cfis_changed, cf, NULL);
 +	}
-+
-+	if (cmd->qualifier < 4) {
-+		int qualifier =3D stk->pending_cmd->qualifier;
-+		GSList *file_list =3D stk->pending_cmd->refresh.file_list;
-+
-+		/* Don't free the list yet */
-+		stk->pending_cmd->refresh.file_list =3D NULL;
-+
-+		/*
-+		 * Queue the TERMINAL RESPONSE before triggering potential
-+		 * file accesses.
-+		 */
-+		err =3D stk_respond(stk, rsp, stk_command_cb);
-+		if (err)
-+			stk_command_cb(&failure, stk);
-+
-+		/* TODO: use the alphaId / icon */
-+		/* TODO: if AID is supplied, check its value */
-+		/* TODO: possibly check if a D-bus call is pending or
-+		 * an STK session ongoing. */
-+
-+		/* TODO: free some elements of the atom state */
-+
-+		switch (qualifier) {
-+		case 0:
-+			free_idle_mode_text(stk);
-+			__ofono_sim_refresh(sim, file_list, TRUE, TRUE);
-+			break;
-+		case 1:
-+			__ofono_sim_refresh(sim, file_list, FALSE, FALSE);
-+			break;
-+		case 2:
-+		case 3:
-+			free_idle_mode_text(stk);
-+			__ofono_sim_refresh(sim, file_list, FALSE, TRUE);
-+			break;
-+		}
-+
-+		g_slist_foreach(file_list, (GFunc) g_free, NULL);
-+		g_slist_free(file_list);
-+
-+		return FALSE;
-+	}
-+
- 	rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
- 	return TRUE;
  }
+ =
+
+ int ofono_call_forwarding_driver_register(const struct ofono_call_forwardi=
+ng_driver *d)
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============6603462366863219431==--
+--===============2020246683039406822==--
 
