@@ -1,197 +1,113 @@
-Content-Type: multipart/mixed; boundary="===============8510064455692659596=="
+Content-Type: multipart/mixed; boundary="===============9026340764565642897=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 3/3] emulator: add +CIND support
-Date: Tue, 15 Feb 2011 16:06:33 +0100
-Message-ID: <1297782393-9898-4-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1297782393-9898-1-git-send-email-frederic.danis@linux.intel.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [sim-ready-nofify-v5 PATCH 2/3] atmodem/sim: use
+ ofono_sim_ready_notify
+Date: Tue, 15 Feb 2011 17:30:34 +0200
+Message-ID: <AANLkTimxMAnyo-vG+HYZ+90Ndxe6xE_gnYY+5G43HGrg@mail.gmail.com>
+In-Reply-To: <4D5310B1.8010007@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8510064455692659596==
+--===============9026340764565642897==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-currently, only network registration is supported (service, roaming)
----
- src/emulator.c |  118 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 118 insertions(+), 0 deletions(-)
+Hi Denis,
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 232b314..96c55d4 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -23,15 +23,21 @@
- #include <config.h>
- #endif
- =
+2011/2/10 Denis Kenzior <denkenz@gmail.com>:
+> So all this logic seems to work by luck.
 
-+#include <stdio.h>
- #include <glib.h>
- =
+AFAIK that is the way you wanted it. Continue initialization after
+1) pin query returns None, and
+2) notify is called after that.
 
- #include "ofono.h"
-+#include "common.h"
- #include "gatserver.h"
- =
+If notify is called when pin is not None, recheck pin.
 
- struct ofono_emulator {
- 	struct ofono_atom *atom;
- 	enum ofono_emulator_type type;
- 	GAtServer *server;
-+	struct ofono_netreg *netreg;
-+	unsigned int netreg_watch;
-+	unsigned int status_watch;
-+	int netreg_status;
- };
- =
+> =C2=A0oFono roughly does this:
+> pin_query:
+> send AT+CPIN?
+> if READY then set waiting_for_pin to none, and wait in
+> ofono_sim_ready_notify
+> if PIN then set waiting_for_pin to the pin, and wait in
+> ofono_sim_ready_notify
+>
+> ofono_sim_ready_notify:
+> if waiting_for_pin is none proceed with initialization
+> otherwise go back to pin_query
 
- static void emulator_debug(const char *str, void *data)
-@@ -39,6 +45,98 @@ static void emulator_debug(const char *str, void *data)
- 	ofono_info("%s: %s\n", (char *)data, str);
- }
- =
+Sounds about correct.
 
-+static void cind_update(struct ofono_emulator *em, gboolean final)
-+{
-+	int status;
-+	int roam;
-+	char buf[30];
-+
-+	switch (em->netreg_status) {
-+	case NETWORK_REGISTRATION_STATUS_REGISTERED:
-+		status =3D 1;
-+		roam =3D 0;
-+		break;
-+	case NETWORK_REGISTRATION_STATUS_ROAMING:
-+		status =3D 1;
-+		roam =3D 1;
-+		break;
-+	default:
-+		status =3D 0;
-+		roam =3D 0;
-+		break;
-+	}
-+
-+	call =3D 0;
-+	callsetup =3D 0;
-+	callheld =3D 0;
-+	signal =3D (em->netreg_signal + 20) / 21;
-+	battchg =3D 0;
-+
-+	sprintf(buf, "+CIND: %d,0,0,0,0,%d,0", status, roam);
-+	g_at_server_send_info(em->server, buf, final);
-+}
-+
-+static void netreg_status_changed(int status, int lac, int ci, int tech,
-+					const char *mcc, const char *mnc,
-+					void *data)
-+{
-+	struct ofono_emulator *em =3D data;
-+
-+	DBG("%d", status);
-+
-+	if (em->netreg_status =3D=3D status)
-+		return;
-+
-+	em->netreg_status =3D status;
-+
-+	cind_update(em, TRUE);
-+}
-+
-+static void netreg_watch(struct ofono_atom *atom,
-+				enum ofono_atom_watch_condition cond,
-+				void *data)
-+{
-+	struct ofono_emulator *em =3D data;
-+
-+	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		em->status_watch =3D 0;
-+		em->netreg_status =3D NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
-+		return;
-+	}
-+
-+	em->netreg =3D __ofono_atom_get_data(atom);
-+	em->netreg_status =3D ofono_netreg_get_status(em->netreg);
-+	em->status_watch =3D __ofono_netreg_add_status_watch(em->netreg,
-+					netreg_status_changed, em, NULL);
-+
-+	cind_update(em, TRUE);
-+}
-+
-+static void at_cind_cb(GAtServerRequestType type, GAtResult *result,
-+			gpointer user_data)
-+{
-+	struct ofono_emulator *em =3D user_data;
-+
-+	switch (type) {
-+	case G_AT_SERVER_REQUEST_TYPE_QUERY:
-+		cind_update(em, FALSE);
-+		g_at_server_send_final(em->server, G_AT_SERVER_RESULT_OK);
-+		break;
-+
-+	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
-+		g_at_server_send_info(em->server, "+CIND: (\"service\",(0,1))"
-+				",(\"call\",(0,1)),(\"callsetup\",(0-3))"
-+				",(\"callheld\",(0-2)),(\"signal\",(0-5))"
-+				",(\"roam\",(0,1)),(\"battchg\",(0-5))", FALSE);
-+		g_at_server_send_final(em->server, G_AT_SERVER_RESULT_OK);
-+		break;
-+
-+	default:
-+		g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
-+		break;
-+	}
-+}
-+
- static void emulator_disconnect(gpointer user_data)
- {
- 	struct ofono_emulator *em =3D user_data;
-@@ -61,6 +159,8 @@ static void emulator_unregister(struct ofono_atom *atom)
- void ofono_emulator_register(struct ofono_emulator *em, int fd)
- {
- 	GIOChannel *io;
-+	struct ofono_modem *modem;
-+	struct ofono_atom *netreg_atom;
- =
+> Here's a log of this running on IFX:
+> ofonod[521]: Aux: > AT+CPIN?\r
+> ofonod[521]: Aux: < \r\n+CPIN: SIM PIN\r\n
+> ofonod[521]: Aux: < \r\nOK\r\n
+> ofonod[521]: drivers/atmodem/sim.c:at_cpin_cb() crsm_pin_cb: SIM PIN
+> ....
+> ofonod[521]: Aux: > AT+CPIN=3D"0000"\r
+> ofonod[521]: Aux: < \r\nOK\r\n
+> ofonod[521]: Aux: > AT+CPIN?\r
+> ofonod[521]: Aux: < \r\n+CME ERROR: 14\r\n
+> ofonod[521]: Querying PIN authentication state failed
+> ....
+> ofonod[521]: Aux: < \r\n+XSIM: 7\r\n
+> ofonod[521]: drivers/atmodem/sim.c:at_xsim_notify()
+> ofonod[521]: drivers/atmodem/sim.c:ready_unregister_and_notify()
+> ofonod[521]: src/sim.c:ofono_sim_ready_notify()
+> ofonod[521]: plugins/ifx.c:xsim_notify() state 7
+> ofonod[521]: Aux: > AT+CPIN?\r
+> ofonod[521]: Aux: < \r\n+CPIN: READY\r\n
+> ofonod[521]: Aux: < \r\nOK\r\n
+> ofonod[521]: drivers/atmodem/sim.c:at_cpin_cb() crsm_pin_cb: READY
+> ofonod[521]: drivers/atmodem/sim.c:at_pin_retries_query()
+> ofonod[521]: drivers/atmodem/sim.c:ready_timeout()
+> ofonod[521]: src/sim.c:ofono_sim_ready_notify()
+>
+> As you can see, we are in fact calling ofono_sim_ready_notify twice in
+> short succession. =C2=A0The only reason we're not stuck for 5 seconds the
+> second time around is that the xsim notification function sets ready to
+> TRUE.
 
- 	DBG("%p, %d", em, fd);
- =
+That is the way it was designed.
 
-@@ -77,6 +177,24 @@ void ofono_emulator_register(struct ofono_emulator *em,=
- int fd)
- 	g_at_server_set_disconnect_function(em->server,
- 						emulator_disconnect, em);
- =
+Second time around driver knows SIM is ready, so it schedules a call
+to ofono_sim_ready_notify() in at_wait_for_ready().
 
-+	if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP) {
-+		g_at_server_register(em->server, "+CIND", at_cind_cb, em, NULL);
-+
-+		modem =3D __ofono_atom_get_modem(em->atom);
-+
-+		em->netreg_watch =3D __ofono_modem_add_atom_watch(modem,
-+						OFONO_ATOM_TYPE_NETREG,
-+						netreg_watch, em, NULL);
-+
-+		netreg_atom =3D __ofono_modem_find_atom(modem,
-+							OFONO_ATOM_TYPE_NETREG);
-+
-+		if (netreg_atom && __ofono_atom_get_registered(netreg_atom))
-+			netreg_watch(netreg_atom,
-+					OFONO_ATOM_WATCH_CONDITION_REGISTERED,
-+					em);
-+	}
-+
- 	__ofono_atom_register(em->atom, emulator_unregister);
- }
- =
+We could avoid extra AT+CPIN? if needed, e.g., at_pin_query() could
+return error immediately if ready_source is set.
+
+>This is all pretty convoluted. =C2=A0I don't really like this at all.
+
+It is. How would you like to clarify the code? Better naming for
+functions, comments?
+
+> Another case to consider is a cold boot quirked modem, PIN disabled. =C2=
+=A0We
+> are highly likely to receive XSIM way before we even query the PIN. =C2=
+=A0So
+> ready is false, ready_id is > 0 and we end up waiting for 5 seconds here
+> for no good reason.
+
+The +XSIM etc. is subscribed when SIM atom is probed, so oFono ends up
+waiting only if SIM probe is done after ready indication. For MBM,
+there is no good way to find out the SIM readyness (apart from reading
+something from the SIM). For IFX, I think we could check the state
+with an AT+XSIMSTATE? request.
+
+> Did you intend if (ok && sd_ready_id =3D=3D 0) here?
+>
+> Otherwise I don't see how non-quirked modems ever signal sim_ready or
+> why you would want to start a timer if you know a notification is coming
+> anyway.
+
+The at_wait_for_ready() will schedule immediately a callback (timer
+with timeout of 0) if modem has not registered a ready indication
+(ready_id is 0).
 
 -- =
 
-1.7.1
+Pekka.Pessi mail at nokia.com
 
-
---===============8510064455692659596==--
+--===============9026340764565642897==--
 
