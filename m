@@ -1,123 +1,111 @@
-Content-Type: multipart/mixed; boundary="===============8502176351955115235=="
+Content-Type: multipart/mixed; boundary="===============7289425467388393003=="
 MIME-Version: 1.0
 From: Olivier Guiter <olivier.guiter@linux.intel.com>
-Subject: [PATCH 1/2] gprs:Add code to handle AT+CGDCONT
-Date: Tue, 15 Feb 2011 14:19:22 +0100
-Message-ID: <1297775963-3426-2-git-send-email-olivier.guiter@linux.intel.com>
+Subject: [PATCH 2/2] emulator: Add +CGMI and +CGDCONT commands
+Date: Tue, 15 Feb 2011 14:19:23 +0100
+Message-ID: <1297775963-3426-3-git-send-email-olivier.guiter@linux.intel.com>
 In-Reply-To: <1297775963-3426-1-git-send-email-olivier.guiter@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8502176351955115235==
+--===============7289425467388393003==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/gprs.h |    2 +
- src/gprs.c     |   63 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 65 insertions(+), 0 deletions(-)
+ include/emulator.h |    7 ++++++-
+ src/emulator.c     |   28 ++++++++++++++++++++++++----
+ 2 files changed, 30 insertions(+), 5 deletions(-)
 
-diff --git a/include/gprs.h b/include/gprs.h
-index 157a6f9..1901329 100644
---- a/include/gprs.h
-+++ b/include/gprs.h
-@@ -73,6 +73,8 @@ void ofono_gprs_remove(struct ofono_gprs *gprs);
- void ofono_gprs_set_data(struct ofono_gprs *gprs, void *data);
- void *ofono_gprs_get_data(struct ofono_gprs *gprs);
+diff --git a/include/emulator.h b/include/emulator.h
+index 2334e02..94053f1 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -27,8 +27,13 @@ extern "C" {
+ #endif
  =
 
-+void ofono_gprs_add_emulator_handler(void *user);
-+
- void ofono_gprs_set_cid_range(struct ofono_gprs *gprs,
- 				unsigned int min, unsigned int max);
- void ofono_gprs_add_context(struct ofono_gprs *gprs,
-diff --git a/src/gprs.c b/src/gprs.c
-index 33711dc..b36f94d 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -45,6 +45,7 @@
- #include "idmap.h"
- #include "simutil.h"
- #include "util.h"
-+#include "gatserver.h"
+ #include <ofono/types.h>
++#include <gatserver.h>
  =
 
- #define GPRS_FLAG_ATTACHING 0x1
- #define GPRS_FLAG_RECHECK 0x2
-@@ -2762,3 +2763,65 @@ void *ofono_gprs_get_data(struct ofono_gprs *gprs)
- {
- 	return gprs->driver_data;
- }
-+
-+static void ofono_gprs_list_contexts(struct ofono_gprs *gprs, gpointer use=
-r)
-+{
-+	GAtServer *server =3D user;
-+	GSList *l;
-+	char buf[256];
-+	int i;
-+
-+	struct pri_context *ctx;
-+
-+	i =3D 1;
-+	for (l =3D gprs->contexts; l; l =3D l->next) {
-+		ctx =3D l->data;
-+
-+		snprintf(buf, 255, "+CGDCONT: %d,\"%s\",\"%s\"",
-+				i, gprs_proto_to_string(ctx->context.proto),
-+				ctx->context.apn);
-+
-+		g_at_server_send_info(server, buf, FALSE);
-+		i +=3D 1 ;
-+	}
-+}
-+
-+/* Process the usual AT+CGDCONT command
-+ * TODO Create context
-+ * TODO Delete: how to map the cid with the correct context
-+ * TODO Req. type support: check the range.
-+ */
-+static void cgdcont_cb(GAtServerRequestType type, GAtResult *cmd, gpointer=
- user)
+-struct ofono_emulator;
++struct ofono_emulator {
++	struct ofono_atom *atom;
++	GAtServer *server;
++	struct ofono_atom *gprs_atom;
++};
+ =
+
+ enum ofono_emulator_type {
+ 	OFONO_EMULATOR_TYPE_DUN,
+diff --git a/src/emulator.c b/src/emulator.c
+index c49283d..0ed2ae5 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -28,10 +28,23 @@
+ #include "ofono.h"
+ #include "gatserver.h"
+ =
+
+-struct ofono_emulator {
+-	struct ofono_atom *atom;
+-	GAtServer *server;
+-};
++static void cgmi_cb(GAtServerRequestType type, GAtResult *cmd, gpointer us=
+er)
 +{
 +	struct ofono_emulator *em =3D user;
 +	GAtServer *server =3D em->server;
-+	void *atom_gprs =3D __ofono_atom_get_data(em->gprs_atom);
 +
 +	switch (type) {
-+	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:  /* +CGDCONT=3D? */
-+		g_at_server_send_info(server,
-+				"+CGDCONT: (1-10),\"IP\",,,(0-2),(0,1,2,3,4)", FALSE);
-+		g_at_server_send_info(server,
-+				"+CGDCONT: (1-2),\"IPv6\",,,(0-2),(0,1,2,3,4)", TRUE);
++	case G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY:
++		g_at_server_send_info(server, "oFono", TRUE);
 +		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
 +		break;
-+
-+	case G_AT_SERVER_REQUEST_TYPE_QUERY:  /* +CGDCONT? */
-+		ofono_gprs_list_contexts(atom_gprs, server);
-+		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-+		break;
-+
-+	case G_AT_SERVER_REQUEST_TYPE_SET:
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
 +		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
 +		break;
 +	default:
 +		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
 +	};
 +}
+ =
+
+ static void emulator_debug(const char *str, void *data)
+ {
+@@ -76,6 +89,12 @@ void ofono_emulator_register(struct ofono_emulator *em, =
+int fd)
+ 	g_at_server_set_disconnect_function(em->server,
+ 						emulator_disconnect, em);
+ =
+
++	/* Register local callbacks */
++	g_at_server_register(em->server, "+CGMI", cgmi_cb, em, NULL);
 +
-+void ofono_gprs_add_emulator_handler(void *user)
-+{
-+	struct ofono_emulator *em =3D user;
++	/* Register external (atoms) callbacks */
++	ofono_gprs_add_emulator_handler(em);
 +
-+	g_at_server_register(em->server, "+CGDCONT", cgdcont_cb, em, NULL);
-+}
+ 	__ofono_atom_register(em->atom, emulator_unregister);
+ }
+ =
+
+@@ -102,6 +121,7 @@ struct ofono_emulator *ofono_emulator_create(struct ofo=
+no_modem *modem,
+ =
+
+ 	em->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_EMULATOR_DUN,
+ 						emulator_remove, em);
++	em->gprs_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_GPRS);
+ =
+
+ 	return em;
+ }
 -- =
 
 1.7.1
 
 
---===============8502176351955115235==--
+--===============7289425467388393003==--
 
