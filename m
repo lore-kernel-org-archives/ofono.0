@@ -1,32 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============5364874188356583413=="
+Content-Type: multipart/mixed; boundary="===============3265816277969593162=="
 MIME-Version: 1.0
-From: Kumar SANGHVI <kumar.sanghvi@stericsson.com>
-Subject: Re: Fwd: [PATCH 01/18] gisi: pipe and pep for wgmodem2.5
-Date: Tue, 15 Feb 2011 13:40:55 +0000
-Message-ID: <20110215134036.GA31704@bnru01.bnr.st.com>
-In-Reply-To: <AANLkTi=9SAJ6Nn-mPrcDxqdZHSxeqYVWZim3wFMDeyn0@mail.gmail.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [RFCv3] doc: Proposal for LTE/IMS API
+Date: Tue, 15 Feb 2011 16:02:44 +0200
+Message-ID: <AANLkTikUHiVe2BBNxjOWc81Mx5T=9XAw8-9FSxwhs2r7@mail.gmail.com>
+In-Reply-To: <1297377234-5056-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5364874188356583413==
+--===============3265816277969593162==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Sjur,
 
-> > As far as I can tell, implementing
-> > connect() on PEP
-> > sockets would be much more elegant (and symmetric).
-> =
+2011/2/11 Sjur Br=C3=A6ndeland <sjurbren@gmail.com>:
+> With latest changes the P-CSCF addresses from ISIM can be read
+> from the IpMultimediaIdentity objects and the P-CSCF addresses
+> returned as dynamic parameters for the PDN Connection are avilable
+> in the ConnectionContext object.
+>
+> I have also added LocalAddress to the IMS QoS SIP PreCondiction check.
+> The Local IP address identifies the APN, so that PreCondition check
+> in effect can be done per IMS APN.
 
-Sorry, I am not aware of the oFono.
-However, I was just wondering that enabling Pipe Controller in Phonet stack=
- should suffice.
-Pipe controller in Phonet stack already implements the connect().
+This looks pretty good to me.
 
-Br,
-Kumar.
+I take that an application that does
+IpMultimediaSubsystem.Register("voice") implicitly support SR-VCC? Or
+should you add a separate register-token for it, too?
 
---===============5364874188356583413==--
+Another issue is the list of ISIMs, the current oFono way of providing
+list of objects is via separate Get* method returning an
+array{object,dict}. What about of adding GetImsIdentities() into
+SimManager API?
+
+--Pekka
+
+-- =
+
+Pekka.Pessi mail at nokia.com
+
+--===============3265816277969593162==--
 
