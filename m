@@ -1,35 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============7612670802046831103=="
+Content-Type: multipart/mixed; boundary="===============6563742623436642785=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 03/18] isimodem: general build updates for wgmodem2.5
-Date: Wed, 16 Feb 2011 13:19:02 +0200
-Message-ID: <AANLkTim6XLz3aPajZqE9Z6Dzhp3WNTfAG0JGaq8tVG=4@mail.gmail.com>
-In-Reply-To: <54211f9998b680739d08cb3a773eb1da89bdee1b.1297772944.git.andreas.westin@stericsson.com>
+From: Andreas WESTIN <andreas.westin@stericsson.com>
+Subject: Re: [PATCH 04/18] gisi: fix subscription for wgmodem2.5
+Date: Wed, 16 Feb 2011 12:33:44 +0100
+Message-ID: <4D5BB618.1060504@stericsson.com>
+In-Reply-To: <AANLkTi=aS+22cSBibi=i=2K4bcYzLbKtiJ9gtpACL-KS@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7612670802046831103==
+--===============6563742623436642785==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Aki,
 
-2011/2/15 Andreas Westin <andreas.westin@stericsson.com>:
-> From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
+On 2011-02-16 12:16, Aki Niemi wrote:
+> Curly brackets are either in both if and else, or in neither. I
+> actually prefer not to have them here, since the first line is just a
+> comment in the else statement. ;)
+
+Yes you're right :)
+
+> This is not necessary, as a modem plugin is supposed to call
+> g_isi_modem_set_device() to set the modem->device to whatever it needs
+> to right after creating the GIsiModem instance.
 >
-> ---
-> =C2=A0drivers/isimodem/debug.c | =C2=A0 48 ++++++++++++++++++++++++++++++=
-++++++++++++++++
-> =C2=A0drivers/isimodem/debug.h | =C2=A0 =C2=A08 +++++++
-> =C2=A0drivers/isimodem/mtc.h =C2=A0 | =C2=A0 38 +++++++++++++++++++++++++=
-+++++++++++
-> =C2=A03 files changed, 94 insertions(+), 0 deletions(-)
+> In other words, the assumption is that when the GIsiModem instace is
+> actually used, all necessary internal data, such as flags and the
+> remote device have already been set.
 
-I pushed this patch, but modified the commit message a bit.
+Tested and works fine, will submit a new patch for the u8500 plugin. =
 
-Cheers,
-Aki
+This is not done in the n900 plugin though, perhaps not necessary ?
 
---===============7612670802046831103==--
+Regards
+Andreas
+
+
+--===============6563742623436642785==--
 
