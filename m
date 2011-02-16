@@ -1,56 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============3143174385780636585=="
+Content-Type: multipart/mixed; boundary="===============1925898073014105737=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [V3 PATCH 3/3] Huawei: set Huawei EM770W modem device to 00
-Date: Wed, 16 Feb 2011 12:04:15 -0600
-Message-ID: <4D5C119F.8050305@gmail.com>
-In-Reply-To: <FC2FB65B4D919844ADE4BE3C2BB739AD369E4E97@shsmsx501.ccr.corp.intel.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH 1/2] gsmdial: add option for Bluetooth DUN dialing
+Date: Wed, 16 Feb 2011 18:41:07 -0300
+Message-ID: <1297892468-22101-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3143174385780636585==
+--===============1925898073014105737==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+---
+ gatchat/gsmdial.c |   19 ++++++++++++++++---
+ 1 files changed, 16 insertions(+), 3 deletions(-)
 
-On 02/15/2011 01:03 AM, Xu, Martin wrote:
-> Denis/Marcel:
->> -----Original Message-----
->> From: Denis Kenzior [mailto:denkenz(a)gmail.com]
->> Sent: Tuesday, February 15, 2011 4:28 AM
->> To: ofono(a)ofono.org
->> Cc: Xu, Martin
->> Subject: Re: [V3 PATCH 3/3] Huawei: set Huawei EM770W modem device to 00
->>
->> Hi Martin,
->>
->> On 02/12/2011 03:41 AM, martin.xu(a)intel.com wrote:
->>> From: Martin Xu <martin.xu@intel.com>
->>>
->>> Device 00 is ppp port. Setting it as 01, my Huawei EM770W modem PPP
->>> connection can't work
->>> ---
->>>  plugins/ofono.rules |    2 +-
->>>  1 files changed, 1 insertions(+), 1 deletions(-)
->>>
->>
->> This contradicts commit bb58a729073abcb6c5b0b2fb8b120973dfa42a07.
-> I can't quite understand why Dietrich needs to this commit. We formal con=
-figure can just make EM770W works.
-> Could you help on this?
+diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
+index 1be80e3..bae5efb 100644
+--- a/gatchat/gsmdial.c
++++ b/gatchat/gsmdial.c
+@@ -56,6 +56,7 @@ static gboolean option_legacy =3D FALSE;
+ static gchar *option_username =3D NULL;
+ static gchar *option_password =3D NULL;
+ static gchar *option_pppdump =3D NULL;
++static gboolean option_bluetooth =3D 0;
+ =
 
-The Huawei firmware is funny, it can actually reconfigure the modem and
-pcui ports (e.g. swap them).  So we might have to be a bit smarter and
-figure out which ports are actually being used for what inside the modem
-driver.
+ static GAtPPP *ppp;
+ static GAtChat *control;
+@@ -266,6 +267,11 @@ static void no_carrier_notify(GAtResult *result, gpoin=
+ter user_data)
+ {
+ 	char buf[64];
+ =
 
-Talk to Marcel, I believe he has played with the Huawei hardware the
-most and might have ideas on how to fix this.
++	if (option_bluetooth) {
++		g_main_loop_quit(event_loop);
++		return;
++	}
++
+ 	sprintf(buf, "AT+CFUN=3D%u", option_offmode);
+ 	g_at_chat_send(control, buf, none_prefix, power_down, NULL, NULL);
+ }
+@@ -612,6 +618,8 @@ static GOptionEntry options[] =3D {
+ 				"Specify CFUN offmode" },
+ 	{ "legacy", 'l', 0, G_OPTION_ARG_NONE, &option_legacy,
+ 				"Use ATD*99***<cid>#" },
++	{ "bluetooth", 'b', 0, G_OPTION_ARG_NONE, &option_bluetooth,
++				"Use only ATD*99" },
+ 	{ "username", 'u', 0, G_OPTION_ARG_STRING, &option_username,
+ 				"Specify PPP username" },
+ 	{ "password", 'w', 0, G_OPTION_ARG_STRING, &option_password,
+@@ -700,9 +708,14 @@ int main(int argc, char **argv)
+ =
 
-Regards,
--Denis
+ 	event_loop =3D g_main_loop_new(NULL, FALSE);
+ =
 
---===============3143174385780636585==--
+-	g_at_chat_send(control, "ATE0Q0V1", NULL, NULL, NULL, NULL);
+-	g_at_chat_send(control, "AT+CFUN?", cfun_prefix,
+-						check_mode, NULL, NULL);
++	if (option_bluetooth) {
++		g_at_chat_send(control, "ATD*99", none_prefix, connect_cb,
++				NULL, NULL);
++	} else {
++		g_at_chat_send(control, "ATE0Q0V1", NULL, NULL, NULL, NULL);
++		g_at_chat_send(control, "AT+CFUN?", cfun_prefix,
++							check_mode, NULL, NULL);
++	}
+ =
+
+ 	g_main_loop_run(event_loop);
+ 	g_source_remove(signal_source);
+-- =
+
+1.7.4
+
+
+--===============1925898073014105737==--
 
