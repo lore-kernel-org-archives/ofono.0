@@ -1,39 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============8128163775806904502=="
+Content-Type: multipart/mixed; boundary="===============8892129107924615183=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] dun_gw: Add DUN server plugin for oFono
-Date: Wed, 16 Feb 2011 00:25:41 -0600
-Message-ID: <4D5B6DE5.406@gmail.com>
-In-Reply-To: <1297797663-29684-1-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH 1/2] gprs:Add code to handle AT+CGDCONT
+Date: Wed, 16 Feb 2011 00:32:11 -0600
+Message-ID: <4D5B6F6B.9030805@gmail.com>
+In-Reply-To: <1297775963-3426-2-git-send-email-olivier.guiter@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8128163775806904502==
+--===============8892129107924615183==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Olivier,
 
-On 02/15/2011 01:21 PM, Gustavo F. Padovan wrote:
-> DUN server is probed when modem state changes to online. It registers
-> DUN record to Bluetooth adapter and wait for incoming DUN connection.
-> =
-
-> Based on a patch from Zhenhua Zhang <zhenhua.zhang@intel.com>
+On 02/15/2011 07:19 AM, Olivier Guiter wrote:
 > ---
->  Makefile.am      |    3 +
->  plugins/dun_gw.c |  164 ++++++++++++++++++++++++++++++++++++++++++++++++=
+>  include/gprs.h |    2 +
+>  src/gprs.c     |   63 ++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++++
->  2 files changed, 167 insertions(+), 0 deletions(-)
->  create mode 100644 plugins/dun_gw.c
+>  2 files changed, 65 insertions(+), 0 deletions(-)
 > =
 
 
-Patch has been applied, thanks.
+So I went in a slightly different direction with the emulator API.  Can
+you please have a look?
+
+Also, I'd really rather hold off trying to implement CGDCONT right now.
+ That piece is quite nasty and generally of lower priority.  I'd like to
+get the emulator a bit more hashed out first and implement the base BT
+DUN & BT HFP profiles.
 
 Regards,
 -Denis
 
---===============8128163775806904502==--
+--===============8892129107924615183==--
 
