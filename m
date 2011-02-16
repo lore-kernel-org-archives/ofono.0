@@ -1,64 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============0262674592687287031=="
+Content-Type: multipart/mixed; boundary="===============6648780286813595981=="
 MIME-Version: 1.0
-From: Andreas WESTIN <andreas.westin@stericsson.com>
-Subject: Re: [PATCH 05/18] plugins: add plugin for u8500
-Date: Wed, 16 Feb 2011 16:27:41 +0100
-Message-ID: <4D5BECED.6020705@stericsson.com>
-In-Reply-To: <AANLkTi=pZCFHhe37OeydXf-XSa_AhES7Q2YfE6gT04sh@mail.gmail.com>
+From: Jan Luebbe <jluebbe@debian.org>
+Subject: [PATCH] plugins/ofono.rules: add ID for Sierra Wireless MC8790
+Date: Wed, 16 Feb 2011 16:34:49 +0100
+Message-ID: <1297870489-2092-1-git-send-email-jluebbe@debian.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0262674592687287031==
+--===============6648780286813595981==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+---
+ plugins/ofono.rules |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index 111f071..f381881 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -11,6 +11,7 @@ SUBSYSTEMS=3D=3D"usb", ATTRS{bInterfaceNumber}=3D=3D"?*",=
+ ATTRS{bInterfaceClass}=3D=3D"ff",
+ ATTRS{idVendor}=3D=3D"05c6", ATTRS{idProduct}=3D=3D"9205", ENV{OFONO_IFACE=
+_NUM}=3D=3D"02", ENV{OFONO_GOBI_TYPE}=3D"modem"
+ =
+
+ # Sierra Wireless HSPA Modem
++ATTRS{idVendor}=3D=3D"1199", ATTRS{idProduct}=3D=3D"683c", ENV{OFONO_IFACE=
+_NUM}=3D=3D"03", ENV{OFONO_SIERRA_TYPE}=3D"modem"
+ ATTRS{idVendor}=3D=3D"1199", ATTRS{idProduct}=3D=3D"6880", ENV{OFONO_IFACE=
+_NUM}=3D=3D"03", ENV{OFONO_SIERRA_TYPE}=3D"modem"
+ ATTRS{idVendor}=3D=3D"1199", ATTRS{idProduct}=3D=3D"6890", ENV{OFONO_IFACE=
+_NUM}=3D=3D"03", ENV{OFONO_SIERRA_TYPE}=3D"modem"
+ =
+
+-- =
+
+1.7.2.3
 
 
-On 2011-02-16 15:26, Aki Niemi wrote:
-> Hi,
->
-> 2011/2/15 Andreas Westin<andreas.westin@stericsson.com>:
->> +static int u8500_probe(struct ofono_modem *modem)
->> +{
->> +       const char *ifname =3D ofono_modem_get_string(modem, "Interface"=
-);
->> +       unsigned address =3D ofono_modem_get_integer(modem, "Address");
->> +       GIsiModem *isimodem;
->> +       GIsiClient *client =3D NULL;
->> +       GIsiPhonetNetlink *link =3D NULL;
->> +       struct isi_data *isi =3D NULL;
->> +
->> +       if (ifname =3D=3D NULL)
->> +               return -EINVAL;
->> +
->> +       DBG("(%p) with %s", modem, ifname);
->> +
->> +       isimodem =3D g_isi_modem_create_by_name(ifname);
->> +       if (isimodem =3D=3D NULL) {
->> +               DBG("Interface=3D%s: %s", ifname, strerror(errno));
->> +               return -errno;
->> +       }
->> +
->> +       if (!g_isi_modem_set_version(isimodem, modemversion))
->> +               return -EINVAL;
->
-> I'm not going to add this API in GIsiModem. If we went this route, and
-> used vendor quirks inside the isimodem driver, then it would make a
-> whole lot more sense to do it in the driver create(), not here.
->
-> But we're not going that route. Each driver detects the version of the
-> ISI service it is talking to when it is probed.
->
-
-Yes this should not be there, but maybe I misunderstood you regarding =
-
-the version handling. I was under the impression that we checked the =
-
-version we get from doing PN_MTC or PN_MODEM_MCE ?
-
-Cheers
-Andreas
-
---===============0262674592687287031==--
+--===============6648780286813595981==--
 
