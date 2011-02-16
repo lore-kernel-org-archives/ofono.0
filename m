@@ -1,82 +1,182 @@
-Content-Type: multipart/mixed; boundary="===============1925898073014105737=="
+Content-Type: multipart/mixed; boundary="===============8690209507157703558=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH 1/2] gsmdial: add option for Bluetooth DUN dialing
-Date: Wed, 16 Feb 2011 18:41:07 -0300
-Message-ID: <1297892468-22101-1-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH 2/2] emulator: add dialing support
+Date: Wed, 16 Feb 2011 18:41:08 -0300
+Message-ID: <1297892468-22101-2-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1297892468-22101-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1925898073014105737==
+--===============8690209507157703558==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+It handles client ATD*99# request and then initiate the PPP negotiation.
+IP forward through the new ppp interface is not done yet.
+
+Initially based on patches from Zhenhua Zhang <zhenhua.zhang@intel.com>
 ---
- gatchat/gsmdial.c |   19 ++++++++++++++++---
- 1 files changed, 16 insertions(+), 3 deletions(-)
+ src/emulator.c |  113 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 113 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index 1be80e3..bae5efb 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -56,6 +56,7 @@ static gboolean option_legacy =3D FALSE;
- static gchar *option_username =3D NULL;
- static gchar *option_password =3D NULL;
- static gchar *option_pppdump =3D NULL;
-+static gboolean option_bluetooth =3D 0;
+diff --git a/src/emulator.c b/src/emulator.c
+index 567692d..c60863b 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -29,11 +29,18 @@
  =
 
- static GAtPPP *ppp;
- static GAtChat *control;
-@@ -266,6 +267,11 @@ static void no_carrier_notify(GAtResult *result, gpoin=
-ter user_data)
- {
- 	char buf[64];
- =
-
-+	if (option_bluetooth) {
-+		g_main_loop_quit(event_loop);
-+		return;
-+	}
+ #include "ofono.h"
+ #include "gatserver.h"
++#include "gatppp.h"
 +
- 	sprintf(buf, "AT+CFUN=3D%u", option_offmode);
- 	g_at_chat_send(control, buf, none_prefix, power_down, NULL, NULL);
++#define DUN_SERVER_ADDRESS     "192.168.1.1"
++#define DUN_PEER_ADDRESS       "192.168.1.2"
++#define DUN_DNS_SERVER_1       "10.10.10.10"
++#define DUN_DNS_SERVER_2       "10.10.10.11"
+ =
+
+ struct ofono_emulator {
+ 	struct ofono_atom *atom;
+ 	enum ofono_emulator_type type;
+ 	GAtServer *server;
++	GAtPPP *ppp;
+ };
+ =
+
+ static void emulator_debug(const char *str, void *data)
+@@ -50,6 +57,110 @@ static void emulator_disconnect(gpointer user_data)
+ 	ofono_emulator_remove(em);
  }
-@@ -612,6 +618,8 @@ static GOptionEntry options[] =3D {
- 				"Specify CFUN offmode" },
- 	{ "legacy", 'l', 0, G_OPTION_ARG_NONE, &option_legacy,
- 				"Use ATD*99***<cid>#" },
-+	{ "bluetooth", 'b', 0, G_OPTION_ARG_NONE, &option_bluetooth,
-+				"Use only ATD*99" },
- 	{ "username", 'u', 0, G_OPTION_ARG_STRING, &option_username,
- 				"Specify PPP username" },
- 	{ "password", 'w', 0, G_OPTION_ARG_STRING, &option_password,
-@@ -700,9 +708,14 @@ int main(int argc, char **argv)
  =
 
- 	event_loop =3D g_main_loop_new(NULL, FALSE);
++static void ppp_connect(const char *iface, const char *local,
++                       const char *remote,
++                       const char *dns1, const char *dns2,
++                       gpointer user_data)
++{
++       DBG("Network Device: %s\n", iface);
++       DBG("IP Address: %s\n", local);
++       DBG("Remote IP Address: %s\n", remote);
++       DBG("Primary DNS Server: %s\n", dns1);
++       DBG("Secondary DNS Server: %s\n", dns2);
++}
++
++static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
+ta)
++{
++       struct ofono_emulator *em =3D user_data;
++
++       DBG("");
++
++       g_at_ppp_unref(em->ppp);
++       em->ppp =3D NULL;
++
++       if (em->server =3D=3D NULL)
++               return;
++
++       g_at_server_resume(em->server);
++}
++
++static gboolean setup_ppp(gpointer user_data)
++{
++       struct ofono_emulator *em =3D user_data;
++       GAtIO *io;
++
++       DBG("");
++
++       io =3D g_at_server_get_io(em->server);
++
++       g_at_server_suspend(em->server);
++
++       em->ppp =3D g_at_ppp_server_new_from_io(io, DUN_SERVER_ADDRESS);
++       if (em->ppp =3D=3D NULL) {
++               g_at_server_resume(em->server);
++               return FALSE;
++       }
++
++       g_at_ppp_set_server_info(em->ppp, DUN_PEER_ADDRESS,
++                                       DUN_DNS_SERVER_1, DUN_DNS_SERVER_2);
++
++       g_at_ppp_set_credentials(em->ppp, "", "");
++       g_at_ppp_set_debug(em->ppp, emulator_debug, "PPP");
++
++       g_at_ppp_set_connect_function(em->ppp, ppp_connect, em);
++       g_at_ppp_set_disconnect_function(em->ppp, ppp_disconnect, em);
++
++       return FALSE;
++}
++
++static gboolean dial_call(struct ofono_emulator *e, const char *dial_str)
++{
++       char c =3D *dial_str;
++
++       DBG("dial call %s", dial_str);
++
++       if (c =3D=3D '*' || c =3D=3D '#' || c =3D=3D 'T' || c =3D=3D 't') {
++
++               g_at_server_send_intermediate(e->server, "CONNECT");
++               g_idle_add(setup_ppp, e);
++       }
++
++       return TRUE;
++}
++
++static void dial_cb(GAtServer *server, GAtServerRequestType type,
++				 GAtResult *result, gpointer user_data)
++{
++       struct ofono_emulator *em =3D user_data;
++       GAtResultIter iter;
++       const char *dial_str;
++
++       DBG("");
++
++       if (type !=3D G_AT_SERVER_REQUEST_TYPE_SET)
++               goto error;
++
++       g_at_result_iter_init(&iter, result);
++
++       if (!g_at_result_iter_next(&iter, ""))
++               goto error;
++
++       dial_str =3D g_at_result_iter_raw_line(&iter);
++       if (!dial_str)
++               goto error;
++
++       if (em->ppp)
++               goto error;
++
++       if (!dial_call(em, dial_str))
++               goto error;
++
++       return;
++
++error:
++       g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
++}
++
+ static void emulator_unregister(struct ofono_atom *atom)
+ {
+ 	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
+@@ -80,6 +191,8 @@ void ofono_emulator_register(struct ofono_emulator *em, =
+int fd)
+ 						emulator_disconnect, em);
  =
 
--	g_at_chat_send(control, "ATE0Q0V1", NULL, NULL, NULL, NULL);
--	g_at_chat_send(control, "AT+CFUN?", cfun_prefix,
--						check_mode, NULL, NULL);
-+	if (option_bluetooth) {
-+		g_at_chat_send(control, "ATD*99", none_prefix, connect_cb,
-+				NULL, NULL);
-+	} else {
-+		g_at_chat_send(control, "ATE0Q0V1", NULL, NULL, NULL, NULL);
-+		g_at_chat_send(control, "AT+CFUN?", cfun_prefix,
-+							check_mode, NULL, NULL);
-+	}
+ 	__ofono_atom_register(em->atom, emulator_unregister);
++
++	g_at_server_register(em->server, "D", dial_cb, em, NULL);
+ }
  =
 
- 	g_main_loop_run(event_loop);
- 	g_source_remove(signal_source);
+ static void emulator_remove(struct ofono_atom *atom)
 -- =
 
 1.7.4
 
 
---===============1925898073014105737==--
+--===============8690209507157703558==--
 
