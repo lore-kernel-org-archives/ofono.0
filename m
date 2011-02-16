@@ -1,30 +1,24 @@
-Content-Type: multipart/mixed; boundary="===============9204695882322963007=="
+Content-Type: multipart/mixed; boundary="===============1101061365421350773=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] bluetooth: rename hfp.c in hpf_hf.c
-Date: Wed, 16 Feb 2011 11:57:33 -0600
-Message-ID: <4D5C100D.7080907@gmail.com>
-In-Reply-To: <1297873551-26026-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH] linktop: power up the modem in 'offline' state
+Date: Wed, 16 Feb 2011 11:58:22 -0600
+Message-ID: <4D5C103E.2010409@gmail.com>
+In-Reply-To: <1297803872-30760-1-git-send-email-mendapara.amit@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9204695882322963007==
+--===============1101061365421350773==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Amit,
 
-On 02/16/2011 10:25 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+On 02/15/2011 03:04 PM, Amit Mendapara wrote:
 > ---
->  Makefile.am      |    2 +-
->  plugins/hfp.c    |  719 ------------------------------------------------=
-------
->  plugins/hfp_hf.c |  719 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  3 files changed, 720 insertions(+), 720 deletions(-)
->  delete mode 100644 plugins/hfp.c
->  create mode 100644 plugins/hfp_hf.c
+>  plugins/linktop.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
 > =
 
 
@@ -33,5 +27,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============9204695882322963007==--
+--===============1101061365421350773==--
 
