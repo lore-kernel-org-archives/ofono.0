@@ -1,36 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============6987380319752205591=="
+Content-Type: multipart/mixed; boundary="===============8128163775806904502=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/3] emulator: add HFP emulator type
-Date: Wed, 16 Feb 2011 00:25:16 -0600
-Message-ID: <4D5B6DCC.5090009@gmail.com>
-In-Reply-To: <1297782393-9898-3-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH] dun_gw: Add DUN server plugin for oFono
+Date: Wed, 16 Feb 2011 00:25:41 -0600
+Message-ID: <4D5B6DE5.406@gmail.com>
+In-Reply-To: <1297797663-29684-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6987380319752205591==
+--===============8128163775806904502==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Gustavo,
 
-On 02/15/2011 09:06 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+On 02/15/2011 01:21 PM, Gustavo F. Padovan wrote:
+> DUN server is probed when modem state changes to online. It registers
+> DUN record to Bluetooth adapter and wait for incoming DUN connection.
+> =
+
+> Based on a patch from Zhenhua Zhang <zhenhua.zhang@intel.com>
 > ---
->  include/emulator.h |    1 +
->  plugins/hfp_ag.c   |   17 +++++++++++++++++
->  src/emulator.c     |   14 ++++++++++++--
->  src/ofono.h        |    1 +
->  4 files changed, 31 insertions(+), 2 deletions(-)
+>  Makefile.am      |    3 +
+>  plugins/dun_gw.c |  164 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  2 files changed, 167 insertions(+), 0 deletions(-)
+>  create mode 100644 plugins/dun_gw.c
 > =
 
 
-I applied this patch but broke it up into three separate commits.
-Please refer to the HACKING document for some guidelines on how we
-prefer our patches to be split up.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============6987380319752205591==--
+--===============8128163775806904502==--
 
