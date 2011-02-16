@@ -1,29 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============7590370817568836393=="
+Content-Type: multipart/mixed; boundary="===============6020285851727417789=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 04/18] gisi: fix subscription for wgmodem2.5
-Date: Wed, 16 Feb 2011 13:37:39 +0200
-Message-ID: <AANLkTim1-a2by3pj-y4qKC2o9o=UcJpY9wMVPQ350R8r@mail.gmail.com>
-In-Reply-To: <4D5BB618.1060504@stericsson.com>
+From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
+Subject: [PATCH 1/1] src: out of bounds problem in smsutil
+Date: Wed, 16 Feb 2011 13:04:58 +0100
+Message-ID: <1297857898-21582-1-git-send-email-jessica.j.nilsson@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7590370817568836393==
+--===============6020285851727417789==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andreas,
+---
 
-2011/2/16 Andreas WESTIN <andreas.westin@stericsson.com>:
-> Tested and works fine, will submit a new patch for the u8500 plugin. This=
- is
-> not done in the n900 plugin though, perhaps not necessary ?
+This one was exposed when wgmodem2.5 CBS was run with valgrind.
 
-The default is PN_DEV_HOST, which is what the N900 uses.
+Best Regards,
+Jessica Nilsson
 
-Cheers,
-Aki
+ src/smsutil.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
---===============7590370817568836393==--
+diff --git a/src/smsutil.c b/src/smsutil.c
+index 5524932..b3a1ba1 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -4628,7 +4628,7 @@ char *cbs_topic_ranges_to_string(GSList *ranges)
+ 	}
+ =
+
+ 	/* Space for ranges, commas and terminator null */
+-	ret =3D g_new(char, len + nelem);
++	ret =3D g_new0(char, len + nelem + 1);
+ =
+
+ 	len =3D 0;
+ =
+
+-- =
+
+1.7.3.5
+
+
+--===============6020285851727417789==--
 
