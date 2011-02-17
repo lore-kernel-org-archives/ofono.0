@@ -1,40 +1,98 @@
-Content-Type: multipart/mixed; boundary="===============0511548459540172872=="
+Content-Type: multipart/mixed; boundary="===============1816593852769123935=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Li, Zhigang <zhigang.li@intel.com>
 Subject: RE: [PATCH] Enable hs 2330 MBM modem
-Date: Wed, 16 Feb 2011 19:16:46 -0800
-Message-ID: <1297912606.2519.22.camel@aeonflux>
-In-Reply-To: <B32E3D5F1713054290B4FF257B89C51A29DEF646DF@shsmsx502.ccr.corp.intel.com>
+Date: Thu, 17 Feb 2011 14:57:59 +0800
+Message-ID: <B32E3D5F1713054290B4FF257B89C51A29E8E95640@shsmsx502.ccr.corp.intel.com>
+In-Reply-To: <1297912606.2519.22.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0511548459540172872==
+--===============1816593852769123935==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhigan,
-
-> > >+			g_str_has_suffix(desc, "Data Modem") ||
-> =
-
 > > I think this should be "Module Data Modem".
-> =
-
-> This is confusing part, with my test with this modem on MeeGo image, the =
-Module Data Modem doesn't work and only Data Modem works.
-> =
-
-> So I think it should be ok.
-
-looks wrong to me. Please get the lsusb -v out for this modem where it
-lists the interface strings.
-
-Regards
-
-Marcel
 
 
+> looks wrong to me. Please get the lsusb -v out for this modem where it
+> lists the interface strings.
 
---===============0511548459540172872==--
+Interface Descriptor:
+      bLength                 9
+      bDescriptorType         4
+      bInterfaceNumber        1
+      bAlternateSetting       0
+      bNumEndpoints           1
+      bInterfaceClass         2 Communications
+      bInterfaceSubClass      2 Abstract (modem)
+      bInterfaceProtocol      1 AT-commands (v.25ter)
+      iInterface              6 HP hs2330 Mobile Broadband Module| Data Mod=
+em
+      CDC Header:
+        bcdCDC               1.10
+      CDC Union:
+        bMasterInterface        1
+        bSlaveInterface         2 =
+
+      CDC Call Management:
+        bmCapabilities       0x03
+          call management
+          use DataInterface
+        bDataInterface          2
+      CDC ACM:
+        bmCapabilities       0x07
+          sends break
+          line coding and serial state
+          get/set/clear comm features
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x8a  EP 10 IN
+        bmAttributes            3
+          Transfer Type            Interrupt
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0010  1x 16 bytes
+        bInterval               8
+    Interface Descriptor:
+      bLength                 9
+      bDescriptorType         4
+      bInterfaceNumber        2
+      bAlternateSetting       0
+      bNumEndpoints           2
+      bInterfaceClass        10 CDC Data
+      bInterfaceSubClass      0 Unused
+      bInterfaceProtocol      0 =
+
+      iInterface              7 HP hs2330 Mobile Broadband Module| Data Mod=
+em
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x01  EP 1 OUT
+        bmAttributes            2
+          Transfer Type            Bulk
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0200  1x 512 bytes
+        bInterval               0
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x81  EP 1 IN
+        bmAttributes            2
+          Transfer Type            Bulk
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0200  1x 512 bytes
+        bInterval               0
+
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+http://lists.ofono.org/listinfo/ofono
+
+--===============1816593852769123935==--
 
