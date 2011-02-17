@@ -1,83 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============1014378782072616797=="
+Content-Type: multipart/mixed; boundary="===============1528562798172839916=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH 2/5] bluetooth: add a bluetoothd connect watch
-Date: Thu, 17 Feb 2011 19:00:46 -0300
-Message-ID: <1297980049-30760-2-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1297980049-30760-1-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH 1/5] bluetooth: move find_adapter_cb to better place.
+Date: Thu, 17 Feb 2011 19:00:45 -0300
+Message-ID: <1297980049-30760-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1014378782072616797==
+--===============1528562798172839916==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This fix a issue with sending DBus messages when bluetoothd is not up yet.
 ---
- plugins/bluetooth.c |   24 ++++++++++++++----------
- 1 files changed, 14 insertions(+), 10 deletions(-)
+ plugins/bluetooth.c |   52 +++++++++++++++++++++++++----------------------=
+---
+ 1 files changed, 26 insertions(+), 26 deletions(-)
 
 diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index 32be96e..8ca9f5f 100644
+index 175ebaa..32be96e 100644
 --- a/plugins/bluetooth.c
 +++ b/plugins/bluetooth.c
-@@ -742,6 +742,18 @@ static void bluetooth_remove_all_modem(gpointer key, g=
-pointer value,
- 	profile->remove_all();
+@@ -633,6 +633,32 @@ static void add_record(gpointer data, gpointer user_da=
+ta)
+ 					DBUS_TYPE_INVALID);
  }
  =
 
-+static void bluetooth_connect(DBusConnection *connection, void *user_data)
++static void find_adapter_cb(DBusPendingCall *call, gpointer user_data)
 +{
-+	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
-+				manager_properties_cb, NULL, NULL, -1,
-+				DBUS_TYPE_INVALID);
++	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
++	DBusError derr;
++	const char *path;
 +
-+	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "FindAdapter",
-+				find_adapter_cb, NULL, NULL, -1,
-+				DBUS_TYPE_STRING, &adapter_any_name,
-+				DBUS_TYPE_INVALID);
++	dbus_error_init(&derr);
++
++	if (dbus_set_error_from_message(&derr, reply)) {
++		ofono_error("Replied with an error: %s, %s",
++					derr.name, derr.message);
++		dbus_error_free(&derr);
++		goto done;
++	}
++
++	dbus_message_get_args(reply, NULL, DBUS_TYPE_OBJECT_PATH, &path,
++					DBUS_TYPE_INVALID);
++
++	adapter_any_path =3D g_strdup(path);
++
++	g_slist_foreach(server_list, (GFunc) add_record, NULL);
++
++done:
++	dbus_message_unref(reply);
 +}
 +
- static void bluetooth_disconnect(DBusConnection *connection, void *user_da=
-ta)
+ static gboolean adapter_added(DBusConnection *connection, DBusMessage *mes=
+sage,
+ 				void *user_data)
  {
- 	if (uuid_hash =3D=3D NULL)
-@@ -763,7 +775,8 @@ static void bluetooth_ref(void)
- 	connection =3D ofono_dbus_get_connection();
+@@ -724,32 +750,6 @@ static void bluetooth_disconnect(DBusConnection *conne=
+ction, void *user_data)
+ 	g_hash_table_foreach(uuid_hash, bluetooth_remove_all_modem, NULL);
+ }
  =
 
- 	bluetooth_watch =3D g_dbus_add_service_watch(connection, BLUEZ_SERVICE,
--					NULL, bluetooth_disconnect, NULL, NULL);
-+					bluetooth_connect,
-+					bluetooth_disconnect, NULL, NULL);
- =
-
- 	adapter_added_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
- 						BLUEZ_MANAGER_INTERFACE,
-@@ -791,15 +804,6 @@ static void bluetooth_ref(void)
- 	adapter_address_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
- 						g_free, g_free);
- =
-
--	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
--				manager_properties_cb, NULL, NULL, -1,
--				DBUS_TYPE_INVALID);
+-static void find_adapter_cb(DBusPendingCall *call, gpointer user_data)
+-{
+-	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
+-	DBusError derr;
+-	const char *path;
 -
--	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "FindAdapter",
--				find_adapter_cb, NULL, NULL, -1,
--				DBUS_TYPE_STRING, &adapter_any_name,
--				DBUS_TYPE_INVALID);
+-	dbus_error_init(&derr);
 -
- increment:
- 	g_atomic_int_inc(&bluetooth_refcount);
- =
-
+-	if (dbus_set_error_from_message(&derr, reply)) {
+-		ofono_error("Replied with an error: %s, %s",
+-					derr.name, derr.message);
+-		dbus_error_free(&derr);
+-		goto done;
+-	}
+-
+-	dbus_message_get_args(reply, NULL, DBUS_TYPE_OBJECT_PATH, &path,
+-					DBUS_TYPE_INVALID);
+-
+-	adapter_any_path =3D g_strdup(path);
+-
+-	g_slist_foreach(server_list, (GFunc) add_record, NULL);
+-
+-done:
+-	dbus_message_unref(reply);
+-}
+-
+ static guint bluetooth_watch;
+ static guint adapter_added_watch;
+ static guint adapter_removed_watch;
 -- =
 
 1.7.4
 
 
---===============1014378782072616797==--
+--===============1528562798172839916==--
 
