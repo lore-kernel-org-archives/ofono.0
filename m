@@ -1,98 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============1816593852769123935=="
+Content-Type: multipart/mixed; boundary="===============4260266733377653825=="
 MIME-Version: 1.0
-From: Li, Zhigang <zhigang.li@intel.com>
-Subject: RE: [PATCH] Enable hs 2330 MBM modem
-Date: Thu, 17 Feb 2011 14:57:59 +0800
-Message-ID: <B32E3D5F1713054290B4FF257B89C51A29E8E95640@shsmsx502.ccr.corp.intel.com>
-In-Reply-To: <1297912606.2519.22.camel@aeonflux>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH 05/18] plugins: add plugin for u8500
+Date: Thu, 17 Feb 2011 11:02:52 +0200
+Message-ID: <AANLkTinULvgnP3ObsCuC3GN1AJGnZDoh7icc=9qBpnsf@mail.gmail.com>
+In-Reply-To: <4D5BECED.6020705@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1816593852769123935==
+--===============4260266733377653825==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> > I think this should be "Module Data Modem".
+Hi Andreas,
 
+2011/2/16 Andreas WESTIN <andreas.westin@stericsson.com>:
+>>> + =C2=A0 =C2=A0 =C2=A0 if (!g_isi_modem_set_version(isimodem, modemvers=
+ion))
+>>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return -EINVAL;
+>>
+>> I'm not going to add this API in GIsiModem. If we went this route, and
+>> used vendor quirks inside the isimodem driver, then it would make a
+>> whole lot more sense to do it in the driver create(), not here.
+>>
+>> But we're not going that route. Each driver detects the version of the
+>> ISI service it is talking to when it is probed.
+>>
+>
+> Yes this should not be there, but maybe I misunderstood you regarding the
+> version handling. I was under the impression that we checked the version =
+we
+> get from doing PN_MTC or PN_MODEM_MCE ?
 
-> looks wrong to me. Please get the lsusb -v out for this modem where it
-> lists the interface strings.
+The modem driver is a bit of a special case again. There is no generic
+isimodem modem driver, but each modem plugin implements their own
+version. Here, just use PN_MODEM_MCE, since that is what the U8500
+uses.
 
-Interface Descriptor:
-      bLength                 9
-      bDescriptorType         4
-      bInterfaceNumber        1
-      bAlternateSetting       0
-      bNumEndpoints           1
-      bInterfaceClass         2 Communications
-      bInterfaceSubClass      2 Abstract (modem)
-      bInterfaceProtocol      1 AT-commands (v.25ter)
-      iInterface              6 HP hs2330 Mobile Broadband Module| Data Mod=
-em
-      CDC Header:
-        bcdCDC               1.10
-      CDC Union:
-        bMasterInterface        1
-        bSlaveInterface         2 =
+Cheers,
+Aki
 
-      CDC Call Management:
-        bmCapabilities       0x03
-          call management
-          use DataInterface
-        bDataInterface          2
-      CDC ACM:
-        bmCapabilities       0x07
-          sends break
-          line coding and serial state
-          get/set/clear comm features
-      Endpoint Descriptor:
-        bLength                 7
-        bDescriptorType         5
-        bEndpointAddress     0x8a  EP 10 IN
-        bmAttributes            3
-          Transfer Type            Interrupt
-          Synch Type               None
-          Usage Type               Data
-        wMaxPacketSize     0x0010  1x 16 bytes
-        bInterval               8
-    Interface Descriptor:
-      bLength                 9
-      bDescriptorType         4
-      bInterfaceNumber        2
-      bAlternateSetting       0
-      bNumEndpoints           2
-      bInterfaceClass        10 CDC Data
-      bInterfaceSubClass      0 Unused
-      bInterfaceProtocol      0 =
-
-      iInterface              7 HP hs2330 Mobile Broadband Module| Data Mod=
-em
-      Endpoint Descriptor:
-        bLength                 7
-        bDescriptorType         5
-        bEndpointAddress     0x01  EP 1 OUT
-        bmAttributes            2
-          Transfer Type            Bulk
-          Synch Type               None
-          Usage Type               Data
-        wMaxPacketSize     0x0200  1x 512 bytes
-        bInterval               0
-      Endpoint Descriptor:
-        bLength                 7
-        bDescriptorType         5
-        bEndpointAddress     0x81  EP 1 IN
-        bmAttributes            2
-          Transfer Type            Bulk
-          Synch Type               None
-          Usage Type               Data
-        wMaxPacketSize     0x0200  1x 512 bytes
-        bInterval               0
-
-_______________________________________________
-ofono mailing list
-ofono(a)ofono.org
-http://lists.ofono.org/listinfo/ofono
-
---===============1816593852769123935==--
+--===============4260266733377653825==--
 
