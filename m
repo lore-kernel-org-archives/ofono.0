@@ -1,40 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============6511012305036158495=="
+Content-Type: multipart/mixed; boundary="===============0182729680282333653=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] gsmdial: add option for Bluetooth DUN dialing
-Date: Wed, 16 Feb 2011 15:55:18 -0600
-Message-ID: <4D5C47C6.50709@gmail.com>
-In-Reply-To: <1297892468-22101-1-git-send-email-padovan@profusion.mobi>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [V3 PATCH 3/3] Huawei: set Huawei EM770W modem device to 00
+Date: Wed, 16 Feb 2011 18:19:17 -0800
+Message-ID: <1297909157.2519.21.camel@aeonflux>
+In-Reply-To: <4D5C119F.8050305@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6511012305036158495==
+--===============0182729680282333653==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Denis,
 
-On 02/16/2011 03:41 PM, Gustavo F. Padovan wrote:
-> ---
->  gatchat/gsmdial.c |   19 ++++++++++++++++---
->  1 files changed, 16 insertions(+), 3 deletions(-)
+> >> This contradicts commit bb58a729073abcb6c5b0b2fb8b120973dfa42a07.
+> > I can't quite understand why Dietrich needs to this commit. We formal c=
+onfigure can just make EM770W works.
+> > Could you help on this?
 > =
 
-> diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-> index 1be80e3..bae5efb 100644
-> --- a/gatchat/gsmdial.c
-> +++ b/gatchat/gsmdial.c
-> @@ -56,6 +56,7 @@ static gboolean option_legacy =3D FALSE;
->  static gchar *option_username =3D NULL;
->  static gchar *option_password =3D NULL;
->  static gchar *option_pppdump =3D NULL;
-> +static gboolean option_bluetooth =3D 0;
+> The Huawei firmware is funny, it can actually reconfigure the modem and
+> pcui ports (e.g. swap them).  So we might have to be a bit smarter and
+> figure out which ports are actually being used for what inside the modem
+> driver.
 
-This should be set to FALSE.  I've applied the patch and fixed this for you.
+so I did apply this patch now since in the default settings the MDM port
+should be on interface 0. All other ones are tempered with.
 
-Regards,
--Denis
+> Talk to Marcel, I believe he has played with the Huawei hardware the
+> most and might have ideas on how to fix this.
 
---===============6511012305036158495==--
+And yes, I will add auto-detection for this now. It should be be
+possible to figure this out.
+
+ofonod[908]: PCUI: > AT^GETPORTMODE\r
+ofonod[908]: PCUI: < \r\n^getportmode:type:WCDMA:Qualcomm,MDM:0,NDIS:1,DIAG=
+:2,PCUI:3\r\n\r\nOK\r\n
+
+All latest modules support ^GETPORTMODE command and the ones that don't
+have only two ports anyway.
+
+Regards
+
+Marcel
+
+
+
+--===============0182729680282333653==--
 
