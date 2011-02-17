@@ -1,52 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============3725052534632766505=="
+Content-Type: multipart/mixed; boundary="===============2378608894775810223=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
 Subject: Re: [PATCH] test-server:Add test of PPP disconnect reason
-Date: Thu, 17 Feb 2011 10:14:45 -0600
-Message-ID: <4D5D4975.1050306@gmail.com>
-In-Reply-To: <1297950507-9175-1-git-send-email-guillaume.zajac@linux.intel.com>
+Date: Thu, 17 Feb 2011 17:37:18 +0100
+Message-ID: <4D5D4EBE.30102@linux.intel.com>
+In-Reply-To: <4D5D4975.1050306@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3725052534632766505==
+--===============2378608894775810223==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Denis,
 
-On 02/17/2011 07:48 AM, Guillaume Zajac wrote:
-> ---
->  gatchat/test-server.c |    6 ++++++
->  1 files changed, 6 insertions(+), 0 deletions(-)
-> =
+On 17/02/2011 17:14, Denis Kenzior wrote:
+> Hi Guillaume,
+>
+> On 02/17/2011 07:48 AM, Guillaume Zajac wrote:
+>> ---
+>>   gatchat/test-server.c |    6 ++++++
+>>   1 files changed, 6 insertions(+), 0 deletions(-)
+>>
+>> diff --git a/gatchat/test-server.c b/gatchat/test-server.c
+>> index e574d64..c0a5a4d 100644
+>> --- a/gatchat/test-server.c
+>> +++ b/gatchat/test-server.c
+>> @@ -137,6 +137,12 @@ static void ppp_disconnect(GAtPPPDisconnectReason r=
+eason, gpointer user)
+>>   	g_at_ppp_unref(ppp);
+>>   	ppp =3D NULL;
+>>
+>> +	if (reason =3D=3D G_AT_PPP_REASON_NET_FAIL) {
+> Don't you mean G_AT_PPP_REASON_LINK_DEAD?
+>
 
-> diff --git a/gatchat/test-server.c b/gatchat/test-server.c
-> index e574d64..c0a5a4d 100644
-> --- a/gatchat/test-server.c
-> +++ b/gatchat/test-server.c
-> @@ -137,6 +137,12 @@ static void ppp_disconnect(GAtPPPDisconnectReason re=
-ason, gpointer user)
->  	g_at_ppp_unref(ppp);
->  	ppp =3D NULL;
->  =
+In case of test-server, I didn't reproduce the crash with/without the =
 
-> +	if (reason =3D=3D G_AT_PPP_REASON_NET_FAIL) {
+fix, I applied it to test server first as we don't have dial_cb for =
 
-Don't you mean G_AT_PPP_REASON_LINK_DEAD?
+emulator yet:
 
-> +		g_at_server_unref(server);
-> +		server =3D NULL;
-> +		return;
-> +	}
-> +
->  	g_at_server_resume(server);
->  	g_at_server_set_debug(server, server_debug, "Server");
->  =
+I did ./gsmdial -i localhost -p 12346
 
+At the end of the exchange:
+ppp_lcp_down_notify() is called
+disconnect reason is G_AT_PPP_REASON_PEER_CLOSED
+then the GAtServer is well resumed.
 
-Regards,
--Denis
+In case of emulator (based on Gustavo/ZhenZhua dial_cb), =
 
---===============3725052534632766505==--
+ppp_lcp_down_notify() is called but just after this one, =
+
+ppp_ipcp_up_notify() fails and sets disconnect reason to =
+
+G_AT_PPP_REASON_NET_FAIL.
+Then we get a crash after ppp_disconnect because we call the hdlc write =
+
+handler e.g. can_write_data() into gathldc.c although we have unref the =
+
+PPP server.
+
+So I called ofono_emulator_remove() that will call the unref GAtServer =
+
+etc... when we get G_AT_PPP_REASON_NET_FAIL into ppp_disconnect
+
+I don't get G_AT_PPP_REASON_LINK_DEAD disconnect reason when emulator =
+
+crashes.
+
+So should we call ofono_emulator_remove()/GAtServer_unref() in both =
+
+disconnect reason cases?
+Or is there a specific action to do when G_AT_PPP_REASON_NET_FAIL?
+
+>> +		g_at_server_unref(server);
+>> +		server =3D NULL;
+>> +		return;
+>> +	}
+>> +
+>>   	g_at_server_resume(server);
+>>   	g_at_server_set_debug(server, server_debug, "Server");
+>>
+> Regards,
+> -Denis
+>
+
+Kind regards,
+Guillaume
+
+--===============2378608894775810223==--
 
