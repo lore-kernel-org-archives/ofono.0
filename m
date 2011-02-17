@@ -1,38 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============4065418427065905152=="
+Content-Type: multipart/mixed; boundary="===============2926652757863875866=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 16/18] isimodem: sms updated with wgmodem2.5
-Date: Thu, 17 Feb 2011 12:30:04 +0200
-Message-ID: <AANLkTinUpj_z4tvAVGnTjKERL-_rJ1h28XB3NUKUd85y@mail.gmail.com>
-In-Reply-To: <4D5BE385.9030906@stericsson.com>
+From: cy xie <chengy.xie@gmail.com>
+Subject: The answer Api in Voicecall can't work
+Date: Thu, 17 Feb 2011 20:28:04 +0800
+Message-ID: <AANLkTi=R2Nr=-d68=eeuQuhZQR7ydcwsm-ECQzt-NcsN@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4065418427065905152==
+--===============2926652757863875866==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andreas,
+Hi guys,
+      I faced a problem, I use ofono on N900, and try to answer the call .
+When the state change to Incoming, I use Answe() API, but the api can't call
+succeed.
+The hangupall() api is no problem, Can anybody help me? thanks.
 
-2011/2/16 Andreas WESTIN <andreas.westin@stericsson.com>:
->> This UICC stuff seems to be leftovers form patch 8/18.
->
-> Well they are related to SMS, debug prints. But yes they are also UICC. Do
-> you want them in patch 8 ?
+--===============2926652757863875866==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-That would be my preference. That is, a patch to bring in the PN_UICC
-codepoints and debugs, then separate patches for implementations using
-those new codepoints.
+PGRpdj5IaSBndXlzLDwvZGl2Pgo8ZGl2PqCgoKCgIEkgZmFjZWQgYSBwcm9ibGVtLCBJIHVzZSBv
+Zm9ubyBvbiBOOTAwLCBhbmQgdHJ5IHRvIGFuc3dlciB0aGUgY2FsbCAuPC9kaXY+CjxkaXY+V2hl
+biB0aGUgc3RhdGUgY2hhbmdlIHRvIEluY29taW5nLCBJIHVzZSBBbnN3ZSgpIEFQSSwgYnV0IHRo
+ZSBhcGkgY2FuJiMzOTt0IGNhbGwgc3VjY2VlZC48L2Rpdj4KPGRpdj5UaGUgaGFuZ3VwYWxsKCkg
+YXBpIGlzIG5vIHByb2JsZW0sIENhbiBhbnlib2R5IGhlbHAgbWU/IHRoYW5rcy48L2Rpdj4K
 
-> PN_SIM client is created in the UICC client verify callback if it fails, =
-do
-> we not get a response to that callback even if UICC fails ?
-
-Ah, right.
-
-Cheers,
-Aki
-
---===============4065418427065905152==--
+--===============2926652757863875866==--
 
