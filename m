@@ -1,111 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============0304502083763527554=="
+Content-Type: multipart/mixed; boundary="===============4843310923740047961=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH 3/5] bluetooth: change how we report DBus errors
-Date: Thu, 17 Feb 2011 19:00:47 -0300
-Message-ID: <1297980049-30760-3-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1297980049-30760-2-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH 4/5] bluetooth: fix crash by removing record
+Date: Thu, 17 Feb 2011 19:00:48 -0300
+Message-ID: <1297980049-30760-4-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1297980049-30760-3-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0304502083763527554==
+--===============4843310923740047961==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+When bluetoothd is not running we should not call RemoveRecord()
 ---
- plugins/bluetooth.c |   33 ++++++++++++++++++++-------------
- 1 files changed, 20 insertions(+), 13 deletions(-)
+ plugins/bluetooth.c |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
 
 diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index 8ca9f5f..161ae4b 100644
+index 161ae4b..5f2d80d 100644
 --- a/plugins/bluetooth.c
 +++ b/plugins/bluetooth.c
-@@ -267,19 +267,16 @@ static void device_properties_cb(DBusPendingCall *cal=
-l, gpointer user_data)
- 	const char *device_addr =3D NULL;
- 	const char *alias =3D NULL;
- 	struct bluetooth_profile *profile;
-+	struct DBusError derr;
- =
-
- 	reply =3D dbus_pending_call_steal_reply(call);
- =
-
--	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
--		DBG("Bluetooth daemon is apparently not available.");
--		goto done;
--	}
--
--	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR) {
--		if (!dbus_message_is_error(reply, DBUS_ERROR_UNKNOWN_METHOD))
--			ofono_info("Error from GetProperties reply: %s",
--					dbus_message_get_error_name(reply));
-+	dbus_error_init(&derr);
- =
-
-+	if (dbus_set_error_from_message(&derr, reply)) {
-+		ofono_error("Device.GetProperties replied an error: %s, %s",
-+					derr.name, derr.message);
-+		dbus_error_free(&derr);
- 		goto done;
- 	}
- =
-
-@@ -397,14 +394,19 @@ static void adapter_properties_cb(DBusPendingCall *ca=
-ll, gpointer user_data)
+@@ -445,6 +445,9 @@ static void remove_record(struct server *server)
  {
- 	const char *path =3D user_data;
- 	DBusMessage *reply;
-+	DBusError derr;
- 	GSList *device_list =3D NULL;
- 	GSList *l;
- 	const char *addr;
+ 	DBusMessage *msg;
  =
 
- 	reply =3D dbus_pending_call_steal_reply(call);
- =
-
--	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
--		DBG("Bluetooth daemon is apparently not available.");
-+	dbus_error_init(&derr);
++	if (server->handle =3D=3D 0)
++		return;
 +
-+	if (dbus_set_error_from_message(&derr, reply)) {
-+		ofono_error("Adapter.GetProperties replied an error: %s, %s",
-+					derr.name, derr.message);
-+		dbus_error_free(&derr);
- 		goto done;
- 	}
+ 	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, adapter_any_path,
+ 					BLUEZ_SERVICE_INTERFACE,
+ 					"RemoveRecord");
+@@ -596,6 +599,13 @@ static void new_connection(GIOChannel *io, gpointer us=
+er_data)
+ 					client_event, cbd);
+ }
  =
 
-@@ -717,11 +719,16 @@ static void parse_adapters(DBusMessageIter *array, gp=
-ointer user_data)
- static void manager_properties_cb(DBusPendingCall *call, gpointer user_dat=
-a)
++static void remove_service_handle(gpointer data, gpointer user_data)
++{
++	struct server *server =3D data;
++
++	server->handle =3D 0;
++}
++
+ static void add_record_cb(DBusPendingCall *call, gpointer user_data)
  {
- 	DBusMessage *reply;
-+	DBusError derr;
+ 	struct server *server =3D user_data;
+@@ -767,6 +777,8 @@ static void bluetooth_disconnect(DBusConnection *connec=
+tion, void *user_data)
+ 		return;
  =
 
- 	reply =3D dbus_pending_call_steal_reply(call);
- =
-
--	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
--		DBG("Bluetooth daemon is apparently not available.");
-+	dbus_error_init(&derr);
+ 	g_hash_table_foreach(uuid_hash, bluetooth_remove_all_modem, NULL);
 +
-+	if (dbus_set_error_from_message(&derr, reply)) {
-+		ofono_error("Manager.GetProperties() replied an error: %s, %s",
-+					derr.name, derr.message);
-+		dbus_error_free(&derr);
- 		goto done;
- 	}
++	g_slist_foreach(server_list, (GFunc) remove_service_handle, NULL);
+ }
  =
 
+ static guint bluetooth_watch;
 -- =
 
 1.7.4
 
 
---===============0304502083763527554==--
+--===============4843310923740047961==--
 
