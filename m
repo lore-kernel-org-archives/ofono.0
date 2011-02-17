@@ -1,34 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============2926652757863875866=="
+Content-Type: multipart/mixed; boundary="===============6622096099116207658=="
 MIME-Version: 1.0
-From: cy xie <chengy.xie@gmail.com>
-Subject: The answer Api in Voicecall can't work
-Date: Thu, 17 Feb 2011 20:28:04 +0800
-Message-ID: <AANLkTi=R2Nr=-d68=eeuQuhZQR7ydcwsm-ECQzt-NcsN@mail.gmail.com>
+From: Andreas WESTIN <andreas.westin@stericsson.com>
+Subject: Re: [PATCH 17/18] isimodem: CBS for wgmodem2.5
+Date: Thu, 17 Feb 2011 13:47:14 +0100
+Message-ID: <4D5D18D2.3010300@stericsson.com>
+In-Reply-To: <4D5BF6F8.9080506@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2926652757863875866==
+--===============6622096099116207658==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi guys,
-      I faced a problem, I use ofono on N900, and try to answer the call .
-When the state change to Incoming, I use Answe() API, but the api can't call
-succeed.
-The hangupall() api is no problem, Can anybody help me? thanks.
+Hi Denis,
 
---===============2926652757863875866==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+On 2011-02-16 17:10, Denis Kenzior wrote:
+> Hi Andreas,
+>
+>
+> Have you thought of adapting cbs_extract_topic_ranges function for all
+> of this somehow?
+>
 
-PGRpdj5IaSBndXlzLDwvZGl2Pgo8ZGl2PqCgoKCgIEkgZmFjZWQgYSBwcm9ibGVtLCBJIHVzZSBv
-Zm9ubyBvbiBOOTAwLCBhbmQgdHJ5IHRvIGFuc3dlciB0aGUgY2FsbCAuPC9kaXY+CjxkaXY+V2hl
-biB0aGUgc3RhdGUgY2hhbmdlIHRvIEluY29taW5nLCBJIHVzZSBBbnN3ZSgpIEFQSSwgYnV0IHRo
-ZSBhcGkgY2FuJiMzOTt0IGNhbGwgc3VjY2VlZC48L2Rpdj4KPGRpdj5UaGUgaGFuZ3VwYWxsKCkg
-YXBpIGlzIG5vIHByb2JsZW0sIENhbiBhbnlib2R5IGhlbHAgbWU/IHRoYW5rcy48L2Rpdj4K
+Yes we are looking at it now.
 
---===============2926652757863875866==--
+Cheers
+Andreas
+
+--===============6622096099116207658==--
 
