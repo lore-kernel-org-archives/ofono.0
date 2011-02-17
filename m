@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6275724906436757280=="
+Content-Type: multipart/mixed; boundary="===============3319310195120767826=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/9] modem.c: Go to PRE_SIM modem state on
- OFONO_SIM_STATE_INSERTED.
-Date: Thu, 17 Feb 2011 15:00:04 -0600
-Message-ID: <4D5D8C54.1060408@gmail.com>
-In-Reply-To: <1297756739-2958-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 2/9] sim: Implement basic Refresh.
+Date: Thu, 17 Feb 2011 15:03:01 -0600
+Message-ID: <4D5D8D05.60403@gmail.com>
+In-Reply-To: <1297756739-2958-2-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6275724906436757280==
+--===============3319310195120767826==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,21 +16,39 @@ Content-Transfer-Encoding: quoted-printable
 Hi Andrew,
 
 On 02/15/2011 01:58 AM, Andrzej Zaborowski wrote:
-> The assumption so far was that SIM state would only go from
-> NOT_PRESENT -> INSERTED -> READY -> NOT_PRESENT because there's
-> no method to unauthenticate from SIM without removing.  We need to
-> be able to switch to INSERTED when SIM is being reset,
-> reinitialised, etc. because going to NOT_PRESENT and then
-> immediately INSERTED would be logically wrong.
 > ---
->  src/modem.c |   12 ++++++++----
->  1 files changed, 8 insertions(+), 4 deletions(-)
+>  src/ofono.h |    4 ++
+>  src/sim.c   |  163 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
++----
+>  2 files changed, 155 insertions(+), 12 deletions(-)
+> =
 
-I applied this patch, but partly refactored it in a later commit.  Can
-you check that I didn't screw something up?
+
+Patch has been applied, but some comments below:
+
+> +	if (reinit_naa) {
+> +		/* Force the sim state out of READY */
+> +
+> +		sim_free_main_state(sim);
+> +
+> +		sim->state =3D OFONO_SIM_STATE_INSERTED;
+> +		for (l =3D sim->state_watches->items; l; l =3D l->next) {
+> +			struct ofono_watchlist_item *item =3D l->data;
+> +			notify =3D item->notify;
+> +
+> +			notify(sim->state, item->notify_data);
+> +		}
+
+I changed this to directly call the modem object and force it into
+pre-sim state.  I think this is a bit more clear than your proposed
+approach.
+
+Another question here is whether we want to maintain two separate simfs
+contexts.  One for the main state and one for the early state.  This
+might make things a bit easier to implement for patch 3 in this series.
 
 Regards,
 -Denis
 
---===============6275724906436757280==--
+--===============3319310195120767826==--
 
