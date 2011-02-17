@@ -1,48 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============3111413218493037875=="
+Content-Type: multipart/mixed; boundary="===============3725052534632766505=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/2] Fix reference handling in hfp_ag
-Date: Thu, 17 Feb 2011 10:08:25 -0600
-Message-ID: <4D5D47F9.5060205@gmail.com>
-In-Reply-To: <1297958126-9156-1-git-send-email-frederic.dalleau@linux.intel.com>
+Subject: Re: [PATCH] test-server:Add test of PPP disconnect reason
+Date: Thu, 17 Feb 2011 10:14:45 -0600
+Message-ID: <4D5D4975.1050306@gmail.com>
+In-Reply-To: <1297950507-9175-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3111413218493037875==
+--===============3725052534632766505==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Guillaume,
 
-On 02/17/2011 09:55 AM, Fr=C3=A9d=C3=A9ric Dalleau wrote:
-> Hi, these patch fixes reference handling in hfp_ag.
+On 02/17/2011 07:48 AM, Guillaume Zajac wrote:
+> ---
+>  gatchat/test-server.c |    6 ++++++
+>  1 files changed, 6 insertions(+), 0 deletions(-)
 > =
 
-> First patch makes sure that GATServer properly disconnects client
-> when modem is put offline. =
+> diff --git a/gatchat/test-server.c b/gatchat/test-server.c
+> index e574d64..c0a5a4d 100644
+> --- a/gatchat/test-server.c
+> +++ b/gatchat/test-server.c
+> @@ -137,6 +137,12 @@ static void ppp_disconnect(GAtPPPDisconnectReason re=
+ason, gpointer user)
+>  	g_at_ppp_unref(ppp);
+>  	ppp =3D NULL;
+>  =
 
-> =
+> +	if (reason =3D=3D G_AT_PPP_REASON_NET_FAIL) {
 
-> Second patch fixes a Glib warning about a socket closed twice.
-> dun_gw may need something similar.
-> =
+Don't you mean G_AT_PPP_REASON_LINK_DEAD?
 
-> Fr=C3=A9d=C3=A9ric Dalleau (2):
->   emulator: unref GIOChannel after creation
->   hfp_ag: Do not close client fd on unref
-> =
+> +		g_at_server_unref(server);
+> +		server =3D NULL;
+> +		return;
+> +	}
+> +
+>  	g_at_server_resume(server);
+>  	g_at_server_set_debug(server, server_debug, "Server");
+>  =
 
->  plugins/hfp_ag.c |    9 +--------
->  src/emulator.c   |    2 ++
->  2 files changed, 3 insertions(+), 8 deletions(-)
-> =
-
-
-Both patches have been applied, thanks.
 
 Regards,
 -Denis
 
---===============3111413218493037875==--
+--===============3725052534632766505==--
 
