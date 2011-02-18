@@ -1,151 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============1182615709380168362=="
+Content-Type: multipart/mixed; boundary="===============8933103337432780369=="
 MIME-Version: 1.0
-From: Antoine Reversat <a.reversat@gmail.com>
-Subject: Re: Modem "reboots" when trying to activate a ConnectionContext
-Date: Fri, 18 Feb 2011 14:06:12 -0500
-Message-ID: <AANLkTinRLSfh=wZBhJMwOM5bMR7jqpJ1+saSD1cBAM-D@mail.gmail.com>
-In-Reply-To: <AANLkTi=yOzoBL-GK=mPsGhFG9TFs+vB0h8cuNzB5hdZS@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] emulator: add dialing support
+Date: Fri, 18 Feb 2011 13:22:00 -0600
+Message-ID: <4D5EC6D8.3030908@gmail.com>
+In-Reply-To: <1298050054-30702-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1182615709380168362==
+--===============8933103337432780369==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-I removed the finale "+ 3" in both send_context_authenticate and
-link_conf_cb in drivers/isimodem/gprs-context.c which would account
-for filler bytes but they don't seem to be actually put int the
-message. This works but I don't know if it is the right fix.
+Hi Gustavo,
 
-On Fri, Feb 18, 2011 at 1:45 PM, Antoine Reversat <a.reversat@gmail.com> =
-wrote:
-> If I'm not mistaken I might have found what's wrong : it seems the
-> subblock length are wrong.
->
-> Fro example in GPDS_CONTEXT_CONFIGURE_REQ the second subblock
-> (GPDS_APN_INFO) contains a length of 0x16 which is 22 bytes. Except
-> the length is 19 bytes. Is this right or am I missing something ? It
-> is also the case for GPDS_CONTEXT_AUTH_REQ.
->
-> On Fri, Feb 18, 2011 at 11:55 AM, Antoine Reversat <a.reversat@gmail.co=
-m> wrote:
->> This is on an N900 running nitdroid gingerbread with a 2.6.35.9 kernel
->> and ofono 0.42
->>
->> When I do this :
->>
->> dbus-send --system --print-reply --dest=3Dorg.ofono /isimodem/context2
->> org.ofono.ConnectionContext.SetProperty string:"Active"
->> variant:boolean:true
->> I get back : Error org.ofono.Error.Failed: Operation failed
->>
->> /isimodem/context2 is properly defined for my operator (Fido in canada).
->>
->> And here's the log ofono gives me :
->>
->> D/ofono =C2=A0 ( =C2=A0355):
->> external/ofono/drivers/isimodem/gprs-context.c:isi_gprs_activate_primary=
-()
->> activate: gpds =3D 0x002c
->> D/ofono =C2=A0 ( =C2=A0355): PN_<UNKNOWN> (0xD9): UNKNOWN [id=3D0x00 uti=
-d=3D0x01 len=3D12]:
->> D/ofono =C2=A0 ( =C2=A0355): =C2=A0 =C2=A0 * 01 00 00 01 6C 42 04 00 00 =
-2C 04 00
->> =C2=A0: .....lB...,..
->> D/Tethering( =C2=A0435): gprs0 is not a tetherable iface, ignoring
->> D/ofono =C2=A0 ( =C2=A0355): PN_<UNKNOWN> (0xD9): UNKNOWN [id=3D0x01 uti=
-d=3D0x01 len=3D6]:
->> D/ofono =C2=A0 ( =C2=A0355): =C2=A0 =C2=A0 * 01 01 00 00 00 00
->> =C2=A0: .......
->> D/ofono =C2=A0 ( =C2=A0355): gisi: Unknown error: 0 RESP to 0x54af8 [res=
-=3D0xD9,
->> id=3D0x01, utid=3D0x01]
->> D/ofono =C2=A0 ( =C2=A0355): PN_GPDS (0x31): GPDS_CONTEXT_ID_CREATE_REQ =
-[id=3D0x02
->> utid=3D0x05 len=3D2]:
->> D/ofono =C2=A0 ( =C2=A0355): =C2=A0 =C2=A0 * 05 02 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : ...
->> D/ofono =C2=A0 ( =C2=A0355): PN_GPDS (0x31): GPDS_CONTEXT_ID_CREATE_RESP
->> [id=3D0x03 utid=3D0x05 len=3D4]:
->> D/ofono =C2=A0 ( =C2=A0355): =C2=A0 =C2=A0 * 05 03 00 01 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : .....
->> D/ofono =C2=A0 ( =C2=A0355): gisi: Unknown error: 0 RESP to 0x521b8 [res=
-=3D0x31,
->> id=3D0x03, utid=3D0x05]
->> D/ofono =C2=A0 ( =C2=A0355): PN_GPDS (0x31): GPDS_LL_CONFIGURE_REQ [id=
-=3D0x00
->> utid=3D0x06 len=3D5]:
->> D/ofono =C2=A0 ( =C2=A0355): =C2=A0 =C2=A0 * 06 00 00 00 02
->> =C2=A0: ......
->> D/ofono =C2=A0 ( =C2=A0355): PN_GPDS (0x31): GPDS_CONTEXT_ID_CREATE_IND =
-[id=3D0x04
->> utid=3D0x00 len=3D3]:
->> D/ofono =C2=A0 ( =C2=A0355): =C2=A0 =C2=A0 * 00 04 00 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0: ....
->> D/ofono =C2=A0 ( =C2=A0355): PN_GPDS (0x31): GPDS_LL_CONFIGURE_RESP [id=
-=3D0x01
->> utid=3D0x06 len=3D4]:
->> D/ofono =C2=A0 ( =C2=A0355): =C2=A0 =C2=A0 * 06 01 00 01 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : .....
->> D/ofono =C2=A0 ( =C2=A0355): gisi: Unknown error: 0 RESP to 0x54af8 [res=
-=3D0x31,
->> id=3D0x01, utid=3D0x06]
->> D/ofono =C2=A0 ( =C2=A0355): PN_GPDS (0x31): GPDS_CONTEXT_CONFIGURE_REQ =
-[id=3D0x06
->> utid=3D0x07 len=3D31]:
->> D/ofono =C2=A0 ( =C2=A0355): =C2=A0 =C2=A0 * 07 06 00 21 00 00 00 02 90 =
-04 00 00 05 16 10
->> 69 : ....!...........i
->> D/ofono =C2=A0 ( =C2=A0355): =C2=A0 =C2=A0 * 6E 74 65 72 6E 65 74 2E 66 =
-69 64 6F 2E 63 61
->> =C2=A0: nternet.fido.ca
->> D/ofono =C2=A0 ( =C2=A0355): PN_GPDS (0x31): GPDS_CONTEXT_CONFIGURE_RESP
->> [id=3D0x07 utid=3D0x07 len=3D4]:
->> D/ofono =C2=A0 ( =C2=A0355): =C2=A0 =C2=A0 * 07 07 00 01 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : .....
->> D/ofono =C2=A0 ( =C2=A0355): gisi: Unknown error: 0 RESP to 0x521b8 [res=
-=3D0x31,
->> id=3D0x07, utid=3D0x07]
->> D/ofono =C2=A0 ( =C2=A0355): PN_GPDS (0x31): GPDS_CONTEXT_AUTH_REQ [id=
-=3D0x33
->> utid=3D0x08 len=3D18]:
->> D/ofono =C2=A0 ( =C2=A0355): =C2=A0 =C2=A0 * 08 33 00 02 0B 0A 04 66 69 =
-64 6F 0C 0A 04 66
->> 69 : ..3.....fido...fi
->> D/ofono =C2=A0 ( =C2=A0355): =C2=A0 =C2=A0 * 64 6F =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 : do
->> D/ofono =C2=A0 ( =C2=A0355):
->> external/ofono/plugins/nokia-gpio.c:phonet_status_cb() Link phonet0
->> (3) is down
->> D/ofono =C2=A0 ( =C2=A0355):
->> external/ofono/plugins/nokia-gpio.c:gpio_power_state_machine()
->> (POWER_EVENT_PHONET_LINK_DOWN) @ state POWER_STATE_ON
->> D/ofono =C2=A0 ( =C2=A0355):
->> external/ofono/plugins/nokia-gpio.c:gpio_power_set_state()
->> (POWER_STATE_ON_RESET) at (POWER_STATE_ON)
->> D/ofono =C2=A0 ( =C2=A0355):
->> external/ofono/plugins/nokia-gpio.c:gpio_power_set_state() Starting
->> modem restart timeout
->> D/ofono =C2=A0 ( =C2=A0355): external/ofono/plugins/n900.c:n900_power_cb=
-() power
->> state POWER_STATE_ON_RESET
->> D/ofono =C2=A0 ( =C2=A0355): external/ofono/plugins/n900.c:report_powere=
-d() Reset
->> D/ofono =C2=A0 ( =C2=A0355): external/ofono/src/modem.c:modem_change_sta=
-te() old
->> state: 3, new state: 0
->>
->>
->> Any ideas or other debug information you need ?
->>
->
+On 02/18/2011 11:27 AM, Gustavo F. Padovan wrote:
+> It handles client ATD*99# request and then initiate the PPP negotiation.
+> IP forward through the new ppp interface is not done yet.
+> =
 
---===============1182615709380168362==--
+> Initially based on patches from Zhenhua Zhang <zhenhua.zhang@intel.com>
+> ---
+>  src/emulator.c |  121 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 121 insertions(+), 0 deletions(-)
+> =
+
+
+Patch has been applied.  You had one minor whitespace issue (mixing tab
+& spaces) which I had to amend.  Lets get this tested and stabilized,
+particularly the socket disconnection conditions while in PPP.
+
+Regards,
+-Denis
+
+--===============8933103337432780369==--
 
