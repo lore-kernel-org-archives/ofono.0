@@ -1,23 +1,24 @@
-Content-Type: multipart/mixed; boundary="===============2809983440286923173=="
+Content-Type: multipart/mixed; boundary="===============4712559816860088806=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/5] bluetooth: move find_adapter_cb to better place.
-Date: Thu, 17 Feb 2011 16:00:57 -0800
-Message-ID: <1297987257.2519.23.camel@aeonflux>
-In-Reply-To: <1297980049-30760-1-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH 2/5] bluetooth: add a bluetoothd connect watch
+Date: Thu, 17 Feb 2011 16:01:14 -0800
+Message-ID: <1297987274.2519.24.camel@aeonflux>
+In-Reply-To: <1297980049-30760-2-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2809983440286923173==
+--===============4712559816860088806==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Gustavo,
 
->  plugins/bluetooth.c |   52 +++++++++++++++++++++++++--------------------=
------
->  1 files changed, 26 insertions(+), 26 deletions(-)
+> This fix a issue with sending DBus messages when bluetoothd is not up yet.
+> ---
+>  plugins/bluetooth.c |   24 ++++++++++++++----------
+>  1 files changed, 14 insertions(+), 10 deletions(-)
 
 patch has been applied.
 
@@ -27,5 +28,5 @@ Marcel
 
 
 
---===============2809983440286923173==--
+--===============4712559816860088806==--
 
