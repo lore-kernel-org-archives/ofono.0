@@ -1,30 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============3245726106893189579=="
+Content-Type: multipart/mixed; boundary="===============2765266363083097543=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 5/5] bluetooth: add DBG() messages
-Date: Thu, 17 Feb 2011 16:03:43 -0800
-Message-ID: <1297987423.2519.27.camel@aeonflux>
-In-Reply-To: <1297980049-30760-5-git-send-email-padovan@profusion.mobi>
+From: Jussi Kangas <jussi.kangas@tieto.com>
+Subject: Problem with SIM lock states not showing correctly in Ofono API.
+Date: Fri, 18 Feb 2011 09:56:55 +0200
+Message-ID: <1298015815.1807.7.camel@jussi-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3245726106893189579==
+--===============2765266363083097543==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi,
 
->  plugins/bluetooth.c |    4 ++++
->  1 files changed, 4 insertions(+), 0 deletions(-)
-
-patch has been applied.
-
-Regards
-
-Marcel
+I would like to get rid of this problem. It's been on TODO list since
+November. I haven't received any feedback about mail =
 
 
+[RFC] sim: check if lock is locked after code changing attempt
 
---===============3245726106893189579==--
+I sent 4th of February. Could somebody check it? =
+
+
+Br,
+-Jussi
+
+
+--===============2765266363083097543==--
 
