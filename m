@@ -1,39 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============8933103337432780369=="
+Content-Type: multipart/mixed; boundary="===============4765968037473707942=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] emulator: add dialing support
-Date: Fri, 18 Feb 2011 13:22:00 -0600
-Message-ID: <4D5EC6D8.3030908@gmail.com>
-In-Reply-To: <1298050054-30702-1-git-send-email-padovan@profusion.mobi>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 2/9] sim: Implement basic Refresh.
+Date: Sat, 19 Feb 2011 05:18:50 +0100
+Message-ID: <AANLkTinZ=2gHvmQnRukrcN9Kd7VQDDv1GJAN895_xsOS@mail.gmail.com>
+In-Reply-To: <4D5D8D05.60403@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8933103337432780369==
+--===============4765968037473707942==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Denis,
 
-On 02/18/2011 11:27 AM, Gustavo F. Padovan wrote:
-> It handles client ATD*99# request and then initiate the PPP negotiation.
-> IP forward through the new ppp interface is not done yet.
-> =
+On 17 February 2011 22:03, Denis Kenzior <denkenz@gmail.com> wrote:
+> On 02/15/2011 01:58 AM, Andrzej Zaborowski wrote:
+>> ---
+>> =C2=A0src/ofono.h | =C2=A0 =C2=A04 ++
+>> =C2=A0src/sim.c =C2=A0 | =C2=A0163 +++++++++++++++++++++++++++++++++++++=
++++++++++++++++++----
+>> =C2=A02 files changed, 155 insertions(+), 12 deletions(-)
+>>
+>
+> Patch has been applied, but some comments below:
+>
+>> + =C2=A0 =C2=A0 if (reinit_naa) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* Force the sim state out o=
+f READY */
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sim_free_main_state(sim);
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sim->state =3D OFONO_SIM_STA=
+TE_INSERTED;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 for (l =3D sim->state_watche=
+s->items; l; l =3D l->next) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+struct ofono_watchlist_item *item =3D l->data;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+notify =3D item->notify;
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+notify(sim->state, item->notify_data);
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
+>
+> I changed this to directly call the modem object and force it into
+> pre-sim state. =C2=A0I think this is a bit more clear than your proposed
+> approach.
 
-> Initially based on patches from Zhenhua Zhang <zhenhua.zhang@intel.com>
-> ---
->  src/emulator.c |  121 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 121 insertions(+), 0 deletions(-)
-> =
+Looks good to me, maybe it would be even better if this was just a
+different type of sim state change, like OFONO_SIM_STATE_NOT_READY so
+it is handled in a similar way as other events.
 
+>
+> Another question here is whether we want to maintain two separate simfs
+> contexts. =C2=A0One for the main state and one for the early state. =C2=
+=A0This
+> might make things a bit easier to implement for patch 3 in this series.
 
-Patch has been applied.  You had one minor whitespace issue (mixing tab
-& spaces) which I had to amend.  Lets get this tested and stabilized,
-particularly the socket disconnection conditions while in PPP.
+I was thinking about that too, I'll send a patch to implement this.
 
-Regards,
--Denis
+Best regards
 
---===============8933103337432780369==--
+--===============4765968037473707942==--
 
