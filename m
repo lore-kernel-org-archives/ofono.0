@@ -1,32 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============8944651727356080365=="
+Content-Type: multipart/mixed; boundary="===============3080335099187277472=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Deduplicate AUTHORS.
-Date: Sat, 19 Feb 2011 16:06:28 -0600
-Message-ID: <4D603EE4.8030203@gmail.com>
-In-Reply-To: <1298109638-13556-2-git-send-email-andrew.zaborowski@intel.com>
+From: Antoine Reversat <a.reversat@gmail.com>
+Subject: [PATCH] Add CNAP to isimodem driver
+Date: Sat, 19 Feb 2011 18:58:01 -0500
+Message-ID: <AANLkTikWAx+rqPRSju06uUUk3DmviCa8V2y5RunLYQG0@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8944651727356080365==
+--===============3080335099187277472==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+This patch adds CNAP support to the isimodem driver. Sorry if it's
+ugly or wrong, it's my first patch to this project. I have tested it
+and it works though (I get the callerid name as the Name property of
+an incoming voicecall).
 
-On 02/19/2011 04:00 AM, Andrzej Zaborowski wrote:
-> As noted on IRC.
-> ---
->  AUTHORS |    2 --
->  1 files changed, 0 insertions(+), 2 deletions(-)
-> =
+--===============3080335099187277472==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="add-cnap-to-isimodem.patch"
 
+ZGlmZiAtLWdpdCBhL2RyaXZlcnMvaXNpbW9kZW0vdm9pY2VjYWxsLmMgYi9kcml2ZXJzL2lzaW1v
+ZGVtL3ZvaWNlY2FsbC5jCmluZGV4IDBhMzJmMjcuLmU3NzhmMjMgMTAwNjQ0Ci0tLSBhL2RyaXZl
+cnMvaXNpbW9kZW0vdm9pY2VjYWxsLmMKKysrIGIvZHJpdmVycy9pc2ltb2RlbS92b2ljZWNhbGwu
+YwpAQCAtNTYsOCArNTYsMTAgQEAgc3RydWN0IGlzaV9jYWxsIHsKIAl1aW50OF90IGNhdXNlOwog
+CXVpbnQ4X3QgYWRkcl90eXBlOwogCXVpbnQ4X3QgcHJlc2VudGF0aW9uOworCXVpbnQ4X3QgbmFt
+ZV9wcmVzZW50YXRpb247CiAJdWludDhfdCByZWFzb247CiAJY2hhciBhZGRyZXNzWzIwXTsKKwlj
+aGFyIG5hbWVbMjBdOwogCWNoYXIgYWRkcl9wYWRbNF07CiB9OwogCkBAIC0yMzEsNiArMjMzLDcg
+QEAgc3RhdGljIHZvaWQgaXNpX2NhbGxfb3JpZ2luX2FkZHJlc3Nfc2JfcHJvYyhzdHJ1Y3QgaXNp
+X3ZvaWNlY2FsbCAqaXZjLAogCQlpc2lfY2FsbF9hbnlfYWRkcmVzc19zYl9wcm9jKGl2YywgY2Fs
+bCwgc2IpOwogfQogCisKIHN0YXRpYyB2b2lkIGlzaV9jYWxsX2Rlc3RpbmF0aW9uX2FkZHJlc3Nf
+c2JfcHJvYyhzdHJ1Y3QgaXNpX3ZvaWNlY2FsbCAqaXZjLAogCQkJCQkJCXN0cnVjdCBpc2lfY2Fs
+bCAqY2FsbCwKIAkJCQkJCQlHSXNpU3ViQmxvY2tJdGVyICpzYikKQEAgLTIzOSw2ICsyNDIsMjkg
+QEAgc3RhdGljIHZvaWQgaXNpX2NhbGxfZGVzdGluYXRpb25fYWRkcmVzc19zYl9wcm9jKHN0cnVj
+dCBpc2lfdm9pY2VjYWxsICppdmMsCiAJCWlzaV9jYWxsX2FueV9hZGRyZXNzX3NiX3Byb2MoaXZj
+LCBjYWxsLCBzYik7CiB9CiAKK3N0YXRpYyB2b2lkIGlzaV9jYWxsX29yaWdpbl9pbmZvX3NiX3By
+b2Moc3RydWN0IGlzaV92b2ljZWNhbGwgKml2YywKKwkJCQkJCXN0cnVjdCBpc2lfY2FsbCAqY2Fs
+bCwKKwkJCQkJCUdJc2lTdWJCbG9ja0l0ZXIgKnNiKQoreworCXVpbnQ4X3QgcHJlczsKKwl1aW50
+OF90IGlkOworCXVpbnQ4X3QgbGVuOworCWNoYXIgKm5hbWU7CisgICAgCisJaWYgKCFnX2lzaV9z
+Yl9pdGVyX2dldF9ieXRlKHNiLCAmcHJlcywgMikgfHwKKwkJCSFnX2lzaV9zYl9pdGVyX2dldF9i
+eXRlKHNiLCAmaWQsIDYpIHx8CisJCQkhZ19pc2lfc2JfaXRlcl9nZXRfYnl0ZShzYiwgJmxlbiwg
+NykgfHwKKwkJCSFnX2lzaV9zYl9pdGVyX2dldF9hbHBoYV90YWcoc2IsICZuYW1lLCAyICogbGVu
+LCA4KSkKKwkJcmV0dXJuOworICAgIAorCisgICAgREJHKCJHb3QgbmFtZSAlcyIsIG5hbWUpOwor
+CWNhbGwtPm5hbWVfcHJlc2VudGF0aW9uID0gcHJlczsKKwlzdHJuY3B5KGNhbGwtPm5hbWUsIG5h
+bWUsIHNpemVvZihjYWxsLT5uYW1lKSk7CisKKwlnX2ZyZWUobmFtZSk7Cit9CisKIHN0YXRpYyB2
+b2lkIGlzaV9jYWxsX21vZGVfc2JfcHJvYyhzdHJ1Y3QgaXNpX3ZvaWNlY2FsbCAqaXZjLAogCQkJ
+CQlzdHJ1Y3QgaXNpX2NhbGwgKmNhbGwsCiAJCQkJCUdJc2lTdWJCbG9ja0l0ZXIgKnNiKQpAQCAt
+Mzk2LDEzICs0MjIsMTkgQEAgc3RhdGljIHN0cnVjdCBvZm9ub19jYWxsIGlzaV9jYWxsX2FzX29m
+b25vX2NhbGwoY29uc3Qgc3RydWN0IGlzaV9jYWxsICpjYWxsKQogCW9jYWxsLnN0YXR1cyA9IGlz
+aV9jYWxsX3N0YXR1c190b19jbGNjKGNhbGwpOwogCiAJbWVtY3B5KG51bWJlci0+bnVtYmVyLCBj
+YWxsLT5hZGRyZXNzLCBzaXplb2YobnVtYmVyLT5udW1iZXIpKTsKKwltZW1jcHkob2NhbGwubmFt
+ZSwgY2FsbC0+bmFtZSwgc2l6ZW9mKG9jYWxsLm5hbWUpKTsKKwogCiAJbnVtYmVyLT50eXBlID0g
+MHg4MCB8IGNhbGwtPmFkZHJfdHlwZTsKIAlvY2FsbC5jbGlwX3ZhbGlkaXR5ID0gY2FsbC0+cHJl
+c2VudGF0aW9uICYgMzsKKyAgICBvY2FsbC5jbmFwX3ZhbGlkaXR5ID0gY2FsbC0+bmFtZV9wcmVz
+ZW50YXRpb24gJiAzOwogCiAJaWYgKG9jYWxsLmNsaXBfdmFsaWRpdHkgPT0gMCAmJiBzdHJsZW4o
+bnVtYmVyLT5udW1iZXIpID09IDApCiAJCW9jYWxsLmNsaXBfdmFsaWRpdHkgPSAyOwogCisJaWYg
+KG9jYWxsLmNuYXBfdmFsaWRpdHkgPT0gMCAmJiBzdHJsZW4oY2FsbC0+bmFtZSkgPT0gMCkKKwkJ
+b2NhbGwuY25hcF92YWxpZGl0eSA9IDI7CisKIAlyZXR1cm4gb2NhbGw7CiB9CiAKQEAgLTUxMywx
+MSArNTQ1LDEyIEBAIHN0YXRpYyB2b2lkIGlzaV9jYWxsX25vdGlmeShzdHJ1Y3Qgb2Zvbm9fdm9p
+Y2VjYWxsICpvdmMsIHN0cnVjdCBpc2lfY2FsbCAqY2FsbCkKIAogCW9jYWxsID0gaXNpX2NhbGxf
+YXNfb2Zvbm9fY2FsbChjYWxsKTsKIAotCURCRygiaWQ9JXUsJXMsJXUsXCIlc1wiLCV1LCV1IiwK
+KwlEQkcoImlkPSV1LCVzLCV1LFwiJXNcIixcIiVzXCIsJXUsJXUiLAogCQlvY2FsbC5pZCwKIAkJ
+b2NhbGwuZGlyZWN0aW9uID8gInRlcm1pbmF0ZWQiIDogIm9yaWdpbmF0ZWQiLAogCQlvY2FsbC5z
+dGF0dXMsCiAJCW9jYWxsLnBob25lX251bWJlci5udW1iZXIsCisgICAgICAgIG9jYWxsLm5hbWUs
+CiAJCW9jYWxsLnBob25lX251bWJlci50eXBlLAogCQlvY2FsbC5jbGlwX3ZhbGlkaXR5KTsKIApA
+QCAtNjIyLDYgKzY1NSwxMCBAQCBzdGF0aWMgdm9pZCBpc2lfY2FsbF9zdGF0dXNfaW5kX2NiKGNv
+bnN0IEdJc2lNZXNzYWdlICptc2csIHZvaWQgKmRhdGEpCiAJCQlpc2lfY2FsbF9vcmlnaW5fYWRk
+cmVzc19zYl9wcm9jKGl2YywgY2FsbCwgJml0ZXIpOwogCQkJYnJlYWs7CiAKKyAgICAgICAgY2Fz
+ZSBDQUxMX09SSUdJTl9JTkZPOgorCQkJaXNpX2NhbGxfb3JpZ2luX2luZm9fc2JfcHJvYyhpdmMs
+IGNhbGwsICZpdGVyKTsKKwkJCWJyZWFrOworCiAJCWNhc2UgQ0FMTF9HU01fREVUQUlMRURfQ0FV
+U0U6CiAJCWNhc2UgQ0FMTF9ERVNUSU5BVElPTl9QUkVfQUREUkVTUzoKIAkJY2FzZSBDQUxMX0RF
+U1RJTkFUSU9OX1BPU1RfQUREUkVTUzoK
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============8944651727356080365==--
+--===============3080335099187277472==--
 
