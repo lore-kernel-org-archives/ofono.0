@@ -1,35 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============4275552486191533799=="
+Content-Type: multipart/mixed; boundary="===============8606207714185002659=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCHv2 2/2] stemodem: Add support for multiple pdp contexts.
-Date: Mon, 21 Feb 2011 08:28:10 -0800
-Message-ID: <1298305690.2519.45.camel@aeonflux>
-In-Reply-To: <1298289551-5896-1-git-send-email-maritsofie.henriksen8@gmail.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [RFC] doc: Add support for CMAS/EU-Alert
+Date: Mon, 21 Feb 2011 09:18:17 -0800
+Message-ID: <1298308697-4144-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4275552486191533799==
+--===============8606207714185002659==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marit,
+---
+ doc/cell-broadcast-api.txt |   26 +++++++++++++++++---------
+ 1 files changed, 17 insertions(+), 9 deletions(-)
 
-> Redesigned, there will be only one contexts for each instance of
-> the driver and only one CAIF interface, no longer need the list
-> of caif devices.
-> ---
->  drivers/stemodem/gprs-context.c |  273 ++++++++-------------------------=
-------
->  1 files changed, 57 insertions(+), 216 deletions(-)
+diff --git a/doc/cell-broadcast-api.txt b/doc/cell-broadcast-api.txt
+index 52618eb..71b2516 100644
+--- a/doc/cell-broadcast-api.txt
++++ b/doc/cell-broadcast-api.txt
+@@ -36,19 +36,27 @@ Signals		PropertyChanged(string name, variant value)
+ 			Please note that base station name broadcasts are
+ 			handled by the NetworkRegistration interface.
+ =
 
-patch has been applied.
+-		EmergencyBroadcast(string text, dict properties)
++		WarningSystemBroadcast(string text, dict properties)
+ =
 
-Regards
+-			This signal is emitted whenever an ETWS cell broadcast
+-			is received.  The string text contains contents of the
+-			broadcast.  The dict is made up of the following
+-			entries:
+-				EmergencyType - string value, possible values
++			This signal is emitted whenever an ETWS or CMAS or
++			EU-Alert cell broadcast is received. The string text
++			contains contents of the broadcast. The dict is made
++			up of the following entries:
++				WarningType - string value, possible values
+ 						include: "Earthquake",
+ 							"Tsunami",
+ 							"Earthquake+Tsunami",
+-							"Other"
+-				EmergencyAlert - boolean value hinting whether
+-						an extra emergency indicator
++							"OtherEmergency",
++							"Presidential",
++							"Extreme",
++							"Severe",
++							"Advisory",
++							"ChildAbduction",
++							"MonthlyTest",
++							"Exercise"
++
++				WarningAlert - boolean value hinting whether
++						an emergency indicator
+ 						should be activated (e.g.
+ 						vibrate mode, emergency alert
+ 						mode.)
+-- =
 
-Marcel
+1.7.0.4
 
 
-
---===============4275552486191533799==--
+--===============8606207714185002659==--
 
