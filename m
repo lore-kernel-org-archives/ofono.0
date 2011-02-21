@@ -1,553 +1,112 @@
-Content-Type: multipart/mixed; boundary="===============3383310460310633971=="
+Content-Type: multipart/mixed; boundary="===============3678706006530238469=="
 MIME-Version: 1.0
-From: Marit Henriksen <tomasz.gregorek@gmail.com>
-Subject: [PATCHv2 2/2] stemodem: Add support for multiple pdp contexts.
-Date: Mon, 21 Feb 2011 12:59:11 +0100
-Message-ID: <1298289551-5896-1-git-send-email-maritsofie.henriksen8@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: gatchat looses UR code if received while waiting a response
+Date: Mon, 21 Feb 2011 09:14:25 -0600
+Message-ID: <4D628151.4040008@gmail.com>
+In-Reply-To: <1298286070.18611.86.camel@lkunnasl-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3383310460310633971==
+--===============3678706006530238469==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Marit Henriksen <marit.henriksen@stericsson.com>
+Hi Lasse,
 
-Redesigned, there will be only one contexts for each instance of
-the driver and only one CAIF interface, no longer need the list
-of caif devices.
----
- drivers/stemodem/gprs-context.c |  273 ++++++++---------------------------=
-----
- 1 files changed, 57 insertions(+), 216 deletions(-)
+On 02/21/2011 05:01 AM, Lasse Kunnasluoto wrote:
+> Hi Marcel,
+> =
 
-diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-contex=
-t.c
-index e247f35..48ae476 100644
---- a/drivers/stemodem/gprs-context.c
-+++ b/drivers/stemodem/gprs-context.c
-@@ -50,29 +50,17 @@
- #include "caif_rtnl.h"
- #include "common.h"
- =
+> On Mon, 2011-02-21 at 12:04 +0200, Marcel Holtmann wrote:
+>> Hi Lasse,
+>>
+>>> I've seen an issue in Unsolicited Result code handling in gatchat. If
+>>> ofono has sent an AT command and is waiting for a response, but modem
+>>> has sent an UR code just before the AT command reached the modem,
+>>> gatchat does not handle that UR code correctly (it drops it). =
 
--#define MAX_CAIF_DEVICES 4
- #define MAX_DNS 2
- #define IP_ADDR_LEN 20
- =
-
- #define AUTH_BUF_LENGTH (OFONO_GPRS_MAX_USERNAME_LENGTH + \
- 			OFONO_GPRS_MAX_PASSWORD_LENGTH + 128)
- =
-
--static const char *cgact_prefix[] =3D { "+CGACT:", NULL };
- static const char *none_prefix[] =3D { NULL };
- =
-
--static GSList *g_caif_devices;
--
- struct gprs_context_data {
- 	GAtChat *chat;
- 	unsigned int active_context;
--};
--
--struct conn_info {
--	/*
--	 * cid is allocated in oFono Core and is identifying
--	 * the Account. cid =3D 0 indicates that it is currently unused.
--	 */
--	unsigned int cid;
- 	/* Id used by CAIF and EPPSD to identify the CAIF channel*/
- 	unsigned int channel_id;
- 	/* Linux Interface Id */
-@@ -150,62 +138,19 @@ static GMarkupParser parser =3D {
- 	error_handler
- };
- =
-
--static gint conn_compare_by_cid(gconstpointer a, gconstpointer b)
--{
--	const struct conn_info *conn =3D a;
--	unsigned int used =3D GPOINTER_TO_UINT(b);
--
--	if (used !=3D conn->cid)
--		return 1;
--
--	return 0;
--}
--
--static struct conn_info *conn_info_create(unsigned int channel_id)
--{
--	struct conn_info *connection =3D g_try_new0(struct conn_info, 1);
--
--	if (connection =3D=3D NULL)
--		return NULL;
--
--	connection->cid =3D 0;
--	connection->channel_id =3D channel_id;
--
--	return connection;
--}
--
- static void rtnl_callback(int ifindex, const char *ifname, void *user_data)
- {
--	struct conn_info *conn =3D user_data;
-+	struct gprs_context_data *gcd =3D user_data;
- =
-
- 	if (ifindex < 0) {
--		conn->created =3D FALSE;
--		ofono_error("Failed to create caif interface %s",
--			conn->interface);
-+		gcd->created =3D FALSE;
-+		ofono_error("Failed to create caif interface");
- 		return;
- 	}
- =
-
--	strncpy(conn->interface, ifname, sizeof(conn->interface));
--	conn->ifindex =3D ifindex;
--	conn->created =3D TRUE;
--}
--
--/*
-- * Removes IP interface for CAIF.
-- */
--static void caif_if_remove(struct conn_info *conn)
--{
--	if (!conn->created)
--		return;
--
--	if (caif_rtnl_delete_interface(conn->ifindex) < 0) {
--		ofono_error("Failed to delete caif interface %s",
--			conn->interface);
--		return;
--	}
--
--	DBG("removed CAIF interface ch:%d ifname:%s ifindex:%d\n",
--		conn->channel_id, conn->interface, conn->ifindex);
-+	strncpy(gcd->interface, ifname, sizeof(gcd->interface));
-+	gcd->ifindex =3D ifindex;
-+	gcd->created =3D TRUE;
- }
- =
-
- static void ste_eppsd_down_cb(gboolean ok, GAtResult *result,
-@@ -215,8 +160,6 @@ static void ste_eppsd_down_cb(gboolean ok, GAtResult *r=
-esult,
- 	ofono_gprs_context_cb_t cb =3D cbd->cb;
- 	struct ofono_gprs_context *gc =3D cbd->user;
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
--	struct conn_info *conn;
--	GSList *l;
- =
-
- 	if (!ok) {
- 		struct ofono_error error;
-@@ -226,20 +169,7 @@ static void ste_eppsd_down_cb(gboolean ok, GAtResult *=
-result,
- 		return;
- 	}
- =
-
--	l =3D g_slist_find_custom(g_caif_devices,
--				GUINT_TO_POINTER(gcd->active_context),
--				conn_compare_by_cid);
--
--	if (l =3D=3D NULL) {
--		DBG("Did not find data (used caif device) for"
--					"connection with cid; %d",
--					gcd->active_context);
--		CALLBACK_WITH_FAILURE(cb, cbd->data);
--		return;
--	}
--
--	conn =3D l->data;
--	conn->cid =3D 0;
-+	gcd->active_context =3D 0;
- 	CALLBACK_WITH_SUCCESS(cb, cbd->data);
- }
- =
-
-@@ -249,9 +179,7 @@ static void ste_eppsd_up_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
- 	ofono_gprs_context_up_cb_t cb =3D cbd->cb;
- 	struct ofono_gprs_context *gc =3D cbd->user;
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
--	struct conn_info *conn;
- 	GAtResultIter iter;
--	GSList *l;
- 	int i;
- 	gsize length;
- 	const char *res_string;
-@@ -259,21 +187,9 @@ static void ste_eppsd_up_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 	struct eppsd_response rsp;
- 	GMarkupParseContext *context;
- =
-
--	l =3D g_slist_find_custom(g_caif_devices,
--				GUINT_TO_POINTER(gcd->active_context),
--				conn_compare_by_cid);
--
--	if (l =3D=3D NULL) {
--		DBG("CAIF Device gone missing (cid:%d)", gcd->active_context);
--		goto error_no_device;
--	}
--
--	conn =3D l->data;
--
- 	if (!ok) {
- 		struct ofono_error error;
- =
-
--		conn->cid =3D 0;
- 		gcd->active_context =3D 0;
- 		decode_at_error(&error, g_at_result_final_response(result));
- 		cb(&error, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
-@@ -305,20 +221,17 @@ static void ste_eppsd_up_cb(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- 	dns[1] =3D rsp.dns_server2;
- 	dns[2] =3D NULL;
- =
-
--	CALLBACK_WITH_SUCCESS(cb, conn->interface, TRUE, rsp.ip_address,
-+	CALLBACK_WITH_SUCCESS(cb, gcd->interface, TRUE, rsp.ip_address,
- 				rsp.subnet_mask, NULL,
- 				dns, cbd->data);
- 	return;
- =
-
- error:
-+	DBG("ste_eppsd_up_cb error");
-+
- 	if (context)
- 		g_markup_parse_context_free(context);
- =
-
--	if (conn)
--		conn->cid =3D 0;
--
--error_no_device:
--	DBG("ste_eppsd_up_cb error");
- 	gcd->active_context =3D 0;
- 	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
- }
-@@ -331,32 +244,19 @@ static void ste_cgdcont_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	struct cb_data *ncbd;
- 	char buf[128];
--	struct conn_info *conn;
--	GSList *l;
--
--	l =3D g_slist_find_custom(g_caif_devices,
--				GUINT_TO_POINTER(gcd->active_context),
--				conn_compare_by_cid);
--
--	if (!l) {
--		DBG("CAIF Device gone missing (cid:%d)", gcd->active_context);
--		goto error_no_device;
--	}
--
--	conn =3D l->data;
- =
-
- 	if (!ok) {
- 		struct ofono_error error;
- =
-
--		conn->cid =3D 0;
- 		gcd->active_context =3D 0;
- 		decode_at_error(&error, g_at_result_final_response(result));
- 		cb(&error, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
- 		return;
- 	}
- =
-
--	snprintf(buf, sizeof(buf), "AT*EPPSD=3D1,%u,%u",
--			conn->channel_id, conn->cid);
-+	snprintf(buf, sizeof(buf), "AT*EPPSD=3D1,%x,%u",
-+			gcd->channel_id, gcd->active_context);
-+
- 	ncbd =3D g_memdup(cbd, sizeof(struct cb_data));
- =
-
- 	if (g_at_chat_send(gcd->chat, buf, NULL,
-@@ -364,12 +264,8 @@ static void ste_cgdcont_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
- 		return;
- =
-
- 	g_free(ncbd);
--	conn->cid =3D 0;
--
--error_no_device:
- 	gcd->active_context =3D 0;
--	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL,
--				NULL, NULL, cbd->data);
-+	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
- }
- =
-
- static void ste_gprs_activate_primary(struct ofono_gprs_context *gc,
-@@ -380,25 +276,11 @@ static void ste_gprs_activate_primary(struct ofono_gp=
-rs_context *gc,
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[AUTH_BUF_LENGTH];
- 	int len;
--	GSList *l;
--	struct conn_info *conn;
- =
-
- 	gcd->active_context =3D ctx->cid;
- 	cbd->user =3D gc;
- =
-
--	/* Find free connection with cid zero */
--	l =3D g_slist_find_custom(g_caif_devices, GUINT_TO_POINTER(0),
--				conn_compare_by_cid);
--
--	if (!l) {
--		DBG("No more available CAIF devices");
--		goto error_no_device;
--	}
--
--	conn =3D l->data;
--	conn->cid =3D ctx->cid;
--
--	if (!conn->created) {
-+	if (!gcd->created) {
- 		DBG("CAIF interface not created (rtnl error?)");
- 		goto error;
- 	}
-@@ -406,7 +288,7 @@ static void ste_gprs_activate_primary(struct ofono_gprs=
-_context *gc,
- 	len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
- =
-
- 	if (ctx->apn)
--		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
-+		snprintf(buf + len, sizeof(buf) - len, ",\"%s\"",
- 				ctx->apn);
- =
-
- 	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-@@ -426,9 +308,6 @@ static void ste_gprs_activate_primary(struct ofono_gprs=
-_context *gc,
- 	return;
- =
-
- error:
--	conn->cid =3D 0;
--
--error_no_device:
- 	gcd->active_context =3D 0;
- 	g_free(cbd);
- =
-
-@@ -441,82 +320,27 @@ static void ste_gprs_deactivate_primary(struct ofono_=
-gprs_context *gc,
- {
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
--	struct conn_info *conn;
- 	char buf[64];
--	GSList *l;
- =
-
--	gcd->active_context =3D id;
- 	cbd->user =3D gc;
- =
-
--	l =3D g_slist_find_custom(g_caif_devices, GUINT_TO_POINTER(id),
--				conn_compare_by_cid);
--
--	if (l =3D=3D NULL) {
--		DBG("did not find data (channel id) "
--				"for connection with cid; %d", id);
--		goto error;
--	}
--
--	conn =3D l->data;
--
--	snprintf(buf, sizeof(buf), "AT*EPPSD=3D0,%u,%u", conn->channel_id, id);
-+	snprintf(buf, sizeof(buf), "AT*EPPSD=3D0,%x,%u", gcd->channel_id, id);
- =
-
- 	if (g_at_chat_send(gcd->chat, buf, none_prefix,
- 				ste_eppsd_down_cb, cbd, g_free) > 0)
- 		return;
- =
-
--error:
- 	g_free(cbd);
- 	CALLBACK_WITH_FAILURE(cb, data);
- }
- =
-
--static void ste_cgact_read_cb(gboolean ok, GAtResult *result,
--				gpointer user_data)
--{
--	struct ofono_gprs_context *gc =3D user_data;
--	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
--	gint cid, state;
--	GAtResultIter iter;
--	GSList *l;
--
--	if (!ok)
--		return;
--
--	g_at_result_iter_init(&iter, result);
--
--	while (g_at_result_iter_next(&iter, "+CGACT:")) {
--
--		if (!g_at_result_iter_next_number(&iter, &cid))
--			continue;
--
--		if ((unsigned int) cid !=3D gcd->active_context)
--			continue;
--
--		if (!g_at_result_iter_next_number(&iter, &state))
--			continue;
--
--		if (state =3D=3D CONTEXT_STATUS_ACTIVATED)
--			continue;
--
--		ofono_gprs_context_deactivated(gc, gcd->active_context);
--		gcd->active_context =3D 0;
--
--		/* Mark interface as unused */
--		l =3D g_slist_find_custom(g_caif_devices, GUINT_TO_POINTER(cid),
--				conn_compare_by_cid);
--		if (l !=3D NULL) {
--			struct conn_info *conn =3D l->data;
--			conn->cid =3D 0;
--		}
--	}
--}
--
- static void cgev_notify(GAtResult *result, gpointer user_data)
- {
- 	struct ofono_gprs_context *gc =3D user_data;
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	GAtResultIter iter;
- 	const char *event;
-+	int cid;
- =
-
- 	g_at_result_iter_init(&iter, result);
- =
-
-@@ -526,9 +350,20 @@ static void cgev_notify(GAtResult *result, gpointer us=
-er_data)
- 	if (!g_at_result_iter_next_unquoted_string(&iter, &event))
- 		return;
- =
-
--	/* Ask what primary contexts are active now */
--	g_at_chat_send(gcd->chat, "AT+CGACT?", cgact_prefix,
--			ste_cgact_read_cb, gc, NULL);
-+	if (g_str_has_prefix(event, "NW DEACT") =3D=3D FALSE)
-+		return;
-+
-+	if (!g_at_result_iter_skip_next(&iter))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &cid))
-+		return;
-+
-+	if ((unsigned int) cid !=3D gcd->active_context)
-+		return;
-+
-+	ofono_gprs_context_deactivated(gc, gcd->active_context);
-+	gcd->active_context =3D 0;
- }
- =
-
- static int ste_gprs_context_probe(struct ofono_gprs_context *gc,
-@@ -536,29 +371,24 @@ static int ste_gprs_context_probe(struct ofono_gprs_c=
-ontext *gc,
- {
- 	GAtChat *chat =3D data;
- 	struct gprs_context_data *gcd;
--	struct conn_info *ci;
--	int i, err;
-+	int err;
- =
-
- 	gcd =3D g_new0(struct gprs_context_data, 1);
- 	gcd->chat =3D g_at_chat_clone(chat);
- =
-
- 	g_at_chat_register(gcd->chat, "+CGEV:", cgev_notify, FALSE, gc, NULL);
- =
-
-+	/* Need a unique channel id */
-+	gcd->channel_id =3D (unsigned int)(unsigned long)gc;
-+
- 	ofono_gprs_context_set_data(gc, gcd);
- =
-
--	for (i =3D 0; i < MAX_CAIF_DEVICES; i++) {
--		ci =3D conn_info_create(i+1);
--		if (!ci)
--			return -ENOMEM;
--		err =3D caif_rtnl_create_interface(IFLA_CAIF_IPV4_CONNID,
--						ci->channel_id, FALSE,
--						rtnl_callback, ci);
--		if (err < 0) {
--			DBG("Failed to create IP interface for CAIF");
--			return err;
--		}
--
--		g_caif_devices =3D g_slist_append(g_caif_devices, ci);
-+	err =3D caif_rtnl_create_interface(IFLA_CAIF_IPV4_CONNID,
-+					gcd->channel_id, FALSE,
-+					rtnl_callback, gcd);
-+	if (err < 0) {
-+		DBG("Failed to create IP interface for CAIF");
-+		return err;
- 	}
- =
-
- 	return 0;
-@@ -568,11 +398,22 @@ static void ste_gprs_context_remove(struct ofono_gprs=
-_context *gc)
- {
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- =
-
--	g_slist_foreach(g_caif_devices, (GFunc) caif_if_remove, NULL);
--	g_slist_foreach(g_caif_devices, (GFunc) g_free, NULL);
--	g_slist_free(g_caif_devices);
--	g_caif_devices =3D NULL;
-+	/*
-+	 * Removes IP interface for CAIF.
-+	 */
-+	if (!gcd->created)
-+		goto out;
-+
-+	if (caif_rtnl_delete_interface(gcd->ifindex) < 0) {
-+		ofono_error("Failed to delete caif interface %s",
-+				gcd->interface);
-+		goto out;
-+	}
-+
-+	DBG("removed CAIF interface ch:%d ifname:%s ifindex:%d\n",
-+			gcd->channel_id, gcd->interface, gcd->ifindex);
- =
-
-+out:
- 	ofono_gprs_context_set_data(gc, NULL);
- =
-
- 	g_at_chat_unref(gcd->chat);
--- =
-
-1.7.1
+>>>
+>>> 27.007 does not restrict UR-sending in the time between AT command and
+>>> sending final response.
+>>>
+>>> Even modem would not send an UR while an active AT command, this may
+>>> happen as a command may be on its way to ofono (e.g. in kernel).
+>>
+>> actually GAtChat handles this correctly. Important is what you give as
+>> valid_resp to g_at_chat_send. If this is NULL, then all lines between
+>> the command and OK are consumed by the callback of the send command.
+>>
+> agree, but it would require a quite effort to change all the NULLs to
+> something meaningful + test with various modems.
+> =
 
 
---===============3383310460310633971==--
+You should not be passing NULL in the first place.  The reason CGMM does
+so is that it has no prefix in the spec (a hold over from V.250).  So if
+you have not been using proper prefixes, I'm afraid you have to fix them
+properly.  The spec mandates the prefixes to expect, so this shouldn't
+be so hard anyway.
+
+>>> Real example of this happening:
+>>> ofonod[1388]: Default: > AT+CGMM\r                  =
+
+>>> ofonod[1388]: Default: < \r
+>>> \n*STKI:"D027810301258082028182850A5361756E616C616874698F09013E50726570=
+6169641801241F020103"\r\n =
+
+>>> ofonod[1388]: Default: < \r\nST-Ericsson Mobile Broadband\r\n\r\nOK\r
+>>> \n  =
+
+>>>
+>>> In this case the call back of *STKI was never called.
+>>>
+>>> This is not a modem issue as it has been verified the modem has sent
+>>> *STKI before AT+CGMM was received.
+>>
+>> I consider this a modem issue. It should not send *STKI during a AT+CGMM
+>> command to avoid any kind of confusion of the parser.
+>>
+> This specific case is not a modem issue. Modem has not received AT+CGMM
+> when it sent *STKI (This was verified from modem logs). Modem cannot
+> predict that there is AT+CGMM coming. Command was sent exactly same time
+> on modem and ofono side. =
+
+> =
+
+> This is timing depend issue and in my opinion may occur with any AT
+> modem. Ofono and Modem states are not always the same as there is
+> certain delay when commands are exchanged between ofono and modem. These
+> issues may be hidden most of the time but may cause some nasty errors
+> some day.
+> =
+
+
+Sounds like the read watch priority should be higher than the write
+watch priority to avoid this specific example.  Care to send a patch?
+
+>>> One way to solve this is to change the sequence in gatchat.c/have_line()
+>>> a bit and check first if this is UR code and then proceeding to response
+>>> handling. Would this be acceptable solution for this issue or would it
+>>> cause some drawbacks? If it is okay I can submit a patch
+>>
+>> See my command above. GAtChat is operating just fine.
+>>
+> More robust solution would be to change GAtChat than defining and
+> finding valid_resps for tens or hundreds of AT commands. I want to point
+> out that this is not only an issue with CGMM but may occur with any AT
+> command when the timing matches.
+> =
+
+
+There's nothing you can do in GAtChat at this point.  Having the
+unsolicited response handler fire and consume lines before the pending
+AT command handler won't work either.  If you're not convinced, try
+handling solicited / unsolicited CREG/CGREG and friends.
+
+Regards,
+-Denis
+
+--===============3678706006530238469==--
 
