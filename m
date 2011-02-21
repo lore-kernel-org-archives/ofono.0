@@ -1,79 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============3080335099187277472=="
+Content-Type: multipart/mixed; boundary="===============2733982642702286245=="
 MIME-Version: 1.0
-From: Antoine Reversat <a.reversat@gmail.com>
-Subject: [PATCH] Add CNAP to isimodem driver
-Date: Sat, 19 Feb 2011 18:58:01 -0500
-Message-ID: <AANLkTikWAx+rqPRSju06uUUk3DmviCa8V2y5RunLYQG0@mail.gmail.com>
+From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
+Subject: gatchat looses UR code if received while waiting a response
+Date: Mon, 21 Feb 2011 11:38:34 +0200
+Message-ID: <1298281114.18611.53.camel@lkunnasl-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3080335099187277472==
+--===============2733982642702286245==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds CNAP support to the isimodem driver. Sorry if it's
-ugly or wrong, it's my first patch to this project. I have tested it
-and it works though (I get the callerid name as the Name property of
-an incoming voicecall).
+Hi,
 
---===============3080335099187277472==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="add-cnap-to-isimodem.patch"
+I've seen an issue in Unsolicited Result code handling in gatchat. If
+ofono has sent an AT command and is waiting for a response, but modem
+has sent an UR code just before the AT command reached the modem,
+gatchat does not handle that UR code correctly (it drops it). =
 
-ZGlmZiAtLWdpdCBhL2RyaXZlcnMvaXNpbW9kZW0vdm9pY2VjYWxsLmMgYi9kcml2ZXJzL2lzaW1v
-ZGVtL3ZvaWNlY2FsbC5jCmluZGV4IDBhMzJmMjcuLmU3NzhmMjMgMTAwNjQ0Ci0tLSBhL2RyaXZl
-cnMvaXNpbW9kZW0vdm9pY2VjYWxsLmMKKysrIGIvZHJpdmVycy9pc2ltb2RlbS92b2ljZWNhbGwu
-YwpAQCAtNTYsOCArNTYsMTAgQEAgc3RydWN0IGlzaV9jYWxsIHsKIAl1aW50OF90IGNhdXNlOwog
-CXVpbnQ4X3QgYWRkcl90eXBlOwogCXVpbnQ4X3QgcHJlc2VudGF0aW9uOworCXVpbnQ4X3QgbmFt
-ZV9wcmVzZW50YXRpb247CiAJdWludDhfdCByZWFzb247CiAJY2hhciBhZGRyZXNzWzIwXTsKKwlj
-aGFyIG5hbWVbMjBdOwogCWNoYXIgYWRkcl9wYWRbNF07CiB9OwogCkBAIC0yMzEsNiArMjMzLDcg
-QEAgc3RhdGljIHZvaWQgaXNpX2NhbGxfb3JpZ2luX2FkZHJlc3Nfc2JfcHJvYyhzdHJ1Y3QgaXNp
-X3ZvaWNlY2FsbCAqaXZjLAogCQlpc2lfY2FsbF9hbnlfYWRkcmVzc19zYl9wcm9jKGl2YywgY2Fs
-bCwgc2IpOwogfQogCisKIHN0YXRpYyB2b2lkIGlzaV9jYWxsX2Rlc3RpbmF0aW9uX2FkZHJlc3Nf
-c2JfcHJvYyhzdHJ1Y3QgaXNpX3ZvaWNlY2FsbCAqaXZjLAogCQkJCQkJCXN0cnVjdCBpc2lfY2Fs
-bCAqY2FsbCwKIAkJCQkJCQlHSXNpU3ViQmxvY2tJdGVyICpzYikKQEAgLTIzOSw2ICsyNDIsMjkg
-QEAgc3RhdGljIHZvaWQgaXNpX2NhbGxfZGVzdGluYXRpb25fYWRkcmVzc19zYl9wcm9jKHN0cnVj
-dCBpc2lfdm9pY2VjYWxsICppdmMsCiAJCWlzaV9jYWxsX2FueV9hZGRyZXNzX3NiX3Byb2MoaXZj
-LCBjYWxsLCBzYik7CiB9CiAKK3N0YXRpYyB2b2lkIGlzaV9jYWxsX29yaWdpbl9pbmZvX3NiX3By
-b2Moc3RydWN0IGlzaV92b2ljZWNhbGwgKml2YywKKwkJCQkJCXN0cnVjdCBpc2lfY2FsbCAqY2Fs
-bCwKKwkJCQkJCUdJc2lTdWJCbG9ja0l0ZXIgKnNiKQoreworCXVpbnQ4X3QgcHJlczsKKwl1aW50
-OF90IGlkOworCXVpbnQ4X3QgbGVuOworCWNoYXIgKm5hbWU7CisgICAgCisJaWYgKCFnX2lzaV9z
-Yl9pdGVyX2dldF9ieXRlKHNiLCAmcHJlcywgMikgfHwKKwkJCSFnX2lzaV9zYl9pdGVyX2dldF9i
-eXRlKHNiLCAmaWQsIDYpIHx8CisJCQkhZ19pc2lfc2JfaXRlcl9nZXRfYnl0ZShzYiwgJmxlbiwg
-NykgfHwKKwkJCSFnX2lzaV9zYl9pdGVyX2dldF9hbHBoYV90YWcoc2IsICZuYW1lLCAyICogbGVu
-LCA4KSkKKwkJcmV0dXJuOworICAgIAorCisgICAgREJHKCJHb3QgbmFtZSAlcyIsIG5hbWUpOwor
-CWNhbGwtPm5hbWVfcHJlc2VudGF0aW9uID0gcHJlczsKKwlzdHJuY3B5KGNhbGwtPm5hbWUsIG5h
-bWUsIHNpemVvZihjYWxsLT5uYW1lKSk7CisKKwlnX2ZyZWUobmFtZSk7Cit9CisKIHN0YXRpYyB2
-b2lkIGlzaV9jYWxsX21vZGVfc2JfcHJvYyhzdHJ1Y3QgaXNpX3ZvaWNlY2FsbCAqaXZjLAogCQkJ
-CQlzdHJ1Y3QgaXNpX2NhbGwgKmNhbGwsCiAJCQkJCUdJc2lTdWJCbG9ja0l0ZXIgKnNiKQpAQCAt
-Mzk2LDEzICs0MjIsMTkgQEAgc3RhdGljIHN0cnVjdCBvZm9ub19jYWxsIGlzaV9jYWxsX2FzX29m
-b25vX2NhbGwoY29uc3Qgc3RydWN0IGlzaV9jYWxsICpjYWxsKQogCW9jYWxsLnN0YXR1cyA9IGlz
-aV9jYWxsX3N0YXR1c190b19jbGNjKGNhbGwpOwogCiAJbWVtY3B5KG51bWJlci0+bnVtYmVyLCBj
-YWxsLT5hZGRyZXNzLCBzaXplb2YobnVtYmVyLT5udW1iZXIpKTsKKwltZW1jcHkob2NhbGwubmFt
-ZSwgY2FsbC0+bmFtZSwgc2l6ZW9mKG9jYWxsLm5hbWUpKTsKKwogCiAJbnVtYmVyLT50eXBlID0g
-MHg4MCB8IGNhbGwtPmFkZHJfdHlwZTsKIAlvY2FsbC5jbGlwX3ZhbGlkaXR5ID0gY2FsbC0+cHJl
-c2VudGF0aW9uICYgMzsKKyAgICBvY2FsbC5jbmFwX3ZhbGlkaXR5ID0gY2FsbC0+bmFtZV9wcmVz
-ZW50YXRpb24gJiAzOwogCiAJaWYgKG9jYWxsLmNsaXBfdmFsaWRpdHkgPT0gMCAmJiBzdHJsZW4o
-bnVtYmVyLT5udW1iZXIpID09IDApCiAJCW9jYWxsLmNsaXBfdmFsaWRpdHkgPSAyOwogCisJaWYg
-KG9jYWxsLmNuYXBfdmFsaWRpdHkgPT0gMCAmJiBzdHJsZW4oY2FsbC0+bmFtZSkgPT0gMCkKKwkJ
-b2NhbGwuY25hcF92YWxpZGl0eSA9IDI7CisKIAlyZXR1cm4gb2NhbGw7CiB9CiAKQEAgLTUxMywx
-MSArNTQ1LDEyIEBAIHN0YXRpYyB2b2lkIGlzaV9jYWxsX25vdGlmeShzdHJ1Y3Qgb2Zvbm9fdm9p
-Y2VjYWxsICpvdmMsIHN0cnVjdCBpc2lfY2FsbCAqY2FsbCkKIAogCW9jYWxsID0gaXNpX2NhbGxf
-YXNfb2Zvbm9fY2FsbChjYWxsKTsKIAotCURCRygiaWQ9JXUsJXMsJXUsXCIlc1wiLCV1LCV1IiwK
-KwlEQkcoImlkPSV1LCVzLCV1LFwiJXNcIixcIiVzXCIsJXUsJXUiLAogCQlvY2FsbC5pZCwKIAkJ
-b2NhbGwuZGlyZWN0aW9uID8gInRlcm1pbmF0ZWQiIDogIm9yaWdpbmF0ZWQiLAogCQlvY2FsbC5z
-dGF0dXMsCiAJCW9jYWxsLnBob25lX251bWJlci5udW1iZXIsCisgICAgICAgIG9jYWxsLm5hbWUs
-CiAJCW9jYWxsLnBob25lX251bWJlci50eXBlLAogCQlvY2FsbC5jbGlwX3ZhbGlkaXR5KTsKIApA
-QCAtNjIyLDYgKzY1NSwxMCBAQCBzdGF0aWMgdm9pZCBpc2lfY2FsbF9zdGF0dXNfaW5kX2NiKGNv
-bnN0IEdJc2lNZXNzYWdlICptc2csIHZvaWQgKmRhdGEpCiAJCQlpc2lfY2FsbF9vcmlnaW5fYWRk
-cmVzc19zYl9wcm9jKGl2YywgY2FsbCwgJml0ZXIpOwogCQkJYnJlYWs7CiAKKyAgICAgICAgY2Fz
-ZSBDQUxMX09SSUdJTl9JTkZPOgorCQkJaXNpX2NhbGxfb3JpZ2luX2luZm9fc2JfcHJvYyhpdmMs
-IGNhbGwsICZpdGVyKTsKKwkJCWJyZWFrOworCiAJCWNhc2UgQ0FMTF9HU01fREVUQUlMRURfQ0FV
-U0U6CiAJCWNhc2UgQ0FMTF9ERVNUSU5BVElPTl9QUkVfQUREUkVTUzoKIAkJY2FzZSBDQUxMX0RF
-U1RJTkFUSU9OX1BPU1RfQUREUkVTUzoK
 
---===============3080335099187277472==--
+27.007 does not restrict UR-sending in the time between AT command and
+sending final response.
+
+Even modem would not send an UR while an active AT command, this may
+happen as a command may be on its way to ofono (e.g. in kernel).
+
+Real example of this happening:
+ofonod[1388]: Default: > AT+CGMM\r                  =
+
+ofonod[1388]: Default: < \r
+\n*STKI:"D027810301258082028182850A5361756E616C616874698F09013E507265706169=
+641801241F020103"\r\n =
+
+ofonod[1388]: Default: < \r\nST-Ericsson Mobile Broadband\r\n\r\nOK\r
+\n  =
+
+
+In this case the call back of *STKI was never called.
+
+This is not a modem issue as it has been verified the modem has sent
+*STKI before AT+CGMM was received.
+
+One way to solve this is to change the sequence in gatchat.c/have_line()
+a bit and check first if this is UR code and then proceeding to response
+handling. Would this be acceptable solution for this issue or would it
+cause some drawbacks? If it is okay I can submit a patch
+
+BR,
+-Lasse
+
+
+--===============2733982642702286245==--
 
