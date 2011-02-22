@@ -1,48 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============7972668695040673952=="
+Content-Type: multipart/mixed; boundary="===============8477331613228087632=="
 MIME-Version: 1.0
-From: Rolf Offermanns <roffermanns@sysgo.com>
-Subject: [PATCH] ofono.rules - remove patch leftovers in linktop rule
-Date: Tue, 22 Feb 2011 14:36:38 +0100
-Message-ID: <20110222133637.GA12115@sysgo.com>
+From: Vijay.Nayani@elektrobit.com
+Subject: RE: [PATCH] atmodem: CEREG support for LTE network status reporting
+ in AT modem
+Date: Tue, 22 Feb 2011 15:46:02 +0200
+Message-ID: <AA48DD8077D5D945A49BD1782C1140F1E7BDE3@fioues08.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7972668695040673952==
+--===============8477331613228087632==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Trivial fix for rules file.
-
----
- plugins/ofono.rules |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-index 121825e..a327923 100644
---- a/plugins/ofono.rules
-+++ b/plugins/ofono.rules
-@@ -452,7 +452,7 @@ ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"062=
-3", ENV{OFONO_DRIVER}=3D"nokia"
- ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"023e", ENV{OFONO_DRIVE=
-R}=3D"nokiacdma"
- ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"00b6", ENV{OFONO_DRIVE=
-R}=3D"nokiacdma"
  =
 
--+# Teracom (Linktop/LW27x) 3G Data Card
--+ATTRS{idVendor}=3D=3D"230d", ATTRS{idProduct}=3D=3D"0001", ENV{OFONO_DRIV=
-ER}=3D"linktop"
-+# Teracom (Linktop/LW27x) 3G Data Card
-+ATTRS{idVendor}=3D=3D"230d", ATTRS{idProduct}=3D=3D"0001", ENV{OFONO_DRIVE=
-R}=3D"linktop"
- =
 
- LABEL=3D"ofono_end"
--- =
+> Subject: [PATCH] atmodem: CEREG support for LTE network =
 
-1.7.4
+> status reporting in AT modem
+> =
 
+> [PATCH] atmodem: CEREG support for LTE network status =
 
---===============7972668695040673952==--
+> reporting in AT modem Tomasz Gregorek tomasz.gregorek at =
+
+> gmail.com Thu Feb 17 19:52:45 PST 2011
+> =
+
+>     * Previous message: [PATCH 2/5] bluetooth: add a =
+
+> bluetoothd connect watch
+>     * Next message: Problem with SIM lock states not showing =
+
+> correctly in Ofono API.
+>     * Messages sorted by: [ date ] [ thread ] [ subject ] [ author ]
+> =
+
+> From: Tomasz Gregorek <tomasz.gregorek@stericsson.com>
+> =
+
+> This is a proposal for CEREG support based on the AT modem.
+> Support in driver should work, though I have an issue with the core.
+> =
+
+> The core has one gprs status currently. In case of having =
+
+> second status for LTE, there is need of having two satuses, =
+
+> one for each, 3G and LTE, or to combine those two into one.
+> =
+
+> I took second approach as it leaves current oFono API, though =
+
+> it is not perfect.
+
+I have been working on solution that comprises of separate eps atom and
+corresponding driver. Code has been tested against modified phonesim for
+eps.Will provide an RFC patch soon once I bring it to certain logical
+end.
+
+Regards,
+Vijay
+
+--===============8477331613228087632==--
 
