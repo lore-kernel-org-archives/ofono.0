@@ -1,146 +1,226 @@
-Content-Type: multipart/mixed; boundary="===============7646167889198409548=="
+Content-Type: multipart/mixed; boundary="===============0358843464162614002=="
 MIME-Version: 1.0
-From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
-Subject: Re: gatchat looses UR code if received while waiting a response
-Date: Tue, 22 Feb 2011 14:43:26 +0200
-Message-ID: <1298378606.8856.82.camel@lkunnasl-desktop>
-In-Reply-To: <4D628151.4040008@gmail.com>
+From: Mika Liljeberg <mika.liljeberg@nokia.com>
+Subject: [RESEND 2 PATCH 01/13] gprs: factor out common code
+Date: Tue, 22 Feb 2011 15:18:57 +0200
+Message-ID: <1298380749-11040-2-git-send-email-mika.liljeberg@nokia.com>
+In-Reply-To: <1298380749-11040-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7646167889198409548==
+--===============0358843464162614002==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ src/gprs.c |  111 +++++++++++++++++++++++++++-----------------------------=
+----
+ 1 files changed, 50 insertions(+), 61 deletions(-)
 
-On Mon, 2011-02-21 at 17:14 +0200, Denis Kenzior wrote:
-> Hi Lasse,
-> =
+diff --git a/src/gprs.c b/src/gprs.c
+index 33711dc..b478f88 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -256,6 +256,49 @@ static void gprs_cid_release(struct ofono_gprs *gprs, =
+unsigned int id)
+ 	idmap_put(gprs->cid_map, id);
+ }
+ =
 
-> On 02/21/2011 05:01 AM, Lasse Kunnasluoto wrote:
-> > Hi Marcel,
-> > =
++static gboolean assign_context(struct pri_context *ctx)
++{
++	struct idmap *cidmap =3D ctx->gprs->cid_map;
++	unsigned int cid_min;
++	GSList *l;
++
++	if (cidmap =3D=3D NULL)
++		return FALSE;
++
++	cid_min =3D idmap_get_min(cidmap);
++
++	ctx->context.cid =3D gprs_cid_alloc(ctx->gprs);
++	if (ctx->context.cid =3D=3D 0)
++		return FALSE;
++
++	for (l =3D ctx->gprs->context_drivers; l; l =3D l->next) {
++		struct ofono_gprs_context *gc =3D l->data;
++
++		if (gc->inuse =3D=3D TRUE)
++			continue;
++
++		if (gc->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_ANY ||
++						gc->type =3D=3D ctx->type) {
++			ctx->context_driver =3D gc;
++			ctx->context_driver->inuse =3D TRUE;
++			return TRUE;
++		}
++	}
++
++	return FALSE;
++}
++
++static void release_context(struct pri_context *ctx)
++{
++	if (ctx =3D=3D NULL || ctx->gprs =3D=3D NULL || ctx->context_driver =3D=
+=3D NULL)
++		return;
++
++	gprs_cid_release(ctx->gprs, ctx->context.cid);
++	ctx->context.cid =3D 0;
++	ctx->context_driver->inuse =3D FALSE;
++	ctx->context_driver =3D NULL;
++}
++
+ static struct pri_context *gprs_context_by_path(struct ofono_gprs *gprs,
+ 						const char *ctx_path)
+ {
+@@ -704,12 +747,7 @@ static void pri_activate_callback(const struct ofono_e=
+rror *error,
+ 				telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&ctx->pending,
+ 					__ofono_error_failed(ctx->pending));
+-
+-		gprs_cid_release(ctx->gprs, ctx->context.cid);
+-		ctx->context.cid =3D 0;
+-		ctx->context_driver->inuse =3D FALSE;
+-		ctx->context_driver =3D NULL;
+-
++		release_context(ctx);
+ 		return;
+ 	}
+ =
 
-> > On Mon, 2011-02-21 at 12:04 +0200, Marcel Holtmann wrote:
-> >> Hi Lasse,
-> >>
-> >>> I've seen an issue in Unsolicited Result code handling in gatchat. If
-> >>> ofono has sent an AT command and is waiting for a response, but modem
-> >>> has sent an UR code just before the AT command reached the modem,
-> >>> gatchat does not handle that UR code correctly (it drops it). =
+@@ -745,11 +783,8 @@ static void pri_deactivate_callback(const struct ofono=
+_error *error, void *data)
+ 		return;
+ 	}
+ =
 
-> >>>
-> >>> 27.007 does not restrict UR-sending in the time between AT command and
-> >>> sending final response.
-> >>>
-> >>> Even modem would not send an UR while an active AT command, this may
-> >>> happen as a command may be on its way to ofono (e.g. in kernel).
-> >>
-> >> actually GAtChat handles this correctly. Important is what you give as
-> >> valid_resp to g_at_chat_send. If this is NULL, then all lines between
-> >> the command and OK are consumed by the callback of the send command.
-> >>
-> > agree, but it would require a quite effort to change all the NULLs to
-> > something meaningful + test with various modems.
-> > =
+-	gprs_cid_release(ctx->gprs, ctx->context.cid);
+-	ctx->context.cid =3D 0;
++	release_context(ctx);
+ 	ctx->active =3D FALSE;
+-	ctx->context_driver->inuse =3D FALSE;
+-	ctx->context_driver =3D NULL;
+ =
 
-> =
+ 	__ofono_dbus_pending_reply(&ctx->pending,
+ 				dbus_message_new_method_return(ctx->pending));
+@@ -996,38 +1031,6 @@ static DBusMessage *pri_set_message_center(struct pri=
+_context *ctx,
+ 	return NULL;
+ }
+ =
 
-> You should not be passing NULL in the first place.  The reason CGMM does
-> so is that it has no prefix in the spec (a hold over from V.250).  So if
-> you have not been using proper prefixes, I'm afraid you have to fix them
-> properly.  The spec mandates the prefixes to expect, so this shouldn't
-> be so hard anyway.
-> =
+-static gboolean assign_context(struct pri_context *ctx)
+-{
+-	struct idmap *cidmap =3D ctx->gprs->cid_map;
+-	unsigned int cid_min;
+-	GSList *l;
+-
+-	if (cidmap =3D=3D NULL)
+-		return FALSE;
+-
+-	cid_min =3D idmap_get_min(cidmap);
+-
+-	ctx->context.cid =3D gprs_cid_alloc(ctx->gprs);
+-	if (ctx->context.cid =3D=3D 0)
+-		return FALSE;
+-
+-	for (l =3D ctx->gprs->context_drivers; l; l =3D l->next) {
+-		struct ofono_gprs_context *gc =3D l->data;
+-
+-		if (gc->inuse =3D=3D TRUE)
+-			continue;
+-
+-		if (gc->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_ANY ||
+-						gc->type =3D=3D ctx->type) {
+-			ctx->context_driver =3D gc;
+-			ctx->context_driver->inuse =3D TRUE;
+-			return TRUE;
+-		}
+-	}
+-
+-	return FALSE;
+-}
+-
+ static DBusMessage *pri_set_property(DBusConnection *conn,
+ 					DBusMessage *msg, void *data)
+ {
+@@ -1345,14 +1348,9 @@ static void gprs_attached_update(struct ofono_gprs *=
+gprs)
+ 			if (ctx->active =3D=3D FALSE)
+ 				continue;
+ =
 
-STE modems mainly use the code in the atmodem driver. If the prefixes
-are correct there we shouldn't have an issue with prefixes. =
+-			gprs_cid_release(gprs, ctx->context.cid);
+-			ctx->context.cid =3D 0;
++			release_context(ctx);
+ 			ctx->active =3D FALSE;
+-			ctx->context_driver->inuse =3D FALSE;
+-			ctx->context_driver =3D NULL;
+-
+ 			pri_reset_context_settings(ctx);
+-
+ 			value =3D FALSE;
+ 			ofono_dbus_signal_property_changed(conn, ctx->path,
+ 					OFONO_CONNECTION_CONTEXT_INTERFACE,
+@@ -1737,10 +1735,7 @@ static void gprs_deactivate_for_remove(const struct =
+ofono_error *error,
+ 		return;
+ 	}
+ =
+
+-	gprs_cid_release(gprs, ctx->context.cid);
+-	ctx->context.cid =3D 0;
+-	ctx->context_driver->inuse =3D FALSE;
+-	ctx->context_driver =3D NULL;
++	release_context(ctx);
+ =
+
+ 	if (gprs->settings) {
+ 		g_key_file_remove_group(gprs->settings, ctx->key, NULL);
+@@ -1832,12 +1827,9 @@ static void gprs_deactivate_for_all(const struct ofo=
+no_error *error,
+ 		return;
+ 	}
+ =
+
+-	gprs_cid_release(gprs, ctx->context.cid);
+-	ctx->active =3D FALSE;
+-	ctx->context.cid =3D 0;
+-	ctx->context_driver->inuse =3D FALSE;
+-	ctx->context_driver =3D NULL;
++	release_context(ctx);
+ =
+
++	ctx->active =3D FALSE;
+ 	pri_reset_context_settings(ctx);
+ =
+
+ 	value =3D ctx->active;
+@@ -2088,11 +2080,8 @@ void ofono_gprs_context_deactivated(struct ofono_gpr=
+s_context *gc,
+ 		if (ctx->active =3D=3D FALSE)
+ 			break;
+ =
+
+-		gprs_cid_release(ctx->gprs, ctx->context.cid);
+-		ctx->context.cid =3D 0;
++		release_context(ctx);
+ 		ctx->active =3D FALSE;
+-		ctx->context_driver->inuse =3D FALSE;
+-		ctx->context_driver =3D NULL;
+ =
+
+ 		pri_reset_context_settings(ctx);
+ =
+
+-- =
+
+1.7.1
 
 
-> >>> Real example of this happening:
-> >>> ofonod[1388]: Default: > AT+CGMM\r                  =
-
-> >>> ofonod[1388]: Default: < \r
-> >>> \n*STKI:"D027810301258082028182850A5361756E616C616874698F09013E507265=
-706169641801241F020103"\r\n =
-
-> >>> ofonod[1388]: Default: < \r\nST-Ericsson Mobile Broadband\r\n\r\nOK\r
-> >>> \n  =
-
-> >>>
-> >>> In this case the call back of *STKI was never called.
-> >>>
-> >>> This is not a modem issue as it has been verified the modem has sent
-> >>> *STKI before AT+CGMM was received.
-> >>
-> >> I consider this a modem issue. It should not send *STKI during a AT+CG=
-MM
-> >> command to avoid any kind of confusion of the parser.
-> >>
-> > This specific case is not a modem issue. Modem has not received AT+CGMM
-> > when it sent *STKI (This was verified from modem logs). Modem cannot
-> > predict that there is AT+CGMM coming. Command was sent exactly same time
-> > on modem and ofono side. =
-
-> > =
-
-> > This is timing depend issue and in my opinion may occur with any AT
-> > modem. Ofono and Modem states are not always the same as there is
-> > certain delay when commands are exchanged between ofono and modem. These
-> > issues may be hidden most of the time but may cause some nasty errors
-> > some day.
-> > =
-
-> =
-
-> Sounds like the read watch priority should be higher than the write
-> watch priority to avoid this specific example.  Care to send a patch?
-> =
-
-I tried this. I put G_PRIORITY_HIGH to the read watch and
-G_PRIORITY_DEFAULT/LOW to write watch. No improvement on my environment.
-
-Changing the priorities may break other use cases, e.g. the one with IFX
-modems: "gatchat: improve large file downlink data transfer"
-This patch changed the priority of write watch to HIGH. =
-
-
-> >>> One way to solve this is to change the sequence in gatchat.c/have_lin=
-e()
-> >>> a bit and check first if this is UR code and then proceeding to respo=
-nse
-> >>> handling. Would this be acceptable solution for this issue or would it
-> >>> cause some drawbacks? If it is okay I can submit a patch
-> >>
-> >> See my command above. GAtChat is operating just fine.
-> >>
-> > More robust solution would be to change GAtChat than defining and
-> > finding valid_resps for tens or hundreds of AT commands. I want to point
-> > out that this is not only an issue with CGMM but may occur with any AT
-> > command when the timing matches.
-> > =
-
-> =
-
-> There's nothing you can do in GAtChat at this point.  Having the
-> unsolicited response handler fire and consume lines before the pending
-> AT command handler won't work either.  If you're not convinced, try
-> handling solicited / unsolicited CREG/CGREG and friends.
-Okay, good to know this, I was not aware. Perhaps I need to reconsider
-the way forward with this issue, we could change the startup sequence of
-different drivers and that way get around this issue. =
-
-
-BR,
--Lasse
-> =
-
-> Regards,
-> -Denis
-
-
-
---===============7646167889198409548==--
+--===============0358843464162614002==--
 
