@@ -1,474 +1,161 @@
-Content-Type: multipart/mixed; boundary="===============2632445971527184967=="
+Content-Type: multipart/mixed; boundary="===============0595476738438909368=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH v4 2/6] location-reporting: add atom implementation
-Date: Tue, 22 Feb 2011 15:35:11 -0300
-Message-ID: <1298399715-9617-3-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <1298399715-9617-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Antoine Reversat <a.reversat@gmail.com>
+Subject: [PATCH] Add CNAP support (callerid name presentation) to isimodem
+Date: Tue, 22 Feb 2011 14:31:24 -0500
+Message-ID: <1298403084-6119-1-git-send-email-a.reversat@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2632445971527184967==
+--===============0595476738438909368==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
-
 ---
- Makefile.am              |    2 +-
- src/location-reporting.c |  393 ++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/ofono.h              |    2 +
- 3 files changed, 396 insertions(+), 1 deletions(-)
- create mode 100644 src/location-reporting.c
+ drivers/isimodem/voicecall.c |   39 ++++++++++++++++++++++++++++++++++++++-
+ src/voicecall.c              |    4 ++--
+ 2 files changed, 40 insertions(+), 3 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index f9a1bd9..48d84c8 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -377,7 +377,7 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
-es) src/ofono.ver \
- 			src/smsagent.c src/smsagent.h src/ctm.c \
- 			src/cdma-voicecall.c src/sim-auth.c \
- 			src/message.h src/message.c src/gprs-provision.c \
--			src/emulator.c
-+			src/emulator.c src/location-reporting.c
- =
-
- src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
-@ -ldl
- =
-
-diff --git a/src/location-reporting.c b/src/location-reporting.c
-new file mode 100644
-index 0000000..6ab0914
---- /dev/null
-+++ b/src/location-reporting.c
-@@ -0,0 +1,393 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2010  Nokia Corporation and/or its subsidiary(-ies).
-+ *  Copyright (C) 2010  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2011  ProFUSION embedded systems.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <string.h>
-+#include <stdio.h>
-+#include <errno.h>
-+
-+#include <glib.h>
-+#include <gdbus.h>
-+
-+#include "ofono.h"
-+#include "common.h"
-+
-+#ifndef DBUS_TYPE_UNIX_FD
-+#define DBUS_TYPE_UNIX_FD -1
-+#endif
-+
-+static GSList *g_drivers =3D NULL;
-+
-+struct ofono_location_reporting {
-+	DBusMessage *pending;
-+	const struct ofono_location_reporting_driver *driver;
-+	void *driver_data;
-+	struct ofono_atom *atom;
-+	ofono_bool_t enabled;
-+	char *client_owner;
-+	guint disconnect_watch;
-+};
-+
-+static const char *location_reporting_type_to_string(
-+					enum ofono_location_reporting_type type)
-+{
-+	switch (type) {
-+	case OFONO_LOCATION_REPORTING_TYPE_NMEA:
-+		return "nmea";
-+	};
-+
-+	return NULL;
-+}
-+
-+static DBusMessage *location_reporting_get_properties(DBusConnection *conn,
-+						DBusMessage *msg, void *data)
-+
-+{
-+	struct ofono_location_reporting *lr =3D data;
-+	DBusMessage *reply;
-+	DBusMessageIter iter;
-+	DBusMessageIter dict;
-+	const char *type;
-+	int value;
-+
-+	reply =3D dbus_message_new_method_return(msg);
-+	if (reply =3D=3D NULL)
-+		return NULL;
-+
-+	dbus_message_iter_init_append(reply, &iter);
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+					OFONO_PROPERTIES_ARRAY_SIGNATURE,
-+					&dict);
-+
-+	value =3D lr->enabled;
-+	ofono_dbus_dict_append(&dict, "Enabled", DBUS_TYPE_BOOLEAN, &value);
-+
-+	type =3D location_reporting_type_to_string(lr->driver->type);
-+	ofono_dbus_dict_append(&dict, "Type", DBUS_TYPE_STRING, &type);
-+
-+	dbus_message_iter_close_container(&iter, &dict);
-+
-+	return reply;
-+}
-+
-+static void client_remove(struct ofono_location_reporting *lr)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+
-+	if (lr->disconnect_watch) {
-+		g_dbus_remove_watch(conn, lr->disconnect_watch);
-+		lr->disconnect_watch =3D 0;
-+	}
-+
-+	g_free(lr->client_owner);
-+}
-+
-+static void signal_enabled(const struct ofono_location_reporting *lr)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path =3D __ofono_atom_get_path(lr->atom);
-+	int value =3D lr->enabled;
-+
-+	ofono_dbus_signal_property_changed(conn, path,
-+					OFONO_LOCATION_REPORTING_INTERFACE,
-+					"Enabled", DBUS_TYPE_BOOLEAN, &value);
-+}
-+
-+static void client_exited_disable_cb(const struct ofono_error *error,
-+								void *data)
-+{
-+	struct ofono_location_reporting *lr =3D data;
-+
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+		ofono_error("Disabling location-reporting failed");
-+
-+		return;
-+	}
-+
-+	client_remove(lr);
-+	lr->enabled =3D FALSE;
-+
-+	signal_enabled(lr);
-+}
-+
-+static void client_exited(DBusConnection *conn, void *data)
-+{
-+	struct ofono_location_reporting *lr =3D data;
-+
-+	lr->disconnect_watch =3D 0;
-+
-+	lr->driver->disable(lr, client_exited_disable_cb , lr);
-+}
-+
-+static void location_reporting_disable_cb(const struct ofono_error *error,
-+								void *data)
-+{
-+	struct ofono_location_reporting *lr =3D data;
-+	DBusMessage *reply;
-+
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+		ofono_error("Disabling location-reporting failed");
-+
-+		reply =3D __ofono_error_failed(lr->pending);
-+		__ofono_dbus_pending_reply(&lr->pending, reply);
-+
-+		return;
-+	}
-+
-+	client_remove(lr);
-+	lr->enabled =3D FALSE;
-+
-+	reply =3D dbus_message_new_method_return(lr->pending);
-+	__ofono_dbus_pending_reply(&lr->pending, reply);
-+
-+	signal_enabled(lr);
-+}
-+
-+static void location_reporting_enable_cb(const struct ofono_error *error,
-+							int fd,	void *data)
-+{
-+	struct ofono_location_reporting *lr =3D data;
-+	DBusMessage *reply;
-+
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+		ofono_error("Enabling location-reporting failed");
-+
-+		client_remove(lr);
-+
-+		reply =3D __ofono_error_failed(lr->pending);
-+		__ofono_dbus_pending_reply(&lr->pending, reply);
-+
-+		return;
-+	}
-+
-+	lr->enabled =3D TRUE;
-+
-+	reply =3D dbus_message_new_method_return(lr->pending);
-+	dbus_message_append_args(reply, DBUS_TYPE_UNIX_FD, &fd,
-+							DBUS_TYPE_INVALID);
-+
-+	__ofono_dbus_pending_reply(&lr->pending, reply);
-+
-+	signal_enabled(lr);
-+}
-+
-+static DBusMessage *location_reporting_request(DBusConnection *conn,
-+						DBusMessage *msg, void *data)
-+{
-+	struct ofono_location_reporting *lr =3D data;
-+	const char *caller =3D dbus_message_get_sender(msg);
-+
-+	if (lr->pending !=3D NULL)
-+		return __ofono_error_busy(msg);
-+
-+	if (lr->enabled)
-+		return __ofono_error_in_use(msg);
-+
-+	lr->client_owner =3D g_strdup(caller);
-+	lr->disconnect_watch =3D g_dbus_add_disconnect_watch(conn,
-+				lr->client_owner, client_exited, lr, NULL);
-+	lr->pending =3D dbus_message_ref(msg);
-+
-+	lr->driver->enable(lr, location_reporting_enable_cb, lr);
-+
-+	return NULL;
-+}
-+
-+static DBusMessage *location_reporting_release(DBusConnection *conn,
-+						DBusMessage *msg, void *data)
-+{
-+	struct ofono_location_reporting *lr =3D data;
-+	const char *caller =3D dbus_message_get_sender(msg);
-+
-+
-+	/*
-+	 * Avoid a race by not trying to release the device if there is a
-+	 * pending message or client already signaled it's exiting. In the
-+	 * later case, the device will eventually be released in
-+	 * client_exited_disable_cb().
-+	 */
-+	if (lr->pending !=3D NULL || (lr->enabled && !lr->disconnect_watch))
-+		return __ofono_error_busy(msg);
-+
-+	if (lr->enabled =3D=3D FALSE)
-+		return __ofono_error_not_available(msg);
-+
-+	if (g_strcmp0(caller, lr->client_owner))
-+		return __ofono_error_access_denied(msg);
-+
-+	lr->pending =3D dbus_message_ref(msg);
-+
-+	lr->driver->disable(lr, location_reporting_disable_cb, lr);
-+
-+	return NULL;
-+}
-+
-+static GDBusMethodTable location_reporting_methods[] =3D {
-+	{ "GetProperties",  "",    "a{sv}", location_reporting_get_properties },
-+	{ "Request",        "",    "h",     location_reporting_request,
-+						G_DBUS_METHOD_FLAG_ASYNC },
-+	{ "Release",        "",    "",      location_reporting_release,
-+						G_DBUS_METHOD_FLAG_ASYNC },
-+	{ }
-+};
-+
-+static GDBusSignalTable location_reporting_signals[] =3D {
-+	{ "PropertyChanged",	"sv" },
-+	{ }
-+};
-+
-+int ofono_location_reporting_driver_register(
-+				const struct ofono_location_reporting_driver *d)
-+{
-+	DBG("driver: %p, name: %s", d, d->name);
-+
-+	if (d =3D=3D NULL || d->probe =3D=3D NULL)
-+		return -EINVAL;
-+
-+	g_drivers =3D g_slist_prepend(g_drivers, (void *) d);
-+
-+	return 0;
-+}
-+
-+void ofono_location_reporting_driver_unregister(
-+				const struct ofono_location_reporting_driver *d)
-+{
-+	DBG("driver: %p, name: %s", d, d->name);
-+
-+	if (d =3D=3D NULL)
-+		return;
-+
-+	g_drivers =3D g_slist_remove(g_drivers, (void *) d);
-+}
-+
-+struct ofono_modem *ofono_location_reporting_get_modem(
-+					struct ofono_location_reporting *lr)
-+{
-+	return __ofono_atom_get_modem(lr->atom);
-+}
-+
-+static void location_reporting_unregister(struct ofono_atom *atom)
-+{
-+	struct ofono_location_reporting *lr =3D __ofono_atom_get_data(atom);
-+	const char *path =3D __ofono_atom_get_path(lr->atom);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(lr->atom);
-+
-+	ofono_modem_remove_interface(modem, OFONO_LOCATION_REPORTING_INTERFACE);
-+	g_dbus_unregister_interface(conn, path,
-+					OFONO_LOCATION_REPORTING_INTERFACE);
-+}
-+
-+static void location_reporting_remove(struct ofono_atom *atom)
-+{
-+	struct ofono_location_reporting *lr =3D __ofono_atom_get_data(atom);
-+
-+	DBG("atom: %p", atom);
-+
-+	if (lr =3D=3D NULL)
-+		return;
-+
-+	if (lr->driver && lr->driver->remove)
-+		lr->driver->remove(lr);
-+
-+	g_free(lr);
-+}
-+
-+struct ofono_location_reporting *ofono_location_reporting_create(
-+						struct ofono_modem *modem,
-+						unsigned int vendor,
-+						const char *driver, void *data)
-+{
-+	struct ofono_location_reporting *lr;
-+	GSList *l;
-+
-+	if (driver =3D=3D NULL)
-+		return NULL;
-+
-+	/* Only D-Bus >=3D 1.3 supports fd-passing */
-+	if (DBUS_TYPE_UNIX_FD =3D=3D -1)
-+		return NULL;
-+
-+	lr =3D g_try_new0(struct ofono_location_reporting, 1);
-+	if (lr =3D=3D NULL)
-+		return NULL;
-+
-+	lr->atom =3D __ofono_modem_add_atom(modem,
-+					OFONO_ATOM_TYPE_LOCATION_REPORTING,
-+					location_reporting_remove, lr);
-+
-+	for (l =3D g_drivers; l; l =3D l->next) {
-+		const struct ofono_location_reporting_driver *drv =3D l->data;
-+
-+		if (g_strcmp0(drv->name, driver) !=3D 0)
-+			continue;
-+
-+		if (drv->probe(lr, vendor, data) < 0)
-+			continue;
-+
-+		lr->driver =3D drv;
-+		break;
-+	}
-+
-+	return lr;
-+}
-+
-+void ofono_location_reporting_register(struct ofono_location_reporting *lr)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(lr->atom);
-+	const char *path =3D __ofono_atom_get_path(lr->atom);
-+
-+	if (!g_dbus_register_interface(conn, path,
-+					OFONO_LOCATION_REPORTING_INTERFACE,
-+					location_reporting_methods,
-+					location_reporting_signals,
-+					NULL, lr, NULL)) {
-+		ofono_error("Could not create %s interface",
-+					OFONO_LOCATION_REPORTING_INTERFACE);
-+
-+		return;
-+	}
-+
-+	ofono_modem_add_interface(modem, OFONO_LOCATION_REPORTING_INTERFACE);
-+	__ofono_atom_register(lr->atom, location_reporting_unregister);
-+}
-+
-+void ofono_location_reporting_remove(struct ofono_location_reporting *lr)
-+{
-+	__ofono_atom_free(lr->atom);
-+}
-+
-+void ofono_location_reporting_set_data(struct ofono_location_reporting *lr,
-+								void *data)
-+{
-+	lr->driver_data =3D data;
-+}
-+
-+void *ofono_location_reporting_get_data(struct ofono_location_reporting *l=
-r)
-+{
-+	return lr->driver_data;
-+}
-diff --git a/src/ofono.h b/src/ofono.h
-index 14dcd18..4e298f1 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -130,6 +130,7 @@ enum ofono_atom_type {
- 	OFONO_ATOM_TYPE_SIM_AUTH,
- 	OFONO_ATOM_TYPE_EMULATOR_DUN,
- 	OFONO_ATOM_TYPE_EMULATOR_HFP,
-+	OFONO_ATOM_TYPE_LOCATION_REPORTING,
+diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
+index 0a32f27..e778f23 100644
+--- a/drivers/isimodem/voicecall.c
++++ b/drivers/isimodem/voicecall.c
+@@ -56,8 +56,10 @@ struct isi_call {
+ 	uint8_t cause;
+ 	uint8_t addr_type;
+ 	uint8_t presentation;
++	uint8_t name_presentation;
+ 	uint8_t reason;
+ 	char address[20];
++	char name[20];
+ 	char addr_pad[4];
  };
  =
 
- enum ofono_atom_watch_condition {
-@@ -230,6 +231,7 @@ gboolean __ofono_call_settings_is_busy(struct ofono_cal=
-l_settings *cs);
- #include <ofono/radio-settings.h>
- #include <ofono/audio-settings.h>
- #include <ofono/ctm.h>
-+#include <ofono/location-reporting.h>
+@@ -231,6 +233,7 @@ static void isi_call_origin_address_sb_proc(struct isi_=
+voicecall *ivc,
+ 		isi_call_any_address_sb_proc(ivc, call, sb);
+ }
  =
 
- #include <ofono/voicecall.h>
++
+ static void isi_call_destination_address_sb_proc(struct isi_voicecall *ivc,
+ 							struct isi_call *call,
+ 							GIsiSubBlockIter *sb)
+@@ -239,6 +242,29 @@ static void isi_call_destination_address_sb_proc(struc=
+t isi_voicecall *ivc,
+ 		isi_call_any_address_sb_proc(ivc, call, sb);
+ }
  =
 
++static void isi_call_origin_info_sb_proc(struct isi_voicecall *ivc,
++						struct isi_call *call,
++						GIsiSubBlockIter *sb)
++{
++	uint8_t pres;
++	uint8_t id;
++	uint8_t len;
++	char *name;
++    =
+
++	if (!g_isi_sb_iter_get_byte(sb, &pres, 2) ||
++			!g_isi_sb_iter_get_byte(sb, &id, 6) ||
++			!g_isi_sb_iter_get_byte(sb, &len, 7) ||
++			!g_isi_sb_iter_get_alpha_tag(sb, &name, 2 * len, 8))
++		return;
++    =
+
++
++    DBG("Got name %s", name);
++	call->name_presentation =3D pres;
++	strncpy(call->name, name, sizeof(call->name));
++
++	g_free(name);
++}
++
+ static void isi_call_mode_sb_proc(struct isi_voicecall *ivc,
+ 					struct isi_call *call,
+ 					GIsiSubBlockIter *sb)
+@@ -396,13 +422,19 @@ static struct ofono_call isi_call_as_ofono_call(const=
+ struct isi_call *call)
+ 	ocall.status =3D isi_call_status_to_clcc(call);
+ =
+
+ 	memcpy(number->number, call->address, sizeof(number->number));
++	memcpy(ocall.name, call->name, sizeof(ocall.name));
++
+ =
+
+ 	number->type =3D 0x80 | call->addr_type;
+ 	ocall.clip_validity =3D call->presentation & 3;
++    ocall.cnap_validity =3D call->name_presentation & 3;
+ =
+
+ 	if (ocall.clip_validity =3D=3D 0 && strlen(number->number) =3D=3D 0)
+ 		ocall.clip_validity =3D 2;
+ =
+
++	if (ocall.cnap_validity =3D=3D 0 && strlen(call->name) =3D=3D 0)
++		ocall.cnap_validity =3D 2;
++
+ 	return ocall;
+ }
+ =
+
+@@ -513,11 +545,12 @@ static void isi_call_notify(struct ofono_voicecall *o=
+vc, struct isi_call *call)
+ =
+
+ 	ocall =3D isi_call_as_ofono_call(call);
+ =
+
+-	DBG("id=3D%u,%s,%u,\"%s\",%u,%u",
++	DBG("id=3D%u,%s,%u,\"%s\",\"%s\",%u,%u",
+ 		ocall.id,
+ 		ocall.direction ? "terminated" : "originated",
+ 		ocall.status,
+ 		ocall.phone_number.number,
++        ocall.name,
+ 		ocall.phone_number.type,
+ 		ocall.clip_validity);
+ =
+
+@@ -622,6 +655,10 @@ static void isi_call_status_ind_cb(const GIsiMessage *=
+msg, void *data)
+ 			isi_call_origin_address_sb_proc(ivc, call, &iter);
+ 			break;
+ =
+
++        case CALL_ORIGIN_INFO:
++			isi_call_origin_info_sb_proc(ivc, call, &iter);
++			break;
++
+ 		case CALL_GSM_DETAILED_CAUSE:
+ 		case CALL_DESTINATION_PRE_ADDRESS:
+ 		case CALL_DESTINATION_POST_ADDRESS:
+diff --git a/src/voicecall.c b/src/voicecall.c
+index 4606668..b608394 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -1951,8 +1951,8 @@ void ofono_voicecall_notify(struct ofono_voicecall *v=
+c,
+ 	struct ofono_call *newcall;
+ =
+
+ 	DBG("Got a voicecall event, status: %d, id: %u, number: %s"
+-			" called_number: %s", call->status, call->id,
+-			call->phone_number.number, call->called_number.number);
++			" called_number: %s, name: %s", call->status, call->id,
++			call->phone_number.number, call->called_number.number, call->name);
+ =
+
+ 	l =3D g_slist_find_custom(vc->call_list, GUINT_TO_POINTER(call->id),
+ 				call_compare_by_id);
 -- =
 
-1.7.4.1
+1.7.1
 
 
---===============2632445971527184967==--
+--===============0595476738438909368==--
 
