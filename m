@@ -1,57 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============2982785422670992961=="
+Content-Type: multipart/mixed; boundary="===============8989604758488037024=="
 MIME-Version: 1.0
 From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [RESEND 2 PATCH 00/13] IPv6 Support
-Date: Tue, 22 Feb 2011 15:18:56 +0200
-Message-ID: <1298380749-11040-1-git-send-email-mika.liljeberg@nokia.com>
+Subject: [RESEND 2 PATCH 03/13] gprs: driver interface changes for IPv6
+Date: Tue, 22 Feb 2011 15:18:59 +0200
+Message-ID: <1298380749-11040-4-git-send-email-mika.liljeberg@nokia.com>
+In-Reply-To: <1298380749-11040-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2982785422670992961==
+--===============8989604758488037024==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-*thump* *thump*
+---
+ include/gprs-context.h |   27 ++++++++++++++++++++++-----
+ 1 files changed, 22 insertions(+), 5 deletions(-)
 
-Is this microphone on?
+diff --git a/include/gprs-context.h b/include/gprs-context.h
+index c29c0dc..f2d6df4 100644
+--- a/include/gprs-context.h
++++ b/include/gprs-context.h
+@@ -37,6 +37,7 @@ struct ofono_gprs_context;
+ enum ofono_gprs_proto {
+ 	OFONO_GPRS_PROTO_IP =3D 0,
+ 	OFONO_GPRS_PROTO_IPV6,
++	OFONO_GPRS_PROTO_IPV4V6,
+ };
+ =
 
-Rebased to current master.
+ enum ofono_gprs_context_type {
+@@ -47,6 +48,12 @@ enum ofono_gprs_context_type {
+ 	OFONO_GPRS_CONTEXT_TYPE_IMS,
+ };
+ =
 
-Regards,
++enum ofono_gprs_addrconf {
++	OFONO_GPRS_ADDRCONF_NONE,
++	OFONO_GPRS_ADDRCONF_STATIC,
++	OFONO_GPRS_ADDRCONF_DHCP,
++};
++
+ struct ofono_gprs_primary_context {
+ 	unsigned int cid;
+ 	int direction;
+@@ -58,10 +65,6 @@ struct ofono_gprs_primary_context {
+ =
 
-	MikaL
+ typedef void (*ofono_gprs_context_cb_t)(const struct ofono_error *error,
+ 					void *data);
+-typedef void (*ofono_gprs_context_up_cb_t)(const struct ofono_error *error,
+-				const char *interface, ofono_bool_t static_ip,
+-				const char *address, const char *netmask,
+-				const char *gw, const char **dns, void *data);
+ =
 
-[RESEND 2 PATCH 01/13] gprs: factor out common code
-[RESEND 2 PATCH 02/13] gprs: Update documentation for IPv6
-[RESEND 2 PATCH 03/13] gprs: driver interface changes for IPv6
-[RESEND 2 PATCH 04/13] gprs: core support for IPv6
-[RESEND 2 PATCH 05/13] test: modify test scripts for IPv6
-[RESEND 2 PATCH 06/13] isimodem: IPv6 support
-[RESEND 2 PATCH 07/13] atmodem: update to new gprs context interface
-[RESEND 2 PATCH 08/13] huaweimodem: update to new gprs context interface
-[RESEND 2 PATCH 09/13] mbmmodem: update to new gprs context interface
-[RESEND 2 PATCH 10/13] hsomodem: update to new gprs context interface
-[RESEND 2 PATCH 11/13] ifxmodem: update to new gprs context interface
-[RESEND 2 PATCH 12/13] stemodem: update to new gprs context interface
-[RESEND 2 PATCH 13/13] phonesim: add IPv6 support
+ struct ofono_gprs_context_driver {
+ 	const char *name;
+@@ -70,7 +73,7 @@ struct ofono_gprs_context_driver {
+ 	void (*remove)(struct ofono_gprs_context *gc);
+ 	void (*activate_primary)(struct ofono_gprs_context *gc,
+ 				const struct ofono_gprs_primary_context *ctx,
+-				ofono_gprs_context_up_cb_t cb, void *data);
++				ofono_gprs_context_cb_t cb, void *data);
+ 	void (*deactivate_primary)(struct ofono_gprs_context *gc,
+ 					unsigned int id,
+ 					ofono_gprs_context_cb_t cb, void *data);
+@@ -94,6 +97,20 @@ struct ofono_modem *ofono_gprs_context_get_modem(struct =
+ofono_gprs_context *gc);
+ =
 
- Makefile.am                        |    3 +-
- doc/connman-api.txt                |    9 +-
- drivers/atmodem/gprs-context.c     |   41 ++--
- drivers/hsomodem/gprs-context.c    |   48 +++--
- drivers/huaweimodem/gprs-context.c |   43 +++--
- drivers/ifxmodem/gprs-context.c    |   36 ++--
- drivers/isimodem/gprs-context.c    |  119 +++++++-----
- drivers/mbmmodem/gprs-context.c    |   65 ++++---
- drivers/stemodem/gprs-context.c    |   30 ++-
- include/gprs-context.h             |   27 ++-
- plugins/phonesim.c                 |   32 +++-
- src/gprs.c                         |  390 ++++++++++++++++++++++++--------=
-----
- test/list-contexts                 |    6 +-
- test/set-context-property          |   38 ++++
- 14 files changed, 583 insertions(+), 304 deletions(-)
+ void ofono_gprs_context_set_type(struct ofono_gprs_context *gc,
+ 					enum ofono_gprs_context_type type);
++void ofono_gprs_context_set_interface(struct ofono_gprs_context *gc,
++					const char *interface);
++void ofono_gprs_context_set_ip_addrconf(struct ofono_gprs_context *gc,
++					enum ofono_gprs_addrconf method);
++void ofono_gprs_context_set_ip_address(struct ofono_gprs_context *gc,
++					const char *address);
++void ofono_gprs_context_set_ip_netmask(struct ofono_gprs_context *gc,
++					const char *netmask);
++void ofono_gprs_context_set_ip_gateway(struct ofono_gprs_context *gc,
++					const char *netmask);
++void ofono_gprs_context_set_ipv6_address(struct ofono_gprs_context *gc,
++					const char *address);
++void ofono_gprs_context_set_dns_servers(struct ofono_gprs_context *gc,
++					const char **dns);
+ =
 
---===============2982785422670992961==--
+ #ifdef __cplusplus
+ }
+-- =
+
+1.7.1
+
+
+--===============8989604758488037024==--
 
