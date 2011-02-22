@@ -1,93 +1,120 @@
-Content-Type: multipart/mixed; boundary="===============6488795117440385038=="
+Content-Type: multipart/mixed; boundary="===============1982268563820643995=="
 MIME-Version: 1.0
 From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [RESEND 2 PATCH 11/13] ifxmodem: update to new gprs context interface
-Date: Tue, 22 Feb 2011 15:19:07 +0200
-Message-ID: <1298380749-11040-12-git-send-email-mika.liljeberg@nokia.com>
+Subject: [RESEND 2 PATCH 12/13] stemodem: update to new gprs context interface
+Date: Tue, 22 Feb 2011 15:19:08 +0200
+Message-ID: <1298380749-11040-13-git-send-email-mika.liljeberg@nokia.com>
 In-Reply-To: <1298380749-11040-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6488795117440385038==
+--===============1982268563820643995==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/ifxmodem/gprs-context.c |   36 +++++++++++++++++++++---------------
- 1 files changed, 21 insertions(+), 15 deletions(-)
+ drivers/stemodem/gprs-context.c |   30 +++++++++++++++++++-----------
+ 1 files changed, 19 insertions(+), 11 deletions(-)
 
-diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
+diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-contex=
 t.c
-index 2c68b44..91dee8c 100644
---- a/drivers/ifxmodem/gprs-context.c
-+++ b/drivers/ifxmodem/gprs-context.c
-@@ -67,10 +67,7 @@ struct gprs_context_data {
- 	char address[32];
- 	char dns1[32];
- 	char dns2[32];
--	union {
--		ofono_gprs_context_cb_t down_cb;        /* Down callback */
--		ofono_gprs_context_up_cb_t up_cb;       /* Up callback */
--	};
-+	ofono_gprs_context_cb_t cb;
- 	void *cb_data;                                  /* Callback data */
- };
+index 48ae476..98abeec 100644
+--- a/drivers/stemodem/gprs-context.c
++++ b/drivers/stemodem/gprs-context.c
+@@ -176,7 +176,7 @@ static void ste_eppsd_down_cb(gboolean ok, GAtResult *r=
+esult,
+ static void ste_eppsd_up_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+ {
+ 	struct cb_data *cbd =3D user_data;
+-	ofono_gprs_context_up_cb_t cb =3D cbd->cb;
++	ofono_gprs_context_cb_t cb =3D cbd->cb;
+ 	struct ofono_gprs_context *gc =3D cbd->user;
+ 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+ 	GAtResultIter iter;
+@@ -192,7 +192,7 @@ static void ste_eppsd_up_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
  =
 
-@@ -123,13 +120,12 @@ static void failed_setup(struct ofono_gprs_context *g=
-c,
- 	gcd->state =3D STATE_IDLE;
- =
-
- 	if (result =3D=3D NULL) {
--		CALLBACK_WITH_FAILURE(gcd->up_cb, NULL, 0, NULL, NULL,
--						NULL, NULL, gcd->cb_data);
-+		CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
+ 		gcd->active_context =3D 0;
+ 		decode_at_error(&error, g_at_result_final_response(result));
+-		cb(&error, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
++		cb(&error, cbd->data);
  		return;
  	}
  =
 
- 	decode_at_error(&error, g_at_result_final_response(result));
--	gcd->up_cb(&error, NULL, 0, NULL, NULL, NULL, NULL, gcd->cb_data);
-+	gcd->cb(&error, gcd->cb_data);
- }
+@@ -221,9 +221,13 @@ static void ste_eppsd_up_cb(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ 	dns[1] =3D rsp.dns_server2;
+ 	dns[2] =3D NULL;
  =
 
- static void session_cb(gboolean ok, GAtResult *result, gpointer user_data)
-@@ -157,10 +153,15 @@ static void session_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 	if (interface =3D=3D NULL)
- 		interface =3D "invalid";
- =
-
--	CALLBACK_WITH_SUCCESS(gcd->up_cb, interface, TRUE, gcd->address,
--				STATIC_IP_NETMASK, NULL, dns, gcd->cb_data);
-+	ofono_gprs_context_set_interface(gc, interface);
+-	CALLBACK_WITH_SUCCESS(cb, gcd->interface, TRUE, rsp.ip_address,
+-				rsp.subnet_mask, NULL,
+-				dns, cbd->data);
++	ofono_gprs_context_set_interface(gc, gcd->interface);
 +	ofono_gprs_context_set_ip_addrconf(gc, OFONO_GPRS_ADDRCONF_STATIC);
-+	ofono_gprs_context_set_ip_address(gc, gcd->address);
-+	ofono_gprs_context_set_ip_netmask(gc, STATIC_IP_NETMASK);
++	ofono_gprs_context_set_ip_address(gc, rsp.ip_address);
++	ofono_gprs_context_set_ip_netmask(gc, rsp.subnet_mask);
 +	ofono_gprs_context_set_dns_servers(gc, dns);
++
++	CALLBACK_WITH_SUCCESS(cb, cbd->data);
+ 	return;
  =
 
--	gcd->up_cb =3D NULL;
-+	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
-+
-+	gcd->cb =3D NULL;
- 	gcd->cb_data =3D NULL;
+ error:
+@@ -233,13 +237,13 @@ error:
+ 		g_markup_parse_context_free(context);
+ =
+
+ 	gcd->active_context =3D 0;
+-	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
++	CALLBACK_WITH_FAILURE(cb, cbd->data);
  }
  =
 
-@@ -316,16 +317,20 @@ error:
+ static void ste_cgdcont_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
+ {
+ 	struct cb_data *cbd =3D user_data;
+-	ofono_gprs_context_up_cb_t cb =3D cbd->cb;
++	ofono_gprs_context_cb_t cb =3D cbd->cb;
+ 	struct ofono_gprs_context *gc =3D cbd->user;
+ 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+ 	struct cb_data *ncbd;
+@@ -250,7 +254,7 @@ static void ste_cgdcont_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
  =
 
- static void ifx_gprs_activate_primary(struct ofono_gprs_context *gc,
+ 		gcd->active_context =3D 0;
+ 		decode_at_error(&error, g_at_result_final_response(result));
+-		cb(&error, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
++		cb(&error, cbd->data);
+ 		return;
+ 	}
+ =
+
+@@ -265,18 +269,22 @@ static void ste_cgdcont_cb(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ =
+
+ 	g_free(ncbd);
+ 	gcd->active_context =3D 0;
+-	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
++	CALLBACK_WITH_FAILURE(cb, cbd->data);
+ }
+ =
+
+ static void ste_gprs_activate_primary(struct ofono_gprs_context *gc,
  				const struct ofono_gprs_primary_context *ctx,
 -				ofono_gprs_context_up_cb_t cb, void *data)
 +				ofono_gprs_context_cb_t cb, void *data)
  {
  	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	char buf[OFONO_GPRS_MAX_APN_LENGTH + 128];
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	char buf[AUTH_BUF_LENGTH];
  	int len;
  =
 
@@ -95,58 +122,25 @@ c,
 +	if (ctx->proto !=3D OFONO_GPRS_PROTO_IP)
 +		goto error;
 +
- 	DBG("cid %u", ctx->cid);
+ 	gcd->active_context =3D ctx->cid;
+ 	cbd->user =3D gc;
  =
 
- 	gcd->active_context =3D ctx->cid;
--	gcd->up_cb =3D cb;
-+	gcd->cb =3D cb;
- 	gcd->cb_data =3D data;
- 	memcpy(gcd->username, ctx->username, sizeof(ctx->username));
- 	memcpy(gcd->password, ctx->password, sizeof(ctx->password));
-@@ -342,7 +347,8 @@ static void ifx_gprs_activate_primary(struct ofono_gprs=
-_context *gc,
- 				setup_cb, gc, NULL) > 0)
- 		return;
+@@ -311,7 +319,7 @@ error:
+ 	gcd->active_context =3D 0;
+ 	g_free(cbd);
  =
 
 -	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, data);
-+error:
 +	CALLBACK_WITH_FAILURE(cb, data);
  }
  =
 
- static void deactivate_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-@@ -360,7 +366,7 @@ static void deactivate_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- =
-
- 	g_at_chat_resume(gcd->chat);
- =
-
--	CALLBACK_WITH_SUCCESS(gcd->down_cb, gcd->cb_data);
-+	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
- }
- =
-
- static void ifx_gprs_deactivate_primary(struct ofono_gprs_context *gc,
-@@ -374,7 +380,7 @@ static void ifx_gprs_deactivate_primary(struct ofono_gp=
-rs_context *gc,
- 	DBG("cid %u", cid);
- =
-
- 	gcd->state =3D STATE_DISABLING;
--	gcd->down_cb =3D cb;
-+	gcd->cb =3D cb;
- 	gcd->cb_data =3D data;
- =
-
- 	g_at_rawip_shutdown(gcd->rawip);
+ static void ste_gprs_deactivate_primary(struct ofono_gprs_context *gc,
 -- =
 
 1.7.1
 
 
---===============6488795117440385038==--
+--===============1982268563820643995==--
 
