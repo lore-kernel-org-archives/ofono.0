@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8336335107688380547=="
+Content-Type: multipart/mixed; boundary="===============3144495489717831775=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH v4 5/6] udev: add location-reporting device to mbm
-Date: Tue, 22 Feb 2011 15:35:14 -0300
-Message-ID: <1298399715-9617-6-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH v4 6/6] location-reporting: add documentation
+Date: Tue, 22 Feb 2011 15:35:15 -0300
+Message-ID: <1298399715-9617-7-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1298399715-9617-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8336335107688380547==
+--===============3144495489717831775==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,40 +16,78 @@ Content-Transfer-Encoding: quoted-printable
 From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
 
 ---
- plugins/udev.c |    5 +++--
- 1 files changed, 3 insertions(+), 2 deletions(-)
+ Makefile.am                    |    3 ++-
+ doc/location-reporting-api.txt |   39 ++++++++++++++++++++++++++++++++++++=
++++
+ 2 files changed, 41 insertions(+), 1 deletions(-)
+ create mode 100644 doc/location-reporting-api.txt
 
-diff --git a/plugins/udev.c b/plugins/udev.c
-index 84478d7..aa5702e 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -105,7 +105,7 @@ static void add_mbm(struct ofono_modem *modem,
- 					struct udev_device *udev_device)
- {
- 	const char *desc, *devnode;
--	const char *device, *data, *network;
-+	const char *device, *data, *network, *gps;
- 	int registered;
+diff --git a/Makefile.am b/Makefile.am
+index 9b6edf4..ca558ea 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -420,7 +420,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt doc/=
+release-faq.txt \
+ 			doc/phonebook-api.txt doc/radio-settings-api.txt \
+ 			doc/sim-api.txt doc/stk-api.txt \
+ 			doc/audio-settings-api.txt doc/text-telephony-api.txt \
+-			doc/calypso-modem.txt doc/message-api.txt
++			doc/calypso-modem.txt doc/message-api.txt \
++			doc/location-reporting-api.txt
  =
 
- 	desc =3D udev_device_get_sysattr_value(udev_device, "device/interface");
-@@ -152,8 +152,9 @@ static void add_mbm(struct ofono_modem *modem,
- 	device  =3D ofono_modem_get_string(modem, MODEM_DEVICE);
- 	data =3D ofono_modem_get_string(modem, DATA_DEVICE);
- 	network =3D ofono_modem_get_string(modem, NETWORK_INTERFACE);
-+	gps =3D ofono_modem_get_string(modem, GPS_DEVICE);
  =
 
--	if (device !=3D NULL && data !=3D NULL && network !=3D NULL) {
-+	if (device !=3D NULL && data !=3D NULL && network !=3D NULL && gps !=3D N=
-ULL) {
- 		ofono_modem_set_integer(modem, "Registered", 1);
- 		ofono_modem_register(modem);
- 	}
+ test_scripts =3D test/backtrace \
+diff --git a/doc/location-reporting-api.txt b/doc/location-reporting-api.txt
+new file mode 100644
+index 0000000..b8ce840
+--- /dev/null
++++ b/doc/location-reporting-api.txt
+@@ -0,0 +1,39 @@
++Location Reporting Hierarchy [experimental]
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++Service		org.ofono
++Interface	org.ofono.LocationReporting
++Object path	[variable prefix]/{modem0,modem1,...}
++
++Methods		dict GetProperties()
++
++			Returns all LocationReporting properties. See the
++			properties section for available properties.
++
++		byte Request()
++
++			Asks to turn ON the NMEA stream and supplies the
++			gps device file descriptor. The external cliend should
++			use the file descriptor to receive the NMEA data.
++
++			Possible Errors: [service].Error.InProgress
++					 [service].Error.InUse
++					 [service].Error.Failed
++
++		void Release()
++
++			Releases the gps device file descriptor and turns
++			OFF the NMEA stream.
++
++			Possible Errors: [service].Error.InProgress
++					 [service].Error.NotAvailable
++					 [service].Error.Failed
++
++Properties	boolean Enabled [readonly]
++
++                        Boolean representing the state of the NMEA stream.
++
++		string Type [readonly]
++
++			Holds the type of the device. Currently only NMEA is
++			supported.
 -- =
 
 1.7.4.1
 
 
---===============8336335107688380547==--
+--===============3144495489717831775==--
 
