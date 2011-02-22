@@ -1,45 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============8886904655628445740=="
+Content-Type: multipart/mixed; boundary="===============1680391361929475579=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [RFC] doc: Add support for CMAS/EU-Alert
-Date: Tue, 22 Feb 2011 07:36:25 +0200
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802E31446@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <C681C76E0D5F1E4BB01DE79E0A80EEC70304D53F@usrdes03.ebgroup.elektrobit.com>
+From: Soum, RedouaneX <redouanex.soum@intel.com>
+Subject: RE: [RFC PATCH v3] gprs: add function to handle activated context
+Date: Tue, 22 Feb 2011 10:19:30 +0000
+Message-ID: <8281606748F03E4390BB98A3F47F2E948A9F911E19@irsmsx501.ger.corp.intel.com>
+In-Reply-To: <8281606748F03E4390BB98A3F47F2E948A9F71E69A@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8886904655628445740==
+--===============1680391361929475579==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rajesh,
+Hi,
 
-ofono-bounces(a)ofono.org wrote:
-> Hi Jeeva,
+> -----Original Message-----
+> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beh=
+alf Of
+> Soum, RedouaneX
+> Sent: Wednesday, February 09, 2011 7:32 PM
+> To: ofono(a)ofono.org
+> Subject: [RFC PATCH v3] gprs: add function to handle activated context
 > =
 
-> Is this WarningType really required on the App side ?
-> Irrespective of the warning type, the emergency broadcast
-> message handling won't change on the apps side (i.e, its
-> going to be displayed immediately to the user). This can be
-> achieved by the old boolean variable EmergencyAlert only ?
-> =
 
+This RFC patch includes all the modifications according to the comments I g=
+ot on previous version.
+I didn't get any comment on this one, what are the next steps for acceptanc=
+e ?
 
-Its Popup property which is used for displaying the
-messages immediately to the user. EmergencyAlert Property
-is used to hint whether an emergency indicator(Vibration, emergency
-tone)
-should be activated.
-
-Yes, agree that the WarningType is not really required. =
-
-May be it was there for some reason. This RFC patch just extends
-the existing EmergencyType property.
+Should I send a patch in two parts (gprs/idmap) ?
 
 Regards,
-Jeevaka=20
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
---===============8886904655628445740==--
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============1680391361929475579==--
 
