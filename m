@@ -1,51 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============1680391361929475579=="
+Content-Type: multipart/mixed; boundary="===============7376926535951517641=="
 MIME-Version: 1.0
-From: Soum, RedouaneX <redouanex.soum@intel.com>
-Subject: RE: [RFC PATCH v3] gprs: add function to handle activated context
-Date: Tue, 22 Feb 2011 10:19:30 +0000
-Message-ID: <8281606748F03E4390BB98A3F47F2E948A9F911E19@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <8281606748F03E4390BB98A3F47F2E948A9F71E69A@irsmsx501.ger.corp.intel.com>
+From: Rolf Offermanns <roffermanns@sysgo.com>
+Subject: Supported USB modems?
+Date: Tue, 22 Feb 2011 12:22:56 +0100
+Message-ID: <4D639C90.60108@sysgo.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1680391361929475579==
+--===============7376926535951517641==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi All,
 
-> -----Original Message-----
-> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beh=
-alf Of
-> Soum, RedouaneX
-> Sent: Wednesday, February 09, 2011 7:32 PM
-> To: ofono(a)ofono.org
-> Subject: [RFC PATCH v3] gprs: add function to handle activated context
-> =
+I am trying to get ofono to work with several usb modems from Vodofone
+(ZTE and Huawei inside) and so far not a single one works.
 
+I don't have the time to fix this myself, but I can provide logs, do
+tests, etc. if there is somebody who is interested in fixing this.
 
-This RFC patch includes all the modifications according to the comments I g=
-ot on previous version.
-I didn't get any comment on this one, what are the next steps for acceptanc=
-e ?
+Which devices do you use for testing?
 
-Should I send a patch in two parts (gprs/idmap) ?
+List of my devices:
+Huawei E172 [12d1:1003] (connector loose, don't know how long it will work)
+Huawei K3715 [12d1:1001]
+ZTE K4505-Z [19d2:2000]
+ZTE K3765-Z [19d2:2002]
 
-Regards,
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+The only modem that actually shows up in the list-modems output is the
+Huawei K3715. But "online-modem" fails.
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+I am on current git.
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+If anyone can help and spare some time, please tell me what you need
+from me.
+If you need logs, is "OFONO_AT_DEBUG=3D1 ./src/ofonod -d '*' -n" OK and
+shall I sent them to this list (will be a long mail)?
 
+Thanks,
+Rolf
+-- =
 
---===============1680391361929475579==--
+Rolf Offermanns <roffermanns@sysgo.com>
+SYSGO AG     Tel.: +49-6136-9948-0
+Am Pfaffenstein 14   Fax: +49-6136-9948-10
+55270 Klein-Winternheim  http://www.sysgo.com
+
+Handelsregister: HRB Mainz 90 HRB 8066
+Vorstand: Michael Tiedemann
+Aufsichtsratsvorsitzender: Juergen Bullacher
+USt(VAT)-Id-Nr.: DE 149062328
+
+--===============7376926535951517641==--
 
