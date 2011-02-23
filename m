@@ -1,122 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============8942490086525471354=="
+Content-Type: multipart/mixed; boundary="===============3280275144099347305=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 3/3] emulator: add CIND support
-Date: Wed, 23 Feb 2011 16:48:50 +0100
-Message-ID: <1298476130-8969-4-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1298476130-8969-1-git-send-email-frederic.danis@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] atmodem: CEREG support for LTE network status reporting
+ in AT modem
+Date: Wed, 23 Feb 2011 09:58:05 -0600
+Message-ID: <4D652E8D.2020404@gmail.com>
+In-Reply-To: <AANLkTinshCCWMqKhgJocjHArKHOy9son=B0=bkzE37tw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8942490086525471354==
+--===============3280275144099347305==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/emulator.c |   73 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 73 insertions(+), 0 deletions(-)
+Hi Tomasz,
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 77113e6..3c2154b 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -172,6 +172,77 @@ error:
-        g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
- }
- =
+> Common gprs atom would be able to handle all situation: 3G only, 3G /
+> LTE, LTE only,
+> marking technology in Bearer property. Though it might be difficult to
+> handle double
+> registration of 3G and LTE at the same time for mix modems, if this is
+> allowed.
+> =
 
-+static void cind_cb(GAtServer *server, GAtServerRequestType type,
-+			GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_emulator *em =3D user_data;
-+	GSList *l;
-+	struct indicator *ind;
-+	gsize size;
-+	int len;
-+	char *buf;
-+	char *tmp;
-+
-+	switch (type) {
-+	case G_AT_SERVER_REQUEST_TYPE_QUERY:
-+		size =3D 7 + (g_slist_length(em->indicators) * 4) + 1;
-+		buf =3D g_try_malloc0(size);
-+		if (buf =3D=3D NULL)
-+			goto fail;
-+
-+		len =3D sprintf(buf, "+CIND: ");
-+		tmp =3D buf + len;
-+
-+		for (l =3D em->indicators; l; l =3D l->next) {
-+			ind =3D l->data;
-+			len =3D sprintf(tmp, "%s%d",
-+					l =3D=3D em->indicators ? "" : ",",
-+					ind->value);
-+			tmp =3D tmp + len;
-+		}
-+
-+		g_at_server_send_info(em->server, buf, FALSE);
-+		g_free(buf);
-+		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-+		break;
-+
-+	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
-+		size =3D 8;
-+
-+		for (l =3D em->indicators; l; l =3D l->next) {
-+			ind =3D l->data;
-+			size +=3D strlen(ind->name) + 15;
-+		}
-+
-+		buf =3D g_try_malloc0(size);
-+		if (buf =3D=3D NULL)
-+			goto fail;
-+
-+		len =3D sprintf(buf, "+CIND: ");
-+		tmp =3D buf + len;
-+
-+		for (l =3D em->indicators; l; l =3D l->next) {
-+			ind =3D l->data;
-+			len =3D sprintf(tmp, "%s(\"%s\",(%d%c%d))",
-+					l =3D=3D em->indicators ? "" : ",",
-+					ind->name, ind->min,
-+					(ind->max - ind->min) =3D=3D 1 ? ',' : '-',
-+					ind->max);
-+			tmp =3D tmp + len;
-+		}
-+
-+		g_at_server_send_info(server, buf, FALSE);
-+		g_free(buf);
-+		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-+		break;
-+
-+	default:
-+fail:
-+		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
-+		break;
-+	}
-+}
-+
- static void emulator_add_indicator(struct ofono_emulator *em, const char* =
-name,
- 					int min, int max, int dflt)
- {
-@@ -241,6 +312,8 @@ void ofono_emulator_register(struct ofono_emulator *em,=
- int fd)
- 		emulator_add_indicator(em, OFONO_EMULATOR_IND_SIGNAL, 0, 5, 0);
- 		emulator_add_indicator(em, OFONO_EMULATOR_IND_ROAMING, 0, 1, 0);
- 		emulator_add_indicator(em, OFONO_EMULATOR_IND_BATTERY, 0, 5, 5);
-+
-+		g_at_server_register(em->server, "+CIND", cind_cb, em, NULL);
- 	}
- =
+> 3G only stuff in gprs seems to be only gprs_suspend during callback as
+> in LTE
+> call won't suspend connection, and attached property as LTE is always
+> attached.
 
- 	__ofono_atom_register(em->atom, emulator_unregister);
--- =
+Yes, unfortunately this is also the nastiest part of the GPRS atom
+logic.  From past experience I can tell you that extending the logic
+will not be easy.
 
-1.7.1
+> Most of this atom is context related which is common.
+> =
+
+> Fast look gives me this division of gprs:
+> - gprs atom: suspend, attached, status handling
+> - lte atom: status handling
+> - context atom (common part for 3G and LTE): whole context handling,
+>     cid map, ~80% of current src/gprs.c, + some IMS stuff
+> all would probably need to use netreg_watch
+> =
 
 
---===============8942490086525471354==--
+Most of the context management can be done on a separate atom /
+interface if needed.
+
+> In my opinion, combined gprs atom would be easier to do and probably enou=
+gh,
+> separate atoms would be more "looking into the future" like but I am not
+> sure if this division is necessary.
+
+Looking at the current ConnectionManager API, none of the properties
+(Powered, Attached, Suspended, RoamingAllowed) are applicable to LTE.
+If we use a separate LTE atom then the Bearer property's 'lte' value is
+redundant as well.  So why would you want to carry this baggage around
+for the user of LTE-only systems?
+
+Without those properties and the associated logic, the LTE-only atom
+becomes quite trivial, assuming the context management is factored out
+somewhere nicely.
+
+You might be right of course and this separation is not necessary.  But
+we won't know until we try.
+
+Regards,
+-Denis
+
+--===============3280275144099347305==--
 
