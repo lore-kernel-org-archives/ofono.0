@@ -1,66 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============6619072273419164278=="
+Content-Type: multipart/mixed; boundary="===============1978948016847122505=="
 MIME-Version: 1.0
-From: Soum, RedouaneX <redouanex.soum@intel.com>
-Subject: RE: [PATCH] atmodem: CEREG support for LTE network status reporting
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] atmodem: CEREG support for LTE network status reporting
  in AT modem
-Date: Wed, 23 Feb 2011 16:36:32 +0000
-Message-ID: <8281606748F03E4390BB98A3F47F2E948A9F98CDC7@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <4D652E8D.2020404@gmail.com>
+Date: Wed, 23 Feb 2011 10:49:37 -0600
+Message-ID: <4D653AA1.8000203@gmail.com>
+In-Reply-To: <8281606748F03E4390BB98A3F47F2E948A9F98CDC7@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6619072273419164278==
+--===============1978948016847122505==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Redouane,
 
+On 02/23/2011 10:36 AM, Soum, RedouaneX wrote:
+> Hi Denis,
+> =
 
->> In my opinion, combined gprs atom would be easier to do and probably =
+> =
 
->> enough, separate atoms would be more "looking into the future" like =
+>>> In my opinion, combined gprs atom would be easier to do and probably =
 
->> but I am not sure if this division is necessary.
->
->Looking at the current ConnectionManager API, none of the properties =
+>>> enough, separate atoms would be more "looking into the future" like =
 
->(Powered, Attached, Suspended, RoamingAllowed) are applicable to LTE.
->If we use a separate LTE atom then the Bearer property's 'lte' value is =
+>>> but I am not sure if this division is necessary.
+>>
+>> Looking at the current ConnectionManager API, none of the properties =
 
->redundant as well.  So why would you want to carry this baggage around =
+>> (Powered, Attached, Suspended, RoamingAllowed) are applicable to LTE.
+>> If we use a separate LTE atom then the Bearer property's 'lte' value is =
 
->for the user of LTE-only systems?
+>> redundant as well.  So why would you want to carry this baggage around =
 
-After discussing internally with Fred Joly I would like to come back on the=
- 4 properties :
-- Suspended is applicable in LTE in case of CS Voice Call using CSFB
-- Powered is applicable the only point is that you'll not be registered to =
-LTE network if PS is disabled.
-- Attached is also applicable and here also if you are not attached then yo=
-u'll not be registered to LTE network.
-- RoamingAllowed it's a settings from the APE so we can imagine that we wou=
-ld like not to use LTE if we are in roaming.
+>> for the user of LTE-only systems?
+> =
 
-Our understanding is that LTE is a GSM technology so it's normal to have GS=
-M concepts behind.
+> After discussing internally with Fred Joly I would like to come back on t=
+he 4 properties :
+> - Suspended is applicable in LTE in case of CS Voice Call using CSFB
 
+My understanding was that CS Fallback physically switches technologies.
+ It is not 'suspending' LTE like it does with GPRS.  Am I wrong on this one?
+
+> - Powered is applicable the only point is that you'll not be registered t=
+o LTE network if PS is disabled.
+
+It sounds like you're talking about RadioSettings properties here.
+
+Powered=3DFalse is implemented by simply not attaching today.  The
+implementation logic for LTE would be completely different.  So most
+likely this will not work out nicely anyway.
+
+> - Attached is also applicable and here also if you are not attached then =
+you'll not be registered to LTE network.
+
+Sounds pointless to expose for LTE to me.
+
+> - RoamingAllowed it's a settings from the APE so we can imagine that we w=
+ould like not to use LTE if we are in roaming.
+
+Perhaps, but again we have no control of the attach procedure with LTE.
+ So the implementation has to rely on vendor specific radio settings.
+Same arguments about shoehorning logic apply here.
 
 Regards,
+-Denis
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============6619072273419164278==--
+--===============1978948016847122505==--
 
