@@ -1,51 +1,181 @@
-Content-Type: multipart/mixed; boundary="===============0574533665965863937=="
+Content-Type: multipart/mixed; boundary="===============0492486017855373503=="
 MIME-Version: 1.0
-From: Antoine Reversat <a.reversat@gmail.com>
-Subject: Re: [PATCH] Add CNAP support (callerid name presentation) to isimodem
-Date: Tue, 22 Feb 2011 16:34:25 -0500
-Message-ID: <AANLkTinf5qt5r+CWOEX-2Wk5XoZhtmfPhufTOgHz36Qx@mail.gmail.com>
-In-Reply-To: <20110222212224.GD2249@joana>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] sim: showing lock state with call meter
+Date: Wed, 23 Feb 2011 00:15:13 -0600
+Message-ID: <4D64A5F1.5090004@gmail.com>
+In-Reply-To: <1298376352-24521-1-git-send-email-jussi.kangas@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0574533665965863937==
+--===============0492486017855373503==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, Feb 22, 2011 at 4:22 PM, Gustavo F. Padovan
-<padovan@profusion.mobi> wrote:
-> Hi Antoine,
+Hi Jussi,
 
-Hi
+>  include/sim.h    |    2 ++
+>  src/call-meter.c |   27 +++++++++++++++++++++++++++
+>  src/sim.c        |    8 ++++----
+>  3 files changed, 33 insertions(+), 4 deletions(-)
+> =
 
->> + =C2=A0 =C2=A0 if (!g_isi_sb_iter_get_byte(sb, &pres, 2) ||
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-!g_isi_sb_iter_get_byte(sb, &id, 6) ||
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-!g_isi_sb_iter_get_byte(sb, &len, 7) ||
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-!g_isi_sb_iter_get_alpha_tag(sb, &name, 2 * len, 8))
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
+> diff --git a/include/sim.h b/include/sim.h
+> index 412ae44..a56056e 100644
+> --- a/include/sim.h
+> +++ b/include/sim.h
+> @@ -227,6 +227,8 @@ unsigned int ofono_sim_add_file_watch(struct ofono_si=
+m_context *context,
+>  void ofono_sim_remove_file_watch(struct ofono_sim_context *context,
+>  					unsigned int id);
+>  =
+
+> +void sim_pin_check(struct ofono_sim *sim);
+> +
+
+Please name this __ofono_sim_recheck_pin(struct ofono_sim *sim);
+
+>  #ifdef __cplusplus
+>  }
+>  #endif
+> diff --git a/src/call-meter.c b/src/call-meter.c
+> index 0789935..61678d8 100644
+> --- a/src/call-meter.c
+> +++ b/src/call-meter.c
+> @@ -335,11 +335,20 @@ static void set_acm_max_query_callback(const struct=
+ ofono_error *error,
+>  static void set_acm_max_callback(const struct ofono_error *error, void *=
+data)
+>  {
+>  	struct ofono_call_meter *cm =3D data;
+> +	struct ofono_atom *sim_atom;
+> +	struct ofono_sim *sim =3D NULL;
+>  =
+
+>  	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+>  		DBG("Setting acm_max failed");
+>  		__ofono_dbus_pending_reply(&cm->pending,
+>  					__ofono_error_failed(cm->pending));
+> +		sim_atom =3D __ofono_modem_find_atom(
+> +			__ofono_atom_get_modem(cm->atom),
+> +				OFONO_ATOM_TYPE_SIM);
+> +		if (!sim_atom)
+
+doc/coding-style.txt M1, and M13
+
+> +			return;
+> +		sim =3D __ofono_atom_get_data(sim_atom);
+
+doc/coding-style.txt M1
+
+> +		sim_pin_check(sim);
+>  		return;
+>  	}
 >
->
-> Isn't this better:
->
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0if (!g_isi_sb_iter_get_byte())
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0if (!g_isi_sb_iter_get_byte())
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0if (!g_isi_sb_iter_get_byte())
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0if (!g_isi_sb_iter_get_alpha_tag())
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
 
-It is better, my code is based on isi_call_any_address_sb_proc which
-has the same construct. I guess I'll fix both then.
+And please factor out this code into a separate function, you repeat it
+three times.
 
->
+> @@ -396,11 +405,20 @@ static void set_puct_query_callback(const struct of=
+ono_error *error,
+>  static void set_puct_callback(const struct ofono_error *error, void *dat=
+a)
+>  {
+>  	struct ofono_call_meter *cm =3D data;
+> +	struct ofono_atom *sim_atom;
+> +	struct ofono_sim *sim =3D NULL;
+>  =
 
-I'll fix the rest and resend the patch, thanks.
+>  	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+>  		DBG("setting puct failed");
+>  		__ofono_dbus_pending_reply(&cm->pending,
+>  					__ofono_error_failed(cm->pending));
+> +		sim_atom =3D __ofono_modem_find_atom(
+> +			__ofono_atom_get_modem(cm->atom),
+> +				OFONO_ATOM_TYPE_SIM);
+> +		if (!sim_atom)
+> +			return;
+> +		sim =3D __ofono_atom_get_data(sim_atom);
+> +		sim_pin_check(sim);
+>  		return;
+>  	}
+>  =
 
---===============0574533665965863937==--
+> @@ -593,11 +611,20 @@ static void reset_acm_query_callback(const struct o=
+fono_error *error, int value,
+>  static void acm_reset_callback(const struct ofono_error *error, void *da=
+ta)
+>  {
+>  	struct ofono_call_meter *cm =3D data;
+> +	struct ofono_atom *sim_atom;
+> +	struct ofono_sim *sim =3D NULL;
+>  =
+
+>  	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+>  		DBG("reseting acm failed");
+>  		__ofono_dbus_pending_reply(&cm->pending,
+>  					__ofono_error_failed(cm->pending));
+> +		sim_atom =3D __ofono_modem_find_atom(
+> +			__ofono_atom_get_modem(cm->atom),
+> +				OFONO_ATOM_TYPE_SIM);
+> +		if (!sim_atom)
+> +			return;
+> +		sim =3D __ofono_atom_get_data(sim_atom);
+> +		sim_pin_check(sim);
+>  		return;
+>  	}
+>  =
+
+> diff --git a/src/sim.c b/src/sim.c
+> index c39269d..08236f2 100644
+> --- a/src/sim.c
+> +++ b/src/sim.c
+> @@ -49,7 +49,6 @@
+>  static GSList *g_drivers =3D NULL;
+>  =
+
+>  static void sim_own_numbers_update(struct ofono_sim *sim);
+> -static void sim_pin_check(struct ofono_sim *sim);
+>  =
+
+>  struct ofono_sim {
+>  	/* Contents of the SIM file system, in rough initialization order */
+> @@ -2231,8 +2230,9 @@ static void sim_pin_query_cb(const struct ofono_err=
+or *error,
+>  						&pin_name);
+>  	}
+>  =
+
+> -	if (pin_type !=3D OFONO_SIM_PASSWORD_NONE &&
+> -			sim->state =3D=3D OFONO_SIM_STATE_READY) {
+> +	if ((pin_type !=3D OFONO_SIM_PASSWORD_NONE &&
+> +			sim->state =3D=3D OFONO_SIM_STATE_READY) &&
+> +				(pin_type !=3D OFONO_SIM_PASSWORD_SIM_PIN2)) {
+
+I don't see how this can work.  You need to check for pin_type !=3D NONE,
+PIN2 and PUK2 AND state =3D=3D READY here.  This also only covers the case
+of the PIN2 or PUK2 being triggered when call-meter is active.  You do
+not take care of the case where PIN2 or PUK2 are already required during
+sim initialization.
+
+>  		/* Force the sim state out of READY */
+>  		sim_free_main_state(sim);
+>  =
+
+> @@ -2247,7 +2247,7 @@ checkdone:
+>  		sim_initialize_after_pin(sim);
+>  }
+>  =
+
+> -static void sim_pin_check(struct ofono_sim *sim)
+> +void sim_pin_check(struct ofono_sim *sim)
+>  {
+>  	if (sim->driver->query_passwd_state =3D=3D NULL) {
+>  		sim_initialize_after_pin(sim);
+
+Regards,
+-Denis
+
+--===============0492486017855373503==--
 
