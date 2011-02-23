@@ -1,38 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============1002348580060091677=="
+Content-Type: multipart/mixed; boundary="===============4741300133333240268=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4 0/2] bluetooth: add CIND and CIEV support in HFP AG
-Date: Wed, 23 Feb 2011 11:18:15 -0600
-Message-ID: <4D654157.70200@gmail.com>
-In-Reply-To: <1298480534-12917-1-git-send-email-frederic.danis@linux.intel.com>
+From: Joly, Frederic <frederic.joly@intel.com>
+Subject: RE: [PATCH] atmodem: CEREG support for LTE network status reporting
+ in AT modem
+Date: Wed, 23 Feb 2011 18:24:07 +0000
+Message-ID: <129600E5E5FB004392DDC3FB599660D701098A699C@irsmsx504.ger.corp.intel.com>
+In-Reply-To: <4D653AA1.8000203@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1002348580060091677==
+--===============4741300133333240268==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Denis,
 
-On 02/23/2011 11:02 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> Add CIND and CIEV support for HFP AG
+> -----Original Message-----
+> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On
+> Behalf Of Denis Kenzior
+> Sent: Wednesday, February 23, 2011 5:50 PM
+> To: ofono(a)ofono.org
+> Cc: tomasz.gregorek(a)gmail.com
+> Subject: Re: [PATCH] atmodem: CEREG support for LTE network status
+> reporting in AT modem
+> > After discussing internally with Fred Joly I would like to come back
+> on the 4 properties :
+> > - Suspended is applicable in LTE in case of CS Voice Call using CSFB
 > =
 
-> Fr=C3=A9d=C3=A9ric Danis (2):
->   emulator: add support of indicators
->   emulator: add CIND support
+> My understanding was that CS Fallback physically switches technologies.
+>  It is not 'suspending' LTE like it does with GPRS.  Am I wrong on this
+> one?
+
+I would say yes. :) =
+
+In case you are obliged to fallback from 4G to 2G without support of DTM, e=
+xaclty like in GPRS.
+
 > =
 
->  src/emulator.c |  155 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  src/network.c  |   77 +++++++++++++++++++++++++++-
->  2 files changed, 231 insertions(+), 1 deletions(-)
+> Perhaps, but again we have no control of the attach procedure with LTE.
+>  So the implementation has to rely on vendor specific radio settings.
+> Same arguments about shoehorning logic apply here.
 
-Both patches have been applied, thanks.
+I'm a bit puzzled by this statement. It is not specific to LTE, but related=
+ to +CFUN proprietary implementation against  +COPS or +CGATT  usage, isn't=
+ it?
 
-Regards,
--Denis
+BR,
 
---===============1002348580060091677==--
+Fred
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============4741300133333240268==--
 
