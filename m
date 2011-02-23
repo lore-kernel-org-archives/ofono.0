@@ -1,119 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============6356246342007962632=="
+Content-Type: multipart/mixed; boundary="===============3616472247679171211=="
 MIME-Version: 1.0
-From: Amit Mendapara <mendapara.amit@gmail.com>
-Subject: ofono crash (setting offline while connected)
-Date: Thu, 24 Feb 2011 10:37:33 +0530
-Message-ID: <AANLkTimFFgUbOiYJs6=+Y1E_ik3xmeFNR0q=r7XJHYo1@mail.gmail.com>
+From: Jussi Kangas <jussi.kangas@tieto.com>
+Subject: Re: [PATCH] sim: showing lock state with call meter
+Date: Wed, 23 Feb 2011 17:24:34 +0200
+Message-ID: <1298474674.26475.79.camel@jussi-desktop>
+In-Reply-To: <4D64A5F1.5090004@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6356246342007962632==
+--===============3616472247679171211==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-While testing the Linktop driver I observed that ofono is crashing if I try
-to set modem offline while it is connected (using test/offline-modem.py
-script). After some debugging, I found that `linktop_disconnect` function is
-being called twice (see the attached debug log).
+On Wed, 2011-02-23 at 08:15 +0200, Denis Kenzior wrote:
+> >  =
 
-What could be the reason here? I have seen some hack in mbm driver (in
-mbm_disconnect) having `reopen_callback`. I have tried this but then having
-another crash (this time when creating gprs context). Anyone, please clarify
-how to deal with the issue properly?
+> > -	if (pin_type !=3D OFONO_SIM_PASSWORD_NONE &&
+> > -			sim->state =3D=3D OFONO_SIM_STATE_READY) {
+> > +	if ((pin_type !=3D OFONO_SIM_PASSWORD_NONE &&
+> > +			sim->state =3D=3D OFONO_SIM_STATE_READY) &&
+> > +				(pin_type !=3D OFONO_SIM_PASSWORD_SIM_PIN2)) {
+> =
 
-Regards
---
-Amit Mendapara
+> I don't see how this can work.  You need to check for pin_type !=3D NONE,
+> PIN2 and PUK2 AND state =3D=3D READY here.  This also only covers the case
+> of the PIN2 or PUK2 being triggered when call-meter is active.  You do
+> not take care of the case where PIN2 or PUK2 are already required during
+> sim initialization.
 
---===============6356246342007962632==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+Hmm. It seems to work here. If I try reset call meter with wrong
+password I get pin_type OFONO_SIM_PASSWORD_SIM_PIN2 and
+OFONO_SIM_STATE_READY. APIs stay up and SIM manager shows pin2 locked
+and pin2 required. (Which is kinda wrong I admit, u cannot unlock the
+pin2, pin2 should always be visible in LockedPins or not at all, I would
+prefer the later. However it is showed as it is showed and it was
+working that way already before this patch). If I run same case three
+times I get same values but API shows that puk2 is required and all
+API:s stay up. If I run the case with correct password it does not come
+to this code at all all. =
 
-SGksPGRpdj48YnI+PC9kaXY+PGRpdj5XaGlsZSB0ZXN0aW5nIHRoZSBMaW5rdG9wIGRyaXZlciBJ
-IG9ic2VydmVkIHRoYXQgb2Zvbm8gaXMgY3Jhc2hpbmcgaWYgSSB0cnkgdG8gc2V0IG1vZGVtIG9m
-ZmxpbmUgd2hpbGUgaXQgaXMgY29ubmVjdGVkICh1c2luZyB0ZXN0L29mZmxpbmUtbW9kZW0ucHkg
-c2NyaXB0KS4gQWZ0ZXIgc29tZSBkZWJ1Z2dpbmcsIEkgZm91bmQgdGhhdCBgbGlua3RvcF9kaXNj
-b25uZWN0YCBmdW5jdGlvbiBpcyBiZWluZyBjYWxsZWQgdHdpY2UgKHNlZSB0aGUgYXR0YWNoZWQg
-ZGVidWcgbG9nKS48L2Rpdj4KPGRpdj48YnI+PC9kaXY+PGRpdj5XaGF0IGNvdWxkIGJlIHRoZSBy
-ZWFzb24gaGVyZT8gSSBoYXZlIHNlZW4gc29tZSBoYWNrIGluIG1ibSBkcml2ZXIgKGluIG1ibV9k
-aXNjb25uZWN0KSBoYXZpbmcgYHJlb3Blbl9jYWxsYmFja2AuIEkgaGF2ZSB0cmllZCB0aGlzIGJ1
-dCB0aGVuIGhhdmluZyBhbm90aGVyIGNyYXNoICh0aGlzIHRpbWUgd2hlbiBjcmVhdGluZyBncHJz
-IGNvbnRleHQpLiBBbnlvbmUsIHBsZWFzZSBjbGFyaWZ5IGhvdyB0byBkZWFsIHdpdGggdGhlIGlz
-c3VlIHByb3Blcmx5PzwvZGl2Pgo8ZGl2Pjxicj48L2Rpdj48ZGl2PlJlZ2FyZHM8L2Rpdj48ZGl2
-Pi0tPC9kaXY+PGRpdj5BbWl0IE1lbmRhcGFyYTwvZGl2Pgo=
 
---===============6356246342007962632==
-Content-Type: text/x-log
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="ofono.log"
+PIN2 cannot be required in startup. It is only required if u do
+something with certain features like fdn or call meter. PUK2 can be
+blocked in startup all right but it does not matter from startup point
+of view. If I start the oFono with PIN2 blocked I get pin_type
+OFONO_SIM_PASSWORD_SIM_PIN2 and OFONO_SIM_STATE_INSERTED states and API
+shows pin2 locked and puk2 required as required. (does not seem work if
+I boot up the modem and not just oFono though. Looks like modem bug
+where it does not read voluntarily PIN2 state.)
 
-Li4uCm9mb25vZFsxNjg5Ml06IENvbnRyb2w6IDwgXHJcbk9LXHJcblxyXG4rQ0lFVjogNSwxXHJc
-blxyXG4rQ0lFVjogOSwwXHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA+IEFUK0NPUFM/XHIK
-b2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPCBcclxuK0NPUFM6IDAsMiwiNDA0NTciLDIgXHJcblxy
-XG5PS1xyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPiBBVCtDSU5EP1xyCm9mb25vZFsxNjg5
-Ml06IENvbnRyb2w6IDwgXHJcbitDSU5EOiAxLDMsMSwwLDEsMCwwLDAsMCwwLDAsMFxyXG5cclxu
-T0tcclxuCm9mb25vZFsxNjg5Ml06IENvbnRyb2w6ID4gQVQrQ09QUz0zLDBccgpvZm9ub2RbMTY4
-OTJdOiBDb250cm9sOiA8IFxyXG5PS1xyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPiBBVCtD
-T1BTP1xyCm9mb25vZFsxNjg5Ml06IENvbnRyb2w6IDwgXHJcbitDT1BTOiAwLDAsIiIsMiBcclxu
-XHJcbk9LXHJcblxyXG4rQ0lFVjogMiwyXHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA8IFxy
-XG4rQ0lFVjogMiwzXHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA8IFxyXG4rQ0lFVjogMiwy
-XHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA8IFxyXG4rQ0lFVjogMiwzXHJcbgpvZm9ub2Rb
-MTY4OTJdOiBNb2RlbTogPiBBVCtDR0RDT05UPTEsIklQIiwiYnNubG5ldCJccgpvZm9ub2RbMTY4
-OTJdOiBNb2RlbTogPCBBVCtDR0RDT05UPTEsIklQIiwiYnNubG5ldCJccgpvZm9ub2RbMTY4OTJd
-OiBNb2RlbTogPCBcclxuT0tcclxuCm9mb25vZFsxNjg5Ml06IE1vZGVtOiA+IEFUK0NHREFUQT0i
-UFBQIiwxXHIKb2Zvbm9kWzE2ODkyXTogTW9kZW06IDwgQVQrQ0dEQVRBPSJQUFAiLDFccgpvZm9u
-b2RbMTY4OTJdOiBNb2RlbTogPCBcclxuQ09OTkVDVFxyXG4KRW50ZXJpbmcgbmV3IHBoYXNlOiAx
-CkVudGVyaW5nIG5ldyBwaGFzZTogMgpFbnRlcmluZyBuZXcgcGhhc2U6IDMKb2Zvbm9kWzE2ODky
-XTogQ29udHJvbDogPCBcclxuKkVQU0I6IDNcclxuCm9mb25vZFsxNjg5Ml06IENvbnRyb2w6IDwg
-XHJcbipFUFNCOiA1XHJcblxyXG4qRVBTQjogNlxyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDog
-PCBcclxuK0NJRVY6IDIsMlxyXG4KUmVjZWl2ZWQgSVBDUCBOQUsKU2V0dGluZyBzdWdnZXN0ZWQg
-aXAgYWRkcgpTZXR0aW5nIHN1Z2dlc3RlZCBkbnMxClNldHRpbmcgc3VnZ2VzdGVkIGRuczIKRW50
-ZXJpbmcgbmV3IHBoYXNlOiA0Cm9mb25vZFsxNjg5Ml06IElQOiAxMC4xNjMuOTAuMTgwCm9mb25v
-ZFsxNjg5Ml06IEROUzogMjE4LjI0OC4yNDAuMTM0LCAyMTguMjQ4LjI0MC4yMwpvZm9ub2RbMTY4
-OTJdOiBDb250cm9sOiA8IFxyXG4rQ0lFVjogMiwzXHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9s
-OiA8IFxyXG4rQ0lFVjogMiwyXHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA8IFxyXG4qRVBT
-QjogMFxyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPCBcclxuK0NJRVY6IDIsM1xyXG4Kb2Zv
-bm9kWzE2ODkyXTogQ29udHJvbDogPCBcclxuKkVQU0I6IDNcclxuCm9mb25vZFsxNjg5Ml06IENv
-bnRyb2w6IDwgXHJcbipFUFNCOiA1XHJcblxyXG4qRVBTQjogNlxyXG4Kb2Zvbm9kWzE2ODkyXTog
-Q29udHJvbDogPCBcclxuK0NJRVY6IDIsMlxyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPCBc
-clxuK0NJRVY6IDIsM1xyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPCBcclxuK0NJRVY6IDIs
-MlxyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPCBcclxuK0NJRVY6IDIsM1xyXG4Kb2Zvbm9k
-WzE2ODkyXTogQ29udHJvbDogPCBcclxuKkVQU0I6IDBcclxuCm9mb25vZFsxNjg5Ml06IENvbnRy
-b2w6IDwgXHJcbipFUFNCOiAzXHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA8IFxyXG4qRVBT
-QjogNVxyXG5cclxuKkVQU0I6IDZcclxuCm9mb25vZFsxNjg5Ml06IENvbnRyb2w6IDwgXHJcbipF
-UFNCOiAwXHJcbgpvZm9ub2RbMTY4OTJdOiBwbHVnaW5zL2xpbmt0b3AuYzpsaW5rdG9wX3NldF9v
-bmxpbmUoKSBtb2RlbSAweGJmNGZmMCBvZmZsaW5lCm9mb25vZFsxNjg5Ml06IENvbnRyb2w6ID4g
-QVQrQ0ZVTj00XHIKRW50ZXJpbmcgbmV3IHBoYXNlOiA1Cm9mb25vZFsxNjg5Ml06IHBsdWdpbnMv
-dWRldi5jOnJlbW92ZV9tb2RlbSgpIC9kZXZpY2VzL3ZpcnR1YWwvbmV0L3BwcDAKRW50ZXJpbmcg
-bmV3IHBoYXNlOiAwCm9mb25vZFsxNjg5Ml06IHBsdWdpbnMvbGlua3RvcC5jOmxpbmt0b3BfZGlz
-Y29ubmVjdCgpIApvZm9ub2RbMTY4OTJdOiBwbHVnaW5zL2xpbmt0b3AuYzpvcGVuX2RldmljZSgp
-IE1vZGVtIC9kZXYvdHR5QUNNMApvZm9ub2RbMTY4OTJdOiBSZW9wZW5lZCBHUFJTIGNvbnRleHQg
-Y2hhbm5lbApvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA8IFxyXG5PS1xyXG5cclxuK0NHRVY6IE5X
-IERFQUNUICJJUCIsICIxMC4xNjMuOTAuMTgwIiwgMVxyXG5cclxuK0NHRVY6IE5XIERFQUNUICJJ
-UCIsICIxMC4xNjMuOTAuMTgwIiwgMVxyXG4Kb2Zvbm9kWzE2ODkyXTogVW5yZWdpc3RlcmVkIGhh
-bmRsZSBmb3IgY2hhbm5lbCAxOiAweDEwMDA1Cm9mb25vZFsxNjg5Ml06IHBsdWdpbnMvbGlua3Rv
-cC5jOmxpbmt0b3BfZGlzY29ubmVjdCgpIApvZm9ub2RbMTY4OTJdOiBBYm9ydGluZyAoc2lnbmFs
-IDExKQpvZm9ub2RbMTY4OTJdOiArKysrKysrKyBiYWNrdHJhY2UgKysrKysrKysKb2Zvbm9kWzE2
-ODkyXTogWzBdOiAvbGliL2xpYnB0aHJlYWQuc28uMCgrMHhmYjQwKSBbMHg3ZjA4NDNhNDRiNDBd
-Cm9mb25vZFsxNjg5Ml06IFsxXTogLi9zcmMvb2Zvbm9kKCkgWzB4NDZjY2NlXQpvZm9ub2RbMTY4
-OTJdOiBbMl06IC4vc3JjL29mb25vZCgpIFsweDQ2MzQyY10Kb2Zvbm9kWzE2ODkyXTogWzNdOiAv
-bGliL2xpYmdsaWItMi4wLnNvLjAoKzB4M2Y4ZmUpIFsweDdmMDg0M2VkMzhmZV0Kb2Zvbm9kWzE2
-ODkyXTogWzRdOiAvbGliL2xpYmdsaWItMi4wLnNvLjAoKzB4M2ZmMzUpIFsweDdmMDg0M2VkM2Yz
-NV0Kb2Zvbm9kWzE2ODkyXTogWzVdOiAvbGliL2xpYmdsaWItMi4wLnNvLjAoZ19tYWluX2NvbnRl
-eHRfZGlzcGF0Y2grMHgyNjMpIFsweDdmMDg0M2VkNDNiM10Kb2Zvbm9kWzE2ODkyXTogWzZdOiAv
-bGliL2xpYmdsaWItMi4wLnNvLjAoKzB4NDQyYTgpIFsweDdmMDg0M2VkODJhOF0Kb2Zvbm9kWzE2
-ODkyXTogWzddOiAvbGliL2xpYmdsaWItMi4wLnNvLjAoZ19tYWluX2xvb3BfcnVuKzB4MTk1KSBb
-MHg3ZjA4NDNlZDg3YjVdCm9mb25vZFsxNjg5Ml06IFs4XTogLi9zcmMvb2Zvbm9kKCkgWzB4NDZi
-NmM0XQpvZm9ub2RbMTY4OTJdOiBbOV06IC9saWIvbGliYy5zby42KF9fbGliY19zdGFydF9tYWlu
-KzB4ZmUpIFsweDdmMDg0MzBiZmQ4ZV0Kb2Zvbm9kWzE2ODkyXTogWzEwXTogLi9zcmMvb2Zvbm9k
-KCkgWzB4NDBjYjg5XQpvZm9ub2RbMTY4OTJdOiArKysrKysrKysrKysrKysrKysrKysrKysrKysK
-Cg==
+Br,
+-Jussi =
 
---===============6356246342007962632==--
+
+
+
+
+--===============3616472247679171211==--
 
