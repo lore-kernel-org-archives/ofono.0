@@ -1,66 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============2037226933275379467=="
+Content-Type: multipart/mixed; boundary="===============5802455178318161648=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 4/4] gsmdial:Remove root user test
-Date: Wed, 23 Feb 2011 16:29:26 +0100
-Message-ID: <1298474966-1691-5-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <y>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 0/2] Disable command echo for hfp emulators
+Date: Wed, 23 Feb 2011 09:31:52 -0600
+Message-ID: <4D652868.4080600@gmail.com>
+In-Reply-To: <1298467153-2426-1-git-send-email-frederic.dalleau@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2037226933275379467==
+--===============5802455178318161648==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- gatchat/gsmdial.c |   15 ++++++++++-----
- 1 files changed, 10 insertions(+), 5 deletions(-)
+Hi Fr=C3=A9d=C3=A9ric,
 
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index c2bcf73..8c0b91f 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -250,11 +250,6 @@ static void ppp_connect(const char *iface, const char =
-*local, const char *peer,
- 	g_print("Primary DNS Server: %s\n", dns1);
- 	g_print("Secondary DNS Server: %s\n", dns2);
- =
+On 02/23/2011 07:19 AM, Fr=C3=A9d=C3=A9ric Dalleau wrote:
+> This is the default asked by HSP and HFP specifications, which
+> is the opposite of what v250 is asking.
+> =
 
--	if (getuid() !=3D 0) {
--		g_print("Need root privilege to config PPP interface\n");
--		return;
--	}
--
- 	snprintf(buf, sizeof(buf), "%s %s up", IFCONFIG_PATH, iface);
- 	execute(buf);
- =
+> Fr=C3=A9d=C3=A9ric Dalleau (2):
+>   gatchat: Add function to enable/disable echo
+>   emulator: Disable echo for hfp emulators
+> =
 
-@@ -283,6 +278,16 @@ static void ppp_disconnect(GAtPPPDisconnectReason reas=
-on, gpointer user_data)
- 	g_at_ppp_unref(ppp);
- 	ppp =3D NULL;
- =
+>  gatchat/gatserver.c |   10 ++++++++++
+>  gatchat/gatserver.h |    1 +
+>  src/emulator.c      |    2 ++
+>  3 files changed, 13 insertions(+), 0 deletions(-)
 
-+	if (reason =3D=3D G_AT_PPP_REASON_LINK_DEAD) {
-+		g_at_chat_unref(modem);
-+		modem =3D NULL;
-+		return;
-+	}
-+
-+	if (reason =3D=3D G_AT_PPP_REASON_NET_FAIL) {
-+		g_print("Failed to create tun\nNeed root privilege to configure PPP inte=
-rface\n");
-+	}
-+
- 	g_at_chat_resume(modem);
- =
+Both patches have been applied, thanks.
 
- 	g_at_chat_register(modem, "NO CARRIER", no_carrier_notify,
--- =
+Regards,
+-Denis
 
-1.7.1
-
-
---===============2037226933275379467==--
+--===============5802455178318161648==--
 
