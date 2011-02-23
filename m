@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4304611578938010201=="
+Content-Type: multipart/mixed; boundary="===============4873158656058574983=="
 MIME-Version: 1.0
 From: Andreas Westin <andreas.westin@stericsson.com>
-Subject: [PATCH v2 15/18] isimodem: code points for sms wgmodem2.5
-Date: Wed, 23 Feb 2011 12:43:26 +0100
-Message-ID: <838c559b62794111303f718abf1b9fd9d632f384.1298460572.git.andreas.westin@stericsson.com>
+Subject: [PATCH v2 17/18] isimodem: CBS for wgmodem2.5
+Date: Wed, 23 Feb 2011 12:43:28 +0100
+Message-ID: <151e2de75a6c07c608472689eb14d0ffe3e250de.1298460572.git.andreas.westin@stericsson.com>
 In-Reply-To: <cover.1298460572.git.andreas.westin@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4304611578938010201==
+--===============4873158656058574983==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,207 +16,596 @@ Content-Transfer-Encoding: quoted-printable
 From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
 
 ---
- drivers/isimodem/debug.c |   56 ++++++++++++++++++++++++++++++++++++++++++=
-++++
- drivers/isimodem/debug.h |    1 +
- drivers/isimodem/sms.h   |   34 ++++++++++++++++++++++++++++
- 3 files changed, 91 insertions(+), 0 deletions(-)
+ drivers/isimodem/cbs.c   |  414 +++++++++++++++++++++++++++++++++++++++++-=
+----
+ drivers/isimodem/debug.c |    4 +
+ drivers/isimodem/sms.h   |    7 +-
+ 3 files changed, 383 insertions(+), 42 deletions(-)
 
-diff --git a/drivers/isimodem/debug.c b/drivers/isimodem/debug.c
-index 33e4dcb..1fd2226 100644
---- a/drivers/isimodem/debug.c
-+++ b/drivers/isimodem/debug.c
-@@ -53,6 +53,7 @@ const char *pn_resource_name(int value)
- 		_(PN_GSS);
- 		_(PN_GPDS);
- 		_(PN_WRAN);
-+		_(PN_UICC);
- 	}
- 	return "PN_<UNKNOWN>";
- }
-@@ -218,6 +219,47 @@ const char *mce_rf_state_name(enum mce_rf_state value)
- 	return "MCE_RF<UNKNOWN>";
+diff --git a/drivers/isimodem/cbs.c b/drivers/isimodem/cbs.c
+index b969c1f..67274be 100644
+--- a/drivers/isimodem/cbs.c
++++ b/drivers/isimodem/cbs.c
+@@ -3,6 +3,7 @@
+  *  oFono - Open Source Telephony
+  *
+  *  Copyright (C) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
++ *  Copyright (C) ST-Ericsson SA 2011.
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License version 2 as
+@@ -47,12 +48,16 @@
+ =
+
+ struct cbs_data {
+ 	GIsiClient *client;
++	uint8_t subscription_nr;
++	GIsiVersion version;
+ };
+ =
+
+ struct cbs_info {
+ 	uint8_t pdu[88];
+ };
+ =
+
++GIsiClient *pn_sms_client;
++
+ static gboolean check_response_status(const GIsiMessage *msg, uint8_t msgi=
+d)
+ {
+ 	uint8_t cause;
+@@ -89,18 +94,292 @@ static gboolean check_response_status(const GIsiMessag=
+e *msg, uint8_t msgid)
+ 	return FALSE;
  }
  =
 
-+const char *uicc_message_id_name(enum uicc_message_id value)
++static void reset_buf(char *buf, char *buf_2, int buf_len)
 +{
-+	switch (value) {
-+		_(UICC_REQ);
-+		_(UICC_RESP);
-+		_(UICC_IND);
-+		_(UICC_CARD_REQ);
-+		_(UICC_CARD_RESP);
-+		_(UICC_CARD_IND);
-+		_(UICC_APPLICATION_REQ);
-+		_(UICC_APPLICATION_RESP);
-+		_(UICC_APPLICATION_IND);
-+		_(UICC_PIN_REQ);
-+		_(UICC_PIN_RESP);
-+		_(UICC_PIN_IND);
-+		_(UICC_APPL_CMD_REQ);
-+		_(UICC_APPL_CMD_RESP);
-+		_(UICC_APPL_CMD_IND);
-+		_(UICC_CONNECTOR_REQ);
-+		_(UICC_CONNECTOR_RESP);
-+		_(UICC_CAT_REQ);
-+		_(UICC_CAT_RESP);
-+		_(UICC_CAT_IND);
-+		_(UICC_APDU_REQ);
-+		_(UICC_APDU_RESP);
-+		_(UICC_APDU_RESET_IND);
-+		_(UICC_REFRESH_REQ);
-+		_(UICC_REFRESH_RESP);
-+		_(UICC_REFRESH_IND);
-+		_(UICC_SIMLOCK_REQ);
-+		_(UICC_SIMLOCK_RESP);
-+		_(UICC_APDU_SAP_REQ);
-+		_(UICC_APDU_SAP_RESP);
-+		_(UICC_APDU_SAP_IND);
-+		_(UICC_PWR_CTRL_REQ);
-+		_(UICC_PWR_CTRL_RESP);
-+		_(UICC_PWR_CTRL_IND);
-+	}
-+	return "UICC_<UNKNOWN>";
++	memset(buf, '\0', buf_len);
++	memset(buf_2, '\0', buf_len);
 +}
 +
- const char *uicc_status_name(uint8_t value)
++static int get_topics_len(const char *topics)
++{
++	int i =3D 0;
++	int k =3D 0;
++	int length =3D 0;
++	char buf[6];
++	char buf_2[6];
++
++	reset_buf(buf, buf_2, 6);
++
++	while (*topics !=3D '\0') {
++		if (*topics =3D=3D ',') {
++			reset_buf(buf, buf_2, 6);
++			k =3D 0;
++			length++;
++		} else if (*topics !=3D ',' && *topics !=3D '-') {
++			buf[k] =3D *topics;
++			k++;
++		} else if (*topics =3D=3D '-') {
++			topics++;
++			i++;
++			k =3D 0;
++
++			while (*topics !=3D ',' && *topics !=3D '\0') {
++				buf_2[k] =3D *topics;
++				topics++;
++				i++;
++				k++;
++			}
++
++			length =3D length + atoi(buf_2) - atoi(buf) + 1;
++			k =3D 0;
++		}
++		if (*topics !=3D '\0') {
++			topics++;
++			i++;
++		}
++	}
++
++	topics =3D topics - i;
++	return length;
++}
++
++static void parse_topics(const char *topics, gint16 *topics_parsed)
++{
++	int j =3D 0;
++	int k =3D 0;
++	char buf[6];
++	char buf_2[6];
++
++	reset_buf(buf, buf_2, 6);
++
++	while (*topics !=3D '\0') {
++		if (*topics !=3D ',' && *topics !=3D '-') {
++			buf[j] =3D *topics;
++			j++;
++		} else if (*topics =3D=3D '-') {
++			topics++;
++			j =3D 0;
++
++			while (*topics !=3D ',' && *topics !=3D '\0') {
++				buf_2[j] =3D *topics;
++				topics++;
++				j++;
++			}
++
++			for (j =3D 0; j <=3D (atoi(buf_2) - atoi(buf)); j++) {
++				topics_parsed[k] =3D atoi(buf) + j;
++				topics_parsed[k] =3D g_ntohs(topics_parsed[k]);
++				k++;
++			}
++
++			j =3D 0;
++		} else if (*topics =3D=3D ',') {
++			topics_parsed[k] =3D atoi(buf);
++			topics_parsed[k] =3D g_ntohs(topics_parsed[k]);
++			reset_buf(buf, buf_2, 6);
++			j =3D 0;
++			k++;
++		}
++		if (*topics !=3D '\0')
++			topics++;
++	}
++}
++
++static void set_topics_resp_cb(const GIsiMessage *msg, void *data)
++{
++	struct isi_cb_data *cbd =3D data;
++	struct cbs_data *cd =3D ofono_cbs_get_data(cbd->user);
++	ofono_cbs_set_cb_t cb =3D cbd->cb;
++	uint8_t result;
++	DBG("");
++
++	if (g_isi_msg_error(msg) < 0) {
++		DBG("Error: %s", strerror(-g_isi_msg_error(msg)));
++		return;
++	}
++
++	if (g_isi_msg_data_len(msg) < 2 || g_isi_msg_id(msg) !=3D
++			SMS_CB_ROUTING_RESP)
++		goto error;
++
++	g_isi_msg_data_get_byte(msg, 1, &result);
++
++	if (result !=3D SMS_OK)
++		goto error;
++
++	g_isi_msg_data_get_byte(msg, 0, &cd->subscription_nr);
++
++	DBG("got subscription nr: %d", cd->subscription_nr);
++
++	CALLBACK_WITH_SUCCESS(cb, cbd->data);
++	return;
++error:
++	CALLBACK_WITH_FAILURE(cb, cbd->data);
++}
++
+ static void isi_set_topics(struct ofono_cbs *cbs, const char *topics,
+ 				ofono_cbs_set_cb_t cb, void *data)
  {
- 	switch (value) {
-@@ -403,6 +445,15 @@ const char *sms_message_id_name(enum sms_message_id va=
-lue)
- 		_(SMS_GSM_CB_ROUTING_RESP);
- 		_(SMS_GSM_CB_ROUTING_NTF);
- 		_(SMS_MESSAGE_SEND_STATUS_IND);
-+		_(SMS_SETTINGS_UPDATE_REQ);
-+		_(SMS_SETTINGS_UPDATE_RESP);
-+		_(SMS_SETTINGS_READ_REQ);
-+		_(SMS_SETTINGS_READ_RESP);
-+		_(SMS_RECEIVED_MSG_REPORT_REQ);
-+		_(SMS_RECEIVED_MSG_REPORT_RESP);
-+		_(SMS_RECEIVE_MESSAGE_REQ);
-+		_(SMS_RECEIVE_MESSAGE_RESP);
-+		_(SMS_RECEIVED_MSG_IND);
- 		_(SMS_COMMON_MESSAGE);
- 	}
- 	return "SMS_<UNKNOWN>";
-@@ -420,6 +471,9 @@ const char *sms_subblock_name(enum sms_subblock value)
- 		_(SMS_GSM_ROUTING);
- 		_(SMS_GSM_CB_MESSAGE);
+-	DBG("Not implemented (topics=3D%s), all topics accepted", topics);
+-	CALLBACK_WITH_SUCCESS(cb, data);
++	struct cbs_data *cd =3D ofono_cbs_get_data(cbs);
++	struct isi_cb_data *cbd =3D isi_cb_data_new(cbs, cb, data);
++	int topics_len =3D get_topics_len(topics);
++	gint16 topics_out[topics_len];
++
++	uint8_t msg[] =3D {
++		SMS_CB_ROUTING_REQ,
++		SMS_ROUTING_SET,
++		cd->subscription_nr,
++		0x00,			/*Subscription type*/
++		0x00,			/*Fillers*/
++		0x00,
++		0x01,			/*Number of subblocks*/
++		0x00,
++		0x26,			/*Subblock*/
++		0x00,
++		topics_len * 2 + 6,	/*Subblock length*/
++		0x00,
++		topics_len,		/*Number of topics*/
++	};
++	struct iovec iov[2] =3D {
++		{ msg, sizeof(msg) },
++		{ topics_out, sizeof(topics_out) },
++	};
++
++	if (cbd =3D=3D NULL)
++		return;
++
++	if (cd =3D=3D NULL)
++		goto error;
++
++	if (cd->version.major =3D=3D 9 && cd->version.minor >=3D 1) {
++		parse_topics(topics, topics_out);
++
++		if (g_isi_client_vsend_with_timeout(cd->client, iov, 2,
++				CBS_TIMEOUT, set_topics_resp_cb, cbd, g_free))
++			return;
++
++		CALLBACK_WITH_FAILURE(cb, data);
++	} else {
++		/*
++		 * TODO: This should probably be put first in
++		 *       the function to avoid unecessary initialization
++		 *       and allocation.  Fix when the version handling
++		 *       issue has been solved.
++		 */
++		DBG("Not implemented (topics=3D%s), all topics accepted", topics);
++		CALLBACK_WITH_SUCCESS(cb, data);
++	}
++
++error:
++	g_free(cbd);
++}
++
++static void clear_topics_resp_cb(const GIsiMessage *msg, void *data)
++{
++	struct isi_cb_data *cbd =3D data;
++	struct cbs_data *cd =3D ofono_cbs_get_data(cbd->user);
++	ofono_cbs_set_cb_t cb =3D cbd->cb;
++	DBG("");
++
++	if (!check_response_status(msg, SMS_CB_ROUTING_RESP))
++		goto error;
++
++	cd->subscription_nr =3D 0;
++	CALLBACK_WITH_SUCCESS(cb, cbd->data);
++	return;
++error:
++	CALLBACK_WITH_FAILURE(cb, cbd->data);
+ }
+ =
+
+ static void isi_clear_topics(struct ofono_cbs *cbs,
+ 				ofono_cbs_set_cb_t cb, void *data)
+ {
+-	DBG("Not implemented");
+-	CALLBACK_WITH_SUCCESS(cb, data);
++	struct cbs_data *cd =3D ofono_cbs_get_data(cbs);
++	struct isi_cb_data *cbd =3D isi_cb_data_new(cbs, cb, data);
++
++	uint8_t msg[] =3D {
++		SMS_CB_ROUTING_REQ,
++		SMS_ROUTING_RELEASE,
++		cd->subscription_nr,	/* Subscription number */
++		0x00,			/* Subscription type */
++		0x00,			/* Fillers */
++		0x00,
++		0x00			/*No subblocks*/
++	};
++
++	if (cbd =3D=3D NULL)
++		return;
++
++	if (cd =3D=3D NULL)
++		goto error;
++
++	if (cd->version.major =3D=3D 9 && cd->version.minor >=3D 1) {
++		if (g_isi_client_send_with_timeout(cd->client, msg, sizeof(msg),
++					CBS_TIMEOUT, clear_topics_resp_cb,
++					cbd, g_free))
++			return;
++
++		CALLBACK_WITH_FAILURE(cb, data);
++	} else {
++		/*
++		 * TODO: This should probably be put first in
++		 *       the function to avoid unecessary initialization
++		 *       and allocation.  Fix when the version handling
++		 *       issue has been solved.
++		 */
++		DBG("Not implemented");
++		CALLBACK_WITH_SUCCESS(cb, data);
++	}
++error:
++	g_free(cbd);
++}
++
++static void routing_ind_cb(const GIsiMessage *msg, void *data)
++{
++	struct ofono_cbs *cbs =3D data;
++	struct cbs_data *cd =3D ofono_cbs_get_data(cbs);
++	struct cbs_info info;
++	size_t len =3D sizeof(struct cbs_info);
++	GIsiSubBlockIter iter;
++	size_t subblock_len;
++	uint8_t sbcount;
++	uint8_t *pdu_data;
++
++	DBG("");
++
++	if (cd =3D=3D NULL || !check_response_status(msg, SMS_CB_ROUTING_IND))
++		return;
++
++	g_isi_msg_data_get_byte(msg, 1, &sbcount);
++
++	for (g_isi_sb_iter_init_full(&iter, msg, 2, TRUE, sbcount);
++		g_isi_sb_iter_is_valid(&iter);
++		g_isi_sb_iter_next(&iter)) {
++
++		if (g_isi_sb_iter_get_id(&iter) !=3D SMS_GSM_CB_MESSAGE)
++			continue;
++
++		subblock_len =3D g_isi_sb_iter_get_len(&iter) - 4;
++
++		if (subblock_len > len &&
++			g_isi_sb_iter_get_data(&iter, (void **)&pdu_data, 4)) {
++			unsigned int i;
++
++			for (i =3D 0; i < len; i++) {
++				if (i < 6) /*account for filler in pos 6*/
++					info.pdu[i] =3D pdu_data[i];
++				else
++					info.pdu[i] =3D pdu_data[i+1];
++			}
++
++			DBG("CBS Message received");
++			ofono_cbs_notify(cbs, info.pdu, len);
++			return;
++		} else {
++			DBG("Error reading CBS message");
++			return;
++		}
++	}
+ }
+ =
+
+ static void routing_ntf_cb(const GIsiMessage *msg, void *data)
+@@ -131,40 +410,70 @@ static void routing_ntf_cb(const GIsiMessage *msg, vo=
+id *data)
+ static void routing_resp_cb(const GIsiMessage *msg, void *data)
+ {
+ 	struct ofono_cbs *cbs =3D data;
++
++	ofono_cbs_register(cbs);
++}
++
++static void reachable_cb(const GIsiMessage *msg, void *data)
++{
++	struct ofono_cbs *cbs =3D data;
+ 	struct cbs_data *cd =3D ofono_cbs_get_data(cbs);
++	uint8_t *new_msg;
+ =
+
+-	if (cd =3D=3D NULL || !check_response_status(msg, SMS_GSM_CB_ROUTING_RESP=
+))
++	if (cd =3D=3D NULL)
+ 		return;
+ =
+
+-	g_isi_client_ntf_subscribe(cd->client, SMS_GSM_CB_ROUTING_NTF,
+-					routing_ntf_cb, cbs);
++	ISI_VERSION_DBG(msg);
++
++	cd->version.major =3D g_isi_msg_version_major(msg);
++	cd->version.minor =3D g_isi_msg_version_minor(msg);
++
++	if (cd->version.major =3D=3D 9 && cd->version.minor >=3D 1) {
++		uint8_t t_msg[] =3D {
++			SMS_CB_ROUTING_REQ,
++			SMS_ROUTING_QUERY_ALL,
++			0x00,	/* New subscription*/
++			0x00,	/* Subscription type */
++			0x00,	/* Fillers */
++			0x00,
++			0x00	/* No subblocks*/
++		};
++		new_msg =3D g_try_malloc0(sizeof(t_msg));
++		memmove(new_msg, t_msg, sizeof(t_msg));
++	} else {
++		uint8_t t_msg[] =3D {
++			SMS_GSM_CB_ROUTING_REQ,
++			SMS_ROUTING_SET,
++			SMS_GSM_ROUTING_MODE_ALL,
++			SMS_CB_NOT_ALLOWED_IDS_LIST,
++			0x00,  /* Subject count */
++			0x00,  /* Language count */
++			0x00,  /* CB range */
++			0x00,  /* Subject list MSBS */
++			0x00,  /* Subject list LSBS */
++			0x00   /* Languages */
++		};
++		new_msg =3D g_try_malloc0(sizeof(t_msg));
++		memmove(new_msg, t_msg, sizeof(t_msg));
++	}
+ =
+
+-	ofono_cbs_register(cbs);
++	g_isi_client_send(cd->client, new_msg, sizeof(msg),
++				routing_resp_cb, cbs, NULL);
++
++	g_free(new_msg);
+ }
+ =
+
+ static int isi_cbs_probe(struct ofono_cbs *cbs, unsigned int vendor,
+ 				void *user)
+ {
+ 	GIsiModem *modem =3D user;
+-	struct cbs_data *cd;
+-
+-	const uint8_t msg[] =3D {
+-		SMS_GSM_CB_ROUTING_REQ,
+-		SMS_ROUTING_SET,
+-		SMS_GSM_ROUTING_MODE_ALL,
+-		SMS_CB_NOT_ALLOWED_IDS_LIST,
+-		0x00,  /* Subject count */
+-		0x00,  /* Language count */
+-		0x00,  /* CB range */
+-		0x00,  /* Subject list MSBS */
+-		0x00,  /* Subject list LSBS */
+-		0x00   /* Languages */
+-	};
++	struct cbs_data *cd =3D g_try_new0(struct cbs_data, 1);
+ =
+
+-	cd =3D g_try_new0(struct cbs_data, 1);
+ 	if (cd =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
++	cd->subscription_nr =3D 0;
++
+ 	cd->client =3D g_isi_client_create(modem, PN_SMS);
+ 	if (cd->client =3D=3D NULL) {
+ 		g_free(cd);
+@@ -173,34 +482,56 @@ static int isi_cbs_probe(struct ofono_cbs *cbs, unsig=
+ned int vendor,
+ =
+
+ 	ofono_cbs_set_data(cbs, cd);
+ =
+
+-	if (g_isi_client_send(cd->client, msg, sizeof(msg),
+-				routing_resp_cb, cbs, NULL))
+-		return 0;
++	g_isi_client_ind_subscribe(cd->client, SMS_CB_ROUTING_IND,
++			routing_ind_cb, cbs);
++
++	g_isi_client_ntf_subscribe(cd->client, SMS_GSM_CB_ROUTING_NTF,
++			routing_ntf_cb, cbs);
+ =
+
+-	return -errno;
++	g_isi_client_verify(cd->client, reachable_cb, cbs, NULL);
++
++	return 0;
+ }
+ =
+
+ static void isi_cbs_remove(struct ofono_cbs *cbs)
+ {
+ 	struct cbs_data *cd =3D ofono_cbs_get_data(cbs);
+-	const uint8_t msg[] =3D {
+-		SMS_GSM_CB_ROUTING_REQ,
+-		SMS_ROUTING_RELEASE,
+-		SMS_GSM_ROUTING_MODE_ALL,
+-		SMS_CB_NOT_ALLOWED_IDS_LIST,
+-		0x00,  /* Subject count */
+-		0x00,  /* Language count */
+-		0x00,  /* CB range */
+-		0x00,  /* Subject list MSBS */
+-		0x00,  /* Subject list LSBS */
+-		0x00   /* Languages */
+-	};
+-
+-	ofono_cbs_set_data(cbs, NULL);
++	uint8_t *msg;
+ =
+
+ 	if (cd =3D=3D NULL)
+ 		return;
+ =
+
++	if (cd->version.major =3D=3D 9 && cd->version.minor >=3D 1) {
++		uint8_t t_msg[] =3D {
++			SMS_CB_ROUTING_REQ,
++			SMS_ROUTING_RELEASE,
++			cd->subscription_nr,	/* Subscription number */
++			0x00,			/* Subscription type */
++			0x00,			/* Fillers */
++			0x00,
++			0x00			/* No subblocks*/
++		};
++		msg =3D g_try_malloc0(sizeof(t_msg));
++		memmove(msg, t_msg, sizeof(t_msg));
++	} else {
++		uint8_t t_msg[] =3D {
++			SMS_GSM_CB_ROUTING_REQ,
++			SMS_ROUTING_RELEASE,
++			SMS_GSM_ROUTING_MODE_ALL,
++			SMS_CB_NOT_ALLOWED_IDS_LIST,
++			0x00,  /* Subject count */
++			0x00,  /* Language count */
++			0x00,  /* CB range */
++			0x00,  /* Subject list MSBS */
++			0x00,  /* Subject list LSBS */
++			0x00   /* Languages */
++		};
++		msg =3D g_try_malloc0(sizeof(t_msg));
++		memmove(msg, t_msg, sizeof(t_msg));
++	}
++	ofono_cbs_set_data(cbs, NULL);
++
++
+ 	/*
+ 	 * Send a promiscuous routing release, so as not to hog
+ 	 * resources unnecessarily after being removed.
+@@ -209,6 +540,7 @@ static void isi_cbs_remove(struct ofono_cbs *cbs)
+ =
+
+ 	g_isi_client_destroy(cd->client);
+ 	g_free(cd);
++	g_free(msg);
+ }
+ =
+
+ static struct ofono_cbs_driver driver =3D {
+diff --git a/drivers/isimodem/debug.c b/drivers/isimodem/debug.c
+index 1fd2226..ec3f3b3 100644
+--- a/drivers/isimodem/debug.c
++++ b/drivers/isimodem/debug.c
+@@ -449,6 +449,9 @@ const char *sms_message_id_name(enum sms_message_id val=
+ue)
+ 		_(SMS_SETTINGS_UPDATE_RESP);
+ 		_(SMS_SETTINGS_READ_REQ);
+ 		_(SMS_SETTINGS_READ_RESP);
++		_(SMS_CB_ROUTING_REQ);
++		_(SMS_CB_ROUTING_RESP);
++		_(SMS_CB_ROUTING_IND);
+ 		_(SMS_RECEIVED_MSG_REPORT_REQ);
+ 		_(SMS_RECEIVED_MSG_REPORT_RESP);
+ 		_(SMS_RECEIVE_MESSAGE_REQ);
+@@ -473,6 +476,7 @@ const char *sms_subblock_name(enum sms_subblock value)
  		_(SMS_GSM_TPDU);
-+		_(SMS_GSM_TPDU_25);
-+		_(SMS_GSM_ROUTE_INFO);
-+		_(SMS_GSM_PARAMETERS);
+ 		_(SMS_GSM_TPDU_25);
+ 		_(SMS_GSM_ROUTE_INFO);
++		_(SMS_GSM_CBS_SUBSCRIPTION);
+ 		_(SMS_GSM_PARAMETERS);
  		_(SMS_COMMON_DATA);
  		_(SMS_ADDRESS);
- 	}
-@@ -1224,6 +1278,8 @@ static const char *res_to_name(uint8_t res, uint8_t i=
-d)
- 		return gss_message_id_name(id);
- 	case PN_GPDS:
- 		return gpds_message_id_name(id);
-+	case PN_UICC:
-+		return uicc_message_id_name(id);
- 	}
- 	return "UNKNOWN";
- }
-diff --git a/drivers/isimodem/debug.h b/drivers/isimodem/debug.h
-index db01f04..5648f7a 100644
---- a/drivers/isimodem/debug.h
-+++ b/drivers/isimodem/debug.h
-@@ -48,6 +48,7 @@ const char *mce_message_id_name(enum mce_message_id value=
-);
- const char *mce_modem_state_name(enum mce_modem_state value);
- const char *mce_status_info(enum mce_status_info value);
- =
-
-+const char *uicc_message_id_name(enum uicc_message_id value);
- const char *uicc_subblock_name(uint8_t value);
- const char *uicc_status_name(uint8_t value);
- =
-
 diff --git a/drivers/isimodem/sms.h b/drivers/isimodem/sms.h
-index cbfb124..a51adf2 100644
+index a51adf2..03db354 100644
 --- a/drivers/isimodem/sms.h
 +++ b/drivers/isimodem/sms.h
-@@ -55,6 +55,7 @@ enum sms_isi_cause {
- };
- =
-
- enum sms_isi_cause_type {
-+	SMS_CAUSE_TYPE_COMMON =3D 0x00,
- 	SMS_CAUSE_TYPE_GSM =3D 0x01,
- };
- =
-
-@@ -125,6 +126,15 @@ enum sms_message_id {
- 	SMS_GSM_CB_ROUTING_RESP =3D 0x0C,
- 	SMS_GSM_CB_ROUTING_NTF =3D 0x0D,
- 	SMS_MESSAGE_SEND_STATUS_IND =3D 0x22,
-+	SMS_SETTINGS_UPDATE_REQ =3D 0x30,
-+	SMS_SETTINGS_UPDATE_RESP =3D 0x31,
-+	SMS_SETTINGS_READ_REQ =3D  0x32,
-+	SMS_SETTINGS_READ_RESP =3D 0x33,
-+	SMS_RECEIVED_MSG_REPORT_REQ =3D 0x3B,
-+	SMS_RECEIVED_MSG_REPORT_RESP =3D 0x3C,
-+	SMS_RECEIVE_MESSAGE_REQ =3D 0x41,
-+	SMS_RECEIVE_MESSAGE_RESP =3D 0x42,
-+	SMS_RECEIVED_MSG_IND =3D 0x43,
- 	SMS_COMMON_MESSAGE =3D 0xF0
- };
- =
-
-@@ -138,6 +148,9 @@ enum sms_subblock {
- 	SMS_GSM_ROUTING =3D 0x0D,
- 	SMS_GSM_CB_MESSAGE =3D 0x0E,
+@@ -130,6 +130,9 @@ enum sms_message_id {
+ 	SMS_SETTINGS_UPDATE_RESP =3D 0x31,
+ 	SMS_SETTINGS_READ_REQ =3D  0x32,
+ 	SMS_SETTINGS_READ_RESP =3D 0x33,
++	SMS_CB_ROUTING_REQ =3D 0x34,
++	SMS_CB_ROUTING_RESP =3D 0x35,
++	SMS_CB_ROUTING_IND =3D 0x36,
+ 	SMS_RECEIVED_MSG_REPORT_REQ =3D 0x3B,
+ 	SMS_RECEIVED_MSG_REPORT_RESP =3D 0x3C,
+ 	SMS_RECEIVE_MESSAGE_REQ =3D 0x41,
+@@ -150,6 +153,7 @@ enum sms_subblock {
  	SMS_GSM_TPDU =3D 0x11,
-+	SMS_GSM_TPDU_25 =3D 0x001C,
-+	SMS_GSM_ROUTE_INFO =3D 0x0023,
-+	SMS_GSM_PARAMETERS =3D 0x0031,
+ 	SMS_GSM_TPDU_25 =3D 0x001C,
+ 	SMS_GSM_ROUTE_INFO =3D 0x0023,
++	SMS_GSM_CBS_SUBSCRIPTION =3D 0x002D,
+ 	SMS_GSM_PARAMETERS =3D 0x0031,
  	SMS_COMMON_DATA =3D 0x80,
  	SMS_ADDRESS =3D 0x82,
- };
-@@ -175,6 +188,7 @@ enum sms_address_type {
- 	SMS_UNICODE_ADDRESS =3D 0x00,
- 	SMS_GSM_0340_ADDRESS =3D 0x01,
- 	SMS_GSM_0411_ADDRESS =3D 0x02,
-+	SMS_SMSC_ADDRESS =3D 0x02
- };
- =
-
- enum sms_sender_type {
-@@ -192,6 +206,26 @@ enum sms_subject_list_type {
- 	SMS_CB_NOT_ALLOWED_IDS_LIST =3D 0x01
+@@ -160,7 +164,8 @@ enum sms_routing_command {
+ 	SMS_ROUTING_SET =3D 0x01,
+ 	SMS_ROUTING_SUSPEND =3D 0x02,
+ 	SMS_ROUTING_RESUME =3D 0x03,
+-	SMS_ROUTING_UPDATE =3D 0x04
++	SMS_ROUTING_UPDATE =3D 0x04,
++	SMS_ROUTING_QUERY_ALL =3D 0x06
  };
  =
 
-+enum sms_reception_command {
-+	SMS_RECEPTION_ACTIVATE =3D 0x01,
-+	SMS_RECEPTION_DEACTIVATE =3D 0x02
-+};
-+
-+enum sms_reception_status {
-+	SMS_RECEPTION_ACTIVE =3D 0x01,
-+	SMS_RECEPTION_INACTIVE =3D 0x02
-+};
-+
-+enum sms_setting_type {
-+	SMS_SETTING_TYPE_ROUTE =3D 0x02
-+};
-+
-+enum sms_route_priority {
-+	SMS_ROUTE_NOT_AVAILABLE =3D 0x00,
-+	SMS_ROUTE_PRIORITY_1 =3D 0x01,
-+	SMS_ROUTE_PRIORITY_2 =3D 0x02
-+};
-+
- #ifdef __cplusplus
- };
- #endif
+ enum sms_route_preference {
 -- =
 
 1.7.3.5
 
 
---===============4304611578938010201==--
+--===============4873158656058574983==--
 
