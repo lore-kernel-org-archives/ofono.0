@@ -1,39 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============5802455178318161648=="
+Content-Type: multipart/mixed; boundary="===============2194038364895686236=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/2] Disable command echo for hfp emulators
-Date: Wed, 23 Feb 2011 09:31:52 -0600
-Message-ID: <4D652868.4080600@gmail.com>
-In-Reply-To: <1298467153-2426-1-git-send-email-frederic.dalleau@linux.intel.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH 1/3] emulator: add indicator support API
+Date: Wed, 23 Feb 2011 16:48:48 +0100
+Message-ID: <1298476130-8969-2-git-send-email-frederic.danis@linux.intel.com>
+In-Reply-To: <1298476130-8969-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5802455178318161648==
+--===============2194038364895686236==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+---
+ include/emulator.h |   11 +++++++++++
+ 1 files changed, 11 insertions(+), 0 deletions(-)
 
-On 02/23/2011 07:19 AM, Fr=C3=A9d=C3=A9ric Dalleau wrote:
-> This is the default asked by HSP and HFP specifications, which
-> is the opposite of what v250 is asking.
-> =
+diff --git a/include/emulator.h b/include/emulator.h
+index 12477f0..71b7c24 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -28,6 +28,14 @@ extern "C" {
+ =
 
-> Fr=C3=A9d=C3=A9ric Dalleau (2):
->   gatchat: Add function to enable/disable echo
->   emulator: Disable echo for hfp emulators
-> =
+ #include <ofono/types.h>
+ =
 
->  gatchat/gatserver.c |   10 ++++++++++
->  gatchat/gatserver.h |    1 +
->  src/emulator.c      |    2 ++
->  3 files changed, 13 insertions(+), 0 deletions(-)
++#define OFONO_EMULATOR_IND_BATTERY "battchg"
++#define OFONO_EMULATOR_IND_CALL "call"
++#define OFONO_EMULATOR_IND_CALLHELD "callheld"
++#define OFONO_EMULATOR_IND_CALLSETUP "callsetup"
++#define OFONO_EMULATOR_IND_ROAMING "roam"
++#define OFONO_EMULATOR_IND_SERVICE "service"
++#define OFONO_EMULATOR_IND_SIGNAL "signal"
++
+ struct ofono_emulator;
+ struct ofono_emulator_request;
+ =
 
-Both patches have been applied, thanks.
+@@ -82,6 +90,9 @@ const char *ofono_emulator_request_get_raw(struct ofono_e=
+mulator_request *req);
+ enum ofono_emulator_request_type ofono_emulator_request_get_type(
+ 					struct ofono_emulator_request *req);
+ =
 
-Regards,
--Denis
++void ofono_emulator_set_indicator(struct ofono_emulator *em,
++					const char *name, int value);
++
+ #ifdef __cplusplus
+ }
+ #endif
+-- =
 
---===============5802455178318161648==--
+1.7.1
+
+
+--===============2194038364895686236==--
 
