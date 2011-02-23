@@ -1,142 +1,102 @@
-Content-Type: multipart/mixed; boundary="===============6519023171813655851=="
+Content-Type: multipart/mixed; boundary="===============0430109562696257510=="
 MIME-Version: 1.0
-From: Miia Leinonen <miia.leinonen@tieto.com>
-Subject: [PATCH] atmodem: Add MBM/STE quirk for SIM record update
-Date: Wed, 23 Feb 2011 10:09:23 +0200
-Message-ID: <1298448563-5033-1-git-send-email-miia.leinonen@tieto.com>
+From: Li, Zhigang <zhigang.li@intel.com>
+Subject: RE: [PATCH] Enable hs 2330 MBM modem
+Date: Wed, 23 Feb 2011 16:50:26 +0800
+Message-ID: <B32E3D5F1713054290B4FF257B89C51A29FA8D5B06@shsmsx502.ccr.corp.intel.com>
+In-Reply-To: <B32E3D5F1713054290B4FF257B89C51A29E8E95640@shsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6519023171813655851==
+--===============0430109562696257510==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Fixed the <data> string to be set inside quotes for STE/MBM.
+Hi Marcel,
 
----
-
-Hi,
-
-This fix has been tested with STE modem only due the lack of MBM HW.
-
-Would it be possible that someone checks this with MBM modem? The problem i=
-s =
-
-likely to appear also there - therefore OFONO_VENDOR_MBM used. Could fix th=
-is =
-
-also to cover all modems, but that might cause some backward compatibility =
-
-issues.
-
-BR,
-Miia
+Base on your request, I get the lsusb -v result, according the interface re=
+sult, the "Data Modem" is ok, besides, my test result also ok.
+In fact, I tried "Module Data Modem", "Broadband Module Data Modem" all are=
+ don't work.
 
 
- drivers/atmodem/sim.c |   59 ++++++++++++++++++++++++++++++++++++++-------=
----
- 1 files changed, 46 insertions(+), 13 deletions(-)
+> looks wrong to me. Please get the lsusb -v out for this modem where it
+> lists the interface strings.
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index d9c0d8d..7a0100a 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -332,17 +332,34 @@ static void at_sim_update_record(struct ofono_sim *si=
-m, int fileid,
- {
- 	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
--	char *buf =3D g_try_new(char, 36 + length * 2);
-+	char *buf;
- 	int len, ret;
- =
+Interface Descriptor:
+      bLength                 9
+      bDescriptorType         4
+      bInterfaceNumber        1
+      bAlternateSetting       0
+      bNumEndpoints           1
+      bInterfaceClass         2 Communications
+      bInterfaceSubClass      2 Abstract (modem)
+      bInterfaceProtocol      1 AT-commands (v.25ter)
+      iInterface              6 HP hs2330 Mobile Broadband Module| Data Mod=
+em
+      CDC Header:
+        bcdCDC               1.10
+      CDC Union:
+        bMasterInterface        1
+        bSlaveInterface         2 =
 
--	if (buf =3D=3D NULL)
--		goto error;
-+	if (sd->vendor =3D=3D OFONO_VENDOR_MBM) {
-+		buf =3D g_try_new(char, 36 + 2 + length * 2);
- =
+      CDC Call Management:
+        bmCapabilities       0x03
+          call management
+          use DataInterface
+        bDataInterface          2
+      CDC ACM:
+        bmCapabilities       0x07
+          sends break
+          line coding and serial state
+          get/set/clear comm features
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x8a  EP 10 IN
+        bmAttributes            3
+          Transfer Type            Interrupt
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0010  1x 16 bytes
+        bInterval               8
+    Interface Descriptor:
+      bLength                 9
+      bDescriptorType         4
+      bInterfaceNumber        2
+      bAlternateSetting       0
+      bNumEndpoints           2
+      bInterfaceClass        10 CDC Data
+      bInterfaceSubClass      0 Unused
+      bInterfaceProtocol      0 =
 
--	len =3D sprintf(buf, "AT+CRSM=3D220,%i,%i,4,%i,", fileid,
--			record, length);
-+		if (buf =3D=3D NULL)
-+			goto error;
- =
+      iInterface              7 HP hs2330 Mobile Broadband Module| Data Mod=
+em
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x01  EP 1 OUT
+        bmAttributes            2
+          Transfer Type            Bulk
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0200  1x 512 bytes
+        bInterval               0
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x81  EP 1 IN
+        bmAttributes            2
+          Transfer Type            Bulk
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0200  1x 512 bytes
+        bInterval               0
 
--	for (; length; length--)
--		len +=3D sprintf(buf + len, "%02hhX", *value++);
-+		len =3D sprintf(buf, "AT+CRSM=3D220,%i,%i,4,%i,\"", fileid,
-+					record, length);
-+
-+		for (; length; length--)
-+			len +=3D sprintf(buf + len, "%02hhX", *value++);
-+
-+		sprintf(buf + len, "\"");
-+	} else {
-+		buf =3D g_try_new(char, 36 + length * 2);
-+
-+		if (buf =3D=3D NULL)
-+			goto error;
-+
-+		len =3D sprintf(buf, "AT+CRSM=3D220,%i,%i,4,%i,", fileid,
-+				record, length);
-+
-+		for (; length; length--)
-+			len +=3D sprintf(buf + len, "%02hhX", *value++);
-+	}
- =
-
- 	ret =3D g_at_chat_send(sd->chat, buf, crsm_prefix,
- 				at_crsm_update_cb, cbd, g_free);
-@@ -364,16 +381,32 @@ static void at_sim_update_cyclic(struct ofono_sim *si=
-m, int fileid,
- {
- 	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
--	char *buf =3D g_try_new(char, 36 + length * 2);
-+	char *buf;
- 	int len, ret;
- =
-
--	if (buf =3D=3D NULL)
--		goto error;
-+	if (sd->vendor =3D=3D OFONO_VENDOR_MBM) {
-+		buf =3D g_try_new(char, 36 + 2 + length * 2);
- =
-
--	len =3D sprintf(buf, "AT+CRSM=3D220,%i,0,3,%i,", fileid, length);
-+		if (buf =3D=3D NULL)
-+			goto error;
- =
-
--	for (; length; length--)
--		len +=3D sprintf(buf + len, "%02hhX", *value++);
-+		len =3D sprintf(buf, "AT+CRSM=3D220,%i,0,3,%i,\"", fileid, length);
-+
-+		for (; length; length--)
-+			len +=3D sprintf(buf + len, "%02hhX", *value++);
-+
-+		sprintf(buf + len, "\"");
-+	} else {
-+		buf =3D g_try_new(char, 36 + length * 2);
-+
-+		if (buf =3D=3D NULL)
-+			goto error;
-+
-+		len =3D sprintf(buf, "AT+CRSM=3D220,%i,0,3,%i,", fileid, length);
-+
-+		for (; length; length--)
-+			len +=3D sprintf(buf + len, "%02hhX", *value++);
-+	}
- =
-
- 	ret =3D g_at_chat_send(sd->chat, buf, crsm_prefix,
- 				at_crsm_update_cb, cbd, g_free);
--- =
-
-1.7.1
+thanks
+zhigang
 
 
---===============6519023171813655851==--
+--===============0430109562696257510==--
 
