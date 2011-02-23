@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4008584563710404772=="
+Content-Type: multipart/mixed; boundary="===============7903922680628848172=="
 MIME-Version: 1.0
 From: Andreas Westin <andreas.westin@stericsson.com>
-Subject: [PATCH v2 01/18] gisi: pipe and pep for wgmodem2.5
-Date: Wed, 23 Feb 2011 12:43:12 +0100
-Message-ID: <7fda09e84d79e3728cecd7bfa6b973e99532327b.1298460572.git.andreas.westin@stericsson.com>
+Subject: [PATCH v2 03/18] plugins: add plugin for u8500
+Date: Wed, 23 Feb 2011 12:43:14 +0100
+Message-ID: <6791487b6a0b10532aaa9f0bae8215471c989c87.1298460572.git.andreas.westin@stericsson.com>
 In-Reply-To: <cover.1298460572.git.andreas.westin@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4008584563710404772==
+--===============7903922680628848172==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,891 +16,750 @@ Content-Transfer-Encoding: quoted-printable
 From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
 
 ---
- gisi/message.c |    8 ++
- gisi/message.h |    1 +
- gisi/modem.c   |   20 ++++
- gisi/modem.h   |    1 +
- gisi/pep.c     |  330 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am     |    3 +
+ plugins/u8500.c |  708 +++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- gisi/pep.h     |    6 +
- gisi/pipe.c    |  180 ++++++++++++++++++++++++++++--
- gisi/pipe.h    |   17 +++
- 8 files changed, 551 insertions(+), 12 deletions(-)
+ 2 files changed, 711 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/u8500.c
 
-diff --git a/gisi/message.c b/gisi/message.c
-index 8f4fe5a..9d00108 100644
---- a/gisi/message.c
-+++ b/gisi/message.c
-@@ -65,6 +65,14 @@ uint8_t g_isi_msg_resource(const GIsiMessage *msg)
- 	return msg->addr->spn_resource;
- }
+diff --git a/Makefile.am b/Makefile.am
+index 7bd7f4f..aa4f3f9 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -144,6 +144,9 @@ builtin_sources +=3D plugins/isiusb.c
  =
 
-+uint8_t g_isi_msg_device(const GIsiMessage *msg)
-+{
-+	if (msg =3D=3D NULL || msg->addr =3D=3D NULL)
-+		return 0;
+ builtin_modules +=3D n900
+ builtin_sources +=3D plugins/n900.c plugins/nokia-gpio.h plugins/nokia-gpi=
+o.c
 +
-+	return msg->addr->spn_dev;
-+}
-+
- uint16_t g_isi_msg_object(const GIsiMessage *msg)
- {
- 	if (msg =3D=3D NULL || msg->addr =3D=3D NULL)
-diff --git a/gisi/message.h b/gisi/message.h
-index 95348f8..f34ce57 100644
---- a/gisi/message.h
-+++ b/gisi/message.h
-@@ -52,6 +52,7 @@ int g_isi_msg_version_minor(const GIsiMessage *msg);
- int g_isi_msg_error(const GIsiMessage *msg);
- const char *g_isi_msg_strerror(const GIsiMessage *msg);
- uint8_t g_isi_msg_resource(const GIsiMessage *msg);
-+uint8_t g_isi_msg_device(const GIsiMessage *msg);
- uint16_t g_isi_msg_object(const GIsiMessage *msg);
++builtin_modules +=3D u8500
++builtin_sources +=3D plugins/u8500.c
+ endif
  =
 
- uint8_t g_isi_msg_id(const GIsiMessage *msg);
-diff --git a/gisi/modem.c b/gisi/modem.c
-index f745bb2..7657bd1 100644
---- a/gisi/modem.c
-+++ b/gisi/modem.c
-@@ -519,6 +519,26 @@ GIsiModem *g_isi_modem_create_by_name(const char *name)
- 	return g_isi_modem_create(if_nametoindex(name));
- }
- =
-
-+guint g_isi_modem_add_to_watch(GIsiModem *modem, int fd)
-+{
-+	GIOChannel *channel;
-+	guint watch;
-+
-+	if (modem =3D=3D NULL || fd < 0)
-+		return 0;
-+
-+	channel =3D g_io_channel_unix_new(fd);
-+	g_io_channel_set_close_on_unref(channel, TRUE);
-+	g_io_channel_set_encoding(channel, NULL, NULL);
-+	g_io_channel_set_buffered(channel, FALSE);
-+	watch =3D g_io_add_watch(channel,
-+				G_IO_IN|G_IO_ERR|G_IO_HUP|G_IO_NVAL,
-+				isi_callback, modem);
-+	g_io_channel_unref(channel);
-+
-+	return watch;
-+}
-+
- void *g_isi_modem_set_userdata(GIsiModem *modem, void *data)
- {
- 	void *old;
-diff --git a/gisi/modem.h b/gisi/modem.h
-index 0397a87..83ba92c 100644
---- a/gisi/modem.h
-+++ b/gisi/modem.h
-@@ -48,6 +48,7 @@ typedef void (*GIsiDebugFunc)(const char *fmt, ...);
- GIsiModem *g_isi_modem_create(unsigned index);
- GIsiModem *g_isi_modem_create_by_name(const char *name);
- void g_isi_modem_destroy(GIsiModem *modem);
-+guint g_isi_modem_add_to_watch(GIsiModem *modem, int fd);
- =
-
- unsigned g_isi_modem_index(GIsiModem *modem);
- =
-
-diff --git a/gisi/pep.c b/gisi/pep.c
-index c82dc39..98b5ee0 100644
---- a/gisi/pep.c
-+++ b/gisi/pep.c
-@@ -3,6 +3,7 @@
-  *  oFono - Open Source Telephony
-  *
-  *  Copyright (C) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
+ if ATMODEM
+diff --git a/plugins/u8500.c b/plugins/u8500.c
+new file mode 100644
+index 0000000..78e1a97
+--- /dev/null
++++ b/plugins/u8500.c
+@@ -0,0 +1,708 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010  Nokia Corporation and/or its subsidiary(-ies).
 + *  Copyright (C) ST-Ericsson SA 2011.
-  *
-  *  This program is free software; you can redistribute it and/or modify
-  *  it under the terms of the GNU General Public License version 2 as
-@@ -30,10 +31,18 @@
- #include <unistd.h>
- #include <glib.h>
- =
-
-+#include "common.h"
- #include "phonet.h"
- #include "socket.h"
-+#include "modem.h"
-+#include "client.h"
-+#include "server.h"
- #include "pep.h"
- =
-
-+#define PN_PIPE					0xD9
-+#define PN_PIPE_INVALID_HANDLE	0xFF
-+#define PN_OBJ_PEP_GPRS			0x30
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
- struct _GIsiPEP {
- 	GIsiPEPCallback ready;
- 	void *opaque;
-@@ -42,6 +51,88 @@ struct _GIsiPEP {
- 	uint16_t handle;
- };
- =
-
-+struct isi_pipe_created_ind{
-+	uint8_t cmd;
-+	uint8_t pipe_handle;
-+	uint8_t n_sb;
-+	uint8_t sb_neg_fc;
-+	uint8_t sb_len;
-+	uint8_t tx_fc;
-+	uint8_t rx_fc;
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <stdio.h>
++#include <errno.h>
++#include <stdlib.h>
++#include <string.h>
++#include <glib.h>
++
++#include <gisi/netlink.h>
++#include <gisi/modem.h>
++#include <gisi/client.h>
++#include <gisi/message.h>
++#include <gisi/iter.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/devinfo.h>
++#include <ofono/phonebook.h>
++#include <ofono/netreg.h>
++#include <ofono/voicecall.h>
++#include <ofono/sms.h>
++#include <ofono/cbs.h>
++#include <ofono/sim.h>
++#include <ofono/ussd.h>
++#include <ofono/ssn.h>
++#include <ofono/call-forwarding.h>
++#include <ofono/call-settings.h>
++#include <ofono/call-barring.h>
++#include <ofono/call-meter.h>
++#include <ofono/radio-settings.h>
++#include <ofono/gprs.h>
++#include <ofono/gprs-context.h>
++
++#include "drivers/isimodem/isimodem.h"
++#include "drivers/isimodem/isiutil.h"
++#include "drivers/isimodem/mtc.h"
++#include "drivers/isimodem/debug.h"
++
++struct isi_data {
++	char const *ifname;
++	GIsiModem *modem;
++	GIsiClient *client;
++	GIsiPhonetNetlink *link;
++	enum GIsiPhonetLinkState linkstate;
++	unsigned interval;
++	int reported;
++	ofono_bool_t online;
++	struct isi_cb_data *online_cbd;
 +};
 +
-+struct isi_pep_resp {
-+	uint8_t pipe_handle;
-+	uint8_t error_code;
++struct devinfo_data {
++	GIsiClient *client;
 +};
 +
-+struct isi_pep_connect_req{
-+	uint8_t cmd;
-+	uint8_t pipe_handle;
-+	uint8_t state_after;
-+	uint8_t other_pep_type;
-+	uint8_t filler1;
-+	uint8_t filler2;
-+	uint8_t n_sb;
-+	uint8_t data_sb;
-+	uint8_t sb_len;
-+	uint8_t alignment;
-+	uint8_t filler;
-+};
-+
-+struct isi_pipe_enabled_ind{
-+	uint8_t cmd;
-+	uint8_t pipe_handle;
-+	uint8_t filler;
-+};
-+
-+
-+struct isi_pep_enable_req{
-+	uint8_t cmd;
-+	uint8_t pipe_handle;
-+	uint8_t filler;
-+};
-+
-+struct isi_pep_disconnect_req{
-+	uint8_t cmd;
-+	uint8_t pipe_handle;
-+	uint8_t filler;
-+};
-+
-+enum pn_flow_control {
-+	PN_NO_FLOW_CONTROL =3D		0x00,
-+	PN_LEGACY_FLOW_CONTROL =3D	0x01,
-+	PN_ONE_CREDIT_FLOW_CONTROL =3D	0x02,
-+	PN_MULTI_CREDIT_FLOW_CONTROL =3D	0x03,
-+};
-+
-+enum isi_pep_message_id {
-+	PNS_PEP_CONNECT_REQ =3D		0x40,
-+	PNS_PEP_CONNECT_RESP =3D		0x41,
-+	PNS_PEP_DISCONNECT_REQ =3D	0x42,
-+	PNS_PEP_DISCONNECT_RESP =3D	0x43,
-+	PNS_PEP_ENABLE_REQ =3D		0x46,
-+	PNS_PEP_ENABLE_RESP =3D		0x47,
-+	PNS_PIPE_CREATED_IND =3D		0x61,
-+	PNS_PIPE_ENABLED_IND =3D		0x64,
-+};
-+
-+enum isi_pep_sb_id {
-+	PN_PIPE_SB_NEGOTIATED_FC =3D	0x03,
-+	PN_PIPE_SB_ALIGNED_DATA =3D	0x06,
-+};
-+
-+enum isi_pep_type {
-+	PN_PEP_TYPE_COMMON
-+};
-+
-+enum pn_pep_state {	/* initial pep state */
-+	PN_PEP_DISABLE,
-+	PN_PEP_ENABLE,
-+};
-+
-+
-+static void g_isi_pep_disconnected(const GIsiMessage *msg, void *data);
- =
-
- static gboolean g_isi_pep_callback(GIOChannel *channel, GIOCondition cond,
- 					gpointer data)
-@@ -153,3 +244,242 @@ char *g_isi_pep_get_ifname(const GIsiPEP *pep, char *=
-ifname)
- =
-
- 	return if_indextoname(g_isi_pep_get_ifindex(pep), ifname);
- }
-+
-+static void g_isi_pep_connected(const GIsiMessage *msg, void *data)
++static gboolean check_response_status(const GIsiMessage *msg, uint8_t msgi=
+d)
 +{
-+	struct isi_pep_resp *resp;
-+	size_t len =3D sizeof(struct isi_pep_resp);
-+	GIsiPipe *pipe =3D data;
-+	GIsiClient *client =3D g_isi_pipe_client(pipe);
-+	struct isi_pipe_created_ind ind =3D {
-+		.cmd =3D PNS_PIPE_CREATED_IND,
-+		.pipe_handle =3D 0x00,
-+		.n_sb =3D 0x01,
-+		.sb_neg_fc =3D PN_PIPE_SB_NEGOTIATED_FC,
-+		.sb_len =3D 0x04,
-+		.tx_fc =3D PN_LEGACY_FLOW_CONTROL,
-+		.rx_fc =3D PN_LEGACY_FLOW_CONTROL,
-+	};
-+
 +	if (g_isi_msg_error(msg) < 0) {
-+		g_isi_pipe_set_error_timeout(pipe);
-+		return;
-+	}
-+
-+	if (g_isi_msg_id(msg) !=3D PNS_PEP_CONNECT_RESP)
-+		return;
-+
-+	if (!g_isi_msg_data_get_struct(msg, 0, (const void **) &resp, len))
-+		return;
-+
-+	if (resp->pipe_handle =3D=3D PN_PIPE_INVALID_HANDLE) {
-+		g_isi_pipe_handle_error(pipe, resp->error_code);
-+		return;
-+	}
-+
-+	g_isi_pipe_set_handle(pipe, resp->pipe_handle);
-+	ind.pipe_handle =3D resp->pipe_handle;
-+
-+	if (g_isi_request_sendto(g_isi_client_modem(client), msg->addr, &ind,
-+			sizeof(ind), G_ISI_CLIENT_DEFAULT_TIMEOUT,
-+			NULL, NULL, NULL) =3D=3D NULL) {
-+			g_isi_pipe_set_error_general(pipe);
-+			return;
-+	}
-+
-+	if (g_isi_msg_device(msg) =3D=3D PN_DEV_HOST) {
-+		g_isi_pep_connect(pipe, g_isi_pipe_get_handle(pipe),
-+					PN_DEV_MODEM);
-+		return;
-+	}
-+
-+	if (g_isi_pipe_get_enabling(pipe))
-+		g_isi_pipe_start(pipe);
-+
-+	g_isi_pipe_start_handler(pipe);
-+
-+}
-+
-+gboolean g_isi_pep_connect(GIsiPipe *pipe, uint8_t obj, uint8_t dev)
-+{
-+	GIsiClient *client =3D  g_isi_pipe_client(pipe);
-+	struct sockaddr_pn dst =3D {
-+		.spn_family =3D AF_PHONET,
-+	};
-+	struct isi_pep_connect_req msg =3D {
-+		.cmd =3D PNS_PEP_CONNECT_REQ,
-+		.pipe_handle =3D obj,
-+		.state_after =3D PN_PEP_DISABLE,
-+		.other_pep_type =3D PN_PEP_TYPE_COMMON,
-+		.filler1 =3D 0x00,
-+		.filler2 =3D 0x00,
-+		.n_sb =3D 0x00,
-+	};
-+
-+	if (dev =3D=3D PN_DEV_HOST) {
-+		dst.spn_dev =3D PN_DEV_HOST;
-+		dst.spn_resource =3D PN_PIPE;
-+		dst.spn_obj =3D obj;
-+	} else if (dev =3D=3D PN_DEV_MODEM) {
-+		dst.spn_dev =3D PN_DEV_MODEM;
-+		dst.spn_resource =3D g_isi_client_resource(client);
-+		dst.spn_obj =3D PN_OBJ_PEP_GPRS;
-+	} else
++		DBG("Error: %s", strerror(-g_isi_msg_error(msg)));
 +		return FALSE;
++	}
 +
-+	if (g_isi_request_sendto(g_isi_client_modem(client), &dst, &msg,
-+			sizeof(msg), G_ISI_CLIENT_DEFAULT_TIMEOUT,
-+			g_isi_pep_connected, pipe, NULL) =3D=3D NULL)
++	if (g_isi_msg_id(msg) !=3D msgid) {
++		DBG("Unexpected msg: %s",
++			mce_message_id_name(g_isi_msg_id(msg)));
 +		return FALSE;
-+
++	}
 +	return TRUE;
 +}
 +
-+static void g_isi_pep_enabled(const GIsiMessage *msg, void *data)
++static void report_powered(struct ofono_modem *modem, struct isi_data *isi,
++				ofono_bool_t powered)
 +{
-+	struct isi_pep_resp *resp;
-+	size_t len =3D sizeof(struct isi_pep_resp);
-+	GIsiPipe *pipe =3D data;
-+	GIsiClient *client =3D g_isi_pipe_client(pipe);
-+	struct isi_pipe_enabled_ind ind =3D {
-+		.cmd =3D PNS_PIPE_ENABLED_IND,
-+		.pipe_handle =3D g_isi_pipe_get_handle(pipe),
-+		.filler =3D 0x00,
-+	};
-+
-+	if (g_isi_msg_error(msg) < 0) {
-+		g_isi_pipe_set_error_timeout(pipe);
-+		return;
-+	}
-+
-+	if (g_isi_msg_id(msg) !=3D PNS_PEP_ENABLE_RESP)
++	if (powered =3D=3D isi->reported)
 +		return;
 +
-+	if (!g_isi_msg_data_get_struct(msg, 0, (const void **) &resp, len))
-+		return;
-+
-+	if (g_isi_pipe_get_handle(pipe) !=3D resp->pipe_handle) {
-+		g_isi_pipe_set_error_invalid_handle(pipe);
-+		return;
-+	}
-+
-+	g_isi_pipe_handle_error(pipe, resp->error_code);
-+	if (g_isi_pipe_get_error(pipe))
-+		return;
-+
-+	if (g_isi_request_sendto(g_isi_client_modem(client), msg->addr, &ind,
-+			sizeof(ind), G_ISI_CLIENT_DEFAULT_TIMEOUT,
-+			NULL, NULL, NULL) =3D=3D NULL) {
-+			g_isi_pipe_set_error_general(pipe);
-+			return;
-+	}
-+
-+	if (g_isi_msg_device(msg) =3D=3D PN_DEV_MODEM) {
-+		g_isi_pep_enable(pipe, PN_DEV_HOST);
-+		return;
-+	}
-+	g_isi_pipe_set_enabling(pipe, FALSE);
-+
-+	if (!g_isi_pipe_get_error(pipe))
-+		g_isi_pipe_set_enabled(pipe, TRUE);
++	isi->reported =3D powered;
++	ofono_modem_set_powered(modem, powered);
 +}
 +
-+void g_isi_pep_enable(GIsiPipe *pipe, uint8_t dev)
++static void report_online(struct isi_data *isi, ofono_bool_t online)
 +{
-+	GIsiClient *client =3D g_isi_pipe_client(pipe);
-+	struct sockaddr_pn dst =3D {
-+		.spn_family =3D AF_PHONET,
-+	};
-+	struct isi_pep_enable_req msg =3D {
-+		.cmd =3D PNS_PEP_ENABLE_REQ,
-+		.pipe_handle =3D g_isi_pipe_get_handle(pipe),
-+		.filler =3D 0x00,
-+	};
++	struct isi_cb_data *cbd =3D isi->online_cbd;
++	ofono_modem_online_cb_t cb =3D cbd->cb;
 +
-+	if (dev =3D=3D PN_DEV_HOST) {
-+		dst.spn_dev =3D PN_DEV_HOST;
-+		dst.spn_resource =3D PN_PIPE;
-+		dst.spn_obj =3D g_isi_pipe_get_handle(pipe);
-+	} else if (dev =3D=3D PN_DEV_MODEM) {
-+		dst.spn_dev =3D PN_DEV_MODEM;
-+		dst.spn_resource =3D g_isi_client_resource(client);
-+		dst.spn_obj =3D PN_OBJ_PEP_GPRS;
-+	} else
-+		return;
++	isi->online_cbd =3D NULL;
 +
-+	if (g_isi_request_sendto(g_isi_client_modem(client), &dst, &msg,
-+			sizeof(msg), G_ISI_CLIENT_DEFAULT_TIMEOUT,
-+			g_isi_pep_enabled, pipe, NULL) =3D=3D NULL)
-+		return;
++	if (isi->online =3D=3D online)
++		CALLBACK_WITH_SUCCESS(cb, cbd->data);
++	else
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
 +
-+	return;
++	g_free(cbd);
 +}
 +
-+static void g_isi_pep_disconnected(const GIsiMessage *msg, void *data)
++static void set_power_by_mce_state(struct ofono_modem *modem,
++					struct isi_data *isi, int mce_state)
 +{
-+	struct isi_pep_resp *resp;
-+	size_t len =3D sizeof(struct isi_pep_resp);
-+	GIsiPipe *pipe =3D data;
++	switch (mce_state) {
++	case MCE_POWER_OFF:
++		report_powered(modem, isi, FALSE);
++		break;
++	case MCE_NORMAL:
++		if (isi->online_cbd)
++			report_online(isi, mce_state =3D=3D MCE_NORMAL);
++	default:
++		report_powered(modem, isi, TRUE);
++	}
++}
 +
-+	if (g_isi_msg_error(msg) < 0) {
-+		g_isi_pipe_set_error_timeout(pipe);
++static void mce_state_ind_cb(const GIsiMessage *msg, void *data)
++{
++	struct ofono_modem *modem =3D data;
++	struct isi_data *isi =3D ofono_modem_get_data(modem);
++	uint8_t state;
++	uint8_t action;
++
++	if (isi =3D=3D NULL || g_isi_msg_id(msg) !=3D MCE_MODEM_STATE_IND)
 +		return;
++
++	if (!g_isi_msg_data_get_byte(msg, 0, &state) ||
++			!g_isi_msg_data_get_byte(msg, 1, &action))
++		return;
++
++	switch (action) {
++	case MCE_START:
++		DBG("target modem state: %s (0x%02X)",
++			mce_modem_state_name(state), state);
++		break;
++
++	case MCE_READY:
++		DBG("current modem state: %s (0x%02X)",
++			mce_modem_state_name(state), state);
++		set_power_by_mce_state(modem, isi, state);
++		break;
++	default:
++		break;
++	}
++}
++
++static void mce_rf_state_ind_cb(const GIsiMessage *msg, void *data)
++{
++	struct ofono_modem *modem =3D data;
++	struct isi_data *isi =3D ofono_modem_get_data(modem);
++	uint8_t state;
++	uint8_t action;
++
++	if (isi =3D=3D NULL || g_isi_msg_id(msg) !=3D MCE_RF_STATE_IND)
++		return;
++
++	if (!g_isi_msg_data_get_byte(msg, 0, &state) ||
++			!g_isi_msg_data_get_byte(msg, 1, &action))
++		return;
++
++	switch (action) {
++	case MCE_READY:
++		DBG("current rf state: %s (0x%02X)",
++			mce_rf_state_name(state), state);
++		if (isi->online_cbd)
++			report_online(isi, state);
++		break;
++	case MCE_START:
++	default:
++		break;
++	}
++}
++
++static void mce_query_cb(const GIsiMessage *msg, void *data)
++{
++	struct ofono_modem *modem =3D data;
++	struct isi_data *isi =3D ofono_modem_get_data(modem);
++	uint8_t current;
++	uint8_t target;
++
++	if (!check_response_status(msg, MCE_MODEM_STATE_QUERY_RESP))
++		return;
++
++	if (!g_isi_msg_data_get_byte(msg, 0, &current) ||
++			!g_isi_msg_data_get_byte(msg, 1, &target))
++		return;
++
++	DBG("Modem state: current=3D%s (0x%02X) target=3D%s (0x%02X)",
++		mce_modem_state_name(current), current,
++		mce_modem_state_name(target), target);
++
++	if (current =3D=3D target)
++		set_power_by_mce_state(modem, isi, current);
++}
++
++static gboolean bootstrap_current_state(gpointer user)
++{
++	struct ofono_modem *om =3D user;
++	struct isi_data *isi =3D ofono_modem_get_data(om);
++
++	const uint8_t req[] =3D {
++		MCE_MODEM_STATE_QUERY_REQ,
++		0x00, 0x00 /* Filler */
++	};
++	size_t len =3D sizeof(req);
++
++	g_isi_client_send(isi->client, req, len, mce_query_cb, om, NULL);
++
++	return FALSE;
++}
++
++static void reachable_cb(const GIsiMessage *msg, void *data)
++{
++	struct ofono_modem *om =3D data;
++	struct isi_data *isi =3D ofono_modem_get_data(om);
++
++	if (!g_isi_msg_error(msg) < 0)
++		return;
++
++	ISI_VERSION_DBG(msg);
++
++	g_isi_client_ind_subscribe(isi->client, MCE_MODEM_STATE_IND,
++					mce_state_ind_cb, om);
++
++	g_isi_client_ind_subscribe(isi->client, MCE_RF_STATE_IND,
++					mce_rf_state_ind_cb, om);
++
++	/*
++	 * FIXME: There is a theoretical race condition here:
++	 * g_isi_client_ind_subscribe() adds the actual message
++	 * sending for committing changes to subscriptions in idle
++	 * loop, which may or may not preserve ordering.  Thus, we
++	 * might miss a state indication if the bootstrap request ends
++	 * up being sent first.
++	 */
++	g_idle_add(bootstrap_current_state, om);
++}
++
++static void phonet_status_cb(GIsiModem *modem, enum GIsiPhonetLinkState st,
++				char const *ifname, void *data)
++{
++	struct ofono_modem *om =3D data;
++	struct isi_data *isi =3D ofono_modem_get_data(om);
++
++	DBG("Link %s (%u) is %s", isi->ifname, g_isi_modem_index(isi->modem),
++		st =3D=3D PN_LINK_REMOVED ? "removed" :
++		st =3D=3D PN_LINK_DOWN ? "down" : "up");
++
++	isi->linkstate =3D st;
++
++	if (st =3D=3D PN_LINK_UP)
++		g_isi_client_verify(isi->client, reachable_cb, om, NULL);
++	else if (st =3D=3D PN_LINK_DOWN)
++		set_power_by_mce_state(om, isi, MCE_POWER_OFF);
++}
++
++static int u8500_probe(struct ofono_modem *modem)
++{
++	const char *ifname =3D ofono_modem_get_string(modem, "Interface");
++	unsigned address =3D ofono_modem_get_integer(modem, "Address");
++	GIsiModem *isimodem;
++	GIsiClient *client =3D NULL;
++	GIsiPhonetNetlink *link =3D NULL;
++	struct isi_data *isi =3D NULL;
++
++	if (ifname =3D=3D NULL)
++		return -EINVAL;
++
++	DBG("(%p) with %s", modem, ifname);
++
++	isimodem =3D g_isi_modem_create_by_name(ifname);
++	if (isimodem =3D=3D NULL) {
++		DBG("Interface=3D%s: %s", ifname, strerror(errno));
++		return -errno;
 +	}
 +
-+	if (g_isi_msg_id(msg) !=3D PNS_PEP_DISCONNECT_RESP)
-+		return;
++	g_isi_modem_set_userdata(isimodem, modem);
 +
-+	if (!g_isi_msg_data_get_struct(msg, 0, (const void **) &resp, len))
-+		return;
++	if (getenv("OFONO_ISI_DEBUG"))
++		g_isi_modem_set_debug(isimodem, ofono_debug);
 +
-+	if (resp->pipe_handle =3D=3D PN_PIPE_INVALID_HANDLE) {
-+		g_isi_pipe_handle_error(pipe, resp->error_code);
-+		return;
-+	}
++	if (getenv("OFONO_ISI_TRACE"))
++		g_isi_modem_set_trace(isimodem, isi_trace);
 +
-+	if (g_isi_pipe_get_handle(pipe) !=3D resp->pipe_handle) {
-+		g_isi_pipe_set_error_invalid_handle(pipe);
-+		return;
-+	}
-+
-+	if (g_isi_msg_device(msg) =3D=3D PN_DEV_HOST) {
-+		g_isi_pep_disconnect(pipe, PN_DEV_MODEM);
-+		return;
-+	}
-+
-+	g_isi_pipe_server_destroy(pipe);
-+	g_isi_client_destroy(g_isi_pipe_client(pipe));
-+	g_free(pipe);
-+}
-+
-+
-+void g_isi_pep_disconnect(GIsiPipe *pipe, uint8_t dev)
-+{
-+	GIsiClient *client =3D g_isi_pipe_client(pipe);
-+	struct sockaddr_pn dst =3D {
-+		.spn_family =3D AF_PHONET,
-+	};
-+	struct isi_pep_disconnect_req msg =3D {
-+		.cmd =3D PNS_PEP_DISCONNECT_REQ,
-+		.pipe_handle =3D g_isi_pipe_get_handle(pipe),
-+		.filler =3D 0x00,
-+	};
-+
-+	if (dev =3D=3D PN_DEV_HOST) {
-+		dst.spn_dev =3D PN_DEV_HOST;
-+		dst.spn_resource =3D PN_PIPE;
-+		dst.spn_obj =3D g_isi_pipe_get_handle(pipe);
-+	} else if (dev =3D=3D PN_DEV_MODEM) {
-+		dst.spn_dev =3D PN_DEV_MODEM;
-+		dst.spn_resource =3D g_isi_client_resource(client);
-+		dst.spn_obj =3D PN_OBJ_PEP_GPRS;
-+	} else
-+		return;
-+
-+	if (g_isi_request_sendto(g_isi_client_modem(client), &dst, &msg,
-+			sizeof(msg), G_ISI_CLIENT_DEFAULT_TIMEOUT,
-+			g_isi_pep_disconnected, pipe, NULL) =3D=3D NULL)
-+		return;
-+
-+	return;
-+}
-diff --git a/gisi/pep.h b/gisi/pep.h
-index d46c8d0..1be5e10 100644
---- a/gisi/pep.h
-+++ b/gisi/pep.h
-@@ -23,6 +23,7 @@
- #define __GISI_PEP_H
- =
-
- #include "modem.h"
-+#include "pipe.h"
- =
-
- #ifdef __cplusplus
- extern "C" {
-@@ -37,6 +38,11 @@ uint16_t g_isi_pep_get_object(const GIsiPEP *pep);
- unsigned g_isi_pep_get_ifindex(const GIsiPEP *pep);
- char *g_isi_pep_get_ifname(const GIsiPEP *pep, char *ifname);
- =
-
-+void g_isi_pep_enable(GIsiPipe *pipe, uint8_t dev);
-+gboolean g_isi_pep_connect(GIsiPipe *pipe, uint8_t obj, uint8_t dev);
-+void g_isi_pep_disconnect(GIsiPipe *pipe, uint8_t dev);
-+
-+
- #ifdef __cplusplus
- }
- #endif
-diff --git a/gisi/pipe.c b/gisi/pipe.c
-index 1bd5140..cf7d3c6 100644
---- a/gisi/pipe.c
-+++ b/gisi/pipe.c
-@@ -24,15 +24,23 @@
- #endif
- =
-
- #include <stdint.h>
-+#include <sys/ioctl.h>
-+#include <net/if.h>
-+#include <fcntl.h>
-+#include <unistd.h>
- #include <errno.h>
- #include <glib.h>
- =
-
- #include "client.h"
- #include "pipe.h"
-+#include "pep.h"
-+#include "common.h"
- =
-
- #define PN_PIPE			0xD9
- #define PN_PIPE_INVALID_HANDLE	0xFF
- =
-
-+#define PN_OBJ_PEP_GPRS		0x30
-+
- struct isi_pipe_create_req {
- 	uint8_t cmd;
- 	uint8_t state_after;
-@@ -73,6 +81,8 @@ struct isi_pipe_resp {
- 	uint8_t error2;
- };
- =
-
-+
-+
- enum isi_pipe_message_id {
- 	PNS_PIPE_CREATE_REQ,
- 	PNS_PIPE_CREATE_RESP,
-@@ -86,6 +96,8 @@ enum isi_pipe_message_id {
- 	PNS_PIPE_REDIRECT_RESP,
- 	PNS_PIPE_DISABLE_REQ,
- 	PNS_PIPE_DISABLE_RESP,
-+	PNS_PIPE_CREATED_IND =3D		0x61,
-+	PNS_PIPE_ENABLED_IND =3D		0x64,
- };
- =
-
- enum pn_pipe_error {	/* error codes */
-@@ -103,6 +115,7 @@ enum pn_pipe_error {	/* error codes */
- 	PN_PIPE_ERR_NOT_SUPPORTED,
- };
- =
-
-+
- enum pn_pipe_state {	/* initial pipe state */
- 	PN_PIPE_DISABLE,
- 	PN_PIPE_ENABLE,
-@@ -113,6 +126,14 @@ enum pn_msg_priority {
- 	PN_MSG_PRIORITY_HIGH,
- };
- =
-
-+
-+
-+struct _GIsiPipeServer {
-+	int fd;
-+	guint watch;
-+};
-+typedef struct _GIsiPipeServer GIsiPipeServer;
-+
- struct _GIsiPipe {
- 	GIsiClient *client;
- 	GIsiPipeHandler handler;
-@@ -122,8 +143,11 @@ struct _GIsiPipe {
- 	uint8_t handle;
- 	gboolean enabled;
- 	gboolean enabling;
-+	GIsiPipeServer *server;
- };
- =
-
-+
-+
- static int g_isi_pipe_error(enum pn_pipe_error code)
- {
- 	switch (code) {
-@@ -155,7 +179,7 @@ static int g_isi_pipe_error(enum pn_pipe_error code)
- 	return -EBADMSG;
- }
- =
-
--static void g_isi_pipe_handle_error(GIsiPipe *pipe, uint8_t code)
-+void g_isi_pipe_handle_error(GIsiPipe *pipe, uint8_t code)
- {
- 	int err =3D g_isi_pipe_error(code);
- =
-
-@@ -168,6 +192,61 @@ static void g_isi_pipe_handle_error(GIsiPipe *pipe, ui=
-nt8_t code)
- 		pipe->error_handler(pipe);
- }
- =
-
-+
-+GIsiClient *g_isi_pipe_client(GIsiPipe *pipe)
-+{
-+	return pipe !=3D NULL ? pipe->client : NULL;
-+}
-+
-+
-+void g_isi_pipe_set_handle(GIsiPipe *pipe, uint8_t handle)
-+{
-+	pipe->handle =3D handle;
-+}
-+
-+static GIsiPipeServer *g_isi_pipe_server_create(GIsiModem *modem)
-+{
-+	GIsiPipeServer *server;
-+	unsigned ifindex =3D g_isi_modem_index(modem);
-+	struct sockaddr_pn addr =3D {
-+		.spn_family =3D AF_PHONET,
-+		.spn_resource =3D PN_PIPE,
-+		.spn_obj =3D PN_OBJ_PEP_GPRS,
-+	};
-+	char buf[IF_NAMESIZE];
-+	int fd =3D socket(PF_PHONET, SOCK_DGRAM, 0);
-+
-+	if (fd =3D=3D -1)
-+		return NULL;
-+
-+	server =3D g_try_new0(GIsiPipeServer, 1);
-+	if (server =3D=3D NULL)
++	if (g_isi_pn_netlink_by_modem(isimodem)) {
++		DBG("%s: %s", ifname, strerror(EBUSY));
++		errno =3D EBUSY;
 +		goto error;
++	}
 +
-+	fcntl(fd, F_SETFD, FD_CLOEXEC);
-+	/* Use blocking mode on purpose. */
-+
-+	if (ifindex =3D=3D 0)
-+		g_warning("Unspecified modem interface index");
-+	else if (if_indextoname(ifindex, buf) =3D=3D NULL ||
-+		setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, buf, IF_NAMESIZE))
++	link =3D g_isi_pn_netlink_start(isimodem, phonet_status_cb, modem);
++	if (link =3D=3D NULL) {
++		DBG("%s: %s", ifname, strerror(errno));
 +		goto error;
++	}
 +
-+	if (bind(fd, (void *)&addr, sizeof(addr)))
-+		goto error;
-+
-+	server->fd =3D fd;
-+	server->watch =3D g_isi_modem_add_to_watch(modem, fd);
-+	if (!server->watch)
-+		goto error;
-+
-+	return server;
-+
-+error:
-+	close(fd);
-+	return NULL;
-+}
-+
- static void g_isi_pipe_created(const GIsiMessage *msg, void *data)
- {
- 	struct isi_pipe_resp *resp;
-@@ -226,6 +305,7 @@ GIsiPipe *g_isi_pipe_create(GIsiModem *modem, GIsiPipeH=
-andler cb, uint16_t obj1,
- 	};
- 	size_t len =3D sizeof(msg);
- 	GIsiPipe *pipe;
-+	gboolean legacy =3D g_isi_modem_flags(modem);
- =
-
- 	pipe =3D g_try_new0(GIsiPipe, 1);
- 	if (pipe =3D=3D NULL) {
-@@ -247,16 +327,34 @@ GIsiPipe *g_isi_pipe_create(GIsiModem *modem, GIsiPip=
-eHandler cb, uint16_t obj1,
- 	pipe->enabled =3D FALSE;
- 	pipe->handle =3D PN_PIPE_INVALID_HANDLE;
- =
-
--	if (g_isi_client_send(pipe->client, &msg, len,
--					g_isi_pipe_created, pipe, NULL))
--		return pipe;
-+	if (legacy) {
-+		if (!g_isi_client_send(pipe->client, &msg, len,
-+			g_isi_pipe_created, pipe, NULL))
++	if (address) {
++		int error =3D g_isi_pn_netlink_set_address(isimodem, address);
++		if (error && error !=3D -EEXIST) {
++			DBG("g_isi_pn_netlink_set_address(): %s\n",
++				strerror(-error));
++			errno =3D -error;
 +			goto error;
-+
-+	} else {
-+		pipe->server =3D g_isi_pipe_server_create(modem);
-+		if (pipe->server =3D=3D NULL)
-+			goto error;
-+
-+		if (!g_isi_pep_connect(pipe, obj1 & 0xFF, PN_DEV_HOST)) {
-+					g_isi_pipe_server_destroy(pipe);
-+		goto error;
 +		}
 +	}
- =
-
-+	return pipe;
++
++	isi =3D g_try_new0(struct isi_data, 1);
++	if (isi =3D=3D NULL) {
++		errno =3D ENOMEM;
++		goto error;
++	}
++
++	client =3D g_isi_client_create(isimodem, PN_MODEM_MCE);
++	if (!client)
++		goto error;
++
++	g_isi_modem_set_device(isimodem, PN_DEV_MODEM);
++
++	isi->modem =3D isimodem;
++	isi->ifname =3D ifname;
++	isi->link =3D link;
++	isi->reported =3D -1;
++	isi->client =3D client;
++
++	ofono_modem_set_data(modem, isi);
++	return 0;
++
++error:
++	g_isi_pn_netlink_stop(link);
++	g_isi_client_destroy(client);
++	g_isi_modem_destroy(isimodem);
++	g_free(isi);
++
++	return -errno;
++}
++
++static void u8500_remove(struct ofono_modem *modem)
++{
++	struct isi_data *isi =3D ofono_modem_get_data(modem);
++
++	ofono_modem_set_data(modem, NULL);
++
++	if (isi =3D=3D NULL)
++		return;
++
++	g_isi_pn_netlink_stop(isi->link);
++	g_isi_client_destroy(isi->client);
++	g_isi_modem_destroy(isi->modem);
++	g_free(isi);
++}
++
++static void mce_state_cb(const GIsiMessage *msg, void *data)
++{
++	struct isi_cb_data *cbd =3D data;
++	struct ofono_modem *modem =3D cbd->user;
++	ofono_modem_online_cb_t cb =3D cbd->cb;
++
++	struct isi_data *isi =3D ofono_modem_get_data(modem);
++	uint8_t cause;
++
++	if (!check_response_status(msg, MCE_RF_STATE_RESP))
++		goto error;
++
++	if (!g_isi_msg_data_get_byte(msg, 0, &cause))
++		goto error;
++
++	DBG("MCE cause: %s (0x%02X)", mce_status_info(cause), cause);
++
++	if (cause =3D=3D MCE_OK) {
++		isi->online_cbd =3D cbd;
++		return;
++	}
++
++	if (cause =3D=3D MCE_ALREADY_ACTIVE) {
++		CALLBACK_WITH_SUCCESS(cb, cbd->data);
++		g_free(cbd);
++		return;
++	}
++
++error:
++	CALLBACK_WITH_FAILURE(cb, cbd->data);
++	g_free(cbd);
++}
++
++static void u8500_online(struct ofono_modem *modem, ofono_bool_t online,
++				ofono_modem_online_cb_t cb, void *data)
++{
++	struct isi_data *isi =3D ofono_modem_get_data(modem);
++	struct isi_cb_data *cbd =3D isi_cb_data_new(modem, cb, data);
++	const uint8_t req[] =3D {
++		MCE_RF_STATE_REQ,
++		online ? MCE_RF_ON : MCE_RF_OFF,
++		0x00
++	};
++
++	DBG("(%p) with %s", modem, isi->ifname);
++
++	if (cbd =3D=3D NULL || isi =3D=3D NULL)
++		goto error;
++
++	if (g_isi_client_send_with_timeout(isi->client, req, sizeof(req),
++				MTC_STATE_REQ_TIMEOUT,
++				mce_state_cb, cbd, NULL)) {
++		isi->online =3D online;
++		return;
++	}
++
++error:
++	CALLBACK_WITH_FAILURE(cb, data);
++	g_free(cbd);
++}
++
++static void u8500_pre_sim(struct ofono_modem *modem)
++{
++	struct isi_data *isi =3D ofono_modem_get_data(modem);
++
++	DBG("(%p) with %s", modem, isi->ifname);
++
++	ofono_sim_create(modem, 0, "isimodem", isi->modem);
++	ofono_devinfo_create(modem, 0, "u8500", isi->modem);
++	ofono_voicecall_create(modem, 0, "isimodem", isi->modem);
++}
++
++static void u8500_post_sim(struct ofono_modem *modem)
++{
++	struct isi_data *isi =3D ofono_modem_get_data(modem);
++
++	DBG("(%p) with %s", modem, isi->ifname);
++
++	ofono_phonebook_create(modem, 0, "isimodem", isi->modem);
++	ofono_call_forwarding_create(modem, 0, "isimodem", isi->modem);
++	ofono_radio_settings_create(modem, 0, "isimodem", isi->modem);
++}
++
++static void u8500_post_online(struct ofono_modem *modem)
++{
++	struct isi_data *isi =3D ofono_modem_get_data(modem);
++
++	DBG("(%p) with %s", modem, isi->ifname);
++
++	ofono_netreg_create(modem, 0, "wgmodem2.5", isi->modem);
++	ofono_sms_create(modem, 0, "isimodem", isi->modem);
++	ofono_cbs_create(modem, 0, "isimodem", isi->modem);
++	ofono_ssn_create(modem, 0, "isimodem", isi->modem);
++	ofono_ussd_create(modem, 0, "isimodem", isi->modem);
++	ofono_call_settings_create(modem, 0, "isimodem", isi->modem);
++	ofono_call_barring_create(modem, 0, "isimodem", isi->modem);
++	ofono_call_meter_create(modem, 0, "isimodem", isi->modem);
++	ofono_gprs_create(modem, 0, "isimodem", isi->modem);
++}
++
++static int u8500_enable(struct ofono_modem *modem)
++{
++	return 0;
++}
++
++static int u8500_disable(struct ofono_modem *modem)
++{
++	return 0;
++}
++
++static void u8500_info_resp_cb(const GIsiMessage *msg, void *data)
++{
++	struct isi_cb_data *cbd =3D data;
++	ofono_devinfo_query_cb_t cb =3D cbd->cb;
++	GIsiSubBlockIter iter;
++	uint8_t msgid;
++	uint8_t status;
++
++	msgid =3D g_isi_msg_id(msg);
++	if (msgid !=3D INFO_SERIAL_NUMBER_READ_RESP)
++		goto error;
++
++	if (g_isi_msg_error(msg) < 0)
++		goto error;
++
++	if (!g_isi_msg_data_get_byte(msg, 0, &status))
++		goto error;
++
++	if (status !=3D INFO_OK)
++		goto error;
++
++	for (g_isi_sb_iter_init(&iter, msg, 2);
++			g_isi_sb_iter_is_valid(&iter);
++			g_isi_sb_iter_next(&iter)) {
++
++		uint8_t id =3D g_isi_sb_iter_get_id(&iter);
++		uint8_t chars;
++		char *info =3D NULL;
++
++		if (id !=3D INFO_SB_PRODUCT_INFO_MANUFACTURER &&
++				id !=3D INFO_SB_PRODUCT_INFO_NAME &&
++				id !=3D INFO_SB_MCUSW_VERSION &&
++				id !=3D INFO_SB_SN_IMEI_PLAIN &&
++				id !=3D INFO_SB_MODEMSW_VERSION)
++			continue;
++
++		if (g_isi_sb_iter_get_len(&iter) < 5)
++			goto error;
++
++		if (!g_isi_sb_iter_get_byte(&iter, &chars, 3))
++			goto error;
++
++		if (!g_isi_sb_iter_get_latin_tag(&iter, &info, chars, 4))
++			goto error;
++
++		CALLBACK_WITH_SUCCESS(cb, info, cbd->data);
++
++		g_free(info);
++		return;
++	}
++
++error:
++	CALLBACK_WITH_FAILURE(cb, "", cbd->data);
++}
++
++static void u8500_devinfo_reachable_cb(const GIsiMessage *msg, void *data)
++{
++	struct ofono_devinfo *info =3D data;
++
++	if (g_isi_msg_error(msg) < 0)
++		return;
++
++	ISI_VERSION_DBG(msg);
++
++	ofono_devinfo_register(info);
++}
++
++static void u8500_query_manufacturer(struct ofono_devinfo *info,
++					ofono_devinfo_query_cb_t cb,
++					void *data)
++{
++	CALLBACK_WITH_FAILURE(cb, "", data);
++}
++
++static void u8500_query_model(struct ofono_devinfo *info,
++				ofono_devinfo_query_cb_t cb,
++				void *data)
++{
++	CALLBACK_WITH_FAILURE(cb, "", data);
++}
++
++static void u8500_query_revision(struct ofono_devinfo *info,
++				ofono_devinfo_query_cb_t cb,
++				void *data)
++{
++	struct devinfo_data *dev =3D ofono_devinfo_get_data(info);
++	struct isi_cb_data *cbd =3D isi_cb_data_new(dev, cb, data);
++	const unsigned char msg[] =3D {
++		INFO_SERIAL_NUMBER_READ_REQ,
++		0x00, 0x00,
++		0x00, 0x00, 0x00, 0x01, /* M_INFO_MODEMSW */
++		0x00, 0x00
++	};
++	DBG("");
++
++	if (cbd =3D=3D NULL || dev =3D=3D NULL)
++		goto error;
++
++	if (g_isi_client_send(dev->client, msg, sizeof(msg),
++				u8500_info_resp_cb, cbd, g_free))
++		return;
 +
 +
 +error:
- 	g_isi_client_destroy(pipe->client);
- 	g_free(pipe);
- =
-
- 	return NULL;
- }
- =
-
++	CALLBACK_WITH_FAILURE(cb, "", data);
++	g_free(cbd);
++}
 +
++static void u8500_query_serial(struct ofono_devinfo *info,
++				ofono_devinfo_query_cb_t cb,
++				void *data)
++{
++	char imei[16]; /* IMEI 15 digits + 1 null*/
++	char numbers[] =3D "1234567890";
++	FILE *fp =3D fopen("/etc/imei", "r");
++	DBG("");
 +
- static void g_isi_pipe_enabled(const GIsiMessage *msg, void *data)
- {
- 	GIsiPipe *pipe =3D data;
-@@ -287,14 +385,20 @@ static void g_isi_pipe_enabled(const GIsiMessage *msg=
-, void *data)
- =
-
- static void g_isi_pipe_enable(GIsiPipe *pipe)
- {
-+	GIsiModem *modem =3D g_isi_client_modem(pipe->client);
-+	gboolean legacy =3D g_isi_modem_flags(modem);
- 	struct isi_pipe_enable_req msg =3D {
- 		.cmd =3D PNS_PIPE_ENABLE_REQ,
- 		.pipe_handle =3D pipe->handle,
- 	};
- 	size_t len =3D sizeof(msg);
- =
-
--	g_isi_client_send(pipe->client, &msg, len,
--				g_isi_pipe_enabled, pipe, NULL);
-+	if (legacy)
-+		g_isi_client_send(pipe->client, &msg, len,
-+					g_isi_pipe_enabled, pipe, NULL);
-+	else
-+		g_isi_pep_enable(pipe, PN_DEV_MODEM);
-+
- }
- =
-
- /**
-@@ -339,8 +443,8 @@ static void g_isi_pipe_removed(const GIsiMessage *msg, =
-void *data)
- 	if (pipe->handle !=3D resp->pipe_handle)
- 		return;
- =
-
--	pipe->handle =3D PN_PIPE_INVALID_HANDLE;
--	pipe->error =3D -EPIPE;
-+	g_isi_client_destroy(pipe->client);
-+	g_free(pipe);
- }
- =
-
- =
-
-@@ -356,17 +460,32 @@ static void g_isi_pipe_remove(GIsiPipe *pipe)
- 				g_isi_pipe_removed, pipe, NULL);
- }
- =
-
-+
- /**
-  * Destroy a pipe. If it was connected, it is removed.
-  * @param pipe pipe as returned from g_isi_pipe_create()
-  */
- void g_isi_pipe_destroy(GIsiPipe *pipe)
- {
--	if (!pipe->error)
--		g_isi_pipe_remove(pipe);
-+	GIsiModem *modem =3D g_isi_client_modem(pipe->client);
-+	gboolean legacy =3D g_isi_modem_flags(modem);
-+
-+	if (!pipe->error) {
-+		if (legacy)
-+			g_isi_pipe_remove(pipe);
-+		else
-+			g_isi_pep_disconnect(pipe, PN_DEV_HOST);
++	if (fp =3D=3D NULL) {
++		DBG("failed to open /etc/imei file");
++		goto error;
 +	}
- =
-
--	g_isi_client_destroy(pipe->client);
--	g_free(pipe);
++
++	if (fgets(imei, 16, fp)) {
++		DBG(" IMEI =3D %s", imei);
++		if (15 =3D=3D strspn(imei, numbers))
++			CALLBACK_WITH_SUCCESS(cb, imei, data);
++		else {
++			CALLBACK_WITH_FAILURE(cb, "", data);
++			fclose(fp);
++			goto error;
++		}
++	}
++
++	fclose(fp);
++	return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, "", data);
 +}
 +
-+
-+void g_isi_pipe_server_destroy(GIsiPipe *pipe)
++static int u8500_devinfo_probe(struct ofono_devinfo *info, unsigned int ve=
+ndor,
++				void *user)
 +{
-+	if (pipe->server->watch > 0)
-+		g_source_remove(pipe->server->watch);
++	GIsiModem *idx =3D user;
++	struct devinfo_data *data =3D g_try_new0(struct devinfo_data, 1);
 +
-+	g_free(pipe->server);
- }
- =
-
- void g_isi_pipe_set_error_handler(GIsiPipe *pipe, GIsiPipeErrorHandler cb)
-@@ -403,3 +522,40 @@ uint8_t g_isi_pipe_get_handle(GIsiPipe *pipe)
- {
- 	return pipe->handle;
- }
++	if (data =3D=3D NULL)
++		return -ENOMEM;
 +
-+void g_isi_pipe_start_handler(GIsiPipe *pipe)
-+{
-+	if (pipe->handler)
-+		pipe->handler(pipe);
-+}
++	data->client =3D g_isi_client_create(idx, PN_MODEM_INFO);
++	if (data->client =3D=3D NULL)
++		goto nomem;
 +
-+gboolean g_isi_pipe_get_enabling(GIsiPipe *pipe)
-+{
-+	return pipe->enabling;
-+}
++	ofono_devinfo_set_data(info, data);
 +
-+void g_isi_pipe_set_enabling(GIsiPipe *pipe, gboolean value)
-+{
-+	pipe->enabling =3D value;
-+}
++	g_isi_client_set_timeout(data->client, INFO_TIMEOUT);
++	g_isi_client_verify(data->client, u8500_devinfo_reachable_cb,
++				info, NULL);
 +
-+void g_isi_pipe_set_enabled(GIsiPipe *pipe, gboolean value)
-+{
-+	pipe->enabled =3D value;
-+}
++	return 0;
 +
-+void g_isi_pipe_set_error_general(GIsiPipe *pipe)
-+{
-+	g_isi_pipe_handle_error(pipe, PN_PIPE_ERR_GENERAL);
++nomem:
++	g_isi_client_destroy(data->client);
++
++	g_free(data);
++	return -ENOMEM;
 +
 +}
 +
-+void g_isi_pipe_set_error_timeout(GIsiPipe *pipe)
++static void u8500_devinfo_remove(struct ofono_devinfo *info)
 +{
-+	g_isi_pipe_handle_error(pipe, PN_PIPE_ERR_TIMEOUT);
++	struct devinfo_data *data =3D ofono_devinfo_get_data(info);
++
++	ofono_devinfo_set_data(info, NULL);
++
++	if (data =3D=3D NULL)
++		return;
++
++	g_isi_client_destroy(data->client);
++	g_free(data);
 +}
 +
-+void g_isi_pipe_set_error_invalid_handle(GIsiPipe *pipe)
++static struct ofono_modem_driver driver =3D {
++	.name =3D "u8500",
++	.probe =3D u8500_probe,
++	.remove =3D u8500_remove,
++	.set_online =3D u8500_online,
++	.pre_sim =3D u8500_pre_sim,
++	.post_sim =3D u8500_post_sim,
++	.post_online =3D u8500_post_online,
++	.enable =3D u8500_enable,
++	.disable =3D u8500_disable,
++};
++
++static struct ofono_devinfo_driver devinfo_driver =3D {
++	.name			=3D "u8500",
++	.probe			=3D u8500_devinfo_probe,
++	.remove			=3D u8500_devinfo_remove,
++	.query_manufacturer	=3D u8500_query_manufacturer,
++	.query_model		=3D u8500_query_model,
++	.query_revision		=3D u8500_query_revision,
++	.query_serial		=3D u8500_query_serial
++};
++
++static int u8500_init(void)
 +{
-+	g_isi_pipe_handle_error(pipe, PN_PIPE_ERR_INVALID_HANDLE);
++	int err;
++
++	err =3D ofono_modem_driver_register(&driver);
++
++	if (err < 0)
++		return err;
++
++	ofono_devinfo_driver_register(&devinfo_driver);
++
++	return 0;
 +}
-\ No newline at end of file
-diff --git a/gisi/pipe.h b/gisi/pipe.h
-index 01265a9..4570821 100644
---- a/gisi/pipe.h
-+++ b/gisi/pipe.h
-@@ -26,24 +26,41 @@
- extern "C" {
- #endif
- =
-
-+#include "client.h"
 +
- struct _GIsiPipe;
- typedef struct _GIsiPipe GIsiPipe;
- =
-
++static void u8500_exit(void)
++{
++	ofono_devinfo_driver_unregister(&devinfo_driver);
 +
- typedef void (*GIsiPipeHandler)(GIsiPipe *pipe);
- typedef void (*GIsiPipeErrorHandler)(GIsiPipe *pipe);
- =
-
- GIsiPipe *g_isi_pipe_create(GIsiModem *modem, GIsiPipeHandler cb, uint16_t=
- obj1,
- 				uint16_t obj2, uint8_t type1, uint8_t type2);
- void g_isi_pipe_destroy(GIsiPipe *pipe);
-+void g_isi_pipe_server_destroy(GIsiPipe *pipe);
- =
-
- void g_isi_pipe_set_error_handler(GIsiPipe *pipe, GIsiPipeErrorHandler cb);
- int g_isi_pipe_get_error(const GIsiPipe *pipe);
- void *g_isi_pipe_set_userdata(GIsiPipe *pipe, void *data);
- void *g_isi_pipe_get_userdata(GIsiPipe *pipe);
- uint8_t g_isi_pipe_get_handle(GIsiPipe *pipe);
-+gboolean g_isi_pipe_get_enabling(GIsiPipe *pipe);
-+void g_isi_pipe_set_enabling(GIsiPipe *pipe, gboolean value);
-+void g_isi_pipe_set_enabled(GIsiPipe *pipe, gboolean value);
- =
-
- int g_isi_pipe_start(GIsiPipe *pipe);
- =
-
-+GIsiClient *g_isi_pipe_client(GIsiPipe *pipe);
-+void g_isi_pipe_set_handle(GIsiPipe *pipe, uint8_t handle);
-+void g_isi_pipe_start_handler(GIsiPipe *pipe);
++	ofono_modem_driver_unregister(&driver);
++}
 +
-+void g_isi_pipe_handle_error(GIsiPipe *pipe, uint8_t code);
-+void g_isi_pipe_set_error_general(GIsiPipe *pipe);
-+void g_isi_pipe_set_error_timeout(GIsiPipe *pipe);
-+void g_isi_pipe_set_error_invalid_handle(GIsiPipe *pipe);
-+
-+
- #ifdef __cplusplus
- }
- #endif
++OFONO_PLUGIN_DEFINE(u8500, "Generic modem driver for isi",
++			VERSION, OFONO_PLUGIN_PRIORITY_DEFAULT,
++			u8500_init, u8500_exit)
 -- =
 
 1.7.3.5
 
 
---===============4008584563710404772==--
+--===============7903922680628848172==--
 
