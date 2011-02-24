@@ -1,46 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============5776181907919620935=="
+Content-Type: multipart/mixed; boundary="===============6702796277433913357=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: ofono crash (setting offline while connected)
-Date: Thu, 24 Feb 2011 11:31:35 -0600
-Message-ID: <4D6695F7.2080607@gmail.com>
-In-Reply-To: <AANLkTimFFgUbOiYJs6=+Y1E_ik3xmeFNR0q=r7XJHYo1@mail.gmail.com>
+Subject: Re: [PATCH v2 0/2] add support of void parameters in CMER
+Date: Thu, 24 Feb 2011 14:02:49 -0600
+Message-ID: <4D66B969.10904@gmail.com>
+In-Reply-To: <1298567766-17745-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5776181907919620935==
+--===============6702796277433913357==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Amit,
+Hi Fr=C3=A9d=C3=A9ric,
 
-On 02/23/2011 11:07 PM, Amit Mendapara wrote:
-> Hi,
+On 02/24/2011 11:16 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+> following commands are supported :
+> AT+CMER=3D3,0,0,1,0
 > =
 
-> While testing the Linktop driver I observed that ofono is crashing if I
-> try to set modem offline while it is connected (using
-> test/offline-modem.py script). After some debugging, I found that
-> `linktop_disconnect` function is being called twice (see the attached
-> debug log).
+> OK
+> AT+CMER=3D3,0,0,1
 > =
 
-> What could be the reason here? I have seen some hack in mbm driver (in
-> mbm_disconnect) having `reopen_callback`. I have tried this but then
-> having another crash (this time when creating gprs context). Anyone,
-> please clarify how to deal with the issue properly?
+> OK
+> AT+CMER=3D3,,,1
+> =
 
-Some of these modems HUP the tty for x seconds.  So if you try to open
-them too fast, they will be HUPed again, leading to various issues.
+> OK
+> AT+CMER=3D3,,,1,
+> =
 
-When posting backtraces, please give them directly from gdb, or use the
-backtrace script to 'prettify' them.  e.g.:
+> OK
+> AT+CMER=3D,,0,1,
+> =
 
-test/backtrace src/ofonod your_log
+> OK
+> AT+CMER=3D3, ,,1
+> =
+
+> OK
+> AT+CMER=3D3,a,0,1
+> =
+
+> ERROR
+> AT+CMER=3D3,"a",0,1
+> =
+
+> ERROR
+> AT+CMER=3D3,
+> =
+
+> OK
+> AT+CMER=3D3
+> =
+
+> OK
+> =
+
+> Fr=C3=A9d=C3=A9ric Danis (2):
+>   gatchat: add g_at_result_iter_next_number_default API
+>   emulator: add support of void parameters in CMER
+> =
+
+>  gatchat/gatresult.c |   30 ++++++++++++++++++++++++++++++
+>  gatchat/gatresult.h |    2 ++
+>  src/emulator.c      |   24 ++++++++++++------------
+>  3 files changed, 44 insertions(+), 12 deletions(-)
+> =
+
+
+Both patches have been applied, thanks.
 
 Regards,
 -Denis
 
---===============5776181907919620935==--
+--===============6702796277433913357==--
 
