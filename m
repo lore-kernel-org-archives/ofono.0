@@ -1,100 +1,119 @@
-Content-Type: multipart/mixed; boundary="===============8981239810982904011=="
+Content-Type: multipart/mixed; boundary="===============6356246342007962632=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4 3/6] mbmmodem: add location-reporting driver
- implementation
-Date: Wed, 23 Feb 2011 22:21:03 -0600
-Message-ID: <4D65DCAF.8070508@gmail.com>
-In-Reply-To: <AANLkTin82oSxJrih9ZwidVSQCGvzoz7xNpdDEmud+FiQ@mail.gmail.com>
+From: Amit Mendapara <mendapara.amit@gmail.com>
+Subject: ofono crash (setting offline while connected)
+Date: Thu, 24 Feb 2011 10:37:33 +0530
+Message-ID: <AANLkTimFFgUbOiYJs6=+Y1E_ik3xmeFNR0q=r7XJHYo1@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8981239810982904011==
+--===============6356246342007962632==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+Hi,
 
-On 02/23/2011 08:26 PM, Lucas De Marchi wrote:
-> Hi Denis
-> =
+While testing the Linktop driver I observed that ofono is crashing if I try
+to set modem offline while it is connected (using test/offline-modem.py
+script). After some debugging, I found that `linktop_disconnect` function is
+being called twice (see the attached debug log).
 
-> On Wed, Feb 23, 2011 at 9:57 PM, Denis Kenzior <denkenz@gmail.com> wrot=
-e:
->> Hi Lucas,
->>
->>> +static int mbm_create_data_chat(struct ofono_location_reporting *lr)
->>> +{
->>> +     struct gps_data *gd =3D ofono_location_reporting_get_data(lr);
->>> +     struct ofono_modem *modem;
->>> +     const char *gps_dev;
->>> +     GAtSyntax *syntax;
->>> +     GIOChannel *channel;
->>> +     int fd;
->>> +
->>> +     modem =3D ofono_location_reporting_get_modem(lr);
->>> +     gps_dev =3D ofono_modem_get_string(modem, "GPSDevice");
->>> +
->>> +     channel =3D g_at_tty_open(gps_dev, NULL);
->>> +     if (channel =3D=3D NULL)
->>> +             return -1;
->>> +
->>> +     syntax =3D g_at_syntax_new_gsm_permissive();
->>> +     gd->data_chat =3D g_at_chat_new(channel, syntax);
->>> +     fd =3D g_io_channel_unix_get_fd(channel);
->>> +
->>> +     g_at_syntax_unref(syntax);
->>> +     g_io_channel_unref(channel);
->>> +
->>> +     if (gd->data_chat =3D=3D NULL)
->>> +             return -1;
->>> +
->>> +     return fd;
->>> +}
->>> +
->>
->> Why do you bother creating a GAtChat for the NMEA port?  It seems that a
->> GIOChannel or a simple fd would be enough.
-> =
+What could be the reason here? I have seen some hack in mbm driver (in
+mbm_disconnect) having `reopen_callback`. I have tried this but then having
+another crash (this time when creating gprs context). Anyone, please clarify
+how to deal with the issue properly?
 
-> This is because of this line:
-> =
+Regards
+--
+Amit Mendapara
 
-> +       if (g_at_chat_send(gd->data_chat, "AT*E2GPSNPD", NULL, NULL, NULL,
-> +                                                               NULL) > 0=
-) {
-> =
+--===============6356246342007962632==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-> AT*E2GPSNPD is sent on the tty that will contain the nmea stream, not
-> the control one.
-> =
+SGksPGRpdj48YnI+PC9kaXY+PGRpdj5XaGlsZSB0ZXN0aW5nIHRoZSBMaW5rdG9wIGRyaXZlciBJ
+IG9ic2VydmVkIHRoYXQgb2Zvbm8gaXMgY3Jhc2hpbmcgaWYgSSB0cnkgdG8gc2V0IG1vZGVtIG9m
+ZmxpbmUgd2hpbGUgaXQgaXMgY29ubmVjdGVkICh1c2luZyB0ZXN0L29mZmxpbmUtbW9kZW0ucHkg
+c2NyaXB0KS4gQWZ0ZXIgc29tZSBkZWJ1Z2dpbmcsIEkgZm91bmQgdGhhdCBgbGlua3RvcF9kaXNj
+b25uZWN0YCBmdW5jdGlvbiBpcyBiZWluZyBjYWxsZWQgdHdpY2UgKHNlZSB0aGUgYXR0YWNoZWQg
+ZGVidWcgbG9nKS48L2Rpdj4KPGRpdj48YnI+PC9kaXY+PGRpdj5XaGF0IGNvdWxkIGJlIHRoZSBy
+ZWFzb24gaGVyZT8gSSBoYXZlIHNlZW4gc29tZSBoYWNrIGluIG1ibSBkcml2ZXIgKGluIG1ibV9k
+aXNjb25uZWN0KSBoYXZpbmcgYHJlb3Blbl9jYWxsYmFja2AuIEkgaGF2ZSB0cmllZCB0aGlzIGJ1
+dCB0aGVuIGhhdmluZyBhbm90aGVyIGNyYXNoICh0aGlzIHRpbWUgd2hlbiBjcmVhdGluZyBncHJz
+IGNvbnRleHQpLiBBbnlvbmUsIHBsZWFzZSBjbGFyaWZ5IGhvdyB0byBkZWFsIHdpdGggdGhlIGlz
+c3VlIHByb3Blcmx5PzwvZGl2Pgo8ZGl2Pjxicj48L2Rpdj48ZGl2PlJlZ2FyZHM8L2Rpdj48ZGl2
+Pi0tPC9kaXY+PGRpdj5BbWl0IE1lbmRhcGFyYTwvZGl2Pgo=
 
+--===============6356246342007962632==
+Content-Type: text/x-log
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="ofono.log"
 
-Then I'm confused how this even works.  The GAtChat is installing its
-own IO watches on this channel and would be reading from the stream.
-Wouldn't this cause you to have a race between the location reporting
-client and ofono itself?
+Li4uCm9mb25vZFsxNjg5Ml06IENvbnRyb2w6IDwgXHJcbk9LXHJcblxyXG4rQ0lFVjogNSwxXHJc
+blxyXG4rQ0lFVjogOSwwXHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA+IEFUK0NPUFM/XHIK
+b2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPCBcclxuK0NPUFM6IDAsMiwiNDA0NTciLDIgXHJcblxy
+XG5PS1xyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPiBBVCtDSU5EP1xyCm9mb25vZFsxNjg5
+Ml06IENvbnRyb2w6IDwgXHJcbitDSU5EOiAxLDMsMSwwLDEsMCwwLDAsMCwwLDAsMFxyXG5cclxu
+T0tcclxuCm9mb25vZFsxNjg5Ml06IENvbnRyb2w6ID4gQVQrQ09QUz0zLDBccgpvZm9ub2RbMTY4
+OTJdOiBDb250cm9sOiA8IFxyXG5PS1xyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPiBBVCtD
+T1BTP1xyCm9mb25vZFsxNjg5Ml06IENvbnRyb2w6IDwgXHJcbitDT1BTOiAwLDAsIiIsMiBcclxu
+XHJcbk9LXHJcblxyXG4rQ0lFVjogMiwyXHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA8IFxy
+XG4rQ0lFVjogMiwzXHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA8IFxyXG4rQ0lFVjogMiwy
+XHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA8IFxyXG4rQ0lFVjogMiwzXHJcbgpvZm9ub2Rb
+MTY4OTJdOiBNb2RlbTogPiBBVCtDR0RDT05UPTEsIklQIiwiYnNubG5ldCJccgpvZm9ub2RbMTY4
+OTJdOiBNb2RlbTogPCBBVCtDR0RDT05UPTEsIklQIiwiYnNubG5ldCJccgpvZm9ub2RbMTY4OTJd
+OiBNb2RlbTogPCBcclxuT0tcclxuCm9mb25vZFsxNjg5Ml06IE1vZGVtOiA+IEFUK0NHREFUQT0i
+UFBQIiwxXHIKb2Zvbm9kWzE2ODkyXTogTW9kZW06IDwgQVQrQ0dEQVRBPSJQUFAiLDFccgpvZm9u
+b2RbMTY4OTJdOiBNb2RlbTogPCBcclxuQ09OTkVDVFxyXG4KRW50ZXJpbmcgbmV3IHBoYXNlOiAx
+CkVudGVyaW5nIG5ldyBwaGFzZTogMgpFbnRlcmluZyBuZXcgcGhhc2U6IDMKb2Zvbm9kWzE2ODky
+XTogQ29udHJvbDogPCBcclxuKkVQU0I6IDNcclxuCm9mb25vZFsxNjg5Ml06IENvbnRyb2w6IDwg
+XHJcbipFUFNCOiA1XHJcblxyXG4qRVBTQjogNlxyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDog
+PCBcclxuK0NJRVY6IDIsMlxyXG4KUmVjZWl2ZWQgSVBDUCBOQUsKU2V0dGluZyBzdWdnZXN0ZWQg
+aXAgYWRkcgpTZXR0aW5nIHN1Z2dlc3RlZCBkbnMxClNldHRpbmcgc3VnZ2VzdGVkIGRuczIKRW50
+ZXJpbmcgbmV3IHBoYXNlOiA0Cm9mb25vZFsxNjg5Ml06IElQOiAxMC4xNjMuOTAuMTgwCm9mb25v
+ZFsxNjg5Ml06IEROUzogMjE4LjI0OC4yNDAuMTM0LCAyMTguMjQ4LjI0MC4yMwpvZm9ub2RbMTY4
+OTJdOiBDb250cm9sOiA8IFxyXG4rQ0lFVjogMiwzXHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9s
+OiA8IFxyXG4rQ0lFVjogMiwyXHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA8IFxyXG4qRVBT
+QjogMFxyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPCBcclxuK0NJRVY6IDIsM1xyXG4Kb2Zv
+bm9kWzE2ODkyXTogQ29udHJvbDogPCBcclxuKkVQU0I6IDNcclxuCm9mb25vZFsxNjg5Ml06IENv
+bnRyb2w6IDwgXHJcbipFUFNCOiA1XHJcblxyXG4qRVBTQjogNlxyXG4Kb2Zvbm9kWzE2ODkyXTog
+Q29udHJvbDogPCBcclxuK0NJRVY6IDIsMlxyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPCBc
+clxuK0NJRVY6IDIsM1xyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPCBcclxuK0NJRVY6IDIs
+MlxyXG4Kb2Zvbm9kWzE2ODkyXTogQ29udHJvbDogPCBcclxuK0NJRVY6IDIsM1xyXG4Kb2Zvbm9k
+WzE2ODkyXTogQ29udHJvbDogPCBcclxuKkVQU0I6IDBcclxuCm9mb25vZFsxNjg5Ml06IENvbnRy
+b2w6IDwgXHJcbipFUFNCOiAzXHJcbgpvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA8IFxyXG4qRVBT
+QjogNVxyXG5cclxuKkVQU0I6IDZcclxuCm9mb25vZFsxNjg5Ml06IENvbnRyb2w6IDwgXHJcbipF
+UFNCOiAwXHJcbgpvZm9ub2RbMTY4OTJdOiBwbHVnaW5zL2xpbmt0b3AuYzpsaW5rdG9wX3NldF9v
+bmxpbmUoKSBtb2RlbSAweGJmNGZmMCBvZmZsaW5lCm9mb25vZFsxNjg5Ml06IENvbnRyb2w6ID4g
+QVQrQ0ZVTj00XHIKRW50ZXJpbmcgbmV3IHBoYXNlOiA1Cm9mb25vZFsxNjg5Ml06IHBsdWdpbnMv
+dWRldi5jOnJlbW92ZV9tb2RlbSgpIC9kZXZpY2VzL3ZpcnR1YWwvbmV0L3BwcDAKRW50ZXJpbmcg
+bmV3IHBoYXNlOiAwCm9mb25vZFsxNjg5Ml06IHBsdWdpbnMvbGlua3RvcC5jOmxpbmt0b3BfZGlz
+Y29ubmVjdCgpIApvZm9ub2RbMTY4OTJdOiBwbHVnaW5zL2xpbmt0b3AuYzpvcGVuX2RldmljZSgp
+IE1vZGVtIC9kZXYvdHR5QUNNMApvZm9ub2RbMTY4OTJdOiBSZW9wZW5lZCBHUFJTIGNvbnRleHQg
+Y2hhbm5lbApvZm9ub2RbMTY4OTJdOiBDb250cm9sOiA8IFxyXG5PS1xyXG5cclxuK0NHRVY6IE5X
+IERFQUNUICJJUCIsICIxMC4xNjMuOTAuMTgwIiwgMVxyXG5cclxuK0NHRVY6IE5XIERFQUNUICJJ
+UCIsICIxMC4xNjMuOTAuMTgwIiwgMVxyXG4Kb2Zvbm9kWzE2ODkyXTogVW5yZWdpc3RlcmVkIGhh
+bmRsZSBmb3IgY2hhbm5lbCAxOiAweDEwMDA1Cm9mb25vZFsxNjg5Ml06IHBsdWdpbnMvbGlua3Rv
+cC5jOmxpbmt0b3BfZGlzY29ubmVjdCgpIApvZm9ub2RbMTY4OTJdOiBBYm9ydGluZyAoc2lnbmFs
+IDExKQpvZm9ub2RbMTY4OTJdOiArKysrKysrKyBiYWNrdHJhY2UgKysrKysrKysKb2Zvbm9kWzE2
+ODkyXTogWzBdOiAvbGliL2xpYnB0aHJlYWQuc28uMCgrMHhmYjQwKSBbMHg3ZjA4NDNhNDRiNDBd
+Cm9mb25vZFsxNjg5Ml06IFsxXTogLi9zcmMvb2Zvbm9kKCkgWzB4NDZjY2NlXQpvZm9ub2RbMTY4
+OTJdOiBbMl06IC4vc3JjL29mb25vZCgpIFsweDQ2MzQyY10Kb2Zvbm9kWzE2ODkyXTogWzNdOiAv
+bGliL2xpYmdsaWItMi4wLnNvLjAoKzB4M2Y4ZmUpIFsweDdmMDg0M2VkMzhmZV0Kb2Zvbm9kWzE2
+ODkyXTogWzRdOiAvbGliL2xpYmdsaWItMi4wLnNvLjAoKzB4M2ZmMzUpIFsweDdmMDg0M2VkM2Yz
+NV0Kb2Zvbm9kWzE2ODkyXTogWzVdOiAvbGliL2xpYmdsaWItMi4wLnNvLjAoZ19tYWluX2NvbnRl
+eHRfZGlzcGF0Y2grMHgyNjMpIFsweDdmMDg0M2VkNDNiM10Kb2Zvbm9kWzE2ODkyXTogWzZdOiAv
+bGliL2xpYmdsaWItMi4wLnNvLjAoKzB4NDQyYTgpIFsweDdmMDg0M2VkODJhOF0Kb2Zvbm9kWzE2
+ODkyXTogWzddOiAvbGliL2xpYmdsaWItMi4wLnNvLjAoZ19tYWluX2xvb3BfcnVuKzB4MTk1KSBb
+MHg3ZjA4NDNlZDg3YjVdCm9mb25vZFsxNjg5Ml06IFs4XTogLi9zcmMvb2Zvbm9kKCkgWzB4NDZi
+NmM0XQpvZm9ub2RbMTY4OTJdOiBbOV06IC9saWIvbGliYy5zby42KF9fbGliY19zdGFydF9tYWlu
+KzB4ZmUpIFsweDdmMDg0MzBiZmQ4ZV0Kb2Zvbm9kWzE2ODkyXTogWzEwXTogLi9zcmMvb2Zvbm9k
+KCkgWzB4NDBjYjg5XQpvZm9ub2RbMTY4OTJdOiArKysrKysrKysrKysrKysrKysrKysrKysrKysK
+Cg==
 
-Maybe you should be sending the E2GPSNPD, unrefing the data_chat and
-then sending the fd upwards?
-
->> Also, what happens if the channel is hupped by the modem?  Shouldn't we
->> have a watch in the core for that and set Enabled accordingly?
-> =
-
-> Humn... maybe. Though client should have called Release(). Otherwise,
-> isn't the Release() method superfluous?
-> =
-
-
-Assuming the client is well behaved..
-
-Also, what are we doing with the open socket if oFono is forcefully shut
-down?  Shouldn't we shut it down as well?
-
-Regards,
--Denis
-
---===============8981239810982904011==--
+--===============6356246342007962632==--
 
