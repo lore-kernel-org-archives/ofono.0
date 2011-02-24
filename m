@@ -1,88 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============9159918394666502829=="
+Content-Type: multipart/mixed; boundary="===============5776181907919620935=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 1/2] gatchat: add g_at_result_iter_next_number_default API
-Date: Thu, 24 Feb 2011 18:16:05 +0100
-Message-ID: <1298567766-17745-2-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1298567766-17745-1-git-send-email-frederic.danis@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: ofono crash (setting offline while connected)
+Date: Thu, 24 Feb 2011 11:31:35 -0600
+Message-ID: <4D6695F7.2080607@gmail.com>
+In-Reply-To: <AANLkTimFFgUbOiYJs6=+Y1E_ik3xmeFNR0q=r7XJHYo1@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9159918394666502829==
+--===============5776181907919620935==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- gatchat/gatresult.c |   30 ++++++++++++++++++++++++++++++
- gatchat/gatresult.h |    2 ++
- 2 files changed, 32 insertions(+), 0 deletions(-)
+Hi Amit,
 
-diff --git a/gatchat/gatresult.c b/gatchat/gatresult.c
-index 8a6dfae..f992486 100644
---- a/gatchat/gatresult.c
-+++ b/gatchat/gatresult.c
-@@ -292,6 +292,36 @@ gboolean g_at_result_iter_next_number(GAtResultIter *i=
-ter, gint *number)
- 	return TRUE;
- }
- =
+On 02/23/2011 11:07 PM, Amit Mendapara wrote:
+> Hi,
+> =
 
-+gboolean g_at_result_iter_next_number_default(GAtResultIter *iter, gint df=
-lt,
-+						gint *number)
-+{
-+	unsigned int pos;
-+	int len;
-+	char *line;
-+
-+	if (iter =3D=3D NULL)
-+		return FALSE;
-+
-+	if (iter->l =3D=3D NULL)
-+		return FALSE;
-+
-+	line =3D iter->l->data;
-+	len =3D strlen(line);
-+
-+	pos =3D skip_to_next_field(line, iter->line_pos, len);
-+
-+	if (pos !=3D iter->line_pos) {
-+		iter->line_pos =3D pos;
-+
-+		if (number)
-+			*number =3D dflt;
-+
-+		return TRUE;
-+	}
-+
-+	return g_at_result_iter_next_number(iter, number);
-+}
-+
- gboolean g_at_result_iter_next_range(GAtResultIter *iter, gint *min, gint =
-*max)
- {
- 	int pos;
-diff --git a/gatchat/gatresult.h b/gatchat/gatresult.h
-index a74741f..f498c86 100644
---- a/gatchat/gatresult.h
-+++ b/gatchat/gatresult.h
-@@ -58,6 +58,8 @@ gboolean g_at_result_iter_next_string(GAtResultIter *iter=
-, const char **str);
- gboolean g_at_result_iter_next_unquoted_string(GAtResultIter *iter,
- 						const char **str);
- gboolean g_at_result_iter_next_number(GAtResultIter *iter, gint *number);
-+gboolean g_at_result_iter_next_number_default(GAtResultIter *iter, gint df=
-lt,
-+						gint *number);
- gboolean g_at_result_iter_next_hexstring(GAtResultIter *iter,
- 		const guint8 **str, gint *length);
- =
+> While testing the Linktop driver I observed that ofono is crashing if I
+> try to set modem offline while it is connected (using
+> test/offline-modem.py script). After some debugging, I found that
+> `linktop_disconnect` function is being called twice (see the attached
+> debug log).
+> =
 
--- =
+> What could be the reason here? I have seen some hack in mbm driver (in
+> mbm_disconnect) having `reopen_callback`. I have tried this but then
+> having another crash (this time when creating gprs context). Anyone,
+> please clarify how to deal with the issue properly?
 
-1.7.1
+Some of these modems HUP the tty for x seconds.  So if you try to open
+them too fast, they will be HUPed again, leading to various issues.
 
+When posting backtraces, please give them directly from gdb, or use the
+backtrace script to 'prettify' them.  e.g.:
 
---===============9159918394666502829==--
+test/backtrace src/ofonod your_log
+
+Regards,
+-Denis
+
+--===============5776181907919620935==--
 
