@@ -1,82 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============2043049354048238869=="
+Content-Type: multipart/mixed; boundary="===============3810468503049308671=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 1/2] gatchat: add g_at_result_iter_next_number_or_void API
-Date: Thu, 24 Feb 2011 16:46:33 +0100
-Message-ID: <1298562394-11475-2-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1298562394-11475-1-git-send-email-frederic.danis@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] common: '+' is not valid phone number anymore
+Date: Thu, 24 Feb 2011 09:47:33 -0600
+Message-ID: <4D667D95.3060505@gmail.com>
+In-Reply-To: <1298536438-2646-1-git-send-email-paavo.leinonen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2043049354048238869==
+--===============3810468503049308671==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- gatchat/gatresult.c |   25 +++++++++++++++++++++++++
- gatchat/gatresult.h |    2 ++
- 2 files changed, 27 insertions(+), 0 deletions(-)
+Hi Paavo,
 
-diff --git a/gatchat/gatresult.c b/gatchat/gatresult.c
-index 8a6dfae..0003f0b 100644
---- a/gatchat/gatresult.c
-+++ b/gatchat/gatresult.c
-@@ -292,6 +292,31 @@ gboolean g_at_result_iter_next_number(GAtResultIter *i=
-ter, gint *number)
- 	return TRUE;
- }
- =
+On 02/24/2011 02:33 AM, Paavo Leinonen wrote:
+> Reject phone number if it contains only plus sign.
+> ---
+> Hi,
+> =
 
-+gboolean g_at_result_iter_next_number_or_void(GAtResultIter *iter, gint *n=
-umber)
-+{
-+	unsigned int pos;
-+	int len;
-+	char *line;
-+
-+	if (iter =3D=3D NULL)
-+		return FALSE;
-+
-+	if (iter->l =3D=3D NULL)
-+		return FALSE;
-+
-+	line =3D iter->l->data;
-+	len =3D strlen(line);
-+
-+	pos =3D skip_to_next_field(line, iter->line_pos, len);
-+
-+	if (pos !=3D iter->line_pos) {
-+		iter->line_pos =3D pos;
-+		return TRUE;
-+	}
-+
-+	return g_at_result_iter_next_number(iter, number);
-+}
-+
- gboolean g_at_result_iter_next_range(GAtResultIter *iter, gint *min, gint =
-*max)
- {
- 	int pos;
-diff --git a/gatchat/gatresult.h b/gatchat/gatresult.h
-index a74741f..7803ca1 100644
---- a/gatchat/gatresult.h
-+++ b/gatchat/gatresult.h
-@@ -58,6 +58,8 @@ gboolean g_at_result_iter_next_string(GAtResultIter *iter=
-, const char **str);
- gboolean g_at_result_iter_next_unquoted_string(GAtResultIter *iter,
- 						const char **str);
- gboolean g_at_result_iter_next_number(GAtResultIter *iter, gint *number);
-+gboolean g_at_result_iter_next_number_or_void(GAtResultIter *iter,
-+						gint *number);
- gboolean g_at_result_iter_next_hexstring(GAtResultIter *iter,
- 		const guint8 **str, gint *length);
- =
+> Originally this issue was found while testing Call Forwarding. If =
 
--- =
+> user would set call fowarding to number '+', oFono actually erased =
 
-1.7.1
+> existing CF settings. Fix was made to common.c as I don't think plus
+> should be considered as a valid phone number in any case.
+> =
+
+> BR,
+> Paavo
+> =
+
+>  src/common.c |    3 +++
+>  1 files changed, 3 insertions(+), 0 deletions(-)
+> =
 
 
---===============2043049354048238869==--
+Patch has been applied, thanks.
+
+Regards,
+-Denis
+
+--===============3810468503049308671==--
 
