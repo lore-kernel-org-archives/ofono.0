@@ -1,59 +1,115 @@
-Content-Type: multipart/mixed; boundary="===============7329208985820431042=="
+Content-Type: multipart/mixed; boundary="===============6376649085216508511=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 0/2] add support of void parameters in CMER
-Date: Thu, 24 Feb 2011 16:46:32 +0100
-Message-ID: <1298562394-11475-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH 2/2] emulator: add support of void parameters in CMER
+Date: Thu, 24 Feb 2011 16:46:34 +0100
+Message-ID: <1298562394-11475-3-git-send-email-frederic.danis@linux.intel.com>
+In-Reply-To: <1298562394-11475-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7329208985820431042==
+--===============6376649085216508511==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-following commands are supported :
-AT+CMER=3D3,0,0,1,0
+---
+ src/emulator.c |   24 ++++++++++++------------
+ 1 files changed, 12 insertions(+), 12 deletions(-)
 
-OK
-AT+CMER=3D3,0,0,1
+diff --git a/src/emulator.c b/src/emulator.c
+index 4896ae1..c4bc505 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -312,23 +312,23 @@ static void cmer_cb(GAtServer *server, GAtServerReque=
+stType type,
+ 	case G_AT_SERVER_REQUEST_TYPE_SET:
+ 	{
+ 		GAtResultIter iter;
+-		int mode;
++		int mode =3D em->events_mode;
+ 		int ind =3D em->events_ind;
+-		int val;
++		int val =3D 0;
+ =
 
-OK
-AT+CMER=3D3,,,1
+ 		g_at_result_iter_init(&iter, result);
+ 		g_at_result_iter_next(&iter, "");
+ =
 
-OK
-AT+CMER=3D3,,,1,
+ 		/* mode */
+-		if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
++		if (!g_at_result_iter_next_number_or_void(&iter, &mode))
+ 			goto fail;
+ =
 
-OK
-AT+CMER=3D,,0,1,
+ 		if ((mode !=3D 0) && (mode !=3D 3))
+ 			goto fail;
+ =
 
-OK
-AT+CMER=3D3, ,,1
+ 		/* keyp */
+-		if (g_at_result_iter_next_number(&iter, &val) =3D=3D FALSE) {
+-			if (g_at_result_iter_skip_next(&iter) =3D=3D FALSE)
++		if (!g_at_result_iter_next_number_or_void(&iter, &val)) {
++			if (!g_at_result_iter_skip_next(&iter))
+ 				goto done;
+ 			goto fail;
+ 		}
+@@ -337,8 +337,8 @@ static void cmer_cb(GAtServer *server, GAtServerRequest=
+Type type,
+ 			goto fail;
+ =
 
-OK
-AT+CMER=3D3,a,0,1
+ 		/* disp */
+-		if (g_at_result_iter_next_number(&iter, &val) =3D=3D FALSE) {
+-			if (g_at_result_iter_skip_next(&iter) =3D=3D FALSE)
++		if (!g_at_result_iter_next_number_or_void(&iter, &val)) {
++			if (!g_at_result_iter_skip_next(&iter))
+ 				goto done;
+ 			goto fail;
+ 		}
+@@ -347,8 +347,8 @@ static void cmer_cb(GAtServer *server, GAtServerRequest=
+Type type,
+ 			goto fail;
+ =
 
-ERROR
-AT+CMER=3D3,"a",0,1
+ 		/* ind */
+-		if (g_at_result_iter_next_number(&iter, &ind) =3D=3D FALSE) {
+-			if (g_at_result_iter_skip_next(&iter) =3D=3D FALSE)
++		if (!g_at_result_iter_next_number_or_void(&iter, &ind)) {
++			if (!g_at_result_iter_skip_next(&iter))
+ 				goto done;
+ 			goto fail;
+ 		}
+@@ -357,8 +357,8 @@ static void cmer_cb(GAtServer *server, GAtServerRequest=
+Type type,
+ 			goto fail;
+ =
 
-ERROR
-AT+CMER=3D3,
+ 		/* bfr */
+-		if (g_at_result_iter_next_number(&iter, &val) =3D=3D FALSE) {
+-			if (g_at_result_iter_skip_next(&iter) =3D=3D FALSE)
++		if (!g_at_result_iter_next_number_or_void(&iter, &val)) {
++			if (!g_at_result_iter_skip_next(&iter))
+ 				goto done;
+ 			goto fail;
+ 		}
+@@ -367,7 +367,7 @@ static void cmer_cb(GAtServer *server, GAtServerRequest=
+Type type,
+ 			goto fail;
+ =
 
-OK
-AT+CMER=3D3
+ 		/* check that bfr is last parameter */
+-		if (g_at_result_iter_skip_next(&iter) =3D=3D TRUE)
++		if (g_at_result_iter_skip_next(&iter))
+ 			goto fail;
+ =
 
-OK
+ done:
+-- =
 
-
-Fr=C3=A9d=C3=A9ric Danis (2):
-  gatchat: add g_at_result_iter_next_number_or_void API
-  emulator: add support of void parameters in CMER
-
- gatchat/gatresult.c |   25 +++++++++++++++++++++++++
- gatchat/gatresult.h |    2 ++
- src/emulator.c      |   24 ++++++++++++------------
- 3 files changed, 39 insertions(+), 12 deletions(-)
+1.7.1
 
 
---===============7329208985820431042==--
+--===============6376649085216508511==--
 
