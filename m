@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8581472717593437919=="
+Content-Type: multipart/mixed; boundary="===============8279924375679751417=="
 MIME-Version: 1.0
 From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH v2 04/18] plugins: add u8500 to udev
-Date: Fri, 25 Feb 2011 17:40:49 +0200
-Message-ID: <AANLkTi=vZE7Et-M0LPCM+GNN--CMf8__1rJE=WRQLd4t@mail.gmail.com>
-In-Reply-To: <b3c1140fdbf2ebfe0179e21c1db2ff72ff5401b2.1298460572.git.andreas.westin@stericsson.com>
+Subject: Re: [PATCH v2 06/18] src: add missing SIM enum to simutil.h
+Date: Fri, 25 Feb 2011 17:41:04 +0200
+Message-ID: <AANLkTim-mfr6JiH+mMr9CcYa+yTJREYZwYZBLPDjXaFu@mail.gmail.com>
+In-Reply-To: <2e1ac6ec28ae6bab1ddfcad4e50208928a574a3c.1298460572.git.andreas.westin@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8581472717593437919==
+--===============8279924375679751417==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,14 +19,13 @@ Hi,
 > From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
 >
 > ---
-> =C2=A0plugins/ofono.rules | =C2=A0 =C2=A03 +++
-> =C2=A0plugins/udev.c =C2=A0 =C2=A0 =C2=A0| =C2=A0 =C2=A02 ++
-> =C2=A02 files changed, 5 insertions(+), 0 deletions(-)
+> =C2=A0src/simutil.h | =C2=A0 =C2=A01 +
+> =C2=A01 files changed, 1 insertions(+), 0 deletions(-)
 
-Patch applied. Thanks!
+Applied this patch with minor tweak of the commit message.
 
 Cheers,
 Aki
 
---===============8581472717593437919==--
+--===============8279924375679751417==--
 
