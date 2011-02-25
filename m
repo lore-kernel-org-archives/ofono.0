@@ -1,54 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============7261281080709753404=="
+Content-Type: multipart/mixed; boundary="===============8549205407484547260=="
 MIME-Version: 1.0
-From: Antoine Reversat <a.reversat@gmail.com>
-Subject: [PATCH 1/3] Clean up isi_call_any_address_sb_proc
-Date: Fri, 25 Feb 2011 14:23:16 -0500
-Message-ID: <1298661798-4059-1-git-send-email-a.reversat@gmail.com>
-In-Reply-To: <AANLkTik_2_gbnD3EgGJkAtQj8OBHWXA6nY093LSJDN5V@mail.gmail.com>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH net-next 0/6] Phonet: small pipe protocol fixes
+Date: Fri, 25 Feb 2011 19:23:36 +0000
+Message-ID: <20110225.112406.246526410.davem@davemloft.net>
+In-Reply-To: <20110225.112055.260096987.davem@davemloft.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7261281080709753404==
+--===============8549205407484547260==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: David Miller <davem@davemloft.net>
+Date: Fri, 25 Feb 2011 11:20:55 -0800 (PST)
+
+> From: "R=C3=A9mi Denis-Courmont" <remi.denis-courmont@nokia.com>
+> Date: Fri, 25 Feb 2011 11:13:41 +0200
+> =
+
+>> This patch series cleans up and fixes a number of small bits in the
+>> Phonet pipe code, especially the experimental pipe controller. Once
+>> this small bits are sorted out, I will try to fix the controller
+>> protocol implementation proper so that we do not need the
+>> compile-time (experimental) flag anymore.
+> =
+
+> All applied thanks.
+> =
+
+> If you want to start using GIT to push phonet changes to me, frankly I
+> would welcome that :-)
+
+BTW, I had to add the following patch to fix a build warning:
+
+--------------------
+phonet: Protect pipe_do_remove() with appropriate ifdefs.
+
+It is only used when CONFIG_PHONET_PIPECTRLR is not set.
+
+Signed-off-by: David S. Miller <davem@davemloft.net>
 ---
- drivers/isimodem/voicecall.c |   14 ++++++++++----
- 1 files changed, 10 insertions(+), 4 deletions(-)
+ net/phonet/pep.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
-index 0a32f27..0f9753b 100644
---- a/drivers/isimodem/voicecall.c
-+++ b/drivers/isimodem/voicecall.c
-@@ -210,10 +210,16 @@ static void isi_call_any_address_sb_proc(struct isi_v=
-oicecall *ivc,
- 	uint8_t len;
- 	char *addr;
+diff --git a/net/phonet/pep.c b/net/phonet/pep.c
+index b8c31fc..875e86c 100644
+--- a/net/phonet/pep.c
++++ b/net/phonet/pep.c
+@@ -849,6 +849,7 @@ drop:
+ 	return err;
+ }
  =
 
--	if (!g_isi_sb_iter_get_byte(sb, &type, 2) ||
--			!g_isi_sb_iter_get_byte(sb, &pres, 3) ||
--			!g_isi_sb_iter_get_byte(sb, &len, 5) ||
--			!g_isi_sb_iter_get_alpha_tag(sb, &addr, 2 * len, 6))
-+	if (!g_isi_sb_iter_get_byte(sb, &type, 2))
-+		return;
-+
-+	if (!g_isi_sb_iter_get_byte(sb, &pres, 3))
-+		return;
-+
-+	if (!g_isi_sb_iter_get_byte(sb, &len, 5))
-+		return;
-+
-+	if (!g_isi_sb_iter_get_alpha_tag(sb, &addr, 2 * len, 6))
- 		return;
++#ifndef CONFIG_PHONET_PIPECTRLR
+ static int pipe_do_remove(struct sock *sk)
+ {
+ 	struct pep_sock *pn =3D pep_sk(sk);
+@@ -870,6 +871,7 @@ static int pipe_do_remove(struct sock *sk)
  =
 
- 	call->addr_type =3D type | 0x80;
+ 	return pn_skb_send(sk, skb, NULL);
+ }
++#endif
+ =
+
+ /* associated socket ceases to exist */
+ static void pep_sock_close(struct sock *sk, long timeout)
 -- =
 
-1.7.1
+1.7.4.1
 
 
---===============7261281080709753404==--
+--===============8549205407484547260==--
 
