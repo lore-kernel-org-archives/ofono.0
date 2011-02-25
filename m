@@ -1,42 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============5380574165278122314=="
+Content-Type: multipart/mixed; boundary="===============1205779689078294932=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH net-next 0/6] Phonet: small pipe protocol fixes
-Date: Fri, 25 Feb 2011 11:13:41 +0200
-Message-ID: <201102251113.41620.remi.denis-courmont@nokia.com>
+From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
+Subject: [PATCH] stk: Add null pointer check
+Date: Fri, 25 Feb 2011 12:39:19 +0200
+Message-ID: <1298630359-4774-1-git-send-email-lasse.kunnasluoto@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5380574165278122314==
+--===============1205779689078294932==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-	Hello,
+Fixes a crash when SIM Session End is received while waiting for user respo=
+nse to SELECT ITEM command.
+---
+ src/stk.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-This patch series cleans up and fixes a number of small bits in the Phonet =
-pipe code, especially the experimental pipe =
+diff --git a/src/stk.c b/src/stk.c
+index bc46b2f..cda378f 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -115,6 +115,9 @@ static int stk_respond(struct ofono_stk *stk, struct st=
+k_response *rsp,
+ 	if (stk->driver->terminal_response =3D=3D NULL)
+ 		return -ENOSYS;
+ =
 
-controller. Once this small bits are sorted out, I will try to fix the cont=
-roller protocol implementation proper so that we do not =
-
-need the compile-time (experimental) flag anymore.
-
-Comments welcome,
-
- include/net/phonet/pep.h    |   22 ----
- include/net/phonet/phonet.h |    1 =
-
- net/phonet/af_phonet.c      |   19 ++-
- net/phonet/pep.c            |  240 +++++++++++++++------------------------=
------
- net/phonet/socket.c         |   14 +-
- 5 files changed, 106 insertions(+), 190 deletions(-)
-
++	if (stk->pending_cmd =3D=3D NULL)
++		return -EINVAL;
++
+ 	rsp->src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL;
+ 	rsp->dst =3D STK_DEVICE_IDENTITY_TYPE_UICC;
+ 	rsp->number =3D stk->pending_cmd->number;
 -- =
 
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net/
+1.7.0.4
 
---===============5380574165278122314==--
+
+--===============1205779689078294932==--
 
