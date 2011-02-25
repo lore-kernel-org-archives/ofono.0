@@ -1,43 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8531155255383191628=="
+Content-Type: multipart/mixed; boundary="===============7541308057044346673=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] TODO: ownership change of E911 support
-Date: Fri, 25 Feb 2011 10:56:34 -0600
-Message-ID: <4D67DF42.7000808@gmail.com>
-In-Reply-To: <1298623094-628-1-git-send-email-jarko.poutiainen@tieto.com>
+From: Antoine Reversat <a.reversat@gmail.com>
+Subject: Re: [PATCH] Add CNAP support for isimodem
+Date: Fri, 25 Feb 2011 12:04:39 -0500
+Message-ID: <AANLkTi=cm_SVQ6b9p89DBP37LUFhXpxnkz4ci997ET4k@mail.gmail.com>
+In-Reply-To: <20110225165337.GA2107@joana>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8531155255383191628==
+--===============7541308057044346673==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jarko,
+On Fri, Feb 25, 2011 at 11:53 AM, Gustavo F. Padovan
+<padovan@profusion.mobi> wrote:
+> Hy Antoine,
+>
+> Top posting is not allowed on this mailing list. Please stop using it.
 
-On 02/25/2011 02:38 AM, Jarko Poutiainen wrote:
-> ---
-> =
+Sorry about that.
 
-> Hi,
-> =
+>
+> A separate patch for this change.
+>
 
-> I have agreed with Sjur that I would take ownership of this.
-> =
+Will do.
 
-> Br,
-> Jarko
-> =
+> --
+> Gustavo F. Padovan
+> http://profusion.mobi
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
->  TODO |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> =
-
-
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============8531155255383191628==--
+--===============7541308057044346673==--
 
