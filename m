@@ -1,31 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============2585583873325078235=="
+Content-Type: multipart/mixed; boundary="===============7261281080709753404=="
 MIME-Version: 1.0
-From: David Miller <davem@davemloft.net>
-Subject: Re: [PATCH net-next 0/6] Phonet: small pipe protocol fixes
-Date: Fri, 25 Feb 2011 19:20:19 +0000
-Message-ID: <20110225.112055.260096987.davem@davemloft.net>
-In-Reply-To: <201102251113.41620.remi.denis-courmont@nokia.com>
+From: Antoine Reversat <a.reversat@gmail.com>
+Subject: [PATCH 1/3] Clean up isi_call_any_address_sb_proc
+Date: Fri, 25 Feb 2011 14:23:16 -0500
+Message-ID: <1298661798-4059-1-git-send-email-a.reversat@gmail.com>
+In-Reply-To: <AANLkTik_2_gbnD3EgGJkAtQj8OBHWXA6nY093LSJDN5V@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2585583873325078235==
+--===============7261281080709753404==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: "R=C3=A9mi Denis-Courmont" <remi.denis-courmont@nokia.com>
-Date: Fri, 25 Feb 2011 11:13:41 +0200
+---
+ drivers/isimodem/voicecall.c |   14 ++++++++++----
+ 1 files changed, 10 insertions(+), 4 deletions(-)
 
-> This patch series cleans up and fixes a number of small bits in the
-> Phonet pipe code, especially the experimental pipe controller. Once
-> this small bits are sorted out, I will try to fix the controller
-> protocol implementation proper so that we do not need the
-> compile-time (experimental) flag anymore.
+diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
+index 0a32f27..0f9753b 100644
+--- a/drivers/isimodem/voicecall.c
++++ b/drivers/isimodem/voicecall.c
+@@ -210,10 +210,16 @@ static void isi_call_any_address_sb_proc(struct isi_v=
+oicecall *ivc,
+ 	uint8_t len;
+ 	char *addr;
+ =
 
-All applied thanks.
+-	if (!g_isi_sb_iter_get_byte(sb, &type, 2) ||
+-			!g_isi_sb_iter_get_byte(sb, &pres, 3) ||
+-			!g_isi_sb_iter_get_byte(sb, &len, 5) ||
+-			!g_isi_sb_iter_get_alpha_tag(sb, &addr, 2 * len, 6))
++	if (!g_isi_sb_iter_get_byte(sb, &type, 2))
++		return;
++
++	if (!g_isi_sb_iter_get_byte(sb, &pres, 3))
++		return;
++
++	if (!g_isi_sb_iter_get_byte(sb, &len, 5))
++		return;
++
++	if (!g_isi_sb_iter_get_alpha_tag(sb, &addr, 2 * len, 6))
+ 		return;
+ =
 
-If you want to start using GIT to push phonet changes to me, frankly I
-would welcome that :-)
+ 	call->addr_type =3D type | 0x80;
+-- =
 
---===============2585583873325078235==--
+1.7.1
+
+
+--===============7261281080709753404==--
 
