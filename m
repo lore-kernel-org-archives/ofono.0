@@ -1,108 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============2335549070566269863=="
+Content-Type: multipart/mixed; boundary="===============3661752265376484774=="
 MIME-Version: 1.0
-From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
-Subject: Re: [PATCH] stk: Add null pointer check
-Date: Fri, 25 Feb 2011 15:04:55 +0200
-Message-ID: <1298639095.5082.20.camel@lkunnasl-desktop>
-In-Reply-To: <AANLkTin=rBFxJ-EbUOKs71nKspQmf6qVXBcCWfCyo8G=@mail.gmail.com>
+From: Jussi Kangas <jussi.kangas@tieto.com>
+Subject: Re: [PATCH] sim: showing lock state with call meter
+Date: Fri, 25 Feb 2011 15:19:31 +0200
+Message-ID: <1298639971.18254.15.camel@jussi-desktop>
+In-Reply-To: <4D66BCEA.2090307@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2335549070566269863==
+--===============3661752265376484774==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrzej,
+Hi,
 
-On Fri, 2011-02-25 at 14:39 +0200, Andrzej Zaborowski wrote:
-> Hi Lasse,
+On Thu, 2011-02-24 at 22:17 +0200, Denis Kenzior wrote: =
+
+
+> We have to check for the PUK2 case above since we might be in PUK2
+> required state already.  If we fail to unlock the PUK2, then
+>       pin_type =3D puk2pin(pin_type);
+> will never be executed.
 > =
 
-> On 25 February 2011 11:39, Lasse Kunnasluoto
-> <lasse.kunnasluoto@tieto.com> wrote:
-> > Fixes a crash when SIM Session End is received while waiting for user r=
-esponse to SELECT ITEM command.
+> And I'm fine with your suggestion of blacklisting PIN2 from
+LockedPins,
+> but lets handle this separately.
+
+Yes let's handle that as separate issue if at all. What I was trying to =
+
+say was that there was no situation in my testings where PUK2 would be =
+
+required in this part of code. If PUK2 is required pin_type is still
+PIN2 here. Situation you describe has to happen with other modems.
+
+> Again, my point here is that you have this code at the bottom of the
+> function:
 > =
 
-> Can you post the ofono debug log for example?  It sounds like
-> something else is wrong because stk_respond should not be called when
-> the session is ended by the card.
-
-Sure, log below.
-
-For me it looks like modem times out after 1 min if no response given. I
-don't think the session was terminated by SIM. Usually SIM cards wait
-for TERMINAL RESPONSE basically forever. SIM has no mechanism to
-terminate ongoing proactive command (well, except reset itself)
-
-ofonod[3228]: src/stk.c:stk_select_item() =
-
-ofonod[3228]: src/stk.c:stk_select_item() =
-
-ofonod[3228]: src/stk.c:stk_send_envelope() =
-
-ofonod[3228]: drivers/mbmmodem/stk.c:mbm_stk_envelope() =
-
-ofonod[3228]: drivers/mbmmodem/stk.c:mbm_stk_envelope()
-AT*STKE=3D"D30782020181900101"
-ofonod[3228]: SIM: > AT*STKE=3D"D30782020181900101"\r
-ofonod[3228]: SIM: < \r\nOK\r\n
-ofonod[3228]: drivers/mbmmodem/stk.c:stke_cb() =
-
-ofonod[3228]: src/stk.c:envelope_cb() length 0
-ofonod[3228]: src/stk.c:menu_selection_envelope_cb() =
-
-ofonod[3228]: src/stk.c:menu_selection_envelope_cb() Menu Selection
-envelope submission gave no error
-ofonod[3228]: SIM: < \r
-\n*STKI:"D05681030124808202818205083E507265706169640F1022437265646974207265=
-6368617267650F07234372656469740F0B245361756E616C616874690F09254C616E6775616=
-7650F072650726963657318052313101324"\r\n
-ofonod[3228]: drivers/mbmmodem/stk.c:stki_notify() =
-
-ofonod[3228]: src/stk.c:stk_menu_create() =
-
-ofonod[3228]: SIM: < \r\n*STKEND\r\n
-ofonod[3228]: drivers/mbmmodem/stk.c:stkend_notify() =
-
-ofonod[3228]: src/stk.c:session_agent_notify() Session Agent removed
-ofonod[3228]: src/stk.c:session_agent_notify() Sending Terminate
-response for session agent
-ofonod[3228]: src/stk.c:send_simple_response() result 16
-ofonod[3228]: src/stk.c:stk_respond() =
-
-ofonod[3228]: Aborting (signal 11)
-ofonod[3228]: ++++++++ backtrace ++++++++
-ofonod[3228]: [0]: [0x4fe400]
-ofonod[3228]: [1]: src/ofonod() [0x80dcfb8]
-ofonod[3228]: [2]: src/ofonod() [0x80dd495]
-ofonod[3228]: [3]: src/ofonod() [0x80f6e10]
-ofonod[3228]: [4]: /lib/libglib-2.0.so.0(g_slist_foreach+0x27)
-[0xe6b3d7]
-ofonod[3228]: [5]: src/ofonod() [0x806fbe6]
-ofonod[3228]: [6]: src/ofonod() [0x8071c17]
-ofonod[3228]: [7]: /lib/libglib-2.0.so.0(+0x7fefb) [0xe8fefb]
-ofonod[3228]: [8]: /lib/libglib-2.0.so.0(g_main_context_dispatch+0x1d5)
-[0xe4b5e5]
-ofonod[3228]: [9]: /lib/libglib-2.0.so.0(+0x3f2d8) [0xe4f2d8]
-ofonod[3228]: [10]: /lib/libglib-2.0.so.0(g_main_loop_run+0x187)
-[0xe4f817]
-ofonod[3228]: [11]: src/ofonod() [0x80b5791]
-ofonod[3228]: [12]: /lib/tls/i686/cmov/libc.so.6(__libc_start_main+0xe6)
-[0x2d1bd6]
-ofonod[3228]: [13]: src/ofonod() [0x8052f91]
-ofonod[3228]: +++++++++++++++++++++++++++
-
-BR,
--Lasse
-
-
+>         if (pin_type =3D=3D OFONO_SIM_PASSWORD_NONE)
+>                 sim_initialize_after_pin(sim);
 > =
 
-> Best regards
+> If you want the SIM initialization to proceed then you need to add a
+> check for SIM PIN2/PUK2.
+
+You are writing about adding PIN2 and PUK2 to this check? I rechecked =
+
+my AT command API specification and PIN2 and PUK2 cannot be required in
+startup. (Speculation about bug in my previous mail was wrong) And if
+PIN2 or PUK2 is required in other time there is no need for
+sim_initialization. You must be writing about situation where oFono is
+run workstation environment and restarted without booting the modem? Ok,
+I'll change that but I think I'll add a check to prevent sim
+initialization in sim state READY situation. =
 
 
+What is your general opinion about making amends in oFono code to enable
+nice working in workstation? My previous hotswap patch does not work if
+you disable modem without restarting oFono. It lacks initialization of
+have_sim parameter in init_sim_reporting method. =
 
---===============2335549070566269863==--
+
+Br,
+-Jussi
+
+
+--===============3661752265376484774==--
 
