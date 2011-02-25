@@ -1,30 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============1281713376661380707=="
+Content-Type: multipart/mixed; boundary="===============4138461190717112745=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: [PATCH] TODO: ownership change of E911 support
-Date: Fri, 25 Feb 2011 12:48:07 +0100
-Message-ID: <AANLkTi=MiTu+NRcyEihHdRWBe+tp=6NyN77AvkG__BoV@mail.gmail.com>
-In-Reply-To: <1298623094-628-1-git-send-email-jarko.poutiainen@tieto.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH] stk: Add null pointer check
+Date: Fri, 25 Feb 2011 13:39:22 +0100
+Message-ID: <AANLkTin=rBFxJ-EbUOKs71nKspQmf6qVXBcCWfCyo8G=@mail.gmail.com>
+In-Reply-To: <1298630359-4774-1-git-send-email-lasse.kunnasluoto@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1281713376661380707==
+--===============4138461190717112745==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Jarko Poutiainen wrote:
-> Hi,
->
-> I have agreed with Sjur that I would take ownership of this.
-...
-> - =C2=A0Owner: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
-> + =C2=A0Owner: Jarko Poutiainen <jarko.poutiainen@tieto.com>
+Hi Lasse,
 
-Acked-by: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
+On 25 February 2011 11:39, Lasse Kunnasluoto
+<lasse.kunnasluoto@tieto.com> wrote:
+> Fixes a crash when SIM Session End is received while waiting for user res=
+ponse to SELECT ITEM command.
 
-Regards
-/Sjur
+Can you post the ofono debug log for example?  It sounds like
+something else is wrong because stk_respond should not be called when
+the session is ended by the card.
 
---===============1281713376661380707==--
+Best regards
+
+--===============4138461190717112745==--
 
