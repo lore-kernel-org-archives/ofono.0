@@ -1,77 +1,136 @@
-Content-Type: multipart/mixed; boundary="===============8549205407484547260=="
+Content-Type: multipart/mixed; boundary="===============6209267733355629878=="
 MIME-Version: 1.0
-From: David Miller <davem@davemloft.net>
-Subject: Re: [PATCH net-next 0/6] Phonet: small pipe protocol fixes
-Date: Fri, 25 Feb 2011 19:23:36 +0000
-Message-ID: <20110225.112406.246526410.davem@davemloft.net>
-In-Reply-To: <20110225.112055.260096987.davem@davemloft.net>
+From: Antoine Reversat <a.reversat@gmail.com>
+Subject: [PATCH 2/3] Add CNAP support for isimodem
+Date: Fri, 25 Feb 2011 14:23:17 -0500
+Message-ID: <1298661798-4059-2-git-send-email-a.reversat@gmail.com>
+In-Reply-To: <AANLkTik_2_gbnD3EgGJkAtQj8OBHWXA6nY093LSJDN5V@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8549205407484547260==
+--===============6209267733355629878==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: David Miller <davem@davemloft.net>
-Date: Fri, 25 Feb 2011 11:20:55 -0800 (PST)
-
-> From: "R=C3=A9mi Denis-Courmont" <remi.denis-courmont@nokia.com>
-> Date: Fri, 25 Feb 2011 11:13:41 +0200
-> =
-
->> This patch series cleans up and fixes a number of small bits in the
->> Phonet pipe code, especially the experimental pipe controller. Once
->> this small bits are sorted out, I will try to fix the controller
->> protocol implementation proper so that we do not need the
->> compile-time (experimental) flag anymore.
-> =
-
-> All applied thanks.
-> =
-
-> If you want to start using GIT to push phonet changes to me, frankly I
-> would welcome that :-)
-
-BTW, I had to add the following patch to fix a build warning:
-
---------------------
-phonet: Protect pipe_do_remove() with appropriate ifdefs.
-
-It is only used when CONFIG_PHONET_PIPECTRLR is not set.
-
-Signed-off-by: David S. Miller <davem@davemloft.net>
 ---
- net/phonet/pep.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ drivers/isimodem/voicecall.c |   42 ++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 files changed, 41 insertions(+), 1 deletions(-)
 
-diff --git a/net/phonet/pep.c b/net/phonet/pep.c
-index b8c31fc..875e86c 100644
---- a/net/phonet/pep.c
-+++ b/net/phonet/pep.c
-@@ -849,6 +849,7 @@ drop:
- 	return err;
+diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
+index 0f9753b..0870556 100644
+--- a/drivers/isimodem/voicecall.c
++++ b/drivers/isimodem/voicecall.c
+@@ -56,8 +56,10 @@ struct isi_call {
+ 	uint8_t cause;
+ 	uint8_t addr_type;
+ 	uint8_t presentation;
++	uint8_t name_presentation;
+ 	uint8_t reason;
+ 	char address[20];
++	char name[20];
+ 	char addr_pad[4];
+ };
+ =
+
+@@ -245,6 +247,34 @@ static void isi_call_destination_address_sb_proc(struc=
+t isi_voicecall *ivc,
+ 		isi_call_any_address_sb_proc(ivc, call, sb);
  }
  =
 
-+#ifndef CONFIG_PHONET_PIPECTRLR
- static int pipe_do_remove(struct sock *sk)
- {
- 	struct pep_sock *pn =3D pep_sk(sk);
-@@ -870,6 +871,7 @@ static int pipe_do_remove(struct sock *sk)
++static void isi_call_origin_info_sb_proc(struct isi_voicecall *ivc,
++						struct isi_call *call,
++						GIsiSubBlockIter *sb)
++{
++	uint8_t pres;
++	uint8_t id;
++	uint8_t len;
++	char *name;
++
++	if (!g_isi_sb_iter_get_byte(sb, &pres, 2))
++		return;
++
++	if (!g_isi_sb_iter_get_byte(sb, &id, 6))
++		return;
++
++	if (!g_isi_sb_iter_get_byte(sb, &len, 7))
++		return;
++
++	if (!g_isi_sb_iter_get_alpha_tag(sb, &name, 2 * len, 8))
++		return;
++
++	DBG("Got name %s", name);
++	call->name_presentation =3D pres;
++	strncpy(call->name, name, sizeof(call->name));
++
++	g_free(name);
++}
++
+ static void isi_call_mode_sb_proc(struct isi_voicecall *ivc,
+ 					struct isi_call *call,
+ 					GIsiSubBlockIter *sb)
+@@ -402,13 +432,18 @@ static struct ofono_call isi_call_as_ofono_call(const=
+ struct isi_call *call)
+ 	ocall.status =3D isi_call_status_to_clcc(call);
  =
 
- 	return pn_skb_send(sk, skb, NULL);
+ 	memcpy(number->number, call->address, sizeof(number->number));
++	memcpy(ocall.name, call->name, sizeof(ocall.name));
+ =
+
+ 	number->type =3D 0x80 | call->addr_type;
+ 	ocall.clip_validity =3D call->presentation & 3;
++	ocall.cnap_validity =3D call->name_presentation & 3;
+ =
+
+ 	if (ocall.clip_validity =3D=3D 0 && strlen(number->number) =3D=3D 0)
+ 		ocall.clip_validity =3D 2;
+ =
+
++	if (ocall.cnap_validity =3D=3D 0 && strlen(call->name) =3D=3D 0)
++		ocall.cnap_validity =3D 2;
++
+ 	return ocall;
  }
-+#endif
  =
 
- /* associated socket ceases to exist */
- static void pep_sock_close(struct sock *sk, long timeout)
+@@ -519,11 +554,12 @@ static void isi_call_notify(struct ofono_voicecall *o=
+vc, struct isi_call *call)
+ =
+
+ 	ocall =3D isi_call_as_ofono_call(call);
+ =
+
+-	DBG("id=3D%u,%s,%u,\"%s\",%u,%u",
++	DBG("id=3D%u,%s,%u,\"%s\",\"%s\",%u,%u",
+ 		ocall.id,
+ 		ocall.direction ? "terminated" : "originated",
+ 		ocall.status,
+ 		ocall.phone_number.number,
++		ocall.name,
+ 		ocall.phone_number.type,
+ 		ocall.clip_validity);
+ =
+
+@@ -628,6 +664,10 @@ static void isi_call_status_ind_cb(const GIsiMessage *=
+msg, void *data)
+ 			isi_call_origin_address_sb_proc(ivc, call, &iter);
+ 			break;
+ =
+
++		case CALL_ORIGIN_INFO:
++			isi_call_origin_info_sb_proc(ivc, call, &iter);
++			break;
++
+ 		case CALL_GSM_DETAILED_CAUSE:
+ 		case CALL_DESTINATION_PRE_ADDRESS:
+ 		case CALL_DESTINATION_POST_ADDRESS:
 -- =
 
-1.7.4.1
+1.7.1
 
 
---===============8549205407484547260==--
+--===============6209267733355629878==--
 
