@@ -1,155 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============3726698094652038479=="
+Content-Type: multipart/mixed; boundary="===============2742976350281716511=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 1/3] mbmmodem: close chat before sending fd
-Date: Mon, 28 Feb 2011 10:43:52 -0300
-Message-ID: <1298900634-2337-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH 2/3] location-reporting: don't add client-exit watch too early
+Date: Mon, 28 Feb 2011 10:43:53 -0300
+Message-ID: <1298900634-2337-2-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1298900634-2337-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3726698094652038479==
+--===============2742976350281716511==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Wait until driver gives us a file descriptor to start watching for
+client exit. This fixes a race when client exits before the driver
+calls location_reporting_enable_cb().
 ---
- drivers/mbmmodem/location-reporting.c |   44 ++++++++++++++++++-----------=
-----
- 1 files changed, 24 insertions(+), 20 deletions(-)
+ src/location-reporting.c |   10 ++++------
+ 1 files changed, 4 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/mbmmodem/location-reporting.c b/drivers/mbmmodem/locat=
-ion-reporting.c
-index 941fac4..b671d71 100644
---- a/drivers/mbmmodem/location-reporting.c
-+++ b/drivers/mbmmodem/location-reporting.c
-@@ -48,7 +48,7 @@ static const char *e2gpsctl_prefix[] =3D { "*E2GPSCTL:", =
-NULL };
- =
-
- struct gps_data {
- 	GAtChat *chat;
--	GAtChat *data_chat;
-+	GIOChannel *data_channel;
- };
- =
-
- static void mbm_e2gpsctl_disable_cb(gboolean ok, GAtResult *result,
-@@ -70,7 +70,7 @@ static void mbm_e2gpsctl_disable_cb(gboolean ok, GAtResul=
-t *result,
- 		return;
- 	}
- =
-
--	g_at_chat_unref(gd->data_chat);
-+	g_io_channel_unref(gd->data_channel);
- =
-
- 	CALLBACK_WITH_SUCCESS(cb, cbd->data);
- }
-@@ -94,33 +94,33 @@ static void mbm_location_reporting_disable(struct ofono=
-_location_reporting *lr,
- 	g_free(cbd);
- }
- =
-
--static int mbm_create_data_chat(struct ofono_location_reporting *lr)
-+static GAtChat *mbm_create_data_chat(struct ofono_location_reporting *lr)
+diff --git a/src/location-reporting.c b/src/location-reporting.c
+index 6ab0914..f19ccf5 100644
+--- a/src/location-reporting.c
++++ b/src/location-reporting.c
+@@ -170,13 +170,12 @@ static void location_reporting_enable_cb(const struct=
+ ofono_error *error,
+ 							int fd,	void *data)
  {
- 	struct gps_data *gd =3D ofono_location_reporting_get_data(lr);
- 	struct ofono_modem *modem;
- 	const char *gps_dev;
- 	GAtSyntax *syntax;
--	GIOChannel *channel;
--	int fd;
-+	GAtChat *chat;
+ 	struct ofono_location_reporting *lr =3D data;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
+ 	DBusMessage *reply;
  =
 
- 	modem =3D ofono_location_reporting_get_modem(lr);
- 	gps_dev =3D ofono_modem_get_string(modem, "GPSDevice");
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+ 		ofono_error("Enabling location-reporting failed");
  =
 
--	channel =3D g_at_tty_open(gps_dev, NULL);
--	if (channel =3D=3D NULL)
--		return -1;
-+	gd->data_channel =3D g_at_tty_open(gps_dev, NULL);
-+	if (gd->data_channel =3D=3D NULL)
-+		return NULL;
- =
-
- 	syntax =3D g_at_syntax_new_gsm_permissive();
--	gd->data_chat =3D g_at_chat_new(channel, syntax);
--	fd =3D g_io_channel_unix_get_fd(channel);
-+	chat =3D g_at_chat_new(gd->data_channel, syntax);
- =
-
- 	g_at_syntax_unref(syntax);
--	g_io_channel_unref(channel);
- =
-
--	if (gd->data_chat =3D=3D NULL)
--		return -1;
-+	if (chat =3D=3D NULL) {
-+		g_io_channel_unref(gd->data_channel);
-+
-+		return NULL;
-+	}
- =
-
--	return fd;
-+	return chat;
- }
- =
-
- static void mbm_e2gpsctl_enable_cb(gboolean ok, GAtResult *result,
-@@ -131,7 +131,7 @@ static void mbm_e2gpsctl_enable_cb(gboolean ok, GAtResu=
-lt *result,
- 	struct ofono_location_reporting *lr =3D cbd->user;
- 	struct gps_data *gd =3D ofono_location_reporting_get_data(lr);
- 	struct ofono_error error;
--	int fd;
-+	GAtChat *chat;
- =
-
- 	DBG("lr=3D%p ok=3D%d", lr, ok);
- =
-
-@@ -143,18 +143,22 @@ static void mbm_e2gpsctl_enable_cb(gboolean ok, GAtRe=
-sult *result,
- 		return;
- 	}
- =
-
--	fd =3D mbm_create_data_chat(lr);
+-		client_remove(lr);
 -
--	if (fd < 0)
-+	chat =3D mbm_create_data_chat(lr);
-+	if (chat =3D=3D NULL)
- 		goto out;
+ 		reply =3D __ofono_error_failed(lr->pending);
+ 		__ofono_dbus_pending_reply(&lr->pending, reply);
  =
 
--	if (g_at_chat_send(gd->data_chat, "AT*E2GPSNPD", NULL, NULL, NULL,
--								NULL) > 0) {
-+	if (g_at_chat_send(chat, "AT*E2GPSNPD", NULL, NULL, NULL, NULL) > 0) {
-+		int fd =3D g_io_channel_unix_get_fd(gd->data_channel);
-+
-+		g_at_chat_unref(chat);
- 		cb(&error, fd, cbd->data);
- =
-
- 		return;
+@@ -184,6 +183,9 @@ static void location_reporting_enable_cb(const struct o=
+fono_error *error,
  	}
  =
 
-+	g_at_chat_unref(chat);
-+	g_io_channel_unref(gd->data_channel);
-+
- out:
- 	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
- }
+ 	lr->enabled =3D TRUE;
++	lr->client_owner =3D g_strdup(dbus_message_get_sender(lr->pending));
++	lr->disconnect_watch =3D g_dbus_add_disconnect_watch(conn,
++				lr->client_owner, client_exited, lr, NULL);
+ =
+
+ 	reply =3D dbus_message_new_method_return(lr->pending);
+ 	dbus_message_append_args(reply, DBUS_TYPE_UNIX_FD, &fd,
+@@ -198,7 +200,6 @@ static DBusMessage *location_reporting_request(DBusConn=
+ection *conn,
+ 						DBusMessage *msg, void *data)
+ {
+ 	struct ofono_location_reporting *lr =3D data;
+-	const char *caller =3D dbus_message_get_sender(msg);
+ =
+
+ 	if (lr->pending !=3D NULL)
+ 		return __ofono_error_busy(msg);
+@@ -206,9 +207,6 @@ static DBusMessage *location_reporting_request(DBusConn=
+ection *conn,
+ 	if (lr->enabled)
+ 		return __ofono_error_in_use(msg);
+ =
+
+-	lr->client_owner =3D g_strdup(caller);
+-	lr->disconnect_watch =3D g_dbus_add_disconnect_watch(conn,
+-				lr->client_owner, client_exited, lr, NULL);
+ 	lr->pending =3D dbus_message_ref(msg);
+ =
+
+ 	lr->driver->enable(lr, location_reporting_enable_cb, lr);
 -- =
 
 1.7.4.1
 
 
---===============3726698094652038479==--
+--===============2742976350281716511==--
 
