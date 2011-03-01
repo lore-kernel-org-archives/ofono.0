@@ -1,66 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============6359145797644462790=="
+Content-Type: multipart/mixed; boundary="===============0079681017434385309=="
 MIME-Version: 1.0
-From: George Matveev <george@matveev.se>
-Subject: Re: ofono patch review policy?
-Date: Tue, 01 Mar 2011 12:32:03 +0100
-Message-ID: <7b56e04856feafef493a8e9e8f64d562.squirrel@squirrel-webmail.surftown.com>
-In-Reply-To: <AANLkTi=roK6TYqonv57dny4Yf+Lm=Kf=CtXoEgh12wis@mail.gmail.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH 1/1] isimodem: group timeouts in enum,
+ remove unused timeout
+Date: Tue, 01 Mar 2011 15:27:11 +0200
+Message-ID: <AANLkTimsPyYHC8MK5U5k9W4zKzfLDm7TCDBRRjPFqNtH@mail.gmail.com>
+In-Reply-To: <1296997000-12073-1-git-send-email-george@matveev.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6359145797644462790==
+--===============0079681017434385309==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi George,
 
-thanx for clarifying this to me (and possibly others).
+2011/2/6 George Matveev <george@matveev.se>:
+> Introduce enum network_timeout for scan/registration timeouts,
+> remove unused NETWORK_TIMEOUT.
+> ---
+> =C2=A0drivers/isimodem/network.h | =C2=A0 =C2=A08 +++++---
+> =C2=A01 files changed, 5 insertions(+), 3 deletions(-)
+>
+> diff --git a/drivers/isimodem/network.h b/drivers/isimodem/network.h
+> index b96216d..f35ed5a 100644
+> --- a/drivers/isimodem/network.h
+> +++ b/drivers/isimodem/network.h
+> @@ -27,11 +27,13 @@ extern "C" {
+> =C2=A0#endif
+>
+> =C2=A0#define PN_NETWORK =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 0x0A
+> -#define NETWORK_TIMEOUT =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A05
+> -#define NETWORK_SCAN_TIMEOUT =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 180
+> -#define NETWORK_SET_TIMEOUT =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0240
+> =C2=A0#define NET_INVALID_TIME =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x64
 
-Could you please have a look (when you have a minute or so)
-into that (rather cosmetic) patch and let me know if it's good enough
-to be applied or if I should (fix and) re-submit.
+I would rather just remove the unused define.
 
-Ha det s=C3=A5 bra,
-George
+> +enum network_timeout {
+> + =C2=A0 =C2=A0 =C2=A0 NETWORK_SCAN_TIMEOUT =C2=A0 =C2=A0=3D =C2=A0 =C2=
+=A0 =C2=A0 180,
+> + =C2=A0 =C2=A0 =C2=A0 NETWORK_SET_TIMEOUT =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =3D =C2=A0 =C2=A0 =C2=A0 240
 
-> Hi George,
->
-> 2011/3/1 George Matveev <george@matveev.se>:
->> on February 6, I submitted a patch (isimodem):
->>
->> http://lists.ofono.org/pipermail/ofono/2011-February/008635.html
->>
->> But it is already March and the patch has never been reviewed nor
->> formally
->> rejected.
->
-> Sorry, I had missed that.
->
->> Other people had asked similar questions regarding their patches
->> recently
->> on #ofono IRC.
->>
->> It would be nice to understand if there's any patch review
->> policy/procedure in this project?
->
-> Currently, patch submitters are kindly asked to follow through. That
-> is, if the patch doesn't receive attention, to resubmit, and bug the
-> maintainers long enough for them to review the patch.
->
-> It's not optimal, but the inflow is quite big at the moment, and I
-> have been for instance (among other duties) quite busy with the
-> wgmodem2.5 patches.
->
-> Cheers,
-> Aki
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
+This is not the indentation style to use for enums. Check
+coding-style.txt, section M11.
 
+Cheers,
+Aki
 
-
---===============6359145797644462790==--
+--===============0079681017434385309==--
 
