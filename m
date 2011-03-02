@@ -1,120 +1,117 @@
-Content-Type: multipart/mixed; boundary="===============2005442976486338927=="
+Content-Type: multipart/mixed; boundary="===============5807727826658439155=="
 MIME-Version: 1.0
-From: Xu, Martin <martin.xu@intel.com>
-Subject: patch to fix BMC #13679 Huawei EM770: ofonod crash when
- disable/enable 3G technology
-Date: Wed, 02 Mar 2011 17:59:38 +0800
-Message-ID: <FC2FB65B4D919844ADE4BE3C2BB739AD36C9398F@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <1299055349.1964.25.camel@pporlan-linux>
+From: Patrick Porlan <patrick.porlan@linux.intel.com>
+Subject: [PATCH] Replace modulo operations in ringbuffer.c by masking
+ operations.
+Date: Wed, 02 Mar 2011 11:15:35 +0100
+Message-ID: <1299060935-12999-1-git-send-email-patrick.porlan@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2005442976486338927==
+--===============5807727826658439155==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Looks like my smtp server has some issue currently. =
+That's possible because the size of the ring buffers is always
+a power of two, and yields a small performance improvement.
 
-So send the patch through attachment.
-Sorry for inconvenient.
+The improvement should be mostly visible on processors that implement
+division in microcode (Atom) or lack a division instruction (ARM).
+---
+ gatchat/ringbuffer.c |   14 ++++++++------
+ 1 files changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/gatchat/ringbuffer.c b/gatchat/ringbuffer.c
+index becd3f8..27be3a8 100644
+--- a/gatchat/ringbuffer.c
++++ b/gatchat/ringbuffer.c
+@@ -34,6 +34,7 @@
+ struct ring_buffer {
+ 	unsigned char *buffer;
+ 	unsigned int size;
++	unsigned int mask;
+ 	unsigned int in;
+ 	unsigned int out;
+ };
+@@ -61,6 +62,7 @@ struct ring_buffer *ring_buffer_new(unsigned int size)
+ 	}
+ =
+
+ 	buffer->size =3D real_size;
++	buffer->mask =3D real_size - 1;
+ 	buffer->in =3D 0;
+ 	buffer->out =3D 0;
+ =
+
+@@ -78,7 +80,7 @@ int ring_buffer_write(struct ring_buffer *buf, const void=
+ *data,
+ 	len =3D MIN(len, buf->size - buf->in + buf->out);
+ =
+
+ 	/* Determine how much to write before wrapping */
+-	offset =3D buf->in % buf->size;
++	offset =3D buf->in & buf->mask;
+ 	end =3D MIN(len, buf->size - offset);
+ 	memcpy(buf->buffer+offset, d, end);
+ =
+
+@@ -93,12 +95,12 @@ int ring_buffer_write(struct ring_buffer *buf, const vo=
+id *data,
+ unsigned char *ring_buffer_write_ptr(struct ring_buffer *buf,
+ 					unsigned int offset)
+ {
+-	return buf->buffer + (buf->in + offset) % buf->size;
++	return buf->buffer + ((buf->in + offset) & buf->mask);
+ }
+ =
+
+ int ring_buffer_avail_no_wrap(struct ring_buffer *buf)
+ {
+-	unsigned int offset =3D buf->in % buf->size;
++	unsigned int offset =3D buf->in & buf->mask;
+ 	unsigned int len =3D buf->size - buf->in + buf->out;
+ =
+
+ 	return MIN(len, buf->size - offset);
+@@ -121,7 +123,7 @@ int ring_buffer_read(struct ring_buffer *buf, void *dat=
+a, unsigned int len)
+ 	len =3D MIN(len, buf->in - buf->out);
+ =
+
+ 	/* Grab data from buffer starting at offset until the end */
+-	offset =3D buf->out % buf->size;
++	offset =3D buf->out & buf->mask;
+ 	end =3D MIN(len, buf->size - offset);
+ 	memcpy(d, buf->buffer + offset, end);
+ =
+
+@@ -150,7 +152,7 @@ int ring_buffer_drain(struct ring_buffer *buf, unsigned=
+ int len)
+ =
+
+ int ring_buffer_len_no_wrap(struct ring_buffer *buf)
+ {
+-	unsigned int offset =3D buf->out % buf->size;
++	unsigned int offset =3D buf->out & buf->mask;
+ 	unsigned int len =3D buf->in - buf->out;
+ =
+
+ 	return MIN(len, buf->size - offset);
+@@ -159,7 +161,7 @@ int ring_buffer_len_no_wrap(struct ring_buffer *buf)
+ unsigned char *ring_buffer_read_ptr(struct ring_buffer *buf,
+ 					unsigned int offset)
+ {
+-	return buf->buffer + (buf->out + offset) % buf->size;
++	return buf->buffer + ((buf->out + offset) & buf->mask);
+ }
+ =
+
+ int ring_buffer_len(struct ring_buffer *buf)
+-- =
+
+1.7.1
 
 
---===============2005442976486338927==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Fix-huawei_disconnect-function-issue.patch"
-
-RnJvbSBkYjgzZDkwYTFlNDhkOTllMmQ4M2FmYTVkYjIxY2VmZGEzNDI3MDE0IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBNYXJ0aW4gWHUgPG1hcnRpbi54dUBpbnRlbC5jb20+CkRhdGU6
-IFdlZCwgMiBNYXIgMjAxMSAxNjo0MTo1OSArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIEZpeCBodWF3
-ZWlfZGlzY29ubmVjdCBmdW5jdGlvbiBpc3N1ZQoKQ2xvc2UgdGhlIGNoYXQgaW5pdGlhdGl2ZWx5
-LCBodWF3ZWlfZGlzY29ubmVjdCBzaG91bGQgbm90IGJlIGNhbGxlZAp0byByZWNyZWF0ZSBjaGF0
-IGFuZCBncHJzIGNvbnRleHQuIEFuZCB0aGUgZnVuY3Rpb24gbmVlZHMgdG8gY2hlY2sgbW9kZW0K
-b25saW5lIHN0YXRlIGJlZm9yZSByZWNyZWF0ZSBncHJzIGNvbnRleHQuCgphbHNvIHJlZmVyIGNv
-bW1pdCAzOTM4MjczMGQ3NzU4YjA5M2NhNjI3MWY0ZTlkZWE4NzVmYTA0YjNhCi0tLQogcGx1Z2lu
-cy9odWF3ZWkuYyB8ICAgNjYgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrLS0tLS0tLS0tLS0KIDEgZmlsZXMgY2hhbmdlZCwgNTIgaW5zZXJ0aW9ucygrKSwgMTQgZGVs
-ZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvcGx1Z2lucy9odWF3ZWkuYyBiL3BsdWdpbnMvaHVhd2Vp
-LmMKaW5kZXggNmYwNTY3Ny4uNWUyZWU5MCAxMDA2NDQKLS0tIGEvcGx1Z2lucy9odWF3ZWkuYwor
-KysgYi9wbHVnaW5zL2h1YXdlaS5jCkBAIC03OCw2ICs3OCw3IEBAIHN0cnVjdCBodWF3ZWlfZGF0
-YSB7CiAJc3RydWN0IG9mb25vX2dwcnMgKmdwcnM7CiAJc3RydWN0IG9mb25vX2dwcnNfY29udGV4
-dCAqZ2M7CiAJZ2Jvb2xlYW4gdm9pY2U7CisJZ2Jvb2xlYW4gb25saW5lOwogCWdib29sZWFuIG5k
-aXM7CiAJZ3VpbnQgc2ltX3BvbGxfdGltZW91dDsKIAlndWludCBzaW1fcG9sbF9jb3VudDsKQEAg
-LTk3LDYgKzk4LDcgQEAgc3RhdGljIGludCBodWF3ZWlfcHJvYmUoc3RydWN0IG9mb25vX21vZGVt
-ICptb2RlbSkKIAlpZiAoZGF0YSA9PSBOVUxMKQogCQlyZXR1cm4gLUVOT01FTTsKIAorCWRhdGEt
-Pm9ubGluZSA9IEZBTFNFOwogCW9mb25vX21vZGVtX3NldF9kYXRhKG1vZGVtLCBkYXRhKTsKIAog
-CXJldHVybiAwOwpAQCAtMTExLDYgKzExMywxMSBAQCBzdGF0aWMgdm9pZCBodWF3ZWlfcmVtb3Zl
-KHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pCiAJb2Zvbm9fbW9kZW1fc2V0X2RhdGEobW9kZW0s
-IE5VTEwpOwogCiAJaWYgKGRhdGEtPm1vZGVtKQorCQkvKgorCQkgKiBodWF3ZWlfZGlzY29ubmVj
-dCBzaG91bGQgbm90IGJlIGNhbGxlZCB3aGVuIHRoZSBjaGF0CisJCSAqIGlzIGNsb3NlZCBpbml0
-aWF0aXZlbHkKKwkJICovCisJCWdfYXRfY2hhdF9zZXRfZGlzY29ubmVjdF9mdW5jdGlvbihkYXRh
-LT5tb2RlbSwgTlVMTCwgTlVMTCk7CiAJCWdfYXRfY2hhdF91bnJlZihkYXRhLT5tb2RlbSk7CiAK
-IAlnX2F0X2NoYXRfdW5yZWYoZGF0YS0+cGN1aSk7CkBAIC00NzAsMTAgKzQ3Nyw3IEBAIHN0YXRp
-YyB2b2lkIGh1YXdlaV9kaXNjb25uZWN0KGdwb2ludGVyIHVzZXJfZGF0YSkKIAlzdHJ1Y3Qgb2Zv
-bm9fbW9kZW0gKm1vZGVtID0gdXNlcl9kYXRhOwogCXN0cnVjdCBodWF3ZWlfZGF0YSAqZGF0YSA9
-IG9mb25vX21vZGVtX2dldF9kYXRhKG1vZGVtKTsKIAotCURCRygiIik7Ci0KLQlpZiAoZGF0YS0+
-Z2MpCi0JCW9mb25vX2dwcnNfY29udGV4dF9yZW1vdmUoZGF0YS0+Z2MpOworCURCRygiZGF0YS0+
-b25saW5lICVkIiwgZGF0YS0+b25saW5lKTsKIAogCWdfYXRfY2hhdF91bnJlZihkYXRhLT5tb2Rl
-bSk7CiAJZGF0YS0+bW9kZW0gPSBOVUxMOwpAQCAtNDg1LDYgKzQ4OSwxMyBAQCBzdGF0aWMgdm9p
-ZCBodWF3ZWlfZGlzY29ubmVjdChncG9pbnRlciB1c2VyX2RhdGEpCiAJZ19hdF9jaGF0X3NldF9k
-aXNjb25uZWN0X2Z1bmN0aW9uKGRhdGEtPm1vZGVtLAogCQkJCQkJaHVhd2VpX2Rpc2Nvbm5lY3Qs
-IG1vZGVtKTsKIAorCS8qIHJlb3BlbiBHUFJTIGNvbnRleHQgY2hhbm5lbCBvbmx5IGF0IG9ubGlu
-ZSBzdGF0ZSAqLworCWlmIChkYXRhLT5vbmxpbmUgPT0gRkFMU0UpCisJCXJldHVybjsKKworCWlm
-IChkYXRhLT5nYykKKwkJb2Zvbm9fZ3Byc19jb250ZXh0X3JlbW92ZShkYXRhLT5nYyk7CisKIAlp
-ZiAoZGF0YS0+c2ltX3N0YXRlID09IEhVQVdFSV9TSU1fU1RBVEVfVkFMSUQgfHwKIAkJCWRhdGEt
-PnNpbV9zdGF0ZSA9PSBIVUFXRUlfU0lNX1NUQVRFX0lOVkFMSURfQ1MpIHsKIAkJb2Zvbm9faW5m
-bygiUmVvcGVuZWQgR1BSUyBjb250ZXh0IGNoYW5uZWwiKTsKQEAgLTUxNSw2ICs1MjYsMTEgQEAg
-c3RhdGljIGludCBodWF3ZWlfZW5hYmxlKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pCiAKIAlk
-YXRhLT5wY3VpID0gb3Blbl9kZXZpY2UobW9kZW0sICJQY3VpIiwgIlBDVUk6ICIpOwogCWlmIChk
-YXRhLT5wY3VpID09IE5VTEwpIHsKKwkJLyoKKwkJICogaHVhd2VpX2Rpc2Nvbm5lY3Qgc2hvdWxk
-IG5vdCBiZSBjYWxsZWQgd2hlbiB0aGUgY2hhdAorCQkgKiBpcyBjbG9zZWQgaW5pdGlhdGl2ZWx5
-CisJCSAqLworCQlnX2F0X2NoYXRfc2V0X2Rpc2Nvbm5lY3RfZnVuY3Rpb24oZGF0YS0+bW9kZW0s
-IE5VTEwsIE5VTEwpOwogCQlnX2F0X2NoYXRfdW5yZWYoZGF0YS0+bW9kZW0pOwogCQlkYXRhLT5t
-b2RlbSA9IE5VTEw7CiAJCXJldHVybiAtRUlPOwpAQCAtNTY0LDYgKzU4MCwxMSBAQCBzdGF0aWMg
-aW50IGh1YXdlaV9kaXNhYmxlKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pCiAJaWYgKGRhdGEt
-Pm1vZGVtKSB7CiAJCWdfYXRfY2hhdF9jYW5jZWxfYWxsKGRhdGEtPm1vZGVtKTsKIAkJZ19hdF9j
-aGF0X3VucmVnaXN0ZXJfYWxsKGRhdGEtPm1vZGVtKTsKKwkJLyoKKwkJICogaHVhd2VpX2Rpc2Nv
-bm5lY3Qgc2hvdWxkIG5vdCBiZSBjYWxsZWQgd2hlbiB0aGUgY2hhdAorCQkgKiBpcyBjbG9zZWQg
-aW5pdGlhdGl2ZWx5CisJCSAqLworCQlnX2F0X2NoYXRfc2V0X2Rpc2Nvbm5lY3RfZnVuY3Rpb24o
-ZGF0YS0+bW9kZW0sIE5VTEwsIE5VTEwpOwogCQlnX2F0X2NoYXRfdW5yZWYoZGF0YS0+bW9kZW0p
-OwogCQlkYXRhLT5tb2RlbSA9IE5VTEw7CiAJfQpAQCAtNTc5LDE1ICs2MDAsMjcgQEAgc3RhdGlj
-IGludCBodWF3ZWlfZGlzYWJsZShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQogCXJldHVybiAt
-RUlOUFJPR1JFU1M7CiB9CiAKK3N0cnVjdCBodWF3ZWlfY2JfZGF0YSB7CisJc3RydWN0IGNiX2Rh
-dGEgKmNiZDsKKwlvZm9ub19ib29sX3Qgb25saW5lOworCXN0cnVjdCBvZm9ub19tb2RlbSAqbW9k
-ZW07Cit9OworCiBzdGF0aWMgdm9pZCBzZXRfb25saW5lX2NiKGdib29sZWFuIG9rLCBHQXRSZXN1
-bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9kYXRhKQogewotCXN0cnVjdCBjYl9kYXRhICpjYmQg
-PSB1c2VyX2RhdGE7Ci0Jb2Zvbm9fbW9kZW1fb25saW5lX2NiX3QgY2IgPSBjYmQtPmNiOworCXN0
-cnVjdCBodWF3ZWlfY2JfZGF0YSAqb25saW5lX2NiZCA9IHVzZXJfZGF0YTsKKwlvZm9ub19tb2Rl
-bV9vbmxpbmVfY2JfdCBjYiA9IG9ubGluZV9jYmQtPmNiZC0+Y2I7CisJc3RydWN0IGh1YXdlaV9k
-YXRhICpkYXRhID0gb2Zvbm9fbW9kZW1fZ2V0X2RhdGEob25saW5lX2NiZC0+bW9kZW0pOwogCi0J
-aWYgKG9rKQotCQlDQUxMQkFDS19XSVRIX1NVQ0NFU1MoY2IsIGNiZC0+ZGF0YSk7CisJaWYgKG9r
-KSB7CisJCWRhdGEtPm9ubGluZSA9IG9ubGluZV9jYmQtPm9ubGluZTsKKworCQlDQUxMQkFDS19X
-SVRIX1NVQ0NFU1MoY2IsIG9ubGluZV9jYmQtPmNiZC0+ZGF0YSk7CisKKwkJZ19mcmVlKG9ubGlu
-ZV9jYmQpOworCX0KIAllbHNlCi0JCUNBTExCQUNLX1dJVEhfRkFJTFVSRShjYiwgY2JkLT5kYXRh
-KTsKKwkJQ0FMTEJBQ0tfV0lUSF9GQUlMVVJFKGNiLCBvbmxpbmVfY2JkLT5jYmQtPmRhdGEpOwog
-fQogCiBzdGF0aWMgdm9pZCBodWF3ZWlfc2V0X29ubGluZShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1v
-ZGVtLCBvZm9ub19ib29sX3Qgb25saW5lLApAQCAtNTk1LDIxICs2MjgsMjYgQEAgc3RhdGljIHZv
-aWQgaHVhd2VpX3NldF9vbmxpbmUoc3RydWN0IG9mb25vX21vZGVtICptb2RlbSwgb2Zvbm9fYm9v
-bF90IG9ubGluZSwKIHsKIAlzdHJ1Y3QgaHVhd2VpX2RhdGEgKmRhdGEgPSBvZm9ub19tb2RlbV9n
-ZXRfZGF0YShtb2RlbSk7CiAJR0F0Q2hhdCAqY2hhdCA9IGRhdGEtPnBjdWk7Ci0Jc3RydWN0IGNi
-X2RhdGEgKmNiZCA9IGNiX2RhdGFfbmV3KGNiLCB1c2VyX2RhdGEpOworCXN0cnVjdCBodWF3ZWlf
-Y2JfZGF0YSAqb25saW5lX2NiZDsKIAljaGFyIGNvbnN0ICpjb21tYW5kID0gb25saW5lID8gIkFU
-K0NGVU49MSIgOiAiQVQrQ0ZVTj01IjsKIAogCURCRygibW9kZW0gJXAgJXMiLCBtb2RlbSwgb25s
-aW5lID8gIm9ubGluZSIgOiAib2ZmbGluZSIpOwogCi0JaWYgKGNiZCA9PSBOVUxMKQorCW9ubGlu
-ZV9jYmQgPSBnX3RyeV9uZXcwKHN0cnVjdCBodWF3ZWlfY2JfZGF0YSwgMSk7CisJb25saW5lX2Ni
-ZC0+Y2JkID0gY2JfZGF0YV9uZXcoY2IsIHVzZXJfZGF0YSk7CisJaWYgKG9ubGluZV9jYmQtPmNi
-ZCA9PSBOVUxMKQogCQlnb3RvIGVycm9yOworCW9ubGluZV9jYmQtPm9ubGluZSA9IG9ubGluZTsK
-KwlvbmxpbmVfY2JkLT5tb2RlbSA9IG1vZGVtOwogCi0JaWYgKGdfYXRfY2hhdF9zZW5kKGNoYXQs
-IGNvbW1hbmQsIE5VTEwsIHNldF9vbmxpbmVfY2IsIGNiZCwgZ19mcmVlKSkKKwlpZiAoZ19hdF9j
-aGF0X3NlbmQoY2hhdCwgY29tbWFuZCwgTlVMTCwgc2V0X29ubGluZV9jYiwKKwkJCQkJCW9ubGlu
-ZV9jYmQsIGdfZnJlZSkpCiAJCXJldHVybjsKIAogZXJyb3I6Ci0JZ19mcmVlKGNiZCk7CisJZ19m
-cmVlKG9ubGluZV9jYmQpOwogCi0JQ0FMTEJBQ0tfV0lUSF9GQUlMVVJFKGNiLCBjYmQtPmRhdGEp
-OworCUNBTExCQUNLX1dJVEhfRkFJTFVSRShjYiwgdXNlcl9kYXRhKTsKIH0KIAogc3RhdGljIHZv
-aWQgaHVhd2VpX3ByZV9zaW0oc3RydWN0IG9mb25vX21vZGVtICptb2RlbSkKLS0gCjEuNi4xLjMK
-Cg==
-
---===============2005442976486338927==--
+--===============5807727826658439155==--
 
