@@ -1,326 +1,120 @@
-Content-Type: multipart/mixed; boundary="===============8843238640798222934=="
+Content-Type: multipart/mixed; boundary="===============2005442976486338927=="
 MIME-Version: 1.0
-From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
-Subject: [PATCH] ste: Add support for multiple AT channels
-Date: Wed, 02 Mar 2011 11:33:53 +0200
-Message-ID: <1299058433-16980-1-git-send-email-lasse.kunnasluoto@tieto.com>
+From: Xu, Martin <martin.xu@intel.com>
+Subject: patch to fix BMC #13679 Huawei EM770: ofonod crash when
+ disable/enable 3G technology
+Date: Wed, 02 Mar 2011 17:59:38 +0800
+Message-ID: <FC2FB65B4D919844ADE4BE3C2BB739AD36C9398F@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1299055349.1964.25.camel@pporlan-linux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8843238640798222934==
+--===============2005442976486338927==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/ste.c |  138 ++++++++++++++++++++++++++++++++++++-----------------=
-----
- 1 files changed, 87 insertions(+), 51 deletions(-)
+Looks like my smtp server has some issue currently. =
 
-diff --git a/plugins/ste.c b/plugins/ste.c
-index b786571..9a1d3d3 100644
---- a/plugins/ste.c
-+++ b/plugins/ste.c
-@@ -65,13 +65,19 @@
- #include <drivers/stemodem/caif_socket.h>
- #include <drivers/stemodem/if_caif.h>
- =
-
--#define NUM_CHAT	1
-+#define NUM_CHAT	5
-+#define AT_DEFAULT	0
-+#define AT_NET	1
-+#define AT_VOICE	2
-+#define AT_GPRS	3
-+#define AT_SIM	4
- #define MAX_PDP_CONTEXTS	4
- =
-
--static char *chat_prefixes[NUM_CHAT] =3D { "Default: " };
-+static char *chat_prefixes[NUM_CHAT] =3D { "Default: ", "Net: ", "Voice: ",
-+					"GPRS: ", "SIM: " };
- =
-
- struct ste_data {
--	GAtChat *chat;
-+	GAtChat *chat[NUM_CHAT];
- 	gboolean have_sim;
- 	struct ofono_sim *sim;
- };
-@@ -105,12 +111,14 @@ static int ste_probe(struct ofono_modem *modem)
- static void ste_remove(struct ofono_modem *modem)
- {
- 	struct ste_data *data =3D ofono_modem_get_data(modem);
-+	int i;
- =
-
- 	DBG("%p", modem);
- =
-
- 	ofono_modem_set_data(modem, NULL);
- =
-
--	g_at_chat_unref(data->chat);
-+	for (i =3D 0; i < NUM_CHAT; i++)
-+		g_at_chat_unref(data->chat[i]);
- =
-
- 	g_free(data);
- }
-@@ -185,7 +193,7 @@ static gboolean init_sim_reporting(gpointer user_data)
- 	struct ofono_modem *modem =3D user_data;
- 	struct ste_data *data =3D ofono_modem_get_data(modem);
- =
-
--	g_at_chat_send(data->chat, "AT*ESIMSR=3D1;*ESIMSR?", NULL,
-+	g_at_chat_send(data->chat[AT_SIM], "AT*ESIMSR=3D1;*ESIMSR?", NULL,
- 			handle_sim_state,
- 			modem, NULL);
- =
-
-@@ -195,11 +203,21 @@ static gboolean init_sim_reporting(gpointer user_data)
- static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
-+	struct ste_data *data =3D ofono_modem_get_data(modem);
-+	int i;
- =
-
- 	DBG("");
- =
-
- 	if (!ok) {
- 		ofono_modem_set_powered(modem, FALSE);
-+
-+		for (i =3D 0; i < NUM_CHAT; i++) {
-+			g_at_chat_cancel_all(data->chat[i]);
-+			g_at_chat_unregister_all(data->chat[i]);
-+			g_at_chat_unref(data->chat[i]);
-+			data->chat[i] =3D NULL;
-+		}
-+
- 		return;
- 	}
- =
-
-@@ -295,35 +313,47 @@ static void esimsr_notify(GAtResult *result, gpointer=
- user_data)
- static int ste_enable(struct ofono_modem *modem)
- {
- 	struct ste_data *data =3D ofono_modem_get_data(modem);
--	GIOChannel *channel;
- 	GAtSyntax *syntax;
-+	int i;
- =
-
- 	syntax =3D g_at_syntax_new_gsm_permissive();
- =
-
--	channel =3D ste_create_channel(modem);
--	if (!channel)
--		return -EIO;
-+	for (i =3D 0; i < NUM_CHAT; i++) {
-+		GIOChannel *channel =3D ste_create_channel(modem);
- =
-
--	data->chat =3D g_at_chat_new_blocking(channel, syntax);
--	g_at_chat_send(data->chat, "AT&F E0 V1 X4 &C1 +CMEE=3D1",
--			NULL, NULL, NULL, NULL);
-+		data->chat[i] =3D g_at_chat_new_blocking(channel, syntax);
-+		if (data->chat[i] =3D=3D NULL)
-+			return -EIO;
- =
-
--	/* All STE modems support UTF-8 */
--	g_at_chat_send(data->chat, "AT+CSCS=3D\"UTF-8\"",
--			NULL, NULL, NULL, NULL);
-+		g_at_chat_send(data->chat[i], "AT&F E0 V1 X4 &C1 +CMEE=3D1",
-+				NULL, NULL, NULL, NULL);
- =
-
--	g_io_channel_unref(channel);
--	g_at_syntax_unref(syntax);
-+		/* All STE modems support UTF-8 */
-+		g_at_chat_send(data->chat[i], "AT+CSCS=3D\"UTF-8\"",
-+				NULL, NULL, NULL, NULL);
- =
-
--	if (data->chat =3D=3D NULL)
--		return -ENOMEM;
-+		g_io_channel_unref(channel);
-+	}
- =
-
--	if (getenv("OFONO_AT_DEBUG"))
--		g_at_chat_set_debug(data->chat, ste_debug, chat_prefixes[0]);
-+	g_at_syntax_unref(syntax);
- =
-
--	g_at_chat_send(data->chat, "AT+CFUN=3D4", NULL, cfun_enable, modem, NULL);
-+	if (getenv("OFONO_AT_DEBUG")) {
-+		g_at_chat_set_debug(data->chat[AT_DEFAULT], ste_debug,
-+					chat_prefixes[0]);
-+		g_at_chat_set_debug(data->chat[AT_NET], ste_debug,
-+					chat_prefixes[1]);
-+		g_at_chat_set_debug(data->chat[AT_VOICE], ste_debug,
-+					chat_prefixes[2]);
-+		g_at_chat_set_debug(data->chat[AT_GPRS], ste_debug,
-+					chat_prefixes[3]);
-+		g_at_chat_set_debug(data->chat[AT_SIM], ste_debug,
-+					chat_prefixes[4]);
-+	}
- =
-
--	g_at_chat_register(data->chat, "*ESIMSR:", esimsr_notify,
-+	g_at_chat_send(data->chat[AT_DEFAULT], "AT+CFUN=3D4", NULL, cfun_enable,
-+				modem, NULL);
-+
-+	g_at_chat_register(data->chat[AT_SIM], "*ESIMSR:", esimsr_notify,
- 				FALSE, modem, NULL);
- =
-
- 	return -EINPROGRESS;
-@@ -333,11 +363,14 @@ static void cfun_disable(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
- 	struct ste_data *data =3D ofono_modem_get_data(modem);
-+	int i;
- =
-
- 	DBG("");
- =
-
--	g_at_chat_unref(data->chat);
--	data->chat =3D NULL;
-+	for (i =3D 0; i < NUM_CHAT; i++) {
-+		g_at_chat_unref(data->chat[i]);
-+		data->chat[i] =3D NULL;
-+	}
- =
-
- 	if (ok)
- 		ofono_modem_set_powered(modem, FALSE);
-@@ -346,15 +379,15 @@ static void cfun_disable(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
- static int ste_disable(struct ofono_modem *modem)
- {
- 	struct ste_data *data =3D ofono_modem_get_data(modem);
-+	int i;
- =
-
- 	DBG("%p", modem);
- =
-
--	if (data->chat =3D=3D NULL)
--		return 0;
--
--	g_at_chat_cancel_all(data->chat);
--	g_at_chat_unregister_all(data->chat);
--	g_at_chat_send(data->chat, "AT+CFUN=3D4", NULL,
-+	for (i =3D 0; i < NUM_CHAT; i++) {
-+		g_at_chat_cancel_all(data->chat[i]);
-+		g_at_chat_unregister_all(data->chat[i]);
-+	}
-+	g_at_chat_send(data->chat[AT_DEFAULT], "AT+CFUN=3D4", NULL,
- 					cfun_disable, modem, NULL);
- =
-
- 	return -EINPROGRESS;
-@@ -375,7 +408,7 @@ static void ste_set_online(struct ofono_modem *modem, o=
-fono_bool_t online,
- 				ofono_modem_online_cb_t cb, void *user_data)
- {
- 	struct ste_data *data =3D ofono_modem_get_data(modem);
--	GAtChat *chat =3D data->chat;
-+	GAtChat *chat =3D data->chat[AT_DEFAULT];
- 	struct cb_data *cbd =3D cb_data_new(cb, user_data);
- 	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
- =
-
-@@ -395,10 +428,10 @@ static void ste_pre_sim(struct ofono_modem *modem)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
-+	ofono_devinfo_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
- 	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_MBM, "atmodem",
--					data->chat);
--	ofono_voicecall_create(modem, 0, "stemodem", data->chat);
-+					data->chat[AT_SIM]);
-+	ofono_voicecall_create(modem, 0, "stemodem", data->chat[AT_VOICE]);
- }
- =
-
- static void ste_post_sim(struct ofono_modem *modem)
-@@ -407,11 +440,11 @@ static void ste_post_sim(struct ofono_modem *modem)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_stk_create(modem, 0, "mbmmodem", data->chat);
--	ofono_phonebook_create(modem, 0, "atmodem", data->chat);
--	ofono_radio_settings_create(modem, 0, "stemodem", data->chat);
-+	ofono_stk_create(modem, 0, "mbmmodem", data->chat[AT_SIM]);
-+	ofono_phonebook_create(modem, 0, "atmodem", data->chat[AT_SIM]);
-+	ofono_radio_settings_create(modem, 0, "stemodem", data->chat[AT_NET]);
- =
-
--	ofono_sms_create(modem, 0, "atmodem", data->chat);
-+	ofono_sms_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
- }
- =
-
- static void ste_post_online(struct ofono_modem *modem)
-@@ -424,22 +457,25 @@ static void ste_post_online(struct ofono_modem *modem)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_ussd_create(modem, 0, "atmodem", data->chat);
--	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
--	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
--	ofono_netreg_create(modem, OFONO_VENDOR_MBM, "atmodem", data->chat);
--	ofono_call_meter_create(modem, 0, "atmodem", data->chat);
--	ofono_call_barring_create(modem, 0, "atmodem", data->chat);
--	ofono_ssn_create(modem, 0, "atmodem", data->chat);
--	ofono_call_volume_create(modem, 0, "atmodem", data->chat);
--	ofono_cbs_create(modem, 0, "atmodem", data->chat);
-+	ofono_ussd_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
-+	ofono_call_forwarding_create(modem, 0,
-+					"atmodem", data->chat[AT_DEFAULT]);
-+	ofono_call_settings_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
-+	ofono_netreg_create(modem, OFONO_VENDOR_MBM,
-+					"atmodem", data->chat[AT_NET]);
-+	ofono_call_meter_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
-+	ofono_call_barring_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
-+	ofono_ssn_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
-+	ofono_call_volume_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
-+	ofono_cbs_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
- =
-
- 	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
--					"atmodem", data->chat);
-+					"atmodem", data->chat[AT_GPRS]);
-+
- 	if (gprs) {
- 		for (i =3D 0; i < MAX_PDP_CONTEXTS; i++) {
--			gc =3D ofono_gprs_context_create(
--					modem, 0, "stemodem", data->chat);
-+			gc =3D ofono_gprs_context_create(modem, 0, "stemodem",
-+					 data->chat[AT_GPRS]);
- 			if (gc =3D=3D NULL)
- 				break;
- =
-
--- =
-
-1.7.0.4
+So send the patch through attachment.
+Sorry for inconvenient.
 
 
---===============8843238640798222934==--
+--===============2005442976486338927==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Fix-huawei_disconnect-function-issue.patch"
+
+RnJvbSBkYjgzZDkwYTFlNDhkOTllMmQ4M2FmYTVkYjIxY2VmZGEzNDI3MDE0IE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBNYXJ0aW4gWHUgPG1hcnRpbi54dUBpbnRlbC5jb20+CkRhdGU6
+IFdlZCwgMiBNYXIgMjAxMSAxNjo0MTo1OSArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIEZpeCBodWF3
+ZWlfZGlzY29ubmVjdCBmdW5jdGlvbiBpc3N1ZQoKQ2xvc2UgdGhlIGNoYXQgaW5pdGlhdGl2ZWx5
+LCBodWF3ZWlfZGlzY29ubmVjdCBzaG91bGQgbm90IGJlIGNhbGxlZAp0byByZWNyZWF0ZSBjaGF0
+IGFuZCBncHJzIGNvbnRleHQuIEFuZCB0aGUgZnVuY3Rpb24gbmVlZHMgdG8gY2hlY2sgbW9kZW0K
+b25saW5lIHN0YXRlIGJlZm9yZSByZWNyZWF0ZSBncHJzIGNvbnRleHQuCgphbHNvIHJlZmVyIGNv
+bW1pdCAzOTM4MjczMGQ3NzU4YjA5M2NhNjI3MWY0ZTlkZWE4NzVmYTA0YjNhCi0tLQogcGx1Z2lu
+cy9odWF3ZWkuYyB8ICAgNjYgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrLS0tLS0tLS0tLS0KIDEgZmlsZXMgY2hhbmdlZCwgNTIgaW5zZXJ0aW9ucygrKSwgMTQgZGVs
+ZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvcGx1Z2lucy9odWF3ZWkuYyBiL3BsdWdpbnMvaHVhd2Vp
+LmMKaW5kZXggNmYwNTY3Ny4uNWUyZWU5MCAxMDA2NDQKLS0tIGEvcGx1Z2lucy9odWF3ZWkuYwor
+KysgYi9wbHVnaW5zL2h1YXdlaS5jCkBAIC03OCw2ICs3OCw3IEBAIHN0cnVjdCBodWF3ZWlfZGF0
+YSB7CiAJc3RydWN0IG9mb25vX2dwcnMgKmdwcnM7CiAJc3RydWN0IG9mb25vX2dwcnNfY29udGV4
+dCAqZ2M7CiAJZ2Jvb2xlYW4gdm9pY2U7CisJZ2Jvb2xlYW4gb25saW5lOwogCWdib29sZWFuIG5k
+aXM7CiAJZ3VpbnQgc2ltX3BvbGxfdGltZW91dDsKIAlndWludCBzaW1fcG9sbF9jb3VudDsKQEAg
+LTk3LDYgKzk4LDcgQEAgc3RhdGljIGludCBodWF3ZWlfcHJvYmUoc3RydWN0IG9mb25vX21vZGVt
+ICptb2RlbSkKIAlpZiAoZGF0YSA9PSBOVUxMKQogCQlyZXR1cm4gLUVOT01FTTsKIAorCWRhdGEt
+Pm9ubGluZSA9IEZBTFNFOwogCW9mb25vX21vZGVtX3NldF9kYXRhKG1vZGVtLCBkYXRhKTsKIAog
+CXJldHVybiAwOwpAQCAtMTExLDYgKzExMywxMSBAQCBzdGF0aWMgdm9pZCBodWF3ZWlfcmVtb3Zl
+KHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pCiAJb2Zvbm9fbW9kZW1fc2V0X2RhdGEobW9kZW0s
+IE5VTEwpOwogCiAJaWYgKGRhdGEtPm1vZGVtKQorCQkvKgorCQkgKiBodWF3ZWlfZGlzY29ubmVj
+dCBzaG91bGQgbm90IGJlIGNhbGxlZCB3aGVuIHRoZSBjaGF0CisJCSAqIGlzIGNsb3NlZCBpbml0
+aWF0aXZlbHkKKwkJICovCisJCWdfYXRfY2hhdF9zZXRfZGlzY29ubmVjdF9mdW5jdGlvbihkYXRh
+LT5tb2RlbSwgTlVMTCwgTlVMTCk7CiAJCWdfYXRfY2hhdF91bnJlZihkYXRhLT5tb2RlbSk7CiAK
+IAlnX2F0X2NoYXRfdW5yZWYoZGF0YS0+cGN1aSk7CkBAIC00NzAsMTAgKzQ3Nyw3IEBAIHN0YXRp
+YyB2b2lkIGh1YXdlaV9kaXNjb25uZWN0KGdwb2ludGVyIHVzZXJfZGF0YSkKIAlzdHJ1Y3Qgb2Zv
+bm9fbW9kZW0gKm1vZGVtID0gdXNlcl9kYXRhOwogCXN0cnVjdCBodWF3ZWlfZGF0YSAqZGF0YSA9
+IG9mb25vX21vZGVtX2dldF9kYXRhKG1vZGVtKTsKIAotCURCRygiIik7Ci0KLQlpZiAoZGF0YS0+
+Z2MpCi0JCW9mb25vX2dwcnNfY29udGV4dF9yZW1vdmUoZGF0YS0+Z2MpOworCURCRygiZGF0YS0+
+b25saW5lICVkIiwgZGF0YS0+b25saW5lKTsKIAogCWdfYXRfY2hhdF91bnJlZihkYXRhLT5tb2Rl
+bSk7CiAJZGF0YS0+bW9kZW0gPSBOVUxMOwpAQCAtNDg1LDYgKzQ4OSwxMyBAQCBzdGF0aWMgdm9p
+ZCBodWF3ZWlfZGlzY29ubmVjdChncG9pbnRlciB1c2VyX2RhdGEpCiAJZ19hdF9jaGF0X3NldF9k
+aXNjb25uZWN0X2Z1bmN0aW9uKGRhdGEtPm1vZGVtLAogCQkJCQkJaHVhd2VpX2Rpc2Nvbm5lY3Qs
+IG1vZGVtKTsKIAorCS8qIHJlb3BlbiBHUFJTIGNvbnRleHQgY2hhbm5lbCBvbmx5IGF0IG9ubGlu
+ZSBzdGF0ZSAqLworCWlmIChkYXRhLT5vbmxpbmUgPT0gRkFMU0UpCisJCXJldHVybjsKKworCWlm
+IChkYXRhLT5nYykKKwkJb2Zvbm9fZ3Byc19jb250ZXh0X3JlbW92ZShkYXRhLT5nYyk7CisKIAlp
+ZiAoZGF0YS0+c2ltX3N0YXRlID09IEhVQVdFSV9TSU1fU1RBVEVfVkFMSUQgfHwKIAkJCWRhdGEt
+PnNpbV9zdGF0ZSA9PSBIVUFXRUlfU0lNX1NUQVRFX0lOVkFMSURfQ1MpIHsKIAkJb2Zvbm9faW5m
+bygiUmVvcGVuZWQgR1BSUyBjb250ZXh0IGNoYW5uZWwiKTsKQEAgLTUxNSw2ICs1MjYsMTEgQEAg
+c3RhdGljIGludCBodWF3ZWlfZW5hYmxlKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pCiAKIAlk
+YXRhLT5wY3VpID0gb3Blbl9kZXZpY2UobW9kZW0sICJQY3VpIiwgIlBDVUk6ICIpOwogCWlmIChk
+YXRhLT5wY3VpID09IE5VTEwpIHsKKwkJLyoKKwkJICogaHVhd2VpX2Rpc2Nvbm5lY3Qgc2hvdWxk
+IG5vdCBiZSBjYWxsZWQgd2hlbiB0aGUgY2hhdAorCQkgKiBpcyBjbG9zZWQgaW5pdGlhdGl2ZWx5
+CisJCSAqLworCQlnX2F0X2NoYXRfc2V0X2Rpc2Nvbm5lY3RfZnVuY3Rpb24oZGF0YS0+bW9kZW0s
+IE5VTEwsIE5VTEwpOwogCQlnX2F0X2NoYXRfdW5yZWYoZGF0YS0+bW9kZW0pOwogCQlkYXRhLT5t
+b2RlbSA9IE5VTEw7CiAJCXJldHVybiAtRUlPOwpAQCAtNTY0LDYgKzU4MCwxMSBAQCBzdGF0aWMg
+aW50IGh1YXdlaV9kaXNhYmxlKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pCiAJaWYgKGRhdGEt
+Pm1vZGVtKSB7CiAJCWdfYXRfY2hhdF9jYW5jZWxfYWxsKGRhdGEtPm1vZGVtKTsKIAkJZ19hdF9j
+aGF0X3VucmVnaXN0ZXJfYWxsKGRhdGEtPm1vZGVtKTsKKwkJLyoKKwkJICogaHVhd2VpX2Rpc2Nv
+bm5lY3Qgc2hvdWxkIG5vdCBiZSBjYWxsZWQgd2hlbiB0aGUgY2hhdAorCQkgKiBpcyBjbG9zZWQg
+aW5pdGlhdGl2ZWx5CisJCSAqLworCQlnX2F0X2NoYXRfc2V0X2Rpc2Nvbm5lY3RfZnVuY3Rpb24o
+ZGF0YS0+bW9kZW0sIE5VTEwsIE5VTEwpOwogCQlnX2F0X2NoYXRfdW5yZWYoZGF0YS0+bW9kZW0p
+OwogCQlkYXRhLT5tb2RlbSA9IE5VTEw7CiAJfQpAQCAtNTc5LDE1ICs2MDAsMjcgQEAgc3RhdGlj
+IGludCBodWF3ZWlfZGlzYWJsZShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQogCXJldHVybiAt
+RUlOUFJPR1JFU1M7CiB9CiAKK3N0cnVjdCBodWF3ZWlfY2JfZGF0YSB7CisJc3RydWN0IGNiX2Rh
+dGEgKmNiZDsKKwlvZm9ub19ib29sX3Qgb25saW5lOworCXN0cnVjdCBvZm9ub19tb2RlbSAqbW9k
+ZW07Cit9OworCiBzdGF0aWMgdm9pZCBzZXRfb25saW5lX2NiKGdib29sZWFuIG9rLCBHQXRSZXN1
+bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9kYXRhKQogewotCXN0cnVjdCBjYl9kYXRhICpjYmQg
+PSB1c2VyX2RhdGE7Ci0Jb2Zvbm9fbW9kZW1fb25saW5lX2NiX3QgY2IgPSBjYmQtPmNiOworCXN0
+cnVjdCBodWF3ZWlfY2JfZGF0YSAqb25saW5lX2NiZCA9IHVzZXJfZGF0YTsKKwlvZm9ub19tb2Rl
+bV9vbmxpbmVfY2JfdCBjYiA9IG9ubGluZV9jYmQtPmNiZC0+Y2I7CisJc3RydWN0IGh1YXdlaV9k
+YXRhICpkYXRhID0gb2Zvbm9fbW9kZW1fZ2V0X2RhdGEob25saW5lX2NiZC0+bW9kZW0pOwogCi0J
+aWYgKG9rKQotCQlDQUxMQkFDS19XSVRIX1NVQ0NFU1MoY2IsIGNiZC0+ZGF0YSk7CisJaWYgKG9r
+KSB7CisJCWRhdGEtPm9ubGluZSA9IG9ubGluZV9jYmQtPm9ubGluZTsKKworCQlDQUxMQkFDS19X
+SVRIX1NVQ0NFU1MoY2IsIG9ubGluZV9jYmQtPmNiZC0+ZGF0YSk7CisKKwkJZ19mcmVlKG9ubGlu
+ZV9jYmQpOworCX0KIAllbHNlCi0JCUNBTExCQUNLX1dJVEhfRkFJTFVSRShjYiwgY2JkLT5kYXRh
+KTsKKwkJQ0FMTEJBQ0tfV0lUSF9GQUlMVVJFKGNiLCBvbmxpbmVfY2JkLT5jYmQtPmRhdGEpOwog
+fQogCiBzdGF0aWMgdm9pZCBodWF3ZWlfc2V0X29ubGluZShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1v
+ZGVtLCBvZm9ub19ib29sX3Qgb25saW5lLApAQCAtNTk1LDIxICs2MjgsMjYgQEAgc3RhdGljIHZv
+aWQgaHVhd2VpX3NldF9vbmxpbmUoc3RydWN0IG9mb25vX21vZGVtICptb2RlbSwgb2Zvbm9fYm9v
+bF90IG9ubGluZSwKIHsKIAlzdHJ1Y3QgaHVhd2VpX2RhdGEgKmRhdGEgPSBvZm9ub19tb2RlbV9n
+ZXRfZGF0YShtb2RlbSk7CiAJR0F0Q2hhdCAqY2hhdCA9IGRhdGEtPnBjdWk7Ci0Jc3RydWN0IGNi
+X2RhdGEgKmNiZCA9IGNiX2RhdGFfbmV3KGNiLCB1c2VyX2RhdGEpOworCXN0cnVjdCBodWF3ZWlf
+Y2JfZGF0YSAqb25saW5lX2NiZDsKIAljaGFyIGNvbnN0ICpjb21tYW5kID0gb25saW5lID8gIkFU
+K0NGVU49MSIgOiAiQVQrQ0ZVTj01IjsKIAogCURCRygibW9kZW0gJXAgJXMiLCBtb2RlbSwgb25s
+aW5lID8gIm9ubGluZSIgOiAib2ZmbGluZSIpOwogCi0JaWYgKGNiZCA9PSBOVUxMKQorCW9ubGlu
+ZV9jYmQgPSBnX3RyeV9uZXcwKHN0cnVjdCBodWF3ZWlfY2JfZGF0YSwgMSk7CisJb25saW5lX2Ni
+ZC0+Y2JkID0gY2JfZGF0YV9uZXcoY2IsIHVzZXJfZGF0YSk7CisJaWYgKG9ubGluZV9jYmQtPmNi
+ZCA9PSBOVUxMKQogCQlnb3RvIGVycm9yOworCW9ubGluZV9jYmQtPm9ubGluZSA9IG9ubGluZTsK
+KwlvbmxpbmVfY2JkLT5tb2RlbSA9IG1vZGVtOwogCi0JaWYgKGdfYXRfY2hhdF9zZW5kKGNoYXQs
+IGNvbW1hbmQsIE5VTEwsIHNldF9vbmxpbmVfY2IsIGNiZCwgZ19mcmVlKSkKKwlpZiAoZ19hdF9j
+aGF0X3NlbmQoY2hhdCwgY29tbWFuZCwgTlVMTCwgc2V0X29ubGluZV9jYiwKKwkJCQkJCW9ubGlu
+ZV9jYmQsIGdfZnJlZSkpCiAJCXJldHVybjsKIAogZXJyb3I6Ci0JZ19mcmVlKGNiZCk7CisJZ19m
+cmVlKG9ubGluZV9jYmQpOwogCi0JQ0FMTEJBQ0tfV0lUSF9GQUlMVVJFKGNiLCBjYmQtPmRhdGEp
+OworCUNBTExCQUNLX1dJVEhfRkFJTFVSRShjYiwgdXNlcl9kYXRhKTsKIH0KIAogc3RhdGljIHZv
+aWQgaHVhd2VpX3ByZV9zaW0oc3RydWN0IG9mb25vX21vZGVtICptb2RlbSkKLS0gCjEuNi4xLjMK
+Cg==
+
+--===============2005442976486338927==--
 
