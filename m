@@ -1,46 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============4533354533401029388=="
+Content-Type: multipart/mixed; boundary="===============5067659302100757799=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] mbmmodem: don't let chat open after fd is sent
-Date: Thu, 03 Mar 2011 09:59:36 -0800
-Message-ID: <1299175176.2519.70.camel@aeonflux>
-In-Reply-To: <AANLkTinT54+-0eAyjgfeWrzaBQsgEzVJeC8B8i=qAipW@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2] ste: Add support for multiple AT channels
+Date: Thu, 03 Mar 2011 13:43:28 -0600
+Message-ID: <4D6FEF60.4030904@gmail.com>
+In-Reply-To: <1299151311-28877-1-git-send-email-lasse.kunnasluoto@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4533354533401029388==
+--===============5067659302100757799==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+Hi Lasse,
 
-> >>  struct gps_data {
-> >>       GAtChat *chat;
-> >> -     GAtChat *data_chat;
-> >> +
-> >> +     struct {
-> >> +             GIOChannel *channel;
-> >> +             guint idle_source;
-> >> +             gsize written;
-> >> +             ofono_location_reporting_enable_cb_t cb;
-> >> +             void *cb_data;
-> >> +     } stream;
-> >>  };
-> >
-> > why do you bother with the struct in struct here?
+On 03/03/2011 05:21 AM, Lasse Kunnasluoto wrote:
+> ---
+> Hi,
 > =
 
-> Just to group these related fields.
+> Updated according to valuable comments from Denis.
+> =
 
-I let Denis decide to take this or not. My preference is to not do this
-unless it has some clear benefit, but that is just me ;)
+> BR,
+> Lasse
+> =
 
-Regards
+>  plugins/ste.c |  145 ++++++++++++++++++++++++++++++++++++---------------=
+------
+>  1 files changed, 92 insertions(+), 53 deletions(-)
+> =
 
-Marcel
 
+Patch has been applied, thanks.  I did have to amend it a bit to fix a
+minor style violation.
 
+Regards,
+-Denis
 
---===============4533354533401029388==--
+--===============5067659302100757799==--
 
