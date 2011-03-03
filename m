@@ -1,29 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============6208006939991293083=="
+Content-Type: multipart/mixed; boundary="===============0055647744557088452=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH] isiusb: add message-waiting
-Date: Thu, 03 Mar 2011 19:17:10 +0200
-Message-ID: <AANLkTi=EB1PPV7Op4qgbYnxUbkLpHPRJB01e2axHvyqL@mail.gmail.com>
-In-Reply-To: <1299142044-10021-1-git-send-email-jukka.saunamaki@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] mbmmodem: don't let chat open after fd is sent
+Date: Thu, 03 Mar 2011 09:21:51 -0800
+Message-ID: <1299172911.2519.68.camel@aeonflux>
+In-Reply-To: <1299172479-11086-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6208006939991293083==
+--===============0055647744557088452==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jukka,
+Hi Lucas,
 
-2011/3/3 Jukka Saunamaki <jukka.saunamaki@nokia.com>:
-> ---
-> =C2=A0plugins/isiusb.c | =C2=A0 =C2=A05 +++++
-> =C2=A01 files changed, 5 insertions(+), 0 deletions(-)
+>  struct gps_data {
+>  	GAtChat *chat;
+> -	GAtChat *data_chat;
+> +
+> +	struct {
+> +		GIOChannel *channel;
+> +		guint idle_source;
+> +		gsize written;
+> +		ofono_location_reporting_enable_cb_t cb;
+> +		void *cb_data;
+> +	} stream;
+>  };
 
-Pushed, thanks.
+why do you bother with the struct in struct here?
 
-Cheers,
-Aki
+Regards
 
---===============6208006939991293083==--
+Marcel
+
+
+
+--===============0055647744557088452==--
 
