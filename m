@@ -1,43 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============9054636509470478522=="
+Content-Type: multipart/mixed; boundary="===============4533354533401029388=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: [PATCH] mbmmodem: don't let chat open after fd is sent
-Date: Thu, 03 Mar 2011 14:49:52 -0300
-Message-ID: <AANLkTinT54+-0eAyjgfeWrzaBQsgEzVJeC8B8i=qAipW@mail.gmail.com>
-In-Reply-To: <1299172911.2519.68.camel@aeonflux>
+Date: Thu, 03 Mar 2011 09:59:36 -0800
+Message-ID: <1299175176.2519.70.camel@aeonflux>
+In-Reply-To: <AANLkTinT54+-0eAyjgfeWrzaBQsgEzVJeC8B8i=qAipW@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9054636509470478522==
+--===============4533354533401029388==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Mar 3, 2011 at 2:21 PM, Marcel Holtmann <marcel@holtmann.org> wro=
-te:
-> Hi Lucas,
->
->> =C2=A0struct gps_data {
->> =C2=A0 =C2=A0 =C2=A0 GAtChat *chat;
->> - =C2=A0 =C2=A0 GAtChat *data_chat;
->> +
->> + =C2=A0 =C2=A0 struct {
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 GIOChannel *channel;
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 guint idle_source;
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 gsize written;
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_location_reporting_ena=
-ble_cb_t cb;
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 void *cb_data;
->> + =C2=A0 =C2=A0 } stream;
->> =C2=A0};
->
-> why do you bother with the struct in struct here?
+Hi Lucas,
 
-Just to group these related fields.
+> >>  struct gps_data {
+> >>       GAtChat *chat;
+> >> -     GAtChat *data_chat;
+> >> +
+> >> +     struct {
+> >> +             GIOChannel *channel;
+> >> +             guint idle_source;
+> >> +             gsize written;
+> >> +             ofono_location_reporting_enable_cb_t cb;
+> >> +             void *cb_data;
+> >> +     } stream;
+> >>  };
+> >
+> > why do you bother with the struct in struct here?
+> =
+
+> Just to group these related fields.
+
+I let Denis decide to take this or not. My preference is to not do this
+unless it has some clear benefit, but that is just me ;)
+
+Regards
+
+Marcel
 
 
-regards,
-Lucas De Marchi
 
---===============9054636509470478522==--
+--===============4533354533401029388==--
 
