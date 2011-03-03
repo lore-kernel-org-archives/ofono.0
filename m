@@ -1,43 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============5067659302100757799=="
+Content-Type: multipart/mixed; boundary="===============5884272366878936578=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] ste: Add support for multiple AT channels
-Date: Thu, 03 Mar 2011 13:43:28 -0600
-Message-ID: <4D6FEF60.4030904@gmail.com>
-In-Reply-To: <1299151311-28877-1-git-send-email-lasse.kunnasluoto@tieto.com>
+Subject: Re: [PATCH] ste: enable multiple oFono runs without restarting the
+ oFono
+Date: Thu, 03 Mar 2011 13:43:48 -0600
+Message-ID: <4D6FEF74.2090604@gmail.com>
+In-Reply-To: <1299152712-21252-1-git-send-email-jussi.kangas@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5067659302100757799==
+--===============5884272366878936578==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lasse,
+Hi Jussi,
 
-On 03/03/2011 05:21 AM, Lasse Kunnasluoto wrote:
+On 03/03/2011 05:45 AM, Jussi Kangas wrote:
 > ---
 > Hi,
 > =
 
-> Updated according to valuable comments from Denis.
+> This enables SIM detection in workstation after disabling and enabling th=
+e =
+
+> modem without rebooting the oFono.
 > =
 
-> BR,
-> Lasse
+> Br,
+> Jussi
 > =
 
->  plugins/ste.c |  145 ++++++++++++++++++++++++++++++++++++---------------=
-------
->  1 files changed, 92 insertions(+), 53 deletions(-)
+> =
+
+>  plugins/ste.c |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
 > =
 
 
-Patch has been applied, thanks.  I did have to amend it a bit to fix a
-minor style violation.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============5067659302100757799==--
+--===============5884272366878936578==--
 
