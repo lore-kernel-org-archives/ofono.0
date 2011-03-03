@@ -1,31 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============1518501278676242330=="
+Content-Type: multipart/mixed; boundary="===============9175227590783511439=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Replace modulo operations in ringbuffer.c by masking
- operations.
-Date: Wed, 02 Mar 2011 22:51:35 -0600
-Message-ID: <4D6F1E57.5020701@gmail.com>
-In-Reply-To: <1299060935-12999-1-git-send-email-patrick.porlan@linux.intel.com>
+Subject: Re: [PATCH] TODO: Mark pin check status task as done
+Date: Wed, 02 Mar 2011 22:52:19 -0600
+Message-ID: <4D6F1E83.9000508@gmail.com>
+In-Reply-To: <1299079222-11604-1-git-send-email-jussi.kangas@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1518501278676242330==
+--===============9175227590783511439==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Patrick,
+Hi Jussi,
 
-On 03/02/2011 04:15 AM, Patrick Porlan wrote:
-> That's possible because the size of the ring buffers is always
-> a power of two, and yields a small performance improvement.
+On 03/02/2011 09:20 AM, Jussi Kangas wrote:
+> ---
 > =
 
-> The improvement should be mostly visible on processors that implement
-> division in microcode (Atom) or lack a division instruction (ARM).
-> ---
->  gatchat/ringbuffer.c |   14 ++++++++------
->  1 files changed, 8 insertions(+), 6 deletions(-)
+> Hi, =
+
+> =
+
+> This can now be set as done.
+> =
+
+> Br,
+> Jussi
+> =
+
+>  TODO |    7 -------
+>  1 files changed, 0 insertions(+), 7 deletions(-)
 > =
 
 
@@ -34,5 +40,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============1518501278676242330==--
+--===============9175227590783511439==--
 
