@@ -1,358 +1,214 @@
-Content-Type: multipart/mixed; boundary="===============5663903137591081311=="
+Content-Type: multipart/mixed; boundary="===============3930875555704037954=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] ste: Add support for multiple AT channels
-Date: Wed, 02 Mar 2011 23:48:09 -0600
-Message-ID: <4D6F2B99.7060203@gmail.com>
-In-Reply-To: <1299058433-16980-1-git-send-email-lasse.kunnasluoto@tieto.com>
+From: Antti Paila <antti.paila@nokia.com>
+Subject: [PATCH] gisi: Consumer functions for ISI message iterator
+Date: Thu, 03 Mar 2011 09:22:39 +0200
+Message-ID: <1299136959-22653-1-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5663903137591081311==
+--===============3930875555704037954==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lasse,
+---
+ gisi/iter.c |   63 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ gisi/iter.h |   13 ++++++++++++
+ 2 files changed, 76 insertions(+), 0 deletions(-)
 
-On 03/02/2011 03:33 AM, Lasse Kunnasluoto wrote:
-> ---
->  plugins/ste.c |  138 ++++++++++++++++++++++++++++++++++++---------------=
-------
->  1 files changed, 87 insertions(+), 51 deletions(-)
-> =
+diff --git a/gisi/iter.c b/gisi/iter.c
+index a925b15..f3f6f5a 100644
+--- a/gisi/iter.c
++++ b/gisi/iter.c
+@@ -55,6 +55,7 @@ void g_isi_sb_iter_init_full(GIsiSubBlockIter *iter, cons=
+t GIsiMessage *msg,
+ 	if (data =3D=3D NULL)
+ 		len =3D used =3D 0;
+ =
 
-> diff --git a/plugins/ste.c b/plugins/ste.c
-> index b786571..9a1d3d3 100644
-> --- a/plugins/ste.c
-> +++ b/plugins/ste.c
-> @@ -65,13 +65,19 @@
->  #include <drivers/stemodem/caif_socket.h>
->  #include <drivers/stemodem/if_caif.h>
->  =
++	iter->cursor =3D longhdr ? 4 : 2;
+ 	iter->start =3D (uint8_t *)data + used;
+ 	iter->end =3D iter->start + len;
+ 	iter->longhdr =3D longhdr;
+@@ -70,6 +71,7 @@ void g_isi_sb_iter_init(GIsiSubBlockIter *iter, const GIs=
+iMessage *msg,
+ 	if (data =3D=3D NULL)
+ 		len =3D used =3D 0;
+ =
 
-> -#define NUM_CHAT	1
-> +#define NUM_CHAT	5
-> +#define AT_DEFAULT	0
-> +#define AT_NET	1
-> +#define AT_VOICE	2
-> +#define AT_GPRS	3
-> +#define AT_SIM	4
++	iter->cursor =3D 2;
+ 	iter->start =3D (uint8_t *)data + used;
+ 	iter->end =3D iter->start + len;
+ 	iter->longhdr =3D FALSE;
+@@ -85,6 +87,7 @@ void g_isi_sb_subiter_init(GIsiSubBlockIter *outer, GIsiS=
+ubBlockIter *inner,
+ 			outer->start + used > outer->end)
+ 		len =3D used =3D 0;
+ =
 
-Can you cleanup the indentation of the channel numbers here to be more
-consistent?  And I'd actually like to have an empty line between these
-and the MAX_PDP_CONTEXTS define.
++	inner->cursor =3D 2;
+ 	inner->start =3D outer->start + used;
+ 	inner->end =3D inner->start + len;
+ 	inner->longhdr =3D FALSE;
+@@ -101,6 +104,7 @@ void g_isi_sb_subiter_init_full(GIsiSubBlockIter *outer,
+ 			outer->start + used > outer->end)
+ 		len =3D used =3D 0;
+ =
 
->  #define MAX_PDP_CONTEXTS	4
->  =
++	inner->cursor =3D longhdr ? 4 : 2;
+ 	inner->start =3D outer->start + used;
+ 	inner->end =3D inner->start + len;
+ 	inner->longhdr =3D longhdr;
+@@ -188,6 +192,35 @@ gboolean g_isi_sb_iter_get_dword(const GIsiSubBlockIte=
+r *restrict iter,
+ 	return TRUE;
+ }
+ =
 
-> -static char *chat_prefixes[NUM_CHAT] =3D { "Default: " };
-> +static char *chat_prefixes[NUM_CHAT] =3D { "Default: ", "Net: ", "Voice:=
- ",
-> +					"GPRS: ", "SIM: " };
->  =
++gboolean g_isi_sb_iter_eat_byte(GIsiSubBlockIter *restrict iter,
++				uint8_t *byte)
++{
++	if (!g_isi_sb_iter_get_byte(iter, byte, iter->cursor))
++		return FALSE;
++
++	iter->cursor +=3D 1;
++	return TRUE;
++}
++gboolean g_isi_sb_iter_eat_word(GIsiSubBlockIter *restrict iter,
++				uint16_t *word)
++{
++	if (!g_isi_sb_iter_get_word(iter, word, iter->cursor))
++		return FALSE;
++
++	iter->cursor +=3D 2;
++	return TRUE;
++}
++
++gboolean g_isi_sb_iter_eat_dword(GIsiSubBlockIter *restrict iter,
++				uint32_t *dword)
++{
++	if (!g_isi_sb_iter_get_dword(iter, dword, iter->cursor))
++		return FALSE;
++
++	iter->cursor +=3D 4;
++	return TRUE;
++}
++
+ gboolean g_isi_sb_iter_get_oper_code(const GIsiSubBlockIter *restrict iter,
+ 					char *mcc, char *mnc, unsigned pos)
+ {
+@@ -198,6 +231,16 @@ gboolean g_isi_sb_iter_get_oper_code(const GIsiSubBloc=
+kIter *restrict iter,
+ 	return TRUE;
+ }
+ =
 
->  struct ste_data {
-> -	GAtChat *chat;
-> +	GAtChat *chat[NUM_CHAT];
->  	gboolean have_sim;
->  	struct ofono_sim *sim;
->  };
-> @@ -105,12 +111,14 @@ static int ste_probe(struct ofono_modem *modem)
->  static void ste_remove(struct ofono_modem *modem)
->  {
->  	struct ste_data *data =3D ofono_modem_get_data(modem);
-> +	int i;
->  =
++gboolean g_isi_sb_iter_eat_oper_code(GIsiSubBlockIter *restrict iter,
++					char *mcc, char *mnc)
++{
++	if (!g_isi_sb_iter_get_oper_code(iter, mcc, mnc, iter->cursor))
++		return FALSE;
++
++	iter->cursor +=3D 3;
++	return TRUE;
++}
++
+ gboolean g_isi_sb_iter_get_alpha_tag(const GIsiSubBlockIter *restrict iter,
+ 					char **utf8, size_t len, unsigned pos)
+ {
+@@ -219,6 +262,15 @@ gboolean g_isi_sb_iter_get_alpha_tag(const GIsiSubBloc=
+kIter *restrict iter,
+ 	return *utf8 !=3D NULL;
+ }
+ =
 
->  	DBG("%p", modem);
->  =
++gboolean g_isi_sb_iter_eat_alpha_tag(GIsiSubBlockIter *restrict iter,
++					char **utf8, size_t len)
++{
++	if (!g_isi_sb_iter_get_alpha_tag(iter, utf8, len, iter->cursor))
++		return FALSE;
++
++	iter->cursor +=3D len;
++	return TRUE;
++}
+ gboolean g_isi_sb_iter_get_latin_tag(const GIsiSubBlockIter *restrict iter,
+ 					char **latin, size_t len, unsigned pos)
+ {
+@@ -243,6 +295,15 @@ gboolean g_isi_sb_iter_get_latin_tag(const GIsiSubBloc=
+kIter *restrict iter,
+ 	return *latin !=3D NULL;
+ }
+ =
 
->  	ofono_modem_set_data(modem, NULL);
->  =
++gboolean g_isi_sb_iter_eat_latin_tag(GIsiSubBlockIter *restrict iter,
++					char **latin, size_t len)
++{
++	if (!g_isi_sb_iter_get_latin_tag(iter, latin, len, iter->cursor))
++		return FALSE;
++
++	iter->cursor +=3D len;
++	return TRUE;
++}
+ gboolean g_isi_sb_iter_next(GIsiSubBlockIter *iter)
+ {
+ 	uint8_t len =3D g_isi_sb_iter_get_len(iter);
+@@ -256,6 +317,8 @@ gboolean g_isi_sb_iter_next(GIsiSubBlockIter *iter)
+ 	if (iter->start + len > iter->end)
+ 		return FALSE;
+ =
 
-> -	g_at_chat_unref(data->chat);
-> +	for (i =3D 0; i < NUM_CHAT; i++)
-> +		g_at_chat_unref(data->chat[i]);
->  =
++
++	iter->cursor =3D iter->longhdr ? 4 : 2;
+ 	iter->start +=3D len;
+ 	iter->sub_blocks--;
+ =
 
->  	g_free(data);
->  }
-> @@ -185,7 +193,7 @@ static gboolean init_sim_reporting(gpointer user_data)
->  	struct ofono_modem *modem =3D user_data;
->  	struct ste_data *data =3D ofono_modem_get_data(modem);
->  =
+diff --git a/gisi/iter.h b/gisi/iter.h
+index 1dfcfa9..2fe4ec5 100644
+--- a/gisi/iter.h
++++ b/gisi/iter.h
+@@ -31,6 +31,7 @@ extern "C" {
+ #include "message.h"
+ =
 
-> -	g_at_chat_send(data->chat, "AT*ESIMSR=3D1;*ESIMSR?", NULL,
-> +	g_at_chat_send(data->chat[AT_SIM], "AT*ESIMSR=3D1;*ESIMSR?", NULL,
->  			handle_sim_state,
->  			modem, NULL);
->  =
+ struct _GIsiSubBlockIter {
++	uint8_t cursor;
+ 	uint8_t *start;
+ 	uint8_t *end;
+ 	gboolean longhdr;
+@@ -63,12 +64,24 @@ gboolean g_isi_sb_iter_get_word(const GIsiSubBlockIter =
+*restrict iter,
+ 				uint16_t *word, unsigned pos);
+ gboolean g_isi_sb_iter_get_dword(const GIsiSubBlockIter *restrict iter,
+ 					uint32_t *dword, unsigned pos);
++gboolean g_isi_sb_iter_eat_byte(GIsiSubBlockIter *restrict iter,
++				uint8_t *byte);
++gboolean g_isi_sb_iter_eat_word(GIsiSubBlockIter *restrict iter,
++				uint16_t *word);
++gboolean g_isi_sb_iter_eat_dword(GIsiSubBlockIter *restrict iter,
++				uint32_t *dword);
+ gboolean g_isi_sb_iter_get_oper_code(const GIsiSubBlockIter *restrict iter,
+ 					char *mcc, char *mnc, unsigned pos);
++gboolean g_isi_sb_iter_eat_oper_code(GIsiSubBlockIter *restrict iter,
++					char *mcc, char *mnc);
+ gboolean g_isi_sb_iter_get_alpha_tag(const GIsiSubBlockIter *restrict iter,
+ 					char **utf8, size_t len, unsigned pos);
++gboolean g_isi_sb_iter_eat_alpha_tag(GIsiSubBlockIter *restrict iter,
++					char **utf8, size_t len);
+ gboolean g_isi_sb_iter_get_latin_tag(const GIsiSubBlockIter *restrict iter,
+ 					char **ascii, size_t len, unsigned pos);
++gboolean g_isi_sb_iter_eat_latin_tag(GIsiSubBlockIter *restrict iter,
++					char **ascii, size_t len);
+ gboolean g_isi_sb_iter_get_struct(const GIsiSubBlockIter *restrict iter,
+ 					void **ptr, size_t len, unsigned pos);
+ =
 
-> @@ -195,11 +203,21 @@ static gboolean init_sim_reporting(gpointer user_da=
-ta)
->  static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
->  {
->  	struct ofono_modem *modem =3D user_data;
-> +	struct ste_data *data =3D ofono_modem_get_data(modem);
-> +	int i;
->  =
+-- =
 
->  	DBG("");
->  =
-
->  	if (!ok) {
->  		ofono_modem_set_powered(modem, FALSE);
-> +
-> +		for (i =3D 0; i < NUM_CHAT; i++) {
-> +			g_at_chat_cancel_all(data->chat[i]);
-> +			g_at_chat_unregister_all(data->chat[i]);
-> +			g_at_chat_unref(data->chat[i]);
-> +			data->chat[i] =3D NULL;
-> +		}
-> +
->  		return;
->  	}
->  =
-
-> @@ -295,35 +313,47 @@ static void esimsr_notify(GAtResult *result, gpoint=
-er user_data)
->  static int ste_enable(struct ofono_modem *modem)
->  {
->  	struct ste_data *data =3D ofono_modem_get_data(modem);
-> -	GIOChannel *channel;
->  	GAtSyntax *syntax;
-> +	int i;
->  =
-
->  	syntax =3D g_at_syntax_new_gsm_permissive();
->  =
-
-
-Sharing a syntax between all channels isn't really going to work out how
-you think ;)  Each syntax has its own state, so you have to create a
-syntax for every channel separately.
-
-> -	channel =3D ste_create_channel(modem);
-> -	if (!channel)
-> -		return -EIO;
-> +	for (i =3D 0; i < NUM_CHAT; i++) {
-> +		GIOChannel *channel =3D ste_create_channel(modem);
->  =
-
-> -	data->chat =3D g_at_chat_new_blocking(channel, syntax);
-> -	g_at_chat_send(data->chat, "AT&F E0 V1 X4 &C1 +CMEE=3D1",
-> -			NULL, NULL, NULL, NULL);
-> +		data->chat[i] =3D g_at_chat_new_blocking(channel, syntax);
-> +		if (data->chat[i] =3D=3D NULL)
-> +			return -EIO;
-
-You might want to handle these errors properly.  If creation of one chat
-fails, then you should unref all of them.
-
->  =
-
-> -	/* All STE modems support UTF-8 */
-> -	g_at_chat_send(data->chat, "AT+CSCS=3D\"UTF-8\"",
-> -			NULL, NULL, NULL, NULL);
-> +		g_at_chat_send(data->chat[i], "AT&F E0 V1 X4 &C1 +CMEE=3D1",
-> +				NULL, NULL, NULL, NULL);
->  =
-
-> -	g_io_channel_unref(channel);
-> -	g_at_syntax_unref(syntax);
-> +		/* All STE modems support UTF-8 */
-> +		g_at_chat_send(data->chat[i], "AT+CSCS=3D\"UTF-8\"",
-> +				NULL, NULL, NULL, NULL);
->  =
-
-> -	if (data->chat =3D=3D NULL)
-> -		return -ENOMEM;
-> +		g_io_channel_unref(channel);
-> +	}
->  =
-
-> -	if (getenv("OFONO_AT_DEBUG"))
-> -		g_at_chat_set_debug(data->chat, ste_debug, chat_prefixes[0]);
-> +	g_at_syntax_unref(syntax);
->  =
-
-> -	g_at_chat_send(data->chat, "AT+CFUN=3D4", NULL, cfun_enable, modem, NUL=
-L);
-> +	if (getenv("OFONO_AT_DEBUG")) {
-> +		g_at_chat_set_debug(data->chat[AT_DEFAULT], ste_debug,
-> +					chat_prefixes[0]);
-> +		g_at_chat_set_debug(data->chat[AT_NET], ste_debug,
-> +					chat_prefixes[1]);
-> +		g_at_chat_set_debug(data->chat[AT_VOICE], ste_debug,
-> +					chat_prefixes[2]);
-> +		g_at_chat_set_debug(data->chat[AT_GPRS], ste_debug,
-> +					chat_prefixes[3]);
-> +		g_at_chat_set_debug(data->chat[AT_SIM], ste_debug,
-> +					chat_prefixes[4]);
-> +	}
-
-Why is this being done here and not in a loop above?
-
->  =
-
-> -	g_at_chat_register(data->chat, "*ESIMSR:", esimsr_notify,
-> +	g_at_chat_send(data->chat[AT_DEFAULT], "AT+CFUN=3D4", NULL, cfun_enable,
-> +				modem, NULL);
-> +
-> +	g_at_chat_register(data->chat[AT_SIM], "*ESIMSR:", esimsr_notify,
->  				FALSE, modem, NULL);
->  =
-
->  	return -EINPROGRESS;
-> @@ -333,11 +363,14 @@ static void cfun_disable(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
->  {
->  	struct ofono_modem *modem =3D user_data;
->  	struct ste_data *data =3D ofono_modem_get_data(modem);
-> +	int i;
->  =
-
->  	DBG("");
->  =
-
-> -	g_at_chat_unref(data->chat);
-> -	data->chat =3D NULL;
-> +	for (i =3D 0; i < NUM_CHAT; i++) {
-> +		g_at_chat_unref(data->chat[i]);
-> +		data->chat[i] =3D NULL;
-> +	}
->  =
-
->  	if (ok)
->  		ofono_modem_set_powered(modem, FALSE);
-> @@ -346,15 +379,15 @@ static void cfun_disable(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
->  static int ste_disable(struct ofono_modem *modem)
->  {
->  	struct ste_data *data =3D ofono_modem_get_data(modem);
-> +	int i;
->  =
-
->  	DBG("%p", modem);
->  =
-
-> -	if (data->chat =3D=3D NULL)
-> -		return 0;
-> -
-> -	g_at_chat_cancel_all(data->chat);
-> -	g_at_chat_unregister_all(data->chat);
-> -	g_at_chat_send(data->chat, "AT+CFUN=3D4", NULL,
-> +	for (i =3D 0; i < NUM_CHAT; i++) {
-> +		g_at_chat_cancel_all(data->chat[i]);
-> +		g_at_chat_unregister_all(data->chat[i]);
-> +	}
-
-Coding style M1
-
-> +	g_at_chat_send(data->chat[AT_DEFAULT], "AT+CFUN=3D4", NULL,
->  					cfun_disable, modem, NULL);
->  =
-
->  	return -EINPROGRESS;
-> @@ -375,7 +408,7 @@ static void ste_set_online(struct ofono_modem *modem,=
- ofono_bool_t online,
->  				ofono_modem_online_cb_t cb, void *user_data)
->  {
->  	struct ste_data *data =3D ofono_modem_get_data(modem);
-> -	GAtChat *chat =3D data->chat;
-> +	GAtChat *chat =3D data->chat[AT_DEFAULT];
->  	struct cb_data *cbd =3D cb_data_new(cb, user_data);
->  	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
->  =
-
-> @@ -395,10 +428,10 @@ static void ste_pre_sim(struct ofono_modem *modem)
->  =
-
->  	DBG("%p", modem);
->  =
-
-> -	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
-> +	ofono_devinfo_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
->  	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_MBM, "atmodem",
-> -					data->chat);
-> -	ofono_voicecall_create(modem, 0, "stemodem", data->chat);
-> +					data->chat[AT_SIM]);
-> +	ofono_voicecall_create(modem, 0, "stemodem", data->chat[AT_VOICE]);
->  }
->  =
-
->  static void ste_post_sim(struct ofono_modem *modem)
-> @@ -407,11 +440,11 @@ static void ste_post_sim(struct ofono_modem *modem)
->  =
-
->  	DBG("%p", modem);
->  =
-
-> -	ofono_stk_create(modem, 0, "mbmmodem", data->chat);
-> -	ofono_phonebook_create(modem, 0, "atmodem", data->chat);
-> -	ofono_radio_settings_create(modem, 0, "stemodem", data->chat);
-> +	ofono_stk_create(modem, 0, "mbmmodem", data->chat[AT_SIM]);
-> +	ofono_phonebook_create(modem, 0, "atmodem", data->chat[AT_SIM]);
-> +	ofono_radio_settings_create(modem, 0, "stemodem", data->chat[AT_NET]);
->  =
-
-> -	ofono_sms_create(modem, 0, "atmodem", data->chat);
-> +	ofono_sms_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
->  }
->  =
-
->  static void ste_post_online(struct ofono_modem *modem)
-> @@ -424,22 +457,25 @@ static void ste_post_online(struct ofono_modem *mod=
-em)
->  =
-
->  	DBG("%p", modem);
->  =
-
-> -	ofono_ussd_create(modem, 0, "atmodem", data->chat);
-> -	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
-> -	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
-> -	ofono_netreg_create(modem, OFONO_VENDOR_MBM, "atmodem", data->chat);
-> -	ofono_call_meter_create(modem, 0, "atmodem", data->chat);
-> -	ofono_call_barring_create(modem, 0, "atmodem", data->chat);
-> -	ofono_ssn_create(modem, 0, "atmodem", data->chat);
-> -	ofono_call_volume_create(modem, 0, "atmodem", data->chat);
-> -	ofono_cbs_create(modem, 0, "atmodem", data->chat);
-> +	ofono_ussd_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
-> +	ofono_call_forwarding_create(modem, 0,
-> +					"atmodem", data->chat[AT_DEFAULT]);
-> +	ofono_call_settings_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
-> +	ofono_netreg_create(modem, OFONO_VENDOR_MBM,
-> +					"atmodem", data->chat[AT_NET]);
-> +	ofono_call_meter_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
-> +	ofono_call_barring_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
-> +	ofono_ssn_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
-> +	ofono_call_volume_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
-> +	ofono_cbs_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
->  =
-
->  	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
-> -					"atmodem", data->chat);
-> +					"atmodem", data->chat[AT_GPRS]);
-> +
->  	if (gprs) {
->  		for (i =3D 0; i < MAX_PDP_CONTEXTS; i++) {
-> -			gc =3D ofono_gprs_context_create(
-> -					modem, 0, "stemodem", data->chat);
-> +			gc =3D ofono_gprs_context_create(modem, 0, "stemodem",
-> +					 data->chat[AT_GPRS]);
-
-You have a whitespace violation here, mixing tabs and spaces.
-
->  			if (gc =3D=3D NULL)
->  				break;
->  =
+1.7.1
 
 
-Regards,
--Denis
-
---===============5663903137591081311==--
+--===============3930875555704037954==--
 
