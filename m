@@ -1,47 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============5884272366878936578=="
+Content-Type: multipart/mixed; boundary="===============7821024789337879752=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] ste: enable multiple oFono runs without restarting the
- oFono
-Date: Thu, 03 Mar 2011 13:43:48 -0600
-Message-ID: <4D6FEF74.2090604@gmail.com>
-In-Reply-To: <1299152712-21252-1-git-send-email-jussi.kangas@tieto.com>
+Subject: Re: [RFC PATCH 1/3] ssn: remove SSN atom completely
+Date: Thu, 03 Mar 2011 13:51:44 -0600
+Message-ID: <4D6FF150.8010903@gmail.com>
+In-Reply-To: <1e15cdd245725a5a12b25ba6b3b0cc8d66792399.1299168583.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5884272366878936578==
+--===============7821024789337879752==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jussi,
+Hi Andras,
 
-On 03/03/2011 05:45 AM, Jussi Kangas wrote:
+On 03/03/2011 10:48 AM, Andras Domokos wrote:
 > ---
-> Hi,
+>  Makefile.am                 |    6 +-
+>  drivers/atmodem/atmodem.c   |    2 -
+>  drivers/atmodem/atmodem.h   |    3 -
+>  drivers/atmodem/ssn.c       |  147 -------------------------
+>  drivers/isimodem/isimodem.c |    2 -
+>  drivers/isimodem/isimodem.h |    3 -
+>  drivers/isimodem/ssn.c      |   95 -----------------
+>  include/ssn.h               |   61 -----------
+>  plugins/calypso.c           |    2 -
+>  plugins/g1.c                |    2 -
+>  plugins/huawei.c            |    2 -
+>  plugins/ifx.c               |    2 -
+>  plugins/isiusb.c            |    2 -
+>  plugins/linktop.c           |    2 -
+>  plugins/n900.c              |    2 -
+>  plugins/phonesim.c          |    2 -
+>  plugins/ste.c               |    2 -
+>  plugins/tc65.c              |    2 -
+>  plugins/u8500.c             |    2 -
+>  plugins/wavecom.c           |    2 -
+>  src/ofono.h                 |   17 ---
+>  src/ssn.c                   |  247 -------------------------------------=
+------
+>  22 files changed, 2 insertions(+), 605 deletions(-)
+>  delete mode 100644 drivers/atmodem/ssn.c
+>  delete mode 100644 drivers/isimodem/ssn.c
+>  delete mode 100644 include/ssn.h
+>  delete mode 100644 src/ssn.c
 > =
 
-> This enables SIM detection in workstation after disabling and enabling th=
-e =
 
-> modem without rebooting the oFono.
-> =
-
-> Br,
-> Jussi
-> =
-
-> =
-
->  plugins/ste.c |    1 +
->  1 files changed, 1 insertions(+), 0 deletions(-)
-> =
-
-
-Patch has been applied, thanks.
+Patch looks good but no longer applies due to changes that Aki pushed
+recently.
 
 Regards,
 -Denis
 
---===============5884272366878936578==--
+--===============7821024789337879752==--
 
