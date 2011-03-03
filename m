@@ -1,48 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============0436021676742838756=="
+Content-Type: multipart/mixed; boundary="===============6248851980401782200=="
 MIME-Version: 1.0
-From: Jussi Kangas <jussi.kangas@tieto.com>
-Subject: [PATCH] ste: enable multiple oFono runs without restarting the oFono
-Date: Thu, 03 Mar 2011 13:45:12 +0200
-Message-ID: <1299152712-21252-1-git-send-email-jussi.kangas@tieto.com>
+From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
+Subject: Re: [RFCv3] doc: Proposal for LTE/IMS API
+Date: Thu, 03 Mar 2011 17:29:15 +0200
+Message-ID: <4D6FB3CB.6040703@nokia.com>
+In-Reply-To: <1297377234-5056-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0436021676742838756==
+--===============6248851980401782200==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
-Hi,
+Hi Sjur,
 
-This enables SIM detection in workstation after disabling and enabling the =
+I have a doubt on this interface
+> +		void Register(array{string} types)
+> +
+> +			Registers an IMS Application. It must register
+> +			with at least one of the types: "voice" or "messaging".
+> +			In future "video" (Conversational Video, Live
+> +			Streaming) should be added. This registration will
+> +			inform the modem's radio stack that the IMS application
+> +			has registered for Voice and/or Messaging over IMS.
+> +			This registration may impact "UE Mode of operation"
+> +			and the ISR feature in the radio stack.
+> +
+> +			The registered application is tracked, if the
+> +			application exits the registration will be
+> +			automatically released.
+> +
+> +			Possible Errors: [service].Error.InvalidArguments
+27.007 describes +CEMODE which sets the UE mode of operation and is =
 
-modem without rebooting the oFono.
+referring to 24.301.
 
-Br,
-Jussi
+There are only 4 modes PS Mode 1, PS Mode 2, PS/CS Mode 1, PS/CS Mode =
 
+2.  These modes only specify, what type of attach is required (a IMSI, =
 
- plugins/ste.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+EPS or a combined). Also if UE supports CSFB, it should be in CS/PS =
 
-diff --git a/plugins/ste.c b/plugins/ste.c
-index b786571..d2a6cc1 100644
---- a/plugins/ste.c
-+++ b/plugins/ste.c
-@@ -184,6 +184,7 @@ static gboolean init_sim_reporting(gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
- 	struct ste_data *data =3D ofono_modem_get_data(modem);
-+	data->have_sim =3D FALSE;
- =
+modes . There is also +VCMOD which can be used to decide whether to use =
 
- 	g_at_chat_send(data->chat, "AT*ESIMSR=3D1;*ESIMSR?", NULL,
- 			handle_sim_state,
--- =
+CS or PS for voice calls.
 
-1.7.1
+What does the Register interface do w.r.t ofono? What AT commands could =
+
+be used here to signal the UE mode of operation to modem?
+
+How does "voice" or "messaging" relate to the 4 modes specified in =
+
+27.007 and 24.301?
+
+Regards
+Arun
 
 
---===============0436021676742838756==--
+--===============6248851980401782200==--
 
