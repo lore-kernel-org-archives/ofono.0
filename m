@@ -1,32 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============0592266351603747556=="
+Content-Type: multipart/mixed; boundary="===============0033050675334561680=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH v2 13/18] isimodem: wgmodem2.5 added to call-forwarding
-Date: Thu, 03 Mar 2011 18:36:28 +0200
-Message-ID: <AANLkTimpOZHgU_O9_1usqb6nfrtT++64ToMmQdpNYdjV@mail.gmail.com>
-In-Reply-To: <729f5e23ade7cf4d4de814b693996cb05b244a13.1298460572.git.andreas.westin@stericsson.com>
+From: Andras Domokos <Andras.Domokos@nokia.com>
+Subject: [PATCH 0/3] Voice call SS notifications (3rd version)
+Date: Thu, 03 Mar 2011 18:47:53 +0200
+Message-ID: <cover.1299168583.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0592266351603747556==
+--===============0033050675334561680==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Implementation proposal for handling some of the voice call
+related Supplementary Services (SS) notifications.
 
-2011/2/23 Andreas Westin <andreas.westin@stericsson.com>:
-> From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
->
-> ---
-> =C2=A0drivers/isimodem/call-forwarding.c | =C2=A0 29 ++++++++++++++++++++=
-+++++----
-> =C2=A01 files changed, 25 insertions(+), 4 deletions(-)
+Implementation details:
+- removed SSN atom
+- (re)implemented voice call SS notification handling framework
+- added voice call SS notification handling to AT modem driver
+  (+CSSU and +CSSI notifications) =
 
-Patch has been applied. Some refactoring after the fact, though.
 
-Cheers,
-Aki
+Andras Domokos (3):
+  ssn: remove SSN atom completely
+  voicecall: add SSN handling functions
+  atmodem: add SSN handling
 
---===============0592266351603747556==--
+ Makefile.am                 |    6 +-
+ drivers/atmodem/atmodem.c   |    2 -
+ drivers/atmodem/atmodem.h   |    3 -
+ drivers/atmodem/ssn.c       |  147 -------------------------
+ drivers/atmodem/voicecall.c |   61 +++++++++++
+ drivers/isimodem/isimodem.c |    2 -
+ drivers/isimodem/isimodem.h |    3 -
+ drivers/isimodem/ssn.c      |   95 -----------------
+ include/ssn.h               |   61 -----------
+ include/types.h             |    2 +
+ include/voicecall.h         |    6 +
+ plugins/calypso.c           |    2 -
+ plugins/g1.c                |    2 -
+ plugins/huawei.c            |    2 -
+ plugins/ifx.c               |    2 -
+ plugins/isiusb.c            |    2 -
+ plugins/linktop.c           |    2 -
+ plugins/n900.c              |    2 -
+ plugins/phonesim.c          |    2 -
+ plugins/ste.c               |    2 -
+ plugins/tc65.c              |    2 -
+ plugins/u8500.c             |    2 -
+ plugins/wavecom.c           |    2 -
+ src/ofono.h                 |   17 ---
+ src/ssn.c                   |  247 ---------------------------------------=
+----
+ src/voicecall.c             |  156 +++++++++++++++++++++++++++
+ 26 files changed, 227 insertions(+), 605 deletions(-)
+ delete mode 100644 drivers/atmodem/ssn.c
+ delete mode 100644 drivers/isimodem/ssn.c
+ delete mode 100644 include/ssn.h
+ delete mode 100644 src/ssn.c
+
+
+--===============0033050675334561680==--
 
