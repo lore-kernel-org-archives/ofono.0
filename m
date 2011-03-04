@@ -1,40 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============6605239152813875520=="
+Content-Type: multipart/mixed; boundary="===============1209467030795450324=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] Allow test/test-call-settings to exit if new value is equal
- to actual value
-Date: Fri, 04 Mar 2011 10:53:36 +0100
-Message-ID: <1299232416-4583-1-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH] Add the possibility to specify the modem in
+ test/test-call-settings
+Date: Fri, 04 Mar 2011 11:22:53 +0100
+Message-ID: <1299234173-4688-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6605239152813875520==
+--===============1209467030795450324==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/test-call-settings |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+ test/test-call-settings |   19 +++++++++++++------
+ 1 files changed, 13 insertions(+), 6 deletions(-)
 
 diff --git a/test/test-call-settings b/test/test-call-settings
-index f49ad0b..f31fd1a 100755
+index f31fd1a..187b405 100755
 --- a/test/test-call-settings
 +++ b/test/test-call-settings
-@@ -62,6 +62,10 @@ if __name__ =3D=3D "__main__":
+@@ -14,15 +14,12 @@ def property_changed(name, value):
  =
 
- 	print "Setting successful"
+ if __name__ =3D=3D "__main__":
+ 	if len(sys.argv) < 3:
+-		print "Usage: %s <property> <newvalue>" % (sys.argv[0])
++		print "Usage: %s [modem] <property> <newvalue>" % (sys.argv[0])
+ 		print "Properties can be: VoiceCallWaiting, HideCallerId"
+ 		sys.exit(1)
  =
 
-+	if (properties[property] =3D=3D newvalue):
-+		print "Setting was already set to this value"
-+		sys.exit(1);
+ 	canexit =3D False
+ =
+
+-	property =3D sys.argv[1]
+-	newvalue =3D sys.argv[2]
+-
+ 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
+ =
+
+ 	bus =3D dbus.SystemBus()
+@@ -31,8 +28,18 @@ if __name__ =3D=3D "__main__":
+ 							'org.ofono.Manager')
+ =
+
+ 	modems =3D manager.GetModems()
+-
+-	cs =3D dbus.Interface(bus.get_object('org.ofono', modems[0][0]),
++	modem =3D modems[0][0]
 +
- 	canexit =3D True
++	if (len(sys.argv) =3D=3D 4):
++		modem =3D sys.argv[1]
++		property =3D sys.argv[2]
++		newvalue =3D sys.argv[3]
++	else:
++		property =3D sys.argv[1]
++		newvalue =3D sys.argv[2]
++	print "Using modem %s" % modem
++
++	cs =3D dbus.Interface(bus.get_object('org.ofono', modem),
+ 						'org.ofono.CallSettings')
  =
 
- 	mainloop =3D gobject.MainLoop()
+ 	cs.connect_to_signal("PropertyChanged", property_changed)
 -- =
 
 1.7.1
@@ -52,5 +82,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============6605239152813875520==--
+--===============1209467030795450324==--
 
