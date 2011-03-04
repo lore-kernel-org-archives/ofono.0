@@ -1,236 +1,121 @@
-Content-Type: multipart/mixed; boundary="===============6655980396747521979=="
+Content-Type: multipart/mixed; boundary="===============3838206902383441767=="
 MIME-Version: 1.0
 From: Andras Domokos <Andras.Domokos@nokia.com>
-Subject: [RFC PATCH 3/5] voicecall: implement SSN handling functions
-Date: Fri, 04 Mar 2011 19:12:38 +0200
-Message-ID: <56722c85908a3516f0d5936cbef7b7e14c33efbd.1299258404.git.Andras.Domokos@nokia.com>
+Subject: [RFC PATCH 4/5] atmodem: implement SSN handling
+Date: Fri, 04 Mar 2011 19:12:48 +0200
+Message-ID: <6a075e6f42036521fc17ff2366501aad439e58f7.1299258404.git.Andras.Domokos@nokia.com>
 In-Reply-To: <cover.1299258404.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6655980396747521979==
+--===============3838206902383441767==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/voicecall.c |  174 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+ drivers/atmodem/voicecall.c |   61 +++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 174 insertions(+), 0 deletions(-)
+ 1 files changed, 61 insertions(+), 0 deletions(-)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index ec001c0..7eee7dd 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -70,6 +70,8 @@ struct voicecall {
- 	uint8_t icon_id;
- 	gboolean untracked;
- 	gboolean dial_result_handled;
-+	ofono_bool_t remote_held;
-+	ofono_bool_t remote_multiparty;
- };
- =
-
- struct dial_request {
-@@ -400,6 +402,12 @@ static void append_voicecall_properties(struct voiceca=
-ll *v,
- =
-
- 	ofono_dbus_dict_append(dict, "Multiparty", DBUS_TYPE_BOOLEAN, &mpty);
- =
-
-+	ofono_dbus_dict_append(dict, "RemoteHeld", DBUS_TYPE_BOOLEAN,
-+				&v->remote_held);
-+
-+	ofono_dbus_dict_append(dict, "RemoteMultiparty", DBUS_TYPE_BOOLEAN,
-+				&v->remote_multiparty);
-+
- 	if (v->message)
- 		ofono_dbus_dict_append(dict, "Information",
- 						DBUS_TYPE_STRING, &v->message);
-@@ -1869,6 +1877,8 @@ static GDBusMethodTable manager_methods[] =3D {
- };
- =
-
- static GDBusSignalTable manager_signals[] =3D {
-+	{ "Forwarded",	 	 "s" },
-+	{ "BarringActive",	 "s" },
- 	{ "PropertyChanged",	"sv" },
- 	{ "CallAdded",		"oa{sv}" },
- 	{ "CallRemoved",	"o" },
-@@ -2684,3 +2694,167 @@ void __ofono_voicecall_tone_cancel(struct ofono_voi=
-cecall *vc, int id)
- 		tone_request_run(vc);
- 	}
+diff --git a/drivers/atmodem/voicecall.c b/drivers/atmodem/voicecall.c
+index ee055da..7d70c85 100644
+--- a/drivers/atmodem/voicecall.c
++++ b/drivers/atmodem/voicecall.c
+@@ -967,6 +967,63 @@ static void busy_notify(GAtResult *result, gpointer us=
+er_data)
+ 			clcc_poll_cb, vc, NULL);
  }
-+
-+static void ssn_mt_forwarded_notify(struct ofono_voicecall *vc,
-+					unsigned int id, int code,
-+					const struct ofono_phone_number *ph)
+ =
+
++static void cssi_notify(GAtResult *result, gpointer user_data)
 +{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path =3D __ofono_atom_get_path(vc->atom);
-+	char *info =3D "incoming";
++	struct ofono_voicecall *vc =3D user_data;
++	GAtResultIter iter;
++	int code, index;
 +
-+	g_dbus_emit_signal(conn, path, OFONO_VOICECALL_MANAGER_INTERFACE,
-+				"Forwarded",
-+				DBUS_TYPE_STRING, &info,
-+				DBUS_TYPE_INVALID);
-+}
++	g_at_result_iter_init(&iter, result);
 +
-+static struct voicecall *voicecall_select(struct ofono_voicecall *vc,
-+						unsigned int id, int code)
-+{
-+	struct voicecall *v =3D NULL;
-+	GSList *l;
-+
-+	if (id !=3D 0) {
-+		l =3D g_slist_find_custom(vc->call_list, GUINT_TO_POINTER(id),
-+				call_compare_by_id);
-+
-+		if (l =3D=3D NULL)
-+			return NULL;
-+
-+		v =3D l->data;
-+	} else if (g_slist_length(vc->call_list) =3D=3D 1) {
-+		v =3D vc->call_list->data;
-+
-+		switch (code) {
-+		case SS_MT_VOICECALL_RETRIEVED:
-+			if (v->remote_held !=3D TRUE)
-+				return NULL;
-+			break;
-+		case SS_MT_VOICECALL_ON_HOLD:
-+			if (v->remote_held =3D=3D TRUE)
-+				return NULL;
-+			break;
-+		case SS_MT_MULTIPARTY_VOICECALL:
-+			if (v->remote_multiparty =3D=3D TRUE)
-+				return NULL;
-+			break;
-+		default:
-+			return NULL;
-+		}
-+	}
-+
-+	return v;
-+}
-+
-+static void ssn_mt_remote_held_notify(struct ofono_voicecall *vc,
-+					unsigned int id, int code,
-+					const struct ofono_phone_number *ph)
-+{
-+	struct voicecall *v =3D voicecall_select(vc, id, code);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path;
-+
-+	if (v =3D=3D NULL)
++	if (!g_at_result_iter_next(&iter, "+CSSI:"))
 +		return;
 +
-+	if (code =3D=3D SS_MT_VOICECALL_ON_HOLD)
-+		v->remote_held =3D TRUE;
-+	else
-+		v->remote_held =3D FALSE;
-+
-+	path =3D voicecall_build_path(vc, v->call);
-+
-+	ofono_dbus_signal_property_changed(conn, path,
-+						OFONO_VOICECALL_INTERFACE,
-+						"RemoteHeld", DBUS_TYPE_BOOLEAN,
-+						&v->remote_held);
-+}
-+
-+static void ssn_mt_remote_multiparty_notify(struct ofono_voicecall *vc,
-+					unsigned int id, int code,
-+					const struct ofono_phone_number *ph)
-+{
-+	struct voicecall *v =3D voicecall_select(vc, id, code);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path;
-+
-+	if (v =3D=3D NULL)
++	if (!g_at_result_iter_next_number(&iter, &code))
 +		return;
 +
-+	v->remote_multiparty =3D TRUE;
++	if (!g_at_result_iter_next_number(&iter, &index))
++		index =3D 0;
 +
-+	path =3D voicecall_build_path(vc, v->call);
-+
-+	ofono_dbus_signal_property_changed(conn, path,
-+					OFONO_VOICECALL_INTERFACE,
-+					"RemoteMultiparty", DBUS_TYPE_BOOLEAN,
-+					&v->remote_multiparty);
++	ofono_voicecall_ssn_mo_notify(vc, 0, code, index);
 +}
 +
-+void ofono_voicecall_ssn_mt_notify(struct ofono_voicecall *vc,
-+					unsigned int id, int code, int index,
-+					const struct ofono_phone_number *ph)
++static void cssu_notify(GAtResult *result, gpointer user_data)
 +{
-+	switch (code) {
-+	case SS_MT_CALL_FORWARDED:
-+		ssn_mt_forwarded_notify(vc, id, code, ph);
-+		break;
-+	case SS_MT_VOICECALL_ON_HOLD:
-+		ssn_mt_remote_held_notify(vc, id, code, ph);
-+		break;
-+	case SS_MT_VOICECALL_RETRIEVED:
-+		ssn_mt_remote_held_notify(vc, id, code, ph);
-+		break;
-+	case SS_MT_MULTIPARTY_VOICECALL:
-+		ssn_mt_remote_multiparty_notify(vc, id, code, ph);
-+		break;
-+	}
++	struct ofono_voicecall *vc =3D user_data;
++	GAtResultIter iter;
++	int code;
++	int index =3D -1;
++	const char *num;
++	struct ofono_phone_number ph;
++
++	ph.number[0] =3D '\0';
++	ph.type =3D 129;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+CSSU:"))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &code))
++		return;
++
++	/* This field is optional, if we can't read it, try to skip it */
++	if (!g_at_result_iter_next_number(&iter, &index) &&
++			!g_at_result_iter_skip_next(&iter))
++		goto out;
++
++	if (!g_at_result_iter_next_string(&iter, &num))
++		goto out;
++
++	strncpy(ph.number, num, OFONO_MAX_PHONE_NUMBER_LENGTH);
++
++	if (!g_at_result_iter_next_number(&iter, &ph.type))
++		return;
++
++out:
++	ofono_voicecall_ssn_mt_notify(vc, 0, code, index, &ph);
 +}
 +
-+static void ssn_mo_call_barred_notify(struct ofono_voicecall *vc,
-+					unsigned int id, int code)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path =3D __ofono_atom_get_path(vc->atom);
-+	const char *info;
+ static void vtd_query_cb(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
+ {
+ 	struct ofono_voicecall *vc =3D user_data;
+@@ -1015,6 +1072,9 @@ static void at_voicecall_initialized(gboolean ok, GAt=
+Result *result,
+ =
+
+ 	/* Populate the call list */
+ 	g_at_chat_send(vd->chat, "AT+CLCC", clcc_prefix, clcc_cb, vc, NULL);
 +
-+	if (code =3D=3D SS_MO_INCOMING_BARRING)
-+		info =3D "remote";
-+	else
-+		info =3D "local";
-+
-+	g_dbus_emit_signal(conn, path, OFONO_VOICECALL_MANAGER_INTERFACE,
-+				"BarringActive",
-+				DBUS_TYPE_STRING, &info,
-+				DBUS_TYPE_INVALID);
-+}
-+
-+static void ssn_mo_forwarded_notify(struct ofono_voicecall *vc,
-+					unsigned int id, int code)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path =3D __ofono_atom_get_path(vc->atom);
-+	char *info =3D "outgoing";
-+
-+	g_dbus_emit_signal(conn, path, OFONO_VOICECALL_MANAGER_INTERFACE,
-+				"Forwarded",
-+				DBUS_TYPE_STRING, &info,
-+				DBUS_TYPE_INVALID);
-+}
-+
-+void ofono_voicecall_ssn_mo_notify(struct ofono_voicecall *vc,
-+					unsigned int id, int code, int index)
-+{
-+	switch (code) {
-+	case SS_MO_OUTGOING_BARRING:
-+		ssn_mo_call_barred_notify(vc, id, code);
-+		break;
-+	case SS_MO_INCOMING_BARRING:
-+		ssn_mo_call_barred_notify(vc, id, code);
-+		break;
-+	case SS_MO_CALL_FORWARDED:
-+		ssn_mo_forwarded_notify(vc, id, code);
-+		break;
-+	}
-+}
++	g_at_chat_register(vd->chat, "+CSSI:", cssi_notify, FALSE, vc, NULL);
++	g_at_chat_register(vd->chat, "+CSSU:", cssu_notify, FALSE, vc, NULL);
+ }
+ =
+
+ static int at_voicecall_probe(struct ofono_voicecall *vc, unsigned int ven=
+dor,
+@@ -1038,6 +1098,7 @@ static int at_voicecall_probe(struct ofono_voicecall =
+*vc, unsigned int vendor,
+ 	g_at_chat_send(vd->chat, "AT+CDIP=3D1", NULL, NULL, NULL, NULL);
+ 	g_at_chat_send(vd->chat, "AT+CNAP=3D1", NULL, NULL, NULL, NULL);
+ 	g_at_chat_send(vd->chat, "AT+COLP=3D1", NULL, NULL, NULL, NULL);
++	g_at_chat_send(vd->chat, "AT+CSSN=3D1,1", NULL, NULL, NULL, NULL);
+ 	g_at_chat_send(vd->chat, "AT+VTD?", NULL,
+ 				vtd_query_cb, vc, NULL);
+ 	g_at_chat_send(vd->chat, "AT+CCWA=3D1", NULL,
 -- =
 
 1.7.0.4
 
 
---===============6655980396747521979==--
+--===============3838206902383441767==--
 
