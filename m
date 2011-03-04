@@ -1,284 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============4213973784586785727=="
+Content-Type: multipart/mixed; boundary="===============2309317724283911531=="
 MIME-Version: 1.0
-From: Andras Domokos <andras.domokos@nokia.com>
-Subject: Re: [RFC PATCH 2/3] voicecall: add SSN handling functions
-Date: Fri, 04 Mar 2011 14:26:27 +0200
-Message-ID: <4D70DA73.6080900@nokia.com>
-In-Reply-To: <4D6FF3FD.2000601@gmail.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH 2/2] mbmmodem: do not check for NULL pointer
+Date: Fri, 04 Mar 2011 10:10:14 -0300
+Message-ID: <1299244214-12411-2-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1299244214-12411-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4213973784586785727==
+--===============2309317724283911531==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+cb_data_new() uses g_new0(), hence there's no need to check the return
+value being NULL.
+---
+ drivers/mbmmodem/location-reporting.c |    4 ----
+ 1 files changed, 0 insertions(+), 4 deletions(-)
 
-On 03/03/2011 10:03 PM, ext Denis Kenzior wrote:
-> Hi Andras,
->
-> On 03/03/2011 10:48 AM, Andras Domokos wrote:
->> ---
->>   include/types.h     |    2 +
->>   include/voicecall.h |    6 ++
->>   src/voicecall.c     |  156 +++++++++++++++++++++++++++++++++++++++++++=
-++++++++
->>   3 files changed, 164 insertions(+), 0 deletions(-)
->>
-> Please make sure to split this patch into several in accordance to our
-> patch submission guidelines.  See HACKING document, specifically the
-> 'Submitting Patches' section.
+diff --git a/drivers/mbmmodem/location-reporting.c b/drivers/mbmmodem/locat=
+ion-reporting.c
+index b76a5c2..1080e62 100644
+--- a/drivers/mbmmodem/location-reporting.c
++++ b/drivers/mbmmodem/location-reporting.c
+@@ -166,16 +166,12 @@ static void mbm_location_reporting_enable(struct ofon=
+o_location_reporting *lr,
+ =
 
-OK, I'll split up the patch according to the HACKING principles.
+ 	DBG("lr=3D%p", lr);
+ =
 
->> diff --git a/include/types.h b/include/types.h
->> index d25f409..b639c8a 100644
->> --- a/include/types.h
->> +++ b/include/types.h
->> @@ -96,6 +96,8 @@ struct ofono_call {
->>   	char name[OFONO_MAX_CALLER_NAME_LENGTH + 1];
->>   	int clip_validity;
->>   	int cnap_validity;
->> +	ofono_bool_t remote_held;
->> +	ofono_bool_t remote_multiparty;
-> I really don't like these being here.  Lets put them onto the struct
-> voicecall object in src/voicecall.c.  The logic for setting remote_held
-> and remote_multiparty is something that belongs in the core and should
-> not be exposed to the driver.
+-	if (cbd =3D=3D NULL)
+-		goto out;
+-
+ 	cbd->user =3D lr;
+ =
 
-You are right, this informations have little to do with the drivers,
-makes more sense to have them in the voicecall struct.
+ 	if (g_at_chat_send(gd->chat, "AT*E2GPSCTL=3D1,5,1", none_prefix,
+ 				mbm_e2gpsctl_enable_cb, cbd, g_free) > 0)
+ 		return;
+ =
 
->>   };
->>
->>   struct ofono_network_time {
->> diff --git a/include/voicecall.h b/include/voicecall.h
->> index f00eb08..5e6da02 100644
->> --- a/include/voicecall.h
->> +++ b/include/voicecall.h
->> @@ -160,6 +160,12 @@ void ofono_voicecall_set_data(struct ofono_voicecal=
-l *vc, void *data);
->>   void *ofono_voicecall_get_data(struct ofono_voicecall *vc);
->>   int ofono_voicecall_get_next_callid(struct ofono_voicecall *vc);
->>
->> +void ofono_voicecall_ssn_mo_notify(struct ofono_voicecall *vc, unsigned=
- int id,
->> +					int code, int index);
->> +void ofono_voicecall_ssn_mt_notify(struct ofono_voicecall *vc, unsigned=
- int id,
->> +					int code, int index,
->> +					const struct ofono_phone_number *ph);
->> +
-> Looks good, but as I mentioned this should be a separate patch.
->
+-out:
+ 	CALLBACK_WITH_FAILURE(cb, -1, data);
+ 	g_free(cbd);
+ }
+-- =
 
-I'll create a separate patch for each top level directory.
+1.7.4.1
 
->>   #ifdef __cplusplus
->>   }
->>   #endif
->> diff --git a/src/voicecall.c b/src/voicecall.c
->> index ec001c0..e5936f5 100644
->> --- a/src/voicecall.c
->> +++ b/src/voicecall.c
->> @@ -400,6 +400,12 @@ static void append_voicecall_properties(struct voic=
-ecall *v,
->>
->>   	ofono_dbus_dict_append(dict, "Multiparty", DBUS_TYPE_BOOLEAN,&mpty);
->>
->> +	ofono_dbus_dict_append(dict, "RemoteHeld", DBUS_TYPE_BOOLEAN,
->> +				&call->remote_held);
->> +
->> +	ofono_dbus_dict_append(dict, "RemoteMultiparty", DBUS_TYPE_BOOLEAN,
->> +				&call->remote_multiparty);
->> +
->>   	if (v->message)
->>   		ofono_dbus_dict_append(dict, "Information",
->>   						DBUS_TYPE_STRING,&v->message);
->> @@ -1869,6 +1875,8 @@ static GDBusMethodTable manager_methods[] =3D {
->>   };
->>
->>   static GDBusSignalTable manager_signals[] =3D {
->> +	{ "Forwarded",	 	 "s" },
->> +	{ "BarringActive",	 "s" },
->>   	{ "PropertyChanged",	"sv" },
->>   	{ "CallAdded",		"oa{sv}" },
->>   	{ "CallRemoved",	"o" },
->> @@ -2684,3 +2692,151 @@ void __ofono_voicecall_tone_cancel(struct ofono_=
-voicecall *vc, int id)
->>   		tone_request_run(vc);
->>   	}
->>   }
->> +
->> +static void ssn_mt_forwarded_notify(struct ofono_voicecall *vc,
->> +					unsigned int id, int code,
->> +					const struct ofono_phone_number *ph)
->> +{
->> +	DBusConnection *conn =3D ofono_dbus_get_connection();
->> +	const char *path =3D __ofono_atom_get_path(vc->atom);
->> +	char *info =3D "incoming";
->> +
->> +	g_dbus_emit_signal(conn, path, OFONO_VOICECALL_MANAGER_INTERFACE,
->> +				"Forwarded",
->> +				DBUS_TYPE_STRING,&info,
->> +				DBUS_TYPE_INVALID);
->> +}
->> +
->> +static struct voicecall *voicecall_select(struct ofono_voicecall *vc,
->> +						unsigned int id, int code)
->> +{
->> +	struct voicecall *v =3D NULL;
->> +	GSList *l;
->> +
->> +	for (l =3D vc->call_list; l; l =3D l->next) {
->> +		struct voicecall *v1 =3D l->data;
->> +
->> +		if (id =3D=3D 0&&  g_slist_length(vc->call_list) =3D=3D 1) {
->> +			if (code =3D=3D SS_MT_VOICECALL_RETRIEVED&&
->> +					v1->call->remote_held =3D=3D TRUE) {
->> +				v =3D v1;
->> +				break;
->> +			} else if (code =3D=3D SS_MT_VOICECALL_ON_HOLD&&
->> +					v1->call->remote_held =3D=3D FALSE) {
->> +				v =3D v1;
->> +				break;
->> +			} else if (code =3D=3D SS_MT_MULTIPARTY_VOICECALL&&
->> +					v1->call->remote_multiparty =3D=3D FALSE) {
->> +				v =3D v1;
->> +				break;
->> +			}
->> +		} else if (v1->call->id =3D=3D id) {
->> +			v =3D v1;
->> +			break;
->> +		}
->> +	}
->> +
->> +	return v;
->> +}
-> I suspect this might be easier to understand if it was re-written to use
-> g_slist_find_custom instead of jumbling unrelated logic (with a similar
-> implementation) into a single function.
 
-Maybe a "g_slist_find_custom" function base implementation would make
-the code look more neat. I'll make the changes.
-
->> +
->> +static void ssn_mt_remote_held_notify(struct ofono_voicecall *vc,
->> +					unsigned int id, int code,
->> +					const struct ofono_phone_number *ph)
->> +{
->> +	struct voicecall *v =3D voicecall_select(vc, id, code);
->> +	DBusConnection *conn =3D ofono_dbus_get_connection();
->> +	const char *path;
->> +
->> +	if (v =3D=3D NULL)
->> +		return;
->> +
->> +	if (code =3D=3D SS_MT_VOICECALL_ON_HOLD)
->> +		v->call->remote_held =3D TRUE;
->> +	else
->> +		v->call->remote_held =3D FALSE;
->> +
->> +	path =3D voicecall_build_path(vc, v->call);
->> +
->> +	ofono_dbus_signal_property_changed(conn, path,
->> +						OFONO_VOICECALL_INTERFACE,
->> +						"RemoteHeld", DBUS_TYPE_BOOLEAN,
->> +						&v->call->remote_held);
->> +}
->> +
->> +static void ssn_mt_remote_multiparty_notify(struct ofono_voicecall *vc,
->> +					unsigned int id, int code,
->> +					const struct ofono_phone_number *ph)
->> +{
->> +	struct voicecall *v =3D voicecall_select(vc, id, code);
->> +	DBusConnection *conn =3D ofono_dbus_get_connection();
->> +	const char *path;
->> +
->> +	if (v =3D=3D NULL)
->> +		return;
->> +
->> +	v->call->remote_multiparty =3D TRUE;
->> +
->> +	path =3D voicecall_build_path(vc, v->call);
->> +
->> +	ofono_dbus_signal_property_changed(conn, path,
->> +					OFONO_VOICECALL_INTERFACE,
->> +					"RemoteMultiparty", DBUS_TYPE_BOOLEAN,
->> +					&v->call->remote_multiparty);
->> +}
->> +
->> +void ofono_voicecall_ssn_mt_notify(struct ofono_voicecall *vc,
->> +					unsigned int id, int code, int index,
->> +					const struct ofono_phone_number *ph)
->> +{
->> +
->> +	if (code =3D=3D SS_MT_CALL_FORWARDED)
->> +		ssn_mt_forwarded_notify(vc, id, code, ph);
->> +	else if (code =3D=3D SS_MT_VOICECALL_ON_HOLD)
->> +		ssn_mt_remote_held_notify(vc, id, code, ph);
->> +	else if (code =3D=3D SS_MT_VOICECALL_RETRIEVED)
->> +		ssn_mt_remote_held_notify(vc, id, code, ph);
->> +	else if (code =3D=3D SS_MT_MULTIPARTY_VOICECALL)
->> +		ssn_mt_remote_multiparty_notify(vc, id, code, ph);
-> Please use a switch/case here
->
-
-OK, no problem.
-
->> +}
->> +
->> +static void ssn_mo_call_barred_notify(struct ofono_voicecall *vc,
->> +					unsigned int id, int code)
->> +{
->> +	DBusConnection *conn =3D ofono_dbus_get_connection();
->> +	const char *path =3D __ofono_atom_get_path(vc->atom);
->> +	const char *info;
->> +
->> +	if (code =3D=3D SS_MO_INCOMING_BARRING)
->> +		info =3D "remote";
->> +	else
->> +		info =3D "local";
->> +
->> +	g_dbus_emit_signal(conn, path, OFONO_VOICECALL_MANAGER_INTERFACE,
->> +				"BarringActive",
->> +				DBUS_TYPE_STRING,&info,
->> +				DBUS_TYPE_INVALID);
->> +}
->> +
->> +static void ssn_mo_forwarded_notify(struct ofono_voicecall *vc,
->> +					unsigned int id, int code)
->> +{
->> +	DBusConnection *conn =3D ofono_dbus_get_connection();
->> +	const char *path =3D __ofono_atom_get_path(vc->atom);
->> +	char *info =3D "outgoing";
->> +
->> +	g_dbus_emit_signal(conn, path, OFONO_VOICECALL_MANAGER_INTERFACE,
->> +				"Forwarded",
->> +				DBUS_TYPE_STRING,&info,
->> +				DBUS_TYPE_INVALID);
->> +}
->> +
->> +void ofono_voicecall_ssn_mo_notify(struct ofono_voicecall *vc,
->> +					unsigned int id, int code, int index)
->> +{
->> +	if (code =3D=3D SS_MO_OUTGOING_BARRING)
->> +		ssn_mo_call_barred_notify(vc, id, code);
->> +	else if (code =3D=3D SS_MO_INCOMING_BARRING)
->> +		ssn_mo_call_barred_notify(vc, id, code);
->> +	else if (code =3D=3D SS_MO_CALL_FORWARDED)
->> +		ssn_mo_forwarded_notify(vc, id, code);
-> Please use a switch/case here.  It is much easier to read and extend.
-
-OK, I'll do it.
-
->> +}
-> Regards,
-> -Denis
-
-Regards,
-Andras
-
---===============4213973784586785727==--
+--===============2309317724283911531==--
 
