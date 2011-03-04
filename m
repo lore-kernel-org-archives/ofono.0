@@ -1,103 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============5125161555881111232=="
+Content-Type: multipart/mixed; boundary="===============6605239152813875520=="
 MIME-Version: 1.0
-From: Antti Paila <antti.paila@nokia.com>
-Subject: [PATCH] gisi: M6 coding style violation corrections
-Date: Fri, 04 Mar 2011 10:28:44 +0200
-Message-ID: <1299227324-10572-1-git-send-email-antti.paila@nokia.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] Allow test/test-call-settings to exit if new value is equal
+ to actual value
+Date: Fri, 04 Mar 2011 10:53:36 +0100
+Message-ID: <1299232416-4583-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5125161555881111232==
+--===============6605239152813875520==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gisi/iter.c |   16 ++++++++--------
- 1 files changed, 8 insertions(+), 8 deletions(-)
+ test/test-call-settings |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-diff --git a/gisi/iter.c b/gisi/iter.c
-index f3f6f5a..8308c00 100644
---- a/gisi/iter.c
-+++ b/gisi/iter.c
-@@ -56,7 +56,7 @@ void g_isi_sb_iter_init_full(GIsiSubBlockIter *iter, cons=
-t GIsiMessage *msg,
- 		len =3D used =3D 0;
+diff --git a/test/test-call-settings b/test/test-call-settings
+index f49ad0b..f31fd1a 100755
+--- a/test/test-call-settings
++++ b/test/test-call-settings
+@@ -62,6 +62,10 @@ if __name__ =3D=3D "__main__":
  =
 
- 	iter->cursor =3D longhdr ? 4 : 2;
--	iter->start =3D (uint8_t *)data + used;
-+	iter->start =3D (uint8_t *) data + used;
- 	iter->end =3D iter->start + len;
- 	iter->longhdr =3D longhdr;
- 	iter->sub_blocks =3D len > used ? sub_blocks : 0;
-@@ -72,7 +72,7 @@ void g_isi_sb_iter_init(GIsiSubBlockIter *iter, const GIs=
-iMessage *msg,
- 		len =3D used =3D 0;
+ 	print "Setting successful"
  =
 
- 	iter->cursor =3D 2;
--	iter->start =3D (uint8_t *)data + used;
-+	iter->start =3D (uint8_t *) data + used;
- 	iter->end =3D iter->start + len;
- 	iter->longhdr =3D FALSE;
- 	iter->sub_blocks =3D len > used ? iter->start[-1] : 0;
-@@ -147,18 +147,18 @@ size_t g_isi_sb_iter_get_len(const GIsiSubBlockIter *=
-iter)
- gboolean g_isi_sb_iter_get_data(const GIsiSubBlockIter *restrict iter,
- 				void **data, unsigned pos)
- {
--	if ((size_t)pos > g_isi_sb_iter_get_len(iter)
-+	if ((size_t) pos > g_isi_sb_iter_get_len(iter)
- 			|| iter->start + pos > iter->end)
- 		return FALSE;
++	if (properties[property] =3D=3D newvalue):
++		print "Setting was already set to this value"
++		sys.exit(1);
++
+ 	canexit =3D True
  =
 
--	*data =3D (void *)iter->start + pos;
-+	*data =3D (void *) iter->start + pos;
- 	return TRUE;
- }
- =
-
- gboolean g_isi_sb_iter_get_byte(const GIsiSubBlockIter *restrict iter,
- 				uint8_t *byte, unsigned pos)
- {
--	if ((size_t)pos > g_isi_sb_iter_get_len(iter)
-+	if ((size_t) pos > g_isi_sb_iter_get_len(iter)
- 			|| iter->start + pos > iter->end)
- 		return FALSE;
- =
-
-@@ -257,8 +257,8 @@ gboolean g_isi_sb_iter_get_alpha_tag(const GIsiSubBlock=
-Iter *restrict iter,
- 	if (ucs2 + len > iter->end)
- 		return FALSE;
- =
-
--	*utf8 =3D g_convert((const char *)ucs2, len, "UTF-8//TRANSLIT", "UCS-2BE",
--				NULL, NULL, NULL);
-+	*utf8 =3D g_convert((const char *) ucs2, len, "UTF-8//TRANSLIT",
-+				"UCS-2BE", NULL, NULL, NULL);
- 	return *utf8 !=3D NULL;
- }
- =
-
-@@ -290,7 +290,7 @@ gboolean g_isi_sb_iter_get_latin_tag(const GIsiSubBlock=
-Iter *restrict iter,
- 	if (str + len > iter->end)
- 		return FALSE;
- =
-
--	*latin =3D g_strndup((char *)str, len);
-+	*latin =3D g_strndup((char *) str, len);
- =
-
- 	return *latin !=3D NULL;
- }
+ 	mainloop =3D gobject.MainLoop()
 -- =
 
 1.7.1
 
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
---===============5125161555881111232==--
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============6605239152813875520==--
 
