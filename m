@@ -1,61 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============7533839782000726204=="
+Content-Type: multipart/mixed; boundary="===============6000549741598819533=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: patch to fix BMC #13679 Huawei EM770: ofonod crash when
- disable/enable 3G technology
-Date: Fri, 04 Mar 2011 09:19:54 -0600
-Message-ID: <4D71031A.20504@gmail.com>
-In-Reply-To: <FC2FB65B4D919844ADE4BE3C2BB739AD36CFDF94@shsmsx501.ccr.corp.intel.com>
+From: Andras Domokos <Andras.Domokos@nokia.com>
+Subject: [PATCH 0/5] Voice call SS notifications (4th version)
+Date: Fri, 04 Mar 2011 19:12:13 +0200
+Message-ID: <cover.1299258404.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7533839782000726204==
+--===============6000549741598819533==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Implementation proposal for handling some of the voice call
+related Supplementary Services (SS) notifications.
 
-On 03/04/2011 12:53 AM, Xu, Martin wrote:
-> Hi Denis:
-> =
+Implementation details:
+- removed SSN atom and all the dependencies
+- (re)implemented voice call SS notification handling framework
+- added voice call SS notification handling to AT modem driver
+  (+CSSU and +CSSI notifications) =
 
->>>  	struct ofono_gprs *gprs;
->>>  	struct ofono_gprs_context *gc;
->>>  	gboolean voice;
->>> +	gboolean online;
->>
->> I don't think you really need this one, you can use the presence of gprs
->> atom instead.
-> Gprs atom is not reliable here. Because gprs will be flushed when enterin=
-g offline mode
+- added voice call SS notification handling to ISI modem driver
 
-Both gprs and gprs-contexts will be flushed.  So you should be setting
-them to NULL when going offline.  How is this not reliable?
+Andras Domokos (5):
+  ssn: remove SSN atom completely
+  voicecall: add SSN function declarations
+  voicecall: implement SSN handling functions
+  atmodem: implement SSN handling
+  isimodem: implement SSN handling
 
->>
->> I suspect all you need to do is unref data->modem, set data->gc and
->> data->gprs to NULL in the offline callback prior to calling back into
->> the core.
-> Logically, call back only needs to set offline states
-> It is Huawei_disconnect's duty to decide the operation. =
+ Makefile.am                  |    6 +-
+ drivers/atmodem/atmodem.c    |    2 -
+ drivers/atmodem/atmodem.h    |    3 -
+ drivers/atmodem/ssn.c        |  147 ------------
+ drivers/atmodem/voicecall.c  |   61 +++++
+ drivers/isimodem/isimodem.c  |    2 -
+ drivers/isimodem/isimodem.h  |    3 -
+ drivers/isimodem/ssn.c       |  503 --------------------------------------=
+----
+ drivers/isimodem/voicecall.c |  359 ++++++++++++++++++++++++++++++
+ include/ssn.h                |   61 -----
+ include/voicecall.h          |    6 +
+ plugins/calypso.c            |    2 -
+ plugins/g1.c                 |    2 -
+ plugins/huawei.c             |    2 -
+ plugins/ifx.c                |    2 -
+ plugins/isiusb.c             |    2 -
+ plugins/linktop.c            |    2 -
+ plugins/n900.c               |    2 -
+ plugins/phonesim.c           |    2 -
+ plugins/ste.c                |    2 -
+ plugins/tc65.c               |    2 -
+ plugins/u8500.c              |    2 -
+ plugins/wavecom.c            |    2 -
+ src/ofono.h                  |   17 --
+ src/ssn.c                    |  247 ---------------------
+ src/voicecall.c              |  174 +++++++++++++++
+ 26 files changed, 602 insertions(+), 1013 deletions(-)
+ delete mode 100644 drivers/atmodem/ssn.c
+ delete mode 100644 drivers/isimodem/ssn.c
+ delete mode 100644 include/ssn.h
+ delete mode 100644 src/ssn.c
 
-> In theory, Huawei_disconnect may be called at any situation when io error=
- happens.
-> (I observed two place, one is at ppp_disconnect the other is at offline m=
-ode CFUN=3D5.)
-> So the function must take action according to the states. =
 
-> I will resent the updated patch
-
-Sure, but what you're trying to prevent is keeping pointers around to
-atoms which have gone away.  One easy way to do that would be to simply
-set them to NULL when going offline.
-
-You can also install atom watches, but that might not be worth the effort.
-
-Regards,
--Denis
-
---===============7533839782000726204==--
+--===============6000549741598819533==--
 
