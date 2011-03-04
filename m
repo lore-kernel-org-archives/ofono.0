@@ -1,54 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============7138835758811855372=="
+Content-Type: multipart/mixed; boundary="===============6659879635927389737=="
 MIME-Version: 1.0
-From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] Fix usage of test/test-call-settings: add missing properties
-Date: Fri, 04 Mar 2011 11:25:28 +0100
-Message-ID: <1299234328-4737-1-git-send-email-bertrand.aygon@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] Fix huawei_disconnect function issue
+Date: Fri, 04 Mar 2011 03:04:16 -0800
+Message-ID: <1299236656.32127.2.camel@aeonflux>
+In-Reply-To: <1299224643-19026-1-git-send-email-martin.xu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7138835758811855372==
+--===============6659879635927389737==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- test/test-call-settings |    5 ++++-
- 1 files changed, 4 insertions(+), 1 deletions(-)
+Hi Martin,
 
-diff --git a/test/test-call-settings b/test/test-call-settings
-index 187b405..97cec86 100755
---- a/test/test-call-settings
-+++ b/test/test-call-settings
-@@ -15,7 +15,10 @@ def property_changed(name, value):
- if __name__ =3D=3D "__main__":
- 	if len(sys.argv) < 3:
- 		print "Usage: %s [modem] <property> <newvalue>" % (sys.argv[0])
--		print "Properties can be: VoiceCallWaiting, HideCallerId"
-+		print "Properties can be: VoiceCallWaiting,"
-+		print "	ConnectedLineRestriction, CallingLineRestriction,"
-+		print "	CallingLinePresentation, CalledLinePresentation,"
-+		print "	ConnectedLinePresentation, HideCallerId"
- 		sys.exit(1)
- =
+> huawei_disconnect is used to recovery the io and gprs context when
+> io error happends, see commit 39382730d7758b093ca6271f4e9dea875fa04b3a
+> However, io error not only happends at PPP disconnect, in theory it
+> can happends at any situation. I also observed that it happens when modem
+> go into offline mode at my Huawei EM770W modem. in this case, gprs should
+> not be reopened.
 
- 	canexit =3D False
--- =
+<snip>
 
-1.7.1
+>  static void huawei_set_online(struct ofono_modem *modem, ofono_bool_t on=
+line,
+> @@ -595,21 +611,26 @@ static void huawei_set_online(struct ofono_modem *m=
+odem, ofono_bool_t online,
+>  {
+>  	struct huawei_data *data =3D ofono_modem_get_data(modem);
+>  	GAtChat *chat =3D data->pcui;
+> -	struct cb_data *cbd =3D cb_data_new(cb, user_data);
+> +	struct huawei_cb_data *online_cbd;
+>  	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D5";
+>  =
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+>  	DBG("modem %p %s", modem, online ? "online" : "offline");
+>  =
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+> -	if (cbd =3D=3D NULL)
+> +	online_cbd =3D g_try_new0(struct huawei_cb_data, 1);
+> +	online_cbd->cbd =3D cb_data_new(cb, user_data);
+> +	if (online_cbd->cbd =3D=3D NULL)
+>  		goto error;
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+you know that you are doing exactly the wrong NULL pointer checks
+here ;)
 
---===============7138835758811855372==--
+Anyhow, we need to get rid of the if (cbd =3D=3D NULL) check first. A while
+back we changed cb_data_new() to use g_new0() instead of g_try_new0() to
+simplify the code. So first that should be all cleaned up.
+
+A quick grep showed these locations for the AT modems:
+
+drivers/mbmmodem/location-reporting.c:  if (cbd =3D=3D NULL)
+plugins/bluetooth.c:    if (cbd =3D=3D NULL) {
+plugins/huawei.c:       if (cbd =3D=3D NULL)
+
+The ISI modem stuff is a different story and needs to be tackled
+separately anyway.
+
+Regards
+
+Marcel
+
+
+
+--===============6659879635927389737==--
 
