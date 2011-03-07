@@ -1,226 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============3375679712659742558=="
+Content-Type: multipart/mixed; boundary="===============7386217001594930306=="
 MIME-Version: 1.0
 From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [RESEND 3 PATCH 01/13] gprs: factor out common code
-Date: Mon, 07 Mar 2011 16:02:27 +0200
-Message-ID: <1299506559-32365-2-git-send-email-mika.liljeberg@nokia.com>
+Subject: [RESEND 3 PATCH 02/13] gprs: Update documentation for IPv6
+Date: Mon, 07 Mar 2011 16:02:28 +0200
+Message-ID: <1299506559-32365-3-git-send-email-mika.liljeberg@nokia.com>
 In-Reply-To: <1299506559-32365-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3375679712659742558==
+--===============7386217001594930306==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/gprs.c |  111 +++++++++++++++++++++++++++-----------------------------=
-----
- 1 files changed, 50 insertions(+), 61 deletions(-)
+ doc/connman-api.txt |    9 +++++++--
+ 1 files changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 33711dc..b478f88 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -256,6 +256,49 @@ static void gprs_cid_release(struct ofono_gprs *gprs, =
-unsigned int id)
- 	idmap_put(gprs->cid_map, id);
- }
+diff --git a/doc/connman-api.txt b/doc/connman-api.txt
+index ece5bd3..5a987d3 100644
+--- a/doc/connman-api.txt
++++ b/doc/connman-api.txt
+@@ -195,7 +195,7 @@ Properties	boolean Active [readwrite]
+ 		string Protocol [readwrite]
  =
 
-+static gboolean assign_context(struct pri_context *ctx)
-+{
-+	struct idmap *cidmap =3D ctx->gprs->cid_map;
-+	unsigned int cid_min;
-+	GSList *l;
+ 			Holds the protocol for this context.  Valid values
+-			are: "ip" and "ipv6".
++			are: "ip", "ipv6" and "ipv4v6".
+ =
+
+ 		string Name [readwrite]
+ =
+
+@@ -209,7 +209,7 @@ Properties	boolean Active [readwrite]
+ =
+
+ 			string Interface [readonly, optional]
+ =
+
+-				Holds the interface of the network interface
++				Holds the name of the network interface
+ 				used by this context (e.g. "ppp0" "usb0")
+ =
+
+ 			string Method [readonly, optional]
+@@ -255,6 +255,11 @@ Properties	boolean Active [readwrite]
+ 				via this proxy.  All other values are left
+ 				out in this case.
+ =
+
++			string IPv6Address [readonly, optional]
 +
-+	if (cidmap =3D=3D NULL)
-+		return FALSE;
++				Holds the IPv6 link local address for this
++				context.
 +
-+	cid_min =3D idmap_get_min(cidmap);
-+
-+	ctx->context.cid =3D gprs_cid_alloc(ctx->gprs);
-+	if (ctx->context.cid =3D=3D 0)
-+		return FALSE;
-+
-+	for (l =3D ctx->gprs->context_drivers; l; l =3D l->next) {
-+		struct ofono_gprs_context *gc =3D l->data;
-+
-+		if (gc->inuse =3D=3D TRUE)
-+			continue;
-+
-+		if (gc->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_ANY ||
-+						gc->type =3D=3D ctx->type) {
-+			ctx->context_driver =3D gc;
-+			ctx->context_driver->inuse =3D TRUE;
-+			return TRUE;
-+		}
-+	}
-+
-+	return FALSE;
-+}
-+
-+static void release_context(struct pri_context *ctx)
-+{
-+	if (ctx =3D=3D NULL || ctx->gprs =3D=3D NULL || ctx->context_driver =3D=
-=3D NULL)
-+		return;
-+
-+	gprs_cid_release(ctx->gprs, ctx->context.cid);
-+	ctx->context.cid =3D 0;
-+	ctx->context_driver->inuse =3D FALSE;
-+	ctx->context_driver =3D NULL;
-+}
-+
- static struct pri_context *gprs_context_by_path(struct ofono_gprs *gprs,
- 						const char *ctx_path)
- {
-@@ -704,12 +747,7 @@ static void pri_activate_callback(const struct ofono_e=
-rror *error,
- 				telephony_error_to_str(error));
- 		__ofono_dbus_pending_reply(&ctx->pending,
- 					__ofono_error_failed(ctx->pending));
--
--		gprs_cid_release(ctx->gprs, ctx->context.cid);
--		ctx->context.cid =3D 0;
--		ctx->context_driver->inuse =3D FALSE;
--		ctx->context_driver =3D NULL;
--
-+		release_context(ctx);
- 		return;
- 	}
+ 		string MessageProxy [readwrite, MMS only]
  =
 
-@@ -745,11 +783,8 @@ static void pri_deactivate_callback(const struct ofono=
-_error *error, void *data)
- 		return;
- 	}
- =
-
--	gprs_cid_release(ctx->gprs, ctx->context.cid);
--	ctx->context.cid =3D 0;
-+	release_context(ctx);
- 	ctx->active =3D FALSE;
--	ctx->context_driver->inuse =3D FALSE;
--	ctx->context_driver =3D NULL;
- =
-
- 	__ofono_dbus_pending_reply(&ctx->pending,
- 				dbus_message_new_method_return(ctx->pending));
-@@ -996,38 +1031,6 @@ static DBusMessage *pri_set_message_center(struct pri=
-_context *ctx,
- 	return NULL;
- }
- =
-
--static gboolean assign_context(struct pri_context *ctx)
--{
--	struct idmap *cidmap =3D ctx->gprs->cid_map;
--	unsigned int cid_min;
--	GSList *l;
--
--	if (cidmap =3D=3D NULL)
--		return FALSE;
--
--	cid_min =3D idmap_get_min(cidmap);
--
--	ctx->context.cid =3D gprs_cid_alloc(ctx->gprs);
--	if (ctx->context.cid =3D=3D 0)
--		return FALSE;
--
--	for (l =3D ctx->gprs->context_drivers; l; l =3D l->next) {
--		struct ofono_gprs_context *gc =3D l->data;
--
--		if (gc->inuse =3D=3D TRUE)
--			continue;
--
--		if (gc->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_ANY ||
--						gc->type =3D=3D ctx->type) {
--			ctx->context_driver =3D gc;
--			ctx->context_driver->inuse =3D TRUE;
--			return TRUE;
--		}
--	}
--
--	return FALSE;
--}
--
- static DBusMessage *pri_set_property(DBusConnection *conn,
- 					DBusMessage *msg, void *data)
- {
-@@ -1345,14 +1348,9 @@ static void gprs_attached_update(struct ofono_gprs *=
-gprs)
- 			if (ctx->active =3D=3D FALSE)
- 				continue;
- =
-
--			gprs_cid_release(gprs, ctx->context.cid);
--			ctx->context.cid =3D 0;
-+			release_context(ctx);
- 			ctx->active =3D FALSE;
--			ctx->context_driver->inuse =3D FALSE;
--			ctx->context_driver =3D NULL;
--
- 			pri_reset_context_settings(ctx);
--
- 			value =3D FALSE;
- 			ofono_dbus_signal_property_changed(conn, ctx->path,
- 					OFONO_CONNECTION_CONTEXT_INTERFACE,
-@@ -1737,10 +1735,7 @@ static void gprs_deactivate_for_remove(const struct =
-ofono_error *error,
- 		return;
- 	}
- =
-
--	gprs_cid_release(gprs, ctx->context.cid);
--	ctx->context.cid =3D 0;
--	ctx->context_driver->inuse =3D FALSE;
--	ctx->context_driver =3D NULL;
-+	release_context(ctx);
- =
-
- 	if (gprs->settings) {
- 		g_key_file_remove_group(gprs->settings, ctx->key, NULL);
-@@ -1832,12 +1827,9 @@ static void gprs_deactivate_for_all(const struct ofo=
-no_error *error,
- 		return;
- 	}
- =
-
--	gprs_cid_release(gprs, ctx->context.cid);
--	ctx->active =3D FALSE;
--	ctx->context.cid =3D 0;
--	ctx->context_driver->inuse =3D FALSE;
--	ctx->context_driver =3D NULL;
-+	release_context(ctx);
- =
-
-+	ctx->active =3D FALSE;
- 	pri_reset_context_settings(ctx);
- =
-
- 	value =3D ctx->active;
-@@ -2088,11 +2080,8 @@ void ofono_gprs_context_deactivated(struct ofono_gpr=
-s_context *gc,
- 		if (ctx->active =3D=3D FALSE)
- 			break;
- =
-
--		gprs_cid_release(ctx->gprs, ctx->context.cid);
--		ctx->context.cid =3D 0;
-+		release_context(ctx);
- 		ctx->active =3D FALSE;
--		ctx->context_driver->inuse =3D FALSE;
--		ctx->context_driver =3D NULL;
- =
-
- 		pri_reset_context_settings(ctx);
- =
-
+ 			Holds the MMS Proxy setting.
 -- =
 
 1.7.1
 
 
---===============3375679712659742558==--
+--===============7386217001594930306==--
 
