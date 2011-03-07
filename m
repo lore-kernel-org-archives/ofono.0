@@ -1,35 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============5732212021217806960=="
+Content-Type: multipart/mixed; boundary="===============0863532127878379693=="
 MIME-Version: 1.0
-From: Vijay Chavan (RBEI/ECV1) <Vijay.Chavan@in.bosch.com>
-Subject: Ofono for DUN connectivity
-Date: Mon, 07 Mar 2011 23:01:10 +0800
-Message-ID: <B0701180BDD6C1438B9DDF8BCD65A834146123E933@SGPMBX02.APAC.bosch.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 0/2] Fix issue with null data object
+Date: Mon, 07 Mar 2011 07:35:48 -0800
+Message-ID: <1299512150-19314-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5732212021217806960==
+--===============0863532127878379693==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello All,
+Hi,
 
-I am new to Ofono, wanted to know if there is any client project using ofon=
-o service.
-Which can be used as reference for making my own Application using ofono se=
-rvies.
-
-I am interested in gettting DUN internet connectivity via a mobile phone us=
-ing ofono.
-I found http://lists.ofono.org/pipermail/ofono/2010-April/002012.html threa=
-d with prototype implementation of DUN modem plugin with Ofono.
-Is this a complete implementation for DUN modem or any other way of impleme=
-nting DUN client in Meego??
-
-Thanks in advance...
+As per the specification, if the alpha identifier is provided by the UICC
+and is a null data object (i.e. length =3D '00' and no value part), this is=
+ an
+indication that the terminal should not give any information to the user.
 
 Regards,
-Vijay
+Jeevaka
 
---===============5732212021217806960==--
+Jeevaka Badrappan (2):
+  stk: fix issue with null data object
+  stkutil: fix issue with null data object
+
+ src/stk.c     |    2 +-
+ src/stkutil.c |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+
+--===============0863532127878379693==--
 
