@@ -1,56 +1,226 @@
-Content-Type: multipart/mixed; boundary="===============1848531594307400399=="
+Content-Type: multipart/mixed; boundary="===============3375679712659742558=="
 MIME-Version: 1.0
 From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [RESEND 3 PATCH 00/13] IPv6 Support
-Date: Mon, 07 Mar 2011 16:02:26 +0200
-Message-ID: <1299506559-32365-1-git-send-email-mika.liljeberg@nokia.com>
+Subject: [RESEND 3 PATCH 01/13] gprs: factor out common code
+Date: Mon, 07 Mar 2011 16:02:27 +0200
+Message-ID: <1299506559-32365-2-git-send-email-mika.liljeberg@nokia.com>
+In-Reply-To: <1299506559-32365-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1848531594307400399==
+--===============3375679712659742558==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi All,
-
-Patches rebased to current master.
-
-Regards,
-
-	MikaL
-
-"IPv6 host walked into a bar. No-one would talk to it."
-
-[RESEND 3 PATCH 01/13] gprs: factor out common code
-[RESEND 3 PATCH 02/13] gprs: Update documentation for IPv6
-[RESEND 3 PATCH 03/13] gprs: driver interface changes for IPv6
-[RESEND 3 PATCH 04/13] gprs: core support for IPv6
-[RESEND 3 PATCH 05/13] test: modify test scripts for IPv6
-[RESEND 3 PATCH 06/13] isimodem: IPv6 support
-[RESEND 3 PATCH 07/13] atmodem: update to new gprs context interface
-[RESEND 3 PATCH 08/13] huaweimodem: update to new gprs context interface
-[RESEND 3 PATCH 09/13] mbmmodem: update to new gprs context interface
-[RESEND 3 PATCH 10/13] hsomodem: update to new gprs context interface
-[RESEND 3 PATCH 11/13] ifxmodem: update to new gprs context interface
-[RESEND 3 PATCH 12/13] stemodem: update to new gprs context interface
-[RESEND 3 PATCH 13/13] phonesim: add IPv6 support
-
- Makefile.am                        |    3 +-
- doc/connman-api.txt                |    9 +-
- drivers/atmodem/gprs-context.c     |   41 ++--
- drivers/hsomodem/gprs-context.c    |   48 +++--
- drivers/huaweimodem/gprs-context.c |   43 +++--
- drivers/ifxmodem/gprs-context.c    |   36 ++--
- drivers/isimodem/gprs-context.c    |  119 +++++++-----
- drivers/mbmmodem/gprs-context.c    |   65 ++++---
- drivers/stemodem/gprs-context.c    |   30 ++-
- include/gprs-context.h             |   27 ++-
- plugins/phonesim.c                 |   32 +++-
- src/gprs.c                         |  390 ++++++++++++++++++++++++--------=
+---
+ src/gprs.c |  111 +++++++++++++++++++++++++++-----------------------------=
 ----
- test/set-context-property          |   38 ++++
- 13 files changed, 580 insertions(+), 301 deletions(-)
+ 1 files changed, 50 insertions(+), 61 deletions(-)
 
---===============1848531594307400399==--
+diff --git a/src/gprs.c b/src/gprs.c
+index 33711dc..b478f88 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -256,6 +256,49 @@ static void gprs_cid_release(struct ofono_gprs *gprs, =
+unsigned int id)
+ 	idmap_put(gprs->cid_map, id);
+ }
+ =
+
++static gboolean assign_context(struct pri_context *ctx)
++{
++	struct idmap *cidmap =3D ctx->gprs->cid_map;
++	unsigned int cid_min;
++	GSList *l;
++
++	if (cidmap =3D=3D NULL)
++		return FALSE;
++
++	cid_min =3D idmap_get_min(cidmap);
++
++	ctx->context.cid =3D gprs_cid_alloc(ctx->gprs);
++	if (ctx->context.cid =3D=3D 0)
++		return FALSE;
++
++	for (l =3D ctx->gprs->context_drivers; l; l =3D l->next) {
++		struct ofono_gprs_context *gc =3D l->data;
++
++		if (gc->inuse =3D=3D TRUE)
++			continue;
++
++		if (gc->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_ANY ||
++						gc->type =3D=3D ctx->type) {
++			ctx->context_driver =3D gc;
++			ctx->context_driver->inuse =3D TRUE;
++			return TRUE;
++		}
++	}
++
++	return FALSE;
++}
++
++static void release_context(struct pri_context *ctx)
++{
++	if (ctx =3D=3D NULL || ctx->gprs =3D=3D NULL || ctx->context_driver =3D=
+=3D NULL)
++		return;
++
++	gprs_cid_release(ctx->gprs, ctx->context.cid);
++	ctx->context.cid =3D 0;
++	ctx->context_driver->inuse =3D FALSE;
++	ctx->context_driver =3D NULL;
++}
++
+ static struct pri_context *gprs_context_by_path(struct ofono_gprs *gprs,
+ 						const char *ctx_path)
+ {
+@@ -704,12 +747,7 @@ static void pri_activate_callback(const struct ofono_e=
+rror *error,
+ 				telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&ctx->pending,
+ 					__ofono_error_failed(ctx->pending));
+-
+-		gprs_cid_release(ctx->gprs, ctx->context.cid);
+-		ctx->context.cid =3D 0;
+-		ctx->context_driver->inuse =3D FALSE;
+-		ctx->context_driver =3D NULL;
+-
++		release_context(ctx);
+ 		return;
+ 	}
+ =
+
+@@ -745,11 +783,8 @@ static void pri_deactivate_callback(const struct ofono=
+_error *error, void *data)
+ 		return;
+ 	}
+ =
+
+-	gprs_cid_release(ctx->gprs, ctx->context.cid);
+-	ctx->context.cid =3D 0;
++	release_context(ctx);
+ 	ctx->active =3D FALSE;
+-	ctx->context_driver->inuse =3D FALSE;
+-	ctx->context_driver =3D NULL;
+ =
+
+ 	__ofono_dbus_pending_reply(&ctx->pending,
+ 				dbus_message_new_method_return(ctx->pending));
+@@ -996,38 +1031,6 @@ static DBusMessage *pri_set_message_center(struct pri=
+_context *ctx,
+ 	return NULL;
+ }
+ =
+
+-static gboolean assign_context(struct pri_context *ctx)
+-{
+-	struct idmap *cidmap =3D ctx->gprs->cid_map;
+-	unsigned int cid_min;
+-	GSList *l;
+-
+-	if (cidmap =3D=3D NULL)
+-		return FALSE;
+-
+-	cid_min =3D idmap_get_min(cidmap);
+-
+-	ctx->context.cid =3D gprs_cid_alloc(ctx->gprs);
+-	if (ctx->context.cid =3D=3D 0)
+-		return FALSE;
+-
+-	for (l =3D ctx->gprs->context_drivers; l; l =3D l->next) {
+-		struct ofono_gprs_context *gc =3D l->data;
+-
+-		if (gc->inuse =3D=3D TRUE)
+-			continue;
+-
+-		if (gc->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_ANY ||
+-						gc->type =3D=3D ctx->type) {
+-			ctx->context_driver =3D gc;
+-			ctx->context_driver->inuse =3D TRUE;
+-			return TRUE;
+-		}
+-	}
+-
+-	return FALSE;
+-}
+-
+ static DBusMessage *pri_set_property(DBusConnection *conn,
+ 					DBusMessage *msg, void *data)
+ {
+@@ -1345,14 +1348,9 @@ static void gprs_attached_update(struct ofono_gprs *=
+gprs)
+ 			if (ctx->active =3D=3D FALSE)
+ 				continue;
+ =
+
+-			gprs_cid_release(gprs, ctx->context.cid);
+-			ctx->context.cid =3D 0;
++			release_context(ctx);
+ 			ctx->active =3D FALSE;
+-			ctx->context_driver->inuse =3D FALSE;
+-			ctx->context_driver =3D NULL;
+-
+ 			pri_reset_context_settings(ctx);
+-
+ 			value =3D FALSE;
+ 			ofono_dbus_signal_property_changed(conn, ctx->path,
+ 					OFONO_CONNECTION_CONTEXT_INTERFACE,
+@@ -1737,10 +1735,7 @@ static void gprs_deactivate_for_remove(const struct =
+ofono_error *error,
+ 		return;
+ 	}
+ =
+
+-	gprs_cid_release(gprs, ctx->context.cid);
+-	ctx->context.cid =3D 0;
+-	ctx->context_driver->inuse =3D FALSE;
+-	ctx->context_driver =3D NULL;
++	release_context(ctx);
+ =
+
+ 	if (gprs->settings) {
+ 		g_key_file_remove_group(gprs->settings, ctx->key, NULL);
+@@ -1832,12 +1827,9 @@ static void gprs_deactivate_for_all(const struct ofo=
+no_error *error,
+ 		return;
+ 	}
+ =
+
+-	gprs_cid_release(gprs, ctx->context.cid);
+-	ctx->active =3D FALSE;
+-	ctx->context.cid =3D 0;
+-	ctx->context_driver->inuse =3D FALSE;
+-	ctx->context_driver =3D NULL;
++	release_context(ctx);
+ =
+
++	ctx->active =3D FALSE;
+ 	pri_reset_context_settings(ctx);
+ =
+
+ 	value =3D ctx->active;
+@@ -2088,11 +2080,8 @@ void ofono_gprs_context_deactivated(struct ofono_gpr=
+s_context *gc,
+ 		if (ctx->active =3D=3D FALSE)
+ 			break;
+ =
+
+-		gprs_cid_release(ctx->gprs, ctx->context.cid);
+-		ctx->context.cid =3D 0;
++		release_context(ctx);
+ 		ctx->active =3D FALSE;
+-		ctx->context_driver->inuse =3D FALSE;
+-		ctx->context_driver =3D NULL;
+ =
+
+ 		pri_reset_context_settings(ctx);
+ =
+
+-- =
+
+1.7.1
+
+
+--===============3375679712659742558==--
 
