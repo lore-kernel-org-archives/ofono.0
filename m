@@ -1,32 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============3965725254209472855=="
+Content-Type: multipart/mixed; boundary="===============8389964792453760538=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: RE: [PATCH] atmodem: Enable network time for AT modem
-Date: Tue, 08 Mar 2011 15:16:21 +0200
-Message-ID: <1299590181.2828.1.camel@tucson>
-In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802E706DD@fioues07.ebgroup.elektrobit.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] Doc: typo
+Date: Tue, 08 Mar 2011 14:10:12 +0100
+Message-ID: <1299589812-5999-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3965725254209472855==
+--===============8389964792453760538==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+---
+ doc/radio-settings-api.txt |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-On Tue, 2011-03-08 at 12:35 +0200, ext Jeevaka.Badrappan(a)elektrobit.com
-wrote:
-> This log is taken some time back. Possible that Network Daylight Saving
-> Time is received as part of the MM information message whereas
-> it may not be in your case.
+diff --git a/doc/radio-settings-api.txt b/doc/radio-settings-api.txt
+index d2dd319..06c35a9 100644
+--- a/doc/radio-settings-api.txt
++++ b/doc/radio-settings-api.txt
+@@ -43,7 +43,7 @@ Properties	string TechnologyPreference [readwrite]
+ 					availability.
+ 				"gsm"	Only GSM used for radio access.
+ 				"umts"	Only UMTS used for radio access.
+-				"lte"	Only LTE used for radio acccess.
++				"lte"	Only LTE used for radio access.
+ =
 
-If my memory serves, DST is optional in NITZ; only the UTC offset is
-mandatory content.
+ 		string GsmBand [readwrite, optional]
+ =
 
-Cheers,
-Aki
+-- =
 
+1.7.1
 
---===============3965725254209472855==--
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============8389964792453760538==--
 
