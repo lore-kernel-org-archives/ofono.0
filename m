@@ -1,41 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============1376786435518631323=="
+Content-Type: multipart/mixed; boundary="===============8906647534178274393=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 2/2] stkutil: fix issue with null data object
-Date: Mon, 07 Mar 2011 07:35:50 -0800
-Message-ID: <1299512150-19314-3-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1299512150-19314-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Antti Paila <antti.paila@nokia.com>
+Subject: [PATCH] atmodem: Enable network time for AT modem
+Date: Tue, 08 Mar 2011 10:43:04 +0200
+Message-ID: <1299573784-21478-1-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1376786435518631323==
+--===============8906647534178274393==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ drivers/atmodem/network-registration.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index abd1c99..66b2924 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -308,7 +308,7 @@ static gboolean parse_dataobj_alpha_id(struct comprehen=
-sion_tlv_iter *iter,
- 	char *utf8;
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index 4913611..2d589f0 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -722,6 +722,8 @@ static void ifx_ctzv_notify(GAtResult *result, gpointer=
+ user_data)
+ 	nd->time.mday =3D mday;
+ 	nd->time.mon =3D mon;
+ 	nd->time.year =3D 2000 + year;
++
++	ofono_netreg_time_notify(netreg, &nd->time);
+ }
  =
 
- 	len =3D comprehension_tlv_iter_get_length(iter);
--	if (len =3D=3D 0) {
-+	if (len <=3D 1) {
- 		*alpha_id =3D g_try_malloc0(1);
- 		return TRUE;
- 	}
+ static void ifx_ctzdst_notify(GAtResult *result, gpointer user_data)
 -- =
 
-1.7.0.4
+1.7.1
 
 
---===============1376786435518631323==--
+--===============8906647534178274393==--
 
