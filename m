@@ -1,74 +1,143 @@
-Content-Type: multipart/mixed; boundary="===============2841477272994107062=="
+Content-Type: multipart/mixed; boundary="===============3012352825390424678=="
 MIME-Version: 1.0
 From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: [PATCH 7/9] ste: add support for gnss
-Date: Tue, 08 Mar 2011 13:00:49 +0200
-Message-ID: <1299582051-32701-8-git-send-email-jarko.poutiainen@tieto.com>
+Subject: [PATCH 9/9] test: add test-gnss
+Date: Tue, 08 Mar 2011 13:00:51 +0200
+Message-ID: <1299582051-32701-10-git-send-email-jarko.poutiainen@tieto.com>
 In-Reply-To: <1299582051-32701-1-git-send-email-jarko.poutiainen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2841477272994107062==
+--===============3012352825390424678==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/ste.c |    8 ++++++--
- 1 files changed, 6 insertions(+), 2 deletions(-)
+ Makefile.am    |    3 +-
+ test/test-gnss |   91 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 93 insertions(+), 1 deletions(-)
+ create mode 100755 test/test-gnss
 
-diff --git a/plugins/ste.c b/plugins/ste.c
-index efae573..749f673 100644
---- a/plugins/ste.c
-+++ b/plugins/ste.c
-@@ -58,6 +58,7 @@
- #include <ofono/gprs-context.h>
- #include <ofono/radio-settings.h>
- #include <ofono/stk.h>
-+#include <ofono/gnss.h>
+diff --git a/Makefile.am b/Makefile.am
+index 3dae7f4..daa5dd0 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -503,7 +503,8 @@ test_scripts =3D test/backtrace \
+ 		test/cdma-hangup \
+ 		test/disable-call-forwarding \
+ 		test/list-messages \
+-		test/test-sms
++		test/test-sms \
++		test/test-gnss
  =
 
- #include <drivers/atmodem/atutil.h>
- #include <drivers/atmodem/vendor.h>
-@@ -65,17 +66,18 @@
- #include <drivers/stemodem/caif_socket.h>
- #include <drivers/stemodem/if_caif.h>
- =
-
--#define NUM_CHAT	5
-+#define NUM_CHAT	6
- #define AT_DEFAULT	0
- #define AT_NET		1
- #define AT_VOICE	2
- #define AT_GPRS	3
- #define AT_SIM		4
-+#define AT_GNSS	5
- =
-
- #define MAX_PDP_CONTEXTS	4
- =
-
- static char *chat_prefixes[NUM_CHAT] =3D { "Default: ", "Net: ", "Voice: ",
--					"GPRS: ", "SIM: " };
-+					 "GPRS: ", "SIM: ", "GNSS:" };
- =
-
- struct ste_data {
- 	GAtChat *chat[NUM_CHAT];
-@@ -473,6 +475,8 @@ static void ste_post_online(struct ofono_modem *modem)
- 	ofono_ssn_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
- 	ofono_call_volume_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
- 	ofono_cbs_create(modem, 0, "atmodem", data->chat[AT_DEFAULT]);
-+	ofono_gnss_create(modem, OFONO_VENDOR_STE, "atmodem",
-+				data->chat[AT_GNSS]);
- =
-
- 	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
- 					"atmodem", data->chat[AT_GPRS]);
+ if TEST
+ testdir =3D $(pkglibdir)/test
+diff --git a/test/test-gnss b/test/test-gnss
+new file mode 100755
+index 0000000..d7d9027
+--- /dev/null
++++ b/test/test-gnss
+@@ -0,0 +1,91 @@
++#!/usr/bin/python
++
++import gobject
++import sys
++import os
++
++import dbus
++import dbus.service
++import dbus.mainloop.glib
++
++class PositioningAgent(dbus.service.Object):
++	@dbus.service.method("org.ofono.PositioningRequestAgent",
++					in_signature=3D"", out_signature=3D"")
++	def Release(self):
++		print "Release"
++		mainloop.quit()
++
++	@dbus.service.method("org.ofono.PositioningRequestAgent",
++					in_signature=3D"s", out_signature=3D"")
++	def Request(self, xml):
++		print "positioning data: %s" % (xml)
++
++	@dbus.service.method("org.ofono.PositioningRequestAgent",
++					in_signature=3D"", out_signature=3D"")
++	def ResetAssistanceData(self):
++		print "Reset Assistance Data request received"
++
++def print_menu():
++	print "Select test case"
++	print "-----------------------------------------------------------"
++	print "[0] SendPositioningElement"
++	print "[1] RegisterPositioningRequestAgent"
++	print "[2] UnregisterPositioningRequestAgent"
++	print "[x] Exit"
++	print "-----------------------------------------------------------"
++
++def stdin_handler(fd, condition, positioning, path):
++
++	in_key =3D os.read(fd.fileno(), 8).rstrip()
++	if in_key =3D=3D '0':
++		xml =3D raw_input('type the element and press enter: ')
++		try:
++			positioning.SendPositioningElement(dbus.String(xml))
++			print "ok"
++		except dbus.DBusException, e:
++			print "Unable to send positioning element"
++
++	elif in_key =3D=3D '1':
++		try:
++			positioning.RegisterPositioningRequestAgent("/test/posagent")
++			print "ok"
++		except dbus.DBusException, e:
++			print "Unable to register positioning agent"
++
++	elif in_key =3D=3D '2':
++		try:
++			positioning.UnregisterPositioningRequestAgent(path)
++			print "ok"
++		except dbus.DBusException, e:
++			print "Unable to unregister positioning agent"
++	elif in_key =3D=3D 'x':
++		sys.exit(1)
++
++	return True
++
++if __name__ =3D=3D "__main__":
++
++	if len(sys.argv) < 1:
++		sys.exit(1)
++
++	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
++	bus =3D dbus.SystemBus()
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++							'org.ofono.Manager')
++
++	modems =3D manager.GetModems()
++	for path, properties in modems:
++		if "org.ofono.AssistedSatelliteNavigation" not in properties["Interfaces=
+"]:
++			continue
++
++		positioning =3D dbus.Interface(bus.get_object('org.ofono', path),
++					'org.ofono.AssistedSatelliteNavigation')
++
++	path =3D "/test/posagent"
++	agent =3D PositioningAgent(bus, path)
++
++	print_menu()
++
++	gobject.io_add_watch(sys.stdin, gobject.IO_IN, stdin_handler, positioning=
+, path)
++	mainloop =3D gobject.MainLoop()
++	mainloop.run()
 -- =
 
 1.7.0.4
 
 
---===============2841477272994107062==--
+--===============3012352825390424678==--
 
