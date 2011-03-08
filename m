@@ -1,47 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============4375500160219126121=="
+Content-Type: multipart/mixed; boundary="===============6446802453786274909=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] test/test-modem: display more properties (Name, Online,
- Lockdown...)
-Date: Tue, 08 Mar 2011 13:33:41 -0600
-Message-ID: <4D768495.30608@gmail.com>
-In-Reply-To: <1299596921-6708-1-git-send-email-bertrand.aygon@intel.com>
+Subject: Re: [PATCH] test/test-message-waiting: Add a new test file to
+ validate org.ofono.MessageWaiting
+Date: Tue, 08 Mar 2011 13:38:29 -0600
+Message-ID: <4D7685B5.8000808@gmail.com>
+In-Reply-To: <1299601667-7099-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4375500160219126121==
+--===============6446802453786274909==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Bertrand,
 
-On 03/08/2011 09:08 AM, Bertrand Aygon wrote:
+On 03/08/2011 10:27 AM, Bertrand Aygon wrote:
 > ---
->  test/test-modem |   25 +++++++++++++++++++++++++
->  1 files changed, 25 insertions(+), 0 deletions(-)
+>  test/test-message-waiting |   36 ++++++++++++++++++++++++++++++++++++
+>  1 files changed, 36 insertions(+), 0 deletions(-)
+>  create mode 100755 test/test-message-waiting
+
+Please also add this to Makefile.am
+
 > =
 
+> diff --git a/test/test-message-waiting b/test/test-message-waiting
+> new file mode 100755
+> index 0000000..79fe810
+> --- /dev/null
+> +++ b/test/test-message-waiting
+> @@ -0,0 +1,36 @@
+> +#!/usr/bin/python
+> +
+> +import gobject
+> +import sys
+> +import dbus
+> +import dbus.mainloop.glib
+> +
+> +def mw_property_changed(name, value):
+> +  	if name =3D=3D 'VoicemailMessageCount':
 
-When I applied this patch I received this:
+There is a mix of tabs and spaces here.
 
-Applying: test/test-modem: display more properties (Name, Online,
-Lockdown...)
-/home/denkenz/ofono-master/.git/rebase-apply/patch:15: trailing whitespace.
-		=
+> +		print "MessageWaiting property: '%s' changed to '%d'" % (name, value)
+> +	else:
+> +		print "MessageWaiting property: '%s' changed to '%s'" % (name, value)
+> +
 
-fatal: 1 line adds whitespace errors.
-Patch failed at 0001 test/test-modem: display more properties (Name,
-Online, Lockdown...)
-When you have resolved this problem run "git am --resolved".
-If you would prefer to skip this patch, instead run "git am --skip".
-To restore the original branch and stop patching run "git am --abort".
+Can you rewrite the code to not go over 80 characters per line?  Even in
+our test scripts we try to stick to that rule.
 
-Please configure your editor to remove indentation for empty lines.  I
-fixed it for you and applied this patch (with a modified commit message).
+> +if __name__ =3D=3D "__main__":
+> +	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
+> +
+> +	bus =3D dbus.SystemBus()
+> +
+> +	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
+> +			'org.ofono.Manager')
+> +
+> +	modems =3D manager.GetModems()
+> +
+> +	mw =3D dbus.Interface(bus.get_object('org.ofono', modems[0][0]),
+> +			'org.ofono.MessageWaiting')
+> +
+> +	mw.connect_to_signal("PropertyChanged", mw_property_changed)
+> +
+> +	properties =3D mw.GetProperties()
+> +
+> +	print "Voicemail waiting: %s" % (properties['VoicemailWaiting'])
+> +	print "Voicemail message count: %d" % (properties['VoicemailMessageCoun=
+t'])
+> +	print "Voicemail mailbox number: %s" % (properties['VoicemailMailboxNum=
+ber'])
+> +
+> +	mainloop =3D gobject.MainLoop()
+> +	mainloop.run()
 
-Thanks,
+Regards,
 -Denis
 
---===============4375500160219126121==--
+--===============6446802453786274909==--
 
