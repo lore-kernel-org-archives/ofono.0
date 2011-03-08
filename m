@@ -1,69 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============2334603392960967212=="
+Content-Type: multipart/mixed; boundary="===============2064978342522110879=="
 MIME-Version: 1.0
-From: Patrick Porlan <patrick.porlan@linux.intel.com>
-Subject: Re: [PATCH] PPP: Optimize write buffer management
-Date: Tue, 08 Mar 2011 17:08:48 +0100
-Message-ID: <1299600528.2528.9.camel@pporlan-linux>
-In-Reply-To: <4D6E6209.6030908@gmail.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] test/test-message-waiting: Add a new test file to validate
+ org.ofono.MessageWaiting
+Date: Tue, 08 Mar 2011 17:27:47 +0100
+Message-ID: <1299601667-7099-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2334603392960967212==
+--===============2064978342522110879==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ test/test-message-waiting |   36 ++++++++++++++++++++++++++++++++++++
+ 1 files changed, 36 insertions(+), 0 deletions(-)
+ create mode 100755 test/test-message-waiting
 
-On Wed, 2011-03-02 at 09:28 -0600, Denis Kenzior wrote:
+diff --git a/test/test-message-waiting b/test/test-message-waiting
+new file mode 100755
+index 0000000..79fe810
+--- /dev/null
++++ b/test/test-message-waiting
+@@ -0,0 +1,36 @@
++#!/usr/bin/python
++
++import gobject
++import sys
++import dbus
++import dbus.mainloop.glib
++
++def mw_property_changed(name, value):
++  	if name =3D=3D 'VoicemailMessageCount':
++		print "MessageWaiting property: '%s' changed to '%d'" % (name, value)
++	else:
++		print "MessageWaiting property: '%s' changed to '%s'" % (name, value)
++
++if __name__ =3D=3D "__main__":
++	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
++
++	bus =3D dbus.SystemBus()
++
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++			'org.ofono.Manager')
++
++	modems =3D manager.GetModems()
++
++	mw =3D dbus.Interface(bus.get_object('org.ofono', modems[0][0]),
++			'org.ofono.MessageWaiting')
++
++	mw.connect_to_signal("PropertyChanged", mw_property_changed)
++
++	properties =3D mw.GetProperties()
++
++	print "Voicemail waiting: %s" % (properties['VoicemailWaiting'])
++	print "Voicemail message count: %d" % (properties['VoicemailMessageCount'=
+])
++	print "Voicemail mailbox number: %s" % (properties['VoicemailMailboxNumbe=
+r'])
++
++	mainloop =3D gobject.MainLoop()
++	mainloop.run()
+-- =
 
-> >> Is there a particular reason why you chose to use a ring buffer of ring
-> >> buffers? A simple GQueue might be much easier to understand.  If you a=
-re
-> >> worried about 'infinite queuing' then a simple counter might help to
-> >> alleviate that.
+1.7.1
 
-I just sent a new version of my patch that does it (forgot to tag it as
-v2, sorry).
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
-> >> You change BUFFER_SIZE from 2048 to 4096 and remove the multiplication
-> >> here.
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
-Having a constant named BUFFER_SIZE whose value is half a buffer size
-did not seem right though. I reinstantated the multiplication, but at
-the macro definition level.
-
-
-> >> So I think we have to be a bit careful here.  HDLC framing can in theo=
-ry
-> >> (if you're maximally unlucky) result in doubling of the data size once
-> >> it is framed.  This means that we might have enough space in the curre=
-nt
-> >> buffer according to this estimate, but still exceed it once the actual
-> >> framing is performed.  If so, then we have to drop the frame.
-
-I checked with random data, and get some frames dropped with a 128
-margin, but none with 256. Using a much larger margin might be
-detrimental to memory usage, so I chose to leave it like this. We can
-address this in a further patch if you wish.
-
-
-> Yes, we definitely want to have some sort of buffer pool management
-> strategy to share a pool of buffers between different entities (e.g.
-> GAtMux, GAtServer, GAtHDLC).  Have you looked at g_slice* inside glib
-> yet?  I think we can take advantage of the fact that most of our ring
-> buffers are sized at 4k.
-
-It looks like this allocator should be used in ringbuffer.c. Let's
-discuss that and follow up with another patch.
-
-Regards,
-
--- Patrick
-
-
-
-
---===============2334603392960967212==--
+--===============2064978342522110879==--
 
