@@ -1,32 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============8331568679049757093=="
+Content-Type: multipart/mixed; boundary="===============3289338888367093105=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Allow test/test-call-settings to exit if new value is
- equal to actual value
-Date: Tue, 08 Mar 2011 13:22:47 -0600
-Message-ID: <4D768207.1020508@gmail.com>
-In-Reply-To: <1299232416-4583-1-git-send-email-bertrand.aygon@intel.com>
+Subject: Re: [PATCH] Doc: typo
+Date: Tue, 08 Mar 2011 13:30:06 -0600
+Message-ID: <4D7683BE.9060004@gmail.com>
+In-Reply-To: <1299589812-5999-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8331568679049757093==
+--===============3289338888367093105==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Bertrand,
 
-On 03/04/2011 03:53 AM, Bertrand Aygon wrote:
+On 03/08/2011 07:10 AM, Bertrand Aygon wrote:
 > ---
->  test/test-call-settings |    4 ++++
->  1 files changed, 4 insertions(+), 0 deletions(-)
+>  doc/radio-settings-api.txt |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
 > =
 
 
-Patch has been applied, thanks.
+Patch has been applied with a slightly modified commit message.
 
 Regards,
 -Denis
 
---===============8331568679049757093==--
+--===============3289338888367093105==--
 
