@@ -1,85 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============6446802453786274909=="
+Content-Type: multipart/mixed; boundary="===============8186388409673364346=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] test/test-message-waiting: Add a new test file to
- validate org.ofono.MessageWaiting
-Date: Tue, 08 Mar 2011 13:38:29 -0600
-Message-ID: <4D7685B5.8000808@gmail.com>
-In-Reply-To: <1299601667-7099-1-git-send-email-bertrand.aygon@intel.com>
+Subject: Re: Ofono for DUN connectivity
+Date: Tue, 08 Mar 2011 13:44:26 -0600
+Message-ID: <4D76871A.5010802@gmail.com>
+In-Reply-To: <B0701180BDD6C1438B9DDF8BCD65A834146123E933@SGPMBX02.APAC.bosch.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6446802453786274909==
+--===============8186388409673364346==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bertrand,
+Hi Vijay,
 
-On 03/08/2011 10:27 AM, Bertrand Aygon wrote:
-> ---
->  test/test-message-waiting |   36 ++++++++++++++++++++++++++++++++++++
->  1 files changed, 36 insertions(+), 0 deletions(-)
->  create mode 100755 test/test-message-waiting
-
-Please also add this to Makefile.am
-
+On 03/07/2011 09:01 AM, Vijay Chavan (RBEI/ECV1) wrote:
+> Hello All,
 > =
 
-> diff --git a/test/test-message-waiting b/test/test-message-waiting
-> new file mode 100755
-> index 0000000..79fe810
-> --- /dev/null
-> +++ b/test/test-message-waiting
-> @@ -0,0 +1,36 @@
-> +#!/usr/bin/python
-> +
-> +import gobject
-> +import sys
-> +import dbus
-> +import dbus.mainloop.glib
-> +
-> +def mw_property_changed(name, value):
-> +  	if name =3D=3D 'VoicemailMessageCount':
+> I am new to Ofono, wanted to know if there is any client project using of=
+ono service.
+> Which can be used as reference for making my own Application using ofono =
+servies.
+> =
 
-There is a mix of tabs and spaces here.
+> I am interested in gettting DUN internet connectivity via a mobile phone =
+using ofono.
+> I found http://lists.ofono.org/pipermail/ofono/2010-April/002012.html thr=
+ead with prototype implementation of DUN modem plugin with Ofono.
+> Is this a complete implementation for DUN modem or any other way of imple=
+menting DUN client in Meego??
 
-> +		print "MessageWaiting property: '%s' changed to '%d'" % (name, value)
-> +	else:
-> +		print "MessageWaiting property: '%s' changed to '%s'" % (name, value)
-> +
+DUN Client is not something that is currently supported by oFono.  I'm
+not aware of any other 'complete implementation' for DUN client in Meego.
 
-Can you rewrite the code to not go over 80 characters per line?  Even in
-our test scripts we try to stick to that rule.
-
-> +if __name__ =3D=3D "__main__":
-> +	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-> +
-> +	bus =3D dbus.SystemBus()
-> +
-> +	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-> +			'org.ofono.Manager')
-> +
-> +	modems =3D manager.GetModems()
-> +
-> +	mw =3D dbus.Interface(bus.get_object('org.ofono', modems[0][0]),
-> +			'org.ofono.MessageWaiting')
-> +
-> +	mw.connect_to_signal("PropertyChanged", mw_property_changed)
-> +
-> +	properties =3D mw.GetProperties()
-> +
-> +	print "Voicemail waiting: %s" % (properties['VoicemailWaiting'])
-> +	print "Voicemail message count: %d" % (properties['VoicemailMessageCoun=
-t'])
-> +	print "Voicemail mailbox number: %s" % (properties['VoicemailMailboxNum=
-ber'])
-> +
-> +	mainloop =3D gobject.MainLoop()
-> +	mainloop.run()
+The set of patches you have pointed out were an attempt as part of the
+GSoC project last year, but were never fully finished.
 
 Regards,
 -Denis
 
---===============6446802453786274909==--
+--===============8186388409673364346==--
 
