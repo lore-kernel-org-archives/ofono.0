@@ -1,247 +1,255 @@
-Content-Type: multipart/mixed; boundary="===============3557266025059159764=="
+Content-Type: multipart/mixed; boundary="===============0262978053188177622=="
 MIME-Version: 1.0
-From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
-Subject: [PATCH 2/3] ifxmodem: integration of kernel mux (n_gsm)
-Date: Wed, 09 Mar 2011 16:46:22 +0000
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D4018813A9C5DBA@irsmsx501.ger.corp.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/3] ifx: integration of kernel mux (n_gsm) and its line
+ discipline
+Date: Wed, 09 Mar 2011 13:46:26 -0800
+Message-ID: <1299707186.2497.11.camel@aeonflux>
+In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D4018813A9C5DB9@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3557266025059159764==
+--===============0262978053188177622==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Guillaume Lucas <guillaumex.lucas@intel.com>
+Hi Lucas,
 
----
- drivers/ifxmodem/gprs-context.c |   95 +++++++++++++++++++++++++++++++++++=
-++--
- 1 files changed, 91 insertions(+), 4 deletions(-)
+> diff --git a/plugins/ifx.c b/plugins/ifx.c
+> index 527a8c4..9c2a5c1 100644
+> --- a/plugins/ifx.c
+> +++ b/plugins/ifx.c
+> @@ -26,8 +26,12 @@
+>  #include <stdio.h>
+>  #include <errno.h>
+>  #include <stdlib.h>
+> +#include <string.h>
+>  #include <sys/stat.h>
+>  #include <sys/ioctl.h>
+> +#include <linux/types.h>
+> +#include <linux/gsmmux.h>
+> +#include <unistd.h>
 
-diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
-t.c
-index 2c68b44..0d133f9 100644
---- a/drivers/ifxmodem/gprs-context.c
-+++ b/drivers/ifxmodem/gprs-context.c
-@@ -29,6 +29,11 @@
- #include <stdio.h>
- #include <errno.h>
- #include <sys/stat.h>
-+#include <sys/ioctl.h>
-+#include <net/if.h>
-+#include <arpa/inet.h>
-+#include <linux/if_ether.h>
-+#include <linux/gsmmux.h>
+please move unistd.h up since as a rule of thumb, the system headers
+should be included before the unix ones.
+
+Also gsmmux.h is not acceptable. We have to carry a local copy for a
+while since otherwise compilation would fail on older kernels.
+
+Why do you need linux/types.h?
  =
 
- #include <glib.h>
+>  #include <glib.h>
+>  #include <gatchat.h>
+> @@ -75,9 +79,9 @@
+>  static char *dlc_prefixes[NUM_DLC] =3D { "Voice: ", "Net: ", "GPRS1: ",
+>  					"GPRS2: ", "GPRS3: ", "Aux: " };
+>  =
+
+> -static const char *dlc_nodes[NUM_DLC] =3D { "/dev/ttyGSM1", "/dev/ttyGSM=
+2",
+> -					"/dev/ttyGSM3", "/dev/ttyGSM4",
+> -					"/dev/ttyGSM5", "/dev/ttyGSM6" };
+> +static const char *dlc_nodes[NUM_DLC] =3D { "/dev/gsmtty1", "/dev/gsmtty=
+2",
+> +					"/dev/gsmtty3", "/dev/gsmtty4",
+> +					"/dev/gsmtty5", "/dev/gsmtty6" };
+
+I am not a big fan of these hardcoded names. I was not a big fan for the
+original MUX code and that has not changed.
+
+So what happens if you have to multiplexer running at the same time?
  =
 
-@@ -63,6 +68,7 @@ struct gprs_context_data {
- 	char username[OFONO_GPRS_MAX_USERNAME_LENGTH + 1];
- 	char password[OFONO_GPRS_MAX_PASSWORD_LENGTH + 1];
- 	GAtRawIP *rawip;
-+	gboolean use_ofono_mux;
- 	enum state state;
- 	char address[32];
- 	char dns1[32];
-@@ -79,7 +85,46 @@ static void rawip_debug(const char *str, void *data)
- 	ofono_info("%s: %s", (const char *) data, str);
- }
+>  static const char *none_prefix[] =3D { NULL };
+>  static const char *xdrv_prefix[] =3D { "+XDRV:", NULL };
+> @@ -392,6 +396,7 @@ static gboolean dlc_ready_check(gpointer user_data)
+>  	struct ifx_data *data =3D ofono_modem_get_data(modem);
+>  	struct stat st;
+>  	int i;
+> +	GHashTable *options;
+>  =
+
+>  	DBG("");
+>  =
+
+> @@ -405,8 +410,14 @@ static gboolean dlc_ready_check(gpointer user_data)
+>  		return TRUE;
+>  	}
+>  =
+
+> +	options =3D g_hash_table_new(g_str_hash, g_str_equal);
+> +	if (options =3D=3D NULL)
+> +		goto error;
+> +
+> +	g_hash_table_insert(options, "Local", "on");
+> +
+
+Why is this needed?
+
+>  	for (i =3D 0; i < NUM_DLC; i++) {
+> -		GIOChannel *channel =3D g_at_tty_open(dlc_nodes[i], NULL);
+> +		GIOChannel *channel =3D g_at_tty_open(dlc_nodes[i], options);
+>  =
+
+>  		data->dlcs[i] =3D create_chat(channel, modem, dlc_prefixes[i]);
+>  		if (data->dlcs[i] =3D=3D NULL) {
+> @@ -415,6 +426,8 @@ static gboolean dlc_ready_check(gpointer user_data)
+>  		}
+>  	}
+>  =
+
+> +	g_hash_table_destroy(options);
+> +
+>  	data->dlc_poll_source =3D 0;
+>  =
+
+>  	/* iterate through mainloop */
+> @@ -455,7 +468,7 @@ static void setup_internal_mux(struct ofono_modem *mo=
+dem)
+>  			ofono_error("Failed to create channel");
+>  			goto error;
+>  		}
+> -        }
+> +	}
+>  =
+
+>  	/* wait for DLC creation to settle */
+>  	data->dlc_init_source =3D g_timeout_add(10, dlc_setup, modem);
+> @@ -471,7 +484,9 @@ static void mux_setup_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+>  {
+>  	struct ofono_modem *modem =3D user_data;
+>  	struct ifx_data *data =3D ofono_modem_get_data(modem);
+> -	int fd;
+> +	int err;
+> +	struct gsm_config cfg;
+> +	int fd =3D -1;
+>  =
+
+>  	DBG("");
+>  =
+
+> @@ -504,6 +519,37 @@ static void mux_setup_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+>  		goto error;
+>  	}
+>  =
+
+> +	memset(&cfg, 0, sizeof(struct gsm_config));
+> +
+> +	err =3D ioctl(fd, GSMIOC_GETCONF, &cfg);
+> +	if (err < 0) {
+> +		ofono_error("Failed to get multiplexer configuration: %d", err);
+> +		goto error;
+> +	}
+> +
+> +	ofono_info("Got default configuration...");
+> +	ofono_info("adaption =3D %d", cfg.adaption);
+> +	ofono_info("encapsulation =3D %d", cfg.encapsulation);
+> +	ofono_info("initiator =3D %d", cfg.initiator);
+> +	ofono_info("t1 =3D %d", cfg.t1);
+> +	ofono_info("t2 =3D %d", cfg.t2);
+> +	ofono_info("t3 =3D %d", cfg.t3);
+> +	ofono_info("n2 =3D %d", cfg.n2);
+> +	ofono_info("mru =3D %d", cfg.mru);
+> +	ofono_info("mtu =3D %d", cfg.mtu);
+> +	ofono_info("k =3D %d", cfg.k);
+
+This pretty heavy debug information and not ofono_info material.
+
+> +	cfg.encapsulation =3D 0; /* encoding - set to basic */
+> +	cfg.initiator =3D 1; /* we are starting side */
+> +	cfg.mru =3D 1500;
+> +	cfg.mtu =3D 1500;
+> +
+> +	err =3D ioctl(fd, GSMIOC_SETCONF, &cfg);
+> +	if (err < 0) {
+> +		ofono_error("Failed to configure n_gsm multiplexer: %d", err);
+> +		goto error;
+> +	}
+> +
+>  	data->dlc_poll_count =3D 0;
+>  	data->dlc_poll_source =3D g_timeout_add_seconds(1, dlc_ready_check,
+>  								modem);
+> @@ -511,6 +557,9 @@ static void mux_setup_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+>  	return;
+>  =
+
+>  error:
+> +	if (ioctl(fd, TIOCSETD, &data->saved_ldisc) < 0)
+> +		ofono_warn("Failed to restore line discipline");
+> +
+
+This is not right. Even if you fail GSMIOC_GETCONF you try to restore
+the line discipline. That makes no sense.
+
+>  	data->saved_ldisc =3D -1;
+>  =
+
+>  	g_io_channel_unref(data->device);
+> @@ -593,9 +642,9 @@ static int ifx_enable(struct ofono_modem *modem)
+>  					NULL, NULL, NULL);
+>  =
+
+>  	/* Enable multiplexer */
+> -	data->frame_size =3D 1509;
+> +	data->frame_size =3D 1500;
+>  =
+
+> -	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
+> +	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1500,10,3,30,,", NULL,
+>  					mux_setup_cb, modem, NULL);
+
+So why did the frame_size changed here? Does the modem firmware changed
+or is this actual a bug in oFono already today?
  =
 
--static const char *setup_rawip(struct ofono_gprs_context *gc)
-+static const char *setup_rawip_kmux(struct ofono_gprs_context *gc)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct gsm_netconfig netconfig;
-+	int fd;
-+	int n;
-+	char *interface =3D NULL;
-+	char ifname[IFNAMSIZ];
-+
-+	memset(&netconfig, 0, sizeof(struct gsm_netconfig));
-+	gcd->rawip =3D NULL;
-+
-+	fd =3D g_io_channel_unix_get_fd(g_at_chat_get_channel(gcd->chat));
-+
-+	g_at_chat_suspend(gcd->chat);
-+
-+	netconfig.adaption =3D 3;
-+	netconfig.protocol =3D htons(ETH_P_IP);
-+
-+	n =3D ioctl(fd, GSMIOC_ENABLE_NET, &netconfig);
-+	if (n < 0) {
-+		ofono_error("Cannot enable network on the mux: %d", n);
-+		return NULL;
-+	}
-+
-+	ofono_info("Net index: %d", n);
-+
-+	interface =3D if_indextoname(n, ifname);
-+	if (interface =3D=3D NULL) {
-+		ofono_error("Interface index %d error %d error msg %s", n,
-+						errno, strerror(errno));
-+		return NULL;
-+	}
-+
-+	ofono_info("Interface name: %s", interface);
-+
-+	return interface;
-+}
-+
-+static const char *setup_rawip_internal(struct ofono_gprs_context *gc)
- {
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	GAtIO *io;
-@@ -153,7 +198,14 @@ static void session_cb(gboolean ok, GAtResult *result,=
- gpointer user_data)
- 	dns[1] =3D gcd->dns2;
- 	dns[2] =3D 0;
- =
+>  	data->mux_init_timeout =3D g_timeout_add_seconds(5, mux_timeout_cb,
+> @@ -732,22 +781,20 @@ static void ifx_post_online(struct ofono_modem *mod=
+em)
+>  	if (gprs =3D=3D NULL)
+>  		return;
+>  =
 
--	interface =3D setup_rawip(gc);
-+	if (gcd->use_ofono_mux =3D=3D FALSE) {
-+		ofono_info("Calling setup_rawip_kmux()");
-+		interface =3D setup_rawip_kmux(gc);
-+	} else {
-+		ofono_info("Calling setup_rawip_internal()");
-+		interface =3D setup_rawip_internal(gc);
-+	}
-+
- 	if (interface =3D=3D NULL)
- 		interface =3D "invalid";
- =
+> -	if (data->mux_ldisc < 0) {
+> -		gc =3D ofono_gprs_context_create(modem, 0,
+> +	gc =3D ofono_gprs_context_create(modem, 0,
+>  					"ifxmodem", data->dlcs[GPRS1_DLC]);
+> -		if (gc)
+> -			ofono_gprs_add_context(gprs, gc);
+> +	if (gc)
+> +		ofono_gprs_add_context(gprs, gc);
+>  =
 
-@@ -352,7 +404,9 @@ static void deactivate_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- =
+> -		gc =3D ofono_gprs_context_create(modem, 0,
+> +	gc =3D ofono_gprs_context_create(modem, 0,
+>  					"ifxmodem", data->dlcs[GPRS2_DLC]);
+> -		if (gc)
+> +	if (gc)
+>  			ofono_gprs_add_context(gprs, gc);
+>  =
 
- 	DBG("ok %d", ok);
- =
+> -		gc =3D ofono_gprs_context_create(modem, 0,
+> +	gc =3D ofono_gprs_context_create(modem, 0,
+>  					"ifxmodem", data->dlcs[GPRS3_DLC]);
+> -		if (gc)
+> -			ofono_gprs_add_context(gprs, gc);
+> -	}
+> +	if (gc)
+> +		ofono_gprs_add_context(gprs, gc);
+>  }
 
--	g_at_rawip_unref(gcd->rawip);
-+	if (gcd->rawip)
-+		g_at_rawip_unref(gcd->rawip);
-+
- 	gcd->rawip =3D NULL;
- =
+We can not just do this unconditionally. Then using the internal MUX
+will not work anymore.
 
- 	gcd->active_context =3D 0;
-@@ -370,6 +424,8 @@ static void ifx_gprs_deactivate_primary(struct ofono_gp=
-rs_context *gc,
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	GAtChat *chat =3D g_at_chat_get_slave(gcd->chat);
- 	char buf[64];
-+	int fd;
-+	int n;
- =
+Regards
 
- 	DBG("cid %u", cid);
- =
-
-@@ -377,7 +433,14 @@ static void ifx_gprs_deactivate_primary(struct ofono_g=
-prs_context *gc,
- 	gcd->down_cb =3D cb;
- 	gcd->cb_data =3D data;
- =
-
--	g_at_rawip_shutdown(gcd->rawip);
-+	if (gcd->rawip)
-+		g_at_rawip_shutdown(gcd->rawip);
-+
-+	fd =3D g_io_channel_unix_get_fd(g_at_chat_get_channel(gcd->chat));
-+
-+	n =3D ioctl(fd, GSMIOC_DISABLE_NET, NULL);
-+	if (n < 0)
-+		ofono_error("Cannot disable network on the mux: %d", n);
- =
-
- 	sprintf(buf, "AT+CGACT=3D0,%u", gcd->active_context);
- 	if (g_at_chat_send(chat, buf, none_prefix,
-@@ -394,6 +457,8 @@ static void cgev_notify(GAtResult *result, gpointer use=
-r_data)
- 	const char *event;
- 	int cid;
- 	GAtResultIter iter;
-+	int fd;
-+	int n;
- =
-
- 	g_at_result_iter_init(&iter, result);
- =
-
-@@ -424,6 +489,14 @@ static void cgev_notify(GAtResult *result, gpointer us=
-er_data)
- 		gcd->rawip =3D NULL;
- 	}
- =
-
-+	if (gcd->use_ofono_mux =3D=3D FALSE) {
-+		fd =3D g_io_channel_unix_get_fd(g_at_chat_get_channel(gcd->chat));
-+
-+		n =3D ioctl(fd, GSMIOC_DISABLE_NET, NULL);
-+		if (n < 0)
-+			ofono_error("Cannot disable network on the mux: %d", n);
-+	}
-+
- 	ofono_gprs_context_deactivated(gc, gcd->active_context);
- =
-
- 	gcd->active_context =3D 0;
-@@ -436,7 +509,9 @@ static int ifx_gprs_context_probe(struct ofono_gprs_con=
-text *gc,
- 					unsigned int vendor, void *data)
- {
- 	GAtChat *chat =3D data;
-+	const char *ldisc;
- 	struct gprs_context_data *gcd;
-+	struct ofono_modem *modem;
- 	struct stat st;
- =
-
- 	DBG("");
-@@ -455,6 +530,18 @@ static int ifx_gprs_context_probe(struct ofono_gprs_co=
-ntext *gc,
- =
-
- 	gcd->chat =3D g_at_chat_clone(chat);
- =
-
-+	modem =3D ofono_gprs_context_get_modem(gc);
-+	ldisc =3D ofono_modem_get_string(modem, "LineDiscipline");
-+
-+	ofono_info("Got LineDiscipline variable from udev: %s", ldisc);
-+	if (ldisc !=3D NULL) {
-+		ofono_info("setting up to use kernel mux for data");
-+		gcd->use_ofono_mux =3D FALSE;
-+	} else {
-+		ofono_info("setting up to use user space mux for data");
-+		gcd->use_ofono_mux =3D TRUE;
-+	}
-+
- 	ofono_gprs_context_set_data(gc, gcd);
- =
-
- 	chat =3D g_at_chat_get_slave(gcd->chat);
--- =
-
-1.6.3.3
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+Marcel
 
 
---===============3557266025059159764==--
+
+--===============0262978053188177622==--
 
