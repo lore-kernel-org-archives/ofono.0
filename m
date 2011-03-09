@@ -1,75 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============3753350482753757960=="
+Content-Type: multipart/mixed; boundary="===============7765482398023766983=="
 MIME-Version: 1.0
-From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
-Subject: [PATCH] simfs: fix GLib-CRITICAL issue occuring when there is no SIM
- card.
-Date: Wed, 09 Mar 2011 12:32:23 +0000
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D4018813A9C5BA2@irsmsx501.ger.corp.intel.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH v2] test/test-message-waiting: Add a new test file to validate
+ org.ofono.MessageWaiting
+Date: Wed, 09 Mar 2011 14:31:35 +0100
+Message-ID: <1299677495-21937-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3753350482753757960==
+--===============7765482398023766983==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Guillaume Lucas <guillaumex.lucas@intel.com>
-
-During modem release, when there is no SIM card, a GLib-CRITICAL
-issue occurs during the free of the sim fs context.
 ---
- src/simfs.c |   26 ++++++++++++++------------
- 1 files changed, 14 insertions(+), 12 deletions(-)
+ Makefile.am               |    3 ++-
+ test/test-message-waiting |   40 ++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 42 insertions(+), 1 deletions(-)
+ create mode 100755 test/test-message-waiting
 
-diff --git a/src/simfs.c b/src/simfs.c
-index 3a97a10..49f79dd 100644
---- a/src/simfs.c
-+++ b/src/simfs.c
-@@ -166,21 +166,23 @@ void sim_fs_context_free(struct ofono_sim_context *co=
-ntext)
- 	int n =3D 0;
- 	struct sim_fs_op *op;
+diff --git a/Makefile.am b/Makefile.am
+index 3f20717..b3c6ad3 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -501,7 +501,8 @@ test_scripts =3D test/backtrace \
+ 		test/cdma-hangup \
+ 		test/disable-call-forwarding \
+ 		test/list-messages \
+-		test/test-sms
++		test/test-sms \
++		test/test-message-waiting
  =
 
--	while ((op =3D g_queue_peek_nth(fs->op_q, n)) !=3D NULL) {
--		if (op->context !=3D context) {
--			n +=3D 1;
--			continue;
--		}
-+	if (fs->op_q) {
-+		while ((op =3D g_queue_peek_nth(fs->op_q, n)) !=3D NULL) {
-+			if (op->context !=3D context) {
-+				n +=3D 1;
-+				continue;
-+			}
- =
-
--		if (n =3D=3D 0) {
--			op->cb =3D NULL;
-+			if (n =3D=3D 0) {
-+				op->cb =3D NULL;
- =
-
--			n +=3D 1;
--			continue;
--		}
-+				n +=3D 1;
-+				continue;
-+			}
- =
-
--		sim_fs_op_free(op);
--		g_queue_remove(fs->op_q, op);
-+			sim_fs_op_free(op);
-+			g_queue_remove(fs->op_q, op);
-+		}
- 	}
- =
-
- 	if (context->file_watches)
+ if TEST
+ testdir =3D $(pkglibdir)/test
+diff --git a/test/test-message-waiting b/test/test-message-waiting
+new file mode 100755
+index 0000000..3abe0ba
+--- /dev/null
++++ b/test/test-message-waiting
+@@ -0,0 +1,40 @@
++#!/usr/bin/python
++
++import gobject
++import sys
++import dbus
++import dbus.mainloop.glib
++
++def mw_property_changed(name, value):
++	if name =3D=3D 'VoicemailMessageCount':
++		print "MessageWaiting property: '%s' changed to '%d'" %\
++			(name,value)
++	else:
++		print "MessageWaiting property: '%s' changed to '%s'" %\
++			(name,value)
++
++if __name__ =3D=3D "__main__":
++	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
++
++	bus =3D dbus.SystemBus()
++
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++			'org.ofono.Manager')
++
++	modems =3D manager.GetModems()
++
++	mw =3D dbus.Interface(bus.get_object('org.ofono', modems[0][0]),
++			'org.ofono.MessageWaiting')
++
++	mw.connect_to_signal("PropertyChanged", mw_property_changed)
++
++	properties =3D mw.GetProperties()
++
++	print "Voicemail waiting: %s" % (properties['VoicemailWaiting'])
++	print "Voicemail message count: %d" %\
++		(properties['VoicemailMessageCount'])
++	print "Voicemail mailbox number: %s" %\
++		(properties['VoicemailMailboxNumber'])
++
++	mainloop =3D gobject.MainLoop()
++	mainloop.run()
 -- =
 
-1.6.3.3
+1.7.1
 
 ---------------------------------------------------------------------
 Intel Corporation SAS (French simplified joint stock company)
@@ -84,6 +97,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
-
---===============3753350482753757960==--
+--===============7765482398023766983==--
 
