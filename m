@@ -1,238 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============3283986588364726563=="
+Content-Type: multipart/mixed; boundary="===============1848741706379681154=="
 MIME-Version: 1.0
-From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
-Subject: RE: [PATCH 1/3] ifx: integration of kernel mux (n_gsm) and its	line
- discipline
-Date: Thu, 10 Mar 2011 09:48:00 +0000
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D4018813A9C5FE3@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <1299707186.2497.11.camel@aeonflux>
+From: Aygon, Bertrand <bertrand.aygon@intel.com>
+Subject: RE: Request for info for issuing AT commands
+Date: Thu, 10 Mar 2011 10:44:33 +0000
+Message-ID: <A782C372B9527D44AB20BF45FEEBB14F75A8ABE09B@irsmsx503.ger.corp.intel.com>
+In-Reply-To: <35DD4A1E71A66646BF42B14F8A62B7AC040EF80C@XMB-BGL-419.cisco.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3283986588364726563==
+--===============1848741706379681154==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi,
 
-> Hi Lucas,
-> =
+> Hi Everyone,
+>
+>=C2=A0I am new to this list.
 
-> > diff --git a/plugins/ifx.c b/plugins/ifx.c
-> > index 527a8c4..9c2a5c1 100644
-> > --- a/plugins/ifx.c
-> > +++ b/plugins/ifx.c
-> > @@ -26,8 +26,12 @@
-> >  #include <stdio.h>
-> >  #include <errno.h>
-> >  #include <stdlib.h>
-> > +#include <string.h>
-> >  #include <sys/stat.h>
-> >  #include <sys/ioctl.h>
-> > +#include <linux/types.h>
-> > +#include <linux/gsmmux.h>
-> > +#include <unistd.h>
-> =
+Welcome!
 
-> please move unistd.h up since as a rule of thumb, the system headers
-> should be included before the unix ones.
-> =
+> I am looking for the oFono APIs that I can use to issue the AT commands f=
+or HFP. I could not found much info on the oFono site. =
 
-> Also gsmmux.h is not acceptable. We have to carry a local copy for a
-> while since otherwise compilation would fail on older kernels.
+> It will be great help if someone can guide to any links/documents.
 
-Ok. It's what Robertino did in his first patch for the kernel mux integrati=
-on.
-I've changed that thinking it was better to used the gsmmux.h of the kernel=
- tree. I'll redo that.
+Can you please clarify this. What can of APIs are you looking at, and for w=
+hich purpose?
 
-> =
-
-> Why do you need linux/types.h?
-> =
-
-
-Do not really remember :(
-I think this is for the gsmmux.h file but if it's the case it to this file =
-to include this one. I'll review that.
-
-> >  #include <glib.h>
-> >  #include <gatchat.h>
-> > @@ -75,9 +79,9 @@
-> >  static char *dlc_prefixes[NUM_DLC] =3D { "Voice: ", "Net: ", "GPRS1:
-> ",
-> >  					"GPRS2: ", "GPRS3: ", "Aux: " };
-> >
-> > -static const char *dlc_nodes[NUM_DLC] =3D { "/dev/ttyGSM1",
-> "/dev/ttyGSM2",
-> > -					"/dev/ttyGSM3", "/dev/ttyGSM4",
-> > -					"/dev/ttyGSM5", "/dev/ttyGSM6" };
-> > +static const char *dlc_nodes[NUM_DLC] =3D { "/dev/gsmtty1",
-> "/dev/gsmtty2",
-> > +					"/dev/gsmtty3", "/dev/gsmtty4",
-> > +					"/dev/gsmtty5", "/dev/gsmtty6" };
-> =
-
-> I am not a big fan of these hardcoded names. I was not a big fan for
-> the original MUX code and that has not changed.
-> =
-
-> So what happens if you have to multiplexer running at the same time?
-> =
-
-
-No idea. I'll try to analyze this point.
-
-> >  static const char *none_prefix[] =3D { NULL };
-> >  static const char *xdrv_prefix[] =3D { "+XDRV:", NULL };
-> > @@ -392,6 +396,7 @@ static gboolean dlc_ready_check(gpointer
-> user_data)
-> >  	struct ifx_data *data =3D ofono_modem_get_data(modem);
-> >  	struct stat st;
-> >  	int i;
-> > +	GHashTable *options;
-> >
-> >  	DBG("");
-> >
-> > @@ -405,8 +410,14 @@ static gboolean dlc_ready_check(gpointer
-> user_data)
-> >  		return TRUE;
-> >  	}
-> >
-> > +	options =3D g_hash_table_new(g_str_hash, g_str_equal);
-> > +	if (options =3D=3D NULL)
-> > +		goto error;
-> > +
-> > +	g_hash_table_insert(options, "Local", "on");
-> > +
-> =
-
-> Why is this needed?
-
-This is needed for PDP context deactivation.
-If you don't set the local to on a tty close occurs when you do the PDP con=
-text deactivation.
-
-> > +
-> > +	ofono_info("Got default configuration...");
-> > +	ofono_info("adaption =3D %d", cfg.adaption);
-> > +	ofono_info("encapsulation =3D %d", cfg.encapsulation);
-> > +	ofono_info("initiator =3D %d", cfg.initiator);
-> > +	ofono_info("t1 =3D %d", cfg.t1);
-> > +	ofono_info("t2 =3D %d", cfg.t2);
-> > +	ofono_info("t3 =3D %d", cfg.t3);
-> > +	ofono_info("n2 =3D %d", cfg.n2);
-> > +	ofono_info("mru =3D %d", cfg.mru);
-> > +	ofono_info("mtu =3D %d", cfg.mtu);
-> > +	ofono_info("k =3D %d", cfg.k);
-> =
-
-> This pretty heavy debug information and not ofono_info material.
-> =
-
-
-Agree. I kept them from the original patch of Robertino but I'll change tha=
-t.
-
-> > +	cfg.encapsulation =3D 0; /* encoding - set to basic */
-> > +	cfg.initiator =3D 1; /* we are starting side */
-> > +	cfg.mru =3D 1500;
-> > +	cfg.mtu =3D 1500;
-> > +
-> > +	err =3D ioctl(fd, GSMIOC_SETCONF, &cfg);
-> > +	if (err < 0) {
-> > +		ofono_error("Failed to configure n_gsm multiplexer: %d",
-> err);
-> > +		goto error;
-> > +	}
-> > +
-> >  	data->dlc_poll_count =3D 0;
-> >  	data->dlc_poll_source =3D g_timeout_add_seconds(1, dlc_ready_check,
-> >  								modem);
-> > @@ -511,6 +557,9 @@ static void mux_setup_cb(gboolean ok, GAtResult
-> *result, gpointer user_data)
-> >  	return;
-> >
-> >  error:
-> > +	if (ioctl(fd, TIOCSETD, &data->saved_ldisc) < 0)
-> > +		ofono_warn("Failed to restore line discipline");
-> > +
-> =
-
-> This is not right. Even if you fail GSMIOC_GETCONF you try to restore
-> the line discipline. That makes no sense.
-> =
-
-
-Agree that is not right but not for the GSMIOC_GETCONF failing.
-It's not right because I try to restore the line discipline even if the ioc=
-tl who gives it failed. I'll review that.
-
-> >  	data->saved_ldisc =3D -1;
-> >
-> >  	g_io_channel_unref(data->device);
-> > @@ -593,9 +642,9 @@ static int ifx_enable(struct ofono_modem *modem)
-> >  					NULL, NULL, NULL);
-> >
-> >  	/* Enable multiplexer */
-> > -	data->frame_size =3D 1509;
-> > +	data->frame_size =3D 1500;
-> >
-> > -	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
-> > +	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1500,10,3,30,,", NULL,
-> >  					mux_setup_cb, modem, NULL);
-> =
-
-> So why did the frame_size changed here? Does the modem firmware changed
-> or is this actual a bug in oFono already today?
-> =
-
-
-It's a bug in oFono.
-
-> >  	data->mux_init_timeout =3D g_timeout_add_seconds(5, mux_timeout_cb,
-> > @@ -732,22 +781,20 @@ static void ifx_post_online(struct ofono_modem
-> *modem)
-> >  	if (gprs =3D=3D NULL)
-> >  		return;
-> >
-> > -	if (data->mux_ldisc < 0) {
-> > -		gc =3D ofono_gprs_context_create(modem, 0,
-> > +	gc =3D ofono_gprs_context_create(modem, 0,
-> >  					"ifxmodem", data->dlcs[GPRS1_DLC]);
-> > -		if (gc)
-> > -			ofono_gprs_add_context(gprs, gc);
-> > +	if (gc)
-> > +		ofono_gprs_add_context(gprs, gc);
-> >
-> > -		gc =3D ofono_gprs_context_create(modem, 0,
-> > +	gc =3D ofono_gprs_context_create(modem, 0,
-> >  					"ifxmodem", data->dlcs[GPRS2_DLC]);
-> > -		if (gc)
-> > +	if (gc)
-> >  			ofono_gprs_add_context(gprs, gc);
-> >
-> > -		gc =3D ofono_gprs_context_create(modem, 0,
-> > +	gc =3D ofono_gprs_context_create(modem, 0,
-> >  					"ifxmodem", data->dlcs[GPRS3_DLC]);
-> > -		if (gc)
-> > -			ofono_gprs_add_context(gprs, gc);
-> > -	}
-> > +	if (gc)
-> > +		ofono_gprs_add_context(gprs, gc);
-> >  }
-> =
-
-> We can not just do this unconditionally. Then using the internal MUX
-> will not work anymore.
-
-Don't understand your point. This part of code is done in both cases: using=
- internal MUX or not.
-The check (data->mux_ldisc < 0) is TRUE when you are using the internal MUX.
+We are working on HFP support in oFono, and on the AT Emulator to support a=
+ll mandatory AT command for HFP.
+But there should be no dedicated API for HFP inside oFono.
 
 Regards,
-Guillaume
+
+Bertrand.
 ---------------------------------------------------------------------
 Intel Corporation SAS (French simplified joint stock company)
 Registered headquarters: "Les Montalets"- 2, rue de Paris, =
@@ -247,5 +50,5 @@ by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
 
---===============3283986588364726563==--
+--===============1848741706379681154==--
 
