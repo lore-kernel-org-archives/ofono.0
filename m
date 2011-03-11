@@ -1,231 +1,121 @@
-Content-Type: multipart/mixed; boundary="===============1070781754242708584=="
+Content-Type: multipart/mixed; boundary="===============5360419154231615042=="
 MIME-Version: 1.0
-From: milan.satpathy@accenture.com
-Subject: [HELP Required]Routing Of SCO data to BT Host Speaker
-Date: Fri, 11 Mar 2011 10:56:34 +0530
-Message-ID: <10D123A956DC4B4FA9D7A48B3335836214DEE684E4@INDXM3131.dir.svc.accenture.com>
+From: Debanjan Biswas (debiswas) <debiswas@cisco.com>
+Subject: RE: Request for info for issuing AT commands
+Date: Fri, 11 Mar 2011 11:38:01 +0530
+Message-ID: <35DD4A1E71A66646BF42B14F8A62B7AC040EFAF3@XMB-BGL-419.cisco.com>
+In-Reply-To: <A782C372B9527D44AB20BF45FEEBB14F75A8ABE140@irsmsx503.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1070781754242708584==
+--===============5360419154231615042==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Thanks for the info Bertrand. I will have a look.
 
-Recently I have been trying to use Ofono to write a Handsfree based applica=
-tion( Using C on Ubuntu 10.10).
-I am able to connect(SLC) to the AG using Ofono. After connection I am also=
- successful in dialing to another number.
-Bluetoothd indicates status as "Playing" ( SCO connection successful) once =
-the call is established.
+Regards
+Debanjan
 
-Problem Faced:
-----------------------
-However, after accepting the call I am unable to hear any voice through the=
- speaker.
+-----Original Message-----
+From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
+f Of Aygon, Bertrand
+Sent: Thursday, March 10, 2011 6:40 PM
+To: ofono(a)ofono.org
+Subject: RE: Request for info for issuing AT commands
 
-Clarification Request:
------------------------------
-1. Do I need any specific settings / configurations to be able to hear the =
-audio?
-2.Or ,Do I need to make use of any available dbus methods / interfaces to e=
-nable the audio functionality?
+> Thanks Bertrand for your mail. I am working on the Audio Gateway side & I=
+ am looking for APIs for receiving AT commands like AT+ATA, =
 
-Please guide me on this.
+> AT+CHUP, AT+BLDN, AT+Ddd...dd, AT+VGS, AT+VGM, etc & for sending events l=
+ike VGM,VGS,CIEV, etc.
+>
+> Any informations on how to build a application for these will be really h=
+elpful.
 
-current config settings :
+An application?
 
-path : /etc/ofono/modem.conf  , /usr/local/etc/ofono/modem.conf
+Some people (Frederic Danis and Frederic Dalleau) are currently working on =
+the HFP support inside oFono. You can have a look at the oFono TODO file. T=
+here will be an atom inside oFono that will do this.
 
-#[hfp]
-Address=3DA8:7E:33:AF:23:A4
-Driver=3Dhfp
-
-path :/etc/bluetooth/audio.conf
-
-[General]
-Enable=3DGateway
-AutoConnect=3Dtrue
-HFP=3Dtrue
-MaxConnected=3D1
+If you want to do this outside oFono, you will have to write an application=
+ that will analyze AT command received from BlueZ, and translate them into =
+oFono APIs.
 
 Regards,
-Milan
 
+Bertrand.
 
-________________________________
-This message is for the designated recipient only and may contain privilege=
-d, proprietary, or otherwise private information. If you have received it i=
-n error, please notify the sender immediately and delete the original. Any =
-other use of the email by you is prohibited.
+-----Original Message-----
+From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
+f Of Aygon, Bertrand
+Sent: Thursday, March 10, 2011 4:15 PM
+To: ofono(a)ofono.org
+Subject: RE: Request for info for issuing AT commands
 
---===============1070781754242708584==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+Hi,
 
-PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
-bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxuczpzdDE9
-InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgeG1sbnM9Imh0dHA6
-Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29u
-dGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBu
-YW1lPSJHZW5lcmF0b3IiIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDExIChmaWx0ZXJlZCBtZWRp
-dW0pIj4KPG86U21hcnRUYWdUeXBlIG5hbWVzcGFjZXVyaT0idXJuOnNjaGVtYXMtbWljcm9zb2Z0
-LWNvbTpvZmZpY2U6c21hcnR0YWdzIiBuYW1lPSJDaXR5IiAvPjxvOlNtYXJ0VGFnVHlwZSBuYW1l
-c3BhY2V1cmk9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgbmFt
-ZT0icGxhY2UiIC8+PCEtLVtpZiAhbXNvXT4KPHN0eWxlPgpzdDFcOip7YmVoYXZpb3I6dXJsKCNk
-ZWZhdWx0I2llb291aSkgfQo8L3N0eWxlPgo8IVtlbmRpZl0tLT48c3R5bGU+CjwhLS0KIC8qIEZv
-bnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseToiQm9vayBBbnRpcXVh
-IjsKCXBhbm9zZS0xOjIgNCA2IDIgNSAzIDUgMyAzIDQ7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMg
-Ki8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGlu
-OwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5
-OiJCb29rIEFudGlxdWEiO30KaDEKCXttYXJnaW4tdG9wOjEyLjBwdDsKCW1hcmdpbi1yaWdodDow
-aW47CgltYXJnaW4tYm90dG9tOjMuMHB0OwoJbWFyZ2luLWxlZnQ6MGluOwoJcGFnZS1icmVhay1h
-ZnRlcjphdm9pZDsKCWZvbnQtc2l6ZToxNC4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVh
-Ijt9CmgyCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFyZ2luLWJv
-dHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZvaWQ7Cglm
-b250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250LXN0eWxl
-Oml0YWxpYzt9CmgzCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFy
-Z2luLWJvdHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZv
-aWQ7Cglmb250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250
-LXdlaWdodDpub3JtYWw7fQpwLk1zb0hlYWRlciwgbGkuTXNvSGVhZGVyLCBkaXYuTXNvSGVhZGVy
-Cgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7
-Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuTXNvRm9vdGVyLCBsaS5Nc29Gb290ZXIs
-IGRpdi5Nc29Gb290ZXIKCXttYXJnaW46MGluOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9u
-dC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KYTpsaW5rLCBzcGFu
-Lk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30K
-YTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7Y29sb3I6IzYwNjQyMDsKCXRl
-eHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpwLkFCTE9DS1BBUkEsIGxpLkFCTE9DS1BBUkEsIGRp
-di5BQkxPQ0tQQVJBCgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQt
-c2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUJVTExFVCwgbGku
-QUJVTExFVCwgZGl2LkFCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdodDowaW47
-CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjE2LjU1cHQ7CgltYXJnaW4tYm90dG9t
-Oi4wMDAxcHQ7Cgl0ZXh0LWluZGVudDotMTYuNTVwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250
-LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUlOREVOVEVEQlVMTEVULCBsaS5BSU5ERU5URURC
-VUxMRVQsIGRpdi5BSU5ERU5URURCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdo
-dDowaW47CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjMzLjFwdDsKCW1hcmdpbi1i
-b3R0b206LjAwMDFwdDsKCXRleHQtaW5kZW50Oi0xNi41NXB0OwoJZm9udC1zaXplOjExLjBwdDsK
-CWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KcC5BSU5ERU5URURQQVJBLCBsaS5BSU5ERU5U
-RURQQVJBLCBkaXYuQUlOREVOVEVEUEFSQQoJe21hcmdpbi10b3A6MGluOwoJbWFyZ2luLXJpZ2h0
-OjBpbjsKCW1hcmdpbi1ib3R0b206MGluOwoJbWFyZ2luLWxlZnQ6MTYuNTVwdDsKCW1hcmdpbi1i
-b3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRp
-cXVhIjt9CnNwYW4uRW1haWxTdHlsZTIzCgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9z
-ZTsKCWZvbnQtZmFtaWx5OkFyaWFsOwoJY29sb3I6d2luZG93dGV4dDt9CkBwYWdlIFNlY3Rpb24x
-Cgl7c2l6ZTo1OTUuNDVwdCA4NDEuN3B0OwoJbWFyZ2luOjEuMGluIC43NWluIDEuMGluIC43NWlu
-O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9Ci0tPgo8L3N0eWxlPgo8L2hlYWQ+Cjxi
-b2R5IGxhbmc9IkVOLVVTIiBsaW5rPSJibHVlIiB2bGluaz0iIzYwNjQyMCI+CjxkaXYgY2xhc3M9
-IlNlY3Rpb24xIj4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJp
-YWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+SGks
-PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQg
-c2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250
-LWZhbWlseTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xh
-c3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJm
-b250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+UmVjZW50bHkgSSBoYXZlIGJlZW4g
-dHJ5aW5nIHRvIHVzZSBPZm9ubyB0byB3cml0ZSBhIEhhbmRzZnJlZSBiYXNlZCBhcHBsaWNhdGlv
-biggVXNpbmcgQyBvbiBVYnVudHUgMTAuMTApLgo8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9w
-Pgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4g
-c3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5JIGFtIGFibGUgdG8g
-Y29ubmVjdChTTEMpIHRvIHRoZSBBRyB1c2luZyBPZm9uby4gQWZ0ZXIgY29ubmVjdGlvbiBJIGFt
-IGFsc28gc3VjY2Vzc2Z1bCBpbiBkaWFsaW5nIHRvIGFub3RoZXIgbnVtYmVyLjxvOnA+PC9vOnA+
-PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZh
-Y2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJp
-YWwiPkJsdWV0b290aGQgaW5kaWNhdGVzIHN0YXR1cyBhcyAmIzgyMjA7UGxheWluZyYjODIyMTsg
-KCBTQ08gY29ubmVjdGlvbiBzdWNjZXNzZnVsKSBvbmNlIHRoZSBjYWxsIGlzIGVzdGFibGlzaGVk
-Lgo8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9u
-dCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZv
-bnQtZmFtaWx5OkFyaWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBj
-bGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9
-ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5Qcm9ibGVtIEZhY2VkOjxvOnA+
-PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9
-IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1p
-bHk6QXJpYWwiPi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0mbmJzcDs8bzpwPjwvbzpwPjwvc3Bhbj48
-L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlh
-bCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5Ib3dl
-dmVyLCBhZnRlciBhY2NlcHRpbmcgdGhlIGNhbGwgSSBhbSB1bmFibGUgdG8gaGVhciBhbnkgdm9p
-Y2UgdGhyb3VnaCB0aGUgc3BlYWtlci4KPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAg
-Y2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxl
-PSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48
-L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFj
-ZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlh
-bCI+Q2xhcmlmaWNhdGlvbiBSZXF1ZXN0OjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cjxw
-IGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHls
-ZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPi0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05v
-cm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6
-MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+MS4gRG8gSSBuZWVkIGFueSBzcGVjaWZpYyBzZXR0
-aW5ncyAvIGNvbmZpZ3VyYXRpb25zIHRvIGJlIGFibGUgdG8gaGVhciB0aGUgYXVkaW8/CjxvOnA+
-PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9
-IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1p
-bHk6QXJpYWwiPjIuT3IgLERvIEkgbmVlZCB0byBtYWtlIHVzZSBvZiBhbnkgYXZhaWxhYmxlIGRi
-dXMgbWV0aG9kcyAvIGludGVyZmFjZXMgdG8gZW5hYmxlIHRoZSBhdWRpbyBmdW5jdGlvbmFsaXR5
-PzxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250
-IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9u
-dC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNs
-YXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0i
-Zm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPlBsZWFzZSBndWlkZSBtZSBvbiB0
-aGlzLjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxm
-b250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsK
-Zm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cjxw
-IGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHls
-ZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPmN1cnJlbnQgY29uZmlnIHNl
-dHRpbmdzIDo8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFs
-Ij48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4w
-cHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9w
-Pgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4g
-c3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5wYXRoIDogL2V0Yy9v
-Zm9uby9tb2RlbS5jb25mICZuYnNwOywgL3Vzci9sb2NhbC9ldGMvb2Zvbm8vbW9kZW0uY29uZgo8
-bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBz
-aXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQt
-ZmFtaWx5OkFyaWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFz
-cz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZv
-bnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj4jW2hmcF08bzpwPjwvbzpwPjwvc3Bh
-bj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJB
-cmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5B
-ZGRyZXNzPUE4OjdFOjMzOkFGOjIzOkE0PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAg
-Y2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxl
-PSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+RHJpdmVyPWhmcDxvOnA+PC9v
-OnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIi
-IGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6
-QXJpYWwiPiZuYnNwOyZuYnNwOzxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNz
-PSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9u
-dC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPnBhdGggOi9ldGMvYmx1ZXRvb3RoL2F1
-ZGlvLmNvbmY8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFs
-Ij48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4w
-cHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9w
-Pgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4g
-c3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5bR2VuZXJhbF08bzpw
-PjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXpl
-PSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFt
-aWx5OkFyaWFsIj5FbmFibGU9R2F0ZXdheTxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cjxw
-IGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHls
-ZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPkF1dG9Db25uZWN0PXRydWU8
-bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBz
-aXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQt
-ZmFtaWx5OkFyaWFsIj5IRlA9dHJ1ZTxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNs
-YXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0i
-Zm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPk1heENvbm5lY3RlZD0xPG86cD48
-L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0i
-MiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWls
-eTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1z
-b05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNp
-emU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+UmVnYXJkcyw8bzpwPjwvbzpwPjwvc3Bhbj48
-L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3QxOnBsYWNlIHc6c3Q9Im9uIj48c3Qx
-OkNpdHkgdzpzdD0ib24iPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0i
-Zm9udC1zaXplOjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCI+TWlsYW48L3NwYW4+PC9mb250Pjwv
-c3QxOkNpdHk+PC9zdDE6cGxhY2U+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0
-eWxlPSJmb250LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsIj48bzpwPjwvbzpwPjwvc3Bh
-bj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJB
-cmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj48
-bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8L2Rpdj4KPGJyPgo8aHI+Cjxmb250
-IGZhY2U9IkFyaWFsIiBjb2xvcj0iR3JheSIgc2l6ZT0iMiI+VGhpcyBtZXNzYWdlIGlzIGZvciB0
-aGUgZGVzaWduYXRlZCByZWNpcGllbnQgb25seSBhbmQgbWF5IGNvbnRhaW4gcHJpdmlsZWdlZCwg
-cHJvcHJpZXRhcnksIG9yIG90aGVyd2lzZSBwcml2YXRlIGluZm9ybWF0aW9uLiBJZiB5b3UgaGF2
-ZSByZWNlaXZlZCBpdCBpbiBlcnJvciwgcGxlYXNlIG5vdGlmeSB0aGUgc2VuZGVyIGltbWVkaWF0
-ZWx5IGFuZCBkZWxldGUgdGhlIG9yaWdpbmFsLgogQW55IG90aGVyIHVzZSBvZiB0aGUgZW1haWwg
-YnkgeW91IGlzIHByb2hpYml0ZWQuPGJyPgo8L2ZvbnQ+CjwvYm9keT4KPC9odG1sPgo=
+> Hi Everyone,
+>
+>=C2=A0I am new to this list.
 
---===============1070781754242708584==--
+Welcome!
+
+> I am looking for the oFono APIs that I can use to issue the AT commands f=
+or HFP. I could not found much info on the oFono site. =
+
+> It will be great help if someone can guide to any links/documents.
+
+Can you please clarify this. What can of APIs are you looking at, and for w=
+hich purpose?
+
+We are working on HFP support in oFono, and on the AT Emulator to support a=
+ll mandatory AT command for HFP.
+But there should be no dedicated API for HFP inside oFono.
+
+Regards,
+
+Bertrand.
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+http://lists.ofono.org/listinfo/ofono
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+http://lists.ofono.org/listinfo/ofono
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+http://lists.ofono.org/listinfo/ofono
+
+--===============5360419154231615042==--
 
