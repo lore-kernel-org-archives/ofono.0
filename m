@@ -1,83 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============0266853413001644719=="
+Content-Type: multipart/mixed; boundary="===============8663305752539869790=="
 MIME-Version: 1.0
-From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: [PATCH 08/12] gatchat: fix gatsyntax to support +CPOS
-Date: Fri, 11 Mar 2011 14:23:05 +0200
-Message-ID: <1299846189-15132-9-git-send-email-jarko.poutiainen@tieto.com>
-In-Reply-To: <1299846189-15132-1-git-send-email-jarko.poutiainen@tieto.com>
+From: Paavo Leinonen <paavo.leinonen@tieto.com>
+Subject: [PATCH] atmodem: fix PB reading when fields are omitted
+Date: Fri, 11 Mar 2011 14:25:47 +0200
+Message-ID: <1299846347-8644-1-git-send-email-paavo.leinonen@tieto.com>
+In-Reply-To: <1299655650-7929-1-git-send-email-paavo.leinonen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0266853413001644719==
+--===============8663305752539869790==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Fix SIM PB reading when numeric fields have been omitted.
+
 ---
- gatchat/gatsyntax.c |   19 +++++++++++++++++++
- 1 files changed, 19 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gatsyntax.c b/gatchat/gatsyntax.c
-index 2fc70b8..f1d896b 100644
---- a/gatchat/gatsyntax.c
-+++ b/gatchat/gatsyntax.c
-@@ -64,6 +64,9 @@ static void gsmv1_hint(GAtSyntax *syntax, GAtSyntaxExpect=
-Hint hint)
- 	case G_AT_SYNTAX_EXPECT_MULTILINE:
- 		syntax->state =3D GSMV1_STATE_GUESS_MULTILINE_RESPONSE;
- 		break;
-+	case G_AT_SYNTAX_EXPECT_SHORT_PROMPT:
-+		syntax->state =3D GSMV1_STATE_PROMPT;
-+		break;
- 	default:
- 		break;
- 	};
-@@ -195,6 +198,13 @@ static GAtSyntaxResult gsmv1_feed(GAtSyntax *syntax,
- 				i +=3D 1;
- 				res =3D G_AT_SYNTAX_RESULT_PROMPT;
- 				goto out;
-+			} else if (byte =3D=3D '\r')
-+				break;
-+			else if (byte =3D=3D '\n') {
-+				syntax->state =3D GSMV1_STATE_IDLE;
-+				i +=3D 1;
-+				res =3D G_AT_SYNTAX_RESULT_PROMPT;
-+				goto out;
- 			}
+Hi,
+
+Here is the fix for SIM PB reading as proposed.
+
+BR,
+Paavo
+
+ drivers/atmodem/phonebook.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/atmodem/phonebook.c b/drivers/atmodem/phonebook.c
+index 97213db..ebac563 100644
+--- a/drivers/atmodem/phonebook.c
++++ b/drivers/atmodem/phonebook.c
+@@ -172,10 +172,10 @@ static void at_cpbr_notify(GAtResult *result, gpointe=
+r user_data)
+ 			continue;
+ 		}
  =
 
- 			syntax->state =3D GSMV1_STATE_RESPONSE;
-@@ -239,6 +249,8 @@ static void gsm_permissive_hint(GAtSyntax *syntax, GAtS=
-yntaxExpectHint hint)
- {
- 	if (hint =3D=3D G_AT_SYNTAX_EXPECT_PDU)
- 		syntax->state =3D GSM_PERMISSIVE_STATE_GUESS_PDU;
-+	else if (hint =3D=3D G_AT_SYNTAX_EXPECT_SHORT_PROMPT)
-+		syntax->state =3D GSM_PERMISSIVE_STATE_PROMPT;
- }
- =
-
- static GAtSyntaxResult gsm_permissive_feed(GAtSyntax *syntax,
-@@ -298,6 +310,13 @@ static GAtSyntaxResult gsm_permissive_feed(GAtSyntax *=
-syntax,
- 				i +=3D 1;
- 				res =3D G_AT_SYNTAX_RESULT_PROMPT;
- 				goto out;
-+			} else if (byte =3D=3D '\r')
-+				break;
-+			else if (byte =3D=3D '\n') {
-+				syntax->state =3D GSM_PERMISSIVE_STATE_IDLE;
-+				i +=3D 1;
-+				res =3D G_AT_SYNTAX_RESULT_PROMPT;
-+				goto out;
- 			}
- =
-
- 			syntax->state =3D GSM_PERMISSIVE_STATE_RESPONSE;
+-		g_at_result_iter_next_number(&iter, &hidden);
++		g_at_result_iter_next_number_default(&iter, 0, &hidden);
+ 		parse_text(&iter, &group, current);
+ 		g_at_result_iter_next_string(&iter, &adnumber);
+-		g_at_result_iter_next_number(&iter, &adtype);
++		g_at_result_iter_next_number_default(&iter, 0, &adtype);
+ 		parse_text(&iter, &secondtext, current);
+ 		parse_text(&iter, &email, current);
+ 		parse_text(&iter, &sip_uri, current);
 -- =
 
-1.7.0.4
+1.7.1
 
 
---===============0266853413001644719==--
+--===============8663305752539869790==--
 
