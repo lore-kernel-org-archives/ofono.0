@@ -1,54 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============4809167335848826919=="
+Content-Type: multipart/mixed; boundary="===============7181395139479796829=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Isimodem: Crash while setting SCA
-Date: Fri, 11 Mar 2011 13:59:46 -0600
-Message-ID: <4D7A7F32.5040408@gmail.com>
-In-Reply-To: <1299847795-9935-1-git-send-email-ext-arun.1.ravindran@nokia.com>
+Subject: Re: [PATCH v2] test/test-message-waiting: Add a new test file to
+ validate org.ofono.MessageWaiting
+Date: Fri, 11 Mar 2011 14:01:33 -0600
+Message-ID: <4D7A7F9D.2000701@gmail.com>
+In-Reply-To: <1299677495-21937-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4809167335848826919==
+--===============7181395139479796829==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arun,
+Hi Bertrand,
 
-On 03/11/2011 06:49 AM, ext-arun.1.ravindran(a)nokia.com wrote:
-> From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
-> =
-
+On 03/09/2011 07:31 AM, Bertrand Aygon wrote:
 > ---
->  drivers/isimodem/sms.c |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
+>  Makefile.am               |    3 ++-
+>  test/test-message-waiting |   40 ++++++++++++++++++++++++++++++++++++++++
+>  2 files changed, 42 insertions(+), 1 deletions(-)
+>  create mode 100755 test/test-message-waiting
 > =
 
 
-I applied the patch, however...
-
-> diff --git a/drivers/isimodem/sms.c b/drivers/isimodem/sms.c
-> index 957b342..c90c06d 100644
-> --- a/drivers/isimodem/sms.c
-> +++ b/drivers/isimodem/sms.c
-> @@ -292,7 +292,7 @@ static void isi_sca_set(struct ofono_sms *sms,
->  		{ &sd->params, sizeof(sd->params) },
->  	};
->  =
-
-> -	if (cbd =3D=3D NULL || sd =3D=3D NULL)
-> +	if (cbd =3D=3D NULL || sd =3D=3D NULL || sd->sim =3D=3D NULL)
-
-The check for sd =3D=3D NULL is too late since sd->params is being used up
-above for initialization of iov...
-
->  		goto error;
->  =
-
->  	bcd =3D sd->params.sca;
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============4809167335848826919==--
+--===============7181395139479796829==--
 
