@@ -1,50 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============5289272828219732643=="
+Content-Type: multipart/mixed; boundary="===============7215770803323606466=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Setting PDP mode
-Date: Fri, 11 Mar 2011 10:20:22 -0600
-Message-ID: <4D7A4BC6.7030203@gmail.com>
-In-Reply-To: <1299745991.3163.3.camel@claudio-laptop>
+Subject: Re: [PATCH 0/5] Voice call SS notifications (4th version)
+Date: Fri, 11 Mar 2011 13:52:04 -0600
+Message-ID: <4D7A7D64.3040203@gmail.com>
+In-Reply-To: <cover.1299258404.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5289272828219732643==
+--===============7215770803323606466==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi claudio,
+Hi Andras,
 
-On 03/10/2011 02:33 AM, claudio wrote:
+On 03/04/2011 11:12 AM, Andras Domokos wrote:
+> Implementation proposal for handling some of the voice call
+> related Supplementary Services (SS) notifications.
 > =
 
-> Hi,
+> Implementation details:
+> - removed SSN atom and all the dependencies
+> - (re)implemented voice call SS notification handling framework
+> - added voice call SS notification handling to AT modem driver
+>   (+CSSU and +CSSI notifications) =
+
+> - added voice call SS notification handling to ISI modem driver
 > =
 
-> It's possible to set the pdp mode through ofono ? I need to set the pdp
-> mode to auto, ip and ppp,
+> Andras Domokos (5):
+>   ssn: remove SSN atom completely
+>   voicecall: add SSN function declarations
+>   voicecall: implement SSN handling functions
+>   atmodem: implement SSN handling
+>   isimodem: implement SSN handling
 
-I'm not sure what you mean by 'auto' pdp mode.
-
-The protocol selection (IP, IPv6 or dual stack IPv4 & IPv6 combined) is
-currently work in progress, but we support IP contexts already.  Refer
-to the Protocol property of ConnectionContext interface in
-doc/connman-api.txt
-
-oFono does not allow you to select the actual protocol used to talk to
-the modem (e.g. PPP, high-speed, or some vendor specific) for gprs
-contexts.  In fact it does not even care itself.  It is up to the modem
-driver to figure out the best protocol for that particular modem.
-
-> =
-
-> What are the dbus interface and properties to use ?
->
-
-Refer to doc/connman-api.txt
+I pushed all of these patches upstream, thanks.
 
 Regards,
 -Denis
 
---===============5289272828219732643==--
+--===============7215770803323606466==--
 
