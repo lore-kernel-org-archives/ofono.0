@@ -1,55 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============3262386840650445892=="
+Content-Type: multipart/mixed; boundary="===============1384508310309579484=="
 MIME-Version: 1.0
-From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: Re: [PATCH 6/9] gatchat: fix gatsyntax to support +CPOS
-Date: Fri, 11 Mar 2011 10:23:31 +0200
-Message-ID: <1299831811.3234.51.camel@poutijar-desktop>
-In-Reply-To: <4D795A9F.8010801@gmail.com>
+From: Jeevaka.Badrappan@elektrobit.com
+Subject: RE: [PATCH 1/2] stk: fix issue with null data object
+Date: Fri, 11 Mar 2011 14:05:03 +0200
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802E70A9C@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <AANLkTimqv2UCkOEmirpLsNDL+q+WNW_ytRD5-ac88RTT@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3262386840650445892==
+--===============1384508310309579484==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Andrew,
 
-On Fri, 2011-03-11 at 01:11 +0200, Denis Kenzior wrote:
-> Hi Jarko,
+Andrzej Zaborowski wrote:
+> Hi Jeevaka
 > =
 
-> Fair enough, sorry for 'shooting the messenger' so to speak ;)
+> On 7 March 2011 16:35, Jeevaka Badrappan
+> <jeevaka.badrappan@elektrobit.com> wrote:
+>> As per the specification, if alphad identifier is provided and is a
+>> null data object, no information should be given to the user.
 > =
 
-Non taken. :)
-
-> Essentially.  You might have to define a new syntax hint for this
-> prompt, namely EXPECT_BROKEN_PROMPT or something like that.
+> What do do you think of the following change?
 > =
 
-Ok I'll do that... but maybe with less sarcastic naming :D
-
-> I'd suggest inventing a new g_at_chat_send variant that would set this
-> hint for you.  Something like g_at_chat_send_and_expect_broken_prompt ;)
+> diff --git a/src/stkutil.c b/src/stkutil.c index
+> abd1c99..c64cb7a 100644
+> --- a/src/stkutil.c
+> +++ b/src/stkutil.c
+> @@ -309,7 +309,7 @@ static gboolean
+> parse_dataobj_alpha_id(struct comprehension_tlv_iter *iter,
 > =
 
-That's a great idea, thanks... not referring to naming in anyway of
-course ;)
-
-> You will have a very long road trying to implement this feature reliably
-> as well.  Lets face it, the spec is broken and the sooner STE modems
-> (and the spec) are fixed the better it will be for everyone.
+>         len =3D comprehension_tlv_iter_get_length(iter);         if
+> (len =3D=3D 0) { -               *alpha_id =3D g_try_malloc0(1);
+> +               *alpha_id =3D NULL;
+>                 return TRUE;
+>         }
 > =
 
-Ok I'll do what little I can.
+> =
 
-> Regards,
-> -Denis
+> This actually lets the caller detect a NULL alpha identifier
+> and then, as far as I can see, the stk.c code will not give
+> any information to the user if either the alpha_id is NULL or not
+> provided. =
 
-Br,
-Jarko
 
+Change is fine with me.
 
---===============3262386840650445892==--
+Regards,
+Jeevaka
+
+--===============1384508310309579484==--
 
