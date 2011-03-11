@@ -1,42 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============3989602176274840820=="
+Content-Type: multipart/mixed; boundary="===============1915182608324117471=="
 MIME-Version: 1.0
-From: ext-arun.1.ravindran@nokia.com
-Subject: [PATCH] Isimodem: Crash while setting SCA
-Date: Fri, 11 Mar 2011 14:49:55 +0200
-Message-ID: <1299847795-9935-1-git-send-email-ext-arun.1.ravindran@nokia.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH] dun_gw: Fix automatic GIOChannel closing when a bluetooth
+ connection is attempted.
+Date: Fri, 11 Mar 2011 14:39:59 +0100
+Message-ID: <1299850799-4997-1-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3989602176274840820==
+--===============1915182608324117471==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
-
 ---
- drivers/isimodem/sms.c |    2 +-
+ plugins/dun_gw.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/isimodem/sms.c b/drivers/isimodem/sms.c
-index 957b342..c90c06d 100644
---- a/drivers/isimodem/sms.c
-+++ b/drivers/isimodem/sms.c
-@@ -292,7 +292,7 @@ static void isi_sca_set(struct ofono_sms *sms,
- 		{ &sd->params, sizeof(sd->params) },
- 	};
+diff --git a/plugins/dun_gw.c b/plugins/dun_gw.c
+index 53edc74..3bc4836 100644
+--- a/plugins/dun_gw.c
++++ b/plugins/dun_gw.c
+@@ -101,7 +101,7 @@ static void dun_gw_connect_cb(GIOChannel *io, GError *e=
+rr, gpointer user_data)
+ 	}
  =
 
--	if (cbd =3D=3D NULL || sd =3D=3D NULL)
-+	if (cbd =3D=3D NULL || sd =3D=3D NULL || sd->sim =3D=3D NULL)
- 		goto error;
+ 	fd =3D g_io_channel_unix_get_fd(io);
+-	g_io_channel_set_close_on_unref(io, TRUE);
++	g_io_channel_set_close_on_unref(io, FALSE);
  =
 
- 	bcd =3D sd->params.sca;
+ 	ofono_emulator_register(em, fd);
+ }
 -- =
 
-1.7.0.4
+1.7.1
 
 
---===============3989602176274840820==--
+--===============1915182608324117471==--
 
