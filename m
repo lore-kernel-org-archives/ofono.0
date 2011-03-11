@@ -1,52 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============9180864915326011750=="
+Content-Type: multipart/mixed; boundary="===============3262386840650445892=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: [HELP Required]Routing Of SCO data to BT Host Speaker
-Date: Fri, 11 Mar 2011 08:21:42 +0100
-Message-ID: <20110311072142.GA2454@candlejack.bmw-carit.intra>
-In-Reply-To: <10D123A956DC4B4FA9D7A48B3335836214DEE684E4@INDXM3131.dir.svc.accenture.com>
+From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
+Subject: Re: [PATCH 6/9] gatchat: fix gatsyntax to support +CPOS
+Date: Fri, 11 Mar 2011 10:23:31 +0200
+Message-ID: <1299831811.3234.51.camel@poutijar-desktop>
+In-Reply-To: <4D795A9F.8010801@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9180864915326011750==
+--===============3262386840650445892==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Milan,
+Hi Denis,
 
-On Fri, Mar 11, 2011 at 10:56:34AM +0530, milan.satpathy(a)accenture.com wr=
-ote:
-> Hi,
+On Fri, 2011-03-11 at 01:11 +0200, Denis Kenzior wrote:
+> Hi Jarko,
 > =
 
-> Recently I have been trying to use Ofono to write a Handsfree based appli=
-cation( Using C on Ubuntu 10.10).
-> I am able to connect(SLC) to the AG using Ofono. After connection I am al=
-so successful in dialing to another number.
-> Bluetoothd indicates status as "Playing" ( SCO connection successful) onc=
-e the call is established.
+> Fair enough, sorry for 'shooting the messenger' so to speak ;)
 > =
 
-> Problem Faced:
-> ----------------------
-> However, after accepting the call I am unable to hear any voice through t=
-he speaker.
+Non taken. :)
 
-You might have to loop back the PulseAudio BT source and sink to your sound=
- card, e.g.
+> Essentially.  You might have to define a new syntax hint for this
+> prompt, namely EXPECT_BROKEN_PROMPT or something like that.
+> =
 
-pactl load-module module-loopback source=3D"alsa_input.pci-0000_00_1b.0.ana=
-log-stereo" sink=3D"bluez_sink.78_47_1D_44_34_10"
-pactl load-module module-loopback source=3D"bluez_source.78_47_1D_44_34_10"=
- sink=3D"alsa_output.pci-0000_00_1b.0.analog-stereo"
+Ok I'll do that... but maybe with less sarcastic naming :D
 
-You have to do this within 5 seconds after the SCO connection has been
-established otherwise PulseAudio will suspend (which leads to a BT
-stream stop) the streams.
+> I'd suggest inventing a new g_at_chat_send variant that would set this
+> hint for you.  Something like g_at_chat_send_and_expect_broken_prompt ;)
+> =
 
-HTH,
-daniel
+That's a great idea, thanks... not referring to naming in anyway of
+course ;)
 
---===============9180864915326011750==--
+> You will have a very long road trying to implement this feature reliably
+> as well.  Lets face it, the spec is broken and the sooner STE modems
+> (and the spec) are fixed the better it will be for everyone.
+> =
+
+Ok I'll do what little I can.
+
+> Regards,
+> -Denis
+
+Br,
+Jarko
+
+
+--===============3262386840650445892==--
 
