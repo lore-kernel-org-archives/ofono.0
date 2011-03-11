@@ -1,269 +1,230 @@
-Content-Type: multipart/mixed; boundary="===============5552475820820160966=="
+Content-Type: multipart/mixed; boundary="===============7215037251299601006=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH 1/3] ifx: integration of kernel mux (n_gsm) and its line
- discipline
-Date: Fri, 11 Mar 2011 14:04:43 -0800
-Message-ID: <1299881083.2055.8.camel@aeonflux>
-In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D4018813A9C5FE3@irsmsx501.ger.corp.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] call-forwarding: fix for showing call forwarding states
+Date: Fri, 11 Mar 2011 16:48:48 -0600
+Message-ID: <4D7AA6D0.7060808@gmail.com>
+In-Reply-To: <1299666479-8438-1-git-send-email-jussi.kangas@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5552475820820160966==
+--===============7215037251299601006==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Jussi,
 
-> > > diff --git a/plugins/ifx.c b/plugins/ifx.c
-> > > index 527a8c4..9c2a5c1 100644
-> > > --- a/plugins/ifx.c
-> > > +++ b/plugins/ifx.c
-> > > @@ -26,8 +26,12 @@
-> > >  #include <stdio.h>
-> > >  #include <errno.h>
-> > >  #include <stdlib.h>
-> > > +#include <string.h>
-> > >  #include <sys/stat.h>
-> > >  #include <sys/ioctl.h>
-> > > +#include <linux/types.h>
-> > > +#include <linux/gsmmux.h>
-> > > +#include <unistd.h>
-> > =
-
-> > please move unistd.h up since as a rule of thumb, the system headers
-> > should be included before the unix ones.
-> > =
-
-> > Also gsmmux.h is not acceptable. We have to carry a local copy for a
-> > while since otherwise compilation would fail on older kernels.
+On 03/09/2011 04:27 AM, Jussi Kangas wrote:
+> ---
+> Hi,
 > =
 
-> Ok. It's what Robertino did in his first patch for the kernel mux integra=
-tion.
-> I've changed that thinking it was better to used the gsmmux.h of the kern=
-el tree. I'll redo that.
+> Here is a fix for call forwarding issue Jarko found a while back. ( TODO
+> issue "Call forwarding state handling change" and mailing list
+> conversation "Ofono CF states not always correct" ).
 > =
 
-> > =
-
-> > Why do you need linux/types.h?
-> > =
-
+> Br,
+> Jussi
 > =
 
-> Do not really remember :(
-> I think this is for the gsmmux.h file but if it's the case it to this fil=
-e to include this one. I'll review that.
-
-in theory if gsmmux.h requires linux/types.h, then it should include it.
-
-> > >  #include <glib.h>
-> > >  #include <gatchat.h>
-> > > @@ -75,9 +79,9 @@
-> > >  static char *dlc_prefixes[NUM_DLC] =3D { "Voice: ", "Net: ", "GPRS1:
-> > ",
-> > >  					"GPRS2: ", "GPRS3: ", "Aux: " };
-> > >
-> > > -static const char *dlc_nodes[NUM_DLC] =3D { "/dev/ttyGSM1",
-> > "/dev/ttyGSM2",
-> > > -					"/dev/ttyGSM3", "/dev/ttyGSM4",
-> > > -					"/dev/ttyGSM5", "/dev/ttyGSM6" };
-> > > +static const char *dlc_nodes[NUM_DLC] =3D { "/dev/gsmtty1",
-> > "/dev/gsmtty2",
-> > > +					"/dev/gsmtty3", "/dev/gsmtty4",
-> > > +					"/dev/gsmtty5", "/dev/gsmtty6" };
-> > =
-
-> > I am not a big fan of these hardcoded names. I was not a big fan for
-> > the original MUX code and that has not changed.
-> > =
-
-> > So what happens if you have to multiplexer running at the same time?
-> > =
-
+>  src/call-forwarding.c |   78 +++++++++++++++++++++++++++++++++++++++++++=
++-----
+>  1 files changed, 70 insertions(+), 8 deletions(-)
 > =
 
-> No idea. I'll try to analyze this point.
+> diff --git a/src/call-forwarding.c b/src/call-forwarding.c
+> index d13f990..6f81296 100644
+> --- a/src/call-forwarding.c
+> +++ b/src/call-forwarding.c
+> @@ -514,10 +514,24 @@ static DBusMessage *cf_get_properties_reply(DBusMes=
+sage *msg,
+>  					OFONO_PROPERTIES_ARRAY_SIGNATURE,
+>  						&dict);
+>  =
 
-This needs a bit more thinking here. Also in reality the names are not
-guaranteed. It might have happened that udev renamed them.
+> -	for (i =3D 0; i < 4; i++)
+> -		property_append_cf_conditions(&dict, cf->cf_conditions[i],
+> +	if (cf->cf_conditions[CALL_FORWARDING_TYPE_UNCONDITIONAL] =3D=3D 0) {
 
-The current code has exactly the same problem. I know that is an issue,
-it just happens to be that the current code is not used anyway.
+Please use a comparison to NULL here instead of 0
 
-> > >  static const char *none_prefix[] =3D { NULL };
-> > >  static const char *xdrv_prefix[] =3D { "+XDRV:", NULL };
-> > > @@ -392,6 +396,7 @@ static gboolean dlc_ready_check(gpointer
-> > user_data)
-> > >  	struct ifx_data *data =3D ofono_modem_get_data(modem);
-> > >  	struct stat st;
-> > >  	int i;
-> > > +	GHashTable *options;
-> > >
-> > >  	DBG("");
-> > >
-> > > @@ -405,8 +410,14 @@ static gboolean dlc_ready_check(gpointer
-> > user_data)
-> > >  		return TRUE;
-> > >  	}
-> > >
-> > > +	options =3D g_hash_table_new(g_str_hash, g_str_equal);
-> > > +	if (options =3D=3D NULL)
-> > > +		goto error;
-> > > +
-> > > +	g_hash_table_insert(options, "Local", "on");
-> > > +
-> > =
+> +		DBG("Append all");
+> +		for (i =3D 0; i < 4; i++)
+> +			property_append_cf_conditions(&dict,
+> +				cf->cf_conditions[i],
+> +					BEARER_CLASS_VOICE,
+> +						cf_type_lut[i]);
 
-> > Why is this needed?
-> =
+Please fix the indentation levels here, the lines following
+property_append... should all be the same indentation level.
 
-> This is needed for PDP context deactivation.
-> If you don't set the local to on a tty close occurs when you do the PDP c=
-ontext deactivation.
+Also, we might want to skip the unconditional call forwarding settings here.
 
-That sounds like a kernel bug to me as well. Why is the kernel closing
-the TTY if you switch back to AT command mode. We are still holding an
-open file descriptor to it.
+> +	} else {
+> +		DBG("append only unconditional");
+> +		property_append_cf_conditions(&dict,
+> +			cf->cf_conditions[CALL_FORWARDING_TYPE_UNCONDITIONAL],
+> +				BEARER_CLASS_VOICE,
+> +					cf_type_lut[0]);
+> +		for (i =3D 1; i < 4; i++)
+> +			property_append_cf_conditions(&dict, NULL,
+>  						BEARER_CLASS_VOICE,
+>  						cf_type_lut[i]);
 
-> > > +	ofono_info("Got default configuration...");
-> > > +	ofono_info("adaption =3D %d", cfg.adaption);
-> > > +	ofono_info("encapsulation =3D %d", cfg.encapsulation);
-> > > +	ofono_info("initiator =3D %d", cfg.initiator);
-> > > +	ofono_info("t1 =3D %d", cfg.t1);
-> > > +	ofono_info("t2 =3D %d", cfg.t2);
-> > > +	ofono_info("t3 =3D %d", cfg.t3);
-> > > +	ofono_info("n2 =3D %d", cfg.n2);
-> > > +	ofono_info("mru =3D %d", cfg.mru);
-> > > +	ofono_info("mtu =3D %d", cfg.mtu);
-> > > +	ofono_info("k =3D %d", cfg.k);
-> > =
+So I'm confused, the TODO entry says we should not return conditional
+entries if the unconditional call forwarding is set as they are now
+quiescent.
 
-> > This pretty heavy debug information and not ofono_info material.
-> > =
+Are you proposing we handle this a bit differently?
 
-> =
+> +	}
+>  =
 
-> Agree. I kept them from the original patch of Robertino but I'll change t=
-hat.
-> =
+>  	if ((cf->flags & CALL_FORWARDING_FLAG_CPHS_CFF) ||
+>  			cf->cfis_record_id > 0)
+> @@ -682,8 +696,23 @@ static void set_query_cf_callback(const struct ofono=
+_error *error, int total,
+>  =
 
-> > > +	cfg.encapsulation =3D 0; /* encoding - set to basic */
-> > > +	cfg.initiator =3D 1; /* we are starting side */
-> > > +	cfg.mru =3D 1500;
-> > > +	cfg.mtu =3D 1500;
-> > > +
-> > > +	err =3D ioctl(fd, GSMIOC_SETCONF, &cfg);
-> > > +	if (err < 0) {
-> > > +		ofono_error("Failed to configure n_gsm multiplexer: %d",
-> > err);
-> > > +		goto error;
-> > > +	}
-> > > +
-> > >  	data->dlc_poll_count =3D 0;
-> > >  	data->dlc_poll_source =3D g_timeout_add_seconds(1, dlc_ready_check,
-> > >  								modem);
-> > > @@ -511,6 +557,9 @@ static void mux_setup_cb(gboolean ok, GAtResult
-> > *result, gpointer user_data)
-> > >  	return;
-> > >
-> > >  error:
-> > > +	if (ioctl(fd, TIOCSETD, &data->saved_ldisc) < 0)
-> > > +		ofono_warn("Failed to restore line discipline");
-> > > +
-> > =
+>  static void set_query_next_cf_cond(struct ofono_call_forwarding *cf)
+>  {
+> -	cf->driver->query(cf, cf->query_next, BEARER_CLASS_DEFAULT,
+> -			set_query_cf_callback, cf);
+> +	DBusMessage *reply;
+> +
+> +	while (cf->query_next !=3D CALL_FORWARDING_TYPE_NOT_REACHABLE) {
+> +		if (!cf->cf_conditions[cf->query_next]) {
+> +			cf->driver->query(cf, cf->query_next,
+> +				BEARER_CLASS_DEFAULT,
+> +				set_query_cf_callback, cf);
+> +				return;
+> +		} else {
+> +			cf->query_next++;
+> +			if (cf->query_next =3D=3D cf->query_end)
+> +				break;
+> +		}
+> +	}
+> +
+> +	reply =3D dbus_message_new_method_return(cf->pending);
+> +	__ofono_dbus_pending_reply(&cf->pending, reply);
 
-> > This is not right. Even if you fail GSMIOC_GETCONF you try to restore
-> > the line discipline. That makes no sense.
-> > =
+Really lost here,
 
-> =
+>  }
+>  =
 
-> Agree that is not right but not for the GSMIOC_GETCONF failing.
-> It's not right because I try to restore the line discipline even if the i=
-octl who gives it failed. I'll review that.
-> =
+>  static void set_property_callback(const struct ofono_error *error, void =
+*data)
+> @@ -836,6 +865,7 @@ static void disable_conditional_callback(const struct=
+ ofono_error *error,
+>  static void disable_all_callback(const struct ofono_error *error, void *=
+data)
+>  {
+>  	struct ofono_call_forwarding *cf =3D data;
+> +	int i;
+>  =
 
-> > >  	data->saved_ldisc =3D -1;
-> > >
-> > >  	g_io_channel_unref(data->device);
-> > > @@ -593,9 +642,9 @@ static int ifx_enable(struct ofono_modem *modem)
-> > >  					NULL, NULL, NULL);
-> > >
-> > >  	/* Enable multiplexer */
-> > > -	data->frame_size =3D 1509;
-> > > +	data->frame_size =3D 1500;
-> > >
-> > > -	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
-> > > +	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1500,10,3,30,,", NULL,
-> > >  					mux_setup_cb, modem, NULL);
-> > =
+>  	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+>  		DBG("Error occurred during erasure of all");
+> @@ -848,6 +878,10 @@ static void disable_all_callback(const struct ofono_=
+error *error, void *data)
+>  	/* Query all cf types */
+>  	cf->query_next =3D CALL_FORWARDING_TYPE_UNCONDITIONAL;
+>  	cf->query_end =3D CALL_FORWARDING_TYPE_NOT_REACHABLE;
+> +
+> +	for (i =3D 0; i < CALL_FORWARDING_TYPE_ALL; i++)
+> +		cf->cf_conditions[i] =3D 0;
+> +
 
-> > So why did the frame_size changed here? Does the modem firmware changed
-> > or is this actual a bug in oFono already today?
-> > =
+For pointers please use NULL instead of 0.
 
-> =
+Why are we setting them to NULL here in the first place? And shouldn't
+you free the data?
 
-> It's a bug in oFono.
+>  	set_query_next_cf_cond(cf);
+>  }
+>  =
 
-Then lets get that fixed separately with a proper commit message
-explaining why using frame size of 1500 is correct.
+> @@ -1014,8 +1048,25 @@ static void ss_set_query_cf_callback(const struct =
+ofono_error *error, int total,
+>  =
 
-We need a proper track record of changes and don't intermix them.
+>  static void ss_set_query_next_cf_cond(struct ofono_call_forwarding *cf)
+>  {
+> -	cf->driver->query(cf, cf->query_next, BEARER_CLASS_DEFAULT,
+> -			ss_set_query_cf_callback, cf);
+> +	DBusMessage *reply;
+> +
+> +	while (cf->query_next !=3D CALL_FORWARDING_TYPE_NOT_REACHABLE) {
+> +		if (!cf->cf_conditions[cf->query_next]) {
+> +			cf->driver->query(cf, cf->query_next,
+> +				BEARER_CLASS_DEFAULT,
+> +				ss_set_query_cf_callback, cf);
+> +				return;
+> +		} else {
+> +			cf->query_next++;
+> +			if (cf->query_next =3D=3D cf->query_end)
+> +				break;
+> +		}
+> +	}
+> +
+> +	reply =3D cf_ss_control_reply(cf, cf->ss_req);
+> +	__ofono_dbus_pending_reply(&cf->pending, reply);
+> +	g_free(cf->ss_req);
+> +	cf->ss_req =3D NULL;
 
-> > >  	data->mux_init_timeout =3D g_timeout_add_seconds(5, mux_timeout_cb,
-> > > @@ -732,22 +781,20 @@ static void ifx_post_online(struct ofono_modem
-> > *modem)
-> > >  	if (gprs =3D=3D NULL)
-> > >  		return;
-> > >
-> > > -	if (data->mux_ldisc < 0) {
-> > > -		gc =3D ofono_gprs_context_create(modem, 0,
-> > > +	gc =3D ofono_gprs_context_create(modem, 0,
-> > >  					"ifxmodem", data->dlcs[GPRS1_DLC]);
-> > > -		if (gc)
-> > > -			ofono_gprs_add_context(gprs, gc);
-> > > +	if (gc)
-> > > +		ofono_gprs_add_context(gprs, gc);
-> > >
-> > > -		gc =3D ofono_gprs_context_create(modem, 0,
-> > > +	gc =3D ofono_gprs_context_create(modem, 0,
-> > >  					"ifxmodem", data->dlcs[GPRS2_DLC]);
-> > > -		if (gc)
-> > > +	if (gc)
-> > >  			ofono_gprs_add_context(gprs, gc);
-> > >
-> > > -		gc =3D ofono_gprs_context_create(modem, 0,
-> > > +	gc =3D ofono_gprs_context_create(modem, 0,
-> > >  					"ifxmodem", data->dlcs[GPRS3_DLC]);
-> > > -		if (gc)
-> > > -			ofono_gprs_add_context(gprs, gc);
-> > > -	}
-> > > +	if (gc)
-> > > +		ofono_gprs_add_context(gprs, gc);
-> > >  }
-> > =
+Again, very lost
 
-> > We can not just do this unconditionally. Then using the internal MUX
-> > will not work anymore.
-> =
+>  }
+>  =
 
-> Don't understand your point. This part of code is done in both cases: usi=
-ng internal MUX or not.
-> The check (data->mux_ldisc < 0) is TRUE when you are using the internal M=
-UX.
+>  static void cf_ss_control_callback(const struct ofono_error *error, void=
+ *data)
+> @@ -1032,6 +1083,11 @@ static void cf_ss_control_callback(const struct of=
+ono_error *error, void *data)
+>  		return;
+>  	}
+>  =
 
-I see that you do an extra set of checks in the gprs-context.c. I need
-to think about that a little bit.
+> +	if (cf->ss_req) {
+> +		if (cf->ss_req->ss_type =3D=3D SS_CONTROL_TYPE_ERASURE)
+> +			cf->cf_conditions[cf->ss_req->cf_type] =3D 0;
+> +	}
+> +
+>  	ss_set_query_next_cf_cond(cf);
+>  }
+>  =
 
-Regards
+> @@ -1180,8 +1236,14 @@ static gboolean cf_ss_control(int type, const char=
+ *sc,
+>  		cf->query_end =3D CALL_FORWARDING_TYPE_NOT_REACHABLE;
+>  		break;
+>  	case CALL_FORWARDING_TYPE_ALL_CONDITIONAL:
+> -		cf->query_next =3D CALL_FORWARDING_TYPE_BUSY;
+> -		cf->query_end =3D CALL_FORWARDING_TYPE_NOT_REACHABLE;
 
-Marcel
+I don't see how handling both these cases with the same code can work...
 
+> +	case CALL_FORWARDING_TYPE_UNCONDITIONAL:
+> +		if (type =3D=3D SS_CONTROL_TYPE_REGISTRATION) {
+> +			cf->query_next =3D cf->ss_req->cf_type;
+> +			cf->query_end =3D cf->ss_req->cf_type;
+> +		} else {
+> +			cf->query_next =3D cf->ss_req->cf_type;
+> +			cf->query_end =3D CALL_FORWARDING_TYPE_NOT_REACHABLE;
+> +		}
 
+I'm a bit lost here, can you explain some more what you're trying to
+accomplish?
 
---===============5552475820820160966==--
+>  		break;
+>  	default:
+>  		cf->query_next =3D cf->ss_req->cf_type;
+
+Regards,
+-Denis
+
+--===============7215037251299601006==--
 
