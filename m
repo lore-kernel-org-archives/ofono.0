@@ -1,39 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============7298167166287541192=="
+Content-Type: multipart/mixed; boundary="===============2217108154851590749=="
 MIME-Version: 1.0
 From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: [PATCH 11/12] ofono.conf: add positioning agent interface
-Date: Fri, 11 Mar 2011 14:23:08 +0200
-Message-ID: <1299846189-15132-12-git-send-email-jarko.poutiainen@tieto.com>
+Subject: [PATCH 06/12] gatchat:new hint to handle +CPOS
+Date: Fri, 11 Mar 2011 14:23:03 +0200
+Message-ID: <1299846189-15132-7-git-send-email-jarko.poutiainen@tieto.com>
 In-Reply-To: <1299846189-15132-1-git-send-email-jarko.poutiainen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7298167166287541192==
+--===============2217108154851590749==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/ofono.conf |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ gatchat/gatsyntax.h |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/src/ofono.conf b/src/ofono.conf
-index 0dfa038..8a83cd0 100644
---- a/src/ofono.conf
-+++ b/src/ofono.conf
-@@ -13,6 +13,7 @@
-     <allow send_interface=3D"org.ofono.SimToolkitAgent"/>
-     <allow send_interface=3D"org.ofono.PushNotificationAgent"/>
-     <allow send_interface=3D"org.ofono.SmartMessagingAgent"/>
-+    <allow send_interface=3D"org.ofono.PositioningRequestAgent"/>
-   </policy>
+diff --git a/gatchat/gatsyntax.h b/gatchat/gatsyntax.h
+index afc0bd3..2580ec6 100644
+--- a/gatchat/gatsyntax.h
++++ b/gatchat/gatsyntax.h
+@@ -29,7 +29,8 @@ extern "C" {
+ enum _GAtSyntaxExpectHint {
+ 	G_AT_SYNTAX_EXPECT_PDU,
+ 	G_AT_SYNTAX_EXPECT_MULTILINE,
+-	G_AT_SYNTAX_EXPECT_PROMPT
++	G_AT_SYNTAX_EXPECT_PROMPT,
++	G_AT_SYNTAX_EXPECT_SHORT_PROMPT
+ };
  =
 
-   <policy at_console=3D"true">
+ typedef enum _GAtSyntaxExpectHint GAtSyntaxExpectHint;
 -- =
 
 1.7.0.4
 
 
---===============7298167166287541192==--
+--===============2217108154851590749==--
 
