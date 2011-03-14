@@ -1,37 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============6496497429046055024=="
+Content-Type: multipart/mixed; boundary="===============4339331199307923432=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] test: Restructure CBS tests
-Date: Mon, 14 Mar 2011 09:51:28 -0500
-Message-ID: <4D7E2B70.3040804@gmail.com>
-In-Reply-To: <1299497583-29072-2-git-send-email-miia.leinonen@tieto.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@linux.intel.com>
+Subject: [PATCH] TODO: set owner of HSP task
+Date: Mon, 14 Mar 2011 15:53:15 +0100
+Message-ID: <1300114395-14743-1-git-send-email-frederic.dalleau@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6496497429046055024==
+--===============4339331199307923432==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Miia,
+---
+ TODO |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-On 03/07/2011 05:33 AM, Miia Leinonen wrote:
-> Remove old CBS test scripts.
-> =
+diff --git a/TODO b/TODO
+index 9db9e0b..c4e78a6 100644
+--- a/TODO
++++ b/TODO
+@@ -142,6 +142,7 @@ Modem Emulator
+ =
 
-> ---
->  Makefile.am         |    2 --
->  test/enable-cbs     |   20 --------------------
->  test/set-cbs-topics |   24 ------------------------
->  3 files changed, 0 insertions(+), 46 deletions(-)
->  delete mode 100755 test/enable-cbs
->  delete mode 100755 test/set-cbs-topics
+   Priority: Low
+   Complexity: C1
++  Owner: Fr=C3=A9d=C3=A9ric Dalleau <frederic.dalleau@linux.intel.com>
+ =
 
-I decided to skip this patch for now.  I thought it would be useful to
-keep the simpler scripts around for quicker testing.
+ - Support DUN emulator. Implement the Bluetooth DUN profile with only mand=
+atory
+   AT command support. Implement USB DUN as well.
+-- =
 
-Regards,
--Denis
+1.7.1
 
---===============6496497429046055024==--
+
+--===============4339331199307923432==--
 
