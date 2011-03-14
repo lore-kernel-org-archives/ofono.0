@@ -1,44 +1,95 @@
-Content-Type: multipart/mixed; boundary="===============2054730323391990590=="
+Content-Type: multipart/mixed; boundary="===============8780026503320064722=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH] Isimodem: Crash while setting SCA
-Date: Mon, 14 Mar 2011 13:49:35 +0200
-Message-ID: <AANLkTin7-R=A6K5me6pGNnx2gaLAVjW04nTsmk1Nx0jY@mail.gmail.com>
-In-Reply-To: <4D7A7F32.5040408@gmail.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] Add the possibility to specify the modem in test/dial-number
+Date: Mon, 14 Mar 2011 14:06:28 +0100
+Message-ID: <1300107988-4603-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2054730323391990590==
+--===============8780026503320064722==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ test/dial-number |   31 +++++++++++++++++++++++++------
+ 1 files changed, 25 insertions(+), 6 deletions(-)
 
-2011/3/11 Denis Kenzior <denkenz@gmail.com>:
->> diff --git a/drivers/isimodem/sms.c b/drivers/isimodem/sms.c
->> index 957b342..c90c06d 100644
->> --- a/drivers/isimodem/sms.c
->> +++ b/drivers/isimodem/sms.c
->> @@ -292,7 +292,7 @@ static void isi_sca_set(struct ofono_sms *sms,
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 { &sd->params, sizeof(s=
-d->params) },
->> =C2=A0 =C2=A0 =C2=A0 };
->>
->> - =C2=A0 =C2=A0 if (cbd =3D=3D NULL || sd =3D=3D NULL)
->> + =C2=A0 =C2=A0 if (cbd =3D=3D NULL || sd =3D=3D NULL || sd->sim =3D=3D =
-NULL)
->
-> The check for sd =3D=3D NULL is too late since sd->params is being used up
-> above for initialization of iov...
+diff --git a/test/dial-number b/test/dial-number
+index d66a878..8e250ea 100755
+--- a/test/dial-number
++++ b/test/dial-number
+@@ -3,21 +3,40 @@
+ import sys
+ import dbus
+ =
 
-That's right. However, the only way for sd =3D=3D NULL would be that core
-first called remove() and then sca_set(), which should not happen.
++if (len(sys.argv) < 2):
++	print "Usage: %s [modem] <number> [hide_callerid]" % (sys.argv[0])
++	sys.exit(1)
++
+ bus =3D dbus.SystemBus()
+ =
 
-So I think I will just remove that check.
+ manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
+ 						'org.ofono.Manager')
+ =
 
-Cheers,
-Aki
+ modems =3D manager.GetModems()
++modem =3D modems[0][0]
++
++hide_callerid =3D "default"
++
++if (len(sys.argv) =3D=3D 2):
++	number =3D sys.argv[1]
++elif (len(sys.argv) =3D=3D 3):
++	if (sys.argv[2] =3D=3D "default") or (sys.argv[2] =3D=3D "enabled") or \
++			(sys.argv[2] =3D=3D "disabled"):
++		number =3D sys.argv[1]
++		hide_callerid =3D sys.argv[2]
++	else:
++		modem =3D sys.argv[1]
++		number =3D sys.argv[2]
++else:
++	modem =3D sys.argv[1]
++	number =3D sys.argv[2]
++	hide_callerid =3D sys.argv[3]
+ =
 
---===============2054730323391990590==--
+-path, properties =3D modems[0]
++print "Using modem %s" % modem
+ =
+
+-manager =3D dbus.Interface(bus.get_object('org.ofono', path),
++vcm =3D dbus.Interface(bus.get_object('org.ofono', modem),
+ 						'org.ofono.VoiceCallManager')
+ =
+
+-if len(sys.argv) > 2:
+-    path =3D manager.Dial(sys.argv[1], sys.argv[2])
+-else:
+-    path =3D manager.Dial(sys.argv[1], "")
++path =3D vcm.Dial(number, hide_callerid)
+ =
+
+ print path
+-- =
+
+1.7.1
+
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============8780026503320064722==--
 
