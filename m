@@ -1,49 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8194244239900808857=="
+Content-Type: multipart/mixed; boundary="===============7811171256251555949=="
 MIME-Version: 1.0
-From: Andras Domokos <andras.domokos@nokia.com>
-Subject: Re: [PATCH 0/5] Voice call SS notifications (4th version)
-Date: Mon, 14 Mar 2011 09:22:16 +0200
-Message-ID: <4D7DC228.6000405@nokia.com>
-In-Reply-To: <4D7A7D64.3040203@gmail.com>
+From: Miia Leinonen <miia.leinonen@tieto.com>
+Subject: Re: [PATCH 1/2] test: Restructure CBS tests
+Date: Mon, 14 Mar 2011 09:29:25 +0200
+Message-ID: <1300087765.1800.4.camel@miia-desktop>
+In-Reply-To: <1299497583-29072-1-git-send-email-miia.leinonen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8194244239900808857==
+--===============7811171256251555949==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
 
-On 03/11/2011 09:52 PM, ext Denis Kenzior wrote:
-> Hi Andras,
->
-> On 03/04/2011 11:12 AM, Andras Domokos wrote:
->> Implementation proposal for handling some of the voice call
->> related Supplementary Services (SS) notifications.
->>
->> Implementation details:
->> - removed SSN atom and all the dependencies
->> - (re)implemented voice call SS notification handling framework
->> - added voice call SS notification handling to AT modem driver
->>    (+CSSU and +CSSI notifications)
->> - added voice call SS notification handling to ISI modem driver
->>
->> Andras Domokos (5):
->>    ssn: remove SSN atom completely
->>    voicecall: add SSN function declarations
->>    voicecall: implement SSN handling functions
->>    atmodem: implement SSN handling
->>    isimodem: implement SSN handling
-> I pushed all of these patches upstream, thanks.
+Hello,
 
-Thanks a lot.
+On Mon, 2011-03-07 at 13:33 +0200, Miia Leinonen wrote:
+> Add new centralised and reinforced CBS test script.
+> =
 
-> Regards,
-> -Denis
+> ---
+>  Makefile.am   |    1 +
+>  test/test-cbs |  189 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  2 files changed, 190 insertions(+), 0 deletions(-)
+>  create mode 100755 test/test-cbs
 
-Regards,
-Andras
+I know this is not one of the most urgent patches here being a test
+script and all - but could you please check if this is OK? I understood
+you prefer the test scripts to be constructed in this manner.
 
---===============8194244239900808857==--
+BR,
+Miia
+
+
+
+--===============7811171256251555949==--
 
