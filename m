@@ -1,39 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============1032484039424218602=="
+Content-Type: multipart/mixed; boundary="===============6243234377839096829=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 1/6] gat: add GAtSuspendFunc CB typedef
-Date: Tue, 15 Mar 2011 10:18:58 +0100
-Message-ID: <1300180743-27624-2-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH 2/6] gathdlc: add prototype to set suspend function.
+Date: Tue, 15 Mar 2011 10:18:59 +0100
+Message-ID: <1300180743-27624-3-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1032484039424218602==
+--===============6243234377839096829==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gat.h |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ gatchat/gathdlc.h |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gat.h b/gatchat/gat.h
-index ddf8695..f067389 100644
---- a/gatchat/gat.h
-+++ b/gatchat/gat.h
-@@ -32,6 +32,7 @@ typedef void (*GAtDisconnectFunc)(gpointer user_data);
- typedef void (*GAtReceiveFunc)(const unsigned char *data, gsize size,
- 							gpointer user_data);
- typedef void (*GAtDebugFunc)(const char *str, gpointer user_data);
-+typedef void (*GAtSuspendFunc)(gpointer user_data);
+diff --git a/gatchat/gathdlc.h b/gatchat/gathdlc.h
+index 95c389e..158f27f 100644
+--- a/gatchat/gathdlc.h
++++ b/gatchat/gathdlc.h
+@@ -57,6 +57,9 @@ GAtIO *g_at_hdlc_get_io(GAtHDLC *hdlc);
  =
 
+ void g_at_hdlc_set_no_carrier_detect(GAtHDLC *hdlc, gboolean detect);
+ =
+
++void g_at_hdlc_set_suspend_function(GAtHDLC *hdlc, GAtSuspendFunc func,
++							gpointer user_data);
++
  #ifdef __cplusplus
  }
+ #endif
 -- =
 
 1.7.1
 
 
---===============1032484039424218602==--
+--===============6243234377839096829==--
 
