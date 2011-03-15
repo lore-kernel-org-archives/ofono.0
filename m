@@ -1,41 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============5755310317879830827=="
+Content-Type: multipart/mixed; boundary="===============1032484039424218602=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 0/6] PPP suspend mechanism implementation
-Date: Tue, 15 Mar 2011 10:18:57 +0100
-Message-ID: <1300180743-27624-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH 1/6] gat: add GAtSuspendFunc CB typedef
+Date: Tue, 15 Mar 2011 10:18:58 +0100
+Message-ID: <1300180743-27624-2-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5755310317879830827==
+--===============1032484039424218602==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This set of patch will make hdlc layer detecting "+...+...+" character to s=
-uspend PPP server and resume AT server:
+---
+ gatchat/gat.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-either for receiving ATH (implemented in one other future patch)
-either for receiving ATO (implemented in a future 2nd set of patch)
+diff --git a/gatchat/gat.h b/gatchat/gat.h
+index ddf8695..f067389 100644
+--- a/gatchat/gat.h
++++ b/gatchat/gat.h
+@@ -32,6 +32,7 @@ typedef void (*GAtDisconnectFunc)(gpointer user_data);
+ typedef void (*GAtReceiveFunc)(const unsigned char *data, gsize size,
+ 							gpointer user_data);
+ typedef void (*GAtDebugFunc)(const char *str, gpointer user_data);
++typedef void (*GAtSuspendFunc)(gpointer user_data);
+ =
 
-Guillaume Zajac (6):
-  gat: add GAtSuspendFunc CB typedef
-  gathdlc: add prototype to set suspend function.
-  gathdlc: add mechanism to detect ppp suspension from DUN client.
-  gatppp: add prototype to set ppp suspend function.
-  gatppp: add g_at_ppp_set_suspend_function() definition.
-  emulator: add ppp_suspend implementation and registration.
+ #ifdef __cplusplus
+ }
+-- =
 
- gatchat/gat.h     |    1 +
- gatchat/gathdlc.c |   58 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- gatchat/gathdlc.h |    3 ++
- gatchat/gatppp.c  |    8 +++++++
- gatchat/gatppp.h  |    2 +
- src/emulator.c    |   10 +++++++++
- 6 files changed, 82 insertions(+), 0 deletions(-)
+1.7.1
 
 
---===============5755310317879830827==--
+--===============1032484039424218602==--
 
