@@ -1,58 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============5953578439471941686=="
+Content-Type: multipart/mixed; boundary="===============0651631430505779748=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 6/6] emulator: add ppp_suspend implementation and registration.
-Date: Tue, 15 Mar 2011 10:19:03 +0100
-Message-ID: <1300180743-27624-7-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <y>
+From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
+Subject: Re: [PATCH] unit: Add unit test for stemodem driver
+Date: Tue, 15 Mar 2011 15:02:24 +0200
+Message-ID: <1300194144.20115.15.camel@lkunnasl-desktop>
+In-Reply-To: <1300120538.2055.27.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5953578439471941686==
+--===============0651631430505779748==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/emulator.c |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+Hi Marcel,
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 20a575f..5179ea9 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -99,6 +99,15 @@ static void ppp_disconnect(GAtPPPDisconnectReason reason=
-, gpointer user_data)
-        g_at_server_resume(em->server);
- }
- =
+On Mon, 2011-03-14 at 18:35 +0200, Marcel Holtmann wrote:
+> Hi Lass,e
+> =
 
-+static void ppp_suspend(gpointer user_data)
-+{
-+       struct ofono_emulator *em =3D user_data;
-+
-+       DBG("");
-+
-+       g_at_server_resume(em->server);
-+}
-+
- static gboolean setup_ppp(gpointer user_data)
- {
-        struct ofono_emulator *em =3D user_data;
-@@ -126,6 +135,7 @@ static gboolean setup_ppp(gpointer user_data)
- =
+> > Here is an updated version of STE unit test, originally done by Marit (=
+sent on 15th of Feb).
+> > This one should apply smoothly =
 
-        g_at_ppp_set_connect_function(em->ppp, ppp_connect, em);
-        g_at_ppp_set_disconnect_function(em->ppp, ppp_disconnect, em);
-+       g_at_ppp_set_suspend_function(em->ppp, ppp_suspend, em);
- =
+> =
 
-        return FALSE;
- }
--- =
+> one question ahead of time. Are you guys up to the task to maintain this
+> unit test? Since it is clearly out of the scope of Denis and I to make
+> sure it will never break.
+> =
 
-1.7.1
+Probably STE would take care of breaks caused by changes in the driver.
+If the unit tests break someday due to changes in Core, you could drop
+out the code. I am not in a position to declare any commitment, so
+cannot promise we are going to maintain these unit tests.
+
+BR,
+-Lasse
+
+> Regards
+> =
+
+> Marcel
+> =
+
+> =
+
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
 
 
---===============5953578439471941686==--
+
+--===============0651631430505779748==--
 
