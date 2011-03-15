@@ -1,34 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============8432186834543670047=="
+Content-Type: multipart/mixed; boundary="===============5755310317879830827=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] unit: Add unit test for stemodem driver
-Date: Mon, 14 Mar 2011 09:35:38 -0700
-Message-ID: <1300120538.2055.27.camel@aeonflux>
-In-Reply-To: <1300102071-19076-1-git-send-email-lasse.kunnasluoto@tieto.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH 0/6] PPP suspend mechanism implementation
+Date: Tue, 15 Mar 2011 10:18:57 +0100
+Message-ID: <1300180743-27624-1-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8432186834543670047==
+--===============5755310317879830827==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lass,e
+This set of patch will make hdlc layer detecting "+...+...+" character to s=
+uspend PPP server and resume AT server:
 
-> Here is an updated version of STE unit test, originally done by Marit (se=
-nt on 15th of Feb).
-> This one should apply smoothly =
+either for receiving ATH (implemented in one other future patch)
+either for receiving ATO (implemented in a future 2nd set of patch)
+
+Guillaume Zajac (6):
+  gat: add GAtSuspendFunc CB typedef
+  gathdlc: add prototype to set suspend function.
+  gathdlc: add mechanism to detect ppp suspension from DUN client.
+  gatppp: add prototype to set ppp suspend function.
+  gatppp: add g_at_ppp_set_suspend_function() definition.
+  emulator: add ppp_suspend implementation and registration.
+
+ gatchat/gat.h     |    1 +
+ gatchat/gathdlc.c |   58 +++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ gatchat/gathdlc.h |    3 ++
+ gatchat/gatppp.c  |    8 +++++++
+ gatchat/gatppp.h  |    2 +
+ src/emulator.c    |   10 +++++++++
+ 6 files changed, 82 insertions(+), 0 deletions(-)
 
 
-one question ahead of time. Are you guys up to the task to maintain this
-unit test? Since it is clearly out of the scope of Denis and I to make
-sure it will never break.
-
-Regards
-
-Marcel
-
-
-
---===============8432186834543670047==--
+--===============5755310317879830827==--
 
