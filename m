@@ -1,31 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============0224995580421054102=="
+Content-Type: multipart/mixed; boundary="===============5110182954399752932=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [RESEND 3 PATCH 00/13] IPv6 Support
-Date: Wed, 16 Mar 2011 08:41:52 -0700
-Message-ID: <1300290112.2055.48.camel@aeonflux>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RESEND 3 PATCH 00/13] IPv6 Support
+Date: Wed, 16 Mar 2011 10:54:26 -0500
+Message-ID: <4D80DD32.6020400@gmail.com>
 In-Reply-To: <CB0EE8641411214CBAFF8AEBB26ABCEC2D1C1E@008-AM1MPN1-007.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0224995580421054102==
+--===============5110182954399752932==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Mika,
 
-> > So during OSTS Samuel, Marcel and I sat down and tried to =
+On 03/16/2011 05:45 AM, Mika.Liljeberg(a)nokia.com wrote:
+> Hi Denis,
+> =
 
-> > figure out the
-> > IPv6 stuff.  Based on this discussion and your implementation =
+>> So during OSTS Samuel, Marcel and I sat down and tried to =
 
-> > I pushed a
-> > series of patches implementing IPv6 and dual-stack contexts.  I have
-> > taken (and later re-worked) some of your patches so you get =
+>> figure out the
+>> IPv6 stuff.  Based on this discussion and your implementation =
 
-> > credit here
-> > as well.
+>> I pushed a
+>> series of patches implementing IPv6 and dual-stack contexts.  I have
+>> taken (and later re-worked) some of your patches so you get =
+
+>> credit here
+>> as well.
 > =
 
 > Thanks for pushing the patches. I notice that these are based on my initi=
@@ -43,8 +47,11 @@ concluded that it would make more sense to keep things consistent by having=
  oFono configure the link-local address on the point-to-point interfaces. I=
  had this implemented in my later patch sets.
 
-our conclusion was actually that we will disable IPv6 auto-configuration
-and expect IP address information given to us by the hardware.
+Samuel felt strongly that this should be done by ConnMan.  There's still
+some questions left around this area.  Namely whether we should prevent
+auto-configuration or not, etc.
+
+> =
 
 > A few comments on the driver API:
 > =
@@ -52,13 +59,16 @@ and expect IP address information given to us by the hardware.
 > 	void ofono_gprs_context_set_ipv4_address(struct ofono_gprs_context *gc,
 >                                                 const char *address,
 >                                                 gboolean static_ip);
-
-We could do that.
+> =
 
 > What's the expected behaviour if this is called with a valid IP address a=
 nd static_ip =3D FALSE? I think you could just drop the boolean flag and as=
 sume a statically configured address if this method is called by the driver=
 , otherwise do DHCP.
+
+Then this is a bug in the driver.  Dropping the boolean flag is
+certainly doable and is probably a good idea.
+
 > =
 
 > 	void ofono_gprs_context_set_ipv4_dns_servers(struct ofono_gprs_context *=
@@ -83,10 +93,13 @@ y contain IPv4 addresses, IPv6 addresses or both. Now the driver has to sor=
 t them into two separate lists for IPv4 and IPv6. Note that you can make A =
 and AAAA queries to any server, so there is no particular reason to separat=
 e the lists based on address family.
+> =
 
-Right now I like to keep them separated for a bit more consistent API,
-but yes essentially it makes no difference what the DNS servers are for
-since they can be clearly differentiated by its address type.
+
+We waffled on this one, but it seemed better to keep it symmetric with
+the way ConnMan API is setup for IPv6.  For AT modems that support
+dual-stack, the IPv4 and IPv6 information is returned separately anyway,
+so for the majority of the drivers separating the details is more efficient.
 
 > 	void ofono_gprs_context_set_ipv6_prefix_length(struct ofono_gprs_context=
  *gc,
@@ -103,9 +116,18 @@ efault gateways are received as part of the standard IPv6 stateless address=
 ve these would if a specific modem with a virtual ethernet interface deviat=
 es from the standard address configuration practises for some reasons.
 
-Looking at AT command based modems, then these are needed. I don't see
-any auto-configuration with these. The prefix length and gateway
-information come from the modem.
+At least the gateway is reported separately for IPv4 and IPv6.  Refer to
+27.007 Section 10.1.23 "PDP Context Read Dynamic Parameters".
+
+For IPv6 we decided to go with prefix length to keep symmetry with
+connman, even though 27.007 reports a netmask.  Drivers will need to
+convert between IPv6 netmask and prefix length, so this might have to be
+addressed in the future.
+
+However, you might be right and that 27.007 is not a good reflection of
+reality.  This has happened before ;)
+
+> =
 
 > Current USB modem sticks don't seem to have IPv6 support, so I'd propose =
 to just drop these and add an API later if it turns out to be necessary. If=
@@ -116,18 +138,29 @@ ditional address configuration settings won't be needed.
 
 > If you decide to keep these, prefix length should probably default to 64 =
 and be always shown in the settings.
+> =
 
-The AT commands are pretty clear in that they give us actually a
-netmask.
+>> These are highly experimental and have not received much =
 
-Our success rate with testing IPv6 on a real network with current
-hardware was rather limited.
+>> testing (since
+>> I don't really have any facilities to do so).  So please look =
 
-Regards
+>> and let me
+>> know if something isn't working as intended.
+> =
 
-Marcel
+> I'm not able to test dual context but IPv6 seems to work with isimodem. I=
+ did notice that the context settings allocated in assign_context() are lea=
+ked if context activation fails. Easy enough to fix, though:
+> =
 
 
+Sounds good.  Good catch on the leak, should we put it into
+pri_activate_callback error case right before release_context?  Either
+way, please do me a favor and send a proper patch.
 
---===============0224995580421054102==--
+Regards,
+-Denis
+
+--===============5110182954399752932==--
 
