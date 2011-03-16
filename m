@@ -1,55 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============0176584607949288707=="
+Content-Type: multipart/mixed; boundary="===============8579634414634798902=="
 MIME-Version: 1.0
-From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] CBMs are always fixed size, so improve PDU length check
-Date: Wed, 16 Mar 2011 10:12:46 +0100
-Message-ID: <1300266766-14064-1-git-send-email-bertrand.aygon@intel.com>
+From: Patrick Porlan <patrick.porlan@linux.intel.com>
+Subject: [PATCH] PPP: Switch ringbuffer.c to g_slice allocator
+Date: Wed, 16 Mar 2011 10:24:23 +0100
+Message-ID: <1300267463-4980-1-git-send-email-patrick.porlan@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0176584607949288707==
+--===============8579634414634798902==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This should allow for more efficient handling of equally sized
+buffers, in terms of alignment and recycling.
 ---
- drivers/atmodem/cbs.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ gatchat/ringbuffer.c |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/atmodem/cbs.c b/drivers/atmodem/cbs.c
-index 8cc3ef0..e2e1ca4 100644
---- a/drivers/atmodem/cbs.c
-+++ b/drivers/atmodem/cbs.c
-@@ -68,8 +68,8 @@ static void at_cbm_notify(GAtResult *result, gpointer use=
-r_data)
- 	if (!g_at_result_iter_next_number(&iter, &pdulen))
+diff --git a/gatchat/ringbuffer.c b/gatchat/ringbuffer.c
+index 27be3a8..775498c 100644
+--- a/gatchat/ringbuffer.c
++++ b/gatchat/ringbuffer.c
+@@ -51,11 +51,11 @@ struct ring_buffer *ring_buffer_new(unsigned int size)
+ 	if (real_size > MAX_SIZE)
+ 		return NULL;
+ =
+
+-	buffer =3D g_try_new(struct ring_buffer, 1);
++	buffer =3D g_slice_new(struct ring_buffer);
+ 	if (buffer =3D=3D NULL)
+ 		return NULL;
+ =
+
+-	buffer->buffer =3D g_try_new(unsigned char, real_size);
++	buffer->buffer =3D g_slice_alloc(real_size);
+ 	if (buffer->buffer =3D=3D NULL) {
+ 		g_free(buffer);
+ 		return NULL;
+@@ -202,6 +202,6 @@ void ring_buffer_free(struct ring_buffer *buf)
+ 	if (buf =3D=3D NULL)
  		return;
  =
 
--	if (pdulen > 88) {
--		ofono_error("Got a CBM message bigger than maximum size!");
-+	if (pdulen !=3D 88) {
-+		ofono_error("Got a CBM message with invalid PDU size!");
- 		return;
- 	}
- =
-
+-	g_free(buf->buffer);
+-	g_free(buf);
++	g_slice_free1(buf->size, buf->buffer);
++	g_slice_free1(sizeof(struct ring_buffer), buf);
+ }
 -- =
 
 1.7.1
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============0176584607949288707==--
+--===============8579634414634798902==--
 
