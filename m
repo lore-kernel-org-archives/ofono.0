@@ -1,48 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============0644920344369031262=="
+Content-Type: multipart/mixed; boundary="===============4670923403245494664=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: IMS support plan
-Date: Wed, 16 Mar 2011 15:53:53 -0500
-Message-ID: <4D812361.6070304@gmail.com>
-In-Reply-To: <FF74A84A5BBBCA439D6B6F41A35AAF010EDD9112@azsmsx502.amr.corp.intel.com>
+Subject: Re: [PATCH] CBMs are always fixed size, so improve PDU length check
+Date: Wed, 16 Mar 2011 21:30:38 -0500
+Message-ID: <4D81724E.1090208@gmail.com>
+In-Reply-To: <1300266766-14064-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0644920344369031262==
+--===============4670923403245494664==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Michael,
+Hi Bertrand,
 
-On 03/16/2011 02:34 PM, Fallon, Michael F wrote:
-> Hello,
+On 03/16/2011 04:12 AM, Bertrand Aygon wrote:
+> ---
+>  drivers/atmodem/cbs.c |    4 ++--
+>  1 files changed, 2 insertions(+), 2 deletions(-)
 > =
 
->  =
 
-> =
-
-> Can anybody provide any insight into oFono=E2=80=99s plans to support IMS=
- (ISIM
-> interface)? I=E2=80=99m particularly interested in feature set and schedu=
-ling
-> details if this information is available. Will ISIM support be included
-> in MeeGo 1.2?
-
-Are you asking for proper IMS support or just reading some IMS specific
-Elementary Files from the (I)SIM?
-
-If you're asking the former, then oFono is likely only an enabler for
-something like a telepathy based IMS connection manager.
-
-If you're asking for the latter, then I would refer you to the proposal
-from STE for IMS/LTE API that was posted a while back.  Please note that
-this is only a proposal and has not been ratified yet and no related
-tasks have been submitted to the TODO list.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============0644920344369031262==--
+--===============4670923403245494664==--
 
