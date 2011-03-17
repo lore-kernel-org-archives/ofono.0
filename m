@@ -1,234 +1,197 @@
-Content-Type: multipart/mixed; boundary="===============2345084265642937945=="
+Content-Type: multipart/mixed; boundary="===============8809024617478290888=="
 MIME-Version: 1.0
-From: Jussi Kangas <jussi.kangas@tieto.com>
-Subject: Re: [PATCH] call-forwarding: fix for showing call forwarding states
-Date: Thu, 17 Mar 2011 10:25:56 +0200
-Message-ID: <1300350356.8348.76.camel@jussi-desktop>
-In-Reply-To: <4D81815E.6060608@gmail.com>
+From: Mika.Liljeberg@nokia.com
+Subject: RE: [RESEND 3 PATCH 00/13] IPv6 Support
+Date: Thu, 17 Mar 2011 08:58:02 +0000
+Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC2D2145@008-AM1MPN1-007.mgdnok.nokia.com>
+In-Reply-To: <4D80DD32.6020400@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2345084265642937945==
+--===============8809024617478290888==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Denis, Marcel,
 
-On Thu, 2011-03-17 at 05:34 +0200, Denis Kenzior wrote:
+I'll respond just once, since you both commented on pretty much the same to=
+pics.
 
-> >> So I'm confused, the TODO entry says we should not return conditional
-> >> entries if the unconditional call forwarding is set as they are now
-> >> quiescent.
-> >>
-> >> Are you proposing we handle this a bit differently?
+> > I notice that your version of the patches are not forming =
+
+> the IPv6 link-local address and configuring it on the network =
+
+> interface. That's ok, as long as connman takes care of it, =
+
+> but it does mean that Ethernet interfaces, which always have =
+
+> a link-local address, will autoconfigure immediately while =
+
+> point-to-point interfaces will only autoconfigure when =
+
+> connman sets the link-local address on them. We talked about =
+
+> this with Marcel and at the time concluded that it would make =
+
+> more sense to keep things consistent by having oFono =
+
+> configure the link-local address on the point-to-point =
+
+> interfaces. I had this implemented in my later patch sets.
+
+[Denis]
+> Samuel felt strongly that this should be done by ConnMan.  =
+
+> There's still
+> some questions left around this area.  Namely whether we =
+
+> should prevent
+> auto-configuration or not, etc.
+
+Disabling IPv6 stateless address would be a bold move indeed, since it is d=
+eclared mandatory in both IETF and 3GPP standards. Please see [RFC4294] and=
+ [3GPP 23.060]. The section "Dynamic IPv6 Address Allocation" in 23.060 is =
+very clear on how IPv6 address allocation in 3GPPP networks is done. See al=
+so the section about IPv6 prefix delegation (relevant to IPv6 tethering) an=
+d applicable parts of 24.008.
+
+> > Having separate lists for IPv4 and IPv6 DNS servers made =
+
+> sense in my first patch set, because a dual context could be =
+
+> emulated with separate IPv4 and IPv6 contexts and those DNS =
+
+> servers might have been behind different network interfaces. =
+
+> However, now this just creates additional complexity for the =
+
+> drivers. A dual context will get a list of DNS server =
+
+> addresses, which may contain IPv4 addresses, IPv6 addresses =
+
+> or both. Now the driver has to sort them into two separate =
+
+> lists for IPv4 and IPv6. Note that you can make A and AAAA =
+
+> queries to any server, so there is no particular reason to =
+
+> separate the lists based on address family.
+
+[Denis]
+> We waffled on this one, but it seemed better to keep it symmetric with
+> the way ConnMan API is setup for IPv6.  For AT modems that support
+> dual-stack, the IPv4 and IPv6 information is returned =
+
+> separately anyway,
+> so for the majority of the drivers separating the details is =
+
+> more efficient.
+
+Sounds like connman has some unnecessary complexity here as well. A single =
+DNS server list really should be sufficient. Not a big deal, though, as lon=
+g as connman combines the lists at some point and gives the whole thing to =
+the DNS resolver.
+
+> > 	void ofono_gprs_context_set_ipv6_prefix_length(struct =
+
+> ofono_gprs_context *gc,
+> >                                                 unsigned =
+
+> char length);
+> > 	void ofono_gprs_context_set_ipv6_gateway(struct =
+
+> ofono_gprs_context *gc,
+> >                                                 const char =
+
+> *gateway);
 > > =
 
-> > No. I'm setting the unconditional values to NULL in order to clean them
-> > from API. If only unconditional is updated when there has been
-> > unconditional conditions active before, list-modems would show them
-> > still. After this change information about unconditional conditions
-> > remains in oFono, but they are not shown in the API.
+> > I'm not sure these are really needed, which is why I =
+
+> dropped these from subsequent patches. This information is =
+
+> not received from the cellular network as part of context =
+
+> activation signalling. On-link prefixes, routes and default =
+
+> gateways are received as part of the standard IPv6 stateless =
+
+> address autoconfiguration when the interfaces is brought up. =
+
+> The only reason to have these would if a specific modem with =
+
+> a virtual ethernet interface deviates from the standard =
+
+> address configuration practises for some reasons.
 > =
 
-> Ok, I think I understand now.  You're checking whether any unconditional
-> entries exist.  If they do, you report them and assume all other entries
-> are quiescent.  Right?
 
-Right. And I only clean them from API. When unconditional is removed,
-conditional states become visible without any query to network except
-checking if the unconditional really disappear. =
+[Denis]
+> At least the gateway is reported separately for IPv4 and =
 
+> IPv6.  Refer to
+> 27.007 Section 10.1.23 "PDP Context Read Dynamic Parameters".
 
-> =
+[Marcel]
+> The AT commands are pretty clear in that they give us actually a
+> netmask.
 
-> So correct me if I'm wrong, but I don't think we can do that.  the
-> current cf_conditions implementation stores all conditions, which could
-> be unrelated to voice; and if my interpretation of 22.004 is correct you
-> can have something like this:
-> =
+True at first glance. However, please note the following:
 
-> Activate CFB for all services to Number 1
-> Activate CFU for Data services to Number 2
-> =
+1) The netmask and gateway values returned here are invented by the modem. =
+They do not come from the network, because they are not carried anywhere in=
+ the signalling messages related to PDP context activation. Stateless IPv6 =
+address autoconfiguration (potentially followed by DHCPv6) is the only way =
+to get the real information from the network.
 
-> Which results in cf_conditions[CALL_FORWARDING_TYPE_UNCONDITIONAL] not
-> being NULL and you reporting CFB for voice incorrectly.
-> =
+2) AT+CGPADDR and AT+CGCONTRDP were introduced in 3GPP rel8 and they are bo=
+th optional. I.e. pre-rel8 equipment does not have them and rel8+ equipment=
+ is not required to have them. In particular, they are not required for a m=
+odem to be able to support IPv6, so you cannot rely on these commands being=
+ implemented in the modem.
 
-> You are probably safer using is_cfu_enabled() function.
+3) IPv6 stateless address autoconfiguration is mandatory in 3GPP standards,=
+ as well as in IETF standards. There's no two ways about it.
 
-As far as I know scenario you describe cannot happen with oFono. There
-is no data related conditions in the call forwarding API. Sure, you can
-set data forwarding on using SS API, but I don't see how data forwarding
-states could be shown in call forwarding API when all states in API
-start with word "voice". Also according to comments in code fax and data
-are not supported. =
+Granted, AT+CGPADDR and AT+GCCONTRDP may be useful for supporting some quir=
+ky modems, as already seen with IPv4 and virtual ethernet interfaces. Lacki=
+ng a concrete example for such a modem I don't see much point in adding the=
+se methods yet, though.
 
+[Denis]
+> For IPv6 we decided to go with prefix length to keep symmetry with
+> connman, even though 27.007 reports a netmask. Drivers will need to
+> convert between IPv6 netmask and prefix length, so this might =
 
-> >>>  =
+> have to be
+> addressed in the future.
 
-> >>>  	if ((cf->flags & CALL_FORWARDING_FLAG_CPHS_CFF) ||
-> >>>  			cf->cfis_record_id > 0)
-> >>> @@ -682,8 +696,23 @@ static void set_query_cf_callback(const struct o=
-fono_error *error, int total,
-> >>>  =
+Actually, the latest versions of 27.007 introduce the AT+CGPIAF command, wh=
+ich allows the use of proper textual representations for IPv6 addresses and=
+ prefixes. Looks like it is finally dawning on the AT spec writers that IPv=
+6 is actually very different from IPv4. ;)
 
-> >>>  static void set_query_next_cf_cond(struct ofono_call_forwarding *cf)
-> >>>  {
-> >>> -	cf->driver->query(cf, cf->query_next, BEARER_CLASS_DEFAULT,
-> >>> -			set_query_cf_callback, cf);
-> >>> +	DBusMessage *reply;
-> >>> +
-> >>> +	while (cf->query_next !=3D CALL_FORWARDING_TYPE_NOT_REACHABLE) {
-> >>> +		if (!cf->cf_conditions[cf->query_next]) {
-> >>> +			cf->driver->query(cf, cf->query_next,
-> >>> +				BEARER_CLASS_DEFAULT,
-> >>> +				set_query_cf_callback, cf);
-> >>> +				return;
-> >>> +		} else {
-> >>> +			cf->query_next++;
-> >>> +			if (cf->query_next =3D=3D cf->query_end)
-> >>> +				break;
-> >>> +		}
-> >>> +	}
-> >>> +
-> >>> +	reply =3D dbus_message_new_method_return(cf->pending);
-> >>> +	__ofono_dbus_pending_reply(&cf->pending, reply);
-> >>
-> >> Really lost here,
-> > =
+[Denis]
+> However, you might be right and that 27.007 is not a good =
 
-> > Query_next and query_end tell only what to ask from query_next to
-> > query_end. This causes pointless query if there is a value in the middle
-> > which is already known. What this implementation does it prevents the
-> > query if the condition is already known. =
+> reflection of
+> reality.  This has happened before ;)
 
-> >   =
+It is not. 27.007 is just an interface specification for modem vendords. It=
+ does not specify the behaviour and protocols between a UE and the network.=
+ You really need to look at 23.060 and 24.008. It will save you some hassle=
+ in the future.
 
-> =
+[Marcel]
+> Our success rate with testing IPv6 on a real network with current
+> hardware was rather limited.
 
-> So the reason it is this way is that if we're querying via SS we want to
-> force the query to proceed anyway.  Even if the value is already known.
->  This is really only a problem for *#002# and *#004# or if the request
-> of all CF conditions failed as a result of get_properties.  In the
-> latter case we don't set the cached flag and re-get all the cfs again.
+That is obvious.
 
-Change is not done for reasons you think here. Fix above is part of
-change made mainly for following error situation: =
+Regards,
 
+	MikaL
 
-oFono has conditional and unconditional conditions on. It is rebooted.
-Network reports only unconditional status. User removes unconditional
-status using SS API. API shows no active call forwardings.  =
-
-
-In order to fix this is I changed the cf_ss_control to ask everything if
-unconditional is erased. This causes unnecessary queries if the oFono is
-not rebooted after setting the unconditional on and unconditional
-conditions exists. This is is prevented with change above. =
-
-
-> Please note that *#002# and *#004# are not valid MMI strings anyway
-> according to 22.004 ("Interrogation of groups of Supplementary Services
-> is not supported.") but I threw them in there since the logic was
-> already implemented.  If it makes things easier we can limit this
-> functionality.
-> =
-
-> Either way this chunk belongs in a separate patch.
-
-Well, my opinion is that it's part of the same states showing correctly
-change for the reasons explained above, but sure I can separate them. =
-
-
-> >>> @@ -1180,8 +1236,14 @@ static gboolean cf_ss_control(int type, const =
-char *sc,
-> >>>  		cf->query_end =3D CALL_FORWARDING_TYPE_NOT_REACHABLE;
-> >>>  		break;
-> >>>  	case CALL_FORWARDING_TYPE_ALL_CONDITIONAL:
-> >>> -		cf->query_next =3D CALL_FORWARDING_TYPE_BUSY;
-> >>> -		cf->query_end =3D CALL_FORWARDING_TYPE_NOT_REACHABLE;
-> >>
-> >> I don't see how handling both these cases with the same code can work.=
-..
-> > =
-
-> > Well at least in my testings if there is break and separate query_next
-> > and query_end for CALL_FORWARDING_TYPE_ALL_CONDITIONAL erasing the
-> > condition by using ss API does not remove conditions from API. =
-
-> > =
-
-> =
-
-> Sorry I'm still confused with this change.  Maybe a more detailed trace
-> would help?
-
-I rechecked this and sent the new version to community in Tuesday. I
-found out that although in API level it seemed to work nicely it
-actually worked so that first query failed and after that oFono asked
-all conditions from network when list-modems were run. New version does
-not do that anymore. I brought back the separate query_next and
-query_end there for ALL_CONDITIONAL. =
-
-
-> >>> +	case CALL_FORWARDING_TYPE_UNCONDITIONAL:
-> >>> +		if (type =3D=3D SS_CONTROL_TYPE_REGISTRATION) {
-> >>> +			cf->query_next =3D cf->ss_req->cf_type;
-> >>> +			cf->query_end =3D cf->ss_req->cf_type;
-> >>> +		} else {
-> >>> +			cf->query_next =3D cf->ss_req->cf_type;
-> >>> +			cf->query_end =3D CALL_FORWARDING_TYPE_NOT_REACHABLE;
-> >>> +		}
-> >>
-> >> I'm a bit lost here, can you explain some more what you're trying to
-> >> accomplish?
-> > =
-
-> > I was looking for this: If the user sets call forwarding unconditional
-> > or all conditional on, there is no reason to ask anything else since
-> > implementation in cf_get_properties_reply prevents the showing. If user
-> > clears the call forwarding unconditional all have to be asked. =
-
-> > =
-
-> =
-
-> I see, so again I'm not sure this optimization is going to work.
-> Suppose I run an registration to CFall to Number 1 via USSD.  Something
-> like:
-> =
-
-> **002*+12345#
-> =
-
-> I do want all affected services to show up in my USSD.Initiate return
-> dictionary with the results that the network is giving us.  Not anything
-> that is cached by oFono.  Think of MMI codes as completely bypassing the
-> cache but oFono peeking at them to update its own properties.
-> =
-
-> It might be helpful to think of this as two caches.  The conditional
-> cache and the unconditional cache.  If the conditional values are
-> updated when CFU is on, then we should clear the conditional cache and
-> re-query them next time they are needed (e.g. when CFU is turned off)
-
-Hmm. I'm not sure if I follow. Current functionality works so that no
-matter if the conditional conditions are visible or not they are queried
-after update. Basically it works as before except states not shown
-anymore if unconditional is on. What you describe is chance for further
-optimization, not a bug or problem. =
-
-
-Please check out the new version of the patch. Maybe that clarifies the
-case little bit. =
-
-
-Br,
--Jussi
-
-
-
---===============2345084265642937945==--
+--===============8809024617478290888==--
 
