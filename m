@@ -1,324 +1,178 @@
-Content-Type: multipart/mixed; boundary="===============1044777889096963288=="
+Content-Type: multipart/mixed; boundary="===============7500817435127648702=="
 MIME-Version: 1.0
-From: Olivier Guiter <olivier.guiter@linux.intel.com>
-Subject: [PATCH] doc: Update BT HFP / Add Emulator AT command set
-Date: Thu, 17 Mar 2011 15:42:50 +0100
-Message-ID: <1300372970-3069-1-git-send-email-olivier.guiter@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RESEND 3 PATCH 00/13] IPv6 Support
+Date: Thu, 17 Mar 2011 09:53:54 -0500
+Message-ID: <4D822082.3070302@gmail.com>
+In-Reply-To: <CB0EE8641411214CBAFF8AEBB26ABCEC2D2145@008-AM1MPN1-007.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1044777889096963288==
+--===============7500817435127648702==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/dialup-command-set.txt |  252 ++++++++++++++++++++++++++++++++++++++--=
-----
- 1 files changed, 218 insertions(+), 34 deletions(-)
+Hi Mika,
 
-diff --git a/doc/dialup-command-set.txt b/doc/dialup-command-set.txt
-index a7a1df3..9d80170 100644
---- a/doc/dialup-command-set.txt
-+++ b/doc/dialup-command-set.txt
-@@ -1,45 +1,229 @@
--This document specifies the AT command set used in the bluetooth ofono plu=
-gins.
-+This document specifies the AT command supported in the AT Emulator and at=
-oms.
- =
+On 03/17/2011 03:58 AM, Mika.Liljeberg(a)nokia.com wrote:
+> Hi Denis, Marcel,
+> =
 
- Bluetooth Dial-up Networking Profile Features Description
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D
--(Ref. document: Dial-up Networking Profile - Bluetooth specification versi=
-on 1.1 - 22 February 2001)
-+(Ref. document: Dial-up Networking Profile - Bluetooth specification
-+	 version 1.1- 22 February 2001)
- =
+> I'll respond just once, since you both commented on pretty much the same =
+topics.
+> =
 
--- AT COMMAND SET USED:
-+- AT COMMAND set used:
- Commands:
--	&C	Circuit 109 (DCD) Control
--	&D	Circuit 108 (DTR) Response
--	&F	Set to Factory Defined Configuration
--	+GCAP	Request Complete Capabilities List
--	+GMI	Request Manufacturer Identification
--	+GMM	Read Model Identification
--	+GMR	Read Revision Identification
--	A	Answer Incoming Call
--	D	Dial
--	E	Command Echo
--	H	Hang Up
--	L	Monitor Speaker Loudness
--	M	Monitor Speaker Control
--	O	Return to Online Data Mode
--	P	Select Pulse Dialling
--	Q	Result Code Suppression
--	S0	Automatic Answer Control
--	S10	Automatic Disconnect Delay Control
--	S3	Command Line Termination Character
--	S4	Response Formatting Character
--	S5	Command Line Editing Character (BACKSPACE)
--	S6	Blind Dial Delay Control
--	S7	Connection Completion Timeout
--	S8	Comma Dial Modifier Delay Control
--	T	Select Tone Dialling
--	V	DCE Response Format
--	X	Call Progress Monitoring Control
--	Z	Reset to Default Configuration
-+	&C		Circuit 109 (DCD) Control
-+	&D		Circuit 108 (DTR) Response
-+	&F		Set to Factory Defined Configuration
-+	+GCAP		Request Complete Capabilities List
-+*	+GMI		Request Manufacturer Identification
-+*	+GMM		Read Model Identification
-+*	+GMR		Read Revision Identification
-+	A		Answer Incoming Call
-+	D		Dial
-+	E		Command Echo
-+	H		Hang Up
-+	L		Monitor Speaker Loudness
-+	M		Monitor Speaker Control
-+	O		Return to Online Data Mode
-+	P		Select Pulse Dialling
-+	Q		Result Code Suppression
-+	S0		Automatic Answer Control
-+	S10		Automatic Disconnect Delay Control
-+	S3		Command Line Termination Character
-+	S4		Response Formatting Character
-+	S5		Command Line Editing Character (BACKSPACE)
-+	S6		Blind Dial Delay Control
-+	S7		Connection Completion Timeout
-+	S8		Comma Dial Modifier Delay Control
-+	T		Select Tone Dialling
-+	V		DCE Response Format
-+	X		Call Progress Monitoring Control
-+	Z		Reset to Default Configuration
- Result codes:
- 	OK		Acknowledge execution of a command
- 	CONNECT		Connection has been established
--	RING		The DCE has detected an incoming call signal from network
--	NO CARRIER	The connection has been terminated, or attempt to establish
--			a connection failed
-+	RING		The DCE has detected an incoming call signal =
+>>> I notice that your version of the patches are not forming =
 
-+			from network
-+	NO CARRIER	The connection has been terminated, or attempt to
-+			establish a connection failed
- 	ERROR		Error
- 	NO DIALTONE	No dial-tone detected
- 	BUSY		Busy signal detected
-+
-+Bluetooth Hands-Free Profile Description
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D
-+(Ref. document: HFP1.5_SPEC (Car Working Group) - version V10r00 - 2005-11=
--25)
-+
-+- AT COMMAND set used:
-+Commands:
-+ 	D>		Extension of the standard ATD command, intended for
-+ 			memory dialing. Only voice calls are covered here
-+    	+CIND		Standard indicator update AT command.    	=
+>> the IPv6 link-local address and configuring it on the network =
 
-+
-+    	+NREC		Noise Reduction and Echo Canceling    	=
+>> interface. That's ok, as long as connman takes care of it, =
 
-+    	+VGM		Gain of Microphone    	=
+>> but it does mean that Ethernet interfaces, which always have =
 
-+    	+VGS		Gain of Speaker
-+    	+BINP		Bluetooth INPut    	=
+>> a link-local address, will autoconfigure immediately while =
 
-+    	+BLDN		Bluetooth Last Dialed Number    	=
+>> point-to-point interfaces will only autoconfigure when =
 
-+    	+BVRA		Bluetooth Voice Recognition Activation
-+    	+BRSF		Bluetooth Retrieve Supported Features    	=
+>> connman sets the link-local address on them. We talked about =
 
-+    	+BTRH		Bluetooth Response and Hold Feature    	=
+>> this with Marcel and at the time concluded that it would make =
 
-+*    	+CCWA		=
+>> more sense to keep things consistent by having oFono =
 
-+*    	+CHLD
-+*    	+CHUP
-+*    	+CLCC
-+*    	+COPS
-+*    	+CMEE
-+*    	+CLIP
-+*    	+CMER
-+*    	+VTS
-+*    	+CNUM		=
+>> configure the link-local address on the point-to-point =
 
-+(* : see below )
-+    	=
+>> interfaces. I had this implemented in my later patch sets.
+> =
 
-+Unsolicited result:
-+    	+CIEV
-+    	+BSIR		Bluetooth Setting of In-band Ring tone   	=
+> [Denis]
+>> Samuel felt strongly that this should be done by ConnMan.  =
 
-+Result codes:
-+	NO ANSWER
-+	DELAYED
-+	BLACKLISTED
-+  =
+>> There's still
+>> some questions left around this area.  Namely whether we =
 
-+AT commands supported in emulator:
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+    =
+>> should prevent
+>> auto-configuration or not, etc.
+> =
 
-+Call management:
-+----------------
-+	+CBST		Select bearer service type
-+	+CHLD		Standard call hold and multiparty handling AT command
-+	+CHUP		Hangup call
-+	+CMOD		Call mode
-+	+CPAS		Phone activity status
-+	+CVHU		Voice Hangup Control
-+	+CLIP		Calling line identification presentation
-+	+CNUM		Subscriber number
-+	+VTS		DTMF and tone generation
-+	+CACM		Accumulated Call Meter
-+	+COLP		Connected Line Identification Presentation
-+
-+Device:
-+--------
-+	+CBC		Battery charge
-+	+CBKLT		Backlight
-+	+CCLK		Clock
-+	+CSO		Command Screen Orientation
-+	+CPWROFF	Switch off MS
-+	+CPOS		Positioning Control
-+	+CSS		Command Screen Size
-+	+CGMI		Request manufacturer identification
-+	+CGMM		Request model identification
-+	+CGMR		Request revision identification
-+	+GMI		Request Manufacturer Identification
-+	+GMM		Request Model Identification
-+	+GMR		Request Revision Identification
-+	+CGSN		Request product serial number identification
-+	+CKPD		Keypad control
-+
-+General:
-+--------
-+	+CEER		Extended error report
-+	+CFUN		Set phone functionality
-+	+CGEQMIN	3G Quality of Service Profile (Minimum acceptable)
-+	+CLAC		List all available AT commands
-+	+CLCK		Facility lock
-+	+CMEC		Mobile Termination control mode
-+	+CMEC		Mobile Termination control mode
-+	+CMEE		Report Mobile Termination error
-+	+CMER		Mobile Termination event reporting
-+	+CPWD		Change password
-+	+CTSA		Command Touch Screen Action
-+	+CIMI		Request international mobile subscriber identity
-+	+FCLASS		Service Class Selection and Identification
-+
-+GPRS:
-+-----
-+	+CGACT		PDP context activate or deactivate
-+	+CGATT		PS attach or detach
-+	+CGCMOD		PDP Context Modify
-+	+CGDCONT	Define PDP Context
-+	+CGEQREQ	3G Quality of Service Profile (Requested)
-+	+CGQREQ		Quality of Service Profile (Requested)
-+	+CGREG		GPRS network registration status
-+	+CGDSCONT	Define Secondary PDP Context
-+	+CGDATA		Enter Data State
-+	+CGTFT		Traffic Flow Template
-+	+CGQMIN		Quality of Service Profile (Minimum Acceptable)
-+	+CGEQNEG	3G Quality of Service Profile (Negotiated) =
-
-+	+CGCMOD		PDP Context Modify
-+	+CGCLASS	GPRS Mobile Station Class
-+	+CGPADDR	Show PDP address
-+	+CGCLASS	GPRS Mobile Station Class
-+	+DR		Data Compression Reporting
-+	+DS		Data Compression
-+
-+Network:
-+--------
-+	*CNTI		Network RAT capabilities
-+	+COPS		PLMN selection
-+	+CPOL		Preferred PLMN list
-+	+CREG		Network registration
-+	+CSQ		Signal quality
-+	+CTZU		Automatic Time Zone Update
-+	+CTZR		Time Zone Reporting
-+
-+SIM:
-+----
-+	+CPBR		Read phonebook entries
-+	+CPBS		Select phonebook memory storage
-+	+CPBW		Write phonebook entry
-+	+CPBF		Find Phonebook Entries
-+	+CPIN		Enter PIN
-+	+CRSM		Restricted SIM access
-+	+CSIM		Generic SIM access
-+	+CUSD		Unstructured supplementary service data
-+	+CASIM		SIM Slot
-+	+CRES		Restore Settings (SMS)
-+	+CSAS		Save Settings  (SMS)
-+	+CCID		Request SIM Card Identification
-+
-+Supplementary Services:
-+-----------------------
-+	+CCFC		Call forwarding number and conditions
-+	+CCWA		Call waiting
-+	+CLCC		List current calls
-+	+CLIR		Calling line identification restriction
-+	+CSSN		Supplementary Service Notifications
-+
-+SMS:
-+----
-+	+CMTI		A GSM/GPRS modem or mobile phone uses +CMTI to notify =
-
-+			the computer / PC that a new SMS message has been =
-
-+			received and the memory location where it is stored.
-+	+CMT		A GSM/GPRS modem or mobile phone uses +CMT to forward
-+			a newly received SMS message to the computer / PC.
-+	+CGSMS		Select service for MO SMS messages
-+	+CMGF		Message Format
-+	+CMGS		Send Message
-+	+CSCA		Service Centre Address
-+	+CESP		Enter SMS Block Mode Protocol
-+	+CMGC		Send Command
-+	+CMGD		Delete Message
-+	+CMGL		List Messages
-+	+CMGR		Read Message
-+	+CMGW		Write Message to Memory
-+	+CMMS		More Messages to Send
-+	+CMSS		Send Message from Storage
-+	+CNMA		New Message Acknowledgement to ME/TA
-+	+CNMI		New Message Indications to TE
-+	+CPMS		Preferred Message Storage
-+	+CSCS	 	Select TE Character Set
-+	+CSCB		Select Cell Broadcast Message Types
-+	+CSDH		Show Text Mode Parameters
-+	+CSMP		Set Text Mode Parameters
-+	+CSMS		Select Message Service
-+
-+Debug:
-+------
-+	+TRACE		Switch Trace ON/OFF
-+
-+AGPS:
-+-----
-+	+CMOLR		Mobile Originated Location Request =
-
-+	+CCLRAD		Needed for clearing of old Assistance Data stored =
-
-+			for AGPS positioning
-+
--- =
-
-1.7.1
+> Disabling IPv6 stateless address would be a bold move indeed, since it is=
+ declared mandatory in both IETF and 3GPP standards. Please see [RFC4294] a=
+nd [3GPP 23.060]. The section "Dynamic IPv6 Address Allocation" in 23.060 i=
+s very clear on how IPv6 address allocation in 3GPPP networks is done. See =
+also the section about IPv6 prefix delegation (relevant to IPv6 tethering) =
+and applicable parts of 24.008.
+> =
 
 
---===============1044777889096963288==--
+This still needs to be figured out.  We are aware that autoconfiguration
+is mandatory in 3GPP.  However, this seems to be going against 27.007.
+So in the end both might be required.
+
+<snip>
+
+>>> 	void ofono_gprs_context_set_ipv6_prefix_length(struct =
+
+>> ofono_gprs_context *gc,
+>>>                                                 unsigned =
+
+>> char length);
+>>> 	void ofono_gprs_context_set_ipv6_gateway(struct =
+
+>> ofono_gprs_context *gc,
+>>>                                                 const char =
+
+>> *gateway);
+>>>
+>>> I'm not sure these are really needed, which is why I =
+
+>> dropped these from subsequent patches. This information is =
+
+>> not received from the cellular network as part of context =
+
+>> activation signalling. On-link prefixes, routes and default =
+
+>> gateways are received as part of the standard IPv6 stateless =
+
+>> address autoconfiguration when the interfaces is brought up. =
+
+>> The only reason to have these would if a specific modem with =
+
+>> a virtual ethernet interface deviates from the standard =
+
+>> address configuration practises for some reasons.
+>>
+> =
+
+> [Denis]
+>> At least the gateway is reported separately for IPv4 and =
+
+>> IPv6.  Refer to
+>> 27.007 Section 10.1.23 "PDP Context Read Dynamic Parameters".
+> =
+
+> [Marcel]
+>> The AT commands are pretty clear in that they give us actually a
+>> netmask.
+> =
+
+> True at first glance. However, please note the following:
+> =
+
+> 1) The netmask and gateway values returned here are invented by the modem=
+. They do not come from the network, because they are not carried anywhere =
+in the signalling messages related to PDP context activation. Stateless IPv=
+6 address autoconfiguration (potentially followed by DHCPv6) is the only wa=
+y to get the real information from the network.
+> =
+
+> 2) AT+CGPADDR and AT+CGCONTRDP were introduced in 3GPP rel8 and they are =
+both optional. I.e. pre-rel8 equipment does not have them and rel8+ equipme=
+nt is not required to have them. In particular, they are not required for a=
+ modem to be able to support IPv6, so you cannot rely on these commands bei=
+ng implemented in the modem.
+> =
+
+> 3) IPv6 stateless address autoconfiguration is mandatory in 3GPP standard=
+s, as well as in IETF standards. There's no two ways about it.
+> =
+
+> Granted, AT+CGPADDR and AT+GCCONTRDP may be useful for supporting some qu=
+irky modems, as already seen with IPv4 and virtual ethernet interfaces. Lac=
+king a concrete example for such a modem I don't see much point in adding t=
+hese methods yet, though.
+
+Optional means nothing in 3GPP 27.007, half that spec is marked as
+optional.  And I've already seen CGPADDR in the wild...
+
+As I mentioned before, it might be that the modem performs the
+autoconfiguration and DHCPv6 steps for us.  We might not even be able to
+turn this behavior off.  Re-running the autoconfiguration and DHCPv6 on
+the host side is a waste of time at that point.
+
+In the end oFono's philosophy is to always err on the side of 27.007.
+So far this strategy has never been (completely) wrong.
+
+<snip>
+
+> [Denis]
+>> However, you might be right and that 27.007 is not a good =
+
+>> reflection of
+>> reality.  This has happened before ;)
+> =
+
+> It is not. 27.007 is just an interface specification for modem vendords. =
+It does not specify the behaviour and protocols between a UE and the networ=
+k. You really need to look at 23.060 and 24.008. It will save you some hass=
+le in the future.
+>
+
+You're right of course, 27.007 is sometimes very far from the protocol.
+ Unfortunately oFono doesn't work with the core protocols, but with 27.007.
+
+Regards,
+-Denis
+
+--===============7500817435127648702==--
 
