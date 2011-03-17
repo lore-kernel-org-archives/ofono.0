@@ -1,33 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============2454753785715609506=="
+Content-Type: multipart/mixed; boundary="===============4456200002939081061=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 0/4] HFP: add call, callsetup indicators and +COPS support
-Date: Thu, 17 Mar 2011 17:50:52 +0100
-Message-ID: <1300380656-8757-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH 1/4] emulator: add defines for call and callsetup indicators
+Date: Thu, 17 Mar 2011 17:50:53 +0100
+Message-ID: <1300380656-8757-2-git-send-email-frederic.danis@linux.intel.com>
+In-Reply-To: <1300380656-8757-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2454753785715609506==
+--===============4456200002939081061==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-AT+COPS support needs to be in emulator as HFP plugin should answer requests
-even when oFono is not registered on network.
-
-Fr=C3=A9d=C3=A9ric Danis (4):
-  emulator: add defines for call and callsetup indicators
-  emulator: add call and callsetup indicators
-  emulator: add API to set network mode and name
-  emulator: add +COPS support
-
- include/emulator.h |   13 +++++++
- src/emulator.c     |   75 +++++++++++++++++++++++++++++++++++++++++++
- src/network.c      |   90 +++++++++++++++++++++++++++++++++++++++++++++++-=
 ---
- src/voicecall.c    |   86 +++++++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 257 insertions(+), 7 deletions(-)
+ include/emulator.h |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
+
+diff --git a/include/emulator.h b/include/emulator.h
+index 71b7c24..701decd 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -36,6 +36,14 @@ extern "C" {
+ #define OFONO_EMULATOR_IND_SERVICE "service"
+ #define OFONO_EMULATOR_IND_SIGNAL "signal"
+ =
+
++#define OFONO_EMULATOR_CALL_INACTIVE 0
++#define OFONO_EMULATOR_CALL_ACTIVE 1
++
++#define OFONO_EMULATOR_CALLSETUP_INACTIVE 0
++#define OFONO_EMULATOR_CALLSETUP_INCOMING 1
++#define OFONO_EMULATOR_CALLSETUP_OUTGOING 2
++#define OFONO_EMULATOR_CALLSETUP_ALERTING 3
++
+ struct ofono_emulator;
+ struct ofono_emulator_request;
+ =
+
+-- =
+
+1.7.1
 
 
---===============2454753785715609506==--
+--===============4456200002939081061==--
 
