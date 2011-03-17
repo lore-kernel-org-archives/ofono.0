@@ -1,24 +1,24 @@
-Content-Type: multipart/mixed; boundary="===============4670923403245494664=="
+Content-Type: multipart/mixed; boundary="===============9037611019136034716=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] CBMs are always fixed size, so improve PDU length check
-Date: Wed, 16 Mar 2011 21:30:38 -0500
-Message-ID: <4D81724E.1090208@gmail.com>
-In-Reply-To: <1300266766-14064-1-git-send-email-bertrand.aygon@intel.com>
+Subject: Re: [PATCH 1/1] stk: fix issue with Get Inkey variable timeout
+Date: Wed, 16 Mar 2011 21:36:51 -0500
+Message-ID: <4D8173C3.6060705@gmail.com>
+In-Reply-To: <1300298250-2205-2-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4670923403245494664==
+--===============9037611019136034716==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bertrand,
+Hi Jeevaka,
 
-On 03/16/2011 04:12 AM, Bertrand Aygon wrote:
+On 03/16/2011 12:57 PM, Jeevaka Badrappan wrote:
 > ---
->  drivers/atmodem/cbs.c |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
+>  src/stk.c |   28 ++++++++++++++++++++++++++--
+>  1 files changed, 26 insertions(+), 2 deletions(-)
 > =
 
 
@@ -27,5 +27,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============4670923403245494664==--
+--===============9037611019136034716==--
 
