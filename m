@@ -1,35 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============8592923609232744182=="
+Content-Type: multipart/mixed; boundary="===============0756606493217666530=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/1] Limits the send sms retry to network timeout
-Date: Thu, 17 Mar 2011 12:24:41 -0500
-Message-ID: <4D8243D9.8070809@gmail.com>
-In-Reply-To: <1300382431-4019-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@linux.intel.com>
+Subject: [PATCH v2 0/9] HSP profile implementation
+Date: Thu, 17 Mar 2011 19:55:39 +0100
+Message-ID: <1300388148-925-1-git-send-email-frederic.dalleau@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8592923609232744182==
+--===============0756606493217666530==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+This patch will start providing an HSP profile implementation
+in oFono. This is work in progress, and based of what was done for
+HFP profile. Finally added the audio connection, that will provide
+a base for discussion. To avoid emulator depend upon btio, there is
+a callback fom the emulator to the hsp plugin to connect audio,
 
-On 03/17/2011 12:20 PM, Jeevaka Badrappan wrote:
-> Hi,
-> =
+Some question remains :
 
->   If sending of SMS fails, then oFono core will try to resend it after
-> n * 5 seconds(n =3D retry count). Due to this, conformance test case
-> 27.22.8 sequence 1.4 fails(refer 31.124 spec). Plan is to limit the
-> failue codes for which the retry will be done. This patch allows the
-> retry if the failure is only due to network timeout. For all the other
-> failure cases, retry is not done.
+* How should pulse audio be notified?
+* What is the behavior of hsp when receiving CKPD=3D200?
 
-Patch has been applied, thanks.
+Next step will be to dial/hangup a call.
 
-Regards,
--Denis
+Fr=C3=A9d=C3=A9ric Dalleau (9):
+  bluetooth: add functions for sco connection
+  emulator: add hsp emulator type
+  hsp_ag: add hsp atom type
+  hsp_ag: Initial plugin commit
+  hsp_ag: add modem watch
+  emulator: add CKPD support
+  emulator: add audio connection API
+  emulator: implement audio connection API
+  hsp_ag: add audio connection support
 
---===============8592923609232744182==--
+ Makefile.am         |    3 +
+ include/emulator.h  |    8 ++
+ plugins/bluetooth.c |  122 +++++++++++++++++++++++++++++++
+ plugins/bluetooth.h |    7 ++
+ plugins/hsp_ag.c    |  200 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/emulator.c      |   50 +++++++++++++
+ src/ofono.h         |    1 +
+ 7 files changed, 391 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/hsp_ag.c
+
+
+--===============0756606493217666530==--
 
