@@ -1,24 +1,26 @@
-Content-Type: multipart/mixed; boundary="===============9037611019136034716=="
+Content-Type: multipart/mixed; boundary="===============1529960744570969370=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/1] stk: fix issue with Get Inkey variable timeout
-Date: Wed, 16 Mar 2011 21:36:51 -0500
-Message-ID: <4D8173C3.6060705@gmail.com>
-In-Reply-To: <1300298250-2205-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: Re: [PATCH] PPP: Switch ringbuffer.c to g_slice allocator
+Date: Wed, 16 Mar 2011 21:37:13 -0500
+Message-ID: <4D8173D9.6030108@gmail.com>
+In-Reply-To: <1300267463-4980-1-git-send-email-patrick.porlan@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9037611019136034716==
+--===============1529960744570969370==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi Patrick,
 
-On 03/16/2011 12:57 PM, Jeevaka Badrappan wrote:
+On 03/16/2011 04:24 AM, Patrick Porlan wrote:
+> This should allow for more efficient handling of equally sized
+> buffers, in terms of alignment and recycling.
 > ---
->  src/stk.c |   28 ++++++++++++++++++++++++++--
->  1 files changed, 26 insertions(+), 2 deletions(-)
+>  gatchat/ringbuffer.c |    8 ++++----
+>  1 files changed, 4 insertions(+), 4 deletions(-)
 > =
 
 
@@ -27,5 +29,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============9037611019136034716==--
+--===============1529960744570969370==--
 
