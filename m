@@ -1,75 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============4657810748818358767=="
+Content-Type: multipart/mixed; boundary="===============4504204751441606241=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@linux.intel.com>
-Subject: [PATCH v2 8/9] emulator: implement audio connection API
-Date: Thu, 17 Mar 2011 19:55:47 +0100
-Message-ID: <1300388148-925-9-git-send-email-frederic.dalleau@linux.intel.com>
+Subject: [PATCH v2 9/9] hsp_ag: add audio connection support
+Date: Thu, 17 Mar 2011 19:55:48 +0100
+Message-ID: <1300388148-925-10-git-send-email-frederic.dalleau@linux.intel.com>
 In-Reply-To: <1300388148-925-1-git-send-email-frederic.dalleau@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4657810748818358767==
+--===============4504204751441606241==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/emulator.c |   16 ++++++++++++++++
- 1 files changed, 16 insertions(+), 0 deletions(-)
+ plugins/hsp_ag.c |   27 +++++++++++++++++++++++++++
+ 1 files changed, 27 insertions(+), 0 deletions(-)
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 1d4fbc6..2f39599 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -49,6 +49,9 @@ struct ofono_emulator {
- 	int events_mode;
- 	gboolean events_ind;
- 	GSList *indicators;
-+	void *user_data;
-+	ofono_emulator_audio_conn_cb_t conn_cb;
-+	void *conn_user_data;
- };
+diff --git a/plugins/hsp_ag.c b/plugins/hsp_ag.c
+index 5a60269..73050aa 100644
+--- a/plugins/hsp_ag.c
++++ b/plugins/hsp_ag.c
+@@ -92,10 +92,30 @@ static const gchar *hsp_record =3D
+ " </attribute>\n"
+ "</record>\n";
  =
 
- struct indicator {
-@@ -390,6 +393,8 @@ fail:
- static void ckpd_cb(GAtServer *server, GAtServerRequestType type,
- 			GAtResult *result, gpointer user_data)
- {
-+	struct ofono_emulator *em =3D user_data;
-+
- 	switch (type) {
- 	case G_AT_SERVER_REQUEST_TYPE_SET:
- 	{
-@@ -404,6 +409,9 @@ static void ckpd_cb(GAtServer *server, GAtServerRequest=
-Type type,
- 		if (key !=3D 200)
- 			goto fail;
- =
-
-+		if(em->conn_cb !=3D NULL)
-+			em->conn_cb(em, em->conn_user_data);
-+
- 		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
- 		break;
- 	}
-@@ -734,3 +742,11 @@ void ofono_emulator_set_indicator(struct ofono_emulato=
-r *em,
- 		return;
- 	}
- }
-+
-+void ofono_emulator_set_audio_connect_handler(struct ofono_emulator *em,
-+					ofono_emulator_audio_conn_cb_t cb,
-+					void *user_data)
++static gboolean sco_unregister_cb(GIOChannel *channel,
++					GIOCondition cond, gpointer data)
 +{
-+	em->conn_cb =3D cb;
-+	em->conn_user_data =3D user_data;
++	struct sco *sco =3D data;
++
++	if (cond & (G_IO_NVAL | G_IO_ERR | G_IO_HUP)) {
++		sco_unregister_server(sco);
++		return FALSE;
++	}
++
++	return TRUE;
 +}
++
++static void audio_connect_cb(struct ofono_emulator *em, void *data)
++{
++	struct sco *sco =3D data;
++	sco_connect(sco);
++}
++
+ static void connect_cb(GIOChannel *channel, GError *err, gpointer data)
+ {	int fd;
+ 	struct ofono_emulator *em;
+ 	struct ofono_modem *modem;
++	struct sco *sco;
+ =
+
+ 	/* Pick the first powered modem */
+ 	modem =3D modems->data;
+@@ -110,6 +130,13 @@ static void connect_cb(GIOChannel *channel, GError *er=
+r, gpointer data)
+ 	ofono_emulator_register(em, fd);
+ =
+
+ 	g_io_channel_set_close_on_unref(channel, FALSE);
++
++	sco =3D sco_register_server(channel);
++
++	ofono_emulator_set_audio_connect_handler(em, audio_connect_cb, sco);
++
++	g_io_add_watch(channel,	G_IO_HUP | G_IO_ERR | G_IO_NVAL,
++						sco_unregister_cb, sco);
+ }
+ =
+
+ static void voicecall_watch(struct ofono_atom *atom,
 -- =
 
 1.7.1
 
 
---===============4657810748818358767==--
+--===============4504204751441606241==--
 
