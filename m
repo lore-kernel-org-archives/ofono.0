@@ -1,35 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============5998876922838504806=="
+Content-Type: multipart/mixed; boundary="===============1247950639252437151=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Adding Features
-Date: Thu, 17 Mar 2011 14:32:45 -0500
-Message-ID: <4D8261DD.3000104@gmail.com>
-In-Reply-To: <AANLkTikOCFE=s6L3vD6zDL0Cs8ngpyxVKXXQH8F+c6wN@mail.gmail.com>
+Subject: Re: [PATCH 3/6] gathdlc: add mechanism to detect ppp suspension from
+ DUN client.
+Date: Thu, 17 Mar 2011 15:13:50 -0500
+Message-ID: <4D826B7E.4020507@gmail.com>
+In-Reply-To: <1300180743-27624-4-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5998876922838504806==
+--===============1247950639252437151==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rishi,
+Hi Guillaume,
 
-On 03/16/2011 10:39 PM, Rishi Kumar wrote:
-> Hi,
-> =
+On 03/15/2011 04:19 AM, Guillaume Zajac wrote:
+> ---
+>  gatchat/gathdlc.c |   58 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 58 insertions(+), 0 deletions(-)
 
-> I have a simple question. How easy it is to add a new feature into
-> oFono say something like video telephony ???
-> =
+http://en.wikipedia.org/wiki/Time_Independent_Escape_Sequence
 
-
-Video Telephony is a pretty large task and would require significant
-effort.  I imagine it would be around C16 on our TODO list complexity
-scale ;)
+If you really want to do this, then lets do this properly, including the
+guard timeouts.
 
 Regards,
 -Denis
 
---===============5998876922838504806==--
+--===============1247950639252437151==--
 
