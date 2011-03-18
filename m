@@ -1,29 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============1110735974995947154=="
+Content-Type: multipart/mixed; boundary="===============2273386669244298741=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 00/12] doc: Add AT commands list to be supported in
- emulator
-Date: Fri, 18 Mar 2011 09:03:31 -0700
-Message-ID: <1300464211.2572.45.camel@aeonflux>
-In-Reply-To: <1300451458-6749-1-git-send-email-olivier.guiter@linux.intel.com>
+Subject: Re: [PATCH 11/12] doc: Add AT command for debugging purpose
+Date: Fri, 18 Mar 2011 09:04:05 -0700
+Message-ID: <1300464245.2572.46.camel@aeonflux>
+In-Reply-To: <1300451458-6749-12-git-send-email-olivier.guiter@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1110735974995947154==
+--===============2273386669244298741==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Olivier,
 
-> These patches only add a list of AT commands that should be added in
-> the emulator. This list is not only related to bluetooth stuff.
+> diff --git a/doc/dialup-command-set.txt b/doc/dialup-command-set.txt
+> index 97ff009..554707d 100644
+> --- a/doc/dialup-command-set.txt
+> +++ b/doc/dialup-command-set.txt
+> @@ -184,6 +184,7 @@ Device:
+>  	+GMR		Request Revision Identification
+>  	+CGSN		Request product serial number identification
+>  	+CKPD		Keypad control
+> +	+TRACE		Switch Trace ON/OFF
 
-Applying: doc: fix typo and incorrect line length
-/data/devel/ofono/.git/rebase-apply/patch:84: trailing whitespace.
-	RING		The DCE has detected an incoming call signal =
-
-fatal: 1 line adds whitespace errors.
+since this is not a standard AT command, I think we should leave it our
+for now.
 
 Regards
 
@@ -31,5 +34,5 @@ Marcel
 
 
 
---===============1110735974995947154==--
+--===============2273386669244298741==--
 
