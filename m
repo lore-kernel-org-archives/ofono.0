@@ -1,114 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============4189287467909727300=="
+Content-Type: multipart/mixed; boundary="===============8780576974378571497=="
 MIME-Version: 1.0
-From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: Re: [PATCH 08/12] gatchat: fix gatsyntax to support +CPOS
-Date: Fri, 18 Mar 2011 15:56:42 +0200
-Message-ID: <1300456602.9383.69.camel@poutijar-desktop>
-In-Reply-To: <4D82E55E.3050503@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 04/12] src: add gnss atom and agent implementation
+Date: Fri, 18 Mar 2011 09:38:59 -0500
+Message-ID: <4D836E83.8050104@gmail.com>
+In-Reply-To: <1300451830.9383.20.camel@poutijar-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4189287467909727300==
+--===============8780576974378571497==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Jarko,
 
-On Fri, 2011-03-18 at 06:53 +0200, Denis Kenzior wrote:
-> Hi Jarko,
+>>> +{
+>>> +     struct ofono_gnss *gnss =3D user_data;
+>>> +
+>>> +     gnss->default_agent =3D NULL;
+>>
+>> Since you're enabling CPOSR when an agent is registered, you have to
+>> also guard against the case of the application exiting.  Note that the
+>> agent can even exit while your CPOSR enable is in progress.  Have a peek
+>> at location-reporting.c for ideas on how Lucas solved this.
+>>
+> Not sure if I understood correctly what you're trying to say and
+> checking location-reporting.c didn't help but I can change the order in
+> which things are done i.e. I can create agent first and then enable
+> CPOSR. That way if the client dies we will know and can destroy the
+> agent.
 > =
 
-> On 03/11/2011 06:23 AM, Jarko Poutiainen wrote:
-> > ---
-> >  gatchat/gatsyntax.c |   19 +++++++++++++++++++
-> >  1 files changed, 19 insertions(+), 0 deletions(-)
-> > =
 
-> > diff --git a/gatchat/gatsyntax.c b/gatchat/gatsyntax.c
-> > index 2fc70b8..f1d896b 100644
-> > --- a/gatchat/gatsyntax.c
-> > +++ b/gatchat/gatsyntax.c
-> > @@ -64,6 +64,9 @@ static void gsmv1_hint(GAtSyntax *syntax, GAtSyntaxEx=
-pectHint hint)
-> >  	case G_AT_SYNTAX_EXPECT_MULTILINE:
-> >  		syntax->state =3D GSMV1_STATE_GUESS_MULTILINE_RESPONSE;
-> >  		break;
-> > +	case G_AT_SYNTAX_EXPECT_SHORT_PROMPT:
-> > +		syntax->state =3D GSMV1_STATE_PROMPT;
-> > +		break;
-> >  	default:
-> >  		break;
-> >  	};
-> > @@ -195,6 +198,13 @@ static GAtSyntaxResult gsmv1_feed(GAtSyntax *synta=
-x,
-> >  				i +=3D 1;
-> >  				res =3D G_AT_SYNTAX_RESULT_PROMPT;
-> >  				goto out;
-> > +			} else if (byte =3D=3D '\r')
-> > +				break;
-> > +			else if (byte =3D=3D '\n') {
-> > +				syntax->state =3D GSMV1_STATE_IDLE;
-> > +				i +=3D 1;
-> > +				res =3D G_AT_SYNTAX_RESULT_PROMPT;
-> > +				goto out;
-> =
+Basically what I'm seeing is that when the application calls:
 
-> Please just create a dedicated state for this one and don't hack the
-> PROMPT state.
-> =
+RegisterPositioningReportingAgent
 
-Ok, good point.
+you trigger CPOSR=3D1 to the modem and return a reply to the application
+in the CPOSR callback.
 
-> >  			}
-> >  =
+When the application unregisters the agent, you trigger CPOSR=3D0 to the
+modem and remove the agent in the callback.
 
-> >  			syntax->state =3D GSMV1_STATE_RESPONSE;
-> > @@ -239,6 +249,8 @@ static void gsm_permissive_hint(GAtSyntax *syntax, =
-GAtSyntaxExpectHint hint)
-> >  {
-> >  	if (hint =3D=3D G_AT_SYNTAX_EXPECT_PDU)
-> >  		syntax->state =3D GSM_PERMISSIVE_STATE_GUESS_PDU;
-> > +	else if (hint =3D=3D G_AT_SYNTAX_EXPECT_SHORT_PROMPT)
-> > +		syntax->state =3D GSM_PERMISSIVE_STATE_PROMPT;
-> >  }
-> >  =
+Now consider what happens if the application that registered the agent
+crashes or exits without unregistering the agent.  Your CPOSR reporting
+is still turned on, without anyone around to handle the request.
 
-> >  static GAtSyntaxResult gsm_permissive_feed(GAtSyntax *syntax,
-> > @@ -298,6 +310,13 @@ static GAtSyntaxResult gsm_permissive_feed(GAtSynt=
-ax *syntax,
-> >  				i +=3D 1;
-> >  				res =3D G_AT_SYNTAX_RESULT_PROMPT;
-> >  				goto out;
-> > +			} else if (byte =3D=3D '\r')
-> > +				break;
-> > +			else if (byte =3D=3D '\n') {
-> > +				syntax->state =3D GSM_PERMISSIVE_STATE_IDLE;
-> > +				i +=3D 1;
-> > +				res =3D G_AT_SYNTAX_RESULT_PROMPT;
-> > +				goto out;
-> =
+You can handle this in a couple of ways:
 
-> Same comment here, and man you better pray that your modem doesn't
-> insert unsolicited notifications between you sending a CPOSR and you
-> receiving a prompt ;)
-> =
+- Always turn on CPOSR in the driver and get rid of the
+set_position_reporting function.  Any requests going to the core with no
+agent registered go to /dev/null (since I don't see a CPOS 'abort' style
+functionality.
 
-Yep. Btw now that I think about it, shouldn't the patch that I proposed
-to ste.c help? I know it's ste specific solution but still..
+- Make sure that CPOSR is reset back to zero in both cases described above.
 
-> >  			}
-> >  =
+Regards,
+-Denis
 
-> >  			syntax->state =3D GSM_PERMISSIVE_STATE_RESPONSE;
-> =
-
-> Regards,
-> -Denis
-Br,
-Jarko
-
-
-
---===============4189287467909727300==--
+--===============8780576974378571497==--
 
