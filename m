@@ -1,39 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============7146263295681555099=="
+Content-Type: multipart/mixed; boundary="===============3061734456621489146=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 0/8] sms: Cancel pending message
-Date: Fri, 18 Mar 2011 18:32:20 -0500
-Message-ID: <4D83EB84.1090405@gmail.com>
-In-Reply-To: <1296848438-5584-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH] voicecall: allow pause to be sent through SendTones()
+Date: Fri, 18 Mar 2011 20:39:47 -0300
+Message-ID: <1300491587-1400-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7146263295681555099==
+--===============3061734456621489146==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+manager_tone() converts all tone chars to uppercase. Since everywhere we
+check for both 'p' and 'P' for a pause, tone_queue() should also check
+both before claiming the string is invalid.
+---
+ src/voicecall.c |    5 +++--
+ 1 files changed, 3 insertions(+), 2 deletions(-)
 
-On 02/04/2011 01:40 PM, Lucas De Marchi wrote:
-> In this version I fixed some issues pointed out by Andrzej and added anot=
-her
-> patch, not so related, but that would conflict with these ones if applied=
- to
-> current master branch. Difference from previous version:
-> =
+diff --git a/src/voicecall.c b/src/voicecall.c
+index cb5258d..4932ffa 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -287,8 +287,9 @@ static int tone_queue(struct ofono_voicecall *vc, const=
+ char *tone_str,
+ 	 */
+ 	for (i =3D 0; tone_str[i]; i++)
+ 		if (!g_ascii_isdigit(tone_str[i]) && tone_str[i] !=3D 'p' &&
+-				tone_str[i] !=3D '*' && tone_str[i] !=3D '#' &&
+-				(tone_str[i] < 'A' || tone_str[i] > 'D'))
++				tone_str[i] !=3D 'P' && tone_str[i] !=3D '*' &&
++				tone_str[i] !=3D '#' && (tone_str[i] < 'A' ||
++				tone_str[i] > 'D'))
+ 			return -EINVAL;
+ =
 
-> Tested with phonesim, slightly changing its plugin in oFono in order to h=
-old
-> messages for a certain period.
+ 	while ((entry =3D g_queue_peek_nth(vc->toneq, n++)) !=3D NULL)
+-- =
 
-I applied this series and slightly changed the API in the process.
-Thanks for doing this.
+1.7.4.1
 
-Can you have a quick look to make sure I didn't screw anything up?
 
-Regards,
--Denis
-
---===============7146263295681555099==--
+--===============3061734456621489146==--
 
