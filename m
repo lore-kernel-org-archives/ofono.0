@@ -1,58 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============2289719120870848757=="
+Content-Type: multipart/mixed; boundary="===============4628930706289838590=="
 MIME-Version: 1.0
 From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: Re: [PATCH 04/12] src: add gnss atom and agent implementation
-Date: Fri, 18 Mar 2011 14:37:10 +0200
-Message-ID: <1300451830.9383.20.camel@poutijar-desktop>
-In-Reply-To: <4D82E216.2030501@gmail.com>
+Subject: Re: [PATCH 09/12] atmodem: add gnss driver
+Date: Fri, 18 Mar 2011 14:50:32 +0200
+Message-ID: <1300452632.9383.33.camel@poutijar-desktop>
+In-Reply-To: <4D82E794.10703@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2289719120870848757==
+--===============4628930706289838590==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-On Fri, 2011-03-18 at 06:39 +0200, Denis Kenzior wrote:
-> Hi Jarko,
-> =
-
+On Fri, 2011-03-18 at 07:03 +0200, Denis Kenzior wrote:
 > On 03/11/2011 06:23 AM, Jarko Poutiainen wrote:
 > > ---
-> >  Makefile.am     |    3 +-
-> >  src/gnss.c      |  357 +++++++++++++++++++++++++++++++++++++++++++++++=
+> >  Makefile.am               |    3 +-
+> >  drivers/atmodem/atmodem.c |    2 +
+> >  drivers/atmodem/atmodem.h |    3 +
+> >  drivers/atmodem/gnss.c    |  279 +++++++++++++++++++++++++++++++++++++=
 ++++++++
-> >  src/gnssagent.c |  152 +++++++++++++++++++++++
-> >  src/gnssagent.h |   40 ++++++
-> >  4 files changed, 551 insertions(+), 1 deletions(-)
-> >  create mode 100644 src/gnss.c
-> >  create mode 100644 src/gnssagent.c
-> >  create mode 100644 src/gnssagent.h
-> >
+> >  4 files changed, 286 insertions(+), 1 deletions(-)
+> >  create mode 100644 drivers/atmodem/gnss.c
+> > =
+
 > > diff --git a/Makefile.am b/Makefile.am
-> > index 7d6acce..24742bb 100644
+> > index 24742bb..3dae7f4 100644
 > > --- a/Makefile.am
 > > +++ b/Makefile.am
-> > @@ -383,7 +383,8 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_s=
-ources) src/ofono.ver \
-> >                       src/smsagent.c src/smsagent.h src/ctm.c \
-> >                       src/cdma-voicecall.c src/sim-auth.c \
-> >                       src/message.h src/message.c src/gprs-provision.c \
-> > -                     src/emulator.c src/location-reporting.c
-> > +                     src/emulator.c src/location-reporting.c \
-> > +                     src/gnss.c src/gnssagent.c src/gnssagent.h
-> >
-> >  src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_=
-LIBS@ -ldl
-> >
-> > diff --git a/src/gnss.c b/src/gnss.c
+> > @@ -180,7 +180,8 @@ builtin_sources +=3D $(gatchat_sources) \
+> >  				drivers/atmodem/atutil.c \
+> >  				drivers/atmodem/gprs.c \
+> >  				drivers/atmodem/gprs-context.c \
+> > -				drivers/atmodem/sim-auth.c
+> > +				drivers/atmodem/sim-auth.c \
+> > +				drivers/atmodem/gnss.c
+> >  =
+
+> >  builtin_modules +=3D nwmodem
+> >  builtin_sources +=3D drivers/atmodem/atutil.h \
+> > diff --git a/drivers/atmodem/atmodem.c b/drivers/atmodem/atmodem.c
+> > index e140281..3093c23 100644
+> > --- a/drivers/atmodem/atmodem.c
+> > +++ b/drivers/atmodem/atmodem.c
+> > @@ -52,6 +52,7 @@ static int atmodem_init(void)
+> >  	at_gprs_init();
+> >  	at_gprs_context_init();
+> >  	at_sim_auth_init();
+> > +	at_gnss_init();
+> >  =
+
+> >  	return 0;
+> >  }
+> > @@ -76,6 +77,7 @@ static void atmodem_exit(void)
+> >  	at_call_volume_exit();
+> >  	at_gprs_exit();
+> >  	at_gprs_context_exit();
+> > +	at_gnss_exit();
+> >  }
+> >  =
+
+> >  OFONO_PLUGIN_DEFINE(atmodem, "AT modem driver", VERSION,
+> > diff --git a/drivers/atmodem/atmodem.h b/drivers/atmodem/atmodem.h
+> > index 1b7cf67..1a73b84 100644
+> > --- a/drivers/atmodem/atmodem.h
+> > +++ b/drivers/atmodem/atmodem.h
+> > @@ -74,3 +74,6 @@ extern void at_gprs_context_exit(void);
+> >  =
+
+> >  extern void at_sim_auth_init(void);
+> >  extern void at_sim_auth_exit(void);
+> > +
+> > +extern void at_gnss_init(void);
+> > +extern void at_gnss_exit(void);
+> > diff --git a/drivers/atmodem/gnss.c b/drivers/atmodem/gnss.c
 > > new file mode 100644
-> > index 0000000..02f9057
+> > index 0000000..c1b1de3
 > > --- /dev/null
-> > +++ b/src/gnss.c
-> > @@ -0,0 +1,357 @@
+> > +++ b/drivers/atmodem/gnss.c
+> > @@ -0,0 +1,279 @@
 > > +/*
 > > + *
 > > + *  oFono - Open Source Telephony
@@ -83,408 +112,315 @@ fy
 > > +
 > > +#define _GNU_SOURCE
 > > +#include <string.h>
-> > +#include <stdio.h>
 > > +#include <stdlib.h>
-> > +#include <stdint.h>
-> > +
-> > +#include <glib.h>
-> > +#include <gdbus.h>
+> > +#include <stdio.h>
 > > +#include <errno.h>
 > > +
-> > +#include "ofono.h"
+> > +#include <glib.h>
 > > +
-> > +#include "common.h"
-> > +#include "gnssagent.h"
+> > +#include <ofono/log.h>
+> > +#include <ofono/modem.h>
+> > +#include <ofono/gnss.h>
 > > +
-> > +static GSList *g_drivers =3D NULL;
+> > +#include "gatchat.h"
+> > +#include "gatresult.h"
 > > +
-> > +struct ofono_gnss {
-> > +     const struct ofono_gnss_driver *driver;
-> > +     void *driver_data;
-> > +     struct ofono_atom *atom;
-> > +     DBusMessage *pending;
-> > +     struct gnss_agent *default_agent;
-> =
-
-> Why is this called default_agent? posr_agent might be a better name
-> =
-
-Good point. I will change that. Wasn't sure how I should implement this
-at first and later just forgot to change the name =
-
-
+> > +#include "atmodem.h"
+> > +#include "vendor.h"
+> > +
+> > +struct gnss_data {
+> > +	GAtChat *chat;
+> > +	unsigned int vendor;
 > > +};
 > > +
-> > +static void gnss_register_agent_cb(const struct ofono_error *error,
-> > +                                     void *data)
+> > +static const char *none_prefix[] =3D { NULL };
+> > +static const char *cpos_prefix[] =3D { "+CPOS:", NULL };
+> > +static const char *cposr_prefix[] =3D { "+CPOSR:", NULL };
+> > +
+> > +static void gnsspr_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
 > > +{
-> > +     DBusMessage *reply;
-> > +     struct ofono_gnss *gnss =3D data;
+> > +	struct cb_data *cbd =3D user_data;
+> > +	ofono_gnss_position_report_cb_t cb =3D cbd->cb;
 > > +
-> > +     DBG("");
+> > +	DBG("");
 > > +
-> > +     if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-> > +             ofono_error("Enabling Location Reporting Failed");
-> > +             reply =3D __ofono_error_failed(gnss->pending);
-> > +             gnss_agent_free(gnss->default_agent);
-> > +             __ofono_dbus_pending_reply(&gnss->pending, reply);
-> > +             return;
-> > +     }
-> > +
-> > +     reply =3D dbus_message_new_method_return(gnss->pending);
-> > +     __ofono_dbus_pending_reply(&gnss->pending, reply);
-> > +}
-> > +
-> > +static void default_agent_notify(gpointer user_data)
+> > +	if (ok)
+> > +		CALLBACK_WITH_SUCCESS(cb, cbd->data);
+> > +	else
+> > +		CALLBACK_WITH_FAILURE(cb, cbd->data);
 > =
 
-> Why is this called default_agent_notify?  Can you have multiple agents?
-> If not, then agent_notify is sufficient.
+> As a general habit, please use at_util_decode_error instead of using
+> these macros.  This leads to simpler code as well
 > =
 
-No. At least I don't see a need.
-
-> > +{
-> > +     struct ofono_gnss *gnss =3D user_data;
-> > +
-> > +     gnss->default_agent =3D NULL;
-> =
-
-> Since you're enabling CPOSR when an agent is registered, you have to
-> also guard against the case of the application exiting.  Note that the
-> agent can even exit while your CPOSR enable is in progress.  Have a peek
-> at location-reporting.c for ideas on how Lucas solved this.
-> =
-
-Not sure if I understood correctly what you're trying to say and
-checking location-reporting.c didn't help but I can change the order in
-which things are done i.e. I can create agent first and then enable
-CPOSR. That way if the client dies we will know and can destroy the
-agent.
+Thanks I will do that
 
 > > +}
 > > +
-> > +static DBusMessage *gnss_register_agent(DBusConnection *conn,
-> > +                                     DBusMessage *msg, void *data)
+> > +static void at_gnss_position_reporting(struct ofono_gnss *gnss,
+> > +					ofono_bool_t enable,
+> > +					ofono_gnss_position_report_cb_t cb,
+> > +					void *data)
 > > +{
-> > +     struct ofono_gnss *gnss =3D data;
-> > +     const char *agent_path;
+> > +	struct gnss_data *ad =3D ofono_gnss_get_data(gnss);
+> > +	struct cb_data *cbd =3D cb_data_new(cb, data);
 > > +
-> > +     if (gnss->pending)
-> > +             return __ofono_error_busy(msg);
+> > +	DBG("");
 > > +
-> > +     if (gnss->default_agent)
-> > +             return __ofono_error_busy(msg);
+> > +	if (enable) {
+> > +		g_at_chat_send(ad->chat, "AT+CPOSR=3D1",
+> > +				cposr_prefix, gnsspr_cb, cbd, g_free);
 > > +
-> > +     if (dbus_message_get_args(msg, NULL, DBUS_TYPE_OBJECT_PATH,
-> > +                               &agent_path, DBUS_TYPE_INVALID) =3D=3D =
-FALSE)
-> =
-
-> Please don't mix spaces and tabs for indentation, always use tabs
-> =
-
-Sorry
-
-> > +             return __ofono_error_invalid_args(msg);
+> > +		if (ad->vendor =3D=3D OFONO_VENDOR_STE)
+> > +			g_at_chat_send(ad->chat, "AT*EPOSADRR=3D1",
+> > +					NULL, NULL, NULL, NULL);
+> > +	} else {
+> > +		g_at_chat_send(ad->chat, "AT+CPOSR=3D0",
+> > +				cposr_prefix, gnsspr_cb, cbd, g_free);
 > > +
-> > +     if (!__ofono_dbus_valid_object_path(agent_path))
-> > +             return __ofono_error_invalid_format(msg);
-> > +
-> > +     gnss->driver->position_reporting(gnss, 1, gnss_register_agent_cb,=
- gnss);
-> =
-
-> Please use TRUE instead of 1 here
-> =
-
-Thanks, I missed that one.
-
-> > +
-> > +     gnss->default_agent =3D gnss_agent_new(agent_path,
-> > +                                     dbus_message_get_sender(msg),
-> > +                                     FALSE);
-> > +
-> > +     if (gnss->default_agent =3D=3D NULL)
-> > +             return __ofono_error_failed(msg);
-> > +
-> > +     gnss_agent_set_removed_notify(gnss->default_agent,
-> > +                                     default_agent_notify, gnss);
-> > +
-> > +     gnss->pending =3D dbus_message_ref(msg);
-> > +
-> > +     return NULL;
+> > +		if (ad->vendor =3D=3D OFONO_VENDOR_STE)
+> > +			g_at_chat_send(ad->chat, "AT*EPOSADRR=3D0",
+> > +					NULL, NULL, NULL, NULL);
+> > +	}
 > > +}
 > > +
-> > +static void gnss_unregister_agent_cb(const struct ofono_error *error,
-> > +                                     void *data)
+> > +static void gnssse_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
 > > +{
-> > +     DBusMessage *reply;
-> > +     struct ofono_gnss *gnss =3D data;
+> > +	struct cb_data *cbd =3D user_data;
+> > +	ofono_gnss_send_element_cb_t cb =3D cbd->cb;
 > > +
-> > +     DBG("");
+> > +	DBG("");
 > > +
-> > +     if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-> > +             ofono_error("Disabling Location Reporting Failed");
-> > +             reply =3D __ofono_error_failed(gnss->pending);
-> > +             goto out;
-> > +     }
-> > +
-> > +     gnss_agent_free(gnss->default_agent);
-> > +
-> > +     if (gnss->default_agent) {
-> > +             ofono_error("Releasing agent failed");
-> > +             reply =3D __ofono_error_failed(gnss->pending);
-> > +             goto out;
-> > +     }
-> > +
-> > +     reply =3D dbus_message_new_method_return(gnss->pending);
-> > +
-> > +out:
-> > +     __ofono_dbus_pending_reply(&gnss->pending, reply);
-> > +}
-> > +
-> > +static DBusMessage *gnss_unregister_agent(DBusConnection *conn,
-> > +                                             DBusMessage *msg, void *d=
-ata)
-> > +{
-> > +     struct ofono_gnss *gnss =3D data;
-> > +     const char *agent_path;
-> > +     const char *agent_bus =3D dbus_message_get_sender(msg);
-> > +
-> > +     if (gnss->pending)
-> > +             return __ofono_error_busy(msg);
-> > +
-> > +     if (dbus_message_get_args(msg, NULL,
-> > +                                     DBUS_TYPE_OBJECT_PATH, &agent_pat=
-h,
-> > +                                     DBUS_TYPE_INVALID) =3D=3D FALSE)
-> > +             return __ofono_error_invalid_args(msg);
-> > +
-> > +     if (gnss->default_agent =3D=3D NULL)
-> > +             return __ofono_error_failed(msg);
-> > +
-> > +     if (!gnss_agent_matches(gnss->default_agent, agent_path, agent_bu=
-s))
-> > +             return __ofono_error_failed(msg);
-> > +
-> > +     gnss->pending =3D dbus_message_ref(msg);
-> > +
-> > +     gnss->driver->position_reporting(gnss, 0, gnss_unregister_agent_c=
-b,
+> > +	if (ok)
+> > +		CALLBACK_WITH_SUCCESS(cb, cbd->data);
+> > +	else
+> > +		CALLBACK_WITH_FAILURE(cb, cbd->data);
 > =
 
-> Please use FALSE here
+> Again, please use at_util_decode_error here
+> =
+
+Ok
+
+> > +}
+> > +
+> > +static void at_gnss_send_element(struct ofono_gnss *gnss,
+> > +				const char *xml,
+> > +				ofono_gnss_send_element_cb_t cb, void *data)
+> > +{
+> > +	struct gnss_data *ad =3D ofono_gnss_get_data(gnss);
+> > +	struct cb_data *cbd =3D cb_data_new(cb, data);
+> > +	char *buf =3D g_try_new(char, strlen(xml) + 10);
+> > +	int len;
+> > +
+> > +	DBG("");
+> > +
+> > +	if (buf =3D=3D NULL)
+> > +		goto error;
+> > +
+> > +	len =3D sprintf(buf, "AT+CPOS\r");
+> > +	len +=3D sprintf(buf + len, "%s", xml);
+> > +
+> > +	if (g_at_chat_send_and_expect_short_prompt(ad->chat, buf, cpos_prefix,
+> > +							gnssse_cb, cbd,
+> > +							g_free) > 0) {
+> > +		g_free(buf);
+> > +		return;
+> > +	}
+> =
+
+> Please add an empty line here
 > =
 
 Sorry about that.
 
-> > +                                             gnss);
+> > +error:
+> > +	g_free(buf);
+> > +	g_free(cbd);
 > > +
-> > +     return NULL;
+> > +	CALLBACK_WITH_FAILURE(cb, data);
 > > +}
 > > +
-> > +static void gnss_send_element_cb(const struct ofono_error *error,
-> > +                             void *data)
+> > +static gboolean gnss_parse_report(GAtResult *result, const char *prefi=
+x,
+> > +					const char **xml)
 > > +{
-> > +     DBusMessage *reply;
-> > +     struct ofono_gnss *gnss =3D data;
+> > +	GAtResultIter iter;
 > > +
-> > +     DBG("");
+> > +	g_at_result_iter_init(&iter, result);
 > > +
-> > +     if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-> > +             ofono_error("Sending Positioning Element failed");
+> > +	if (!g_at_result_iter_next(&iter, prefix))
+> > +		return FALSE;
 > > +
-> > +             reply =3D __ofono_error_failed(gnss->pending);
+> > +	if (!g_at_result_iter_next_unquoted_string(&iter, xml))
+> > +		return FALSE;
 > > +
-> > +             goto out;
-> > +     }
-> > +
-> > +     reply =3D dbus_message_new_method_return(gnss->pending);
-> > +
-> > +out:
-> > +     __ofono_dbus_pending_reply(&gnss->pending, reply);
-> > +}
-> > +
-> > +static DBusMessage *gnss_send_element(DBusConnection *conn,
-> > +                                     DBusMessage *msg, void *data)
-> > +{
-> > +     struct ofono_gnss *gnss =3D data;
-> > +     const char *xml;
-> > +
-> > +     DBG("");
-> > +
-> > +     if (gnss->pending)
-> > +             return __ofono_error_busy(msg);
-> > +
-> > +     if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &xml,
-> > +                                     DBUS_TYPE_INVALID))
-> > +             return __ofono_error_invalid_args(msg);
-> > +
-> > +     gnss->pending =3D dbus_message_ref(msg);
-> > +
+> > +	return TRUE;
 > =
 
-> Please make sure that only the application which has registered the
-> agent can use this method and return AccessDenied otherwise.
+> Do you really need a separate function?  This might belong in gnss_report
 > =
 
-Thanks that's a good point.
+I just thought that it would be more logical to have separate function
+to parse the result rather than putting it all in to same function. Is
+that a big deal or do you want me to change that?
 
-> > +     gnss->driver->send_element(gnss, xml, gnss_send_element_cb, gnss);
-> > +
-> > +     return NULL;
 > > +}
 > > +
-> > +static GDBusMethodTable gnss_methods[] =3D {
-> > +     { "SendPositioningElement",             "s",    "",
-> > +                             gnss_send_element, G_DBUS_METHOD_FLAG_ASY=
-NC },
-> > +     { "RegisterPositioningRequestAgent",    "o",    "",
-> > +                             gnss_register_agent,
-> > +                             G_DBUS_METHOD_FLAG_ASYNC },
-> > +     { "UnregisterPositioningRequestAgent",  "o",    "",
-> > +                             gnss_unregister_agent,
-> > +                             G_DBUS_METHOD_FLAG_ASYNC },
-> > +     { }
+> > +static void gnss_report(GAtResult *result, gpointer user_data)
+> > +{
+> > +	struct ofono_gnss *gnss =3D user_data;
+> > +	const char *xml;
+> > +
+> > +	DBG("");
+> > +
+> > +	xml =3D NULL;
+> > +	if (!gnss_parse_report(result, "+CPOSR:", &xml)) {
+> > +		ofono_error("Unable to parse CPOSR notification");
+> > +		return;
+> > +	}
+> > +
+> > +	if (xml =3D=3D NULL) {
+> > +		ofono_error("Unable to parse CPOSR notification");
+> > +		return;
+> > +	}
+> > +
+> > +	ofono_gnss_receive_request(gnss, xml);
+> > +}
+> > +
+> > +static void at_gnssreset_cb(GAtResult *result, gpointer user_data)
+> =
+
+> Since this is a notification, please call this gnssreset_notify
+> =
+
+Ok, good point and in fact I'll change it to gnss_reset_notify to be
+consistent with naming.
+
+> > +{
+> > +	struct ofono_gnss *gnss =3D user_data;
+> > +
+> > +	DBG("");
+> > +
+> > +	ofono_gnss_receive_reset(gnss);
+> > +}
+> > +
+> > +static void at_gnss_not_supported(struct ofono_gnss *gnss)
+> > +{
+> > +	ofono_error("gnss not supported by this modem.");
+> > +
+> > +	ofono_gnss_remove(gnss);
+> > +}
+> > +
+> > +static void at_gnsscposr_cb(gboolean ok, GAtResult *result, gpointer u=
+ser_data)
+> > +{
+> > +	struct ofono_gnss *gnss =3D user_data;
+> > +	struct gnss_data *ad =3D ofono_gnss_get_data(gnss);
+> > +
+> > +	DBG("");
+> > +
+> > +	if (!ok) {
+> > +		at_gnss_not_supported(gnss);
+> > +		return;
+> > +	}
+> > +
+> > +	g_at_chat_register(ad->chat, "+CPOSR:", gnss_report,
+> > +				FALSE, gnss, NULL);
+> > +
+> > +	if (ad->vendor =3D=3D OFONO_VENDOR_STE)
+> > +		g_at_chat_register(ad->chat, "*EPOSADRR:", at_gnssreset_cb,
+> > +					FALSE, gnss, NULL);
+> > +
+> > +	ofono_gnss_register(gnss);
+> > +}
+> > +
+> > +static void at_gnsscpos_cb(gboolean ok, GAtResult *result, gpointer us=
+er_data)
+> =
+
+> This might be better called at_gnss_cpos_support_cb
+> =
+
+Ok I'll change that.
+
+> > +{
+> > +	struct ofono_gnss *gnss =3D user_data;
+> > +	struct gnss_data *ad =3D ofono_gnss_get_data(gnss);
+> > +
+> > +	DBG("");
+> > +
+> > +	if (!ok) {
+> > +		at_gnss_not_supported(gnss);
+> > +		return;
+> > +	}
+> > +
+> > +	g_at_chat_send(ad->chat, "AT+CPOSR=3D?",
+> > +			none_prefix, at_gnsscposr_cb, gnss, NULL);
+> =
+
+> And this one at_gnss_cposr_support_cb
+> =
+
+Ok.
+
+> > +}
+> > +
+> > +static int at_gnss_probe(struct ofono_gnss *gnss, unsigned int vendor,
+> > +				void *user)
+> > +{
+> > +	GAtChat *chat =3D user;
+> > +	struct gnss_data *gd;
+> > +
+> > +	DBG("");
+> > +
+> > +	gd =3D g_try_new0(struct gnss_data, 1);
+> > +	if (gd =3D=3D NULL)
+> > +		return -ENOMEM;
+> > +
+> > +	gd->chat =3D g_at_chat_clone(chat);
+> > +	gd->vendor =3D vendor;
+> > +
+> > +	ofono_gnss_set_data(gnss, gd);
+> > +
+> > +	g_at_chat_send(gd->chat, "AT+CPOS=3D?",
+> > +			none_prefix, at_gnsscpos_cb, gnss, NULL);
+> > +
+> > +	return 0;
+> > +}
+> > +
+> > +static void at_gnss_remove(struct ofono_gnss *gnss)
+> > +{
+> > +	struct gnss_data *gd =3D ofono_gnss_get_data(gnss);
+> > +
+> > +	DBG("");
+> > +
+> > +	ofono_gnss_set_data(gnss, NULL);
+> > +
+> > +	g_at_chat_unref(gd->chat);
+> > +	g_free(gd);
+> > +}
+> > +
+> > +static struct ofono_gnss_driver driver =3D {
+> > +	.name			=3D "atmodem",
+> > +	.probe			=3D at_gnss_probe,
+> > +	.remove			=3D at_gnss_remove,
+> > +	.send_element		=3D at_gnss_send_element,
+> > +	.position_reporting	=3D at_gnss_position_reporting,
 > > +};
 > > +
-> > +static void gnss_unregister(struct ofono_atom *atom)
+> > +void at_gnss_init(void)
 > > +{
-> > +     struct ofono_gnss *gnss =3D __ofono_atom_get_data(atom);
-> > +     DBusConnection *conn =3D ofono_dbus_get_connection();
-> > +     struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
-> > +     const char *path =3D __ofono_atom_get_path(atom);
-> > +
-> > +     if (gnss->default_agent)
-> > +             gnss_agent_free(gnss->default_agent);
-> > +
-> > +     ofono_modem_remove_interface(modem, OFONO_AS_NAVIGATION_INTERFACE=
-);
-> > +     g_dbus_unregister_interface(conn, path, OFONO_AS_NAVIGATION_INTER=
-FACE);
+> > +	ofono_gnss_driver_register(&driver);
 > > +}
 > > +
-> > +static void gnss_remove(struct ofono_atom *atom)
+> > +void at_gnss_exit(void)
 > > +{
-> > +     struct ofono_gnss *gnss =3D __ofono_atom_get_data(atom);
-> > +
-> > +     DBG("atom: %p", atom);
-> > +
-> > +     if (gnss =3D=3D NULL)
-> > +             return;
-> > +
-> > +     if (gnss->driver && gnss->driver->remove)
-> > +             gnss->driver->remove(gnss);
-> > +
-> > +     g_free(gnss);
+> > +	ofono_gnss_driver_unregister(&driver);
 > > +}
-> > +
-> > +void ofono_gnss_register(struct ofono_gnss *gnss)
-> > +{
-> > +     DBusConnection *conn =3D ofono_dbus_get_connection();
-> > +     struct ofono_modem *modem =3D __ofono_atom_get_modem(gnss->atom);
-> > +     const char *path =3D __ofono_atom_get_path(gnss->atom);
-> > +
-> > +     if (!g_dbus_register_interface(conn, path,
-> > +                                     OFONO_AS_NAVIGATION_INTERFACE,
-> > +                                     gnss_methods, NULL, NULL,
-> > +                                     gnss, NULL)) {
-> > +             ofono_error("Could not create %s interface",
-> > +                             OFONO_AS_NAVIGATION_INTERFACE);
-> > +
-> > +             return;
-> > +     }
-> > +
-> > +     ofono_modem_add_interface(modem, OFONO_AS_NAVIGATION_INTERFACE);
-> > +
-> > +     __ofono_atom_register(gnss->atom, gnss_unregister);
-> > +}
-> > +
-> > +int ofono_gnss_driver_register(const struct ofono_gnss_driver *d)
-> > +{
-> > +     DBG("driver: %p, name: %s", d, d->name);
-> > +
-> > +     if (d->probe =3D=3D NULL)
-> > +             return -EINVAL;
-> > +
-> > +     g_drivers =3D g_slist_prepend(g_drivers, (void *) d);
-> > +
-> > +     return 0;
-> > +}
-> > +
-> > +void ofono_gnss_driver_unregister(const struct ofono_gnss_driver *d)
-> > +{
-> > +     DBG("driver: %p, name: %s", d, d->name);
-> > +
-> > +     g_drivers =3D g_slist_remove(g_drivers, (void *) d);
-> > +}
-> > +
-> > +struct ofono_gnss *ofono_gnss_create(struct ofono_modem *modem,
-> > +                                     unsigned int vendor,
-> > +                                     const char *driver,
-> > +                                     void *data)
-> > +{
-> > +     struct ofono_gnss *gnss;
-> > +     GSList *l;
-> > +
-> > +     if (driver =3D=3D NULL)
-> > +             return NULL;
-> > +
-> > +     gnss =3D g_try_new0(struct ofono_gnss, 1);
-> > +
-> > +     if (gnss =3D=3D NULL)
-> > +             return NULL;
-> > +
-> > +     gnss->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_GNSS,
-> > +                                             gnss_remove, gnss);
-> > +
-> > +     for (l =3D g_drivers; l; l =3D l->next) {
-> > +             const struct ofono_gnss_driver *drv =3D l->data;
-> > +
-> > +             if (g_strcmp0(drv->name, driver))
-> > +                     continue;
-> > +
-> > +             if (drv->probe(gnss, vendor, data) < 0)
-> > +                     continue;
-> > +
-> > +             gnss->driver =3D drv;
-> > +             break;
-> > +     }
-> > +
-> > +     return gnss;
-> > +}
-> > +
-> > +void ofono_gnss_receive_request(struct ofono_gnss *gnss, const char *x=
-ml)
-> > +{
-> > +     if (gnss->default_agent)
-> > +             gnss_agent_receive_request(gnss->default_agent, xml);
-> > +}
-> > +
-> > +void ofono_gnss_receive_reset(struct ofono_gnss *gnss)
-> > +{
-> > +     if (gnss->default_agent)
-> > +             gnss_agent_receive_reset(gnss->default_agent);
-> > +}
-> > +
-> > +void ofono_gnss_remove(struct ofono_gnss *gnss)
-> > +{
-> > +     __ofono_atom_free(gnss->atom);
-> > +}
-> > +
-> > +void ofono_gnss_set_data(struct ofono_gnss *gnss, void *data)
-> > +{
-> > +     gnss->driver_data =3D data;
-> > +}
-> > +
-> > +void *ofono_gnss_get_data(struct ofono_gnss *gnss)
-> > +{
-> > +     return gnss->driver_data;
-> > +}
-> =
-
-> <snip>
 > =
 
 > Regards,
@@ -494,5 +430,5 @@ Jarko
 
 
 
---===============2289719120870848757==--
+--===============4628930706289838590==--
 
