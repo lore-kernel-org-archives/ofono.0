@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0372363462095452994=="
+Content-Type: multipart/mixed; boundary="===============5742237615209512415=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 07/12] gatchat: implementation for +CPOS send
-Date: Thu, 17 Mar 2011 23:42:23 -0500
-Message-ID: <4D82E2AF.4060901@gmail.com>
-In-Reply-To: <1299846189-15132-8-git-send-email-jarko.poutiainen@tieto.com>
+Subject: Re: [PATCH 08/12] gatchat: fix gatsyntax to support +CPOS
+Date: Thu, 17 Mar 2011 23:53:50 -0500
+Message-ID: <4D82E55E.3050503@gmail.com>
+In-Reply-To: <1299846189-15132-9-git-send-email-jarko.poutiainen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0372363462095452994==
+--===============5742237615209512415==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,47 +17,79 @@ Hi Jarko,
 
 On 03/11/2011 06:23 AM, Jarko Poutiainen wrote:
 > ---
->  gatchat/gatchat.c |   13 +++++++++++++
->  1 files changed, 13 insertions(+), 0 deletions(-)
+>  gatchat/gatsyntax.c |   19 +++++++++++++++++++
+>  1 files changed, 19 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
-> index 3fd564d..64f131d 100644
-> --- a/gatchat/gatchat.c
-> +++ b/gatchat/gatchat.c
-> @@ -1468,6 +1468,19 @@ guint g_at_chat_send_pdu_listing(GAtChat *chat, co=
-nst char *cmd,
->  					listing, func, user_data, notify);
+> diff --git a/gatchat/gatsyntax.c b/gatchat/gatsyntax.c
+> index 2fc70b8..f1d896b 100644
+> --- a/gatchat/gatsyntax.c
+> +++ b/gatchat/gatsyntax.c
+> @@ -64,6 +64,9 @@ static void gsmv1_hint(GAtSyntax *syntax, GAtSyntaxExpe=
+ctHint hint)
+>  	case G_AT_SYNTAX_EXPECT_MULTILINE:
+>  		syntax->state =3D GSMV1_STATE_GUESS_MULTILINE_RESPONSE;
+>  		break;
+> +	case G_AT_SYNTAX_EXPECT_SHORT_PROMPT:
+> +		syntax->state =3D GSMV1_STATE_PROMPT;
+> +		break;
+>  	default:
+>  		break;
+>  	};
+> @@ -195,6 +198,13 @@ static GAtSyntaxResult gsmv1_feed(GAtSyntax *syntax,
+>  				i +=3D 1;
+>  				res =3D G_AT_SYNTAX_RESULT_PROMPT;
+>  				goto out;
+> +			} else if (byte =3D=3D '\r')
+> +				break;
+> +			else if (byte =3D=3D '\n') {
+> +				syntax->state =3D GSMV1_STATE_IDLE;
+> +				i +=3D 1;
+> +				res =3D G_AT_SYNTAX_RESULT_PROMPT;
+> +				goto out;
+
+Please just create a dedicated state for this one and don't hack the
+PROMPT state.
+
+>  			}
+>  =
+
+>  			syntax->state =3D GSMV1_STATE_RESPONSE;
+> @@ -239,6 +249,8 @@ static void gsm_permissive_hint(GAtSyntax *syntax, GA=
+tSyntaxExpectHint hint)
+>  {
+>  	if (hint =3D=3D G_AT_SYNTAX_EXPECT_PDU)
+>  		syntax->state =3D GSM_PERMISSIVE_STATE_GUESS_PDU;
+> +	else if (hint =3D=3D G_AT_SYNTAX_EXPECT_SHORT_PROMPT)
+> +		syntax->state =3D GSM_PERMISSIVE_STATE_PROMPT;
 >  }
 >  =
 
-> +guint g_at_chat_send_and_expect_short_prompt(GAtChat *chat, const char *=
-cmd,
-> +			const char **prefix_list, GAtResultFunc func,
-> +			gpointer user_data, GDestroyNotify notify)
-> +{
-> +	if(chat !=3D NULL)
-> +		chat->parent->syntax->set_hint(chat->parent->syntax,
-> +					G_AT_SYNTAX_EXPECT_SHORT_PROMPT);
+>  static GAtSyntaxResult gsm_permissive_feed(GAtSyntax *syntax,
+> @@ -298,6 +310,13 @@ static GAtSyntaxResult gsm_permissive_feed(GAtSyntax=
+ *syntax,
+>  				i +=3D 1;
+>  				res =3D G_AT_SYNTAX_RESULT_PROMPT;
+>  				goto out;
+> +			} else if (byte =3D=3D '\r')
+> +				break;
+> +			else if (byte =3D=3D '\n') {
+> +				syntax->state =3D GSM_PERMISSIVE_STATE_IDLE;
+> +				i +=3D 1;
+> +				res =3D G_AT_SYNTAX_RESULT_PROMPT;
+> +				goto out;
 
-So unfortunately you can't do this.  GAtChat is a command queue and we
-might be in the process of sending / receiving responses for multiple
-commands that are ahead of this one.  So you can't really manipulate the
-syntax directly here.  You have to do this only once the CPOSR has been
-sent on the wire.
+Same comment here, and man you better pray that your modem doesn't
+insert unsolicited notifications between you sending a CPOSR and you
+receiving a prompt ;)
 
-> +
-> +	return at_chat_send_common(chat->parent, chat->group,
-> +					cmd, prefix_list, FALSE, NULL,
-> +					func, user_data, notify);
-> +}
-> +
->  gboolean g_at_chat_cancel(GAtChat *chat, guint id)
->  {
->  	/* We use id 0 for wakeup commands */
+>  			}
+>  =
+
+>  			syntax->state =3D GSM_PERMISSIVE_STATE_RESPONSE;
 
 Regards,
 -Denis
 
---===============0372363462095452994==--
+--===============5742237615209512415==--
 
