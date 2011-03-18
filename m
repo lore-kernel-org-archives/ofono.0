@@ -1,80 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============8644065122761610764=="
+Content-Type: multipart/mixed; boundary="===============3665581767253518025=="
 MIME-Version: 1.0
-From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: Re: [PATCH 07/12] gatchat: implementation for +CPOS send
-Date: Fri, 18 Mar 2011 15:05:19 +0200
-Message-ID: <1300453519.9383.48.camel@poutijar-desktop>
-In-Reply-To: <4D82E2AF.4060901@gmail.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] Fix a memory leak reported by cppcheck.
+Date: Fri, 18 Mar 2011 14:18:02 +0100
+Message-ID: <1300454282-21431-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8644065122761610764==
+--===============3665581767253518025==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ src/smsutil.c |    4 +++-
+ 1 files changed, 3 insertions(+), 1 deletions(-)
 
-On Fri, 2011-03-18 at 06:42 +0200, Denis Kenzior wrote:
-> Hi Jarko,
-> =
+diff --git a/src/smsutil.c b/src/smsutil.c
+index 5524932..e781399 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -3344,7 +3344,7 @@ void sms_tx_backup_free(const char *imsi, unsigned lo=
+ng id,
+ 	len =3D scandir(path, &entries, NULL, versionsort);
+ =
 
-> On 03/11/2011 06:23 AM, Jarko Poutiainen wrote:
-> > ---
-> >  gatchat/gatchat.c |   13 +++++++++++++
-> >  1 files changed, 13 insertions(+), 0 deletions(-)
-> > =
+ 	if (len < 0)
+-		return;
++		goto nodir_exit;
+ =
 
-> > diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
-> > index 3fd564d..64f131d 100644
-> > --- a/gatchat/gatchat.c
-> > +++ b/gatchat/gatchat.c
-> > @@ -1468,6 +1468,19 @@ guint g_at_chat_send_pdu_listing(GAtChat *chat, =
-const char *cmd,
-> >  					listing, func, user_data, notify);
-> >  }
-> >  =
+ 	/* skip '..' and '.' entries */
+ 	while (len-- > 2) {
+@@ -3362,6 +3362,8 @@ void sms_tx_backup_free(const char *imsi, unsigned lo=
+ng id,
+ 	g_free(entries);
+ =
 
-> > +guint g_at_chat_send_and_expect_short_prompt(GAtChat *chat, const char=
- *cmd,
-> > +			const char **prefix_list, GAtResultFunc func,
-> > +			gpointer user_data, GDestroyNotify notify)
-> > +{
-> > +	if(chat !=3D NULL)
-> > +		chat->parent->syntax->set_hint(chat->parent->syntax,
-> > +					G_AT_SYNTAX_EXPECT_SHORT_PROMPT);
-> =
+ 	rmdir(path);
++
++nodir_exit:
+ 	g_free(path);
+ }
+ =
 
-> So unfortunately you can't do this.  GAtChat is a command queue and we
-> might be in the process of sending / receiving responses for multiple
-> commands that are ahead of this one.  So you can't really manipulate the
-> syntax directly here.  You have to do this only once the CPOSR has been
-> sent on the wire.
-> =
+-- =
 
-Ok, thanks. Still having trouble to understand GAtChat. =
+1.7.1
 
-Not just sure where I should set the hint then but I get your point.
-Now I'm also a little confused because previously you suggested that I'd
-make a new g_at_chat_send variant that would set the hint so what did
-you mean by it then if not this?
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-> > +
-> > +	return at_chat_send_common(chat->parent, chat->group,
-> > +					cmd, prefix_list, FALSE, NULL,
-> > +					func, user_data, notify);
-> > +}
-> > +
-> >  gboolean g_at_chat_cancel(GAtChat *chat, guint id)
-> >  {
-> >  	/* We use id 0 for wakeup commands */
-> =
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
-> Regards,
-> -Denis
-Br,
-Jarko
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
-
---===============8644065122761610764==--
+--===============3665581767253518025==--
 
