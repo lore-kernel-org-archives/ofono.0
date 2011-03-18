@@ -1,89 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============4519129799791356636=="
+Content-Type: multipart/mixed; boundary="===============4769735411635399605=="
 MIME-Version: 1.0
 From: Olivier Guiter <olivier.guiter@linux.intel.com>
-Subject: [PATCH 02/12] doc: Add BT HFP AT commands list
-Date: Fri, 18 Mar 2011 13:30:48 +0100
-Message-ID: <1300451458-6749-3-git-send-email-olivier.guiter@linux.intel.com>
-In-Reply-To: <1300451458-6749-1-git-send-email-olivier.guiter@linux.intel.com>
+Subject: [PATCH 00/12] doc: Add AT commands list to be supported in emulator
+Date: Fri, 18 Mar 2011 13:30:46 +0100
+Message-ID: <1300451458-6749-1-git-send-email-olivier.guiter@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4519129799791356636==
+--===============4769735411635399605==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/dialup-command-set.txt |   38 ++++++++++++++++++++++++++++++++++++++
- 1 files changed, 38 insertions(+), 0 deletions(-)
+Hi,
+These patches only add a list of AT commands that should be added in
+the emulator. This list is not only related to bluetooth stuff.
 
-diff --git a/doc/dialup-command-set.txt b/doc/dialup-command-set.txt
-index 3e40aae..2067dfb 100644
---- a/doc/dialup-command-set.txt
-+++ b/doc/dialup-command-set.txt
-@@ -45,3 +45,41 @@ Result codes:
- 	ERROR		Error
- 	NO DIALTONE	No dial-tone detected
- 	BUSY		Busy signal detected
-+	=
+Olivier Guiter (12):
+  doc: fix typo and incorrect line length
+  doc: Add BT HFP AT commands list
+  doc: Add AT command reference mark
+  doc: Add AT commands for Call Management
+  doc:Add AT commands for GPRS
+  doc:Add AT commands for Network support
+  doc: AT commands for supplementary services
+  doc: AT commands for SMS
+  doc: AT commands for device management
+  doc: AT commands for SIM
+  doc: Add AT command for debugging purpose
+  doc: AT commands for Location based services
 
-+Bluetooth Hands-Free Profile Description
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D
-+(Ref. document: HFP1.5_SPEC (Car Working Group) - version V10r00 - 2005-11=
--25)
-+
-+- AT COMMAND set used:
-+Commands:
-+ 	D>		Extension of the standard ATD command, intended for
-+ 			memory dialing. Only voice calls are covered here
-+    	+CIND		Standard indicator update AT command.    	=
-
-+
-+    	+NREC		Noise Reduction and Echo Canceling    	=
-
-+    	+VGM		Gain of Microphone    	=
-
-+    	+VGS		Gain of Speaker
-+    	+BINP		Bluetooth INPut    	=
-
-+    	+BLDN		Bluetooth Last Dialed Number    	=
-
-+    	+BVRA		Bluetooth Voice Recognition Activation
-+    	+BRSF		Bluetooth Retrieve Supported Features    	=
-
-+    	+BTRH		Bluetooth Response and Hold Feature    	=
-
-+    	+CCWA		=
-
-+    	+CHLD
-+    	+CHUP
-+    	+CLCC
-+    	+COPS
-+    	+CMEE
-+    	+CLIP
-+    	+CMER
-+    	+VTS
-+    	+CNUM		=
-
-+    	=
-
-+Unsolicited result:
-+    	+CIEV
-+    	+BSIR		Bluetooth Setting of In-band Ring tone   	=
-
-+Result codes:
-+	NO ANSWER
-+	DELAYED
-+	BLACKLISTED
-+	=
-
-\ No newline at end of file
--- =
-
-1.7.1
+ doc/dialup-command-set.txt |  228 +++++++++++++++++++++++++++++++++++++---=
+----
+ 1 files changed, 194 insertions(+), 34 deletions(-)
 
 
---===============4519129799791356636==--
+--===============4769735411635399605==--
 
