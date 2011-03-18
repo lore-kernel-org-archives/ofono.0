@@ -1,49 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============1124649281385648359=="
+Content-Type: multipart/mixed; boundary="===============4675506105984764786=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 07/12] gatchat: implementation for +CPOS send
-Date: Fri, 18 Mar 2011 09:52:53 -0500
-Message-ID: <4D8371C5.8010907@gmail.com>
-In-Reply-To: <1300453519.9383.48.camel@poutijar-desktop>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 0/1] Fix issue in ifx nitz time reporting
+Date: Fri, 18 Mar 2011 08:58:08 -0700
+Message-ID: <1300463889-4828-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1124649281385648359==
+--===============4675506105984764786==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jarko,
+Hi,
 
->>> +guint g_at_chat_send_and_expect_short_prompt(GAtChat *chat, const char=
- *cmd,
->>> +			const char **prefix_list, GAtResultFunc func,
->>> +			gpointer user_data, GDestroyNotify notify)
->>> +{
->>> +	if(chat !=3D NULL)
->>> +		chat->parent->syntax->set_hint(chat->parent->syntax,
->>> +					G_AT_SYNTAX_EXPECT_SHORT_PROMPT);
->>
->> So unfortunately you can't do this.  GAtChat is a command queue and we
->> might be in the process of sending / receiving responses for multiple
->> commands that are ahead of this one.  So you can't really manipulate the
->> syntax directly here.  You have to do this only once the CPOSR has been
->> sent on the wire.
->>
-> Ok, thanks. Still having trouble to understand GAtChat. =
-
-> Not just sure where I should set the hint then but I get your point.
-> Now I'm also a little confused because previously you suggested that I'd
-> make a new g_at_chat_send variant that would set the hint so what did
-> you mean by it then if not this?
-
-Look at how e.g. expect_pdu boolean is handled.  You need to do
-something very similar but after sending the first chunk followed by \r.
-(e.g. when AT+CPOS\r was sent).  You probably need to add another
-flag/boolean to the command data structure for this.
+ CTZDST will be reported only if the network daylight saving time is
+received from network as part of the MM information message. Due to this,
+time was not reported to the core.
+ Fix is to schedule the timer once the CTZV is received. This way, time
+information will be reported always and also only once as expected.
 
 Regards,
--Denis
+Jeevaka
 
---===============1124649281385648359==--
+Jeevaka Badrappan (1):
+  atmodem: fix issue in time reporting with ifx
+
+ drivers/atmodem/network-registration.c |   25 +++++++++++++++++++++++--
+ 1 files changed, 23 insertions(+), 2 deletions(-)
+
+
+--===============4675506105984764786==--
 
