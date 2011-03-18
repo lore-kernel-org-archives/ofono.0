@@ -1,36 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============0777651413331618752=="
+Content-Type: multipart/mixed; boundary="===============7146263295681555099=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 1/9] bluetooth: add functions for sco connection
-Date: Fri, 18 Mar 2011 15:27:39 -0500
-Message-ID: <4D83C03B.4060703@gmail.com>
-In-Reply-To: <1300388148-925-2-git-send-email-frederic.dalleau@linux.intel.com>
+Subject: Re: [PATCH v2 0/8] sms: Cancel pending message
+Date: Fri, 18 Mar 2011 18:32:20 -0500
+Message-ID: <4D83EB84.1090405@gmail.com>
+In-Reply-To: <1296848438-5584-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0777651413331618752==
+--===============7146263295681555099==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Lucas,
 
-On 03/17/2011 01:55 PM, Fr=C3=A9d=C3=A9ric Dalleau wrote:
-> ---
->  plugins/bluetooth.c |  122 +++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  plugins/bluetooth.h |    7 +++
->  2 files changed, 129 insertions(+), 0 deletions(-)
+On 02/04/2011 01:40 PM, Lucas De Marchi wrote:
+> In this version I fixed some issues pointed out by Andrzej and added anot=
+her
+> patch, not so related, but that would conflict with these ones if applied=
+ to
+> current master branch. Difference from previous version:
 > =
 
+> Tested with phonesim, slightly changing its plugin in oFono in order to h=
+old
+> messages for a certain period.
 
-So before you run too far with this I suggest you speak to Marcel and
-Johan on whether handling SCO audio inside oFono is a good idea.
-Personally I'd rather see this piece remain inside BlueZ, but I'm no
-longer an expert in this area.
+I applied this series and slightly changed the API in the process.
+Thanks for doing this.
+
+Can you have a quick look to make sure I didn't screw anything up?
 
 Regards,
 -Denis
 
---===============0777651413331618752==--
+--===============7146263295681555099==--
 
