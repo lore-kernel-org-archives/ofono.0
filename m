@@ -1,29 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============8360082058913277377=="
+Content-Type: multipart/mixed; boundary="===============1315244759616136533=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH v2 0/2] HFP: add call related indicators
-Date: Fri, 18 Mar 2011 17:10:46 +0100
-Message-ID: <1300464648-11074-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH 1/2] emulator: add defines for call,
+ callsetup and callheld indicators
+Date: Fri, 18 Mar 2011 17:10:47 +0100
+Message-ID: <1300464648-11074-2-git-send-email-frederic.danis@linux.intel.com>
+In-Reply-To: <1300464648-11074-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8360082058913277377==
+--===============1315244759616136533==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add call, callsetup and callheld indicators for +CIEV
+---
+ include/emulator.h |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
 
-Fr=C3=A9d=C3=A9ric Danis (2):
-  emulator: add defines for call, callsetup and callheld indicators
-  emulator: add call, callsetup and callheld indicators
+diff --git a/include/emulator.h b/include/emulator.h
+index 71b7c24..5cd894b 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -36,6 +36,18 @@ extern "C" {
+ #define OFONO_EMULATOR_IND_SERVICE "service"
+ #define OFONO_EMULATOR_IND_SIGNAL "signal"
+ =
 
- include/emulator.h |   12 +++++++
- src/emulator.c     |    5 +++
- src/voicecall.c    |   92 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 3 files changed, 109 insertions(+), 0 deletions(-)
++#define OFONO_EMULATOR_CALL_INACTIVE 0
++#define OFONO_EMULATOR_CALL_ACTIVE 1
++
++#define OFONO_EMULATOR_CALLSETUP_INACTIVE 0
++#define OFONO_EMULATOR_CALLSETUP_INCOMING 1
++#define OFONO_EMULATOR_CALLSETUP_OUTGOING 2
++#define OFONO_EMULATOR_CALLSETUP_ALERTING 3
++
++#define OFONO_EMULATOR_CALLHELD_NONE 0
++#define OFONO_EMULATOR_CALLHELD_MULTIPLE 1
++#define OFONO_EMULATOR_CALLHELD_ON_HOLD 2
++
+ struct ofono_emulator;
+ struct ofono_emulator_request;
+ =
+
+-- =
+
+1.7.1
 
 
---===============8360082058913277377==--
+--===============1315244759616136533==--
 
