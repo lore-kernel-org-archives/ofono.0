@@ -1,434 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============4628930706289838590=="
+Content-Type: multipart/mixed; boundary="===============0195862843265490793=="
 MIME-Version: 1.0
-From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: Re: [PATCH 09/12] atmodem: add gnss driver
-Date: Fri, 18 Mar 2011 14:50:32 +0200
-Message-ID: <1300452632.9383.33.camel@poutijar-desktop>
-In-Reply-To: <4D82E794.10703@gmail.com>
+From: Jussi Kangas <jussi.kangas@tieto.com>
+Subject: Re: [PATCH] call-forwarding: fix for showing call forwarding states
+Date: Fri, 18 Mar 2011 14:53:52 +0200
+Message-ID: <1300452832.2707.78.camel@jussi-desktop>
+In-Reply-To: <4D82221D.3070401@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4628930706289838590==
+--===============0195862843265490793==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi,
 
-On Fri, 2011-03-18 at 07:03 +0200, Denis Kenzior wrote:
-> On 03/11/2011 06:23 AM, Jarko Poutiainen wrote:
-> > ---
-> >  Makefile.am               |    3 +-
-> >  drivers/atmodem/atmodem.c |    2 +
-> >  drivers/atmodem/atmodem.h |    3 +
-> >  drivers/atmodem/gnss.c    |  279 +++++++++++++++++++++++++++++++++++++=
-++++++++
-> >  4 files changed, 286 insertions(+), 1 deletions(-)
-> >  create mode 100644 drivers/atmodem/gnss.c
+On Thu, 2011-03-17 at 17:00 +0200, Denis Kenzior wrote:
+> Hi Jussi,
+> =
+
+> >>
+> >> So correct me if I'm wrong, but I don't think we can do that.  the
+> >> current cf_conditions implementation stores all conditions, which could
+> >> be unrelated to voice; and if my interpretation of 22.004 is correct y=
+ou
+> >> can have something like this:
+> >>
+> >> Activate CFB for all services to Number 1
+> >> Activate CFU for Data services to Number 2
+> >>
+> >> Which results in cf_conditions[CALL_FORWARDING_TYPE_UNCONDITIONAL] not
+> >> being NULL and you reporting CFB for voice incorrectly.
+> >>
+> >> You are probably safer using is_cfu_enabled() function.
 > > =
 
-> > diff --git a/Makefile.am b/Makefile.am
-> > index 24742bb..3dae7f4 100644
-> > --- a/Makefile.am
-> > +++ b/Makefile.am
-> > @@ -180,7 +180,8 @@ builtin_sources +=3D $(gatchat_sources) \
-> >  				drivers/atmodem/atutil.c \
-> >  				drivers/atmodem/gprs.c \
-> >  				drivers/atmodem/gprs-context.c \
-> > -				drivers/atmodem/sim-auth.c
-> > +				drivers/atmodem/sim-auth.c \
-> > +				drivers/atmodem/gnss.c
-> >  =
+> > As far as I know scenario you describe cannot happen with oFono. There
+> > is no data related conditions in the call forwarding API. Sure, you can
+> > set data forwarding on using SS API, but I don't see how data forwarding
+> > states could be shown in call forwarding API when all states in API
+> > start with word "voice". Also according to comments in code fax and data
+> > are not supported. =
 
-> >  builtin_modules +=3D nwmodem
-> >  builtin_sources +=3D drivers/atmodem/atutil.h \
-> > diff --git a/drivers/atmodem/atmodem.c b/drivers/atmodem/atmodem.c
-> > index e140281..3093c23 100644
-> > --- a/drivers/atmodem/atmodem.c
-> > +++ b/drivers/atmodem/atmodem.c
-> > @@ -52,6 +52,7 @@ static int atmodem_init(void)
-> >  	at_gprs_init();
-> >  	at_gprs_context_init();
-> >  	at_sim_auth_init();
-> > +	at_gnss_init();
-> >  =
-
-> >  	return 0;
-> >  }
-> > @@ -76,6 +77,7 @@ static void atmodem_exit(void)
-> >  	at_call_volume_exit();
-> >  	at_gprs_exit();
-> >  	at_gprs_context_exit();
-> > +	at_gnss_exit();
-> >  }
-> >  =
-
-> >  OFONO_PLUGIN_DEFINE(atmodem, "AT modem driver", VERSION,
-> > diff --git a/drivers/atmodem/atmodem.h b/drivers/atmodem/atmodem.h
-> > index 1b7cf67..1a73b84 100644
-> > --- a/drivers/atmodem/atmodem.h
-> > +++ b/drivers/atmodem/atmodem.h
-> > @@ -74,3 +74,6 @@ extern void at_gprs_context_exit(void);
-> >  =
-
-> >  extern void at_sim_auth_init(void);
-> >  extern void at_sim_auth_exit(void);
-> > +
-> > +extern void at_gnss_init(void);
-> > +extern void at_gnss_exit(void);
-> > diff --git a/drivers/atmodem/gnss.c b/drivers/atmodem/gnss.c
-> > new file mode 100644
-> > index 0000000..c1b1de3
-> > --- /dev/null
-> > +++ b/drivers/atmodem/gnss.c
-> > @@ -0,0 +1,279 @@
-> > +/*
-> > + *
-> > + *  oFono - Open Source Telephony
-> > + *
-> > + *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-> > + *  Copyright (C) 2011 ST-Ericsson AB.
-> > + *
-> > + *  This program is free software; you can redistribute it and/or modi=
-fy
-> > + *  it under the terms of the GNU General Public License version 2 as
-> > + *  published by the Free Software Foundation.
-> > + *
-> > + *  This program is distributed in the hope that it will be useful,
-> > + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-> > + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> > + *  GNU General Public License for more details.
-> > + *
-> > + *  You should have received a copy of the GNU General Public License
-> > + *  along with this program; if not, write to the Free Software
-> > + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1=
-301  USA
-> > + *
-> > + */
-> > +
-> > +#ifdef HAVE_CONFIG_H
-> > +#include <config.h>
-> > +#endif
-> > +
-> > +#define _GNU_SOURCE
-> > +#include <string.h>
-> > +#include <stdlib.h>
-> > +#include <stdio.h>
-> > +#include <errno.h>
-> > +
-> > +#include <glib.h>
-> > +
-> > +#include <ofono/log.h>
-> > +#include <ofono/modem.h>
-> > +#include <ofono/gnss.h>
-> > +
-> > +#include "gatchat.h"
-> > +#include "gatresult.h"
-> > +
-> > +#include "atmodem.h"
-> > +#include "vendor.h"
-> > +
-> > +struct gnss_data {
-> > +	GAtChat *chat;
-> > +	unsigned int vendor;
-> > +};
-> > +
-> > +static const char *none_prefix[] =3D { NULL };
-> > +static const char *cpos_prefix[] =3D { "+CPOS:", NULL };
-> > +static const char *cposr_prefix[] =3D { "+CPOSR:", NULL };
-> > +
-> > +static void gnsspr_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-> > +{
-> > +	struct cb_data *cbd =3D user_data;
-> > +	ofono_gnss_position_report_cb_t cb =3D cbd->cb;
-> > +
-> > +	DBG("");
-> > +
-> > +	if (ok)
-> > +		CALLBACK_WITH_SUCCESS(cb, cbd->data);
-> > +	else
-> > +		CALLBACK_WITH_FAILURE(cb, cbd->data);
+> >
 > =
 
-> As a general habit, please use at_util_decode_error instead of using
-> these macros.  This leads to simpler code as well
-> =
+> It can.  oFono stores _all_ conditions in its lists.  However, it
+> filters them when reporting the conditions in get_properties or signals.
+>  This is why is_cfu_enabled function looks the way it does.  So a
+> scenario like this is fully possible.  Not to mention that the CFs are
+> queried for all services by default.
 
-Thanks I will do that
+All right. I have no access to network that would support data
+forwarding or my modem does not support it so I cannot verify this in
+practice. But I think problem can be avoided by changing the line =
 
-> > +}
-> > +
-> > +static void at_gnss_position_reporting(struct ofono_gnss *gnss,
-> > +					ofono_bool_t enable,
-> > +					ofono_gnss_position_report_cb_t cb,
-> > +					void *data)
-> > +{
-> > +	struct gnss_data *ad =3D ofono_gnss_get_data(gnss);
-> > +	struct cb_data *cbd =3D cb_data_new(cb, data);
-> > +
-> > +	DBG("");
-> > +
-> > +	if (enable) {
-> > +		g_at_chat_send(ad->chat, "AT+CPOSR=3D1",
-> > +				cposr_prefix, gnsspr_cb, cbd, g_free);
-> > +
-> > +		if (ad->vendor =3D=3D OFONO_VENDOR_STE)
-> > +			g_at_chat_send(ad->chat, "AT*EPOSADRR=3D1",
-> > +					NULL, NULL, NULL, NULL);
-> > +	} else {
-> > +		g_at_chat_send(ad->chat, "AT+CPOSR=3D0",
-> > +				cposr_prefix, gnsspr_cb, cbd, g_free);
-> > +
-> > +		if (ad->vendor =3D=3D OFONO_VENDOR_STE)
-> > +			g_at_chat_send(ad->chat, "AT*EPOSADRR=3D0",
-> > +					NULL, NULL, NULL, NULL);
-> > +	}
-> > +}
-> > +
-> > +static void gnssse_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-> > +{
-> > +	struct cb_data *cbd =3D user_data;
-> > +	ofono_gnss_send_element_cb_t cb =3D cbd->cb;
-> > +
-> > +	DBG("");
-> > +
-> > +	if (ok)
-> > +		CALLBACK_WITH_SUCCESS(cb, cbd->data);
-> > +	else
-> > +		CALLBACK_WITH_FAILURE(cb, cbd->data);
-> =
 
-> Again, please use at_util_decode_error here
-> =
+if (cf->cf_conditions[CALL_FORWARDING_TYPE_UNCONDITIONAL] =3D=3D NULL) {
 
-Ok
+to =
 
-> > +}
-> > +
-> > +static void at_gnss_send_element(struct ofono_gnss *gnss,
-> > +				const char *xml,
-> > +				ofono_gnss_send_element_cb_t cb, void *data)
-> > +{
-> > +	struct gnss_data *ad =3D ofono_gnss_get_data(gnss);
-> > +	struct cb_data *cbd =3D cb_data_new(cb, data);
-> > +	char *buf =3D g_try_new(char, strlen(xml) + 10);
-> > +	int len;
-> > +
-> > +	DBG("");
-> > +
-> > +	if (buf =3D=3D NULL)
-> > +		goto error;
-> > +
-> > +	len =3D sprintf(buf, "AT+CPOS\r");
-> > +	len +=3D sprintf(buf + len, "%s", xml);
-> > +
-> > +	if (g_at_chat_send_and_expect_short_prompt(ad->chat, buf, cpos_prefix,
-> > +							gnssse_cb, cbd,
-> > +							g_free) > 0) {
-> > +		g_free(buf);
-> > +		return;
-> > +	}
-> =
 
-> Please add an empty line here
-> =
+if (!is_cfu_enabled(cf, NULL)) {
 
-Sorry about that.
+Of course little bit optimization would be good to avoid second calling
+of this method later in function. Moving the setting of status variable
+above these and using it when checked if UNCONDITIONAL is on instead of
+is_cfu_enabled seems to be working nicely.
 
-> > +error:
-> > +	g_free(buf);
-> > +	g_free(cbd);
-> > +
-> > +	CALLBACK_WITH_FAILURE(cb, data);
-> > +}
-> > +
-> > +static gboolean gnss_parse_report(GAtResult *result, const char *prefi=
-x,
-> > +					const char **xml)
-> > +{
-> > +	GAtResultIter iter;
-> > +
-> > +	g_at_result_iter_init(&iter, result);
-> > +
-> > +	if (!g_at_result_iter_next(&iter, prefix))
-> > +		return FALSE;
-> > +
-> > +	if (!g_at_result_iter_next_unquoted_string(&iter, xml))
-> > +		return FALSE;
-> > +
-> > +	return TRUE;
-> =
-
-> Do you really need a separate function?  This might belong in gnss_report
-> =
-
-I just thought that it would be more logical to have separate function
-to parse the result rather than putting it all in to same function. Is
-that a big deal or do you want me to change that?
-
-> > +}
-> > +
-> > +static void gnss_report(GAtResult *result, gpointer user_data)
-> > +{
-> > +	struct ofono_gnss *gnss =3D user_data;
-> > +	const char *xml;
-> > +
-> > +	DBG("");
-> > +
-> > +	xml =3D NULL;
-> > +	if (!gnss_parse_report(result, "+CPOSR:", &xml)) {
-> > +		ofono_error("Unable to parse CPOSR notification");
-> > +		return;
-> > +	}
-> > +
-> > +	if (xml =3D=3D NULL) {
-> > +		ofono_error("Unable to parse CPOSR notification");
-> > +		return;
-> > +	}
-> > +
-> > +	ofono_gnss_receive_request(gnss, xml);
-> > +}
-> > +
-> > +static void at_gnssreset_cb(GAtResult *result, gpointer user_data)
-> =
-
-> Since this is a notification, please call this gnssreset_notify
-> =
-
-Ok, good point and in fact I'll change it to gnss_reset_notify to be
-consistent with naming.
-
-> > +{
-> > +	struct ofono_gnss *gnss =3D user_data;
-> > +
-> > +	DBG("");
-> > +
-> > +	ofono_gnss_receive_reset(gnss);
-> > +}
-> > +
-> > +static void at_gnss_not_supported(struct ofono_gnss *gnss)
-> > +{
-> > +	ofono_error("gnss not supported by this modem.");
-> > +
-> > +	ofono_gnss_remove(gnss);
-> > +}
-> > +
-> > +static void at_gnsscposr_cb(gboolean ok, GAtResult *result, gpointer u=
-ser_data)
-> > +{
-> > +	struct ofono_gnss *gnss =3D user_data;
-> > +	struct gnss_data *ad =3D ofono_gnss_get_data(gnss);
-> > +
-> > +	DBG("");
-> > +
-> > +	if (!ok) {
-> > +		at_gnss_not_supported(gnss);
-> > +		return;
-> > +	}
-> > +
-> > +	g_at_chat_register(ad->chat, "+CPOSR:", gnss_report,
-> > +				FALSE, gnss, NULL);
-> > +
-> > +	if (ad->vendor =3D=3D OFONO_VENDOR_STE)
-> > +		g_at_chat_register(ad->chat, "*EPOSADRR:", at_gnssreset_cb,
-> > +					FALSE, gnss, NULL);
-> > +
-> > +	ofono_gnss_register(gnss);
-> > +}
-> > +
-> > +static void at_gnsscpos_cb(gboolean ok, GAtResult *result, gpointer us=
-er_data)
-> =
-
-> This might be better called at_gnss_cpos_support_cb
-> =
-
-Ok I'll change that.
-
-> > +{
-> > +	struct ofono_gnss *gnss =3D user_data;
-> > +	struct gnss_data *ad =3D ofono_gnss_get_data(gnss);
-> > +
-> > +	DBG("");
-> > +
-> > +	if (!ok) {
-> > +		at_gnss_not_supported(gnss);
-> > +		return;
-> > +	}
-> > +
-> > +	g_at_chat_send(ad->chat, "AT+CPOSR=3D?",
-> > +			none_prefix, at_gnsscposr_cb, gnss, NULL);
-> =
-
-> And this one at_gnss_cposr_support_cb
-> =
-
-Ok.
-
-> > +}
-> > +
-> > +static int at_gnss_probe(struct ofono_gnss *gnss, unsigned int vendor,
-> > +				void *user)
-> > +{
-> > +	GAtChat *chat =3D user;
-> > +	struct gnss_data *gd;
-> > +
-> > +	DBG("");
-> > +
-> > +	gd =3D g_try_new0(struct gnss_data, 1);
-> > +	if (gd =3D=3D NULL)
-> > +		return -ENOMEM;
-> > +
-> > +	gd->chat =3D g_at_chat_clone(chat);
-> > +	gd->vendor =3D vendor;
-> > +
-> > +	ofono_gnss_set_data(gnss, gd);
-> > +
-> > +	g_at_chat_send(gd->chat, "AT+CPOS=3D?",
-> > +			none_prefix, at_gnsscpos_cb, gnss, NULL);
-> > +
-> > +	return 0;
-> > +}
-> > +
-> > +static void at_gnss_remove(struct ofono_gnss *gnss)
-> > +{
-> > +	struct gnss_data *gd =3D ofono_gnss_get_data(gnss);
-> > +
-> > +	DBG("");
-> > +
-> > +	ofono_gnss_set_data(gnss, NULL);
-> > +
-> > +	g_at_chat_unref(gd->chat);
-> > +	g_free(gd);
-> > +}
-> > +
-> > +static struct ofono_gnss_driver driver =3D {
-> > +	.name			=3D "atmodem",
-> > +	.probe			=3D at_gnss_probe,
-> > +	.remove			=3D at_gnss_remove,
-> > +	.send_element		=3D at_gnss_send_element,
-> > +	.position_reporting	=3D at_gnss_position_reporting,
-> > +};
-> > +
-> > +void at_gnss_init(void)
-> > +{
-> > +	ofono_gnss_driver_register(&driver);
-> > +}
-> > +
-> > +void at_gnss_exit(void)
-> > +{
-> > +	ofono_gnss_driver_unregister(&driver);
-> > +}
-> =
-
-> Regards,
-> -Denis
 Br,
-Jarko
+-Jussi
 
 
 
---===============4628930706289838590==--
+--===============0195862843265490793==--
 
