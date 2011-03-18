@@ -1,77 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============0195862843265490793=="
+Content-Type: multipart/mixed; boundary="===============8644065122761610764=="
 MIME-Version: 1.0
-From: Jussi Kangas <jussi.kangas@tieto.com>
-Subject: Re: [PATCH] call-forwarding: fix for showing call forwarding states
-Date: Fri, 18 Mar 2011 14:53:52 +0200
-Message-ID: <1300452832.2707.78.camel@jussi-desktop>
-In-Reply-To: <4D82221D.3070401@gmail.com>
+From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
+Subject: Re: [PATCH 07/12] gatchat: implementation for +CPOS send
+Date: Fri, 18 Mar 2011 15:05:19 +0200
+Message-ID: <1300453519.9383.48.camel@poutijar-desktop>
+In-Reply-To: <4D82E2AF.4060901@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0195862843265490793==
+--===============8644065122761610764==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Denis,
 
-On Thu, 2011-03-17 at 17:00 +0200, Denis Kenzior wrote:
-> Hi Jussi,
+On Fri, 2011-03-18 at 06:42 +0200, Denis Kenzior wrote:
+> Hi Jarko,
 > =
 
-> >>
-> >> So correct me if I'm wrong, but I don't think we can do that.  the
-> >> current cf_conditions implementation stores all conditions, which could
-> >> be unrelated to voice; and if my interpretation of 22.004 is correct y=
-ou
-> >> can have something like this:
-> >>
-> >> Activate CFB for all services to Number 1
-> >> Activate CFU for Data services to Number 2
-> >>
-> >> Which results in cf_conditions[CALL_FORWARDING_TYPE_UNCONDITIONAL] not
-> >> being NULL and you reporting CFB for voice incorrectly.
-> >>
-> >> You are probably safer using is_cfu_enabled() function.
+> On 03/11/2011 06:23 AM, Jarko Poutiainen wrote:
+> > ---
+> >  gatchat/gatchat.c |   13 +++++++++++++
+> >  1 files changed, 13 insertions(+), 0 deletions(-)
 > > =
 
-> > As far as I know scenario you describe cannot happen with oFono. There
-> > is no data related conditions in the call forwarding API. Sure, you can
-> > set data forwarding on using SS API, but I don't see how data forwarding
-> > states could be shown in call forwarding API when all states in API
-> > start with word "voice". Also according to comments in code fax and data
-> > are not supported. =
+> > diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
+> > index 3fd564d..64f131d 100644
+> > --- a/gatchat/gatchat.c
+> > +++ b/gatchat/gatchat.c
+> > @@ -1468,6 +1468,19 @@ guint g_at_chat_send_pdu_listing(GAtChat *chat, =
+const char *cmd,
+> >  					listing, func, user_data, notify);
+> >  }
+> >  =
 
-> >
+> > +guint g_at_chat_send_and_expect_short_prompt(GAtChat *chat, const char=
+ *cmd,
+> > +			const char **prefix_list, GAtResultFunc func,
+> > +			gpointer user_data, GDestroyNotify notify)
+> > +{
+> > +	if(chat !=3D NULL)
+> > +		chat->parent->syntax->set_hint(chat->parent->syntax,
+> > +					G_AT_SYNTAX_EXPECT_SHORT_PROMPT);
 > =
 
-> It can.  oFono stores _all_ conditions in its lists.  However, it
-> filters them when reporting the conditions in get_properties or signals.
->  This is why is_cfu_enabled function looks the way it does.  So a
-> scenario like this is fully possible.  Not to mention that the CFs are
-> queried for all services by default.
+> So unfortunately you can't do this.  GAtChat is a command queue and we
+> might be in the process of sending / receiving responses for multiple
+> commands that are ahead of this one.  So you can't really manipulate the
+> syntax directly here.  You have to do this only once the CPOSR has been
+> sent on the wire.
+> =
 
-All right. I have no access to network that would support data
-forwarding or my modem does not support it so I cannot verify this in
-practice. But I think problem can be avoided by changing the line =
+Ok, thanks. Still having trouble to understand GAtChat. =
 
+Not just sure where I should set the hint then but I get your point.
+Now I'm also a little confused because previously you suggested that I'd
+make a new g_at_chat_send variant that would set the hint so what did
+you mean by it then if not this?
 
-if (cf->cf_conditions[CALL_FORWARDING_TYPE_UNCONDITIONAL] =3D=3D NULL) {
+> > +
+> > +	return at_chat_send_common(chat->parent, chat->group,
+> > +					cmd, prefix_list, FALSE, NULL,
+> > +					func, user_data, notify);
+> > +}
+> > +
+> >  gboolean g_at_chat_cancel(GAtChat *chat, guint id)
+> >  {
+> >  	/* We use id 0 for wakeup commands */
+> =
 
-to =
-
-
-if (!is_cfu_enabled(cf, NULL)) {
-
-Of course little bit optimization would be good to avoid second calling
-of this method later in function. Moving the setting of status variable
-above these and using it when checked if UNCONDITIONAL is on instead of
-is_cfu_enabled seems to be working nicely.
-
+> Regards,
+> -Denis
 Br,
--Jussi
+Jarko
 
 
-
---===============0195862843265490793==--
+--===============8644065122761610764==--
 
