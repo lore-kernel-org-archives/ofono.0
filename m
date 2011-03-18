@@ -1,128 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============8802060942055101495=="
+Content-Type: multipart/mixed; boundary="===============0247002747306070192=="
 MIME-Version: 1.0
-From: Frederic Danis <frederic.danis@linux.intel.com>
-Subject: Re: [PATCH 4/4] emulator: add +COPS support
-Date: Fri, 18 Mar 2011 10:13:52 +0100
-Message-ID: <4D832250.3080106@linux.intel.com>
-In-Reply-To: <4D827AA4.4080306@gmail.com>
+From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
+Subject: Re: [PATCH 01/12] dbus: add gnss interface definition
+Date: Fri, 18 Mar 2011 14:19:51 +0200
+Message-ID: <1300450791.9383.3.camel@poutijar-desktop>
+In-Reply-To: <4D82DEEB.4010203@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8802060942055101495==
+--===============0247002747306070192==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+Hi Denis,
 
-Le 17/03/2011 22:18, Denis Kenzior a =C3=A9crit :
-> Hi Fr=C3=A9d=C3=A9ric,
->
-> On 03/17/2011 11:50 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
->> This needs to be in emulator as HFP plugin should answer AT+COPS requests
->> even when oFono is not registered on network.
->> ---
->>   src/emulator.c |   72 ++++++++++++++++++++++++++++++++++++++++++++
->>   src/network.c  |   90 ++++++++++++++++++++++++++++++++++++++++++++++++=
-+++----
->>   2 files changed, 155 insertions(+), 7 deletions(-)
->>
->> diff --git a/src/emulator.c b/src/emulator.c
->> index 864e50b..eb4f49e 100644
->> --- a/src/emulator.c
->> +++ b/src/emulator.c
->> @@ -49,6 +49,8 @@ struct ofono_emulator {
->>   	int events_mode;
->>   	gboolean events_ind;
->>   	GSList *indicators;
->> +	char op_name[17];
->> +	int net_mode;
->>   };
->>
->>   struct indicator {
->> @@ -387,6 +389,59 @@ fail:
->>   	}
->>   }
->>
->> +static void cops_cb(GAtServer *server, GAtServerRequestType type,
->> +			GAtResult *result, gpointer user_data)
->> +{
->> +	struct ofono_emulator *em =3D user_data;
->> +	char buf[32];
->> +
->> +	if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP&&  em->slc =3D=3D FALSE) {
->> +		g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
->> +		return;
->> +	}
->> +
->
-> There's no need for this if you use ofono_emulator_add_handler since the
-> handler_proxy will take care of this detail.
->
->> +	switch (type) {
->> +	case G_AT_SERVER_REQUEST_TYPE_QUERY:
->> +		sprintf(buf, "+COPS: %d,0,\"%s\"", em->net_mode, em->op_name);
->> +		g_at_server_send_info(em->server, buf, TRUE);
->> +		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
->> +		break;
->> +
->> +	case G_AT_SERVER_REQUEST_TYPE_SET:
->> +	{
->> +		GAtResultIter iter;
->> +		int val;
->> +
->> +		g_at_result_iter_init(&iter, result);
->> +		g_at_result_iter_next(&iter, "");
->> +
->> +		if (!g_at_result_iter_next_number(&iter,&val))
->> +			goto fail;
->> +
->> +		if (val !=3D 3)
->> +			goto fail;
->> +
->> +		if (!g_at_result_iter_next_number(&iter,&val))
->> +			goto fail;
->> +
->> +		if (val !=3D 0)
->> +			goto fail;
->> +
->> +		/* check there is no more parameter */
->> +		if (g_at_result_iter_skip_next(&iter))
->> +			goto fail;
->> +
->> +		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
->> +		break;
->> +	}
->> +
->> +	default:
->> +fail:
->> +		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
->> +		break;
->> +	}
->> +}
->> +
->
-> Please move this function to netreg.c.  This should make this patch
-> quite a bit simpler.
->
-> <snip>
->
+On Fri, 2011-03-18 at 06:26 +0200, Denis Kenzior wrote:
+> Hi Jarko,
+> =
+
+> On 03/11/2011 06:22 AM, Jarko Poutiainen wrote:
+> > ---
+> >  include/dbus.h |    2 ++
+> >  1 files changed, 2 insertions(+), 0 deletions(-)
+> > =
+
+> > diff --git a/include/dbus.h b/include/dbus.h
+> > index 19a138a..bf3e8a4 100644
+> > --- a/include/dbus.h
+> > +++ b/include/dbus.h
+> > @@ -56,6 +56,8 @@ extern "C" {
+> >  #define OFONO_STK_INTERFACE OFONO_SERVICE ".SimToolkit"
+> >  #define OFONO_SIM_APP_INTERFACE OFONO_SERVICE ".SimToolkitAgent"
+> >  #define OFONO_LOCATION_REPORTING_INTERFACE OFONO_SERVICE ".LocationRep=
+orting"
+> > +#define OFONO_AS_NAVIGATION_INTERFACE "org.ofono.AssistedSatelliteNavi=
+gation"
+> =
+
+> Please name this OFONO_GNSS_INTERFACE
+> =
+
+Ok
+
+> > +#define OFONO_POSITIONING_REQUEST_INTERFACE "org.ofono.PositioningRequ=
+estAgent"
+> =
+
+> Please name this OFONO_GNSS_POSR_INTERFACE or
+> OFONO_GNSS_POSR_AGENT_INTERFACE
+> =
+
+> Or feel free to suggest a better name, but the current names are getting
+> too big
+> =
+
+Ok I'll use OFONO_GNSS_POSR_AGENT_INTERFACE
+> >  =
+
+> >  /* CDMA Interfaces */
+> >  #define OFONO_CDMA_VOICECALL_MANAGER_INTERFACE "org.ofono.cdma.VoiceCa=
+llManager"
+> =
+
 > Regards,
 > -Denis
 
-If this is moved to netreg.c, AT+COPS requests will not be handled when =
-
-oFono modem is not online.
-I understand that there is no problem to reply ERROR to AT+COPS?, but I =
-
-think this is wrong for AT+COPS=3D3,0.
-This is why I do this in emulator.c.
-
--- =
-
-Frederic Danis                            Open Source Technology Centre
-frederic.danis(a)intel.com                              Intel Corporation
+Br,
+Jarko
 
 
---===============8802060942055101495==--
+--===============0247002747306070192==--
 
