@@ -1,121 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============8649913277370640460=="
+Content-Type: multipart/mixed; boundary="===============4519129799791356636=="
 MIME-Version: 1.0
 From: Olivier Guiter <olivier.guiter@linux.intel.com>
-Subject: [PATCH 01/12] doc: fix typo and incorrect line length
-Date: Fri, 18 Mar 2011 13:30:47 +0100
-Message-ID: <1300451458-6749-2-git-send-email-olivier.guiter@linux.intel.com>
+Subject: [PATCH 02/12] doc: Add BT HFP AT commands list
+Date: Fri, 18 Mar 2011 13:30:48 +0100
+Message-ID: <1300451458-6749-3-git-send-email-olivier.guiter@linux.intel.com>
 In-Reply-To: <1300451458-6749-1-git-send-email-olivier.guiter@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8649913277370640460==
+--===============4519129799791356636==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/dialup-command-set.txt |   70 ++++++++++++++++++++++------------------=
----
- 1 files changed, 36 insertions(+), 34 deletions(-)
+ doc/dialup-command-set.txt |   38 ++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 38 insertions(+), 0 deletions(-)
 
 diff --git a/doc/dialup-command-set.txt b/doc/dialup-command-set.txt
-index a7a1df3..3e40aae 100644
+index 3e40aae..2067dfb 100644
 --- a/doc/dialup-command-set.txt
 +++ b/doc/dialup-command-set.txt
-@@ -1,45 +1,47 @@
--This document specifies the AT command set used in the bluetooth ofono plu=
-gins.
-+This document specifies the AT command supported in the AT Emulator and at=
-oms.
- =
-
- Bluetooth Dial-up Networking Profile Features Description
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D
--(Ref. document: Dial-up Networking Profile - Bluetooth specification versi=
-on 1.1 - 22 February 2001)
-+(Ref. document: Dial-up Networking Profile - Bluetooth specification
-+	 version 1.1- 22 February 2001)
- =
-
--- AT COMMAND SET USED:
-+- AT COMMAND set used:
- Commands:
--	&C	Circuit 109 (DCD) Control
--	&D	Circuit 108 (DTR) Response
--	&F	Set to Factory Defined Configuration
--	+GCAP	Request Complete Capabilities List
--	+GMI	Request Manufacturer Identification
--	+GMM	Read Model Identification
--	+GMR	Read Revision Identification
--	A	Answer Incoming Call
--	D	Dial
--	E	Command Echo
--	H	Hang Up
--	L	Monitor Speaker Loudness
--	M	Monitor Speaker Control
--	O	Return to Online Data Mode
--	P	Select Pulse Dialling
--	Q	Result Code Suppression
--	S0	Automatic Answer Control
--	S10	Automatic Disconnect Delay Control
--	S3	Command Line Termination Character
--	S4	Response Formatting Character
--	S5	Command Line Editing Character (BACKSPACE)
--	S6	Blind Dial Delay Control
--	S7	Connection Completion Timeout
--	S8	Comma Dial Modifier Delay Control
--	T	Select Tone Dialling
--	V	DCE Response Format
--	X	Call Progress Monitoring Control
--	Z	Reset to Default Configuration
-+	&C		Circuit 109 (DCD) Control
-+	&D		Circuit 108 (DTR) Response
-+	&F		Set to Factory Defined Configuration
-+	+GCAP		Request Complete Capabilities List
-+	+GMI		Request Manufacturer Identification
-+	+GMM		Read Model Identification
-+	+GMR		Read Revision Identification
-+	A		Answer Incoming Call
-+	D		Dial
-+	E		Command Echo
-+	H		Hang Up
-+	L		Monitor Speaker Loudness
-+	M		Monitor Speaker Control
-+	O		Return to Online Data Mode
-+	P		Select Pulse Dialling
-+	Q		Result Code Suppression
-+	S0		Automatic Answer Control
-+	S10		Automatic Disconnect Delay Control
-+	S3		Command Line Termination Character
-+	S4		Response Formatting Character
-+	S5		Command Line Editing Character (BACKSPACE)
-+	S6		Blind Dial Delay Control
-+	S7		Connection Completion Timeout
-+	S8		Comma Dial Modifier Delay Control
-+	T		Select Tone Dialling
-+	V		DCE Response Format
-+	X		Call Progress Monitoring Control
-+	Z		Reset to Default Configuration
- Result codes:
- 	OK		Acknowledge execution of a command
- 	CONNECT		Connection has been established
--	RING		The DCE has detected an incoming call signal from network
--	NO CARRIER	The connection has been terminated, or attempt to establish
--			a connection failed
-+	RING		The DCE has detected an incoming call signal =
-
-+			from network
-+	NO CARRIER	The connection has been terminated, or attempt to
-+			establish a connection failed
+@@ -45,3 +45,41 @@ Result codes:
  	ERROR		Error
  	NO DIALTONE	No dial-tone detected
  	BUSY		Busy signal detected
++	=
+
++Bluetooth Hands-Free Profile Description
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D
++(Ref. document: HFP1.5_SPEC (Car Working Group) - version V10r00 - 2005-11=
+-25)
++
++- AT COMMAND set used:
++Commands:
++ 	D>		Extension of the standard ATD command, intended for
++ 			memory dialing. Only voice calls are covered here
++    	+CIND		Standard indicator update AT command.    	=
+
++
++    	+NREC		Noise Reduction and Echo Canceling    	=
+
++    	+VGM		Gain of Microphone    	=
+
++    	+VGS		Gain of Speaker
++    	+BINP		Bluetooth INPut    	=
+
++    	+BLDN		Bluetooth Last Dialed Number    	=
+
++    	+BVRA		Bluetooth Voice Recognition Activation
++    	+BRSF		Bluetooth Retrieve Supported Features    	=
+
++    	+BTRH		Bluetooth Response and Hold Feature    	=
+
++    	+CCWA		=
+
++    	+CHLD
++    	+CHUP
++    	+CLCC
++    	+COPS
++    	+CMEE
++    	+CLIP
++    	+CMER
++    	+VTS
++    	+CNUM		=
+
++    	=
+
++Unsolicited result:
++    	+CIEV
++    	+BSIR		Bluetooth Setting of In-band Ring tone   	=
+
++Result codes:
++	NO ANSWER
++	DELAYED
++	BLACKLISTED
++	=
+
+\ No newline at end of file
 -- =
 
 1.7.1
 
 
---===============8649913277370640460==--
+--===============4519129799791356636==--
 
