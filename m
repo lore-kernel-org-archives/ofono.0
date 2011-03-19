@@ -1,53 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============2006056287892793240=="
+Content-Type: multipart/mixed; boundary="===============0245958436564718697=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] unit: fix broken alpha id unit test cases
-Date: Sat, 19 Mar 2011 00:09:23 -0700
-Message-ID: <1300518563-22068-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Johan Hedberg <johan.hedberg@gmail.com>
+Subject: Re: [PATCH v2 1/9] bluetooth: add functions for sco connection
+Date: Sat, 19 Mar 2011 13:06:21 +0200
+Message-ID: <20110319110621.GA5863@jh-x301>
+In-Reply-To: <4D83C03B.4060703@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2006056287892793240==
+--===============0245958436564718697==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- unit/test-stkutil.c |    7 ++++---
- 1 files changed, 4 insertions(+), 3 deletions(-)
+Hi,
 
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index f1cad78..aa62aac 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -129,7 +129,10 @@ static inline void check_address(const struct stk_addr=
-ess *command,
- /* Defined in TS 102.223 Section 8.2 */
- static inline void check_alpha_id(const char *command, const char *test)
- {
--	check_common_text(command, test);
-+	if (test !=3D NULL && strlen(test) > 0)
-+		check_common_text(command, test);
-+	else
-+		g_assert(command =3D=3D NULL);
- }
- =
+On Fri, Mar 18, 2011, Denis Kenzior wrote:
+> > ---
+> >  plugins/bluetooth.c |  122 +++++++++++++++++++++++++++++++++++++++++++=
+++++++++
+> >  plugins/bluetooth.h |    7 +++
+> >  2 files changed, 129 insertions(+), 0 deletions(-)
+> =
 
- /* Defined in TS 102.223 Section 8.3 */
-@@ -5937,8 +5940,6 @@ static void test_setup_menu(gconstpointer data)
- 	g_assert(command->src =3D=3D STK_DEVICE_IDENTITY_TYPE_UICC);
- 	g_assert(command->dst =3D=3D STK_DEVICE_IDENTITY_TYPE_TERMINAL);
- =
+> So before you run too far with this I suggest you speak to Marcel and
+> Johan on whether handling SCO audio inside oFono is a good idea.
+> Personally I'd rather see this piece remain inside BlueZ, but I'm no
+> longer an expert in this area.
 
--	if (test->alpha_id)
--		g_assert(command->setup_menu.alpha_id);
- 	check_alpha_id(command->setup_menu.alpha_id, test->alpha_id);
- 	check_items(command->setup_menu.items, test->items);
- 	check_items_next_action_indicator(&command->setup_menu.next_act,
--- =
+AFAIK the plan is still to have only one interface towards PulseAudio as
+far as Bluetooth audio is concerned, and that's the Media interface in
+BlueZ. So oFono shouldn't need any SCO support as such. What will be
+needed though is for oFono to indicate to BlueZ once the SLC
+establishment signaling commands are complete (so SCO connections are
+neither accepted nor initiated before that) as well as for BlueZ to
+indicate to oFono when SCO has been established (so e.g. RING
+indications aren't sent prematurely in the case of in-band ring tone).
 
-1.7.0.4
+Johan
 
-
---===============2006056287892793240==--
+--===============0245958436564718697==--
 
