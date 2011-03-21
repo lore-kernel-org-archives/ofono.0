@@ -1,33 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============8043075572478636867=="
+Content-Type: multipart/mixed; boundary="===============3270717320957985631=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@linux.intel.com>
-Subject: Re: [PATCH v2 1/9] bluetooth: add functions for sco connection
-Date: Mon, 21 Mar 2011 18:08:39 +0100
-Message-ID: <4D878617.6000703@linux.intel.com>
-In-Reply-To: <20110319110621.GA5863@jh-x301>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [RESEND 3 PATCH 00/13] IPv6 Support
+Date: Mon, 21 Mar 2011 10:21:32 -0700
+Message-ID: <1300728092.2572.68.camel@aeonflux>
+In-Reply-To: <AANLkTikp5KjrX_p12GhQUOnog9HxaHXmsMfSZ8yAJ9MN@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8043075572478636867==
+--===============3270717320957985631==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Johan,
-> AFAIK the plan is still to have only one interface towards PulseAudio as
-> far as Bluetooth audio is concerned, and that's the Media interface in
-> BlueZ. So oFono shouldn't need any SCO support as such.
+Hi Aki,
 
-Thanks for feedback,
+> > Unfortunately that ship has sailed.  Every vendor except Nokia uses AT
+> > command modems, or at least implements a (somewhat) full-featured AT
+> > backend.
+> =
 
-My understanding was that profiles had to be prototyped using btio, then =
+> Not quite the way I see things. There are notable exceptions to this,
+> for example, Qualcomm modems don't use AT commands but a proprietary
+> protocol.
+> =
 
-moving to use bluez over dbus similar to hfp handsfree implementation. I =
+> That said, I think designing the modem driver API based on 27.007 was
+> a good design decision, but the real test of that decision hasn't
+> really been done yet. Of course you'll find AT modems mostly a good
+> fit, and in most cases the other protocols too. But calling it a
+> raving success without, say, QMI support is a bit premature.
 
-have no real idea when this transition could occur...
+I am happily inviting Qualcomm to join oFono and add support for their
+QMI protocol ;)
 
-Fr=C3=A9d=C3=A9ric
+Regards
+
+Marcel
 
 
---===============8043075572478636867==--
+
+--===============3270717320957985631==--
 
