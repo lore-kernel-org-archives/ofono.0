@@ -1,44 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3270717320957985631=="
+Content-Type: multipart/mixed; boundary="===============5806780123621377826=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RESEND 3 PATCH 00/13] IPv6 Support
-Date: Mon, 21 Mar 2011 10:21:32 -0700
-Message-ID: <1300728092.2572.68.camel@aeonflux>
-In-Reply-To: <AANLkTikp5KjrX_p12GhQUOnog9HxaHXmsMfSZ8yAJ9MN@mail.gmail.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@linux.intel.com>
+Subject: Re: [PATCH v2 0/9] HSP profile implementation
+Date: Mon, 21 Mar 2011 19:10:06 +0100
+Message-ID: <4D87947E.2080702@linux.intel.com>
+In-Reply-To: <AANLkTi=5w-3j1fE5BwEZQMYpC_UYbO=oMfVM+hJw2ddn@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3270717320957985631==
+--===============5806780123621377826==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi Luiz,
+> that is the plan then I suggest we first define a D-Bus spec on how to
+> signal things like SLC and NREC to BlueZ, the record and socket
+> listening/connection handling logic could also be done in BlueZ side
+> so we use D-Bus to transfer the fd to oFono.
+I didn't expect that yet, but if everybody agrees, why not!
 
-> > Unfortunately that ship has sailed.  Every vendor except Nokia uses AT
-> > command modems, or at least implements a (somewhat) full-featured AT
-> > backend.
-> =
-
-> Not quite the way I see things. There are notable exceptions to this,
-> for example, Qualcomm modems don't use AT commands but a proprietary
-> protocol.
-> =
-
-> That said, I think designing the modem driver API based on 27.007 was
-> a good design decision, but the real test of that decision hasn't
-> really been done yet. Of course you'll find AT modems mostly a good
-> fit, and in most cases the other protocols too. But calling it a
-> raving success without, say, QMI support is a bit premature.
-
-I am happily inviting Qualcomm to join oFono and add support for their
-QMI protocol ;)
-
-Regards
-
-Marcel
+>> * What is the behavior of hsp when receiving CKPD=3D200?
+> This is what oFono does in BlueZ:
+> 	if (waiting)
+> 		err =3D answer_call(waiting);
+> 	else if (active)
+> 		err =3D release_call(active);
+> 	else
+> 		err =3D 0;
+I'm fine with it!
+If there is no call setup, is it worth trying to enable voice recognition?
 
 
+Thanks,
+Fr=C3=A9d=C3=A9ric
 
---===============3270717320957985631==--
+
+--===============5806780123621377826==--
 
