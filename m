@@ -1,50 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============5169600834622102106=="
+Content-Type: multipart/mixed; boundary="===============7194469609908179349=="
 MIME-Version: 1.0
-From: Olivier Guiter <olivier.guiter@linux.intel.com>
-Subject: [PATCH 2/3] idmap.c: add get size function
-Date: Mon, 21 Mar 2011 14:45:13 +0100
-Message-ID: <1300715114-5790-3-git-send-email-olivier.guiter@linux.intel.com>
-In-Reply-To: <1300715114-5790-1-git-send-email-olivier.guiter@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH 3/6] gathdlc: add mechanism to detect ppp suspension from
+ DUN client.
+Date: Mon, 21 Mar 2011 15:17:10 +0100
+Message-ID: <4D875DE6.8010609@linux.intel.com>
+In-Reply-To: <4D826B7E.4020507@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5169600834622102106==
+--===============7194469609908179349==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/idmap.c |    5 +++++
- src/idmap.h |    1 +
- 2 files changed, 6 insertions(+), 0 deletions(-)
+Hi Denis,
 
-diff --git a/src/idmap.c b/src/idmap.c
-index 6d46e8a..967adbd 100644
---- a/src/idmap.c
-+++ b/src/idmap.c
-@@ -200,3 +200,8 @@ unsigned int idmap_get_max(struct idmap *idmap)
- {
- 	return idmap->max;
- }
-+
-+unsigned int idmap_get_size(struct idmap *idmap)
-+{
-+	return idmap->size;
-+}
-diff --git a/src/idmap.h b/src/idmap.h
-index d6141c2..6fc29fd 100644
---- a/src/idmap.h
-+++ b/src/idmap.h
-@@ -30,3 +30,4 @@ unsigned int idmap_alloc_next(struct idmap *idmap, unsign=
-ed int last);
- struct idmap *idmap_new_from_range(unsigned int min, unsigned int max);
- unsigned int idmap_get_min(struct idmap *idmap);
- unsigned int idmap_get_max(struct idmap *idmap);
-+unsigned int idmap_get_size(struct idmap *idmap);
--- =
+On 17/03/2011 21:13, Denis Kenzior wrote:
+> Hi Guillaume,
+>
+> On 03/15/2011 04:19 AM, Guillaume Zajac wrote:
+>> ---
+>>   gatchat/gathdlc.c |   58 +++++++++++++++++++++++++++++++++++++++++++++=
+++++++++
+>>   1 files changed, 58 insertions(+), 0 deletions(-)
+> http://en.wikipedia.org/wiki/Time_Independent_Escape_Sequence
+>
+> If you really want to do this, then lets do this properly, including the
+> guard timeouts.
+>
+> Regards,
+> -Denis
+>
+I noticed also this guard timeouts after having sent the set of patches. =
 
-1.7.1
+I will send a 2nd version of patches.
+However I can't test the "+++" sequence with telnet because it is adding =
+
+some '\r' '\n' characters when I do do "+++" then "Enter".
+I could try to filter those characters but it would add some specific =
+
+code for telnet test case.
+
+I have tried to modifiy gsmdial to send "+++" 5 seconds after the 2 ppp =
+
+devices have been set up for instance.
+I have implemented a g_at_ppp_send_escape_sequence() function to send =
+
+it. (this function directly writes on the GIOChannel)
+Then the GAtChat is resumed and an ATH0 is sent.
+
+Should I commit first the test case over gsmdial and then commit the =
+
+escape sequence detection mechanism?
+
+Kind regards,
+Guillaume
 
 
---===============5169600834622102106==--
+
+--===============7194469609908179349==--
 
