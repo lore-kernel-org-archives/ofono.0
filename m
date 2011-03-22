@@ -1,42 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============0203013945822736906=="
+Content-Type: multipart/mixed; boundary="===============0032293281530152995=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 4/6] gatppp: add g_at_ppp_set_suspend_function() prototype
-Date: Tue, 22 Mar 2011 10:36:49 +0100
-Message-ID: <1300786611-11055-5-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH 5/6] gatppp: add g_at_ppp_set_suspend_function() definition
+Date: Tue, 22 Mar 2011 10:36:50 +0100
+Message-ID: <1300786611-11055-6-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0203013945822736906==
+--===============0032293281530152995==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatppp.h |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ gatchat/gatppp.c |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
-index fb5de4c..7835d1f 100644
---- a/gatchat/gatppp.h
-+++ b/gatchat/gatppp.h
-@@ -61,6 +61,8 @@ void g_at_ppp_set_connect_function(GAtPPP *ppp, GAtPPPCon=
-nectFunc callback,
- void g_at_ppp_set_disconnect_function(GAtPPP *ppp, GAtPPPDisconnectFunc fu=
-nc,
- 					gpointer user_data);
- void g_at_ppp_set_debug(GAtPPP *ppp, GAtDebugFunc func, gpointer user_data=
-);
-+void g_at_ppp_set_suspend_function(GAtPPP *ppp, GAtSuspendFunc func,
-+					gpointer user_data);
- void g_at_ppp_shutdown(GAtPPP *ppp);
- void g_at_ppp_ref(GAtPPP *ppp);
- void g_at_ppp_unref(GAtPPP *ppp);
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index 993b5ea..9df6b8e 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -467,6 +467,14 @@ void g_at_ppp_set_debug(GAtPPP *ppp, GAtDebugFunc func=
+, gpointer user_data)
+ 	ppp->debug_data =3D user_data;
+ }
+ =
+
++void g_at_ppp_set_suspend_function(GAtPPP *ppp, GAtSuspendFunc func, gpoin=
+ter user_data)
++{
++	if (ppp =3D=3D NULL)
++		return;
++
++	g_at_hdlc_set_suspend_function(ppp->hdlc, func, user_data);
++}
++
+ void g_at_ppp_shutdown(GAtPPP *ppp)
+ {
+ 	if (ppp->phase =3D=3D PPP_PHASE_DEAD || ppp->phase =3D=3D PPP_PHASE_TERMI=
+NATION)
 -- =
 
 1.7.1
 
 
---===============0203013945822736906==--
+--===============0032293281530152995==--
 
