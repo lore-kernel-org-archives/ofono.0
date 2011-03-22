@@ -1,125 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============1893534704775737729=="
+Content-Type: multipart/mixed; boundary="===============5193241682534133306=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] gprs.c: add list contexts for emulator
-Date: Mon, 21 Mar 2011 21:06:41 -0500
-Message-ID: <4D880431.6050309@gmail.com>
-In-Reply-To: <1300715114-5790-4-git-send-email-olivier.guiter@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH 3/6] gathdlc: add mechanism to detect ppp suspension from
+ DUN client.
+Date: Tue, 22 Mar 2011 09:57:20 +0100
+Message-ID: <4D886470.7040905@linux.intel.com>
+In-Reply-To: <4D879F8C.3080106@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1893534704775737729==
+--===============5193241682534133306==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Olivier,
+Hi Denis,
 
-On 03/21/2011 08:45 AM, Olivier Guiter wrote:
-> ---
->  src/gprs.c |   26 ++++++++++++++++++++++++--
->  1 files changed, 24 insertions(+), 2 deletions(-)
-> =
+On 21/03/2011 19:57, Denis Kenzior wrote:
+> Hi Guillaume,
+>
+> On 03/21/2011 09:17 AM, Guillaume Zajac wrote:
+>> Hi Denis,
+>>
+>> On 17/03/2011 21:13, Denis Kenzior wrote:
+>>> Hi Guillaume,
+>>>
+>>> On 03/15/2011 04:19 AM, Guillaume Zajac wrote:
+>>>> ---
+>>>>    gatchat/gathdlc.c |   58
+>>>> +++++++++++++++++++++++++++++++++++++++++++++++++++++
+>>>>    1 files changed, 58 insertions(+), 0 deletions(-)
+>>> http://en.wikipedia.org/wiki/Time_Independent_Escape_Sequence
+>>>
+>>> If you really want to do this, then lets do this properly, including the
+>>> guard timeouts.
+>>>
+>>> Regards,
+>>> -Denis
+>>>
+>> I noticed also this guard timeouts after having sent the set of patches.
+>> I will send a 2nd version of patches.
+>> However I can't test the "+++" sequence with telnet because it is adding
+>> some '\r' '\n' characters when I do do "+++" then "Enter".
+>> I could try to filter those characters but it would add some specific
+>> code for telnet test case.
+>>
+>> I have tried to modifiy gsmdial to send "+++" 5 seconds after the 2 ppp
+>> devices have been set up for instance.
+>> I have implemented a g_at_ppp_send_escape_sequence() function to send
+>> it. (this function directly writes on the GIOChannel)
+>> Then the GAtChat is resumed and an ATH0 is sent.
+>>
+>> Should I commit first the test case over gsmdial and then commit the
+>> escape sequence detection mechanism?
+>>
+> The order doesn't matter, but it would be nice to have all of this in
+> the same patch series for context.  That way the entire series can be
+> applied and tested in one go.
+>
+> You might have to do a bit more work than just sending +++ to the
+> IOChannel.  For instance you might need to shutdown I/O coming from the
+> TUN device so as not to overflow the GAtHDLC write queue.  So perhaps a
+> proper g_at_ppp_suspend and g_at_chat_send_command_mode_escape() is neede=
+d.
+>
 
-> diff --git a/src/gprs.c b/src/gprs.c
-> index 04432c3..06d52f3 100644
-> --- a/src/gprs.c
-> +++ b/src/gprs.c
-> @@ -2863,11 +2863,31 @@ static void provision_contexts(struct ofono_gprs =
-*gprs, const char *mcc,
->  	__ofono_gprs_provision_free_settings(settings, count);
->  }
->  =
+Thanks for the info, I will commit first my version 2 of the escape =
 
-> +static void ofono_gprs_list_contexts(struct ofono_emulator *em, void *us=
-erdata)
-> +{
-> +	struct ofono_gprs *gprs =3D userdata;
-> +	GSList *l;
-> +	char buf[256];
-> +
-> +	struct pri_context *ctx;
-> +
-> +	for (l =3D gprs->contexts; l; l =3D l->next) {
-> +		ctx =3D l->data;
-> +
-> +		snprintf(buf, 255, "+CGDCONT: %d,\"%s\",\"%s\"",
-> +				ctx->id, gprs_proto_to_string(ctx->context.proto),
-> +				ctx->context.apn);
+sequence detection mechanism.
+Then, I will find a proper way to reproduce the suspend mechanism with =
 
-So you're mixing concepts here a bit.
+gsmdial.
 
-gprs.c has two maps:
+Kind regards,
+Guillaume
 
-- pid_map
-- cid_map
-
-and two ids:
-- pri_context::id
-- ofono_gprs_primary_context::cid
-
-Roughly speaking the cid_map lets us pick a context id that maps 1:1 to
-the modem driver.  Hence the use of ofono_gprs_set_cid_range.  Basically
-the driver tells us the valid range of context ids and oFono picks the
-rest.  For an AT modem the driver can simply use the cid picked by oFono
-in activate_primary callback.
-
-Internally oFono has another idmap for tracking unique ids for contexts
-and ensuring some sane limit on their number.  This is managed by
-pid_map and pri_context::id.
-
-The code you have right now would use the pid_map ids...
-
-> +		ofono_emulator_send_info(em, buf, FALSE);
-> +	}
-> +}
-> +
->  /* Process the usual AT+CGDCONT command
->   */
->  static void cgdcont_cb(struct ofono_emulator *em,
->  			struct ofono_emulator_request *req, void *userdata)
->  {
-> +	struct ofono_gprs *gprs =3D userdata;
-> +	struct idmap *cid =3D gprs->cid_map;
->  	struct ofono_error result;
->  	char buf[256];
->  =
-
-> @@ -2876,7 +2896,8 @@ static void cgdcont_cb(struct ofono_emulator *em,
->  	switch (ofono_emulator_request_get_type(req)) {
->  	case OFONO_EMULATOR_REQUEST_TYPE_SUPPORT:
->  		/* TODO: check additionnal parameters */
-> -		snprintf(buf, 255, "+CGDCONT: (1-2),\"IP\",,,(0-2),(0,1,2,3,4)");
-> +		snprintf(buf, 255, "+CGDCONT: (1-%d),\"IP\",,,(0-2),(0,1,2,3,4)",
-> +					idmap_get_size(cid));
-
-, but use the size of the cid_map in the CGDCONT=3D? implementation below.
- These sizes are highly unlikely to match.
-
-However, this brings up a more fundamental question from me.  What do
-you actually want to expose here?  Do you want the emulator to be able
-to view / edit contexts exposed over D-Bus?
-
-Or is it enough to simply fake all this and maintain the cgdcont list in
-memory for each emulator instance?
-
->  		ofono_emulator_send_info(em, buf, FALSE);
->  		result.type =3D OFONO_ERROR_TYPE_NO_ERROR;
->  		ofono_emulator_send_final(em, &result);
-> @@ -2888,7 +2909,8 @@ static void cgdcont_cb(struct ofono_emulator *em,
->  		break;
->  =
-
->  	case OFONO_EMULATOR_REQUEST_TYPE_QUERY:
-> -		result.type =3D OFONO_ERROR_TYPE_FAILURE;
-> +		ofono_gprs_list_contexts(em, gprs);
-> +		result.type =3D OFONO_ERROR_TYPE_NO_ERROR;
->  		ofono_emulator_send_final(em, &result);
->  		break;
->  	case OFONO_EMULATOR_REQUEST_TYPE_SET:
-
-Regards,
--Denis
-
---===============1893534704775737729==--
+--===============5193241682534133306==--
 
