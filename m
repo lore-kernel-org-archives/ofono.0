@@ -1,159 +1,205 @@
-Content-Type: multipart/mixed; boundary="===============1914616490337564879=="
+Content-Type: multipart/mixed; boundary="===============7894194058227042851=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 2/6] stk-api.txt: Describe new d-bus APIs related to BIP
- commands.
-Date: Tue, 22 Mar 2011 13:51:16 +0100
-Message-ID: <1300798280-4281-3-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 4/6] stkagent: Add new methods to support the BIP commands
+Date: Tue, 22 Mar 2011 13:51:18 +0100
+Message-ID: <1300798280-4281-5-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1914616490337564879==
+--===============7894194058227042851==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/stk-api.txt |   27 ++++++++++++++++++++++++++-
- 1 files changed, 26 insertions(+), 1 deletions(-)
+ src/stkagent.c |  129 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/stkagent.h |   17 +++++++
+ 2 files changed, 146 insertions(+), 0 deletions(-)
 
-diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-index 529c734..772e4ce 100644
---- a/doc/stk-api.txt
-+++ b/doc/stk-api.txt
-@@ -96,6 +96,7 @@ Methods		byte RequestSelection(string title, byte icon_id,
- 			an error given below.
+diff --git a/src/stkagent.c b/src/stkagent.c
+index 2395182..bae788c 100644
+--- a/src/stkagent.c
++++ b/src/stkagent.c
+@@ -1081,3 +1081,132 @@ int stk_agent_confirm_launch_browser(struct stk_age=
+nt *agent, const char *text,
  =
 
- 			Possible Errors: [service].Error.SimToolkit.GoBack
-+					 [service].Error.SimToolkit.EndSession
- =
-
- 			Implementation notes:
- =
-
-@@ -111,6 +112,7 @@ Methods		byte RequestSelection(string title, byte icon_=
-id,
- 			cleared prior to the display of this text.
- =
-
- 			Possible Errors: [service].Error.SimToolkit.GoBack
-+					 [service].Error.SimToolkit.EndSession
- 					 [service].Error.SimToolkit.Busy
- =
-
- 			Implementation notes:
-@@ -154,6 +156,7 @@ Methods		byte RequestSelection(string title, byte icon_=
-id,
- 			should be opaque.
- =
-
- 			Possible Errors: [service].Error.SimToolkit.GoBack
-+					 [service].Error.SimToolkit.EndSession
- =
-
- 			Implementation notes:
- =
-
-@@ -171,6 +174,7 @@ Methods		byte RequestSelection(string title, byte icon_=
-id,
- 			are expected.
- =
-
- 			Possible Errors: [service].Error.SimToolkit.GoBack
-+					 [service].Error.SimToolkit.EndSession
- =
-
- 		string RequestKey(string alpha, byte icon_id)
- =
-
-@@ -179,6 +183,7 @@ Methods		byte RequestSelection(string title, byte icon_=
-id,
- 			for the request.
- =
-
- 			Possible Errors: [service].Error.SimToolkit.GoBack
-+					 [service].Error.SimToolkit.EndSession
- =
-
- 		string RequestDigit(string alpha, byte icon_id)
- =
-
-@@ -186,12 +191,14 @@ Methods		byte RequestSelection(string title, byte ico=
-n_id,
- 			expected.
- =
-
- 			Possible Errors: [service].Error.SimToolkit.GoBack
-+					 [service].Error.SimToolkit.EndSession
- =
-
- 		boolean RequestConfirmation(string alpha, byte icon_id)
- =
-
- 			Asks the agent to get confirmation from the user.
- =
-
- 			Possible Errors: [service].Error.SimToolkit.GoBack
-+					 [service].Error.SimToolkit.EndSession
- =
-
- 		boolean ConfirmCallSetup(string information, byte icon_id)
- =
-
-@@ -245,6 +252,7 @@ Methods		byte RequestSelection(string title, byte icon_=
-id,
- 			Possible Errors: [service].Error.SimToolkit.EndSession
- =
-
- 		void DisplayActionInformation(string text, byte icon_id)
-+						[noreply]
- =
-
- 			Supplies a text string and/or icon concerning the
- 			current activity in the terminal and UICC.  The
-@@ -260,6 +268,23 @@ Methods		byte RequestSelection(string title, byte icon=
-_id,
- 			confirmation message to oFono and then should open
- 			the launch browser with the given url.
- =
-
-+		boolean ConfirmOpenChannel(string information, byte icon_id)
+ 	return 0;
+ }
 +
-+			Asks the agent to request user to confirm the channel
-+			set-up.
++static void confirm_open_channel_cb(DBusPendingCall *call, void *data)
++{
++	struct stk_agent *agent =3D data;
++	stk_agent_confirmation_cb cb =3D agent->user_cb;
++	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
++	enum stk_agent_result result;
++	gboolean remove_agent;
++	dbus_bool_t confirm;
 +
-+			Possible Errors: [service].Error.SimToolkit.EndSession
++	if (check_error(agent, reply,
++			ALLOWED_ERROR_TERMINATE, &result) =3D=3D -EINVAL) {
++		remove_agent =3D TRUE;
++		goto error;
++	}
 +
-+		void DisplayChannelActivity(string text, byte icon_id)
++	if (result !=3D STK_AGENT_RESULT_OK) {
++		cb(result, FALSE, agent->user_data);
++		goto done;
++	}
 +
-+			Supplies a text string and/or icon concerning the
-+			current activity linked to the channel set-up. The
-+			text should be displayed to the user on screen
-+			until the call is canceled using Cancel() or until the
-+			user decides to end the session.
++	if (dbus_message_get_args(reply, NULL,
++					DBUS_TYPE_BOOLEAN, &confirm,
++					DBUS_TYPE_INVALID) =3D=3D FALSE) {
++		ofono_error("Can't parse the reply to ConfirmOpenChannel()");
++		remove_agent =3D TRUE;
++		goto error;
++	}
 +
-+			Possible Errors: [service].Error.SimToolkit.EndSession
++	cb(result, confirm, agent->user_data);
 +
- 		void Cancel() [noreply]
++	CALLBACK_END();
++}
++
++int stk_agent_confirm_open_channel(struct stk_agent *agent, const char *te=
+xt,
++					const struct stk_icon_id *icon,
++					stk_agent_confirmation_cb cb,
++					void *user_data,
++					ofono_destroy_func destroy, int timeout)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++
++	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
++							OFONO_SIM_APP_INTERFACE,
++							"ConfirmOpenChannel");
++	if (agent->msg =3D=3D NULL)
++		return -ENOMEM;
++
++	dbus_message_append_args(agent->msg,
++					DBUS_TYPE_STRING, &text,
++					DBUS_TYPE_BYTE, &icon->id,
++					DBUS_TYPE_INVALID);
++
++	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
++						timeout) =3D=3D FALSE ||
++						agent->call =3D=3D NULL)
++		return -EIO;
++
++	agent->user_cb =3D cb;
++	agent->user_data =3D user_data;
++	agent->user_destroy =3D destroy;
++
++	dbus_pending_call_set_notify(agent->call, confirm_open_channel_cb,
++					agent, NULL);
++
++	return 0;
++}
++
++static void channel_activity_cb(DBusPendingCall *call, void *data)
++{
++	struct stk_agent *agent =3D data;
++	stk_agent_channel_activity_cb cb =3D agent->user_cb;
++	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
++	enum stk_agent_result result;
++	gboolean remove_agent;
++
++	if (check_error(agent, reply,
++			ALLOWED_ERROR_TERMINATE, &result) =3D=3D -EINVAL) {
++		remove_agent =3D TRUE;
++		goto error;
++	}
++
++	if (dbus_message_get_args(reply, NULL, DBUS_TYPE_INVALID) =3D=3D FALSE) {
++		ofono_error("Can't parse the reply to DisplayChannelActivity()"
++				);
++		remove_agent =3D TRUE;
++		goto error;
++	}
++
++	cb(result, agent->user_data);
++	goto done;
++
++	CALLBACK_END();
++}
++
++int stk_agent_display_channel_activity(struct stk_agent *agent,
++					const char *text,
++					const struct stk_icon_id *icon,
++					stk_agent_channel_activity_cb cb,
++					void *user_data,
++					ofono_destroy_func destroy)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++
++	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
++						OFONO_SIM_APP_INTERFACE,
++						"DisplayChannelActivity");
++	if (agent->msg =3D=3D NULL)
++		return -ENOMEM;
++
++	dbus_message_append_args(agent->msg,
++					DBUS_TYPE_STRING, &text,
++					DBUS_TYPE_BYTE, &icon->id,
++					DBUS_TYPE_INVALID);
++
++	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
++						0) =3D=3D FALSE ||
++						agent->call =3D=3D NULL)
++		return -EIO;
++
++	agent->user_cb =3D cb;
++	agent->user_data =3D user_data;
++	agent->user_destroy =3D destroy;
++
++	dbus_pending_call_set_notify(agent->call, channel_activity_cb,
++					agent, NULL);
++
++	return 0;
++}
+diff --git a/src/stkagent.h b/src/stkagent.h
+index 1f0c4fa..610c728 100644
+--- a/src/stkagent.h
++++ b/src/stkagent.h
+@@ -60,6 +60,9 @@ typedef void (*stk_agent_string_cb)(enum stk_agent_result=
+ result,
+ typedef void (*stk_agent_tone_cb)(enum stk_agent_result result,
+ 						void *user_data);
  =
 
- 			Asks the agent to cancel any ongoing operation in
-@@ -270,6 +295,6 @@ Methods		byte RequestSelection(string title, byte icon_=
-id,
- 		void Release() [noreply]
++typedef void (*stk_agent_channel_activity_cb)(enum stk_agent_result result,
++						void *user_data);
++
+ struct stk_agent *stk_agent_new(const char *path, const char *sender,
+ 					ofono_bool_t remove_on_terminate);
  =
 
- 			Agent is being released, possibly because of oFono
--			terminating, SimToolkit interface torn down or modem
-+			terminating, SimToolkit interface turn down or modem
- 			off.  If the agent is registered as a global agent,
- 			no UnregisterAgent call is expected.
+@@ -147,3 +150,17 @@ int stk_agent_confirm_launch_browser(struct stk_agent =
+*agent, const char *text,
+ 					void *user_data,
+ 					ofono_destroy_func destroy,
+ 					int timeout);
++
++int stk_agent_confirm_open_channel(struct stk_agent *agent, const char *te=
+xt,
++					const struct stk_icon_id *icon,
++					stk_agent_confirmation_cb cb,
++					void *user_data,
++					ofono_destroy_func destroy,
++					int timeout);
++
++int stk_agent_display_channel_activity(struct stk_agent *agent,
++					const char *text,
++					const struct stk_icon_id *icon,
++					stk_agent_channel_activity_cb cb,
++					void *user_data,
++					ofono_destroy_func destroy);
 -- =
 
 1.7.1
 
 
---===============1914616490337564879==--
+--===============7894194058227042851==--
 
