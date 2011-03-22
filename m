@@ -1,153 +1,125 @@
-Content-Type: multipart/mixed; boundary="===============3530416528719960895=="
+Content-Type: multipart/mixed; boundary="===============1893534704775737729=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] emulator: add call, callsetup and callheld indicators
-Date: Mon, 21 Mar 2011 14:31:31 -0500
-Message-ID: <4D87A793.8020509@gmail.com>
-In-Reply-To: <1300464648-11074-3-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH 3/3] gprs.c: add list contexts for emulator
+Date: Mon, 21 Mar 2011 21:06:41 -0500
+Message-ID: <4D880431.6050309@gmail.com>
+In-Reply-To: <1300715114-5790-4-git-send-email-olivier.guiter@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3530416528719960895==
+--===============1893534704775737729==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Olivier,
 
-> +static void notify_emulator_call_status(struct ofono_voicecall *vc)
-> +{
-> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
-> +	int status;
-> +
-> +	status =3D voicecalls_have_with_status(vc, CALL_STATUS_ACTIVE) ?
-> +						OFONO_EMULATOR_CALL_ACTIVE :
-> +						OFONO_EMULATOR_CALL_INACTIVE;
-> +	__ofono_modem_foreach_atom(modem, OFONO_ATOM_TYPE_EMULATOR_HFP,
-> +					emulator_call_status_cb,
-> +					GINT_TO_POINTER(status));
-> +
+On 03/21/2011 08:45 AM, Olivier Guiter wrote:
+> ---
+>  src/gprs.c |   26 ++++++++++++++++++++++++--
+>  1 files changed, 24 insertions(+), 2 deletions(-)
+> =
 
-This looks wrong, the call indicator is not only about active calls.
-See Sequence in figure 4.26 in HFP 1.5 for more details.
-
-You really need to sit down and figure out the possible scenarios and
-the sequences in which the indicators must be set.  I suggest you also
-run PTS tester at a minimum to make sure the sequences sent by oFono is
-what the spec expects.
-
-Also, please google MCPC-TR-002 Version 1.5.  That document contains
-many more scenarios than are present in the BT HFP 1.5 specification.
-
-> +	if (voicecalls_have_with_status(vc, CALL_STATUS_HELD)) {
-> +		if (status)
-> +			status =3D OFONO_EMULATOR_CALLHELD_MULTIPLE;
-> +		else
-> +			status =3D OFONO_EMULATOR_CALLHELD_ON_HOLD;
-> +	} else
-> +		status =3D OFONO_EMULATOR_CALLHELD_NONE;
-> +
-> +	__ofono_modem_foreach_atom(modem, OFONO_ATOM_TYPE_EMULATOR_HFP,
-> +					emulator_callheld_status_cb,
-> +					GINT_TO_POINTER(status));
-> +
-> +	if (voicecalls_have_with_status(vc, CALL_STATUS_DIALING))
-> +		status =3D OFONO_EMULATOR_CALLSETUP_OUTGOING;
-> +	else if (voicecalls_have_with_status(vc, CALL_STATUS_ALERTING))
-> +		status =3D OFONO_EMULATOR_CALLSETUP_ALERTING;
-> +	else if (voicecalls_have_with_status(vc, CALL_STATUS_INCOMING)
-> +		|| voicecalls_have_with_status(vc, CALL_STATUS_WAITING))
-
-Please re-read doc/coding-style.txt section M4
-
-> +		status =3D OFONO_EMULATOR_CALLSETUP_INCOMING;
-> +	else
-> +		status =3D OFONO_EMULATOR_CALLSETUP_INACTIVE;
-> +
-> +	__ofono_modem_foreach_atom(modem, OFONO_ATOM_TYPE_EMULATOR_HFP,
-> +					emulator_callsetup_status_cb,
-> +					GINT_TO_POINTER(status));
-> +}
-> +
->  static void voicecall_set_call_status(struct voicecall *call, int status)
->  {
->  	DBusConnection *conn =3D ofono_dbus_get_connection();
-> @@ -714,6 +779,8 @@ static void voicecall_set_call_status(struct voicecal=
-l *call, int status)
->  						"State", DBUS_TYPE_STRING,
->  						&status_str);
->  =
-
-> +	notify_emulator_call_status(call->vc);
-> +
->  	if (status =3D=3D CALL_STATUS_ACTIVE &&
->  		(old_status =3D=3D CALL_STATUS_INCOMING ||
->  			old_status =3D=3D CALL_STATUS_DIALING ||
-> @@ -1043,6 +1110,8 @@ static void voicecalls_emit_call_added(struct ofono=
-_voicecall *vc,
->  	DBusMessageIter dict;
->  	const char *path;
->  =
-
-> +	notify_emulator_call_status(vc);
-> +
->  	path =3D __ofono_atom_get_path(vc->atom);
->  =
-
->  	signal =3D dbus_message_new_signal(path,
-> @@ -2188,6 +2257,15 @@ static void voicecall_unregister(struct ofono_atom=
- *atom)
->  	const char *path =3D __ofono_atom_get_path(atom);
->  	GSList *l;
->  =
-
-> +	__ofono_modem_foreach_atom(modem, OFONO_ATOM_TYPE_EMULATOR_HFP,
-> +					emulator_call_status_cb, 0);
-> +	__ofono_modem_foreach_atom(modem, OFONO_ATOM_TYPE_EMULATOR_HFP,
-> +					emulator_callsetup_status_cb, 0);
-> +	__ofono_modem_foreach_atom(modem, OFONO_ATOM_TYPE_EMULATOR_HFP,
-> +					emulator_callheld_status_cb, 0);
-> +
-> +	__ofono_modem_remove_atom_watch(modem, vc->hfp_watch);
-> +
->  	if (vc->sim_watch) {
->  		__ofono_modem_remove_atom_watch(modem, vc->sim_watch);
->  		vc->sim_watch =3D 0;
-> @@ -2362,6 +2440,16 @@ static void sim_watch(struct ofono_atom *atom,
->  	sim_state_watch(ofono_sim_get_state(sim), vc);
+> diff --git a/src/gprs.c b/src/gprs.c
+> index 04432c3..06d52f3 100644
+> --- a/src/gprs.c
+> +++ b/src/gprs.c
+> @@ -2863,11 +2863,31 @@ static void provision_contexts(struct ofono_gprs =
+*gprs, const char *mcc,
+>  	__ofono_gprs_provision_free_settings(settings, count);
 >  }
 >  =
 
-> +static void emulator_hfp_watch(struct ofono_atom *atom,
-> +				enum ofono_atom_watch_condition cond,
-> +				void *data)
+> +static void ofono_gprs_list_contexts(struct ofono_emulator *em, void *us=
+erdata)
 > +{
-> +	struct ofono_voicecall *vc =3D data;
+> +	struct ofono_gprs *gprs =3D userdata;
+> +	GSList *l;
+> +	char buf[256];
 > +
-> +	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_REGISTERED)
-> +		notify_emulator_call_status(vc);
+> +	struct pri_context *ctx;
+> +
+> +	for (l =3D gprs->contexts; l; l =3D l->next) {
+> +		ctx =3D l->data;
+> +
+> +		snprintf(buf, 255, "+CGDCONT: %d,\"%s\",\"%s\"",
+> +				ctx->id, gprs_proto_to_string(ctx->context.proto),
+> +				ctx->context.apn);
+
+So you're mixing concepts here a bit.
+
+gprs.c has two maps:
+
+- pid_map
+- cid_map
+
+and two ids:
+- pri_context::id
+- ofono_gprs_primary_context::cid
+
+Roughly speaking the cid_map lets us pick a context id that maps 1:1 to
+the modem driver.  Hence the use of ofono_gprs_set_cid_range.  Basically
+the driver tells us the valid range of context ids and oFono picks the
+rest.  For an AT modem the driver can simply use the cid picked by oFono
+in activate_primary callback.
+
+Internally oFono has another idmap for tracking unique ids for contexts
+and ensuring some sane limit on their number.  This is managed by
+pid_map and pri_context::id.
+
+The code you have right now would use the pid_map ids...
+
+> +		ofono_emulator_send_info(em, buf, FALSE);
+> +	}
 > +}
 > +
->  void ofono_voicecall_register(struct ofono_voicecall *vc)
+>  /* Process the usual AT+CGDCONT command
+>   */
+>  static void cgdcont_cb(struct ofono_emulator *em,
+>  			struct ofono_emulator_request *req, void *userdata)
 >  {
->  	DBusConnection *conn =3D ofono_dbus_get_connection();
-> @@ -2398,6 +2486,10 @@ void ofono_voicecall_register(struct ofono_voiceca=
-ll *vc)
->  		sim_watch(sim_atom, OFONO_ATOM_WATCH_CONDITION_REGISTERED, vc);
+> +	struct ofono_gprs *gprs =3D userdata;
+> +	struct idmap *cid =3D gprs->cid_map;
+>  	struct ofono_error result;
+>  	char buf[256];
 >  =
 
->  	__ofono_atom_register(vc->atom, voicecall_unregister);
-> +
-> +	vc->hfp_watch =3D __ofono_modem_add_atom_watch(modem,
-> +					OFONO_ATOM_TYPE_EMULATOR_HFP,
-> +					emulator_hfp_watch, vc, NULL);
->  }
+> @@ -2876,7 +2896,8 @@ static void cgdcont_cb(struct ofono_emulator *em,
+>  	switch (ofono_emulator_request_get_type(req)) {
+>  	case OFONO_EMULATOR_REQUEST_TYPE_SUPPORT:
+>  		/* TODO: check additionnal parameters */
+> -		snprintf(buf, 255, "+CGDCONT: (1-2),\"IP\",,,(0-2),(0,1,2,3,4)");
+> +		snprintf(buf, 255, "+CGDCONT: (1-%d),\"IP\",,,(0-2),(0,1,2,3,4)",
+> +					idmap_get_size(cid));
+
+, but use the size of the cid_map in the CGDCONT=3D? implementation below.
+ These sizes are highly unlikely to match.
+
+However, this brings up a more fundamental question from me.  What do
+you actually want to expose here?  Do you want the emulator to be able
+to view / edit contexts exposed over D-Bus?
+
+Or is it enough to simply fake all this and maintain the cgdcont list in
+memory for each emulator instance?
+
+>  		ofono_emulator_send_info(em, buf, FALSE);
+>  		result.type =3D OFONO_ERROR_TYPE_NO_ERROR;
+>  		ofono_emulator_send_final(em, &result);
+> @@ -2888,7 +2909,8 @@ static void cgdcont_cb(struct ofono_emulator *em,
+>  		break;
 >  =
 
->  void ofono_voicecall_remove(struct ofono_voicecall *vc)
+>  	case OFONO_EMULATOR_REQUEST_TYPE_QUERY:
+> -		result.type =3D OFONO_ERROR_TYPE_FAILURE;
+> +		ofono_gprs_list_contexts(em, gprs);
+> +		result.type =3D OFONO_ERROR_TYPE_NO_ERROR;
+>  		ofono_emulator_send_final(em, &result);
+>  		break;
+>  	case OFONO_EMULATOR_REQUEST_TYPE_SET:
 
 Regards,
 -Denis
 
---===============3530416528719960895==--
+--===============1893534704775737729==--
 
