@@ -1,49 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============0032293281530152995=="
+Content-Type: multipart/mixed; boundary="===============2725560472063809372=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 5/6] gatppp: add g_at_ppp_set_suspend_function() definition
-Date: Tue, 22 Mar 2011 10:36:50 +0100
-Message-ID: <1300786611-11055-6-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH 6/6] emulator: add ppp_suspend() CB and register it
+Date: Tue, 22 Mar 2011 10:36:51 +0100
+Message-ID: <1300786611-11055-7-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0032293281530152995==
+--===============2725560472063809372==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatppp.c |    8 ++++++++
- 1 files changed, 8 insertions(+), 0 deletions(-)
+ src/emulator.c |   10 ++++++++++
+ 1 files changed, 10 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index 993b5ea..9df6b8e 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -467,6 +467,14 @@ void g_at_ppp_set_debug(GAtPPP *ppp, GAtDebugFunc func=
+diff --git a/src/emulator.c b/src/emulator.c
+index c84f0a9..c1ceb36 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -99,6 +99,15 @@ static void ppp_disconnect(GAtPPPDisconnectReason reason=
 , gpointer user_data)
- 	ppp->debug_data =3D user_data;
+ 	g_at_server_resume(em->server);
  }
  =
 
-+void g_at_ppp_set_suspend_function(GAtPPP *ppp, GAtSuspendFunc func, gpoin=
-ter user_data)
++static void ppp_suspend(gpointer user_data)
 +{
-+	if (ppp =3D=3D NULL)
-+		return;
++	struct ofono_emulator *em =3D user_data;
 +
-+	g_at_hdlc_set_suspend_function(ppp->hdlc, func, user_data);
++	DBG("");
++
++	g_at_server_resume(em->server);
 +}
 +
- void g_at_ppp_shutdown(GAtPPP *ppp)
+ static gboolean setup_ppp(gpointer user_data)
  {
- 	if (ppp->phase =3D=3D PPP_PHASE_DEAD || ppp->phase =3D=3D PPP_PHASE_TERMI=
-NATION)
+ 	struct ofono_emulator *em =3D user_data;
+@@ -126,6 +135,7 @@ static gboolean setup_ppp(gpointer user_data)
+ =
+
+ 	g_at_ppp_set_connect_function(em->ppp, ppp_connect, em);
+ 	g_at_ppp_set_disconnect_function(em->ppp, ppp_disconnect, em);
++	g_at_ppp_set_suspend_function(em->ppp, ppp_suspend, em);
+ =
+
+ 	return FALSE;
+ }
 -- =
 
 1.7.1
 
 
---===============0032293281530152995==--
+--===============2725560472063809372==--
 
