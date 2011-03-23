@@ -1,39 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============3784384290947818247=="
+Content-Type: multipart/mixed; boundary="===============3335475562850046167=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Reg: Supporting Operator Preferred List in oFono
-Date: Wed, 23 Mar 2011 09:26:21 -0500
-Message-ID: <4D8A030D.3050205@gmail.com>
-In-Reply-To: <AANLkTi=CDANYGyC6UwA5EjEudLocEuUp=uL8gQ318y-1@mail.gmail.com>
+Subject: Re: USSD network initiated support
+Date: Wed, 23 Mar 2011 09:29:27 -0500
+Message-ID: <4D8A03C7.5050608@gmail.com>
+In-Reply-To: <A782C372B9527D44AB20BF45FEEBB14F75BFCC1180@irsmsx503.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3784384290947818247==
+--===============3335475562850046167==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sankar,
+Hi Bertrand,
 
-On 03/23/2011 06:52 AM, Sankar wrote:
-> Hi ,
+On 03/23/2011 06:10 AM, Aygon, Bertrand wrote:
+> Hi,
 > =
 
-> I would like to know if there is any proposal to support the Operator
-> Preferred List in oFono. This is being a key feature, allowing the user
-> to add/delete/modify the PLMNSel, PLMNWact files on the card, which are
-> used by the Baseband during the network registration procedures.
+>  =
+
+> =
+
+> In doc/overview.txt , I could see that there is some work in progress
+> about USSD network initiated. But I couldn=E2=80=99t find anything about =
+if in
+> the TODO.
+> =
+
 > =
 
 
-This is not (and unlikely to be) a priority feature.  These lists are
-mostly managed by the modem and do not need oFono's intervention.
+doc/overview.txt is out of date...
 
-If you need this feature then I suggest you add a task to the TODO list
-and go about finding someone to implement it ;)
+> =
+
+> Does that means that USSD network initiated support is just something
+> that we should work on, but no one is looking into? Or is someone
+> working on it, but the TODO has not been updated?
+> =
+
+> =
+
+
+Network initiated USSD has been available for about a year now, it was
+available before the existence of doc/features.txt.
 
 Regards,
 -Denis
 
---===============3784384290947818247==--
+--===============3335475562850046167==--
 
