@@ -1,36 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7535023896334061985=="
+Content-Type: multipart/mixed; boundary="===============8619526296659535572=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 0/1] Handle getenv failure case
-Date: Wed, 23 Mar 2011 04:42:03 -0700
-Message-ID: <1300880524-21559-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Sankar <gsankar.gs@gmail.com>
+Subject: Reg: Supporting Operator Preferred List in oFono
+Date: Wed, 23 Mar 2011 17:22:43 +0530
+Message-ID: <AANLkTi=CDANYGyC6UwA5EjEudLocEuUp=uL8gQ318y-1@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7535023896334061985==
+--===============8619526296659535572==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi ,
 
-If ofono is started before setting the LANG enviroment variable, then
-call to getenv fails. This results in the failure of test case
-Provide Local Information - Language setting(27.22.4.15 seq 1.5).
+I would like to know if there is any proposal to support the Operator
+Preferred List in oFono. This is being a key feature, allowing the user to
+add/delete/modify the PLMNSel, PLMNWact files on the card, which are used by
+the Baseband during the network registration procedures.
 
-Plan is to default to en when the getenv fails. Warning message has
-also been added. Distribution will be informed to start ofono after
-the locale is set.
+Thanks,
+Sankar.
 
-Regards,
-Jeevaka
+--===============8619526296659535572==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-Jeevaka Badrappan (1):
-  stk: Fix getenv failure case
+SGkgLDxkaXY+PGJyPjwvZGl2PjxkaXY+SSB3b3VsZCBsaWtlIHRvIGtub3cgaWYgdGhlcmUgaXMg
+YW55IHByb3Bvc2FsIHRvIHN1cHBvcnQgdGhlIE9wZXJhdG9yIFByZWZlcnJlZCBMaXN0IGluIG9G
+b25vLiBUaGlzIGlzIGJlaW5nIGEga2V5IGZlYXR1cmUsIGFsbG93aW5nIHRoZSB1c2VyIHRvIGFk
+ZC9kZWxldGUvbW9kaWZ5IHRoZSBQTE1OU2VsLCBQTE1OV2FjdCBmaWxlcyBvbiB0aGUgY2FyZCwg
+d2hpY2ggYXJlIHVzZWQgYnkgdGhlIEJhc2ViYW5kIGR1cmluZyB0aGUgbmV0d29yayByZWdpc3Ry
+YXRpb24gcHJvY2VkdXJlcy48L2Rpdj4KPGRpdj48YnI+PC9kaXY+PGRpdj5UaGFua3MsPC9kaXY+
+PGRpdj5TYW5rYXIuPC9kaXY+Cg==
 
- src/stk.c |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
-
-
---===============7535023896334061985==--
+--===============8619526296659535572==--
 
