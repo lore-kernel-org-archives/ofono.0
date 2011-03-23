@@ -1,33 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============4180519729625587469=="
+Content-Type: multipart/mixed; boundary="===============4447479594630040688=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] common: fix buffer length in phone_number_to_string
-Date: Wed, 23 Mar 2011 15:03:59 -0500
-Message-ID: <4D8A522F.9000007@gmail.com>
-In-Reply-To: <1300900595-32375-1-git-send-email-frederic.danis@linux.intel.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: Re: buildroot
+Date: Wed, 23 Mar 2011 18:08:40 -0300
+Message-ID: <AANLkTi=3-+Lkg7xxH3s8uFchA4ZiYhJhHRvqZx2PUjnr@mail.gmail.com>
+In-Reply-To: <AANLkTi=MRsBechiLLBeG9pcKQ+dG5ViZY04x5QwOmZrW@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4180519729625587469==
+--===============4447479594630040688==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+On Wed, Mar 23, 2011 at 1:01 PM, Jerry Casette <gjerryboi@gmail.com> wrot=
+e:
+> Hello List,
+>
+> first mail, please be gentle. I wish to create a new rootfs for my ARM920T
+> microcontroller based device using BUILDROOT. The device has a serial port
+> attached huawei 3G modem that could theoretically be used with stock
+> chap/ppp. I do vividly remember though my aggreviance with this before
+> finding wvdial, a simple, easy-to-use package to configure, initialize,
+> start, and monitor the pppd. Unfortunately, wvdial just can not be added =
+to
+> my buidroot created rootFS. My question to the listmembers is twofold:
+> 1) am I right to assume that ofono is more than capable replacing my old
+> friend vwdial as shown here:
+> http://ofono.org/wiki/how-work-newly-bought-3g-key
 
-On 03/23/2011 12:16 PM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> update buffer length related to OFONO_MAX_PHONE_NUMBER_LENGTH change
-> 78c1e96bf9601b5e5d31d04413baa1265a1c284f
-> ---
->  src/common.c |   10 +++++-----
->  1 files changed, 5 insertions(+), 5 deletions(-)
-> =
+Yes, but make sure to use udev instead of mdev (AFAIR mdev is the
+default in buildroot).
+
+Other problem is that buildroot uses uClibc. Denis, do you know if
+there's any problem in building oFono with uClibc?
+
+If there is, you'd need to provide your own toolchain (take one from
+CodeSourcery).
 
 
-Nice catch.  Patch has been applied, thanks.
+> 2) if so, is there a makefile I could use to add ofono to my otherwise
+> functional buildroot conf?
 
-Regards,
--Denis
+oFono uses autotools for building. If you are using the git
+repository, you need to run './bootstrap && ./configure' first. Then
+you'll have a Makefile.
 
---===============4180519729625587469==--
+
+regards,
+
+Lucas De Marchi
+
+--===============4447479594630040688==--
 
