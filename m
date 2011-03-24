@@ -1,39 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============0851872176162581790=="
+Content-Type: multipart/mixed; boundary="===============6446344874200771764=="
 MIME-Version: 1.0
-From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH] Set owner CSSU/CSSI support task
-Date: Thu, 24 Mar 2011 19:29:38 +0100
-Message-ID: <1300991378-24934-1-git-send-email-nicolas.bertrand@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] voicecall: fix voicecalls_release_queue
+Date: Thu, 24 Mar 2011 13:30:35 -0500
+Message-ID: <4D8B8DCB.6060806@gmail.com>
+In-Reply-To: <1300988602-12513-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0851872176162581790==
+--===============6446344874200771764==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+Hi Fr=C3=A9d=C3=A9ric,
 
-diff --git a/TODO b/TODO
-index ed644c9..6769906 100644
---- a/TODO
-+++ b/TODO
-@@ -21,3 +21,7 @@ Call Management
- - Add support for +CSSU / +CSSI notifications.  These can be used to simul=
-ate
-   the remote party putting the call on hold, retrieving or creating an mpty
-   call.
-+
-+  Priority: Low
-+  Complexity: C1
-+  Owner: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-\ No newline at end of file
--- =
-
-1.7.1
+On 03/24/2011 12:43 PM, Fr=C3=A9d=C3=A9ric Danis wrote:
+> voicecalls_release_queue uses struct ofono_call instead of
+> struct voicecall (which is used in "calls" list parameter and
+> function voicecalls_release_next)
+> ---
+>  src/voicecall.c |    4 ++--
+>  1 files changed, 2 insertions(+), 2 deletions(-)
+> =
 
 
---===============0851872176162581790==--
+Good spot, patch has been applied, thanks.
+
+Regards,
+-Denis
+
+--===============6446344874200771764==--
 
