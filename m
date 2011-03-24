@@ -1,89 +1,117 @@
-Content-Type: multipart/mixed; boundary="===============8377762474589261912=="
+Content-Type: multipart/mixed; boundary="===============2219367197453979672=="
 MIME-Version: 1.0
-From: Sankar <gsankar.gs@gmail.com>
-Subject: Re: Reg: Supporting Operator Preferred List in oFono
-Date: Thu, 24 Mar 2011 11:44:57 +0530
-Message-ID: <AANLkTik3+jC3O_k1_UfJvx_Dx+S6FKJyPuiH3Be7hreL@mail.gmail.com>
-In-Reply-To: <4D8A030D.3050205@gmail.com>
+From: Ankur chauhan <iitg_ankur@yahoo.com>
+Subject: Queries related to oFono
+Date: Thu, 24 Mar 2011 09:32:49 +0000
+Message-ID: <931845.98105.qm@web161616.mail.bf1.yahoo.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8377762474589261912==
+--===============2219367197453979672==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Dear All Greetings!
+=C2=A0
+I am new to oFono, however I have a few basic queries.
+=C2=A0
+1)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 [oFono]:=C2=A0 Does this framework support=
+s the 3GPP release 9 features.
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =
+
+2)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 [oFono]:=C2=A0 In Multimode case (2G+3G+LT=
+E)=C2=A0PS session continuation support, i.e. during PS call UE latches to =
+some other access technology.
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =
+
+3)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 [oFone]:=C2=A0 Does it supports LTE comple=
+tly, (i.e. LTE registration, data transfer)
+=C2=A0
+=C2=A0
+4)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 [oFono]:=C2=A0 This OFono framework doesn'=
+t take care of messaging framework i.e. concatination/retransmission/Storat=
+e etc of SMS, is there any open source messaging framework available which =
+is compatible to oFono Telephony framework.
+=C2=A0
+=C2=A0
+Regards,
+Ankur
 
 
-On Wed, Mar 23, 2011 at 7:56 PM, Denis Kenzior <denkenz@gmail.com> wrote:
+     =20
 
-> Hi Sankar,
->
-> On 03/23/2011 06:52 AM, Sankar wrote:
-> > Hi ,
-> >
-> > I would like to know if there is any proposal to support the Operator
-> > Preferred List in oFono. This is being a key feature, allowing the user
-> > to add/delete/modify the PLMNSel, PLMNWact files on the card, which are
-> > used by the Baseband during the network registration procedures.
-> >
->
-> This is not (and unlikely to be) a priority feature.  These lists are
-> mostly managed by the modem and do not need oFono's intervention.
-
-I agree lists are used by Modem, but definitely oFono's intervention is
-required if the user wants to modify this list.
-
->
-
-
-> If you need this feature then I suggest you add a task to the TODO list
-> and go about finding someone to implement it ;)
->
-I will explore this. I have not added any TODOs before.
-
->
-> Regards,
-> -Denis
->
-
---===============8377762474589261912==
+--===============2219367197453979672==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-SGkgRGVuaXMsPGRpdj48YnI+PGJyPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj5PbiBXZWQsIE1h
-ciAyMywgMjAxMSBhdCA3OjU2IFBNLCBEZW5pcyBLZW56aW9yIDxzcGFuIGRpcj0ibHRyIj4mbHQ7
-PGEgaHJlZj0ibWFpbHRvOmRlbmtlbnpAZ21haWwuY29tIj5kZW5rZW56QGdtYWlsLmNvbTwvYT4m
-Z3Q7PC9zcGFuPiB3cm90ZTo8YnI+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHls
-ZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1s
-ZWZ0OjFleDsiPgpIaSBTYW5rYXIsPGJyPgo8ZGl2PjxkaXY+PC9kaXY+PGRpdiBjbGFzcz0iaDUi
-Pjxicj4KT24gMDMvMjMvMjAxMSAwNjo1MiBBTSwgU2Fua2FyIHdyb3RlOjxicj4KJmd0OyBIaSAs
-PGJyPgomZ3Q7PGJyPgomZ3Q7IEkgd291bGQgbGlrZSB0byBrbm93IGlmIHRoZXJlIGlzIGFueSBw
-cm9wb3NhbCB0byBzdXBwb3J0IHRoZSBPcGVyYXRvcjxicj4KJmd0OyBQcmVmZXJyZWQgTGlzdCBp
-biBvRm9uby4gVGhpcyBpcyBiZWluZyBhIGtleSBmZWF0dXJlLCBhbGxvd2luZyB0aGUgdXNlcjxi
-cj4KJmd0OyB0byBhZGQvZGVsZXRlL21vZGlmeSB0aGUgUExNTlNlbCwgUExNTldhY3QgZmlsZXMg
-b24gdGhlIGNhcmQsIHdoaWNoIGFyZTxicj4KJmd0OyB1c2VkIGJ5IHRoZSBCYXNlYmFuZCBkdXJp
-bmcgdGhlIG5ldHdvcmsgcmVnaXN0cmF0aW9uIHByb2NlZHVyZXMuPGJyPgomZ3Q7PGJyPgo8YnI+
-CjwvZGl2PjwvZGl2PlRoaXMgaXMgbm90IChhbmQgdW5saWtlbHkgdG8gYmUpIGEgcHJpb3JpdHkg
-ZmVhdHVyZS4goFRoZXNlIGxpc3RzIGFyZTxicj4KbW9zdGx5IG1hbmFnZWQgYnkgdGhlIG1vZGVt
-IGFuZCBkbyBub3QgbmVlZCBvRm9ubyYjMzk7cyBpbnRlcnZlbnRpb24uPC9ibG9ja3F1b3RlPjxk
-aXY+SSBhZ3JlZSBsaXN0cyBhcmUgdXNlZCBieSBNb2RlbSwgYnV0oGRlZmluaXRlbHkgb0Zvbm8m
-IzM5O3MgaW50ZXJ2ZW50aW9uIGlzIHJlcXVpcmVkIGlmIHRoZSB1c2VyIHdhbnRzIHRvIG1vZGlm
-eSB0aGlzIGxpc3QuoKA8L2Rpdj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxl
-PSJtYXJnaW46MCAwIDAgLjhleDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxl
-ZnQ6MWV4OyI+CqA8L2Jsb2NrcXVvdGU+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBz
-dHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGlu
-Zy1sZWZ0OjFleDsiPgo8YnI+CklmIHlvdSBuZWVkIHRoaXMgZmVhdHVyZSB0aGVuIEkgc3VnZ2Vz
-dCB5b3UgYWRkIGEgdGFzayB0byB0aGUgVE9ETyBsaXN0PGJyPgphbmQgZ28gYWJvdXQgZmluZGlu
-ZyBzb21lb25lIHRvIGltcGxlbWVudCBpdCA7KTxicj48L2Jsb2NrcXVvdGU+PGRpdj5JIHdpbGwg
-ZXhwbG9yZSB0aGlzLiBJIGhhdmUgbm90IGFkZGVkIGFueSBUT0RPcyBiZWZvcmUuoDwvZGl2Pjxi
-bG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4O2Jv
-cmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDoxZXg7Ij4KCjxicj4KUmVnYXJk
-cyw8YnI+Cjxmb250IGNvbG9yPSIjODg4ODg4Ij4tRGVuaXM8YnI+CjwvZm9udD48L2Jsb2NrcXVv
-dGU+PC9kaXY+PGJyPjwvZGl2Pgo=
-
---===============8377762474589261912==--
+PHRhYmxlIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iMCIgYm9yZGVyPSIwIiA+PHRyPjx0
+ZCB2YWxpZ249InRvcCIgc3R5bGU9ImZvbnQ6IGluaGVyaXQ7Ij48RElWPkRlYXIgQWxsIEdyZWV0
+aW5ncyE8L0RJVj4KPERJVj4mbmJzcDs8L0RJVj4KPERJVj5JIGFtIG5ldyB0byBvRm9ubywgaG93
+ZXZlciBJIGhhdmUgYSBmZXcgYmFzaWMgcXVlcmllcy48L0RJVj4KPERJVj4mbmJzcDs8L0RJVj4K
+PFAgc3R5bGU9IlRFWFQtSU5ERU5UOiAtMC4yNWluOyBNQVJHSU46IDBpbiAwaW4gMHB0IDAuNWlu
+OyBtc28tbGlzdDogbDAgbGV2ZWwxIGxmbzEiIGNsYXNzPU1zb0xpc3RQYXJhZ3JhcGg+PFNQQU4g
+c3R5bGU9Im1zby1mYXJlYXN0LWZvbnQtZmFtaWx5OiBDYWxpYnJpOyBtc28tYmlkaS1mb250LWZh
+bWlseTogQ2FsaWJyaSI+PFNQQU4gc3R5bGU9Im1zby1saXN0OiBJZ25vcmUiPjxGT05UIHNpemU9
+MyBmYWNlPUNhbGlicmk+MSk8L0ZPTlQ+PFNQQU4gc3R5bGU9IkZPTlQ6IDdwdCAnVGltZXMgTmV3
+IFJvbWFuJyI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IDwvU1BBTj48L1NQQU4+PC9T
+UEFOPjxGT05UIHNpemU9MyBmYWNlPUNhbGlicmk+W29Gb25vXTombmJzcDsgRG9lcyB0aGlzIGZy
+YW1ld29yayBzdXBwb3J0cyB0aGUgM0dQUCByZWxlYXNlIDkgZmVhdHVyZXMuPC9GT05UPjwvRElW
+Pgo8UCBzdHlsZT0iTUFSR0lOOiAwaW4gMGluIDBwdCAwLjVpbiIgY2xhc3M9TXNvTGlzdFBhcmFn
+cmFwaD48Rk9OVCBzaXplPTM+PEZPTlQgZmFjZT1DYWxpYnJpPiZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyA8L0ZPTlQ+PC9GT05UPjwvRElWPgo8UCBz
+dHlsZT0iVEVYVC1JTkRFTlQ6IC0wLjI1aW47IE1BUkdJTjogMGluIDBpbiAwcHQgMC41aW47IG1z
+by1saXN0OiBsMCBsZXZlbDEgbGZvMSIgY2xhc3M9TXNvTGlzdFBhcmFncmFwaD48U1BBTiBzdHls
+ZT0ibXNvLWZhcmVhc3QtZm9udC1mYW1pbHk6IENhbGlicmk7IG1zby1iaWRpLWZvbnQtZmFtaWx5
+OiBDYWxpYnJpIj48U1BBTiBzdHlsZT0ibXNvLWxpc3Q6IElnbm9yZSI+PEZPTlQgc2l6ZT0zIGZh
+Y2U9Q2FsaWJyaT4yKTwvRk9OVD48U1BBTiBzdHlsZT0iRk9OVDogN3B0ICdUaW1lcyBOZXcgUm9t
+YW4nIj4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgPC9TUEFOPjwvU1BBTj48L1NQQU4+
+PEZPTlQgc2l6ZT0zIGZhY2U9Q2FsaWJyaT5bb0Zvbm9dOiZuYnNwOyBJbiBNdWx0aW1vZGUgY2Fz
+ZSAoMkcrM0crTFRFKSZuYnNwO1BTIHNlc3Npb24gY29udGludWF0aW9uIHN1cHBvcnQsIGkuZS4g
+ZHVyaW5nIFBTIGNhbGwgVUUgbGF0Y2hlcyB0byBzb21lIG90aGVyIGFjY2VzcyB0ZWNobm9sb2d5
+LjwvRk9OVD48L0RJVj4KPFAgc3R5bGU9Ik1BUkdJTjogMGluIDBpbiAwcHQgMC41aW4iIGNsYXNz
+PU1zb0xpc3RQYXJhZ3JhcGg+PEZPTlQgc2l6ZT0zPjxGT05UIGZhY2U9Q2FsaWJyaT4mbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgPC9GT05UPjwvRk9O
+VD48L0RJVj4KPFAgc3R5bGU9IlRFWFQtSU5ERU5UOiAtMC4yNWluOyBNQVJHSU46IDBpbiAwaW4g
+MHB0IDAuNWluOyBtc28tbGlzdDogbDAgbGV2ZWwxIGxmbzEiIGNsYXNzPU1zb0xpc3RQYXJhZ3Jh
+cGg+PFNQQU4gc3R5bGU9Im1zby1mYXJlYXN0LWZvbnQtZmFtaWx5OiBDYWxpYnJpOyBtc28tYmlk
+aS1mb250LWZhbWlseTogQ2FsaWJyaSI+PFNQQU4gc3R5bGU9Im1zby1saXN0OiBJZ25vcmUiPjxG
+T05UIHNpemU9MyBmYWNlPUNhbGlicmk+Myk8L0ZPTlQ+PFNQQU4gc3R5bGU9IkZPTlQ6IDdwdCAn
+VGltZXMgTmV3IFJvbWFuJyI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IDwvU1BBTj48
+L1NQQU4+PC9TUEFOPjxGT05UIHNpemU9MyBmYWNlPUNhbGlicmk+W29Gb25lXTombmJzcDsgRG9l
+cyBpdCBzdXBwb3J0cyBMVEUgY29tcGxldGx5LCAoaS5lLiBMVEUgcmVnaXN0cmF0aW9uLCBkYXRh
+IHRyYW5zZmVyKTwvRk9OVD48L0RJVj4KPFAgc3R5bGU9IlRFWFQtSU5ERU5UOiAtMC4yNWluOyBN
+QVJHSU46IDBpbiAwaW4gMHB0IDAuNWluOyBtc28tbGlzdDogbDAgbGV2ZWwxIGxmbzEiIGNsYXNz
+PU1zb0xpc3RQYXJhZ3JhcGg+Jm5ic3A7PC9ESVY+CjxQIHN0eWxlPSJURVhULUlOREVOVDogLTAu
+MjVpbjsgTUFSR0lOOiAwaW4gMGluIDBwdCAwLjVpbjsgbXNvLWxpc3Q6IGwwIGxldmVsMSBsZm8x
+IiBjbGFzcz1Nc29MaXN0UGFyYWdyYXBoPiZuYnNwOzwvRElWPgo8UCBzdHlsZT0iVEVYVC1JTkRF
+TlQ6IC0wLjI1aW47IE1BUkdJTjogMGluIDBpbiAwcHQgMC41aW47IG1zby1saXN0OiBsMCBsZXZl
+bDEgbGZvMSIgY2xhc3M9TXNvTGlzdFBhcmFncmFwaD48U1BBTiBzdHlsZT0ibXNvLWZhcmVhc3Qt
+Zm9udC1mYW1pbHk6IENhbGlicmk7IG1zby1iaWRpLWZvbnQtZmFtaWx5OiBDYWxpYnJpIj48U1BB
+TiBzdHlsZT0ibXNvLWxpc3Q6IElnbm9yZSI+PEZPTlQgc2l6ZT0zIGZhY2U9Q2FsaWJyaT40KTwv
+Rk9OVD48U1BBTiBzdHlsZT0iRk9OVDogN3B0ICdUaW1lcyBOZXcgUm9tYW4nIj4mbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsgPC9TUEFOPjwvU1BBTj48L1NQQU4+PEZPTlQgc2l6ZT0zIGZh
+Y2U9Q2FsaWJyaT5bb0Zvbm9dOiZuYnNwOyBUaGlzIE9Gb25vIGZyYW1ld29yayBkb2Vzbid0IHRh
+a2UgY2FyZSBvZiBtZXNzYWdpbmcgZnJhbWV3b3JrIGkuZS4gY29uY2F0aW5hdGlvbi9yZXRyYW5z
+bWlzc2lvbi9TdG9yYXRlIGV0YyBvZiBTTVMsIGlzIHRoZXJlIGFueSBvcGVuIHNvdXJjZSBtZXNz
+YWdpbmcgZnJhbWV3b3JrIGF2YWlsYWJsZSB3aGljaCBpcyBjb21wYXRpYmxlIHRvIG9Gb25vIFRl
+bGVwaG9ueSBmcmFtZXdvcmsuPC9GT05UPjwvRElWPgo8UCBzdHlsZT0iVEVYVC1JTkRFTlQ6IC0w
+LjI1aW47IE1BUkdJTjogMGluIDBpbiAwcHQgMC41aW47IG1zby1saXN0OiBsMCBsZXZlbDEgbGZv
+MSIgY2xhc3M9TXNvTGlzdFBhcmFncmFwaD48Rk9OVCBzaXplPTMgZmFjZT1DYWxpYnJpPjwvRk9O
+VD4mbmJzcDs8L0RJVj4KPFAgc3R5bGU9IlRFWFQtSU5ERU5UOiAtMC4yNWluOyBNQVJHSU46IDBp
+biAwaW4gMHB0IDAuNWluOyBtc28tbGlzdDogbDAgbGV2ZWwxIGxmbzEiIGNsYXNzPU1zb0xpc3RQ
+YXJhZ3JhcGg+PEZPTlQgc2l6ZT0zIGZhY2U9Q2FsaWJyaT48L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxQ
+IHN0eWxlPSJURVhULUlOREVOVDogLTAuMjVpbjsgTUFSR0lOOiAwaW4gMGluIDBwdCAwLjVpbjsg
+bXNvLWxpc3Q6IGwwIGxldmVsMSBsZm8xIiBjbGFzcz1Nc29MaXN0UGFyYWdyYXBoPjxGT05UIHNp
+emU9MyBmYWNlPUNhbGlicmk+UmVnYXJkcyw8L0ZPTlQ+PC9ESVY+CjxQIHN0eWxlPSJURVhULUlO
+REVOVDogLTAuMjVpbjsgTUFSR0lOOiAwaW4gMGluIDBwdCAwLjVpbjsgbXNvLWxpc3Q6IGwwIGxl
+dmVsMSBsZm8xIiBjbGFzcz1Nc29MaXN0UGFyYWdyYXBoPjxGT05UIHNpemU9MyBmYWNlPUNhbGli
+cmk+QW5rdXI8L0ZPTlQ+PC9ESVY+PC90ZD48L3RyPjwvdGFibGU+PGJyPgoKICAgICAg
+--===============2219367197453979672==--
 
