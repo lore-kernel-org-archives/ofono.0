@@ -1,88 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============0711161330989165080=="
+Content-Type: multipart/mixed; boundary="===============5821680489962701971=="
 MIME-Version: 1.0
-From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 2/2] test: add a script to set any GPRS context property
-Date: Thu, 24 Mar 2011 14:32:24 +0200
-Message-ID: <1300969944-20659-3-git-send-email-mika.liljeberg@nokia.com>
-In-Reply-To: <1300969944-20659-1-git-send-email-mika.liljeberg@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Reg: Supporting Operator Preferred List in oFono
+Date: Thu, 24 Mar 2011 13:37:48 +0100
+Message-ID: <1300970268.2572.82.camel@aeonflux>
+In-Reply-To: <AANLkTik3+jC3O_k1_UfJvx_Dx+S6FKJyPuiH3Be7hreL@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0711161330989165080==
+--===============5821680489962701971==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am               |    3 ++-
- test/set-context-property |   38 ++++++++++++++++++++++++++++++++++++++
- 2 files changed, 40 insertions(+), 1 deletions(-)
- create mode 100755 test/set-context-property
+Hi Sankar,
 
-diff --git a/Makefile.am b/Makefile.am
-index b0cbcd7..fce9cd8 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -506,7 +506,8 @@ test_scripts =3D test/backtrace \
- 		test/test-sms \
- 		test/test-message-waiting \
- 		test/cdma-connman-disable \
--		test/cdma-connman-enable
-+		test/cdma-connman-enable \
-+		test/set-context-property
- =
+>         =
 
- if TEST
- testdir =3D $(pkglibdir)/test
-diff --git a/test/set-context-property b/test/set-context-property
-new file mode 100755
-index 0000000..8ea0e3a
---- /dev/null
-+++ b/test/set-context-property
-@@ -0,0 +1,38 @@
-+#!/usr/bin/python
-+
-+import sys
-+import dbus
-+
-+if len(sys.argv) < 4:
-+	print "Usage: set-context-property <context> <name> <value>"
-+	sys.exit(1)
-+
-+bus =3D dbus.SystemBus()
-+
-+manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
-+
-+modems =3D manager.GetModems()
-+
-+for path, properties in modems:
-+	if "org.ofono.ConnectionManager" not in properties["Interfaces"]:
-+		continue
-+
-+	connman =3D dbus.Interface(bus.get_object('org.ofono', path),
-+					'org.ofono.ConnectionManager')
-+
-+	contexts =3D connman.GetContexts()
-+
-+	if (len(contexts) =3D=3D 0):
-+		print "No context available"
-+		sys.exit(1)
-+
-+	path =3D contexts[int(sys.argv[1])][0]
-+	context =3D dbus.Interface(bus.get_object('org.ofono', path),
-+					'org.ofono.ConnectionContext')
-+
-+	try:
-+		context.SetProperty(sys.argv[2], sys.argv[3])
-+	except dbus.DBusException, e:
-+		print "Error setting context %s property %s: %s" % (path, sys.argv[2], s=
-tr(e))
-+		exit(2)
--- =
+>         > I would like to know if there is any proposal to support the
+>         Operator
+>         > Preferred List in oFono. This is being a key feature,
+>         allowing the user
+>         > to add/delete/modify the PLMNSel, PLMNWact files on the
+>         card, which are
+>         > used by the Baseband during the network registration
+>         procedures.
+>         >
+>         =
 
-1.7.1
+>         =
+
+>         This is not (and unlikely to be) a priority feature.  These
+>         lists are
+>         mostly managed by the modem and do not need oFono's
+>         intervention.
+> I agree lists are used by Modem, but definitely oFono's intervention
+> is required if the user wants to modify this list.  =
 
 
---===============0711161330989165080==--
+so this is the point, where I clearly have to ask, why does the end user
+wants to modify this list?
+
+And which smartphone shipped in the last 2 years give access to this
+list to the end user?
+
+For me this list needs to be managed by the operator and not the end
+user. Since a normal end user has no idea what he/she would be doing
+with this list anyway.
+
+Regards
+
+Marcel
+
+
+
+--===============5821680489962701971==--
 
