@@ -1,31 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============2498097102598925564=="
+Content-Type: multipart/mixed; boundary="===============6330348318765420535=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] test: add a script to set any GPRS context property
-Date: Thu, 24 Mar 2011 13:25:09 -0500
-Message-ID: <4D8B8C85.8030502@gmail.com>
-In-Reply-To: <1300969944-20659-3-git-send-email-mika.liljeberg@nokia.com>
+Subject: Re: [PATCH 2/2] TODO: remove me from ofono_sim_ready_notify()
+Date: Thu, 24 Mar 2011 13:25:57 -0500
+Message-ID: <4D8B8CB5.6000403@gmail.com>
+In-Reply-To: <1300967115-24054-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2498097102598925564==
+--===============6330348318765420535==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mika,
+Hi Pekka,
 
-On 03/24/2011 07:32 AM, Mika Liljeberg wrote:
+On 03/24/2011 06:45 AM, Pekka.Pessi(a)nokia.com wrote:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+> =
+
+> __ofono_sim_recheck_pin() is fine by me
 > ---
->  Makefile.am               |    3 ++-
->  test/set-context-property |   38 ++++++++++++++++++++++++++++++++++++++
->  2 files changed, 40 insertions(+), 1 deletions(-)
->  create mode 100755 test/set-context-property
+>  TODO |    1 -
+>  1 files changed, 0 insertions(+), 1 deletions(-)
+> =
 
-Patch has been applied, thanks.
+
+Applied, thanks.
 
 Regards,
 -Denis
 
---===============2498097102598925564==--
+--===============6330348318765420535==--
 
