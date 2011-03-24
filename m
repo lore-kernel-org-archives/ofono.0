@@ -1,29 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============0145998867587015742=="
+Content-Type: multipart/mixed; boundary="===============0851872176162581790=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gatserver: add v250 ATL and ATM commands
-Date: Thu, 24 Mar 2011 13:29:10 -0500
-Message-ID: <4D8B8D76.3000507@gmail.com>
-In-Reply-To: <1300964569-6164-1-git-send-email-olivier.guiter@linux.intel.com>
+From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
+Subject: [PATCH] Set owner CSSU/CSSI support task
+Date: Thu, 24 Mar 2011 19:29:38 +0100
+Message-ID: <1300991378-24934-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0145998867587015742==
+--===============0851872176162581790==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Olivier,
+---
+ TODO |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-> +static void at_l_cb(GAtServer *server, GAtServerRequestType type,
-> +			GAtResult *result, gpointer user_data)
-> +{
-> +	s_template_cb(type, result, server, &server->v250.s5, "L", 0, 3);
+diff --git a/TODO b/TODO
+index ed644c9..6769906 100644
+--- a/TODO
++++ b/TODO
+@@ -21,3 +21,7 @@ Call Management
+ - Add support for +CSSU / +CSSI notifications.  These can be used to simul=
+ate
+   the remote party putting the call on hold, retrieving or creating an mpty
+   call.
++
++  Priority: Low
++  Complexity: C1
++  Owner: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
+\ No newline at end of file
+-- =
 
-Copy paste error?  I presume you mean v250.l here
+1.7.1
 
-Regards,
--Denis
 
---===============0145998867587015742==--
+--===============0851872176162581790==--
 
