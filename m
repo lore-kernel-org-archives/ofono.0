@@ -1,58 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============5821680489962701971=="
+Content-Type: multipart/mixed; boundary="===============6378518539326044535=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Reg: Supporting Operator Preferred List in oFono
-Date: Thu, 24 Mar 2011 13:37:48 +0100
-Message-ID: <1300970268.2572.82.camel@aeonflux>
-In-Reply-To: <AANLkTik3+jC3O_k1_UfJvx_Dx+S6FKJyPuiH3Be7hreL@mail.gmail.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH 1/1] isimodem: fix network registration for older modems
+Date: Thu, 24 Mar 2011 14:45:48 +0200
+Message-ID: <AANLkTimrHYR6szVc4qKrRgA=97-aCXmYYqCA-e7CxYyd@mail.gmail.com>
+In-Reply-To: <1300968849-19877-2-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5821680489962701971==
+--===============6378518539326044535==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sankar,
+Hi Mika,
 
->         =
+2011/3/24 Mika Liljeberg <mika.liljeberg@nokia.com>:
+> ---
+> =C2=A0drivers/isimodem/network-registration.c | =C2=A0 10 ++++++++--
+> =C2=A01 files changed, 8 insertions(+), 2 deletions(-)
 
->         > I would like to know if there is any proposal to support the
->         Operator
->         > Preferred List in oFono. This is being a key feature,
->         allowing the user
->         > to add/delete/modify the PLMNSel, PLMNWact files on the
->         card, which are
->         > used by the Baseband during the network registration
->         procedures.
->         >
->         =
+Patch has been pushed. Thanks.
 
->         =
+Cheers,
+Aki
 
->         This is not (and unlikely to be) a priority feature.  These
->         lists are
->         mostly managed by the modem and do not need oFono's
->         intervention.
-> I agree lists are used by Modem, but definitely oFono's intervention
-> is required if the user wants to modify this list.  =
-
-
-so this is the point, where I clearly have to ask, why does the end user
-wants to modify this list?
-
-And which smartphone shipped in the last 2 years give access to this
-list to the end user?
-
-For me this list needs to be managed by the operator and not the end
-user. Since a normal end user has no idea what he/she would be doing
-with this list anyway.
-
-Regards
-
-Marcel
-
-
-
---===============5821680489962701971==--
+--===============6378518539326044535==--
 
