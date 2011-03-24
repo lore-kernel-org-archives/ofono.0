@@ -1,39 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============9210195709175347734=="
+Content-Type: multipart/mixed; boundary="===============6752093430218579536=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 1/2] isimodem/sim: added PIN and SIM state handling
-Date: Thu, 24 Mar 2011 15:36:38 +0200
-Message-ID: <AANLkTikHvRhQQAV95ad8dcVOQQoiOoYT26n1CXG3VU4e@mail.gmail.com>
-In-Reply-To: <1300967115-24054-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
+Subject: [PATCH 00/12] Basic E911 support
+Date: Thu, 24 Mar 2011 15:46:24 +0200
+Message-ID: <1300974396-15801-1-git-send-email-jarko.poutiainen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9210195709175347734==
+--===============6752093430218579536==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi,
 
-2011/3/24  <Pekka.Pessi@nokia.com>:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
->
-> Using PN_SECURITY resource to obtain PIN statuses.
->
-> Using ofono_sim_ready_notify() aka __ofono_sim_recheck_pin() to report
-> the ready state.
-> ---
-> =C2=A0drivers/isimodem/debug.c | =C2=A0 59 +++++
-> =C2=A0drivers/isimodem/debug.h | =C2=A0 =C2=A06 +
-> =C2=A0drivers/isimodem/sim.c =C2=A0 | =C2=A0584 +++++++++++++++++++++++++=
-++++++++++++++++-----
-> =C2=A0drivers/isimodem/sim.h =C2=A0 | =C2=A0 50 ++++-
-> =C2=A04 files changed, 634 insertions(+), 65 deletions(-)
+This is third attempt to provide implementation for basic E911 support.
 
-Patch has been pushed. Thanks.
+Br,
+Jarko
 
-Cheers,
-Aki
+Jarko Poutiainen (12):
+  dbus: add gnss interface definition
+  include: add gnss.h file
+  src: add atom type for gnss
+  src: add gnss atom and agent implementation
+  gatchat: introduce send for +CPOS
+  gatchat: new hint to handle +CPOS
+  gatchat: implementation for +CPOS send
+  gatchat: fix gatsyntax to support +CPOS
+  atmodem: add gnss driver
+  ste: add support for gnss
+  ofono.conf: add positioning agent interface
+  test: add test-gnss
 
---===============9210195709175347734==--
+ Makefile.am               |   12 +-
+ drivers/atmodem/atmodem.c |    2 +
+ drivers/atmodem/atmodem.h |    3 +
+ drivers/atmodem/gnss.c    |  282 +++++++++++++++++++++++++++++++++
+ gatchat/gatchat.c         |   37 ++++-
+ gatchat/gatchat.h         |    8 +
+ gatchat/gatsyntax.c       |   27 +++
+ gatchat/gatsyntax.h       |    3 +-
+ include/dbus.h            |    2 +
+ include/gnss.h            |   69 ++++++++
+ plugins/ste.c             |    8 +-
+ src/gnss.c                |  386 +++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/gnssagent.c           |  158 ++++++++++++++++++
+ src/gnssagent.h           |   43 +++++
+ src/ofono.conf            |    1 +
+ src/ofono.h               |    2 +
+ test/test-gnss            |   91 +++++++++++
+ 17 files changed, 1123 insertions(+), 11 deletions(-)
+ create mode 100644 drivers/atmodem/gnss.c
+ create mode 100644 include/gnss.h
+ create mode 100644 src/gnss.c
+ create mode 100644 src/gnssagent.c
+ create mode 100644 src/gnssagent.h
+ create mode 100755 test/test-gnss
+
+
+--===============6752093430218579536==--
 
