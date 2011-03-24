@@ -1,143 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============1206885242111794735=="
+Content-Type: multipart/mixed; boundary="===============3417165767738314117=="
 MIME-Version: 1.0
-From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: [PATCH 12/12] test: add test-gnss
-Date: Thu, 24 Mar 2011 15:46:36 +0200
-Message-ID: <1300974396-15801-13-git-send-email-jarko.poutiainen@tieto.com>
-In-Reply-To: <1300974396-15801-1-git-send-email-jarko.poutiainen@tieto.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 5/6] stkutil: Complete the TLV parsing/builder to support
+ BIP commands
+Date: Thu, 24 Mar 2011 09:32:10 -0500
+Message-ID: <4D8B55EA.90909@gmail.com>
+In-Reply-To: <4D8B3153.6050105@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1206885242111794735==
+--===============3417165767738314117==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am    |    3 +-
- test/test-gnss |   91 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 93 insertions(+), 1 deletions(-)
- create mode 100755 test/test-gnss
+Hi Philippe,
 
-diff --git a/Makefile.am b/Makefile.am
-index b5a3d6e..626a310 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -509,7 +509,8 @@ test_scripts =3D test/backtrace \
- 		test/test-sms \
- 		test/test-message-waiting \
- 		test/cdma-connman-disable \
--		test/cdma-connman-enable
-+		test/cdma-connman-enable \
-+		test/test-gnss
- =
+>>>   struct stk_network_access_name {
+>>> -    unsigned char name[127];
+>>> +    unsigned char name[100];
+>>>       unsigned char len;
+>>
+>> This part really makes no sense.  Since you parse it into a string,
+>> might as well just use that.
+> =
 
- if TEST
- testdir =3D $(pkglibdir)/test
-diff --git a/test/test-gnss b/test/test-gnss
-new file mode 100755
-index 0000000..d7d9027
---- /dev/null
-+++ b/test/test-gnss
-@@ -0,0 +1,91 @@
-+#!/usr/bin/python
-+
-+import gobject
-+import sys
-+import os
-+
-+import dbus
-+import dbus.service
-+import dbus.mainloop.glib
-+
-+class PositioningAgent(dbus.service.Object):
-+	@dbus.service.method("org.ofono.PositioningRequestAgent",
-+					in_signature=3D"", out_signature=3D"")
-+	def Release(self):
-+		print "Release"
-+		mainloop.quit()
-+
-+	@dbus.service.method("org.ofono.PositioningRequestAgent",
-+					in_signature=3D"s", out_signature=3D"")
-+	def Request(self, xml):
-+		print "positioning data: %s" % (xml)
-+
-+	@dbus.service.method("org.ofono.PositioningRequestAgent",
-+					in_signature=3D"", out_signature=3D"")
-+	def ResetAssistanceData(self):
-+		print "Reset Assistance Data request received"
-+
-+def print_menu():
-+	print "Select test case"
-+	print "-----------------------------------------------------------"
-+	print "[0] SendPositioningElement"
-+	print "[1] RegisterPositioningRequestAgent"
-+	print "[2] UnregisterPositioningRequestAgent"
-+	print "[x] Exit"
-+	print "-----------------------------------------------------------"
-+
-+def stdin_handler(fd, condition, positioning, path):
-+
-+	in_key =3D os.read(fd.fileno(), 8).rstrip()
-+	if in_key =3D=3D '0':
-+		xml =3D raw_input('type the element and press enter: ')
-+		try:
-+			positioning.SendPositioningElement(dbus.String(xml))
-+			print "ok"
-+		except dbus.DBusException, e:
-+			print "Unable to send positioning element"
-+
-+	elif in_key =3D=3D '1':
-+		try:
-+			positioning.RegisterPositioningRequestAgent("/test/posagent")
-+			print "ok"
-+		except dbus.DBusException, e:
-+			print "Unable to register positioning agent"
-+
-+	elif in_key =3D=3D '2':
-+		try:
-+			positioning.UnregisterPositioningRequestAgent(path)
-+			print "ok"
-+		except dbus.DBusException, e:
-+			print "Unable to unregister positioning agent"
-+	elif in_key =3D=3D 'x':
-+		sys.exit(1)
-+
-+	return True
-+
-+if __name__ =3D=3D "__main__":
-+
-+	if len(sys.argv) < 1:
-+		sys.exit(1)
-+
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+	bus =3D dbus.SystemBus()
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+							'org.ofono.Manager')
-+
-+	modems =3D manager.GetModems()
-+	for path, properties in modems:
-+		if "org.ofono.AssistedSatelliteNavigation" not in properties["Interfaces=
-"]:
-+			continue
-+
-+		positioning =3D dbus.Interface(bus.get_object('org.ofono', path),
-+					'org.ofono.AssistedSatelliteNavigation')
-+
-+	path =3D "/test/posagent"
-+	agent =3D PositioningAgent(bus, path)
-+
-+	print_menu()
-+
-+	gobject.io_add_watch(sys.stdin, gobject.IO_IN, stdin_handler, positioning=
-, path)
-+	mainloop =3D gobject.MainLoop()
-+	mainloop.run()
--- =
+> All the above comments are just relevant. Thank you for having spent
+> time to point all these remarks and especially all the coding style
+> noncompliances. I will apply your comments in a new patch and separate
+> cleaning/typo modifications in another dedicated patch.
+> =
 
-1.7.0.4
+> Here, the apn string is indeed extracted from the encoded buffer.
+> As the encoded apn just can't exceeed 100 bytes as per the spec and as
+> the extracted string is lesser than 100 bytes since we are removing the
+> octet length field , I considered that the string buffer was better
+> sized with 100 bytes than 127. But perhaps, I'm over thinking here...
+>
 
+Then just remove this structure and use a static buffer for the apn/nan...
 
---===============1206885242111794735==--
+>>
+>>>   };
+>>>
+>>> @@ -1250,6 +1298,21 @@ struct stk_command_launch_browser {
+>>>       char *text_passwd;
+>>>   };
+>>>
+>>> +struct stk_command_open_channel {
+>>> +    char *alpha_id;
+>>> +    struct stk_icon_id icon_id;
+>>> +    struct stk_bearer_description bearer_desc;
+>>> +    unsigned short buf_size;
+>>> +    struct stk_network_access_name network_name;
+>>
+>> E.g. char *network_name;
+>>
+
+e.g. char name[100] here.
+
+>>> +        /* The number of bytes remaining in the Rx buffer */
+>>> +        unsigned int data_left_length;
+>>
+>> So maybe rx_remaining is a better name?
+>>
+>>> +        /*
+>>> +         * The number of bytes of empty space available
+>>> +         * in the Tx buffer
+>>> +         */
+>>> +        unsigned int empty_data_length;
+>>
+>> And tx_avail here?
+>>
+>> Then you don't need the comments ;)
+>>
+>> Also, why do you use unsigned int instead of unsigned char?
+>>
+> =
+
+> In practice, the size (rx_remaining or tx_avail) can reach 65535 as the
+> buffer size it self given by the UICC is encoded by 2 bytes. I could
+> consider indeed to use at least an unsigned short, but to be homogeneous
+> with the type of the buffer size given by data.len, I preferred to go
+> with an unsigned int.
+
+Stick with actual datatypes used on the wire.  If this is an 8 bit
+sequence with FF used to mean 255 bytes or more, then use that.  The
+logic that fills this structure will have to take care of that.
+
+Besides, you use unsigned char in stk_response_receive_data and
+stk_response_send_data, so might as well be consistent.
+
+Use of unsigned int should be limited to the length field of the TLV,
+and even then we might have to change this later for fields that are short.
+
+Regards,
+-Denis
+
+--===============3417165767738314117==--
 
