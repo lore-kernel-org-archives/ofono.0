@@ -1,86 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============7685062239115633951=="
+Content-Type: multipart/mixed; boundary="===============7789134455503730406=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/6] stk-api.txt: Describe new d-bus APIs related to BIP
- commands.
-Date: Thu, 24 Mar 2011 10:26:32 -0500
-Message-ID: <4D8B62A8.6040607@gmail.com>
-In-Reply-To: <4D8B5676.7080201@linux.intel.com>
+From: Olivier Guiter <olivier.guiter@linux.intel.com>
+Subject: [PATCH] dun: Add ATX command in emulator (X0 only)
+Date: Thu, 24 Mar 2011 16:29:51 +0100
+Message-ID: <1300980591-9395-1-git-send-email-olivier.guiter@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7685062239115633951==
+--===============7789134455503730406==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+---
+ src/emulator.c |   57 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 files changed, 56 insertions(+), 1 deletions(-)
 
->>>           boolean ConfirmCallSetup(string information, byte icon_id)
->>>
->>> @@ -245,6 +252,7 @@ Methods        byte RequestSelection(string
->>> title, byte icon_id,
->>>               Possible Errors: [service].Error.SimToolkit.EndSession
->>>
->>>           void DisplayActionInformation(string text, byte icon_id)
->>> +                        [noreply]
->>>
->>
->> Why are you marking this noreply when we do actually expect one?
-> =
+diff --git a/src/emulator.c b/src/emulator.c
+index c84f0a9..101d6b8 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -177,6 +177,59 @@ error:
+ 	g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
+ }
+ =
 
-> In practice, this API is called once an alpha Id is provided by the
-> proactive commands SEND SS, SEND SMS, SEND USSD.
-> =
++static gboolean get_result_value(GAtServer *server, GAtResult *result,
++						int min, int max, int *value)
++{
++	GAtResultIter iter;
++	int val;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, ""))
++		return FALSE;
++
++	if (!g_at_result_iter_next_number(&iter, &val))
++		return FALSE;
++
++	if (val < min || val > max)
++		return FALSE;
++
++	if (value !=3D NULL)
++		*value =3D val;
++
++	return TRUE;
++}
++
++static void at_x_cb(GAtServer *server, GAtServerRequestType type,
++				GAtResult *result, gpointer user_data)
++{
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++		if (!get_result_value(server, result, 0, 0, NULL)) {
++			g_at_server_send_final(server,
++						G_AT_SERVER_RESULT_ERROR);
++			return;
++		}
++		/* the value is not stored, as there's only one choice */
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
++		break;
++
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		g_at_server_send_info(server, "000", TRUE);
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
++		break;
++
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		g_at_server_send_info(server, "X: (0-0)", TRUE);
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
++		break;
++
++	default:
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
++		break;
++	}
++}
++
+ static void brsf_cb(GAtServer *server, GAtServerRequestType type,
+ 			GAtResult *result, gpointer user_data)
+ {
+@@ -466,8 +519,10 @@ void ofono_emulator_register(struct ofono_emulator *em=
+, int fd)
+ =
 
-> For such proactive commands, no "user" answer is expected. That's why
-> the error code [service].Error.SimToolkit.EndSession is even not
-> allowed. And that's the reason why I added the criteria [No reply]
+ 	__ofono_atom_register(em->atom, emulator_unregister);
+ =
 
-Ok fair enough.
+-	if (em->type =3D=3D OFONO_EMULATOR_TYPE_DUN)
++	if (em->type =3D=3D OFONO_EMULATOR_TYPE_DUN) {
+ 		g_at_server_register(em->server, "D", dial_cb, em, NULL);
++		g_at_server_register(em->server, "X", at_x_cb, em, NULL);
++	}
+ 	else if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP)
+ 		g_at_server_set_echo(em->server, FALSE);
+ }
+-- =
 
-> =
-
-> Now, I just realized that I missed the proactive command SEND DTMF for
-> which this API is also relevant and for which the user can indeed
-> request to end the session. So, the criteria [noreply] is indeed not fair.
-> =
-
-
-Send DTMF is a little bit more subtle.  The problem is that it is
-usually handled by the modem side and we have no control over the
-terminal response.  So the current Send DTMF implementation will likely
-work magically everywhere anyway.  We probably should split up this
-implementation into two paths:
-
-- If the command is notified via
-ofono_stk_proactive_command_handled_notify, then do as we do now, e.g.
-using DisplayActionInformation
-- If the command is notified via ofono_stk_proactive_command_notify,
-then we should probably call a different function.
-
-> But, the reason for which I introduced the new API
-> DisplayChannelActivity was to distinguish precisely when the STK agent
-> could allow the user to end the session (typically when the button
-> Cancel could be displayed).
-> =
+1.7.1
 
 
-And that makes sense to me now
-
-> Now, to handle correctly the case SEND DTMF, I presume that it would be
-> better to refactor this API 'DisplayActionInformation' in order to
-> address all the proactive commands which require simply to display an
-> alpha ID. But this requires I guess to introduce a new argument like a
-> boolean "end_session_allowed".
-> =
-
-
-I think a separate function makes sense.  Perhaps
-DisplayAbortableActionInfo or feel free to come up with a better name.
-
-Regards,
--Denis
-
---===============7685062239115633951==--
+--===============7789134455503730406==--
 
