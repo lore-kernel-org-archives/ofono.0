@@ -1,117 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============2219367197453979672=="
+Content-Type: multipart/mixed; boundary="===============6808249717571819026=="
 MIME-Version: 1.0
-From: Ankur chauhan <iitg_ankur@yahoo.com>
-Subject: Queries related to oFono
-Date: Thu, 24 Mar 2011 09:32:49 +0000
-Message-ID: <931845.98105.qm@web161616.mail.bf1.yahoo.com>
+From: Olivier Guiter <olivier.guiter@linux.intel.com>
+Subject: [PATCH] gatserver: add AT&F command
+Date: Thu, 24 Mar 2011 11:03:14 +0100
+Message-ID: <1300960994-5130-1-git-send-email-olivier.guiter@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2219367197453979672==
+--===============6808249717571819026==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Dear All Greetings!
-=C2=A0
-I am new to oFono, however I have a few basic queries.
-=C2=A0
-1)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 [oFono]:=C2=A0 Does this framework support=
-s the 3GPP release 9 features.
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =
+---
+ gatchat/gatserver.c |   29 +++++++++++++++++++++++++++--
+ 1 files changed, 27 insertions(+), 2 deletions(-)
 
-2)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 [oFono]:=C2=A0 In Multimode case (2G+3G+LT=
-E)=C2=A0PS session continuation support, i.e. during PS call UE latches to =
-some other access technology.
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =
+diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
+index 57cc58e..8266ead 100644
+--- a/gatchat/gatserver.c
++++ b/gatchat/gatserver.c
+@@ -274,7 +274,8 @@ static gboolean get_result_value(GAtServer *server, GAt=
+Result *result,
+ 	if (val < min || val > max)
+ 		return FALSE;
+ =
 
-3)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 [oFone]:=C2=A0 Does it supports LTE comple=
-tly, (i.e. LTE registration, data transfer)
-=C2=A0
-=C2=A0
-4)=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 [oFono]:=C2=A0 This OFono framework doesn'=
-t take care of messaging framework i.e. concatination/retransmission/Storat=
-e etc of SMS, is there any open source messaging framework available which =
-is compatible to oFono Telephony framework.
-=C2=A0
-=C2=A0
-Regards,
-Ankur
+-	*value =3D val;
++	if (value)
++		*value =3D val;
+ =
+
+ 	return TRUE;
+ }
+@@ -464,10 +465,33 @@ static void at_c108_cb(GAtServer *server, GAtServerRe=
+questType type,
+ 	at_template_cb(type, result, server, &server->v250.c108, "&D", 0, 2, 2);
+ }
+ =
+
+-static void at_z_cb(GAtServer *server, GAtServerRequestType type,
++static void at_f_cb(GAtServer *server, GAtServerRequestType type,
+ 			GAtResult *result, gpointer user_data)
+ {
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++		if (!get_result_value(server, result, 0, 0, NULL)) {
++			g_at_server_send_final(server,
++						G_AT_SERVER_RESULT_ERROR);
++			return;
++		}
++		/* intentional fallback here */
+ =
+
++	case G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY:
++		/* default behavior on AT&F same as ATZ */
++		v250_settings_create(&server->v250);
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
++		break;
++
++	default:
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
++		break;
++	}
++}
++
++static void at_z_cb(GAtServer *server, GAtServerRequestType type,
++			GAtResult *result, gpointer user_data)
++{
+ 	switch (type) {
+ 	case G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY:
+ 		v250_settings_create(&server->v250);
+@@ -1134,6 +1158,7 @@ static void basic_command_register(GAtServer *server)
+ 	g_at_server_register(server, "&C", at_c109_cb, NULL, NULL);
+ 	g_at_server_register(server, "&D", at_c108_cb, NULL, NULL);
+ 	g_at_server_register(server, "Z", at_z_cb, NULL, NULL);
++	g_at_server_register(server, "&F", at_f_cb, NULL, NULL);
+ }
+ =
+
+ GAtServer *g_at_server_new(GIOChannel *io)
+-- =
+
+1.7.1
 
 
-     =20
-
---===============2219367197453979672==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PHRhYmxlIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iMCIgYm9yZGVyPSIwIiA+PHRyPjx0
-ZCB2YWxpZ249InRvcCIgc3R5bGU9ImZvbnQ6IGluaGVyaXQ7Ij48RElWPkRlYXIgQWxsIEdyZWV0
-aW5ncyE8L0RJVj4KPERJVj4mbmJzcDs8L0RJVj4KPERJVj5JIGFtIG5ldyB0byBvRm9ubywgaG93
-ZXZlciBJIGhhdmUgYSBmZXcgYmFzaWMgcXVlcmllcy48L0RJVj4KPERJVj4mbmJzcDs8L0RJVj4K
-PFAgc3R5bGU9IlRFWFQtSU5ERU5UOiAtMC4yNWluOyBNQVJHSU46IDBpbiAwaW4gMHB0IDAuNWlu
-OyBtc28tbGlzdDogbDAgbGV2ZWwxIGxmbzEiIGNsYXNzPU1zb0xpc3RQYXJhZ3JhcGg+PFNQQU4g
-c3R5bGU9Im1zby1mYXJlYXN0LWZvbnQtZmFtaWx5OiBDYWxpYnJpOyBtc28tYmlkaS1mb250LWZh
-bWlseTogQ2FsaWJyaSI+PFNQQU4gc3R5bGU9Im1zby1saXN0OiBJZ25vcmUiPjxGT05UIHNpemU9
-MyBmYWNlPUNhbGlicmk+MSk8L0ZPTlQ+PFNQQU4gc3R5bGU9IkZPTlQ6IDdwdCAnVGltZXMgTmV3
-IFJvbWFuJyI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IDwvU1BBTj48L1NQQU4+PC9T
-UEFOPjxGT05UIHNpemU9MyBmYWNlPUNhbGlicmk+W29Gb25vXTombmJzcDsgRG9lcyB0aGlzIGZy
-YW1ld29yayBzdXBwb3J0cyB0aGUgM0dQUCByZWxlYXNlIDkgZmVhdHVyZXMuPC9GT05UPjwvRElW
-Pgo8UCBzdHlsZT0iTUFSR0lOOiAwaW4gMGluIDBwdCAwLjVpbiIgY2xhc3M9TXNvTGlzdFBhcmFn
-cmFwaD48Rk9OVCBzaXplPTM+PEZPTlQgZmFjZT1DYWxpYnJpPiZuYnNwOyZuYnNwOyZuYnNwOyZu
-YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
-OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyA8L0ZPTlQ+PC9GT05UPjwvRElWPgo8UCBz
-dHlsZT0iVEVYVC1JTkRFTlQ6IC0wLjI1aW47IE1BUkdJTjogMGluIDBpbiAwcHQgMC41aW47IG1z
-by1saXN0OiBsMCBsZXZlbDEgbGZvMSIgY2xhc3M9TXNvTGlzdFBhcmFncmFwaD48U1BBTiBzdHls
-ZT0ibXNvLWZhcmVhc3QtZm9udC1mYW1pbHk6IENhbGlicmk7IG1zby1iaWRpLWZvbnQtZmFtaWx5
-OiBDYWxpYnJpIj48U1BBTiBzdHlsZT0ibXNvLWxpc3Q6IElnbm9yZSI+PEZPTlQgc2l6ZT0zIGZh
-Y2U9Q2FsaWJyaT4yKTwvRk9OVD48U1BBTiBzdHlsZT0iRk9OVDogN3B0ICdUaW1lcyBOZXcgUm9t
-YW4nIj4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgPC9TUEFOPjwvU1BBTj48L1NQQU4+
-PEZPTlQgc2l6ZT0zIGZhY2U9Q2FsaWJyaT5bb0Zvbm9dOiZuYnNwOyBJbiBNdWx0aW1vZGUgY2Fz
-ZSAoMkcrM0crTFRFKSZuYnNwO1BTIHNlc3Npb24gY29udGludWF0aW9uIHN1cHBvcnQsIGkuZS4g
-ZHVyaW5nIFBTIGNhbGwgVUUgbGF0Y2hlcyB0byBzb21lIG90aGVyIGFjY2VzcyB0ZWNobm9sb2d5
-LjwvRk9OVD48L0RJVj4KPFAgc3R5bGU9Ik1BUkdJTjogMGluIDBpbiAwcHQgMC41aW4iIGNsYXNz
-PU1zb0xpc3RQYXJhZ3JhcGg+PEZPTlQgc2l6ZT0zPjxGT05UIGZhY2U9Q2FsaWJyaT4mbmJzcDsm
-bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
-cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgPC9GT05UPjwvRk9O
-VD48L0RJVj4KPFAgc3R5bGU9IlRFWFQtSU5ERU5UOiAtMC4yNWluOyBNQVJHSU46IDBpbiAwaW4g
-MHB0IDAuNWluOyBtc28tbGlzdDogbDAgbGV2ZWwxIGxmbzEiIGNsYXNzPU1zb0xpc3RQYXJhZ3Jh
-cGg+PFNQQU4gc3R5bGU9Im1zby1mYXJlYXN0LWZvbnQtZmFtaWx5OiBDYWxpYnJpOyBtc28tYmlk
-aS1mb250LWZhbWlseTogQ2FsaWJyaSI+PFNQQU4gc3R5bGU9Im1zby1saXN0OiBJZ25vcmUiPjxG
-T05UIHNpemU9MyBmYWNlPUNhbGlicmk+Myk8L0ZPTlQ+PFNQQU4gc3R5bGU9IkZPTlQ6IDdwdCAn
-VGltZXMgTmV3IFJvbWFuJyI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IDwvU1BBTj48
-L1NQQU4+PC9TUEFOPjxGT05UIHNpemU9MyBmYWNlPUNhbGlicmk+W29Gb25lXTombmJzcDsgRG9l
-cyBpdCBzdXBwb3J0cyBMVEUgY29tcGxldGx5LCAoaS5lLiBMVEUgcmVnaXN0cmF0aW9uLCBkYXRh
-IHRyYW5zZmVyKTwvRk9OVD48L0RJVj4KPFAgc3R5bGU9IlRFWFQtSU5ERU5UOiAtMC4yNWluOyBN
-QVJHSU46IDBpbiAwaW4gMHB0IDAuNWluOyBtc28tbGlzdDogbDAgbGV2ZWwxIGxmbzEiIGNsYXNz
-PU1zb0xpc3RQYXJhZ3JhcGg+Jm5ic3A7PC9ESVY+CjxQIHN0eWxlPSJURVhULUlOREVOVDogLTAu
-MjVpbjsgTUFSR0lOOiAwaW4gMGluIDBwdCAwLjVpbjsgbXNvLWxpc3Q6IGwwIGxldmVsMSBsZm8x
-IiBjbGFzcz1Nc29MaXN0UGFyYWdyYXBoPiZuYnNwOzwvRElWPgo8UCBzdHlsZT0iVEVYVC1JTkRF
-TlQ6IC0wLjI1aW47IE1BUkdJTjogMGluIDBpbiAwcHQgMC41aW47IG1zby1saXN0OiBsMCBsZXZl
-bDEgbGZvMSIgY2xhc3M9TXNvTGlzdFBhcmFncmFwaD48U1BBTiBzdHlsZT0ibXNvLWZhcmVhc3Qt
-Zm9udC1mYW1pbHk6IENhbGlicmk7IG1zby1iaWRpLWZvbnQtZmFtaWx5OiBDYWxpYnJpIj48U1BB
-TiBzdHlsZT0ibXNvLWxpc3Q6IElnbm9yZSI+PEZPTlQgc2l6ZT0zIGZhY2U9Q2FsaWJyaT40KTwv
-Rk9OVD48U1BBTiBzdHlsZT0iRk9OVDogN3B0ICdUaW1lcyBOZXcgUm9tYW4nIj4mbmJzcDsmbmJz
-cDsmbmJzcDsmbmJzcDsmbmJzcDsgPC9TUEFOPjwvU1BBTj48L1NQQU4+PEZPTlQgc2l6ZT0zIGZh
-Y2U9Q2FsaWJyaT5bb0Zvbm9dOiZuYnNwOyBUaGlzIE9Gb25vIGZyYW1ld29yayBkb2Vzbid0IHRh
-a2UgY2FyZSBvZiBtZXNzYWdpbmcgZnJhbWV3b3JrIGkuZS4gY29uY2F0aW5hdGlvbi9yZXRyYW5z
-bWlzc2lvbi9TdG9yYXRlIGV0YyBvZiBTTVMsIGlzIHRoZXJlIGFueSBvcGVuIHNvdXJjZSBtZXNz
-YWdpbmcgZnJhbWV3b3JrIGF2YWlsYWJsZSB3aGljaCBpcyBjb21wYXRpYmxlIHRvIG9Gb25vIFRl
-bGVwaG9ueSBmcmFtZXdvcmsuPC9GT05UPjwvRElWPgo8UCBzdHlsZT0iVEVYVC1JTkRFTlQ6IC0w
-LjI1aW47IE1BUkdJTjogMGluIDBpbiAwcHQgMC41aW47IG1zby1saXN0OiBsMCBsZXZlbDEgbGZv
-MSIgY2xhc3M9TXNvTGlzdFBhcmFncmFwaD48Rk9OVCBzaXplPTMgZmFjZT1DYWxpYnJpPjwvRk9O
-VD4mbmJzcDs8L0RJVj4KPFAgc3R5bGU9IlRFWFQtSU5ERU5UOiAtMC4yNWluOyBNQVJHSU46IDBp
-biAwaW4gMHB0IDAuNWluOyBtc28tbGlzdDogbDAgbGV2ZWwxIGxmbzEiIGNsYXNzPU1zb0xpc3RQ
-YXJhZ3JhcGg+PEZPTlQgc2l6ZT0zIGZhY2U9Q2FsaWJyaT48L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxQ
-IHN0eWxlPSJURVhULUlOREVOVDogLTAuMjVpbjsgTUFSR0lOOiAwaW4gMGluIDBwdCAwLjVpbjsg
-bXNvLWxpc3Q6IGwwIGxldmVsMSBsZm8xIiBjbGFzcz1Nc29MaXN0UGFyYWdyYXBoPjxGT05UIHNp
-emU9MyBmYWNlPUNhbGlicmk+UmVnYXJkcyw8L0ZPTlQ+PC9ESVY+CjxQIHN0eWxlPSJURVhULUlO
-REVOVDogLTAuMjVpbjsgTUFSR0lOOiAwaW4gMGluIDBwdCAwLjVpbjsgbXNvLWxpc3Q6IGwwIGxl
-dmVsMSBsZm8xIiBjbGFzcz1Nc29MaXN0UGFyYWdyYXBoPjxGT05UIHNpemU9MyBmYWNlPUNhbGli
-cmk+QW5rdXI8L0ZPTlQ+PC9ESVY+PC90ZD48L3RyPjwvdGFibGU+PGJyPgoKICAgICAg
---===============2219367197453979672==--
+--===============6808249717571819026==--
 
