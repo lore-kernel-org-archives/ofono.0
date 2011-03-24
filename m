@@ -1,39 +1,143 @@
-Content-Type: multipart/mixed; boundary="===============8054228319104617099=="
+Content-Type: multipart/mixed; boundary="===============1206885242111794735=="
 MIME-Version: 1.0
 From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: [PATCH 11/12] ofono.conf: add positioning agent interface
-Date: Thu, 24 Mar 2011 15:46:35 +0200
-Message-ID: <1300974396-15801-12-git-send-email-jarko.poutiainen@tieto.com>
+Subject: [PATCH 12/12] test: add test-gnss
+Date: Thu, 24 Mar 2011 15:46:36 +0200
+Message-ID: <1300974396-15801-13-git-send-email-jarko.poutiainen@tieto.com>
 In-Reply-To: <1300974396-15801-1-git-send-email-jarko.poutiainen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8054228319104617099==
+--===============1206885242111794735==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/ofono.conf |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ Makefile.am    |    3 +-
+ test/test-gnss |   91 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 93 insertions(+), 1 deletions(-)
+ create mode 100755 test/test-gnss
 
-diff --git a/src/ofono.conf b/src/ofono.conf
-index 0dfa038..8a83cd0 100644
---- a/src/ofono.conf
-+++ b/src/ofono.conf
-@@ -13,6 +13,7 @@
-     <allow send_interface=3D"org.ofono.SimToolkitAgent"/>
-     <allow send_interface=3D"org.ofono.PushNotificationAgent"/>
-     <allow send_interface=3D"org.ofono.SmartMessagingAgent"/>
-+    <allow send_interface=3D"org.ofono.PositioningRequestAgent"/>
-   </policy>
+diff --git a/Makefile.am b/Makefile.am
+index b5a3d6e..626a310 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -509,7 +509,8 @@ test_scripts =3D test/backtrace \
+ 		test/test-sms \
+ 		test/test-message-waiting \
+ 		test/cdma-connman-disable \
+-		test/cdma-connman-enable
++		test/cdma-connman-enable \
++		test/test-gnss
  =
 
-   <policy at_console=3D"true">
+ if TEST
+ testdir =3D $(pkglibdir)/test
+diff --git a/test/test-gnss b/test/test-gnss
+new file mode 100755
+index 0000000..d7d9027
+--- /dev/null
++++ b/test/test-gnss
+@@ -0,0 +1,91 @@
++#!/usr/bin/python
++
++import gobject
++import sys
++import os
++
++import dbus
++import dbus.service
++import dbus.mainloop.glib
++
++class PositioningAgent(dbus.service.Object):
++	@dbus.service.method("org.ofono.PositioningRequestAgent",
++					in_signature=3D"", out_signature=3D"")
++	def Release(self):
++		print "Release"
++		mainloop.quit()
++
++	@dbus.service.method("org.ofono.PositioningRequestAgent",
++					in_signature=3D"s", out_signature=3D"")
++	def Request(self, xml):
++		print "positioning data: %s" % (xml)
++
++	@dbus.service.method("org.ofono.PositioningRequestAgent",
++					in_signature=3D"", out_signature=3D"")
++	def ResetAssistanceData(self):
++		print "Reset Assistance Data request received"
++
++def print_menu():
++	print "Select test case"
++	print "-----------------------------------------------------------"
++	print "[0] SendPositioningElement"
++	print "[1] RegisterPositioningRequestAgent"
++	print "[2] UnregisterPositioningRequestAgent"
++	print "[x] Exit"
++	print "-----------------------------------------------------------"
++
++def stdin_handler(fd, condition, positioning, path):
++
++	in_key =3D os.read(fd.fileno(), 8).rstrip()
++	if in_key =3D=3D '0':
++		xml =3D raw_input('type the element and press enter: ')
++		try:
++			positioning.SendPositioningElement(dbus.String(xml))
++			print "ok"
++		except dbus.DBusException, e:
++			print "Unable to send positioning element"
++
++	elif in_key =3D=3D '1':
++		try:
++			positioning.RegisterPositioningRequestAgent("/test/posagent")
++			print "ok"
++		except dbus.DBusException, e:
++			print "Unable to register positioning agent"
++
++	elif in_key =3D=3D '2':
++		try:
++			positioning.UnregisterPositioningRequestAgent(path)
++			print "ok"
++		except dbus.DBusException, e:
++			print "Unable to unregister positioning agent"
++	elif in_key =3D=3D 'x':
++		sys.exit(1)
++
++	return True
++
++if __name__ =3D=3D "__main__":
++
++	if len(sys.argv) < 1:
++		sys.exit(1)
++
++	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
++	bus =3D dbus.SystemBus()
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++							'org.ofono.Manager')
++
++	modems =3D manager.GetModems()
++	for path, properties in modems:
++		if "org.ofono.AssistedSatelliteNavigation" not in properties["Interfaces=
+"]:
++			continue
++
++		positioning =3D dbus.Interface(bus.get_object('org.ofono', path),
++					'org.ofono.AssistedSatelliteNavigation')
++
++	path =3D "/test/posagent"
++	agent =3D PositioningAgent(bus, path)
++
++	print_menu()
++
++	gobject.io_add_watch(sys.stdin, gobject.IO_IN, stdin_handler, positioning=
+, path)
++	mainloop =3D gobject.MainLoop()
++	mainloop.run()
 -- =
 
 1.7.0.4
 
 
---===============8054228319104617099==--
+--===============1206885242111794735==--
 
