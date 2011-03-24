@@ -1,42 +1,124 @@
-Content-Type: multipart/mixed; boundary="===============8225009666088078038=="
+Content-Type: multipart/mixed; boundary="===============0035079264925367106=="
 MIME-Version: 1.0
 From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: [PATCH 01/12] dbus: add gnss interface definition
-Date: Thu, 24 Mar 2011 15:46:25 +0200
-Message-ID: <1300974396-15801-2-git-send-email-jarko.poutiainen@tieto.com>
+Subject: [PATCH 02/12] include: add gnss.h file
+Date: Thu, 24 Mar 2011 15:46:26 +0200
+Message-ID: <1300974396-15801-3-git-send-email-jarko.poutiainen@tieto.com>
 In-Reply-To: <1300974396-15801-1-git-send-email-jarko.poutiainen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8225009666088078038==
+--===============0035079264925367106==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/dbus.h |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ Makefile.am    |    3 +-
+ include/gnss.h |   69 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 71 insertions(+), 1 deletions(-)
+ create mode 100644 include/gnss.h
 
-diff --git a/include/dbus.h b/include/dbus.h
-index 38864fb..4dd9db5 100644
---- a/include/dbus.h
-+++ b/include/dbus.h
-@@ -56,6 +56,8 @@ extern "C" {
- #define OFONO_STK_INTERFACE OFONO_SERVICE ".SimToolkit"
- #define OFONO_SIM_APP_INTERFACE OFONO_SERVICE ".SimToolkitAgent"
- #define OFONO_LOCATION_REPORTING_INTERFACE OFONO_SERVICE ".LocationReporti=
-ng"
-+#define OFONO_GNSS_INTERFACE "org.ofono.AssistedSatelliteNavigation"
-+#define OFONO_GNSS_POSR_AGENT_INTERFACE "org.ofono.PositioningRequestAgent"
+diff --git a/Makefile.am b/Makefile.am
+index b0cbcd7..bff2374 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -16,7 +16,8 @@ pkginclude_HEADERS =3D include/log.h include/plugin.h inc=
+lude/history.h \
+ 			include/cdma-sms.h include/sim-auth.h \
+ 			include/gprs-provision.h include/emulator.h \
+ 			include/location-reporting.h \
+-			include/cdma-connman.h
++			include/cdma-connman.h \
++			include/gnss.h
  =
 
- /* CDMA Interfaces */
- #define OFONO_CDMA_VOICECALL_MANAGER_INTERFACE "org.ofono.cdma.VoiceCallMa=
-nager"
+ nodist_pkginclude_HEADERS =3D include/version.h
+ =
+
+diff --git a/include/gnss.h b/include/gnss.h
+new file mode 100644
+index 0000000..c8ff310
+--- /dev/null
++++ b/include/gnss.h
+@@ -0,0 +1,69 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2011 ST-Ericsson AB.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifndef __OFONO_GNSS_H
++#define __OFONO_GNSS_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include <ofono/types.h>
++
++struct ofono_gnss;
++
++typedef void (*ofono_gnss_cb_t)(const struct ofono_error *error, void *dat=
+a);
++
++struct ofono_gnss_driver {
++	const char *name;
++	int (*probe)(struct ofono_gnss *gnss, unsigned int vendor, void *data);
++	void (*remove)(struct ofono_gnss *gnss);
++	void (*send_element)(struct ofono_gnss *gnss,
++				const char *xml,
++				ofono_gnss_cb_t cb, void *data);
++	void (*set_position_reporting)(struct ofono_gnss *gnss,
++					ofono_bool_t enable,
++					ofono_gnss_cb_t cb,
++					void *data);
++};
++
++void ofono_gnss_notify_posr_request(struct ofono_gnss *gnss, const char *x=
+ml);
++void ofono_gnss_notify_posr_reset(struct ofono_gnss *gnss);
++int ofono_gnss_driver_register(const struct ofono_gnss_driver *d);
++void ofono_gnss_driver_unregister(const struct ofono_gnss_driver *d);
++
++struct ofono_gnss *ofono_gnss_create(struct ofono_modem *modem,
++					unsigned int vendor,
++					const char *driver, void *data);
++
++void ofono_gnss_register(struct ofono_gnss *gnss);
++void ofono_gnss_remove(struct ofono_gnss *gnss);
++
++void ofono_gnss_set_data(struct ofono_gnss *gnss, void *data);
++void *ofono_gnss_get_data(struct ofono_gnss *gnss);
++
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* __OFONO_GNSS_H */
 -- =
 
 1.7.0.4
 
 
---===============8225009666088078038==--
+--===============0035079264925367106==--
 
