@@ -1,41 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============3434320505706201743=="
+Content-Type: multipart/mixed; boundary="===============6031748952062838334=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 10/18] gatppp: add g_at_ppp_resume() prototype
-Date: Fri, 25 Mar 2011 16:25:41 +0100
-Message-ID: <1301066749-12052-11-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH 11/18] gatppp: add g_at_ppp_resume() definition.
+Date: Fri, 25 Mar 2011 16:25:42 +0100
+Message-ID: <1301066749-12052-12-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3434320505706201743==
+--===============6031748952062838334==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatppp.h |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ gatchat/gatppp.c |   16 ++++++++++++++++
+ 1 files changed, 16 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
-index 7835d1f..71e0afe 100644
---- a/gatchat/gatppp.h
-+++ b/gatchat/gatppp.h
-@@ -77,6 +77,8 @@ void g_at_ppp_set_recording(GAtPPP *ppp, const char *file=
-name);
- void g_at_ppp_set_server_info(GAtPPP *ppp, const char *remote_ip,
- 				const char *dns1, const char *dns2);
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index 9df6b8e..29271e4 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -537,6 +537,22 @@ void g_at_ppp_set_server_info(GAtPPP *ppp, const char =
+*remote,
+ 	ipcp_set_server_info(ppp->ipcp, r, d1, d2);
+ }
  =
 
-+void g_at_ppp_resume(GAtPPP *ppp);
++void g_at_ppp_resume(GAtPPP *ppp)
++{
++	if (ppp =3D=3D NULL)
++		return;
 +
- #ifdef __cplusplus
- }
- #endif
++	if (g_at_hdlc_get_io(ppp->hdlc) =3D=3D NULL) {
++		io_disconnect(ppp);
++		return;
++	}
++
++	g_at_io_set_disconnect_function(g_at_hdlc_get_io(ppp->hdlc),
++							io_disconnect, ppp);
++
++	g_at_hdlc_resume(ppp->hdlc);
++}
++
+ static GAtPPP *ppp_init_common(GAtHDLC *hdlc, gboolean is_server, guint32 =
+ip)
+ {
+ 	GAtPPP *ppp;
 -- =
 
 1.7.1
 
 
---===============3434320505706201743==--
+--===============6031748952062838334==--
 
