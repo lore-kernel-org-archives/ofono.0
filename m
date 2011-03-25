@@ -1,165 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============6395806072388314700=="
+Content-Type: multipart/mixed; boundary="===============2614657405532280832=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 2/2] ifxmodem: add support for emergency number list
-Date: Fri, 25 Mar 2011 07:08:03 -0700
-Message-ID: <1301062083-20416-3-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1301062083-20416-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH v3 00/18] Send and detect Escape Sequence implementation
+Date: Fri, 25 Mar 2011 16:25:31 +0100
+Message-ID: <1301066749-12052-1-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6395806072388314700==
+--===============2614657405532280832==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Patch 1 to 6:
+Implement the "+++" escape sequence detection with guard timeouts.
+
+Patch 7:
+Implement the Hook Control Callback into emulator.
+
+Patch 8 to 12:
+Implement the return to Online Data State Callback into emulator.
+Implement gatppp and gathdlc new APIs to resume PPP server.
+
+Patch 13 to 16:
+Implement gatppp and gathdlc new APIs to control PPP client with gsmdial.
+
+Patch 17 and 18 are adding a new option into gsmdial to send an escape sequ=
+ence whether a PPP conection is established.
+The "+++" sequence can't be written using GAtChat because it is adding and =
+'\r' character at the end of the string.
+
+I have used the write_done GAtIO CB to detect when a PPP packet is written =
+to suspend PPP client and write "+++" on GAtIO.
+The GUARD_TIMEOUTS value defined into gsmdial is ruling the timing to do:
++++ --> ATO0 --> +++ --> ATH0
+
+If you want to send an escape sequence you have to use gsmdial in this way:
+
+sudo ./gsmdial -i your_inet_addr -p 12346 -b -e
+
+Guillaume Zajac (18):
+  gat: add GAtSuspendFunc CB typedef
+  gathdlc: add g_at_hdlc_set_suspend_function() prototype
+  gathdlc: add mechansim to detect '+++' escape sequence
+  gatppp: add g_at_ppp_set_suspend_function() prototype
+  gatppp: add g_at_ppp_set_suspend_function() definition
+  emulator: add ppp_suspend() CB and register it
+  emulator: add AT hook_control_cb() and register it
+  gathdlc: add g_at_resume_hdlc() prototype.
+  gathdlc: add g_at_hdlc_resume() definition.
+  gatppp: add g_at_ppp_resume() prototype
+  gatppp: add g_at_ppp_resume() definition.
+  emulator: add AT online_data_state_cb() and register it
+  gathdlc: add prototype to suspend gathdlc externally
+  gathdlc: add g_at_hdlc_suspend() definition
+  gatppp: add prototype to suspend ppp server externally
+  gatppp: add g_at_ppp_suspend() definition
+  gsmdial: add new option to test sending escape sequence
+  gsmdial: implement mechanism to send +++ -> ATO0 -> +++ -> ATH0
+
+ gatchat/gat.h     |    1 +
+ gatchat/gathdlc.c |  152 ++++++++++++++++++++++++++++++++++++++++++++++++
+ gatchat/gathdlc.h |    7 ++
+ gatchat/gatppp.c  |   32 ++++++++++
+ gatchat/gatppp.h  |    5 ++
+ gatchat/gsmdial.c |  167 ++++++++++++++++++++++++++++++++++++++++++++-----=
 ---
- drivers/ifxmodem/voicecall.c |   98 ++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 98 insertions(+), 0 deletions(-)
-
-diff --git a/drivers/ifxmodem/voicecall.c b/drivers/ifxmodem/voicecall.c
-index 87a48e6..a92ac11 100644
---- a/drivers/ifxmodem/voicecall.c
-+++ b/drivers/ifxmodem/voicecall.c
-@@ -42,11 +42,13 @@
- #include "ifxmodem.h"
- =
-
- static const char *none_prefix[] =3D { NULL };
-+static const char *xlema_prefix[] =3D { "+XLEMA:", NULL };
- =
-
- struct voicecall_data {
- 	GSList *calls;
- 	unsigned int local_release;
- 	GAtChat *chat;
-+	GSList *en_list;
- };
- =
-
- struct release_id_req {
-@@ -786,6 +788,95 @@ static void xcolp_notify(GAtResult *result, gpointer u=
-ser_data)
- 	ofono_voicecall_notify(vc, call);
- }
- =
-
-+static gint number_compare(gconstpointer a, gconstpointer b)
-+{
-+	const char *s1 =3D a, *s2 =3D b;
-+	return strcmp(s1, s2);
-+}
-+
-+static void xlema_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_voicecall *vc =3D user_data;
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-+	GAtResultIter iter;
-+	int index, total_cnt;
-+	const char *number;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+XLEMA:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &index))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &total_cnt))
-+		return;
-+
-+	if (!g_at_result_iter_next_string(&iter, &number))
-+		return;
-+
-+	// Skip the category, EN valid with simpresence and mcc fields
-+
-+	if (!g_slist_find_custom(vd->en_list, number, number_compare))
-+		vd->en_list =3D g_slist_prepend(vd->en_list, g_strdup(number));
-+
-+	if (index !=3D total_cnt)
-+		return;
-+
-+	vd->en_list =3D g_slist_reverse(vd->en_list);
-+
-+	ofono_voicecall_en_list_notify(vc, vd->en_list);
-+
-+	g_slist_foreach(vd->en_list, (GFunc) g_free, NULL);
-+	g_slist_free(vd->en_list);
-+	vd->en_list =3D NULL;
-+}
-+
-+static void xlema_read(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_voicecall *vc =3D user_data;
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-+	GAtResultIter iter;
-+	int index, total_cnt;
-+	const char *number;
-+
-+	if (!ok) {
-+		DBG("Emergency number list read failed");
-+		return;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	while (g_at_result_iter_next(&iter, "+XLEMA:")) {
-+		if (!g_at_result_iter_next_number(&iter, &index))
-+			continue;
-+
-+		if (!g_at_result_iter_next_number(&iter, &total_cnt))
-+			continue;
-+
-+		if (!g_at_result_iter_next_string(&iter, &number))
-+			continue;
-+
-+		// Skip the category, EN valid with simpresence and mcc fields
-+		g_at_result_iter_skip_next(&iter);
-+		g_at_result_iter_skip_next(&iter);
-+		g_at_result_iter_skip_next(&iter);
-+
-+		if (!g_slist_find_custom(vd->en_list, number, number_compare))
-+			vd->en_list =3D g_slist_prepend(vd->en_list,
-+							g_strdup(number));
-+	}
-+
-+	vd->en_list =3D g_slist_reverse(vd->en_list);
-+
-+	ofono_voicecall_en_list_notify(vc, vd->en_list);
-+
-+	g_slist_foreach(vd->en_list, (GFunc) g_free, NULL);
-+	g_slist_free(vd->en_list);
-+	vd->en_list =3D NULL;
-+}
-+
- static void ifx_voicecall_initialized(gboolean ok, GAtResult *result,
- 					gpointer user_data)
- {
-@@ -803,7 +894,14 @@ static void ifx_voicecall_initialized(gboolean ok, GAt=
-Result *result,
- 							FALSE, vc, NULL);
- 	g_at_chat_register(vd->chat, "+XCOLP:", xcolp_notify, FALSE, vc, NULL);
- =
-
-+	g_at_chat_register(vd->chat, "+XLEMA:", xlema_notify, FALSE, vc, NULL);
-+	/* Enable emergency number list notification */
-+	g_at_chat_send(vd->chat, "AT+XLEMA=3D1", none_prefix, NULL, NULL, NULL);
-+
- 	ofono_voicecall_register(vc);
-+
-+	g_at_chat_send(vd->chat, "AT+XLEMA?", xlema_prefix, xlema_read, vc,
-+									NULL);
- }
- =
-
- static int ifx_voicecall_probe(struct ofono_voicecall *vc, unsigned int ve=
-ndor,
--- =
-
-1.7.0.4
+ src/emulator.c    |  100 +++++++++++++++++++++++++++++++-
+ 7 files changed, 435 insertions(+), 29 deletions(-)
 
 
---===============6395806072388314700==--
+--===============2614657405532280832==--
 
