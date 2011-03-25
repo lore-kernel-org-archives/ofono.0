@@ -1,56 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============6031748952062838334=="
+Content-Type: multipart/mixed; boundary="===============2329912066035849615=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 11/18] gatppp: add g_at_ppp_resume() definition.
-Date: Fri, 25 Mar 2011 16:25:42 +0100
-Message-ID: <1301066749-12052-12-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH 12/18] emulator: add AT online_data_state_cb() and register it
+Date: Fri, 25 Mar 2011 16:25:43 +0100
+Message-ID: <1301066749-12052-13-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6031748952062838334==
+--===============2329912066035849615==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatppp.c |   16 ++++++++++++++++
- 1 files changed, 16 insertions(+), 0 deletions(-)
+ src/emulator.c |   46 ++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 46 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index 9df6b8e..29271e4 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -537,6 +537,22 @@ void g_at_ppp_set_server_info(GAtPPP *ppp, const char =
-*remote,
- 	ipcp_set_server_info(ppp->ipcp, r, d1, d2);
+diff --git a/src/emulator.c b/src/emulator.c
+index e1b078d..220d0b5 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -222,6 +222,51 @@ error:
+ 	g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
  }
  =
 
-+void g_at_ppp_resume(GAtPPP *ppp)
++static gboolean resume_ppp(gpointer user_data)
 +{
-+	if (ppp =3D=3D NULL)
-+		return;
++	struct ofono_emulator *em =3D user_data;
 +
-+	if (g_at_hdlc_get_io(ppp->hdlc) =3D=3D NULL) {
-+		io_disconnect(ppp);
++	g_at_server_suspend(em->server);
++	g_at_ppp_resume(em->ppp);
++
++	return FALSE;
++}
++
++static void online_data_state_cb(GAtServer *server, GAtServerRequestType t=
+ype,
++			GAtResult *result, gpointer user_data)
++{
++	struct ofono_emulator *em =3D user_data;
++	GAtResultIter iter;
++	int val;
++
++	DBG("");
++
++	if (em->ppp =3D=3D NULL) {
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_NO_CARRIER);
 +		return;
 +	}
 +
-+	g_at_io_set_disconnect_function(g_at_hdlc_get_io(ppp->hdlc),
-+							io_disconnect, ppp);
++	if (type !=3D G_AT_SERVER_REQUEST_TYPE_SET)
++		goto error;
 +
-+	g_at_hdlc_resume(ppp->hdlc);
++	g_at_result_iter_init(&iter, result);
++	g_at_result_iter_next(&iter, "");
++
++	if (g_at_result_iter_next_number(&iter, &val) =3D=3D FALSE)
++		goto error;
++
++	if (val !=3D 0)
++		goto error;
++
++	g_at_server_send_intermediate(em->server, "CONNECT");
++	em->source =3D g_idle_add(resume_ppp, em);
++
++	return;
++
++error:
++	g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
 +}
 +
- static GAtPPP *ppp_init_common(GAtHDLC *hdlc, gboolean is_server, guint32 =
-ip)
+ static void brsf_cb(GAtServer *server, GAtServerRequestType type,
+ 			GAtResult *result, gpointer user_data)
  {
- 	GAtPPP *ppp;
+@@ -514,6 +559,7 @@ void ofono_emulator_register(struct ofono_emulator *em,=
+ int fd)
+ 	if (em->type =3D=3D OFONO_EMULATOR_TYPE_DUN) {
+ 		g_at_server_register(em->server, "D", dial_cb, em, NULL);
+ 		g_at_server_register(em->server, "H", hook_control_cb, em, NULL);
++		g_at_server_register(em->server, "O", online_data_state_cb, em, NULL);
+ 	} else {
+ 		if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP)
+ 			g_at_server_set_echo(em->server, FALSE);
 -- =
 
 1.7.1
 
 
---===============6031748952062838334==--
+--===============2329912066035849615==--
 
