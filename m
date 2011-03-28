@@ -1,51 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============7036911711384331595=="
+Content-Type: multipart/mixed; boundary="===============6760156154019789001=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH v2 3/4] voicecall: network emergency number list support
-Date: Mon, 28 Mar 2011 06:58:08 -0700
-Message-ID: <1301320689-25201-4-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1301320689-25201-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] Update overview.txt: add GPS/Location Services feature
+ information
+Date: Mon, 28 Mar 2011 16:00:47 +0200
+Message-ID: <1301320847-3055-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7036911711384331595==
+--===============6760156154019789001==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/voicecall.c |   13 +++++++++++++
- 1 files changed, 13 insertions(+), 0 deletions(-)
+ doc/overview.txt |    6 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 826e10c..e3b1135 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -2172,6 +2172,19 @@ check:
- 	set_new_ecc(vc);
- }
+diff --git a/doc/overview.txt b/doc/overview.txt
+index 1924875..7a234ce 100644
+--- a/doc/overview.txt
++++ b/doc/overview.txt
+@@ -145,6 +145,12 @@ Current implemented features:
+ 		supplementary service control string and user/network initiated
+ 		unstructured supplementary service data (USSD).
  =
 
-+void ofono_voicecall_en_list_notify(struct ofono_voicecall *vc,
-+					GSList *new_en_list)
-+{
-+	GSList *l;
++	GPS/Location Services
 +
-+	for (l =3D new_en_list; l; l =3D l->next)
-+		vc->new_en_list =3D g_slist_prepend(vc->new_en_list,
-+							g_strdup(l->data));
++		oFono provide a Location Reporting interface and an Assisted
++		Satellite Navigation interface to take advantage of GPS
++		capabilities of latest modem.
 +
-+	vc->new_en_list =3D g_slist_reverse(vc->new_en_list);
-+	set_new_ecc(vc);
-+}
-+
- int ofono_voicecall_driver_register(const struct ofono_voicecall_driver *d)
- {
- 	DBG("driver: %p, name: %s", d, d->name);
+ Work in progress features:
+ =
+
+ 	GPRS
 -- =
 
-1.7.0.4
+1.7.1
 
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
---===============7036911711384331595==--
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============6760156154019789001==--
 
