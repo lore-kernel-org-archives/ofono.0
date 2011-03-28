@@ -1,50 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============3224892919790531240=="
+Content-Type: multipart/mixed; boundary="===============2262365365159742264=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] Update overview.txt: move USSD from work in progress section
- to implemented section.
-Date: Mon, 28 Mar 2011 15:37:55 +0200
-Message-ID: <1301319475-2774-1-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH] Update overview.txt: update GPRS features with IPv6 context
+ support in progress.
+Date: Mon, 28 Mar 2011 15:47:01 +0200
+Message-ID: <1301320021-2921-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3224892919790531240==
+--===============2262365365159742264==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/overview.txt |    9 ++++++---
- 1 files changed, 6 insertions(+), 3 deletions(-)
+ doc/overview.txt |    6 ++++--
+ 1 files changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/doc/overview.txt b/doc/overview.txt
-index 2a30e0b..244b4ff 100644
+index 244b4ff..6b53f14 100644
 --- a/doc/overview.txt
 +++ b/doc/overview.txt
-@@ -138,12 +138,15 @@ Current implemented features:
- 		operation status. Information on the Sim Toolkit feature
- 		list can be found in features.txt.
+@@ -120,8 +120,8 @@ Current implemented features:
+ 	GPRS
  =
 
-+	Supplementary Services
-+
-+		The Supplementary Services interface handles both recognized
-+		supplementary service control string and user/network initiated
-+		unstructured supplementary service data (USSD).
-+
+ 		GPRS data connections are fully supported by oFono.  Multiple
+-		active GPRS contexts are supported, but IPv6 context support is
+-		currently missing.
++		active GPRS contexts are supported. IPv6 context support is
++		in progress.
+ =
+
+ 	Radio Access Settings
+ =
+
+@@ -146,6 +146,8 @@ Current implemented features:
+ =
+
  Work in progress features:
  =
 
--	USSD
++	GPRS
++		IPv6 PS context support is under development.
  =
 
--		User initiated USSD support is available, but not
--		network-initiated USSD support.
  =
 
  Not implemented features:
- =
-
 -- =
 
 1.7.1
@@ -62,5 +65,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============3224892919790531240==--
+--===============2262365365159742264==--
 
