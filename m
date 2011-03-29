@@ -1,29 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============4548161971163445527=="
+Content-Type: multipart/mixed; boundary="===============5579605824705376347=="
 MIME-Version: 1.0
-From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH 0/2] Phonesim: add support for CSSU/CSSI notification
-Date: Tue, 29 Mar 2011 17:16:34 +0200
-Message-ID: <1301411796-18027-1-git-send-email-nicolas.bertrand@linux.intel.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] Update overview.txt: add a Modem Emulator paragraph in work
+ in progress section.
+Date: Tue, 29 Mar 2011 18:33:17 +0200
+Message-ID: <1301416397-9639-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4548161971163445527==
+--===============5579605824705376347==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add UI to be able to send CSSU and CSSI notification with phonesim
-
-Nicolas Bertrand (2):
-  phonesim: add CSSU/CSSI UI
-  phonesim: Add CSSU/CSSI notification support
-
- src/control.cpp    |   30 +++++++++++++++++++++++-
- src/control.h      |    2 +
- src/controlbase.ui |   65 +++++++++++++++++++++++++++++++++++++++++++-----=
 ---
- 3 files changed, 85 insertions(+), 12 deletions(-)
+ doc/overview.txt |    8 +++++++-
+ 1 files changed, 7 insertions(+), 1 deletions(-)
 
+diff --git a/doc/overview.txt b/doc/overview.txt
+index c93d1ec..8cee617 100644
+--- a/doc/overview.txt
++++ b/doc/overview.txt
+@@ -156,8 +156,15 @@ Current implemented features:
+ Work in progress features:
+ =
 
---===============4548161971163445527==--
+ 	GPRS
++
+ 		IPv6 PS context support is under development.
+ =
+
++	Modem Emulator
++
++		To enable DialUp Networking (over Bluetooth or USB), and to
++		allow Bluetooth HandsFree / Headset support, oFono will expose
++		some 'fake' modem to enable the communication with car kits, or
++		other devices.
+ =
+
+ Not implemented features:
+ =
+
+@@ -202,4 +209,3 @@ Not implemented features:
+ 		prominent.
+ =
+
+ 		A similar split like with MMS might be a good idea.
+-
+-- =
+
+1.7.1
+
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============5579605824705376347==--
 
