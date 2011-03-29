@@ -1,42 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============6788162331049609076=="
+Content-Type: multipart/mixed; boundary="===============0554403282362843141=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] TODO:remove me from E911 support
-Date: Tue, 29 Mar 2011 13:49:55 -0500
-Message-ID: <4D9229D3.1000702@gmail.com>
-In-Reply-To: <1301397415-29323-1-git-send-email-jarko.poutiainen@tieto.com>
+Subject: Re: [PATCH] TODO: set owner of Emergency Calls task
+Date: Tue, 29 Mar 2011 13:50:45 -0500
+Message-ID: <4D922A05.7060007@gmail.com>
+In-Reply-To: <1301420008-17970-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6788162331049609076==
+--===============0554403282362843141==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jarko,
+Hi Jeevaka,
 
-On 03/29/2011 06:16 AM, Jarko Poutiainen wrote:
+On 03/29/2011 12:33 PM, Jeevaka Badrappan wrote:
 > ---
-> Hi,
-> =
-
-> unfortunately I don't have time to continue with this but thanks for supp=
-ort.
-> =
-
-> Br,
-> Jarko
-> =
-
->  TODO |    1 -
->  1 files changed, 0 insertions(+), 1 deletions(-)
+>  TODO |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
 > =
 
 
-That's too bad, you were pretty close.  Applied, thanks.
+Thanks for taking up this task.  Patch has been applied.
 
 Regards,
 -Denis
 
---===============6788162331049609076==--
+--===============0554403282362843141==--
 
