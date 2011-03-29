@@ -1,66 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============2789112509906970901=="
+Content-Type: multipart/mixed; boundary="===============3370102111078369050=="
 MIME-Version: 1.0
 From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 1/3] core: notify watches of already registered atoms
-Date: Tue, 29 Mar 2011 10:48:28 +0300
-Message-ID: <1301384910-28272-2-git-send-email-mika.liljeberg@nokia.com>
-In-Reply-To: <1301384910-28272-1-git-send-email-mika.liljeberg@nokia.com>
+Subject: [PATCH 0/3] atom watch cleanup
+Date: Tue, 29 Mar 2011 10:48:27 +0300
+Message-ID: <1301384910-28272-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2789112509906970901==
+--===============3370102111078369050==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/modem.c |   16 +++++++++++++++-
- 1 files changed, 15 insertions(+), 1 deletions(-)
+Hi,
 
-diff --git a/src/modem.c b/src/modem.c
-index 655994b..d22c718 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -271,6 +271,9 @@ unsigned int __ofono_modem_add_atom_watch(struct ofono_=
-modem *modem,
- 					void *data, ofono_destroy_func destroy)
- {
- 	struct atom_watch *watch;
-+	unsigned int id;
-+	GSList *l;
-+	struct ofono_atom *atom;
- =
+This patch set simplifies atom watch registration and removes
+redundant code.
 
- 	if (notify =3D=3D NULL)
- 		return 0;
-@@ -282,8 +285,19 @@ unsigned int __ofono_modem_add_atom_watch(struct ofono=
-_modem *modem,
- 	watch->item.destroy =3D destroy;
- 	watch->item.notify_data =3D data;
- =
+This approach also correctly handles the case when there are
+multiple atoms of the same type (e.g. parallel probing of
+alternate drivers or GPRS context drivers).
 
--	return __ofono_watchlist_add_item(modem->atom_watches,
-+	id =3D __ofono_watchlist_add_item(modem->atom_watches,
- 					(struct ofono_watchlist_item *)watch);
-+
-+	for (l =3D modem->atoms; l; l =3D l->next) {
-+		atom =3D l->data;
-+
-+		if (atom->type !=3D type || atom->unregister =3D=3D NULL)
-+			continue;
-+
-+		notify(atom, OFONO_ATOM_WATCH_CONDITION_REGISTERED, data);
-+	}
-+
-+	return id;
- }
- =
+Br,
 
- gboolean __ofono_modem_remove_atom_watch(struct ofono_modem *modem,
--- =
+	MikaL
 
-1.7.1
+[PATCH 1/3] core: notify watches of already registered atoms
+[PATCH 2/3] core: remove redundant code
+[PATCH 3/3] atmodem: remove redundant code
 
+ drivers/atmodem/sim-poll.c |   13 +------------
+ src/call-barring.c         |    7 -------
+ src/call-forwarding.c      |    7 -------
+ src/call-settings.c        |    7 -------
+ src/cbs.c                  |    7 -------
+ src/gprs.c                 |    7 -------
+ src/modem.c                |   16 +++++++++++++++-
+ src/sms.c                  |   11 -----------
+ src/voicecall.c            |    6 ------
+ 9 files changed, 16 insertions(+), 65 deletions(-)
 
---===============2789112509906970901==--
+--===============3370102111078369050==--
 
