@@ -1,54 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============8908754091499433400=="
+Content-Type: multipart/mixed; boundary="===============1124072471810526754=="
 MIME-Version: 1.0
-From: Olivier Guiter <olivier.guiter@linux.intel.com>
-Subject: [PATCH] gnss: fix build broken
-Date: Tue, 29 Mar 2011 10:53:47 +0200
-Message-ID: <1301388827-21563-1-git-send-email-olivier.guiter@linux.intel.com>
+From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
+Subject: Re: [PATCH 00/12] Basic E911 support
+Date: Tue, 29 Mar 2011 13:19:59 +0300
+Message-ID: <1301393999.22831.1.camel@poutijar-desktop>
+In-Reply-To: <4D91123B.8020700@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8908754091499433400==
+--===============1124072471810526754==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/atmodem/gnss.c |    1 -
- plugins/phonesim.c     |    1 +
- 2 files changed, 1 insertions(+), 1 deletions(-)
+Hi Denis,
 
-diff --git a/drivers/atmodem/gnss.c b/drivers/atmodem/gnss.c
-index 4954bb8..e102815 100644
---- a/drivers/atmodem/gnss.c
-+++ b/drivers/atmodem/gnss.c
-@@ -153,7 +153,6 @@ static gboolean gnss_parse_report(GAtResult *result, co=
-nst char *prefix,
- =
+On Tue, 2011-03-29 at 01:56 +0300, Denis Kenzior wrote:
+> Hi Jarko,
+> =
 
- static void gnss_report(GAtResult *result, gpointer user_data)
- {
--	struct ofono_gnss *gnss =3D user_data;
- 	const char *xml;
- =
+> On 03/24/2011 08:46 AM, Jarko Poutiainen wrote:
+> > Hi,
+> > =
 
- 	DBG("");
-diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-index 6bb5977..1a6703d 100644
---- a/plugins/phonesim.c
-+++ b/plugins/phonesim.c
-@@ -58,6 +58,7 @@
- #include <ofono/voicecall.h>
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
-+#include <ofono/gnss.h>
- =
+> > This is third attempt to provide implementation for basic E911 support.
+> > =
 
- #include <drivers/atmodem/vendor.h>
- #include <drivers/atmodem/sim-poll.h>
--- =
+> > Br,
+> > Jarko
+> > =
 
-1.7.1
+> =
+
+> I applied (most) of this patch series, however see my comments for the
+> individual patches.  I did refactor your work 'slightly', so please let
+> me know if something doesn't work.
+> =
+
+> Regards,
+> -Denis
+
+Thanks! Everything seems to work.
+
+Br,
+Jarko
 
 
---===============8908754091499433400==--
+--===============1124072471810526754==--
 
