@@ -1,94 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============5490750547932797235=="
+Content-Type: multipart/mixed; boundary="===============2789112509906970901=="
 MIME-Version: 1.0
-From: Mika.Liljeberg@nokia.com
-Subject: RE: [PATCH 0/1] isimodem: fix network registration for older modems
-Date: Tue, 29 Mar 2011 07:07:30 +0000
-Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC2D945D@008-AM1MPN1-007.mgdnok.nokia.com>
-In-Reply-To: <1301048512.9106.17.camel@claudio-ThinkPad-R61>
+From: Mika Liljeberg <mika.liljeberg@nokia.com>
+Subject: [PATCH 1/3] core: notify watches of already registered atoms
+Date: Tue, 29 Mar 2011 10:48:28 +0300
+Message-ID: <1301384910-28272-2-git-send-email-mika.liljeberg@nokia.com>
+In-Reply-To: <1301384910-28272-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5490750547932797235==
+--===============2789112509906970901==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Claudio,
+---
+ src/modem.c |   16 +++++++++++++++-
+ 1 files changed, 15 insertions(+), 1 deletions(-)
 
-> I have tested the path of isi modem on nokia n95 and nokia 6760, =
+diff --git a/src/modem.c b/src/modem.c
+index 655994b..d22c718 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -271,6 +271,9 @@ unsigned int __ofono_modem_add_atom_watch(struct ofono_=
+modem *modem,
+ 					void *data, ofono_destroy_func destroy)
+ {
+ 	struct atom_watch *watch;
++	unsigned int id;
++	GSList *l;
++	struct ofono_atom *atom;
+ =
 
-> and I report the result of my test
-> =
+ 	if (notify =3D=3D NULL)
+ 		return 0;
+@@ -282,8 +285,19 @@ unsigned int __ofono_modem_add_atom_watch(struct ofono=
+_modem *modem,
+ 	watch->item.destroy =3D destroy;
+ 	watch->item.notify_data =3D data;
+ =
 
-> 1) Using nokia N95 and ofono =
+-	return __ofono_watchlist_add_item(modem->atom_watches,
++	id =3D __ofono_watchlist_add_item(modem->atom_watches,
+ 					(struct ofono_watchlist_item *)watch);
++
++	for (l =3D modem->atoms; l; l =3D l->next) {
++		atom =3D l->data;
++
++		if (atom->type !=3D type || atom->unregister =3D=3D NULL)
++			continue;
++
++		notify(atom, OFONO_ATOM_WATCH_CONDITION_REGISTERED, data);
++	}
++
++	return id;
+ }
+ =
 
-> * I have attached the phone to my computer =
+ gboolean __ofono_modem_remove_atom_watch(struct ofono_modem *modem,
+-- =
 
-> * I have used the ./online-modem =
-
-> * I have set apn/username/password and activate the context
-> =
-
-> It works (log onlineUsingOfonoTest file attached to mail)
-
-Cool.
-
-> 2) Using nokia N95 and ofono/connma
-> * I have attached the phone to my computer
-> * Start connman and I have checked it set OnLine the modem correctly =
-
-> * I have set apn/username/password and activate the context
-> * Using connect of connman, but i receive the message  	=
-
-> 		=
-
-> 	org.ofono.Error.NotAttached GPRS is not attached
-> =
-
-> I reports the log onlineUsingConnmanTest, can be a problem of =
-
-> connman ? =
-
-
-I was able to reproduce this with N95 without using connman. There seems to=
- be a conflict with the way atom watches are registered and the way isiusb =
-creates and probes two variations of the network registration driver in par=
-allel. The problem is timing dependent, which is probably why we haven't se=
-en it here before.
-
-> 1) Using nokia 6760 and ofono
-
-> * I have attached the phone to my computer =
-
-> * I have used the ./online-modem =
-
-> * I have set apn/username/password and activate the context
-> =
-
-> It not works, (log in nokia6760 file attached to mail)
-> =
-
-> Any suggestion ? =
+1.7.1
 
 
-I believe the same problem also happens with 6760 and could potentially hap=
-pen with any ISI modem. Now that I know what it is, I'll try to provide pat=
-ches.
-
-> is it possible to know the list of supported mobile phone as =
-
-> 3g modem ?
-
-We don't have a list of supported phones as such as we're not systematicall=
-y tesing oFono against old Nokia phones. The isiusb plugin is primarily a d=
-evelopment aid, allowing us to test isimodem drivers on a PC instead of on-=
-target. There are some limitations in using the isimodem driver over USB th=
-is way. All functionality may not be available with all phones. Mostly it w=
-orks fine, though.
-
-Regards,
-
-	MikaL
-
---===============5490750547932797235==--
+--===============2789112509906970901==--
 
