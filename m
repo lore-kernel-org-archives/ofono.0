@@ -1,25 +1,24 @@
-Content-Type: multipart/mixed; boundary="===============3537866442727873205=="
+Content-Type: multipart/mixed; boundary="===============4697581385329048438=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Update overview.txt: add a Modem Emulator paragraph in
- work in progress section.
-Date: Tue, 29 Mar 2011 13:52:59 -0500
-Message-ID: <4D922A8B.5020805@gmail.com>
-In-Reply-To: <1301416397-9639-1-git-send-email-bertrand.aygon@intel.com>
+Subject: Re: [PATCH] gatserver: add tone and pulse dialing AT commands
+Date: Tue, 29 Mar 2011 13:55:48 -0500
+Message-ID: <4D922B34.3030606@gmail.com>
+In-Reply-To: <1301307797-5905-1-git-send-email-olivier.guiter@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3537866442727873205==
+--===============4697581385329048438==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bertrand,
+Hi Olivier,
 
-On 03/29/2011 11:33 AM, Bertrand Aygon wrote:
+On 03/28/2011 05:23 AM, Olivier Guiter wrote:
 > ---
->  doc/overview.txt |    8 +++++++-
->  1 files changed, 7 insertions(+), 1 deletions(-)
+>  gatchat/gatserver.c |   38 ++++++++++++++++++++++++++++++++++++++
+>  1 files changed, 38 insertions(+), 0 deletions(-)
 > =
 
 
@@ -28,5 +27,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============3537866442727873205==--
+--===============4697581385329048438==--
 
