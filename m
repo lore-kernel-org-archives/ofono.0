@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6910400151779644169=="
+Content-Type: multipart/mixed; boundary="===============2318520103972842472=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 1/4] include: Add ofono_voicecall_en_list_notify api
-Date: Tue, 29 Mar 2011 22:03:15 -0500
-Message-ID: <4D929D73.6030609@gmail.com>
-In-Reply-To: <1301320689-25201-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: Re: [PATCH v2 2/4] voicecall: refactor emergency number list handling
+Date: Tue, 29 Mar 2011 22:06:56 -0500
+Message-ID: <4D929E50.40107@gmail.com>
+In-Reply-To: <1301320689-25201-3-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6910400151779644169==
+--===============2318520103972842472==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,33 +17,136 @@ Hi Jeevaka,
 
 On 03/28/2011 08:58 AM, Jeevaka Badrappan wrote:
 > ---
->  include/voicecall.h |    3 +++
->  1 files changed, 3 insertions(+), 0 deletions(-)
+>  src/voicecall.c |   32 ++++++++++++++++++++++++--------
+>  1 files changed, 24 insertions(+), 8 deletions(-)
 > =
 
-> diff --git a/include/voicecall.h b/include/voicecall.h
-> index 5e6da02..477b226 100644
-> --- a/include/voicecall.h
-> +++ b/include/voicecall.h
-> @@ -140,6 +140,9 @@ struct ofono_voicecall_driver {
->  			ofono_voicecall_cb_t cb, void *data);
->  };
+> diff --git a/src/voicecall.c b/src/voicecall.c
+> index b1d5586..826e10c 100644
+> --- a/src/voicecall.c
+> +++ b/src/voicecall.c
+> @@ -47,7 +47,8 @@ struct ofono_voicecall {
+>  	GSList *release_list;
+>  	GSList *multiparty_list;
+>  	GSList *en_list;  /* emergency number list */
+> -	GSList *new_en_list; /* Emergency numbers being read from SIM */
+> +	GSList *sim_en_list; /* Emergency numbers being read from SIM */
+> +	GSList *new_en_list; /* Emergency numbers from modem/network/no SIM*/
+>  	DBusMessage *pending;
+>  	struct ofono_sim *sim;
+>  	struct ofono_sim_context *sim_context;
+> @@ -2071,6 +2072,7 @@ static void emit_en_list_changed(struct ofono_voice=
+call *vc)
+>  static void set_new_ecc(struct ofono_voicecall *vc)
+>  {
+>  	int i =3D 0;
+> +	GSList *l;
 >  =
 
-> +void ofono_voicecall_en_list_notify(struct ofono_voicecall *vc,
-> +					GSList *nw_en_list);
+>  	g_slist_foreach(vc->en_list, (GFunc) g_free, NULL);
+>  	g_slist_free(vc->en_list);
+> @@ -2079,6 +2081,12 @@ static void set_new_ecc(struct ofono_voicecall *vc)
+>  	vc->en_list =3D vc->new_en_list;
+>  	vc->new_en_list =3D NULL;
+>  =
+
+> +	for (l =3D vc->sim_en_list; l; l =3D l->next) {
+> +		if (!g_slist_find_custom(vc->en_list, l->data, number_compare))
+> +			vc->en_list =3D g_slist_prepend(vc->en_list,
+> +							g_strdup(l->data));
+> +	}
 > +
+>  	while (default_en_list[i]) {
+>  		GSList *l;
+>  =
 
-We have a long-standing rule not to introduce G* types into the oFono
-public API.  For lists, please use an array of strings for this.  Refer
-to e.g. ofono_netreg_operator_list_cb_t or similar for an example.
+> @@ -2120,10 +2128,11 @@ static void ecc_g2_read_cb(int ok, int total_leng=
+th, int record,
+>  		data +=3D 3;
+>  =
 
->  void ofono_voicecall_notify(struct ofono_voicecall *vc,
->  				const struct ofono_call *call);
->  void ofono_voicecall_disconnected(struct ofono_voicecall *vc, int id,
+>  		if (en[0] !=3D '\0')
+> -			vc->new_en_list =3D g_slist_prepend(vc->new_en_list,
+> +			vc->sim_en_list =3D g_slist_prepend(vc->sim_en_list,
+>  								g_strdup(en));
+
+To preserve the old behavior, can we also check that the number is not
+on the default_en_list?
+
+>  	}
+>  =
+
+> +	vc->sim_en_list =3D g_slist_reverse(vc->sim_en_list);
+>  	set_new_ecc(vc);
+>  }
+>  =
+
+> @@ -2149,16 +2158,17 @@ static void ecc_g3_read_cb(int ok, int total_leng=
+th, int record,
+>  	extract_bcd_number(data, 3, en);
+>  =
+
+>  	if (en[0] !=3D '\0')
+> -		vc->new_en_list =3D g_slist_prepend(vc->new_en_list,
+> +		vc->sim_en_list =3D g_slist_prepend(vc->sim_en_list,
+>  							g_strdup(en));
+
+Same comment here
+
+>  =
+
+>  	if (record !=3D total)
+>  		return;
+>  =
+
+>  check:
+> -	if (!ok && vc->new_en_list =3D=3D NULL)
+> +	if (!ok && vc->sim_en_list =3D=3D NULL)
+>  		return;
+>  =
+
+> +	vc->sim_en_list =3D g_slist_reverse(vc->sim_en_list);
+>  	set_new_ecc(vc);
+>  }
+>  =
+
+> @@ -2231,6 +2241,12 @@ static void voicecall_remove(struct ofono_atom *at=
+om)
+>  		vc->new_en_list =3D NULL;
+>  	}
+>  =
+
+> +	if (vc->sim_en_list) {
+> +		g_slist_foreach(vc->sim_en_list, (GFunc) g_free, NULL);
+> +		g_slist_free(vc->sim_en_list);
+> +		vc->sim_en_list =3D NULL;
+> +	}
+> +
+>  	if (vc->sim_state_watch) {
+>  		ofono_sim_remove_state_watch(vc->sim, vc->sim_state_watch);
+>  		vc->sim_state_watch =3D 0;
+> @@ -2330,10 +2346,10 @@ static void sim_state_watch(enum ofono_sim_state =
+new_state, void *user)
+>  		 * Free the currently being read EN list, just in case the
+>  		 * SIM is removed when we're still reading them
+>  		 */
+> -		if (vc->new_en_list) {
+> -			g_slist_foreach(vc->new_en_list, (GFunc) g_free, NULL);
+> -			g_slist_free(vc->new_en_list);
+> -			vc->new_en_list =3D NULL;
+> +		if (vc->sim_en_list) {
+> +			g_slist_foreach(vc->sim_en_list, (GFunc) g_free, NULL);
+> +			g_slist_free(vc->sim_en_list);
+> +			vc->sim_en_list =3D NULL;
+>  		}
+>  =
+
+>  		add_to_en_list(&vc->new_en_list, default_en_list_no_sim);
+
+Otherwise looks good.
 
 Regards,
 -Denis
 
---===============6910400151779644169==--
+--===============2318520103972842472==--
 
