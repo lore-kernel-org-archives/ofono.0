@@ -1,86 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8662629282152996751=="
+Content-Type: multipart/mixed; boundary="===============2726795198927335214=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2 2/4] stk: Handle user termination for Send DTMF
-Date: Wed, 30 Mar 2011 12:27:42 +0200
-Message-ID: <1301480864-8116-2-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 4/4] test-stk-menu: Extend to support DisplayAction method
+Date: Wed, 30 Mar 2011 12:27:44 +0200
+Message-ID: <1301480864-8116-4-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8662629282152996751==
+--===============2726795198927335214==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |   26 +++++++++++++++++++++-----
- 1 files changed, 21 insertions(+), 5 deletions(-)
+ test/test-stk-menu |   10 ++++++++++
+ 1 files changed, 10 insertions(+), 0 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index 94ad396..780e0c2 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -473,6 +473,16 @@ static void emit_menu_changed(struct ofono_stk *stk)
- 	g_dbus_send_message(conn, signal);
- }
+diff --git a/test/test-stk-menu b/test/test-stk-menu
+index 639fe77..1fde700 100755
+--- a/test/test-stk-menu
++++ b/test/test-stk-menu
+@@ -198,6 +198,16 @@ class StkAgent(dbus.service.Object):
+ 		print "Text: %s" % (text)
+ 		print "Icon: %d" % (icon)
  =
 
-+static void user_termination_cb(enum stk_agent_result result, void *user_d=
-ata)
-+{
-+	struct ofono_stk *stk =3D user_data;
++	@dbus.service.method("org.ofono.SimToolkitAgent",
++					in_signature=3D"sy", out_signature=3D"")
++	def DisplayAction(self, text, icon):
++		print "Text: (%s)" % (text)
++		print "Icon: (%d)" % (icon)
++		key =3D raw_input("Press 't' to terminate the session ")
 +
-+	if (result =3D=3D STK_AGENT_RESULT_TERMINATE) {
-+		stk->respond_on_exit =3D FALSE;
-+		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
-+	}
-+}
++		if key =3D=3D 't':
++			raise EndSession("User wishes to terminate session")
 +
- static void stk_alpha_id_set(struct ofono_stk *stk,
- 		const char *text, const struct stk_text_attribute *attr,
- 		const struct stk_icon_id *icon)
-@@ -484,7 +494,13 @@ static void stk_alpha_id_set(struct ofono_stk *stk,
- 	 * and no alpha identifier cases equally. This may be changed once
- 	 * better idea is found out.
- 	 */
--	if (alpha !=3D NULL)
-+	if (alpha =3D=3D NULL)
-+		return;
-+
-+	if (stk->respond_on_exit)
-+		stk_agent_display_action(stk->current_agent, alpha, icon,
-+						user_termination_cb, stk, NULL);
-+	else
- 		stk_agent_display_action_info(stk->current_agent, alpha, icon);
- =
-
- 	g_free(alpha);
-@@ -2329,10 +2345,6 @@ static gboolean handle_command_send_dtmf(const struc=
-t stk_command *cmd,
- 		return TRUE;
- 	}
- =
-
--	stk_alpha_id_set(stk, cmd->send_dtmf.alpha_id,
--				&cmd->send_dtmf.text_attr,
--				&cmd->send_dtmf.icon_id);
--
- 	/*
- 	 * Note that we don't strictly require an agent to be connected,
- 	 * but to comply with 6.4.24 we need to send a End Session when
-@@ -2342,6 +2354,10 @@ static gboolean handle_command_send_dtmf(const struc=
-t stk_command *cmd,
- 	stk->cancel_cmd =3D send_dtmf_cancel;
- 	stk->dtmf_id =3D err;
- =
-
-+	stk_alpha_id_set(stk, cmd->send_dtmf.alpha_id,
-+				&cmd->send_dtmf.text_attr,
-+				&cmd->send_dtmf.icon_id);
-+
- 	return FALSE;
- }
+ def property_changed(name, value):
+ 	print "SimToolKit property: %s changed to '%s'" % (name, value)
  =
 
 -- =
@@ -88,5 +45,5 @@ t stk_command *cmd,
 1.7.1
 
 
---===============8662629282152996751==--
+--===============2726795198927335214==--
 
