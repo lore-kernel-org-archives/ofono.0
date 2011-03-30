@@ -1,140 +1,238 @@
-Content-Type: multipart/mixed; boundary="===============5595831840702295910=="
+Content-Type: multipart/mixed; boundary="===============5478673552838208973=="
 MIME-Version: 1.0
-From: Mika.Liljeberg@nokia.com
-Subject: RE: [PATCH 1/3] core: notify watches of already registered atoms
-Date: Wed, 30 Mar 2011 08:37:22 +0000
-Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC2D9E23@008-AM1MPN1-007.mgdnok.nokia.com>
-In-Reply-To: <4D923464.5000401@gmail.com>
+From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
+Subject: [PATCH] atmodem: gnss aggregate xml
+Date: Wed, 30 Mar 2011 11:45:40 +0300
+Message-ID: <1301474740-15233-1-git-send-email-jarko.poutiainen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5595831840702295910==
+--===============5478673552838208973==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+Hi,
 
-> On 03/29/2011 02:48 AM, Mika Liljeberg wrote:
-> > ---
-> >  src/modem.c |   16 +++++++++++++++-
-> >  1 files changed, 15 insertions(+), 1 deletions(-)
-> > =
+ok this is the very final patch from me for this. The parsing could be done=
+ better I know but seems to work. Hopefully this will any way give some ide=
+a for somebody else to finalise this.
 
-> > diff --git a/src/modem.c b/src/modem.c
-> > index 655994b..d22c718 100644
-> > --- a/src/modem.c
-> > +++ b/src/modem.c
-> > @@ -271,6 +271,9 @@ unsigned int =
+br,
+Jarko
+ drivers/atmodem/gnss.c |  135 ++++++++++++++++++++++++++++++++++++++++++--=
+----
+ 1 files changed, 119 insertions(+), 16 deletions(-)
 
-> __ofono_modem_add_atom_watch(struct ofono_modem *modem,
-> >  					void *data, =
+diff --git a/drivers/atmodem/gnss.c b/drivers/atmodem/gnss.c
+index e102815..719fb6d 100644
+--- a/drivers/atmodem/gnss.c
++++ b/drivers/atmodem/gnss.c
+@@ -45,6 +45,7 @@
+ struct gnss_data {
+ 	GAtChat *chat;
+ 	unsigned int vendor;
++	char *xml_data;
+ };
+ =
 
-> ofono_destroy_func destroy)
-> >  {
-> >  	struct atom_watch *watch;
-> > +	unsigned int id;
-> > +	GSList *l;
-> > +	struct ofono_atom *atom;
-> >  =
+ static const char *none_prefix[] =3D { NULL };
+@@ -136,40 +137,138 @@ error:
+ }
+ =
 
-> >  	if (notify =3D=3D NULL)
-> >  		return 0;
-> > @@ -282,8 +285,19 @@ unsigned int =
+ static gboolean gnss_parse_report(GAtResult *result, const char *prefix,
+-					const char **xml)
++					char **xml, struct gnss_data *gd)
+ {
+ 	GAtResultIter iter;
++	char *buf, *temp_xml;
++	int len, old_len, xml_len;
++	const char *xml_result;
++
++	buf =3D NULL;
++	temp_xml =3D NULL;
++	xml_result =3D NULL;
++	xml_len =3D 0;
++	old_len =3D 0;
++	len =3D 0;
+ =
 
-> __ofono_modem_add_atom_watch(struct ofono_modem *modem,
-> >  	watch->item.destroy =3D destroy;
-> >  	watch->item.notify_data =3D data;
-> >  =
+ 	g_at_result_iter_init(&iter, result);
+ =
 
-> > -	return __ofono_watchlist_add_item(modem->atom_watches,
-> > +	id =3D __ofono_watchlist_add_item(modem->atom_watches,
-> >  					(struct =
+-	if (!g_at_result_iter_next(&iter, prefix))
+-		return FALSE;
++	if (!g_at_result_iter_next(&iter, prefix)) {
++		if (gd->xml_data) {
++			g_free(gd->xml_data);
++			gd->xml_data =3D NULL;
++		}
++		goto error;
++	}
+ =
 
-> ofono_watchlist_item *)watch);
-> > +
-> > +	for (l =3D modem->atoms; l; l =3D l->next) {
-> > +		atom =3D l->data;
-> > +
-> > +		if (atom->type !=3D type || atom->unregister =3D=3D NULL)
-> > +			continue;
-> > +
-> > +		notify(atom, =
+-	if (!g_at_result_iter_next_unquoted_string(&iter, xml))
++	if (!g_at_result_iter_next_unquoted_string(&iter, &xml_result)) {
++		if (gd->xml_data) {
++			g_free(gd->xml_data);
++			gd->xml_data =3D NULL;
++		}
++		goto error;
++	}
++
++	if (xml_result =3D=3D NULL) {
++		if (gd->xml_data) {
++			g_free(gd->xml_data);
++			gd->xml_data =3D NULL;
++		}
++		goto error;
++	}
++
++	len =3D strlen(xml_result);
++
++	if (len =3D=3D 0)
+ 		return FALSE;
+ =
 
-> OFONO_ATOM_WATCH_CONDITION_REGISTERED, data);
-> > +	}
-> > +
-> > +	return id;
-> >  }
-> >  =
+-	return TRUE;
++	while ((xml_result[len-1] =3D=3D '\n') || (xml_result[len-1] =3D=3D '\r')=
+ ||
++			(xml_result[len-1] =3D=3D ' ')) {
++		len =3D len - 1;
++	}
++
++	temp_xml =3D g_try_new(char, len+1);
++	if (!temp_xml) {
++		if (gd->xml_data) {
++			g_free(gd->xml_data);
++			gd->xml_data =3D NULL;
++		}
++		goto error;
++	}
++
++	g_memmove(temp_xml, xml_result, len);
++	temp_xml[len] =3D '\0';
++
++	if (temp_xml[len-1] =3D=3D '>' && temp_xml[len-2] =3D=3D 's'
++			&& temp_xml[len-3] =3D=3D 'o'
++			&& temp_xml[len-4] =3D=3D 'p'
++			&& temp_xml[len-5] =3D=3D '/') {
++		if (gd->xml_data) {
++			old_len =3D strlen(gd->xml_data);
++			buf =3D g_try_new(char, (old_len+len+1));
++			if (!buf) {
++				g_free(gd->xml_data);
++				g_free(temp_xml);
++				gd->xml_data =3D NULL;
++				goto error;
++			}
++
++			xml_len =3D sprintf(buf, "%s", gd->xml_data);
++			xml_len +=3D sprintf(buf + xml_len, "%s", temp_xml);
++			buf[xml_len] =3D '\0';
++			g_free(gd->xml_data);
++			g_free(temp_xml);
++			gd->xml_data =3D NULL;
++			*xml =3D buf;
++			return TRUE;
++		} else {
++			*xml =3D temp_xml;
++			return TRUE;
++		}
++	} else {
++		if (gd->xml_data) {
++			old_len =3D strlen(gd->xml_data);
++			buf =3D g_try_new(char, (old_len+len+1));
++			if (!buf) {
++				g_free(gd->xml_data);
++				g_free(temp_xml);
++				gd->xml_data =3D NULL;
++				goto error;
++			}
++
++			xml_len =3D sprintf(buf, "%s", gd->xml_data);
++			xml_len +=3D sprintf(buf + xml_len, "%s", temp_xml);
++			buf[xml_len] =3D '\0';
++			g_free(gd->xml_data);
++			gd->xml_data =3D buf;
++			g_free(temp_xml);
++			return FALSE;
++		} else {
++			gd->xml_data =3D temp_xml;
++			return FALSE;
++		}
++	}
++
++error:
++	ofono_error("Unable to parse CPOSR notification");
++	return FALSE;
+ }
+ =
 
-> >  gboolean __ofono_modem_remove_atom_watch(struct ofono_modem *modem,
-> =
+ static void gnss_report(GAtResult *result, gpointer user_data)
+ {
+-	const char *xml;
++	struct ofono_gnss *gnss =3D user_data;
++	struct gnss_data *gd =3D ofono_gnss_get_data(gnss);
++
++	char *xml;
+ =
 
-> This patch is behavior changing.  Whether this is a good idea =
+ 	DBG("");
+ =
 
-> or not I'm
-> still undecided, though I see its merits.
-> =
+ 	xml =3D NULL;
+ =
 
-> However, I don't see how it is fixing anything.  The watches =
+-	if (!gnss_parse_report(result, "+CPOSR:", &xml)) {
+-		ofono_error("Unable to parse CPOSR notification");
+-		return;
++	if (gnss_parse_report(result, "+CPOSR:", &xml, gd)) {
++		ofono_gnss_notify_posr_request(gnss, xml);
++		g_free(xml);
+ 	}
+-
+-	if (xml =3D=3D NULL) {
+-		ofono_error("Unable to parse CPOSR notification");
+-		return;
+-	}
+-
+-	DBG("%s", xml);
+ }
+ =
 
-> are called
-> only upon registration (which means the driver is probed and =
+ static void at_gnss_reset_notify(GAtResult *result, gpointer user_data)
+@@ -242,6 +341,7 @@ static int at_gnss_probe(struct ofono_gnss *gnss, unsig=
+ned int vendor,
+ =
 
-> ready).  So
-> even if you create two netreg atoms in hopes of probing the =
+ 	gd->chat =3D g_at_chat_clone(chat);
+ 	gd->vendor =3D vendor;
++	gd->xml_data =3D NULL;
+ =
 
-> modem type,
-> only one should ever register and this code should not be needed.
+ 	ofono_gnss_set_data(gnss, gd);
+ =
 
-I do have an actual bug, which this patch fixes. I've been investigating wh=
-y, with isiusb, the gprs atom sometimes fails to receive the network regist=
-ration status and therefore fails to attach to the GPRS service. It turns o=
-ut that the problem comes from the client side code pattern for registering=
- atom watches. The code assumes that there will only be a single atom of th=
-e same type (registered or not).
+@@ -257,6 +357,9 @@ static void at_gnss_remove(struct ofono_gnss *gnss)
+ =
 
-Basically, gprs atom and the alternative netreg atoms are probing in parall=
-el and may register themselves in a random order. If gprs finishes first, i=
-t will correctly get a call to its watch handler when one of the netreg ato=
-ms completes its registration. However, if the order is reversed and gprs f=
-inishes after the netreg atom, the following snippet of code tries to find =
-the already registered netreg atom:
+ 	DBG("");
+ =
 
-        netreg_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_NETR=
-EG);
++	if (gd->xml_data)
++		g_free(gd->xml_data);
++
+ 	ofono_gnss_set_data(gnss, NULL);
+ =
 
-        if (netreg_atom && __ofono_atom_get_registered(netreg_atom))
-                netreg_watch(netreg_atom,
-                                OFONO_ATOM_WATCH_CONDITION_REGISTERED, gprs=
-);
+ 	g_at_chat_unref(gd->chat);
+-- =
 
-The trouble here is that __ofono_modem_find_atom() just returns the first n=
-eterg atom it finds, regardless of whether it is registered or not. In this=
- case it happens to be the wrong netreg (wgmodem2.5 version, which fails to=
- probe), even though the other netreg atom is already present and registere=
-d. Because of this, the watch funtion is never called.
+1.7.0.4
 
-I realize that there are other ways to fix this. The client side pattern co=
-uld be changed to use __ofono_modem_foreach_atom() to look for already regi=
-stered atoms, instead of doing the same within the __ofono_modem_add_atom_w=
-atch() as in my patch. This would introduce quite a bit of more code. Alter=
-natively, an __ofono_modem_find_registered_atom() function could be introdu=
-ced to look for a registerd atom of a certain type (might be a good idea to=
- do this in any case). Or isiusb (and any other similar cases) could be rev=
-ectored to not probe multiple atoms of the same type in parallel. However, =
-we already create multiple GPRS context atoms as a matter of course, so the=
- assumption that there will only be a single instance is no longer valid fo=
-r all atom types anyway. IMO, it would be good to get rid of the assumption=
- altogether.
 
-So, I like my patch because it removes a lot of copy-paste code and does no=
-t assume anything about how many atoms of a certain type there can be.
-
-Regards,
-
-	MikaL
-
---===============5595831840702295910==--
+--===============5478673552838208973==--
 
