@@ -1,32 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============3763223370998409873=="
+Content-Type: multipart/mixed; boundary="===============1787058922054272877=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] doc: add data-call.txt
-Date: Wed, 30 Mar 2011 16:35:53 +0200
-Message-ID: <1301495753.2572.128.camel@aeonflux>
-In-Reply-To: <1301493399-32041-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] emulator: add AT hook_control_cb() CB and register it
+Date: Wed, 30 Mar 2011 09:39:18 -0500
+Message-ID: <4D934096.4090500@gmail.com>
+In-Reply-To: <4D92E386.3060506@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3763223370998409873==
+--===============1787058922054272877==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Guillaume,
 
->  doc/data-call.txt |   47 +++++++++++++++++++++++++++++++++++++++++++++++
->  1 files changed, 47 insertions(+), 0 deletions(-)
->  create mode 100644 doc/data-call.txt
-
-looks great. Just call it doc/dialup-overview.txt since data-call is a
-little unclear what this is about.
-
-Regards
-
-Marcel
+> This patch is also in the set of patches I have sent for escape sequence
+> detection because I needed it to complete gsmdial tests.
+> Should I resend the set of patches with this patch updated ? or I should
+> wait for your feedback on the complete set of patches?
+> =
 
 
+Yes I noticed you put this patch in the other series after I sent the
+review.  Please wait for my review of that series before resending.  I
+will attempt to do that today.
 
---===============3763223370998409873==--
+Regards,
+-Denis
+
+--===============1787058922054272877==--
 
