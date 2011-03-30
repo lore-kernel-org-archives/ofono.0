@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============6568734370321532249=="
+Content-Type: multipart/mixed; boundary="===============6504613724387179506=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 03/18] gathdlc: add mechansim to detect '+++' escape
- sequence
-Date: Wed, 30 Mar 2011 15:52:23 -0500
-Message-ID: <4D939807.3020304@gmail.com>
-In-Reply-To: <1301066749-12052-4-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH 05/18] gatppp: add g_at_ppp_set_suspend_function()
+ definition
+Date: Wed, 30 Mar 2011 15:54:45 -0500
+Message-ID: <4D939895.5070303@gmail.com>
+In-Reply-To: <1301066749-12052-6-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6568734370321532249==
+--===============6504613724387179506==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -18,230 +18,41 @@ Hi Guillaume,
 
 On 03/25/2011 10:25 AM, Guillaume Zajac wrote:
 > ---
->  gatchat/gathdlc.c |  114 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 114 insertions(+), 0 deletions(-)
+>  gatchat/gatppp.c |    8 ++++++++
+>  1 files changed, 8 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/gatchat/gathdlc.c b/gatchat/gathdlc.c
-> index 7c45454..21e4533 100644
-> --- a/gatchat/gathdlc.c
-> +++ b/gatchat/gathdlc.c
-> @@ -50,6 +50,13 @@
->  =
-
->  #define HDLC_FCS(fcs, c) crc_ccitt_byte(fcs, c)
->  =
-
-> +/* Amount of fiftieths of second to detect '+++'.
-> + * Range is 0 to 0xff.
-> + */
-> +#define ESC_TIME 	0x32
-
-Where is this coming from?  Is this supposed to be controlled by an
-S-register?  If so, you might want to use a proper variable for this.
-
-> +
-> +#define GUARD_TIMEOUTS	1000	/* Pause time before and after '+++' sequenc=
-e */
-> +
-
-This seems redundant to the ESC_TIME timeout...
-
->  struct _GAtHDLC {
->  	gint ref_count;
->  	GAtIO *io;
-> @@ -68,6 +75,12 @@ struct _GAtHDLC {
->  	gboolean in_read_handler;
->  	gboolean destroyed;
->  	gboolean no_carrier_detect;
-> +	GAtSuspendFunc suspend_func;
-> +	gpointer suspend_data;
-> +	guint cmpt;
-> +	guint suspend_timeout;
-> +	guint pause_timeout;
-
-You never clean up these g_sources (e.g. in the case where GAtHDLC is
-forcefully removed).  This is a big no no in a library, you must clean
-up after yourself in all cases.
-
-I would also replace the suspend_timeout with a GTimer directly.
-
-> +	gboolean paused;
->  };
->  =
-
->  static void hdlc_record(int fd, gboolean in, guint8 *data, guint16 lengt=
-h)
-> @@ -130,6 +143,47 @@ guint32 g_at_hdlc_get_recv_accm(GAtHDLC *hdlc)
->  	return hdlc->recv_accm;
+> diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+> index 993b5ea..9df6b8e 100644
+> --- a/gatchat/gatppp.c
+> +++ b/gatchat/gatppp.c
+> @@ -467,6 +467,14 @@ void g_at_ppp_set_debug(GAtPPP *ppp, GAtDebugFunc fu=
+nc, gpointer user_data)
+>  	ppp->debug_data =3D user_data;
 >  }
 >  =
 
-> +void g_at_hdlc_set_suspend_function(GAtHDLC *hdlc, GAtSuspendFunc func,
-> +							gpointer user_data)
+> +void g_at_ppp_set_suspend_function(GAtPPP *ppp, GAtSuspendFunc func, gpo=
+inter user_data)
 > +{
-> +	if (hdlc =3D=3D NULL)
+> +	if (ppp =3D=3D NULL)
 > +		return;
 > +
-> +	hdlc->suspend_func =3D func;
-> +	hdlc->suspend_data =3D user_data;
+> +	g_at_hdlc_set_suspend_function(ppp->hdlc, func, user_data);
 > +}
 > +
-> +static gboolean paused_timeout_cb(gpointer user_data)
-> +{
-> +	GAtHDLC *hdlc =3D user_data;
-> +
-> +	hdlc->paused =3D TRUE;
-> +
-> +	return FALSE;
-> +}
-> +
-> +static gboolean susp_timeout_cb(gpointer user_data)
-> +{
-> +	GAtHDLC *hdlc =3D user_data;
-> +
-> +	hdlc->cmpt =3D 0;
-> +
-> +	return FALSE;
-> +}
-> +
-> +static gboolean hdlc_suspend(gpointer user_data)
-> +{
-> +	GAtHDLC *hdlc =3D user_data;
-> +
-> +	g_at_io_set_write_handler(hdlc->io, NULL, NULL);
-> +	g_at_io_set_read_handler(hdlc->io, NULL, NULL);
-> +
-> +	if (hdlc->suspend_func)
-> +		hdlc->suspend_func(hdlc->suspend_data);
-> +
-> +	return FALSE;
-> +}
-> +
->  static void new_bytes(struct ring_buffer *rbuf, gpointer user_data)
+
+This is really not enough, you must also shut down the read watch on the
+TUN device, so that we don't try to forward packets from TUN to HDLC
+while we're suspended.
+
+>  void g_at_ppp_shutdown(GAtPPP *ppp)
 >  {
->  	GAtHDLC *hdlc =3D user_data;
-> @@ -142,6 +196,13 @@ static void new_bytes(struct ring_buffer *rbuf, gpoi=
-nter user_data)
->  =
-
->  	hdlc->in_read_handler =3D TRUE;
->  =
-
-> +	/*
-> +	 * We delete the the paused_timeout_cb or hdlc_suspend as soons as
-> +	 * we read a data.
-> +	 */
-> +	if (hdlc->pause_timeout > 0)
-> +		g_source_remove(hdlc->pause_timeout);
-> +
->  	while (pos < len) {
->  		/*
->  		 * We try to detect NO CARRIER conditions here.  We
-> @@ -153,6 +214,21 @@ static void new_bytes(struct ring_buffer *rbuf, gpoi=
-nter user_data)
->  				hdlc->decode_offset =3D=3D 0 && *buf =3D=3D '\r')
->  			break;
->  =
-
-> +		/*
-> +		 * If there was no character for 1 second we try to detect
-> +		 * the '+' character to suspend data call if 3 '+' are
-> +		 * detected in less than 20 * ESC_TIME milliseconds.
-> +		 */
-> +		if (*buf =3D=3D '+' && hdlc->paused) {
-> +			if (hdlc->cmpt =3D=3D 0)
-> +				hdlc->suspend_timeout =3D g_timeout_add (20 * ESC_TIME,
-> +							susp_timeout_cb, hdlc);
-> +			hdlc->cmpt++;
-> +		} else {
-> +			hdlc->cmpt =3D 0;
-> +			hdlc->paused =3D FALSE;
-> +		}
-> +
->  		if (hdlc->decode_escape =3D=3D TRUE) {
->  			unsigned char val =3D *buf ^ HDLC_TRANS;
->  =
-
-> @@ -190,6 +266,9 @@ static void new_bytes(struct ring_buffer *rbuf, gpoin=
-ter user_data)
->  		}
->  	}
->  =
-
-> +	if (hdlc->cmpt =3D=3D 3)
-> +		goto suspend;
-> +
->  out:
->  	ring_buffer_drain(rbuf, pos);
->  =
-
-> @@ -197,6 +276,37 @@ out:
->  =
-
->  	if (hdlc->destroyed)
->  		g_free(hdlc);
-> +
-> +	/*
-> +	 * If there were no data pause for GUARD_TIMEOUTS ms,
-> +	 * we try again to check it.
-> +	 */
-> +	if (!hdlc->paused)
-> +		hdlc->pause_timeout =3D g_timeout_add (GUARD_TIMEOUTS,
-> +							paused_timeout_cb,
-> +							hdlc);
-> +
-> +	return;
-> +
-> +suspend:
-> +	/*
-> +	 * If the suspend timeout still exists,
-> +	 * delete it.
-> +	 */
-> +	if (hdlc->suspend_timeout > 0)
-> +		g_source_remove(hdlc->suspend_timeout);
-> +
-> +	/*
-> +	 * Restart the counter and reset the ring buffer.
-> +	 */
-> +	hdlc->cmpt =3D 0;
-> +	ring_buffer_reset(rbuf);
-
-This sounds like a really bad idea.  What are you trying to accomplish here?
-
-> +
-> +	/*
-> +	 * Wait for another pause of GUARD_TIMEOUTS ms before returning to comm=
-and mode.
-> +	 */
-> +	hdlc->paused =3D FALSE;
-> +	hdlc->pause_timeout =3D g_timeout_add (GUARD_TIMEOUTS, hdlc_suspend, hd=
-lc);
->  }
->  =
-
->  GAtHDLC *g_at_hdlc_new_from_io(GAtIO *io)
-> @@ -245,6 +355,10 @@ GAtHDLC *g_at_hdlc_new_from_io(GAtIO *io)
->  	hdlc->io =3D g_at_io_ref(io);
->  	g_at_io_set_read_handler(hdlc->io, new_bytes, hdlc);
->  =
-
-> +	hdlc->cmpt =3D 0;
-> +
-> +	hdlc->paused =3D FALSE;
-> +
-
-In general it isn't necessary to initialize variables to zero since we
-use g_try_new0 which zeros the structure already.
-
->  	return hdlc;
->  =
-
->  error:
+>  	if (ppp->phase =3D=3D PPP_PHASE_DEAD || ppp->phase =3D=3D PPP_PHASE_TER=
+MINATION)
 
 Regards,
 -Denis
 
---===============6568734370321532249==--
+--===============6504613724387179506==--
 
