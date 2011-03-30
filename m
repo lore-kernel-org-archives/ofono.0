@@ -1,32 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============0484293505946395601=="
+Content-Type: multipart/mixed; boundary="===============2128687706079256105=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCHv2] doc: add dialup-overview.txt
-Date: Wed, 30 Mar 2011 16:55:56 +0200
-Message-ID: <1301496956.2572.129.camel@aeonflux>
-In-Reply-To: <1301496326-32762-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 2/4] voicecall: refactor emergency number list handling
+Date: Wed, 30 Mar 2011 10:41:45 -0500
+Message-ID: <4D934F39.5060708@gmail.com>
+In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802EEFF8F@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0484293505946395601==
+--===============2128687706079256105==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Jeevaka,
 
->  doc/dialup-overview.txt |   47 +++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 47 insertions(+), 0 deletions(-)
->  create mode 100644 doc/dialup-overview.txt
+On 03/30/2011 08:33 AM, Jeevaka.Badrappan(a)elektrobit.com wrote:
+> Hi Denis,
+> =
 
-patch has been applied. Thanks.
+> Denis Kenzior wrote:
+>> Hi Jeevaka,
+>>
+>>> void emit_en_list_changed(struct ofono_voicecall *vc)  static void
+>>> set_new_ecc(struct ofono_voicecall *vc)  {
+>>>  	int i =3D 0;
+>>> +	GSList *l;
+>>>
+>>>  	g_slist_foreach(vc->en_list, (GFunc) g_free, NULL); =
 
-Regards
+>>> g_slist_free(vc->en_list); @@ -2079,6 +2081,12 @@ static void
+>>>  	set_new_ecc(struct ofono_voicecall *vc) vc->en_list =3D
+>>>  	vc->new_en_list; vc->new_en_list =3D NULL;
+>>>
+>>> +	for (l =3D vc->sim_en_list; l; l =3D l->next) {
+>>> +		if (!g_slist_find_custom(vc->en_list, l->data,
+> number_compare))
+>>> +			vc->en_list =3D g_slist_prepend(vc->en_list,
+>>> +
+>> g_strdup(l->data));
+>>> +	}
+>>> +
+>>>  	while (default_en_list[i]) {
+>>>  		GSList *l;
+>>>
+>>> @@ -2120,10 +2128,11 @@ static void ecc_g2_read_cb(int ok, int
+>>> total_length, int record,  		data +=3D 3; =
 
-Marcel
+>>>
+>>>  		if (en[0] !=3D '\0')
+>>> -			vc->new_en_list =3D
+>> g_slist_prepend(vc->new_en_list,
+>>> +			vc->sim_en_list =3D
+>> g_slist_prepend(vc->sim_en_list,
+>>>
+>> g_strdup(en));
+>>
+>> To preserve the old behavior, can we also check that the
+>> number is not on the default_en_list?
+> =
+
+> SIM ecc number check with default_en_list is already taken care inside
+> set_new_ecc function. =
+
+> =
 
 
+Thinking some more about it, yes you're absolutely right that it works
+out in the end.
 
---===============0484293505946395601==--
+It might still be a good idea to use a Hashtable to fake a Set (e.g.
+uniqueness) behavior of ECCs.  That would make the driver
+implementations a bit simpler as well.
+
+Regards,
+-Denis
+
+--===============2128687706079256105==--
 
