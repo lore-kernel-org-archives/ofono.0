@@ -1,140 +1,221 @@
-Content-Type: multipart/mixed; boundary="===============3857692704268886193=="
+Content-Type: multipart/mixed; boundary="===============2083259441197482767=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH v2] sim: add +CNUM support for HFP emulator
-Date: Thu, 31 Mar 2011 13:55:55 +0200
-Message-ID: <1301572555-11318-1-git-send-email-frederic.danis@linux.intel.com>
+From: Ostermann, Christophe <Christophe.Ostermann@sicpa.com>
+Subject: Motorola Modem H24 gprs connection
+Date: Thu, 31 Mar 2011 16:00:16 +0200
+Message-ID: <65D0035E6914AC478A46CFE3E20C3926017CC3F9@snch1xch53.sicpa-net.ads>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3857692704268886193==
+--===============2083259441197482767==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/sim.c |   66 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 66 insertions(+), 0 deletions(-)
+Hi, =
 
-diff --git a/src/sim.c b/src/sim.c
-index 98d4cc4..af7a715 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -106,6 +106,7 @@ struct ofono_sim {
- 	const struct ofono_sim_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-+	unsigned int hfp_watch;
- };
+
  =
 
- struct msisdn_set_request {
-@@ -2445,6 +2446,13 @@ void ofono_sim_driver_unregister(const struct ofono_=
-sim_driver *d)
- 	g_drivers =3D g_slist_remove(g_drivers, (void *) d);
- }
+
+After having successfully enabled sms and voice call with modem h24 from
+motorola. I am now trying to setup a gprs connection.
+
+In fact Motorola has a specific set of AT command AT+MIPxxx to setup
+gprs connection by using an internal TCP/UDP IP stack. =
+
+
+Can you confirm that the right approach is to write a new gprs-context.c
+?
+
  =
 
-+static void emulator_remove_handler(struct ofono_atom *atom, void *data)
-+{
-+	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
-+
-+	ofono_emulator_remove_handler(em, data);
-+}
-+
- static void sim_unregister(struct ofono_atom *atom)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
-@@ -2452,6 +2460,13 @@ static void sim_unregister(struct ofono_atom *atom)
- 	const char *path =3D __ofono_atom_get_path(atom);
- 	struct ofono_sim *sim =3D __ofono_atom_get_data(atom);
+
+When a gprs cantext has properly established connection, does ofono
+create a network interface?
+
  =
 
-+	__ofono_modem_foreach_registered_atom(modem,
-+						OFONO_ATOM_TYPE_EMULATOR_HFP,
-+						emulator_remove_handler,
-+						"+CNUM");
-+
-+	__ofono_modem_remove_atom_watch(modem, sim->hfp_watch);
-+
- 	__ofono_watchlist_free(sim->state_watches);
- 	sim->state_watches =3D NULL;
+
+BR
+christophe
+
  =
 
-@@ -2519,6 +2534,53 @@ struct ofono_sim *ofono_sim_create(struct ofono_mode=
-m *modem,
- 	return sim;
- }
+
+----------
+
+Christophe Ostermann =
+
+Software Engineer
+Devices Engineering
+
+SICPA Security Solutions SA
+Av. de Florissant 41, 1008 Prilly, Switzerland
+Tel +41 21 627 59 70  Direct +41 21 627 63 68
+Fax +41 21 620 06 22 =
+
+christophe.ostermann(a)sicpa.com
+<mailto:christophe.christophe.ostermann@sicpa.com>   www.sicpa.com
+<http://www.sicpa.com/> =
+
+
  =
 
-+static void emulator_cnum_cb(struct ofono_emulator *em,
-+			struct ofono_emulator_request *req, void *userdata)
-+{
-+	struct ofono_sim *sim =3D userdata;
-+	struct ofono_error result;
-+	GSList *l;
-+	const char *phone;
-+	/*
-+	 * '+CNUM: ,"+",,,4' + phone number + phone type on 3 digits max
-+	 * + terminating null
-+	 */
-+	char buf[OFONO_MAX_PHONE_NUMBER_LENGTH + 18 + 1];
-+
-+	result.error =3D 0;
-+
-+	switch (ofono_emulator_request_get_type(req)) {
-+	case OFONO_EMULATOR_REQUEST_TYPE_COMMAND_ONLY:
-+		for (l =3D sim->own_numbers; l; l =3D l->next) {
-+			struct ofono_phone_number *ph =3D l->data;
-+
-+			phone =3D phone_number_to_string(ph);
-+			sprintf(buf, "+CNUM: ,\"%s\",%d,,4", phone, ph->type);
-+			ofono_emulator_send_info(em, buf, l->next =3D=3D NULL ?
-+							TRUE : FALSE);
-+		}
-+
-+		result.type =3D OFONO_ERROR_TYPE_NO_ERROR;
-+		ofono_emulator_send_final(em, &result);
-+		break;
-+
-+	default:
-+		result.type =3D OFONO_ERROR_TYPE_FAILURE;
-+		ofono_emulator_send_final(em, &result);
-+	};
-+}
-+
-+static void emulator_hfp_watch(struct ofono_atom *atom,
-+				enum ofono_atom_watch_condition cond,
-+				void *data)
-+{
-+	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
-+
-+	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_REGISTERED)
-+		ofono_emulator_add_handler(em, "+CNUM", emulator_cnum_cb, data,
-+						NULL);
-+}
-+
- void ofono_sim_register(struct ofono_sim *sim)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
-@@ -2545,6 +2607,10 @@ void ofono_sim_register(struct ofono_sim *sim)
+
  =
 
- 	if (sim->state > OFONO_SIM_STATE_NOT_PRESENT)
- 		sim_initialize(sim);
-+
-+	sim->hfp_watch =3D __ofono_modem_add_atom_watch(modem,
-+					OFONO_ATOM_TYPE_EMULATOR_HFP,
-+					emulator_hfp_watch, sim, NULL);
- }
- =
-
- void ofono_sim_remove(struct ofono_sim *sim)
--- =
-
-1.7.1
 
 
---===============3857692704268886193==--
+
+This message was delivered through encrypted mechanism.
+
+
+The information in this email and any attachments is confidential
+and intended solely for the use of the individual(s) to whom it is
+addressed or otherwise directed.
+Please note that any views or opinions presented in this email are
+solely those of the author and do not necessarily represent those
+of the Company.
+Finally, the recipient should check this email and any attachments
+for the presence of viruses.
+The Company accepts no liability for any damage caused by any virus
+transmitted by this email.
+
+--===============2083259441197482767==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
+bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxucz0iaHR0
+cDovL3d3dy53My5vcmcvVFIvUkVDLWh0bWw0MCINCnhtbG5zOm5zMD0idXJuOnNjaGVtYXMtbWlj
+cm9zb2Z0LWNvbTpvZmZpY2U6c21hcnR0YWdzIj4NCg0KPGhlYWQ+DQo8bWV0YSBodHRwLWVxdWl2
+PUNvbnRlbnQtVHlwZSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPg0KPG1l
+dGEgbmFtZT1HZW5lcmF0b3IgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTEgKGZpbHRlcmVkIG1l
+ZGl1bSkiPg0KPHN0eWxlPg0KPCEtLQ0KIC8qIFN0eWxlIERlZmluaXRpb25zICovDQogcC5Nc29O
+b3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbA0KCXttYXJnaW46MGNtOw0KCW1hcmdp
+bi1ib3R0b206LjAwMDFwdDsNCglmb250LXNpemU6MTIuMHB0Ow0KCWZvbnQtZmFtaWx5OiJUaW1l
+cyBOZXcgUm9tYW4iO30NCmE6bGluaywgc3Bhbi5Nc29IeXBlcmxpbmsNCgl7Y29sb3I6Ymx1ZTsN
+Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30NCmE6dmlzaXRlZCwgc3Bhbi5Nc29IeXBlcmxp
+bmtGb2xsb3dlZA0KCXtjb2xvcjpwdXJwbGU7DQoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9
+DQpzcGFuLkVtYWlsU3R5bGUxNw0KCXttc28tc3R5bGUtdHlwZTpwZXJzb25hbC1jb21wb3NlOw0K
+CWZvbnQtZmFtaWx5OkFyaWFsOw0KCWNvbG9yOndpbmRvd3RleHQ7fQ0KQHBhZ2UgU2VjdGlvbjEN
+Cgl7c2l6ZTo1OTUuM3B0IDg0MS45cHQ7DQoJbWFyZ2luOjcwLjg1cHQgNzAuODVwdCA3MC44NXB0
+IDcwLjg1cHQ7fQ0KZGl2LlNlY3Rpb24xDQoJe3BhZ2U6U2VjdGlvbjE7fQ0KLS0+DQo8L3N0eWxl
+Pg0KDQo8L2hlYWQ+DQoNCjxib2R5IGxhbmc9RlIgbGluaz1ibHVlIHZsaW5rPXB1cnBsZT4NCg0K
+PGRpdiBjbGFzcz1TZWN0aW9uMT4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBm
+YWNlPUFyaWFsPjxzcGFuIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Ow0KZm9udC1mYW1pbHk6QXJp
+YWwnPkhpLCA8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPg0KDQo8cCBjbGFzcz1Nc29Ob3Jt
+YWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQ7
+DQpmb250LWZhbWlseTpBcmlhbCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4N
+Cg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9
+RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+QWZ0ZXIg
+aGF2aW5nIHN1Y2Nlc3NmdWxseSBlbmFibGVkIHNtcyBhbmQgdm9pY2UgY2FsbA0Kd2l0aCBtb2Rl
+bSBoMjQgZnJvbSBtb3Rvcm9sYS4gSSBhbSBub3cgdHJ5aW5nIHRvIHNldHVwIGEgZ3BycyBjb25u
+ZWN0aW9uLjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1h
+bD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNp
+emU6DQoxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwnPkluIGZhY3QgTW90b3JvbGEgaGFzIGEgc3Bl
+Y2lmaWMgc2V0IG9mIEFUIGNvbW1hbmQgQVQrTUlQeHh4DQp0byBzZXR1cCBncHJzIGNvbm5lY3Rp
+b24gYnkgdXNpbmcgYW4gaW50ZXJuYWwgVENQL1VEUCBJUCBzdGFjay4gPG86cD48L286cD48L3Nw
+YW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFy
+aWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWls
+eTpBcmlhbCc+Q2FuIHlvdSBjb25maXJtIHRoYXQgdGhlIHJpZ2h0IGFwcHJvYWNoIGlzIHRvIHdy
+aXRlIGENCm5ldyBncHJzLWNvbnRleHQuYyA/PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4N
+Cg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9
+RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+PG86cD4m
+bmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250
+IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEw
+LjBwdDtmb250LWZhbWlseTpBcmlhbCc+V2hlbiBhIGdwcnMgY2FudGV4dCBoYXMgcHJvcGVybHkg
+ZXN0YWJsaXNoZWQNCmNvbm5lY3Rpb24sIGRvZXMgb2Zvbm8gY3JlYXRlIGEgbmV0d29yayBpbnRl
+cmZhY2U/PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFs
+Pjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6
+ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9m
+b250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxz
+cGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlh
+bCc+QlI8YnI+DQpjaHJpc3RvcGhlPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAg
+Y2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Ig
+c3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+PG86cD4mbmJzcDs8
+L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsIHN0eWxlPSdtc28t
+bWFyZ2luLXRvcC1hbHQ6YXV0bzttc28tbWFyZ2luLWJvdHRvbS1hbHQ6YXV0byc+PHN0cm9uZz48
+Yj48Zm9udA0Kc2l6ZT0xIGNvbG9yPSIjMDAyMDQxIiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4t
+R0Igc3R5bGU9J2ZvbnQtc2l6ZTo3LjVwdDsNCmZvbnQtZmFtaWx5OkFyaWFsO2NvbG9yOiMwMDIw
+NDEnPi0tLS0tLS0tLS08L3NwYW4+PC9mb250PjwvYj48L3N0cm9uZz48c3Bhbg0KbGFuZz1FTi1H
+Qj48bzpwPjwvbzpwPjwvc3Bhbj48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1hbCBzdHlsZT0nbXNv
+LW1hcmdpbi10b3AtYWx0OmF1dG87bXNvLW1hcmdpbi1ib3R0b20tYWx0OmF1dG8nPjxzdHJvbmc+
+PGI+PGZvbnQNCnNpemU9MSBjb2xvcj0iIzAwMjA0MSIgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVO
+LUdCIHN0eWxlPSdmb250LXNpemU6Ny41cHQ7DQpmb250LWZhbWlseTpBcmlhbDtjb2xvcjojMDAy
+MDQxJz5DaHJpc3RvcGhlIE9zdGVybWFubjwvc3Bhbj48L2ZvbnQ+PC9iPjwvc3Ryb25nPjxmb250
+DQpjb2xvcj1uYXZ5PjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2NvbG9yOm5hdnknPiA8L3NwYW4+
+PC9mb250Pjxmb250IHNpemU9MQ0KY29sb3I9IiMwMDIwNDEiIGZhY2U9QXJpYWw+PHNwYW4gbGFu
+Zz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjcuNXB0O2ZvbnQtZmFtaWx5Og0KQXJpYWw7Y29sb3I6
+IzAwMjA0MSc+PGJyPg0KU29mdHdhcmUgRW5naW5lZXI8YnI+DQpEZXZpY2VzIEVuZ2luZWVyaW5n
+PC9zcGFuPjwvZm9udD48c3BhbiBsYW5nPUVOLUdCPjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4NCg0K
+PHAgY2xhc3M9TXNvTm9ybWFsIHN0eWxlPSdtc28tbWFyZ2luLXRvcC1hbHQ6YXV0bzttc28tbWFy
+Z2luLWJvdHRvbS1hbHQ6YXV0byc+PGZvbnQNCnNpemU9MSBjb2xvcj0iIzAwMjA0MSIgZmFjZT1B
+cmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6Ny41cHQ7DQpmb250LWZhbWls
+eTpBcmlhbDtjb2xvcjojMDAyMDQxJz5TSUNQQSBTZWN1cml0eSBTb2x1dGlvbnMgU0E8YnI+DQo8
+L3NwYW4+PC9mb250Pjxmb250IHNpemU9MSBjb2xvcj0iIzAwMWYzNyIgZmFjZT1BcmlhbD48c3Bh
+biBzdHlsZT0nZm9udC1zaXplOg0KOC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWw7Y29sb3I6IzAwMUYz
+Nyc+QXYuIGRlIEZsb3Jpc3NhbnQgNDE8L3NwYW4+PC9mb250Pjxmb250DQpzaXplPTEgY29sb3I9
+IiMwMDIwNDEiIGZhY2U9QXJpYWw+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjcu
+NXB0Ow0KZm9udC1mYW1pbHk6QXJpYWw7Y29sb3I6IzAwMjA0MSc+LCAxMDA4IDwvc3Bhbj48L2Zv
+bnQ+PGZvbnQgc2l6ZT0xIGZhY2U9QXJpYWw+PHNwYW4NCmxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQt
+c2l6ZTo3LjVwdDtmb250LWZhbWlseTpBcmlhbCc+PG5zMDpwbGFjZQ0KIHc6aW5zQXV0aG9yPSJv
+c3Rlcm1hbm4iIHc6aW5zRGF0ZT0iMjAxMS0wMy0zMVQxNTo0MjowMFoiDQogdzplbmRJbnNBdXRo
+b3I9Im9zdGVybWFubiIgdzplbmRJbnNEYXRlPSIyMDExLTAzLTMxVDE1OjQyOjAwWiI+PG5zMDpD
+aXR5DQogIHc6aW5zQXV0aG9yPSJvc3Rlcm1hbm4iIHc6aW5zRGF0ZT0iMjAxMS0wMy0zMVQxNTo0
+MjowMFoiDQogIHc6ZW5kSW5zQXV0aG9yPSJvc3Rlcm1hbm4iIHc6ZW5kSW5zRGF0ZT0iMjAxMS0w
+My0zMVQxNTo0MjowMFoiPjxuczA6cGxhY2UNCiAgIHc6aW5zQXV0aG9yPSJvc3Rlcm1hbm4iIHc6
+aW5zRGF0ZT0iMjAxMS0wMy0zMVQxNTo0MjowMFoiDQogICB3OmVuZEluc0F1dGhvcj0ib3N0ZXJt
+YW5uIiB3OmVuZEluc0RhdGU9IjIwMTEtMDMtMzFUMTU6NDI6MDBaIj48bnMwOkNpdHkNCiAgICB3
+Omluc0F1dGhvcj0ib3N0ZXJtYW5uIiB3Omluc0RhdGU9IjIwMTEtMDMtMzFUMTU6NDI6MDBaIg0K
+ICAgIHc6ZW5kSW5zQXV0aG9yPSJvc3Rlcm1hbm4iIHc6ZW5kSW5zRGF0ZT0iMjAxMS0wMy0zMVQx
+NTo0MjowMFoiPjxmb250DQogICAgY29sb3I9IiMwMDIwNDEiPjxzcGFuIHN0eWxlPSdjb2xvcjoj
+MDAyMDQxJz5QcmlsbHk8L3NwYW4+PC9mb250PjwvbnMwOkNpdHk+PC9uczA6cGxhY2U+PC9uczA6
+Q2l0eT48L25zMDpwbGFjZT48Zm9udA0KY29sb3I9IiMwMDIwNDEiPjxzcGFuIHN0eWxlPSdjb2xv
+cjojMDAyMDQxJz4sIDwvc3Bhbj48L2ZvbnQ+PG5zMDpjb3VudHJ5LXJlZ2lvbg0KIHc6aW5zQXV0
+aG9yPSJvc3Rlcm1hbm4iIHc6aW5zRGF0ZT0iMjAxMS0wMy0zMVQxNTo0MjowMFoiDQogdzplbmRJ
+bnNBdXRob3I9Im9zdGVybWFubiIgdzplbmRJbnNEYXRlPSIyMDExLTAzLTMxVDE1OjQyOjAwWiI+
+PG5zMDpjb3VudHJ5LXJlZ2lvbg0KICB3Omluc0F1dGhvcj0ib3N0ZXJtYW5uIiB3Omluc0RhdGU9
+IjIwMTEtMDMtMzFUMTU6NDI6MDBaIg0KICB3OmVuZEluc0F1dGhvcj0ib3N0ZXJtYW5uIiB3OmVu
+ZEluc0RhdGU9IjIwMTEtMDMtMzFUMTU6NDI6MDBaIj48Zm9udA0KICBjb2xvcj0iIzAwMjA0MSI+
+PHNwYW4gc3R5bGU9J2NvbG9yOiMwMDIwNDEnPlN3aXR6ZXJsYW5kPC9zcGFuPjwvZm9udD48L25z
+MDpjb3VudHJ5LXJlZ2lvbj48L25zMDpjb3VudHJ5LXJlZ2lvbj48Zm9udA0KY29sb3I9IiMwMDIw
+NDEiPjxzcGFuIHN0eWxlPSdjb2xvcjojMDAyMDQxJz48YnI+DQpUZWwgKzQxIDIxIDYyNyA1OSA3
+MCAmbmJzcDtEaXJlY3QgKzQxIDIxIDYyNyZuYnNwOzYzIDY4PGJyPg0KRmF4ICs0MSAyMSA2MjAg
+MDYgMjI8L3NwYW4+PC9mb250Pjwvc3Bhbj48L2ZvbnQ+PGZvbnQgY29sb3I9bmF2eT48c3Bhbg0K
+bGFuZz1FTi1HQiBzdHlsZT0nY29sb3I6bmF2eSc+IDwvc3Bhbj48L2ZvbnQ+PGZvbnQgc2l6ZT0x
+IGNvbG9yPSIjMDAyMDQxIg0KZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250
+LXNpemU6Ny41cHQ7Zm9udC1mYW1pbHk6QXJpYWw7DQpjb2xvcjojMDAyMDQxJz48YnI+DQo8YSBo
+cmVmPSJtYWlsdG86Y2hyaXN0b3BoZS5jaHJpc3RvcGhlLm9zdGVybWFubkBzaWNwYS5jb20iPmNo
+cmlzdG9waGUub3N0ZXJtYW5uQHNpY3BhLmNvbTwvYT4NCiZuYnNwOzwvc3Bhbj48L2ZvbnQ+PGZv
+bnQgY29sb3I9bmF2eT48c3BhbiBzdHlsZT0nY29sb3I6bmF2eSc+PGENCmhyZWY9Imh0dHA6Ly93
+d3cuc2ljcGEuY29tLyINCnRpdGxlPSJodHRwOi8vd3d3LnNpY3BhLmNvbS8mIzEwO2Jsb2NrZWQ6
+Omh0dHA6Ly93d3cuc2ljcGEuY29tLyI+PGZvbnQgc2l6ZT0xDQpjb2xvcj0iIzAwMjA0MSIgZmFj
+ZT1BcmlhbA0KdGl0bGU9Imh0dHA6Ly93d3cuc2ljcGEuY29tLyYjMTA7YmxvY2tlZDo6aHR0cDov
+L3d3dy5zaWNwYS5jb20vIj48c3Bhbg0KdGl0bGU9Imh0dHA6Ly93d3cuc2ljcGEuY29tLyI+PHNw
+YW4gdGl0bGU9Imh0dHA6Ly93d3cuc2ljcGEuY29tLyI+PHNwYW4NCmxhbmc9RU4tR0Igc3R5bGU9
+J2ZvbnQtc2l6ZTo3LjVwdDtmb250LWZhbWlseTpBcmlhbDtjb2xvcjojMDAyMDQxJz53d3cuc2lj
+cGEuY29tPC9zcGFuPjwvc3Bhbj48L3NwYW4+PC9mb250PjwvYT48L3NwYW4+PC9mb250PjxvOnA+
+PC9vOnA+PC9wPg0KDQo8cCBjbGFzcz1Nc29Ob3JtYWwgc3R5bGU9J21zby1tYXJnaW4tdG9wLWFs
+dDphdXRvO21zby1tYXJnaW4tYm90dG9tLWFsdDphdXRvJz48Zm9udA0Kc2l6ZT0zIGZhY2U9IlRp
+bWVzIE5ldyBSb21hbiI+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMi4wcHQnPiZuYnNwOzwvc3Bh
+bj48bzpwPjwvbzpwPjwvZm9udD48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXpl
+PTMgZmFjZT0iVGltZXMgTmV3IFJvbWFuIj48c3BhbiBzdHlsZT0nZm9udC1zaXplOg0KMTIuMHB0
+Jz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPg0KDQo8L2Rpdj4NCg0KPC9ib2R5
+Pg0KDQo8L2h0bWw+DQoNClRoaXMgbWVzc2FnZSB3YXMgZGVsaXZlcmVkIHRocm91Z2ggZW5jcnlw
+dGVkIG1lY2hhbmlzbS4NCg0KDQpUaGUgaW5mb3JtYXRpb24gaW4gdGhpcyBlbWFpbCBhbmQgYW55
+IGF0dGFjaG1lbnRzIGlzIGNvbmZpZGVudGlhbCBhbmQgaW50ZW5kZWQgc29sZWx5IGZvciB0aGUg
+dXNlIG9mIHRoZSBpbmRpdmlkdWFsKHMpIHRvIHdob20gaXQgaXMgYWRkcmVzc2VkIG9yIG90aGVy
+d2lzZSBkaXJlY3RlZC4gUGxlYXNlIG5vdGUgdGhhdCBhbnkgdmlld3Mgb3Igb3BpbmlvbnMgcHJl
+c2VudGVkIGluIHRoaXMgZW1haWwgYXJlIHNvbGVseSB0aG9zZSBvZiB0aGUgYXV0aG9yIGFuZCBk
+byBub3QgbmVjZXNzYXJpbHkgcmVwcmVzZW50IHRob3NlIG9mIHRoZSBDb21wYW55LiBGaW5hbGx5
+LCB0aGUgcmVjaXBpZW50IHNob3VsZCBjaGVjayB0aGlzIGVtYWlsIGFuZCBhbnkgYXR0YWNobWVu
+dHMgZm9yIHRoZSBwcmVzZW5jZSBvZiB2aXJ1c2VzLiBUaGUgQ29tcGFueSBhY2NlcHRzIG5vIGxp
+YWJpbGl0eSBmb3IgYW55IGRhbWFnZSBjYXVzZWQgYnkgYW55IHZpcnVzIHRyYW5zbWl0dGVkIGJ5
+IHRoaXMgZW1haWwuDQoNCg==
+
+--===============2083259441197482767==--
 
