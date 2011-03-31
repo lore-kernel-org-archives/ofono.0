@@ -1,109 +1,126 @@
-Content-Type: multipart/mixed; boundary="===============7344642630135486444=="
+Content-Type: multipart/mixed; boundary="===============5877848904468864336=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] cf: Reregister CallForwarding atom on EF-CFIS refresh.
-Date: Thu, 31 Mar 2011 15:01:23 +0200
-Message-ID: <1301576483-2990-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 2/2] doc: Mark SIM Refresh support as present.
+Date: Thu, 31 Mar 2011 15:40:57 +0200
+Message-ID: <1301578857-3790-2-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1301578857-3790-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7344642630135486444==
+--===============5877848904468864336==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/call-forwarding.c |   47 +++++++++++++++------------------------------=
---
- 1 files changed, 15 insertions(+), 32 deletions(-)
+ TODO             |   35 -----------------------------------
+ doc/features.txt |   34 ++++++++++++++++++++++++++++++++++
+ 2 files changed, 34 insertions(+), 35 deletions(-)
 
-diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index 84d3067..7ce6dd4 100644
---- a/src/call-forwarding.c
-+++ b/src/call-forwarding.c
-@@ -74,6 +74,7 @@ static void get_query_next_cf_cond(struct ofono_call_forw=
-arding *cf);
- static void set_query_next_cf_cond(struct ofono_call_forwarding *cf);
- static void ss_set_query_next_cf_cond(struct ofono_call_forwarding *cf);
- static void cf_unregister_ss_controls(struct ofono_call_forwarding *cf);
-+static void call_forwarding_unregister(struct ofono_atom *atom);
+diff --git a/TODO b/TODO
+index e18c5e6..207adf7 100644
+--- a/TODO
++++ b/TODO
+@@ -261,41 +261,6 @@ Voicecall
+ Sim Toolkit
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
  =
 
- struct cf_ss_request {
- 	int ss_type;
-@@ -1368,41 +1369,21 @@ static void sim_cfis_changed(int id, void *userdata)
- {
- 	struct ofono_call_forwarding *cf =3D userdata;
- =
-
--	if (cf->flags & CALL_FORWARDING_FLAG_CACHED)
--		goto done;
+-- Support Refresh proactive command.  The specification defines 7 types
+-  of Refresh types:
+-	- NAA Initialization
+-	- NAA File Change Notification
+-	- NAA Initialization and File Change Notification
+-	- NAA Initialization and Full File Change Notification
+-	- UICC Reset
+-	- NAA Application Reset (2G only)
+-	- NAA Session Reset (3G only)
 -
--	if (((cf->flags & CALL_FORWARDING_FLAG_CPHS_CFF) ||
--			cf->cfis_record_id > 0) && is_cfu_enabled(cf, NULL)) {
--		DBusConnection *conn =3D ofono_dbus_get_connection();
--		const char *path =3D __ofono_atom_get_path(cf->atom);
--		ofono_bool_t status =3D FALSE;
+-  The 'NAA Initialization' type will be ignored by oFono, it is assumed
+-  this is handled by the modem.
 -
--		ofono_dbus_signal_property_changed(conn, path,
--					OFONO_CALL_FORWARDING_INTERFACE,
--					"ForwardingFlagOnSim",
--					DBUS_TYPE_BOOLEAN, &status);
--	}
+-  For 'UICC Reset', 'NAA Application Reset' and 'NAA Session Reset' oFono
+-  will first check whether there are any calls or ussd operations active.
+-  If there are, the appropriate response will be sent (e.g. busy on call
+-  or screen busy terminal response.)  Otherwise a positive response will be
+-  sent to the driver.  In the case of a 'UICC Reset' the driver / modem
+-  can interpret this that it is safe to reset the UICC.
 -
--done:
--	cf->cfis_record_id =3D 0;
--	cf->flags &=3D ~CALL_FORWARDING_FLAG_CPHS_CFF;
-+	if (!(cf->flags & CALL_FORWARDING_FLAG_CACHED))
-+		return;
+-  Alternatively, the driver / modem can notify the core of the SIM removal
+-  / SIM insertion events without using the Refresh proactive command.  It
+-  is up to the driver / modem to perform a warm reset.  In particular, 3GPP
+-  31.111 mandates that any change to EFimsi is done by using 'UICC Reset',
+-  'NAA Application Reset' or 'NAA Session Reset'.  Please see 3GPP 31.111
+-  Section 6.4.7.1.
+-
+-  Other types will be handled by oFono flushing the EF cache of the files
+-  affected (or the entire SIM cache in case of Full File Change Notificati=
+ons)
+-  and re-reading the affected files.  Any properties derived from these
+-  Elementary Files will be updated and signaled using PropertyChanged.
+-
+-  Priority: High
+-  Complexity: C8
+-
+ - Support of the BIP (Bearer Independent Protocol) proactive commands.
+   The specification defines several bearer types. For now, only the packet=
+ data
+   service bearer is considered.
+diff --git a/doc/features.txt b/doc/features.txt
+index b905ae7..98a9fed 100644
+--- a/doc/features.txt
++++ b/doc/features.txt
+@@ -126,6 +126,40 @@ Supported Proactive Commands:
  =
 
- 	/*
--	 * TODO: remove forwarding rules in
--	 * cf->cf_conditions[CALL_FORWARDING_TYPE_UNCONDITIONAL] that
--	 * originate from EFcfis before adding the new rules?
-+	 * If the values are cached it's because at least one client
-+	 * requested them and we need to notify them about this
-+	 * change.  However the authoritative source of current
-+	 * Call-Forwarding settings is the network operator and the
-+	 * query can take a noticeable amount of time.  Instead of
-+	 * sedning PropertyChanged, we reregister the Call Forwarding
-+	 * atom.  The client will invoke GetProperties only if it
-+	 * is still interested.
- 	 */
--
--	if (__ofono_sim_service_available(cf->sim,
--			SIM_UST_SERVICE_CFIS,
--			SIM_SST_SERVICE_CFIS) =3D=3D TRUE)
--		ofono_sim_read(cf->sim_context, SIM_EFCFIS_FILEID,
--				OFONO_SIM_FILE_STRUCTURE_FIXED,
--				sim_cfis_read_cb, cf);
--	else
--		ofono_sim_read(cf->sim_context, SIM_EF_CPHS_CFF_FILEID,
--				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
--				sim_cphs_cff_read_cb, cf);
-+	call_forwarding_unregister(cf->atom);
-+	ofono_call_forwarding_register(cf);
- }
+   NOTE: This command can also be handled by the modem.
  =
 
- static void sim_read_cf_indicator(struct ofono_call_forwarding *cf)
-@@ -1465,6 +1446,8 @@ static void call_forwarding_unregister(struct ofono_a=
-tom *atom)
- =
-
- 	if (cf->ussd_watch)
- 		__ofono_modem_remove_atom_watch(modem, cf->ussd_watch);
++- Refresh proactive command.  The specification defines 7 types
++  of Refresh requests:
++	- NAA Initialization
++	- NAA File Change Notification
++	- NAA Initialization and File Change Notification
++	- NAA Initialization and Full File Change Notification
++	- UICC Reset
++	- NAA Application Reset (2G only)
++	- NAA Session Reset (3G only)
 +
-+	cf->flags =3D 0;
- }
- =
-
- static void call_forwarding_remove(struct ofono_atom *atom)
++  oFono can fully perform the the first four types of Refresh.  The
++  remaining three must be handled by the modem or its driver with a
++  notification sent to ofono.  Regardless of whether the command is
++  handled by the modem or not, oFono will check whether there are any
++  calls or ussd operations active.  If there are, the appropriate
++  response will be sent (e.g. busy on call or screen busy terminal
++  response.)  Otherwise a positive response will be sent to the driver.
++  In the case of a 'UICC Reset' the driver / modem can interpret this
++  that it is safe to reset the UICC.
++
++  Alternatively, the driver / modem can notify the core of the SIM removal
++  / SIM insertion events without using the Refresh proactive command.  It
++  is up to the driver / modem to perform a warm reset.  In particular, 3GPP
++  31.111 mandates that any change to EFimsi is done by using 'UICC Reset',
++  'NAA Application Reset' or 'NAA Session Reset'.  Please see 3GPP 31.111
++  Section 6.4.7.1.
++
++  Other types are handled by oFono flushing the EF cache of the files
++  affected (or the entire SIM cache in case of Full File Change Notificati=
+ons)
++  and re-reading the affected files.  Any properties derived from these
++  Elementary Files will be updated and signaled using PropertyChanged.
++
++  NOTE: This command can also be handled by the modem.
++
+ - Sim icon support.  oFono supports icons that are stored on the SIM.  If =
+the
+   SIM notifies oFono that an icon is available for a particular proactive
+   command, oFono passes this information to the UI.  The UI is able to obt=
+ain
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============7344642630135486444==--
+--===============5877848904468864336==--
 
