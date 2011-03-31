@@ -1,40 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============2407321580584691117=="
+Content-Type: multipart/mixed; boundary="===============2811789384997861519=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 18/18] gsmdial: implement mechanism to send +++ -> ATO0 ->
- +++ -> ATH0
-Date: Thu, 31 Mar 2011 10:39:04 -0500
-Message-ID: <4D94A018.9010003@gmail.com>
-In-Reply-To: <4D9492DE.2000809@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH 03/18] gathdlc: add mechansim to detect '+++' escape
+ sequence
+Date: Thu, 31 Mar 2011 17:40:38 +0200
+Message-ID: <4D94A076.5050902@linux.intel.com>
+In-Reply-To: <4D949CF5.8080400@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2407321580584691117==
+--===============2811789384997861519==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Denis,
 
->> The logic for sending a guard timeout, +++, guard timeout should really
->> belong in GAtChat, otherwise every single client has to repeat the same
->> state machine.
-> =
+On 31/03/2011 17:25, Denis Kenzior wrote:
+> Hi Guillaume,
+>
+>>>> +suspend:
+>>>> +    /*
+>>>> +     * If the suspend timeout still exists,
+>>>> +     * delete it.
+>>>> +     */
+>>>> +    if (hdlc->suspend_timeout>   0)
+>>>> +        g_source_remove(hdlc->suspend_timeout);
+>>>> +
+>>>> +    /*
+>>>> +     * Restart the counter and reset the ring buffer.
+>>>> +     */
+>>>> +    hdlc->cmpt =3D 0;
+>>>> +    ring_buffer_reset(rbuf);
+>>> This sounds like a really bad idea.  What are you trying to accomplish
+>>> here?
+>> If I don't reset ring_buffer, I am receiving "+++" on GAtServer when I
+>> return to command mode and it is blocking following AT commands.
+>> I can't send next ATH0 or ATO0. Do you have any idea how to prevent
+>> receiving GAtServer to receive it?
+> So two issues:
+>
+> - why are you using ring_buffer_reset instead of ring_buffer_drain(buf, 3=
+)?
 
-> I can implement a g_at_chat_send_escape_sequence() to manage:
-> <pause> --> +++ <pause> timing
-> =
+I didn't think about it :)
 
-> I would still write directly on at_chat GAtIO because using
-> at_chat_send_common() would add a '\r' that would cancel the suspend
-> data call.
-> =
+> - Why are you doing this here instead of waiting for the guard timeout
+> to expire after +++ has been detected?
+>
 
+I didn't think that an HDLC frame can contain +++++...
+I will change this.
 
-Yes, of course.
+Thanks.
 
-Regards,
--Denis
+Kind regards,
+Guillaume
 
---===============2407321580584691117==--
+--===============2811789384997861519==--
 
