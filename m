@@ -1,221 +1,205 @@
-Content-Type: multipart/mixed; boundary="===============2083259441197482767=="
+Content-Type: multipart/mixed; boundary="===============0450537602957744789=="
 MIME-Version: 1.0
-From: Ostermann, Christophe <Christophe.Ostermann@sicpa.com>
-Subject: Motorola Modem H24 gprs connection
-Date: Thu, 31 Mar 2011 16:00:16 +0200
-Message-ID: <65D0035E6914AC478A46CFE3E20C3926017CC3F9@snch1xch53.sicpa-net.ads>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH 18/18] gsmdial: implement mechanism to send +++ -> ATO0 ->
+ +++ -> ATH0
+Date: Thu, 31 Mar 2011 16:42:38 +0200
+Message-ID: <4D9492DE.2000809@linux.intel.com>
+In-Reply-To: <4D9399AE.1050805@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2083259441197482767==
+--===============0450537602957744789==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi, =
+Hi Denis,
 
+On 30/03/2011 22:59, Denis Kenzior wrote:
+> Hi Guillaume,
+>
+> On 03/25/2011 10:25 AM, Guillaume Zajac wrote:
+>> ---
+>>   gatchat/gsmdial.c |  164 ++++++++++++++++++++++++++++++++++++++++++++-=
+-------
+>>   1 files changed, 138 insertions(+), 26 deletions(-)
+>>
+>> diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
+>> index 92a7ff2..f1b485e 100644
+>> --- a/gatchat/gsmdial.c
+>> +++ b/gatchat/gsmdial.c
+>> @@ -40,6 +40,8 @@
+>>
+>>   #define IFCONFIG_PATH "/sbin/ifconfig"
+>>
+>> +#define GUARD_TIMEOUTS 1500
+>> +
+>>   static const char *none_prefix[] =3D { NULL };
+>>   static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
+>>   static const char *creg_prefix[] =3D { "+CREG:", NULL };
+>> @@ -238,32 +240,6 @@ static gboolean execute(const char *cmd)
+>>   	return TRUE;
+>>   }
+>>
+>> -static void ppp_connect(const char *iface, const char *local, const cha=
+r *peer,
+>> -			const char *dns1, const char *dns2,
+>> -			gpointer user_data)
+>> -{
+>> -	char buf[512];
+>> -
+>> -	/* print out the negotiated address and dns server */
+>> -	g_print("Network Device: %s\n", iface);
+>> -	g_print("IP Address: %s\n", local);
+>> -	g_print("Peer IP Address: %s\n", peer);
+>> -	g_print("Primary DNS Server: %s\n", dns1);
+>> -	g_print("Secondary DNS Server: %s\n", dns2);
+>> -
+>> -	if (getuid() !=3D 0) {
+>> -		g_print("Need root privilege to config PPP interface\n");
+>> -		return;
+>> -	}
+>> -
+>> -	snprintf(buf, sizeof(buf), "%s %s up", IFCONFIG_PATH, iface);
+>> -	execute(buf);
+>> -
+>> -	snprintf(buf, sizeof(buf), "%s %s %s pointopoint %s", IFCONFIG_PATH,
+>> -				iface, local, peer);
+>> -	execute(buf);
+>> -}
+>> -
+>>   static void no_carrier_notify(GAtResult *result, gpointer user_data)
+>>   {
+>>   	char buf[64];
+>> @@ -294,6 +270,142 @@ static void ppp_disconnect(GAtPPPDisconnectReason =
+reason, gpointer user_data)
+>>   	g_at_chat_resume(modem);
+>>   }
+>>
+>> +static void power_down_ppp(gboolean ok, GAtResult *result, gpointer use=
+r_data)
+>> +{
+>> +	if (!ok)
+>> +		return;
+>> +
+>> +	g_at_ppp_unref(ppp);
+>> +	ppp =3D NULL;
+>> +}
+>> +
+>> +static gboolean send_ATH0(gpointer user_data)
+>> +{
+>> +	/* Resume AT chat to send ATH0 */
+>> +	g_at_chat_resume(modem);
+>> +	g_at_chat_send(modem, "ATH0", none_prefix, power_down_ppp, NULL, NULL);
+>> +
+>> +	return FALSE;
+>> +}
+>> +
+>> +static gboolean suspend_and_close(gpointer user_data)
+>> +{
+>> +	g_print("Send +++\n");
+>> +	/* Send the escape sequence to suspend PPP server*/
+>> +	g_at_io_write(g_at_chat_get_io(modem), "+++", 3);
+>> +	=
 
- =
+>> +	/*
+>> +	 * Wait GUARD_TIMEOUTS ms before sending ATH0 cmd
+>> +	 * according to guard timeouts
+>> +	 */
+>> +	g_timeout_add(GUARD_TIMEOUTS, send_ATH0, NULL);
+>> +
+>> +	return FALSE;
+>> +}
+>> +
+>> +static void ppp_suspend_close(gpointer data)
+>> +{
+>> +	/* Delete the write done CB */
+>> +	g_at_io_set_write_done(g_at_chat_get_io(modem), NULL, NULL);
+>> +
+>> +	/*
+>> +	 * We are sure there are no more PPP packets to be written,
+>> +	 * we can suspend PPP client
+>> +	 */
+>> +	g_at_ppp_suspend(ppp);
+>> +
+>> +	/* Wait GUARD_TIMEOUTS ms before sending escape sequence */
+>> +	g_timeout_add(GUARD_TIMEOUTS, suspend_and_close, NULL);
+>> +}
+>> +
+>> +static void suspend_gat_chat(gboolean ok, GAtResult *result, gpointer u=
+ser_data)
+>> +{
+>> +	/*
+>> +	 * As soon as the command is treated by AT server
+>> +	 * we can suspend AT chat and resume PPP client
+>> +	 */
+>> +	g_at_chat_suspend(modem);
+>> +	g_at_ppp_resume(ppp);
+>> +
+>> +	/*
+>> +	 * We wait for another PPP packet to be written
+>> +	 * to suspend again PPP server and close it
+>> +	 */
+>> +	g_at_io_set_write_done(g_at_chat_get_io(modem), ppp_suspend_close, NUL=
+L);
+>> +}
+>> +
+>> +static gboolean send_ATO0(gpointer user_data)
+>> +{
+>> +	/* Resume AT chat to send ATO0 */
+>> +	g_at_chat_resume(modem);
+>> +	g_at_chat_send(modem, "ATO0", none_prefix, suspend_gat_chat, NULL, NUL=
+L);
+>> +
+>> +	return FALSE;
+>> +}
+>> +
+>> +static gboolean suspend_resume(gpointer user_data)
+>> +{
+>> +	g_print("Send +++\n");
+>> +	/* Send the escape sequence to suspend PPP server*/
+>> +	g_at_io_write(g_at_chat_get_io(modem), "+++", 3);
+>> +
+>> +	/*
+>> +	 * Wait GUARD_TIMEOUTS ms before sending ATO0 cmd
+>> +	 * according to guard timeouts
+>> +	 */
+>> +	g_timeout_add(GUARD_TIMEOUTS, send_ATO0, NULL);
+>> +
+>> +	return FALSE;
+>> +}
+>> +
+>> +static void ppp_suspend_resume(gpointer data)
+>> +{
+>> +	/* Delete the write done CB */
+>> +	g_at_io_set_write_done(g_at_chat_get_io(modem), NULL, NULL);
+>> +
+>> +	/*
+>> +	 * We are sure there are no more PPP packets to be written,
+>> +	 * we can suspend PPP client
+>> +	 */
+>> +	g_at_ppp_suspend(ppp);
+>> +
+>> +	/* Wait GUARD_TIMEOUTS ms before sending escape sequence */
+>> +	g_timeout_add(GUARD_TIMEOUTS, suspend_resume, NULL);
+>> +}
+>> +
+> The logic for sending a guard timeout, +++, guard timeout should really
+> belong in GAtChat, otherwise every single client has to repeat the same
+> state machine.
 
+I can implement a g_at_chat_send_escape_sequence() to manage:
+<pause> --> +++ <pause> timing
 
-After having successfully enabled sms and voice call with modem h24 from
-motorola. I am now trying to setup a gprs connection.
+I would still write directly on at_chat GAtIO because using =
 
-In fact Motorola has a specific set of AT command AT+MIPxxx to setup
-gprs connection by using an internal TCP/UDP IP stack. =
+at_chat_send_common() would add a '\r' that would cancel the suspend =
 
+data call.
 
-Can you confirm that the right approach is to write a new gprs-context.c
-?
+Kind regards,
+Guillaume
 
- =
-
-
-When a gprs cantext has properly established connection, does ofono
-create a network interface?
-
- =
-
-
-BR
-christophe
-
- =
-
-
-----------
-
-Christophe Ostermann =
-
-Software Engineer
-Devices Engineering
-
-SICPA Security Solutions SA
-Av. de Florissant 41, 1008 Prilly, Switzerland
-Tel +41 21 627 59 70  Direct +41 21 627 63 68
-Fax +41 21 620 06 22 =
-
-christophe.ostermann(a)sicpa.com
-<mailto:christophe.christophe.ostermann@sicpa.com>   www.sicpa.com
-<http://www.sicpa.com/> =
-
-
- =
-
-
- =
-
-
-
-
-This message was delivered through encrypted mechanism.
-
-
-The information in this email and any attachments is confidential
-and intended solely for the use of the individual(s) to whom it is
-addressed or otherwise directed.
-Please note that any views or opinions presented in this email are
-solely those of the author and do not necessarily represent those
-of the Company.
-Finally, the recipient should check this email and any attachments
-for the presence of viruses.
-The Company accepts no liability for any damage caused by any virus
-transmitted by this email.
-
---===============2083259441197482767==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
-bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxucz0iaHR0
-cDovL3d3dy53My5vcmcvVFIvUkVDLWh0bWw0MCINCnhtbG5zOm5zMD0idXJuOnNjaGVtYXMtbWlj
-cm9zb2Z0LWNvbTpvZmZpY2U6c21hcnR0YWdzIj4NCg0KPGhlYWQ+DQo8bWV0YSBodHRwLWVxdWl2
-PUNvbnRlbnQtVHlwZSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPg0KPG1l
-dGEgbmFtZT1HZW5lcmF0b3IgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTEgKGZpbHRlcmVkIG1l
-ZGl1bSkiPg0KPHN0eWxlPg0KPCEtLQ0KIC8qIFN0eWxlIERlZmluaXRpb25zICovDQogcC5Nc29O
-b3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbA0KCXttYXJnaW46MGNtOw0KCW1hcmdp
-bi1ib3R0b206LjAwMDFwdDsNCglmb250LXNpemU6MTIuMHB0Ow0KCWZvbnQtZmFtaWx5OiJUaW1l
-cyBOZXcgUm9tYW4iO30NCmE6bGluaywgc3Bhbi5Nc29IeXBlcmxpbmsNCgl7Y29sb3I6Ymx1ZTsN
-Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30NCmE6dmlzaXRlZCwgc3Bhbi5Nc29IeXBlcmxp
-bmtGb2xsb3dlZA0KCXtjb2xvcjpwdXJwbGU7DQoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9
-DQpzcGFuLkVtYWlsU3R5bGUxNw0KCXttc28tc3R5bGUtdHlwZTpwZXJzb25hbC1jb21wb3NlOw0K
-CWZvbnQtZmFtaWx5OkFyaWFsOw0KCWNvbG9yOndpbmRvd3RleHQ7fQ0KQHBhZ2UgU2VjdGlvbjEN
-Cgl7c2l6ZTo1OTUuM3B0IDg0MS45cHQ7DQoJbWFyZ2luOjcwLjg1cHQgNzAuODVwdCA3MC44NXB0
-IDcwLjg1cHQ7fQ0KZGl2LlNlY3Rpb24xDQoJe3BhZ2U6U2VjdGlvbjE7fQ0KLS0+DQo8L3N0eWxl
-Pg0KDQo8L2hlYWQ+DQoNCjxib2R5IGxhbmc9RlIgbGluaz1ibHVlIHZsaW5rPXB1cnBsZT4NCg0K
-PGRpdiBjbGFzcz1TZWN0aW9uMT4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBm
-YWNlPUFyaWFsPjxzcGFuIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Ow0KZm9udC1mYW1pbHk6QXJp
-YWwnPkhpLCA8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPg0KDQo8cCBjbGFzcz1Nc29Ob3Jt
-YWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQ7
-DQpmb250LWZhbWlseTpBcmlhbCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4N
-Cg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9
-RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+QWZ0ZXIg
-aGF2aW5nIHN1Y2Nlc3NmdWxseSBlbmFibGVkIHNtcyBhbmQgdm9pY2UgY2FsbA0Kd2l0aCBtb2Rl
-bSBoMjQgZnJvbSBtb3Rvcm9sYS4gSSBhbSBub3cgdHJ5aW5nIHRvIHNldHVwIGEgZ3BycyBjb25u
-ZWN0aW9uLjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1h
-bD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNp
-emU6DQoxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwnPkluIGZhY3QgTW90b3JvbGEgaGFzIGEgc3Bl
-Y2lmaWMgc2V0IG9mIEFUIGNvbW1hbmQgQVQrTUlQeHh4DQp0byBzZXR1cCBncHJzIGNvbm5lY3Rp
-b24gYnkgdXNpbmcgYW4gaW50ZXJuYWwgVENQL1VEUCBJUCBzdGFjay4gPG86cD48L286cD48L3Nw
-YW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFy
-aWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWls
-eTpBcmlhbCc+Q2FuIHlvdSBjb25maXJtIHRoYXQgdGhlIHJpZ2h0IGFwcHJvYWNoIGlzIHRvIHdy
-aXRlIGENCm5ldyBncHJzLWNvbnRleHQuYyA/PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4N
-Cg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9
-RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+PG86cD4m
-bmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250
-IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEw
-LjBwdDtmb250LWZhbWlseTpBcmlhbCc+V2hlbiBhIGdwcnMgY2FudGV4dCBoYXMgcHJvcGVybHkg
-ZXN0YWJsaXNoZWQNCmNvbm5lY3Rpb24sIGRvZXMgb2Zvbm8gY3JlYXRlIGEgbmV0d29yayBpbnRl
-cmZhY2U/PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFs
-Pjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6
-ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9m
-b250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxz
-cGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlh
-bCc+QlI8YnI+DQpjaHJpc3RvcGhlPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAg
-Y2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Ig
-c3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+PG86cD4mbmJzcDs8
-L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsIHN0eWxlPSdtc28t
-bWFyZ2luLXRvcC1hbHQ6YXV0bzttc28tbWFyZ2luLWJvdHRvbS1hbHQ6YXV0byc+PHN0cm9uZz48
-Yj48Zm9udA0Kc2l6ZT0xIGNvbG9yPSIjMDAyMDQxIiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4t
-R0Igc3R5bGU9J2ZvbnQtc2l6ZTo3LjVwdDsNCmZvbnQtZmFtaWx5OkFyaWFsO2NvbG9yOiMwMDIw
-NDEnPi0tLS0tLS0tLS08L3NwYW4+PC9mb250PjwvYj48L3N0cm9uZz48c3Bhbg0KbGFuZz1FTi1H
-Qj48bzpwPjwvbzpwPjwvc3Bhbj48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1hbCBzdHlsZT0nbXNv
-LW1hcmdpbi10b3AtYWx0OmF1dG87bXNvLW1hcmdpbi1ib3R0b20tYWx0OmF1dG8nPjxzdHJvbmc+
-PGI+PGZvbnQNCnNpemU9MSBjb2xvcj0iIzAwMjA0MSIgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVO
-LUdCIHN0eWxlPSdmb250LXNpemU6Ny41cHQ7DQpmb250LWZhbWlseTpBcmlhbDtjb2xvcjojMDAy
-MDQxJz5DaHJpc3RvcGhlIE9zdGVybWFubjwvc3Bhbj48L2ZvbnQ+PC9iPjwvc3Ryb25nPjxmb250
-DQpjb2xvcj1uYXZ5PjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2NvbG9yOm5hdnknPiA8L3NwYW4+
-PC9mb250Pjxmb250IHNpemU9MQ0KY29sb3I9IiMwMDIwNDEiIGZhY2U9QXJpYWw+PHNwYW4gbGFu
-Zz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjcuNXB0O2ZvbnQtZmFtaWx5Og0KQXJpYWw7Y29sb3I6
-IzAwMjA0MSc+PGJyPg0KU29mdHdhcmUgRW5naW5lZXI8YnI+DQpEZXZpY2VzIEVuZ2luZWVyaW5n
-PC9zcGFuPjwvZm9udD48c3BhbiBsYW5nPUVOLUdCPjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4NCg0K
-PHAgY2xhc3M9TXNvTm9ybWFsIHN0eWxlPSdtc28tbWFyZ2luLXRvcC1hbHQ6YXV0bzttc28tbWFy
-Z2luLWJvdHRvbS1hbHQ6YXV0byc+PGZvbnQNCnNpemU9MSBjb2xvcj0iIzAwMjA0MSIgZmFjZT1B
-cmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6Ny41cHQ7DQpmb250LWZhbWls
-eTpBcmlhbDtjb2xvcjojMDAyMDQxJz5TSUNQQSBTZWN1cml0eSBTb2x1dGlvbnMgU0E8YnI+DQo8
-L3NwYW4+PC9mb250Pjxmb250IHNpemU9MSBjb2xvcj0iIzAwMWYzNyIgZmFjZT1BcmlhbD48c3Bh
-biBzdHlsZT0nZm9udC1zaXplOg0KOC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWw7Y29sb3I6IzAwMUYz
-Nyc+QXYuIGRlIEZsb3Jpc3NhbnQgNDE8L3NwYW4+PC9mb250Pjxmb250DQpzaXplPTEgY29sb3I9
-IiMwMDIwNDEiIGZhY2U9QXJpYWw+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjcu
-NXB0Ow0KZm9udC1mYW1pbHk6QXJpYWw7Y29sb3I6IzAwMjA0MSc+LCAxMDA4IDwvc3Bhbj48L2Zv
-bnQ+PGZvbnQgc2l6ZT0xIGZhY2U9QXJpYWw+PHNwYW4NCmxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQt
-c2l6ZTo3LjVwdDtmb250LWZhbWlseTpBcmlhbCc+PG5zMDpwbGFjZQ0KIHc6aW5zQXV0aG9yPSJv
-c3Rlcm1hbm4iIHc6aW5zRGF0ZT0iMjAxMS0wMy0zMVQxNTo0MjowMFoiDQogdzplbmRJbnNBdXRo
-b3I9Im9zdGVybWFubiIgdzplbmRJbnNEYXRlPSIyMDExLTAzLTMxVDE1OjQyOjAwWiI+PG5zMDpD
-aXR5DQogIHc6aW5zQXV0aG9yPSJvc3Rlcm1hbm4iIHc6aW5zRGF0ZT0iMjAxMS0wMy0zMVQxNTo0
-MjowMFoiDQogIHc6ZW5kSW5zQXV0aG9yPSJvc3Rlcm1hbm4iIHc6ZW5kSW5zRGF0ZT0iMjAxMS0w
-My0zMVQxNTo0MjowMFoiPjxuczA6cGxhY2UNCiAgIHc6aW5zQXV0aG9yPSJvc3Rlcm1hbm4iIHc6
-aW5zRGF0ZT0iMjAxMS0wMy0zMVQxNTo0MjowMFoiDQogICB3OmVuZEluc0F1dGhvcj0ib3N0ZXJt
-YW5uIiB3OmVuZEluc0RhdGU9IjIwMTEtMDMtMzFUMTU6NDI6MDBaIj48bnMwOkNpdHkNCiAgICB3
-Omluc0F1dGhvcj0ib3N0ZXJtYW5uIiB3Omluc0RhdGU9IjIwMTEtMDMtMzFUMTU6NDI6MDBaIg0K
-ICAgIHc6ZW5kSW5zQXV0aG9yPSJvc3Rlcm1hbm4iIHc6ZW5kSW5zRGF0ZT0iMjAxMS0wMy0zMVQx
-NTo0MjowMFoiPjxmb250DQogICAgY29sb3I9IiMwMDIwNDEiPjxzcGFuIHN0eWxlPSdjb2xvcjoj
-MDAyMDQxJz5QcmlsbHk8L3NwYW4+PC9mb250PjwvbnMwOkNpdHk+PC9uczA6cGxhY2U+PC9uczA6
-Q2l0eT48L25zMDpwbGFjZT48Zm9udA0KY29sb3I9IiMwMDIwNDEiPjxzcGFuIHN0eWxlPSdjb2xv
-cjojMDAyMDQxJz4sIDwvc3Bhbj48L2ZvbnQ+PG5zMDpjb3VudHJ5LXJlZ2lvbg0KIHc6aW5zQXV0
-aG9yPSJvc3Rlcm1hbm4iIHc6aW5zRGF0ZT0iMjAxMS0wMy0zMVQxNTo0MjowMFoiDQogdzplbmRJ
-bnNBdXRob3I9Im9zdGVybWFubiIgdzplbmRJbnNEYXRlPSIyMDExLTAzLTMxVDE1OjQyOjAwWiI+
-PG5zMDpjb3VudHJ5LXJlZ2lvbg0KICB3Omluc0F1dGhvcj0ib3N0ZXJtYW5uIiB3Omluc0RhdGU9
-IjIwMTEtMDMtMzFUMTU6NDI6MDBaIg0KICB3OmVuZEluc0F1dGhvcj0ib3N0ZXJtYW5uIiB3OmVu
-ZEluc0RhdGU9IjIwMTEtMDMtMzFUMTU6NDI6MDBaIj48Zm9udA0KICBjb2xvcj0iIzAwMjA0MSI+
-PHNwYW4gc3R5bGU9J2NvbG9yOiMwMDIwNDEnPlN3aXR6ZXJsYW5kPC9zcGFuPjwvZm9udD48L25z
-MDpjb3VudHJ5LXJlZ2lvbj48L25zMDpjb3VudHJ5LXJlZ2lvbj48Zm9udA0KY29sb3I9IiMwMDIw
-NDEiPjxzcGFuIHN0eWxlPSdjb2xvcjojMDAyMDQxJz48YnI+DQpUZWwgKzQxIDIxIDYyNyA1OSA3
-MCAmbmJzcDtEaXJlY3QgKzQxIDIxIDYyNyZuYnNwOzYzIDY4PGJyPg0KRmF4ICs0MSAyMSA2MjAg
-MDYgMjI8L3NwYW4+PC9mb250Pjwvc3Bhbj48L2ZvbnQ+PGZvbnQgY29sb3I9bmF2eT48c3Bhbg0K
-bGFuZz1FTi1HQiBzdHlsZT0nY29sb3I6bmF2eSc+IDwvc3Bhbj48L2ZvbnQ+PGZvbnQgc2l6ZT0x
-IGNvbG9yPSIjMDAyMDQxIg0KZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250
-LXNpemU6Ny41cHQ7Zm9udC1mYW1pbHk6QXJpYWw7DQpjb2xvcjojMDAyMDQxJz48YnI+DQo8YSBo
-cmVmPSJtYWlsdG86Y2hyaXN0b3BoZS5jaHJpc3RvcGhlLm9zdGVybWFubkBzaWNwYS5jb20iPmNo
-cmlzdG9waGUub3N0ZXJtYW5uQHNpY3BhLmNvbTwvYT4NCiZuYnNwOzwvc3Bhbj48L2ZvbnQ+PGZv
-bnQgY29sb3I9bmF2eT48c3BhbiBzdHlsZT0nY29sb3I6bmF2eSc+PGENCmhyZWY9Imh0dHA6Ly93
-d3cuc2ljcGEuY29tLyINCnRpdGxlPSJodHRwOi8vd3d3LnNpY3BhLmNvbS8mIzEwO2Jsb2NrZWQ6
-Omh0dHA6Ly93d3cuc2ljcGEuY29tLyI+PGZvbnQgc2l6ZT0xDQpjb2xvcj0iIzAwMjA0MSIgZmFj
-ZT1BcmlhbA0KdGl0bGU9Imh0dHA6Ly93d3cuc2ljcGEuY29tLyYjMTA7YmxvY2tlZDo6aHR0cDov
-L3d3dy5zaWNwYS5jb20vIj48c3Bhbg0KdGl0bGU9Imh0dHA6Ly93d3cuc2ljcGEuY29tLyI+PHNw
-YW4gdGl0bGU9Imh0dHA6Ly93d3cuc2ljcGEuY29tLyI+PHNwYW4NCmxhbmc9RU4tR0Igc3R5bGU9
-J2ZvbnQtc2l6ZTo3LjVwdDtmb250LWZhbWlseTpBcmlhbDtjb2xvcjojMDAyMDQxJz53d3cuc2lj
-cGEuY29tPC9zcGFuPjwvc3Bhbj48L3NwYW4+PC9mb250PjwvYT48L3NwYW4+PC9mb250PjxvOnA+
-PC9vOnA+PC9wPg0KDQo8cCBjbGFzcz1Nc29Ob3JtYWwgc3R5bGU9J21zby1tYXJnaW4tdG9wLWFs
-dDphdXRvO21zby1tYXJnaW4tYm90dG9tLWFsdDphdXRvJz48Zm9udA0Kc2l6ZT0zIGZhY2U9IlRp
-bWVzIE5ldyBSb21hbiI+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMi4wcHQnPiZuYnNwOzwvc3Bh
-bj48bzpwPjwvbzpwPjwvZm9udD48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXpl
-PTMgZmFjZT0iVGltZXMgTmV3IFJvbWFuIj48c3BhbiBzdHlsZT0nZm9udC1zaXplOg0KMTIuMHB0
-Jz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPg0KDQo8L2Rpdj4NCg0KPC9ib2R5
-Pg0KDQo8L2h0bWw+DQoNClRoaXMgbWVzc2FnZSB3YXMgZGVsaXZlcmVkIHRocm91Z2ggZW5jcnlw
-dGVkIG1lY2hhbmlzbS4NCg0KDQpUaGUgaW5mb3JtYXRpb24gaW4gdGhpcyBlbWFpbCBhbmQgYW55
-IGF0dGFjaG1lbnRzIGlzIGNvbmZpZGVudGlhbCBhbmQgaW50ZW5kZWQgc29sZWx5IGZvciB0aGUg
-dXNlIG9mIHRoZSBpbmRpdmlkdWFsKHMpIHRvIHdob20gaXQgaXMgYWRkcmVzc2VkIG9yIG90aGVy
-d2lzZSBkaXJlY3RlZC4gUGxlYXNlIG5vdGUgdGhhdCBhbnkgdmlld3Mgb3Igb3BpbmlvbnMgcHJl
-c2VudGVkIGluIHRoaXMgZW1haWwgYXJlIHNvbGVseSB0aG9zZSBvZiB0aGUgYXV0aG9yIGFuZCBk
-byBub3QgbmVjZXNzYXJpbHkgcmVwcmVzZW50IHRob3NlIG9mIHRoZSBDb21wYW55LiBGaW5hbGx5
-LCB0aGUgcmVjaXBpZW50IHNob3VsZCBjaGVjayB0aGlzIGVtYWlsIGFuZCBhbnkgYXR0YWNobWVu
-dHMgZm9yIHRoZSBwcmVzZW5jZSBvZiB2aXJ1c2VzLiBUaGUgQ29tcGFueSBhY2NlcHRzIG5vIGxp
-YWJpbGl0eSBmb3IgYW55IGRhbWFnZSBjYXVzZWQgYnkgYW55IHZpcnVzIHRyYW5zbWl0dGVkIGJ5
-IHRoaXMgZW1haWwuDQoNCg==
-
---===============2083259441197482767==--
+--===============0450537602957744789==--
 
