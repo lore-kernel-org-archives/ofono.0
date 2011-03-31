@@ -1,61 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============2811789384997861519=="
+Content-Type: multipart/mixed; boundary="===============7653860648745719327=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH 03/18] gathdlc: add mechansim to detect '+++' escape
- sequence
-Date: Thu, 31 Mar 2011 17:40:38 +0200
-Message-ID: <4D94A076.5050902@linux.intel.com>
-In-Reply-To: <4D949CF5.8080400@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Motorola Modem H24 gprs connection
+Date: Thu, 31 Mar 2011 10:42:06 -0500
+Message-ID: <4D94A0CE.3020804@gmail.com>
+In-Reply-To: <65D0035E6914AC478A46CFE3E20C3926017CC3F9@snch1xch53.sicpa-net.ads>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2811789384997861519==
+--===============7653860648745719327==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Christophe,
 
-On 31/03/2011 17:25, Denis Kenzior wrote:
-> Hi Guillaume,
->
->>>> +suspend:
->>>> +    /*
->>>> +     * If the suspend timeout still exists,
->>>> +     * delete it.
->>>> +     */
->>>> +    if (hdlc->suspend_timeout>   0)
->>>> +        g_source_remove(hdlc->suspend_timeout);
->>>> +
->>>> +    /*
->>>> +     * Restart the counter and reset the ring buffer.
->>>> +     */
->>>> +    hdlc->cmpt =3D 0;
->>>> +    ring_buffer_reset(rbuf);
->>> This sounds like a really bad idea.  What are you trying to accomplish
->>> here?
->> If I don't reset ring_buffer, I am receiving "+++" on GAtServer when I
->> return to command mode and it is blocking following AT commands.
->> I can't send next ATH0 or ATO0. Do you have any idea how to prevent
->> receiving GAtServer to receive it?
-> So two issues:
->
-> - why are you using ring_buffer_reset instead of ring_buffer_drain(buf, 3=
-)?
+On 03/31/2011 09:00 AM, Ostermann, Christophe wrote:
+> Hi,
+> =
 
-I didn't think about it :)
+>  =
 
-> - Why are you doing this here instead of waiting for the guard timeout
-> to expire after +++ has been detected?
->
+> =
 
-I didn't think that an HDLC frame can contain +++++...
-I will change this.
+> After having successfully enabled sms and voice call with modem h24 from
+> motorola. I am now trying to setup a gprs connection.
+> =
 
-Thanks.
+> In fact Motorola has a specific set of AT command AT+MIPxxx to setup
+> gprs connection by using an internal TCP/UDP IP stack.
 
-Kind regards,
-Guillaume
+Not quite sure what that means?  Do you mean the modem expects raw data
+and produces TCP/IP packets internally?  If so you will have some fun ;)
 
---===============2811789384997861519==--
+> =
+
+> Can you confirm that the right approach is to write a new gprs-context.c ?
+> =
+
+>  =
+
+
+Yes.
+
+> =
+
+> When a gprs cantext has properly established connection, does ofono
+> create a network interface?
+> =
+
+>  =
+
+
+No, a network interface is either already created by the kernel driver
+when the device is inserted (e.g. on usb data sticks from hso, mbm, etc)
+or created by the ppp stack managed inside the gprs-context driver.  All
+oFono does is bring the interface up.
+
+Regards,
+-Denis
+
+--===============7653860648745719327==--
 
