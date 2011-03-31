@@ -1,256 +1,140 @@
-Content-Type: multipart/mixed; boundary="===============0871397904422467986=="
+Content-Type: multipart/mixed; boundary="===============3857692704268886193=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: Re: [PATCH v2 1/2] stkutil: Complete the TLV parsing/builder to
- support BIP commands
-Date: Thu, 31 Mar 2011 12:37:31 +0200
-Message-ID: <4D94596B.8070008@linux.intel.com>
-In-Reply-To: <4D93D860.1030407@gmail.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH v2] sim: add +CNUM support for HFP emulator
+Date: Thu, 31 Mar 2011 13:55:55 +0200
+Message-ID: <1301572555-11318-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0871397904422467986==
+--===============3857692704268886193==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ src/sim.c |   66 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 66 insertions(+), 0 deletions(-)
 
-On 03/31/2011 03:26 AM, Denis Kenzior wrote:
-> Hi Philippe,
->
-> On 03/30/2011 04:41 PM, Philippe Nunes wrote:
->> ---
->>   src/stkutil.c |  287 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++---
->>   src/stkutil.h |  132 ++++++++++++++++++++++-----
->>   2 files changed, 380 insertions(+), 39 deletions(-)
->
-> <snip>
->
->>
->> @@ -1604,16 +1624,48 @@ static gboolean parse_dataobj_esn(struct compreh=
-ension_tlv_iter *iter,
->>   static gboolean parse_dataobj_network_access_name(
->>   		struct comprehension_tlv_iter *iter, void *user)
->>   {
->> -	struct stk_network_access_name *nan =3D user;
->> +	char **apn =3D user;
->>   	const unsigned char *data;
->>   	unsigned int len =3D comprehension_tlv_iter_get_length(iter);
->> +	unsigned char label_size;
->> +	unsigned char offset =3D 0;
->> +	char decoded_apn[100];
->>
->> -	if (len =3D=3D 0)
->> +	if (len =3D=3D 0 || len>  100)
->>   		return FALSE;
->>
->>   	data =3D comprehension_tlv_iter_get_data(iter);
->> -	nan->len =3D len;
->> -	memcpy(nan->name, data, len);
->> +	/*
->> +	 * As specified in TS 23 003 Section 9
->> +	 * The APN consists of one or more labels. Each label is coded as
->> +	 * a one octet length field followed by that number of octets coded
->> +	 * as 8 bit ASCII characters
->> +	 */
->> +
->> +	while (len) {
->> +		label_size =3D *data;
->> +
->> +		if (label_size>  (len-1))
->> +			return FALSE;
->> +
->> +		memcpy(decoded_apn + offset, data + 1, label_size);
->> +
->> +		data +=3D label_size + 1;
->> +		offset +=3D label_size;
->> +
->> +		len -=3D label_size + 1;
->
-> This really belongs with the data/offset increments
->
->> +		if (len) {
->> +			decoded_apn[offset] =3D '.';
->> +			offset +=3D 1;
->
-> This might be better written as:
->
-> if (len>  0)
-> 	decoded_apn[offset++] =3D '.';
->
->> +		}
->> +	}
->> +
->> +	*apn =3D g_try_malloc(offset + 1);
->> +	if (*apn =3D=3D NULL)
->> +		return FALSE;
->> +
->> +	memcpy(*apn, decoded_apn, offset);
->> +	(*apn)[offset] =3D '\0';
->
-> *apn =3D g_strdup(decoded_apn);
->
-> is really just fine ;)
->
->>
+diff --git a/src/sim.c b/src/sim.c
+index 98d4cc4..af7a715 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -106,6 +106,7 @@ struct ofono_sim {
+ 	const struct ofono_sim_driver *driver;
+ 	void *driver_data;
+ 	struct ofono_atom *atom;
++	unsigned int hfp_watch;
+ };
+ =
 
-Ok, I'm just going to use g_strndup to get the string null terminated.
+ struct msisdn_set_request {
+@@ -2445,6 +2446,13 @@ void ofono_sim_driver_unregister(const struct ofono_=
+sim_driver *d)
+ 	g_drivers =3D g_slist_remove(g_drivers, (void *) d);
+ }
+ =
 
++static void emulator_remove_handler(struct ofono_atom *atom, void *data)
++{
++	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
++
++	ofono_emulator_remove_handler(em, data);
++}
++
+ static void sim_unregister(struct ofono_atom *atom)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+@@ -2452,6 +2460,13 @@ static void sim_unregister(struct ofono_atom *atom)
+ 	const char *path =3D __ofono_atom_get_path(atom);
+ 	struct ofono_sim *sim =3D __ofono_atom_get_data(atom);
+ =
 
->>   	return TRUE;
->>   }
->> @@ -3274,7 +3326,68 @@ static enum stk_command_parse_result parse_launch=
-_browser(
->>   				STK_DATA_OBJECT_TYPE_INVALID);
->>   }
->>
->> -/* TODO: parse_open_channel */
->> +static void destroy_open_channel(struct stk_command *command)
->> +{
->> +	g_free(command->open_channel.alpha_id);
->> +	g_free(command->open_channel.text_usr);
->> +	g_free(command->open_channel.text_passwd);
->> +}
->
-> =3D=3D9744=3D=3D 40 bytes in 4 blocks are definitely lost in loss record =
-1,825
-> of 1,925
-> =3D=3D9744=3D=3D    at 0x4C274A8: malloc (vg_replace_malloc.c:236)
-> =3D=3D9744=3D=3D    by 0x41B868: parse_dataobj_network_access_name (stkut=
-il.c:1663)
-> =3D=3D9744=3D=3D    by 0x41AF95: parse_dataobj (stkutil.c:2415)
-> =3D=3D9744=3D=3D    by 0x41CC1B: stk_command_new_from_pdu (stkutil.c:3358)
-> =3D=3D9744=3D=3D    by 0x40A953: test_open_channel (test-stkutil.c:17257)
-> =3D=3D9744=3D=3D    by 0x4E922E2: g_test_run_suite_internal (gtestutils.c=
-:1138)
-> =3D=3D9744=3D=3D    by 0x4E92455: g_test_run_suite_internal (gtestutils.c=
-:1197)
-> =3D=3D9744=3D=3D    by 0x4E9273A: g_test_run_suite (gtestutils.c:1246)
-> =3D=3D9744=3D=3D    by 0x406C45: main (test-stkutil.c:26130)
->
++	__ofono_modem_foreach_registered_atom(modem,
++						OFONO_ATOM_TYPE_EMULATOR_HFP,
++						emulator_remove_handler,
++						"+CNUM");
++
++	__ofono_modem_remove_atom_watch(modem, sim->hfp_watch);
++
+ 	__ofono_watchlist_free(sim->state_watches);
+ 	sim->state_watches =3D NULL;
+ =
 
+@@ -2519,6 +2534,53 @@ struct ofono_sim *ofono_sim_create(struct ofono_mode=
+m *modem,
+ 	return sim;
+ }
+ =
 
-Right, I missed to free the apn string.
++static void emulator_cnum_cb(struct ofono_emulator *em,
++			struct ofono_emulator_request *req, void *userdata)
++{
++	struct ofono_sim *sim =3D userdata;
++	struct ofono_error result;
++	GSList *l;
++	const char *phone;
++	/*
++	 * '+CNUM: ,"+",,,4' + phone number + phone type on 3 digits max
++	 * + terminating null
++	 */
++	char buf[OFONO_MAX_PHONE_NUMBER_LENGTH + 18 + 1];
++
++	result.error =3D 0;
++
++	switch (ofono_emulator_request_get_type(req)) {
++	case OFONO_EMULATOR_REQUEST_TYPE_COMMAND_ONLY:
++		for (l =3D sim->own_numbers; l; l =3D l->next) {
++			struct ofono_phone_number *ph =3D l->data;
++
++			phone =3D phone_number_to_string(ph);
++			sprintf(buf, "+CNUM: ,\"%s\",%d,,4", phone, ph->type);
++			ofono_emulator_send_info(em, buf, l->next =3D=3D NULL ?
++							TRUE : FALSE);
++		}
++
++		result.type =3D OFONO_ERROR_TYPE_NO_ERROR;
++		ofono_emulator_send_final(em, &result);
++		break;
++
++	default:
++		result.type =3D OFONO_ERROR_TYPE_FAILURE;
++		ofono_emulator_send_final(em, &result);
++	};
++}
++
++static void emulator_hfp_watch(struct ofono_atom *atom,
++				enum ofono_atom_watch_condition cond,
++				void *data)
++{
++	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
++
++	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_REGISTERED)
++		ofono_emulator_add_handler(em, "+CNUM", emulator_cnum_cb, data,
++						NULL);
++}
++
+ void ofono_sim_register(struct ofono_sim *sim)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+@@ -2545,6 +2607,10 @@ void ofono_sim_register(struct ofono_sim *sim)
+ =
 
+ 	if (sim->state > OFONO_SIM_STATE_NOT_PRESENT)
+ 		sim_initialize(sim);
++
++	sim->hfp_watch =3D __ofono_modem_add_atom_watch(modem,
++					OFONO_ATOM_TYPE_EMULATOR_HFP,
++					emulator_hfp_watch, sim, NULL);
+ }
+ =
 
+ void ofono_sim_remove(struct ofono_sim *sim)
+-- =
 
-> <snip>
->
->> +static gboolean build_receive_data(struct stk_tlv_builder *builder,
->> +					const struct stk_response *response)
->> +{
->> +	const struct stk_response_receive_data *receive_data =3D
->> +		&response->receive_data;
->> +
->> +	if (response->result.type =3D=3D STK_RESULT_TYPE_SUCCESS) {
->> +		if (receive_data->rx_data.len) {
->> +			if (build_dataobj(builder, build_dataobj_channel_data,
->> +					DATAOBJ_FLAG_CR,
->> +					&response->receive_data.rx_data,
->> +					NULL) !=3D TRUE)
->> +				return FALSE;
->> +		}
->> +
->> +		return build_dataobj(builder,
->> +					build_dataobj_channel_data_length,
->> +					DATAOBJ_FLAG_CR,
->> +					&response->receive_data.rx_remaining,
->> +					NULL);
->> +	}
->
-> Avoid nesting whenever possible.  This really might be better written lik=
-e:
->
-> if (response->result.type !=3D STK_RESULT_TYPE_SUCCESS)
-> 	return TRUE;
->
-> if (...) {
-> }
->
-> return build_dataobj(...)
->
->> +
->> +	return TRUE;
->> +}
->> +
->> +static gboolean build_send_data(struct stk_tlv_builder *builder,
->> +					const struct stk_response *response)
->> +{
->> +	if (response->result.type =3D=3D STK_RESULT_TYPE_SUCCESS) {
->> +		return build_dataobj(builder,
->> +					build_dataobj_channel_data_length,
->> +					DATAOBJ_FLAG_CR,
->> +					&response->send_data.tx_avail,
->> +					NULL);
->> +	}
->> +
->
-> Same comment as above
->
-
-Ok, I try to keep this rule in mind.
+1.7.1
 
 
->> +	return TRUE;
->> +}
->> +
->>   const unsigned char *stk_pdu_from_response(const struct stk_response *=
-response,
->>   						unsigned int *out_length)
->>   {
->> +/* Defined in TS 102.223 Section 8.1 */
->
-> ^^^
->
-> This really doesn't sounds right for the Section
->
-
-Yes, corrected to section 8.6 (command qualifier)
-
->> +enum stk_qualifier_send_data {
->> +	STK_SEND_DATA_STORE_DATA =3D	0x00,
->> +	STK_SEND_DATA_IMMEDIATELY =3D	0x01,
->> +};
->> +
->> +/* Defined in TS 102.223 Section 8.56 */
->> +enum stk_channel_status {
->> +	STK_CHANNEL_PACKET_DATA_SERVICE_NOT_ACTIVATED =3D 0x00,
->> +	STK_CHANNEL_PACKET_DATA_SERVICE_ACTIVATED =3D	0x01,
->> +	STK_CHANNEL_TCP_IN_CLOSED_STATE =3D		0x02,
->> +	STK_CHANNEL_TCP_IN_LISTEN_STATE =3D		0x03,
->> +	STK_CHANNEL_TCP_IN_ESTABLISHED_STATE =3D		0x04,
->> +	STK_CHANNEL_LINK_DROPPED =3D			0x05,
->> +};
->> +
->
-> You're playing serious magic here, but fair enough.
-
-
-Here, I'm introducing these enums to list only the different channel =
-
-status but they can't be used indeed as direct values for the channel =
-
-status TLV parsing/building.
-
-Note that for the section:
-
-enum stk_qualifier_open_channel {
-	STK_OPEN_CHANNEL_ON_DEMAND =3D			0x00,
-	STK_OPEN_CHANNEL_IMMEDIATE =3D			0x01,
-	STK_OPEN_CHANNEL_AUTOMATIC_RECONNECTION =3D	0x02,
-	STK_OPEN_CHANNEL_IMMEDIATE_IN_BACKGROUND_MODE =3D	0x04,
-};
-
-The purpose of these enums is to use them as bit masks. Maybe #defines =
-
-could be more appropriate?
-
-Regards,
-
-Philippe.
-
-
---===============0871397904422467986==--
+--===============3857692704268886193==--
 
