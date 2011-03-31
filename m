@@ -1,126 +1,180 @@
-Content-Type: multipart/mixed; boundary="===============5877848904468864336=="
+Content-Type: multipart/mixed; boundary="===============3966833979207795480=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 2/2] doc: Mark SIM Refresh support as present.
-Date: Thu, 31 Mar 2011 15:40:57 +0200
-Message-ID: <1301578857-3790-2-git-send-email-andrew.zaborowski@intel.com>
-In-Reply-To: <1301578857-3790-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 1/2] stk: Check if terminal is busy before SIM Refresh.
+Date: Thu, 31 Mar 2011 15:40:56 +0200
+Message-ID: <1301578857-3790-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5877848904468864336==
+--===============3966833979207795480==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- TODO             |   35 -----------------------------------
- doc/features.txt |   34 ++++++++++++++++++++++++++++++++++
- 2 files changed, 34 insertions(+), 35 deletions(-)
+ src/stk.c |   94 ++++++++++++++++++++++++++++++++++++++++++++++-----------=
+----
+ 1 files changed, 71 insertions(+), 23 deletions(-)
 
-diff --git a/TODO b/TODO
-index e18c5e6..207adf7 100644
---- a/TODO
-+++ b/TODO
-@@ -261,41 +261,6 @@ Voicecall
- Sim Toolkit
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+diff --git a/src/stk.c b/src/stk.c
+index 780e0c2..01e14db 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -1924,51 +1924,52 @@ static void send_ussd_callback(int error, int dcs, =
+const unsigned char *msg,
+ 	}
+ }
  =
 
--- Support Refresh proactive command.  The specification defines 7 types
--  of Refresh types:
--	- NAA Initialization
--	- NAA File Change Notification
--	- NAA Initialization and File Change Notification
--	- NAA Initialization and Full File Change Notification
--	- UICC Reset
--	- NAA Application Reset (2G only)
--	- NAA Session Reset (3G only)
--
--  The 'NAA Initialization' type will be ignored by oFono, it is assumed
--  this is handled by the modem.
--
--  For 'UICC Reset', 'NAA Application Reset' and 'NAA Session Reset' oFono
--  will first check whether there are any calls or ussd operations active.
--  If there are, the appropriate response will be sent (e.g. busy on call
--  or screen busy terminal response.)  Otherwise a positive response will be
--  sent to the driver.  In the case of a 'UICC Reset' the driver / modem
--  can interpret this that it is safe to reset the UICC.
--
--  Alternatively, the driver / modem can notify the core of the SIM removal
--  / SIM insertion events without using the Refresh proactive command.  It
--  is up to the driver / modem to perform a warm reset.  In particular, 3GPP
--  31.111 mandates that any change to EFimsi is done by using 'UICC Reset',
--  'NAA Application Reset' or 'NAA Session Reset'.  Please see 3GPP 31.111
--  Section 6.4.7.1.
--
--  Other types will be handled by oFono flushing the EF cache of the files
--  affected (or the entire SIM cache in case of Full File Change Notificati=
-ons)
--  and re-reading the affected files.  Any properties derived from these
--  Elementary Files will be updated and signaled using PropertyChanged.
--
--  Priority: High
--  Complexity: C8
--
- - Support of the BIP (Bearer Independent Protocol) proactive commands.
-   The specification defines several bearer types. For now, only the packet=
- data
-   service bearer is considered.
-diff --git a/doc/features.txt b/doc/features.txt
-index b905ae7..98a9fed 100644
---- a/doc/features.txt
-+++ b/doc/features.txt
-@@ -126,6 +126,40 @@ Supported Proactive Commands:
+-static gboolean handle_command_send_ussd(const struct stk_command *cmd,
+-					struct stk_response *rsp,
+-					struct ofono_stk *stk)
++static gboolean ss_is_busy(struct ofono_modem *modem)
+ {
+-	struct ofono_modem *modem =3D __ofono_atom_get_modem(stk->atom);
+-	static unsigned char busy_on_ss_result[] =3D { 0x03 };
+-	static unsigned char busy_on_ussd_result[] =3D { 0x08 };
+ 	struct ofono_atom *atom;
+-	struct ofono_ussd *ussd;
+-	int err;
  =
 
-   NOTE: This command can also be handled by the modem.
+ 	atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_FORWARDING);
+ 	if (atom && __ofono_atom_get_registered(atom)) {
+ 		struct ofono_call_forwarding *cf =3D __ofono_atom_get_data(atom);
  =
 
-+- Refresh proactive command.  The specification defines 7 types
-+  of Refresh requests:
-+	- NAA Initialization
-+	- NAA File Change Notification
-+	- NAA Initialization and File Change Notification
-+	- NAA Initialization and Full File Change Notification
-+	- UICC Reset
-+	- NAA Application Reset (2G only)
-+	- NAA Session Reset (3G only)
+-		if (__ofono_call_forwarding_is_busy(cf)) {
+-			ADD_ERROR_RESULT(rsp->result,
+-						STK_RESULT_TYPE_TERMINAL_BUSY,
+-						busy_on_ss_result);
++		if (__ofono_call_forwarding_is_busy(cf))
+ 			return TRUE;
+-		}
+ 	}
+ =
+
+ 	atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_BARRING);
+ 	if (atom && __ofono_atom_get_registered(atom)) {
+ 		struct ofono_call_barring *cb =3D __ofono_atom_get_data(atom);
+ =
+
+-		if (__ofono_call_barring_is_busy(cb)) {
+-			ADD_ERROR_RESULT(rsp->result,
+-						STK_RESULT_TYPE_TERMINAL_BUSY,
+-						busy_on_ss_result);
++		if (__ofono_call_barring_is_busy(cb))
+ 			return TRUE;
+-		}
+ 	}
+ =
+
+ 	atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_SETTINGS);
+ 	if (atom && __ofono_atom_get_registered(atom)) {
+ 		struct ofono_call_settings *cs =3D __ofono_atom_get_data(atom);
+ =
+
+-		if (__ofono_call_settings_is_busy(cs)) {
+-			ADD_ERROR_RESULT(rsp->result,
+-						STK_RESULT_TYPE_TERMINAL_BUSY,
+-						busy_on_ss_result);
++		if (__ofono_call_settings_is_busy(cs))
+ 			return TRUE;
+-		}
++	}
 +
-+  oFono can fully perform the the first four types of Refresh.  The
-+  remaining three must be handled by the modem or its driver with a
-+  notification sent to ofono.  Regardless of whether the command is
-+  handled by the modem or not, oFono will check whether there are any
-+  calls or ussd operations active.  If there are, the appropriate
-+  response will be sent (e.g. busy on call or screen busy terminal
-+  response.)  Otherwise a positive response will be sent to the driver.
-+  In the case of a 'UICC Reset' the driver / modem can interpret this
-+  that it is safe to reset the UICC.
++	return FALSE;
++}
 +
-+  Alternatively, the driver / modem can notify the core of the SIM removal
-+  / SIM insertion events without using the Refresh proactive command.  It
-+  is up to the driver / modem to perform a warm reset.  In particular, 3GPP
-+  31.111 mandates that any change to EFimsi is done by using 'UICC Reset',
-+  'NAA Application Reset' or 'NAA Session Reset'.  Please see 3GPP 31.111
-+  Section 6.4.7.1.
++static gboolean handle_command_send_ussd(const struct stk_command *cmd,
++					struct stk_response *rsp,
++					struct ofono_stk *stk)
++{
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(stk->atom);
++	static unsigned char busy_on_ss_result[] =3D { 0x03 };
++	static unsigned char busy_on_ussd_result[] =3D { 0x08 };
++	struct ofono_atom *atom;
++	struct ofono_ussd *ussd;
++	int err;
 +
-+  Other types are handled by oFono flushing the EF cache of the files
-+  affected (or the entire SIM cache in case of Full File Change Notificati=
-ons)
-+  and re-reading the affected files.  Any properties derived from these
-+  Elementary Files will be updated and signaled using PropertyChanged.
++	if (ss_is_busy(modem)) {
++		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
++					busy_on_ss_result);
++		return TRUE;
+ 	}
+ =
+
+ 	atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_USSD);
+@@ -2029,6 +2030,11 @@ static gboolean handle_command_refresh(const struct =
+stk_command *cmd,
+ 	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
+ 	struct ofono_sim *sim =3D NULL;
+ 	struct ofono_atom *sim_atom;
++	struct ofono_ussd *ussd =3D NULL;
++	struct ofono_atom *ussd_atom;
++	struct ofono_voicecall *vc =3D NULL;
++	struct ofono_atom *vc_atom;
++	uint8_t addnl_info[1];
+ 	int err;
+ 	GSList *l;
+ =
+
+@@ -2098,6 +2104,48 @@ static gboolean handle_command_refresh(const struct =
+stk_command *cmd,
+ 		return TRUE;
+ 	}
+ =
+
++	if (rsp !=3D NULL) {
++		ussd_atom =3D __ofono_modem_find_atom(
++					__ofono_atom_get_modem(stk->atom),
++					OFONO_ATOM_TYPE_USSD);
++		if (ussd_atom)
++			ussd =3D __ofono_atom_get_data(ussd_atom);
 +
-+  NOTE: This command can also be handled by the modem.
++		if (ussd && __ofono_ussd_is_busy(ussd)) {
++			addnl_info[0] =3D STK_RESULT_ADDNL_ME_PB_USSD_BUSY;
 +
- - Sim icon support.  oFono supports icons that are stored on the SIM.  If =
-the
-   SIM notifies oFono that an icon is available for a particular proactive
-   command, oFono passes this information to the UI.  The UI is able to obt=
-ain
++			ADD_ERROR_RESULT(rsp->result,
++					STK_RESULT_TYPE_TERMINAL_BUSY,
++					addnl_info);
++			return TRUE;
++		}
++
++		vc_atom =3D __ofono_modem_find_atom(
++					__ofono_atom_get_modem(stk->atom),
++					OFONO_ATOM_TYPE_VOICECALL);
++		if (vc_atom)
++			vc =3D __ofono_atom_get_data(vc_atom);
++
++		if (vc && __ofono_voicecall_is_busy(vc,
++					OFONO_VOICECALL_INTERACTION_NONE)) {
++			addnl_info[0] =3D STK_RESULT_ADDNL_ME_PB_BUSY_ON_CALL;
++
++			ADD_ERROR_RESULT(rsp->result,
++					STK_RESULT_TYPE_TERMINAL_BUSY,
++					addnl_info);
++			return TRUE;
++		}
++
++		if (ss_is_busy(__ofono_atom_get_modem(stk->atom))) {
++			addnl_info[0] =3D STK_RESULT_ADDNL_ME_PB_SS_BUSY;
++
++			ADD_ERROR_RESULT(rsp->result,
++					STK_RESULT_TYPE_TERMINAL_BUSY,
++					addnl_info);
++			return TRUE;
++		}
++	}
++
+ 	/*
+ 	 * For now we can handle the Refresh types that don't require
+ 	 * a SIM reset except if that part of the task has been already
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============5877848904468864336==--
+--===============3966833979207795480==--
 
