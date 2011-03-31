@@ -1,67 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============3035569795509882979=="
+Content-Type: multipart/mixed; boundary="===============1576724345321896943=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: Trouble using Huwei E160G
-Date: Thu, 31 Mar 2011 15:42:03 +0100
-Message-ID: <A782C372B9527D44AB20BF45FEEBB14F75BFE71AF2@irsmsx503.ger.corp.intel.com>
-In-Reply-To: <4D9451C7.4030107@zirak.it>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/1] isimodem: remove atoms that fail to probe
+Date: Thu, 31 Mar 2011 10:23:26 -0500
+Message-ID: <4D949C6E.2060401@gmail.com>
+In-Reply-To: <1301560133-13303-2-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3035569795509882979==
+--===============1576724345321896943==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Mika,
 
->I have performed 2 tests
->
->1) Connect 3G key and wait for umts coverage (blue led)
->
->I activated the 3g connection, but ofono response is
->
->Error org.ofono.Error.NotImplemented: Implementation not provided
->
->Attacched there is the log of ofono test_umts.log
->
->I have tested the 3g connection on umts on windows and works connectly.
->
->2) Connect 3G key and wait for gprs coverage (green led)
->
->I activated the 3g connection, but ofono response is
->
->Error org.ofono.Error.NotAttached: GPRS is not attached
->
->Attacched there is the log of ofono test_gprs.log
+On 03/31/2011 03:28 AM, Mika Liljeberg wrote:
+> ---
+>  drivers/isimodem/audio-settings.c       |    4 +++-
+>  drivers/isimodem/call-barring.c         |    4 +++-
+>  drivers/isimodem/call-forwarding.c      |    4 +++-
+>  drivers/isimodem/call-settings.c        |    4 +++-
+>  drivers/isimodem/cbs.c                  |    5 ++++-
+>  drivers/isimodem/devinfo.c              |    4 +++-
+>  drivers/isimodem/gprs-context.c         |    6 ++++--
+>  drivers/isimodem/gprs.c                 |    1 +
+>  drivers/isimodem/network-registration.c |    7 +++----
+>  drivers/isimodem/phonebook.c            |    4 +++-
+>  drivers/isimodem/radio-settings.c       |    4 +++-
+>  drivers/isimodem/sim.c                  |    1 +
+>  drivers/isimodem/sms.c                  |    5 ++++-
+>  drivers/isimodem/ussd.c                 |    4 +++-
+>  drivers/isimodem/voicecall.c            |    4 +++-
+>  15 files changed, 44 insertions(+), 17 deletions(-)
+> =
 
-I am not familiar with Huwai modem, and still learning oFono.
 
-But one question: how do you make difference between test 1 and test 2? How=
- did you force UMTS and then GPRS?
-It seems that during test 1, you got network service. But not during test 2.
-
-Can you please tell me exactly what you did for test 1, and what you did fo=
-r test 2?
+Patch has been applied, thanks.
 
 Regards,
+-Denis
 
-Bertrand.
-
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============3035569795509882979==--
+--===============1576724345321896943==--
 
