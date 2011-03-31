@@ -1,97 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============2702128339465462913=="
+Content-Type: multipart/mixed; boundary="===============6283960794539137483=="
 MIME-Version: 1.0
-From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 1/1] isimodem: fix operator name reading with old ISI modems
-Date: Thu, 31 Mar 2011 11:35:43 +0300
-Message-ID: <1301560543-13716-2-git-send-email-mika.liljeberg@nokia.com>
-In-Reply-To: <1301560543-13716-1-git-send-email-mika.liljeberg@nokia.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH 05/18] gatppp: add g_at_ppp_set_suspend_function()
+ definition
+Date: Thu, 31 Mar 2011 11:04:00 +0200
+Message-ID: <4D944380.60309@linux.intel.com>
+In-Reply-To: <4D939895.5070303@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2702128339465462913==
+--===============6283960794539137483==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/isimodem/debug.c                |    2 ++
- drivers/isimodem/network-registration.c |    8 ++++++--
- drivers/isimodem/network.h              |    2 ++
- 3 files changed, 10 insertions(+), 2 deletions(-)
+Hi Denis,
 
-diff --git a/drivers/isimodem/debug.c b/drivers/isimodem/debug.c
-index 6fb451f..b48dd95 100644
---- a/drivers/isimodem/debug.c
-+++ b/drivers/isimodem/debug.c
-@@ -1035,6 +1035,8 @@ const char *net_message_id_name(enum net_message_id v=
-alue)
- 		_(NET_AVAILABLE_GET_RESP);
- 		_(NET_OPER_NAME_READ_REQ);
- 		_(NET_OPER_NAME_READ_RESP);
-+		_(NET_OLD_OPER_NAME_READ_REQ);
-+		_(NET_OLD_OPER_NAME_READ_RESP);
- 		_(NET_COMMON_MESSAGE);
- 	}
- 	return "NET_<UNKNOWN>";
-diff --git a/drivers/isimodem/network-registration.c b/drivers/isimodem/net=
-work-registration.c
-index 8bf2423..78e55ed 100644
---- a/drivers/isimodem/network-registration.c
-+++ b/drivers/isimodem/network-registration.c
-@@ -466,7 +466,8 @@ static void name_get_resp_cb(const GIsiMessage *msg, vo=
-id *data)
- =
+On 30/03/2011 22:54, Denis Kenzior wrote:
+> Hi Guillaume,
+>
+> On 03/25/2011 10:25 AM, Guillaume Zajac wrote:
+>> ---
+>>   gatchat/gatppp.c |    8 ++++++++
+>>   1 files changed, 8 insertions(+), 0 deletions(-)
+>>
+>> diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+>> index 993b5ea..9df6b8e 100644
+>> --- a/gatchat/gatppp.c
+>> +++ b/gatchat/gatppp.c
+>> @@ -467,6 +467,14 @@ void g_at_ppp_set_debug(GAtPPP *ppp, GAtDebugFunc f=
+unc, gpointer user_data)
+>>   	ppp->debug_data =3D user_data;
+>>   }
+>>
+>> +void g_at_ppp_set_suspend_function(GAtPPP *ppp, GAtSuspendFunc func, gp=
+ointer user_data)
+>> +{
+>> +	if (ppp =3D=3D NULL)
+>> +		return;
+>> +
+>> +	g_at_hdlc_set_suspend_function(ppp->hdlc, func, user_data);
+>> +}
+>> +
+> This is really not enough, you must also shut down the read watch on the
+> TUN device, so that we don't try to forward packets from TUN to HDLC
+> while we're suspended.
+>
 
- 	memset(&op, 0, sizeof(struct ofono_network_operator));
- =
+I will add into g_at_ppp_suspend():
+-->ppp_net_suspend() to shut down read watch
 
--	if (!check_response_status(msg, NET_OPER_NAME_READ_RESP))
-+	if (!check_response_status(msg, NET_OLD_OPER_NAME_READ_RESP) &&
-+			!check_response_status(msg, NET_OPER_NAME_READ_RESP))
- 		goto error;
- =
+and into g_at_ppp_resume():
+-->ppp_net_resume() to resume read watch
 
- 	for (g_isi_sb_iter_init(&iter, msg, 6);
-@@ -513,7 +514,7 @@ static void isi_current_operator(struct ofono_netreg *n=
-etreg,
- 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
- 	struct isi_cb_data *cbd =3D isi_cb_data_new(netreg, cb, data);
- =
-
--	const uint8_t msg[] =3D {
-+	uint8_t msg[] =3D {
- 		NET_OPER_NAME_READ_REQ,
- 		NET_HARDCODED_LATIN_OPER_NAME,
- 		OFONO_MAX_OPERATOR_NAME_LENGTH,
-@@ -525,6 +526,9 @@ static void isi_current_operator(struct ofono_netreg *n=
-etreg,
- 	if (cbd =3D=3D NULL || nd =3D=3D NULL)
- 		goto error;
- =
-
-+	if (nd->version.major < 14)
-+		msg[0] =3D NET_OLD_OPER_NAME_READ_REQ;
-+
- 	if (g_isi_client_send(nd->client, msg, sizeof(msg), name_get_resp_cb,
- 				cbd, g_free))
- 		return;
-diff --git a/drivers/isimodem/network.h b/drivers/isimodem/network.h
-index ee1fbf2..57c92ac 100644
---- a/drivers/isimodem/network.h
-+++ b/drivers/isimodem/network.h
-@@ -45,6 +45,8 @@ enum net_message_id {
- 	NET_RSSI_IND =3D					0x1E,
- 	NET_CIPHERING_IND =3D				0x20,
- 	NET_TIME_IND =3D					0x27,
-+	NET_OLD_OPER_NAME_READ_REQ =3D			0x28,
-+	NET_OLD_OPER_NAME_READ_RESP =3D			0x29,
- 	NET_CHANNEL_INFO_IND =3D				0x2C,
- 	NET_RAT_IND =3D					0x35,
- 	NET_RAT_REQ =3D					0x36,
--- =
-
-1.7.1
+Kind regards,
+Guillaume
 
 
---===============2702128339465462913==--
+--===============6283960794539137483==--
 
