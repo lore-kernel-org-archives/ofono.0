@@ -1,205 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============0450537602957744789=="
+Content-Type: multipart/mixed; boundary="===============3035569795509882979=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH 18/18] gsmdial: implement mechanism to send +++ -> ATO0 ->
- +++ -> ATH0
-Date: Thu, 31 Mar 2011 16:42:38 +0200
-Message-ID: <4D9492DE.2000809@linux.intel.com>
-In-Reply-To: <4D9399AE.1050805@gmail.com>
+From: Aygon, Bertrand <bertrand.aygon@intel.com>
+Subject: RE: Trouble using Huwei E160G
+Date: Thu, 31 Mar 2011 15:42:03 +0100
+Message-ID: <A782C372B9527D44AB20BF45FEEBB14F75BFE71AF2@irsmsx503.ger.corp.intel.com>
+In-Reply-To: <4D9451C7.4030107@zirak.it>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0450537602957744789==
+--===============3035569795509882979==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi,
 
-On 30/03/2011 22:59, Denis Kenzior wrote:
-> Hi Guillaume,
+>I have performed 2 tests
 >
-> On 03/25/2011 10:25 AM, Guillaume Zajac wrote:
->> ---
->>   gatchat/gsmdial.c |  164 ++++++++++++++++++++++++++++++++++++++++++++-=
--------
->>   1 files changed, 138 insertions(+), 26 deletions(-)
->>
->> diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
->> index 92a7ff2..f1b485e 100644
->> --- a/gatchat/gsmdial.c
->> +++ b/gatchat/gsmdial.c
->> @@ -40,6 +40,8 @@
->>
->>   #define IFCONFIG_PATH "/sbin/ifconfig"
->>
->> +#define GUARD_TIMEOUTS 1500
->> +
->>   static const char *none_prefix[] =3D { NULL };
->>   static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
->>   static const char *creg_prefix[] =3D { "+CREG:", NULL };
->> @@ -238,32 +240,6 @@ static gboolean execute(const char *cmd)
->>   	return TRUE;
->>   }
->>
->> -static void ppp_connect(const char *iface, const char *local, const cha=
-r *peer,
->> -			const char *dns1, const char *dns2,
->> -			gpointer user_data)
->> -{
->> -	char buf[512];
->> -
->> -	/* print out the negotiated address and dns server */
->> -	g_print("Network Device: %s\n", iface);
->> -	g_print("IP Address: %s\n", local);
->> -	g_print("Peer IP Address: %s\n", peer);
->> -	g_print("Primary DNS Server: %s\n", dns1);
->> -	g_print("Secondary DNS Server: %s\n", dns2);
->> -
->> -	if (getuid() !=3D 0) {
->> -		g_print("Need root privilege to config PPP interface\n");
->> -		return;
->> -	}
->> -
->> -	snprintf(buf, sizeof(buf), "%s %s up", IFCONFIG_PATH, iface);
->> -	execute(buf);
->> -
->> -	snprintf(buf, sizeof(buf), "%s %s %s pointopoint %s", IFCONFIG_PATH,
->> -				iface, local, peer);
->> -	execute(buf);
->> -}
->> -
->>   static void no_carrier_notify(GAtResult *result, gpointer user_data)
->>   {
->>   	char buf[64];
->> @@ -294,6 +270,142 @@ static void ppp_disconnect(GAtPPPDisconnectReason =
-reason, gpointer user_data)
->>   	g_at_chat_resume(modem);
->>   }
->>
->> +static void power_down_ppp(gboolean ok, GAtResult *result, gpointer use=
-r_data)
->> +{
->> +	if (!ok)
->> +		return;
->> +
->> +	g_at_ppp_unref(ppp);
->> +	ppp =3D NULL;
->> +}
->> +
->> +static gboolean send_ATH0(gpointer user_data)
->> +{
->> +	/* Resume AT chat to send ATH0 */
->> +	g_at_chat_resume(modem);
->> +	g_at_chat_send(modem, "ATH0", none_prefix, power_down_ppp, NULL, NULL);
->> +
->> +	return FALSE;
->> +}
->> +
->> +static gboolean suspend_and_close(gpointer user_data)
->> +{
->> +	g_print("Send +++\n");
->> +	/* Send the escape sequence to suspend PPP server*/
->> +	g_at_io_write(g_at_chat_get_io(modem), "+++", 3);
->> +	=
+>1) Connect 3G key and wait for umts coverage (blue led)
+>
+>I activated the 3g connection, but ofono response is
+>
+>Error org.ofono.Error.NotImplemented: Implementation not provided
+>
+>Attacched there is the log of ofono test_umts.log
+>
+>I have tested the 3g connection on umts on windows and works connectly.
+>
+>2) Connect 3G key and wait for gprs coverage (green led)
+>
+>I activated the 3g connection, but ofono response is
+>
+>Error org.ofono.Error.NotAttached: GPRS is not attached
+>
+>Attacched there is the log of ofono test_gprs.log
 
->> +	/*
->> +	 * Wait GUARD_TIMEOUTS ms before sending ATH0 cmd
->> +	 * according to guard timeouts
->> +	 */
->> +	g_timeout_add(GUARD_TIMEOUTS, send_ATH0, NULL);
->> +
->> +	return FALSE;
->> +}
->> +
->> +static void ppp_suspend_close(gpointer data)
->> +{
->> +	/* Delete the write done CB */
->> +	g_at_io_set_write_done(g_at_chat_get_io(modem), NULL, NULL);
->> +
->> +	/*
->> +	 * We are sure there are no more PPP packets to be written,
->> +	 * we can suspend PPP client
->> +	 */
->> +	g_at_ppp_suspend(ppp);
->> +
->> +	/* Wait GUARD_TIMEOUTS ms before sending escape sequence */
->> +	g_timeout_add(GUARD_TIMEOUTS, suspend_and_close, NULL);
->> +}
->> +
->> +static void suspend_gat_chat(gboolean ok, GAtResult *result, gpointer u=
-ser_data)
->> +{
->> +	/*
->> +	 * As soon as the command is treated by AT server
->> +	 * we can suspend AT chat and resume PPP client
->> +	 */
->> +	g_at_chat_suspend(modem);
->> +	g_at_ppp_resume(ppp);
->> +
->> +	/*
->> +	 * We wait for another PPP packet to be written
->> +	 * to suspend again PPP server and close it
->> +	 */
->> +	g_at_io_set_write_done(g_at_chat_get_io(modem), ppp_suspend_close, NUL=
-L);
->> +}
->> +
->> +static gboolean send_ATO0(gpointer user_data)
->> +{
->> +	/* Resume AT chat to send ATO0 */
->> +	g_at_chat_resume(modem);
->> +	g_at_chat_send(modem, "ATO0", none_prefix, suspend_gat_chat, NULL, NUL=
-L);
->> +
->> +	return FALSE;
->> +}
->> +
->> +static gboolean suspend_resume(gpointer user_data)
->> +{
->> +	g_print("Send +++\n");
->> +	/* Send the escape sequence to suspend PPP server*/
->> +	g_at_io_write(g_at_chat_get_io(modem), "+++", 3);
->> +
->> +	/*
->> +	 * Wait GUARD_TIMEOUTS ms before sending ATO0 cmd
->> +	 * according to guard timeouts
->> +	 */
->> +	g_timeout_add(GUARD_TIMEOUTS, send_ATO0, NULL);
->> +
->> +	return FALSE;
->> +}
->> +
->> +static void ppp_suspend_resume(gpointer data)
->> +{
->> +	/* Delete the write done CB */
->> +	g_at_io_set_write_done(g_at_chat_get_io(modem), NULL, NULL);
->> +
->> +	/*
->> +	 * We are sure there are no more PPP packets to be written,
->> +	 * we can suspend PPP client
->> +	 */
->> +	g_at_ppp_suspend(ppp);
->> +
->> +	/* Wait GUARD_TIMEOUTS ms before sending escape sequence */
->> +	g_timeout_add(GUARD_TIMEOUTS, suspend_resume, NULL);
->> +}
->> +
-> The logic for sending a guard timeout, +++, guard timeout should really
-> belong in GAtChat, otherwise every single client has to repeat the same
-> state machine.
+I am not familiar with Huwai modem, and still learning oFono.
 
-I can implement a g_at_chat_send_escape_sequence() to manage:
-<pause> --> +++ <pause> timing
+But one question: how do you make difference between test 1 and test 2? How=
+ did you force UMTS and then GPRS?
+It seems that during test 1, you got network service. But not during test 2.
 
-I would still write directly on at_chat GAtIO because using =
+Can you please tell me exactly what you did for test 1, and what you did fo=
+r test 2?
 
-at_chat_send_common() would add a '\r' that would cancel the suspend =
+Regards,
 
-data call.
+Bertrand.
 
-Kind regards,
-Guillaume
 
---===============0450537602957744789==--
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============3035569795509882979==--
 
