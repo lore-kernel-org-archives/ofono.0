@@ -1,44 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============2329275200350450334=="
+Content-Type: multipart/mixed; boundary="===============8387685789192997992=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH v3 19/26] ppp_net: add ppp_net_resume_interface() definition
-Date: Fri, 01 Apr 2011 10:56:21 +0200
-Message-ID: <1301648188-7208-20-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH v3 17/26] gathdlc: add g_at_hdlc_resume() definition
+Date: Fri, 01 Apr 2011 10:56:19 +0200
+Message-ID: <1301648188-7208-18-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1301648188-7208-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2329275200350450334==
+--===============8387685789192997992==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/ppp_net.c |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+ gatchat/gathdlc.c |   25 +++++++++++++++++++++++++
+ 1 files changed, 25 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
-index 9abf590..6ace16b 100644
---- a/gatchat/ppp_net.c
-+++ b/gatchat/ppp_net.c
-@@ -205,3 +205,13 @@ void ppp_net_suspend_interface(struct ppp_net *net)
- 	if (net->watch)
- 		g_source_remove(net->watch);
+diff --git a/gatchat/gathdlc.c b/gatchat/gathdlc.c
+index 37f2539..816da34 100644
+--- a/gatchat/gathdlc.c
++++ b/gatchat/gathdlc.c
+@@ -604,3 +604,28 @@ void g_at_hdlc_suspend(GAtHDLC *hdlc)
+ 	g_at_io_set_write_handler(hdlc->io, NULL, NULL);
+ 	g_at_io_set_read_handler(hdlc->io, NULL, NULL);
  }
 +
-+void ppp_net_resume_interface(struct ppp_net *net)
++static void hdlc_wakeup_writer(GAtHDLC *hdlc)
 +{
-+	if (net =3D=3D NULL || net->channel =3D=3D NULL)
++	g_at_io_set_write_handler(hdlc->io, can_write_data, hdlc);
++}
++
++void g_at_hdlc_resume(GAtHDLC *hdlc)
++{
++	if (hdlc =3D=3D NULL)
 +		return;
 +
-+	net->watch =3D g_io_add_watch(net->channel,
-+			G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
-+			ppp_net_callback, net);
++	g_at_io_set_read_handler(hdlc->io, new_bytes, hdlc);
++
++	if (g_queue_get_length(hdlc->write_queue) > 0)
++		hdlc_wakeup_writer(hdlc);
++
++	/*
++	 * As soon as we resume HDLC we can start checking for
++	 * guard timeouts pause.
++	 */
++	if (!hdlc->paused)
++		hdlc->pause_timeout =3D g_timeout_add (GUARD_TIMEOUTS,
++							paused_timeout_cb,
++							hdlc);
 +}
 -- =
 
 1.7.1
 
 
---===============2329275200350450334==--
+--===============8387685789192997992==--
 
