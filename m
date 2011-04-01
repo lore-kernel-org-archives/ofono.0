@@ -1,43 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============6834703566791170743=="
+Content-Type: multipart/mixed; boundary="===============3733488863591947336=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH v3 24/26] gatchat: add g_at_chat_send_escape_sequence()
- prototype
-Date: Fri, 01 Apr 2011 10:56:26 +0200
-Message-ID: <1301648188-7208-25-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH v3 23/26] gsmdial: add new option to test sending escape
+ sequence
+Date: Fri, 01 Apr 2011 10:56:25 +0200
+Message-ID: <1301648188-7208-24-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1301648188-7208-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6834703566791170743==
+--===============3733488863591947336==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatchat.h |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ gatchat/gsmdial.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gatchat.h b/gatchat/gatchat.h
-index eb82daa..326ebe2 100644
---- a/gatchat/gatchat.h
-+++ b/gatchat/gatchat.h
-@@ -132,6 +132,8 @@ guint g_at_chat_send_and_expect_short_prompt(GAtChat *c=
-hat, const char *cmd,
- 				const char **valid_resp, GAtResultFunc func,
- 				gpointer user_data, GDestroyNotify notify);
+diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
+index a10e7cb..92a7ff2 100644
+--- a/gatchat/gsmdial.c
++++ b/gatchat/gsmdial.c
+@@ -57,6 +57,7 @@ static gchar *option_username =3D NULL;
+ static gchar *option_password =3D NULL;
+ static gchar *option_pppdump =3D NULL;
+ static gboolean option_bluetooth =3D FALSE;
++static gboolean option_esc =3D FALSE;
  =
 
-+void g_at_chat_send_escape_sequence(GAtChat *chat);
-+
- gboolean g_at_chat_cancel(GAtChat *chat, guint id);
- gboolean g_at_chat_cancel_all(GAtChat *chat);
- =
-
+ static GAtPPP *ppp;
+ static GAtChat *control;
+@@ -624,6 +625,8 @@ static GOptionEntry options[] =3D {
+ 				"Use ATD*99***<cid>#" },
+ 	{ "bluetooth", 'b', 0, G_OPTION_ARG_NONE, &option_bluetooth,
+ 				"Use only ATD*99" },
++	{ "esc_seq", 'e', 0, G_OPTION_ARG_NONE, &option_esc,
++				"Send escape sequence test" },
+ 	{ "username", 'u', 0, G_OPTION_ARG_STRING, &option_username,
+ 				"Specify PPP username" },
+ 	{ "password", 'w', 0, G_OPTION_ARG_STRING, &option_password,
 -- =
 
 1.7.1
 
 
---===============6834703566791170743==--
+--===============3733488863591947336==--
 
