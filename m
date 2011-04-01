@@ -1,43 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============4707439199565968670=="
+Content-Type: multipart/mixed; boundary="===============3310502060080224657=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH v3 04/26] gathdlc: add g_at_hdlc_set_suspend_function()
- prototype
-Date: Fri, 01 Apr 2011 10:56:06 +0200
-Message-ID: <1301648188-7208-5-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH v3 03/26] gatio: add g_at_io_drain_ring_buffer() definition
+Date: Fri, 01 Apr 2011 10:56:05 +0200
+Message-ID: <1301648188-7208-4-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1301648188-7208-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4707439199565968670==
+--===============3310502060080224657==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gathdlc.h |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ gatchat/gatio.c |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gathdlc.h b/gatchat/gathdlc.h
-index 95c389e..158f27f 100644
---- a/gatchat/gathdlc.h
-+++ b/gatchat/gathdlc.h
-@@ -57,6 +57,9 @@ GAtIO *g_at_hdlc_get_io(GAtHDLC *hdlc);
- =
-
- void g_at_hdlc_set_no_carrier_detect(GAtHDLC *hdlc, gboolean detect);
- =
-
-+void g_at_hdlc_set_suspend_function(GAtHDLC *hdlc, GAtSuspendFunc func,
-+							gpointer user_data);
-+
- #ifdef __cplusplus
+diff --git a/gatchat/gatio.c b/gatchat/gatio.c
+index 2778260..f679cd0 100644
+--- a/gatchat/gatio.c
++++ b/gatchat/gatio.c
+@@ -387,3 +387,8 @@ void g_at_io_set_write_done(GAtIO *io, GAtDisconnectFun=
+c func,
+ 	io->write_done_func =3D func;
+ 	io->write_done_data =3D user_data;
  }
- #endif
++
++void g_at_io_drain_ring_buffer(GAtIO *io, guint len)
++{
++	ring_buffer_drain(io->buf, len);
++}
 -- =
 
 1.7.1
 
 
---===============4707439199565968670==--
+--===============3310502060080224657==--
 
