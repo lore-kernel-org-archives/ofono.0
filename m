@@ -1,47 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8355658776117615485=="
+Content-Type: multipart/mixed; boundary="===============0167541126825381207=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH v3 13/26] gatppp: add g_at_ppp_suspend() definition
-Date: Fri, 01 Apr 2011 10:56:15 +0200
-Message-ID: <1301648188-7208-14-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH v3 18/26] ppp: add ppp_net_resume_interface() prototype
+Date: Fri, 01 Apr 2011 10:56:20 +0200
+Message-ID: <1301648188-7208-19-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1301648188-7208-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8355658776117615485==
+--===============0167541126825381207==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatppp.c |    9 +++++++++
- 1 files changed, 9 insertions(+), 0 deletions(-)
+ gatchat/ppp.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index 9df6b8e..5f005fe 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -484,6 +484,15 @@ void g_at_ppp_shutdown(GAtPPP *ppp)
- 	pppcp_signal_close(ppp->lcp);
- }
+diff --git a/gatchat/ppp.h b/gatchat/ppp.h
+index 22809d8..ae96e42 100644
+--- a/gatchat/ppp.h
++++ b/gatchat/ppp.h
+@@ -108,6 +108,7 @@ void ppp_net_process_packet(struct ppp_net *net, const =
+guint8 *packet);
+ void ppp_net_free(struct ppp_net *net);
+ gboolean ppp_net_set_mtu(struct ppp_net *net, guint16 mtu);
+ void ppp_net_suspend_interface(struct ppp_net *net);
++void ppp_net_resume_interface(struct ppp_net *net);
  =
 
-+void g_at_ppp_suspend(GAtPPP *ppp)
-+{
-+	if (ppp =3D=3D NULL)
-+		return;
-+
-+	ppp_net_suspend_interface(ppp->net);
-+	g_at_hdlc_suspend(ppp->hdlc);
-+}
-+
- void g_at_ppp_ref(GAtPPP *ppp)
- {
- 	g_atomic_int_inc(&ppp->ref_count);
+ /* PPP functions related to main GAtPPP object */
+ void ppp_debug(GAtPPP *ppp, const char *str);
 -- =
 
 1.7.1
 
 
---===============8355658776117615485==--
+--===============0167541126825381207==--
 
