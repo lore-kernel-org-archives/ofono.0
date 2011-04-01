@@ -1,83 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============0356096030960616150=="
+Content-Type: multipart/mixed; boundary="===============8574076434016123744=="
 MIME-Version: 1.0
-From: Claudio Degioanni <claudio.degioanni@zirak.it>
-Subject: Re: Trouble using Huwei E160G
-Date: Fri, 01 Apr 2011 08:59:08 +0200
-Message-ID: <4D9577BC.8030209@zirak.it>
-In-Reply-To: <A782C372B9527D44AB20BF45FEEBB14F75BFE71AF2@irsmsx503.ger.corp.intel.com>
+From: Ostermann, Christophe <Christophe.Ostermann@sicpa.com>
+Subject: RE: Motorola Modem H24 gprs connection
+Date: Fri, 01 Apr 2011 09:00:14 +0200
+Message-ID: <65D0035E6914AC478A46CFE3E20C3926017CC3FA@snch1xch53.sicpa-net.ads>
+In-Reply-To: <4D94A0CE.3020804@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0356096030960616150==
+--===============8574076434016123744==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Il 31/03/2011 16.42, Aygon, Bertrand ha scritto:
+Hi Denis,
+
+Thank you for this quick answer.
+
+Yes H24 modem expects some raw data in this mode (after having created a
+TCP or UDP socket). =
+
+
+This modem must also support standard way of sending data through ppp. I
+will start by using this mode. I ve tried but unfortunately AT+CGDATA is
+not recognized by this modem. I m just starting to play with this modem
+so I ve to investigate how to configure it properly without this
+command.
+
+BR
+Christophe
+
+
+
+-----Original Message-----
+From: Denis Kenzior [mailto:denkenz(a)gmail.com] =
+
+Sent: jeudi, 31. mars 2011 17:42
+To: ofono(a)ofono.org
+Cc: Ostermann, Christophe
+Subject: Re: Motorola Modem H24 gprs connection
+
+Hi Christophe,
+
+On 03/31/2011 09:00 AM, Ostermann, Christophe wrote:
 > Hi,
->
->> I have performed 2 tests
->>
->> 1) Connect 3G key and wait for umts coverage (blue led)
->>
->> I activated the 3g connection, but ofono response is
->>
->> Error org.ofono.Error.NotImplemented: Implementation not provided
->>
->> Attacched there is the log of ofono test_umts.log
->>
->> I have tested the 3g connection on umts on windows and works connectly.
->>
->> 2) Connect 3G key and wait for gprs coverage (green led)
->>
->> I activated the 3g connection, but ofono response is
->>
->> Error org.ofono.Error.NotAttached: GPRS is not attached
->>
->> Attacched there is the log of ofono test_gprs.log
-> I am not familiar with Huwai modem, and still learning oFono.
->
-> But one question: how do you make difference between test 1 and test 2? =
+> =
 
-The difference is visible on device, it has a led blinking green fro
-gprs and blue for utms coverage.
-> How did you force UMTS and then GPRS?
-> It seems that during test 1, you got network service. But not during test=
- 2.
->
-> Can you please tell me exactly what you did for test 1, and what you did =
-for test 2?
-We work in a zone with limited utms coverage, some times it use gprs
-(green blinking led). The test 1 is the
-normal case with good umts coverage, for test 2 i force gprs using for
-example a simple Faraday Cage.
+>  =
 
-regs
-Claudio
+> =
 
-> Regards,
->
-> Bertrand.
->
->
-> ---------------------------------------------------------------------
-> Intel Corporation SAS (French simplified joint stock company)
-> Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+> After having successfully enabled sms and voice call with modem h24
+from
+> motorola. I am now trying to setup a gprs connection.
+> =
 
-> 92196 Meudon Cedex, France
-> Registration Number:  302 456 199 R.C.S. NANTERRE
-> Capital: 4,572,000 Euros
->
-> This e-mail and any attachments may contain confidential material for
-> the sole use of the intended recipient(s). Any review or distribution
-> by others is strictly prohibited. If you are not the intended
-> recipient, please contact the sender and delete all copies.
->
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
+> In fact Motorola has a specific set of AT command AT+MIPxxx to setup
+> gprs connection by using an internal TCP/UDP IP stack.
+
+Not quite sure what that means?  Do you mean the modem expects raw data
+and produces TCP/IP packets internally?  If so you will have some fun ;)
+
+> =
+
+> Can you confirm that the right approach is to write a new
+gprs-context.c ?
+> =
+
+>  =
 
 
---===============0356096030960616150==--
+Yes.
+
+> =
+
+> When a gprs cantext has properly established connection, does ofono
+> create a network interface?
+> =
+
+>  =
+
+
+No, a network interface is either already created by the kernel driver
+when the device is inserted (e.g. on usb data sticks from hso, mbm, etc)
+or created by the ppp stack managed inside the gprs-context driver.  All
+oFono does is bring the interface up.
+
+Regards,
+-Denis
+This message was delivered through encrypted mechanism.
+
+
+The information in this email and any attachments is confidential
+and intended solely for the use of the individual(s) to whom it is
+addressed or otherwise directed.
+Please note that any views or opinions presented in this email are
+solely those of the author and do not necessarily represent those
+of the Company.
+Finally, the recipient should check this email and any attachments
+for the presence of viruses.
+The Company accepts no liability for any damage caused by any virus
+transmitted by this email.
+
+--===============8574076434016123744==--
 
