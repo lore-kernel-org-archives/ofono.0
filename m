@@ -1,128 +1,146 @@
-Content-Type: multipart/mixed; boundary="===============5502896653291354424=="
+Content-Type: multipart/mixed; boundary="===============1381216246467872649=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH v3 26/26] gsmdial: implement test sequence +++-ATO0-+++-ATH0
-Date: Fri, 01 Apr 2011 10:56:28 +0200
-Message-ID: <1301648188-7208-27-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1301648188-7208-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: milan.satpathy@accenture.com
+Subject: [HELP] How To Access Audio Gateway Features using Ofono ?
+Date: Fri, 01 Apr 2011 17:40:13 +0530
+Message-ID: <10D123A956DC4B4FA9D7A48B3335836214E0E20BE0@INDXM3131.dir.svc.accenture.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5502896653291354424==
+--===============1381216246467872649==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- gatchat/gsmdial.c |   78 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 78 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index 92a7ff2..7e6eec9 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -238,6 +238,76 @@ static gboolean execute(const char *cmd)
- 	return TRUE;
- }
- =
+I am currently using ofono to write a hands free application using the D-bu=
+s APIs.
+I have a need to access certain remote device features available with Ofono=
+ (e.g. the battery charge or the voice recognition status).
+I am not able to find any suitable d-bus APIs to achieve this. Please sugge=
+st how should I be able to do this ?
 
-+static void ppp_suspend(void)
-+{
-+	/* Delete the write done CB */
-+	g_at_io_set_write_done(g_at_chat_get_io(modem), NULL, NULL);
-+
-+	/*
-+	 * We are sure there are no more PPP packets to be written,
-+	 * we can suspend PPP client
-+	 */
-+	g_at_ppp_suspend(ppp);
-+	g_at_chat_send_escape_sequence(modem);
-+}
-+
-+static void power_down_ppp(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+{
-+	if (!ok)
-+		return;
-+
-+	g_at_ppp_unref(ppp);
-+	ppp =3D NULL;
-+}
-+
-+static gboolean send_ATH0(gpointer user_data)
-+{
-+	/* Resume AT chat to send ATH0 */
-+	g_at_chat_resume(modem);
-+	g_at_chat_send(modem, "ATH0", none_prefix, power_down_ppp, NULL, NULL);
-+
-+	return FALSE;
-+}
-+
-+static void continue_test_sequence(gpointer data)
-+{
-+	ppp_suspend();
-+	g_timeout_add_seconds(5, send_ATH0, NULL);
-+}
-+
-+static void suspend_gat_chat(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+	/*
-+	 * As soon as the command is treated by AT server
-+	 * we can suspend AT chat and resume PPP client
-+	 */
-+	g_at_chat_suspend(modem);
-+	g_at_ppp_resume(ppp);
-+
-+	/*
-+	 * As soon as a PPP packet is written by the client, we continue
-+	 * test sequence.
-+	 */
-+	g_at_io_set_write_done(g_at_chat_get_io(modem),
-+				continue_test_sequence, NULL);
-+}
-+
-+static gboolean send_ATO0(gpointer user_data)
-+{
-+	g_at_chat_resume(modem);
-+	g_at_chat_send(modem, "ATO0", none_prefix,
-+			suspend_gat_chat, NULL, NULL);
-+
-+	return FALSE;
-+}
-+
-+static void start_test_sequence(gpointer data)
-+{
-+	ppp_suspend();
-+	g_timeout_add_seconds(5, send_ATO0, NULL);
-+}
-+
- static void ppp_connect(const char *iface, const char *local, const char *=
-peer,
- 			const char *dns1, const char *dns2,
- 			gpointer user_data)
-@@ -262,6 +332,14 @@ static void ppp_connect(const char *iface, const char =
-*local, const char *peer,
- 	snprintf(buf, sizeof(buf), "%s %s %s pointopoint %s", IFCONFIG_PATH,
- 				iface, local, peer);
- 	execute(buf);
-+
-+	/*
-+	 * As soon as a PPP packet is written by the client, we start
-+	 * test sequence.
-+	 */
-+	if (option_esc)
-+		g_at_io_set_write_done(g_at_chat_get_io(modem),
-+					start_test_sequence, NULL);
- }
- =
+Also, will it be possible to pass any AT commands (from any application) to=
+ the hands free device using ofono?
+Any useful information / reference on this will be of great help.
 
- static void no_carrier_notify(GAtResult *result, gpointer user_data)
--- =
-
-1.7.1
+Regards,
+Milan
 
 
---===============5502896653291354424==--
+
+________________________________
+This message is for the designated recipient only and may contain privilege=
+d, proprietary, or otherwise private information. If you have received it i=
+n error, please notify the sender immediately and delete the original. Any =
+other use of the email by you is prohibited.
+
+--===============1381216246467872649==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
+bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxuczpzdDE9
+InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgeG1sbnM9Imh0dHA6
+Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29u
+dGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBu
+YW1lPSJHZW5lcmF0b3IiIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDExIChmaWx0ZXJlZCBtZWRp
+dW0pIj4KPG86U21hcnRUYWdUeXBlIG5hbWVzcGFjZXVyaT0idXJuOnNjaGVtYXMtbWljcm9zb2Z0
+LWNvbTpvZmZpY2U6c21hcnR0YWdzIiBuYW1lPSJDaXR5IiAvPjxvOlNtYXJ0VGFnVHlwZSBuYW1l
+c3BhY2V1cmk9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgbmFt
+ZT0icGxhY2UiIC8+PCEtLVtpZiAhbXNvXT4KPHN0eWxlPgpzdDFcOip7YmVoYXZpb3I6dXJsKCNk
+ZWZhdWx0I2llb291aSkgfQo8L3N0eWxlPgo8IVtlbmRpZl0tLT48c3R5bGU+CjwhLS0KIC8qIEZv
+bnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseToiQm9vayBBbnRpcXVh
+IjsKCXBhbm9zZS0xOjIgNCA2IDIgNSAzIDUgMyAzIDQ7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMg
+Ki8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGlu
+OwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5
+OiJCb29rIEFudGlxdWEiO30KaDEKCXttYXJnaW4tdG9wOjEyLjBwdDsKCW1hcmdpbi1yaWdodDow
+aW47CgltYXJnaW4tYm90dG9tOjMuMHB0OwoJbWFyZ2luLWxlZnQ6MGluOwoJcGFnZS1icmVhay1h
+ZnRlcjphdm9pZDsKCWZvbnQtc2l6ZToxNC4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVh
+Ijt9CmgyCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFyZ2luLWJv
+dHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZvaWQ7Cglm
+b250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250LXN0eWxl
+Oml0YWxpYzt9CmgzCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFy
+Z2luLWJvdHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZv
+aWQ7Cglmb250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250
+LXdlaWdodDpub3JtYWw7fQpwLk1zb0hlYWRlciwgbGkuTXNvSGVhZGVyLCBkaXYuTXNvSGVhZGVy
+Cgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7
+Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuTXNvRm9vdGVyLCBsaS5Nc29Gb290ZXIs
+IGRpdi5Nc29Gb290ZXIKCXttYXJnaW46MGluOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9u
+dC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KYTpsaW5rLCBzcGFu
+Lk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30K
+YTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7Y29sb3I6IzYwNjQyMDsKCXRl
+eHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpwLkFCTE9DS1BBUkEsIGxpLkFCTE9DS1BBUkEsIGRp
+di5BQkxPQ0tQQVJBCgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQt
+c2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUJVTExFVCwgbGku
+QUJVTExFVCwgZGl2LkFCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdodDowaW47
+CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjE2LjU1cHQ7CgltYXJnaW4tYm90dG9t
+Oi4wMDAxcHQ7Cgl0ZXh0LWluZGVudDotMTYuNTVwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250
+LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUlOREVOVEVEQlVMTEVULCBsaS5BSU5ERU5URURC
+VUxMRVQsIGRpdi5BSU5ERU5URURCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdo
+dDowaW47CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjMzLjFwdDsKCW1hcmdpbi1i
+b3R0b206LjAwMDFwdDsKCXRleHQtaW5kZW50Oi0xNi41NXB0OwoJZm9udC1zaXplOjExLjBwdDsK
+CWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KcC5BSU5ERU5URURQQVJBLCBsaS5BSU5ERU5U
+RURQQVJBLCBkaXYuQUlOREVOVEVEUEFSQQoJe21hcmdpbi10b3A6MGluOwoJbWFyZ2luLXJpZ2h0
+OjBpbjsKCW1hcmdpbi1ib3R0b206MGluOwoJbWFyZ2luLWxlZnQ6MTYuNTVwdDsKCW1hcmdpbi1i
+b3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRp
+cXVhIjt9CnNwYW4uRW1haWxTdHlsZTIzCgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9z
+ZTsKCWZvbnQtZmFtaWx5OkFyaWFsOwoJY29sb3I6d2luZG93dGV4dDt9CkBwYWdlIFNlY3Rpb24x
+Cgl7c2l6ZTo1OTUuNDVwdCA4NDEuN3B0OwoJbWFyZ2luOjEuMGluIC43NWluIDEuMGluIC43NWlu
+O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9Ci0tPgo8L3N0eWxlPgo8L2hlYWQ+Cjxi
+b2R5IGxhbmc9IkVOLVVTIiBsaW5rPSJibHVlIiB2bGluaz0iIzYwNjQyMCI+CjxkaXYgY2xhc3M9
+IlNlY3Rpb24xIj4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJp
+YWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+SGks
+PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQg
+c2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250
+LWZhbWlseTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xh
+c3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJm
+b250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+SSBhbSBjdXJyZW50bHkgdXNpbmcg
+b2Zvbm8gdG8gd3JpdGUgYSBoYW5kcyBmcmVlIGFwcGxpY2F0aW9uIHVzaW5nIHRoZSBELWJ1cyBB
+UElzLjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxm
+b250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsK
+Zm9udC1mYW1pbHk6QXJpYWwiPkkgaGF2ZSBhIG5lZWQgdG8gYWNjZXNzIGNlcnRhaW4gcmVtb3Rl
+IGRldmljZSBmZWF0dXJlcyBhdmFpbGFibGUgd2l0aCBPZm9ubyAoZS5nLiB0aGUgYmF0dGVyeSBj
+aGFyZ2Ugb3IgdGhlIHZvaWNlIHJlY29nbml0aW9uIHN0YXR1cykuPG86cD48L286cD48L3NwYW4+
+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJp
+YWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+SSBh
+bSBub3QgYWJsZSB0byBmaW5kIGFueSBzdWl0YWJsZSBkLWJ1cyBBUElzIHRvIGFjaGlldmUgdGhp
+cy4gUGxlYXNlIHN1Z2dlc3QgaG93IHNob3VsZCBJIGJlIGFibGUgdG8gZG8gdGhpcyA/PG86cD48
+L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0i
+MiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWls
+eTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1z
+b05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNp
+emU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+QWxzbywgd2lsbCBpdCBiZSBwb3NzaWJsZSB0
+byBwYXNzIGFueSBBVCBjb21tYW5kcyAoZnJvbSBhbnkgYXBwbGljYXRpb24pIHRvIHRoZSBoYW5k
+cyBmcmVlIGRldmljZSB1c2luZyBvZm9ubz88bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8
+cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5
+bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5BbnkgdXNlZnVsIGluZm9y
+bWF0aW9uIC8gcmVmZXJlbmNlIG9uIHRoaXMgd2lsbCBiZSBvZiBncmVhdCBoZWxwLjxvOnA+PC9v
+OnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIi
+IGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6
+QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29O
+b3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXpl
+OjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPlJlZ2FyZHMsPG86cD48L286cD48L3NwYW4+PC9m
+b250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHN0MTpDaXR5IHc6c3Q9Im9uIj48c3QxOnBs
+YWNlIHc6c3Q9Im9uIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZv
+bnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwiPk1pbGFuPC9zcGFuPjwvZm9udD48L3N0
+MTpwbGFjZT48L3N0MTpDaXR5Pjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHls
+ZT0iZm9udC1zaXplOjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCI+PG86cD48L286cD48L3NwYW4+
+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJp
+YWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+PG86
+cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZv
+bnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpm
+b250LWZhbWlseTpBcmlhbCI+Jm5ic3A7PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPC9k
+aXY+Cjxicj4KPGhyPgo8Zm9udCBmYWNlPSJBcmlhbCIgY29sb3I9IkdyYXkiIHNpemU9IjIiPlRo
+aXMgbWVzc2FnZSBpcyBmb3IgdGhlIGRlc2lnbmF0ZWQgcmVjaXBpZW50IG9ubHkgYW5kIG1heSBj
+b250YWluIHByaXZpbGVnZWQsIHByb3ByaWV0YXJ5LCBvciBvdGhlcndpc2UgcHJpdmF0ZSBpbmZv
+cm1hdGlvbi4gSWYgeW91IGhhdmUgcmVjZWl2ZWQgaXQgaW4gZXJyb3IsIHBsZWFzZSBub3RpZnkg
+dGhlIHNlbmRlciBpbW1lZGlhdGVseSBhbmQgZGVsZXRlIHRoZSBvcmlnaW5hbC4KIEFueSBvdGhl
+ciB1c2Ugb2YgdGhlIGVtYWlsIGJ5IHlvdSBpcyBwcm9oaWJpdGVkLjxicj4KPC9mb250Pgo8L2Jv
+ZHk+CjwvaHRtbD4K
+
+--===============1381216246467872649==--
 
