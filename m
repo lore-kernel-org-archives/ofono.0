@@ -1,61 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============8033019825671623629=="
+Content-Type: multipart/mixed; boundary="===============6643676679547369913=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [HELP] How To Access Audio Gateway Features using Ofono ?
-Date: Fri, 01 Apr 2011 09:36:09 -0500
-Message-ID: <4D95E2D9.8010901@gmail.com>
-In-Reply-To: <10D123A956DC4B4FA9D7A48B3335836214E0E20BE0@INDXM3131.dir.svc.accenture.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH v3 4/4] ifxmodem: emergency number list support
+Date: Fri, 01 Apr 2011 17:16:31 +0200
+Message-ID: <1301670991.2572.160.camel@aeonflux>
+In-Reply-To: <1301668176-19356-5-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8033019825671623629==
+--===============6643676679547369913==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Milan,
+Hi Jeevaka,
 
-On 04/01/2011 07:10 AM, milan.satpathy(a)accenture.com wrote:
-> Hi,
-> =
+> +	/* Enable emergency number list notification */
+> +	g_at_chat_send(vd->chat, "AT+XLEMA=3D1", none_prefix, NULL, NULL, NULL);
+> +
+>  	ofono_voicecall_register(vc);
+> +
+> +	g_at_chat_send(vd->chat, "AT+XLEMA?", xlema_prefix, xlema_read, vc,
+> +									NULL);
 
->  =
+do you really need the XLEMA? read command? If this works like the other
+commands (like XCALLSTAT) that enable notifications, then with sending
+AT+XLEMA=3D1 it should send out unsolicited +XLEMA: notifications and no
+extra read command is needed.
 
-> =
+Regards
 
-> I am currently using ofono to write a hands free application using the
-> D-bus APIs.
-
-I assume you're writing a car-kit role connecting to a mobile phone...
-
-> =
-
-> I have a need to access certain remote device features available with
-> Ofono (e.g. the battery charge or the voice recognition status).
-> =
-
-> I am not able to find any suitable d-bus APIs to achieve this. Please
-> suggest how should I be able to do this ?
-> =
-
->  =
+Marcel
 
 
-oFono currently does not provide APIs to access this information.  Any
-help is welcome in this area.
 
-> =
-
-> Also, will it be possible to pass any AT commands (from any application)
-> to the hands free device using ofono?
-> =
-
-
-No, this is not possible at this time and probably not a good idea in
-the first place.
-
-Regards,
--Denis
-
---===============8033019825671623629==--
+--===============6643676679547369913==--
 
