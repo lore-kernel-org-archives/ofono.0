@@ -1,45 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============7779980812323530643=="
+Content-Type: multipart/mixed; boundary="===============2341217676667011997=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH v3 09/26] gathdlc: add g_at_hdlc_suspend() definition
-Date: Fri, 01 Apr 2011 10:56:11 +0200
-Message-ID: <1301648188-7208-10-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH v3 11/26] ppp_net: add ppp_net_suspend_interface() definition
+Date: Fri, 01 Apr 2011 10:56:13 +0200
+Message-ID: <1301648188-7208-12-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1301648188-7208-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7779980812323530643==
+--===============2341217676667011997==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gathdlc.c |    9 +++++++++
+ gatchat/ppp_net.c |    9 +++++++++
  1 files changed, 9 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gathdlc.c b/gatchat/gathdlc.c
-index db4ad5a..37f2539 100644
---- a/gatchat/gathdlc.c
-+++ b/gatchat/gathdlc.c
-@@ -595,3 +595,12 @@ void g_at_hdlc_set_no_carrier_detect(GAtHDLC *hdlc, gb=
-oolean detect)
- =
-
- 	hdlc->no_carrier_detect =3D detect;
+diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
+index 1a6cdf7..9abf590 100644
+--- a/gatchat/ppp_net.c
++++ b/gatchat/ppp_net.c
+@@ -196,3 +196,12 @@ void ppp_net_free(struct ppp_net *net)
+ 	g_free(net->if_name);
+ 	g_free(net);
  }
 +
-+void g_at_hdlc_suspend(GAtHDLC *hdlc)
++void ppp_net_suspend_interface(struct ppp_net *net)
 +{
-+	if (hdlc =3D=3D NULL)
++	if (net =3D=3D NULL || net->channel =3D=3D NULL)
 +		return;
 +
-+	g_at_io_set_write_handler(hdlc->io, NULL, NULL);
-+	g_at_io_set_read_handler(hdlc->io, NULL, NULL);
++	if (net->watch)
++		g_source_remove(net->watch);
 +}
 -- =
 
 1.7.1
 
 
---===============7779980812323530643==--
+--===============2341217676667011997==--
 
