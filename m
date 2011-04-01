@@ -1,176 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============6311182390696241438=="
+Content-Type: multipart/mixed; boundary="===============2232592621129937184=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH v3 4/4] ifxmodem: emergency number list support
-Date: Fri, 01 Apr 2011 07:29:36 -0700
-Message-ID: <1301668176-19356-5-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1301668176-19356-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Motorola Modem H24 gprs connection
+Date: Fri, 01 Apr 2011 09:32:01 -0500
+Message-ID: <4D95E1E1.8050901@gmail.com>
+In-Reply-To: <65D0035E6914AC478A46CFE3E20C3926017CC3FA@snch1xch53.sicpa-net.ads>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6311182390696241438==
+--===============2232592621129937184==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/ifxmodem/voicecall.c |   99 ++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 99 insertions(+), 0 deletions(-)
+Hi Christophe,
 
-diff --git a/drivers/ifxmodem/voicecall.c b/drivers/ifxmodem/voicecall.c
-index 87a48e6..0841165 100644
---- a/drivers/ifxmodem/voicecall.c
-+++ b/drivers/ifxmodem/voicecall.c
-@@ -42,11 +42,13 @@
- #include "ifxmodem.h"
- =
+Gentle reminder not to top-post on this mailing list.
 
- static const char *none_prefix[] =3D { NULL };
-+static const char *xlema_prefix[] =3D { "+XLEMA:", NULL };
- =
+On 04/01/2011 02:00 AM, Ostermann, Christophe wrote:
+> Hi Denis,
+> =
 
- struct voicecall_data {
- 	GSList *calls;
- 	unsigned int local_release;
- 	GAtChat *chat;
-+	char **en_list;
- };
- =
+> Thank you for this quick answer.
+> =
 
- struct release_id_req {
-@@ -786,6 +788,93 @@ static void xcolp_notify(GAtResult *result, gpointer u=
-ser_data)
- 	ofono_voicecall_notify(vc, call);
- }
- =
+> Yes H24 modem expects some raw data in this mode (after having created a
+> TCP or UDP socket). =
 
-+static void xlema_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_voicecall *vc =3D user_data;
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-+	GAtResultIter iter;
-+	int index, total_cnt;
-+	const char *number;
-+	int count =3D g_strv_length(vd->en_list);
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+XLEMA:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &index))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &total_cnt))
-+		return;
-+
-+	if (!g_at_result_iter_next_string(&iter, &number))
-+		return;
-+
-+	/* Skip the category, valid in simpresent and mcc fields */
-+
-+	if (vd->en_list =3D=3D NULL)
-+		vd->en_list =3D g_new0(char *, total_cnt + 1);
-+
-+	vd->en_list[count] =3D g_strdup(number);
-+
-+	if (index !=3D total_cnt)
-+		return;
-+
-+	ofono_voicecall_en_list_notify(vc, vd->en_list);
-+
-+	g_strfreev(vd->en_list);
-+	vd->en_list =3D NULL;
-+}
-+
-+static void xlema_read(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_voicecall *vc =3D user_data;
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-+	GAtResultIter iter;
-+	int num =3D 0;
-+	int index, total_cnt;
-+	const char *number;
-+
-+	if (!ok) {
-+		DBG("Emergency number list read failed");
-+		return;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	while (g_at_result_iter_next(&iter, "+XLEMA:"))
-+		num +=3D 1;
-+
-+	vd->en_list =3D g_new0(char *, num + 1);
-+
-+	num =3D 0;
-+	g_at_result_iter_init(&iter, result);
-+
-+	while (g_at_result_iter_next(&iter, "+XLEMA:")) {
-+		if (!g_at_result_iter_next_number(&iter, &index))
-+			continue;
-+
-+		if (!g_at_result_iter_next_number(&iter, &total_cnt))
-+			continue;
-+
-+		if (!g_at_result_iter_next_string(&iter, &number))
-+			continue;
-+
-+		/* Skip the category, valid in simpresent and mcc fields */
-+		g_at_result_iter_skip_next(&iter);
-+		g_at_result_iter_skip_next(&iter);
-+		g_at_result_iter_skip_next(&iter);
-+
-+		vd->en_list[num++] =3D g_strdup(number);
-+	}
-+
-+	ofono_voicecall_en_list_notify(vc, vd->en_list);
-+
-+	g_strfreev(vd->en_list);
-+	vd->en_list =3D NULL;
-+}
-+
- static void ifx_voicecall_initialized(gboolean ok, GAtResult *result,
- 					gpointer user_data)
- {
-@@ -803,7 +892,15 @@ static void ifx_voicecall_initialized(gboolean ok, GAt=
-Result *result,
- 							FALSE, vc, NULL);
- 	g_at_chat_register(vd->chat, "+XCOLP:", xcolp_notify, FALSE, vc, NULL);
- =
+> =
 
-+	g_at_chat_register(vd->chat, "+XLEMA:", xlema_notify, FALSE, vc, NULL);
-+
-+	/* Enable emergency number list notification */
-+	g_at_chat_send(vd->chat, "AT+XLEMA=3D1", none_prefix, NULL, NULL, NULL);
-+
- 	ofono_voicecall_register(vc);
-+
-+	g_at_chat_send(vd->chat, "AT+XLEMA?", xlema_prefix, xlema_read, vc,
-+									NULL);
- }
- =
-
- static int ifx_voicecall_probe(struct ofono_voicecall *vc, unsigned int ve=
-ndor,
-@@ -840,6 +937,8 @@ static void ifx_voicecall_remove(struct ofono_voicecall=
- *vc)
- 	g_slist_foreach(vd->calls, (GFunc) g_free, NULL);
- 	g_slist_free(vd->calls);
- =
-
-+	g_strfreev(vd->en_list);
-+
- 	ofono_voicecall_set_data(vc, NULL);
- =
-
- 	g_at_chat_unref(vd->chat);
--- =
-
-1.7.0.4
+> This modem must also support standard way of sending data through ppp. I
+> will start by using this mode. I ve tried but unfortunately AT+CGDATA is
+> not recognized by this modem. I m just starting to play with this modem
+> so I ve to investigate how to configure it properly without this
+> command.
+> =
 
 
---===============6311182390696241438==--
+You might have luck using the legacy ATD*99 variation instead of CGDATA,
+but we don't support this inside the current atmodem/gprs-context.c.
+Have a look at gatchat/gsmdial.c, it implements this functionality.  So
+you might be able to quickly test whether PPP/ATD*99 works on the H24.
+
+Regards,
+-Denis
+
+--===============2232592621129937184==--
 
