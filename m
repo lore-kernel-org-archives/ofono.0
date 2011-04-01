@@ -1,49 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============2232592621129937184=="
+Content-Type: multipart/mixed; boundary="===============8033019825671623629=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Motorola Modem H24 gprs connection
-Date: Fri, 01 Apr 2011 09:32:01 -0500
-Message-ID: <4D95E1E1.8050901@gmail.com>
-In-Reply-To: <65D0035E6914AC478A46CFE3E20C3926017CC3FA@snch1xch53.sicpa-net.ads>
+Subject: Re: [HELP] How To Access Audio Gateway Features using Ofono ?
+Date: Fri, 01 Apr 2011 09:36:09 -0500
+Message-ID: <4D95E2D9.8010901@gmail.com>
+In-Reply-To: <10D123A956DC4B4FA9D7A48B3335836214E0E20BE0@INDXM3131.dir.svc.accenture.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2232592621129937184==
+--===============8033019825671623629==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+Hi Milan,
 
-Gentle reminder not to top-post on this mailing list.
-
-On 04/01/2011 02:00 AM, Ostermann, Christophe wrote:
-> Hi Denis,
+On 04/01/2011 07:10 AM, milan.satpathy(a)accenture.com wrote:
+> Hi,
 > =
 
-> Thank you for this quick answer.
-> =
-
-> Yes H24 modem expects some raw data in this mode (after having created a
-> TCP or UDP socket). =
+>  =
 
 > =
 
-> This modem must also support standard way of sending data through ppp. I
-> will start by using this mode. I ve tried but unfortunately AT+CGDATA is
-> not recognized by this modem. I m just starting to play with this modem
-> so I ve to investigate how to configure it properly without this
-> command.
+> I am currently using ofono to write a hands free application using the
+> D-bus APIs.
+
+I assume you're writing a car-kit role connecting to a mobile phone...
+
+> =
+
+> I have a need to access certain remote device features available with
+> Ofono (e.g. the battery charge or the voice recognition status).
+> =
+
+> I am not able to find any suitable d-bus APIs to achieve this. Please
+> suggest how should I be able to do this ?
+> =
+
+>  =
+
+
+oFono currently does not provide APIs to access this information.  Any
+help is welcome in this area.
+
+> =
+
+> Also, will it be possible to pass any AT commands (from any application)
+> to the hands free device using ofono?
 > =
 
 
-You might have luck using the legacy ATD*99 variation instead of CGDATA,
-but we don't support this inside the current atmodem/gprs-context.c.
-Have a look at gatchat/gsmdial.c, it implements this functionality.  So
-you might be able to quickly test whether PPP/ATD*99 works on the H24.
+No, this is not possible at this time and probably not a good idea in
+the first place.
 
 Regards,
 -Denis
 
---===============2232592621129937184==--
+--===============8033019825671623629==--
 
