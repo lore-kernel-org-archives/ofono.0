@@ -1,50 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============5863488371723466300=="
+Content-Type: multipart/mixed; boundary="===============2523698335933223985=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: Trouble using Huwei E160G
-Date: Mon, 04 Apr 2011 10:31:04 +0100
-Message-ID: <A782C372B9527D44AB20BF45FEEBB14F75BFE722C1@irsmsx503.ger.corp.intel.com>
-In-Reply-To: <4D998E46.10503@zirak.it>
+From: Ostermann, Christophe <Christophe.Ostermann@sicpa.com>
+Subject: RE: Motorola Modem H24 gprs connection
+Date: Mon, 04 Apr 2011 14:14:15 +0200
+Message-ID: <65D0035E6914AC478A46CFE3E20C3926017CC401@snch1xch53.sicpa-net.ads>
+In-Reply-To: <4D95E1E1.8050901@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5863488371723466300==
+--===============2523698335933223985==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Denis,
 
->>> 1) Connect 3G key and wait for umts coverage (blue led)
->>>
->>> I activated the 3g connection, but ofono response is
->>>
->>> Error org.ofono.Error.NotImplemented: Implementation not provided
->> Can you please send the full log for this case, and also the term output=
-, so I can see what you are exactly doing.
->
->I have attached the log on test 1 and 2.
+> =
 
-Can you please add the full output of the oFono test scripts (since the ./l=
-ist_modems to the error you have)?
+> Hi Christophe,
+> =
 
-Thanks,
+> Gentle reminder not to top-post on this mailing list.
+> =
 
-Bertrand.
+> On 04/01/2011 02:00 AM, Ostermann, Christophe wrote:
+> > Hi Denis,
+> >
+> > Thank you for this quick answer.
+> >
+> > Yes H24 modem expects some raw data in this mode (after having
+created a
+> > TCP or UDP socket).
+> >
+> > This modem must also support standard way of sending data through
+ppp. I
+> > will start by using this mode. I ve tried but unfortunately
+AT+CGDATA is
+> > not recognized by this modem. I m just starting to play with this
+modem
+> > so I ve to investigate how to configure it properly without this
+> > command.
+> >
+> =
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+> You might have luck using the legacy ATD*99 variation instead of
+CGDATA,
+> but we don't support this inside the current atmodem/gprs-context.c.
+> Have a look at gatchat/gsmdial.c, it implements this functionality.
+So
+> you might be able to quickly test whether PPP/ATD*99 works on the H24.
+> =
 
 
---===============5863488371723466300==--
+ATD*99 works fine on H24. How can I pass an option to gprs driver to use
+ATD*99 instead of CGDATA ?  based on vendor as in drivers/atmodem/sms.c?
+
+
+After setting ConnectionContext property "Active" to true I can see that
+IPaddr and DNS server addr are properly returned by APN. A ppp0
+interface is also available. But ppp0 configuration does not seems to be
+correct when I use ifconfig (IP address is not set etc...). Is ofono
+responsible of doing this or ppp0 interface must be configured by
+another layer?    =
+
+
+BR,
+Christophe
+PS: is this email ident style ok ?
+
+> Regards,
+> -Denis
+This message was delivered through encrypted mechanism.
+
+
+The information in this email and any attachments is confidential
+and intended solely for the use of the individual(s) to whom it is
+addressed or otherwise directed.
+Please note that any views or opinions presented in this email are
+solely those of the author and do not necessarily represent those
+of the Company.
+Finally, the recipient should check this email and any attachments
+for the presence of viruses.
+The Company accepts no liability for any damage caused by any virus
+transmitted by this email.
+
+--===============2523698335933223985==--
 
