@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3960522112321017318=="
+Content-Type: multipart/mixed; boundary="===============6823119144678778167=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] stk: Check if terminal is busy before SIM Refresh.
-Date: Tue, 05 Apr 2011 00:26:15 -0500
-Message-ID: <4D9AA7F7.7040005@gmail.com>
-In-Reply-To: <1301578857-3790-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 2/2] doc: Mark SIM Refresh support as present.
+Date: Tue, 05 Apr 2011 00:26:33 -0500
+Message-ID: <4D9AA809.1030909@gmail.com>
+In-Reply-To: <1301578857-3790-2-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3960522112321017318==
+--===============6823119144678778167==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,9 +17,9 @@ Hi Andrew,
 
 On 03/31/2011 08:40 AM, Andrzej Zaborowski wrote:
 > ---
->  src/stk.c |   94 ++++++++++++++++++++++++++++++++++++++++++++++---------=
-------
->  1 files changed, 71 insertions(+), 23 deletions(-)
+>  TODO             |   35 -----------------------------------
+>  doc/features.txt |   34 ++++++++++++++++++++++++++++++++++
+>  2 files changed, 34 insertions(+), 35 deletions(-)
 > =
 
 
@@ -28,5 +28,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============3960522112321017318==--
+--===============6823119144678778167==--
 
