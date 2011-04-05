@@ -1,59 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============2452003389225984623=="
+Content-Type: multipart/mixed; boundary="===============3989685376925953319=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: Trouble using Huwei E160G
-Date: Tue, 05 Apr 2011 10:35:21 +0100
-Message-ID: <A782C372B9527D44AB20BF45FEEBB14F75BFECF7BB@irsmsx503.ger.corp.intel.com>
-In-Reply-To: <4D9ADA4F.5060501@zirak.it>
+From: ext-arun.1.ravindran@Nokia.com
+Subject: [PATCH] isimodem:Remove reporting active state wrongly
+Date: Tue, 05 Apr 2011 12:32:53 +0300
+Message-ID: <1301995973-15858-1-git-send-email-ext-arun.1.ravindran@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2452003389225984623==
+--===============3989685376925953319==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
 
->>>>>> 1) Connect 3G key and wait for umts coverage (blue led)
->>>>>>
->>>>>> I activated the 3g connection, but ofono response is
->>>>>>
->>>>>> Error org.ofono.Error.NotImplemented: Implementation not provided
+---
+ drivers/isimodem/voicecall.c |    5 ++++-
+ 1 files changed, 4 insertions(+), 1 deletions(-)
 
-From what I can see when you do the 'list-modem', your modem is already en=
-abled and online, so you do not have to do the ./enable_modem and ./online-=
-modem.
+diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
+index 5cbba1f..05f7c09 100644
+--- a/drivers/isimodem/voicecall.c
++++ b/drivers/isimodem/voicecall.c
+@@ -405,7 +405,6 @@ static int isi_call_status_to_clcc(const struct isi_cal=
+l *call)
+ 	case CALL_STATUS_TERMINATED:
+ 		return 6;
+ =
 
-The PS context is also created (looking at ./list-contexts answer).
+-	case CALL_STATUS_ANSWERED:
+ 	case CALL_STATUS_ACTIVE:
+ 	case CALL_STATUS_HOLD_INITIATED:
+ 		return 0;
+@@ -551,6 +550,10 @@ static void isi_call_notify(struct ofono_voicecall *ov=
+c, struct isi_call *call)
+ 	case CALL_STATUS_MT_RELEASE:
+ 	case CALL_STATUS_TERMINATED:
+ 		isi_call_set_disconnect_reason(call);
++		break;
++	case CALL_STATUS_ANSWERED:
++		DBG("State need not be reported to Core");
++		return;
+ 	}
+ =
 
-So just the ./activate-context should be fine.
+ 	ocall =3D isi_call_as_ofono_call(call);
+-- =
 
-But there is an error ... From what I can see in the source code, it should=
- be enable 'post sim'. And still according to source code, the Huawei modem=
- seems to skip some SIM status during warm start.
-
-So, can you please unplug replug the USB key, wait a few, just execute ./li=
-st-modems and ./list-contexts (nothing else).
-You should see the modem enabled and online, and your context created. If s=
-o, just execute ./activate-context
-
-Regards,
-
-Bertrand.
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+1.7.0.4
 
 
---===============2452003389225984623==--
+--===============3989685376925953319==--
 
