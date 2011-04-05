@@ -1,64 +1,119 @@
-Content-Type: multipart/mixed; boundary="===============3514376829940048051=="
+Content-Type: multipart/mixed; boundary="===============6448954764270012793=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Motorola Modem H24 gprs connection
-Date: Mon, 04 Apr 2011 09:42:23 -0500
-Message-ID: <4D99D8CF.2080904@gmail.com>
-In-Reply-To: <65D0035E6914AC478A46CFE3E20C3926017CC401@snch1xch53.sicpa-net.ads>
+Subject: Re: [RFC PATCH 0/9] Emergency Mode
+Date: Tue, 05 Apr 2011 00:00:19 -0500
+Message-ID: <4D9AA1E3.9060906@gmail.com>
+In-Reply-To: <1301588312-6932-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3514376829940048051==
+--===============6448954764270012793==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+Hi Jeevaka,
 
-
->> You might have luck using the legacy ATD*99 variation instead of
-> CGDATA,
->> but we don't support this inside the current atmodem/gprs-context.c.
->> Have a look at gatchat/gsmdial.c, it implements this functionality.
-> So
->> you might be able to quickly test whether PPP/ATD*99 works on the H24.
->>
+On 03/31/2011 11:18 AM, Jeevaka Badrappan wrote:
+> Hi,
 > =
 
-> ATD*99 works fine on H24. How can I pass an option to gprs driver to use
-> ATD*99 instead of CGDATA ?  based on vendor as in drivers/atmodem/sms.c?
+>  Following patch is a proposal for emergency mode. Test has been done
+> with the phonesim.
+> =
+
+> Listed down few important cases to give an overview of the state
+> changes that happen in each case.
+> =
+
+> Case 1: SIM Present, No PIN required, modem in offline state
+> =
+
+> 	- Modem set to online mode(UI triggered)
+> 		Post online atoms created
+> 	- Dial request received with emergency number
+> 		- Emergency mode activated
+> 		- Dial request sent to modem
+> 	- Emergency call is active
+> 	- Call ended
+> 		Emergency mode deactivated.
+> 	- Modem remains in online mode. Post online
+> 	  atoms are present.
+> =
+
+> Case 2: SIM Present and PIN required
+> =
+
+> 	- Modem set to online mode(UI triggered)
+> 		Post SIM and Post online atoms not created
+> 	- Dial request received with emergency number
+> 		- Emergency mode activated
+> 		- Dial request sent to modem
+> 	- Emergency call is active
+> 	- Call ended
+> 		Emergency mode deactivated.
+> 	- Modem remains in online mode. Post sim
+> 	  and post online atoms are not present/created.
+> =
+
+> Case 3: SIM Present and PIN required(Dial request cancelled by user)
+> =
+
+> 	- Modem set to online mode(UI triggered)
+> 		Post SIM and Post online atoms not created
+> 	- Dial request received with emergency number
+> 		- Emergency mode activated
+> 		- Dial request sent to modem
+> 	- Dial request cancelled by user
+> 		Emergency mode deactivated.
+> 	- Modem remains in online mode.
+> 	- User enters the right pin
+> 	- Modem remains in online mode. Post sim
+> 	  and post online atoms are created.
+> =
+
+> Case 4: SIM Not Present(PIN disabled SIM inserted)
+> =
+
+> 	- Modem set to online mode(UI triggered)
+> 		Post SIM and Post online atoms not created
+> 	- Dial request received with emergency number
+> 		- Emergency mode activated
+> 	- Emergency call is active
+> 	- SIM inserted and SIM ready received(NO PIN required).
+> 		- Post sim and post online atoms are created.
+> 	- Call ended
+> 		Emergency mode deactivated.
+> 	- Modem remains in online mode. Post sim and post
+> 	  online atoms are present.
+> =
+
+> Case 5: SIM Not Present(PIN enabled SIM inserted)
+> =
+
+> 	- Modem set to online mode(UI triggered)
+> 		Post SIM and Post online atoms not created
+> 	- Dial request received with emergency number
+> 		- Emergency mode activated
+> 	- Emergency call is active
+> 	- SIM Inserted(PIN required).
+> 	- Call ended
+> 		Emergency mode deactivated.
+> 	- Modem remains in online mode. Post sim
+> 	  and post online atoms are not created.
 > =
 
 
-Yes, a quirk would be what you want.  However, there's no code inside
-atmodem gprs-context driver to handle quirks yet.  If you do, please
-send us a patch.
+All 9 patches have been applied, in a slightly different order.  Thanks
+for that!
 
-> =
-
-> After setting ConnectionContext property "Active" to true I can see that
-> IPaddr and DNS server addr are properly returned by APN. A ppp0
-> interface is also available. But ppp0 configuration does not seems to be
-> correct when I use ifconfig (IP address is not set etc...). Is ofono
-> responsible of doing this or ppp0 interface must be configured by
-> another layer?    =
-
-
-oFono only activates the interface and emits the settings.  Some other
-component (e.g. connection manager) does the IP assignment, DHCP if
-needed, etc.  Use ConnMan if you want readily available oFono
-integration, or take a peek at test/process-context-settings.
-
-> =
-
-> BR,
-> Christophe
-> PS: is this email ident style ok ?
-
-The quoting is a little mangled still...
+I made some slight refactorings and additions afterward, and went ahead
+and marked this task as done.  Can you take a look and see if you concur
+with my changes?
 
 Regards,
 -Denis
 
---===============3514376829940048051==--
+--===============6448954764270012793==--
 
