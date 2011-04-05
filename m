@@ -1,36 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============3672428655738659215=="
+Content-Type: multipart/mixed; boundary="===============0882415554554898461=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 0/7] emulator: add simple incoming call support
-Date: Tue, 05 Apr 2011 17:40:24 +0200
-Message-ID: <1302018031-12401-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH 1/7] emulator: add defines for call,
+ callsetup and callheld indicators
+Date: Tue, 05 Apr 2011 17:40:25 +0200
+Message-ID: <1302018031-12401-2-git-send-email-frederic.danis@linux.intel.com>
+In-Reply-To: <1302018031-12401-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3672428655738659215==
+--===============0882415554554898461==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add call related indicators, +CLIP, RING to signal incoming call,
-ATA to allow reception and AT+CHUP to reject or finish
-of an incoming call in HFP AG
+---
+ include/emulator.h |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
 
-Fr=C3=A9d=C3=A9ric Danis (7):
-  emulator: add defines for call, callsetup and callheld indicators
-  emulator: add call, callsetup and callheld indicators
-  emulator: add RING for HFP AG
-  emulator: add incoming call API
-  emulator: add +CLIP support for HFP AG
-  voicecall: add ATA support for HFP emulator
-  voicecall: add +CHUP support for HFP emulator
+diff --git a/include/emulator.h b/include/emulator.h
+index 71b7c24..5cd894b 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -36,6 +36,18 @@ extern "C" {
+ #define OFONO_EMULATOR_IND_SERVICE "service"
+ #define OFONO_EMULATOR_IND_SIGNAL "signal"
+ =
 
- include/emulator.h |   15 +++
- src/emulator.c     |  106 ++++++++++++++++++
- src/voicecall.c    |  306 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 3 files changed, 427 insertions(+), 0 deletions(-)
++#define OFONO_EMULATOR_CALL_INACTIVE 0
++#define OFONO_EMULATOR_CALL_ACTIVE 1
++
++#define OFONO_EMULATOR_CALLSETUP_INACTIVE 0
++#define OFONO_EMULATOR_CALLSETUP_INCOMING 1
++#define OFONO_EMULATOR_CALLSETUP_OUTGOING 2
++#define OFONO_EMULATOR_CALLSETUP_ALERTING 3
++
++#define OFONO_EMULATOR_CALLHELD_NONE 0
++#define OFONO_EMULATOR_CALLHELD_MULTIPLE 1
++#define OFONO_EMULATOR_CALLHELD_ON_HOLD 2
++
+ struct ofono_emulator;
+ struct ofono_emulator_request;
+ =
+
+-- =
+
+1.7.1
 
 
---===============3672428655738659215==--
+--===============0882415554554898461==--
 
