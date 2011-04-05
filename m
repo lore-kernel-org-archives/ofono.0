@@ -1,165 +1,97 @@
-Content-Type: multipart/mixed; boundary="===============4422160229383451851=="
+Content-Type: multipart/mixed; boundary="===============4051920565828189329=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] emulator: add AT+CMEE support for HFP
-Date: Tue, 05 Apr 2011 00:40:47 -0500
-Message-ID: <4D9AAB5F.4050909@gmail.com>
-In-Reply-To: <1301667693-7781-1-git-send-email-olivier.guiter@linux.intel.com>
+From: Ostermann, Christophe <Christophe.Ostermann@sicpa.com>
+Subject: RE: Motorola Modem H24 gprs connection
+Date: Tue, 05 Apr 2011 07:57:46 +0200
+Message-ID: <65D0035E6914AC478A46CFE3E20C3926017CC405@snch1xch53.sicpa-net.ads>
+In-Reply-To: <4D99D8CF.2080904@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4422160229383451851==
+--===============4051920565828189329==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Olivier,
 
-On 04/01/2011 09:21 AM, Olivier Guiter wrote:
-> ---
->  src/emulator.c |   59 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++-
->  1 files changed, 58 insertions(+), 1 deletions(-)
-> =
+Hi Denis,
 
-> diff --git a/src/emulator.c b/src/emulator.c
-> index c84f0a9..24897b4 100644
-> --- a/src/emulator.c
-> +++ b/src/emulator.c
-> @@ -29,6 +29,7 @@
->  #include <glib.h>
->  =
+>
+>Hi Christophe,
+>
+>
+>>> You might have luck using the legacy ATD*99 variation instead of
+>> CGDATA,
+>>> but we don't support this inside the current atmodem/gprs-context.c.
+>>> Have a look at gatchat/gsmdial.c, it implements this functionality.
+>> So
+>>> you might be able to quickly test whether PPP/ATD*99 works on the
+H24.
+>>>
+>>
+>> ATD*99 works fine on H24. How can I pass an option to gprs driver to
+use
+>> ATD*99 instead of CGDATA ?  based on vendor as in
+drivers/atmodem/sms.c?
+>>
+>
+>Yes, a quirk would be what you want.  However, there's no code inside
+>atmodem gprs-context driver to handle quirks yet.  If you do, please
+>send us a patch.
+>
 
->  #include "ofono.h"
-> +#include "common.h"
->  #include "gatserver.h"
->  #include "gatppp.h"
->  =
+I have implemented it. I will send you a patch in another email.
 
-> @@ -48,6 +49,7 @@ struct ofono_emulator {
->  	int r_features;
->  	int events_mode;
->  	gboolean events_ind;
-> +	char cme_error_ind;
+>>
+>> After setting ConnectionContext property "Active" to true I can see
+that
+>> IPaddr and DNS server addr are properly returned by APN. A ppp0
+>> interface is also available. But ppp0 configuration does not seems to
+be
+>> correct when I use ifconfig (IP address is not set etc...). Is ofono
+>> responsible of doing this or ppp0 interface must be configured by
+>> another layer?
+>
+>oFono only activates the interface and emits the settings.  Some other
+>component (e.g. connection manager) does the IP assignment, DHCP if
+>needed, etc.  Use ConnMan if you want readily available oFono
+>integration, or take a peek at test/process-context-settings.
 
-You probably want unsigned char here, since the value is never negative.
-
->  	GSList *indicators;
->  };
->  =
-
-> @@ -387,6 +389,52 @@ fail:
->  	}
->  }
->  =
-
-> +static void cmee_cb(GAtServer *server, GAtServerRequestType type,
-> +			GAtResult *result, gpointer user_data)
-> +{
-> +	struct ofono_emulator *em =3D user_data;
-> +	GAtResultIter iter;
-> +	int val;
-> +	char buf[16];
-> +
-> +	switch (type) {
-> +	case G_AT_SERVER_REQUEST_TYPE_SET:
-> +		g_at_result_iter_init(&iter, result);
-> +		g_at_result_iter_next(&iter, "");
-> +
-> +		if (g_at_result_iter_next_number(&iter, &val) =3D=3D FALSE)
-> +			goto fail;
-> +
-> +		if ((val < 0) && (val > 1))
-
-Please avoid unneeded parentheses whenever possible.
-
-> +			goto fail;
-> +
-> +		em->cme_error_ind =3D (char)val;
-
-Do you really need this cast?
-
-> +
-> +		sprintf(buf, "+CMEE: %d", em->cme_error_ind);
-> +		g_at_server_send_info(em->server, buf, TRUE);
-> +		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-> +		break;
-> +
-> +	case G_AT_SERVER_REQUEST_TYPE_QUERY:
-> +		sprintf(buf, "+CMEE: %d", em->cme_error_ind);
-> +		g_at_server_send_info(em->server, buf, TRUE);
-> +		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-> +		break;
-> +
-> +	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
-> +		/* HFP only support 0 and 1 */
-> +		sprintf(buf, "+CMEE: (0,1)");
-> +		g_at_server_send_info(em->server, buf, TRUE);
-> +		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-> +		break;
-> +
-> +	default:
-> +fail:
-> +		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
-> +		break;
-> +	}
-> +}
-> +
->  static void emulator_add_indicator(struct ofono_emulator *em, const char=
-* name,
->  					int min, int max, int dflt)
->  {
-> @@ -462,6 +510,7 @@ void ofono_emulator_register(struct ofono_emulator *e=
-m, int fd)
->  		g_at_server_register(em->server, "+BRSF", brsf_cb, em, NULL);
->  		g_at_server_register(em->server, "+CIND", cind_cb, em, NULL);
->  		g_at_server_register(em->server, "+CMER", cmer_cb, em, NULL);
-> +		g_at_server_register(em->server, "+CMEE", cmee_cb, em, NULL);
->  	}
->  =
-
->  	__ofono_atom_register(em->atom, emulator_unregister);
-> @@ -505,6 +554,7 @@ struct ofono_emulator *ofono_emulator_create(struct o=
-fono_modem *modem,
->  	/* TODO: Check real local features */
->  	em->l_features =3D 32;
->  	em->events_mode =3D 3;	/* default mode is forwarding events */
-> +	em->cme_error_ind =3D 0;	/* numeric only */
-
-The comment does not match the initializer?  Do you really mean numeric
-only here (e.g. CMEE=3D1) or something like disable cme-error?  What
-default does BT-HFP spec suggests?
-
->  =
-
->  	em->atom =3D __ofono_modem_add_atom_offline(modem, atom_t,
->  							emulator_remove, em);
-> @@ -533,7 +583,14 @@ void ofono_emulator_send_final(struct ofono_emulator=
- *em,
->  		break;
->  =
-
->  	case OFONO_ERROR_TYPE_CME:
-> -		sprintf(buf, "+CME ERROR: %d", final->error);
-> +		/* default string */
-> +		sprintf(buf, "ERROR");
-> +
-> +		if (em->cme_error_ind =3D=3D 1)
-> +			sprintf(buf, "+CME ERROR: %d", final->error);
-> +		else if (em->cme_error_ind =3D=3D 2)
-> +			sprintf(buf, "+CME ERROR: %s", telephony_error_to_str(final));
-> +
-
-I suspect that a switch/case would be more readable and slightly more
-efficient here.
-
->  		g_at_server_send_ext_final(em->server, buf);
->  		break;
->  =
+I have successfully setup/configured a gprs connection by using
+ifconfig.
+I will have a look to connman.  =
 
 
-Regards,
--Denis
+>
+>>
+>> BR,
+>> Christophe
+>> PS: is this email ident style ok ?
+>
+>The quoting is a little mangled still...
 
---===============4422160229383451851==--
+Will try to improve.
+
+BR,
+Christophe
+
+
+>
+>Regards,
+>-Denis
+This message was delivered through encrypted mechanism.
+
+
+The information in this email and any attachments is confidential
+and intended solely for the use of the individual(s) to whom it is
+addressed or otherwise directed.
+Please note that any views or opinions presented in this email are
+solely those of the author and do not necessarily represent those
+of the Company.
+Finally, the recipient should check this email and any attachments
+for the presence of viruses.
+The Company accepts no liability for any damage caused by any virus
+transmitted by this email.
+
+--===============4051920565828189329==--
 
