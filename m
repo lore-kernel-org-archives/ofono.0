@@ -1,47 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============1103598180136245430=="
+Content-Type: multipart/mixed; boundary="===============7938730164700359951=="
 MIME-Version: 1.0
-From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
-Subject: Re: [RFC PATCH v3] gprs: add function to handle activated context
-Date: Wed, 06 Apr 2011 17:06:20 +0300
-Message-ID: <4D9C735C.50902@nokia.com>
-In-Reply-To: <BANLkTikCNtgvi2kNWDQOTabkKmtcM7QUEQ@mail.gmail.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH v4 1/4] include: Add ofono_voicecall_en_list_notify api
+Date: Wed, 06 Apr 2011 07:26:40 -0700
+Message-ID: <1302100003-5488-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1302100003-5488-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1103598180136245430==
+--===============7938730164700359951==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pessi,
+---
+ include/voicecall.h |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-> Hi Arun,
->
-> 2011/4/6 Arun Ravindran<ext-arun.1.ravindran@nokia.com>:
->> According to this, the cid of user initiated context and network initiat=
-ed
->> context doesn't overlap.
-> The problem is, the initial EPS context is initiated by mobile, not by
-> the network. The mobile sends a piggybacked
-> PDN CONNECTIVITY REQUEST with the initial attach request in order to
-> initiate the initial EPS context.
->
+diff --git a/include/voicecall.h b/include/voicecall.h
+index 6ae06a9..a373c64 100644
+--- a/include/voicecall.h
++++ b/include/voicecall.h
+@@ -135,6 +135,9 @@ struct ofono_voicecall_driver {
+ 			ofono_voicecall_cb_t cb, void *data);
+ };
+ =
 
-How does this happen from oFono (or in the TE-MT Interface).
++void ofono_voicecall_en_list_notify(struct ofono_voicecall *vc,
++					char **nw_en_list);
++
+ void ofono_voicecall_notify(struct ofono_voicecall *vc,
+ 				const struct ofono_call *call);
+ void ofono_voicecall_disconnected(struct ofono_voicecall *vc, int id,
+-- =
 
-Does it mean that in for EPS context the TE will have to do the same =
-
-steps what it does for GPRS?
-
-The PDN CONNECTIVITY REQUEST has the APN name, and for TE, CGDCONT to =
-
-set the APN is called with a context id, in that case what is the need =
-
-for the cid handling done in this patch?
-
-Regards
-Arun
+1.7.0.4
 
 
---===============1103598180136245430==--
+--===============7938730164700359951==--
 
