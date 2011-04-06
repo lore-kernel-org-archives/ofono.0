@@ -1,82 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============5746161807779948011=="
+Content-Type: multipart/mixed; boundary="===============5064251248783453363=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH v4 3/4] voicecall: network emergency number list support
-Date: Wed, 06 Apr 2011 07:26:42 -0700
-Message-ID: <1302100003-5488-4-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH v4 4/4] TODO: Mark Network/Modem EN update task as done
+Date: Wed, 06 Apr 2011 07:26:43 -0700
+Message-ID: <1302100003-5488-5-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1302100003-5488-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5746161807779948011==
+--===============5064251248783453363==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/voicecall.c |   19 +++++++++++++++++++
- 1 files changed, 19 insertions(+), 0 deletions(-)
+ TODO             |   11 -----------
+ doc/features.txt |   18 ++++++++++--------
+ 2 files changed, 10 insertions(+), 19 deletions(-)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index b0f15fd..19ef479 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -49,6 +49,7 @@ struct ofono_voicecall {
- 	GHashTable *en_list; /* emergency number list */
- 	GSList *sim_en_list; /* Emergency numbers being read from SIM */
- 	ofono_bool_t sim_en_list_ready;
-+	char **nw_en_list; /* Emergency numbers from modem/network */
- 	DBusMessage *pending;
- 	struct ofono_sim *sim;
- 	struct ofono_sim_context *sim_context;
-@@ -2093,6 +2094,10 @@ static void set_new_ecc(struct ofono_voicecall *vc)
- 	vc->en_list =3D g_hash_table_new_full(g_str_hash, g_str_equal,
- 							g_free, NULL);
+diff --git a/TODO b/TODO
+index 85c5ad1..3491436 100644
+--- a/TODO
++++ b/TODO
+@@ -289,17 +289,6 @@ Sim Toolkit
+   Complexity: C2
+   Owner: Philippe Nunes <philippe.nunes@linux.intel.com>
  =
 
-+	/* Emergency numbers from modem/network */
-+	if (vc->nw_en_list)
-+		add_to_en_list(vc, vc->nw_en_list);
-+
- 	/* Emergency numbers read from SIM */
- 	if (vc->sim_en_list_ready =3D=3D TRUE && vc->sim_en_list) {
- 		for (l =3D vc->sim_en_list; l; l =3D l->next)
-@@ -2175,6 +2180,15 @@ check:
- 	set_new_ecc(vc);
- }
+-Emergency Calls
+-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+-
+-- Network / Modem updating of the emergency number list. Support the list =
+of
+-  emergency numbers dynamically updated by the network or by the modem (e.=
+g.
+-  additional numbers burned into modem ROM).
+-
+-  Priority: High
+-  Complexity: C2
+-
+-
+ Miscellaneous
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
  =
 
-+void ofono_voicecall_en_list_notify(struct ofono_voicecall *vc,
-+						char **nw_en_list)
-+{
-+	g_strfreev(vc->nw_en_list);
-+
-+	vc->nw_en_list =3D g_strdupv(nw_en_list);
-+	set_new_ecc(vc);
-+}
-+
- int ofono_voicecall_driver_register(const struct ofono_voicecall_driver *d)
- {
- 	DBG("driver: %p, name: %s", d, d->name);
-@@ -2220,6 +2234,11 @@ static void voicecall_unregister(struct ofono_atom *=
-atom)
- 		vc->sim_en_list =3D NULL;
- 	}
+diff --git a/doc/features.txt b/doc/features.txt
+index eb945c3..68d0676 100644
+--- a/doc/features.txt
++++ b/doc/features.txt
+@@ -583,14 +583,16 @@ Text Telephony
+ Emergency Calls
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
  =
 
-+	if (vc->nw_en_list) {
-+		g_strfreev(vc->nw_en_list);
-+		vc->nw_en_list =3D NULL;
-+	}
+-- EFecc support.  During SIM initialization phase oFono reads EFecc in ord=
+er
+-  to bootstrap the emergency calling codes provides by the SIM.  If the SI=
+M is
+-  not present or EFecc has not been read yet, the default set of emergency
+-  calling codes is used.
+-
+-- Emergency number reporting.  The current known list of emergency calling
+-  codes is reported by oFono in the EmergencyNumbers property on the
+-  VoicecallManager interface.  When a voicecall is made to a number present
++- Emergency number reporting.  During SIM initialization phase oFono reads
++  EFecc in order to bootstrap the emergency calling codes provided by the =
+SIM.
++  Emergency number list is exposed via the EmergencyNumbers property on the
++  VoicecallManager interface.  If SIM is present, list is the union of def=
+ault
++  emergency numbers(112, 911), numbers in EFecc and Network / Modem report=
+ed
++  emergency numbers.  If SIM is not present or EFecc has not been read yet,
++  list is the union of default emergency numbers(112, 911) and emergency
++  numbers without SIM(119, 118, 999, 110, 08 and 000).
 +
- 	g_hash_table_destroy(vc->en_list);
- 	vc->en_list =3D NULL;
- =
-
++- Emergency call reporting.  When a voicecall is made to a number present
+   on the EmergencyNumbers list it is automatically flagged as an emergency
+   call.  This is done by setting the Emergency property on the Voicecall
+   interface to TRUE.
 -- =
 
 1.7.0.4
 
 
---===============5746161807779948011==--
+--===============5064251248783453363==--
 
