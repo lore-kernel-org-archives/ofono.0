@@ -1,49 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============5044369952717769758=="
+Content-Type: multipart/mixed; boundary="===============1832912632309619771=="
 MIME-Version: 1.0
-From: Claudio Degioanni <claudio.degioanni@zirak.it>
-Subject: Re: Trouble using Huwei E160G
-Date: Thu, 07 Apr 2011 08:43:08 +0200
-Message-ID: <4D9D5CFC.1070406@zirak.it>
-In-Reply-To: <0E7E5CACD8E9F248AA009C292CC772A048E3ED@ALA-MBA.corp.ad.wrs.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH] isimodem:hangupall failed for hold initiated call
+Date: Thu, 07 Apr 2011 11:04:23 +0300
+Message-ID: <BANLkTi=+f0ZSD_P8BRkt3P54=WRNtnjvZg@mail.gmail.com>
+In-Reply-To: <1302004979-17634-1-git-send-email-ext-arun.1.ravindran@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5044369952717769758==
+--===============1832912632309619771==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-HI Caiwen,
+Hi Arun,
 
-Il 06/04/2011 10.36, Zhang, Caiwen ha scritto:
-> Hi Claudio,
+2011/4/5  <ext-arun.1.ravindran@nokia.com>:
+> From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
 >
->> I have made the test proposed, I still recive the same error :)
-> ofonod[2329]: drivers/atmodem/gprs-context.c:at_gprs_context_probe() =
+> ---
+> =C2=A0drivers/isimodem/voicecall.c | =C2=A0 =C2=A01 +
+> =C2=A01 files changed, 1 insertions(+), 0 deletions(-)
 
-> ofonod[2329]: Missing support for TUN/TAP devices
->
-> It seems you device doesn't support TUN/TAP. at_gprs_context_probe return=
- -ENODEV,
-> So it cause the gprs context driver is not set (ofono_gprs_context->drive=
-r is NULL).
->> Any suggestion ?
-> Remove TUN checking code, in drivers/atmodem/gprs-context.c:at_gprs_conte=
-xt_probe()
->
-> Hope it help.
+Patch has been applied with minor tweak to the commit message. Thanks!
 
-Thank you very much for feedback, I have checked the target kernel and
-support for TUN (CONFIG_TUN) it disabled.
+Cheers,
+Aki
 
-regs
-Claudio
-> Caiwen
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
-
-
---===============5044369952717769758==--
+--===============1832912632309619771==--
 
