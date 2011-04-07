@@ -1,173 +1,246 @@
-Content-Type: multipart/mixed; boundary="===============7336666406425223207=="
+Content-Type: multipart/mixed; boundary="===============6034283247769552614=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH v2 3/8] emulator: add RING for HFP AG
-Date: Thu, 07 Apr 2011 18:33:55 +0200
-Message-ID: <1302194040-18811-4-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH v2 2/8] emulator: add call, callsetup and callheld indicators
+Date: Thu, 07 Apr 2011 18:33:54 +0200
+Message-ID: <1302194040-18811-3-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1302194040-18811-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7336666406425223207==
+--===============6034283247769552614==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/emulator.c |   86 +++++++++++++++++++++++++++++++++++++++++++++++-----=
----
- 1 files changed, 73 insertions(+), 13 deletions(-)
+ src/emulator.c  |    5 ++
+ src/voicecall.c |  131 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 136 insertions(+), 0 deletions(-)
 
 diff --git a/src/emulator.c b/src/emulator.c
-index 2707592..f1ccfb3 100644
+index c84f0a9..2707592 100644
 --- a/src/emulator.c
 +++ b/src/emulator.c
-@@ -37,6 +37,8 @@
- #define DUN_DNS_SERVER_1       "10.10.10.10"
- #define DUN_DNS_SERVER_2       "10.10.10.11"
+@@ -455,6 +455,11 @@ void ofono_emulator_register(struct ofono_emulator *em=
+, int fd)
  =
 
-+#define RING_TIMEOUT 3
-+
- struct ofono_emulator {
- 	struct ofono_atom *atom;
- 	enum ofono_emulator_type type;
-@@ -49,6 +51,7 @@ struct ofono_emulator {
- 	int events_mode;
- 	gboolean events_ind;
- 	GSList *indicators;
-+	guint ring;
+ 	if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP) {
+ 		emulator_add_indicator(em, OFONO_EMULATOR_IND_SERVICE, 0, 1, 0);
++		emulator_add_indicator(em, OFONO_EMULATOR_IND_CALL, 0, 1, 0);
++		emulator_add_indicator(em, OFONO_EMULATOR_IND_CALLSETUP, 0, 3,
++									0);
++		emulator_add_indicator(em, OFONO_EMULATOR_IND_CALLHELD, 0, 2,
++									0);
+ 		emulator_add_indicator(em, OFONO_EMULATOR_IND_SIGNAL, 0, 5, 0);
+ 		emulator_add_indicator(em, OFONO_EMULATOR_IND_ROAMING, 0, 1, 0);
+ 		emulator_add_indicator(em, OFONO_EMULATOR_IND_BATTERY, 0, 5, 5);
+diff --git a/src/voicecall.c b/src/voicecall.c
+index 469b939..a3ea6de 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -59,6 +59,7 @@ struct ofono_voicecall {
+ 	struct dial_request *dial_req;
+ 	GQueue *toneq;
+ 	guint tone_source;
++	unsigned int hfp_watch;
  };
  =
 
- struct indicator {
-@@ -177,6 +180,42 @@ error:
- 	g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
+ struct voicecall {
+@@ -689,6 +690,107 @@ static void voicecall_emit_multiparty(struct voicecal=
+l *call, gboolean mpty)
+ 						&val);
  }
  =
 
-+static struct indicator *find_indicator(struct ofono_emulator *em,
-+						const char *name, int *index)
++static void emulator_call_status_cb(struct ofono_atom *atom, void *data)
 +{
++	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
++
++	ofono_emulator_set_indicator(em, OFONO_EMULATOR_IND_CALL,
++						GPOINTER_TO_INT(data));
++}
++
++static void emulator_callsetup_status_cb(struct ofono_atom *atom, void *da=
+ta)
++{
++	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
++
++	ofono_emulator_set_indicator(em, OFONO_EMULATOR_IND_CALLSETUP,
++						GPOINTER_TO_INT(data));
++}
++
++static void emulator_callheld_status_cb(struct ofono_atom *atom, void *dat=
+a)
++{
++	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
++
++	ofono_emulator_set_indicator(em, OFONO_EMULATOR_IND_CALLHELD,
++						GPOINTER_TO_INT(data));
++}
++
++static void notify_emulator_call_status(struct ofono_voicecall *vc)
++{
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
++	int status;
++	gboolean call =3D FALSE;
++	gboolean held =3D FALSE;
++	gboolean incoming =3D FALSE;
++	gboolean dialing =3D FALSE;
++	gboolean alerting =3D FALSE;
++	gboolean waiting =3D FALSE;
 +	GSList *l;
-+	int i;
++	struct voicecall *v;
 +
-+	for (i =3D 1, l =3D em->indicators; l; l =3D l->next, i++) {
-+		struct indicator *ind =3D l->data;
++	for (l =3D vc->call_list; l; l =3D l->next) {
++		v =3D l->data;
 +
-+		if (g_str_equal(ind->name, name) =3D=3D TRUE) {
-+			if (index)
-+				*index =3D i;
++		switch (v->call->status) {
++		case CALL_STATUS_ACTIVE:
++			call =3D TRUE;
++			break;
 +
-+			return ind;
++		case CALL_STATUS_HELD:
++			held =3D TRUE;
++			break;
++
++		case CALL_STATUS_DIALING:
++			dialing =3D TRUE;
++			break;
++
++		case CALL_STATUS_ALERTING:
++			alerting =3D TRUE;
++			break;
++
++		case CALL_STATUS_INCOMING:
++			incoming =3D TRUE;
++			break;
++
++		case CALL_STATUS_WAITING:
++			waiting =3D TRUE;
++			break;
 +		}
 +	}
 +
-+	return NULL;
++	status =3D call || held ? OFONO_EMULATOR_CALL_ACTIVE :
++					OFONO_EMULATOR_CALL_INACTIVE;
++
++	__ofono_modem_foreach_registered_atom(modem,
++						OFONO_ATOM_TYPE_EMULATOR_HFP,
++						emulator_call_status_cb,
++						GINT_TO_POINTER(status));
++
++	if (incoming || waiting)
++		status =3D OFONO_EMULATOR_CALLSETUP_INCOMING;
++	else if (dialing)
++		status =3D OFONO_EMULATOR_CALLSETUP_OUTGOING;
++	else if (alerting)
++		status =3D OFONO_EMULATOR_CALLSETUP_ALERTING;
++	else
++		status =3D OFONO_EMULATOR_CALLSETUP_INACTIVE;
++
++	__ofono_modem_foreach_registered_atom(modem,
++						OFONO_ATOM_TYPE_EMULATOR_HFP,
++						emulator_callsetup_status_cb,
++						GINT_TO_POINTER(status));
++
++	if (held)
++		status =3D call ? OFONO_EMULATOR_CALLHELD_MULTIPLE :
++					OFONO_EMULATOR_CALLHELD_ON_HOLD;
++	else
++		status =3D OFONO_EMULATOR_CALLHELD_NONE;
++
++	__ofono_modem_foreach_registered_atom(modem,
++						OFONO_ATOM_TYPE_EMULATOR_HFP,
++						emulator_callheld_status_cb,
++						GINT_TO_POINTER(status));
 +}
 +
-+static gboolean ring_cb(gpointer user_data)
-+{
-+	struct ofono_emulator *em =3D user_data;
-+	struct indicator *call_ind;
-+
-+	if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP && em->slc =3D=3D FALSE)
-+		return TRUE;
-+
-+	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
-+
-+	if (call_ind->value =3D=3D OFONO_EMULATOR_CALL_INACTIVE)
-+		g_at_server_send_unsolicited(em->server, "RING");
-+
-+	return TRUE;
-+}
-+
- static void brsf_cb(GAtServer *server, GAtServerRequestType type,
- 			GAtResult *result, gpointer user_data)
+ static void voicecall_set_call_status(struct voicecall *call, int status)
  {
-@@ -418,6 +457,11 @@ static void emulator_unregister(struct ofono_atom *ato=
-m)
- 		em->source =3D 0;
- 	}
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+@@ -711,6 +813,8 @@ static void voicecall_set_call_status(struct voicecall =
+*call, int status)
+ 						"State", DBUS_TYPE_STRING,
+ 						&status_str);
  =
 
-+	if (em->ring) {
-+		g_source_remove(em->ring);
-+		em->ring =3D 0;
-+	}
++	notify_emulator_call_status(call->vc);
 +
- 	for (l =3D em->indicators; l; l =3D l->next) {
- 		struct indicator *ind =3D l->data;
+ 	if (status =3D=3D CALL_STATUS_ACTIVE &&
+ 		(old_status =3D=3D CALL_STATUS_INCOMING ||
+ 			old_status =3D=3D CALL_STATUS_DIALING ||
+@@ -1040,6 +1144,8 @@ static void voicecalls_emit_call_added(struct ofono_v=
+oicecall *vc,
+ 	DBusMessageIter dict;
+ 	const char *path;
  =
 
-@@ -681,27 +725,43 @@ enum ofono_emulator_request_type ofono_emulator_reque=
-st_get_type(
- void ofono_emulator_set_indicator(struct ofono_emulator *em,
- 					const char *name, int value)
- {
--	GSList *l;
- 	int i;
- 	char buf[20];
-+	struct indicator *ind;
-+	struct indicator *call_ind;
- =
-
--	for (i =3D 1, l =3D em->indicators; l; l =3D l->next, i++) {
--		struct indicator *ind =3D l->data;
-+	ind =3D find_indicator(em, name, &i);
- =
-
--		if (g_str_equal(ind->name, name) =3D=3D FALSE)
--			continue;
-+	if (ind =3D=3D NULL || ind->value =3D=3D value || value < ind->min
-+			|| value > ind->max)
-+		return;
- =
-
--		if (ind->value =3D=3D value || value < ind->min
--					|| value > ind->max)
--			return;
-+	ind->value =3D value;
- =
-
--		ind->value =3D value;
-+	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
- =
-
--		if (em->events_mode =3D=3D 3 && em->events_ind && em->slc) {
--			sprintf(buf, "+CIEV: %d,%d", i, ind->value);
--			g_at_server_send_info(em->server, buf, TRUE);
--		}
-+	if (em->events_mode =3D=3D 3 && em->events_ind && em->slc) {
-+		sprintf(buf, "+CIEV: %d,%d", i, ind->value);
-+		g_at_server_send_info(em->server, buf, TRUE);
-+	}
- =
-
-+	/*
-+	 * Ring timer should be started when callsetup indicator is set to
-+	 *   Incoming
-+	 * If there is no active call, a first RING should be sent just after
-+	 *   the +CIEV
-+	 * It should be stopped for all other values of callsetup
-+	 */
-+	if (g_str_equal(name, OFONO_EMULATOR_IND_CALLSETUP) =3D=3D FALSE)
- 		return;
++	notify_emulator_call_status(vc);
 +
-+	if (value =3D=3D OFONO_EMULATOR_CALLSETUP_INCOMING && em->ring =3D=3D 0) {
-+		if (call_ind->value =3D=3D OFONO_EMULATOR_CALL_INACTIVE)
-+			ring_cb(em);
+ 	path =3D __ofono_atom_get_path(vc->atom);
+ =
+
+ 	signal =3D dbus_message_new_signal(path,
+@@ -2203,6 +2309,19 @@ static void voicecall_unregister(struct ofono_atom *=
+atom)
+ 	const char *path =3D __ofono_atom_get_path(atom);
+ 	GSList *l;
+ =
+
++	__ofono_modem_foreach_registered_atom(modem,
++						OFONO_ATOM_TYPE_EMULATOR_HFP,
++						emulator_call_status_cb, 0);
++	__ofono_modem_foreach_registered_atom(modem,
++						OFONO_ATOM_TYPE_EMULATOR_HFP,
++						emulator_callsetup_status_cb,
++						0);
++	__ofono_modem_foreach_registered_atom(modem,
++						OFONO_ATOM_TYPE_EMULATOR_HFP,
++						emulator_callheld_status_cb, 0);
 +
-+		em->ring =3D g_timeout_add_seconds(RING_TIMEOUT, ring_cb, em);
-+	} else if (value !=3D OFONO_EMULATOR_CALLSETUP_INCOMING && em->ring) {
-+		g_source_remove(em->ring);
-+		em->ring =3D 0;
- 	}
++	__ofono_modem_remove_atom_watch(modem, vc->hfp_watch);
++
+ 	if (vc->sim_watch) {
+ 		__ofono_modem_remove_atom_watch(modem, vc->sim_watch);
+ 		vc->sim_watch =3D 0;
+@@ -2378,6 +2497,14 @@ static void sim_watch(struct ofono_atom *atom,
+ 	sim_state_watch(ofono_sim_get_state(sim), vc);
  }
+ =
+
++static void emulator_hfp_watch(struct ofono_atom *atom,
++				enum ofono_atom_watch_condition cond,
++				void *data)
++{
++	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_REGISTERED)
++		notify_emulator_call_status(data);
++}
++
+ void ofono_voicecall_register(struct ofono_voicecall *vc)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+@@ -2408,6 +2535,10 @@ void ofono_voicecall_register(struct ofono_voicecall=
+ *vc)
+ 						sim_watch, vc, NULL);
+ =
+
+ 	__ofono_atom_register(vc->atom, voicecall_unregister);
++
++	vc->hfp_watch =3D __ofono_modem_add_atom_watch(modem,
++					OFONO_ATOM_TYPE_EMULATOR_HFP,
++					emulator_hfp_watch, vc, NULL);
+ }
+ =
+
+ void ofono_voicecall_remove(struct ofono_voicecall *vc)
 -- =
 
 1.7.1
 
 
---===============7336666406425223207==--
+--===============6034283247769552614==--
 
