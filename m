@@ -1,39 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============3873955279248915353=="
+Content-Type: multipart/mixed; boundary="===============6385063330872289336=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: Qualcomm Gobi 2000 Modem Issues
-Date: Thu, 07 Apr 2011 16:42:35 +0100
-Message-ID: <A782C372B9527D44AB20BF45FEEBB14F75BFED041B@irsmsx503.ger.corp.intel.com>
-In-Reply-To: <BANLkTimhdWZCh-BFhs5OLRUyVreU6ufJPA@mail.gmail.com>
+From: Soum, RedouaneX <redouanex.soum@intel.com>
+Subject: RE: [RFC PATCH v3] gprs: add function to handle activated context
+Date: Thu, 07 Apr 2011 16:47:55 +0100
+Message-ID: <8281606748F03E4390BB98A3F47F2E948B3B116BE6@irsmsx501.ger.corp.intel.com>
+In-Reply-To: <4D9DB0CF.80800@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3873955279248915353==
+--===============6385063330872289336==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
->test/activate-context
->Error activating /gobi0/context1: org.ofono.Error.NotImplemented:
->Implementation not provided
 >
->If you could give me a little assisting on where to look, maybe I
->would be able to contribute patches, too.
+>So the spec says, ME PDN ACT can come even for an implicit context
+>activation request associated with CGATT, which is the case with EPS.
+>
+>For 3G, if this happens (ME PDN ACT) for UE initiated activation of
+>context, then the cid is already set with CGDCONT.
+>
+>For EPS this can happen for default context, where cid is not set with
+>CGDCONT, but is in the range as returned by CGDCONT.
+>
+>Here the cid issue, because cid is managed by ofono and is never
+>communicated to modem.  Probably to avoid sending too many CGDCONT's
+>during startup. or is it something else?
+>
+>I thought the default context activation will come to TE as NW ACT, with
+>a cid not in range of CGDCONT.
+>
 
-This second issue looks like an issue reported a couple of days ago.
+Exactly so the idea to avoid any issue was to call ofono_gprs_set_cid_range=
+ from the driver with a range which doesn't include the CID used for initia=
+l EPS context.
+Normaly we know from the modem vendor which CID will be used for the initia=
+l EPS context.
 
-Can you please check in oFono logs if there is not something like this:
+For instance if +CGDSCONT=3D? Is returning 1-25 as range then we call  ofon=
+o_gprs_set_cid_range with 2-25 as range assuming that CID 1 will be used fo=
+r the initial EPS context.
 
-ofonod[2329]: drivers/atmodem/gprs-context.c:at_gprs_context_probe()
-ofonod[2329]: Missing support for TUN/TAP devices
-
-And if so, it means that your kernel doesn't have support for TUN enabled.
-
-Regards,
-
-Bertrand.
+Redouane.
 ---------------------------------------------------------------------
 Intel Corporation SAS (French simplified joint stock company)
 Registered headquarters: "Les Montalets"- 2, rue de Paris, =
@@ -48,5 +58,5 @@ by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
 
---===============3873955279248915353==--
+--===============6385063330872289336==--
 
