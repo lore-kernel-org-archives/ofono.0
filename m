@@ -1,194 +1,190 @@
-Content-Type: multipart/mixed; boundary="===============3975129980084911713=="
+Content-Type: multipart/mixed; boundary="===============0092070590733498774=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH v2 7/8] voicecall: add +CHUP support for HFP emulator
-Date: Thu, 07 Apr 2011 18:33:59 +0200
-Message-ID: <1302194040-18811-8-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH v2 8/8] emulator: add +CCWA support for HFP AG
+Date: Thu, 07 Apr 2011 18:34:00 +0200
+Message-ID: <1302194040-18811-9-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1302194040-18811-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3975129980084911713==
+--===============0092070590733498774==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/voicecall.c |  108 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 108 insertions(+), 0 deletions(-)
+ src/emulator.c |   83 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 files changed, 82 insertions(+), 1 deletions(-)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index cf02bb6..8aec0a0 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -60,6 +60,7 @@ struct ofono_voicecall {
- 	GQueue *toneq;
- 	guint tone_source;
- 	unsigned int hfp_watch;
-+	GSList *hfp_release_list;
+diff --git a/src/emulator.c b/src/emulator.c
+index 7559d07..00588b5 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -60,6 +60,7 @@ struct ofono_emulator {
+ 	 * + phone type on 3 digits max + terminating null
+ 	 */
+ 	char incoming_str[OFONO_MAX_PHONE_NUMBER_LENGTH + 14 + 1];
++	gboolean ccwa;
  };
  =
 
- struct voicecall {
-@@ -95,6 +96,11 @@ struct tone_queue_entry {
- 	int id;
- };
+ struct indicator {
+@@ -208,6 +209,28 @@ static struct indicator *find_indicator(struct ofono_e=
+mulator *em,
+ 	return NULL;
+ }
  =
 
-+struct emulator_release {
-+	struct ofono_voicecall *vc;
-+	struct ofono_emulator *em;
-+};
++static void notify_ccwa(struct ofono_emulator *em)
++{
++	const char *phone;
 +
- static const char *default_en_list[] =3D { "911", "112", NULL };
- static const char *default_en_list_no_sim[] =3D { "119", "118", "999", "11=
-0",
- 						"08", "000", NULL };
-@@ -102,6 +108,7 @@ static const char *default_en_list_no_sim[] =3D { "119"=
-, "118", "999", "110",
- static void generic_callback(const struct ofono_error *error, void *data);
- static void multirelease_callback(const struct ofono_error *err, void *dat=
-a);
- static gboolean tone_request_run(gpointer user_data);
-+static void emulator_release_next(struct emulator_release *er);
- =
-
- static gint call_compare_by_id(gconstpointer a, gconstpointer b)
++	if (em->incoming &&
++			em->incoming->clip_validity =3D=3D CLIP_VALIDITY_VALID &&
++			em->incoming_str[0] =3D=3D '\0') {
++		phone =3D phone_number_to_string(&em->incoming->phone_number);
++		sprintf(em->incoming_str, "+CCWA: \"%s\",%d", phone,
++				em->incoming->phone_number.type);
++	}
++
++	if (em->ccwa) {
++		if (em->incoming_str[0] =3D=3D '\0')
++			g_at_server_send_unsolicited(em->server,
++							"+CCWA: \"\",128");
++		else
++			g_at_server_send_unsolicited(em->server,
++							em->incoming_str);
++	}
++}
++
+ static void notify_ring(struct ofono_emulator *em)
  {
-@@ -2344,6 +2351,10 @@ static void voicecall_unregister(struct ofono_atom *=
-atom)
- 						OFONO_ATOM_TYPE_EMULATOR_HFP,
- 						emulator_remove_handler,
- 						"A");
-+	__ofono_modem_foreach_registered_atom(modem,
-+						OFONO_ATOM_TYPE_EMULATOR_HFP,
-+						emulator_remove_handler,
-+						"+CHUP");
+ 	const char *phone;
+@@ -238,6 +261,8 @@ static gboolean ring_cb(gpointer user_data)
  =
 
- 	__ofono_modem_remove_atom_watch(modem, vc->hfp_watch);
+ 	if (call_ind->value =3D=3D OFONO_EMULATOR_CALL_INACTIVE)
+ 		notify_ring(em);
++	else
++		notify_ccwa(em);
  =
 
-@@ -2558,6 +2569,102 @@ fail:
+ 	return TRUE;
+ }
+@@ -488,6 +513,42 @@ fail:
  	};
  }
  =
 
-+static void emulator_multirelease_callback(const struct ofono_error *error,
-+						void *data)
++static void ccwa_cb(GAtServer *server, GAtServerRequestType type,
++			GAtResult *result, gpointer user_data)
 +{
-+	struct emulator_release *er =3D data;
-+	struct ofono_voicecall *vc =3D er->vc;
++	struct ofono_emulator *em =3D user_data;
++	GAtResultIter iter;
++	int val;
 +
-+	if (vc->hfp_release_list !=3D NULL) {
-+		emulator_release_next(er);
-+		return;
-+	}
++	if (em->slc =3D=3D FALSE)
++		goto fail;
 +
-+	emulator_generic_cb(error, er->em);
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "");
 +
-+	g_free(er);
-+}
-+
-+static void emulator_release_next(struct emulator_release *er)
-+{
-+	struct ofono_voicecall *vc;
-+	struct voicecall *call;
-+
-+	vc =3D er->vc;
-+
-+	call =3D vc->hfp_release_list->data;
-+
-+	vc->hfp_release_list =3D g_slist_remove(vc->hfp_release_list, call);
-+
-+	vc->driver->release_specific(vc, call->call->id,
-+				emulator_multirelease_callback, er);
-+}
-+
-+static void emulator_chup_cb(struct ofono_emulator *em,
-+			struct ofono_emulator_request *req, void *userdata)
-+{
-+	struct ofono_voicecall *vc =3D userdata;
-+	struct ofono_error result;
-+	struct emulator_release *er;
-+	GSList *l;
-+	struct voicecall *call;
-+
-+	result.error =3D 0;
-+
-+	switch (ofono_emulator_request_get_type(req)) {
-+	case OFONO_EMULATOR_REQUEST_TYPE_COMMAND_ONLY:
-+		if (vc->driver->release_specific =3D=3D NULL &&
-+				vc->driver->hangup_active =3D=3D NULL)
++		if (!g_at_result_iter_next_number(&iter, &val))
 +			goto fail;
 +
-+		if (vc->driver->hangup_active) {
-+			vc->driver->hangup_active(vc, emulator_generic_cb, em);
-+			goto done;
-+		}
-+
-+		/* if there is already a CHUP pending we return an error */
-+		if (vc->hfp_release_list)
++		if (val !=3D 0 && val !=3D 1)
 +			goto fail;
 +
-+		er =3D g_try_new0(struct emulator_release, 1);
-+		if (er =3D=3D NULL) {
-+			ofono_error("Unable to allocate release structure");
++		/* check this is last parameter */
++		if (g_at_result_iter_skip_next(&iter))
 +			goto fail;
-+		}
 +
-+		er->vc =3D vc;
-+		er->em =3D em;
++		em->ccwa =3D val;
 +
-+		for (l =3D vc->call_list; l; l =3D l->next) {
-+			call =3D l->data;
-+
-+			if (call->call->status =3D=3D CALL_STATUS_WAITING ||
-+					call->call->status =3D=3D CALL_STATUS_HELD)
-+				continue;
-+
-+			vc->hfp_release_list =3D g_slist_prepend(
-+						vc->hfp_release_list,
-+						l->data);
-+		}
-+
-+		if (vc->hfp_release_list =3D=3D NULL) {
-+			g_free(er);
-+			goto fail;
-+		}
-+
-+		emulator_release_next(er);
-+
-+done:
-+		dial_request_user_cancel(vc, NULL);
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
 +		break;
 +
 +	default:
 +fail:
-+		result.type =3D OFONO_ERROR_TYPE_FAILURE;
-+		ofono_emulator_send_final(em, &result);
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
 +	};
 +}
 +
- static void emulator_hfp_watch(struct ofono_atom *atom,
- 				enum ofono_atom_watch_condition cond,
- 				void *data)
-@@ -2570,6 +2677,7 @@ static void emulator_hfp_watch(struct ofono_atom *ato=
-m,
- 	notify_emulator_call_status(data);
+ static void emulator_add_indicator(struct ofono_emulator *em, const char* =
+name,
+ 					int min, int max, int dflt)
+ {
+@@ -574,6 +635,7 @@ void ofono_emulator_register(struct ofono_emulator *em,=
+ int fd)
+ 		g_at_server_register(em->server, "+CIND", cind_cb, em, NULL);
+ 		g_at_server_register(em->server, "+CMER", cmer_cb, em, NULL);
+ 		g_at_server_register(em->server, "+CLIP", clip_cb, em, NULL);
++		g_at_server_register(em->server, "+CCWA", ccwa_cb, em, NULL);
+ 	}
  =
 
- 	ofono_emulator_add_handler(em, "A", emulator_ata_cb, data, NULL);
-+	ofono_emulator_add_handler(em, "+CHUP", emulator_chup_cb, data, NULL);
- }
+ 	__ofono_atom_register(em->atom, emulator_unregister);
+@@ -793,6 +855,7 @@ void ofono_emulator_set_indicator(struct ofono_emulator=
+ *em,
+ 	char buf[20];
+ 	struct indicator *ind;
+ 	struct indicator *call_ind;
++	gboolean callsetup;
  =
 
- void ofono_voicecall_register(struct ofono_voicecall *vc)
+ 	ind =3D find_indicator(em, name, &i);
+ =
+
+@@ -802,8 +865,26 @@ void ofono_emulator_set_indicator(struct ofono_emulato=
+r *em,
+ =
+
+ 	ind->value =3D value;
+ =
+
++	/*
++	 * When call indicator goes to inactive, force to re-generate
++	 * incoming call (+CLIP or +CCWA) string
++	 */
++	if (g_str_equal(name, OFONO_EMULATOR_IND_CALL) =3D=3D TRUE &&
++			value =3D=3D OFONO_EMULATOR_CALL_INACTIVE)
++		em->incoming_str[0] =3D '\0';
++
+ 	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
+ =
+
++	callsetup =3D g_str_equal(name, OFONO_EMULATOR_IND_CALLSETUP);
++
++	/*
++	 * When callsetup indicator goes to Incoming and there is an active call
++	 * a +CCWA should be sent before +CIEV
++	 */
++	if (callsetup && value =3D=3D OFONO_EMULATOR_CALLSETUP_INCOMING &&
++			call_ind->value =3D=3D OFONO_EMULATOR_CALL_ACTIVE)
++		ring_cb(em);
++
+ 	if (em->events_mode =3D=3D 3 && em->events_ind && em->slc) {
+ 		sprintf(buf, "+CIEV: %d,%d", i, ind->value);
+ 		g_at_server_send_info(em->server, buf, TRUE);
+@@ -816,7 +897,7 @@ void ofono_emulator_set_indicator(struct ofono_emulator=
+ *em,
+ 	 *   the +CIEV
+ 	 * It should be stopped for all other values of callsetup
+ 	 */
+-	if (g_str_equal(name, OFONO_EMULATOR_IND_CALLSETUP) =3D=3D FALSE)
++	if (!callsetup)
+ 		return;
+ =
+
+ 	if (value =3D=3D OFONO_EMULATOR_CALLSETUP_INCOMING && em->ring =3D=3D 0) {
 -- =
 
 1.7.1
 
 
---===============3975129980084911713==--
+--===============0092070590733498774==--
 
