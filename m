@@ -1,78 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============2779558709481683081=="
+Content-Type: multipart/mixed; boundary="===============3873955279248915353=="
 MIME-Version: 1.0
-From: Kai Scharwies <kai@scharwies.de>
-Subject: Qualcomm Gobi 2000 Modem Issues
-Date: Thu, 07 Apr 2011 17:37:47 +0200
-Message-ID: <BANLkTimhdWZCh-BFhs5OLRUyVreU6ufJPA@mail.gmail.com>
+From: Aygon, Bertrand <bertrand.aygon@intel.com>
+Subject: RE: Qualcomm Gobi 2000 Modem Issues
+Date: Thu, 07 Apr 2011 16:42:35 +0100
+Message-ID: <A782C372B9527D44AB20BF45FEEBB14F75BFED041B@irsmsx503.ger.corp.intel.com>
+In-Reply-To: <BANLkTimhdWZCh-BFhs5OLRUyVreU6ufJPA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2779558709481683081==
+--===============3873955279248915353==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi everyone.
+Hi,
 
-I ran into two issues trying to setup a data connection with a Gobi 2000 ca=
-rd.
-The first one seems to be an error regarding simcard onlocking. After
-enabling the modem test/list-modems shows the following, despite the
-simcard is inserted correctly:
+>test/activate-context
+>Error activating /gobi0/context1: org.ofono.Error.NotImplemented:
+>Implementation not provided
+>
+>If you could give me a little assisting on where to look, maybe I
+>would be able to contribute patches, too.
 
-[ /gobi0 ]
-    Features =3D sim
-    Emergency =3D 0
-    Powered =3D 1
-    Lockdown =3D 0
-    Interfaces =3D org.ofono.SimManager
-    Online =3D 0
-    Model =3D Qualcomm Gobi 2000
-    Revision =3D D1025-STUTABGD-3600  1  [Jan 14 2010 14:00:00]
-    Serial =3D 353093033460401
-    Manufacturer =3D Qualcomm Incorporated
-    [ org.ofono.SimManager ]
-        Present =3D 0
+This second issue looks like an issue reported a couple of days ago.
 
-Our current workaround is quitting ofono and using minicom to unlock
-the sim directly, then restarting ofono.
-> at+cpin?
-+CPIN: SIM PIN
-OK
+Can you please check in oFono logs if there is not something like this:
 
-> at+cpin=3D"1234"
-OK
-$QCSIMSTAT: 1 SIM INIT COMPLETED
+ofonod[2329]: drivers/atmodem/gprs-context.c:at_gprs_context_probe()
+ofonod[2329]: Missing support for TUN/TAP devices
 
-The second issue is not being able to activate an internet context:
-(Network registration and attachment is alright)
+And if so, it means that your kernel doesn't have support for TUN enabled.
 
-test/enable-modem
-Connecting modem /gobi0...
-test/online-modem
-Setting modem /gobi0 online...
-test/list-contexts
-[ /gobi0 ]
-    [ /gobi0/context1 ]
-        Username =3D
-        Protocol =3D ip
-        Name =3D Internet
-        Settings =3D { }
-        IPv6.Settings =3D { }
-        Active =3D 0
-        AccessPointName =3D internet.t-mobile
-        Password =3D
-        Type =3D internet
+Regards,
 
-test/activate-context
-Error activating /gobi0/context1: org.ofono.Error.NotImplemented:
-Implementation not provided
+Bertrand.
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-If you could give me a little assisting on where to look, maybe I
-would be able to contribute patches, too.
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
-Best regards,
-Kai
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
---===============2779558709481683081==--
+
+--===============3873955279248915353==--
 
