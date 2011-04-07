@@ -1,89 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============1505534603329529886=="
+Content-Type: multipart/mixed; boundary="===============2779558709481683081=="
 MIME-Version: 1.0
-From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
-Subject: Re: [RFC PATCH v3] gprs: add function to handle activated context
-Date: Thu, 07 Apr 2011 15:40:47 +0300
-Message-ID: <4D9DB0CF.80800@nokia.com>
-In-Reply-To: <8281606748F03E4390BB98A3F47F2E948B3B0AAF92@irsmsx501.ger.corp.intel.com>
+From: Kai Scharwies <kai@scharwies.de>
+Subject: Qualcomm Gobi 2000 Modem Issues
+Date: Thu, 07 Apr 2011 17:37:47 +0200
+Message-ID: <BANLkTimhdWZCh-BFhs5OLRUyVreU6ufJPA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1505534603329529886==
+--===============2779558709481683081==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Redouane,
+Hi everyone.
 
->>> the network. The mobile sends a piggybacked
->>> PDN CONNECTIVITY REQUEST with the initial attach request in order to
->>> initiate the initial EPS context.
->>>
->> How does this happen from oFono (or in the TE-MT Interface).
-> The problem is, the initial EPS context is initiated by mobile, not by
-> It's triggered by AT+CGATT=3D1 (or AT+CFUN=3D1 if we have auto attach ena=
-bled).
->> Does it mean that in for EPS context the TE will have to do the same
->> steps what it does for GPRS?
-> For the EPS context (non initial) yes.
->
-> For the initial EPS context we don't use AT+CGACT and CGDCONT.
->> the PDN CONNECTIVITY REQUEST has the APN name, and for TE, CGDCONT to
->> set the APN is called with a context id, in that case what is the need
->> for the cid handling done in this patch?
->  From 24.301:
->
-> In order to request connectivity to a PDN using the default APN, the UE i=
-ncludes the Access point name IE in the PDN CONNECTIVITY REQUEST message or=
-, when applicable, in the ESM INFORMATION RESPONSE message, according to th=
-e following conditions:
-> -    if use of a PDN using the default APN requires PAP/CHAP, then the UE=
- should include the Access point name IE; and
-> -    in all other conditions, the UE need not include the Access point na=
-me IE.
-> ----
->
-> For the initial EPS context the UE may have to provide the APN in some ca=
-ses. From 27007 we don't have an at command such as AT+CGCONT to specify th=
-e parameter that'll be used for the initial EPS context (like APN).
->
-> Regarding the patch, In 3G when you get the following unsolicited  "ME PD=
-N ACT X" (where X is the CID, see +CGEREP) it's because you activated a con=
-text (AT+CGACT).
-> In this case you already specified the CID with AT+CDCONT before AT+CGACT.
->
-> In LTE you can get this event in two cases; after the attach procedure (A=
-T+CGATT) and in this case you don't know the CID before, or after AT+CGDCON=
-T and AT+CGACT as in 3G.
->
+I ran into two issues trying to setup a data connection with a Gobi 2000 ca=
+rd.
+The first one seems to be an error regarding simcard onlocking. After
+enabling the modem test/list-modems shows the following, despite the
+simcard is inserted correctly:
 
-So the spec says, ME PDN ACT can come even for an implicit context =
+[ /gobi0 ]
+    Features =3D sim
+    Emergency =3D 0
+    Powered =3D 1
+    Lockdown =3D 0
+    Interfaces =3D org.ofono.SimManager
+    Online =3D 0
+    Model =3D Qualcomm Gobi 2000
+    Revision =3D D1025-STUTABGD-3600  1  [Jan 14 2010 14:00:00]
+    Serial =3D 353093033460401
+    Manufacturer =3D Qualcomm Incorporated
+    [ org.ofono.SimManager ]
+        Present =3D 0
 
-activation request associated with CGATT, which is the case with EPS.
+Our current workaround is quitting ofono and using minicom to unlock
+the sim directly, then restarting ofono.
+> at+cpin?
++CPIN: SIM PIN
+OK
 
-For 3G, if this happens (ME PDN ACT) for UE initiated activation of =
+> at+cpin=3D"1234"
+OK
+$QCSIMSTAT: 1 SIM INIT COMPLETED
 
-context, then the cid is already set with CGDCONT.
+The second issue is not being able to activate an internet context:
+(Network registration and attachment is alright)
 
-For EPS this can happen for default context, where cid is not set with =
+test/enable-modem
+Connecting modem /gobi0...
+test/online-modem
+Setting modem /gobi0 online...
+test/list-contexts
+[ /gobi0 ]
+    [ /gobi0/context1 ]
+        Username =3D
+        Protocol =3D ip
+        Name =3D Internet
+        Settings =3D { }
+        IPv6.Settings =3D { }
+        Active =3D 0
+        AccessPointName =3D internet.t-mobile
+        Password =3D
+        Type =3D internet
 
-CGDCONT, but is in the range as returned by CGDCONT.
+test/activate-context
+Error activating /gobi0/context1: org.ofono.Error.NotImplemented:
+Implementation not provided
 
-Here the cid issue, because cid is managed by ofono and is never =
+If you could give me a little assisting on where to look, maybe I
+would be able to contribute patches, too.
 
-communicated to modem.  Probably to avoid sending too many CGDCONT's =
+Best regards,
+Kai
 
-during startup. or is it something else?
-
-I thought the default context activation will come to TE as NW ACT, with =
-
-a cid not in range of CGDCONT.
-
-
-regards
-Arun
-
-
-
---===============1505534603329529886==--
+--===============2779558709481683081==--
 
