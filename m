@@ -1,62 +1,98 @@
-Content-Type: multipart/mixed; boundary="===============6385063330872289336=="
+Content-Type: multipart/mixed; boundary="===============3229029502442039140=="
 MIME-Version: 1.0
-From: Soum, RedouaneX <redouanex.soum@intel.com>
-Subject: RE: [RFC PATCH v3] gprs: add function to handle activated context
-Date: Thu, 07 Apr 2011 16:47:55 +0100
-Message-ID: <8281606748F03E4390BB98A3F47F2E948B3B116BE6@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <4D9DB0CF.80800@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Qualcomm Gobi 2000 Modem Issues
+Date: Thu, 07 Apr 2011 08:52:16 -0700
+Message-ID: <1302191536.2572.180.camel@aeonflux>
+In-Reply-To: <BANLkTimhdWZCh-BFhs5OLRUyVreU6ufJPA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6385063330872289336==
+--===============3229029502442039140==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Kai,
 
->
->So the spec says, ME PDN ACT can come even for an implicit context
->activation request associated with CGATT, which is the case with EPS.
->
->For 3G, if this happens (ME PDN ACT) for UE initiated activation of
->context, then the cid is already set with CGDCONT.
->
->For EPS this can happen for default context, where cid is not set with
->CGDCONT, but is in the range as returned by CGDCONT.
->
->Here the cid issue, because cid is managed by ofono and is never
->communicated to modem.  Probably to avoid sending too many CGDCONT's
->during startup. or is it something else?
->
->I thought the default context activation will come to TE as NW ACT, with
->a cid not in range of CGDCONT.
->
+> I ran into two issues trying to setup a data connection with a Gobi 2000 =
+card.
+> The first one seems to be an error regarding simcard onlocking. After
+> enabling the modem test/list-modems shows the following, despite the
+> simcard is inserted correctly:
+> =
 
-Exactly so the idea to avoid any issue was to call ofono_gprs_set_cid_range=
- from the driver with a range which doesn't include the CID used for initia=
-l EPS context.
-Normaly we know from the modem vendor which CID will be used for the initia=
-l EPS context.
+> [ /gobi0 ]
+>     Features =3D sim
+>     Emergency =3D 0
+>     Powered =3D 1
+>     Lockdown =3D 0
+>     Interfaces =3D org.ofono.SimManager
+>     Online =3D 0
+>     Model =3D Qualcomm Gobi 2000
+>     Revision =3D D1025-STUTABGD-3600  1  [Jan 14 2010 14:00:00]
+>     Serial =3D 353093033460401
+>     Manufacturer =3D Qualcomm Incorporated
+>     [ org.ofono.SimManager ]
+>         Present =3D 0
+> =
 
-For instance if +CGDSCONT=3D? Is returning 1-25 as range then we call  ofon=
-o_gprs_set_cid_range with 2-25 as range assuming that CID 1 will be used fo=
-r the initial EPS context.
+> Our current workaround is quitting ofono and using minicom to unlock
+> the sim directly, then restarting ofono.
+> > at+cpin?
+> +CPIN: SIM PIN
+> OK
+> =
 
-Redouane.
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+> > at+cpin=3D"1234"
+> OK
+> $QCSIMSTAT: 1 SIM INIT COMPLETED
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+this is weird since the PIN unlocking should just work fine. Have you
+tried to use the test/enter-pin script?
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+> The second issue is not being able to activate an internet context:
+> (Network registration and attachment is alright)
+> =
+
+> test/enable-modem
+> Connecting modem /gobi0...
+> test/online-modem
+> Setting modem /gobi0 online...
+> test/list-contexts
+> [ /gobi0 ]
+>     [ /gobi0/context1 ]
+>         Username =3D
+>         Protocol =3D ip
+>         Name =3D Internet
+>         Settings =3D { }
+>         IPv6.Settings =3D { }
+>         Active =3D 0
+>         AccessPointName =3D internet.t-mobile
+>         Password =3D
+>         Type =3D internet
+> =
+
+> test/activate-context
+> Error activating /gobi0/context1: org.ofono.Error.NotImplemented:
+> Implementation not provided
+> =
+
+> If you could give me a little assisting on where to look, maybe I
+> would be able to contribute patches, too.
+
+Of course this does not work. Check doc/hardware-support.txt for
+supported modem and supported capabilities.
+
+Until Qualcomm gives us the chance to implement QMI properly, we are a
+bit out of luck with just one AT command channel. You need at least two
+AT command channel to run oFono properly.
+
+Regards
+
+Marcel
 
 
---===============6385063330872289336==--
+
+--===============3229029502442039140==--
 
