@@ -1,38 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============4435251973684300941=="
+Content-Type: multipart/mixed; boundary="===============4087196633104882466=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH v2 0/8] emulator: add simple incoming call support
-Date: Thu, 07 Apr 2011 18:39:06 +0200
-Message-ID: <1302194346-19182-1-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1302194040-18811-1-git-send-email-frederic.danis@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v4 0/4] Support of Network / Modem updated emergency
+ numbers
+Date: Thu, 07 Apr 2011 22:20:14 -0500
+Message-ID: <4D9E7EEE.7040300@gmail.com>
+In-Reply-To: <1302100003-5488-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4435251973684300941==
+--===============4087196633104882466==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add call related indicators, +CLIP, +CCWA, RING to signal incoming call,
-ATA to allow reception and AT+CHUP to reject or finish
-of an incoming call in HFP AG
+Hi Jeevaka,
 
-Fr=C3=A9d=C3=A9ric Danis (8):
-  emulator: add defines for call, callsetup and callheld indicators
-  emulator: add call, callsetup and callheld indicators
-  emulator: add RING for HFP AG
-  emulator: add incoming call API
-  emulator: add +CLIP support for HFP AG
-  voicecall: add ATA support for HFP emulator
-  voicecall: add +CHUP support for HFP emulator
-  emulator: add +CCWA support for HFP AG
+On 04/06/2011 09:26 AM, Jeevaka Badrappan wrote:
+> Hi,
+> =
 
- include/emulator.h |   15 +++
- src/emulator.c     |  244 +++++++++++++++++++++++++++++++++++++++---
- src/voicecall.c    |  306 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 3 files changed, 552 insertions(+), 13 deletions(-)
+>  Following set of patch adds the support for emergency number list update
+> from the network/modem in the oFono core.
+> =
+
+> Regards,
+> Jeevaka
+> =
 
 
---===============4435251973684300941==--
+I applied all of the patches in this series, but did split patch 2 into
+two commits.  Thanks for that.
+
+I also did some minor refactoring after the fact to take care of some
+really corner cases.  Can you please review and make sure I didn't screw
+anything up.
+
+I believe this should complete emergency call related tasks.  Can we
+make sure to test this really well in the coming weeks?
+
+Regards,
+-Denis
+
+--===============4087196633104882466==--
 
