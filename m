@@ -1,160 +1,122 @@
-Content-Type: multipart/mixed; boundary="===============4307825613403142912=="
+Content-Type: multipart/mixed; boundary="===============3204648155162714958=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Qualcomm Gobi 2000 Modem Issues
-Date: Fri, 08 Apr 2011 06:47:43 -0700
-Message-ID: <1302270463.2572.185.camel@aeonflux>
-In-Reply-To: <BANLkTi=46H305-EY_yWj_iVsFYupn-JtBQ@mail.gmail.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH 1/6] stkagent: Add ConfirmOpenChannel method
+Date: Fri, 08 Apr 2011 18:33:26 +0200
+Message-ID: <1302280411-20762-1-git-send-email-philippe.nunes@linux.intel.com>
+In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4307825613403142912==
+--===============3204648155162714958==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kai,
+---
+ src/stkagent.c |   67 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/stkagent.h |    7 ++++++
+ 2 files changed, 74 insertions(+), 0 deletions(-)
 
-> >> I ran into two issues trying to setup a data connection with a Gobi 20=
-00 card.
-> >> The first one seems to be an error regarding simcard onlocking. After
-> >> enabling the modem test/list-modems shows the following, despite the
-> >> simcard is inserted correctly:
-> >>
-> >> [ /gobi0 ]
-> >>     Features =3D sim
-> >>     Emergency =3D 0
-> >>     Powered =3D 1
-> >>     Lockdown =3D 0
-> >>     Interfaces =3D org.ofono.SimManager
-> >>     Online =3D 0
-> >>     Model =3D Qualcomm Gobi 2000
-> >>     Revision =3D D1025-STUTABGD-3600  1  [Jan 14 2010 14:00:00]
-> >>     Serial =3D 353093033460401
-> >>     Manufacturer =3D Qualcomm Incorporated
-> >>     [ org.ofono.SimManager ]
-> >>         Present =3D 0
-> >>
-> >> Our current workaround is quitting ofono and using minicom to unlock
-> >> the sim directly, then restarting ofono.
-> >> > at+cpin?
-> >> +CPIN: SIM PIN
-> >> OK
-> >>
-> >> > at+cpin=3D"1234"
-> >> OK
-> >> $QCSIMSTAT: 1 SIM INIT COMPLETED
-> >
-> > this is weird since the PIN unlocking should just work fine. Have you
-> > tried to use the test/enter-pin script?
-> =
+diff --git a/src/stkagent.c b/src/stkagent.c
+index 220812e..1a4bdd8 100644
+--- a/src/stkagent.c
++++ b/src/stkagent.c
+@@ -1145,3 +1145,70 @@ int stk_agent_display_action(struct stk_agent *agent,
+ =
 
-> Yes, I tried the enter-pin script. Using it without the optional PATH
-> this is the error:
-> dbus.exceptions.DBusException: org.ofono.Error.InvalidFormat: Argument
-> format is not recognized
-> =
+ 	return 0;
+ }
++
++static void confirm_open_channel_cb(DBusPendingCall *call, void *data)
++{
++	struct stk_agent *agent =3D data;
++	stk_agent_confirmation_cb cb =3D agent->user_cb;
++	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
++	enum stk_agent_result result;
++	gboolean remove_agent;
++	dbus_bool_t confirm;
++
++	if (check_error(agent, reply,
++			ALLOWED_ERROR_TERMINATE, &result) =3D=3D -EINVAL) {
++		remove_agent =3D TRUE;
++		goto error;
++	}
++
++	if (result !=3D STK_AGENT_RESULT_OK) {
++		cb(result, FALSE, agent->user_data);
++		goto done;
++	}
++
++	if (dbus_message_get_args(reply, NULL,
++					DBUS_TYPE_BOOLEAN, &confirm,
++					DBUS_TYPE_INVALID) =3D=3D FALSE) {
++		ofono_error("Can't parse the reply to ConfirmOpenChannel()");
++		remove_agent =3D TRUE;
++		goto error;
++	}
++
++	cb(result, confirm, agent->user_data);
++
++	CALLBACK_END();
++}
++
++int stk_agent_confirm_open_channel(struct stk_agent *agent, const char *te=
+xt,
++					const struct stk_icon_id *icon,
++					stk_agent_confirmation_cb cb,
++					void *user_data,
++					ofono_destroy_func destroy, int timeout)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++
++	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
++							OFONO_SIM_APP_INTERFACE,
++							"ConfirmOpenChannel");
++	if (agent->msg =3D=3D NULL)
++		return -ENOMEM;
++
++	dbus_message_append_args(agent->msg,
++					DBUS_TYPE_STRING, &text,
++					DBUS_TYPE_BYTE, &icon->id,
++					DBUS_TYPE_INVALID);
++
++	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
++						timeout) =3D=3D FALSE ||
++						agent->call =3D=3D NULL)
++		return -EIO;
++
++	agent->user_cb =3D cb;
++	agent->user_data =3D user_data;
++	agent->user_destroy =3D destroy;
++
++	dbus_pending_call_set_notify(agent->call, confirm_open_channel_cb,
++					agent, NULL);
++
++	return 0;
++}
+diff --git a/src/stkagent.h b/src/stkagent.h
+index 4b5d0a6..5e81485 100644
+--- a/src/stkagent.h
++++ b/src/stkagent.h
+@@ -156,3 +156,10 @@ int stk_agent_display_action(struct stk_agent *agent, =
+const char *text,
+ 					stk_agent_display_action_cb cb,
+ 					void *user_data,
+ 					ofono_destroy_func destroy);
++
++int stk_agent_confirm_open_channel(struct stk_agent *agent, const char *te=
+xt,
++					const struct stk_icon_id *icon,
++					stk_agent_confirmation_cb cb,
++					void *user_data,
++					ofono_destroy_func destroy,
++					int timeout);
+-- =
 
-> Entering 'test/enter-pin /generic pin 1234' resultis in:
-> dbus.exceptions.DBusException:
-> org.freedesktop.DBus.Error.UnknownMethod: Method "EnterPin" with
-> signature "ss" on interface "org.ofono.SimManager" doesn't exist
-> =
-
-> The problem is ofono not detecting the sim card properly since
-> 'list-modems' shows:
->     [ org.ofono.SimManager ]
->         Present =3D 0
-
-this is clearly a bug in the Gobi plugin then. It does not detect the
-SIM card properly. So you need to dig a bit into plugins/gobi.c and
-figure out how to fix it.
-
-> >> The second issue is not being able to activate an internet context:
-> >> (Network registration and attachment is alright)
-> >>
-> >> test/enable-modem
-> >> Connecting modem /gobi0...
-> >> test/online-modem
-> >> Setting modem /gobi0 online...
-> >> test/list-contexts
-> >> [ /gobi0 ]
-> >>     [ /gobi0/context1 ]
-> >>         Username =3D
-> >>         Protocol =3D ip
-> >>         Name =3D Internet
-> >>         Settings =3D { }
-> >>         IPv6.Settings =3D { }
-> >>         Active =3D 0
-> >>         AccessPointName =3D internet.t-mobile
-> >>         Password =3D
-> >>         Type =3D internet
-> >>
-> >> test/activate-context
-> >> Error activating /gobi0/context1: org.ofono.Error.NotImplemented:
-> >> Implementation not provided
-> >>
-> >> If you could give me a little assisting on where to look, maybe I
-> >> would be able to contribute patches, too.
-> >
-> > Of course this does not work. Check doc/hardware-support.txt for
-> > supported modem and supported capabilities.
-> >
-> > Until Qualcomm gives us the chance to implement QMI properly, we are a
-> > bit out of luck with just one AT command channel. You need at least two
-> > AT command channel to run oFono properly.
-> >
-> =
-
-> I missed reading that document.
-> However I don't understand why you would need QMI for setting up a PPP
-> connection, since there are infact three AT command channels, not one,
-> if I understand the log correctly:
-> =
-
-> ofonod[2844]: src/modem.c:ofono_modem_create() name: (null), type: gobi
-> ofonod[2844]: src/modem.c:set_modem_property() modem 0x8dcb268 property P=
-ath
-> ofonod[2844]: src/modem.c:set_modem_property() modem 0x8dcb268
-> property Registered
-> ofonod[2844]: plugins/udev.c:add_modem()
-> /devices/pci0000:00/0000:00:1a.7/usb1/1-4/1-4:1.1/ttyUSB3/tty/ttyUSB3
-> (gobi)
-> ofonod[2844]: plugins/udev.c:add_gobi() modem 0x8dcb268
-> ofonod[2844]: src/modem.c:get_modem_property() modem 0x8dcb268 property P=
-ath
-> ofonod[2844]: plugins/udev.c:add_modem()
-> /devices/pci0000:00/0000:00:1a.7/usb1/1-4/1-4:1.2/ttyUSB4/tty/ttyUSB4
-> (gobi)
-> ofonod[2844]: plugins/udev.c:add_gobi() modem 0x8dcb268
-> ofonod[2844]: src/modem.c:set_modem_property() modem 0x8dcb268 property D=
-evice
-> ofonod[2844]: plugins/gobi.c:gobi_probe() 0x8dcb268
-> ofonod[2844]: plugins/hfp_ag.c:modem_watch() modem: 0x8dcb268, added: 1
-> ofonod[2844]: plugins/dun_gw.c:modem_watch() modem: 0x8dcb268, added: 1
-> ofonod[2844]: plugins/smart-messaging.c:modem_watch() modem: 0x8dcb268, a=
-dded: 1
-> ofonod[2844]: plugins/push-notification.c:modem_watch() modem:
-> 0x8dcb268, added: 1
-> ofonod[2844]: src/modem.c:get_modem_property() modem 0x8dcb268 property P=
-ath
-> ofonod[2844]: plugins/udev.c:add_modem()
-> /devices/pci0000:00/0000:00:1a.7/usb1/1-4/1-4:1.3/ttyUSB5/tty/ttyUSB5
-> (gobi)
-
-This means that there are 3 TTYs exposed by the Gobi card. This does not
-mean that these are all AT modem capable ports. In fact they are not.
-Check /proc/bus/usb/devices and see what driver got loaded for what USB
-interface. All the qcaux bound interfaces are not really helpful.
-
-But if you by accident have a Gobi firmware that exposes 2 real AT
-command ports, I like to hear about it.
-
-Regards
-
-Marcel
+1.7.1
 
 
-
---===============4307825613403142912==--
+--===============3204648155162714958==--
 
