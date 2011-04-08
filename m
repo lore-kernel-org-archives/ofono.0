@@ -1,77 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============4115058682007331117=="
+Content-Type: multipart/mixed; boundary="===============2827224394732076764=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: Retrieve ofono_sim_password_type
-Date: Fri, 08 Apr 2011 14:38:02 +0300
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802EF09AA@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <65D0035E6914AC478A46CFE3E20C392601E9F725@snch1xch53.sicpa-net.ads>
+From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
+Subject: Re: [RFC PATCH v3] gprs: add function to handle activated context
+Date: Fri, 08 Apr 2011 16:03:28 +0300
+Message-ID: <4D9F07A0.9050900@nokia.com>
+In-Reply-To: <8281606748F03E4390BB98A3F47F2E948B3B116BE6@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4115058682007331117==
+--===============2827224394732076764==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
- =
+Hi Redouane,
 
-Hi Christophe,	=
+>
+>> So the spec says, ME PDN ACT can come even for an implicit context
+>> activation request associated with CGATT, which is the case with EPS.
+>>
+>> For 3G, if this happens (ME PDN ACT) for UE initiated activation of
+>> context, then the cid is already set with CGDCONT.
+>>
+>> For EPS this can happen for default context, where cid is not set with
+>> CGDCONT, but is in the range as returned by CGDCONT.
+>>
+>> Here the cid issue, because cid is managed by ofono and is never
+>> communicated to modem.  Probably to avoid sending too many CGDCONT's
+>> during startup. or is it something else?
+>>
+>> I thought the default context activation will come to TE as NW ACT, with
+>> a cid not in range of CGDCONT.
+>>
+> Exactly so the idea to avoid any issue was to call ofono_gprs_set_cid_ran=
+ge from the driver with a range which doesn't include the CID used for init=
+ial EPS context.
+> Normaly we know from the modem vendor which CID will be used for the init=
+ial EPS context.
+>
+> For instance if +CGDSCONT=3D? Is returning 1-25 as range then we call  of=
+ono_gprs_set_cid_range with 2-25 as range assuming that CID 1 will be used =
+for the initial EPS context.
+Ok so you are assuming that cid 1 will be always used for default =
+
+context, and so this is work around for the issue.
+
+Instead we could also expect it to have a unique id.
+
+I still feel that the default context should be a NW initiated context =
+
+and will have a unique cid.
+
+Also why can't the context id management be done in modem instead of ofono?
+
+Regards
+Arun
 
 
->	Hi,
->
->	I need to map ofono_sim_password_type according to h24 AT
-command manual.
->
->	Can somebody check if I mapped correctly enum with documentation
-definition.
->
->	OFONO_SIM_PASSWORD_SIM_PIN       : PIN attempts
->
->	OFONO_SIM_PASSWORD_SIM_PUK,     : PUK attempts
->
->	OFONO_SIM_PASSWORD_SIM_PIN2,    : PIN2 attempts
->
->	OFONO_SIM_PASSWORD_SIM_PUK2,    : PUK2 attempts
->
->	OFONO_SIM_PASSWORD_PHNET_PIN,   : NETWORK PERSONALIZATION PIN
-attempts
->
->	OFONO_SIM_PASSWORD_PHNET_PUK,   : NETWORK PERSONALIZATION PUK
-attempts
->
->	OFONO_SIM_PASSWORD_PHNETSUB_PIN,: NETWORK SUBSET PERSONALIZATION
-PIN attempts
->
->	OFONO_SIM_PASSWORD_PHNETSUB_PUK,: NETWORK SUBSET PERSONALIZATION
-PUK attempts
->
->	OFONO_SIM_PASSWORD_PHSP_PIN,    : SERVICE PROVIDER
-PERSONALIZATION PIN attempts
->
->	OFONO_SIM_PASSWORD_PHSP_PUK,    : SERVICE PROVIDER
-PERSONALIZATION PUK attempts
->
->	OFONO_SIM_PASSWORD_PHCORP_PIN,  : CORPORATE PERSONALIZATION PIN
-attempts
->
->	OFONO_SIM_PASSWORD_PHCORP_PUK,  : CORPORATE PERSONALIZATION PUK
-attempts
->
->	OFONO_SIM_PASSWORD_PHFSIM_PIN,  : SIM PERSONALIZATION PIN
-attempts
->
->	OFONO_SIM_PASSWORD_PHFSIM_PUK,  : SIM PERSONALIZATION PUK
-attempts
 
-enum value is based on the 27.007 section 8.3 <code> values. If the h24
-values are as per
-27.007 specification, then its correct.
-
-Atleast based on the description, mapping seems to be correct.
-
-Regards,
-Jeevaka
-
---===============4115058682007331117==--
+--===============2827224394732076764==--
 
