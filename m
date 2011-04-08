@@ -1,43 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============3789870760524612817=="
+Content-Type: multipart/mixed; boundary="===============7410445155559838940=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 4/6] stkutil.c: Send at least the data currently available
-Date: Fri, 08 Apr 2011 18:33:29 +0200
-Message-ID: <1302280411-20762-4-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 5/6] test-stk-menu: Extend to support ConfirmOpenchannel method
+Date: Fri, 08 Apr 2011 18:33:30 +0200
+Message-ID: <1302280411-20762-5-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3789870760524612817==
+--===============7410445155559838940==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+ test/test-stk-menu |   14 ++++++++++++++
+ 1 files changed, 14 insertions(+), 0 deletions(-)
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index 7299fb5..ee59841 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -5655,7 +5655,8 @@ static gboolean build_receive_data(struct stk_tlv_bui=
-lder *builder,
- 	const struct stk_response_receive_data *receive_data =3D
- 		&response->receive_data;
+diff --git a/test/test-stk-menu b/test/test-stk-menu
+index 1fde700..a9f92e8 100755
+--- a/test/test-stk-menu
++++ b/test/test-stk-menu
+@@ -208,6 +208,20 @@ class StkAgent(dbus.service.Object):
+ 		if key =3D=3D 't':
+ 			raise EndSession("User wishes to terminate session")
  =
 
--	if (response->result.type !=3D STK_RESULT_TYPE_SUCCESS)
-+	if (response->result.type !=3D STK_RESULT_TYPE_SUCCESS &&
-+			response->result.type !=3D STK_RESULT_TYPE_MISSING_INFO)
- 		return TRUE;
++	@dbus.service.method("org.ofono.SimToolkitAgent",
++					in_signature=3D"sy", out_signature=3D"b")
++	def ConfirmOpenChannel(self, info, icon):
++		print "Open channel confirmation: (%s)" % (info)
++		print "Icon: (%d)" % (icon)
++		key =3D raw_input("Enter Confirmation (t, y, n):")
++
++		if key =3D=3D 't':
++			raise EndSession("User wishes to terminate session");
++		elif key =3D=3D 'y':
++			return True
++		else:
++			return False
++
+ def property_changed(name, value):
+ 	print "SimToolKit property: %s changed to '%s'" % (name, value)
  =
 
- 	if (receive_data->rx_data.len) {
 -- =
 
 1.7.1
 
 
---===============3789870760524612817==--
+--===============7410445155559838940==--
 
