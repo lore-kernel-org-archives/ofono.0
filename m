@@ -1,62 +1,141 @@
-Content-Type: multipart/mixed; boundary="===============2827224394732076764=="
+Content-Type: multipart/mixed; boundary="===============8810170670244191478=="
 MIME-Version: 1.0
-From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
-Subject: Re: [RFC PATCH v3] gprs: add function to handle activated context
-Date: Fri, 08 Apr 2011 16:03:28 +0300
-Message-ID: <4D9F07A0.9050900@nokia.com>
-In-Reply-To: <8281606748F03E4390BB98A3F47F2E948B3B116BE6@irsmsx501.ger.corp.intel.com>
+From: Ari.Laukkanen@nokia.com
+Subject: Ofono crash when sendin SMS's
+Date: Fri, 08 Apr 2011 13:10:41 +0000
+Message-ID: <D1C2BB4285833449BC8FB4FF4AFE90370122E810@008-AM1MPN1-016.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2827224394732076764==
+--===============8810170670244191478==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Redouane,
+Hi,
 
->
->> So the spec says, ME PDN ACT can come even for an implicit context
->> activation request associated with CGATT, which is the case with EPS.
->>
->> For 3G, if this happens (ME PDN ACT) for UE initiated activation of
->> context, then the cid is already set with CGDCONT.
->>
->> For EPS this can happen for default context, where cid is not set with
->> CGDCONT, but is in the range as returned by CGDCONT.
->>
->> Here the cid issue, because cid is managed by ofono and is never
->> communicated to modem.  Probably to avoid sending too many CGDCONT's
->> during startup. or is it something else?
->>
->> I thought the default context activation will come to TE as NW ACT, with
->> a cid not in range of CGDCONT.
->>
-> Exactly so the idea to avoid any issue was to call ofono_gprs_set_cid_ran=
-ge from the driver with a range which doesn't include the CID used for init=
-ial EPS context.
-> Normaly we know from the modem vendor which CID will be used for the init=
-ial EPS context.
->
-> For instance if +CGDSCONT=3D? Is returning 1-25 as range then we call  of=
-ono_gprs_set_cid_range with 2-25 as range assuming that CID 1 will be used =
-for the initial EPS context.
-Ok so you are assuming that cid 1 will be always used for default =
+I am testing ofono with N900 modem and python scripts sending big sms messa=
+ges approx 20-30 pieces (size 500-1500 characters). SMSC setting is not val=
+id i.e. sms sending will fail. I get  quit often crash in tx_next() functio=
+n in sms.c. See backtrace.
 
-context, and so this is work around for the issue.
+#0  0x000000000047d95e in tx_next ()
+#1  0x00007ffff76f525b in g_timeout_dispatch (source=3D0x71ee30, callback=
+=3D0x47d930 <tx_next>, user_data=3D0x0)
+    at gmain.c:3877
+#2  0x00007ffff76f4802 in g_main_dispatch (context=3D0x70e300) at gmain.c:2=
+440
+#3  g_main_context_dispatch (context=3D0x70e300) at gmain.c:3013
+#4  0x00007ffff76f8ed8 in g_main_context_iterate (context=3D0x70e300, block=
+=3D<value optimized out>,
+    dispatch=3D<value optimized out>, self=3D<value optimized out>) at gmai=
+n.c:3091
+#5  0x00007ffff76f93e5 in g_main_loop_run (loop=3D0x70e3e0) at gmain.c:3299
+#6  0x000000000046ea5c in main ()
 
-Instead we could also expect it to have a unique id.
+                T:Ari Laukkanen
 
-I still feel that the default context should be a NW initiated context =
 
-and will have a unique cid.
-
-Also why can't the context id management be done in modem instead of ofono?
-
-Regards
-Arun
+Principal Engineer Testing
+MS MeeGo Computers<https://in.nokia.com:443/SearchCenter/Pages/PeopleResult=
+s.aspx?k=3DBU:%22MS%20MeeGo%20Computers%22>
+Phone: +358400444018
+Email: ari.laukkanen(a)nokia.com<mailto:ari.laukkanen@nokia.com>
+Address: It=C3=A4merenkatu 11-13, 00180 Helsinki, Finland
 
 
 
---===============2827224394732076764==--
+
+
+--===============8810170670244191478==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNv
+bnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD1pc28tODg1OS0xIj4KPG1ldGEgbmFtZT0iR2VuZXJh
+dG9yIiBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+CjxzdHls
+ZT4KPCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5
+OiJDYW1icmlhIE1hdGgiOwoJcGFub3NlLTE6MiA0IDUgMyA1IDQgNiAzIDIgNDt9CkBmb250LWZh
+Y2UKCXtmb250LWZhbWlseTpDYWxpYnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAyIDQ7
+fQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRp
+di5Nc29Ob3JtYWwKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1z
+aXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7fQphOmxpbmss
+IHNwYW4uTXNvSHlwZXJsaW5rCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6Ymx1ZTsK
+CXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlwZXJsaW5r
+Rm9sbG93ZWQKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpwdXJwbGU7Cgl0ZXh0LWRl
+Y29yYXRpb246dW5kZXJsaW5lO30Kc3Bhbi5FbWFpbFN0eWxlMTcKCXttc28tc3R5bGUtdHlwZTpw
+ZXJzb25hbC1jb21wb3NlOwoJZm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjsKCWNv
+bG9yOndpbmRvd3RleHQ7fQouTXNvQ2hwRGVmYXVsdAoJe21zby1zdHlsZS10eXBlOmV4cG9ydC1v
+bmx5O30KQHBhZ2UgU2VjdGlvbjEKCXtzaXplOjYxMi4wcHQgNzkyLjBwdDsKCW1hcmdpbjo3Mi4w
+cHQgNzIuMHB0IDcyLjBwdCA3Mi4wcHQ7fQpkaXYuU2VjdGlvbjEKCXtwYWdlOlNlY3Rpb24xO30K
+LS0+Cjwvc3R5bGU+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CiA8bzpzaGFwZWRlZmF1bHRzIHY6
+ZXh0PSJlZGl0IiBzcGlkbWF4PSIxMDI2IiAvPgo8L3htbD48IVtlbmRpZl0tLT48IS0tW2lmIGd0
+ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlbGF5b3V0IHY6ZXh0PSJlZGl0Ij4KICA8bzppZG1hcCB2
+OmV4dD0iZWRpdCIgZGF0YT0iMSIgLz4KIDwvbzpzaGFwZWxheW91dD48L3htbD48IVtlbmRpZl0t
+LT4KPC9oZWFkPgo8Ym9keSBsYW5nPSJFTi1VUyIgbGluaz0iYmx1ZSIgdmxpbms9InB1cnBsZSI+
+CjxkaXYgY2xhc3M9IlNlY3Rpb24xIj4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+SGksPG86cD48L286
+cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgo8cCBjbGFz
+cz0iTXNvTm9ybWFsIj5JIGFtIHRlc3Rpbmcgb2Zvbm8gd2l0aCBOOTAwIG1vZGVtIGFuZCBweXRo
+b24gc2NyaXB0cyBzZW5kaW5nIGJpZyBzbXMgbWVzc2FnZXMgYXBwcm94IDIwLTMwIHBpZWNlcyAo
+c2l6ZSA1MDAtMTUwMCBjaGFyYWN0ZXJzKS4gU01TQyBzZXR0aW5nIGlzIG5vdCB2YWxpZCBpLmUu
+IHNtcyBzZW5kaW5nIHdpbGwgZmFpbC4gSSBnZXQmbmJzcDsgcXVpdCBvZnRlbiBjcmFzaCBpbiB0
+eF9uZXh0KCkgZnVuY3Rpb24gaW4gc21zLmMuCiBTZWUgYmFja3RyYWNlLiA8bzpwPjwvbzpwPjwv
+cD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86cD4mbmJzcDs8L286cD48L3A+CjxwIGNsYXNzPSJN
+c29Ob3JtYWwiPiMwJm5ic3A7IDB4MDAwMDAwMDAwMDQ3ZDk1ZSBpbiB0eF9uZXh0ICgpPG86cD48
+L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiMxJm5ic3A7IDB4MDAwMDdmZmZmNzZmNTI1
+YiBpbiBnX3RpbWVvdXRfZGlzcGF0Y2ggKHNvdXJjZT0weDcxZWUzMCwgY2FsbGJhY2s9MHg0N2Q5
+MzAgJmx0O3R4X25leHQmZ3Q7LCB1c2VyX2RhdGE9MHgwKTxvOnA+PC9vOnA+PC9wPgo8cCBjbGFz
+cz0iTXNvTm9ybWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsgYXQgZ21haW4uYzozODc3PG86cD48L286
+cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiMyJm5ic3A7IDB4MDAwMDdmZmZmNzZmNDgwMiBp
+biBnX21haW5fZGlzcGF0Y2ggKGNvbnRleHQ9MHg3MGUzMDApIGF0IGdtYWluLmM6MjQ0MDxvOnA+
+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4jMyZuYnNwOyBnX21haW5fY29udGV4dF9k
+aXNwYXRjaCAoY29udGV4dD0weDcwZTMwMCkgYXQgZ21haW4uYzozMDEzPG86cD48L286cD48L3A+
+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiM0Jm5ic3A7IDB4MDAwMDdmZmZmNzZmOGVkOCBpbiBnX21h
+aW5fY29udGV4dF9pdGVyYXRlIChjb250ZXh0PTB4NzBlMzAwLCBibG9jaz0mbHQ7dmFsdWUgb3B0
+aW1pemVkIG91dCZndDssCjxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4mbmJz
+cDsmbmJzcDsmbmJzcDsgZGlzcGF0Y2g9Jmx0O3ZhbHVlIG9wdGltaXplZCBvdXQmZ3Q7LCBzZWxm
+PSZsdDt2YWx1ZSBvcHRpbWl6ZWQgb3V0Jmd0OykgYXQgZ21haW4uYzozMDkxPG86cD48L286cD48
+L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiM1Jm5ic3A7IDB4MDAwMDdmZmZmNzZmOTNlNSBpbiBn
+X21haW5fbG9vcF9ydW4gKGxvb3A9MHg3MGUzZTApIGF0IGdtYWluLmM6MzI5OTxvOnA+PC9vOnA+
+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4jNiZuYnNwOyAweDAwMDAwMDAwMDA0NmVhNWMgaW4g
+bWFpbiAoKTxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48bzpwPiZuYnNwOzwv
+bzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7IFQ6QXJpIExhdWtrYW5lbjxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFs
+Ij48bzpwPiZuYnNwOzwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0i
+RkkiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNw
+YW4gc3R5bGU9ImZvbnQtc2l6ZTo3LjVwdDtmb250LWZhbWlseTomcXVvdDtBcmlhbCZxdW90Oywm
+cXVvdDtzYW5zLXNlcmlmJnF1b3Q7Owpjb2xvcjpzaWx2ZXIiPlByaW5jaXBhbCBFbmdpbmVlciBU
+ZXN0aW5nPC9zcGFuPjxzcGFuIHN0eWxlPSJmb250LXNpemU6Ny41cHQiPjxicj4KPC9zcGFuPjxz
+cGFuIHN0eWxlPSJmb250LXNpemU6Ny41cHQ7Zm9udC1mYW1pbHk6JnF1b3Q7QXJpYWwmcXVvdDss
+JnF1b3Q7c2Fucy1zZXJpZiZxdW90OzsKY29sb3I6c2lsdmVyIj48YSBocmVmPSJodHRwczovL2lu
+Lm5va2lhLmNvbTo0NDMvU2VhcmNoQ2VudGVyL1BhZ2VzL1Blb3BsZVJlc3VsdHMuYXNweD9rPUJV
+OiUyMk1TJTIwTWVlR28lMjBDb21wdXRlcnMlMjIiPjxzcGFuIHN0eWxlPSJmb250LWZhbWlseTom
+cXVvdDtUaW1lcyBOZXcgUm9tYW4mcXVvdDssJnF1b3Q7c2VyaWYmcXVvdDs7Y29sb3I6c2lsdmVy
+O3RleHQtZGVjb3JhdGlvbjpub25lIj5NUwogTWVlR28gQ29tcHV0ZXJzPC9zcGFuPjwvYT48L3Nw
+YW4+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTo3LjVwdCI+PGJyPgo8L3NwYW4+PHNwYW4gc3R5bGU9
+ImZvbnQtc2l6ZTo3LjVwdDtmb250LWZhbWlseTomcXVvdDtBcmlhbCZxdW90OywmcXVvdDtzYW5z
+LXNlcmlmJnF1b3Q7Owpjb2xvcjpzaWx2ZXIiPlBob25lOiAmIzQzOzM1ODQwMDQ0NDAxODwvc3Bh
+bj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjcuNXB0Ij48YnI+Cjwvc3Bhbj48c3BhbiBzdHlsZT0i
+Zm9udC1zaXplOjcuNXB0O2ZvbnQtZmFtaWx5OiZxdW90O0FyaWFsJnF1b3Q7LCZxdW90O3NhbnMt
+c2VyaWYmcXVvdDs7CmNvbG9yOnNpbHZlciI+RW1haWw6CjxhIGhyZWY9Im1haWx0bzphcmkubGF1
+a2thbmVuQG5va2lhLmNvbSI+PHNwYW4gc3R5bGU9ImZvbnQtZmFtaWx5OiZxdW90O1RpbWVzIE5l
+dyBSb21hbiZxdW90OywmcXVvdDtzZXJpZiZxdW90Oztjb2xvcjpibHVlIj5hcmkubGF1a2thbmVu
+QG5va2lhLmNvbTwvc3Bhbj48L2E+PC9zcGFuPjxzcGFuIHN0eWxlPSJmb250LXNpemU6Ny41cHQi
+Pjxicj4KPC9zcGFuPjxzcGFuIHN0eWxlPSJmb250LXNpemU6Ny41cHQ7Zm9udC1mYW1pbHk6JnF1
+b3Q7QXJpYWwmcXVvdDssJnF1b3Q7c2Fucy1zZXJpZiZxdW90OzsKY29sb3I6c2lsdmVyIj5BZGRy
+ZXNzOiBJdORtZXJlbmthdHUgMTEtMTMsIDAwMTgwIEhlbHNpbmtpLCBGaW5sYW5kPC9zcGFuPjxz
+cGFuIHN0eWxlPSJmb250LXNpemU6Ny41cHQiPjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KPHAgY2xh
+c3M9Ik1zb05vcm1hbCI+PG86cD4mbmJzcDs8L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwi
+PjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48bzpwPiZuYnNwOzwv
+bzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86cD4mbmJzcDs8L286cD48L3A+CjwvZGl2
+Pgo8L2JvZHk+CjwvaHRtbD4K
+
+--===============8810170670244191478==--
 
