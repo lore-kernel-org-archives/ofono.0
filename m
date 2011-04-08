@@ -1,91 +1,160 @@
-Content-Type: multipart/mixed; boundary="===============2232141899725664304=="
+Content-Type: multipart/mixed; boundary="===============4307825613403142912=="
 MIME-Version: 1.0
-From: Soum, RedouaneX <redouanex.soum@intel.com>
-Subject: RE: [RFC PATCH v3] gprs: add function to handle activated context
-Date: Fri, 08 Apr 2011 14:34:47 +0100
-Message-ID: <8281606748F03E4390BB98A3F47F2E948B3B116E8A@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <4D9F07A0.9050900@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Qualcomm Gobi 2000 Modem Issues
+Date: Fri, 08 Apr 2011 06:47:43 -0700
+Message-ID: <1302270463.2572.185.camel@aeonflux>
+In-Reply-To: <BANLkTi=46H305-EY_yWj_iVsFYupn-JtBQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2232141899725664304==
+--===============4307825613403142912==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arun,
+Hi Kai,
 
->>> So the spec says, ME PDN ACT can come even for an implicit context
->>> activation request associated with CGATT, which is the case with EPS.
->>>
->>> For 3G, if this happens (ME PDN ACT) for UE initiated activation of
->>> context, then the cid is already set with CGDCONT.
->>>
->>> For EPS this can happen for default context, where cid is not set with
->>> CGDCONT, but is in the range as returned by CGDCONT.
->>>
->>> Here the cid issue, because cid is managed by ofono and is never
->>> communicated to modem.  Probably to avoid sending too many CGDCONT's
->>> during startup. or is it something else?
->>>
->>> I thought the default context activation will come to TE as NW ACT,
->with
->>> a cid not in range of CGDCONT.
->>>
->> Exactly so the idea to avoid any issue was to call
->ofono_gprs_set_cid_range from the driver with a range which doesn't
->include the CID used for initial EPS context.
->> Normaly we know from the modem vendor which CID will be used for the
->initial EPS context.
->>
->> For instance if +CGDSCONT=3D? Is returning 1-25 as range then we call
->ofono_gprs_set_cid_range with 2-25 as range assuming that CID 1 will be
->used for the initial EPS context.
->Ok so you are assuming that cid 1 will be always used for default
->context, and so this is work around for the issue.
+> >> I ran into two issues trying to setup a data connection with a Gobi 20=
+00 card.
+> >> The first one seems to be an error regarding simcard onlocking. After
+> >> enabling the modem test/list-modems shows the following, despite the
+> >> simcard is inserted correctly:
+> >>
+> >> [ /gobi0 ]
+> >>     Features =3D sim
+> >>     Emergency =3D 0
+> >>     Powered =3D 1
+> >>     Lockdown =3D 0
+> >>     Interfaces =3D org.ofono.SimManager
+> >>     Online =3D 0
+> >>     Model =3D Qualcomm Gobi 2000
+> >>     Revision =3D D1025-STUTABGD-3600  1  [Jan 14 2010 14:00:00]
+> >>     Serial =3D 353093033460401
+> >>     Manufacturer =3D Qualcomm Incorporated
+> >>     [ org.ofono.SimManager ]
+> >>         Present =3D 0
+> >>
+> >> Our current workaround is quitting ofono and using minicom to unlock
+> >> the sim directly, then restarting ofono.
+> >> > at+cpin?
+> >> +CPIN: SIM PIN
+> >> OK
+> >>
+> >> > at+cpin=3D"1234"
+> >> OK
+> >> $QCSIMSTAT: 1 SIM INIT COMPLETED
+> >
+> > this is weird since the PIN unlocking should just work fine. Have you
+> > tried to use the test/enter-pin script?
+> =
 
-The modem vendor should know which CID will be used for the initial default=
- context.
-So the idea was to add a requirement in the implementation of the gprs driv=
-ers that ofono_gprs_set_cid should be called with a range that's doesn't in=
-clude the CID used for the initial default bearer.
+> Yes, I tried the enter-pin script. Using it without the optional PATH
+> this is the error:
+> dbus.exceptions.DBusException: org.ofono.Error.InvalidFormat: Argument
+> format is not recognized
+> =
 
-From what I know there is nothing in the spec saying which CID to use for =
-initial default context.
-And there is no standard AT commands to specify settings to use for the ini=
-tial default context (CID, APN, user , password , IPV4/IPV6/ IPV4V6 ...)
+> Entering 'test/enter-pin /generic pin 1234' resultis in:
+> dbus.exceptions.DBusException:
+> org.freedesktop.DBus.Error.UnknownMethod: Method "EnterPin" with
+> signature "ss" on interface "org.ofono.SimManager" doesn't exist
+> =
 
->Instead we could also expect it to have a unique id.
->
->I still feel that the default context should be a NW initiated context
->and will have a unique cid.
+> The problem is ofono not detecting the sim card properly since
+> 'list-modems' shows:
+>     [ org.ofono.SimManager ]
+>         Present =3D 0
 
-As Pessi said before the PDN connectivity request is UE initiated.
+this is clearly a bug in the Gobi plugin then. It does not detect the
+SIM card properly. So you need to dig a bit into plugins/gobi.c and
+figure out how to fix it.
 
--- The problem is, the initial EPS context is initiated by mobile, not by t=
-he network. The mobile sends a piggybacked PDN CONNECTIVITY REQUEST with th=
-e initial attach request in order to initiate the initial EPS context. --
+> >> The second issue is not being able to activate an internet context:
+> >> (Network registration and attachment is alright)
+> >>
+> >> test/enable-modem
+> >> Connecting modem /gobi0...
+> >> test/online-modem
+> >> Setting modem /gobi0 online...
+> >> test/list-contexts
+> >> [ /gobi0 ]
+> >>     [ /gobi0/context1 ]
+> >>         Username =3D
+> >>         Protocol =3D ip
+> >>         Name =3D Internet
+> >>         Settings =3D { }
+> >>         IPv6.Settings =3D { }
+> >>         Active =3D 0
+> >>         AccessPointName =3D internet.t-mobile
+> >>         Password =3D
+> >>         Type =3D internet
+> >>
+> >> test/activate-context
+> >> Error activating /gobi0/context1: org.ofono.Error.NotImplemented:
+> >> Implementation not provided
+> >>
+> >> If you could give me a little assisting on where to look, maybe I
+> >> would be able to contribute patches, too.
+> >
+> > Of course this does not work. Check doc/hardware-support.txt for
+> > supported modem and supported capabilities.
+> >
+> > Until Qualcomm gives us the chance to implement QMI properly, we are a
+> > bit out of luck with just one AT command channel. You need at least two
+> > AT command channel to run oFono properly.
+> >
+> =
 
->Also why can't the context id management be done in modem instead of
->ofono?
+> I missed reading that document.
+> However I don't understand why you would need QMI for setting up a PPP
+> connection, since there are infact three AT command channels, not one,
+> if I understand the log correctly:
+> =
 
-What do you mean by context id management be done in the modem ?
+> ofonod[2844]: src/modem.c:ofono_modem_create() name: (null), type: gobi
+> ofonod[2844]: src/modem.c:set_modem_property() modem 0x8dcb268 property P=
+ath
+> ofonod[2844]: src/modem.c:set_modem_property() modem 0x8dcb268
+> property Registered
+> ofonod[2844]: plugins/udev.c:add_modem()
+> /devices/pci0000:00/0000:00:1a.7/usb1/1-4/1-4:1.1/ttyUSB3/tty/ttyUSB3
+> (gobi)
+> ofonod[2844]: plugins/udev.c:add_gobi() modem 0x8dcb268
+> ofonod[2844]: src/modem.c:get_modem_property() modem 0x8dcb268 property P=
+ath
+> ofonod[2844]: plugins/udev.c:add_modem()
+> /devices/pci0000:00/0000:00:1a.7/usb1/1-4/1-4:1.2/ttyUSB4/tty/ttyUSB4
+> (gobi)
+> ofonod[2844]: plugins/udev.c:add_gobi() modem 0x8dcb268
+> ofonod[2844]: src/modem.c:set_modem_property() modem 0x8dcb268 property D=
+evice
+> ofonod[2844]: plugins/gobi.c:gobi_probe() 0x8dcb268
+> ofonod[2844]: plugins/hfp_ag.c:modem_watch() modem: 0x8dcb268, added: 1
+> ofonod[2844]: plugins/dun_gw.c:modem_watch() modem: 0x8dcb268, added: 1
+> ofonod[2844]: plugins/smart-messaging.c:modem_watch() modem: 0x8dcb268, a=
+dded: 1
+> ofonod[2844]: plugins/push-notification.c:modem_watch() modem:
+> 0x8dcb268, added: 1
+> ofonod[2844]: src/modem.c:get_modem_property() modem 0x8dcb268 property P=
+ath
+> ofonod[2844]: plugins/udev.c:add_modem()
+> /devices/pci0000:00/0000:00:1a.7/usb1/1-4/1-4:1.3/ttyUSB5/tty/ttyUSB5
+> (gobi)
 
-Regards,
-Redouane.
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+This means that there are 3 TTYs exposed by the Gobi card. This does not
+mean that these are all AT modem capable ports. In fact they are not.
+Check /proc/bus/usb/devices and see what driver got loaded for what USB
+interface. All the qcaux bound interfaces are not really helpful.
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+But if you by accident have a Gobi firmware that exposes 2 real AT
+command ports, I like to hear about it.
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+Regards
+
+Marcel
 
 
---===============2232141899725664304==--
+
+--===============4307825613403142912==--
 
