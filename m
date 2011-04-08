@@ -1,46 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============4087196633104882466=="
+Content-Type: multipart/mixed; boundary="===============0467842906765782503=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4 0/4] Support of Network / Modem updated emergency
- numbers
-Date: Thu, 07 Apr 2011 22:20:14 -0500
-Message-ID: <4D9E7EEE.7040300@gmail.com>
-In-Reply-To: <1302100003-5488-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: Re: [PATCH: Motorola H24 early support]
+Date: Thu, 07 Apr 2011 22:25:45 -0500
+Message-ID: <4D9E8039.6030804@gmail.com>
+In-Reply-To: <65D0035E6914AC478A46CFE3E20C392601E9F71C@snch1xch53.sicpa-net.ads>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4087196633104882466==
+--===============0467842906765782503==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi Christophe,
 
-On 04/06/2011 09:26 AM, Jeevaka Badrappan wrote:
-> Hi,
+On 04/07/2011 06:35 AM, Ostermann, Christophe wrote:
+> Hi, =
+
 > =
 
->  Following set of patch adds the support for emergency number list update
-> from the network/modem in the oFono core.
+> I try to send again a patch to support Motorola H24 modem.
+> Sorry but I can t use git to generate the patch in my environment.
 > =
 
-> Regards,
-> Jeevaka
-> =
+> I ve attached a patch file and send my mail in plain text.  Hope you can =
+easily use this patch.
 
+This is really not going to work out.  We need a properly formatted
+patch, something that I can apply that contains your authorship
+information and follows our patch submission guidelines.  In the case of
+this patch, it needs to be at least 6 separate commits:
 
-I applied all of the patches in this series, but did split patch 2 into
-two commits.  Thanks for that.
+- motorola vendor addition
+- gprs-context driver changes
+- sim driver changes
+- documentation change
+- udev change
+- h24 plugin + Makefile
 
-I also did some minor refactoring after the fact to take care of some
-really corner cases.  Can you please review and make sure I didn't screw
-anything up.
-
-I believe this should complete emergency call related tasks.  Can we
-make sure to test this really well in the coming weeks?
+See HACKING for our patch submission guidelines.
 
 Regards,
 -Denis
 
---===============4087196633104882466==--
+--===============0467842906765782503==--
 
