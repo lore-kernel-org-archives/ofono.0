@@ -1,182 +1,297 @@
-Content-Type: multipart/mixed; boundary="===============8679518705272718255=="
+Content-Type: multipart/mixed; boundary="===============6709734827359200304=="
 MIME-Version: 1.0
-From: Kai Scharwies <kai@scharwies.de>
-Subject: Re: Qualcomm Gobi 2000 Modem Issues
-Date: Fri, 08 Apr 2011 10:31:38 +0200
-Message-ID: <BANLkTi=46H305-EY_yWj_iVsFYupn-JtBQ@mail.gmail.com>
-In-Reply-To: <1302191536.2572.180.camel@aeonflux>
+From: Ostermann, Christophe <Christophe.Ostermann@sicpa.com>
+Subject: Retrieve ofono_sim_password_type
+Date: Fri, 08 Apr 2011 13:05:38 +0200
+Message-ID: <65D0035E6914AC478A46CFE3E20C392601E9F725@snch1xch53.sicpa-net.ads>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8679518705272718255==
+--===============6709734827359200304==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2011/4/7 Marcel Holtmann <marcel@holtmann.org>:
-> Hi Kai,
->
->> I ran into two issues trying to setup a data connection with a Gobi 2000=
- card.
->> The first one seems to be an error regarding simcard onlocking. After
->> enabling the modem test/list-modems shows the following, despite the
->> simcard is inserted correctly:
->>
->> [ /gobi0 ]
->> =C2=A0 =C2=A0 Features =3D sim
->> =C2=A0 =C2=A0 Emergency =3D 0
->> =C2=A0 =C2=A0 Powered =3D 1
->> =C2=A0 =C2=A0 Lockdown =3D 0
->> =C2=A0 =C2=A0 Interfaces =3D org.ofono.SimManager
->> =C2=A0 =C2=A0 Online =3D 0
->> =C2=A0 =C2=A0 Model =3D Qualcomm Gobi 2000
->> =C2=A0 =C2=A0 Revision =3D D1025-STUTABGD-3600 =C2=A01 =C2=A0[Jan 14 201=
-0 14:00:00]
->> =C2=A0 =C2=A0 Serial =3D 353093033460401
->> =C2=A0 =C2=A0 Manufacturer =3D Qualcomm Incorporated
->> =C2=A0 =C2=A0 [ org.ofono.SimManager ]
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 Present =3D 0
->>
->> Our current workaround is quitting ofono and using minicom to unlock
->> the sim directly, then restarting ofono.
->> > at+cpin?
->> +CPIN: SIM PIN
->> OK
->>
->> > at+cpin=3D"1234"
->> OK
->> $QCSIMSTAT: 1 SIM INIT COMPLETED
->
-> this is weird since the PIN unlocking should just work fine. Have you
-> tried to use the test/enter-pin script?
+Hi,
 
-Yes, I tried the enter-pin script. Using it without the optional PATH
-this is the error:
-dbus.exceptions.DBusException: org.ofono.Error.InvalidFormat: Argument
-format is not recognized
+ =
 
-Entering 'test/enter-pin /generic pin 1234' resultis in:
-dbus.exceptions.DBusException:
-org.freedesktop.DBus.Error.UnknownMethod: Method "EnterPin" with
-signature "ss" on interface "org.ofono.SimManager" doesn't exist
 
-The problem is ofono not detecting the sim card properly since
-'list-modems' shows:
-    [ org.ofono.SimManager ]
-        Present =3D 0
+I need to map ofono_sim_password_type according to h24 AT command
+manual.
 
-What it should look like is this (Output after unlocking via AT
-commands, described above):
-    [ org.ofono.SimManager ]
-        Retries =3D
-        MobileCountryCode =3D 262
-        FixedDialing =3D 0
-        SubscriberNumbers =3D
-        PreferredLanguages =3D de en
-        BarredDialing =3D 0
-        CardIdentifier =3D 89490200000622126220
-        LockedPins =3D
-        MobileNetworkCode =3D 01
-        SubscriberIdentity =3D 262019038101028
-        Present =3D 1
-        PinRequired =3D none
+Can somebody check if I mapped correctly enum with documentation
+definition.
 
-PinRequired should of course read "pin" before unlocking.
-Anymore logs I could deliver to solve this issue?
+ =
 
->
->> The second issue is not being able to activate an internet context:
->> (Network registration and attachment is alright)
->>
->> test/enable-modem
->> Connecting modem /gobi0...
->> test/online-modem
->> Setting modem /gobi0 online...
->> test/list-contexts
->> [ /gobi0 ]
->> =C2=A0 =C2=A0 [ /gobi0/context1 ]
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 Username =3D
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 Protocol =3D ip
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 Name =3D Internet
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 Settings =3D { }
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 IPv6.Settings =3D { }
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 Active =3D 0
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 AccessPointName =3D internet.t-mobile
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 Password =3D
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 Type =3D internet
->>
->> test/activate-context
->> Error activating /gobi0/context1: org.ofono.Error.NotImplemented:
->> Implementation not provided
->>
->> If you could give me a little assisting on where to look, maybe I
->> would be able to contribute patches, too.
->
-> Of course this does not work. Check doc/hardware-support.txt for
-> supported modem and supported capabilities.
->
-> Until Qualcomm gives us the chance to implement QMI properly, we are a
-> bit out of luck with just one AT command channel. You need at least two
-> AT command channel to run oFono properly.
->
 
-I missed reading that document.
-However I don't understand why you would need QMI for setting up a PPP
-connection, since there are infact three AT command channels, not one,
-if I understand the log correctly:
+OFONO_SIM_PASSWORD_SIM_PIN       : PIN attempts
 
-ofonod[2844]: src/modem.c:ofono_modem_create() name: (null), type: gobi
-ofonod[2844]: src/modem.c:set_modem_property() modem 0x8dcb268 property Path
-ofonod[2844]: src/modem.c:set_modem_property() modem 0x8dcb268
-property Registered
-ofonod[2844]: plugins/udev.c:add_modem()
-/devices/pci0000:00/0000:00:1a.7/usb1/1-4/1-4:1.1/ttyUSB3/tty/ttyUSB3
-(gobi)
-ofonod[2844]: plugins/udev.c:add_gobi() modem 0x8dcb268
-ofonod[2844]: src/modem.c:get_modem_property() modem 0x8dcb268 property Path
-ofonod[2844]: plugins/udev.c:add_modem()
-/devices/pci0000:00/0000:00:1a.7/usb1/1-4/1-4:1.2/ttyUSB4/tty/ttyUSB4
-(gobi)
-ofonod[2844]: plugins/udev.c:add_gobi() modem 0x8dcb268
-ofonod[2844]: src/modem.c:set_modem_property() modem 0x8dcb268 property Dev=
-ice
-ofonod[2844]: plugins/gobi.c:gobi_probe() 0x8dcb268
-ofonod[2844]: plugins/hfp_ag.c:modem_watch() modem: 0x8dcb268, added: 1
-ofonod[2844]: plugins/dun_gw.c:modem_watch() modem: 0x8dcb268, added: 1
-ofonod[2844]: plugins/smart-messaging.c:modem_watch() modem: 0x8dcb268, add=
-ed: 1
-ofonod[2844]: plugins/push-notification.c:modem_watch() modem:
-0x8dcb268, added: 1
-ofonod[2844]: src/modem.c:get_modem_property() modem 0x8dcb268 property Path
-ofonod[2844]: plugins/udev.c:add_modem()
-/devices/pci0000:00/0000:00:1a.7/usb1/1-4/1-4:1.3/ttyUSB5/tty/ttyUSB5
-(gobi)
-ofonod[2844]: plugins/udev.c:add_gobi() modem 0x8dcb268
-ofonod[2844]: plugins/gobi.c:gobi_enable() 0x8dcb268
-ofonod[2844]: src/modem.c:get_modem_property() modem 0x8dcb268 property Dev=
-ice
-ofonod[2844]: plugins/gobi.c:open_device() Device /dev/ttyUSB4
-ofonod[2844]: plugins/gobi.c:cfun_enable()
-ofonod[2844]: src/modem.c:modem_change_state() old state: 0, new state: 1
-ofonod[2844]: plugins/gobi.c:gobi_pre_sim() 0x8dcb268
-ofonod[2844]: src/modem.c:modem_change_state() old state: 1, new state: 2
-ofonod[2844]: plugins/gobi.c:gobi_post_sim() 0x8dcb268
-ofonod[2844]: src/sim.c:ofono_sim_add_state_watch() 0x8dc8900
-ofonod[2844]: src/sim.c:ofono_sim_add_state_watch() 0x8dc8900
-ofonod[2844]: Phonebook not supported by this modem.  If this is in
-error please submit patches to support this hardware
-ofonod[2844]: src/phonebook.c:phonebook_remove() atom: 0x8dc5498
-ofonod[2844]: SMS not supported by this modem.  If this is in error
-please submit patches to support this hardware
-ofonod[2844]: src/sms.c:sms_remove() atom: 0x8dca430
-ofonod[2844]: plugins/gobi.c:simstat_notify() state UNKNOWN
+OFONO_SIM_PASSWORD_SIM_PUK,     : PUK attempts
 
-The other hint looking for missing TUN/TAP support is not an issue.
-Using e.g. OpenVPN I definetly have the support enabled and the logs
-didn't mention the error.
+OFONO_SIM_PASSWORD_SIM_PIN2,    : PIN2 attempts
 
-Best regards,
-Kai
+OFONO_SIM_PASSWORD_SIM_PUK2,    : PUK2 attempts
 
---===============8679518705272718255==--
+OFONO_SIM_PASSWORD_PHNET_PIN,   : NETWORK PERSONALIZATION PIN attempts
+
+OFONO_SIM_PASSWORD_PHNET_PUK,   : NETWORK PERSONALIZATION PUK attempts
+
+OFONO_SIM_PASSWORD_PHNETSUB_PIN,: NETWORK SUBSET PERSONALIZATION PIN
+attempts
+
+OFONO_SIM_PASSWORD_PHNETSUB_PUK,: NETWORK SUBSET PERSONALIZATION PUK
+attempts
+
+OFONO_SIM_PASSWORD_PHSP_PIN,    : SERVICE PROVIDER PERSONALIZATION PIN
+attempts
+
+OFONO_SIM_PASSWORD_PHSP_PUK,    : SERVICE PROVIDER PERSONALIZATION PUK
+attempts
+
+OFONO_SIM_PASSWORD_PHCORP_PIN,  : CORPORATE PERSONALIZATION PIN attempts
+
+OFONO_SIM_PASSWORD_PHCORP_PUK,  : CORPORATE PERSONALIZATION PUK attempts
+
+OFONO_SIM_PASSWORD_PHFSIM_PIN,  : SIM PERSONALIZATION PIN attempts
+
+OFONO_SIM_PASSWORD_PHFSIM_PUK,  : SIM PERSONALIZATION PUK attempts
+
+ =
+
+
+ =
+
+
+BR
+
+Christophe
+
+ =
+
+
+----------
+
+Christophe Ostermann =
+
+Software Engineer
+Devices Engineering
+
+SICPA Security Solutions SA
+Av. de Florissant 41, 1008 Prilly, Switzerland
+Tel +41 21 627 59 70  Direct +41 21 627 63 68
+Fax +41 21 620 06 22 =
+
+christophe.ostermann(a)sicpa.com
+<mailto:christophe.christophe.ostermann@sicpa.com>   www.sicpa.com
+<http://www.sicpa.com/> =
+
+
+ =
+
+
+ =
+
+
+
+
+This message was delivered through encrypted mechanism.
+
+
+The information in this email and any attachments is confidential
+and intended solely for the use of the individual(s) to whom it is
+addressed or otherwise directed.
+Please note that any views or opinions presented in this email are
+solely those of the author and do not necessarily represent those
+of the Company.
+Finally, the recipient should check this email and any attachments
+for the presence of viruses.
+The Company accepts no liability for any damage caused by any virus
+transmitted by this email.
+
+--===============6709734827359200304==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
+bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxucz0iaHR0
+cDovL3d3dy53My5vcmcvVFIvUkVDLWh0bWw0MCINCnhtbG5zOm5zMD0idXJuOnNjaGVtYXMtbWlj
+cm9zb2Z0LWNvbTpvZmZpY2U6c21hcnR0YWdzIj4NCg0KPGhlYWQ+DQo8TUVUQSBIVFRQLUVRVUlW
+PSJDb250ZW50LVR5cGUiIENPTlRFTlQ9InRleHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+DQo8
+bWV0YSBuYW1lPUdlbmVyYXRvciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMSAoZmlsdGVyZWQg
+bWVkaXVtKSI+DQo8c3R5bGU+DQo8IS0tDQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8NCiBwLk1z
+b05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsDQoJe21hcmdpbjowY207DQoJbWFy
+Z2luLWJvdHRvbTouMDAwMXB0Ow0KCWZvbnQtc2l6ZToxMi4wcHQ7DQoJZm9udC1mYW1pbHk6IlRp
+bWVzIE5ldyBSb21hbiI7fQ0KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluaw0KCXtjb2xvcjpibHVl
+Ow0KCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQ0KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVy
+bGlua0ZvbGxvd2VkDQoJe2NvbG9yOnB1cnBsZTsNCgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5l
+O30NCnNwYW4uRW1haWxTdHlsZTE3DQoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7
+DQoJZm9udC1mYW1pbHk6QXJpYWw7DQoJY29sb3I6d2luZG93dGV4dDt9DQpAcGFnZSBTZWN0aW9u
+MQ0KCXtzaXplOjU5NS4zcHQgODQxLjlwdDsNCgltYXJnaW46NzAuODVwdCA3MC44NXB0IDcwLjg1
+cHQgNzAuODVwdDt9DQpkaXYuU2VjdGlvbjENCgl7cGFnZTpTZWN0aW9uMTt9DQotLT4NCjwvc3R5
+bGU+DQoNCjwvaGVhZD4NCg0KPGJvZHkgbGFuZz1GUiBsaW5rPWJsdWUgdmxpbms9cHVycGxlPg0K
+DQo8ZGl2IGNsYXNzPVNlY3Rpb24xPg0KDQo8cCBjbGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0y
+IGZhY2U9QXJpYWw+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOg0KMTAuMHB0O2Zv
+bnQtZmFtaWx5OkFyaWFsJz5IaSw8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPg0KDQo8cCBj
+bGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4gbGFuZz1FTi1HQiBz
+dHlsZT0nZm9udC1zaXplOg0KMTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsJz48bzpwPiZuYnNwOzwv
+bzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPg0KDQo8cCBjbGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0y
+IGZhY2U9QXJpYWw+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOg0KMTAuMHB0O2Zv
+bnQtZmFtaWx5OkFyaWFsJz5JIG5lZWQgdG8gbWFwIG9mb25vX3NpbV9wYXNzd29yZF90eXBlIGFj
+Y29yZGluZyB0bw0KaDI0IEFUIGNvbW1hbmQgbWFudWFsLjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9u
+dD48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48c3Bh
+biBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6DQoxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwn
+PkNhbiBzb21lYm9keSBjaGVjayBpZiBJIG1hcHBlZCBjb3JyZWN0bHkgZW51bSB3aXRoDQpkb2N1
+bWVudGF0aW9uIGRlZmluaXRpb24uPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAg
+Y2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Ig
+c3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+PG86cD4mbmJzcDs8
+L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9
+MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtm
+b250LWZhbWlseTpBcmlhbCc+T0ZPTk9fU0lNX1BBU1NXT1JEX1NJTV9QSU4mbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgOiBQSU4gYXR0ZW1wdHM8bzpwPjwvbzpwPjwvc3Bhbj48
+L2ZvbnQ+PC9wPg0KDQo8cCBjbGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+
+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOg0KMTAuMHB0O2ZvbnQtZmFtaWx5OkFy
+aWFsJz5PRk9OT19TSU1fUEFTU1dPUkRfU0lNX1BVSywmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsg
+OiBQVUsgYXR0ZW1wdHM8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPg0KDQo8cCBjbGFzcz1N
+c29Ob3JtYWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0n
+Zm9udC1zaXplOg0KMTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsJz5PRk9OT19TSU1fUEFTU1dPUkRf
+U0lNX1BJTjIsJm5ic3A7Jm5ic3A7Jm5ic3A7IDogUElOMiBhdHRlbXB0czxvOnA+PC9vOnA+PC9z
+cGFuPjwvZm9udD48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1B
+cmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6DQoxMC4wcHQ7Zm9udC1mYW1p
+bHk6QXJpYWwnPk9GT05PX1NJTV9QQVNTV09SRF9TSU1fUFVLMiwmbmJzcDsmbmJzcDsmbmJzcDsg
+OiBQVUsyIGF0dGVtcHRzPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9
+TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9
+J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+T0ZPTk9fU0lNX1BBU1NXT1JE
+X1BITkVUX1BJTiwmbmJzcDsmbmJzcDsgOiBORVRXT1JLDQpQRVJTT05BTElaQVRJT04gUElOIGF0
+dGVtcHRzPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFs
+Pjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6
+ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+T0ZPTk9fU0lNX1BBU1NXT1JEX1BITkVUX1BV
+SywmbmJzcDsmbmJzcDsgOiBORVRXT1JLDQpQRVJTT05BTElaQVRJT04gUFVLIGF0dGVtcHRzPG86
+cD48L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNp
+emU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBw
+dDtmb250LWZhbWlseTpBcmlhbCc+T0ZPTk9fU0lNX1BBU1NXT1JEX1BITkVUU1VCX1BJTiw6IE5F
+VFdPUksgU1VCU0VUDQpQRVJTT05BTElaQVRJT04gUElOIGF0dGVtcHRzPG86cD48L286cD48L3Nw
+YW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFy
+aWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWls
+eTpBcmlhbCc+T0ZPTk9fU0lNX1BBU1NXT1JEX1BITkVUU1VCX1BVSyw6IE5FVFdPUksgU1VCU0VU
+DQpQRVJTT05BTElaQVRJT04gUFVLIGF0dGVtcHRzPG86cD48L286cD48L3NwYW4+PC9mb250Pjwv
+cD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxh
+bmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+T0ZP
+Tk9fU0lNX1BBU1NXT1JEX1BIU1BfUElOLCZuYnNwOyZuYnNwOyZuYnNwOyA6IFNFUlZJQ0UgUFJP
+VklERVINClBFUlNPTkFMSVpBVElPTiBQSU4gYXR0ZW1wdHM8bzpwPjwvbzpwPjwvc3Bhbj48L2Zv
+bnQ+PC9wPg0KDQo8cCBjbGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNw
+YW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOg0KMTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFs
+Jz5PRk9OT19TSU1fUEFTU1dPUkRfUEhTUF9QVUssJm5ic3A7Jm5ic3A7Jm5ic3A7IDogU0VSVklD
+RSBQUk9WSURFUg0KUEVSU09OQUxJWkFUSU9OIFBVSyBhdHRlbXB0czxvOnA+PC9vOnA+PC9zcGFu
+PjwvZm9udD48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1Bcmlh
+bD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6DQoxMC4wcHQ7Zm9udC1mYW1pbHk6
+QXJpYWwnPk9GT05PX1NJTV9QQVNTV09SRF9QSENPUlBfUElOLCZuYnNwOyA6IENPUlBPUkFURQ0K
+UEVSU09OQUxJWkFUSU9OIFBJTiBhdHRlbXB0czxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+
+DQoNCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48c3BhbiBsYW5n
+PUVOLUdCIHN0eWxlPSdmb250LXNpemU6DQoxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwnPk9GT05P
+X1NJTV9QQVNTV09SRF9QSENPUlBfUFVLLCZuYnNwOyA6IENPUlBPUkFURSBQRVJTT05BTElaQVRJ
+T04NClBVSyBhdHRlbXB0czxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+DQoNCjxwIGNsYXNz
+PU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxl
+PSdmb250LXNpemU6DQoxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwnPk9GT05PX1NJTV9QQVNTV09S
+RF9QSEZTSU1fUElOLCZuYnNwOyA6IFNJTSBQRVJTT05BTElaQVRJT04NClBJTiBhdHRlbXB0czxv
+OnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBz
+aXplPTIgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6DQoxMC4w
+cHQ7Zm9udC1mYW1pbHk6QXJpYWwnPk9GT05PX1NJTV9QQVNTV09SRF9QSEZTSU1fUFVLLCZuYnNw
+OyA6IFNJTSBQRVJTT05BTElaQVRJT04NClBVSyBhdHRlbXB0czxvOnA+PC9vOnA+PC9zcGFuPjwv
+Zm9udD48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48
+c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6DQoxMC4wcHQ7Zm9udC1mYW1pbHk6QXJp
+YWwnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+DQoNCjxwIGNsYXNzPU1zb05v
+cm1hbD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250
+LXNpemU6DQoxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFu
+PjwvZm9udD48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1Bcmlh
+bD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6DQoxMC4wcHQ7Zm9udC1mYW1pbHk6
+QXJpYWwnPkJSPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9y
+bWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQt
+c2l6ZToNCjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+Q2hyaXN0b3BoZTxvOnA+PC9vOnA+PC9z
+cGFuPjwvZm9udD48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1B
+cmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6DQoxMC4wcHQ7Zm9udC1mYW1p
+bHk6QXJpYWwnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+DQoNCjxwIGNsYXNz
+PU1zb05vcm1hbCBzdHlsZT0nbXNvLW1hcmdpbi10b3AtYWx0OmF1dG87bXNvLW1hcmdpbi1ib3R0
+b20tYWx0OmF1dG8nPjxzdHJvbmc+PGI+PGZvbnQNCnNpemU9MSBjb2xvcj0iIzAwMjA0MSIgZmFj
+ZT1BcmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6Ny41cHQ7DQpmb250LWZh
+bWlseTpBcmlhbDtjb2xvcjojMDAyMDQxJz4tLS0tLS0tLS0tPC9zcGFuPjwvZm9udD48L2I+PC9z
+dHJvbmc+PHNwYW4NCmxhbmc9RU4tR0I+PG86cD48L286cD48L3NwYW4+PC9wPg0KDQo8cCBjbGFz
+cz1Nc29Ob3JtYWwgc3R5bGU9J21zby1tYXJnaW4tdG9wLWFsdDphdXRvO21zby1tYXJnaW4tYm90
+dG9tLWFsdDphdXRvJz48c3Ryb25nPjxiPjxmb250DQpzaXplPTEgY29sb3I9IiMwMDIwNDEiIGZh
+Y2U9QXJpYWw+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjcuNXB0Ow0KZm9udC1m
+YW1pbHk6QXJpYWw7Y29sb3I6IzAwMjA0MSc+Q2hyaXN0b3BoZSBPc3Rlcm1hbm48L3NwYW4+PC9m
+b250PjwvYj48L3N0cm9uZz48Zm9udA0KY29sb3I9bmF2eT48c3BhbiBsYW5nPUVOLUdCIHN0eWxl
+PSdjb2xvcjpuYXZ5Jz4gPC9zcGFuPjwvZm9udD48Zm9udCBzaXplPTENCmNvbG9yPSIjMDAyMDQx
+IiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZTo3LjVwdDtmb250
+LWZhbWlseToNCkFyaWFsO2NvbG9yOiMwMDIwNDEnPjxicj4NClNvZnR3YXJlIEVuZ2luZWVyPGJy
+Pg0KRGV2aWNlcyBFbmdpbmVlcmluZzwvc3Bhbj48L2ZvbnQ+PHNwYW4gbGFuZz1FTi1HQj48bzpw
+PjwvbzpwPjwvc3Bhbj48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1hbCBzdHlsZT0nbXNvLW1hcmdp
+bi10b3AtYWx0OmF1dG87bXNvLW1hcmdpbi1ib3R0b20tYWx0OmF1dG8nPjxmb250DQpzaXplPTEg
+Y29sb3I9IiMwMDIwNDEiIGZhY2U9QXJpYWw+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1z
+aXplOjcuNXB0Ow0KZm9udC1mYW1pbHk6QXJpYWw7Y29sb3I6IzAwMjA0MSc+U0lDUEEgU2VjdXJp
+dHkgU29sdXRpb25zIFNBPGJyPg0KPC9zcGFuPjwvZm9udD48Zm9udCBzaXplPTEgY29sb3I9IiMw
+MDFmMzciIGZhY2U9QXJpYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToNCjguMHB0O2ZvbnQtZmFt
+aWx5OkFyaWFsO2NvbG9yOiMwMDFGMzcnPkF2LiBkZSBGbG9yaXNzYW50IDQxPC9zcGFuPjwvZm9u
+dD48Zm9udA0Kc2l6ZT0xIGNvbG9yPSIjMDAyMDQxIiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4t
+R0Igc3R5bGU9J2ZvbnQtc2l6ZTo3LjVwdDsNCmZvbnQtZmFtaWx5OkFyaWFsO2NvbG9yOiMwMDIw
+NDEnPiwgMTAwOCA8L3NwYW4+PC9mb250Pjxmb250IHNpemU9MSBmYWNlPUFyaWFsPjxzcGFuDQps
+YW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6Ny41cHQ7Zm9udC1mYW1pbHk6QXJpYWwnPjxuczA6
+cGxhY2UNCiB3Omluc0F1dGhvcj0ib3N0ZXJtYW5uIiB3Omluc0RhdGU9IjIwMTEtMDQtMDhUMTM6
+MDM6MDBaIg0KIHc6ZW5kSW5zQXV0aG9yPSJvc3Rlcm1hbm4iIHc6ZW5kSW5zRGF0ZT0iMjAxMS0w
+NC0wOFQxMzowMzowMFoiPjxuczA6Q2l0eQ0KICB3Omluc0F1dGhvcj0ib3N0ZXJtYW5uIiB3Omlu
+c0RhdGU9IjIwMTEtMDQtMDhUMTM6MDM6MDBaIg0KICB3OmVuZEluc0F1dGhvcj0ib3N0ZXJtYW5u
+IiB3OmVuZEluc0RhdGU9IjIwMTEtMDQtMDhUMTM6MDM6MDBaIj48bnMwOnBsYWNlDQogICB3Omlu
+c0F1dGhvcj0ib3N0ZXJtYW5uIiB3Omluc0RhdGU9IjIwMTEtMDQtMDhUMTM6MDM6MDBaIg0KICAg
+dzplbmRJbnNBdXRob3I9Im9zdGVybWFubiIgdzplbmRJbnNEYXRlPSIyMDExLTA0LTA4VDEzOjAz
+OjAwWiI+PG5zMDpDaXR5DQogICAgdzppbnNBdXRob3I9Im9zdGVybWFubiIgdzppbnNEYXRlPSIy
+MDExLTA0LTA4VDEzOjAzOjAwWiINCiAgICB3OmVuZEluc0F1dGhvcj0ib3N0ZXJtYW5uIiB3OmVu
+ZEluc0RhdGU9IjIwMTEtMDQtMDhUMTM6MDM6MDBaIj48Zm9udA0KICAgIGNvbG9yPSIjMDAyMDQx
+Ij48c3BhbiBzdHlsZT0nY29sb3I6IzAwMjA0MSc+UHJpbGx5PC9zcGFuPjwvZm9udD48L25zMDpD
+aXR5PjwvbnMwOnBsYWNlPjwvbnMwOkNpdHk+PC9uczA6cGxhY2U+PGZvbnQNCmNvbG9yPSIjMDAy
+MDQxIj48c3BhbiBzdHlsZT0nY29sb3I6IzAwMjA0MSc+LCA8L3NwYW4+PC9mb250PjxuczA6Y291
+bnRyeS1yZWdpb24NCiB3Omluc0F1dGhvcj0ib3N0ZXJtYW5uIiB3Omluc0RhdGU9IjIwMTEtMDQt
+MDhUMTM6MDM6MDBaIg0KIHc6ZW5kSW5zQXV0aG9yPSJvc3Rlcm1hbm4iIHc6ZW5kSW5zRGF0ZT0i
+MjAxMS0wNC0wOFQxMzowMzowMFoiPjxuczA6Y291bnRyeS1yZWdpb24NCiAgdzppbnNBdXRob3I9
+Im9zdGVybWFubiIgdzppbnNEYXRlPSIyMDExLTA0LTA4VDEzOjAzOjAwWiINCiAgdzplbmRJbnNB
+dXRob3I9Im9zdGVybWFubiIgdzplbmRJbnNEYXRlPSIyMDExLTA0LTA4VDEzOjAzOjAwWiI+PGZv
+bnQNCiAgY29sb3I9IiMwMDIwNDEiPjxzcGFuIHN0eWxlPSdjb2xvcjojMDAyMDQxJz5Td2l0emVy
+bGFuZDwvc3Bhbj48L2ZvbnQ+PC9uczA6Y291bnRyeS1yZWdpb24+PC9uczA6Y291bnRyeS1yZWdp
+b24+PGZvbnQNCmNvbG9yPSIjMDAyMDQxIj48c3BhbiBzdHlsZT0nY29sb3I6IzAwMjA0MSc+PGJy
+Pg0KVGVsICs0MSAyMSA2MjcgNTkgNzAgJm5ic3A7RGlyZWN0ICs0MSAyMSA2MjcmbmJzcDs2MyA2
+ODxicj4NCkZheCArNDEgMjEgNjIwIDA2IDIyPC9zcGFuPjwvZm9udD48L3NwYW4+PC9mb250Pjxm
+b250IGNvbG9yPW5hdnk+PHNwYW4NCmxhbmc9RU4tR0Igc3R5bGU9J2NvbG9yOm5hdnknPiA8L3Nw
+YW4+PC9mb250Pjxmb250IHNpemU9MSBjb2xvcj0iIzAwMjA0MSINCmZhY2U9QXJpYWw+PHNwYW4g
+bGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjcuNXB0O2ZvbnQtZmFtaWx5OkFyaWFsOw0KY29s
+b3I6IzAwMjA0MSc+PGJyPg0KPGEgaHJlZj0ibWFpbHRvOmNocmlzdG9waGUuY2hyaXN0b3BoZS5v
+c3Rlcm1hbm5Ac2ljcGEuY29tIj5jaHJpc3RvcGhlLm9zdGVybWFubkBzaWNwYS5jb208L2E+DQom
+bmJzcDs8L3NwYW4+PC9mb250Pjxmb250IGNvbG9yPW5hdnk+PHNwYW4gc3R5bGU9J2NvbG9yOm5h
+dnknPjxhDQpocmVmPSJodHRwOi8vd3d3LnNpY3BhLmNvbS8iDQp0aXRsZT0iaHR0cDovL3d3dy5z
+aWNwYS5jb20vJiMxMDtibG9ja2VkOjpodHRwOi8vd3d3LnNpY3BhLmNvbS8iPjxmb250IHNpemU9
+MQ0KY29sb3I9IiMwMDIwNDEiIGZhY2U9QXJpYWwNCnRpdGxlPSJodHRwOi8vd3d3LnNpY3BhLmNv
+bS8mIzEwO2Jsb2NrZWQ6Omh0dHA6Ly93d3cuc2ljcGEuY29tLyI+PHNwYW4NCnRpdGxlPSJodHRw
+Oi8vd3d3LnNpY3BhLmNvbS8iPjxzcGFuIHRpdGxlPSJodHRwOi8vd3d3LnNpY3BhLmNvbS8iPjxz
+cGFuDQpsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6Ny41cHQ7Zm9udC1mYW1pbHk6QXJpYWw7
+Y29sb3I6IzAwMjA0MSc+d3d3LnNpY3BhLmNvbTwvc3Bhbj48L3NwYW4+PC9zcGFuPjwvZm9udD48
+L2E+PC9zcGFuPjwvZm9udD48bzpwPjwvbzpwPjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsIHN0
+eWxlPSdtc28tbWFyZ2luLXRvcC1hbHQ6YXV0bzttc28tbWFyZ2luLWJvdHRvbS1hbHQ6YXV0byc+
+PGZvbnQNCnNpemU9MyBmYWNlPSJUaW1lcyBOZXcgUm9tYW4iPjxzcGFuIHN0eWxlPSdmb250LXNp
+emU6MTIuMHB0Jz4mbmJzcDs8L3NwYW4+PG86cD48L286cD48L2ZvbnQ+PC9wPg0KDQo8cCBjbGFz
+cz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0zIGZhY2U9IlRpbWVzIE5ldyBSb21hbiI+PHNwYW4gc3R5
+bGU9J2ZvbnQtc2l6ZToNCjEyLjBwdCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250Pjwv
+cD4NCg0KPC9kaXY+DQoNCjwvYm9keT4NCg0KPC9odG1sPg0KDQpUaGlzIG1lc3NhZ2Ugd2FzIGRl
+bGl2ZXJlZCB0aHJvdWdoIGVuY3J5cHRlZCBtZWNoYW5pc20uDQoNCg0KVGhlIGluZm9ybWF0aW9u
+IGluIHRoaXMgZW1haWwgYW5kIGFueSBhdHRhY2htZW50cyBpcyBjb25maWRlbnRpYWwgYW5kIGlu
+dGVuZGVkIHNvbGVseSBmb3IgdGhlIHVzZSBvZiB0aGUgaW5kaXZpZHVhbChzKSB0byB3aG9tIGl0
+IGlzIGFkZHJlc3NlZCBvciBvdGhlcndpc2UgZGlyZWN0ZWQuIFBsZWFzZSBub3RlIHRoYXQgYW55
+IHZpZXdzIG9yIG9waW5pb25zIHByZXNlbnRlZCBpbiB0aGlzIGVtYWlsIGFyZSBzb2xlbHkgdGhv
+c2Ugb2YgdGhlIGF1dGhvciBhbmQgZG8gbm90IG5lY2Vzc2FyaWx5IHJlcHJlc2VudCB0aG9zZSBv
+ZiB0aGUgQ29tcGFueS4gRmluYWxseSwgdGhlIHJlY2lwaWVudCBzaG91bGQgY2hlY2sgdGhpcyBl
+bWFpbCBhbmQgYW55IGF0dGFjaG1lbnRzIGZvciB0aGUgcHJlc2VuY2Ugb2YgdmlydXNlcy4gVGhl
+IENvbXBhbnkgYWNjZXB0cyBubyBsaWFiaWxpdHkgZm9yIGFueSBkYW1hZ2UgY2F1c2VkIGJ5IGFu
+eSB2aXJ1cyB0cmFuc21pdHRlZCBieSB0aGlzIGVtYWlsLg0KDQo=
+
+--===============6709734827359200304==--
 
