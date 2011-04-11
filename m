@@ -1,83 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============4166681291864840807=="
+Content-Type: multipart/mixed; boundary="===============2280650813347039312=="
 MIME-Version: 1.0
-From: Debanjan Biswas (debiswas) <debiswas@cisco.com>
-Subject: Integration of oFono with BlueZ
-Date: Mon, 11 Apr 2011 22:56:19 +0530
-Message-ID: <35DD4A1E71A66646BF42B14F8A62B7AC044B1656@XMB-BGL-419.cisco.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 10/20] doc: add PreferredMode property to modem
+Date: Mon, 11 Apr 2011 14:27:45 -0500
+Message-ID: <4DA35631.5090906@gmail.com>
+In-Reply-To: <1302517218-2147-11-git-send-email-vijay.nayani@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4166681291864840807==
+--===============2280650813347039312==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Everyone,
+Hi Vijay,
 
-                How the oFono integrates with the BlueZ stack for
-retrieving/sending of commands/events? Does it use D-bus to communicate
-with the BlueZ stack or does it run in the same process as that of BlueZ
-stack?
+On 04/11/2011 05:20 AM, Vijay Nayani wrote:
+> ---
+>  doc/modem-api.txt |   18 ++++++++++++++++++
+>  1 files changed, 18 insertions(+), 0 deletions(-)
+> =
 
- =
+> diff --git a/doc/modem-api.txt b/doc/modem-api.txt
+> index fa400a2..c79bffa 100644
+> --- a/doc/modem-api.txt
+> +++ b/doc/modem-api.txt
+> @@ -54,6 +54,24 @@ Properties	boolean Powered [readwrite]
+>  			modem. The Emergency is true if an emergency call or
+>  			related operation is currently active.
+>  =
 
+> +		string PreferredMode [readonly, optional]
+> +
+> +			Preferred UE mode setting. A UE attached for EPS services
+> +			shall operate in one of the following operation modes:
+> +
+> +				"PS mode 2"	UE registers only to EPS
+> +						services, and UE's usage setting
+> +						is "data centric".
+> +				"CS/PS mode 1"	UE registers to both EPS and
+> +						non-EPS services, and UE's usage
+> +						setting is "voice centric".
+> +				"CS/PS mode 2"	UE registers to both EPS and
+> +						non-EPS services, and UE's usage
+> +						setting is "data centric".
+> +				"PS mode 1"	UE registers only to EPS
+> +						services, and UE's usage setting
+> +						is "voice centric".
+> +
 
-                Thanking you in advance.
+I don't like that this is being exposed on the modem interface.  This
+really belongs on a separate atom.  Not all modems are going to be LTE
+enabled yet...
 
- =
+Have you looked at the IMS/LTE API proposal from Sjur a while back?
 
+>  		string Name [readonly, optional]
+>  =
 
-Regards
+>  			Friendly name of the modem device.
 
-Debanjan
+Regards,
+-Denis
 
-
---===============4166681291864840807==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29u
-dGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEgbmFtZT1HZW5lcmF0b3Ig
-Y29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTIgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+Cjwh
-LS0KIC8qIEZvbnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseToiQ2Ft
-YnJpYSBNYXRoIjsKCXBhbm9zZS0xOjIgNCA1IDMgNSA0IDYgMyAyIDQ7fQpAZm9udC1mYWNlCgl7
-Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KIC8q
-IFN0eWxlIERlZmluaXRpb25zICovCiBwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNv
-Tm9ybWFsCgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZTox
-MS4wcHQ7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBzcGFu
-Lk1zb0h5cGVybGluawoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0ZXh0
-LWRlY29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxv
-d2VkCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0
-aW9uOnVuZGVybGluZTt9CnNwYW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29u
-YWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xvcjp3
-aW5kb3d0ZXh0O30KLk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTt9
-CkBwYWdlIFdvcmRTZWN0aW9uMQoJe3NpemU6OC41aW4gMTEuMGluOwoJbWFyZ2luOjEuMGluIDEu
-MGluIDEuMGluIDEuMGluO30KZGl2LldvcmRTZWN0aW9uMQoJe3BhZ2U6V29yZFNlY3Rpb24xO30K
-LS0+Cjwvc3R5bGU+CjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPgogPG86c2hhcGVkZWZhdWx0cyB2
-OmV4dD0iZWRpdCIgc3BpZG1heD0iMTAyNiIgLz4KPC94bWw+PCFbZW5kaWZdLS0+PCEtLVtpZiBn
-dGUgbXNvIDldPjx4bWw+CiA8bzpzaGFwZWxheW91dCB2OmV4dD0iZWRpdCI+CiAgPG86aWRtYXAg
-djpleHQ9ImVkaXQiIGRhdGE9IjEiIC8+CiA8L286c2hhcGVsYXlvdXQ+PC94bWw+PCFbZW5kaWZd
-LS0+CjwvaGVhZD4KCjxib2R5IGxhbmc9RU4tVVMgbGluaz1ibHVlIHZsaW5rPXB1cnBsZT4KCjxk
-aXYgY2xhc3M9V29yZFNlY3Rpb24xPgoKPHAgY2xhc3M9TXNvTm9ybWFsPkhpIEV2ZXJ5b25lLDxv
-OnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
-OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
-YnNwOyZuYnNwOyBIb3cKdGhlIG9Gb25vIGludGVncmF0ZXMgd2l0aCB0aGUgQmx1ZVogc3RhY2sg
-Zm9yIHJldHJpZXZpbmcvc2VuZGluZyBvZgpjb21tYW5kcy9ldmVudHM/IERvZXMgaXQgdXNlIEQt
-YnVzIHRvIGNvbW11bmljYXRlIHdpdGggdGhlIEJsdWVaIHN0YWNrIG9yIGRvZXMKaXQgcnVuIGlu
-IHRoZSBzYW1lIHByb2Nlc3MgYXMgdGhhdCBvZiBCbHVlWiBzdGFjaz88bzpwPjwvbzpwPjwvcD4K
-CjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05v
-cm1hbD4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
-cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgVGhhbmtpbmcKeW91IGluIGFk
-dmFuY2UuPG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PG86cD4mbmJzcDs8L286
-cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+UmVnYXJkczxvOnA+PC9vOnA+PC9wPgoKPHAgY2xh
-c3M9TXNvTm9ybWFsPkRlYmFuamFuPG86cD48L286cD48L3A+Cgo8L2Rpdj4KCjwvYm9keT4KCjwv
-aHRtbD4K
-
---===============4166681291864840807==--
+--===============2280650813347039312==--
 
