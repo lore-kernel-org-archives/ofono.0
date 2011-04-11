@@ -1,143 +1,109 @@
-Content-Type: multipart/mixed; boundary="===============2230253016819706834=="
+Content-Type: multipart/mixed; boundary="===============7829655357976865932=="
 MIME-Version: 1.0
 From: Vijay Nayani <vijay.nayani@elektrobit.com>
-Subject: [RFC PATCH 19/20] phonesim: atoms creation based on UE mode
-Date: Mon, 11 Apr 2011 13:20:17 +0300
-Message-ID: <1302517218-2147-20-git-send-email-vijay.nayani@elektrobit.com>
+Subject: [RFC PATCH 18/20] phonesim: Add cemode query implementation
+Date: Mon, 11 Apr 2011 13:20:16 +0300
+Message-ID: <1302517218-2147-19-git-send-email-vijay.nayani@elektrobit.com>
 In-Reply-To: <1302517218-2147-1-git-send-email-vijay.nayani@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2230253016819706834==
+--===============7829655357976865932==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/phonesim.c |   42 +++++++++++++++++++++++++++++++-----------
- 1 files changed, 31 insertions(+), 11 deletions(-)
+ plugins/phonesim.c |   34 +++++++++++++++++++++++++++++++++-
+ 1 files changed, 33 insertions(+), 1 deletions(-)
 
 diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-index 0727baf..8e3e928 100644
+index 13f942e..0727baf 100644
 --- a/plugins/phonesim.c
 +++ b/plugins/phonesim.c
-@@ -64,6 +64,8 @@
- #include <drivers/atmodem/sim-poll.h>
- #include <drivers/atmodem/atutil.h>
+@@ -66,6 +66,7 @@
  =
 
-+#include  "common.h"
-+
  static const char *none_prefix[] =3D { NULL };
  static const char *ptty_prefix[] =3D { "+PTTY:", NULL };
- static const char *cemode_prefix[] =3D { "+CEMODE:", NULL };
-@@ -667,11 +669,16 @@ static void phonesim_pre_sim(struct ofono_modem *mode=
-m)
- 	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
- 	sim =3D ofono_sim_create(modem, 0, "atmodem", data->chat);
++static const char *cemode_prefix[] =3D { "+CEMODE:", NULL };
+ static int next_iface =3D 0;
  =
 
-+	if (data->pref_ue_mode =3D=3D PREFERRED_UE_MODE_PS_VOICE_CENTRIC ||
-+			data->pref_ue_mode =3D=3D PREFERRED_UE_MODE_PS_DATA_CENTRIC)
+ struct phonesim_data {
+@@ -73,6 +74,7 @@ struct phonesim_data {
+ 	GAtChat *chat;
+ 	gboolean calypso;
+ 	gboolean use_mux;
++	int pref_ue_mode;
+ };
+ =
+
+ struct packet_context_data {
+@@ -419,6 +421,31 @@ static void crst_notify(GAtResult *result, gpointer us=
+er_data)
+ 	g_idle_add(phonesim_reset, user_data);
+ }
+ =
+
++static void cemode_read_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct phonesim_data *data =3D ofono_modem_get_data(modem);
++	GAtResultIter iter;
++	int mode;
++
++	if (!ok)
 +		goto out;
 +
- 	if (data->calypso)
- 		ofono_voicecall_create(modem, 0, "calypsomodem", data->chat);
- 	else
- 		ofono_voicecall_create(modem, 0, "atmodem", data->chat);
- =
-
++	g_at_result_iter_init(&iter, result);
++
++	if (g_at_result_iter_next(&iter, "+CEMODE:") =3D=3D FALSE)
++		goto out;
++
++	if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
++		goto out;
++
++	data->pref_ue_mode =3D mode;
++	ofono_modem_set_preferred_ue_mode(modem, mode);
++
 +out:
- 	if (sim)
- 		ofono_sim_inserted_notify(sim, TRUE);
- }
-@@ -682,13 +689,18 @@ static void phonesim_post_sim(struct ofono_modem *mod=
-em)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_ctm_create(modem, 0, "phonesim", data->chat);
- 	ofono_phonebook_create(modem, 0, "atmodem", data->chat);
- =
-
- 	if (!data->calypso)
- 		ofono_stk_create(modem, OFONO_VENDOR_PHONESIM,
- 					"atmodem", data->chat);
- =
-
-+	/* Other atom creations need to be addressed in the future */
-+	if (data->pref_ue_mode =3D=3D PREFERRED_UE_MODE_PS_VOICE_CENTRIC ||
-+			data->pref_ue_mode =3D=3D PREFERRED_UE_MODE_PS_DATA_CENTRIC)
-+		return;
++	ofono_modem_set_powered(modem, TRUE);
++}
 +
-+	ofono_ctm_create(modem, 0, "phonesim", data->chat);
- 	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
+ static void phonesim_disconnected(gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+@@ -529,6 +556,8 @@ static int phonesim_enable(struct ofono_modem *modem)
+ 		return -ENOMEM;
+ 	}
  =
 
- 	if (!data->calypso)
-@@ -704,9 +716,6 @@ static void phonesim_post_online(struct ofono_modem *mo=
-dem)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_ussd_create(modem, 0, "atmodem", data->chat);
--	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
--
++	data->pref_ue_mode =3D -1;
++
  	if (data->calypso)
- 		ofono_netreg_create(modem, OFONO_VENDOR_CALYPSO,
- 							"atmodem", data->chat);
-@@ -714,13 +723,6 @@ static void phonesim_post_online(struct ofono_modem *m=
-odem)
- 		ofono_netreg_create(modem, OFONO_VENDOR_PHONESIM,
- 							"atmodem", data->chat);
+ 		syntax =3D g_at_syntax_new_gsm_permissive();
+ 	else
+@@ -574,7 +603,10 @@ static int phonesim_enable(struct ofono_modem *modem)
+ 	g_at_chat_register(data->chat, "+CRST:",
+ 				crst_notify, FALSE, modem, NULL);
  =
 
--	ofono_call_meter_create(modem, 0, "atmodem", data->chat);
--	ofono_call_barring_create(modem, 0, "atmodem", data->chat);
--	ofono_call_volume_create(modem, 0, "atmodem", data->chat);
--
--	if (!data->calypso)
--		ofono_cbs_create(modem, 0, "atmodem", data->chat);
--
- 	ps =3D ofono_packet_service_create(modem, 0, "atmodem", data->chat);
+-	return 0;
++	g_at_chat_send(data->chat, "AT+CEMODE?", cemode_prefix,
++			cemode_read_cb, modem, NULL);
++
++	return -EINPROGRESS;
+ }
  =
 
- 	pc1 =3D ofono_packet_context_create(modem, 0, "phonesim", data->chat);
-@@ -731,6 +733,24 @@ static void phonesim_post_online(struct ofono_modem *m=
-odem)
- 	if (ps && pc2)
- 		ofono_packet_service_add_context(ps, pc2);
- =
-
-+	/*
-+	 * Incase of +CEMODE: 0 or +CEMODE: 3, only LTE atoms are created which
-+	 * include sim, phonebook, stk, netreg, packet-service and packet-context.
-+	 */
-+	if (data->pref_ue_mode =3D=3D PREFERRED_UE_MODE_PS_VOICE_CENTRIC ||
-+			data->pref_ue_mode =3D=3D PREFERRED_UE_MODE_PS_DATA_CENTRIC)
-+		return;
-+
-+	ofono_ussd_create(modem, 0, "atmodem", data->chat);
-+	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
-+
-+	ofono_call_meter_create(modem, 0, "atmodem", data->chat);
-+	ofono_call_barring_create(modem, 0, "atmodem", data->chat);
-+	ofono_call_volume_create(modem, 0, "atmodem", data->chat);
-+
-+	if (!data->calypso)
-+		ofono_cbs_create(modem, 0, "atmodem", data->chat);
-+
- 	mw =3D ofono_message_waiting_create(modem);
- 	if (mw)
- 		ofono_message_waiting_register(mw);
+ static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
 -- =
 
 1.7.0.4
 
 
---===============2230253016819706834==--
+--===============7829655357976865932==--
 
