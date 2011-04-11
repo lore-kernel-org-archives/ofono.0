@@ -1,109 +1,146 @@
-Content-Type: multipart/mixed; boundary="===============7829655357976865932=="
+Content-Type: multipart/mixed; boundary="===============7711647379286438797=="
 MIME-Version: 1.0
 From: Vijay Nayani <vijay.nayani@elektrobit.com>
-Subject: [RFC PATCH 18/20] phonesim: Add cemode query implementation
-Date: Mon, 11 Apr 2011 13:20:16 +0300
-Message-ID: <1302517218-2147-19-git-send-email-vijay.nayani@elektrobit.com>
+Subject: [RFC PATCH 20/20] modem: Add netreg watch for tech switch
+Date: Mon, 11 Apr 2011 13:20:18 +0300
+Message-ID: <1302517218-2147-21-git-send-email-vijay.nayani@elektrobit.com>
 In-Reply-To: <1302517218-2147-1-git-send-email-vijay.nayani@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7829655357976865932==
+--===============7711647379286438797==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Placeholder for technology switch based on
+registered technology and preferred ue mode also
+added along with the netreg status watch.
 ---
- plugins/phonesim.c |   34 +++++++++++++++++++++++++++++++++-
- 1 files changed, 33 insertions(+), 1 deletions(-)
+ src/modem.c |   79 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 79 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-index 13f942e..0727baf 100644
---- a/plugins/phonesim.c
-+++ b/plugins/phonesim.c
-@@ -66,6 +66,7 @@
- =
-
- static const char *none_prefix[] =3D { NULL };
- static const char *ptty_prefix[] =3D { "+PTTY:", NULL };
-+static const char *cemode_prefix[] =3D { "+CEMODE:", NULL };
- static int next_iface =3D 0;
- =
-
- struct phonesim_data {
-@@ -73,6 +74,7 @@ struct phonesim_data {
- 	GAtChat *chat;
- 	gboolean calypso;
- 	gboolean use_mux;
-+	int pref_ue_mode;
- };
- =
-
- struct packet_context_data {
-@@ -419,6 +421,31 @@ static void crst_notify(GAtResult *result, gpointer us=
-er_data)
- 	g_idle_add(phonesim_reset, user_data);
+diff --git a/src/modem.c b/src/modem.c
+index aecb35a..65db45c 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -84,6 +84,9 @@ struct ofono_modem {
+ 	struct ofono_sim	*sim;
+ 	unsigned int		sim_watch;
+ 	unsigned int		sim_ready_watch;
++	struct ofono_netreg	*netreg;
++	unsigned int		netreg_watch;
++	unsigned int		netreg_status_watch;
+ 	const struct ofono_modem_driver *driver;
+ 	void			*driver_data;
+ 	char			*driver_type;
+@@ -1846,6 +1849,75 @@ static void sim_watch(struct ofono_atom *atom,
+ 							modem, NULL);
  }
  =
 
-+static void cemode_read_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
++static void netreg_status_watch(int status, int lac, int ci, int tech,
++					const char *mcc, const char *mnc,
++					void *data)
 +{
-+	struct ofono_modem *modem =3D user_data;
-+	struct phonesim_data *data =3D ofono_modem_get_data(modem);
-+	GAtResultIter iter;
-+	int mode;
++	struct ofono_modem *modem =3D data;
 +
-+	if (!ok)
-+		goto out;
++	if (status !=3D NETWORK_REGISTRATION_STATUS_REGISTERED &&
++			status !=3D NETWORK_REGISTRATION_STATUS_ROAMING)
++		return;
 +
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (g_at_result_iter_next(&iter, "+CEMODE:") =3D=3D FALSE)
-+		goto out;
-+
-+	if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
-+		goto out;
-+
-+	data->pref_ue_mode =3D mode;
-+	ofono_modem_set_preferred_ue_mode(modem, mode);
-+
-+out:
-+	ofono_modem_set_powered(modem, TRUE);
++	switch (tech) {
++	case ACCESS_TECHNOLOGY_EUTRAN:
++		switch(modem->pref_mode) {
++		case PREFERRED_UE_MODE_PS_VOICE_CENTRIC:
++		case PREFERRED_UE_MODE_PS_DATA_CENTRIC:
++			/* No need to do any switching */
++			break;
++		case PREFERRED_UE_MODE_CS_PS_VOICE_CENTRIC:
++		case PREFERRED_UE_MODE_CS_PS_DATA_CENTRIC:
++			/*
++			 * All atoms needs to be created which is
++			 * already done
++			 */
++			break;
++		}
++		break;
++	case ACCESS_TECHNOLOGY_GSM:
++	case ACCESS_TECHNOLOGY_GSM_COMPACT:
++	case ACCESS_TECHNOLOGY_UTRAN:
++	case ACCESS_TECHNOLOGY_GSM_EGPRS:
++	case ACCESS_TECHNOLOGY_UTRAN_HSDPA:
++	case ACCESS_TECHNOLOGY_UTRAN_HSUPA:
++	case ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA:
++		switch(modem->pref_mode) {
++		case PREFERRED_UE_MODE_PS_VOICE_CENTRIC:
++			/* Switch to 3G */
++			break;
++		case PREFERRED_UE_MODE_CS_PS_VOICE_CENTRIC:
++		case PREFERRED_UE_MODE_CS_PS_DATA_CENTRIC:
++			/*
++			 * All atoms needs to be created which is already
++			 * done.
++			 */
++			break;
++		default:
++			break;
++		}
++		break;
++	}
 +}
 +
- static void phonesim_disconnected(gpointer user_data)
++static void netreg_watch(struct ofono_atom *atom,
++			enum ofono_atom_watch_condition cond, void *data)
++{
++	struct ofono_modem *modem =3D data;
++
++	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
++		modem->netreg_status_watch =3D 0;
++		modem->netreg =3D NULL;
++		return;
++	}
++
++	modem->netreg =3D __ofono_atom_get_data(atom);
++	modem->netreg_status_watch =3D __ofono_netreg_add_status_watch(
++							modem->netreg,
++							netreg_status_watch,
++							modem, NULL);
++}
++
+ void __ofono_modemwatch_init(void)
  {
- 	struct ofono_modem *modem =3D user_data;
-@@ -529,6 +556,8 @@ static int phonesim_enable(struct ofono_modem *modem)
- 		return -ENOMEM;
- 	}
+ 	g_modemwatches =3D __ofono_watchlist_new(g_free);
+@@ -1988,6 +2060,10 @@ int ofono_modem_register(struct ofono_modem *modem)
+ 					OFONO_ATOM_TYPE_SIM,
+ 					sim_watch, modem, NULL);
  =
 
-+	data->pref_ue_mode =3D -1;
++	modem->netreg_watch =3D __ofono_modem_add_atom_watch(modem,
++					OFONO_ATOM_TYPE_NETREG,
++					netreg_watch, modem, NULL);
 +
- 	if (data->calypso)
- 		syntax =3D g_at_syntax_new_gsm_permissive();
- 	else
-@@ -574,7 +603,10 @@ static int phonesim_enable(struct ofono_modem *modem)
- 	g_at_chat_register(data->chat, "+CRST:",
- 				crst_notify, FALSE, modem, NULL);
- =
-
--	return 0;
-+	g_at_chat_send(data->chat, "AT+CEMODE?", cemode_prefix,
-+			cemode_read_cb, modem, NULL);
-+
-+	return -EINPROGRESS;
+ 	return 0;
  }
  =
 
- static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
+@@ -2020,6 +2096,9 @@ static void modem_unregister(struct ofono_modem *mode=
+m)
+ 	modem->sim_watch =3D 0;
+ 	modem->sim_ready_watch =3D 0;
+ =
+
++	modem->netreg_watch =3D 0;
++	modem->netreg_status_watch =3D 0;
++
+ 	g_slist_foreach(modem->interface_list, (GFunc) g_free, NULL);
+ 	g_slist_free(modem->interface_list);
+ 	modem->interface_list =3D NULL;
 -- =
 
 1.7.0.4
 
 
---===============7829655357976865932==--
+--===============7711647379286438797==--
 
