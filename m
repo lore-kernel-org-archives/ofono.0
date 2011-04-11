@@ -1,133 +1,223 @@
-Content-Type: multipart/mixed; boundary="===============4261944362651550873=="
+Content-Type: multipart/mixed; boundary="===============5821693304396617882=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 6/8] voicecall: add ATA support for HFP emulator
-Date: Mon, 11 Apr 2011 11:00:42 -0500
-Message-ID: <4DA325AA.1060203@gmail.com>
-In-Reply-To: <1302194040-18811-7-git-send-email-frederic.danis@linux.intel.com>
+From: Frederic Danis <frederic.danis@intel.com>
+Subject: Re: [PATCH v2 3/8] emulator: add RING for HFP AG
+Date: Mon, 11 Apr 2011 16:09:51 +0000
+Message-ID: <4DA327CB.8030302@intel.com>
+In-Reply-To: <4DA32366.9010509@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4261944362651550873==
+--===============5821693304396617882==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hello Denis,
 
-On 04/07/2011 11:33 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> ---
->  src/voicecall.c |   58 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++-
->  1 files changed, 56 insertions(+), 2 deletions(-)
-> =
+Le 11/04/2011 17:51, Denis Kenzior a =C3=A9crit :
+> Hi Fr=C3=A9d=C3=A9ric,
+>
+> On 04/07/2011 11:33 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+>> ---
+>>   src/emulator.c |   86 +++++++++++++++++++++++++++++++++++++++++++++++-=
+-------
+>>   1 files changed, 73 insertions(+), 13 deletions(-)
+>>
+>> diff --git a/src/emulator.c b/src/emulator.c
+>> index 2707592..f1ccfb3 100644
+>> --- a/src/emulator.c
+>> +++ b/src/emulator.c
+>> @@ -37,6 +37,8 @@
+>>   #define DUN_DNS_SERVER_1       "10.10.10.10"
+>>   #define DUN_DNS_SERVER_2       "10.10.10.11"
+>>
+>> +#define RING_TIMEOUT 3
+>> +
+>>   struct ofono_emulator {
+>>   	struct ofono_atom *atom;
+>>   	enum ofono_emulator_type type;
+>> @@ -49,6 +51,7 @@ struct ofono_emulator {
+>>   	int events_mode;
+>>   	gboolean events_ind;
+>>   	GSList *indicators;
+>> +	guint ring;
+>
+> Please name this callsetup_source.
+>
+>>   };
+>>
+>>   struct indicator {
+>> @@ -177,6 +180,42 @@ error:
+>>   	g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
+>>   }
+>>
+>> +static struct indicator *find_indicator(struct ofono_emulator *em,
+>> +						const char *name, int *index)
+>> +{
+>> +	GSList *l;
+>> +	int i;
+>> +
+>> +	for (i =3D 1, l =3D em->indicators; l; l =3D l->next, i++) {
+>> +		struct indicator *ind =3D l->data;
+>> +
+>> +		if (g_str_equal(ind->name, name) =3D=3D TRUE) {
+>> +			if (index)
+>> +				*index =3D i;
+>> +
+>> +			return ind;
+>> +		}
+>
+> To avoid nesting, this might be better written as:
+>
+> if (g_str_equal(ind->name, name) =3D=3D FALSE)
+> 	continue;
+>
+> if (index)
+> 	...
+>
+>> +	}
+>> +
+>> +	return NULL;
+>> +}
+>> +
+>> +static gboolean ring_cb(gpointer user_data)
+>
+> Please name this something like: send_callsetup_indicators
+>
+>> +{
+>> +	struct ofono_emulator *em =3D user_data;
+>> +	struct indicator *call_ind;
+>> +
+>> +	if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP&&  em->slc =3D=3D FALSE)
+>> +		return TRUE;
+>> +
+>> +	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
+>> +
+>> +	if (call_ind->value =3D=3D OFONO_EMULATOR_CALL_INACTIVE)
+>> +		g_at_server_send_unsolicited(em->server, "RING");
+>> +
+>> +	return TRUE;
+>> +}
+>> +
+>>   static void brsf_cb(GAtServer *server, GAtServerRequestType type,
+>>   			GAtResult *result, gpointer user_data)
+>>   {
+>> @@ -418,6 +457,11 @@ static void emulator_unregister(struct ofono_atom *=
+atom)
+>>   		em->source =3D 0;
+>>   	}
+>>
+>> +	if (em->ring) {
+>> +		g_source_remove(em->ring);
+>> +		em->ring =3D 0;
+>> +	}
+>> +
+>>   	for (l =3D em->indicators; l; l =3D l->next) {
+>>   		struct indicator *ind =3D l->data;
+>>
+>> @@ -681,27 +725,43 @@ enum ofono_emulator_request_type ofono_emulator_re=
+quest_get_type(
+>>   void ofono_emulator_set_indicator(struct ofono_emulator *em,
+>>   					const char *name, int value)
+>>   {
+>> -	GSList *l;
+>>   	int i;
+>>   	char buf[20];
+>> +	struct indicator *ind;
+>> +	struct indicator *call_ind;
+>>
+>> -	for (i =3D 1, l =3D em->indicators; l; l =3D l->next, i++) {
+>> -		struct indicator *ind =3D l->data;
+>> +	ind =3D find_indicator(em, name,&i);
+>>
+>> -		if (g_str_equal(ind->name, name) =3D=3D FALSE)
+>> -			continue;
+>> +	if (ind =3D=3D NULL || ind->value =3D=3D value || value<  ind->min
+>> +			|| value>  ind->max)
+>> +		return;
+>>
+>> -		if (ind->value =3D=3D value || value<  ind->min
+>> -					|| value>  ind->max)
+>> -			return;
+>> +	ind->value =3D value;
+>>
+>> -		ind->value =3D value;
+>> +	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
+>>
+>> -		if (em->events_mode =3D=3D 3&&  em->events_ind&&  em->slc) {
+>> -			sprintf(buf, "+CIEV: %d,%d", i, ind->value);
+>> -			g_at_server_send_info(em->server, buf, TRUE);
+>> -		}
+>> +	if (em->events_mode =3D=3D 3&&  em->events_ind&&  em->slc) {
+>> +		sprintf(buf, "+CIEV: %d,%d", i, ind->value);
+>> +		g_at_server_send_info(em->server, buf, TRUE);
+>
+> Reminds me, this should be g_at_server_send_unsolicited
+>
+>> +	}
+>>
+>> +	/*
+>> +	 * Ring timer should be started when callsetup indicator is set to
+>> +	 *   Incoming
+>> +	 * If there is no active call, a first RING should be sent just after
+>> +	 *   the +CIEV
+>> +	 * It should be stopped for all other values of callsetup
+>> +	 */
+>> +	if (g_str_equal(name, OFONO_EMULATOR_IND_CALLSETUP) =3D=3D FALSE)
+>>   		return;
+>> +
+>> +	if (value =3D=3D OFONO_EMULATOR_CALLSETUP_INCOMING&&  em->ring =3D=3D =
+0) {
+>> +		if (call_ind->value =3D=3D OFONO_EMULATOR_CALL_INACTIVE)
+>> +			ring_cb(em);
+>> +
+>> +		em->ring =3D g_timeout_add_seconds(RING_TIMEOUT, ring_cb, em);
+>> +	} else if (value !=3D OFONO_EMULATOR_CALLSETUP_INCOMING&&  em->ring) {
+>> +		g_source_remove(em->ring);
+>> +		em->ring =3D 0;
+>
+> Do you really need to check for em->ring here?  You already return if
+> the value of the indicator is already the same.  Also, it sounds like
+> you should just start a timer and always call ring_cb when callsetup =3D=
+=3D
+> callsetup_incoming.  The CCWA/RING determination should be done in that
+> function.
+>
+I agree with you that check of em->ring when callsetup becomes INCOMING =
 
-> diff --git a/src/voicecall.c b/src/voicecall.c
-> index 8e68243..cf02bb6 100644
-> --- a/src/voicecall.c
-> +++ b/src/voicecall.c
-> @@ -2314,6 +2314,13 @@ void ofono_voicecall_driver_unregister(const struc=
-t ofono_voicecall_driver *d)
->  	g_drivers =3D g_slist_remove(g_drivers, (void *) d);
->  }
->  =
+is useless.
+I thought that the second one, when callsetup is no more INCOMING, =
 
-> +static void emulator_remove_handler(struct ofono_atom *atom, void *data)
-> +{
-> +	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
-> +
-> +	ofono_emulator_remove_handler(em, data);
-> +}
-> +
->  static void voicecall_unregister(struct ofono_atom *atom)
->  {
->  	DBusConnection *conn =3D ofono_dbus_get_connection();
-> @@ -2333,6 +2340,11 @@ static void voicecall_unregister(struct ofono_atom=
- *atom)
->  						OFONO_ATOM_TYPE_EMULATOR_HFP,
->  						emulator_callheld_status_cb, 0);
->  =
+should be kept to stop the timer as soon as callsetup change states.
+>>   	}
+>>   }
+>
+> Regards,
+> -Denis
 
-> +	__ofono_modem_foreach_registered_atom(modem,
-> +						OFONO_ATOM_TYPE_EMULATOR_HFP,
-> +						emulator_remove_handler,
-> +						"A");
-> +
+Regards
 
-Can you move this into its own function, e.g.
-unregister_emulator_handlers or something like that.  There will be lots
-of these and I don't want to clutter up voicecall_unregister too much.
+Fred
 
->  	__ofono_modem_remove_atom_watch(modem, vc->hfp_watch);
->  =
+-- =
 
->  	if (vc->sim_watch) {
-> @@ -2510,12 +2522,54 @@ static void sim_watch(struct ofono_atom *atom,
->  	sim_state_watch(ofono_sim_get_state(sim), vc);
->  }
->  =
+Frederic Danis                            Open Source Technology Centre
+frederic.danis(a)intel.com                              Intel Corporation
 
-> +static void emulator_generic_cb(const struct ofono_error *error, void *d=
-ata)
-> +{
-> +	struct ofono_emulator *em =3D data;
-> +	struct ofono_error result;
-> +
-> +	result.type =3D error->type;
-> +
-> +	ofono_emulator_send_final(em, &result);
-> +}
-> +
-> +static void emulator_ata_cb(struct ofono_emulator *em,
-> +			struct ofono_emulator_request *req, void *userdata)
-> +{
-> +	struct ofono_voicecall *vc =3D userdata;
-> +	struct ofono_error result;
-> +
-> +	result.error =3D 0;
-> +
-> +	switch (ofono_emulator_request_get_type(req)) {
-> +	case OFONO_EMULATOR_REQUEST_TYPE_COMMAND_ONLY:
-> +		if (!voicecalls_have_incoming(vc))
-> +			goto fail;
-> +
-> +		if (vc->driver->answer =3D=3D NULL)
-> +			goto fail;
-> +
-> +		vc->driver->answer(vc, emulator_generic_cb, em);
-> +		break;
-> +
-> +	default:
-> +fail:
-> +		result.type =3D OFONO_ERROR_TYPE_FAILURE;
-> +		ofono_emulator_send_final(em, &result);
-> +	};
-> +}
-> +
->  static void emulator_hfp_watch(struct ofono_atom *atom,
->  				enum ofono_atom_watch_condition cond,
->  				void *data)
->  {
-> -	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_REGISTERED)
-> -		notify_emulator_call_status(data);
-> +	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
-> +
-> +	if (cond !=3D OFONO_ATOM_WATCH_CONDITION_REGISTERED)
-> +		return;
-> +
-> +	notify_emulator_call_status(data);
-> +
-> +	ofono_emulator_add_handler(em, "A", emulator_ata_cb, data, NULL);
->  }
->  =
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
->  void ofono_voicecall_register(struct ofono_voicecall *vc)
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
-Otherwise looks good, but does not apply.  Could you please rebase &
-resubmit?
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
-Regards,
--Denis
 
---===============4261944362651550873==--
+--===============5821693304396617882==--
 
