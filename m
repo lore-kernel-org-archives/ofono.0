@@ -1,46 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8023559155199352146=="
+Content-Type: multipart/mixed; boundary="===============0029573502726130033=="
 MIME-Version: 1.0
 From: Vijay Nayani <vijay.nayani@elektrobit.com>
-Subject: [RFC PATCH 07/20] common: add preferred_ue_mode enum
-Date: Mon, 11 Apr 2011 13:20:05 +0300
-Message-ID: <1302517218-2147-8-git-send-email-vijay.nayani@elektrobit.com>
+Subject: [RFC PATCH 08/20] include: add set preferred ue mode api
+Date: Mon, 11 Apr 2011 13:20:06 +0300
+Message-ID: <1302517218-2147-9-git-send-email-vijay.nayani@elektrobit.com>
 In-Reply-To: <1302517218-2147-1-git-send-email-vijay.nayani@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8023559155199352146==
+--===============0029573502726130033==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/common.h |    8 ++++++++
- 1 files changed, 8 insertions(+), 0 deletions(-)
+ include/modem.h |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-diff --git a/src/common.h b/src/common.h
-index 5fc3ead..cfc620c 100644
---- a/src/common.h
-+++ b/src/common.h
-@@ -41,6 +41,14 @@ enum network_registration_status {
- 	NETWORK_REGISTRATION_STATUS_ROAMING =3D		5,
- };
+diff --git a/include/modem.h b/include/modem.h
+index 5a34370..e416f50 100644
+--- a/include/modem.h
++++ b/include/modem.h
+@@ -51,6 +51,8 @@ void ofono_modem_reset(struct ofono_modem *modem);
+ void ofono_modem_set_powered(struct ofono_modem *modem, ofono_bool_t power=
+ed);
+ ofono_bool_t ofono_modem_get_powered(struct ofono_modem *modem);
  =
 
-+/* 27.007 section 10.1.28 <mode> */
-+enum preferred_ue_mode {
-+	PREFERRED_UE_MODE_PS_DATA_CENTRIC =3D		0,
-+	PREFERRED_UE_MODE_CS_PS_VOICE_CENTRIC =3D		1,
-+	PREFERRED_UE_MODE_CS_PS_DATA_CENTRIC =3D		2,
-+	PREFERRED_UE_MODE_PS_VOICE_CENTRIC =3D		3,
-+};
++void ofono_modem_set_preferred_ue_mode(struct ofono_modem *modem, int mode=
+);
 +
- /* 27.007 Section 7.6 */
- enum clip_validity {
- 	CLIP_VALIDITY_VALID =3D		0,
+ ofono_bool_t ofono_modem_get_online(struct ofono_modem *modem);
+ =
+
+ ofono_bool_t ofono_modem_get_emergency_mode(struct ofono_modem *modem);
 -- =
 
 1.7.0.4
 
 
---===============8023559155199352146==--
+--===============0029573502726130033==--
 
