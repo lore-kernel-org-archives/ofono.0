@@ -1,146 +1,202 @@
-Content-Type: multipart/mixed; boundary="===============7711647379286438797=="
+Content-Type: multipart/mixed; boundary="===============4093462686187396050=="
 MIME-Version: 1.0
-From: Vijay Nayani <vijay.nayani@elektrobit.com>
-Subject: [RFC PATCH 20/20] modem: Add netreg watch for tech switch
-Date: Mon, 11 Apr 2011 13:20:18 +0300
-Message-ID: <1302517218-2147-21-git-send-email-vijay.nayani@elektrobit.com>
-In-Reply-To: <1302517218-2147-1-git-send-email-vijay.nayani@elektrobit.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 3/8] emulator: add RING for HFP AG
+Date: Mon, 11 Apr 2011 10:51:02 -0500
+Message-ID: <4DA32366.9010509@gmail.com>
+In-Reply-To: <1302194040-18811-4-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7711647379286438797==
+--===============4093462686187396050==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Placeholder for technology switch based on
-registered technology and preferred ue mode also
-added along with the netreg status watch.
----
- src/modem.c |   79 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 79 insertions(+), 0 deletions(-)
+Hi Fr=C3=A9d=C3=A9ric,
 
-diff --git a/src/modem.c b/src/modem.c
-index aecb35a..65db45c 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -84,6 +84,9 @@ struct ofono_modem {
- 	struct ofono_sim	*sim;
- 	unsigned int		sim_watch;
- 	unsigned int		sim_ready_watch;
-+	struct ofono_netreg	*netreg;
-+	unsigned int		netreg_watch;
-+	unsigned int		netreg_status_watch;
- 	const struct ofono_modem_driver *driver;
- 	void			*driver_data;
- 	char			*driver_type;
-@@ -1846,6 +1849,75 @@ static void sim_watch(struct ofono_atom *atom,
- 							modem, NULL);
- }
- =
+On 04/07/2011 11:33 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+> ---
+>  src/emulator.c |   86 +++++++++++++++++++++++++++++++++++++++++++++++---=
+-----
+>  1 files changed, 73 insertions(+), 13 deletions(-)
+> =
 
-+static void netreg_status_watch(int status, int lac, int ci, int tech,
-+					const char *mcc, const char *mnc,
-+					void *data)
-+{
-+	struct ofono_modem *modem =3D data;
-+
-+	if (status !=3D NETWORK_REGISTRATION_STATUS_REGISTERED &&
-+			status !=3D NETWORK_REGISTRATION_STATUS_ROAMING)
-+		return;
-+
-+	switch (tech) {
-+	case ACCESS_TECHNOLOGY_EUTRAN:
-+		switch(modem->pref_mode) {
-+		case PREFERRED_UE_MODE_PS_VOICE_CENTRIC:
-+		case PREFERRED_UE_MODE_PS_DATA_CENTRIC:
-+			/* No need to do any switching */
-+			break;
-+		case PREFERRED_UE_MODE_CS_PS_VOICE_CENTRIC:
-+		case PREFERRED_UE_MODE_CS_PS_DATA_CENTRIC:
-+			/*
-+			 * All atoms needs to be created which is
-+			 * already done
-+			 */
-+			break;
-+		}
-+		break;
-+	case ACCESS_TECHNOLOGY_GSM:
-+	case ACCESS_TECHNOLOGY_GSM_COMPACT:
-+	case ACCESS_TECHNOLOGY_UTRAN:
-+	case ACCESS_TECHNOLOGY_GSM_EGPRS:
-+	case ACCESS_TECHNOLOGY_UTRAN_HSDPA:
-+	case ACCESS_TECHNOLOGY_UTRAN_HSUPA:
-+	case ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA:
-+		switch(modem->pref_mode) {
-+		case PREFERRED_UE_MODE_PS_VOICE_CENTRIC:
-+			/* Switch to 3G */
-+			break;
-+		case PREFERRED_UE_MODE_CS_PS_VOICE_CENTRIC:
-+		case PREFERRED_UE_MODE_CS_PS_DATA_CENTRIC:
-+			/*
-+			 * All atoms needs to be created which is already
-+			 * done.
-+			 */
-+			break;
-+		default:
-+			break;
-+		}
-+		break;
-+	}
-+}
-+
-+static void netreg_watch(struct ofono_atom *atom,
-+			enum ofono_atom_watch_condition cond, void *data)
-+{
-+	struct ofono_modem *modem =3D data;
-+
-+	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		modem->netreg_status_watch =3D 0;
-+		modem->netreg =3D NULL;
-+		return;
-+	}
-+
-+	modem->netreg =3D __ofono_atom_get_data(atom);
-+	modem->netreg_status_watch =3D __ofono_netreg_add_status_watch(
-+							modem->netreg,
-+							netreg_status_watch,
-+							modem, NULL);
-+}
-+
- void __ofono_modemwatch_init(void)
- {
- 	g_modemwatches =3D __ofono_watchlist_new(g_free);
-@@ -1988,6 +2060,10 @@ int ofono_modem_register(struct ofono_modem *modem)
- 					OFONO_ATOM_TYPE_SIM,
- 					sim_watch, modem, NULL);
- =
+> diff --git a/src/emulator.c b/src/emulator.c
+> index 2707592..f1ccfb3 100644
+> --- a/src/emulator.c
+> +++ b/src/emulator.c
+> @@ -37,6 +37,8 @@
+>  #define DUN_DNS_SERVER_1       "10.10.10.10"
+>  #define DUN_DNS_SERVER_2       "10.10.10.11"
+>  =
 
-+	modem->netreg_watch =3D __ofono_modem_add_atom_watch(modem,
-+					OFONO_ATOM_TYPE_NETREG,
-+					netreg_watch, modem, NULL);
-+
- 	return 0;
- }
- =
+> +#define RING_TIMEOUT 3
+> +
+>  struct ofono_emulator {
+>  	struct ofono_atom *atom;
+>  	enum ofono_emulator_type type;
+> @@ -49,6 +51,7 @@ struct ofono_emulator {
+>  	int events_mode;
+>  	gboolean events_ind;
+>  	GSList *indicators;
+> +	guint ring;
 
-@@ -2020,6 +2096,9 @@ static void modem_unregister(struct ofono_modem *mode=
-m)
- 	modem->sim_watch =3D 0;
- 	modem->sim_ready_watch =3D 0;
- =
+Please name this callsetup_source.
 
-+	modem->netreg_watch =3D 0;
-+	modem->netreg_status_watch =3D 0;
-+
- 	g_slist_foreach(modem->interface_list, (GFunc) g_free, NULL);
- 	g_slist_free(modem->interface_list);
- 	modem->interface_list =3D NULL;
--- =
+>  };
+>  =
 
-1.7.0.4
+>  struct indicator {
+> @@ -177,6 +180,42 @@ error:
+>  	g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
+>  }
+>  =
 
+> +static struct indicator *find_indicator(struct ofono_emulator *em,
+> +						const char *name, int *index)
+> +{
+> +	GSList *l;
+> +	int i;
+> +
+> +	for (i =3D 1, l =3D em->indicators; l; l =3D l->next, i++) {
+> +		struct indicator *ind =3D l->data;
+> +
+> +		if (g_str_equal(ind->name, name) =3D=3D TRUE) {
+> +			if (index)
+> +				*index =3D i;
+> +
+> +			return ind;
+> +		}
 
---===============7711647379286438797==--
+To avoid nesting, this might be better written as:
+
+if (g_str_equal(ind->name, name) =3D=3D FALSE)
+	continue;
+
+if (index)
+	...
+
+> +	}
+> +
+> +	return NULL;
+> +}
+> +
+> +static gboolean ring_cb(gpointer user_data)
+
+Please name this something like: send_callsetup_indicators
+
+> +{
+> +	struct ofono_emulator *em =3D user_data;
+> +	struct indicator *call_ind;
+> +
+> +	if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP && em->slc =3D=3D FALSE)
+> +		return TRUE;
+> +
+> +	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
+> +
+> +	if (call_ind->value =3D=3D OFONO_EMULATOR_CALL_INACTIVE)
+> +		g_at_server_send_unsolicited(em->server, "RING");
+> +
+> +	return TRUE;
+> +}
+> +
+>  static void brsf_cb(GAtServer *server, GAtServerRequestType type,
+>  			GAtResult *result, gpointer user_data)
+>  {
+> @@ -418,6 +457,11 @@ static void emulator_unregister(struct ofono_atom *a=
+tom)
+>  		em->source =3D 0;
+>  	}
+>  =
+
+> +	if (em->ring) {
+> +		g_source_remove(em->ring);
+> +		em->ring =3D 0;
+> +	}
+> +
+>  	for (l =3D em->indicators; l; l =3D l->next) {
+>  		struct indicator *ind =3D l->data;
+>  =
+
+> @@ -681,27 +725,43 @@ enum ofono_emulator_request_type ofono_emulator_req=
+uest_get_type(
+>  void ofono_emulator_set_indicator(struct ofono_emulator *em,
+>  					const char *name, int value)
+>  {
+> -	GSList *l;
+>  	int i;
+>  	char buf[20];
+> +	struct indicator *ind;
+> +	struct indicator *call_ind;
+>  =
+
+> -	for (i =3D 1, l =3D em->indicators; l; l =3D l->next, i++) {
+> -		struct indicator *ind =3D l->data;
+> +	ind =3D find_indicator(em, name, &i);
+>  =
+
+> -		if (g_str_equal(ind->name, name) =3D=3D FALSE)
+> -			continue;
+> +	if (ind =3D=3D NULL || ind->value =3D=3D value || value < ind->min
+> +			|| value > ind->max)
+> +		return;
+>  =
+
+> -		if (ind->value =3D=3D value || value < ind->min
+> -					|| value > ind->max)
+> -			return;
+> +	ind->value =3D value;
+>  =
+
+> -		ind->value =3D value;
+> +	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
+>  =
+
+> -		if (em->events_mode =3D=3D 3 && em->events_ind && em->slc) {
+> -			sprintf(buf, "+CIEV: %d,%d", i, ind->value);
+> -			g_at_server_send_info(em->server, buf, TRUE);
+> -		}
+> +	if (em->events_mode =3D=3D 3 && em->events_ind && em->slc) {
+> +		sprintf(buf, "+CIEV: %d,%d", i, ind->value);
+> +		g_at_server_send_info(em->server, buf, TRUE);
+
+Reminds me, this should be g_at_server_send_unsolicited
+
+> +	}
+>  =
+
+> +	/*
+> +	 * Ring timer should be started when callsetup indicator is set to
+> +	 *   Incoming
+> +	 * If there is no active call, a first RING should be sent just after
+> +	 *   the +CIEV
+> +	 * It should be stopped for all other values of callsetup
+> +	 */
+> +	if (g_str_equal(name, OFONO_EMULATOR_IND_CALLSETUP) =3D=3D FALSE)
+>  		return;
+> +
+> +	if (value =3D=3D OFONO_EMULATOR_CALLSETUP_INCOMING && em->ring =3D=3D 0=
+) {
+> +		if (call_ind->value =3D=3D OFONO_EMULATOR_CALL_INACTIVE)
+> +			ring_cb(em);
+> +
+> +		em->ring =3D g_timeout_add_seconds(RING_TIMEOUT, ring_cb, em);
+> +	} else if (value !=3D OFONO_EMULATOR_CALLSETUP_INCOMING && em->ring) {
+> +		g_source_remove(em->ring);
+> +		em->ring =3D 0;
+
+Do you really need to check for em->ring here?  You already return if
+the value of the indicator is already the same.  Also, it sounds like
+you should just start a timer and always call ring_cb when callsetup =3D=3D
+callsetup_incoming.  The CCWA/RING determination should be done in that
+function.
+
+>  	}
+>  }
+
+Regards,
+-Denis
+
+--===============4093462686187396050==--
 
