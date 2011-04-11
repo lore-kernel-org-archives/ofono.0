@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2280650813347039312=="
+Content-Type: multipart/mixed; boundary="===============4332011471676941724=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 10/20] doc: add PreferredMode property to modem
-Date: Mon, 11 Apr 2011 14:27:45 -0500
-Message-ID: <4DA35631.5090906@gmail.com>
-In-Reply-To: <1302517218-2147-11-git-send-email-vijay.nayani@elektrobit.com>
+Subject: Re: [RFC PATCH 08/20] include: add set preferred ue mode api
+Date: Mon, 11 Apr 2011 14:34:52 -0500
+Message-ID: <4DA357DC.80309@gmail.com>
+In-Reply-To: <1302517218-2147-9-git-send-email-vijay.nayani@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2280650813347039312==
+--===============4332011471676941724==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,51 +17,35 @@ Hi Vijay,
 
 On 04/11/2011 05:20 AM, Vijay Nayani wrote:
 > ---
->  doc/modem-api.txt |   18 ++++++++++++++++++
->  1 files changed, 18 insertions(+), 0 deletions(-)
+>  include/modem.h |    2 ++
+>  1 files changed, 2 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/doc/modem-api.txt b/doc/modem-api.txt
-> index fa400a2..c79bffa 100644
-> --- a/doc/modem-api.txt
-> +++ b/doc/modem-api.txt
-> @@ -54,6 +54,24 @@ Properties	boolean Powered [readwrite]
->  			modem. The Emergency is true if an emergency call or
->  			related operation is currently active.
+> diff --git a/include/modem.h b/include/modem.h
+> index 5a34370..e416f50 100644
+> --- a/include/modem.h
+> +++ b/include/modem.h
+> @@ -51,6 +51,8 @@ void ofono_modem_reset(struct ofono_modem *modem);
+>  void ofono_modem_set_powered(struct ofono_modem *modem, ofono_bool_t pow=
+ered);
+>  ofono_bool_t ofono_modem_get_powered(struct ofono_modem *modem);
 >  =
 
-> +		string PreferredMode [readonly, optional]
-> +
-> +			Preferred UE mode setting. A UE attached for EPS services
-> +			shall operate in one of the following operation modes:
-> +
-> +				"PS mode 2"	UE registers only to EPS
-> +						services, and UE's usage setting
-> +						is "data centric".
-> +				"CS/PS mode 1"	UE registers to both EPS and
-> +						non-EPS services, and UE's usage
-> +						setting is "voice centric".
-> +				"CS/PS mode 2"	UE registers to both EPS and
-> +						non-EPS services, and UE's usage
-> +						setting is "data centric".
-> +				"PS mode 1"	UE registers only to EPS
-> +						services, and UE's usage setting
-> +						is "voice centric".
+> +void ofono_modem_set_preferred_ue_mode(struct ofono_modem *modem, int mo=
+de);
 > +
 
-I don't like that this is being exposed on the modem interface.  This
-really belongs on a separate atom.  Not all modems are going to be LTE
-enabled yet...
+Are you assuming that the UE mode cannot be changed? If so, doesn't this
+map to +CEMODE AT command? Doesn't it allow a set operation to change
+the UE mode?
 
-Have you looked at the IMS/LTE API proposal from Sjur a while back?
-
->  		string Name [readonly, optional]
+>  ofono_bool_t ofono_modem_get_online(struct ofono_modem *modem);
 >  =
 
->  			Friendly name of the modem device.
+>  ofono_bool_t ofono_modem_get_emergency_mode(struct ofono_modem *modem);
 
 Regards,
 -Denis
 
---===============2280650813347039312==--
+--===============4332011471676941724==--
 
