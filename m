@@ -1,40 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============8240408456689557461=="
+Content-Type: multipart/mixed; boundary="===============3866160017522932292=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 09/20] modem: add preferred ue mode handling
-Date: Tue, 12 Apr 2011 08:59:13 -0500
-Message-ID: <4DA45AB1.1010609@gmail.com>
-In-Reply-To: <AA48DD8077D5D945A49BD1782C1140F1EBB217@fioues08.ebgroup.elektrobit.com>
+Subject: Re: [RFC PATCH 10/20] doc: add PreferredMode property to modem
+Date: Tue, 12 Apr 2011 09:02:38 -0500
+Message-ID: <4DA45B7E.5010008@gmail.com>
+In-Reply-To: <AA48DD8077D5D945A49BD1782C1140F1EBB21B@fioues08.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8240408456689557461==
+--===============3866160017522932292==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Vijay,
 
->> These values are really not telling anyone anything.  How do =
+>> I don't like that this is being exposed on the modem =
 
->> you envision the upper layers using this information?
+>> interface.  This really belongs on a separate atom.  Not all =
+
+>> modems are going to be LTE enabled yet...
 >>
+> Preferred mode is modem property on which mode modem is going to
+> operate.
+> Currently we have restricted this to read only for below reasons.
+> 1.No proper business case on why would user needs to play around this.
+> Unless operator give privilege to user to configure the modem behavior.
+> 2.Setting the preferred mode from user side would bring in new API for
+> driver essentially. =
+
 > =
 
-> Current preferred mode would show up as part of modem property for EPS
-> modem on the similar lines of onlne,powered,lockdown..etc.
 
-Yes, I know what a property is ;)
+So again, this property is simply not going onto the Modem interface.
+It doesn't belong there since not all modems will be LTE enabled.  In
+particular those pesky CDMA-only modems or 3G/2G GSM modems.  You really
+need to put this on a separate atom dealing with IMS.
 
-> And also this property gets signalled if preferred mode changes.This is
-> currently happening during the enabling modem process.
-> We currently don't have option to set this from user side.
-
-You still have not answered the question.  How do you envision the UI
-actually using this information.
+And as mentioned before, I still see no actual use-case for this
+property.  Until the usecase is presented, this property should be dropped.
 
 Regards,
 -Denis
 
---===============8240408456689557461==--
+--===============3866160017522932292==--
 
