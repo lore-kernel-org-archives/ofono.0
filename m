@@ -1,40 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============1842555569476467906=="
+Content-Type: multipart/mixed; boundary="===============3124715372864771928=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH] TODO: set owner on DUN profile and DUN usb
-Date: Tue, 12 Apr 2011 17:42:43 +0200
-Message-ID: <1302622963-3894-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] isimodem: notify sms-status-reports, too
+Date: Tue, 12 Apr 2011 19:05:13 +0300
+Message-ID: <1302624313-30069-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1842555569476467906==
+--===============3124715372864771928==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
+
 ---
- TODO |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ drivers/isimodem/sms.c |   11 ++++++++++-
+ 1 files changed, 10 insertions(+), 1 deletions(-)
 
-diff --git a/TODO b/TODO
-index 3491436..573f0f7 100644
---- a/TODO
-+++ b/TODO
-@@ -137,6 +137,7 @@ Modem Emulator
+diff --git a/drivers/isimodem/sms.c b/drivers/isimodem/sms.c
+index 6f6b247..40dfa1d 100644
+--- a/drivers/isimodem/sms.c
++++ b/drivers/isimodem/sms.c
+@@ -564,6 +564,8 @@ static void routing_ntf_cb(const GIsiMessage *msg, void=
+ *data)
+ 	GIsiSubBlockIter iter;
  =
 
-   Complexity: C4
-   Priority: Medium
-+  Owner: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+ 	uint8_t pdu[176];
++	uint8_t len;
++	uint8_t tp_mti;
  =
 
-   Depends: PPP Server mode
+ 	if (g_isi_msg_id(msg) !=3D SMS_PP_ROUTING_NTF)
+ 		return;
+@@ -586,7 +588,14 @@ static void routing_ntf_cb(const GIsiMessage *msg, voi=
+d *data)
+ 	memcpy(pdu, addr.data, addr.len);
+ 	memcpy(pdu + addr.len, tpdu.data, tpdu.len);
  =
 
+-	ofono_sms_deliver_notify(sms, pdu, tpdu.len + addr.len, tpdu.len);
++	len =3D addr.len + tpdu.len;
++
++	tp_mti =3D pdu[addr.len] & 0x3;
++
++	if (tp_mti =3D=3D 0)
++		ofono_sms_deliver_notify(sms, pdu, len, tpdu.len);
++	else if (tp_mti =3D=3D 2)
++		ofono_sms_status_notify(sms, pdu, len, tpdu.len);
+ =
+
+ 	/*
+ 	 * FIXME: We should not ack the DELIVER unless it has been
 -- =
 
 1.7.1
 
 
---===============1842555569476467906==--
+--===============3124715372864771928==--
 
