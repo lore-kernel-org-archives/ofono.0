@@ -1,44 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============3161644485854602491=="
+Content-Type: multipart/mixed; boundary="===============0876696026359098367=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 08/20] include: add set preferred ue mode api
-Date: Tue, 12 Apr 2011 08:52:39 -0500
-Message-ID: <4DA45927.2080507@gmail.com>
-In-Reply-To: <AA48DD8077D5D945A49BD1782C1140F1EBB1FC@fioues08.ebgroup.elektrobit.com>
+Subject: Re: [RFC PATCH 17/20] atmodem: add lte specific functions
+Date: Tue, 12 Apr 2011 08:56:54 -0500
+Message-ID: <4DA45A26.2050006@gmail.com>
+In-Reply-To: <AA48DD8077D5D945A49BD1782C1140F1EBB1FD@fioues08.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3161644485854602491==
+--===============0876696026359098367==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vijay,
+>> This is really not working out, since you still need to get =
 
->>> +void ofono_modem_set_preferred_ue_mode(struct ofono_modem =
+>> the interface for this context.  The fact that a context is =
 
->> *modem, int =
+>> active does not necessarily mean that all the resources have =
 
->>> +mode);
->>> +
+>> been properly allocated.
+>> Namely a gprs-context allocated and all the implications =
+
+>> (e.g. AT channel dedicated to the gprs-context is taken, ppp =
+
+>> / high speed data connection established, etc.)
 >>
->> Are you assuming that the UE mode cannot be changed? If so, =
+>> Only the core can do the context allocation, so you still =
 
->> doesn't this map to +CEMODE AT command? Doesn't it allow a =
-
->> set operation to change the UE mode?
+>> need to let the core decide what to do.
 >>
 > =
 
-> We have made this currently read only as i don't see any usecase of this
-> being set from user side(settings or any other).
-> If a set provision need arises, this would bring in new API to driver
-> side as well to do the job. Also this would be purly apply for LTE.
+> I agree on your comments here.
+> Infact have missed out to put a todo here on interface assignment so
+> that this can be taken up when we work with real modem.
+> =
 
-Then I don't see a need to even tell this information to the core then.
+
+Interface assignment is not going to happen here, please re-think this
+entire approach.  You really need to let the core allocate a context
+properly.
+
+>>>  	if (g_at_chat_send(psd->chat, "AT+CGREG?", cgreg_prefix,
+>>>  				at_cgreg_cb, cbd, g_free) > 0)
+>>>  		return;
+>>
+>> This is really just a bad idea.  The core needs to understand =
+
+>> the concept of CEREG properly, not try to hide this in the driver.
+>>
+> Intention here is to hide to the core on details of registraion
+> technology.
+> If core needs these awareness and want to fire relevent
+> API/functionality based on current access tech, would bring in new APIs
+> to driver for 3G registraion status and LTE registraion status.
+> This will also result in core to base it behaviour depending on acess
+> technology.
+
+Please get this idea out of your head.  The core should know about LTE
+specific details.  Changing the core is not something to be afraid of.
+
+The driver should not be hiding anything besides manufacturer specific
+details.  The philosophy behind oFono's drivers has always been to make
+them dumb as rocks.  If you're trying to make the driver smart, then you
+are already breaking one of the primary design principles.
 
 Regards,
 -Denis
 
---===============3161644485854602491==--
+--===============0876696026359098367==--
 
