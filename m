@@ -1,139 +1,318 @@
-Content-Type: multipart/mixed; boundary="===============3165031861141194730=="
+Content-Type: multipart/mixed; boundary="===============0072376467562067101=="
 MIME-Version: 1.0
 From: Vijay.Nayani@elektrobit.com
-Subject: RE: [RFC PATCH 10/20] doc: add PreferredMode property to modem
-Date: Tue, 12 Apr 2011 14:51:08 +0300
-Message-ID: <AA48DD8077D5D945A49BD1782C1140F1EBB21B@fioues08.ebgroup.elektrobit.com>
-In-Reply-To: <4DA35631.5090906@gmail.com>
+Subject: RE: [RFC PATCH 17/20] atmodem: add lte specific functions
+Date: Tue, 12 Apr 2011 15:48:55 +0300
+Message-ID: <AA48DD8077D5D945A49BD1782C1140F1EBB237@fioues08.ebgroup.elektrobit.com>
+In-Reply-To: <1302579839.2572.244.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3165031861141194730==
+--===============0072376467562067101==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dennis,
-
-> "data centric".
-> > +				"PS mode 1"	UE registers only to EPS
-> > +						services, and =
-
-> UE's usage setting
-> > +						is "voice centric".
-> > +
-> =
-
-> I don't like that this is being exposed on the modem =
-
-> interface.  This really belongs on a separate atom.  Not all =
-
-> modems are going to be LTE enabled yet...
-> =
-
-Preferred mode is modem property on which mode modem is going to
-operate.
-Currently we have restricted this to read only for below reasons.
-1.No proper business case on why would user needs to play around this.
-Unless operator give privilege to user to configure the modem behavior.
-2.Setting the preferred mode from user side would bring in new API for
-driver essentially. =
+Hi Marcel, =
 
 
-Regards,
+Let me thank for the comments.
+I am happy to see default context stuff dominate our discussion which is
+kind of my expectation as well.
+
+I agree that these things are not so clear from the spec point of view
+and hopeful that they will shape out via for discussion and some support
+from modem friends in community.
+
+Any how I would consider all these comments going forward.
+
+More comments in line.
+
+Regards
 Vijay
 
 > -----Original Message-----
-> From: Denis Kenzior [mailto:denkenz(a)gmail.com] =
+> From: ofono-bounces(a)ofono.org =
 
-> Sent: 11 April 2011 22:28
+> [mailto:ofono-bounces(a)ofono.org] On Behalf Of Marcel Holtmann
+> Sent: 12 April 2011 06:44
 > To: ofono(a)ofono.org
-> Cc: Nayani Vijay
-> Subject: Re: [RFC PATCH 10/20] doc: add PreferredMode =
-
-> property to modem
+> Subject: Re: [RFC PATCH 17/20] atmodem: add lte specific functions
 > =
 
 > Hi Vijay,
 > =
 
-> On 04/11/2011 05:20 AM, Vijay Nayani wrote:
-> > ---
-> >  doc/modem-api.txt |   18 ++++++++++++++++++
-> >  1 files changed, 18 insertions(+), 0 deletions(-)
-> > =
+> > +static void at_cgcontrdp_cb(gboolean ok, GAtResult =
 
-> > diff --git a/doc/modem-api.txt b/doc/modem-api.txt index =
+> *result, gpointer =
 
-> > fa400a2..c79bffa 100644
-> > --- a/doc/modem-api.txt
-> > +++ b/doc/modem-api.txt
-> > @@ -54,6 +54,24 @@ Properties	boolean Powered [readwrite]
-> >  			modem. The Emergency is true if an =
+> > +user_data) {
+> > +	struct ofono_packet_service *ps =3D user_data;
+> > +	struct packet_service_data *psd =3D =
 
-> emergency call or
-> >  			related operation is currently active.
+> ofono_packet_service_get_data(ps);
+> > +	GAtResultIter iter;
+> > +	int cid, bearer_id;
+> > +	const char *apn, *address, *gateway, *dns1, *dns2;
+> > +	const char *dns[3];
+> > +	struct ofono_default_context_param *param;
+> > +
+> > +	if (!ok)
+> > +		return;
+> > +
+> > +	g_at_result_iter_init(&iter, result);
+> > +
+> > +	if (g_at_result_iter_next(&iter, "+CGCONTRDP:") =3D=3D FALSE)
+> > +		return;
+> > +
+> > +	if (g_at_result_iter_next_number(&iter, &cid) =3D=3D FALSE)
+> > +		return;
+> > +
+> > +	if (g_at_result_iter_next_number(&iter, &bearer_id) =3D=3D FALSE)
+> > +		return;
+> > +
+> > +	if (g_at_result_iter_next_string(&iter, &apn) =3D=3D FALSE)
+> > +		return;
+> > +
+> > +	if (g_at_result_iter_next_string(&iter, &address) =3D=3D FALSE)
+> > +		goto out;
+> > +
+> > +	if (g_at_result_iter_next_string(&iter, &gateway) =3D=3D FALSE)
+> > +		goto out;
+> > +
+> > +	if (g_at_result_iter_next_string(&iter, &dns1) =3D=3D FALSE)
+> > +		goto out;
+> > +
+> > +	if (g_at_result_iter_next_string(&iter, &dns2) =3D=3D FALSE)
+> > +		goto out;
+> > +
+> > +	dns[0] =3D dns1;
+> > +	dns[1] =3D dns2;
+> > +	dns[2] =3D 0;
+> > +
+> > +out:
+> > +	param =3D g_new0(struct ofono_default_context_param, 1);
+> > +	if (param =3D=3D NULL)
+> > +		return;
+> > +
+> > +	param->cid =3D cid;
+> > +	param->proto =3D psd->default_context_type;
+> > +	param->apn =3D apn;
+> > +	param->address =3D address;
+> > +	param->gateway =3D gateway;
+> > +	param->dns =3D dns;
+> > +
+> > +	ofono_packet_service_default_context_notify(ps, param);
+> > +
+> > +	g_free(param);
+> > +	param =3D NULL;
+> > +}
+> > +
+> > +static void at_cgdcont_cb(gboolean ok, GAtResult *result, gpointer =
+
+> > +user_data) {
+> > +	struct ofono_packet_service *ps =3D user_data;
+> > +	struct packet_service_data *psd =3D =
+
+> ofono_packet_service_get_data(ps);
+> > +	GAtResultIter iter;
+> > +	int cid;
+> > +	const char *pdp_type;
+> > +	char buf[64];
+> > +	gboolean found =3D FALSE;
+> > +
+> > +	if (!ok)
+> > +		return;
+> > +
+> > +	g_at_result_iter_init(&iter, result);
+> > +
+> > +	while (!found && g_at_result_iter_next(&iter, "+CGDCONT:")) {
+> > +		if (g_at_result_iter_next_number(&iter, &cid) =3D=3D FALSE)
+> > +			return;
+> > +
+> > +		if (psd->default_cid !=3D cid)
+> > +			continue;
+> > +
+> > +		g_at_result_iter_next_string(&iter, &pdp_type);
+> > +
+> > +		found =3D TRUE;
+> > +	}
+> > +
+> > +	if (found =3D=3D FALSE)
+> > +		return;
+> > +
+> > +	if (g_str_equal(pdp_type, "IP"))
+> > +		psd->default_context_type =3D OFONO_PACKET_PROTO_IP;
+> > +	else if (g_str_equal(pdp_type, "IPV6"))
+> > +		psd->default_context_type =3D OFONO_PACKET_PROTO_IPV6;
+> > +	else if (g_str_equal(pdp_type, "IPV4V6"))
+> > +		psd->default_context_type =3D OFONO_PACKET_PROTO_IPV4V6;
+> > +
+> > +	snprintf(buf, sizeof(buf), "AT+CGCONTRDP=3D%i", psd->default_cid);
+> =
+
+> this looks wrong to me. Reading the CGDCONT information is =
+
+> not going to help us. We should just read CGCONTRDP if =
+
+> available or CGADDR it not.
+> =
+
+> If we are a dual stack, then we will see two lines of =
+
+> CGCONTRDP, if not then I assume we can tell from the address =
+
+> if we are IP or IPV6. Same applies to CGADDR in case =
+
+> CGCONTRDP is not available.
+> =
+
+> And of course we need to keep CGPIAF in mind.
+
+Agreed that we can just do with CGCONTRDP and aviod CGDCONT.
+Hope you are saying to differentiate IP and IPV6 based on the address
+format.
+
+> =
+
+> For me it is also important if <IM_CN_Signalling_Flag> is set =
+
+> or not since that tells us that this is the IMS context. And =
+
+> I would expect that all networks will use that one as default context.
+> =
+
+> > +	g_at_chat_send(psd->chat, buf, cgcontrdp_prefix, =
+
+> at_cgcontrdp_cb,
+> > +								=
+
+> ps, NULL);
+> > +}
+> > +
+> >  static void at_packet_service_registration_status(
+> >  					struct ofono_packet_service *ps,
+> >  					=
+
+> ofono_packet_service_status_cb_t cb, @@ -138,6 +273,13 @@ static =
+
+> > void at_packet_service_registration_status(
+> >  		break;
+> >  	}
 > >  =
 
-> > +		string PreferredMode [readonly, optional]
+> > +	if (ofono_packet_service_get_technology(ps) =3D=3D
+> > +						=
+
+> ACCESS_TECHNOLOGY_EUTRAN) {
+> > +		if (g_at_chat_send(psd->chat, "AT+CEREG?", cereg_prefix,
+> > +					at_cereg_cb, cbd, g_free) > 0)
+> > +			return;
+> > +	}
 > > +
-> > +			Preferred UE mode setting. A UE =
+> >  	if (g_at_chat_send(psd->chat, "AT+CGREG?", cgreg_prefix,
+> >  				at_cgreg_cb, cbd, g_free) > 0)
+> >  		return;
+> > @@ -160,9 +302,23 @@ static void cgreg_notify(GAtResult =
 
-> attached for EPS services
-> > +			shall operate in one of the following =
-
-> operation modes:
-> > +
-> > +				"PS mode 2"	UE registers only to EPS
-> > +						services, and =
-
-> UE's usage setting
-> > +						is "data centric".
-> > +				"CS/PS mode 1"	UE registers to =
-
-> both EPS and
-> > +						non-EPS =
-
-> services, and UE's usage
-> > +						setting is =
-
-> "voice centric".
-> > +				"CS/PS mode 2"	UE registers to =
-
-> both EPS and
-> > +						non-EPS =
-
-> services, and UE's usage
-> > +						setting is =
-
-> "data centric".
-> > +				"PS mode 1"	UE registers only to EPS
-> > +						services, and =
-
-> UE's usage setting
-> > +						is "voice centric".
-> > +
-> =
-
-> I don't like that this is being exposed on the modem =
-
-> interface.  This really belongs on a separate atom.  Not all =
-
-> modems are going to be LTE enabled yet...
-> =
-
-> Have you looked at the IMS/LTE API proposal from Sjur a while back?
-> =
-
-> >  		string Name [readonly, optional]
+> *result, gpointer user_data)
+> >  	ofono_packet_service_status_notify(ps, status);  }
 > >  =
 
-> >  			Friendly name of the modem device.
+> > +static void cereg_notify(GAtResult *result, gpointer user_data) {
+> > +	struct ofono_packet_service *ps =3D user_data;
+> > +	int status;
+> > +	struct packet_service_data *psd =3D =
+
+> ofono_packet_service_get_data(ps);
+> > +
+> > +	if (at_util_parse_reg_unsolicited(result, "+CEREG:", &status,
+> > +				NULL, NULL, NULL, psd->vendor) =3D=3D FALSE)
+> > +		return;
+> > +
+> > +	ofono_packet_service_status_notify(ps, status); }
+> > +
+> >  static void cgev_notify(GAtResult *result, gpointer user_data)  {
+> >  	struct ofono_packet_service *ps =3D user_data;
+> > +	struct packet_service_data *psd =3D =
+
+> ofono_packet_service_get_data(ps);
+> >  	GAtResultIter iter;
+> >  	const char *event;
+> >  =
+
+> > @@ -179,6 +335,35 @@ static void cgev_notify(GAtResult =
+
+> *result, gpointer user_data)
+> >  		ofono_packet_service_detached_notify(ps);
+> >  		return;
+> >  	}
+> > +
+> > +	if (g_str_has_prefix(event, "ME PDN ACT")) {
+> > +		/*
+> > +		 * As per 27.007, this even it sent when the =
+
+> mobile termination
+> > +		 * has activated a context. The context represents a PDN
+> > +		 * connection in LTE or a Primary PDP context =
+
+> in GSM/UMTS.
+> > +		 * The <cid> for this context is provided to =
+
+> the TE. This event
+> > +		 * is sent either in result of explicit context =
+
+> activation
+> > +		 * request (+CGACT), or in result of implicit =
+
+> context activation
+> > +		 * request associated to attach request (+CGATT=3D1).
+> > +		 */
+> > +		int cid;
+> > +
+> > +		cid =3D g_ascii_strtoll(&event[11], NULL, 0);
+> > +
+> > +		/*
+> > +		 * Assumption: context id for default EPS =
+
+> context will have
+> > +		 * value outside the ranges indicated in the =
+
+> test form of
+> > +		 * the command +CGDCONT.
+> > +		 */
 > =
 
-> Regards,
-> -Denis
+> That is still an assumption that needs to be confirmed. So =
+
+> does the default context activation from just uses APN =3D=3D "" =
+
+> and then the network picks the APN to activate. Or does it =
+
+> just use the APN value from CID 1 for example.
+> =
+
+
+At this point , if the returned cid is out of range it is assumed this
+would be default context (already activated).
+Network has the APN and other required mandatory parameters required for
+activation of default context.
+This is done part of implicit attach process.
+
+> Regards
+> =
+
+> Marcel
+> =
+
+> =
+
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
 >=20
 
---===============3165031861141194730==--
+--===============0072376467562067101==--
 
