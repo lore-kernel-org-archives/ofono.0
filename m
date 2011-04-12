@@ -1,98 +1,214 @@
-Content-Type: multipart/mixed; boundary="===============0958669029649674141=="
+Content-Type: multipart/mixed; boundary="===============9122656839537318199=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC PATCH 12/20] packet: add context type default
-Date: Tue, 12 Apr 2011 04:49:07 +0200
-Message-ID: <1302576547.2572.235.camel@aeonflux>
-In-Reply-To: <4DA35940.40300@gmail.com>
+Subject: Re: [RFC PATCH 17/20] atmodem: add lte specific functions
+Date: Tue, 12 Apr 2011 05:43:59 +0200
+Message-ID: <1302579839.2572.244.camel@aeonflux>
+In-Reply-To: <1302517218-2147-18-git-send-email-vijay.nayani@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0958669029649674141==
+--===============9122656839537318199==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Vijay,
 
-> > OFONO_PACKET_CONTEXT_TYPE_DEFAULT is added to
-> > ofono_packet_context_type and conversion functions
-> > are updated for the same.
-> > ---
-> >  include/packet-context.h |    1 +
-> >  src/packet.c             |    7 +++++++
-> >  2 files changed, 8 insertions(+), 0 deletions(-)
-> > =
+> +static void at_cgcontrdp_cb(gboolean ok, GAtResult *result, gpointer use=
+r_data)
+> +{
+> +	struct ofono_packet_service *ps =3D user_data;
+> +	struct packet_service_data *psd =3D ofono_packet_service_get_data(ps);
+> +	GAtResultIter iter;
+> +	int cid, bearer_id;
+> +	const char *apn, *address, *gateway, *dns1, *dns2;
+> +	const char *dns[3];
+> +	struct ofono_default_context_param *param;
+> +
+> +	if (!ok)
+> +		return;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (g_at_result_iter_next(&iter, "+CGCONTRDP:") =3D=3D FALSE)
+> +		return;
+> +
+> +	if (g_at_result_iter_next_number(&iter, &cid) =3D=3D FALSE)
+> +		return;
+> +
+> +	if (g_at_result_iter_next_number(&iter, &bearer_id) =3D=3D FALSE)
+> +		return;
+> +
+> +	if (g_at_result_iter_next_string(&iter, &apn) =3D=3D FALSE)
+> +		return;
+> +
+> +	if (g_at_result_iter_next_string(&iter, &address) =3D=3D FALSE)
+> +		goto out;
+> +
+> +	if (g_at_result_iter_next_string(&iter, &gateway) =3D=3D FALSE)
+> +		goto out;
+> +
+> +	if (g_at_result_iter_next_string(&iter, &dns1) =3D=3D FALSE)
+> +		goto out;
+> +
+> +	if (g_at_result_iter_next_string(&iter, &dns2) =3D=3D FALSE)
+> +		goto out;
+> +
+> +	dns[0] =3D dns1;
+> +	dns[1] =3D dns2;
+> +	dns[2] =3D 0;
+> +
+> +out:
+> +	param =3D g_new0(struct ofono_default_context_param, 1);
+> +	if (param =3D=3D NULL)
+> +		return;
+> +
+> +	param->cid =3D cid;
+> +	param->proto =3D psd->default_context_type;
+> +	param->apn =3D apn;
+> +	param->address =3D address;
+> +	param->gateway =3D gateway;
+> +	param->dns =3D dns;
+> +
+> +	ofono_packet_service_default_context_notify(ps, param);
+> +
+> +	g_free(param);
+> +	param =3D NULL;
+> +}
+> +
+> +static void at_cgdcont_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+> +{
+> +	struct ofono_packet_service *ps =3D user_data;
+> +	struct packet_service_data *psd =3D ofono_packet_service_get_data(ps);
+> +	GAtResultIter iter;
+> +	int cid;
+> +	const char *pdp_type;
+> +	char buf[64];
+> +	gboolean found =3D FALSE;
+> +
+> +	if (!ok)
+> +		return;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	while (!found && g_at_result_iter_next(&iter, "+CGDCONT:")) {
+> +		if (g_at_result_iter_next_number(&iter, &cid) =3D=3D FALSE)
+> +			return;
+> +
+> +		if (psd->default_cid !=3D cid)
+> +			continue;
+> +
+> +		g_at_result_iter_next_string(&iter, &pdp_type);
+> +
+> +		found =3D TRUE;
+> +	}
+> +
+> +	if (found =3D=3D FALSE)
+> +		return;
+> +
+> +	if (g_str_equal(pdp_type, "IP"))
+> +		psd->default_context_type =3D OFONO_PACKET_PROTO_IP;
+> +	else if (g_str_equal(pdp_type, "IPV6"))
+> +		psd->default_context_type =3D OFONO_PACKET_PROTO_IPV6;
+> +	else if (g_str_equal(pdp_type, "IPV4V6"))
+> +		psd->default_context_type =3D OFONO_PACKET_PROTO_IPV4V6;
+> +
+> +	snprintf(buf, sizeof(buf), "AT+CGCONTRDP=3D%i", psd->default_cid);
 
-> > diff --git a/include/packet-context.h b/include/packet-context.h
-> > index 44fd69f..02a5c42 100644
-> > --- a/include/packet-context.h
-> > +++ b/include/packet-context.h
-> > @@ -47,6 +47,7 @@ enum ofono_packet_context_type {
-> >  	OFONO_PACKET_CONTEXT_TYPE_MMS,
-> >  	OFONO_PACKET_CONTEXT_TYPE_WAP,
-> >  	OFONO_PACKET_CONTEXT_TYPE_IMS,
-> > +	OFONO_PACKET_CONTEXT_TYPE_DEFAULT,
-> >  };
-> >  =
+this looks wrong to me. Reading the CGDCONT information is not going to
+help us. We should just read CGCONTRDP if available or CGADDR it not.
 
-> =
+If we are a dual stack, then we will see two lines of CGCONTRDP, if not
+then I assume we can tell from the address if we are IP or IPV6. Same
+applies to CGADDR in case CGCONTRDP is not available.
 
-> My understanding was that whether an EPS bearer is 'default' has no
-> bearing on what context type (e.g. ims, internet, mms) it actually is.
-> I remember there was a conversation on how a 'default' context is
-> chosen, but I already forgot most of it.
+And of course we need to keep CGPIAF in mind.
 
-in the end we concluded that the only way to figure out the context type
-is by comparing the APN name. And hopefully we have that one configured
-and can simply string match it. If we do not, then the whole system will
-fall apart.
+For me it is also important if <IM_CN_Signalling_Flag> is set or not
+since that tells us that this is the IMS context. And I would expect
+that all networks will use that one as default context.
 
-> To me it makes no sense that a default context is going to be anything
-> other than internet or ims.  The fact that it is a 'default' context
-> doesn't really help the upper layers in any way.  Especially ConnMan
-> needs to know whether this context can be used for internet access or not.
+> +	g_at_chat_send(psd->chat, buf, cgcontrdp_prefix, at_cgcontrdp_cb,
+> +								ps, NULL);
+> +}
+> +
+>  static void at_packet_service_registration_status(
+>  					struct ofono_packet_service *ps,
+>  					ofono_packet_service_status_cb_t cb,
+> @@ -138,6 +273,13 @@ static void at_packet_service_registration_status(
+>  		break;
+>  	}
+>  =
 
-The concept of default context is as broken as trying to introduce a
-special CID 0 meaning. Both do not work. We need to know what type of
-context we have.
+> +	if (ofono_packet_service_get_technology(ps) =3D=3D
+> +						ACCESS_TECHNOLOGY_EUTRAN) {
+> +		if (g_at_chat_send(psd->chat, "AT+CEREG?", cereg_prefix,
+> +					at_cereg_cb, cbd, g_free) > 0)
+> +			return;
+> +	}
+> +
+>  	if (g_at_chat_send(psd->chat, "AT+CGREG?", cgreg_prefix,
+>  				at_cgreg_cb, cbd, g_free) > 0)
+>  		return;
+> @@ -160,9 +302,23 @@ static void cgreg_notify(GAtResult *result, gpointer=
+ user_data)
+>  	ofono_packet_service_status_notify(ps, status);
+>  }
+>  =
 
-The real problem that I see here is that there is no clear definition on
-what the default context connects to. I think this is the biggest
-limitation of 3GPP right now. They should have just said that the
-default context always connects to the private IP network of the
-carrier. And that will be then the IMS, MMS etc. or some sort of context
-that is clearly private to the carrier. And that the Internet context
-always needs to be established by host.
+> +static void cereg_notify(GAtResult *result, gpointer user_data)
+> +{
+> +	struct ofono_packet_service *ps =3D user_data;
+> +	int status;
+> +	struct packet_service_data *psd =3D ofono_packet_service_get_data(ps);
+> +
+> +	if (at_util_parse_reg_unsolicited(result, "+CEREG:", &status,
+> +				NULL, NULL, NULL, psd->vendor) =3D=3D FALSE)
+> +		return;
+> +
+> +	ofono_packet_service_status_notify(ps, status);
+> +}
+> +
+>  static void cgev_notify(GAtResult *result, gpointer user_data)
+>  {
+>  	struct ofono_packet_service *ps =3D user_data;
+> +	struct packet_service_data *psd =3D ofono_packet_service_get_data(ps);
+>  	GAtResultIter iter;
+>  	const char *event;
+>  =
 
-Especially for the cases of roaming we need to have the default context
-connecting to an operator internal network. Otherwise any kind of
-billing will get really complicated. Since on one hand you wanna be
-reachable while roaming, but maybe not pay for data roaming. Not to talk
-about emergency call handling while roaming.
+> @@ -179,6 +335,35 @@ static void cgev_notify(GAtResult *result, gpointer =
+user_data)
+>  		ofono_packet_service_detached_notify(ps);
+>  		return;
+>  	}
+> +
+> +	if (g_str_has_prefix(event, "ME PDN ACT")) {
+> +		/*
+> +		 * As per 27.007, this even it sent when the mobile termination
+> +		 * has activated a context. The context represents a PDN
+> +		 * connection in LTE or a Primary PDP context in GSM/UMTS.
+> +		 * The <cid> for this context is provided to the TE. This event
+> +		 * is sent either in result of explicit context activation
+> +		 * request (+CGACT), or in result of implicit context activation
+> +		 * request associated to attach request (+CGATT=3D1).
+> +		 */
+> +		int cid;
+> +
+> +		cid =3D g_ascii_strtoll(&event[11], NULL, 0);
+> +
+> +		/*
+> +		 * Assumption: context id for default EPS context will have
+> +		 * value outside the ranges indicated in the test form of
+> +		 * the command +CGDCONT.
+> +		 */
 
-Lets have a look at the one network that deploys LTE for the public
-these days. I did not find an official Verizon page about their APN
-names and functions, but this will do:
-
-http://www.4ginfo.com/index.php/verizon-uml290-mac-configuration-warning-a-=
-fix.html
-
-CID 1, Type IPV6,   APN vzwims
-CID 3, Type IPV4V6, APN vzwinternet
-CID 4, Type IPv4V6, APN vzwapp
-
-And if you trust other sources, then CID 2 is this:
-
-CID 2, Type IPV4V6, APN vzwadmin
-
-This does not answer which APN gets activated as default, but I would
-assume the network returns vzwims. If someone is on Verizon and has LTE
-capable hardware, it would be nice if they try this.
-
-And if you wanna have any legacy software working with LTE data dongle
-as before, if would make a lot of sense to not end up having two
-Internet contexts activated. I am just saying ;)
+That is still an assumption that needs to be confirmed. So does the
+default context activation from just uses APN =3D=3D "" and then the network
+picks the APN to activate. Or does it just use the APN value from CID 1
+for example.
 
 Regards
 
@@ -100,5 +216,5 @@ Marcel
 
 
 
---===============0958669029649674141==--
+--===============9122656839537318199==--
 
