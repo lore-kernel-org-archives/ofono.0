@@ -1,62 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============3124715372864771928=="
+Content-Type: multipart/mixed; boundary="===============8288612638353977547=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] isimodem: notify sms-status-reports, too
-Date: Tue, 12 Apr 2011 19:05:13 +0300
-Message-ID: <1302624313-30069-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH] isimodem: fix call_create_resp handling
+Date: Tue, 12 Apr 2011 20:41:50 +0300
+Message-ID: <BANLkTimWEYtTdf-NxXafuZKszYeytufD5g@mail.gmail.com>
+In-Reply-To: <1302618809-26929-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3124715372864771928==
+--===============8288612638353977547==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi Pekka,
 
----
- drivers/isimodem/sms.c |   11 ++++++++++-
- 1 files changed, 10 insertions(+), 1 deletions(-)
+2011/4/12  <Pekka.Pessi@nokia.com>:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+>
+> In case of call creation failure modem may return a valid call id in
+> order to send CALL_SERVICE_DENIED_IND which we do not handle.
+>
+> Fixes MeeGo bug#15855.
+> ---
+> =C2=A0drivers/isimodem/voicecall.c | =C2=A0 39 ++++++++++++++++++++++++++=
++++++++------
+> =C2=A01 files changed, 33 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/isimodem/sms.c b/drivers/isimodem/sms.c
-index 6f6b247..40dfa1d 100644
---- a/drivers/isimodem/sms.c
-+++ b/drivers/isimodem/sms.c
-@@ -564,6 +564,8 @@ static void routing_ntf_cb(const GIsiMessage *msg, void=
- *data)
- 	GIsiSubBlockIter iter;
- =
+Patch has been pushed. Thanks!
 
- 	uint8_t pdu[176];
-+	uint8_t len;
-+	uint8_t tp_mti;
- =
+Cheers,
+Aki
 
- 	if (g_isi_msg_id(msg) !=3D SMS_PP_ROUTING_NTF)
- 		return;
-@@ -586,7 +588,14 @@ static void routing_ntf_cb(const GIsiMessage *msg, voi=
-d *data)
- 	memcpy(pdu, addr.data, addr.len);
- 	memcpy(pdu + addr.len, tpdu.data, tpdu.len);
- =
-
--	ofono_sms_deliver_notify(sms, pdu, tpdu.len + addr.len, tpdu.len);
-+	len =3D addr.len + tpdu.len;
-+
-+	tp_mti =3D pdu[addr.len] & 0x3;
-+
-+	if (tp_mti =3D=3D 0)
-+		ofono_sms_deliver_notify(sms, pdu, len, tpdu.len);
-+	else if (tp_mti =3D=3D 2)
-+		ofono_sms_status_notify(sms, pdu, len, tpdu.len);
- =
-
- 	/*
- 	 * FIXME: We should not ack the DELIVER unless it has been
--- =
-
-1.7.1
-
-
---===============3124715372864771928==--
+--===============8288612638353977547==--
 
