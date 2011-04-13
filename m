@@ -1,176 +1,167 @@
-Content-Type: multipart/mixed; boundary="===============7649166102927909321=="
+Content-Type: multipart/mixed; boundary="===============5163639995855853674=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH v3 1/6] emulator: add RING for HFP AG
-Date: Wed, 13 Apr 2011 18:05:29 +0200
-Message-ID: <1302710734-6103-2-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH v3 3/6] emulator: add +CLIP support for HFP AG
+Date: Wed, 13 Apr 2011 18:05:31 +0200
+Message-ID: <1302710734-6103-4-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1302710734-6103-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7649166102927909321==
+--===============5163639995855853674==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/emulator.c |   89 +++++++++++++++++++++++++++++++++++++++++++++++-----=
----
- 1 files changed, 76 insertions(+), 13 deletions(-)
+ src/emulator.c |   82 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 files changed, 81 insertions(+), 1 deletions(-)
 
 diff --git a/src/emulator.c b/src/emulator.c
-index 2707592..9005c66 100644
+index 9005c66..8e18785 100644
 --- a/src/emulator.c
 +++ b/src/emulator.c
-@@ -37,6 +37,8 @@
- #define DUN_DNS_SERVER_1       "10.10.10.10"
- #define DUN_DNS_SERVER_2       "10.10.10.11"
+@@ -29,6 +29,7 @@
+ #include <glib.h>
  =
 
-+#define RING_TIMEOUT 3
-+
- struct ofono_emulator {
- 	struct ofono_atom *atom;
- 	enum ofono_emulator_type type;
-@@ -49,6 +51,7 @@ struct ofono_emulator {
- 	int events_mode;
+ #include "ofono.h"
++#include "common.h"
+ #include "gatserver.h"
+ #include "gatppp.h"
+ =
+
+@@ -52,6 +53,7 @@ struct ofono_emulator {
  	gboolean events_ind;
  	GSList *indicators;
-+	guint callsetup_source;
+ 	guint callsetup_source;
++	gboolean clip;
  };
  =
 
  struct indicator {
-@@ -177,6 +180,43 @@ error:
- 	g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
+@@ -201,6 +203,47 @@ static struct indicator *find_indicator(struct ofono_e=
+mulator *em,
+ 	return NULL;
  }
  =
 
-+static struct indicator *find_indicator(struct ofono_emulator *em,
-+						const char *name, int *index)
++static struct ofono_call *find_call_with_status(struct ofono_emulator *em,
++								int status)
 +{
-+	GSList *l;
-+	int i;
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(em->atom);
++	struct ofono_atom *vc_atom;
++	struct ofono_voicecall *vc;
 +
-+	for (i =3D 1, l =3D em->indicators; l; l =3D l->next, i++) {
-+		struct indicator *ind =3D l->data;
++	vc_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_VOICECALL);
++	if (vc_atom =3D=3D NULL)
++		return NULL;
 +
-+		if (g_str_equal(ind->name, name) =3D=3D FALSE)
-+			continue;
++	vc =3D __ofono_atom_get_data(vc_atom);
 +
-+		if (index)
-+			*index =3D i;
-+
-+		return ind;
-+	}
-+
-+	return NULL;
++	return __ofono_voicecall_find_call_with_status(vc, status);
 +}
 +
-+static gboolean send_callsetup_notification(gpointer user_data)
++static void notify_ring(struct ofono_emulator *em)
++{
++	struct ofono_call *c;
++	const char *phone;
++	/*
++	 * '+CLIP: "+",' + phone number + phone type on 3 digits max
++	 * + terminating null
++	 */
++	char str[OFONO_MAX_PHONE_NUMBER_LENGTH + 14 + 1];
++
++	g_at_server_send_unsolicited(em->server, "RING");
++
++	if (!em->clip)
++		return;
++
++	c =3D find_call_with_status(em, CALL_STATUS_INCOMING);
++
++	if (c && c->clip_validity =3D=3D CLIP_VALIDITY_VALID) {
++		phone =3D phone_number_to_string(&c->phone_number);
++		sprintf(str, "+CLIP: \"%s\",%d", phone, c->phone_number.type);
++
++		g_at_server_send_unsolicited(em->server, str);
++	}
++}
++
+ static gboolean send_callsetup_notification(gpointer user_data)
+ {
+ 	struct ofono_emulator *em =3D user_data;
+@@ -212,7 +255,7 @@ static gboolean send_callsetup_notification(gpointer us=
+er_data)
+ 	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
+ =
+
+ 	if (call_ind->value =3D=3D OFONO_EMULATOR_CALL_INACTIVE)
+-		g_at_server_send_unsolicited(em->server, "RING");
++		notify_ring(em);
+ =
+
+ 	return TRUE;
+ }
+@@ -427,6 +470,42 @@ fail:
+ 	}
+ }
+ =
+
++static void clip_cb(GAtServer *server, GAtServerRequestType type,
++			GAtResult *result, gpointer user_data)
 +{
 +	struct ofono_emulator *em =3D user_data;
-+	struct indicator *call_ind;
++	GAtResultIter iter;
++	int val;
 +
-+	if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP && em->slc =3D=3D FALSE)
-+		return TRUE;
++	if (em->slc =3D=3D FALSE)
++		goto fail;
 +
-+	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "");
 +
-+	if (call_ind->value =3D=3D OFONO_EMULATOR_CALL_INACTIVE)
-+		g_at_server_send_unsolicited(em->server, "RING");
++		if (!g_at_result_iter_next_number(&iter, &val))
++			goto fail;
 +
-+	return TRUE;
++		if (val !=3D 0 && val !=3D 1)
++			goto fail;
++
++		/* check this is last parameter */
++		if (g_at_result_iter_skip_next(&iter))
++			goto fail;
++
++		em->clip =3D val;
++
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
++		break;
++
++	default:
++fail:
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
++	};
 +}
 +
- static void brsf_cb(GAtServer *server, GAtServerRequestType type,
- 			GAtResult *result, gpointer user_data)
+ static void emulator_add_indicator(struct ofono_emulator *em, const char* =
+name,
+ 					int min, int max, int dflt)
  {
-@@ -418,6 +458,11 @@ static void emulator_unregister(struct ofono_atom *ato=
-m)
- 		em->source =3D 0;
+@@ -512,6 +591,7 @@ void ofono_emulator_register(struct ofono_emulator *em,=
+ int fd)
+ 		g_at_server_register(em->server, "+BRSF", brsf_cb, em, NULL);
+ 		g_at_server_register(em->server, "+CIND", cind_cb, em, NULL);
+ 		g_at_server_register(em->server, "+CMER", cmer_cb, em, NULL);
++		g_at_server_register(em->server, "+CLIP", clip_cb, em, NULL);
  	}
  =
 
-+	if (em->callsetup_source) {
-+		g_source_remove(em->callsetup_source);
-+		em->callsetup_source =3D 0;
-+	}
-+
- 	for (l =3D em->indicators; l; l =3D l->next) {
- 		struct indicator *ind =3D l->data;
- =
-
-@@ -681,27 +726,45 @@ enum ofono_emulator_request_type ofono_emulator_reque=
-st_get_type(
- void ofono_emulator_set_indicator(struct ofono_emulator *em,
- 					const char *name, int value)
- {
--	GSList *l;
- 	int i;
- 	char buf[20];
-+	struct indicator *ind;
-+	struct indicator *call_ind;
- =
-
--	for (i =3D 1, l =3D em->indicators; l; l =3D l->next, i++) {
--		struct indicator *ind =3D l->data;
-+	ind =3D find_indicator(em, name, &i);
- =
-
--		if (g_str_equal(ind->name, name) =3D=3D FALSE)
--			continue;
-+	if (ind =3D=3D NULL || ind->value =3D=3D value || value < ind->min
-+			|| value > ind->max)
-+		return;
- =
-
--		if (ind->value =3D=3D value || value < ind->min
--					|| value > ind->max)
--			return;
-+	ind->value =3D value;
- =
-
--		ind->value =3D value;
-+	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
- =
-
--		if (em->events_mode =3D=3D 3 && em->events_ind && em->slc) {
--			sprintf(buf, "+CIEV: %d,%d", i, ind->value);
--			g_at_server_send_info(em->server, buf, TRUE);
--		}
-+	if (em->events_mode =3D=3D 3 && em->events_ind && em->slc) {
-+		sprintf(buf, "+CIEV: %d,%d", i, ind->value);
-+		g_at_server_send_unsolicited(em->server, buf);
-+	}
- =
-
-+	/*
-+	 * Ring timer should be started when callsetup indicator is set to
-+	 *   Incoming
-+	 * If there is no active call, a first RING should be sent just after
-+	 *   the +CIEV
-+	 * It should be stopped for all other values of callsetup
-+	 */
-+	if (g_str_equal(name, OFONO_EMULATOR_IND_CALLSETUP) =3D=3D FALSE)
- 		return;
-+
-+	if (value =3D=3D OFONO_EMULATOR_CALLSETUP_INCOMING) {
-+		if (call_ind->value =3D=3D OFONO_EMULATOR_CALL_INACTIVE)
-+			send_callsetup_notification(em);
-+
-+		em->callsetup_source =3D g_timeout_add_seconds(RING_TIMEOUT,
-+					send_callsetup_notification, em);
-+	} else if (value !=3D OFONO_EMULATOR_CALLSETUP_INCOMING &&
-+						em->callsetup_source) {
-+		g_source_remove(em->callsetup_source);
-+		em->callsetup_source =3D 0;
- 	}
- }
+ 	__ofono_atom_register(em->atom, emulator_unregister);
 -- =
 
 1.7.1
 
 
---===============7649166102927909321==--
+--===============5163639995855853674==--
 
