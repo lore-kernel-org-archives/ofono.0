@@ -1,522 +1,229 @@
-Content-Type: multipart/mixed; boundary="===============4015200468344044154=="
+Content-Type: multipart/mixed; boundary="===============1679162504683453412=="
 MIME-Version: 1.0
-From: Amit Mendapara <mendapara.amit@gmail.com>
-Subject: [PATCH 1/2] linktop: reimplemented linktop plugin based on mbm
-Date: Thu, 14 Apr 2011 15:43:53 +0530
-Message-ID: <1302776034-18573-1-git-send-email-mendapara.amit@gmail.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH v4] voicecall: add +CHUP support for HFP emulator
+Date: Thu, 14 Apr 2011 14:27:04 +0200
+Message-ID: <1302784024-9767-1-git-send-email-frederic.danis@linux.intel.com>
+In-Reply-To: <1302710734-6103-7-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4015200468344044154==
+--===============1679162504683453412==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The AT commands listed with AT+CLAC matches with MBM supported devices.
-However, the mbm plugin doesn't work for this devices and the specification=
- is
-also quite different.
-
-Fixes MeeGo bug #14784
+Update multirelease_callback to be used from DBus calls or HFP Emulator.
+"release done" is configurable by multirelease caller.
 ---
- plugins/linktop.c |  268 +++++++++++++++++++++++++++++++++++--------------=
-----
- 1 files changed, 177 insertions(+), 91 deletions(-)
+ src/voicecall.c |   91 +++++++++++++++++++++++++++++++++++++++++++++++++++=
++---
+ 1 files changed, 86 insertions(+), 5 deletions(-)
 
-diff --git a/plugins/linktop.c b/plugins/linktop.c
-index 953f634..2f603a9 100644
---- a/plugins/linktop.c
-+++ b/plugins/linktop.c
-@@ -26,6 +26,7 @@
- #include <stdio.h>
- #include <errno.h>
- #include <stdlib.h>
-+#include <string.h>
+diff --git a/src/voicecall.c b/src/voicecall.c
+index 929ecba..e0377bd 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -44,9 +44,15 @@
  =
 
- #include <glib.h>
- #include <gatchat.h>
-@@ -42,6 +43,7 @@
- #include <ofono/message-waiting.h>
- #include <ofono/netreg.h>
- #include <ofono/sim.h>
-+#include <ofono/stk.h>
- #include <ofono/cbs.h>
- #include <ofono/sms.h>
- #include <ofono/ussd.h>
-@@ -53,16 +55,21 @@
- #include <ofono/radio-settings.h>
- #include <ofono/log.h>
+ GSList *g_drivers =3D NULL;
  =
 
--#include <drivers/atmodem/vendor.h>
- #include <drivers/atmodem/atutil.h>
-+#include <drivers/atmodem/vendor.h>
- =
-
-+static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
- static const char *none_prefix[] =3D { NULL };
- =
-
- struct linktop_data {
--	GAtChat *modem;
--	GAtChat *control;
-+	GAtChat *modem_port;
-+	GAtChat *data_port;
-+	guint cpin_poll_source;
-+	guint cpin_poll_count;
-+	gboolean have_sim;
- 	struct ofono_gprs *gprs;
- 	struct ofono_gprs_context *gc;
-+	guint reopen_source;
- };
- =
-
- static int linktop_probe(struct ofono_modem *modem)
-@@ -86,35 +93,86 @@ static void linktop_remove(struct ofono_modem *modem)
- =
-
- 	DBG("%p", modem);
- =
-
-+	if (data->reopen_source > 0) {
-+		g_source_remove(data->reopen_source);
-+		data->reopen_source =3D 0;
-+	}
++struct multirelease {
++	ofono_voicecall_cb_t release_done;
++	struct ofono_emulator *em;
++};
 +
- 	ofono_modem_set_data(modem, NULL);
- =
-
--	g_at_chat_unref(data->modem);
--	g_at_chat_unref(data->control);
-+	g_at_chat_unref(data->data_port);
-+	g_at_chat_unref(data->modem_port);
-+
-+	if (data->cpin_poll_source > 0)
-+		g_source_remove(data->cpin_poll_source);
- =
-
- 	g_free(data);
+ struct ofono_voicecall {
+ 	GSList *call_list;
+ 	GSList *release_list;
++	struct multirelease multirelease;
+ 	GSList *multiparty_list;
+ 	GHashTable *en_list; /* emergency number list */
+ 	GSList *sim_en_list; /* Emergency numbers already read from SIM */
+@@ -1234,6 +1240,15 @@ fallback:
+ 					multirelease_callback, vc);
  }
  =
 
- static void linktop_debug(const char *str, void *user_data)
- {
--        const char *prefix =3D user_data;
-+	const char *prefix =3D user_data;
++static void voicecalls_release_done(const struct ofono_error *error, void =
+*data)
++{
++	struct ofono_voicecall *vc =3D data;
++	DBusMessage *reply;
 +
-+	ofono_info("%s%s", prefix, str);
++	reply =3D dbus_message_new_method_return(vc->pending);
++	__ofono_dbus_pending_reply(&vc->pending, reply);
 +}
 +
-+static gboolean init_simpin_check(gpointer user_data);
-+
-+static void simpin_check(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct linktop_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("");
-+
-+	/* Modem returns an error if SIM is not ready. */
-+	if (!ok && data->cpin_poll_count++ < 5) {
-+		data->cpin_poll_source =3D
-+			g_timeout_add_seconds(1, init_simpin_check, modem);
-+		return;
-+	}
-+
-+	data->cpin_poll_count =3D 0;
-+
-+	/* There is probably no SIM if SIM is not ready after 5 seconds. */
-+	data->have_sim =3D ok;
-+
-+	ofono_modem_set_powered(modem, TRUE);
-+}
-+
-+static gboolean init_simpin_check(gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct linktop_data *data =3D ofono_modem_get_data(modem);
-+
-+	data->cpin_poll_source =3D 0;
-+
-+	g_at_chat_send(data->modem_port, "AT+CPIN?", cpin_prefix,
-+			simpin_check, modem, NULL);
-+
-+	return FALSE;
-+}
-+
-+static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+
-+	DBG("");
- =
-
--        ofono_info("%s%s", prefix, str);
-+	if (!ok) {
-+		ofono_modem_set_powered(modem, FALSE);
-+		return;
-+	}
-+
-+	init_simpin_check(modem);
- }
- =
-
--static GAtChat *open_device(struct ofono_modem *modem,
--				const char *key, char *debug)
-+static GAtChat *create_port(const char *device)
+ static DBusMessage *manager_get_properties(DBusConnection *conn,
+ 						DBusMessage *msg, void *data)
  {
--	const char *device;
- 	GAtSyntax *syntax;
- 	GIOChannel *channel;
- 	GAtChat *chat;
- =
-
--	device =3D ofono_modem_get_string(modem, key);
--	if (device =3D=3D NULL)
--		return NULL;
--
--	DBG("%s %s", key, device);
--
- 	channel =3D g_at_tty_open(device, NULL);
- 	if (channel =3D=3D NULL)
- 		return NULL;
-@@ -127,81 +185,106 @@ static GAtChat *open_device(struct ofono_modem *mode=
-m,
- 	if (chat =3D=3D NULL)
- 		return NULL;
- =
-
--	if (getenv("OFONO_AT_DEBUG"))
--		g_at_chat_set_debug(chat, linktop_debug, debug);
--
- 	return chat;
- }
- =
-
--static void linktop_disconnect(gpointer user_data)
-+static void linktop_disconnect(gpointer user_data);
-+
-+static gboolean reopen_callback(gpointer user_data)
+@@ -1602,7 +1617,7 @@ static DBusMessage *manager_hangup_all(DBusConnection=
+ *conn,
  {
- 	struct ofono_modem *modem =3D user_data;
- 	struct linktop_data *data =3D ofono_modem_get_data(modem);
-+	const char *data_dev;
+ 	struct ofono_voicecall *vc =3D data;
  =
 
--	DBG("");
-+	data->reopen_source =3D 0;
+-	if (vc->pending)
++	if (vc->pending || vc->release_list)
+ 		return __ofono_error_busy(msg);
  =
 
--	if (data->gc)
--		ofono_gprs_context_remove(data->gc);
-+	data_dev =3D ofono_modem_get_string(modem, "DataDevice");
+ 	if (vc->driver->hangup_all =3D=3D NULL &&
+@@ -1619,6 +1634,7 @@ static DBusMessage *manager_hangup_all(DBusConnection=
+ *conn,
  =
 
--	g_at_chat_unref(data->modem);
--	data->modem =3D NULL;
-+	data->data_port =3D create_port(data_dev);
-+	if (data->data_port =3D=3D NULL)
-+		return FALSE;
- =
-
--	data->modem =3D open_device(modem, "Modem", "Modem: ");
--	if (data->modem =3D=3D NULL)
--		return;
-+	if (getenv("OFONO_AT_DEBUG"))
-+		g_at_chat_set_debug(data->data_port, linktop_debug, "Data: ");
- =
-
--	g_at_chat_set_disconnect_function(data->modem,
-+	g_at_chat_set_disconnect_function(data->data_port,
- 						linktop_disconnect, modem);
- =
-
- 	ofono_info("Reopened GPRS context channel");
- =
-
--	data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
--
--	if (data->gprs && data->gc)
-+	data->gc =3D ofono_gprs_context_create(modem, 0,
-+					"atmodem", data->data_port);
-+	if (data->gprs && data->gc) {
- 		ofono_gprs_add_context(data->gprs, data->gc);
-+	}
-+
-+	return FALSE;
- }
- =
-
--static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
-+static void linktop_disconnect(gpointer user_data)
+ 	if (vc->driver->hangup_all =3D=3D NULL) {
+ 		voicecalls_release_queue(vc, vc->call_list);
++		vc->multirelease.release_done =3D voicecalls_release_done;
+ 		voicecalls_release_next(vc);
+ 	} else
+ 		vc->driver->hangup_all(vc, generic_callback, vc);
+@@ -1828,7 +1844,7 @@ static DBusMessage *multiparty_hangup(DBusConnection =
+*conn,
  {
- 	struct ofono_modem *modem =3D user_data;
-+	struct linktop_data *data =3D ofono_modem_get_data(modem);
+ 	struct ofono_voicecall *vc =3D data;
  =
 
- 	DBG("");
+-	if (vc->pending)
++	if (vc->pending || vc->release_list)
+ 		return __ofono_error_busy(msg);
  =
 
--	ofono_modem_set_powered(modem, ok);
-+	if (data->gc)
-+		ofono_gprs_context_remove(data->gc);
-+
-+	g_at_chat_unref(data->data_port);
-+	data->data_port =3D NULL;
-+
-+	/* Waiting for the +CGEV: ME DEACT might also work */
-+	if (data->reopen_source > 0)
-+		g_source_remove(data->reopen_source);
-+
-+	data->reopen_source =3D g_timeout_add_seconds(1, reopen_callback, modem);
- }
+ 	if (vc->driver->release_specific =3D=3D NULL)
+@@ -1871,6 +1887,7 @@ static DBusMessage *multiparty_hangup(DBusConnection =
+*conn,
  =
 
- static int linktop_enable(struct ofono_modem *modem)
+ 	/* Fall back to the old-fashioned way */
+ 	voicecalls_release_queue(vc, vc->multiparty_list);
++	vc->multirelease.release_done =3D voicecalls_release_done;
+ 	voicecalls_release_next(vc);
+ =
+
+ out:
+@@ -2175,15 +2192,13 @@ static void generic_callback(const struct ofono_err=
+or *error, void *data)
+ static void multirelease_callback(const struct ofono_error *error, void *d=
+ata)
  {
- 	struct linktop_data *data =3D ofono_modem_get_data(modem);
-+	const char *modem_dev;
-+	const char *data_dev;
+ 	struct ofono_voicecall *vc =3D data;
+-	DBusMessage *reply;
  =
 
- 	DBG("%p", modem);
- =
-
--	data->modem =3D open_device(modem, "Modem", "Modem: ");
--	if (data->modem =3D=3D NULL)
--		return -EINVAL;
-+	modem_dev =3D ofono_modem_get_string(modem, "ModemDevice");
-+	data_dev =3D ofono_modem_get_string(modem, "DataDevice");
- =
-
--	g_at_chat_set_disconnect_function(data->modem,
--						linktop_disconnect, modem);
-+	DBG("%s, %s", modem_dev, data_dev);
-+
-+	if (modem_dev =3D=3D NULL || data_dev =3D=3D NULL)
-+		return -EINVAL;
- =
-
--	data->control =3D open_device(modem, "Control", "Control: ");
--	if (data->control =3D=3D NULL) {
--		g_at_chat_unref(data->modem);
--		data->modem =3D NULL;
-+	data->modem_port =3D create_port(modem_dev);
-+	if (data->modem_port =3D=3D NULL)
- 		return -EIO;
--	}
- =
-
--	g_at_chat_send(data->control, "ATE0 +CMEE=3D1", none_prefix,
--						NULL, NULL, NULL);
-+	if (getenv("OFONO_AT_DEBUG"))
-+		g_at_chat_set_debug(data->modem_port, linktop_debug, "Modem: ");
- =
-
--	g_at_chat_send(data->modem, "AT", none_prefix,
--						NULL, NULL, NULL);
-+	data->data_port =3D create_port(data_dev);
-+	if (data->data_port =3D=3D NULL) {
-+		g_at_chat_unref(data->modem_port);
-+		data->modem_port =3D NULL;
- =
-
--	g_at_chat_send(data->modem, "AT &F", none_prefix,
--						NULL, NULL, NULL);
-+		return -EIO;
-+	}
- =
-
--	g_at_chat_send(data->control, "AT+CFUN=3D4", none_prefix,
--					cfun_enable, modem, NULL);
-+	if (getenv("OFONO_AT_DEBUG"))
-+		g_at_chat_set_debug(data->data_port, linktop_debug, "Data: ");
-+
-+	g_at_chat_set_disconnect_function(data->data_port,
-+						linktop_disconnect, modem);
- =
-
-+	g_at_chat_send(data->modem_port, "AT&F E0 V1 X4 &C1 +CMEE=3D1", NULL,
-+					NULL, NULL, NULL);
-+	g_at_chat_send(data->data_port, "AT&F E0 V1 X4 &C1 +CMEE=3D1", NULL,
-+					NULL, NULL, NULL);
-+	g_at_chat_send(data->modem_port, "AT+CFUN=3D4", none_prefix,
-+				cfun_enable, modem, NULL);
-+	=
-
- 	return -EINPROGRESS;
- }
- =
-
-@@ -212,8 +295,11 @@ static void cfun_disable(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- =
-
- 	DBG("");
- =
-
--	g_at_chat_unref(data->control);
--	data->control =3D NULL;
-+	g_at_chat_unref(data->modem_port);
-+	data->modem_port =3D NULL;
-+
-+	g_at_chat_unref(data->data_port);
-+	data->data_port =3D NULL;
- =
-
- 	if (ok)
- 		ofono_modem_set_powered(modem, FALSE);
-@@ -225,19 +311,17 @@ static int linktop_disable(struct ofono_modem *modem)
- =
-
- 	DBG("%p", modem);
- =
-
--	if (data->modem) {
--		g_at_chat_cancel_all(data->modem);
--		g_at_chat_unregister_all(data->modem);
--		g_at_chat_unref(data->modem);
--		data->modem =3D NULL;
-+	if (data->reopen_source > 0) {
-+		g_source_remove(data->reopen_source);
-+		data->reopen_source =3D 0;
+ 	if (vc->release_list !=3D NULL) {
+ 		voicecalls_release_next(vc);
+ 		return;
  	}
  =
 
--	if (data->control =3D=3D NULL)
-+	if (data->modem_port =3D=3D NULL)
- 		return 0;
- =
-
--	g_at_chat_cancel_all(data->control);
--	g_at_chat_unregister_all(data->control);
--	g_at_chat_send(data->control, "AT+CFUN=3D4", none_prefix,
-+	g_at_chat_cancel_all(data->modem_port);
-+	g_at_chat_unregister_all(data->modem_port);
-+	g_at_chat_send(data->modem_port, "AT+CFUN=3D4", NULL,
- 					cfun_disable, modem, NULL);
- =
-
- 	return -EINPROGRESS;
-@@ -247,17 +331,18 @@ static void set_online_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
- {
- 	struct cb_data *cbd =3D user_data;
- 	ofono_modem_online_cb_t cb =3D cbd->cb;
--	struct ofono_error error;
- =
-
--	decode_at_error(&error, g_at_result_final_response(result));
--	cb(&error, cbd->data);
-+	if (ok)
-+		CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+	else
-+		CALLBACK_WITH_FAILURE(cb, cbd->data);
+-	reply =3D dbus_message_new_method_return(vc->pending);
+-	__ofono_dbus_pending_reply(&vc->pending, reply);
++	vc->multirelease.release_done(error, vc);
  }
  =
 
- static void linktop_set_online(struct ofono_modem *modem, ofono_bool_t onl=
-ine,
- 				ofono_modem_online_cb_t cb, void *user_data)
- {
- 	struct linktop_data *data =3D ofono_modem_get_data(modem);
--	GAtChat *chat =3D data->control;
-+	GAtChat *chat =3D data->modem_port;
- 	struct cb_data *cbd =3D cb_data_new(cb, user_data);
- 	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
+ static void emit_en_list_changed(struct ofono_voicecall *vc)
+@@ -2389,6 +2404,10 @@ static void emulator_hfp_unregister(struct ofono_ato=
+m *atom)
+ 						OFONO_ATOM_TYPE_EMULATOR_HFP,
+ 						emulator_remove_handler,
+ 						"A");
++	__ofono_modem_foreach_registered_atom(modem,
++						OFONO_ATOM_TYPE_EMULATOR_HFP,
++						emulator_remove_handler,
++						"+CHUP");
  =
 
-@@ -278,11 +363,11 @@ static void linktop_pre_sim(struct ofono_modem *modem)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_devinfo_create(modem, 0, "atmodem", data->control);
--	sim =3D ofono_sim_create(modem, 0, "atmodem", data->control);
--	ofono_voicecall_create(modem, 0, "stemodem", data->control);
-+	ofono_devinfo_create(modem, 0, "atmodem", data->modem_port);
-+	sim =3D ofono_sim_create(modem, 0, "atmodem", data->modem_port);
-+	ofono_voicecall_create(modem, 0, "stemodem", data->modem_port);
- =
-
--	if (sim)
-+	if (data->have_sim && sim)
- 		ofono_sim_inserted_notify(sim, TRUE);
+ 	__ofono_modem_remove_atom_watch(modem, vc->hfp_watch);
+ }
+@@ -2603,6 +2622,67 @@ fail:
+ 	};
  }
  =
 
-@@ -292,35 +377,36 @@ static void linktop_post_sim(struct ofono_modem *mode=
-m)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_radio_settings_create(modem, 0, "stemodem", data->control);
--	ofono_phonebook_create(modem, 0, "atmodem", data->control);
--	ofono_sms_create(modem, 0, "atmodem", data->control);
-+	ofono_stk_create(modem, 0, "mbmmodem", data->modem_port);
-+	ofono_radio_settings_create(modem, 0, "stemodem", data->modem_port);
-+	ofono_phonebook_create(modem, 0, "atmodem", data->modem_port);
-+	ofono_sms_create(modem, 0, "atmodem", data->modem_port);
- }
- =
-
- static void linktop_post_online(struct ofono_modem *modem)
- {
- 	struct linktop_data *data =3D ofono_modem_get_data(modem);
- 	struct ofono_message_waiting *mw;
--	struct ofono_gprs *gprs;
--	struct ofono_gprs_context *gc;
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_ussd_create(modem, 0, "atmodem", data->control);
--	ofono_call_forwarding_create(modem, 0, "atmodem", data->control);
--	ofono_call_settings_create(modem, 0, "atmodem", data->control);
--	ofono_netreg_create(modem, OFONO_VENDOR_MBM, "atmodem", data->control);
--	ofono_call_meter_create(modem, 0, "atmodem", data->control);
--	ofono_call_barring_create(modem, 0, "atmodem", data->control);
--	ofono_call_volume_create(modem, 0, "atmodem", data->control);
--	ofono_cbs_create(modem, 0, "atmodem", data->control);
--
--	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
--					"atmodem", data->control);
--	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
--
--	if (gprs && gc)
--		ofono_gprs_add_context(gprs, gc);
-+	ofono_netreg_create(modem, 0, "atmodem", data->modem_port);
-+	ofono_cbs_create(modem, 0, "atmodem", data->modem_port);
-+	ofono_ussd_create(modem, 0, "atmodem", data->modem_port);
-+	ofono_call_forwarding_create(modem, 0, "atmodem", data->modem_port);
-+	ofono_call_settings_create(modem, 0, "atmodem", data->modem_port);
-+	ofono_call_meter_create(modem, 0, "atmodem", data->modem_port);
-+	ofono_call_barring_create(modem, 0, "atmodem", data->modem_port);
-+	ofono_call_volume_create(modem, 0, "atmodem", data->modem_port);
++static void emulator_release_done(const struct ofono_error *error,
++					void *data)
++{
++	struct ofono_voicecall *vc =3D data;
 +
-+	data->gprs =3D ofono_gprs_create(modem, 0,
-+					"atmodem", data->modem_port);
-+	data->gc =3D ofono_gprs_context_create(modem, 0,
-+					"atmodem", data->data_port);
++	emulator_generic_cb(error, vc->multirelease.em);
++}
 +
-+	if (data->gprs && data->gc) {
-+		ofono_gprs_add_context(data->gprs, data->gc);
-+	}
++static void emulator_chup_cb(struct ofono_emulator *em,
++			struct ofono_emulator_request *req, void *userdata)
++{
++	struct ofono_voicecall *vc =3D userdata;
++	struct ofono_error result;
++	GSList *l;
++	struct voicecall *call;
++
++	result.error =3D 0;
++
++	switch (ofono_emulator_request_get_type(req)) {
++	case OFONO_EMULATOR_REQUEST_TYPE_COMMAND_ONLY:
++		if (vc->release_list)
++			goto fail;
++
++		if (vc->driver->release_specific =3D=3D NULL &&
++				vc->driver->hangup_active =3D=3D NULL)
++			goto fail;
++
++		if (vc->driver->hangup_active) {
++			vc->driver->hangup_active(vc, emulator_generic_cb, em);
++			goto done;
++		}
++
++		for (l =3D vc->call_list; l; l =3D l->next) {
++			call =3D l->data;
++
++			if (call->call->status =3D=3D CALL_STATUS_WAITING ||
++					call->call->status =3D=3D CALL_STATUS_HELD)
++				continue;
++
++			vc->release_list =3D g_slist_prepend(vc->release_list,
++								l->data);
++		}
++
++		if (vc->release_list =3D=3D NULL)
++			goto fail;
++
++		vc->multirelease.release_done =3D emulator_release_done;
++		vc->multirelease.em =3D em;
++		voicecalls_release_next(vc);
++
++done:
++		dial_request_user_cancel(vc, NULL);
++		break;
++
++	default:
++fail:
++		result.type =3D OFONO_ERROR_TYPE_FAILURE;
++		ofono_emulator_send_final(em, &result);
++	};
++}
++
+ static void emulator_hfp_watch(struct ofono_atom *atom,
+ 				enum ofono_atom_watch_condition cond,
+ 				void *data)
+@@ -2615,6 +2695,7 @@ static void emulator_hfp_watch(struct ofono_atom *ato=
+m,
+ 	notify_emulator_call_status(data);
  =
 
- 	mw =3D ofono_message_waiting_create(modem);
+ 	ofono_emulator_add_handler(em, "A", emulator_ata_cb, data, NULL);
++	ofono_emulator_add_handler(em, "+CHUP", emulator_chup_cb, data, NULL);
+ }
  =
 
+ void ofono_voicecall_register(struct ofono_voicecall *vc)
 -- =
 
 1.7.1
 
 
---===============4015200468344044154==--
+--===============1679162504683453412==--
 
