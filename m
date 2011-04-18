@@ -1,126 +1,142 @@
-Content-Type: multipart/mixed; boundary="===============3830745099716374053=="
+Content-Type: multipart/mixed; boundary="===============4683570043027594792=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: SIM Cached Files
-Date: Tue, 19 Apr 2011 00:32:34 +0200
-Message-ID: <BANLkTi=qMPOQmse7QB18FcBBXUGC4qYWAQ@mail.gmail.com>
-In-Reply-To: <BANLkTinUHJusBA0KxnTT1d-=-vfGNGEU4g@mail.gmail.com>
+Subject: Re: [PATCH] stk: Clear 'respond_on_exit' flag after sending the
+ terminal response
+Date: Tue, 19 Apr 2011 01:33:20 +0200
+Message-ID: <BANLkTinLsBpz9ZBspNM+uE+rep+wdJk2PA@mail.gmail.com>
+In-Reply-To: <1302784842-13259-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3830745099716374053==
+--===============4683570043027594792==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Philippe,
 
-On 18 April 2011 12:41, Rishi Kumar <crystal.rishi2@gmail.com> wrote:
-> I could see the following enumeration and it being used in
-> ofono_sim_read(). Are all these files getting cached. ??
-
-Only the files which are read-only, or writable administratively only,
-are cached.  The allowed access types are stored on the card itself
-(and cached in ofono).
-
+On 14 April 2011 14:40, Philippe Nunes <philippe.nunes@linux.intel.com> w=
+rote:
+> ---
+> =C2=A0src/stk.c | =C2=A0 27 ++-------------------------
+> =C2=A01 files changed, 2 insertions(+), 25 deletions(-)
 >
-> enum sim_fileid {
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFPL_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x2F05,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EF_ICCID_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x2FE2,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_MF_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x3F00,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFIMG_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x4F20,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFPSC_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x4F22,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFCC_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x4F23,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFPUID_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x4F24,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFPBR_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x4F30,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_DFPHONEBOOK_FILEID =3D =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x5F3A,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_DFMULTIMEDIA_FILEID =3D =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x5F3B,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFLI_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F05,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFARR_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F06,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFIMSI_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F07,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EF_CPHS_MWIS_FILEID =3D =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F11,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EF_CPHS_CFF_FILEID =3D =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F13,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EF_CPHS_CSP_FILEID =3D =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F15,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EF_CPHS_INFORMATION_FILEID =3D =C2=A0 =C2=
-=A0 =C2=A0 =C2=A00x6F16,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EF_CPHS_MBDN_FILEID =3D =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F17,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFUST_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F38,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFSST_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F38, /* same as EFus=
-t */
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFADN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F3A,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFMSISDN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F40,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFSMSP_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F42,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFCBMI_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F45,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFSPN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F46,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFCBMID_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F48,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFSDN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F49,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFEXT1_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F4A,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFBDN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F4D,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFCBMIR_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F50,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFEST_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F56,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFAD_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6FAD,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFPHASE_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6FAE,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFECC_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6FB7,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFPNN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6FC5,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFOPL_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6FC6,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFMBDN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6FC7,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFMBI_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6FC9,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFMWIS_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6FCA,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFCFIS_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6FCB,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFSPDI_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6FCD,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_DFTELECOM_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x7F10,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_DFGSM_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x7F20,
-> };
+> diff --git a/src/stk.c b/src/stk.c
+> index c86cbfb..8214b65 100644
+> --- a/src/stk.c
+> +++ b/src/stk.c
+> @@ -128,6 +128,7 @@ static int stk_respond(struct ofono_stk *stk, struct =
+stk_response *rsp,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0stk_command_free(stk->pending_cmd);
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0stk->pending_cmd =3D NULL;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0stk->cancel_cmd =3D NULL;
+> + =C2=A0 =C2=A0 =C2=A0 stk->respond_on_exit =3D FALSE;
 >
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0stk->driver->terminal_response(stk, tlv_len, t=
+lv, cb, stk);
 >
-> I could not also locate the meaning of STORAGEDIR. Kindly help me out
-> on the same.
 
-It is defined by autotools during ./configure
+Overall this looks good.
+
+> @@ -477,10 +478,8 @@ static void user_termination_cb(enum stk_agent_resul=
+t result, void *user_data)
+> =C2=A0{
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct ofono_stk *stk =3D user_data;
+>
+> - =C2=A0 =C2=A0 =C2=A0 if (result =3D=3D STK_AGENT_RESULT_TERMINATE) {
+> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 stk->respond_on_exit =
+=3D FALSE;
+> + =C2=A0 =C2=A0 =C2=A0 if (result =3D=3D STK_AGENT_RESULT_TERMINATE)
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0send_simple_respon=
+se(stk, STK_RESULT_TYPE_USER_TERMINATED);
+> - =C2=A0 =C2=A0 =C2=A0 }
+> =C2=A0}
+>
+> =C2=A0static void stk_alpha_id_set(struct ofono_stk *stk,
+> @@ -598,7 +597,6 @@ static void default_agent_notify(gpointer user_data)
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0stk->default_agent =3D NULL;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0stk->current_agent =3D stk->session_agent;
+> - =C2=A0 =C2=A0 =C2=A0 stk->respond_on_exit =3D FALSE;
+> =C2=A0}
+>
+> =C2=A0static void session_agent_notify(gpointer user_data)
+> @@ -617,7 +615,6 @@ static void session_agent_notify(gpointer user_data)
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0stk->session_agent =3D NULL;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0stk->current_agent =3D stk->default_agent;
+> - =C2=A0 =C2=A0 =C2=A0 stk->respond_on_exit =3D FALSE;
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0if (stk->remove_agent_source) {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0g_source_remove(st=
+k->remove_agent_source);
+> @@ -1159,8 +1156,6 @@ static void request_selection_cb(enum stk_agent_res=
+ult result, uint8_t id,
+> =C2=A0{
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct ofono_stk *stk =3D user_data;
+>
+> - =C2=A0 =C2=A0 =C2=A0 stk->respond_on_exit =3D FALSE;
+> -
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0switch (result) {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0case STK_AGENT_RESULT_OK:
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0{
+> @@ -1243,8 +1238,6 @@ static void display_text_cb(enum stk_agent_result r=
+esult, void *user_data)
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0static unsigned char screen_busy_result[] =3D =
+{ 0x01 };
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0static struct ofono_error error =3D { .type =
+=3D OFONO_ERROR_TYPE_FAILURE };
+>
+> - =C2=A0 =C2=A0 =C2=A0 stk->respond_on_exit =3D FALSE;
+> -
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0/*
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 * There are four possible paths for DisplayTe=
+xt with immediate
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 * response flag set:
+> @@ -1386,8 +1379,6 @@ static void request_confirmation_cb(enum stk_agent_=
+result result,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_command_get_inkey *cmd =3D &stk->pe=
+nding_cmd->get_inkey;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_response rsp;
+>
+> - =C2=A0 =C2=A0 =C2=A0 stk->respond_on_exit =3D FALSE;
+> @@ -1442,8 +1433,6 @@ static void request_key_cb(enum stk_agent_result re=
+sult, char *string,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_command_get_inkey *cmd =3D &stk->pe=
+nding_cmd->get_inkey;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_response rsp;
+>
+> - =C2=A0 =C2=A0 =C2=A0 stk->respond_on_exit =3D FALSE;
+> -
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0switch (result) {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0case STK_AGENT_RESULT_OK:
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0memset(&rsp, 0, si=
+zeof(rsp));
+> @@ -1560,8 +1549,6 @@ static void request_string_cb(enum stk_agent_result=
+ result, char *string,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0gboolean packed =3D (qualifier & (1 << 3)) !=
+=3D 0;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_response rsp;
+>
+> - =C2=A0 =C2=A0 =C2=A0 stk->respond_on_exit =3D FALSE;
+> -
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0switch (result) {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0case STK_AGENT_RESULT_OK:
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0memset(&rsp, 0, si=
+zeof(rsp));
+> @@ -1699,8 +1686,6 @@ static void confirm_call_cb(enum stk_agent_result r=
+esult, gboolean confirm,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_response rsp;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0int err;
+>
+> - =C2=A0 =C2=A0 =C2=A0 stk->respond_on_exit =3D FALSE;
+
+However there's a change in behaviour here which I think is incorrect.
+ We need to wait for the call to be cancelled or connected before
+responding, so I'd just leave this line as is.
 
 Best regards
 
---===============3830745099716374053==--
+--===============4683570043027594792==--
 
