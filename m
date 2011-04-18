@@ -1,43 +1,126 @@
-Content-Type: multipart/mixed; boundary="===============0066739311418328630=="
+Content-Type: multipart/mixed; boundary="===============3830745099716374053=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] isiusb: wait for MTC transitions, too
-Date: Mon, 18 Apr 2011 16:24:52 +0300
-Message-ID: <1303133092-8913-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: SIM Cached Files
+Date: Tue, 19 Apr 2011 00:32:34 +0200
+Message-ID: <BANLkTi=qMPOQmse7QB18FcBBXUGC4qYWAQ@mail.gmail.com>
+In-Reply-To: <BANLkTinUHJusBA0KxnTT1d-=-vfGNGEU4g@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0066739311418328630==
+--===============3830745099716374053==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi,
 
----
- plugins/isiusb.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+On 18 April 2011 12:41, Rishi Kumar <crystal.rishi2@gmail.com> wrote:
+> I could see the following enumeration and it being used in
+> ofono_sim_read(). Are all these files getting cached. ??
 
-diff --git a/plugins/isiusb.c b/plugins/isiusb.c
-index ad24fc9..82d2cc5 100644
---- a/plugins/isiusb.c
-+++ b/plugins/isiusb.c
-@@ -352,7 +352,7 @@ static void mtc_state_cb(const GIsiMessage *msg, void *=
-data)
- =
+Only the files which are read-only, or writable administratively only,
+are cached.  The allowed access types are stored on the card itself
+(and cached in ofono).
 
- 	DBG("MTC cause: %s (0x%02X)", mtc_isi_cause_name(cause), cause);
- =
+>
+> enum sim_fileid {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFPL_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x2F05,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EF_ICCID_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x2FE2,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_MF_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x3F00,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFIMG_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x4F20,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFPSC_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x4F22,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFCC_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x4F23,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFPUID_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x4F24,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFPBR_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x4F30,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_DFPHONEBOOK_FILEID =3D =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x5F3A,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_DFMULTIMEDIA_FILEID =3D =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x5F3B,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFLI_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F05,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFARR_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F06,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFIMSI_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F07,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EF_CPHS_MWIS_FILEID =3D =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F11,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EF_CPHS_CFF_FILEID =3D =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F13,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EF_CPHS_CSP_FILEID =3D =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F15,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EF_CPHS_INFORMATION_FILEID =3D =C2=A0 =C2=
+=A0 =C2=A0 =C2=A00x6F16,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EF_CPHS_MBDN_FILEID =3D =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F17,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFUST_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F38,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFSST_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F38, /* same as EFus=
+t */
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFADN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F3A,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFMSISDN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F40,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFSMSP_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F42,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFCBMI_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F45,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFSPN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F46,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFCBMID_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F48,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFSDN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F49,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFEXT1_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6F4A,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFBDN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F4D,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFCBMIR_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F50,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFEST_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6F56,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFAD_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6FAD,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFPHASE_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6FAE,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFECC_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6FB7,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFPNN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6FC5,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFOPL_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6FC6,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFMBDN_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6FC7,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFMBI_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x6FC9,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFMWIS_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6FCA,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFCFIS_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6FCB,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_EFSPDI_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x6FCD,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_DFTELECOM_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x7F10,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0SIM_DFGSM_FILEID =3D =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x7F20,
+> };
+>
+>
+> I could not also locate the meaning of STORAGEDIR. Kindly help me out
+> on the same.
 
--	if (cause =3D=3D MTC_OK) {
-+	if (cause =3D=3D MTC_OK || cause =3D=3D MTC_STATE_TRANSITION_GOING_ON) {
- 		isi->online_cbd =3D cbd;
- 		return;
- 	}
--- =
+It is defined by autotools during ./configure
 
-1.7.1
+Best regards
 
-
---===============0066739311418328630==--
+--===============3830745099716374053==--
 
