@@ -1,54 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============8251871923993923575=="
+Content-Type: multipart/mixed; boundary="===============4437514249994857467=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH] emulator: fix +CLIP in case of withheld call
-Date: Wed, 20 Apr 2011 22:24:41 +0200
-Message-ID: <1303331081-5047-1-git-send-email-frederic.danis@linux.intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] mbm: make sure not to double-free gprs context
+Date: Wed, 20 Apr 2011 22:33:40 +0200
+Message-ID: <1303331620-27359-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8251871923993923575==
+--===============4437514249994857467==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+If modem is offline, the mms context has been already freed so remove
+mbm.c's reference to it.
 ---
- src/emulator.c |   12 ++++++++++--
- 1 files changed, 10 insertions(+), 2 deletions(-)
+ plugins/mbm.c |   19 ++++++++++++++++++-
+ 1 files changed, 18 insertions(+), 1 deletions(-)
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 9b4647b..9055909 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -261,11 +261,19 @@ static void notify_ring(struct ofono_emulator *em)
- =
-
- 	c =3D find_call_with_status(em, CALL_STATUS_INCOMING);
- =
-
--	if (c && c->clip_validity =3D=3D CLIP_VALIDITY_VALID) {
-+	if (c =3D=3D NULL)
-+		return;
-+
-+	switch (c->clip_validity) {
-+	case CLIP_VALIDITY_VALID:
- 		phone =3D phone_number_to_string(&c->phone_number);
- 		sprintf(str, "+CLIP: \"%s\",%d", phone, c->phone_number.type);
--
- 		g_at_server_send_unsolicited(em->server, str);
-+		break;
-+
-+	case CLIP_VALIDITY_WITHHELD:
-+		g_at_server_send_unsolicited(em->server, "+CLIP: \"\",128");
-+		break;
- 	}
+diff --git a/plugins/mbm.c b/plugins/mbm.c
+index 105843f..9518990 100644
+--- a/plugins/mbm.c
++++ b/plugins/mbm.c
+@@ -463,6 +463,19 @@ static void set_online_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+ 		CALLBACK_WITH_FAILURE(cb, cbd->data);
  }
  =
 
++static void set_offline_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct cb_data *cbd =3D user_data;
++	struct mbm_data *data =3D cbd->user;
++
++	if (ok) {
++		data->gc =3D NULL;
++		data->gprs =3D NULL;
++	}
++
++	return set_online_cb(ok, result, user_data);
++}
++
+ static void mbm_set_online(struct ofono_modem *modem, ofono_bool_t online,
+ 				ofono_modem_online_cb_t cb, void *user_data)
+ {
+@@ -473,7 +486,11 @@ static void mbm_set_online(struct ofono_modem *modem, =
+ofono_bool_t online,
+ =
+
+ 	DBG("modem %p %s", modem, online ? "online" : "offline");
+ =
+
+-	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
++	cbd->user =3D data;
++
++	if (g_at_chat_send(chat, command, NULL,
++				online ? set_online_cb : set_offline_cb,
++				cbd, g_free))
+ 		return;
+ =
+
+ 	g_free(cbd);
 -- =
 
-1.7.1
+1.7.1.86.g0e460.dirty
 
 
---===============8251871923993923575==--
+--===============4437514249994857467==--
 
