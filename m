@@ -1,75 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============7164926529495960031=="
+Content-Type: multipart/mixed; boundary="===============8251871923993923575=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: [PATCH] stk: Clear 'respond_on_exit' flag after sending the
- terminal response
-Date: Wed, 20 Apr 2011 21:11:10 +0200
-Message-ID: <BANLkTi=+qfw5OGQCb=8=zpgiO-JD31Kv4Q@mail.gmail.com>
-In-Reply-To: <4DAF0480.6030306@linux.intel.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH] emulator: fix +CLIP in case of withheld call
+Date: Wed, 20 Apr 2011 22:24:41 +0200
+Message-ID: <1303331081-5047-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7164926529495960031==
+--===============8251871923993923575==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ src/emulator.c |   12 ++++++++++--
+ 1 files changed, 10 insertions(+), 2 deletions(-)
 
-On 20 April 2011 18:06, Philippe Nunes <philippe.nunes@linux.intel.com> w=
-rote:
->>> @@ -1699,8 +1686,6 @@ static void confirm_call_cb(enum stk_agent_result
->>> result, gboolean confirm,
->>> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_response rsp;
->>> =C2=A0 =C2=A0 =C2=A0 =C2=A0int err;
->>>
->>> - =C2=A0 =C2=A0 =C2=A0 stk->respond_on_exit =3D FALSE;
->>
->> However there's a change in behaviour here which I think is incorrect.
->> =C2=A0We need to wait for the call to be cancelled or connected before
->> responding, so I'd just leave this line as is.
->>
->
-> According to me, this change doesn't impact your expectation.
-> It offers only the possibility for the user to end properly the session w=
-hen
-> exiting the on screen STK agent and before the dialer App becomes
-> foreground. I know, this could be unlikely to happen due to timing
-> consideration but still, I think this change is more safe.
+diff --git a/src/emulator.c b/src/emulator.c
+index 9b4647b..9055909 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -261,11 +261,19 @@ static void notify_ring(struct ofono_emulator *em)
+ =
 
-The problem is not that it's unlikely, but by my reading of the
-specification the user should be able to quit the STK session without
-disturbing the call setup.
+ 	c =3D find_call_with_status(em, CALL_STATUS_INCOMING);
+ =
 
-> Indeed, when the STK agent quits, normally the callback
-> "session_agent_notify" is called. If the flag respond_on exit is set to
-> FALSE, no chance to cancel the command neither to send the appropriate
-> terminal response with the result "user ends the session".
->
-> Now, indeed, the user is still able to cancel the call in the dialer App
-> (and a terminal response will be sent at the end) but I feel we missed to
-> consider first the STK agent exit.
->
-> Also, you mentioned:
-> "the spec only mentions the "session terminated by the user" response in =
-the
-> "confirmation phase" and not in the "setup phase".
->
-> According to me, the session still exists during the setup phase, therefo=
-re,
+-	if (c && c->clip_validity =3D=3D CLIP_VALIDITY_VALID) {
++	if (c =3D=3D NULL)
++		return;
++
++	switch (c->clip_validity) {
++	case CLIP_VALIDITY_VALID:
+ 		phone =3D phone_number_to_string(&c->phone_number);
+ 		sprintf(str, "+CLIP: \"%s\",%d", phone, c->phone_number.type);
+-
+ 		g_at_server_send_unsolicited(em->server, str);
++		break;
++
++	case CLIP_VALIDITY_WITHHELD:
++		g_at_server_send_unsolicited(em->server, "+CLIP: \"\",128");
++		break;
+ 	}
+ }
+ =
 
-Yes it exists, and if the user closes the session then in this case
-nothing should happen (same as during Send DTMF or other commands).
-TS 102.223 6.4 lists the allowed responses for every scenario and if
-we want to follow it, then the current behaviour is more correct than
-the proposed one.
+-- =
 
-All in all I'm okay with this patch because the change is minor but
-whenever there's a behaviour change the reasoning needs to be
-documented in the commit message optimally with reference to the
-specification. (possibly in the code too)
+1.7.1
 
-Best regards
 
---===============7164926529495960031==--
+--===============8251871923993923575==--
 
