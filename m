@@ -1,35 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============1648116080871447723=="
+Content-Type: multipart/mixed; boundary="===============7266369685097789090=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4] voicecall: add +CHUP support for HFP emulator
-Date: Thu, 21 Apr 2011 16:24:03 -0500
-Message-ID: <4DB0A073.8090100@gmail.com>
-In-Reply-To: <1302784024-9767-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH] emulator: fix +CLIP in case of withheld call
+Date: Thu, 21 Apr 2011 16:24:24 -0500
+Message-ID: <4DB0A088.1070401@gmail.com>
+In-Reply-To: <1303331081-5047-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1648116080871447723==
+--===============7266369685097789090==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Fr=C3=A9d=C3=A9ric,
 
-On 04/14/2011 07:27 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> Update multirelease_callback to be used from DBus calls or HFP Emulator.
-> "release done" is configurable by multirelease caller.
+On 04/20/2011 03:24 PM, Fr=C3=A9d=C3=A9ric Danis wrote:
 > ---
->  src/voicecall.c |   91 +++++++++++++++++++++++++++++++++++++++++++++++++=
-+++---
->  1 files changed, 86 insertions(+), 5 deletions(-)
+>  src/emulator.c |   12 ++++++++++--
+>  1 files changed, 10 insertions(+), 2 deletions(-)
 > =
 
 
-Patch has been applied, thanks.  I did refactor it somewhat afterwards,
-could you make sure I didn't screw anything up?
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============1648116080871447723==--
+--===============7266369685097789090==--
 
