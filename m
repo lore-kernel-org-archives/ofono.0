@@ -1,124 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============0641558276982963112=="
+Content-Type: multipart/mixed; boundary="===============4265004481693324164=="
 MIME-Version: 1.0
-From: milan.satpathy@accenture.com
-Subject: [HELP]Clarification Needed On HFP Version
-Date: Thu, 21 Apr 2011 17:47:20 +0530
-Message-ID: <10D123A956DC4B4FA9D7A48B3335836214E16A26E8@INDXM3131.dir.svc.accenture.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH] stk: Clear 'respond_on_exit' flag after sending
+ the	terminal response
+Date: Thu, 21 Apr 2011 16:50:35 +0200
+Message-ID: <4DB0443B.70607@linux.intel.com>
+In-Reply-To: <BANLkTi=+qfw5OGQCb=8=zpgiO-JD31Kv4Q@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0641558276982963112==
+--===============4265004481693324164==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Andrew,
 
-I have been recently browsing through the internet to confirm if Ofono is c=
-ompliant with HFP version 1.5.Is there any link / reference to confirm the =
-HFP spec version Ofono is currently running on. Please share any available =
-inputs on this.
+
+On 04/20/2011 09:11 PM, Andrzej Zaborowski wrote:
+> Hi,
+>
+> On 20 April 2011 18:06, Philippe Nunes<philippe.nunes@linux.intel.com> =
+ wrote:
+>>>> @@ -1699,8 +1686,6 @@ static void confirm_call_cb(enum stk_agent_result
+>>>> result, gboolean confirm,
+>>>>         struct stk_response rsp;
+>>>>         int err;
+>>>>
+>>>> -       stk->respond_on_exit =3D FALSE;
+>>>
+>>> However there's a change in behaviour here which I think is incorrect.
+>>>   We need to wait for the call to be cancelled or connected before
+>>> responding, so I'd just leave this line as is.
+>>>
+>>
+>> According to me, this change doesn't impact your expectation.
+>> It offers only the possibility for the user to end properly the session =
+when
+>> exiting the on screen STK agent and before the dialer App becomes
+>> foreground. I know, this could be unlikely to happen due to timing
+>> consideration but still, I think this change is more safe.
+>
+> The problem is not that it's unlikely, but by my reading of the
+> specification the user should be able to quit the STK session without
+> disturbing the call setup.
+>
+>> Indeed, when the STK agent quits, normally the callback
+>> "session_agent_notify" is called. If the flag respond_on exit is set to
+>> FALSE, no chance to cancel the command neither to send the appropriate
+>> terminal response with the result "user ends the session".
+>>
+>> Now, indeed, the user is still able to cancel the call in the dialer App
+>> (and a terminal response will be sent at the end) but I feel we missed to
+>> consider first the STK agent exit.
+>>
+>> Also, you mentioned:
+>> "the spec only mentions the "session terminated by the user" response in=
+ the
+>> "confirmation phase" and not in the "setup phase".
+>>
+>> According to me, the session still exists during the setup phase, theref=
+ore,
+>
+> Yes it exists, and if the user closes the session then in this case
+> nothing should happen (same as during Send DTMF or other commands).
+> TS 102.223 6.4 lists the allowed responses for every scenario and if
+> we want to follow it, then the current behaviour is more correct than
+> the proposed one.
+>
+
+For Send DTMF proactive command, I can read "If the user indicates the =
+
+need to end the proactive UICC session whilst the terminal is sending =
+
+the DTMF string, the terminal shall stop sending the DTMF string and =
+
+shall send a terminal response with "proactive UICC session terminated =
+
+by the user" result value. That's precisely what is allowing this change.
+
+For setup call, the specification is not so clear but since this result =
+
+code is allowed for SETUP CALL, I guess that the spec should have =
+
+pointed that it was however not possible to send this result code during =
+
+the call setup.
+
+For me, this change brings at least an homogeneous behavior.
+
+
+> All in all I'm okay with this patch because the change is minor but
+> whenever there's a behaviour change the reasoning needs to be
+> documented in the commit message optimally with reference to the
+> specification. (possibly in the code too)
+>
+
+I agree. I didn't realize that this change could be problematic.
 
 Regards,
-Milan
+
+Philippe.
 
 
-
-________________________________
-This message is for the designated recipient only and may contain privilege=
-d, proprietary, or otherwise private information. If you have received it i=
-n error, please notify the sender immediately and delete the original. Any =
-other use of the email by you is prohibited.
-
---===============0641558276982963112==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
-bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxuczpzdDE9
-InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgeG1sbnM9Imh0dHA6
-Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29u
-dGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBu
-YW1lPSJHZW5lcmF0b3IiIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDExIChmaWx0ZXJlZCBtZWRp
-dW0pIj4KPG86U21hcnRUYWdUeXBlIG5hbWVzcGFjZXVyaT0idXJuOnNjaGVtYXMtbWljcm9zb2Z0
-LWNvbTpvZmZpY2U6c21hcnR0YWdzIiBuYW1lPSJDaXR5IiAvPjxvOlNtYXJ0VGFnVHlwZSBuYW1l
-c3BhY2V1cmk9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgbmFt
-ZT0icGxhY2UiIC8+PCEtLVtpZiAhbXNvXT4KPHN0eWxlPgpzdDFcOip7YmVoYXZpb3I6dXJsKCNk
-ZWZhdWx0I2llb291aSkgfQo8L3N0eWxlPgo8IVtlbmRpZl0tLT48c3R5bGU+CjwhLS0KIC8qIEZv
-bnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseToiQm9vayBBbnRpcXVh
-IjsKCXBhbm9zZS0xOjIgNCA2IDIgNSAzIDUgMyAzIDQ7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMg
-Ki8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGlu
-OwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5
-OiJCb29rIEFudGlxdWEiO30KaDEKCXttYXJnaW4tdG9wOjEyLjBwdDsKCW1hcmdpbi1yaWdodDow
-aW47CgltYXJnaW4tYm90dG9tOjMuMHB0OwoJbWFyZ2luLWxlZnQ6MGluOwoJcGFnZS1icmVhay1h
-ZnRlcjphdm9pZDsKCWZvbnQtc2l6ZToxNC4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVh
-Ijt9CmgyCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFyZ2luLWJv
-dHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZvaWQ7Cglm
-b250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250LXN0eWxl
-Oml0YWxpYzt9CmgzCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFy
-Z2luLWJvdHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZv
-aWQ7Cglmb250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250
-LXdlaWdodDpub3JtYWw7fQpwLk1zb0hlYWRlciwgbGkuTXNvSGVhZGVyLCBkaXYuTXNvSGVhZGVy
-Cgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7
-Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuTXNvRm9vdGVyLCBsaS5Nc29Gb290ZXIs
-IGRpdi5Nc29Gb290ZXIKCXttYXJnaW46MGluOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9u
-dC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KYTpsaW5rLCBzcGFu
-Lk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30K
-YTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7Y29sb3I6IzYwNjQyMDsKCXRl
-eHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpwLkFCTE9DS1BBUkEsIGxpLkFCTE9DS1BBUkEsIGRp
-di5BQkxPQ0tQQVJBCgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQt
-c2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUJVTExFVCwgbGku
-QUJVTExFVCwgZGl2LkFCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdodDowaW47
-CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjE2LjU1cHQ7CgltYXJnaW4tYm90dG9t
-Oi4wMDAxcHQ7Cgl0ZXh0LWluZGVudDotMTYuNTVwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250
-LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUlOREVOVEVEQlVMTEVULCBsaS5BSU5ERU5URURC
-VUxMRVQsIGRpdi5BSU5ERU5URURCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdo
-dDowaW47CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjMzLjFwdDsKCW1hcmdpbi1i
-b3R0b206LjAwMDFwdDsKCXRleHQtaW5kZW50Oi0xNi41NXB0OwoJZm9udC1zaXplOjExLjBwdDsK
-CWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KcC5BSU5ERU5URURQQVJBLCBsaS5BSU5ERU5U
-RURQQVJBLCBkaXYuQUlOREVOVEVEUEFSQQoJe21hcmdpbi10b3A6MGluOwoJbWFyZ2luLXJpZ2h0
-OjBpbjsKCW1hcmdpbi1ib3R0b206MGluOwoJbWFyZ2luLWxlZnQ6MTYuNTVwdDsKCW1hcmdpbi1i
-b3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRp
-cXVhIjt9CnNwYW4uRW1haWxTdHlsZTIzCgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9z
-ZTsKCWZvbnQtZmFtaWx5OkFyaWFsOwoJY29sb3I6d2luZG93dGV4dDt9CkBwYWdlIFNlY3Rpb24x
-Cgl7c2l6ZTo1OTUuNDVwdCA4NDEuN3B0OwoJbWFyZ2luOjEuMGluIC43NWluIDEuMGluIC43NWlu
-O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9Ci0tPgo8L3N0eWxlPgo8L2hlYWQ+Cjxi
-b2R5IGxhbmc9IkVOLVVTIiBsaW5rPSJibHVlIiB2bGluaz0iIzYwNjQyMCI+CjxkaXYgY2xhc3M9
-IlNlY3Rpb24xIj4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJp
-YWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+SGks
-PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQg
-c2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250
-LWZhbWlseTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xh
-c3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJm
-b250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+SSBoYXZlIGJlZW4gcmVjZW50bHkg
-YnJvd3NpbmcgdGhyb3VnaCB0aGUgaW50ZXJuZXQgdG8gY29uZmlybSBpZiBPZm9ubyBpcyBjb21w
-bGlhbnQgd2l0aCBIRlAgdmVyc2lvbiAxLjUuSXMgdGhlcmUgYW55IGxpbmsgLyByZWZlcmVuY2Ug
-dG8gY29uZmlybSB0aGUgSEZQIHNwZWMKIHZlcnNpb24gT2Zvbm8gaXMgY3VycmVudGx5IHJ1bm5p
-bmcgb24uIFBsZWFzZSBzaGFyZSBhbnkgYXZhaWxhYmxlIGlucHV0cyBvbiB0aGlzLjxvOnA+PC9v
-OnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIi
-IGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6
-QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29O
-b3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXpl
-OjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPlJlZ2FyZHMsPG86cD48L286cD48L3NwYW4+PC9m
-b250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHN0MTpDaXR5IHc6c3Q9Im9uIj48c3QxOnBs
-YWNlIHc6c3Q9Im9uIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZv
-bnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwiPk1pbGFuPC9zcGFuPjwvZm9udD48L3N0
-MTpwbGFjZT48L3N0MTpDaXR5Pjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHls
-ZT0iZm9udC1zaXplOjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCI+CjxvOnA+PC9vOnA+PC9zcGFu
-PjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFy
-aWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPjxv
-OnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxm
-b250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsK
-Zm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cjwv
-ZGl2Pgo8YnI+Cjxocj4KPGZvbnQgZmFjZT0iQXJpYWwiIGNvbG9yPSJHcmF5IiBzaXplPSIyIj5U
-aGlzIG1lc3NhZ2UgaXMgZm9yIHRoZSBkZXNpZ25hdGVkIHJlY2lwaWVudCBvbmx5IGFuZCBtYXkg
-Y29udGFpbiBwcml2aWxlZ2VkLCBwcm9wcmlldGFyeSwgb3Igb3RoZXJ3aXNlIHByaXZhdGUgaW5m
-b3JtYXRpb24uIElmIHlvdSBoYXZlIHJlY2VpdmVkIGl0IGluIGVycm9yLCBwbGVhc2Ugbm90aWZ5
-IHRoZSBzZW5kZXIgaW1tZWRpYXRlbHkgYW5kIGRlbGV0ZSB0aGUgb3JpZ2luYWwuCiBBbnkgb3Ro
-ZXIgdXNlIG9mIHRoZSBlbWFpbCBieSB5b3UgaXMgcHJvaGliaXRlZC48YnI+CjwvZm9udD4KPC9i
-b2R5Pgo8L2h0bWw+Cg==
-
---===============0641558276982963112==--
+--===============4265004481693324164==--
 
