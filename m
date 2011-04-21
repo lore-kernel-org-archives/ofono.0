@@ -1,122 +1,124 @@
-Content-Type: multipart/mixed; boundary="===============4600813588792701216=="
+Content-Type: multipart/mixed; boundary="===============0641558276982963112=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@linux.intel.com>
-Subject: [PATCH] voicecall: add +CLCC support for HFP emulator
-Date: Thu, 21 Apr 2011 11:59:57 +0200
-Message-ID: <1303379997-6238-2-git-send-email-frederic.dalleau@linux.intel.com>
-In-Reply-To: <1303379997-6238-1-git-send-email-frederic.dalleau@linux.intel.com>
+From: milan.satpathy@accenture.com
+Subject: [HELP]Clarification Needed On HFP Version
+Date: Thu, 21 Apr 2011 17:47:20 +0530
+Message-ID: <10D123A956DC4B4FA9D7A48B3335836214E16A26E8@INDXM3131.dir.svc.accenture.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4600813588792701216==
+--===============0641558276982963112==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/voicecall.c |   64 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 64 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 2e20c80..49f190a 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -2390,6 +2390,10 @@ static void emulator_hfp_unregister(struct ofono_ato=
-m *atom)
- 						OFONO_ATOM_TYPE_EMULATOR_HFP,
- 						emulator_remove_handler,
- 						"A");
-+	__ofono_modem_foreach_registered_atom(modem,
-+						OFONO_ATOM_TYPE_EMULATOR_HFP,
-+						emulator_remove_handler,
-+						"+CLCC");
- =
+I have been recently browsing through the internet to confirm if Ofono is c=
+ompliant with HFP version 1.5.Is there any link / reference to confirm the =
+HFP spec version Ofono is currently running on. Please share any available =
+inputs on this.
 
- 	__ofono_modem_remove_atom_watch(modem, vc->hfp_watch);
- }
-@@ -2604,6 +2608,65 @@ fail:
- 	};
- }
- =
-
-+static void emulator_clcc_cb(struct ofono_emulator *em,
-+			struct ofono_emulator_request *req, void *userdata)
-+{
-+	struct ofono_voicecall *vc =3D userdata;
-+	struct ofono_error result;
-+	GSList *l;
-+	struct voicecall *v;
-+	const char *phone;
-+	gboolean mpty;
-+	/*
-+	 * '+CLCC: 123,1,1,0,1,"+",' + phone number + phone type on 3 digits
-+	 * + terminating null
-+	 */
-+	char buf[OFONO_MAX_PHONE_NUMBER_LENGTH + 26 + 1];
-+
-+	result.error =3D 0;
-+
-+	switch (ofono_emulator_request_get_type(req)) {
-+	case OFONO_EMULATOR_REQUEST_TYPE_COMMAND_ONLY:
-+
-+		for (l =3D vc->call_list; l; l =3D l->next) {
-+			v =3D l->data;
-+
-+			if (g_slist_find_custom(vc->multiparty_list,
-+						GINT_TO_POINTER(v->call->id),
-+						call_compare_by_id))
-+				mpty =3D TRUE;
-+			else
-+				mpty =3D FALSE;
-+
-+			if (v->call->clip_validity !=3D CLIP_VALIDITY_VALID) {
-+				sprintf(buf, "+CLCC: %d,%d,%d,0,%d",
-+					v->call->id, v->call->direction,
-+					v->call->status, mpty);
-+				goto send;
-+			}
-+
-+			phone =3D phone_number_to_string(&v->call->phone_number);
-+
-+			sprintf(buf, "+CLCC: %d,%d,%d,0,%d,\"%s\",%d",
-+					v->call->id, v->call->direction,
-+					v->call->status, mpty, phone,
-+					v->call->phone_number.type);
-+
-+send:
-+			ofono_emulator_send_info(em, buf, l->next =3D=3D NULL ?
-+							TRUE : FALSE);
-+		}
-+
-+		result.type =3D OFONO_ERROR_TYPE_NO_ERROR;
-+		break;
-+
-+	default:
-+		result.type =3D OFONO_ERROR_TYPE_FAILURE;
-+	}
-+
-+	ofono_emulator_send_final(em, &result);
-+}
-+
- static void emulator_hfp_watch(struct ofono_atom *atom,
- 				enum ofono_atom_watch_condition cond,
- 				void *data)
-@@ -2616,6 +2679,7 @@ static void emulator_hfp_watch(struct ofono_atom *ato=
-m,
- 	notify_emulator_call_status(data);
- =
-
- 	ofono_emulator_add_handler(em, "A", emulator_ata_cb, data, NULL);
-+	ofono_emulator_add_handler(em, "+CLCC", emulator_clcc_cb, data, NULL);
- }
- =
-
- void ofono_voicecall_register(struct ofono_voicecall *vc)
--- =
-
-1.7.1
+Regards,
+Milan
 
 
---===============4600813588792701216==--
+
+________________________________
+This message is for the designated recipient only and may contain privilege=
+d, proprietary, or otherwise private information. If you have received it i=
+n error, please notify the sender immediately and delete the original. Any =
+other use of the email by you is prohibited.
+
+--===============0641558276982963112==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
+bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxuczpzdDE9
+InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgeG1sbnM9Imh0dHA6
+Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29u
+dGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBu
+YW1lPSJHZW5lcmF0b3IiIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDExIChmaWx0ZXJlZCBtZWRp
+dW0pIj4KPG86U21hcnRUYWdUeXBlIG5hbWVzcGFjZXVyaT0idXJuOnNjaGVtYXMtbWljcm9zb2Z0
+LWNvbTpvZmZpY2U6c21hcnR0YWdzIiBuYW1lPSJDaXR5IiAvPjxvOlNtYXJ0VGFnVHlwZSBuYW1l
+c3BhY2V1cmk9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgbmFt
+ZT0icGxhY2UiIC8+PCEtLVtpZiAhbXNvXT4KPHN0eWxlPgpzdDFcOip7YmVoYXZpb3I6dXJsKCNk
+ZWZhdWx0I2llb291aSkgfQo8L3N0eWxlPgo8IVtlbmRpZl0tLT48c3R5bGU+CjwhLS0KIC8qIEZv
+bnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseToiQm9vayBBbnRpcXVh
+IjsKCXBhbm9zZS0xOjIgNCA2IDIgNSAzIDUgMyAzIDQ7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMg
+Ki8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGlu
+OwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5
+OiJCb29rIEFudGlxdWEiO30KaDEKCXttYXJnaW4tdG9wOjEyLjBwdDsKCW1hcmdpbi1yaWdodDow
+aW47CgltYXJnaW4tYm90dG9tOjMuMHB0OwoJbWFyZ2luLWxlZnQ6MGluOwoJcGFnZS1icmVhay1h
+ZnRlcjphdm9pZDsKCWZvbnQtc2l6ZToxNC4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVh
+Ijt9CmgyCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFyZ2luLWJv
+dHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZvaWQ7Cglm
+b250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250LXN0eWxl
+Oml0YWxpYzt9CmgzCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFy
+Z2luLWJvdHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZv
+aWQ7Cglmb250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250
+LXdlaWdodDpub3JtYWw7fQpwLk1zb0hlYWRlciwgbGkuTXNvSGVhZGVyLCBkaXYuTXNvSGVhZGVy
+Cgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7
+Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuTXNvRm9vdGVyLCBsaS5Nc29Gb290ZXIs
+IGRpdi5Nc29Gb290ZXIKCXttYXJnaW46MGluOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9u
+dC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KYTpsaW5rLCBzcGFu
+Lk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30K
+YTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7Y29sb3I6IzYwNjQyMDsKCXRl
+eHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpwLkFCTE9DS1BBUkEsIGxpLkFCTE9DS1BBUkEsIGRp
+di5BQkxPQ0tQQVJBCgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQt
+c2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUJVTExFVCwgbGku
+QUJVTExFVCwgZGl2LkFCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdodDowaW47
+CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjE2LjU1cHQ7CgltYXJnaW4tYm90dG9t
+Oi4wMDAxcHQ7Cgl0ZXh0LWluZGVudDotMTYuNTVwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250
+LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUlOREVOVEVEQlVMTEVULCBsaS5BSU5ERU5URURC
+VUxMRVQsIGRpdi5BSU5ERU5URURCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdo
+dDowaW47CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjMzLjFwdDsKCW1hcmdpbi1i
+b3R0b206LjAwMDFwdDsKCXRleHQtaW5kZW50Oi0xNi41NXB0OwoJZm9udC1zaXplOjExLjBwdDsK
+CWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KcC5BSU5ERU5URURQQVJBLCBsaS5BSU5ERU5U
+RURQQVJBLCBkaXYuQUlOREVOVEVEUEFSQQoJe21hcmdpbi10b3A6MGluOwoJbWFyZ2luLXJpZ2h0
+OjBpbjsKCW1hcmdpbi1ib3R0b206MGluOwoJbWFyZ2luLWxlZnQ6MTYuNTVwdDsKCW1hcmdpbi1i
+b3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRp
+cXVhIjt9CnNwYW4uRW1haWxTdHlsZTIzCgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9z
+ZTsKCWZvbnQtZmFtaWx5OkFyaWFsOwoJY29sb3I6d2luZG93dGV4dDt9CkBwYWdlIFNlY3Rpb24x
+Cgl7c2l6ZTo1OTUuNDVwdCA4NDEuN3B0OwoJbWFyZ2luOjEuMGluIC43NWluIDEuMGluIC43NWlu
+O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9Ci0tPgo8L3N0eWxlPgo8L2hlYWQ+Cjxi
+b2R5IGxhbmc9IkVOLVVTIiBsaW5rPSJibHVlIiB2bGluaz0iIzYwNjQyMCI+CjxkaXYgY2xhc3M9
+IlNlY3Rpb24xIj4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJp
+YWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+SGks
+PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQg
+c2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250
+LWZhbWlseTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xh
+c3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJm
+b250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+SSBoYXZlIGJlZW4gcmVjZW50bHkg
+YnJvd3NpbmcgdGhyb3VnaCB0aGUgaW50ZXJuZXQgdG8gY29uZmlybSBpZiBPZm9ubyBpcyBjb21w
+bGlhbnQgd2l0aCBIRlAgdmVyc2lvbiAxLjUuSXMgdGhlcmUgYW55IGxpbmsgLyByZWZlcmVuY2Ug
+dG8gY29uZmlybSB0aGUgSEZQIHNwZWMKIHZlcnNpb24gT2Zvbm8gaXMgY3VycmVudGx5IHJ1bm5p
+bmcgb24uIFBsZWFzZSBzaGFyZSBhbnkgYXZhaWxhYmxlIGlucHV0cyBvbiB0aGlzLjxvOnA+PC9v
+OnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIi
+IGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6
+QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29O
+b3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXpl
+OjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPlJlZ2FyZHMsPG86cD48L286cD48L3NwYW4+PC9m
+b250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHN0MTpDaXR5IHc6c3Q9Im9uIj48c3QxOnBs
+YWNlIHc6c3Q9Im9uIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZv
+bnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwiPk1pbGFuPC9zcGFuPjwvZm9udD48L3N0
+MTpwbGFjZT48L3N0MTpDaXR5Pjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHls
+ZT0iZm9udC1zaXplOjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCI+CjxvOnA+PC9vOnA+PC9zcGFu
+PjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFy
+aWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPjxv
+OnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxm
+b250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsK
+Zm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cjwv
+ZGl2Pgo8YnI+Cjxocj4KPGZvbnQgZmFjZT0iQXJpYWwiIGNvbG9yPSJHcmF5IiBzaXplPSIyIj5U
+aGlzIG1lc3NhZ2UgaXMgZm9yIHRoZSBkZXNpZ25hdGVkIHJlY2lwaWVudCBvbmx5IGFuZCBtYXkg
+Y29udGFpbiBwcml2aWxlZ2VkLCBwcm9wcmlldGFyeSwgb3Igb3RoZXJ3aXNlIHByaXZhdGUgaW5m
+b3JtYXRpb24uIElmIHlvdSBoYXZlIHJlY2VpdmVkIGl0IGluIGVycm9yLCBwbGVhc2Ugbm90aWZ5
+IHRoZSBzZW5kZXIgaW1tZWRpYXRlbHkgYW5kIGRlbGV0ZSB0aGUgb3JpZ2luYWwuCiBBbnkgb3Ro
+ZXIgdXNlIG9mIHRoZSBlbWFpbCBieSB5b3UgaXMgcHJvaGliaXRlZC48YnI+CjwvZm9udD4KPC9i
+b2R5Pgo8L2h0bWw+Cg==
+
+--===============0641558276982963112==--
 
