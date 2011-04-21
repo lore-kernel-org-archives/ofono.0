@@ -1,41 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============4407506110766606460=="
+Content-Type: multipart/mixed; boundary="===============8103631489197231650=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [HELP]Clarification Needed On HFP Version
-Date: Thu, 21 Apr 2011 16:30:19 -0500
-Message-ID: <4DB0A1EB.1010500@gmail.com>
-In-Reply-To: <10D123A956DC4B4FA9D7A48B3335836214E16A26E8@INDXM3131.dir.svc.accenture.com>
+From: america 999 <cool.america9@gmail.com>
+Subject: re: AT+CBKLT COMAMND
+Date: Thu, 21 Apr 2011 22:19:38 +0000
+Message-ID: <BANLkTiket3LnOKwQfjRWXiTX99++ekhvuQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4407506110766606460==
+--===============8103631489197231650==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Milan,
+HI ,
 
-On 04/21/2011 07:17 AM, milan.satpathy(a)accenture.com wrote:
-> Hi,
-> =
+How to use the AT+CBKLT  command  ?  i..e to enable or disable the backlight
+of the device ?
 
->  =
+I need to know the exact syntax to enable or disable backlight ?
 
-> =
+The syntax i have tried for is
 
-> I have been recently browsing through the internet to confirm if Ofono
-> is compliant with HFP version 1.5.Is there any link / reference to
-> confirm the HFP spec version Ofono is currently running on. Please share
-> any available inputs on this.
-> =
+AT+CBKLT
+RESPONSE :  ERROR
 
+AT+CBKLT?
+RESPOSNE :  ERROR
 
-oFono cannot claim to be compliant to any version of the HFP specification.
+AT+CBKLT=3D?
 
-Having said that, that is the spec version we have been developing against.
+RESPONSE :  ERROR
 
-Regards,
--Denis
+Please do let me know  on the syntax
 
---===============4407506110766606460==--
+Thank you
+
+--===============8103631489197231650==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdj5ISSAsIDwvZGl2Pgo8ZGl2PqA8L2Rpdj4KPGRpdj5Ib3cgdG8gdXNlIHRoZSBBVCtDQktM
+VKAgY29tbWFuZKCgP6AgaS4uZSB0byBlbmFibGUgb3IgZGlzYWJsZSB0aGUgYmFja2xpZ2h0IG9m
+IHRoZSBkZXZpY2UgPyA8L2Rpdj4KPGRpdj6gPC9kaXY+CjxkaXY+SSBuZWVkIHRvIGtub3cgdGhl
+IGV4YWN0IHN5bnRheCB0byBlbmFibGUgb3IgZGlzYWJsZSBiYWNrbGlnaHQgPyA8L2Rpdj4KPGRp
+dj6gPC9kaXY+CjxkaXY+VGhlIHN5bnRheCBpIGhhdmUgdHJpZWQgZm9yIGlzoCA8L2Rpdj4KPGRp
+dj6gPC9kaXY+CjxkaXY+QVQrQ0JLTFQ8L2Rpdj4KPGRpdj5SRVNQT05TRSA6oCBFUlJPUjwvZGl2
+Pgo8ZGl2PqA8L2Rpdj4KPGRpdj5BVCtDQktMVD88L2Rpdj4KPGRpdj5SRVNQT1NORSA6oCBFUlJP
+UjwvZGl2Pgo8ZGl2PqA8L2Rpdj4KPGRpdj5BVCtDQktMVD0/PC9kaXY+CjxkaXY+oDwvZGl2Pgo8
+ZGl2PlJFU1BPTlNFIDqgIEVSUk9SIDwvZGl2Pgo8ZGl2PqA8L2Rpdj4KPGRpdj5QbGVhc2UgZG8g
+bGV0IG1lIGtub3egIG9uIHRoZSBzeW50YXggPC9kaXY+CjxkaXY+oDwvZGl2Pgo8ZGl2PlRoYW5r
+IHlvdTwvZGl2Pgo8ZGl2PqA8L2Rpdj4K
+
+--===============8103631489197231650==--
 
