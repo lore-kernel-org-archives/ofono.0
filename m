@@ -1,198 +1,278 @@
-Content-Type: multipart/mixed; boundary="===============3679639455268455277=="
+Content-Type: multipart/mixed; boundary="===============9168250838232606434=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 2/4] emulator: add routine to request/release private network
- from ConnMan
-Date: Fri, 22 Apr 2011 12:02:41 +0200
-Message-ID: <1303466563-3111-3-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH 3/4] connman: add plugin in oFono to request request/release
+ private network
+Date: Fri, 22 Apr 2011 12:02:42 +0200
+Message-ID: <1303466563-3111-4-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1303466563-3111-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3679639455268455277==
+--===============9168250838232606434==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/emulator.h |   10 +++++++
- src/emulator.c     |   75 +++++++++++++++++++++++++++++++++++++++++++++++-=
-----
- 2 files changed, 78 insertions(+), 7 deletions(-)
+ plugins/connman.c |  239 +++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 239 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/connman.c
 
-diff --git a/include/emulator.h b/include/emulator.h
-index 5cd894b..29abf55 100644
---- a/include/emulator.h
-+++ b/include/emulator.h
-@@ -105,6 +105,16 @@ enum ofono_emulator_request_type ofono_emulator_reques=
-t_get_type(
- void ofono_emulator_set_indicator(struct ofono_emulator *em,
- 					const char *name, int value);
- =
-
-+typedef void (*network_request)(struct ofono_error *, int *,
-+				const char **, const char **,
-+				const char **, const char **);
-+typedef void (*network_release)(void);
+diff --git a/plugins/connman.c b/plugins/connman.c
+new file mode 100644
+index 0000000..eec0940
+--- /dev/null
++++ b/plugins/connman.c
+@@ -0,0 +1,239 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
-+void ofono_emulator_add_network_request_cb(struct ofono_emulator *em,
-+							network_request cb);
-+void ofono_emulator_add_network_release_cb(struct ofono_emulator *em,
-+							network_release cb);
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
 +
- #ifdef __cplusplus
- }
- #endif
-diff --git a/src/emulator.c b/src/emulator.c
-index 9b4647b..b5055ff 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -33,10 +33,13 @@
- #include "gatserver.h"
- #include "gatppp.h"
- =
-
--#define DUN_SERVER_ADDRESS     "192.168.1.1"
--#define DUN_PEER_ADDRESS       "192.168.1.2"
--#define DUN_DNS_SERVER_1       "10.10.10.10"
--#define DUN_DNS_SERVER_2       "10.10.10.11"
-+struct emulator_network {
-+	int fd;
-+	const char *server_ip;
-+	const char *peer_ip;
-+	const char *primary_dns;
-+	const char *secondary_dns;
-+};
- =
-
- #define RING_TIMEOUT 3
- =
-
-@@ -55,6 +58,9 @@ struct ofono_emulator {
- 	guint callsetup_source;
- 	gboolean clip;
- 	gboolean ccwa;
-+	struct emulator_network *en;
-+	network_request req_en_cb;
-+	network_release rel_en_cb;
- };
- =
-
- struct indicator {
-@@ -78,6 +84,40 @@ static void emulator_disconnect(gpointer user_data)
- 	ofono_emulator_remove(em);
- }
- =
-
-+static struct emulator_network *get_emulator_network(struct ofono_emulator=
- *e)
++#include <errno.h>
++#include <stdlib.h>
++
++#include <gdbus.h>
++#include <string.h>
++
++#include <ofono.h>
++#include <emulator.h>
++
++#define CONNMAN_SERVICE			"net.connman"
++#define CONNMAN_PATH			"/net/connman"
++
++#define CONNMAN_DEBUG_INTERFACE		CONNMAN_SERVICE ".Debug"
++#define CONNMAN_ERROR_INTERFACE		CONNMAN_SERVICE ".Error"
++#define CONNMAN_AGENT_INTERFACE		CONNMAN_SERVICE ".Agent"
++#define CONNMAN_COUNTER_INTERFACE	CONNMAN_SERVICE ".Counter"
++
++#define CONNMAN_MANAGER_INTERFACE	CONNMAN_SERVICE ".Manager"
++#define CONNMAN_MANAGER_PATH		"/"
++
++#define CONNMAN_TASK_INTERFACE		CONNMAN_SERVICE ".Task"
++#define CONNMAN_PROFILE_INTERFACE	CONNMAN_SERVICE ".Profile"
++#define CONNMAN_SERVICE_INTERFACE	CONNMAN_SERVICE ".Service"
++#define CONNMAN_PROVIDER_INTERFACE	CONNMAN_SERVICE ".Provider"
++#define CONNMAN_TECHNOLOGY_INTERFACE	CONNMAN_SERVICE ".Technology"
++#define CONNMAN_SESSION_INTERFACE	CONNMAN_SERVICE ".Session"
++#define CONNMAN_NOTIFICATION_INTERFACE	CONNMAN_SERVICE ".Notification"
++
++static DBusConnection *connection;
++static guint modemwatch_id;
++static GList *modems;
++
++static void request_pn(struct ofono_error *error, int *out_fd,
++					const char **out_server_ip,
++					const char **out_peer_ip,
++					const char **out_primary_dns,
++					const char **out_secondary_dns)
 +{
-+	struct ofono_error error;
-+	struct emulator_network *en;
++	DBusMessageIter array, dict, entry;
++	DBusMessage *message, *reply;
++	DBusError dbus_error;
 +
-+	en =3D g_try_new0(struct emulator_network, 1);
++	DBG("");
 +
-+	if (en =3D=3D NULL)
-+		return en;
++	error->type =3D OFONO_ERROR_TYPE_NO_ERROR;
 +
-+	if (e->req_en_cb)
-+		e->req_en_cb(&error, &en->fd, &en->server_ip, &en->peer_ip,
-+				&en->primary_dns, &en->secondary_dns);
-+	else
++	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
++				     CONNMAN_MANAGER_PATH,
++				     CONNMAN_MANAGER_INTERFACE,
++				     "RequestPrivateNetwork");
++
++	if (message =3D=3D NULL)
 +		goto error;
 +
-+	if (error.type =3D=3D OFONO_ERROR_TYPE_FAILURE)
++	dbus_error_init(&dbus_error);
++
++	reply =3D dbus_connection_send_with_reply_and_block(connection, message,
++								-1, &dbus_error);
++
++	dbus_message_unref(message);
++
++	if (!reply) {
++		if (dbus_error_is_set(&dbus_error)) {
++			g_print("1. %s\n", dbus_error.message);
++			dbus_error_free(&dbus_error);
++		} else {
++			g_print("Request() failed");
++		}
++
++		goto error;
++	}
++
++	if (dbus_message_iter_init(reply, &array) =3D=3D FALSE)
 +		goto error;
 +
-+	return en;
++	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_UNIX_FD)
++		goto error;
 +
++	dbus_message_iter_get_basic(&array, out_fd);
++	g_print("Fildescriptor =3D %d\n", *out_fd);
++
++	dbus_message_iter_next(&array);
++
++	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_ARRAY)
++		goto error;
++
++	dbus_message_iter_recurse(&array, &dict);
++
++	while (dbus_message_iter_get_arg_type(&dict) =3D=3D DBUS_TYPE_DICT_ENTRY)=
+ {
++		DBusMessageIter iter;
++		const char *key;
++		int type;
++
++		dbus_message_iter_recurse(&dict, &entry);
++
++		dbus_message_iter_get_basic(&entry, &key);
++
++		g_print("key %s", key);
++
++		dbus_message_iter_next(&entry);
++		dbus_message_iter_recurse(&entry, &iter);
++
++		type =3D dbus_message_iter_get_arg_type(&iter);
++		if (type !=3D DBUS_TYPE_STRING)
++			break;
++
++		if (g_str_equal(key, "ServerIPv4")
++				&& type =3D=3D DBUS_TYPE_STRING) {
++			dbus_message_iter_get_basic(&iter, out_server_ip);
++			g_print(" =3D %s\n", *out_server_ip);
++
++		} else if (g_str_equal(key, "PeerIPv4")
++				&& type =3D=3D DBUS_TYPE_STRING) {
++			dbus_message_iter_get_basic(&iter, out_peer_ip);
++			g_print(" =3D %s\n", *out_peer_ip);
++
++		} else if (g_str_equal(key, "PrimaryDNS")
++				&& type =3D=3D DBUS_TYPE_STRING) {
++			dbus_message_iter_get_basic(&iter, out_primary_dns);
++			g_print(" =3D %s\n", *out_primary_dns);
++
++		} else if (g_str_equal(key, "SecondaryDNS")
++				&& type =3D=3D DBUS_TYPE_STRING) {
++			dbus_message_iter_get_basic(&iter, out_secondary_dns);
++			g_print(" =3D %s\n", *out_secondary_dns);
++		}
++
++		dbus_message_iter_next(&dict);
++	}
++
++	return;
 +error:
-+	g_free(en);
-+	return NULL;
++	error->type =3D OFONO_ERROR_TYPE_FAILURE;
++	return;
 +}
 +
-+static void release_emulator_network(struct ofono_emulator *e)
++static void release_pn(void)
 +{
-+	if (e->rel_en_cb)
-+		e->rel_en_cb();
-+	if (e->en)
-+		g_free(e->en);
++	DBusMessage *message;
++
++	DBG("");
++
++	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
++				     CONNMAN_MANAGER_PATH,
++				     CONNMAN_MANAGER_INTERFACE,
++				     "ReleasePrivateNetwork");
++
++	if (message =3D=3D NULL)
++		return;
++
++	dbus_connection_send(connection, message, NULL);
++
++	dbus_message_unref(message);
 +}
 +
- static void ppp_connect(const char *iface, const char *local,
- 			const char *remote,
- 			const char *dns1, const char *dns2,
-@@ -98,6 +138,7 @@ static void ppp_disconnect(GAtPPPDisconnectReason reason=
-, gpointer user_data)
- =
-
- 	g_at_ppp_unref(em->ppp);
- 	em->ppp =3D NULL;
-+	release_emulator_network(em);
- =
-
- 	if (em->server =3D=3D NULL)
- 		return;
-@@ -118,14 +159,16 @@ static gboolean setup_ppp(gpointer user_data)
- =
-
- 	g_at_server_suspend(em->server);
- =
-
--	em->ppp =3D g_at_ppp_server_new_from_io(io, DUN_SERVER_ADDRESS);
-+	em->ppp =3D g_at_ppp_server_new_from_io_with_fd(io,
-+							em->en->server_ip,
-+							em->en->fd);
- 	if (em->ppp =3D=3D NULL) {
- 		g_at_server_resume(em->server);
- 		return FALSE;
- 	}
- =
-
--	g_at_ppp_set_server_info(em->ppp, DUN_PEER_ADDRESS,
--					DUN_DNS_SERVER_1, DUN_DNS_SERVER_2);
-+	g_at_ppp_set_server_info(em->ppp, em->en->peer_ip,
-+					em->en->primary_dns, em->en->secondary_dns);;
- =
-
- 	g_at_ppp_set_credentials(em->ppp, "", "");
- 	g_at_ppp_set_debug(em->ppp, emulator_debug, "PPP");
-@@ -143,6 +186,9 @@ static gboolean dial_call(struct ofono_emulator *em, co=
-nst char *dial_str)
- 	DBG("dial call %s", dial_str);
- =
-
- 	if (c =3D=3D '*' || c =3D=3D '#' || c =3D=3D 'T' || c =3D=3D 't') {
-+		em->en =3D get_emulator_network(em);
-+		if (!em->en)
-+			return FALSE;
- 		g_at_server_send_intermediate(em->server, "CONNECT");
- 		em->source =3D g_idle_add(setup_ppp, em);
- 	}
-@@ -927,3 +973,18 @@ void ofono_emulator_set_indicator(struct ofono_emulato=
-r *em,
- 		break;
- 	}
- }
-+
-+void ofono_emulator_add_network_request_cb(struct ofono_emulator *em,
-+							network_request cb)
++static void dun_emulator_watch(struct ofono_atom *atom,
++				enum ofono_atom_watch_condition cond,
++				void *data)
 +{
-+	if (em !=3DNULL)
-+		em->req_en_cb =3D cb;
++	struct ofono_modem *modem =3D data;
++	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
++
++	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_REGISTERED) {
++		modems =3D g_list_append(modems, modem);
++
++		if (modems->next =3D=3D NULL)
++			ofono_emulator_add_network_request_cb(em, request_pn);
++			ofono_emulator_add_network_release_cb(em, release_pn);
++	} else {
++		modems =3D g_list_remove(modems, modem);
++	}
 +}
 +
-+void ofono_emulator_add_network_release_cb(struct ofono_emulator *em,
-+							network_release cb)
++static void modem_watch(struct ofono_modem *modem, gboolean added, void *u=
+ser)
 +{
-+	if (em !=3DNULL)
-+		em->rel_en_cb =3D cb;
++	DBG("modem: %p, added: %d", modem, added);
++
++	if (added =3D=3D FALSE)
++		return;
++
++	__ofono_modem_add_atom_watch(modem, OFONO_ATOM_TYPE_EMULATOR_DUN,
++					dun_emulator_watch, modem, NULL);
 +}
 +
++static void call_modemwatch(struct ofono_modem *modem, void *user)
++{
++	modem_watch(modem, TRUE, user);
++}
++
++static int connman_init(void)
++{
++	int err;
++	=
+
++	DBG("");
++
++	connection =3D ofono_dbus_get_connection();
++
++	modemwatch_id =3D __ofono_modemwatch_add(modem_watch, NULL, NULL);
++
++	__ofono_modem_foreach(call_modemwatch, NULL);
++
++	return 0;
++		return err;
++
++	return 0;
++}
++
++static void connman_exit(void)
++{
++	__ofono_modemwatch_remove(modemwatch_id);
++}
++
++OFONO_PLUGIN_DEFINE(connman, "ConnMan plugin", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, connman_init, connman_exit)
 -- =
 
 1.7.1
 
 
---===============3679639455268455277==--
+--===============9168250838232606434==--
 
