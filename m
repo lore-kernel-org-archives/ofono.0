@@ -1,198 +1,226 @@
-Content-Type: multipart/mixed; boundary="===============3154552974344238990=="
+Content-Type: multipart/mixed; boundary="===============2859029872694076883=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v2 2/4] emulator: add routine to request/release private
- network from ConnMan
-Date: Fri, 22 Apr 2011 14:06:31 +0200
-Message-ID: <1303473993-3606-3-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v2 1/4] gatppp: Add new contructor to use external fd
+Date: Fri, 22 Apr 2011 14:06:30 +0200
+Message-ID: <1303473993-3606-2-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1303473993-3606-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3154552974344238990==
+--===============2859029872694076883==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/emulator.h |   10 +++++++
- src/emulator.c     |   75 +++++++++++++++++++++++++++++++++++++++++++++++-=
-----
- 2 files changed, 78 insertions(+), 7 deletions(-)
+ gatchat/gatppp.c  |   43 ++++++++++++++++++++++++++++++++++++++++---
+ gatchat/gatppp.h  |    2 ++
+ gatchat/ppp.h     |    2 +-
+ gatchat/ppp_net.c |   46 ++++++++++++++++++++++++++++------------------
+ 4 files changed, 71 insertions(+), 22 deletions(-)
 
-diff --git a/include/emulator.h b/include/emulator.h
-index 5cd894b..29abf55 100644
---- a/include/emulator.h
-+++ b/include/emulator.h
-@@ -105,6 +105,16 @@ enum ofono_emulator_request_type ofono_emulator_reques=
-t_get_type(
- void ofono_emulator_set_indicator(struct ofono_emulator *em,
- 					const char *name, int value);
- =
-
-+typedef void (*network_request)(struct ofono_error *, int *,
-+				const char **, const char **,
-+				const char **, const char **);
-+typedef void (*network_release)(void);
-+
-+void ofono_emulator_add_network_request_cb(struct ofono_emulator *em,
-+							network_request cb);
-+void ofono_emulator_add_network_release_cb(struct ofono_emulator *em,
-+							network_release cb);
-+
- #ifdef __cplusplus
- }
- #endif
-diff --git a/src/emulator.c b/src/emulator.c
-index 9b4647b..b5055ff 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -33,10 +33,13 @@
- #include "gatserver.h"
- #include "gatppp.h"
- =
-
--#define DUN_SERVER_ADDRESS     "192.168.1.1"
--#define DUN_PEER_ADDRESS       "192.168.1.2"
--#define DUN_DNS_SERVER_1       "10.10.10.10"
--#define DUN_DNS_SERVER_2       "10.10.10.11"
-+struct emulator_network {
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index 993b5ea..d59f69b 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -76,6 +76,7 @@ struct _GAtPPP {
+ 	gpointer debug_data;
+ 	gboolean sta_pending;
+ 	guint ppp_dead_source;
 +	int fd;
-+	const char *server_ip;
-+	const char *peer_ip;
-+	const char *primary_dns;
-+	const char *secondary_dns;
-+};
- =
-
- #define RING_TIMEOUT 3
- =
-
-@@ -55,6 +58,9 @@ struct ofono_emulator {
- 	guint callsetup_source;
- 	gboolean clip;
- 	gboolean ccwa;
-+	struct emulator_network *en;
-+	network_request req_en_cb;
-+	network_release rel_en_cb;
  };
  =
 
- struct indicator {
-@@ -78,6 +84,40 @@ static void emulator_disconnect(gpointer user_data)
- 	ofono_emulator_remove(em);
- }
+ void ppp_debug(GAtPPP *ppp, const char *str)
+@@ -288,7 +289,7 @@ void ppp_auth_notify(GAtPPP *ppp, gboolean success)
+ void ppp_ipcp_up_notify(GAtPPP *ppp, const char *local, const char *peer,
+ 					const char *dns1, const char *dns2)
+ {
+-	ppp->net =3D ppp_net_new(ppp);
++	ppp->net =3D ppp_net_new(ppp, ppp->fd);
  =
 
-+static struct emulator_network *get_emulator_network(struct ofono_emulator=
- *e)
-+{
-+	struct ofono_error error;
-+	struct emulator_network *en;
-+
-+	en =3D g_try_new0(struct emulator_network, 1);
-+
-+	if (en =3D=3D NULL)
-+		return en;
-+
-+	if (e->req_en_cb)
-+		e->req_en_cb(&error, &en->fd, &en->server_ip, &en->peer_ip,
-+				&en->primary_dns, &en->secondary_dns);
-+	else
-+		goto error;
-+
-+	if (error.type =3D=3D OFONO_ERROR_TYPE_FAILURE)
-+		goto error;
-+
-+	return en;
-+
-+error:
-+	g_free(en);
-+	return NULL;
-+}
-+
-+static void release_emulator_network(struct ofono_emulator *e)
-+{
-+	if (e->rel_en_cb)
-+		e->rel_en_cb();
-+	if (e->en)
-+		g_free(e->en);
-+}
-+
- static void ppp_connect(const char *iface, const char *local,
- 			const char *remote,
- 			const char *dns1, const char *dns2,
-@@ -98,6 +138,7 @@ static void ppp_disconnect(GAtPPPDisconnectReason reason=
-, gpointer user_data)
- =
-
- 	g_at_ppp_unref(em->ppp);
- 	em->ppp =3D NULL;
-+	release_emulator_network(em);
- =
-
- 	if (em->server =3D=3D NULL)
+ 	if (ppp->net =3D=3D NULL) {
+ 		ppp->disconnect_reason =3D G_AT_PPP_REASON_NET_FAIL;
+@@ -296,8 +297,14 @@ void ppp_ipcp_up_notify(GAtPPP *ppp, const char *local=
+, const char *peer,
  		return;
-@@ -118,14 +159,16 @@ static gboolean setup_ppp(gpointer user_data)
- =
-
- 	g_at_server_suspend(em->server);
- =
-
--	em->ppp =3D g_at_ppp_server_new_from_io(io, DUN_SERVER_ADDRESS);
-+	em->ppp =3D g_at_ppp_server_new_from_io_with_fd(io,
-+							em->en->server_ip,
-+							em->en->fd);
- 	if (em->ppp =3D=3D NULL) {
- 		g_at_server_resume(em->server);
- 		return FALSE;
  	}
  =
 
--	g_at_ppp_set_server_info(em->ppp, DUN_PEER_ADDRESS,
--					DUN_DNS_SERVER_1, DUN_DNS_SERVER_2);
-+	g_at_ppp_set_server_info(em->ppp, em->en->peer_ip,
-+					em->en->primary_dns, em->en->secondary_dns);;
+-	if (ppp_net_set_mtu(ppp->net, ppp->mtu) =3D=3D FALSE)
+-		DBG(ppp, "Unable to set MTU");
++	/*
++	 * If we have opened the tun interface locally,
++	 * we have to set a MTU value.
++	 */
++	if (ppp->fd < 0) {
++		if (ppp_net_set_mtu(ppp->net, ppp->mtu) =3D=3D FALSE)
++			DBG(ppp, "Unable to set MTU");
++	}
  =
 
- 	g_at_ppp_set_credentials(em->ppp, "", "");
- 	g_at_ppp_set_debug(em->ppp, emulator_debug, "PPP");
-@@ -143,6 +186,9 @@ static gboolean dial_call(struct ofono_emulator *em, co=
-nst char *dial_str)
- 	DBG("dial call %s", dial_str);
+ 	ppp_enter_phase(ppp, PPP_PHASE_LINK_UP);
  =
 
- 	if (c =3D=3D '*' || c =3D=3D '#' || c =3D=3D 'T' || c =3D=3D 't') {
-+		em->en =3D get_emulator_network(em);
-+		if (!em->en)
-+			return FALSE;
- 		g_at_server_send_intermediate(em->server, "CONNECT");
- 		em->source =3D g_idle_add(setup_ppp, em);
- 	}
-@@ -927,3 +973,18 @@ void ofono_emulator_set_indicator(struct ofono_emulato=
-r *em,
- 		break;
- 	}
+@@ -541,6 +548,9 @@ static GAtPPP *ppp_init_common(GAtHDLC *hdlc, gboolean =
+is_server, guint32 ip)
+ =
+
+ 	ppp->ref_count =3D 1;
+ =
+
++	/* Default value of fd is -1 */
++	ppp->fd =3D -1;
++
+ 	/* set options to defaults */
+ 	ppp->mru =3D DEFAULT_MRU;
+ 	ppp->mtu =3D DEFAULT_MTU;
+@@ -629,6 +639,33 @@ GAtPPP *g_at_ppp_server_new_from_io(GAtIO *io, const c=
+har *local)
+ 		return NULL;
+ =
+
+ 	ppp =3D ppp_init_common(hdlc, TRUE, ip);
++
++	g_at_hdlc_unref(hdlc);
++
++	return ppp;
++}
++
++GAtPPP *g_at_ppp_server_new_from_io_with_fd(GAtIO *io,
++						const char *local, int fd)
++{
++	GAtHDLC *hdlc;
++	GAtPPP *ppp;
++	guint32 ip;
++
++	if (local =3D=3D NULL)
++		ip =3D 0;
++	else if (inet_pton(AF_INET, local, &ip) !=3D 1)
++		return NULL;
++
++	hdlc =3D g_at_hdlc_new_from_io(io);
++	if (hdlc =3D=3D NULL)
++		return NULL;
++
++	ppp =3D ppp_init_common(hdlc, TRUE, ip);
++
++	/* Set the fd value returned by ConnMan */
++	ppp->fd =3D fd;
++
+ 	g_at_hdlc_unref(hdlc);
+ =
+
+ 	return ppp;
+diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
+index fb5de4c..4ed4cde 100644
+--- a/gatchat/gatppp.h
++++ b/gatchat/gatppp.h
+@@ -54,6 +54,8 @@ GAtPPP *g_at_ppp_new(GIOChannel *modem);
+ GAtPPP *g_at_ppp_new_from_io(GAtIO *io);
+ GAtPPP *g_at_ppp_server_new(GIOChannel *modem, const char *local);
+ GAtPPP *g_at_ppp_server_new_from_io(GAtIO *io, const char *local);
++GAtPPP *g_at_ppp_server_new_from_io_with_fd(GAtIO *io,
++						const char *local, int fd);
+ =
+
+ void g_at_ppp_open(GAtPPP *ppp);
+ void g_at_ppp_set_connect_function(GAtPPP *ppp, GAtPPPConnectFunc callback,
+diff --git a/gatchat/ppp.h b/gatchat/ppp.h
+index d2786d7..8107820 100644
+--- a/gatchat/ppp.h
++++ b/gatchat/ppp.h
+@@ -102,7 +102,7 @@ void ppp_chap_free(struct ppp_chap *chap);
+ void ppp_chap_process_packet(struct ppp_chap *chap, const guint8 *new_pack=
+et);
+ =
+
+ /* TUN / Network related functions */
+-struct ppp_net *ppp_net_new(GAtPPP *ppp);
++struct ppp_net *ppp_net_new(GAtPPP *ppp, int fd);
+ const char *ppp_net_get_interface(struct ppp_net *net);
+ void ppp_net_process_packet(struct ppp_net *net, const guint8 *packet);
+ void ppp_net_free(struct ppp_net *net);
+diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
+index 1a6cdf7..59c4b5e 100644
+--- a/gatchat/ppp_net.c
++++ b/gatchat/ppp_net.c
+@@ -123,12 +123,12 @@ const char *ppp_net_get_interface(struct ppp_net *net)
+ 	return net->if_name;
  }
+ =
+
+-struct ppp_net *ppp_net_new(GAtPPP *ppp)
++struct ppp_net *ppp_net_new(GAtPPP *ppp, int fd)
+ {
+ 	struct ppp_net *net;
+ 	GIOChannel *channel =3D NULL;
+ 	struct ifreq ifr;
+-	int fd, err;
++	int fdesc, err;
+ =
+
+ 	net =3D g_try_new0(struct ppp_net, 1);
+ 	if (net =3D=3D NULL)
+@@ -140,23 +140,33 @@ struct ppp_net *ppp_net_new(GAtPPP *ppp)
+ 		return NULL;
+ 	}
+ =
+
+-	/* open a tun interface */
+-	fd =3D open("/dev/net/tun", O_RDWR);
+-	if (fd < 0)
+-		goto error;
+-
+-	memset(&ifr, 0, sizeof(ifr));
+-	ifr.ifr_flags =3D IFF_TUN | IFF_NO_PI;
+-	strcpy(ifr.ifr_name, "ppp%d");
+-
+-	err =3D ioctl(fd, TUNSETIFF, (void *) &ifr);
+-	if (err < 0)
+-		goto error;
+-
+-	net->if_name =3D strdup(ifr.ifr_name);
++	/*
++	 * If the fd value is still the default one,
++	 * open the tun interface and configure it.
++	 */
++	if (fd< 0) {
++		/* open a tun interface */
++		fdesc =3D open("/dev/net/tun", O_RDWR);
++		if (fdesc < 0)
++			goto error;
 +
-+void ofono_emulator_add_network_request_cb(struct ofono_emulator *em,
-+							network_request cb)
-+{
-+	if (em !=3DNULL)
-+		em->req_en_cb =3D cb;
-+}
++		memset(&ifr, 0, sizeof(ifr));
++		ifr.ifr_flags =3D IFF_TUN | IFF_NO_PI;
++		strcpy(ifr.ifr_name, "ppp%d");
 +
-+void ofono_emulator_add_network_release_cb(struct ofono_emulator *em,
-+							network_release cb)
-+{
-+	if (em !=3DNULL)
-+		em->rel_en_cb =3D cb;
-+}
++		err =3D ioctl(fdesc, TUNSETIFF, (void *) &ifr);
++		if (err < 0)
++			goto error;
 +
++		net->if_name =3D strdup(ifr.ifr_name);
++		/* create a channel for reading and writing to this interface */
++		channel =3D g_io_channel_unix_new(fdesc);
++	} else {
++		net->if_name =3D strdup("Server ppp");
++		/* create a channel for reading and writing to this interface */
++		channel =3D g_io_channel_unix_new(fd);
++	}
+ =
+
+-	/* create a channel for reading and writing to this interface */
+-	channel =3D g_io_channel_unix_new(fd);
+ 	if (channel =3D=3D NULL)
+ 		goto error;
+ =
+
 -- =
 
 1.7.1
 
 
---===============3154552974344238990==--
+--===============2859029872694076883==--
 
