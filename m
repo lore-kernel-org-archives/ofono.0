@@ -1,50 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============8238437995921107550=="
+Content-Type: multipart/mixed; boundary="===============5028424511921316880=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH] voicecall: fix waiting calls for HFP emulator
-Date: Fri, 22 Apr 2011 17:44:02 +0200
-Message-ID: <1303487042-8612-1-git-send-email-frederic.danis@linux.intel.com>
+From: martin.xu@intel.com
+Subject: [PATCH 1/2] Fix ofonod crash issue
+Date: Tue, 26 Apr 2011 17:07:42 +0800
+Message-ID: <1303808863-831-1-git-send-email-martin.xu@intel.com>
+In-Reply-To: <martin.xu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8238437995921107550==
+--===============5028424511921316880==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Fix precedence between waiting and dialing so HFP emulator is notified
-of dialing/alerting even in case of a waiting call pending.
+From: Martin Xu <martin.xu@intel.com>
+
+In case of offline modem when GPRS data connection is connected, if gprs
+atom is removed before PPP termination process is complete, the terminate_t=
+imer
+will not be stop. It will cause ofonod crash when the timer time out.
 ---
- src/voicecall.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
+ gatchat/ppp_cp.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 7aa0b7e..dcc358e 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -770,12 +770,14 @@ static void notify_emulator_call_status(struct ofono_=
-voicecall *vc)
- 						emulator_call_status_cb,
- 						GINT_TO_POINTER(status));
+diff --git a/gatchat/ppp_cp.c b/gatchat/ppp_cp.c
+index f0731cc..6e4a9c5 100644
+--- a/gatchat/ppp_cp.c
++++ b/gatchat/ppp_cp.c
+@@ -970,6 +970,8 @@ void pppcp_process_packet(gpointer priv, const guint8 *=
+new_packet)
  =
 
--	if (incoming || waiting)
-+	if (incoming)
- 		status =3D OFONO_EMULATOR_CALLSETUP_INCOMING;
- 	else if (dialing)
- 		status =3D OFONO_EMULATOR_CALLSETUP_OUTGOING;
- 	else if (alerting)
- 		status =3D OFONO_EMULATOR_CALLSETUP_ALERTING;
-+	else if (waiting)
-+		status =3D OFONO_EMULATOR_CALLSETUP_INCOMING;
- 	else
- 		status =3D OFONO_EMULATOR_CALLSETUP_INACTIVE;
- =
-
+ void pppcp_free(struct pppcp_data *pppcp)
+ {
++	pppcp_stop_timer(&pppcp->config_timer_data);
++	pppcp_stop_timer(&pppcp->terminate_timer_data);
+ 	g_free(pppcp->peer_options);
+ 	g_free(pppcp);
+ }
 -- =
 
-1.7.1
+1.7.2.2
 
 
---===============8238437995921107550==--
+--===============5028424511921316880==--
 
