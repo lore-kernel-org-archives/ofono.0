@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7845438047159547062=="
+Content-Type: multipart/mixed; boundary="===============3292042823055883255=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/6] callmanager: Add signal on call status change
-Date: Thu, 28 Apr 2011 14:52:05 -0500
-Message-ID: <4DB9C565.7020405@gmail.com>
-In-Reply-To: <1303984179-8333-2-git-send-email-nicolas.bertrand@linux.intel.com>
+Subject: Re: [PATCH 2/6] control: Update UI using call status
+Date: Thu, 28 Apr 2011 14:58:09 -0500
+Message-ID: <4DB9C6D1.9050608@gmail.com>
+In-Reply-To: <1303984179-8333-3-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7845438047159547062==
+--===============3292042823055883255==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,224 +17,137 @@ Hi Nicolas,
 
 On 04/28/2011 04:49 AM, Nicolas Bertrand wrote:
 > ---
->  src/callmanager.cpp |   34 ++++++++++++++++++++++++++--------
->  src/callmanager.h   |    3 +++
->  2 files changed, 29 insertions(+), 8 deletions(-)
+>  src/control.cpp |   40 +++++++++++++++++++++++++++++++++++-----
+>  src/control.h   |    5 +++++
+>  2 files changed, 40 insertions(+), 5 deletions(-)
 > =
 
-> diff --git a/src/callmanager.cpp b/src/callmanager.cpp
-> index 585a3ac..9823f05 100644
-> --- a/src/callmanager.cpp
-> +++ b/src/callmanager.cpp
-> @@ -149,6 +149,8 @@ bool CallManager::command( const QString& cmd )
->          info.dialBack =3D false;
->          callList +=3D info;
+> diff --git a/src/control.cpp b/src/control.cpp
+> index 645219c..2f12d91 100644
+> --- a/src/control.cpp
+> +++ b/src/control.cpp
+> @@ -134,6 +134,32 @@ Control::~Control()
+>      delete widget;
+>  }
 >  =
 
-> +        emit sendCallStatus( &callList );
+> +void Control::callManagement( QList<CallInfo> *list )
+> +{
+> +	bool enableCSSU =3D false;
+> +	bool enableCSSI =3D false;
 > +
->          // Advertise the call state change and then return to command mo=
-de.
->          sendState( info );
->          send( "OK" );
-> @@ -176,6 +178,8 @@ bool CallManager::command( const QString& cmd )
->                  info.dialBack =3D false;
->                  callList +=3D info;
->  =
+> +	foreach( CallInfo i, *list ) {
+> +		if ( i.incoming && !enableCSSU )
+> +			enableCSSU =3D true;
+> +		if ( !i.incoming && !enableCSSI )
+> +			enableCSSI =3D true;
 
-> +                emit sendCallStatus( &callList );
+indentation consistency please ;)
+
+> +	}
 > +
->                  // Advertise the call state change and then return to co=
-mmand mode.
->                  sendState( info );
->                  send( "CONNECT 19200" );
-> @@ -369,6 +373,7 @@ void CallManager::startIncomingCall( const QString& n=
-umber,
->      callList +=3D info;
->  =
-
->      emitRing(info);
-> +    emit sendCallStatus( &callList );
->  =
-
->      // Announce the incoming call using Ericsson-style state notificatio=
-ns.
->      sendState( info );
-> @@ -395,6 +400,7 @@ void CallManager::hangupAll()
->      connectTimer->stop();
->      alertingTimer->stop();
->      hangupTimer->stop();
-> +    emit sendCallStatus( &callList );
->  }
->  =
-
->  void CallManager::hangupConnected()
-> @@ -412,6 +418,8 @@ void CallManager::hangupConnected()
->  =
-
->      if ( !hasCall( CallState_Held ) )
->          waitingToIncoming();
+> +	widget->CSSIactivation( enableCSSI );
+> +	widget->CSSUactivation( enableCSSU );
+> +}
 > +
-> +    emit sendCallStatus( &callList );
->  }
->  =
-
->  void CallManager::hangupHeld()
-> @@ -429,6 +437,8 @@ void CallManager::hangupHeld()
->  =
-
->      if ( !hasCall( CallState_Active ) )
->          waitingToIncoming();
+> +void ControlWidget::CSSIactivation( bool enableCSSI )
+> +{
+> +    ui->cbCSSI->setEnabled( enableCSSI );
+> +}
 > +
-> +    emit sendCallStatus( &callList );
->  }
->  =
+> +void ControlWidget::CSSUactivation( bool enableCSSU )
+> +{
+> +    ui->cbCSSU->setEnabled( enableCSSU );
+> +}
 
->  void CallManager::hangupConnectedAndHeld()
-> @@ -445,6 +455,7 @@ void CallManager::hangupConnectedAndHeld()
->      }
->      callList =3D newCallList;
->      waitingToIncoming();
-> +    emit sendCallStatus( &callList );
->  }
->  =
+These might be better named something like:
 
->  void CallManager::hangupCall( int id )
-> @@ -464,15 +475,13 @@ bool CallManager::acceptCall()
->      } else if ( hasCall( CallState_Active ) ) {
->          // Put the active calls on hold and accept the incoming call.
->          changeGroup( CallState_Active, CallState_Held );
-> -        callList[index].state =3D CallState_Active;
-> -        sendState( callList[index] );
-> -        return true;
-> -    } else {
-> -        // Only held calls, or no other calls, so just make the incoming=
- call active.
-> -        callList[index].state =3D CallState_Active;
-> -        sendState( callList[index] );
-> -        return true;
->      }
+setCssiEnabled and setCssuEnabled.  Note that Qt APIs are strict
+CamelCase, even with abbreviations and the first word of a function
+should be all small-caps.
+
 > +
-> +	// No more active calls, so accept incoming
-
-Please make sure to follow phonesim's 4-space indentation rules.
-
-> +    callList[index].state =3D CallState_Active;
-> +    sendState( callList[index] );
-> +    emit sendCallStatus( &callList );
-> +	return true;
-
-This chunk is changing the behavior and does not belong in this patch.
-Please send the behavior modification separately.  Also please note that
-once any calls (active or held) exist, then you cannot have incoming
-calls, only waiting calls.  The logic of this function can probably be
-simplified somewhat.
-
->  }
+>  void Control::setPhoneNumber( const QString &number )
+>  {
+>      widget->setWindowTitle("Phonesim - Number: " + number);
+> @@ -146,6 +172,10 @@ void Control::warning( const QString &title, const Q=
+String &message )
 >  =
 
->  bool CallManager::chld0()
-> @@ -500,6 +509,7 @@ bool CallManager::chld1()
->          int index =3D indexForId(id);
->          callList[index].state =3D CallState_Active;
->          sendState( callList[index] );
-> +        emit sendCallStatus( &callList );
->          return true;
->      } else if ( hasCall( CallState_Held ) ) {
->          // Hangup the active calls and activate the held ones.
-> @@ -508,6 +518,7 @@ bool CallManager::chld1()
->              if ( callList[index].state =3D=3D CallState_Held ) {
->                  callList[index].state =3D CallState_Active;
->                  sendState( callList[index] );
-> +                emit sendCallStatus( &callList );
->              }
->          }
->          return true;
-> @@ -551,6 +562,7 @@ bool CallManager::chld1x( int x )
->      if ( !hasCall( CallState_Active ) && !hasCall( CallState_Held ) )
->          waitingToIncoming();
->  =
-
-> +    emit sendCallStatus( &callList );
->      return found;
->  }
->  =
-
-> @@ -570,6 +582,7 @@ bool CallManager::chld2()
->          int index =3D indexForId( id );
->          callList[index].state =3D CallState_Active;
->          sendState( callList[index] );
-> +        emit sendCallStatus( &callList );
->          return true;
->      } else if ( hasCall( CallState_Active ) && hasCall( CallState_Held )=
- ) {
->          // Swap the active and held calls.
-> @@ -620,6 +633,7 @@ bool CallManager::chld2x( int x )
->              // No active calls, so make just this call active.
->              callList[index].state =3D CallState_Active;
->              sendState( callList[index] );
-> +            emit sendCallStatus( &callList );
->          }
->          return true;
->      } else if ( callList[index].state =3D=3D CallState_Active ) {
-> @@ -634,6 +648,7 @@ bool CallManager::chld2x( int x )
->                      return false;
->                  callList[index2].state =3D CallState_Held;
->                  sendState( callList[index2] );
-> +                emit sendCallStatus( &callList );
->              }
->          }
->          return true;
-> @@ -691,6 +706,7 @@ void CallManager::dialingToConnected()
->      // Transition the call to its new state.
->      callList[index].state =3D CallState_Active;
->      sendState( callList[index] );
-> +    emit sendCallStatus( &callList );
->      // If the dialed number starts with 05123, disconnect the
->      // call after xx seconds, where xx is part of the dial string
->      // as 05123xx
-> @@ -714,6 +730,7 @@ void CallManager::dialingToAlerting()
->      // Transition the call to its new state.
->      callList[index].state =3D CallState_Alerting;
->      sendState( callList[index] );
-> +    emit sendCallStatus( &callList );
->  }
->  =
-
->  void CallManager::waitingToIncoming()
-> @@ -856,6 +873,7 @@ void CallManager::changeGroup( CallState oldState, Ca=
-llState newState )
->              sendState( callList[index] );
->          }
->      }
-> +    emit sendCallStatus( &callList );
->  }
->  =
-
->  void CallManager::sendState( const CallInfo& info )
-> diff --git a/src/callmanager.h b/src/callmanager.h
-> index 5876c87..69e8d3b 100644
-> --- a/src/callmanager.h
-> +++ b/src/callmanager.h
-> @@ -114,6 +114,9 @@ signals:
->      // Send a call control event.
->      void controlEvent( const QSimControlEvent& event );
->  =
-
-> +    // Send calls list on status change
-> +    void sendCallStatus( QList<CallInfo> *list );
+>  void ControlWidget::handleCSSNNotif()
+>  {
 > +
+> +    ui->cbCSSU->setEnabled( false );
+> +    ui->cbCSSI->setEnabled( false );
+> +
+>      ui->cbCSSU->insertItem(0, "");
+>      ui->cbCSSU->insertItem(1, "0 - forwarded", 0);
+>      ui->cbCSSU->insertItem(3, "2 - on hold", 2);
+> @@ -160,15 +190,15 @@ void ControlWidget::handleCSSNNotif()
+>  =
 
-For Qt style APIs signals should use past-tense wording.  e.g. something
-like callStatesChanged().  I know phonesim isn't really good in this
-respect ;).  Lets strive to do better for new additions
+>  void ControlWidget::sendCSSN()
+>  {
+> -    QVariant v =3D ui->cbCSSU->itemData(ui->cbCSSU->currentIndex());
+> +    QVariant v =3D ui->cbCSSU->itemData( ui->cbCSSU->currentIndex() );
+>  =
+
+> -    if (v.canConvert<int>())
+> -        emit unsolicitedCommand("+CSSU: "+QString::number(v.toInt()));
+> +    if ( v.canConvert<int>() && ui->cbCSSU->isEnabled() )
+> +        emit unsolicitedCommand( "+CSSU: "+QString::number( v.toInt() ) =
+);
+>  =
+
+>      v =3D ui->cbCSSI->itemData(ui->cbCSSI->currentIndex());
+>  =
+
+> -    if (v.canConvert<int>())
+> -        emit unsolicitedCommand("+CSSI: "+QString::number(v.toInt()));
+> +    if ( v.canConvert<int>() && ui->cbCSSI->isEnabled() )
+> +        emit unsolicitedCommand( "+CSSI: "+QString::number( v.toInt() ) =
+);
+>  }
+>  =
+
+>  void ControlWidget::sendSQ()
+> diff --git a/src/control.h b/src/control.h
+> index c17146a..2ccde29 100644
+> --- a/src/control.h
+> +++ b/src/control.h
+> @@ -25,6 +25,7 @@
+>  #include <QtScript>
+>  #include "ui_controlbase.h"
+>  #include "attranslator.h"
+> +#include "callmanager.h"
+>  =
+
+>  class Control;
+>  =
+
+> @@ -71,6 +72,9 @@ public:
+>      void handleToData( const QString& );
+>      void handleNewApp();
+>      void handleCSSNNotif();
+> +    void CSSUactivation( bool enableCSSU );
+> +    void CSSIactivation( bool enableCSSI );
+> +
+>  =
 
 >  private slots:
->      // Transition the active dialing or alerting call to connected.
->      void dialingToConnected();
+>      void sendSQ();
+> @@ -146,6 +150,7 @@ public slots:
+>      void handleToData( const QString& );
+>      void setPhoneNumber( const QString& );
+>      void handleNewApp();
+> +    void callManagement( QList<CallInfo> *info );
+>  =
+
+>  protected:
+>      virtual void warning( const QString&, const QString& );
 
 Regards,
 -Denis
 
---===============7845438047159547062==--
+--===============3292042823055883255==--
 
