@@ -1,47 +1,240 @@
-Content-Type: multipart/mixed; boundary="===============8122206189297092266=="
+Content-Type: multipart/mixed; boundary="===============7845438047159547062=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v2 1/4] gatppp: Add new contructor to use external fd
-Date: Thu, 28 Apr 2011 14:41:23 -0500
-Message-ID: <4DB9C2E3.9060301@gmail.com>
-In-Reply-To: <4DB9851D.5080803@linux.intel.com>
+Subject: Re: [PATCH 1/6] callmanager: Add signal on call status change
+Date: Thu, 28 Apr 2011 14:52:05 -0500
+Message-ID: <4DB9C565.7020405@gmail.com>
+In-Reply-To: <1303984179-8333-2-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8122206189297092266==
+--===============7845438047159547062==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Nicolas,
 
->>>>> +        /* create a channel for reading and writing to this
->>>>> interface */
->>>>> +        channel =3D g_io_channel_unix_new(fd);
->>>>> +    }
->>>> There's a small problem of symmetry here.  If IPCP is established
->>>> correctly, then the fd will eventually be closed by ppp_net.  However,
->>>> if we never properly establish IPCP, then fd will not be closed.  What
->>>> is actually expected by ConnMan?
->>>>
->>> In the case we don't properly establish the IPCP, ppp_disconnect CB of
->>> emulator will be called.
->>> Then, we will call the release_private_network DBus method. This method
->>> will close the fd if it is opened.
->>>
->> Again, we're writing a library.  We cannot assume some behavior external
->> to the library is going to save us.  So I really suggest we make closing
->> of the fd symmetric.
-> So I will close the fd into g_at_ppp_unref() if it is >=3D0.
-> I have also to close it if we fail to create the PPP server.
+On 04/28/2011 04:49 AM, Nicolas Bertrand wrote:
+> ---
+>  src/callmanager.cpp |   34 ++++++++++++++++++++++++++--------
+>  src/callmanager.h   |    3 +++
+>  2 files changed, 29 insertions(+), 8 deletions(-)
 > =
 
+> diff --git a/src/callmanager.cpp b/src/callmanager.cpp
+> index 585a3ac..9823f05 100644
+> --- a/src/callmanager.cpp
+> +++ b/src/callmanager.cpp
+> @@ -149,6 +149,8 @@ bool CallManager::command( const QString& cmd )
+>          info.dialBack =3D false;
+>          callList +=3D info;
+>  =
 
-Right.  Your approach doesn't sound completely correct, but I will let
-you figure this out.  Just make sure to close the fd in all circumstances.
+> +        emit sendCallStatus( &callList );
+> +
+>          // Advertise the call state change and then return to command mo=
+de.
+>          sendState( info );
+>          send( "OK" );
+> @@ -176,6 +178,8 @@ bool CallManager::command( const QString& cmd )
+>                  info.dialBack =3D false;
+>                  callList +=3D info;
+>  =
+
+> +                emit sendCallStatus( &callList );
+> +
+>                  // Advertise the call state change and then return to co=
+mmand mode.
+>                  sendState( info );
+>                  send( "CONNECT 19200" );
+> @@ -369,6 +373,7 @@ void CallManager::startIncomingCall( const QString& n=
+umber,
+>      callList +=3D info;
+>  =
+
+>      emitRing(info);
+> +    emit sendCallStatus( &callList );
+>  =
+
+>      // Announce the incoming call using Ericsson-style state notificatio=
+ns.
+>      sendState( info );
+> @@ -395,6 +400,7 @@ void CallManager::hangupAll()
+>      connectTimer->stop();
+>      alertingTimer->stop();
+>      hangupTimer->stop();
+> +    emit sendCallStatus( &callList );
+>  }
+>  =
+
+>  void CallManager::hangupConnected()
+> @@ -412,6 +418,8 @@ void CallManager::hangupConnected()
+>  =
+
+>      if ( !hasCall( CallState_Held ) )
+>          waitingToIncoming();
+> +
+> +    emit sendCallStatus( &callList );
+>  }
+>  =
+
+>  void CallManager::hangupHeld()
+> @@ -429,6 +437,8 @@ void CallManager::hangupHeld()
+>  =
+
+>      if ( !hasCall( CallState_Active ) )
+>          waitingToIncoming();
+> +
+> +    emit sendCallStatus( &callList );
+>  }
+>  =
+
+>  void CallManager::hangupConnectedAndHeld()
+> @@ -445,6 +455,7 @@ void CallManager::hangupConnectedAndHeld()
+>      }
+>      callList =3D newCallList;
+>      waitingToIncoming();
+> +    emit sendCallStatus( &callList );
+>  }
+>  =
+
+>  void CallManager::hangupCall( int id )
+> @@ -464,15 +475,13 @@ bool CallManager::acceptCall()
+>      } else if ( hasCall( CallState_Active ) ) {
+>          // Put the active calls on hold and accept the incoming call.
+>          changeGroup( CallState_Active, CallState_Held );
+> -        callList[index].state =3D CallState_Active;
+> -        sendState( callList[index] );
+> -        return true;
+> -    } else {
+> -        // Only held calls, or no other calls, so just make the incoming=
+ call active.
+> -        callList[index].state =3D CallState_Active;
+> -        sendState( callList[index] );
+> -        return true;
+>      }
+> +
+> +	// No more active calls, so accept incoming
+
+Please make sure to follow phonesim's 4-space indentation rules.
+
+> +    callList[index].state =3D CallState_Active;
+> +    sendState( callList[index] );
+> +    emit sendCallStatus( &callList );
+> +	return true;
+
+This chunk is changing the behavior and does not belong in this patch.
+Please send the behavior modification separately.  Also please note that
+once any calls (active or held) exist, then you cannot have incoming
+calls, only waiting calls.  The logic of this function can probably be
+simplified somewhat.
+
+>  }
+>  =
+
+>  bool CallManager::chld0()
+> @@ -500,6 +509,7 @@ bool CallManager::chld1()
+>          int index =3D indexForId(id);
+>          callList[index].state =3D CallState_Active;
+>          sendState( callList[index] );
+> +        emit sendCallStatus( &callList );
+>          return true;
+>      } else if ( hasCall( CallState_Held ) ) {
+>          // Hangup the active calls and activate the held ones.
+> @@ -508,6 +518,7 @@ bool CallManager::chld1()
+>              if ( callList[index].state =3D=3D CallState_Held ) {
+>                  callList[index].state =3D CallState_Active;
+>                  sendState( callList[index] );
+> +                emit sendCallStatus( &callList );
+>              }
+>          }
+>          return true;
+> @@ -551,6 +562,7 @@ bool CallManager::chld1x( int x )
+>      if ( !hasCall( CallState_Active ) && !hasCall( CallState_Held ) )
+>          waitingToIncoming();
+>  =
+
+> +    emit sendCallStatus( &callList );
+>      return found;
+>  }
+>  =
+
+> @@ -570,6 +582,7 @@ bool CallManager::chld2()
+>          int index =3D indexForId( id );
+>          callList[index].state =3D CallState_Active;
+>          sendState( callList[index] );
+> +        emit sendCallStatus( &callList );
+>          return true;
+>      } else if ( hasCall( CallState_Active ) && hasCall( CallState_Held )=
+ ) {
+>          // Swap the active and held calls.
+> @@ -620,6 +633,7 @@ bool CallManager::chld2x( int x )
+>              // No active calls, so make just this call active.
+>              callList[index].state =3D CallState_Active;
+>              sendState( callList[index] );
+> +            emit sendCallStatus( &callList );
+>          }
+>          return true;
+>      } else if ( callList[index].state =3D=3D CallState_Active ) {
+> @@ -634,6 +648,7 @@ bool CallManager::chld2x( int x )
+>                      return false;
+>                  callList[index2].state =3D CallState_Held;
+>                  sendState( callList[index2] );
+> +                emit sendCallStatus( &callList );
+>              }
+>          }
+>          return true;
+> @@ -691,6 +706,7 @@ void CallManager::dialingToConnected()
+>      // Transition the call to its new state.
+>      callList[index].state =3D CallState_Active;
+>      sendState( callList[index] );
+> +    emit sendCallStatus( &callList );
+>      // If the dialed number starts with 05123, disconnect the
+>      // call after xx seconds, where xx is part of the dial string
+>      // as 05123xx
+> @@ -714,6 +730,7 @@ void CallManager::dialingToAlerting()
+>      // Transition the call to its new state.
+>      callList[index].state =3D CallState_Alerting;
+>      sendState( callList[index] );
+> +    emit sendCallStatus( &callList );
+>  }
+>  =
+
+>  void CallManager::waitingToIncoming()
+> @@ -856,6 +873,7 @@ void CallManager::changeGroup( CallState oldState, Ca=
+llState newState )
+>              sendState( callList[index] );
+>          }
+>      }
+> +    emit sendCallStatus( &callList );
+>  }
+>  =
+
+>  void CallManager::sendState( const CallInfo& info )
+> diff --git a/src/callmanager.h b/src/callmanager.h
+> index 5876c87..69e8d3b 100644
+> --- a/src/callmanager.h
+> +++ b/src/callmanager.h
+> @@ -114,6 +114,9 @@ signals:
+>      // Send a call control event.
+>      void controlEvent( const QSimControlEvent& event );
+>  =
+
+> +    // Send calls list on status change
+> +    void sendCallStatus( QList<CallInfo> *list );
+> +
+
+For Qt style APIs signals should use past-tense wording.  e.g. something
+like callStatesChanged().  I know phonesim isn't really good in this
+respect ;).  Lets strive to do better for new additions
+
+>  private slots:
+>      // Transition the active dialing or alerting call to connected.
+>      void dialingToConnected();
 
 Regards,
 -Denis
 
---===============8122206189297092266==--
+--===============7845438047159547062==--
 
