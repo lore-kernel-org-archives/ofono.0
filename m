@@ -1,40 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============0014072723332848182=="
+Content-Type: multipart/mixed; boundary="===============8831791753097369468=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: [PATCH] Add send vcal test
-Date: Thu, 28 Apr 2011 15:25:46 +0100
-Message-ID: <A782C372B9527D44AB20BF45FEEBB14F75C0052C2B@irsmsx503.ger.corp.intel.com>
-In-Reply-To: <4DB97879.4080806@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] isimodem: use a specific call id when answering
+Date: Thu, 28 Apr 2011 09:28:52 -0500
+Message-ID: <4DB979A4.8010300@gmail.com>
+In-Reply-To: <1303908309-28914-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0014072723332848182==
+--===============8831791753097369468==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
->Patch has been applied, however you forgot to add this to the build.  I
->fixed this in a follow-on patch for you ;)
+Hi Pekka,
 
-Damn, sorry, second times...
+On 04/27/2011 07:45 AM, Pekka.Pessi(a)nokia.com wrote:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+> =
 
-Thanks for the fix.
+> ---
+>  drivers/isimodem/voicecall.c |   22 +++++++++++++++++++++-
+>  1 files changed, 21 insertions(+), 1 deletions(-)
+> =
 
-Bertrand
+> diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
+> index 333f9b8..4d4e16b 100644
+> --- a/drivers/isimodem/voicecall.c
+> +++ b/drivers/isimodem/voicecall.c
+> @@ -1480,7 +1480,27 @@ static void isi_dial(struct ofono_voicecall *ovc,
+>  static void isi_answer(struct ofono_voicecall *ovc, ofono_voicecall_cb_t=
+ cb,
+>  			void *data)
+>  {
+> -	isi_call_answer_req(ovc, CALL_ID_ALL, cb, data);
+> +	struct isi_voicecall *ivc =3D ofono_voicecall_get_data(ovc);
+> +	int id;
+> +
+> +	for (id =3D 1; id <=3D 7; id++) {
+> +		switch (ivc->calls[id].status) {
+> +		case CALL_STATUS_COMING:
+> +		case CALL_STATUS_MT_ALERTING:
+> +		case CALL_STATUS_WAITING:
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+oFono expects answer to only work on 'incoming' calls in the traditional
+sense.  Is waiting status equivalent to CCWA here? If so, it might be
+better to leave it out here.
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+> +			goto answer;
+> +		case CALL_STATUS_PROCEEDING:
+> +			if (ivc->calls[id].mode_info & CALL_MODE_ORIGINATOR)
+> +				goto answer;
+> +			break;
+> +		}
+> +	}
+> +
+> +	CALLBACK_WITH_FAILURE(cb, data);
+> +	return;
+> +
+> +answer:
+> +	isi_call_answer_req(ovc, id, cb, data);
+>  }
+>  =
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+>  static void isi_hangup_current(struct ofono_voicecall *ovc,
 
+Regards,
+-Denis
 
---===============0014072723332848182==--
+--===============8831791753097369468==--
 
