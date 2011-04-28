@@ -1,253 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============2601561113410989934=="
+Content-Type: multipart/mixed; boundary="===============1285770146061262468=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH_v2 1/4] gatppp: Add new contructor to use external fd
-Date: Thu, 28 Apr 2011 15:06:33 +0200
-Message-ID: <4DB96659.8060102@linux.intel.com>
-In-Reply-To: <4DB78B68.8070508@gmail.com>
+Subject: Re: [PATCH_v2 2/4] emulator: add routine to request/release private
+ network from ConnMan
+Date: Thu, 28 Apr 2011 15:29:01 +0200
+Message-ID: <4DB96B9D.1030406@linux.intel.com>
+In-Reply-To: <4DB78CB9.1000008@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2601561113410989934==
+--===============1285770146061262468==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-On 27/04/2011 05:20, Denis Kenzior wrote:
+On 27/04/2011 05:25, Denis Kenzior wrote:
 > Hi Guillaume,
 >
 > On 04/22/2011 07:06 AM, Guillaume Zajac wrote:
 >> ---
->>   gatchat/gatppp.c  |   43 ++++++++++++++++++++++++++++++++++++++++---
->>   gatchat/gatppp.h  |    2 ++
->>   gatchat/ppp.h     |    2 +-
->>   gatchat/ppp_net.c |   46 ++++++++++++++++++++++++++++------------------
->>   4 files changed, 71 insertions(+), 22 deletions(-)
+>>   include/emulator.h |   10 +++++++
+>>   src/emulator.c     |   75 ++++++++++++++++++++++++++++++++++++++++++++=
++++-----
+>>   2 files changed, 78 insertions(+), 7 deletions(-)
 >>
->> diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
->> index 993b5ea..d59f69b 100644
->> --- a/gatchat/gatppp.c
->> +++ b/gatchat/gatppp.c
->> @@ -76,6 +76,7 @@ struct _GAtPPP {
->>   	gpointer debug_data;
->>   	gboolean sta_pending;
->>   	guint ppp_dead_source;
->> +	int fd;
->>   };
+>> diff --git a/include/emulator.h b/include/emulator.h
+>> index 5cd894b..29abf55 100644
+>> --- a/include/emulator.h
+>> +++ b/include/emulator.h
+>> @@ -105,6 +105,16 @@ enum ofono_emulator_request_type ofono_emulator_req=
+uest_get_type(
+>>   void ofono_emulator_set_indicator(struct ofono_emulator *em,
+>>   					const char *name, int value);
 >>
->>   void ppp_debug(GAtPPP *ppp, const char *str)
->> @@ -288,7 +289,7 @@ void ppp_auth_notify(GAtPPP *ppp, gboolean success)
->>   void ppp_ipcp_up_notify(GAtPPP *ppp, const char *local, const char *pe=
-er,
->>   					const char *dns1, const char *dns2)
->>   {
->> -	ppp->net =3D ppp_net_new(ppp);
->> +	ppp->net =3D ppp_net_new(ppp, ppp->fd);
->>
->>   	if (ppp->net =3D=3D NULL) {
->>   		ppp->disconnect_reason =3D G_AT_PPP_REASON_NET_FAIL;
->> @@ -296,8 +297,14 @@ void ppp_ipcp_up_notify(GAtPPP *ppp, const char *lo=
-cal, const char *peer,
->>   		return;
->>   	}
->>
->> -	if (ppp_net_set_mtu(ppp->net, ppp->mtu) =3D=3D FALSE)
->> -		DBG(ppp, "Unable to set MTU");
->> +	/*
->> +	 * If we have opened the tun interface locally,
->> +	 * we have to set a MTU value.
->> +	 */
-> So I don't agree with this.  The MTU is negotiated during LCP phase, so
-> unless I'm missing something, this value should still be set to the
-> negotiated one.
->
+>> +typedef void (*network_request)(struct ofono_error *, int *,
+>> +				const char **, const char **,
+>> +				const char **, const char **);
+>> +typedef void (*network_release)(void);
+>> +
+>> +void ofono_emulator_add_network_request_cb(struct ofono_emulator *em,
+>> +							network_request cb);
+>> +void ofono_emulator_add_network_release_cb(struct ofono_emulator *em,
+>> +							network_release cb);
+>> +
+> I really don't like this, you're re-inventing the wheel here.  We
+> already solved this pattern a while ago ;)  I suggest you look at
+> include/gprs-provision.h and examples/provision.c
 
-Right , I thought that as I was setting a MTU value for ConnMan tun =
+In looking the example, I should create some emulator network drivers to =
 
-interface I didn't need to set the MTU value into oFono.
-Obviously I was wrong :)
+get settings and release the network like:
 
->> +	if (ppp->fd<  0) {
->> +		if (ppp_net_set_mtu(ppp->net, ppp->mtu) =3D=3D FALSE)
->> +			DBG(ppp, "Unable to set MTU");
->> +	}
->>
->>   	ppp_enter_phase(ppp, PPP_PHASE_LINK_UP);
->>
->> @@ -541,6 +548,9 @@ static GAtPPP *ppp_init_common(GAtHDLC *hdlc, gboole=
-an is_server, guint32 ip)
->>
->>   	ppp->ref_count =3D 1;
->>
->> +	/* Default value of fd is -1 */
->> +	ppp->fd =3D -1;
->> +
->>   	/* set options to defaults */
->>   	ppp->mru =3D DEFAULT_MRU;
->>   	ppp->mtu =3D DEFAULT_MTU;
->> @@ -629,6 +639,33 @@ GAtPPP *g_at_ppp_server_new_from_io(GAtIO *io, cons=
-t char *local)
->>   		return NULL;
->>
->>   	ppp =3D ppp_init_common(hdlc, TRUE, ip);
->> +
->> +	g_at_hdlc_unref(hdlc);
->> +
->> +	return ppp;
->> +}
->> +
->> +GAtPPP *g_at_ppp_server_new_from_io_with_fd(GAtIO *io,
->> +						const char *local, int fd)
->> +{
->> +	GAtHDLC *hdlc;
->> +	GAtPPP *ppp;
->> +	guint32 ip;
->> +
->> +	if (local =3D=3D NULL)
->> +		ip =3D 0;
->> +	else if (inet_pton(AF_INET, local,&ip) !=3D 1)
->> +		return NULL;
->> +
->> +	hdlc =3D g_at_hdlc_new_from_io(io);
->> +	if (hdlc =3D=3D NULL)
->> +		return NULL;
->> +
->> +	ppp =3D ppp_init_common(hdlc, TRUE, ip);
->> +
->> +	/* Set the fd value returned by ConnMan */
->> +	ppp->fd =3D fd;
->> +
->>   	g_at_hdlc_unref(hdlc);
->>
->>   	return ppp;
->> diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
->> index fb5de4c..4ed4cde 100644
->> --- a/gatchat/gatppp.h
->> +++ b/gatchat/gatppp.h
->> @@ -54,6 +54,8 @@ GAtPPP *g_at_ppp_new(GIOChannel *modem);
->>   GAtPPP *g_at_ppp_new_from_io(GAtIO *io);
->>   GAtPPP *g_at_ppp_server_new(GIOChannel *modem, const char *local);
->>   GAtPPP *g_at_ppp_server_new_from_io(GAtIO *io, const char *local);
->> +GAtPPP *g_at_ppp_server_new_from_io_with_fd(GAtIO *io,
->> +						const char *local, int fd);
-> Please name this g_at_ppp_server_new_full()
+struct emulator_network{
+     ...
+}
 
-Ok
+struct emulator_network_provision_driver{
+     char *name;
+     (void)(*get_settings)(struct emulator_network **out_en);
+     (void)(*release)(void);
+}
 
->>
->>   void g_at_ppp_open(GAtPPP *ppp);
->>   void g_at_ppp_set_connect_function(GAtPPP *ppp, GAtPPPConnectFunc call=
-back,
->> diff --git a/gatchat/ppp.h b/gatchat/ppp.h
->> index d2786d7..8107820 100644
->> --- a/gatchat/ppp.h
->> +++ b/gatchat/ppp.h
->> @@ -102,7 +102,7 @@ void ppp_chap_free(struct ppp_chap *chap);
->>   void ppp_chap_process_packet(struct ppp_chap *chap, const guint8 *new_=
-packet);
->>
->>   /* TUN / Network related functions */
->> -struct ppp_net *ppp_net_new(GAtPPP *ppp);
->> +struct ppp_net *ppp_net_new(GAtPPP *ppp, int fd);
->>   const char *ppp_net_get_interface(struct ppp_net *net);
->>   void ppp_net_process_packet(struct ppp_net *net, const guint8 *packet);
->>   void ppp_net_free(struct ppp_net *net);
->> diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
->> index 1a6cdf7..59c4b5e 100644
->> --- a/gatchat/ppp_net.c
->> +++ b/gatchat/ppp_net.c
->> @@ -123,12 +123,12 @@ const char *ppp_net_get_interface(struct ppp_net *=
-net)
->>   	return net->if_name;
+and un/register drivers into emulator.c
+
+>>   #ifdef __cplusplus
 >>   }
->>
->> -struct ppp_net *ppp_net_new(GAtPPP *ppp)
->> +struct ppp_net *ppp_net_new(GAtPPP *ppp, int fd)
->>   {
->>   	struct ppp_net *net;
->>   	GIOChannel *channel =3D NULL;
->>   	struct ifreq ifr;
->> -	int fd, err;
->> +	int fdesc, err;
->>
->>   	net =3D g_try_new0(struct ppp_net, 1);
->>   	if (net =3D=3D NULL)
->> @@ -140,23 +140,33 @@ struct ppp_net *ppp_net_new(GAtPPP *ppp)
->>   		return NULL;
->>   	}
->>
->> -	/* open a tun interface */
->> -	fd =3D open("/dev/net/tun", O_RDWR);
->> -	if (fd<  0)
->> -		goto error;
->> -
->> -	memset(&ifr, 0, sizeof(ifr));
->> -	ifr.ifr_flags =3D IFF_TUN | IFF_NO_PI;
->> -	strcpy(ifr.ifr_name, "ppp%d");
->> -
->> -	err =3D ioctl(fd, TUNSETIFF, (void *)&ifr);
->> -	if (err<  0)
->> -		goto error;
->> -
->> -	net->if_name =3D strdup(ifr.ifr_name);
->> +	/*
->> +	 * If the fd value is still the default one,
->> +	 * open the tun interface and configure it.
->> +	 */
->> +	if (fd<  0) {
-> Missing space before '<'
->
-
-Ok
-
->> +		/* open a tun interface */
->> +		fdesc =3D open("/dev/net/tun", O_RDWR);
->> +		if (fdesc<  0)
->> +			goto error;
->> +
->> +		memset(&ifr, 0, sizeof(ifr));
->> +		ifr.ifr_flags =3D IFF_TUN | IFF_NO_PI;
->> +		strcpy(ifr.ifr_name, "ppp%d");
->> +
->> +		err =3D ioctl(fdesc, TUNSETIFF, (void *)&ifr);
->> +		if (err<  0)
->> +			goto error;
->> +
->> +		net->if_name =3D strdup(ifr.ifr_name);
->> +		/* create a channel for reading and writing to this interface */
->> +		channel =3D g_io_channel_unix_new(fdesc);
->> +	} else {
->> +		net->if_name =3D strdup("Server ppp");
-> This looks wrong.  You do actually want to return a proper network
-> interface here, not make something up.
-
-In fact, only ConnMan needs to know each name of its interfaces,
-so do we need to fill this field in when ConnMan creates the interface?
-
->> +		/* create a channel for reading and writing to this interface */
->> +		channel =3D g_io_channel_unix_new(fd);
->> +	}
-> There's a small problem of symmetry here.  If IPCP is established
-> correctly, then the fd will eventually be closed by ppp_net.  However,
-> if we never properly establish IPCP, then fd will not be closed.  What
-> is actually expected by ConnMan?
->
-
-In the case we don't properly establish the IPCP, ppp_disconnect CB of =
-
-emulator will be called.
-Then, we will call the release_private_network DBus method. This method =
-
-will close the fd if it is opened.
-
->>
->> -	/* create a channel for reading and writing to this interface */
->> -	channel =3D g_io_channel_unix_new(fd);
->>   	if (channel =3D=3D NULL)
->>   		goto error;
->>
+>>   #endif
 > Regards,
 > -Denis
 >
@@ -255,6 +75,5 @@ will close the fd if it is opened.
 Kind regards,
 Guillaume
 
-
---===============2601561113410989934==--
+--===============1285770146061262468==--
 
