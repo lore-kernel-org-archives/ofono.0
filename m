@@ -1,72 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============8831791753097369468=="
+Content-Type: multipart/mixed; boundary="===============3539602299344780250=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] isimodem: use a specific call id when answering
-Date: Thu, 28 Apr 2011 09:28:52 -0500
-Message-ID: <4DB979A4.8010300@gmail.com>
-In-Reply-To: <1303908309-28914-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH_v2 1/4] gatppp: Add new contructor to use external fd
+Date: Thu, 28 Apr 2011 09:44:19 -0500
+Message-ID: <4DB97D43.4050404@gmail.com>
+In-Reply-To: <4DB96659.8060102@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8831791753097369468==
+--===============3539602299344780250==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Guillaume,
 
-On 04/27/2011 07:45 AM, Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+>>> -    if (ppp_net_set_mtu(ppp->net, ppp->mtu) =3D=3D FALSE)
+>>> -        DBG(ppp, "Unable to set MTU");
+>>> +    /*
+>>> +     * If we have opened the tun interface locally,
+>>> +     * we have to set a MTU value.
+>>> +     */
+>> So I don't agree with this.  The MTU is negotiated during LCP phase, so
+>> unless I'm missing something, this value should still be set to the
+>> negotiated one.
+>>
 > =
 
-> ---
->  drivers/isimodem/voicecall.c |   22 +++++++++++++++++++++-
->  1 files changed, 21 insertions(+), 1 deletions(-)
+> Right , I thought that as I was setting a MTU value for ConnMan tun
+> interface I didn't need to set the MTU value into oFono.
+> Obviously I was wrong :)
 > =
 
-> diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
-> index 333f9b8..4d4e16b 100644
-> --- a/drivers/isimodem/voicecall.c
-> +++ b/drivers/isimodem/voicecall.c
-> @@ -1480,7 +1480,27 @@ static void isi_dial(struct ofono_voicecall *ovc,
->  static void isi_answer(struct ofono_voicecall *ovc, ofono_voicecall_cb_t=
- cb,
->  			void *data)
->  {
-> -	isi_call_answer_req(ovc, CALL_ID_ALL, cb, data);
-> +	struct isi_voicecall *ivc =3D ofono_voicecall_get_data(ovc);
-> +	int id;
-> +
-> +	for (id =3D 1; id <=3D 7; id++) {
-> +		switch (ivc->calls[id].status) {
-> +		case CALL_STATUS_COMING:
-> +		case CALL_STATUS_MT_ALERTING:
-> +		case CALL_STATUS_WAITING:
 
-oFono expects answer to only work on 'incoming' calls in the traditional
-sense.  Is waiting status equivalent to CCWA here? If so, it might be
-better to leave it out here.
+I assume the MTU is set to the default 1500 in Connman?
 
-> +			goto answer;
-> +		case CALL_STATUS_PROCEEDING:
-> +			if (ivc->calls[id].mode_info & CALL_MODE_ORIGINATOR)
-> +				goto answer;
-> +			break;
-> +		}
-> +	}
-> +
-> +	CALLBACK_WITH_FAILURE(cb, data);
-> +	return;
-> +
-> +answer:
-> +	isi_call_answer_req(ovc, id, cb, data);
->  }
->  =
+>>> +        net->if_name =3D strdup("Server ppp");
+>> This looks wrong.  You do actually want to return a proper network
+>> interface here, not make something up.
+> =
 
->  static void isi_hangup_current(struct ofono_voicecall *ovc,
+> In fact, only ConnMan needs to know each name of its interfaces,
+> so do we need to fill this field in when ConnMan creates the interface?
+> =
+
+
+Remember that we're writing a library, so things must be consistent.
+Besides, isn't this is a matter of running a TUNGETIFF ioctl?
+
+>>> +        /* create a channel for reading and writing to this
+>>> interface */
+>>> +        channel =3D g_io_channel_unix_new(fd);
+>>> +    }
+>> There's a small problem of symmetry here.  If IPCP is established
+>> correctly, then the fd will eventually be closed by ppp_net.  However,
+>> if we never properly establish IPCP, then fd will not be closed.  What
+>> is actually expected by ConnMan?
+>>
+> =
+
+> In the case we don't properly establish the IPCP, ppp_disconnect CB of
+> emulator will be called.
+> Then, we will call the release_private_network DBus method. This method
+> will close the fd if it is opened.
+> =
+
+
+Again, we're writing a library.  We cannot assume some behavior external
+to the library is going to save us.  So I really suggest we make closing
+of the fd symmetric.
 
 Regards,
 -Denis
 
---===============8831791753097369468==--
+--===============3539602299344780250==--
 
