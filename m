@@ -1,44 +1,100 @@
-Content-Type: multipart/mixed; boundary="===============2390915924678688309=="
+Content-Type: multipart/mixed; boundary="===============8258161110491674111=="
 MIME-Version: 1.0
 From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH 4/6] phonesim: Connect call status signal
-Date: Thu, 28 Apr 2011 11:49:37 +0200
-Message-ID: <1303984179-8333-5-git-send-email-nicolas.bertrand@linux.intel.com>
+Subject: [PATCH 5/6] controlbase.ui: Add call mangement tab
+Date: Thu, 28 Apr 2011 11:49:38 +0200
+Message-ID: <1303984179-8333-6-git-send-email-nicolas.bertrand@linux.intel.com>
 In-Reply-To: <1303984179-8333-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2390915924678688309==
+--===============8258161110491674111==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/phonesim.cpp |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ src/controlbase.ui |   61 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 61 insertions(+), 0 deletions(-)
 
-diff --git a/src/phonesim.cpp b/src/phonesim.cpp
-index a822cd9..cda32dd 100644
---- a/src/phonesim.cpp
-+++ b/src/phonesim.cpp
-@@ -528,6 +528,8 @@ SimRules::SimRules( int fd, QObject *p,  const QString&=
- filename, HardwareManipu
-     if ( machine ) {
-         connect( machine, SIGNAL(startIncomingCall(QString,QString,QString=
-)),
-                  _callManager, SLOT(startIncomingCall(QString,QString,QStr=
-ing)) );
-+        connect ( _callManager, SIGNAL( sendCallStatus( QList<CallInfo> * =
-) ),
-+                  machine, SLOT( callManagement( QList<CallInfo> * ) ) );
-     }
- =
-
-     connect(this,SIGNAL(readyRead()),
+diff --git a/src/controlbase.ui b/src/controlbase.ui
+index cfadfe8..41c6d12 100644
+--- a/src/controlbase.ui
++++ b/src/controlbase.ui
+@@ -1458,6 +1458,67 @@ p, li { white-space: pre-wrap; }
+        </property>
+       </widget>
+      </widget>
++     <widget class=3D"QWidget" name=3D"tab_9">
++      <attribute name=3D"title">
++       <string>Call</string>
++      </attribute>
++      <layout class=3D"QVBoxLayout" name=3D"verticalLayout_3">
++       <item>
++        <widget class=3D"QTableWidget" name=3D"twCallMgt">
++         <property name=3D"columnCount">
++          <number>5</number>
++         </property>
++         <attribute name=3D"horizontalHeaderMinimumSectionSize">
++          <number>50</number>
++         </attribute>
++         <attribute name=3D"horizontalHeaderShowSortIndicator" stdset=3D"0=
+">
++          <bool>true</bool>
++         </attribute>
++         <attribute name=3D"verticalHeaderDefaultSectionSize">
++          <number>50</number>
++         </attribute>
++         <column>
++          <property name=3D"text">
++           <string>id</string>
++          </property>
++         </column>
++         <column>
++          <property name=3D"text">
++           <string>number</string>
++          </property>
++         </column>
++         <column>
++          <property name=3D"text">
++           <string>state</string>
++          </property>
++         </column>
++         <column>
++          <property name=3D"text">
++           <string>name</string>
++          </property>
++         </column>
++         <column>
++          <property name=3D"text">
++           <string>type</string>
++          </property>
++         </column>
++        </widget>
++       </item>
++       <item>
++        <spacer name=3D"verticalSpacer">
++         <property name=3D"orientation">
++          <enum>Qt::Vertical</enum>
++         </property>
++         <property name=3D"sizeHint" stdset=3D"0">
++          <size>
++           <width>20</width>
++           <height>40</height>
++          </size>
++         </property>
++        </spacer>
++       </item>
++      </layout>
++     </widget>
+     </widget>
+    </item>
+    <item>
 -- =
 
 1.7.1
 
 
---===============2390915924678688309==--
+--===============8258161110491674111==--
 
