@@ -1,39 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============1559887156218195226=="
+Content-Type: multipart/mixed; boundary="===============8981213478606208266=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] Modify send vcard test to be able to set the modem to use
-Date: Thu, 28 Apr 2011 14:02:01 +0200
-Message-ID: <1303992121-22556-1-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH] Add send vcal test
+Date: Thu, 28 Apr 2011 14:05:48 +0200
+Message-ID: <1303992348-22676-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1559887156218195226==
+--===============8981213478606208266==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/send-vcard |   26 +++++++++++++++++++-------
- 1 files changed, 19 insertions(+), 7 deletions(-)
+ test/send-vcal |   32 ++++++++++++++++++++++++++++++++
+ 1 files changed, 32 insertions(+), 0 deletions(-)
+ create mode 100755 test/send-vcal
 
-diff --git a/test/send-vcard b/test/send-vcard
-index d11d5ac..3955990 100755
---- a/test/send-vcard
-+++ b/test/send-vcard
-@@ -3,18 +3,30 @@
- import sys
- import dbus
- =
-
+diff --git a/test/send-vcal b/test/send-vcal
+new file mode 100755
+index 0000000..7ccd2f6
+--- /dev/null
++++ b/test/send-vcal
+@@ -0,0 +1,32 @@
++#!/usr/bin/python
++
++import sys
++import dbus
++
 +if len(sys.argv) < 3:
-+	print "Usage: %s [modem] <to> <vcard file>" % (sys.argv[0])
++	print "Usage: %s [modem] <to> <vcal file>" % (sys.argv[0])
 +	sys.exit(1)
 +
- bus =3D dbus.SystemBus()
- =
-
--manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
--						'org.ofono.Manager')
++bus =3D dbus.SystemBus()
++
 +if len(sys.argv) =3D=3D 4:
 +	path =3D sys.argv[1]
 +else:
@@ -41,29 +41,20 @@ index d11d5ac..3955990 100755
 +					'org.ofono.Manager')
 +	modems =3D manager.GetModems()
 +	path =3D modems[0][0]
- =
-
--modems =3D manager.GetModems()
--path =3D modems[0][0]
-+print "Send vcard using modem %s ..." % path
- =
-
--manager =3D dbus.Interface(bus.get_object('org.ofono', path),
++
++print "Send vcal using modem %s ..." % path
++
 +sm =3D dbus.Interface(bus.get_object('org.ofono', path),
- 					'org.ofono.SmartMessaging')
- =
-
--vcard =3D file(sys.argv[2]).read()
--path =3D manager.SendBusinessCard(sys.argv[1], vcard)
++					'org.ofono.SmartMessaging')
++
 +if len(sys.argv) =3D=3D 4:
-+	vcard =3D file(sys.argv[3]).read()
-+	path =3D sm.SendBusinessCard(sys.argv[2], vcard)
++	vcal =3D file(sys.argv[3]).read()
++	path =3D sm.SendAppointment(sys.argv[2], vcal)
 +else:
-+	vcard =3D file(sys.argv[2]).read()
-+	path =3D sm.SendBusinessCard(sys.argv[1], vcard)
- =
-
- print path
++	vcal =3D file(sys.argv[2]).read()
++	path =3D sm.SendAppointment(sys.argv[1], vcal)
++
++print path
 -- =
 
 1.7.1
@@ -81,5 +72,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============1559887156218195226==--
+--===============8981213478606208266==--
 
