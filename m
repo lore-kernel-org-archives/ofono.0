@@ -1,100 +1,199 @@
-Content-Type: multipart/mixed; boundary="===============8258161110491674111=="
+Content-Type: multipart/mixed; boundary="===============0901073983984477567=="
 MIME-Version: 1.0
 From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH 5/6] controlbase.ui: Add call mangement tab
-Date: Thu, 28 Apr 2011 11:49:38 +0200
-Message-ID: <1303984179-8333-6-git-send-email-nicolas.bertrand@linux.intel.com>
+Subject: [PATCH 6/6] control: Update call view
+Date: Thu, 28 Apr 2011 11:49:39 +0200
+Message-ID: <1303984179-8333-7-git-send-email-nicolas.bertrand@linux.intel.com>
 In-Reply-To: <1303984179-8333-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8258161110491674111==
+--===============0901073983984477567==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/controlbase.ui |   61 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 61 insertions(+), 0 deletions(-)
+ src/control.cpp |  100 +++++++++++++++++++++++++++++++++++++++++++++++++--=
+----
+ src/control.h   |    3 +-
+ 2 files changed, 91 insertions(+), 12 deletions(-)
 
-diff --git a/src/controlbase.ui b/src/controlbase.ui
-index cfadfe8..41c6d12 100644
---- a/src/controlbase.ui
-+++ b/src/controlbase.ui
-@@ -1458,6 +1458,67 @@ p, li { white-space: pre-wrap; }
-        </property>
-       </widget>
-      </widget>
-+     <widget class=3D"QWidget" name=3D"tab_9">
-+      <attribute name=3D"title">
-+       <string>Call</string>
-+      </attribute>
-+      <layout class=3D"QVBoxLayout" name=3D"verticalLayout_3">
-+       <item>
-+        <widget class=3D"QTableWidget" name=3D"twCallMgt">
-+         <property name=3D"columnCount">
-+          <number>5</number>
-+         </property>
-+         <attribute name=3D"horizontalHeaderMinimumSectionSize">
-+          <number>50</number>
-+         </attribute>
-+         <attribute name=3D"horizontalHeaderShowSortIndicator" stdset=3D"0=
-">
-+          <bool>true</bool>
-+         </attribute>
-+         <attribute name=3D"verticalHeaderDefaultSectionSize">
-+          <number>50</number>
-+         </attribute>
-+         <column>
-+          <property name=3D"text">
-+           <string>id</string>
-+          </property>
-+         </column>
-+         <column>
-+          <property name=3D"text">
-+           <string>number</string>
-+          </property>
-+         </column>
-+         <column>
-+          <property name=3D"text">
-+           <string>state</string>
-+          </property>
-+         </column>
-+         <column>
-+          <property name=3D"text">
-+           <string>name</string>
-+          </property>
-+         </column>
-+         <column>
-+          <property name=3D"text">
-+           <string>type</string>
-+          </property>
-+         </column>
-+        </widget>
-+       </item>
-+       <item>
-+        <spacer name=3D"verticalSpacer">
-+         <property name=3D"orientation">
-+          <enum>Qt::Vertical</enum>
-+         </property>
-+         <property name=3D"sizeHint" stdset=3D"0">
-+          <size>
-+           <width>20</width>
-+           <height>40</height>
-+          </size>
-+         </property>
-+        </spacer>
-+       </item>
-+      </layout>
-+     </widget>
-     </widget>
-    </item>
-    <item>
+diff --git a/src/control.cpp b/src/control.cpp
+index 2f12d91..dec3aea 100644
+--- a/src/control.cpp
++++ b/src/control.cpp
+@@ -136,14 +136,79 @@ Control::~Control()
+ =
+
+ void Control::callManagement( QList<CallInfo> *list )
+ {
++	int row =3D 0;
+ 	bool enableCSSU =3D false;
+ 	bool enableCSSI =3D false;
+ =
+
++	widget->clearCallView();
++
+ 	foreach( CallInfo i, *list ) {
++		QString param[5];
++
+ 		if ( i.incoming && !enableCSSU )
+ 			enableCSSU =3D true;
+ 		if ( !i.incoming && !enableCSSI )
+ 			enableCSSI =3D true;
++
++		param[0].setNum( i.id );
++		param[1] =3D i.number;
++
++		switch( i.state ) {
++
++            case CallState_Active:
++            {
++                param[2] =3D "Active";
++            }
++            break;
++
++            case CallState_Held:
++            {
++                param[2] =3D "Held";
++            }
++            break;
++
++            case CallState_Dialing:
++            {
++                param[2] =3D "Dialing";
++            }
++            break;
++
++            case CallState_Alerting:
++            {
++                param[2] =3D "Alerting";
++            }
++            break;
++
++            case CallState_Incoming:
++            {
++                param[2] =3D "Incoming";
++            }
++            break;
++
++            case CallState_Waiting:
++            {
++                param[2] =3D "Waiting";
++            }
++            break;
++
++            case CallState_Hangup:
++            {
++                param[2] =3D "Hangup";
++            }
++            break;
++
++            case CallState_SwapDummy:
++            {
++                param[2] =3D "SwapDummy";
++            }
++            break;
++		}
++
++		param[3] =3D i.name;
++		param[4] =3D i.incoming ? "incoming" : "outgoing";
++
++		widget->updateCallView( param, row );
++		row++;
+ 	}
+ =
+
+ 	widget->CSSIactivation( enableCSSI );
+@@ -160,6 +225,20 @@ void ControlWidget::CSSUactivation( bool enableCSSU )
+     ui->cbCSSU->setEnabled( enableCSSU );
+ }
+ =
+
++void ControlWidget::clearCallView()
++{
++    ui->twCallMgt->clearContents();
++}
++
++void ControlWidget::updateCallView( QString callParameters [5], int row )
++{
++	if ( row > ui->twCallMgt->rowCount() - 1 )
++		ui->twCallMgt->insertRow( row );
++
++	for ( int i =3D 0; i < 5; i++ )
++		ui->twCallMgt->setItem( row, i, new QTableWidgetItem( callParameters[i] =
+) );
++}
++
+ void Control::setPhoneNumber( const QString &number )
+ {
+     widget->setWindowTitle("Phonesim - Number: " + number);
+@@ -172,20 +251,19 @@ void Control::warning( const QString &title, const QS=
+tring &message )
+ =
+
+ void ControlWidget::handleCSSNNotif()
+ {
+-
+     ui->cbCSSU->setEnabled( false );
+     ui->cbCSSI->setEnabled( false );
+ =
+
+-    ui->cbCSSU->insertItem(0, "");
+-    ui->cbCSSU->insertItem(1, "0 - forwarded", 0);
+-    ui->cbCSSU->insertItem(3, "2 - on hold", 2);
+-    ui->cbCSSU->insertItem(4, "3 - retrieved", 3);
+-    ui->cbCSSU->insertItem(5, "4 - multiparty", 4);
++    ui->cbCSSU->insertItem( 0, "" );
++    ui->cbCSSU->insertItem( 1, "0 - forwarded", 0 );
++    ui->cbCSSU->insertItem( 3, "2 - on hold", 2 );
++    ui->cbCSSU->insertItem( 4, "3 - retrieved", 3 );
++    ui->cbCSSU->insertItem( 5, "4 - multiparty", 4 );
+ =
+
+-    ui->cbCSSI->insertItem(0, "");
+-    ui->cbCSSI->insertItem(3, "2 - forwarded", 2);
+-    ui->cbCSSI->insertItem(6, "5 - outgoing barred", 5);
+-    ui->cbCSSI->insertItem(7, "6 - incomming barred", 6);
++    ui->cbCSSI->insertItem( 0, "" );
++    ui->cbCSSI->insertItem( 3, "2 - forwarded", 2 );
++    ui->cbCSSI->insertItem( 6, "5 - outgoing barred", 5 );
++    ui->cbCSSI->insertItem( 7, "6 - incomming barred", 6 );
+ }
+ =
+
+ void ControlWidget::sendCSSN()
+@@ -195,7 +273,7 @@ void ControlWidget::sendCSSN()
+     if ( v.canConvert<int>() && ui->cbCSSU->isEnabled() )
+         emit unsolicitedCommand( "+CSSU: "+QString::number( v.toInt() ) );
+ =
+
+-    v =3D ui->cbCSSI->itemData(ui->cbCSSI->currentIndex());
++    v =3D ui->cbCSSI->itemData( ui->cbCSSI->currentIndex() );
+ =
+
+     if ( v.canConvert<int>() && ui->cbCSSI->isEnabled() )
+         emit unsolicitedCommand( "+CSSI: "+QString::number( v.toInt() ) );
+diff --git a/src/control.h b/src/control.h
+index 2ccde29..20bdc86 100644
+--- a/src/control.h
++++ b/src/control.h
+@@ -74,7 +74,8 @@ public:
+     void handleCSSNNotif();
+     void CSSUactivation( bool enableCSSU );
+     void CSSIactivation( bool enableCSSI );
+-
++    void updateCallView( QString callParameters [5], int row );
++    void clearCallView();
+ =
+
+ private slots:
+     void sendSQ();
 -- =
 
 1.7.1
 
 
---===============8258161110491674111==--
+--===============0901073983984477567==--
 
