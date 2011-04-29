@@ -1,101 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============6041732053305135113=="
+Content-Type: multipart/mixed; boundary="===============6054878897584276695=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH_v2 2/4] emulator: add routine to request/release private
- network from ConnMan
-Date: Fri, 29 Apr 2011 12:06:20 +0200
-Message-ID: <4DBA8D9C.2000106@linux.intel.com>
-In-Reply-To: <4DB9C266.4020605@gmail.com>
+Subject: Re: [PATCH_v2 1/4] gatppp: Add new contructor to use external fd
+Date: Fri, 29 Apr 2011 15:12:58 +0200
+Message-ID: <4DBAB95A.9050104@linux.intel.com>
+In-Reply-To: <4DB9C2E3.9060301@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6041732053305135113==
+--===============6054878897584276695==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-On 28/04/2011 21:39, Denis Kenzior wrote:
+On 28/04/2011 21:41, Denis Kenzior wrote:
 > Hi Guillaume,
 >
-> On 04/28/2011 08:29 AM, Guillaume Zajac wrote:
->> Hi Denis,
+>>>>>> +        /* create a channel for reading and writing to this
+>>>>>> interface */
+>>>>>> +        channel =3D g_io_channel_unix_new(fd);
+>>>>>> +    }
+>>>>> There's a small problem of symmetry here.  If IPCP is established
+>>>>> correctly, then the fd will eventually be closed by ppp_net.  However,
+>>>>> if we never properly establish IPCP, then fd will not be closed.  What
+>>>>> is actually expected by ConnMan?
+>>>>>
+>>>> In the case we don't properly establish the IPCP, ppp_disconnect CB of
+>>>> emulator will be called.
+>>>> Then, we will call the release_private_network DBus method. This method
+>>>> will close the fd if it is opened.
+>>>>
+>>> Again, we're writing a library.  We cannot assume some behavior external
+>>> to the library is going to save us.  So I really suggest we make closing
+>>> of the fd symmetric.
+>> So I will close the fd into g_at_ppp_unref() if it is>=3D0.
+>> I have also to close it if we fail to create the PPP server.
 >>
->> On 27/04/2011 05:25, Denis Kenzior wrote:
->>> Hi Guillaume,
->>>
->>> On 04/22/2011 07:06 AM, Guillaume Zajac wrote:
->>>> +typedef void (*network_request)(struct ofono_error *, int *,
->>>> +                const char **, const char **,
->>>> +                const char **, const char **);
->>>> +typedef void (*network_release)(void);
->>>> +
->>>> +void ofono_emulator_add_network_request_cb(struct ofono_emulator *em,
->>>> +                            network_request cb);
->>>> +void ofono_emulator_add_network_release_cb(struct ofono_emulator *em,
->>>> +                            network_release cb);
->>>> +
->>> I really don't like this, you're re-inventing the wheel here.  We
->>> already solved this pattern a while ago ;)  I suggest you look at
->>> include/gprs-provision.h and examples/provision.c
->> In looking the example, I should create some emulator network drivers to
->> get settings and release the network like:
->>
->> struct emulator_network{
->>      ...
->> }
-> struct private_network_settings or something might be better
->
+> Right.  Your approach doesn't sound completely correct, but I will let
+> you figure this out.  Just make sure to close the fd in all circumstances.
 
-Ok
+In looking the previous implementation in ppp_net_new(),
+there is just:
 
->> struct emulator_network_provision_driver{
->>      char *name;
->>      (void)(*get_settings)(struct emulator_network **out_en);
-> You will probably need to make this async, and allow cancellation, since
-> there can be multiple emulators requesting private networks
-> concurrently.  This probably means you need to return a unique
-> identifier as well.
->
+fd =3D open("/dev/net/tun", ...);
+...
+net->channel =3D g_io_channel_unix_new(fd);
 
-Concerning asynchronism and cancellation,
-I don't see the use case here, do you mean:
-     - on a device with multiple modems, we have one DUN emulator per modem
-     - 2 clients request DUN data call on this device, data call will be =
+However, the fd is never closed when we do ppp_net_free()
+We just unref the net->channel
 
-redirected to each modem by ConnMan.
-     - oFono will ask for 2 private network settings, however ConnMan =
+So should we do in ppp_net_free() a:
+fd =3D g_io_channel_unix_get_fd(net->channel);
+close(fd);
+g_io_channel_unref(net->channel);
 
-can't handle this case, so we should
-       avoid this case from oFono by cancelling the 1 of the request.
+Or maybe I miss something?
 
-how should we priotirize it?
-Could that be a concrete use case?
+In the new implementation, in the case we don't establish the IPCP, we =
 
->>      (void)(*release)(void);
-> And you need to take the unique id as input here.
+still have the fd of ConnMan opened.
+ppp->net =3D=3D NULL so in the g_at_ppp_unref() we can do:
 
-I can store the private_network_settings into ofono_emulator. Then I =
+if (ppp->net)
+         ppp_net_free(ppp->net); /* We close the fd  like above */
+else {
+         if( fd >=3D 0)
+                 close(ppp->fd); /* We don't have established IPCP, we =
 
-pass it as input of the release function.
-
->> }
->>
->> and un/register drivers into emulator.c
->>
->>> Regards,
->>> -Denis
->>>
->> Kind regards,
->> Guillaume
-> Regards,
-> -Denis
->
+need to close the fd from ConnMan */
+         }
 
 Kind regards,
 Guillaume
 
-
---===============6041732053305135113==--
+--===============6054878897584276695==--
 
