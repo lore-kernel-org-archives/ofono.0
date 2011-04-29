@@ -1,91 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============3930472081192621648=="
+Content-Type: multipart/mixed; boundary="===============6155548706247257227=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v2 1/4] gatppp: Add new contructor to use external fd
-Date: Fri, 29 Apr 2011 03:52:49 -0500
-Message-ID: <4DBA7C61.6020203@gmail.com>
-In-Reply-To: <4DBAB95A.9050104@linux.intel.com>
+Subject: Re: [PATCH_v2 2/4] emulator: add routine to request/release private
+ network from ConnMan
+Date: Fri, 29 Apr 2011 03:59:45 -0500
+Message-ID: <4DBA7E01.6070304@gmail.com>
+In-Reply-To: <4DBA8D9C.2000106@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3930472081192621648==
+--===============6155548706247257227==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Guillaume,
 
-On 04/29/2011 08:12 AM, Guillaume Zajac wrote:
-> Hi Denis,
-> =
-
-> On 28/04/2011 21:41, Denis Kenzior wrote:
->> Hi Guillaume,
+>>> struct emulator_network_provision_driver{
+>>>      char *name;
+>>>      (void)(*get_settings)(struct emulator_network **out_en);
+>> You will probably need to make this async, and allow cancellation, since
+>> there can be multiple emulators requesting private networks
+>> concurrently.  This probably means you need to return a unique
+>> identifier as well.
 >>
->>>>>>> +        /* create a channel for reading and writing to this
->>>>>>> interface */
->>>>>>> +        channel =3D g_io_channel_unix_new(fd);
->>>>>>> +    }
->>>>>> There's a small problem of symmetry here.  If IPCP is established
->>>>>> correctly, then the fd will eventually be closed by ppp_net. =
-
->>>>>> However,
->>>>>> if we never properly establish IPCP, then fd will not be closed. =
-
->>>>>> What
->>>>>> is actually expected by ConnMan?
->>>>>>
->>>>> In the case we don't properly establish the IPCP, ppp_disconnect CB of
->>>>> emulator will be called.
->>>>> Then, we will call the release_private_network DBus method. This
->>>>> method
->>>>> will close the fd if it is opened.
->>>>>
->>>> Again, we're writing a library.  We cannot assume some behavior
->>>> external
->>>> to the library is going to save us.  So I really suggest we make
->>>> closing
->>>> of the fd symmetric.
->>> So I will close the fd into g_at_ppp_unref() if it is>=3D0.
->>> I have also to close it if we fail to create the PPP server.
->>>
->> Right.  Your approach doesn't sound completely correct, but I will let
->> you figure this out.  Just make sure to close the fd in all
->> circumstances.
 > =
 
-> In looking the previous implementation in ppp_net_new(),
-> there is just:
-> =
+> Concerning asynchronism and cancellation,
+> I don't see the use case here, do you mean:
+>     - on a device with multiple modems, we have one DUN emulator per modem
+>     - 2 clients request DUN data call on this device, data call will be
+> redirected to each modem by ConnMan.
+>     - oFono will ask for 2 private network settings, however ConnMan
 
-> fd =3D open("/dev/net/tun", ...);
-> ...
-> net->channel =3D g_io_channel_unix_new(fd);
-> =
+You can have several modems in the system with DUN connections.  You
+might have several DUN connection transports active, e.g. USB & BT, or
+you might simply have several clients on the same transport.
 
-> However, the fd is never closed when we do ppp_net_free()
-> We just unref the net->channel
-> =
-
-> So should we do in ppp_net_free() a:
-> fd =3D g_io_channel_unix_get_fd(net->channel);
-> close(fd);
-> g_io_channel_unref(net->channel);
-> =
-
-> Or maybe I miss something?
+> can't handle this case, so we should
+>       avoid this case from oFono by cancelling the 1 of the request.
 > =
 
 
-You are, namely the call to:
+Is ConnMan only handing out 1 IP per application?  If so that is not
+enough for oFono...
 
-        if (!g_at_util_setup_io(channel, 0))
-                goto error;
+> how should we priotirize it?
+> Could that be a concrete use case?
+> =
 
-which sets the close on unref flag on the GIOChannel.
+>>>      (void)(*release)(void);
+>> And you need to take the unique id as input here.
+> =
+
+> I can store the private_network_settings into ofono_emulator. Then I
+> pass it as input of the release function.
+> =
+
+
+Won't work as you might need to cancel a request that is still pending.
 
 Regards,
 -Denis
 
---===============3930472081192621648==--
+--===============6155548706247257227==--
 
