@@ -1,44 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============7383127999513748132=="
+Content-Type: multipart/mixed; boundary="===============3697704363290331981=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [RFC PATCH 0/9] Emergency Mode
-Date: Fri, 01 Apr 2011 01:47:12 +0300
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802EF018B@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <1301593388.2572.147.camel@aeonflux>
+From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
+Subject: [PATCH v2 0/6] phonesim: Add call status UI 
+Date: Mon, 02 May 2011 11:17:12 +0200
+Message-ID: <1304327838-11164-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7383127999513748132==
+--===============3697704363290331981==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+This  patch introduce a new tab "call" in phonesim UI in order to display c=
+alls
+informationsi (id, number, status, name and direction).
+The interface to send CSSU and CSSI notification is now dynamic based on the
+type of current calls.
+Fix some coding-style violations.
 
-ofono-bounces(a)ofono.org wrote:
-> Hi Jeevaka,
-> =
+Nicolas Bertrand (6):
+  callmanager: Add signal on call status change
+  control: Update UI using call status
+  hardwaremanipulator: add callmanagement method
+  phonesim: Connect call status signal
+  controlbase.ui: Add call mangement tab
+  control: Update call view
 
->>  Following patch is a proposal for emergency mode. Test has been
->> done with the phonesim. =
-
->> =
-
->> Listed down few important cases to give an overview of the state
->> changes that happen in each case.
-> =
-
-> and I think we should turn this into a
-> doc/emergency-call-handling.txt and extend a bit. Especially
-> with what is expected from the user/UI to be done and what
-> oFono will do for the user/UI.
-> =
+ src/callmanager.cpp         |   22 +++++++
+ src/callmanager.h           |    3 +
+ src/control.cpp             |  140 ++++++++++++++++++++++++++++++++++++++-=
+----
+ src/control.h               |    6 ++
+ src/controlbase.ui          |   61 +++++++++++++++++++
+ src/hardwaremanipulator.cpp |    4 +
+ src/hardwaremanipulator.h   |    2 +
+ src/phonesim.cpp            |    2 +
+ 8 files changed, 224 insertions(+), 16 deletions(-)
 
 
-agreed. Will be done with next version of this patch set.
-
-Regards,
-Jeevaka
-
---===============7383127999513748132==--
+--===============3697704363290331981==--
 
