@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============1614057099179454952=="
+Content-Type: multipart/mixed; boundary="===============8570786332155470602=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3 09/26] gathdlc: add g_at_hdlc_suspend() definition
-Date: Mon, 02 May 2011 07:24:31 -0500
-Message-ID: <4DBEA27F.4080009@gmail.com>
-In-Reply-To: <1301648188-7208-10-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH v3 13/26] gatppp: add g_at_ppp_suspend() definition
+Date: Mon, 02 May 2011 07:26:36 -0500
+Message-ID: <4DBEA2FC.4000801@gmail.com>
+In-Reply-To: <1301648188-7208-14-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1614057099179454952==
+--===============8570786332155470602==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,35 +17,39 @@ Hi Guillaume,
 
 On 04/01/2011 03:56 AM, Guillaume Zajac wrote:
 > ---
->  gatchat/gathdlc.c |    9 +++++++++
+>  gatchat/gatppp.c |    9 +++++++++
 >  1 files changed, 9 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/gatchat/gathdlc.c b/gatchat/gathdlc.c
-> index db4ad5a..37f2539 100644
-> --- a/gatchat/gathdlc.c
-> +++ b/gatchat/gathdlc.c
-> @@ -595,3 +595,12 @@ void g_at_hdlc_set_no_carrier_detect(GAtHDLC *hdlc, =
-gboolean detect)
+> diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+> index 9df6b8e..5f005fe 100644
+> --- a/gatchat/gatppp.c
+> +++ b/gatchat/gatppp.c
+> @@ -484,6 +484,15 @@ void g_at_ppp_shutdown(GAtPPP *ppp)
+>  	pppcp_signal_close(ppp->lcp);
+>  }
 >  =
 
->  	hdlc->no_carrier_detect =3D detect;
->  }
-> +
-> +void g_at_hdlc_suspend(GAtHDLC *hdlc)
+> +void g_at_ppp_suspend(GAtPPP *ppp)
 > +{
-> +	if (hdlc =3D=3D NULL)
+> +	if (ppp =3D=3D NULL)
 > +		return;
 > +
-> +	g_at_io_set_write_handler(hdlc->io, NULL, NULL);
-> +	g_at_io_set_read_handler(hdlc->io, NULL, NULL);
+> +	ppp_net_suspend_interface(ppp->net);
+> +	g_at_hdlc_suspend(ppp->hdlc);
 > +}
+> +
 
-What do you think of simply putting this into the function that calls
-the HDLC suspend callback?
+What do you think of automatically calling ppp_net_suspend_interface
+when the ppp suspend callback is triggered?  e.g. using a proxy function
+in g_at_ppp_set_suspend_function.
+
+>  void g_at_ppp_ref(GAtPPP *ppp)
+>  {
+>  	g_atomic_int_inc(&ppp->ref_count);
 
 Regards,
 -Denis
 
---===============1614057099179454952==--
+--===============8570786332155470602==--
 
