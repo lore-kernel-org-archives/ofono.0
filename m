@@ -1,41 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============7575871098016347497=="
+Content-Type: multipart/mixed; boundary="===============2811466356817061386=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [PATCH] isimodem: use a specific call id when answering
-Date: Tue, 03 May 2011 22:10:56 +0300
-Message-ID: <BANLkTinKerbiztsMN9LJS49+HQTJV85Q7g@mail.gmail.com>
-In-Reply-To: <4DB979A4.8010300@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v3 01/26] gat: add GAtSuspendFunc CB typedef
+Date: Mon, 02 May 2011 07:08:22 -0500
+Message-ID: <4DBE9EB6.3070809@gmail.com>
+In-Reply-To: <1301648188-7208-2-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7575871098016347497==
+--===============2811466356817061386==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Guillaume,
 
-2011/4/28 Denis Kenzior <denkenz@gmail.com>:
-'>> + =C2=A0 =C2=A0 for (id =3D 1; id <=3D 7; id++) {
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 switch (ivc->calls[id].statu=
-s) {
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 case CALL_STATUS_COMING:
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 case CALL_STATUS_MT_ALERTING:
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 case CALL_STATUS_WAITING:
->
-> oFono expects answer to only work on 'incoming' calls in the traditional
-> sense. =C2=A0Is waiting status equivalent to CCWA here? If so, it might be
-> better to leave it out here.
+On 04/01/2011 03:56 AM, Guillaume Zajac wrote:
+> ---
+>  gatchat/gat.h |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
+> =
 
-isi_answer() is called by both .answer and .release_all_active
-methods, so I included the WAITING state here, too.
 
-Answering a waiting call is a tricky, I'll try to see if it can be
-made in a more robust manner.
+Patch has been applied, thanks.
 
--- =
+Regards,
+-Denis
 
-Pekka.Pessi mail at nokia.com
-
---===============7575871098016347497==--
+--===============2811466356817061386==--
 
