@@ -1,264 +1,309 @@
-Content-Type: multipart/mixed; boundary="===============3946188064222735098=="
+Content-Type: multipart/mixed; boundary="===============0234562586093495179=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v3 1/3] gatppp: Add new contructor to use external fd
-Date: Tue, 03 May 2011 16:44:41 +0200
-Message-ID: <1304433883-3806-2-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v3 3/3] connman: add plugin in oFono to request
+ request/release private network
+Date: Tue, 03 May 2011 16:44:43 +0200
+Message-ID: <1304433883-3806-4-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1304433883-3806-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3946188064222735098==
+--===============0234562586093495179==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatppp.c  |   48 ++++++++++++++++++++++++++++++++++++++++++---
- gatchat/gatppp.h  |    1 +
- gatchat/ppp.h     |    2 +-
- gatchat/ppp_net.c |   55 +++++++++++++++++++++++++++++++++----------------=
----
- 4 files changed, 81 insertions(+), 25 deletions(-)
+ Makefile.am       |    3 +
+ plugins/connman.c |  255 +++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 258 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/connman.c
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index 993b5ea..c7cc28b 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -76,6 +76,7 @@ struct _GAtPPP {
- 	gpointer debug_data;
- 	gboolean sta_pending;
- 	guint ppp_dead_source;
-+	int fd;
- };
+diff --git a/Makefile.am b/Makefile.am
+index a413a47..37f9468 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -339,6 +339,9 @@ builtin_sources +=3D plugins/hfp_ag.c plugins/bluetooth=
+.h
+ builtin_modules +=3D dun_gw
+ builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
  =
 
- void ppp_debug(GAtPPP *ppp, const char *str)
-@@ -288,7 +289,7 @@ void ppp_auth_notify(GAtPPP *ppp, gboolean success)
- void ppp_ipcp_up_notify(GAtPPP *ppp, const char *local, const char *peer,
- 					const char *dns1, const char *dns2)
- {
--	ppp->net =3D ppp_net_new(ppp);
-+	ppp->net =3D ppp_net_new(ppp, ppp->fd);
- =
-
- 	if (ppp->net =3D=3D NULL) {
- 		ppp->disconnect_reason =3D G_AT_PPP_REASON_NET_FAIL;
-@@ -296,8 +297,14 @@ void ppp_ipcp_up_notify(GAtPPP *ppp, const char *local=
-, const char *peer,
- 		return;
- 	}
- =
-
--	if (ppp_net_set_mtu(ppp->net, ppp->mtu) =3D=3D FALSE)
--		DBG(ppp, "Unable to set MTU");
-+	/*
-+	 * If we have opened the tun interface locally,
-+	 * we have to set a MTU value.
-+	 */
-+	if (ppp->fd < 0) {
-+		if (ppp_net_set_mtu(ppp->net, ppp->mtu) =3D=3D FALSE)
-+			DBG(ppp, "Unable to set MTU");
-+	}
- =
-
- 	ppp_enter_phase(ppp, PPP_PHASE_LINK_UP);
- =
-
-@@ -314,6 +321,7 @@ void ppp_ipcp_down_notify(GAtPPP *ppp)
- 		return;
- =
-
- 	ppp_net_free(ppp->net);
-+	ppp->fd =3D -1;
- 	ppp->net =3D NULL;
- }
- =
-
-@@ -496,8 +504,13 @@ void g_at_ppp_unref(GAtPPP *ppp)
- 	g_at_io_set_disconnect_function(g_at_hdlc_get_io(ppp->hdlc),
- 						NULL, NULL);
- =
-
--	if (ppp->net)
-+	if (ppp->net) {
- 		ppp_net_free(ppp->net);
-+	}
-+	else {
-+		if (ppp->fd >=3D 0)
-+			close(ppp->fd);
-+	}
- =
-
- 	if (ppp->chap)
- 		ppp_chap_free(ppp->chap);
-@@ -541,6 +554,8 @@ static GAtPPP *ppp_init_common(GAtHDLC *hdlc, gboolean =
-is_server, guint32 ip)
- =
-
- 	ppp->ref_count =3D 1;
- =
-
-+	ppp->fd =3D -1;
++builtin_modules +=3D connman
++builtin_sources +=3D plugins/connman.c
 +
- 	/* set options to defaults */
- 	ppp->mru =3D DEFAULT_MRU;
- 	ppp->mtu =3D DEFAULT_MTU;
-@@ -633,3 +648,28 @@ GAtPPP *g_at_ppp_server_new_from_io(GAtIO *io, const c=
-har *local)
- =
-
- 	return ppp;
- }
+ builtin_sources +=3D $(btio_sources)
+ builtin_cflags +=3D @BLUEZ_CFLAGS@
+ builtin_libadd +=3D @BLUEZ_LIBS@
+diff --git a/plugins/connman.c b/plugins/connman.c
+new file mode 100644
+index 0000000..47d4654
+--- /dev/null
++++ b/plugins/connman.c
+@@ -0,0 +1,255 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
-+GAtPPP *g_at_ppp_server_new_full(GAtIO *io, const char *local, int fd)
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <errno.h>
++#include <stdlib.h>
++#include <unistd.h>
++
++#include <gdbus.h>
++#include <string.h>
++
++#include <ofono.h>
++#include <emulator.h>
++
++#define CONNMAN_SERVICE			"net.connman"
++#define CONNMAN_PATH			"/net/connman"
++
++#define CONNMAN_DEBUG_INTERFACE		CONNMAN_SERVICE ".Debug"
++#define CONNMAN_ERROR_INTERFACE		CONNMAN_SERVICE ".Error"
++#define CONNMAN_AGENT_INTERFACE		CONNMAN_SERVICE ".Agent"
++#define CONNMAN_COUNTER_INTERFACE	CONNMAN_SERVICE ".Counter"
++
++#define CONNMAN_MANAGER_INTERFACE	CONNMAN_SERVICE ".Manager"
++#define CONNMAN_MANAGER_PATH		"/"
++
++#define CONNMAN_TASK_INTERFACE		CONNMAN_SERVICE ".Task"
++#define CONNMAN_PROFILE_INTERFACE	CONNMAN_SERVICE ".Profile"
++#define CONNMAN_SERVICE_INTERFACE	CONNMAN_SERVICE ".Service"
++#define CONNMAN_PROVIDER_INTERFACE	CONNMAN_SERVICE ".Provider"
++#define CONNMAN_TECHNOLOGY_INTERFACE	CONNMAN_SERVICE ".Technology"
++#define CONNMAN_SESSION_INTERFACE	CONNMAN_SERVICE ".Session"
++#define CONNMAN_NOTIFICATION_INTERFACE	CONNMAN_SERVICE ".Notification"
++
++static DBusConnection *connection;
++static GHashTable *pending_calls;
++static int id;
++
++static void settings_reply(DBusPendingCall *call, void *user_data)
 +{
-+	GAtHDLC *hdlc;
-+	GAtPPP *ppp;
-+	guint32 ip;
++	struct ofono_emulator *em =3D user_data;
++	DBusMessageIter array, dict, entry;
++	DBusMessage *reply;
++	int fd =3D -1;
++	const char *server_ip =3D NULL;
++	const char *peer_ip =3D NULL;
++	const char *primary_dns =3D NULL;
++	const char *secondary_dns =3D NULL;
++	int uid =3D ofono_emulator_get_uid(em);
 +
-+	if (local =3D=3D NULL)
-+		ip =3D 0;
-+	else if (inet_pton(AF_INET, local, &ip) !=3D 1)
-+		return NULL;
++	reply =3D dbus_pending_call_steal_reply(call);
 +
-+	hdlc =3D g_at_hdlc_new_from_io(io);
-+	if (hdlc =3D=3D NULL)
-+		return NULL;
-+
-+	ppp =3D ppp_init_common(hdlc, TRUE, ip);
-+
-+	/* Set the fd value returned by ConnMan */
-+	ppp->fd =3D fd;
-+
-+	g_at_hdlc_unref(hdlc);
-+
-+	return ppp;
-+}
-diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
-index fb5de4c..825c022 100644
---- a/gatchat/gatppp.h
-+++ b/gatchat/gatppp.h
-@@ -54,6 +54,7 @@ GAtPPP *g_at_ppp_new(GIOChannel *modem);
- GAtPPP *g_at_ppp_new_from_io(GAtIO *io);
- GAtPPP *g_at_ppp_server_new(GIOChannel *modem, const char *local);
- GAtPPP *g_at_ppp_server_new_from_io(GAtIO *io, const char *local);
-+GAtPPP *g_at_ppp_server_new_full(GAtIO *io, const char *local, int fd);
- =
-
- void g_at_ppp_open(GAtPPP *ppp);
- void g_at_ppp_set_connect_function(GAtPPP *ppp, GAtPPPConnectFunc callback,
-diff --git a/gatchat/ppp.h b/gatchat/ppp.h
-index d2786d7..8107820 100644
---- a/gatchat/ppp.h
-+++ b/gatchat/ppp.h
-@@ -102,7 +102,7 @@ void ppp_chap_free(struct ppp_chap *chap);
- void ppp_chap_process_packet(struct ppp_chap *chap, const guint8 *new_pack=
-et);
- =
-
- /* TUN / Network related functions */
--struct ppp_net *ppp_net_new(GAtPPP *ppp);
-+struct ppp_net *ppp_net_new(GAtPPP *ppp, int fd);
- const char *ppp_net_get_interface(struct ppp_net *net);
- void ppp_net_process_packet(struct ppp_net *net, const guint8 *packet);
- void ppp_net_free(struct ppp_net *net);
-diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
-index 1a6cdf7..1a56a3c 100644
---- a/gatchat/ppp_net.c
-+++ b/gatchat/ppp_net.c
-@@ -123,12 +123,13 @@ const char *ppp_net_get_interface(struct ppp_net *net)
- 	return net->if_name;
- }
- =
-
--struct ppp_net *ppp_net_new(GAtPPP *ppp)
-+struct ppp_net *ppp_net_new(GAtPPP *ppp, int fd)
- {
- 	struct ppp_net *net;
- 	GIOChannel *channel =3D NULL;
- 	struct ifreq ifr;
--	int fd, err;
-+	int fdesc =3D -1;
-+	int err;
- =
-
- 	net =3D g_try_new0(struct ppp_net, 1);
- 	if (net =3D=3D NULL)
-@@ -140,23 +141,37 @@ struct ppp_net *ppp_net_new(GAtPPP *ppp)
- 		return NULL;
- 	}
- =
-
--	/* open a tun interface */
--	fd =3D open("/dev/net/tun", O_RDWR);
--	if (fd < 0)
--		goto error;
--
--	memset(&ifr, 0, sizeof(ifr));
--	ifr.ifr_flags =3D IFF_TUN | IFF_NO_PI;
--	strcpy(ifr.ifr_name, "ppp%d");
--
--	err =3D ioctl(fd, TUNSETIFF, (void *) &ifr);
--	if (err < 0)
--		goto error;
--
--	net->if_name =3D strdup(ifr.ifr_name);
-+	/*
-+	 * If the fd value is still the default one,
-+	 * open the tun interface and configure it.
-+	 */
-+	if (fd < 0) {
-+		/* open a tun interface */
-+		fdesc =3D open("/dev/net/tun", O_RDWR);
-+		if (fdesc < 0)
-+			goto error;
-+
-+		memset(&ifr, 0, sizeof(ifr));
-+		ifr.ifr_flags =3D IFF_TUN | IFF_NO_PI;
-+		strcpy(ifr.ifr_name, "ppp%d");
-+
-+		err =3D ioctl(fdesc, TUNSETIFF, (void *) &ifr);
-+		if (err < 0)
-+			goto error;
-+
-+		net->if_name =3D strdup(ifr.ifr_name);
-+		/* create a channel for reading and writing to this interface */
-+		channel =3D g_io_channel_unix_new(fdesc);
-+	} else {
-+		err =3D ioctl(fd, TUNGETIFF, (void *) &ifr);
-+		if (err < 0)
-+			goto error;
-+
-+		net->if_name =3D strdup(ifr.ifr_name);
-+		/* create a channel for reading and writing to this interface */
-+		channel =3D g_io_channel_unix_new(fd);
++	if (!reply) {
++		g_hash_table_remove(pending_calls, &uid);
++		dbus_pending_call_unref(call);
 +	}
- =
-
--	/* create a channel for reading and writing to this interface */
--	channel =3D g_io_channel_unix_new(fd);
- 	if (channel =3D=3D NULL)
- 		goto error;
- =
-
-@@ -178,8 +193,8 @@ error:
- 	if (channel)
- 		g_io_channel_unref(channel);
- =
-
--	if (fd >=3D 0)
--		close(fd);
-+	if (fdesc >=3D 0)
-+		close(fdesc);
- =
-
- 	g_free(net->if_name);
- 	g_free(net->ppp_packet);
++
++	if (dbus_message_iter_init(reply, &array) =3D=3D FALSE)
++		goto done;
++
++	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_UNIX_FD)
++		goto done;
++
++	dbus_message_iter_get_basic(&array, &fd);
++	g_print("Fildescriptor =3D %d\n", fd);
++
++	dbus_message_iter_next(&array);
++
++	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_ARRAY)
++		goto done;
++
++	dbus_message_iter_recurse(&array, &dict);
++
++	while (dbus_message_iter_get_arg_type(&dict) =3D=3D DBUS_TYPE_DICT_ENTRY)=
+ {
++		DBusMessageIter iter;
++		const char *key;
++		int type;
++
++		dbus_message_iter_recurse(&dict, &entry);
++
++		dbus_message_iter_get_basic(&entry, &key);
++
++		g_print("key %s", key);
++
++		dbus_message_iter_next(&entry);
++		dbus_message_iter_recurse(&entry, &iter);
++
++		type =3D dbus_message_iter_get_arg_type(&iter);
++		if (type !=3D DBUS_TYPE_STRING)
++			break;
++
++		if (g_str_equal(key, "ServerIPv4")
++				&& type =3D=3D DBUS_TYPE_STRING) {
++			dbus_message_iter_get_basic(&iter, &server_ip);
++			g_print(" =3D %s\n", server_ip);
++
++		} else if (g_str_equal(key, "PeerIPv4")
++				&& type =3D=3D DBUS_TYPE_STRING) {
++			dbus_message_iter_get_basic(&iter, &peer_ip);
++			g_print(" =3D %s\n", peer_ip);
++
++		} else if (g_str_equal(key, "PrimaryDNS")
++				&& type =3D=3D DBUS_TYPE_STRING) {
++			dbus_message_iter_get_basic(&iter, &primary_dns);
++			g_print(" =3D %s\n", primary_dns);
++
++		} else if (g_str_equal(key, "SecondaryDNS")
++				&& type =3D=3D DBUS_TYPE_STRING) {
++			dbus_message_iter_get_basic(&iter, &secondary_dns);
++			g_print(" =3D %s\n", secondary_dns);
++		}
++
++		dbus_message_iter_next(&dict);
++	}
++
++	if (server_ip =3D=3D NULL || peer_ip =3D=3D NULL ||
++		primary_dns =3D=3D NULL || secondary_dns =3D=3D NULL) {
++		ofono_error("Error while reading dictionnary...\n");
++		goto done;
++	}
++
++	ofono_emulator_setup_ppp(em, fd, server_ip, peer_ip, primary_dns,
++					secondary_dns);
++
++done:
++	g_hash_table_remove(pending_calls, &uid);
++	dbus_message_unref(reply);
++	dbus_pending_call_unref(call);
++}
++
++static int pn_get_settings(struct ofono_emulator *em)
++{
++	DBusMessage *message;
++	DBusPendingCall *call;
++
++	DBG("");
++
++	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
++				     CONNMAN_MANAGER_PATH,
++				     CONNMAN_MANAGER_INTERFACE,
++				     "RequestPrivateNetwork");
++
++	if (message =3D=3D NULL)
++		return -ENOMEM;
++
++	if (dbus_connection_send_with_reply(connection,
++				message, &call, 5000) =3D=3D FALSE) {
++		ofono_error("Error while sending message...");
++		dbus_message_unref(message);
++		return -EIO;
++	}
++
++	dbus_pending_call_set_notify(call, settings_reply,
++							em, NULL);
++
++	id++;
++	g_hash_table_insert(pending_calls, &id, call);
++
++	dbus_message_unref(message);
++
++	return id;
++}
++
++static void release_reply(DBusPendingCall *call, void *user_data)
++{
++	DBusMessage *reply;
++
++	DBG("");
++
++	reply =3D dbus_pending_call_steal_reply(call);
++	dbus_pending_call_unref(call);
++}
++
++static void pn_release(int uid)
++{
++	DBusMessage *message;
++	DBusPendingCall *pending;
++	DBusPendingCall *call;
++
++	DBG("");
++
++	pending =3D g_hash_table_lookup(pending_calls, &uid);
++	if (pending) {
++		if (dbus_pending_call_get_completed(pending) =3D=3D FALSE) {
++			dbus_pending_call_cancel(pending);
++			g_hash_table_remove(pending_calls, &uid);
++			return;
++		}
++	}
++
++	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
++				     CONNMAN_MANAGER_PATH,
++				     CONNMAN_MANAGER_INTERFACE,
++				     "ReleasePrivateNetwork");
++
++	if (message =3D=3D NULL)
++		return;
++
++	if (dbus_connection_send_with_reply(connection,
++				message, &call, 5000) =3D=3D FALSE) {
++		dbus_message_unref(message);
++		return;
++	}
++
++	dbus_pending_call_set_notify(call, release_reply,
++							NULL, NULL);
++
++	dbus_message_unref(message);
++}
++
++static struct emulator_network_provision_driver pn_driver =3D {
++	.name		=3D "ConnMan Private Network",
++	.get_settings	=3D pn_get_settings,
++	.release	=3D pn_release,
++};
++
++static int connman_init(void)
++{
++	DBG("");
++
++	id =3D 0;
++	connection =3D ofono_dbus_get_connection();
++	pending_calls =3D g_hash_table_new(g_int_hash, g_int_equal);
++
++	return ofono_emulator_network_driver_register(&pn_driver);
++}
++
++static void connman_exit(void)
++{
++	g_hash_table_destroy(pending_calls);
++	ofono_emulator_network_driver_unregister(&pn_driver);
++}
++
++OFONO_PLUGIN_DEFINE(connman, "ConnMan plugin", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, connman_init, connman_exit)
 -- =
 
 1.7.1
 
 
---===============3946188064222735098==--
+--===============0234562586093495179==--
 
