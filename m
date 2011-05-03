@@ -1,63 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============2191027561165334254=="
+Content-Type: multipart/mixed; boundary="===============7575871098016347497=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 0/6] phonesim: Add call status UI
-Date: Mon, 02 May 2011 04:23:51 -0500
-Message-ID: <4DBE7827.8030901@gmail.com>
-In-Reply-To: <1304327838-11164-1-git-send-email-nicolas.bertrand@linux.intel.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [PATCH] isimodem: use a specific call id when answering
+Date: Tue, 03 May 2011 22:10:56 +0300
+Message-ID: <BANLkTinKerbiztsMN9LJS49+HQTJV85Q7g@mail.gmail.com>
+In-Reply-To: <4DB979A4.8010300@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2191027561165334254==
+--===============7575871098016347497==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nicolas,
+Hi Denis,
 
-On 05/02/2011 04:17 AM, Nicolas Bertrand wrote:
-> This  patch introduce a new tab "call" in phonesim UI in order to display=
- calls
-> informationsi (id, number, status, name and direction).
-> The interface to send CSSU and CSSI notification is now dynamic based on =
-the
-> type of current calls.
-> Fix some coding-style violations.
-> =
+2011/4/28 Denis Kenzior <denkenz@gmail.com>:
+'>> + =C2=A0 =C2=A0 for (id =3D 1; id <=3D 7; id++) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 switch (ivc->calls[id].statu=
+s) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 case CALL_STATUS_COMING:
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 case CALL_STATUS_MT_ALERTING:
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 case CALL_STATUS_WAITING:
+>
+> oFono expects answer to only work on 'incoming' calls in the traditional
+> sense. =C2=A0Is waiting status equivalent to CCWA here? If so, it might be
+> better to leave it out here.
 
-> Nicolas Bertrand (6):
->   callmanager: Add signal on call status change
->   control: Update UI using call status
->   hardwaremanipulator: add callmanagement method
->   phonesim: Connect call status signal
->   controlbase.ui: Add call mangement tab
->   control: Update call view
-> =
+isi_answer() is called by both .answer and .release_all_active
+methods, so I included the WAITING state here, too.
 
->  src/callmanager.cpp         |   22 +++++++
->  src/callmanager.h           |    3 +
->  src/control.cpp             |  140 +++++++++++++++++++++++++++++++++++++=
-+-----
->  src/control.h               |    6 ++
->  src/controlbase.ui          |   61 +++++++++++++++++++
->  src/hardwaremanipulator.cpp |    4 +
->  src/hardwaremanipulator.h   |    2 +
->  src/phonesim.cpp            |    2 +
->  8 files changed, 224 insertions(+), 16 deletions(-)
+Answering a waiting call is a tricky, I'll try to see if it can be
+made in a more robust manner.
 
-I applied all of the patches in this series, thanks.
+-- =
 
-Some general comments:
+Pekka.Pessi mail at nokia.com
 
-Your logic for enabling CSSI/CSSU buttons is not really correct.  CSSU
-notifications (2, 3, 4) can come at any time there is an active/held
-call, and not just during MT call setup.
-
-You might also want to move the CSSI/CSSU generator UI elements into the
-Call tab.  They logically belong there now.
-
-Regards,
--Denis
-
---===============2191027561165334254==--
+--===============7575871098016347497==--
 
