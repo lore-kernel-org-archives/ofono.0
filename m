@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============0234562586093495179=="
+Content-Type: multipart/mixed; boundary="===============0488943280807637894=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
 Subject: [PATCH_v3 3/3] connman: add plugin in oFono to request
  request/release private network
-Date: Tue, 03 May 2011 16:44:43 +0200
-Message-ID: <1304433883-3806-4-git-send-email-guillaume.zajac@linux.intel.com>
+Date: Tue, 03 May 2011 17:06:16 +0200
+Message-ID: <1304435176-4128-1-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1304433883-3806-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0234562586093495179==
+--===============0488943280807637894==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -305,5 +305,5 @@ index 0000000..47d4654
 1.7.1
 
 
---===============0234562586093495179==--
+--===============0488943280807637894==--
 
