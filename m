@@ -1,103 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============8275087197122750050=="
+Content-Type: multipart/mixed; boundary="===============1996275674395631350=="
 MIME-Version: 1.0
-From: rajeshkumar s.a <rajeshkumar.s.a@gmail.com>
-Subject: Dedug Log for Huawei EC168C
-Date: Wed, 04 May 2011 21:05:13 +0530
-Message-ID: <BANLkTim06sHWdPREx_nbvpJku+GZMxTVfg@mail.gmail.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v4 1/8] gathdlc: delete read/write handler in hdlc_suspend and
+ add public suspend function for testing
+Date: Wed, 04 May 2011 17:38:59 +0200
+Message-ID: <1304523546-643-2-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1304523546-643-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8275087197122750050==
+--===============1996275674395631350==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-PFA, the debug log with AT commands
+---
+ gatchat/gathdlc.c |   12 ++++++++++++
+ gatchat/gathdlc.h |    2 ++
+ 2 files changed, 14 insertions(+), 0 deletions(-)
 
-I am still getting a timeout on enable-modem operation
+diff --git a/gatchat/gathdlc.c b/gatchat/gathdlc.c
+index e3ab7ec..7989bd7 100644
+--- a/gatchat/gathdlc.c
++++ b/gatchat/gathdlc.c
+@@ -166,6 +166,9 @@ static gboolean hdlc_suspend(gpointer user_data)
+ =
 
-and list-modem gives following o/p
+ 	g_at_io_drain_ring_buffer(hdlc->io, 3);
+ =
 
-$ ./list-modems
-[ /huawei0 ]
-    Features =3D
-    Emergency =3D 0
-    Powered =3D 0
-    Lockdown =3D 0
-    Interfaces =3D
-    Online =3D 0
++	g_at_io_set_write_handler(hdlc->io, NULL, NULL);
++	g_at_io_set_read_handler(hdlc->io, NULL, NULL);
++
+ 	if (hdlc->suspend_func)
+ 		hdlc->suspend_func(hdlc->suspend_data);
+ =
 
-Regards,
-Rajesh
+@@ -610,3 +613,12 @@ void g_at_hdlc_set_no_carrier_detect(GAtHDLC *hdlc, gb=
+oolean detect)
+ =
 
---===============8275087197122750050==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+ 	hdlc->no_carrier_detect =3D detect;
+ }
++
++void g_at_hdlc_suspend(GAtHDLC *hdlc)
++{
++	if (hdlc =3D=3D NULL)
++		return;
++
++	g_at_io_set_write_handler(hdlc->io, NULL, NULL);
++	g_at_io_set_read_handler(hdlc->io, NULL, NULL);
++}
+diff --git a/gatchat/gathdlc.h b/gatchat/gathdlc.h
+index 158f27f..556e383 100644
+--- a/gatchat/gathdlc.h
++++ b/gatchat/gathdlc.h
+@@ -60,6 +60,8 @@ void g_at_hdlc_set_no_carrier_detect(GAtHDLC *hdlc, gbool=
+ean detect);
+ void g_at_hdlc_set_suspend_function(GAtHDLC *hdlc, GAtSuspendFunc func,
+ 							gpointer user_data);
+ =
 
-UEZBLCB0aGUgZGVidWcgbG9nIHdpdGggQVQgY29tbWFuZHM8YnI+PGJyPkkgYW0gc3RpbGwgZ2V0
-dGluZyBhIHRpbWVvdXQgb24gZW5hYmxlLW1vZGVtIG9wZXJhdGlvbiA8YnI+PGJyPmFuZCBsaXN0
-LW1vZGVtIGdpdmVzIGZvbGxvd2luZyBvL3A8YnI+PGJyPiQgLi9saXN0LW1vZGVtcyA8YnI+WyAv
-aHVhd2VpMCBdPGJyPqCgoCBGZWF0dXJlcyA9IDxicj6goKAgRW1lcmdlbmN5ID0gMDxicj4KoKCg
-IFBvd2VyZWQgPSAwPGJyPqCgoCBMb2NrZG93biA9IDA8YnI+oKCgIEludGVyZmFjZXMgPSA8YnI+
-oKCgIE9ubGluZSA9IDA8YnI+PGJyPlJlZ2FyZHMsPGJyPlJhamVzaDxicj48YnI+PGJyPjxicj4K
++void g_at_hdlc_suspend(GAtHDLC *hdlc);
++
+ #ifdef __cplusplus
+ }
+ #endif
+-- =
 
---===============8275087197122750050==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="debug_log_2.obj"
+1.7.1
 
-IyAuL3NyYy9vZm9ub2QgLW4gLWQgJ3BsdWdpbnMvKicKb2Zvbm9kWzIxMjBdOiBvRm9ubyB2ZXJz
-aW9uIDAuNDgKb2Zvbm9kWzIxMjBdOiBwbHVnaW5zL3B1c2gtbm90aWZpY2F0aW9uLmM6cHVzaF9u
-b3RpZmljYXRpb25faW5pdCgpIApvZm9ub2RbMjEyMF06IHBsdWdpbnMvc21hcnQtbWVzc2FnaW5n
-LmM6c21hcnRfbWVzc2FnaW5nX2luaXQoKSAKb2Zvbm9kWzIxMjBdOiBwbHVnaW5zL2R1bl9ndy5j
-OmR1bl9nd19pbml0KCkgCm9mb25vZFsyMTIwXTogcGx1Z2lucy9waG9uZXNpbS5jOnBhcnNlX2Nv
-bmZpZygpIGZpbGVuYW1lIC91c3IvbG9jYWwvZXRjL29mb25vL3Bob25lc2ltLmNvbmYKb2Zvbm9k
-WzIxMjBdOiBwbHVnaW5zL3VkZXYuYzphZGRfbW9kZW0oKSAvZGV2aWNlcy9wY2kwMDAwOjAwLzAw
-MDA6MDA6MWQuMS91c2IzLzMtMS8zLTE6MS4wL3R0eVVTQjAvdHR5L3R0eVVTQjAgKGh1YXdlaSkK
-b2Zvbm9kWzIxMjBdOiBwbHVnaW5zL3VkZXYuYzphZGRfaHVhd2VpKCkgbW9kZW0gMHg5NTYzN2Uw
-Cm9mb25vZFsyMTIwXTogcGx1Z2lucy91ZGV2LmM6YWRkX21vZGVtKCkgL2RldmljZXMvcGNpMDAw
-MDowMC8wMDAwOjAwOjFkLjEvdXNiMy8zLTEvMy0xOjEuMS90dHlVU0IxL3R0eS90dHlVU0IxICho
-dWF3ZWkpCm9mb25vZFsyMTIwXTogcGx1Z2lucy91ZGV2LmM6YWRkX2h1YXdlaSgpIG1vZGVtIDB4
-OTU2MzdlMApvZm9ub2RbMjEyMF06IHBsdWdpbnMvdWRldi5jOmFkZF9tb2RlbSgpIC9kZXZpY2Vz
-L3BjaTAwMDA6MDAvMDAwMDowMDoxZC4xL3VzYjMvMy0xLzMtMToxLjIvdHR5VVNCMi90dHkvdHR5
-VVNCMiAoaHVhd2VpKQpvZm9ub2RbMjEyMF06IHBsdWdpbnMvdWRldi5jOmFkZF9odWF3ZWkoKSBt
-b2RlbSAweDk1NjM3ZTAKb2Zvbm9kWzIxMjBdOiBwbHVnaW5zL2h1YXdlaS5jOmh1YXdlaV9wcm9i
-ZSgpIDB4OTU2MzdlMApvZm9ub2RbMjEyMF06IHBsdWdpbnMvaGZwX2FnLmM6bW9kZW1fd2F0Y2go
-KSBtb2RlbTogMHg5NTYzN2UwLCBhZGRlZDogMQpvZm9ub2RbMjEyMF06IHBsdWdpbnMvZHVuX2d3
-LmM6bW9kZW1fd2F0Y2goKSBtb2RlbTogMHg5NTYzN2UwLCBhZGRlZDogMQpvZm9ub2RbMjEyMF06
-IHBsdWdpbnMvc21hcnQtbWVzc2FnaW5nLmM6bW9kZW1fd2F0Y2goKSBtb2RlbTogMHg5NTYzN2Uw
-LCBhZGRlZDogMQpvZm9ub2RbMjEyMF06IHBsdWdpbnMvcHVzaC1ub3RpZmljYXRpb24uYzptb2Rl
-bV93YXRjaCgpIG1vZGVtOiAweDk1NjM3ZTAsIGFkZGVkOiAxCm9mb25vZFsyMTIwXTogcGx1Z2lu
-cy91ZGV2LmM6YWRkX21vZGVtKCkgL2RldmljZXMvcGNpMDAwMDowMC8wMDAwOjAwOjFkLjEvdXNi
-My8zLTEvMy0xOjEuNC90dHlVU0IzL3R0eS90dHlVU0IzIChodWF3ZWkpCm9mb25vZFsyMTIwXTog
-cGx1Z2lucy91ZGV2LmM6YWRkX2h1YXdlaSgpIG1vZGVtIDB4OTU2MzdlMApvZm9ub2RbMjEyMF06
-IHBsdWdpbnMvaHVhd2VpLmM6aHVhd2VpX2VuYWJsZSgpIDB4OTU2MzdlMApvZm9ub2RbMjEyMF06
-IHBsdWdpbnMvaHVhd2VpLmM6b3Blbl9kZXZpY2UoKSBNb2RlbSAvZGV2L3R0eVVTQjAKb2Zvbm9k
-WzIxMjBdOiBwbHVnaW5zL2h1YXdlaS5jOm9wZW5fZGV2aWNlKCkgUGN1aSAvZGV2L3R0eVVTQjIK
-b2Zvbm9kWzIxMjBdOiBwbHVnaW5zL2h1YXdlaS5jOnF1ZXJ5X3NpbV9zdGF0ZSgpIApvZm9ub2Rb
-MjEyMF06IFBDVUk6ID4gQVRFMCArQ01FRT0xXHIKb2Zvbm9kWzIxMjBdOiBQQ1VJOiA8IFxyXG5P
-S1xyXG4Kb2Zvbm9kWzIxMjBdOiBQQ1VJOiA+IEFUK0NGVU49MVxyCm9mb25vZFsyMTIwXTogUENV
-STogPCBcclxuT0tcclxuCm9mb25vZFsyMTIwXTogcGx1Z2lucy9odWF3ZWkuYzpjZnVuX2VuYWJs
-ZSgpIApvZm9ub2RbMjEyMF06IFBDVUk6ID4gQVReU1lTSU5GT1xyCm9mb25vZFsyMTIwXTogUENV
-STogPCBcclxuXlNZU0lORk86MiwyNTUsMCw4LDI0MFxyXG5cclxuT0tcclxuCm9mb25vZFsyMTIw
-XTogcGx1Z2lucy9odWF3ZWkuYzpub3RpZnlfc2ltX3N0YXRlKCkgMjQwCm9mb25vZFsyMTIwXTog
-UENVSTogPiBBVF5VMkRJQUc/XHIKb2Zvbm9kWzIxMjBdOiBQQ1VJOiA8IFxyXG5DT01NQU5EIE5P
-VCBTVVBQT1JUXHJcbgpvZm9ub2RbMjEyMF06IFBDVUk6ID4gQVReR0VUUE9SVE1PREVccgpvZm9u
-b2RbMjEyMF06IFBDVUk6IDwgXHJcbkNPTU1BTkQgTk9UIFNVUFBPUlRcclxuCm9mb25vZFsyMTIw
-XTogUENVSTogPiBBVF5VU1NETU9ERT0/XHIKb2Zvbm9kWzIxMjBdOiBQQ1VJOiA8IFxyXG5DT01N
-QU5EIE5PVCBTVVBQT1JUXHJcbgpvZm9ub2RbMjEyMF06IFBDVUk6ID4gQVReQ1ZPSUNFPT9ccgpv
-Zm9ub2RbMjEyMF06IFBDVUk6IDwgXHJcbl5DVk9JQ0U6KDApXHJcblxyXG5PS1xyXG4Kb2Zvbm9k
-WzIxMjBdOiBQQ1VJOiA+IEFUXkNWT0lDRT9ccgpvZm9ub2RbMjEyMF06IFBDVUk6IDwgXHJcbl5D
-Vk9JQ0U6MCw4MDAwLDE2LDIwXHJcblxyXG5PS1xyXG4Kb2Zvbm9kWzIxMjBdOiBWb2ljZSBjaGFu
-bmVsOiA4MDAwIEh6LCAxNiBiaXRzLCAyMG1zIHBlcmlvZApvZm9ub2RbMjEyMF06IFBDVUk6ID4g
-QVReRERTRVRFWD0/XHIKb2Zvbm9kWzIxMjBdOiBQQ1VJOiA8IFxyXG5eRERTRVRFWDooMilcclxu
-XHJcbk9LXHJcbgpvZm9ub2RbMjEyMF06IE1vZGVtOiA8IFxyXG5eSFJTU0lMVkw6ODBcclxuCm9m
-b25vZFsyMTIwXTogUENVSTogPCBcclxuXkhSU1NJTFZMOjgwXHJcbgpvZm9ub2RbMjEyMF06IE1v
-ZGVtOiA8IFxyXG5eSFJTU0lMVkw6NjBcclxuCm9mb25vZFsyMTIwXTogUENVSTogPCBcclxuXkhS
-U1NJTFZMOjYwXHJcbgo=
 
---===============8275087197122750050==--
+--===============1996275674395631350==--
 
