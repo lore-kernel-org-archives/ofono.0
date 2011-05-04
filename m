@@ -1,66 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============8113852934843736169=="
+Content-Type: multipart/mixed; boundary="===============5833144843890621452=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH v3 13/26] gatppp: add g_at_ppp_suspend() definition
-Date: Wed, 04 May 2011 11:25:55 +0200
-Message-ID: <4DC11BA3.4020608@linux.intel.com>
-In-Reply-To: <4DBEA2FC.4000801@gmail.com>
+From: andrzej zaborowski <balrogg@gmail.com>
+Subject: Re: Ofono cross compiling for ARM
+Date: Wed, 04 May 2011 13:59:57 +0200
+Message-ID: <BANLkTint4qbXrNTr5iVCYtgYu6T+L+BWbw@mail.gmail.com>
+In-Reply-To: <BANLkTink6D45Lz6iAEmOnoeMtJu2bMkZ_Q@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8113852934843736169==
+--===============5833144843890621452==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Yuruvaj,
 
-Hi Denis,
-
-On 02/05/2011 14:26, Denis Kenzior wrote:
-> Hi Guillaume,
+On 4 May 2011 11:07, Yuvaraj Ragupathi <yuvaraj.addu@gmail.com> wrote:
+> I want to cross compile the ofono for ARM target.
 >
-> On 04/01/2011 03:56 AM, Guillaume Zajac wrote:
->> ---
->>   gatchat/gatppp.c |    9 +++++++++
->>   1 files changed, 9 insertions(+), 0 deletions(-)
->>
->> diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
->> index 9df6b8e..5f005fe 100644
->> --- a/gatchat/gatppp.c
->> +++ b/gatchat/gatppp.c
->> @@ -484,6 +484,15 @@ void g_at_ppp_shutdown(GAtPPP *ppp)
->>   	pppcp_signal_close(ppp->lcp);
->>   }
->>
->> +void g_at_ppp_suspend(GAtPPP *ppp)
->> +{
->> +	if (ppp =3D=3D NULL)
->> +		return;
->> +
->> +	ppp_net_suspend_interface(ppp->net);
->> +	g_at_hdlc_suspend(ppp->hdlc);
->> +}
->> +
-> What do you think of automatically calling ppp_net_suspend_interface
-> when the ppp suspend callback is triggered?  e.g. using a proxy function
-> in g_at_ppp_set_suspend_function.
-
-Good idea, thus we only need to resume GAtServer into ppp_suspend() into =
-
-emulator.c
-However, like for g_at_hdlc_suspend(), we might need to call this =
-
-function from gsmdial to make some tests.
-
->>   void g_at_ppp_ref(GAtPPP *ppp)
->>   {
->>   	g_atomic_int_inc(&ppp->ref_count);
-> Regards,
-> -Denis
+> So i executed configure file with following arguments
 >
+>
+> #./configure --host=3Darm
+> --libdir=3D/usr/lib/madde/linux-i686/sysroots/meego-core-armv7l-madde-sys=
+root-1.1.2-fs/usr/lib
+> --prefix=3D/home/$myname/Desktop/ofono_For_ARM/binaries
+> --includedir=3D/usr/lib/madde/linux-i686/sysroots/meego-core-armv7l-madde=
+-sysroot-1.1.2-fs/usr/include
+>
+>
+> It is giving config related error message
+>
+> configure: error: signalfd support is required
+>
+>
+> What it does mean?
 
-Kind regards,
-Guillaume
+This error is related to glibc version, I believe signalfd was added
+in 2.7 so you need to upgrade your cross toolchain.  There's also
+dependency on kernel version but I don't know what the minimum version
+that works is.
 
---===============8113852934843736169==--
+Best regards
+
+--===============5833144843890621452==--
 
