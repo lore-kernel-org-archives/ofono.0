@@ -1,75 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============1996275674395631350=="
+Content-Type: multipart/mixed; boundary="===============5748360086947645384=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v4 1/8] gathdlc: delete read/write handler in hdlc_suspend and
- add public suspend function for testing
-Date: Wed, 04 May 2011 17:38:59 +0200
-Message-ID: <1304523546-643-2-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v4 2/8] ppp_net: add ppp_net_suspend_interface() function
+Date: Wed, 04 May 2011 17:39:00 +0200
+Message-ID: <1304523546-643-3-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1304523546-643-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1996275674395631350==
+--===============5748360086947645384==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gathdlc.c |   12 ++++++++++++
- gatchat/gathdlc.h |    2 ++
- 2 files changed, 14 insertions(+), 0 deletions(-)
+ gatchat/ppp.h     |    1 +
+ gatchat/ppp_net.c |    9 +++++++++
+ 2 files changed, 10 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gathdlc.c b/gatchat/gathdlc.c
-index e3ab7ec..7989bd7 100644
---- a/gatchat/gathdlc.c
-+++ b/gatchat/gathdlc.c
-@@ -166,6 +166,9 @@ static gboolean hdlc_suspend(gpointer user_data)
+diff --git a/gatchat/ppp.h b/gatchat/ppp.h
+index d2786d7..22809d8 100644
+--- a/gatchat/ppp.h
++++ b/gatchat/ppp.h
+@@ -107,6 +107,7 @@ const char *ppp_net_get_interface(struct ppp_net *net);
+ void ppp_net_process_packet(struct ppp_net *net, const guint8 *packet);
+ void ppp_net_free(struct ppp_net *net);
+ gboolean ppp_net_set_mtu(struct ppp_net *net, guint16 mtu);
++void ppp_net_suspend_interface(struct ppp_net *net);
  =
 
- 	g_at_io_drain_ring_buffer(hdlc->io, 3);
- =
-
-+	g_at_io_set_write_handler(hdlc->io, NULL, NULL);
-+	g_at_io_set_read_handler(hdlc->io, NULL, NULL);
-+
- 	if (hdlc->suspend_func)
- 		hdlc->suspend_func(hdlc->suspend_data);
- =
-
-@@ -610,3 +613,12 @@ void g_at_hdlc_set_no_carrier_detect(GAtHDLC *hdlc, gb=
-oolean detect)
- =
-
- 	hdlc->no_carrier_detect =3D detect;
+ /* PPP functions related to main GAtPPP object */
+ void ppp_debug(GAtPPP *ppp, const char *str);
+diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
+index 1a6cdf7..9abf590 100644
+--- a/gatchat/ppp_net.c
++++ b/gatchat/ppp_net.c
+@@ -196,3 +196,12 @@ void ppp_net_free(struct ppp_net *net)
+ 	g_free(net->if_name);
+ 	g_free(net);
  }
 +
-+void g_at_hdlc_suspend(GAtHDLC *hdlc)
++void ppp_net_suspend_interface(struct ppp_net *net)
 +{
-+	if (hdlc =3D=3D NULL)
++	if (net =3D=3D NULL || net->channel =3D=3D NULL)
 +		return;
 +
-+	g_at_io_set_write_handler(hdlc->io, NULL, NULL);
-+	g_at_io_set_read_handler(hdlc->io, NULL, NULL);
++	if (net->watch)
++		g_source_remove(net->watch);
 +}
-diff --git a/gatchat/gathdlc.h b/gatchat/gathdlc.h
-index 158f27f..556e383 100644
---- a/gatchat/gathdlc.h
-+++ b/gatchat/gathdlc.h
-@@ -60,6 +60,8 @@ void g_at_hdlc_set_no_carrier_detect(GAtHDLC *hdlc, gbool=
-ean detect);
- void g_at_hdlc_set_suspend_function(GAtHDLC *hdlc, GAtSuspendFunc func,
- 							gpointer user_data);
- =
-
-+void g_at_hdlc_suspend(GAtHDLC *hdlc);
-+
- #ifdef __cplusplus
- }
- #endif
 -- =
 
 1.7.1
 
 
---===============1996275674395631350==--
+--===============5748360086947645384==--
 
