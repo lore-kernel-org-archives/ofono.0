@@ -1,195 +1,187 @@
-Content-Type: multipart/mixed; boundary="===============5350038219085548097=="
+Content-Type: multipart/mixed; boundary="===============6902446558883839174=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: Dedug Log for Huawei EC168C
-Date: Wed, 04 May 2011 17:41:54 +0100
-Message-ID: <A782C372B9527D44AB20BF45FEEBB14F75C508629B@irsmsx503.ger.corp.intel.com>
-In-Reply-To: <BANLkTim06sHWdPREx_nbvpJku+GZMxTVfg@mail.gmail.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH V2 2/3] stk: Clear 'respond_on_exit' flag after sending the
+ terminal response
+Date: Wed, 04 May 2011 19:07:42 +0200
+Message-ID: <1304528863-13144-2-git-send-email-philippe.nunes@linux.intel.com>
+In-Reply-To: <1304528863-13144-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5350038219085548097==
+--===============6902446558883839174==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ src/stk.c |   27 ++-------------------------
+ 1 files changed, 2 insertions(+), 25 deletions(-)
 
->PFA, the debug log with AT commands
->
->I am still getting a timeout on enable-modem operation
->
->and list-modem gives following o/p
->
->$ ./list-modems
->[ /huawei0 ]
->    Features =3D
->    Emergency =3D 0
->    Powered =3D 0
->    Lockdown =3D 0
->    Interfaces =3D
->    Online =3D 0
->
->Regards,
->Rajesh
+diff --git a/src/stk.c b/src/stk.c
+index c86cbfb..8214b65 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -128,6 +128,7 @@ static int stk_respond(struct ofono_stk *stk, struct st=
+k_response *rsp,
+ 	stk_command_free(stk->pending_cmd);
+ 	stk->pending_cmd =3D NULL;
+ 	stk->cancel_cmd =3D NULL;
++	stk->respond_on_exit =3D FALSE;
+ =
 
-We have one idea to fix this. It seems that this modem has never been teste=
-d or used with oFono, and so oFono is not handling it.
-How did you get ofonod? Did you build it?
-If so, can you please modify file plugins/huawei.c, line 208, and insert:
-case 240:
+ 	stk->driver->terminal_response(stk, tlv_len, tlv, cb, stk);
+ =
 
-You should have:
-...
-case HUAWEI_SIM_STATE_VALID:
-case HUAWEI_SIM_STATE_INVALID_CS:
-case HUAWEI_SIM_STATE_INVALID_PS:
-case HUAWEI_SIM_STATE_INVALID_PS_AND_CS:
-case 240:
-if (data->sim_poll_timeout) {
-g_source_remove(data->sim_poll_timeout);
-data->sim_poll_timeout =3D 0;
-}
-...
+@@ -477,10 +478,8 @@ static void user_termination_cb(enum stk_agent_result =
+result, void *user_data)
+ {
+ 	struct ofono_stk *stk =3D user_data;
+ =
 
-Thanks,
+-	if (result =3D=3D STK_AGENT_RESULT_TERMINATE) {
+-		stk->respond_on_exit =3D FALSE;
++	if (result =3D=3D STK_AGENT_RESULT_TERMINATE)
+ 		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
+-	}
+ }
+ =
 
-Bertrand
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+ static void stk_alpha_id_set(struct ofono_stk *stk,
+@@ -598,7 +597,6 @@ static void default_agent_notify(gpointer user_data)
+ =
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+ 	stk->default_agent =3D NULL;
+ 	stk->current_agent =3D stk->session_agent;
+-	stk->respond_on_exit =3D FALSE;
+ }
+ =
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+ static void session_agent_notify(gpointer user_data)
+@@ -617,7 +615,6 @@ static void session_agent_notify(gpointer user_data)
+ =
 
---===============5350038219085548097==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+ 	stk->session_agent =3D NULL;
+ 	stk->current_agent =3D stk->default_agent;
+-	stk->respond_on_exit =3D FALSE;
+ =
 
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6eD0idXJuOnNjaGVtYXMtbWljcm9z
-b2Z0LWNvbTpvZmZpY2U6ZXhjZWwiIHhtbG5zOnA9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206
-b2ZmaWNlOnBvd2VycG9pbnQiIHhtbG5zOmE9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
-aWNlOmFjY2VzcyIgeG1sbnM6ZHQ9InV1aWQ6QzJGNDEwMTAtNjVCMy0xMWQxLUEyOUYtMDBBQTAw
-QzE0ODgyIiB4bWxuczpzPSJ1dWlkOkJEQzZFM0YwLTZEQTMtMTFkMS1BMkEzLTAwQUEwMEMxNDg4
-MiIgeG1sbnM6cnM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206cm93c2V0IiB4bWxuczp6PSIj
-Um93c2V0U2NoZW1hIiB4bWxuczpiPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpw
-dWJsaXNoZXIiIHhtbG5zOnNzPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzcHJl
-YWRzaGVldCIgeG1sbnM6Yz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6Y29tcG9u
-ZW50OnNwcmVhZHNoZWV0IiB4bWxuczpvZGM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
-aWNlOm9kYyIgeG1sbnM6b2E9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOmFjdGl2
-YXRpb24iIHhtbG5zOmh0bWw9Imh0dHA6Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiIHhtbG5z
-OnE9Imh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3NvYXAvZW52ZWxvcGUvIiB4bWxuczpydGM9
-Imh0dHA6Ly9taWNyb3NvZnQuY29tL29mZmljZW5ldC9jb25mZXJlbmNpbmciIHhtbG5zOkQ9IkRB
-VjoiIHhtbG5zOlJlcGw9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vcmVwbC8iIHhtbG5z
-Om10PSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC9tZWV0aW5n
-cy8iIHhtbG5zOngyPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS9leGNlbC8y
-MDAzL3htbCIgeG1sbnM6cHBkYT0iaHR0cDovL3d3dy5wYXNzcG9ydC5jb20vTmFtZVNwYWNlLnhz
-ZCIgeG1sbnM6b2lzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29h
-cC9vaXMvIiB4bWxuczpkaXI9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
-dC9zb2FwL2RpcmVjdG9yeS8iIHhtbG5zOmRzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3ht
-bGRzaWcjIiB4bWxuczpkc3A9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
-dC9kc3AiIHhtbG5zOnVkYz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYyIg
-eG1sbnM6eHNkPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6c3ViPSJo
-dHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC8yMDAyLzEvYWxlcnRz
-LyIgeG1sbnM6ZWM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZW5jIyIgeG1sbnM6c3A9
-Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC8iIHhtbG5zOnNwcz0iaHR0
-cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvIiB4bWxuczp4c2k9Imh0
-dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiB4bWxuczp1ZGNzPSJodHRw
-Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3NvYXAiIHhtbG5zOnVkY3hmPSJodHRw
-Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3htbGZpbGUiIHhtbG5zOnVkY3AycD0i
-aHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYy9wYXJ0dG9wYXJ0IiB4bWxuczp3
-Zj0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvd29ya2Zsb3cv
-IiB4bWxuczpkc3NzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS8yMDA2L2Rp
-Z3NpZy1zZXR1cCIgeG1sbnM6ZHNzaT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZp
-Y2UvMjAwNi9kaWdzaWciIHhtbG5zOm1kc3NpPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0
-cy5vcmcvcGFja2FnZS8yMDA2L2RpZ2l0YWwtc2lnbmF0dXJlIiB4bWxuczptdmVyPSJodHRwOi8v
-c2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvbWFya3VwLWNvbXBhdGliaWxpdHkvMjAwNiIgeG1s
-bnM6bT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4
-bWxuczptcmVscz0iaHR0cDovL3NjaGVtYXMub3BlbnhtbGZvcm1hdHMub3JnL3BhY2thZ2UvMjAw
-Ni9yZWxhdGlvbnNoaXBzIiB4bWxuczpzcHdwPSJodHRwOi8vbWljcm9zb2Z0LmNvbS9zaGFyZXBv
-aW50L3dlYnBhcnRwYWdlcyIgeG1sbnM6ZXgxMnQ9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5j
-b20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi90eXBlcyIgeG1sbnM6ZXgxMm09Imh0dHA6Ly9zY2hl
-bWFzLm1pY3Jvc29mdC5jb20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi9tZXNzYWdlcyIgeG1sbnM6
-cHB0c2w9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC9zb2FwL1NsaWRl
-TGlicmFyeS8iIHhtbG5zOnNwc2w9Imh0dHA6Ly9taWNyb3NvZnQuY29tL3dlYnNlcnZpY2VzL1No
-YXJlUG9pbnRQb3J0YWxTZXJ2ZXIvUHVibGlzaGVkTGlua3NTZXJ2aWNlIiB4bWxuczpaPSJ1cm46
-c2NoZW1hcy1taWNyb3NvZnQtY29tOiIgeG1sbnM6c3Q9IiYjMTsiIHhtbG5zPSJodHRwOi8vd3d3
-LnczLm9yZy9UUi9SRUMtaHRtbDQwIj48aGVhZD48bWV0YSBodHRwLWVxdWl2PUNvbnRlbnQtVHlw
-ZSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPjxtZXRhIG5hbWU9R2VuZXJh
-dG9yIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDEyIChmaWx0ZXJlZCBtZWRpdW0pIj48c3R5bGU+
-PCEtLQovKiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseToiQ2Ft
-YnJpYSBNYXRoIjsKCXBhbm9zZS0xOjIgNCA1IDMgNSA0IDYgMyAyIDQ7fQpAZm9udC1mYWNlCgl7
-Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KLyog
-U3R5bGUgRGVmaW5pdGlvbnMgKi8KcC5Nc29Ob3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05v
-cm1hbAoJe21hcmdpbjowY207CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTIu
-MHB0OwoJZm9udC1mYW1pbHk6IlRpbWVzIE5ldyBSb21hbiIsInNlcmlmIjt9CmE6bGluaywgc3Bh
-bi5Nc29IeXBlcmxpbmsKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpibHVlOwoJdGV4
-dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CmE6dmlzaXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xs
-b3dlZAoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOnB1cnBsZTsKCXRleHQtZGVjb3Jh
-dGlvbjp1bmRlcmxpbmU7fQpzcGFuLkVtYWlsU3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNv
-bmFsLXJlcGx5OwoJZm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjsKCWNvbG9yOiMx
-RjQ5N0Q7fQouTXNvQ2hwRGVmYXVsdAoJe21zby1zdHlsZS10eXBlOmV4cG9ydC1vbmx5O30KQHBh
-Z2UgV29yZFNlY3Rpb24xCgl7c2l6ZTo2MTIuMHB0IDc5Mi4wcHQ7CgltYXJnaW46NzIuMHB0IDcy
-LjBwdCA3Mi4wcHQgNzIuMHB0O30KZGl2LldvcmRTZWN0aW9uMQoJe3BhZ2U6V29yZFNlY3Rpb24x
-O30KLS0+PC9zdHlsZT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVkZWZhdWx0cyB2
-OmV4dD0iZWRpdCIgc3BpZG1heD0iMTAyNiIgLz4KPC94bWw+PCFbZW5kaWZdLS0+PCEtLVtpZiBn
-dGUgbXNvIDldPjx4bWw+CjxvOnNoYXBlbGF5b3V0IHY6ZXh0PSJlZGl0Ij4KPG86aWRtYXAgdjpl
-eHQ9ImVkaXQiIGRhdGE9IjEiIC8+CjwvbzpzaGFwZWxheW91dD48L3htbD48IVtlbmRpZl0tLT48
-L2hlYWQ+PGJvZHkgbGFuZz1FTi1HQiBsaW5rPWJsdWUgdmxpbms9cHVycGxlPjxkaXYgY2xhc3M9
-V29yZFNlY3Rpb24xPjxwIGNsYXNzPU1zb05vcm1hbD5IaSw8bzpwPjwvbzpwPjwvcD48cCBjbGFz
-cz1Nc29Ob3JtYWw+PG86cD4mbmJzcDs8L286cD48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPiZndDtQ
-RkEsIHRoZSBkZWJ1ZyBsb2cgd2l0aCBBVCBjb21tYW5kczxicj4mZ3Q7PGJyPiZndDtJIGFtIHN0
-aWxsIGdldHRpbmcgYSB0aW1lb3V0IG9uIGVuYWJsZS1tb2RlbSBvcGVyYXRpb24gPGJyPiZndDs8
-YnI+Jmd0O2FuZCBsaXN0LW1vZGVtIGdpdmVzIGZvbGxvd2luZyBvL3A8YnI+Jmd0Ozxicj4mZ3Q7
-JCAuL2xpc3QtbW9kZW1zIDxicj4mZ3Q7WyAvaHVhd2VpMCBdPGJyPiZndDsmbmJzcDsmbmJzcDsm
-bmJzcDsgRmVhdHVyZXMgPSA8YnI+Jmd0OyZuYnNwOyZuYnNwOyZuYnNwOyBFbWVyZ2VuY3kgPSAw
-PGJyPiZndDsmbmJzcDsmbmJzcDsmbmJzcDsgUG93ZXJlZCA9IDA8YnI+Jmd0OyZuYnNwOyZuYnNw
-OyZuYnNwOyBMb2NrZG93biA9IDA8YnI+Jmd0OyZuYnNwOyZuYnNwOyZuYnNwOyBJbnRlcmZhY2Vz
-ID0gPGJyPiZndDsmbmJzcDsmbmJzcDsmbmJzcDsgT25saW5lID0gMDxicj4mZ3Q7PGJyPiZndDtS
-ZWdhcmRzLDxicj4mZ3Q7UmFqZXNoPGJyPjxicj5XZSBoYXZlIG9uZSBpZGVhIHRvIGZpeCB0aGlz
-LiBJdCBzZWVtcyB0aGF0IHRoaXMgbW9kZW0gaGFzIG5ldmVyIGJlZW4gdGVzdGVkIG9yIHVzZWQg
-d2l0aCBvRm9ubywgYW5kIHNvIG9Gb25vIGlzIG5vdCBoYW5kbGluZyBpdC48bzpwPjwvbzpwPjwv
-cD48cCBjbGFzcz1Nc29Ob3JtYWw+SG93IGRpZCB5b3UgZ2V0IG9mb25vZD8gRGlkIHlvdSBidWls
-ZCBpdD88bzpwPjwvbzpwPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+SWYgc28sIGNhbiB5b3UgcGxl
-YXNlIG1vZGlmeSBmaWxlIHBsdWdpbnMvaHVhd2VpLmMsIGxpbmUgMjA4LCBhbmQgaW5zZXJ0Ojxv
-OnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD5jYXNlIDI0MDo8bzpwPjwvbzpwPjwvcD48
-cCBjbGFzcz1Nc29Ob3JtYWw+PG86cD4mbmJzcDs8L286cD48L3A+PHAgY2xhc3M9TXNvTm9ybWFs
-PllvdSBzaG91bGQgaGF2ZTo8bzpwPjwvbzpwPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+Li4uPG86
-cD48L286cD48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPmNhc2UmbmJzcDtIVUFXRUlfU0lNX1NUQVRF
-X1ZBTElEOjxvOnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD5jYXNlJm5ic3A7SFVBV0VJ
-X1NJTV9TVEFURV9JTlZBTElEX0NTOjxvOnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD5j
-YXNlJm5ic3A7SFVBV0VJX1NJTV9TVEFURV9JTlZBTElEX1BTOjxvOnA+PC9vOnA+PC9wPjxwIGNs
-YXNzPU1zb05vcm1hbD5jYXNlJm5ic3A7SFVBV0VJX1NJTV9TVEFURV9JTlZBTElEX1BTX0FORF9D
-Uzo8bzpwPjwvbzpwPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+Y2FzZSAyNDA6PG86cD48L286cD48
-L3A+PHAgY2xhc3M9TXNvTm9ybWFsPmlmJm5ic3A7KGRhdGEtJmd0O3NpbV9wb2xsX3RpbWVvdXQp
-Jm5ic3A7ezxvOnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD5nX3NvdXJjZV9yZW1vdmUo
-ZGF0YS0mZ3Q7c2ltX3BvbGxfdGltZW91dCk7PG86cD48L286cD48L3A+PHAgY2xhc3M9TXNvTm9y
-bWFsPmRhdGEtJmd0O3NpbV9wb2xsX3RpbWVvdXQmbmJzcDs9Jm5ic3A7MDs8bzpwPjwvbzpwPjwv
-cD48cCBjbGFzcz1Nc29Ob3JtYWw+fTxvOnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD4u
-Li48bzpwPjwvbzpwPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PG86cD4mbmJzcDs8L286cD48L3A+
-PHAgY2xhc3M9TXNvTm9ybWFsPlRoYW5rcyw8bzpwPjwvbzpwPjwvcD48cCBjbGFzcz1Nc29Ob3Jt
-YWw+PG86cD4mbmJzcDs8L286cD48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPkJlcnRyYW5kPG86cD48
-L286cD48L3A+PC9kaXY+PGZvbnQgZmFjZT0ibW9ub3NwYWNlIj4tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS08YnI+Cklu
-dGVsIENvcnBvcmF0aW9uIFNBUyAoRnJlbmNoIHNpbXBsaWZpZWQgam9pbnQgc3RvY2sgY29tcGFu
-eSk8YnI+ClJlZ2lzdGVyZWQgaGVhZHF1YXJ0ZXJzOiAiTGVzIE1vbnRhbGV0cyItIDIsIHJ1ZSBk
-ZSBQYXJpcywgPGJyPgo5MjE5NiBNZXVkb24gQ2VkZXgsIEZyYW5jZTxicj4KUmVnaXN0cmF0aW9u
-IE51bWJlcjombmJzcDsgMzAyIDQ1NiAxOTkgUi5DLlMuIE5BTlRFUlJFPGJyPgpDYXBpdGFsOiA0
-LDU3MiwwMDAgRXVyb3M8YnI+Cjxicj4KVGhpcyBlLW1haWwgYW5kIGFueSBhdHRhY2htZW50cyBt
-YXkgY29udGFpbiBjb25maWRlbnRpYWwgbWF0ZXJpYWwgZm9yPGJyPgp0aGUgc29sZSB1c2Ugb2Yg
-dGhlIGludGVuZGVkIHJlY2lwaWVudChzKS4gQW55IHJldmlldyBvciBkaXN0cmlidXRpb248YnI+
-CmJ5IG90aGVycyBpcyBzdHJpY3RseSBwcm9oaWJpdGVkLiBJZiB5b3UgYXJlIG5vdCB0aGUgaW50
-ZW5kZWQ8YnI+CnJlY2lwaWVudCwgcGxlYXNlIGNvbnRhY3QgdGhlIHNlbmRlciBhbmQgZGVsZXRl
-IGFsbCBjb3BpZXMuPC9mb250PjwvYm9keT48L2h0bWw+
---===============5350038219085548097==--
+ 	if (stk->remove_agent_source) {
+ 		g_source_remove(stk->remove_agent_source);
+@@ -1159,8 +1156,6 @@ static void request_selection_cb(enum stk_agent_resul=
+t result, uint8_t id,
+ {
+ 	struct ofono_stk *stk =3D user_data;
+ =
+
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_OK:
+ 	{
+@@ -1243,8 +1238,6 @@ static void display_text_cb(enum stk_agent_result res=
+ult, void *user_data)
+ 	static unsigned char screen_busy_result[] =3D { 0x01 };
+ 	static struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_FAILURE =
+};
+ =
+
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	/*
+ 	 * There are four possible paths for DisplayText with immediate
+ 	 * response flag set:
+@@ -1386,8 +1379,6 @@ static void request_confirmation_cb(enum stk_agent_re=
+sult result,
+ 	struct stk_command_get_inkey *cmd =3D &stk->pending_cmd->get_inkey;
+ 	struct stk_response rsp;
+ =
+
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_OK:
+ 		memset(&rsp, 0, sizeof(rsp));
+@@ -1442,8 +1433,6 @@ static void request_key_cb(enum stk_agent_result resu=
+lt, char *string,
+ 	struct stk_command_get_inkey *cmd =3D &stk->pending_cmd->get_inkey;
+ 	struct stk_response rsp;
+ =
+
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_OK:
+ 		memset(&rsp, 0, sizeof(rsp));
+@@ -1560,8 +1549,6 @@ static void request_string_cb(enum stk_agent_result r=
+esult, char *string,
+ 	gboolean packed =3D (qualifier & (1 << 3)) !=3D 0;
+ 	struct stk_response rsp;
+ =
+
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_OK:
+ 		memset(&rsp, 0, sizeof(rsp));
+@@ -1699,8 +1686,6 @@ static void confirm_call_cb(enum stk_agent_result res=
+ult, gboolean confirm,
+ 	struct stk_response rsp;
+ 	int err;
+ =
+
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_TIMEOUT:
+ 		confirm =3D FALSE;
+@@ -2283,8 +2268,6 @@ static void send_dtmf_cancel(struct ofono_stk *stk)
+ 	struct ofono_voicecall *vc =3D NULL;
+ 	struct ofono_atom *vc_atom;
+ =
+
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	vc_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
+ 						OFONO_ATOM_TYPE_VOICECALL);
+ 	if (vc_atom)
+@@ -2300,8 +2283,6 @@ static void dtmf_sent_cb(int error, void *user_data)
+ {
+ 	struct ofono_stk *stk =3D user_data;
+ =
+
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	stk_alpha_id_unset(stk);
+ =
+
+ 	if (error =3D=3D ENOENT) {
+@@ -2413,8 +2394,6 @@ static void play_tone_cb(enum stk_agent_result result=
+, void *user_data)
+ {
+ 	struct ofono_stk *stk =3D user_data;
+ =
+
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_OK:
+ 	case STK_AGENT_RESULT_TIMEOUT:
+@@ -2547,8 +2526,6 @@ static void confirm_launch_browser_cb(enum stk_agent_=
+result result,
+ 	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
+ 	struct stk_response rsp;
+ =
+
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_TIMEOUT:
+ 		confirm =3D FALSE;
+-- =
+
+1.7.1
+
+
+--===============6902446558883839174==--
 
