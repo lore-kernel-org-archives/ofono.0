@@ -1,225 +1,215 @@
-Content-Type: multipart/mixed; boundary="===============0522086663823974793=="
+Content-Type: multipart/mixed; boundary="===============8362782596442719165=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 3/4] stk: Use gprs APIs to create,
- activate and remove a dedicated PDP context
-Date: Wed, 04 May 2011 19:26:41 +0200
-Message-ID: <1304530002-13336-4-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 4/4] gprs: Add a host route for STK context type.
+Date: Wed, 04 May 2011 19:26:42 +0200
+Message-ID: <1304530002-13336-5-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1304530002-13336-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0522086663823974793==
+--===============8362782596442719165==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |  132 +++++++++++++++++++++++++++++++++++++++++++++++++++++----=
----
- 1 files changed, 116 insertions(+), 16 deletions(-)
+ src/gprs.c |   51 ++++++++++++++++++++++++++++-----------------------
+ 1 files changed, 28 insertions(+), 23 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index dec0439..fe74cb5 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -85,6 +85,7 @@ struct ofono_stk {
- 	struct stk_channel_data tx_buffer;
- 	gboolean link_on_demand;
- 	struct ofono_gprs *gprs;
-+	struct stk_bearer_description bearer_desc;
- };
+diff --git a/src/gprs.c b/src/gprs.c
+index 2b88324..9618d7a 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -141,8 +141,8 @@ struct pri_context {
+ 	unsigned int id;
+ 	char *path;
+ 	char *key;
+-	char *proxy_host;
+-	uint16_t proxy_port;
++	char *host;
++	uint16_t port;
+ 	DBusMessage *pending;
+ 	struct ofono_gprs_primary_context context;
+ 	struct ofono_gprs_context *context_driver;
+@@ -613,16 +613,16 @@ static void pri_parse_proxy(struct pri_context *ctx, =
+const char *proxy)
+ 		host +=3D 3;
  =
 
- struct envelope_op {
-@@ -489,13 +490,10 @@ static void emit_menu_changed(struct ofono_stk *stk)
+ 		if (strcasecmp(scheme, "https") =3D=3D 0)
+-			ctx->proxy_port =3D 443;
++			ctx->port =3D 443;
+ 		else if (strcasecmp(scheme, "http") =3D=3D 0)
+-			ctx->proxy_port =3D 80;
++			ctx->port =3D 80;
+ 		else {
+ 			g_free(scheme);
+ 			return;
+ 		}
+ 	} else {
+ 		host =3D scheme;
+-		ctx->proxy_port =3D 80;
++		ctx->port =3D 80;
+ 	}
  =
 
- static void stk_close_channel(struct ofono_stk *stk)
- {
--	/*
--	 * TODO
--	 * Deactivate and remove PDP context
--	 * Send the Terminal Response once the PDP context is deactivated
--	 */
-+	int err;
-+
-+	err =3D ofono_gprs_remove_pdp_context(stk->gprs, stk->channel.id);
+ 	path =3D strchr(host, '/');
+@@ -636,12 +636,12 @@ static void pri_parse_proxy(struct pri_context *ctx, =
+const char *proxy)
  =
 
--	/* Temporary implementation */
- 	g_free(stk->rx_buffer.data.array);
- 	g_free(stk->tx_buffer.data.array);
- 	stk->rx_buffer.data.array =3D NULL;
-@@ -504,6 +502,9 @@ static void stk_close_channel(struct ofono_stk *stk)
- 	stk->channel.id =3D 0;
- 	stk->channel.status =3D STK_CHANNEL_PACKET_DATA_SERVICE_NOT_ACTIVATED;
+ 		if (*end =3D=3D '\0') {
+ 			*port =3D '\0';
+-			ctx->proxy_port =3D tmp;
++			ctx->port =3D tmp;
+ 		}
+ 	}
  =
 
-+	if (err < 0)
-+		return;
-+
- 	if (stk->pending_cmd &&
- 			stk->pending_cmd->type =3D=3D
- 				STK_COMMAND_TYPE_CLOSE_CHANNEL)
-@@ -560,12 +561,65 @@ static void stk_alpha_id_unset(struct ofono_stk *stk)
- 	stk_agent_request_cancel(stk->current_agent);
+-	g_free(ctx->proxy_host);
+-	ctx->proxy_host =3D g_strdup(host);
++	g_free(ctx->host);
++	ctx->host =3D g_strdup(host);
+ =
+
+ 	g_free(scheme);
+ }
+@@ -725,7 +725,7 @@ done:
+ 	close(sk);
  }
  =
 
-+static void ofono_stk_activate_pdp_context_cb(int error, char *interface,
-+						char *ipv4, char *ipv6,
-+						void *data)
-+{
-+	struct ofono_stk *stk =3D data;
-+	struct stk_response rsp;
-+	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
-+
-+	DBG("");
-+
-+	memset(&rsp, 0, sizeof(rsp));
-+
-+	if (error !=3D 0) {
-+		rsp.result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		goto out;
-+	}
-+
-+	if (stk->pending_cmd =3D=3D NULL) {
-+		/* TODO
-+		 * send the event channel status
-+		 * insert local address if dynamic local address is requested
-+		 * insert bearer description if Open channel in background mode
-+		 */
-+		return;
-+	}
-+
-+	DBG("Interface %s, ipv4 =3D %s, ipv6 =3D %s", interface, ipv4, ipv6);
-+
-+	stk->channel.status =3D STK_CHANNEL_PACKET_DATA_SERVICE_ACTIVATED;
-+
-+	if (stk->pending_cmd->type =3D=3D STK_COMMAND_TYPE_OPEN_CHANNEL) {
-+		rsp.open_channel.channel.id =3D stk->channel.id;
-+		rsp.open_channel.channel.status =3D stk->channel.status;
-+		rsp.open_channel.buf_size =3D stk->rx_buffer.data.len;
-+		memcpy(&rsp.open_channel.bearer_desc, &stk->bearer_desc,
-+				sizeof(struct stk_bearer_description));
-+	} else if (stk->pending_cmd->type =3D=3D STK_COMMAND_TYPE_SEND_DATA &&
-+			stk->link_on_demand) {
-+		/*
-+		 * TODO
-+		 * send the data immediately, flush the tx buffer
-+		 */
-+		stk->tx_buffer.tx_avail =3D stk->tx_buffer.data.len;
-+		rsp.send_data.tx_avail =3D stk->tx_buffer.tx_avail;
-+	}
-+
-+out:
-+	if (stk_respond(stk, &rsp, stk_command_cb))
-+		stk_command_cb(&failure, stk);
-+}
- =
-
- static void stk_open_channel(struct ofono_stk *stk)
+-static void pri_setproxy(const char *interface, const char *proxy)
++static void pri_add_host_route(const char *interface, const char *host)
  {
- 	const struct stk_command_open_channel *oc;
- 	struct stk_response rsp;
- 	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
-+	char *host =3D NULL;
-+	unsigned int id;
-+	int err;
+ 	struct rtentry rt;
+ 	struct sockaddr_in addr;
+@@ -744,7 +744,7 @@ static void pri_setproxy(const char *interface, const c=
+har *proxy)
  =
 
- 	if (stk->pending_cmd =3D=3D NULL ||
- 		stk->pending_cmd->type !=3D STK_COMMAND_TYPE_OPEN_CHANNEL)
-@@ -592,13 +646,52 @@ static void stk_open_channel(struct ofono_stk *stk)
- 	stk->tx_buffer.data.len =3D oc->buf_size;
- 	stk->link_on_demand =3D (stk->pending_cmd->qualifier &
- 				STK_OPEN_CHANNEL_FLAG_IMMEDIATE) ? FALSE : TRUE;
--
-+	memcpy(&stk->bearer_desc, &oc->bearer_desc,
-+					sizeof(struct stk_bearer_description));
- 	/*
--	 * TODO
- 	 * Add a new primary PDP context based on the provided settings
--	 * Send the Terminal Response or wait until the PDP context is activated
--	 * in case of immediate link establishment not in background.
-+	 * According 3GPP TS 31.111, the packet data protocol type is set to 02
-+	 * '02' =3D IP (Internet Protocol, IETF STD 5)
- 	 */
-+
-+	id =3D ofono_gprs_add_pdp_context(stk->gprs, "stk", "ip", oc->apn,
-+					oc->text_usr, oc->text_passwd, host);
-+
-+	if (id =3D=3D 0) {
-+		rsp.result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		goto out;
-+	}
-+
-+	stk->channel.id =3D id;
-+
-+	if (stk->link_on_demand) {
-+		rsp.open_channel.channel.id =3D id;
-+		rsp.open_channel.channel.status =3D
-+				STK_CHANNEL_PACKET_DATA_SERVICE_NOT_ACTIVATED;
-+		rsp.open_channel.buf_size =3D oc->buf_size;
-+		goto out;
-+	}
-+
-+	err =3D ofono_gprs_activate_pdp_context(stk->gprs, id,
-+					ofono_stk_activate_pdp_context_cb, stk);
-+
-+	if (err < 0) {
-+		rsp.result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		goto out;
-+	}
-+
-+	/* In background mode, send the terminal response now */
-+	if (stk->pending_cmd->qualifier & STK_OPEN_CHANNEL_FLAG_BACKGROUND) {
-+		rsp.open_channel.channel.id =3D id;
-+		rsp.open_channel.channel.status =3D
-+				STK_CHANNEL_PACKET_DATA_SERVICE_NOT_ACTIVATED;
-+		rsp.open_channel.buf_size =3D oc->buf_size;
-+		goto out;
-+	}
-+
-+	/* wait for the PDP context activation to send the Terminal Response */
-+	return;
-+
- out:
- 	if (stk_respond(stk, &rsp, stk_command_cb))
- 		stk_command_cb(&failure, stk);
-@@ -642,12 +735,19 @@ static void stk_send_data(struct ofono_stk *stk,
+ 	memset(&addr, 0, sizeof(addr));
+ 	addr.sin_family =3D AF_INET;
+-	addr.sin_addr.s_addr =3D inet_addr(proxy);
++	addr.sin_addr.s_addr =3D inet_addr(host);
+ 	memcpy(&rt.rt_dst, &addr, sizeof(rt.rt_dst));
  =
 
- 	if (stk->channel.status =3D=3D STK_CHANNEL_PACKET_DATA_SERVICE_NOT_ACTIVA=
-TED
- 			&& stk->link_on_demand =3D=3D TRUE) {
--		/*
--		 * TODO
--		 * activate the context, update the channel status
--		 * once the context is activated, send the data immediately
--		 * and flush the tx buffer
--		 */
-+		int err;
+ 	memset(&addr, 0, sizeof(addr));
+@@ -758,7 +758,7 @@ static void pri_setproxy(const char *interface, const c=
+har *proxy)
+ 	memcpy(&rt.rt_genmask, &addr, sizeof(rt.rt_genmask));
+ =
+
+ 	if (ioctl(sk, SIOCADDRT, &rt) < 0)
+-		ofono_error("Failed to add proxy host route");
++		ofono_error("Failed to add host route");
+ =
+
+ 	close(sk);
+ }
+@@ -785,12 +785,13 @@ static void pri_reset_context_settings(struct pri_con=
+text *ctx)
+ =
+
+ 	pri_context_signal_settings(ctx, signal_ipv4, signal_ipv6);
+ =
+
+-	if (ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS) {
++	if (ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS ||
++			ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_STK) {
+ 		pri_set_ipv4_addr(interface, NULL);
+ =
+
+-		g_free(ctx->proxy_host);
+-		ctx->proxy_host =3D NULL;
+-		ctx->proxy_port =3D 0;
++		g_free(ctx->host);
++		ctx->host =3D NULL;
++		ctx->port =3D 0;
+ 	}
+ =
+
+ 	pri_ifupdown(interface, FALSE);
+@@ -798,7 +799,7 @@ static void pri_reset_context_settings(struct pri_conte=
+xt *ctx)
+ 	g_free(interface);
+ }
+ =
+
+-static void pri_update_mms_context_settings(struct pri_context *ctx)
++static void pri_update_interface(struct pri_context *ctx)
+ {
+ 	struct ofono_gprs_context *gc =3D ctx->context_driver;
+ 	struct context_settings *settings =3D gc->settings;
+@@ -808,12 +809,12 @@ static void pri_update_mms_context_settings(struct pr=
+i_context *ctx)
+ =
+
+ 	pri_parse_proxy(ctx, ctx->message_proxy);
+ =
+
+-	DBG("proxy %s port %u", ctx->proxy_host, ctx->proxy_port);
++	DBG("host %s port %u", ctx->host, ctx->port);
+ =
+
+ 	pri_set_ipv4_addr(settings->interface, settings->ipv4->ip);
+ =
+
+-	if (ctx->proxy_host)
+-		pri_setproxy(settings->interface, ctx->proxy_host);
++	if (ctx->host)
++		pri_add_host_route(settings->interface, ctx->host);
+ }
+ =
+
+ static void append_context_properties(struct pri_context *ctx,
+@@ -921,9 +922,10 @@ static void pri_activate_callback(const struct ofono_e=
+rror *error, void *data)
+ 	if (gc->settings->interface !=3D NULL) {
+ 		pri_ifupdown(gc->settings->interface, TRUE);
+ =
+
+-		if (ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS &&
+-				gc->settings->ipv4)
+-			pri_update_mms_context_settings(ctx);
++		if ((ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS &&
++				gc->settings->ipv4) ||
++				ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_STK)
++			pri_update_interface(ctx);
+ =
+
+ 		pri_context_signal_settings(ctx, gc->settings->ipv4 !=3D NULL,
+ 						gc->settings->ipv6 !=3D NULL);
+@@ -1383,7 +1385,7 @@ static void pri_context_destroy(gpointer userdata)
+ {
+ 	struct pri_context *ctx =3D userdata;
+ =
+
+-	g_free(ctx->proxy_host);
++	g_free(ctx->host);
+ 	g_free(ctx->path);
+ 	g_free(ctx);
+ }
+@@ -3113,6 +3115,9 @@ unsigned int ofono_gprs_add_pdp_context(struct ofono_=
+gprs *gprs,
+ =
+
+ 	context->context.proto =3D proto;
+ =
+
++	if (host)
++		context->host =3D g_strdup(host);
 +
-+		err =3D ofono_gprs_activate_pdp_context(stk->gprs,
-+					stk->channel.id,
-+					ofono_stk_activate_pdp_context_cb,
-+					stk);
-+
-+		if (err < 0) {
-+			rsp.result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+			goto out;
-+		}
-+
-+		return;
- 	} else {
- 		/*
- 		 * TODO
+ 	if (context_dbus_register(context) =3D=3D FALSE)
+ 		return 0;
+ =
+
 -- =
 
 1.7.1
 
 
---===============0522086663823974793==--
+--===============8362782596442719165==--
 
