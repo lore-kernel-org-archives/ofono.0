@@ -1,19 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============2837480372467533679=="
+Content-Type: multipart/mixed; boundary="===============8672659270623198304=="
 MIME-Version: 1.0
-From: Olivier Guiter <olivier.guiter@linux.intel.com>
+From: rajeshkumar s.a <rajeshkumar.s.a@gmail.com>
 Subject: Re: Dedug Log for Huawei EC168C
-Date: Wed, 04 May 2011 17:56:24 +0200
-Message-ID: <4DC17728.5090406@linux.intel.com>
-In-Reply-To: <BANLkTim06sHWdPREx_nbvpJku+GZMxTVfg@mail.gmail.com>
+Date: Wed, 04 May 2011 21:31:01 +0530
+Message-ID: <BANLkTimfiAoZZQc_GB0PYd_n0CF-v1je=w@mail.gmail.com>
+In-Reply-To: <4DC17728.5090406@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2837480372467533679==
+--===============8672659270623198304==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 05/04/2011 05:35 PM, rajeshkumar s.a wrote:
+How do I get the proper ofono_interface_num ? (n00b ques)
+
+rajesh
+
+On Wed, May 4, 2011 at 9:26 PM, Olivier Guiter <
+olivier.guiter@linux.intel.com> wrote:
+
+>  On 05/04/2011 05:35 PM, rajeshkumar s.a wrote:
+>
 > PFA, the debug log with AT commands
 >
 > I am still getting a timeout on enable-modem operation
@@ -32,63 +40,62 @@ On 05/04/2011 05:35 PM, rajeshkumar s.a wrote:
 > Regards,
 > Rajesh
 >
-As far i can see, ofono communicates using the wrong USB interface .... =
+>  As far i can see, ofono communicates using the wrong USB interface .... I
+> suggest you to modify the */etc/udev/rules.d/ofono.rules *to use the
+> correct one
+> First, get the idvendor and id product of your key (e.g: lsusb)
+> Then check in the ofono.rules  a line like this one:
+> ATTRS{idVendor}=3D=3D"19d2",
+> ATTRS{idProduct}=3D=3D"0121",ENV{OFONO_IFACE_NUM}=3D=3D"04",
+> ENV{OFONO_ZTE_TYPE}=3D"modem"
+> And update the OFONO_IFACE_NUM
+> These keys publish multiple interfaces with different purposes (like modem
+> diag, traces, etc...)
+> Hope this help
+> Olivier
+>
+>
+> **
+>
 
-I suggest you to modify the //etc/udev/rules.d/ofono.rules///to use the =
-
-correct one
-First, get the idvendor and id product of your key (e.g: lsusb)
-Then check in the ofono.rules  a line like this one:
-|ATTRS{idVendor}=3D=3D"19d2", =
-
-ATTRS{idProduct}=3D=3D"0121",ENV{OFONO_IFACE_NUM}=3D=3D"04",  =
-
-ENV{OFONO_ZTE_TYPE}=3D"modem"
-|And update the OFONO_IFACE_NUM
-These keys publish multiple interfaces with different purposes (like =
-
-modem diag, traces, etc...)
-Hope this help
-Olivier
-
-
-//
-
---===============2837480372467533679==
+--===============8672659270623198304==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMDEgVHJhbnNpdGlvbmFs
-Ly9FTiI+CjxodG1sPgogIDxoZWFkPgogICAgPG1ldGEgY29udGVudD0idGV4dC9odG1sOyBjaGFy
-c2V0PUlTTy04ODU5LTEiCiAgICAgIGh0dHAtZXF1aXY9IkNvbnRlbnQtVHlwZSI+CiAgPC9oZWFk
-PgogIDxib2R5IGJnY29sb3I9IiNmZmZmZmYiIHRleHQ9IiMwMDAwMDAiPgogICAgT24gMDUvMDQv
-MjAxMSAwNTozNSBQTSwgcmFqZXNoa3VtYXIgcy5hIHdyb3RlOgogICAgPGJsb2NrcXVvdGUKICAg
-ICAgY2l0ZT0ibWlkOkJBTkxrVGltMDZzSFdkUFJFeF9uYnZwSmt1K0daTXhUVmZnQG1haWwuZ21h
-aWwuY29tIgogICAgICB0eXBlPSJjaXRlIj5QRkEsIHRoZSBkZWJ1ZyBsb2cgd2l0aCBBVCBjb21t
-YW5kczxicj4KICAgICAgPGJyPgogICAgICBJIGFtIHN0aWxsIGdldHRpbmcgYSB0aW1lb3V0IG9u
-IGVuYWJsZS1tb2RlbSBvcGVyYXRpb24gPGJyPgogICAgICA8YnI+CiAgICAgIGFuZCBsaXN0LW1v
-ZGVtIGdpdmVzIGZvbGxvd2luZyBvL3A8YnI+CiAgICAgIDxicj4KICAgICAgJCAuL2xpc3QtbW9k
-ZW1zIDxicj4KICAgICAgWyAvaHVhd2VpMCBdPGJyPgogICAgICAmbmJzcDsmbmJzcDsmbmJzcDsg
-RmVhdHVyZXMgPSA8YnI+CiAgICAgICZuYnNwOyZuYnNwOyZuYnNwOyBFbWVyZ2VuY3kgPSAwPGJy
-PgogICAgICAmbmJzcDsmbmJzcDsmbmJzcDsgUG93ZXJlZCA9IDA8YnI+CiAgICAgICZuYnNwOyZu
-YnNwOyZuYnNwOyBMb2NrZG93biA9IDA8YnI+CiAgICAgICZuYnNwOyZuYnNwOyZuYnNwOyBJbnRl
-cmZhY2VzID0gPGJyPgogICAgICAmbmJzcDsmbmJzcDsmbmJzcDsgT25saW5lID0gMDxicj4KICAg
-ICAgPGJyPgogICAgICBSZWdhcmRzLDxicj4KICAgICAgUmFqZXNoPGJyPgogICAgICA8YnI+CiAg
-ICA8L2Jsb2NrcXVvdGU+CiAgICBBcyBmYXIgaSBjYW4gc2VlLCBvZm9ubyBjb21tdW5pY2F0ZXMg
-dXNpbmcgdGhlIHdyb25nIFVTQiBpbnRlcmZhY2UKICAgIC4uLi4gSSBzdWdnZXN0IHlvdSB0byBt
-b2RpZnkgdGhlIDxlbT4vZXRjL3VkZXYvcnVsZXMuZC9vZm9uby5ydWxlczxpPgogICAgICA8L2k+
-PC9lbT50byB1c2UgdGhlIGNvcnJlY3Qgb25lPGJyPgogICAgRmlyc3QsIGdldCB0aGUgaWR2ZW5k
-b3IgYW5kIGlkIHByb2R1Y3Qgb2YgeW91ciBrZXkgKGUuZzogbHN1c2IpPGJyPgogICAgVGhlbiBj
-aGVjayBpbiB0aGUgb2Zvbm8ucnVsZXMmbmJzcDsgYSBsaW5lIGxpa2UgdGhpcyBvbmU6PGJyPgog
-ICAgPGNvZGU+QVRUUlN7aWRWZW5kb3J9PT0iMTlkMiIsCiAgICAgIEFUVFJTe2lkUHJvZHVjdH09
-PSIwMTIxIixFTlZ7T0ZPTk9fSUZBQ0VfTlVNfT09IjA0IiwmbmJzcDsKICAgICAgRU5We09GT05P
-X1pURV9UWVBFfT0ibW9kZW0iPGJyPgogICAgPC9jb2RlPkFuZCB1cGRhdGUgdGhlIE9GT05PX0lG
-QUNFX05VTTxicj4KICAgIFRoZXNlIGtleXMgcHVibGlzaCBtdWx0aXBsZSBpbnRlcmZhY2VzIHdp
-dGggZGlmZmVyZW50IHB1cnBvc2VzIChsaWtlCiAgICBtb2RlbSBkaWFnLCB0cmFjZXMsIGV0Yy4u
-Lik8YnI+CiAgICBIb3BlIHRoaXMgaGVscCA8YnI+CiAgICBPbGl2aWVyPGJyPgogICAgPGJyPgog
-ICAgPGJyPgogICAgPGVtPjwvZW0+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==
+SG93IGRvIEkgZ2V0IHRoZSBwcm9wZXIgb2Zvbm9faW50ZXJmYWNlX251bSA/IChuMDBiIHF1ZXMp
+PGJyPjxicj5yYWplc2g8YnI+PGJyPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj5PbiBXZWQsIE1h
+eSA0LCAyMDExIGF0IDk6MjYgUE0sIE9saXZpZXIgR3VpdGVyIDxzcGFuIGRpcj0ibHRyIj4mbHQ7
+PGEgaHJlZj0ibWFpbHRvOm9saXZpZXIuZ3VpdGVyQGxpbnV4LmludGVsLmNvbSI+b2xpdmllci5n
+dWl0ZXJAbGludXguaW50ZWwuY29tPC9hPiZndDs8L3NwYW4+IHdyb3RlOjxicj4KPGJsb2NrcXVv
+dGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOiAwcHQgMHB0IDBwdCAwLjhleDsg
+Ym9yZGVyLWxlZnQ6IDFweCBzb2xpZCByZ2IoMjA0LCAyMDQsIDIwNCk7IHBhZGRpbmctbGVmdDog
+MWV4OyI+CgogIAogICAgCiAgCiAgPGRpdiBiZ2NvbG9yPSIjZmZmZmZmIiB0ZXh0PSIjMDAwMDAw
+Ij48ZGl2PjxkaXY+PC9kaXY+PGRpdiBjbGFzcz0iaDUiPgogICAgT24gMDUvMDQvMjAxMSAwNToz
+NSBQTSwgcmFqZXNoa3VtYXIgcy5hIHdyb3RlOgogICAgPGJsb2NrcXVvdGUgdHlwZT0iY2l0ZSI+
+UEZBLCB0aGUgZGVidWcgbG9nIHdpdGggQVQgY29tbWFuZHM8YnI+CiAgICAgIDxicj4KICAgICAg
+SSBhbSBzdGlsbCBnZXR0aW5nIGEgdGltZW91dCBvbiBlbmFibGUtbW9kZW0gb3BlcmF0aW9uIDxi
+cj4KICAgICAgPGJyPgogICAgICBhbmQgbGlzdC1tb2RlbSBnaXZlcyBmb2xsb3dpbmcgby9wPGJy
+PgogICAgICA8YnI+CiAgICAgICQgLi9saXN0LW1vZGVtcyA8YnI+CiAgICAgIFsgL2h1YXdlaTAg
+XTxicj4KICAgICAgoKCgIEZlYXR1cmVzID0gPGJyPgogICAgICCgoKAgRW1lcmdlbmN5ID0gMDxi
+cj4KICAgICAgoKCgIFBvd2VyZWQgPSAwPGJyPgogICAgICCgoKAgTG9ja2Rvd24gPSAwPGJyPgog
+ICAgICCgoKAgSW50ZXJmYWNlcyA9IDxicj4KICAgICAgoKCgIE9ubGluZSA9IDA8YnI+CiAgICAg
+IDxicj4KICAgICAgUmVnYXJkcyw8YnI+CiAgICAgIFJhamVzaDxicj4KICAgICAgPGJyPgogICAg
+PC9ibG9ja3F1b3RlPjwvZGl2PjwvZGl2PgogICAgQXMgZmFyIGkgY2FuIHNlZSwgb2Zvbm8gY29t
+bXVuaWNhdGVzIHVzaW5nIHRoZSB3cm9uZyBVU0IgaW50ZXJmYWNlCiAgICAuLi4uIEkgc3VnZ2Vz
+dCB5b3UgdG8gbW9kaWZ5IHRoZSA8aT4vZXRjL3VkZXYvcnVsZXMuZC9vZm9uby5ydWxlczxpPgog
+ICAgICA8L2k+PC9pPnRvIHVzZSB0aGUgY29ycmVjdCBvbmU8YnI+CiAgICBGaXJzdCwgZ2V0IHRo
+ZSBpZHZlbmRvciBhbmQgaWQgcHJvZHVjdCBvZiB5b3VyIGtleSAoZS5nOiBsc3VzYik8YnI+CiAg
+ICBUaGVuIGNoZWNrIGluIHRoZSBvZm9uby5ydWxlc6AgYSBsaW5lIGxpa2UgdGhpcyBvbmU6PGJy
+PgogICAgPGNvZGU+QVRUUlN7aWRWZW5kb3J9PT0mcXVvdDsxOWQyJnF1b3Q7LAogICAgICBBVFRS
+U3tpZFByb2R1Y3R9PT0mcXVvdDswMTIxJnF1b3Q7LEVOVntPRk9OT19JRkFDRV9OVU19PT0mcXVv
+dDswNCZxdW90OyygCiAgICAgIEVOVntPRk9OT19aVEVfVFlQRX09JnF1b3Q7bW9kZW0mcXVvdDs8
+YnI+CiAgICA8L2NvZGU+QW5kIHVwZGF0ZSB0aGUgT0ZPTk9fSUZBQ0VfTlVNPGJyPgogICAgVGhl
+c2Uga2V5cyBwdWJsaXNoIG11bHRpcGxlIGludGVyZmFjZXMgd2l0aCBkaWZmZXJlbnQgcHVycG9z
+ZXMgKGxpa2UKICAgIG1vZGVtIGRpYWcsIHRyYWNlcywgZXRjLi4uKTxicj4KICAgIEhvcGUgdGhp
+cyBoZWxwIDxicj4KICAgIE9saXZpZXI8YnI+CiAgICA8YnI+CiAgICA8YnI+CiAgICA8aT48L2k+
+CiAgPC9kaXY+Cgo8L2Jsb2NrcXVvdGU+PC9kaXY+PGJyPgo=
 
---===============2837480372467533679==--
+--===============8672659270623198304==--
 
