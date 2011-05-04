@@ -1,101 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============4988606995766086156=="
+Content-Type: multipart/mixed; boundary="===============2837480372467533679=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v4 6/8] gsmdial: add new option to test escape sequence
-Date: Wed, 04 May 2011 17:39:04 +0200
-Message-ID: <1304523546-643-7-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1304523546-643-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Olivier Guiter <olivier.guiter@linux.intel.com>
+Subject: Re: Dedug Log for Huawei EC168C
+Date: Wed, 04 May 2011 17:56:24 +0200
+Message-ID: <4DC17728.5090406@linux.intel.com>
+In-Reply-To: <BANLkTim06sHWdPREx_nbvpJku+GZMxTVfg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4988606995766086156==
+--===============2837480372467533679==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- gatchat/gsmdial.c |   29 +++++++++++++++++++++++++++++
- 1 files changed, 29 insertions(+), 0 deletions(-)
+On 05/04/2011 05:35 PM, rajeshkumar s.a wrote:
+> PFA, the debug log with AT commands
+>
+> I am still getting a timeout on enable-modem operation
+>
+> and list-modem gives following o/p
+>
+> $ ./list-modems
+> [ /huawei0 ]
+>     Features =3D
+>     Emergency =3D 0
+>     Powered =3D 0
+>     Lockdown =3D 0
+>     Interfaces =3D
+>     Online =3D 0
+>
+> Regards,
+> Rajesh
+>
+As far i can see, ofono communicates using the wrong USB interface .... =
 
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index a10e7cb..31bb910 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -57,6 +57,7 @@ static gchar *option_username =3D NULL;
- static gchar *option_password =3D NULL;
- static gchar *option_pppdump =3D NULL;
- static gboolean option_bluetooth =3D FALSE;
-+static gboolean option_esc =3D FALSE;
- =
+I suggest you to modify the //etc/udev/rules.d/ofono.rules///to use the =
 
- static GAtPPP *ppp;
- static GAtChat *control;
-@@ -237,6 +238,23 @@ static gboolean execute(const char *cmd)
- 	return TRUE;
- }
- =
+correct one
+First, get the idvendor and id product of your key (e.g: lsusb)
+Then check in the ofono.rules  a line like this one:
+|ATTRS{idVendor}=3D=3D"19d2", =
 
-+static void ppp_suspend(gpointer user_data)
-+{
-+	g_at_chat_resume(modem);
-+}
-+
-+static void start_test_sequence(gpointer data)
-+{
-+	/* Delete the write done CB */
-+	g_at_io_set_write_done(g_at_chat_get_io(modem), NULL, NULL);
-+
-+	/*
-+	 * We are sure there are no more PPP packets to be written,
-+	 * we can suspend PPP client and send escape sequence
-+	 */
-+	g_at_ppp_suspend(ppp);
-+}
-+
- static void ppp_connect(const char *iface, const char *local, const char *=
-peer,
- 			const char *dns1, const char *dns2,
- 			gpointer user_data)
-@@ -261,6 +279,14 @@ static void ppp_connect(const char *iface, const char =
-*local, const char *peer,
- 	snprintf(buf, sizeof(buf), "%s %s %s pointopoint %s", IFCONFIG_PATH,
- 				iface, local, peer);
- 	execute(buf);
-+
-+	/*
-+	 * As soon as a PPP packet is written by the client, we start
-+	 * test sequence.
-+	 */
-+	if (option_esc)
-+		g_at_io_set_write_done(g_at_chat_get_io(modem),
-+					start_test_sequence, NULL);
- }
- =
+ATTRS{idProduct}=3D=3D"0121",ENV{OFONO_IFACE_NUM}=3D=3D"04",  =
 
- static void no_carrier_notify(GAtResult *result, gpointer user_data)
-@@ -327,6 +353,7 @@ static void connect_cb(gboolean ok, GAtResult *result, =
-gpointer user_data)
- 	/* set connect and disconnect callbacks */
- 	g_at_ppp_set_connect_function(ppp, ppp_connect, NULL);
- 	g_at_ppp_set_disconnect_function(ppp, ppp_disconnect, NULL);
-+	g_at_ppp_set_suspend_function(ppp, ppp_suspend, NULL);
- =
+ENV{OFONO_ZTE_TYPE}=3D"modem"
+|And update the OFONO_IFACE_NUM
+These keys publish multiple interfaces with different purposes (like =
 
- 	/* open the ppp connection */
- 	g_at_ppp_open(ppp);
-@@ -624,6 +651,8 @@ static GOptionEntry options[] =3D {
- 				"Use ATD*99***<cid>#" },
- 	{ "bluetooth", 'b', 0, G_OPTION_ARG_NONE, &option_bluetooth,
- 				"Use only ATD*99" },
-+	{ "esc_seq", 'e', 0, G_OPTION_ARG_NONE, &option_esc,
-+				"Send escape sequence test" },
- 	{ "username", 'u', 0, G_OPTION_ARG_STRING, &option_username,
- 				"Specify PPP username" },
- 	{ "password", 'w', 0, G_OPTION_ARG_STRING, &option_password,
--- =
-
-1.7.1
+modem diag, traces, etc...)
+Hope this help
+Olivier
 
 
---===============4988606995766086156==--
+//
+
+--===============2837480372467533679==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMDEgVHJhbnNpdGlvbmFs
+Ly9FTiI+CjxodG1sPgogIDxoZWFkPgogICAgPG1ldGEgY29udGVudD0idGV4dC9odG1sOyBjaGFy
+c2V0PUlTTy04ODU5LTEiCiAgICAgIGh0dHAtZXF1aXY9IkNvbnRlbnQtVHlwZSI+CiAgPC9oZWFk
+PgogIDxib2R5IGJnY29sb3I9IiNmZmZmZmYiIHRleHQ9IiMwMDAwMDAiPgogICAgT24gMDUvMDQv
+MjAxMSAwNTozNSBQTSwgcmFqZXNoa3VtYXIgcy5hIHdyb3RlOgogICAgPGJsb2NrcXVvdGUKICAg
+ICAgY2l0ZT0ibWlkOkJBTkxrVGltMDZzSFdkUFJFeF9uYnZwSmt1K0daTXhUVmZnQG1haWwuZ21h
+aWwuY29tIgogICAgICB0eXBlPSJjaXRlIj5QRkEsIHRoZSBkZWJ1ZyBsb2cgd2l0aCBBVCBjb21t
+YW5kczxicj4KICAgICAgPGJyPgogICAgICBJIGFtIHN0aWxsIGdldHRpbmcgYSB0aW1lb3V0IG9u
+IGVuYWJsZS1tb2RlbSBvcGVyYXRpb24gPGJyPgogICAgICA8YnI+CiAgICAgIGFuZCBsaXN0LW1v
+ZGVtIGdpdmVzIGZvbGxvd2luZyBvL3A8YnI+CiAgICAgIDxicj4KICAgICAgJCAuL2xpc3QtbW9k
+ZW1zIDxicj4KICAgICAgWyAvaHVhd2VpMCBdPGJyPgogICAgICAmbmJzcDsmbmJzcDsmbmJzcDsg
+RmVhdHVyZXMgPSA8YnI+CiAgICAgICZuYnNwOyZuYnNwOyZuYnNwOyBFbWVyZ2VuY3kgPSAwPGJy
+PgogICAgICAmbmJzcDsmbmJzcDsmbmJzcDsgUG93ZXJlZCA9IDA8YnI+CiAgICAgICZuYnNwOyZu
+YnNwOyZuYnNwOyBMb2NrZG93biA9IDA8YnI+CiAgICAgICZuYnNwOyZuYnNwOyZuYnNwOyBJbnRl
+cmZhY2VzID0gPGJyPgogICAgICAmbmJzcDsmbmJzcDsmbmJzcDsgT25saW5lID0gMDxicj4KICAg
+ICAgPGJyPgogICAgICBSZWdhcmRzLDxicj4KICAgICAgUmFqZXNoPGJyPgogICAgICA8YnI+CiAg
+ICA8L2Jsb2NrcXVvdGU+CiAgICBBcyBmYXIgaSBjYW4gc2VlLCBvZm9ubyBjb21tdW5pY2F0ZXMg
+dXNpbmcgdGhlIHdyb25nIFVTQiBpbnRlcmZhY2UKICAgIC4uLi4gSSBzdWdnZXN0IHlvdSB0byBt
+b2RpZnkgdGhlIDxlbT4vZXRjL3VkZXYvcnVsZXMuZC9vZm9uby5ydWxlczxpPgogICAgICA8L2k+
+PC9lbT50byB1c2UgdGhlIGNvcnJlY3Qgb25lPGJyPgogICAgRmlyc3QsIGdldCB0aGUgaWR2ZW5k
+b3IgYW5kIGlkIHByb2R1Y3Qgb2YgeW91ciBrZXkgKGUuZzogbHN1c2IpPGJyPgogICAgVGhlbiBj
+aGVjayBpbiB0aGUgb2Zvbm8ucnVsZXMmbmJzcDsgYSBsaW5lIGxpa2UgdGhpcyBvbmU6PGJyPgog
+ICAgPGNvZGU+QVRUUlN7aWRWZW5kb3J9PT0iMTlkMiIsCiAgICAgIEFUVFJTe2lkUHJvZHVjdH09
+PSIwMTIxIixFTlZ7T0ZPTk9fSUZBQ0VfTlVNfT09IjA0IiwmbmJzcDsKICAgICAgRU5We09GT05P
+X1pURV9UWVBFfT0ibW9kZW0iPGJyPgogICAgPC9jb2RlPkFuZCB1cGRhdGUgdGhlIE9GT05PX0lG
+QUNFX05VTTxicj4KICAgIFRoZXNlIGtleXMgcHVibGlzaCBtdWx0aXBsZSBpbnRlcmZhY2VzIHdp
+dGggZGlmZmVyZW50IHB1cnBvc2VzIChsaWtlCiAgICBtb2RlbSBkaWFnLCB0cmFjZXMsIGV0Yy4u
+Lik8YnI+CiAgICBIb3BlIHRoaXMgaGVscCA8YnI+CiAgICBPbGl2aWVyPGJyPgogICAgPGJyPgog
+ICAgPGJyPgogICAgPGVtPjwvZW0+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==
+
+--===============2837480372467533679==--
 
