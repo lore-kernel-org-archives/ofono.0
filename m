@@ -1,67 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============9156886145975003635=="
+Content-Type: multipart/mixed; boundary="===============6663622623695812287=="
 MIME-Version: 1.0
-From: Yuvaraj Ragupathi <yuvaraj.addu@gmail.com>
-Subject: Ofono cross compiling for ARM
-Date: Wed, 04 May 2011 14:37:10 +0530
-Message-ID: <BANLkTink6D45Lz6iAEmOnoeMtJu2bMkZ_Q@mail.gmail.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH v3 05/26] gathdlc: add mechansim to detect '+++' escape
+ sequence
+Date: Wed, 04 May 2011 11:14:27 +0200
+Message-ID: <4DC118F3.2070201@linux.intel.com>
+In-Reply-To: <4DBEA1FC.20800@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9156886145975003635==
+--===============6663622623695812287==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guys,
+Hi Denis,
 
+On 02/05/2011 14:22, Denis Kenzior wrote:
+> Hi Guillaume,
+>
+>> @@ -197,6 +257,29 @@ out:
+>>
+>>   	if (hdlc->destroyed)
+>>   		g_free(hdlc);
+>> +
+>> +	/*
+>> +	 * If there were no data pause for GUARD_TIMEOUTS ms,
+>> +	 * we try again to check it.
+>> +	 */
+>> +	if (!hdlc->paused)
+>> +		hdlc->pause_timeout =3D g_timeout_add (GUARD_TIMEOUTS,
+>> +							paused_timeout_cb,
+>> +							hdlc);
+> So you just caused a crash here...
 
-I want to cross compile the ofono for ARM target.
+Yes big one, I may have sent you not the right version because I made it =
 
-So i executed configure file with following arguments
+working.
+Abyway, I will work on your version now :)
 
+>> +
+>> +	return;
+>> +
+>> +suspend:
+>> +	/*
+>> +	 * Restart the counter and reset the ring buffer.
+>> +	 */
+>> +	hdlc->cmpt =3D 0;
+>> +
+>> +	/*
+>> +	 * Wait for another pause of GUARD_TIMEOUTS ms before returning to com=
+mand mode.
+>> +	 */
+>> +	hdlc->paused =3D FALSE;
+>> +	hdlc->pause_timeout =3D g_timeout_add (GUARD_TIMEOUTS, hdlc_suspend, h=
+dlc);
+>>   }
+>>
+>>   GAtHDLC *g_at_hdlc_new_from_io(GAtIO *io)
+> Some general comments:
+>
+> Your implementation assumes too much about the contents of the read
+> buffer.  You have to make sure that it works even in different timings
+> of the received information.  You should also not try to process the
+> escape sequence through the main HDLC parser...
+>
+> I've pushed my own version, which I have not tested at all.  The
+> relevant commits are 94d6d505eeda4db0a28aea99bf3ab23a62a65f2c and
+> dc86e864463a61d3f99a21c948c11ba274c6ef84.  Please review and let me know
+> how well it works.
+>
 
-#./configure --host=3Darm
---libdir=3D/usr/lib/madde/linux-i686/sysroots/meego-core-armv7l-madde-sysro=
-ot-1.1.2-fs/usr/lib
---prefix=3D/home/$myname/Desktop/ofono_For_ARM/binaries
---includedir=3D/usr/lib/madde/linux-i686/sysroots/meego-core-armv7l-madde-s=
-ysroot-1.1.2-fs/usr/include
+At first sight, it sounds ok, I will test it now.
 
+Kind regards,
+Guillaume
 
-It is giving config related error message
-
-configure: error: signalfd support is required
-
-
-What it does mean?
-
-To cross compile the ofono for ARM. What are the dependencies are required
-
-
-
-Thanks
-
-Addu T.R
-
---===============9156886145975003635==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-SGkgR3V5cyw8YnI+PGJyPjxicj5JIHdhbnQgdG8gY3Jvc3MgY29tcGlsZSB0aGUgb2Zvbm8gZm9y
-IEFSTSB0YXJnZXQuPGJyPjxicj5TbyBpIGV4ZWN1dGVkIGNvbmZpZ3VyZSBmaWxlIHdpdGggZm9s
-bG93aW5nIGFyZ3VtZW50czxicj48YnI+PGJyPiMuL2NvbmZpZ3VyZSAtLWhvc3Q9YXJtIC0tbGli
-ZGlyPS91c3IvbGliL21hZGRlL2xpbnV4LWk2ODYvc3lzcm9vdHMvbWVlZ28tY29yZS1hcm12N2wt
-bWFkZGUtc3lzcm9vdC0xLjEuMi1mcy91c3IvbGliIC0tcHJlZml4PS9ob21lLyRteW5hbWUvRGVz
-a3RvcC9vZm9ub19Gb3JfQVJNL2JpbmFyaWVzoCAtLWluY2x1ZGVkaXI9L3Vzci9saWIvbWFkZGUv
-bGludXgtaTY4Ni9zeXNyb290cy9tZWVnby1jb3JlLWFybXY3bC1tYWRkZS1zeXNyb290LTEuMS4y
-LWZzL3Vzci9pbmNsdWRlPGJyPgo8YnI+PGJyPkl0IGlzIGdpdmluZyBjb25maWcgcmVsYXRlZCBl
-cnJvciBtZXNzYWdlIDxicj48YnI+PHNwYW4gc3R5bGU9ImNvbG9yOiByZ2IoMjU1LCAwLCAwKTsi
-PmNvbmZpZ3VyZTogZXJyb3I6IHNpZ25hbGZkIHN1cHBvcnQgaXMgcmVxdWlyZWQ8L3NwYW4+PGJy
-Pjxicj48YnI+V2hhdCBpdCBkb2VzIG1lYW4/IDxicj48YnI+VG8gY3Jvc3MgY29tcGlsZSB0aGUg
-b2Zvbm8gZm9yIEFSTS4gV2hhdCBhcmUgdGhlIGRlcGVuZGVuY2llcyBhcmUgcmVxdWlyZWQ8YnI+
-Cjxicj48YnI+PGJyPlRoYW5rczxicj48YnI+QWRkdSBULlI8YnI+PGJyPgo=
-
---===============9156886145975003635==--
+--===============6663622623695812287==--
 
