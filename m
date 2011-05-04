@@ -1,13 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5957764770854060604=="
+Content-Type: multipart/mixed; boundary="===============8172846637455656921=="
 MIME-Version: 1.0
 From: rajeshkumar s.a <rajeshkumar.s.a@gmail.com>
 Subject: Debug log
-Date: Wed, 04 May 2011 12:19:18 +0000
-Message-ID: <BANLkTikrGsdCtJrLJLOt6Ww8-OZvRUiiQQ@mail.gmail.com>
+Date: Wed, 04 May 2011 18:14:40 +0530
+Message-ID: <BANLkTikGKOkgJx5yUkdNL+my2W8Nj3_V8Q@mail.gmail.com>
+In-Reply-To: <BANLkTikrGsdCtJrLJLOt6Ww8-OZvRUiiQQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5957764770854060604==
+--===============8172846637455656921==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -20,17 +21,18 @@ I am getting a timeout error when I do a ./enable-modem on Huawei datacard
 Regards,
 Rajesh
 
---===============5957764770854060604==
+--===============8172846637455656921==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-UEZBLCB0aGUgZGVidWcgbG9nPGJyPjxicj5JIGFtIGdldHRpbmcgYSB0aW1lb3V0IGVycm9yIHdo
-ZW4gSSBkbyBhIC4vZW5hYmxlLW1vZGVtIG9uIEh1YXdlaSBkYXRhY2FyZCAoRUMxNjhDKTxicj48
-YnI+UmVnYXJkcyw8YnI+UmFqZXNoPGJyPgo=
+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPlBGQSwgdGhlIGRlYnVnIGxvZzxicj48YnI+SSBhbSBn
+ZXR0aW5nIGEgdGltZW91dCBlcnJvciB3aGVuIEkgZG8gYSAuL2VuYWJsZS1tb2RlbSBvbiBIdWF3
+ZWkgZGF0YWNhcmQgKEVDMTY4Qyk8YnI+PGJyPlJlZ2FyZHMsPGJyPlJhamVzaDxicj4KPC9kaXY+
+PGJyPgo=
 
---===============5957764770854060604==
+--===============8172846637455656921==
 Content-Type: application/octet-stream
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
@@ -234,5 +236,5 @@ c3JjL21vZGVtLmM6Z2V0X21vZGVtX3Byb3BlcnR5KCkgbW9kZW0gMHg4NWVmODU4IHByb3BlcnR5
 IE1vZGVtUmVnaXN0ZXJlZApvZm9ub2RbMjIyOThdOiBzcmMvbW9kZW0uYzpnZXRfbW9kZW1fcHJv
 cGVydHkoKSBtb2RlbSAweDg1ZWY4NTggcHJvcGVydHkgUGN1aVJlZ2lzdGVyZWQK
 
---===============5957764770854060604==--
+--===============8172846637455656921==--
 
