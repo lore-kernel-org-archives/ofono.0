@@ -1,57 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============5748360086947645384=="
+Content-Type: multipart/mixed; boundary="===============5916223752266956598=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v4 2/8] ppp_net: add ppp_net_suspend_interface() function
-Date: Wed, 04 May 2011 17:39:00 +0200
-Message-ID: <1304523546-643-3-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1304523546-643-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v4 0/8] Escape sequence test implementation
+Date: Wed, 04 May 2011 17:38:58 +0200
+Message-ID: <1304523546-643-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5748360086947645384==
+--===============5916223752266956598==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
+Hi all,
+
+After set of patches has been applied, you can test it in launching:
+
+sudo src/ofonod -nd '*' (with phonesim enabled and online)
+
+sudo gsmdial -i xxx.xxx.xxx.xxx -p xxxx -b -e
+
+This will establish a PPP connection and terminate it using "+++"
+escape sequence and ATH0 command.
+
+Change log from v3:
+	- remove "+++" detection mechanism, use Denis implementation
+	- "+++" is sent from GAtPPP not anymore from at_chat
+	- suspend function is set in PPP server and PPP client
+	  to resume at_chat
+	- dun_ato_cb will be committed in separated set of patches
+
+Guillaume Zajac (8):
+  gathdlc: delete read/write handler in hdlc_suspend and add public
+    suspend function for testing
+  ppp_net: add ppp_net_suspend_interface() function
+  gatppp: add function to set ppp_suspend() and proxy function to call
+    ppp_net_suspend_interface()
+  gatppp: add public suspend function for testing
+  emulator: add suspend_ppp() definition and and register it into
+    GAtPPP
+  gsmdial: add new option to test escape sequence
+  emulator: add dun_ath_cb() and register it
+  gsmdial: add ATH0 command test
+
+ gatchat/gathdlc.c |   12 +++++++++
+ gatchat/gathdlc.h |    2 +
+ gatchat/gatppp.c  |   59 +++++++++++++++++++++++++++++++++++++++++++++
+ gatchat/gatppp.h  |    3 ++
+ gatchat/gsmdial.c |   39 ++++++++++++++++++++++++++++++
  gatchat/ppp.h     |    1 +
- gatchat/ppp_net.c |    9 +++++++++
- 2 files changed, 10 insertions(+), 0 deletions(-)
-
-diff --git a/gatchat/ppp.h b/gatchat/ppp.h
-index d2786d7..22809d8 100644
---- a/gatchat/ppp.h
-+++ b/gatchat/ppp.h
-@@ -107,6 +107,7 @@ const char *ppp_net_get_interface(struct ppp_net *net);
- void ppp_net_process_packet(struct ppp_net *net, const guint8 *packet);
- void ppp_net_free(struct ppp_net *net);
- gboolean ppp_net_set_mtu(struct ppp_net *net, guint16 mtu);
-+void ppp_net_suspend_interface(struct ppp_net *net);
- =
-
- /* PPP functions related to main GAtPPP object */
- void ppp_debug(GAtPPP *ppp, const char *str);
-diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
-index 1a6cdf7..9abf590 100644
---- a/gatchat/ppp_net.c
-+++ b/gatchat/ppp_net.c
-@@ -196,3 +196,12 @@ void ppp_net_free(struct ppp_net *net)
- 	g_free(net->if_name);
- 	g_free(net);
- }
-+
-+void ppp_net_suspend_interface(struct ppp_net *net)
-+{
-+	if (net =3D=3D NULL || net->channel =3D=3D NULL)
-+		return;
-+
-+	if (net->watch)
-+		g_source_remove(net->watch);
-+}
--- =
-
-1.7.1
+ gatchat/ppp_net.c |    9 +++++++
+ src/emulator.c    |   69 +++++++++++++++++++++++++++++++++++++++++++++++++=
+++-
+ 8 files changed, 192 insertions(+), 2 deletions(-)
 
 
---===============5748360086947645384==--
+--===============5916223752266956598==--
 
