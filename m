@@ -1,42 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============5542343836293782190=="
+Content-Type: multipart/mixed; boundary="===============6781010995297883291=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/7] Add CHLD support to HFP profile
-Date: Wed, 04 May 2011 22:37:27 -0500
-Message-ID: <4DC21B77.20904@gmail.com>
-In-Reply-To: <1304351288-3894-1-git-send-email-frederic.dalleau@linux.intel.com>
+Subject: Re: [PATCH 2/4] gprs: Add new external APIs to create,
+ activate and remove a PDP context
+Date: Wed, 04 May 2011 22:42:29 -0500
+Message-ID: <4DC21CA5.5070000@gmail.com>
+In-Reply-To: <1304530002-13336-3-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5542343836293782190==
+--===============6781010995297883291==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Philippe,
 
-On 05/02/2011 10:48 AM, Fr=C3=A9d=C3=A9ric Dalleau wrote:
-> This patch adds CHLD support to HFP profile.
+On 05/04/2011 12:26 PM, Philippe Nunes wrote:
+> ---
+>  include/gprs.h |   16 ++++
+>  src/gprs.c     |  234 ++++++++++++++++++++++++++++++++++++++++++++++++++=
++++++-
+>  2 files changed, 246 insertions(+), 4 deletions(-)
 > =
 
-> AT+CHLD=3D0 uses release_all_held and set_udub
-> AT+CHLD=3D1 uses release_all_active
-> AT+CHLD=3D2 uses hold_all_active
-> AT+CHLD=3D3 uses create_multiparty
-> AT+CHLD=3D4 uses transfer
-> AT+CHLD=3D1X uses release_specific
-> AT+CHLD=3D2X uses private_chat
-> =
+> diff --git a/include/gprs.h b/include/gprs.h
+> index 157a6f9..0bb37f7 100644
+> --- a/include/gprs.h
+> +++ b/include/gprs.h
+> @@ -36,6 +36,10 @@ typedef void (*ofono_gprs_status_cb_t)(const struct of=
+ono_error *error,
+>  =
 
-> Best regards!
-> =
+>  typedef void (*ofono_gprs_cb_t)(const struct ofono_error *error, void *d=
+ata);
+>  =
 
+> +typedef void (*ofono_gprs_add_pdp_context_cb_t)(int error, char *interfa=
+ce,
+> +						char *ipv4, char *ipv6,
+> +						void *data);
+> +
+>  struct ofono_gprs_driver {
+>  	const char *name;
+>  	int (*probe)(struct ofono_gprs *gprs, unsigned int vendor,
+> @@ -77,7 +81,19 @@ void ofono_gprs_set_cid_range(struct ofono_gprs *gprs,
+>  				unsigned int min, unsigned int max);
+>  void ofono_gprs_add_context(struct ofono_gprs *gprs,
+>  				struct ofono_gprs_context *gc);
+> +unsigned int ofono_gprs_add_pdp_context(struct ofono_gprs *gprs,
+> +					const char *type,
+> +					const char *protocol,
+> +					const char *apn,
+> +					const char *username,
+> +					const char *password,
+> +					const char *host);
+> +
+> +int ofono_gprs_remove_pdp_context(struct ofono_gprs *gprs, unsigned int =
+id);
+>  =
 
-I applied all patches in this series, however I did make a few refactor
-commits afterwards.  Please check and make sure I didn't screw anything up.
+> +int ofono_gprs_activate_pdp_context(struct ofono_gprs *gprs, unsigned in=
+t id,
+> +					ofono_gprs_add_pdp_context_cb_t cb,
+> +					void *data);
+
+Why do you want to expose STK activated contexts over D-Bus and try to
+deal with the consequences of this decision?  Having oFono handle them
+completely internally would simplify the design quite a bit, no?
 
 Regards,
 -Denis
 
---===============5542343836293782190==--
+>  #ifdef __cplusplus
+>  }
+>  #endif
+
+--===============6781010995297883291==--
 
