@@ -1,85 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============7879746622924242317=="
+Content-Type: multipart/mixed; boundary="===============8950761600321883304=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH_v3 2/3] emulator: add drivers to request/release private
- network from ConnMan
-Date: Thu, 05 May 2011 10:38:44 +0200
-Message-ID: <4DC26214.8040400@linux.intel.com>
-In-Reply-To: <4DC22361.5000906@gmail.com>
+From: Alexander Khryukin <alexander@mezon.ru>
+Subject: ofono modem plug loop
+Date: Thu, 05 May 2011 16:55:33 +0400
+Message-ID: <BANLkTikRHqy0gYWhQeqzXG5zLZaC5p-epw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7879746622924242317==
+--===============8950761600321883304==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+BUILD IMAGE: any image with ofono 0.36 - latest or git ofono
 
-On 05/05/2011 06:11, Denis Kenzior wrote:
->> diff --git a/include/emulator.h b/include/emulator.h
->> index 5cd894b..a7fc23b 100644
->> --- a/include/emulator.h
->> +++ b/include/emulator.h
->> @@ -105,6 +105,24 @@ enum ofono_emulator_request_type ofono_emulator_req=
-uest_get_type(
->>   void ofono_emulator_set_indicator(struct ofono_emulator *em,
->>   					const char *name, int value);
->>
->> +ofono_bool_t ofono_emulator_setup_ppp(struct ofono_emulator *em, int fd,
->> +				const char *server_ip, const char *peer_ip,
->> +				const char *primary_dns,
->> +				const char *secondary_dns);
->> +
->> +int ofono_emulator_get_uid(struct ofono_emulator *em);
->> +
-> I'm not particularly happy with this, we should try to de-couple the
-> private network provider from the emulator.  We might end up with other
-> consumers later.
->
->> +struct emulator_network_provision_driver {
->> +	char *name;
->> +	int (*get_settings)(struct ofono_emulator *em);
->> +	void (*release)(int uid);
->> +};
->> +
-> I'd say you're on the right track here, but modeling this even closer to
-> gprs-provision might be a good idea.  Except you'll need to use a
-> callback, so something like:
->
-> struct ofono_private_network_settings {
-> 	...
-> };
->
-> typedef (ofono_private_network_cb_t)(...);
->
-> struct ofono_private_network_driver {
-> 	char *name;
-> 	int (*request)(ofono_private_network_cb_t cb, void *data);
-> 	void (*release)(int id);
-> };
->
->> +int ofono_emulator_network_driver_register(
->> +			const struct emulator_network_provision_driver *d);
->> +void ofono_emulator_network_driver_unregister(
->> +			const struct emulator_network_provision_driver *d);
->> +
-> And then add __ofono_private_network_request / release to src/ofono.h
-> for now.  Similar to how gprs_provision does things.
+HARDWARE MODEL: HUAWEI E620, HUAWEI E1550
 
-Should we add a new src into ofono that would implement those =
+BUG DETAILED DESCRIPTIONS
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D
+When E1550 plugged ofono succefful work with udev rules and start modem.
+But everytime ofono drops in remove_modem, add_modem loop
 
-request/release functions and register the ofono_private_network_driver?
-Something like private-network-provision.c?
-Then we would have the driver and callback type definition into =
+log herehttp://pastie.org/1867821
 
-private-network-provision.h.
+ofonod[5983]: plugins/udev.c:add_modem()
+/devices/pci0000:00/0000:00:1d.7/usb1/1-1/1-1:1.1/ttyUSB1/tty/ttyUSB1 (huaw=
+ei)
+ofonod[5983]: plugins/udev.c:add_huawei() modem 0x995c260
+......
+......
+plugins/udev.c:remove_modem()
+/devices/pci0000:00/0000:00:1d.7/usb1/1-1/1-1:1.0/ttyUSB0/tty/ttyUSB0
 
-Kind regards,
-Guillaume
+Again and again
 
 
 
+EXACT STEPS LEADING TO PROBLEM:
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D
+1.meego any build
+2.any version of ofono
+3./usr/sbin/ofono -n -d
+4.plug modem
 
---===============7879746622924242317==--
+EXPECTED OUTCOME:
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+Modem must not reconnect loop
+
+ACTUAL OUTCOME:
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+Modem in add\remove loop
+
+--===============8950761600321883304==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PHByZSBjbGFzcz0iYnpfY29tbWVudF90ZXh0IiBpZD0iY29tbWVudF90ZXh0XzAiPkJVSUxEIElN
+QUdFOiBhbnkgaW1hZ2Ugd2l0aCBvZm9ubyAwLjM2IC0gbGF0ZXN0IG9yIGdpdCBvZm9ubyAgICAg
+IAoKSEFSRFdBUkUgTU9ERUw6IEhVQVdFSSBFNjIwLCBIVUFXRUkgRTE1NTAKCkJVRyBERVRBSUxF
+RCBERVNDUklQVElPTlMKPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT0KV2hlbiBFMTU1MCBwbHVnZ2VkIG9mb25vIHN1Y2NlZmZ1bCB3b3Jr
+IHdpdGggdWRldiBydWxlcyBhbmQgc3RhcnQgbW9kZW0uCkJ1dCBldmVyeXRpbWUgb2Zvbm8gZHJv
+cHMgaW4gcmVtb3ZlX21vZGVtLCBhZGRfbW9kZW0gbG9vcAoKbG9nIGhlcmUKPGEgaHJlZj0iaHR0
+cDovL3Bhc3RpZS5vcmcvMTg2NzgyMSI+aHR0cDovL3Bhc3RpZS5vcmcvMTg2NzgyMTwvYT4KCm9m
+b25vZFs1OTgzXTogcGx1Z2lucy91ZGV2LmM6YWRkX21vZGVtKCkKL2RldmljZXMvcGNpMDAwMDow
+MC8wMDAwOjAwOjFkLjcvdXNiMS8xLTEvMS0xOjEuMS90dHlVU0IxL3R0eS90dHlVU0IxIChodWF3
+ZWkpCm9mb25vZFs1OTgzXTogcGx1Z2lucy91ZGV2LmM6YWRkX2h1YXdlaSgpIG1vZGVtIDB4OTk1
+YzI2MAouLi4uLi4KLi4uLi4uCnBsdWdpbnMvdWRldi5jOnJlbW92ZV9tb2RlbSgpCi9kZXZpY2Vz
+L3BjaTAwMDA6MDAvMDAwMDowMDoxZC43L3VzYjEvMS0xLzEtMToxLjAvdHR5VVNCMC90dHkvdHR5
+VVNCMAoKQWdhaW4gYW5kIGFnYWluCgoKCkVYQUNUIFNURVBTIExFQURJTkcgVE8gUFJPQkxFTToK
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT0KMS5tZWVnbyBhbnkgYnVpbGQKMi5hbnkgdmVyc2lvbiBvZiBvZm9ubwozLi91c3Ivc2Jpbi9v
+Zm9ubyAtbiAtZAo0LnBsdWcgbW9kZW0gCgpFWFBFQ1RFRCBPVVRDT01FOgo9PT09PT09PT09PT09
+PT09PT09Ck1vZGVtIG11c3Qgbm90IHJlY29ubmVjdCBsb29wCgpBQ1RVQUwgT1VUQ09NRToKPT09
+PT09PT09PT09PT09PT09PQpNb2RlbSBpbiBhZGRccmVtb3ZlIGxvb3AgICAgICAgIDwvcHJlPgo=
+
+--===============8950761600321883304==--
 
