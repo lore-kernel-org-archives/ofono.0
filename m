@@ -1,58 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============7941700009596061732=="
+Content-Type: multipart/mixed; boundary="===============0295061914427426936=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] gprs: Add new external APIs to create,
- activate and remove a PDP context
-Date: Thu, 05 May 2011 05:47:29 -0500
-Message-ID: <4DC28041.2050704@gmail.com>
-In-Reply-To: <4DC2D276.9020008@linux.intel.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH] phonesim: Add title to the SETUP menu (this AID TLV object is
+ mandatory)
+Date: Fri, 06 May 2011 10:07:17 +0200
+Message-ID: <1304669237-12189-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7941700009596061732==
+--===============0295061914427426936==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+---
+ src/conformancesimapplication.cpp |    3 ++-
+ src/simapplication.cpp            |    1 +
+ 2 files changed, 3 insertions(+), 1 deletions(-)
 
->> Why do you want to expose STK activated contexts over D-Bus and try to
->> deal with the consequences of this decision?  Having oFono handle them
->> completely internally would simplify the design quite a bit, no?
-> =
+diff --git a/src/conformancesimapplication.cpp b/src/conformancesimapplicat=
+ion.cpp
+index 5eb9d07..baf3538 100644
+--- a/src/conformancesimapplication.cpp
++++ b/src/conformancesimapplication.cpp
+@@ -107,6 +107,7 @@ void ConformanceSimApplication::mainMenu()
+     QList<QSimMenuItem> items;
+ =
 
-> Yes, indeed. I thought that the PDP context created by and for oFono
-> should be however visible from outside. But I agree,
-> STK PDP context should not be handled from outside. So, I will remove
-> the D-BUS interface registration for this kind of context.
-> =
+     cmd.setType( QSimCommand::SetupMenu );
++    cmd.setTitle( "Conformance menu" );
+ =
 
-> Should I also consider to not add this context to the gprs->contexts list?
+     item.setIdentifier( ConformanceMenu_DisplayText );
+     item.setLabel( "Display Text" );
+@@ -1729,4 +1730,4 @@ void ConformanceSimApplication::GetInputIconMenu( con=
+st QSimTerminalResponse& re
+             endSession();
+         break;
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/src/simapplication.cpp b/src/simapplication.cpp
+index 68ec1cd..119d7b2 100644
+--- a/src/simapplication.cpp
++++ b/src/simapplication.cpp
+@@ -382,6 +382,7 @@ void DemoSimApplication::mainMenu()
+     QList<QSimMenuItem> items;
+ =
 
-I don't know yet ;)
+     cmd.setType( QSimCommand::SetupMenu );
++    cmd.setTitle( "Phonesim services" );
+ =
 
-> =
+     item.setIdentifier( MainMenu_News );
+     item.setLabel( "News" );
+-- =
 
-> As you can see, I'm using a callback to notify the STK atom when the
-> context is activated. Since the context is no more subject to D-BUS
-> handling, do you think I could map this callback directly as the
-> callback for the gprs_context driver (id
-> ofono_stk_activate_pdp_context_cb =3D ofono_gprs_context_cb_t)?
-> =
+1.7.1
 
-> It implies that I need to setup the interface directly in the STK atom
-> but so far, I don't know if you agree with the modifications I did in
-> gprs.c regarding how this interface is updated when this is linked to a
-> STK PDP context (particularly for the host route).
-> Perhaps, even if it duplicates some code, you would prefer to see the
-> STK atom updating the interface directly?
 
-Do not do that.  I suggest you look into how STK Send SMS is implemented
-and model this somewhat after that.  GPRS atom needs to manage the
-contexts and provide private API for activating 'hidden' ones.
-
-Regards,
--Denis
-
---===============7941700009596061732==--
+--===============0295061914427426936==--
 
