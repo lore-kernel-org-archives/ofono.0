@@ -1,352 +1,159 @@
-Content-Type: multipart/mixed; boundary="===============3234524253111851549=="
+Content-Type: multipart/mixed; boundary="===============9216945683842925429=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v4 5/5] connman: add plugin in oFono to request
- request/release private network
-Date: Fri, 06 May 2011 16:01:53 +0200
-Message-ID: <1304690513-3137-6-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v4 4/5] emulator: add request/release private network calls
+Date: Fri, 06 May 2011 16:01:52 +0200
+Message-ID: <1304690513-3137-5-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1304690513-3137-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3234524253111851549==
+--===============9216945683842925429==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am       |    3 +
- plugins/connman.c |  297 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 300 insertions(+), 0 deletions(-)
- create mode 100644 plugins/connman.c
+ src/emulator.c |   49 +++++++++++++++++++++++++++++++++++++++----------
+ 1 files changed, 39 insertions(+), 10 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index e1eaf15..ffb85ae 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -339,6 +339,9 @@ builtin_sources +=3D plugins/hfp_ag.c plugins/bluetooth=
-.h
- builtin_modules +=3D dun_gw
- builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
+diff --git a/src/emulator.c b/src/emulator.c
+index 9055909..d6b2b1b 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -25,6 +25,7 @@
  =
 
-+builtin_modules +=3D connman
-+builtin_sources +=3D plugins/connman.c
-+
- builtin_sources +=3D $(btio_sources)
- builtin_cflags +=3D @BLUEZ_CFLAGS@
- builtin_libadd +=3D @BLUEZ_LIBS@
-diff --git a/plugins/connman.c b/plugins/connman.c
-new file mode 100644
-index 0000000..cfc1721
---- /dev/null
-+++ b/plugins/connman.c
-@@ -0,0 +1,297 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <errno.h>
-+#include <stdlib.h>
+ #include <stdio.h>
+ #include <string.h>
 +#include <unistd.h>
-+
-+#include <gdbus.h>
-+#include <string.h>
-+
-+#include <ofono.h>
-+#include <private-network.h>
-+
-+#define CONNMAN_SERVICE			"net.connman"
-+#define CONNMAN_PATH			"/net/connman"
-+
-+#define CONNMAN_DEBUG_INTERFACE		CONNMAN_SERVICE ".Debug"
-+#define CONNMAN_ERROR_INTERFACE		CONNMAN_SERVICE ".Error"
-+#define CONNMAN_AGENT_INTERFACE		CONNMAN_SERVICE ".Agent"
-+#define CONNMAN_COUNTER_INTERFACE	CONNMAN_SERVICE ".Counter"
-+
-+#define CONNMAN_MANAGER_INTERFACE	CONNMAN_SERVICE ".Manager"
-+#define CONNMAN_MANAGER_PATH		"/"
-+
-+#define CONNMAN_TASK_INTERFACE		CONNMAN_SERVICE ".Task"
-+#define CONNMAN_PROFILE_INTERFACE	CONNMAN_SERVICE ".Profile"
-+#define CONNMAN_SERVICE_INTERFACE	CONNMAN_SERVICE ".Service"
-+#define CONNMAN_PROVIDER_INTERFACE	CONNMAN_SERVICE ".Provider"
-+#define CONNMAN_TECHNOLOGY_INTERFACE	CONNMAN_SERVICE ".Technology"
-+#define CONNMAN_SESSION_INTERFACE	CONNMAN_SERVICE ".Session"
-+#define CONNMAN_NOTIFICATION_INTERFACE	CONNMAN_SERVICE ".Notification"
-+
-+static DBusConnection *connection;
-+static GHashTable *requests;
-+static unsigned int id;
-+
-+struct pns_req {
-+	int uid;
-+	DBusPendingCall *pending;
-+	struct ofono_private_network_settings *pns;
-+	ofono_private_network_cb_t *cb;
-+	void *data;
-+};
-+
-+static void request_reply(DBusPendingCall *call, void *user_data)
-+{
-+	struct pns_req *req =3D user_data;
-+	struct ofono_private_network_settings *pns;
-+	DBusMessageIter array, dict, entry;
-+	DBusMessage *reply;
-+
-+	DBG("");
-+
-+	req->pending =3D NULL;
-+	reply =3D dbus_pending_call_steal_reply(call);
-+	if (!reply)
-+		goto error;
-+
-+	pns =3D g_try_new0(struct ofono_private_network_settings, 1);
-+	if (pns =3D=3D NULL)
-+		goto error;
-+
-+	if (dbus_message_iter_init(reply, &array) =3D=3D FALSE)
-+		goto error;
-+
-+	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_UNIX_FD)
-+		goto error;
-+
-+	dbus_message_iter_get_basic(&array, &pns->fd);
-+	DBG("Fildescriptor =3D %d\n", pns->fd);
-+
-+	dbus_message_iter_next(&array);
-+
-+	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_ARRAY)
-+		goto error;
-+
-+	dbus_message_iter_recurse(&array, &dict);
-+
-+	while (dbus_message_iter_get_arg_type(&dict) =3D=3D DBUS_TYPE_DICT_ENTRY)=
- {
-+		DBusMessageIter iter;
-+		const char *key;
-+		int type;
-+
-+		dbus_message_iter_recurse(&dict, &entry);
-+
-+		dbus_message_iter_get_basic(&entry, &key);
-+
-+		dbus_message_iter_next(&entry);
-+		dbus_message_iter_recurse(&entry, &iter);
-+
-+		type =3D dbus_message_iter_get_arg_type(&iter);
-+		if (type !=3D DBUS_TYPE_STRING)
-+			break;
-+
-+		if (g_str_equal(key, "ServerIPv4")
-+				&& type =3D=3D DBUS_TYPE_STRING) {
-+			dbus_message_iter_get_basic(&iter, &pns->server_ip);
-+
-+		} else if (g_str_equal(key, "PeerIPv4")
-+				&& type =3D=3D DBUS_TYPE_STRING) {
-+			dbus_message_iter_get_basic(&iter, &pns->peer_ip);
-+
-+		} else if (g_str_equal(key, "PrimaryDNS")
-+				&& type =3D=3D DBUS_TYPE_STRING) {
-+			dbus_message_iter_get_basic(&iter, &pns->primary_dns);
-+
-+		} else if (g_str_equal(key, "SecondaryDNS")
-+				&& type =3D=3D DBUS_TYPE_STRING) {
-+			dbus_message_iter_get_basic(&iter, &pns->secondary_dns);
-+		}
-+
-+		dbus_message_iter_next(&dict);
-+	}
-+
-+	req->pns =3D pns;
-+	if (pns->server_ip =3D=3D NULL || pns->peer_ip =3D=3D NULL ||
-+		pns->primary_dns =3D=3D NULL || pns->secondary_dns =3D=3D NULL ||
-+		pns->fd < 0) {
-+		ofono_error("Error while reading dictionnary...\n");
-+		goto error;
-+	}
-+
-+	req->cb(req->data, req->pns);
-+
-+	dbus_message_unref(reply);
-+	dbus_pending_call_unref(call);
-+
-+	return;
-+
-+error:
-+	req->cb(req->data, NULL);
-+	if (reply)
-+		dbus_message_unref(reply);
-+
-+	dbus_pending_call_unref(call);
-+}
-+
-+static int pns_request(ofono_private_network_cb_t cb, void *data)
-+{
-+	DBusMessage *message;
-+	DBusPendingCall *call;
-+	struct pns_req *req;
-+
-+	DBG("");
-+
-+	req =3D g_try_new0(struct pns_req, 1);
-+
-+	if (req =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
-+				     CONNMAN_MANAGER_PATH,
-+				     CONNMAN_MANAGER_INTERFACE,
-+				     "RequestPrivateNetwork");
-+
-+	if (message =3D=3D NULL) {
-+		g_free(req);
-+		return -ENOMEM;
-+	}
-+
-+	if (dbus_connection_send_with_reply(connection,
-+				message, &call, 5000) =3D=3D FALSE) {
-+		g_free(req);
-+		dbus_message_unref(message);
-+		return -EIO;
-+	}
-+
-+	id++;
-+	req->pending =3D call;
-+	req->cb =3D cb;
-+	req->data =3D data;
-+	req->uid =3D id;
-+
-+	dbus_pending_call_set_notify(call, request_reply,
-+							req, NULL);
-+	g_hash_table_insert(requests, &req->uid, req);
-+	dbus_message_unref(message);
-+
-+	return req->uid;
-+}
-+
-+static void release_reply(DBusPendingCall *call, void *user_data)
-+{
-+	DBusMessage *reply;
-+	struct pns_req *req =3D user_data;
-+
-+	DBG("");
-+
-+	reply =3D dbus_pending_call_steal_reply(call);
-+	g_hash_table_remove(requests, &req->uid);
-+	if (req->pns)
-+		g_free(req->pns);
-+
-+	g_free(req);
-+	if (reply)
-+		dbus_message_unref(reply);
-+
-+	dbus_pending_call_unref(call);
-+}
-+
-+static void pns_release(int uid)
-+{
-+	DBusMessage *message =3D NULL;
-+	struct pns_req *req;
-+	DBusPendingCall *call;
-+
-+	DBG("");
-+
-+	req =3D g_hash_table_lookup(requests, &uid);
-+	if (!req)
-+		return;
-+
-+	if (req->pending) {
-+		if (dbus_pending_call_get_completed(req->pending) =3D=3D FALSE) {
-+			dbus_pending_call_cancel(req->pending);
-+			g_hash_table_remove(requests, &uid);
-+			g_free(req);
-+			return;
-+		}
-+	}
-+
-+	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
-+				     CONNMAN_MANAGER_PATH,
-+				     CONNMAN_MANAGER_INTERFACE,
-+				     "ReleasePrivateNetwork");
-+
-+	if (message =3D=3D NULL)
-+		goto error;
-+
-+	if (dbus_connection_send_with_reply(connection,
-+				message, &call, 5000) =3D=3D FALSE)
-+		goto error;
-+
-+	dbus_pending_call_set_notify(call, release_reply,
-+							req, NULL);
-+	dbus_message_unref(message);
-+	=
+ =
 
-+	return;
+ #include <glib.h>
+ =
+
+@@ -32,11 +33,7 @@
+ #include "common.h"
+ #include "gatserver.h"
+ #include "gatppp.h"
+-
+-#define DUN_SERVER_ADDRESS     "192.168.1.1"
+-#define DUN_PEER_ADDRESS       "192.168.1.2"
+-#define DUN_DNS_SERVER_1       "10.10.10.10"
+-#define DUN_DNS_SERVER_2       "10.10.10.11"
++#include "private-network.h"
+ =
+
+ #define RING_TIMEOUT 3
+ =
+
+@@ -55,6 +52,8 @@ struct ofono_emulator {
+ 	guint callsetup_source;
+ 	gboolean clip;
+ 	gboolean ccwa;
++	int pns_id;
++	struct ofono_private_network_settings *pns;
+ };
+ =
+
+ struct indicator {
+@@ -99,6 +98,11 @@ static void ppp_disconnect(GAtPPPDisconnectReason reason=
+, gpointer user_data)
+ 	g_at_ppp_unref(em->ppp);
+ 	em->ppp =3D NULL;
+ =
+
++	if (em->pns_id > 0)
++		__ofono_private_network_release(em->pns_id);
 +
-+error:
-+	if (message)
-+		dbus_message_unref(message);
++	em->pns_id =3D -1;
 +
-+	g_hash_table_remove(requests, &req->uid);
-+	if (req->pns)
-+		g_free(req->pns);
-+
-+	g_free(req);
-+}
-+
-+static struct ofono_private_network_driver pn_driver =3D {
-+	.name		=3D "ConnMan Private Network",
-+	.request	=3D pns_request,
-+	.release	=3D pns_release,
-+};
-+
-+static int connman_init(void)
+ 	if (em->server =3D=3D NULL)
+ 		return;
+ =
+
+@@ -118,14 +122,19 @@ static gboolean setup_ppp(gpointer user_data)
+ =
+
+ 	g_at_server_suspend(em->server);
+ =
+
+-	em->ppp =3D g_at_ppp_server_new_from_io(io, DUN_SERVER_ADDRESS);
++	em->ppp =3D g_at_ppp_server_new_full(io, em->pns->server_ip, em->pns->fd);
+ 	if (em->ppp =3D=3D NULL) {
++		close(em->pns->fd);
++		if (em->pns_id > 0)
++			__ofono_private_network_release(em->pns_id);
++		em->pns_id =3D -1;
+ 		g_at_server_resume(em->server);
+ 		return FALSE;
+ 	}
+ =
+
+-	g_at_ppp_set_server_info(em->ppp, DUN_PEER_ADDRESS,
+-					DUN_DNS_SERVER_1, DUN_DNS_SERVER_2);
++	g_at_ppp_set_server_info(em->ppp, em->pns->peer_ip,
++					em->pns->primary_dns,
++					em->pns->secondary_dns);
+ =
+
+ 	g_at_ppp_set_credentials(em->ppp, "", "");
+ 	g_at_ppp_set_debug(em->ppp, emulator_debug, "PPP");
+@@ -136,6 +145,24 @@ static gboolean setup_ppp(gpointer user_data)
+ 	return FALSE;
+ }
+ =
+
++static gboolean setup_ppp_cb(void *data,
++				struct ofono_private_network_settings *pns)
 +{
-+	DBG("");
++	struct ofono_emulator *em =3D data;
 +
-+	id =3D 0;
-+	connection =3D ofono_dbus_get_connection();
-+	requests =3D g_hash_table_new(g_int_hash, g_int_equal);
++	if (pns =3D=3D NULL) {
++		__ofono_private_network_release(em->pns_id);
++		g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
++		return FALSE;
++	}
 +
-+	return ofono_private_network_driver_register(&pn_driver);
++	em->pns =3D pns;
++	g_at_server_send_intermediate(em->server, "CONNECT");
++	em->source =3D g_idle_add(setup_ppp, em);
++
++	return TRUE;
 +}
 +
-+static void connman_exit(void)
-+{
-+	g_hash_table_destroy(requests);
-+	ofono_private_network_driver_unregister(&pn_driver);
-+}
-+
-+OFONO_PLUGIN_DEFINE(connman, "ConnMan plugin", VERSION,
-+		OFONO_PLUGIN_PRIORITY_DEFAULT, connman_init, connman_exit)
+ static gboolean dial_call(struct ofono_emulator *em, const char *dial_str)
+ {
+ 	char c =3D *dial_str;
+@@ -143,8 +170,9 @@ static gboolean dial_call(struct ofono_emulator *em, co=
+nst char *dial_str)
+ 	DBG("dial call %s", dial_str);
+ =
+
+ 	if (c =3D=3D '*' || c =3D=3D '#' || c =3D=3D 'T' || c =3D=3D 't') {
+-		g_at_server_send_intermediate(em->server, "CONNECT");
+-		em->source =3D g_idle_add(setup_ppp, em);
++		if (__ofono_private_network_request(setup_ppp_cb, em,
++							&em->pns_id) =3D=3D FALSE)
++			return FALSE;
+ 	}
+ =
+
+ 	return TRUE;
+@@ -707,6 +735,7 @@ struct ofono_emulator *ofono_emulator_create(struct ofo=
+no_modem *modem,
+ 	/* TODO: Check real local features */
+ 	em->l_features =3D 32;
+ 	em->events_mode =3D 3;	/* default mode is forwarding events */
++	em->pns_id =3D -1;
+ =
+
+ 	em->atom =3D __ofono_modem_add_atom_offline(modem, atom_t,
+ 							emulator_remove, em);
 -- =
 
 1.7.1
 
 
---===============3234524253111851549==--
+--===============9216945683842925429==--
 
