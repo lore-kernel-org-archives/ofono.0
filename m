@@ -1,48 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============1869786172834390074=="
+Content-Type: multipart/mixed; boundary="===============5823542710035328942=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
 Subject: Re: Unint var with GCC 4.5.2
-Date: Thu, 05 May 2011 21:52:16 -0500
-Message-ID: <4DC36260.3020300@gmail.com>
-In-Reply-To: <A782C372B9527D44AB20BF45FEEBB14F75C5086BFC@irsmsx503.ger.corp.intel.com>
+Date: Fri, 06 May 2011 20:59:44 +0200
+Message-ID: <BANLkTik8oN-02pgupcYKPG5bpsbHDfDa7w@mail.gmail.com>
+In-Reply-To: <A782C372B9527D44AB20BF45FEEBB14F75C5086A2D@irsmsx503.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1869786172834390074==
+--===============5823542710035328942==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Bertrand,
 
->> Yes, the cache is persistent (stored in IMSI-keyed filesystem location).
->> The logic is supposed to work somewhat like this:
->>
->> 1. Upon sim-atom init, read EFimg and populate its contents in a look up
->> table.
->>
->> 2a. When an application requests an icon with a particular id, look it
->> up in cache or read it from the SIM.  Each icon is assigned to a
->> particular EFiidf_n file.  So record application's interest in that file
->> by assigning a file watch.
->>
->> 2b. If an EFiidf file is refreshed via STK Refresh, call the file watch
->> and remove the file watch.  The file watch will be re-added again once
->> the application requests the icon.
->>
->> However, we have not seen any SIMs with SIM icons, so this part of the
->> code has not been stress tested...
-> =
+On 6 May 2011 11:41, Aygon, Bertrand <bertrand.aygon@intel.com> wrote:
+> Hi,
+>
+> I have switched my dev environment to Ubuntu 11.04, and so I am using GCC
+> 4.5.2.
+>
+> Building oFono returns 2 erros due to uninit var. One is a false negative,
+> so I have fix it with the =E2=80=98magic define=E2=80=99, and will send t=
+he patch soon (VPN
+> is dead so I cannot send it).
+>
+> But for the second one, I am not sure it=E2=80=99s a false negative, so I=
+ would like
+> to have the thought of the mailing list, and even better the author or gu=
+ys
+> who has some knowledge on this part of the code.
 
-> This cannot tested using PhoneSim?
+That one is a bug.  I remember it caught my eye at some point but
+later I forgot about it.  This is more or less how I'd try to fix it:
 
-It can be, guess no one thought of it.
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -947,10 +947,8 @@ static void sim_get_image(struct ofono_sim *sim,
+unsigned char id,
 
-We have already simulated icons with phonesim.  However sending a
-refresh for EFiidf hasn't been added to phonesim yet.
+        image =3D sim_fs_get_cached_image(sim->simfs, id);
 
-Regards,
--Denis
+-       if (image !=3D NULL) {
++       if (image !=3D NULL)
+                sim_get_image_cb(sim, id, image, FALSE);
+-               goto watch;
+-       }
 
---===============1869786172834390074==--
+        if (sim->efimg_length <=3D (id * 9)) {
+                sim_get_image_cb(sim, id, NULL, FALSE);
+@@ -963,13 +961,10 @@ static void sim_get_image(struct ofono_sim *sim,
+unsigned char id,
+        iidf_offset =3D efimg[5] << 8 | efimg[6];
+        iidf_len =3D efimg[7] << 8 | efimg[8];
+
+-       /* read the image data */
+-       ofono_sim_read_bytes(sim->context, iidf_id, iidf_offset, iidf_len,
+-                               sim_iidf_read_cb, sim);
+-
+-watch:
+-       if (sim->efimg_length <=3D id * 9)
+-               return;
++       if (image =3D=3D NULL)
++               /* read the image data */
++               ofono_sim_read_bytes(sim->context, iidf_id, iidf_offset,
++                                       iidf_len, sim_iidf_read_cb, sim);
+
+        if (sim->iidf_watch_ids[id] > 0)
+                return;
+
+Best regards
+
+--===============5823542710035328942==--
 
