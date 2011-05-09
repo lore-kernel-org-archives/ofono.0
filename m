@@ -1,32 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============2142112929977593726=="
+Content-Type: multipart/mixed; boundary="===============6721639814066529851=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3] emulator: add AT+CMEE support for HFP
-Date: Sun, 08 May 2011 23:22:21 -0500
-Message-ID: <4DC76BFD.8090203@gmail.com>
-In-Reply-To: <1304953986-14476-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: Unint var with GCC 4.5.2
+Date: Sun, 08 May 2011 23:28:59 -0500
+Message-ID: <4DC76D8B.4060802@gmail.com>
+In-Reply-To: <BANLkTik8oN-02pgupcYKPG5bpsbHDfDa7w@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2142112929977593726==
+--===============6721639814066529851==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Andrzej,
 
-On 05/09/2011 10:13 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> ---
->  src/emulator.c |   63 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++-
->  1 files changed, 62 insertions(+), 1 deletions(-)
 > =
 
+> That one is a bug.  I remember it caught my eye at some point but
+> later I forgot about it.  This is more or less how I'd try to fix it:
 
-Patch has been applied, thanks.
+I pushed a fix b1f4e981f4935bff1b198a24cf110a6e838e42a9.  Please review
+it and let me know if I screwed it up.
 
 Regards,
 -Denis
 
---===============2142112929977593726==--
+--===============6721639814066529851==--
 
