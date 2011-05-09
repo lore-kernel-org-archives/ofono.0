@@ -1,102 +1,145 @@
-Content-Type: multipart/mixed; boundary="===============6588635146084606987=="
+Content-Type: multipart/mixed; boundary="===============6091175598615797171=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/1] Fix primary context active/deactive result d-bus
- reply missing issue
-Date: Sun, 08 May 2011 11:06:16 -0500
-Message-ID: <4DC6BF78.7070004@gmail.com>
-In-Reply-To: <1303887867-6467-1-git-send-email-martin.xu@intel.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH v3] emulator: add AT+CMEE support for HFP
+Date: Mon, 09 May 2011 17:13:06 +0200
+Message-ID: <1304953986-14476-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6588635146084606987==
+--===============6091175598615797171==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+---
+ src/emulator.c |   63 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 files changed, 62 insertions(+), 1 deletions(-)
 
-On 04/27/2011 02:04 AM, martin.xu(a)intel.com wrote:
-> From: Martin Xu <martin.xu@intel.com>
-> =
+diff --git a/src/emulator.c b/src/emulator.c
+index 9055909..46eeaf1 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -51,6 +51,7 @@ struct ofono_emulator {
+ 	int r_features;
+ 	int events_mode;
+ 	gboolean events_ind;
++	unsigned char cmee_mode;
+ 	GSList *indicators;
+ 	guint callsetup_source;
+ 	gboolean clip;
+@@ -577,6 +578,50 @@ fail:
+ 	};
+ }
+ =
 
-> If user offline modem when the gprs_context is in enabling or disabling
-> state(activating/disactivating), the GPRS primary context activate/disact=
-ivate
-> result will not be replied to the corresponding application.
-> ---
->  drivers/atmodem/gprs-context.c |    7 +++++++
->  src/gprs.c                     |    5 +++++
->  2 files changed, 12 insertions(+), 0 deletions(-)
-> =
++static void cmee_cb(GAtServer *server, GAtServerRequestType type,
++			GAtResult *result, gpointer user_data)
++{
++	struct ofono_emulator *em =3D user_data;
++	GAtResultIter iter;
++	int val;
++	char buf[16];
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "");
++
++		if (g_at_result_iter_next_number(&iter, &val) =3D=3D FALSE)
++			goto fail;
++
++		if (val < 0 && val > 1)
++			goto fail;
++
++		em->cmee_mode =3D val;
++
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
++		break;
++
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		sprintf(buf, "+CMEE: %d", em->cmee_mode);
++		g_at_server_send_info(em->server, buf, TRUE);
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
++		break;
++
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		/* HFP only support 0 and 1 */
++		sprintf(buf, "+CMEE: (0,1)");
++		g_at_server_send_info(em->server, buf, TRUE);
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
++		break;
++
++	default:
++fail:
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
++		break;
++	}
++}
++
+ static void emulator_add_indicator(struct ofono_emulator *em, const char* =
+name,
+ 					int min, int max, int dflt)
+ {
+@@ -664,6 +709,7 @@ void ofono_emulator_register(struct ofono_emulator *em,=
+ int fd)
+ 		g_at_server_register(em->server, "+CMER", cmer_cb, em, NULL);
+ 		g_at_server_register(em->server, "+CLIP", clip_cb, em, NULL);
+ 		g_at_server_register(em->server, "+CCWA", ccwa_cb, em, NULL);
++		g_at_server_register(em->server, "+CMEE", cmee_cb, em, NULL);
+ 	}
+ =
 
-> diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-contex=
-t.c
-> index ba95cbf..bfbd2c5 100644
-> --- a/drivers/atmodem/gprs-context.c
-> +++ b/drivers/atmodem/gprs-context.c
-> @@ -301,6 +301,13 @@ static void at_gprs_context_remove(struct ofono_gprs=
-_context *gc)
->  =
+ 	__ofono_atom_register(em->atom, emulator_unregister);
+@@ -707,6 +753,7 @@ struct ofono_emulator *ofono_emulator_create(struct ofo=
+no_modem *modem,
+ 	/* TODO: Check real local features */
+ 	em->l_features =3D 32;
+ 	em->events_mode =3D 3;	/* default mode is forwarding events */
++	em->cmee_mode =3D 0;	/* CME ERROR disabled by default */
+ =
 
->  	if (gcd->state !=3D STATE_IDLE && gcd->ppp) {
->  		g_at_ppp_unref(gcd->ppp);
-> +
-> +		if (gcd->state =3D=3D STATE_ENABLING)
-> +			CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
-> +
-> +		if (gcd->state =3D=3D STATE_DISABLING)
-> +			CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
-> +
+ 	em->atom =3D __ofono_modem_add_atom_offline(modem, atom_t,
+ 							emulator_remove, em);
+@@ -735,7 +782,20 @@ void ofono_emulator_send_final(struct ofono_emulator *=
+em,
+ 		break;
+ =
 
-The biggest problem with doing it this way is that the context's
-unregister function has already been called.  When this is called we're
-actually in the process of removing the context, hence why you require
-the hacks in the core below.  We also don't emit the PropertyChanged
-signal properly if we do it this way.
+ 	case OFONO_ERROR_TYPE_CME:
+-		sprintf(buf, "+CME ERROR: %d", final->error);
++		switch (em->cmee_mode) {
++		case 1:
++			sprintf(buf, "+CME ERROR: %d", final->error);
++			break;
++
++		case 2:
++			sprintf(buf, "+CME ERROR: %s",
++						telephony_error_to_str(final));
++			break;
++
++		default:
++			goto failure;
++		}
++
+ 		g_at_server_send_ext_final(em->server, buf);
+ 		break;
+ =
 
-There might be a couple ways to fix this:
+@@ -746,6 +806,7 @@ void ofono_emulator_send_final(struct ofono_emulator *e=
+m,
+ 	case OFONO_ERROR_TYPE_CEER:
+ 	case OFONO_ERROR_TYPE_SIM:
+ 	case OFONO_ERROR_TYPE_FAILURE:
++failure:
+ 		g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
+ 		break;
+ 	};
+-- =
 
-- Make a specific remove function for the ppp context driver.  This will
-call the callbacks as you do above and then remove the driver.
+1.7.1
 
-- Handle all of this inside the core.
 
->  		g_at_chat_resume(gcd->chat);
->  	}
->  =
-
-> diff --git a/src/gprs.c b/src/gprs.c
-> index deffeb8..99cb55d 100644
-> --- a/src/gprs.c
-> +++ b/src/gprs.c
-> @@ -351,6 +351,9 @@ static struct pri_context *gprs_context_by_path(struc=
-t ofono_gprs *gprs,
->  =
-
->  static void context_settings_free(struct context_settings *settings)
->  {
-> +	if (settings =3D=3D NULL)
-> +		return;
-> +
->  	if (settings->ipv4) {
->  		g_free(settings->ipv4->ip);
->  		g_free(settings->ipv4->netmask);
-> @@ -736,6 +739,8 @@ static void pri_reset_context_settings(struct pri_con=
-text *ctx)
->  		return;
->  =
-
->  	settings =3D ctx->context_driver->settings;
-> +	if (settings =3D=3D NULL)
-> +		return;
->  =
-
->  	interface =3D settings->interface;
->  	settings->interface =3D NULL;
-
-Regards,
--Denis
-
---===============6588635146084606987==--
+--===============6091175598615797171==--
 
