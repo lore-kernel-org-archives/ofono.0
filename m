@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============2556989325496060832=="
+Content-Type: multipart/mixed; boundary="===============5181603404283079615=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v4 2/5] private-network: add callback typedef drivers and
- settings
-Date: Sun, 08 May 2011 23:48:28 -0500
-Message-ID: <4DC7721C.5050707@gmail.com>
-In-Reply-To: <1304690513-3137-3-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH_v4 3/5] private-network: add request/release functions and
+ new feature to Makefile.am
+Date: Sun, 08 May 2011 23:52:46 -0500
+Message-ID: <4DC7731E.7040105@gmail.com>
+In-Reply-To: <1304690513-3137-4-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2556989325496060832==
+--===============5181603404283079615==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -18,22 +18,71 @@ Hi Guillaume,
 
 On 05/06/2011 09:01 AM, Guillaume Zajac wrote:
 > ---
->  include/private-network.h |   59 +++++++++++++++++++++++++++++++++++++++=
+>  Makefile.am           |    7 ++--
+>  src/ofono.h           |    6 +++
+>  src/private-network.c |   89 +++++++++++++++++++++++++++++++++++++++++++=
 ++++++
->  1 files changed, 59 insertions(+), 0 deletions(-)
->  create mode 100644 include/private-network.h
+>  3 files changed, 99 insertions(+), 3 deletions(-)
+>  create mode 100644 src/private-network.c
 > =
 
+> diff --git a/Makefile.am b/Makefile.am
+> index a413a47..e1eaf15 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -16,8 +16,8 @@ pkginclude_HEADERS =3D include/log.h include/plugin.h i=
+nclude/history.h \
+>  			include/cdma-sms.h include/sim-auth.h \
+>  			include/gprs-provision.h include/emulator.h \
+>  			include/location-reporting.h \
+> -			include/cdma-connman.h \
+> -			include/gnss.h
+> +			include/cdma-connman.h include/gnss.h \
+> +			include/private-network.h
 
-You also need to include this file into the build system, so changes to
-Makefile.am should be included here as well.
+As mentioned previously, this one belongs in the previous commit.
 
-> diff --git a/include/private-network.h b/include/private-network.h
+>  =
+
+>  nodist_pkginclude_HEADERS =3D include/version.h
+>  =
+
+> @@ -387,7 +387,8 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sou=
+rces) src/ofono.ver \
+>  			src/message.h src/message.c src/gprs-provision.c \
+>  			src/emulator.c src/location-reporting.c \
+>  			src/cdma-connman.c src/gnss.c \
+> -			src/gnssagent.c src/gnssagent.h
+> +			src/gnssagent.c src/gnssagent.h \
+> +			src/private-network.c
+>  =
+
+>  src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LI=
+BS@ -ldl
+>  =
+
+> diff --git a/src/ofono.h b/src/ofono.h
+> index 82d7e34..7353022 100644
+> --- a/src/ofono.h
+> +++ b/src/ofono.h
+> @@ -468,3 +468,9 @@ void __ofono_gprs_provision_free_settings(
+>  =
+
+>  #include <ofono/emulator.h>
+>  #include <ofono/gnss.h>
+> +#include <ofono/private-network.h>
+> +
+> +void __ofono_private_network_release(int id);
+> +ofono_bool_t __ofono_private_network_request(ofono_private_network_cb_t =
+cb,
+> +						void *data, int *id);
+> +
+> diff --git a/src/private-network.c b/src/private-network.c
 > new file mode 100644
-> index 0000000..ba84a36
+> index 0000000..03204a5
 > --- /dev/null
-> +++ b/include/private-network.h
-> @@ -0,0 +1,59 @@
+> +++ b/src/private-network.c
+> @@ -0,0 +1,89 @@
 > +/*
 > + *
 > + *  oFono - Open Source Telephony
@@ -56,60 +105,91 @@ Makefile.am should be included here as well.
 > + *
 > + */
 > +
-> +
-
-Why the double newline?
-
-> +#ifndef __OFONO_PRIVATE_NETWORK_H
-> +#define __OFONO_PRIVATE_NETWORK_H
-> +
-> +#ifdef __cplusplus
-> +extern "C" {
+> +#ifdef HAVE_CONFIG_H
+> +#include <config.h>
 > +#endif
 > +
+> +#include <string.h>
 > +#include <glib.h>
+> +#include "ofono.h"
+> +
+> +static GSList *g_drivers =3D NULL;
+> +
+> +void __ofono_private_network_release(int id)
+> +{
+> +	GSList *d;
+> +
+> +	DBG("");
+> +
+> +	for (d =3D g_drivers; d; d =3D d->next) {
+> +		const struct ofono_private_network_driver *driver =3D d->data;
+> +
+> +		if (g_strcmp0(driver->name, "ConnMan Private Network"))
+> +			continue;
+> +
 
-One of the rules of writing oFono public APIs (e.g. files under include)
-is that they should use native C types.  Do not ever use glib types here.
+What exactly is the purpose of the above statement?  Also, for now I'd
+just assume that you can only ever have a single private network driver
+to make things simpler.
+
+> +		driver->release(id);
+> +
+> +		break;
+> +	}
+> +}
+> +
+> +ofono_bool_t __ofono_private_network_request(ofono_private_network_cb_t =
+cb,
+> +						void *data, int *id)
+> +{
+> +	GSList *d;
+> +
+> +	DBG("");
+> +
+> +	for (d =3D g_drivers; d; d =3D d->next) {
+> +		const struct ofono_private_network_driver *driver =3D d->data;
+> +
+> +		if (g_strcmp0(driver->name, "ConnMan Private Network"))
+> +			continue;
+> +
+> +		*id =3D driver->request(cb, data);
+
+In general it is good form not to assign to an out variable unless the
+function returns successfully.
+
+> +		if (*id < 0)
+> +			continue;
+
+You might want to always return > 0 for successful cases, and leave 0 as
+a sentinel value.
 
 > +
-> +struct ofono_private_network_settings {
-> +	int fd;
-> +	const char *server_ip;
-> +	const char *peer_ip;
-> +	const char *primary_dns;
-> +	const char *secondary_dns;
-> +};
+> +		return TRUE;
+> +	}
 > +
-> +
-
-Why the double newline?
-
-> +typedef gboolean (ofono_private_network_cb_t)(
-> +		void *data, struct ofono_private_network_settings *settings);
-
-What is the purpose of the gboolean return value in this callback?
-
-> +
-> +struct ofono_private_network_driver {
-> +	char *name;
-> +	int (*request)(ofono_private_network_cb_t cb, void *data);
-> +	void (*release)(int uid);
-> +};
+> +	return FALSE;
+> +}
 > +
 > +int ofono_private_network_driver_register(
-> +			const struct ofono_private_network_driver *d);
-> +void ofono_private_network_driver_unregister(
-> +			const struct ofono_private_network_driver *d);
+> +			const struct ofono_private_network_driver *d)
+> +{
+> +	DBG("driver: %p, name: %s", d, d->name);
 > +
-> +#ifdef __cplusplus
+> +	g_drivers =3D g_slist_prepend(g_drivers, (void *) d);
+> +
+> +	return 0;
 > +}
-> +#endif
 > +
-> +#endif /* __OFONO_PRIVATE_NETWORK_H */
+> +void ofono_private_network_driver_unregister(
+> +			const struct ofono_private_network_driver *d)
+> +{
+> +	DBG("driver: %p, name: %s", d, d->name);
+> +
+> +	g_drivers =3D g_slist_remove(g_drivers, (void *) d);
+> +}
 
 Regards,
 -Denis
 
---===============2556989325496060832==--
+--===============5181603404283079615==--
 
