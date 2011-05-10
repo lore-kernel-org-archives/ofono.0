@@ -1,53 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============1769409559066761107=="
+Content-Type: multipart/mixed; boundary="===============8010560568056824411=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v5 3/3] gsmdial: add ATH0 command test
-Date: Tue, 10 May 2011 10:34:16 +0200
-Message-ID: <1305016456-24542-4-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1305016456-24542-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Caiwen Zhang <caiwen.zhang@windriver.com>
+Subject: [PATCH] fix miss dbus reply issue
+Date: Tue, 10 May 2011 18:31:51 +0800
+Message-ID: <1305023511-596-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1769409559066761107==
+--===============8010560568056824411==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+When set modem offline or power off, if there is some other operation in pr=
+ogress,
+the dbus reply may lost. Always check the pending dbus message to make sure=
+ don't
+miss any reply.
+
+This should be a common issue, this patch only fix the GPRS relatived.
+
 ---
- gatchat/gsmdial.c |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+ src/gprs.c |   17 ++++++++++++++++++-
+ 1 files changed, 17 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index 31bb910..7c8ba47 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -238,9 +238,19 @@ static gboolean execute(const char *cmd)
- 	return TRUE;
- }
+diff --git a/src/gprs.c b/src/gprs.c
+index e221741..535432e 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -1363,6 +1363,10 @@ static gboolean context_dbus_unregister(struct pri_c=
+ontext *ctx)
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+ 	char path[256];
  =
 
-+static void power_down_ppp(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+{
-+	if (!ok)
-+		return;
++	if (ctx->pending !=3D NULL)
++		__ofono_dbus_pending_reply(&ctx->pending,
++					__ofono_error_failed(ctx->pending));
 +
-+	g_at_ppp_unref(ppp);
-+	ppp =3D NULL;
-+}
-+
- static void ppp_suspend(gpointer user_data)
+ 	strcpy(path, ctx->path);
+ 	idmap_put(ctx->gprs->pid_map, ctx->id);
+ =
+
+@@ -2133,6 +2137,8 @@ void ofono_gprs_set_cid_range(struct ofono_gprs *gprs,
+ static void gprs_context_unregister(struct ofono_atom *atom)
  {
- 	g_at_chat_resume(modem);
-+	g_at_chat_send(modem, "ATH0", none_prefix, power_down_ppp, NULL, NULL);
- }
+ 	struct ofono_gprs_context *gc =3D __ofono_atom_get_data(atom);
++	GSList *l;
++	struct pri_context *ctx;
  =
 
- static void start_test_sequence(gpointer data)
+ 	if (gc->gprs =3D=3D NULL)
+ 		return;
+@@ -2143,6 +2149,13 @@ static void gprs_context_unregister(struct ofono_ato=
+m *atom)
+ 		gc->settings =3D NULL;
+ 	}
+ =
+
++	for (l =3D gc->gprs->contexts; l; l =3D l->next) {
++		ctx =3D l->data;
++		if (ctx->context_driver =3D=3D gc && ctx->pending !=3D NULL)
++			__ofono_dbus_pending_reply(&ctx->pending,
++					__ofono_error_failed(ctx->pending));
++	}
++
+ 	gc->gprs->context_drivers =3D g_slist_remove(gc->gprs->context_drivers,
+ 							gc);
+ 	gc->gprs =3D NULL;
+@@ -2481,6 +2494,10 @@ static void gprs_unregister(struct ofono_atom *atom)
+ 		gprs->netreg =3D NULL;
+ 	}
+ =
+
++	if (gprs->pending !=3D NULL)
++		__ofono_dbus_pending_reply(&gprs->pending,
++					__ofono_error_failed(gprs->pending));
++
+ 	ofono_modem_remove_interface(modem,
+ 					OFONO_CONNECTION_MANAGER_INTERFACE);
+ 	g_dbus_unregister_interface(conn, path,
 -- =
 
-1.7.1
+1.7.5
 
 
---===============1769409559066761107==--
+--===============8010560568056824411==--
 
