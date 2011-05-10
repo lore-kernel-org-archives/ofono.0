@@ -1,37 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============7312426256347650920=="
+Content-Type: multipart/mixed; boundary="===============1769409559066761107=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v5 0/3] Escape sequence test implementation
-Date: Tue, 10 May 2011 10:34:13 +0200
-Message-ID: <1305016456-24542-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v5 3/3] gsmdial: add ATH0 command test
+Date: Tue, 10 May 2011 10:34:16 +0200
+Message-ID: <1305016456-24542-4-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1305016456-24542-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7312426256347650920==
+--===============1769409559066761107==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ gatchat/gsmdial.c |   10 ++++++++++
+ 1 files changed, 10 insertions(+), 0 deletions(-)
 
-Changelog from v4:
-	- contain only the gsmdial tool to test escape sequence
-	- add GSource track of guard_timeouts to send "+++" to
-	  remove it properly in case of problem
+diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
+index 31bb910..7c8ba47 100644
+--- a/gatchat/gsmdial.c
++++ b/gatchat/gsmdial.c
+@@ -238,9 +238,19 @@ static gboolean execute(const char *cmd)
+ 	return TRUE;
+ }
+ =
 
-All associated resume functions for g_at_hdlc_... and g_at_ppp_...
-will be sent with ATO0 callback implementation patches.
++static void power_down_ppp(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	if (!ok)
++		return;
++
++	g_at_ppp_unref(ppp);
++	ppp =3D NULL;
++}
++
+ static void ppp_suspend(gpointer user_data)
+ {
+ 	g_at_chat_resume(modem);
++	g_at_chat_send(modem, "ATH0", none_prefix, power_down_ppp, NULL, NULL);
+ }
+ =
 
-Guillaume Zajac (3):
-  gatppp: add public suspend function
-  gsmdial: add new option to test escape sequence
-  gsmdial: add ATH0 command test
+ static void start_test_sequence(gpointer data)
+-- =
 
- gatchat/gatppp.c  |   43 +++++++++++++++++++++++++++++++++++++++++++
- gatchat/gatppp.h  |    1 +
- gatchat/gsmdial.c |   39 +++++++++++++++++++++++++++++++++++++++
- 3 files changed, 83 insertions(+), 0 deletions(-)
+1.7.1
 
 
---===============7312426256347650920==--
+--===============1769409559066761107==--
 
