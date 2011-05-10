@@ -1,124 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============6330526898103765715=="
+Content-Type: multipart/mixed; boundary="===============7570287282896289146=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v5 1/3] gatppp: add public suspend function
-Date: Tue, 10 May 2011 10:34:14 +0200
-Message-ID: <1305016456-24542-2-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v5 2/3] gsmdial: add new option to test escape sequence
+Date: Tue, 10 May 2011 10:34:15 +0200
+Message-ID: <1305016456-24542-3-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1305016456-24542-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6330526898103765715==
+--===============7570287282896289146==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatppp.c |   43 +++++++++++++++++++++++++++++++++++++++++++
- gatchat/gatppp.h |    1 +
- 2 files changed, 44 insertions(+), 0 deletions(-)
+ gatchat/gsmdial.c |   29 +++++++++++++++++++++++++++++
+ 1 files changed, 29 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index c776811..2d051d5 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -46,6 +46,9 @@
- #define PPP_ADDR_FIELD	0xff
- #define PPP_CTRL	0x03
+diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
+index a10e7cb..31bb910 100644
+--- a/gatchat/gsmdial.c
++++ b/gatchat/gsmdial.c
+@@ -57,6 +57,7 @@ static gchar *option_username =3D NULL;
+ static gchar *option_password =3D NULL;
+ static gchar *option_pppdump =3D NULL;
+ static gboolean option_bluetooth =3D FALSE;
++static gboolean option_esc =3D FALSE;
  =
 
-+/* Time to wait before and after +++ sequence */
-+#define GUARD_TIMEOUTS 1500
-+
- enum ppp_phase {
- 	PPP_PHASE_DEAD =3D 0,		/* Link dead */
- 	PPP_PHASE_ESTABLISHMENT,	/* LCP started */
-@@ -78,6 +81,7 @@ struct _GAtPPP {
- 	guint ppp_dead_source;
- 	GAtSuspendFunc suspend_func;
- 	gpointer suspend_data;
-+	guint guard_timeout_src;
- };
- =
-
- void ppp_debug(GAtPPP *ppp, const char *str)
-@@ -500,6 +504,40 @@ void g_at_ppp_shutdown(GAtPPP *ppp)
- 	pppcp_signal_close(ppp->lcp);
+ static GAtPPP *ppp;
+ static GAtChat *control;
+@@ -237,6 +238,23 @@ static gboolean execute(const char *cmd)
+ 	return TRUE;
  }
  =
 
-+static gboolean call_suspend_cb(gpointer user_data)
++static void ppp_suspend(gpointer user_data)
 +{
-+	GAtPPP *ppp =3D user_data;
-+
-+	ppp->guard_timeout_src =3D 0;
-+
-+	if (ppp->suspend_func)
-+		ppp->suspend_func(ppp->suspend_data);
-+
-+	return FALSE;
++	g_at_chat_resume(modem);
 +}
 +
-+static gboolean send_escape_sequence(gpointer user_data)
++static void start_test_sequence(gpointer data)
 +{
-+	GAtPPP *ppp =3D user_data;
-+	GAtIO *io =3D g_at_hdlc_get_io(ppp->hdlc);
++	/* Delete the write done CB */
++	g_at_io_set_write_done(g_at_chat_get_io(modem), NULL, NULL);
 +
-+	ppp->guard_timeout_src =3D 0;
-+	g_at_io_write(io, "+++", 3);
-+	ppp->guard_timeout_src  =3D g_timeout_add(GUARD_TIMEOUTS, call_suspend_cb=
-, ppp);
-+
-+	return FALSE;
++	/*
++	 * We are sure there are no more PPP packets to be written,
++	 * we can suspend PPP client and send escape sequence
++	 */
++	g_at_ppp_suspend(ppp);
 +}
 +
-+void g_at_ppp_suspend(GAtPPP *ppp)
-+{
-+	if (ppp =3D=3D NULL)
-+		return;
+ static void ppp_connect(const char *iface, const char *local, const char *=
+peer,
+ 			const char *dns1, const char *dns2,
+ 			gpointer user_data)
+@@ -261,6 +279,14 @@ static void ppp_connect(const char *iface, const char =
+*local, const char *peer,
+ 	snprintf(buf, sizeof(buf), "%s %s %s pointopoint %s", IFCONFIG_PATH,
+ 				iface, local, peer);
+ 	execute(buf);
 +
-+	ppp_net_suspend_interface(ppp->net);
-+	g_at_hdlc_suspend(ppp->hdlc);
-+	ppp->guard_timeout_src =3D g_timeout_add(GUARD_TIMEOUTS, send_escape_sequ=
-ence, ppp);
-+}
-+
- void g_at_ppp_ref(GAtPPP *ppp)
- {
- 	g_atomic_int_inc(&ppp->ref_count);
-@@ -534,6 +572,11 @@ void g_at_ppp_unref(GAtPPP *ppp)
- 		ppp->ppp_dead_source =3D 0;
- 	}
++	/*
++	 * As soon as a PPP packet is written by the client, we start
++	 * test sequence.
++	 */
++	if (option_esc)
++		g_at_io_set_write_done(g_at_chat_get_io(modem),
++					start_test_sequence, NULL);
+ }
  =
 
-+	if (ppp->guard_timeout_src) {
-+		g_source_remove(ppp->guard_timeout_src);
-+		ppp->guard_timeout_src =3D 0;
-+	}
-+
- 	g_at_hdlc_unref(ppp->hdlc);
+ static void no_carrier_notify(GAtResult *result, gpointer user_data)
+@@ -327,6 +353,7 @@ static void connect_cb(gboolean ok, GAtResult *result, =
+gpointer user_data)
+ 	/* set connect and disconnect callbacks */
+ 	g_at_ppp_set_connect_function(ppp, ppp_connect, NULL);
+ 	g_at_ppp_set_disconnect_function(ppp, ppp_disconnect, NULL);
++	g_at_ppp_set_suspend_function(ppp, ppp_suspend, NULL);
  =
 
- 	g_free(ppp);
-diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
-index 9464ffd..66e0ade 100644
---- a/gatchat/gatppp.h
-+++ b/gatchat/gatppp.h
-@@ -64,6 +64,7 @@ void g_at_ppp_set_suspend_function(GAtPPP *ppp, GAtSuspen=
-dFunc func,
- 					gpointer user_data);
- void g_at_ppp_set_debug(GAtPPP *ppp, GAtDebugFunc func, gpointer user_data=
-);
- void g_at_ppp_shutdown(GAtPPP *ppp);
-+void g_at_ppp_suspend(GAtPPP *ppp);
- void g_at_ppp_ref(GAtPPP *ppp);
- void g_at_ppp_unref(GAtPPP *ppp);
- =
-
+ 	/* open the ppp connection */
+ 	g_at_ppp_open(ppp);
+@@ -624,6 +651,8 @@ static GOptionEntry options[] =3D {
+ 				"Use ATD*99***<cid>#" },
+ 	{ "bluetooth", 'b', 0, G_OPTION_ARG_NONE, &option_bluetooth,
+ 				"Use only ATD*99" },
++	{ "esc_seq", 'e', 0, G_OPTION_ARG_NONE, &option_esc,
++				"Send escape sequence test" },
+ 	{ "username", 'u', 0, G_OPTION_ARG_STRING, &option_username,
+ 				"Specify PPP username" },
+ 	{ "password", 'w', 0, G_OPTION_ARG_STRING, &option_password,
 -- =
 
 1.7.1
 
 
---===============6330526898103765715==--
+--===============7570287282896289146==--
 
