@@ -1,75 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============5385490446743186138=="
+Content-Type: multipart/mixed; boundary="===============1833870241865227026=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Fix a memory leak,
- all dir opened with opendir must be closed with closedir
-Date: Wed, 11 May 2011 13:35:27 -0500
-Message-ID: <4DCAD6EF.30600@gmail.com>
-In-Reply-To: <1305127663-6173-1-git-send-email-bertrand.aygon@intel.com>
+Subject: Re: [PATCH 0/5] Introduce call management buttons
+Date: Wed, 11 May 2011 14:04:33 -0500
+Message-ID: <4DCADDC1.50201@gmail.com>
+In-Reply-To: <1305114407-23796-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5385490446743186138==
+--===============1833870241865227026==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bertrand,
+Hi Nicolas,
 
-On 05/11/2011 10:27 AM, Bertrand Aygon wrote:
-> ---
->  plugins/nokia-gpio.c |    7 +++++--
->  1 files changed, 5 insertions(+), 2 deletions(-)
+On 05/11/2011 06:46 AM, Nicolas Bertrand wrote:
+> This patch add support of call state management.
+> Buttons Alerting and Active permit to change the state of on-going call.
 > =
 
-> diff --git a/plugins/nokia-gpio.c b/plugins/nokia-gpio.c
-> index 3ddf6e1..57aad8d 100644
-> --- a/plugins/nokia-gpio.c
-> +++ b/plugins/nokia-gpio.c
-> @@ -645,7 +645,6 @@ static int gpio_probe_links(void)
->  	DBG("Using %s: trying to make links to %s", gpiodir, cmtdir);
->  =
+> Nicolas Bertrand (5):
+>   controlbase: Add call state management buttons
+>   hardwaremanipulator: Call state changed signals
+>   callmanager: Change call state management slots
+>   control: handle call management buttons
+>   phonesim: connect call mangagement signals
+> =
 
->  	if (!dir_exists(cmtdir)) {
-> -
->  		if (mkdir(cmtdir, 0755) =3D=3D -1) {
->  			DBG("%s: %s", cmtdir, strerror(errno));
->  			return -(errno =3D ENODEV);
-
-Since this is a style issue, I broke your patch up into two.
-
-> @@ -663,8 +662,10 @@ static int gpio_probe_links(void)
->  		FILE *nf;
->  		size_t len;
->  =
-
-> -		if (d =3D=3D NULL)
-> +		if (d =3D=3D NULL) {
-> +			(void) closedir(gpio);
->  			return 0;
-> +		}
->  =
-
->  		snprintf(nn, sizeof nn, "%s/%s/name", gpiodir, d->d_name);
->  =
-
-> @@ -701,6 +702,8 @@ static int gpio_probe_links(void)
->  =
-
->  	DBG("%s: %s", "/sys/class/gpio", strerror(errno));
->  =
-
-> +	(void) closedir(gpio);
-> +
->  	return -(errno =3D ENODEV);
->  }
->  =
+>  src/callmanager.cpp       |    7 +++++++
+>  src/callmanager.h         |   12 ++++++------
+>  src/control.cpp           |   12 ++++++++++++
+>  src/control.h             |    2 ++
+>  src/controlbase.ui        |   18 ++++++++++++++++++
+>  src/hardwaremanipulator.h |    2 ++
+>  src/phonesim.cpp          |    4 ++++
+>  7 files changed, 51 insertions(+), 6 deletions(-)
+> =
 
 
-Patch has been applied with a modified commit message.  Thanks.
+I applied all patches in this series, however calls still proceed to
+Alerting / Active state automagically.  Are there plans to fix that?
 
 Regards,
 -Denis
 
---===============5385490446743186138==--
+--===============1833870241865227026==--
 
