@@ -1,36 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============1400173013432798168=="
+Content-Type: multipart/mixed; boundary="===============6307997494917058409=="
 MIME-Version: 1.0
 From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH 0/5] Introduce call management buttons
-Date: Wed, 11 May 2011 13:46:42 +0200
-Message-ID: <1305114407-23796-1-git-send-email-nicolas.bertrand@linux.intel.com>
+Subject: [PATCH 1/5] controlbase: Add call state management buttons
+Date: Wed, 11 May 2011 13:46:43 +0200
+Message-ID: <1305114407-23796-2-git-send-email-nicolas.bertrand@linux.intel.com>
+In-Reply-To: <1305114407-23796-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1400173013432798168==
+--===============6307997494917058409==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch add support of call state management.
-Buttons Alerting and Active permit to change the state of on-going call.
+---
+ src/controlbase.ui |   18 ++++++++++++++++++
+ 1 files changed, 18 insertions(+), 0 deletions(-)
 
-Nicolas Bertrand (5):
-  controlbase: Add call state management buttons
-  hardwaremanipulator: Call state changed signals
-  callmanager: Change call state management slots
-  control: handle call management buttons
-  phonesim: connect call mangagement signals
+diff --git a/src/controlbase.ui b/src/controlbase.ui
+index dd60cda..45b60f9 100644
+--- a/src/controlbase.ui
++++ b/src/controlbase.ui
+@@ -1395,6 +1395,24 @@ p, li { white-space: pre-wrap; }
+         </widget>
+        </item>
+        <item>
++        <layout class=3D"QHBoxLayout" name=3D"horizontalLayout_4">
++         <item>
++          <widget class=3D"QPushButton" name=3D"pbAlerting">
++           <property name=3D"text">
++            <string>Alerting</string>
++           </property>
++          </widget>
++         </item>
++         <item>
++          <widget class=3D"QPushButton" name=3D"pbActive">
++           <property name=3D"text">
++            <string>Active</string>
++           </property>
++          </widget>
++         </item>
++        </layout>
++       </item>
++       <item>
+         <layout class=3D"QHBoxLayout" name=3D"horizontalLayout_3">
+          <item>
+           <widget class=3D"QGroupBox" name=3D"gbIncomingCall">
+-- =
 
- src/callmanager.cpp       |    7 +++++++
- src/callmanager.h         |   12 ++++++------
- src/control.cpp           |   12 ++++++++++++
- src/control.h             |    2 ++
- src/controlbase.ui        |   18 ++++++++++++++++++
- src/hardwaremanipulator.h |    2 ++
- src/phonesim.cpp          |    4 ++++
- 7 files changed, 51 insertions(+), 6 deletions(-)
+1.7.1
 
 
---===============1400173013432798168==--
+--===============6307997494917058409==--
 
