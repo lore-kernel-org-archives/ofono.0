@@ -1,67 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============3781356725404032624=="
+Content-Type: multipart/mixed; boundary="===============3808507434631706498=="
 MIME-Version: 1.0
 From: Caiwen Zhang <caiwen.zhang@windriver.com>
-Subject: [PATCH] fix ppp protocol-reject constructing error
-Date: Wed, 11 May 2011 16:15:19 +0800
-Message-ID: <1305101719-2913-1-git-send-email-caiwen.zhang@windriver.com>
+Subject: [PATCH] add name field when process chap authentication
+Date: Wed, 11 May 2011 17:19:27 +0800
+Message-ID: <1305105567-3749-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3781356725404032624==
+--===============3808507434631706498==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-In PPP Protocol-Reject package the 'rejected data field' should be a copy
-of the rejected package, the copy starts from the data field. besides, =
-
-Protocol-Reject package include a 'rejected protocol field', it is the
-same as the protocol field of the rejected package.
-
-Protocol-Reject package structure is:
-
-	| PPP_header | rejected protocol | rejected data
-
-The rejected package structure is:
-	| Addr | Control | protocol | data
-	=
-
-So the Protocol-Reject package data field is copied from the 3rd byte of
-the rejected package.
+Some systems require name field, otherwise chap authentication will fail.
 
 ---
- gatchat/ppp_cp.c |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
+ gatchat/ppp_auth.c |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/ppp_cp.c b/gatchat/ppp_cp.c
-index 6e4a9c5..2d47933 100644
---- a/gatchat/ppp_cp.c
-+++ b/gatchat/ppp_cp.c
-@@ -922,7 +922,8 @@ void pppcp_send_protocol_reject(struct pppcp_data *data,
- 	 * info should contain the old packet info, plus the 16bit
- 	 * protocol number we are rejecting.
+diff --git a/gatchat/ppp_auth.c b/gatchat/ppp_auth.c
+index b73f320..f2b8c31 100644
+--- a/gatchat/ppp_auth.c
++++ b/gatchat/ppp_auth.c
+@@ -60,6 +60,7 @@ static void chap_process_challenge(struct ppp_chap *chap,=
+ const guint8 *packet)
+ 	struct chap_header *response;
+ 	GChecksum *checksum;
+ 	const char *secret =3D g_at_ppp_get_password(chap->ppp);
++	const char *username =3D g_at_ppp_get_username(chap->ppp);
+ 	guint16 response_length;
+ 	struct ppp_header *ppp_packet;
+ 	gsize digest_len;
+@@ -83,6 +84,8 @@ static void chap_process_challenge(struct ppp_chap *chap,=
+ const guint8 *packet)
  	 */
--	packet =3D pppcp_packet_new(data, PPPCP_CODE_TYPE_PROTOCOL_REJECT, len);
-+	packet =3D pppcp_packet_new(data, PPPCP_CODE_TYPE_PROTOCOL_REJECT,
-+		len - 2);
+ 	digest_len =3D g_checksum_type_get_length(chap->method);
+ 	response_length =3D digest_len + sizeof(*header) + 1;
++	if (username !=3D NULL)
++		response_length +=3D strlen(username);
+ 	ppp_packet =3D ppp_packet_new(response_length, CHAP_PROTOCOL);
+ 	if (ppp_packet =3D=3D NULL)
+ 		goto challenge_out;
+@@ -98,6 +101,10 @@ static void chap_process_challenge(struct ppp_chap *cha=
+p, const guint8 *packet)
+ 		/* leave the name empty? */
+ 	}
  =
 
- 	/*
- 	 * Identifier must be changed for each Protocol-Reject sent
-@@ -933,8 +934,7 @@ void pppcp_send_protocol_reject(struct pppcp_data *data,
- 	 * rejected packet should be copied in, but it should be
- 	 * truncated if it needs to be to comply with mtu requirement
- 	 */
--	memcpy(packet->data, rejected_packet,
--			(ntohs(packet->length) - CP_HEADER_SZ));
-+	memcpy(packet->data, rejected_packet + 2, len - 2);
- =
-
- 	ppp_transmit(data->ppp, pppcp_to_ppp_packet(packet),
- 			ntohs(packet->length));
++	if (username !=3D NULL)
++		memcpy(response->data + digest_len + 1, username,
++				strlen(username));
++
+ 	/* transmit the packet */
+ 	ppp_transmit(chap->ppp, (guint8 *) ppp_packet, response_length);
+ 	g_free(ppp_packet);
 -- =
 
 1.7.5
 
---===============3781356725404032624==--
+
+--===============3808507434631706498==--
 
