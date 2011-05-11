@@ -1,78 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============2256450475040981536=="
+Content-Type: multipart/mixed; boundary="===============4810387689873214049=="
 MIME-Version: 1.0
-From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] Fix a memory leak,
- all dir opened with opendir must be closed with closedir
-Date: Wed, 11 May 2011 17:27:43 +0200
-Message-ID: <1305127663-6173-1-git-send-email-bertrand.aygon@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] reopen data device once if open data device failed
+Date: Wed, 11 May 2011 11:21:21 -0500
+Message-ID: <4DCAB781.4030605@gmail.com>
+In-Reply-To: <0E7E5CACD8E9F248AA009C292CC772A057B610@ALA-MBA.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2256450475040981536==
+--===============4810387689873214049==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/nokia-gpio.c |    7 +++++--
- 1 files changed, 5 insertions(+), 2 deletions(-)
+Hi Caiwen,
 
-diff --git a/plugins/nokia-gpio.c b/plugins/nokia-gpio.c
-index 3ddf6e1..57aad8d 100644
---- a/plugins/nokia-gpio.c
-+++ b/plugins/nokia-gpio.c
-@@ -645,7 +645,6 @@ static int gpio_probe_links(void)
- 	DBG("Using %s: trying to make links to %s", gpiodir, cmtdir);
- =
+On 05/11/2011 12:49 AM, Zhang, Caiwen wrote:
+> Hi Denis,
+> =
 
- 	if (!dir_exists(cmtdir)) {
--
- 		if (mkdir(cmtdir, 0755) =3D=3D -1) {
- 			DBG("%s: %s", cmtdir, strerror(errno));
- 			return -(errno =3D ENODEV);
-@@ -663,8 +662,10 @@ static int gpio_probe_links(void)
- 		FILE *nf;
- 		size_t len;
- =
+>>>> I think this is wrong as well. We should remove that context no
+>> matter
+>>>> if online of offline, but off course you do not wanna create a new
+>> GPRS
+>>>> context if you are actually offline, right?
+>>>>
+>>>
+>>> If the device is offline, the GPRS context atom has been released
+>> when set
+>>> the device to offline. That's another issue has been fixed by Martin
+>> (Need
+>>> set data->gc to NULL, because it has been release if device is
+>> offline).
+>>>
+>>> It will create a new GPRS context when the device is switch to
+>> online(in
+>>> huawei_post_online()), so don't create it here if it is offline.
+>>>
+>>>
+>>
+>> I suggest you migrate the huawei modem driver to create the gprs atom
+>> in
+>> post_sim state instead of post_online.  It will solve many of the
+>> issues
+>> you're trying to solve.
+>>
+> =
 
--		if (d =3D=3D NULL)
-+		if (d =3D=3D NULL) {
-+			(void) closedir(gpio);
- 			return 0;
-+		}
- =
+> Thanks your suggestion.
+> =
 
- 		snprintf(nn, sizeof nn, "%s/%s/name", gpiodir, d->d_name);
- =
+> Yes, It can help that we don't need to care whether gprs atom and gprs co=
+ntext atom =
 
-@@ -701,6 +702,8 @@ static int gpio_probe_links(void)
- =
+> be repeatedly created. But if do this at post_sim state, it will beak the=
+ rule
+> that only enable the atom when it is available. At post_sim state GPRS is=
+ still unavailable.
+> In addition, all other plug-ins do this at post_online, only do this in H=
+uawei plug-in,
+> it may impact the consistency of the codes.
+> =
 
- 	DBG("%s: %s", "/sys/class/gpio", strerror(errno));
- =
 
-+	(void) closedir(gpio);
-+
- 	return -(errno =3D ENODEV);
- }
- =
+I wouldn't really suggest this if I didn't think it was a good idea.
+All modem drivers should be migrated to create gprs in the post_sim
+state instead of post_online at some point anyway.  And even if the GPRS
+connections cannot be established when the modem is Offline, the
+relevant settings on ConnectionManager interface can still be modified.
 
--- =
+Regards,
+-Denis
 
-1.7.4.1
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============2256450475040981536==--
+--===============4810387689873214049==--
 
