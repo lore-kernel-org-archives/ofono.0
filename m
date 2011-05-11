@@ -1,47 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============0282018655280892150=="
+Content-Type: multipart/mixed; boundary="===============2256450475040981536=="
 MIME-Version: 1.0
-From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH 5/5] phonesim: connect call mangagement signals
-Date: Wed, 11 May 2011 13:46:47 +0200
-Message-ID: <1305114407-23796-6-git-send-email-nicolas.bertrand@linux.intel.com>
-In-Reply-To: <1305114407-23796-1-git-send-email-nicolas.bertrand@linux.intel.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] Fix a memory leak,
+ all dir opened with opendir must be closed with closedir
+Date: Wed, 11 May 2011 17:27:43 +0200
+Message-ID: <1305127663-6173-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0282018655280892150==
+--===============2256450475040981536==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/phonesim.cpp |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+ plugins/nokia-gpio.c |    7 +++++--
+ 1 files changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/src/phonesim.cpp b/src/phonesim.cpp
-index 6b45cf6..d3bd049 100644
---- a/src/phonesim.cpp
-+++ b/src/phonesim.cpp
-@@ -530,6 +530,10 @@ SimRules::SimRules( int fd, QObject *p,  const QString=
-& filename, HardwareManipu
-                  _callManager, SLOT(startIncomingCall(QString,QString,QStr=
-ing)) );
-         connect ( _callManager, SIGNAL( callStatesChanged( QList<CallInfo>=
- * ) ),
-                   machine, SLOT( callManagement( QList<CallInfo> * ) ) );
-+        connect ( machine, SIGNAL( stateChangedToAlerting() ), _callManage=
-r,
-+                SLOT( dialingToAlerting() ) );
-+        connect ( machine, SIGNAL( stateChangedToConnected() ), _callManag=
-er,
-+                SLOT( dialingToConnected() ) );
-     }
+diff --git a/plugins/nokia-gpio.c b/plugins/nokia-gpio.c
+index 3ddf6e1..57aad8d 100644
+--- a/plugins/nokia-gpio.c
++++ b/plugins/nokia-gpio.c
+@@ -645,7 +645,6 @@ static int gpio_probe_links(void)
+ 	DBG("Using %s: trying to make links to %s", gpiodir, cmtdir);
  =
 
-     connect(this,SIGNAL(readyRead()),
+ 	if (!dir_exists(cmtdir)) {
+-
+ 		if (mkdir(cmtdir, 0755) =3D=3D -1) {
+ 			DBG("%s: %s", cmtdir, strerror(errno));
+ 			return -(errno =3D ENODEV);
+@@ -663,8 +662,10 @@ static int gpio_probe_links(void)
+ 		FILE *nf;
+ 		size_t len;
+ =
+
+-		if (d =3D=3D NULL)
++		if (d =3D=3D NULL) {
++			(void) closedir(gpio);
+ 			return 0;
++		}
+ =
+
+ 		snprintf(nn, sizeof nn, "%s/%s/name", gpiodir, d->d_name);
+ =
+
+@@ -701,6 +702,8 @@ static int gpio_probe_links(void)
+ =
+
+ 	DBG("%s: %s", "/sys/class/gpio", strerror(errno));
+ =
+
++	(void) closedir(gpio);
++
+ 	return -(errno =3D ENODEV);
+ }
+ =
+
 -- =
 
-1.7.1
+1.7.4.1
 
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
---===============0282018655280892150==--
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============2256450475040981536==--
 
