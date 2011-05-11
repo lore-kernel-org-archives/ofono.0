@@ -1,89 +1,175 @@
-Content-Type: multipart/mixed; boundary="===============8010560568056824411=="
+Content-Type: multipart/mixed; boundary="===============4668610594456503258=="
 MIME-Version: 1.0
 From: Caiwen Zhang <caiwen.zhang@windriver.com>
-Subject: [PATCH] fix miss dbus reply issue
-Date: Tue, 10 May 2011 18:31:51 +0800
-Message-ID: <1305023511-596-1-git-send-email-caiwen.zhang@windriver.com>
+Subject: [PATCH] reopen data device once if open data device failed
+Date: Wed, 11 May 2011 10:25:09 +0800
+Message-ID: <1305080709-1888-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8010560568056824411==
+--===============4668610594456503258==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When set modem offline or power off, if there is some other operation in pr=
-ogress,
-the dbus reply may lost. Always check the pending dbus message to make sure=
- don't
-miss any reply.
-
-This should be a common issue, this patch only fix the GPRS relatived.
+Sometimes when open the data device, it may fail. If open the data device
+failed, retry once one second later.
 
 ---
- src/gprs.c |   17 ++++++++++++++++++-
- 1 files changed, 17 insertions(+), 0 deletions(-)
+ plugins/huawei.c |   54 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+----
+ 1 files changed, 50 insertions(+), 4 deletions(-)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index e221741..535432e 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -1363,6 +1363,10 @@ static gboolean context_dbus_unregister(struct pri_c=
-ontext *ctx)
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
- 	char path[256];
+diff --git a/plugins/huawei.c b/plugins/huawei.c
+index e791718..b888b0f 100644
+--- a/plugins/huawei.c
++++ b/plugins/huawei.c
+@@ -51,6 +51,7 @@
+ #include <ofono/phonebook.h>
+ #include <ofono/message-waiting.h>
+ #include <ofono/log.h>
++#include <ofono.h>
  =
 
-+	if (ctx->pending !=3D NULL)
-+		__ofono_dbus_pending_reply(&ctx->pending,
-+					__ofono_error_failed(ctx->pending));
-+
- 	strcpy(path, ctx->path);
- 	idmap_put(ctx->gprs->pid_map, ctx->id);
+ #include <drivers/atmodem/atutil.h>
+ #include <drivers/atmodem/vendor.h>
+@@ -80,6 +81,8 @@ struct huawei_data {
+ 	gboolean ndis;
+ 	guint sim_poll_timeout;
+ 	guint sim_poll_count;
++	guint reopen_source;
++	ofono_bool_t online;
+ };
  =
 
-@@ -2133,6 +2137,8 @@ void ofono_gprs_set_cid_range(struct ofono_gprs *gprs,
- static void gprs_context_unregister(struct ofono_atom *atom)
- {
- 	struct ofono_gprs_context *gc =3D __ofono_atom_get_data(atom);
-+	GSList *l;
-+	struct pri_context *ctx;
+ #define MAX_SIM_POLL_COUNT 5
+@@ -107,6 +110,11 @@ static void huawei_remove(struct ofono_modem *modem)
  =
 
- 	if (gc->gprs =3D=3D NULL)
- 		return;
-@@ -2143,6 +2149,13 @@ static void gprs_context_unregister(struct ofono_ato=
-m *atom)
- 		gc->settings =3D NULL;
- 	}
+ 	DBG("%p", modem);
  =
 
-+	for (l =3D gc->gprs->contexts; l; l =3D l->next) {
-+		ctx =3D l->data;
-+		if (ctx->context_driver =3D=3D gc && ctx->pending !=3D NULL)
-+			__ofono_dbus_pending_reply(&ctx->pending,
-+					__ofono_error_failed(ctx->pending));
++	if (data->reopen_source > 0) {
++		g_source_remove(data->reopen_source);
++		data->reopen_source =3D 0;
 +	}
 +
- 	gc->gprs->context_drivers =3D g_slist_remove(gc->gprs->context_drivers,
- 							gc);
- 	gc->gprs =3D NULL;
-@@ -2481,6 +2494,10 @@ static void gprs_unregister(struct ofono_atom *atom)
- 		gprs->netreg =3D NULL;
+ 	ofono_modem_set_data(modem, NULL);
+ =
+
+ 	if (data->modem)
+@@ -465,6 +473,14 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	return chat;
+ }
+ =
+
++static void huawei_disconnect(gpointer user_data);
++
++static gboolean reopen_callback(gpointer user_data)
++{
++	huawei_disconnect(user_data);
++	return FALSE;
++}
++
+ static void huawei_disconnect(gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+@@ -476,15 +492,26 @@ static void huawei_disconnect(gpointer user_data)
+ 	data->modem =3D NULL;
+ =
+
+ 	data->modem =3D open_device(modem, "Modem", "Modem: ");
+-	if (data->modem =3D=3D NULL)
++	/* retry once if failed */
++	if (data->modem =3D=3D NULL && data->reopen_source =3D=3D 0) {
++		data->reopen_source =3D
++			g_timeout_add_seconds(1, reopen_callback, modem);
++
++		ofono_debug("open device failed, try to reopen it.");
+ 		return;
++	}
++
++	if (data->reopen_source > 0)
++		data->reopen_source =3D 0;
+ =
+
+ 	g_at_chat_set_disconnect_function(data->modem,
+ 						huawei_disconnect, modem);
+ =
+
+-	/* gprs_context has been destructed and needs not reopen */
+-	if (data->gc =3D=3D NULL)
+-		return;
++	/* gprs_context has been destructed, if offline needs not recreate.
++	    if device is online, need recreate.
++	 */
++	 if (data->gc =3D=3D NULL && data->online =3D=3D FALSE)
++		return;
+ =
+
+ 	ofono_gprs_context_remove(data->gc);
+ =
+
+@@ -492,6 +519,13 @@ static void huawei_disconnect(gpointer user_data)
+ 			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) {
+ 		ofono_info("Reopened GPRS context channel");
+ =
+
++		if (__ofono_modem_find_atom(modem,
++				OFONO_ATOM_TYPE_GPRS) =3D=3D NULL) {
++			data->gprs =3D ofono_gprs_create(modem,
++					OFONO_VENDOR_HUAWEI,
++					"atmodem", data->pcui);
++		}
++
+ 		data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem",
+ 								data->modem);
+ =
+
+@@ -559,6 +593,11 @@ static int huawei_disable(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
++	if (data->reopen_source > 0) {
++		g_source_remove(data->reopen_source);
++		data->reopen_source =3D 0;
++	}
++
+ 	if (data->sim_poll_timeout > 0) {
+ 		g_source_remove(data->sim_poll_timeout);
+ 		data->sim_poll_timeout =3D 0;
+@@ -588,6 +627,12 @@ static void set_online_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+ 	ofono_modem_online_cb_t cb =3D cbd->cb;
+ 	struct ofono_error error;
+ =
+
++	if (ok) {
++		struct huawei_data *data =3D cbd->user;
++
++		data->online =3D TRUE;
++	}
++
+ 	decode_at_error(&error, g_at_result_final_response(result));
+ 	cb(&error, cbd->data);
+ }
+@@ -603,6 +648,7 @@ static void set_offline_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+ =
+
+ 		data->gc =3D NULL;
+ 		data->gprs =3D NULL;
++		data->online =3D FALSE;
  	}
  =
 
-+	if (gprs->pending !=3D NULL)
-+		__ofono_dbus_pending_reply(&gprs->pending,
-+					__ofono_error_failed(gprs->pending));
-+
- 	ofono_modem_remove_interface(modem,
- 					OFONO_CONNECTION_MANAGER_INTERFACE);
- 	g_dbus_unregister_interface(conn, path,
+ 	decode_at_error(&error, g_at_result_final_response(result));
 -- =
 
 1.7.5
 
 
---===============8010560568056824411==--
+--===============4668610594456503258==--
 
