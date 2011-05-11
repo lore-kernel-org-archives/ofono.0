@@ -1,68 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============9203629682349275431=="
+Content-Type: multipart/mixed; boundary="===============3781356725404032624=="
 MIME-Version: 1.0
-From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
-Subject: RE: [PATCH] reopen data device once if open data device failed
-Date: Wed, 11 May 2011 05:49:29 +0000
-Message-ID: <0E7E5CACD8E9F248AA009C292CC772A057B610@ALA-MBA.corp.ad.wrs.com>
-In-Reply-To: <4DCA0662.6090101@gmail.com>
+From: Caiwen Zhang <caiwen.zhang@windriver.com>
+Subject: [PATCH] fix ppp protocol-reject constructing error
+Date: Wed, 11 May 2011 16:15:19 +0800
+Message-ID: <1305101719-2913-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9203629682349275431==
+--===============3781356725404032624==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+In PPP Protocol-Reject package the 'rejected data field' should be a copy
+of the rejected package, the copy starts from the data field. besides, =
 
-> >> I think this is wrong as well. We should remove that context no
-> matter
-> >> if online of offline, but off course you do not wanna create a new
-> GPRS
-> >> context if you are actually offline, right?
-> >>
-> >
-> > If the device is offline, the GPRS context atom has been released
-> when set
-> > the device to offline. That's another issue has been fixed by Martin
-> (Need
-> > set data->gc to NULL, because it has been release if device is
-> offline).
-> >
-> > It will create a new GPRS context when the device is switch to
-> online(in
-> > huawei_post_online()), so don't create it here if it is offline.
-> >
-> >
-> =
+Protocol-Reject package include a 'rejected protocol field', it is the
+same as the protocol field of the rejected package.
 
-> I suggest you migrate the huawei modem driver to create the gprs atom
-> in
-> post_sim state instead of post_online.  It will solve many of the
-> issues
-> you're trying to solve.
-> =
+Protocol-Reject package structure is:
 
+	| PPP_header | rejected protocol | rejected data
 
-Thanks your suggestion.
+The rejected package structure is:
+	| Addr | Control | protocol | data
+	=
 
-Yes, It can help that we don't need to care whether gprs atom and gprs cont=
-ext atom =
+So the Protocol-Reject package data field is copied from the 3rd byte of
+the rejected package.
 
-be repeatedly created. But if do this at post_sim state, it will beak the r=
-ule
-that only enable the atom when it is available. At post_sim state GPRS is s=
-till unavailable.
-In addition, all other plug-ins do this at post_online, only do this in Hua=
-wei plug-in,
-it may impact the consistency of the codes.
+---
+ gatchat/ppp_cp.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
-Best regards
-Caiwen
+diff --git a/gatchat/ppp_cp.c b/gatchat/ppp_cp.c
+index 6e4a9c5..2d47933 100644
+--- a/gatchat/ppp_cp.c
++++ b/gatchat/ppp_cp.c
+@@ -922,7 +922,8 @@ void pppcp_send_protocol_reject(struct pppcp_data *data,
+ 	 * info should contain the old packet info, plus the 16bit
+ 	 * protocol number we are rejecting.
+ 	 */
+-	packet =3D pppcp_packet_new(data, PPPCP_CODE_TYPE_PROTOCOL_REJECT, len);
++	packet =3D pppcp_packet_new(data, PPPCP_CODE_TYPE_PROTOCOL_REJECT,
++		len - 2);
+ =
 
+ 	/*
+ 	 * Identifier must be changed for each Protocol-Reject sent
+@@ -933,8 +934,7 @@ void pppcp_send_protocol_reject(struct pppcp_data *data,
+ 	 * rejected packet should be copied in, but it should be
+ 	 * truncated if it needs to be to comply with mtu requirement
+ 	 */
+-	memcpy(packet->data, rejected_packet,
+-			(ntohs(packet->length) - CP_HEADER_SZ));
++	memcpy(packet->data, rejected_packet + 2, len - 2);
+ =
 
+ 	ppp_transmit(data->ppp, pppcp_to_ppp_packet(packet),
+ 			ntohs(packet->length));
+-- =
 
+1.7.5
 
-
---===============9203629682349275431==--
+--===============3781356725404032624==--
 
