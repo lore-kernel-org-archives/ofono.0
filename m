@@ -1,145 +1,196 @@
-Content-Type: multipart/mixed; boundary="===============7599574425535761808=="
+Content-Type: multipart/mixed; boundary="===============1136384107652487775=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 3/4] voicecall: save last dialed number
-Date: Thu, 12 May 2011 16:40:57 +0200
-Message-ID: <1305211258-8189-4-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH 1/4] voicecall: create generic dial function
+Date: Thu, 12 May 2011 16:40:55 +0200
+Message-ID: <1305211258-8189-2-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1305211258-8189-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7599574425535761808==
+--===============1136384107652487775==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+split manager_dial between generic and dbus parts
 ---
- src/voicecall.c |   45 +++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 45 insertions(+), 0 deletions(-)
+ src/voicecall.c |  106 +++++++++++++++++++++++++++++++++++++++++----------=
+----
+ 1 files changed, 79 insertions(+), 27 deletions(-)
 
 diff --git a/src/voicecall.c b/src/voicecall.c
-index b98c858..25d8506 100644
+index d46f463..037caac 100644
 --- a/src/voicecall.c
 +++ b/src/voicecall.c
-@@ -37,11 +37,15 @@
- #include "common.h"
- #include "simutil.h"
- #include "smsutil.h"
-+#include "storage.h"
- =
-
- #define MAX_VOICE_CALLS 16
+@@ -42,6 +42,17 @@
  =
 
  #define VOICECALL_FLAG_SIM_ECC_READY 0x1
  =
 
-+#define VOICECALL_STORE "voicecall"
-+#define LASTDIAL_GROUP "LastDial"
++enum dial_error {
++	DIAL_NO_ERROR,
++	DIAL_TOO_MANY_CALLS,
++	DIAL_INVALID_PHONE,
++	DIAL_NO_NETWORK,
++	DIAL_NOT_SUPPORTED,
++	DIAL_INCOMING,
++	DIAL_BUSY,
++	DIAL_ACTIVE
++};
 +
- enum dial_error {
- 	DIAL_NO_ERROR,
- 	DIAL_TOO_MANY_CALLS,
-@@ -82,6 +86,8 @@ struct ofono_voicecall {
- 	GQueue *toneq;
- 	guint tone_source;
- 	unsigned int hfp_watch;
-+	GKeyFile *settings;
-+	char *imsi;
- };
+ GSList *g_drivers =3D NULL;
  =
 
- struct voicecall {
-@@ -1485,6 +1491,12 @@ static enum dial_error voicecall_dial(struct ofono_v=
-oicecall *vc,
- =
-
- 	vc->driver->dial(vc, &ph, clir, cb, vc);
- =
-
-+	if (vc->settings) {
-+		g_key_file_set_string(vc->settings, LASTDIAL_GROUP,
-+					"Number", number);
-+		storage_sync(vc->imsi, VOICECALL_STORE, vc->settings);
-+	}
-+
- 	return DIAL_NO_ERROR;
+ struct multi_release {
+@@ -1437,59 +1448,100 @@ static void manager_dial_callback(const struct ofo=
+no_error *error, void *data)
+ 		voicecalls_emit_call_added(vc, v);
  }
  =
 
-@@ -2481,6 +2493,33 @@ static void emulator_hfp_unregister(struct ofono_ato=
-m *atom)
- 	__ofono_modem_remove_atom_watch(modem, vc->hfp_watch);
- }
- =
-
-+static void voicecall_load_settings(struct ofono_voicecall *vc)
-+{
-+	const char *imsi;
-+
-+	imsi =3D ofono_sim_get_imsi(vc->sim);
-+	if (imsi =3D=3D NULL)
-+		return;
-+
-+	vc->settings =3D storage_open(imsi, VOICECALL_STORE);
-+
-+	if (vc->settings =3D=3D NULL)
-+		return;
-+
-+	vc->imsi =3D g_strdup(imsi);
-+}
-+
-+static void voicecall_close_settings(struct ofono_voicecall *vc)
-+{
-+	if (vc->settings) {
-+		storage_close(vc->imsi, VOICECALL_STORE, vc->settings, TRUE);
-+
-+		g_free(vc->imsi);
-+		vc->imsi =3D NULL;
-+		vc->settings =3D NULL;
-+	}
-+}
-+
- static void voicecall_unregister(struct ofono_atom *atom)
+-static DBusMessage *manager_dial(DBusConnection *conn,
+-					DBusMessage *msg, void *data)
++static enum dial_error voicecall_dial(struct ofono_voicecall *vc,
++					const char *number,
++					enum ofono_clir_option clir,
++					ofono_voicecall_cb_t cb, void *data)
  {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
-@@ -2491,6 +2530,8 @@ static void voicecall_unregister(struct ofono_atom *a=
-tom)
+-	struct ofono_voicecall *vc =3D data;
+ 	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+-	const char *number;
+ 	struct ofono_phone_number ph;
+-	const char *clirstr;
+-	enum ofono_clir_option clir;
+-
+-	if (vc->pending)
+-		return __ofono_error_busy(msg);
  =
 
- 	emulator_hfp_unregister(atom);
+ 	if (g_slist_length(vc->call_list) >=3D MAX_VOICE_CALLS)
+-		return __ofono_error_failed(msg);
+-
+-	if (dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &number,
+-					DBUS_TYPE_STRING, &clirstr,
+-					DBUS_TYPE_INVALID) =3D=3D FALSE)
+-		return __ofono_error_invalid_args(msg);
++		return DIAL_TOO_MANY_CALLS;
  =
 
-+	voicecall_close_settings(vc);
+ 	if (!valid_long_phone_number_format(number))
+-		return __ofono_error_invalid_format(msg);
+-
+-	if (clir_string_to_clir(clirstr, &clir) =3D=3D FALSE)
+-		return __ofono_error_invalid_format(msg);
++		return DIAL_INVALID_PHONE;
+ =
+
+ 	if (ofono_modem_get_online(modem) =3D=3D FALSE)
+-		return __ofono_error_not_available(msg);
++		return DIAL_NO_NETWORK;
+ =
+
+ 	if (vc->driver->dial =3D=3D NULL)
+-		return __ofono_error_not_implemented(msg);
++		return DIAL_NOT_SUPPORTED;
+ =
+
+ 	if (voicecalls_have_incoming(vc))
+-		return __ofono_error_failed(msg);
++		return DIAL_INCOMING;
+ =
+
+ 	/* We can't have two dialing/alerting calls, reject outright */
+ 	if (voicecalls_num_connecting(vc) > 0)
+-		return __ofono_error_failed(msg);
++		return DIAL_BUSY;
+ =
+
+ 	if (voicecalls_have_active(vc) && voicecalls_have_held(vc))
+-		return __ofono_error_failed(msg);
++		return DIAL_ACTIVE;
+ =
+
+ 	if (is_emergency_number(vc, number) =3D=3D TRUE)
+ 		__ofono_modem_inc_emergency_mode(modem);
+ =
+
++	string_to_phone_number(number, &ph);
 +
- 	if (vc->sim_state_watch) {
- 		ofono_sim_remove_state_watch(vc->sim, vc->sim_state_watch);
- 		vc->sim_state_watch =3D 0;
-@@ -2630,6 +2671,9 @@ static void sim_state_watch(enum ofono_sim_state new_=
-state, void *user)
++	vc->driver->dial(vc, &ph, clir, cb, vc);
++
++	return DIAL_NO_ERROR;
++}
++
++static DBusMessage *manager_dial(DBusConnection *conn,
++					DBusMessage *msg, void *data)
++{
++	struct ofono_voicecall *vc =3D data;
++	const char *number;
++	const char *clirstr;
++	enum ofono_clir_option clir;
++	enum dial_error err;
++	DBusMessage *reply =3D NULL;
++
++	if (vc->pending)
++		return __ofono_error_busy(msg);
++
++	if (dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &number,
++					DBUS_TYPE_STRING, &clirstr,
++					DBUS_TYPE_INVALID) =3D=3D FALSE)
++		return __ofono_error_invalid_args(msg);
++
++	if (clir_string_to_clir(clirstr, &clir) =3D=3D FALSE)
++		return __ofono_error_invalid_format(msg);
++
+ 	vc->pending =3D dbus_message_ref(msg);
  =
 
- 		free_sim_ecc_numbers(vc, FALSE);
- 		set_new_ecc(vc);
-+	case OFONO_SIM_STATE_READY:
-+		voicecall_load_settings(vc);
+-	string_to_phone_number(number, &ph);
++	err =3D voicecall_dial(vc, number, clir, manager_dial_callback, vc);
++	switch (err) {
++	case DIAL_NO_ERROR:
 +		break;
- 	default:
- 		break;
- 	}
-@@ -2642,6 +2686,7 @@ static void sim_watch(struct ofono_atom *atom,
- 	struct ofono_sim *sim =3D __ofono_atom_get_data(atom);
++
++	case DIAL_INVALID_PHONE:
++		reply =3D __ofono_error_invalid_format(msg);
++		break;
  =
 
- 	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		voicecall_close_settings(vc);
- 		vc->sim_state_watch =3D 0;
- 		vc->sim =3D NULL;
- 		return;
+-	vc->driver->dial(vc, &ph, clir, manager_dial_callback, vc);
++	case DIAL_NO_NETWORK:
++		reply =3D __ofono_error_not_available(msg);
++		break;
+ =
+
+-	return NULL;
++	case DIAL_NOT_SUPPORTED:
++		reply =3D __ofono_error_not_implemented(msg);
++		break;
++
++	case DIAL_TOO_MANY_CALLS:
++	case DIAL_INCOMING:
++	case DIAL_BUSY:
++	case DIAL_ACTIVE:
++		reply =3D __ofono_error_failed(msg);
++		break;
++	}
++
++	if (reply !=3D NULL) {
++		dbus_message_unref(msg);
++		vc->pending =3D NULL;
++	}
++
++	return reply;
+ }
+ =
+
+ static DBusMessage *manager_transfer(DBusConnection *conn,
 -- =
 
 1.7.1
 
 
---===============7599574425535761808==--
+--===============1136384107652487775==--
 
