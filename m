@@ -1,53 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============7562258893021329182=="
+Content-Type: multipart/mixed; boundary="===============1259782050846315347=="
 MIME-Version: 1.0
-From: Xu, Martin <martin.xu@intel.com>
-Subject: RE: [PATCH 1/1] Fix primary context active/deactive result d-bus
- reply missing issue
-Date: Thu, 12 May 2011 09:01:19 +0800
-Message-ID: <FC2FB65B4D919844ADE4BE3C2BB739AD5A7470C7@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <4DCAD5F0.1050209@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] add name field when process chap authentication
+Date: Wed, 11 May 2011 20:25:32 -0500
+Message-ID: <4DCB370C.1050100@gmail.com>
+In-Reply-To: <1305105567-3749-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7562258893021329182==
+--===============1259782050846315347==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Denis:
-> -----Original Message-----
-> From: Denis Kenzior [mailto:denkenz(a)gmail.com]
-> Sent: Thursday, May 12, 2011 2:31 AM
-> To: ofono(a)ofono.org
-> Cc: Xu, Martin
-> Subject: Re: [PATCH 1/1] Fix primary context active/deactive result d-bus=
- reply
-> missing issue
+Hi Caiwen,
+
+On 05/11/2011 04:19 AM, Caiwen Zhang wrote:
+> Some systems require name field, otherwise chap authentication will fail.
 > =
 
-> Hi Martin,
+> ---
+>  gatchat/ppp_auth.c |    7 +++++++
+>  1 files changed, 7 insertions(+), 0 deletions(-)
 > =
 
-> On 04/27/2011 02:04 AM, martin.xu(a)intel.com wrote:
-> > From: Martin Xu <martin.xu@intel.com>
-> >
-> > If user offline modem when the gprs_context is in enabling or disabling
-> > state(activating/disactivating), the GPRS primary context activate/disa=
-ctivate
-> > result will not be replied to the corresponding application.
-> > ---
-> >  drivers/atmodem/gprs-context.c |    7 +++++++
-> >  src/gprs.c                     |    5 +++++
-> >  2 files changed, 12 insertions(+), 0 deletions(-)
-> >
-> =
 
-> Please check commit 4714d8199aacf0ba6be777a70e01b3016ba2aa5f, this
-> might
-> partly fix this issue.
-Thanks. :-)
-The patch only fix the issue partly, we are continue to test and review the=
- code and try to find the final solution.=20
+Patch has been applied with a minor style fix and a reworded commit
+message.  Thanks for that.
 
---===============7562258893021329182==--
+Regards,
+-Denis
+
+--===============1259782050846315347==--
 
