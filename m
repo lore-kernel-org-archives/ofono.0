@@ -1,32 +1,151 @@
-Content-Type: multipart/mixed; boundary="===============4493587678486829527=="
+Content-Type: multipart/mixed; boundary="===============0580582911034598299=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 0/4] Add dial support for HFP emulator
-Date: Thu, 12 May 2011 16:40:54 +0200
-Message-ID: <1305211258-8189-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH 2/4] voicecall: add ATD support for HFP emulator
+Date: Thu, 12 May 2011 16:40:56 +0200
+Message-ID: <1305211258-8189-3-git-send-email-frederic.danis@linux.intel.com>
+In-Reply-To: <1305211258-8189-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4493587678486829527==
+--===============0580582911034598299==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Create a generic dial function that can be called by DBus or emulator
-Add support of ATD and AT+BLDN
-Save last dialed number in /var/lib/ofono/<modem>/voicecall to be used
-by AT+BLDN
+---
+ src/voicecall.c |   92 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 92 insertions(+), 0 deletions(-)
 
-Fr=C3=A9d=C3=A9ric Danis (4):
-  voicecall: create generic dial function
-  voicecall: add ATD support for HFP emulator
-  voicecall: save last dialed number
-  voicecall: add +BLDN support for HFP emulator
+diff --git a/src/voicecall.c b/src/voicecall.c
+index 037caac..b98c858 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -2473,6 +2473,10 @@ static void emulator_hfp_unregister(struct ofono_ato=
+m *atom)
+ 						OFONO_ATOM_TYPE_EMULATOR_HFP,
+ 						emulator_remove_handler,
+ 						"+CHLD");
++	__ofono_modem_foreach_registered_atom(modem,
++						OFONO_ATOM_TYPE_EMULATOR_HFP,
++						emulator_remove_handler,
++						"D");
+ =
 
- src/voicecall.c |  274 +++++++++++++++++++++++++++++++++++++++++++++++++--=
-----
- 1 files changed, 247 insertions(+), 27 deletions(-)
+ 	__ofono_modem_remove_atom_watch(modem, vc->hfp_watch);
+ }
+@@ -2918,6 +2922,93 @@ fail:
+ 	ofono_emulator_send_final(em, &result);
+ }
+ =
+
++static void emulator_dial_callback(const struct ofono_error *error, void *=
+data)
++{
++	struct ofono_voicecall *vc =3D data;
++	const char *number =3D NULL;
++	gboolean need_to_emit;
++	struct voicecall *v;
++
++	v =3D dial_handle_result(vc, error, number, &need_to_emit);
++
++	if (v =3D=3D NULL) {
++		struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
++
++		if (is_emergency_number(vc, number) =3D=3D TRUE)
++			__ofono_modem_dec_emergency_mode(modem);
++	}
++
++	if (need_to_emit)
++		voicecalls_emit_call_added(vc, v);
++}
++
++static void emulator_dial(struct ofono_emulator *em, struct ofono_voicecal=
+l *vc,
++				const char *number)
++{
++	enum ofono_clir_option clir;
++	struct ofono_error result;
++	enum dial_error err;
++
++	result.error =3D 0;
++
++	if (number =3D=3D NULL || number[0] =3D=3D '\0') {
++		result.type =3D OFONO_ERROR_TYPE_FAILURE;
++		goto send;
++	}
++
++	if (!strncmp(number, "*31#", 4)) {
++		number +=3D 4;
++		clir =3D OFONO_CLIR_OPTION_INVOCATION;
++	} else if (!strncmp(number, "#31#", 4)) {
++		number +=3D 4;
++		clir =3D  OFONO_CLIR_OPTION_SUPPRESSION;
++	} else
++		clir =3D OFONO_CLIR_OPTION_DEFAULT;
++
++	err =3D voicecall_dial(vc, number, clir, emulator_dial_callback, vc);
++	switch (err) {
++	case DIAL_NO_ERROR:
++		result.type =3D OFONO_ERROR_TYPE_NO_ERROR;
++		break;
++
++	case DIAL_NO_NETWORK:
++		result.error =3D 30;
++		result.type =3D OFONO_ERROR_TYPE_CME;
++		break;
++
++	case DIAL_INVALID_PHONE:
++	case DIAL_NOT_SUPPORTED:
++	case DIAL_TOO_MANY_CALLS:
++	case DIAL_INCOMING:
++	case DIAL_BUSY:
++	case DIAL_ACTIVE:
++		result.type =3D OFONO_ERROR_TYPE_FAILURE;
++	}
++
++send:
++	ofono_emulator_send_final(em, &result);
++}
++
++static void emulator_atd_cb(struct ofono_emulator *em,
++			struct ofono_emulator_request *req, void *userdata)
++{
++	struct ofono_voicecall *vc =3D userdata;
++	const char *str;
++	struct ofono_error result;
++
++	switch (ofono_emulator_request_get_type(req)) {
++	case OFONO_EMULATOR_REQUEST_TYPE_SET:
++		str =3D ofono_emulator_request_get_raw(req);
++		emulator_dial(em, vc, str);
++		break;
++
++	default:
++		result.error =3D 0;
++		result.type =3D OFONO_ERROR_TYPE_FAILURE;
++		ofono_emulator_send_final(em, &result);
++	};
++}
++
+ static void emulator_hfp_watch(struct ofono_atom *atom,
+ 				enum ofono_atom_watch_condition cond,
+ 				void *data)
+@@ -2933,6 +3024,7 @@ static void emulator_hfp_watch(struct ofono_atom *ato=
+m,
+ 	ofono_emulator_add_handler(em, "+CHUP", emulator_chup_cb, data, NULL);
+ 	ofono_emulator_add_handler(em, "+CLCC", emulator_clcc_cb, data, NULL);
+ 	ofono_emulator_add_handler(em, "+CHLD", emulator_chld_cb, data, NULL);
++	ofono_emulator_add_handler(em, "D", emulator_atd_cb, data, NULL);
+ }
+ =
+
+ void ofono_voicecall_register(struct ofono_voicecall *vc)
+-- =
+
+1.7.1
 
 
---===============4493587678486829527==--
+--===============0580582911034598299==--
 
