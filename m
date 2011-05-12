@@ -1,47 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============9006065583905838934=="
+Content-Type: multipart/mixed; boundary="===============4493587678486829527=="
 MIME-Version: 1.0
-From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH] control: Make call table items non editable
-Date: Thu, 12 May 2011 15:45:40 +0200
-Message-ID: <1305207940-6500-1-git-send-email-nicolas.bertrand@linux.intel.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH 0/4] Add dial support for HFP emulator
+Date: Thu, 12 May 2011 16:40:54 +0200
+Message-ID: <1305211258-8189-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9006065583905838934==
+--===============4493587678486829527==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/control.cpp |    6 +++++-
- 1 files changed, 5 insertions(+), 1 deletions(-)
+Create a generic dial function that can be called by DBus or emulator
+Add support of ATD and AT+BLDN
+Save last dialed number in /var/lib/ofono/<modem>/voicecall to be used
+by AT+BLDN
 
-diff --git a/src/control.cpp b/src/control.cpp
-index e74aa7c..60f23f2 100644
---- a/src/control.cpp
-+++ b/src/control.cpp
-@@ -203,7 +203,11 @@ void ControlWidget::updateCallView( QString callParame=
-ters [5], int row )
-         ui->twCallMgt->insertRow( row );
- =
+Fr=C3=A9d=C3=A9ric Danis (4):
+  voicecall: create generic dial function
+  voicecall: add ATD support for HFP emulator
+  voicecall: save last dialed number
+  voicecall: add +BLDN support for HFP emulator
 
-     for ( int i =3D 0; i < 5; i++ )
--        ui->twCallMgt->setItem( row, i, new QTableWidgetItem( callParamete=
-rs[i] ) );
-+    {
-+        QTableWidgetItem *item =3D new QTableWidgetItem( callParameters[i]=
- );
-+        item->setFlags( item->flags() & ~Qt::ItemIsEditable );
-+        ui->twCallMgt->setItem( row, i, item );
-+    }
- }
- =
-
- void Control::setPhoneNumber( const QString &number )
--- =
-
-1.7.1
+ src/voicecall.c |  274 +++++++++++++++++++++++++++++++++++++++++++++++++--=
+----
+ 1 files changed, 247 insertions(+), 27 deletions(-)
 
 
---===============9006065583905838934==--
+--===============4493587678486829527==--
 
