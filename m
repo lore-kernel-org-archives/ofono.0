@@ -1,49 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============1833870241865227026=="
+Content-Type: multipart/mixed; boundary="===============7562258893021329182=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/5] Introduce call management buttons
-Date: Wed, 11 May 2011 14:04:33 -0500
-Message-ID: <4DCADDC1.50201@gmail.com>
-In-Reply-To: <1305114407-23796-1-git-send-email-nicolas.bertrand@linux.intel.com>
+From: Xu, Martin <martin.xu@intel.com>
+Subject: RE: [PATCH 1/1] Fix primary context active/deactive result d-bus
+ reply missing issue
+Date: Thu, 12 May 2011 09:01:19 +0800
+Message-ID: <FC2FB65B4D919844ADE4BE3C2BB739AD5A7470C7@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <4DCAD5F0.1050209@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1833870241865227026==
+--===============7562258893021329182==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nicolas,
-
-On 05/11/2011 06:46 AM, Nicolas Bertrand wrote:
-> This patch add support of call state management.
-> Buttons Alerting and Active permit to change the state of on-going call.
+Denis:
+> -----Original Message-----
+> From: Denis Kenzior [mailto:denkenz(a)gmail.com]
+> Sent: Thursday, May 12, 2011 2:31 AM
+> To: ofono(a)ofono.org
+> Cc: Xu, Martin
+> Subject: Re: [PATCH 1/1] Fix primary context active/deactive result d-bus=
+ reply
+> missing issue
 > =
 
-> Nicolas Bertrand (5):
->   controlbase: Add call state management buttons
->   hardwaremanipulator: Call state changed signals
->   callmanager: Change call state management slots
->   control: handle call management buttons
->   phonesim: connect call mangagement signals
+> Hi Martin,
 > =
 
->  src/callmanager.cpp       |    7 +++++++
->  src/callmanager.h         |   12 ++++++------
->  src/control.cpp           |   12 ++++++++++++
->  src/control.h             |    2 ++
->  src/controlbase.ui        |   18 ++++++++++++++++++
->  src/hardwaremanipulator.h |    2 ++
->  src/phonesim.cpp          |    4 ++++
->  7 files changed, 51 insertions(+), 6 deletions(-)
+> On 04/27/2011 02:04 AM, martin.xu(a)intel.com wrote:
+> > From: Martin Xu <martin.xu@intel.com>
+> >
+> > If user offline modem when the gprs_context is in enabling or disabling
+> > state(activating/disactivating), the GPRS primary context activate/disa=
+ctivate
+> > result will not be replied to the corresponding application.
+> > ---
+> >  drivers/atmodem/gprs-context.c |    7 +++++++
+> >  src/gprs.c                     |    5 +++++
+> >  2 files changed, 12 insertions(+), 0 deletions(-)
+> >
 > =
 
+> Please check commit 4714d8199aacf0ba6be777a70e01b3016ba2aa5f, this
+> might
+> partly fix this issue.
+Thanks. :-)
+The patch only fix the issue partly, we are continue to test and review the=
+ code and try to find the final solution.=20
 
-I applied all patches in this series, however calls still proceed to
-Alerting / Active state automagically.  Are there plans to fix that?
-
-Regards,
--Denis
-
---===============1833870241865227026==--
+--===============7562258893021329182==--
 
