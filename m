@@ -1,53 +1,209 @@
-Content-Type: multipart/mixed; boundary="===============2342312947041613001=="
+Content-Type: multipart/mixed; boundary="===============1710061666903847014=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v5 0/5] Private network request to ConnMan
-Date: Mon, 16 May 2011 14:37:32 +0200
-Message-ID: <1305549457-32298-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v5 1/5] gatppp: Add new contructor to use external fd
+Date: Mon, 16 May 2011 14:37:33 +0200
+Message-ID: <1305549457-32298-2-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1305549457-32298-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2342312947041613001==
+--===============1710061666903847014==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ gatchat/gatppp.c  |   33 ++++++++++++++++++++++++++++++++-
+ gatchat/gatppp.h  |    1 +
+ gatchat/ppp.h     |    2 +-
+ gatchat/ppp_net.c |   38 ++++++++++++++++++++++++--------------
+ 4 files changed, 58 insertions(+), 16 deletions(-)
 
-Changelog from v4:
-	- add new header and its reference into Makefile.am
-	- close fd for each ppp_net_new() error
-	- close fd into emulator when there are memory errors
-	- copy into application memory private network settings returned by
-	  ConnMan
-	- add redundant marker when request needs to be cancelled
-	- check error in ConnMan DBus reply to call accordingly release DBus
-	  method
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index c776811..1f2d227 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -78,6 +78,7 @@ struct _GAtPPP {
+ 	guint ppp_dead_source;
+ 	GAtSuspendFunc suspend_func;
+ 	gpointer suspend_data;
++	int fd;
+ };
+ =
 
-Guillaume Zajac (5):
-  gatppp: Add new contructor to use external fd
-  private-network: add header into include and Makefile.am
-  private-network: add request/release functions and new feature to
-    Makefile.am
-  emulator: add request/release private network calls
-  connman: add plugin in oFono to request/release private network
+ void ppp_debug(GAtPPP *ppp, const char *str)
+@@ -290,7 +291,7 @@ void ppp_auth_notify(GAtPPP *ppp, gboolean success)
+ void ppp_ipcp_up_notify(GAtPPP *ppp, const char *local, const char *peer,
+ 					const char *dns1, const char *dns2)
+ {
+-	ppp->net =3D ppp_net_new(ppp);
++	ppp->net =3D ppp_net_new(ppp, ppp->fd);
+ =
 
- Makefile.am               |   10 +-
- gatchat/gatppp.c          |   33 +++++-
- gatchat/gatppp.h          |    1 +
- gatchat/ppp.h             |    2 +-
- gatchat/ppp_net.c         |   38 ++++--
- include/private-network.h |   56 +++++++++
- plugins/connman.c         |  299 +++++++++++++++++++++++++++++++++++++++++=
-++++
- src/emulator.c            |   75 ++++++++++--
- src/ofono.h               |    6 +
- src/private-network.c     |   91 ++++++++++++++
- 10 files changed, 582 insertions(+), 29 deletions(-)
- create mode 100644 include/private-network.h
- create mode 100644 plugins/connman.c
- create mode 100644 src/private-network.c
+ 	if (ppp->net =3D=3D NULL) {
+ 		ppp->disconnect_reason =3D G_AT_PPP_REASON_NET_FAIL;
+@@ -316,6 +317,7 @@ void ppp_ipcp_down_notify(GAtPPP *ppp)
+ 		return;
+ =
+
+ 	ppp_net_free(ppp->net);
++	ppp->fd =3D -1;
+ 	ppp->net =3D NULL;
+ }
+ =
+
+@@ -522,6 +524,8 @@ void g_at_ppp_unref(GAtPPP *ppp)
+ =
+
+ 	if (ppp->net)
+ 		ppp_net_free(ppp->net);
++	else if (ppp->fd >=3D 0)
++		close(ppp->fd);
+ =
+
+ 	if (ppp->chap)
+ 		ppp_chap_free(ppp->chap);
+@@ -565,6 +569,8 @@ static GAtPPP *ppp_init_common(GAtHDLC *hdlc, gboolean =
+is_server, guint32 ip)
+ =
+
+ 	ppp->ref_count =3D 1;
+ =
+
++	ppp->fd =3D -1;
++
+ 	/* set options to defaults */
+ 	ppp->mru =3D DEFAULT_MRU;
+ 	ppp->mtu =3D DEFAULT_MTU;
+@@ -657,3 +663,28 @@ GAtPPP *g_at_ppp_server_new_from_io(GAtIO *io, const c=
+har *local)
+ =
+
+ 	return ppp;
+ }
++
++GAtPPP *g_at_ppp_server_new_full(GAtIO *io, const char *local, int fd)
++{
++	GAtHDLC *hdlc;
++	GAtPPP *ppp;
++	guint32 ip;
++
++	if (local =3D=3D NULL)
++		ip =3D 0;
++	else if (inet_pton(AF_INET, local, &ip) !=3D 1)
++		return NULL;
++
++	hdlc =3D g_at_hdlc_new_from_io(io);
++	if (hdlc =3D=3D NULL)
++		return NULL;
++
++	ppp =3D ppp_init_common(hdlc, TRUE, ip);
++
++	/* Set the fd value returned by ConnMan */
++	ppp->fd =3D fd;
++
++	g_at_hdlc_unref(hdlc);
++
++	return ppp;
++}
+diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
+index 9464ffd..365123a 100644
+--- a/gatchat/gatppp.h
++++ b/gatchat/gatppp.h
+@@ -54,6 +54,7 @@ GAtPPP *g_at_ppp_new(GIOChannel *modem);
+ GAtPPP *g_at_ppp_new_from_io(GAtIO *io);
+ GAtPPP *g_at_ppp_server_new(GIOChannel *modem, const char *local);
+ GAtPPP *g_at_ppp_server_new_from_io(GAtIO *io, const char *local);
++GAtPPP *g_at_ppp_server_new_full(GAtIO *io, const char *local, int fd);
+ =
+
+ void g_at_ppp_open(GAtPPP *ppp);
+ void g_at_ppp_set_connect_function(GAtPPP *ppp, GAtPPPConnectFunc callback,
+diff --git a/gatchat/ppp.h b/gatchat/ppp.h
+index 22809d8..f866944 100644
+--- a/gatchat/ppp.h
++++ b/gatchat/ppp.h
+@@ -102,7 +102,7 @@ void ppp_chap_free(struct ppp_chap *chap);
+ void ppp_chap_process_packet(struct ppp_chap *chap, const guint8 *new_pack=
+et);
+ =
+
+ /* TUN / Network related functions */
+-struct ppp_net *ppp_net_new(GAtPPP *ppp);
++struct ppp_net *ppp_net_new(GAtPPP *ppp, int fd);
+ const char *ppp_net_get_interface(struct ppp_net *net);
+ void ppp_net_process_packet(struct ppp_net *net, const guint8 *packet);
+ void ppp_net_free(struct ppp_net *net);
+diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
+index 25bcfa4..5cef3fa 100644
+--- a/gatchat/ppp_net.c
++++ b/gatchat/ppp_net.c
+@@ -123,12 +123,12 @@ const char *ppp_net_get_interface(struct ppp_net *net)
+ 	return net->if_name;
+ }
+ =
+
+-struct ppp_net *ppp_net_new(GAtPPP *ppp)
++struct ppp_net *ppp_net_new(GAtPPP *ppp, int fd)
+ {
+ 	struct ppp_net *net;
+ 	GIOChannel *channel =3D NULL;
+ 	struct ifreq ifr;
+-	int fd, err;
++	int err;
+ =
+
+ 	net =3D g_try_new0(struct ppp_net, 1);
+ 	if (net =3D=3D NULL)
+@@ -140,18 +140,28 @@ struct ppp_net *ppp_net_new(GAtPPP *ppp)
+ 		return NULL;
+ 	}
+ =
+
+-	/* open a tun interface */
+-	fd =3D open("/dev/net/tun", O_RDWR);
+-	if (fd < 0)
+-		goto error;
+-
+-	memset(&ifr, 0, sizeof(ifr));
+-	ifr.ifr_flags =3D IFF_TUN | IFF_NO_PI;
+-	strcpy(ifr.ifr_name, "ppp%d");
+-
+-	err =3D ioctl(fd, TUNSETIFF, (void *) &ifr);
+-	if (err < 0)
+-		goto error;
++	/*
++	 * If the fd value is still the default one,
++	 * open the tun interface and configure it.
++	 */
++	if (fd < 0) {
++		/* open a tun interface */
++		fd =3D open("/dev/net/tun", O_RDWR);
++		if (fd < 0)
++			goto error;
++
++		memset(&ifr, 0, sizeof(ifr));
++		ifr.ifr_flags =3D IFF_TUN | IFF_NO_PI;
++		strcpy(ifr.ifr_name, "ppp%d");
++
++		err =3D ioctl(fd, TUNSETIFF, (void *) &ifr);
++		if (err < 0)
++			goto error;
++	} else {
++		err =3D ioctl(fd, TUNGETIFF, (void *) &ifr);
++		if (err < 0)
++			goto error;
++	}
+ =
+
+ 	net->if_name =3D strdup(ifr.ifr_name);
+ =
+
+-- =
+
+1.7.1
 
 
---===============2342312947041613001==--
+--===============1710061666903847014==--
 
