@@ -1,70 +1,169 @@
-Content-Type: multipart/mixed; boundary="===============6962844813897279337=="
+Content-Type: multipart/mixed; boundary="===============7337627823309173163=="
 MIME-Version: 1.0
-From: Yuvaraj Ragupathi <yuvaraj.addu@gmail.com>
-Subject: Adding New contact failed in Ofono
-Date: Mon, 16 May 2011 12:58:30 +0530
-Message-ID: <BANLkTi=v=FFGF5n7m28Z+pj8J2pHr8jAcw@mail.gmail.com>
+From: Aygon, Bertrand <bertrand.aygon@intel.com>
+Subject: RE: Adding New contact failed in Ofono
+Date: Mon, 16 May 2011 09:17:42 +0100
+Message-ID: <681C8C8FC7710A4EAEA09BE56067C76E7A505F@irsmsx002.ger.corp.intel.com>
+In-Reply-To: <BANLkTi=v=FFGF5n7m28Z+pj8J2pHr8jAcw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6962844813897279337==
+--===============7337627823309173163==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi All,
+Hi,
 
-I am trying to add new contact in sim via following sample code
+>Hi All,
+>
+>I am trying to add new contact in sim via following sample code
+>
+>
+>static  int new_contact(struct ofono_phonebook *pb,char *num,ofono_phonebo=
+ok_cb_t cb)
+>{
+>    struct pb_data *pbd =3D ofono_phonebook_get_data(pb);
+>    char cmd[50];int return_value;
+>        sprintf(cmd,"AT+CPBW=3D10,%s,129,Testing", num);
+>        printf("Command is %s\n",cmd);
+>    return_value=3Dg_at_chat_send(pbd->chat,cmd, none_prefix,
+>                       NULL,NULL, NULL);
+>        printf("Add New contact number in Sim\n Status is %d\n",return_val=
+ue);
+>        return return_value;
+>}
+>
+>
+>If i try to add new contact  my Return status is  69 or 70
+>
+>
+>what is does mean?
+>
+>I verified  in my Sim. Contact is not added
 
+Do you have the AT log?
 
-static  int new_contact(struct ofono_phonebook *pb,char
-*num,ofono_phonebook_cb_t cb)
-{
-    struct pb_data *pbd =3D ofono_phonebook_get_data(pb);
-    char cmd[50];int return_value;
-        sprintf(cmd,"AT+CPBW=3D10,%s,129,Testing", num);
-        printf("Command is %s\n",cmd);
-    return_value=3Dg_at_chat_send(pbd->chat,cmd, none_prefix,
-                       NULL,NULL, NULL);
-        printf("Add New contact number in Sim\n Status is
-%d\n",return_value);
-        return return_value;
-}
+One thing I have in mind, is that phone number and name must be a quoted st=
+ring:
+        sprintf(cmd,"AT+CPBW=3D10,\"%s\",129,\"Testing\"", num);
 
+Regards,
 
-If i try to add new contact  my Return status is  69 or 70
+Bertrand
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
-what is does mean?
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
-I verified  in my Sim. Contact is not added
-
-
-Thanks
-
-Yuvi R
-
---===============6962844813897279337==
+--===============7337627823309173163==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-SGkgQWxsLDxicj48YnI+SSBhbSB0cnlpbmcgdG8gYWRkIG5ldyBjb250YWN0IGluIHNpbSB2aWEg
-Zm9sbG93aW5nIHNhbXBsZSBjb2RlPGJyPjxicj48YnI+c3RhdGljoCBpbnQgbmV3X2NvbnRhY3Qo
-c3RydWN0IG9mb25vX3Bob25lYm9vayAqcGIsY2hhciAqbnVtLG9mb25vX3Bob25lYm9va19jYl90
-IGNiKTxicj57PGJyPqCgoCBzdHJ1Y3QgcGJfZGF0YSAqcGJkID0gb2Zvbm9fcGhvbmVib29rX2dl
-dF9kYXRhKHBiKTs8YnI+CqCgoCBjaGFyIGNtZFs1MF07aW50IHJldHVybl92YWx1ZTs8YnI+oKCg
-oKCgoCBzcHJpbnRmKGNtZCwmcXVvdDtBVCtDUEJXPTEwLCVzLDEyOSxUZXN0aW5nJnF1b3Q7LCBu
-dW0pOzxicj6goKCgoKCgIHByaW50ZigmcXVvdDtDb21tYW5kIGlzICVzXG4mcXVvdDssY21kKTs8
-YnI+oKCgIHJldHVybl92YWx1ZT1nX2F0X2NoYXRfc2VuZChwYmQtJmd0O2NoYXQsY21kLCBub25l
-X3ByZWZpeCw8YnI+CqCgoKCgoKCgoKCgoKCgoKCgoKCgoKAgTlVMTCxOVUxMLCBOVUxMKTs8YnI+
-oKCgoKCgoCBwcmludGYoJnF1b3Q7QWRkIE5ldyBjb250YWN0IG51bWJlciBpbiBTaW1cbiBTdGF0
-dXMgaXMgJWRcbiZxdW90OyxyZXR1cm5fdmFsdWUpOzxicj6goKCgoKCgIHJldHVybiByZXR1cm5f
-dmFsdWU7PGJyPn08YnI+PGJyPjxicj5JZiBpIHRyeSB0byBhZGQgbmV3IGNvbnRhY3SgIG15IFJl
-dHVybiBzdGF0dXMgaXOgIDY5IG9yIDcwPGJyPgo8YnI+PGJyPndoYXQgaXMgZG9lcyBtZWFuPzxi
-cj48YnI+SSB2ZXJpZmllZKAgaW4gbXkgU2ltLiBDb250YWN0IGlzIG5vdCBhZGRlZDxicj48YnI+
-PGJyPlRoYW5rczxicj48YnI+WXV2aSBSPGJyPgo=
-
---===============6962844813897279337==--
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29udGVu
+dD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj48bWV0YSBuYW1lPUdlbmVyYXRvciBjb250
+ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+PHN0eWxlPjwhLS0KLyog
+Rm9udCBEZWZpbml0aW9ucyAqLwpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6IkNhbWJyaWEgTWF0
+aCI7CglwYW5vc2UtMToyIDQgNSAzIDUgNCA2IDMgMiA0O30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
+aWx5OkNhbGlicmk7CglwYW5vc2UtMToyIDE1IDUgMiAyIDIgNCAzIDIgNDt9Ci8qIFN0eWxlIERl
+ZmluaXRpb25zICovCnAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXtt
+YXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjEyLjBwdDsKCWZv
+bnQtZmFtaWx5OiJUaW1lcyBOZXcgUm9tYW4iLCJzZXJpZiI7fQphOmxpbmssIHNwYW4uTXNvSHlw
+ZXJsaW5rCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6Ymx1ZTsKCXRleHQtZGVjb3Jh
+dGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlwZXJsaW5rRm9sbG93ZWQKCXtt
+c28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpwdXJwbGU7Cgl0ZXh0LWRlY29yYXRpb246dW5k
+ZXJsaW5lO30Kc3Bhbi5FbWFpbFN0eWxlMTcKCXttc28tc3R5bGUtdHlwZTpwZXJzb25hbC1yZXBs
+eTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xvcjojMUY0OTdEO30K
+Lk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTt9CkBwYWdlIFdvcmRT
+ZWN0aW9uMQoJe3NpemU6NjEyLjBwdCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBwdCA3Mi4wcHQgNzIu
+MHB0IDcyLjBwdDt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9Ci0tPjwv
+c3R5bGU+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CjxvOnNoYXBlZGVmYXVsdHMgdjpleHQ9ImVk
+aXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5
+XT48eG1sPgo8bzpzaGFwZWxheW91dCB2OmV4dD0iZWRpdCI+CjxvOmlkbWFwIHY6ZXh0PSJlZGl0
+IiBkYXRhPSIxIiAvPgo8L286c2hhcGVsYXlvdXQ+PC94bWw+PCFbZW5kaWZdLS0+PC9oZWFkPjxi
+b2R5IGxhbmc9RU4tR0IgbGluaz1ibHVlIHZsaW5rPXB1cnBsZT48ZGl2IGNsYXNzPVdvcmRTZWN0
+aW9uMT48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMS4wcHQ7Zm9u
+dC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjtjb2xvcjojMUY0OTdEJz5IaSw8bzpwPjwv
+bzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPjxw
+IGNsYXNzPU1zb05vcm1hbD48c3BhbiBzdHlsZT0nY29sb3I6IzFGNDk3RCc+Jmd0Ozwvc3Bhbj5I
+aSBBbGwsPGJyPjxzcGFuIHN0eWxlPSdjb2xvcjojMUY0OTdEJz4mZ3Q7PC9zcGFuPjxicj48c3Bh
+biBzdHlsZT0nY29sb3I6IzFGNDk3RCc+Jmd0Ozwvc3Bhbj5JIGFtIHRyeWluZyB0byBhZGQgbmV3
+IGNvbnRhY3QgaW4gc2ltIHZpYSBmb2xsb3dpbmcgc2FtcGxlIGNvZGU8YnI+PHNwYW4gc3R5bGU9
+J2NvbG9yOiMxRjQ5N0QnPiZndDs8L3NwYW4+PGJyPjxzcGFuIHN0eWxlPSdjb2xvcjojMUY0OTdE
+Jz4mZ3Q7PC9zcGFuPjxicj48c3BhbiBzdHlsZT0nY29sb3I6IzFGNDk3RCc+Jmd0Ozwvc3Bhbj5z
+dGF0aWMmbmJzcDsgaW50IG5ld19jb250YWN0KHN0cnVjdCBvZm9ub19waG9uZWJvb2sgKnBiLGNo
+YXIgKm51bSxvZm9ub19waG9uZWJvb2tfY2JfdCBjYik8YnI+PHNwYW4gc3R5bGU9J2NvbG9yOiMx
+RjQ5N0QnPiZndDs8L3NwYW4+ezxicj48c3BhbiBzdHlsZT0nY29sb3I6IzFGNDk3RCc+Jmd0Ozwv
+c3Bhbj4mbmJzcDsmbmJzcDsmbmJzcDsgc3RydWN0IHBiX2RhdGEgKnBiZCA9IG9mb25vX3Bob25l
+Ym9va19nZXRfZGF0YShwYik7PGJyPjxzcGFuIHN0eWxlPSdjb2xvcjojMUY0OTdEJz4mZ3Q7PC9z
+cGFuPiZuYnNwOyZuYnNwOyZuYnNwOyBjaGFyIGNtZFs1MF07aW50IHJldHVybl92YWx1ZTs8YnI+
+PHNwYW4gc3R5bGU9J2NvbG9yOiMxRjQ5N0QnPiZndDs8L3NwYW4+Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IHNwcmludGYoY21kLCZxdW90O0FUK0NQQlc9MTAsJXMs
+MTI5LFRlc3RpbmcmcXVvdDssIG51bSk7PGJyPjxzcGFuIHN0eWxlPSdjb2xvcjojMUY0OTdEJz4m
+Z3Q7PC9zcGFuPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyBwcmlu
+dGYoJnF1b3Q7Q29tbWFuZCBpcyAlc1xuJnF1b3Q7LGNtZCk7PGJyPjxzcGFuIHN0eWxlPSdjb2xv
+cjojMUY0OTdEJz4mZ3Q7PC9zcGFuPiZuYnNwOyZuYnNwOyZuYnNwOyByZXR1cm5fdmFsdWU9Z19h
+dF9jaGF0X3NlbmQocGJkLSZndDtjaGF0LGNtZCwgbm9uZV9wcmVmaXgsPGJyPjxzcGFuIHN0eWxl
+PSdjb2xvcjojMUY0OTdEJz4mZ3Q7PC9zcGFuPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyBOVUxMLE5VTEws
+IE5VTEwpOzxicj48c3BhbiBzdHlsZT0nY29sb3I6IzFGNDk3RCc+Jmd0Ozwvc3Bhbj4mbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgcHJpbnRmKCZxdW90O0FkZCBOZXcg
+Y29udGFjdCBudW1iZXIgaW4gU2ltXG4gU3RhdHVzIGlzICVkXG4mcXVvdDsscmV0dXJuX3ZhbHVl
+KTs8YnI+PHNwYW4gc3R5bGU9J2NvbG9yOiMxRjQ5N0QnPiZndDs8L3NwYW4+Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IHJldHVybiByZXR1cm5fdmFsdWU7PGJyPjxz
+cGFuIHN0eWxlPSdjb2xvcjojMUY0OTdEJz4mZ3Q7PC9zcGFuPn08YnI+PHNwYW4gc3R5bGU9J2Nv
+bG9yOiMxRjQ5N0QnPiZndDs8L3NwYW4+PGJyPjxzcGFuIHN0eWxlPSdjb2xvcjojMUY0OTdEJz4m
+Z3Q7PC9zcGFuPjxicj48c3BhbiBzdHlsZT0nY29sb3I6IzFGNDk3RCc+Jmd0Ozwvc3Bhbj5JZiBp
+IHRyeSB0byBhZGQgbmV3IGNvbnRhY3QmbmJzcDsgbXkgUmV0dXJuIHN0YXR1cyBpcyZuYnNwOyA2
+OSBvciA3MDxicj48c3BhbiBzdHlsZT0nY29sb3I6IzFGNDk3RCc+Jmd0Ozwvc3Bhbj48YnI+PHNw
+YW4gc3R5bGU9J2NvbG9yOiMxRjQ5N0QnPiZndDs8L3NwYW4+PGJyPjxzcGFuIHN0eWxlPSdjb2xv
+cjojMUY0OTdEJz4mZ3Q7PC9zcGFuPndoYXQgaXMgZG9lcyBtZWFuPzxicj48c3BhbiBzdHlsZT0n
+Y29sb3I6IzFGNDk3RCc+Jmd0Ozwvc3Bhbj48YnI+PHNwYW4gc3R5bGU9J2NvbG9yOiMxRjQ5N0Qn
+PiZndDs8L3NwYW4+SSB2ZXJpZmllZCZuYnNwOyBpbiBteSBTaW0uIENvbnRhY3QgaXMgbm90IGFk
+ZGVkPGJyPjxicj48c3BhbiBzdHlsZT0nY29sb3I6IzFGNDk3RCc+RG8geW91IGhhdmUgdGhlIEFU
+IGxvZz88bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIHN0eWxl
+PSdmb250LXNpemU6MTEuMHB0O2ZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Y29s
+b3I6IzFGNDk3RCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1h
+bD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjExLjBwdDtmb250LWZhbWlseToiQ2FsaWJyaSIsInNh
+bnMtc2VyaWYiO2NvbG9yOiMxRjQ5N0QnPk9uZSB0aGluZyBJIGhhdmUgaW4gbWluZCwgaXMgdGhh
+dCBwaG9uZSBudW1iZXIgYW5kIG5hbWUgbXVzdCBiZSBhIHF1b3RlZCBzdHJpbmc6IDxvOnA+PC9v
+OnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7IHNwcmludGYoY21kLCZxdW90O0FUK0NQQlc9MTAsXCYjODIyMTsl
+c1wmIzgyMjE7LDEyOSxcJiM4MjIxO1Rlc3RpbmdcJiM4MjIxOyZxdW90OywgbnVtKTs8YnI+PGJy
+PjxzcGFuIHN0eWxlPSdmb250LXNpemU6MTEuMHB0O2ZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fu
+cy1zZXJpZiI7Y29sb3I6IzFGNDk3RCc+PG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1z
+b05vcm1hbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjExLjBwdDtmb250LWZhbWlseToiQ2FsaWJy
+aSIsInNhbnMtc2VyaWYiO2NvbG9yOiMxRjQ5N0QnPlJlZ2FyZHMsPG86cD48L286cD48L3NwYW4+
+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjExLjBwdDtmb250
+LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO2NvbG9yOiMxRjQ5N0QnPjxvOnA+Jm5ic3A7
+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6
+ZToxMS4wcHQ7Zm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjtjb2xvcjojMUY0OTdE
+Jz5CZXJ0cmFuZDxvOnA+PC9vOnA+PC9zcGFuPjwvcD48L2Rpdj48Zm9udCBmYWNlPSJtb25vc3Bh
+Y2UiPi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLTxicj4KSW50ZWwgQ29ycG9yYXRpb24gU0FTIChGcmVuY2ggc2ltcGxp
+ZmllZCBqb2ludCBzdG9jayBjb21wYW55KTxicj4KUmVnaXN0ZXJlZCBoZWFkcXVhcnRlcnM6ICJM
+ZXMgTW9udGFsZXRzIi0gMiwgcnVlIGRlIFBhcmlzLCA8YnI+CjkyMTk2IE1ldWRvbiBDZWRleCwg
+RnJhbmNlPGJyPgpSZWdpc3RyYXRpb24gTnVtYmVyOiZuYnNwOyAzMDIgNDU2IDE5OSBSLkMuUy4g
+TkFOVEVSUkU8YnI+CkNhcGl0YWw6IDQsNTcyLDAwMCBFdXJvczxicj4KPGJyPgpUaGlzIGUtbWFp
+bCBhbmQgYW55IGF0dGFjaG1lbnRzIG1heSBjb250YWluIGNvbmZpZGVudGlhbCBtYXRlcmlhbCBm
+b3I8YnI+CnRoZSBzb2xlIHVzZSBvZiB0aGUgaW50ZW5kZWQgcmVjaXBpZW50KHMpLiBBbnkgcmV2
+aWV3IG9yIGRpc3RyaWJ1dGlvbjxicj4KYnkgb3RoZXJzIGlzIHN0cmljdGx5IHByb2hpYml0ZWQu
+IElmIHlvdSBhcmUgbm90IHRoZSBpbnRlbmRlZDxicj4KcmVjaXBpZW50LCBwbGVhc2UgY29udGFj
+dCB0aGUgc2VuZGVyIGFuZCBkZWxldGUgYWxsIGNvcGllcy48L2ZvbnQ+PC9ib2R5PjwvaHRtbD4=
+--===============7337627823309173163==--
 
