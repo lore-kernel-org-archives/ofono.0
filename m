@@ -1,188 +1,144 @@
-Content-Type: multipart/mixed; boundary="===============1014246835116298192=="
+Content-Type: multipart/mixed; boundary="===============6148542377817453957=="
 MIME-Version: 1.0
-From: Yuvaraj Ragupathi <yuvaraj.addu@gmail.com>
-Subject: Re: Adding New contact failed in Ofono
-Date: Mon, 16 May 2011 14:28:05 +0530
-Message-ID: <BANLkTikj9rOhs_E912bUObfRURbthnuabg@mail.gmail.com>
-In-Reply-To: <BANLkTim+Y4=WuBBBd--6H=TBhNaLrRw0ZQ@mail.gmail.com>
+From: Aygon, Bertrand <bertrand.aygon@intel.com>
+Subject: RE: Adding New contact failed in Ofono
+Date: Mon, 16 May 2011 10:02:57 +0100
+Message-ID: <681C8C8FC7710A4EAEA09BE56067C76E7A50D6@irsmsx002.ger.corp.intel.com>
+In-Reply-To: <BANLkTikj9rOhs_E912bUObfRURbthnuabg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1014246835116298192==
+--===============6148542377817453957==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-I am doing this work for ST Ericsson modem.
-
-Now i registered callback function for result handling and added quotes in
-cmd. Now cmd is
-
-AT+CPBW=3D10,"123456789",129,"Testing"
-
-*Log message:*
-
-Control @ Command is AT+CPBW=3D10,"123456789",129,"Testing"
-Add New contact number in Sim
- Status is 69
- Saving contact on Sim is failed
-
-*Code :*
-
-static const char *cpbw_prefix[] =3D { "+CPBW:", NULL };
-
-static void myResult(gboolean ok, GAtResult *result, gpointer user_data)
-{
-
-struct cb_data *cbd =3D user_data;
-    if(!ok)
-            printf(" Saving contact on Sim is failed\n");
-
-
-}
-static  int new_contact(struct ofono_phonebook *pb,char
-*num,ofono_phonebook_cb_t cb)
-{
-    struct pb_data *pbd =3D ofono_phonebook_get_data(pb);
-    char cmd[50];int return_value;
-        sprintf(cmd,"AT+CPBW=3D10,\"%s\",129,\"Testing\"", num);
-        printf("Command is %s\n",cmd);
-    return_value=3Dg_at_chat_send(pbd->chat,cmd, cpbw_prefix,
-                       myResult,NULL, NULL);
-        printf("Add New contact number in Sim\n Status is
-%d\n",return_value);
-        return return_value;
-}
-
-Thanks
-
-Yuvi R
-On Mon, May 16, 2011 at 1:57 PM, Jeevaka Prabu Badrappan <
-jeevakaprabu@gmail.com> wrote:
-
-> Hi Yuvi,
+>I am doing this work for ST Ericsson modem.
 >
-> > On Mon, May 16, 2011 at 10:28 AM, Yuvaraj Ragupathi <
-> yuvaraj.addu(a)gmail.com> wrote:
-> > Hi All,
-> >
-> > I am trying to add new contact in sim via following sample code
-> >
-> >
-> > static  int new_contact(struct ofono_phonebook *pb,char
-> *num,ofono_phonebook_cb_t cb)
-> > {
-> >     struct pb_data *pbd =3D ofono_phonebook_get_data(pb);
-> >     char cmd[50];int return_value;
-> >         sprintf(cmd,"AT+CPBW=3D10,%s,129,Testing", num);
-> >         printf("Command is %s\n",cmd);
-> >     return_value=3Dg_at_chat_send(pbd->chat,cmd, none_prefix,
-> >                        NULL,NULL, NULL);
-> >         printf("Add New contact number in Sim\n Status is
-> %d\n",return_value);
-> >         return return_value;
-> > }
-> >
+>Now i registered callback function for result handling and added quotes in=
+ cmd. Now cmd is
 >
-> I don't think there is any plan to support storing contacts to SIM
-> storage in the ofono core. Can be confirmed by
-> the Denis/Marcel.
+>AT+CPBW=3D10,"123456789",129,"Testing"
 >
-> As per the 27.007 spec,
+>Log message:
 >
->
-> +CPBW=3D[<index>][,<number>[,<type>[,<text>[,<group>[,<adnumber>[,<adtype=
->[,<secondtext>[,<email>[,<sip_uri>[,<tel_uri>[,<hidden>]]]]]]]]]]]
->
-> Possible response(s)
->
-> +CPBW: <written index>
->
-> +CME ERROR: <err>
->
-> Atleast as per the code, I notice that you are using none_prefix which
-> is not correct. Also you haven't given any callback function to handle
-> the result.
->
-> Regards,
-> Jeevaka
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
+>Control @ Command is AT+CPBW=3D10,"123456789",129,"Testing"
+>Add New contact number in Sim
+> Status is 69
+> Saving contact on Sim is failed
 
---===============1014246835116298192==
+Please do not top-post on the mailing list.
+
+Can you please provide AT log (export OFONO_AT_DEBUG=3D1)?
+
+Did you also select the appropriate phonebook storage because writing, and =
+make sure that the phonebook is 'ready'?
+
+Regards,
+
+Bertrand.
+
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============6148542377817453957==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-SGksPGJyPjxicj5JIGFtIGRvaW5nIHRoaXMgd29yayBmb3IgU1QgRXJpY3Nzb24gbW9kZW0uPGJy
-Pjxicj5Ob3cgaSByZWdpc3RlcmVkIGNhbGxiYWNrIGZ1bmN0aW9uIGZvciByZXN1bHQgaGFuZGxp
-bmcgYW5kIGFkZGVkIHF1b3RlcyBpbiBjbWQuIE5vdyBjbWQgaXMgPGJyPjxicj5BVCtDUEJXPTEw
-LCZxdW90OzEyMzQ1Njc4OSZxdW90OywxMjksJnF1b3Q7VGVzdGluZyZxdW90Ozxicj48YnI+Cjxi
-PkxvZyBtZXNzYWdlOjwvYj48YnI+PGJyPkNvbnRyb2wgQCBDb21tYW5kIGlzIEFUK0NQQlc9MTAs
-JnF1b3Q7MTIzNDU2Nzg5JnF1b3Q7LDEyOSwmcXVvdDtUZXN0aW5nJnF1b3Q7PGJyPkFkZCBOZXcg
-Y29udGFjdCBudW1iZXIgaW4gU2ltPGJyPqBTdGF0dXMgaXMgNjk8YnI+oFNhdmluZyBjb250YWN0
-IG9uIFNpbSBpcyBmYWlsZWQ8YnI+PGJyPjxiPkNvZGUgOjwvYj48YnI+PGJyPnN0YXRpYyBjb25z
-dCBjaGFyICpjcGJ3X3ByZWZpeFtdID0geyAmcXVvdDsrQ1BCVzomcXVvdDssIE5VTEwgfTs8YnI+
-Cjxicj5zdGF0aWMgdm9pZCBteVJlc3VsdChnYm9vbGVhbiBvaywgR0F0UmVzdWx0ICpyZXN1bHQs
-IGdwb2ludGVyIHVzZXJfZGF0YSk8YnI+ezxicj48YnI+c3RydWN0IGNiX2RhdGEgKmNiZCA9IHVz
-ZXJfZGF0YTs8YnI+oKCgIGlmKCFvayk8YnI+oKCgIKCgoCCgoKAgcHJpbnRmKCZxdW90OyBTYXZp
-bmcgY29udGFjdCBvbiBTaW0gaXMgZmFpbGVkXG4mcXVvdDspOzxicj6goKAgoKAgPGJyPgqgoKAg
-PGJyPn08YnI+c3RhdGljoCBpbnQgbmV3X2NvbnRhY3Qoc3RydWN0IG9mb25vX3Bob25lYm9vayAq
-cGIsY2hhciAqbnVtLG9mb25vX3Bob25lYm9va19jYl90IGNiKTxicj57PGJyPqCgoCBzdHJ1Y3Qg
-cGJfZGF0YSAqcGJkID0gb2Zvbm9fcGhvbmVib29rX2dldF9kYXRhKHBiKTs8YnI+oKCgIGNoYXIg
-Y21kWzUwXTtpbnQgcmV0dXJuX3ZhbHVlOzxicj6goKCgoKCgIHNwcmludGYoY21kLCZxdW90O0FU
-K0NQQlc9MTAsXCZxdW90OyVzXCZxdW90OywxMjksXCZxdW90O1Rlc3RpbmdcJnF1b3Q7JnF1b3Q7
-LCBudW0pOzxicj4KoKCgoKCgoCBwcmludGYoJnF1b3Q7Q29tbWFuZCBpcyAlc1xuJnF1b3Q7LGNt
-ZCk7PGJyPqCgoCByZXR1cm5fdmFsdWU9Z19hdF9jaGF0X3NlbmQocGJkLSZndDtjaGF0LGNtZCwg
-Y3Bid19wcmVmaXgsPGJyPqCgoKCgoKCgoKCgoKCgoKCgoKCgoKAgbXlSZXN1bHQsTlVMTCwgTlVM
-TCk7PGJyPqCgoKCgoKAgcHJpbnRmKCZxdW90O0FkZCBOZXcgY29udGFjdCBudW1iZXIgaW4gU2lt
-XG4gU3RhdHVzIGlzICVkXG4mcXVvdDsscmV0dXJuX3ZhbHVlKTs8YnI+CqCgoKCgoKAgcmV0dXJu
-IHJldHVybl92YWx1ZTs8YnI+fTxicj48YnI+VGhhbmtzPGJyPjxicj5ZdXZpIFI8YnI+PGRpdiBj
-bGFzcz0iZ21haWxfcXVvdGUiPk9uIE1vbiwgTWF5IDE2LCAyMDExIGF0IDE6NTcgUE0sIEplZXZh
-a2EgUHJhYnUgQmFkcmFwcGFuIDxzcGFuIGRpcj0ibHRyIj4mbHQ7PGEgaHJlZj0ibWFpbHRvOmpl
-ZXZha2FwcmFidUBnbWFpbC5jb20iPmplZXZha2FwcmFidUBnbWFpbC5jb208L2E+Jmd0Ozwvc3Bh
-bj4gd3JvdGU6PGJyPgo8YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJn
-aW46IDBwdCAwcHQgMHB0IDAuOGV4OyBib3JkZXItbGVmdDogMXB4IHNvbGlkIHJnYigyMDQsIDIw
-NCwgMjA0KTsgcGFkZGluZy1sZWZ0OiAxZXg7Ij5IaSBZdXZpLDxicj4KPGRpdiBjbGFzcz0iaW0i
-Pjxicj4KJmd0OyBPbiBNb24sIE1heSAxNiwgMjAxMSBhdCAxMDoyOCBBTSwgWXV2YXJhaiBSYWd1
-cGF0aGkgJmx0OzxhIGhyZWY9Im1haWx0bzp5dXZhcmFqLmFkZHVAZ21haWwuY29tIj55dXZhcmFq
-LmFkZHVAZ21haWwuY29tPC9hPiZndDsgd3JvdGU6PGJyPgomZ3Q7IEhpIEFsbCw8YnI+CiZndDs8
-YnI+CiZndDsgSSBhbSB0cnlpbmcgdG8gYWRkIG5ldyBjb250YWN0IGluIHNpbSB2aWEgZm9sbG93
-aW5nIHNhbXBsZSBjb2RlPGJyPgomZ3Q7PGJyPgomZ3Q7PGJyPgomZ3Q7IHN0YXRpY6AgaW50IG5l
-d19jb250YWN0KHN0cnVjdCBvZm9ub19waG9uZWJvb2sgKnBiLGNoYXIgKm51bSxvZm9ub19waG9u
-ZWJvb2tfY2JfdCBjYik8YnI+CiZndDsgezxicj4KJmd0OyCgoKAgc3RydWN0IHBiX2RhdGEgKnBi
-ZCA9IG9mb25vX3Bob25lYm9va19nZXRfZGF0YShwYik7PGJyPgomZ3Q7IKCgoCBjaGFyIGNtZFs1
-MF07aW50IHJldHVybl92YWx1ZTs8YnI+CiZndDsgoKCgoKCgoCBzcHJpbnRmKGNtZCwmcXVvdDtB
-VCtDUEJXPTEwLCVzLDEyOSxUZXN0aW5nJnF1b3Q7LCBudW0pOzxicj4KJmd0OyCgoKCgoKCgIHBy
-aW50ZigmcXVvdDtDb21tYW5kIGlzICVzXG4mcXVvdDssY21kKTs8YnI+CiZndDsgoKCgIHJldHVy
-bl92YWx1ZT1nX2F0X2NoYXRfc2VuZChwYmQtJmd0O2NoYXQsY21kLCBub25lX3ByZWZpeCw8YnI+
-CiZndDsgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoCBOVUxMLE5VTEwsIE5VTEwpOzxicj4KJmd0OyCg
-oKCgoKCgIHByaW50ZigmcXVvdDtBZGQgTmV3IGNvbnRhY3QgbnVtYmVyIGluIFNpbVxuIFN0YXR1
-cyBpcyAlZFxuJnF1b3Q7LHJldHVybl92YWx1ZSk7PGJyPgomZ3Q7IKCgoKCgoKAgcmV0dXJuIHJl
-dHVybl92YWx1ZTs8YnI+CiZndDsgfTxicj4KJmd0Ozxicj4KPGJyPgo8L2Rpdj5JIGRvbiYjMzk7
-dCB0aGluayB0aGVyZSBpcyBhbnkgcGxhbiB0byBzdXBwb3J0IHN0b3JpbmcgY29udGFjdHMgdG8g
-U0lNPGJyPgpzdG9yYWdlIGluIHRoZSBvZm9ubyBjb3JlLiBDYW4gYmUgY29uZmlybWVkIGJ5PGJy
-Pgp0aGUgRGVuaXMvTWFyY2VsLjxicj4KPGJyPgpBcyBwZXIgdGhlIDI3LjAwNyBzcGVjLDxicj4K
-PGJyPgorQ1BCVz1bJmx0O2luZGV4Jmd0O11bLCZsdDtudW1iZXImZ3Q7WywmbHQ7dHlwZSZndDtb
-LCZsdDt0ZXh0Jmd0O1ssJmx0O2dyb3VwJmd0O1ssJmx0O2FkbnVtYmVyJmd0O1ssJmx0O2FkdHlw
-ZSZndDtbLCZsdDtzZWNvbmR0ZXh0Jmd0O1ssJmx0O2VtYWlsJmd0O1ssJmx0O3NpcF91cmkmZ3Q7
-WywmbHQ7dGVsX3VyaSZndDtbLCZsdDtoaWRkZW4mZ3Q7XV1dXV1dXV1dXV08YnI+Cjxicj4KUG9z
-c2libGUgcmVzcG9uc2Uocyk8YnI+Cjxicj4KK0NQQlc6ICZsdDt3cml0dGVuIGluZGV4Jmd0Ozxi
-cj4KPGJyPgorQ01FIEVSUk9SOiAmbHQ7ZXJyJmd0Ozxicj4KPGJyPgpBdGxlYXN0IGFzIHBlciB0
-aGUgY29kZSwgSSBub3RpY2UgdGhhdCB5b3UgYXJlIHVzaW5nIG5vbmVfcHJlZml4IHdoaWNoPGJy
-PgppcyBub3QgY29ycmVjdC4gQWxzbyB5b3UgaGF2ZW4mIzM5O3QgZ2l2ZW4gYW55IGNhbGxiYWNr
-IGZ1bmN0aW9uIHRvIGhhbmRsZTxicj4KdGhlIHJlc3VsdC48YnI+Cjxicj4KUmVnYXJkcyw8YnI+
-CkplZXZha2E8YnI+Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fPGJyPgpvZm9ubyBtYWlsaW5nIGxpc3Q8YnI+CjxhIGhyZWY9Im1haWx0bzpvZm9ub0BvZm9u
-by5vcmciPm9mb25vQG9mb25vLm9yZzwvYT48YnI+CjxhIGhyZWY9Imh0dHA6Ly9saXN0cy5vZm9u
-by5vcmcvbGlzdGluZm8vb2Zvbm8iIHRhcmdldD0iX2JsYW5rIj5odHRwOi8vbGlzdHMub2Zvbm8u
-b3JnL2xpc3RpbmZvL29mb25vPC9hPjxicj4KPC9ibG9ja3F1b3RlPjwvZGl2Pjxicj4K
-
---===============1014246835116298192==--
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29udGVu
+dD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj48bWV0YSBuYW1lPUdlbmVyYXRvciBjb250
+ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+PHN0eWxlPjwhLS0KLyog
+Rm9udCBEZWZpbml0aW9ucyAqLwpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6IkNhbWJyaWEgTWF0
+aCI7CglwYW5vc2UtMToyIDQgNSAzIDUgNCA2IDMgMiA0O30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
+aWx5OkNhbGlicmk7CglwYW5vc2UtMToyIDE1IDUgMiAyIDIgNCAzIDIgNDt9Ci8qIFN0eWxlIERl
+ZmluaXRpb25zICovCnAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXtt
+YXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjEyLjBwdDsKCWZv
+bnQtZmFtaWx5OiJUaW1lcyBOZXcgUm9tYW4iLCJzZXJpZiI7fQphOmxpbmssIHNwYW4uTXNvSHlw
+ZXJsaW5rCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6Ymx1ZTsKCXRleHQtZGVjb3Jh
+dGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlwZXJsaW5rRm9sbG93ZWQKCXtt
+c28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpwdXJwbGU7Cgl0ZXh0LWRlY29yYXRpb246dW5k
+ZXJsaW5lO30Kc3Bhbi5FbWFpbFN0eWxlMTcKCXttc28tc3R5bGUtdHlwZTpwZXJzb25hbC1yZXBs
+eTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xvcjojMUY0OTdEO30K
+Lk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTt9CkBwYWdlIFdvcmRT
+ZWN0aW9uMQoJe3NpemU6NjEyLjBwdCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBwdCA3Mi4wcHQgNzIu
+MHB0IDcyLjBwdDt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9Ci0tPjwv
+c3R5bGU+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CjxvOnNoYXBlZGVmYXVsdHMgdjpleHQ9ImVk
+aXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5
+XT48eG1sPgo8bzpzaGFwZWxheW91dCB2OmV4dD0iZWRpdCI+CjxvOmlkbWFwIHY6ZXh0PSJlZGl0
+IiBkYXRhPSIxIiAvPgo8L286c2hhcGVsYXlvdXQ+PC94bWw+PCFbZW5kaWZdLS0+PC9oZWFkPjxi
+b2R5IGxhbmc9RU4tR0IgbGluaz1ibHVlIHZsaW5rPXB1cnBsZT48ZGl2IGNsYXNzPVdvcmRTZWN0
+aW9uMT48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMS4wcHQ7Zm9u
+dC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjtjb2xvcjojMUY0OTdEJz5IaSw8bzpwPjwv
+bzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxicj48c3BhbiBzdHlsZT0nY29sb3I6
+IzFGNDk3RCc+Jmd0Ozwvc3Bhbj5JIGFtIGRvaW5nIHRoaXMgd29yayBmb3IgU1QgRXJpY3Nzb24g
+bW9kZW0uPGJyPjxzcGFuIHN0eWxlPSdjb2xvcjojMUY0OTdEJz4mZ3Q7PC9zcGFuPjxicj48c3Bh
+biBzdHlsZT0nY29sb3I6IzFGNDk3RCc+Jmd0Ozwvc3Bhbj5Ob3cgaSByZWdpc3RlcmVkIGNhbGxi
+YWNrIGZ1bmN0aW9uIGZvciByZXN1bHQgaGFuZGxpbmcgYW5kIGFkZGVkIHF1b3RlcyBpbiBjbWQu
+IE5vdyBjbWQgaXMgPGJyPjxzcGFuIHN0eWxlPSdjb2xvcjojMUY0OTdEJz4mZ3Q7PC9zcGFuPjxi
+cj48c3BhbiBzdHlsZT0nY29sb3I6IzFGNDk3RCc+Jmd0Ozwvc3Bhbj5BVCtDUEJXPTEwLCZxdW90
+OzEyMzQ1Njc4OSZxdW90OywxMjksJnF1b3Q7VGVzdGluZyZxdW90Ozxicj48c3BhbiBzdHlsZT0n
+Y29sb3I6IzFGNDk3RCc+Jmd0Ozwvc3Bhbj48YnI+PGI+PHNwYW4gc3R5bGU9J2NvbG9yOiMxRjQ5
+N0QnPiZndDs8L3NwYW4+TG9nIG1lc3NhZ2U6PC9iPjxicj48c3BhbiBzdHlsZT0nY29sb3I6IzFG
+NDk3RCc+Jmd0Ozwvc3Bhbj48YnI+PHNwYW4gc3R5bGU9J2NvbG9yOiMxRjQ5N0QnPiZndDs8L3Nw
+YW4+Q29udHJvbCBAIENvbW1hbmQgaXMgQVQrQ1BCVz0xMCwmcXVvdDsxMjM0NTY3ODkmcXVvdDss
+MTI5LCZxdW90O1Rlc3RpbmcmcXVvdDs8YnI+PHNwYW4gc3R5bGU9J2NvbG9yOiMxRjQ5N0QnPiZn
+dDs8L3NwYW4+QWRkIE5ldyBjb250YWN0IG51bWJlciBpbiBTaW08YnI+PHNwYW4gc3R5bGU9J2Nv
+bG9yOiMxRjQ5N0QnPiZndDs8L3NwYW4+Jm5ic3A7U3RhdHVzIGlzIDY5PGJyPjxzcGFuIHN0eWxl
+PSdjb2xvcjojMUY0OTdEJz4mZ3Q7PC9zcGFuPiZuYnNwO1NhdmluZyBjb250YWN0IG9uIFNpbSBp
+cyBmYWlsZWQ8YnI+PGJyPjxvOnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBz
+dHlsZT0nZm9udC1zaXplOjExLjBwdDtmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYi
+O2NvbG9yOiMxRjQ5N0QnPlBsZWFzZSBkbyBub3QgdG9wLXBvc3Qgb24gdGhlIG1haWxpbmcgbGlz
+dC48bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIHN0eWxlPSdm
+b250LXNpemU6MTEuMHB0O2ZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Y29sb3I6
+IzFGNDk3RCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48
+c3BhbiBzdHlsZT0nZm9udC1zaXplOjExLjBwdDtmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMt
+c2VyaWYiO2NvbG9yOiMxRjQ5N0QnPkNhbiB5b3UgcGxlYXNlIHByb3ZpZGUgQVQgbG9nIChleHBv
+cnQgT0ZPTk9fQVRfREVCVUc9MSk/PG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05v
+cm1hbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjExLjBwdDtmb250LWZhbWlseToiQ2FsaWJyaSIs
+InNhbnMtc2VyaWYiO2NvbG9yOiMxRjQ5N0QnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD48
+cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMS4wcHQ7Zm9udC1mYW1p
+bHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjtjb2xvcjojMUY0OTdEJz5EaWQgeW91IGFsc28gc2Vs
+ZWN0IHRoZSBhcHByb3ByaWF0ZSBwaG9uZWJvb2sgc3RvcmFnZSBiZWNhdXNlIHdyaXRpbmcsIGFu
+ZCBtYWtlIHN1cmUgdGhhdCB0aGUgcGhvbmVib29rIGlzICYjODIxNjtyZWFkeSYjODIxNzs/PG86
+cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBzdHlsZT0nZm9udC1z
+aXplOjExLjBwdDtmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO2NvbG9yOiMxRjQ5
+N0QnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4g
+c3R5bGU9J2ZvbnQtc2l6ZToxMS4wcHQ7Zm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlm
+Ijtjb2xvcjojMUY0OTdEJz5SZWdhcmRzLDxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1N
+c29Ob3JtYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMS4wcHQ7Zm9udC1mYW1pbHk6IkNhbGli
+cmkiLCJzYW5zLXNlcmlmIjtjb2xvcjojMUY0OTdEJz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48
+L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIHN0eWxlPSdmb250LXNpemU6MTEuMHB0O2ZvbnQt
+ZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Y29sb3I6IzFGNDk3RCc+QmVydHJhbmQuPG86
+cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwv
+cD48L2Rpdj48Zm9udCBmYWNlPSJtb25vc3BhY2UiPi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLTxicj4KSW50ZWwgQ29y
+cG9yYXRpb24gU0FTIChGcmVuY2ggc2ltcGxpZmllZCBqb2ludCBzdG9jayBjb21wYW55KTxicj4K
+UmVnaXN0ZXJlZCBoZWFkcXVhcnRlcnM6ICJMZXMgTW9udGFsZXRzIi0gMiwgcnVlIGRlIFBhcmlz
+LCA8YnI+CjkyMTk2IE1ldWRvbiBDZWRleCwgRnJhbmNlPGJyPgpSZWdpc3RyYXRpb24gTnVtYmVy
+OiZuYnNwOyAzMDIgNDU2IDE5OSBSLkMuUy4gTkFOVEVSUkU8YnI+CkNhcGl0YWw6IDQsNTcyLDAw
+MCBFdXJvczxicj4KPGJyPgpUaGlzIGUtbWFpbCBhbmQgYW55IGF0dGFjaG1lbnRzIG1heSBjb250
+YWluIGNvbmZpZGVudGlhbCBtYXRlcmlhbCBmb3I8YnI+CnRoZSBzb2xlIHVzZSBvZiB0aGUgaW50
+ZW5kZWQgcmVjaXBpZW50KHMpLiBBbnkgcmV2aWV3IG9yIGRpc3RyaWJ1dGlvbjxicj4KYnkgb3Ro
+ZXJzIGlzIHN0cmljdGx5IHByb2hpYml0ZWQuIElmIHlvdSBhcmUgbm90IHRoZSBpbnRlbmRlZDxi
+cj4KcmVjaXBpZW50LCBwbGVhc2UgY29udGFjdCB0aGUgc2VuZGVyIGFuZCBkZWxldGUgYWxsIGNv
+cGllcy48L2ZvbnQ+PC9ib2R5PjwvaHRtbD4=
+--===============6148542377817453957==--
 
