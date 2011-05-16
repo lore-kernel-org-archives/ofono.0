@@ -1,144 +1,98 @@
-Content-Type: multipart/mixed; boundary="===============6148542377817453957=="
+Content-Type: multipart/mixed; boundary="===============0058319212871013954=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: Adding New contact failed in Ofono
-Date: Mon, 16 May 2011 10:02:57 +0100
-Message-ID: <681C8C8FC7710A4EAEA09BE56067C76E7A50D6@irsmsx002.ger.corp.intel.com>
-In-Reply-To: <BANLkTikj9rOhs_E912bUObfRURbthnuabg@mail.gmail.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@linux.intel.com>
+Subject: [PATCH] voicecall: add +VTS support for HFP emulator
+Date: Mon, 16 May 2011 12:13:49 +0200
+Message-ID: <1305540829-14417-1-git-send-email-frederic.dalleau@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6148542377817453957==
+--===============0058319212871013954==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ src/voicecall.c |   43 +++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 43 insertions(+), 0 deletions(-)
 
->I am doing this work for ST Ericsson modem.
->
->Now i registered callback function for result handling and added quotes in=
- cmd. Now cmd is
->
->AT+CPBW=3D10,"123456789",129,"Testing"
->
->Log message:
->
->Control @ Command is AT+CPBW=3D10,"123456789",129,"Testing"
->Add New contact number in Sim
-> Status is 69
-> Saving contact on Sim is failed
+diff --git a/src/voicecall.c b/src/voicecall.c
+index d46f463..846c1c4 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -2421,6 +2421,10 @@ static void emulator_hfp_unregister(struct ofono_ato=
+m *atom)
+ 						OFONO_ATOM_TYPE_EMULATOR_HFP,
+ 						emulator_remove_handler,
+ 						"+CHLD");
++	__ofono_modem_foreach_registered_atom(modem,
++						OFONO_ATOM_TYPE_EMULATOR_HFP,
++						emulator_remove_handler,
++						"+VTS");
+ =
 
-Please do not top-post on the mailing list.
+ 	__ofono_modem_remove_atom_watch(modem, vc->hfp_watch);
+ }
+@@ -2866,6 +2870,44 @@ fail:
+ 	ofono_emulator_send_final(em, &result);
+ }
+ =
 
-Can you please provide AT log (export OFONO_AT_DEBUG=3D1)?
++static void vts_tone_cb(int error, void *data)
++{
++	struct ofono_emulator *em =3D data;
++	struct ofono_error result;
++
++	result.error =3D 0;
++	result.type =3D error ? OFONO_ERROR_TYPE_FAILURE :
++						OFONO_ERROR_TYPE_NO_ERROR;
++
++	ofono_emulator_send_final(em, &result);
++}
++
++static void emulator_vts_cb(struct ofono_emulator *em,
++			struct ofono_emulator_request *req, void *userdata)
++{
++	struct ofono_voicecall *vc =3D userdata;
++	struct ofono_error result;
++	const char *str;
++
++	switch (ofono_emulator_request_get_type(req)) {
++	case OFONO_EMULATOR_REQUEST_TYPE_SET:
++		str =3D ofono_emulator_request_get_raw(req);
++
++		if (__ofono_voicecall_tone_send(vc, str, vts_tone_cb, em) < 0)
++			break;
++
++		return;
++
++	default:
++		break;
++	}
++
++	result.error =3D 0;
++	result.type =3D OFONO_ERROR_TYPE_FAILURE;
++
++	ofono_emulator_send_final(em, &result);
++}
++
+ static void emulator_hfp_watch(struct ofono_atom *atom,
+ 				enum ofono_atom_watch_condition cond,
+ 				void *data)
+@@ -2881,6 +2923,7 @@ static void emulator_hfp_watch(struct ofono_atom *ato=
+m,
+ 	ofono_emulator_add_handler(em, "+CHUP", emulator_chup_cb, data, NULL);
+ 	ofono_emulator_add_handler(em, "+CLCC", emulator_clcc_cb, data, NULL);
+ 	ofono_emulator_add_handler(em, "+CHLD", emulator_chld_cb, data, NULL);
++	ofono_emulator_add_handler(em, "+VTS", emulator_vts_cb, data, NULL);
+ }
+ =
 
-Did you also select the appropriate phonebook storage because writing, and =
-make sure that the phonebook is 'ready'?
+ void ofono_voicecall_register(struct ofono_voicecall *vc)
+-- =
 
-Regards,
+1.7.1
 
-Bertrand.
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============6148542377817453957==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29udGVu
-dD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj48bWV0YSBuYW1lPUdlbmVyYXRvciBjb250
-ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+PHN0eWxlPjwhLS0KLyog
-Rm9udCBEZWZpbml0aW9ucyAqLwpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6IkNhbWJyaWEgTWF0
-aCI7CglwYW5vc2UtMToyIDQgNSAzIDUgNCA2IDMgMiA0O30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
-aWx5OkNhbGlicmk7CglwYW5vc2UtMToyIDE1IDUgMiAyIDIgNCAzIDIgNDt9Ci8qIFN0eWxlIERl
-ZmluaXRpb25zICovCnAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXtt
-YXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjEyLjBwdDsKCWZv
-bnQtZmFtaWx5OiJUaW1lcyBOZXcgUm9tYW4iLCJzZXJpZiI7fQphOmxpbmssIHNwYW4uTXNvSHlw
-ZXJsaW5rCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6Ymx1ZTsKCXRleHQtZGVjb3Jh
-dGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlwZXJsaW5rRm9sbG93ZWQKCXtt
-c28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpwdXJwbGU7Cgl0ZXh0LWRlY29yYXRpb246dW5k
-ZXJsaW5lO30Kc3Bhbi5FbWFpbFN0eWxlMTcKCXttc28tc3R5bGUtdHlwZTpwZXJzb25hbC1yZXBs
-eTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xvcjojMUY0OTdEO30K
-Lk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTt9CkBwYWdlIFdvcmRT
-ZWN0aW9uMQoJe3NpemU6NjEyLjBwdCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBwdCA3Mi4wcHQgNzIu
-MHB0IDcyLjBwdDt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9Ci0tPjwv
-c3R5bGU+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CjxvOnNoYXBlZGVmYXVsdHMgdjpleHQ9ImVk
-aXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5
-XT48eG1sPgo8bzpzaGFwZWxheW91dCB2OmV4dD0iZWRpdCI+CjxvOmlkbWFwIHY6ZXh0PSJlZGl0
-IiBkYXRhPSIxIiAvPgo8L286c2hhcGVsYXlvdXQ+PC94bWw+PCFbZW5kaWZdLS0+PC9oZWFkPjxi
-b2R5IGxhbmc9RU4tR0IgbGluaz1ibHVlIHZsaW5rPXB1cnBsZT48ZGl2IGNsYXNzPVdvcmRTZWN0
-aW9uMT48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMS4wcHQ7Zm9u
-dC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjtjb2xvcjojMUY0OTdEJz5IaSw8bzpwPjwv
-bzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxicj48c3BhbiBzdHlsZT0nY29sb3I6
-IzFGNDk3RCc+Jmd0Ozwvc3Bhbj5JIGFtIGRvaW5nIHRoaXMgd29yayBmb3IgU1QgRXJpY3Nzb24g
-bW9kZW0uPGJyPjxzcGFuIHN0eWxlPSdjb2xvcjojMUY0OTdEJz4mZ3Q7PC9zcGFuPjxicj48c3Bh
-biBzdHlsZT0nY29sb3I6IzFGNDk3RCc+Jmd0Ozwvc3Bhbj5Ob3cgaSByZWdpc3RlcmVkIGNhbGxi
-YWNrIGZ1bmN0aW9uIGZvciByZXN1bHQgaGFuZGxpbmcgYW5kIGFkZGVkIHF1b3RlcyBpbiBjbWQu
-IE5vdyBjbWQgaXMgPGJyPjxzcGFuIHN0eWxlPSdjb2xvcjojMUY0OTdEJz4mZ3Q7PC9zcGFuPjxi
-cj48c3BhbiBzdHlsZT0nY29sb3I6IzFGNDk3RCc+Jmd0Ozwvc3Bhbj5BVCtDUEJXPTEwLCZxdW90
-OzEyMzQ1Njc4OSZxdW90OywxMjksJnF1b3Q7VGVzdGluZyZxdW90Ozxicj48c3BhbiBzdHlsZT0n
-Y29sb3I6IzFGNDk3RCc+Jmd0Ozwvc3Bhbj48YnI+PGI+PHNwYW4gc3R5bGU9J2NvbG9yOiMxRjQ5
-N0QnPiZndDs8L3NwYW4+TG9nIG1lc3NhZ2U6PC9iPjxicj48c3BhbiBzdHlsZT0nY29sb3I6IzFG
-NDk3RCc+Jmd0Ozwvc3Bhbj48YnI+PHNwYW4gc3R5bGU9J2NvbG9yOiMxRjQ5N0QnPiZndDs8L3Nw
-YW4+Q29udHJvbCBAIENvbW1hbmQgaXMgQVQrQ1BCVz0xMCwmcXVvdDsxMjM0NTY3ODkmcXVvdDss
-MTI5LCZxdW90O1Rlc3RpbmcmcXVvdDs8YnI+PHNwYW4gc3R5bGU9J2NvbG9yOiMxRjQ5N0QnPiZn
-dDs8L3NwYW4+QWRkIE5ldyBjb250YWN0IG51bWJlciBpbiBTaW08YnI+PHNwYW4gc3R5bGU9J2Nv
-bG9yOiMxRjQ5N0QnPiZndDs8L3NwYW4+Jm5ic3A7U3RhdHVzIGlzIDY5PGJyPjxzcGFuIHN0eWxl
-PSdjb2xvcjojMUY0OTdEJz4mZ3Q7PC9zcGFuPiZuYnNwO1NhdmluZyBjb250YWN0IG9uIFNpbSBp
-cyBmYWlsZWQ8YnI+PGJyPjxvOnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBz
-dHlsZT0nZm9udC1zaXplOjExLjBwdDtmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYi
-O2NvbG9yOiMxRjQ5N0QnPlBsZWFzZSBkbyBub3QgdG9wLXBvc3Qgb24gdGhlIG1haWxpbmcgbGlz
-dC48bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIHN0eWxlPSdm
-b250LXNpemU6MTEuMHB0O2ZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Y29sb3I6
-IzFGNDk3RCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48
-c3BhbiBzdHlsZT0nZm9udC1zaXplOjExLjBwdDtmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMt
-c2VyaWYiO2NvbG9yOiMxRjQ5N0QnPkNhbiB5b3UgcGxlYXNlIHByb3ZpZGUgQVQgbG9nIChleHBv
-cnQgT0ZPTk9fQVRfREVCVUc9MSk/PG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05v
-cm1hbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjExLjBwdDtmb250LWZhbWlseToiQ2FsaWJyaSIs
-InNhbnMtc2VyaWYiO2NvbG9yOiMxRjQ5N0QnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD48
-cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMS4wcHQ7Zm9udC1mYW1p
-bHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjtjb2xvcjojMUY0OTdEJz5EaWQgeW91IGFsc28gc2Vs
-ZWN0IHRoZSBhcHByb3ByaWF0ZSBwaG9uZWJvb2sgc3RvcmFnZSBiZWNhdXNlIHdyaXRpbmcsIGFu
-ZCBtYWtlIHN1cmUgdGhhdCB0aGUgcGhvbmVib29rIGlzICYjODIxNjtyZWFkeSYjODIxNzs/PG86
-cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBzdHlsZT0nZm9udC1z
-aXplOjExLjBwdDtmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO2NvbG9yOiMxRjQ5
-N0QnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4g
-c3R5bGU9J2ZvbnQtc2l6ZToxMS4wcHQ7Zm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlm
-Ijtjb2xvcjojMUY0OTdEJz5SZWdhcmRzLDxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1N
-c29Ob3JtYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMS4wcHQ7Zm9udC1mYW1pbHk6IkNhbGli
-cmkiLCJzYW5zLXNlcmlmIjtjb2xvcjojMUY0OTdEJz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48
-L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIHN0eWxlPSdmb250LXNpemU6MTEuMHB0O2ZvbnQt
-ZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Y29sb3I6IzFGNDk3RCc+QmVydHJhbmQuPG86
-cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwv
-cD48L2Rpdj48Zm9udCBmYWNlPSJtb25vc3BhY2UiPi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLTxicj4KSW50ZWwgQ29y
-cG9yYXRpb24gU0FTIChGcmVuY2ggc2ltcGxpZmllZCBqb2ludCBzdG9jayBjb21wYW55KTxicj4K
-UmVnaXN0ZXJlZCBoZWFkcXVhcnRlcnM6ICJMZXMgTW9udGFsZXRzIi0gMiwgcnVlIGRlIFBhcmlz
-LCA8YnI+CjkyMTk2IE1ldWRvbiBDZWRleCwgRnJhbmNlPGJyPgpSZWdpc3RyYXRpb24gTnVtYmVy
-OiZuYnNwOyAzMDIgNDU2IDE5OSBSLkMuUy4gTkFOVEVSUkU8YnI+CkNhcGl0YWw6IDQsNTcyLDAw
-MCBFdXJvczxicj4KPGJyPgpUaGlzIGUtbWFpbCBhbmQgYW55IGF0dGFjaG1lbnRzIG1heSBjb250
-YWluIGNvbmZpZGVudGlhbCBtYXRlcmlhbCBmb3I8YnI+CnRoZSBzb2xlIHVzZSBvZiB0aGUgaW50
-ZW5kZWQgcmVjaXBpZW50KHMpLiBBbnkgcmV2aWV3IG9yIGRpc3RyaWJ1dGlvbjxicj4KYnkgb3Ro
-ZXJzIGlzIHN0cmljdGx5IHByb2hpYml0ZWQuIElmIHlvdSBhcmUgbm90IHRoZSBpbnRlbmRlZDxi
-cj4KcmVjaXBpZW50LCBwbGVhc2UgY29udGFjdCB0aGUgc2VuZGVyIGFuZCBkZWxldGUgYWxsIGNv
-cGllcy48L2ZvbnQ+PC9ib2R5PjwvaHRtbD4=
---===============6148542377817453957==--
+--===============0058319212871013954==--
 
