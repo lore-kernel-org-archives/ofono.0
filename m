@@ -1,50 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============2910475350505876892=="
+Content-Type: multipart/mixed; boundary="===============0439260251181912807=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v5 2/5] private-network: add header into include and
- Makefile.am
-Date: Mon, 16 May 2011 14:37:34 +0200
-Message-ID: <1305549457-32298-3-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v5 3/5] private-network: add request/release functions and new
+ feature to Makefile.am
+Date: Mon, 16 May 2011 14:37:35 +0200
+Message-ID: <1305549457-32298-4-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1305549457-32298-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2910475350505876892==
+--===============0439260251181912807==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am               |    4 +-
- include/private-network.h |   56 +++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am           |    3 +-
+ src/ofono.h           |    6 +++
+ src/private-network.c |   91 +++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 2 files changed, 58 insertions(+), 2 deletions(-)
- create mode 100644 include/private-network.h
+ 3 files changed, 99 insertions(+), 1 deletions(-)
+ create mode 100644 src/private-network.c
 
 diff --git a/Makefile.am b/Makefile.am
-index a413a47..d7e5626 100644
+index d7e5626..e1eaf15 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -16,8 +16,8 @@ pkginclude_HEADERS =3D include/log.h include/plugin.h inc=
-lude/history.h \
- 			include/cdma-sms.h include/sim-auth.h \
- 			include/gprs-provision.h include/emulator.h \
- 			include/location-reporting.h \
--			include/cdma-connman.h \
--			include/gnss.h
-+			include/cdma-connman.h include/gnss.h \
-+			include/private-network.h
+@@ -387,7 +387,8 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
+es) src/ofono.ver \
+ 			src/message.h src/message.c src/gprs-provision.c \
+ 			src/emulator.c src/location-reporting.c \
+ 			src/cdma-connman.c src/gnss.c \
+-			src/gnssagent.c src/gnssagent.h
++			src/gnssagent.c src/gnssagent.h \
++			src/private-network.c
  =
 
- nodist_pkginclude_HEADERS =3D include/version.h
+ src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
+@ -ldl
  =
 
-diff --git a/include/private-network.h b/include/private-network.h
+diff --git a/src/ofono.h b/src/ofono.h
+index 82d7e34..7353022 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -468,3 +468,9 @@ void __ofono_gprs_provision_free_settings(
+ =
+
+ #include <ofono/emulator.h>
+ #include <ofono/gnss.h>
++#include <ofono/private-network.h>
++
++void __ofono_private_network_release(int id);
++ofono_bool_t __ofono_private_network_request(ofono_private_network_cb_t cb,
++						void *data, int *id);
++
+diff --git a/src/private-network.c b/src/private-network.c
 new file mode 100644
-index 0000000..983bf5b
+index 0000000..e955656
 --- /dev/null
-+++ b/include/private-network.h
-@@ -0,0 +1,56 @@
++++ b/src/private-network.c
+@@ -0,0 +1,91 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -67,45 +83,80 @@ index 0000000..983bf5b
 + *
 + */
 +
-+#ifndef __OFONO_PRIVATE_NETWORK_H
-+#define __OFONO_PRIVATE_NETWORK_H
-+
-+#ifdef __cplusplus
-+extern "C" {
++#ifdef HAVE_CONFIG_H
++#include <config.h>
 +#endif
 +
-+struct ofono_private_network_settings {
-+	int fd;
-+	char *server_ip;
-+	char *peer_ip;
-+	char *primary_dns;
-+	char *secondary_dns;
-+};
++#include <string.h>
++#include <glib.h>
++#include "ofono.h"
 +
-+typedef void (ofono_private_network_cb_t)(
-+		void *data,
-+		const struct ofono_private_network_settings *settings);
++static GSList *g_drivers =3D NULL;
 +
-+struct ofono_private_network_driver {
-+	char *name;
-+	int (*request)(ofono_private_network_cb_t cb, void *data);
-+	void (*release)(int uid);
-+};
++void __ofono_private_network_release(int id)
++{
++	GSList *d;
++
++	DBG("");
++
++	for (d =3D g_drivers; d; d =3D d->next) {
++		const struct ofono_private_network_driver *driver =3D d->data;
++
++		if (!driver->release)
++			continue;
++
++		driver->release(id);
++
++		break;
++	}
++}
++
++ofono_bool_t __ofono_private_network_request(ofono_private_network_cb_t cb,
++						void *data, int *id)
++{
++	GSList *d;
++	int uid;
++
++	DBG("");
++
++	for (d =3D g_drivers; d; d =3D d->next) {
++		const struct ofono_private_network_driver *driver =3D d->data;
++
++		if (!driver->request)
++			continue;
++
++		uid =3D driver->request(cb, data);
++		if (uid <=3D 0)
++			continue;
++
++		*id =3D uid;
++		return TRUE;
++	}
++
++	return FALSE;
++}
 +
 +int ofono_private_network_driver_register(
-+			const struct ofono_private_network_driver *d);
-+void ofono_private_network_driver_unregister(
-+			const struct ofono_private_network_driver *d);
++			const struct ofono_private_network_driver *d)
++{
++	DBG("driver: %p, name: %s", d, d->name);
 +
-+#ifdef __cplusplus
++	g_drivers =3D g_slist_prepend(g_drivers, (void *) d);
++
++	return 0;
 +}
-+#endif
 +
-+#endif /* __OFONO_PRIVATE_NETWORK_H */
++void ofono_private_network_driver_unregister(
++			const struct ofono_private_network_driver *d)
++{
++	DBG("driver: %p, name: %s", d, d->name);
++
++	g_drivers =3D g_slist_remove(g_drivers, (void *) d);
++}
 -- =
 
 1.7.1
 
 
---===============2910475350505876892==--
+--===============0439260251181912807==--
 
