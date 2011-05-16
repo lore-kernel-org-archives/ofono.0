@@ -1,162 +1,187 @@
-Content-Type: multipart/mixed; boundary="===============0439260251181912807=="
+Content-Type: multipart/mixed; boundary="===============1628802777481116316=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v5 3/5] private-network: add request/release functions and new
- feature to Makefile.am
-Date: Mon, 16 May 2011 14:37:35 +0200
-Message-ID: <1305549457-32298-4-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v5 4/5] emulator: add request/release private network calls
+Date: Mon, 16 May 2011 14:37:36 +0200
+Message-ID: <1305549457-32298-5-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1305549457-32298-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0439260251181912807==
+--===============1628802777481116316==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am           |    3 +-
- src/ofono.h           |    6 +++
- src/private-network.c |   91 +++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 3 files changed, 99 insertions(+), 1 deletions(-)
- create mode 100644 src/private-network.c
+ src/emulator.c |   75 ++++++++++++++++++++++++++++++++++++++++++++++++----=
+---
+ 1 files changed, 65 insertions(+), 10 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index d7e5626..e1eaf15 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -387,7 +387,8 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
-es) src/ofono.ver \
- 			src/message.h src/message.c src/gprs-provision.c \
- 			src/emulator.c src/location-reporting.c \
- 			src/cdma-connman.c src/gnss.c \
--			src/gnssagent.c src/gnssagent.h
-+			src/gnssagent.c src/gnssagent.h \
-+			src/private-network.c
+diff --git a/src/emulator.c b/src/emulator.c
+index c17b901..0a83403 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -25,6 +25,7 @@
  =
 
- src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
-@ -ldl
+ #include <stdio.h>
+ #include <string.h>
++#include <unistd.h>
  =
 
-diff --git a/src/ofono.h b/src/ofono.h
-index 82d7e34..7353022 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -468,3 +468,9 @@ void __ofono_gprs_provision_free_settings(
+ #include <glib.h>
  =
 
- #include <ofono/emulator.h>
- #include <ofono/gnss.h>
-+#include <ofono/private-network.h>
-+
-+void __ofono_private_network_release(int id);
-+ofono_bool_t __ofono_private_network_request(ofono_private_network_cb_t cb,
-+						void *data, int *id);
-+
-diff --git a/src/private-network.c b/src/private-network.c
-new file mode 100644
-index 0000000..e955656
---- /dev/null
-+++ b/src/private-network.c
-@@ -0,0 +1,91 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <string.h>
-+#include <glib.h>
-+#include "ofono.h"
-+
-+static GSList *g_drivers =3D NULL;
-+
-+void __ofono_private_network_release(int id)
+@@ -32,11 +33,7 @@
+ #include "common.h"
+ #include "gatserver.h"
+ #include "gatppp.h"
+-
+-#define DUN_SERVER_ADDRESS     "192.168.1.1"
+-#define DUN_PEER_ADDRESS       "192.168.1.2"
+-#define DUN_DNS_SERVER_1       "10.10.10.10"
+-#define DUN_DNS_SERVER_2       "10.10.10.11"
++#include "private-network.h"
+ =
+
+ #define RING_TIMEOUT 3
+ =
+
+@@ -56,6 +53,8 @@ struct ofono_emulator {
+ 	guint callsetup_source;
+ 	gboolean clip;
+ 	gboolean ccwa;
++	int pns_id;
++	struct ofono_private_network_settings *local_pns;
+ };
+ =
+
+ struct indicator {
+@@ -91,6 +90,18 @@ static void ppp_connect(const char *iface, const char *l=
+ocal,
+ 	DBG("Secondary DNS Server: %s\n", dns2);
+ }
+ =
+
++static void release_pns(struct ofono_emulator *em)
 +{
-+	GSList *d;
++	g_free(em->local_pns->server_ip);
++	g_free(em->local_pns->peer_ip);
++	g_free(em->local_pns->primary_dns);
++	g_free(em->local_pns->secondary_dns);
++	g_free(em->local_pns);
 +
-+	DBG("");
++	__ofono_private_network_release(em->pns_id);
++	em->pns_id =3D 0;
++}
 +
-+	for (d =3D g_drivers; d; d =3D d->next) {
-+		const struct ofono_private_network_driver *driver =3D d->data;
+ static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
+ta)
+ {
+ 	struct ofono_emulator *em =3D user_data;
+@@ -100,6 +111,9 @@ static void ppp_disconnect(GAtPPPDisconnectReason reaso=
+n, gpointer user_data)
+ 	g_at_ppp_unref(em->ppp);
+ 	em->ppp =3D NULL;
+ =
+
++	if (em->pns_id > 0)
++		release_pns(em);
 +
-+		if (!driver->release)
-+			continue;
+ 	if (em->server =3D=3D NULL)
+ 		return;
+ =
+
+@@ -128,14 +142,21 @@ static gboolean setup_ppp(gpointer user_data)
+ =
+
+ 	g_at_server_suspend(em->server);
+ =
+
+-	em->ppp =3D g_at_ppp_server_new_from_io(io, DUN_SERVER_ADDRESS);
++	em->ppp =3D g_at_ppp_server_new_full(io, em->local_pns->server_ip,
++						em->local_pns->fd);
+ 	if (em->ppp =3D=3D NULL) {
++		/* PPP stack hasn't closed fd */
++		close(em->local_pns->fd);
++		if (em->pns_id > 0)
++			release_pns(em);
 +
-+		driver->release(id);
+ 		g_at_server_resume(em->server);
+ 		return FALSE;
+ 	}
+ =
+
+-	g_at_ppp_set_server_info(em->ppp, DUN_PEER_ADDRESS,
+-					DUN_DNS_SERVER_1, DUN_DNS_SERVER_2);
++	g_at_ppp_set_server_info(em->ppp, em->local_pns->peer_ip,
++					em->local_pns->primary_dns,
++					em->local_pns->secondary_dns);
+ =
+
+ 	g_at_ppp_set_credentials(em->ppp, "", "");
+ 	g_at_ppp_set_debug(em->ppp, emulator_debug, "PPP");
+@@ -147,6 +168,39 @@ static gboolean setup_ppp(gpointer user_data)
+ 	return FALSE;
+ }
+ =
+
++static void request_private_network_cb(void *data,
++			const struct ofono_private_network_settings *pns)
++{
++	struct ofono_emulator *em =3D data;
 +
-+		break;
++	if (pns =3D=3D NULL) {
++		__ofono_private_network_release(em->pns_id);
++		em->pns_id =3D 0;
++		g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
++		return;
 +	}
-+}
 +
-+ofono_bool_t __ofono_private_network_request(ofono_private_network_cb_t cb,
-+						void *data, int *id)
-+{
-+	GSList *d;
-+	int uid;
-+
-+	DBG("");
-+
-+	for (d =3D g_drivers; d; d =3D d->next) {
-+		const struct ofono_private_network_driver *driver =3D d->data;
-+
-+		if (!driver->request)
-+			continue;
-+
-+		uid =3D driver->request(cb, data);
-+		if (uid <=3D 0)
-+			continue;
-+
-+		*id =3D uid;
-+		return TRUE;
++	em->local_pns =3D g_try_new0(struct ofono_private_network_settings, 1);
++	if (em->local_pns =3D=3D NULL) {
++		close(pns->fd);
++		__ofono_private_network_release(em->pns_id);
++		em->pns_id =3D 0;
++		g_at_server_send_final(em->server, G_AT_SERVER_RESULT_ERROR);
++		return;
 +	}
 +
-+	return FALSE;
++	em->local_pns->fd =3D pns->fd;
++	em->local_pns->server_ip =3D g_strdup(pns->server_ip);
++	em->local_pns->peer_ip =3D g_strdup(pns->peer_ip);
++	em->local_pns->primary_dns =3D g_strdup(pns->primary_dns);
++	em->local_pns->secondary_dns =3D g_strdup(pns->secondary_dns);
++
++	g_at_server_send_intermediate(em->server, "CONNECT");
++	em->source =3D g_idle_add(setup_ppp, em);
++
++	return;
 +}
 +
-+int ofono_private_network_driver_register(
-+			const struct ofono_private_network_driver *d)
-+{
-+	DBG("driver: %p, name: %s", d, d->name);
-+
-+	g_drivers =3D g_slist_prepend(g_drivers, (void *) d);
-+
-+	return 0;
-+}
-+
-+void ofono_private_network_driver_unregister(
-+			const struct ofono_private_network_driver *d)
-+{
-+	DBG("driver: %p, name: %s", d, d->name);
-+
-+	g_drivers =3D g_slist_remove(g_drivers, (void *) d);
-+}
+ static gboolean dial_call(struct ofono_emulator *em, const char *dial_str)
+ {
+ 	char c =3D *dial_str;
+@@ -154,8 +208,9 @@ static gboolean dial_call(struct ofono_emulator *em, co=
+nst char *dial_str)
+ 	DBG("dial call %s", dial_str);
+ =
+
+ 	if (c =3D=3D '*' || c =3D=3D '#' || c =3D=3D 'T' || c =3D=3D 't') {
+-		g_at_server_send_intermediate(em->server, "CONNECT");
+-		em->source =3D g_idle_add(setup_ppp, em);
++		if (__ofono_private_network_request(request_private_network_cb,
++						em, &em->pns_id) =3D=3D FALSE)
++			return FALSE;
+ 	}
+ =
+
+ 	return TRUE;
 -- =
 
 1.7.1
 
 
---===============0439260251181912807==--
+--===============1628802777481116316==--
 
