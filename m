@@ -1,39 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============3927683446728404026=="
+Content-Type: multipart/mixed; boundary="===============8476118788957491508=="
 MIME-Version: 1.0
-From: Arun Ravindran <arunlee@gmail.com>
-Subject: In band Tones and announcements
-Date: Tue, 17 May 2011 10:44:47 +0300
-Message-ID: <BANLkTinz5GuwMB0XqFCCwK275JniwvUgGg@mail.gmail.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH v3 2/7] stk: Introduce BIP command handlers
+Date: Tue, 17 May 2011 11:55:26 +0200
+Message-ID: <4DD2460E.9050401@linux.intel.com>
+In-Reply-To: <BANLkTin0K_wovwFOsmkO2JUhODC+H=O2yw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3927683446728404026==
+--===============8476118788957491508==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
 
-Is there support for inband tones/announcement in ofono, if not is there any
-plan to implement/support this in ofono?
+Hi Andrew,
 
-Is org.ofono.AudioSettings interface meant for this, (but all the properties
-seem EXPERIMENTAL now)?
+>> +
+>> +       stk->tx_buffer.data.array =3D g_try_malloc(oc->buf_size);
+>> +       if (stk->tx_buffer.data.array =3D=3D NULL) {
+>> +               rsp.result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
+>> +               goto out;
+>> +       }
+>
+> A minor nitpick: we tend to return one of the temporary error codes
+> when out of memory.
+>
 
-regards
-Arun
+OK, I will return in this case the general result =
 
---===============3927683446728404026==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+"STK_RESULT_TYPE_TERMINAL_BUSY" with the additional info "no specific =
 
-SGksPGJyPjxicj5JcyB0aGVyZSBzdXBwb3J0IGZvciBpbmJhbmQgdG9uZXMvYW5ub3VuY2VtZW50
-IGluIG9mb25vLCBpZiBub3QgaXMgdGhlcmUgYW55IHBsYW4gdG8gaW1wbGVtZW50L3N1cHBvcnQg
-dGhpcyBpbiBvZm9ubz88YnI+PGJyPklzIG9yZy5vZm9uby5BdWRpb1NldHRpbmdzIGludGVyZmFj
-ZSBtZWFudCBmb3IgdGhpcywgKGJ1dCBhbGwgdGhlIHByb3BlcnRpZXMgc2VlbSBFWFBFUklNRU5U
-QUwgbm93KT8gPGJyPgoKPGJyPnJlZ2FyZHM8YnI+QXJ1bjxicj48YnI+Cg==
+cause".
 
---===============3927683446728404026==--
+>> +static void confirm_open_channel_cb(enum stk_agent_result result,
+>> +                                       gboolean confirm,
+>> +                                       void *user_data)
+>> +{
+>> +       struct ofono_stk *stk =3D user_data;
+>> +
+>> +       switch (result) {
+>> +       case STK_AGENT_RESULT_TERMINATE:
+>> +               send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATE=
+D);
+>> +               return;
+>> +
+>> +       case STK_AGENT_RESULT_TIMEOUT:
+>> +               confirm =3D FALSE;
+>> +               /* Fall through */
+>> +
+>> +       case STK_AGENT_RESULT_OK:
+>> +               if (confirm)
+>> +                       break;
+>> +               /* Fall through */
+>
+> According to 6.4.27 we should return STK_RESULT_TYPE_USER_REJECT if
+> the user does not accept the channel setup.
+>
+>> +
+>> +       default:
+>> +               send_simple_response(stk, STK_RESULT_TYPE_TERMINAL_BUSY);
+>> +               return;
+>> +       }
+>
+> I think Jeevaka determined that this needs an additional info field.
+
+
+In practice, I applied the same code than "confirm_launch_browser_cb". =
+
+But you're right, for Open channel, we should return the terminal =
+
+response "User did not accept the proactive command".
+
+For the additional info field, I just simplified the code seen in =
+
+"confirm_launch_browser_cb" as in this case, no specific cause is given.
+But your remark is true, it is mandatory to return an additional =
+
+information in case of general result "STK_RESULT_TYPE_TERMINAL_BUSY".
+
+To clean both issues you raised and for an homogeneous behavior, I =
+
+propose to follow the code written in "confirm_call_cb".Thus, in case of =
+
+no answer, I will return STK_RESULT_TYPE_USER_TERMINATED and not =
+
+STK_RESULT_TYPE_TERMINAL_BUSY.
+
+Thank you for your review.
+Best regards,
+
+Philippe.
+
+--===============8476118788957491508==--
 
