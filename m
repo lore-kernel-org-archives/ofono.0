@@ -1,52 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============2056630827622568211=="
+Content-Type: multipart/mixed; boundary="===============3927683446728404026=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Adding New contact failed in Ofono
-Date: Mon, 16 May 2011 23:33:12 -0700
-Message-ID: <1305613992.15916.184.camel@aeonflux>
-In-Reply-To: <BANLkTi=4FuTTL1=Jw=+C2KSy+O07xCkh8w@mail.gmail.com>
+From: Arun Ravindran <arunlee@gmail.com>
+Subject: In band Tones and announcements
+Date: Tue, 17 May 2011 10:44:47 +0300
+Message-ID: <BANLkTinz5GuwMB0XqFCCwK275JniwvUgGg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2056630827622568211==
+--===============3927683446728404026==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yuvi,
+Hi,
 
-please respect the mailing etiquette and do not top post.
+Is there support for inband tones/announcement in ofono, if not is there any
+plan to implement/support this in ofono?
 
-> Suppose end user wants to store his/her contact number in SIM. What is the
-> way to do?
-> =
+Is org.ofono.AudioSettings interface meant for this, (but all the properties
+seem EXPERIMENTAL now)?
 
-> Actually all mobile devices supporting these features. ( Personally i feel
-> that very end user expecting these feature).
+regards
+Arun
 
-This is actually not true. Neither the iPhone nor Android devices are
-supporting writing to the SIM card. They only support importing contacts
-from the SIM card for legacy reasons. And oFono does support exactly the
-same.
+--===============3927683446728404026==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-The Android Nexus S export functionality for example is only USB and
-sharing your contacts over Bluetooth or via email. No exporting to SIM
-card is supported.
+SGksPGJyPjxicj5JcyB0aGVyZSBzdXBwb3J0IGZvciBpbmJhbmQgdG9uZXMvYW5ub3VuY2VtZW50
+IGluIG9mb25vLCBpZiBub3QgaXMgdGhlcmUgYW55IHBsYW4gdG8gaW1wbGVtZW50L3N1cHBvcnQg
+dGhpcyBpbiBvZm9ubz88YnI+PGJyPklzIG9yZy5vZm9uby5BdWRpb1NldHRpbmdzIGludGVyZmFj
+ZSBtZWFudCBmb3IgdGhpcywgKGJ1dCBhbGwgdGhlIHByb3BlcnRpZXMgc2VlbSBFWFBFUklNRU5U
+QUwgbm93KT8gPGJyPgoKPGJyPnJlZ2FyZHM8YnI+QXJ1bjxicj48YnI+Cg==
 
-> I don't know ,there could some technical reasons
-
-The SIM phonebook is too limited in the number of field or number of
-entries to be anywhere near useful for anybody. It is not a storage
-location that should be used anymore. It is ancient and outdated.
-
-And for the same reason we do not support storing SMS on the SIM card
-and import existing ones if found.
-
-Regards
-
-Marcel
-
-
-
---===============2056630827622568211==--
+--===============3927683446728404026==--
 
