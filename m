@@ -1,194 +1,130 @@
-Content-Type: multipart/mixed; boundary="===============1049596266133578368=="
+Content-Type: multipart/mixed; boundary="===============3304057014270184395=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: [PATCH v3 7/7] stk: Add support of the Setup event list proactive
- command
-Date: Mon, 16 May 2011 19:00:24 +0200
-Message-ID: <BANLkTimzGtPmbaFK33=9gRihRCSW-RoaUw@mail.gmail.com>
-In-Reply-To: <1305307324-19548-7-git-send-email-philippe.nunes@linux.intel.com>
+From: Yuvaraj Ragupathi <yuvaraj.addu@gmail.com>
+Subject: Re: Adding New contact failed in Ofono
+Date: Tue, 17 May 2011 11:24:22 +0530
+Message-ID: <BANLkTi=4FuTTL1=Jw=+C2KSy+O07xCkh8w@mail.gmail.com>
+In-Reply-To: <4DD08B77.6050505@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1049596266133578368==
+--===============3304057014270184395==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 13 May 2011 19:22, Philippe Nunes <philippe.nunes@linux.intel.com> wro=
-te:
-> ---
-> =C2=A0src/stk.c | =C2=A0 90 +++++++++++++++++++++++++++++++++++++++++++++=
-+++++++++-------
-> =C2=A01 files changed, 80 insertions(+), 10 deletions(-)
->
-> diff --git a/src/stk.c b/src/stk.c
-> index 5ff9441..7122477 100644
-> --- a/src/stk.c
-> +++ b/src/stk.c
-> @@ -85,6 +85,8 @@ struct ofono_stk {
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_channel_data rx_buffer;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_channel_data tx_buffer;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0gboolean link_on_demand;
-> + =C2=A0 =C2=A0 =C2=A0 gboolean report_data_available;
-> + =C2=A0 =C2=A0 =C2=A0 gboolean report_channel_status;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct ofono_gprs *gprs;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_bearer_description bearer_desc;
-> =C2=A0};
-> @@ -489,6 +491,40 @@ static void emit_menu_changed(struct ofono_stk *stk)
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0g_dbus_send_message(conn, signal);
-> =C2=A0}
->
-> +static void event_download_envelope_cb(struct ofono_stk *stk, gboolean o=
-k,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 const unsigned char *data, int len)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 if (!ok) {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_error("Event dow=
-nload to UICC failed");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
-> + =C2=A0 =C2=A0 =C2=A0 }
-> +
-> + =C2=A0 =C2=A0 =C2=A0 if (len)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_error("Event dow=
-nload returned %i bytes of data",
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 len);
-> +
-> + =C2=A0 =C2=A0 =C2=A0 DBG("Event download =C2=A0to UICC reported no erro=
-r");
-> +}
-> +
-> +static void stk_send_channel_status_event(struct ofono_stk *stk)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 struct stk_envelope e;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 memset(&e, 0, sizeof(e));
-> + =C2=A0 =C2=A0 =C2=A0 e.type =3D STK_ENVELOPE_TYPE_EVENT_DOWNLOAD;
-> + =C2=A0 =C2=A0 =C2=A0 e.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL;
-> + =C2=A0 =C2=A0 =C2=A0 e.event_download.channel_status.channel.id =3D stk=
-->channel.id;
-> + =C2=A0 =C2=A0 =C2=A0 e.event_download.channel_status.channel.status =3D=
- stk->channel.status;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 if (stk->channel.status =3D=3D STK_CHANNEL_PACKET_=
-DATA_SERVICE_ACTIVATED)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 memcpy(&e.event_downlo=
-ad.channel_status.bearer_desc,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &stk->bearer_desc,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sizeof(struct stk_bearer_description));
-> +
-> + =C2=A0 =C2=A0 =C2=A0 if (stk_send_envelope(stk, &e, event_download_enve=
-lope_cb, 0))
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 event_download_envelop=
-e_cb(stk, FALSE, NULL, -1);
-> +}
-> +
-> =C2=A0static void ofono_stk_remove_pdp_context_cb(int error, void *data)
-> =C2=A0{
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct ofono_stk *stk =3D data;
-> @@ -503,12 +539,8 @@ static void ofono_stk_remove_pdp_context_cb(int erro=
-r, void *data)
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0send_simple_response(stk, STK_RESULT_TYPE_NOT_CAPABLE);
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0else
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0send_simple_response(stk, STK_RESULT_TYPE_SUCCESS);
-> - =C2=A0 =C2=A0 =C2=A0 } else {
-> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /*
-> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* TODO
-> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* Send Event cha=
-nnel status
-> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/
-> - =C2=A0 =C2=A0 =C2=A0 }
-> + =C2=A0 =C2=A0 =C2=A0 } else if (stk->report_channel_status)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 stk_send_channel_statu=
-s_event(stk);
->
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0/* free the buffers even in case of error */
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0g_free(stk->rx_buffer.data.array);
-> @@ -608,10 +640,8 @@ static void ofono_stk_activate_pdp_context_cb(int er=
-ror, const char *interface,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0}
->
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0if (stk->pending_cmd =3D=3D NULL) {
-> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /*
-> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* TODO
-> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* Send Event cha=
-nnel status
-> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (stk->report_channe=
-l_status)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 stk_send_channel_status_event(stk);
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0}
->
-> @@ -3129,6 +3159,41 @@ static gboolean handle_command_get_channel_status(=
-const struct stk_command *cmd,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0return TRUE;
-> =C2=A0}
->
-> +
-> +static gboolean handle_command_setup_event_list(const struct stk_command=
- *cmd,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 struct stk_response *rsp,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 struct ofono_stk *stk)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 const struct stk_command_setup_event_list *sel =3D=
- &cmd->setup_event_list;
-> + =C2=A0 =C2=A0 =C2=A0 unsigned int i;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 for (i =3D 0; i < sel->event_list.len; i++) {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 switch (sel->event_lis=
-t.list[i]) {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 case STK_EVENT_TYPE_DA=
-TA_AVAILABLE:
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 DBG("Enable data available event");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 stk->report_data_available =3D TRUE;
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 break;
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 case STK_EVENT_TYPE_CH=
-ANNEL_STATUS:
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 DBG("Enable channel status event");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 stk->report_channel_status =3D TRUE;
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 break;
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 default:
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 DBG("Event type (%d) not supported",
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 sel->event_list.list[i]);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 return TRUE;
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
-> + =C2=A0 =C2=A0 =C2=A0 }
-> +
-> + =C2=A0 =C2=A0 =C2=A0 if (sel->event_list.len =3D=3D 0) {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 stk->report_data_avail=
-able =3D FALSE;
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 stk->report_channel_st=
-atus =3D FALSE;
-> + =C2=A0 =C2=A0 =C2=A0 }
+Hi,
 
-These flags should probably be cleared unconditionally before the loop
-above because "Any subsequent SET UP EVENT LIST command replaces the
-current list of events..".
+Thanks for your reply.
 
-Best regards
 
---===============1049596266133578368==--
+Suppose end user wants to store his/her contact number in SIM. What is the
+way to do?
+
+Actually all mobile devices supporting these features. ( Personally i feel
+that very end user expecting these feature).
+
+I don't know ,there could some technical reasons
+
+Please correct me. If my understanding is wrong
+
+
+Thanks
+
+Yuvi R
+
+
+On Mon, May 16, 2011 at 7:57 AM, Denis Kenzior <denkenz@gmail.com> wrote:
+
+> Hi Yuvi,
+>
+> On 05/16/2011 02:28 AM, Yuvaraj Ragupathi wrote:
+> > Hi All,
+> >
+> > I am trying to add new contact in sim via following sample code
+> >
+> >
+> > static  int new_contact(struct ofono_phonebook *pb,char
+> > *num,ofono_phonebook_cb_t cb)
+> > {
+> >     struct pb_data *pbd =3D ofono_phonebook_get_data(pb);
+> >     char cmd[50];int return_value;
+> >         sprintf(cmd,"AT+CPBW=3D10,%s,129,Testing", num);
+> >         printf("Command is %s\n",cmd);
+> >     return_value=3Dg_at_chat_send(pbd->chat,cmd, none_prefix,
+> >                        NULL,NULL, NULL);
+> >         printf("Add New contact number in Sim\n Status is
+> > %d\n",return_value);
+> >         return return_value;
+> > }
+> >
+>
+> oFono core does not support adding new contacts to the sim and there are
+> no plans to do so.  So I'm not quite sure what you're trying to
+> accomplish here in the first place.  If your question is about using
+> GAtChat, then adjust your subject accordingly.
+>
+> >
+> > If i try to add new contact  my Return status is  69 or 70
+> >
+>
+> Your 'return status' is just an ID assigned by GAtChat.  GAtChat is
+> _asynchronous_, your command has not been executed yet.  If you want to
+> know the result of the operation, provide a proper callback, or at the
+> very least enable AT debug logging.  See HACKING for details.
+>
+> Regards,
+> -Denis
+>
+
+--===============3304057014270184395==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+SGksPGJyPjxicj5UaGFua3MgZm9yIHlvdXIgcmVwbHkuPGJyPjxicj48YnI+U3VwcG9zZSBlbmQg
+dXNlciB3YW50cyB0byBzdG9yZSBoaXMvaGVyIGNvbnRhY3QgbnVtYmVyIGluIFNJTS4gV2hhdCBp
+cyB0aGUgd2F5IHRvIGRvPzxicj48YnI+QWN0dWFsbHkgYWxsIG1vYmlsZSBkZXZpY2VzIHN1cHBv
+cnRpbmcgdGhlc2UgZmVhdHVyZXMuICggUGVyc29uYWxseSBpIGZlZWwgdGhhdCB2ZXJ5IGVuZCB1
+c2VyIGV4cGVjdGluZyB0aGVzZSBmZWF0dXJlKS48YnI+Cjxicj5JIGRvbiYjMzk7dCBrbm93ICx0
+aGVyZSBjb3VsZCBzb21lIHRlY2huaWNhbCByZWFzb25zPGJyPjxicj5QbGVhc2UgY29ycmVjdCBt
+ZS4gSWYgbXkgdW5kZXJzdGFuZGluZyBpcyB3cm9uZzxicj48YnI+PGJyPlRoYW5rczxicj48YnI+
+WXV2aSBSPGJyPjxicj48YnI+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPk9uIE1vbiwgTWF5IDE2
+LCAyMDExIGF0IDc6NTcgQU0sIERlbmlzIEtlbnppb3IgPHNwYW4gZGlyPSJsdHIiPiZsdDs8YSBo
+cmVmPSJtYWlsdG86ZGVua2VuekBnbWFpbC5jb20iPmRlbmtlbnpAZ21haWwuY29tPC9hPiZndDs8
+L3NwYW4+IHdyb3RlOjxicj4KPGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0i
+bWFyZ2luOiAwcHQgMHB0IDBwdCAwLjhleDsgYm9yZGVyLWxlZnQ6IDFweCBzb2xpZCByZ2IoMjA0
+LCAyMDQsIDIwNCk7IHBhZGRpbmctbGVmdDogMWV4OyI+SGkgWXV2aSw8YnI+CjxkaXYgY2xhc3M9
+ImltIj48YnI+Ck9uIDA1LzE2LzIwMTEgMDI6MjggQU0sIFl1dmFyYWogUmFndXBhdGhpIHdyb3Rl
+Ojxicj4KJmd0OyBIaSBBbGwsPGJyPgomZ3Q7PGJyPgomZ3Q7IEkgYW0gdHJ5aW5nIHRvIGFkZCBu
+ZXcgY29udGFjdCBpbiBzaW0gdmlhIGZvbGxvd2luZyBzYW1wbGUgY29kZTxicj4KJmd0Ozxicj4K
+Jmd0Ozxicj4KJmd0OyBzdGF0aWMgoGludCBuZXdfY29udGFjdChzdHJ1Y3Qgb2Zvbm9fcGhvbmVi
+b29rICpwYixjaGFyPGJyPgomZ3Q7ICpudW0sb2Zvbm9fcGhvbmVib29rX2NiX3QgY2IpPGJyPgom
+Z3Q7IHs8YnI+CiZndDsgoCCgIHN0cnVjdCBwYl9kYXRhICpwYmQgPSBvZm9ub19waG9uZWJvb2tf
+Z2V0X2RhdGEocGIpOzxicj4KJmd0OyCgIKAgY2hhciBjbWRbNTBdO2ludCByZXR1cm5fdmFsdWU7
+PGJyPgomZ3Q7IKAgoCCgIKAgc3ByaW50ZihjbWQsJnF1b3Q7QVQrQ1BCVz0xMCwlcywxMjksVGVz
+dGluZyZxdW90OywgbnVtKTs8YnI+CiZndDsgoCCgIKAgoCBwcmludGYoJnF1b3Q7Q29tbWFuZCBp
+cyAlc1xuJnF1b3Q7LGNtZCk7PGJyPgomZ3Q7IKAgoCByZXR1cm5fdmFsdWU9Z19hdF9jaGF0X3Nl
+bmQocGJkLSZndDtjaGF0LGNtZCwgbm9uZV9wcmVmaXgsPGJyPgomZ3Q7IKAgoCCgIKAgoCCgIKAg
+oCCgIKAgoCCgTlVMTCxOVUxMLCBOVUxMKTs8YnI+CiZndDsgoCCgIKAgoCBwcmludGYoJnF1b3Q7
+QWRkIE5ldyBjb250YWN0IG51bWJlciBpbiBTaW1cbiBTdGF0dXMgaXM8YnI+CiZndDsgJWRcbiZx
+dW90OyxyZXR1cm5fdmFsdWUpOzxicj4KJmd0OyCgIKAgoCCgIHJldHVybiByZXR1cm5fdmFsdWU7
+PGJyPgomZ3Q7IH08YnI+CiZndDs8YnI+Cjxicj4KPC9kaXY+b0Zvbm8gY29yZSBkb2VzIG5vdCBz
+dXBwb3J0IGFkZGluZyBuZXcgY29udGFjdHMgdG8gdGhlIHNpbSBhbmQgdGhlcmUgYXJlPGJyPgpu
+byBwbGFucyB0byBkbyBzby4goFNvIEkmIzM5O20gbm90IHF1aXRlIHN1cmUgd2hhdCB5b3UmIzM5
+O3JlIHRyeWluZyB0bzxicj4KYWNjb21wbGlzaCBoZXJlIGluIHRoZSBmaXJzdCBwbGFjZS4goElm
+IHlvdXIgcXVlc3Rpb24gaXMgYWJvdXQgdXNpbmc8YnI+CkdBdENoYXQsIHRoZW4gYWRqdXN0IHlv
+dXIgc3ViamVjdCBhY2NvcmRpbmdseS48YnI+CjxkaXYgY2xhc3M9ImltIj48YnI+CiZndDs8YnI+
+CiZndDsgSWYgaSB0cnkgdG8gYWRkIG5ldyBjb250YWN0IKBteSBSZXR1cm4gc3RhdHVzIGlzIKA2
+OSBvciA3MDxicj4KJmd0Ozxicj4KPGJyPgo8L2Rpdj5Zb3VyICYjMzk7cmV0dXJuIHN0YXR1cyYj
+Mzk7IGlzIGp1c3QgYW4gSUQgYXNzaWduZWQgYnkgR0F0Q2hhdC4goEdBdENoYXQgaXM8YnI+Cl9h
+c3luY2hyb25vdXNfLCB5b3VyIGNvbW1hbmQgaGFzIG5vdCBiZWVuIGV4ZWN1dGVkIHlldC4goElm
+IHlvdSB3YW50IHRvPGJyPgprbm93IHRoZSByZXN1bHQgb2YgdGhlIG9wZXJhdGlvbiwgcHJvdmlk
+ZSBhIHByb3BlciBjYWxsYmFjaywgb3IgYXQgdGhlPGJyPgp2ZXJ5IGxlYXN0IGVuYWJsZSBBVCBk
+ZWJ1ZyBsb2dnaW5nLiCgU2VlIEhBQ0tJTkcgZm9yIGRldGFpbHMuPGJyPgo8YnI+ClJlZ2FyZHMs
+PGJyPgo8Zm9udCBjb2xvcj0iIzg4ODg4OCI+LURlbmlzPGJyPgo8L2ZvbnQ+PC9ibG9ja3F1b3Rl
+PjwvZGl2Pjxicj4K
+
+--===============3304057014270184395==--
 
