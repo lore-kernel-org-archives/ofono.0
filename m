@@ -1,90 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============7969263076524563058=="
+Content-Type: multipart/mixed; boundary="===============8819949994389790019=="
 MIME-Version: 1.0
-From: Arun Ravindran <arunlee@gmail.com>
-Subject: [PATCH] isimodem: Improper handling of missed call
-Date: Wed, 18 May 2011 13:47:32 +0300
-Message-ID: <1305715652-4357-1-git-send-email-arunlee@gmail.com>
+From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
+Subject: [PATCH 0/5] Add support of remote hangup
+Date: Wed, 18 May 2011 15:33:25 +0200
+Message-ID: <1305725610-32602-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7969263076524563058==
+--===============8819949994389790019==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/isimodem/voicecall.c |   20 ++++++++++++++++----
- 1 files changed, 16 insertions(+), 4 deletions(-)
+These patchs introduce the possibility of remote hangup
+by selecting the call in the call table and use the new =
 
-diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
-index 333f9b8..6979105 100644
---- a/drivers/isimodem/voicecall.c
-+++ b/drivers/isimodem/voicecall.c
-@@ -50,6 +50,7 @@ struct isi_call {
- 	uint8_t id;
- 	uint8_t call_id;
- 	uint8_t status;
-+	uint8_t prev_status;
- 	uint8_t mode;
- 	uint8_t mode_info;
- 	uint8_t cause_type;
-@@ -314,7 +315,7 @@ static void isi_call_status_sb_proc(struct isi_voicecal=
-l *ivc,
- =
+button "hangup".
 
- 	if (!g_isi_sb_iter_get_byte(sb, &status, 2))
- 		return;
--
-+	call->prev_status =3D call->status;
- 	call->status =3D status;
- }
- =
+Nicolas Bertrand (5):
+  controlbase: Add hangup button
+  callmanager: Remote hangup slot
+  hardwaremanipulator: add hangup signal
+  control: Handle hangup call
+  phonesim: Connect hangup signal
 
-@@ -401,10 +402,16 @@ static int isi_call_status_to_clcc(const struct isi_c=
-all *call)
- 		return 5;
- =
-
- 	case CALL_STATUS_MO_RELEASE:
--	case CALL_STATUS_MT_RELEASE:
--	case CALL_STATUS_TERMINATED:
- 		return 6;
- =
-
-+	case CALL_STATUS_MT_RELEASE:
-+		if ((call->prev_status =3D=3D CALL_STATUS_MT_ALERTING) ||
-+				(call->prev_status =3D=3D CALL_STATUS_COMING) ||
-+				(call->prev_status =3D=3D CALL_STATUS_WAITING))
-+			return 4;
-+		else
-+			return 6;
-+	=
-
- 	case CALL_STATUS_ACTIVE:
- 	case CALL_STATUS_HOLD_INITIATED:
- 		return 0;
-@@ -548,9 +555,14 @@ static void isi_call_notify(struct ofono_voicecall *ov=
-c, struct isi_call *call)
- =
-
- 	case CALL_STATUS_MO_RELEASE:
- 	case CALL_STATUS_MT_RELEASE:
-+		isi_call_set_disconect_reason(call):
-+		break;
-+
- 	case CALL_STATUS_TERMINATED:
- 		isi_call_set_disconnect_reason(call);
--		break;
-+		DBG("State( CALL_STATUS_TERMINATED ) need not be reported to Core");
-+		return;
-+
- 	case CALL_STATUS_ANSWERED:
- 		DBG("State need not be reported to Core");
- 		return;
--- =
-
-1.7.1
+ src/callmanager.cpp       |   23 +++++++++++++++++++++++
+ src/callmanager.h         |    3 +++
+ src/control.cpp           |   24 +++++++++++++++++++++++-
+ src/control.h             |    2 ++
+ src/controlbase.ui        |    7 +++++++
+ src/hardwaremanipulator.h |    1 +
+ src/phonesim.cpp          |    2 ++
+ 7 files changed, 61 insertions(+), 1 deletions(-)
 
 
---===============7969263076524563058==--
+--===============8819949994389790019==--
 
