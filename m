@@ -1,91 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============3767819797106813295=="
+Content-Type: multipart/mixed; boundary="===============3243822543478747940=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: Emulator not unregistered while sending ATH0
-Date: Thu, 19 May 2011 14:58:09 +0200
-Message-ID: <4DD513E1.7000306@linux.intel.com>
-In-Reply-To: <4DD5093F.6050307@linux.intel.com>
+Subject: [PATCH] emulator: fix dun_ath_cb() not to remove GAtServer
+ io_disconnect() CB
+Date: Thu, 19 May 2011 15:03:14 +0200
+Message-ID: <1305810194-24360-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3767819797106813295==
+--===============3243822543478747940==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi again Denis,
+---
+ src/emulator.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-I have found the issue I will submit a fix.
-See explanations below.
+diff --git a/src/emulator.c b/src/emulator.c
+index c17b901..251bed8 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -219,15 +219,19 @@ static void dun_ath_cb(GAtServer *server, GAtServerRe=
+questType type,
+ 		if (val !=3D 0)
+ 			goto error;
+ =
 
-On 19/05/2011 14:12, Guillaume Zajac wrote:
-> Hi Denis,
->
-> I have mixed some stuff concerning GIOChannels...
->
-> On 19/05/2011 12:13, Guillaume Zajac wrote:
->> Hi Denis,
->>
->> I noticed that when I send +++ -> ATH0 during a PPP session the ppp =
++		g_at_server_suspend(em->server);
+ 		g_at_ppp_unref(em->ppp);
+ 		em->ppp =3D NULL;
++		g_at_server_resume(em->server);
+ =
 
->> server is well unregistered.
->> However when the physical layer is removed (bluetooht or TCP), the =
+ 		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
+ 		break;
+ =
 
->> associated emulator is not unregistered.
->> As we used in gatutil.c set_close_on_unref(TRUE), it means there is =
+ 	case G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY:
++		g_at_server_suspend(em->server);
+ 		g_at_ppp_unref(em->ppp);
+ 		em->ppp =3D NULL;
++		g_at_server_resume(em->server);
+ =
 
->> still on reference on the GIOChannel.
->
-> The set_close_on_unref() from gatutil.c is done for ppp_net interface =
+ 		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
+ 		break;
+-- =
 
-> GIOChannel.
-> It has nothing to do with the physical layer.
->
-> However, we do also:
->     - set_close_on_unref(TRUE) into example/emulator.c
->     - set_close_on_unref(FALSE) into plugins/dun_gw.c
->
-> So after the client send ATH0, the connection is removed and emulator =
-
-> should be unregistered and removed but it is not the case.
->
->> In the case the PPP session is ended normally, we call =
-
->> ppp_ipcp_down_notify() to free the ppp_net interface.
->> Then the physical layer is removed and we got the emulator well =
-
->> unregistered.
->
-> That's why I assume unregistration of the emulator is bound to the way =
-
-> PPP session is ended e.g.
-> normally ---> ppp_ipcpdown_notify()
-> forced ---> ATH0
->
->> Do you have any idea about what is happening there?
->> Maybe I forgot to do something into dun_ath_cb().
-
-While doing g_at_ppp_unref(), g_at_io_set_disconnect_function() is =
-
-called and clear the io_disconnect function.
-Thus, when connection with client is removed, io_disconnect() from =
-
-GAtServer is no more called.
-
-We have to do in dun_ath_cb() this sequence:
-
-g_at_server_suspend(em->server);
-
-g_at_ppp_unref(em->ppp);  /* Clear io_disconnect */
-em->ppp =3D NULL;
-
-g_at_server_resume(em->server); /* Set io_disconnect */
+1.7.1
 
 
-Kind regards,
-Guillaume
-
-
-
---===============3767819797106813295==--
+--===============3243822543478747940==--
 
