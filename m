@@ -1,50 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============0061804313890329850=="
+Content-Type: multipart/mixed; boundary="===============1294795657177557908=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] voicecall: add ATD support for HFP emulator
-Date: Thu, 19 May 2011 11:39:01 -0500
-Message-ID: <4DD547A5.9090407@gmail.com>
-In-Reply-To: <4DD54262.3090008@linux.intel.com>
+Subject: Re: [PATCH] voicecall: add +VTS support for HFP emulator
+Date: Thu, 19 May 2011 11:42:29 -0500
+Message-ID: <4DD54875.1010100@gmail.com>
+In-Reply-To: <1305540829-14417-1-git-send-email-frederic.dalleau@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0061804313890329850==
+--===============1294795657177557908==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Frederic,
+Hi Fr=C3=A9d=C3=A9ric,
 
->>> So, I think that voicecall should return an OFONO_ERROR_TYPE_CME 30, and
->>> ofono_emulator_send_final should take care of replying the right string.
->>>
->>
->> Nope, you have to take your pick, either CME ERROR: 30, or NO CARRIER.
->> I'd expect most implementations to reply with a NO CARRIER in this case,
->> but can you check what other implementations do in reality?
->>
-> =
+> +static void emulator_vts_cb(struct ofono_emulator *em,
+> +			struct ofono_emulator_request *req, void *userdata)
+> +{
+> +	struct ofono_voicecall *vc =3D userdata;
+> +	struct ofono_error result;
+> +	const char *str;
+> +
+> +	switch (ofono_emulator_request_get_type(req)) {
+> +	case OFONO_EMULATOR_REQUEST_TYPE_SET:
+> +		str =3D ofono_emulator_request_get_raw(req);
+> +
+> +		if (__ofono_voicecall_tone_send(vc, str, vts_tone_cb, em) < 0)
+> +			break;
 
-> In paragraph 6.2.13.11 of tr002v15, in reply to ATD command without
-> network, the flowchart shows usage of +CME ERROR: 30 or ERROR reply (no
-> usage of NO CARRIER).
-> =
+This looks wrong.  The VTS command takes a single ascii character, not a
+string.  So you need to validate that.  +VTS also does not accept P/p
+characters, so you need to make sure to filter these out as well.
 
+> +
+> +		return;
+> +
+> +	default:
+> +		break;
+> +	}
+> +
 
-If that is what tr002 recommends, then lets do that for now.
+I'd do this like this:
 
-> Paragraph 4.33.2 of HFP 1.5 specification said that NO CARRIER (and
-> BUSY, NO ANSWER, ...) "are in addition to the +CME ERROR: reponses".
-> =
+if (__tone_send() =3D=3D 0)
+	return;
 
-> My understanding of specs is that we should send the CME ERROR and, if
-> we want, NO CARRIER in addition.
-
-Yeah, I never understood that particular statement.  +CME ERROR and NO
-CARRIER are both final responses, you should not send both.
+> +	result.error =3D 0;
+> +	result.type =3D OFONO_ERROR_TYPE_FAILURE;
+> +
+> +	ofono_emulator_send_final(em, &result);
+> +}
+> +
 
 Regards,
 -Denis
 
---===============0061804313890329850==--
+--===============1294795657177557908==--
 
