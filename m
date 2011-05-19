@@ -1,66 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============8256152933289403201=="
+Content-Type: multipart/mixed; boundary="===============2724252560015576000=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: Emulator not unregistered while sending ATH0
-Date: Thu, 19 May 2011 14:12:47 +0200
-Message-ID: <4DD5093F.6050307@linux.intel.com>
-In-Reply-To: <4DD4ED45.3050907@linux.intel.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH] isimodem: Improper handling of missed call
+Date: Thu, 19 May 2011 15:19:00 +0300
+Message-ID: <BANLkTinrHrn_XgjWmu1ZFbOodGqCAU4UZg@mail.gmail.com>
+In-Reply-To: <1305715652-4357-1-git-send-email-arunlee@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8256152933289403201==
+--===============2724252560015576000==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Arun,
 
-I have mixed some stuff concerning GIOChannels...
+2011/5/18 Arun Ravindran <arunlee@gmail.com>:
+> + =C2=A0 =C2=A0 =C2=A0 case CALL_STATUS_MT_RELEASE:
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if ((call->prev_status=
+ =3D=3D CALL_STATUS_MT_ALERTING) ||
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 (call->prev_status =3D=3D CALL_STATUS_CO=
+MING) ||
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 (call->prev_status =3D=3D CALL_STATUS_WA=
+ITING))
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 return 4;
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 else
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 return 6;
+> +
 
-On 19/05/2011 12:13, Guillaume Zajac wrote:
-> Hi Denis,
+Extra whitespace here.
+
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0case CALL_STATUS_ACTIVE:
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0case CALL_STATUS_HOLD_INITIATED:
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return 0;
+> @@ -548,9 +555,14 @@ static void isi_call_notify(struct ofono_voicecall *=
+ovc, struct isi_call *call)
 >
-> I noticed that when I send +++ -> ATH0 during a PPP session the ppp =
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0case CALL_STATUS_MO_RELEASE:
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0case CALL_STATUS_MT_RELEASE:
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 isi_call_set_disconect=
+_reason(call):
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 break;
+> +
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0case CALL_STATUS_TERMINATED:
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0isi_call_set_disco=
+nnect_reason(call);
+> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 break;
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBG("State( CALL_STATU=
+S_TERMINATED ) need not be reported to Core");
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
+> +
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0case CALL_STATUS_ANSWERED:
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0DBG("State need no=
+t be reported to Core");
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
 
-> server is well unregistered.
-> However when the physical layer is removed (bluetooht or TCP), the =
+If the intention is not to report this up, then why set the disconnect
+reason with isi_call_set_disconnect_reason()? Why not just fold these
+two case statements together?
 
-> associated emulator is not unregistered.
-> As we used in gatutil.c set_close_on_unref(TRUE), it means there is =
+Cheers,
+Aki
 
-> still on reference on the GIOChannel.
-
-The set_close_on_unref() from gatutil.c is done for ppp_net interface =
-
-GIOChannel.
-It has nothing to do with the physical layer.
-
-However, we do also:
-     - set_close_on_unref(TRUE) into example/emulator.c
-     - set_close_on_unref(FALSE) into plugins/dun_gw.c
-
-So after the client send ATH0, the connection is removed and emulator =
-
-should be unregistered and removed but it is not the case.
-
-> In the case the PPP session is ended normally, we call =
-
-> ppp_ipcp_down_notify() to free the ppp_net interface.
-> Then the physical layer is removed and we got the emulator well =
-
-> unregistered.
-
-That's why I assume unregistration of the emulator is bound to the way =
-
-PPP session is ended e.g.
-normally ---> ppp_ipcpdown_notify()
-forced ---> ATH0
-
-> Do you have any idea about what is happening there?
-> Maybe I forgot to do something into dun_ath_cb().
-
-Kind regards,
-Guillaume
-
---===============8256152933289403201==--
+--===============2724252560015576000==--
 
