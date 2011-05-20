@@ -1,54 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============2981735908974670604=="
+Content-Type: multipart/mixed; boundary="===============4247301367467997187=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH 6/7] tools: remove set but not used var
-Date: Fri, 20 May 2011 16:03:44 -0300
-Message-ID: <1305918225-8438-6-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1305918225-8438-5-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH 5/7] gobi: remove set but not used var
+Date: Fri, 20 May 2011 16:03:43 -0300
+Message-ID: <1305918225-8438-5-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1305918225-8438-4-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2981735908974670604==
+--===============4247301367467997187==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- tools/huawei-audio.c |    4 ----
- 1 files changed, 0 insertions(+), 4 deletions(-)
+ plugins/gobi.c |    4 +---
+ 1 files changed, 1 insertions(+), 3 deletions(-)
 
-diff --git a/tools/huawei-audio.c b/tools/huawei-audio.c
-index 084241e..c7b78aa 100644
---- a/tools/huawei-audio.c
-+++ b/tools/huawei-audio.c
-@@ -430,7 +430,6 @@ static void check_interfaces(struct modem_data *modem, =
-DBusMessageIter *iter)
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index b559f33..dcc41af 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -288,7 +288,6 @@ static void gobi_post_sim(struct ofono_modem *modem)
+ static void gobi_post_online(struct ofono_modem *modem)
  {
- 	DBusMessageIter entry;
- 	gboolean has_callmanager =3D FALSE;
--	gboolean has_audiosettings =3D FALSE;
+ 	struct gobi_data *data =3D ofono_modem_get_data(modem);
+-	struct ofono_gprs *gprs;
  =
 
- 	dbus_message_iter_recurse(iter, &entry);
+ 	DBG("%p", modem);
  =
 
-@@ -442,9 +441,6 @@ static void check_interfaces(struct modem_data *modem, =
-DBusMessageIter *iter)
- 		if (g_str_equal(interface, OFONO_CALLMANAGER_INTERFACE) =3D=3D TRUE)
- 			has_callmanager =3D TRUE;
+@@ -297,8 +296,7 @@ static void gobi_post_online(struct ofono_modem *modem)
+ 	ofono_cbs_create(modem, OFONO_VENDOR_GOBI, "atmodem", data->chat);
+ 	ofono_ussd_create(modem, OFONO_VENDOR_GOBI, "atmodem", data->chat);
  =
 
--		if (g_str_equal(interface, OFONO_AUDIO_INTERFACE) =3D=3D TRUE)
--			has_audiosettings =3D TRUE;
--
- 		dbus_message_iter_next(&entry);
- 	}
+-	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_GOBI,
+-						"atmodem", data->chat);
++	ofono_gprs_create(modem, OFONO_VENDOR_GOBI, "atmodem", data->chat);
+ }
  =
 
+ static struct ofono_modem_driver gobi_driver =3D {
 -- =
 
 1.7.5.1
 
 
---===============2981735908974670604==--
+--===============4247301367467997187==--
 
