@@ -1,199 +1,201 @@
-Content-Type: multipart/mixed; boundary="===============8083888543128904692=="
+Content-Type: multipart/mixed; boundary="===============8882878891620963029=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v4 6/8] gprs: Add a host route for STK context type
-Date: Fri, 20 May 2011 18:26:19 +0200
-Message-ID: <1305908781-8322-6-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v4 7/8] stk: Add support of the Setup event list proactive
+ command
+Date: Fri, 20 May 2011 18:26:20 +0200
+Message-ID: <1305908781-8322-7-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1305908781-8322-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8083888543128904692==
+--===============8882878891620963029==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/gprs.c |   45 ++++++++++++++++++++++++++-------------------
- 1 files changed, 26 insertions(+), 19 deletions(-)
+ src/stk.c |  108 +++++++++++++++++++++++++++++++++++++++++++++++++++++++--=
+----
+ 1 files changed, 98 insertions(+), 10 deletions(-)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 86d95bc..a867ea1 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -141,8 +141,8 @@ struct pri_context {
- 	unsigned int id;
- 	char *path;
- 	char *key;
--	char *proxy_host;
--	uint16_t proxy_port;
-+	char *host;
-+	uint16_t port;
- 	DBusMessage *pending;
- 	struct ofono_gprs_primary_context context;
- 	struct ofono_gprs_context *context_driver;
-@@ -616,16 +616,16 @@ static void pri_parse_proxy(struct pri_context *ctx, =
-const char *proxy)
- 		host +=3D 3;
- =
-
- 		if (strcasecmp(scheme, "https") =3D=3D 0)
--			ctx->proxy_port =3D 443;
-+			ctx->port =3D 443;
- 		else if (strcasecmp(scheme, "http") =3D=3D 0)
--			ctx->proxy_port =3D 80;
-+			ctx->port =3D 80;
- 		else {
- 			g_free(scheme);
- 			return;
- 		}
- 	} else {
- 		host =3D scheme;
--		ctx->proxy_port =3D 80;
-+		ctx->port =3D 80;
- 	}
- =
-
- 	path =3D strchr(host, '/');
-@@ -639,12 +639,12 @@ static void pri_parse_proxy(struct pri_context *ctx, =
-const char *proxy)
- =
-
- 		if (*end =3D=3D '\0') {
- 			*port =3D '\0';
--			ctx->proxy_port =3D tmp;
-+			ctx->port =3D tmp;
- 		}
- 	}
- =
-
--	g_free(ctx->proxy_host);
--	ctx->proxy_host =3D g_strdup(host);
-+	g_free(ctx->host);
-+	ctx->host =3D g_strdup(host);
- =
-
- 	g_free(scheme);
- }
-@@ -728,7 +728,7 @@ done:
- 	close(sk);
+diff --git a/src/stk.c b/src/stk.c
+index d9f1e25..fbd93c3 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -85,6 +85,8 @@ struct ofono_stk {
+ 	struct stk_channel_data rx_buffer;
+ 	struct stk_channel_data tx_buffer;
+ 	gboolean link_on_demand;
++	gboolean report_data_available;
++	gboolean report_channel_status;
+ 	struct ofono_gprs *gprs;
+ 	struct stk_bearer_description bearer_desc;
+ };
+@@ -489,6 +491,58 @@ static void emit_menu_changed(struct ofono_stk *stk)
+ 	g_dbus_send_message(conn, signal);
  }
  =
 
--static void pri_setproxy(const char *interface, const char *proxy)
-+static void pri_add_host_route(const char *interface, const char *host)
- {
- 	struct rtentry rt;
- 	struct sockaddr_in addr;
-@@ -747,7 +747,7 @@ static void pri_setproxy(const char *interface, const c=
-har *proxy)
- =
-
- 	memset(&addr, 0, sizeof(addr));
- 	addr.sin_family =3D AF_INET;
--	addr.sin_addr.s_addr =3D inet_addr(proxy);
-+	addr.sin_addr.s_addr =3D inet_addr(host);
- 	memcpy(&rt.rt_dst, &addr, sizeof(rt.rt_dst));
- =
-
- 	memset(&addr, 0, sizeof(addr));
-@@ -761,7 +761,7 @@ static void pri_setproxy(const char *interface, const c=
-har *proxy)
- 	memcpy(&rt.rt_genmask, &addr, sizeof(rt.rt_genmask));
- =
-
- 	if (ioctl(sk, SIOCADDRT, &rt) < 0)
--		ofono_error("Failed to add proxy host route");
-+		ofono_error("Failed to add host route");
- =
-
- 	close(sk);
- }
-@@ -788,12 +788,13 @@ static void pri_reset_context_settings(struct pri_con=
-text *ctx)
- =
-
- 	pri_context_signal_settings(ctx, signal_ipv4, signal_ipv6);
- =
-
--	if (ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS) {
-+	if (ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS ||
-+			ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_STK) {
- 		pri_set_ipv4_addr(interface, NULL);
- =
-
--		g_free(ctx->proxy_host);
--		ctx->proxy_host =3D NULL;
--		ctx->proxy_port =3D 0;
-+		g_free(ctx->host);
-+		ctx->host =3D NULL;
-+		ctx->port =3D 0;
- 	}
- =
-
- 	pri_ifupdown(interface, FALSE);
-@@ -811,12 +812,12 @@ static void pri_update_mms_context_settings(struct pr=
-i_context *ctx)
- =
-
- 	pri_parse_proxy(ctx, ctx->message_proxy);
- =
-
--	DBG("proxy %s port %u", ctx->proxy_host, ctx->proxy_port);
-+	DBG("host %s port %u", ctx->host, ctx->port);
- =
-
- 	pri_set_ipv4_addr(settings->interface, settings->ipv4->ip);
- =
-
--	if (ctx->proxy_host)
--		pri_setproxy(settings->interface, ctx->proxy_host);
-+	if (ctx->host)
-+		pri_add_host_route(settings->interface, ctx->host);
- }
- =
-
- static void append_context_properties(struct pri_context *ctx,
-@@ -1366,7 +1367,7 @@ static void pri_context_destroy(gpointer userdata)
- {
- 	struct pri_context *ctx =3D userdata;
- =
-
--	g_free(ctx->proxy_host);
-+	g_free(ctx->host);
- 	g_free(ctx->path);
- 	g_free(ctx);
- }
-@@ -3086,6 +3087,9 @@ unsigned int __ofono_gprs_add_pdp_context(struct ofon=
-o_gprs *gprs,
- =
-
- 	context->context.proto =3D proto;
- =
-
-+	if (host)
-+		context->host =3D g_strdup(host);
++static void event_download_envelope_cb(struct ofono_stk *stk, gboolean ok,
++				const unsigned char *data, int len)
++{
++	if (!ok) {
++		ofono_error("Event download to UICC failed");
++		return;
++	}
 +
- 	gprs->last_context_id =3D id;
- 	gprs->contexts =3D g_slist_append(gprs->contexts, context);
++	if (len)
++		ofono_error("Event download returned %i bytes of data",
++				len);
++
++	DBG("Event download  to UICC reported no error");
++}
++
++static void stk_send_channel_status_event(struct ofono_stk *stk)
++{
++	struct stk_envelope e;
++
++	memset(&e, 0, sizeof(e));
++	e.type =3D STK_ENVELOPE_TYPE_EVENT_DOWNLOAD;
++	e.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL;
++	e.event_download.type =3D STK_EVENT_TYPE_CHANNEL_STATUS;
++	e.event_download.channel_status.channel.id =3D stk->channel.id;
++	e.event_download.channel_status.channel.status =3D stk->channel.status;
++
++	if (stk->channel.status =3D=3D STK_CHANNEL_PACKET_DATA_SERVICE_ACTIVATED)
++		memcpy(&e.event_download.channel_status.bearer_desc,
++				&stk->bearer_desc,
++				sizeof(struct stk_bearer_description));
++
++	if (stk_send_envelope(stk, &e, event_download_envelope_cb, 0))
++		event_download_envelope_cb(stk, FALSE, NULL, -1);
++}
++
++static void stk_send_data_available_event(struct ofono_stk *stk,
++						unsigned short data_available)
++{
++	struct stk_envelope e;
++
++	memset(&e, 0, sizeof(e));
++	e.type =3D STK_ENVELOPE_TYPE_EVENT_DOWNLOAD;
++	e.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL;
++	e.event_download.type =3D STK_EVENT_TYPE_DATA_AVAILABLE;
++	e.event_download.data_available.channel.id =3D stk->channel.id;
++	e.event_download.data_available.channel.status =3D stk->channel.status;
++	e.event_download.data_available.channel_data_len =3D data_available;
++
++	if (stk_send_envelope(stk, &e, event_download_envelope_cb, 0))
++		event_download_envelope_cb(stk, FALSE, NULL, -1);
++}
++
+ static void ofono_stk_remove_pdp_context_cb(int error, void *data)
+ {
+ 	struct ofono_stk *stk =3D data;
+@@ -503,12 +557,8 @@ static void ofono_stk_remove_pdp_context_cb(int error,=
+ void *data)
+ 			send_simple_response(stk, STK_RESULT_TYPE_NOT_CAPABLE);
+ 		else
+ 			send_simple_response(stk, STK_RESULT_TYPE_SUCCESS);
+-	} else {
+-		/*
+-		 * TODO
+-		 * Send Event channel status
+-		 */
+-	}
++	} else if (stk->report_channel_status)
++		stk_send_channel_status_event(stk);
  =
 
-@@ -3121,6 +3125,9 @@ static void activate_request_callback(const struct of=
-ono_error *error,
- 						gc->settings->ipv4) {
- 			pri_set_ipv4_addr(gc->settings->interface,
- 							gc->settings->ipv4->ip);
-+			if (ctx->host)
-+				pri_add_host_route(gc->settings->interface,
-+								ctx->host);
- 		}
+ 	/* free the buffers even in case of error */
+ 	g_free(stk->rx_buffer.data.array);
+@@ -607,10 +657,8 @@ static void ofono_stk_activate_pdp_context_cb(int erro=
+r, const char *interface,
  	}
  =
 
+ 	if (stk->pending_cmd =3D=3D NULL) {
+-		/*
+-		 * TODO
+-		 * Send Event channel status
+-		 */
++		if (stk->report_channel_status)
++			stk_send_channel_status_event(stk);
+ 		return;
+ 	}
+ =
+
+@@ -2515,6 +2563,8 @@ static gboolean handle_command_refresh(const struct s=
+tk_command *cmd,
+ 		case 5:
+ 		case 6:
+ 			free_idle_mode_text(stk);
++			stk->report_data_available =3D FALSE;
++			stk->report_channel_status =3D FALSE;
+ 			__ofono_sim_refresh(sim, file_list, FALSE, TRUE);
+ 			break;
+ 		}
+@@ -3140,6 +3190,39 @@ static gboolean handle_command_get_channel_status(co=
+nst struct stk_command *cmd,
+ 	return TRUE;
+ }
+ =
+
++
++static gboolean handle_command_setup_event_list(const struct stk_command *=
+cmd,
++						struct stk_response *rsp,
++						struct ofono_stk *stk)
++{
++	const struct stk_command_setup_event_list *sel =3D &cmd->setup_event_list;
++	unsigned int i;
++
++	stk->report_data_available =3D FALSE;
++	stk->report_channel_status =3D FALSE;
++
++	for (i =3D 0; i < sel->event_list.len; i++) {
++		switch (sel->event_list.list[i]) {
++		case STK_EVENT_TYPE_DATA_AVAILABLE:
++			DBG("Enable data available event");
++			stk->report_data_available =3D TRUE;
++			break;
++		case STK_EVENT_TYPE_CHANNEL_STATUS:
++			DBG("Enable channel status event");
++			stk->report_channel_status =3D TRUE;
++			break;
++		default:
++			DBG("Event type (%d) not supported",
++						sel->event_list.list[i]);
++			rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
++			return TRUE;
++		}
++	}
++
++	rsp->result.type =3D STK_RESULT_TYPE_SUCCESS;
++	return TRUE;
++}
++
+ static void stk_proactive_command_cancel(struct ofono_stk *stk)
+ {
+ 	if (stk->immediate_response)
+@@ -3358,6 +3441,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
+_stk *stk,
+ 							&rsp, stk);
+ 		break;
+ =
+
++	case STK_COMMAND_TYPE_SETUP_EVENT_LIST:
++		respond =3D handle_command_setup_event_list(stk->pending_cmd,
++							&rsp, stk);
++		break;
++
+ 	default:
+ 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
+ 		break;
 -- =
 
 1.7.1
 
 
---===============8083888543128904692==--
+--===============8882878891620963029==--
 
