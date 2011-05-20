@@ -1,169 +1,186 @@
-Content-Type: multipart/mixed; boundary="===============0109769822122444436=="
+Content-Type: multipart/mixed; boundary="===============3019946638262245880=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v2] reopen once if open device failed
-Date: Fri, 20 May 2011 06:53:09 -0700
-Message-ID: <1305899589.2681.4.camel@aeonflux>
-In-Reply-To: <1305881809-20355-1-git-send-email-caiwen.zhang@windriver.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH v4 1/8] stk: Clear 'respond_on_exit' flag after sending the
+ terminal response
+Date: Fri, 20 May 2011 18:26:14 +0200
+Message-ID: <1305908781-8322-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0109769822122444436==
+--===============3019946638262245880==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Caiwen,
+---
+ src/stk.c |   27 ++-------------------------
+ 1 files changed, 2 insertions(+), 25 deletions(-)
 
-> (1) Sometimes when open the data device, it may fail. If open the data de=
-vice failed,
-> retry once one second later.
-> =
+diff --git a/src/stk.c b/src/stk.c
+index c86cbfb..8214b65 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -128,6 +128,7 @@ static int stk_respond(struct ofono_stk *stk, struct st=
+k_response *rsp,
+ 	stk_command_free(stk->pending_cmd);
+ 	stk->pending_cmd =3D NULL;
+ 	stk->cancel_cmd =3D NULL;
++	stk->respond_on_exit =3D FALSE;
+ =
 
-> (2) Fix Huawei NDIS modem gprs doesn't work issue
+ 	stk->driver->terminal_response(stk, tlv_len, tlv, cb, stk);
+ =
 
-what does this comment mean. We should just not try the NDIS part of
-Huawei until I get clear specs on how to use the NDIS port. Even the
-basic AT^DHCP handling of this is unreliable.
+@@ -477,10 +478,8 @@ static void user_termination_cb(enum stk_agent_result =
+result, void *user_data)
+ {
+ 	struct ofono_stk *stk =3D user_data;
+ =
 
-> ---
->  plugins/huawei.c |   43 ++++++++++++++++++++++++++++++++++++++-----
->  1 files changed, 38 insertions(+), 5 deletions(-)
-> =
+-	if (result =3D=3D STK_AGENT_RESULT_TERMINATE) {
+-		stk->respond_on_exit =3D FALSE;
++	if (result =3D=3D STK_AGENT_RESULT_TERMINATE)
+ 		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
+-	}
+ }
+ =
 
-> diff --git a/plugins/huawei.c b/plugins/huawei.c
-> index e791718..6b2caa4 100644
-> --- a/plugins/huawei.c
-> +++ b/plugins/huawei.c
-> @@ -80,6 +80,7 @@ struct huawei_data {
->  	gboolean ndis;
->  	guint sim_poll_timeout;
->  	guint sim_poll_count;
-> +	guint reopen_timeout;
->  };
->  =
+ static void stk_alpha_id_set(struct ofono_stk *stk,
+@@ -598,7 +597,6 @@ static void default_agent_notify(gpointer user_data)
+ =
 
->  #define MAX_SIM_POLL_COUNT 5
-> @@ -107,6 +108,11 @@ static void huawei_remove(struct ofono_modem *modem)
->  =
+ 	stk->default_agent =3D NULL;
+ 	stk->current_agent =3D stk->session_agent;
+-	stk->respond_on_exit =3D FALSE;
+ }
+ =
 
->  	DBG("%p", modem);
->  =
+ static void session_agent_notify(gpointer user_data)
+@@ -617,7 +615,6 @@ static void session_agent_notify(gpointer user_data)
+ =
 
-> +	if (data->reopen_timeout > 0) {
-> +		g_source_remove(data->reopen_timeout);
-> +		data->reopen_timeout =3D 0;
-> +	}
-> +
->  	ofono_modem_set_data(modem, NULL);
->  =
+ 	stk->session_agent =3D NULL;
+ 	stk->current_agent =3D stk->default_agent;
+-	stk->respond_on_exit =3D FALSE;
+ =
 
->  	if (data->modem)
-> @@ -465,6 +471,20 @@ static GAtChat *open_device(struct ofono_modem *mode=
-m,
->  	return chat;
->  }
->  =
+ 	if (stk->remove_agent_source) {
+ 		g_source_remove(stk->remove_agent_source);
+@@ -1159,8 +1156,6 @@ static void request_selection_cb(enum stk_agent_resul=
+t result, uint8_t id,
+ {
+ 	struct ofono_stk *stk =3D user_data;
+ =
 
-> +static void huawei_disconnect(gpointer user_data);
-> +
-> +static gboolean reopen_callback(gpointer user_data)
-> +{
-> +	struct ofono_modem *modem =3D user_data;
-> +	struct huawei_data *data =3D ofono_modem_get_data(modem);
-> +
-> +	huawei_disconnect(user_data);
-> +
-> +	data->reopen_timeout =3D 0;
-> +
-> +	return FALSE;
-> +}
-> +
->  static void huawei_disconnect(gpointer user_data)
->  {
->  	struct ofono_modem *modem =3D user_data;
-> @@ -476,8 +496,17 @@ static void huawei_disconnect(gpointer user_data)
->  	data->modem =3D NULL;
->  =
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_OK:
+ 	{
+@@ -1243,8 +1238,6 @@ static void display_text_cb(enum stk_agent_result res=
+ult, void *user_data)
+ 	static unsigned char screen_busy_result[] =3D { 0x01 };
+ 	static struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_FAILURE =
+};
+ =
 
->  	data->modem =3D open_device(modem, "Modem", "Modem: ");
-> -	if (data->modem =3D=3D NULL)
-> +	/* retry once if failed */
-> +	if (data->modem =3D=3D NULL) {
-> +		if (data->reopen_timeout =3D=3D 0) {
-> +			data->reopen_timeout =3D
-> +				g_timeout_add_seconds(1, reopen_callback,
-> +					modem);
-> +
-> +			ofono_debug("open device failed, try to reopen it.");
-> +		}
->  		return;
-> +	}
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	/*
+ 	 * There are four possible paths for DisplayText with immediate
+ 	 * response flag set:
+@@ -1386,8 +1379,6 @@ static void request_confirmation_cb(enum stk_agent_re=
+sult result,
+ 	struct stk_command_get_inkey *cmd =3D &stk->pending_cmd->get_inkey;
+ 	struct stk_response rsp;
+ =
 
-Please do not nest here.
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_OK:
+ 		memset(&rsp, 0, sizeof(rsp));
+@@ -1442,8 +1433,6 @@ static void request_key_cb(enum stk_agent_result resu=
+lt, char *string,
+ 	struct stk_command_get_inkey *cmd =3D &stk->pending_cmd->get_inkey;
+ 	struct stk_response rsp;
+ =
 
-	if (data->modem =3D=3D NULL) {
-		if (data->reopen_timeout > 0)
-			return;
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_OK:
+ 		memset(&rsp, 0, sizeof(rsp));
+@@ -1560,8 +1549,6 @@ static void request_string_cb(enum stk_agent_result r=
+esult, char *string,
+ 	gboolean packed =3D (qualifier & (1 << 3)) !=3D 0;
+ 	struct stk_response rsp;
+ =
 
-		data->reopen_timeout =3D ...
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_OK:
+ 		memset(&rsp, 0, sizeof(rsp));
+@@ -1699,8 +1686,6 @@ static void confirm_call_cb(enum stk_agent_result res=
+ult, gboolean confirm,
+ 	struct stk_response rsp;
+ 	int err;
+ =
 
-		return;
-	}
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_TIMEOUT:
+ 		confirm =3D FALSE;
+@@ -2283,8 +2268,6 @@ static void send_dtmf_cancel(struct ofono_stk *stk)
+ 	struct ofono_voicecall *vc =3D NULL;
+ 	struct ofono_atom *vc_atom;
+ =
 
->  =
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	vc_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
+ 						OFONO_ATOM_TYPE_VOICECALL);
+ 	if (vc_atom)
+@@ -2300,8 +2283,6 @@ static void dtmf_sent_cb(int error, void *user_data)
+ {
+ 	struct ofono_stk *stk =3D user_data;
+ =
 
->  	g_at_chat_set_disconnect_function(data->modem,
->  						huawei_disconnect, modem);
-> @@ -559,6 +588,11 @@ static int huawei_disable(struct ofono_modem *modem)
->  =
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	stk_alpha_id_unset(stk);
+ =
 
->  	DBG("%p", modem);
->  =
+ 	if (error =3D=3D ENOENT) {
+@@ -2413,8 +2394,6 @@ static void play_tone_cb(enum stk_agent_result result=
+, void *user_data)
+ {
+ 	struct ofono_stk *stk =3D user_data;
+ =
 
-> +	if (data->reopen_timeout > 0) {
-> +		g_source_remove(data->reopen_timeout);
-> +		data->reopen_timeout =3D 0;
-> +	}
-> +
->  	if (data->sim_poll_timeout > 0) {
->  		g_source_remove(data->sim_poll_timeout);
->  		data->sim_poll_timeout =3D 0;
-> @@ -682,16 +716,15 @@ static void huawei_post_online(struct ofono_modem *=
-modem)
->  	ofono_ussd_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
->  						"atmodem", data->pcui);
->  =
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_OK:
+ 	case STK_AGENT_RESULT_TIMEOUT:
+@@ -2547,8 +2526,6 @@ static void confirm_launch_browser_cb(enum stk_agent_=
+result result,
+ 	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
+ 	struct stk_response rsp;
+ =
 
-> -	if ((data->sim_state =3D=3D HUAWEI_SIM_STATE_VALID ||
-> -			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) &&
-> -			data->modem !=3D NULL) {
-> +	if (data->sim_state =3D=3D HUAWEI_SIM_STATE_VALID ||
-> +			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) {
+-	stk->respond_on_exit =3D FALSE;
+-
+ 	switch (result) {
+ 	case STK_AGENT_RESULT_TIMEOUT:
+ 		confirm =3D FALSE;
+-- =
 
-Why this change?
-
->  		data->gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_HUAWEI,
->  						"atmodem", data->pcui);
->  =
-
->  		if (data->ndis =3D=3D TRUE)
->  			data->gc =3D ofono_gprs_context_create(modem, 0,
->  						"huaweimodem", data->pcui);
-> -		else
-> +		else if (data->modem !=3D NULL)
->  			data->gc =3D ofono_gprs_context_create(modem, 0,
->  						"atmodem", data->modem);
->  =
-
-
-I do not understand this change.
-
-Regards
-
-Marcel
+1.7.1
 
 
-
---===============0109769822122444436==--
+--===============3019946638262245880==--
 
