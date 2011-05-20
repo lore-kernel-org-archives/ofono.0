@@ -1,146 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============4502085846825264107=="
+Content-Type: multipart/mixed; boundary="===============9119417718128722023=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH V2 3/4] voicecall: save last dialed number
-Date: Fri, 20 May 2011 11:41:00 +0200
-Message-ID: <1305884461-4476-4-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH V2 4/4] voicecall: add +BLDN support for HFP emulator
+Date: Fri, 20 May 2011 11:41:01 +0200
+Message-ID: <1305884461-4476-5-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1305884461-4476-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4502085846825264107==
+--===============9119417718128722023==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/voicecall.c |   45 +++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 45 insertions(+), 0 deletions(-)
+ src/voicecall.c |   31 +++++++++++++++++++++++++++++++
+ 1 files changed, 31 insertions(+), 0 deletions(-)
 
 diff --git a/src/voicecall.c b/src/voicecall.c
-index ff1f0fc..e91ba42 100644
+index e91ba42..9132fed 100644
 --- a/src/voicecall.c
 +++ b/src/voicecall.c
-@@ -37,11 +37,15 @@
- #include "common.h"
- #include "simutil.h"
- #include "smsutil.h"
-+#include "storage.h"
- =
-
- #define MAX_VOICE_CALLS 16
- =
-
- #define VOICECALL_FLAG_SIM_ECC_READY 0x1
- =
-
-+#define VOICECALL_STORE "voicecall"
-+#define LASTDIAL_GROUP "LastDial"
-+
- GSList *g_drivers =3D NULL;
- =
-
- struct multi_release {
-@@ -71,6 +75,8 @@ struct ofono_voicecall {
- 	GQueue *toneq;
- 	guint tone_source;
- 	unsigned int hfp_watch;
-+	GKeyFile *settings;
-+	char *imsi;
- };
- =
-
- struct voicecall {
-@@ -1473,6 +1479,12 @@ static int voicecall_dial(struct ofono_voicecall *vc=
-, const char *number,
- =
-
- 	vc->driver->dial(vc, &ph, clir, cb, vc);
- =
-
-+	if (vc->settings) {
-+		g_key_file_set_string(vc->settings, LASTDIAL_GROUP,
-+					"Number", number);
-+		storage_sync(vc->imsi, VOICECALL_STORE, vc->settings);
-+	}
-+
- 	return 0;
- }
- =
-
-@@ -2466,6 +2478,33 @@ static void emulator_hfp_unregister(struct ofono_ato=
+@@ -2474,6 +2474,10 @@ static void emulator_hfp_unregister(struct ofono_ato=
 m *atom)
+ 						OFONO_ATOM_TYPE_EMULATOR_HFP,
+ 						emulator_remove_handler,
+ 						"D");
++	__ofono_modem_foreach_registered_atom(modem,
++						OFONO_ATOM_TYPE_EMULATOR_HFP,
++						emulator_remove_handler,
++						"+BLDN");
+ =
+
  	__ofono_modem_remove_atom_watch(modem, vc->hfp_watch);
  }
+@@ -3025,6 +3029,32 @@ static void emulator_atd_cb(struct ofono_emulator *e=
+m,
+ 	};
+ }
  =
 
-+static void voicecall_load_settings(struct ofono_voicecall *vc)
++static void emulator_bldn_cb(struct ofono_emulator *em,
++			struct ofono_emulator_request *req, void *userdata)
 +{
-+	const char *imsi;
++	struct ofono_voicecall *vc =3D userdata;
++	const char *str;
++	struct ofono_error result;
++	GError *error =3D NULL;
 +
-+	imsi =3D ofono_sim_get_imsi(vc->sim);
-+	if (imsi =3D=3D NULL)
-+		return;
++	switch (ofono_emulator_request_get_type(req)) {
++	case OFONO_EMULATOR_REQUEST_TYPE_COMMAND_ONLY:
++		if (vc->settings =3D=3D NULL)
++			goto fail;
 +
-+	vc->settings =3D storage_open(imsi, VOICECALL_STORE);
-+
-+	if (vc->settings =3D=3D NULL)
-+		return;
-+
-+	vc->imsi =3D g_strdup(imsi);
-+}
-+
-+static void voicecall_close_settings(struct ofono_voicecall *vc)
-+{
-+	if (vc->settings) {
-+		storage_close(vc->imsi, VOICECALL_STORE, vc->settings, TRUE);
-+
-+		g_free(vc->imsi);
-+		vc->imsi =3D NULL;
-+		vc->settings =3D NULL;
-+	}
-+}
-+
- static void voicecall_unregister(struct ofono_atom *atom)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
-@@ -2476,6 +2515,8 @@ static void voicecall_unregister(struct ofono_atom *a=
-tom)
- =
-
- 	emulator_hfp_unregister(atom);
- =
-
-+	voicecall_close_settings(vc);
-+
- 	if (vc->sim_state_watch) {
- 		ofono_sim_remove_state_watch(vc->sim, vc->sim_state_watch);
- 		vc->sim_state_watch =3D 0;
-@@ -2615,6 +2656,9 @@ static void sim_state_watch(enum ofono_sim_state new_=
-state, void *user)
- =
-
- 		free_sim_ecc_numbers(vc, FALSE);
- 		set_new_ecc(vc);
-+	case OFONO_SIM_STATE_READY:
-+		voicecall_load_settings(vc);
++		str =3D g_key_file_get_string(vc->settings, LASTDIAL_GROUP,
++						"Number", &error);
++		emulator_dial(em, vc, str);
 +		break;
- 	default:
- 		break;
- 	}
-@@ -2627,6 +2671,7 @@ static void sim_watch(struct ofono_atom *atom,
- 	struct ofono_sim *sim =3D __ofono_atom_get_data(atom);
++
++	default:
++fail:
++		result.error =3D 0;
++		result.type =3D OFONO_ERROR_TYPE_FAILURE;
++		ofono_emulator_send_final(em, &result);
++	};
++}
++
+ static void emulator_hfp_watch(struct ofono_atom *atom,
+ 				enum ofono_atom_watch_condition cond,
+ 				void *data)
+@@ -3041,6 +3071,7 @@ static void emulator_hfp_watch(struct ofono_atom *ato=
+m,
+ 	ofono_emulator_add_handler(em, "+CLCC", emulator_clcc_cb, data, NULL);
+ 	ofono_emulator_add_handler(em, "+CHLD", emulator_chld_cb, data, NULL);
+ 	ofono_emulator_add_handler(em, "D", emulator_atd_cb, data, NULL);
++	ofono_emulator_add_handler(em, "+BLDN", emulator_bldn_cb, data, NULL);
+ }
  =
 
- 	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		voicecall_close_settings(vc);
- 		vc->sim_state_watch =3D 0;
- 		vc->sim =3D NULL;
- 		return;
+ void ofono_voicecall_register(struct ofono_voicecall *vc)
 -- =
 
 1.7.1
 
 
---===============4502085846825264107==--
+--===============9119417718128722023==--
 
