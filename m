@@ -1,88 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8727848395019932729=="
+Content-Type: multipart/mixed; boundary="===============4270052188629831902=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH] doc: add hfp-overview.txt
-Date: Fri, 20 May 2011 11:47:18 +0200
-Message-ID: <1305884838-4646-1-git-send-email-frederic.danis@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Could not able to detect ST Ericsson Modems
+Date: Fri, 20 May 2011 06:49:06 -0700
+Message-ID: <1305899346.2681.1.camel@aeonflux>
+In-Reply-To: <BANLkTim7iBD9b5bQn8Ub-UWHGPirW7t=zw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8727848395019932729==
+--===============4270052188629831902==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/hfp-overview.txt |   49 ++++++++++++++++++++++++++++++++++++++++++++++=
-+++
- 1 files changed, 49 insertions(+), 0 deletions(-)
- create mode 100644 doc/hfp-overview.txt
+Hi Yuvaraj,
 
-diff --git a/doc/hfp-overview.txt b/doc/hfp-overview.txt
-new file mode 100644
-index 0000000..3ca1213
---- /dev/null
-+++ b/doc/hfp-overview.txt
-@@ -0,0 +1,49 @@
-+HandsFree Profile Audio Gateway diagram
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+This diagram explains how oFono manages HFP AG.
-+
-+AT commands and unsolicited results are managed in their related atom (eg.=
- ATA
-+is managed in voicecall atom).
-+The emulator atom is managing AT commands or unsolicited results that are =
-not
-+falling into a specific atom.
-+
-+1) HFP AG plugin registers a HFP AG server as soon as a voicecall atom exi=
-st.
-+2) When a connection occurs on this server, HFP AG plugin creates and regi=
-sters
-+   an emulator atom.
-+3) Emulator atom will start a GAtServer and registers non-atom-specific
-+   AT commands to it.
-+4) On emulator atom registration, voice call related atoms (voicecall, net=
-work
-+   and sim) register AT callbacks they managed through emulator atom.
-+
-+
-+*=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D*                *-----------------*
-+|           |   Register     |                 |
-+|   BlueZ   |<---------------|  HFP AG plugin  |
-+|           |   SDP record   |                 |
-+*=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D*                *-----------------*
-+                                      |
-+                                      | Start emulator on connection
-+                                      |
-+                                      V
-+                             *-----------------*
-+                             |                 |
-+                   *-------->|  Emulator Atom  |
-+                   |         |                 |
-+                   |         *-----------------*
-+                   |                  |
-+         Register  |                  | Register AT commands
-+            AT     |                  V
-+         callbacks |         *-----------------*
-+                   |         |                 |
-+                   |         |    GAtServer    |
-+                   |         |                 |
-+                   |         *-----------------*
-+                   |
-+                   *---------------------*-------------------*
-+                   |                     |                   |
-+          *----------------*     *--------------*     *-------------*
-+          |                |     |              |     |             |
-+          | Voicecall atom |     | Network atom |     |  SIM atom   |
-+          |                |     |              |     |             |
-+          *----------------*     *--------------*     *-------------*
--- =
+> I am connecting ST Ericsson modem with Nokia N900 device.
+> =
 
-1.7.1
+> N900 has Meego with CAIF protocol support. And i modified 97-ofono.rules
+> file to load ST Ericsson's modem
+> =
+
+> But N900 could not able to detect the ST Ericsson modem. I verified via
+> dmesg and lsusb commands.
+> =
+
+> Do i need to enable any modules in meego kernel?
+
+how did you attach the STE modem to your N900. And you might also need
+the STE init daemon to detect the modem.
+
+Personally I never had a STE modem, so I can't really help you here.
+
+Regards
+
+Marcel
 
 
---===============8727848395019932729==--
+
+--===============4270052188629831902==--
 
