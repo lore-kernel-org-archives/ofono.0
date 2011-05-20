@@ -1,62 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============5025979265019690747=="
+Content-Type: multipart/mixed; boundary="===============5968476781623128389=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH] emulator: fix dun_ath_cb() not to remove GAtServer
- io_disconnect() CB
-Date: Fri, 20 May 2011 11:40:32 +0200
-Message-ID: <4DD63710.7040503@linux.intel.com>
-In-Reply-To: <4DD54135.7070709@gmail.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH V2 0/4] Add dial support for HFP emulator
+Date: Fri, 20 May 2011 11:40:57 +0200
+Message-ID: <1305884461-4476-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5025979265019690747==
+--===============5968476781623128389==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Create a generic dial function that can be called by DBus or emulator
+Add support of ATD and AT+BLDN
+Save last dialed number in /var/lib/ofono/<modem>/voicecall to be used
+by AT+BLDN
 
-On 19/05/2011 18:11, Denis Kenzior wrote:
-> Hi Guillaume,
->
-> On 05/19/2011 08:03 AM, Guillaume Zajac wrote:
->> ---
->>   src/emulator.c |    4 ++++
->>   1 files changed, 4 insertions(+), 0 deletions(-)
->>
->> diff --git a/src/emulator.c b/src/emulator.c
->> index c17b901..251bed8 100644
->> --- a/src/emulator.c
->> +++ b/src/emulator.c
->> @@ -219,15 +219,19 @@ static void dun_ath_cb(GAtServer *server, GAtServe=
-rRequestType type,
->>   		if (val !=3D 0)
->>   			goto error;
->>
->> +		g_at_server_suspend(em->server);
->>   		g_at_ppp_unref(em->ppp);
->>   		em->ppp =3D NULL;
->> +		g_at_server_resume(em->server);
->>
->>   		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
->>   		break;
->>
->>   	case G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY:
->> +		g_at_server_suspend(em->server);
->>   		g_at_ppp_unref(em->ppp);
->>   		em->ppp =3D NULL;
->> +		g_at_server_resume(em->server);
->>
->>   		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
->>   		break;
-> This really sounds wrong.  I suggest that we not set the disconnect
-> function in GAtPPP when unrefing if GAtPPP is currently suspended.
+Fr=C3=A9d=C3=A9ric Danis (4):
+  voicecall: create generic dial function
+  voicecall: add ATD support for HFP emulator
+  voicecall: save last dialed number
+  voicecall: add +BLDN support for HFP emulator
 
-As it is bound to the escape sequence implementation and ATO0 CB,
-I have included it into the v6 of escape sequence implementation.
+ src/voicecall.c |  245 +++++++++++++++++++++++++++++++++++++++++++++++++--=
+----
+ 1 files changed, 218 insertions(+), 27 deletions(-)
 
-Kind regards,
-Guillaume
 
---===============5025979265019690747==--
+--===============5968476781623128389==--
 
