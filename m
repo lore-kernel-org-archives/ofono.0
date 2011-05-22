@@ -1,32 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8812161032208637943=="
+Content-Type: multipart/mixed; boundary="===============5775381559389292731=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 5/7] gobi: remove set but not used var
-Date: Fri, 20 May 2011 15:07:48 -0500
-Message-ID: <4DD6CA14.7020107@gmail.com>
-In-Reply-To: <1305918225-8438-5-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH 0/5] Add support of remote hangup
+Date: Sun, 22 May 2011 06:00:12 -0500
+Message-ID: <4DD8ECBC.60000@gmail.com>
+In-Reply-To: <1305725610-32602-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8812161032208637943==
+--===============5775381559389292731==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Nicolas,
 
-On 05/20/2011 02:03 PM, Gustavo F. Padovan wrote:
-> ---
->  plugins/gobi.c |    4 +---
->  1 files changed, 1 insertions(+), 3 deletions(-)
+On 05/18/2011 08:33 AM, Nicolas Bertrand wrote:
+> These patchs introduce the possibility of remote hangup
+> by selecting the call in the call table and use the new =
+
+> button "hangup".
+> =
+
+> Nicolas Bertrand (5):
+>   controlbase: Add hangup button
+>   callmanager: Remote hangup slot
+>   hardwaremanipulator: add hangup signal
+>   control: Handle hangup call
+>   phonesim: Connect hangup signal
 > =
 
 
-Nice catch, patch has been applied.  Thanks.
+All 5 patches have been applied, thanks.
 
 Regards,
 -Denis
 
-
---===============8812161032208637943==--
+--===============5775381559389292731==--
 
