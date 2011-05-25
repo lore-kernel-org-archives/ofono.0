@@ -1,103 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============3782311202048886159=="
+Content-Type: multipart/mixed; boundary="===============3158782459740703113=="
 MIME-Version: 1.0
 From: Bernhard.Guillon@hale.at
-Subject: [PATCH v2 2/3] network-registration.c: implement CIND forTelit UC864-G
-Date: Wed, 25 May 2011 15:14:24 +0200
-Message-ID: <1306329265-12066-2-git-send-email-Bernhard.Guillon@hale.at>
+Subject: [PATCH v2 3/3] udev: add Telit UC864-G and update udev rules
+Date: Wed, 25 May 2011 15:14:25 +0200
+Message-ID: <1306329265-12066-3-git-send-email-Bernhard.Guillon@hale.at>
 In-Reply-To: <1306329265-12066-1-git-send-email-Bernhard.Guillon@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3782311202048886159==
+--===============3158782459740703113==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Bernhard Guillon <Bernhard.Guillon@hale.at>
 
-*UC864 has an incompatible CIND
-*add a Telit specific check for "not measurable" strength
+*for now only check for Modem, add GPS later
 
 Co-authored-by: Christopher Vogl <Christopher.Vogl@hale.at>
 ---
- drivers/atmodem/network-registration.c |   40 ++++++++++++++++++++++++++++=
-+--
- 1 files changed, 37 insertions(+), 3 deletions(-)
+ plugins/ofono.rules |    8 ++++++++
+ plugins/udev.c      |   31 +++++++++++++++++++++++++++++++
+ 2 files changed, 39 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index b3aa511..984e85e 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -666,7 +666,20 @@ static void ciev_notify(GAtResult *result, gpointer us=
-er_data)
- 	if (!g_at_result_iter_next_number(&iter, &strength))
- 		return;
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index 5a36380..87ef065 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -344,6 +344,14 @@ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"14=
+85", ENV{OFONO_IFACE_NUM}=3D=3D"02", E
+ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1486", ENV{OFONO_IFACE=
+_NUM}=3D=3D"00", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
+ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1486", ENV{OFONO_IFACE=
+_NUM}=3D=3D"02", ENV{OFONO_HUAWEI_TYPE}=3D"Pcui"
  =
 
--	strength =3D (strength * 100) / (nd->signal_max - nd->signal_min);
-+	switch (nd->vendor) {
-+	case OFONO_VENDOR_TELIT:
-+		/* Check for "signal not measurable" */
-+		if (strength =3D=3D 99)
-+			strength =3D 0;
-+		else
-+			strength =3D (strength * 100) / (nd->signal_max -
-+						nd->signal_min);
-+		break;
-+	default:
-+		strength =3D (strength * 100) / (nd->signal_max - nd->signal_min);
-+		break;
++#Telit UC864-G
++ATTRS{idVendor}=3D=3D"1bc7", ATTRS{idProduct}=3D=3D"1004", ENV{OFONO_IFACE=
+_NUM}=3D=3D"00", ENV{OFONO_TELIT_TYPE}=3D"Modem"
++ATTRS{idVendor}=3D=3D"1bc7", ATTRS{idProduct}=3D=3D"1004", ENV{OFONO_IFACE=
+_NUM}=3D=3D"01", ENV{OFONO_TELIT_TYPE}=3D"Aux"
++ATTRS{idVendor}=3D=3D"1bc7", ATTRS{idProduct}=3D=3D"1004", ENV{OFONO_IFACE=
+_NUM}=3D=3D"02", ENV{OFONO_TELIT_TYPE}=3D"GPS"
++ATTRS{idVendor}=3D=3D"1bc7", ATTRS{idProduct}=3D=3D"1004", ENV{OFONO_IFACE=
+_NUM}=3D=3D"03", ENV{OFONO_TELIT_TYPE}=3D"UART"
++
++ATTRS{idVendor}=3D=3D"1bc7", ENV{OFONO_DRIVER}=3D"telit"
++
+ LABEL=3D"ofono_tty_end"
+ =
+
+ # ISI/Phonet drivers
+diff --git a/plugins/udev.c b/plugins/udev.c
+index cbb596d..28fff72 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -588,6 +588,35 @@ static void add_linktop(struct ofono_modem *modem,
+ 	}
+ }
+ =
+
++static void add_telit(struct ofono_modem *modem,
++					struct udev_device *udev_device)
++{
++	struct udev_list_entry *entry;
++	const char *devnode;
++	gboolean found =3D FALSE;
++
++	DBG("modem %p", modem);
++
++	entry =3D udev_device_get_properties_list_entry(udev_device);
++	while (entry) {
++		const char *name =3D udev_list_entry_get_name(entry);
++		const char *value =3D udev_list_entry_get_value(entry);
++
++		if (g_str_equal(name, "OFONO_TELIT_TYPE") =3D=3D TRUE &&
++					g_str_equal(value, "Modem") =3D=3D TRUE) {
++			found =3D TRUE;
++		}
++		entry =3D udev_list_entry_get_next(entry);
 +	}
 +
- 	ofono_netreg_strength_notify(netreg, strength);
- }
- =
-
-@@ -798,8 +811,19 @@ static void cind_cb(gboolean ok, GAtResult *result, gp=
-ointer user_data)
- =
-
- 	g_at_result_iter_next_number(&iter, &strength);
- =
-
--	strength =3D (strength * 100) / (nd->signal_max - nd->signal_min);
--
-+	switch (nd->vendor) {
-+	case OFONO_VENDOR_TELIT:
-+		/* Check for "signal not measurable" */
-+		if (strength =3D=3D 99)
-+			strength =3D 0;
-+		else
-+			strength =3D (strength * 100) / (nd->signal_max -
-+						nd->signal_min);
-+		break;
-+	default:
-+		strength =3D (strength * 100) / (nd->signal_max - nd->signal_min);
-+		break;
-+	}
- 	cb(&error, strength, cbd->data);
- }
- =
-
-@@ -1302,6 +1326,16 @@ static void at_creg_set_cb(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- 	case OFONO_VENDOR_NOKIA:
- 		/* Signal strength reporting via CIND is not supported */
- 		break;
-+	case OFONO_VENDOR_TELIT:
-+		/* Use RSSI instead of signal.*/
-+		nd->signal_index =3D 9;
-+		nd->signal_min =3D 0;
-+		nd->signal_max =3D 5;
-+		g_at_chat_send(nd->chat, "AT+CIND=3D1", cind_prefix,
-+						NULL, NULL, NULL);
-+		g_at_chat_register(nd->chat, "+CIEV:", ciev_notify,
-+					FALSE, netreg, NULL);
-+		break;
- 	default:
- 		g_at_chat_send(nd->chat, "AT+CIND=3D?", cind_prefix,
- 				cind_support_cb, netreg, NULL);
++	if (found =3D=3D FALSE)
++		return;
++
++	devnode =3D udev_device_get_devnode(udev_device);
++	ofono_modem_set_string(modem, "Modem", devnode);
++	ofono_modem_register(modem);
++}
++
+ static void add_modem(struct udev_device *udev_device)
+ {
+ 	struct ofono_modem *modem;
+@@ -682,6 +711,8 @@ done:
+ 		add_calypso(modem, udev_device);
+ 	else if (g_strcmp0(driver, "tc65") =3D=3D 0)
+ 		add_tc65(modem, udev_device);
++	else if (g_strcmp0(driver, "telit") =3D=3D 0)
++		add_telit(modem, udev_device);
+ 	else if (g_strcmp0(driver, "nokiacdma") =3D=3D 0)
+ 		add_nokiacdma(modem, udev_device);
+         else if (g_strcmp0(driver, "linktop") =3D=3D 0)
 -- =
 
 1.7.0.4
@@ -108,5 +111,5 @@ esult, gpointer user_data)
 Scanned by MailScanner.
 
 
---===============3782311202048886159==--
+--===============3158782459740703113==--
 
