@@ -1,29 +1,25 @@
-Content-Type: multipart/mixed; boundary="===============0040960436134021957=="
+Content-Type: multipart/mixed; boundary="===============0035617411543293073=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v6 3/5] private-network: add request/release functions and
- new feature to Makefile.am
-Date: Wed, 25 May 2011 05:38:42 -0500
-Message-ID: <4DDCDC32.5060301@gmail.com>
-In-Reply-To: <1305799112-14289-4-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH_v6 1/5] gathdlc: add g_at_hdlc_resume() API
+Date: Wed, 25 May 2011 05:39:16 -0500
+Message-ID: <4DDCDC54.7070107@gmail.com>
+In-Reply-To: <1305884296-2601-2-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0040960436134021957==
+--===============0035617411543293073==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Guillaume,
 
-On 05/19/2011 04:58 AM, Guillaume Zajac wrote:
+On 05/20/2011 04:38 AM, Guillaume Zajac wrote:
 > ---
->  Makefile.am           |    3 +-
->  src/ofono.h           |    6 +++
->  src/private-network.c |   91 +++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  3 files changed, 99 insertions(+), 1 deletions(-)
->  create mode 100644 src/private-network.c
+>  gatchat/gathdlc.c |   16 ++++++++++++++++
+>  gatchat/gathdlc.h |    1 +
+>  2 files changed, 17 insertions(+), 0 deletions(-)
 > =
 
 
@@ -32,5 +28,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============0040960436134021957==--
+--===============0035617411543293073==--
 
