@@ -1,120 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============6014577762509943871=="
+Content-Type: multipart/mixed; boundary="===============9219922525788039567=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH V2 1/4] voicecall: create generic dial function
-Date: Wed, 25 May 2011 05:59:43 -0500
-Message-ID: <4DDCE11F.1070001@gmail.com>
-In-Reply-To: <1305884461-4476-2-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH V2 2/4] voicecall: add ATD support for HFP emulator
+Date: Wed, 25 May 2011 06:16:22 -0500
+Message-ID: <4DDCE506.1040406@gmail.com>
+In-Reply-To: <1305884461-4476-3-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6014577762509943871==
+--===============9219922525788039567==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Fr=C3=A9d=C3=A9ric,
 
-On 05/20/2011 04:40 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> split manager_dial between generic and dbus parts
-> ---
->  src/voicecall.c |   91 ++++++++++++++++++++++++++++++++++++++-----------=
------
->  1 files changed, 64 insertions(+), 27 deletions(-)
-> =
-
-
 <snip>
 
-> +
-> +static DBusMessage *manager_dial(DBusConnection *conn,
-> +					DBusMessage *msg, void *data)
+> +static void emulator_dial_callback(const struct ofono_error *error, void=
+ *data)
 > +{
 > +	struct ofono_voicecall *vc =3D data;
-> +	const char *number;
-> +	const char *clirstr;
-> +	enum ofono_clir_option clir;
+> +	const char *number =3D NULL;
+> +	gboolean need_to_emit;
+> +	struct voicecall *v;
+> +
+> +	v =3D dial_handle_result(vc, error, number, &need_to_emit);
+> +
+> +	if (v =3D=3D NULL) {
+> +		struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+> +
+> +		if (is_emergency_number(vc, number) =3D=3D TRUE)
+> +			__ofono_modem_dec_emergency_mode(modem);
+> +	}
+> +
+> +	if (need_to_emit)
+> +		voicecalls_emit_call_added(vc, v);
+> +}
+> +
+> +static void emulator_dial(struct ofono_emulator *em, struct ofono_voicec=
+all *vc,
+> +				const char *number)
+> +{
+> +	struct ofono_error result;
 > +	int err;
-> +	DBusMessage *reply =3D NULL;
 > +
-> +	if (vc->pending)
-> +		return __ofono_error_busy(msg);
+> +	result.error =3D 0;
 > +
-> +	if (dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &number,
-> +					DBUS_TYPE_STRING, &clirstr,
-> +					DBUS_TYPE_INVALID) =3D=3D FALSE)
-> +		return __ofono_error_invalid_args(msg);
+> +	if (number =3D=3D NULL || number[0] =3D=3D '\0') {
+> +		result.type =3D OFONO_ERROR_TYPE_FAILURE;
+> +		goto send;
+> +	}
 > +
-> +	if (clir_string_to_clir(clirstr, &clir) =3D=3D FALSE)
-> +		return __ofono_error_invalid_format(msg);
-> +
->  	vc->pending =3D dbus_message_ref(msg);
->  =
-
-> -	string_to_phone_number(number, &ph);
-> +	err =3D voicecall_dial(vc, number, clir, manager_dial_callback, vc);
+> +	err =3D voicecall_dial(vc, number, OFONO_CLIR_OPTION_DEFAULT,
+> +					emulator_dial_callback, vc);
 > +	switch (err) {
 > +	case 0:
-> +		break;
-
-Maybe I'm missing something, but why don't you do something like:
-
-if (err >=3D 0)
-	return NULL;
-
-vc->pending =3D NULL;
-dbus_message_unref(msg);
-
-> +
-> +	case -EINVAL:
-> +		reply =3D __ofono_error_invalid_format(msg);
-> +		break;
-
-And then simply use return __ofono_error... here?
-
->  =
-
-> -	vc->driver->dial(vc, &ph, clir, manager_dial_callback, vc);
-> +	case -ENETDOWN:
-> +		reply =3D __ofono_error_not_available(msg);
-> +		break;
->  =
-
-
-And here
-
-> -	return NULL;
-> +	case -ENOTSUP:
-> +		reply =3D __ofono_error_not_implemented(msg);
+> +		result.type =3D OFONO_ERROR_TYPE_NO_ERROR;
 > +		break;
 > +
 
-And here
+Actually you can't do this.  There are bizarre circumstances where the
+dial callback will be called synchronously, so even though all
+conditions in voicecall_dial are satisfied and it returns 0, the modem
+driver still fails to dispatch the ATD.  In which case you will
+erroneously return OK.
 
-> +	default:
-> +		reply =3D __ofono_error_failed(msg);
-> +		break;
-> +	}
-> +
+e.g.:
 
-And here
+voicecall_dial ->
+	at_modem_dial ->
+		emulator_dial_callback
+voicecall_dial
 
-> +	if (reply !=3D NULL) {
-> +		dbus_message_unref(msg);
-> +		vc->pending =3D NULL;
-> +	}
-> +
-> +	return reply;
-
-And then this part is not needed.
-
->  }
->  =
-
->  static DBusMessage *manager_transfer(DBusConnection *conn,
+you have to be also careful of the timing of the ofono_voicecall_notify
+events and the ATD callback.  You should not report cind until you have
+sent the final response to the ATD.
 
 Regards,
 -Denis
 
---===============6014577762509943871==--
+--===============9219922525788039567==--
 
