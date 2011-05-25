@@ -1,33 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============5679597209963164380=="
+Content-Type: multipart/mixed; boundary="===============0368123954278417743=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v6 5/5] gsmdial: add escape sequence/ATH0/ATO0 testing
- option
-Date: Wed, 25 May 2011 05:43:33 -0500
-Message-ID: <4DDCDD55.3010107@gmail.com>
-In-Reply-To: <1305884296-2601-6-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH_v6 4/5] emulator: add request/release private network calls
+Date: Wed, 25 May 2011 05:46:15 -0500
+Message-ID: <4DDCDDF7.2020401@gmail.com>
+In-Reply-To: <1305799112-14289-5-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5679597209963164380==
+--===============0368123954278417743==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Guillaume,
 
-On 05/20/2011 04:38 AM, Guillaume Zajac wrote:
+On 05/19/2011 04:58 AM, Guillaume Zajac wrote:
 > ---
->  gatchat/gsmdial.c |   73 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 73 insertions(+), 0 deletions(-)
+>  src/emulator.c |   75 ++++++++++++++++++++++++++++++++++++++++++++++++--=
+-----
+>  1 files changed, 65 insertions(+), 10 deletions(-)
 > =
 
 
-I pushed my own version of this patch that utilizes signals.
+I applied this patch, but have done heavy refactoring afterwards.
+Please review all my changes (~20 or so patches intermixed with yours)
+and make sure everything makes sense.  I lightly tested this
+functionality with gsmdial and everything seems to be performing well.
+
+However, please test it really well yourself, use valgrind and try every
+exceptional condition you can think of.
 
 Regards,
 -Denis
 
---===============5679597209963164380==--
+--===============0368123954278417743==--
 
