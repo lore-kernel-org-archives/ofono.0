@@ -1,463 +1,214 @@
-Content-Type: multipart/mixed; boundary="===============2626874225493408253=="
+Content-Type: multipart/mixed; boundary="===============3186962243794568220=="
 MIME-Version: 1.0
-From: Bernhard.Guillon@hale.at
-Subject: [PATCH v2 1/3] Add basic Telit UC864-G support:
-Date: Wed, 25 May 2011 15:14:23 +0200
-Message-ID: <1306329265-12066-1-git-send-email-Bernhard.Guillon@hale.at>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [RFC PATCH 1/2] Add basic Telit UC864-G support:
+Date: Wed, 25 May 2011 09:12:37 -0700
+Message-ID: <1306339957.2681.22.camel@aeonflux>
+In-Reply-To: <4DDCFDBE.3050905@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2626874225493408253==
+--===============3186962243794568220==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Bernhard Guillon <Bernhard.Guillon@hale.at>
+Hi Bernhard,
 
-*add a basic plugin based on different ofono plugins
-*use Telit specific QSS for SIM-state
-*add Telit to atmodem/vendors
-*update Makefile
+> >> +	 * +CFUN=3D1: mobile full functionality with power saving disabled (=
+factory default).
+> >> +	 * +CFUN=3D5: mobile full functionality with power saving enabled.
+> >> +	 */
+> >> +	g_at_chat_send(chat, "AT+CFUN=3D1", none_prefix, cfun_enable_cb, mod=
+em, NULL);
+> > If you are supporting online mode, then this is wrong. You need to start
+> > in offline mode. So most likely CFUN=3D4.
+> >
+> =
 
-Co-authored-by: Christopher Vogl <Christopher.Vogl@hale.at>
----
- Makefile.am              |    3 +
- drivers/atmodem/vendor.h |    1 +
- plugins/telit.c          |  384 ++++++++++++++++++++++++++++++++++++++++++=
-++++
- 3 files changed, 388 insertions(+), 0 deletions(-)
- create mode 100644 plugins/telit.c
+> Ok, I switched it. The only problem about being in state 4 is that #QSS =
 
-diff --git a/Makefile.am b/Makefile.am
-index a413a47..6197cf6 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -326,6 +326,9 @@ builtin_sources +=3D plugins/nokiacdma.c
- builtin_modules +=3D linktop
- builtin_sources +=3D plugins/linktop.c
- =
+> returns "sim not inserted". But after test/online-modem everything wakes =
 
-+builtin_modules +=3D telit
-+builtin_sources +=3D plugins/telit.c
-+
- if BLUETOOTH
- builtin_modules +=3D bluetooth
- builtin_sources +=3D plugins/bluetooth.c plugins/bluetooth.h
-diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
-index 3898fa8..412bc76 100644
---- a/drivers/atmodem/vendor.h
-+++ b/drivers/atmodem/vendor.h
-@@ -35,4 +35,5 @@ enum ofono_vendor {
- 	OFONO_VENDOR_WAVECOM,
- 	OFONO_VENDOR_NOKIA,
- 	OFONO_VENDOR_PHONESIM,
-+	OFONO_VENDOR_TELIT,
- };
-diff --git a/plugins/telit.c b/plugins/telit.c
-new file mode 100644
-index 0000000..80cca14
---- /dev/null
-+++ b/plugins/telit.c
-@@ -0,0 +1,384 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <errno.h>
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include <unistd.h>
-+
-+#include <glib.h>
-+#include <gatchat.h>
-+#include <gattty.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/call-barring.h>
-+#include <ofono/call-forwarding.h>
-+#include <ofono/call-meter.h>
-+#include <ofono/call-settings.h>
-+#include <ofono/devinfo.h>
-+#include <ofono/message-waiting.h>
-+#include <ofono/netreg.h>
-+#include <ofono/phonebook.h>
-+#include <ofono/sim.h>
-+#include <ofono/gprs.h>
-+#include <ofono/gprs-context.h>
-+#include <ofono/sms.h>
-+#include <ofono/ussd.h>
-+#include <ofono/voicecall.h>
-+
-+#include <drivers/atmodem/vendor.h>
-+#include <drivers/atmodem/atutil.h>
-+
-+static const char *none_prefix[] =3D { NULL };
-+static const char *qss_prefix[] =3D { "#QSS:", NULL };
-+
-+struct telit_data {
-+	GAtChat *chat;
-+	struct ofono_sim *sim;
-+};
-+
-+static void telit_debug(const char *str, void *user_data)
-+{
-+	const char *prefix =3D user_data;
-+
-+	ofono_info("%s%s", prefix, str);
-+}
-+
-+static int telit_probe(struct ofono_modem *modem)
-+{
-+	struct telit_data *data;
-+
-+	DBG("%p", modem);
-+
-+	data =3D g_try_new0(struct telit_data, 1);
-+	if (data =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	ofono_modem_set_data(modem, data);
-+
-+	return 0;
-+}
-+
-+static void telit_remove(struct ofono_modem *modem)
-+{
-+	struct telit_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	ofono_modem_set_data(modem, NULL);
-+
-+	if (data->chat)
-+		g_at_chat_unref(data->chat);
-+
-+	g_free(data);
-+}
-+
-+static void telit_qss_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct telit_data *data =3D ofono_modem_get_data(modem);
-+	int status;
-+	GAtResultIter iter;
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "#QSS:"))
-+		return;
-+
-+	g_at_result_iter_next_number(&iter, &status);
-+
-+	switch(status) {
-+	case 0:
-+		DBG("SIM not inserted");
-+		ofono_sim_inserted_notify(data->sim,FALSE);
-+		break;
-+	case 1:
-+		DBG("SIM inserted");
-+		/* We need to sleep a bit */
-+		sleep(1);
-+		ofono_sim_inserted_notify(data->sim,TRUE);
-+		break;
-+	case 2:
-+		DBG("SIM inserted and PIN unlocked");
-+		break;
-+	case 3:
-+		DBG("SIM inserted and ready");
-+		break;
-+	default:
-+		return;
-+	}
-+	return;
-+}
-+
-+static void telit_qss_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct telit_data *data =3D ofono_modem_get_data(modem);
-+	int mode;
-+	int status;
-+	GAtResultIter iter;
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "#QSS:"))
-+		return;
-+
-+	g_at_result_iter_next_number(&iter, &mode);
-+	g_at_result_iter_next_number(&iter, &status);
-+
-+	switch(status) {
-+	case 0:
-+		DBG("SIM not inserted");
-+		break;
-+	case 1:
-+		DBG("SIM inserted");
-+		ofono_sim_inserted_notify(data->sim,TRUE);
-+		break;
-+	case 2:
-+		DBG("SIM inserted and PIN unlocked");
-+		break;
-+	case 3:
-+		DBG("SIM inserted and ready");
-+		break;
-+	default:
-+		return;
-+	}
-+}
-+
-+static void cfun_enable_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct telit_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("");
-+
-+	if (ok)
-+		ofono_modem_set_powered(modem, TRUE);
-+
-+	/* Enable sim state notification */
-+	g_at_chat_send(data->chat, "AT#QSS=3D1", none_prefix, NULL, NULL, NULL);
-+
-+	/* Follow sim state */
-+	g_at_chat_register(data->chat, "#QSS:", telit_qss_notify,
-+				FALSE, modem, NULL);
-+
-+	/* Query current sim state */
-+	g_at_chat_send(data->chat, "AT#QSS?", qss_prefix,
-+				telit_qss_cb, modem, NULL);
-+}
-+
-+static void cfun_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct telit_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("");
-+
-+	g_at_chat_unref(data->chat);
-+	data->chat =3D NULL;
-+
-+	if (ok)
-+		ofono_modem_set_powered(modem, FALSE);
-+}
-+
-+static GAtChat *open_device(struct ofono_modem *modem,
-+				const char *key, char *debug)
-+{
-+	const char *device;
-+	GAtSyntax *syntax;
-+	GIOChannel *channel;
-+	GAtChat *chat;
-+
-+	device =3D ofono_modem_get_string(modem, key);
-+	if (device =3D=3D NULL)
-+		return NULL;
-+
-+	DBG("%s %s", key, device);
-+
-+	channel =3D g_at_tty_open(device, NULL);
-+	if (channel =3D=3D NULL)
-+		return NULL;
-+
-+	syntax =3D g_at_syntax_new_gsmv1();
-+	chat =3D g_at_chat_new(channel, syntax);
-+	g_at_syntax_unref(syntax);
-+	g_io_channel_unref(channel);
-+
-+	if (chat =3D=3D NULL)
-+		return NULL;
-+
-+	if (getenv("OFONO_AT_DEBUG"))
-+		g_at_chat_set_debug(chat, telit_debug, debug);
-+
-+	return chat;
-+}
-+
-+static int telit_enable(struct ofono_modem *modem)
-+{
-+	struct telit_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	data->chat =3D open_device(modem, "Modem", "Modem: ");
-+	if (data->chat =3D=3D NULL)
-+		return -EINVAL;
-+
-+	/*
-+	 * Disable command echo and
-+	 * enable the Extended Error Result Codes
-+	 */
-+	g_at_chat_send(data->chat, "ATE0 +CMEE=3D1", none_prefix,
-+				NULL, NULL, NULL);
-+
-+	/* Set phone functionality */
-+	g_at_chat_send(data->chat, "AT+CFUN=3D4", none_prefix,
-+				cfun_enable_cb, modem, NULL);
-+
-+	return -EINPROGRESS;
-+}
-+
-+static int telit_disable(struct ofono_modem *modem)
-+{
-+	struct telit_data *data =3D ofono_modem_get_data(modem);
-+	DBG("%p", modem);
-+
-+	if (data->chat =3D=3D NULL)
-+		return 0;
-+
-+	g_at_chat_cancel_all(data->chat);
-+	g_at_chat_unregister_all(data->chat);
-+
-+	/* Power down modem */
-+	g_at_chat_send(data->chat, "AT+CFUN=3D0", none_prefix,
-+				cfun_disable_cb, modem, NULL);
-+
-+	return -EINPROGRESS;
-+}
-+
-+static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_modem_online_cb_t cb =3D cbd->cb;
-+
-+	if (ok)
-+		CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+	else
-+		CALLBACK_WITH_FAILURE(cb, cbd->data);
-+}
-+
-+static void telit_set_online(struct ofono_modem *modem, ofono_bool_t onlin=
-e,
-+				ofono_modem_online_cb_t cb, void *user_data)
-+{
-+	struct telit_data *data =3D ofono_modem_get_data(modem);
-+	struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
-+
-+	DBG("modem %p %s", modem, online ? "online" : "offline");
-+
-+	if (data->chat =3D=3D NULL)
-+		goto error;
-+
-+	if (g_at_chat_send(data->chat, command, none_prefix,
-+			set_online_cb, cbd, g_free))
-+		return;
-+
-+error:
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, cbd->data);
-+}
-+
-+static void telit_pre_sim(struct ofono_modem *modem)
-+{
-+	struct telit_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
-+	data->sim =3D ofono_sim_create(modem, 0, "atmodem", data->chat);
-+	ofono_voicecall_create(modem, 0, "atmodem", data->chat);
-+}
-+
-+static void telit_post_sim(struct ofono_modem *modem)
-+{
-+	struct telit_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	ofono_sms_create(modem, 0, "atmodem", data->chat);
-+}
-+
-+static void telit_post_online(struct ofono_modem *modem)
-+{
-+	struct telit_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_message_waiting *mw;
-+	struct ofono_gprs *gprs;
-+	struct ofono_gprs_context *gc;
-+
-+	DBG("%p", modem);
-+
-+	ofono_ussd_create(modem, 0, "atmodem", data->chat);
-+	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
-+	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
-+	ofono_netreg_create(modem, OFONO_VENDOR_TELIT, "atmodem", data->chat);
-+	ofono_call_meter_create(modem, 0, "atmodem", data->chat);
-+	ofono_call_barring_create(modem, 0, "atmodem", data->chat);
-+
-+	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->chat);
-+	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->chat);
-+
-+	if (gprs && gc)
-+		ofono_gprs_add_context(gprs, gc);
-+
-+	mw =3D ofono_message_waiting_create(modem);
-+	if (mw)
-+		ofono_message_waiting_register(mw);
-+}
-+
-+static struct ofono_modem_driver telit_driver =3D {
-+	.name			=3D "telit",
-+	.probe			=3D telit_probe,
-+	.remove			=3D telit_remove,
-+	.enable			=3D telit_enable,
-+	.disable		=3D telit_disable,
-+	.set_online		=3D telit_set_online,
-+	.pre_sim		=3D telit_pre_sim,
-+	.post_sim		=3D telit_post_sim,
-+	.post_online	=3D telit_post_online,
-+};
-+
-+static int telit_init(void)
-+{
-+	return ofono_modem_driver_register(&telit_driver);
-+}
-+
-+static void telit_exit(void)
-+{
-+	ofono_modem_driver_unregister(&telit_driver);
-+}
-+
-+OFONO_PLUGIN_DEFINE(telit, "telit driver", VERSION,
-+		OFONO_PLUGIN_PRIORITY_DEFAULT, telit_init, telit_exit)
--- =
+> up properly. I was not sure about attaching a full log or not. I can =
 
-1.7.0.4
+> upload it to pastebin if you like.
+> =
+
+> ...
+> ofonod[5796]: src/sim.c:ofono_sim_add_state_watch() 0x9488ad0
+> ofonod[5796]: Modem: > AT#QSS=3D1\r
+> ofonod[5796]: Modem: < \r\nOK\r\n
+> ofonod[5796]: Modem: > AT#QSS?\r
+> ofonod[5796]: Modem: < \r\n#QSS: 1,0\r\n\r\nOK\r\n
+> ofonod[5796]: plugins/telit.c:telit_qss_cb() SIM not inserted
+> ofonod[5796]: Modem: > AT+CGMI\r
+> ofonod[5796]: Modem: < \r\nTelit\r\n\r\nOK\r\n
+> ofonod[5796]: Modem: > AT+CLCC\r
+> ofonod[5796]: Modem: < \r\n+CME ERROR: 10\r\n
+> ofonod[5796]: Modem: > AT+CGMM\r
+> ofonod[5796]: Modem: < \r\nUC864-G\r\n\r\nOK\r\n
+> ofonod[5796]: Modem: > AT+CGMR\r
+> ofonod[5796]: Modem: < \r\n08.01.107\r\n\r\nOK\r\n
+> ofonod[5796]: Modem: > AT+CGSN\r
+> ofonod[5796]: Modem: < \r\n356265021006068\r\n\r\nOK\r\n
+> ofonod[5796]: plugins/telit.c:telit_set_online() modem 0x9488438 online
+> ofonod[5796]: Modem: > AT+CFUN=3D1\r
+> ofonod[5796]: Modem: < \r\nOK\r\n
+> ofonod[5796]: src/modem.c:common_online_cb() Online in PRE SIM state
+> ofonod[5796]: Modem: < \r\n#QSS: 1\r\n
+> ofonod[5796]: plugins/telit.c:telit_qss_notify() SIM inserted
+> ofonod[5796]: Modem: > AT+CRSM=3D192,28599\r
+> ...
+
+you need to handle SIM hotswap if the modem does support and report it.
+Check how other modem plugins do it.
+
+> >> +		/* enable sim state notification */
+> >> +		g_at_chat_send(chat, "AT#QSS=3D1", NULL, NULL, NULL, NULL);
+> >> +		g_at_chat_register(chat, "#QSS:", telit_qss_notify, FALSE, sim, NUL=
+L);
+> >> +		/* query current sim state */
+> >> +		g_at_chat_send(chat, "AT#QSS?", NULL, telit_qss_cb, sim, NULL);
+> > Using NULL for prefix is most likely wrong here. Can you show us some
+> > examples logs with OFONO_AT_DEBUG=3D1 for this?
+> >
+> =
+
+> ofonod[30582]: drivers/atmodem/voicecall.c:at_voicecall_initialized() =
+
+> voicecall_init: registering to notifications
+> ofonod[30582]: src/sim.c:ofono_sim_add_state_watch() 0x18cb6b0
+> ofonod[30582]: > AT#QSS=3D1\r
+> ofonod[30582]: < \r\nOK\r\n
+> ofonod[30582]: > AT#QSS?\r
+> ofonod[30582]: < \r\n#QSS: 1,1\r\n\r\nOK\r\n
+> ofonod[30582]: plugins/telit.c:telit_qss_cb() SIM inserted
+> ofonod[30582]: > AT+CGMI\r
+> ofonod[30582]: < \r\nTelit\r\n\r\nOK\r\n
+> ofonod[30582]: > AT+CLCC\r
+> ofonod[30582]: < \r\nOK\r\n
+> =
+
+> But I followed your adwise and added a prefix for #QSS for the new patch =
+
+> (see output above)
+
+For AT#QSS=3D1 you do want to use none_prefix. And for AT#QSS? you want to
+use a special qss_prefix.
+
+In case you are using NULL as prefix it would consume all events and
+that means that any other unsolicited notification will be missed.
+
+> >> +	if (gps)
+> >> +		g_at_chat_send(chat, "AT$GPSP=3D1", NULL, NULL, NULL, NULL);
+> > So in general the post_online, pre_sim and post_sim states should only
+> > be used to add atoms and not to send commands.
+> >
+> > If you wanna support GPS, then please create a proper atom driver
+> > specific for the Telit modem.
+> >
+> =
+
+> Ok, I will remove the GPS attempts of the patch and try to support it =
+
+> later.
+> =
+
+> As far as I read the doc a correct implemented GPS atom is opening the =
+
+> GPS tty line, so I cannot longer use it with gypsy?
+
+It does not need to be. You can have multiple TTY and also the location
+reporting atoms return a file descriptor via D-Bus. So that would be
+easy to use from Gypsy as well. However the TTY is actually owned by
+oFono in the end.
+
+> >> +static void add_telit(struct ofono_modem *modem,
+> >> +					struct udev_device *udev_device)
+> >> +{
+> >> +	struct udev_list_entry *entry;
+> >> +	const char *devnode;
+> >> +	gboolean found =3D FALSE;
+> >> +	gboolean gps =3D FALSE;
+> >> +
+> >> +	DBG("modem %p", modem);
+> >> +
+> >> +	entry =3D udev_device_get_properties_list_entry(udev_device);
+> >> +	while (entry) {
+> >> +		const char *name =3D udev_list_entry_get_name(entry);
+> >> +		const char *value =3D udev_list_entry_get_value(entry);
+> >> +
+> >> +		if (g_str_equal(name, "OFONO_TELIT_TYPE") =3D=3D TRUE&&
+> >> +					g_str_equal(value, "modem") =3D=3D TRUE) {
+> >> +			found =3D TRUE;
+> >> +		}
+> >> +		if (g_str_equal(name, "OFONO_TELIT_MODEL") =3D=3D TRUE&&
+> >> +					g_str_equal(value, "UC864-G") =3D=3D TRUE) {
+> >> +			gps =3D TRUE;
+> >> +		}
+> >> +		entry =3D udev_list_entry_get_next(entry);
+> >> +	}
+> >> +
+> >> +	if (found =3D=3D FALSE)
+> >> +		return;
+> >> +
+> >> +	devnode =3D udev_device_get_devnode(udev_device);
+> >> +	ofono_modem_set_string(modem, "Device", devnode);
+> >> +
+> >> +	if(gps)
+> >> +		ofono_modem_set_integer(modem, "GPS", 1);
+> >> +
+> >> +	ofono_modem_register(modem);
+> >> +}
+> >> +
+> >
+> > Do you happen to have the output of /proc/bus/usb/devices for this
+> > device?
+> >
+> =
+
+> #uname -a
+> Linux entw48 2.6.32-28-generic #55-Ubuntu SMP Mon Jan 10 23:42:43 UTC =
+
+> 2011 x86_64 GNU/Linux
+> =
+
+> # ls -lah /proc/bus/
+> total 0
+> dr-xr-xr-x   4 root root 0 2011-05-25 14:32 .
+> dr-xr-xr-x 237 root root 0 2011-05-24 10:53 ..
+> dr-xr-xr-x   2 root root 0 2011-05-25 14:32 input
+> dr-xr-xr-x   3 root root 0 2011-05-25 14:32 pci
+> =
+
+> =
+
+> root(a)entw48:~# ls -lah /sys/bus/usb-serial/devices/
+> total 0
+> drwxr-xr-x 2 root root 0 2011-05-25 14:33 .
+> drwxr-xr-x 4 root root 0 2011-05-25 14:32 ..
+> lrwxrwxrwx 1 root root 0 2011-05-25 14:33 ttyUSB0 -> =
+
+> ../../../devices/pci0000:00/0000:00:1d.2/usb8/8-2/8-2:1.0/ttyUSB0
+> lrwxrwxrwx 1 root root 0 2011-05-25 14:33 ttyUSB1 -> =
+
+> ../../../devices/pci0000:00/0000:00:1d.2/usb8/8-2/8-2:1.1/ttyUSB1
+> lrwxrwxrwx 1 root root 0 2011-05-25 14:33 ttyUSB2 -> =
+
+> ../../../devices/pci0000:00/0000:00:1d.2/usb8/8-2/8-2:1.2/ttyUSB2
+> lrwxrwxrwx 1 root root 0 2011-05-25 14:33 ttyUSB3 -> =
+
+> ../../../devices/pci0000:00/0000:00:1d.2/usb8/8-2/8-2:1.3/ttyUSB3
+
+There is a script usbdevices.sh if you do not have usbfs mounted
+anymore.
+
+Regards
+
+Marcel
 
 
 
---
-Scanned by MailScanner.
-
-
---===============2626874225493408253==--
+--===============3186962243794568220==--
 
