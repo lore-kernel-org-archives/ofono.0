@@ -1,72 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============3494164403042730455=="
+Content-Type: multipart/mixed; boundary="===============1132180967701298123=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH] isimodem: Improper handling of missed call
-Date: Mon, 30 May 2011 15:03:38 +0300
-Message-ID: <BANLkTinQC+b_7_i_podTj2yXM6AiakmWiA@mail.gmail.com>
-In-Reply-To: <1306164011-29368-1-git-send-email-arunlee@gmail.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH_v6 4/5] emulator: add request/release private network calls
+Date: Mon, 30 May 2011 15:25:13 +0200
+Message-ID: <4DE39AB9.1020206@linux.intel.com>
+In-Reply-To: <4DDCDDF7.2020401@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3494164403042730455==
+--===============1132180967701298123==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arun,
+Hi Denis,
 
-2011/5/23 Arun Ravindran <arunlee@gmail.com>:
-> @@ -548,9 +555,26 @@ static void isi_call_notify(struct ofono_voicecall *=
-ovc, struct isi_call *call)
+> I applied this patch, but have done heavy refactoring afterwards.
+> Please review all my changes (~20 or so patches intermixed with yours)
+> and make sure everything makes sense.  I lightly tested this
+> functionality with gsmdial and everything seems to be performing well.
 >
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0case CALL_STATUS_MO_RELEASE:
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0case CALL_STATUS_MT_RELEASE:
-> - =C2=A0 =C2=A0 =C2=A0 case CALL_STATUS_TERMINATED:
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /*
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 * Core requires the ca=
-ll status to be either incoming
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 * or waiting to identi=
-fy the disconnected call as missed.
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 * The MT RELEASE is no=
-t mapped to any state in +CLCC, but
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 * we need the disconne=
-ct reason.
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 */
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0isi_call_set_disco=
-nnect_reason(call);
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0break;
-> + =C2=A0 =C2=A0 =C2=A0 case CALL_STATUS_TERMINATED:
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBG("State( CALL_STATU=
-S_TERMINATED ) need not be reported to Core");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /*
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 * The call terminated =
-is not reported to core as
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 * these intermediate s=
-tates are not processed in
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 * the core. We report =
-the call status when it becomes
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 * idle and TERMINATED =
-is not mapped to +CLCC. The disconnect
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 * reason is set, so th=
-at the call termination cause
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 * in case of error is =
-available to the core.
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 */
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 isi_call_set_disconnec=
-t_reason(call);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
+> However, please test it really well yourself, use valgrind and try every
+> exceptional condition you can think of.
+>
 
-These comment blocks had some trailing whitespace.
+I see you have changed the way PPP packets exchange start, that was what =
 
-I tested this patch, and I don't think it's still doing the right
-thing. I don't seem to be able to generate a missed call, at least
-when using the isiusb plugin. Somehow, ofono_voicecall_disconnect()
-does not get called with the correct reason code.
+was missing me.
+Now we don't need anymore to copy into emulator structure the PN =
 
-Can you post logs on such a successful case, if you have any around?
+settings as we can directly
+pass the values to the PPP stack.
+I also forgot to use set_write_done to trigger the resume GAtPPP/suspend =
 
-Cheers,
-Aki
+GAtChat.
+It sounds ok to me.
 
---===============3494164403042730455==--
+I have tested it with Windows 7 DUN client and everything seems to work.
+I have also found a way to test escape sequence from Windows 7 DUN client,
+you just have to turn off your bluetooth adapter while you are connected =
+
+to oFono DUN server.
+It will send +++ --> ATH0 and turn the adapter off.
+
+Kind regards,
+Guillaume
+
+
+--===============1132180967701298123==--
 
