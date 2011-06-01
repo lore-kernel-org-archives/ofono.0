@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6341484778955998637=="
+Content-Type: multipart/mixed; boundary="===============7702914476482102307=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4 4/8] gprs: Add private APIs for
- adding/activating/removing hidden PDP contexts
-Date: Wed, 01 Jun 2011 01:18:33 -0500
-Message-ID: <4DE5D9B9.6090506@gmail.com>
-In-Reply-To: <1305908781-8322-4-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH v4 6/8] gprs: Add a host route for STK context type
+Date: Wed, 01 Jun 2011 01:26:12 -0500
+Message-ID: <4DE5DB84.4090301@gmail.com>
+In-Reply-To: <1305908781-8322-6-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6341484778955998637==
+--===============7702914476482102307==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -18,371 +17,193 @@ Hi Philippe,
 
 On 05/20/2011 11:26 AM, Philippe Nunes wrote:
 > ---
->  src/gprs.c  |  239 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  src/ofono.h |   24 ++++++
->  2 files changed, 263 insertions(+), 0 deletions(-)
+>  src/gprs.c |   45 ++++++++++++++++++++++++++-------------------
+>  1 files changed, 26 insertions(+), 19 deletions(-)
 > =
 
 > diff --git a/src/gprs.c b/src/gprs.c
-> index 9657a3e..86d95bc 100644
+> index 86d95bc..a867ea1 100644
 > --- a/src/gprs.c
 > +++ b/src/gprs.c
-> @@ -147,6 +147,8 @@ struct pri_context {
+> @@ -141,8 +141,8 @@ struct pri_context {
+>  	unsigned int id;
+>  	char *path;
+>  	char *key;
+> -	char *proxy_host;
+> -	uint16_t proxy_port;
+> +	char *host;
+> +	uint16_t port;
+>  	DBusMessage *pending;
 >  	struct ofono_gprs_primary_context context;
 >  	struct ofono_gprs_context *context_driver;
->  	struct ofono_gprs *gprs;
-> +	void *notify;
-> +	void *notify_data;
->  };
+> @@ -616,16 +616,16 @@ static void pri_parse_proxy(struct pri_context *ctx=
+, const char *proxy)
+>  		host +=3D 3;
 >  =
 
+>  		if (strcasecmp(scheme, "https") =3D=3D 0)
+> -			ctx->proxy_port =3D 443;
+> +			ctx->port =3D 443;
+>  		else if (strcasecmp(scheme, "http") =3D=3D 0)
+> -			ctx->proxy_port =3D 80;
+> +			ctx->port =3D 80;
+>  		else {
+>  			g_free(scheme);
+>  			return;
+>  		}
+>  	} else {
+>  		host =3D scheme;
+> -		ctx->proxy_port =3D 80;
+> +		ctx->port =3D 80;
+>  	}
+>  =
 
-Modifying pri_context for this does not seem like a good idea, I suggest
-you make your own structure since pretty much all the members of this
-structure are not relevant to what you're trying to accomplish.
+>  	path =3D strchr(host, '/');
+> @@ -639,12 +639,12 @@ static void pri_parse_proxy(struct pri_context *ctx=
+, const char *proxy)
+>  =
 
-As a general philosophy we prefer clearer code (even if there's more of
-it) than trying to complicate the logic of code designed for a
-completely different purpose.
+>  		if (*end =3D=3D '\0') {
+>  			*port =3D '\0';
+> -			ctx->proxy_port =3D tmp;
+> +			ctx->port =3D tmp;
+>  		}
+>  	}
+>  =
 
->  static void gprs_netreg_update(struct ofono_gprs *gprs);
-> @@ -356,6 +358,35 @@ static struct pri_context *gprs_context_by_path(stru=
-ct ofono_gprs *gprs,
->  	return NULL;
+> -	g_free(ctx->proxy_host);
+> -	ctx->proxy_host =3D g_strdup(host);
+> +	g_free(ctx->host);
+> +	ctx->host =3D g_strdup(host);
+>  =
+
+>  	g_free(scheme);
+>  }
+> @@ -728,7 +728,7 @@ done:
+>  	close(sk);
 >  }
 >  =
 
-> +static struct pri_context *gprs_context_by_id(struct ofono_gprs *gprs,
-> +						unsigned int id)
-> +{
-> +	GSList *l;
-> +
-> +	for (l =3D gprs->contexts; l; l =3D l->next) {
-> +		struct pri_context *ctx =3D l->data;
-> +
-> +		if (ctx->id =3D=3D id)
-> +			return ctx;
-> +	}
-> +
-> +	return NULL;
-> +}
-> +
-> +static struct pri_context *gprs_get_default_context(struct ofono_gprs *g=
-prs)
-> +{
-> +	GSList *l;
-> +
-> +	for (l =3D gprs->contexts; l; l =3D l->next) {
-> +		struct pri_context *ctx =3D l->data;
-> +
-> +		if (ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_INTERNET)
-> +			return ctx;
-> +	}
-> +
-> +	return NULL;
-> +}
-> +
->  static void context_settings_free(struct context_settings *settings)
+
+I don't think you really need to mess with this at all.  The host IP is
+already stored nicely inside the stk pending_cmd structure.  Converting
+it to a string, g_strduping it and then making sure to g_free it seems
+like a total waste of time.  It would be better to simply make
+pri_setproxy into a utility function and call it from stk.c directly.
+
+> -static void pri_setproxy(const char *interface, const char *proxy)
+> +static void pri_add_host_route(const char *interface, const char *host)
 >  {
->  	if (settings->ipv4) {
-> @@ -537,6 +568,9 @@ static void signal_settings(struct pri_context *ctx, =
-const char *prop,
->  	DBusMessageIter iter;
->  	struct context_settings *settings;
+>  	struct rtentry rt;
+>  	struct sockaddr_in addr;
+> @@ -747,7 +747,7 @@ static void pri_setproxy(const char *interface, const=
+ char *proxy)
 >  =
 
-> +	if (path =3D=3D NULL)
-> +		return;
-> +
->  	signal =3D dbus_message_new_signal(path,
->  					OFONO_CONNECTION_CONTEXT_INTERFACE,
->  					"PropertyChanged");
-> @@ -2968,3 +3002,208 @@ void *ofono_gprs_get_data(struct ofono_gprs *gprs)
->  {
->  	return gprs->driver_data;
+>  	memset(&addr, 0, sizeof(addr));
+>  	addr.sin_family =3D AF_INET;
+> -	addr.sin_addr.s_addr =3D inet_addr(proxy);
+> +	addr.sin_addr.s_addr =3D inet_addr(host);
+>  	memcpy(&rt.rt_dst, &addr, sizeof(rt.rt_dst));
+>  =
+
+>  	memset(&addr, 0, sizeof(addr));
+> @@ -761,7 +761,7 @@ static void pri_setproxy(const char *interface, const=
+ char *proxy)
+>  	memcpy(&rt.rt_genmask, &addr, sizeof(rt.rt_genmask));
+>  =
+
+>  	if (ioctl(sk, SIOCADDRT, &rt) < 0)
+> -		ofono_error("Failed to add proxy host route");
+> +		ofono_error("Failed to add host route");
+>  =
+
+>  	close(sk);
 >  }
-> +
-> +unsigned int __ofono_gprs_add_pdp_context(struct ofono_gprs *gprs,
-> +				enum ofono_gprs_context_type context_type,
-> +				enum ofono_gprs_proto proto,
-> +				const char *apn,
-> +				const char *username,
-> +				const char *password,
-> +				const char *host)
+> @@ -788,12 +788,13 @@ static void pri_reset_context_settings(struct pri_c=
+ontext *ctx)
+>  =
 
-What is the purpose of the host parameter? Doesn't STK use IP addresses
-for the destination?
+>  	pri_context_signal_settings(ctx, signal_ipv4, signal_ipv6);
+>  =
 
-> +{
+> -	if (ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS) {
+> +	if (ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS ||
+> +			ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_STK) {
+>  		pri_set_ipv4_addr(interface, NULL);
+>  =
 
-Returning int here would be better:
+> -		g_free(ctx->proxy_host);
+> -		ctx->proxy_host =3D NULL;
+> -		ctx->proxy_port =3D 0;
+> +		g_free(ctx->host);
+> +		ctx->host =3D NULL;
+> +		ctx->port =3D 0;
+>  	}
+>  =
 
-> +	unsigned int id;
-> +	struct pri_context *context;
-> +	struct pri_context *default_ctx =3D NULL;
-> +	const char *name;
-> +
-> +	/* Sanity check */
-> +	if (apn && strlen(apn) > OFONO_GPRS_MAX_APN_LENGTH)
-> +		return 0;
+>  	pri_ifupdown(interface, FALSE);
+> @@ -811,12 +812,12 @@ static void pri_update_mms_context_settings(struct =
+pri_context *ctx)
+>  =
 
-Then you can return meaningful error here, e.g. -EINVAL
+>  	pri_parse_proxy(ctx, ctx->message_proxy);
+>  =
 
-> +
-> +	if (username && strlen(username) > OFONO_GPRS_MAX_USERNAME_LENGTH)
-> +		return 0;
-> +
-> +	if (password && strlen(password) > OFONO_GPRS_MAX_PASSWORD_LENGTH)
-> +		return 0;
-> +
-> +	if (apn =3D=3D NULL || (username =3D=3D NULL && password =3D=3D NULL)) {
-> +		/* take the default primary internet context */
-> +		default_ctx =3D gprs_get_default_context(gprs);
-> +
-> +		if (default_ctx =3D=3D NULL && apn =3D=3D NULL)
-> +			return 0;
+> -	DBG("proxy %s port %u", ctx->proxy_host, ctx->proxy_port);
+> +	DBG("host %s port %u", ctx->host, ctx->port);
+>  =
 
-Maybe ENOENT here
+>  	pri_set_ipv4_addr(settings->interface, settings->ipv4->ip);
+>  =
 
-> +	}
-> +
-> +	if (apn && is_valid_apn(apn) =3D=3D FALSE)
-> +		return 0;
-> +
+> -	if (ctx->proxy_host)
+> -		pri_setproxy(settings->interface, ctx->proxy_host);
+> +	if (ctx->host)
+> +		pri_add_host_route(settings->interface, ctx->host);
+>  }
+>  =
 
-etc
+>  static void append_context_properties(struct pri_context *ctx,
+> @@ -1366,7 +1367,7 @@ static void pri_context_destroy(gpointer userdata)
+>  {
+>  	struct pri_context *ctx =3D userdata;
+>  =
 
-This will allow you to return meaningful terminal responses in case
-things fail.
+> -	g_free(ctx->proxy_host);
+> +	g_free(ctx->host);
+>  	g_free(ctx->path);
+>  	g_free(ctx);
+>  }
+> @@ -3086,6 +3087,9 @@ unsigned int __ofono_gprs_add_pdp_context(struct of=
+ono_gprs *gprs,
+>  =
 
-> +	name =3D gprs_context_default_name(context_type);
-> +	if (name =3D=3D NULL)
-> +		return 0;
-> +
-> +	if (gprs->last_context_id)
-> +		id =3D idmap_alloc_next(gprs->pid_map, gprs->last_context_id);
-> +	else
-> +		id =3D idmap_alloc(gprs->pid_map);
-> +
-> +	if (id > idmap_get_max(gprs->pid_map))
-> +		return 0;
-> +
-> +	context =3D pri_context_create(gprs, name, context_type);
-> +	if (context =3D=3D NULL) {
-> +		idmap_put(gprs->pid_map, id);
-> +		return 0;
-> +	}
-> +
+>  	context->context.proto =3D proto;
+>  =
 
-As mentioned previously, I don't see the point of creating pri_context
-structure for this.  So you can rip much of this stuff out.
+> +	if (host)
+> +		context->host =3D g_strdup(host);
+> +
+>  	gprs->last_context_id =3D id;
+>  	gprs->contexts =3D g_slist_append(gprs->contexts, context);
+>  =
 
-> +	context->id =3D id;
-> +
-> +	if (username !=3D NULL)
-> +		strcpy(context->context.username, username);
-> +
-> +	if (password !=3D NULL)
-> +		strcpy(context->context.password, password);
-> +
-> +	if (username =3D=3D NULL && password =3D=3D NULL && default_ctx) {
-> +		if (default_ctx->context.username)
-> +			strcpy(context->context.username,
-> +					default_ctx->context.username);
-> +		if (default_ctx->context.password)
-> +			strcpy(context->context.password,
-> +					default_ctx->context.password);
-> +	}
-> +
-> +	if (apn)
-> +		strcpy(context->context.apn, apn);
-> +	else if (default_ctx) {
-> +		strcpy(context->context.apn, default_ctx->context.apn);
-> +		if (default_ctx->context.username)
-> +			strcpy(context->context.username,
-> +					default_ctx->context.username);
-> +		if (default_ctx->context.password)
-> +			strcpy(context->context.password,
-> +					default_ctx->context.password);
-> +	}
-> +
-> +	context->context.proto =3D proto;
-> +
-> +	gprs->last_context_id =3D id;
-> +	gprs->contexts =3D g_slist_append(gprs->contexts, context);
-> +
-> +	return id;
-> +}
-> +
-> +static void activate_request_callback(const struct ofono_error *error,
-> +					void *data)
-> +{
-> +	struct pri_context *ctx =3D data;
-> +	struct ofono_gprs_context *gc =3D ctx->context_driver;
-> +
-> +	DBG("%p", ctx);
-> +
-> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-> +		DBG("Activating context failed with error: %s",
-> +				telephony_error_to_str(error));
-> +		context_settings_free(ctx->context_driver->settings);
-> +		release_context(ctx);
-> +
-> +		if (ctx->notify)
-> +			((__ofono_gprs_add_pdp_context_cb_t) ctx->notify)
-> +				(-ENOSYS, NULL, NULL, ctx->notify_data);
-> +		return;
-> +	}
-> +
-> +	ctx->active =3D TRUE;
-> +
-> +	if (gc->settings->interface !=3D NULL) {
-> +		pri_ifupdown(gc->settings->interface, TRUE);
-> +
-> +		if (ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_STK &&
-> +						gc->settings->ipv4) {
-> +			pri_set_ipv4_addr(gc->settings->interface,
-> +							gc->settings->ipv4->ip);
-> +		}
-> +	}
-> +
-> +	if (ctx->notify && gc->settings->ipv4)
-> +		((__ofono_gprs_add_pdp_context_cb_t) ctx->notify)
-> +					(0, gc->settings->interface,
-> +						gc->settings->ipv4->ip,
-> +						ctx->notify_data);
-> +}
-> +
-> +int __ofono_gprs_activate_pdp_context(struct ofono_gprs *gprs, unsigned =
-int id,
-> +					__ofono_gprs_add_pdp_context_cb_t cb,
-> +					void *data)
-> +{
-> +	struct pri_context *ctx;
-> +	struct ofono_gprs_context *gc;
-> +
-> +	ctx =3D gprs_context_by_id(gprs, id);
-> +	if (ctx =3D=3D NULL)
-> +		return -EINVAL;
-> +
-> +	if (ctx->active =3D=3D TRUE)
-> +		return 0;
-> +
-> +	if (assign_context(ctx) =3D=3D FALSE)
-> +		return -ENOSYS;
-> +
-> +	gc =3D ctx->context_driver;
-> +
-> +	ctx->notify =3D cb;
-> +	ctx->notify_data =3D data;
-> +
-> +	gc->driver->activate_primary(gc, &ctx->context,
-> +					activate_request_callback, ctx);
-> +	return 0;
-> +}
-> +
-> +static void remove_request_callback(const struct ofono_error *error,
-> +					void *data)
-> +{
-> +	struct pri_context *ctx =3D data;
-> +	struct ofono_gprs *gprs =3D ctx->gprs;
-> +	int err =3D 0;
-> +
-> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-> +		DBG("Removing context failed with error: %s",
-> +				telephony_error_to_str(error));
-> +		err =3D -ENOSYS;
-> +	}
-> +
-> +	pri_reset_context_settings(ctx);
-> +	release_context(ctx);
-> +	idmap_put(gprs->pid_map, ctx->id);
-> +	gprs->contexts =3D g_slist_remove(gprs->contexts, ctx);
-> +
-> +	if (ctx->notify)
-> +		((__ofono_gprs_remove_pdp_context_cb_t) ctx->notify)
-> +				(err, ctx->notify_data);
-> +}
-> +
-> +int __ofono_gprs_remove_pdp_context(struct ofono_gprs *gprs, unsigned in=
-t id,
-> +					__ofono_gprs_remove_pdp_context_cb_t cb,
-> +					void *data)
-> +{
-> +	struct pri_context *ctx;
-> +
-> +	ctx =3D gprs_context_by_id(gprs, id);
-> +	if (ctx =3D=3D NULL)
-> +		return -EINVAL;
-> +
-> +	if (ctx->active) {
-> +		struct ofono_gprs_context *gc =3D ctx->context_driver;
-> +
-> +		ctx->notify =3D cb;
-> +		ctx->notify_data =3D data;
-> +
-> +		gc->driver->deactivate_primary(gc, ctx->context.cid,
-> +					remove_request_callback, ctx);
-> +		return -EINPROGRESS;
-> +	}
-> +
-> +	idmap_put(gprs->pid_map, ctx->id);
-> +	gprs->contexts =3D g_slist_remove(gprs->contexts, ctx);
-> +
-> +	return 0;
-> +}
-> diff --git a/src/ofono.h b/src/ofono.h
-> index 82d7e34..ee5864d 100644
-> --- a/src/ofono.h
-> +++ b/src/ofono.h
-> @@ -239,6 +239,30 @@ gboolean __ofono_call_settings_is_busy(struct ofono_=
-call_settings *cs);
->  #include <ofono/phonebook.h>
->  #include <ofono/gprs.h>
->  #include <ofono/gprs-context.h>
-> +
-> +typedef void (*__ofono_gprs_add_pdp_context_cb_t)(int error,
-> +						const char *interface,
-> +						const char *ip,
-> +						void *data);
-> +
-> +typedef void (*__ofono_gprs_remove_pdp_context_cb_t)(int error, void *da=
-ta);
-> +
-> +unsigned int __ofono_gprs_add_pdp_context(struct ofono_gprs *gprs,
-> +					enum ofono_gprs_context_type type,
-> +					enum ofono_gprs_proto proto,
-> +					const char *apn,
-> +					const char *username,
-> +					const char *password,
-> +					const char *host);
-> +
+> @@ -3121,6 +3125,9 @@ static void activate_request_callback(const struct =
+ofono_error *error,
+>  						gc->settings->ipv4) {
+>  			pri_set_ipv4_addr(gc->settings->interface,
+>  							gc->settings->ipv4->ip);
+> +			if (ctx->host)
+> +				pri_add_host_route(gc->settings->interface,
+> +								ctx->host);
+>  		}
+>  	}
+>  =
 
-I don't think this is needed at all.  All STK needs to do is just say
-'please activate a context with these params'.  You can pretty much get
-away with __ofono_gprs_activate_context and __ofono_gprs_deactivate_context.
-
-> +int __ofono_gprs_remove_pdp_context(struct ofono_gprs *gprs, unsigned in=
-t id,
-> +					__ofono_gprs_remove_pdp_context_cb_t cb,
-> +					void *data);
-> +
-
-Are you sure you really need the callback function here?  The spec is a
-little fuzzy on when the terminal response is actually sent.
-
-> +int __ofono_gprs_activate_pdp_context(struct ofono_gprs *gprs, unsigned =
-int id,
-> +					__ofono_gprs_add_pdp_context_cb_t cb,
-> +					void *data);
-> +
->  #include <ofono/radio-settings.h>
->  #include <ofono/audio-settings.h>
->  #include <ofono/ctm.h>
 
 Regards,
 -Denis
 
---===============6341484778955998637==--
+--===============7702914476482102307==--
 
