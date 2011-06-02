@@ -1,218 +1,378 @@
-Content-Type: multipart/mixed; boundary="===============6487199254417715239=="
+Content-Type: multipart/mixed; boundary="===============6210578546689977413=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH V3 2/4] voicecall: add ATD support for HFP emulator
-Date: Wed, 01 Jun 2011 21:08:52 -0500
-Message-ID: <4DE6F0B4.10208@gmail.com>
-In-Reply-To: <1306927463-10642-3-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH_v6 5/5] connman: add plugin in oFono to request/release
+ private network
+Date: Wed, 01 Jun 2011 21:53:38 -0500
+Message-ID: <4DE6FB32.90502@gmail.com>
+In-Reply-To: <1305799112-14289-6-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6487199254417715239==
+--===============6210578546689977413==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Guillaume,
 
-On 06/01/2011 06:24 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+On 05/19/2011 04:58 AM, Guillaume Zajac wrote:
 > ---
->  src/voicecall.c |  109 +++++++++++++++++++++++++++++++++++++++++++++++++=
+>  Makefile.am       |    3 +
+>  plugins/connman.c |  299 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++++
->  1 files changed, 109 insertions(+), 0 deletions(-)
+>  2 files changed, 302 insertions(+), 0 deletions(-)
+>  create mode 100644 plugins/connman.c
 > =
 
-> diff --git a/src/voicecall.c b/src/voicecall.c
-> index 26fe3e4..a6ccddd 100644
-> --- a/src/voicecall.c
-> +++ b/src/voicecall.c
-> @@ -71,6 +71,7 @@ struct ofono_voicecall {
->  	GQueue *toneq;
->  	guint tone_source;
->  	unsigned int hfp_watch;
-> +	struct ofono_emulator *pending_em;
-
-I think you're on the right track, but...
-
->  };
+> diff --git a/Makefile.am b/Makefile.am
+> index e1eaf15..ffb85ae 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -339,6 +339,9 @@ builtin_sources +=3D plugins/hfp_ag.c plugins/bluetoo=
+th.h
+>  builtin_modules +=3D dun_gw
+>  builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
 >  =
 
->  struct voicecall {
-> @@ -745,10 +746,14 @@ static void notify_emulator_call_status(struct ofon=
-o_voicecall *vc)
->  			break;
->  =
+> +builtin_modules +=3D connman
+> +builtin_sources +=3D plugins/connman.c
+> +
+>  builtin_sources +=3D $(btio_sources)
+>  builtin_cflags +=3D @BLUEZ_CFLAGS@
+>  builtin_libadd +=3D @BLUEZ_LIBS@
+> diff --git a/plugins/connman.c b/plugins/connman.c
+> new file mode 100644
+> index 0000000..5f0ad8a
+> --- /dev/null
+> +++ b/plugins/connman.c
+> @@ -0,0 +1,299 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifdef HAVE_CONFIG_H
+> +#include <config.h>
+> +#endif
+> +
+> +#include <errno.h>
+> +#include <stdlib.h>
+> +#include <unistd.h>
+> +
+> +#include <gdbus.h>
+> +#include <string.h>
+> +
+> +#include <ofono.h>
+> +#include <private-network.h>
+> +
+> +#define CONNMAN_SERVICE			"net.connman"
+> +#define CONNMAN_PATH			"/net/connman"
+> +
+> +#define CONNMAN_DEBUG_INTERFACE		CONNMAN_SERVICE ".Debug"
+> +#define CONNMAN_ERROR_INTERFACE		CONNMAN_SERVICE ".Error"
+> +#define CONNMAN_AGENT_INTERFACE		CONNMAN_SERVICE ".Agent"
+> +#define CONNMAN_COUNTER_INTERFACE	CONNMAN_SERVICE ".Counter"
+> +
+> +#define CONNMAN_MANAGER_INTERFACE	CONNMAN_SERVICE ".Manager"
+> +#define CONNMAN_MANAGER_PATH		"/"
+> +
+> +#define CONNMAN_TASK_INTERFACE		CONNMAN_SERVICE ".Task"
+> +#define CONNMAN_PROFILE_INTERFACE	CONNMAN_SERVICE ".Profile"
+> +#define CONNMAN_SERVICE_INTERFACE	CONNMAN_SERVICE ".Service"
+> +#define CONNMAN_PROVIDER_INTERFACE	CONNMAN_SERVICE ".Provider"
+> +#define CONNMAN_TECHNOLOGY_INTERFACE	CONNMAN_SERVICE ".Technology"
+> +#define CONNMAN_SESSION_INTERFACE	CONNMAN_SERVICE ".Session"
+> +#define CONNMAN_NOTIFICATION_INTERFACE	CONNMAN_SERVICE ".Notification"
+> +
 
->  		case CALL_STATUS_DIALING:
-> +			if (v->vc->pending_em)
-> +				return;
->  			dialing =3D TRUE;
->  			break;
->  =
+Why do you bother defining all these interfaces when you only ever use
+the MANAGER one?  Please remove the ones you don't need.
 
->  		case CALL_STATUS_ALERTING:
-> +			if (v->vc->pending_em)
-> +				return;
->  			alerting =3D TRUE;
->  			break;
->  =
-
-
-You can't really do it this way since you might have several emulators
-active at once, and you want to make sure that only the one with the
-pending ATD doesn't receive updates until ATD returns.
-
-One thing you might try is to skip sending updates to the emulator if it
-is equal to pending_em inside emulator_call_status_cb /
-emulator_callheld_status_cb / emulator_callsetup_status_cb
-
-> @@ -2453,6 +2458,10 @@ static void emulator_hfp_unregister(struct ofono_a=
-tom *atom)
->  						OFONO_ATOM_TYPE_EMULATOR_HFP,
->  						emulator_remove_handler,
->  						"+VTS");
-> +	__ofono_modem_foreach_registered_atom(modem,
-> +						OFONO_ATOM_TYPE_EMULATOR_HFP,
-> +						emulator_remove_handler,
-> +						"D");
->  =
-
->  	__ofono_modem_remove_atom_watch(modem, vc->hfp_watch);
->  }
-> @@ -2941,6 +2950,105 @@ static void emulator_vts_cb(struct ofono_emulator=
- *em,
->  	ofono_emulator_send_final(em, &result);
->  }
->  =
-
-> +static void emulator_dial_callback(const struct ofono_error *error, void=
- *data)
+> +static DBusConnection *connection;
+> +static GHashTable *requests;
+> +static unsigned int id;
+> +
+> +struct pns_req {
+> +	int uid;
+> +	DBusPendingCall *pending;
+> +	ofono_private_network_cb_t *cb;
+> +	void *data;
+> +	gboolean redundant;
+> +	gboolean error;
+> +};
+> +
+> +static void request_reply(DBusPendingCall *call, void *user_data)
 > +{
-> +	struct ofono_voicecall *vc =3D data;
-> +	const char *number =3D NULL;
-> +	gboolean need_to_emit;
-> +	struct voicecall *v;
+> +	struct pns_req *req =3D user_data;
+> +	struct ofono_private_network_settings pns;
+> +	DBusMessageIter array, dict, entry;
+> +	DBusMessage *reply;
 > +
-> +	v =3D dial_handle_result(vc, error, number, &need_to_emit);
+> +	DBG("");
 > +
-
-Setting number to NULL is actually wrong.  dial_handle_result needs a
-proper number, so you must track it somehow.  The only reason we set it
-to NULL in e.g. manager_dial_callback is to get around the compiler
-nagging us of uninitialized variables (which will never happen unless
-something truly bizarre is happening.)
-
-> +	if (v =3D=3D NULL) {
-> +		struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+> +	pns.fd =3D -1;
+> +	pns.server_ip =3D NULL;
+> +	pns.peer_ip =3D NULL;
+> +	pns.primary_dns =3D NULL;
+> +	pns.secondary_dns =3D NULL;
 > +
-> +		if (is_emergency_number(vc, number) =3D=3D TRUE)
-> +			__ofono_modem_dec_emergency_mode(modem);
+> +	/* request is no more pending */
+> +	req->pending =3D NULL;
+> +
+> +	reply =3D dbus_pending_call_steal_reply(call);
+> +	if (!reply)
+> +		goto error;
+> +
+> +	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR)
+> +		goto error;
+> +
+> +	if (dbus_message_iter_init(reply, &array) =3D=3D FALSE)
+> +		goto error;
+> +
+> +	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_UNIX_FD)
+> +		goto error;
+> +
+> +	dbus_message_iter_get_basic(&array, &pns.fd);
+> +	DBG("Fildescriptor =3D %d\n", pns.fd);
+> +
+> +	dbus_message_iter_next(&array);
+> +
+> +	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_ARRAY)
+> +		goto error;
+> +
+> +	dbus_message_iter_recurse(&array, &dict);
+> +
+> +	while (dbus_message_iter_get_arg_type(&dict) =3D=3D DBUS_TYPE_DICT_ENTR=
+Y) {
+> +		DBusMessageIter iter;
+> +		const char *key;
+> +		int type;
+> +
+> +		dbus_message_iter_recurse(&dict, &entry);
+> +
+> +		dbus_message_iter_get_basic(&entry, &key);
+> +
+> +		dbus_message_iter_next(&entry);
+> +		dbus_message_iter_recurse(&entry, &iter);
+> +
+> +		type =3D dbus_message_iter_get_arg_type(&iter);
+> +		if (type !=3D DBUS_TYPE_STRING)
+> +			break;
+> +
+> +		if (g_str_equal(key, "ServerIPv4")
+> +				&& type =3D=3D DBUS_TYPE_STRING)
+> +			dbus_message_iter_get_basic(&iter, &pns.server_ip);
+> +		else if (g_str_equal(key, "PeerIPv4")
+> +				&& type =3D=3D DBUS_TYPE_STRING)
+> +			dbus_message_iter_get_basic(&iter, &pns.peer_ip);
+> +		else if (g_str_equal(key, "PrimaryDNS")
+> +				&& type =3D=3D DBUS_TYPE_STRING)
+> +			dbus_message_iter_get_basic(&iter, &pns.primary_dns);
+> +		else if (g_str_equal(key, "SecondaryDNS")
+> +				&& type =3D=3D DBUS_TYPE_STRING)
+> +			dbus_message_iter_get_basic(&iter, &pns.secondary_dns);
+> +
+> +		dbus_message_iter_next(&dict);
 > +	}
 > +
-> +	ofono_emulator_send_final(vc->pending_em, error);
+> +	if (req->redundant =3D=3D TRUE)
+> +		goto done;
+
+We should be checking this much earlier, before doing all the work of
+parsing the returned arguments.  You should also be sending a
+ReleasePrivateNetwork call to ConnMan in this case.
+
 > +
-> +	vc->pending_em =3D NULL;
+> +	if (pns.server_ip =3D=3D NULL || pns.peer_ip =3D=3D NULL ||
+> +			pns.primary_dns =3D=3D NULL || pns.secondary_dns =3D=3D NULL ||
+> +			pns.fd < 0) {
+> +		ofono_error("Error while reading dictionnary...\n");
+> +		goto done;
+> +	}
 > +
-> +	notify_emulator_call_status(vc);
+> +	req->cb(req->data, &pns);
 > +
-> +	if (need_to_emit)
-> +		voicecalls_emit_call_added(vc, v);
+> +	dbus_message_unref(reply);
+> +	dbus_pending_call_unref(call);
+> +
+> +	return;
+> +
+> +error:
+> +	req->error =3D TRUE;
+> +done:
+
+Calling this label 'done' is a bit misleading.
+
+> +	if (pns.fd >=3D 0)
+> +		close(pns.fd);
+> +
+> +	req->cb(req->data, NULL);
+> +
+> +	if (reply)
+> +		dbus_message_unref(reply);
+> +
+> +	dbus_pending_call_unref(call);
 > +}
 > +
-> +static void emulator_dial(struct ofono_emulator *em, struct ofono_voicec=
-all *vc,
-> +				const char *number)
+> +static int pns_request(ofono_private_network_cb_t cb, void *data)
 > +{
-> +	struct ofono_error result;
-> +	int err;
+> +	DBusMessage *message;
+> +	DBusPendingCall *call;
+> +	struct pns_req *req;
 > +
-> +	result.error =3D 0;
+> +	DBG("");
 > +
-> +	if (vc->pending_em) {
-> +		result.type =3D OFONO_ERROR_TYPE_FAILURE;
-> +		goto send;
+> +	req =3D g_try_new(struct pns_req, 1);
+> +
+> +	if (req =3D=3D NULL)
+> +		return -ENOMEM;
+> +
+> +	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
+> +				     CONNMAN_MANAGER_PATH,
+> +				     CONNMAN_MANAGER_INTERFACE,
+> +				     "RequestPrivateNetwork");
+
+Mixing tabs and spaces here, please fix this.
+
+> +
+> +	if (message =3D=3D NULL) {
+> +		g_free(req);
+> +		return -ENOMEM;
 > +	}
-
-You might also want to check that the Dial is not happening via D-Bus or
-STK, and vice-versa.
-
 > +
-> +	vc->pending_em =3D em;
+> +	if (dbus_connection_send_with_reply(connection,
+> +				message, &call, 5000) =3D=3D FALSE) {
+> +		g_free(req);
+> +		dbus_message_unref(message);
+> +		return -EIO;
+> +	}
 > +
-> +	err =3D voicecall_dial(vc, number, OFONO_CLIR_OPTION_DEFAULT,
-> +					emulator_dial_callback, vc);
+> +	id++;
+> +	req->pending =3D call;
+> +	req->cb =3D cb;
+> +	req->data =3D data;
+> +	req->uid =3D id;
+> +	req->redundant =3D FALSE;
+> +	req->error =3D FALSE;
 > +
-> +	if (err >=3D 0)
+> +	dbus_pending_call_set_notify(call, request_reply,
+> +							req, NULL);
+> +	g_hash_table_insert(requests, &req->uid, req);
+> +	dbus_message_unref(message);
+> +
+> +	return req->uid;
+> +}
+> +
+> +static void pns_release(int uid)
+> +{
+> +	DBusMessage *message =3D NULL;
+> +	struct pns_req *req;
+> +
+> +	DBG("");
+> +
+> +	req =3D g_hash_table_lookup(requests, &uid);
+> +	if (!req)
 > +		return;
 > +
-> +	vc->pending_em =3D NULL;
-> +
-> +	switch (err) {
-> +	case -ENETDOWN:
-> +		result.error =3D 30;
-> +		result.type =3D OFONO_ERROR_TYPE_CME;
-> +		break;
-> +
-> +	default:
-> +		result.type =3D OFONO_ERROR_TYPE_FAILURE;
+> +	if (req->pending) {
+> +		if (dbus_pending_call_get_completed(req->pending) =3D=3D FALSE) {
+> +			/*
+> +			 * We want to cancel the request but we have to wait
+> +			 * the response of ConnMan. So we mark request as
+> +			 * redundant until we get the response, then we remove
+> +			 * it from hash table.
+> +			 */
+> +			req->redundant =3D TRUE;
+> +			return;
+> +		}
 > +	}
 > +
-> +send:
-> +	ofono_emulator_send_final(em, &result);
-> +}
-> +
-> +static void emulator_atd_cb(struct ofono_emulator *em,
-> +			struct ofono_emulator_request *req, void *userdata)
-> +{
-> +	struct ofono_voicecall *vc =3D userdata;
-> +	const char *str;
-> +	size_t len;
-> +	char number[OFONO_MAX_PHONE_NUMBER_LENGTH + 1];
-> +	struct ofono_error result;
-> +
-> +	switch (ofono_emulator_request_get_type(req)) {
-> +	case OFONO_EMULATOR_REQUEST_TYPE_SET:
-> +		str =3D ofono_emulator_request_get_raw(req);
-> +
-> +		if (str =3D=3D NULL || str[0] =3D=3D '\0')
-> +			goto fail;
-> +
-> +		len =3D strlen(str);
-> +
-> +		if (len > OFONO_MAX_PHONE_NUMBER_LENGTH + 1 ||
-> +				str[len - 1] !=3D ';')
-> +			goto fail;
-> +
-> +		strncpy(number, str, len - 1);
-> +		number[len - 1] =3D '\0';
-> +
-> +		emulator_dial(em, vc, number);
-> +		break;
-> +
-> +	default:
-> +fail:
-> +		result.error =3D 0;
-> +		result.type =3D OFONO_ERROR_TYPE_FAILURE;
-> +		ofono_emulator_send_final(em, &result);
-> +	};
-> +}
-> +
->  static void emulator_hfp_watch(struct ofono_atom *atom,
->  				enum ofono_atom_watch_condition cond,
->  				void *data)
-> @@ -2957,6 +3065,7 @@ static void emulator_hfp_watch(struct ofono_atom *a=
-tom,
->  	ofono_emulator_add_handler(em, "+CLCC", emulator_clcc_cb, data, NULL);
->  	ofono_emulator_add_handler(em, "+CHLD", emulator_chld_cb, data, NULL);
->  	ofono_emulator_add_handler(em, "+VTS", emulator_vts_cb, data, NULL);
-> +	ofono_emulator_add_handler(em, "D", emulator_atd_cb, data, NULL);
->  }
->  =
+> +	/*
+> +	 * There was an error while reading response or transmitted by response
+> +	 * so we don't need to call release DBus method.
+> +	 */
+> +	if (req->error)
+> +		goto error;
 
->  void ofono_voicecall_register(struct ofono_voicecall *vc)
+Actually I don't think you need this.  We should not call release in
+case Request() returned an error.  I fixed this in commit 9ff1b9f.
+
+> +
+> +	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
+> +				     CONNMAN_MANAGER_PATH,
+> +				     CONNMAN_MANAGER_INTERFACE,
+> +				     "ReleasePrivateNetwork");
+
+Mixing tabs and spaces here, please fix this
+
+> +
+> +	if (message =3D=3D NULL)
+> +		goto error;
+> +
+> +	dbus_message_set_no_reply(message, TRUE);
+> +	dbus_connection_send(connection, message, NULL);
+> +
+> +error:
+> +	if (message)
+> +		dbus_message_unref(message);
+> +
+> +	g_hash_table_remove(requests, &req->uid);
+> +}
+> +
+> +static struct ofono_private_network_driver pn_driver =3D {
+> +	.name		=3D "ConnMan Private Network",
+> +	.request	=3D pns_request,
+> +	.release	=3D pns_release,
+> +};
+> +
+> +static void remove_requests(gpointer user_data)
+> +{
+> +	struct pns_req *req =3D user_data;
+> +
+> +	g_free(req);
+> +}
+> +
+> +static int connman_init(void)
+> +{
+> +	DBG("");
+> +
+> +	id =3D 0;
+> +	connection =3D ofono_dbus_get_connection();
+> +	requests =3D g_hash_table_new_full(g_int_hash, g_int_equal, NULL,
+> +						remove_requests);
+> +
+> +	return ofono_private_network_driver_register(&pn_driver);
+> +}
+> +
+> +static void connman_exit(void)
+> +{
+> +	g_hash_table_destroy(requests);
+> +	ofono_private_network_driver_unregister(&pn_driver);
+> +}
+> +
+> +OFONO_PLUGIN_DEFINE(connman, "ConnMan plugin", VERSION,
+> +		OFONO_PLUGIN_PRIORITY_DEFAULT, connman_init, connman_exit)
 
 Regards,
 -Denis
 
---===============6487199254417715239==--
+--===============6210578546689977413==--
 
