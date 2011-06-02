@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7702914476482102307=="
+Content-Type: multipart/mixed; boundary="===============1660827236096198172=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4 6/8] gprs: Add a host route for STK context type
-Date: Wed, 01 Jun 2011 01:26:12 -0500
-Message-ID: <4DE5DB84.4090301@gmail.com>
-In-Reply-To: <1305908781-8322-6-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH v4 2/8] stk: Introduce BIP command handlers
+Date: Wed, 01 Jun 2011 19:28:57 -0500
+Message-ID: <4DE6D949.3090001@gmail.com>
+In-Reply-To: <1305908781-8322-2-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7702914476482102307==
+--===============1660827236096198172==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,193 +17,551 @@ Hi Philippe,
 
 On 05/20/2011 11:26 AM, Philippe Nunes wrote:
 > ---
->  src/gprs.c |   45 ++++++++++++++++++++++++++-------------------
->  1 files changed, 26 insertions(+), 19 deletions(-)
+>  src/stk.c |  426 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++++-
+>  1 files changed, 425 insertions(+), 1 deletions(-)
 > =
 
-> diff --git a/src/gprs.c b/src/gprs.c
-> index 86d95bc..a867ea1 100644
-> --- a/src/gprs.c
-> +++ b/src/gprs.c
-> @@ -141,8 +141,8 @@ struct pri_context {
->  	unsigned int id;
->  	char *path;
->  	char *key;
-> -	char *proxy_host;
-> -	uint16_t proxy_port;
-> +	char *host;
-> +	uint16_t port;
->  	DBusMessage *pending;
->  	struct ofono_gprs_primary_context context;
->  	struct ofono_gprs_context *context_driver;
-> @@ -616,16 +616,16 @@ static void pri_parse_proxy(struct pri_context *ctx=
-, const char *proxy)
->  		host +=3D 3;
+
+This patch no longer applies.  Please rebase and resubmit.  Also, can I
+ask you to break this patch up into several, e.g. one for Open Channel,
+one for Close Channel, etc.  This will make it much easier for me to review.
+
+> diff --git a/src/stk.c b/src/stk.c
+> index 8214b65..fb376a6 100644
+> --- a/src/stk.c
+> +++ b/src/stk.c
+> @@ -41,6 +41,7 @@
+>  #include "smsutil.h"
+>  #include "stkutil.h"
+>  #include "stkagent.h"
+> +#include "gprs.h"
+>  #include "util.h"
 >  =
 
->  		if (strcasecmp(scheme, "https") =3D=3D 0)
-> -			ctx->proxy_port =3D 443;
-> +			ctx->port =3D 443;
->  		else if (strcasecmp(scheme, "http") =3D=3D 0)
-> -			ctx->proxy_port =3D 80;
-> +			ctx->port =3D 80;
->  		else {
->  			g_free(scheme);
->  			return;
->  		}
->  	} else {
->  		host =3D scheme;
-> -		ctx->proxy_port =3D 80;
-> +		ctx->port =3D 80;
->  	}
+>  static GSList *g_drivers =3D NULL;
+> @@ -79,6 +80,11 @@ struct ofono_stk {
 >  =
 
->  	path =3D strchr(host, '/');
-> @@ -639,12 +639,12 @@ static void pri_parse_proxy(struct pri_context *ctx=
-, const char *proxy)
+>  	__ofono_sms_sim_download_cb_t sms_pp_cb;
+>  	void *sms_pp_userdata;
+> +	struct stk_channel channel;
+> +	struct stk_channel_data rx_buffer;
+> +	struct stk_channel_data tx_buffer;
+
+Are you sure you need these buffers?  At least the RX buffer can
+probably be ignored since you can always use the kernel socket buffer
+instead.  Copying from the kernel buffer into your own buffer just to
+copy it into SIM's buffer seems like busywork.
+
+The TX buffer is arguable, you might want to use non-blocking IO, but in
+that case I would use a ring_buffer from GAtChat.
+
+> +	gboolean link_on_demand;
+> +	struct ofono_gprs *gprs;
+>  };
 >  =
 
->  		if (*end =3D=3D '\0') {
->  			*port =3D '\0';
-> -			ctx->proxy_port =3D tmp;
-> +			ctx->port =3D tmp;
->  		}
->  	}
+>  struct envelope_op {
+> @@ -104,6 +110,13 @@ static void timers_update(struct ofono_stk *stk);
+>  		result.additional_len =3D sizeof(addn_info);	\
+>  		result.additional =3D addn_info;			\
 >  =
 
-> -	g_free(ctx->proxy_host);
-> -	ctx->proxy_host =3D g_strdup(host);
-> +	g_free(ctx->host);
-> +	ctx->host =3D g_strdup(host);
->  =
-
->  	g_free(scheme);
->  }
-> @@ -728,7 +728,7 @@ done:
->  	close(sk);
->  }
->  =
-
-
-I don't think you really need to mess with this at all.  The host IP is
-already stored nicely inside the stk pending_cmd structure.  Converting
-it to a string, g_strduping it and then making sure to g_free it seems
-like a total waste of time.  It would be better to simply make
-pri_setproxy into a utility function and call it from stk.c directly.
-
-> -static void pri_setproxy(const char *interface, const char *proxy)
-> +static void pri_add_host_route(const char *interface, const char *host)
->  {
->  	struct rtentry rt;
->  	struct sockaddr_in addr;
-> @@ -747,7 +747,7 @@ static void pri_setproxy(const char *interface, const=
- char *proxy)
->  =
-
->  	memset(&addr, 0, sizeof(addr));
->  	addr.sin_family =3D AF_INET;
-> -	addr.sin_addr.s_addr =3D inet_addr(proxy);
-> +	addr.sin_addr.s_addr =3D inet_addr(host);
->  	memcpy(&rt.rt_dst, &addr, sizeof(rt.rt_dst));
->  =
-
->  	memset(&addr, 0, sizeof(addr));
-> @@ -761,7 +761,7 @@ static void pri_setproxy(const char *interface, const=
- char *proxy)
->  	memcpy(&rt.rt_genmask, &addr, sizeof(rt.rt_genmask));
->  =
-
->  	if (ioctl(sk, SIOCADDRT, &rt) < 0)
-> -		ofono_error("Failed to add proxy host route");
-> +		ofono_error("Failed to add host route");
->  =
-
->  	close(sk);
->  }
-> @@ -788,12 +788,13 @@ static void pri_reset_context_settings(struct pri_c=
-ontext *ctx)
->  =
-
->  	pri_context_signal_settings(ctx, signal_ipv4, signal_ipv6);
->  =
-
-> -	if (ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS) {
-> +	if (ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS ||
-> +			ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_STK) {
->  		pri_set_ipv4_addr(interface, NULL);
->  =
-
-> -		g_free(ctx->proxy_host);
-> -		ctx->proxy_host =3D NULL;
-> -		ctx->proxy_port =3D 0;
-> +		g_free(ctx->host);
-> +		ctx->host =3D NULL;
-> +		ctx->port =3D 0;
->  	}
->  =
-
->  	pri_ifupdown(interface, FALSE);
-> @@ -811,12 +812,12 @@ static void pri_update_mms_context_settings(struct =
-pri_context *ctx)
->  =
-
->  	pri_parse_proxy(ctx, ctx->message_proxy);
->  =
-
-> -	DBG("proxy %s port %u", ctx->proxy_host, ctx->proxy_port);
-> +	DBG("host %s port %u", ctx->host, ctx->port);
->  =
-
->  	pri_set_ipv4_addr(settings->interface, settings->ipv4->ip);
->  =
-
-> -	if (ctx->proxy_host)
-> -		pri_setproxy(settings->interface, ctx->proxy_host);
-> +	if (ctx->host)
-> +		pri_add_host_route(settings->interface, ctx->host);
->  }
->  =
-
->  static void append_context_properties(struct pri_context *ctx,
-> @@ -1366,7 +1367,7 @@ static void pri_context_destroy(gpointer userdata)
->  {
->  	struct pri_context *ctx =3D userdata;
->  =
-
-> -	g_free(ctx->proxy_host);
-> +	g_free(ctx->host);
->  	g_free(ctx->path);
->  	g_free(ctx);
->  }
-> @@ -3086,6 +3087,9 @@ unsigned int __ofono_gprs_add_pdp_context(struct of=
-ono_gprs *gprs,
->  =
-
->  	context->context.proto =3D proto;
->  =
-
-> +	if (host)
-> +		context->host =3D g_strdup(host);
+> +/*
+> + * According the structure and coding of the Terminal response defined in
+> + * TS 102 223 section 6.8, the maximum number of bytes possible for the =
+channel
+> + * data object is 243
+> + */
+> +#define CHANNEL_DATA_OBJECT_MAX_LENGTH 243
 > +
->  	gprs->last_context_id =3D id;
->  	gprs->contexts =3D g_slist_append(gprs->contexts, context);
+>  static int stk_respond(struct ofono_stk *stk, struct stk_response *rsp,
+>  			ofono_stk_generic_cb_t cb)
+>  {
+> @@ -474,12 +487,43 @@ static void emit_menu_changed(struct ofono_stk *stk)
+>  	g_dbus_send_message(conn, signal);
+>  }
 >  =
 
-> @@ -3121,6 +3125,9 @@ static void activate_request_callback(const struct =
-ofono_error *error,
->  						gc->settings->ipv4) {
->  			pri_set_ipv4_addr(gc->settings->interface,
->  							gc->settings->ipv4->ip);
-> +			if (ctx->host)
-> +				pri_add_host_route(gc->settings->interface,
-> +								ctx->host);
->  		}
->  	}
+> +static void stk_close_channel(struct ofono_stk *stk)
+> +{
+> +	/*
+> +	 * TODO
+> +	 * Deactivate and remove PDP context
+> +	 * Send the Terminal Response once the PDP context is deactivated
+> +	 */
+> +
+> +	/* Temporary implementation */
+> +	g_free(stk->rx_buffer.data.array);
+> +	g_free(stk->tx_buffer.data.array);
+> +	stk->rx_buffer.data.array =3D NULL;
+> +	stk->tx_buffer.data.array =3D NULL;
+> +
+> +	stk->channel.id =3D 0;
+> +	stk->channel.status =3D STK_CHANNEL_PACKET_DATA_SERVICE_NOT_ACTIVATED;
+> +
+> +	if (stk->pending_cmd &&
+
+Would this function ever be called if pending_cmd is NULL?
+
+> +			stk->pending_cmd->type =3D=3D
+> +				STK_COMMAND_TYPE_CLOSE_CHANNEL)
+> +		send_simple_response(stk, STK_RESULT_TYPE_SUCCESS);
+> +}
+> +
+>  static void user_termination_cb(enum stk_agent_result result, void *user=
+_data)
+>  {
+>  	struct ofono_stk *stk =3D user_data;
 >  =
 
+> -	if (result =3D=3D STK_AGENT_RESULT_TERMINATE)
+> +	if (result !=3D STK_AGENT_RESULT_TERMINATE)
+> +		return;
+> +
+> +	if (stk->pending_cmd) {
+> +		stk->cancel_cmd(stk);
+
+You can't actually do this since the agent does not support calling
+stk_agent_request_cancel from within a callback.
+
+>  		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
+> +	}
+> +
+> +	if (stk->channel.id)
+> +		stk_close_channel(stk);
+>  }
+>  =
+
+>  static void stk_alpha_id_set(struct ofono_stk *stk,
+> @@ -510,6 +554,147 @@ static void stk_alpha_id_unset(struct ofono_stk *st=
+k)
+>  	stk_agent_request_cancel(stk->current_agent);
+>  }
+>  =
+
+> +
+> +static void stk_open_channel(struct ofono_stk *stk)
+> +{
+> +	const struct stk_command_open_channel *oc;
+> +	struct stk_response rsp;
+> +	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
+> +
+> +	if (stk->pending_cmd =3D=3D NULL ||
+> +		stk->pending_cmd->type !=3D STK_COMMAND_TYPE_OPEN_CHANNEL)
+
+doc/coding-style.txt item M4
+
+> +		return;
+> +
+> +	oc =3D &stk->pending_cmd->open_channel;
+> +
+> +	memset(&rsp, 0, sizeof(rsp));
+> +	rsp.result.type =3D STK_RESULT_TYPE_SUCCESS;
+> +
+> +	stk->rx_buffer.data.array =3D g_try_malloc(oc->buf_size);
+> +	if (stk->rx_buffer.data.array =3D=3D NULL) {
+> +		unsigned char no_cause_result[] =3D { 0x00 };
+> +
+> +		ADD_ERROR_RESULT(rsp.result, STK_RESULT_TYPE_TERMINAL_BUSY,
+> +					no_cause_result);
+> +		goto out;
+> +	}
+> +
+> +	stk->tx_buffer.data.array =3D g_try_malloc(oc->buf_size);
+> +	if (stk->tx_buffer.data.array =3D=3D NULL) {
+> +		unsigned char no_cause_result[] =3D { 0x00 };
+> +
+> +		ADD_ERROR_RESULT(rsp.result, STK_RESULT_TYPE_TERMINAL_BUSY,
+> +					no_cause_result);
+> +		goto out;
+> +	}
+> +
+> +	stk->rx_buffer.data.len =3D oc->buf_size;
+> +	stk->rx_buffer.rx_remaining =3D 0;
+> +	stk->tx_buffer.data.len =3D oc->buf_size;
+> +	stk->tx_buffer.tx_avail =3D oc->buf_size;
+> +	stk->link_on_demand =3D (stk->pending_cmd->qualifier &
+> +				STK_OPEN_CHANNEL_FLAG_IMMEDIATE) ? FALSE : TRUE;
+> +
+> +	/*
+> +	 * TODO
+> +	 * Add a new primary PDP context based on the provided settings
+> +	 * Send the Terminal Response or wait until the PDP context is activated
+> +	 * in case of immediate link establishment not in background.
+> +	 */
+> +out:
+> +	if (stk_respond(stk, &rsp, stk_command_cb))
+> +		stk_command_cb(&failure, stk);
+> +
+> +	if (rsp.result.type =3D=3D STK_RESULT_TYPE_NOT_CAPABLE && stk->channel.=
+id)
+> +		stk_close_channel(stk);
+> +}
+> +
+> +static void stk_send_data(struct ofono_stk *stk,
+> +				struct stk_common_byte_array data,
+> +				unsigned char qualifier)
+> +{
+> +	struct stk_response rsp;
+> +	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
+> +	unsigned int offset;
+> +
+> +	memset(&rsp, 0, sizeof(rsp));
+> +	rsp.result.type =3D STK_RESULT_TYPE_SUCCESS;
+> +
+> +	if (data.len > stk->tx_buffer.data.len ||
+> +		data.len > stk->tx_buffer.tx_avail) {
+
+doc/coding-style.txt item M4
+
+> +		rsp.result.type =3D STK_RESULT_TYPE_BIP_ERROR;
+> +		goto out;
+> +	}
+> +
+> +	if (data.len) {
+> +		offset =3D stk->tx_buffer.data.len - stk->tx_buffer.tx_avail;
+> +		memcpy(stk->tx_buffer.data.array + offset, data.array,
+> +				data.len);
+> +
+> +		stk->tx_buffer.tx_avail -=3D data.len;
+> +
+> +		if (qualifier =3D=3D STK_SEND_DATA_STORE_DATA) {
+> +			rsp.send_data.tx_avail =3D stk->tx_buffer.tx_avail;
+> +			goto out;
+> +		}
+> +	}
+> +
+> +	if (stk->channel.status =3D=3D STK_CHANNEL_PACKET_DATA_SERVICE_NOT_ACTI=
+VATED
+> +			&& stk->link_on_demand =3D=3D TRUE) {
+> +		/*
+> +		 * TODO
+> +		 * activate the context, update the channel status
+> +		 * once the context is activated, send the data immediately
+> +		 * and flush the tx buffer
+> +		 */
+> +	} else {
+> +		/*
+> +		 * TODO
+> +		 * send the data immediately, flush the tx buffer
+> +		 */
+> +		rsp.send_data.tx_avail =3D stk->tx_buffer.data.len;
+> +	}
+> +
+> +out:
+> +	if (stk_respond(stk, &rsp, stk_command_cb))
+> +		stk_command_cb(&failure, stk);
+> +}
+> +
+> +static void stk_receive_data(struct ofono_stk *stk, unsigned char data_l=
+en)
+> +{
+> +	struct stk_response rsp;
+> +	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
+> +
+> +	memset(&rsp, 0, sizeof(rsp));
+> +	rsp.result.type =3D STK_RESULT_TYPE_SUCCESS;
+> +
+> +	if (stk->rx_buffer.rx_remaining =3D=3D 0) {
+> +		rsp.result.type =3D STK_RESULT_TYPE_MISSING_INFO;
+> +		goto out;
+> +	}
+> +
+> +	if (data_len > stk->rx_buffer.rx_remaining) {
+> +		rsp.result.type =3D STK_RESULT_TYPE_MISSING_INFO;
+> +		data_len =3D stk->rx_buffer.rx_remaining;
+> +	}
+> +
+> +	if (data_len > CHANNEL_DATA_OBJECT_MAX_LENGTH)
+> +		data_len =3D CHANNEL_DATA_OBJECT_MAX_LENGTH;
+> +
+> +	rsp.receive_data.rx_data.array =3D stk->rx_buffer.data.array;
+> +	rsp.receive_data.rx_data.len =3D data_len;
+> +	stk->rx_buffer.rx_remaining -=3D data_len;
+> +	rsp.receive_data.rx_remaining =3D stk->rx_buffer.rx_remaining;
+> +
+> +out:
+> +	if (stk_respond(stk, &rsp, stk_command_cb))
+> +		stk_command_cb(&failure, stk);
+> +
+> +	if (rsp.receive_data.rx_data.len && stk->rx_buffer.rx_remaining > 0)
+> +		memmove(stk->rx_buffer.data.array, stk->rx_buffer.data.array +
+> +				data_len, stk->rx_buffer.rx_remaining);
+> +}
+> +
+>  static int duration_to_msecs(const struct stk_duration *duration)
+>  {
+>  	int msecs =3D duration->interval;
+> @@ -2589,6 +2774,220 @@ static gboolean handle_command_launch_browser(con=
+st struct stk_command *cmd,
+>  	return FALSE;
+>  }
+>  =
+
+> +
+> +static void open_channel_cancel(struct ofono_stk *stk)
+> +{
+> +	/* TODO */
+> +}
+> +
+> +static void confirm_open_channel_cb(enum stk_agent_result result,
+> +					gboolean confirm,
+> +					void *user_data)
+> +{
+> +	struct ofono_stk *stk =3D user_data;
+> +
+> +	switch (result) {
+> +	case STK_AGENT_RESULT_TIMEOUT:
+> +		confirm =3D FALSE;
+> +		/* Fall through */
+> +
+> +	case STK_AGENT_RESULT_OK:
+> +		if (confirm)
+> +			break;
+> +
+> +		send_simple_response(stk, STK_RESULT_TYPE_USER_REJECT);
+> +		return;
+> +
+> +	case STK_AGENT_RESULT_TERMINATE:
+> +	default:
+> +		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
+> +		return;
+> +	}
+> +
+> +	stk_open_channel(stk);
+> +}
+> +
+> +static gboolean handle_command_open_channel(const struct stk_command *cm=
+d,
+> +						struct stk_response *rsp,
+> +						struct ofono_stk *stk)
+> +{
+> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(stk->atom);
+> +	const struct stk_command_open_channel *oc =3D &cmd->open_channel;
+> +	struct ofono_atom *gprs_atom;
+> +	int err;
+> +
+> +	/* Check first if channel is available */
+> +	if (stk->channel.id) {
+> +		unsigned char addnl_info[1];
+> +
+> +		addnl_info[0] =3D STK_RESULT_ADDNL_BIP_PB_NO_CHANNEL_AVAIL;
+> +		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_BIP_ERROR,
+> +				addnl_info);
+> +		return TRUE;
+> +	}
+> +
+> +	gprs_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_GPRS);
+> +	if (gprs_atom =3D=3D NULL || !__ofono_atom_get_registered(gprs_atom)) {
+> +		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
+> +		return TRUE;
+> +	}
+> +
+> +	stk->gprs =3D __ofono_atom_get_data(gprs_atom);
+> +	stk->respond_on_exit =3D TRUE;
+> +	stk->cancel_cmd =3D open_channel_cancel;
+> +
+> +	/*
+> +	 * Don't ask for user confirmation if AID is a null data object
+> +	 * or is not provided
+> +	 */
+> +	if (oc->alpha_id && strlen(oc->alpha_id) > 0) {
+
+Calling strlen here is a bit overkill, you can always use
+oc->alpha_id[0] !=3D '\0'
+
+> +		char *alpha_id;
+> +
+> +		alpha_id =3D dbus_apply_text_attributes(oc->alpha_id,
+> +								&oc->text_attr);
+> +		if (alpha_id =3D=3D NULL) {
+> +			rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
+> +			return TRUE;
+> +		}
+> +
+> +		err =3D stk_agent_confirm_open_channel(stk->current_agent,
+> +							alpha_id,
+> +							&oc->icon_id,
+> +							confirm_open_channel_cb,
+> +							stk, NULL,
+> +							stk->timeout * 1000);
+> +		g_free(alpha_id);
+> +
+> +		if (err < 0) {
+> +			unsigned char no_cause_result[] =3D { 0x00 };
+> +
+> +			ADD_ERROR_RESULT(rsp->result,
+> +						STK_RESULT_TYPE_TERMINAL_BUSY,
+> +						no_cause_result);
+> +			return TRUE;
+> +		}
+> +
+> +		return FALSE;
+> +	}
+> +
+> +	stk_open_channel(stk);
+> +
+> +	return FALSE;
+> +}
+> +
+> +static gboolean handle_command_close_channel(const struct stk_command *c=
+md,
+> +						struct stk_response *rsp,
+> +						struct ofono_stk *stk)
+> +{
+> +	const struct stk_command_close_channel *cc =3D &cmd->close_channel;
+> +
+> +	/* Check if channel identifier is valid */
+> +	if (cmd->dst !=3D (stk->channel.id | 0x20)) {
+> +		unsigned char addnl_info[1];
+> +
+> +		addnl_info[1] =3D STK_RESULT_ADDNL_BIP_PB_CHANNEL_ID_NOT_VALID;
+> +		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_BIP_ERROR,
+> +					addnl_info);
+> +		return TRUE;
+> +	}
+> +
+> +	/*
+> +	 * Don't inform the user about the link closing phase if AID is
+> +	 * a null data object or is not provided
+> +	 */
+> +	if (cc->alpha_id && strlen(cc->alpha_id) > 0)
+> +		stk_alpha_id_set(stk, cc->alpha_id, &cc->text_attr,
+> +							&cc->icon_id);
+> +
+> +	stk->respond_on_exit =3D TRUE;
+> +	stk->cancel_cmd =3D stk_request_cancel;
+> +
+> +	stk_close_channel(stk);
+> +
+> +	return FALSE;
+> +}
+> +
+> +static gboolean handle_command_receive_data(const struct stk_command *cm=
+d,
+> +						struct stk_response *rsp,
+> +						struct ofono_stk *stk)
+> +{
+> +	const struct stk_command_receive_data *rd =3D &cmd->receive_data;
+> +
+> +	/* Check if channel identifier is valid or already closed */
+> +	if (cmd->dst !=3D (stk->channel.id | 0x20)) {
+> +		unsigned char addnl_info[1];
+> +
+> +		addnl_info[1] =3D STK_RESULT_ADDNL_BIP_PB_CHANNEL_ID_NOT_VALID;
+> +		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_BIP_ERROR,
+> +					addnl_info);
+> +		return TRUE;
+> +	}
+> +
+> +	/*
+> +	 * Don't inform the user during data transfer if AID is
+> +	 * a null data object or is not provided
+> +	 */
+> +	if (rd->alpha_id && strlen(rd->alpha_id) > 0)
+> +		stk_alpha_id_set(stk, rd->alpha_id, &rd->text_attr,
+> +					&rd->icon_id);
+> +
+> +	stk->respond_on_exit =3D TRUE;
+> +	stk->cancel_cmd =3D stk_request_cancel;
+> +
+> +	stk_receive_data(stk, rd->data_len);
+> +
+> +	return FALSE;
+> +}
+> +
+> +static gboolean handle_command_send_data(const struct stk_command *cmd,
+> +						struct stk_response *rsp,
+> +						struct ofono_stk *stk)
+> +{
+> +	const struct stk_command_send_data *sd =3D &cmd->send_data;
+> +	unsigned char addnl_info[1];
+> +
+> +	/* Check if channel identifier is valid or already closed */
+> +	if (cmd->dst !=3D (stk->channel.id | 0x20)) {
+> +		addnl_info[1] =3D STK_RESULT_ADDNL_BIP_PB_CHANNEL_ID_NOT_VALID;
+> +		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_BIP_ERROR,
+> +					addnl_info);
+> +		return TRUE;
+> +	}
+> +
+> +	/* Check if the link was dropped */
+> +	if (stk->channel.status =3D=3D STK_CHANNEL_LINK_DROPPED) {
+> +		addnl_info[1] =3D STK_RESULT_ADDNL_BIP_PB_CHANNEL_CLOSED;
+> +		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_BIP_ERROR,
+> +					addnl_info);
+> +		return TRUE;
+> +	}
+> +
+> +	/*
+> +	 * Don't inform the user during data transfer if AID is
+> +	 * a null data object or is not provided
+> +	 */
+> +	if (sd->alpha_id && strlen(sd->alpha_id) > 0)
+> +		stk_alpha_id_set(stk, sd->alpha_id, &sd->text_attr,
+> +							&sd->icon_id);
+> +
+> +	stk->respond_on_exit =3D TRUE;
+> +	stk->cancel_cmd =3D stk_request_cancel;
+> +
+> +	stk_send_data(stk, sd->data, cmd->qualifier);
+> +
+> +	return FALSE;
+> +}
+> +
+> +static gboolean handle_command_get_channel_status(const struct stk_comma=
+nd *cmd,
+> +						struct stk_response *rsp,
+> +						struct ofono_stk *stk)
+> +{
+> +	rsp->result.type =3D STK_RESULT_TYPE_SUCCESS;
+> +	rsp->channel_status.channel.id =3D stk->channel.id;
+> +	rsp->channel_status.channel.status =3D stk->channel.status;
+> +	return TRUE;
+> +}
+> +
+>  static void stk_proactive_command_cancel(struct ofono_stk *stk)
+>  {
+>  	if (stk->immediate_response)
+> @@ -2782,6 +3181,31 @@ void ofono_stk_proactive_command_notify(struct ofo=
+no_stk *stk,
+>  							&rsp, stk);
+>  		break;
+>  =
+
+> +	case STK_COMMAND_TYPE_OPEN_CHANNEL:
+> +		respond =3D handle_command_open_channel(stk->pending_cmd,
+> +							&rsp, stk);
+> +		break;
+> +
+> +	case STK_COMMAND_TYPE_CLOSE_CHANNEL:
+> +		respond =3D handle_command_close_channel(stk->pending_cmd,
+> +							&rsp, stk);
+> +		break;
+> +
+> +	case STK_COMMAND_TYPE_RECEIVE_DATA:
+> +		respond =3D handle_command_receive_data(stk->pending_cmd,
+> +							&rsp, stk);
+> +		break;
+> +
+> +	case STK_COMMAND_TYPE_SEND_DATA:
+> +		respond =3D handle_command_send_data(stk->pending_cmd,
+> +							&rsp, stk);
+> +		break;
+> +
+> +	case STK_COMMAND_TYPE_GET_CHANNEL_STATUS:
+> +		respond =3D handle_command_get_channel_status(stk->pending_cmd,
+> +							&rsp, stk);
+> +		break;
+> +
+>  	default:
+>  		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
+>  		break;
 
 Regards,
 -Denis
 
---===============7702914476482102307==--
+--===============1660827236096198172==--
 
