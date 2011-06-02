@@ -1,36 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============5164856148894134539=="
+Content-Type: multipart/mixed; boundary="===============5660850015140877402=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4] reopen once if open device failed
-Date: Thu, 02 Jun 2011 16:04:23 -0500
-Message-ID: <4DE7FAD7.5020108@gmail.com>
-In-Reply-To: <1307091610-23058-1-git-send-email-caiwen.zhang@windriver.com>
+Subject: Re: [PATCH] skip modem port checking when create NDIS gprs context
+Date: Thu, 02 Jun 2011 16:04:44 -0500
+Message-ID: <4DE7FAEC.8020201@gmail.com>
+In-Reply-To: <1307092447-23510-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5164856148894134539==
+--===============5660850015140877402==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Caiwen,
 
-On 06/03/2011 04:00 AM, Caiwen Zhang wrote:
-> Sometimes when open the data device, it may fail. If open the data device=
- failed,
-> retry once one second later.
+On 06/03/2011 04:14 AM, Caiwen Zhang wrote:
+> When create NDIS gprs context, It doesn't depend on modem port,
+> don't need to check modem port.
 > =
 
 > ---
->  plugins/huawei.c |   36 +++++++++++++++++++++++++++++++++++-
->  1 files changed, 35 insertions(+), 1 deletions(-)
+>  plugins/huawei.c |    7 +++----
+>  1 files changed, 3 insertions(+), 4 deletions(-)
 > =
 
 
-Patch has been applied with a slightly modified commit message.
+Patch has been applied with a slightly modified commit message.  Thanks.
 
 Regards,
 -Denis
 
---===============5164856148894134539==--
+--===============5660850015140877402==--
 
