@@ -1,124 +1,128 @@
-Content-Type: multipart/mixed; boundary="===============4569215839223415344=="
+Content-Type: multipart/mixed; boundary="===============2070182779456656687=="
 MIME-Version: 1.0
-From: milan.satpathy@accenture.com
-Subject: [HELP]Handsfree Telephony : BUSY & NO ANSWER 
-Date: Fri, 03 Jun 2011 11:05:56 +0530
-Message-ID: <10D123A956DC4B4FA9D7A48B3335836214E613CE9B@INDXM3131.dir.svc.accenture.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2] fix can't attach GPRS issue
+Date: Thu, 02 Jun 2011 07:22:25 -0500
+Message-ID: <4DE78081.9020307@gmail.com>
+In-Reply-To: <0E7E5CACD8E9F248AA009C292CC772A057D32E@ALA-MBA.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4569215839223415344==
+--===============2070182779456656687==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Caiwen,
 
-Recently I am using hfp modem to make outgoing calls. I would like to know =
-if Ofono is providing any support(DBUS signals / erros) to indicate
-when the called party is busy in another call ( BUSY tone) or when there is=
- no answer from the called number.
+On 06/02/2011 10:42 PM, Zhang, Caiwen wrote:
+> Hi Denis,
+> =
+
+>>>>
+>>>> Can you try the attached patch and tell me if this fixes your
+>> problem?
+>>>>
+>>>
+>>> Yes, it works.
+>>
+>> From the log it isn't clear whether oFono eventually re-attaches
+>> automatically, does that work as well?
+>>
+> =
+
+> It won't re-attach automatically. Following are the log from line 6792 to
+> 6802 and my comment.
+> =
+
+> ofonod[619]: PCUI: < \r\n+CREG: 1, A807, A72B71\r\n\r\n+CGREG: 1, A807, A=
+72B71\r\n
+> ofonod[619]: src/gprs.c:netreg_status_changed() 1
+> =
+
+> gprs->netreg_status is 1 (NETWORK_REGISTRATION_STATUS_REGISTERED).
+> =
+
+> ofonod[619]: src/cbs.c:cbs_location_changed() 1, 43015, 10955633, -1, (nu=
+ll)(null)
+> ofonod[619]: src/gprs.c:ofono_gprs_status_notify() /huawei0 status 1
+> =
+
+> gprs->driver_attached is set to TURE. From now on, unless the modem unreg=
+istered,
+> gprs_netreg_update() will always return before execute gprs->driver->set_=
+attached()
+> because (gprs->driver_attached =3D=3D attach).
+
+So to me it doesn't look like your interpretation is correct:
+
+At line 6754:
+
+ofonod[619]: PCUI: > AT+CGATT=3D1\r
+ofonod[619]: PCUI: < \r\nOK\r\n
+ofonod[619]: src/gprs.c:gprs_attach_callback() /huawei0 error =3D 0
+
+This is issued in the initial gprs_netreg_update called from netreg_watch.
+
+Then we issue a CGREG query from gprs_attach_callback@line 6768:
+
+ofonod[619]: PCUI: > AT+CGREG?\r
+ofonod[619]: PCUI: < \r\n+CGREG: 2,1, A807, 2B71\r\n\r\nOK\r\n
+
+So driver_attached is TRUE here
+
+At line 6778 the modem has a nervous tick:
+ofonod[619]: PCUI: < \r\n^SRVST:1\r\n\r\n+CREG: 2\r\n\r\n+CGREG:
+2\r\n\r\n^SRVST:2\r\n\r\n+CREG: 1, A807, A72B71\r\n\r\n+CGREG: 0\r\n
+
+And the first CREG: 2 causes us to issue another gprs_netreg_update
+which issues a detach@line 6797:
+
+ofonod[619]: PCUI: > AT+CGATT=3D0\r
+ofonod[619]: PCUI: < \r\n+CREG: 1, A807, A72B71\r\n\r\n+CGREG:
+0\r\n\r\nOK\r\n
+
+The subsequent CGREG should simply update our Attached attribute to
+False.  The next CREG will trigger another gprs_netreg_update, which
+should in turn set the RECHECK flag to TRUE. And the subsequent CGREG
+has no effect.
+
+With my earlier patch, you should not have any changes to
+driver_attached until the CGATT=3D0 returns, which should trigger another
+CGREG update and assuming the RECHECK flag was set, another call to
+gprs_update_netreg.
+
+Can you investigate why this isn't happening?  Instrumentation of the
+settings of driver_attached and flags would be helpful.
+
+> =
+
+> ofonod[619]: PCUI: < \r\n+CRSM: 106,130,""\r\n\r\nOK\r\n
+> ofonod[619]: PCUI: > AT+CGATT=3D0\r
+> ofonod[619]: PCUI: < \r\n+CREG: 1, A807, A72B71\r\n\r\n+CGREG: 0\r\n\r\nO=
+K\r\n
+> ofonod[619]: src/gprs.c:netreg_status_changed() 1
+> ofonod[619]: src/cbs.c:cbs_location_changed() 1, 43015, 10955633, -1, (nu=
+ll)(null)
+> ofonod[619]: src/gprs.c:ofono_gprs_status_notify() /huawei0 status 0
+> ofonod[619]: src/gprs.c:gprs_attach_callback() /huawei0 error =3D 0
+> =
+
+> gprs->driver_attached is used to indicated (CGATT) status, its value shou=
+ldn't be changed before =
+
+> gprs->driver->set_attached() execute completely.
+> In this case, its value happen to be changed during gprs->driver->set_att=
+ached() is executed. So
+> its value is not the same as (CGATT) status. =
+
+
+The value of driver_attached is not about the current CGATT status, but
+the pending status of set_attached to the driver.  While related, they
+are not the same.
 
 Regards,
-Milan
+-Denis
 
-
-________________________________
-This message is for the designated recipient only and may contain privilege=
-d, proprietary, or otherwise private information. If you have received it i=
-n error, please notify the sender immediately and delete the original. Any =
-other use of the email by you is prohibited.
-
---===============4569215839223415344==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6c3QxPSJ1cm46c2NoZW1hcy1taWNy
-b3NvZnQtY29tOm9mZmljZTpzbWFydHRhZ3MiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy9UUi9S
-RUMtaHRtbDQwIj4KPGhlYWQ+CjxtZXRhIGh0dHAtZXF1aXY9IkNvbnRlbnQtVHlwZSIgY29udGVu
-dD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEgbmFtZT0iR2VuZXJhdG9yIiBj
-b250ZW50PSJNaWNyb3NvZnQgV29yZCAxMSAoZmlsdGVyZWQgbWVkaXVtKSI+CjxvOlNtYXJ0VGFn
-VHlwZSBuYW1lc3BhY2V1cmk9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0
-dGFncyIgbmFtZT0iQ2l0eSIgLz48bzpTbWFydFRhZ1R5cGUgbmFtZXNwYWNldXJpPSJ1cm46c2No
-ZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzbWFydHRhZ3MiIG5hbWU9InBsYWNlIiAvPjwhLS1b
-aWYgIW1zb10+CjxzdHlsZT4Kc3QxXDoqe2JlaGF2aW9yOnVybCgjZGVmYXVsdCNpZW9vdWkpIH0K
-PC9zdHlsZT4KPCFbZW5kaWZdLS0+PHN0eWxlPgo8IS0tCiAvKiBGb250IERlZmluaXRpb25zICov
-CiBAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7CglwYW5vc2UtMToyIDQg
-NiAyIDUgMyA1IDMgMyA0O30KIC8qIFN0eWxlIERlZmluaXRpb25zICovCiBwLk1zb05vcm1hbCwg
-bGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsCgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206
-LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9
-CmgxCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFyZ2luLWJvdHRv
-bTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZvaWQ7Cglmb250
-LXNpemU6MTQuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7fQpoMgoJe21hcmdpbi10
-b3A6MTIuMHB0OwoJbWFyZ2luLXJpZ2h0OjBpbjsKCW1hcmdpbi1ib3R0b206My4wcHQ7CgltYXJn
-aW4tbGVmdDowaW47CglwYWdlLWJyZWFrLWFmdGVyOmF2b2lkOwoJZm9udC1zaXplOjEyLjBwdDsK
-CWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiOwoJZm9udC1zdHlsZTppdGFsaWM7fQpoMwoJe21h
-cmdpbi10b3A6MTIuMHB0OwoJbWFyZ2luLXJpZ2h0OjBpbjsKCW1hcmdpbi1ib3R0b206My4wcHQ7
-CgltYXJnaW4tbGVmdDowaW47CglwYWdlLWJyZWFrLWFmdGVyOmF2b2lkOwoJZm9udC1zaXplOjEy
-LjBwdDsKCWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiOwoJZm9udC13ZWlnaHQ6bm9ybWFsO30K
-cC5Nc29IZWFkZXIsIGxpLk1zb0hlYWRlciwgZGl2Lk1zb0hlYWRlcgoJe21hcmdpbjowaW47Cglt
-YXJnaW4tYm90dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTEuMHB0OwoJZm9udC1mYW1pbHk6IkJv
-b2sgQW50aXF1YSI7fQpwLk1zb0Zvb3RlciwgbGkuTXNvRm9vdGVyLCBkaXYuTXNvRm9vdGVyCgl7
-bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglm
-b250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CmE6bGluaywgc3Bhbi5Nc29IeXBlcmxpbmsKCXtj
-b2xvcjpibHVlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CmE6dmlzaXRlZCwgc3Bhbi5N
-c29IeXBlcmxpbmtGb2xsb3dlZAoJe2NvbG9yOiM2MDY0MjA7Cgl0ZXh0LWRlY29yYXRpb246dW5k
-ZXJsaW5lO30KcC5BQkxPQ0tQQVJBLCBsaS5BQkxPQ0tQQVJBLCBkaXYuQUJMT0NLUEFSQQoJe21h
-cmdpbjowaW47CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTEuMHB0OwoJZm9u
-dC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7fQpwLkFCVUxMRVQsIGxpLkFCVUxMRVQsIGRpdi5BQlVM
-TEVUCgl7bWFyZ2luLXRvcDowaW47CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFyZ2luLWJvdHRvbTow
-aW47CgltYXJnaW4tbGVmdDoxNi41NXB0OwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJdGV4dC1p
-bmRlbnQ6LTE2LjU1cHQ7Cglmb250LXNpemU6MTEuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50
-aXF1YSI7fQpwLkFJTkRFTlRFREJVTExFVCwgbGkuQUlOREVOVEVEQlVMTEVULCBkaXYuQUlOREVO
-VEVEQlVMTEVUCgl7bWFyZ2luLXRvcDowaW47CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFyZ2luLWJv
-dHRvbTowaW47CgltYXJnaW4tbGVmdDozMy4xcHQ7CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7Cgl0
-ZXh0LWluZGVudDotMTYuNTVwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9v
-ayBBbnRpcXVhIjt9CnAuQUlOREVOVEVEUEFSQSwgbGkuQUlOREVOVEVEUEFSQSwgZGl2LkFJTkRF
-TlRFRFBBUkEKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdodDowaW47CgltYXJnaW4tYm90
-dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjE2LjU1cHQ7CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7Cglm
-b250LXNpemU6MTEuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7fQpzcGFuLkVtYWls
-U3R5bGUyMwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7Cglmb250LWZhbWlseTpB
-cmlhbDsKCWNvbG9yOndpbmRvd3RleHQ7fQpAcGFnZSBTZWN0aW9uMQoJe3NpemU6NTk1LjQ1cHQg
-ODQxLjdwdDsKCW1hcmdpbjoxLjBpbiAuNzVpbiAxLjBpbiAuNzVpbjt9CmRpdi5TZWN0aW9uMQoJ
-e3BhZ2U6U2VjdGlvbjE7fQotLT4KPC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBsYW5nPSJFTi1VUyIg
-bGluaz0iYmx1ZSIgdmxpbms9IiM2MDY0MjAiPgo8ZGl2IGNsYXNzPSJTZWN0aW9uMSI+CjxwIGNs
-YXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0i
-Zm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPkhpLDxvOnA+PC9vOnA+PC9zcGFu
-PjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFy
-aWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPjxv
-OnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxm
-b250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsK
-Zm9udC1mYW1pbHk6QXJpYWwiPlJlY2VudGx5IEkgYW0gdXNpbmcgaGZwIG1vZGVtIHRvIG1ha2Ug
-b3V0Z29pbmcgY2FsbHMuIEkgd291bGQgbGlrZSB0byBrbm93IGlmIE9mb25vIGlzIHByb3ZpZGlu
-ZyBhbnkgc3VwcG9ydChEQlVTIHNpZ25hbHMgLyBlcnJvcykgdG8gaW5kaWNhdGU8bzpwPjwvbzpw
-Pjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBm
-YWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFy
-aWFsIj53aGVuIHRoZSBjYWxsZWQgcGFydHkgaXMgYnVzeSBpbiBhbm90aGVyIGNhbGwgKCBCVVNZ
-IHRvbmUpIG9yIHdoZW4gdGhlcmUgaXMgbm8gYW5zd2VyIGZyb20gdGhlIGNhbGxlZCBudW1iZXIu
-PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQg
-c2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250
-LWZhbWlseTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xh
-c3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJm
-b250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+UmVnYXJkcyw8bzpwPjwvbzpwPjwv
-c3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3QxOkNpdHkgdzpzdD0ib24i
-PjxzdDE6cGxhY2UgdzpzdD0ib24iPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBz
-dHlsZT0iZm9udC1zaXplOjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCI+TWlsYW48L3NwYW4+PC9m
-b250Pjwvc3QxOnBsYWNlPjwvc3QxOkNpdHk+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxz
-cGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsIj4KICZuYnNwOzwv
-c3Bhbj48L2ZvbnQ+PG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNp
-emU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1m
-YW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjwvZGl2Pgo8
-YnI+Cjxocj4KPGZvbnQgZmFjZT0iQXJpYWwiIGNvbG9yPSJHcmF5IiBzaXplPSIyIj5UaGlzIG1l
-c3NhZ2UgaXMgZm9yIHRoZSBkZXNpZ25hdGVkIHJlY2lwaWVudCBvbmx5IGFuZCBtYXkgY29udGFp
-biBwcml2aWxlZ2VkLCBwcm9wcmlldGFyeSwgb3Igb3RoZXJ3aXNlIHByaXZhdGUgaW5mb3JtYXRp
-b24uIElmIHlvdSBoYXZlIHJlY2VpdmVkIGl0IGluIGVycm9yLCBwbGVhc2Ugbm90aWZ5IHRoZSBz
-ZW5kZXIgaW1tZWRpYXRlbHkgYW5kIGRlbGV0ZSB0aGUgb3JpZ2luYWwuCiBBbnkgb3RoZXIgdXNl
-IG9mIHRoZSBlbWFpbCBieSB5b3UgaXMgcHJvaGliaXRlZC48YnI+CjwvZm9udD4KPC9ib2R5Pgo8
-L2h0bWw+Cg==
-
---===============4569215839223415344==--
+--===============2070182779456656687==--
 
