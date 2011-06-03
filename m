@@ -1,153 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============7010958334559235672=="
+Content-Type: multipart/mixed; boundary="===============8469062773427211058=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3] reopen once if open device failed
-Date: Thu, 02 Jun 2011 04:27:54 -0500
-Message-ID: <4DE7579A.6030009@gmail.com>
-In-Reply-To: <1307068541-22433-1-git-send-email-caiwen.zhang@windriver.com>
+From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
+Subject: RE: [PATCH v2] fix can't attach GPRS issue
+Date: Fri, 03 Jun 2011 03:42:00 +0000
+Message-ID: <0E7E5CACD8E9F248AA009C292CC772A057D32E@ALA-MBA.corp.ad.wrs.com>
+In-Reply-To: <4DE75421.6040907@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7010958334559235672==
+--===============8469062773427211058==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Caiwen,
+Hi Denis,
 
-On 06/02/2011 09:35 PM, Caiwen Zhang wrote:
-> Sometimes when open the data device, it may fail. If open the data device=
- failed,
-> retry once one second later.
+> >>
+> >> Can you try the attached patch and tell me if this fixes your
+> problem?
+> >>
+> >
+> > Yes, it works.
 > =
 
-> ---
->  plugins/huawei.c |   43 ++++++++++++++++++++++++++++++++++++++-----
->  1 files changed, 38 insertions(+), 5 deletions(-)
+> From the log it isn't clear whether oFono eventually re-attaches
+> automatically, does that work as well?
 > =
 
-> diff --git a/plugins/huawei.c b/plugins/huawei.c
-> index e791718..96c9cc2 100644
-> --- a/plugins/huawei.c
-> +++ b/plugins/huawei.c
-> @@ -80,6 +80,7 @@ struct huawei_data {
->  	gboolean ndis;
->  	guint sim_poll_timeout;
->  	guint sim_poll_count;
-> +	guint reopen_timeout;
->  };
->  =
 
->  #define MAX_SIM_POLL_COUNT 5
-> @@ -107,6 +108,11 @@ static void huawei_remove(struct ofono_modem *modem)
->  =
+It won't re-attach automatically. Following are the log from line 6792 to
+6802 and my comment.
 
->  	DBG("%p", modem);
->  =
+ofonod[619]: PCUI: < \r\n+CREG: 1, A807, A72B71\r\n\r\n+CGREG: 1, A807, A72=
+B71\r\n
+ofonod[619]: src/gprs.c:netreg_status_changed() 1
 
-> +	if (data->reopen_timeout > 0) {
-> +		g_source_remove(data->reopen_timeout);
-> +		data->reopen_timeout =3D 0;
-> +	}
-> +
->  	ofono_modem_set_data(modem, NULL);
->  =
+gprs->netreg_status is 1 (NETWORK_REGISTRATION_STATUS_REGISTERED).
 
->  	if (data->modem)
-> @@ -465,6 +471,20 @@ static GAtChat *open_device(struct ofono_modem *mode=
-m,
->  	return chat;
->  }
->  =
+ofonod[619]: src/cbs.c:cbs_location_changed() 1, 43015, 10955633, -1, (null=
+)(null)
+ofonod[619]: src/gprs.c:ofono_gprs_status_notify() /huawei0 status 1
 
-> +static void huawei_disconnect(gpointer user_data);
-> +
-> +static gboolean reopen_callback(gpointer user_data)
-> +{
-> +	struct ofono_modem *modem =3D user_data;
-> +	struct huawei_data *data =3D ofono_modem_get_data(modem);
-> +
-> +	huawei_disconnect(user_data);
-> +
-> +	data->reopen_timeout =3D 0;
-> +
-> +	return FALSE;
-> +}
-> +
->  static void huawei_disconnect(gpointer user_data)
->  {
->  	struct ofono_modem *modem =3D user_data;
-> @@ -476,8 +496,17 @@ static void huawei_disconnect(gpointer user_data)
->  	data->modem =3D NULL;
->  =
+gprs->driver_attached is set to TURE. From now on, unless the modem unregis=
+tered,
+gprs_netreg_update() will always return before execute gprs->driver->set_at=
+tached()
+because (gprs->driver_attached =3D=3D attach).
 
->  	data->modem =3D open_device(modem, "Modem", "Modem: ");
-> -	if (data->modem =3D=3D NULL)
-> +	/* retry once if failed */
-> +	if (data->modem =3D=3D NULL) {
-> +		if (data->reopen_timeout > 0)
-> +			return;
-> +
-> +		data->reopen_timeout =3D g_timeout_add_seconds(1,
-> +				reopen_callback, modem);
-> +
-> +		ofono_debug("open device failed, try to reopen it.");
->  		return;
-> +	}
->  =
+ofonod[619]: PCUI: < \r\n+CRSM: 106,130,""\r\n\r\nOK\r\n
+ofonod[619]: PCUI: > AT+CGATT=3D0\r
+ofonod[619]: PCUI: < \r\n+CREG: 1, A807, A72B71\r\n\r\n+CGREG: 0\r\n\r\nOK\=
+r\n
+ofonod[619]: src/gprs.c:netreg_status_changed() 1
+ofonod[619]: src/cbs.c:cbs_location_changed() 1, 43015, 10955633, -1, (null=
+)(null)
+ofonod[619]: src/gprs.c:ofono_gprs_status_notify() /huawei0 status 0
+ofonod[619]: src/gprs.c:gprs_attach_callback() /huawei0 error =3D 0
 
->  	g_at_chat_set_disconnect_function(data->modem,
->  						huawei_disconnect, modem);
-> @@ -559,6 +588,11 @@ static int huawei_disable(struct ofono_modem *modem)
->  =
+gprs->driver_attached is used to indicated (CGATT) status, its value should=
+n't be changed before =
 
->  	DBG("%p", modem);
->  =
-
-> +	if (data->reopen_timeout > 0) {
-> +		g_source_remove(data->reopen_timeout);
-> +		data->reopen_timeout =3D 0;
-> +	}
-> +
->  	if (data->sim_poll_timeout > 0) {
->  		g_source_remove(data->sim_poll_timeout);
->  		data->sim_poll_timeout =3D 0;
-> @@ -682,16 +716,15 @@ static void huawei_post_online(struct ofono_modem *=
-modem)
->  	ofono_ussd_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
->  						"atmodem", data->pcui);
->  =
-
-> -	if ((data->sim_state =3D=3D HUAWEI_SIM_STATE_VALID ||
-> -			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) &&
-> -			data->modem !=3D NULL) {
-> +	if (data->sim_state =3D=3D HUAWEI_SIM_STATE_VALID ||
-> +			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) {
-
-What are you trying to accomplish here?  It sounds like you want to
-separate the logic of creating the NDIS gprs context (which does not
-depend on the modem port being available.)  Is this the case?  If so,
-then you need to submit this as a separate patch...
-
->  		data->gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_HUAWEI,
->  						"atmodem", data->pcui);
->  =
-
->  		if (data->ndis =3D=3D TRUE)
->  			data->gc =3D ofono_gprs_context_create(modem, 0,
->  						"huaweimodem", data->pcui);
-> -		else
-> +		else if (data->modem !=3D NULL)
->  			data->gc =3D ofono_gprs_context_create(modem, 0,
->  						"atmodem", data->modem);
->  =
+gprs->driver->set_attached() execute completely.
+In this case, its value happen to be changed during gprs->driver->set_attac=
+hed() is executed. So
+its value is not the same as (CGATT) status. =
 
 
-along with this chunk here, since they are not related to the issue
-you're trying to fix.
+best regards
+Caiwen
 
-Regards,
--Denis
 
---===============7010958334559235672==--
+--===============8469062773427211058==--
 
