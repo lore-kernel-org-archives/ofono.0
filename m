@@ -1,128 +1,114 @@
-Content-Type: multipart/mixed; boundary="===============2070182779456656687=="
+Content-Type: multipart/mixed; boundary="===============7561298549584377260=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] fix can't attach GPRS issue
-Date: Thu, 02 Jun 2011 07:22:25 -0500
-Message-ID: <4DE78081.9020307@gmail.com>
-In-Reply-To: <0E7E5CACD8E9F248AA009C292CC772A057D32E@ALA-MBA.corp.ad.wrs.com>
+From: Caiwen Zhang <caiwen.zhang@windriver.com>
+Subject: [PATCH v4] reopen once if open device failed
+Date: Fri, 03 Jun 2011 17:00:10 +0800
+Message-ID: <1307091610-23058-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2070182779456656687==
+--===============7561298549584377260==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Caiwen,
+Sometimes when open the data device, it may fail. If open the data device f=
+ailed,
+retry once one second later.
 
-On 06/02/2011 10:42 PM, Zhang, Caiwen wrote:
-> Hi Denis,
-> =
+---
+ plugins/huawei.c |   36 +++++++++++++++++++++++++++++++++++-
+ 1 files changed, 35 insertions(+), 1 deletions(-)
 
->>>>
->>>> Can you try the attached patch and tell me if this fixes your
->> problem?
->>>>
->>>
->>> Yes, it works.
->>
->> From the log it isn't clear whether oFono eventually re-attaches
->> automatically, does that work as well?
->>
-> =
+diff --git a/plugins/huawei.c b/plugins/huawei.c
+index e791718..639ae0d 100644
+--- a/plugins/huawei.c
++++ b/plugins/huawei.c
+@@ -80,6 +80,7 @@ struct huawei_data {
+ 	gboolean ndis;
+ 	guint sim_poll_timeout;
+ 	guint sim_poll_count;
++	guint reopen_timeout;
+ };
+ =
 
-> It won't re-attach automatically. Following are the log from line 6792 to
-> 6802 and my comment.
-> =
+ #define MAX_SIM_POLL_COUNT 5
+@@ -107,6 +108,11 @@ static void huawei_remove(struct ofono_modem *modem)
+ =
 
-> ofonod[619]: PCUI: < \r\n+CREG: 1, A807, A72B71\r\n\r\n+CGREG: 1, A807, A=
-72B71\r\n
-> ofonod[619]: src/gprs.c:netreg_status_changed() 1
-> =
+ 	DBG("%p", modem);
+ =
 
-> gprs->netreg_status is 1 (NETWORK_REGISTRATION_STATUS_REGISTERED).
-> =
++	if (data->reopen_timeout > 0) {
++		g_source_remove(data->reopen_timeout);
++		data->reopen_timeout =3D 0;
++	}
++
+ 	ofono_modem_set_data(modem, NULL);
+ =
 
-> ofonod[619]: src/cbs.c:cbs_location_changed() 1, 43015, 10955633, -1, (nu=
-ll)(null)
-> ofonod[619]: src/gprs.c:ofono_gprs_status_notify() /huawei0 status 1
-> =
+ 	if (data->modem)
+@@ -465,6 +471,20 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	return chat;
+ }
+ =
 
-> gprs->driver_attached is set to TURE. From now on, unless the modem unreg=
-istered,
-> gprs_netreg_update() will always return before execute gprs->driver->set_=
-attached()
-> because (gprs->driver_attached =3D=3D attach).
++static void huawei_disconnect(gpointer user_data);
++
++static gboolean reopen_callback(gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct huawei_data *data =3D ofono_modem_get_data(modem);
++
++	huawei_disconnect(user_data);
++
++	data->reopen_timeout =3D 0;
++
++	return FALSE;
++}
++
+ static void huawei_disconnect(gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+@@ -476,8 +496,17 @@ static void huawei_disconnect(gpointer user_data)
+ 	data->modem =3D NULL;
+ =
 
-So to me it doesn't look like your interpretation is correct:
+ 	data->modem =3D open_device(modem, "Modem", "Modem: ");
+-	if (data->modem =3D=3D NULL)
++	/* retry once if failed */
++	if (data->modem =3D=3D NULL) {
++		if (data->reopen_timeout > 0)
++			return;
++
++		data->reopen_timeout =3D g_timeout_add_seconds(1,
++				reopen_callback, modem);
++
++		ofono_debug("open device failed, try to reopen it.");
+ 		return;
++	}
+ =
 
-At line 6754:
+ 	g_at_chat_set_disconnect_function(data->modem,
+ 						huawei_disconnect, modem);
+@@ -559,6 +588,11 @@ static int huawei_disable(struct ofono_modem *modem)
+ =
 
-ofonod[619]: PCUI: > AT+CGATT=3D1\r
-ofonod[619]: PCUI: < \r\nOK\r\n
-ofonod[619]: src/gprs.c:gprs_attach_callback() /huawei0 error =3D 0
+ 	DBG("%p", modem);
+ =
 
-This is issued in the initial gprs_netreg_update called from netreg_watch.
++	if (data->reopen_timeout > 0) {
++		g_source_remove(data->reopen_timeout);
++		data->reopen_timeout =3D 0;
++	}
++
+ 	if (data->sim_poll_timeout > 0) {
+ 		g_source_remove(data->sim_poll_timeout);
+ 		data->sim_poll_timeout =3D 0;
+-- =
 
-Then we issue a CGREG query from gprs_attach_callback@line 6768:
-
-ofonod[619]: PCUI: > AT+CGREG?\r
-ofonod[619]: PCUI: < \r\n+CGREG: 2,1, A807, 2B71\r\n\r\nOK\r\n
-
-So driver_attached is TRUE here
-
-At line 6778 the modem has a nervous tick:
-ofonod[619]: PCUI: < \r\n^SRVST:1\r\n\r\n+CREG: 2\r\n\r\n+CGREG:
-2\r\n\r\n^SRVST:2\r\n\r\n+CREG: 1, A807, A72B71\r\n\r\n+CGREG: 0\r\n
-
-And the first CREG: 2 causes us to issue another gprs_netreg_update
-which issues a detach@line 6797:
-
-ofonod[619]: PCUI: > AT+CGATT=3D0\r
-ofonod[619]: PCUI: < \r\n+CREG: 1, A807, A72B71\r\n\r\n+CGREG:
-0\r\n\r\nOK\r\n
-
-The subsequent CGREG should simply update our Attached attribute to
-False.  The next CREG will trigger another gprs_netreg_update, which
-should in turn set the RECHECK flag to TRUE. And the subsequent CGREG
-has no effect.
-
-With my earlier patch, you should not have any changes to
-driver_attached until the CGATT=3D0 returns, which should trigger another
-CGREG update and assuming the RECHECK flag was set, another call to
-gprs_update_netreg.
-
-Can you investigate why this isn't happening?  Instrumentation of the
-settings of driver_attached and flags would be helpful.
-
-> =
-
-> ofonod[619]: PCUI: < \r\n+CRSM: 106,130,""\r\n\r\nOK\r\n
-> ofonod[619]: PCUI: > AT+CGATT=3D0\r
-> ofonod[619]: PCUI: < \r\n+CREG: 1, A807, A72B71\r\n\r\n+CGREG: 0\r\n\r\nO=
-K\r\n
-> ofonod[619]: src/gprs.c:netreg_status_changed() 1
-> ofonod[619]: src/cbs.c:cbs_location_changed() 1, 43015, 10955633, -1, (nu=
-ll)(null)
-> ofonod[619]: src/gprs.c:ofono_gprs_status_notify() /huawei0 status 0
-> ofonod[619]: src/gprs.c:gprs_attach_callback() /huawei0 error =3D 0
-> =
-
-> gprs->driver_attached is used to indicated (CGATT) status, its value shou=
-ldn't be changed before =
-
-> gprs->driver->set_attached() execute completely.
-> In this case, its value happen to be changed during gprs->driver->set_att=
-ached() is executed. So
-> its value is not the same as (CGATT) status. =
+1.7.5
 
 
-The value of driver_attached is not about the current CGATT status, but
-the pending status of set_attached to the driver.  While related, they
-are not the same.
-
-Regards,
--Denis
-
---===============2070182779456656687==--
+--===============7561298549584377260==--
 
