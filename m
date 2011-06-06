@@ -1,37 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============0604868894712184680=="
+Content-Type: multipart/mixed; boundary="===============3918216915201954248=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Call Logs
-Date: Mon, 06 Jun 2011 15:12:12 -0500
-Message-ID: <4DED349C.70709@gmail.com>
-In-Reply-To: <BANLkTina8iSM1tgBK738OHDe7pOo-NtPug@mail.gmail.com>
+Subject: Re: Problems ofono 0.45 and Nokia 6760
+Date: Mon, 06 Jun 2011 15:13:25 -0500
+Message-ID: <4DED34E5.3070602@gmail.com>
+In-Reply-To: <4DEF85AF.8000900@zirak.it>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0604868894712184680==
+--===============3918216915201954248==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rishi,
 
-On 06/08/2011 09:18 AM, Rishi Kumar wrote:
-> Hi,
+Hi Claudio,
+
+On 06/08/2011 09:22 AM, Claudio Degioanni wrote:
+> Hi all,
 > =
 
-> One Quick question. Does oFono Support any Call Loggin mechanism ???
-> It says that it handles call history via plugin interface and not
-> directly.
-> Can anyone please elaborate on the same ??
+> I have attacched a nokia 6760 to ofono for using it as gprs modem.
+> =
+
+> I have started the daemon with
+> =
+
+> OFONO_ISI_TRACE=3D1 OFONO_ISI_DEBUG=3D1 ofonod -nd
+> =
+
+> =
+
+> After enabling the modem and activate the profile using
+> =
+
+> dbus-send --system --print-reply --reply-timeout=3D120000
+> --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0
+> org.ofono.Modem.SetProperty string:Powered variant:boolean:true
+> =
+
+> dbus-send --system --print-reply --reply-timeout=3D120000
+> --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0
+> org.ofono.Modem.SetProperty string:Online variant:boolean:true
+> =
+
+> dbus-send --system --print-reply --reply-timeout=3D120000
+> --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0/context1
+> org.ofono.ConnectionContext.SetProperty string:AccessPointName
+> variant:string:ibox.tim.it
+> =
+
+> dbus-send --system --print-reply --reply-timeout=3D120000
+> --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0/context1
+> org.ofono.ConnectionContext.SetProperty string:Active variant:boolean:true
+> =
+
+> We obtain on last method calls the follow error:
+> =
+
+> Error org.ofono.Error.NotAttached: GPRS is not attached
 > =
 
 
-Please look into examples/history.c, it implements the history plugin
-interface that is notified of any outgoing / incoming / missed calls and
-sent / received SMS messages.
+You have to wait for the modem to attach to GPRS first.  Track the
+status of the ConnectionManager 'Attached' property.  Once it changes to
+TRUE, then you can try to activate a context.
 
 Regards,
 -Denis
 
---===============0604868894712184680==--
+--===============3918216915201954248==--
 
