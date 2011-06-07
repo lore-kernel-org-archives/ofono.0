@@ -1,55 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============6979486453345703452=="
+Content-Type: multipart/mixed; boundary="===============1449366835972228057=="
 MIME-Version: 1.0
-From: Bernhard Guillon <Bernhard.Guillon@hale.at>
-Subject: Re: [PATCH] network-registration.c: enhance CIND=? support
-Date: Tue, 07 Jun 2011 14:12:06 +0200
-Message-ID: <alpine.DEB.2.00.1106071409280.4297@entw48>
-In-Reply-To: <1307448289-4413-1-git-send-email-Bernhard.Guillon@hale.at>
+From: Frederic Danis <frederic.danis@linux.intel.com>
+Subject: Re: [PATCH V3 2/4] voicecall: add ATD support for HFP emulator
+Date: Tue, 07 Jun 2011 14:58:00 +0200
+Message-ID: <4DEE2058.3000601@linux.intel.com>
+In-Reply-To: <4DE6F0B4.10208@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6979486453345703452==
+--===============1449366835972228057==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hello Denis,
 
-
-On Tue, 7 Jun 2011, Bernhard.Guillon(a)hale.at wrote:
-
-> From: Bernhard Guillon <Bernhard.Guillon@hale.at>
+Le 02/06/2011 04:08, Denis Kenzior a =C3=A9crit :
+>> +static void emulator_dial(struct ofono_emulator *em, struct ofono_voice=
+call *vc,
+>> +				const char *number)
+>> +{
+>> +	struct ofono_error result;
+>> +	int err;
+>> +
+>> +	result.error =3D 0;
+>> +
+>> +	if (vc->pending_em) {
+>> +		result.type =3D OFONO_ERROR_TYPE_FAILURE;
+>> +		goto send;
+>> +	}
 >
-> *add support for CIND=3D? tokens like ("signal",(0-7,99))
-> *add support for token encapsulation e.g.
->    (("one",(0-7,99)),("two",(0-7,99)))
-> ---
-> drivers/atmodem/network-registration.c |   51 +++++++++++++++++++++++++++=
-+---
-> 1 files changed, 46 insertions(+), 5 deletions(-)
+> You might also want to check that the Dial is not happening via D-Bus or
+> STK, and vice-versa.
+
+Voicecall_dial will check if there is already a pending outgoing call.
+I think this is sufficient to manage concurrent ATD between D-Bus, STK =
+
+and emulator.
+
+>
+>> +
+>> +	vc->pending_em =3D em;
+>> +
+>> +	err =3D voicecall_dial(vc, number, OFONO_CLIR_OPTION_DEFAULT,
+>> +					emulator_dial_callback, vc);
+>> +
+>> +	if (err>=3D 0)
+>> +		return;
+>> +
+>> +	vc->pending_em =3D NULL;
+>> +
+>> +	switch (err) {
+>> +	case -ENETDOWN:
+>> +		result.error =3D 30;
+>> +		result.type =3D OFONO_ERROR_TYPE_CME;
+>> +		break;
+>> +
+>> +	default:
+>> +		result.type =3D OFONO_ERROR_TYPE_FAILURE;
+>> +	}
+>> +
+>> +send:
+>> +	ofono_emulator_send_final(em,&result);
+>> +}
+>> +
+
+Regards
+
+Fred
 
 
-Tested with:
+-- =
 
-Telit:
-AT+CIND=3D?
-+CIND: (("battchg",(0-5,99)),("signal",(0-7,99)),("service",(0,1)),("sounde=
-r",(0,1)),("message",(0,1)),("call",(0,1)),("roam",(0,1)),("smsfull",(0,1))=
-,("rssi",(0-5,99)))
-
-and some kind of Motorola from wikipedia [1]:
-
-+CIND: ("Voice Mail",(0,1)),("service",(0,1)),("call",(0,1)),("Roam",(0-2))=
-,("signal",(0-5)),("callsetup",(0-3)),("smsfull",(0,1))
-
-Best regards,
-Bernhard
-
-1 http://en.wikipedia.org/wiki/Motorola_phone_AT_commands
+Frederic Danis                            Open Source Technology Centre
+frederic.danis(a)intel.com                              Intel Corporation
 
 
---
-Scanned by MailScanner.
-
-
---===============6979486453345703452==--
+--===============1449366835972228057==--
 
