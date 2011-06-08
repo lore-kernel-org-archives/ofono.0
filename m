@@ -1,126 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============4105267467261696360=="
+Content-Type: multipart/mixed; boundary="===============8371499854591355376=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4 4/8] gprs: Add private APIs for
- adding/activating/removing hidden PDP contexts
-Date: Wed, 08 Jun 2011 02:46:43 -0500
-Message-ID: <4DEF28E3.3050205@gmail.com>
-In-Reply-To: <4DF1E793.1050608@linux.intel.com>
+Subject: Re: [PATCH v4 2/8] stk: Introduce BIP command handlers
+Date: Wed, 08 Jun 2011 03:01:00 -0500
+Message-ID: <4DEF2C3C.7090405@gmail.com>
+In-Reply-To: <4DF2241F.7050108@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4105267467261696360==
+--===============8371499854591355376==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Philippe,
 
+>>>       __ofono_sms_sim_download_cb_t sms_pp_cb;
+>>>       void *sms_pp_userdata;
+>>> +    struct stk_channel channel;
+>>> +    struct stk_channel_data rx_buffer;
+>>> +    struct stk_channel_data tx_buffer;
 >>
->> As mentioned previously, I don't see the point of creating pri_context
->> structure for this.  So you can rip much of this stuff out.
-> =
-
-> =
-
-> I don't understand why you think we don't need to create a pri_context.
-> Could you clarify please?
-> =
-
-> Even if no parameters are provided by the UICC (id use default
-> parameters), I still need to setup a dedicated primary context with
-> defaults parameters since we can't double-activate an existing primary
-> context.
-> =
-
-
-struct pri_context is used to store information pertinent to the D-Bus
-API. Namely all the context attributes that are exposed on the
-ConnectionContext interface.  You are not using any of them, and we do
-not want to ever expose STK contexts over D-Bus.
-
-In effect you're (ab)using a structure that was never meant for your
-particular purpose, and moreover not using 90% of the members of that
-structure.
-
-Whenever you are faced with a situation like this you need to ask
-yourself whether making a new structure would make more sense,
-particularly from ease of implementation and code readability.
-Generally the answer is 'yes'.
-
-<snip>
-
->>> +unsigned int __ofono_gprs_add_pdp_context(struct ofono_gprs *gprs,
->>> +                    enum ofono_gprs_context_type type,
->>> +                    enum ofono_gprs_proto proto,
->>> +                    const char *apn,
->>> +                    const char *username,
->>> +                    const char *password,
->>> +                    const char *host);
->>> +
->>
->> I don't think this is needed at all.  All STK needs to do is just say
->> 'please activate a context with these params'.  You can pretty much get
->> away with __ofono_gprs_activate_context and
->> __ofono_gprs_deactivate_context.
+>> Are you sure you need these buffers?  At least the RX buffer can
+>> probably be ignored since you can always use the kernel socket buffer
+>> instead.  Copying from the kernel buffer into your own buffer just to
+>> copy it into SIM's buffer seems like busywork.
 >>
 > =
 
-> When "on link demand" mode is requested, we just need to setup the PDP
-> context and return the PDP identifier. The PDP context activation is
-> done only once we receive a proactive command SEND DATA with the
-> qualifier "Send data immediately".
-> So, I don't see how to differentiate this mode without the API
-> "__ofono_gprs_add_pdp_context".
+> The idea of the Rx buffer is to introduce an intermediate buffer since
+> it's up to the UICC to collect the received data with the proactive
+> command 'Receive data'. But before that, we need to read the kernel
+> buffer to determine the amount of data available and inform the UICC
+> about this size.
 > =
 
 
-There's nothing stopping you from recording the PDP context parameters
-in stk.c and providing them to activate_context when some data is
-actually sent.
+If this is the only reason you're introducing an rx buffer, then please
+don't.  There are ioctls on tcp / udp sockets that give you this
+information.  Please see FIONREAD ioctl.
 
 > =
 
->>> +int __ofono_gprs_remove_pdp_context(struct ofono_gprs *gprs,
->>> unsigned int id,
->>> +                    __ofono_gprs_remove_pdp_context_cb_t cb,
->>> +                    void *data);
->>> +
+>> The TX buffer is arguable, you might want to use non-blocking IO, but in
+>> that case I would use a ring_buffer from GAtChat.
+> =
+
+> For STK, what is the added value of a ring buffer? The mechanism for STK
+> is to store data in the TX buffer and once the PDU is complete, flush it
+> by sending the data. So we can't store before the Tx buffer is empty.
+> =
+
+>
+
+Because you would have to use non-blocking IO, and your number of bytes
+written to the kernel socket is not guaranteed to be the same as the
+contents of the tx buffer.  So you either must memmove or use a ring
+buffer which is more efficient.
+
+
 >>
->> Are you sure you really need the callback function here?  The spec is a
->> little fuzzy on when the terminal response is actually sent.
+>> You can't actually do this since the agent does not support calling
+>> stk_agent_request_cancel from within a callback.
 > =
 
-> =
+> OK, thank you for pointing this issue. But then I realize that I don't
+> need to expressly release the stk session agent (through
+> stk_agent_request_cancel). We just need to wait for the "End session"
+> notification which is likely to be received as a result of the Terminal
+> response "session terminated by user".
 
-> At first sight, yes, that was also my opinion but then I saw the
-> examples in annex I (TS 102 223).
-> =
-
-> For Close channel, we can see the following sequence:
-> =
-
-> UICC             Terminal                 SGSN
-> =
-
-> |--------------------->    |                |
-> |    Close Channel    |                |
-> |            | -------------------------->   |
-> |            | Deactivate PDP context request|
-> |            | <-----------------------------|
-> |            | Deactivate PDP context accept |
-> |<----------------------
->    Terminal response
-> =
-
-> That's why, I introduced the callback to trigger the Terminal response.
-> =
-
-
-Fair enough.
+We've already had this discussion ;)  Please don't rely on such behavior.
 
 Regards,
 -Denis
 
---===============4105267467261696360==--
+--===============8371499854591355376==--
 
