@@ -1,403 +1,555 @@
-Content-Type: multipart/mixed; boundary="===============4473204102179114432=="
+Content-Type: multipart/mixed; boundary="===============2882653892953432561=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH_v7] connman: add plugin in oFono to request/release
- private network
-Date: Wed, 08 Jun 2011 10:46:11 +0200
-Message-ID: <4DEF36D3.5090106@linux.intel.com>
-In-Reply-To: <4DEC70E3.7090604@gmail.com>
+From: Amit Mendapara <mendapara.amit@gmail.com>
+Subject: [PATCH 1/2] linktop: reimplemented linktop plugin based on mbm
+Date: Wed, 08 Jun 2011 15:16:19 +0530
+Message-ID: <1307526380-6285-1-git-send-email-mendapara.amit@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4473204102179114432==
+--===============2882653892953432561==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+The AT commands listed with AT+CLAC matches with MBM supported devices.
+However, the mbm plugin doesn't work for this devices and the specification=
+ is
+also quite different.
 
-On 06/06/2011 08:17, Denis Kenzior wrote:
-> Hi Guillaume,
->
-> On 06/06/2011 04:17 AM, Guillaume Zajac wrote:
->> Hi,
->>
->> Changelog from v6:
->> 	- This patch contains only the ConnMan plugin to request/release
->> 	the private network settings.
->> 	- remove unused ConnMan interfaces.
->> 	- remove error field from pns_req structure.
->> 	- directly call release method from plugin when a request is redundant.
->>
->> ---
->>   Makefile.am       |    3 +
->>   plugins/connman.c |  277 +++++++++++++++++++++++++++++++++++++++++++++=
-++++++++
->>   2 files changed, 280 insertions(+), 0 deletions(-)
->>   create mode 100644 plugins/connman.c
->>
->> diff --git a/Makefile.am b/Makefile.am
->> index 0a7b6d5..ab28e2c 100644
->> --- a/Makefile.am
->> +++ b/Makefile.am
->> @@ -339,6 +339,9 @@ builtin_sources +=3D plugins/hfp_ag.c plugins/blueto=
-oth.h
->>   builtin_modules +=3D dun_gw
->>   builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
->>
->> +builtin_modules +=3D connman
->> +builtin_sources +=3D plugins/connman.c
->> +
->>   builtin_sources +=3D $(btio_sources)
->>   builtin_cflags +=3D @BLUEZ_CFLAGS@
->>   builtin_libadd +=3D @BLUEZ_LIBS@
->> diff --git a/plugins/connman.c b/plugins/connman.c
->> new file mode 100644
->> index 0000000..e6cce3f
->> --- /dev/null
->> +++ b/plugins/connman.c
->> @@ -0,0 +1,277 @@
->> +/*
->> + *
->> + *  oFono - Open Source Telephony
->> + *
->> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
->> + *
->> + *  This program is free software; you can redistribute it and/or modify
->> + *  it under the terms of the GNU General Public License version 2 as
->> + *  published by the Free Software Foundation.
->> + *
->> + *  This program is distributed in the hope that it will be useful,
->> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
->> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
->> + *  GNU General Public License for more details.
->> + *
->> + *  You should have received a copy of the GNU General Public License
->> + *  along with this program; if not, write to the Free Software
->> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-13=
-01  USA
->> + *
->> + */
->> +
->> +#ifdef HAVE_CONFIG_H
->> +#include<config.h>
->> +#endif
->> +
->> +#include<errno.h>
->> +#include<stdlib.h>
->> +#include<unistd.h>
->> +
->> +#include<gdbus.h>
->> +#include<string.h>
->> +
->> +#include<ofono.h>
->> +#include<private-network.h>
->> +
-> Please get into the habit of running 'make distcheck' before submitting
-> patches.  The above header use is actually wrong.
->
-> First you should not use ofono.h here, instead you need to include
-> <ofono/log.h>,<ofono/dbus.h>  and<ofono/plugin.h>.  ofono.h is strictly
-> for private APIs, which you're not using any of in this plugin.
->
-> Secondly, private-network.h should be<ofono/private-network.h>  and you
-> will need to define OFONO_DBUS_API_SUBJECT_TO_CHANGE.  See just about
-> any plugin for an example.
->
+I have also adopted some fixes from huawei plugin to fix MeeGo bug #14784
 
-Thanks for the info, I didn't know about that.
+Signed-off-by: Amit Mendapara <mendapara.amit@gmail.com>
+---
+ plugins/linktop.c |  301 ++++++++++++++++++++++++++++++++++++-------------=
+---
+ 1 files changed, 208 insertions(+), 93 deletions(-)
 
->> +#define CONNMAN_SERVICE			"net.connman"
->> +#define CONNMAN_PATH			"/net/connman"
->> +
->> +#define CONNMAN_MANAGER_INTERFACE	CONNMAN_SERVICE ".Manager"
->> +#define CONNMAN_MANAGER_PATH		"/"
->> +
->> +static DBusConnection *connection;
->> +static GHashTable *requests;
->> +static unsigned int id;
->> +
->> +struct pns_req {
->> +	int uid;
->> +	DBusPendingCall *pending;
->> +	ofono_private_network_cb_t cb;
->> +	void *data;
->> +	gboolean redundant;
->> +};
->> +
->> +static void pns_release(int uid)
->> +{
->> +	DBusMessage *message =3D NULL;
->> +	struct pns_req *req;
->> +
->> +	DBG("");
->> +
->> +	req =3D g_hash_table_lookup(requests,&uid);
->> +	if (!req)
->> +		return;
->> +
->> +	if (req->pending) {
->> +		if (dbus_pending_call_get_completed(req->pending) =3D=3D FALSE) {
->> +			/*
->> +			 * We want to cancel the request but we have to wait
->> +			 * the response of ConnMan. So we mark request as
->> +			 * redundant until we get the response, then we remove
->> +			 * it from hash table.
->> +			 */
->> +			req->redundant =3D TRUE;
->> +			return;
->> +		}
->> +	}
-> Why do you check both pending and dbus_pending_call_get_completed?  You
-> reset pending to NULL pretty early in request_reply.  So at best
-> dbus_pending_call_get_completed is redundant, and at worst it will
-> actually cause bugs.  Think it through fully.
+diff --git a/plugins/linktop.c b/plugins/linktop.c
+index 953f634..26536d8 100644
+--- a/plugins/linktop.c
++++ b/plugins/linktop.c
+@@ -26,6 +26,7 @@
+ #include <stdio.h>
+ #include <errno.h>
+ #include <stdlib.h>
++#include <string.h>
+ =
 
-I will remove this pending reset into request_reply: I have to let dbus =
+ #include <glib.h>
+ #include <gatchat.h>
+@@ -42,6 +43,7 @@
+ #include <ofono/message-waiting.h>
+ #include <ofono/netreg.h>
+ #include <ofono/sim.h>
++#include <ofono/stk.h>
+ #include <ofono/cbs.h>
+ #include <ofono/sms.h>
+ #include <ofono/ussd.h>
+@@ -53,16 +55,21 @@
+ #include <ofono/radio-settings.h>
+ #include <ofono/log.h>
+ =
 
-rountines release the pending call.
-I test pending value and dbus_pending_call_get_completed() because it is =
+-#include <drivers/atmodem/vendor.h>
+ #include <drivers/atmodem/atutil.h>
++#include <drivers/atmodem/vendor.h>
+ =
 
-possible that the pending call has been completed and is not NULL.
++static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
+ static const char *none_prefix[] =3D { NULL };
+ =
 
->> +
->> +	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
->> +				     CONNMAN_MANAGER_PATH,
->> +				     CONNMAN_MANAGER_INTERFACE,
->> +				     "ReleasePrivateNetwork");
-> You're mixing tabs and spaces for indentation here, please fix this.
-> You should also follow the indentation rules of item M4.
->
->> +
->> +	if (message =3D=3D NULL)
->> +		goto error;
->> +
->> +	dbus_message_set_no_reply(message, TRUE);
->> +	dbus_connection_send(connection, message, NULL);
->> +
-> Err, are you missing something important here?  Like the fd argument?
->
-> > From connman/doc:
->                  void ReleasePrivateNetwork(fd) [experimental]
->
+ struct linktop_data {
+-	GAtChat *modem;
+-	GAtChat *control;
++	GAtChat *modem_port;
++	GAtChat *data_port;
++	guint cpin_poll_source;
++	guint cpin_poll_count;
++	gboolean have_sim;
+ 	struct ofono_gprs *gprs;
+ 	struct ofono_gprs_context *gc;
++	guint reopen_source;
+ };
+ =
 
-It seems there is a typo between the doc and the implemented API, for =
+ static int linktop_probe(struct ofono_modem *modem)
+@@ -86,35 +93,86 @@ static void linktop_remove(struct ofono_modem *modem)
+ =
 
-the moment ReleasePrivateNetwork() doesn't take any argument.
-The PN settings are removed from the hash table using the DBus sender.
-I will send a patch to fix the documentation.
+ 	DBG("%p", modem);
+ =
 
->> +error:
->> +	if (message)
->> +		dbus_message_unref(message);
-> This check is redundant.  The code would look way nicer if you do:
->
-> 	dbus_message_unref(message);
->
-> error:
-> 	g_hash_table_remove(...);
->
->> +
->> +	g_hash_table_remove(requests,&req->uid);
->> +}
->> +
->> +static void request_reply(DBusPendingCall *call, void *user_data)
->> +{
->> +	struct pns_req *req =3D user_data;
->> +	struct ofono_private_network_settings pns;
->> +	DBusMessageIter array, dict, entry;
->> +	DBusMessage *reply;
->> +
->> +	DBG("");
->> +
->> +	pns.fd =3D -1;
->> +	pns.server_ip =3D NULL;
->> +	pns.peer_ip =3D NULL;
->> +	pns.primary_dns =3D NULL;
->> +	pns.secondary_dns =3D NULL;
->> +
->> +	/* request is no more pending */
->> +	req->pending =3D NULL;
->> +
->> +	reply =3D dbus_pending_call_steal_reply(call);
->> +	if (!reply)
->> +		goto error;
->> +
->> +	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR)
->> +		goto error;
->> +
->> +	if (dbus_message_iter_init(reply,&array) =3D=3D FALSE)
->> +		goto error;
->> +
->> +	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_UNIX_FD)
->> +		goto error;
->> +
->> +	dbus_message_iter_get_basic(&array,&pns.fd);
->> +	DBG("Fildescriptor =3D %d\n", pns.fd);
->> +
->> +	dbus_message_iter_next(&array);
->> +
->> +	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_ARRAY)
->> +		goto error;
->> +
->> +	if (req->redundant =3D=3D TRUE)
->> +		goto release;
->> +
->> +	dbus_message_iter_recurse(&array,&dict);
->> +
->> +	while (dbus_message_iter_get_arg_type(&dict) =3D=3D DBUS_TYPE_DICT_ENT=
-RY) {
->> +		DBusMessageIter iter;
->> +		const char *key;
->> +		int type;
->> +
->> +		dbus_message_iter_recurse(&dict,&entry);
->> +
->> +		dbus_message_iter_get_basic(&entry,&key);
->> +
->> +		dbus_message_iter_next(&entry);
->> +		dbus_message_iter_recurse(&entry,&iter);
->> +
->> +		type =3D dbus_message_iter_get_arg_type(&iter);
->> +		if (type !=3D DBUS_TYPE_STRING)
->> +			break;
->> +
->> +		if (g_str_equal(key, "ServerIPv4")
->> +				&&  type =3D=3D DBUS_TYPE_STRING)
->> +			dbus_message_iter_get_basic(&iter,&pns.server_ip);
->> +		else if (g_str_equal(key, "PeerIPv4")
->> +				&&  type =3D=3D DBUS_TYPE_STRING)
->> +			dbus_message_iter_get_basic(&iter,&pns.peer_ip);
->> +		else if (g_str_equal(key, "PrimaryDNS")
->> +				&&  type =3D=3D DBUS_TYPE_STRING)
->> +			dbus_message_iter_get_basic(&iter,&pns.primary_dns);
->> +		else if (g_str_equal(key, "SecondaryDNS")
->> +				&&  type =3D=3D DBUS_TYPE_STRING)
->> +			dbus_message_iter_get_basic(&iter,&pns.secondary_dns);
->> +
->> +		dbus_message_iter_next(&dict);
->> +	}
->> +
->> +	if (pns.server_ip =3D=3D NULL || pns.peer_ip =3D=3D NULL ||
->> +			pns.primary_dns =3D=3D NULL || pns.secondary_dns =3D=3D NULL ||
->> +			pns.fd<  0) {
->> +		ofono_error("Error while reading dictionnary...\n");
->> +		goto release;
->> +	}
->> +
->> +	req->cb(&pns, req->data);
->> +
->> +	dbus_message_unref(reply);
->> +	dbus_pending_call_unref(call);
->> +
->> +	return;
->> +
->> +release:
->> +	pns_release(req->uid);
->> +error:
->> +	if (pns.fd>=3D 0)
->> +		close(pns.fd);
->> +
->> +	req->cb(NULL, req->data);
->> +
->> +	if (reply)
->> +		dbus_message_unref(reply);
->> +
->> +	dbus_pending_call_unref(call);
->> +}
->> +
->> +static int pns_request(ofono_private_network_cb_t cb, void *data)
->> +{
->> +	DBusMessage *message;
->> +	DBusPendingCall *call;
->> +	struct pns_req *req;
->> +
->> +	DBG("");
->> +
->> +	req =3D g_try_new(struct pns_req, 1);
->> +
->> +	if (req =3D=3D NULL)
->> +		return -ENOMEM;
->> +
->> +	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
->> +					CONNMAN_MANAGER_PATH,
->> +					CONNMAN_MANAGER_INTERFACE,
->> +					"RequestPrivateNetwork");
-> Please align these in accordance with item M4 of our coding-style documen=
-t.
->
->> +
->> +	if (message =3D=3D NULL) {
->> +		g_free(req);
->> +		return -ENOMEM;
->> +	}
->> +
->> +	if (dbus_connection_send_with_reply(connection,
->> +				message,&call, 5000) =3D=3D FALSE) {
-> Same here, you can put message on the previous line to make this easier.
->
->> +		g_free(req);
->> +		dbus_message_unref(message);
->> +		return -EIO;
->> +	}
->> +
->> +	id++;
->> +	req->pending =3D call;
->> +	req->cb =3D cb;
->> +	req->data =3D data;
->> +	req->uid =3D id;
->> +	req->redundant =3D FALSE;
->> +
->> +	dbus_pending_call_set_notify(call, request_reply,
->> +							req, NULL);
-> why are you breaking up this line? It can all fit on the same line.
->
->> +	g_hash_table_insert(requests,&req->uid, req);
->> +	dbus_message_unref(message);
->> +
->> +	return req->uid;
->> +}
->> +
->> +static struct ofono_private_network_driver pn_driver =3D {
->> +	.name		=3D "ConnMan Private Network",
->> +	.request	=3D pns_request,
->> +	.release	=3D pns_release,
->> +};
->> +
->> +static void remove_requests(gpointer user_data)
->> +{
->> +	struct pns_req *req =3D user_data;
->> +
->> +	g_free(req);
->> +}
->> +
->> +static int connman_init(void)
->> +{
->> +	DBG("");
->> +
->> +	id =3D 0;
-> The id initialization is redundant.  Either initialize it to zero at
-> declaration or just remember that all statics are initialized to zero
-> anyway.
->
->> +	connection =3D ofono_dbus_get_connection();
->> +	requests =3D g_hash_table_new_full(g_int_hash, g_int_equal, NULL,
->> +						remove_requests);
->> +
->> +	return ofono_private_network_driver_register(&pn_driver);
->> +}
->> +
->> +static void connman_exit(void)
->> +{
->> +	g_hash_table_destroy(requests);
->> +	ofono_private_network_driver_unregister(&pn_driver);
->> +}
->> +
->> +OFONO_PLUGIN_DEFINE(connman, "ConnMan plugin", VERSION,
->> +		OFONO_PLUGIN_PRIORITY_DEFAULT, connman_init, connman_exit)
++	if (data->reopen_source > 0) {
++		g_source_remove(data->reopen_source);
++		data->reopen_source =3D 0;
++	}
++
+ 	ofono_modem_set_data(modem, NULL);
+ =
 
-Kind regards,
-Guillaume
+-	g_at_chat_unref(data->modem);
+-	g_at_chat_unref(data->control);
++	g_at_chat_unref(data->data_port);
++	g_at_chat_unref(data->modem_port);
++
++	if (data->cpin_poll_source > 0)
++		g_source_remove(data->cpin_poll_source);
+ =
 
---===============4473204102179114432==--
+ 	g_free(data);
+ }
+ =
+
+ static void linktop_debug(const char *str, void *user_data)
+ {
+-        const char *prefix =3D user_data;
++	const char *prefix =3D user_data;
++
++	ofono_info("%s%s", prefix, str);
++}
++
++static gboolean init_simpin_check(gpointer user_data);
++
++static void simpin_check(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
+ =
+
+-        ofono_info("%s%s", prefix, str);
++	DBG("");
++
++	/* Modem returns an error if SIM is not ready. */
++	if (!ok && data->cpin_poll_count++ < 5) {
++		data->cpin_poll_source =3D
++			g_timeout_add_seconds(1, init_simpin_check, modem);
++		return;
++	}
++
++	data->cpin_poll_count =3D 0;
++
++	/* There is probably no SIM if SIM is not ready after 5 seconds. */
++	data->have_sim =3D ok;
++
++	ofono_modem_set_powered(modem, TRUE);
+ }
+ =
+
+-static GAtChat *open_device(struct ofono_modem *modem,
+-				const char *key, char *debug)
++static gboolean init_simpin_check(gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
++
++	data->cpin_poll_source =3D 0;
++
++	g_at_chat_send(data->modem_port, "AT+CPIN?", cpin_prefix,
++			simpin_check, modem, NULL);
++
++	return FALSE;
++}
++
++static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++
++	DBG("");
++
++	if (!ok) {
++		ofono_modem_set_powered(modem, FALSE);
++		return;
++	}
++
++	init_simpin_check(modem);
++}
++
++static GAtChat *create_port(const char *device)
+ {
+-	const char *device;
+ 	GAtSyntax *syntax;
+ 	GIOChannel *channel;
+ 	GAtChat *chat;
+ =
+
+-	device =3D ofono_modem_get_string(modem, key);
+-	if (device =3D=3D NULL)
+-		return NULL;
+-
+-	DBG("%s %s", key, device);
+-
+ 	channel =3D g_at_tty_open(device, NULL);
+ 	if (channel =3D=3D NULL)
+ 		return NULL;
+@@ -127,81 +185,116 @@ static GAtChat *open_device(struct ofono_modem *mode=
+m,
+ 	if (chat =3D=3D NULL)
+ 		return NULL;
+ =
+
+-	if (getenv("OFONO_AT_DEBUG"))
+-		g_at_chat_set_debug(chat, linktop_debug, debug);
+-
+ 	return chat;
+ }
+ =
+
+-static void linktop_disconnect(gpointer user_data)
++static void linktop_disconnect(gpointer user_data);
++
++static gboolean reopen_callback(gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+ 	struct linktop_data *data =3D ofono_modem_get_data(modem);
++	const char *data_dev;
++
++	data_dev =3D ofono_modem_get_string(modem, "DataDevice");
++	data->data_port =3D create_port(data_dev);
++	/* retry once if failed */
++	if (data->data_port =3D=3D NULL) {
++		if (data->reopen_source > 0)
++			return FALSE;
++
++		data->reopen_source =3D g_timeout_add_seconds(1,
++				reopen_callback, modem);
++		ofono_debug("opening data port failed, retrying...");
++		return FALSE;
++	}
+ =
+
+-	DBG("");
+-
+-	if (data->gc)
+-		ofono_gprs_context_remove(data->gc);
+-
+-	g_at_chat_unref(data->modem);
+-	data->modem =3D NULL;
+-
+-	data->modem =3D open_device(modem, "Modem", "Modem: ");
+-	if (data->modem =3D=3D NULL)
+-		return;
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(data->data_port, linktop_debug, "Data: ");
+ =
+
+-	g_at_chat_set_disconnect_function(data->modem,
++	g_at_chat_set_disconnect_function(data->data_port,
+ 						linktop_disconnect, modem);
+ =
+
+ 	ofono_info("Reopened GPRS context channel");
+ =
+
+-	data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
+-
+-	if (data->gprs && data->gc)
++	data->gc =3D ofono_gprs_context_create(modem, 0,
++					"atmodem", data->data_port);
++	if (data->gprs && data->gc) {
+ 		ofono_gprs_add_context(data->gprs, data->gc);
++	}
++
++	data->reopen_source =3D 0;
++
++	return FALSE;
+ }
+ =
+
+-static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
++static void linktop_disconnect(gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
+ =
+
+-	DBG("");
++	DBG("%p, data->gc %p", modem, data->gc);
++
++	/* gprs_context has been destructed and needs not reopen */
++	if (data->gc =3D=3D NULL)
++		return
++	=
+
++	ofono_gprs_context_remove(data->gc);
+ =
+
+-	ofono_modem_set_powered(modem, ok);
++	g_at_chat_unref(data->data_port);
++	data->data_port =3D NULL;
++
++	/* Waiting for the +CGEV: ME DEACT might also work */
++	if (data->reopen_source > 0)
++		g_source_remove(data->reopen_source);
++
++	data->reopen_source =3D g_timeout_add_seconds(1, reopen_callback, modem);
+ }
+ =
+
+ static int linktop_enable(struct ofono_modem *modem)
+ {
+ 	struct linktop_data *data =3D ofono_modem_get_data(modem);
++	const char *modem_dev;
++	const char *data_dev;
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	data->modem =3D open_device(modem, "Modem", "Modem: ");
+-	if (data->modem =3D=3D NULL)
+-		return -EINVAL;
++	modem_dev =3D ofono_modem_get_string(modem, "ModemDevice");
++	data_dev =3D ofono_modem_get_string(modem, "DataDevice");
+ =
+
+-	g_at_chat_set_disconnect_function(data->modem,
+-						linktop_disconnect, modem);
++	DBG("%s, %s", modem_dev, data_dev);
++
++	if (modem_dev =3D=3D NULL || data_dev =3D=3D NULL)
++		return -EINVAL;
+ =
+
+-	data->control =3D open_device(modem, "Control", "Control: ");
+-	if (data->control =3D=3D NULL) {
+-		g_at_chat_unref(data->modem);
+-		data->modem =3D NULL;
++	data->modem_port =3D create_port(modem_dev);
++	if (data->modem_port =3D=3D NULL)
+ 		return -EIO;
+-	}
+ =
+
+-	g_at_chat_send(data->control, "ATE0 +CMEE=3D1", none_prefix,
+-						NULL, NULL, NULL);
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(data->modem_port, linktop_debug, "Modem: ");
++
++	data->data_port =3D create_port(data_dev);
++	if (data->data_port =3D=3D NULL) {
++		g_at_chat_unref(data->modem_port);
++		data->modem_port =3D NULL;
+ =
+
+-	g_at_chat_send(data->modem, "AT", none_prefix,
+-						NULL, NULL, NULL);
++		return -EIO;
++	}
+ =
+
+-	g_at_chat_send(data->modem, "AT &F", none_prefix,
+-						NULL, NULL, NULL);
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(data->data_port, linktop_debug, "Data: ");
+ =
+
+-	g_at_chat_send(data->control, "AT+CFUN=3D4", none_prefix,
+-					cfun_enable, modem, NULL);
++	g_at_chat_set_disconnect_function(data->data_port,
++						linktop_disconnect, modem);
+ =
+
++	g_at_chat_send(data->modem_port, "AT&F E0 V1 X4 &C1 +CMEE=3D1", NULL,
++					NULL, NULL, NULL);
++	g_at_chat_send(data->data_port, "AT&F E0 V1 X4 &C1 +CMEE=3D1", NULL,
++					NULL, NULL, NULL);
++	g_at_chat_send(data->modem_port, "AT+CFUN=3D4", none_prefix,
++				cfun_enable, modem, NULL);
++	=
+
+ 	return -EINPROGRESS;
+ }
+ =
+
+@@ -212,8 +305,11 @@ static void cfun_disable(gboolean ok, GAtResult *resul=
+t, gpointer user_data)
+ =
+
+ 	DBG("");
+ =
+
+-	g_at_chat_unref(data->control);
+-	data->control =3D NULL;
++	g_at_chat_unref(data->modem_port);
++	data->modem_port =3D NULL;
++
++	g_at_chat_unref(data->data_port);
++	data->data_port =3D NULL;
+ =
+
+ 	if (ok)
+ 		ofono_modem_set_powered(modem, FALSE);
+@@ -225,19 +321,17 @@ static int linktop_disable(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	if (data->modem) {
+-		g_at_chat_cancel_all(data->modem);
+-		g_at_chat_unregister_all(data->modem);
+-		g_at_chat_unref(data->modem);
+-		data->modem =3D NULL;
++	if (data->reopen_source > 0) {
++		g_source_remove(data->reopen_source);
++		data->reopen_source =3D 0;
+ 	}
+ =
+
+-	if (data->control =3D=3D NULL)
++	if (data->modem_port =3D=3D NULL)
+ 		return 0;
+ =
+
+-	g_at_chat_cancel_all(data->control);
+-	g_at_chat_unregister_all(data->control);
+-	g_at_chat_send(data->control, "AT+CFUN=3D4", none_prefix,
++	g_at_chat_cancel_all(data->modem_port);
++	g_at_chat_unregister_all(data->modem_port);
++	g_at_chat_send(data->modem_port, "AT+CFUN=3D4", NULL,
+ 					cfun_disable, modem, NULL);
+ =
+
+ 	return -EINPROGRESS;
+@@ -253,17 +347,37 @@ static void set_online_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	cb(&error, cbd->data);
+ }
+ =
+
++static void set_offline_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_modem_online_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	if (ok) {
++		struct linktop_data *data =3D cbd->user;
++
++		data->gc =3D NULL;
++		data->gprs =3D NULL;
++	}
++
++	decode_at_error(&error, g_at_result_final_response(result));
++	cb(&error, cbd->data);
++}
++
+ static void linktop_set_online(struct ofono_modem *modem, ofono_bool_t onl=
+ine,
+ 				ofono_modem_online_cb_t cb, void *user_data)
+ {
+ 	struct linktop_data *data =3D ofono_modem_get_data(modem);
+-	GAtChat *chat =3D data->control;
++	GAtChat *chat =3D data->modem_port;
+ 	struct cb_data *cbd =3D cb_data_new(cb, user_data);
+ 	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
+ =
+
+ 	DBG("modem %p %s", modem, online ? "online" : "offline");
+ =
+
+-	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
++	cbd->user =3D data;
++
++	if (g_at_chat_send(chat, command, NULL,
++				online ? set_online_cb : set_offline_cb, cbd, g_free))
+ 		return;
+ =
+
+ 	g_free(cbd);
+@@ -278,11 +392,11 @@ static void linktop_pre_sim(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	ofono_devinfo_create(modem, 0, "atmodem", data->control);
+-	sim =3D ofono_sim_create(modem, 0, "atmodem", data->control);
+-	ofono_voicecall_create(modem, 0, "stemodem", data->control);
++	ofono_devinfo_create(modem, 0, "atmodem", data->modem_port);
++	sim =3D ofono_sim_create(modem, 0, "atmodem", data->modem_port);
++	ofono_voicecall_create(modem, 0, "stemodem", data->modem_port);
+ =
+
+-	if (sim)
++	if (data->have_sim && sim)
+ 		ofono_sim_inserted_notify(sim, TRUE);
+ }
+ =
+
+@@ -292,35 +406,36 @@ static void linktop_post_sim(struct ofono_modem *mode=
+m)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	ofono_radio_settings_create(modem, 0, "stemodem", data->control);
+-	ofono_phonebook_create(modem, 0, "atmodem", data->control);
+-	ofono_sms_create(modem, 0, "atmodem", data->control);
++	ofono_stk_create(modem, 0, "mbmmodem", data->modem_port);
++	ofono_radio_settings_create(modem, 0, "stemodem", data->modem_port);
++	ofono_phonebook_create(modem, 0, "atmodem", data->modem_port);
++	ofono_sms_create(modem, 0, "atmodem", data->modem_port);
+ }
+ =
+
+ static void linktop_post_online(struct ofono_modem *modem)
+ {
+ 	struct linktop_data *data =3D ofono_modem_get_data(modem);
+ 	struct ofono_message_waiting *mw;
+-	struct ofono_gprs *gprs;
+-	struct ofono_gprs_context *gc;
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	ofono_ussd_create(modem, 0, "atmodem", data->control);
+-	ofono_call_forwarding_create(modem, 0, "atmodem", data->control);
+-	ofono_call_settings_create(modem, 0, "atmodem", data->control);
+-	ofono_netreg_create(modem, OFONO_VENDOR_MBM, "atmodem", data->control);
+-	ofono_call_meter_create(modem, 0, "atmodem", data->control);
+-	ofono_call_barring_create(modem, 0, "atmodem", data->control);
+-	ofono_call_volume_create(modem, 0, "atmodem", data->control);
+-	ofono_cbs_create(modem, 0, "atmodem", data->control);
+-
+-	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
+-					"atmodem", data->control);
+-	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
+-
+-	if (gprs && gc)
+-		ofono_gprs_add_context(gprs, gc);
++	ofono_netreg_create(modem, 0, "atmodem", data->modem_port);
++	ofono_cbs_create(modem, 0, "atmodem", data->modem_port);
++	ofono_ussd_create(modem, 0, "atmodem", data->modem_port);
++	ofono_call_forwarding_create(modem, 0, "atmodem", data->modem_port);
++	ofono_call_settings_create(modem, 0, "atmodem", data->modem_port);
++	ofono_call_meter_create(modem, 0, "atmodem", data->modem_port);
++	ofono_call_barring_create(modem, 0, "atmodem", data->modem_port);
++	ofono_call_volume_create(modem, 0, "atmodem", data->modem_port);
++
++	data->gprs =3D ofono_gprs_create(modem, 0,
++					"atmodem", data->modem_port);
++	data->gc =3D ofono_gprs_context_create(modem, 0,
++					"atmodem", data->data_port);
++
++	if (data->gprs && data->gc) {
++		ofono_gprs_add_context(data->gprs, data->gc);
++	}
+ =
+
+ 	mw =3D ofono_message_waiting_create(modem);
+ =
+
+-- =
+
+1.7.4.1
+
+
+--===============2882653892953432561==--
 
