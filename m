@@ -1,68 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============1435442204080206821=="
+Content-Type: multipart/mixed; boundary="===============8679345216026509789=="
 MIME-Version: 1.0
-From: Jeevaka Prabu Badrappan <jeevakaprabu@gmail.com>
-Subject: Re: Problems ofono 0.45 and Nokia 6760
-Date: Wed, 08 Jun 2011 18:17:10 +0300
-Message-ID: <BANLkTikLft+D2ShS6p7EOokdv_3qyS0STQ@mail.gmail.com>
-In-Reply-To: <4DEF85AF.8000900@zirak.it>
+From: Bernhard.Guillon@hale.at
+Subject: [PATCH v4 3/4] atmodem/vendor.h: add OFONO_VENDOR_TELIT
+Date: Wed, 08 Jun 2011 17:18:36 +0200
+Message-ID: <1307546317-31831-3-git-send-email-Bernhard.Guillon@hale.at>
+In-Reply-To: <1307546317-31831-1-git-send-email-Bernhard.Guillon@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1435442204080206821==
+--===============8679345216026509789==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Claudio,
+From: Bernhard Guillon <Bernhard.Guillon@hale.at>
 
-On Wed, Jun 8, 2011 at 5:22 PM, Claudio Degioanni
-<claudio.degioanni@zirak.it> wrote:
-> Hi all,
->
-> I have attacched a nokia 6760 to ofono for using it as gprs modem.
->
-> I have started the daemon with
->
-> OFONO_ISI_TRACE=3D1 OFONO_ISI_DEBUG=3D1 ofonod -nd
->
->
-> After enabling the modem and activate the profile using
->
-> dbus-send --system --print-reply --reply-timeout=3D120000
-> --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0
-> org.ofono.Modem.SetProperty string:Powered variant:boolean:true
->
-> dbus-send --system --print-reply --reply-timeout=3D120000
-> --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0
-> org.ofono.Modem.SetProperty string:Online variant:boolean:true
->
-> dbus-send --system --print-reply --reply-timeout=3D120000
-> --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0/context1
-> org.ofono.ConnectionContext.SetProperty string:AccessPointName
-> variant:string:ibox.tim.it
->
-> dbus-send --system --print-reply --reply-timeout=3D120000
-> --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0/context1
-> org.ofono.ConnectionContext.SetProperty string:Active variant:boolean:true
->
-> We obtain on last method calls the follow error:
->
-> Error org.ofono.Error.NotAttached: GPRS is not attached
->
-> You can help me ?
->
-> PS: I have attacced the log on ofono.
+---
+ drivers/atmodem/vendor.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-As per the log, there is some issue with the network registration
-status query. Log statement:
+diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
+index 3898fa8..412bc76 100644
+--- a/drivers/atmodem/vendor.h
++++ b/drivers/atmodem/vendor.h
+@@ -35,4 +35,5 @@ enum ofono_vendor {
+ 	OFONO_VENDOR_WAVECOM,
+ 	OFONO_VENDOR_NOKIA,
+ 	OFONO_VENDOR_PHONESIM,
++	OFONO_VENDOR_TELIT,
+ };
+-- =
 
-"src/network.c:init_registration_status() Error during registration
-status query"
+1.7.0.4
 
-isimodem people can help you on this issue.
 
-Regards,
-Jeevaka
 
---===============1435442204080206821==--
+--
+Scanned by MailScanner.
+
+
+--===============8679345216026509789==--
 
