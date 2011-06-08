@@ -1,73 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============3918216915201954248=="
+Content-Type: multipart/mixed; boundary="===============1435442204080206821=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Jeevaka Prabu Badrappan <jeevakaprabu@gmail.com>
 Subject: Re: Problems ofono 0.45 and Nokia 6760
-Date: Mon, 06 Jun 2011 15:13:25 -0500
-Message-ID: <4DED34E5.3070602@gmail.com>
+Date: Wed, 08 Jun 2011 18:17:10 +0300
+Message-ID: <BANLkTikLft+D2ShS6p7EOokdv_3qyS0STQ@mail.gmail.com>
 In-Reply-To: <4DEF85AF.8000900@zirak.it>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3918216915201954248==
+--===============1435442204080206821==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-
 Hi Claudio,
 
-On 06/08/2011 09:22 AM, Claudio Degioanni wrote:
+On Wed, Jun 8, 2011 at 5:22 PM, Claudio Degioanni
+<claudio.degioanni@zirak.it> wrote:
 > Hi all,
-> =
-
+>
 > I have attacched a nokia 6760 to ofono for using it as gprs modem.
-> =
-
+>
 > I have started the daemon with
-> =
-
+>
 > OFONO_ISI_TRACE=3D1 OFONO_ISI_DEBUG=3D1 ofonod -nd
-> =
-
-> =
-
+>
+>
 > After enabling the modem and activate the profile using
-> =
-
+>
 > dbus-send --system --print-reply --reply-timeout=3D120000
 > --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0
 > org.ofono.Modem.SetProperty string:Powered variant:boolean:true
-> =
-
+>
 > dbus-send --system --print-reply --reply-timeout=3D120000
 > --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0
 > org.ofono.Modem.SetProperty string:Online variant:boolean:true
-> =
-
+>
 > dbus-send --system --print-reply --reply-timeout=3D120000
 > --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0/context1
 > org.ofono.ConnectionContext.SetProperty string:AccessPointName
 > variant:string:ibox.tim.it
-> =
-
+>
 > dbus-send --system --print-reply --reply-timeout=3D120000
 > --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0/context1
 > org.ofono.ConnectionContext.SetProperty string:Active variant:boolean:true
-> =
-
+>
 > We obtain on last method calls the follow error:
-> =
-
+>
 > Error org.ofono.Error.NotAttached: GPRS is not attached
-> =
+>
+> You can help me ?
+>
+> PS: I have attacced the log on ofono.
 
+As per the log, there is some issue with the network registration
+status query. Log statement:
 
-You have to wait for the modem to attach to GPRS first.  Track the
-status of the ConnectionManager 'Attached' property.  Once it changes to
-TRUE, then you can try to activate a context.
+"src/network.c:init_registration_status() Error during registration
+status query"
+
+isimodem people can help you on this issue.
 
 Regards,
--Denis
+Jeevaka
 
---===============3918216915201954248==--
+--===============1435442204080206821==--
 
