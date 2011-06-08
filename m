@@ -1,146 +1,156 @@
-Content-Type: multipart/mixed; boundary="===============4952210203024529767=="
+Content-Type: multipart/mixed; boundary="===============7499549754860523821=="
 MIME-Version: 1.0
 From: Bernhard.Guillon@hale.at
-Subject: [PATCH v4 1/4] network-registration.c: add telit support
-Date: Wed, 08 Jun 2011 17:18:34 +0200
-Message-ID: <1307546317-31831-1-git-send-email-Bernhard.Guillon@hale.at>
+Subject: [PATCH v4 4/4] udev: add Telit UC864-G and update udev rules
+Date: Wed, 08 Jun 2011 17:18:37 +0200
+Message-ID: <1307546317-31831-4-git-send-email-Bernhard.Guillon@hale.at>
+In-Reply-To: <1307546317-31831-1-git-send-email-Bernhard.Guillon@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4952210203024529767==
+--===============7499549754860523821==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Bernhard Guillon <Bernhard.Guillon@hale.at>
 
-*add support for CIND=3D? tokens like ("signal",(0-7,99))
-*add telit quirk for token encapsulation e.g.
-    (("one",(0-7,99)),("two",(0-7,99)))
+*add Modem and GPS check for telit
+*make GPS yes/no configurable with udev rules settings
+**this is necessary because telit has different interface
+  numbers on different modems e.g. GPS and UART
 ---
- drivers/atmodem/network-registration.c |   41 ++++++++++++++++++++++++++++=
-----
- 1 files changed, 36 insertions(+), 5 deletions(-)
+ plugins/ofono.rules |    8 +++++
+ plugins/udev.c      |   72 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 80 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index b3aa511..7c86fec 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -56,6 +56,7 @@ struct netreg_data {
- 	int signal_index; /* If strength is reported via CIND */
- 	int signal_min; /* min strength reported via CIND */
- 	int signal_max; /* max strength reported via CIND */
-+	int signal_invalid; /* invalid strength reported via CIND */
- 	int tech;
- 	struct ofono_network_time time;
- 	guint nitz_timeout;
-@@ -666,7 +667,11 @@ static void ciev_notify(GAtResult *result, gpointer us=
-er_data)
- 	if (!g_at_result_iter_next_number(&iter, &strength))
- 		return;
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index 268b327..64fa4b2 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -344,6 +344,11 @@ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"14=
+85", ENV{OFONO_IFACE_NUM}=3D=3D"02", E
+ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1486", ENV{OFONO_IFACE=
+_NUM}=3D=3D"00", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
+ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1486", ENV{OFONO_IFACE=
+_NUM}=3D=3D"02", ENV{OFONO_HUAWEI_TYPE}=3D"Pcui"
  =
 
--	strength =3D (strength * 100) / (nd->signal_max - nd->signal_min);
-+	if (strength =3D=3D nd->signal_invalid)
-+		strength =3D -1;
-+	else
-+		strength =3D (strength * 100) / (nd->signal_max - nd->signal_min);
++#Telit UC864-G
++ATTRS{idVendor}=3D=3D"1bc7", ATTRS{idProduct}=3D=3D"1004", ENV{OFONO_TELIT=
+_GPS}=3D"1"
++ATTRS{idVendor}=3D=3D"1bc7", ATTRS{idProduct}=3D=3D"1004", ENV{OFONO_IFACE=
+_NUM}=3D=3D"00", ENV{OFONO_TELIT_TYPE}=3D"Modem"
++ATTRS{idVendor}=3D=3D"1bc7", ATTRS{idProduct}=3D=3D"1004", ENV{OFONO_IFACE=
+_NUM}=3D=3D"02", ENV{OFONO_TELIT_TYPE}=3D"GPS"
 +
- 	ofono_netreg_strength_notify(netreg, strength);
- }
+ LABEL=3D"ofono_tty_end"
  =
 
-@@ -798,7 +803,10 @@ static void cind_cb(gboolean ok, GAtResult *result, gp=
-ointer user_data)
+ # ISI/Phonet drivers
+@@ -459,4 +464,7 @@ ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"00b=
+6", ENV{OFONO_DRIVER}=3D"nokiacdma"
+ # Teracom (Linktop/LW27x) 3G Data Card
+ ATTRS{idVendor}=3D=3D"230d", ATTRS{idProduct}=3D=3D"0001", ENV{OFONO_DRIVE=
+R}=3D"linktop"
  =
 
- 	g_at_result_iter_next_number(&iter, &strength);
- =
-
--	strength =3D (strength * 100) / (nd->signal_max - nd->signal_min);
-+	if (strength =3D=3D nd->signal_invalid)
-+		strength =3D -1;
-+	else
-+		strength =3D (strength * 100) / (nd->signal_max - nd->signal_min);
- =
-
- 	cb(&error, strength, cbd->data);
- }
-@@ -1133,7 +1141,9 @@ static void cind_support_cb(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- 	GAtResultIter iter;
- 	const char *str;
- 	int index;
--	int min, max;
-+	int min =3D 0;
-+	int max =3D 0;
-+	int tmp_min, tmp_max, invalid;
- =
-
- 	if (!ok)
- 		goto error;
-@@ -1144,15 +1154,32 @@ static void cind_support_cb(gboolean ok, GAtResult =
-*result, gpointer user_data)
- =
-
- 	index =3D 1;
- =
-
-+	/*
-+	 * Telit encapsulates the CIND=3D? tokens with braces
-+	 * so we need to skip them
-+	 */
-+	if (nd->vendor =3D=3D OFONO_VENDOR_TELIT)
-+		g_at_result_iter_open_list(&iter);
++# Telit
++ATTRS{idVendor}=3D=3D"1bc7", ENV{OFONO_DRIVER}=3D"telit"
 +
- 	while (g_at_result_iter_open_list(&iter)) {
-+		/* Reset invalid default value for every token*/
-+		invalid =3D 99;
-+
- 		if (!g_at_result_iter_next_string(&iter, &str))
- 			goto error;
- =
-
- 		if (!g_at_result_iter_open_list(&iter))
- 			goto error;
- =
-
--		while (g_at_result_iter_next_range(&iter, &min, &max))
--			;
-+		while (g_at_result_iter_next_range(&iter, &tmp_min, &tmp_max)) {
-+
-+			if (tmp_min !=3D tmp_max) {
-+				min =3D tmp_min;
-+				max =3D tmp_max;
-+			} else
-+				invalid =3D tmp_min;
-+
-+		}
- =
-
- 		if (!g_at_result_iter_close_list(&iter))
- 			goto error;
-@@ -1164,11 +1191,15 @@ static void cind_support_cb(gboolean ok, GAtResult =
-*result, gpointer user_data)
- 			nd->signal_index =3D index;
- 			nd->signal_min =3D min;
- 			nd->signal_max =3D max;
-+			nd->signal_invalid =3D invalid;
- 		}
- =
-
- 		index +=3D 1;
+ LABEL=3D"ofono_end"
+diff --git a/plugins/udev.c b/plugins/udev.c
+index 0234fc0..e56d3db 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -587,6 +587,76 @@ static void add_linktop(struct ofono_modem *modem,
  	}
+ }
  =
 
-+	if (nd->vendor =3D=3D OFONO_VENDOR_TELIT)
-+		g_at_result_iter_close_list(&iter);
++static void add_telit(struct ofono_modem *modem,
++					struct udev_device *udev_device)
++{
++	struct udev_list_entry *entry;
++	const char *devnode, *type;
++	int device, gps_device, has_gps;
 +
- 	if (nd->signal_index =3D=3D 0)
- 		goto error;
- =
-
++	DBG("modem %p", modem);
++
++	/*
++	 * Some Telit modems have a built in GPS device. According to the
++	 * manual the the interface numbers can differ between different
++	 * devices hence we need to use udev rules to set the environment
++	 * accordingly.
++	 */
++	device =3D ofono_modem_get_integer(modem, "ModemRegistered");
++	gps_device =3D ofono_modem_get_integer(modem, "GPSRegistered");
++	has_gps =3D ofono_modem_get_integer(modem, "HasGPS");
++
++	if ((!has_gps && device) || (device && gps_device))
++		return;
++
++	entry =3D udev_device_get_properties_list_entry(udev_device);
++	while (entry) {
++		const char *name =3D udev_list_entry_get_name(entry);
++		type =3D udev_list_entry_get_value(entry);
++
++		if (g_str_equal(name, "OFONO_TELIT_GPS") =3D=3D TRUE) {
++			int value =3D g_str_equal(type, "1");
++
++			ofono_modem_set_integer(modem, "HasGPS", value);
++			entry =3D udev_list_entry_get_next(entry);
++			continue;
++		}
++
++		if (g_str_equal(name, "OFONO_TELIT_TYPE") !=3D TRUE) {
++			entry =3D udev_list_entry_get_next(entry);
++			continue;
++		}
++
++		if (g_str_equal(type, "Modem") =3D=3D TRUE) {
++
++			if (device !=3D 0)
++				return;
++
++			devnode =3D udev_device_get_devnode(udev_device);
++			ofono_modem_set_string(modem, "Modem", devnode);
++			device =3D 1;
++			ofono_modem_set_integer(modem, "ModemRegistered",
++							device);
++		} else if (g_str_equal(type, "GPS") =3D=3D TRUE) {
++
++			if (gps_device !=3D 0)
++				return;
++
++			devnode =3D udev_device_get_devnode(udev_device);
++			ofono_modem_set_string(modem, "GPS", devnode);
++
++			gps_device =3D 1;
++			ofono_modem_set_integer(modem, "GPSRegistered",
++							gps_device);
++		}
++
++		break;
++	}
++
++	if ((!has_gps && device) || (device && gps_device))
++		ofono_modem_register(modem);
++}
++
+ static void add_modem(struct udev_device *udev_device)
+ {
+ 	struct ofono_modem *modem;
+@@ -681,6 +751,8 @@ done:
+ 		add_calypso(modem, udev_device);
+ 	else if (g_strcmp0(driver, "tc65") =3D=3D 0)
+ 		add_tc65(modem, udev_device);
++	else if (g_strcmp0(driver, "telit") =3D=3D 0)
++		add_telit(modem, udev_device);
+ 	else if (g_strcmp0(driver, "nokiacdma") =3D=3D 0)
+ 		add_nokiacdma(modem, udev_device);
+         else if (g_strcmp0(driver, "linktop") =3D=3D 0)
 -- =
 
 1.7.0.4
@@ -151,5 +161,5 @@ esult, gpointer user_data)
 Scanned by MailScanner.
 
 
---===============4952210203024529767==--
+--===============7499549754860523821==--
 
