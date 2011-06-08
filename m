@@ -1,90 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============4219164826078483544=="
+Content-Type: multipart/mixed; boundary="===============3971638501793358244=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH V5 2/2] voicecall: add +BLDN support for HFP emulator
-Date: Wed, 08 Jun 2011 15:47:25 +0200
-Message-ID: <1307540845-9889-3-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1307540845-9889-1-git-send-email-frederic.danis@linux.intel.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] Add the possibility to specify the modem to use
+Date: Wed, 08 Jun 2011 15:50:39 +0200
+Message-ID: <1307541039-16872-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4219164826078483544==
+--===============3971638501793358244==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/voicecall.c |   34 ++++++++++++++++++++++++++++++++++
- 1 files changed, 34 insertions(+), 0 deletions(-)
+ test/test-ussd |   16 ++++++++++++----
+ 1 files changed, 12 insertions(+), 4 deletions(-)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index e14b88c..1f0d3b8 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -2488,6 +2488,10 @@ static void emulator_hfp_unregister(struct ofono_ato=
-m *atom)
- 						OFONO_ATOM_TYPE_EMULATOR_HFP,
- 						emulator_remove_handler,
- 						"D");
-+	__ofono_modem_foreach_registered_atom(modem,
-+						OFONO_ATOM_TYPE_EMULATOR_HFP,
-+						emulator_remove_handler,
-+						"+BLDN");
+diff --git a/test/test-ussd b/test/test-ussd
+index d4c1e27..c21f5e3 100755
+--- a/test/test-ussd
++++ b/test/test-ussd
+@@ -37,7 +37,7 @@ def stdin_handler(fd, condition):
  =
 
- 	__ofono_modem_remove_atom_watch(modem, vc->hfp_watch);
- }
-@@ -3112,6 +3116,35 @@ fail:
- 	};
- }
+ if __name__ =3D=3D "__main__":
+ 	if (len(sys.argv) < 2):
+-		print "Usage: %s <ussd-string>" % (sys.argv[0])
++		print "Usage: %s [modem] <ussd-string>" % (sys.argv[0])
+ 		sys.exit(1)
  =
 
-+static void emulator_bldn_cb(struct ofono_emulator *em,
-+			struct ofono_emulator_request *req, void *userdata)
-+{
-+	struct ofono_voicecall *vc =3D userdata;
-+	const char *number;
-+	struct ofono_error result;
-+	GError *error =3D NULL;
-+
-+	switch (ofono_emulator_request_get_type(req)) {
-+	case OFONO_EMULATOR_REQUEST_TYPE_COMMAND_ONLY:
-+		if (vc->settings =3D=3D NULL)
-+			goto fail;
-+
-+		number =3D g_key_file_get_string(vc->settings, SETTINGS_GROUP,
-+						"Number", &error);
-+		if (number =3D=3D NULL || number[0] =3D=3D '\0')
-+			goto fail;
-+
-+		emulator_dial(em, vc, number);
-+		break;
-+
-+	default:
-+fail:
-+		result.error =3D 0;
-+		result.type =3D OFONO_ERROR_TYPE_FAILURE;
-+		ofono_emulator_send_final(em, &result);
-+	};
-+}
-+
- static void emulator_hfp_watch(struct ofono_atom *atom,
- 				enum ofono_atom_watch_condition cond,
- 				void *data)
-@@ -3129,6 +3162,7 @@ static void emulator_hfp_watch(struct ofono_atom *ato=
-m,
- 	ofono_emulator_add_handler(em, "+CHLD", emulator_chld_cb, data, NULL);
- 	ofono_emulator_add_handler(em, "+VTS", emulator_vts_cb, data, NULL);
- 	ofono_emulator_add_handler(em, "D", emulator_atd_cb, data, NULL);
-+	ofono_emulator_add_handler(em, "+BLDN", emulator_bldn_cb, data, NULL);
- }
+ 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
+@@ -48,8 +48,16 @@ if __name__ =3D=3D "__main__":
+ 							'org.ofono.Manager')
  =
 
- void ofono_voicecall_register(struct ofono_voicecall *vc)
+ 	modems =3D manager.GetModems()
+-	ss =3D dbus.Interface(bus.get_object('org.ofono', modems[0][0]),
+-							'org.ofono.SupplementaryServices')
++	modem =3D modems[0][0]
++
++	if (len(sys.argv) =3D=3D 2):
++		ussd =3D sys.argv[1]
++	else:
++		modem =3D sys.argv[1]
++		ussd =3D sys.argv[2]
++
++	ss =3D dbus.Interface(bus.get_object('org.ofono', modem),
++					'org.ofono.SupplementaryServices')
+ =
+
+ 	props =3D ss.GetProperties()
+ 	for p in props:
+@@ -59,7 +67,7 @@ if __name__ =3D=3D "__main__":
+ 	ss.connect_to_signal("RequestReceived", ussd_request_received)
+ 	ss.connect_to_signal("PropertyChanged", ussd_property_changed)
+ =
+
+-	print ss.Initiate(sys.argv[1], timeout=3D100)
++	print ss.Initiate(ussd, timeout=3D100)
+ =
+
+ 	gobject.io_add_watch(sys.stdin, gobject.IO_IN, stdin_handler)
+ =
+
 -- =
 
-1.7.1
+1.7.4.1
 
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
---===============4219164826078483544==--
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============3971638501793358244==--
 
