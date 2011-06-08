@@ -1,395 +1,403 @@
-Content-Type: multipart/mixed; boundary="===============4080135135200796952=="
+Content-Type: multipart/mixed; boundary="===============4473204102179114432=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
 Subject: Re: [PATCH_v7] connman: add plugin in oFono to request/release
  private network
-Date: Mon, 06 Jun 2011 01:17:07 -0500
-Message-ID: <4DEC70E3.7090604@gmail.com>
-In-Reply-To: <1307351827-28013-1-git-send-email-guillaume.zajac@linux.intel.com>
+Date: Wed, 08 Jun 2011 10:46:11 +0200
+Message-ID: <4DEF36D3.5090106@linux.intel.com>
+In-Reply-To: <4DEC70E3.7090604@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4080135135200796952==
+--===============4473204102179114432==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Denis,
 
-On 06/06/2011 04:17 AM, Guillaume Zajac wrote:
-> Hi,
-> =
+On 06/06/2011 08:17, Denis Kenzior wrote:
+> Hi Guillaume,
+>
+> On 06/06/2011 04:17 AM, Guillaume Zajac wrote:
+>> Hi,
+>>
+>> Changelog from v6:
+>> 	- This patch contains only the ConnMan plugin to request/release
+>> 	the private network settings.
+>> 	- remove unused ConnMan interfaces.
+>> 	- remove error field from pns_req structure.
+>> 	- directly call release method from plugin when a request is redundant.
+>>
+>> ---
+>>   Makefile.am       |    3 +
+>>   plugins/connman.c |  277 +++++++++++++++++++++++++++++++++++++++++++++=
+++++++++
+>>   2 files changed, 280 insertions(+), 0 deletions(-)
+>>   create mode 100644 plugins/connman.c
+>>
+>> diff --git a/Makefile.am b/Makefile.am
+>> index 0a7b6d5..ab28e2c 100644
+>> --- a/Makefile.am
+>> +++ b/Makefile.am
+>> @@ -339,6 +339,9 @@ builtin_sources +=3D plugins/hfp_ag.c plugins/blueto=
+oth.h
+>>   builtin_modules +=3D dun_gw
+>>   builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
+>>
+>> +builtin_modules +=3D connman
+>> +builtin_sources +=3D plugins/connman.c
+>> +
+>>   builtin_sources +=3D $(btio_sources)
+>>   builtin_cflags +=3D @BLUEZ_CFLAGS@
+>>   builtin_libadd +=3D @BLUEZ_LIBS@
+>> diff --git a/plugins/connman.c b/plugins/connman.c
+>> new file mode 100644
+>> index 0000000..e6cce3f
+>> --- /dev/null
+>> +++ b/plugins/connman.c
+>> @@ -0,0 +1,277 @@
+>> +/*
+>> + *
+>> + *  oFono - Open Source Telephony
+>> + *
+>> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+>> + *
+>> + *  This program is free software; you can redistribute it and/or modify
+>> + *  it under the terms of the GNU General Public License version 2 as
+>> + *  published by the Free Software Foundation.
+>> + *
+>> + *  This program is distributed in the hope that it will be useful,
+>> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+>> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+>> + *  GNU General Public License for more details.
+>> + *
+>> + *  You should have received a copy of the GNU General Public License
+>> + *  along with this program; if not, write to the Free Software
+>> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-13=
+01  USA
+>> + *
+>> + */
+>> +
+>> +#ifdef HAVE_CONFIG_H
+>> +#include<config.h>
+>> +#endif
+>> +
+>> +#include<errno.h>
+>> +#include<stdlib.h>
+>> +#include<unistd.h>
+>> +
+>> +#include<gdbus.h>
+>> +#include<string.h>
+>> +
+>> +#include<ofono.h>
+>> +#include<private-network.h>
+>> +
+> Please get into the habit of running 'make distcheck' before submitting
+> patches.  The above header use is actually wrong.
+>
+> First you should not use ofono.h here, instead you need to include
+> <ofono/log.h>,<ofono/dbus.h>  and<ofono/plugin.h>.  ofono.h is strictly
+> for private APIs, which you're not using any of in this plugin.
+>
+> Secondly, private-network.h should be<ofono/private-network.h>  and you
+> will need to define OFONO_DBUS_API_SUBJECT_TO_CHANGE.  See just about
+> any plugin for an example.
+>
 
-> Changelog from v6:
-> 	- This patch contains only the ConnMan plugin to request/release
-> 	the private network settings.
-> 	- remove unused ConnMan interfaces.
-> 	- remove error field from pns_req structure.
-> 	- directly call release method from plugin when a request is redundant.
-> =
+Thanks for the info, I didn't know about that.
 
-> ---
->  Makefile.am       |    3 +
->  plugins/connman.c |  277 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  2 files changed, 280 insertions(+), 0 deletions(-)
->  create mode 100644 plugins/connman.c
-> =
+>> +#define CONNMAN_SERVICE			"net.connman"
+>> +#define CONNMAN_PATH			"/net/connman"
+>> +
+>> +#define CONNMAN_MANAGER_INTERFACE	CONNMAN_SERVICE ".Manager"
+>> +#define CONNMAN_MANAGER_PATH		"/"
+>> +
+>> +static DBusConnection *connection;
+>> +static GHashTable *requests;
+>> +static unsigned int id;
+>> +
+>> +struct pns_req {
+>> +	int uid;
+>> +	DBusPendingCall *pending;
+>> +	ofono_private_network_cb_t cb;
+>> +	void *data;
+>> +	gboolean redundant;
+>> +};
+>> +
+>> +static void pns_release(int uid)
+>> +{
+>> +	DBusMessage *message =3D NULL;
+>> +	struct pns_req *req;
+>> +
+>> +	DBG("");
+>> +
+>> +	req =3D g_hash_table_lookup(requests,&uid);
+>> +	if (!req)
+>> +		return;
+>> +
+>> +	if (req->pending) {
+>> +		if (dbus_pending_call_get_completed(req->pending) =3D=3D FALSE) {
+>> +			/*
+>> +			 * We want to cancel the request but we have to wait
+>> +			 * the response of ConnMan. So we mark request as
+>> +			 * redundant until we get the response, then we remove
+>> +			 * it from hash table.
+>> +			 */
+>> +			req->redundant =3D TRUE;
+>> +			return;
+>> +		}
+>> +	}
+> Why do you check both pending and dbus_pending_call_get_completed?  You
+> reset pending to NULL pretty early in request_reply.  So at best
+> dbus_pending_call_get_completed is redundant, and at worst it will
+> actually cause bugs.  Think it through fully.
 
-> diff --git a/Makefile.am b/Makefile.am
-> index 0a7b6d5..ab28e2c 100644
-> --- a/Makefile.am
-> +++ b/Makefile.am
-> @@ -339,6 +339,9 @@ builtin_sources +=3D plugins/hfp_ag.c plugins/bluetoo=
-th.h
->  builtin_modules +=3D dun_gw
->  builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
->  =
+I will remove this pending reset into request_reply: I have to let dbus =
 
-> +builtin_modules +=3D connman
-> +builtin_sources +=3D plugins/connman.c
-> +
->  builtin_sources +=3D $(btio_sources)
->  builtin_cflags +=3D @BLUEZ_CFLAGS@
->  builtin_libadd +=3D @BLUEZ_LIBS@
-> diff --git a/plugins/connman.c b/plugins/connman.c
-> new file mode 100644
-> index 0000000..e6cce3f
-> --- /dev/null
-> +++ b/plugins/connman.c
-> @@ -0,0 +1,277 @@
-> +/*
-> + *
-> + *  oFono - Open Source Telephony
-> + *
-> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-> + *
-> + *  This program is free software; you can redistribute it and/or modify
-> + *  it under the terms of the GNU General Public License version 2 as
-> + *  published by the Free Software Foundation.
-> + *
-> + *  This program is distributed in the hope that it will be useful,
-> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + *  GNU General Public License for more details.
-> + *
-> + *  You should have received a copy of the GNU General Public License
-> + *  along with this program; if not, write to the Free Software
-> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
-1  USA
-> + *
-> + */
-> +
-> +#ifdef HAVE_CONFIG_H
-> +#include <config.h>
-> +#endif
-> +
-> +#include <errno.h>
-> +#include <stdlib.h>
-> +#include <unistd.h>
-> +
-> +#include <gdbus.h>
-> +#include <string.h>
-> +
-> +#include <ofono.h>
-> +#include <private-network.h>
-> +
+rountines release the pending call.
+I test pending value and dbus_pending_call_get_completed() because it is =
 
-Please get into the habit of running 'make distcheck' before submitting
-patches.  The above header use is actually wrong.
+possible that the pending call has been completed and is not NULL.
 
-First you should not use ofono.h here, instead you need to include
-<ofono/log.h>, <ofono/dbus.h> and <ofono/plugin.h>.  ofono.h is strictly
-for private APIs, which you're not using any of in this plugin.
+>> +
+>> +	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
+>> +				     CONNMAN_MANAGER_PATH,
+>> +				     CONNMAN_MANAGER_INTERFACE,
+>> +				     "ReleasePrivateNetwork");
+> You're mixing tabs and spaces for indentation here, please fix this.
+> You should also follow the indentation rules of item M4.
+>
+>> +
+>> +	if (message =3D=3D NULL)
+>> +		goto error;
+>> +
+>> +	dbus_message_set_no_reply(message, TRUE);
+>> +	dbus_connection_send(connection, message, NULL);
+>> +
+> Err, are you missing something important here?  Like the fd argument?
+>
+> > From connman/doc:
+>                  void ReleasePrivateNetwork(fd) [experimental]
+>
 
-Secondly, private-network.h should be <ofono/private-network.h> and you
-will need to define OFONO_DBUS_API_SUBJECT_TO_CHANGE.  See just about
-any plugin for an example.
+It seems there is a typo between the doc and the implemented API, for =
 
-> +#define CONNMAN_SERVICE			"net.connman"
-> +#define CONNMAN_PATH			"/net/connman"
-> +
-> +#define CONNMAN_MANAGER_INTERFACE	CONNMAN_SERVICE ".Manager"
-> +#define CONNMAN_MANAGER_PATH		"/"
-> +
-> +static DBusConnection *connection;
-> +static GHashTable *requests;
-> +static unsigned int id;
-> +
-> +struct pns_req {
-> +	int uid;
-> +	DBusPendingCall *pending;
-> +	ofono_private_network_cb_t cb;
-> +	void *data;
-> +	gboolean redundant;
-> +};
-> +
-> +static void pns_release(int uid)
-> +{
-> +	DBusMessage *message =3D NULL;
-> +	struct pns_req *req;
-> +
-> +	DBG("");
-> +
-> +	req =3D g_hash_table_lookup(requests, &uid);
-> +	if (!req)
-> +		return;
-> +
-> +	if (req->pending) {
-> +		if (dbus_pending_call_get_completed(req->pending) =3D=3D FALSE) {
-> +			/*
-> +			 * We want to cancel the request but we have to wait
-> +			 * the response of ConnMan. So we mark request as
-> +			 * redundant until we get the response, then we remove
-> +			 * it from hash table.
-> +			 */
-> +			req->redundant =3D TRUE;
-> +			return;
-> +		}
-> +	}
+the moment ReleasePrivateNetwork() doesn't take any argument.
+The PN settings are removed from the hash table using the DBus sender.
+I will send a patch to fix the documentation.
 
-Why do you check both pending and dbus_pending_call_get_completed?  You
-reset pending to NULL pretty early in request_reply.  So at best
-dbus_pending_call_get_completed is redundant, and at worst it will
-actually cause bugs.  Think it through fully.
+>> +error:
+>> +	if (message)
+>> +		dbus_message_unref(message);
+> This check is redundant.  The code would look way nicer if you do:
+>
+> 	dbus_message_unref(message);
+>
+> error:
+> 	g_hash_table_remove(...);
+>
+>> +
+>> +	g_hash_table_remove(requests,&req->uid);
+>> +}
+>> +
+>> +static void request_reply(DBusPendingCall *call, void *user_data)
+>> +{
+>> +	struct pns_req *req =3D user_data;
+>> +	struct ofono_private_network_settings pns;
+>> +	DBusMessageIter array, dict, entry;
+>> +	DBusMessage *reply;
+>> +
+>> +	DBG("");
+>> +
+>> +	pns.fd =3D -1;
+>> +	pns.server_ip =3D NULL;
+>> +	pns.peer_ip =3D NULL;
+>> +	pns.primary_dns =3D NULL;
+>> +	pns.secondary_dns =3D NULL;
+>> +
+>> +	/* request is no more pending */
+>> +	req->pending =3D NULL;
+>> +
+>> +	reply =3D dbus_pending_call_steal_reply(call);
+>> +	if (!reply)
+>> +		goto error;
+>> +
+>> +	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR)
+>> +		goto error;
+>> +
+>> +	if (dbus_message_iter_init(reply,&array) =3D=3D FALSE)
+>> +		goto error;
+>> +
+>> +	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_UNIX_FD)
+>> +		goto error;
+>> +
+>> +	dbus_message_iter_get_basic(&array,&pns.fd);
+>> +	DBG("Fildescriptor =3D %d\n", pns.fd);
+>> +
+>> +	dbus_message_iter_next(&array);
+>> +
+>> +	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_ARRAY)
+>> +		goto error;
+>> +
+>> +	if (req->redundant =3D=3D TRUE)
+>> +		goto release;
+>> +
+>> +	dbus_message_iter_recurse(&array,&dict);
+>> +
+>> +	while (dbus_message_iter_get_arg_type(&dict) =3D=3D DBUS_TYPE_DICT_ENT=
+RY) {
+>> +		DBusMessageIter iter;
+>> +		const char *key;
+>> +		int type;
+>> +
+>> +		dbus_message_iter_recurse(&dict,&entry);
+>> +
+>> +		dbus_message_iter_get_basic(&entry,&key);
+>> +
+>> +		dbus_message_iter_next(&entry);
+>> +		dbus_message_iter_recurse(&entry,&iter);
+>> +
+>> +		type =3D dbus_message_iter_get_arg_type(&iter);
+>> +		if (type !=3D DBUS_TYPE_STRING)
+>> +			break;
+>> +
+>> +		if (g_str_equal(key, "ServerIPv4")
+>> +				&&  type =3D=3D DBUS_TYPE_STRING)
+>> +			dbus_message_iter_get_basic(&iter,&pns.server_ip);
+>> +		else if (g_str_equal(key, "PeerIPv4")
+>> +				&&  type =3D=3D DBUS_TYPE_STRING)
+>> +			dbus_message_iter_get_basic(&iter,&pns.peer_ip);
+>> +		else if (g_str_equal(key, "PrimaryDNS")
+>> +				&&  type =3D=3D DBUS_TYPE_STRING)
+>> +			dbus_message_iter_get_basic(&iter,&pns.primary_dns);
+>> +		else if (g_str_equal(key, "SecondaryDNS")
+>> +				&&  type =3D=3D DBUS_TYPE_STRING)
+>> +			dbus_message_iter_get_basic(&iter,&pns.secondary_dns);
+>> +
+>> +		dbus_message_iter_next(&dict);
+>> +	}
+>> +
+>> +	if (pns.server_ip =3D=3D NULL || pns.peer_ip =3D=3D NULL ||
+>> +			pns.primary_dns =3D=3D NULL || pns.secondary_dns =3D=3D NULL ||
+>> +			pns.fd<  0) {
+>> +		ofono_error("Error while reading dictionnary...\n");
+>> +		goto release;
+>> +	}
+>> +
+>> +	req->cb(&pns, req->data);
+>> +
+>> +	dbus_message_unref(reply);
+>> +	dbus_pending_call_unref(call);
+>> +
+>> +	return;
+>> +
+>> +release:
+>> +	pns_release(req->uid);
+>> +error:
+>> +	if (pns.fd>=3D 0)
+>> +		close(pns.fd);
+>> +
+>> +	req->cb(NULL, req->data);
+>> +
+>> +	if (reply)
+>> +		dbus_message_unref(reply);
+>> +
+>> +	dbus_pending_call_unref(call);
+>> +}
+>> +
+>> +static int pns_request(ofono_private_network_cb_t cb, void *data)
+>> +{
+>> +	DBusMessage *message;
+>> +	DBusPendingCall *call;
+>> +	struct pns_req *req;
+>> +
+>> +	DBG("");
+>> +
+>> +	req =3D g_try_new(struct pns_req, 1);
+>> +
+>> +	if (req =3D=3D NULL)
+>> +		return -ENOMEM;
+>> +
+>> +	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
+>> +					CONNMAN_MANAGER_PATH,
+>> +					CONNMAN_MANAGER_INTERFACE,
+>> +					"RequestPrivateNetwork");
+> Please align these in accordance with item M4 of our coding-style documen=
+t.
+>
+>> +
+>> +	if (message =3D=3D NULL) {
+>> +		g_free(req);
+>> +		return -ENOMEM;
+>> +	}
+>> +
+>> +	if (dbus_connection_send_with_reply(connection,
+>> +				message,&call, 5000) =3D=3D FALSE) {
+> Same here, you can put message on the previous line to make this easier.
+>
+>> +		g_free(req);
+>> +		dbus_message_unref(message);
+>> +		return -EIO;
+>> +	}
+>> +
+>> +	id++;
+>> +	req->pending =3D call;
+>> +	req->cb =3D cb;
+>> +	req->data =3D data;
+>> +	req->uid =3D id;
+>> +	req->redundant =3D FALSE;
+>> +
+>> +	dbus_pending_call_set_notify(call, request_reply,
+>> +							req, NULL);
+> why are you breaking up this line? It can all fit on the same line.
+>
+>> +	g_hash_table_insert(requests,&req->uid, req);
+>> +	dbus_message_unref(message);
+>> +
+>> +	return req->uid;
+>> +}
+>> +
+>> +static struct ofono_private_network_driver pn_driver =3D {
+>> +	.name		=3D "ConnMan Private Network",
+>> +	.request	=3D pns_request,
+>> +	.release	=3D pns_release,
+>> +};
+>> +
+>> +static void remove_requests(gpointer user_data)
+>> +{
+>> +	struct pns_req *req =3D user_data;
+>> +
+>> +	g_free(req);
+>> +}
+>> +
+>> +static int connman_init(void)
+>> +{
+>> +	DBG("");
+>> +
+>> +	id =3D 0;
+> The id initialization is redundant.  Either initialize it to zero at
+> declaration or just remember that all statics are initialized to zero
+> anyway.
+>
+>> +	connection =3D ofono_dbus_get_connection();
+>> +	requests =3D g_hash_table_new_full(g_int_hash, g_int_equal, NULL,
+>> +						remove_requests);
+>> +
+>> +	return ofono_private_network_driver_register(&pn_driver);
+>> +}
+>> +
+>> +static void connman_exit(void)
+>> +{
+>> +	g_hash_table_destroy(requests);
+>> +	ofono_private_network_driver_unregister(&pn_driver);
+>> +}
+>> +
+>> +OFONO_PLUGIN_DEFINE(connman, "ConnMan plugin", VERSION,
+>> +		OFONO_PLUGIN_PRIORITY_DEFAULT, connman_init, connman_exit)
 
-> +
-> +	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
-> +				     CONNMAN_MANAGER_PATH,
-> +				     CONNMAN_MANAGER_INTERFACE,
-> +				     "ReleasePrivateNetwork");
+Kind regards,
+Guillaume
 
-You're mixing tabs and spaces for indentation here, please fix this.
-You should also follow the indentation rules of item M4.
-
-> +
-> +	if (message =3D=3D NULL)
-> +		goto error;
-> +
-> +	dbus_message_set_no_reply(message, TRUE);
-> +	dbus_connection_send(connection, message, NULL);
-> +
-
-Err, are you missing something important here?  Like the fd argument?
-
-From connman/doc:
-                void ReleasePrivateNetwork(fd) [experimental]
-
-> +error:
-> +	if (message)
-> +		dbus_message_unref(message);
-
-This check is redundant.  The code would look way nicer if you do:
-
-	dbus_message_unref(message);
-
-error:
-	g_hash_table_remove(...);
-
-> +
-> +	g_hash_table_remove(requests, &req->uid);
-> +}
-> +
-> +static void request_reply(DBusPendingCall *call, void *user_data)
-> +{
-> +	struct pns_req *req =3D user_data;
-> +	struct ofono_private_network_settings pns;
-> +	DBusMessageIter array, dict, entry;
-> +	DBusMessage *reply;
-> +
-> +	DBG("");
-> +
-> +	pns.fd =3D -1;
-> +	pns.server_ip =3D NULL;
-> +	pns.peer_ip =3D NULL;
-> +	pns.primary_dns =3D NULL;
-> +	pns.secondary_dns =3D NULL;
-> +
-> +	/* request is no more pending */
-> +	req->pending =3D NULL;
-> +
-> +	reply =3D dbus_pending_call_steal_reply(call);
-> +	if (!reply)
-> +		goto error;
-> +
-> +	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR)
-> +		goto error;
-> +
-> +	if (dbus_message_iter_init(reply, &array) =3D=3D FALSE)
-> +		goto error;
-> +
-> +	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_UNIX_FD)
-> +		goto error;
-> +
-> +	dbus_message_iter_get_basic(&array, &pns.fd);
-> +	DBG("Fildescriptor =3D %d\n", pns.fd);
-> +
-> +	dbus_message_iter_next(&array);
-> +
-> +	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_ARRAY)
-> +		goto error;
-> +
-> +	if (req->redundant =3D=3D TRUE)
-> +		goto release;
-> +
-> +	dbus_message_iter_recurse(&array, &dict);
-> +
-> +	while (dbus_message_iter_get_arg_type(&dict) =3D=3D DBUS_TYPE_DICT_ENTR=
-Y) {
-> +		DBusMessageIter iter;
-> +		const char *key;
-> +		int type;
-> +
-> +		dbus_message_iter_recurse(&dict, &entry);
-> +
-> +		dbus_message_iter_get_basic(&entry, &key);
-> +
-> +		dbus_message_iter_next(&entry);
-> +		dbus_message_iter_recurse(&entry, &iter);
-> +
-> +		type =3D dbus_message_iter_get_arg_type(&iter);
-> +		if (type !=3D DBUS_TYPE_STRING)
-> +			break;
-> +
-> +		if (g_str_equal(key, "ServerIPv4")
-> +				&& type =3D=3D DBUS_TYPE_STRING)
-> +			dbus_message_iter_get_basic(&iter, &pns.server_ip);
-> +		else if (g_str_equal(key, "PeerIPv4")
-> +				&& type =3D=3D DBUS_TYPE_STRING)
-> +			dbus_message_iter_get_basic(&iter, &pns.peer_ip);
-> +		else if (g_str_equal(key, "PrimaryDNS")
-> +				&& type =3D=3D DBUS_TYPE_STRING)
-> +			dbus_message_iter_get_basic(&iter, &pns.primary_dns);
-> +		else if (g_str_equal(key, "SecondaryDNS")
-> +				&& type =3D=3D DBUS_TYPE_STRING)
-> +			dbus_message_iter_get_basic(&iter, &pns.secondary_dns);
-> +
-> +		dbus_message_iter_next(&dict);
-> +	}
-> +
-> +	if (pns.server_ip =3D=3D NULL || pns.peer_ip =3D=3D NULL ||
-> +			pns.primary_dns =3D=3D NULL || pns.secondary_dns =3D=3D NULL ||
-> +			pns.fd < 0) {
-> +		ofono_error("Error while reading dictionnary...\n");
-> +		goto release;
-> +	}
-> +
-> +	req->cb(&pns, req->data);
-> +
-> +	dbus_message_unref(reply);
-> +	dbus_pending_call_unref(call);
-> +
-> +	return;
-> +
-> +release:
-> +	pns_release(req->uid);
-> +error:
-> +	if (pns.fd >=3D 0)
-> +		close(pns.fd);
-> +
-> +	req->cb(NULL, req->data);
-> +
-> +	if (reply)
-> +		dbus_message_unref(reply);
-> +
-> +	dbus_pending_call_unref(call);
-> +}
-> +
-> +static int pns_request(ofono_private_network_cb_t cb, void *data)
-> +{
-> +	DBusMessage *message;
-> +	DBusPendingCall *call;
-> +	struct pns_req *req;
-> +
-> +	DBG("");
-> +
-> +	req =3D g_try_new(struct pns_req, 1);
-> +
-> +	if (req =3D=3D NULL)
-> +		return -ENOMEM;
-> +
-> +	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
-> +					CONNMAN_MANAGER_PATH,
-> +					CONNMAN_MANAGER_INTERFACE,
-> +					"RequestPrivateNetwork");
-
-Please align these in accordance with item M4 of our coding-style document.
-
-> +
-> +	if (message =3D=3D NULL) {
-> +		g_free(req);
-> +		return -ENOMEM;
-> +	}
-> +
-> +	if (dbus_connection_send_with_reply(connection,
-> +				message, &call, 5000) =3D=3D FALSE) {
-
-Same here, you can put message on the previous line to make this easier.
-
-> +		g_free(req);
-> +		dbus_message_unref(message);
-> +		return -EIO;
-> +	}
-> +
-> +	id++;
-> +	req->pending =3D call;
-> +	req->cb =3D cb;
-> +	req->data =3D data;
-> +	req->uid =3D id;
-> +	req->redundant =3D FALSE;
-> +
-> +	dbus_pending_call_set_notify(call, request_reply,
-> +							req, NULL);
-
-why are you breaking up this line? It can all fit on the same line.
-
-> +	g_hash_table_insert(requests, &req->uid, req);
-> +	dbus_message_unref(message);
-> +
-> +	return req->uid;
-> +}
-> +
-> +static struct ofono_private_network_driver pn_driver =3D {
-> +	.name		=3D "ConnMan Private Network",
-> +	.request	=3D pns_request,
-> +	.release	=3D pns_release,
-> +};
-> +
-> +static void remove_requests(gpointer user_data)
-> +{
-> +	struct pns_req *req =3D user_data;
-> +
-> +	g_free(req);
-> +}
-> +
-> +static int connman_init(void)
-> +{
-> +	DBG("");
-> +
-> +	id =3D 0;
-
-The id initialization is redundant.  Either initialize it to zero at
-declaration or just remember that all statics are initialized to zero
-anyway.
-
-> +	connection =3D ofono_dbus_get_connection();
-> +	requests =3D g_hash_table_new_full(g_int_hash, g_int_equal, NULL,
-> +						remove_requests);
-> +
-> +	return ofono_private_network_driver_register(&pn_driver);
-> +}
-> +
-> +static void connman_exit(void)
-> +{
-> +	g_hash_table_destroy(requests);
-> +	ofono_private_network_driver_unregister(&pn_driver);
-> +}
-> +
-> +OFONO_PLUGIN_DEFINE(connman, "ConnMan plugin", VERSION,
-> +		OFONO_PLUGIN_PRIORITY_DEFAULT, connman_init, connman_exit)
-
-Regards,
--Denis
-
---===============4080135135200796952==--
+--===============4473204102179114432==--
 
