@@ -1,49 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============9074132723605926087=="
+Content-Type: multipart/mixed; boundary="===============9130501208596159733=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Serial Port modems - can ofono help?
-Date: Mon, 13 Jun 2011 04:20:00 -0500
-Message-ID: <4DF5D640.4080306@gmail.com>
-In-Reply-To: <4DF77014.2090002@wildgooses.com>
+Subject: Re: [PATCH v4 4/4] udev: add Telit UC864-G and update udev rules
+Date: Mon, 13 Jun 2011 04:28:43 -0500
+Message-ID: <4DF5D84B.4030607@gmail.com>
+In-Reply-To: <alpine.DEB.2.00.1106140956070.30119@entw48>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9074132723605926087==
+--===============9130501208596159733==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ed,
+Hi Bernhard,
 
-> Thanks could you offer me some reference to what you mean here?  ie does
-> ofono offer me something over and above simply a udev rule firing on the
-> correct subsystem (and perhaps limiting by driver name if we really want
-> to tighten up the rule?)
+>> In theory you can use $GPSNMUN to enable GPS reporting on Ports 1 and 4
+>> which seem to be fully functional.  However, it does look like on my
+>> UC864-G, port #3 is used for the GPS stream.  Port #1 doesn't seem to
+>> respond to anything.
+>>
+> =
+
+> I just tried the following at my modem:
+> =
+
+> AT$GPSNMUN=3D1,1,1,1,1,1,1
+> AT$GPSP=3D1
+> =
+
+> Which enables the GPS reporting on Ports 1 and 4 and adds $GPSNMUN: at
+> the beginning of every GPS report e.g.
+> =
+
+> $GPSNMUN: $GPVTG,,T,,M,,N,,K*4E
+> =
+
+> Which would be easy to catch from ofono.
+> =
+
+> In my opinion the problem about this is that the GPS atom needs to be
+> loaded for every telit modem, then try AT$GPSNMUN=3D1,1,1,1,1,1,1 and wait
+> for the response. If the response is an error the atom knows that the
+> modem does not support GPS. Could this check/enable also be added to a
+> part of the telit plugin?
+> =
+
+> The udev approach has the benifet to be able to do
+> =
+
+> if (HasGPS)
+>     ... =3D ofono_location_reporting_create(...);
+> =
+
+> or something like that at the telit plugin.
 > =
 
 
-Nope, it really doesn't.  Well besides maybe an easy integration point
-with GAtChat library.
+I agree that your proposed approach is the right one.
 
->> If you can combine the two above parts then you might be able to detect
->> modem devices automatically, Marcel had a few ideas how to do this, but
->> nothing concrete has been done yet.
+>>
+>> Yes and no.  ofono_modem_create has two modes of operation, one where a
+>> known unique id is given.  This can come for example from the serial
+>> number of the USB device.  Some manufacturers provide this information
+>> properly, others do not.  If you cannot trust the USB serial ID, then
+>> giving a NULL parameter to ofono_modem_create will tell oFono to
+>> generate a unique id itself.  Your path will then look like /telit2 or
+>> something like that.
 > =
 
-> I need to implement something pretty imminently - just wondering if
-> ofono had something to help.  For example is there a "probe this port
-> and tell me what modem is on the end" feature? That way I could point it
-> at my suspected serial port and ask ofono to scan it?
+> Ah, ok then the patch is fine I think and I like to get it reviewed :)
+> =
 
-Nope, there isn't anything like that.  We have plans to implement
-something similar, but in the end most of our modems can be easily
-detected via udev, or are on platforms with a well known configuration
-(e.g. the Freerunner, etc).  So the motivation to do so is not high
-right now.  If you manage to make this work nicely (either with oFono or
-something else) we'd love to hear about it.
+> But I can alter the patch to only search for the modem device and add
+> the GPS check later to the telit plugin or the GPS atom, if you like.
+> =
+
+
+Patch has been reviewed, however we might have to examine whether we
+need to tweak the udev rules for this serial number / modem path stuff
+to work properly.  Marcel will have to take a look as I'm lost in that
+part of the udev plugin.
 
 Regards,
 -Denis
 
---===============9074132723605926087==--
+--===============9130501208596159733==--
 
