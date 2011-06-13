@@ -1,73 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============3877518689657559189=="
+Content-Type: multipart/mixed; boundary="===============0917647428264337264=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] linktop: reimplemented linktop plugin based on mbm
-Date: Sun, 12 Jun 2011 03:57:42 -0500
-Message-ID: <4DF47F86.9030108@gmail.com>
-In-Reply-To: <BANLkTikNc_A+B5t1iqvZHAoipPRG04T5kA@mail.gmail.com>
+From: Dara Spieker-Doyle <dara.spiekerdoyle@gmail.com>
+Subject: [PATCH] cdma-voicecall: Fix for crash when unregistering atom
+Date: Mon, 13 Jun 2011 15:37:42 -0700
+Message-ID: <1308004662-2310-1-git-send-email-dara.spiekerdoyle@gmail.com>
+In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3877518689657559189==
+--===============0917647428264337264==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Amit,
+---
+ src/cdma-voicecall.c |   14 ++++++++++++++
+ 1 files changed, 14 insertions(+), 0 deletions(-)
 
-> =
+diff --git a/src/cdma-voicecall.c b/src/cdma-voicecall.c
+index a590063..2bdf850 100644
+--- a/src/cdma-voicecall.c
++++ b/src/cdma-voicecall.c
+@@ -335,6 +335,18 @@ void ofono_cdma_voicecall_driver_unregister(
+ 	g_drivers =3D g_slist_remove(g_drivers, (void *)d);
+ }
+ =
 
-> The windows driver files have some references to ST-Ericsson and the AT
-> commands
-> looks more like as subset of ST-Ericsson commands then Huawei.
-> =
++static void cdma_voicecall_unregister(struct ofono_atom *atom)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
++	const char *path =3D __ofono_atom_get_path(atom);
++
++	g_dbus_unregister_interface(conn, path,
++					OFONO_CDMA_VOICECALL_MANAGER_INTERFACE);
++	ofono_modem_remove_interface(modem,
++					OFONO_CDMA_VOICECALL_MANAGER_INTERFACE);
++}
++
+ static void voicecall_manager_remove(struct ofono_atom *atom)
+ {
+ 	struct ofono_cdma_voicecall *vc =3D __ofono_atom_get_data(atom);
+@@ -405,6 +417,8 @@ void ofono_cdma_voicecall_register(struct ofono_cdma_vo=
+icecall *vc)
+ =
 
-> I have cross check the listed commands
-> with http://natisbad.org/E4300/Dell_Wireless_5530_AT_cmd_ref.html and
-> found lots of AT*E**** commands which are Ericsson extensions.
->  =
+ 	ofono_modem_add_interface(modem,
+ 				OFONO_CDMA_VOICECALL_MANAGER_INTERFACE);
++
++	__ofono_atom_register(vc->atom, cdma_voicecall_unregister);
+ }
+ =
+
+ void ofono_cdma_voicecall_remove(struct ofono_cdma_voicecall *vc)
+-- =
+
+1.7.4.1
 
 
-Ok, then forget what I said earlier.  This indeed looks like an MBM clone.
-
->     Same with radio-settings and voicecall.
-> =
-
-> =
-
-> I have tested redio-settings and is required to switch to edge to umts. =
-
-> =
-
-
-Fair enough.
-
-> The device supports voice call but I am unable to test with
-> test-voicecall script ast it fails with =
-
-> `Method "GetCalls" with signature "" on interface
-> "org.ofono.VoiceCallManager" doesn't exist` error.
-> =
-
-> Looking at windows driver log, the device issues AT*ECAV command
-> to initiate voice call like this:
-> =
-
-> AT*ECAV: 1,1,1,,,"1503",129
-
-Then you will have to trace why the voicecall atom never registers.  Do
-note that unless the linktop supports some way of obtaining audio, we
-prefer not to enable the voicecall driver and associated interfaces.
-Pretty much every single usb datacard on the market can make calls, but
-95% of them do not support audio.
-
-Also, I notice that the device reports support of *ENAP, which is used
-for high-speed context activation.  Is the kernel detecting a high-speed
-interface (e.g. ethernet) when you insert the linktop device?  Or is
-this device only capable of PPP?
-
-Regards,
--Denis
-
---===============3877518689657559189==--
+--===============0917647428264337264==--
 
