@@ -1,36 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============4670046230280595402=="
+Content-Type: multipart/mixed; boundary="===============0861381988617117537=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH] isimodem: Improper handling of missed call
-Date: Tue, 14 Jun 2011 11:30:11 +0300
-Message-ID: <BANLkTikKBh3Q0ou19UDyt=gz-YYUE5HvNw@mail.gmail.com>
-In-Reply-To: <BANLkTikKUpoXEnJx4M4UT2u5ib0ounWADA@mail.gmail.com>
+From: Bernhard Guillon <Bernhard.Guillon@hale.at>
+Subject: Re: [PATCH v4 4/4] udev: add Telit UC864-G and update udev rules
+Date: Tue, 14 Jun 2011 10:34:35 +0200
+Message-ID: <alpine.DEB.2.00.1106140956070.30119@entw48>
+In-Reply-To: <4DEF338F.1020701@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4670046230280595402==
+--===============0861381988617117537==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arun,
 
-2011/5/30 Arun Ravindran <arunlee@gmail.com>:
->> Can you post logs on such a successful case, if you have any around?
+
+On Wed, 8 Jun 2011, Denis Kenzior wrote:
+
+> Hi Bernhard,
+>
+>>>
+>>> From what I remember of the Telit modems, all ports are fully
+>>> functional, so the GPS port can be on any tty.  If this is the case,
+>>> then the way this can be accomplished is by querying the model /
+>>> revision of the modem during the enable() stage in the modem driver and
+>>> adding the appropriate atom as needed.
+>>>
+>>
+>> The GPS port is not fully functional as far is I know it is read only.
+>> According to the manual it is necessary to enable over the modem line
+>> with AT$GPSP=3D1 afterwards it starts reporting NMEA signals on the GPS =
+line.
 >>
 >
-> tested once again, its working for me. I have attached the log here.
+> In theory you can use $GPSNMUN to enable GPS reporting on Ports 1 and 4
+> which seem to be fully functional.  However, it does look like on my
+> UC864-G, port #3 is used for the GPS stream.  Port #1 doesn't seem to
+> respond to anything.
 >
-> But here i am using as n900 modem and not as isiusb .
 
-It seems to be working for me now using the isiusb plugin.
+I just tried the following at my modem:
 
-So I pushed the patch along with the WS fixes.
+AT$GPSNMUN=3D1,1,1,1,1,1,1
+AT$GPSP=3D1
 
-Sorry for the delay.
+Which enables the GPS reporting on Ports 1 and 4 and adds $GPSNMUN: at the =
 
-Cheers,
-Aki
+beginning of every GPS report e.g.
 
---===============4670046230280595402==--
+$GPSNMUN: $GPVTG,,T,,M,,N,,K*4E
+
+Which would be easy to catch from ofono.
+
+In my opinion the problem about this is that the GPS atom needs to be =
+
+loaded for every telit modem, then try AT$GPSNMUN=3D1,1,1,1,1,1,1 and wait =
+
+for the response. If the response is an error the atom knows that the =
+
+modem does not support GPS. Could this check/enable also be added to a =
+
+part of the telit plugin?
+
+The udev approach has the benifet to be able to do
+
+if (HasGPS)
+ 	... =3D ofono_location_reporting_create(...);
+
+or something like that at the telit plugin.
+
+>
+> Yes and no.  ofono_modem_create has two modes of operation, one where a
+> known unique id is given.  This can come for example from the serial
+> number of the USB device.  Some manufacturers provide this information
+> properly, others do not.  If you cannot trust the USB serial ID, then
+> giving a NULL parameter to ofono_modem_create will tell oFono to
+> generate a unique id itself.  Your path will then look like /telit2 or
+> something like that.
+
+Ah, ok then the patch is fine I think and I like to get it reviewed :)
+
+But I can alter the patch to only search for the modem device and add the =
+
+GPS check later to the telit plugin or the GPS atom, if you like.
+
+Best regards,
+Bernhard
+
+
+--
+Scanned by MailScanner.
+
+
+--===============0861381988617117537==--
 
