@@ -1,53 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============5125259575541415691=="
+Content-Type: multipart/mixed; boundary="===============3916050944761933345=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH] emulator: fix request tests
-Date: Thu, 16 Jun 2011 15:27:48 +0200
-Message-ID: <1308230868-17256-1-git-send-email-frederic.danis@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: ZTE 3G dongle fails to work on Ofono
+Date: Wed, 15 Jun 2011 03:31:29 -0500
+Message-ID: <4DF86DE1.60404@gmail.com>
+In-Reply-To: <CE59C043D0EC3349B2BF41C0EC72229B4D8B2C99@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5125259575541415691==
+--===============3916050944761933345==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/emulator.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+Hi,
 
-diff --git a/src/emulator.c b/src/emulator.c
-index c120ad3..8821afd 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -433,7 +433,7 @@ static void brsf_cb(GAtServer *server, GAtServerRequest=
-Type type,
- 		if (g_at_result_iter_next_number(&iter, &val) =3D=3D FALSE)
- 			goto fail;
- =
+On 06/15/2011 10:31 PM, Deng, Ying An wrote:
+> Hi,
+> =
 
--		if ((val < 0) && (val > 127))
-+		if ((val < 0) || (val > 127))
- 			goto fail;
- =
+>  =
 
- 		em->r_features =3D val;
-@@ -715,7 +715,7 @@ static void cmee_cb(GAtServer *server, GAtServerRequest=
-Type type,
- 		if (g_at_result_iter_next_number(&iter, &val) =3D=3D FALSE)
- 			goto fail;
- =
+> =
 
--		if (val < 0 && val > 1)
-+		if (val !=3D 0 && val !=3D 1)
- 			goto fail;
- =
+> I am trying with ZTE MF180 USB dongles on ofono 0.48 version, but met
+> with some error when authenticate SIM:
+> =
 
- 		em->cmee_mode =3D val;
--- =
+> ofonod[2563]: Querying remaining pin retries failed
+> =
 
-1.7.1
+> =
 
 
---===============5125259575541415691==--
+Feel free to ignore this error, it just means that the zte driver does
+not implement PIN retry queries.  You would need to find the vendor
+specific command that does this.
+
+Regards,
+-Denis
+
+--===============3916050944761933345==--
 
