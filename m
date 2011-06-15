@@ -1,131 +1,419 @@
-Content-Type: multipart/mixed; boundary="===============4478244811358197362=="
+Content-Type: multipart/mixed; boundary="===============1912988396096922378=="
 MIME-Version: 1.0
-From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH] call-forward: Call forwarding state handling
-Date: Thu, 16 Jun 2011 16:31:35 +0200
-Message-ID: <1308234695-11428-1-git-send-email-nicolas.bertrand@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] linktop: reimplemented linktop plugin based on mbm
+ with minimum features
+Date: Wed, 15 Jun 2011 09:18:01 -0500
+Message-ID: <4DF8BF19.8080005@gmail.com>
+In-Reply-To: <1308122001-7649-1-git-send-email-mendapara.amit@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4478244811358197362==
+--===============1912988396096922378==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When CFU is active be cautious with conditional
-call-forward activation/deactivation
----
- src/call-forwarding.c |   46 ++++++++++++++++++++++++++++++++++++++++------
- 1 files changed, 40 insertions(+), 6 deletions(-)
+Hi Amit,
 
-diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index 73ce433..eff5e9d 100644
---- a/src/call-forwarding.c
-+++ b/src/call-forwarding.c
-@@ -504,6 +504,7 @@ static DBusMessage *cf_get_properties_reply(DBusMessage=
- *msg,
- 	DBusMessageIter dict;
- 	int i;
- 	dbus_bool_t status;
-+	GSList *hidden =3D NULL;
- =
+<snip>
 
- 	reply =3D dbus_message_new_method_return(msg);
- 	if (reply =3D=3D NULL)
-@@ -515,17 +516,33 @@ static DBusMessage *cf_get_properties_reply(DBusMessa=
-ge *msg,
- 					OFONO_PROPERTIES_ARRAY_SIGNATURE,
- 						&dict);
- =
+> @@ -127,93 +178,130 @@ static GAtChat *open_device(struct ofono_modem *mo=
+dem,
+>  	if (chat =3D=3D NULL)
+>  		return NULL;
+>  =
 
--	for (i =3D 0; i < 4; i++)
--		property_append_cf_conditions(&dict, cf->cf_conditions[i],
--						BEARER_CLASS_VOICE,
--						cf_type_lut[i]);
--
- 	if ((cf->flags & CALL_FORWARDING_FLAG_CPHS_CFF) ||
- 			cf->cfis_record_id > 0)
- 		status =3D is_cfu_enabled(cf, NULL);
- 	else
- 		status =3D FALSE;
- =
+> -	if (getenv("OFONO_AT_DEBUG"))
+> -		g_at_chat_set_debug(chat, linktop_debug, debug);
+> -
+>  	return chat;
+>  }
+>  =
 
-+	/*
-+	 * If unconditional call-forwarding is enabled,
-+	 * hide conditionnal status
-+	 */
-+	if (status =3D=3D TRUE) {
-+		struct ofono_call_forwarding_condition cd =3D {0, 0, {"", 0}, 0};
-+
-+		for (i =3D 0; i < 4; i++)
-+			hidden =3D g_slist_prepend(hidden, &cd);
-+	}
-+
-+	for (i =3D 0; i < 4; i++)
-+		property_append_cf_conditions(&dict, (status &&
-+				i !=3D CALL_FORWARDING_TYPE_UNCONDITIONAL) ?
-+				hidden : cf->cf_conditions[i],
-+				BEARER_CLASS_VOICE,
-+				cf_type_lut[i]);
-+
-+	if (status =3D=3D TRUE)
-+		g_slist_free(hidden);
-+
- 	ofono_dbus_dict_append(&dict, "ForwardingFlagOnSim", DBUS_TYPE_BOOLEAN,
- 					&status);
- =
+> -static void linktop_disconnect(gpointer user_data)
+> +static void linktop_disconnect(gpointer user_data);
+> +
+> +static gboolean reopen_callback(gpointer user_data)
+>  {
+>  	struct ofono_modem *modem =3D user_data;
+>  	struct linktop_data *data =3D ofono_modem_get_data(modem);
+> +	const char *data_dev;
+> +
+> +	data_dev =3D ofono_modem_get_string(modem, "DataDevice");
+> +	data->data_port =3D create_port(data_dev);
+> +	/* retry once if failed */
+> +	if (data->data_port =3D=3D NULL) {
+> +		if (data->reopen_source > 0)
+> +			return FALSE;
 
-@@ -552,6 +569,13 @@ static void get_query_cf_callback(const struct ofono_e=
-rror *error, int total,
- 			cf->flags |=3D CALL_FORWARDING_FLAG_CACHED;
- 	}
- =
+Ok, this isn't right.  When mixing logic between two plugins, pay
+attention! :)
 
-+	if (cf->query_next =3D=3D CALL_FORWARDING_TYPE_UNCONDITIONAL &&
-+			is_cfu_enabled(cf, NULL) =3D=3D TRUE) {
-+		DBusMessage *reply =3D cf_get_properties_reply(cf->pending, cf);
-+		__ofono_dbus_pending_reply(&cf->pending, reply);
-+		return;
-+	}
-+
- 	if (cf->query_next =3D=3D CALL_FORWARDING_TYPE_NOT_REACHABLE) {
- 		DBusMessage *reply =3D cf_get_properties_reply(cf->pending, cf);
- 		__ofono_dbus_pending_reply(&cf->pending, reply);
-@@ -575,7 +599,8 @@ static DBusMessage *cf_get_properties(DBusConnection *c=
-onn, DBusMessage *msg,
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(cf->atom);
- =
+reopen_callback is called from a GSource.  The way GSources work is that
+returning FALSE means that the GSource should not be repeated, and
+returning TRUE means it should be.  Since you never reset reopen_source
+to 0 anywhere this won't work like you expect...  The reason this works
+is probably because the 1 second timeout is enough...
 
- 	if ((cf->flags & CALL_FORWARDING_FLAG_CACHED) ||
--			ofono_modem_get_online(modem) =3D=3D FALSE)
-+			ofono_modem_get_online(modem) =3D=3D FALSE ||
-+			is_cfu_enabled(cf, NULL) =3D=3D TRUE)
- 		return cf_get_properties_reply(msg, cf);
- =
+> +
+> +		data->reopen_source =3D g_timeout_add_seconds(1,
+> +				reopen_callback, modem);
+> +		ofono_debug("opening data port failed, retrying...");
+> +		return FALSE;
+> +	}
+>  =
 
- 	if (cf->driver->query =3D=3D NULL)
-@@ -698,6 +723,15 @@ static void set_property_callback(const struct ofono_e=
-rror *error, void *data)
- 		return;
- 	}
- =
+> -	DBG("");
+> -
+> -	if (data->gc)
+> -		ofono_gprs_context_remove(data->gc);
+> -
+> -	g_at_chat_unref(data->modem);
+> -	data->modem =3D NULL;
+> -
+> -	data->modem =3D open_device(modem, "Modem", "Modem: ");
+> -	if (data->modem =3D=3D NULL)
+> -		return;
+> +	if (getenv("OFONO_AT_DEBUG"))
+> +		g_at_chat_set_debug(data->data_port, linktop_debug, "Data: ");
+>  =
 
-+	if (cf->query_next !=3D CALL_FORWARDING_TYPE_UNCONDITIONAL &&
-+			is_cfu_enabled(cf, NULL) =3D=3D TRUE) {
-+		DBusMessage *reply;
-+		cf->flags &=3D ~CALL_FORWARDING_FLAG_CACHED;
-+		reply =3D dbus_message_new_method_return(cf->pending);
-+		__ofono_dbus_pending_reply(&cf->pending, reply);
-+		return;
-+	}
-+
- 	/* Successfully set, query the entire set just in case */
- 	set_query_next_cf_cond(cf);
- }
--- =
+> -	g_at_chat_set_disconnect_function(data->modem,
+> +	g_at_chat_set_disconnect_function(data->data_port,
+>  						linktop_disconnect, modem);
+>  =
 
-1.7.1
+>  	ofono_info("Reopened GPRS context channel");
+>  =
+
+> -	data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem=
+);
+> -
+> +	data->gc =3D ofono_gprs_context_create(modem, 0,
+> +					"atmodem", data->data_port);
+>  	if (data->gprs && data->gc)
+>  		ofono_gprs_add_context(data->gprs, data->gc);
+> +
+> +	data->reopen_source =3D 0;
+> +
+> +	return FALSE;
+>  }
+>  =
+
+> -static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
+> +static void linktop_disconnect(gpointer user_data)
+>  {
+>  	struct ofono_modem *modem =3D user_data;
+> +	struct linktop_data *data =3D ofono_modem_get_data(modem);
+>  =
+
+> -	DBG("");
+> +	DBG("%p, data->gc %p", modem, data->gc);
+>  =
+
+> -	ofono_modem_set_powered(modem, ok);
+> +	/* gprs_context has been destructed and needs not reopen */
+> +	if (data->gc =3D=3D NULL)
+> +		return
+> +	=
 
 
---===============4478244811358197362==--
+You have a dangling tab on the line above.
+
+> +	ofono_gprs_context_remove(data->gc);
+> +
+> +	g_at_chat_unref(data->data_port);
+> +	data->data_port =3D NULL;
+> +
+> +	/* Waiting for the +CGEV: ME DEACT might also work */
+> +	if (data->reopen_source > 0)
+> +		g_source_remove(data->reopen_source);
+> +
+> +	data->reopen_source =3D g_timeout_add_seconds(1, reopen_callback, modem=
+);
+>  }
+>  =
+
+>  static int linktop_enable(struct ofono_modem *modem)
+>  {
+>  	struct linktop_data *data =3D ofono_modem_get_data(modem);
+> +	const char *modem_dev;
+> +	const char *data_dev;
+>  =
+
+>  	DBG("%p", modem);
+>  =
+
+> -	data->modem =3D open_device(modem, "Modem", "Modem: ");
+> -	if (data->modem =3D=3D NULL)
+> -		return -EINVAL;
+> +	modem_dev =3D ofono_modem_get_string(modem, "ModemDevice");
+> +	data_dev =3D ofono_modem_get_string(modem, "DataDevice");
+>  =
+
+> -	g_at_chat_set_disconnect_function(data->modem,
+> -						linktop_disconnect, modem);
+> +	DBG("%s, %s", modem_dev, data_dev);
+>  =
+
+> -	data->control =3D open_device(modem, "Control", "Control: ");
+> -	if (data->control =3D=3D NULL) {
+> -		g_at_chat_unref(data->modem);
+> -		data->modem =3D NULL;
+> +	if (modem_dev =3D=3D NULL || data_dev =3D=3D NULL)
+> +		return -EINVAL;
+> +
+> +	data->modem_port =3D create_port(modem_dev);
+> +	if (data->modem_port =3D=3D NULL)
+>  		return -EIO;
+> -	}
+>  =
+
+> -	g_at_chat_send(data->control, "ATE0 +CMEE=3D1", none_prefix,
+> -						NULL, NULL, NULL);
+> +	if (getenv("OFONO_AT_DEBUG"))
+> +		g_at_chat_set_debug(data->modem_port, linktop_debug, "Modem: ");
+>  =
+
+> -	g_at_chat_send(data->modem, "AT", none_prefix,
+> -						NULL, NULL, NULL);
+> +	data->data_port =3D create_port(data_dev);
+> +	if (data->data_port =3D=3D NULL) {
+> +		g_at_chat_unref(data->modem_port);
+> +		data->modem_port =3D NULL;
+> +
+> +		return -EIO;
+> +	}
+>  =
+
+> -	g_at_chat_send(data->modem, "AT &F", none_prefix,
+> -						NULL, NULL, NULL);
+> +	if (getenv("OFONO_AT_DEBUG"))
+> +		g_at_chat_set_debug(data->data_port, linktop_debug, "Data: ");
+>  =
+
+> -	g_at_chat_send(data->control, "AT+CFUN=3D4", none_prefix,
+> -					cfun_enable, modem, NULL);
+> +	g_at_chat_set_disconnect_function(data->data_port,
+> +						linktop_disconnect, modem);
+>  =
+
+> +	g_at_chat_send(data->modem_port, "AT&F E0 V1 X4 &C1 +CMEE=3D1", none_pr=
+efix,
+> +				cfun_enable_cb, modem, NULL);
+> +	g_at_chat_send(data->data_port, "AT&F E0 V1 X4 &C1 +CMEE=3D1", none_pre=
+fix,
+> +				cfun_enable_cb, modem, NULL);
+
+Please obey the 80 characters / line limit
+
+> +	g_at_chat_send(data->modem_port, "AT+CFUN=3D4", none_prefix,
+> +				cfun_enable_cb, modem, NULL);
+> +	=
+
+
+You have a dangling tab on the line above...
+
+>  	return -EINPROGRESS;
+>  }
+>  =
+
+> -static void cfun_disable(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
+> +static void cfun_disable_cb(gboolean ok, GAtResult *result, gpointer use=
+r_data)
+>  {
+>  	struct ofono_modem *modem =3D user_data;
+>  	struct linktop_data *data =3D ofono_modem_get_data(modem);
+>  =
+
+>  	DBG("");
+>  =
+
+> -	g_at_chat_unref(data->control);
+> -	data->control =3D NULL;
+> +	g_at_chat_unref(data->modem_port);
+> +	data->modem_port =3D NULL;
+> +
+> +	g_at_chat_unref(data->data_port);
+> +	data->data_port =3D NULL;
+>  =
+
+>  	if (ok)
+>  		ofono_modem_set_powered(modem, FALSE);
+> @@ -225,20 +313,18 @@ static int linktop_disable(struct ofono_modem *mode=
+m)
+>  =
+
+>  	DBG("%p", modem);
+>  =
+
+> -	if (data->modem) {
+> -		g_at_chat_cancel_all(data->modem);
+> -		g_at_chat_unregister_all(data->modem);
+> -		g_at_chat_unref(data->modem);
+> -		data->modem =3D NULL;
+> +	if (data->reopen_source > 0) {
+> +		g_source_remove(data->reopen_source);
+> +		data->reopen_source =3D 0;
+>  	}
+>  =
+
+> -	if (data->control =3D=3D NULL)
+> +	if (data->modem_port =3D=3D NULL)
+>  		return 0;
+>  =
+
+> -	g_at_chat_cancel_all(data->control);
+> -	g_at_chat_unregister_all(data->control);
+> -	g_at_chat_send(data->control, "AT+CFUN=3D4", none_prefix,
+> -					cfun_disable, modem, NULL);
+> +	g_at_chat_cancel_all(data->modem_port);
+> +	g_at_chat_unregister_all(data->modem_port);
+> +	g_at_chat_send(data->modem_port, "AT+CFUN=3D4", NULL,
+> +					cfun_disable_cb, modem, NULL);
+>  =
+
+>  	return -EINPROGRESS;
+>  }
+> @@ -253,17 +339,37 @@ static void set_online_cb(gboolean ok, GAtResult *r=
+esult, gpointer user_data)
+>  	cb(&error, cbd->data);
+>  }
+>  =
+
+> +static void set_offline_cb(gboolean ok, GAtResult *result, gpointer user=
+_data)
+> +{
+> +	struct cb_data *cbd =3D user_data;
+> +	ofono_modem_online_cb_t cb =3D cbd->cb;
+> +	struct ofono_error error;
+> +
+> +	if (ok) {
+> +		struct linktop_data *data =3D cbd->user;
+> +
+> +		data->gc =3D NULL;
+> +		data->gprs =3D NULL;
+> +	}
+> +
+> +	decode_at_error(&error, g_at_result_final_response(result));
+> +	cb(&error, cbd->data);
+> +}
+> +
+>  static void linktop_set_online(struct ofono_modem *modem, ofono_bool_t o=
+nline,
+>  				ofono_modem_online_cb_t cb, void *user_data)
+>  {
+>  	struct linktop_data *data =3D ofono_modem_get_data(modem);
+> -	GAtChat *chat =3D data->control;
+> +	GAtChat *chat =3D data->modem_port;
+>  	struct cb_data *cbd =3D cb_data_new(cb, user_data);
+>  	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
+>  =
+
+>  	DBG("modem %p %s", modem, online ? "online" : "offline");
+>  =
+
+> -	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
+> +	cbd->user =3D data;
+> +
+> +	if (g_at_chat_send(chat, command, NULL,
+> +				online ? set_online_cb : set_offline_cb, cbd, g_free))
+
+Please obey the 80 characters / line limit
+
+>  		return;
+>  =
+
+>  	g_free(cbd);
+> @@ -278,11 +384,10 @@ static void linktop_pre_sim(struct ofono_modem *mod=
+em)
+>  =
+
+>  	DBG("%p", modem);
+>  =
+
+> -	ofono_devinfo_create(modem, 0, "atmodem", data->control);
+> -	sim =3D ofono_sim_create(modem, 0, "atmodem", data->control);
+> -	ofono_voicecall_create(modem, 0, "stemodem", data->control);
+> +	ofono_devinfo_create(modem, 0, "atmodem", data->modem_port);
+> +	sim =3D ofono_sim_create(modem, 0, "atmodem", data->modem_port);
+>  =
+
+> -	if (sim)
+> +	if (data->have_sim && sim)
+>  		ofono_sim_inserted_notify(sim, TRUE);
+>  }
+>  =
+
+> @@ -292,35 +397,29 @@ static void linktop_post_sim(struct ofono_modem *mo=
+dem)
+>  =
+
+>  	DBG("%p", modem);
+>  =
+
+> -	ofono_radio_settings_create(modem, 0, "stemodem", data->control);
+> -	ofono_phonebook_create(modem, 0, "atmodem", data->control);
+> -	ofono_sms_create(modem, 0, "atmodem", data->control);
+> +	ofono_radio_settings_create(modem, 0, "stemodem", data->modem_port);
+> +	ofono_phonebook_create(modem, 0, "atmodem", data->modem_port);
+> +	ofono_sms_create(modem, 0, "atmodem", data->modem_port);
+>  }
+>  =
+
+>  static void linktop_post_online(struct ofono_modem *modem)
+>  {
+>  	struct linktop_data *data =3D ofono_modem_get_data(modem);
+>  	struct ofono_message_waiting *mw;
+> -	struct ofono_gprs *gprs;
+> -	struct ofono_gprs_context *gc;
+>  =
+
+>  	DBG("%p", modem);
+>  =
+
+> -	ofono_ussd_create(modem, 0, "atmodem", data->control);
+> -	ofono_call_forwarding_create(modem, 0, "atmodem", data->control);
+> -	ofono_call_settings_create(modem, 0, "atmodem", data->control);
+> -	ofono_netreg_create(modem, OFONO_VENDOR_MBM, "atmodem", data->control);
+> -	ofono_call_meter_create(modem, 0, "atmodem", data->control);
+> -	ofono_call_barring_create(modem, 0, "atmodem", data->control);
+> -	ofono_call_volume_create(modem, 0, "atmodem", data->control);
+> -	ofono_cbs_create(modem, 0, "atmodem", data->control);
+> -
+> -	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
+> -					"atmodem", data->control);
+> -	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
+> -
+> -	if (gprs && gc)
+> -		ofono_gprs_add_context(gprs, gc);
+> +	ofono_netreg_create(modem, 0, "atmodem", data->modem_port);
+> +	ofono_cbs_create(modem, 0, "atmodem", data->modem_port);
+> +	ofono_ussd_create(modem, 0, "atmodem", data->modem_port);
+> +
+> +	data->gprs =3D ofono_gprs_create(modem, 0,
+> +					"atmodem", data->modem_port);
+> +	data->gc =3D ofono_gprs_context_create(modem, 0,
+> +					"atmodem", data->data_port);
+> +
+> +	if (data->gprs && data->gc)
+> +		ofono_gprs_add_context(data->gprs, data->gc);
+
+I suggest that you move creation of gprs and gc to post_sim above.  This
+also means you can stop tracking the lifetime of data->gprs in
+set_offline_cb
+
+>  =
+
+>  	mw =3D ofono_message_waiting_create(modem);
+>  =
+
+
+Regards,
+-Denis
+
+--===============1912988396096922378==--
 
