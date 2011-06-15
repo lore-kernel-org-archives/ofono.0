@@ -1,137 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============0201831819245517102=="
+Content-Type: multipart/mixed; boundary="===============2075383526281358800=="
 MIME-Version: 1.0
-From: Bernhard.Guillon@hale.at
-Subject: [PATCH v6] udev: add initial Telit support
-Date: Wed, 15 Jun 2011 09:17:27 +0200
-Message-ID: <1308122247-9176-1-git-send-email-Bernhard.Guillon@hale.at>
+From: Claudio Degioanni <claudio.degioanni@zirak.it>
+Subject: Re: Re: Problems ofono 0.45 and Nokia 6760
+Date: Wed, 15 Jun 2011 09:23:27 +0200
+Message-ID: <4DF85DEF.4030603@zirak.it>
+In-Reply-To: <BANLkTikLft+D2ShS6p7EOokdv_3qyS0STQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0201831819245517102==
+--===============2075383526281358800==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Bernhard Guillon <Bernhard.Guillon@hale.at>
+Il 08/06/2011 17.17, Jeevaka Prabu Badrappan ha scritto:
+> Hi Claudio,
+>
+> On Wed, Jun 8, 2011 at 5:22 PM, Claudio Degioanni
+> <claudio.degioanni@zirak.it> wrote:
+>> Hi all,
+>>
+>> I have attacched a nokia 6760 to ofono for using it as gprs modem.
+>>
+>> I have started the daemon with
+>>
+>> OFONO_ISI_TRACE=3D1 OFONO_ISI_DEBUG=3D1 ofonod -nd
+>>
+>>
+>> After enabling the modem and activate the profile using
+>>
+>> dbus-send --system --print-reply --reply-timeout=3D120000
+>> --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0
+>> org.ofono.Modem.SetProperty string:Powered variant:boolean:true
+>>
+>> dbus-send --system --print-reply --reply-timeout=3D120000
+>> --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0
+>> org.ofono.Modem.SetProperty string:Online variant:boolean:true
+>>
+>> dbus-send --system --print-reply --reply-timeout=3D120000
+>> --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0/context1
+>> org.ofono.ConnectionContext.SetProperty string:AccessPointName
+>> variant:string:ibox.tim.it
+>>
+>> dbus-send --system --print-reply --reply-timeout=3D120000
+>> --type=3Dmethod_call --dest=3D'org.ofono' /isiusb0/context1
+>> org.ofono.ConnectionContext.SetProperty string:Active variant:boolean:tr=
+ue
+>>
+>> We obtain on last method calls the follow error:
+>>
+>> Error org.ofono.Error.NotAttached: GPRS is not attached
+>>
+>> You can help me ?
+>>
+>> PS: I have attacced the log on ofono.
+> As per the log, there is some issue with the network registration
+> status query. Log statement:
+>
+> "src/network.c:init_registration_status() Error during registration
+> status query"
+>
+> isimodem people can help you on this issue.
 
----
- plugins/ofono.rules |    8 ++++++++
- plugins/udev.c      |   49 +++++++++++++++++++++++++++++++++++++++++++++++=
-++
- 2 files changed, 57 insertions(+), 0 deletions(-)
+Any news ?
 
-diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-index 268b327..7124143 100644
---- a/plugins/ofono.rules
-+++ b/plugins/ofono.rules
-@@ -344,6 +344,11 @@ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"14=
-85", ENV{OFONO_IFACE_NUM}=3D=3D"02", E
- ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1486", ENV{OFONO_IFACE=
-_NUM}=3D=3D"00", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
- ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1486", ENV{OFONO_IFACE=
-_NUM}=3D=3D"02", ENV{OFONO_HUAWEI_TYPE}=3D"Pcui"
- =
-
-+#Telit UC864-G
-+ATTRS{idVendor}=3D=3D"1bc7", ATTRS{idProduct}=3D=3D"1004", ENV{OFONO_IFACE=
-_NUM}=3D=3D"00", ENV{OFONO_TELIT_TYPE}=3D"Modem"
-+ATTRS{idVendor}=3D=3D"1bc7", ATTRS{idProduct}=3D=3D"1004", ENV{OFONO_IFACE=
-_NUM}=3D=3D"02", ENV{OFONO_TELIT_TYPE}=3D"GPS"
-+ATTRS{idVendor}=3D=3D"1bc7", ATTRS{idProduct}=3D=3D"1004", ENV{OFONO_IFACE=
-_NUM}=3D=3D"03", ENV{OFONO_TELIT_TYPE}=3D"Data"
-+
- LABEL=3D"ofono_tty_end"
- =
-
- # ISI/Phonet drivers
-@@ -459,4 +464,7 @@ ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"00b=
-6", ENV{OFONO_DRIVER}=3D"nokiacdma"
- # Teracom (Linktop/LW27x) 3G Data Card
- ATTRS{idVendor}=3D=3D"230d", ATTRS{idProduct}=3D=3D"0001", ENV{OFONO_DRIVE=
-R}=3D"linktop"
- =
-
-+# Telit
-+ATTRS{idVendor}=3D=3D"1bc7", ENV{OFONO_DRIVER}=3D"telit"
-+
- LABEL=3D"ofono_end"
-diff --git a/plugins/udev.c b/plugins/udev.c
-index 0234fc0..026eb70 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -587,6 +587,53 @@ static void add_linktop(struct ofono_modem *modem,
- 	}
- }
- =
-
-+static void add_telit(struct ofono_modem *modem,
-+					struct udev_device *udev_device)
-+{
-+	struct udev_list_entry *entry;
-+	const char *devnode, *type;
-+	int registered;
-+
-+	DBG("modem %p", modem);
-+
-+	registered =3D ofono_modem_get_integer(modem, "Registered");
-+
-+	entry =3D udev_device_get_properties_list_entry(udev_device);
-+	while (entry) {
-+		const char *name =3D udev_list_entry_get_name(entry);
-+		type =3D udev_list_entry_get_value(entry);
-+
-+		if (g_str_equal(name, "OFONO_TELIT_TYPE") !=3D TRUE) {
-+			entry =3D udev_list_entry_get_next(entry);
-+			continue;
-+		}
-+
-+		if ((registered =3D=3D 0) && (g_str_equal(type, "Modem") =3D=3D TRUE)) {
-+			devnode =3D udev_device_get_devnode(udev_device);
-+			ofono_modem_set_string(modem, "Modem", devnode);
-+		} else if (g_str_equal(type, "GPS") =3D=3D TRUE) {
-+			devnode =3D udev_device_get_devnode(udev_device);
-+			ofono_modem_set_string(modem, "GPS", devnode);
-+		} else if ((registered =3D=3D 0) &&
-+				(g_str_equal(type, "Data") =3D=3D TRUE)) {
-+			devnode =3D udev_device_get_devnode(udev_device);
-+			ofono_modem_set_string(modem, "Data", devnode);
-+		}
-+
-+		break;
-+	}
-+
-+	if (registered =3D=3D 1)
-+		return;
-+
-+	if ((ofono_modem_get_string(modem, "Modem") !=3D NULL) &&
-+			(ofono_modem_get_string(modem, "Data") !=3D NULL)) {
-+		ofono_modem_set_integer(modem, "Registered", 1);
-+		ofono_modem_register(modem);
-+	}
-+
-+}
-+
- static void add_modem(struct udev_device *udev_device)
- {
- 	struct ofono_modem *modem;
-@@ -681,6 +728,8 @@ done:
- 		add_calypso(modem, udev_device);
- 	else if (g_strcmp0(driver, "tc65") =3D=3D 0)
- 		add_tc65(modem, udev_device);
-+	else if (g_strcmp0(driver, "telit") =3D=3D 0)
-+		add_telit(modem, udev_device);
- 	else if (g_strcmp0(driver, "nokiacdma") =3D=3D 0)
- 		add_nokiacdma(modem, udev_device);
-         else if (g_strcmp0(driver, "linktop") =3D=3D 0)
--- =
-
-1.7.0.4
+regs
+Claufio
+> Regards,
+> Jeevaka
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
 
 
-
---
-Scanned by MailScanner.
-
-
---===============0201831819245517102==--
+--===============2075383526281358800==--
 
