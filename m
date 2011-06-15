@@ -1,173 +1,573 @@
-Content-Type: multipart/mixed; boundary="===============7422250453464592848=="
+Content-Type: multipart/mixed; boundary="===============2376367990065862124=="
 MIME-Version: 1.0
-From: Yuvaraj Ragupathi <yuvaraj.addu@gmail.com>
-Subject: Fwd: Caif protocol not working properly in Ofono-0.49 version
-Date: Wed, 15 Jun 2011 10:39:23 +0530
-Message-ID: <BANLkTinaT26mO+wLWPvZYBvBQxpZRU0qtg@mail.gmail.com>
-In-Reply-To: <BANLkTinnFzz6VvTRa-rqUNp2n_J9QYYn=w@mail.gmail.com>
+From: Amit Mendapara <mendapara.amit@gmail.com>
+Subject: [PATCH 1/2] linktop: reimplemented linktop plugin based on mbm with
+ minimum features
+Date: Wed, 15 Jun 2011 12:43:20 +0530
+Message-ID: <1308122001-7649-1-git-send-email-mendapara.amit@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7422250453464592848==
+--===============2376367990065862124==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+The AT commands listed with AT+CLAC matches with MBM supported devices.
+However, the mbm plugin doesn't work for this devices and the specification=
+ is
+also quite different.
 
-I don't have any problem with older versions. Problem with latest version
-0.49
+I have also adopted some fixes from huawei plugin to fix MeeGo bug #14784
 
-Anybodies input is real help ful
+The device supports voice call but I am unable to hear any sound after
+making calls even though the soundcard is detected by the kernel.
+
+The device also supports sim toolkit commands but I am unable to test
+this feature.
+
+All these untested features will be added later.
+---
+ plugins/linktop.c |  299 +++++++++++++++++++++++++++++++++++--------------=
+----
+ 1 files changed, 199 insertions(+), 100 deletions(-)
+
+diff --git a/plugins/linktop.c b/plugins/linktop.c
+index 953f634..4083f17 100644
+--- a/plugins/linktop.c
++++ b/plugins/linktop.c
+@@ -26,6 +26,7 @@
+ #include <stdio.h>
+ #include <errno.h>
+ #include <stdlib.h>
++#include <string.h>
+ =
+
+ #include <glib.h>
+ #include <gatchat.h>
+@@ -34,10 +35,6 @@
+ #define OFONO_API_SUBJECT_TO_CHANGE
+ #include <ofono/plugin.h>
+ #include <ofono/modem.h>
+-#include <ofono/call-barring.h>
+-#include <ofono/call-forwarding.h>
+-#include <ofono/call-meter.h>
+-#include <ofono/call-settings.h>
+ #include <ofono/devinfo.h>
+ #include <ofono/message-waiting.h>
+ #include <ofono/netreg.h>
+@@ -45,24 +42,27 @@
+ #include <ofono/cbs.h>
+ #include <ofono/sms.h>
+ #include <ofono/ussd.h>
+-#include <ofono/call-volume.h>
+-#include <ofono/voicecall.h>
+ #include <ofono/gprs.h>
+ #include <ofono/gprs-context.h>
+ #include <ofono/phonebook.h>
+ #include <ofono/radio-settings.h>
+ #include <ofono/log.h>
+ =
+
+-#include <drivers/atmodem/vendor.h>
+ #include <drivers/atmodem/atutil.h>
++#include <drivers/atmodem/vendor.h>
+ =
+
++static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
+ static const char *none_prefix[] =3D { NULL };
+ =
+
+ struct linktop_data {
+-	GAtChat *modem;
+-	GAtChat *control;
++	GAtChat *modem_port;
++	GAtChat *data_port;
++	guint cpin_poll_source;
++	guint cpin_poll_count;
++	gboolean have_sim;
+ 	struct ofono_gprs *gprs;
+ 	struct ofono_gprs_context *gc;
++	guint reopen_source;
+ };
+ =
+
+ static int linktop_probe(struct ofono_modem *modem)
+@@ -86,35 +86,86 @@ static void linktop_remove(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
++	if (data->reopen_source > 0) {
++		g_source_remove(data->reopen_source);
++		data->reopen_source =3D 0;
++	}
++
+ 	ofono_modem_set_data(modem, NULL);
+ =
+
+-	g_at_chat_unref(data->modem);
+-	g_at_chat_unref(data->control);
++	g_at_chat_unref(data->data_port);
++	g_at_chat_unref(data->modem_port);
++
++	if (data->cpin_poll_source > 0)
++		g_source_remove(data->cpin_poll_source);
+ =
+
+ 	g_free(data);
+ }
+ =
+
+ static void linktop_debug(const char *str, void *user_data)
+ {
+-        const char *prefix =3D user_data;
++	const char *prefix =3D user_data;
++
++	ofono_info("%s%s", prefix, str);
++}
++
++static gboolean init_simpin_check(gpointer user_data);
++
++static void simpin_check(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("");
++
++	/* Modem returns an error if SIM is not ready. */
++	if (!ok && data->cpin_poll_count++ < 5) {
++		data->cpin_poll_source =3D
++			g_timeout_add_seconds(1, init_simpin_check, modem);
++		return;
++	}
++
++	data->cpin_poll_count =3D 0;
++
++	/* There is probably no SIM if SIM is not ready after 5 seconds. */
++	data->have_sim =3D ok;
++
++	ofono_modem_set_powered(modem, TRUE);
++}
++
++static gboolean init_simpin_check(gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
++
++	data->cpin_poll_source =3D 0;
+ =
+
+-        ofono_info("%s%s", prefix, str);
++	g_at_chat_send(data->modem_port, "AT+CPIN?", cpin_prefix,
++			simpin_check, modem, NULL);
++
++	return FALSE;
+ }
+ =
+
+-static GAtChat *open_device(struct ofono_modem *modem,
+-				const char *key, char *debug)
++static void cfun_enable_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct ofono_modem *modem =3D user_data;
++
++	DBG("");
++
++	if (!ok) {
++		ofono_modem_set_powered(modem, FALSE);
++		return;
++	}
++
++	init_simpin_check(modem);
++}
++
++static GAtChat *create_port(const char *device)
+ {
+-	const char *device;
+ 	GAtSyntax *syntax;
+ 	GIOChannel *channel;
+ 	GAtChat *chat;
+ =
+
+-	device =3D ofono_modem_get_string(modem, key);
+-	if (device =3D=3D NULL)
+-		return NULL;
+-
+-	DBG("%s %s", key, device);
+-
+ 	channel =3D g_at_tty_open(device, NULL);
+ 	if (channel =3D=3D NULL)
+ 		return NULL;
+@@ -127,93 +178,130 @@ static GAtChat *open_device(struct ofono_modem *mode=
+m,
+ 	if (chat =3D=3D NULL)
+ 		return NULL;
+ =
+
+-	if (getenv("OFONO_AT_DEBUG"))
+-		g_at_chat_set_debug(chat, linktop_debug, debug);
+-
+ 	return chat;
+ }
+ =
+
+-static void linktop_disconnect(gpointer user_data)
++static void linktop_disconnect(gpointer user_data);
++
++static gboolean reopen_callback(gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+ 	struct linktop_data *data =3D ofono_modem_get_data(modem);
++	const char *data_dev;
++
++	data_dev =3D ofono_modem_get_string(modem, "DataDevice");
++	data->data_port =3D create_port(data_dev);
++	/* retry once if failed */
++	if (data->data_port =3D=3D NULL) {
++		if (data->reopen_source > 0)
++			return FALSE;
++
++		data->reopen_source =3D g_timeout_add_seconds(1,
++				reopen_callback, modem);
++		ofono_debug("opening data port failed, retrying...");
++		return FALSE;
++	}
+ =
+
+-	DBG("");
+-
+-	if (data->gc)
+-		ofono_gprs_context_remove(data->gc);
+-
+-	g_at_chat_unref(data->modem);
+-	data->modem =3D NULL;
+-
+-	data->modem =3D open_device(modem, "Modem", "Modem: ");
+-	if (data->modem =3D=3D NULL)
+-		return;
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(data->data_port, linktop_debug, "Data: ");
+ =
+
+-	g_at_chat_set_disconnect_function(data->modem,
++	g_at_chat_set_disconnect_function(data->data_port,
+ 						linktop_disconnect, modem);
+ =
+
+ 	ofono_info("Reopened GPRS context channel");
+ =
+
+-	data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
+-
++	data->gc =3D ofono_gprs_context_create(modem, 0,
++					"atmodem", data->data_port);
+ 	if (data->gprs && data->gc)
+ 		ofono_gprs_add_context(data->gprs, data->gc);
++
++	data->reopen_source =3D 0;
++
++	return FALSE;
+ }
+ =
+
+-static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
++static void linktop_disconnect(gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
++	struct linktop_data *data =3D ofono_modem_get_data(modem);
+ =
+
+-	DBG("");
++	DBG("%p, data->gc %p", modem, data->gc);
+ =
+
+-	ofono_modem_set_powered(modem, ok);
++	/* gprs_context has been destructed and needs not reopen */
++	if (data->gc =3D=3D NULL)
++		return
++	=
+
++	ofono_gprs_context_remove(data->gc);
++
++	g_at_chat_unref(data->data_port);
++	data->data_port =3D NULL;
++
++	/* Waiting for the +CGEV: ME DEACT might also work */
++	if (data->reopen_source > 0)
++		g_source_remove(data->reopen_source);
++
++	data->reopen_source =3D g_timeout_add_seconds(1, reopen_callback, modem);
+ }
+ =
+
+ static int linktop_enable(struct ofono_modem *modem)
+ {
+ 	struct linktop_data *data =3D ofono_modem_get_data(modem);
++	const char *modem_dev;
++	const char *data_dev;
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	data->modem =3D open_device(modem, "Modem", "Modem: ");
+-	if (data->modem =3D=3D NULL)
+-		return -EINVAL;
++	modem_dev =3D ofono_modem_get_string(modem, "ModemDevice");
++	data_dev =3D ofono_modem_get_string(modem, "DataDevice");
+ =
+
+-	g_at_chat_set_disconnect_function(data->modem,
+-						linktop_disconnect, modem);
++	DBG("%s, %s", modem_dev, data_dev);
+ =
+
+-	data->control =3D open_device(modem, "Control", "Control: ");
+-	if (data->control =3D=3D NULL) {
+-		g_at_chat_unref(data->modem);
+-		data->modem =3D NULL;
++	if (modem_dev =3D=3D NULL || data_dev =3D=3D NULL)
++		return -EINVAL;
++
++	data->modem_port =3D create_port(modem_dev);
++	if (data->modem_port =3D=3D NULL)
+ 		return -EIO;
+-	}
+ =
+
+-	g_at_chat_send(data->control, "ATE0 +CMEE=3D1", none_prefix,
+-						NULL, NULL, NULL);
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(data->modem_port, linktop_debug, "Modem: ");
+ =
+
+-	g_at_chat_send(data->modem, "AT", none_prefix,
+-						NULL, NULL, NULL);
++	data->data_port =3D create_port(data_dev);
++	if (data->data_port =3D=3D NULL) {
++		g_at_chat_unref(data->modem_port);
++		data->modem_port =3D NULL;
++
++		return -EIO;
++	}
+ =
+
+-	g_at_chat_send(data->modem, "AT &F", none_prefix,
+-						NULL, NULL, NULL);
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(data->data_port, linktop_debug, "Data: ");
+ =
+
+-	g_at_chat_send(data->control, "AT+CFUN=3D4", none_prefix,
+-					cfun_enable, modem, NULL);
++	g_at_chat_set_disconnect_function(data->data_port,
++						linktop_disconnect, modem);
+ =
+
++	g_at_chat_send(data->modem_port, "AT&F E0 V1 X4 &C1 +CMEE=3D1", none_pref=
+ix,
++				cfun_enable_cb, modem, NULL);
++	g_at_chat_send(data->data_port, "AT&F E0 V1 X4 &C1 +CMEE=3D1", none_prefi=
+x,
++				cfun_enable_cb, modem, NULL);
++	g_at_chat_send(data->modem_port, "AT+CFUN=3D4", none_prefix,
++				cfun_enable_cb, modem, NULL);
++	=
+
+ 	return -EINPROGRESS;
+ }
+ =
+
+-static void cfun_disable(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
++static void cfun_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+ 	struct linktop_data *data =3D ofono_modem_get_data(modem);
+ =
+
+ 	DBG("");
+ =
+
+-	g_at_chat_unref(data->control);
+-	data->control =3D NULL;
++	g_at_chat_unref(data->modem_port);
++	data->modem_port =3D NULL;
++
++	g_at_chat_unref(data->data_port);
++	data->data_port =3D NULL;
+ =
+
+ 	if (ok)
+ 		ofono_modem_set_powered(modem, FALSE);
+@@ -225,20 +313,18 @@ static int linktop_disable(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	if (data->modem) {
+-		g_at_chat_cancel_all(data->modem);
+-		g_at_chat_unregister_all(data->modem);
+-		g_at_chat_unref(data->modem);
+-		data->modem =3D NULL;
++	if (data->reopen_source > 0) {
++		g_source_remove(data->reopen_source);
++		data->reopen_source =3D 0;
+ 	}
+ =
+
+-	if (data->control =3D=3D NULL)
++	if (data->modem_port =3D=3D NULL)
+ 		return 0;
+ =
+
+-	g_at_chat_cancel_all(data->control);
+-	g_at_chat_unregister_all(data->control);
+-	g_at_chat_send(data->control, "AT+CFUN=3D4", none_prefix,
+-					cfun_disable, modem, NULL);
++	g_at_chat_cancel_all(data->modem_port);
++	g_at_chat_unregister_all(data->modem_port);
++	g_at_chat_send(data->modem_port, "AT+CFUN=3D4", NULL,
++					cfun_disable_cb, modem, NULL);
+ =
+
+ 	return -EINPROGRESS;
+ }
+@@ -253,17 +339,37 @@ static void set_online_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	cb(&error, cbd->data);
+ }
+ =
+
++static void set_offline_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_modem_online_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	if (ok) {
++		struct linktop_data *data =3D cbd->user;
++
++		data->gc =3D NULL;
++		data->gprs =3D NULL;
++	}
++
++	decode_at_error(&error, g_at_result_final_response(result));
++	cb(&error, cbd->data);
++}
++
+ static void linktop_set_online(struct ofono_modem *modem, ofono_bool_t onl=
+ine,
+ 				ofono_modem_online_cb_t cb, void *user_data)
+ {
+ 	struct linktop_data *data =3D ofono_modem_get_data(modem);
+-	GAtChat *chat =3D data->control;
++	GAtChat *chat =3D data->modem_port;
+ 	struct cb_data *cbd =3D cb_data_new(cb, user_data);
+ 	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
+ =
+
+ 	DBG("modem %p %s", modem, online ? "online" : "offline");
+ =
+
+-	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
++	cbd->user =3D data;
++
++	if (g_at_chat_send(chat, command, NULL,
++				online ? set_online_cb : set_offline_cb, cbd, g_free))
+ 		return;
+ =
+
+ 	g_free(cbd);
+@@ -278,11 +384,10 @@ static void linktop_pre_sim(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	ofono_devinfo_create(modem, 0, "atmodem", data->control);
+-	sim =3D ofono_sim_create(modem, 0, "atmodem", data->control);
+-	ofono_voicecall_create(modem, 0, "stemodem", data->control);
++	ofono_devinfo_create(modem, 0, "atmodem", data->modem_port);
++	sim =3D ofono_sim_create(modem, 0, "atmodem", data->modem_port);
+ =
+
+-	if (sim)
++	if (data->have_sim && sim)
+ 		ofono_sim_inserted_notify(sim, TRUE);
+ }
+ =
+
+@@ -292,35 +397,29 @@ static void linktop_post_sim(struct ofono_modem *mode=
+m)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	ofono_radio_settings_create(modem, 0, "stemodem", data->control);
+-	ofono_phonebook_create(modem, 0, "atmodem", data->control);
+-	ofono_sms_create(modem, 0, "atmodem", data->control);
++	ofono_radio_settings_create(modem, 0, "stemodem", data->modem_port);
++	ofono_phonebook_create(modem, 0, "atmodem", data->modem_port);
++	ofono_sms_create(modem, 0, "atmodem", data->modem_port);
+ }
+ =
+
+ static void linktop_post_online(struct ofono_modem *modem)
+ {
+ 	struct linktop_data *data =3D ofono_modem_get_data(modem);
+ 	struct ofono_message_waiting *mw;
+-	struct ofono_gprs *gprs;
+-	struct ofono_gprs_context *gc;
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	ofono_ussd_create(modem, 0, "atmodem", data->control);
+-	ofono_call_forwarding_create(modem, 0, "atmodem", data->control);
+-	ofono_call_settings_create(modem, 0, "atmodem", data->control);
+-	ofono_netreg_create(modem, OFONO_VENDOR_MBM, "atmodem", data->control);
+-	ofono_call_meter_create(modem, 0, "atmodem", data->control);
+-	ofono_call_barring_create(modem, 0, "atmodem", data->control);
+-	ofono_call_volume_create(modem, 0, "atmodem", data->control);
+-	ofono_cbs_create(modem, 0, "atmodem", data->control);
+-
+-	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
+-					"atmodem", data->control);
+-	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
+-
+-	if (gprs && gc)
+-		ofono_gprs_add_context(gprs, gc);
++	ofono_netreg_create(modem, 0, "atmodem", data->modem_port);
++	ofono_cbs_create(modem, 0, "atmodem", data->modem_port);
++	ofono_ussd_create(modem, 0, "atmodem", data->modem_port);
++
++	data->gprs =3D ofono_gprs_create(modem, 0,
++					"atmodem", data->modem_port);
++	data->gc =3D ofono_gprs_context_create(modem, 0,
++					"atmodem", data->data_port);
++
++	if (data->gprs && data->gc)
++		ofono_gprs_add_context(data->gprs, data->gc);
+ =
+
+ 	mw =3D ofono_message_waiting_create(modem);
+ =
+
+-- =
+
+1.7.4.1
 
 
-Thanks
-
-Yuvaraj R
-
-
-Hi,
-
-When tried to enable st ericsson modem with ofono version 0.49.
-
-Always it is giving time out error, while enabling the modem.
-
-Please refer below log messages:
-
-*Ofono Logs:*
-
-ofonod[12846]: src/modem.c:get_modem_property() modem 0x99d4048 property
-Device
-ofonod[12846]: src/modem.c:get_modem_property() modem 0x99d4048 property
-Interface
-ofonod[12846]: plugins/ste.c:ste_create_channel() 0x99d4048
-ofonod[12846]: src/modem.c:get_modem_property() modem 0x99d4048 property
-Device
-ofonod[12846]: src/modem.c:get_modem_property() modem 0x99d4048 property
-Interface
-ofonod[12846]: plugins/ste.c:ste_create_channel() 0x99d4048
-ofonod[12846]: src/modem.c:get_modem_property() modem 0x99d4048 property
-Device
-ofonod[12846]: src/modem.c:get_modem_property() modem 0x99d4048 property
-Interface
-ofonod[12846]: plugins/ste.c:ste_create_channel() 0x99d4048
-ofonod[12846]: src/modem.c:get_modem_property() modem 0x99d4048 property
-Device
-ofonod[12846]: src/modem.c:get_modem_property() modem 0x99d4048 property
-Interface
-ofonod[12846]: plugins/ste.c:cfun_enable()
-ofonod[12846]: plugins/ste.c:handle_sim_state() ok:0
-ofonod[12846]: src/modem.c:set_powered_timeout() modem: 0x99d4048
-
-*Dmesg*:
-
-[ 3789.085030] cfttyUSB1: Features changed: 0x00004800 -> 0x00004000
-[ 3789.086752] cfttyUSB1: register
-[ 3794.638634] cfttyUSB1: up
-[ 3814.498886] caif:cfmuxl_receive(): Received data on unknown link ID =3D 1
-(0x1) up =3D=3D NULL
-[ 3814.511892] caif:cfmuxl_receive(): Received data on unknown link ID =3D 2
-(0x2) up =3D=3D NULL
-[ 3814.520057] caif:cfmuxl_receive(): Received data on unknown link ID =3D 3
-(0x3) up =3D=3D NULL
-[ 3814.525892] caif:cfmuxl_receive(): Received data on unknown link ID =3D 4
-(0x4) up =3D=3D NULL
-[ 3814.532898] caif:cfmuxl_receive(): Received data on unknown link ID =3D 5
-(0x5) up =3D=3D NULL
-[ 3814.539890] caif:cfmuxl_receive(): Received data on unknown link ID =3D 6
-(0x6) up =3D=3D NULL
-[ 3919.926922] caif:cfmuxl_receive(): Received data on unknown link ID =3D 1
-(0x1) up =3D=3D NULL
-[ 3919.932930] caif:cfmuxl_receive(): Received data on unknown link ID =3D 2
-(0x2) up =3D=3D NULL
-[ 3919.939929] caif:cfmuxl_receive(): Received data on unknown link ID =3D 3
-(0x3) up =3D=3D NULL
-[ 3919.946932] caif:cfmuxl_receive(): Received data on unknown link ID =3D 4
-(0x4) up =3D=3D NULL
-[ 3919.953928] caif:cfmuxl_receive(): Received data on unknown link ID =3D 5
-(0x5) up =3D=3D NULL
-[ 3919.960930] caif:cfmuxl_receive(): Received data on unknown link ID =3D 6
-(0x6) up =3D=3D NULL
-
-
-*I have loaded caif related modules*
-
-#lsmod | grep caif
-caif_socket             9317  12
-caif                   44312  2 chnl_net,caif_socket
-crc_ccitt               1359  1 caif
-caif_serial             4289  1
-
-
-Please help how do i fix these issue?
-
-
-Thanks
-
-Yuvaraj R
-
---===============7422250453464592848==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGJyPkhpLDxicj48YnI+SSBkb24mIzM5O3QgaGF2ZSBhbnkgcHJvYmxlbSB3aXRoIG9sZGVyIHZl
-cnNpb25zLiBQcm9ibGVtIHdpdGggbGF0ZXN0IHZlcnNpb24gMC40OTxicj48YnI+QW55Ym9kaWVz
-IGlucHV0IGlzIHJlYWwgaGVscCBmdWw8YnI+PGJyPjxicj5UaGFua3M8YnI+PGJyPll1dmFyYWog
-Ujxicj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+PGJyPjxicj5IaSw8YnI+PGJyPldoZW4gdHJp
-ZWQgdG8gZW5hYmxlIHN0IGVyaWNzc29uIG1vZGVtIHdpdGggb2Zvbm8gdmVyc2lvbiAwLjQ5Ljxi
-cj4KPGJyPkFsd2F5cyBpdCBpcyBnaXZpbmcgdGltZSBvdXQgZXJyb3IsIHdoaWxlIGVuYWJsaW5n
-IHRoZSBtb2RlbS48YnI+PGJyPlBsZWFzZSByZWZlciBiZWxvdyBsb2cgbWVzc2FnZXM6PGJyPjxi
-cj48Yj5PZm9ubyBMb2dzOjwvYj48YnI+PGJyPm9mb25vZFsxMjg0Nl06IHNyYy9tb2RlbS5jOmdl
-dF9tb2RlbV9wcm9wZXJ0eSgpIG1vZGVtIDB4OTlkNDA0OCBwcm9wZXJ0eSBEZXZpY2U8YnI+Cgpv
-Zm9ub2RbMTI4NDZdOiBzcmMvbW9kZW0uYzpnZXRfbW9kZW1fcHJvcGVydHkoKSBtb2RlbSAweDk5
-ZDQwNDggcHJvcGVydHkgSW50ZXJmYWNlPGJyPm9mb25vZFsxMjg0Nl06IHBsdWdpbnMvc3RlLmM6
-c3RlX2NyZWF0ZV9jaGFubmVsKCkgMHg5OWQ0MDQ4PGJyPm9mb25vZFsxMjg0Nl06IHNyYy9tb2Rl
-bS5jOmdldF9tb2RlbV9wcm9wZXJ0eSgpIG1vZGVtIDB4OTlkNDA0OCBwcm9wZXJ0eSBEZXZpY2U8
-YnI+CgpvZm9ub2RbMTI4NDZdOiBzcmMvbW9kZW0uYzpnZXRfbW9kZW1fcHJvcGVydHkoKSBtb2Rl
-bSAweDk5ZDQwNDggcHJvcGVydHkgSW50ZXJmYWNlPGJyPm9mb25vZFsxMjg0Nl06IHBsdWdpbnMv
-c3RlLmM6c3RlX2NyZWF0ZV9jaGFubmVsKCkgMHg5OWQ0MDQ4PGJyPm9mb25vZFsxMjg0Nl06IHNy
-Yy9tb2RlbS5jOmdldF9tb2RlbV9wcm9wZXJ0eSgpIG1vZGVtIDB4OTlkNDA0OCBwcm9wZXJ0eSBE
-ZXZpY2U8YnI+CgpvZm9ub2RbMTI4NDZdOiBzcmMvbW9kZW0uYzpnZXRfbW9kZW1fcHJvcGVydHko
-KSBtb2RlbSAweDk5ZDQwNDggcHJvcGVydHkgSW50ZXJmYWNlPGJyPm9mb25vZFsxMjg0Nl06IHBs
-dWdpbnMvc3RlLmM6c3RlX2NyZWF0ZV9jaGFubmVsKCkgMHg5OWQ0MDQ4PGJyPm9mb25vZFsxMjg0
-Nl06IHNyYy9tb2RlbS5jOmdldF9tb2RlbV9wcm9wZXJ0eSgpIG1vZGVtIDB4OTlkNDA0OCBwcm9w
-ZXJ0eSBEZXZpY2U8YnI+CgpvZm9ub2RbMTI4NDZdOiBzcmMvbW9kZW0uYzpnZXRfbW9kZW1fcHJv
-cGVydHkoKSBtb2RlbSAweDk5ZDQwNDggcHJvcGVydHkgSW50ZXJmYWNlPGJyPm9mb25vZFsxMjg0
-Nl06IHBsdWdpbnMvc3RlLmM6Y2Z1bl9lbmFibGUoKSA8YnI+b2Zvbm9kWzEyODQ2XTogcGx1Z2lu
-cy9zdGUuYzpoYW5kbGVfc2ltX3N0YXRlKCkgb2s6MDxicj5vZm9ub2RbMTI4NDZdOiBzcmMvbW9k
-ZW0uYzpzZXRfcG93ZXJlZF90aW1lb3V0KCkgbW9kZW06IDB4OTlkNDA0ODxicj4KCjxicj48Yj5E
-bWVzZzwvYj46PGJyPjxicj5bIDM3ODkuMDg1MDMwXSBjZnR0eVVTQjE6IEZlYXR1cmVzIGNoYW5n
-ZWQ6IDB4MDAwMDQ4MDAgLSZndDsgMHgwMDAwNDAwMDxicj5bIDM3ODkuMDg2NzUyXSBjZnR0eVVT
-QjE6IHJlZ2lzdGVyPGJyPlsgMzc5NC42Mzg2MzRdIGNmdHR5VVNCMTogdXA8YnI+WyAzODE0LjQ5
-ODg4Nl0gY2FpZjpjZm11eGxfcmVjZWl2ZSgpOiBSZWNlaXZlZCBkYXRhIG9uIHVua25vd24gbGlu
-ayBJRCA9IDEgKDB4MSkgdXAgPT0gTlVMTDxicj4KClsgMzgxNC41MTE4OTJdIGNhaWY6Y2ZtdXhs
-X3JlY2VpdmUoKTogUmVjZWl2ZWQgZGF0YSBvbiB1bmtub3duIGxpbmsgSUQgPSAyICgweDIpIHVw
-ID09IE5VTEw8YnI+WyAzODE0LjUyMDA1N10gY2FpZjpjZm11eGxfcmVjZWl2ZSgpOiBSZWNlaXZl
-ZCBkYXRhIG9uIHVua25vd24gbGluayBJRCA9IDMgKDB4MykgdXAgPT0gTlVMTDxicj5bIDM4MTQu
-NTI1ODkyXSBjYWlmOmNmbXV4bF9yZWNlaXZlKCk6IFJlY2VpdmVkIGRhdGEgb24gdW5rbm93biBs
-aW5rIElEID0gNCAoMHg0KSB1cCA9PSBOVUxMPGJyPgoKWyAzODE0LjUzMjg5OF0gY2FpZjpjZm11
-eGxfcmVjZWl2ZSgpOiBSZWNlaXZlZCBkYXRhIG9uIHVua25vd24gbGluayBJRCA9IDUgKDB4NSkg
-dXAgPT0gTlVMTDxicj5bIDM4MTQuNTM5ODkwXSBjYWlmOmNmbXV4bF9yZWNlaXZlKCk6IFJlY2Vp
-dmVkIGRhdGEgb24gdW5rbm93biBsaW5rIElEID0gNiAoMHg2KSB1cCA9PSBOVUxMPGJyPlsgMzkx
-OS45MjY5MjJdIGNhaWY6Y2ZtdXhsX3JlY2VpdmUoKTogUmVjZWl2ZWQgZGF0YSBvbiB1bmtub3du
-IGxpbmsgSUQgPSAxICgweDEpIHVwID09IE5VTEw8YnI+CgpbIDM5MTkuOTMyOTMwXSBjYWlmOmNm
-bXV4bF9yZWNlaXZlKCk6IFJlY2VpdmVkIGRhdGEgb24gdW5rbm93biBsaW5rIElEID0gMiAoMHgy
-KSB1cCA9PSBOVUxMPGJyPlsgMzkxOS45Mzk5MjldIGNhaWY6Y2ZtdXhsX3JlY2VpdmUoKTogUmVj
-ZWl2ZWQgZGF0YSBvbiB1bmtub3duIGxpbmsgSUQgPSAzICgweDMpIHVwID09IE5VTEw8YnI+WyAz
-OTE5Ljk0NjkzMl0gY2FpZjpjZm11eGxfcmVjZWl2ZSgpOiBSZWNlaXZlZCBkYXRhIG9uIHVua25v
-d24gbGluayBJRCA9IDQgKDB4NCkgdXAgPT0gTlVMTDxicj4KClsgMzkxOS45NTM5MjhdIGNhaWY6
-Y2ZtdXhsX3JlY2VpdmUoKTogUmVjZWl2ZWQgZGF0YSBvbiB1bmtub3duIGxpbmsgSUQgPSA1ICgw
-eDUpIHVwID09IE5VTEw8YnI+WyAzOTE5Ljk2MDkzMF0gY2FpZjpjZm11eGxfcmVjZWl2ZSgpOiBS
-ZWNlaXZlZCBkYXRhIG9uIHVua25vd24gbGluayBJRCA9IDYgKDB4NikgdXAgPT0gTlVMTDxicj48
-YnI+PGJyPjxiPkkgaGF2ZSBsb2FkZWQgY2FpZiByZWxhdGVkIG1vZHVsZXM8L2I+PGJyPgoKPGJy
-PiNsc21vZCB8IGdyZXAgY2FpZjxicj5jYWlmX3NvY2tldKCgoKCgoKCgoKCgoCA5MzE3oCAxMiA8
-YnI+Y2FpZqCgoKCgoKCgoKCgoKCgoKCgoCA0NDMxMqAgMiBjaG5sX25ldCxjYWlmX3NvY2tldDxi
-cj5jcmNfY2NpdHSgoKCgoKCgoKCgoKCgoCAxMzU5oCAxIGNhaWY8YnI+Y2FpZl9zZXJpYWygoKCg
-oKCgoKCgoKAgNDI4OaAgMSA8YnI+PGJyPjxicj5QbGVhc2UgaGVscCBob3cgZG8gaSBmaXggdGhl
-c2UgaXNzdWU/PGJyPgoKPGJyPjxicj5UaGFua3M8YnI+PGJyPll1dmFyYWogUjxicj4KPC9kaXY+
-PGJyPgo=
-
---===============7422250453464592848==--
+--===============2376367990065862124==--
 
