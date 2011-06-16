@@ -1,29 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============1581589087468774596=="
+Content-Type: multipart/mixed; boundary="===============4500143520715221070=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] call-settings: fix typo
-Date: Thu, 16 Jun 2011 03:56:48 -0500
-Message-ID: <4DF9C550.5070801@gmail.com>
-In-Reply-To: <1308316152-28974-1-git-send-email-nicolas.bertrand@linux.intel.com>
+Subject: Re: [PATCH V5 1/2] voicecall: add ATD support for HFP emulator
+Date: Thu, 16 Jun 2011 06:31:34 -0500
+Message-ID: <4DF9E996.6060809@gmail.com>
+In-Reply-To: <1307540845-9889-2-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1581589087468774596==
+--===============4500143520715221070==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nicolas,
+Hi Fr=C3=A9d=C3=A9ric,
 
-On 06/17/2011 08:09 AM, Nicolas Bertrand wrote:
+On 06/08/2011 08:47 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
 > ---
->  src/call-settings.c |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
+>  src/voicecall.c |  165 ++++++++++++++++++++++++++++++++++++++++++++++++-=
+-----
+>  1 files changed, 146 insertions(+), 19 deletions(-)
+> =
 
-Patch has been applied, thanks.
+
+The patch looks pretty good to me, and has been applied, thanks.
 
 Regards,
 -Denis
 
---===============1581589087468774596==--
+--===============4500143520715221070==--
 
