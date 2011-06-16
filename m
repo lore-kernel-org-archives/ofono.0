@@ -1,34 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============2925516143036181616=="
+Content-Type: multipart/mixed; boundary="===============1022214675844604741=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Re: Problems ofono 0.45 and Nokia 6760
-Date: Thu, 16 Jun 2011 14:37:19 +0300
-Message-ID: <1308224239.2565.562.camel@tucson>
-In-Reply-To: <4DF9CC7B.60603@zirak.it>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH 0/2] ACFC and PFC options implementation
+Date: Thu, 16 Jun 2011 13:55:19 +0200
+Message-ID: <1308225321-21611-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2925516143036181616==
+--===============1022214675844604741==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2011-06-16 at 11:27 +0200, ext Claudio Degioanni wrote:
-> > So my advice is to simply use DUN via USB ACM interface. So I think the
-> > nokia driver might work better than the isiusb one in this case.
-> I'm using embedded tegra2 system, in the past i have tested the
-> connection on x86 machine and it
-> works succefull.
+Hi,
 
-Ah, I see.
+Those 2 patches, are implementing:
+	- Address and Control Field Compression option
+	- Protocol Field Compression option
 
-This issue was actually fixed in commit
-44ad041c2740064ec055bee7c4084953a10e799d about a week after the 0.45
-release.
+It has been tested with gsmdial that do not negotiate any options and Win7
+that negotiate both option.
+An improvement of gsmdial and some ppp_lcp APIs could be done to test optio=
+ns
+separately e.g. only PFC negotiated and only ACFC negotiated
 
-Cheers,
-Aki
+Guillaume Zajac (2):
+  GAtPPP: Add ACFC option support
+  GAtPPP: Add PFC option support
+
+ gatchat/gatppp.c  |  169 ++++++++++++++++++++++++++++++++++++++++++++++---=
+----
+ gatchat/ppp.h     |   10 +++
+ gatchat/ppp_lcp.c |   49 ++++++++++++++-
+ 3 files changed, 203 insertions(+), 25 deletions(-)
 
 
---===============2925516143036181616==--
+--===============1022214675844604741==--
 
