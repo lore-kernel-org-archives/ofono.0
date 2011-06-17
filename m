@@ -1,31 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============2747313956143774423=="
+Content-Type: multipart/mixed; boundary="===============3862762301127280430=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH V5 2/2] voicecall: add +BLDN support for HFP emulator
-Date: Thu, 16 Jun 2011 06:32:18 -0500
-Message-ID: <4DF9E9C2.1050500@gmail.com>
-In-Reply-To: <1307540845-9889-3-git-send-email-frederic.danis@linux.intel.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: Re: Ofono and DUN Client
+Date: Fri, 17 Jun 2011 14:56:44 -0300
+Message-ID: <20110617175644.GA16891@joana>
+In-Reply-To: <4DFB4865.9070405@zirak.it>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2747313956143774423==
+--===============3862762301127280430==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Claudio,
 
-On 06/08/2011 08:47 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> ---
->  src/voicecall.c |   34 ++++++++++++++++++++++++++++++++++
->  1 files changed, 34 insertions(+), 0 deletions(-)
+* Claudio Degioanni <claudio.degioanni@zirak.it> [2011-06-17 14:28:21 +02=
+00]:
+
+> Hi all,
 > =
 
+> What is the current state of work of bluetooth DUN client on ofono ?
 
-Patch has been applied, thanks.
+I have started its implementation some time ago but never finished.
+Feel free to take my patches[1], fix them and push upstream.
 
-Regards,
--Denis
+[1] http://lists.ofono.org/pipermail/ofono/2010-November/005523.html
 
---===============2747313956143774423==--
+	Gustavo
+
+--===============3862762301127280430==--
 
