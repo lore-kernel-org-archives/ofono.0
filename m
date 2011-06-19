@@ -1,46 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============3006870287550479023=="
+Content-Type: multipart/mixed; boundary="===============0385052562436062474=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 3/3] emulator: fix local HFP AG features
-Date: Mon, 20 Jun 2011 17:13:48 +0200
-Message-ID: <1308582828-3806-3-git-send-email-frederic.danis@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/3] emulator: add HFP feature defines
+Date: Sun, 19 Jun 2011 06:31:20 -0500
+Message-ID: <4DFDDE08.5070600@gmail.com>
 In-Reply-To: <1308582828-3806-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3006870287550479023==
+--===============0385052562436062474==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/emulator.c |    6 ++++--
- 1 files changed, 4 insertions(+), 2 deletions(-)
+Hi Fr=C3=A9d=C3=A9ric,
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 1439854..d19706d 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -882,8 +882,10 @@ struct ofono_emulator *ofono_emulator_create(struct of=
-ono_modem *modem,
- 		return NULL;
- =
+On 06/20/2011 10:13 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+> ---
+>  include/emulator.h |   19 +++++++++++++++++++
+>  1 files changed, 19 insertions(+), 0 deletions(-)
+> =
 
- 	em->type =3D type;
--	/* TODO: Check real local features */
--	em->l_features =3D 32;
-+	em->l_features =3D AG_FEATURE_3WAY | AG_FEATURE_REJECT_CALL |
-+			AG_FEATURE_ENHANCED_CALL_STATUS |
-+			AG_FEATURE_ENHANCED_CALL_CONTROL |
-+			AG_FEATURE_EXTENDED_RES_CODE;
- 	em->events_mode =3D 3;	/* default mode is forwarding events */
- 	em->cmee_mode =3D 0;	/* CME ERROR disabled by default */
- =
+> diff --git a/include/emulator.h b/include/emulator.h
+> index 5cd894b..452c59c 100644
+> --- a/include/emulator.h
+> +++ b/include/emulator.h
+> @@ -48,6 +48,25 @@ extern "C" {
+>  #define OFONO_EMULATOR_CALLHELD_MULTIPLE 1
+>  #define OFONO_EMULATOR_CALLHELD_ON_HOLD 2
+>  =
 
--- =
+> +/* AG supported features bitmap. Bluetooth HFP 1.5 spec page 77 */
+> +#define AG_FEATURE_3WAY 0x1
+> +#define AG_FEATURE_ECNR 0x2
+> +#define AG_FEATURE_VOICE_RECOG 0x4
+> +#define AG_FEATURE_IN_BAND_RING_TONE 0x8
+> +#define AG_FEATURE_ATTACH_VOICE_TAG 0x10
+> +#define AG_FEATURE_REJECT_CALL 0x20
+> +#define AG_FEATURE_ENHANCED_CALL_STATUS 0x40
+> +#define AG_FEATURE_ENHANCED_CALL_CONTROL 0x80
+> +#define AG_FEATURE_EXTENDED_RES_CODE 0x100
+> +
+> +#define HF_FEATURE_ECNR 0x1
+> +#define HF_FEATURE_3WAY 0x2
+> +#define HF_FEATURE_CLIP 0x4
+> +#define HF_FEATURE_VOICE_RECOGNITION 0x8
+> +#define HF_FEATURE_REMOTE_VOLUME_CONTROL 0x10
+> +#define HF_FEATURE_ENHANCED_CALL_STATUS 0x20
+> +#define HF_FEATURE_ENHANCED_CALL_CONTROL 0x40
+> +
 
-1.7.1
+Since you're copying them from hfpmodem.h, I suggest making it official
+and not duplicate code.  So I would suggest:
+
+- add
+	enum hfp_ag_feature {
+		HFP_AG_FEATURE_3WAY =3D	0x1,
+		HFP_AG_FEATURE_ECNR =3D	0x2,
+		...
+	};
+
+	enum hfp_hf_feature {
+		...
+	};
+
+to include/types.h, remove them from hfpmodem.h and use the new defines.
+
+>  struct ofono_emulator;
+>  struct ofono_emulator_request;
+>  =
 
 
---===============3006870287550479023==--
+Regards,
+-Denis
+
+--===============0385052562436062474==--
 
