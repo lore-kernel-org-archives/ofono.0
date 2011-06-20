@@ -1,30 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============5202817800510767356=="
+Content-Type: multipart/mixed; boundary="===============0716120835322553011=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 0/3] Add ATD>1; support for HFP emulator
-Date: Mon, 20 Jun 2011 17:12:40 +0200
-Message-ID: <1308582763-3605-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH 2/3] message-waiting: API to retrieve voicemail number
+Date: Mon, 20 Jun 2011 17:12:42 +0200
+Message-ID: <1308582763-3605-3-git-send-email-frederic.danis@linux.intel.com>
+In-Reply-To: <1308582763-3605-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5202817800510767356==
+--===============0716120835322553011==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Only ATD>1; will be managed through HFP AG, and it will call the
-voicemail number retrieved from the message-waiting atom.
+---
+ src/message-waiting.c |    6 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
 
-Fr=C3=A9d=C3=A9ric Danis (3):
-  message-waiting: add API to retrieve voicemail number
-  message-waiting: API to retrieve voicemail number
-  voicecall: add ATD> support for HFP emulator
+diff --git a/src/message-waiting.c b/src/message-waiting.c
+index ad534d9..bce881b 100644
+--- a/src/message-waiting.c
++++ b/src/message-waiting.c
+@@ -605,6 +605,12 @@ static void mw_cphs_mbdn_changed(int id, void *userdat=
+a)
+ 			mw_cphs_mbdn_read_cb, mw);
+ }
+ =
 
- include/message-waiting.h |    2 ++
- src/message-waiting.c     |    6 ++++++
- src/voicecall.c           |   30 +++++++++++++++++++++++++++---
- 3 files changed, 35 insertions(+), 3 deletions(-)
++const struct ofono_phone_number *ofono_message_waiting_get_voicemail_numbe=
+r(
++					struct ofono_message_waiting *mw)
++{
++	return &mw->mailbox_number[0];
++}
++
+ static void mw_mbi_read_cb(int ok, int total_length, int record,
+ 				const unsigned char *data,
+ 				int record_length, void *userdata)
+-- =
+
+1.7.1
 
 
---===============5202817800510767356==--
+--===============0716120835322553011==--
 
