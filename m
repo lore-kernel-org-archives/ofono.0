@@ -1,35 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============4638242327121280981=="
+Content-Type: multipart/mixed; boundary="===============3006870287550479023=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 2/3] hfp_ag: fix SDP record
-Date: Mon, 20 Jun 2011 17:13:47 +0200
-Message-ID: <1308582828-3806-2-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH 3/3] emulator: fix local HFP AG features
+Date: Mon, 20 Jun 2011 17:13:48 +0200
+Message-ID: <1308582828-3806-3-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1308582828-3806-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4638242327121280981==
+--===============3006870287550479023==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-HFP AG supports 3 way calls
 ---
- plugins/hfp_ag.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ src/emulator.c |    6 ++++--
+ 1 files changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/hfp_ag.c b/plugins/hfp_ag.c
-index 17751ad..191708b 100644
---- a/plugins/hfp_ag.c
-+++ b/plugins/hfp_ag.c
-@@ -81,7 +81,7 @@ static const gchar *hfp_ag_record =3D
- "  </attribute>\n"
- "\n"
- "  <attribute id=3D\"0x0311\">\n"
--"    <uint16 value=3D\"0x0000\" />\n"
-+"    <uint16 value=3D\"0x0001\" />\n"
- "  </attribute>\n"
- "</record>\n";
+diff --git a/src/emulator.c b/src/emulator.c
+index 1439854..d19706d 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -882,8 +882,10 @@ struct ofono_emulator *ofono_emulator_create(struct of=
+ono_modem *modem,
+ 		return NULL;
+ =
+
+ 	em->type =3D type;
+-	/* TODO: Check real local features */
+-	em->l_features =3D 32;
++	em->l_features =3D AG_FEATURE_3WAY | AG_FEATURE_REJECT_CALL |
++			AG_FEATURE_ENHANCED_CALL_STATUS |
++			AG_FEATURE_ENHANCED_CALL_CONTROL |
++			AG_FEATURE_EXTENDED_RES_CODE;
+ 	em->events_mode =3D 3;	/* default mode is forwarding events */
+ 	em->cmee_mode =3D 0;	/* CME ERROR disabled by default */
  =
 
 -- =
@@ -37,5 +42,5 @@ index 17751ad..191708b 100644
 1.7.1
 
 
---===============4638242327121280981==--
+--===============3006870287550479023==--
 
