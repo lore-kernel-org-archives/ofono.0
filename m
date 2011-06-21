@@ -1,49 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============8907653608955829850=="
+Content-Type: multipart/mixed; boundary="===============7059421617351224163=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] message-waiting: add API to retrieve voicemail number
-Date: Mon, 20 Jun 2011 04:33:14 -0500
-Message-ID: <4DFF13DA.1040803@gmail.com>
-In-Reply-To: <1308582763-3605-2-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH] doc: Add dial-number/username/password Property
+Date: Tue, 21 Jun 2011 10:07:51 -0500
+Message-ID: <4E00B3C7.6000405@gmail.com>
+In-Reply-To: <1308649987-2438-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8907653608955829850==
+--===============7059421617351224163==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Caiwen,
 
-On 06/20/2011 10:12 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> ---
->  include/message-waiting.h |    2 ++
->  1 files changed, 2 insertions(+), 0 deletions(-)
+On 06/21/2011 04:53 AM, Caiwen Zhang wrote:
+> Some network's dial-number isn't #777 and user name and password
+> are required when setup data connection. =
+
 > =
 
-> diff --git a/include/message-waiting.h b/include/message-waiting.h
-> index b40993e..adb7ef2 100644
-> --- a/include/message-waiting.h
-> +++ b/include/message-waiting.h
-> @@ -33,6 +33,8 @@ struct ofono_message_waiting;
->  struct ofono_message_waiting *ofono_message_waiting_create(struct ofono_=
-modem *modem);
->  void ofono_message_waiting_register(struct ofono_message_waiting *mw);
->  void ofono_message_waiting_remove(struct ofono_message_waiting *mw);
-> +const struct ofono_phone_number *ofono_message_waiting_get_voicemail_num=
-ber(
-> +					struct ofono_message_waiting *mw);
+> ---
+>  doc/cdma-connman-api.txt |   14 ++++++++++++++
+>  1 files changed, 14 insertions(+), 0 deletions(-)
+> =
 
-I'd like to keep this API private for now, so lets move this to ofono.h
-and combine patch 1 & 2 together.
+> diff --git a/doc/cdma-connman-api.txt b/doc/cdma-connman-api.txt
+> index e486c09..f76a2c5 100644
+> --- a/doc/cdma-connman-api.txt
+> +++ b/doc/cdma-connman-api.txt
+> @@ -35,6 +35,20 @@ Properties	boolean Powered [readwrite]
+>  			Contains whether the connection is dormant.  Will
+>  			always be false if the connection is not powered.
+>  =
 
-Also, can you please use the following signature:
+> +		string DialNumber [readwrite]
+> +
+> +			Holds the dialed number.
+> +
 
-const struct ofono_phone_number *__ofono_message_waiting_get_mbdn(
-					struct ofono_message_waiting *mw, unsigned int index);
+We discussed this during the oFono CDMA workshop and the consensus was
+that this is not needed in practice.
+
+> +		string Username [readwrite]
+> +
+> +			Holds the username to be used for authentication
+> +			purposes.
+> +
+> +		string Password [readwrite]
+> +
+> +			Holds the password to be used for authentication
+> +			purposes.
+> +
+
+We discussed these as well and the consensus was that these are probably
+not needed.  If we ever come across a network that does, then we can
+re-examine this decision.
+
+>  		dict Settings [readonly, optional]
+>  =
+
+>  			Holds all the IP network settings
 
 Regards,
 -Denis
 
---===============8907653608955829850==--
+--===============7059421617351224163==--
 
