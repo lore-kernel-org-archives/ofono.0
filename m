@@ -1,61 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============2369802784560923704=="
+Content-Type: multipart/mixed; boundary="===============7954012262613864607=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH v2 2/4] hfp_hf: update to use new HFP enums
-Date: Tue, 21 Jun 2011 14:49:47 +0200
-Message-ID: <1308660589-2187-2-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1308660589-2187-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH v2 1/4] include: add HFP features types for HF and AG
+Date: Tue, 21 Jun 2011 14:49:46 +0200
+Message-ID: <1308660589-2187-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2369802784560923704==
+--===============7954012262613864607==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/hfp_hf.c |   12 ++++++------
- 1 files changed, 6 insertions(+), 6 deletions(-)
+ include/types.h |   24 ++++++++++++++++++++++++
+ 1 files changed, 24 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
-index 12d3457..8a76701 100644
---- a/plugins/hfp_hf.c
-+++ b/plugins/hfp_hf.c
-@@ -174,7 +174,7 @@ static void cmer_cb(gboolean ok, GAtResult *result, gpo=
-inter user_data)
- 		return;
- 	}
+diff --git a/include/types.h b/include/types.h
+index d25f409..536dac7 100644
+--- a/include/types.h
++++ b/include/types.h
+@@ -115,6 +115,30 @@ struct ofono_uuid {
+ 	unsigned char uuid[OFONO_SHA1_UUID_LEN];
+ };
  =
 
--	if (data->ag_features & AG_FEATURE_3WAY)
-+	if (data->ag_features & HFP_AG_FEATURE_3WAY)
- 		g_at_chat_send(data->chat, "AT+CHLD=3D?", chld_prefix,
- 			chld_cb, modem, NULL);
- 	else
-@@ -418,11 +418,11 @@ static int hfp_create_modem(const char *device, const=
- char *dev_addr,
- 	if (data =3D=3D NULL)
- 		goto free;
++/* HFP AG supported features bitmap. Bluetooth HFP 1.5 spec page 77 */
++enum hfp_ag_feature {
++	HFP_AG_FEATURE_3WAY =3D			0x1,
++	HFP_AG_FEATURE_ECNR =3D			0x2,
++	HFP_AG_FEATURE_VOICE_RECOG =3D		0x4,
++	HFP_AG_FEATURE_IN_BAND_RING_TONE =3D	0x8,
++	HFP_AG_FEATURE_ATTACH_VOICE_TAG =3D	0x10,
++	HFP_AG_FEATURE_REJECT_CALL =3D		0x20,
++	HFP_AG_FEATURE_ENHANCED_CALL_STATUS =3D	0x40,
++	HFP_AG_FEATURE_ENHANCED_CALL_CONTROL =3D	0x80,
++	HFP_AG_FEATURE_EXTENDED_RES_CODE =3D	0x100
++};
++
++/* HFP HF supported features bitmap. Bluetooth HFP 1.5 spec page 77 */
++enum hfp_hf_feature {
++	HFP_HF_FEATURE_ECNR =3D			0x1,
++	HFP_HF_FEATURE_3WAY =3D			0x2,
++	HFP_HF_FEATURE_CLIP =3D			0x4,
++	HFP_HF_FEATURE_VOICE_RECOGNITION =3D	0x8,
++	HFP_HF_FEATURE_REMOTE_VOLUME_CONTROL =3D	0x10,
++	HFP_HF_FEATURE_ENHANCED_CALL_STATUS =3D	0x20,
++	HFP_HF_FEATURE_ENHANCED_CALL_CONTROL =3D	0x40
++};
++
+ const char *ofono_uuid_to_str(const struct ofono_uuid *uuid);
+ void ofono_call_init(struct ofono_call *call);
  =
 
--	data->hf_features |=3D HF_FEATURE_3WAY;
--	data->hf_features |=3D HF_FEATURE_CLIP;
--	data->hf_features |=3D HF_FEATURE_REMOTE_VOLUME_CONTROL;
--	data->hf_features |=3D HF_FEATURE_ENHANCED_CALL_STATUS;
--	data->hf_features |=3D HF_FEATURE_ENHANCED_CALL_CONTROL;
-+	data->hf_features |=3D HFP_HF_FEATURE_3WAY;
-+	data->hf_features |=3D HFP_HF_FEATURE_CLIP;
-+	data->hf_features |=3D HFP_HF_FEATURE_REMOTE_VOLUME_CONTROL;
-+	data->hf_features |=3D HFP_HF_FEATURE_ENHANCED_CALL_STATUS;
-+	data->hf_features |=3D HFP_HF_FEATURE_ENHANCED_CALL_CONTROL;
- =
-
- 	data->handsfree_path =3D g_strdup(device);
- 	if (data->handsfree_path =3D=3D NULL)
 -- =
 
 1.7.1
 
 
---===============2369802784560923704==--
+--===============7954012262613864607==--
 
