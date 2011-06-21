@@ -1,79 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============5627402206539004053=="
+Content-Type: multipart/mixed; boundary="===============6120385705453484093=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH v2 2/2] voicecall: add ATD> support for HFP emulator
-Date: Tue, 21 Jun 2011 18:48:34 +0200
-Message-ID: <1308674914-13037-3-git-send-email-frederic.danis@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 0/2] Add ATD>1; support for HFP emulator
+Date: Tue, 21 Jun 2011 12:09:17 -0500
+Message-ID: <4E00D03D.5070607@gmail.com>
 In-Reply-To: <1308674914-13037-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5627402206539004053==
+--===============6120385705453484093==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/voicecall.c |   30 +++++++++++++++++++++++++++---
- 1 files changed, 27 insertions(+), 3 deletions(-)
+Hi Fr=C3=A9d=C3=A9ric,
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 1f0d3b8..2eb32a6 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -3084,6 +3084,7 @@ static void emulator_atd_cb(struct ofono_emulator *em,
- 			struct ofono_emulator_request *req, void *userdata)
- {
- 	struct ofono_voicecall *vc =3D userdata;
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
- 	const char *str;
- 	size_t len;
- 	char number[OFONO_MAX_PHONE_NUMBER_LENGTH + 1];
-@@ -3102,10 +3103,33 @@ static void emulator_atd_cb(struct ofono_emulator *=
-em,
- 				str[len - 1] !=3D ';')
- 			goto fail;
- =
+On 06/21/2011 11:48 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+> Only ATD>1; will be managed through HFP AG, and it will call the
+> voicemail number retrieved from the message-waiting atom.
+> =
 
--		strncpy(number, str, len - 1);
--		number[len - 1] =3D '\0';
-+		if (len =3D=3D 3 && str[0] =3D=3D '>' && str[1] =3D=3D '1') {
-+			struct ofono_atom *mw_atom;
-+			struct ofono_message_waiting *mw;
-+			const struct ofono_phone_number *ph;
-+			const char *num;
- =
+> Fr=C3=A9d=C3=A9ric Danis (2):
+>   message-waiting: API to retrieve voicemail number
+>   voicecall: add ATD> support for HFP emulator
+> =
 
--		emulator_dial(em, vc, number);
-+			mw_atom =3D __ofono_modem_find_atom(modem,
-+					OFONO_ATOM_TYPE_MESSAGE_WAITING);
-+
-+			if (mw_atom =3D=3D NULL)
-+				goto fail;
-+
-+			mw =3D __ofono_atom_get_data(mw_atom);
-+			ph =3D __ofono_message_waiting_get_mbdn(mw, 0);
-+
-+			if (ph =3D=3D NULL)
-+				goto fail;
-+
-+			num =3D phone_number_to_string(ph);
-+
-+			emulator_dial(em, vc, num);
-+		} else {
-+			strncpy(number, str, len - 1);
-+			number[len - 1] =3D '\0';
-+
-+			emulator_dial(em, vc, number);
-+		}
- 		break;
- =
-
- 	default:
--- =
-
-1.7.1
+>  src/message-waiting.c |    7 +++++++
+>  src/ofono.h           |    4 ++++
+>  src/voicecall.c       |   30 +++++++++++++++++++++++++++---
+>  3 files changed, 38 insertions(+), 3 deletions(-)
+> =
 
 
---===============5627402206539004053==--
+Both patches have been applied, thanks.
+
+Regards,
+-Denis
+
+--===============6120385705453484093==--
 
