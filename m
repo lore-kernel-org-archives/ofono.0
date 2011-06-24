@@ -1,367 +1,209 @@
-Content-Type: multipart/mixed; boundary="===============6907551720139265350=="
+Content-Type: multipart/mixed; boundary="===============9094976869789084494=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH 1/2] GAtPPP: Add ACFC option support
-Date: Fri, 24 Jun 2011 10:41:31 +0200
-Message-ID: <4E044DBB.4080707@linux.intel.com>
-In-Reply-To: <4E038CBE.9010006@gmail.com>
+From: milan.satpathy@accenture.com
+Subject: [HELP] HFP Outgoing Call Method (Dial)  Not Responding
+Date: Fri, 24 Jun 2011 16:57:06 +0530
+Message-ID: <10D123A956DC4B4FA9D7A48B33358362150C959DA7@INDXM3131.dir.svc.accenture.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6907551720139265350==
+--===============9094976869789084494==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi,
 
-On 23/06/2011 20:58, Denis Kenzior wrote:
-> Hi Guillaume,
->
-> On 06/16/2011 06:55 AM, Guillaume Zajac wrote:
->> ---
->>   gatchat/gatppp.c  |  116 ++++++++++++++++++++++++++++++++++++++++++---=
--------
->>   gatchat/ppp.h     |    7 +++
->>   gatchat/ppp_lcp.c |   27 +++++++++++-
->>   3 files changed, 124 insertions(+), 26 deletions(-)
->>
->> diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
->> index 5fb4146..a505db1 100644
->> --- a/gatchat/gatppp.c
->> +++ b/gatchat/gatppp.c
->> @@ -83,6 +83,9 @@ struct _GAtPPP {
->>   	int fd;
->>   	guint guard_timeout_source;
->>   	gboolean suspended;
->> +	gboolean acfc;
->> +	guint8 address;
->> +	guint8 control;
-> I'm lost as to the purpose of the address and control variables in the
-> GAtPPP structure?
->
+Recently I was testing a small hands free use case using Ofono(version 0.48=
+).
 
-It was just for testing those values while negociating ACFC but as peet
-is reponsible from them, I will delete them.
-
->>   };
->>
->>   void ppp_debug(GAtPPP *ppp, const char *str)
->> @@ -168,17 +171,39 @@ static inline gboolean ppp_drop_packet(GAtPPP *ppp=
-, guint16 protocol)
->>   static void ppp_receive(const unsigned char *buf, gsize len, void *dat=
-a)
->>   {
->>   	GAtPPP *ppp =3D data;
->> -	guint16 protocol =3D ppp_proto(buf);
->> -	const guint8 *packet =3D ppp_info(buf);
->> +	struct ppp_header *header =3D (struct ppp_header *) buf;
->> +	gboolean acfc_frame =3D (header->address !=3D PPP_ADDR_FIELD
->> +			|| header->control !=3D PPP_CTRL);
->> +	guint16 protocol;
->> +	const guint8 *packet;
->> +
->> +	if (acfc_frame) {
->> +		protocol =3D ppp_acfc_proto(buf);
->> +		packet =3D ppp_acfc_info(buf);
->> +	} else {
->> +		protocol =3D ppp_proto(buf);
->> +		packet =3D ppp_info(buf);
->> +	}
->>
-> Looks good to me
->
->>   	if (ppp_drop_packet(ppp, protocol))
->>   		return;
->>
->> +	/*
->> +	 * RFC 1661:
->> +	 * If we received PPP packets with Adress and Control Field Compressed
->> +	 * although ACFC had not been negociated, we silently discard them.
->> +	 */
->> +	if (!ppp->acfc&&  acfc_frame)
->> +		return;
->> +
-> Please use ppp->acfc =3D=3D FALSE here
-
-Ok
-
->>   	switch (protocol) {
->>   	case PPP_IP_PROTO:
->>   		ppp_net_process_packet(ppp->net, packet);
->>   		break;
->>   	case LCP_PROTOCOL:
->> +		/* Those values will be tested while negociating ACFC option */
->> +		ppp->address =3D header->address;
->> +		ppp->control =3D header->control;
->>   		pppcp_process_packet(ppp->lcp, packet);
->>   		break;
->>   	case IPCP_PROTO:
->> @@ -196,37 +221,29 @@ static void ppp_receive(const unsigned char *buf, =
-gsize len, void *data)
->>   	};
->>   }
->>
->> -/*
->> - * transmit out through the lower layer interface
->> - *
->> - * infolen - length of the information part of the packet
->> - */
->> -void ppp_transmit(GAtPPP *ppp, guint8 *packet, guint infolen)
->> +static void ppp_send_lcp_frame(GAtPPP *ppp, guint8 *packet, guint infol=
-en)
->>   {
->>   	struct ppp_header *header =3D (struct ppp_header *) packet;
->> -	guint16 proto =3D ppp_proto(packet);
->>   	guint8 code;
->> -	gboolean lcp =3D (proto =3D=3D LCP_PROTOCOL);
->>   	guint32 xmit_accm =3D 0;
->>   	gboolean sta =3D FALSE;
->> +	gboolean lcp;
->>
->>   	/*
->>   	 * all LCP Link Configuration, Link Termination, and Code-Reject
->>   	 * packets must be sent with the default sending ACCM
->>   	 */
->> -	if (lcp) {
->> -		code =3D pppcp_get_code(packet);
->> -		lcp =3D code>  0&&  code<  8;
->> -
->> -		/*
->> -		 * If we're going down, we try to make sure to send the final
->> -		 * ack before informing the upper layers via the ppp_disconnect
->> -		 * function.  Once we enter PPP_DEAD phase, no further packets
->> -		 * will be sent
->> -		 */
->> -		if (code =3D=3D PPPCP_CODE_TYPE_TERMINATE_ACK)
->> -			sta =3D TRUE;
->> -	}
->> +	code =3D pppcp_get_code(packet);
->> +	lcp =3D code>  0&&  code<  8;
->> +
->> +	/*
->> +	 * If we're going down, we try to make sure to send the final
->> +	 * ack before informing the upper layers via the ppp_disconnect
->> +	 * function.  Once we enter PPP_DEAD phase, no further packets
->> +	 * will be sent
->> +	 */
->> +	if (code =3D=3D PPPCP_CODE_TYPE_TERMINATE_ACK)
->> +		sta =3D TRUE;
->>
->>   	if (lcp) {
->>   		xmit_accm =3D g_at_hdlc_get_xmit_accm(ppp->hdlc);
->> @@ -251,6 +268,42 @@ void ppp_transmit(GAtPPP *ppp, guint8 *packet, guin=
-t infolen)
->>   		g_at_hdlc_set_xmit_accm(ppp->hdlc, xmit_accm);
->>   }
->>
->> +static void ppp_send_acfc_frame(GAtPPP *ppp, guint8 *packet,
->> +					guint infolen)
->> +{
->> +	struct ppp_header *header =3D (struct ppp_header *) packet;
->> +	guint offset =3D 0;
->> +
->> +	if (ppp->acfc)
->> +		offset =3D 2;
->> +
->> +	if (g_at_hdlc_send(ppp->hdlc, packet + offset,
->> +				infolen + sizeof(*header) - offset)
->> +			=3D=3D FALSE)
->> +		DBG(ppp, "Failed to send a frame\n");
->> +}
->> +
->> +/*
->> + * transmit out through the lower layer interface
->> + *
->> + * infolen - length of the information part of the packet
->> + */
->> +void ppp_transmit(GAtPPP *ppp, guint8 *packet, guint infolen)
->> +{
->> +	guint16 proto =3D ppp_proto(packet);
->> +
->> +	switch (proto) {
->> +	case LCP_PROTOCOL:
->> +		ppp_send_lcp_frame(ppp, packet, infolen);
->> +		break;
->> +	case CHAP_PROTOCOL:
->> +	case IPCP_PROTO:
->> +	case PPP_IP_PROTO:
->> +		ppp_send_acfc_frame(ppp, packet, infolen);
->> +		break;
->> +	}
->> +}
->> +
-> Looks fine to me
->
->>   static inline void ppp_enter_phase(GAtPPP *ppp, enum ppp_phase phase)
->>   {
->>   	DBG(ppp, "%d", phase);
->> @@ -390,6 +443,23 @@ void ppp_set_mtu(GAtPPP *ppp, const guint8 *data)
->>   	ppp->mtu =3D mtu;
->>   }
->>
->> +gboolean ppp_set_acfc_enabled(GAtPPP *ppp, gboolean acfc)
->> +{
->> +	/*
->> +	 * RFC 1662:
->> +	 * When using the standard HDLC-like framing, the Address and Control
->> +	 * fields contain the hexadecimal values 0xff and 0x03 respectively.
->> +	 * When other Address or Control field values are in use, Address-
->> +	 * and-Control-Field-Compression MUST NOT be negotiated.
->> +	 */
->> +	if (ppp->address =3D=3D 0xFF&&  ppp->control =3D=3D 0x03)
->> +		ppp->acfc =3D acfc;
-> There is no need for this check.  The sender is responsible for not
-> compressing the packets if the address / control do not correspond to
-> the well known ones.
->
+Scenario:
 
 
->> +	else
->> +		ppp->acfc =3D FALSE;
->> +
->> +	return ppp->acfc;
->> +}
->> +
-> So this seems wrong to me.  The purpose of ppp_set_acfc_enabled is twofol=
-d:
->
-> - Whether we should send the ACFC option to the peer (e.g. we can accept
-> ACFC packets)
-> - Whether we should try to send ACFC packets (assuming the peer tells us
-> it is capable of doing so)
->
-> So what this function should be doing is setting lcp->req_options
-> accordingly (somehow).
->
-> ppp->acfc should not really change 'per packet', but a global setting
-> for the GAtPPP object
->
->>   static void io_disconnect(gpointer user_data)
->>   {
->>   	GAtPPP *ppp =3D user_data;
->> diff --git a/gatchat/ppp.h b/gatchat/ppp.h
->> index 023d779..3cf11f7 100644
->> --- a/gatchat/ppp.h
->> +++ b/gatchat/ppp.h
->> @@ -85,6 +85,12 @@ static inline void __put_unaligned_short(void *p, gui=
-nt16 val)
->>   #define ppp_proto(packet) \
->>   	(get_host_short(packet + 2))
->>
->> +#define ppp_acfc_info(packet) \
->> +	(packet + 2)
->> +
->> +#define ppp_acfc_proto(packet) \
->> +	(get_host_short(packet))
->> +
->>   /* LCP related functions */
->>   struct pppcp_data *lcp_new(GAtPPP *ppp, gboolean dormant);
->>   void lcp_free(struct pppcp_data *lcp);
->> @@ -125,4 +131,5 @@ void ppp_lcp_finished_notify(GAtPPP *ppp);
->>   void ppp_set_recv_accm(GAtPPP *ppp, guint32 accm);
->>   void ppp_set_xmit_accm(GAtPPP *ppp, guint32 accm);
->>   void ppp_set_mtu(GAtPPP *ppp, const guint8 *data);
->> +gboolean ppp_set_acfc_enabled(GAtPPP *ppp, gboolean acfc);
-> This function should be g_at_ppp_set_acfc_enabled() and be in gatppp.h
->
->>   struct ppp_header *ppp_packet_new(gsize infolen, guint16 protocol);
->> diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
->> index ce9dae2..24e7bae 100644
->> --- a/gatchat/ppp_lcp.c
->> +++ b/gatchat/ppp_lcp.c
->> @@ -58,11 +58,12 @@ enum lcp_options {
->>   	ACFC			=3D 8,
->>   };
->>
->> -/* Maximum size of all options, we only ever request ACCM and MRU */
->> -#define MAX_CONFIG_OPTION_SIZE 10
->> +/* Maximum size of all options, we only ever request ACCM, MRU and ACFC=
- */
->> +#define MAX_CONFIG_OPTION_SIZE 12
->>
->>   #define REQ_OPTION_ACCM	0x1
->>   #define REQ_OPTION_MRU	0x2
->> +#define REQ_OPTION_ACFC	0x4
->>
->>   struct lcp_data {
->>   	guint8 options[MAX_CONFIG_OPTION_SIZE];
->> @@ -100,6 +101,13 @@ static void lcp_generate_config_options(struct lcp_=
-data *lcp)
->>   		len +=3D 4;
->>   	}
->>
->> +	if (lcp->req_options&  REQ_OPTION_ACFC) {
->> +		lcp->options[len] =3D ACFC;
->> +		lcp->options[len + 1] =3D 2;
->> +
->> +		len +=3D 2;
->> +	}
->> +
->>   	lcp->options_len =3D len;
->>   }
->>
->> @@ -110,6 +118,12 @@ static void lcp_reset_config_options(struct lcp_dat=
-a *lcp)
->>   	lcp_generate_config_options(lcp);
->>   }
->>
->> +static void lcp_set_acfc_config_option(struct lcp_data *lcp)
->> +{
->> +	lcp->req_options |=3D REQ_OPTION_ACFC;
->> +	lcp_generate_config_options(lcp);
->> +}
->> +
->>   /*
->>    * signal the Up event to the NCP
->>    */
->> @@ -286,9 +300,16 @@ static enum rcr_result lcp_rcr(struct pppcp_data *p=
-ppcp,
->>   			break;
->>   		case MAGIC_NUMBER:
->>   		case PFC:
->> -		case ACFC:
->>   			/* don't care */
->>   			break;
->> +		case ACFC:
->> +			if (ppp_set_acfc_enabled(ppp, TRUE)) {
->> +				struct lcp_data *lcp =3D pppcp_get_data(pppcp);
->> +				lcp_set_acfc_config_option(lcp);
->> +				pppcp_set_local_options(pppcp, lcp->options,
->> +							lcp->options_len);
->> +			}
->> +			break;
-> Again, this seems wrong.  What is happening here is that the peer just
-> told us that 'Yes, I can accept ACFC packets'.
->
-> What you're trying to do is set whether our end can accept ACFC packets
-> based on whether the peer can.  In fact, they are completely
-> independent.  The relationship can be asymmetric, e.g. client that can
-> send ACFC packets, but not accept them, and vice versa.  You need to
-> account for this.
->
+ 1.  Make an incoming call to the remote AG phone number.
+ 2.  Accept the incoming call using Ofono D-BUS call.
+ 3.  Once the incoming call is active, create an outgoing call ( "Dial" ) u=
+sing Ofono D-BUS call.
 
-Right, so if we always set by default ACFC options into LCP configure =
+Problem Faced:
+The "Dial" method does not reply in this case. Hence, the outgoing call est=
+ablishment also does not happen.
 
-request.
-I could dot into
+Request For Assistance:
 
-static void lcp_reset_config_options(struct lcp_data *lcp)
-{
-     /* Using the default ACCM */
-     lcp->req_options |=3D REQ_OPTION_ACFC;
-     lcp_generate_config_options(lcp);
-}
+I would like to know if Ofono supports a multiple call feature like this.
+
+If anybody could succeed in making an outgoing call in the above explained =
+scenario,
+please let me know the make of the handset you could test with.
+
+Thanks in advance!
+
+Best Regards,
+Milan
 
 
-On reception, we always say we can receive ACFC packet then it is up to
-the peer to transmit or not ACFC packets.
 
-GAtPPP object only needs to know if it has to transmit or not ACFC packets.
-That is the purpose of ppp->acfc.
 
-Kind regards,
-Guillaume
+________________________________
+This message is for the designated recipient only and may contain privilege=
+d, proprietary, or otherwise private information. If you have received it i=
+n error, please notify the sender immediately and delete the original. Any =
+other use of the email by you is prohibited.
 
---===============6907551720139265350==--
+--===============9094976869789084494==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
+bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxuczpzdDE9
+InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgeG1sbnM9Imh0dHA6
+Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29u
+dGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBu
+YW1lPSJHZW5lcmF0b3IiIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDExIChmaWx0ZXJlZCBtZWRp
+dW0pIj4KPG86U21hcnRUYWdUeXBlIG5hbWVzcGFjZXVyaT0idXJuOnNjaGVtYXMtbWljcm9zb2Z0
+LWNvbTpvZmZpY2U6c21hcnR0YWdzIiBuYW1lPSJDaXR5IiAvPjxvOlNtYXJ0VGFnVHlwZSBuYW1l
+c3BhY2V1cmk9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgbmFt
+ZT0icGxhY2UiIC8+PCEtLVtpZiAhbXNvXT4KPHN0eWxlPgpzdDFcOip7YmVoYXZpb3I6dXJsKCNk
+ZWZhdWx0I2llb291aSkgfQo8L3N0eWxlPgo8IVtlbmRpZl0tLT48c3R5bGU+CjwhLS0KIC8qIEZv
+bnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseToiQm9vayBBbnRpcXVh
+IjsKCXBhbm9zZS0xOjIgNCA2IDIgNSAzIDUgMyAzIDQ7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMg
+Ki8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGlu
+OwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5
+OiJCb29rIEFudGlxdWEiO30KaDEKCXttYXJnaW4tdG9wOjEyLjBwdDsKCW1hcmdpbi1yaWdodDow
+aW47CgltYXJnaW4tYm90dG9tOjMuMHB0OwoJbWFyZ2luLWxlZnQ6MGluOwoJcGFnZS1icmVhay1h
+ZnRlcjphdm9pZDsKCWZvbnQtc2l6ZToxNC4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVh
+Ijt9CmgyCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFyZ2luLWJv
+dHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZvaWQ7Cglm
+b250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250LXN0eWxl
+Oml0YWxpYzt9CmgzCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFy
+Z2luLWJvdHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZv
+aWQ7Cglmb250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250
+LXdlaWdodDpub3JtYWw7fQpwLk1zb0hlYWRlciwgbGkuTXNvSGVhZGVyLCBkaXYuTXNvSGVhZGVy
+Cgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7
+Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuTXNvRm9vdGVyLCBsaS5Nc29Gb290ZXIs
+IGRpdi5Nc29Gb290ZXIKCXttYXJnaW46MGluOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9u
+dC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KYTpsaW5rLCBzcGFu
+Lk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30K
+YTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7Y29sb3I6IzYwNjQyMDsKCXRl
+eHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpwLkFCTE9DS1BBUkEsIGxpLkFCTE9DS1BBUkEsIGRp
+di5BQkxPQ0tQQVJBCgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQt
+c2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUJVTExFVCwgbGku
+QUJVTExFVCwgZGl2LkFCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdodDowaW47
+CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjE2LjU1cHQ7CgltYXJnaW4tYm90dG9t
+Oi4wMDAxcHQ7Cgl0ZXh0LWluZGVudDotMTYuNTVwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250
+LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUlOREVOVEVEQlVMTEVULCBsaS5BSU5ERU5URURC
+VUxMRVQsIGRpdi5BSU5ERU5URURCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdo
+dDowaW47CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjMzLjFwdDsKCW1hcmdpbi1i
+b3R0b206LjAwMDFwdDsKCXRleHQtaW5kZW50Oi0xNi41NXB0OwoJZm9udC1zaXplOjExLjBwdDsK
+CWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KcC5BSU5ERU5URURQQVJBLCBsaS5BSU5ERU5U
+RURQQVJBLCBkaXYuQUlOREVOVEVEUEFSQQoJe21hcmdpbi10b3A6MGluOwoJbWFyZ2luLXJpZ2h0
+OjBpbjsKCW1hcmdpbi1ib3R0b206MGluOwoJbWFyZ2luLWxlZnQ6MTYuNTVwdDsKCW1hcmdpbi1i
+b3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRp
+cXVhIjt9CnNwYW4uRW1haWxTdHlsZTIzCgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9z
+ZTsKCWZvbnQtZmFtaWx5OkFyaWFsOwoJY29sb3I6d2luZG93dGV4dDt9CkBwYWdlIFNlY3Rpb24x
+Cgl7c2l6ZTo1OTUuNDVwdCA4NDEuN3B0OwoJbWFyZ2luOjEuMGluIC43NWluIDEuMGluIC43NWlu
+O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9CiAvKiBMaXN0IERlZmluaXRpb25zICov
+CiBAbGlzdCBsMAoJe21zby1saXN0LWlkOjEwNTc2MjcyNzc7Cgltc28tbGlzdC10eXBlOmh5YnJp
+ZDsKCW1zby1saXN0LXRlbXBsYXRlLWlkczoxNjg2MTExMzggNjc2OTg3MDMgNjc2OTg3MTMgNjc2
+OTg3MTUgNjc2OTg3MDMgNjc2OTg3MTMgNjc2OTg3MTUgNjc2OTg3MDMgNjc2OTg3MTMgNjc2OTg3
+MTU7fQpAbGlzdCBsMDpsZXZlbDEKCXttc28tbGV2ZWwtdGFiLXN0b3A6LjVpbjsKCW1zby1sZXZl
+bC1udW1iZXItcG9zaXRpb246bGVmdDsKCXRleHQtaW5kZW50Oi0uMjVpbjt9Cm9sCgl7bWFyZ2lu
+LWJvdHRvbTowaW47fQp1bAoJe21hcmdpbi1ib3R0b206MGluO30KLS0+Cjwvc3R5bGU+CjwvaGVh
+ZD4KPGJvZHkgbGFuZz0iRU4tVVMiIGxpbms9ImJsdWUiIHZsaW5rPSIjNjA2NDIwIj4KPGRpdiBj
+bGFzcz0iU2VjdGlvbjEiPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNl
+PSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFs
+Ij5IaSw8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48
+Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7
+CmZvbnQtZmFtaWx5OkFyaWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8
+cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5
+bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5SZWNlbnRseSBJIHdhcyB0
+ZXN0aW5nIGEgc21hbGwgaGFuZHMgZnJlZSB1c2UgY2FzZSB1c2luZyBPZm9ubyh2ZXJzaW9uIDAu
+NDgpLjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxm
+b250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsK
+Zm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cjxw
+IGNsYXNzPSJNc29Ob3JtYWwiPjx1Pjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBz
+dHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPlNjZW5hcmlvPC9zcGFu
+PjwvZm9udD48L3U+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250
+LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsIj46PG86cD48L286cD48L3NwYW4+PC9mb250
+PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxz
+cGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+PG86cD4mbmJz
+cDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPG9sIHN0eWxlPSJtYXJnaW4tdG9wOjBpbiIgc3Rh
+cnQ9IjEiIHR5cGU9IjEiPgo8bGkgY2xhc3M9Ik1zb05vcm1hbCIgc3R5bGU9Im1zby1saXN0Omww
+IGxldmVsMSBsZm8xIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZv
+bnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwiPk1ha2UgYW4gaW5jb21pbmcgY2FsbCB0
+byB0aGUgcmVtb3RlIEFHIHBob25lIG51bWJlci48bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+Cjwv
+bGk+PGxpIGNsYXNzPSJNc29Ob3JtYWwiIHN0eWxlPSJtc28tbGlzdDpsMCBsZXZlbDEgbGZvMSI+
+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0
+O2ZvbnQtZmFtaWx5OkFyaWFsIj5BY2NlcHQgdGhlIGluY29taW5nIGNhbGwgdXNpbmcgT2Zvbm8g
+RC1CVVMgY2FsbC4KPG86cD48L286cD48L3NwYW4+PC9mb250PjwvbGk+PGxpIGNsYXNzPSJNc29O
+b3JtYWwiIHN0eWxlPSJtc28tbGlzdDpsMCBsZXZlbDEgbGZvMSI+PGZvbnQgc2l6ZT0iMiIgZmFj
+ZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFs
+Ij5PbmNlIHRoZSBpbmNvbWluZyBjYWxsIGlzIGFjdGl2ZSwgY3JlYXRlIGFuIG91dGdvaW5nIGNh
+bGwgKCAmIzgyMjA7RGlhbCYjODIyMTsgKSB1c2luZyBPZm9ubyBELUJVUyBjYWxsLjxvOnA+PC9v
+OnA+PC9zcGFuPjwvZm9udD4KPC9saT48L29sPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBz
+aXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQt
+ZmFtaWx5OkFyaWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFz
+cz0iTXNvTm9ybWFsIj48dT48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9
+ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5Qcm9ibGVtIEZhY2VkOjxvOnA+
+PC9vOnA+PC9zcGFuPjwvZm9udD48L3U+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIiBzdHlsZT0i
+bWFyZ2luLWxlZnQ6LjI1aW4iPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHls
+ZT0iZm9udC1zaXplOjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCI+VGhlICYjODIyMDtEaWFsJiM4
+MjIxOyBtZXRob2QgZG9lcyBub3QgcmVwbHkgaW4gdGhpcyBjYXNlLiBIZW5jZSwgdGhlIG91dGdv
+aW5nIGNhbGwgZXN0YWJsaXNobWVudCBhbHNvIGRvZXMgbm90IGhhcHBlbi48bzpwPjwvbzpwPjwv
+c3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNl
+PSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFs
+Ij48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFs
+Ij48dT48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTox
+MC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5SZXF1ZXN0IEZvciBBc3Npc3RhbmNlPC9zcGFuPjwv
+Zm9udD48L3U+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNp
+emU6MTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsIj46PG86cD48L286cD48L3NwYW4+PC9mb250Pjwv
+cD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFu
+IHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+PG86cD4mbmJzcDs8
+L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0i
+MiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWls
+eTpBcmlhbCI+SSB3b3VsZCBsaWtlIHRvIGtub3cgaWYgT2Zvbm8gc3VwcG9ydHMgYSBtdWx0aXBs
+ZSBjYWxsIGZlYXR1cmUgbGlrZSB0aGlzLgo8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8
+cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5
+bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj48bzpwPiZuYnNwOzwvbzpw
+Pjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBm
+YWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFy
+aWFsIj5JZiBhbnlib2R5IGNvdWxkIHN1Y2NlZWQgaW4gbWFraW5nIGFuIG91dGdvaW5nIGNhbGwg
+aW4gdGhlIGFib3ZlIGV4cGxhaW5lZCBzY2VuYXJpbywKPG86cD48L286cD48L3NwYW4+PC9mb250
+PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxz
+cGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+cGxlYXNlIGxl
+dCBtZSBrbm93IHRoZSBtYWtlIG9mIHRoZSBoYW5kc2V0IHlvdSBjb3VsZCB0ZXN0IHdpdGguPG86
+cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6
+ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZh
+bWlseTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9
+Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250
+LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+VGhhbmtzIGluIGFkdmFuY2UhPG86cD48
+L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0i
+MiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWls
+eTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1z
+b05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNp
+emU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+QmVzdCBSZWdhcmRzLDxvOnA+PC9vOnA+PC9z
+cGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzdDE6cGxhY2UgdzpzdD0ib24i
+PjxzdDE6Q2l0eSB3OnN0PSJvbiI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0
+eWxlPSJmb250LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsIj5NaWxhbjwvc3Bhbj48L2Zv
+bnQ+PC9zdDE6Q2l0eT48L3N0MTpwbGFjZT48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNw
+YW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+PC9vOnA+
+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZh
+Y2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJp
+YWwiPiZuYnNwOzxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3Jt
+YWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEw
+LjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48
+L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3Bh
+biBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7
+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjwvZGl2Pgo8YnI+Cjxocj4KPGZvbnQgZmFjZT0iQXJp
+YWwiIGNvbG9yPSJHcmF5IiBzaXplPSIyIj5UaGlzIG1lc3NhZ2UgaXMgZm9yIHRoZSBkZXNpZ25h
+dGVkIHJlY2lwaWVudCBvbmx5IGFuZCBtYXkgY29udGFpbiBwcml2aWxlZ2VkLCBwcm9wcmlldGFy
+eSwgb3Igb3RoZXJ3aXNlIHByaXZhdGUgaW5mb3JtYXRpb24uIElmIHlvdSBoYXZlIHJlY2VpdmVk
+IGl0IGluIGVycm9yLCBwbGVhc2Ugbm90aWZ5IHRoZSBzZW5kZXIgaW1tZWRpYXRlbHkgYW5kIGRl
+bGV0ZSB0aGUgb3JpZ2luYWwuCiBBbnkgb3RoZXIgdXNlIG9mIHRoZSBlbWFpbCBieSB5b3UgaXMg
+cHJvaGliaXRlZC48YnI+CjwvZm9udD4KPC9ib2R5Pgo8L2h0bWw+Cg==
+
+--===============9094976869789084494==--
 
