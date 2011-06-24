@@ -1,209 +1,204 @@
-Content-Type: multipart/mixed; boundary="===============9094976869789084494=="
+Content-Type: multipart/mixed; boundary="===============2647658001473746520=="
 MIME-Version: 1.0
-From: milan.satpathy@accenture.com
-Subject: [HELP] HFP Outgoing Call Method (Dial)  Not Responding
-Date: Fri, 24 Jun 2011 16:57:06 +0530
-Message-ID: <10D123A956DC4B4FA9D7A48B33358362150C959DA7@INDXM3131.dir.svc.accenture.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH] emulator: fix CCWA for PTS
+Date: Fri, 24 Jun 2011 16:11:05 +0200
+Message-ID: <1308924665-9039-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9094976869789084494==
+--===============2647658001473746520==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+During test TP/TCA/BV-05-I [Terminate Ongoing Call =E2=80=93 While Call Wai=
+ting]
+PTS fails if multiple +CCWA are sent (waiting for 1st phone number when
+waiting one becomes incoming, intead of 2nd phone number).
+So, send only 1 +CCWA.
 
-Recently I was testing a small hands free use case using Ofono(version 0.48=
-).
+Update RING timer management to be started as soon as an incoming call
+exists, and retrieve +CLIP info for incoming or waiting call (in case
+of waiting call becoming incoming call, call indicator changes before
+internal call status is updated)
+---
+ src/emulator.c |   74 ++++++++++++++++++++++++++++++----------------------=
+---
+ 1 files changed, 40 insertions(+), 34 deletions(-)
 
-Scenario:
+diff --git a/src/emulator.c b/src/emulator.c
+index 906404d..eea69f0 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -352,7 +352,8 @@ static void notify_ccwa(struct ofono_emulator *em)
+ 	 */
+ 	char str[OFONO_MAX_PHONE_NUMBER_LENGTH + 14 + 1];
+ =
+
+-	if (!em->ccwa)
++	if ((em->type =3D=3D OFONO_EMULATOR_TYPE_HFP && em->slc =3D=3D FALSE) ||
++			!em->ccwa)
+ 		return;
+ =
+
+ 	c =3D find_call_with_status(em, CALL_STATUS_WAITING);
+@@ -366,8 +367,9 @@ static void notify_ccwa(struct ofono_emulator *em)
+ 		g_at_server_send_unsolicited(em->server, "+CCWA: \"\",128");
+ }
+ =
+
+-static void notify_ring(struct ofono_emulator *em)
++static gboolean notify_ring(void *user_data)
+ {
++	struct ofono_emulator *em =3D user_data;
+ 	struct ofono_call *c;
+ 	const char *phone;
+ 	/*
+@@ -376,15 +378,25 @@ static void notify_ring(struct ofono_emulator *em)
+ 	 */
+ 	char str[OFONO_MAX_PHONE_NUMBER_LENGTH + 14 + 1];
+ =
+
++	if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP && em->slc =3D=3D FALSE)
++		return TRUE;
++
+ 	g_at_server_send_unsolicited(em->server, "RING");
+ =
+
+ 	if (!em->clip)
+-		return;
++		return TRUE;
+ =
+
+ 	c =3D find_call_with_status(em, CALL_STATUS_INCOMING);
+ =
+
++	/*
++	 * In case of waiting call becoming an incoming call, call status
++	 * change may not have been done yet, so try to find waiting call too
++	 */
+ 	if (c =3D=3D NULL)
+-		return;
++		c =3D find_call_with_status(em, CALL_STATUS_WAITING);
++
++	if (c =3D=3D NULL)
++		return TRUE;
+ =
+
+ 	switch (c->clip_validity) {
+ 	case CLIP_VALIDITY_VALID:
+@@ -397,22 +409,6 @@ static void notify_ring(struct ofono_emulator *em)
+ 		g_at_server_send_unsolicited(em->server, "+CLIP: \"\",128");
+ 		break;
+ 	}
+-}
+-
+-static gboolean send_callsetup_notification(gpointer user_data)
+-{
+-	struct ofono_emulator *em =3D user_data;
+-	struct indicator *call_ind;
+-
+-	if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP && em->slc =3D=3D FALSE)
+-		return TRUE;
+-
+-	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
+-
+-	if (call_ind->value =3D=3D OFONO_EMULATOR_CALL_INACTIVE)
+-		notify_ring(em);
+-	else
+-		notify_ccwa(em);
+ =
+
+ 	return TRUE;
+ }
+@@ -1078,7 +1074,10 @@ void ofono_emulator_set_indicator(struct ofono_emula=
+tor *em,
+ 	char buf[20];
+ 	struct indicator *ind;
+ 	struct indicator *call_ind;
++	struct indicator *cs_ind;
++	gboolean call;
+ 	gboolean callsetup;
++	gboolean waiting;
+ =
+
+ 	ind =3D find_indicator(em, name, &i);
+ =
+
+@@ -1089,16 +1088,20 @@ void ofono_emulator_set_indicator(struct ofono_emul=
+ator *em,
+ 	ind->value =3D value;
+ =
+
+ 	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
++	cs_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALLSETUP, NULL);
+ =
+
+-	callsetup =3D g_str_equal(name, OFONO_EMULATOR_IND_CALLSETUP);
++	call =3D (ind =3D=3D call_ind);
++	callsetup =3D (ind =3D=3D cs_ind);
+ =
+
+ 	/*
+ 	 * When callsetup indicator goes to Incoming and there is an active
+ 	 * call a +CCWA should be sent before +CIEV
+ 	 */
+-	if (callsetup && value =3D=3D OFONO_EMULATOR_CALLSETUP_INCOMING &&
+-			call_ind->value =3D=3D OFONO_EMULATOR_CALL_ACTIVE)
+-		send_callsetup_notification(em);
++	waiting =3D (callsetup && value =3D=3D OFONO_EMULATOR_CALLSETUP_INCOMING =
+&&
++			call_ind->value =3D=3D OFONO_EMULATOR_CALL_ACTIVE);
++
++	if (waiting)
++		notify_ccwa(em);
+ =
+
+ 	if (em->events_mode =3D=3D 3 && em->events_ind && em->slc) {
+ 		sprintf(buf, "+CIEV: %d,%d", i, ind->value);
+@@ -1106,21 +1109,24 @@ void ofono_emulator_set_indicator(struct ofono_emul=
+ator *em,
+ 	}
+ =
+
+ 	/*
+-	 * Ring timer should be started when callsetup indicator is set to
+-	 * Incoming.  If there is no active call, a first RING should be
+-	 * sent just after the +CIEV and should be stopped for all other
+-	 * values of callsetup
++	 * Ring timer should be started when:
++	 * - callsetup indicator is set to Incoming and there is no active call
++	 *   (not a waiting call)
++	 * - or call indicator is set to inactive while callsetup is already
++	 *   set to Incoming.
++	 * In those cases, a first RING should be sent just after the +CIEV
++	 * Ring timer should be stopped for all other values of callsetup
+ 	 */
+-	if (!callsetup)
++	if (!((callsetup && !waiting) ||
++			(call && value =3D=3D OFONO_EMULATOR_CALL_INACTIVE &&
++			cs_ind->value =3D=3D OFONO_EMULATOR_CALLSETUP_INCOMING)))
+ 		return;
+ =
+
+-	switch (value) {
++	switch (cs_ind->value) {
+ 	case OFONO_EMULATOR_CALLSETUP_INCOMING:
+-		if (call_ind->value =3D=3D OFONO_EMULATOR_CALL_INACTIVE)
+-			send_callsetup_notification(em);
+-
++		notify_ring(em);
+ 		em->callsetup_source =3D g_timeout_add_seconds(RING_TIMEOUT,
+-					send_callsetup_notification, em);
++							notify_ring, em);
+ 		break;
+ 	default:
+ 		if (em->callsetup_source > 0) {
+-- =
+
+1.7.1
 
 
- 1.  Make an incoming call to the remote AG phone number.
- 2.  Accept the incoming call using Ofono D-BUS call.
- 3.  Once the incoming call is active, create an outgoing call ( "Dial" ) u=
-sing Ofono D-BUS call.
-
-Problem Faced:
-The "Dial" method does not reply in this case. Hence, the outgoing call est=
-ablishment also does not happen.
-
-Request For Assistance:
-
-I would like to know if Ofono supports a multiple call feature like this.
-
-If anybody could succeed in making an outgoing call in the above explained =
-scenario,
-please let me know the make of the handset you could test with.
-
-Thanks in advance!
-
-Best Regards,
-Milan
-
-
-
-
-________________________________
-This message is for the designated recipient only and may contain privilege=
-d, proprietary, or otherwise private information. If you have received it i=
-n error, please notify the sender immediately and delete the original. Any =
-other use of the email by you is prohibited.
-
---===============9094976869789084494==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
-bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxuczpzdDE9
-InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgeG1sbnM9Imh0dHA6
-Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29u
-dGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBu
-YW1lPSJHZW5lcmF0b3IiIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDExIChmaWx0ZXJlZCBtZWRp
-dW0pIj4KPG86U21hcnRUYWdUeXBlIG5hbWVzcGFjZXVyaT0idXJuOnNjaGVtYXMtbWljcm9zb2Z0
-LWNvbTpvZmZpY2U6c21hcnR0YWdzIiBuYW1lPSJDaXR5IiAvPjxvOlNtYXJ0VGFnVHlwZSBuYW1l
-c3BhY2V1cmk9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgbmFt
-ZT0icGxhY2UiIC8+PCEtLVtpZiAhbXNvXT4KPHN0eWxlPgpzdDFcOip7YmVoYXZpb3I6dXJsKCNk
-ZWZhdWx0I2llb291aSkgfQo8L3N0eWxlPgo8IVtlbmRpZl0tLT48c3R5bGU+CjwhLS0KIC8qIEZv
-bnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseToiQm9vayBBbnRpcXVh
-IjsKCXBhbm9zZS0xOjIgNCA2IDIgNSAzIDUgMyAzIDQ7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMg
-Ki8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGlu
-OwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5
-OiJCb29rIEFudGlxdWEiO30KaDEKCXttYXJnaW4tdG9wOjEyLjBwdDsKCW1hcmdpbi1yaWdodDow
-aW47CgltYXJnaW4tYm90dG9tOjMuMHB0OwoJbWFyZ2luLWxlZnQ6MGluOwoJcGFnZS1icmVhay1h
-ZnRlcjphdm9pZDsKCWZvbnQtc2l6ZToxNC4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVh
-Ijt9CmgyCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFyZ2luLWJv
-dHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZvaWQ7Cglm
-b250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250LXN0eWxl
-Oml0YWxpYzt9CmgzCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFy
-Z2luLWJvdHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZv
-aWQ7Cglmb250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250
-LXdlaWdodDpub3JtYWw7fQpwLk1zb0hlYWRlciwgbGkuTXNvSGVhZGVyLCBkaXYuTXNvSGVhZGVy
-Cgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7
-Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuTXNvRm9vdGVyLCBsaS5Nc29Gb290ZXIs
-IGRpdi5Nc29Gb290ZXIKCXttYXJnaW46MGluOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9u
-dC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KYTpsaW5rLCBzcGFu
-Lk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30K
-YTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7Y29sb3I6IzYwNjQyMDsKCXRl
-eHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpwLkFCTE9DS1BBUkEsIGxpLkFCTE9DS1BBUkEsIGRp
-di5BQkxPQ0tQQVJBCgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQt
-c2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUJVTExFVCwgbGku
-QUJVTExFVCwgZGl2LkFCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdodDowaW47
-CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjE2LjU1cHQ7CgltYXJnaW4tYm90dG9t
-Oi4wMDAxcHQ7Cgl0ZXh0LWluZGVudDotMTYuNTVwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250
-LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUlOREVOVEVEQlVMTEVULCBsaS5BSU5ERU5URURC
-VUxMRVQsIGRpdi5BSU5ERU5URURCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdo
-dDowaW47CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjMzLjFwdDsKCW1hcmdpbi1i
-b3R0b206LjAwMDFwdDsKCXRleHQtaW5kZW50Oi0xNi41NXB0OwoJZm9udC1zaXplOjExLjBwdDsK
-CWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KcC5BSU5ERU5URURQQVJBLCBsaS5BSU5ERU5U
-RURQQVJBLCBkaXYuQUlOREVOVEVEUEFSQQoJe21hcmdpbi10b3A6MGluOwoJbWFyZ2luLXJpZ2h0
-OjBpbjsKCW1hcmdpbi1ib3R0b206MGluOwoJbWFyZ2luLWxlZnQ6MTYuNTVwdDsKCW1hcmdpbi1i
-b3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRp
-cXVhIjt9CnNwYW4uRW1haWxTdHlsZTIzCgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9z
-ZTsKCWZvbnQtZmFtaWx5OkFyaWFsOwoJY29sb3I6d2luZG93dGV4dDt9CkBwYWdlIFNlY3Rpb24x
-Cgl7c2l6ZTo1OTUuNDVwdCA4NDEuN3B0OwoJbWFyZ2luOjEuMGluIC43NWluIDEuMGluIC43NWlu
-O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9CiAvKiBMaXN0IERlZmluaXRpb25zICov
-CiBAbGlzdCBsMAoJe21zby1saXN0LWlkOjEwNTc2MjcyNzc7Cgltc28tbGlzdC10eXBlOmh5YnJp
-ZDsKCW1zby1saXN0LXRlbXBsYXRlLWlkczoxNjg2MTExMzggNjc2OTg3MDMgNjc2OTg3MTMgNjc2
-OTg3MTUgNjc2OTg3MDMgNjc2OTg3MTMgNjc2OTg3MTUgNjc2OTg3MDMgNjc2OTg3MTMgNjc2OTg3
-MTU7fQpAbGlzdCBsMDpsZXZlbDEKCXttc28tbGV2ZWwtdGFiLXN0b3A6LjVpbjsKCW1zby1sZXZl
-bC1udW1iZXItcG9zaXRpb246bGVmdDsKCXRleHQtaW5kZW50Oi0uMjVpbjt9Cm9sCgl7bWFyZ2lu
-LWJvdHRvbTowaW47fQp1bAoJe21hcmdpbi1ib3R0b206MGluO30KLS0+Cjwvc3R5bGU+CjwvaGVh
-ZD4KPGJvZHkgbGFuZz0iRU4tVVMiIGxpbms9ImJsdWUiIHZsaW5rPSIjNjA2NDIwIj4KPGRpdiBj
-bGFzcz0iU2VjdGlvbjEiPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNl
-PSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFs
-Ij5IaSw8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48
-Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7
-CmZvbnQtZmFtaWx5OkFyaWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8
-cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5
-bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5SZWNlbnRseSBJIHdhcyB0
-ZXN0aW5nIGEgc21hbGwgaGFuZHMgZnJlZSB1c2UgY2FzZSB1c2luZyBPZm9ubyh2ZXJzaW9uIDAu
-NDgpLjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxm
-b250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsK
-Zm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cjxw
-IGNsYXNzPSJNc29Ob3JtYWwiPjx1Pjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBz
-dHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPlNjZW5hcmlvPC9zcGFu
-PjwvZm9udD48L3U+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250
-LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsIj46PG86cD48L286cD48L3NwYW4+PC9mb250
-PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxz
-cGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+PG86cD4mbmJz
-cDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPG9sIHN0eWxlPSJtYXJnaW4tdG9wOjBpbiIgc3Rh
-cnQ9IjEiIHR5cGU9IjEiPgo8bGkgY2xhc3M9Ik1zb05vcm1hbCIgc3R5bGU9Im1zby1saXN0Omww
-IGxldmVsMSBsZm8xIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZv
-bnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwiPk1ha2UgYW4gaW5jb21pbmcgY2FsbCB0
-byB0aGUgcmVtb3RlIEFHIHBob25lIG51bWJlci48bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+Cjwv
-bGk+PGxpIGNsYXNzPSJNc29Ob3JtYWwiIHN0eWxlPSJtc28tbGlzdDpsMCBsZXZlbDEgbGZvMSI+
-PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0
-O2ZvbnQtZmFtaWx5OkFyaWFsIj5BY2NlcHQgdGhlIGluY29taW5nIGNhbGwgdXNpbmcgT2Zvbm8g
-RC1CVVMgY2FsbC4KPG86cD48L286cD48L3NwYW4+PC9mb250PjwvbGk+PGxpIGNsYXNzPSJNc29O
-b3JtYWwiIHN0eWxlPSJtc28tbGlzdDpsMCBsZXZlbDEgbGZvMSI+PGZvbnQgc2l6ZT0iMiIgZmFj
-ZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFs
-Ij5PbmNlIHRoZSBpbmNvbWluZyBjYWxsIGlzIGFjdGl2ZSwgY3JlYXRlIGFuIG91dGdvaW5nIGNh
-bGwgKCAmIzgyMjA7RGlhbCYjODIyMTsgKSB1c2luZyBPZm9ubyBELUJVUyBjYWxsLjxvOnA+PC9v
-OnA+PC9zcGFuPjwvZm9udD4KPC9saT48L29sPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBz
-aXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQt
-ZmFtaWx5OkFyaWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFz
-cz0iTXNvTm9ybWFsIj48dT48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9
-ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5Qcm9ibGVtIEZhY2VkOjxvOnA+
-PC9vOnA+PC9zcGFuPjwvZm9udD48L3U+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIiBzdHlsZT0i
-bWFyZ2luLWxlZnQ6LjI1aW4iPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHls
-ZT0iZm9udC1zaXplOjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCI+VGhlICYjODIyMDtEaWFsJiM4
-MjIxOyBtZXRob2QgZG9lcyBub3QgcmVwbHkgaW4gdGhpcyBjYXNlLiBIZW5jZSwgdGhlIG91dGdv
-aW5nIGNhbGwgZXN0YWJsaXNobWVudCBhbHNvIGRvZXMgbm90IGhhcHBlbi48bzpwPjwvbzpwPjwv
-c3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNl
-PSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFs
-Ij48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFs
-Ij48dT48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTox
-MC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5SZXF1ZXN0IEZvciBBc3Npc3RhbmNlPC9zcGFuPjwv
-Zm9udD48L3U+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNp
-emU6MTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsIj46PG86cD48L286cD48L3NwYW4+PC9mb250Pjwv
-cD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFu
-IHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+PG86cD4mbmJzcDs8
-L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0i
-MiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWls
-eTpBcmlhbCI+SSB3b3VsZCBsaWtlIHRvIGtub3cgaWYgT2Zvbm8gc3VwcG9ydHMgYSBtdWx0aXBs
-ZSBjYWxsIGZlYXR1cmUgbGlrZSB0aGlzLgo8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8
-cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5
-bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj48bzpwPiZuYnNwOzwvbzpw
-Pjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBm
-YWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFy
-aWFsIj5JZiBhbnlib2R5IGNvdWxkIHN1Y2NlZWQgaW4gbWFraW5nIGFuIG91dGdvaW5nIGNhbGwg
-aW4gdGhlIGFib3ZlIGV4cGxhaW5lZCBzY2VuYXJpbywKPG86cD48L286cD48L3NwYW4+PC9mb250
-PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxz
-cGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+cGxlYXNlIGxl
-dCBtZSBrbm93IHRoZSBtYWtlIG9mIHRoZSBoYW5kc2V0IHlvdSBjb3VsZCB0ZXN0IHdpdGguPG86
-cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6
-ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZh
-bWlseTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9
-Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250
-LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+VGhhbmtzIGluIGFkdmFuY2UhPG86cD48
-L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0i
-MiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWls
-eTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1z
-b05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNp
-emU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+QmVzdCBSZWdhcmRzLDxvOnA+PC9vOnA+PC9z
-cGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzdDE6cGxhY2UgdzpzdD0ib24i
-PjxzdDE6Q2l0eSB3OnN0PSJvbiI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0
-eWxlPSJmb250LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsIj5NaWxhbjwvc3Bhbj48L2Zv
-bnQ+PC9zdDE6Q2l0eT48L3N0MTpwbGFjZT48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNw
-YW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+PC9vOnA+
-PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZh
-Y2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJp
-YWwiPiZuYnNwOzxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3Jt
-YWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEw
-LjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48
-L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3Bh
-biBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7
-PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjwvZGl2Pgo8YnI+Cjxocj4KPGZvbnQgZmFjZT0iQXJp
-YWwiIGNvbG9yPSJHcmF5IiBzaXplPSIyIj5UaGlzIG1lc3NhZ2UgaXMgZm9yIHRoZSBkZXNpZ25h
-dGVkIHJlY2lwaWVudCBvbmx5IGFuZCBtYXkgY29udGFpbiBwcml2aWxlZ2VkLCBwcm9wcmlldGFy
-eSwgb3Igb3RoZXJ3aXNlIHByaXZhdGUgaW5mb3JtYXRpb24uIElmIHlvdSBoYXZlIHJlY2VpdmVk
-IGl0IGluIGVycm9yLCBwbGVhc2Ugbm90aWZ5IHRoZSBzZW5kZXIgaW1tZWRpYXRlbHkgYW5kIGRl
-bGV0ZSB0aGUgb3JpZ2luYWwuCiBBbnkgb3RoZXIgdXNlIG9mIHRoZSBlbWFpbCBieSB5b3UgaXMg
-cHJvaGliaXRlZC48YnI+CjwvZm9udD4KPC9ib2R5Pgo8L2h0bWw+Cg==
-
---===============9094976869789084494==--
+--===============2647658001473746520==--
 
