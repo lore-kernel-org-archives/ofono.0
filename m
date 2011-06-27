@@ -1,57 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============7717454083994122343=="
+Content-Type: multipart/mixed; boundary="===============7576715437472327052=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: PDP Context Activation
-Date: Mon, 27 Jun 2011 07:46:51 -0500
-Message-ID: <4E087BBB.2010007@gmail.com>
-In-Reply-To: <BANLkTikW3ior-TXzXAdrnOJf67DXoh2QxA@mail.gmail.com>
+From: ofonoconn@encambio.com
+Subject: Problem detecting/using wwan0 modem
+Date: Mon, 27 Jun 2011 17:45:28 +0200
+Message-ID: <20110627154528.GA26618@debut.europalab.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7717454083994122343==
+--===============7576715437472327052==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yuvaraj,
 
-Please do not top-post on this mailing list.
+Hello list,
 
-On 06/27/2011 06:16 AM, Yuvaraj Ragupathi wrote:
-> My APN details are:
-> =
+when using distros integrating network-manager, I can connect to the
+Internet using my GSM/GPRS/UMTS WWAN modem and would like to be able
+to do so with Linux distros (MeeGo) which integrate ofono and
+connman. This is not very well documented, so please help.
 
-> $ ./list-contexts
-> [ /ste0 ]
->     [ /ste0/context3 ]
->         Username =3D
->         Protocol =3D ip
->         Name =3D internet
->         Settings =3D { }
->         Active =3D 0
->         AccessPointName =3D TATA.DOCOMO.INTERNET
->         Password =3D
->         Type =3D internet
-> =
+GOAL
+----
+I want to be able to select from between eth0, wlan0, and wwan0
+from the ofono/connman connection applet in MeeGo.
 
-> $ ./activate-context
-> Error activating /ste0/context3: org.ofono.Error.Failed: Operation failed
-> =
+PROBLEM
+-------
+Ofono (or connman, not sure which) presents connection options after
+detecting that wired and wireless ethernet interfaces exist. In my
+netbook, no option to use the F3607gw (labeled Hewlett-Packard below)
+WWAN modem device wwan0 is available.
 
-> This is happening with st board on Ubuntu
-> =
-
-> =
-
-> Any updates on this issue?
-> =
+ENVIRONMENT
+-----------
+$ lsusb
+Bus 002 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+[...]
+Bus 001 Device 006: ID 03f0:271d Hewlett-Packard =
 
 
-None of the core oFono team has access to your hardware, so we can't be
-of much help.  I suggest you seek help from your hardware vendor.
+$ ifconfig -a
+eth0      Link encap:Ethernet  HWaddr 12:34:56:78:9A:BC  =
+
+[...]
+lo        Link encap:Local Loopback  =
+
+[...]
+wlan0     Link encap:Ethernet  HWaddr 12:34:56:78:9A:BC  =
+
+[...]
+wwan0     Link encap:Ethernet  HWaddr 12:34:56:78:9A:BC
+          BROADCAST MULTICAST  MTU:1500  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 =
+
+          RX bytes:0 (0.0 b)  TX bytes:0 (0.0 b)
+
+$ /usr/lib/ofono/test/list-modems
+$
+
+$ dmesg | grep wwan
+[   11.385780] cdc_ether 1-5:1.6: wwan0: register 'cdc_ether' at usb-0000:0=
+0:1d.7-5, Mobile Broadband Network Device, 02:80:37:ec:02:00
+[ 2505.050955] cdc_ether 1-5:1.6: wwan0: unregister 'cdc_ether' usb-0000:00=
+:1d.7-5, Mobile Broadband Network Device
+[ 2505.609492] cdc_ether 1-5:1.6: wwan0: register 'cdc_ether' at usb-0000:0=
+0:1d.7-5, Mobile Broadband Network Device, 02:80:37:ec:02:00
+
+$ lsmod
+Module                  Size  Used by
+iptable_nat             3545  0 =
+
+nf_nat                 16042  1 iptable_nat
+ath9k                  65740  0 =
+
+ideapad_laptop          3529  0 =
+
+zaurus                  3045  0 =
+
+battery                 8862  0 =
+
+uvcvideo               50368  0 =
+
+ath9k_common            1977  1 ath9k
+cdc_ether               5744  1 zaurus
+cdc_acm                15767  0 =
+
+serio_raw               3821  0 =
+
+joydev                  8205  0 =
+
+cdc_wdm                 8885  0 =
+
+ath9k_hw              243316  2 ath9k,ath9k_common
+usbnet                 19620  2 zaurus,cdc_ether
+
+What could the problem be?
 
 Regards,
--Denis
+Michael
 
---===============7717454083994122343==--
+--===============7576715437472327052==--
 
