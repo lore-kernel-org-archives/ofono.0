@@ -1,43 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============4242216818443238591=="
+Content-Type: multipart/mixed; boundary="===============1008157853535806709=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v3 4/4] gsmdial: Activate ACFC and PFC options on GAtPPP object
-Date: Tue, 28 Jun 2011 12:03:47 +0200
-Message-ID: <1309255427-10308-5-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v3 3/4] emulator: Activate ACFC and PFC options onto GAtPPP
+ object
+Date: Tue, 28 Jun 2011 12:03:46 +0200
+Message-ID: <1309255427-10308-4-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1309255427-10308-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4242216818443238591==
+--===============1008157853535806709==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gsmdial.c |    3 +++
+ src/emulator.c |    3 +++
  1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index 1116984..21df2f9 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -372,6 +372,9 @@ static void connect_cb(gboolean ok, GAtResult *result, =
-gpointer user_data)
+diff --git a/src/emulator.c b/src/emulator.c
+index 906404d..c432b54 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -150,6 +150,9 @@ static void request_private_network_cb(
+ 	g_at_ppp_set_server_info(em->ppp, pns->peer_ip,
+ 					pns->primary_dns, pns->secondary_dns);
  =
 
- 	g_at_ppp_set_credentials(ppp, option_username, option_password);
- =
-
-+	g_at_ppp_set_acfc_enabled(ppp);
-+	g_at_ppp_set_pfc_enabled(ppp);
++	g_at_ppp_set_acfc_enabled(em->ppp);
++	g_at_ppp_set_pfc_enabled(em->ppp);
 +
- 	/* set connect and disconnect callbacks */
- 	g_at_ppp_set_connect_function(ppp, ppp_connect, NULL);
- 	g_at_ppp_set_disconnect_function(ppp, ppp_disconnect, NULL);
+ 	g_at_ppp_set_credentials(em->ppp, "", "");
+ 	g_at_ppp_set_debug(em->ppp, emulator_debug, "PPP");
+ =
+
 -- =
 
 1.7.1
 
 
---===============4242216818443238591==--
+--===============1008157853535806709==--
 
