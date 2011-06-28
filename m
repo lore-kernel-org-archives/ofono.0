@@ -1,104 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============3666883604699184490=="
+Content-Type: multipart/mixed; boundary="===============2060624434446055206=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v3 1/4] GAtPPP: Add ACFC option support
-Date: Tue, 28 Jun 2011 12:03:51 -0500
-Message-ID: <4E0A0977.8050801@gmail.com>
-In-Reply-To: <1309255427-10308-2-git-send-email-guillaume.zajac@linux.intel.com>
+From: ofonoconn@encambio.com
+Subject: Re: Problem using wwan0 modem
+Date: Tue, 28 Jun 2011 22:01:53 +0200
+Message-ID: <20110628200153.GA20542@debut.europalab.com>
+In-Reply-To: <4E0A2C1A.8000806@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3666883604699184490==
+--===============2060624434446055206==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
 
-> @@ -658,6 +703,11 @@ void g_at_ppp_set_server_info(GAtPPP *ppp, const cha=
-r *remote,
->  	ipcp_set_server_info(ppp->ipcp, r, d1, d2);
->  }
->  =
+Hello Thierry,
 
-> +void g_at_ppp_set_acfc_enabled(GAtPPP *ppp)
+On Tues., juin 28, 2011, Thierry Boureille wrote:
+>I have the same problem I guess. I use ofono 0.40 and connman since
+>release 0.64 which was working well.  after migration to connman
+>0.75 I've recently noticed on that ip address is not mounted
+>anymore on my gsm interface after my modem is connected and I have
+>equivalent ifconfig result than you
+>
+Not sure what you mean. It's possible that we have a common ofono
+or connman problem, but the solution that helped me use list-modems
+to 'see' my modem is not in your patch. Instead, it is in udev.c.
 
-I really do want the signature to be g_at_ppp_set_acfc_enabled(GAtPPP
-*ppp, gboolean enabled)
+...but because I'm having problems even after being able to properly
+detect the modem, it may be that the next problem is solved by
+looking at your patch. Thanks for the help with that.
 
-There are cases where we might re-use the PPP object with different
-parameters.
-
-> +{
-> +	lcp_turn_on_acfc(ppp->lcp);
-> +}
-> +
->  static GAtPPP *ppp_init_common(gboolean is_server, guint32 ip)
->  {
->  	GAtPPP *ppp;
-
-<snip>
-
-> @@ -100,13 +101,19 @@ static void lcp_generate_config_options(struct lcp_=
-data *lcp)
->  		len +=3D 4;
->  	}
->  =
-
-> +	if (lcp->req_options & REQ_OPTION_ACFC) {
-> +		lcp->options[len] =3D ACFC;
-> +		lcp->options[len + 1] =3D 2;
-> +
-> +		len +=3D 2;
-> +	}
-> +
->  	lcp->options_len =3D len;
->  }
->  =
-
->  static void lcp_reset_config_options(struct lcp_data *lcp)
->  {
->  	/* Using the default ACCM */
-> -
-
-Please don't include random whitespace fixes as part of a larger patch,
-send these separately.  And in this case the empty line is there on
-purpose, since the comment does not refer to
-lcp_generate_config_options, but to the fact that options by default are
-empty.
-
->  	lcp_generate_config_options(lcp);
->  }
->  =
-
-> @@ -286,9 +293,15 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pp=
-pcp,
->  			break;
->  		case MAGIC_NUMBER:
->  		case PFC:
-> -		case ACFC:
->  			/* don't care */
->  			break;
-> +		case ACFC:
-> +		{
-> +			struct lcp_data *lcp =3D pppcp_get_data(pppcp);
-
-Please add a newline here
-
-> +			if (lcp->req_options & REQ_OPTION_ACFC)
-> +				ppp_set_xmit_acfc(ppp, TRUE);
-
-And a newline here
-
-> +			break;
-> +		}
->  		}
->  	}
->  =
-
+>please find here the patch I've just submitted :
+>http://lists.connman.net/pipermail/connman/2011-June/005156.html
+>
+Just looked, but what problem are you trying to solve with that?
+If you type ifconfig wwan0 do you get something that you don't
+expect? I think the interfaces uses DHCP to get an IP address
+from a GPRS carrier rather than PPP, but I'm rather new to this.
 
 Regards,
--Denis
+Michael
 
---===============3666883604699184490==--
+--===============2060624434446055206==--
 
