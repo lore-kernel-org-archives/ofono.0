@@ -1,65 +1,144 @@
-Content-Type: multipart/mixed; boundary="===============8622130756855492866=="
+Content-Type: multipart/mixed; boundary="===============0515110458413013359=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 03/11] stk: Add support for the proactive command 'Get channel
- status'
-Date: Tue, 28 Jun 2011 19:16:15 +0200
-Message-ID: <1309281383-6605-4-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 04/11] stk: Add support for the proactive command 'Close
+ channel'
+Date: Tue, 28 Jun 2011 19:16:16 +0200
+Message-ID: <1309281383-6605-5-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1309281383-6605-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8622130756855492866==
+--===============0515110458413013359==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |   15 +++++++++++++++
- 1 files changed, 15 insertions(+), 0 deletions(-)
+ src/stk.c |   64 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 64 insertions(+), 0 deletions(-)
 
 diff --git a/src/stk.c b/src/stk.c
-index 4bf6a08..835922f 100644
+index 835922f..8426af7 100644
 --- a/src/stk.c
 +++ b/src/stk.c
-@@ -2817,6 +2817,16 @@ static gboolean handle_command_open_channel(const st=
+@@ -502,6 +502,28 @@ static void cancel_pending_dtmf(struct ofono_stk *stk)
+ 		__ofono_voicecall_tone_cancel(vc, stk->dtmf_id);
+ }
+ =
+
++static void ofono_stk_deactivate_context_cb(int error, void *data)
++{
++}
++
++static void stk_close_channel(struct ofono_stk *stk)
++{
++	int err;
++
++	err =3D __ofono_gprs_deactivate_context(stk->context.cid,
++			ofono_stk_deactivate_context_cb, stk);
++
++	if (err < 0) {
++		stk->channel.id =3D 0;
++		stk->channel.status =3D
++				STK_CHANNEL_PACKET_DATA_SERVICE_NOT_ACTIVATED;
++
++		if (stk->pending_cmd && stk->pending_cmd->type =3D=3D
++				STK_COMMAND_TYPE_CLOSE_CHANNEL)
++			send_simple_response(stk, STK_RESULT_TYPE_NOT_CAPABLE);
++	}
++}
++
+ static void user_termination_cb(enum stk_agent_result result, void *user_d=
+ata)
+ {
+ 	struct ofono_stk *stk =3D user_data;
+@@ -516,6 +538,9 @@ static void user_termination_cb(enum stk_agent_result r=
+esult, void *user_data)
+ 	}
+ =
+
+ 	send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
++
++	if (stk->channel.id)
++		stk_close_channel(stk);
+ }
+ =
+
+ static void stk_alpha_id_set(struct ofono_stk *stk,
+@@ -650,6 +675,8 @@ out:
+ 	if (stk_respond(stk, &rsp, stk_command_cb))
+ 		stk_command_cb(&failure, stk);
+ =
+
++	if (rsp.result.type !=3D STK_RESULT_TYPE_SUCCESS)
++		stk_close_channel(stk);
+ }
+ =
+
+ =
+
+@@ -2817,6 +2844,38 @@ static gboolean handle_command_open_channel(const st=
 ruct stk_command *cmd,
  	return FALSE;
  }
  =
 
-+static gboolean handle_command_get_channel_status(const struct stk_command=
- *cmd,
++static gboolean handle_command_close_channel(const struct stk_command *cmd,
 +						struct stk_response *rsp,
 +						struct ofono_stk *stk)
 +{
-+	rsp->result.type =3D STK_RESULT_TYPE_SUCCESS;
-+	rsp->channel_status.channel.id =3D stk->channel.id;
-+	rsp->channel_status.channel.status =3D stk->channel.status;
-+	return TRUE;
++	const struct stk_command_close_channel *cc =3D &cmd->close_channel;
++
++	/* Check if channel identifier is valid */
++	if (cmd->dst !=3D (stk->channel.id | 0x20)) {
++		unsigned char addnl_info[1];
++
++		addnl_info[1] =3D STK_RESULT_ADDNL_BIP_PB_CHANNEL_ID_NOT_VALID;
++		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_BIP_ERROR,
++					addnl_info);
++		return TRUE;
++	}
++
++	/*
++	 * Don't inform the user about the link closing phase if AID is
++	 * a null data object or is not provided
++	 */
++	if (cc->alpha_id && cc->alpha_id[0] !=3D '\0')
++		stk_alpha_id_set(stk, cc->alpha_id, &cc->text_attr,
++							&cc->icon_id);
++
++	stk->respond_on_exit =3D TRUE;
++	stk->cancel_cmd =3D stk_request_cancel;
++
++	stk_close_channel(stk);
++
++	return FALSE;
 +}
 +
- static void stk_proactive_command_cancel(struct ofono_stk *stk)
- {
- 	if (stk->immediate_response)
-@@ -3015,6 +3025,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
+ static gboolean handle_command_get_channel_status(const struct stk_command=
+ *cmd,
+ 						struct stk_response *rsp,
+ 						struct ofono_stk *stk)
+@@ -3025,6 +3084,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
 _stk *stk,
  							&rsp, stk);
  		break;
  =
 
-+	case STK_COMMAND_TYPE_GET_CHANNEL_STATUS:
-+		respond =3D handle_command_get_channel_status(stk->pending_cmd,
++	case STK_COMMAND_TYPE_CLOSE_CHANNEL:
++		respond =3D handle_command_close_channel(stk->pending_cmd,
 +							&rsp, stk);
 +		break;
 +
- 	default:
- 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
- 		break;
+ 	case STK_COMMAND_TYPE_GET_CHANNEL_STATUS:
+ 		respond =3D handle_command_get_channel_status(stk->pending_cmd,
+ 							&rsp, stk);
 -- =
 
 1.7.1
 
 
---===============8622130756855492866==--
+--===============0515110458413013359==--
 
