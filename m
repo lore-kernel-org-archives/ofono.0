@@ -1,45 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============5761916999179739067=="
+Content-Type: multipart/mixed; boundary="===============8290977595618201730=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH_v3 1/4] GAtPPP: Add ACFC option support
-Date: Tue, 28 Jun 2011 18:24:22 -0700
-Message-ID: <1309310665.2208.29.camel@aeonflux>
-In-Reply-To: <4E0A0977.8050801@gmail.com>
+Date: Tue, 28 Jun 2011 18:29:52 -0500
+Message-ID: <4E0A63F0.8070607@gmail.com>
+In-Reply-To: <1309310665.2208.29.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5761916999179739067==
+--===============8290977595618201730==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Marcel,
 
-> > @@ -658,6 +703,11 @@ void g_at_ppp_set_server_info(GAtPPP *ppp, const c=
+On 06/28/2011 08:24 PM, Marcel Holtmann wrote:
+> Hi Denis,
+> =
+
+>>> @@ -658,6 +703,11 @@ void g_at_ppp_set_server_info(GAtPPP *ppp, const c=
 har *remote,
-> >  	ipcp_set_server_info(ppp->ipcp, r, d1, d2);
-> >  }
-> >  =
+>>>  	ipcp_set_server_info(ppp->ipcp, r, d1, d2);
+>>>  }
+>>>  =
 
-> > +void g_at_ppp_set_acfc_enabled(GAtPPP *ppp)
+>>> +void g_at_ppp_set_acfc_enabled(GAtPPP *ppp)
+>>
+>> I really do want the signature to be g_at_ppp_set_acfc_enabled(GAtPPP
+>> *ppp, gboolean enabled)
+>>
+>> There are cases where we might re-use the PPP object with different
+>> parameters.
 > =
 
-> I really do want the signature to be g_at_ppp_set_acfc_enabled(GAtPPP
-> *ppp, gboolean enabled)
-> =
+> what is wrong with just g_at_ppp_set_acfc(GAtPPP *ppp, gboolean enabled)
+> as function name. Duplicating enabled in the function name and as
+> parameter seems to be bit odd.
 
-> There are cases where we might re-use the PPP object with different
-> parameters.
+For APIs I generally prefer:
 
-what is wrong with just g_at_ppp_set_acfc(GAtPPP *ppp, gboolean enabled)
-as function name. Duplicating enabled in the function name and as
-parameter seems to be bit odd.
+_set_foo() when foo is a 'thing', e.g int/string/struct/etc
 
-Regards
+and _set_foo_enabled() when foo is on/off as that intent is clearer when
+reading the code.
 
-Marcel
+Regards,
+-Denis
 
-
-
---===============5761916999179739067==--
+--===============8290977595618201730==--
 
