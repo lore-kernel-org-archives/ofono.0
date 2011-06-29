@@ -1,286 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============2379191437612638928=="
+Content-Type: multipart/mixed; boundary="===============2340216534802038528=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v4 2/4] GAtPPP: Add PFC option support
-Date: Wed, 29 Jun 2011 10:20:24 +0200
-Message-ID: <1309335626-32202-3-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v4 3/4] emulator: Activate ACFC and PFC options onto GAtPPP
+ object
+Date: Wed, 29 Jun 2011 10:20:25 +0200
+Message-ID: <1309335626-32202-4-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1309335626-32202-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2379191437612638928==
+--===============2340216534802038528==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatppp.c  |   63 +++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- gatchat/gatppp.h  |    1 +
- gatchat/ppp.h     |    4 +++
- gatchat/ppp_lcp.c |   35 +++++++++++++++++++++++++++--
- 4 files changed, 99 insertions(+), 4 deletions(-)
+ src/emulator.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index 42b3224..919fd2f 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -84,6 +84,7 @@ struct _GAtPPP {
- 	guint guard_timeout_source;
- 	gboolean suspended;
- 	gboolean xmit_acfc;
-+	gboolean xmit_pfc;
- };
+diff --git a/src/emulator.c b/src/emulator.c
+index 906404d..2e1300e 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -150,6 +150,9 @@ static void request_private_network_cb(
+ 	g_at_ppp_set_server_info(em->ppp, pns->peer_ip,
+ 					pns->primary_dns, pns->secondary_dns);
  =
 
- void ppp_debug(GAtPPP *ppp, const char *str)
-@@ -172,6 +173,7 @@ static void ppp_receive(const unsigned char *buf, gsize=
- len, void *data)
- 	struct ppp_header *header =3D (struct ppp_header *) buf;
- 	gboolean acfc_frame =3D (header->address !=3D PPP_ADDR_FIELD
- 			|| header->control !=3D PPP_CTRL);
-+	gboolean pfc_frame =3D FALSE;
- 	guint16 protocol;
- 	const guint8 *packet;
- =
-
-@@ -183,6 +185,20 @@ static void ppp_receive(const unsigned char *buf, gsiz=
-e len, void *data)
- 		packet =3D ppp_info(buf);
- 	}
- =
-
-+	pfc_frame =3D (protocol !=3D LCP_PROTOCOL && protocol !=3D CHAP_PROTOCOL =
-&&
-+			protocol !=3D IPCP_PROTO && protocol !=3D PPP_IP_PROTO);
++	g_at_ppp_set_acfc_enabled(em->ppp, TRUE);
++	g_at_ppp_set_pfc_enabled(em->ppp, TRUE);
 +
-+	if (pfc_frame) {
-+		guint8 proto =3D (protocol >> 8) & 0xFF ;
-+		packet =3D packet - 1;
-+		/*
-+		 * The only protocol that can be compressed is PPP_IP_PROTO
-+		 * because first byte is 0x00.
-+		 */
-+		if (proto =3D=3D PPP_IP_COMPRESSED_PROTO)
-+			protocol =3D PPP_IP_PROTO;
-+	}
-+
- 	if (ppp_drop_packet(ppp, protocol))
- 		return;
+ 	g_at_ppp_set_credentials(em->ppp, "", "");
+ 	g_at_ppp_set_debug(em->ppp, emulator_debug, "PPP");
  =
 
-@@ -264,6 +280,32 @@ static void ppp_send_acfc_frame(GAtPPP *ppp, guint8 *p=
-acket,
- 	if (ppp->xmit_acfc)
- 		offset =3D 2;
- =
-
-+	/* We remove the only address and control field */
-+	if (g_at_hdlc_send(ppp->hdlc, packet + offset,
-+				infolen + sizeof(*header) - offset)
-+			=3D=3D FALSE)
-+		DBG(ppp, "Failed to send a frame\n");
-+}
-+
-+static void ppp_send_acfc_pfc_frame(GAtPPP *ppp, guint8 *packet,
-+					guint infolen)
-+{
-+	struct ppp_header *header =3D (struct ppp_header *) packet;
-+	guint offset =3D 0;
-+
-+	if (ppp->xmit_acfc && ppp->xmit_pfc)
-+		offset =3D 3;
-+	else if (ppp->xmit_acfc)
-+		offset =3D 2;
-+	else if (ppp->xmit_pfc) {
-+		/*
-+		 * We remove only the 1st byte that is 0x00 of protocol field.
-+		 */
-+		packet[2] =3D packet[1];
-+		packet[1] =3D packet[0];
-+		offset =3D 1;
-+	}
-+
- 	if (g_at_hdlc_send(ppp->hdlc, packet + offset,
- 				infolen + sizeof(*header) - offset)
- 			=3D=3D FALSE)
-@@ -285,9 +327,18 @@ void ppp_transmit(GAtPPP *ppp, guint8 *packet, guint i=
-nfolen)
- 		break;
- 	case CHAP_PROTOCOL:
- 	case IPCP_PROTO:
--	case PPP_IP_PROTO:
-+		/*
-+		 * We can't use PFC option because first byte of CHAP_PROTOCOL
-+		 * and IPCP_PROTO is not equal to 0x00
-+		 */
- 		ppp_send_acfc_frame(ppp, packet, infolen);
- 		break;
-+	case PPP_IP_PROTO:
-+		/*
-+		 * We can't use both compression options if they are negotiated
-+		 */
-+		ppp_send_acfc_pfc_frame(ppp, packet, infolen);
-+		break;
- 	}
- }
- =
-
-@@ -435,6 +486,11 @@ void ppp_set_xmit_acfc(GAtPPP *ppp, gboolean acfc)
- 	ppp->xmit_acfc =3D acfc;
- }
- =
-
-+void ppp_set_xmit_pfc(GAtPPP *ppp, gboolean pfc)
-+{
-+	ppp->xmit_pfc =3D pfc;
-+}
-+
- static void io_disconnect(gpointer user_data)
- {
- 	GAtPPP *ppp =3D user_data;
-@@ -708,6 +764,11 @@ void g_at_ppp_set_acfc_enabled(GAtPPP *ppp, gboolean e=
-nabled)
- 	lcp_set_acfc_enabled(ppp->lcp, enabled);
- }
- =
-
-+void g_at_ppp_set_pfc_enabled(GAtPPP *ppp, gboolean enabled)
-+{
-+	lcp_set_pfc_enabled(ppp->lcp, enabled);
-+}
-+
- static GAtPPP *ppp_init_common(gboolean is_server, guint32 ip)
- {
- 	GAtPPP *ppp;
-diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
-index 1544b31..fcaf3a9 100644
---- a/gatchat/gatppp.h
-+++ b/gatchat/gatppp.h
-@@ -80,6 +80,7 @@ void g_at_ppp_set_server_info(GAtPPP *ppp, const char *re=
-mote_ip,
- 				const char *dns1, const char *dns2);
- =
-
- void g_at_ppp_set_acfc_enabled(GAtPPP *ppp, gboolean enabled);
-+void g_at_ppp_set_pfc_enabled(GAtPPP *ppp, gboolean enabled);
- =
-
- #ifdef __cplusplus
- }
-diff --git a/gatchat/ppp.h b/gatchat/ppp.h
-index 41bcf7b..414d2df 100644
---- a/gatchat/ppp.h
-+++ b/gatchat/ppp.h
-@@ -27,6 +27,8 @@
- #define PPP_IP_PROTO	0x0021
- #define MD5		5
- =
-
-+#define PPP_IP_COMPRESSED_PROTO 0x21
-+
- #define DBG(p, fmt, arg...) do {				\
- 	char *str =3D g_strdup_printf("%s:%s() " fmt, __FILE__,	\
- 					__FUNCTION__ , ## arg); \
-@@ -96,6 +98,7 @@ struct pppcp_data *lcp_new(GAtPPP *ppp, gboolean dormant);
- void lcp_free(struct pppcp_data *lcp);
- void lcp_protocol_reject(struct pppcp_data *lcp, guint8 *packet, gsize len=
-);
- void lcp_set_acfc_enabled(struct pppcp_data *pppcp, gboolean enabled);
-+void lcp_set_pfc_enabled(struct pppcp_data *pppcp, gboolean enabled);
- =
-
- /* IPCP related functions */
- struct pppcp_data *ipcp_new(GAtPPP *ppp, gboolean is_server, guint32 ip);
-@@ -133,4 +136,5 @@ void ppp_set_recv_accm(GAtPPP *ppp, guint32 accm);
- void ppp_set_xmit_accm(GAtPPP *ppp, guint32 accm);
- void ppp_set_mtu(GAtPPP *ppp, const guint8 *data);
- void ppp_set_xmit_acfc(GAtPPP *ppp, gboolean acfc);
-+void ppp_set_xmit_pfc(GAtPPP *ppp, gboolean pfc);
- struct ppp_header *ppp_packet_new(gsize infolen, guint16 protocol);
-diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
-index c86a7d8..01b36bf 100644
---- a/gatchat/ppp_lcp.c
-+++ b/gatchat/ppp_lcp.c
-@@ -58,12 +58,13 @@ enum lcp_options {
- 	ACFC			=3D 8,
- };
- =
-
--/* Maximum size of all options, we only ever request ACCM, MRU and ACFC */
--#define MAX_CONFIG_OPTION_SIZE 12
-+/* Maximum size of all options, we only ever request ACCM, MRU, ACFC and P=
-FC */
-+#define MAX_CONFIG_OPTION_SIZE 14
- =
-
- #define REQ_OPTION_ACCM	0x1
- #define REQ_OPTION_MRU	0x2
- #define REQ_OPTION_ACFC	0x4
-+#define REQ_OPTION_PFC	0x8
- =
-
- struct lcp_data {
- 	guint8 options[MAX_CONFIG_OPTION_SIZE];
-@@ -108,6 +109,13 @@ static void lcp_generate_config_options(struct lcp_dat=
-a *lcp)
- 		len +=3D 2;
- 	}
- =
-
-+	if (lcp->req_options & REQ_OPTION_PFC) {
-+		lcp->options[len] =3D PFC;
-+		lcp->options[len + 1] =3D 2;
-+
-+		len +=3D 2;
-+	}
-+
- 	lcp->options_len =3D len;
- }
- =
-
-@@ -293,9 +301,17 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppc=
-p,
- 			ppp_set_mtu(ppp, ppp_option_iter_get_data(&iter));
- 			break;
- 		case MAGIC_NUMBER:
--		case PFC:
- 			/* don't care */
- 			break;
-+		case PFC:
-+		{
-+			struct lcp_data *lcp =3D pppcp_get_data(pppcp);
-+
-+			if (lcp->req_options & REQ_OPTION_PFC)
-+				ppp_set_xmit_pfc(ppp, TRUE);
-+
-+			break;
-+		}
- 		case ACFC:
- 		{
- 			struct lcp_data *lcp =3D pppcp_get_data(pppcp);
-@@ -367,3 +383,16 @@ void lcp_set_acfc_enabled(struct pppcp_data *pppcp, gb=
-oolean enabled)
- 	lcp_generate_config_options(lcp);
- 	pppcp_set_local_options(pppcp, lcp->options, lcp->options_len);
- }
-+
-+void lcp_set_pfc_enabled(struct pppcp_data *pppcp, gboolean enabled)
-+{
-+	struct lcp_data *lcp =3D pppcp_get_data(pppcp);
-+
-+	if (enabled =3D=3D TRUE)
-+		lcp->req_options |=3D REQ_OPTION_PFC;
-+	else
-+		lcp->req_options &=3D ~REQ_OPTION_PFC;
-+
-+	lcp_generate_config_options(lcp);
-+	pppcp_set_local_options(pppcp, lcp->options, lcp->options_len);
-+}
 -- =
 
 1.7.1
 
 
---===============2379191437612638928==--
+--===============2340216534802038528==--
 
