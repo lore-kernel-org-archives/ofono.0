@@ -1,52 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============2825694595275221998=="
+Content-Type: multipart/mixed; boundary="===============3793038133352885493=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@linux.intel.com>
-Subject: [PATCH 1/2] voicecall: manage multiparty list in AT+CHLD=3
-Date: Wed, 29 Jun 2011 21:38:52 +0200
-Message-ID: <1309376333-6076-2-git-send-email-frederic.dalleau@linux.intel.com>
+Subject: [PATCH 2/2] voicecall: manage multiparty list in AT+CHLD=2X
+Date: Wed, 29 Jun 2011 21:38:53 +0200
+Message-ID: <1309376333-6076-3-git-send-email-frederic.dalleau@linux.intel.com>
 In-Reply-To: <1309376333-6076-1-git-send-email-frederic.dalleau@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2825694595275221998==
+--===============3793038133352885493==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/voicecall.c |   65 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 64 insertions(+), 1 deletions(-)
+ src/voicecall.c |   60 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+++-
+ 1 files changed, 58 insertions(+), 2 deletions(-)
 
 diff --git a/src/voicecall.c b/src/voicecall.c
-index 9620838..8e4ab58 100644
+index 8e4ab58..e55f44b 100644
 --- a/src/voicecall.c
 +++ b/src/voicecall.c
-@@ -94,6 +94,12 @@ struct voicecall {
- 	ofono_bool_t remote_multiparty;
- };
- =
-
-+struct mpty_cb_info {
-+	struct ofono_voicecall *vc;
-+	struct ofono_emulator *em;
-+	int id;
-+};
-+
- struct dial_request {
- 	struct ofono_voicecall *vc;
- 	char *message;
-@@ -2710,6 +2716,48 @@ static void emulator_generic_cb(const struct ofono_e=
-rror *error, void *data)
- 	ofono_emulator_send_final(em, error);
+@@ -2756,6 +2756,38 @@ static void emulator_mpty_join_cb(const struct ofono=
+_error *error, void *data)
+ 	g_free(mp);
  }
  =
 
-+static void emulator_mpty_join_cb(const struct ofono_error *error, void *d=
-ata)
++static void emulator_mpty_private_chat_cb(const struct ofono_error *error,
++							void *data)
 +{
 +	struct mpty_cb_info *mp =3D data;
 +	GSList *old;
++	GSList *l;
 +
 +	ofono_emulator_send_final(mp->em, error);
 +
@@ -55,53 +42,54 @@ ata)
 +		return;
 +	}
 +
-+	/*
-+	 * We just created a multiparty call, gather all held
-+	 * active calls and add them to the multiparty list
-+	 */
-+	old =3D mp->vc->multiparty_list;
-+	mp->vc->multiparty_list =3D 0;
++	old =3D g_slist_copy(mp->vc->multiparty_list);
 +
-+	mp->vc->multiparty_list =3D g_slist_concat(mp->vc->multiparty_list,
-+						voicecalls_held_list(mp->vc));
++	l =3D g_slist_find_custom(mp->vc->multiparty_list,
++				GINT_TO_POINTER(mp->id), call_compare_by_id);
 +
-+	mp->vc->multiparty_list =3D g_slist_concat(mp->vc->multiparty_list,
-+						voicecalls_active_list(mp->vc));
++	if (l) {
++		mp->vc->multiparty_list =3D
++			g_slist_remove(mp->vc->multiparty_list, l->data);
 +
-+	mp->vc->multiparty_list =3D g_slist_sort(mp->vc->multiparty_list,
-+						call_compare);
-+
-+	if (g_slist_length(mp->vc->multiparty_list) < 2) {
-+		ofono_error("Created multiparty call, but size is less than 2"
-+				" panic!");
-+
-+		return;
++		if (mp->vc->multiparty_list->next =3D=3D NULL) {
++			g_slist_free(mp->vc->multiparty_list);
++			mp->vc->multiparty_list =3D 0;
++		}
 +	}
 +
 +	voicecalls_multiparty_changed(old, mp->vc->multiparty_list);
 +	g_slist_free(old);
 +	g_free(mp);
-+}
-+
-+}
-+
+ }
+ =
+
  static void emulator_ata_cb(struct ofono_emulator *em,
- 			struct ofono_emulator_request *req, void *userdata)
- {
-@@ -2900,12 +2948,27 @@ static void emulator_chld_cb(struct ofono_emulator =
+@@ -2990,11 +3022,35 @@ static void emulator_chld_cb(struct ofono_emulator =
 *em,
- 					emulator_generic_cb, em);
- 			return;
- 		case 3:
-+		{
+ 		}
+ =
+
+ 		if (chld >=3D 21 && chld <=3D 27) {
++			GSList *l;
 +			struct mpty_cb_info *mp;
++			unsigned int id =3D chld - 20;
 +
- 			if (vc->driver->create_multiparty =3D=3D NULL)
+ 			if (vc->driver->private_chat =3D=3D NULL)
  				goto fail;
  =
 
-+			if (!voicecalls_have_held(vc)
-+					|| !voicecalls_have_active(vc))
+-			vc->driver->private_chat(vc, chld - 20,
+-					emulator_generic_cb, em);
++			for (l =3D vc->multiparty_list; l; l =3D l->next) {
++				struct voicecall *v =3D l->data;
++				if (v->call->id =3D=3D id)
++					break;
++			}
++
++			if (l =3D=3D NULL)
++				goto fail;
++
++			if (voicecalls_have_held(vc))
 +				goto fail;
 +
 +			mp =3D g_try_malloc0(sizeof(struct mpty_cb_info));
@@ -110,19 +98,18 @@ ata)
 +
 +			mp->vc =3D vc;
 +			mp->em =3D em;
++			mp->id =3D id;
 +
- 			vc->driver->create_multiparty(vc,
--					emulator_generic_cb, em);
-+					emulator_mpty_join_cb, mp);
++			vc->driver->private_chat(vc, id,
++					emulator_mpty_private_chat_cb, mp);
  			return;
-+		}
- 		case 4:
- 			if (vc->driver->transfer =3D=3D NULL)
- 				goto fail;
+ 		}
+ =
+
 -- =
 
 1.7.1
 
 
---===============2825694595275221998==--
+--===============3793038133352885493==--
 
