@@ -1,60 +1,321 @@
-Content-Type: multipart/mixed; boundary="===============7882145856126689507=="
+Content-Type: multipart/mixed; boundary="===============1824278698572628875=="
 MIME-Version: 1.0
-From: Xu, Dongxiao <dongxiao.xu@intel.com>
-Subject: RE: ofonod crash on Ericsson F5521GW
-Date: Wed, 29 Jun 2011 10:53:50 +0800
-Message-ID: <D5AB6E638E5A3E4B8F4406B113A5A19A12D6B85846@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <4DE51ABD.3020508@gmail.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v4 1/4] GAtPPP: Add ACFC option support
+Date: Wed, 29 Jun 2011 10:20:23 +0200
+Message-ID: <1309335626-32202-2-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1309335626-32202-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7882145856126689507==
+--===============1824278698572628875==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ gatchat/gatppp.c  |   96 ++++++++++++++++++++++++++++++++++++++++---------=
+----
+ gatchat/gatppp.h  |    2 +
+ gatchat/ppp.h     |    8 ++++
+ gatchat/ppp_lcp.c |   35 +++++++++++++++++--
+ 4 files changed, 115 insertions(+), 26 deletions(-)
 
-> -----Original Message-----
-> From: Denis Kenzior [mailto:denkenz(a)gmail.com]
-> Sent: Wednesday, June 01, 2011 12:44 AM
-> To: Xu, Dongxiao
-> Cc: ofono(a)ofono.org
-> Subject: Re: ofonod crash on Ericsson F5521GW
-> =
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index 5fb4146..42b3224 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -83,6 +83,7 @@ struct _GAtPPP {
+ 	int fd;
+ 	guint guard_timeout_source;
+ 	gboolean suspended;
++	gboolean xmit_acfc;
+ };
+ =
 
-> Hi Dongxiao,
-> =
+ void ppp_debug(GAtPPP *ppp, const char *str)
+@@ -168,8 +169,19 @@ static inline gboolean ppp_drop_packet(GAtPPP *ppp, gu=
+int16 protocol)
+ static void ppp_receive(const unsigned char *buf, gsize len, void *data)
+ {
+ 	GAtPPP *ppp =3D data;
+-	guint16 protocol =3D ppp_proto(buf);
+-	const guint8 *packet =3D ppp_info(buf);
++	struct ppp_header *header =3D (struct ppp_header *) buf;
++	gboolean acfc_frame =3D (header->address !=3D PPP_ADDR_FIELD
++			|| header->control !=3D PPP_CTRL);
++	guint16 protocol;
++	const guint8 *packet;
++
++	if (acfc_frame) {
++		protocol =3D ppp_acfc_proto(buf);
++		packet =3D ppp_acfc_info(buf);
++	} else {
++		protocol =3D ppp_proto(buf);
++		packet =3D ppp_info(buf);
++	}
+ =
 
-> >>
-> >> I suggest you try the latest release of oFono, 0.43 is pretty old.
-> >> Judging by your log this issue should be fixed in later versions.  If
-> >> you still encounter the problem, please post a proper backtrace.
-> >> Either by using gdb or running the backtrace through test/backtrace sc=
-ript.
-> >
-> > Latest ofono-0.48 also has the same problem. Here I attached a more
-> detailed crash log.
-> >
-> =
+ 	if (ppp_drop_packet(ppp, protocol))
+ 		return;
+@@ -196,37 +208,29 @@ static void ppp_receive(const unsigned char *buf, gsi=
+ze len, void *data)
+ 	};
+ }
+ =
 
-> At least the GError warning should be fixed by commit d99ca17.  If you ha=
-ve
-> other crashes, please report back.  You still need to provide a proper gdb
-> trace or run the log through the test/backtrace script.
+-/*
+- * transmit out through the lower layer interface
+- *
+- * infolen - length of the information part of the packet
+- */
+-void ppp_transmit(GAtPPP *ppp, guint8 *packet, guint infolen)
++static void ppp_send_lcp_frame(GAtPPP *ppp, guint8 *packet, guint infolen)
+ {
+ 	struct ppp_header *header =3D (struct ppp_header *) packet;
+-	guint16 proto =3D ppp_proto(packet);
+ 	guint8 code;
+-	gboolean lcp =3D (proto =3D=3D LCP_PROTOCOL);
+ 	guint32 xmit_accm =3D 0;
+ 	gboolean sta =3D FALSE;
++	gboolean lcp;
+ =
 
-Sorry for the late confirmation.
+ 	/*
+ 	 * all LCP Link Configuration, Link Termination, and Code-Reject
+ 	 * packets must be sent with the default sending ACCM
+ 	 */
+-	if (lcp) {
+-		code =3D pppcp_get_code(packet);
+-		lcp =3D code > 0 && code < 8;
+-
+-		/*
+-		 * If we're going down, we try to make sure to send the final
+-		 * ack before informing the upper layers via the ppp_disconnect
+-		 * function.  Once we enter PPP_DEAD phase, no further packets
+-		 * will be sent
+-		 */
+-		if (code =3D=3D PPPCP_CODE_TYPE_TERMINATE_ACK)
+-			sta =3D TRUE;
+-	}
++	code =3D pppcp_get_code(packet);
++	lcp =3D code > 0 && code < 8;
++
++	/*
++	 * If we're going down, we try to make sure to send the final
++	 * ack before informing the upper layers via the ppp_disconnect
++	 * function.  Once we enter PPP_DEAD phase, no further packets
++	 * will be sent
++	 */
++	if (code =3D=3D PPPCP_CODE_TYPE_TERMINATE_ACK)
++		sta =3D TRUE;
+ =
 
-This issue should have been fixed by your commit d99ca17, since ofono-0.50 =
-could work well with Ericsson F5521GW modem.
+ 	if (lcp) {
+ 		xmit_accm =3D g_at_hdlc_get_xmit_accm(ppp->hdlc);
+@@ -251,6 +255,42 @@ void ppp_transmit(GAtPPP *ppp, guint8 *packet, guint i=
+nfolen)
+ 		g_at_hdlc_set_xmit_accm(ppp->hdlc, xmit_accm);
+ }
+ =
 
-Thanks,
-Dongxiao
++static void ppp_send_acfc_frame(GAtPPP *ppp, guint8 *packet,
++					guint infolen)
++{
++	struct ppp_header *header =3D (struct ppp_header *) packet;
++	guint offset =3D 0;
++
++	if (ppp->xmit_acfc)
++		offset =3D 2;
++
++	if (g_at_hdlc_send(ppp->hdlc, packet + offset,
++				infolen + sizeof(*header) - offset)
++			=3D=3D FALSE)
++		DBG(ppp, "Failed to send a frame\n");
++}
++
++/*
++ * transmit out through the lower layer interface
++ *
++ * infolen - length of the information part of the packet
++ */
++void ppp_transmit(GAtPPP *ppp, guint8 *packet, guint infolen)
++{
++	guint16 proto =3D ppp_proto(packet);
++
++	switch (proto) {
++	case LCP_PROTOCOL:
++		ppp_send_lcp_frame(ppp, packet, infolen);
++		break;
++	case CHAP_PROTOCOL:
++	case IPCP_PROTO:
++	case PPP_IP_PROTO:
++		ppp_send_acfc_frame(ppp, packet, infolen);
++		break;
++	}
++}
++
+ static inline void ppp_enter_phase(GAtPPP *ppp, enum ppp_phase phase)
+ {
+ 	DBG(ppp, "%d", phase);
+@@ -390,6 +430,11 @@ void ppp_set_mtu(GAtPPP *ppp, const guint8 *data)
+ 	ppp->mtu =3D mtu;
+ }
+ =
 
-> =
++void ppp_set_xmit_acfc(GAtPPP *ppp, gboolean acfc)
++{
++	ppp->xmit_acfc =3D acfc;
++}
++
+ static void io_disconnect(gpointer user_data)
+ {
+ 	GAtPPP *ppp =3D user_data;
+@@ -658,6 +703,11 @@ void g_at_ppp_set_server_info(GAtPPP *ppp, const char =
+*remote,
+ 	ipcp_set_server_info(ppp->ipcp, r, d1, d2);
+ }
+ =
 
-> Regards,
-> -Denis
++void g_at_ppp_set_acfc_enabled(GAtPPP *ppp, gboolean enabled)
++{
++	lcp_set_acfc_enabled(ppp->lcp, enabled);
++}
++
+ static GAtPPP *ppp_init_common(gboolean is_server, guint32 ip)
+ {
+ 	GAtPPP *ppp;
+diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
+index f0930a7..1544b31 100644
+--- a/gatchat/gatppp.h
++++ b/gatchat/gatppp.h
+@@ -79,6 +79,8 @@ void g_at_ppp_set_recording(GAtPPP *ppp, const char *file=
+name);
+ void g_at_ppp_set_server_info(GAtPPP *ppp, const char *remote_ip,
+ 				const char *dns1, const char *dns2);
+ =
 
---===============7882145856126689507==--
++void g_at_ppp_set_acfc_enabled(GAtPPP *ppp, gboolean enabled);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/gatchat/ppp.h b/gatchat/ppp.h
+index 023d779..41bcf7b 100644
+--- a/gatchat/ppp.h
++++ b/gatchat/ppp.h
+@@ -85,10 +85,17 @@ static inline void __put_unaligned_short(void *p, guint=
+16 val)
+ #define ppp_proto(packet) \
+ 	(get_host_short(packet + 2))
+ =
+
++#define ppp_acfc_info(packet) \
++	(packet + 2)
++
++#define ppp_acfc_proto(packet) \
++	(get_host_short(packet))
++
+ /* LCP related functions */
+ struct pppcp_data *lcp_new(GAtPPP *ppp, gboolean dormant);
+ void lcp_free(struct pppcp_data *lcp);
+ void lcp_protocol_reject(struct pppcp_data *lcp, guint8 *packet, gsize len=
+);
++void lcp_set_acfc_enabled(struct pppcp_data *pppcp, gboolean enabled);
+ =
+
+ /* IPCP related functions */
+ struct pppcp_data *ipcp_new(GAtPPP *ppp, gboolean is_server, guint32 ip);
+@@ -125,4 +132,5 @@ void ppp_lcp_finished_notify(GAtPPP *ppp);
+ void ppp_set_recv_accm(GAtPPP *ppp, guint32 accm);
+ void ppp_set_xmit_accm(GAtPPP *ppp, guint32 accm);
+ void ppp_set_mtu(GAtPPP *ppp, const guint8 *data);
++void ppp_set_xmit_acfc(GAtPPP *ppp, gboolean acfc);
+ struct ppp_header *ppp_packet_new(gsize infolen, guint16 protocol);
+diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
+index ce9dae2..c86a7d8 100644
+--- a/gatchat/ppp_lcp.c
++++ b/gatchat/ppp_lcp.c
+@@ -58,11 +58,12 @@ enum lcp_options {
+ 	ACFC			=3D 8,
+ };
+ =
+
+-/* Maximum size of all options, we only ever request ACCM and MRU */ =
+
+-#define MAX_CONFIG_OPTION_SIZE 10
++/* Maximum size of all options, we only ever request ACCM, MRU and ACFC */
++#define MAX_CONFIG_OPTION_SIZE 12
+ =
+
+ #define REQ_OPTION_ACCM	0x1
+ #define REQ_OPTION_MRU	0x2
++#define REQ_OPTION_ACFC	0x4
+ =
+
+ struct lcp_data {
+ 	guint8 options[MAX_CONFIG_OPTION_SIZE];
+@@ -100,6 +101,13 @@ static void lcp_generate_config_options(struct lcp_dat=
+a *lcp)
+ 		len +=3D 4;
+ 	}
+ =
+
++	if (lcp->req_options & REQ_OPTION_ACFC) {
++		lcp->options[len] =3D ACFC;
++		lcp->options[len + 1] =3D 2;
++
++		len +=3D 2;
++	}
++
+ 	lcp->options_len =3D len;
+ }
+ =
+
+@@ -286,9 +294,17 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppc=
+p,
+ 			break;
+ 		case MAGIC_NUMBER:
+ 		case PFC:
+-		case ACFC:
+ 			/* don't care */
+ 			break;
++		case ACFC:
++		{
++			struct lcp_data *lcp =3D pppcp_get_data(pppcp);
++
++			if (lcp->req_options & REQ_OPTION_ACFC)
++				ppp_set_xmit_acfc(ppp, TRUE);
++
++			break;
++		}
+ 		}
+ 	}
+ =
+
+@@ -338,3 +354,16 @@ struct pppcp_data *lcp_new(GAtPPP *ppp, gboolean is_se=
+rver)
+ =
+
+ 	return pppcp;
+ }
++
++void lcp_set_acfc_enabled(struct pppcp_data *pppcp, gboolean enabled)
++{
++	struct lcp_data *lcp =3D pppcp_get_data(pppcp);
++
++	if (enabled =3D=3D TRUE)
++		lcp->req_options |=3D REQ_OPTION_ACFC;
++	else
++		lcp->req_options &=3D ~REQ_OPTION_ACFC;
++
++	lcp_generate_config_options(lcp);
++	pppcp_set_local_options(pppcp, lcp->options, lcp->options_len);
++}
+-- =
+
+1.7.1
+
+
+--===============1824278698572628875==--
 
