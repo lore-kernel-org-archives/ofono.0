@@ -1,70 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============8407832416277261120=="
+Content-Type: multipart/mixed; boundary="===============7882145856126689507=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v3 1/4] GAtPPP: Add ACFC option support
-Date: Tue, 28 Jun 2011 18:40:01 -0500
-Message-ID: <4E0A6651.2080503@gmail.com>
-In-Reply-To: <1309311529.2208.36.camel@aeonflux>
+From: Xu, Dongxiao <dongxiao.xu@intel.com>
+Subject: RE: ofonod crash on Ericsson F5521GW
+Date: Wed, 29 Jun 2011 10:53:50 +0800
+Message-ID: <D5AB6E638E5A3E4B8F4406B113A5A19A12D6B85846@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <4DE51ABD.3020508@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8407832416277261120==
+--===============7882145856126689507==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Denis,
 
-On 06/28/2011 08:38 PM, Marcel Holtmann wrote:
-> Hi Denis,
+> -----Original Message-----
+> From: Denis Kenzior [mailto:denkenz(a)gmail.com]
+> Sent: Wednesday, June 01, 2011 12:44 AM
+> To: Xu, Dongxiao
+> Cc: ofono(a)ofono.org
+> Subject: Re: ofonod crash on Ericsson F5521GW
 > =
 
->>>>> @@ -658,6 +703,11 @@ void g_at_ppp_set_server_info(GAtPPP *ppp, const=
- char *remote,
->>>>>  	ipcp_set_server_info(ppp->ipcp, r, d1, d2);
->>>>>  }
->>>>>  =
-
->>>>> +void g_at_ppp_set_acfc_enabled(GAtPPP *ppp)
->>>>
->>>> I really do want the signature to be g_at_ppp_set_acfc_enabled(GAtPPP
->>>> *ppp, gboolean enabled)
->>>>
->>>> There are cases where we might re-use the PPP object with different
->>>> parameters.
->>>
->>> what is wrong with just g_at_ppp_set_acfc(GAtPPP *ppp, gboolean enabled)
->>> as function name. Duplicating enabled in the function name and as
->>> parameter seems to be bit odd.
->>
->> For APIs I generally prefer:
->>
->> _set_foo() when foo is a 'thing', e.g int/string/struct/etc
->>
->> and _set_foo_enabled() when foo is on/off as that intent is clearer when
->> reading the code.
+> Hi Dongxiao,
 > =
 
-> fair enough.
+> >>
+> >> I suggest you try the latest release of oFono, 0.43 is pretty old.
+> >> Judging by your log this issue should be fixed in later versions.  If
+> >> you still encounter the problem, please post a proper backtrace.
+> >> Either by using gdb or running the backtrace through test/backtrace sc=
+ript.
+> >
+> > Latest ofono-0.48 also has the same problem. Here I attached a more
+> detailed crash log.
+> >
 > =
 
-> However we have not been 100% consistent then here.
+> At least the GError warning should be fixed by commit d99ca17.  If you ha=
+ve
+> other crashes, please report back.  You still need to provide a proper gdb
+> trace or run the log through the test/backtrace script.
+
+Sorry for the late confirmation.
+
+This issue should have been fixed by your commit d99ca17, since ofono-0.50 =
+could work well with Ericsson F5521GW modem.
+
+Thanks,
+Dongxiao
+
 > =
 
-> g_at_server_set_echo()
-> g_at_hdlc_set_no_carrier_detect()
-> =
+> Regards,
+> -Denis
 
-> Both look at bit fishy with this API intention. Should we fix them as
-> well then while at it?
-
-Yes, I think set_echo definitely should become set_echo_enabled
-
-set_no_carrier_detect_enabled would pretty long and I wouldn't mind
-having a better name for this one...
-
-Regards,
--Denis
-
---===============8407832416277261120==--
+--===============7882145856126689507==--
 
