@@ -1,146 +1,338 @@
-Content-Type: multipart/mixed; boundary="===============3459013449937223214=="
+Content-Type: multipart/mixed; boundary="===============2229507386015127784=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] voicecall: manage multiparty list in AT+CHLD=3
-Date: Wed, 29 Jun 2011 16:09:29 -0500
-Message-ID: <4E0B9489.1000108@gmail.com>
-In-Reply-To: <1309376333-6076-2-git-send-email-frederic.dalleau@linux.intel.com>
+Subject: Re: [PATCH 01/11] gprs: Add private APIs to activate/deactivate
+ private contexts
+Date: Wed, 29 Jun 2011 17:22:01 -0500
+Message-ID: <4E0BA589.7050701@gmail.com>
+In-Reply-To: <1309281383-6605-2-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3459013449937223214==
+--===============2229507386015127784==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Philippe,
 
-On 06/29/2011 02:38 PM, Fr=C3=A9d=C3=A9ric Dalleau wrote:
+On 06/28/2011 12:16 PM, Philippe Nunes wrote:
 > ---
->  src/voicecall.c |   65 +++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++-
->  1 files changed, 64 insertions(+), 1 deletions(-)
+>  src/gprs.c  |  211 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  src/ofono.h |   17 +++++
+>  2 files changed, 228 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/src/voicecall.c b/src/voicecall.c
-> index 9620838..8e4ab58 100644
-> --- a/src/voicecall.c
-> +++ b/src/voicecall.c
-> @@ -94,6 +94,12 @@ struct voicecall {
->  	ofono_bool_t remote_multiparty;
+> diff --git a/src/gprs.c b/src/gprs.c
+> index acbfa56..b3e6869 100644
+> --- a/src/gprs.c
+> +++ b/src/gprs.c
+> @@ -59,6 +59,7 @@
+>  =
+
+>  static GSList *g_drivers =3D NULL;
+>  static GSList *g_context_drivers =3D NULL;
+> +static GSList *g_private_contexts =3D NULL;
+
+So this part is quite wrong ;)  What you have done here is to make stk
+activated contexts shared across all gprs atoms, with potentially
+duplicate ids.
+
+>  =
+
+>  /* 27.007 Section 7.29 */
+>  enum packet_bearer {
+> @@ -149,6 +150,13 @@ struct pri_context {
+>  	struct ofono_gprs *gprs;
 >  };
 >  =
 
-> +struct mpty_cb_info {
-> +	struct ofono_voicecall *vc;
-> +	struct ofono_emulator *em;
-> +	int id;
+> +struct gprs_private_context {
+> +	unsigned int cid;
+> +	struct ofono_gprs_context *context_driver;
+> +	void *notify;
+
+I suggest you use a union so as to avoid casting all over the place.
+
+e.g.
+
+union {
+	activate_cb act;
+	deactivate_cb deact;
+};
+
+or something
+
+> +	void *notify_data;
 > +};
 > +
->  struct dial_request {
->  	struct ofono_voicecall *vc;
->  	char *message;
-> @@ -2710,6 +2716,48 @@ static void emulator_generic_cb(const struct ofono=
-_error *error, void *data)
->  	ofono_emulator_send_final(em, error);
+>  static void gprs_netreg_update(struct ofono_gprs *gprs);
+>  static void gprs_deactivate_next(struct ofono_gprs *gprs);
+>  =
+
+> @@ -346,6 +354,20 @@ static struct pri_context *gprs_context_by_path(stru=
+ct ofono_gprs *gprs,
+>  	return NULL;
 >  }
 >  =
 
-> +static void emulator_mpty_join_cb(const struct ofono_error *error, void =
-*data)
+> +static struct pri_context *gprs_get_default_context(struct ofono_gprs *g=
+prs)
 > +{
-> +	struct mpty_cb_info *mp =3D data;
-> +	GSList *old;
+> +	GSList *l;
 > +
-> +	ofono_emulator_send_final(mp->em, error);
+> +	for (l =3D gprs->contexts; l; l =3D l->next) {
+> +		struct pri_context *ctx =3D l->data;
 > +
-> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-> +		g_free(mp);
-> +		return;
+> +		if (ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_INTERNET)
+> +			return ctx;
 > +	}
 > +
-> +	/*
-> +	 * We just created a multiparty call, gather all held
-> +	 * active calls and add them to the multiparty list
-> +	 */
-> +	old =3D mp->vc->multiparty_list;
-> +	mp->vc->multiparty_list =3D 0;
-> +
-> +	mp->vc->multiparty_list =3D g_slist_concat(mp->vc->multiparty_list,
-> +						voicecalls_held_list(mp->vc));
-> +
-> +	mp->vc->multiparty_list =3D g_slist_concat(mp->vc->multiparty_list,
-> +						voicecalls_active_list(mp->vc));
-> +
-> +	mp->vc->multiparty_list =3D g_slist_sort(mp->vc->multiparty_list,
-> +						call_compare);
-> +
-> +	if (g_slist_length(mp->vc->multiparty_list) < 2) {
-> +		ofono_error("Created multiparty call, but size is less than 2"
-> +				" panic!");
-> +
-> +		return;
-> +	}
-> +
-> +	voicecalls_multiparty_changed(old, mp->vc->multiparty_list);
-> +	g_slist_free(old);
-> +	g_free(mp);
+> +	return NULL;
 > +}
 > +
-> +}
-> +
-
-Something is wrong with your git-foo here:
-src/voicecall.c:2759: error: expected identifier or =E2=80=98(=E2=80=99 bef=
-ore =E2=80=98}=E2=80=99 token
-
->  static void emulator_ata_cb(struct ofono_emulator *em,
->  			struct ofono_emulator_request *req, void *userdata)
+>  static void context_settings_free(struct context_settings *settings)
 >  {
-> @@ -2900,12 +2948,27 @@ static void emulator_chld_cb(struct ofono_emulato=
-r *em,
->  					emulator_generic_cb, em);
->  			return;
->  		case 3:
-> +		{
-> +			struct mpty_cb_info *mp;
-> +
->  			if (vc->driver->create_multiparty =3D=3D NULL)
->  				goto fail;
+>  	if (settings->ipv4) {
+> @@ -872,6 +894,8 @@ static void pri_activate_callback(const struct ofono_=
+error *error, void *data)
+>  				dbus_message_new_method_return(ctx->pending));
 >  =
 
-> +			if (!voicecalls_have_held(vc)
-> +					|| !voicecalls_have_active(vc))
-> +				goto fail;
+>  	if (gc->settings->interface !=3D NULL) {
+> +		DBG("Interface %s", gc->settings->interface);
 > +
-> +			mp =3D g_try_malloc0(sizeof(struct mpty_cb_info));
-> +			if (!mp)
-> +				goto fail;
+>  		pri_ifupdown(gc->settings->interface, TRUE);
+>  =
+
+>  		if (ctx->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS &&
+> @@ -3012,3 +3036,190 @@ void *ofono_gprs_get_data(struct ofono_gprs *gprs)
+>  {
+>  	return gprs->driver_data;
+>  }
 > +
-> +			mp->vc =3D vc;
-> +			mp->em =3D em;
+> +static struct gprs_private_context *gprs_private_context_by_id(unsigned =
+int id)
+> +{
+> +	GSList *l;
 > +
->  			vc->driver->create_multiparty(vc,
-> -					emulator_generic_cb, em);
-> +					emulator_mpty_join_cb, mp);
-
-So unfortunately you cannot do this, the current oFono driver framework
-does not have a mechanism to guarantee the destruction of userdata you
-pass to the driver method.  There was never a reason to have it...
-Since atoms can and are forcefully removed at any time, you would
-potentially be leaking memory here.
-
-Can you re-use the existing pending_em member of ofono_voicecall for
-this purpose?
-
->  			return;
-> +		}
->  		case 4:
->  			if (vc->driver->transfer =3D=3D NULL)
->  				goto fail;
+> +	for (l =3D g_private_contexts; l; l =3D l->next) {
+> +		struct gprs_private_context *ctx =3D l->data;
+> +
+> +		if (ctx->cid =3D=3D id)
+> +			return ctx;
+> +	}
+> +
+> +	return NULL;
+> +}
+> +
+> +static void activate_request_callback(const struct ofono_error *error,
+> +					void *data)
+> +{
+> +	struct gprs_private_context *ctx =3D data;
+> +	struct context_settings *settings =3D ctx->context_driver->settings;
+> +
+> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+> +		DBG("Activating context failed with error: %s",
+> +				telephony_error_to_str(error));
+> +		context_settings_free(settings);
+> +		gprs_cid_release(ctx->context_driver->gprs, ctx->cid);
+> +		ctx->context_driver->inuse =3D FALSE;
+> +
+> +		if (ctx->notify)
+> +			((__ofono_gprs_activate_context_cb_t) ctx->notify)
+> +				(-ENOSYS, NULL, NULL, ctx->notify_data);
+> +
+> +		g_private_contexts =3D g_slist_remove(g_private_contexts, ctx);
+> +		return;
+> +	}
+> +
+> +	if (settings->interface !=3D NULL) {
+> +		pri_ifupdown(settings->interface, TRUE);
+> +
+> +		if (settings->ipv4)
+> +			pri_set_ipv4_addr(settings->interface,
+> +							settings->ipv4->ip);
+> +	}
+> +
+> +	if (ctx->notify && settings->ipv4)
+> +		((__ofono_gprs_activate_context_cb_t) ctx->notify)
+> +					(0, settings->interface,
+> +						settings->ipv4->ip,
+> +						ctx->notify_data);
+> +}
+> +
+> +int __ofono_gprs_activate_context(struct ofono_gprs *gprs,
+> +				struct ofono_gprs_primary_context *context,
+> +				__ofono_gprs_activate_context_cb_t cb,
+> +				void *data)
+> +{
+> +	struct gprs_private_context *private_ctx;
+> +	struct pri_context *default_ctx =3D NULL;
+> +	struct ofono_gprs_context *gc =3D NULL;
+> +	struct idmap *cidmap =3D gprs->cid_map;
+> +	GSList *l;
+> +
+> +	if (context->apn[0] =3D=3D '\0' || (context->username[0] =3D=3D '\0' &&
+> +			context->password[0] =3D=3D '\0')) {
+> +		/* take the default primary internet context */
+> +		default_ctx =3D gprs_get_default_context(gprs);
+> +
+> +		if (default_ctx =3D=3D NULL && context->apn[0] =3D=3D '\0')
+> +			return -ENOENT;
+> +	}
+> +
+> +	if (context->apn[0] !=3D '\0' && is_valid_apn(context->apn) =3D=3D FALS=
+E)
+> +		return EINVAL;
+> +
+> +	if (context->proto !=3D OFONO_GPRS_PROTO_IPV4V6 &&
+> +			context->proto !=3D OFONO_GPRS_PROTO_IP)
+> +		return -ENOSYS;
+> +
+> +	if (cidmap =3D=3D NULL)
+> +		return -ENOSYS;
+> +
+> +	if (context->apn[0] =3D=3D '\0') {
+> +		strcpy(context->apn, default_ctx->context.apn);
+> +		strcpy(context->username, default_ctx->context.username);
+> +		strcpy(context->password, default_ctx->context.password);
+> +	}
+> +
+> +	private_ctx =3D g_try_new0(struct gprs_private_context, 1);
+> +	if (private_ctx =3D=3D NULL)
+> +		return -ENOMEM;
+> +
+> +	private_ctx->cid =3D gprs_cid_alloc(gprs);
+> +	if (private_ctx->cid =3D=3D 0) {
+> +		g_free(private_ctx);
+> +		return -EBUSY;
+> +	}
+> +
+> +	context->cid =3D private_ctx->cid;
+> +
+> +	for (l =3D gprs->context_drivers; l; l =3D l->next) {
+> +		gc =3D l->data;
+> +
+> +		if (gc->inuse =3D=3D TRUE)
+> +			continue;
+> +
+> +		if (gc->driver =3D=3D NULL)
+> +			continue;
+> +
+> +		if (gc->driver->activate_primary =3D=3D NULL ||
+> +				gc->driver->deactivate_primary =3D=3D NULL)
+> +			continue;
+> +
+> +		if (gc->type !=3D OFONO_GPRS_CONTEXT_TYPE_ANY &&
+> +				gc->type !=3D OFONO_GPRS_CONTEXT_TYPE_INTERNET)
+> +			continue;
+> +
+> +		break;
+> +	}
+> +
+> +	if (gc =3D=3D NULL) {
+> +		g_free(private_ctx);
+> +		return -EBUSY;
+> +	}
+> +
+> +	gc->inuse =3D TRUE;
+> +	gc->settings->ipv4 =3D g_new0(struct ipv4_settings, 1);
+> +	private_ctx->context_driver =3D gc;
+> +	private_ctx->notify =3D cb;
+> +	private_ctx->notify_data =3D data;
+> +
+> +	g_private_contexts =3D g_slist_append(g_private_contexts, private_ctx);
+> +
+> +	gc->driver->activate_primary(gc, context, activate_request_callback,
+> +					private_ctx);
+> +	return 0;
+> +}
+> +
+> +static void deactivate_request_callback(const struct ofono_error *error,
+> +					void *data)
+> +{
+> +	struct gprs_private_context *ctx =3D data;
+> +	struct context_settings *settings =3D ctx->context_driver->settings;
+> +	int err =3D 0;
+> +
+> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+> +		DBG("Deactivating context failed with error: %s",
+> +				telephony_error_to_str(error));
+> +		err =3D -ENOSYS;
+> +	}
+> +
+> +	pri_set_ipv4_addr(settings->interface, NULL);
+> +	pri_ifupdown(settings->interface, FALSE);
+> +	context_settings_free(settings);
+> +
+> +	DBG("Release Context cid %d", ctx->cid);
+> +
+> +	gprs_cid_release(ctx->context_driver->gprs, ctx->cid);
+> +	ctx->context_driver->inuse =3D FALSE;
+> +
+> +	if (ctx->notify)
+> +		((__ofono_gprs_deactivate_context_cb_t) ctx->notify)
+> +				(err, ctx->notify_data);
+> +
+> +	g_private_contexts =3D g_slist_remove(g_private_contexts, ctx);
+> +}
+> +
+> +int __ofono_gprs_deactivate_context(unsigned int id,
+> +					__ofono_gprs_deactivate_context_cb_t cb,
+> +					void *data)
+> +{
+> +	struct gprs_private_context *private_ctx;
+> +	struct ofono_gprs_context *gc;
+> +
+> +	DBG("Deactivate context with cid %d", id);
+> +
+> +	private_ctx =3D gprs_private_context_by_id(id);
+> +	if (private_ctx =3D=3D NULL)
+> +		return -EINVAL;
+> +
+> +	private_ctx->notify =3D cb;
+> +	private_ctx->notify_data =3D data;
+> +
+> +	gc =3D private_ctx->context_driver;
+> +	gc->driver->deactivate_primary(gc, private_ctx->cid,
+> +				deactivate_request_callback, private_ctx);
+> +	return 0;
+> +}
+> diff --git a/src/ofono.h b/src/ofono.h
+> index 6524806..6b72816 100644
+> --- a/src/ofono.h
+> +++ b/src/ofono.h
+> @@ -240,6 +240,23 @@ gboolean __ofono_call_settings_is_busy(struct ofono_=
+call_settings *cs);
+>  #include <ofono/phonebook.h>
+>  #include <ofono/gprs.h>
+>  #include <ofono/gprs-context.h>
+> +
+> +typedef void (*__ofono_gprs_activate_context_cb_t)(int error,
+> +						const char *interface,
+> +						const char *ip,
+> +						void *data);
+> +
+> +typedef void (*__ofono_gprs_deactivate_context_cb_t)(int error, void *da=
+ta);
+> +
+> +int __ofono_gprs_deactivate_context(unsigned int id,
+> +					__ofono_gprs_deactivate_context_cb_t cb,
+> +					void *data);
+> +
+> +int __ofono_gprs_activate_context(struct ofono_gprs *gprs,
+> +				struct ofono_gprs_primary_context *context,
+> +				__ofono_gprs_activate_context_cb_t cb,
+> +				void *data);
+> +
+>  #include <ofono/radio-settings.h>
+>  #include <ofono/audio-settings.h>
+>  #include <ofono/ctm.h>
 
 Regards,
 -Denis
 
---===============3459013449937223214==--
+--===============2229507386015127784==--
 
