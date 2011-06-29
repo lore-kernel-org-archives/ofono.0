@@ -1,31 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============7838028202943655583=="
+Content-Type: multipart/mixed; boundary="===============4068036975159809286=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] test: According the current locale,
- replace non-codable character with '?'
-Date: Wed, 29 Jun 2011 00:05:40 -0500
-Message-ID: <4E0AB2A4.90806@gmail.com>
-In-Reply-To: <1309352829-14399-1-git-send-email-philippe.nunes@linux.intel.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@linux.intel.com>
+Subject: [PATCH 0/2] Manage multiparty list in emulator CHLD calls
+Date: Wed, 29 Jun 2011 21:38:51 +0200
+Message-ID: <1309376333-6076-1-git-send-email-frederic.dalleau@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7838028202943655583==
+--===============4068036975159809286==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+These patches will manage the multiparty list in emulator CHLD calls.
+This allow the mpty field of +CLCC to be set to 1 or 0 depending if there i=
+s a multiparty call or not.
 
-On 06/29/2011 08:07 AM, Philippe Nunes wrote:
-> ---
->  test/test-stk-menu |   45 +++++++++++++++++++++++++--------------------
->  1 files changed, 25 insertions(+), 20 deletions(-)
+Fr=C3=A9d=C3=A9ric Dalleau (2):
+  voicecall: manage multiparty list in AT+CHLD=3D3
+  voicecall: manage multiparty list in AT+CHLD=3D2X
 
-I question the need for this patch, are you using a non-UTF8 locale for
-some reason?
+ src/voicecall.c |  125 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+++-
+ 1 files changed, 122 insertions(+), 3 deletions(-)
 
-Regards,
--Denis
 
---===============7838028202943655583==--
+--===============4068036975159809286==--
 
