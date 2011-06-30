@@ -1,51 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============0125748576167839936=="
+Content-Type: multipart/mixed; boundary="===============3813510821857373508=="
 MIME-Version: 1.0
-From: Michael Schloh von Bennewitz <ofonoconn@encambio.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: Incoming patch HS2330 detection, plugins/udev.c
-Date: Thu, 30 Jun 2011 21:46:39 +0200
-Message-ID: <20110630194639.GA5689@debut.europalab.com>
-In-Reply-To: <4E0C1BFC.8060904@gmail.com>
+Date: Thu, 30 Jun 2011 13:20:06 -0700
+Message-ID: <1309465208.2208.59.camel@aeonflux>
+In-Reply-To: <20110630194639.GA5689@debut.europalab.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0125748576167839936==
+--===============3813510821857373508==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Michael,
 
-Hello Denis,
+> It might interest you that I made a feature request 20386 on the
+> MeeGo bugtracker [1][2] today to include PIN entry logic in the
+> MeeGo network panel. Not sure how far this request will go or if
+> they'll (gulp) ask me to do it myself... I'm still unclear on the
+> boundaries and coupling between ofono, connman, and the UI pieces
+> like the MeeGo network panel.
 
-On Thurs., June 30, 2011, Denis Kenzior wrote:
->On 06/30/2011 07:31 AM, Michael Schloh von Bennewitz wrote:
->> This patch is assembled according to discussions on #ofono
->> [...]
->>
->Patch has been applied with a slightly reformatted commit message.
->
-Great, thanks alot. But most of all, thanks for the great work
-on ofono in general. I think it's pretty good software and a
-good project.
+we do not really work on MeeGo network panel related UI details, but in
+general there needs to be a split between network generic tasks and
+technology specific ones. Similar to that we have a Bluetooth panel for
+pairing etc.
 
-It might interest you that I made a feature request 20386 on the
-MeeGo bugtracker [1][2] today to include PIN entry logic in the
-MeeGo network panel. Not sure how far this request will go or if
-they'll (gulp) ask me to do it myself... I'm still unclear on the
-boundaries and coupling between ofono, connman, and the UI pieces
-like the MeeGo network panel.
+So would expect to see a cellular panel that allows to enter the PIN
+code and configure the APN settings. Since APN settings are oFono
+specific and have nothing to do with ConnMan.
 
-It's only relevant because we had discussions about this on IRC.
+I leave this all up to our UX designers :)
 
-[1] https://bugs.meego.com/
-[2] https://bugs.meego.com/show_bug.cgi?id=3D20386
+Regards
 
-Regards,
-Michael
+Marcel
 
--- =
 
-Michael Schloh von Bennewitz
-http://michael.schloh.com/
 
---===============0125748576167839936==--
+--===============3813510821857373508==--
 
