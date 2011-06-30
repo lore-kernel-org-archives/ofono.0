@@ -1,126 +1,157 @@
-Content-Type: multipart/mixed; boundary="===============1008353076837393927=="
+Content-Type: multipart/mixed; boundary="===============5475375128069172024=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 11/11] gprs: Add API to set a 'detach'notification callback
-Date: Wed, 29 Jun 2011 17:46:54 -0500
-Message-ID: <4E0BAB5E.7050103@gmail.com>
-In-Reply-To: <1309281383-6605-12-git-send-email-philippe.nunes@linux.intel.com>
+From: milan.satpathy@accenture.com
+Subject: [HELP] Application Aborts After Making "Dial" Method Call
+Date: Thu, 30 Jun 2011 11:38:34 +0530
+Message-ID: <10D123A956DC4B4FA9D7A48B33358362150DD42424@INDXM3131.dir.svc.accenture.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1008353076837393927==
+--===============5475375128069172024==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi,
 
-On 06/28/2011 12:16 PM, Philippe Nunes wrote:
-> ---
->  src/gprs.c  |   37 +++++++++++++++++++++++++++++++++++++
->  src/ofono.h |    6 ++++++
->  2 files changed, 43 insertions(+), 0 deletions(-)
-> =
+This issue may not be related directly to any d-bus functionality as such. =
+Yet I would like to know,
+If any one faced a similar problem and got any idea how to fix the issue.
 
-> diff --git a/src/gprs.c b/src/gprs.c
-> index b3e6869..0166e70 100644
-> --- a/src/gprs.c
-> +++ b/src/gprs.c
-> @@ -1495,6 +1495,28 @@ static void gprs_attached_update(struct ofono_gprs=
- *gprs)
->  					"Active", DBUS_TYPE_BOOLEAN, &value);
->  		}
->  =
+When I make the "Dial" call using D-BUS method call, I get the below error =
+sometimes:
 
-> +		for (l =3D g_private_contexts; l; l =3D l->next) {
-> +			struct gprs_private_context *ctx =3D l->data;
-> +			struct context_settings *settings =3D
-> +						ctx->context_driver->settings;
-> +
-> +			pri_set_ipv4_addr(settings->interface, NULL);
-> +			pri_ifupdown(settings->interface, FALSE);
-> +			context_settings_free(settings);
-> +
-> +			DBG("Release private context cid %d", ctx->cid);
-> +
-> +			gprs_cid_release(gprs, ctx->cid);
-> +			ctx->context_driver->inuse =3D FALSE;
-> +
-> +			if (ctx->notify)
-> +				((__ofono_gprs_deactivated_on_detach_cb_t)
-> +						ctx->notify)(ctx->notify_data);
-> +
-> +			g_private_contexts =3D g_slist_remove(g_private_contexts,
-> +								ctx);
-> +		}
-> +
-
-Doing this only here might not quite be enough.  The context can also be
-deactivated due to gprs_context atom destruction or network forced detach.
-
->  		gprs->bearer =3D -1;
->  	}
->  =
-
-> @@ -3223,3 +3245,18 @@ int __ofono_gprs_deactivate_context(unsigned int i=
-d,
->  				deactivate_request_callback, private_ctx);
->  	return 0;
->  }
-> +
-> +int __ofono_gprs_set_deactivated_on_detach_notify(unsigned int id,
-> +				__ofono_gprs_deactivated_on_detach_cb_t cb,
-> +				void *data)
-
-I'd prefer ofono_gprs_private_context_set_detached_notify
-
-> +{
-> +	struct gprs_private_context *private_ctx;
-> +
-> +	private_ctx =3D gprs_private_context_by_id(id);
-> +	if (private_ctx =3D=3D NULL)
-> +		return -EINVAL;
-> +
-> +	private_ctx->notify =3D cb;
-> +	private_ctx->notify_data =3D data;
-> +	return 0;
-> +}
-> diff --git a/src/ofono.h b/src/ofono.h
-> index 6b72816..a1215e8 100644
-> --- a/src/ofono.h
-> +++ b/src/ofono.h
-> @@ -248,6 +248,8 @@ typedef void (*__ofono_gprs_activate_context_cb_t)(in=
-t error,
->  =
-
->  typedef void (*__ofono_gprs_deactivate_context_cb_t)(int error, void *da=
-ta);
->  =
-
-> +typedef void (*__ofono_gprs_deactivated_on_detach_cb_t)(void *data);
-> +
->  int __ofono_gprs_deactivate_context(unsigned int id,
->  					__ofono_gprs_deactivate_context_cb_t cb,
->  					void *data);
-> @@ -257,6 +259,10 @@ int __ofono_gprs_activate_context(struct ofono_gprs =
-*gprs,
->  				__ofono_gprs_activate_context_cb_t cb,
->  				void *data);
->  =
-
-> +int __ofono_gprs_set_deactivated_on_detach_notify(unsigned int id,
-> +				__ofono_gprs_deactivated_on_detach_cb_t cb,
-> +				void *data);
-> +
->  #include <ofono/radio-settings.h>
->  #include <ofono/audio-settings.h>
->  #include <ofono/ctm.h>
-
-Do we have some way of testing at least the channel open / close parts?
- Can we add this to phonesim to enable some basic sanity testing?
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3DERROR LOG=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+process 4536: arguments to dbus_message_iter_append_basic() were incorrect,=
+ assertion "_dbus_check_is_valid_utf8 (*string_p)" failed in file dbus-mess=
+age.c line 2526.
+This is normally a bug in some application using the D-Bus library.
+  D-Bus not built with -rdynamic so unable to print a backtrace
 
 Regards,
--Denis
+Milan
 
---===============1008353076837393927==--
+________________________________
+This message is for the designated recipient only and may contain privilege=
+d, proprietary, or otherwise private information. If you have received it i=
+n error, please notify the sender immediately and delete the original. Any =
+other use of the email by you is prohibited.
+
+--===============5475375128069172024==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6eD0idXJuOnNjaGVtYXMtbWljcm9z
+b2Z0LWNvbTpvZmZpY2U6ZXhjZWwiIHhtbG5zOnN0MT0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNv
+bTpvZmZpY2U6c21hcnR0YWdzIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvVFIvUkVDLWh0bWw0
+MCI+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNvbnRlbnQ9InRleHQv
+aHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxtZXRhIG5hbWU9IkdlbmVyYXRvciIgY29udGVudD0i
+TWljcm9zb2Z0IFdvcmQgMTEgKGZpbHRlcmVkIG1lZGl1bSkiPgo8bzpTbWFydFRhZ1R5cGUgbmFt
+ZXNwYWNldXJpPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzbWFydHRhZ3MiIG5h
+bWU9IkNpdHkiIC8+PG86U21hcnRUYWdUeXBlIG5hbWVzcGFjZXVyaT0idXJuOnNjaGVtYXMtbWlj
+cm9zb2Z0LWNvbTpvZmZpY2U6c21hcnR0YWdzIiBuYW1lPSJwbGFjZSIgLz48IS0tW2lmICFtc29d
+Pgo8c3R5bGU+CnN0MVw6KntiZWhhdmlvcjp1cmwoI2RlZmF1bHQjaWVvb3VpKSB9Cjwvc3R5bGU+
+CjwhW2VuZGlmXS0tPjxzdHlsZT4KPCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZvbnQt
+ZmFjZQoJe2ZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiOwoJcGFub3NlLTE6MiA0IDYgMiA1IDMg
+NSAzIDMgNDt9CiAvKiBTdHlsZSBEZWZpbml0aW9ucyAqLwogcC5Nc29Ob3JtYWwsIGxpLk1zb05v
+cm1hbCwgZGl2Lk1zb05vcm1hbAoJe21hcmdpbjowaW47CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7
+Cglmb250LXNpemU6MTEuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7fQpoMQoJe21h
+cmdpbi10b3A6MTIuMHB0OwoJbWFyZ2luLXJpZ2h0OjBpbjsKCW1hcmdpbi1ib3R0b206My4wcHQ7
+CgltYXJnaW4tbGVmdDowaW47CglwYWdlLWJyZWFrLWFmdGVyOmF2b2lkOwoJZm9udC1zaXplOjE0
+LjBwdDsKCWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KaDIKCXttYXJnaW4tdG9wOjEyLjBw
+dDsKCW1hcmdpbi1yaWdodDowaW47CgltYXJnaW4tYm90dG9tOjMuMHB0OwoJbWFyZ2luLWxlZnQ6
+MGluOwoJcGFnZS1icmVhay1hZnRlcjphdm9pZDsKCWZvbnQtc2l6ZToxMi4wcHQ7Cglmb250LWZh
+bWlseToiQm9vayBBbnRpcXVhIjsKCWZvbnQtc3R5bGU6aXRhbGljO30KaDMKCXttYXJnaW4tdG9w
+OjEyLjBwdDsKCW1hcmdpbi1yaWdodDowaW47CgltYXJnaW4tYm90dG9tOjMuMHB0OwoJbWFyZ2lu
+LWxlZnQ6MGluOwoJcGFnZS1icmVhay1hZnRlcjphdm9pZDsKCWZvbnQtc2l6ZToxMi4wcHQ7Cglm
+b250LWZhbWlseToiQm9vayBBbnRpcXVhIjsKCWZvbnQtd2VpZ2h0Om5vcm1hbDt9CnAuTXNvSGVh
+ZGVyLCBsaS5Nc29IZWFkZXIsIGRpdi5Nc29IZWFkZXIKCXttYXJnaW46MGluOwoJbWFyZ2luLWJv
+dHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJCb29rIEFudGlx
+dWEiO30KcC5Nc29Gb290ZXIsIGxpLk1zb0Zvb3RlciwgZGl2Lk1zb0Zvb3RlcgoJe21hcmdpbjow
+aW47CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTEuMHB0OwoJZm9udC1mYW1p
+bHk6IkJvb2sgQW50aXF1YSI7fQphOmxpbmssIHNwYW4uTXNvSHlwZXJsaW5rCgl7Y29sb3I6Ymx1
+ZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlwZXJs
+aW5rRm9sbG93ZWQKCXtjb2xvcjojNjA2NDIwOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9
+CnAuQUJMT0NLUEFSQSwgbGkuQUJMT0NLUEFSQSwgZGl2LkFCTE9DS1BBUkEKCXttYXJnaW46MGlu
+OwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5
+OiJCb29rIEFudGlxdWEiO30KcC5BQlVMTEVULCBsaS5BQlVMTEVULCBkaXYuQUJVTExFVAoJe21h
+cmdpbi10b3A6MGluOwoJbWFyZ2luLXJpZ2h0OjBpbjsKCW1hcmdpbi1ib3R0b206MGluOwoJbWFy
+Z2luLWxlZnQ6MTYuNTVwdDsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCXRleHQtaW5kZW50Oi0x
+Ni41NXB0OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30K
+cC5BSU5ERU5URURCVUxMRVQsIGxpLkFJTkRFTlRFREJVTExFVCwgZGl2LkFJTkRFTlRFREJVTExF
+VAoJe21hcmdpbi10b3A6MGluOwoJbWFyZ2luLXJpZ2h0OjBpbjsKCW1hcmdpbi1ib3R0b206MGlu
+OwoJbWFyZ2luLWxlZnQ6MzMuMXB0OwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJdGV4dC1pbmRl
+bnQ6LTE2LjU1cHQ7Cglmb250LXNpemU6MTEuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1
+YSI7fQpwLkFJTkRFTlRFRFBBUkEsIGxpLkFJTkRFTlRFRFBBUkEsIGRpdi5BSU5ERU5URURQQVJB
+Cgl7bWFyZ2luLXRvcDowaW47CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFyZ2luLWJvdHRvbTowaW47
+CgltYXJnaW4tbGVmdDoxNi41NXB0OwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXpl
+OjExLjBwdDsKCWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30Kc3Bhbi5FbWFpbFN0eWxlMjMK
+CXttc28tc3R5bGUtdHlwZTpwZXJzb25hbC1jb21wb3NlOwoJZm9udC1mYW1pbHk6QXJpYWw7Cglj
+b2xvcjp3aW5kb3d0ZXh0O30KQHBhZ2UgU2VjdGlvbjEKCXtzaXplOjU5NS40NXB0IDg0MS43cHQ7
+CgltYXJnaW46MS4waW4gLjc1aW4gMS4waW4gLjc1aW47fQpkaXYuU2VjdGlvbjEKCXtwYWdlOlNl
+Y3Rpb24xO30KLS0+Cjwvc3R5bGU+CjwvaGVhZD4KPGJvZHkgbGFuZz0iRU4tVVMiIGxpbms9ImJs
+dWUiIHZsaW5rPSIjNjA2NDIwIj4KPGRpdiBjbGFzcz0iU2VjdGlvbjEiPgo8cCBjbGFzcz0iTXNv
+Tm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6
+ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5IaSw8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+
+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNw
+YW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj48bzpwPiZuYnNw
+OzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXpl
+PSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFt
+aWx5OkFyaWFsIj5UaGlzIGlzc3VlIG1heSBub3QgYmUgcmVsYXRlZCBkaXJlY3RseSB0byBhbnkg
+ZC1idXMgZnVuY3Rpb25hbGl0eSBhcyBzdWNoLiBZZXQgSSB3b3VsZCBsaWtlIHRvIGtub3csPG86
+cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6
+ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZh
+bWlseTpBcmlhbCI+SWYgYW55IG9uZSBmYWNlZCBhIHNpbWlsYXIgcHJvYmxlbSBhbmQgZ290IGFu
+eSBpZGVhIGhvdyB0byBmaXggdGhlIGlzc3VlLjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+
+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBz
+dHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7PC9v
+OnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIi
+IGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6
+QXJpYWwiPldoZW4gSSBtYWtlIHRoZSAmIzgyMjA7RGlhbCYjODIyMTsgY2FsbCB1c2luZyBELUJV
+UyBtZXRob2QgY2FsbCwgSSBnZXQgdGhlIGJlbG93IGVycm9yIHNvbWV0aW1lczo8bzpwPjwvbzpw
+Pjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBm
+YWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFy
+aWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9y
+bWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTox
+MC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj49PT09PT09PT09PT09PT09PT09PT1FUlJPUiBMT0c9
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PTxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJN
+c29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1z
+aXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPnByb2Nlc3MgNDUzNjogYXJndW1lbnRzIHRv
+IGRidXNfbWVzc2FnZV9pdGVyX2FwcGVuZF9iYXNpYygpIHdlcmUgaW5jb3JyZWN0LCBhc3NlcnRp
+b24gJnF1b3Q7X2RidXNfY2hlY2tfaXNfdmFsaWRfdXRmOCAoKnN0cmluZ19wKSZxdW90OyBmYWls
+ZWQgaW4gZmlsZSBkYnVzLW1lc3NhZ2UuYyBsaW5lCiAyNTI2LjxvOnA+PC9vOnA+PC9zcGFuPjwv
+Zm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFs
+Ij48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPlRoaXMg
+aXMgbm9ybWFsbHkgYSBidWcgaW4gc29tZSBhcHBsaWNhdGlvbiB1c2luZyB0aGUgRC1CdXMgbGli
+cmFyeS48bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48
+Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7
+CmZvbnQtZmFtaWx5OkFyaWFsIj4mbmJzcDsgRC1CdXMgbm90IGJ1aWx0IHdpdGggLXJkeW5hbWlj
+IHNvIHVuYWJsZSB0byBwcmludCBhIGJhY2t0cmFjZTxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48
+L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3Bh
+biBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7
+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9
+IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1p
+bHk6QXJpYWwiPlJlZ2FyZHMsPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9
+Ik1zb05vcm1hbCI+PHN0MTpDaXR5IHc6c3Q9Im9uIj48c3QxOnBsYWNlIHc6c3Q9Im9uIj48Zm9u
+dCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7Zm9u
+dC1mYW1pbHk6QXJpYWwiPk1pbGFuPC9zcGFuPjwvZm9udD48L3N0MTpwbGFjZT48L3N0MTpDaXR5
+Pjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBw
+dDtmb250LWZhbWlseTpBcmlhbCI+PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPC9kaXY+
+Cjxicj4KPGhyPgo8Zm9udCBmYWNlPSJBcmlhbCIgY29sb3I9IkdyYXkiIHNpemU9IjIiPlRoaXMg
+bWVzc2FnZSBpcyBmb3IgdGhlIGRlc2lnbmF0ZWQgcmVjaXBpZW50IG9ubHkgYW5kIG1heSBjb250
+YWluIHByaXZpbGVnZWQsIHByb3ByaWV0YXJ5LCBvciBvdGhlcndpc2UgcHJpdmF0ZSBpbmZvcm1h
+dGlvbi4gSWYgeW91IGhhdmUgcmVjZWl2ZWQgaXQgaW4gZXJyb3IsIHBsZWFzZSBub3RpZnkgdGhl
+IHNlbmRlciBpbW1lZGlhdGVseSBhbmQgZGVsZXRlIHRoZSBvcmlnaW5hbC4KIEFueSBvdGhlciB1
+c2Ugb2YgdGhlIGVtYWlsIGJ5IHlvdSBpcyBwcm9oaWJpdGVkLjxicj4KPC9mb250Pgo8L2JvZHk+
+CjwvaHRtbD4K
+
+--===============5475375128069172024==--
 
