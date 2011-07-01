@@ -1,43 +1,172 @@
-Content-Type: multipart/mixed; boundary="===============3813510821857373508=="
+Content-Type: multipart/mixed; boundary="===============4985199995416430089=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Incoming patch HS2330 detection, plugins/udev.c
-Date: Thu, 30 Jun 2011 13:20:06 -0700
-Message-ID: <1309465208.2208.59.camel@aeonflux>
-In-Reply-To: <20110630194639.GA5689@debut.europalab.com>
+From: Luiz Augusto von Dentz <luiz.dentz@gmail.com>
+Subject: [PATCH 2/3] bluetooth: make uuid profile detection more generic
+Date: Fri, 01 Jul 2011 10:12:23 +0300
+Message-ID: <1309504344-23058-2-git-send-email-luiz.dentz@gmail.com>
+In-Reply-To: <1309504344-23058-1-git-send-email-luiz.dentz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3813510821857373508==
+--===============4985199995416430089==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Michael,
+From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
 
-> It might interest you that I made a feature request 20386 on the
-> MeeGo bugtracker [1][2] today to include PIN entry logic in the
-> MeeGo network panel. Not sure how far this request will go or if
-> they'll (gulp) ask me to do it myself... I'm still unclear on the
-> boundaries and coupling between ofono, connman, and the UI pieces
-> like the MeeGo network panel.
+---
+ plugins/bluetooth.c |   31 ++++++++++++++++++-------------
+ plugins/bluetooth.h |    4 +---
+ 2 files changed, 19 insertions(+), 16 deletions(-)
 
-we do not really work on MeeGo network panel related UI details, but in
-general there needs to be a split between network generic tasks and
-technology specific ones. Similar to that we have a Bluetooth panel for
-pairing etc.
+diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+index f9bc0b5..7e0705f 100644
+--- a/plugins/bluetooth.c
++++ b/plugins/bluetooth.c
+@@ -226,9 +226,9 @@ done:
+ 	g_slist_free(prop_handlers);
+ }
+ =
 
-So would expect to see a cellular panel that allows to enter the PIN
-code and configure the APN settings. Since APN settings are oFono
-specific and have nothing to do with ConnMan.
+-static void has_uuid(DBusMessageIter *array, gpointer user_data)
++static void parse_uuids(DBusMessageIter *array, gpointer user_data)
+ {
+-	gboolean *profiles =3D user_data;
++	GSList **uuids =3D user_data;
+ 	DBusMessageIter value;
+ =
 
-I leave this all up to our UX designers :)
+ 	if (dbus_message_iter_get_arg_type(array) !=3D DBUS_TYPE_ARRAY)
+@@ -241,8 +241,7 @@ static void has_uuid(DBusMessageIter *array, gpointer u=
+ser_data)
+ =
 
-Regards
+ 		dbus_message_iter_get_basic(&value, &uuid);
+ =
 
-Marcel
+-		if (!strcasecmp(uuid, HFP_AG_UUID))
+-			*profiles |=3D HFP_AG;
++		*uuids =3D g_slist_prepend(*uuids, (char *) uuid);
+ =
+
+ 		dbus_message_iter_next(&value);
+ 	}
+@@ -262,14 +261,13 @@ static void parse_string(DBusMessageIter *iter, gpoin=
+ter user_data)
+ static void device_properties_cb(DBusPendingCall *call, gpointer user_data)
+ {
+ 	DBusMessage *reply;
+-	int have_uuid =3D 0;
+ 	const char *path =3D user_data;
+ 	const char *adapter =3D NULL;
+ 	const char *adapter_addr =3D NULL;
+ 	const char *device_addr =3D NULL;
+ 	const char *alias =3D NULL;
+-	struct bluetooth_profile *profile;
+ 	struct DBusError derr;
++	GSList *uuids =3D NULL;
+ =
+
+ 	reply =3D dbus_pending_call_steal_reply(call);
+ =
+
+@@ -284,7 +282,7 @@ static void device_properties_cb(DBusPendingCall *call,=
+ gpointer user_data)
+ =
+
+ 	DBG("");
+ =
+
+-	bluetooth_parse_properties(reply, "UUIDs", has_uuid, &have_uuid,
++	bluetooth_parse_properties(reply, "UUIDs", parse_uuids, &uuids,
+ 				"Adapter", parse_string, &adapter,
+ 				"Address", parse_string, &device_addr,
+ 				"Alias", parse_string, &alias, NULL);
+@@ -293,15 +291,22 @@ static void device_properties_cb(DBusPendingCall *cal=
+l, gpointer user_data)
+ 		adapter_addr =3D g_hash_table_lookup(adapter_address_hash,
+ 							adapter);
+ =
+
+-	if ((have_uuid & HFP_AG) && device_addr && adapter_addr) {
+-		profile =3D g_hash_table_lookup(uuid_hash, HFP_AG_UUID);
++	if (!device_addr && !adapter_addr)
++		goto done;
++
++	for (; uuids; uuids =3D uuids->next) {
++		struct bluetooth_profile *profile;
++		const char *uuid =3D uuids->data;
++
++		profile =3D g_hash_table_lookup(uuid_hash, uuid);
+ 		if (profile =3D=3D NULL || profile->create =3D=3D NULL)
+-			goto done;
++			continue;
+ =
+
+ 		profile->create(path, device_addr, adapter_addr, alias);
+ 	}
+ =
+
+ done:
++	g_slist_free(uuids);
+ 	dbus_message_unref(reply);
+ }
+ =
+
+@@ -342,7 +347,7 @@ static gboolean property_changed(DBusConnection *connec=
+tion, DBusMessage *msg,
+ =
+
+ 	dbus_message_iter_get_basic(&iter, &property);
+ 	if (g_str_equal(property, "UUIDs") =3D=3D TRUE) {
+-		int profiles =3D 0;
++		GSList *uuids =3D NULL;
+ 		const char *path =3D dbus_message_get_path(msg);
+ 		DBusMessageIter variant;
+ =
+
+@@ -354,13 +359,13 @@ static gboolean property_changed(DBusConnection *conn=
+ection, DBusMessage *msg,
+ =
+
+ 		dbus_message_iter_recurse(&iter, &variant);
+ =
+
+-		has_uuid(&variant, &profiles);
++		parse_uuids(&variant, &uuids);
+ =
+
+ 		/* We need the full set of properties to be able to create
+ 		 * the modem properly, including Adapter and Alias, so
+ 		 * refetch everything again
+ 		 */
+-		if (profiles)
++		if (uuids)
+ 			bluetooth_send_with_reply(path, BLUEZ_DEVICE_INTERFACE,
+ 					"GetProperties", device_properties_cb,
+ 					g_strdup(path), g_free, -1,
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index 318e4b0..ff0ea52 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -28,9 +28,7 @@
+ #define DBUS_TIMEOUT 15
+ =
+
+ #define HFP_AG_UUID	"0000111f-0000-1000-8000-00805f9b34fb"
+-
+-/* Profiles bitfield */
+-#define HFP_AG 0x01
++#define HFP_HS_UUID	"0000111e-0000-1000-8000-00805f9b34fb"
+ =
+
+ struct bluetooth_profile {
+ 	const char *name;
+-- =
+
+1.7.5.4
 
 
-
---===============3813510821857373508==--
+--===============4985199995416430089==--
 
