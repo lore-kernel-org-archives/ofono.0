@@ -1,68 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============2798958777036752762=="
+Content-Type: multipart/mixed; boundary="===============5629457616965630961=="
 MIME-Version: 1.0
-From: Luiz Augusto von Dentz <luiz.dentz@gmail.com>
-Subject: Re: [PATCH 3/3] bluetooth: fix not removing data when
- devices/adapters are removed
-Date: Sat, 02 Jul 2011 22:04:33 +0300
-Message-ID: <CABBYNZK0qHdWQNrQwog7kFPA-tVGqU2tzaKAzBeJ=e=AH_s2tA@mail.gmail.com>
-In-Reply-To: <4E0D838C.9000304@gmail.com>
+From: Michael <ofonoconn@encambio.com>
+Subject: Re: Incoming patch HS2330 detection, plugins/udev.c
+Date: Sat, 02 Jul 2011 21:08:23 +0200
+Message-ID: <20110702190823.GA11986@debut.europalab.com>
+In-Reply-To: <1309465208.2208.59.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2798958777036752762==
+--===============5629457616965630961==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
 
-On Fri, Jul 1, 2011 at 11:21 AM, Denis Kenzior <denkenz@gmail.com> wrote:
-> Hi Luiz,
+Hello Marcel,
+
+On Thurs., Jun 30, 2011, Marcel Holtmann wrote:
+>> It might interest you that I made a feature request 20386 on the
+>> MeeGo bugtracker [1][2] today to include PIN entry logic in the
+>> MeeGo network panel. Not sure how far this request will go or if
+>> they'll (gulp) ask me to do it myself... I'm still unclear on the
+>> boundaries and coupling between ofono, connman, and the UI pieces
+>> like the MeeGo network panel.
 >
-> On 07/01/2011 02:12 AM, Luiz Augusto von Dentz wrote:
->> From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
->>
->> If an adapter or device is removed any data associate should be removed,
->> otherwise the next time they appear/are created the drivers may not
->> asssociate again.
->> ---
->> =C2=A0plugins/bluetooth.c | =C2=A0 79 ++++++++++++++++++++++++++++++++++=
-++--------------
->> =C2=A0plugins/bluetooth.h | =C2=A0 =C2=A04 +-
->> =C2=A0plugins/hfp_hf.c =C2=A0 =C2=A0| =C2=A0 30 ++++++++++++-------
->> =C2=A03 files changed, 78 insertions(+), 35 deletions(-)
+>we do not really work on MeeGo network panel related UI details,
+>but in general there needs to be a split between network generic
+>tasks and technology specific ones. Similar to that we have a
+>Bluetooth panel for pairing etc.
 >
-> Patch looks good, just one quick question:
+>So would expect to see a cellular panel that allows to enter the
+>PIN code and configure the APN settings. Since APN settings are
+>oFono specific and have nothing to do with ConnMan.
 >
->> @@ -443,25 +443,33 @@ free:
->> =C2=A0 =C2=A0 =C2=A0 return -ENOMEM;
->> =C2=A0}
->>
->> -static gboolean hfp_remove_each_modem(gpointer key, gpointer value,
->> +static gboolean hfp_remove_modem(gpointer key, gpointer value,
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 gpointer use=
-r_data)
->> =C2=A0{
->> =C2=A0 =C2=A0 =C2=A0 struct ofono_modem *modem =3D value;
->> + =C2=A0 =C2=A0 const char *device =3D key;
->> + =C2=A0 =C2=A0 const char *prefix =3D user_data;
->> +
->> + =C2=A0 =C2=A0 if (prefix && g_str_has_prefix(device, prefix) =3D=3D FA=
-LSE)
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return TRUE;
+Well I don't think you mean 'panel' here, because they are rather
+large overreaching components. Putting cellular information in its
+own panel would only be a good thing if there's much more to it than
+the APN typically used. Maybe I'm too new to 3G, but it seems to me
+that the cellular config can be part of the network panel just as
+Wifi information is as well.
+
+Bluetooth probably has its own panel because of potential file
+transfers, pairing, tethering, various profile activity... It's
+a lot more to configure than just the APN of a cellular connection.
+
+So that's why it might be good to put the PIN entry textedit just
+next to the DHCP/Static selector of the cellular device. It would
+be a intuitive place to look for it at least.
+
+>I leave this all up to our UX designers :)
 >
-> Are you sure you want to return TRUE here? =C2=A0By my reading TRUE shoul=
-d be
-> removed only if the key should be removed. =C2=A0That seems not to be what
-> you want...
+It would help to know just who that is and where or how they
+communicate with the community.
 
-Yep, gonna fix it in v2, thanks for the quick review.
+Are these UX designers officially part of the ofono project or
+the meego project? When you say 'our UX designers' do you mean
+that 'ofono developers maintain the MeeGo network panel code'
+as well?
 
+Regards,
+Michael
 
--- =
-
-Luiz Augusto von Dentz
-
---===============2798958777036752762==--
+--===============5629457616965630961==--
 
