@@ -1,351 +1,141 @@
-Content-Type: multipart/mixed; boundary="===============6991736577128558157=="
+Content-Type: multipart/mixed; boundary="===============5019934721000433623=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v8] connman: add plugin in oFono to request/release private
- network
-Date: Mon, 04 Jul 2011 15:41:18 +0200
-Message-ID: <1309786878-29671-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Christian Gagneraud <chris@techworks.ie>
+Subject: Re: ofono-qt - anything to add/improve?
+Date: Mon, 04 Jul 2011 15:41:10 +0100
+Message-ID: <4E11D106.1060809@techworks.ie>
+In-Reply-To: <CANNYZj-ic66A+wibWSDWKt_s3O+5R6v=RzMOxgs_5NxL6bRMnQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6991736577128558157==
+--===============5019934721000433623==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Change log from v7:
-	- Fix some style issues.
-	- While requesting private network, we store the object path returned
-	  by ConnMan, to use it later on.
-	- While releasing private network we pass stored object path in
-	  argument.
-	- We don't check anymore in release function if call get completed, we
-	  only check if pending call is not null. It might happens that pending
-	  call is not null and creates a crash while testing call completion.
-	  Now we force pending call to be set to NULL when request_reply is
-	  invoked.
+On 04/07/11 14:01, Alexander Kanavin wrote:
+> Hi,
+>
+> I am the maintainer of ofono-qt library, which provides Qt bindings to
+> ofono services and licensed under LGPL 2.1:
+> http://meego.gitorious.org/meego-cellular/ofono-qt
 
----
- Makefile.am       |    3 +
- plugins/connman.c |  286 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 289 insertions(+), 0 deletions(-)
- create mode 100644 plugins/connman.c
+Hi Alexander,
 
-diff --git a/Makefile.am b/Makefile.am
-index ef6196b..6bbf47a 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -343,6 +343,9 @@ builtin_sources +=3D plugins/hfp_ag.c plugins/bluetooth=
-.h
- builtin_modules +=3D dun_gw
- builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
- =
+I started to use ofono-qt recently. And first of all, I would like to =
 
-+builtin_modules +=3D connman
-+builtin_sources +=3D plugins/connman.c
-+
- builtin_sources +=3D $(btio_sources)
- builtin_cflags +=3D @BLUEZ_CFLAGS@
- builtin_libadd +=3D @BLUEZ_LIBS@
-diff --git a/plugins/connman.c b/plugins/connman.c
-new file mode 100644
-index 0000000..6af3fcb
---- /dev/null
-+++ b/plugins/connman.c
-@@ -0,0 +1,286 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <errno.h>
-+#include <stdlib.h>
-+#include <unistd.h>
-+
-+#include <gdbus.h>
-+#include <string.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/log.h>
-+#include <ofono/dbus.h>
-+#include <ofono/plugin.h>
-+#include <ofono/private-network.h>
-+
-+#define CONNMAN_SERVICE			"net.connman"
-+#define CONNMAN_PATH			"/net/connman"
-+
-+#define CONNMAN_MANAGER_INTERFACE	CONNMAN_SERVICE ".Manager"
-+#define CONNMAN_MANAGER_PATH		"/"
-+
-+static DBusConnection *connection;
-+static GHashTable *requests;
-+static unsigned int id;
-+
-+struct pns_req {
-+	int uid;
-+	DBusPendingCall *pending;
-+	ofono_private_network_cb_t cb;
-+	void *data;
-+	gboolean redundant;
-+	char *path;
-+};
-+
-+static void pns_release(int uid)
-+{
-+	DBusMessage *message =3D NULL;
-+	struct pns_req *req;
-+
-+	DBG("");
-+
-+	req =3D g_hash_table_lookup(requests, &uid);
-+	if (!req)
-+		return;
-+
-+	if (req->pending) {
-+		/*
-+		* We want to cancel the request but we have to wait
-+		* the response of ConnMan. So we mark request as
-+		* redundant until we get the response, then we remove
-+		* it from hash table.
-+		*/
-+		req->redundant =3D TRUE;
-+		return;
-+	}
-+
-+	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
-+						CONNMAN_MANAGER_PATH,
-+						CONNMAN_MANAGER_INTERFACE,
-+						"ReleasePrivateNetwork");
-+
-+	if (message =3D=3D NULL)
-+		goto error;
-+
-+	dbus_message_append_args(message, DBUS_TYPE_OBJECT_PATH, &req->path,
-+							DBUS_TYPE_INVALID);
-+	dbus_message_set_no_reply(message, TRUE);
-+	dbus_connection_send(connection, message, NULL);
-+	dbus_message_unref(message);
-+
-+error:
-+	g_hash_table_remove(requests, &req->uid);
-+}
-+
-+static void request_reply(DBusPendingCall *call, void *user_data)
-+{
-+	struct pns_req *req =3D user_data;
-+	struct ofono_private_network_settings pns;
-+	DBusMessageIter array, dict, entry;
-+	DBusMessage *reply;
-+	const char *path;
-+
-+	DBG("");
-+
-+	pns.fd =3D -1;
-+	pns.server_ip =3D NULL;
-+	pns.peer_ip =3D NULL;
-+	pns.primary_dns =3D NULL;
-+	pns.secondary_dns =3D NULL;
-+
-+	req->pending =3D NULL;
-+
-+	reply =3D dbus_pending_call_steal_reply(call);
-+	if (!reply)
-+		goto error;
-+
-+	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR)
-+		goto error;
-+
-+	if (dbus_message_iter_init(reply, &array) =3D=3D FALSE)
-+		goto error;
-+
-+	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_OBJECT_PATH)
-+		goto error;
-+
-+	dbus_message_iter_get_basic(&array, &path);
-+	req->path =3D g_strdup(path);
-+	DBG("Object path =3D %s\n", req->path);
-+
-+	dbus_message_iter_next(&array);
-+	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_ARRAY)
-+		goto error;
-+
-+	if (req->redundant =3D=3D TRUE)
-+		goto release;
-+
-+	dbus_message_iter_recurse(&array, &dict);
-+
-+	while (dbus_message_iter_get_arg_type(&dict) =3D=3D DBUS_TYPE_DICT_ENTRY)=
- {
-+		DBusMessageIter iter;
-+		const char *key;
-+		int type;
-+
-+		dbus_message_iter_recurse(&dict, &entry);
-+
-+		dbus_message_iter_get_basic(&entry, &key);
-+
-+		dbus_message_iter_next(&entry);
-+		dbus_message_iter_recurse(&entry, &iter);
-+
-+		type =3D dbus_message_iter_get_arg_type(&iter);
-+		if (type !=3D DBUS_TYPE_STRING)
-+			break;
-+
-+		if (g_str_equal(key, "ServerIPv4")
-+				&& type =3D=3D DBUS_TYPE_STRING)
-+			dbus_message_iter_get_basic(&iter, &pns.server_ip);
-+		else if (g_str_equal(key, "PeerIPv4")
-+				&& type =3D=3D DBUS_TYPE_STRING)
-+			dbus_message_iter_get_basic(&iter, &pns.peer_ip);
-+		else if (g_str_equal(key, "PrimaryDNS")
-+				&& type =3D=3D DBUS_TYPE_STRING)
-+			dbus_message_iter_get_basic(&iter, &pns.primary_dns);
-+		else if (g_str_equal(key, "SecondaryDNS")
-+				&& type =3D=3D DBUS_TYPE_STRING)
-+			dbus_message_iter_get_basic(&iter, &pns.secondary_dns);
-+
-+		dbus_message_iter_next(&dict);
-+	}
-+
-+	dbus_message_iter_next(&array);
-+	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_UNIX_FD)
-+		goto error;
-+
-+	dbus_message_iter_get_basic(&array, &pns.fd);
-+	DBG("Fildescriptor =3D %d\n", pns.fd);
-+
-+
-+	if (pns.server_ip =3D=3D NULL || pns.peer_ip =3D=3D NULL ||
-+			pns.primary_dns =3D=3D NULL || pns.secondary_dns =3D=3D NULL ||
-+			pns.fd < 0) {
-+		ofono_error("Error while reading dictionnary...\n");
-+		goto release;
-+	}
-+
-+	req->cb(&pns, req->data);
-+
-+	dbus_message_unref(reply);
-+	dbus_pending_call_unref(call);
-+
-+	return;
-+
-+release:
-+	pns_release(req->uid);
-+error:
-+	if (pns.fd >=3D 0)
-+		close(pns.fd);
-+
-+	req->cb(NULL, req->data);
-+
-+	if (reply)
-+		dbus_message_unref(reply);
-+
-+	dbus_pending_call_unref(call);
-+}
-+
-+static int pns_request(ofono_private_network_cb_t cb, void *data)
-+{
-+	DBusMessage *message;
-+	DBusPendingCall *call;
-+	struct pns_req *req;
-+
-+	DBG("");
-+
-+	req =3D g_try_new(struct pns_req, 1);
-+
-+	if (req =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
-+						CONNMAN_MANAGER_PATH,
-+						CONNMAN_MANAGER_INTERFACE,
-+						"RequestPrivateNetwork");
-+
-+	if (message =3D=3D NULL) {
-+		g_free(req);
-+		return -ENOMEM;
-+	}
-+
-+	if (dbus_connection_send_with_reply(connection, message,
-+						&call, 5000) =3D=3D FALSE) {
-+		g_free(req);
-+		dbus_message_unref(message);
-+		return -EIO;
-+	}
-+
-+	id++;
-+	req->pending =3D call;
-+	req->cb =3D cb;
-+	req->data =3D data;
-+	req->uid =3D id;
-+	req->redundant =3D FALSE;
-+
-+	dbus_pending_call_set_notify(call, request_reply, req, NULL);
-+	g_hash_table_insert(requests, &req->uid, req);
-+	dbus_message_unref(message);
-+
-+	return req->uid;
-+}
-+
-+static struct ofono_private_network_driver pn_driver =3D {
-+	.name		=3D "ConnMan Private Network",
-+	.request	=3D pns_request,
-+	.release	=3D pns_release,
-+};
-+
-+static void remove_requests(gpointer user_data)
-+{
-+	struct pns_req *req =3D user_data;
-+
-+	g_free(req->path);
-+	g_free(req);
-+}
-+
-+static int connman_init(void)
-+{
-+	DBG("");
-+
-+	connection =3D ofono_dbus_get_connection();
-+	requests =3D g_hash_table_new_full(g_int_hash, g_int_equal, NULL,
-+						remove_requests);
-+
-+	return ofono_private_network_driver_register(&pn_driver);
-+}
-+
-+static void connman_exit(void)
-+{
-+	g_hash_table_destroy(requests);
-+	ofono_private_network_driver_unregister(&pn_driver);
-+}
-+
-+OFONO_PLUGIN_DEFINE(connman, "ConnMan plugin", VERSION,
-+		OFONO_PLUGIN_PRIORITY_DEFAULT, connman_init, connman_exit)
--- =
+say, that it does offer a very nice DBUS abstraction.
 
-1.7.1
+I'm not a user of the voice call interfaces, just the modem, sim, =
+
+network and connman (mobile broadband use case).
+
+I'm actually integrating ofono(-qt) (and other stuff) into PTXdist =
+
+(Reproducable Embedded Linux Systems) [1]
+
+1. Releases.
+I've found 2 places for the tarballs:
+- git:
+   path: =
+
+http://meego.gitorious.org/meego-cellular/ofono-qt/archive-tarball/<version>
+   filename: meego-cellular-ofono-qt-<version>.tar.gz
+   (which uncompress into a folder named "meego-cellular-ofono-qt"
+- meego: http://api.meego.com/public/source/Trunk/libofono-qt/
+   name of the archives: ofono-qt-<version>
+   which uncompress nicely into a folder named ofono-qt-<version>, =
+
+unfortunately, this is not a repository, as it contains only the version =
+
+used by meego something.
+
+So, to make it clear and simple, is there any official repository for =
+
+ofono-qt?
+
+2. "slotification" of various member functions:
+
+member functions like OfonoModem.setPowered(bool powered) could be =
+
+declared slots, so that it can be connected to signals of same signature =
+
+like QCheckBox.toggled(bool)
+
+3. More convenient function members (I'm getting picky, I know)
+example for OfonoModem:
+  - existing: setPowered(bool powered), setOnline(bool online)
+  - proposed addition: powerOn(), powerOff(), goOnline(), goOffline()
+
+This with the proposed slotification, would make libofono-qt even easier =
+
+to use.
+
+4. Use enumeration instead of strings:
+for example in OfonoConnmanContext:
+enum ContextType {
+	ContextTypeInternet,
+	ContextTypeMms,
+	ContextTypeWap,
+	ContextTypeIms,
+};
+void setType(ContextType type);
+instead of:
+void setType(const QString& type)
+
+I know, that it is less flexible (especially if the oFono DBUS API =
+
+change), but it can help to reduce size of binaries and be slightly more =
+
+efficient. [On an ARM9(a)200MHz, every little helps! ;)]
+
+3. bug with path()?
+Each time my code call OfonoXyz.path(), I get a message in the console:
+QDBusArgument: read from a write-only object
+
+I don't know where does it come from, perhaps it's not even related to =
+
+ofono-qt...
+
+4. partial interface implementation
+There some classes that are missing properties/ function members.
+On top of my head:
+GSM band, UMTS band and fast dormancy in RadioSettings
+
+5. More documentation (doxygen)
+   I know that by reading the ofono DBUS API, it's easy to figure out =
+
+how to use ofono-qt. But as ofono-qt offers an abstraction of the ofono =
+
+DBUS API, it might be nice to have a full ofono-qt API documentation.
+I guess it would be mainly copy/paste from ofono/doc/*-api.txt.
+
+6. Enhance ofono-qt with a concept of PIN agent?
+It's easy to use SimManager.pinRequiredChanged() signals, but perhaps a =
+
+simple PIN agent class might be a nice thing to have.
+At the SimManager level, or even better at the Modem level
+OfonoModem.registerSimPinAgent(myAgent);
+
+Just throwing some cheap ideas....
 
 
---===============6991736577128558157==--
+Regards,
+Chris
+
+[1] http://www.mail-archive.com/ptxdist(a)pengutronix.de/msg04566.html
+
+
+>
+> I would like to get in touch with everyone who is using it, or perhaps
+> would like to use it, and find out if there is anything incomplete,
+> missing or possible to improve there. Let me know please.
+>
+> Also, if you know an easy way to find out what is dependent on this
+> library in Meego, that would be great too.
+>
+> Regards,
+
+
+--===============5019934721000433623==--
 
