@@ -1,141 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============5019934721000433623=="
+Content-Type: multipart/mixed; boundary="===============4794228785313510558=="
 MIME-Version: 1.0
-From: Christian Gagneraud <chris@techworks.ie>
-Subject: Re: ofono-qt - anything to add/improve?
-Date: Mon, 04 Jul 2011 15:41:10 +0100
-Message-ID: <4E11D106.1060809@techworks.ie>
-In-Reply-To: <CANNYZj-ic66A+wibWSDWKt_s3O+5R6v=RzMOxgs_5NxL6bRMnQ@mail.gmail.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 00/11] Add BIP commands support
+Date: Mon, 04 Jul 2011 18:06:31 +0200
+Message-ID: <1309795602-26046-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5019934721000433623==
+--===============4794228785313510558==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 04/07/11 14:01, Alexander Kanavin wrote:
-> Hi,
->
-> I am the maintainer of ofono-qt library, which provides Qt bindings to
-> ofono services and licensed under LGPL 2.1:
-> http://meego.gitorious.org/meego-cellular/ofono-qt
-
-Hi Alexander,
-
-I started to use ofono-qt recently. And first of all, I would like to =
-
-say, that it does offer a very nice DBUS abstraction.
-
-I'm not a user of the voice call interfaces, just the modem, sim, =
-
-network and connman (mobile broadband use case).
-
-I'm actually integrating ofono(-qt) (and other stuff) into PTXdist =
-
-(Reproducable Embedded Linux Systems) [1]
-
-1. Releases.
-I've found 2 places for the tarballs:
-- git:
-   path: =
-
-http://meego.gitorious.org/meego-cellular/ofono-qt/archive-tarball/<version>
-   filename: meego-cellular-ofono-qt-<version>.tar.gz
-   (which uncompress into a folder named "meego-cellular-ofono-qt"
-- meego: http://api.meego.com/public/source/Trunk/libofono-qt/
-   name of the archives: ofono-qt-<version>
-   which uncompress nicely into a folder named ofono-qt-<version>, =
-
-unfortunately, this is not a repository, as it contains only the version =
-
-used by meego something.
-
-So, to make it clear and simple, is there any official repository for =
-
-ofono-qt?
-
-2. "slotification" of various member functions:
-
-member functions like OfonoModem.setPowered(bool powered) could be =
-
-declared slots, so that it can be connected to signals of same signature =
-
-like QCheckBox.toggled(bool)
-
-3. More convenient function members (I'm getting picky, I know)
-example for OfonoModem:
-  - existing: setPowered(bool powered), setOnline(bool online)
-  - proposed addition: powerOn(), powerOff(), goOnline(), goOffline()
-
-This with the proposed slotification, would make libofono-qt even easier =
-
-to use.
-
-4. Use enumeration instead of strings:
-for example in OfonoConnmanContext:
-enum ContextType {
-	ContextTypeInternet,
-	ContextTypeMms,
-	ContextTypeWap,
-	ContextTypeIms,
-};
-void setType(ContextType type);
-instead of:
-void setType(const QString& type)
-
-I know, that it is less flexible (especially if the oFono DBUS API =
-
-change), but it can help to reduce size of binaries and be slightly more =
-
-efficient. [On an ARM9(a)200MHz, every little helps! ;)]
-
-3. bug with path()?
-Each time my code call OfonoXyz.path(), I get a message in the console:
-QDBusArgument: read from a write-only object
-
-I don't know where does it come from, perhaps it's not even related to =
-
-ofono-qt...
-
-4. partial interface implementation
-There some classes that are missing properties/ function members.
-On top of my head:
-GSM band, UMTS band and fast dormancy in RadioSettings
-
-5. More documentation (doxygen)
-   I know that by reading the ofono DBUS API, it's easy to figure out =
-
-how to use ofono-qt. But as ofono-qt offers an abstraction of the ofono =
-
-DBUS API, it might be nice to have a full ofono-qt API documentation.
-I guess it would be mainly copy/paste from ofono/doc/*-api.txt.
-
-6. Enhance ofono-qt with a concept of PIN agent?
-It's easy to use SimManager.pinRequiredChanged() signals, but perhaps a =
-
-simple PIN agent class might be a nice thing to have.
-At the SimManager level, or even better at the Modem level
-OfonoModem.registerSimPinAgent(myAgent);
-
-Just throwing some cheap ideas....
+ - Remove the list of private context as we don't expect to activate multip=
+le contexts from STK  or to activate a context outside of STK.
+ - Replace the context id argument in the GPRS private APIs by the GPRS ato=
+m data. This way, the global variable used to store the STK private context=
+ is checked against the solicited GPRS atom.
+ It prevents concurrent access if we have multiple STK enabled modems in th=
+e system.
+ - Introduce an anonymous structure in ofono_stk structure to group all the=
+ BIP parameters
+ - Release the STK context when the associated GPRS context is unregistered=
+ or when the STK context is deactivated after a network forced detach.  =
 
 
-Regards,
-Chris
+Philippe Nunes (11):
+  gprs: Add private APIs to activate/deactivate a private context for
+    STK
+  stk: Add support for the proactive command 'Open channel'
+  stk: Add support for the proactive command 'Get channel status'
+  stk: Add support for the proactive command 'Close channel'
+  stk: Add 'ofono_stk_activate_cb' definition
+  stk: Add 'ofono_stk_deactivate_context_cb' definition
+  stk: Add support for the proactive command 'Receive data'
+  stk: Add support for the proactive command 'Send data'
+  stk: Add support of the Setup event list proactive command
+  stk: Add host route to route the traffic through the stk interface
+  gprs: Add API to set a 'detach'notification callback
 
-[1] http://www.mail-archive.com/ptxdist(a)pengutronix.de/msg04566.html
+ src/gprs.c  |  256 +++++++++++++++++
+ src/ofono.h |   23 ++
+ src/stk.c   |  920 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 3 files changed, 1199 insertions(+), 0 deletions(-)
 
 
->
-> I would like to get in touch with everyone who is using it, or perhaps
-> would like to use it, and find out if there is anything incomplete,
-> missing or possible to improve there. Let me know please.
->
-> Also, if you know an easy way to find out what is dependent on this
-> library in Meego, that would be great too.
->
-> Regards,
-
-
---===============5019934721000433623==--
+--===============4794228785313510558==--
 
