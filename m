@@ -1,233 +1,240 @@
-Content-Type: multipart/mixed; boundary="===============0215765314216709787=="
+Content-Type: multipart/mixed; boundary="===============6255462031015016327=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2 08/11] stk: Add support for the proactive command 'Send
- data'
-Date: Mon, 04 Jul 2011 18:06:39 +0200
-Message-ID: <1309795602-26046-9-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 09/11] stk: Add support of the Setup event list proactive
+ command
+Date: Mon, 04 Jul 2011 18:06:40 +0200
+Message-ID: <1309795602-26046-10-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1309795602-26046-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0215765314216709787==
+--===============6255462031015016327==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |  157 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 156 insertions(+), 1 deletions(-)
+ src/stk.c |  120 +++++++++++++++++++++++++++++++++++++++++++++++++++++++--=
+---
+ 1 files changed, 110 insertions(+), 10 deletions(-)
 
 diff --git a/src/stk.c b/src/stk.c
-index 612eafb..1e5869a 100644
+index 1e5869a..4c81bf8 100644
 --- a/src/stk.c
 +++ b/src/stk.c
-@@ -620,6 +620,43 @@ static void stk_alpha_id_unset(struct ofono_stk *stk)
- 	stk_agent_request_cancel(stk->current_agent);
+@@ -90,6 +90,8 @@ struct ofono_stk {
+ 		gsize rx_remaining;
+ 		gsize tx_avail;
+ 		gboolean link_on_demand;
++		gboolean report_data_available;
++		gboolean report_channel_status;
+ 		struct ofono_gprs *gprs;
+ 		struct stk_bearer_description bearer_desc;
+ 		enum stk_transport_protocol_type protocol;
+@@ -519,6 +521,61 @@ static void cancel_pending_dtmf(struct ofono_stk *stk)
+ 		__ofono_voicecall_tone_cancel(vc, stk->dtmf_id);
  }
  =
 
-+static gsize stk_channel_data_write(struct ofono_stk *stk, gboolean packag=
-e,
-+					const unsigned char *data, gsize len)
++static void event_download_envelope_cb(struct ofono_stk *stk, gboolean ok,
++				const unsigned char *data, int len)
 +{
-+	GIOStatus status;
-+	gssize bytes_written;
-+	int flags =3D 0;
-+
-+	if (stk->bip.protocol =3D=3D STK_TRANSPORT_PROTOCOL_UDP_CLIENT_REMOTE) {
-+		if (package =3D=3D TRUE)
-+			flags =3D MSG_MORE;
-+
-+		bytes_written =3D sendto(g_io_channel_unix_get_fd(stk->bip.io),
-+					data, len, flags,
-+					(struct sockaddr *) &stk->bip.dest_addr,
-+					sizeof(stk->bip.dest_addr));
-+
-+		if (bytes_written =3D=3D -1 && stk->bip.read_watch > 0) {
-+			g_source_remove(stk->bip.read_watch);
-+			return 0;
-+		}
-+	} else {
-+		status =3D g_io_channel_write_chars(stk->bip.io, (gchar *)data,
-+					len, (gsize *) &bytes_written, NULL);
-+
-+		if (status !=3D G_IO_STATUS_NORMAL && stk->bip.read_watch > 0) {
-+			g_source_remove(stk->bip.read_watch);
-+			return 0;
-+		}
++	if (!ok) {
++		ofono_error("Event download to UICC failed");
++		return;
 +	}
 +
-+	DBG("Send %zd bytes", bytes_written);
++	if (len)
++		ofono_error("Event download returned %i bytes of data",
++				len);
 +
-+	stk->bip.tx_avail +=3D bytes_written;
-+
-+	return bytes_written;
++	DBG("Event download  to UICC reported no error");
 +}
 +
- static gboolean receive_callback(GIOChannel *channel, GIOCondition cond,
- 				gpointer userdata)
- {
-@@ -778,7 +815,17 @@ static void ofono_stk_activate_context_cb(int error, c=
-onst char *interface,
- 				sizeof(struct stk_bearer_description));
- 	} else if (stk->pending_cmd->type =3D=3D STK_COMMAND_TYPE_SEND_DATA &&
- 			stk->bip.link_on_demand) {
--		/* TODO send data */
-+		const struct stk_command_send_data *sd =3D
-+						&stk->pending_cmd->send_data;
-+		gboolean package =3D (stk->pending_cmd->qualifier =3D=3D
-+				STK_SEND_DATA_STORE_DATA) ? TRUE : FALSE;
-+
-+		if (stk_channel_data_write(stk, package, sd->data.array,
-+						sd->data.len) =3D=3D 0) {
-+				ofono_error("Failed to send data");
-+				rsp.result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+				goto out;
-+		}
- 		rsp.send_data.tx_avail =3D stk->bip.tx_avail;
- 	} else {
- 		/* TODO send channel status event */
-@@ -912,6 +959,70 @@ out:
- 		stk_close_channel(stk);
- }
- =
-
-+static void stk_send_data(struct ofono_stk *stk,
-+				struct stk_common_byte_array data,
-+				unsigned char qualifier)
++static void stk_send_channel_status_event(struct ofono_stk *stk)
 +{
-+	struct stk_response rsp;
-+	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
++	struct stk_envelope e;
 +
-+
-+	memset(&rsp, 0, sizeof(rsp));
-+	rsp.result.type =3D STK_RESULT_TYPE_SUCCESS;
-+
-+	if (data.len > stk->bip.tx_avail) {
-+		rsp.result.type =3D STK_RESULT_TYPE_BIP_ERROR;
-+		goto out;
-+	}
++	memset(&e, 0, sizeof(e));
++	e.type =3D STK_ENVELOPE_TYPE_EVENT_DOWNLOAD;
++	e.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL;
++	e.event_download.type =3D STK_EVENT_TYPE_CHANNEL_STATUS;
++	e.event_download.channel_status.channel.id =3D stk->bip.channel.id;
++	e.event_download.channel_status.channel.status =3D
++						stk->bip.channel.status;
 +
 +	if (stk->bip.channel.status =3D=3D
-+			STK_CHANNEL_PACKET_DATA_SERVICE_NOT_ACTIVATED &&
-+			stk->bip.link_on_demand =3D=3D TRUE) {
-+		int err;
-+		struct ofono_modem *modem =3D __ofono_atom_get_modem(stk->atom);
-+		struct ofono_atom *gprs_atom;
++				STK_CHANNEL_PACKET_DATA_SERVICE_ACTIVATED)
++		memcpy(&e.event_download.channel_status.bearer_desc,
++				&stk->bip.bearer_desc,
++				sizeof(struct stk_bearer_description));
 +
-+		gprs_atom =3D __ofono_modem_find_atom(modem,
-+							OFONO_ATOM_TYPE_GPRS);
-+		if (gprs_atom =3D=3D NULL ||
-+				!__ofono_atom_get_registered(gprs_atom)) {
-+			rsp.result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+			goto out;
-+		}
-+
-+		err =3D __ofono_gprs_private_context_activate(
-+					__ofono_atom_get_data(gprs_atom),
-+					&stk->bip.context,
-+					ofono_stk_activate_context_cb, stk);
-+
-+		if (err =3D=3D -EBUSY) {
-+			rsp.result.type =3D STK_RESULT_TYPE_BIP_ERROR;
-+			goto out;
-+		} else if (err < 0) {
-+			rsp.result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+			goto out;
-+		}
-+
-+		return;
-+	} else {
-+		gboolean package =3D (qualifier =3D=3D STK_SEND_DATA_STORE_DATA) ?
-+						TRUE : FALSE;
-+
-+		if (stk_channel_data_write(stk, package, data.array,
-+						data.len) =3D=3D 0) {
-+				ofono_error("Failed to send data");
-+				rsp.result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+				goto out;
-+		}
-+		stk->bip.tx_avail -=3D data.len;
-+		rsp.send_data.tx_avail =3D stk->bip.tx_avail;
-+	}
-+
-+out:
-+	if (stk_respond(stk, &rsp, stk_command_cb))
-+		stk_command_cb(&failure, stk);
++	if (stk_send_envelope(stk, &e, event_download_envelope_cb, 0))
++		event_download_envelope_cb(stk, FALSE, NULL, -1);
 +}
 +
- static void stk_receive_data(struct ofono_stk *stk, unsigned char toread)
++static void stk_send_data_available_event(struct ofono_stk *stk,
++						unsigned short data_available)
++{
++	struct stk_envelope e;
++
++	memset(&e, 0, sizeof(e));
++	e.type =3D STK_ENVELOPE_TYPE_EVENT_DOWNLOAD;
++	e.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL;
++	e.event_download.type =3D STK_EVENT_TYPE_DATA_AVAILABLE;
++	e.event_download.data_available.channel.id =3D stk->bip.channel.id;
++	e.event_download.data_available.channel.status =3D
++						stk->bip.channel.status;
++	e.event_download.data_available.channel_data_len =3D data_available;
++
++	if (stk_send_envelope(stk, &e, event_download_envelope_cb, 0))
++		event_download_envelope_cb(stk, FALSE, NULL, -1);
++}
++
+ static void ofono_stk_deactivate_context_cb(int error, void *data)
  {
- 	struct stk_response rsp;
-@@ -3195,6 +3306,45 @@ static gboolean handle_command_receive_data(const st=
-ruct stk_command *cmd,
- 	return FALSE;
+ 	struct ofono_stk *stk =3D data;
+@@ -534,8 +591,10 @@ static void ofono_stk_deactivate_context_cb(int error,=
+ void *data)
+ 			send_simple_response(stk, STK_RESULT_TYPE_NOT_CAPABLE);
+ 		else
+ 			send_simple_response(stk, STK_RESULT_TYPE_SUCCESS);
+-	} else {
+-		/* TODO send channel status event */
++	} else if (stk->bip.report_channel_status) {
++		/* user cancellation */
++		stk->bip.channel.status =3D STK_CHANNEL_LINK_DROPPED;
++		stk_send_channel_status_event(stk);
+ 	}
+ =
+
+ 	stk->bip.channel.id =3D 0;
+@@ -672,11 +731,10 @@ static gboolean receive_callback(GIOChannel *channel,=
+ GIOCondition cond,
+ 		ioctl(fd, FIONREAD, &len);
+ 		DBG("%zd bytes to read", len);
+ =
+
+-		/*
+-		 * TODO
+-		 * send data available event if the buffer is empty
+-		 * when new data arrives in it
+-		 */
++		if (len > 0 && stk->bip.rx_remaining =3D=3D 0 &&
++				stk->bip.report_data_available) {
++			stk_send_data_available_event(stk, len);
++		}
+ =
+
+ 		stk->bip.rx_remaining =3D len;
+ =
+
+@@ -711,7 +769,8 @@ static void ofono_stk_activate_context_cb(int error, co=
+nst char *interface,
+ 				STK_COMMAND_TYPE_OPEN_CHANNEL &&
+ 				stk->pending_cmd->type !=3D
+ 				STK_COMMAND_TYPE_SEND_DATA)) {
+-			/* TODO send channel status event */
++			if (stk->bip.report_channel_status)
++				stk_send_channel_status_event(stk);
+ 			return;
+ 		} else {
+ 			rsp.result.type =3D STK_RESULT_TYPE_NETWORK_UNAVAILABLE;
+@@ -805,7 +864,8 @@ static void ofono_stk_activate_context_cb(int error, co=
+nst char *interface,
+ 	g_io_channel_unref(io);
+ =
+
+ 	if (stk->pending_cmd =3D=3D NULL) {
+-		/* TODO send channel status event */
++		if (stk->bip.report_channel_status)
++			stk_send_channel_status_event(stk);
+ 		return;
+ 	} else if (stk->pending_cmd->type =3D=3D STK_COMMAND_TYPE_OPEN_CHANNEL) {
+ 		rsp.open_channel.channel.id =3D stk->bip.channel.id;
+@@ -828,7 +888,8 @@ static void ofono_stk_activate_context_cb(int error, co=
+nst char *interface,
+ 		}
+ 		rsp.send_data.tx_avail =3D stk->bip.tx_avail;
+ 	} else {
+-		/* TODO send channel status event */
++		if (stk->bip.report_channel_status)
++			stk_send_channel_status_event(stk);
+ 		return;
+ 	}
+ =
+
+@@ -2747,6 +2808,8 @@ static gboolean handle_command_refresh(const struct s=
+tk_command *cmd,
+ 		case 5:
+ 		case 6:
+ 			free_idle_mode_text(stk);
++			stk->bip.report_data_available =3D FALSE;
++			stk->bip.report_channel_status =3D FALSE;
+ 			__ofono_sim_refresh(sim, file_list, FALSE, TRUE);
+ 			break;
+ 		}
+@@ -3355,6 +3418,38 @@ static gboolean handle_command_get_channel_status(co=
+nst struct stk_command *cmd,
+ 	return TRUE;
  }
  =
 
-+static gboolean handle_command_send_data(const struct stk_command *cmd,
++static gboolean handle_command_setup_event_list(const struct stk_command *=
+cmd,
 +						struct stk_response *rsp,
 +						struct ofono_stk *stk)
 +{
-+	const struct stk_command_send_data *sd =3D &cmd->send_data;
-+	unsigned char addnl_info[1];
++	const struct stk_command_setup_event_list *sel =3D &cmd->setup_event_list;
++	unsigned int i;
 +
-+	/* Check if channel identifier is valid or already closed */
-+	if (cmd->dst !=3D (stk->bip.channel.id | 0x20)) {
-+		addnl_info[1] =3D STK_RESULT_ADDNL_BIP_PB_CHANNEL_ID_NOT_VALID;
-+		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_BIP_ERROR,
-+					addnl_info);
-+		return TRUE;
++	stk->bip.report_data_available =3D FALSE;
++	stk->bip.report_channel_status =3D FALSE;
++
++	for (i =3D 0; i < sel->event_list.len; i++) {
++		switch (sel->event_list.list[i]) {
++		case STK_EVENT_TYPE_DATA_AVAILABLE:
++			DBG("Enable data available event");
++			stk->bip.report_data_available =3D TRUE;
++			break;
++		case STK_EVENT_TYPE_CHANNEL_STATUS:
++			DBG("Enable channel status event");
++			stk->bip.report_channel_status =3D TRUE;
++			break;
++		default:
++			DBG("Event type (%d) not supported",
++						sel->event_list.list[i]);
++			rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
++			return TRUE;
++		}
 +	}
 +
-+	/* Check if the link was dropped */
-+	if (stk->bip.channel.status =3D=3D STK_CHANNEL_LINK_DROPPED) {
-+		addnl_info[1] =3D STK_RESULT_ADDNL_BIP_PB_CHANNEL_CLOSED;
-+		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_BIP_ERROR,
-+					addnl_info);
-+		return TRUE;
-+	}
-+
-+	/*
-+	 * Don't inform the user during data transfer if AID is
-+	 * a null data object or is not provided
-+	 */
-+	if (sd->alpha_id && sd->alpha_id[0] !=3D '\0')
-+		stk_alpha_id_set(stk, sd->alpha_id, &sd->text_attr,
-+							&sd->icon_id);
-+
-+	stk->respond_on_exit =3D TRUE;
-+	stk->cancel_cmd =3D stk_request_cancel;
-+
-+	stk_send_data(stk, sd->data, cmd->qualifier);
-+
-+	return FALSE;
++	rsp->result.type =3D STK_RESULT_TYPE_SUCCESS;
++	return TRUE;
 +}
 +
- static gboolean handle_command_get_channel_status(const struct stk_command=
- *cmd,
- 						struct stk_response *rsp,
- 						struct ofono_stk *stk)
-@@ -3413,6 +3563,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
+ static void stk_proactive_command_cancel(struct ofono_stk *stk)
+ {
+ 	if (stk->immediate_response)
+@@ -3573,6 +3668,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
 _stk *stk,
  							&rsp, stk);
  		break;
  =
 
-+	case STK_COMMAND_TYPE_SEND_DATA:
-+		respond =3D handle_command_send_data(stk->pending_cmd,
++	case STK_COMMAND_TYPE_SETUP_EVENT_LIST:
++		respond =3D handle_command_setup_event_list(stk->pending_cmd,
 +							&rsp, stk);
 +		break;
 +
- 	case STK_COMMAND_TYPE_GET_CHANNEL_STATUS:
- 		respond =3D handle_command_get_channel_status(stk->pending_cmd,
- 							&rsp, stk);
+ 	default:
+ 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
+ 		break;
 -- =
 
 1.7.1
 
 
---===============0215765314216709787==--
+--===============6255462031015016327==--
 
