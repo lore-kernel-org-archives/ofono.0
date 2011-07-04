@@ -1,127 +1,240 @@
-Content-Type: multipart/mixed; boundary="===============4019833099036258040=="
+Content-Type: multipart/mixed; boundary="===============3427894503709089923=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2 11/11] gprs: Add API to set a 'detach'notification callback
-Date: Mon, 04 Jul 2011 18:06:42 +0200
-Message-ID: <1309795602-26046-12-git-send-email-philippe.nunes@linux.intel.com>
-In-Reply-To: <1309795602-26046-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH] phonesim: Extend STK menu for BIP commands sanity testing
+Date: Mon, 04 Jul 2011 18:26:00 +0200
+Message-ID: <1309796760-27584-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4019833099036258040==
+--===============3427894503709089923==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+For sanity testing regarding the BIP commands, the BIP  menu is enriched wi=
+th the Open channel TCP and Open channel UDP items.
+For both, the destination adress is set as the locahost port '12348'
+With a TCP/UDP server listen to this destination address (like netcat), it'=
+s possible to check the connection (for TCP) and the data exchange (sending=
+/receiving).
 ---
- src/gprs.c  |   28 ++++++++++++++++++++++++++++
- src/ofono.h |    5 +++++
- 2 files changed, 33 insertions(+), 0 deletions(-)
+ src/simapplication.cpp |  126 +++++++++++++++++++++++++++++++++++++++-----=
+----
+ 1 files changed, 103 insertions(+), 23 deletions(-)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index f6090ba..a8b8e7d 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -155,6 +155,7 @@ struct gprs_private_context {
- 	union {
- 		__ofono_gprs_private_context_activate_cb_t act;
- 		__ofono_gprs_private_context_deactivate_cb_t deact;
-+		__ofono_gprs_private_context_detached_cb_t detach;
- 	};
- 	void *cb_data;
- };
-@@ -1502,6 +1503,10 @@ static void gprs_attached_update(struct ofono_gprs *=
-gprs)
+diff --git a/src/simapplication.cpp b/src/simapplication.cpp
+index 119d7b2..f098b8a 100644
+--- a/src/simapplication.cpp
++++ b/src/simapplication.cpp
+@@ -350,11 +350,13 @@ const QString DemoSimApplication::getName()
+ #define LocalInfoMenu_Time  1
+ #define LocalInfoMenu_Lang  2
  =
 
- 		if (stk_context) {
- 			gprs_private_context_release(stk_context);
-+
-+			if (stk_context->detach)
-+				stk_context->detach(stk_context->cb_data);
-+
- 			g_free(stk_context);
- 			stk_context =3D NULL;
- 		}
-@@ -2210,6 +2215,10 @@ static void gprs_context_unregister(struct ofono_ato=
-m *atom)
+-#define BIPMenu_OpenChannel      1
+-#define BIPMenu_CloseChannel     2
+-#define BIPMenu_ReceiveData      3
+-#define BIPMenu_SendData         4
+-#define BIPMenu_GetChannelStatus 5
++#define BIPMenu_OpenChannel_TCP        1
++#define BIPMenu_OpenChannel_UDP        2
++#define BIPMenu_CloseChannel           3
++#define BIPMenu_ReceiveData            4
++#define BIPMenu_SendData_Immediately   5
++#define BIPMenu_SendData_Store         6
++#define BIPMenu_GetChannelStatus       7
  =
 
- 	if (stk_context && stk_context->context_driver =3D=3D gc) {
- 		gprs_private_context_release(stk_context);
-+
-+		if (stk_context->detach)
-+			stk_context->detach(stk_context->cb_data);
-+
- 		g_free(stk_context);
- 		stk_context =3D NULL;
- 	}
-@@ -2287,6 +2296,10 @@ void ofono_gprs_context_deactivated(struct ofono_gpr=
-s_context *gc,
+ enum SendSMSMenuItems {
+ 	SendSMS_Unpacked =3D 1,
+@@ -2377,7 +2379,7 @@ void DemoSimApplication::BIPMenu( const QSimTerminalR=
+esponse& resp )
+     if ( resp.result() =3D=3D QSimTerminalResponse::Success ) {
+ 	switch ( resp.menuItem() ) {
  =
 
- 	if (stk_context && stk_context->context_driver =3D=3D gc) {
- 		gprs_private_context_release(stk_context);
-+
-+		if (stk_context->detach)
-+			stk_context->detach(stk_context->cb_data);
-+
- 		g_free(stk_context);
- 		stk_context =3D NULL;
- 	}
-@@ -3240,3 +3253,18 @@ int __ofono_gprs_private_context_deactivate(struct o=
-fono_gprs *gprs,
- 				deactivate_request_callback, stk_context);
- 	return 0;
- }
-+
-+int __ofono_gprs_private_context_set_detached_notify(struct ofono_gprs *gp=
-rs,
-+				__ofono_gprs_private_context_detached_cb_t cb,
-+				void *data)
-+{
-+	if (stk_context =3D=3D NULL)
-+		return -ENOENT;
-+
-+	if (stk_context->context_driver->gprs !=3D gprs)
-+		return -EINVAL;
-+
-+	stk_context->detach =3D cb;
-+	stk_context->cb_data =3D data;
-+	return 0;
-+}
-diff --git a/src/ofono.h b/src/ofono.h
-index 274912d..9ea16c5 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -248,6 +248,7 @@ typedef void (*__ofono_gprs_private_context_activate_cb=
-_t)(int error,
- 						const char *interface,
- 						const char *ip,
- 						void *data);
-+typedef void (*__ofono_gprs_private_context_detached_cb_t)(void *data);
+-            case BIPMenu_OpenChannel:
++            case BIPMenu_OpenChannel_TCP:
+             {
+                 QByteArray bearerDesc;
+                 QByteArray uti;
+@@ -2392,14 +2394,64 @@ void DemoSimApplication::BIPMenu( const QSimTermina=
+lResponse& resp )
+                 bearerDesc +=3D 0x1F;
+                 bearerDesc +=3D 0x02;
  =
 
- int __ofono_gprs_private_context_deactivate(struct ofono_gprs *gprs,
- 				__ofono_gprs_private_context_deactivate_cb_t cb,
-@@ -258,6 +259,10 @@ int __ofono_gprs_private_context_activate(struct ofono=
-_gprs *gprs,
- 				__ofono_gprs_private_context_activate_cb_t cb,
- 				void *data);
+-                uti +=3D 0x01;
+-                uti +=3D 0xAD;
+-                uti +=3D 0x9C;
++                uti +=3D 0x02; /* TCP, UICC in client mode, remote connect=
+ion */
++                uti +=3D 0x30;
++                uti +=3D 0x3C; /* port 12348 */
  =
 
-+int __ofono_gprs_private_context_set_detached_notify(struct ofono_gprs *gp=
-rs,
-+				__ofono_gprs_private_context_detached_cb_t cb,
-+				void *data);
+                 destAddress +=3D 0x21;
++                destAddress +=3D 0x7F; /* local host 127.0.0.1 */
++                destAddress +=3D (char) 0x00;
++                destAddress +=3D (char) 0x00;
+                 destAddress +=3D 0x01;
+-                destAddress +=3D 0x01;
+-                destAddress +=3D 0x01;
 +
- #include <ofono/radio-settings.h>
- #include <ofono/audio-settings.h>
- #include <ofono/ctm.h>
++                apn +=3D 0x06;
++                apn +=3D 0x54;
++                apn +=3D 0x65;
++                apn +=3D 0x73;
++                apn +=3D 0x74;
++                apn +=3D 0x47;
++                apn +=3D 0x70;
++                apn +=3D 0x02;
++                apn +=3D 0x72;
++                apn +=3D 0x73;
++
++                cmd.setType( QSimCommand::OpenChannel );
++                cmd.setQualifier( QSimCommand::OpenChannelImmediate );
++                cmd.setText("Open channel TCP");
++                cmd.setBearerDesc(bearerDesc);
++                cmd.setBufferSize(1400);
++                cmd.setApn(apn);
++                cmd.setUserLogin("UserLog");
++                cmd.setUserPassword("UserPwd");
++                cmd.setUti(uti);
++                cmd.setDestAddress(destAddress);
++                command( cmd, this, SLOT(sendBIPMenu()) );
++            }
++            break;
++
++            case BIPMenu_OpenChannel_UDP:
++            {
++                QByteArray bearerDesc;
++                QByteArray uti;
++                QByteArray destAddress;
++                QByteArray apn;
++
++                bearerDesc +=3D 0x02;
++                bearerDesc +=3D 0x03;
++                bearerDesc +=3D 0x04;
++                bearerDesc +=3D 0x03;
++                bearerDesc +=3D 0x04;
++                bearerDesc +=3D 0x1F;
++                bearerDesc +=3D 0x02;
++
++                uti +=3D 0x01; /* UDP, UICC in client mode, remote connect=
+ion */
++                uti +=3D 0x30;
++                uti +=3D 0x3C; /* port 12348 */
++
++                destAddress +=3D 0x21;
++                destAddress +=3D 0x7F; /* local host 127.0.0.1 */
++                destAddress +=3D (char) 0x00;
++                destAddress +=3D (char) 0x00;
+                 destAddress +=3D 0x01;
+ =
+
+                 apn +=3D 0x06;
+@@ -2415,7 +2467,7 @@ void DemoSimApplication::BIPMenu( const QSimTerminalR=
+esponse& resp )
+ =
+
+                 cmd.setType( QSimCommand::OpenChannel );
+                 cmd.setQualifier( QSimCommand::OpenChannelImmediate );
+-                cmd.setText("Open ID");
++                cmd.setText("Open channel UDP");
+                 cmd.setBearerDesc(bearerDesc);
+                 cmd.setBufferSize(1400);
+                 cmd.setApn(apn);
+@@ -2437,19 +2489,39 @@ void DemoSimApplication::BIPMenu( const QSimTermina=
+lResponse& resp )
+             }
+             break;
+ =
+
+-            case BIPMenu_SendData:
++            case BIPMenu_SendData_Immediately:
+             {
+                 QByteArray data;
+ =
+
+-                data +=3D 0x01;
+-                data +=3D 0x02;
+-                data +=3D 0x03;
+-                data +=3D 0x04;
+-                data +=3D 0x05;
++                data +=3D 0x61;
++                data +=3D 0x62;
++                data +=3D 0x63;
++                data +=3D 0x64;
++                data +=3D 0x65;
+ =
+
++                cmd.setQualifier( QSimCommand::SendDataImmediately );
+                 cmd.setType( QSimCommand::SendData );
+                 cmd.setDestinationDevice( QSimCommand::Channel1 );
+-                cmd.setText("Send Data 1");
++                cmd.setText("Send Data Immediately");
++                cmd.addExtensionField( 0x36, data );
++                command( cmd, this, SLOT(sendBIPMenu()) );
++            }
++            break;
++
++            case BIPMenu_SendData_Store:
++            {
++                QByteArray data;
++
++                data +=3D 0x31;
++                data +=3D 0x32;
++                data +=3D 0x33;
++                data +=3D 0x34;
++                data +=3D 0x35;
++
++                cmd.setQualifier( QSimCommand::SendDataStoreData );
++                cmd.setType( QSimCommand::SendData );
++                cmd.setDestinationDevice( QSimCommand::Channel1 );
++                cmd.setText("Store Data");
+                 cmd.addExtensionField( 0x36, data );
+                 command( cmd, this, SLOT(sendBIPMenu()) );
+             }
+@@ -2489,8 +2561,12 @@ void DemoSimApplication::sendBIPMenu()
+     cmd.setType( QSimCommand::SelectItem );
+     cmd.setTitle( "BIP commands Menu" );
+ =
+
+-    item.setIdentifier( BIPMenu_OpenChannel );
+-    item.setLabel( "Open channel" );
++    item.setIdentifier( BIPMenu_OpenChannel_TCP );
++    item.setLabel( "Open channel - TCP in client mode" );
++    items +=3D item;
++
++    item.setIdentifier( BIPMenu_OpenChannel_UDP );
++    item.setLabel( "Open channel - UDP in client mode" );
+     items +=3D item;
+ =
+
+     item.setIdentifier( BIPMenu_CloseChannel );
+@@ -2501,8 +2577,12 @@ void DemoSimApplication::sendBIPMenu()
+     item.setLabel( "Receive data" );
+     items +=3D item;
+ =
+
+-    item.setIdentifier( BIPMenu_SendData );
+-    item.setLabel( "Send data" );
++    item.setIdentifier( BIPMenu_SendData_Immediately );
++    item.setLabel( "Send data - Immediately" );
++    items +=3D item;
++
++    item.setIdentifier( BIPMenu_SendData_Store );
++    item.setLabel( "Send data - Store" );
+     items +=3D item;
+ =
+
+     item.setIdentifier( BIPMenu_GetChannelStatus );
 -- =
 
 1.7.1
 
 
---===============4019833099036258040==--
+--===============3427894503709089923==--
 
