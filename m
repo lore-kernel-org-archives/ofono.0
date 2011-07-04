@@ -1,99 +1,127 @@
-Content-Type: multipart/mixed; boundary="===============1278279545453351917=="
+Content-Type: multipart/mixed; boundary="===============4019833099036258040=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2 10/11] stk: Add host route to route the traffic through the
- stk interface
-Date: Mon, 04 Jul 2011 18:06:41 +0200
-Message-ID: <1309795602-26046-11-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 11/11] gprs: Add API to set a 'detach'notification callback
+Date: Mon, 04 Jul 2011 18:06:42 +0200
+Message-ID: <1309795602-26046-12-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1309795602-26046-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1278279545453351917==
+--===============4019833099036258040==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |   41 +++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 41 insertions(+), 0 deletions(-)
+ src/gprs.c  |   28 ++++++++++++++++++++++++++++
+ src/ofono.h |    5 +++++
+ 2 files changed, 33 insertions(+), 0 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index 4c81bf8..1b2ba32 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -31,6 +31,7 @@
- #include <arpa/inet.h>
- #include <net/if.h>
- #include <unistd.h>
-+#include <net/route.h>
- #include <sys/ioctl.h>
+diff --git a/src/gprs.c b/src/gprs.c
+index f6090ba..a8b8e7d 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -155,6 +155,7 @@ struct gprs_private_context {
+ 	union {
+ 		__ofono_gprs_private_context_activate_cb_t act;
+ 		__ofono_gprs_private_context_deactivate_cb_t deact;
++		__ofono_gprs_private_context_detached_cb_t detach;
+ 	};
+ 	void *cb_data;
+ };
+@@ -1502,6 +1503,10 @@ static void gprs_attached_update(struct ofono_gprs *=
+gprs)
  =
 
- #include <glib.h>
-@@ -679,6 +680,44 @@ static void stk_alpha_id_unset(struct ofono_stk *stk)
- 	stk_agent_request_cancel(stk->current_agent);
- }
+ 		if (stk_context) {
+ 			gprs_private_context_release(stk_context);
++
++			if (stk_context->detach)
++				stk_context->detach(stk_context->cb_data);
++
+ 			g_free(stk_context);
+ 			stk_context =3D NULL;
+ 		}
+@@ -2210,6 +2215,10 @@ static void gprs_context_unregister(struct ofono_ato=
+m *atom)
  =
 
-+static void stk_add_host_route(struct ofono_stk *stk, const char *interfac=
-e)
-+{
-+	struct rtentry rt;
-+	struct sockaddr_in addr;
-+	int sk;
+ 	if (stk_context && stk_context->context_driver =3D=3D gc) {
+ 		gprs_private_context_release(stk_context);
 +
-+	if (interface =3D=3D NULL)
-+		return;
++		if (stk_context->detach)
++			stk_context->detach(stk_context->cb_data);
 +
-+	sk =3D socket(PF_INET, SOCK_DGRAM, 0);
-+	if (sk < 0)
-+		return;
-+
-+	memset(&rt, 0, sizeof(rt));
-+	rt.rt_flags =3D RTF_UP | RTF_HOST;
-+	rt.rt_dev =3D (char *) interface;
-+
-+	memset(&addr, 0, sizeof(addr));
-+	addr.sin_family =3D AF_INET;
-+	addr.sin_addr.s_addr =3D stk->bip.dest_addr.sin_addr.s_addr;
-+	memcpy(&rt.rt_dst, &addr, sizeof(rt.rt_dst));
-+
-+	memset(&addr, 0, sizeof(addr));
-+	addr.sin_family =3D AF_INET;
-+	addr.sin_addr.s_addr =3D INADDR_ANY;
-+	memcpy(&rt.rt_gateway, &addr, sizeof(rt.rt_gateway));
-+
-+	memset(&addr, 0, sizeof(addr));
-+	addr.sin_family =3D AF_INET;
-+	addr.sin_addr.s_addr =3D INADDR_ANY;
-+	memcpy(&rt.rt_genmask, &addr, sizeof(rt.rt_genmask));
-+
-+	if (ioctl(sk, SIOCADDRT, &rt) < 0)
-+		ofono_error("Failed to add host route");
-+
-+	close(sk);
-+}
-+
- static gsize stk_channel_data_write(struct ofono_stk *stk, gboolean packag=
-e,
- 					const unsigned char *data, gsize len)
- {
-@@ -782,6 +821,8 @@ static void ofono_stk_activate_context_cb(int error, co=
-nst char *interface,
- 				STK_CHANNEL_PACKET_DATA_SERVICE_ACTIVATED;
+ 		g_free(stk_context);
+ 		stk_context =3D NULL;
  	}
+@@ -2287,6 +2296,10 @@ void ofono_gprs_context_deactivated(struct ofono_gpr=
+s_context *gc,
  =
 
-+	stk_add_host_route(stk, interface);
+ 	if (stk_context && stk_context->context_driver =3D=3D gc) {
+ 		gprs_private_context_release(stk_context);
 +
- 	if (stk->bip.protocol =3D=3D STK_TRANSPORT_PROTOCOL_TCP_CLIENT_REMOTE) {
- 		sk =3D socket(AF_INET, SOCK_STREAM, 0);
- 		if (sk < 0) {
++		if (stk_context->detach)
++			stk_context->detach(stk_context->cb_data);
++
+ 		g_free(stk_context);
+ 		stk_context =3D NULL;
+ 	}
+@@ -3240,3 +3253,18 @@ int __ofono_gprs_private_context_deactivate(struct o=
+fono_gprs *gprs,
+ 				deactivate_request_callback, stk_context);
+ 	return 0;
+ }
++
++int __ofono_gprs_private_context_set_detached_notify(struct ofono_gprs *gp=
+rs,
++				__ofono_gprs_private_context_detached_cb_t cb,
++				void *data)
++{
++	if (stk_context =3D=3D NULL)
++		return -ENOENT;
++
++	if (stk_context->context_driver->gprs !=3D gprs)
++		return -EINVAL;
++
++	stk_context->detach =3D cb;
++	stk_context->cb_data =3D data;
++	return 0;
++}
+diff --git a/src/ofono.h b/src/ofono.h
+index 274912d..9ea16c5 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -248,6 +248,7 @@ typedef void (*__ofono_gprs_private_context_activate_cb=
+_t)(int error,
+ 						const char *interface,
+ 						const char *ip,
+ 						void *data);
++typedef void (*__ofono_gprs_private_context_detached_cb_t)(void *data);
+ =
+
+ int __ofono_gprs_private_context_deactivate(struct ofono_gprs *gprs,
+ 				__ofono_gprs_private_context_deactivate_cb_t cb,
+@@ -258,6 +259,10 @@ int __ofono_gprs_private_context_activate(struct ofono=
+_gprs *gprs,
+ 				__ofono_gprs_private_context_activate_cb_t cb,
+ 				void *data);
+ =
+
++int __ofono_gprs_private_context_set_detached_notify(struct ofono_gprs *gp=
+rs,
++				__ofono_gprs_private_context_detached_cb_t cb,
++				void *data);
++
+ #include <ofono/radio-settings.h>
+ #include <ofono/audio-settings.h>
+ #include <ofono/ctm.h>
 -- =
 
 1.7.1
 
 
---===============1278279545453351917==--
+--===============4019833099036258040==--
 
