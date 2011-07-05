@@ -1,29 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============1584192066208026229=="
+Content-Type: multipart/mixed; boundary="===============0766537690928498316=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: Ofono and DUN Client
-Date: Tue, 05 Jul 2011 16:27:41 +0200
-Message-ID: <4E131F5D.6020806@monom.org>
-In-Reply-To: <4DFB4865.9070405@zirak.it>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH] rules: Add ofono rule for Huwaei modem E173
+Date: Tue, 05 Jul 2011 17:16:56 +0200
+Message-ID: <1309879016-9760-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1584192066208026229==
+--===============0766537690928498316==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Claudio,
+---
+ plugins/ofono.rules |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-On 17.06.2011 14:28, Claudio Degioanni wrote:
-> Hi all,
->
-> What is the current state of work of bluetooth DUN client on ofono ?
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index 7124143..e585bae 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -344,6 +344,9 @@ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"148=
+5", ENV{OFONO_IFACE_NUM}=3D=3D"02", E
+ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1486", ENV{OFONO_IFACE=
+_NUM}=3D=3D"00", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
+ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1486", ENV{OFONO_IFACE=
+_NUM}=3D=3D"02", ENV{OFONO_HUAWEI_TYPE}=3D"Pcui"
+ =
 
-We hope to have some patches ready very soon. That means in this week.
++ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1c05", ENV{OFONO_IFACE=
+_NUM}=3D=3D"00", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
++ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1c05", ENV{OFONO_IFACE=
+_NUM}=3D=3D"02", ENV{OFONO_HUAWEI_TYPE}=3D"Pcui"
++
+ #Telit UC864-G
+ ATTRS{idVendor}=3D=3D"1bc7", ATTRS{idProduct}=3D=3D"1004", ENV{OFONO_IFACE=
+_NUM}=3D=3D"00", ENV{OFONO_TELIT_TYPE}=3D"Modem"
+ ATTRS{idVendor}=3D=3D"1bc7", ATTRS{idProduct}=3D=3D"1004", ENV{OFONO_IFACE=
+_NUM}=3D=3D"02", ENV{OFONO_TELIT_TYPE}=3D"GPS"
+-- =
 
-cheers,
-daniel
+1.7.1
 
---===============1584192066208026229==--
+
+--===============0766537690928498316==--
 
