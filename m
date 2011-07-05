@@ -1,136 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============6853783730493123957=="
+Content-Type: multipart/mixed; boundary="===============8146268236807431692=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@linux.intel.com>
-Subject: [PATCH v2 1/2] voicecall: manage multiparty list in AT+CHLD=3
-Date: Tue, 05 Jul 2011 07:50:36 +0200
-Message-ID: <1309845037-27360-2-git-send-email-frederic.dalleau@linux.intel.com>
-In-Reply-To: <1309845037-27360-1-git-send-email-frederic.dalleau@linux.intel.com>
+From: =?unknown-8bit?q?H=C3=A4rk=C3=B6nen?= Timo <Timo.Harkonen@digia.com>
+Subject: VS: [Meego-handset] ofono-qt - anything to add/improve?
+Date: Tue, 05 Jul 2011 05:59:25 +0000
+Message-ID: <CA04A6A57256304AB6CA9036AD639A1824148FE27A@E2K7MAIL.it.local>
+In-Reply-To: <CANNYZj-ic66A+wibWSDWKt_s3O+5R6v=RzMOxgs_5NxL6bRMnQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6853783730493123957==
+--===============8146268236807431692==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/voicecall.c |   55 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-----
- 1 files changed, 51 insertions(+), 4 deletions(-)
+Hi
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 9620838..14f25ab 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -1788,7 +1788,7 @@ static DBusMessage *multiparty_private_chat(DBusConne=
-ction *conn,
- 	unsigned int id;
- 	GSList *l;
- =
+This is from N900 Community Edition:
 
--	if (vc->pending)
-+	if (vc->pending || vc->pending_em)
- 		return __ofono_error_busy(msg);
- =
+[root(a)localhost ~]# rpm -q --whatrequires libofono-qt
+meegotouchcp-cellular-0.0.1-1.3.DE.armv7hl
+meegotouchcp-gprs-0.17.4-12.2.DE.armv7hl
+meego-pinquery-0.0.2-1.1.DE.armv7hl
+meego-ux-settings-0.4.0-1.33.armv7hl
 
- 	if (dbus_message_get_args(msg, NULL, DBUS_TYPE_OBJECT_PATH, &callpath,
-@@ -1886,7 +1886,7 @@ static DBusMessage *multiparty_create(DBusConnection =
-*conn,
- {
- 	struct ofono_voicecall *vc =3D data;
- =
+-Timo
 
--	if (vc->pending)
-+	if (vc->pending || vc->pending_em)
- 		return __ofono_error_busy(msg);
- =
+ps. Sorry for top posting. using owa..
+________________________________________
+L=C3=A4hett=C3=A4j=C3=A4: meego-handset-bounces(a)lists.meego.com [meego-ha=
+ndset-bounces(a)lists.meego.com] k&#228;ytt&#228;j&#228;n Alexander Kanavin=
+ [alex.kanavin(a)gmail.com] puolesta
+L=C3=A4hetetty: 4. hein=C3=A4kuuta 2011 16:01
+Vastaanottaja: ofono(a)ofono.org; meego-handset(a)lists.meego.com
+Aihe: [Meego-handset] ofono-qt - anything to add/improve?
 
- 	if (!voicecalls_have_held(vc) || !voicecalls_have_active(vc))
-@@ -1907,7 +1907,7 @@ static DBusMessage *multiparty_hangup(DBusConnection =
-*conn,
- {
- 	struct ofono_voicecall *vc =3D data;
- =
+Hi,
 
--	if (vc->pending || vc->release_list)
-+	if (vc->pending || vc->pending_em || vc->release_list)
- 		return __ofono_error_busy(msg);
- =
+I am the maintainer of ofono-qt library, which provides Qt bindings to
+ofono services and licensed under LGPL 2.1:
+http://meego.gitorious.org/meego-cellular/ofono-qt
 
- 	if (vc->driver->release_specific =3D=3D NULL)
-@@ -2710,6 +2710,44 @@ static void emulator_generic_cb(const struct ofono_e=
-rror *error, void *data)
- 	ofono_emulator_send_final(em, error);
- }
- =
+I would like to get in touch with everyone who is using it, or perhaps
+would like to use it, and find out if there is anything incomplete,
+missing or possible to improve there. Let me know please.
 
-+static void emulator_mpty_join_cb(const struct ofono_error *error, void *d=
-ata)
-+{
-+	struct ofono_voicecall *vc =3D data;
-+	GSList *old;
-+
-+	ofono_emulator_send_final(vc->pending_em, error);
-+	vc->pending_em =3D NULL;
-+
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
-+		return;
-+
-+	/*
-+	 * We just created a multiparty call, gather all held
-+	 * active calls and add them to the multiparty list
-+	 */
-+	old =3D vc->multiparty_list;
-+	vc->multiparty_list =3D 0;
-+
-+	vc->multiparty_list =3D g_slist_concat(vc->multiparty_list,
-+						voicecalls_held_list(vc));
-+
-+	vc->multiparty_list =3D g_slist_concat(vc->multiparty_list,
-+						voicecalls_active_list(vc));
-+
-+	vc->multiparty_list =3D g_slist_sort(vc->multiparty_list,
-+						call_compare);
-+
-+	if (g_slist_length(vc->multiparty_list) < 2) {
-+		ofono_error("Created multiparty call, but size is less than 2"
-+				" panic!");
-+		g_slist_free(old);
-+		return;
-+	}
-+
-+	voicecalls_multiparty_changed(old, vc->multiparty_list);
-+	g_slist_free(old);
-+}
-+
- static void emulator_ata_cb(struct ofono_emulator *em,
- 			struct ofono_emulator_request *req, void *userdata)
- {
-@@ -2903,8 +2941,17 @@ static void emulator_chld_cb(struct ofono_emulator *=
-em,
- 			if (vc->driver->create_multiparty =3D=3D NULL)
- 				goto fail;
- =
+Also, if you know an easy way to find out what is dependent on this
+library in Meego, that would be great too.
 
-+			if (vc->pending_em || vc->pending || vc->dial_req)
-+				goto fail;
-+
-+			if (!voicecalls_have_held(vc)
-+					|| !voicecalls_have_active(vc))
-+				goto fail;
-+
-+			vc->pending_em =3D em;
-+
- 			vc->driver->create_multiparty(vc,
--					emulator_generic_cb, em);
-+					emulator_mpty_join_cb, vc);
- 			return;
- 		case 4:
- 			if (vc->driver->transfer =3D=3D NULL)
--- =
+Regards,
+--
+Alexander
+_______________________________________________
+MeeGo-handset mailing list
+MeeGo-handset(a)lists.meego.com
+http://lists.meego.com/listinfo/meego-handset
 
-1.7.1
-
-
---===============6853783730493123957==--
+--===============8146268236807431692==--
 
