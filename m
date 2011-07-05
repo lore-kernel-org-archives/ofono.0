@@ -1,17 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============8146268236807431692=="
+Content-Type: multipart/mixed; boundary="===============7520047132120431862=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?H=C3=A4rk=C3=B6nen?= Timo <Timo.Harkonen@digia.com>
-Subject: VS: [Meego-handset] ofono-qt - anything to add/improve?
-Date: Tue, 05 Jul 2011 05:59:25 +0000
-Message-ID: <CA04A6A57256304AB6CA9036AD639A1824148FE27A@E2K7MAIL.it.local>
-In-Reply-To: <CANNYZj-ic66A+wibWSDWKt_s3O+5R6v=RzMOxgs_5NxL6bRMnQ@mail.gmail.com>
+From: jukka.eklund@nokia.com
+Subject: RE: [Meego-handset] ofono-qt - anything to add/improve?
+Date: Tue, 05 Jul 2011 06:27:20 +0000
+Message-ID: <B3EBB0688840F44EA1B25FB84F7D3F3D06B6EC@008-AM1MPN1-011.mgdnok.nokia.com>
+In-Reply-To: <CA04A6A57256304AB6CA9036AD639A1824148FE27A@E2K7MAIL.it.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8146268236807431692==
+--===============7520047132120431862==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
+
+Right, so CE specifically has added those 3 first packages (cellular PIN qu=
+ery, and settings). Those are available for upstream also, but probably not=
+ accepted for a reason or other.
+
+The last one is the new (Tablet) Settings application that is in MeeGo 1.2.=
+ Alex, you could at least get in touch with owner of that component.
+
+________________________________________
+From: meego-handset-bounces(a)lists.meego.com [meego-handset-bounces(a)list=
+s.meego.com] on behalf of ext H=C3=A4rk=C3=B6nen Timo [Timo.Harkonen(a)digi=
+a.com]
+Sent: 05 July 2011 08:57
+To: Alexander Kanavin; ofono(a)ofono.org; meego-handset(a)lists.meego.com
+Subject: Re: [Meego-handset] ofono-qt - anything to add/improve?
 
 Hi
 
@@ -54,6 +69,10 @@ _______________________________________________
 MeeGo-handset mailing list
 MeeGo-handset(a)lists.meego.com
 http://lists.meego.com/listinfo/meego-handset
+_______________________________________________
+MeeGo-handset mailing list
+MeeGo-handset(a)lists.meego.com
+http://lists.meego.com/listinfo/meego-handset
 
---===============8146268236807431692==--
+--===============7520047132120431862==--
 
