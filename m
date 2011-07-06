@@ -1,32 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============8904867671425619302=="
+Content-Type: multipart/mixed; boundary="===============3504171364145501653=="
 MIME-Version: 1.0
-From: Shane Bryan <shane.bryan@linux.intel.com>
-Subject: Re: [Meego-handset] ofono-qt - anything to add/improve?
-Date: Wed, 06 Jul 2011 10:44:20 -0700
-Message-ID: <20110706174420.GG9901@cyclone.jf.intel.com>
-In-Reply-To: <20110706173237.GF9901@cyclone.jf.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] Create a SpeedUp plugin, using standard AT Modem,
+ and add corresponding udev rules
+Date: Wed, 06 Jul 2011 20:07:50 +0200
+Message-ID: <1309975670.21109.31.camel@aeonflux>
+In-Reply-To: <1309955657-14565-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8904867671425619302==
+--===============3504171364145501653==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Jul 06, 2011 at 10:32:37AM -0700, Shane Bryan wrote:
-> Roland is doing a bunch of that work, and expects to be done around
-> July 18th.  As I've not seen any of it yet, and we're still trying
-> to completely merge the HRP fork *and* migrate to libofono-qt, I
+Hi Betrand,
 
-Correction.  I meant to say *HFP*, the dialer used in IVI images,
-forked at:
+>  Makefile.am         |    3 +
+>  plugins/ofono.rules |    9 ++
+>  plugins/speedup.c   |  334 +++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  plugins/udev.c      |   54 ++++++++
+>  4 files changed, 400 insertions(+), 0 deletions(-)
+>  create mode 100644 plugins/speedup.c
 
-https://gitorious.org/~jimmyhuang/meego-handset-ux/jimmyhuangs-meego-handse=
-t-dialer
+same request as for everybody else in the past. Please split udev rules
+and detection into a separate patch.
 
--- =
+Regards
 
-Shane...
+Marcel
 
---===============8904867671425619302==--
+
+
+--===============3504171364145501653==--
 
