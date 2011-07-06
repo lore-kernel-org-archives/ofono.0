@@ -1,57 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============0263286526775557648=="
+Content-Type: multipart/mixed; boundary="===============1870959951843470473=="
 MIME-Version: 1.0
-From: Alex Kanavin <ak@sensi.org>
-Subject: Re: [Meego-handset] ofono-qt - anything to add/improve?
-Date: Wed, 06 Jul 2011 21:17:43 +0300
-Message-ID: <CANNYZj9ZsDKjKjxt61zz_EOEhoqjhyg_evg8MmPQM7=sMLqicg@mail.gmail.com>
-In-Reply-To: <20110706173237.GF9901@cyclone.jf.intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] stk: Use the right command pointer.
+Date: Wed, 06 Jul 2011 10:40:00 +0200
+Message-ID: <1309941600-17173-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0263286526775557648==
+--===============1870959951843470473==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2011/7/6 Shane Bryan <shane.bryan@linux.intel.com>:
-> Two things come to mind:
->
-> 1) A document that identifies which version of oFono the libofono-qt is
-> =C2=A0 targeted for and some metric, like what percent of that version oF=
-ono's
-> =C2=A0 API is complete/covered by this library.
+---
+ src/stk.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-I haven't given much thought to the process of 'certifying' ofono-qt
-for a specific version of ofono until now. Like I said, I plan to go
-through the implemented APIs looking for things that are missing or
-have changed and documenting them, and we can take it from there. We
-can also change the versioning scheme to match ofono's.
+diff --git a/src/stk.c b/src/stk.c
+index c86cbfb..fcf3991 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -2890,7 +2890,7 @@ void ofono_stk_proactive_command_handled_notify(struc=
+t ofono_stk *stk,
+ 		break;
+ =
 
-> 2) A bit harder to do, espcially for the currently used CallHistory plugi=
-n,
-> =C2=A0 but we need an API for getting call history signals and methods fr=
-om the
-> =C2=A0 agent providing that data.
-
-Yep, I haven't done d-bus adaptors in Qt yet, so will take some time
-to get it right.
-
-> On a matter related to 1) above, what is your plan for keeping pace with
-> oFono upstream releases and (maybe more important to this list) keeping
-> pace with oFono package updates in MeeGo OBS? =C2=A0No plan is a fine ans=
-wer,
-> which should (hopefully) spark offers for help, but if you *do* have a
-> plan, I (and I assume others) would like to know what it is.
-
-I suppose there should be a more formal way of tracking changes in
-ofono/doc/*. Perhaps by making a diff between two version tags that
-then would serve as a TODO :)
-
-I will write up a wishlist and post it here.
+ 	case STK_COMMAND_TYPE_REFRESH:
+-		handle_command_refresh(stk->pending_cmd, NULL, stk);
++		handle_command_refresh(cmd, NULL, stk);
+ 		break;
+ 	}
+ =
 
 -- =
 
-Alexander
+1.7.1.86.g0e460.dirty
 
---===============0263286526775557648==--
+---------------------------------------------------------------------
+Intel Technology Poland sp. z o.o.
+z siedziba w Gdansku
+ul. Slowackiego 173
+80-298 Gdansk
+
+Sad Rejonowy Gdansk Polnoc w Gdansku, =
+
+VII Wydzial Gospodarczy Krajowego Rejestru Sadowego, =
+
+numer KRS 101882
+
+NIP 957-07-52-316
+Kapital zakladowy 200.000 zl
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============1870959951843470473==--
 
