@@ -1,24 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============6324778302532788052=="
+Content-Type: multipart/mixed; boundary="===============1690817588219051047=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] rules: Add ofono rule for Huwaei modem E173
-Date: Tue, 05 Jul 2011 21:08:36 -0500
-Message-ID: <4E13C3A4.1010002@gmail.com>
-In-Reply-To: <1309879016-9760-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH 3/3 v2] bluetooth: fix not removing data when
+ devices/adapters are removed
+Date: Tue, 05 Jul 2011 21:12:45 -0500
+Message-ID: <4E13C49D.8070400@gmail.com>
+In-Reply-To: <1309764736-26327-1-git-send-email-luiz.dentz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6324778302532788052==
+--===============1690817588219051047==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Luiz,
 
-On 07/05/2011 10:16 AM, Guillaume Zajac wrote:
+On 07/04/2011 02:32 AM, Luiz Augusto von Dentz wrote:
+> From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+> =
+
+> If an adapter or device is removed any data associate should be removed,
+> otherwise the next time they appear/are created the drivers may not
+> asssociate again.
 > ---
->  plugins/ofono.rules |    3 +++
->  1 files changed, 3 insertions(+), 0 deletions(-)
+>  plugins/bluetooth.c |   79 ++++++++++++++++++++++++++++++++++++---------=
+-----
+>  plugins/bluetooth.h |    4 +-
+>  plugins/hfp_hf.c    |   30 ++++++++++++-------
+>  3 files changed, 78 insertions(+), 35 deletions(-)
 > =
 
 
@@ -27,5 +37,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============6324778302532788052==--
+--===============1690817588219051047==--
 
