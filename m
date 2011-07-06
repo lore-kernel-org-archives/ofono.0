@@ -1,58 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============4966575551365049658=="
+Content-Type: multipart/mixed; boundary="===============8968092710604894383=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@linux.intel.com>
-Subject: [PATCH 4/4] ifxmodem: add support for user_confirmation in stk
-Date: Wed, 06 Jul 2011 03:06:13 -0700
-Message-ID: <1309946773-7747-5-git-send-email-jeevaka.badrappan@linux.intel.com>
-In-Reply-To: <1309946773-7747-1-git-send-email-jeevaka.badrappan@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 0/2] Fix oFono rules for 2 ZTE modem
+Date: Tue, 05 Jul 2011 21:07:21 -0500
+Message-ID: <4E13C359.5010207@gmail.com>
+In-Reply-To: <1309855633-14468-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4966575551365049658==
+--===============8968092710604894383==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/ifxmodem/stk.c |   11 +++++++++++
- 1 files changed, 11 insertions(+), 0 deletions(-)
+Hi Guillaume,
 
-diff --git a/drivers/ifxmodem/stk.c b/drivers/ifxmodem/stk.c
-index f08cf47..d2082c4 100644
---- a/drivers/ifxmodem/stk.c
-+++ b/drivers/ifxmodem/stk.c
-@@ -173,6 +173,16 @@ error:
- 	CALLBACK_WITH_FAILURE(cb, data);
- }
- =
+On 07/05/2011 03:47 AM, Guillaume Zajac wrote:
+> Hi,
+> =
 
-+static void ifx_stk_user_confirmation(struct ofono_stk *stk, gboolean conf=
-irm)
-+{
-+	struct stk_data *sd =3D ofono_stk_get_data(stk);
-+	char buf[20];
-+
-+	snprintf(buf, sizeof(buf), "AT+SATD=3D%i", confirm ? 1 : 0);
-+
-+	g_at_chat_send(sd->chat, buf, none_prefix, NULL, NULL, NULL);
-+}
-+
- static void sati_notify(GAtResult *result, gpointer user_data)
- {
- 	struct ofono_stk *stk =3D user_data;
-@@ -303,6 +313,7 @@ static struct ofono_stk_driver driver =3D {
- 	.remove			=3D ifx_stk_remove,
- 	.envelope		=3D ifx_stk_envelope,
- 	.terminal_response	=3D ifx_stk_terminal_response,
-+	.user_confirmation	=3D ifx_stk_user_confirmation,
- };
- =
+> Those two patches add oFono rules for ZTE modems MF180 and MF668
+> =
 
- void ifx_stk_init(void)
--- =
+> Guillaume Zajac (2):
+>   rules: Add ofono rule for ZTE modem MF180
+>   rules: Add ofono rule for ZTE modem MF668
+> =
 
-1.7.4.1
+>  plugins/ofono.rules |    6 ++++++
+>  1 files changed, 6 insertions(+), 0 deletions(-)
 
+Both patches have been applied, thanks.
 
---===============4966575551365049658==--
+Regards,
+-Denis
+
+--===============8968092710604894383==--
 
