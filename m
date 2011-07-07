@@ -1,45 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============7431722772080905216=="
+Content-Type: multipart/mixed; boundary="===============5309720239320914869=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: [PATCH] Create a SpeedUp plugin, using standard AT Modem,
- and add corresponding udev rules
-Date: Thu, 07 Jul 2011 10:08:01 +0100
-Message-ID: <568DE01DA537804BA73470071BAC288938DF3596@irsmsx503.ger.corp.intel.com>
-In-Reply-To: <1310025902.21109.50.camel@aeonflux>
+From: Alex Kanavin <ak@sensi.org>
+Subject: Re: [Meego-handset] ofono-qt - anything to add/improve?
+Date: Thu, 07 Jul 2011 15:43:39 +0300
+Message-ID: <CANNYZj933A9wkYK1bj5XXS-zTWvjT=OPEZrOrRjHVbQcAOb0=Q@mail.gmail.com>
+In-Reply-To: <CANNYZj9ZsDKjKjxt61zz_EOEhoqjhyg_evg8MmPQM7=sMLqicg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7431722772080905216==
+--===============5309720239320914869==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+2011/7/6 Alex Kanavin <ak@sensi.org>:
+> I will write up a wishlist and post it here.
 
-There has been an update on usb_modeswitch 2 days ago, and now SU9800 are r=
-ecognized automatically.
+Right, so this is the list of things in no particular order. If you
+want any of them to happen faster, you are very much welcome to help.
 
-This is working great!
+Check the API and get it up to date:
+ - message manager should not use dbusobjectpath class
+ - connman contextAdd should return object path
+ - radio settings has missing stuff
+ - there might be plenty of other things
 
-Just take 1.1.8 and latest data.
+More formal "certification" of ofono-qt to specific ofono versions
+ - change the versioning to match ofono's
+ - when new version of ofono is out, diff of ofono/doc/* could serve
+   as a list of things to fix
 
-Regards,
+Convert "void setPowered(bool powered)" type functions to public slots.
 
-Bertrand.
+SIM toolkit bindings. This requires implementing a d-bus agent and some
+kind of reasonable test.
+ - same for CallHistory.
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+When automatic modem selection is used, and ofono-qt class moves to using a
+new modem, in addition to property change signal also other d-bus signal
+subscriptions should be moved to the new modem path.
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+When interface availability changes, in addition to properties also lists of
+object paths (such as voice calls, messages, GPRS contexts etc) should be
+refreshed.
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+-- =
 
+Alexander
 
---===============7431722772080905216==--
+--===============5309720239320914869==--
 
