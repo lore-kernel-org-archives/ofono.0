@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3305338810460349824=="
+Content-Type: multipart/mixed; boundary="===============2011604597805119577=="
 MIME-Version: 1.0
 From: Mario Tokarz <mario@tokarz.eu>
-Subject: [RFC 1/3] dunmodem: Add baseline for DUN modem driver.
-Date: Thu, 07 Jul 2011 10:45:21 +0200
-Message-ID: <1310028323-29180-2-git-send-email-mario@tokarz.eu>
+Subject: [RFC 3/3] dun_dt: Add baseline for dun_dt plug-in.
+Date: Thu, 07 Jul 2011 10:45:23 +0200
+Message-ID: <1310028323-29180-4-git-send-email-mario@tokarz.eu>
 In-Reply-To: <1310028323-29180-1-git-send-email-mario@tokarz.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3305338810460349824==
+--===============2011604597805119577==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,161 +16,41 @@ Content-Transfer-Encoding: quoted-printable
 From: Mario Tokarz <mario.tokarz@bmw-carit.de>
 
 ---
- Makefile.am                             |    8 ++
- drivers/dunmodem/dunmodem.c             |   55 ++++++++
- drivers/dunmodem/dunmodem.h             |   39 ++++++
- drivers/dunmodem/gprs-context.c         |  207 +++++++++++++++++++++++++++=
+ Makefile.am      |    3 +
+ plugins/dun_dt.c |  337 ++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- drivers/dunmodem/gprs.c                 |  101 +++++++++++++++
- drivers/dunmodem/network-registration.c |   96 ++++++++++++++
- 6 files changed, 506 insertions(+), 0 deletions(-)
- create mode 100644 drivers/dunmodem/dunmodem.c
- create mode 100644 drivers/dunmodem/dunmodem.h
- create mode 100644 drivers/dunmodem/gprs-context.c
- create mode 100644 drivers/dunmodem/gprs.c
- create mode 100644 drivers/dunmodem/network-registration.c
+ 2 files changed, 340 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/dun_dt.c
 
 diff --git a/Makefile.am b/Makefile.am
-index ef6196b..c77a793 100644
+index c77a793..97698df 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -206,6 +206,14 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/calypsomodem/voicecall.c \
- 			drivers/calypsomodem/stk.c
+@@ -351,6 +351,9 @@ builtin_sources +=3D plugins/hfp_ag.c plugins/bluetooth=
+.h
+ builtin_modules +=3D dun_gw
+ builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
  =
 
-+builtin_modules +=3D dunmodem
-+builtin_sources +=3D drivers/atmodem/atutil.h \
-+			drivers/dunmodem/dunmodem.h \
-+			drivers/dunmodem/dunmodem.c \
-+			drivers/dunmodem/gprs.c \
-+			drivers/dunmodem/gprs-context.c \
-+			drivers/dunmodem/network-registration.c
++builtin_modules +=3D dun_dt
++builtin_sources +=3D plugins/dun_dt.c plugins/bluetooth.h
 +
- builtin_modules +=3D hfpmodem
- builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/hfpmodem/hfpmodem.h \
-diff --git a/drivers/dunmodem/dunmodem.c b/drivers/dunmodem/dunmodem.c
+ builtin_sources +=3D $(btio_sources)
+ builtin_cflags +=3D @BLUEZ_CFLAGS@
+ builtin_libadd +=3D @BLUEZ_LIBS@
+diff --git a/plugins/dun_dt.c b/plugins/dun_dt.c
 new file mode 100644
-index 0000000..79c07ec
+index 0000000..98e2214
 --- /dev/null
-+++ b/drivers/dunmodem/dunmodem.c
-@@ -0,0 +1,55 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2011  BMW Car IT GmbH. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <stdio.h>
-+#include <string.h>
-+#include <errno.h>
-+#include <glib.h>
-+#include <gatchat.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
-+#include <ofono/types.h>
-+
-+#include "dunmodem.h"
-+
-+static int dunmodem_init(void)
-+{
-+	dun_dt_netreg_init();
-+	dun_dt_gprs_init();
-+	dun_dt_gprs_context_init();
-+
-+	return 0;
-+}
-+
-+static void dunmodem_exit(void)
-+{
-+	dun_dt_gprs_context_exit();
-+	dun_dt_gprs_exit();
-+	dun_dt_netreg_exit();
-+}
-+
-+OFONO_PLUGIN_DEFINE(dunmodem, "Dial-up Network Modem Driver", VERSION,
-+		OFONO_PLUGIN_PRIORITY_DEFAULT, dunmodem_init, dunmodem_exit)
-diff --git a/drivers/dunmodem/dunmodem.h b/drivers/dunmodem/dunmodem.h
-new file mode 100644
-index 0000000..8802780
---- /dev/null
-+++ b/drivers/dunmodem/dunmodem.h
-@@ -0,0 +1,39 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2011  BMW Car IT GmbH. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#include <drivers/atmodem/atutil.h>
-+#include "gatppp.h"
-+
-+struct dun_data {
-+	char *dun_path;
-+	char *tty;
-+	struct ofono_gprs *gprs;
-+	struct ofono_gprs_context *gc;
-+};
-+
-+extern void dun_dt_netreg_init(void);
-+extern void dun_dt_netreg_exit(void);
-+
-+extern void dun_dt_gprs_init(void);
-+extern void dun_dt_gprs_exit(void);
-+
-+extern void dun_dt_gprs_context_init(void);
-+extern void dun_dt_gprs_context_exit(void);
-diff --git a/drivers/dunmodem/gprs-context.c b/drivers/dunmodem/gprs-contex=
-t.c
-new file mode 100644
-index 0000000..c479153
---- /dev/null
-+++ b/drivers/dunmodem/gprs-context.c
-@@ -0,0 +1,207 @@
++++ b/plugins/dun_dt.c
+@@ -0,0 +1,337 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
 + *
 + *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2011 BMW Car IT GmbH. All rights reserved.
++ *  Copyright (C) 2010  ProFUSION embedded systems
++ *  Copyright (C) 2011  BMW Car IT GmbH. All rights reserved.
 + *
 + *  This program is free software; you can redistribute it and/or modify
 + *  it under the terms of the GNU General Public License version 2 as
@@ -191,406 +71,324 @@ index 0000000..c479153
 +#ifdef HAVE_CONFIG_H
 +#include <config.h>
 +#endif
-+
-+#define _GNU_SOURCE
 +#include <string.h>
 +#include <stdlib.h>
-+#include <fcntl.h>
 +#include <stdio.h>
 +#include <errno.h>
-+#include <sys/stat.h>
-+
 +#include <glib.h>
++#include <gatchat.h>
++#include <gattty.h>
++#include <gdbus.h>
++#include <ofono.h>
 +
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
 +#include <ofono/log.h>
 +#include <ofono/modem.h>
++#include <ofono/netreg.h>
++#include <ofono/voicecall.h>
++#include <ofono/gprs.h>
 +#include <ofono/gprs-context.h>
++#include <ofono/call-volume.h>
 +
-+#include "gatchat.h"
-+#include "gatresult.h"
-+#include "gatppp.h"
-+#include <gattty.h>
++#include <drivers/dunmodem/dunmodem.h>
 +
-+#include "dunmodem.h"
++#include <ofono/dbus.h>
 +
-+static void ppp_debug(const char *str, void *data)
++#include "bluetooth.h"
++
++#define BLUEZ_SERIAL_INTERFACE BLUEZ_SERVICE ".Serial"
++
++#ifndef DBUS_TYPE_UNIX_FD
++#define DBUS_TYPE_UNIX_FD -1
++#endif
++
++static DBusConnection *connection;
++static GHashTable *modem_hash;
++
++static int dun_dt_bt_probe(const char *device, const char *dev_addr,
++				const char *adapter_addr, const char *alias)
 +{
-+	ofono_info("%s: %s", (const char *) data, str);
-+}
-+
-+struct gprs_context_data {
-+	char *tty;
-+	GIOChannel *channel;
-+	GAtPPP *ppp;
-+};
-+
-+static void ppp_connect(const char *interface, const char *local,
-+			const char *remote,
-+			const char *dns1, const char *dns2,
-+			gpointer user_data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+
-+	DBG("PPP connected %p, %s, %s, %s, %s, %s",
-+		gc, interface, local, remote, dns1, dns2);
-+
-+	/* Update configuration here - this is where work continues. */
-+}
-+
-+static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
-ta)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+
-+	DBG("ppp disconnecting");
-+
-+	g_at_ppp_unref(gcd->ppp);
-+	gcd->ppp =3D NULL;
-+}
-+
-+static gboolean setup_ppp(struct ofono_gprs_context *gc)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	GAtIO *io;
++	struct ofono_modem *modem;
++	struct dun_data *data;
++	char buf[256];
++	char alias_buf[256];
 +
 +	DBG("");
 +
-+	gcd->ppp =3D g_at_ppp_new();
++	/* We already have this device in our hash, ignore */
++	if (g_hash_table_lookup(modem_hash, device) !=3D NULL)
++		return -EALREADY;
 +
-+	if (gcd->ppp =3D=3D NULL)
++	ofono_info("Using device: %s, devaddr: %s, adapter: %s",
++			device, dev_addr, adapter_addr);
++
++	strcpy(buf, "dun/");
++	bluetooth_create_path(dev_addr, adapter_addr, buf + 4, sizeof(buf) - 4);
++
++	modem =3D ofono_modem_create(buf, "dun_dt");
++	if (modem =3D=3D NULL) {
++		DBG("Failed to create modem");
++		return -ENOMEM;
++	}
++
++	DBG("Modem %p", modem);
++
++	data =3D g_try_new0(struct dun_data, 1);
++	if (data =3D=3D NULL)
++		goto free;
++
++	data->dun_path =3D g_strdup(device);
++	if (data->dun_path =3D=3D NULL)
++		goto free;
++
++	ofono_modem_set_data(modem, data);
++
++	strcpy(alias_buf, "DUN ");
++	strcat(alias_buf, alias);
++	ofono_modem_set_name(modem, alias_buf);
++	ofono_modem_register(modem);
++
++	g_hash_table_insert(modem_hash, g_strdup(device), modem);
++	return 0;
++
++free:
++	g_free(data->dun_path);
++	data->dun_path =3D NULL;
++	g_free(data);
++	ofono_modem_remove(modem);
++
++	return -ENOMEM;
++
++}
++
++static gboolean dun_dt_remove_modem(gpointer key, gpointer value,
++				      gpointer user_data)
++{
++	struct ofono_modem *modem =3D value;
++	const char *device =3D key;
++	const char *prefix =3D user_data;
++
++	DBG("");
++
++	if (prefix && g_str_has_prefix(device, prefix) =3D=3D FALSE)
 +		return FALSE;
 +
-+	/* Needs to be read from ENV var in final version */
-+	g_at_ppp_set_debug(gcd->ppp, ppp_debug, "PPP");
-+
-+	g_at_ppp_set_connect_function(gcd->ppp, ppp_connect, gc);
-+	g_at_ppp_set_disconnect_function(gcd->ppp, ppp_disconnect, gc);
-+
-+	io =3D g_at_io_new(gcd->channel);
-+	if (io =3D=3D NULL)
-+		return FALSE;
-+
-+	DBG("Connection channel %p with io %p", gcd->channel, io);
-+	g_at_ppp_open(gcd->ppp, io);
-+
-+	DBG("PPP is open");
++	ofono_modem_remove(modem);
 +
 +	return TRUE;
 +}
 +
-+static void dun_dt_gprs_activate_primary(struct ofono_gprs_context *gc,
-+				const struct ofono_gprs_primary_context *ctx,
-+				ofono_gprs_context_cb_t cb, void *data)
++static void dun_dt_bt_remove(const char *prefix)
 +{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	GIOChannel *channel;
-+	int fd;
++	DBG("%s", prefix);
 +
-+	DBG("tty for connection %s", gcd->tty);
-+
-+	fd =3D open(gcd->tty, O_RDWR);
-+	if (fd < 0)
-+		goto error;
-+
-+	channel =3D g_io_channel_unix_new(fd);
-+	DBG("Opened %s as channel %p with fd %d", gcd->tty, channel, fd);
-+
-+	if (channel =3D=3D NULL)
-+		goto error;
-+
-+	gcd->channel =3D channel;
-+
-+	setup_ppp(gc);
-+
-+	return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+static void dun_dt_gprs_deactivate_primary(struct ofono_gprs_context *gc,
-+						unsigned int cid,
-+						ofono_gprs_context_cb_t cb,
-+						void *data)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+
-+	DBG("Disconnect PPP");
-+
-+	if (gcd->ppp =3D=3D NULL)
++	if (modem_hash =3D=3D NULL)
 +		return;
 +
-+	g_at_ppp_shutdown(gcd->ppp);
++	g_hash_table_foreach_remove(modem_hash, dun_dt_remove_modem,
++							(gpointer) prefix);
 +}
 +
-+static int dun_dt_gprs_context_probe(struct ofono_gprs_context *gc,
-+					unsigned int vendor, void *data)
++static void dun_dt_bt_set_alias(const char *device, const char *alias)
 +{
-+	struct dun_data *dd =3D data;
-+	struct gprs_context_data *gcd;
++	struct ofono_modem *modem;
 +
 +	DBG("");
 +
-+	gcd =3D g_try_new0(struct gprs_context_data, 1);
-+	if (gcd =3D=3D NULL)
-+		return -ENOMEM;
++	if (device =3D=3D NULL || alias =3D=3D NULL)
++		return;
 +
-+	ofono_gprs_context_set_data(gc, gcd);
++	modem =3D	g_hash_table_lookup(modem_hash, device);
++	if (modem =3D=3D NULL)
++		return;
 +
-+	gcd->tty =3D g_strdup(dd->tty);
++	ofono_modem_set_name(modem, alias);
++}
++
++
++static void dun_dt_pre_sim(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++}
++
++static int dun_dt_probe(struct ofono_modem *modem)
++{
++	DBG("Probe %p", modem);
 +
 +	return 0;
 +}
 +
-+static void dun_dt_gprs_context_remove(struct ofono_gprs_context *gc)
++
++static void dun_dt_post_sim(struct ofono_modem *modem)
 +{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct dun_data *dd =3D ofono_modem_get_data(modem);
 +
-+	DBG("%p", gc);
++	DBG("%p, path %s, tty %s", modem, dd->dun_path, dd->tty);
 +
-+	if (gcd->ppp)
-+		g_at_ppp_unref(gcd->ppp);
++	ofono_netreg_create(modem, 0, "dunmodem", dd);
 +
-+	ofono_gprs_context_set_data(gc, NULL);
++	dd->gprs =3D ofono_gprs_create(modem, 0, "dunmodem", dd);
++	ofono_gprs_set_cid_range(dd->gprs, 1, 16);
 +
-+	g_free(gcd);
++	dd->gc =3D ofono_gprs_context_create(modem, 0, "dunmodem", dd);
++
++	ofono_gprs_add_context(dd->gprs, dd->gc);
 +}
 +
-+static struct ofono_gprs_context_driver driver =3D {
-+	.name			=3D "dunmodem",
-+	.probe			=3D dun_dt_gprs_context_probe,
-+	.remove		=3D dun_dt_gprs_context_remove,
-+	.activate_primary	=3D dun_dt_gprs_activate_primary,
-+	.deactivate_primary	=3D dun_dt_gprs_deactivate_primary,
++static void dun_dt_post_online(struct ofono_modem *modem)
++{
++	DBG("");
++}
++
++
++static void dun_dt_connect_reply(DBusPendingCall *call, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct dun_data *data =3D ofono_modem_get_data(modem);
++	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
++	DBusError derr;
++	char *tty;
++
++
++	DBG("%p", modem);
++
++	dbus_error_init(&derr);
++	if (dbus_set_error_from_message(&derr, reply)) {
++		DBG("Connection to bt serial returned with error: %s, %s",
++			derr.name, derr.message);
++		dbus_error_free(&derr);
++		goto done;
++	}
++
++	dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &tty,
++			DBUS_TYPE_INVALID);
++
++	DBG("BT via tty %s", tty);
++
++	data->tty =3D g_strdup(tty);
++
++	ofono_modem_set_powered(modem, TRUE);
++
++done:
++	dbus_message_unref(reply);
++}
++
++static int dun_dt_enable(struct ofono_modem *modem)
++{
++	struct dun_data *data =3D ofono_modem_get_data(modem);
++	char *profile =3D "dun";
++
++	DBG("Open Bluetooth Networking");
++
++	bluetooth_send_with_reply(data->dun_path,
++					BLUEZ_SERIAL_INTERFACE, "Connect",
++					dun_dt_connect_reply, modem,
++					NULL, DBUS_TIMEOUT,
++					DBUS_TYPE_STRING, &profile,
++					DBUS_TYPE_INVALID);
++
++	return -EINPROGRESS;
++}
++
++static void dun_dt_disconnect_reply(DBusPendingCall *call, gpointer user_d=
+ata)
++{
++	struct ofono_modem *modem =3D user_data;
++
++	/* handle errors. */
++
++	ofono_modem_set_powered(modem, FALSE);
++}
++
++static int dun_dt_disable(struct ofono_modem *modem)
++{
++	struct dun_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("Disconnect Bluetooth Networking");
++
++	bluetooth_send_with_reply(data->dun_path,
++					BLUEZ_SERIAL_INTERFACE, "Disconnect",
++					dun_dt_disconnect_reply, modem,
++					NULL, DBUS_TIMEOUT,
++					DBUS_TYPE_STRING, &data->tty,
++					DBUS_TYPE_INVALID);
++
++	return -EINPROGRESS;
++}
++
++static void dun_dt_set_online(struct ofono_modem *modem, ofono_bool_t onli=
+ne,
++			ofono_modem_online_cb_t cb, void *data) {
++	DBG("modem %p, online %d", modem, online);
++
++	CALLBACK_WITH_SUCCESS(cb, modem);
++}
++
++
++static struct ofono_modem_driver dun_dt_driver =3D {
++	.name		=3D "dun_dt",
++	.probe		=3D dun_dt_probe,
++	.enable	=3D dun_dt_enable,
++	.disable	=3D dun_dt_disable,
++	.set_online	=3D dun_dt_set_online,
++	.pre_sim	=3D dun_dt_pre_sim,
++	.post_sim	=3D dun_dt_post_sim,
++	.post_online	=3D dun_dt_post_online
 +};
 +
-+void dun_dt_gprs_context_init(void)
++static struct bluetooth_profile dun_dt_profile =3D {
++	.name		=3D "dun_dt",
++	.probe		=3D dun_dt_bt_probe,
++	.remove	=3D dun_dt_bt_remove,
++	.set_alias	=3D dun_dt_bt_set_alias,
++};
++
++static int dun_dt_init(void)
 +{
-+	ofono_gprs_context_driver_register(&driver);
-+}
++	int err;
 +
-+void dun_dt_gprs_context_exit(void)
-+{
-+	ofono_gprs_context_driver_unregister(&driver);
-+}
-diff --git a/drivers/dunmodem/gprs.c b/drivers/dunmodem/gprs.c
-new file mode 100644
-index 0000000..3fbde1a
---- /dev/null
-+++ b/drivers/dunmodem/gprs.c
-@@ -0,0 +1,101 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2011  BMW Car IT GmbH. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#define _GNU_SOURCE
-+#include <string.h>
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include <errno.h>
-+
-+#include <glib.h>
-+
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/gprs.h>
-+
-+#include "gatchat.h"
-+#include "gatppp.h"
-+#include "gatresult.h"
-+
-+#include "dunmodem.h"
-+
-+static void dun_dt_gprs_set_attached(struct ofono_gprs *gprs, int attached,
-+						ofono_gprs_cb_t cb, void *data)
-+{
 +	DBG("");
 +
-+	CALLBACK_WITH_SUCCESS(cb, data);
-+}
++	if (DBUS_TYPE_UNIX_FD < 0)
++		return -EBADF;
 +
-+static gboolean dun_dt_gprs_finish_registration(gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
++	connection =3D ofono_dbus_get_connection();
 +
-+	ofono_gprs_register(gprs);
++	err =3D ofono_modem_driver_register(&dun_dt_driver);
++	if (err < 0)
++		return err;
 +
-+	return FALSE;
-+}
++	err =3D bluetooth_register_uuid(DUN_GW_UUID, &dun_dt_profile);
++	if (err < 0) {
++		ofono_modem_driver_unregister(&dun_dt_driver);
++		return err;
++	}
 +
-+static int dun_dt_gprs_probe(struct ofono_gprs *gprs,
-+					unsigned int vendor, void *data)
-+{
-+	DBG("");
-+
-+	g_timeout_add(500, dun_dt_gprs_finish_registration, gprs);
++	modem_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++						g_free, NULL);
 +
 +	return 0;
 +}
 +
-+static void dun_dt_gprs_remove(struct ofono_gprs *gprs)
-+{
-+	DBG("");
-+}
-+
-+static void dun_dt_gprs_attached_status(struct ofono_gprs *gprs,
-+						ofono_gprs_status_cb_t cb,
-+						void *data)
++static void dun_dt_exit(void)
 +{
 +	DBG("");
 +
-+	CALLBACK_WITH_SUCCESS(cb, 1, data);
++	bluetooth_unregister_uuid(DUN_GW_UUID);
++	ofono_modem_driver_unregister(&dun_dt_driver);
++
++	g_hash_table_destroy(modem_hash);
 +}
 +
-+static struct ofono_gprs_driver driver =3D {
-+	.name			=3D "dunmodem",
-+	.probe			=3D dun_dt_gprs_probe,
-+	.remove		=3D dun_dt_gprs_remove,
-+	.set_attached		=3D dun_dt_gprs_set_attached,
-+	.attached_status	=3D dun_dt_gprs_attached_status,
-+};
-+
-+void dun_dt_gprs_init(void)
-+{
-+	ofono_gprs_driver_register(&driver);
-+}
-+
-+void dun_dt_gprs_exit(void)
-+{
-+	ofono_gprs_driver_unregister(&driver);
-+}
-diff --git a/drivers/dunmodem/network-registration.c b/drivers/dunmodem/net=
-work-registration.c
-new file mode 100644
-index 0000000..a9acec0
---- /dev/null
-+++ b/drivers/dunmodem/network-registration.c
-@@ -0,0 +1,96 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2011  BMW Car IT GmbH. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#define _GNU_SOURCE
-+#include <string.h>
-+#include <stdlib.h>
-+#include <stdio.h>
-+
-+#include <glib.h>
-+
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/netreg.h>
-+
-+#include "gatchat.h"
-+#include "gatppp.h"
-+#include "gatresult.h"
-+#include "common.h"
-+
-+#include "dunmodem.h"
-+
-+static gboolean dun_netreg_register(gpointer user_data)
-+{
-+	struct ofono_netreg *netreg =3D user_data;
-+
-+	DBG("");
-+
-+	ofono_netreg_register(netreg);
-+
-+	return FALSE;
-+}
-+
-+static int dun_netreg_probe(struct ofono_netreg *netreg, unsigned int vend=
-or,
-+				void *user_data)
-+{
-+	struct dun_data *data =3D user_data;
-+
-+	DBG("%p", data);
-+
-+	g_idle_add(dun_netreg_register, netreg);
-+
-+	return 0;
-+}
-+
-+static void dun_netreg_remove(struct ofono_netreg *netreg)
-+{
-+	DBG("");
-+}
-+
-+static void dun_registration_status(struct ofono_netreg *netreg,
-+					ofono_netreg_status_cb_t cb,
-+					void *data)
-+{
-+	DBG("");
-+
-+	CALLBACK_WITH_SUCCESS(cb, 1, -1, -1, -1, netreg);
-+}
-+
-+static struct ofono_netreg_driver driver =3D {
-+	.name				=3D "dunmodem",
-+	.probe				=3D dun_netreg_probe,
-+	.remove				=3D dun_netreg_remove,
-+	.registration_status		=3D dun_registration_status
-+};
-+
-+void dun_dt_netreg_init(void)
-+{
-+	ofono_netreg_driver_register(&driver);
-+}
-+
-+void dun_dt_netreg_exit(void)
-+{
-+	ofono_netreg_driver_unregister(&driver);
-+}
++OFONO_PLUGIN_DEFINE(dun_dt, "Dial-up Networking Data Terminal Profile Plug=
+ins",
++			VERSION, OFONO_PLUGIN_PRIORITY_DEFAULT,
++			dun_dt_init, dun_dt_exit)
 -- =
 
 1.7.4.1
 
 
---===============3305338810460349824==--
+--===============2011604597805119577==--
 
