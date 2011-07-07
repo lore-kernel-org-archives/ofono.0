@@ -1,47 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============6206886952553371517=="
+Content-Type: multipart/mixed; boundary="===============7431722772080905216=="
 MIME-Version: 1.0
-From: Mario Tokarz <mario@tokarz.eu>
-Subject: [RFC 2/3] bluetooth: Add UUID for DUN.
-Date: Thu, 07 Jul 2011 10:45:22 +0200
-Message-ID: <1310028323-29180-3-git-send-email-mario@tokarz.eu>
-In-Reply-To: <1310028323-29180-1-git-send-email-mario@tokarz.eu>
+From: Aygon, Bertrand <bertrand.aygon@intel.com>
+Subject: RE: [PATCH] Create a SpeedUp plugin, using standard AT Modem,
+ and add corresponding udev rules
+Date: Thu, 07 Jul 2011 10:08:01 +0100
+Message-ID: <568DE01DA537804BA73470071BAC288938DF3596@irsmsx503.ger.corp.intel.com>
+In-Reply-To: <1310025902.21109.50.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6206886952553371517==
+--===============7431722772080905216==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Mario Tokarz <mario.tokarz@bmw-carit.de>
+Hi,
 
----
- plugins/bluetooth.h |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+There has been an update on usb_modeswitch 2 days ago, and now SU9800 are r=
+ecognized automatically.
 
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index 7f9f810..f572e5d 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -27,9 +27,11 @@
- =
+This is working great!
 
- #define DBUS_TIMEOUT 15
- =
+Just take 1.1.8 and latest data.
 
-+#define DUN_GW_UUID	"00001103-0000-1000-8000-00805f9b34fb"
- #define HFP_AG_UUID	"0000111f-0000-1000-8000-00805f9b34fb"
- #define HFP_HS_UUID	"0000111e-0000-1000-8000-00805f9b34fb"
- =
+Regards,
 
-+
- struct bluetooth_profile {
- 	const char *name;
- 	int (*probe)(const char *device, const char *dev_addr,
--- =
+Bertrand.
 
-1.7.4.1
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
 
---===============6206886952553371517==--
+--===============7431722772080905216==--
 
