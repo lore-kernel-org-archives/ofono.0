@@ -1,37 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============4977021750021559307=="
+Content-Type: multipart/mixed; boundary="===============1830818324862166885=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] phonesim: add support of +CBC
-Date: Fri, 08 Jul 2011 13:25:15 -0500
-Message-ID: <4E174B8B.1040300@gmail.com>
-In-Reply-To: <1310131760-5611-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH] phonesim: Extend STK menu for BIP commands sanity testing
+Date: Fri, 08 Jul 2011 14:42:22 -0500
+Message-ID: <4E175D9E.9070306@gmail.com>
+In-Reply-To: <1309796760-27584-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4977021750021559307==
+--===============1830818324862166885==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Philippe,
 
-On 07/08/2011 08:29 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> PTS test TP/PSI/BV-03-I [Transfer Battery Level Indication] needs to
-> change battery level and check that the battery level indication is
-> received at the HF.
-> So add support for +CBC in phonesim plugin, and force update of the
-> battery indicator on HFP AG Emulator registration.
+On 07/04/2011 11:26 AM, Philippe Nunes wrote:
+> For sanity testing regarding the BIP commands, the BIP  menu is enriched =
+with the Open channel TCP and Open channel UDP items.
+> For both, the destination adress is set as the locahost port '12348'
+> With a TCP/UDP server listen to this destination address (like netcat), i=
+t's possible to check the connection (for TCP) and the data exchange (sendi=
+ng/receiving).
 > ---
->  plugins/phonesim.c |   64 ++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 64 insertions(+), 0 deletions(-)
+>  src/simapplication.cpp |  126 +++++++++++++++++++++++++++++++++++++++---=
+------
+>  1 files changed, 103 insertions(+), 23 deletions(-)
 > =
 
 
-Patch looks great and has been applied, thanks.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============4977021750021559307==--
+--===============1830818324862166885==--
 
