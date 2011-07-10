@@ -1,38 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============1830818324862166885=="
+Content-Type: multipart/mixed; boundary="===============1655911076256206606=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] phonesim: Extend STK menu for BIP commands sanity testing
-Date: Fri, 08 Jul 2011 14:42:22 -0500
-Message-ID: <4E175D9E.9070306@gmail.com>
-In-Reply-To: <1309796760-27584-1-git-send-email-philippe.nunes@linux.intel.com>
+From: Mario Tokarz <mario@tokarz.eu>
+Subject: Re: [RFC 3/3] dun_dt: Add baseline for dun_dt plug-in.
+Date: Sun, 10 Jul 2011 23:07:23 +0200
+Message-ID: <20110710210723.GA3206@mario-laptop>
+In-Reply-To: <20110707165932.GA16322@joana>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1830818324862166885==
+--===============1655911076256206606==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi Gustavo,
 
-On 07/04/2011 11:26 AM, Philippe Nunes wrote:
-> For sanity testing regarding the BIP commands, the BIP  menu is enriched =
-with the Open channel TCP and Open channel UDP items.
-> For both, the destination adress is set as the locahost port '12348'
-> With a TCP/UDP server listen to this destination address (like netcat), i=
-t's possible to check the connection (for TCP) and the data exchange (sendi=
-ng/receiving).
-> ---
->  src/simapplication.cpp |  126 +++++++++++++++++++++++++++++++++++++++---=
-------
->  1 files changed, 103 insertions(+), 23 deletions(-)
+On Thu, Jul 07, 2011 at 01:59:32PM -0300 , Gustavo Padovan wrote:
+> Hi Mario,
+> =
+
+> * Mario Tokarz <mario@tokarz.eu> [2011-07-07 10:45:23 +0200]:
+> =
+
+> > From: Mario Tokarz <mario.tokarz@bmw-carit.de>
+> > --- /dev/null
+> > +++ b/plugins/dun_dt.c
+> > @@ -0,0 +1,337 @@
+> > +/*
+> > + *
+> > + *  oFono - Open Source Telephony
+> > + *
+> > + *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
+> > + *  Copyright (C) 2010  ProFUSION embedded systems
+> =
+
+> So this is mine as in the original code I wrote. Not from ProFUSION.
+> It was part of a Google Summer of Code project.
+> =
+
+> 	Copyright (C) 2010 Gustavo Padovan <gustavo@padovan.org>
 > =
 
 
-Patch has been applied, thanks.
+Ah, ok - sorry for that. I based it on plugins/hfp_hc.c, so maybe the
+Copyright Notice would need update on that file as well?
 
-Regards,
--Denis
+> > +
+> > +	strcpy(alias_buf, "DUN ");
+> > +	strcat(alias_buf, alias);
+> =
 
---===============1830818324862166885==--
+> Do you really need tell the user this is a DUN modem? It doesn't care.
+> =
+
+
+Hm, ok. I'll look into that again then. I will be back with an
+update. =
+
+
+Thanks for taking the time to look over that.
+Mario
+
+--===============1655911076256206606==--
 
