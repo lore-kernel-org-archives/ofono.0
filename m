@@ -1,21 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============8699073753702815974=="
+Content-Type: multipart/mixed; boundary="===============7387323909561686990=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
 Subject: Re: [RFC 1/1] GPRS Provisioning Plugin.
-Date: Mon, 11 Jul 2011 10:47:04 +0300
-Message-ID: <4E1AAA78.2010203@intel.com>
+Date: Mon, 11 Jul 2011 11:11:39 +0300
+Message-ID: <201107111111.39453.remi.denis-courmont@nokia.com>
 In-Reply-To: <4E174B26.3080004@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8699073753702815974==
+--===============7387323909561686990==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+On Friday 08 July 2011 21:23:34 ext Denis Kenzior, you wrote:
+> Hi Oleg,
+> =
 
-On 07/08/2011 09:23 PM, Denis Kenzior wrote:
+> <snip>
+> =
+
+> > +static int gprs_provision(const char *mcc, const char *mnc,
+> > +				const char *spn,
+> > +				struct ofono_gprs_provision_data **settings,
+> > +				int *count)
+> > +{
+> > +	int i;
+> > +	struct parser_data *data;
+> > +	*settings =3D NULL;
+> > +
+> > +	DBG("Provisioning for MCC %s, MNC %s, SPN '%s'",
+> > +			mcc, mnc, spn);
+> > +
+> > +	data =3D g_try_new0(struct parser_data, 1);
+> > +	if (data =3D=3D NULL)
+> > +		return -ENOMEM;
+> > +
+> > +	lookup_apn(mcc, mnc, NULL, data);
+> =
+
 > What I wonder is what is the overhead of the XML parser right now (e.g.
 > how long it takes on reasonable embedded hardware).  If this takes a
 > while, then it might be better to pre-parse the mobile-provider-info db
@@ -23,30 +46,23 @@ On 07/08/2011 09:23 PM, Denis Kenzior wrote:
 > called.  Otherwise we run the risk of hanging the daemon while the
 > provision settings are being looked up.
 
-Thanks for the input. Yes, this might be the problem. I could try to =
+Provisioning should be a fairly rare occurence. Preparsing the table into =
 
-test with N900 in order to get the idea of how long the parsing can =
+memory might be a waste of both CPU and memory in the common circumstances.=
+..
 
-take. Pre-parsing might be a good idea anyway, I will try to check how =
+If you suspect the parser is slow (I doubt it, but I have not checked), the=
+n =
 
-feasible it is.
+it might be better to just do it in a separate thread in the rare cases tha=
+t =
 
-Regards,
-Oleg
----------------------------------------------------------------------
-Intel Finland Oy
-Registered Address: PL 281, 00181 Helsinki =
+you actually do need the data.
 
-Business Identity Code: 0357606 - 4 =
+-- =
 
-Domiciled in Helsinki =
+R=C3=A9mi Denis-Courmont
+http://www.remlab.net/
 
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============8699073753702815974==--
+--===============7387323909561686990==--
 
