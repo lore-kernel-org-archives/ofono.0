@@ -1,65 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============1655911076256206606=="
+Content-Type: multipart/mixed; boundary="===============8699073753702815974=="
 MIME-Version: 1.0
-From: Mario Tokarz <mario@tokarz.eu>
-Subject: Re: [RFC 3/3] dun_dt: Add baseline for dun_dt plug-in.
-Date: Sun, 10 Jul 2011 23:07:23 +0200
-Message-ID: <20110710210723.GA3206@mario-laptop>
-In-Reply-To: <20110707165932.GA16322@joana>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: Re: [RFC 1/1] GPRS Provisioning Plugin.
+Date: Mon, 11 Jul 2011 10:47:04 +0300
+Message-ID: <4E1AAA78.2010203@intel.com>
+In-Reply-To: <4E174B26.3080004@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1655911076256206606==
+--===============8699073753702815974==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hello Denis,
 
-On Thu, Jul 07, 2011 at 01:59:32PM -0300 , Gustavo Padovan wrote:
-> Hi Mario,
-> =
+On 07/08/2011 09:23 PM, Denis Kenzior wrote:
+> What I wonder is what is the overhead of the XML parser right now (e.g.
+> how long it takes on reasonable embedded hardware).  If this takes a
+> while, then it might be better to pre-parse the mobile-provider-info db
+> during plugin initialization and not every time gprs_provision is
+> called.  Otherwise we run the risk of hanging the daemon while the
+> provision settings are being looked up.
 
-> * Mario Tokarz <mario@tokarz.eu> [2011-07-07 10:45:23 +0200]:
-> =
+Thanks for the input. Yes, this might be the problem. I could try to =
 
-> > From: Mario Tokarz <mario.tokarz@bmw-carit.de>
-> > --- /dev/null
-> > +++ b/plugins/dun_dt.c
-> > @@ -0,0 +1,337 @@
-> > +/*
-> > + *
-> > + *  oFono - Open Source Telephony
-> > + *
-> > + *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-> > + *  Copyright (C) 2010  ProFUSION embedded systems
-> =
+test with N900 in order to get the idea of how long the parsing can =
 
-> So this is mine as in the original code I wrote. Not from ProFUSION.
-> It was part of a Google Summer of Code project.
-> =
+take. Pre-parsing might be a good idea anyway, I will try to check how =
 
-> 	Copyright (C) 2010 Gustavo Padovan <gustavo@padovan.org>
-> =
+feasible it is.
 
+Regards,
+Oleg
+---------------------------------------------------------------------
+Intel Finland Oy
+Registered Address: PL 281, 00181 Helsinki =
 
-Ah, ok - sorry for that. I based it on plugins/hfp_hc.c, so maybe the
-Copyright Notice would need update on that file as well?
+Business Identity Code: 0357606 - 4 =
 
-> > +
-> > +	strcpy(alias_buf, "DUN ");
-> > +	strcat(alias_buf, alias);
-> =
-
-> Do you really need tell the user this is a DUN modem? It doesn't care.
-> =
+Domiciled in Helsinki =
 
 
-Hm, ok. I'll look into that again then. I will be back with an
-update. =
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
 
-Thanks for taking the time to look over that.
-Mario
-
---===============1655911076256206606==--
+--===============8699073753702815974==--
 
