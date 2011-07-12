@@ -1,43 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============7915732758919893729=="
+Content-Type: multipart/mixed; boundary="===============1334152614047210226=="
 MIME-Version: 1.0
-From: nicolas.bertrand <nicolas.bertrand@linux.intel.com>
-Subject: AT+CFUN=7 not supported by Huawei E173
-Date: Tue, 12 Jul 2011 18:00:49 +0200
-Message-ID: <4E1C6FB1.9090703@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] rules: Add oFono rule for ZTE MF 637 modem
+Date: Tue, 12 Jul 2011 11:20:05 -0500
+Message-ID: <4E1C7435.7010504@gmail.com>
+In-Reply-To: <1310483340-7830-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7915732758919893729==
+--===============1334152614047210226==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Bertrand,
 
-I got a problem with the change "huawei: Use correct command for setting =
-
-offline mode".
-
-The command AT+CFUN=3D7 is not supported by all Huawei modems and so the =
-
-E173 is not working anymore.
-
-PCUI: > AT+CFUN=3D7\r
-PCUI: < \r\n+CME ERROR: 50\r\n
-
-This modem supports only these functionality level: 0, 1, 4, 5 and 6.
-I don't have the specification of this modem and so I don't know what =
-
-level we need to set here.
-
-Do you have an idea on how we can resolve this problem?
-
-Thanks.
-
--- =
+On 07/12/2011 10:09 AM, Bertrand Aygon wrote:
+> ---
+>  plugins/ofono.rules |   10 +++++++---
+>  1 files changed, 7 insertions(+), 3 deletions(-)
+> =
 
 
-Nico
+Patch has been applied, thanks.
 
---===============7915732758919893729==--
+Regards,
+-Denis
+
+--===============1334152614047210226==--
 
