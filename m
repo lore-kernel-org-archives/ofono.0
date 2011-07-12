@@ -1,79 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============5207287934723901129=="
+Content-Type: multipart/mixed; boundary="===============0120261870533611692=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v9] connman: add plugin in oFono to request/release private
- network
-Date: Tue, 12 Jul 2011 11:31:18 +0200
-Message-ID: <1310463078-15378-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH] huaweicdma: Create first draft for plugin huaweicdma
+Date: Tue, 12 Jul 2011 11:51:23 +0200
+Message-ID: <1310464283-20128-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5207287934723901129==
+--===============0120261870533611692==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-While requesting private network, object path returned
-by ConnMan is stored to use it later on.
-
-While releasing private network,  pass stored object path in
-argument in order ConnMan to release accordingly private network.
-
-Don't check in release function if call get completed, only
-check if pending call is not null. It might happens that pending
-call is not null and creates a crash while testing call completion.
-Force pending call to be set to NULL when request_reply is invoked.
-
-Don't call the application CB when a call is marked as redundant,
-it might create a crash.
 ---
- Makefile.am       |    3 +
- plugins/connman.c |  287 +++++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am          |    3 +
+ plugins/huaweicdma.c |  180 ++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 2 files changed, 290 insertions(+), 0 deletions(-)
- create mode 100644 plugins/connman.c
+ 2 files changed, 183 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/huaweicdma.c
 
 diff --git a/Makefile.am b/Makefile.am
-index c08e09f..efb1118 100644
+index c08e09f..2fa8771 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -346,6 +346,9 @@ builtin_sources +=3D plugins/hfp_ag.c plugins/bluetooth=
-.h
- builtin_modules +=3D dun_gw
- builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
+@@ -294,6 +294,9 @@ builtin_sources +=3D plugins/zte.c
+ builtin_modules +=3D huawei
+ builtin_sources +=3D plugins/huawei.c
  =
 
-+builtin_modules +=3D connman
-+builtin_sources +=3D plugins/connman.c
++builtin_modules +=3D huaweicdma
++builtin_sources +=3D plugins/huaweicdma.c
 +
- builtin_sources +=3D $(btio_sources)
- builtin_cflags +=3D @BLUEZ_CFLAGS@
- builtin_libadd +=3D @BLUEZ_LIBS@
-diff --git a/plugins/connman.c b/plugins/connman.c
+ builtin_modules +=3D sierra
+ builtin_sources +=3D plugins/sierra.c
+ =
+
+diff --git a/plugins/huaweicdma.c b/plugins/huaweicdma.c
 new file mode 100644
-index 0000000..caa9aab
+index 0000000..5dc9f0c
 --- /dev/null
-+++ b/plugins/connman.c
-@@ -0,0 +1,287 @@
++++ b/plugins/huaweicdma.c
+@@ -0,0 +1,180 @@
 +/*
++ * This file is part of oFono - Open Source Telephony
 + *
-+ *  oFono - Open Source Telephony
++ * Copyright (C) 2010 Nokia Corporation. All rights reserved.
 + *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * version 2 as published by the Free Software Foundation.
 + *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
 + *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
++ * 02110-1301 USA
 + *
 + */
 +
@@ -81,273 +66,165 @@ index 0000000..caa9aab
 +#include <config.h>
 +#endif
 +
-+#include <errno.h>
 +#include <stdlib.h>
-+#include <unistd.h>
-+
-+#include <gdbus.h>
++#include <errno.h>
++#include <termios.h>
 +#include <string.h>
++#include <unistd.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++
++#include <glib.h>
++#include <gatchat.h>
++#include <gattty.h>
 +
 +#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/log.h>
-+#include <ofono/dbus.h>
 +#include <ofono/plugin.h>
-+#include <ofono/private-network.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
 +
-+#define CONNMAN_SERVICE			"net.connman"
-+#define CONNMAN_PATH			"/net/connman"
++#include <drivers/atmodem/atutil.h>
++#include <ofono/cdma-voicecall.h>
++#include <ofono/devinfo.h>
++#include <ofono/cdma-connman.h>
 +
-+#define CONNMAN_MANAGER_INTERFACE	CONNMAN_SERVICE ".Manager"
-+#define CONNMAN_MANAGER_PATH		"/"
++#include "common.h"
 +
-+static DBusConnection *connection;
-+static GHashTable *requests;
-+static unsigned int id;
-+
-+struct pns_req {
-+	int uid;
-+	DBusPendingCall *pending;
-+	ofono_private_network_cb_t cb;
-+	void *data;
-+	gboolean redundant;
-+	char *path;
++struct huaweicdma_data {
++	GAtChat *chat;
 +};
 +
-+static void pns_release(int uid)
++static void huaweicdma_debug(const char *str, void *data)
 +{
-+	DBusMessage *message =3D NULL;
-+	struct pns_req *req;
++	const char *prefix =3D data;
 +
-+	DBG("");
-+
-+	req =3D g_hash_table_lookup(requests, &uid);
-+	if (!req)
-+		return;
-+
-+	if (req->pending) {
-+		/*
-+		* We want to cancel the request but we have to wait
-+		* the response of ConnMan. So we mark request as
-+		* redundant until we get the response, then we remove
-+		* it from hash table.
-+		*/
-+		req->redundant =3D TRUE;
-+		return;
-+	}
-+
-+	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
-+						CONNMAN_MANAGER_PATH,
-+						CONNMAN_MANAGER_INTERFACE,
-+						"ReleasePrivateNetwork");
-+
-+	if (message =3D=3D NULL)
-+		goto error;
-+
-+	dbus_message_append_args(message, DBUS_TYPE_OBJECT_PATH, &req->path,
-+							DBUS_TYPE_INVALID);
-+	dbus_message_set_no_reply(message, TRUE);
-+	dbus_connection_send(connection, message, NULL);
-+	dbus_message_unref(message);
-+
-+error:
-+	g_hash_table_remove(requests, &req->uid);
++	ofono_info("%s%s", prefix, str);
 +}
 +
-+static void request_reply(DBusPendingCall *call, void *user_data)
++static int huaweicdma_probe(struct ofono_modem *modem)
 +{
-+	struct pns_req *req =3D user_data;
-+	struct ofono_private_network_settings pns;
-+	DBusMessageIter array, dict, entry;
-+	DBusMessage *reply;
-+	const char *path;
++	struct huaweicdma_data *data;
 +
-+	DBG("");
++	DBG("%p", modem);
 +
-+	pns.fd =3D -1;
-+	pns.server_ip =3D NULL;
-+	pns.peer_ip =3D NULL;
-+	pns.primary_dns =3D NULL;
-+	pns.secondary_dns =3D NULL;
++	data =3D g_try_new0(struct huaweicdma_data, 1);
++	if (data =3D=3D NULL)
++		return -ENOMEM;
 +
-+	req->pending =3D NULL;
++	ofono_modem_set_data(modem, data);
 +
-+	reply =3D dbus_pending_call_steal_reply(call);
-+	if (!reply)
-+		goto error;
-+
-+	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR)
-+		goto error;
-+
-+	if (dbus_message_iter_init(reply, &array) =3D=3D FALSE)
-+		goto error;
-+
-+	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_OBJECT_PATH)
-+		goto error;
-+
-+	dbus_message_iter_get_basic(&array, &path);
-+
-+	dbus_message_iter_next(&array);
-+	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_ARRAY)
-+		goto error;
-+
-+	if (req->redundant =3D=3D TRUE)
-+		goto release;
-+
-+	dbus_message_iter_recurse(&array, &dict);
-+
-+	while (dbus_message_iter_get_arg_type(&dict) =3D=3D DBUS_TYPE_DICT_ENTRY)=
- {
-+		DBusMessageIter iter;
-+		const char *key;
-+		int type;
-+
-+		dbus_message_iter_recurse(&dict, &entry);
-+
-+		dbus_message_iter_get_basic(&entry, &key);
-+
-+		dbus_message_iter_next(&entry);
-+		dbus_message_iter_recurse(&entry, &iter);
-+
-+		type =3D dbus_message_iter_get_arg_type(&iter);
-+		if (type !=3D DBUS_TYPE_STRING)
-+			break;
-+
-+		if (g_str_equal(key, "ServerIPv4") &&
-+				type =3D=3D DBUS_TYPE_STRING)
-+			dbus_message_iter_get_basic(&iter, &pns.server_ip);
-+		else if (g_str_equal(key, "PeerIPv4") &&
-+				type =3D=3D DBUS_TYPE_STRING)
-+			dbus_message_iter_get_basic(&iter, &pns.peer_ip);
-+		else if (g_str_equal(key, "PrimaryDNS") &&
-+				type =3D=3D DBUS_TYPE_STRING)
-+			dbus_message_iter_get_basic(&iter, &pns.primary_dns);
-+		else if (g_str_equal(key, "SecondaryDNS") &&
-+				type =3D=3D DBUS_TYPE_STRING)
-+			dbus_message_iter_get_basic(&iter, &pns.secondary_dns);
-+
-+		dbus_message_iter_next(&dict);
-+	}
-+
-+	dbus_message_iter_next(&array);
-+	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_UNIX_FD)
-+		goto error;
-+
-+	dbus_message_iter_get_basic(&array, &pns.fd);
-+	DBG("Fildescriptor =3D %d\n", pns.fd);
-+
-+	req->path =3D g_strdup(path);
-+	DBG("Object path =3D %s\n", req->path);
-+
-+	if (pns.server_ip =3D=3D NULL || pns.peer_ip =3D=3D NULL ||
-+			pns.primary_dns =3D=3D NULL || pns.secondary_dns =3D=3D NULL ||
-+			pns.fd < 0) {
-+		ofono_error("Error while reading dictionnary...\n");
-+		goto release;
-+	}
-+
-+	req->cb(&pns, req->data);
-+
-+	dbus_message_unref(reply);
-+	dbus_pending_call_unref(call);
-+
-+	return;
-+
-+release:
-+	pns_release(req->uid);
-+error:
-+	if (pns.fd >=3D 0)
-+		close(pns.fd);
-+
-+	if (req->redundant =3D=3D FALSE)
-+		req->cb(NULL, req->data);
-+
-+	if (reply)
-+		dbus_message_unref(reply);
-+
-+	dbus_pending_call_unref(call);
++	return 0;
 +}
 +
-+static int pns_request(ofono_private_network_cb_t cb, void *data)
++static void huaweicdma_remove(struct ofono_modem *modem)
 +{
-+	DBusMessage *message;
-+	DBusPendingCall *call;
-+	struct pns_req *req;
++	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
 +
-+	DBG("");
++	DBG("%p", modem);
 +
-+	req =3D g_try_new(struct pns_req, 1);
++	ofono_modem_set_data(modem, NULL);
 +
-+	if (req =3D=3D NULL)
-+		return -ENOMEM;
++	g_at_chat_unref(data->chat);
 +
-+	message =3D dbus_message_new_method_call(CONNMAN_SERVICE,
-+						CONNMAN_MANAGER_PATH,
-+						CONNMAN_MANAGER_INTERFACE,
-+						"RequestPrivateNetwork");
++	g_free(data);
++}
 +
-+	if (message =3D=3D NULL) {
-+		g_free(req);
-+		return -ENOMEM;
-+	}
++static int huaweicdma_enable(struct ofono_modem *modem)
++{
++	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
++	GAtSyntax *syntax;
++	GIOChannel *channel;
++	const char *device;
 +
-+	if (dbus_connection_send_with_reply(connection, message,
-+						&call, 5000) =3D=3D FALSE) {
-+		g_free(req);
-+		dbus_message_unref(message);
++	device =3D ofono_modem_get_string(modem, "Device");
++	if (device =3D=3D NULL)
++		return -EINVAL;
++
++	channel =3D g_at_tty_open(device, NULL);
++	if (channel =3D=3D NULL)
 +		return -EIO;
-+	}
 +
-+	id++;
-+	req->pending =3D call;
-+	req->cb =3D cb;
-+	req->data =3D data;
-+	req->uid =3D id;
-+	req->redundant =3D FALSE;
++	/*
++	 * TODO: Will need a CDMA AT syntax parser later.
++	 * Using GSM V1 for now.
++	 */
++	syntax =3D g_at_syntax_new_gsmv1();
 +
-+	dbus_pending_call_set_notify(call, request_reply, req, NULL);
-+	g_hash_table_insert(requests, &req->uid, req);
-+	dbus_message_unref(message);
++	data->chat =3D g_at_chat_new(channel, syntax);
++	g_at_syntax_unref(syntax);
++	g_io_channel_unref(channel);
 +
-+	return req->uid;
++	if (data->chat =3D=3D NULL)
++		return -ENOMEM;
++
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(data->chat, huaweicdma_debug,
++					"CDMA Device: ");
++
++	return 0;
 +}
 +
-+static struct ofono_private_network_driver pn_driver =3D {
-+	.name		=3D "ConnMan Private Network",
-+	.request	=3D pns_request,
-+	.release	=3D pns_release,
++static int huaweicdma_disable(struct ofono_modem *modem)
++{
++	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
++
++	return 0;
++}
++
++static void huaweicdma_pre_sim(struct ofono_modem *modem)
++{
++	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
++
++	ofono_cdma_voicecall_create(modem, 0, "cdmamodem", data->chat);
++	ofono_devinfo_create(modem, 0, "cdmamodem", data->chat);
++}
++
++static void huaweicdma_post_sim(struct ofono_modem *modem)
++{
++}
++
++static void huaweicdma_post_online(struct ofono_modem *modem)
++{
++	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->chat);
++}
++
++static struct ofono_modem_driver huaweicdma_driver =3D {
++	.name			=3D "huaweicdma",
++	.probe			=3D huaweicdma_probe,
++	.remove			=3D huaweicdma_remove,
++	.enable			=3D huaweicdma_enable,
++	.disable		=3D huaweicdma_disable,
++	.pre_sim		=3D huaweicdma_pre_sim,
++	.post_sim		=3D huaweicdma_post_sim,
++	.post_online		=3D huaweicdma_post_online,
 +};
 +
-+static void remove_requests(gpointer user_data)
++static int huaweicdma_init(void)
 +{
-+	struct pns_req *req =3D user_data;
-+
-+	g_free(req->path);
-+	g_free(req);
++	return ofono_modem_driver_register(&huaweicdma_driver);
 +}
 +
-+static int connman_init(void)
++static void huaweicdma_exit(void)
 +{
-+	DBG("");
-+
-+	connection =3D ofono_dbus_get_connection();
-+	requests =3D g_hash_table_new_full(g_int_hash, g_int_equal, NULL,
-+						remove_requests);
-+
-+	return ofono_private_network_driver_register(&pn_driver);
++	ofono_modem_driver_unregister(&huaweicdma_driver);
 +}
 +
-+static void connman_exit(void)
-+{
-+	g_hash_table_destroy(requests);
-+	ofono_private_network_driver_unregister(&pn_driver);
-+}
-+
-+OFONO_PLUGIN_DEFINE(connman, "ConnMan plugin", VERSION,
-+		OFONO_PLUGIN_PRIORITY_DEFAULT, connman_init, connman_exit)
++OFONO_PLUGIN_DEFINE(huaweicdma, "Huawei CDMA AT Modem", VERSION,
++			OFONO_PLUGIN_PRIORITY_DEFAULT,
++			huaweicdma_init, huaweicdma_exit)
 -- =
 
 1.7.1
 
 
---===============5207287934723901129==--
+--===============0120261870533611692==--
 
