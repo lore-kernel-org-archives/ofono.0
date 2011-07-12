@@ -1,22 +1,24 @@
-Content-Type: multipart/mixed; boundary="===============0120261870533611692=="
+Content-Type: multipart/mixed; boundary="===============1082002177795572171=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH] huaweicdma: Create first draft for plugin huaweicdma
-Date: Tue, 12 Jul 2011 11:51:23 +0200
-Message-ID: <1310464283-20128-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v2] huaweicdma: Create first draft for plugin huaweicdma
+Date: Tue, 12 Jul 2011 12:03:10 +0200
+Message-ID: <1310464990-20448-1-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1310464283-20128-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0120261870533611692==
+--===============1082002177795572171==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Add Intel copyright.
 ---
  Makefile.am          |    3 +
- plugins/huaweicdma.c |  180 ++++++++++++++++++++++++++++++++++++++++++++++=
+ plugins/huaweicdma.c |  181 ++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 2 files changed, 183 insertions(+), 0 deletions(-)
+ 2 files changed, 184 insertions(+), 0 deletions(-)
  create mode 100644 plugins/huaweicdma.c
 
 diff --git a/Makefile.am b/Makefile.am
@@ -37,14 +39,15 @@ index c08e09f..2fa8771 100644
 
 diff --git a/plugins/huaweicdma.c b/plugins/huaweicdma.c
 new file mode 100644
-index 0000000..5dc9f0c
+index 0000000..cae53fe
 --- /dev/null
 +++ b/plugins/huaweicdma.c
-@@ -0,0 +1,180 @@
+@@ -0,0 +1,181 @@
 +/*
 + * This file is part of oFono - Open Source Telephony
 + *
 + * Copyright (C) 2010 Nokia Corporation. All rights reserved.
++ * Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
 + *
 + * This program is free software; you can redistribute it and/or
 + * modify it under the terms of the GNU General Public License
@@ -226,5 +229,5 @@ index 0000000..5dc9f0c
 1.7.1
 
 
---===============0120261870533611692==--
+--===============1082002177795572171==--
 
