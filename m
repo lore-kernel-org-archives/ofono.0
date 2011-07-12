@@ -1,83 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============5010315462500926780=="
+Content-Type: multipart/mixed; boundary="===============2017591915906618628=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH_v3] huaweicdma: Create first draft for plugin huaweicdma
-Date: Tue, 12 Jul 2011 14:36:09 +0200
-Message-ID: <4E1C3FB9.70401@linux.intel.com>
-In-Reply-To: <1310472386.21109.94.camel@aeonflux>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] ofono.rules: Add rules for SpeedUp 8000 modem
+Date: Tue, 12 Jul 2011 16:33:29 +0200
+Message-ID: <1310481209-5805-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5010315462500926780==
+--===============2017591915906618628==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+---
+ plugins/ofono.rules |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-On 12/07/2011 14:06, Marcel Holtmann wrote:
-> Hi Guillaume,
->
->> 	- Remove Nokia copyright.
->> 	- Remove cdma voicecall for the moment.
->> 	- Add debug print into post_sim pre_sim.
->> 	- use GSM permissive synthax for the moment.
-> the nokiacdma.c was actually the worst example to derive this one from.
-> I fixed this all up for you now and applied the patch.
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index 27615cc..0f4f85d 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -369,6 +369,10 @@ ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"98=
+00", ENV{OFONO_IFACE_NUM}=3D=3D"02", E
+ ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9e00", ENV{OFONO_IFACE=
+_NUM}=3D=3D"00", ENV{OFONO_SPEEDUP_TYPE}=3D"modem"
+ ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9e00", ENV{OFONO_IFACE=
+_NUM}=3D=3D"03", ENV{OFONO_SPEEDUP_TYPE}=3D"aux"
+ =
 
-Sorry this was the only cdma plugin smple I had.
-Thanks for fixing the issues.
++# SpeedUp 8000
++ATTRS{idVendor}=3D=3D"2020", ATTRS{idProduct}=3D=3D"1008", ENV{OFONO_IFACE=
+_NUM}=3D=3D"01", ENV{OFONO_SPEEDUP_TYPE}=3D"modem"
++ATTRS{idVendor}=3D=3D"2020", ATTRS{idProduct}=3D=3D"1008", ENV{OFONO_IFACE=
+_NUM}=3D=3D"03", ENV{OFONO_SPEEDUP_TYPE}=3D"aux"
++
+ LABEL=3D"ofono_tty_end"
+ =
 
->> +/*
->> + * This file is part of oFono - Open Source Telephony
-> I missed this part, but all the Nokia copyright headers are wrongly
-> formatted. They should have been fixed a long time ago.
->
->> +#include<stdlib.h>
->> +#include<errno.h>
->> +#include<termios.h>
->> +#include<string.h>
->> +#include<unistd.h>
->> +#include<sys/types.h>
->> +#include<sys/stat.h>
->> +#include<fcntl.h>
-> This list of includes is useless. Big copy and paste around.
->
+ # ISI/Phonet drivers
+@@ -414,6 +418,10 @@ ATTRS{idVendor}=3D=3D"1c9e", ENV{OFONO_DRIVER}=3D"spee=
+dup"
+ =
 
-You got me :)
+ ATTRS{idVendor}=3D=3D"1c9e", ATTRS{serial}=3D=3D"1234567890ABCDEF", ENV{ID=
+_SERIAL_SHORT}=3D""
+ =
 
->> +#include<glib.h>
->> +#include<gatchat.h>
->> +#include<gattty.h>
->> +
->> +#define OFONO_API_SUBJECT_TO_CHANGE
->> +#include<ofono/plugin.h>
->> +#include<ofono/log.h>
->> +#include<ofono/modem.h>
->> +
->> +#include<drivers/atmodem/atutil.h>
->> +#include<ofono/devinfo.h>
->> +#include<ofono/cdma-connman.h>
->> +
->> +#include "common.h"
-> What is this for?
->
->> +	/*
->> +	 * TODO: Will need a CDMA AT syntax parser later.
->> +	 * Using GSM permissive for now.
->> +	 */
->> +	syntax =3D g_at_syntax_new_gsm_permissive();
-> The comment is rather pointless until we really know what is going with
-> CDMA modems. So I removed it.
->
-> However you have to keep in mind that you need to turn echo support off
-> before you can use the permissive syntax parser.
->
++ATTRS{idVendor}=3D=3D"2020", ENV{OFONO_DRIVER}=3D"speedup"
++
++ATTRS{idVendor}=3D=3D"2020", ATTRS{serial}=3D=3D"1234567890ABCDEF", ENV{ID=
+_SERIAL_SHORT}=3D""
++
+ # Option Globetrotter
+ ATTRS{idVendor}=3D=3D"0af0", ATTRS{idProduct}=3D=3D"6911", ENV{OFONO_DRIVE=
+R}=3D"hso"
+ ATTRS{idVendor}=3D=3D"0af0", ATTRS{idProduct}=3D=3D"6971", ENV{OFONO_DRIVE=
+R}=3D"hso"
+-- =
 
-Ok, thanks for the info.
+1.7.4.1
 
-Kind regards,
-Guillaume
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
---===============5010315462500926780==--
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============2017591915906618628==--
 
