@@ -1,91 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============3811057359001628630=="
+Content-Type: multipart/mixed; boundary="===============7915732758919893729=="
 MIME-Version: 1.0
-From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] rules: Add oFono rule for ZTE MF 637 modem
-Date: Tue, 12 Jul 2011 17:09:00 +0200
-Message-ID: <1310483340-7830-1-git-send-email-bertrand.aygon@intel.com>
+From: nicolas.bertrand <nicolas.bertrand@linux.intel.com>
+Subject: AT+CFUN=7 not supported by Huawei E173
+Date: Tue, 12 Jul 2011 18:00:49 +0200
+Message-ID: <4E1C6FB1.9090703@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3811057359001628630==
+--===============7915732758919893729==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/ofono.rules |   10 +++++++---
- 1 files changed, 7 insertions(+), 3 deletions(-)
+Hi Marcel,
 
-diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-index 0f4f85d..876a2f8 100644
---- a/plugins/ofono.rules
-+++ b/plugins/ofono.rules
-@@ -15,6 +15,10 @@ ATTRS{idVendor}=3D=3D"1199", ATTRS{idProduct}=3D=3D"683c=
-", ENV{OFONO_IFACE_NUM}=3D=3D"03", E
- ATTRS{idVendor}=3D=3D"1199", ATTRS{idProduct}=3D=3D"6880", ENV{OFONO_IFACE=
-_NUM}=3D=3D"03", ENV{OFONO_SIERRA_TYPE}=3D"modem"
- ATTRS{idVendor}=3D=3D"1199", ATTRS{idProduct}=3D=3D"6890", ENV{OFONO_IFACE=
-_NUM}=3D=3D"03", ENV{OFONO_SIERRA_TYPE}=3D"modem"
- =
+I got a problem with the change "huawei: Use correct command for setting =
 
-+# ZTE =
+offline mode".
 
-+ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0017", ENV{OFONO_IFACE=
-_NUM}=3D=3D"03", ENV{OFONO_ZTE_TYPE}=3D"modem"
-+ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0017", ENV{OFONO_IFACE=
-_NUM}=3D=3D"01", ENV{OFONO_ZTE_TYPE}=3D"aux"
-+
- ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0031", ENV{OFONO_IFACE=
-_NUM}=3D=3D"03", ENV{OFONO_ZTE_TYPE}=3D"modem"
- ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0031", ENV{OFONO_IFACE=
-_NUM}=3D=3D"01", ENV{OFONO_ZTE_TYPE}=3D"aux"
- =
+The command AT+CFUN=3D7 is not supported by all Huawei modems and so the =
 
-@@ -24,12 +28,12 @@ ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"006=
-3", ENV{OFONO_IFACE_NUM}=3D=3D"01", E
- ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0117", ENV{OFONO_IFACE=
-_NUM}=3D=3D"02", ENV{OFONO_ZTE_TYPE}=3D"modem"
- ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0117", ENV{OFONO_IFACE=
-_NUM}=3D=3D"01", ENV{OFONO_ZTE_TYPE}=3D"aux"
- =
+E173 is not working anymore.
 
-+ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0121", ENV{OFONO_IFACE=
-_NUM}=3D=3D"04", ENV{OFONO_ZTE_TYPE}=3D"modem"
-+ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0121", ENV{OFONO_IFACE=
-_NUM}=3D=3D"01", ENV{OFONO_ZTE_TYPE}=3D"aux"
-+
- ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0124", ENV{OFONO_IFACE=
-_NUM}=3D=3D"04", ENV{OFONO_ZTE_TYPE}=3D"modem"
- ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0124", ENV{OFONO_IFACE=
-_NUM}=3D=3D"01", ENV{OFONO_ZTE_TYPE}=3D"aux"
- =
+PCUI: > AT+CFUN=3D7\r
+PCUI: < \r\n+CME ERROR: 50\r\n
 
--ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0017", ENV{OFONO_IFACE=
-_NUM}=3D=3D"03", ENV{OFONO_ZTE_TYPE}=3D"modem"
--ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0017", ENV{OFONO_IFACE=
-_NUM}=3D=3D"01", ENV{OFONO_ZTE_TYPE}=3D"aux"
--
- # Generic 0x1001
- ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1001", ENV{OFONO_IFACE=
-_NUM}=3D=3D"00", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
- ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1001", ENV{OFONO_IFACE=
-_NUM}=3D=3D"02", ENV{OFONO_HUAWEI_TYPE}=3D"Pcui"
+This modem supports only these functionality level: 0, 1, 4, 5 and 6.
+I don't have the specification of this modem and so I don't know what =
+
+level we need to set here.
+
+Do you have an idea on how we can resolve this problem?
+
+Thanks.
+
 -- =
 
-1.7.4.1
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+Nico
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============3811057359001628630==--
+--===============7915732758919893729==--
 
