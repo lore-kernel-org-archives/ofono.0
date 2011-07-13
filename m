@@ -1,68 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============7268708809036484705=="
+Content-Type: multipart/mixed; boundary="===============7182554096812942359=="
 MIME-Version: 1.0
-From: Leonardo Luiz Padovani da Mata <leonardol@syst.com.br>
-Subject: Re: AT+CFUN=7 not supported by Huawei E173
-Date: Tue, 12 Jul 2011 14:53:13 -0300
-Message-ID: <CAMdu8wEzDhw7jNV0NgLoifRROLK3qoMVE0BqeJLBWsEvr_R7gw@mail.gmail.com>
-In-Reply-To: <4E1C6FB1.9090703@linux.intel.com>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: Re: [RFC 1/1] GPRS Provisioning Plugin.
+Date: Wed, 13 Jul 2011 13:41:19 +0300
+Message-ID: <4E1D764F.5000707@intel.com>
+In-Reply-To: <4E174B26.3080004@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7268708809036484705==
+--===============7182554096812942359==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-I'm very interested on having this modem working... Is there anything
-i contribute with?
+Hello Denis,
 
-On Tue, Jul 12, 2011 at 1:00 PM, nicolas.bertrand
-<nicolas.bertrand@linux.intel.com> wrote:
-> Hi Marcel,
->
-> I got a problem with the change "huawei: Use correct command for setting
-> offline mode".
->
-> The command AT+CFUN=3D7 is not supported by all Huawei modems and so the =
-E173
-> is not working anymore.
->
-> PCUI: > AT+CFUN=3D7\r
-> PCUI: < \r\n+CME ERROR: 50\r\n
->
-> This modem supports only these functionality level: 0, 1, 4, 5 and 6.
-> I don't have the specification of this modem and so I don't know what lev=
-el
-> we need to set here.
->
-> Do you have an idea on how we can resolve this problem?
->
-> Thanks.
->
-> --
->
-> Nico
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
+On 07/08/2011 09:23 PM, Denis Kenzior wrote:
+> What I wonder is what is the overhead of the XML parser right now (e.g.
+> how long it takes on reasonable embedded hardware).  If this takes a
+> while, then it might be better to pre-parse the mobile-provider-info db
+> during plugin initialization and not every time gprs_provision is
+> called.  Otherwise we run the risk of hanging the daemon while the
+> provision settings are being looked up.
 
+I have tested on N900 (MeeGo 1.2 Community Edition on microSDHC class 4 car=
+d), =
 
+it takes 0.1 second to load and parse the mobile-provider-info database (15=
+4KB).
+
+Is this a reasonable time or should we go with pre-parsing?
+
+Regards,
+Oleg
 
 -- =
 
-Leonardo Luiz Padovani da Mata
+Intel Finland Oy
+Registered Address: PL 281, 00181 Helsinki
+Business Identity Code: 0357606 - 4
+Domiciled in Helsinki
 
-International Syst S/A
-Metasys Tecnologia
-Software Engineer Metasys MeeGo Team
-
-leonardol(a)metasys.com.br
-+55-31-3503-9040
-
-"May the force be with you, always"
-"Nerd Pride... eu tenho. Voce tem?"
-
---===============7268708809036484705==--
+--===============7182554096812942359==--
 
