@@ -1,48 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============1240747537191476653=="
+Content-Type: multipart/mixed; boundary="===============7100429224825467047=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC 1/1] GPRS Provisioning Plugin.
-Date: Wed, 13 Jul 2011 08:18:48 -0500
-Message-ID: <4E1D9B38.3000206@gmail.com>
-In-Reply-To: <4E1D764F.5000707@intel.com>
+From: Christian Gagneraud <chris@techworks.ie>
+Subject: About satellite modems
+Date: Thu, 14 Jul 2011 17:53:04 +0100
+Message-ID: <4E1F1EF0.5080108@techworks.ie>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1240747537191476653==
+--===============7100429224825467047==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Oleg,
+Hi there,
 
-On 07/13/2011 05:41 AM, Oleg Zhurakivskyy wrote:
-> Hello Denis,
-> =
+Has anyone ever think about adding support for satellite modems? Things =
 
-> On 07/08/2011 09:23 PM, Denis Kenzior wrote:
->> What I wonder is what is the overhead of the XML parser right now (e.g.
->> how long it takes on reasonable embedded hardware).  If this takes a
->> while, then it might be better to pre-parse the mobile-provider-info db
->> during plugin initialization and not every time gprs_provision is
->> called.  Otherwise we run the risk of hanging the daemon while the
->> provision settings are being looked up.
-> =
+like global start, Iridium, etc...
+Some of these modems offer specific features (special data packet =
 
-> I have tested on N900 (MeeGo 1.2 Community Edition on microSDHC class 4
-> card), it takes 0.1 second to load and parse the mobile-provider-info
-> database (154KB).
-> =
+service), but they usually provide SMS, voicecall and internet (ppp).
+They usually utilize standard and enhanced Hayes AT commands.
+For example, Globalstar claims "Crystal clear voice quality: Superior =
 
-> Is this a reasonable time or should we go with pre-parsing?
+CDMA digital satellite quality", so it should mean that they are usable =
 
-My rule of thumb is less than 300 ms is not really noticeable to the
-user and anything up to 1 second is OK.  So in this case I'd say we
-should be fine parsing on demand.
+with oFono cdma API.
 
-If we ever encounter performance problems we can revisit this decision.
+So In short, it seems to me that these modems are very similar to GSM =
+
+ones, but yet they have some differences as well (no SIM card, different =
+
+radio settings, ...)
 
 Regards,
--Denis
+Chris
 
---===============1240747537191476653==--
+-- =
+
+Christian Gagneraud,
+Embedded systems engineer.
+Techworks Marine
+4a Park lane
+Dun Laoghaire
+Co. Dublin
+Ireland
+Tel: + 353 (0) 1 236 5990
+Web: http://www.techworks.ie/
+
+--===============7100429224825467047==--
 
