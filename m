@@ -1,31 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============0180222016563569190=="
+Content-Type: multipart/mixed; boundary="===============6831494423040156641=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/4] ifxmodem: add support for user_confirmation in stk
-Date: Fri, 15 Jul 2011 11:10:28 -0500
-Message-ID: <4E206674.1020903@gmail.com>
-In-Reply-To: <1310733734-4206-5-git-send-email-jeevaka.badrappan@linux.intel.com>
+Subject: Re: [PATCH 3/4] stk: Handle set up call in handled_notify
+Date: Fri, 15 Jul 2011 11:11:44 -0500
+Message-ID: <4E2066C0.6040403@gmail.com>
+In-Reply-To: <65215.10.254.189.70.1310733972.squirrel@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0180222016563569190==
+--===============6831494423040156641==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jeevaka,
 
-On 07/15/2011 07:42 AM, Jeevaka Badrappan wrote:
-> ---
->  drivers/ifxmodem/stk.c |   11 +++++++++++
->  1 files changed, 11 insertions(+), 0 deletions(-)
+On 07/15/2011 07:46 AM, jeevaka.badrappan(a)linux.intel.com wrote:
+> Hi,
+> =
+
+>> @@ -529,7 +531,12 @@ static void stk_alpha_id_set(struct ofono_stk *stk,
+>>
+>>  static void stk_alpha_id_unset(struct ofono_stk *stk)
+>>  {
+>> -	stk_agent_request_cancel(stk->current_agent);
+>> +	/*
+>> +	 * If there is no default agent, then current agent also will be NULL.
+>> +	 * So, call request cancel only when there is a valid current agent.
+>> +	 */
+>> +	if (stk->current_agent)
+>> +		stk_agent_request_cancel(stk->current_agent);
+>>  }
+>>
+> =
+
+> If needed, I can send this code change alone in a separate fix patch.
 > =
 
 
-Patch has been applied, thanks.
+It sounds like you were getting a crash with this one, so please send it
+as a separate patch.
 
 Regards,
 -Denis
 
---===============0180222016563569190==--
+--===============6831494423040156641==--
 
