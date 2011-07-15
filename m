@@ -1,38 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============3112014357124455322=="
+Content-Type: multipart/mixed; boundary="===============1591168677130781423=="
 MIME-Version: 1.0
-From: jeevaka.badrappan@linux.intel.com
-Subject: Re: [PATCH 3/4] stk: Handle set up call in handled_notify
-Date: Fri, 15 Jul 2011 05:46:12 -0700
-Message-ID: <65215.10.254.189.70.1310733972.squirrel@linux.intel.com>
-In-Reply-To: <1310733734-4206-4-git-send-email-jeevaka.badrappan@linux.intel.com>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: [PATCH 0/3] Mobile broadband provider info plugin
+Date: Fri, 15 Jul 2011 18:12:14 +0300
+Message-ID: <1310742737-5254-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3112014357124455322==
+--===============1591168677130781423==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hello,
 
-> @@ -529,7 +531,12 @@ static void stk_alpha_id_set(struct ofono_stk *stk,
->
->  static void stk_alpha_id_unset(struct ofono_stk *stk)
->  {
-> -	stk_agent_request_cancel(stk->current_agent);
-> +	/*
-> +	 * If there is no default agent, then current agent also will be NULL.
-> +	 * So, call request cancel only when there is a valid current agent.
-> +	 */
-> +	if (stk->current_agent)
-> +		stk_agent_request_cancel(stk->current_agent);
->  }
->
+Please find the mobile broadband provider info plugin ("Internet Access Pro=
+vider database" TODO item).
 
-If needed, I can send this code change alone in a separate fix patch.
+If enabled, the plugin reads mobile-broadband-provider-info database entrie=
+s (PROVIDER_DATABASE) and returns GRPS context settings to oFono provisioni=
+ng module.
 
 Regards,
-Jeevaka
+Oleg
 
---===============3112014357124455322==--
+Oleg Zhurakivskyy (3):
+  Mobile broadband provider info plugin
+  Mobile broadband provider info plugin autoconf support
+  Mobile broadband provider info plugin makefile changes
+
+ Makefile.am                              |    8 +-
+ configure.ac                             |   19 ++-
+ plugins/mobile-broadband-provider-info.c |  293 ++++++++++++++++++++++++++=
+++++
+ 3 files changed, 311 insertions(+), 9 deletions(-)
+ create mode 100644 plugins/mobile-broadband-provider-info.c
+
+
+--===============1591168677130781423==--
 
