@@ -1,131 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============6671974669478577521=="
+Content-Type: multipart/mixed; boundary="===============1382544206983388504=="
 MIME-Version: 1.0
 From: jeevaka.badrappan@linux.intel.com
-Subject: Re: [PATCH 2/4] voicecall: api for set/clear alpha and icon id
-Date: Fri, 15 Jul 2011 09:41:28 -0700
-Message-ID: <52928.10.254.189.70.1310748088.squirrel@linux.intel.com>
-In-Reply-To: <4E2065EE.7010902@gmail.com>
+Subject: Re: [PATCH 3/4] stk: Handle set up call in handled_notify
+Date: Fri, 15 Jul 2011 09:45:28 -0700
+Message-ID: <52936.10.254.189.70.1310748328.squirrel@linux.intel.com>
+In-Reply-To: <4E206C32.3060000@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6671974669478577521==
+--===============1382544206983388504==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
->>  	}
->>
->> +	if (vc->dial_req) {
->> +		v->message =3D vc->dial_req->message;
->> +		v->icon_id =3D vc->dial_req->icon_id;
->> +
->> +		vc->dial_req->message =3D NULL;
->> +		vc->dial_req->call =3D v;
->> +
->> +		newcall->phone_number.type =3D vc->dial_req->ph.type;
->> +		strncpy(newcall->phone_number.number, vc->dial_req->ph.number,
->> +									20);
->
-> Do you really want to do this?  I suspect we should override the phone
-> number information only if the CLIP validity is not valid.
-
-Agreed.
-
->
->> +
->> +		/*
->> +		 * TS 102 223 Section 6.4.13: The terminal shall not store
->> +		 * in the UICC the call set-up details (called party number
->> +		 * and associated parameters)
->> +		 */
->> +		v->untracked =3D TRUE;
->> +	}
->> +
->
-> This looks fine, but there's a very subtle thing going on which breaks
-> one particular case.  Some background, voicecall driver is free to
-> notify the call before returning from the atd callback, or vice versa.
->
-> So e.g.
->
-> #1
-> driver->dial(.., cb, data);
-> ofono_voicecall_notify()
-> cb(data);
->
-> or
->
-> #2
-> driver->dial(..., cb, data);
-> cb(data);
-> ofono_voicecall_notify()
->
-> In the case that oFono generates the Set Up Call Request and assuming
-> driver behavior #1, you end up performing some steps twice.  Perhaps we
-> should set a flag in vc->flags to indicate that the call setup is being
-> initiated by the modem, and only trigger this path if this flag is set.
->
-
-I haven't seen the case where the call status is notified before dial
-callback. But agreed, we will end up in steps twice in this case. Proposed
-change is fine with me. Will be incorporated in the next version.
-
->> +void __ofono_voicecall_clear_alpha_and_icon_id(struct ofono_voicecall
->> *vc)
+>> +static void proactive_command_handled_end(struct ofono_stk *stk)
 >> +{
->> +	const char *number;
+>> +	stk->modem_handled_cmd =3D FALSE;
 >> +
->> +	if (vc->dial_req =3D=3D NULL)
+>> +	if (stk->pending_cmd =3D=3D NULL)
 >> +		return;
 >> +
->> +	number =3D phone_number_to_string(&vc->dial_req->ph);
+>> +	switch(stk->pending_cmd->type) {
+>> +	case STK_COMMAND_TYPE_SETUP_CALL:
+>> +	{
+>> +		struct ofono_voicecall *vc =3D NULL;
+>> +		struct ofono_atom *vc_atom;
 >> +
->> +	/*
->> +	 * Incase the modem fails to setup the call and if there is no call
->> +	 * created, then the emergency mode has to be cleared.
->> +	 */
->> +	if (!strcmp(number, "112")) {
->> +		if (voicecalls_num_active(vc) =3D=3D 0 &&
->> +				voicecalls_num_connecting(vc) =3D=3D 0) {
->> +			struct ofono_modem *modem =3D
->> +					__ofono_atom_get_modem(vc->atom);
+>> +		vc_atom =3D __ofono_modem_find_atom(
+>> +					__ofono_atom_get_modem(stk->atom),
+>> +					OFONO_ATOM_TYPE_VOICECALL);
+>> +		if (vc_atom)
+>> +			vc =3D __ofono_atom_get_data(vc_atom);
 >> +
->> +			__ofono_modem_dec_emergency_mode(modem);
->> +		}
+>> +		if (vc !=3D NULL)
+>> +			__ofono_voicecall_clear_alpha_and_icon_id(vc);
+>> +
+>> +		break;
 >> +	}
->
-> I'm guessing what you're trying to take care of here is the case that
-> the set up call might have been canceled before the call was notified,
-> right?
->
-> Wouldn't it be better to do:
->
-> if (vc->dial_req->call =3D=3D NULL)
-> 	...
->
-> ?
->
-> However, in the end I think it is simpler to only initiate the emergency
-> mode when we have the call, and let it be deactivated by the disconnect
-> notification.  Then this function becomes way simpler.
->
 >> +
->> +	g_free(vc->dial_req->message);
->> +	vc->dial_req->message =3D NULL;
->> +
->> +	g_free(vc->dial_req);
->> +	vc->dial_req =3D NULL;
+>> +	default:
+>> +		break;
+>> +	}
 >> +}
 >> +
 >
-> However, I'm actually questioning the need for this function since the
-> cancellation can only be accomplished by hanging up the call before it
-> is active, in which case the modem will take care of sending the
-> appropriate terminal response.
+> So I'm still not sure this part is actually needed.  Once the user has
+> acknowledged the call, there is no way for us to cancel it until the
+> call is notified to the voicecall driver.  So unless the modem is drunk,
+> I don't really see the need to cover this case.
+>
+> Once the call is notified to voicecall driver, then the need for
+> clearing alpha/icon id disappears.  The voicecall driver will do this
+> automatically based on the ofono_voicecall_disconnected notification.
+>
+> What do you guys think?
 
-Here, I'm trying to cover the following case:
+As pointed in other mail thred, trying to cover the following case:
 
 1. oFono core is informed of the modem handled setup call and requests
 user confirmation
@@ -136,8 +68,13 @@ oFono core is not notified of any call status notifications
 5. Modem sends the terminal response to SAT and notifies oFono core of the
 command/session completion
 
+Basically, if the modem due to some reason fails to initiate/setup the
+call and call status notifications not sent to the voice call driver side.
+This case, we will be left with dial_req, message and icon id set but not
+freed.
+
 Regards,
 Jeevaka
 
---===============6671974669478577521==--
+--===============1382544206983388504==--
 
