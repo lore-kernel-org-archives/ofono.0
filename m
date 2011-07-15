@@ -1,48 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============3588373949600011324=="
+Content-Type: multipart/mixed; boundary="===============8962174419842139393=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@linux.intel.com>
-Subject: [PATCH] stk: Fix crash seen in stk_alpha_id_unset
-Date: Fri, 15 Jul 2011 09:29:27 -0700
-Message-ID: <1310747367-6817-1-git-send-email-jeevaka.badrappan@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 3/4] stk: Handle set up call in handled_notify
+Date: Fri, 15 Jul 2011 11:34:58 -0500
+Message-ID: <4E206C32.3060000@gmail.com>
+In-Reply-To: <1310733734-4206-4-git-send-email-jeevaka.badrappan@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3588373949600011324==
+--===============8962174419842139393==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If there is no default agent, then current agent also will
-be NULL. So, call stk_agent_request_cancel only when there is a valid
-current agent.
----
- src/stk.c |    7 ++++++-
- 1 files changed, 6 insertions(+), 1 deletions(-)
+Hi Andrew, Jeevaka,
 
-diff --git a/src/stk.c b/src/stk.c
-index 4df23b5..e8ffb42 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -529,7 +529,12 @@ static void stk_alpha_id_set(struct ofono_stk *stk,
- =
+<snip>
 
- static void stk_alpha_id_unset(struct ofono_stk *stk)
- {
--	stk_agent_request_cancel(stk->current_agent);
-+	/*
-+	 * If there is no default agent, then current agent also will be NULL.
-+	 * So, call request cancel only when there is a valid current agent.
-+	 */
-+	if (stk->current_agent)
-+		stk_agent_request_cancel(stk->current_agent);
- }
- =
+> +static void proactive_command_handled_end(struct ofono_stk *stk)
+> +{
+> +	stk->modem_handled_cmd =3D FALSE;
+> +
+> +	if (stk->pending_cmd =3D=3D NULL)
+> +		return;
+> +
+> +	switch(stk->pending_cmd->type) {
+> +	case STK_COMMAND_TYPE_SETUP_CALL:
+> +	{
+> +		struct ofono_voicecall *vc =3D NULL;
+> +		struct ofono_atom *vc_atom;
+> +
+> +		vc_atom =3D __ofono_modem_find_atom(
+> +					__ofono_atom_get_modem(stk->atom),
+> +					OFONO_ATOM_TYPE_VOICECALL);
+> +		if (vc_atom)
+> +			vc =3D __ofono_atom_get_data(vc_atom);
+> +
+> +		if (vc !=3D NULL)
+> +			__ofono_voicecall_clear_alpha_and_icon_id(vc);
+> +
+> +		break;
+> +	}
+> +
+> +	default:
+> +		break;
+> +	}
+> +}
+> +
 
- static int duration_to_msecs(const struct stk_duration *duration)
--- =
+So I'm still not sure this part is actually needed.  Once the user has
+acknowledged the call, there is no way for us to cancel it until the
+call is notified to the voicecall driver.  So unless the modem is drunk,
+I don't really see the need to cover this case.
 
-1.7.4.1
+Once the call is notified to voicecall driver, then the need for
+clearing alpha/icon id disappears.  The voicecall driver will do this
+automatically based on the ofono_voicecall_disconnected notification.
 
+What do you guys think?
 
---===============3588373949600011324==--
+Regards,
+-Denis
+
+--===============8962174419842139393==--
 
