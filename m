@@ -1,39 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============0179088863168309279=="
+Content-Type: multipart/mixed; boundary="===============7985929486788542446=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@linux.intel.com>
-Subject: [PATCH 1/4] include: Add driver api for user confirmation
-Date: Fri, 15 Jul 2011 05:42:11 -0700
-Message-ID: <1310733734-4206-2-git-send-email-jeevaka.badrappan@linux.intel.com>
+Subject: [PATCH 4/4] ifxmodem: add support for user_confirmation in stk
+Date: Fri, 15 Jul 2011 05:42:14 -0700
+Message-ID: <1310733734-4206-5-git-send-email-jeevaka.badrappan@linux.intel.com>
 In-Reply-To: <1310733734-4206-1-git-send-email-jeevaka.badrappan@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0179088863168309279==
+--===============7985929486788542446==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/stk.h |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ drivers/ifxmodem/stk.c |   11 +++++++++++
+ 1 files changed, 11 insertions(+), 0 deletions(-)
 
-diff --git a/include/stk.h b/include/stk.h
-index c276c84..60636b5 100644
---- a/include/stk.h
-+++ b/include/stk.h
-@@ -47,6 +47,7 @@ struct ofono_stk_driver {
- 	void (*terminal_response)(struct ofono_stk *stk,
- 					int length, const unsigned char *resp,
- 					ofono_stk_generic_cb_t cb, void *data);
-+	void (*user_confirmation)(struct ofono_stk *stk, ofono_bool_t confirm);
+diff --git a/drivers/ifxmodem/stk.c b/drivers/ifxmodem/stk.c
+index f08cf47..d2082c4 100644
+--- a/drivers/ifxmodem/stk.c
++++ b/drivers/ifxmodem/stk.c
+@@ -173,6 +173,16 @@ error:
+ 	CALLBACK_WITH_FAILURE(cb, data);
+ }
+ =
+
++static void ifx_stk_user_confirmation(struct ofono_stk *stk, gboolean conf=
+irm)
++{
++	struct stk_data *sd =3D ofono_stk_get_data(stk);
++	char buf[20];
++
++	snprintf(buf, sizeof(buf), "AT+SATD=3D%i", confirm ? 1 : 0);
++
++	g_at_chat_send(sd->chat, buf, none_prefix, NULL, NULL, NULL);
++}
++
+ static void sati_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_stk *stk =3D user_data;
+@@ -303,6 +313,7 @@ static struct ofono_stk_driver driver =3D {
+ 	.remove			=3D ifx_stk_remove,
+ 	.envelope		=3D ifx_stk_envelope,
+ 	.terminal_response	=3D ifx_stk_terminal_response,
++	.user_confirmation	=3D ifx_stk_user_confirmation,
  };
  =
 
- int ofono_stk_driver_register(const struct ofono_stk_driver *d);
+ void ifx_stk_init(void)
 -- =
 
 1.7.4.1
 
 
---===============0179088863168309279==--
+--===============7985929486788542446==--
 
