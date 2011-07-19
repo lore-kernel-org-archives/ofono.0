@@ -1,51 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============7905548938866665454=="
+Content-Type: multipart/mixed; boundary="===============1698169437881342208=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] voicecall: fix callheld indicator for PTS
-Date: Tue, 19 Jul 2011 11:19:50 -0500
-Message-ID: <4E25AEA6.60508@gmail.com>
-In-Reply-To: <1311091847-7900-1-git-send-email-frederic.danis@linux.intel.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH 1/3] voicecall: fix +BLDN in case of SIM not 'ready'
+Date: Tue, 19 Jul 2011 18:49:09 +0200
+Message-ID: <1311094151-9765-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7905548938866665454==
+--===============1698169437881342208==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+---
+ src/voicecall.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-On 07/19/2011 11:10 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> Fix PTS test TP/TWC/BV-03-I [Call Waiting- Hold Active/Retrieve
-> Waiting Call or Held].
-> =
+diff --git a/src/voicecall.c b/src/voicecall.c
+index ce975d3..8815d9e 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -2683,6 +2683,9 @@ static void sim_state_watch(enum ofono_sim_state new_=
+state, void *user)
+ =
 
-> PTS test fails after receiving intermediate update of callheld indicator
-> with value 0 (no held call) before it receives update to value 1
-> (active and held calls). This is due to the non-atomic update of calls
-> status after call swap (moving first call to active state before moving
-> second one to hold state).
-> =
+ 		free_sim_ecc_numbers(vc, FALSE);
+ 		set_new_ecc(vc);
++
++		voicecall_close_settings(vc);
++		break;
+ 	case OFONO_SIM_STATE_READY:
+ 		voicecall_load_settings(vc);
+ 		break;
+-- =
 
-> HFP 1.5 spec specifies that an update of callheld indicator to 1 should
-> be sent after AT+CHLD=3D2 command.
-> As oFono emulator sends +CIEV only if the indicator value changes, we
-> need to use an intermediate state for callheld indicator (2, all calls on
-> hold).
-> =
-
-> So, in case of multiple active calls, or an active call with an active
-> mutiparty call, force update of callheld indicator to 2.
-> ---
->  src/voicecall.c |   20 ++++++++++++++++++++
->  1 files changed, 20 insertions(+), 0 deletions(-)
-> =
+1.7.1
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============7905548938866665454==--
+--===============1698169437881342208==--
 
