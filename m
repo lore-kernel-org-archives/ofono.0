@@ -1,181 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============3213704972397425274=="
+Content-Type: multipart/mixed; boundary="===============3298667007966101261=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@linux.intel.com>
-Subject: [PATCH 2/2] stk: Handle set up call in handled_notify
-Date: Tue, 19 Jul 2011 00:13:27 -0700
-Message-ID: <1311059607-10695-3-git-send-email-jeevaka.badrappan@linux.intel.com>
-In-Reply-To: <1311059607-10695-1-git-send-email-jeevaka.badrappan@linux.intel.com>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: Re: [PATCH 1/3] Mobile broadband provider info plugin
+Date: Tue, 19 Jul 2011 16:19:55 +0300
+Message-ID: <4E25847B.1070401@intel.com>
+In-Reply-To: <4E242B30.201@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3213704972397425274==
+--===============3298667007966101261==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/stk.c |  113 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++--
- 1 files changed, 110 insertions(+), 3 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index e8ffb42..a204e45 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -1790,6 +1790,45 @@ static void confirm_call_cb(enum stk_agent_result re=
-sult, gboolean confirm,
- 		stk_command_cb(&error, stk);
- }
- =
+Hello Denis,
 
-+static void confirm_handled_call_cb(enum stk_agent_result result,
-+					gboolean confirm, void *user_data)
-+{
-+	struct ofono_stk *stk =3D user_data;
-+	const struct stk_command_setup_call *sc =3D
-+					&stk->pending_cmd->setup_call;
-+	struct ofono_voicecall *vc =3D NULL;
-+	struct ofono_atom *vc_atom;
-+
-+	if (stk->driver->user_confirmation =3D=3D NULL)
-+		goto out;
-+
-+	if (result !=3D STK_AGENT_RESULT_OK) {
-+		stk->driver->user_confirmation(stk, FALSE);
-+		goto out;
-+	}
-+
-+	stk->driver->user_confirmation(stk, confirm);
-+
-+	vc_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
-+						OFONO_ATOM_TYPE_VOICECALL);
-+	if (vc_atom)
-+		vc =3D __ofono_atom_get_data(vc_atom);
-+
-+	if (vc =3D=3D NULL)
-+		goto out;
-+
-+	__ofono_voicecall_set_alpha_and_icon_id(vc, sc->addr.number,
-+						sc->addr.ton_npi,
-+						sc->alpha_id_call_setup,
-+						sc->icon_id_call_setup.id);
-+
-+	return;
-+
-+out:
-+	stk_command_free(stk->pending_cmd);
-+	stk->pending_cmd =3D NULL;
-+}
-+
- static gboolean handle_command_set_up_call(const struct stk_command *cmd,
- 						struct stk_response *rsp,
- 						struct ofono_stk *stk)
-@@ -2606,6 +2645,74 @@ static gboolean handle_command_launch_browser(const =
-struct stk_command *cmd,
- 	return FALSE;
- }
- =
+On 07/18/2011 03:46 PM, Denis Kenzior wrote:
+> Are you sure? Briefly looking through serviceproviders.xml I only
+> noticed different plans within the same provider.  You might be right of
+> course, but even if you are, we have no way of distinguishing between a
+> different plan and a different APN type.
 
-+static void proactive_command_handled_end(struct ofono_stk *stk)
-+{
-+	if (stk->pending_cmd =3D=3D NULL)
-+		return;
-+
-+	switch(stk->pending_cmd->type) {
-+	case STK_COMMAND_TYPE_SETUP_CALL:
-+	{
-+		struct ofono_voicecall *vc =3D NULL;
-+		struct ofono_atom *vc_atom;
-+
-+		vc_atom =3D __ofono_modem_find_atom(
-+					__ofono_atom_get_modem(stk->atom),
-+					OFONO_ATOM_TYPE_VOICECALL);
-+		if (vc_atom)
-+			vc =3D __ofono_atom_get_data(vc_atom);
-+
-+		if (vc !=3D NULL)
-+			__ofono_voicecall_clear_alpha_and_icon_id(vc);
-+
-+		break;
-+	}
-+	case STK_COMMAND_TYPE_SEND_SMS:
-+	case STK_COMMAND_TYPE_SEND_USSD:
-+	case STK_COMMAND_TYPE_SEND_SS:
-+	case STK_COMMAND_TYPE_SEND_DTMF:
-+		stk_alpha_id_unset(stk);
-+		break;
-+
-+	default:
-+		break;
-+	}
-+}
-+
-+static void handle_setup_call_confirmation_req(struct stk_command *cmd,
-+						struct ofono_stk *stk)
-+{
-+	const struct stk_command_setup_call *sc =3D &cmd->setup_call;
-+	int err;
-+	char *alpha_id =3D dbus_apply_text_attributes(
-+					sc->alpha_id_usr_cfm ?
-+					sc->alpha_id_usr_cfm : "",
-+					&sc->text_attr_usr_cfm);
-+	if (alpha_id =3D=3D NULL)
-+		goto out;
-+
-+	err =3D stk_agent_confirm_call(stk->current_agent, alpha_id,
-+					&sc->icon_id_usr_cfm,
-+					confirm_handled_call_cb,
-+					stk, NULL,
-+					stk->timeout * 1000);
-+	g_free(alpha_id);
-+
-+	if (err < 0)
-+		goto out;
-+
-+	stk->pending_cmd =3D cmd;
-+	stk->cancel_cmd =3D proactive_command_handled_end;
-+
-+	return;
-+
-+out:
-+	if (stk->driver->user_confirmation)
-+		stk->driver->user_confirmation(stk, FALSE);
-+
-+	stk_command_free(cmd);
-+}
-+
- static void stk_proactive_command_cancel(struct ofono_stk *stk)
- {
- 	if (stk->immediate_response)
-@@ -2826,7 +2933,7 @@ void ofono_stk_proactive_command_handled_notify(struc=
-t ofono_stk *stk,
- 	 * responses here
- 	 */
- 	if (length > 0 && pdu[0] =3D=3D 0x81) {
--		stk_alpha_id_unset(stk);
-+		proactive_command_handled_end(stk);
- 		return;
- 	}
- =
+Hmm, now I am not sure. In a plugin the settings is the access point settin=
+gs? =
 
-@@ -2863,8 +2970,8 @@ void ofono_stk_proactive_command_handled_notify(struc=
-t ofono_stk *stk,
- 		break;
- =
+If so, yes, there are multiple access points within the same provider in =
 
- 	case STK_COMMAND_TYPE_SETUP_CALL:
--		/* TODO */
--		break;
-+		handle_setup_call_confirmation_req(cmd, stk);
-+		return;
- =
+serviceproviders.xml. Or what kind of setting is meant?
 
- 	case STK_COMMAND_TYPE_SEND_USSD:
- 		stk_alpha_id_set(stk, cmd->send_ussd.alpha_id,
+> Option 2 sounds like the most likely candidate right now.  Option 3 is
+> the direction where we need mobile-broadband-provider-info to go in.  In
+> particular adding the internet/mms/wap tags and SPN entries to its databa=
+se.
+
+OK, let's do option 2 for now and extend the mobile-broadband-provider-info=
+. =
+
+Could you please explain regarding the SPN entries, I am not sure if I =
+
+understand this correct.
+
+Regards,
+Oleg
 -- =
 
-1.7.4.1
+Intel Finland Oy
+Registered Address: PL 281, 00181 Helsinki
+Business Identity Code: 0357606 - 4
+Domiciled in Helsinki
 
-
---===============3213704972397425274==--
+--===============3298667007966101261==--
 
