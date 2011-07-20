@@ -1,41 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============0737489644818820657=="
+Content-Type: multipart/mixed; boundary="===============8132763436844494711=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH] CDMA ConnMan API: add username and password for PPP
- authentication.
-Date: Wed, 20 Jul 2011 18:13:52 +0200
-Message-ID: <1311178433.21109.249.camel@aeonflux>
-In-Reply-To: <568DE01DA537804BA73470071BAC288938F0620D@irsmsx503.ger.corp.intel.com>
+From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
+Subject: [PATCH 0/2] CPIN polling mechanism
+Date: Wed, 20 Jul 2011 18:52:53 +0200
+Message-ID: <1311180775-20983-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0737489644818820657==
+--===============8132763436844494711==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bertrand,
+As no SIM card status urc is available with ZTE and Speedup, the SIM =
 
-> >For you two TTY cases. That is normal. Huawei treats the first TTY as
-> >modem to issue PPP on it. And the second one (PCUI) is used for
-> >notifications. So yes, oFono needs to open both. You will need the
-> >second one for network registration updates.
-> =
+state is set by default to OFONO_SIM_STATE_INSERTED even if no SIM card =
 
-> But I think that if you send ATD on a channel, you should receive the CON=
-NECT in the same channel. It's an answer, not a notification.
+is inserted. Also, we are facing with a modem latency after the ttyUSB =
 
-you do remember me talking about how broken some modems are ;)
+is opened (first AT commands are failing and the PIN status query =
 
-So here you go. Wait until you deal with stuff like unsolicited
-notification and which channel they appear on. Working with IFX or MBM
-hardware is a dream compared to this ;)
+returns CME ERROR: 14 - SIM Busy).
+So, to deal with those 2 issues, this patch set is introducing a =
 
-Regards
+preliminary PIN status polling in the ZTE/Speedup plugins. In practice, =
 
-Marcel
+this polling is started after the modem is enabled and stopped when the =
+
+CPIN query returns an other result than CME ERROR 14 or when the polling =
+
+duration exceeds 5 seconds.
+As a result, the SIM state is set according the result of the CPIN query =
+
+and the update of the modem_powered state is postponed which delays the =
+
+next AT commands.
+
+Developed conjointly with philippe nunes.
 
 
+Nicolas Bertrand (2):
+  speedup: add cpin polling mechanism
+  zte: add cpin polling mechanism
 
---===============0737489644818820657==--
+ plugins/speedup.c |   64 +++++++++++++++++++++++++++++++++++++++++++++++++=
+++-
+ plugins/zte.c     |   65 +++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 2 files changed, 127 insertions(+), 2 deletions(-)
+
+-- =
+
+1.7.4.1
+
+
+--===============8132763436844494711==--
 
