@@ -1,58 +1,136 @@
-Content-Type: multipart/mixed; boundary="===============8132763436844494711=="
+Content-Type: multipart/mixed; boundary="===============1516064208411606542=="
 MIME-Version: 1.0
 From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH 0/2] CPIN polling mechanism
-Date: Wed, 20 Jul 2011 18:52:53 +0200
-Message-ID: <1311180775-20983-1-git-send-email-nicolas.bertrand@linux.intel.com>
+Subject: [PATCH 1/2] speedup: add cpin polling mechanism
+Date: Wed, 20 Jul 2011 18:52:54 +0200
+Message-ID: <1311180775-20983-2-git-send-email-nicolas.bertrand@linux.intel.com>
+In-Reply-To: <1311180775-20983-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8132763436844494711==
+--===============1516064208411606542==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-As no SIM card status urc is available with ZTE and Speedup, the SIM =
-
-state is set by default to OFONO_SIM_STATE_INSERTED even if no SIM card =
-
-is inserted. Also, we are facing with a modem latency after the ttyUSB =
-
-is opened (first AT commands are failing and the PIN status query =
-
-returns CME ERROR: 14 - SIM Busy).
-So, to deal with those 2 issues, this patch set is introducing a =
-
-preliminary PIN status polling in the ZTE/Speedup plugins. In practice, =
-
-this polling is started after the modem is enabled and stopped when the =
-
-CPIN query returns an other result than CME ERROR 14 or when the polling =
-
-duration exceeds 5 seconds.
-As a result, the SIM state is set according the result of the CPIN query =
-
-and the update of the modem_powered state is postponed which delays the =
-
-next AT commands.
-
-Developed conjointly with philippe nunes.
-
-
-Nicolas Bertrand (2):
-  speedup: add cpin polling mechanism
-  zte: add cpin polling mechanism
-
+Make sure that the SIM card is ready before sending commands
+---
  plugins/speedup.c |   64 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++-
- plugins/zte.c     |   65 +++++++++++++++++++++++++++++++++++++++++++++++++=
 +++-
- 2 files changed, 127 insertions(+), 2 deletions(-)
+ 1 files changed, 63 insertions(+), 1 deletions(-)
 
+diff --git a/plugins/speedup.c b/plugins/speedup.c
+index 7e89b6f..23ba173 100644
+--- a/plugins/speedup.c
++++ b/plugins/speedup.c
+@@ -49,10 +49,14 @@
+ #include <drivers/atmodem/vendor.h>
+ =
+
+ static const char *none_prefix[] =3D { NULL };
++static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
+ =
+
+ struct speedup_data {
+ 	GAtChat *modem;
+ 	GAtChat *aux;
++	guint cpin_poll_source;
++	guint cpin_poll_count;
++	gboolean have_sim;
+ 	struct ofono_gprs *gprs;
+ 	struct ofono_gprs_context *gc;
+ };
+@@ -83,6 +87,9 @@ static void speedup_remove(struct ofono_modem *modem)
+ 	g_at_chat_unref(data->modem);
+ 	g_at_chat_unref(data->aux);
+ =
+
++	if (data->cpin_poll_source > 0)
++		g_source_remove(data->cpin_poll_source);
++
+ 	g_free(data);
+ }
+ =
+
+@@ -152,13 +159,68 @@ static void speedup_disconnect(gpointer user_data)
+ 		ofono_gprs_add_context(data->gprs, data->gc);
+ }
+ =
+
++static gboolean init_simpin_check(gpointer user_data);
++
++static void simpin_check(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct speedup_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_error error;
++
++	DBG("");
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	/* Modem returns an error if SIM is not ready. */
++	switch (error.error) {
++	case 10:
++	case 13:
++		data->have_sim =3D FALSE;
++		break;
++	case 14: /* SIM Busy, wait and check again the SIM pin status */
++		if (data->cpin_poll_count++ < 5) {
++			data->cpin_poll_source =3D
++				g_timeout_add_seconds(1, init_simpin_check,
++						modem);
++			return;
++		}
++		/*SIM card is present but not accessible*/
++		data->have_sim =3D FALSE;
++		break;
++	default:
++		data->have_sim =3D TRUE;
++	}
++
++	data->cpin_poll_count =3D 0;
++
++	ofono_modem_set_powered(modem, TRUE);
++}
++
++static gboolean init_simpin_check(gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct speedup_data *data =3D ofono_modem_get_data(modem);
++
++	data->cpin_poll_source =3D 0;
++
++	g_at_chat_send(data->modem, "AT+CPIN?", cpin_prefix,
++			simpin_check, modem, NULL);
++
++	return FALSE;
++}
++
+ static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+ =
+
+ 	DBG("");
+ =
+
+-	ofono_modem_set_powered(modem, ok);
++	if (!ok) {
++		ofono_modem_set_powered(modem, FALSE);
++		return;
++	}
++
++	init_simpin_check(modem);
+ }
+ =
+
+ static int speedup_enable(struct ofono_modem *modem)
 -- =
 
 1.7.4.1
 
 
---===============8132763436844494711==--
+--===============1516064208411606542==--
 
