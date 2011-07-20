@@ -1,37 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============4643469594029990129=="
+Content-Type: multipart/mixed; boundary="===============8561511038761691821=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 0/4] CDMA-connman add username and password properties
-Date: Wed, 20 Jul 2011 11:26:36 +0200
-Message-ID: <1311154000-32353-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH 1/4] cdma-connman: add prototype to retrieve username and
+ password
+Date: Wed, 20 Jul 2011 11:26:37 +0200
+Message-ID: <1311154000-32353-2-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1311154000-32353-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4643469594029990129==
+--===============8561511038761691821==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ include/cdma-connman.h |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-These patches will be used to set PPP credentials when CDMA network will ne=
-ed them.
-It contains a test script based on create-internet-context script.
+diff --git a/include/cdma-connman.h b/include/cdma-connman.h
+index 22252e0..1439ea9 100644
+--- a/include/cdma-connman.h
++++ b/include/cdma-connman.h
+@@ -72,6 +72,10 @@ void ofono_cdma_connman_set_data(struct ofono_cdma_connm=
+an *cm,
+ 						void *data);
+ void *ofono_cdma_connman_get_data(struct ofono_cdma_connman *cm);
+ =
 
-Guillaume Zajac (4):
-  cdma-connman: add prototype to retrieve username and password
-  cdma-connman: add possibility to set a username and a password
-  driver cdma-connman: add credential while setting up PPP if required
-  test: add script to set credentials for cdma connection
++const char *ofono_cdma_connman_get_username(struct ofono_cdma_connman *cm);
++
++const char *ofono_cdma_connman_get_password(struct ofono_cdma_connman *cm);
++
+ #ifdef __cplusplus
+ }
+ #endif
+-- =
 
- drivers/cdmamodem/connman.c  |    8 +++++++
- include/cdma-connman.h       |    4 +++
- src/cdma-connman.c           |   44 ++++++++++++++++++++++++++++++++++++++=
-+++-
- test/create-cdma-credentials |   29 +++++++++++++++++++++++++++
- 4 files changed, 84 insertions(+), 1 deletions(-)
- create mode 100755 test/create-cdma-credentials
+1.7.1
 
 
---===============4643469594029990129==--
+--===============8561511038761691821==--
 
