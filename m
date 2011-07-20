@@ -1,36 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============7449512228986347550=="
+Content-Type: multipart/mixed; boundary="===============2920106267064566490=="
 MIME-Version: 1.0
-From: jeevaka.badrappan@linux.intel.com
-Subject: RE: [PATCH] ifxmodem: emergency number list support
-Date: Wed, 20 Jul 2011 06:43:59 -0700
-Message-ID: <53148.10.254.184.10.1311169439.squirrel@linux.intel.com>
-In-Reply-To: <8250E4885F9967469CAC3FB5CBA2CE69946ABFF9C4@irsmsx501.ger.corp.intel.c
- om>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH] TODO: add HFP 1.6 AG tasks
+Date: Wed, 20 Jul 2011 15:55:02 +0200
+Message-ID: <1311170102-5877-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7449512228986347550==
+--===============2920106267064566490==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ TODO |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
 
-> Hi Jeevaka,
->
-> I'm Nicolas Paccou, I'm in charge of validating the changes applied in new
-> oFono release.
-> Unfortunately, I have not the hardware to be able to regress your patch:
-> "Add support for handling IFX emergency number list"
->
-> I wanted to know if you have tested your patch on IFX modem ?
-> If yes, can you tell me if the result is ok ?
-> If not, do you able to test it and tell me the result please ?
+diff --git a/TODO b/TODO
+index 8302f6f..4530407 100644
+--- a/TODO
++++ b/TODO
+@@ -132,6 +132,18 @@ Modem Emulator
+   Complexity: C4
+   Priority: Medium
+ =
 
-Yep, this has been tested with the IFX modem FW which supports XLEMA.
++- Support new HFP 1.6 AG command related to indicators (AT+BIA).
++
++  Complexity: C1
++  Priority: Low
++  Owner: Fr=C3=A9d=C3=A9ric Danis <frederic.danis@linux.intel.com>
++
++- Support new HFP 1.6 AG commands allowing to publish, select and connect =
+audio
++  codecs (AT+BAC, AT+BCS, +BCS, AT+BCC). This will need to interact with a=
+udio
++  framework.
++
++  Complexity: C4
++  Priority: Low
+ =
 
-Regards,
-Jeevaka
+ PPP
+ =3D=3D=3D
+-- =
 
---===============7449512228986347550==--
+1.7.1
+
+
+--===============2920106267064566490==--
 
