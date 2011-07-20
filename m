@@ -1,125 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============6539407183778537686=="
+Content-Type: multipart/mixed; boundary="===============3609787896954465366=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH v2 2/2] voicecall: remove usage of em_atd_number
-Date: Wed, 20 Jul 2011 16:34:36 +0200
-Message-ID: <1311172476-7157-2-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1311172476-7157-1-git-send-email-frederic.danis@linux.intel.com>
+From: Aygon, Bertrand <bertrand.aygon@intel.com>
+Subject: RE: [PATCH] CDMA ConnMan API: add username and password for PPP
+ authentication.
+Date: Wed, 20 Jul 2011 16:57:59 +0100
+Message-ID: <568DE01DA537804BA73470071BAC288938F0620D@irsmsx503.ger.corp.intel.com>
+In-Reply-To: <1311167871.21109.247.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6539407183778537686==
+--===============3609787896954465366==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-as emulator atom can only run with a 'ready' SIM,
-use saved number instead of em_atd_number
----
- src/voicecall.c |   19 +++++++++----------
- 1 files changed, 9 insertions(+), 10 deletions(-)
+Hi,
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 9160ce8..f4c2358 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -74,7 +74,6 @@ struct ofono_voicecall {
- 	ofono_voicecall_cb_t release_queue_done_cb;
- 	struct ofono_emulator *pending_em;
- 	unsigned int pending_id;
--	char *em_atd_number;
- };
- =
+>fair enough. That is enough for me to confirm that it is used in real
+>networks. We do not like to add APIs for something that is not used
+>anymore only because some specification or RFC says so ;)
 
- struct voicecall {
-@@ -1506,14 +1505,14 @@ static int voicecall_dial(struct ofono_voicecall *v=
-c, const char *number,
- =
+I agree.
 
- 	string_to_phone_number(number, &ph);
- =
+>Patch has been applied now. However I changed the commit prefix back to
+>doc: to make it look cleaner.
 
--	vc->driver->dial(vc, &ph, clir, cb, vc);
--
- 	if (vc->settings) {
- 		g_key_file_set_string(vc->settings, SETTINGS_GROUP,
- 					"Number", number);
- 		storage_sync(vc->imsi, SETTINGS_STORE, vc->settings);
- 	}
- =
+Thanks.
 
-+	vc->driver->dial(vc, &ph, clir, cb, vc);
-+
- 	return 0;
- }
- =
+>For you two TTY cases. That is normal. Huawei treats the first TTY as
+>modem to issue PPP on it. And the second one (PCUI) is used for
+>notifications. So yes, oFono needs to open both. You will need the
+>second one for network registration updates.
 
-@@ -3154,13 +3153,18 @@ static void emulator_dial_callback(const struct ofo=
-no_error *error, void *data)
- 	struct ofono_voicecall *vc =3D data;
- 	gboolean need_to_emit;
- 	struct voicecall *v;
-+	const char *number;
-+	GError *err =3D NULL;
-+
-+	number =3D g_key_file_get_string(vc->settings, SETTINGS_GROUP,
-+					"Number", &err);
- =
+But I think that if you send ATD on a channel, you should receive the CONNE=
+CT in the same channel. It's an answer, not a notification.
 
--	v =3D dial_handle_result(vc, error, vc->em_atd_number, &need_to_emit);
-+	v =3D dial_handle_result(vc, error, number, &need_to_emit);
- =
+Regards,
 
- 	if (v =3D=3D NULL) {
- 		struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
- =
+Bertrand
 
--		if (is_emergency_number(vc, vc->em_atd_number) =3D=3D TRUE)
-+		if (is_emergency_number(vc, number) =3D=3D TRUE)
- 			__ofono_modem_dec_emergency_mode(modem);
- 	}
- =
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-@@ -3168,8 +3172,6 @@ static void emulator_dial_callback(const struct ofono=
-_error *error, void *data)
- 		ofono_emulator_send_final(vc->pending_em, error);
- =
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
- 	vc->pending_em =3D NULL;
--	g_free(vc->em_atd_number);
--	vc->em_atd_number =3D NULL;
- =
-
- 	notify_emulator_call_status(vc);
- =
-
-@@ -3191,7 +3193,6 @@ static void emulator_dial(struct ofono_emulator *em, =
-struct ofono_voicecall *vc,
- 	}
- =
-
- 	vc->pending_em =3D em;
--	vc->em_atd_number =3D g_strdup(number);
- =
-
- 	err =3D voicecall_dial(vc, number, OFONO_CLIR_OPTION_DEFAULT,
- 					emulator_dial_callback, vc);
-@@ -3200,8 +3201,6 @@ static void emulator_dial(struct ofono_emulator *em, =
-struct ofono_voicecall *vc,
- 		return;
- =
-
- 	vc->pending_em =3D NULL;
--	g_free(vc->em_atd_number);
--	vc->em_atd_number =3D NULL;
- =
-
- 	switch (err) {
- 	case -ENETDOWN:
--- =
-
-1.7.1
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
 
---===============6539407183778537686==--
+--===============3609787896954465366==--
 
