@@ -1,28 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============1516064208411606542=="
+Content-Type: multipart/mixed; boundary="===============7879721054918887399=="
 MIME-Version: 1.0
 From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH 1/2] speedup: add cpin polling mechanism
-Date: Wed, 20 Jul 2011 18:52:54 +0200
-Message-ID: <1311180775-20983-2-git-send-email-nicolas.bertrand@linux.intel.com>
+Subject: [PATCH 2/2] zte: add cpin polling mechanism
+Date: Wed, 20 Jul 2011 18:52:55 +0200
+Message-ID: <1311180775-20983-3-git-send-email-nicolas.bertrand@linux.intel.com>
 In-Reply-To: <1311180775-20983-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1516064208411606542==
+--===============7879721054918887399==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Make sure that the SIM card is ready before sending commands
 ---
- plugins/speedup.c |   64 +++++++++++++++++++++++++++++++++++++++++++++++++=
+ plugins/zte.c |   65 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
 +++-
- 1 files changed, 63 insertions(+), 1 deletions(-)
+ 1 files changed, 64 insertions(+), 1 deletions(-)
 
-diff --git a/plugins/speedup.c b/plugins/speedup.c
-index 7e89b6f..23ba173 100644
---- a/plugins/speedup.c
-+++ b/plugins/speedup.c
+diff --git a/plugins/zte.c b/plugins/zte.c
+index 4bac3cf..53b3fa0 100644
+--- a/plugins/zte.c
++++ b/plugins/zte.c
 @@ -49,10 +49,14 @@
  #include <drivers/atmodem/vendor.h>
  =
@@ -31,7 +31,7 @@ index 7e89b6f..23ba173 100644
 +static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
  =
 
- struct speedup_data {
+ struct zte_data {
  	GAtChat *modem;
  	GAtChat *aux;
 +	guint cpin_poll_source;
@@ -40,7 +40,7 @@ index 7e89b6f..23ba173 100644
  	struct ofono_gprs *gprs;
  	struct ofono_gprs_context *gc;
  };
-@@ -83,6 +87,9 @@ static void speedup_remove(struct ofono_modem *modem)
+@@ -83,6 +87,9 @@ static void zte_remove(struct ofono_modem *modem)
  	g_at_chat_unref(data->modem);
  	g_at_chat_unref(data->aux);
  =
@@ -52,7 +52,7 @@ index 7e89b6f..23ba173 100644
  }
  =
 
-@@ -152,13 +159,68 @@ static void speedup_disconnect(gpointer user_data)
+@@ -152,13 +159,69 @@ static void zte_disconnect(gpointer user_data)
  		ofono_gprs_add_context(data->gprs, data->gc);
  }
  =
@@ -63,7 +63,7 @@ index 7e89b6f..23ba173 100644
 a)
 +{
 +	struct ofono_modem *modem =3D user_data;
-+	struct speedup_data *data =3D ofono_modem_get_data(modem);
++	struct zte_data *data =3D ofono_modem_get_data(modem);
 +	struct ofono_error error;
 +
 +	DBG("");
@@ -76,7 +76,7 @@ a)
 +	case 13:
 +		data->have_sim =3D FALSE;
 +		break;
-+	case 14: /* SIM Busy, wait and check again the SIM pin status */
++	case 14: /* SIM Busy, wait and check again the card status */
 +		if (data->cpin_poll_count++ < 5) {
 +			data->cpin_poll_source =3D
 +				g_timeout_add_seconds(1, init_simpin_check,
@@ -98,7 +98,7 @@ a)
 +static gboolean init_simpin_check(gpointer user_data)
 +{
 +	struct ofono_modem *modem =3D user_data;
-+	struct speedup_data *data =3D ofono_modem_get_data(modem);
++	struct zte_data *data =3D ofono_modem_get_data(modem);
 +
 +	data->cpin_poll_source =3D 0;
 +
@@ -107,6 +107,7 @@ a)
 +
 +	return FALSE;
 +}
++
 +
  static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
  {
@@ -126,11 +127,11 @@ a)
  }
  =
 
- static int speedup_enable(struct ofono_modem *modem)
+ static int zte_enable(struct ofono_modem *modem)
 -- =
 
 1.7.4.1
 
 
---===============1516064208411606542==--
+--===============7879721054918887399==--
 
