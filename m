@@ -1,74 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============4066274351265340091=="
+Content-Type: multipart/mixed; boundary="===============8829168996625135495=="
 MIME-Version: 1.0
-From: Paccou, Nicolas <nicolas.paccou@intel.com>
-Subject: RE: [PATCH] isimodem: Improper handling of missed call
-Date: Wed, 20 Jul 2011 14:14:13 +0100
-Message-ID: <8250E4885F9967469CAC3FB5CBA2CE69946ABFF9AE@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <BANLkTikKBh3Q0ou19UDyt=gz-YYUE5HvNw@mail.gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: [PATCH] CDMA ConnMan API: add username and password for PPP
+ authentication.
+Date: Wed, 20 Jul 2011 15:17:50 +0200
+Message-ID: <1311167871.21109.247.camel@aeonflux>
+In-Reply-To: <568DE01DA537804BA73470071BAC288938F060A7@irsmsx503.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4066274351265340091==
+--===============8829168996625135495==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi Bertrand,
 
-I'm Nicolas Paccou, I'm in charge of validating the changes applied in new =
-oFono release.
-Unfortunately, I have not the hardware to be able to regress your patch: "A=
-dd support for UICC SIM driver for ISI modems"
+> >Have you tried empty strings like "". Have you tried random values? Do
+> >they have to be really specific ones.
+> >
+> >Is the password checked? Or just the username? Maybe they treat the
+> >username as pseudo APN of some sort, but the password means nothing.
+> >
+> >OFONO_PPP_DEBUG for starters. And then using cdmadial to create a full
+> >pppdump compatible log would be good idea. Something that we can open in
+> >Wireshark.
+> =
 
-I wanted to know if you have tested your patch on an ISI modem ?
-If yes, can you tell me if the result is ok ?
-If not, do you able to test it and tell me the result please ?
+> Here are cdmadial result with multiple possibility. The one with 2 tty is=
+ funy ;)
+> =
 
-Thanks,
-Nicolas
+> So from the result, I can tell that both login and password are checked.
 
------Original Message-----
-From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
-f Of Aki Niemi
-Sent: Tuesday, June 14, 2011 10:30 AM
-To: ofono(a)ofono.org
-Subject: Re: [PATCH] isimodem: Improper handling of missed call
+fair enough. That is enough for me to confirm that it is used in real
+networks. We do not like to add APIs for something that is not used
+anymore only because some specification or RFC says so ;)
 
-Hi Arun,
+Patch has been applied now. However I changed the commit prefix back to
+doc: to make it look cleaner.
 
-2011/5/30 Arun Ravindran <arunlee@gmail.com>:
->> Can you post logs on such a successful case, if you have any around?
->>
->
-> tested once again, its working for me. I have attached the log here.
->
-> But here i am using as n900 modem and not as isiusb .
+For you two TTY cases. That is normal. Huawei treats the first TTY as
+modem to issue PPP on it. And the second one (PCUI) is used for
+notifications. So yes, oFono needs to open both. You will need the
+second one for network registration updates.
 
-It seems to be working for me now using the isiusb plugin.
+Regards
 
-So I pushed the patch along with the WS fixes.
-
-Sorry for the delay.
-
-Cheers,
-Aki
-_______________________________________________
-ofono mailing list
-ofono(a)ofono.org
-http://lists.ofono.org/listinfo/ofono
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+Marcel
 
 
---===============4066274351265340091==--
+
+--===============8829168996625135495==--
 
