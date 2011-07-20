@@ -1,61 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============7378381366064186998=="
+Content-Type: multipart/mixed; boundary="===============4643469594029990129=="
 MIME-Version: 1.0
-From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] CDMA ConnMan API: add username and password for PPP
- authentication.
-Date: Wed, 20 Jul 2011 10:07:52 +0200
-Message-ID: <1311149272-5251-1-git-send-email-bertrand.aygon@intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH 0/4] CDMA-connman add username and password properties
+Date: Wed, 20 Jul 2011 11:26:36 +0200
+Message-ID: <1311154000-32353-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7378381366064186998==
+--===============4643469594029990129==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/cdma-connman-api.txt |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/doc/cdma-connman-api.txt b/doc/cdma-connman-api.txt
-index e486c09..48699a3 100644
---- a/doc/cdma-connman-api.txt
-+++ b/doc/cdma-connman-api.txt
-@@ -35,6 +35,16 @@ Properties	boolean Powered [readwrite]
- 			Contains whether the connection is dormant.  Will
- 			always be false if the connection is not powered.
- =
+These patches will be used to set PPP credentials when CDMA network will ne=
+ed them.
+It contains a test script based on create-internet-context script.
 
-+		string Username [readwrite]
-+
-+			Holds the username to be used for authentication
-+			purposes.
-+
-+		string Password [readwrite]
-+
-+			Holds the password to be used for authentication
-+			purposes.
-+
- 		dict Settings [readonly, optional]
- =
+Guillaume Zajac (4):
+  cdma-connman: add prototype to retrieve username and password
+  cdma-connman: add possibility to set a username and a password
+  driver cdma-connman: add credential while setting up PPP if required
+  test: add script to set credentials for cdma connection
 
- 			Holds all the IP network settings
--- =
+ drivers/cdmamodem/connman.c  |    8 +++++++
+ include/cdma-connman.h       |    4 +++
+ src/cdma-connman.c           |   44 ++++++++++++++++++++++++++++++++++++++=
++++-
+ test/create-cdma-credentials |   29 +++++++++++++++++++++++++++
+ 4 files changed, 84 insertions(+), 1 deletions(-)
+ create mode 100755 test/create-cdma-credentials
 
-1.7.4.1
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============7378381366064186998==--
+--===============4643469594029990129==--
 
