@@ -1,137 +1,263 @@
-Content-Type: multipart/mixed; boundary="===============7879721054918887399=="
+Content-Type: multipart/mixed; boundary="===============3812743210661456102=="
 MIME-Version: 1.0
-From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH 2/2] zte: add cpin polling mechanism
-Date: Wed, 20 Jul 2011 18:52:55 +0200
-Message-ID: <1311180775-20983-3-git-send-email-nicolas.bertrand@linux.intel.com>
-In-Reply-To: <1311180775-20983-1-git-send-email-nicolas.bertrand@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v4] speedupcdma: add speedup cdma skeleton plugin
+Date: Thu, 21 Jul 2011 04:31:08 +0200
+Message-ID: <1311215468-2462-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7879721054918887399==
+--===============3812743210661456102==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Make sure that the SIM card is ready before sending commands
+Free speedupcdma_data while removing modem.
+
 ---
- plugins/zte.c |   65 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 64 insertions(+), 1 deletions(-)
+ Makefile.am           |    3 +
+ plugins/speedupcdma.c |  210 +++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 213 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/speedupcdma.c
 
-diff --git a/plugins/zte.c b/plugins/zte.c
-index 4bac3cf..53b3fa0 100644
---- a/plugins/zte.c
-+++ b/plugins/zte.c
-@@ -49,10 +49,14 @@
- #include <drivers/atmodem/vendor.h>
+diff --git a/Makefile.am b/Makefile.am
+index a4e6c95..4b72091 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -336,6 +336,9 @@ builtin_sources +=3D plugins/telit.c
+ builtin_modules +=3D speedup
+ builtin_sources +=3D plugins/speedup.c
  =
 
- static const char *none_prefix[] =3D { NULL };
-+static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
- =
-
- struct zte_data {
- 	GAtChat *modem;
- 	GAtChat *aux;
-+	guint cpin_poll_source;
-+	guint cpin_poll_count;
-+	gboolean have_sim;
- 	struct ofono_gprs *gprs;
- 	struct ofono_gprs_context *gc;
- };
-@@ -83,6 +87,9 @@ static void zte_remove(struct ofono_modem *modem)
- 	g_at_chat_unref(data->modem);
- 	g_at_chat_unref(data->aux);
- =
-
-+	if (data->cpin_poll_source > 0)
-+		g_source_remove(data->cpin_poll_source);
++builtin_modules +=3D speedupcdma
++builtin_sources +=3D plugins/speedupcdma.c
 +
- 	g_free(data);
- }
- =
-
-@@ -152,13 +159,69 @@ static void zte_disconnect(gpointer user_data)
- 		ofono_gprs_add_context(data->gprs, data->gc);
- }
- =
-
-+static gboolean init_simpin_check(gpointer user_data);
+ if BLUETOOTH
+ builtin_modules +=3D bluetooth
+ builtin_sources +=3D plugins/bluetooth.c plugins/bluetooth.h
+diff --git a/plugins/speedupcdma.c b/plugins/speedupcdma.c
+new file mode 100644
+index 0000000..65da2f6
+--- /dev/null
++++ b/plugins/speedupcdma.c
+@@ -0,0 +1,210 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
-+static void simpin_check(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <stdio.h>
++#include <errno.h>
++#include <stdlib.h>
++
++#include <glib.h>
++#include <gatchat.h>
++#include <gattty.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/modem.h>
++#include <ofono/devinfo.h>
++#include <ofono/cdma-connman.h>
++#include <ofono/log.h>
++
++#include <drivers/atmodem/atutil.h>
++
++static const char *none_prefix[] =3D { NULL };
++
++struct speedupcdma_data {
++	GAtChat *chat;
++};
++
++static void speedupcdma_debug(const char *str, void *data)
++{
++	const char *prefix =3D data;
++
++	ofono_info("%s%s", prefix, str);
++}
++
++static int speedupcdma_probe(struct ofono_modem *modem)
++{
++	struct speedupcdma_data *data;
++
++	DBG("%p", modem);
++
++	data =3D g_try_new0(struct speedupcdma_data, 1);
++	if (data =3D=3D NULL)
++		return -ENOMEM;
++
++	ofono_modem_set_data(modem, data);
++
++	return 0;
++}
++
++static void speedupcdma_remove(struct ofono_modem *modem)
++{
++	struct speedupcdma_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_free(data);
++	ofono_modem_set_data(modem, NULL);
++}
++
++static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
 +{
 +	struct ofono_modem *modem =3D user_data;
-+	struct zte_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_error error;
 +
 +	DBG("");
 +
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	/* Modem returns an error if SIM is not ready. */
-+	switch (error.error) {
-+	case 10:
-+	case 13:
-+		data->have_sim =3D FALSE;
-+		break;
-+	case 14: /* SIM Busy, wait and check again the card status */
-+		if (data->cpin_poll_count++ < 5) {
-+			data->cpin_poll_source =3D
-+				g_timeout_add_seconds(1, init_simpin_check,
-+						modem);
-+			return;
-+		}
-+		/*SIM card is present but not accessible*/
-+		data->have_sim =3D FALSE;
-+		break;
-+	default:
-+		data->have_sim =3D TRUE;
-+	}
-+
-+	data->cpin_poll_count =3D 0;
-+
-+	ofono_modem_set_powered(modem, TRUE);
-+}
-+
-+static gboolean init_simpin_check(gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct zte_data *data =3D ofono_modem_get_data(modem);
-+
-+	data->cpin_poll_source =3D 0;
-+
-+	g_at_chat_send(data->modem, "AT+CPIN?", cpin_prefix,
-+			simpin_check, modem, NULL);
-+
-+	return FALSE;
-+}
-+
-+
- static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
- =
-
- 	DBG("");
- =
-
--	ofono_modem_set_powered(modem, ok);
 +	if (!ok) {
++		struct speedupcdma_data *data =3D ofono_modem_get_data(modem);
++
++		g_at_chat_unref(data->chat);
++		data->chat =3D=3D NULL;
++
 +		ofono_modem_set_powered(modem, FALSE);
 +		return;
 +	}
 +
-+	init_simpin_check(modem);
- }
- =
-
- static int zte_enable(struct ofono_modem *modem)
++	ofono_modem_set_powered(modem, TRUE);
++}
++
++static int speedupcdma_enable(struct ofono_modem *modem)
++{
++	struct speedupcdma_data *data =3D ofono_modem_get_data(modem);
++	GAtSyntax *syntax;
++	GIOChannel *channel;
++	const char *modem_path;
++
++	modem_path =3D ofono_modem_get_string(modem, "Modem");
++	if (modem_path =3D=3D NULL)
++		return -EINVAL;
++
++	DBG("path is: %s", modem_path);
++
++	channel =3D g_at_tty_open(modem_path, NULL);
++	if (channel =3D=3D NULL)
++		return -EIO;
++
++	syntax =3D g_at_syntax_new_gsm_permissive();
++	data->chat =3D g_at_chat_new(channel, syntax);
++	g_at_syntax_unref(syntax);
++
++	g_io_channel_unref(channel);
++
++	if (data->chat =3D=3D NULL)
++		return -ENOMEM;
++
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(data->chat, speedupcdma_debug, "Modem: ");
++
++	g_at_chat_send(data->chat, "ATE0 +CMEE=3D1", none_prefix,
++						NULL, NULL, NULL);
++
++	g_at_chat_send(data->chat, "AT+CFUN=3D1", none_prefix,
++					cfun_enable, modem, NULL);
++
++	return -EINPROGRESS;
++}
++
++static void cfun_disable(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct speedupcdma_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("");
++
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
++
++	if (ok)
++		ofono_modem_set_powered(modem, FALSE);
++}
++
++static int speedupcdma_disable(struct ofono_modem *modem)
++{
++	struct speedupcdma_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_at_chat_send(data->chat, "AT+CFUN=3D0", none_prefix,
++					cfun_disable, modem, NULL);
++
++	return -EINPROGRESS;
++}
++
++static void speedupcdma_pre_sim(struct ofono_modem *modem)
++{
++	struct speedupcdma_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	ofono_devinfo_create(modem, 0, "cdmamodem", data->chat);
++}
++
++static void speedupcdma_post_sim(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++}
++
++static void speedupcdma_post_online(struct ofono_modem *modem)
++{
++	struct speedupcdma_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->chat);
++}
++
++static struct ofono_modem_driver speedupcdma_driver =3D {
++	.name		=3D "speedupcdma",
++	.probe		=3D speedupcdma_probe,
++	.remove		=3D speedupcdma_remove,
++	.enable		=3D speedupcdma_enable,
++	.disable	=3D speedupcdma_disable,
++	.pre_sim	=3D speedupcdma_pre_sim,
++	.post_sim	=3D speedupcdma_post_sim,
++	.post_online	=3D speedupcdma_post_online,
++};
++
++static int speedupcdma_init(void)
++{
++	return ofono_modem_driver_register(&speedupcdma_driver);
++}
++
++static void speedupcdma_exit(void)
++{
++	ofono_modem_driver_unregister(&speedupcdma_driver);
++}
++
++OFONO_PLUGIN_DEFINE(speedupcdma, "Speedup CDMA modem driver", VERSION,
++				OFONO_PLUGIN_PRIORITY_DEFAULT,
++				speedupcdma_init, speedupcdma_exit)
 -- =
 
-1.7.4.1
+1.7.1
 
 
---===============7879721054918887399==--
+--===============3812743210661456102==--
 
