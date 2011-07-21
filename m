@@ -1,13 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6655461567561285081=="
+Content-Type: multipart/mixed; boundary="===============6229816913364032402=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] Create cdmadial tool to work on CDMA data call support.
-Date: Thu, 21 Jul 2011 04:38:29 +0200
-Message-ID: <1311215909-11206-1-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH_v2] Create cdmadial tool to work on CDMA data call support.
+Date: Thu, 21 Jul 2011 05:09:44 +0200
+Message-ID: <1311217784-17924-1-git-send-email-bertrand.aygon@intel.com>
+In-Reply-To: <1311215909-11206-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6655461567561285081==
+--===============6229816913364032402==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -20,7 +21,7 @@ Content-Transfer-Encoding: quoted-printable
  create mode 100644 gatchat/cdmadial.c
 
 diff --git a/Makefile.am b/Makefile.am
-index a4e6c95..bb712cb 100644
+index a4e6c95..f5a8504 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -616,11 +616,15 @@ tools_lookup_apn_SOURCES =3D tools/lookup-apn.c
@@ -29,7 +30,7 @@ index a4e6c95..bb712cb 100644
  =
 
 -noinst_PROGRAMS +=3D gatchat/gsmdial gatchat/test-server gatchat/test-qcdm
-+noinst_PROGRAMS +=3D gatchat/gsmdial gatchat/cdmadial /
++noinst_PROGRAMS +=3D gatchat/gsmdial gatchat/cdmadial \
 +			gatchat/test-server gatchat/test-qcdm
  =
 
@@ -591,5 +592,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============6655461567561285081==--
+--===============6229816913364032402==--
 
