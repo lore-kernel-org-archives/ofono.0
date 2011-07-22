@@ -1,86 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============8642458842021438838=="
+Content-Type: multipart/mixed; boundary="===============7865903153171104232=="
 MIME-Version: 1.0
-From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] CDMA devinfo: send AT+GCAP to check devinfo.
-Date: Fri, 22 Jul 2011 06:28:04 +0200
-Message-ID: <1311308884-11237-1-git-send-email-bertrand.aygon@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] udev: add support for SpeedUp CDMA dongles.
+Date: Fri, 22 Jul 2011 11:22:13 +0200
+Message-ID: <1311326540.21109.295.camel@aeonflux>
+In-Reply-To: <1311307040-10346-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8642458842021438838==
+--===============7865903153171104232==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/cdmamodem/devinfo.c |   10 ++++++----
- 1 files changed, 6 insertions(+), 4 deletions(-)
+Hi Bertrand,
 
-diff --git a/drivers/cdmamodem/devinfo.c b/drivers/cdmamodem/devinfo.c
-index 9603e05..2a5813c 100644
---- a/drivers/cdmamodem/devinfo.c
-+++ b/drivers/cdmamodem/devinfo.c
-@@ -36,6 +36,8 @@
- =
+>  plugins/udev.c |    2 ++
+>  1 files changed, 2 insertions(+), 0 deletions(-)
+> =
 
- #include "cdmamodem.h"
- =
+> diff --git a/plugins/udev.c b/plugins/udev.c
+> index a28bea7..b50ca2f 100644
+> --- a/plugins/udev.c
+> +++ b/plugins/udev.c
+> @@ -793,6 +793,8 @@ done:
+>  		add_linktop(modem, udev_device);
+>          else if (g_strcmp0(driver, "speedup") =3D=3D 0)
+>  		add_speedup(modem, udev_device);
+> +	else if (g_strcmp0(driver, "speedupcdma") =3D=3D 0)
+> +		add_speedup(modem, udev_device);
+>  =
 
-+static const char *gcap_prefix[] =3D { "+GCAP:", NULL };
-+
- static void attr_cb(gboolean ok, GAtResult *result, gpointer user_data)
- {
-          struct cb_data *cbd =3D user_data;
-@@ -123,13 +125,11 @@ static void cdma_query_serial(struct ofono_devinfo *i=
-nfo,
- 	CALLBACK_WITH_FAILURE(cb, NULL, data);
- }
- =
 
--static gboolean cdma_devinfo_register(gpointer user_data)
-+static void capability_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
- {
- 	struct ofono_devinfo *info =3D user_data;
- =
+patch has been applied, but I had to cleanup the whitespace damage from
+the previous patch ;)
 
- 	ofono_devinfo_register(info);
--
--	return FALSE;
- }
- =
+Regards
 
- static int cdma_devinfo_probe(struct ofono_devinfo *info,
-@@ -138,7 +138,9 @@ static int cdma_devinfo_probe(struct ofono_devinfo *inf=
-o,
- 	GAtChat *chat =3D data;
- =
+Marcel
 
- 	ofono_devinfo_set_data(info, g_at_chat_clone(chat));
--	g_idle_add(cdma_devinfo_register, info);
-+
-+	g_at_chat_send(chat, "AT+GCAP", gcap_prefix,
-+				capability_cb, info, NULL);
- =
 
- 	return 0;
- }
--- =
 
-1.7.4.1
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============8642458842021438838==--
+--===============7865903153171104232==--
 
