@@ -1,33 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============5450188658229519736=="
+Content-Type: multipart/mixed; boundary="===============5935313932925435190=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3 2/2] voicecall: remove usage of em_atd_number
-Date: Thu, 21 Jul 2011 20:28:15 -0500
-Message-ID: <4E28D22F.1070305@gmail.com>
-In-Reply-To: <1311260289-15708-2-git-send-email-frederic.danis@linux.intel.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] udev: add support for SpeedUp CDMA dongles.
+Date: Fri, 22 Jul 2011 05:57:20 +0200
+Message-ID: <1311307040-10346-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5450188658229519736==
+--===============5935313932925435190==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+---
+ plugins/udev.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-On 07/21/2011 09:58 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> as emulator atom can only run with a 'ready' SIM,
-> use saved number instead of em_atd_number
-> ---
->  src/voicecall.c |   19 +++++++++----------
->  1 files changed, 9 insertions(+), 10 deletions(-)
-> =
+diff --git a/plugins/udev.c b/plugins/udev.c
+index a28bea7..b50ca2f 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -793,6 +793,8 @@ done:
+ 		add_linktop(modem, udev_device);
+         else if (g_strcmp0(driver, "speedup") =3D=3D 0)
+ 		add_speedup(modem, udev_device);
++	else if (g_strcmp0(driver, "speedupcdma") =3D=3D 0)
++		add_speedup(modem, udev_device);
+ }
+ =
 
+ static gboolean devpath_remove(gpointer key, gpointer value, gpointer user=
+_data)
+-- =
 
-Patch has been applied, thanks.
+1.7.4.1
 
-Regards,
--Denis
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
---===============5450188658229519736==--
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============5935313932925435190==--
 
