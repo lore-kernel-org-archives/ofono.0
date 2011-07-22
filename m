@@ -1,144 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============4156549274069747788=="
+Content-Type: multipart/mixed; boundary="===============7100405952191028519=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 4/4] atmodem: Add support for the PIN counter command AT+CPNNUM
-Date: Fri, 22 Jul 2011 18:15:29 +0200
-Message-ID: <1311351329-1241-5-git-send-email-philippe.nunes@linux.intel.com>
-In-Reply-To: <1311351329-1241-1-git-send-email-philippe.nunes@linux.intel.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH] hfpmodem: fix callheld indicator
+Date: Fri, 22 Jul 2011 18:27:38 +0200
+Message-ID: <1311352058-9158-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4156549274069747788==
+--===============7100405952191028519==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Removing release of active calls when receive callheld move from 1
+(active and held calls) to 2 (all calls on hold). Intermediate state
+callheld=3D2 during a swap calls command is allowed by PTS.
 ---
- drivers/atmodem/sim.c |   95 +++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 95 insertions(+), 0 deletions(-)
+ drivers/hfpmodem/voicecall.c |    2 --
+ 1 files changed, 0 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index b28f3f8..49f5245 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -667,6 +667,95 @@ static void at_cpinr_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 	cb(&error, retries, cbd->data);
- }
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index 126c1e3..5824643 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -1042,8 +1042,6 @@ static void ciev_callheld_notify(struct ofono_voiceca=
+ll *vc,
+ 				call->status =3D CALL_STATUS_HELD;
+ 				ofono_voicecall_notify(vc, call);
+ 			}
+-		} else if (callheld =3D=3D 1) {
+-			release_with_status(vc, CALL_STATUS_ACTIVE);
+ 		}
+ 	}
  =
 
-+static gboolean skip_to_field(GAtResultIter *iter, const char *field)
-+{
-+	char *line;
-+	char *offset;
-+	int field_len =3D field ? strlen(field) : 0;
-+
-+	if (iter =3D=3D NULL)
-+		return FALSE;
-+
-+	if (iter->l =3D=3D NULL)
-+		return FALSE;
-+
-+	line =3D iter->l->data;
-+
-+	if (field_len =3D=3D 0) {
-+		iter->line_pos =3D 0;
-+		return TRUE;
-+	}
-+
-+	offset =3D g_strrstr(line, field);
-+	if (offset =3D=3D NULL)
-+		return FALSE;
-+
-+	iter->line_pos =3D (offset - line) + field_len;
-+
-+	return TRUE;
-+}
-+
-+static void at_cpnnum_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_sim_pin_retries_cb_t cb =3D cbd->cb;
-+	GAtResultIter iter;
-+	struct ofono_error error;
-+	int retries[OFONO_SIM_PASSWORD_INVALID];
-+	size_t i;
-+
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	if (!ok) {
-+		cb(&error, NULL, cbd->data);
-+		return;
-+	}
-+
-+	for (i =3D 0; i < OFONO_SIM_PASSWORD_INVALID; i++)
-+		retries[i] =3D -1;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	/*
-+	 * Even if this is not really a suffix, we rely on the tag PIN1 to
-+	 * recognize the correct response line.
-+	 */
-+	if (!g_at_result_iter_next(&iter, "PIN1=3D"))
-+		goto error;
-+
-+	if (!g_at_result_iter_next_number(&iter,
-+					&retries[OFONO_SIM_PASSWORD_SIM_PIN]))
-+		goto error;
-+
-+	if (!skip_to_field(&iter, "PUK1=3D"))
-+		goto error;
-+
-+	if (!g_at_result_iter_next_number(&iter,
-+					&retries[OFONO_SIM_PASSWORD_SIM_PUK]))
-+		goto error;
-+
-+	if (!skip_to_field(&iter, "PIN2=3D"))
-+		goto error;
-+
-+	if (!g_at_result_iter_next_number(&iter,
-+					&retries[OFONO_SIM_PASSWORD_SIM_PIN2]))
-+		goto error;
-+
-+	if (!skip_to_field(&iter, "PUK2=3D"))
-+		goto error;
-+
-+	if (!g_at_result_iter_next_number(&iter,
-+					&retries[OFONO_SIM_PASSWORD_SIM_PUK2]))
-+		goto error;
-+
-+	cb(&error, retries, cbd->data);
-+
-+	return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
-+}
-+
- static void at_pin_retries_query(struct ofono_sim *sim,
- 					ofono_sim_pin_retries_cb_t cb,
- 					void *data)
-@@ -695,6 +784,12 @@ static void at_pin_retries_query(struct ofono_sim *sim,
- 			return;
- =
-
- 		break;
-+	case OFONO_VENDOR_SPEEDUP:
-+		if (g_at_chat_send(sd->chat, "AT+CPNNUM", NULL,
-+					at_cpnnum_cb, cbd, g_free) > 0)
-+			return;
-+
-+		break;
- 	default:
- 		if (g_at_chat_send(sd->chat, "AT+CPINR", cpinr_prefixes,
- 					at_cpinr_cb, cbd, g_free) > 0)
 -- =
 
 1.7.1
 
 
---===============4156549274069747788==--
+--===============7100405952191028519==--
 
