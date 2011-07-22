@@ -1,125 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============0713966680826319312=="
+Content-Type: multipart/mixed; boundary="===============4398349680211809651=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH v3 2/2] voicecall: remove usage of em_atd_number
-Date: Thu, 21 Jul 2011 16:58:09 +0200
-Message-ID: <1311260289-15708-2-git-send-email-frederic.danis@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v3 1/2] hfp_ag: start server on sim 'ready' state
+Date: Thu, 21 Jul 2011 20:28:00 -0500
+Message-ID: <4E28D220.9020407@gmail.com>
 In-Reply-To: <1311260289-15708-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0713966680826319312==
+--===============4398349680211809651==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-as emulator atom can only run with a 'ready' SIM,
-use saved number instead of em_atd_number
----
- src/voicecall.c |   19 +++++++++----------
- 1 files changed, 9 insertions(+), 10 deletions(-)
+Hi Fr=C3=A9d=C3=A9ric,
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 9160ce8..f4c2358 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -74,7 +74,6 @@ struct ofono_voicecall {
- 	ofono_voicecall_cb_t release_queue_done_cb;
- 	struct ofono_emulator *pending_em;
- 	unsigned int pending_id;
--	char *em_atd_number;
- };
- =
-
- struct voicecall {
-@@ -1506,14 +1505,14 @@ static int voicecall_dial(struct ofono_voicecall *v=
-c, const char *number,
- =
-
- 	string_to_phone_number(number, &ph);
- =
-
--	vc->driver->dial(vc, &ph, clir, cb, vc);
--
- 	if (vc->settings) {
- 		g_key_file_set_string(vc->settings, SETTINGS_GROUP,
- 					"Number", number);
- 		storage_sync(vc->imsi, SETTINGS_STORE, vc->settings);
- 	}
- =
-
-+	vc->driver->dial(vc, &ph, clir, cb, vc);
-+
- 	return 0;
- }
- =
-
-@@ -3154,13 +3153,18 @@ static void emulator_dial_callback(const struct ofo=
-no_error *error, void *data)
- 	struct ofono_voicecall *vc =3D data;
- 	gboolean need_to_emit;
- 	struct voicecall *v;
-+	const char *number;
-+	GError *err =3D NULL;
-+
-+	number =3D g_key_file_get_string(vc->settings, SETTINGS_GROUP,
-+					"Number", &err);
- =
-
--	v =3D dial_handle_result(vc, error, vc->em_atd_number, &need_to_emit);
-+	v =3D dial_handle_result(vc, error, number, &need_to_emit);
- =
-
- 	if (v =3D=3D NULL) {
- 		struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
- =
-
--		if (is_emergency_number(vc, vc->em_atd_number) =3D=3D TRUE)
-+		if (is_emergency_number(vc, number) =3D=3D TRUE)
- 			__ofono_modem_dec_emergency_mode(modem);
- 	}
- =
-
-@@ -3168,8 +3172,6 @@ static void emulator_dial_callback(const struct ofono=
-_error *error, void *data)
- 		ofono_emulator_send_final(vc->pending_em, error);
- =
-
- 	vc->pending_em =3D NULL;
--	g_free(vc->em_atd_number);
--	vc->em_atd_number =3D NULL;
- =
-
- 	notify_emulator_call_status(vc);
- =
-
-@@ -3191,7 +3193,6 @@ static void emulator_dial(struct ofono_emulator *em, =
-struct ofono_voicecall *vc,
- 	}
- =
-
- 	vc->pending_em =3D em;
--	vc->em_atd_number =3D g_strdup(number);
- =
-
- 	err =3D voicecall_dial(vc, number, OFONO_CLIR_OPTION_DEFAULT,
- 					emulator_dial_callback, vc);
-@@ -3200,8 +3201,6 @@ static void emulator_dial(struct ofono_emulator *em, =
-struct ofono_voicecall *vc,
- 		return;
- =
-
- 	vc->pending_em =3D NULL;
--	g_free(vc->em_atd_number);
--	vc->em_atd_number =3D NULL;
- =
-
- 	switch (err) {
- 	case -ENETDOWN:
--- =
-
-1.7.1
+On 07/21/2011 09:58 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+> update HFP AG server to start only when a modem has its SIM atom
+> in 'ready' state and has voice call capability
+> ---
+>  plugins/hfp_ag.c |   69 +++++++++++++++++++++++++++++++++++++++++++-----=
+------
+>  1 files changed, 55 insertions(+), 14 deletions(-)
+> =
 
 
---===============0713966680826319312==--
+Patch has been applied, thanks.
+
+Regards,
+-Denis
+
+--===============4398349680211809651==--
 
