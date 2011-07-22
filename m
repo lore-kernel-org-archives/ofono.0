@@ -1,63 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============2772076574420979679=="
+Content-Type: multipart/mixed; boundary="===============8168792160945087995=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [HELP] Voicecall Establishment Using CDMA Phone
-Date: Fri, 22 Jul 2011 05:20:58 -0500
-Message-ID: <4E294F0A.5030100@gmail.com>
-In-Reply-To: <10D123A956DC4B4FA9D7A48B33358362151681D7A9@INDXM3131.dir.svc.accenture.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH 0/4] ZTE/SpeedUp specificities
+Date: Fri, 22 Jul 2011 18:15:25 +0200
+Message-ID: <1311351329-1241-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2772076574420979679==
+--===============8168792160945087995==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Milan,
+On ZTE/Speedup modem, AT+CPIN? keeps returning CME ERROR 14 for a moment af=
+ter successful AT+CPIN=3D".."
+As there is no card status notification, a pooling with CPIN queries is use=
+d to detect the state change.
 
-On 07/22/2011 06:16 AM, milan.satpathy(a)accenture.com wrote:
-> Hi,
-> =
+On SpeedUp modem (vendor id 0x1c9e), use the proprietary command AT+CPNNUM?=
+ to get the remaining SIM PIN attempts.
 
->  =
+Philippe Nunes (4):
+  atmodem: Add vendor entry for SpeedUp modems
+  speedup: Create SIM atom with SpeedUp vendor to handle proprietary
+    commands
+  atmodem: Add a polling based on CPIN query to detect SIM state change
+  atmodem: Add support for the PIN counter command AT+CPNNUM
 
-> =
-
-> I have been using =E2=80=9Chfpmodem=E2=80=9D to establish HFP connections=
- and make calls
-> using GSM handsets.
-> =
-
-> When I tried with a CDMA phone (ACCORD A714), I am able to establish HFP
-> connection. But the =E2=80=9Cvoicecallmanager=E2=80=9D methods do not see=
-m to work.
-> =
-
-> I m not able to create an outgoing call using =E2=80=9CDial=E2=80=9D.
-> =
-
->  =
-
-> =
-
-> Also, when I make an incoming call, I do not see any dbus signal from
-> Ofono. The voicecall objectpath (=E2=80=A6/voicecall01) is not created as=
- well.
-> Do I need to make use of the cdma modem here? Please suggest, if I need
-> to make any configuration changes in order to make a CDMA handset work
-> normally.
-> =
+ drivers/atmodem/sim.c    |  151 ++++++++++++++++++++++++++++++++++++++++++=
+++++
+ drivers/atmodem/vendor.h |    1 +
+ plugins/speedup.c        |    2 +-
+ 3 files changed, 153 insertions(+), 1 deletions(-)
 
 
-We need a bit more information than that to help you.  Is the phone
-you're trying to use supporting Bluetooth HFP profile (e.g. are other
-bluetooth headsets working)
-
-Can you provide AT and debug logs of ofono when you encounter these
-problems?
-
-Regards,
--Denis
-
---===============2772076574420979679==--
+--===============8168792160945087995==--
 
