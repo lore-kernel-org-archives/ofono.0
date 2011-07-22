@@ -1,79 +1,152 @@
-Content-Type: multipart/mixed; boundary="===============8623299052273559422=="
+Content-Type: multipart/mixed; boundary="===============2093526944176468991=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: [PATCH] SpeedUp CDMA: querying SIM state during powering on phase.
-Date: Fri, 22 Jul 2011 10:57:45 +0100
-Message-ID: <568DE01DA537804BA73470071BAC288938F4DEBC@irsmsx503.ger.corp.intel.com>
-In-Reply-To: <1311328408.21109.311.camel@aeonflux>
+From: milan.satpathy@accenture.com
+Subject: [HELP] Voicecall Establishment Using CDMA Phone
+Date: Fri, 22 Jul 2011 16:46:09 +0530
+Message-ID: <10D123A956DC4B4FA9D7A48B33358362151681D7A9@INDXM3131.dir.svc.accenture.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8623299052273559422==
+--===============2093526944176468991==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-> > > This is wrong code. So in case CFUN=3D1 fails, you still go ahead and
-> > > query the SIM state. That is rather pointless and might result on
-> > > unforseen feedback from the modem.
-> > >
-> > > In addition you do not handle the set_powered in case ^SYSINFO fails =
-or
-> > > you have polled max attempts.
-> > >
-> > > Now looking over this. I do not like this at all. Please do not copy =
-any
-> > > code from Huawei plugin and write this from scratch based on actual
-> > > traces and the documentation.
-> >
-> > I totally agree, I will rework this part.
-> >
-> > I will set the powered flag after CFUN, and use the SYSINFO to broadcas=
-t SIM
-> info (available or not).
-> =
+I have been using "hfpmodem" to establish HFP connections and make calls us=
+ing GSM handsets.
+When I tried with a CDMA phone (ACCORD A714), I am able to establish HFP co=
+nnection. But the "voicecallmanager" methods do not seem to work.
+I m not able to create an outgoing call using "Dial".
 
-> please post OFONO_AT_DEBUG traces to the mailing list first.
-> =
-
-> If you wanna handle some fake CDMA SIM states, then we might need a
-> simplified SIM atom driver for CDMA as well. Or something only CDMA
-> specific.
-
-No. In fact modems seems to react correctly. There is SIM state notificatio=
-n, but we got it once over 10. So I do not want to rely on.
-
-SYSINFO will give me the info, and it's always correct so I do not need a p=
-olling mechanism. =
-
-
-> Otherwise the check for a valid CDMA SIM, ROM SIM or whatever they call
-> it should be done during the enable callback handling. If it is not
-> there, then it is not there. Nothing you can do about it anyway. Failing
-> the modem enabling seems to be the best approach in my book.
-
-Exactly, I have to check for SIM available or not. I will send once the SYS=
-INFO in the cfun callback, and based on the result notify the availability =
-of the SIM.
+Also, when I make an incoming call, I do not see any dbus signal from Ofono=
+. The voicecall objectpath (.../voicecall01) is not created as well. Do I n=
+eed to make use of the cdma modem here? Please suggest, if I need to make a=
+ny configuration changes in order to make a CDMA handset work normally.
 
 Regards,
-
-Bertrand
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+Milan
 
 
---===============8623299052273559422==--
+
+
+
+________________________________
+This message is for the designated recipient only and may contain privilege=
+d, proprietary, or otherwise private information. If you have received it i=
+n error, please notify the sender immediately and delete the original. Any =
+other use of the email by you is prohibited.
+
+--===============2093526944176468991==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
+bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxuczpzdDE9
+InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgeG1sbnM9Imh0dHA6
+Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29u
+dGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBu
+YW1lPSJHZW5lcmF0b3IiIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDExIChmaWx0ZXJlZCBtZWRp
+dW0pIj4KPG86U21hcnRUYWdUeXBlIG5hbWVzcGFjZXVyaT0idXJuOnNjaGVtYXMtbWljcm9zb2Z0
+LWNvbTpvZmZpY2U6c21hcnR0YWdzIiBuYW1lPSJDaXR5IiAvPjxvOlNtYXJ0VGFnVHlwZSBuYW1l
+c3BhY2V1cmk9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgbmFt
+ZT0icGxhY2UiIC8+PCEtLVtpZiAhbXNvXT4KPHN0eWxlPgpzdDFcOip7YmVoYXZpb3I6dXJsKCNk
+ZWZhdWx0I2llb291aSkgfQo8L3N0eWxlPgo8IVtlbmRpZl0tLT48c3R5bGU+CjwhLS0KIC8qIEZv
+bnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseToiQm9vayBBbnRpcXVh
+IjsKCXBhbm9zZS0xOjIgNCA2IDIgNSAzIDUgMyAzIDQ7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMg
+Ki8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGlu
+OwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5
+OiJCb29rIEFudGlxdWEiO30KaDEKCXttYXJnaW4tdG9wOjEyLjBwdDsKCW1hcmdpbi1yaWdodDow
+aW47CgltYXJnaW4tYm90dG9tOjMuMHB0OwoJbWFyZ2luLWxlZnQ6MGluOwoJcGFnZS1icmVhay1h
+ZnRlcjphdm9pZDsKCWZvbnQtc2l6ZToxNC4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVh
+Ijt9CmgyCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFyZ2luLWJv
+dHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZvaWQ7Cglm
+b250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250LXN0eWxl
+Oml0YWxpYzt9CmgzCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFy
+Z2luLWJvdHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZv
+aWQ7Cglmb250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250
+LXdlaWdodDpub3JtYWw7fQpwLk1zb0hlYWRlciwgbGkuTXNvSGVhZGVyLCBkaXYuTXNvSGVhZGVy
+Cgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7
+Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuTXNvRm9vdGVyLCBsaS5Nc29Gb290ZXIs
+IGRpdi5Nc29Gb290ZXIKCXttYXJnaW46MGluOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9u
+dC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KYTpsaW5rLCBzcGFu
+Lk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30K
+YTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7Y29sb3I6IzYwNjQyMDsKCXRl
+eHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpwLkFCTE9DS1BBUkEsIGxpLkFCTE9DS1BBUkEsIGRp
+di5BQkxPQ0tQQVJBCgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQt
+c2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUJVTExFVCwgbGku
+QUJVTExFVCwgZGl2LkFCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdodDowaW47
+CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjE2LjU1cHQ7CgltYXJnaW4tYm90dG9t
+Oi4wMDAxcHQ7Cgl0ZXh0LWluZGVudDotMTYuNTVwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250
+LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUlOREVOVEVEQlVMTEVULCBsaS5BSU5ERU5URURC
+VUxMRVQsIGRpdi5BSU5ERU5URURCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdo
+dDowaW47CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjMzLjFwdDsKCW1hcmdpbi1i
+b3R0b206LjAwMDFwdDsKCXRleHQtaW5kZW50Oi0xNi41NXB0OwoJZm9udC1zaXplOjExLjBwdDsK
+CWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KcC5BSU5ERU5URURQQVJBLCBsaS5BSU5ERU5U
+RURQQVJBLCBkaXYuQUlOREVOVEVEUEFSQQoJe21hcmdpbi10b3A6MGluOwoJbWFyZ2luLXJpZ2h0
+OjBpbjsKCW1hcmdpbi1ib3R0b206MGluOwoJbWFyZ2luLWxlZnQ6MTYuNTVwdDsKCW1hcmdpbi1i
+b3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRp
+cXVhIjt9CnNwYW4uRW1haWxTdHlsZTIzCgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9z
+ZTsKCWZvbnQtZmFtaWx5OkFyaWFsOwoJY29sb3I6d2luZG93dGV4dDt9CkBwYWdlIFNlY3Rpb24x
+Cgl7c2l6ZTo1OTUuNDVwdCA4NDEuN3B0OwoJbWFyZ2luOjEuMGluIC43NWluIDEuMGluIC43NWlu
+O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9Ci0tPgo8L3N0eWxlPgo8L2hlYWQ+Cjxi
+b2R5IGxhbmc9IkVOLVVTIiBsaW5rPSJibHVlIiB2bGluaz0iIzYwNjQyMCI+CjxkaXYgY2xhc3M9
+IlNlY3Rpb24xIj4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJp
+YWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+SGks
+PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQg
+c2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250
+LWZhbWlseTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xh
+c3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJm
+b250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+SSBoYXZlIGJlZW4gdXNpbmcgJiM4
+MjIwO2hmcG1vZGVtJiM4MjIxOyB0byBlc3RhYmxpc2ggSEZQIGNvbm5lY3Rpb25zIGFuZCBtYWtl
+IGNhbGxzIHVzaW5nIEdTTSBoYW5kc2V0cy48bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8
+cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5
+bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5XaGVuIEkgdHJpZWQgd2l0
+aCBhIENETUEgcGhvbmUgKEFDQ09SRCBBNzE0KSwgSSBhbSBhYmxlIHRvIGVzdGFibGlzaCBIRlAg
+Y29ubmVjdGlvbi4gQnV0IHRoZSAmIzgyMjA7dm9pY2VjYWxsbWFuYWdlciYjODIyMTsgbWV0aG9k
+cyBkbyBub3Qgc2VlbSB0byB3b3JrLjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNs
+YXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0i
+Zm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPkkgbSBub3QgYWJsZSB0byBjcmVh
+dGUgYW4gb3V0Z29pbmcgY2FsbCB1c2luZyAmIzgyMjA7RGlhbCYjODIyMTsuPG86cD48L286cD48
+L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFj
+ZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlh
+bCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1h
+bCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAu
+MHB0Owpmb250LWZhbWlseTpBcmlhbCI+QWxzbywgd2hlbiBJIG1ha2UgYW4gaW5jb21pbmcgY2Fs
+bCwgSSBkbyBub3Qgc2VlIGFueSBkYnVzIHNpZ25hbCBmcm9tIE9mb25vLiBUaGUgdm9pY2VjYWxs
+IG9iamVjdHBhdGggKCYjODIzMDsvdm9pY2VjYWxsMDEpIGlzIG5vdCBjcmVhdGVkIGFzIHdlbGwu
+IERvIEkgbmVlZCB0byBtYWtlCiB1c2Ugb2YgdGhlIGNkbWEgbW9kZW0gaGVyZT8gUGxlYXNlIHN1
+Z2dlc3QsIGlmIEkgbmVlZCB0byBtYWtlIGFueSBjb25maWd1cmF0aW9uIGNoYW5nZXMgaW4gb3Jk
+ZXIgdG8gbWFrZSBhIENETUEgaGFuZHNldCB3b3JrIG5vcm1hbGx5LjxvOnA+PC9vOnA+PC9zcGFu
+PjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFy
+aWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPjxv
+OnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxm
+b250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsK
+Zm9udC1mYW1pbHk6QXJpYWwiPlJlZ2FyZHMsPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4K
+PHAgY2xhc3M9Ik1zb05vcm1hbCI+PHN0MTpDaXR5IHc6c3Q9Im9uIj48c3QxOnBsYWNlIHc6c3Q9
+Im9uIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTox
+MC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwiPk1pbGFuPC9zcGFuPjwvZm9udD48L3N0MTpwbGFjZT48
+L3N0MTpDaXR5Pjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1z
+aXplOjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCI+PG86cD48L286cD48L3NwYW4+PC9mb250Pjwv
+cD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFu
+IHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+PG86cD4mbmJzcDs8
+L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0i
+MiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWls
+eTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1z
+b05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNp
+emU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9m
+b250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwi
+PjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+PG86cD4m
+bmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPC9kaXY+Cjxicj4KPGhyPgo8Zm9udCBmYWNl
+PSJBcmlhbCIgY29sb3I9IkdyYXkiIHNpemU9IjIiPlRoaXMgbWVzc2FnZSBpcyBmb3IgdGhlIGRl
+c2lnbmF0ZWQgcmVjaXBpZW50IG9ubHkgYW5kIG1heSBjb250YWluIHByaXZpbGVnZWQsIHByb3By
+aWV0YXJ5LCBvciBvdGhlcndpc2UgcHJpdmF0ZSBpbmZvcm1hdGlvbi4gSWYgeW91IGhhdmUgcmVj
+ZWl2ZWQgaXQgaW4gZXJyb3IsIHBsZWFzZSBub3RpZnkgdGhlIHNlbmRlciBpbW1lZGlhdGVseSBh
+bmQgZGVsZXRlIHRoZSBvcmlnaW5hbC4KIEFueSBvdGhlciB1c2Ugb2YgdGhlIGVtYWlsIGJ5IHlv
+dSBpcyBwcm9oaWJpdGVkLjxicj4KPC9mb250Pgo8L2JvZHk+CjwvaHRtbD4K
+
+--===============2093526944176468991==--
 
