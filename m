@@ -1,56 +1,144 @@
-Content-Type: multipart/mixed; boundary="===============6536958473255888704=="
+Content-Type: multipart/mixed; boundary="===============4156549274069747788=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 2/4] speedup: Create SIM atom with SpeedUp vendor to handle
- proprietary commands
-Date: Fri, 22 Jul 2011 18:15:27 +0200
-Message-ID: <1311351329-1241-3-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 4/4] atmodem: Add support for the PIN counter command AT+CPNNUM
+Date: Fri, 22 Jul 2011 18:15:29 +0200
+Message-ID: <1311351329-1241-5-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1311351329-1241-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6536958473255888704==
+--===============4156549274069747788==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/atmodem/sim.c |    1 +
- plugins/speedup.c     |    2 +-
- 2 files changed, 2 insertions(+), 1 deletions(-)
+ drivers/atmodem/sim.c |   95 +++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 95 insertions(+), 0 deletions(-)
 
 diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 2690ab4..a4a09f5 100644
+index b28f3f8..49f5245 100644
 --- a/drivers/atmodem/sim.c
 +++ b/drivers/atmodem/sim.c
-@@ -151,6 +151,7 @@ static void at_sim_read_info(struct ofono_sim *sim, int=
- fileid,
- 	case OFONO_VENDOR_HUAWEI:
- 	case OFONO_VENDOR_SIERRA:
- 	case OFONO_VENDOR_QUALCOMM_MSM:
-+	case OFONO_VENDOR_SPEEDUP:
- 		strcat(buf, ",0,0,255"); /* Maximum possible length */
+@@ -667,6 +667,95 @@ static void at_cpinr_cb(gboolean ok, GAtResult *result=
+, gpointer user_data)
+ 	cb(&error, retries, cbd->data);
+ }
+ =
+
++static gboolean skip_to_field(GAtResultIter *iter, const char *field)
++{
++	char *line;
++	char *offset;
++	int field_len =3D field ? strlen(field) : 0;
++
++	if (iter =3D=3D NULL)
++		return FALSE;
++
++	if (iter->l =3D=3D NULL)
++		return FALSE;
++
++	line =3D iter->l->data;
++
++	if (field_len =3D=3D 0) {
++		iter->line_pos =3D 0;
++		return TRUE;
++	}
++
++	offset =3D g_strrstr(line, field);
++	if (offset =3D=3D NULL)
++		return FALSE;
++
++	iter->line_pos =3D (offset - line) + field_len;
++
++	return TRUE;
++}
++
++static void at_cpnnum_cb(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_sim_pin_retries_cb_t cb =3D cbd->cb;
++	GAtResultIter iter;
++	struct ofono_error error;
++	int retries[OFONO_SIM_PASSWORD_INVALID];
++	size_t i;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (!ok) {
++		cb(&error, NULL, cbd->data);
++		return;
++	}
++
++	for (i =3D 0; i < OFONO_SIM_PASSWORD_INVALID; i++)
++		retries[i] =3D -1;
++
++	g_at_result_iter_init(&iter, result);
++
++	/*
++	 * Even if this is not really a suffix, we rely on the tag PIN1 to
++	 * recognize the correct response line.
++	 */
++	if (!g_at_result_iter_next(&iter, "PIN1=3D"))
++		goto error;
++
++	if (!g_at_result_iter_next_number(&iter,
++					&retries[OFONO_SIM_PASSWORD_SIM_PIN]))
++		goto error;
++
++	if (!skip_to_field(&iter, "PUK1=3D"))
++		goto error;
++
++	if (!g_at_result_iter_next_number(&iter,
++					&retries[OFONO_SIM_PASSWORD_SIM_PUK]))
++		goto error;
++
++	if (!skip_to_field(&iter, "PIN2=3D"))
++		goto error;
++
++	if (!g_at_result_iter_next_number(&iter,
++					&retries[OFONO_SIM_PASSWORD_SIM_PIN2]))
++		goto error;
++
++	if (!skip_to_field(&iter, "PUK2=3D"))
++		goto error;
++
++	if (!g_at_result_iter_next_number(&iter,
++					&retries[OFONO_SIM_PASSWORD_SIM_PUK2]))
++		goto error;
++
++	cb(&error, retries, cbd->data);
++
++	return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
++}
++
+ static void at_pin_retries_query(struct ofono_sim *sim,
+ 					ofono_sim_pin_retries_cb_t cb,
+ 					void *data)
+@@ -695,6 +784,12 @@ static void at_pin_retries_query(struct ofono_sim *sim,
+ 			return;
+ =
+
  		break;
- 	}
-diff --git a/plugins/speedup.c b/plugins/speedup.c
-index 23ba173..9302dcc 100644
---- a/plugins/speedup.c
-+++ b/plugins/speedup.c
-@@ -330,7 +330,7 @@ static void speedup_pre_sim(struct ofono_modem *modem)
- 	DBG("%p", modem);
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", data->aux);
--	sim =3D ofono_sim_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
-+	sim =3D ofono_sim_create(modem, OFONO_VENDOR_SPEEDUP,
- 				"atmodem", data->aux);
- =
-
- 	if (sim)
++	case OFONO_VENDOR_SPEEDUP:
++		if (g_at_chat_send(sd->chat, "AT+CPNNUM", NULL,
++					at_cpnnum_cb, cbd, g_free) > 0)
++			return;
++
++		break;
+ 	default:
+ 		if (g_at_chat_send(sd->chat, "AT+CPINR", cpinr_prefixes,
+ 					at_cpinr_cb, cbd, g_free) > 0)
 -- =
 
 1.7.1
 
 
---===============6536958473255888704==--
+--===============4156549274069747788==--
 
