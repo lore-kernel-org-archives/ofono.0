@@ -1,243 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============1432797801619133958=="
+Content-Type: multipart/mixed; boundary="===============0678509141688333460=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] huaweicdma: rework driver to match huawei driver and not
- nokiacdma.
-Date: Sat, 23 Jul 2011 06:52:11 +0200
-Message-ID: <1311396731-16157-1-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH] cdmamodem: create vendor.h file.
+Date: Sat, 23 Jul 2011 13:04:00 +0200
+Message-ID: <1311419040-4213-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1432797801619133958==
+--===============0678509141688333460==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/huaweicdma.c |  135 +++++++++++++++++++++++++++++++++++++++++++---=
-----
- 1 files changed, 116 insertions(+), 19 deletions(-)
+ Makefile.am                |    3 ++-
+ drivers/cdmamodem/vendor.h |   25 +++++++++++++++++++++++++
+ 2 files changed, 27 insertions(+), 1 deletions(-)
+ create mode 100644 drivers/cdmamodem/vendor.h
 
-diff --git a/plugins/huaweicdma.c b/plugins/huaweicdma.c
-index 4f45fec..aacad28 100644
---- a/plugins/huaweicdma.c
-+++ b/plugins/huaweicdma.c
-@@ -40,8 +40,12 @@
+diff --git a/Makefile.am b/Makefile.am
+index e00f73b..f1ef96c 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -270,7 +270,8 @@ builtin_sources +=3D drivers/cdmamodem/cdmamodem.h \
+ 			drivers/cdmamodem/voicecall.c \
+ 			drivers/cdmamodem/devinfo.c \
+ 			drivers/cdmamodem/connman.c \
+-			drivers/cdmamodem/network-registration.c
++			drivers/cdmamodem/network-registration.c \
++			drivers/cdmamodem/vendor.h
+ endif
  =
 
- #include <drivers/atmodem/atutil.h>
- =
-
-+static const char *none_prefix[] =3D { NULL };
-+static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
+ builtin_modules +=3D g1
+diff --git a/drivers/cdmamodem/vendor.h b/drivers/cdmamodem/vendor.h
+new file mode 100644
+index 0000000..3b00bbf
+--- /dev/null
++++ b/drivers/cdmamodem/vendor.h
+@@ -0,0 +1,25 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
- struct huaweicdma_data {
--	GAtChat *chat;
-+	GAtChat *modem;
-+	GAtChat *pcui;
- };
- =
-
- static void huaweicdma_debug(const char *str, void *data)
-@@ -74,39 +78,129 @@ static void huaweicdma_remove(struct ofono_modem *mode=
-m)
- =
-
- 	ofono_modem_set_data(modem, NULL);
- =
-
--	g_at_chat_unref(data->chat);
-+	if (data->modem)
-+		g_at_chat_unref(data->modem);
- =
-
-+	g_at_chat_unref(data->pcui);
- 	g_free(data);
- }
- =
-
--static int huaweicdma_enable(struct ofono_modem *modem)
-+static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("");
-+
-+	if (!ok) {
-+		g_at_chat_unref(data->modem);
-+		data->modem =3D NULL;
-+
-+		g_at_chat_unref(data->pcui);
-+		data->pcui =3D NULL;
-+
-+		ofono_modem_set_powered(modem, FALSE);
-+		return;
-+	}
-+
-+	ofono_modem_set_powered(modem, TRUE);
-+}
-+
-+static void cfun_query(gboolean ok, GAtResult *result, gpointer user_data)
- {
-+	struct ofono_modem *modem =3D user_data;
- 	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-+	GAtResultIter iter;
-+	int status;
-+
-+	DBG("%d", ok);
-+
-+	if (!ok)
-+		return;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (g_at_result_iter_next(&iter, "+CFUN:") =3D=3D FALSE)
-+		return;
-+
-+	g_at_result_iter_next_number(&iter, &status);
-+
-+	if (status !=3D 1) {
-+		g_at_chat_send(data->pcui, "AT+CFUN=3D1", none_prefix,
-+				cfun_enable, modem, NULL);
-+		return;
-+	}
-+
-+	ofono_modem_set_powered(modem, TRUE);
-+}
-+
-+static GAtChat *create_port(const char *device)
-+{
- 	GAtSyntax *syntax;
- 	GIOChannel *channel;
--	const char *device;
--
--	device =3D ofono_modem_get_string(modem, "Device");
--	if (device =3D=3D NULL)
--		return -EINVAL;
-+	GAtChat *chat;
- =
-
- 	channel =3D g_at_tty_open(device, NULL);
- 	if (channel =3D=3D NULL)
--		return -EIO;
-+		return NULL;
- =
-
- 	syntax =3D g_at_syntax_new_gsm_permissive();
--	data->chat =3D g_at_chat_new(channel, syntax);
-+	chat =3D g_at_chat_new(channel, syntax);
- 	g_at_syntax_unref(syntax);
--
- 	g_io_channel_unref(channel);
- =
-
--	if (data->chat =3D=3D NULL)
--		return -ENOMEM;
-+	if (chat =3D=3D NULL)
-+		return NULL;
-+
-+	return chat;
-+}
-+
-+static GAtChat *open_device(struct ofono_modem *modem,
-+				const char *key, char *debug)
-+{
-+	const char *device;
-+	GAtChat *chat;
-+
-+	device =3D ofono_modem_get_string(modem, key);
-+	if (device =3D=3D NULL)
-+		return NULL;
-+
-+	DBG("%s %s", key, device);
-+
-+	chat =3D create_port(device);
-+	if (chat =3D=3D NULL)
-+		return NULL;
-+
-+	g_at_chat_add_terminator(chat, "COMMAND NOT SUPPORT", -1, FALSE);
- =
-
- 	if (getenv("OFONO_AT_DEBUG"))
--		g_at_chat_set_debug(data->chat, huaweicdma_debug, "Device: ");
-+		g_at_chat_set_debug(chat, huaweicdma_debug, debug);
- =
-
--	return 0;
-+	return chat;
-+}
-+
-+static int huaweicdma_enable(struct ofono_modem *modem)
-+{
-+	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-+
-+	data->modem =3D open_device(modem, "Modem", "Modem: ");
-+	if (data->modem =3D=3D NULL)
-+		return -EINVAL;
-+
-+	data->pcui =3D open_device(modem, "Pcui", "PCUI: ");
-+	if (data->pcui =3D=3D NULL) {
-+		g_at_chat_unref(data->modem);
-+		data->modem =3D NULL;
-+		return -EIO;
-+	}
-+
-+	g_at_chat_send(data->pcui, "ATE0 +CMEE=3D1", none_prefix,
-+						NULL, NULL, NULL);
-+
-+	g_at_chat_send(data->pcui, "AT+CFUN?", cfun_prefix,
-+					cfun_query, modem, NULL);
-+
-+	return -EINPROGRESS;
- }
- =
-
- static int huaweicdma_disable(struct ofono_modem *modem)
-@@ -115,8 +209,11 @@ static int huaweicdma_disable(struct ofono_modem *mode=
-m)
- =
-
- 	DBG("%p", modem);
- =
-
--	g_at_chat_unref(data->chat);
--	data->chat =3D NULL;
-+	g_at_chat_unref(data->modem);
-+	data->modem =3D NULL;
-+
-+	g_at_chat_unref(data->pcui);
-+	data->pcui =3D NULL;
- =
-
- 	return 0;
- }
-@@ -127,7 +224,7 @@ static void huaweicdma_pre_sim(struct ofono_modem *mode=
-m)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_devinfo_create(modem, 0, "cdmamodem", data->chat);
-+	ofono_devinfo_create(modem, 0, "cdmamodem", data->pcui);
- }
- =
-
- static void huaweicdma_post_sim(struct ofono_modem *modem)
-@@ -141,7 +238,7 @@ static void huaweicdma_post_online(struct ofono_modem *=
-modem)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->chat);
-+	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->pcui);
- }
- =
-
- static struct ofono_modem_driver huaweicdma_driver =3D {
++enum ofono_vendor {
++	OFONO_VENDOR_GENERIC =3D 0,
++	OFONO_VENDOR_SPEEDUP,
++};
 -- =
 
 1.7.4.1
@@ -255,5 +82,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============1432797801619133958==--
+--===============0678509141688333460==--
 
