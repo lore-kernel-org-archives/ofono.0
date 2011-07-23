@@ -1,49 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============6395239805153844852=="
+Content-Type: multipart/mixed; boundary="===============8626820053482146337=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH_v2 3/3] speedupcdma: register to cdma network registration
- atom.
-Date: Sat, 23 Jul 2011 06:09:30 +0200
-Message-ID: <1311394170-7381-4-git-send-email-bertrand.aygon@intel.com>
-In-Reply-To: <1311394170-7381-1-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH] udev: add support for Huawei CDMA dongles.
+Date: Sat, 23 Jul 2011 06:45:50 +0200
+Message-ID: <1311396350-15928-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6395239805153844852==
+--===============8626820053482146337==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/speedupcdma.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ plugins/udev.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/speedupcdma.c b/plugins/speedupcdma.c
-index b7e54a1..14189aa 100644
---- a/plugins/speedupcdma.c
-+++ b/plugins/speedupcdma.c
-@@ -36,6 +36,7 @@
- #include <ofono/modem.h>
- #include <ofono/devinfo.h>
- #include <ofono/cdma-connman.h>
-+#include <ofono/cdma-netreg.h>
- #include <ofono/log.h>
- =
-
- #include <drivers/atmodem/atutil.h>
-@@ -181,6 +182,8 @@ static void speedupcdma_post_online(struct ofono_modem =
-*modem)
- =
-
- 	DBG("%p", modem);
- =
-
-+	ofono_cdma_netreg_create(modem, 0, "cdmamodem", data->chat);
-+
- 	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->chat);
- }
- =
-
+diff --git a/plugins/udev.c b/plugins/udev.c
+index f2d89a7..1d9aaf2 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -767,6 +767,8 @@ done:
+ 		add_zte(modem, udev_device);
+ 	else if (g_strcmp0(driver, "huawei") =3D=3D 0)
+ 		add_huawei(modem, udev_device);
++	else if (g_strcmp0(driver, "huaweicdma") =3D=3D 0)
++		add_huawei(modem, udev_device);
+ 	else if (g_strcmp0(driver, "sierra") =3D=3D 0)
+ 		add_sierra(modem, udev_device);
+ 	else if (g_strcmp0(driver, "novatel") =3D=3D 0)
 -- =
 
 1.7.4.1
@@ -61,5 +46,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============6395239805153844852==--
+--===============8626820053482146337==--
 
