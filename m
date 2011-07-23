@@ -1,63 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============3906159898666188906=="
+Content-Type: multipart/mixed; boundary="===============2092148571464572254=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv2 0/2] CPIN polling mechanism
-Date: Fri, 22 Jul 2011 09:18:49 -0500
-Message-ID: <4E2986C9.6020908@gmail.com>
-In-Reply-To: <1311242513-17724-1-git-send-email-nicolas.bertrand@linux.intel.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH_v2 0/3] Create CDMA Network Registration atom
+Date: Sat, 23 Jul 2011 06:09:27 +0200
+Message-ID: <1311394170-7381-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3906159898666188906==
+--===============2092148571464572254==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nicolas,
+Create an org.ofono.cdma.NetworkRegistraiton interface
 
-On 07/21/2011 05:01 AM, Nicolas Bertrand wrote:
-> v2 changes:
->  - change AT channel from modem to aux
->  - raise timeout to 20 since some dongle take a while to be
->    operational
->  - send sim inserted notify related to the current status
-> =
+Bertrand Aygon (3):
+  cdmamodem: Create org.ofono.cdma.NetworkRegistration interface.
+  cdmamodem: Create network registration atom.
+  speedupcdma: register to cdma network registration atom.
 
-> As no SIM card status urc is available with ZTE and Speedup, the SIM =
+ Makefile.am                              |    9 +-
+ drivers/cdmamodem/cdmamodem.c            |    2 +
+ drivers/cdmamodem/cdmamodem.h            |    5 +
+ drivers/cdmamodem/network-registration.c |  139 ++++++++++++++++++
+ include/cdma-netreg.h                    |   63 ++++++++
+ include/dbus.h                           |    2 +
+ plugins/speedupcdma.c                    |    3 +
+ src/cdma-netreg.c                        |  233 ++++++++++++++++++++++++++=
+++++
+ src/ofono.h                              |    2 +
+ 9 files changed, 454 insertions(+), 4 deletions(-)
+ create mode 100644 drivers/cdmamodem/network-registration.c
+ create mode 100644 include/cdma-netreg.h
+ create mode 100644 src/cdma-netreg.c
 
-> state is set by default to OFONO_SIM_STATE_INSERTED even if no SIM card =
+-- =
 
-> is inserted. Also, we are facing with a modem latency after the ttyUSB =
+1.7.4.1
 
-> is opened (first AT commands are failing and the PIN status query =
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-> returns CME ERROR: 14 - SIM Busy).
-> So, to deal with those 2 issues, this patch set is introducing a =
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
-> preliminary PIN status polling in the ZTE/Speedup plugins. In practice, =
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
-> this polling is started after the modem is enabled and stopped when the =
-
-> CPIN query returns an other result than CME ERROR 14 or when the polling =
-
-> duration exceeds 5 seconds.
-> As a result, the SIM state is set according the result of the CPIN query =
-
-> and the update of the modem_powered state is postponed which delays the =
-
-> next AT commands.
-> =
-
-> Developed conjointly with philippe nunes.
-> =
-
-
-I've added PIN polling utility to drivers/atmodem/atutil.c and have made
-the mbm plugin use this.  Can you check whether this utility is suitable
-for ZTE/Speedup drivers?
-
-Regards,
--Denis
-
---===============3906159898666188906==--
+--===============2092148571464572254==--
 
