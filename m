@@ -1,66 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============5478887190465357421=="
+Content-Type: multipart/mixed; boundary="===============3750670921239477680=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] cdmamodem: check for TUN/TAP devices in ConnMan atom.
-Date: Sun, 24 Jul 2011 05:32:42 +0200
-Message-ID: <1311478362-18474-1-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH] cdmaconnman: fix the set_property Activate reply
+Date: Sun, 24 Jul 2011 08:05:01 +0200
+Message-ID: <1311487501-488-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5478887190465357421==
+--===============3750670921239477680==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/cdmamodem/connman.c |    9 +++++++++
- 1 files changed, 9 insertions(+), 0 deletions(-)
+ src/cdma-connman.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/cdmamodem/connman.c b/drivers/cdmamodem/connman.c
-index ce9a748..0df93eb 100644
---- a/drivers/cdmamodem/connman.c
-+++ b/drivers/cdmamodem/connman.c
-@@ -28,6 +28,7 @@
- #include <stdlib.h>
- #include <stdio.h>
- #include <errno.h>
-+#include <sys/stat.h>
+diff --git a/src/cdma-connman.c b/src/cdma-connman.c
+index b52f9c1..0c9013b 100644
+--- a/src/cdma-connman.c
++++ b/src/cdma-connman.c
+@@ -472,7 +472,7 @@ static DBusMessage *cdma_connman_set_property(DBusConne=
+ction *conn,
+ 		else
+ 			cm->driver->deactivate(cm, deactivate_callback, cm);
  =
 
- #include <glib.h>
- =
-
-@@ -41,6 +42,8 @@
- =
-
- #include "cdmamodem.h"
- =
-
-+#define TUN_SYSFS_DIR "/sys/devices/virtual/misc/tun"
-+
- #define STATIC_IP_NETMASK "255.255.255.255"
- =
-
- static const char *none_prefix[] =3D { NULL };
-@@ -240,9 +243,15 @@ static int cdma_connman_probe(struct ofono_cdma_connma=
-n *cm,
- {
- 	GAtChat *chat =3D data;
- 	struct connman_data *cd;
-+	struct stat st;
- =
-
- 	DBG("");
- =
-
-+	if (stat(TUN_SYSFS_DIR, &st) < 0) {
-+		ofono_error("Missing support for TUN/TAP devices");
-+		return -ENODEV;
-+	}
-+
- 	cd =3D g_try_new0(struct connman_data, 1);
- 	if (cd =3D=3D NULL)
- 		return -ENOMEM;
+-		return dbus_message_new_method_return(msg);
++		return NULL;
+ 	} else if (!strcmp(property, "Username")) {
+ 		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_STRING)
+ 			return __ofono_error_invalid_args(msg);
 -- =
 
 1.7.4.1
@@ -78,5 +48,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============5478887190465357421==--
+--===============3750670921239477680==--
 
