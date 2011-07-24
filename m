@@ -1,47 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============7972228505720980284=="
+Content-Type: multipart/mixed; boundary="===============5478887190465357421=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v2 2/3] cdmamodem: Create network registration atom.
-Date: Sat, 23 Jul 2011 10:23:03 -0500
-Message-ID: <4E2AE757.60901@gmail.com>
-In-Reply-To: <568DE01DA537804BA73470071BAC288938F4E133@irsmsx503.ger.corp.intel.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] cdmamodem: check for TUN/TAP devices in ConnMan atom.
+Date: Sun, 24 Jul 2011 05:32:42 +0200
+Message-ID: <1311478362-18474-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7972228505720980284==
+--===============5478887190465357421==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bertrand,
+---
+ drivers/cdmamodem/connman.c |    9 +++++++++
+ 1 files changed, 9 insertions(+), 0 deletions(-)
 
-On 07/23/2011 10:15 AM, Aygon, Bertrand wrote:
-> Hi Denis,
-> =
+diff --git a/drivers/cdmamodem/connman.c b/drivers/cdmamodem/connman.c
+index ce9a748..0df93eb 100644
+--- a/drivers/cdmamodem/connman.c
++++ b/drivers/cdmamodem/connman.c
+@@ -28,6 +28,7 @@
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <errno.h>
++#include <sys/stat.h>
+ =
 
-> =
+ #include <glib.h>
+ =
 
-> <<snip>>
->  =
+@@ -41,6 +42,8 @@
+ =
 
->> And why are we using a Huawei specific command inside the generic
->> cdmamodem driver without at least a vendor if/switch somewhere?
-> =
+ #include "cdmamodem.h"
+ =
 
-> We have SpeedUp dongle that also support this command...
-> =
++#define TUN_SYSFS_DIR "/sys/devices/virtual/misc/tun"
++
+ #define STATIC_IP_NETMASK "255.255.255.255"
+ =
 
-> I know this is not the best answer, but there is no standard for CDMA, so=
- many customer seems to se the same AT command.
-> =
+ static const char *none_prefix[] =3D { NULL };
+@@ -240,9 +243,15 @@ static int cdma_connman_probe(struct ofono_cdma_connma=
+n *cm,
+ {
+ 	GAtChat *chat =3D data;
+ 	struct connman_data *cd;
++	struct stat st;
+ =
 
+ 	DBG("");
+ =
 
-Just because you saw two manufacturers doing this, it does not mean that
-every one of them will, especially since many use qcdm for this info.
-This either belongs in huaweicdma directory or behind a vendor quirk.
++	if (stat(TUN_SYSFS_DIR, &st) < 0) {
++		ofono_error("Missing support for TUN/TAP devices");
++		return -ENODEV;
++	}
++
+ 	cd =3D g_try_new0(struct connman_data, 1);
+ 	if (cd =3D=3D NULL)
+ 		return -ENOMEM;
+-- =
 
-Regards,
--Denis
+1.7.4.1
 
---===============7972228505720980284==--
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============5478887190465357421==--
 
