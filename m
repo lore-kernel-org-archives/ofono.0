@@ -1,78 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============9168125857916768443=="
+Content-Type: multipart/mixed; boundary="===============2548690951051541449=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH v2] hfpmodem: fix callheld indicator
-Date: Mon, 25 Jul 2011 16:42:19 +0200
-Message-ID: <1311604939-10751-1-git-send-email-frederic.danis@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: CDMA SIM atom
+Date: Mon, 25 Jul 2011 16:42:47 +0200
+Message-ID: <1311604968.8920.17.camel@aeonflux>
+In-Reply-To: <568DE01DA537804BA73470071BAC288938F4E588@irsmsx503.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9168125857916768443==
+--===============2548690951051541449==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Callheld move from 1 (active and held calls) to 2 (all calls on hold) may
-result of:
-- active call has been dropped by remote,
-- an intermediate state during a call swap which will be followed by a
-  move back to 1.
-So, wait a little before checking calls state.
----
- drivers/hfpmodem/voicecall.c |   16 +++++++++++++++-
- 1 files changed, 15 insertions(+), 1 deletions(-)
+Hi Bertrand,
 
-diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index 126c1e3..3c49870 100644
---- a/drivers/hfpmodem/voicecall.c
-+++ b/drivers/hfpmodem/voicecall.c
-@@ -42,6 +42,7 @@
- #include "slc.h"
- =
+> We are working on CDMA to enable some USB dongle, and we need to get the =
+IMSI for the ConnMan interface, to create the interface name.
+> =
 
- #define POLL_CLCC_INTERVAL 2000
-+#define POLL_CLCC_DELAY 50
- #define CLIP_TIMEOUT 500
- =
+> We could use the AT SIM atom, since there should be no big difference bet=
+ween a CDMA SIM and a GSM SIM (same kind of functionality for SIM lock/unlo=
+ck, same IMSI info).
+> =
 
- static const char *none_prefix[] =3D { NULL };
-@@ -1024,6 +1025,11 @@ static void ciev_callheld_notify(struct ofono_voicec=
-all *vc,
- 		break;
- =
+> But we could also create a CDMA dedicated one. This will duplicate some c=
+ode, but will be 'cleaner'.
+> =
 
- 	case 1:
-+		if (vd->clcc_source) {
-+			g_source_remove(vd->clcc_source);
-+			vd->clcc_source =3D 0;
-+		}
-+
- 		/* We have to poll here, we have no idea whether the call was
- 		 * accepted by CHLD=3D1 or swapped by CHLD=3D2 or one call was
- 		 * chosed for private chat by CHLD=3D2x
-@@ -1043,7 +1049,15 @@ static void ciev_callheld_notify(struct ofono_voicec=
-all *vc,
- 				ofono_voicecall_notify(vc, call);
- 			}
- 		} else if (callheld =3D=3D 1) {
--			release_with_status(vc, CALL_STATUS_ACTIVE);
-+			if (vd->clcc_source)
-+				g_source_remove(vd->clcc_source);
-+
-+			/* We have to schedule a poll here, we have no idea
-+			 * whether active call was dropped by remote or if this
-+			 * is an intermediate state during call swap
-+			 */
-+			vd->clcc_source =3D g_timeout_add(POLL_CLCC_DELAY,
-+							poll_clcc, vc);
- 		}
- 	}
- =
+> I would prefer the solution of a CDMA SIM atom, so CDMA plugins use only =
+CDMA atom, but I would prefer to have the oFono community opinion before go=
+ing into the code.
 
--- =
+you do not need an IMSI for ConnMan. You just need a proper unique
+identifier that is consistent. Using the hardware serial number in case
+of CDMA should be a good enough interim solution.
 
-1.7.1
+We are using the IMSI for GSM since we wanna bind stored settings
+towards the SIM card. So that hardware swapping has no effect on the
+user experience. With CDMA we could neglect this actually. So far all
+CDMA account are still bound to the hardware itself.
+
+Regards
+
+Marcel
 
 
---===============9168125857916768443==--
+
+--===============2548690951051541449==--
 
