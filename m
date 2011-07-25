@@ -1,31 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============8130386356051630535=="
+Content-Type: multipart/mixed; boundary="===============2514188607708487554=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] TODO: add HFP AG tasks related to BlueZ/PA
-Date: Mon, 25 Jul 2011 01:28:44 -0500
-Message-ID: <4E2D0D1C.9010503@gmail.com>
-In-Reply-To: <1311604044-10093-1-git-send-email-frederic.danis@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: [PATCH] cdmamodem: create vendor.h file.
+Date: Mon, 25 Jul 2011 18:58:34 +0200
+Message-ID: <1311613119.8920.21.camel@aeonflux>
+In-Reply-To: <568DE01DA537804BA73470071BAC288938F4E5AB@irsmsx503.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8130386356051630535==
+--===============2514188607708487554==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+H Bertrand,
 
-On 07/25/2011 09:27 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> ---
->  TODO |   17 +++++++++++++++++
->  1 files changed, 17 insertions(+), 0 deletions(-)
+> > And from were I am standing, feel free to share the vendor quirks from
+> > atmodem/vendor.h. At least until we have the rest figured out.
 > =
 
+> Ok, and what about the GENERIC, are we creating one? I don't think that t=
+his is a good idea.
 
-Patch has been applied, thanks.
+the atom driver by default should implement generic behavior. Aka vendor
+set to 0. Only quirk behavior should be implemented via this. And that
+only if it shares like 95% of the functionality otherwise. If it not
+share that much, then just add another atom driver. So clearly no to the
+GENERIC thing.
 
-Regards,
--Denis
+Regards
 
---===============8130386356051630535==--
+Marcel
+
+
+
+--===============2514188607708487554==--
 
