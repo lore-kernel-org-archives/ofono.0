@@ -1,33 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============3464477160622849700=="
+Content-Type: multipart/mixed; boundary="===============8169873773159806340=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH_v2] huaweicdma: open 2 ttys,
- to use a dedicated one for PPP.
-Date: Tue, 26 Jul 2011 12:21:59 +0200
-Message-ID: <1311675721.8920.58.camel@aeonflux>
-In-Reply-To: <1311672353-11844-1-git-send-email-bertrand.aygon@intel.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH] hfpmodem: fix network status
+Date: Tue, 26 Jul 2011 16:56:53 +0200
+Message-ID: <1311692213-18020-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3464477160622849700==
+--===============8169873773159806340==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bertrand,
+When receiving roaming indicator update to 0 (no roaming) network
+registration status should be updated with latest value of service
+indicator.
+---
+ drivers/hfpmodem/network-registration.c |   10 +++++++---
+ 1 files changed, 7 insertions(+), 3 deletions(-)
 
->  plugins/huaweicdma.c |  132 ++++++++++++++++++++++++++++++++++++++++++--=
-------
->  1 files changed, 111 insertions(+), 21 deletions(-)
+diff --git a/drivers/hfpmodem/network-registration.c b/drivers/hfpmodem/net=
+work-registration.c
+index 4cb2b14..7d26424 100644
+--- a/drivers/hfpmodem/network-registration.c
++++ b/drivers/hfpmodem/network-registration.c
+@@ -130,10 +130,14 @@ static void ciev_notify(GAtResult *result, gpointer u=
+ser_data)
+ 	} else if (index =3D=3D nd->cind_pos[HFP_INDICATOR_ROAM]) {
+ 		nd->cind_val[HFP_INDICATOR_ROAM] =3D value;
+ =
 
-since the code is still the same as speedupcdma, same comments apply
-here (minus the s/aux/pcui/ changes) ;)
+-		if (value) {
++		if (value)
+ 			status =3D NETWORK_REGISTRATION_STATUS_ROAMING;
+-			ofono_netreg_status_notify(netreg, status, -1, -1, -1);
+-		}
++		else if (nd->cind_val[HFP_INDICATOR_SERVICE])
++			status =3D NETWORK_REGISTRATION_STATUS_REGISTERED;
++		else
++			status =3D NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
++
++		ofono_netreg_status_notify(netreg, status, -1, -1, -1);
+ 	} else if (index =3D=3D nd->cind_pos[HFP_INDICATOR_SIGNAL]) {
+ 		nd->cind_val[HFP_INDICATOR_SIGNAL] =3D value;
+ 		ofono_netreg_strength_notify(netreg, value * 20);
+-- =
 
-Regards
-
-Marcel
+1.7.1
 
 
-
---===============3464477160622849700==--
+--===============8169873773159806340==--
 
