@@ -1,53 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============8169873773159806340=="
+Content-Type: multipart/mixed; boundary="===============8144293533612425307=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH] hfpmodem: fix network status
-Date: Tue, 26 Jul 2011 16:56:53 +0200
-Message-ID: <1311692213-18020-1-git-send-email-frederic.danis@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v4 0/2] Add support for modem handled setup call proactive
+ command
+Date: Mon, 25 Jul 2011 23:00:16 -0500
+Message-ID: <4E2E3BD0.3010402@gmail.com>
+In-Reply-To: <1311617727-10294-1-git-send-email-jeevaka.badrappan@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8169873773159806340==
+--===============8144293533612425307==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When receiving roaming indicator update to 0 (no roaming) network
-registration status should be updated with latest value of service
-indicator.
----
- drivers/hfpmodem/network-registration.c |   10 +++++++---
- 1 files changed, 7 insertions(+), 3 deletions(-)
+Hi Jeevaka,
 
-diff --git a/drivers/hfpmodem/network-registration.c b/drivers/hfpmodem/net=
-work-registration.c
-index 4cb2b14..7d26424 100644
---- a/drivers/hfpmodem/network-registration.c
-+++ b/drivers/hfpmodem/network-registration.c
-@@ -130,10 +130,14 @@ static void ciev_notify(GAtResult *result, gpointer u=
-ser_data)
- 	} else if (index =3D=3D nd->cind_pos[HFP_INDICATOR_ROAM]) {
- 		nd->cind_val[HFP_INDICATOR_ROAM] =3D value;
- =
+On 07/25/2011 01:15 PM, Jeevaka Badrappan wrote:
+> Hi,
+> =
 
--		if (value) {
-+		if (value)
- 			status =3D NETWORK_REGISTRATION_STATUS_ROAMING;
--			ofono_netreg_status_notify(netreg, status, -1, -1, -1);
--		}
-+		else if (nd->cind_val[HFP_INDICATOR_SERVICE])
-+			status =3D NETWORK_REGISTRATION_STATUS_REGISTERED;
-+		else
-+			status =3D NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
-+
-+		ofono_netreg_status_notify(netreg, status, -1, -1, -1);
- 	} else if (index =3D=3D nd->cind_pos[HFP_INDICATOR_SIGNAL]) {
- 		nd->cind_val[HFP_INDICATOR_SIGNAL] =3D value;
- 		ofono_netreg_strength_notify(netreg, value * 20);
--- =
+> This patch set fixes the review comments.
+> =
 
-1.7.1
+> If the modem is able to setup the call, then the alpha id will be freed w=
+hen the
+> initiated call ends.
+> =
+
+> If the modem is not able to setup the call due to some reason, then the m=
+emory
+> allocated for alpha id and dial request are freed when the command end/se=
+ssion
+> end is received.
+> =
 
 
---===============8169873773159806340==--
+I went ahead and applied both of these patches.  I did do some minor
+refactoring afterwards, please test and let me know whether I broke
+something.
+
+> Also, noticed there is a break missing in the ofono_stk_proactive_command=
+_handled_notify
+> for STK_COMMAND_TYPE_SEND_SS case. Fix for that will be provided as a sep=
+arate patch.
+
+I went ahead and fixed this as well.
+
+> =
+
+> Note: This version of the patch is not tested.
+> =
+
+> Thanks and Regards,
+> Jeevaka
+> =
+
+
+Regards,
+-Denis
+
+--===============8144293533612425307==--
 
