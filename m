@@ -1,27 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============7552384385530150735=="
+Content-Type: multipart/mixed; boundary="===============5487271189203862171=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] zte: Use at_util's cpin polling implementation.
-Date: Wed, 27 Jul 2011 18:26:33 +0200
-Message-ID: <1311783993-23427-1-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH] speedup: Use at_util's cpin polling implementation.
+Date: Wed, 27 Jul 2011 18:54:09 +0200
+Message-ID: <1311785649-24434-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7552384385530150735==
+--===============5487271189203862171==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/zte.c |   25 +++++++++++++++++++++++--
+ plugins/speedup.c |   25 +++++++++++++++++++++++--
  1 files changed, 23 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/zte.c b/plugins/zte.c
-index 4426b4c..610c164 100644
---- a/plugins/zte.c
-+++ b/plugins/zte.c
+diff --git a/plugins/speedup.c b/plugins/speedup.c
+index 7f42b55..2500148 100644
+--- a/plugins/speedup.c
++++ b/plugins/speedup.c
 @@ -52,6 +52,8 @@ static const char *none_prefix[] =3D { NULL };
- struct zte_data {
+ struct speedup_data {
  	GAtChat *modem;
  	GAtChat *aux;
 +	gboolean have_sim;
@@ -29,7 +29,7 @@ index 4426b4c..610c164 100644
  };
  =
 
- static int zte_probe(struct ofono_modem *modem)
+ static int speedup_probe(struct ofono_modem *modem)
 @@ -120,6 +122,18 @@ static GAtChat *open_device(struct ofono_modem *modem,
  	return chat;
  }
@@ -38,7 +38,7 @@ index 4426b4c..610c164 100644
 +static void sim_state_cb(gboolean present, gpointer user_data)
 +{
 +	struct ofono_modem *modem =3D user_data;
-+	struct zte_data *data =3D ofono_modem_get_data(modem);
++	struct speedup_data *data =3D ofono_modem_get_data(modem);
 +
 +	at_util_sim_state_query_free(data->sim_state_query);
 +	data->sim_state_query =3D NULL;
@@ -71,8 +71,8 @@ index 4426b4c..610c164 100644
  }
  =
 
- static int zte_enable(struct ofono_modem *modem)
-@@ -239,7 +260,7 @@ static void zte_pre_sim(struct ofono_modem *modem)
+ static int speedup_enable(struct ofono_modem *modem)
+@@ -238,7 +259,7 @@ static void speedup_pre_sim(struct ofono_modem *modem)
  	sim =3D ofono_sim_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
  						"atmodem", data->aux);
  =
@@ -100,5 +100,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============7552384385530150735==--
+--===============5487271189203862171==--
 
