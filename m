@@ -1,231 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============5359940978739619577=="
+Content-Type: multipart/mixed; boundary="===============9056978314325700354=="
 MIME-Version: 1.0
-From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH_v2] huaweicdma: open 2 ttys, to use a dedicated one for PPP.
-Date: Wed, 27 Jul 2011 10:07:38 +0200
-Message-ID: <1311754058-16411-1-git-send-email-bertrand.aygon@intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v3] test: add script to set credentials for cdma connection
+Date: Wed, 27 Jul 2011 13:52:00 +0200
+Message-ID: <1311767520-6297-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5359940978739619577==
+--===============9056978314325700354==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/huaweicdma.c |  106 +++++++++++++++++++++++++++++++++++++++++-----=
-----
- 1 files changed, 87 insertions(+), 19 deletions(-)
+ Makefile.am               |    1 +
+ test/cdma-set-credentials |   29 +++++++++++++++++++++++++++++
+ 2 files changed, 30 insertions(+), 0 deletions(-)
+ create mode 100755 test/cdma-set-credentials
 
-diff --git a/plugins/huaweicdma.c b/plugins/huaweicdma.c
-index 7288850..dccf17e 100644
---- a/plugins/huaweicdma.c
-+++ b/plugins/huaweicdma.c
-@@ -38,7 +38,8 @@
- #include <ofono/log.h>
- =
-
- struct huaweicdma_data {
--	GAtChat *chat;
-+	GAtChat *modem;
-+	GAtChat *pcui;
- };
- =
-
- static void huaweicdma_debug(const char *str, void *data)
-@@ -71,39 +72,97 @@ static void huaweicdma_remove(struct ofono_modem *modem)
- =
-
- 	ofono_modem_set_data(modem, NULL);
- =
-
--	g_at_chat_unref(data->chat);
--
- 	g_free(data);
- }
- =
-
--static int huaweicdma_enable(struct ofono_modem *modem)
-+static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
- {
-+	struct ofono_modem *modem =3D user_data;
- 	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
--	GAtSyntax *syntax;
--	GIOChannel *channel;
+diff --git a/Makefile.am b/Makefile.am
+index d44e62b..89190ad 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -528,6 +528,7 @@ test_scripts =3D test/backtrace \
+ 		test/cdma-list-call \
+ 		test/cdma-dial-number \
+ 		test/cdma-hangup \
++		test/cdma-set-credentials \
+ 		test/disable-call-forwarding \
+ 		test/list-messages \
+ 		test/test-sms \
+diff --git a/test/cdma-set-credentials b/test/cdma-set-credentials
+new file mode 100755
+index 0000000..0f52a98
+--- /dev/null
++++ b/test/cdma-set-credentials
+@@ -0,0 +1,29 @@
++#!/usr/bin/python
 +
-+	DBG("");
++import dbus
++import sys
 +
-+	if (!ok) {
-+		g_at_chat_unref(data->modem);
-+		data->modem =3D NULL;
++bus =3D dbus.SystemBus()
 +
-+		g_at_chat_unref(data->pcui);
-+		data->pcui =3D NULL;
-+	}
++manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++						'org.ofono.Manager')
 +
-+	ofono_modem_set_powered(modem, ok);
-+}
++modems =3D manager.GetModems()
 +
-+static GAtChat *open_device(struct ofono_modem *modem,
-+				const char *key, char *debug)
-+{
- 	const char *device;
-+	GIOChannel *channel;
-+	GAtSyntax *syntax;
-+	GAtChat *chat;
- =
-
--	device =3D ofono_modem_get_string(modem, "Device");
-+	device =3D ofono_modem_get_string(modem, key);
- 	if (device =3D=3D NULL)
--		return -EINVAL;
-+		return NULL;
++for path, properties in modems:
++	if "org.ofono.cdma.ConnectionManager" not in properties["Interfaces"]:
++		continue
 +
-+	DBG("%s %s", key, device);
- =
-
- 	channel =3D g_at_tty_open(device, NULL);
- 	if (channel =3D=3D NULL)
--		return -EIO;
-+		return NULL;
- =
-
- 	syntax =3D g_at_syntax_new_gsm_permissive();
--	data->chat =3D g_at_chat_new(channel, syntax);
-+	chat =3D g_at_chat_new(channel, syntax);
- 	g_at_syntax_unref(syntax);
- =
-
- 	g_io_channel_unref(channel);
- =
-
--	if (data->chat =3D=3D NULL)
--		return -ENOMEM;
-+	if (chat =3D=3D NULL)
-+		return NULL;
- =
-
- 	if (getenv("OFONO_AT_DEBUG"))
--		g_at_chat_set_debug(data->chat, huaweicdma_debug, "Device: ");
-+		g_at_chat_set_debug(chat, huaweicdma_debug, debug);
- =
-
--	return 0;
-+	return chat;
-+}
++	cm =3D dbus.Interface(bus.get_object('org.ofono', path),
++					'org.ofono.cdma.ConnectionManager')
 +
-+static int huaweicdma_enable(struct ofono_modem *modem)
-+{
-+	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
++	print "Connecting CDMA Packet Data Service on modem %s..." % path
 +
-+	DBG("");
++	if len(sys.argv) > 1:
++		cm.SetProperty("Username", (sys.argv[1]))
++		print "Setting Username to %s" % (sys.argv[1])
 +
-+	data->modem =3D open_device(modem, "Modem", "Modem: ");
-+	if (data->modem =3D=3D NULL)
-+		return -EINVAL;
++	if len(sys.argv) > 2:
++		cm.SetProperty("Password", (sys.argv[2]))
++		print "Setting Password to %s" % (sys.argv[2])
 +
-+	data->pcui =3D open_device(modem, "Pcui", "PCUI: ");
-+	if (data->pcui =3D=3D NULL) {
-+		g_at_chat_unref(data->modem);
-+		data->modem =3D NULL;
-+		return -EIO;
-+	}
-+
-+	g_at_chat_send(data->modem, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
-+	g_at_chat_send(data->pcui, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
-+
-+	g_at_chat_send(data->pcui, "AT+CFUN=3D1", NULL, cfun_enable, modem, NULL);
-+
-+	return -EINPROGRESS;
-+}
-+
-+static void cfun_disable(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("");
-+
-+	g_at_chat_unref(data->pcui);
-+	data->pcui =3D NULL;
-+
-+	if (ok)
-+		ofono_modem_set_powered(modem, FALSE);
- }
- =
-
- static int huaweicdma_disable(struct ofono_modem *modem)
-@@ -112,10 +171,19 @@ static int huaweicdma_disable(struct ofono_modem *mod=
-em)
- =
-
- 	DBG("%p", modem);
- =
-
--	g_at_chat_unref(data->chat);
--	data->chat =3D NULL;
-+	g_at_chat_cancel_all(data->modem);
-+	g_at_chat_unregister_all(data->modem);
- =
-
--	return 0;
-+	g_at_chat_unref(data->modem);
-+	data->modem =3D NULL;
-+
-+	g_at_chat_cancel_all(data->pcui);
-+	g_at_chat_unregister_all(data->pcui);
-+
-+	g_at_chat_send(data->pcui, "AT+CFUN=3D0", NULL, cfun_disable,
-+				modem, NULL);
-+
-+	return -EINPROGRESS;
- }
- =
-
- static void huaweicdma_pre_sim(struct ofono_modem *modem)
-@@ -124,7 +192,7 @@ static void huaweicdma_pre_sim(struct ofono_modem *mode=
-m)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_devinfo_create(modem, 0, "cdmamodem", data->chat);
-+	ofono_devinfo_create(modem, 0, "cdmamodem", data->pcui);
- }
- =
-
- static void huaweicdma_post_sim(struct ofono_modem *modem)
-@@ -138,7 +206,7 @@ static void huaweicdma_post_online(struct ofono_modem *=
-modem)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->chat);
-+	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->modem);
- }
- =
-
- static struct ofono_modem_driver huaweicdma_driver =3D {
 -- =
 
-1.7.4.1
+1.7.1
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============5359940978739619577==--
+--===============9056978314325700354==--
 
