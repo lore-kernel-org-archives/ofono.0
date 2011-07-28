@@ -1,42 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3935467328456273860=="
+Content-Type: multipart/mixed; boundary="===============3143847895643309097=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH_v3 0/4] Create CDMA Network Registration atom
-Date: Thu, 28 Jul 2011 13:37:52 +0200
-Message-ID: <1311853076-15878-1-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH_v3 1/4] cdmamodem: Define CDMA Network Registration atom.
+Date: Thu, 28 Jul 2011 13:37:53 +0200
+Message-ID: <1311853076-15878-2-git-send-email-bertrand.aygon@intel.com>
+In-Reply-To: <1311853076-15878-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3935467328456273860==
+--===============3143847895643309097==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Create an org.ofono.cdma.NetworkRegistration interface.
-Just create a skeleton for now.
-Modify SpeedUpCDMA driver to use this new atom.
+---
+ include/dbus.h |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-Bertrand Aygon (4):
-  cdmamodem: Define CDMA Network Registration atom.
-  cdmamodem: Create org.ofono.cdma.NetworkRegistration interface.
-  cdmamodem: Create CDMA network registration atom.
-  speedupcdma: register to CDMA network registration atom.
+diff --git a/include/dbus.h b/include/dbus.h
+index 4dd9db5..65bda72 100644
+--- a/include/dbus.h
++++ b/include/dbus.h
+@@ -63,6 +63,8 @@ extern "C" {
+ #define OFONO_CDMA_VOICECALL_MANAGER_INTERFACE "org.ofono.cdma.VoiceCallMa=
+nager"
+ #define OFONO_CDMA_MESSAGE_MANAGER_INTERFACE "org.ofono.cdma.MessageManage=
+r"
+ #define OFONO_CDMA_CONNECTION_MANAGER_INTERFACE "org.ofono.cdma.Connection=
+Manager"
++#define OFONO_CDMA_NETWORK_REGISTRATION_INTERFACE \
++					"org.ofono.cdma.NetworkRegistration"
+ =
 
- Makefile.am                              |    9 +-
- drivers/cdmamodem/cdmamodem.c            |    2 +
- drivers/cdmamodem/cdmamodem.h            |    2 +
- drivers/cdmamodem/network-registration.c |   81 +++++++++++++
- include/cdma-netreg.h                    |   61 ++++++++++
- include/dbus.h                           |    2 +
- plugins/speedupcdma.c                    |    3 +
- src/cdma-netreg.c                        |  188 ++++++++++++++++++++++++++=
-++++
- src/ofono.h                              |    2 +
- 9 files changed, 346 insertions(+), 4 deletions(-)
- create mode 100644 drivers/cdmamodem/network-registration.c
- create mode 100644 include/cdma-netreg.h
- create mode 100644 src/cdma-netreg.c
-
+ /* Essentially a{sv} */
+ #define OFONO_PROPERTIES_ARRAY_SIGNATURE DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STR=
+ING \
 -- =
 
 1.7.4.1
@@ -54,5 +52,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============3935467328456273860==--
+--===============3143847895643309097==--
 
