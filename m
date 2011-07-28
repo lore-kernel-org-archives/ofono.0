@@ -1,95 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============0313540069936230904=="
+Content-Type: multipart/mixed; boundary="===============3718804852513636652=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: [PATCH] speedup: during enable, we have to go offline first.
-Date: Thu, 28 Jul 2011 12:59:43 +0100
-Message-ID: <568DE01DA537804BA73470071BAC288938FA9A50@irsmsx503.ger.corp.intel.com>
-In-Reply-To: <1311851936.8920.87.camel@aeonflux>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: [PATCH] udev: Add support for SpeedUp 7300 EVDO modem.
+Date: Thu, 28 Jul 2011 14:08:00 +0200
+Message-ID: <1311854881.8920.101.camel@aeonflux>
+In-Reply-To: <568DE01DA537804BA73470071BAC288938FA9A4C@irsmsx503.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0313540069936230904==
+--===============3718804852513636652==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Bertrand,
 
-> >  plugins/speedup.c |    2 +-
-> >  1 files changed, 1 insertions(+), 1 deletions(-)
-> >
-> > diff --git a/plugins/speedup.c b/plugins/speedup.c
-> > index 90ca5e3..a7aa43c 100644
-> > --- a/plugins/speedup.c
-> > +++ b/plugins/speedup.c
-> > @@ -177,7 +177,7 @@ static int speedup_enable(struct ofono_modem *modem)
-> >  	g_at_chat_send(data->modem, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL,
-> NULL);
-> >  	g_at_chat_send(data->aux, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NUL=
-L);
-> >
-> > -	g_at_chat_send(data->aux, "AT+CFUN=3D1", NULL,
-> > +	g_at_chat_send(data->aux, "AT+CFUN=3D4", NULL,
-> >  					cfun_enable, modem, NULL);
+> > > diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+> > > index f8e485b..ab21f57 100644
+> > > --- a/plugins/ofono.rules
+> > > +++ b/plugins/ofono.rules
+> > > @@ -422,11 +422,15 @@ ATTRS{idVendor}=3D=3D"19d2", ENV{OFONO_DRIVER}=
+=3D"zte"
+> > >
+> > >  ATTRS{idVendor}=3D=3D"19d2", ATTRS{serial}=3D=3D"1234567890ABCDEF",
+> > ENV{ID_SERIAL_SHORT}=3D""
+> > >
+> > > -# SpeedUp
+> > > -ATTRS{idVendor}=3D=3D"1c9e", ENV{OFONO_DRIVER}=3D"speedup"
+> > > +# SpeedUp 7300
+> > > +ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9e00",
+> > ENV{OFONO_DRIVER}=3D"speedupcdma"
+> > > +
+> > > +# SpeedUp 9800
+> > > +ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9800",
+> > ENV{OFONO_DRIVER}=3D"speedup"
+> > >
+> > >  ATTRS{idVendor}=3D=3D"1c9e", ATTRS{serial}=3D=3D"1234567890ABCDEF",
+> > ENV{ID_SERIAL_SHORT}=3D""
+> > =
+
+> > did you send the usb-devices output for these dongles to confirm that
+> > this serial number hack is still needed?
 > =
 
-> this is not a correct fix. You are messing up the logic here. You are
-> still in offline mode from an oFono point of view, but your modem is
-> actually online.
+> Here it is:
 > =
 
-> Try the same that we did for ZTE with sending +CFUN=3D1;+CFUN=3D4 if that
-> works out.
+> T:  Bus=3D02 Lev=3D02 Prnt=3D02 Port=3D02 Cnt=3D02 Dev#=3D 20 Spd=3D480 M=
+xCh=3D 0
+> D:  Ver=3D 2.00 Cls=3D00(>ifc ) Sub=3D00 Prot=3D00 MxPS=3D64 #Cfgs=3D  1
+> P:  Vendor=3D1c9e ProdID=3D9800 Rev=3D00.00
+> S:  Manufacturer=3DUSB Modem
+> S:  Product=3DUSB Modem
+> S:  SerialNumber=3D1234567890ABCDEF
+> C:  #Ifs=3D 5 Cfg#=3D 1 Atr=3De0 MxPwr=3D500mA
+> I:  If#=3D 0 Alt=3D 0 #EPs=3D 2 Cls=3Dff(vend.) Sub=3Dff Prot=3Dff Driver=
+=3Doption
+> I:  If#=3D 1 Alt=3D 0 #EPs=3D 3 Cls=3Dff(vend.) Sub=3Dff Prot=3Dff Driver=
+=3Doption
+> I:  If#=3D 2 Alt=3D 0 #EPs=3D 2 Cls=3Dff(vend.) Sub=3Dff Prot=3Dff Driver=
+=3Doption
+> I:  If#=3D 3 Alt=3D 0 #EPs=3D 2 Cls=3D08(stor.) Sub=3D06 Prot=3D50 Driver=
+=3Dusb-storage
+> I:  If#=3D 4 Alt=3D 0 #EPs=3D 2 Cls=3D08(stor.) Sub=3D06 Prot=3D50 Driver=
+=3Dusb-storage
 
-This is not working:
+are you sure that SpeedUp for GSM is just not a re-branded ZTE dongle.
+They look as broken as the ZTE ones.
 
-ofonod[17315]: plugins/speedup.c:speedup_enable() 0x9ae1af8
-ofonod[17315]: src/modem.c:get_modem_property() modem 0x9ae1af8 property Mo=
-dem
-ofonod[17315]: plugins/speedup.c:open_device() Modem /dev/ttyUSB1
-ofonod[17315]: src/modem.c:get_modem_property() modem 0x9ae1af8 property Aux
-ofonod[17315]: plugins/speedup.c:open_device() Aux /dev/ttyUSB2
-ofonod[17315]: Modem: > ATE0 +CMEE=3D1\r
-ofonod[17315]: Aux: > ATE0 +CMEE=3D1\r
-ofonod[17315]: Aux: < ATE0 +CMEE=3D1\r
-ofonod[17315]: Modem: < \r\nOK\r\n
-ofonod[17315]: Aux: < \r\nOK\r\n
-ofonod[17315]: Aux: > AT+CFUN=3D1;+CFUN=3D4\r
-ofonod[17315]: Aux: < \r\n+CME ERROR: 0\r\n
-ofonod[17315]: plugins/speedup.c:cfun_enable()
+Same as SpeedUp for CDMA might be just a re-branded Huawei dongle.
 
+Regards
 
-> If not, then check if we can go CFUN=3D1 first and then after SIM query
-> succeeded, we go into CFUN=3D4. We do this for Huawei actually.
-
-I will try this...
-
-> If none of these work, then you need to remove the set_online callback
-> like we do for Nokia. If you can not support online/offline mode, then
-> don't even try to.
-> =
-
-> And please show proper OFONO_AT_DEBUG traces. They can be part of the
-> commit message actually.
-> =
+Marcel
 
 
-Regards,
 
-Bertrand
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============0313540069936230904==--
+--===============3718804852513636652==--
 
