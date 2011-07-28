@@ -1,163 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============7449371547836126439=="
+Content-Type: multipart/mixed; boundary="===============6774952187576228459=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH_v3 3/4] cdmamodem: Create CDMA network registration atom.
-Date: Thu, 28 Jul 2011 13:37:55 +0200
-Message-ID: <1311853076-15878-4-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH_v3 4/4] speedupcdma: register to CDMA network registration
+ atom.
+Date: Thu, 28 Jul 2011 13:37:56 +0200
+Message-ID: <1311853076-15878-5-git-send-email-bertrand.aygon@intel.com>
 In-Reply-To: <1311853076-15878-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7449371547836126439==
+--===============6774952187576228459==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am                              |    3 +-
- drivers/cdmamodem/cdmamodem.c            |    2 +
- drivers/cdmamodem/cdmamodem.h            |    2 +
- drivers/cdmamodem/network-registration.c |   81 ++++++++++++++++++++++++++=
-++++
- 4 files changed, 87 insertions(+), 1 deletions(-)
- create mode 100644 drivers/cdmamodem/network-registration.c
+ plugins/speedupcdma.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 4a4b1d2..7e048f5 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -275,7 +275,8 @@ builtin_sources +=3D drivers/cdmamodem/cdmamodem.h \
- 			drivers/cdmamodem/cdmamodem.c \
- 			drivers/cdmamodem/voicecall.c \
- 			drivers/cdmamodem/devinfo.c \
--			drivers/cdmamodem/connman.c
-+			drivers/cdmamodem/connman.c \
-+			drivers/cdmamodem/network-registration.c
- endif
- =
-
- builtin_modules +=3D g1
-diff --git a/drivers/cdmamodem/cdmamodem.c b/drivers/cdmamodem/cdmamodem.c
-index 1b19a4a..60d5315 100644
---- a/drivers/cdmamodem/cdmamodem.c
-+++ b/drivers/cdmamodem/cdmamodem.c
-@@ -37,6 +37,7 @@ static int cdmamodem_init(void)
- 	cdma_voicecall_init();
- 	cdma_devinfo_init();
- 	cdma_connman_init();
-+	cdma_netreg_init();
- =
-
- 	return 0;
- }
-@@ -46,6 +47,7 @@ static void cdmamodem_exit(void)
- 	cdma_voicecall_exit();
- 	cdma_devinfo_exit();
- 	cdma_connman_exit();
-+	cdma_netreg_exit();
- }
- =
-
- OFONO_PLUGIN_DEFINE(cdmamodem, "CDMA AT modem driver", VERSION,
-diff --git a/drivers/cdmamodem/cdmamodem.h b/drivers/cdmamodem/cdmamodem.h
-index 90e2848..f2d229b 100644
---- a/drivers/cdmamodem/cdmamodem.h
-+++ b/drivers/cdmamodem/cdmamodem.h
-@@ -27,3 +27,5 @@ extern void cdma_devinfo_init(void);
- extern void cdma_devinfo_exit(void);
- extern void cdma_connman_init(void);
- extern void cdma_connman_exit(void);
-+extern void cdma_netreg_init(void);
-+extern void cdma_netreg_exit(void);
-diff --git a/drivers/cdmamodem/network-registration.c b/drivers/cdmamodem/n=
-etwork-registration.c
-new file mode 100644
-index 0000000..92dad56
---- /dev/null
-+++ b/drivers/cdmamodem/network-registration.c
-@@ -0,0 +1,81 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#define _GNU_SOURCE
-+#include <glib.h>
-+
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
+diff --git a/plugins/speedupcdma.c b/plugins/speedupcdma.c
+index 2194a80..8a89f1a 100644
+--- a/plugins/speedupcdma.c
++++ b/plugins/speedupcdma.c
+@@ -35,6 +35,7 @@
+ #include <ofono/modem.h>
+ #include <ofono/devinfo.h>
+ #include <ofono/cdma-connman.h>
 +#include <ofono/cdma-netreg.h>
+ #include <ofono/log.h>
+ =
+
+ struct speedupcdma_data {
+@@ -207,6 +208,8 @@ static void speedupcdma_post_online(struct ofono_modem =
+*modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
++	ofono_cdma_netreg_create(modem, 0, "cdmamodem", data->aux);
 +
-+#include "gatchat.h"
-+
-+#include "cdmamodem.h"
-+
-+struct netreg_data {
-+	GAtChat *chat;
-+};
-+
-+static int cdma_netreg_probe(struct ofono_cdma_netreg *netreg,
-+				unsigned int vendor, void *data)
-+{
-+	GAtChat *chat =3D data;
-+	struct netreg_data *nd;
-+
-+	nd =3D g_try_new0(struct netreg_data, 1);
-+
-+	nd->chat =3D g_at_chat_clone(chat);
-+	ofono_cdma_netreg_set_data(netreg, nd);
-+
-+	ofono_cdma_netreg_register(netreg);
-+
-+	return 0;
-+}
-+
-+static void cdma_netreg_remove(struct ofono_cdma_netreg *netreg)
-+{
-+	struct netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg);
-+
-+	ofono_cdma_netreg_set_data(netreg, NULL);
-+
-+	g_at_chat_unref(nd->chat);
-+	g_free(nd);
-+}
-+
-+static struct ofono_cdma_netreg_driver driver =3D {
-+	.name	=3D "cdmamodem",
-+	.probe	=3D cdma_netreg_probe,
-+	.remove	=3D cdma_netreg_remove,
-+};
-+
-+void cdma_netreg_init(void)
-+{
-+	ofono_cdma_netreg_driver_register(&driver);
-+}
-+
-+void cdma_netreg_exit(void)
-+{
-+	ofono_cdma_netreg_driver_unregister(&driver);
-+}
+ 	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->modem);
+ }
+ =
+
 -- =
 
 1.7.4.1
@@ -175,5 +61,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============7449371547836126439==--
+--===============6774952187576228459==--
 
