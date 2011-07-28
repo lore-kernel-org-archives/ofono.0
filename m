@@ -1,60 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============7738802784197824132=="
+Content-Type: multipart/mixed; boundary="===============3935467328456273860=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] speedup: during enable, we have to go offline first.
-Date: Thu, 28 Jul 2011 13:18:55 +0200
-Message-ID: <1311851936.8920.87.camel@aeonflux>
-In-Reply-To: <1311841508-19358-1-git-send-email-bertrand.aygon@intel.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH_v3 0/4] Create CDMA Network Registration atom
+Date: Thu, 28 Jul 2011 13:37:52 +0200
+Message-ID: <1311853076-15878-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7738802784197824132==
+--===============3935467328456273860==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bertrand,
+Create an org.ofono.cdma.NetworkRegistration interface.
+Just create a skeleton for now.
+Modify SpeedUpCDMA driver to use this new atom.
 
->  plugins/speedup.c |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> =
+Bertrand Aygon (4):
+  cdmamodem: Define CDMA Network Registration atom.
+  cdmamodem: Create org.ofono.cdma.NetworkRegistration interface.
+  cdmamodem: Create CDMA network registration atom.
+  speedupcdma: register to CDMA network registration atom.
 
-> diff --git a/plugins/speedup.c b/plugins/speedup.c
-> index 90ca5e3..a7aa43c 100644
-> --- a/plugins/speedup.c
-> +++ b/plugins/speedup.c
-> @@ -177,7 +177,7 @@ static int speedup_enable(struct ofono_modem *modem)
->  	g_at_chat_send(data->modem, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NUL=
-L);
->  	g_at_chat_send(data->aux, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
->  =
+ Makefile.am                              |    9 +-
+ drivers/cdmamodem/cdmamodem.c            |    2 +
+ drivers/cdmamodem/cdmamodem.h            |    2 +
+ drivers/cdmamodem/network-registration.c |   81 +++++++++++++
+ include/cdma-netreg.h                    |   61 ++++++++++
+ include/dbus.h                           |    2 +
+ plugins/speedupcdma.c                    |    3 +
+ src/cdma-netreg.c                        |  188 ++++++++++++++++++++++++++=
+++++
+ src/ofono.h                              |    2 +
+ 9 files changed, 346 insertions(+), 4 deletions(-)
+ create mode 100644 drivers/cdmamodem/network-registration.c
+ create mode 100644 include/cdma-netreg.h
+ create mode 100644 src/cdma-netreg.c
 
-> -	g_at_chat_send(data->aux, "AT+CFUN=3D1", NULL,
-> +	g_at_chat_send(data->aux, "AT+CFUN=3D4", NULL,
->  					cfun_enable, modem, NULL);
+-- =
 
-this is not a correct fix. You are messing up the logic here. You are
-still in offline mode from an oFono point of view, but your modem is
-actually online.
+1.7.4.1
 
-Try the same that we did for ZTE with sending +CFUN=3D1;+CFUN=3D4 if that
-works out.
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-If not, then check if we can go CFUN=3D1 first and then after SIM query
-succeeded, we go into CFUN=3D4. We do this for Huawei actually.
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
-If none of these work, then you need to remove the set_online callback
-like we do for Nokia. If you can not support online/offline mode, then
-don't even try to.
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
-And please show proper OFONO_AT_DEBUG traces. They can be part of the
-commit message actually.
-
-Regards
-
-Marcel
-
-
-
---===============7738802784197824132==--
+--===============3935467328456273860==--
 
