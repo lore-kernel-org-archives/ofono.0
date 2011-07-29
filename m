@@ -1,85 +1,133 @@
-Content-Type: multipart/mixed; boundary="===============8726495767364461955=="
+Content-Type: multipart/mixed; boundary="===============8558491991733528048=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH] udev: assign "huaweicdma" OFONO_DRIVER for E156 dongle
-Date: Fri, 29 Jul 2011 09:39:37 +0200
-Message-ID: <4E3263B9.1060601@linux.intel.com>
-In-Reply-To: <1311883944.8920.118.camel@aeonflux>
+From: Aygon, Bertrand <bertrand.aygon@intel.com>
+Subject: Huawei E398 and E367
+Date: Fri, 29 Jul 2011 13:37:15 +0100
+Message-ID: <568DE01DA537804BA73470071BAC288938FA9F69@irsmsx503.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8726495767364461955==
+--===============8558491991733528048==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Marcel,
 
-On 28/07/2011 22:12, Marcel Holtmann wrote:
-> Hi Guillaume,
->
->>   plugins/ofono.rules |  217 +++++++++++++++++++++++++++++++++++++++++++=
-+++++++-
->>   1 files changed, 216 insertions(+), 1 deletions(-)
->>
->> diff --git a/plugins/ofono.rules b/plugins/ofono.rules
->> index f8e485b..94eb061 100644
->> --- a/plugins/ofono.rules
->> +++ b/plugins/ofono.rules
->> @@ -412,7 +412,222 @@ ATTRS{idVendor}=3D=3D"1199", ENV{OFONO_DRIVER}=3D"=
-sierra"
->>   ATTRS{idVendor}=3D=3D"1199", ATTRS{serial}=3D=3D"1234567890ABCDEF", EN=
-V{ID_SERIAL_SHORT}=3D""
->>
->>   # HUAWEI Technology
->> -ATTRS{idVendor}=3D=3D"12d1", ENV{OFONO_DRIVER}=3D"huawei"
->> +
->> +# Generic 0x1001
->> +ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1001", ENV{OFONO_DR=
-IVER}=3D"huawei"
->> +
->> +# Generic 0x1003
->> +ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1003", ENV{OFONO_DR=
-IVER}=3D"huawei"
->> +
->> +ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1004", ENV{OFONO_DR=
-IVER}=3D"huawei"
->> +
->> +ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1401", ENV{OFONO_DR=
-IVER}=3D"huawei"
->> +
->> +ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1402", ENV{OFONO_DR=
-IVER}=3D"huawei"
->> +
->> +ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1404", ENV{OFONO_DR=
-IVER}=3D"huawei"
->> +
->> +ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1405", ENV{OFONO_DR=
-IVER}=3D"huawei"
->> +
->> +ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1406", ENV{OFONO_DR=
-IVER}=3D"huawei"
->> +
->> +ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1408", ENV{OFONO_DR=
-IVER}=3D"huawei"
->> +
->> +ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1409", ENV{OFONO_DR=
-IVER}=3D"huawei"
->> +
->> +ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"140a", ENV{OFONO_DR=
-IVER}=3D"huawei"
->> +
->> +# E156
->> +ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"140b", ENV{OFONO_DR=
-IVER}=3D"huaweicdma"
-> just make this one special and have it overwrite the previous one. No
-> need for touching everything.
->
+I saw that you add an oFono.rules to support E398 Huawei modem. And for thi=
+s modem, you are using interface 0 for Modem and 1 for Pcui. This mode has =
+a VID/PID after switch 12d1:1506.
 
-It seems Denis has just done it.
+But I have a Huawei E367, which also switch to 12d1:1506, but which is not =
+using the same tty.
 
-Kind regards,
-Guillaume
+The E3667 has five tty, but only ttyUSB0 and ttyUSB4 can send/recv AT comma=
+nd.
 
---===============8726495767364461955==--
+Is your dongle also have a ttUSB4 that could be used?
+
+How can we handle such cases?
+
+Thanks,
+
+Bertrand.
+
+--
+Bertrand Aygon                      Engineering Manager
+Bertrand.Aygon(a)Intel.com<mailto:Bertrand.Aygon@intel.com>            Op=
+en Source Technology Center, Intel Corporation
+
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============8558491991733528048==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6eD0idXJuOnNjaGVtYXMtbWljcm9z
+b2Z0LWNvbTpvZmZpY2U6ZXhjZWwiIHhtbG5zOmR0PSJ1dWlkOkMyRjQxMDEwLTY1QjMtMTFkMS1B
+MjlGLTAwQUEwMEMxNDg4MiIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9v
+ZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvVFIvUkVDLWh0bWw0
+MCI+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29udGVudD0idGV4dC9odG1s
+OyBjaGFyc2V0PXVzLWFzY2lpIj48bWV0YSBuYW1lPUdlbmVyYXRvciBjb250ZW50PSJNaWNyb3Nv
+ZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+PHN0eWxlPjwhLS0KLyogRm9udCBEZWZpbml0
+aW9ucyAqLwpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6IkNhbWJyaWEgTWF0aCI7CglwYW5vc2Ut
+MToyIDQgNSAzIDUgNCA2IDMgMiA0O30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OkNhbGlicmk7
+CglwYW5vc2UtMToyIDE1IDUgMiAyIDIgNCAzIDIgNDt9CkBmb250LWZhY2UKCXtmb250LWZhbWls
+eTpDb25zb2xhczsKCXBhbm9zZS0xOjIgMTEgNiA5IDIgMiA0IDMgMiA0O30KLyogU3R5bGUgRGVm
+aW5pdGlvbnMgKi8KcC5Nc29Ob3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJe21h
+cmdpbjowY207CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTEuMHB0OwoJZm9u
+dC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjt9CmE6bGluaywgc3Bhbi5Nc29IeXBlcmxp
+bmsKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpibHVlOwoJdGV4dC1kZWNvcmF0aW9u
+OnVuZGVybGluZTt9CmE6dmlzaXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZAoJe21zby1z
+dHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOnB1cnBsZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxp
+bmU7fQpzcGFuLkVtYWlsU3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7
+Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiOwoJY29sb3I6d2luZG93dGV4dDt9
+Ci5Nc29DaHBEZWZhdWx0Cgl7bXNvLXN0eWxlLXR5cGU6ZXhwb3J0LW9ubHk7fQpAcGFnZSBXb3Jk
+U2VjdGlvbjEKCXtzaXplOjYxMi4wcHQgNzkyLjBwdDsKCW1hcmdpbjo3Mi4wcHQgNzIuMHB0IDcy
+LjBwdCA3Mi4wcHQ7fQpkaXYuV29yZFNlY3Rpb24xCgl7cGFnZTpXb3JkU2VjdGlvbjE7fQotLT48
+L3N0eWxlPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPgo8bzpzaGFwZWRlZmF1bHRzIHY6ZXh0PSJl
+ZGl0IiBzcGlkbWF4PSIxMDI2IiAvPgo8L3htbD48IVtlbmRpZl0tLT48IS0tW2lmIGd0ZSBtc28g
+OV0+PHhtbD4KPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgo8bzppZG1hcCB2OmV4dD0iZWRp
+dCIgZGF0YT0iMSIgLz4KPC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlmXS0tPjwvaGVhZD48
+Ym9keSBsYW5nPUVOLUdCIGxpbms9Ymx1ZSB2bGluaz1wdXJwbGU+PGRpdiBjbGFzcz1Xb3JkU2Vj
+dGlvbjE+PHAgY2xhc3M9TXNvTm9ybWFsPkhpIE1hcmNlbCw8bzpwPjwvbzpwPjwvcD48cCBjbGFz
+cz1Nc29Ob3JtYWw+PG86cD4mbmJzcDs8L286cD48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPkkgc2F3
+IHRoYXQgeW91IGFkZCBhbiBvRm9uby5ydWxlcyB0byBzdXBwb3J0IEUzOTggSHVhd2VpIG1vZGVt
+LiBBbmQgZm9yIHRoaXMgbW9kZW0sIHlvdSBhcmUgdXNpbmcgaW50ZXJmYWNlIDAgZm9yIE1vZGVt
+IGFuZCAxIGZvciBQY3VpLiBUaGlzIG1vZGUgaGFzIGEgVklEL1BJRCBhZnRlciBzd2l0Y2ggMTJk
+MToxNTA2LjxvOnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpw
+PjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+QnV0IEkgaGF2ZSBhIEh1YXdlaSBFMzY3LCB3aGljaCBh
+bHNvIHN3aXRjaCB0byAxMmQxOjE1MDYsIGJ1dCB3aGljaCBpcyBub3QgdXNpbmcgdGhlIHNhbWUg
+dHR5LjxvOnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwv
+cD48cCBjbGFzcz1Nc29Ob3JtYWw+VGhlIEUzNjY3IGhhcyBmaXZlIHR0eSwgYnV0IG9ubHkgdHR5
+VVNCMCBhbmQgdHR5VVNCNCBjYW4gc2VuZC9yZWN2IEFUIGNvbW1hbmQuPG86cD48L286cD48L3A+
+PHAgY2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPjxwIGNsYXNzPU1zb05vcm1h
+bD5JcyB5b3VyIGRvbmdsZSBhbHNvIGhhdmUgYSB0dFVTQjQgdGhhdCBjb3VsZCBiZSB1c2VkPzxv
+OnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD48cCBj
+bGFzcz1Nc29Ob3JtYWw+SG93IGNhbiB3ZSBoYW5kbGUgc3VjaCBjYXNlcz88bzpwPjwvbzpwPjwv
+cD48cCBjbGFzcz1Nc29Ob3JtYWw+PG86cD4mbmJzcDs8L286cD48L3A+PHAgY2xhc3M9TXNvTm9y
+bWFsPlRoYW5rcyw8bzpwPjwvbzpwPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PG86cD4mbmJzcDs8
+L286cD48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPkJlcnRyYW5kLjxvOnA+PC9vOnA+PC9wPjxwIGNs
+YXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNw
+YW4gc3R5bGU9J2ZvbnQtc2l6ZToxMC41cHQ7Zm9udC1mYW1pbHk6Q29uc29sYXMnPi0tIDxvOnA+
+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6
+ZToxMC41cHQ7Zm9udC1mYW1pbHk6Q29uc29sYXMnPkJlcnRyYW5kIEF5Z29uJm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+IEVuZ2luZWVyaW5nIE1hbmFnZXImbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgPG86cD48L286cD48L3NwYW4+PC9w
+PjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjEwLjVwdDtmb250LWZh
+bWlseTpDb25zb2xhcyc+PGEgaHJlZj0ibWFpbHRvOkJlcnRyYW5kLkF5Z29uQGludGVsLmNvbSI+
+QmVydHJhbmQuQXlnb25ASW50ZWwuY29tPC9hPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyBPcGVuIFNvdXJjZSBUZWNobm9s
+b2d5IENlbnRlciwgSW50ZWwgQ29ycG9yYXRpb248bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xh
+c3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPjwvZGl2Pjxmb250IGZhY2U9Im1vbm9z
+cGFjZSI+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tPGJyPgpJbnRlbCBDb3Jwb3JhdGlvbiBTQVMgKEZyZW5jaCBzaW1w
+bGlmaWVkIGpvaW50IHN0b2NrIGNvbXBhbnkpPGJyPgpSZWdpc3RlcmVkIGhlYWRxdWFydGVyczog
+IkxlcyBNb250YWxldHMiLSAyLCBydWUgZGUgUGFyaXMsIDxicj4KOTIxOTYgTWV1ZG9uIENlZGV4
+LCBGcmFuY2U8YnI+ClJlZ2lzdHJhdGlvbiBOdW1iZXI6Jm5ic3A7IDMwMiA0NTYgMTk5IFIuQy5T
+LiBOQU5URVJSRTxicj4KQ2FwaXRhbDogNCw1NzIsMDAwIEV1cm9zPGJyPgo8YnI+ClRoaXMgZS1t
+YWlsIGFuZCBhbnkgYXR0YWNobWVudHMgbWF5IGNvbnRhaW4gY29uZmlkZW50aWFsIG1hdGVyaWFs
+IGZvcjxicj4KdGhlIHNvbGUgdXNlIG9mIHRoZSBpbnRlbmRlZCByZWNpcGllbnQocykuIEFueSBy
+ZXZpZXcgb3IgZGlzdHJpYnV0aW9uPGJyPgpieSBvdGhlcnMgaXMgc3RyaWN0bHkgcHJvaGliaXRl
+ZC4gSWYgeW91IGFyZSBub3QgdGhlIGludGVuZGVkPGJyPgpyZWNpcGllbnQsIHBsZWFzZSBjb250
+YWN0IHRoZSBzZW5kZXIgYW5kIGRlbGV0ZSBhbGwgY29waWVzLjwvZm9udD48L2JvZHk+PC9odG1s
+Pg==
+--===============8558491991733528048==--
 
