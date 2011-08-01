@@ -1,84 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============3823081607397558127=="
+Content-Type: multipart/mixed; boundary="===============2808117178391264956=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH 1/2] cbs: send topics one by one for ZTE modem.
-Date: Mon, 01 Aug 2011 12:12:58 +0200
-Message-ID: <1312193580.8920.149.camel@aeonflux>
-In-Reply-To: <568DE01DA537804BA73470071BAC288939006036@irsmsx503.ger.corp.intel.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] udev: switch ttys for SpeedUp 8000.
+Date: Mon, 01 Aug 2011 14:25:55 +0200
+Message-ID: <1312201555-1396-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3823081607397558127==
+--===============2808117178391264956==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bertrand,
+On SpeedUp 8000, notifications are received only on ttyUSB1.
+So we must use this tty for aux, and use ttyUSB3 for modem.
+---
+ plugins/ofono.rules |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-> > > +
-> > > +	if (send_by_one) {
-> > > +		gchar **topic_list =3D NULL;
-> > > +		gchar **topic_list_orig =3D NULL;
-> > > +
-> > > +		topic_list =3D topic_list_orig =3D g_strsplit_set(topics, ",", -1);
-> > > +
-> > > +		for (; *topic_list; topic_list++) {
-> > > +			struct cb_data *cbd =3D cb_data_new(cb, user_data);
-> > > +
-> > > +			buf =3D g_strdup_printf("AT+CSCB=3D0,\"%s\"", *topic_list);
-> > >
-> > > -	id =3D g_at_chat_send(data->chat, buf, none_prefix,
-> > > +			id =3D g_at_chat_send(data->chat, buf, none_prefix,
-> > >  				at_cscb_set_cb, cbd, g_free);
-> > =
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index 3434bef..467f342 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -382,8 +382,8 @@ ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9e0=
+0", ENV{ID_USB_INTERFACE_NUM}=3D=3D"0
+ ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9e00", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"03", ENV{OFONO_SPEEDUP_TYPE}=3D"aux"
+ =
 
-> > So this is not going to work out as nicely as you might think it would.
-> > You keep calling ofono_cbs_set_cb_t callback now for every single topic
-> > you send. And also as a result, the D-Bus call returns successful after
-> > the first one.
-> =
+ # SpeedUp 8000
+-ATTRS{idVendor}=3D=3D"2020", ATTRS{idProduct}=3D=3D"1008", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"01", ENV{OFONO_SPEEDUP_TYPE}=3D"modem"
+-ATTRS{idVendor}=3D=3D"2020", ATTRS{idProduct}=3D=3D"1008", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"03", ENV{OFONO_SPEEDUP_TYPE}=3D"aux"
++ATTRS{idVendor}=3D=3D"2020", ATTRS{idProduct}=3D=3D"1008", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"03", ENV{OFONO_SPEEDUP_TYPE}=3D"modem"
++ATTRS{idVendor}=3D=3D"2020", ATTRS{idProduct}=3D=3D"1008", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"01", ENV{OFONO_SPEEDUP_TYPE}=3D"aux"
+ =
 
-> OK, I see.
-> =
+ # Olive
+ ATTRS{idVendor}=3D=3D"201e", ATTRS{idProduct}=3D=3D"2009", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"00", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
+-- =
 
-> > You need to properly queue this and properly fail and roll back in case
-> > of a failure.
-> =
+1.7.4.1
 
-> Roll back? You means that if there is a failure in the middle of sending,=
- you want to send AT command to remove the first topics?
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-at minimum clear all topics again.
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
-> > I addition to that, I would prefer to send as many topics at once as
-> > possible. So how many can ZTE set at once?
-> =
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
-> I can do some test, but I think that it's not related to topics, but to A=
-T command length. And we cannot guaranty to find another model more restric=
-tive. Sending one by one seems to be the 'safest' solution.
-
-Please check this. And AT command length limitation would be funny. Not
-unlikely, but funny.
-
-And while at it, please check if it is actually capable of handling any
-kind of topic ranges properly. You currently only split the topics, but
-have no special handling for ranges. So if the modem does not handle
-topic ranges, then you have a problem here.
-
-For example if it can only set 10 topics at once, and you give 1-11. Is
-this 11 topics and the modem can handle it. Or it can handle only 10
-topics and would fail.
-
-Another thing that came to mind, please check that it actually adds the
-topics and not just overwrites it. Some manufactures don't read the AT
-command specification carefully.
-
-Regards
-
-Marcel
-
-
-
---===============3823081607397558127==--
+--===============2808117178391264956==--
 
