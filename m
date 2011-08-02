@@ -1,64 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============5134227986092911346=="
+Content-Type: multipart/mixed; boundary="===============7128835856459800345=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: [PATCH 1/2] cbs: split the topics list for ZTE modem.
-Date: Tue, 02 Aug 2011 15:29:06 +0100
-Message-ID: <568DE01DA537804BA73470071BAC28893900664F@irsmsx503.ger.corp.intel.com>
-In-Reply-To: <1312292289.8920.171.camel@aeonflux>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH_v2 0/2] cbs: add a mechanism to split the topics list.
+Date: Tue, 02 Aug 2011 16:33:37 +0200
+Message-ID: <1312295619-29778-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5134227986092911346==
+--===============7128835856459800345==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Some ZTE modems don't support sending a CBS topics list larger than 50 char=
+acters.
 
-> > > >  	/* For the Qualcomm based devices it is required to clear
-> > > >  	 * the list of topics first.  Otherwise setting the new
-> > > > @@ -128,14 +180,40 @@ static void at_cbs_set_topics(struct
-> ofono_cbs
-> > > *cbs, const char *topics,
-> > > >  		g_at_chat_send(data->chat, "AT+CSCB=3D1", none_prefix,
-> > > >  				NULL, NULL, NULL);
-> > > >  		break;
-> > > > +	case OFONO_VENDOR_ZTE:
-> > > > +		data->string_limit =3D 50;
-> > > > +		g_at_chat_send(data->chat, "AT+CSCB=3D1", none_prefix,
-> > > > +				NULL, NULL, NULL);
-> > > > +		break;
-> > >
-> > > Why are we copying the Qualcomm quirk over for ZTE?
-> >
-> > Because previously, ZTE modem is using QUALCOMM vendor for CBS
-> creation.
-> > So I do not want to change this behaviour.
-> =
+Bertrand Aygon (2):
+  cbs: add a mechniasm to split the topics list.
+  zte: specify the vendor to send cbs in split mode.
 
-> test it again. I am not even 100% that ZTE needs this behavior if the
-> limitation was on the command line length. However it might. So please
-> double check and comment it properly.
+ drivers/atmodem/cbs.c |   97 +++++++++++++++++++++++++++++++++++++++++++++=
++---
+ plugins/zte.c         |    2 +-
+ 2 files changed, 93 insertions(+), 6 deletions(-)
 
+-- =
 
-Ok, so ZTE require the CSCB=3D1 in case the topic is already set:
+1.7.4.1
 
-at+cscb=3D1
-OK
-AT+CSCB=3D0,"2000,3000,4000,5000,6000,7000,8000,9000,10000"
-
-OK
-at+cscb?
-+CSCB: 0, "10000,9000,8000,7000,6000,5000,4000,3000,2000",""
-
-OK
-AT+CSCB=3D0,"2000,3000,4000,5000,6000,7000,8000,9000,10000"
-
-+CMS ERROR: 302
-
-Regards,
-
-Bertrand
 ---------------------------------------------------------------------
 Intel Corporation SAS (French simplified joint stock company)
 Registered headquarters: "Les Montalets"- 2, rue de Paris, =
@@ -72,6 +41,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
-
---===============5134227986092911346==--
+--===============7128835856459800345==--
 
