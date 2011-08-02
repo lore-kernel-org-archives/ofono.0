@@ -1,37 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============4813800580246876448=="
+Content-Type: multipart/mixed; boundary="===============4113953113090017369=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH 2/2] zte: specify the vendor to send cbs topics in split mode.
-Date: Tue, 02 Aug 2011 09:35:25 +0200
-Message-ID: <1312270525-14045-3-git-send-email-bertrand.aygon@intel.com>
-In-Reply-To: <1312270525-14045-1-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH_v4 0/6] Create CDMA Network Registration atom
+Date: Tue, 02 Aug 2011 14:45:16 +0200
+Message-ID: <1312289122-22845-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4813800580246876448==
+--===============4113953113090017369==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/zte.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Create an org.ofono.cdma.NetworkRegistration interface.
+Create the skeleton for the new interface.
+Modify SpeedUpCDMA driver to register this atom.
+Add status information to the CDMA Network registration atom.
+Register to ^MODE notification to be informed when network change.
+Send ^SYSINFO to get network status information.
 
-diff --git a/plugins/zte.c b/plugins/zte.c
-index 9fa9940..c572860 100644
---- a/plugins/zte.c
-+++ b/plugins/zte.c
-@@ -297,7 +297,7 @@ static void zte_post_online(struct ofono_modem *modem)
- =
+Bertrand Aygon (6):
+  cdmamodem: Define CDMA Network Registration atom.
+  cdmamodem: Create org.ofono.cdma.NetworkRegistration interface.
+  cdmamodem: Create CDMA network registration atom.
+  speedupcdma: register to CDMA network registration atom.
+  cdmamodem: add status info to cdma network atom.
+  cdmamodem: register for network status notification.
 
- 	ofono_netreg_create(modem, OFONO_VENDOR_ZTE, "atmodem", data->aux);
- =
+ Makefile.am                              |    9 +-
+ drivers/cdmamodem/cdmamodem.c            |    2 +
+ drivers/cdmamodem/cdmamodem.h            |    2 +
+ drivers/cdmamodem/network-registration.c |  156 +++++++++++++++++++
+ include/cdma-netreg.h                    |   69 +++++++++
+ include/dbus.h                           |    2 +
+ plugins/speedupcdma.c                    |    3 +
+ src/cdma-netreg.c                        |  244 ++++++++++++++++++++++++++=
+++++
+ src/ofono.h                              |    2 +
+ 9 files changed, 485 insertions(+), 4 deletions(-)
+ create mode 100644 drivers/cdmamodem/network-registration.c
+ create mode 100644 include/cdma-netreg.h
+ create mode 100644 src/cdma-netreg.c
 
--	ofono_cbs_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
-+	ofono_cbs_create(modem, OFONO_VENDOR_ZTE,
- 					"atmodem", data->aux);
- 	ofono_ussd_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
- 					"atmodem", data->aux);
 -- =
 
 1.7.4.1
@@ -49,5 +59,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============4813800580246876448==--
+--===============4113953113090017369==--
 
