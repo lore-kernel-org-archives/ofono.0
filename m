@@ -1,90 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============2197637315354950338=="
+Content-Type: multipart/mixed; boundary="===============1048733262967331803=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: [PATCH] huawei: cleanup sim polling when the modem is removed.
-Date: Wed, 03 Aug 2011 11:17:20 +0100
-Message-ID: <568DE01DA537804BA73470071BAC288939006987@irsmsx503.ger.corp.intel.com>
-In-Reply-To: <1312366315.3373.15.camel@aeonflux>
+From: iiro.kaihlaniemi@nokia.com
+Subject: [PATCH 0/5] isimodem: Add functionality to UICC
+Date: Wed, 03 Aug 2011 10:39:36 +0000
+Message-ID: <6B9DA0A3415B234191A1ADFA6275C51CB2409D@008-AM1MPN1-041.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2197637315354950338==
+--===============1048733262967331803==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+This patch adds some functionality to UICC which has been pretty much dummy=
+ so far.
 
-> > > We call disable before we call remove, but the only thing that I
-> have
-> > > not checked is what happens to this if we have not succeeded with
-> > > enable
-> > > yet. So if I remember this right, then disable is always called
-> (even
-> > > if
-> > > enable has not yet called set_powered), but I need Denis to confirm
-> > > this.
-> >
-> > Except in the unplug test.
-> =
-
-> it is just the race condition for the time enable is running. Once the
-> modem is properly enabled, even the unplug case is fine.
-> =
-
-> ofonod[14344]: plugins/udev.c:udev_event() subsystem net remove
-> ofonod[14344]: plugins/udev.c:remove_modem()
-> /devices/pci0000:00/0000:00:1a.0/usb1/1-1/1-1.1/1-1.1:1.1/net/wwan0
-> ofonod[14344]: src/modem.c:get_modem_property() modem 0x7beff0 property
-> Path
-> ofonod[14344]: src/modem.c:ofono_modem_remove() 0x7beff0
-> ofonod[14344]: src/modem.c:modem_unregister() 0x7beff0
-> ofonod[14344]: src/modem.c:modem_change_state() old state: 2, new
-> state: 0
-> ofonod[14344]: src/modem.c:flush_atoms()
-> ofonod[14344]: Example Network Time Remove for modem: 0x7beff0
-> ofonod[14344]: Example History Remove for modem: 0x7beff0
-> ofonod[14344]: src/gprs.c:gprs_context_unregister() 0x7be230, 0x7bc8c0
-> ofonod[14344]: src/gprs.c:gprs_context_remove() atom: 0x7be270
-> ofonod[14344]: drivers/atmodem/gprs-context.c:at_gprs_context_remove()
-> ofonod[14344]: Unregistered handle for channel 1: 0x10000
-> ofonod[14344]: src/gprs.c:gprs_unregister() 0x7bc8c0
-> ofonod[14344]: src/gprs.c:gprs_remove() atom: 0x7bd840
-> ofonod[14344]: plugins/push-notification.c:push_notification_cleanup()
-> 0x7ba6a0
-> ofonod[14344]: plugins/smart-messaging.c:smart_messaging_cleanup()
-> 0x7ba640
-> ofonod[14344]: src/sms.c:sms_remove() atom: 0x7bf300
-> ofonod[14344]: src/radio-settings.c:radio_settings_remove() atom:
-> 0x7bea90
-> ofonod[14344]: src/phonebook.c:phonebook_remove() atom: 0x7ba400
-> ofonod[14344]: src/sim.c:sim_remove() atom: 0x7b8b00
-> ofonod[14344]: src/modem.c:devinfo_remove() atom: 0x7b8d00
-> ofonod[14344]: plugins/huawei.c:huawei_disable() 0x7beff0
-> ofonod[14344]: plugins/huawei.c:huawei_remove() 0x7beff0
-> =
-
-> We do call disable before we call remove in the "clean" unplug case. So
-> that is not the problem.
-
-Ok, I get it.
-
-Thanks,
-
-Bertrand
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+ Makefile.am              |    3 +-
+ drivers/isimodem/debug.c |  121 +++++
+ drivers/isimodem/debug.h |    2 +
+ drivers/isimodem/uicc.c  | 1282 ++++++++++++++++++++++++++++++++++++++++++=
++---
+ drivers/isimodem/uicc.h  |   11 +-
+ 5 files changed, 1346 insertions(+), 73 deletions(-)
 
 
---===============2197637315354950338==--
+--===============1048733262967331803==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgZGlyPSJsdHIiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBj
+b250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9aXNvLTg4NTktMSI+CjxzdHlsZSBpZD0ib3dhUGFy
+YVN0eWxlIiB0eXBlPSJ0ZXh0L2NzcyI+UCB7bWFyZ2luLXRvcDowO21hcmdpbi1ib3R0b206MDt9
+PC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBvY3NpPSIwIiBmcHN0eWxlPSIxIj4KPGRpdiBzdHlsZT0i
+ZGlyZWN0aW9uOiBsdHI7Zm9udC1mYW1pbHk6IFRhaG9tYTtjb2xvcjogIzAwMDAwMDtmb250LXNp
+emU6IDEwcHQ7Ij5UaGlzIHBhdGNoIGFkZHMgc29tZSBmdW5jdGlvbmFsaXR5IHRvIFVJQ0Mgd2hp
+Y2ggaGFzIGJlZW4gcHJldHR5IG11Y2ggZHVtbXkgc28gZmFyLjxicj4KPGJyPgombmJzcDtNYWtl
+ZmlsZS5hbSZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyB8Jm5ic3A7Jm5ic3A7Jm5ic3A7IDMgJiM0Mzst
+PGJyPgombmJzcDtkcml2ZXJzL2lzaW1vZGVtL2RlYnVnLmMgfCZuYnNwOyAxMjEgJiM0MzsmIzQz
+OyYjNDM7JiM0MzsmIzQzOzxicj4KJm5ic3A7ZHJpdmVycy9pc2ltb2RlbS9kZWJ1Zy5oIHwmbmJz
+cDsmbmJzcDsmbmJzcDsgMiAmIzQzOzxicj4KJm5ic3A7ZHJpdmVycy9pc2ltb2RlbS91aWNjLmMm
+bmJzcDsgfCAxMjgyICYjNDM7JiM0MzsmIzQzOyYjNDM7JiM0MzsmIzQzOyYjNDM7JiM0MzsmIzQz
+OyYjNDM7JiM0MzsmIzQzOyYjNDM7JiM0MzsmIzQzOyYjNDM7JiM0MzsmIzQzOyYjNDM7JiM0Mzsm
+IzQzOyYjNDM7JiM0MzsmIzQzOyYjNDM7JiM0MzsmIzQzOyYjNDM7JiM0MzsmIzQzOyYjNDM7JiM0
+MzsmIzQzOyYjNDM7JiM0MzsmIzQzOyYjNDM7JiM0MzsmIzQzOyYjNDM7JiM0MzsmIzQzOyYjNDM7
+LS0tPGJyPgombmJzcDtkcml2ZXJzL2lzaW1vZGVtL3VpY2MuaCZuYnNwOyB8Jm5ic3A7Jm5ic3A7
+IDExICYjNDM7LTxicj4KJm5ic3A7NSBmaWxlcyBjaGFuZ2VkLCAxMzQ2IGluc2VydGlvbnMoJiM0
+MzspLCA3MyBkZWxldGlvbnMoLSk8YnI+Cjxicj4KPC9kaXY+CjwvYm9keT4KPC9odG1sPgo=
+
+--===============1048733262967331803==--
 
