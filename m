@@ -1,26 +1,26 @@
-Content-Type: multipart/mixed; boundary="===============9046885603807422071=="
+Content-Type: multipart/mixed; boundary="===============1943226178890382925=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH] speedup: cleanup sim polling when the modem is removed.
-Date: Wed, 03 Aug 2011 10:24:03 +0200
-Message-ID: <1312359843-2595-1-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH] zte: cleanup sim polling when the modem is removed.
+Date: Wed, 03 Aug 2011 10:24:48 +0200
+Message-ID: <1312359888-2753-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9046885603807422071==
+--===============1943226178890382925==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/speedup.c |    3 +++
+ plugins/zte.c |    3 +++
  1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/speedup.c b/plugins/speedup.c
-index b617699..fbfe2e6 100644
---- a/plugins/speedup.c
-+++ b/plugins/speedup.c
-@@ -80,6 +80,9 @@ static void speedup_remove(struct ofono_modem *modem)
+diff --git a/plugins/zte.c b/plugins/zte.c
+index 9fa9940..d812e64 100644
+--- a/plugins/zte.c
++++ b/plugins/zte.c
+@@ -82,6 +82,9 @@ static void zte_remove(struct ofono_modem *modem)
  	/* Cleanup after hot-unplug */
  	g_at_chat_unref(data->aux);
  =
@@ -49,5 +49,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============9046885603807422071==--
+--===============1943226178890382925==--
 
