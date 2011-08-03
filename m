@@ -1,32 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============2786827755398637212=="
+Content-Type: multipart/mixed; boundary="===============2835517541957528061=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] cdmamodem: Use correct prefixes to parse devinfo AT
- results correctly
-Date: Wed, 03 Aug 2011 12:11:44 -0500
-Message-ID: <4E398150.4050101@gmail.com>
-In-Reply-To: <1312379071-8035-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] dunmodem: Add stub for gprs.
+Date: Wed, 03 Aug 2011 22:35:26 +0200
+Message-ID: <1312403727.3373.31.camel@aeonflux>
+In-Reply-To: <1312376660-4785-1-git-send-email-mario@tokarz.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2786827755398637212==
+--===============2835517541957528061==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Mario,
 
-On 08/03/2011 08:44 AM, Guillaume Zajac wrote:
-> ---
->  drivers/cdmamodem/devinfo.c |    8 ++++----
->  1 files changed, 4 insertions(+), 4 deletions(-)
-> =
+>  Makefile.am                 |    3 +-
+>  drivers/dunmodem/dunmodem.c |    2 +
+>  drivers/dunmodem/dunmodem.h |    3 +
+>  drivers/dunmodem/gprs.c     |   99 +++++++++++++++++++++++++++++++++++++=
+++++++
+>  4 files changed, 106 insertions(+), 1 deletions(-)
+>  create mode 100644 drivers/dunmodem/gprs.c
+
+patch has been applied, but ...
+
+> +#define _GNU_SOURCE
+> +#include <string.h>
+> +#include <stdlib.h>
+> +#include <stdio.h>
+> +#include <errno.h>
+> +
+
+... I trimmed this include list a little bit since you are not using any
+of it.
+
+Regards
+
+Marcel
 
 
-Patch has been applied, thanks.
 
-Regards,
--Denis
-
---===============2786827755398637212==--
+--===============2835517541957528061==--
 
