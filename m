@@ -1,64 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============5856859385531999447=="
+Content-Type: multipart/mixed; boundary="===============7843485031150013215=="
 MIME-Version: 1.0
-From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH_v5 8/8] huaweicdma: register to CDMA netreg atom.
-Date: Wed, 03 Aug 2011 15:50:52 +0200
-Message-ID: <1312379452-821-9-git-send-email-bertrand.aygon@intel.com>
-In-Reply-To: <1312379452-821-1-git-send-email-bertrand.aygon@intel.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH] TODO: mark HFP AG emulator task as done
+Date: Wed, 03 Aug 2011 15:53:41 +0200
+Message-ID: <1312379621-13279-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5856859385531999447==
+--===============7843485031150013215==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/huaweicdma.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ TODO             |    8 --------
+ doc/features.txt |    7 +++++++
+ 2 files changed, 7 insertions(+), 8 deletions(-)
 
-diff --git a/plugins/huaweicdma.c b/plugins/huaweicdma.c
-index 75aacb2..4c83114 100644
---- a/plugins/huaweicdma.c
-+++ b/plugins/huaweicdma.c
-@@ -34,6 +34,7 @@
- #include <ofono/plugin.h>
- #include <ofono/modem.h>
- #include <ofono/devinfo.h>
-+#include <ofono/cdma-netreg.h>
- #include <ofono/cdma-connman.h>
- #include <ofono/log.h>
+diff --git a/TODO b/TODO
+index ab8ccff..f03a112 100644
+--- a/TODO
++++ b/TODO
+@@ -94,14 +94,6 @@ SIM / SIM File system
+ Modem Emulator
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
  =
 
-@@ -210,6 +211,8 @@ static void huaweicdma_post_online(struct ofono_modem *=
-modem)
- =
-
- 	DBG("%p", modem);
- =
-
-+	ofono_cdma_netreg_create(modem, 0, "huaweicdmamodem", data->modem);
+-- Support HFP AG emulator.  We should provide a new HFP_AG_EMULATOR atom t=
+ype
+-  that will implement the Bluetooth HFP AG profile.  Voicecall atom, netreg
+-  atoms can register command handlers for this atom appropriately.
+-
+-  Complexity: C4
+-  Priority: Medium
+-  Owner: Fr=C3=A9d=C3=A9ric Danis <frederic.danis@linux.intel.com>
+-
+ - Support CE4A extensions to HFP AG emulator. CE4A defines additional
+   AT command extensions to the Bluetooth HFP AG standard. Refer to CE4A
+   white paper: "AT-commands for Automotive Premium Phone Integration".
+diff --git a/doc/features.txt b/doc/features.txt
+index 46cd79d..525ca85 100644
+--- a/doc/features.txt
++++ b/doc/features.txt
+@@ -670,3 +670,10 @@ PPP Stack
+   PPP stack supports both receiving and sending of packets with ACFC enabl=
+ed.
+   The user can also control whether ACFC capability is advertised to the p=
+eer,
+   and used during transmission.
 +
- 	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->modem);
- }
- =
-
++Modem Emulator
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++- Support HandsFree Profile Audio Gateway (HFP AG) emulator.
++  Supported feature are: 3-way calling, ability to reject a call, enhanced=
+ call
++  status, enhanced call control and report of extended error results code.
 -- =
 
-1.7.4.1
+1.7.1
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============5856859385531999447==--
+--===============7843485031150013215==--
 
