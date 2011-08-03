@@ -1,30 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============7455698156657628724=="
+Content-Type: multipart/mixed; boundary="===============2786827755398637212=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] cdmamodem: remove an unneeded buffer and sprintf.
-Date: Wed, 03 Aug 2011 19:05:48 +0200
-Message-ID: <1312391148.3373.30.camel@aeonflux>
-In-Reply-To: <1312389228-25454-1-git-send-email-bertrand.aygon@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] cdmamodem: Use correct prefixes to parse devinfo AT
+ results correctly
+Date: Wed, 03 Aug 2011 12:11:44 -0500
+Message-ID: <4E398150.4050101@gmail.com>
+In-Reply-To: <1312379071-8035-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7455698156657628724==
+--===============2786827755398637212==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bertrand,
+Hi Guillaume,
 
->  drivers/cdmamodem/connman.c |    5 +----
->  1 files changed, 1 insertions(+), 4 deletions(-)
-
-patch has been applied. Thanks.
-
-Regards
-
-Marcel
+On 08/03/2011 08:44 AM, Guillaume Zajac wrote:
+> ---
+>  drivers/cdmamodem/devinfo.c |    8 ++++----
+>  1 files changed, 4 insertions(+), 4 deletions(-)
+> =
 
 
+Patch has been applied, thanks.
 
---===============7455698156657628724==--
+Regards,
+-Denis
+
+--===============2786827755398637212==--
 
