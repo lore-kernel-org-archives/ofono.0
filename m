@@ -1,40 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============5987771120611160546=="
+Content-Type: multipart/mixed; boundary="===============0489976540793185219=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH_v5 1/8] cdmamodem: Define CDMA Network Registration atom.
-Date: Wed, 03 Aug 2011 15:50:45 +0200
-Message-ID: <1312379452-821-2-git-send-email-bertrand.aygon@intel.com>
-In-Reply-To: <1312379452-821-1-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH_v5 0/8] Create CDMA Network Registration atom
+Date: Wed, 03 Aug 2011 15:50:44 +0200
+Message-ID: <1312379452-821-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5987771120611160546==
+--===============0489976540793185219==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- include/dbus.h |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+Create an org.ofono.cdma.NetworkRegistration interface.
+Create the skeleton for the new interface.
+Add status information to the CDMA Network registration atom.
+Create a Huawei CDMA driver with a dedicated CDMA netreg atom. =
 
-diff --git a/include/dbus.h b/include/dbus.h
-index 4dd9db5..65bda72 100644
---- a/include/dbus.h
-+++ b/include/dbus.h
-@@ -63,6 +63,8 @@ extern "C" {
- #define OFONO_CDMA_VOICECALL_MANAGER_INTERFACE "org.ofono.cdma.VoiceCallMa=
-nager"
- #define OFONO_CDMA_MESSAGE_MANAGER_INTERFACE "org.ofono.cdma.MessageManage=
-r"
- #define OFONO_CDMA_CONNECTION_MANAGER_INTERFACE "org.ofono.cdma.Connection=
-Manager"
-+#define OFONO_CDMA_NETWORK_REGISTRATION_INTERFACE \
-+					"org.ofono.cdma.NetworkRegistration"
- =
+Modify Huawei CDMA driver to register this atom.
 
- /* Essentially a{sv} */
- #define OFONO_PROPERTIES_ARRAY_SIGNATURE DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STR=
-ING \
+Bertrand Aygon (8):
+  cdmamodem: Define CDMA Network Registration atom.
+  cdmamodem: define CDMA netreg atom.
+  cdmamodem: create include file for CDMA netreg.
+  cdmamodem: create the interface for CDMA netreg.
+  cdmamodem: define cdma network status.
+  cdmamodem: implement cdma network status.
+  huaweicdmamodem: create a huawei cdma driver.
+  huaweicdma: register to CDMA netreg atom.
+
+ Makefile.am                                    |   10 +-
+ drivers/huaweicdmamodem/huaweicdmamodem.c      |   45 +++++
+ drivers/huaweicdmamodem/huaweicdmamodem.h      |   23 +++
+ drivers/huaweicdmamodem/network-registration.c |  159 ++++++++++++++++
+ include/cdma-netreg.h                          |   67 +++++++
+ include/dbus.h                                 |    2 +
+ plugins/huaweicdma.c                           |    3 +
+ src/cdma-netreg.c                              |  238 ++++++++++++++++++++=
+++++
+ src/ofono.h                                    |    2 +
+ 9 files changed, 547 insertions(+), 2 deletions(-)
+ create mode 100644 drivers/huaweicdmamodem/huaweicdmamodem.c
+ create mode 100644 drivers/huaweicdmamodem/huaweicdmamodem.h
+ create mode 100644 drivers/huaweicdmamodem/network-registration.c
+ create mode 100644 include/cdma-netreg.h
+ create mode 100644 src/cdma-netreg.c
+
 -- =
 
 1.7.4.1
@@ -52,5 +63,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============5987771120611160546==--
+--===============0489976540793185219==--
 
