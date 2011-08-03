@@ -1,44 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============8234541503166932503=="
+Content-Type: multipart/mixed; boundary="===============7389609256087837292=="
 MIME-Version: 1.0
-From: Mario Tokarz <mario@tokarz.eu>
-Subject: Re: [PATCH 2/2] dunmodem: Add stub for gprs.
-Date: Wed, 03 Aug 2011 15:05:43 +0200
-Message-ID: <20110803130543.GA4819@lmuc323778>
-In-Reply-To: <1312375716.3373.29.camel@aeonflux>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH] cdmamodem: Use correct prefixes to parse devinfo AT results
+ correctly
+Date: Wed, 03 Aug 2011 15:44:31 +0200
+Message-ID: <1312379071-8035-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8234541503166932503==
+--===============7389609256087837292==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel
+---
+ drivers/cdmamodem/devinfo.c |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
 
-On Wed, Aug 03, 2011 at 02:48:35PM +0200 , Marcel Holtmann wrote:
-<snip>
+diff --git a/drivers/cdmamodem/devinfo.c b/drivers/cdmamodem/devinfo.c
+index 2a5813c..06b759c 100644
+--- a/drivers/cdmamodem/devinfo.c
++++ b/drivers/cdmamodem/devinfo.c
+@@ -67,7 +67,7 @@ static void cdma_query_manufacturer(struct ofono_devinfo =
+*info,
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	GAtChat *chat =3D ofono_devinfo_get_data(info);
+ =
 
-> > +
-> > +static int dun_gprs_probe(struct ofono_gprs *gprs,
-> > +					unsigned int vendor, void *data)
-> > +{
-> > +	DBG("");
-> > +
-> > +	g_timeout_add(500, dun_gprs_finish_registration, gprs);
-> > +
-> > +	return 0;
-> > +}
-> =
+-	cbd->user =3D "AT+GMI";
++	cbd->user =3D "+GMI:";
+ =
 
-> Why 500 milliseconds? Why not just g_timeout_add_seconds(0, ...) or
-> g_idle_add().
-> =
+ 	if (g_at_chat_send(chat, "AT+GMI", NULL, attr_cb, cbd, g_free) > 0)
+ 		return;
+@@ -83,7 +83,7 @@ static void cdma_query_model(struct ofono_devinfo *info,
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	GAtChat *chat =3D ofono_devinfo_get_data(info);
+ =
+
+-	cbd->user =3D "AT+GMM";
++	cbd->user =3D "+GMM:";
+ =
+
+ 	if (g_at_chat_send(chat, "AT+GMM", NULL, attr_cb, cbd, g_free) > 0)
+ 		return;
+@@ -99,7 +99,7 @@ static void cdma_query_revision(struct ofono_devinfo *inf=
+o,
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	GAtChat *chat =3D ofono_devinfo_get_data(info);
+ =
+
+-	cbd->user =3D "AT+GMR";
++	cbd->user =3D "+GMR:";
+ =
+
+ 	if (g_at_chat_send(chat, "AT+GMR", NULL, attr_cb, cbd, g_free) > 0)
+ 		return;
+@@ -115,7 +115,7 @@ static void cdma_query_serial(struct ofono_devinfo *inf=
+o,
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	GAtChat *chat =3D ofono_devinfo_get_data(info);
+ =
+
+-	cbd->user =3D "AT+GSN";
++	cbd->user =3D "+GSN:";
+ =
+
+ 	if (g_at_chat_send(chat, "AT+GSN", NULL, attr_cb, cbd, g_free) > 0)
+ 		return;
+-- =
+
+1.7.1
 
 
-Thx, I'm resending.
-
-Cheers,
-Mario
-
---===============8234541503166932503==--
+--===============7389609256087837292==--
 
