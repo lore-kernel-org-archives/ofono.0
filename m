@@ -1,37 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============2163523308265613765=="
+Content-Type: multipart/mixed; boundary="===============4058861603585018400=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH_v2 2/2] zte: specify the vendor to send cbs in split mode.
-Date: Tue, 02 Aug 2011 16:33:39 +0200
-Message-ID: <1312295619-29778-3-git-send-email-bertrand.aygon@intel.com>
-In-Reply-To: <1312295619-29778-1-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH] huawei: cleanup sim polling when the modem is removed.
+Date: Wed, 03 Aug 2011 10:23:14 +0200
+Message-ID: <1312359794-2455-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2163523308265613765==
+--===============4058861603585018400==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/zte.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ plugins/huawei.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/zte.c b/plugins/zte.c
-index 9fa9940..c572860 100644
---- a/plugins/zte.c
-+++ b/plugins/zte.c
-@@ -297,7 +297,7 @@ static void zte_post_online(struct ofono_modem *modem)
+diff --git a/plugins/huawei.c b/plugins/huawei.c
+index 1380369..eaf8b07 100644
+--- a/plugins/huawei.c
++++ b/plugins/huawei.c
+@@ -107,6 +107,9 @@ static void huawei_remove(struct ofono_modem *modem)
+ 	/* Cleanup after hot-unplug */
+ 	g_at_chat_unref(data->pcui);
  =
 
- 	ofono_netreg_create(modem, OFONO_VENDOR_ZTE, "atmodem", data->aux);
++	if (data->sysinfo_poll_source)
++		g_source_remove(data->sysinfo_poll_source);
++
+ 	g_free(data);
+ }
  =
 
--	ofono_cbs_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
-+	ofono_cbs_create(modem, OFONO_VENDOR_ZTE,
- 					"atmodem", data->aux);
- 	ofono_ussd_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
- 					"atmodem", data->aux);
 -- =
 
 1.7.4.1
@@ -49,5 +49,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============2163523308265613765==--
+--===============4058861603585018400==--
 
