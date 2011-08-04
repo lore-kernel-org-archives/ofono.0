@@ -1,63 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============4003073339777377475=="
+Content-Type: multipart/mixed; boundary="===============1917358507025198578=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: [PATCH] speedup: blacklist the NO CARRIER terminator for control
- channel
-Date: Thu, 04 Aug 2011 17:30:50 +0100
-Message-ID: <568DE01DA537804BA73470071BAC28893905BCEA@irsmsx503.ger.corp.intel.com>
-In-Reply-To: <1312475086.3373.41.camel@aeonflux>
+From: Alexander Kanavin <alex.kanavin@gmail.com>
+Subject: Re: [PATCH] Add missing PreferredLanguages property to SimManager
+ documentation
+Date: Thu, 04 Aug 2011 21:14:11 +0300
+Message-ID: <CANNYZj_P90X9=Y-fbZYAz5mWdHqCk-Xzsc-tk1i-2OY4Rv5u-w@mail.gmail.com>
+In-Reply-To: <1312472495.3373.33.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4003073339777377475==
+--===============1917358507025198578==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+2011/8/4 Marcel Holtmann <marcel@holtmann.org>:
+>> > patch has been applied, but I had to fix up the commit message for to
+>> > have a proper prefix. Keep that in mind next time.
+>>
+>> Perhaps this rule should be documented too :)
+>
+> you do know the answer to this one, patches are welcome ;)
 
-> > > > Some Speedup cards will send the NO CARRIER in the control
-> channel.
-> > >
-> > > please include a trace. I am not sure how this effect anything
-> since we
-> > > are not supporting online/offline mode with these cards.
-> >
-> > Ok, no problem. What kind of test do you want me to do?
-> >
-> > I make a data call that failed and then I disable the modem?
-> =
-
-> you are proposing to blacklist this terminator. So you should know
-> where
-> it causes a problem. I only blacklisted it modems that were supporting
-> online mode and where switching offline caused a problem that NO
-> CARRIER
-> came before OK. Do you have that problem?
-
-No I don't, because as you said, speedup doesn't support offline/online mod=
-e.
-
-I have proposed to blacklist it, because this NO CARRIER has nothing to do =
-in control channel, and I do not want it to cause any trouble. I know, this=
- is rude :)
-
-Regards,
-
-Bertrand
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+I know, but I can't quite come up with a good definition for those
+prefixes. How about this:
+"Commit message should be prefixed with a keyword telling which
+module, driver or directory is affected. You can check the commit
+history for examples."
 
 
---===============4003073339777377475==--
+-- =
+
+Alexander
+
+--===============1917358507025198578==--
 
