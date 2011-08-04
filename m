@@ -1,62 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============4262970107378043954=="
+Content-Type: multipart/mixed; boundary="===============0679306187445637818=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: [PATCH] udev: add support for Olive HSDPA modem,
- which seems to be a SpeedUP.
-Date: Thu, 04 Aug 2011 17:01:42 +0100
-Message-ID: <568DE01DA537804BA73470071BAC28893905BCBD@irsmsx503.ger.corp.intel.com>
-In-Reply-To: <568DE01DA537804BA73470071BAC28893905BB86@irsmsx503.ger.corp.intel.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] atutil: put CME ERROR 10 in CPIN polling.
+Date: Thu, 04 Aug 2011 18:06:32 +0200
+Message-ID: <1312473992-6066-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4262970107378043954==
+--===============0679306187445637818==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Some modem also return CME ERROR 10 during boot, until SIM is ready.
 
-> >  plugins/ofono.rules |    9 ++++++---
-> >  1 files changed, 6 insertions(+), 3 deletions(-)
-> >
-> > diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-> > index 27a6316..4e697af 100644
-> > --- a/plugins/ofono.rules
-> > +++ b/plugins/ofono.rules
-> > @@ -385,7 +385,10 @@ ATTRS{idVendor}=3D=3D"1c9e",
-> ATTRS{idProduct}=3D=3D"9800",
-> > ENV{ID_USB_INTERFACE_NUM}=3D=3D"0
-> >  ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9e00",
-> > ENV{ID_USB_INTERFACE_NUM}=3D=3D"00", ENV{OFONO_SPEEDUP_TYPE}=3D"modem"
-> >  ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9e00",
-> > ENV{ID_USB_INTERFACE_NUM}=3D=3D"03", ENV{OFONO_SPEEDUP_TYPE}=3D"aux"
-> >
-> > -# SpeedUp 8000
-> > +# SpeedUp
-> > +ATTRS{idVendor}=3D=3D"2020", ATTRS{idProduct}=3D=3D"1005",
-> > ENV{ID_USB_INTERFACE_NUM}=3D=3D"03", ENV{OFONO_SPEEDUP_TYPE}=3D"modem"
-> > +ATTRS{idVendor}=3D=3D"2020", ATTRS{idProduct}=3D=3D"1005",
-> > ENV{ID_USB_INTERFACE_NUM}=3D=3D"01", ENV{OFONO_SPEEDUP_TYPE}=3D"aux"
-> > +
-> =
+ofonod[5073]: Modem: > ATE0 +CMEE=3D1\r
+ofonod[5073]: Aux: > ATE0 +CMEE=3D1\r
+ofonod[5073]: Aux: < \r\nOK\r\n
+ofonod[5073]: Aux: > AT+CFUN=3D1\r
+ofonod[5073]: Modem: < \r\nOK\r\n
+ofonod[5073]: Aux: < \r\nUSAT_OP_FINISH\r\n\r\n+STRSP:0x14\r\n\r\nOK\r\n
+ofonod[5073]: plugins/speedup.c:cfun_enable()
+ofonod[5073]: Aux: > AT+CPIN?\r
+ofonod[5073]: Aux: < \r\n+CME ERROR: 10\r\n
+ofonod[5073]: Aux: > AT+CPIN?\r
+ofonod[5073]: Aux: < \r\n+CPIN: READY\r\n\r\nOK\r\n
+---
+ drivers/atmodem/atutil.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
-> This modem seems to have an issue with PPP. The NO CARRIER is sent only
-> in one channel, and not the same as the ATD. So I think that I have to
-> swith the tty.
-> =
+diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
+index 63b1301..34e2d3e 100644
+--- a/drivers/atmodem/atutil.c
++++ b/drivers/atmodem/atutil.c
+@@ -527,11 +527,11 @@ static void cpin_check_cb(gboolean ok, GAtResult *res=
+ult, gpointer userdata)
+ 		goto done;
+ =
 
-> Please wait before applying this patch.
+ 	switch (error.error) {
+-	case 10:
+-	case 13:
++	case 13: /* SIM failure */
+ 		goto done;
+ =
 
-Finally, I will keep the tty because if I switch, it's even worse :(
-If modem is on tty 0, we are never receiving any PPP data from the modem.
+-	case 14:
++	case 10: /* SIM not inserted */
++	case 14: /* SIM Busy */
+ 		goto tryagain;
+ =
 
-So I will kept this patch as it is.
+ 	default:
+-- =
 
-And I will make one to black list the NO CARRIER for speedup...
+1.7.4.1
 
-Thanks for the review,
-
-Bertrand
 ---------------------------------------------------------------------
 Intel Corporation SAS (French simplified joint stock company)
 Registered headquarters: "Les Montalets"- 2, rue de Paris, =
@@ -70,6 +69,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
-
---===============4262970107378043954==--
+--===============0679306187445637818==--
 
