@@ -1,71 +1,104 @@
-Content-Type: multipart/mixed; boundary="===============3509315960507790610=="
+Content-Type: multipart/mixed; boundary="===============0283172338074433419=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH_v6 11/14] huaweicdma: register to ^RSSILVL to update signal
- strength.
-Date: Fri, 05 Aug 2011 15:21:12 +0200
-Message-ID: <1312550475-8537-12-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH_v6 10/14] cdmamodem: add strength to CDMA netreg atom.
+Date: Fri, 05 Aug 2011 15:21:11 +0200
+Message-ID: <1312550475-8537-11-git-send-email-bertrand.aygon@intel.com>
 In-Reply-To: <1312550475-8537-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3509315960507790610==
+--===============0283172338074433419==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/huaweicdmamodem/network-registration.c |   23 ++++++++++++++++++++=
-+++
- 1 files changed, 23 insertions(+), 0 deletions(-)
+ src/cdma-netreg.c |   39 +++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 39 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/huaweicdmamodem/network-registration.c b/drivers/huawe=
-icdmamodem/network-registration.c
-index db91882..b82919a 100644
---- a/drivers/huaweicdmamodem/network-registration.c
-+++ b/drivers/huaweicdmamodem/network-registration.c
-@@ -115,6 +115,26 @@ static void mode_notify(GAtResult *result, gpointer us=
-er_data)
- 				sysinfo_cb, netreg, NULL);
+diff --git a/src/cdma-netreg.c b/src/cdma-netreg.c
+index ec6b315..12ddd23 100644
+--- a/src/cdma-netreg.c
++++ b/src/cdma-netreg.c
+@@ -33,6 +33,7 @@ static GSList *g_drivers;
+ =
+
+ struct ofono_cdma_netreg {
+ 	enum cdma_netreg_status status;
++	int strength;
+ 	const struct ofono_cdma_netreg_driver *driver;
+ 	void *driver_data;
+ 	struct ofono_atom *atom;
+@@ -74,6 +75,13 @@ static DBusMessage *network_get_properties(DBusConnectio=
+n *conn,
+ =
+
+ 	ofono_dbus_dict_append(&dict, "Status", DBUS_TYPE_STRING, &status);
+ =
+
++	if (cdma_netreg->strength !=3D -1) {
++		unsigned char strength =3D cdma_netreg->strength;
++
++		ofono_dbus_dict_append(&dict, "Strength", DBUS_TYPE_BYTE,
++					&strength);
++	}
++
+ 	dbus_message_iter_close_container(&iter, &dict);
+ =
+
+ 	return reply;
+@@ -113,6 +121,36 @@ void ofono_cdma_netreg_status_notify(struct ofono_cdma=
+_netreg *cdma_netreg,
+ 		set_registration_status(cdma_netreg, status);
  }
  =
 
-+static void rssilvl_notify(GAtResult *result, gpointer user_data)
++void ofono_cdma_netreg_strength_notify(struct ofono_cdma_netreg *netreg,
++					int strength)
 +{
-+	struct ofono_cdma_netreg *netreg =3D user_data;
-+	int strength;
-+	GAtResultIter iter;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "^RSSILVL:"))
++	if (netreg =3D=3D NULL)
 +		return;
 +
-+	if (!g_at_result_iter_next_number(&iter, &strength))
++	if (netreg->strength =3D=3D strength)
 +		return;
 +
-+	if (strength =3D=3D 99)
-+		strength =3D 100;
++	/*
++	 * Theoretically we can get signal strength even when not registered
++	 * to any network.  However, what do we do with it in that case?
++	 */
++	if (netreg->status =3D=3D CDMA_NETWORK_REGISTRATION_STATUS_NOT_REGISTERED)
++		return;
 +
-+	ofono_cdma_netreg_strength_notify(netreg, strength);
++	netreg->strength =3D strength;
++
++	if (strength !=3D -1) {
++		DBusConnection *conn =3D ofono_dbus_get_connection();
++		const char *path =3D __ofono_atom_get_path(netreg->atom);
++		unsigned char strength =3D netreg->strength;
++
++		ofono_dbus_signal_property_changed(conn, path,
++				OFONO_CDMA_NETWORK_REGISTRATION_INTERFACE,
++				"Strength", DBUS_TYPE_BYTE,
++				&strength);
++	}
 +}
 +
- static void probe_cb(gboolean ok, GAtResult *result, gpointer user_data)
+ int ofono_cdma_netreg_driver_register(const struct ofono_cdma_netreg_drive=
+r *d)
  {
- 	struct ofono_cdma_netreg *netreg =3D user_data;
-@@ -142,6 +162,9 @@ static int huaweicdma_netreg_probe(struct ofono_cdma_ne=
-treg *netreg,
- 	g_at_chat_register(nd->chat, "^MODE:",
- 				mode_notify, FALSE, netreg, NULL);
+ 	DBG("driver: %p, name: %s", d, d->name);
+@@ -177,6 +215,7 @@ struct ofono_cdma_netreg *ofono_cdma_netreg_create(stru=
+ct ofono_modem *modem,
+ 		return NULL;
  =
 
-+	g_at_chat_register(nd->chat, "^RSSILVL:",
-+				rssilvl_notify, FALSE, netreg, NULL);
-+
- 	g_at_chat_send(nd->chat, "AT^SYSINFO", sysinfo_prefix,
- 				probe_cb, netreg, NULL);
+ 	cdma_netreg->status =3D CDMA_NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
++	cdma_netreg->strength =3D -1;
  =
 
+ 	cdma_netreg->atom =3D __ofono_modem_add_atom(modem,
+ 					OFONO_ATOM_TYPE_CDMA_NETREG,
 -- =
 
 1.7.4.1
@@ -83,5 +116,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============3509315960507790610==--
+--===============0283172338074433419==--
 
