@@ -1,37 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============1917358507025198578=="
+Content-Type: multipart/mixed; boundary="===============5138191032335816388=="
 MIME-Version: 1.0
-From: Alexander Kanavin <alex.kanavin@gmail.com>
-Subject: Re: [PATCH] Add missing PreferredLanguages property to SimManager
- documentation
-Date: Thu, 04 Aug 2011 21:14:11 +0300
-Message-ID: <CANNYZj_P90X9=Y-fbZYAz5mWdHqCk-Xzsc-tk1i-2OY4Rv5u-w@mail.gmail.com>
-In-Reply-To: <1312472495.3373.33.camel@aeonflux>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH 0/2] PPP: recording ppp dump to file
+Date: Fri, 05 Aug 2011 10:34:02 +0200
+Message-ID: <1312533244-28622-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1917358507025198578==
+--===============5138191032335816388==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2011/8/4 Marcel Holtmann <marcel@holtmann.org>:
->> > patch has been applied, but I had to fix up the commit message for to
->> > have a proper prefix. Keep that in mind next time.
->>
->> Perhaps this rule should be documented too :)
->
-> you do know the answer to this one, patches are welcome ;)
+Create a new env var to activate PPP dump recording into a file.
+Store this file in the PPP context, so the recording can occurs from
+the beginning of the session, and so we are sure to not loose any frame.
 
-I know, but I can't quite come up with a good definition for those
-prefixes. How about this:
-"Commit message should be prefixed with a keyword telling which
-module, driver or directory is affected. You can check the commit
-history for examples."
+Bertrand Aygon (2):
+  gatppp: save dumpfile into ppp info to start recording during open
+    phase.
+  gprs: use a new var env to active PPP dump.
 
+ drivers/atmodem/gprs-context.c |    5 +++++
+ gatchat/gatppp.c               |   11 ++++++++++-
+ 2 files changed, 15 insertions(+), 1 deletions(-)
 
 -- =
 
-Alexander
+1.7.4.1
 
---===============1917358507025198578==--
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============5138191032335816388==--
 
