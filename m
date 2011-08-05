@@ -1,38 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============3266485026545344245=="
+Content-Type: multipart/mixed; boundary="===============2922527773008468795=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH_v6 12/14] cdmamodem: add data strength to CDMA netreg atom.
-Date: Fri, 05 Aug 2011 15:21:13 +0200
-Message-ID: <1312550475-8537-13-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH_v6 14/14] test: update list-modem to display CDMA DataStrength
+ info.
+Date: Fri, 05 Aug 2011 15:21:15 +0200
+Message-ID: <1312550475-8537-15-git-send-email-bertrand.aygon@intel.com>
 In-Reply-To: <1312550475-8537-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3266485026545344245==
+--===============2922527773008468795==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/cdma-netreg.h |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ test/list-modems |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/include/cdma-netreg.h b/include/cdma-netreg.h
-index 80b0047..5687a24 100644
---- a/include/cdma-netreg.h
-+++ b/include/cdma-netreg.h
-@@ -48,6 +48,8 @@ void ofono_cdma_netreg_status_notify(struct ofono_cdma_ne=
-treg *netreg,
- 				enum cdma_netreg_status status);
- void ofono_cdma_netreg_strength_notify(struct ofono_cdma_netreg *netreg,
- 				int strength);
-+void ofono_cdma_netreg_data_strength_notify(struct ofono_cdma_netreg *netr=
-eg,
-+				int data_strength);
- =
-
- int ofono_cdma_netreg_driver_register(
- 				const struct ofono_cdma_netreg_driver *d);
+diff --git a/test/list-modems b/test/list-modems
+index 662a3c7..09949b7 100755
+--- a/test/list-modems
++++ b/test/list-modems
+@@ -52,7 +52,8 @@ for path, properties in modems:
+ 						"VoicemailMessageCount",
+ 						"MicrophoneVolume",
+ 						"SpeakerVolume",
+-						"Strength"]:
++						"Strength",
++						"DataStrength"]:
+ 				val =3D int(properties[key])
+ 			elif key in ["MainMenu"]:
+ 				val =3D ", ".join([ text + " (" + str(int(icon)) +
 -- =
 
 1.7.4.1
@@ -50,5 +49,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============3266485026545344245==--
+--===============2922527773008468795==--
 
