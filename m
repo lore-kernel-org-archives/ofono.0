@@ -1,125 +1,262 @@
-Content-Type: multipart/mixed; boundary="===============5186162984502185972=="
+Content-Type: multipart/mixed; boundary="===============0955094714687513885=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH_v6 05/14] cdmamodem: implement cdma network status.
-Date: Fri, 05 Aug 2011 15:21:06 +0200
-Message-ID: <1312550475-8537-6-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH_v6 07/14] huaweicdma: create a dedicated netreg atom.
+Date: Fri, 05 Aug 2011 15:21:08 +0200
+Message-ID: <1312550475-8537-8-git-send-email-bertrand.aygon@intel.com>
 In-Reply-To: <1312550475-8537-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5186162984502185972==
+--===============0955094714687513885==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/cdma-netreg.c |   47 +++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 47 insertions(+), 0 deletions(-)
+ Makefile.am                                    |    3 +-
+ drivers/huaweicdmamodem/huaweicdmamodem.c      |    3 +
+ drivers/huaweicdmamodem/huaweicdmamodem.h      |    2 +
+ drivers/huaweicdmamodem/network-registration.c |  175 ++++++++++++++++++++=
+++++
+ 4 files changed, 182 insertions(+), 1 deletions(-)
+ create mode 100644 drivers/huaweicdmamodem/network-registration.c
 
-diff --git a/src/cdma-netreg.c b/src/cdma-netreg.c
-index 927af52..ec6b315 100644
---- a/src/cdma-netreg.c
-+++ b/src/cdma-netreg.c
-@@ -32,18 +32,36 @@
- static GSList *g_drivers;
+diff --git a/Makefile.am b/Makefile.am
+index 1c424ca..da4e238 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -280,7 +280,8 @@ builtin_sources +=3D drivers/cdmamodem/cdmamodem.h \
  =
 
- struct ofono_cdma_netreg {
-+	enum cdma_netreg_status status;
- 	const struct ofono_cdma_netreg_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
- };
+ builtin_modules +=3D huaweicdmamodem
+ builtin_sources +=3D drivers/huaweicdmamodem/huaweicdmamodem.h \
+-			drivers/huaweicdmamodem/huaweicdmamodem.c
++			drivers/huaweicdmamodem/huaweicdmamodem.c \
++			drivers/huaweicdmamodem/network-registration.c
  =
 
-+static const char *cdma_netreg_status_to_string(enum cdma_netreg_status st=
-atus)
-+{
-+	switch (status) {
-+	case CDMA_NETWORK_REGISTRATION_STATUS_NOT_REGISTERED:
-+		return "unregistered";
-+	case CDMA_NETWORK_REGISTRATION_STATUS_REGISTERED:
-+		return "registered";
-+	case CDMA_NETWORK_REGISTRATION_STATUS_ROAMING:
-+		return "roaming";
-+	}
-+
-+	return "";
-+}
-+
- static DBusMessage *network_get_properties(DBusConnection *conn,
- 						DBusMessage *msg, void *data)
+ endif
+ =
+
+diff --git a/drivers/huaweicdmamodem/huaweicdmamodem.c b/drivers/huaweicdma=
+modem/huaweicdmamodem.c
+index d9e7943..4e9c400 100644
+--- a/drivers/huaweicdmamodem/huaweicdmamodem.c
++++ b/drivers/huaweicdmamodem/huaweicdmamodem.c
+@@ -30,11 +30,14 @@
+ =
+
+ static int huaweicdmamodem_init(void)
  {
-+	struct ofono_cdma_netreg *cdma_netreg =3D data;
- 	DBusMessage *reply;
- 	DBusMessageIter iter;
- 	DBusMessageIter dict;
- =
-
-+	const char *status =3D cdma_netreg_status_to_string(cdma_netreg->status);
++	huaweicdma_netreg_init();
 +
- 	reply =3D dbus_message_new_method_return(msg);
- 	if (reply =3D=3D NULL)
- 		return NULL;
-@@ -54,6 +72,8 @@ static DBusMessage *network_get_properties(DBusConnection=
- *conn,
- 					OFONO_PROPERTIES_ARRAY_SIGNATURE,
- 					&dict);
+ 	return 0;
+ }
  =
 
-+	ofono_dbus_dict_append(&dict, "Status", DBUS_TYPE_STRING, &status);
+ static void huaweicdmamodem_exit(void)
+ {
++	huaweicdma_netreg_exit();
+ }
+ =
+
+ OFONO_PLUGIN_DEFINE(huaweicdmamodem, "Huawei CDMA modem driver", VERSION,
+diff --git a/drivers/huaweicdmamodem/huaweicdmamodem.h b/drivers/huaweicdma=
+modem/huaweicdmamodem.h
+index 018747f..799d3a8 100644
+--- a/drivers/huaweicdmamodem/huaweicdmamodem.h
++++ b/drivers/huaweicdmamodem/huaweicdmamodem.h
+@@ -19,3 +19,5 @@
+  *
+  */
+ =
+
++extern void huaweicdma_netreg_init(void);
++extern void huaweicdma_netreg_exit(void);
+diff --git a/drivers/huaweicdmamodem/network-registration.c b/drivers/huawe=
+icdmamodem/network-registration.c
+new file mode 100644
+index 0000000..db91882
+--- /dev/null
++++ b/drivers/huaweicdmamodem/network-registration.c
+@@ -0,0 +1,175 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
- 	dbus_message_iter_close_container(&iter, &dict);
- =
-
- 	return reply;
-@@ -68,6 +88,31 @@ static GDBusSignalTable cdma_netreg_manager_signals[] =
-=3D {
- 	{ }
- };
- =
-
-+static void set_registration_status(struct ofono_cdma_netreg *cdma_netreg,
-+						enum cdma_netreg_status status)
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#define _GNU_SOURCE
++#include <glib.h>
++#include <errno.h>
++
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/cdma-netreg.h>
++
++#include "gatchat.h"
++
++#include "huaweicdmamodem.h"
++
++static const char *sysinfo_prefix[] =3D { "^SYSINFO:", NULL };
++
++struct huaweicdma_netreg_data {
++	GAtChat *chat;
++};
++
++static void parse_sysinfo(GAtResult *result, gint *status)
 +{
-+	const char *str_status =3D cdma_netreg_status_to_string(status);
-+	const char *path =3D __ofono_atom_get_path(cdma_netreg->atom);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
++	GAtResultIter iter;
++	gint srv_status;
++	gint srv_domain;
++	gint roaming_status;
 +
-+	cdma_netreg->status =3D status;
++	g_at_result_iter_init(&iter, result);
 +
-+	ofono_dbus_signal_property_changed(conn, path,
-+				OFONO_CDMA_NETWORK_REGISTRATION_INTERFACE,
-+				"Status", DBUS_TYPE_STRING,
-+				&str_status);
-+}
-+
-+void ofono_cdma_netreg_status_notify(struct ofono_cdma_netreg *cdma_netreg,
-+					enum cdma_netreg_status status)
-+{
-+	if (cdma_netreg =3D=3D NULL)
++	if (!g_at_result_iter_next(&iter, "^SYSINFO:"))
 +		return;
 +
-+	if (cdma_netreg->status !=3D status)
-+		set_registration_status(cdma_netreg, status);
++	if (!g_at_result_iter_next_number(&iter, &srv_status))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &srv_domain))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &roaming_status))
++		return;
++
++	DBG("%d, %d, %d", srv_status, srv_domain, roaming_status);
++
++	switch (srv_status) {
++	case 1:	/* Restricted service */
++	case 2:	/* Service valid */
++	case 3:	/* Restricted region service */
++		if (roaming_status)
++			*status =3D CDMA_NETWORK_REGISTRATION_STATUS_ROAMING;
++		else
++			*status =3D CDMA_NETWORK_REGISTRATION_STATUS_REGISTERED;
++		break;
++	case 0:	/* No service */
++	case 4:	/* Not registered */
++	default:
++		*status =3D CDMA_NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
++		break;
++	}
++
++	switch (srv_domain) {
++	case 0: /* No service */
++	case 255: /* CDMA not supported */
++		*status =3D CDMA_NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
++		break;
++	case 1: /* Only CS */
++	case 2: /* Only PS */
++	case 3: /* CS + PS */
++	case 4: /* CS registered, PS in searching state */
++		break;
++	}
 +}
 +
- int ofono_cdma_netreg_driver_register(const struct ofono_cdma_netreg_drive=
-r *d)
- {
- 	DBG("driver: %p, name: %s", d, d->name);
-@@ -131,6 +176,8 @@ struct ofono_cdma_netreg *ofono_cdma_netreg_create(stru=
-ct ofono_modem *modem,
- 	if (cdma_netreg =3D=3D NULL)
- 		return NULL;
- =
-
-+	cdma_netreg->status =3D CDMA_NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
++static void sysinfo_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_cdma_netreg *netreg =3D user_data;
++	int status;
 +
- 	cdma_netreg->atom =3D __ofono_modem_add_atom(modem,
- 					OFONO_ATOM_TYPE_CDMA_NETREG,
- 					cdma_netreg_remove, cdma_netreg);
++	if (!ok)
++		return;
++
++	parse_sysinfo(result, &status);
++
++	ofono_cdma_netreg_status_notify(netreg, status);
++}
++
++static void mode_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_cdma_netreg *netreg =3D user_data;
++	struct huaweicdma_netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg);
++
++	g_at_chat_send(nd->chat, "AT^SYSINFO", sysinfo_prefix,
++				sysinfo_cb, netreg, NULL);
++}
++
++static void probe_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_cdma_netreg *netreg =3D user_data;
++
++	if (!ok)
++		return;
++
++	ofono_cdma_netreg_register(netreg);
++}
++
++static int huaweicdma_netreg_probe(struct ofono_cdma_netreg *netreg,
++				unsigned int vendor, void *data)
++{
++	GAtChat *chat =3D data;
++	struct huaweicdma_netreg_data *nd;
++
++	nd =3D g_try_new0(struct huaweicdma_netreg_data, 1);
++	if (nd =3D=3D NULL)
++		return -ENOMEM;
++
++	nd->chat =3D g_at_chat_clone(chat);
++
++	ofono_cdma_netreg_set_data(netreg, nd);
++
++	g_at_chat_register(nd->chat, "^MODE:",
++				mode_notify, FALSE, netreg, NULL);
++
++	g_at_chat_send(nd->chat, "AT^SYSINFO", sysinfo_prefix,
++				probe_cb, netreg, NULL);
++
++	return 0;
++}
++
++static void huaweicdma_netreg_remove(struct ofono_cdma_netreg *netreg)
++{
++	struct huaweicdma_netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg);
++
++	ofono_cdma_netreg_set_data(netreg, NULL);
++
++	g_at_chat_unref(nd->chat);
++	g_free(nd);
++}
++
++static struct ofono_cdma_netreg_driver driver =3D {
++	.name	=3D "huaweicdmamodem",
++	.probe	=3D huaweicdma_netreg_probe,
++	.remove	=3D huaweicdma_netreg_remove,
++};
++
++void huaweicdma_netreg_init(void)
++{
++	ofono_cdma_netreg_driver_register(&driver);
++}
++
++void huaweicdma_netreg_exit(void)
++{
++	ofono_cdma_netreg_driver_unregister(&driver);
++}
 -- =
 
 1.7.4.1
@@ -137,5 +274,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============5186162984502185972==--
+--===============0955094714687513885==--
 
