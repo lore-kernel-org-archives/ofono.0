@@ -1,171 +1,337 @@
-Content-Type: multipart/mixed; boundary="===============4380651521278821991=="
+Content-Type: multipart/mixed; boundary="===============3654990594822186723=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 2/3] isimodem: Allow network registration automatically
-Date: Fri, 05 Aug 2011 11:38:15 +0300
-Message-ID: <CANzBvOSx7=cvwEj73xDAWG4oZ2AuN7epejm-nNuctL7h-qmyxA@mail.gmail.com>
-In-Reply-To: <6B9DA0A3415B234191A1ADFA6275C51CB2423A@008-AM1MPN1-041.mgdnok.nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH_v5 7/8] huaweicdmamodem: create a huawei cdma driver.
+Date: Fri, 05 Aug 2011 10:49:04 +0200
+Message-ID: <1312534145.3373.56.camel@aeonflux>
+In-Reply-To: <1312379452-821-8-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4380651521278821991==
+--===============3654990594822186723==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Iiro,
+Hi Bertrand,
 
-2011/8/3  <iiro.kaihlaniemi@nokia.com>:
-> diff --git a/drivers/isimodem/network-registration.c b/drivers/isimodem/n=
-etwork-registration.c
-> index cc48579..ffcfab4 100644
-> --- a/drivers/isimodem/network-registration.c
-> +++ b/drivers/isimodem/network-registration.c
-> @@ -946,6 +946,84 @@ error:
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0g_free(cbd);
-> =C2=A0}
->
-> +static void cs_access_config_resp_cb(const GIsiMessage *msg, void *data)
+>  Makefile.am                                    |    6 +
+>  drivers/huaweicdmamodem/huaweicdmamodem.c      |   45 +++++++
+>  drivers/huaweicdmamodem/huaweicdmamodem.h      |   23 ++++
+>  drivers/huaweicdmamodem/network-registration.c |  159 ++++++++++++++++++=
+++++++
+>  4 files changed, 233 insertions(+), 0 deletions(-)
+>  create mode 100644 drivers/huaweicdmamodem/huaweicdmamodem.c
+>  create mode 100644 drivers/huaweicdmamodem/huaweicdmamodem.h
+>  create mode 100644 drivers/huaweicdmamodem/network-registration.c
+
+these need to be split into two. First put the core plugin into place
+and then add features to it.
+
+> diff --git a/Makefile.am b/Makefile.am
+> index 56c1d6a..afa5e6f 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -276,6 +276,12 @@ builtin_sources +=3D drivers/cdmamodem/cdmamodem.h \
+>  			drivers/cdmamodem/voicecall.c \
+>  			drivers/cdmamodem/devinfo.c \
+>  			drivers/cdmamodem/connman.c
+> +
+> +builtin_modules +=3D huaweicdmamodem
+> +builtin_sources +=3D drivers/huaweicdmamodem/huaweicdmamodem.h \
+> +			drivers/huaweicdmamodem/huaweicdmamodem.c \
+> +			drivers/huaweicdmamodem/network-registration.c
+> +
+>  endif
+>  =
+
+>  builtin_modules +=3D g1
+> diff --git a/drivers/huaweicdmamodem/huaweicdmamodem.c b/drivers/huaweicd=
+mamodem/huaweicdmamodem.c
+> new file mode 100644
+> index 0000000..4e9c400
+> --- /dev/null
+> +++ b/drivers/huaweicdmamodem/huaweicdmamodem.c
+> @@ -0,0 +1,45 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifdef HAVE_CONFIG_H
+> +#include <config.h>
+> +#endif
+> +
+> +#define OFONO_API_SUBJECT_TO_CHANGE
+> +#include <ofono/plugin.h>
+> +
+> +#include "huaweicdmamodem.h"
+> +
+> +static int huaweicdmamodem_init(void)
 > +{
-> + =C2=A0 =C2=A0struct ofono_netreg *netreg =3D data;
-> + =C2=A0 =C2=A0struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-> + =C2=A0 =C2=A0 =C2=A0 GIsiSubBlockIter iter;
+> +	huaweicdma_netreg_init();
 > +
-> + =C2=A0 =C2=A0DBG("");
-> + =C2=A0 =C2=A0if (g_isi_msg_id(msg) !=3D NET_NW_ACCESS_CONF_RESP)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
-
-Indent with a single tab, no spaces allowed. This applies to the rest
-of the patch as well.
-
-> + =C2=A0 =C2=A0 =C2=A0 for (g_isi_sb_iter_init(&iter, msg, 2);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 g_isi_sb_iter_is_valid(&iter);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 g_isi_sb_iter_next(&iter))
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 uint8_t id =3D g_isi_s=
-b_iter_get_id(&iter);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 uint8_t mode;
+> +	return 0;
+> +}
 > +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBG("SB=3D%02X", id);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if ((id =3D=3D 0x55) |=
-| (id =3D=3D 0x59))
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_isi_sb_iter_get_byte=
-(&iter, &mode, 2);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBG("Reg=
- %X", mode);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 else if ((id =3D=3D 0x=
-56) || (id =3D=3D 0x5A))
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_isi_sb_iter_get_byte=
-(&iter, &mode, 2);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBG("Roa=
-m %X", mode);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
+> +static void huaweicdmamodem_exit(void)
+> +{
+> +	huaweicdma_netreg_exit();
+> +}
+> +
+> +OFONO_PLUGIN_DEFINE(huaweicdmamodem, "Huawei CDMA modem driver", VERSION,
+> +			OFONO_PLUGIN_PRIORITY_DEFAULT,
+> +			huaweicdmamodem_init, huaweicdmamodem_exit)
+> diff --git a/drivers/huaweicdmamodem/huaweicdmamodem.h b/drivers/huaweicd=
+mamodem/huaweicdmamodem.h
+> new file mode 100644
+> index 0000000..799d3a8
+> --- /dev/null
+> +++ b/drivers/huaweicdmamodem/huaweicdmamodem.h
+> @@ -0,0 +1,23 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +extern void huaweicdma_netreg_init(void);
+> +extern void huaweicdma_netreg_exit(void);
+> diff --git a/drivers/huaweicdmamodem/network-registration.c b/drivers/hua=
+weicdmamodem/network-registration.c
+> new file mode 100644
+> index 0000000..e4c5c41
+> --- /dev/null
+> +++ b/drivers/huaweicdmamodem/network-registration.c
+> @@ -0,0 +1,159 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifdef HAVE_CONFIG_H
+> +#include <config.h>
+> +#endif
+> +
+> +#define _GNU_SOURCE
+> +#include <glib.h>
+> +
+> +#include <ofono/log.h>
+> +#include <ofono/modem.h>
+> +#include <ofono/cdma-netreg.h>
+> +
+> +#include "gatchat.h"
+> +
+> +#include "huaweicdmamodem.h"
+> +
+> +static const char *sysinfo_prefix[] =3D { "^SYSINFO:", NULL };
+> +
+> +struct huaweicdma_netreg_data {
+> +	GAtChat *chat;
+> +};
+> +
+> +static void sysinfo_cb(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
+> +{
+> +	struct ofono_cdma_netreg *netreg =3D user_data;
+> +	gint srv_status;
+> +	gint srv_domain;
+> +	gint roaming_status;
+> +	int status;
+> +	GAtResultIter iter;
+> +
+> +	if (!ok)
+> +		return;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (!g_at_result_iter_next(&iter, "^SYSINFO:"))
+> +		return;
+> +
+> +	if (!g_at_result_iter_next_number(&iter, &srv_status))
+> +		return;
+> +
+> +	if (!g_at_result_iter_next_number(&iter, &srv_domain))
+> +		return;
+> +
+> +	if (!g_at_result_iter_next_number(&iter, &roaming_status))
+> +		return;
+> +
+> +	DBG("%d, %d, %d", srv_status, srv_domain, roaming_status);
+> +
+> +	switch (srv_status) {
+> +	case 1:	/* Restricted service */
+> +	case 2:	/* Service valid */
+> +	case 3:	/* Restricted region service */
+> +		status =3D CDMA_NETWORK_REGISTRATION_STATUS_REGISTERED;
+> +		break;
+> +	case 0:	/* No service */
+> +	case 4:	/* Not registered */
+> +	default:
+> +		status =3D CDMA_NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
+> +		break;
+> +	}
+> +
+> +	switch (srv_domain) {
+> +	case 0: /* No service */
+> +	case 255: /* CDMA not supported */
+> +		status =3D CDMA_NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
+> +		break;
+> +	case 1: /* Only CS */
+> +	case 2: /* Only PS */
+> +	case 3: /* CS + PS */
+> +	case 4: /* CS registered, PS in searching state */
+> +		break;
+> +	}
+> +	=
 
-These subblock IDs need to be added in network.h. I would also
-recommend a switch statement here for more readability.
+> +	if (status =3D=3D CDMA_NETWORK_REGISTRATION_STATUS_REGISTERED
+> +				&& roaming_status)
+> +		status =3D CDMA_NETWORK_REGISTRATION_STATUS_ROAMING;
 
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 else
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBG("Unk=
-nown subblock");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
+Do we really have to make it this complicated? Just nest the switch
+statement for srv_status and srv_domain.
 
-Regarding the entire for and if blocks above and elsewhere in the
-patch, the style in oFono is to attach curly brackets on the same line
-as the for/if/while statement. Please take a look at
-doc/coding-style.txt.
+It is pretty obvious that if srv_status results in not registered that
+we do not have to do any further checks.
 
-To catch style errors early, I would recommend also using the
-checkpatch.pl script before submitting.
+> +	ofono_cdma_netreg_status_notify(netreg, status);
+> +}
+> +
+> +
+> +static void mode_notify(GAtResult *result, gpointer user_data)
+> +{
+> +	struct ofono_cdma_netreg *netreg =3D user_data;
+> +	struct huaweicdma_netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg=
+);
+> +
+> +	g_at_chat_send(nd->chat, "AT^SYSINFO", sysinfo_prefix, sysinfo_cb,
+> +				netreg, NULL);
+
+Just for style sake, put sysinfo_cb on the next line. Most of the
+command do that. Even if it fits into the previous line.
 
 > +}
 > +
-> +static void cs_state_resp_cb(const GIsiMessage *msg, void *data)
+> +static int huaweicdma_netreg_probe(struct ofono_cdma_netreg *netreg,
+> +				unsigned int vendor, void *data)
 > +{
-> + =C2=A0 =C2=A0struct ofono_netreg *netreg =3D data;
-> + =C2=A0 =C2=A0struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-> + =C2=A0 =C2=A0uint8_t code;
+> +	GAtChat *chat =3D data;
+> +	struct huaweicdma_netreg_data *nd;
 > +
-> + =C2=A0 =C2=A0DBG("");
-> + =C2=A0 =C2=A0if (g_isi_msg_id(msg) !=3D NET_CS_STATE_RESP)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
+> +	nd =3D g_try_new0(struct huaweicdma_netreg_data, 1);
+
+You need to check if memory allocation succeeded here.
+
+> +	nd->chat =3D g_at_chat_clone(chat);
+
+Extra empty line here.
+
+> +	ofono_cdma_netreg_set_data(netreg, nd);
 > +
-> + =C2=A0 =C2=A0if (!g_isi_msg_data_get_byte(msg, 0, &code))
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
+> +	g_at_chat_register(nd->chat, "^MODE:",
+> +				mode_notify, FALSE, netreg, NULL);
 > +
-> + =C2=A0 =C2=A0if (code !=3D NET_CAUSE_OK)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0{
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0DBG("Failed with cause=3D%X", code);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0}
+> +	ofono_cdma_netreg_register(netreg);
+
+Please do not do that here. Also I am not sure that has actually been
+tested, but this should fail and cause various side effects.
+
+Just have a different callback for the initial AT^SYSINFO call. You
+should really only register that atom once you know that it is supported
+and at least on AT^SYSINFO succeeded
+
+> +	g_at_chat_send(nd->chat, "AT^SYSINFO", sysinfo_prefix, sysinfo_cb,
+> +				netreg, NULL);
+
+Same style comment as above.
+
 > +
-> + =C2=A0 =C2=A0if (!g_isi_msg_data_get_byte(msg, 1, &code))
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
-> + =C2=A0 =C2=A0DBG("CS STATE=3D%X", code);
-> +
-> + =C2=A0 =C2=A0if (code =3D=3D NET_CS_INACTIVE)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0{
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0DBG("CS INACTIVE - DO POWER ON NOT IMPLEMENT=
-ED!!!!!!");
-
-No shouting please ;)
-
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0}
-> + =C2=A0 =C2=A0else
-> + =C2=A0 =C2=A0 =C2=A0 {
-> + =C2=A0 =C2=A0 =C2=A0 /* Enable registration and roaming */
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0const uint8_t req[] =3D {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0NET_NW_ACCESS_CONF_REQ, 0, 2,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* Subblock 1 */
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x59, 4, 1, 0,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* Subblock 2 */
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x5A, 4, 1, 0,
-
-Should really add these subblock IDs in network.h.
-
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0};
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0DBG("CS ACTIVE - Check access config");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0g_isi_client_send(nd->client, req, sizeof(re=
-q), cs_access_config_resp_cb, netreg, NULL);
-
-Please take a look at coding style rule O2, and rather than putting
-all this in an else statement, just return above if code =3D=3D
-NET_CS_INACTIVE.
-
-By the way, is CS access config ever set if when probing the CS state
-is NET_CS_INACTIVE? Should we also subscribe to the equivalent
-indication to drive this code?
-
-> + =C2=A0 =C2=A0 =C2=A0 }
+> +	return 0;
 > +}
 > +
-> =C2=A0static void subscribe_indications(GIsiClient *cl, void *data)
-> =C2=A0{
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0g_isi_client_ind_subscribe(cl, NET_RSSI_IND, r=
-ssi_ind_cb, data);
-> @@ -994,6 +1072,11 @@ static void pn_modem_network_reachable_cb(const GIs=
-iMessage *msg, void *data)
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct ofono_netreg *netreg =3D data;
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct netreg_data *nd =3D ofono_netreg_get_da=
-ta(netreg);
->
-> + =C2=A0 =C2=A0const uint8_t req[] =3D {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0NET_CS_STATE_REQ,
-> + =C2=A0 =C2=A0};
+> +static void huaweicdma_netreg_remove(struct ofono_cdma_netreg *netreg)
+> +{
+> +	struct huaweicdma_netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg=
+);
 > +
+> +	ofono_cdma_netreg_set_data(netreg, NULL);
 > +
+> +	g_at_chat_unref(nd->chat);
+> +	g_free(nd);
+> +}
+> +
+> +static struct ofono_cdma_netreg_driver driver =3D {
+> +	.name	=3D "huaweicdmamodem",
+> +	.probe	=3D huaweicdma_netreg_probe,
+> +	.remove	=3D huaweicdma_netreg_remove,
+> +};
+> +
+> +void huaweicdma_netreg_init(void)
+> +{
+> +	ofono_cdma_netreg_driver_register(&driver);
+> +}
+> +
+> +void huaweicdma_netreg_exit(void)
+> +{
+> +	ofono_cdma_netreg_driver_unregister(&driver);
+> +}
 
-Indent with tabs here.
+Regards
 
-Cheers,
-Aki
+Marcel
 
---===============4380651521278821991==--
+
+
+--===============3654990594822186723==--
 
