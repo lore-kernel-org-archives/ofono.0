@@ -1,39 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============3362901015707385865=="
+Content-Type: multipart/mixed; boundary="===============3253881571592290861=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv3 3/5] GPRS provisioning data plan support
-Date: Fri, 05 Aug 2011 15:26:00 +0300
-Message-ID: <1312547162-26420-4-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv3 4/5] Mobile broadband provider info plugin autoconf support
+Date: Fri, 05 Aug 2011 15:26:01 +0300
+Message-ID: <1312547162-26420-5-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1312547162-26420-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3362901015707385865==
+--===============3253881571592290861==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/gprs-provision.h |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ configure.ac |   19 +++++++++++++------
+ 1 files changed, 13 insertions(+), 6 deletions(-)
 
-diff --git a/include/gprs-provision.h b/include/gprs-provision.h
-index e9eec61..2273a09 100644
---- a/include/gprs-provision.h
-+++ b/include/gprs-provision.h
-@@ -30,6 +30,7 @@ extern "C" {
+diff --git a/configure.ac b/configure.ac
+index a6b4094..966237c 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -197,14 +197,21 @@ AC_SUBST(BLUEZ_CFLAGS)
+ AC_SUBST(BLUEZ_LIBS)
+ AM_CONDITIONAL(BLUETOOTH, test "${enable_bluetooth}" !=3D "no")
  =
 
- struct ofono_gprs_provision_data {
- 	enum ofono_gprs_context_type type;
-+	enum ofono_gprs_context_plan plan;
- 	enum ofono_gprs_proto proto;
- 	char *name;
- 	char *apn;
+-AC_MSG_CHECKING([for mobile-broadband-provider-info])
+-PKG_CHECK_EXISTS(mobile-broadband-provider-info,
+-	_PKG_CONFIG(PROVIDER_DATABASE, [variable=3Ddatabase],
++AC_ARG_ENABLE(provider-info, AC_HELP_STRING([--enable-provider-info],
++				[enable mobile provider database support]),
++					[enable_provider_info=3D${enableval}])
++if (test "${enable_provider_info}" =3D=3D "yes"); then
++	AC_MSG_CHECKING([for mobile-broadband-provider-info])
++	PKG_CHECK_EXISTS(mobile-broadband-provider-info,
++			_PKG_CONFIG(PROVIDER_DATABASE, [variable=3Ddatabase],
+ 					[mobile-broadband-provider-info])
+-	AC_DEFINE_UNQUOTED(PROVIDER_DATABASE, "$pkg_cv_PROVIDER_DATABASE",
++		AC_DEFINE_UNQUOTED(PROVIDER_DATABASE,
++					"$pkg_cv_PROVIDER_DATABASE",
+ 					[Mobile provider database])
+-	AC_MSG_RESULT([yes]),
+-	AC_MSG_RESULT([no]))
++		AC_MSG_RESULT([yes]),
++		AC_MSG_ERROR(mobile-broadband-provider-info package is required))
++fi
++AM_CONDITIONAL(PROVIDER_INFO, test "${enable_provider_info}" =3D=3D "yes")
+ =
+
+ AC_ARG_ENABLE(datafiles, AC_HELP_STRING([--disable-datafiles],
+ 			[don't install configuration and data files]),
 -- =
 
 1.7.1
 
 
---===============3362901015707385865==--
+--===============3253881571592290861==--
 
