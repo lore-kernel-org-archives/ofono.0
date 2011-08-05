@@ -1,37 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============3545788938219108167=="
+Content-Type: multipart/mixed; boundary="===============3509315960507790610=="
 MIME-Version: 1.0
 From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH_v6 09/14] cdmamodem: add strength to CDMA netreg atom
-Date: Fri, 05 Aug 2011 15:21:10 +0200
-Message-ID: <1312550475-8537-10-git-send-email-bertrand.aygon@intel.com>
+Subject: [PATCH_v6 11/14] huaweicdma: register to ^RSSILVL to update signal
+ strength.
+Date: Fri, 05 Aug 2011 15:21:12 +0200
+Message-ID: <1312550475-8537-12-git-send-email-bertrand.aygon@intel.com>
 In-Reply-To: <1312550475-8537-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3545788938219108167==
+--===============3509315960507790610==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/cdma-netreg.h |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ drivers/huaweicdmamodem/network-registration.c |   23 ++++++++++++++++++++=
++++
+ 1 files changed, 23 insertions(+), 0 deletions(-)
 
-diff --git a/include/cdma-netreg.h b/include/cdma-netreg.h
-index 126a5a5..80b0047 100644
---- a/include/cdma-netreg.h
-+++ b/include/cdma-netreg.h
-@@ -46,6 +46,8 @@ struct ofono_cdma_netreg_driver {
+diff --git a/drivers/huaweicdmamodem/network-registration.c b/drivers/huawe=
+icdmamodem/network-registration.c
+index db91882..b82919a 100644
+--- a/drivers/huaweicdmamodem/network-registration.c
++++ b/drivers/huaweicdmamodem/network-registration.c
+@@ -115,6 +115,26 @@ static void mode_notify(GAtResult *result, gpointer us=
+er_data)
+ 				sysinfo_cb, netreg, NULL);
+ }
  =
 
- void ofono_cdma_netreg_status_notify(struct ofono_cdma_netreg *netreg,
- 				enum cdma_netreg_status status);
-+void ofono_cdma_netreg_strength_notify(struct ofono_cdma_netreg *netreg,
-+				int strength);
++static void rssilvl_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_cdma_netreg *netreg =3D user_data;
++	int strength;
++	GAtResultIter iter;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "^RSSILVL:"))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &strength))
++		return;
++
++	if (strength =3D=3D 99)
++		strength =3D 100;
++
++	ofono_cdma_netreg_strength_notify(netreg, strength);
++}
++
+ static void probe_cb(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_cdma_netreg *netreg =3D user_data;
+@@ -142,6 +162,9 @@ static int huaweicdma_netreg_probe(struct ofono_cdma_ne=
+treg *netreg,
+ 	g_at_chat_register(nd->chat, "^MODE:",
+ 				mode_notify, FALSE, netreg, NULL);
  =
 
- int ofono_cdma_netreg_driver_register(
- 				const struct ofono_cdma_netreg_driver *d);
++	g_at_chat_register(nd->chat, "^RSSILVL:",
++				rssilvl_notify, FALSE, netreg, NULL);
++
+ 	g_at_chat_send(nd->chat, "AT^SYSINFO", sysinfo_prefix,
+ 				probe_cb, netreg, NULL);
+ =
+
 -- =
 
 1.7.4.1
@@ -49,5 +83,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============3545788938219108167==--
+--===============3509315960507790610==--
 
