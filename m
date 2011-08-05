@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4774659977725214155=="
+Content-Type: multipart/mixed; boundary="===============0852297629564478353=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] hfpmodem: fix hf features
-Date: Fri, 05 Aug 2011 17:09:46 -0500
-Message-ID: <4E3C6A2A.9060002@gmail.com>
-In-Reply-To: <1312462544-21581-2-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH 2/2] hfp_hf: retrieve AG version
+Date: Fri, 05 Aug 2011 17:13:10 -0500
+Message-ID: <4E3C6AF6.3060906@gmail.com>
+In-Reply-To: <1312462544-21581-3-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4774659977725214155==
+--===============0852297629564478353==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,53 +16,69 @@ Content-Transfer-Encoding: quoted-printable
 Hi Fr=C3=A9d=C3=A9ric,
 
 On 08/04/2011 07:55 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> check audio gateway version and only set right features
 > ---
->  drivers/hfpmodem/slc.c |    5 +++++
->  drivers/hfpmodem/slc.h |    1 +
->  2 files changed, 6 insertions(+), 0 deletions(-)
+>  plugins/hfp_hf.c |    7 ++++---
+>  1 files changed, 4 insertions(+), 3 deletions(-)
 > =
 
-> diff --git a/drivers/hfpmodem/slc.c b/drivers/hfpmodem/slc.c
-> index f9eca22..db1c3b9 100644
-> --- a/drivers/hfpmodem/slc.c
-> +++ b/drivers/hfpmodem/slc.c
-> @@ -60,9 +60,14 @@ void hfp_slc_info_init(struct hfp_slc_info *info)
->  	info->hf_features =3D HFP_HF_FEATURE_3WAY;
->  	info->hf_features |=3D HFP_HF_FEATURE_CLIP;
->  	info->hf_features |=3D HFP_HF_FEATURE_REMOTE_VOLUME_CONTROL;
-> +
-> +	if (info->ag_version < 0x0105)
-> +		goto done;
-> +
->  	info->hf_features |=3D HFP_HF_FEATURE_ENHANCED_CALL_STATUS;
->  	info->hf_features |=3D HFP_HF_FEATURE_ENHANCED_CALL_CONTROL;
+> diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
+> index 5625141..cf2bb42 100644
+> --- a/plugins/hfp_hf.c
+> +++ b/plugins/hfp_hf.c
+> @@ -163,9 +163,12 @@ static DBusMessage *hfp_agent_new_connection(DBusCon=
+nection *conn,
+>  	struct hfp_data *hfp_data =3D ofono_modem_get_data(modem);
 >  =
 
-> +done:
->  	memset(info->cind_val, 0, sizeof(info->cind_val));
->  	memset(info->cind_pos, 0, sizeof(info->cind_pos));
+>  	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_UNIX_FD, &fd,
+> +				DBUS_TYPE_UINT16, &hfp_data->info.ag_version,
+
+I don't like doing it this way, hfp_slc_info_init implies that it
+initializes the entire structure.  Perhaps passing the version into
+hfp_slc_info_init would be better.
+
+Also, I don't know if we want to be a little 'nice' and allow the second
+argument to be omitted.  For those that might still be running against
+an older version of BlueZ (and then retire this in a version or two of
+oFono)  However, since there are not many users of hfp client right now
+I'm not particularly picky here.
+
+>  				DBUS_TYPE_INVALID))
+>  		return __ofono_error_invalid_args(msg);
+>  =
+
+> +	hfp_slc_info_init(&hfp_data->info);
+> +
+>  	err =3D service_level_connection(modem, fd);
+>  	if (err < 0 && err !=3D -EINPROGRESS)
+>  		return __ofono_error_failed(msg);
+> @@ -192,7 +195,7 @@ static DBusMessage *hfp_agent_release(DBusConnection =
+*conn,
 >  }
-> diff --git a/drivers/hfpmodem/slc.h b/drivers/hfpmodem/slc.h
-> index f37a59c..7f4203f 100644
-> --- a/drivers/hfpmodem/slc.h
-> +++ b/drivers/hfpmodem/slc.h
-> @@ -42,6 +42,7 @@ typedef void (*hfp_slc_cb_t)(void *userdata);
 >  =
 
->  struct hfp_slc_info {
->  	GAtChat *chat;
-> +	int ag_version;
+>  static GDBusMethodTable agent_methods[] =3D {
+> -	{ "NewConnection", "h", "", hfp_agent_new_connection,
+> +	{ "NewConnection", "hq", "", hfp_agent_new_connection,
+>  		G_DBUS_METHOD_FLAG_ASYNC },
+>  	{ "Release", "", "", hfp_agent_release },
+>  	{ NULL, NULL, NULL, NULL }
+> @@ -223,8 +226,6 @@ static int hfp_hf_probe(const char *device, const cha=
+r *dev_addr,
+>  	if (data =3D=3D NULL)
+>  		goto free;
+>  =
 
-I think you can avoid introducing this member if you simply pass the
-version into hfp_slc_info_init.
+> -	hfp_slc_info_init(&data->info);
+> -
+>  	data->handsfree_path =3D g_strdup(device);
+>  	if (data->handsfree_path =3D=3D NULL)
+>  		goto free;
 
->  	unsigned int ag_features;
->  	unsigned int ag_mpty_features;
->  	unsigned int hf_features;
+The rest looks good to me.
 
 Regards,
 -Denis
 
---===============4774659977725214155==--
+--===============0852297629564478353==--
 
