@@ -1,84 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============0852297629564478353=="
+Content-Type: multipart/mixed; boundary="===============2200348085264084300=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] hfp_hf: retrieve AG version
-Date: Fri, 05 Aug 2011 17:13:10 -0500
-Message-ID: <4E3C6AF6.3060906@gmail.com>
-In-Reply-To: <1312462544-21581-3-git-send-email-frederic.danis@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: cdma-connman: how to save credentials
+Date: Mon, 08 Aug 2011 10:19:12 +0200
+Message-ID: <4E3F9C00.30606@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0852297629564478353==
+--===============2200348085264084300==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Denis and Marcel,
 
-On 08/04/2011 07:55 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> ---
->  plugins/hfp_hf.c |    7 ++++---
->  1 files changed, 4 insertions(+), 3 deletions(-)
-> =
+As suggested by Marcel over ConnMan mailing list, I would like to save =
 
-> diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
-> index 5625141..cf2bb42 100644
-> --- a/plugins/hfp_hf.c
-> +++ b/plugins/hfp_hf.c
-> @@ -163,9 +163,12 @@ static DBusMessage *hfp_agent_new_connection(DBusCon=
-nection *conn,
->  	struct hfp_data *hfp_data =3D ofono_modem_get_data(modem);
->  =
+CDMA modem credentials like it is done for GSM modem contexts.
+However, for GSM modem we use IMSI to save the contexts. So I could use =
 
->  	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_UNIX_FD, &fd,
-> +				DBUS_TYPE_UINT16, &hfp_data->info.ag_version,
+CDMA Modem Serial to save but if we put different SIM into the same =
 
-I don't like doing it this way, hfp_slc_info_init implies that it
-initializes the entire structure.  Perhaps passing the version into
-hfp_slc_info_init would be better.
+modem, we will load wrong credentials.
 
-Also, I don't know if we want to be a little 'nice' and allow the second
-argument to be omitted.  For those that might still be running against
-an older version of BlueZ (and then retire this in a version or two of
-oFono)  However, since there are not many users of hfp client right now
-I'm not particularly picky here.
+If this solution is good for you anyway, should I:
 
->  				DBUS_TYPE_INVALID))
->  		return __ofono_error_invalid_args(msg);
->  =
+         1) modifiy the query_serial_cb() like this:
 
-> +	hfp_slc_info_init(&hfp_data->info);
-> +
->  	err =3D service_level_connection(modem, fd);
->  	if (err < 0 && err !=3D -EINPROGRESS)
->  		return __ofono_error_failed(msg);
-> @@ -192,7 +195,7 @@ static DBusMessage *hfp_agent_release(DBusConnection =
-*conn,
->  }
->  =
+static void query_serial_cb(const struct ofono_error *error,
+                  const char *serial, void *user)
+  {
+      struct ofono_devinfo *info =3D user;
++    struct ofono_atom *cdma_atom;
++    struct ofono_cdma_connman *cm;
+      DBusConnection *conn =3D ofono_dbus_get_connection();
+      const char *path =3D __ofono_atom_get_path(info->atom);
 
->  static GDBusMethodTable agent_methods[] =3D {
-> -	{ "NewConnection", "h", "", hfp_agent_new_connection,
-> +	{ "NewConnection", "hq", "", hfp_agent_new_connection,
->  		G_DBUS_METHOD_FLAG_ASYNC },
->  	{ "Release", "", "", hfp_agent_release },
->  	{ NULL, NULL, NULL, NULL }
-> @@ -223,8 +226,6 @@ static int hfp_hf_probe(const char *device, const cha=
-r *dev_addr,
->  	if (data =3D=3D NULL)
->  		goto free;
->  =
+      if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
+          return;
 
-> -	hfp_slc_info_init(&data->info);
-> -
->  	data->handsfree_path =3D g_strdup(device);
->  	if (data->handsfree_path =3D=3D NULL)
->  		goto free;
++    cdma_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(info->ato=
+m),
++                        OFONO_ATOM_TYPE_CDMA_CONNMAN);
++
++    if (cdma_atom !=3D NULL) {
++        cm =3D __ofono_atom_get_data(cdma_atom);
++        ofono_cdma_connman_load_credentials(cm, serial);    // similar =
 
-The rest looks good to me.
+to gprs_load_settings()
++    }
++
 
-Regards,
--Denis
+     info->serial =3D g_strdup(serial);
 
---===============0852297629564478353==--
+     ofono_dbus_signal_property_changed(conn, path,
+                         OFONO_MODEM_INTERFACE,
+                         "Serial", DBUS_TYPE_STRING,
+&info->serial);
+}
+
+     or 2) Implement a devinfo API to return serial, like the IMSI is =
+
+returned by SIM atom?
+             Thus, I would have gprs-like implementation.
+
+Thanks for your help.
+
+Kind regards,
+Guillaume
+
+--===============2200348085264084300==--
 
