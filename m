@@ -1,55 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============4190066793688411583=="
+Content-Type: multipart/mixed; boundary="===============5939717835819395171=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH_v9 0/4] Create CDMA netreg atom
-Date: Mon, 08 Aug 2011 14:42:04 +0200
-Message-ID: <4E3FD99C.7040408@linux.intel.com>
-In-Reply-To: <1312805600-20043-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH v2 0/2] add profile version to HandsfreeAgent
+Date: Mon, 08 Aug 2011 15:45:40 +0200
+Message-ID: <1312811142-13831-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4190066793688411583==
+--===============5939717835819395171==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-
-It should have been v8 and not v9 sorry for the mistake.
-
-Kind regards,
-Guillaume
-
-On 08/08/2011 14:13, Guillaume Zajac wrote:
-> Already v9, cause of some issues.
->
-> Changelog from v8 is:
-> 	- Remove struct cdma_netreg_data creating compilation issue
-> 	- Use correct name "DataStrength" for data signal
->
->
-> Bertrand Aygon (4):
->    huaweicdma: create a dedicated netreg atom.
->    huaweicdma: register to CDMA netreg atom.
->    huaweicdma: register to ^RSSILVL to update signal strength.
->    cdmamodem: add data strength to CDMA netreg atom.
->
->   Makefile.am                                    |    3 +-
->   drivers/huaweicdmamodem/huaweicdmamodem.c      |    3 +
->   drivers/huaweicdmamodem/huaweicdmamodem.h      |    3 +
->   drivers/huaweicdmamodem/network-registration.c |  199 +++++++++++++++++=
-+++++++
->   plugins/huaweicdma.c                           |    3 +
->   src/cdma-netreg.c                              |   54 +++++--
->   6 files changed, 254 insertions(+), 11 deletions(-)
->   create mode 100644 drivers/huaweicdmamodem/network-registration.c
->
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
+Some phones with HFP Audio Gateway version previous to 1.5 (i.e.
+Samsung SGH-D600 returning 0x0101 as profile version) do not accept
+an AT+BRSF with latest features.
+The Handsfree agent should adapt its AT+BRSF command depending on the
+remote version, so add version information as parameter of
+NewConnection method.
+For localhfp modem, use the highest version possible (0xFFFF) so it
+will always send all implemented features.
 
 
---===============4190066793688411583==--
+Fr=C3=A9d=C3=A9ric Danis (2):
+  hfpmodem: fix hf features
+  hfp_hf: retrieve AG version
+
+ drivers/hfpmodem/slc.c |    7 ++++++-
+ drivers/hfpmodem/slc.h |    2 +-
+ plugins/hfp_hf.c       |    9 +++++----
+ plugins/phonesim.c     |    2 +-
+ 4 files changed, 13 insertions(+), 7 deletions(-)
+
+
+--===============5939717835819395171==--
 
