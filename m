@@ -1,40 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============5199890909950599781=="
+Content-Type: multipart/mixed; boundary="===============2364519599641668630=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v9 0/4] Create CDMA netreg atom
-Date: Mon, 08 Aug 2011 14:13:16 +0200
-Message-ID: <1312805600-20043-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v9 2/4] huaweicdma: register to CDMA netreg atom.
+Date: Mon, 08 Aug 2011 14:13:18 +0200
+Message-ID: <1312805600-20043-3-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1312805600-20043-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5199890909950599781==
+--===============2364519599641668630==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Already v9, cause of some issues.
+From: Bertrand Aygon <bertrand.aygon@intel.com>
 
-Changelog from v8 is:
-	- Remove struct cdma_netreg_data creating compilation issue
-	- Use correct name "DataStrength" for data signal
+---
+ plugins/huaweicdma.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
+
+diff --git a/plugins/huaweicdma.c b/plugins/huaweicdma.c
+index 75aacb2..4c83114 100644
+--- a/plugins/huaweicdma.c
++++ b/plugins/huaweicdma.c
+@@ -34,6 +34,7 @@
+ #include <ofono/plugin.h>
+ #include <ofono/modem.h>
+ #include <ofono/devinfo.h>
++#include <ofono/cdma-netreg.h>
+ #include <ofono/cdma-connman.h>
+ #include <ofono/log.h>
+ =
+
+@@ -210,6 +211,8 @@ static void huaweicdma_post_online(struct ofono_modem *=
+modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
++	ofono_cdma_netreg_create(modem, 0, "huaweicdmamodem", data->modem);
++
+ 	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->modem);
+ }
+ =
+
+-- =
+
+1.7.1
 
 
-Bertrand Aygon (4):
-  huaweicdma: create a dedicated netreg atom.
-  huaweicdma: register to CDMA netreg atom.
-  huaweicdma: register to ^RSSILVL to update signal strength.
-  cdmamodem: add data strength to CDMA netreg atom.
-
- Makefile.am                                    |    3 +-
- drivers/huaweicdmamodem/huaweicdmamodem.c      |    3 +
- drivers/huaweicdmamodem/huaweicdmamodem.h      |    3 +
- drivers/huaweicdmamodem/network-registration.c |  199 ++++++++++++++++++++=
-++++
- plugins/huaweicdma.c                           |    3 +
- src/cdma-netreg.c                              |   54 +++++--
- 6 files changed, 254 insertions(+), 11 deletions(-)
- create mode 100644 drivers/huaweicdmamodem/network-registration.c
-
-
---===============5199890909950599781==--
+--===============2364519599641668630==--
 
