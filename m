@@ -1,71 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============7444076440668713270=="
+Content-Type: multipart/mixed; boundary="===============5670732811608774266=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH v3 2/2] hfp_hf: retrieve AG version
-Date: Mon, 08 Aug 2011 16:34:41 +0200
-Message-ID: <1312814081-15279-3-git-send-email-frederic.danis@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v3 0/2] add profile version to HandsfreeAgent
+Date: Mon, 08 Aug 2011 10:19:28 -0500
+Message-ID: <4E3FFE80.4080508@gmail.com>
 In-Reply-To: <1312814081-15279-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7444076440668713270==
+--===============5670732811608774266==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/hfp_hf.c |    9 +++++----
- 1 files changed, 5 insertions(+), 4 deletions(-)
+Hi Fr=C3=A9d=C3=A9ric,
 
-diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
-index 9fa420a..6516e75 100644
---- a/plugins/hfp_hf.c
-+++ b/plugins/hfp_hf.c
-@@ -161,11 +161,14 @@ static DBusMessage *hfp_agent_new_connection(DBusConn=
-ection *conn,
- 	int fd, err;
- 	struct ofono_modem *modem =3D data;
- 	struct hfp_data *hfp_data =3D ofono_modem_get_data(modem);
-+	guint16 version;
- =
+On 08/08/2011 09:34 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+> Some phones with HFP Audio Gateway version previous to 1.5 (i.e.
+> Samsung SGH-D600 returning 0x0101 as profile version) do not accept
+> an AT+BRSF with latest features.
+> The Handsfree agent should adapt its AT+BRSF command depending on the
+> remote version, so add version information as parameter of
+> NewConnection method.
+> For localhfp modem, use the highest version possible (0xFFFF) so it
+> will always send all implemented features.
+> =
 
- 	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_UNIX_FD, &fd,
--				DBUS_TYPE_INVALID))
-+				DBUS_TYPE_UINT16, &version, DBUS_TYPE_INVALID))
- 		return __ofono_error_invalid_args(msg);
- =
+> Fr=C3=A9d=C3=A9ric Danis (2):
+>   hfpmodem: fix hf features
+>   hfp_hf: retrieve AG version
+> =
 
-+	hfp_slc_info_init(&hfp_data->info, version);
-+
- 	err =3D service_level_connection(modem, fd);
- 	if (err < 0 && err !=3D -EINPROGRESS)
- 		return __ofono_error_failed(msg);
-@@ -192,7 +195,7 @@ static DBusMessage *hfp_agent_release(DBusConnection *c=
-onn,
- }
- =
+>  drivers/hfpmodem/slc.c |    7 ++++++-
+>  drivers/hfpmodem/slc.h |    5 ++++-
+>  plugins/hfp_hf.c       |    9 +++++----
+>  plugins/phonesim.c     |    2 +-
+>  4 files changed, 16 insertions(+), 7 deletions(-)
 
- static GDBusMethodTable agent_methods[] =3D {
--	{ "NewConnection", "h", "", hfp_agent_new_connection,
-+	{ "NewConnection", "hq", "", hfp_agent_new_connection,
- 		G_DBUS_METHOD_FLAG_ASYNC },
- 	{ "Release", "", "", hfp_agent_release },
- 	{ NULL, NULL, NULL, NULL }
-@@ -223,8 +226,6 @@ static int hfp_hf_probe(const char *device, const char =
-*dev_addr,
- 	if (data =3D=3D NULL)
- 		goto free;
- =
+Both have been applied, thanks.
 
--	hfp_slc_info_init(&data->info, HFP_VERSION_1_5);
--
- 	data->handsfree_path =3D g_strdup(device);
- 	if (data->handsfree_path =3D=3D NULL)
- 		goto free;
--- =
+Regards,
+-Denis
 
-1.7.1
-
-
---===============7444076440668713270==--
+--===============5670732811608774266==--
 
