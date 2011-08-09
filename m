@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2398752569929328729=="
+Content-Type: multipart/mixed; boundary="===============3603047414190250304=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/3] cdma-connman: Add D-Bus API to remove credentials
-Date: Tue, 09 Aug 2011 13:37:19 -0500
-Message-ID: <4E417E5F.4070406@gmail.com>
-In-Reply-To: <1312901287-30032-3-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH 1/3] cdma-connman: add feature to load/save credentials
+Date: Tue, 09 Aug 2011 13:52:12 -0500
+Message-ID: <4E4181DC.4040306@gmail.com>
+In-Reply-To: <1312901287-30032-2-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2398752569929328729==
+--===============3603047414190250304==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,79 +17,46 @@ Hi Guillaume,
 
 On 08/09/2011 09:48 AM, Guillaume Zajac wrote:
 > ---
->  src/cdma-connman.c |   34 ++++++++++++++++++++++++++++++++++
->  1 files changed, 34 insertions(+), 0 deletions(-)
+>  include/cdma-connman.h |    3 ++
+>  src/cdma-connman.c     |   57 ++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  src/modem.c            |   35 +++++++++++++++++++++++++++++
+>  3 files changed, 95 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/src/cdma-connman.c b/src/cdma-connman.c
-> index 3967080..9f40104 100644
-> --- a/src/cdma-connman.c
-> +++ b/src/cdma-connman.c
-> @@ -510,16 +510,50 @@ static DBusMessage *cdma_connman_set_property(DBusC=
-onnection *conn,
->  	return __ofono_error_invalid_args(msg);
+> diff --git a/include/cdma-connman.h b/include/cdma-connman.h
+> index 6a1c9ff..0f8e388 100644
+> --- a/include/cdma-connman.h
+> +++ b/include/cdma-connman.h
+> @@ -77,6 +77,9 @@ void ofono_cdma_connman_set_data(struct ofono_cdma_conn=
+man *cm,
+>  						void *data);
+>  void *ofono_cdma_connman_get_data(struct ofono_cdma_connman *cm);
+>  =
+
+> +void ofono_cdma_connman_load_credentials(struct ofono_cdma_connman *cm,
+> +					const char *serial);
+> +
+
+Stop right there, this is pretty much the wrong design.  In fact it is
+completely opposite of what you want to have from an encapsulation / API
+point of view.
+
+You need to ensure that the imsi/meid are known prior to cdma-connman
+going live.  That way the cdma-connman atom can lookup the relevant
+information and load its settings as needed.
+
+If that means that the modem needs to query the relevant information
+prior to calling post_sim/post_online, then that is what you have to do.
+
+>  #ifdef __cplusplus
 >  }
->  =
+>  #endif
 
-> +static DBusMessage *cdma_connman_remove_credentials(DBusConnection *conn,
-> +							DBusMessage *msg,
-> +							void *data)
-> +{
-> +	struct ofono_cdma_connman *cm =3D data;
-> +	const char *path;
-> +
-> +	DBG("");
-> +
-> +	strcpy(cm->username, "");
-> +	strcpy(cm->password, "");
-> +
-> +	if (cm->powered =3D=3D TRUE)
-> +		cm->driver->deactivate(cm, deactivate_callback, cm);
-
-You can't do it this way, you need to ensure no other operations are in
-progress...
-
-> +
-> +	if (cm->credentials) {
-> +		g_key_file_remove_group(cm->credentials, CREDENTIALS_GROUP,
-> +					NULL);
-> +		storage_sync(cm->serial, CREDENTIALS_STORE, cm->credentials);
-> +	}
-> +
-> +	g_dbus_send_reply(conn, msg, DBUS_TYPE_INVALID);
-> +
-> +	path =3D __ofono_atom_get_path(cm->atom);
-> +	g_dbus_emit_signal(conn, path, OFONO_CONNECTION_MANAGER_INTERFACE,
-> +				"CredentialsRemoved", DBUS_TYPE_INVALID);
-> +
-> +	return NULL;
-> +}
-> +
->  static GDBusMethodTable cdma_connman_methods[] =3D {
->  	{ "GetProperties",	"",	"a{sv}",
->  						cdma_connman_get_properties },
->  	{ "SetProperty",	"sv",	"",	cdma_connman_set_property,
->  						G_DBUS_METHOD_FLAG_ASYNC },
-> +	{ "RemoveCredentials",	"",	"",
-> +					cdma_connman_remove_credentials,
-> +						G_DBUS_METHOD_FLAG_ASYNC },
->  	{ }
->  };
->  =
-
->  static GDBusSignalTable cdma_connman_signals[] =3D {
->  	{ "PropertyChanged",	"sv" },
-> +	{ "CredentialsRemoved",	"" },
->  	{ }
->  };
->  =
-
-
-However, I'm pretty much against these changes right now.  What exactly
-is your usecase here?
+<snip>
 
 Regards,
 -Denis
 
---===============2398752569929328729==--
+--===============3603047414190250304==--
 
