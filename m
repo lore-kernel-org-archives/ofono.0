@@ -1,85 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============5210505159218092043=="
+Content-Type: multipart/mixed; boundary="===============8274495006305786923=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 2/3] cdma-connman: Add D-Bus API to remove credentials
-Date: Tue, 09 Aug 2011 16:48:06 +0200
-Message-ID: <1312901287-30032-3-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH 3/3] test: Add cdma-remove-credentials script
+Date: Tue, 09 Aug 2011 16:48:07 +0200
+Message-ID: <1312901287-30032-4-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1312901287-30032-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5210505159218092043==
+--===============8274495006305786923==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/cdma-connman.c |   34 ++++++++++++++++++++++++++++++++++
- 1 files changed, 34 insertions(+), 0 deletions(-)
+ Makefile.am                  |    1 +
+ test/cdma-remove-credentials |   21 +++++++++++++++++++++
+ 2 files changed, 22 insertions(+), 0 deletions(-)
+ create mode 100755 test/cdma-remove-credentials
 
-diff --git a/src/cdma-connman.c b/src/cdma-connman.c
-index 3967080..9f40104 100644
---- a/src/cdma-connman.c
-+++ b/src/cdma-connman.c
-@@ -510,16 +510,50 @@ static DBusMessage *cdma_connman_set_property(DBusCon=
-nection *conn,
- 	return __ofono_error_invalid_args(msg);
- }
- =
-
-+static DBusMessage *cdma_connman_remove_credentials(DBusConnection *conn,
-+							DBusMessage *msg,
-+							void *data)
-+{
-+	struct ofono_cdma_connman *cm =3D data;
-+	const char *path;
+diff --git a/Makefile.am b/Makefile.am
+index 62174db..eec08d8 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -544,6 +544,7 @@ test_scripts =3D test/backtrace \
+ 		test/cdma-dial-number \
+ 		test/cdma-hangup \
+ 		test/cdma-set-credentials \
++		test/cdma-remove-credentials \
+ 		test/disable-call-forwarding \
+ 		test/list-messages \
+ 		test/test-sms \
+diff --git a/test/cdma-remove-credentials b/test/cdma-remove-credentials
+new file mode 100755
+index 0000000..28bc128
+--- /dev/null
++++ b/test/cdma-remove-credentials
+@@ -0,0 +1,21 @@
++#!/usr/bin/python
 +
-+	DBG("");
++import dbus
++import sys
 +
-+	strcpy(cm->username, "");
-+	strcpy(cm->password, "");
++bus =3D dbus.SystemBus()
 +
-+	if (cm->powered =3D=3D TRUE)
-+		cm->driver->deactivate(cm, deactivate_callback, cm);
++manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++						'org.ofono.Manager')
 +
-+	if (cm->credentials) {
-+		g_key_file_remove_group(cm->credentials, CREDENTIALS_GROUP,
-+					NULL);
-+		storage_sync(cm->serial, CREDENTIALS_STORE, cm->credentials);
-+	}
++modems =3D manager.GetModems()
 +
-+	g_dbus_send_reply(conn, msg, DBUS_TYPE_INVALID);
++for path, properties in modems:
++	if "org.ofono.cdma.ConnectionManager" not in properties["Interfaces"]:
++		continue
 +
-+	path =3D __ofono_atom_get_path(cm->atom);
-+	g_dbus_emit_signal(conn, path, OFONO_CONNECTION_MANAGER_INTERFACE,
-+				"CredentialsRemoved", DBUS_TYPE_INVALID);
++	cm =3D dbus.Interface(bus.get_object('org.ofono', path),
++					'org.ofono.cdma.ConnectionManager')
 +
-+	return NULL;
-+}
-+
- static GDBusMethodTable cdma_connman_methods[] =3D {
- 	{ "GetProperties",	"",	"a{sv}",
- 						cdma_connman_get_properties },
- 	{ "SetProperty",	"sv",	"",	cdma_connman_set_property,
- 						G_DBUS_METHOD_FLAG_ASYNC },
-+	{ "RemoveCredentials",	"",	"",
-+					cdma_connman_remove_credentials,
-+						G_DBUS_METHOD_FLAG_ASYNC },
- 	{ }
- };
- =
-
- static GDBusSignalTable cdma_connman_signals[] =3D {
- 	{ "PropertyChanged",	"sv" },
-+	{ "CredentialsRemoved",	"" },
- 	{ }
- };
- =
-
++	cm.RemoveCredentials()
++	print "Removing all credentials"
 -- =
 
 1.7.1
 
 
---===============5210505159218092043==--
+--===============8274495006305786923==--
 
