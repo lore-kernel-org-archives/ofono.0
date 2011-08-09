@@ -1,67 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8274495006305786923=="
+Content-Type: multipart/mixed; boundary="===============3890892762052827953=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 3/3] test: Add cdma-remove-credentials script
-Date: Tue, 09 Aug 2011 16:48:07 +0200
-Message-ID: <1312901287-30032-4-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1312901287-30032-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH_v9 1/4] huaweicdma: create a dedicated netreg atom.
+Date: Tue, 09 Aug 2011 13:31:42 -0500
+Message-ID: <4E417D0E.9030406@gmail.com>
+In-Reply-To: <1312805600-20043-2-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8274495006305786923==
+--===============3890892762052827953==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am                  |    1 +
- test/cdma-remove-credentials |   21 +++++++++++++++++++++
- 2 files changed, 22 insertions(+), 0 deletions(-)
- create mode 100755 test/cdma-remove-credentials
+Hi Guillaume,
 
-diff --git a/Makefile.am b/Makefile.am
-index 62174db..eec08d8 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -544,6 +544,7 @@ test_scripts =3D test/backtrace \
- 		test/cdma-dial-number \
- 		test/cdma-hangup \
- 		test/cdma-set-credentials \
-+		test/cdma-remove-credentials \
- 		test/disable-call-forwarding \
- 		test/list-messages \
- 		test/test-sms \
-diff --git a/test/cdma-remove-credentials b/test/cdma-remove-credentials
-new file mode 100755
-index 0000000..28bc128
---- /dev/null
-+++ b/test/cdma-remove-credentials
-@@ -0,0 +1,21 @@
-+#!/usr/bin/python
-+
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
-+
-+modems =3D manager.GetModems()
-+
-+for path, properties in modems:
-+	if "org.ofono.cdma.ConnectionManager" not in properties["Interfaces"]:
-+		continue
-+
-+	cm =3D dbus.Interface(bus.get_object('org.ofono', path),
-+					'org.ofono.cdma.ConnectionManager')
-+
-+	cm.RemoveCredentials()
-+	print "Removing all credentials"
--- =
+On 08/08/2011 07:13 AM, Guillaume Zajac wrote:
+> From: Bertrand Aygon <bertrand.aygon@intel.com>
+> =
 
-1.7.1
+> ---
+>  Makefile.am                                    |    3 +-
+>  drivers/huaweicdmamodem/huaweicdmamodem.c      |    3 +
+>  drivers/huaweicdmamodem/huaweicdmamodem.h      |    3 +
+>  drivers/huaweicdmamodem/network-registration.c |  171 ++++++++++++++++++=
+++++++
+>  4 files changed, 179 insertions(+), 1 deletions(-)
+>  create mode 100644 drivers/huaweicdmamodem/network-registration.c
+> =
 
 
---===============8274495006305786923==--
+I applied this patch but refactored it slightly afterwards.  Please
+review and make sure I didn't break anything.
+
+Regards,
+-Denis
+
+--===============3890892762052827953==--
 
