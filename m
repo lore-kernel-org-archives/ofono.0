@@ -1,23 +1,26 @@
-Content-Type: multipart/mixed; boundary="===============5512735427618390374=="
+Content-Type: multipart/mixed; boundary="===============7083136526942169858=="
 MIME-Version: 1.0
 From: Mikel Astiz <mikel.astiz@bmw-carit.de>
 Subject: Re: Underlying Bluetooth device of a modem
-Date: Wed, 10 Aug 2011 17:39:37 +0200
-Message-ID: <4E42A639.3060707@bmw-carit.de>
-In-Reply-To: <1312983556.3373.112.camel@aeonflux>
+Date: Wed, 10 Aug 2011 17:49:29 +0200
+Message-ID: <4E42A889.30802@bmw-carit.de>
+In-Reply-To: <4E422907.1090304@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5512735427618390374==
+--===============7083136526942169858==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Denis,
 
-On 08/10/2011 03:39 PM, Marcel Holtmann wrote:
+On 08/10/2011 08:45 AM, Denis Kenzior wrote:
 > Hi Mikel,
 >
+> On 08/10/2011 03:46 AM, Mikel Astiz wrote:
+>> Hi all,
+>>
 >> I am trying to set up a simple HFP demonstrator using
 >> BlueZ+oFono+PulseAudio, with a dbus client that coordinates the three of
 >> them. Being a simple prototype, the goal is to see how they behave and
@@ -32,50 +35,41 @@ On 08/10/2011 03:39 PM, Marcel Holtmann wrote:
 >> present. Could somebody confirm this or otherwise explain how it can be
 >> done?
 >>
+> Have a look at the Modem.Name property, HFP_HF plugin sets this based on
+> the BlueZ Device.Alias property of the remote device.  Which should be
+> either the remote device name or the local alias.  This might actually
+> be enough for your purposes.
+>
 >> The purpose of my interest is that, depending on the use-case, the final
 >> user would have to choose the modem (or device) manually.
-> you would need to be a bit more specific on what the actual use case
-> entails here. How would selection work and how the user is involved in
-> it. Depending on that, things should be done differently.
+>>
+> Depending on the usecase you might require more information, such as the
+> bdaddr of the remote device.  In that case you will have to do a bit
+> more work, such as defining a new atom that exports the information you
+> require.
 >
-> So besides that, some simple pieces that come to mind quickly are to
-> create a HFP devinfo atom driver that just exports the BD_ADDR as serial
-> number.
+> Regards,
+> -Denis
 
-Thanks for your quick answer.
+Thanks for your answer.
 
-Regarding the use case, the most obvious situation would be that the =
+I replied to Marcel's message before reading yours so we could hopefully =
 
-user would choose the device based on its Bluetooth alias, there could =
+merge into one message thread.
 
-be other alternatives too. In any case, your answer seems to confirm =
+One specific point to your answer: the device alias is certainly =
 
-that oFono currently does not expose this information, right?
+available (and in this case would satisfy the use case of =
 
-Regarding your proposal of the devinfo driver, I will give it a try. I'm =
+manually-select-by-alias, so to speak) but that doesn't seem to scale =
 
-not actually familiar with the source code but that doesn't sound too =
+well if you would also like to use other criteria (for example, to =
 
-difficult.
+filter some devices depending on their icon, available services, etc.).
 
-Another idea I was thinking about is to add a specific d-bus interface =
-
-for these modems. Similar approaches could be followed by other modem =
-
-types (if strictly necessary and modem-type specific). Would that make =
-
-sense to you? I guess it's not desirable to have interfaces with one =
-
-single method, but still it might be better than adding functionality to =
-
-existing interfaces (for example by adding an optional property to =
-
-org.ofono.Modem).
-
-Best regards,
-
+Regards,
 Mikel
 
 
---===============5512735427618390374==--
+--===============7083136526942169858==--
 
