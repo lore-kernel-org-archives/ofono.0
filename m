@@ -1,62 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============3603047414190250304=="
+Content-Type: multipart/mixed; boundary="===============4777211501082205974=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] cdma-connman: add feature to load/save credentials
-Date: Tue, 09 Aug 2011 13:52:12 -0500
-Message-ID: <4E4181DC.4040306@gmail.com>
-In-Reply-To: <1312901287-30032-2-git-send-email-guillaume.zajac@linux.intel.com>
+From: Mikel Astiz <mikel.astiz@bmw-carit.de>
+Subject: Underlying Bluetooth device of a modem
+Date: Wed, 10 Aug 2011 10:46:21 +0200
+Message-ID: <4E42455D.9030102@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3603047414190250304==
+--===============4777211501082205974==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi all,
 
-On 08/09/2011 09:48 AM, Guillaume Zajac wrote:
-> ---
->  include/cdma-connman.h |    3 ++
->  src/cdma-connman.c     |   57 ++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  src/modem.c            |   35 +++++++++++++++++++++++++++++
->  3 files changed, 95 insertions(+), 0 deletions(-)
-> =
+I am trying to set up a simple HFP demonstrator using =
 
-> diff --git a/include/cdma-connman.h b/include/cdma-connman.h
-> index 6a1c9ff..0f8e388 100644
-> --- a/include/cdma-connman.h
-> +++ b/include/cdma-connman.h
-> @@ -77,6 +77,9 @@ void ofono_cdma_connman_set_data(struct ofono_cdma_conn=
-man *cm,
->  						void *data);
->  void *ofono_cdma_connman_get_data(struct ofono_cdma_connman *cm);
->  =
+BlueZ+oFono+PulseAudio, with a dbus client that coordinates the three of =
 
-> +void ofono_cdma_connman_load_credentials(struct ofono_cdma_connman *cm,
-> +					const char *serial);
-> +
+them. Being a simple prototype, the goal is to see how they behave and =
 
-Stop right there, this is pretty much the wrong design.  In fact it is
-completely opposite of what you want to have from an encapsulation / API
-point of view.
+analyze how well it would all scale.
 
-You need to ensure that the imsi/meid are known prior to cdma-connman
-going live.  That way the cdma-connman atom can lookup the relevant
-information and load its settings as needed.
+The first question that arises is quite simple. In a multi-phone =
 
-If that means that the modem needs to query the relevant information
-prior to calling post_sim/post_online, then that is what you have to do.
+scenario (all of them connected to our PC using Bluetooth HFP), oFono =
 
->  #ifdef __cplusplus
->  }
->  #endif
+properly lists all the phones as available modems. I would like to know =
 
-<snip>
+whether these modems can be associated to their underlying bluetooth =
+
+device (mac address, bluez device dbus path, or whatever). I have been =
+
+looking on the available modem properties but this seems not to be =
+
+present. Could somebody confirm this or otherwise explain how it can be =
+
+done?
+
+The purpose of my interest is that, depending on the use-case, the final =
+
+user would have to choose the modem (or device) manually.
 
 Regards,
--Denis
+Mikel Astiz
 
---===============3603047414190250304==--
+
+--===============4777211501082205974==--
 
