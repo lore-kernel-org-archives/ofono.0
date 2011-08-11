@@ -1,48 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============0353586031970325315=="
+Content-Type: multipart/mixed; boundary="===============4709997330540827826=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/3] oFono rules update
-Date: Thu, 11 Aug 2011 09:21:56 -0700
-Message-ID: <1313079722.3373.139.camel@aeonflux>
-In-Reply-To: <1313077104-13397-1-git-send-email-philippe.nunes@linux.intel.com>
+From: Gustavo Padovan <padovan@profusion.mobi>
+Subject: Re: Underlying Bluetooth device of a modem
+Date: Thu, 11 Aug 2011 19:19:19 -0300
+Message-ID: <20110811221918.GH19699@joana>
+In-Reply-To: <1312983556.3373.112.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0353586031970325315==
+--===============4709997330540827826==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+* Marcel Holtmann <marcel@holtmann.org> [2011-08-10 06:39:15 -0700]:
 
-> Based on the latest usb_modeswitch rules, some 3G dongles require
-> to modify the ofono rules to be supported correctly (tests done in India)=
-  =
-
+> Hi Mikel,
 > =
 
+> > I am trying to set up a simple HFP demonstrator using =
+
+> > BlueZ+oFono+PulseAudio, with a dbus client that coordinates the three o=
+f =
+
+> > them. Being a simple prototype, the goal is to see how they behave and =
+
+> > analyze how well it would all scale.
+> > =
+
+> > The first question that arises is quite simple. In a multi-phone =
+
+> > scenario (all of them connected to our PC using Bluetooth HFP), oFono =
+
+> > properly lists all the phones as available modems. I would like to know =
+
+> > whether these modems can be associated to their underlying bluetooth =
+
+> > device (mac address, bluez device dbus path, or whatever). I have been =
+
+> > looking on the available modem properties but this seems not to be =
+
+> > present. Could somebody confirm this or otherwise explain how it can be =
+
+> > done?
+> > =
+
+> > The purpose of my interest is that, depending on the use-case, the fina=
+l =
+
+> > user would have to choose the modem (or device) manually.
 > =
 
-> Philippe Nunes (3):
->   udev: use ttyUSB3 for ZTE K3570 modem port.
->   udev:  add support for Olive HSDPA modem
->   udev: Use ttyUSB4 for Huawei E367 Pcui port
+> you would need to be a bit more specific on what the actual use case
+> entails here. How would selection work and how the user is involved in
+> it. Depending on that, things should be done differently.
 > =
 
->  plugins/ofono.rules |   17 ++++++++++-------
->  1 files changed, 10 insertions(+), 7 deletions(-)
+> So besides that, some simple pieces that come to mind quickly are to
+> create a HFP devinfo atom driver that just exports the BD_ADDR as serial
+> number.
 
-I think you are way too late with these changes. We are not using
-plugins/udev.c for Huawei and ZTE device detection anymore. I fixed this
-all up and plugins/udevng.c should do proper automatic detection.
+Only the BD_ADDR is not enough, the device can paired with two or more
+adapters. Exports its DBUS path seems a best option.
+HFP plugin already keep the path for internal use, so its just a matter of =
+put
+it devinfo.
+Also, the modem path gives you the information you need. The numbers there =
+are
+the adapter bd_addr followed by the remove device bd_add.
 
-Please check if this works properly for you or if you have problems.
+	Gustavo
 
-Regards
-
-Marcel
-
-
-
---===============0353586031970325315==--
+--===============4709997330540827826==--
 
