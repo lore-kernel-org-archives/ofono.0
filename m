@@ -1,120 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============3886249023854514201=="
+Content-Type: multipart/mixed; boundary="===============6463993968588707103=="
 MIME-Version: 1.0
-From: Caiwen Zhang <caiwen.zhang@windriver.com>
-Subject: [PATCH 2/2] Add cdma voice call status notify
-Date: Fri, 12 Aug 2011 17:20:37 +0800
-Message-ID: <1313140837-29093-1-git-send-email-caiwen.zhang@windriver.com>
+From: Gustavo Padovan <padovan@profusion.mobi>
+Subject: Re: Underlying Bluetooth device of a modem
+Date: Fri, 12 Aug 2011 11:16:26 -0300
+Message-ID: <20110812141626.GB4168@joana>
+In-Reply-To: <1313102382.3373.145.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3886249023854514201==
+--===============6463993968588707103==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- include/cdma-voicecall.h |    3 ++
- src/cdma-voicecall.c     |   55 ++++++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 58 insertions(+), 0 deletions(-)
+Hi Marcel,
 
-diff --git a/include/cdma-voicecall.h b/include/cdma-voicecall.h
-index f12e0b6..badc5eb 100644
---- a/include/cdma-voicecall.h
-+++ b/include/cdma-voicecall.h
-@@ -66,6 +66,9 @@ struct ofono_cdma_voicecall_driver {
- 			ofono_cdma_voicecall_cb_t cb, void *data);
- };
- =
+* Marcel Holtmann <marcel@holtmann.org> [2011-08-11 15:39:40 -0700]:
 
-+void ofono_cdma_voicecall_notify(struct ofono_cdma_voicecall *vc,
-+	enum cdma_call_status status, const char *number);
-+
- void ofono_cdma_voicecall_disconnected(struct ofono_cdma_voicecall *vc,
- 					enum ofono_disconnect_reason reason,
- 					const struct ofono_error *error);
-diff --git a/src/cdma-voicecall.c b/src/cdma-voicecall.c
-index 47d416c..201e1ff 100644
---- a/src/cdma-voicecall.c
-+++ b/src/cdma-voicecall.c
-@@ -244,6 +244,32 @@ static void voicecall_set_call_lineid(struct ofono_cdm=
-a_voicecall *vc)
- 					DBUS_TYPE_STRING, &lineid_str);
- }
- =
+> Hi Gustavo,
+> =
 
-+static void voicecall_set_call_waiting_number(struct ofono_cdma_voicecall =
-*vc,
-+				const struct ofono_cdma_phone_number *ph)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path  =3D __ofono_atom_get_path(vc->atom);
-+	const char *waiting_number;
-+	ofono_bool_t call_waiting =3D TRUE;
-+
-+	if (ph->number[0] =3D=3D '\0')
-+		return;
-+
-+	memcpy(&vc->waiting_number, ph, sizeof(struct ofono_cdma_phone_number));
-+
-+	waiting_number =3D cdma_phone_number_to_string(ph);
-+
-+	ofono_dbus_signal_property_changed(conn, path,
-+					OFONO_CDMA_VOICECALL_MANAGER_INTERFACE,
-+					"CallWaitingNumber", DBUS_TYPE_STRING,
-+					&waiting_number);
-+
-+	ofono_dbus_signal_property_changed(conn, path,
-+					OFONO_CDMA_VOICECALL_MANAGER_INTERFACE,
-+					"CallWaiting", DBUS_TYPE_BOOLEAN,
-+					&call_waiting);
-+}
-+
- static void manager_dial_callback(const struct ofono_error *error, void *d=
-ata)
- {
- 	struct ofono_cdma_voicecall *vc =3D data;
-@@ -433,6 +459,35 @@ static GDBusSignalTable manager_signals[] =3D {
- 	{ }
- };
- =
+> > > > I am trying to set up a simple HFP demonstrator using =
 
-+void ofono_cdma_voicecall_notify(struct ofono_cdma_voicecall *vc,
-+			enum cdma_call_status status,
-+			const char *number)
-+{
-+	struct ofono_cdma_phone_number ph;
-+
-+	DBG("status: %d", status);
-+
-+	memset(&ph, 0, sizeof(struct ofono_cdma_phone_number));
-+
-+	if (number !=3D NULL) {
-+		DBG("lineid: %d", number);
-+
-+		string_to_cdma_phone_number(number, &ph);
-+
-+		if (status =3D=3D CDMA_CALL_STATUS_INCOMING
-+				&& vc->status =3D=3D CDMA_CALL_STATUS_ACTIVE) {
-+			voicecall_set_call_waiting_number(vc, &ph);
-+		} else {
-+			memcpy(&vc->phone_number, &ph,
-+					sizeof(struct ofono_cdma_phone_number));
-+
-+			voicecall_set_call_lineid(vc);
-+		}
-+	}
-+
-+	voicecall_set_call_status(vc, status);
-+}
-+
- void ofono_cdma_voicecall_disconnected(struct ofono_cdma_voicecall *vc,
- 					enum ofono_disconnect_reason reason,
- 					const struct ofono_error *error)
--- =
+> > > > BlueZ+oFono+PulseAudio, with a dbus client that coordinates the thr=
+ee of =
 
-1.7.5
+> > > > them. Being a simple prototype, the goal is to see how they behave =
+and =
 
+> > > > analyze how well it would all scale.
+> > > > =
 
---===============3886249023854514201==--
+> > > > The first question that arises is quite simple. In a multi-phone =
+
+> > > > scenario (all of them connected to our PC using Bluetooth HFP), oFo=
+no =
+
+> > > > properly lists all the phones as available modems. I would like to =
+know =
+
+> > > > whether these modems can be associated to their underlying bluetoot=
+h =
+
+> > > > device (mac address, bluez device dbus path, or whatever). I have b=
+een =
+
+> > > > looking on the available modem properties but this seems not to be =
+
+> > > > present. Could somebody confirm this or otherwise explain how it ca=
+n be =
+
+> > > > done?
+> > > > =
+
+> > > > The purpose of my interest is that, depending on the use-case, the =
+final =
+
+> > > > user would have to choose the modem (or device) manually.
+> > > =
+
+> > > you would need to be a bit more specific on what the actual use case
+> > > entails here. How would selection work and how the user is involved in
+> > > it. Depending on that, things should be done differently.
+> > > =
+
+> > > So besides that, some simple pieces that come to mind quickly are to
+> > > create a HFP devinfo atom driver that just exports the BD_ADDR as ser=
+ial
+> > > number.
+> > =
+
+> > Only the BD_ADDR is not enough, the device can paired with two or more
+> > adapters. Exports its DBUS path seems a best option.
+> > HFP plugin already keep the path for internal use, so its just a matter=
+ of put
+> > it devinfo.
+> > Also, the modem path gives you the information you need. The numbers th=
+ere are
+> > the adapter bd_addr followed by the remove device bd_add.
+> =
+
+> you can not get the BD_ADDR out of the device path. The device path is
+> arbitrary. And if anybody considers to misuse it, then I will add even
+> more random bits into it.
+
+Yes, but I am talking about the oFono modem path, you can extract the bd_ad=
+dr
+from there and call BlueZ api to discover the remove device path.
+But add the device path to modem devinfo is a best option, I just wanted to
+mention that this extraction is possible.
+
+	Gustavo
+
+--===============6463993968588707103==--
 
