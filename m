@@ -1,108 +1,120 @@
-Content-Type: multipart/mixed; boundary="===============8257350955849701274=="
+Content-Type: multipart/mixed; boundary="===============3886249023854514201=="
 MIME-Version: 1.0
 From: Caiwen Zhang <caiwen.zhang@windriver.com>
-Subject: [PATCH 1/2] Add call waiting support in CDMA voice call
-Date: Fri, 12 Aug 2011 17:20:15 +0800
-Message-ID: <1313140815-29052-1-git-send-email-caiwen.zhang@windriver.com>
+Subject: [PATCH 2/2] Add cdma voice call status notify
+Date: Fri, 12 Aug 2011 17:20:37 +0800
+Message-ID: <1313140837-29093-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8257350955849701274==
+--===============3886249023854514201==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/cdma-voicecall.c |   35 ++++++++++++++++++++++++++++++++---
- 1 files changed, 32 insertions(+), 3 deletions(-)
+ include/cdma-voicecall.h |    3 ++
+ src/cdma-voicecall.c     |   55 ++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 58 insertions(+), 0 deletions(-)
 
+diff --git a/include/cdma-voicecall.h b/include/cdma-voicecall.h
+index f12e0b6..badc5eb 100644
+--- a/include/cdma-voicecall.h
++++ b/include/cdma-voicecall.h
+@@ -66,6 +66,9 @@ struct ofono_cdma_voicecall_driver {
+ 			ofono_cdma_voicecall_cb_t cb, void *data);
+ };
+ =
+
++void ofono_cdma_voicecall_notify(struct ofono_cdma_voicecall *vc,
++	enum cdma_call_status status, const char *number);
++
+ void ofono_cdma_voicecall_disconnected(struct ofono_cdma_voicecall *vc,
+ 					enum ofono_disconnect_reason reason,
+ 					const struct ofono_error *error);
 diff --git a/src/cdma-voicecall.c b/src/cdma-voicecall.c
-index bbf805f..47d416c 100644
+index 47d416c..201e1ff 100644
 --- a/src/cdma-voicecall.c
 +++ b/src/cdma-voicecall.c
-@@ -40,6 +40,7 @@ static GSList *g_drivers;
- =
-
- struct ofono_cdma_voicecall {
- 	struct ofono_cdma_phone_number phone_number;
-+	struct ofono_cdma_phone_number waiting_number;
- 	int direction;
- 	enum cdma_call_status status;
- 	time_t start_time;
-@@ -108,14 +109,33 @@ static void append_voicecall_properties(struct ofono_=
-cdma_voicecall *vc,
- {
- 	const char *status;
- 	const char *lineid;
-+	const char *waiting_call =3D NULL;
-+	ofono_bool_t call_waiting;
- =
-
- 	status =3D cdma_call_status_to_string(vc->status);
--	lineid =3D cdma_phone_number_to_string(&vc->phone_number);
- =
-
- 	ofono_dbus_dict_append(dict, "State", DBUS_TYPE_STRING, &status);
- =
-
--	ofono_dbus_dict_append(dict, "LineIdentification",
--				DBUS_TYPE_STRING, &lineid);
-+	if (vc->status !=3D CDMA_CALL_STATUS_DISCONNECTED) {
-+		if (vc->phone_number.number[0] !=3D '\0') {
-+			lineid =3D cdma_phone_number_to_string(&vc->phone_number);
-+			ofono_dbus_dict_append(dict, "LineIdentification",
-+						DBUS_TYPE_STRING, &lineid);
-+		}
-+
-+		if (vc->waiting_number.number[0] !=3D '\0') {
-+			waiting_call =3D cdma_phone_number_to_string(
-+						&vc->waiting_number);
-+
-+			ofono_dbus_dict_append(dict, "CallWaitingNumber",
-+					DBUS_TYPE_STRING, &waiting_call);
-+		}
-+	}
-+
-+	call_waiting =3D (waiting_call !=3D NULL);
-+
-+	ofono_dbus_dict_append(dict, "CallWaiting",
-+					DBUS_TYPE_BOOLEAN, &call_waiting);
- =
-
- 	if (vc->status =3D=3D CDMA_CALL_STATUS_ACTIVE) {
- 		const char *timestr =3D time_to_str(&vc->start_time);
-@@ -172,6 +192,7 @@ static void voicecall_set_call_status(struct ofono_cdma=
-_voicecall *vc,
- 	const char *status_str;
- 	enum cdma_call_status old_status;
- =
-
-+	DBG("status: %s", cdma_call_status_to_string(status));
- 	if (vc->status =3D=3D status)
- 		return;
- =
-
-@@ -198,6 +219,14 @@ static void voicecall_set_call_status(struct ofono_cdm=
-a_voicecall *vc,
- 					"StartTime", DBUS_TYPE_STRING,
- 					&timestr);
- 	}
-+
-+	if (status =3D=3D CDMA_CALL_STATUS_DISCONNECTED) {
-+		memset(&vc->phone_number, 0,
-+				sizeof(struct ofono_cdma_phone_number));
-+
-+		memset(&vc->waiting_number, 0,
-+			sizeof(struct ofono_cdma_phone_number));
-+	}
+@@ -244,6 +244,32 @@ static void voicecall_set_call_lineid(struct ofono_cdm=
+a_voicecall *vc)
+ 					DBUS_TYPE_STRING, &lineid_str);
  }
  =
 
- static void voicecall_set_call_lineid(struct ofono_cdma_voicecall *vc)
++static void voicecall_set_call_waiting_number(struct ofono_cdma_voicecall =
+*vc,
++				const struct ofono_cdma_phone_number *ph)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path  =3D __ofono_atom_get_path(vc->atom);
++	const char *waiting_number;
++	ofono_bool_t call_waiting =3D TRUE;
++
++	if (ph->number[0] =3D=3D '\0')
++		return;
++
++	memcpy(&vc->waiting_number, ph, sizeof(struct ofono_cdma_phone_number));
++
++	waiting_number =3D cdma_phone_number_to_string(ph);
++
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_CDMA_VOICECALL_MANAGER_INTERFACE,
++					"CallWaitingNumber", DBUS_TYPE_STRING,
++					&waiting_number);
++
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_CDMA_VOICECALL_MANAGER_INTERFACE,
++					"CallWaiting", DBUS_TYPE_BOOLEAN,
++					&call_waiting);
++}
++
+ static void manager_dial_callback(const struct ofono_error *error, void *d=
+ata)
+ {
+ 	struct ofono_cdma_voicecall *vc =3D data;
+@@ -433,6 +459,35 @@ static GDBusSignalTable manager_signals[] =3D {
+ 	{ }
+ };
+ =
+
++void ofono_cdma_voicecall_notify(struct ofono_cdma_voicecall *vc,
++			enum cdma_call_status status,
++			const char *number)
++{
++	struct ofono_cdma_phone_number ph;
++
++	DBG("status: %d", status);
++
++	memset(&ph, 0, sizeof(struct ofono_cdma_phone_number));
++
++	if (number !=3D NULL) {
++		DBG("lineid: %d", number);
++
++		string_to_cdma_phone_number(number, &ph);
++
++		if (status =3D=3D CDMA_CALL_STATUS_INCOMING
++				&& vc->status =3D=3D CDMA_CALL_STATUS_ACTIVE) {
++			voicecall_set_call_waiting_number(vc, &ph);
++		} else {
++			memcpy(&vc->phone_number, &ph,
++					sizeof(struct ofono_cdma_phone_number));
++
++			voicecall_set_call_lineid(vc);
++		}
++	}
++
++	voicecall_set_call_status(vc, status);
++}
++
+ void ofono_cdma_voicecall_disconnected(struct ofono_cdma_voicecall *vc,
+ 					enum ofono_disconnect_reason reason,
+ 					const struct ofono_error *error)
 -- =
 
 1.7.5
 
 
---===============8257350955849701274==--
+--===============3886249023854514201==--
 
