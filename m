@@ -1,86 +1,120 @@
-Content-Type: multipart/mixed; boundary="===============1493364837420879234=="
+Content-Type: multipart/mixed; boundary="===============7360889220627550304=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 1/2] gatserver: add command finished functions
-Date: Fri, 12 Aug 2011 02:00:04 -0500
-Message-ID: <4E44CF74.6070109@gmail.com>
-In-Reply-To: <1312468190-27253-1-git-send-email-frederic.danis@linux.intel.com>
+From: Caiwen Zhang <caiwen.zhang@windriver.com>
+Subject: [PATCH v2 2/2] Add cdma voice call status notify
+Date: Mon, 15 Aug 2011 10:06:49 +0800
+Message-ID: <1313374009-11516-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1493364837420879234==
+--===============7360889220627550304==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+---
+ include/cdma-voicecall.h |    3 ++
+ src/cdma-voicecall.c     |   55 ++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 58 insertions(+), 0 deletions(-)
 
-On 08/04/2011 09:29 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> ---
->  gatchat/gatserver.c |   44 ++++++++++++++++++++++++++++++++++++++++++++
->  gatchat/gatserver.h |    7 +++++++
->  2 files changed, 51 insertions(+), 0 deletions(-)
-> =
+diff --git a/include/cdma-voicecall.h b/include/cdma-voicecall.h
+index f12e0b6..badc5eb 100644
+--- a/include/cdma-voicecall.h
++++ b/include/cdma-voicecall.h
+@@ -66,6 +66,9 @@ struct ofono_cdma_voicecall_driver {
+ 			ofono_cdma_voicecall_cb_t cb, void *data);
+ };
+ =
+
++void ofono_cdma_voicecall_notify(struct ofono_cdma_voicecall *vc,
++	enum cdma_call_status status, const char *number);
++
+ void ofono_cdma_voicecall_disconnected(struct ofono_cdma_voicecall *vc,
+ 					enum ofono_disconnect_reason reason,
+ 					const struct ofono_error *error);
+diff --git a/src/cdma-voicecall.c b/src/cdma-voicecall.c
+index 47d416c..1af5bdc 100644
+--- a/src/cdma-voicecall.c
++++ b/src/cdma-voicecall.c
+@@ -244,6 +244,32 @@ static void voicecall_set_call_lineid(struct ofono_cdm=
+a_voicecall *vc)
+ 					DBUS_TYPE_STRING, &lineid_str);
+ }
+ =
+
++static void voicecall_set_call_waiting_number(struct ofono_cdma_voicecall =
+*vc,
++				const struct ofono_cdma_phone_number *ph)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path  =3D __ofono_atom_get_path(vc->atom);
++	const char *waiting_number;
++	ofono_bool_t call_waiting =3D TRUE;
++
++	if (ph->number[0] =3D=3D '\0')
++		return;
++
++	memcpy(&vc->waiting_number, ph, sizeof(struct ofono_cdma_phone_number));
++
++	waiting_number =3D cdma_phone_number_to_string(ph);
++
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_CDMA_VOICECALL_MANAGER_INTERFACE,
++					"CallWaitingNumber", DBUS_TYPE_STRING,
++					&waiting_number);
++
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_CDMA_VOICECALL_MANAGER_INTERFACE,
++					"CallWaiting", DBUS_TYPE_BOOLEAN,
++					&call_waiting);
++}
++
+ static void manager_dial_callback(const struct ofono_error *error, void *d=
+ata)
+ {
+ 	struct ofono_cdma_voicecall *vc =3D data;
+@@ -433,6 +459,35 @@ static GDBusSignalTable manager_signals[] =3D {
+ 	{ }
+ };
+ =
+
++void ofono_cdma_voicecall_notify(struct ofono_cdma_voicecall *vc,
++			enum cdma_call_status status,
++			const char *number)
++{
++	struct ofono_cdma_phone_number ph;
++
++	DBG("status: %d", status);
++
++	memset(&ph, 0, sizeof(struct ofono_cdma_phone_number));
++
++	if (number !=3D NULL) {
++		DBG("lineid: %s", number);
++
++		string_to_cdma_phone_number(number, &ph);
++
++		if (status =3D=3D CDMA_CALL_STATUS_INCOMING
++				&& vc->status =3D=3D CDMA_CALL_STATUS_ACTIVE) {
++			voicecall_set_call_waiting_number(vc, &ph);
++		} else {
++			memcpy(&vc->phone_number, &ph,
++					sizeof(struct ofono_cdma_phone_number));
++
++			voicecall_set_call_lineid(vc);
++		}
++	}
++
++	voicecall_set_call_status(vc, status);
++}
++
+ void ofono_cdma_voicecall_disconnected(struct ofono_cdma_voicecall *vc,
+ 					enum ofono_disconnect_reason reason,
+ 					const struct ofono_error *error)
+-- =
+
+1.7.5
 
 
-I haven't forgotten about this patch, but I found a nasty corner case in
-GAtServer that breaks the current implementation.  I'm still looking for
-a nice solution.
-
-> diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-> index ab785f7..8e92071 100644
-> --- a/gatchat/gatserver.c
-> +++ b/gatchat/gatserver.c
-> @@ -115,6 +115,9 @@ struct _GAtServer {
->  	gpointer user_disconnect_data;		/* User disconnect data */
->  	GAtDebugFunc debugf;			/* Debugging output function */
->  	gpointer debug_data;			/* Data to pass to debug func */
-> +	GAtServerFinishFunc finishf;		/* Command finish function */
-> +	gpointer finish_data;			/* Finish func data */
-> +	guint finish_source;
->  	GHashTable *command_list;		/* List of AT commands */
->  	GQueue *write_queue;			/* Write buffer queue */
->  	guint max_read_attempts;		/* Max reads per select */
-> @@ -1177,12 +1180,27 @@ static void server_wakeup_writer(GAtServer *serve=
-r)
->  	g_at_io_set_write_handler(server->io, can_write_data, server);
->  }
->  =
-
-> +static gboolean notify_finish(void *user_data)
-> +{
-> +	GAtServer *server =3D user_data;
-> +
-> +	server->finishf(server, server->finish_data);
-> +	server->finish_source =3D 0;
-> +
-> +	return FALSE;
-> +}
-> +
->  static void server_resume(GAtServer *server)
->  {
->  	if (server->suspended =3D=3D FALSE)
->  		return;
->  =
-
->  	server->suspended =3D FALSE;
-> +
-> +	if (server->finishf)
-> +		server->finish_source =3D g_timeout_add_seconds(0, notify_finish,
-> +								server);
-> +
->  	g_at_io_set_read_handler(server->io, new_bytes, server);
->  }
->  =
-
-
-<snip>
-
-Can you brainstorm some ideas of a way not to use a g_timeout_add and do
-the finish notify synchronously?  I suspect there is a nice(r) solution.
-
-Regards,
--Denis
-
---===============1493364837420879234==--
+--===============7360889220627550304==--
 
