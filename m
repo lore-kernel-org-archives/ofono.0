@@ -1,32 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============1503825220878668889=="
+Content-Type: multipart/mixed; boundary="===============8106021471922166624=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] TODO: mark HFP AG emulator task as done
-Date: Mon, 15 Aug 2011 00:29:35 -0500
-Message-ID: <4E48AEBF.9080801@gmail.com>
-In-Reply-To: <1312379621-13279-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH v2 1/2] gatserver: add command finished functions
+Date: Mon, 15 Aug 2011 00:32:48 -0500
+Message-ID: <4E48AF80.7070206@gmail.com>
+In-Reply-To: <1312468190-27253-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1503825220878668889==
+--===============8106021471922166624==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Fr=C3=A9d=C3=A9ric,
 
-On 08/03/2011 08:53 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+On 08/04/2011 09:29 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
 > ---
->  TODO             |    8 --------
->  doc/features.txt |    7 +++++++
->  2 files changed, 7 insertions(+), 8 deletions(-)
+>  gatchat/gatserver.c |   44 ++++++++++++++++++++++++++++++++++++++++++++
+>  gatchat/gatserver.h |    7 +++++++
+>  2 files changed, 51 insertions(+), 0 deletions(-)
 > =
 
 
-Patch has been applied, thanks.
+I pushed my own version of this patch.  I have performed basic testing
+here on my end and it seems to be working out quite nicely.  However, I
+have not tested the HFP emulator proper, so could you please double
+check my logic and make sure that I haven't done anything silly?
 
-Regards,
+Thanks,
 -Denis
 
---===============1503825220878668889==--
+--===============8106021471922166624==--
 
