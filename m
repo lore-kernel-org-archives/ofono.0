@@ -1,35 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============8106021471922166624=="
+Content-Type: multipart/mixed; boundary="===============0092858287758161877=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 1/2] gatserver: add command finished functions
-Date: Mon, 15 Aug 2011 00:32:48 -0500
-Message-ID: <4E48AF80.7070206@gmail.com>
-In-Reply-To: <1312468190-27253-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH] Add CDMA voice call answering support
+Date: Mon, 15 Aug 2011 00:58:39 -0500
+Message-ID: <4E48B58F.1090502@gmail.com>
+In-Reply-To: <1313140749-28926-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8106021471922166624==
+--===============0092858287758161877==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Caiwen,
 
-On 08/04/2011 09:29 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+On 08/12/2011 04:19 AM, Caiwen Zhang wrote:
 > ---
->  gatchat/gatserver.c |   44 ++++++++++++++++++++++++++++++++++++++++++++
->  gatchat/gatserver.h |    7 +++++++
->  2 files changed, 51 insertions(+), 0 deletions(-)
-> =
+>  include/cdma-voicecall.h |    3 +++
+>  src/cdma-voicecall.c     |   23 +++++++++++++++++++++++
+>  2 files changed, 26 insertions(+), 0 deletions(-)
 
+I applied this patch, however I broke it up into two:
+06d45196a8f1e3617c529f9b008d4fa67f84aa92 and
+e2be184afbd88cac07e086f5d9ae07133077ae95
 
-I pushed my own version of this patch.  I have performed basic testing
-here on my end and it seems to be working out quite nicely.  However, I
-have not tested the HFP emulator proper, so could you please double
-check my logic and make sure that I haven't done anything silly?
+In the future please structure your commits such that any new public API
+additions (e.g. inside include/) are in a separate commit.
 
-Thanks,
+Regards,
 -Denis
 
---===============8106021471922166624==--
+--===============0092858287758161877==--
 
