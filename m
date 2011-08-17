@@ -1,60 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============5282862652236469051=="
+Content-Type: multipart/mixed; boundary="===============2600265315037132441=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: Re: [PATCHv3 1/5] Mobile broadband provider info plugin
-Date: Tue, 16 Aug 2011 17:11:43 +0300
-Message-ID: <4E4A7A9F.8050208@intel.com>
-In-Reply-To: <4E44CE68.7040404@gmail.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: [PATCH] udev: Fix typo for Huawei diagnostic interfaces
+Date: Tue, 16 Aug 2011 18:50:05 -0700
+Message-ID: <1313545805-20202-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5282862652236469051==
+--===============2600265315037132441==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
-On 08/12/2011 09:55 AM, Denis Kenzior wrote:
->> +static struct ofono_gprs_provision_data *apn_try_new(struct parser_data=
- *data)
->> +{
->> +	void *p;
->> +
->> +	p =3D g_try_realloc(*data->settings,
->> +				sizeof(struct ofono_gprs_provision_data) *
->> +				(data->count + 1));
->> +	if (p =3D=3D NULL)
->> +		return NULL;
->> +
->> +	*data->settings =3D p;
->> +
->> +	data->context =3D *data->settings + data->count++;
->> +
->> +	memset(data->context, 0, sizeof(struct ofono_gprs_provision_data));
->
-> This seems like a really big hammer.  We have 3 settings we're likely to
-> provision, internet, wap, mms.  The function runs synchronously and
-> oFono is not threaded.  So in theory you can allocate the context
-> information statically and only copy it to the caller once you have
-> completed the parser.
+---
+ plugins/udevng.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-Hmm, statically allocated array of settings was in the previous version. Th=
-en =
-
-the wish was to make it dynamic and to use realloc. Can we settle on an app=
-roach =
-
-here?
-
-Regards,
-Oleg
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 78682ff..1365bd1 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -259,7 +259,7 @@ static gboolean setup_huawei(struct modem_info *modem)
+ 				break;
+ 		} else if (g_strcmp0(info->label, "diag") =3D=3D 0 ||
+ 				g_strcmp0(info->interface, "255/1/3") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/2/2") =3D=3D 0) {
++				g_strcmp0(info->interface, "255/2/3") =3D=3D 0) {
+ 			diag =3D info->devnode;
+ 			if (mdm !=3D NULL && pcui !=3D NULL)
+ 				break;
 -- =
 
-Intel Finland Oy
-Registered Address: PL 281, 00181 Helsinki
-Business Identity Code: 0357606 - 4
-Domiciled in Helsinki
+1.7.4.4
 
---===============5282862652236469051==--
+
+--===============2600265315037132441==--
 
