@@ -1,64 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============8389789720725148401=="
+Content-Type: multipart/mixed; boundary="===============2981873174082115680=="
 MIME-Version: 1.0
-From: Steve Totaro <stotaro@totarotechnologies.com>
-Subject: Re: Business
-Date: Thu, 18 Aug 2011 16:21:10 -0400
-Message-ID: <CAGA-L+UdpswHQo8tDP=6sFs5NzhZyVNot2eJx29Aob6NC3r5rw@mail.gmail.com>
-In-Reply-To: <CAL=iohyj3wtVrE-GUMri2ieGBEU-dcXVorN441iJ4c9xNY_TXA@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCHv3 1/5] Mobile broadband provider info plugin
+Date: Thu, 18 Aug 2011 13:37:02 -0500
+Message-ID: <4E4D5BCE.7040901@gmail.com>
+In-Reply-To: <4E4A7A9F.8050208@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8389789720725148401==
+--===============2981873174082115680==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-R&D, produce a product that meets a need and sell it.
+Hi Oleg,
 
-Your question reminds me of a South Park episode where little gnomes
-are stealing underwear for their three step business plan.
+On 08/16/2011 09:11 AM, Oleg Zhurakivskyy wrote:
+> Hello Denis,
+> =
 
-http://www.youtube.com/watch?v=3DTBiSI6OdqvA
+> On 08/12/2011 09:55 AM, Denis Kenzior wrote:
+>>> +static struct ofono_gprs_provision_data *apn_try_new(struct
+>>> parser_data *data)
+>>> +{
+>>> +    void *p;
+>>> +
+>>> +    p =3D g_try_realloc(*data->settings,
+>>> +                sizeof(struct ofono_gprs_provision_data) *
+>>> +                (data->count + 1));
+>>> +    if (p =3D=3D NULL)
+>>> +        return NULL;
+>>> +
+>>> +    *data->settings =3D p;
+>>> +
+>>> +    data->context =3D *data->settings + data->count++;
+>>> +
+>>> +    memset(data->context, 0, sizeof(struct ofono_gprs_provision_data));
+>>
+>> This seems like a really big hammer.  We have 3 settings we're likely to
+>> provision, internet, wap, mms.  The function runs synchronously and
+>> oFono is not threaded.  So in theory you can allocate the context
+>> information statically and only copy it to the caller once you have
+>> completed the parser.
+> =
 
-It amazes me that people ask for a others to provide a business plan.
-Most just copy what someone is doing successfully and have zero R&D
-costs, market research, or any of the other expenses that the pioneer
-of the business had to pay.  They have no creativity or imagination
-unless they further the business in some new way.
+> Hmm, statically allocated array of settings was in the previous version.
+> Then the wish was to make it dynamic and to use realloc. Can we settle
+> on an approach here?
+> =
 
-In this case, you have to use your brain and creativity and figure it
-out since nobody using this technology is going to give away answers
-that cost them a great deal of resources upfront.  Plus if they give
-you their business model, then they now have a competitor who can
-offer lower pricing because they don't have to offset any of the
-initial costs which are pretty major.
 
-This is the idea behind medications and time restrictions on others
-producing generics, as well as patent law.  It gives the creator a
-window of exclusivity to recoup R&D and other costs which are usually
-very substantial.
+The preference is to always allocate statically if you can get away with
+it; if you do not need to use malloc/realloc, then please don't.  I do
+not believe the earlier feedback you received is in conflict here.
 
-For whatever reason, I see these questions coming from countries that
-copy ideas and business plans that stem from the U.S.
+Using a static array for the parser and only allocating the return array
+is the preferred approach since we should not be returning more than 1
+internet, 1 wap and 1 mms setting.  If you have multiple of any of these
+then you should not provision as it indicates that user's input is required.
 
-Thanks,
-Steve Totaro
+Regards,
+-Denis
 
-On Thu, Aug 18, 2011 at 9:55 AM, Daser Jnr. <atbutuxinggnu@gmail.com> wro=
-te:
-> Hi all
-> From a business point of view, can some one tell me what i can do with of=
-ono
->
->
-> Cheers
->
-> Daser S.
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
-
---===============8389789720725148401==--
+--===============2981873174082115680==--
 
