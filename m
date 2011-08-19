@@ -1,64 +1,141 @@
-Content-Type: multipart/mixed; boundary="===============4399038770598023173=="
+Content-Type: multipart/mixed; boundary="===============8742806557830808075=="
 MIME-Version: 1.0
-From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
-Subject: RE: [PATCH] Add air interface flash validation in CDMA voice call
-Date: Fri, 19 Aug 2011 05:46:58 +0000
-Message-ID: <0E7E5CACD8E9F248AA009C292CC772A075C80B@ALA-MBA.corp.ad.wrs.com>
-In-Reply-To: <4E4D6173.7030302@gmail.com>
+From: milan.satpathy@accenture.com
+Subject: [Clarification Request]HFP Modem:Termination Of Held Call
+Date: Fri, 19 Aug 2011 12:00:29 +0530
+Message-ID: <10D123A956DC4B4FA9D7A48B3335836215186E3911@INDXM3131.dir.svc.accenture.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4399038770598023173==
+--===============8742806557830808075==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi,
 
-> > +	/* flash string is empty, it is allowed */
-> > +	if (str =3D=3D NULL)
-> > +		return TRUE;
-> =
+It looks like with current Ofono implementation, the termination of a Held =
+call (AT+CHLD=3D0) is not permitted (using "Hangup"), in case there is anot=
+her call present. Is there any specific reason to prevent the termination o=
+f Held call, unless it is the only call available?
 
-> NULL strings are not valid here, they can't be sent over D-Bus.  Please
-> omit this check.
-> =
+Issue faced:
+-There is one active and one held call.
+-It is not possible to terminate the held call as long as the active call e=
+xists.
 
-
-I will remove it.
-
-> >  	if (vc->driver->send_flash =3D=3D NULL)
-> >  		return __ofono_error_not_implemented(msg);
-> >
-> > +	if (vc->status =3D=3D CDMA_CALL_STATUS_DISCONNECTED)
-> > +		return __ofono_error_failed(msg);
-> > +
-> =
-
-> Just to double check, can a flash be sent during
-> dialing/alerting/incoming stage?
-> =
+Regards,
+Milan
 
 
-During dialing state, the flash should be ignored.
 
-There is no alerting state used in CDMA voice call. It doesn't distinguish
-alerting state and connected state.
+________________________________
+This message is for the designated recipient only and may contain privilege=
+d, proprietary, or otherwise private information. If you have received it i=
+n error, please notify the sender immediately and delete the original. Any =
+other use of the email by you is prohibited.
 
-There are two situations for incoming stage:
- (1) only one ringing call, the flash should be ignored
- (2) there is a waiting call. send flash will switch the calls.
+--===============8742806557830808075==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-To make it clearer, I will specified the valid states.
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
+bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxuczpzdDE9
+InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgeG1sbnM9Imh0dHA6
+Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29u
+dGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBu
+YW1lPSJHZW5lcmF0b3IiIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDExIChmaWx0ZXJlZCBtZWRp
+dW0pIj4KPG86U21hcnRUYWdUeXBlIG5hbWVzcGFjZXVyaT0idXJuOnNjaGVtYXMtbWljcm9zb2Z0
+LWNvbTpvZmZpY2U6c21hcnR0YWdzIiBuYW1lPSJDaXR5IiAvPjxvOlNtYXJ0VGFnVHlwZSBuYW1l
+c3BhY2V1cmk9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgbmFt
+ZT0icGxhY2UiIC8+PCEtLVtpZiAhbXNvXT4KPHN0eWxlPgpzdDFcOip7YmVoYXZpb3I6dXJsKCNk
+ZWZhdWx0I2llb291aSkgfQo8L3N0eWxlPgo8IVtlbmRpZl0tLT48c3R5bGU+CjwhLS0KIC8qIEZv
+bnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseToiQm9vayBBbnRpcXVh
+IjsKCXBhbm9zZS0xOjIgNCA2IDIgNSAzIDUgMyAzIDQ7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMg
+Ki8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGlu
+OwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5
+OiJCb29rIEFudGlxdWEiO30KaDEKCXttYXJnaW4tdG9wOjEyLjBwdDsKCW1hcmdpbi1yaWdodDow
+aW47CgltYXJnaW4tYm90dG9tOjMuMHB0OwoJbWFyZ2luLWxlZnQ6MGluOwoJcGFnZS1icmVhay1h
+ZnRlcjphdm9pZDsKCWZvbnQtc2l6ZToxNC4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVh
+Ijt9CmgyCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFyZ2luLWJv
+dHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZvaWQ7Cglm
+b250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250LXN0eWxl
+Oml0YWxpYzt9CmgzCgl7bWFyZ2luLXRvcDoxMi4wcHQ7CgltYXJnaW4tcmlnaHQ6MGluOwoJbWFy
+Z2luLWJvdHRvbTozLjBwdDsKCW1hcmdpbi1sZWZ0OjBpbjsKCXBhZ2UtYnJlYWstYWZ0ZXI6YXZv
+aWQ7Cglmb250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IkJvb2sgQW50aXF1YSI7Cglmb250
+LXdlaWdodDpub3JtYWw7fQpwLk1zb0hlYWRlciwgbGkuTXNvSGVhZGVyLCBkaXYuTXNvSGVhZGVy
+Cgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7
+Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuTXNvRm9vdGVyLCBsaS5Nc29Gb290ZXIs
+IGRpdi5Nc29Gb290ZXIKCXttYXJnaW46MGluOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9u
+dC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KYTpsaW5rLCBzcGFu
+Lk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30K
+YTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7Y29sb3I6IzYwNjQyMDsKCXRl
+eHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpwLkFCTE9DS1BBUkEsIGxpLkFCTE9DS1BBUkEsIGRp
+di5BQkxPQ0tQQVJBCgl7bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQt
+c2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUJVTExFVCwgbGku
+QUJVTExFVCwgZGl2LkFCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdodDowaW47
+CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjE2LjU1cHQ7CgltYXJnaW4tYm90dG9t
+Oi4wMDAxcHQ7Cgl0ZXh0LWluZGVudDotMTYuNTVwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250
+LWZhbWlseToiQm9vayBBbnRpcXVhIjt9CnAuQUlOREVOVEVEQlVMTEVULCBsaS5BSU5ERU5URURC
+VUxMRVQsIGRpdi5BSU5ERU5URURCVUxMRVQKCXttYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdo
+dDowaW47CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0OjMzLjFwdDsKCW1hcmdpbi1i
+b3R0b206LjAwMDFwdDsKCXRleHQtaW5kZW50Oi0xNi41NXB0OwoJZm9udC1zaXplOjExLjBwdDsK
+CWZvbnQtZmFtaWx5OiJCb29rIEFudGlxdWEiO30KcC5BSU5ERU5URURQQVJBLCBsaS5BSU5ERU5U
+RURQQVJBLCBkaXYuQUlOREVOVEVEUEFSQQoJe21hcmdpbi10b3A6MGluOwoJbWFyZ2luLXJpZ2h0
+OjBpbjsKCW1hcmdpbi1ib3R0b206MGluOwoJbWFyZ2luLWxlZnQ6MTYuNTVwdDsKCW1hcmdpbi1i
+b3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQm9vayBBbnRp
+cXVhIjt9CnNwYW4uRW1haWxTdHlsZTIzCgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9z
+ZTsKCWZvbnQtZmFtaWx5OkFyaWFsOwoJY29sb3I6d2luZG93dGV4dDt9CkBwYWdlIFNlY3Rpb24x
+Cgl7c2l6ZTo1OTUuNDVwdCA4NDEuN3B0OwoJbWFyZ2luOjEuMGluIC43NWluIDEuMGluIC43NWlu
+O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9Ci0tPgo8L3N0eWxlPgo8L2hlYWQ+Cjxi
+b2R5IGxhbmc9IkVOLVVTIiBsaW5rPSJibHVlIiB2bGluaz0iIzYwNjQyMCI+CjxkaXYgY2xhc3M9
+IlNlY3Rpb24xIj4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJp
+YWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+SGks
+PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGZvbnQg
+c2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0Owpmb250
+LWZhbWlseTpBcmlhbCI+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KPHAgY2xh
+c3M9Ik1zb05vcm1hbCI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJpYWwiPjxzcGFuIHN0eWxlPSJm
+b250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCI+SXQgbG9va3MgbGlrZSB3aXRoIGN1
+cnJlbnQgT2Zvbm8gaW1wbGVtZW50YXRpb24sIHRoZSB0ZXJtaW5hdGlvbiBvZiBhIEhlbGQgY2Fs
+bCAoQVQmIzQzO0NITEQ9MCkgaXMgbm90IHBlcm1pdHRlZCAodXNpbmcgJiM4MjIwO0hhbmd1cCYj
+ODIyMTspLCBpbiBjYXNlIHRoZXJlIGlzIGFub3RoZXIgY2FsbAogcHJlc2VudC4gSXMgdGhlcmUg
+YW55IHNwZWNpZmljIHJlYXNvbiB0byBwcmV2ZW50IHRoZSB0ZXJtaW5hdGlvbiBvZiBIZWxkIGNh
+bGwsIHVubGVzcyBpdCBpcyB0aGUgb25seSBjYWxsIGF2YWlsYWJsZT88bzpwPjwvbzpwPjwvc3Bh
+bj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJB
+cmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj48
+bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48
+Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7
+CmZvbnQtZmFtaWx5OkFyaWFsIj5Jc3N1ZSBmYWNlZDo8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+
+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNw
+YW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj4tVGhlcmUgaXMg
+b25lIGFjdGl2ZSBhbmQgb25lIGhlbGQgY2FsbC48bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9w
+Pgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4g
+c3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj4tSXQgaXMgbm90IHBv
+c3NpYmxlIHRvIHRlcm1pbmF0ZSB0aGUgaGVsZCBjYWxsIGFzIGxvbmcgYXMgdGhlIGFjdGl2ZSBj
+YWxsIGV4aXN0cy48bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgo8cCBjbGFzcz0iTXNvTm9y
+bWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTox
+MC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+
+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48Zm9udCBzaXplPSIyIiBmYWNlPSJBcmlhbCI+PHNw
+YW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsIj5SZWdhcmRzLDxv
+OnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzdDE6Q2l0
+eSB3OnN0PSJvbiI+PHN0MTpwbGFjZSB3OnN0PSJvbiI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iQXJp
+YWwiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsIj5NaWxh
+bjwvc3Bhbj48L2ZvbnQ+PC9zdDE6cGxhY2U+PC9zdDE6Q2l0eT48Zm9udCBzaXplPSIyIiBmYWNl
+PSJBcmlhbCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwi
+PjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxmb250
+IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDsKZm9u
+dC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+CjxwIGNs
+YXNzPSJNc29Ob3JtYWwiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48c3BhbiBzdHlsZT0i
+Zm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9z
+cGFuPjwvZm9udD48L3A+CjwvZGl2Pgo8YnI+Cjxocj4KPGZvbnQgZmFjZT0iQXJpYWwiIGNvbG9y
+PSJHcmF5IiBzaXplPSIyIj5UaGlzIG1lc3NhZ2UgaXMgZm9yIHRoZSBkZXNpZ25hdGVkIHJlY2lw
+aWVudCBvbmx5IGFuZCBtYXkgY29udGFpbiBwcml2aWxlZ2VkLCBwcm9wcmlldGFyeSwgb3Igb3Ro
+ZXJ3aXNlIHByaXZhdGUgaW5mb3JtYXRpb24uIElmIHlvdSBoYXZlIHJlY2VpdmVkIGl0IGluIGVy
+cm9yLCBwbGVhc2Ugbm90aWZ5IHRoZSBzZW5kZXIgaW1tZWRpYXRlbHkgYW5kIGRlbGV0ZSB0aGUg
+b3JpZ2luYWwuCiBBbnkgb3RoZXIgdXNlIG9mIHRoZSBlbWFpbCBieSB5b3UgaXMgcHJvaGliaXRl
+ZC48YnI+CjwvZm9udD4KPC9ib2R5Pgo8L2h0bWw+Cg==
 
-Please have a look the previous two patches relative call waiting and call
-status notify. It is required to check call waiting status here. It depends=
- on
-those patches.
-
-Thanks!
-
-Caiwen
-
---===============4399038770598023173==--
+--===============8742806557830808075==--
 
