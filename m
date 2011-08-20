@@ -1,155 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============5417170396838680262=="
+Content-Type: multipart/mixed; boundary="===============0993838913792471712=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/3] oFono rules update
-Date: Tue, 23 Aug 2011 09:13:13 -0700
-Message-ID: <1314115995.3373.211.camel@aeonflux>
-In-Reply-To: <4E53C6BA.9010807@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [Clarification Request]HFP Modem:Notification of Multiparty Call
+ Created Using AG
+Date: Sat, 20 Aug 2011 00:39:47 -0500
+Message-ID: <4E4F48A3.2030101@gmail.com>
+In-Reply-To: <10D123A956DC4B4FA9D7A48B3335836215186E43FF@INDXM3131.dir.svc.accenture.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5417170396838680262==
+--===============0993838913792471712==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Phillipe,
+Hi Milan,
 
-> >> Based on the latest usb_modeswitch rules, some 3G dongles require
-> >> to modify the ofono rules to be supported correctly (tests done in Ind=
-ia)
-> >>
-> >>
-> >> Philippe Nunes (3):
-> >>    udev: use ttyUSB3 for ZTE K3570 modem port.
-> >>    udev:  add support for Olive HSDPA modem
-> >>    udev: Use ttyUSB4 for Huawei E367 Pcui port
-> >>
-> >>   plugins/ofono.rules |   17 ++++++++++-------
-> >>   1 files changed, 10 insertions(+), 7 deletions(-)
-> >
-> > I think you are way too late with these changes. We are not using
-> > plugins/udev.c for Huawei and ZTE device detection anymore. I fixed this
-> > all up and plugins/udevng.c should do proper automatic detection.
-> >
-> > Please check if this works properly for you or if you have problems.
-> >
+On 08/22/2011 12:34 AM, milan.satpathy(a)accenture.com wrote:
+> Hi,
 > =
+
+>  =
 
 > =
 
-> Hi Marcel,
+> The following issue is being faced while establishing a multiparty call
+> using AG directly.
 > =
 
-> I just experienced a case where the automatic detection brings a =
-
-> difference with the previous implementation.
-> =
-
-> Using the dongle ZTE MF190 (DefaultProduct=3D 0x0149 TargetProduct=3D =
-
-> 0x0124), udevng.c is assigning the modem port to ttyUSB3 whereas ttyUSB4 =
-
-> was assigned with the previous udev.c based on the previous ofono.rules.
-> =
-
-> In practice, the port com ttyUSB3 is not responsive (I checked also with =
-
-> minicom) so we can't manage to connect a data call (see ofono logs in =
-
-> attachment). Using the previous combination udev.c  + ofono.rules, if =
-
-> the modem port assigned to ttyUSB4 is responsive, we are however facing =
-
-> with an other issue:
-> =
-
-> ofonod[23908]: plugins/zte.c:zte_post_online() 0x9e2a470
-> ofonod[23908]: Aux: > AT+CREG=3D?\r
-> ofonod[23908]: Aux: < \r\nOK\r\n
-> ofonod[23908]: Unable to initialize Network Registration
-> ofonod[23908]: src/network.c:netreg_remove() atom: 0x9e29cf0
-> =
+>  =
 
 > =
 
-> So, we can't go ahead for the data call since the network is not =
-
-> registered. But this is an other issue we would need to fix I guess =
-
-> specifically for this dongle.
+> Precondition:
 > =
 
-> Here, I just wanted to raise a potential issue regarding the modem port =
-
-> com assignment for ZTE dongles:
+> -------------------
 > =
 
-> Indeed, according the previous ofono.rules, we were assigning ttyUSB4 as =
-
-> modem port for 2 product Ids:
+>    1. No SLC is established between AG & HF.
+>    2. A multiparty call is established using the available features in
+>       AG directly.
 > =
 
-> ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0121", =
+>  =
 
-> ENV{ID_USB_INTERFACE_NUM}=3D=3D"04", ENV{OFONO_ZTE_TYPE}=3D"modem"
-> ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0121", =
-
-> ENV{ID_USB_INTERFACE_NUM}=3D=3D"01", ENV{OFONO_ZTE_TYPE}=3D"aux"
 > =
 
-> ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0124", =
-
-> ENV{ID_USB_INTERFACE_NUM}=3D=3D"04", ENV{OFONO_ZTE_TYPE}=3D"modem"
-> ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0124", =
-
-> ENV{ID_USB_INTERFACE_NUM}=3D=3D"01", ENV{OFONO_ZTE_TYPE}=3D"aux"
+> Test Steps:
 > =
 
-> but looking to udevng.c and particularly the function 'setup_zte', the =
-
-> modem port can't be assigned anymore to ttyUSB4.
+> ----------------
 > =
 
-> static gboolean setup_zte(struct modem_info *modem)
-> {
-> 	...
+>       1. SLC is established while the conference call is in progress.
 > =
 
-> 	if (g_strcmp0(info->number, "00") =3D=3D 0)
-> 		qcdm =3D info->devnode;
-> 	else if (g_strcmp0(info->number, "01") =3D=3D 0)
-> 		aux =3D info->devnode;
-> 	else if (g_strcmp0(info->number, "02") =3D=3D 0)
-> 		mdm =3D info->devnode;
-> 	else if (g_strcmp0(info->number, "03") =3D=3D 0)
-> 		mdm =3D info->devnode;
-> 	}
-> }
+>       2. The participant calls are still presented as =E2=80=9Cmultiparty=
+ =3D false=E2=80=9D.
 > =
 
-> So, I wonder if the condition:
-> 	=
+>  =
 
-> 	else if (g_strcmp0(info->number, "04") =3D=3D 0)
 > =
 
-> is voluntarily missing or not.
+> Primary Analysis:
+> =
 
-it might be missing. What does usb-devices say and how many TTY is this
-one actually creating. If it creates indeed 5 TTY and the fourth TTY is
-on interface number 04, then yes this should be added.
+> ------------------------
+> =
 
-The general rule for ZTE is that the modem interface is suppose to be on
-the last interface. Not sure if this is always true, but with all my
-devices it was. And we could still overwrite this with a udev rule if we
-have to.
+> From primary code walk through it looks like, the multiparty property is
+> set possibly as a result of callback to =E2=80=9Ccreatemultiparty=E2=80=
+=9D call, made
+> using Ofono.
+> =
 
-Regards
+>  =
 
-Marcel
+> =
+
+> Query:
+> =
+
+> ---------
+> =
+
+> Is there a specific reason to limit the availability of multiparty call
+> support initiated through Ofono only?
+> =
 
 
+This is an oversight for HFP.  oFono primarily deals with 'real' modems
+and the implicit assumption is that no calls can exist since oFono is
+responsible for powering up the modem.
 
---===============5417170396838680262==--
+We would need to introduce a new list_calls method to the voicecall
+driver and execute it at atom initialization time.  We can then file
+multiple held / active calls into the multiparty list.  Patches are
+always welcome ;)
+
+Regards,
+-Denis
+
+--===============0993838913792471712==--
 
