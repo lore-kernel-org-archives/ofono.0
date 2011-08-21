@@ -1,64 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============3734638087514128742=="
+Content-Type: multipart/mixed; boundary="===============1541369266133212451=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 2/2] TODO: Mark Bluetooth DUN task as done
-Date: Thu, 25 Aug 2011 16:19:51 +0200
-Message-ID: <1314281991-16595-2-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1314281991-16595-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Bluetooth HF role
+Date: Sat, 20 Aug 2011 21:13:47 -0500
+Message-ID: <4E5069DB.4020006@gmail.com>
+In-Reply-To: <4E5640F2.5010302@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3734638087514128742==
+--===============1541369266133212451==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO             |    7 -------
- doc/features.txt |    5 +++++
- 2 files changed, 5 insertions(+), 7 deletions(-)
+Hi Mikel,
 
-diff --git a/TODO b/TODO
-index 9cc5dc0..8249e32 100644
---- a/TODO
-+++ b/TODO
-@@ -110,13 +110,6 @@ Modem Emulator
-   Priority: Low
-   Complexity: C1
- =
+On 08/25/2011 07:32 AM, Mikel Astiz wrote:
+> Hi Denis,
+> =
 
--- Support DUN emulator. Implement the Bluetooth DUN profile with only mand=
-atory
--  AT command support.
--
--  Complexity: C4
--  Priority: Medium
--  Owner: Guillaume Zajac <guillaume.zajac@linux.intel.com>
--
- - Implement USB DUN.
- =
+> On 08/20/2011 11:00 AM, Denis Kenzior wrote:
+>> Hi Mikel,
+>>
+>> On 08/24/2011 10:28 AM, Mikel Astiz wrote:
+>>> Hi all,
+>>>
+>>> I'm trying to understand the features currently supported by oFono
+>>> regarding the handsfree role in Bluetooth/HFP. My first impression
+>>> looking at the source code is that some HFP functionality might be
+>>> missing, but I would rather have your confirmation.
+>>>
+>> Correct, in general only features that map 1:1 to existing APIs are
+>> exposed.  So that means network registration, voicecalls and call-volume
+>> interfaces.
+>>
+>>> Some examples I've found so far are the following:
+>>> 1. Response and hold (AT+BTRH=3D0)
+>>> 2. Redial last number (AT+BLDN)
+>>> 3. Retrieval of supported Bluetooth features for a certain modem/device
+>>> (AT+BRSF)
+>>>
+>> BRSF is supported and used internally, but the information is not
+>> exposed over D-Bus.
+>>
+>>> Could you clarify which (if any) of these features are currently
+>>> supported by oFono?
+>> Bluetooth specific features are not supported yet, these will require a
+>> separate atom. Roughly this means anything starting with +B.. including:
+>>     - +BINP
+>>     - +BLDN
+>>     - +BVRA
+>>     - +NREC
+>>     - +BSIR
+>>     - +BTRH
+>>
+>>> In general, is there any documented list of unsupported features?
+>>>
+>> In general the TODO list is your best source of readily available
+>> information.  In the case of HFP HF, there is no such documentation ;)
+>> Patches adding tasks to the TODO list to support these features are
+>> always welcome.
+>>
+>> Regards
+>> -Denis
+> =
 
-   Complexity: C4
-diff --git a/doc/features.txt b/doc/features.txt
-index 1eaad64..4a2ac9a 100644
---- a/doc/features.txt
-+++ b/doc/features.txt
-@@ -680,3 +680,8 @@ Modem Emulator
-   enhanced call status, enhanced call control and report of extended error
-   results code.  Audio management is assumed to be performed in another sy=
-stem
-   component, e.g. PulseAudio.
-+
-+- Support Bluetooth DUN profile. Only mandatory AT commands are supported,=
- see
-+  dialup-command-set.txt.
-+  =
+> OK, thanks for the information.
+> =
 
-+
--- =
-
-1.7.1
+> Then I guess the next question is whether you have plans to support this
+> in the future, or if you would accept patches in this direction. I'm
+> afraid some of them could potentially affect the existing API.
+> =
 
 
---===============3734638087514128742==--
+Patches are always welcome.  I'm not sure why you want to change the
+existing API, sounds like most of these features belong to a new atom
+interface, however I could be wrong.  Go ahead and send your proposal so
+we have a starting point for the discussion.
+
+Regards,
+-Denis
+
+--===============1541369266133212451==--
 
