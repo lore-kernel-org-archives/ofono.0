@@ -1,54 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============3845361328629623202=="
+Content-Type: multipart/mixed; boundary="===============4461763846415153086=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [Clarification Request]HFP Modem:Termination Of Held Call
-Date: Thu, 18 Aug 2011 19:32:41 -0500
-Message-ID: <4E4DAF29.5030309@gmail.com>
-In-Reply-To: <10D123A956DC4B4FA9D7A48B3335836215186E3911@INDXM3131.dir.svc.accenture.com>
+From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
+Subject: RE: Issues about GPRS state
+Date: Mon, 22 Aug 2011 02:06:48 +0000
+Message-ID: <0E7E5CACD8E9F248AA009C292CC772A075C8F8@ALA-MBA.corp.ad.wrs.com>
+In-Reply-To: <4E4D6816.4010805@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3845361328629623202==
+--===============4461763846415153086==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Milan,
+Hi Denis,
 
-On 08/19/2011 01:30 AM, milan.satpathy(a)accenture.com wrote:
-> Hi,
+> > At line 3 gprs_netreg_update() is called, driver_attached is set to
+> > FALSE. Due to there are some AT command in the queue, AT+CGATT=3D0 is
+> not sent out immediately(till at line 20).
+> > At line 18, driver_attached is set to TRUE. In fact after line 21,
+> GPRS is detached.
+> > In src/gprs.c there is only one place to attach GPRS, it is in
+> gprs_netreg_update().
+> > due to driver_attached is TRUE, gprs_netreg_update() will always
+> > return before
+> > gprs->driver->set_attached() invoked.
+> >
 > =
 
->  =
-
-> =
-
-> It looks like with current Ofono implementation, the termination of a
-> Held call (AT+CHLD=3D0) is not permitted (using =E2=80=9CHangup=E2=80=9D)=
-, in case there
-> is another call present. Is there any specific reason to prevent the
-> termination of Held call, unless it is the only call available?
-> =
-
->  =
-
-> =
-
-> Issue faced:
-> =
-
-> -There is one active and one held call.
-> =
-
-> -It is not possible to terminate the held call as long as the active
-> call exists.
+> It seems to me the issue is that we do not check the FLAG_ATTACHING
+> properly inside ofono_gprs_status_notify.  I've already proposed a fix
+> for this a while ago, please see it again (attached).
 > =
 
 
-The pre-conditions have been relaxed by commit cb21b7f4.
+Yes, it is a better solution. I remember we have discussed it before,
+please don't forget apply it.
 
-Regards,
--Denis
+> > For this issue I have submit two patches, please see attached.
+> >
+> > (2) After receive "NW DETACH"/"ME DETACH" unsolicited message, GPRS
+> is
+> > not re-attached. It will cause can not connect GPRS connection any
+> more.
+> >
+> > (3) In AT modem GPRS driver, the attach status query
+> > function(.attached_status) is implememted as query the GPRS
+> registration status. Is it by mistake or intended? It is very
+> confusable.
+> >
+> =
 
---===============3845361328629623202==--
+> Attached means whether we're actually attached to PS service.  The
+> reason the driver method is called attached_status is that some modems
+> (e.g. isi) do not have (and rightfully so) a concept of 'PS
+> registration status' as returned by CGREG.  So yes, it is on purpose
+> and it is not a mistake.
+> =
+
+
+Please have a look https://bugs.meego.com/show_bug.cgi?id=3D17921. The issu=
+e the
+tester encountered when verified this bug should be issue (2) mentioned abo=
+ve.
+
+
+Regards
+
+Caiwen
+
+
+--===============4461763846415153086==--
 
