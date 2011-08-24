@@ -1,37 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============6248625220459419437=="
+Content-Type: multipart/mixed; boundary="===============8716367922010080693=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 0/5] isimodem: Add functionality to UICC
-Date: Mon, 29 Aug 2011 14:38:22 +0300
-Message-ID: <CANzBvOQHZmASHKKSDvh9qLRmEE_PJmy4sTr2e2dkr1Lo==cqPA@mail.gmail.com>
-In-Reply-To: <6B9DA0A3415B234191A1ADFA6275C51CB2409D@008-AM1MPN1-041.mgdnok.nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] TODO: Splitting DUN task in 2 parts Bluetooth DUN and
+ USB DUN
+Date: Tue, 23 Aug 2011 23:54:02 -0500
+Message-ID: <4E5483EA.7000306@gmail.com>
+In-Reply-To: <1314281991-16595-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6248625220459419437==
+--===============8716367922010080693==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Iiro,
+Hi Guillaume,
 
-2011/8/3  <iiro.kaihlaniemi@nokia.com>:
-> This patch adds some functionality to UICC which has been pretty much dum=
-my
-> so far.
->
-> =C2=A0Makefile.am=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0=C2=A0 3 +-
-> =C2=A0drivers/isimodem/debug.c |=C2=A0 121 +++++
-> =C2=A0drivers/isimodem/debug.h |=C2=A0=C2=A0=C2=A0 2 +
-> =C2=A0drivers/isimodem/uicc.c=C2=A0 | 1282
+On 08/25/2011 09:19 AM, Guillaume Zajac wrote:
+> ---
+>  TODO |    7 ++++++-
+>  1 files changed, 6 insertions(+), 1 deletions(-)
+> =
 
-The set that I just pushed included this stuff as well.
 
-(We had a number of private emails with Iiro to iron out some issues.)
+Patch has been applied, thanks.
 
-Cheers,
-Aki
+Regards,
+-Denis
 
---===============6248625220459419437==--
+--===============8716367922010080693==--
 
