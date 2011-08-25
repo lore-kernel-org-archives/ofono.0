@@ -1,52 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============8254728914693707608=="
+Content-Type: multipart/mixed; boundary="===============3695858903892637774=="
 MIME-Version: 1.0
-From: Gustavo Padovan <padovan@profusion.mobi>
-Subject: Re: Bluetooth HF role
-Date: Wed, 24 Aug 2011 13:56:44 -0300
-Message-ID: <20110824165643.GA2662@joana>
-In-Reply-To: <4E5518A3.6070402@bmw-carit.de>
+From: Daser Jnr. <atbutuxinggnu@gmail.com>
+Subject: Re: Business
+Date: Thu, 25 Aug 2011 03:28:09 +0100
+Message-ID: <CAL=iohyfhvZT2=Gth5L0wjihFarPZD4bx3_HozQiByz6VZ66rg@mail.gmail.com>
+In-Reply-To: <CAGA-L+UdpswHQo8tDP=6sFs5NzhZyVNot2eJx29Aob6NC3r5rw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8254728914693707608==
+--===============3695858903892637774==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mikel,
+Hmmn, touching...but for who ever has implemented this technology
+called ofono, business or non-business, what can i use ofono for?(a
+use case) will be nice.
+good work and cheers
 
-* Mikel Astiz <mikel.astiz@bmw-carit.de> [2011-08-24 17:28:35 +0200]:
+Daser S.
 
-> Hi all,
-> =
+On 8/18/11, Steve Totaro <stotaro@totarotechnologies.com> wrote:
+> R&D, produce a product that meets a need and sell it.
+>
+> Your question reminds me of a South Park episode where little gnomes
+> are stealing underwear for their three step business plan.
+>
+> http://www.youtube.com/watch?v=3DTBiSI6OdqvA
+>
+> It amazes me that people ask for a others to provide a business plan.
+> Most just copy what someone is doing successfully and have zero R&D
+> costs, market research, or any of the other expenses that the pioneer
+> of the business had to pay.  They have no creativity or imagination
+> unless they further the business in some new way.
+>
+> In this case, you have to use your brain and creativity and figure it
+> out since nobody using this technology is going to give away answers
+> that cost them a great deal of resources upfront.  Plus if they give
+> you their business model, then they now have a competitor who can
+> offer lower pricing because they don't have to offset any of the
+> initial costs which are pretty major.
+>
+> This is the idea behind medications and time restrictions on others
+> producing generics, as well as patent law.  It gives the creator a
+> window of exclusivity to recoup R&D and other costs which are usually
+> very substantial.
+>
+> For whatever reason, I see these questions coming from countries that
+> copy ideas and business plans that stem from the U.S.
+>
+> Thanks,
+> Steve Totaro
+>
+> On Thu, Aug 18, 2011 at 9:55 AM, Daser Jnr. <atbutuxinggnu@gmail.com> w=
+rote:
+>> Hi all
+>> From a business point of view, can some one tell me what i can do with
+>> ofono
+>>
+>>
+>> Cheers
+>>
+>> Daser S.
+>> _______________________________________________
+>> ofono mailing list
+>> ofono(a)ofono.org
+>> http://lists.ofono.org/listinfo/ofono
+>>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
-> I'm trying to understand the features currently supported by oFono
-> regarding the handsfree role in Bluetooth/HFP. My first impression
-> looking at the source code is that some HFP functionality might be
-> missing, but I would rather have your confirmation.
-> =
-
-> Some examples I've found so far are the following:
-> 1. Response and hold (AT+BTRH=3D0)
-> 2. Redial last number (AT+BLDN)
-
-Yeah, these are missing.
-
-> 3. Retrieval of supported Bluetooth features for a certain
-> modem/device (AT+BRSF)
-
-This is done by hfp_slc_establish() in hfp_hf.c plugin.
-> =
-
-> Could you clarify which (if any) of these features are currently
-> supported by oFono?
-> =
-
-> In general, is there any documented list of unsupported features?
-
-No, I think you need to confront the code against the spec.
-
-	Gustavo
-
---===============8254728914693707608==--
+--===============3695858903892637774==--
 
