@@ -1,113 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============3818222723800856318=="
+Content-Type: multipart/mixed; boundary="===============7758006688802509161=="
 MIME-Version: 1.0
-From: Steve Totaro <stotaro@totarotechnologies.com>
-Subject: Re: Business
-Date: Wed, 24 Aug 2011 22:38:47 -0400
-Message-ID: <CAGA-L+Ws8srFYf9bEr2ON7QPmS-Wt0CdijfeR5bb3PwtLCHeYg@mail.gmail.com>
-In-Reply-To: <CAL=iohyfhvZT2=Gth5L0wjihFarPZD4bx3_HozQiByz6VZ66rg@mail.gmail.com>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv4 1/3] Mobile broadband provider info plugin makefile changes
+Date: Thu, 25 Aug 2011 14:23:04 +0300
+Message-ID: <1314271386-23201-2-git-send-email-oleg.zhurakivskyy@intel.com>
+In-Reply-To: <1314271386-23201-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3818222723800856318==
+--===============7758006688802509161==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-You are obviously new to all of this and don't understand.  First,
-learn about top and bottom posting.  I don't care as long as it flows
-the same way, some will totally ignore top posters, these are usually
-the most valuable allies you have.
+---
+ Makefile.am |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
 
-I still see someone asking for something for nothing.
+diff --git a/Makefile.am b/Makefile.am
+index 6f5d921..7df0fd3 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -358,6 +358,11 @@ builtin_libadd +=3D @BLUEZ_LIBS@
+ endif
+ endif
+ =
 
-Look at the goals of the project.  Google, research, ask a real
-question, not "what can I use it for".
++if PROVIDER_INFO
++builtin_modules +=3D mobile_broadband_provider_info
++builtin_sources +=3D plugins/mobile-broadband-provider-info.c
++endif
++
+ if MAINTAINER_MODE
+ builtin_modules +=3D example_history
+ builtin_sources +=3D examples/history.c
+@@ -365,8 +370,10 @@ builtin_sources +=3D examples/history.c
+ builtin_modules +=3D example_nettime
+ builtin_sources +=3D examples/nettime.c
+ =
 
-Use your brain and imagination or stop cluttering the internet with
-mindless garbage.
++if !PROVIDER_INFO
+ builtin_modules +=3D example_provision
+ builtin_sources +=3D examples/provision.c
++endif
+ =
 
-Implement it yourself and then brainstorm or hire a thinktank.
+ builtin_modules +=3D example_emulator
+ builtin_sources +=3D examples/emulator.c
+-- =
 
-Unbelievable how things have degraded as far as imagination.
+1.7.4.1
 
-Do you think other successful companies with a new, state of the art
-product are going to just hand over business plans for free?  You are
-just trying to rip off a sucker with brains but no business sense.
 
-Read the site, mail list archives, and blogs for ofono, WOW, how about
-you implement it yourself!  a bit of effort and brain work.
-
-Nothing is free.  Stop trying to rip off people that don't know better.
-
-Thanks,
-Steve Totaro
-
-On Wed, Aug 24, 2011 at 10:28 PM, Daser Jnr. <atbutuxinggnu@gmail.com> wr=
-ote:
-> Hmmn, touching...but for who ever has implemented this technology
-> called ofono, business or non-business, what can i use ofono for?(a
-> use case) will be nice.
-> good work and cheers
->
-> Daser S.
->
-> On 8/18/11, Steve Totaro <stotaro@totarotechnologies.com> wrote:
->> R&D, produce a product that meets a need and sell it.
->>
->> Your question reminds me of a South Park episode where little gnomes
->> are stealing underwear for their three step business plan.
->>
->> http://www.youtube.com/watch?v=3DTBiSI6OdqvA
->>
->> It amazes me that people ask for a others to provide a business plan.
->> Most just copy what someone is doing successfully and have zero R&D
->> costs, market research, or any of the other expenses that the pioneer
->> of the business had to pay. =C2=A0They have no creativity or imagination
->> unless they further the business in some new way.
->>
->> In this case, you have to use your brain and creativity and figure it
->> out since nobody using this technology is going to give away answers
->> that cost them a great deal of resources upfront. =C2=A0Plus if they give
->> you their business model, then they now have a competitor who can
->> offer lower pricing because they don't have to offset any of the
->> initial costs which are pretty major.
->>
->> This is the idea behind medications and time restrictions on others
->> producing generics, as well as patent law. =C2=A0It gives the creator a
->> window of exclusivity to recoup R&D and other costs which are usually
->> very substantial.
->>
->> For whatever reason, I see these questions coming from countries that
->> copy ideas and business plans that stem from the U.S.
->>
->> Thanks,
->> Steve Totaro
->>
->> On Thu, Aug 18, 2011 at 9:55 AM, Daser Jnr. <atbutuxinggnu@gmail.com> =
-wrote:
->>> Hi all
->>> From a business point of view, can some one tell me what i can do with
->>> ofono
->>>
->>>
->>> Cheers
->>>
->>> Daser S.
->>> _______________________________________________
->>> ofono mailing list
->>> ofono(a)ofono.org
->>> http://lists.ofono.org/listinfo/ofono
->>>
->> _______________________________________________
->> ofono mailing list
->> ofono(a)ofono.org
->> http://lists.ofono.org/listinfo/ofono
->>
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
-
---===============3818222723800856318==--
+--===============7758006688802509161==--
 
