@@ -1,60 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============4063248147562927491=="
+Content-Type: multipart/mixed; boundary="===============4311418921880107777=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv4 2/3] Mobile broadband provider info plugin autoconf support
-Date: Thu, 25 Aug 2011 14:23:05 +0300
-Message-ID: <1314271386-23201-3-git-send-email-oleg.zhurakivskyy@intel.com>
-In-Reply-To: <1314271386-23201-1-git-send-email-oleg.zhurakivskyy@intel.com>
+From: Mikel Astiz <mikel.astiz@bmw-carit.de>
+Subject: Re: Bluetooth HF role
+Date: Thu, 25 Aug 2011 14:32:50 +0200
+Message-ID: <4E5640F2.5010302@bmw-carit.de>
+In-Reply-To: <4E4F7797.7060905@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4063248147562927491==
+--===============4311418921880107777==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- configure.ac |   19 +++++++++++++------
- 1 files changed, 13 insertions(+), 6 deletions(-)
+Hi Denis,
 
-diff --git a/configure.ac b/configure.ac
-index a6b4094..966237c 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -197,14 +197,21 @@ AC_SUBST(BLUEZ_CFLAGS)
- AC_SUBST(BLUEZ_LIBS)
- AM_CONDITIONAL(BLUETOOTH, test "${enable_bluetooth}" !=3D "no")
- =
+On 08/20/2011 11:00 AM, Denis Kenzior wrote:
+> Hi Mikel,
+>
+> On 08/24/2011 10:28 AM, Mikel Astiz wrote:
+>> Hi all,
+>>
+>> I'm trying to understand the features currently supported by oFono
+>> regarding the handsfree role in Bluetooth/HFP. My first impression
+>> looking at the source code is that some HFP functionality might be
+>> missing, but I would rather have your confirmation.
+>>
+> Correct, in general only features that map 1:1 to existing APIs are
+> exposed.  So that means network registration, voicecalls and call-volume
+> interfaces.
+>
+>> Some examples I've found so far are the following:
+>> 1. Response and hold (AT+BTRH=3D0)
+>> 2. Redial last number (AT+BLDN)
+>> 3. Retrieval of supported Bluetooth features for a certain modem/device
+>> (AT+BRSF)
+>>
+> BRSF is supported and used internally, but the information is not
+> exposed over D-Bus.
+>
+>> Could you clarify which (if any) of these features are currently
+>> supported by oFono?
+> Bluetooth specific features are not supported yet, these will require a
+> separate atom. Roughly this means anything starting with +B.. including:
+> 	- +BINP
+> 	- +BLDN
+> 	- +BVRA
+> 	- +NREC
+> 	- +BSIR
+> 	- +BTRH
+>
+>> In general, is there any documented list of unsupported features?
+>>
+> In general the TODO list is your best source of readily available
+> information.  In the case of HFP HF, there is no such documentation ;)
+> Patches adding tasks to the TODO list to support these features are
+> always welcome.
+>
+> Regards
+> -Denis
 
--AC_MSG_CHECKING([for mobile-broadband-provider-info])
--PKG_CHECK_EXISTS(mobile-broadband-provider-info,
--	_PKG_CONFIG(PROVIDER_DATABASE, [variable=3Ddatabase],
-+AC_ARG_ENABLE(provider-info, AC_HELP_STRING([--enable-provider-info],
-+				[enable mobile provider database support]),
-+					[enable_provider_info=3D${enableval}])
-+if (test "${enable_provider_info}" =3D=3D "yes"); then
-+	AC_MSG_CHECKING([for mobile-broadband-provider-info])
-+	PKG_CHECK_EXISTS(mobile-broadband-provider-info,
-+			_PKG_CONFIG(PROVIDER_DATABASE, [variable=3Ddatabase],
- 					[mobile-broadband-provider-info])
--	AC_DEFINE_UNQUOTED(PROVIDER_DATABASE, "$pkg_cv_PROVIDER_DATABASE",
-+		AC_DEFINE_UNQUOTED(PROVIDER_DATABASE,
-+					"$pkg_cv_PROVIDER_DATABASE",
- 					[Mobile provider database])
--	AC_MSG_RESULT([yes]),
--	AC_MSG_RESULT([no]))
-+		AC_MSG_RESULT([yes]),
-+		AC_MSG_ERROR(mobile-broadband-provider-info package is required))
-+fi
-+AM_CONDITIONAL(PROVIDER_INFO, test "${enable_provider_info}" =3D=3D "yes")
- =
+OK, thanks for the information.
 
- AC_ARG_ENABLE(datafiles, AC_HELP_STRING([--disable-datafiles],
- 			[don't install configuration and data files]),
--- =
+Then I guess the next question is whether you have plans to support this =
 
-1.7.4.1
+in the future, or if you would accept patches in this direction. I'm =
+
+afraid some of them could potentially affect the existing API.
+
+Best regards,
+Mikel
 
 
---===============4063248147562927491==--
+--===============4311418921880107777==--
 
