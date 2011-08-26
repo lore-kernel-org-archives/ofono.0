@@ -1,42 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============4711679948933359444=="
+Content-Type: multipart/mixed; boundary="===============8248940507788342658=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 1/4] udevng.c: Switch aux channel and modem channel for
- Speedup dongles
-Date: Fri, 26 Aug 2011 17:21:50 +0200
-Message-ID: <1314372113-29410-2-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 3/4] udev: Add rules to support ZTE MF668 dongle
+Date: Fri, 26 Aug 2011 17:21:52 +0200
+Message-ID: <1314372113-29410-4-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1314372113-29410-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4711679948933359444==
+--===============8248940507788342658==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/udevng.c |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
+ plugins/ofono.rules |    9 +++++++++
+ 1 files changed, 9 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 1365bd1..8578604 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -312,11 +312,11 @@ static gboolean setup_speedup(struct modem_info *mode=
-m)
- 				break;
- 		} else if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
- 			if (g_strcmp0(info->number, "01") =3D=3D 0)
--				aux =3D info->devnode;
--			else if (g_strcmp0(info->number, "02") =3D=3D 0)
- 				mdm =3D info->devnode;
-+			else if (g_strcmp0(info->number, "02") =3D=3D 0)
-+				aux =3D info->devnode;
- 			else if (g_strcmp0(info->number, "03") =3D=3D 0)
--				mdm =3D info->devnode;
-+				aux =3D info->devnode;
- 		}
- 	}
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index 30a1b7e..c7fac57 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -15,6 +15,15 @@ KERNEL=3D=3D"shrm0", ENV{OFONO_DRIVER}=3D"u8500"
+ =
+
+ LABEL=3D"ofono_isi_end"
+ =
+
++SUBSYSTEM!=3D"tty", GOTO=3D"ofono_tty_end"
++KERNEL!=3D"ttyUSB[0-9]*", GOTO=3D"ofono_tty_end"
++
++# ZTE
++ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0017", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"02", ENV{OFONO_LABEL}=3D"modem"
++ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0017", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"01", ENV{OFONO_LABEL}=3D"aux"
++
++LABEL=3D"ofono_tty_end"
++
+ SUBSYSTEM!=3D"usb", GOTO=3D"ofono_end"
+ ENV{DEVTYPE}!=3D"usb_device", GOTO=3D"ofono_end"
  =
 
 -- =
@@ -44,5 +47,5 @@ m)
 1.7.1
 
 
---===============4711679948933359444==--
+--===============8248940507788342658==--
 
