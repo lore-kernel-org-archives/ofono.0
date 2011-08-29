@@ -1,40 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============7126784466419637850=="
+Content-Type: multipart/mixed; boundary="===============2689921519361406318=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2 0/5] udev rules update
-Date: Mon, 29 Aug 2011 18:41:46 +0200
-Message-ID: <1314636111-16146-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 1/5] udev: Add rules to support ZTE MF668 dongle
+Date: Mon, 29 Aug 2011 18:41:47 +0200
+Message-ID: <1314636111-16146-2-git-send-email-philippe.nunes@linux.intel.com>
+In-Reply-To: <1314636111-16146-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7126784466419637850==
+--===============2689921519361406318==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-For Speedup dongles, the aux channel is not necessarily on the last interfa=
-ce (as for Speedup 8000)
-So, I kept the actual logic (modem is assigned on the last interface) and I=
- added two rules for Speedup 7300 and Speedup 9800
+---
+ plugins/ofono.rules |    9 +++++++++
+ 1 files changed, 9 insertions(+), 0 deletions(-)
 
-I modified also udevng.c in order to avoid aux/modem channel assignment acc=
-ording OFONO_LABEL to be overridden by the default assignment.
-Note that for ZTE dongles, this overriding can't occur.
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index 30a1b7e..c7fac57 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -15,6 +15,15 @@ KERNEL=3D=3D"shrm0", ENV{OFONO_DRIVER}=3D"u8500"
  =
 
+ LABEL=3D"ofono_isi_end"
+ =
 
-Philippe Nunes (5):
-  udev: Add rules to support ZTE MF668 dongle
-  udev: Add rules to support ZTE MF190 dongle
-  udevng.c: tty assignment according OFONO_LABEL should take precedence
-  udev: Add rules to support Speedup 7300 dongle
-  udev: Add rules to support SpeedUp 9800 dongle
++SUBSYSTEM!=3D"tty", GOTO=3D"ofono_tty_end"
++KERNEL!=3D"ttyUSB[0-9]*", GOTO=3D"ofono_tty_end"
++
++# ZTE
++ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0017", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"02", ENV{OFONO_LABEL}=3D"modem"
++ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0017", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"01", ENV{OFONO_LABEL}=3D"aux"
++
++LABEL=3D"ofono_tty_end"
++
+ SUBSYSTEM!=3D"usb", GOTO=3D"ofono_end"
+ ENV{DEVTYPE}!=3D"usb_device", GOTO=3D"ofono_end"
+ =
 
- plugins/ofono.rules |   20 +++++++++++++++++++
- plugins/udevng.c    |   52 +++++++++++++++++++++++++++++------------------=
----
- 2 files changed, 50 insertions(+), 22 deletions(-)
+-- =
+
+1.7.1
 
 
---===============7126784466419637850==--
+--===============2689921519361406318==--
 
