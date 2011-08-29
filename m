@@ -1,32 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3837950741713340797=="
+Content-Type: multipart/mixed; boundary="===============7126784466419637850=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] TODO: Mark Bluetooth DUN task as done
-Date: Tue, 23 Aug 2011 23:54:20 -0500
-Message-ID: <4E5483FC.40202@gmail.com>
-In-Reply-To: <1314281991-16595-2-git-send-email-guillaume.zajac@linux.intel.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 0/5] udev rules update
+Date: Mon, 29 Aug 2011 18:41:46 +0200
+Message-ID: <1314636111-16146-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3837950741713340797==
+--===============7126784466419637850==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+For Speedup dongles, the aux channel is not necessarily on the last interfa=
+ce (as for Speedup 8000)
+So, I kept the actual logic (modem is assigned on the last interface) and I=
+ added two rules for Speedup 7300 and Speedup 9800
 
-On 08/25/2011 09:19 AM, Guillaume Zajac wrote:
-> ---
->  TODO             |    7 -------
->  doc/features.txt |    5 +++++
->  2 files changed, 5 insertions(+), 7 deletions(-)
-> =
+I modified also udevng.c in order to avoid aux/modem channel assignment acc=
+ording OFONO_LABEL to be overridden by the default assignment.
+Note that for ZTE dongles, this overriding can't occur.
+ =
 
 
-Patch has been applied, thanks.
+Philippe Nunes (5):
+  udev: Add rules to support ZTE MF668 dongle
+  udev: Add rules to support ZTE MF190 dongle
+  udevng.c: tty assignment according OFONO_LABEL should take precedence
+  udev: Add rules to support Speedup 7300 dongle
+  udev: Add rules to support SpeedUp 9800 dongle
 
-Regards,
--Denis
+ plugins/ofono.rules |   20 +++++++++++++++++++
+ plugins/udevng.c    |   52 +++++++++++++++++++++++++++++------------------=
+---
+ 2 files changed, 50 insertions(+), 22 deletions(-)
 
---===============3837950741713340797==--
+
+--===============7126784466419637850==--
 
