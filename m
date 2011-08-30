@@ -1,48 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============8662491720953395124=="
+Content-Type: multipart/mixed; boundary="===============7933806120620095697=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [VPATH PATCH 1/2] Fix generating links in Makefile.am
-Date: Tue, 30 Aug 2011 15:20:17 +0300
-Message-ID: <1314706818-9720-2-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1314706818-9720-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [VPATH PATCH 2/2] Fix $(INCLUDE) in Makefile.am
+Date: Tue, 30 Aug 2011 15:20:18 +0300
+Message-ID: <1314706818-9720-3-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1314706818-9720-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8662491720953395124==
+--===============7933806120620095697==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-In case relative dependency is in $(srcdir), $< already includes path to
-$(srcdir).
+Allow using directory names as namespaces.
 ---
- Makefile.am |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ Makefile.am |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
 diff --git a/Makefile.am b/Makefile.am
-index 5019b7d..832c8ac 100644
+index 832c8ac..92ef72e 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -666,9 +666,9 @@ include/ofono/version.h: include/version.h
- 	$(AM_V_at)$(MKDIR_P) include/ofono
- 	$(AM_V_GEN)$(LN_S) $(abs_top_builddir)/$< $@
+@@ -447,7 +447,8 @@ AM_CFLAGS =3D @DBUS_CFLAGS@ @GLIB_CFLAGS@ @CAPNG_CFLAGS=
+@ @USB_CFLAGS@ \
+ 					-DOFONO_PLUGIN_BUILTIN \
+ 					-DPLUGINDIR=3D\""$(build_plugindir)"\"
  =
 
--include/ofono/%.h: include/%.h
-+include/ofono/%.h: $(abs_top_srcdir)/include/%.h
- 	$(AM_V_at)$(MKDIR_P) include/ofono
--	$(AM_V_GEN)$(LN_S) $(abs_top_srcdir)/$< $@
-+	$(AM_V_GEN)$(LN_S) $< $@
+-INCLUDES =3D -I$(builddir)/include -I$(builddir)/src -I$(srcdir)/src \
++INCLUDES =3D -I$(builddir) -I$(srcdir) -I$(builddir)/include \
++			-I$(builddir)/src -I$(srcdir)/src \
+ 			-I$(srcdir)/gdbus -I$(srcdir)/gisi -I$(srcdir)/gatchat \
+ 			-I$(srcdir)/btio
  =
 
- clean-local:
- 	@$(RM) -rf include/ofono
 -- =
 
 1.7.4.1
 
 
---===============8662491720953395124==--
+--===============7933806120620095697==--
 
