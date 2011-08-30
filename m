@@ -1,77 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============3984611286717119810=="
+Content-Type: multipart/mixed; boundary="===============7249638808178423196=="
 MIME-Version: 1.0
-From: Antti Paila <antti.paila@nokia.com>
-Subject: [PATCH] Add Direction property to voice call
-Date: Tue, 30 Aug 2011 16:48:35 +0300
-Message-ID: <1314712115-5068-1-git-send-email-antti.paila@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [VPATH PATCH 1/2] Fix generating links in Makefile.am
+Date: Tue, 30 Aug 2011 11:36:56 -0700
+Message-ID: <1314729418.3373.247.camel@aeonflux>
+In-Reply-To: <1314706818-9720-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3984611286717119810==
+--===============7249638808178423196==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/voicecall-api.txt |    6 ++++++
- src/voicecall.c       |    9 +++++++++
- 2 files changed, 15 insertions(+), 0 deletions(-)
+Hi Pekka,
 
-diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-index 7eb41aa..6870905 100644
---- a/doc/voicecall-api.txt
-+++ b/doc/voicecall-api.txt
-@@ -110,6 +110,12 @@ Properties	string LineIdentification [readonly]
- 			service with their network provider and would like
- 			to know what line the call is coming in on.
- =
+> In case relative dependency is in $(srcdir), $< already includes path to
+> $(srcdir).
+> ---
+>  Makefile.am |    4 ++--
+>  1 files changed, 2 insertions(+), 2 deletions(-)
 
-+                string Direction [readonly]
-+                        Indicates whether the call is mobile-originated or
-+                        mobile-terminated.
-+
-+                        Possible values: "mo", "mt"
-+
- 		string Name [readonly]
- =
+patch has been applied. Thanks.
 
- 			Contains the Name Identification information returned
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 2b4c209..833fe09 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -415,6 +415,7 @@ static void append_voicecall_properties(struct voicecal=
-l *v,
- 	const char *callerid;
- 	const char *timestr;
- 	const char *name;
-+        const char *direction;
- 	ofono_bool_t mpty;
- 	dbus_bool_t emergency_call;
- =
+Regards
 
-@@ -444,6 +445,14 @@ static void append_voicecall_properties(struct voiceca=
-ll *v,
- =
-
- 	ofono_dbus_dict_append(dict, "Name", DBUS_TYPE_STRING, &name);
- =
-
-+        if (call->direction =3D=3D CALL_DIRECTION_MOBILE_ORIGINATED)
-+            direction =3D "mo";
-+        else
-+            direction =3D "mt";
-+
-+        ofono_dbus_dict_append(dict, "Direction", DBUS_TYPE_STRING,
-+                                &direction);
-+
- 	if (call->status =3D=3D CALL_STATUS_ACTIVE ||
- 			call->status =3D=3D CALL_STATUS_HELD ||
- 			(call->status =3D=3D CALL_STATUS_DISCONNECTED &&
--- =
-
-1.7.4.1
+Marcel
 
 
---===============3984611286717119810==--
+
+--===============7249638808178423196==--
 
