@@ -1,48 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============1837189107273453513=="
+Content-Type: multipart/mixed; boundary="===============8662491720953395124=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2 5/5] udev: Add rules to support SpeedUp 9800 dongle
-Date: Mon, 29 Aug 2011 18:41:51 +0200
-Message-ID: <1314636111-16146-6-git-send-email-philippe.nunes@linux.intel.com>
-In-Reply-To: <1314636111-16146-1-git-send-email-philippe.nunes@linux.intel.com>
+From: Pekka.Pessi@nokia.com
+Subject: [VPATH PATCH 1/2] Fix generating links in Makefile.am
+Date: Tue, 30 Aug 2011 15:20:17 +0300
+Message-ID: <1314706818-9720-2-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1314706818-9720-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1837189107273453513==
+--===============8662491720953395124==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
+
+In case relative dependency is in $(srcdir), $< already includes path to
+$(srcdir).
 ---
- plugins/ofono.rules |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+ Makefile.am |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-index 7f284d4..9e7a651 100644
---- a/plugins/ofono.rules
-+++ b/plugins/ofono.rules
-@@ -29,6 +29,10 @@ ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0124=
-", ENV{ID_USB_INTERFACE_NUM}=3D=3D"0
- ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9e00", ENV{ID_USB_INTE=
-RFACE_NUM}=3D=3D"00", ENV{OFONO_LABEL}=3D"modem"
- ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9e00", ENV{ID_USB_INTE=
-RFACE_NUM}=3D=3D"03", ENV{OFONO_LABEL}=3D"aux"
+diff --git a/Makefile.am b/Makefile.am
+index 5019b7d..832c8ac 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -666,9 +666,9 @@ include/ofono/version.h: include/version.h
+ 	$(AM_V_at)$(MKDIR_P) include/ofono
+ 	$(AM_V_GEN)$(LN_S) $(abs_top_builddir)/$< $@
  =
 
-+# SpeedUp 9800
-+ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9800", ENV{ID_USB_INTE=
-RFACE_NUM}=3D=3D"01", ENV{OFONO_LABEL}=3D"modem"
-+ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9800", ENV{ID_USB_INTE=
-RFACE_NUM}=3D=3D"02", ENV{OFONO_LABEL}=3D"aux"
-+
- LABEL=3D"ofono_tty_end"
+-include/ofono/%.h: include/%.h
++include/ofono/%.h: $(abs_top_srcdir)/include/%.h
+ 	$(AM_V_at)$(MKDIR_P) include/ofono
+-	$(AM_V_GEN)$(LN_S) $(abs_top_srcdir)/$< $@
++	$(AM_V_GEN)$(LN_S) $< $@
  =
 
- SUBSYSTEM!=3D"usb", GOTO=3D"ofono_end"
+ clean-local:
+ 	@$(RM) -rf include/ofono
 -- =
 
-1.7.1
+1.7.4.1
 
 
---===============1837189107273453513==--
+--===============8662491720953395124==--
 
