@@ -1,56 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============0852855564389067027=="
+Content-Type: multipart/mixed; boundary="===============3984611286717119810=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: Re: [PATCHv4 3/3] Mobile broadband provider info plugin
-Date: Tue, 30 Aug 2011 15:57:54 +0300
-Message-ID: <4E5CDE52.8030507@intel.com>
-In-Reply-To: <4E544E27.3030204@gmail.com>
+From: Antti Paila <antti.paila@nokia.com>
+Subject: [PATCH] Add Direction property to voice call
+Date: Tue, 30 Aug 2011 16:48:35 +0300
+Message-ID: <1314712115-5068-1-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0852855564389067027==
+--===============3984611286717119810==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+---
+ doc/voicecall-api.txt |    6 ++++++
+ src/voicecall.c       |    9 +++++++++
+ 2 files changed, 15 insertions(+), 0 deletions(-)
 
-On 08/24/2011 04:04 AM, Denis Kenzior wrote:
-> However, I'm still wondering whether setting data->match_found is
-> enough.  Here's the example I'm thinking of:
->
-> <provider>
-> 	<name>Major Operator</name>
-> 	<network-id mcc=3D"555" mnc=3D"55"/>
-> 	<apn>...</apn>
-> </provider>
->
-> <provider>
-> 	<name>MVNO running on Major Operator</name>
-> 	<network-id mcc=3D"555" mnc=3D"55"/>
-> 	<apn>...</apn>
-> </provider>
->
-> If the Major Operator provides MAX_APN apns, then wouldn't this cause us
-> to return the APNs from Major Operator, even though this is a conflict
-> and we might potentially want APNs from MVNO?
->
-> If this is indeed such a conflicted case then we need to let the user
-> decide, not return any results as they're potentially erroneous.
+diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
+index 7eb41aa..6870905 100644
+--- a/doc/voicecall-api.txt
++++ b/doc/voicecall-api.txt
+@@ -110,6 +110,12 @@ Properties	string LineIdentification [readonly]
+ 			service with their network provider and would like
+ 			to know what line the call is coming in on.
+ =
 
-Thanks for the comments. Please take a look at the PATCHv5 on the list, whi=
-ch =
++                string Direction [readonly]
++                        Indicates whether the call is mobile-originated or
++                        mobile-terminated.
++
++                        Possible values: "mo", "mt"
++
+ 		string Name [readonly]
+ =
 
-addresses this and other issues too.
+ 			Contains the Name Identification information returned
+diff --git a/src/voicecall.c b/src/voicecall.c
+index 2b4c209..833fe09 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -415,6 +415,7 @@ static void append_voicecall_properties(struct voicecal=
+l *v,
+ 	const char *callerid;
+ 	const char *timestr;
+ 	const char *name;
++        const char *direction;
+ 	ofono_bool_t mpty;
+ 	dbus_bool_t emergency_call;
+ =
 
-Regards,
-Oleg
+@@ -444,6 +445,14 @@ static void append_voicecall_properties(struct voiceca=
+ll *v,
+ =
+
+ 	ofono_dbus_dict_append(dict, "Name", DBUS_TYPE_STRING, &name);
+ =
+
++        if (call->direction =3D=3D CALL_DIRECTION_MOBILE_ORIGINATED)
++            direction =3D "mo";
++        else
++            direction =3D "mt";
++
++        ofono_dbus_dict_append(dict, "Direction", DBUS_TYPE_STRING,
++                                &direction);
++
+ 	if (call->status =3D=3D CALL_STATUS_ACTIVE ||
+ 			call->status =3D=3D CALL_STATUS_HELD ||
+ 			(call->status =3D=3D CALL_STATUS_DISCONNECTED &&
 -- =
 
-Intel Finland Oy
-Registered Address: PL 281, 00181 Helsinki
-Business Identity Code: 0357606 - 4
-Domiciled in Helsinki
+1.7.4.1
 
---===============0852855564389067027==--
+
+--===============3984611286717119810==--
 
