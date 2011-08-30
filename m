@@ -1,25 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============7967471056123622079=="
+Content-Type: multipart/mixed; boundary="===============4212022647843952778=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [VPATH PATCH 0/2] Fix Makefile.am when using VPATH
-Date: Tue, 30 Aug 2011 15:20:16 +0300
-Message-ID: <1314706818-9720-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv5 0/3] Mobile broadband provider info plugin
+Date: Tue, 30 Aug 2011 15:56:07 +0300
+Message-ID: <1314708970-6521-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7967471056123622079==
+--===============4212022647843952778==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hello,
 
-I noticed there are some problems building with VPATH (if builddir and
-srcdir are different from each other). E.g., make checkdist worked only
-by accident. The following patches are supposed to fix the problems.
+Please find the mobile broadband provider info plugin ("Internet Access Pro=
+vider database" TODO item).
 
---Pekka
+If enabled, the plugin reads mobile-broadband-provider-info database entrie=
+s (PROVIDER_DATABASE) and returns GRPS context settings to oFono provisioni=
+ng module.
+
+Regards,
+Oleg
+
+Oleg Zhurakivskyy (3):
+  Mobile broadband provider info plugin makefile changes
+  Mobile broadband provider info plugin autoconf support
+  Mobile broadband provider info plugin
+
+ Makefile.am                              |    7 +
+ configure.ac                             |   19 +-
+ plugins/mobile-broadband-provider-info.c |  695 ++++++++++++++++++++++++++=
+++++
+ 3 files changed, 715 insertions(+), 6 deletions(-)
+ create mode 100644 plugins/mobile-broadband-provider-info.c
+
+-- =
+
+1.7.4.1
 
 
---===============7967471056123622079==--
+--===============4212022647843952778==--
 
