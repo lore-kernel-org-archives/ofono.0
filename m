@@ -1,123 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============2007539600418808948=="
+Content-Type: multipart/mixed; boundary="===============1578768135489577217=="
 MIME-Version: 1.0
-From: Mikel Astiz <mikel.astiz@bmw-carit.de>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Bluetooth HF role
-Date: Thu, 08 Sep 2011 12:03:52 +0200
-Message-ID: <4E689308.9060400@bmw-carit.de>
+Date: Thu, 01 Sep 2011 03:18:00 -0500
+Message-ID: <4E5F3FB8.5030505@gmail.com>
 In-Reply-To: <4E687C55.5030807@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2007539600418808948==
+--===============1578768135489577217==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Mikel,
 
-On 09/08/2011 10:27 AM, Mikel Astiz wrote:
-> Hi Denis,
->
-> On 08/21/2011 04:13 AM, Denis Kenzior wrote:
->> Hi Mikel,
->>
->> On 08/25/2011 07:32 AM, Mikel Astiz wrote:
->>> Hi Denis,
->>>
->>> On 08/20/2011 11:00 AM, Denis Kenzior wrote:
->>>> Hi Mikel,
->>>>
->>>> On 08/24/2011 10:28 AM, Mikel Astiz wrote:
->>>>> Hi all,
->>>>>
->>>>> I'm trying to understand the features currently supported by oFono
->>>>> regarding the handsfree role in Bluetooth/HFP. My first impression
->>>>> looking at the source code is that some HFP functionality might be
->>>>> missing, but I would rather have your confirmation.
->>>>>
->>>> Correct, in general only features that map 1:1 to existing APIs are
->>>> exposed.  So that means network registration, voicecalls and call-volu=
-me
->>>> interfaces.
->>>>
->>>>> Some examples I've found so far are the following:
->>>>> 1. Response and hold (AT+BTRH=3D0)
->>>>> 2. Redial last number (AT+BLDN)
->>>>> 3. Retrieval of supported Bluetooth features for a certain modem/devi=
-ce
->>>>> (AT+BRSF)
->>>>>
->>>> BRSF is supported and used internally, but the information is not
->>>> exposed over D-Bus.
->>>>
->>>>> Could you clarify which (if any) of these features are currently
->>>>> supported by oFono?
->>>> Bluetooth specific features are not supported yet, these will require a
->>>> separate atom. Roughly this means anything starting with +B.. includin=
-g:
->>>>       - +BINP
->>>>       - +BLDN
->>>>       - +BVRA
->>>>       - +NREC
->>>>       - +BSIR
->>>>       - +BTRH
->>>>
->>>>> In general, is there any documented list of unsupported features?
->>>>>
->>>> In general the TODO list is your best source of readily available
->>>> information.  In the case of HFP HF, there is no such documentation ;)
->>>> Patches adding tasks to the TODO list to support these features are
->>>> always welcome.
->>>>
->>>> Regards
->>>> -Denis
->>> OK, thanks for the information.
->>>
->>> Then I guess the next question is whether you have plans to support this
->>> in the future, or if you would accept patches in this direction. I'm
->>> afraid some of them could potentially affect the existing API.
->>>
->> Patches are always welcome.  I'm not sure why you want to change the
->> existing API, sounds like most of these features belong to a new atom
->> interface, however I could be wrong.  Go ahead and send your proposal so
->> we have a starting point for the discussion.
->>
->> Regards,
->> -Denis
+> =
+
 > Before discussing the source code itself, I would like to know your
 > opinion about the different alternatives that come into my mind.
->
+> =
+
 > When you talk about a new atom interface, we could:
->
+> =
+
 > a. Create an HFP interface that includes all bluetooth-specific
 > extensions. This could something like org.ofono.Handsfree or
 > org.ofono.HfpModem.
+
+This is my preferred option.
+
 > b. Be more consistent with the existing oFono API and split the new
 > extensions into several interfaces, such as org.ofono.hfp.Modem and
 > org.ofono.hfp.VoiceCallManager (and whatever else is needed). This
-> second interface would support methods such as Redial() and AnswerAndHold=
-().
+> second interface would support methods such as Redial() and
+> AnswerAndHold().
+
+I don't think this is a good idea, you lose much of the flexibility for
+the applications; e.g. being able to implement the same API and work on
+real modems, hfp devices, sap devices, etc.
+
+Having said that, the +BTRH is a bit special.  I believe it is only
+supported on CDMA networks, while the HFP protocol is modeled after the
+GSM call model.  We might have to look into implementing it on
+VoiceCallManager and tweak the GSM call state logic accordingly, which
+won't be fun ;)  Any ideas are welcome here, I have no experience with
+Response and Hold or access to networks with it enabled.
+
 > c. If this second approach of hfp.VoiceCallManager is followed, we could
 > not only include the extensions there, but also replicate the whole API
 > in org.ofono.VoiceCallManager. Personally I would rather not do this,
 > but it seems to me that org.ofono.cdma.CdmaVoiceCallManager has been
 > designed that way.
->
+> =
+
+
+CDMA versions were designed this way because the CDMA call state machine
+is dirt simple.  There didn't seem to be a need to make applications
+deal with the complexity of the GSM API while having a much simpler
+model underneath.
+
 > My vote would be in favor of the first option, for the sake of simplicity.
->
+> =
+
 > What do you think? Any other alternative?
 
-I forgot to add that another alternative would be to merge voice-call =
-
-related extensions in the existing API. For example, by adding the =
-
-method Redial() in org.ofono.VoiceCallManager, and extending the =
-
-semantics of SwapCalls() to put incoming calls on hold.
+Nope, your proposal is in line with my current thinking.
 
 Regards,
-Mikel
+-Denis
 
-
---===============2007539600418808948==--
+--===============1578768135489577217==--
 
