@@ -1,97 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============1186856542030365119=="
+Content-Type: multipart/mixed; boundary="===============7355458488590314340=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv5 3/3] Mobile broadband provider info plugin
-Date: Wed, 31 Aug 2011 03:25:29 -0500
-Message-ID: <4E5DEFF9.20308@gmail.com>
-In-Reply-To: <4E6765E2.3020503@intel.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH 00/20] Bluetooth SAP Client support
+Date: Mon, 05 Sep 2011 15:03:29 -0300
+Message-ID: <1315245829-6887-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1186856542030365119==
+--===============7355458488590314340==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Oleg,
+From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 
-On 09/07/2011 07:38 AM, Oleg Zhurakivskyy wrote:
-> Hello Denis,
-> =
+Hi,
 
-> On 08/30/2011 11:17 AM, Denis Kenzior wrote:
->> The mobile-broadband-provider-info database would probably need to be
->> extended with a fully-fledged SPN element to store this information.
->> The current database is simply not setup this way.  To give you an
->> example, in Australia most providers have the SPN structured something
->> like this:
->> '<ProviderName>  AU'
->>
->> So it is quite obvious why your logic above will fail ;)
->>
->> Other times the SPN name is a shortened / stylized name of the provider,
->> e.g. Virgin Mobile ->  Virgin
->>
->> The current<name>  tag under the<provider>  tag is really for the user's
->> benefit.
-> =
+The following patches add supports for the SAP Client in oFono. Currently o=
+nly
+Telit UC864-G is supported, but the sap plugin implementation has a modular
+approach and support for other hardwares could be easily added.
 
-> If the provider name isn't sufficient to serve as the SPN, shall we add
-> optional SPN element on the same level?
-> =
+Please review!
 
-> <provider>
->     <name>...</name>
->     <spn>...</spn>
->     <network-id mcc=3D"123" mnc=3D"12"/>
->     <apn>...</apn>
-> </provider>
-> =
+Gustavo F. Padovan (20):
+  udevng: look also to VID
+  sap: add basic SAP plugin
+  telit: add support to enable SAP client
+  sap: add support to connect the RFCOMM link
+  telit: add #RSEN notify
+  sap: add watch for the Bluetooth Link
+  sap: add support to open the channel for SAP data
+  sap: connect the hw and the bluetooth link
+  telit: add telit_sap_disable()
+  sap: add support to the disable the SAP client
+  telit: add aux GAtChat
+  sap: enable modem only when #RSEN is 1
+  telit: enable the telit modem when SAP is enabled.
+  sap: add pre_sim handling
+  sap: add set_online handling
+  sap: add post_sim handling
+  sap: add post_online handling
+  telit: improve sap disable
+  sap: disconnect link if enable() fails
+  sap: do a proper shutdown of the channels
 
-> Can we drop this check until such SPN element can be upstreamed into the
-> database?
-> =
+ Makefile.am         |    3 +
+ plugins/bluetooth.c |    1 -
+ plugins/bluetooth.h |   23 ++
+ plugins/hfp_hf.c    |    2 -
+ plugins/sap.c       |  576 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ plugins/telit.c     |  315 +++++++++++++++++++++-------
+ plugins/udevng.c    |   14 +-
+ 7 files changed, 847 insertions(+), 87 deletions(-)
+ create mode 100644 plugins/sap.c
+
+-- =
+
+1.7.6.1
 
 
-Yes, this is exactly what I'd like to do.
-
->>> For some tags, the parser calls body multiple times, first few times
->>> supplying just '\n' and '\t's. Also, some tags have such a body that
->>> DBG() has trouble to print without escaping. So, what's the method to
->>> protect against the latter?
->>
->> This might be easier if you only run the parser on the bodies of the
->> tags you really care about.  e.g. this problem might just go away when
->> you use g_markup_parse_context_push/pop.
-> =
-
-> This place in the parser is already run only on bodies we care about,
-> i.e. within mcc/mnc match. If the diagnostics on body is required, this
-> problem won't go away if we use g_markup_parse_context_push/pop. So, do
-> we keep the escaping or drop diagnostics of the element body? Or,
-> propose a solution?
-
-I still think that the reasons for your escaping logic are flawed.  I
-suggest that you study the problem and get a better understanding why
-this happens in the first place.
-
-For example:
-<network-id mcc=3D"412" mnc=3D"01"/>
-<apn value=3D"internet">
-	<username>awcc</username>
-	<password>1111</password>
-</apn>
-
-I expect the body callback to be called with random \r\t\n garbage for
-the APN tag.  However, this is not something we care about anyway and
-can ignore (e.g. with a call to g_markup_parse_context_push)
-
-For username/password bodies we shouldn't even have \r\t\n characters in
-there in the first place.  Certainly the naive escaping mechanism you
-have now won't work with UTF-8 strings.
-
-Regards,
--Denis
-
---===============1186856542030365119==--
+--===============7355458488590314340==--
 
