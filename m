@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4941214441310155110=="
+Content-Type: multipart/mixed; boundary="===============2785222904490562600=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH 17/20] sap: add post_online handling
-Date: Mon, 05 Sep 2011 15:03:46 -0300
-Message-ID: <1315245829-6887-18-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1315245829-6887-17-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH 18/20] telit: improve sap disable
+Date: Mon, 05 Sep 2011 15:03:47 -0300
+Message-ID: <1315245829-6887-19-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1315245829-6887-18-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4941214441310155110==
+--===============2785222904490562600==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,140 +16,130 @@ Content-Transfer-Encoding: quoted-printable
 From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 
 ---
- plugins/bluetooth.h |    1 +
- plugins/sap.c       |   15 +++++++++++++
- plugins/telit.c     |   58 +++++++++++++++++++++++++++--------------------=
----
- 3 files changed, 47 insertions(+), 27 deletions(-)
+ plugins/telit.c |   78 +++++++++++++++++++++++++++++----------------------=
+----
+ 1 files changed, 41 insertions(+), 37 deletions(-)
 
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index 2f02c39..78b93e2 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -50,6 +50,7 @@ struct bluetooth_sap_driver {
- 	void (*post_sim) (struct ofono_modem *modem);
- 	void (*set_online) (struct ofono_modem *modem, ofono_bool_t online,
- 				ofono_modem_online_cb_t cb, void *user_data);
-+	void (*post_online) (struct ofono_modem *modem);
- 	int (*disable) (struct ofono_modem *modem);
- 	int (*open) (struct ofono_modem *modem);
- };
-diff --git a/plugins/sap.c b/plugins/sap.c
-index e97b810..c5f0d46 100644
---- a/plugins/sap.c
-+++ b/plugins/sap.c
-@@ -382,6 +382,20 @@ static void sap_set_online(struct ofono_modem *modem, =
-ofono_bool_t online,
- 	sap_driver->set_online(data->hw_modem, online, cb, user_data);
- }
- =
-
-+static void sap_post_online(struct ofono_modem *modem)
-+{
-+	struct sap_data *data =3D ofono_modem_get_data(modem);
-+	struct bluetooth_sap_driver *sap_driver;
-+
-+	DBG("%p", modem);
-+
-+	sap_driver =3D g_hash_table_lookup(sap_hw_hash, data->hw_modem);
-+	if (!sap_driver)
-+		return;
-+
-+	sap_driver->post_online(data->hw_modem);
-+}
-+
- static int bluetooth_sap_probe(const char *device, const char *dev_addr,
- 				const char *adapter_addr, const char *alias)
- {
-@@ -483,6 +497,7 @@ static struct ofono_modem_driver sap_driver =3D {
- 	.pre_sim	=3D sap_pre_sim,
- 	.post_sim	=3D sap_post_sim,
- 	.set_online	=3D sap_set_online,
-+	.post_online	=3D sap_post_online,
- };
- =
-
- static struct bluetooth_profile sap =3D {
 diff --git a/plugins/telit.c b/plugins/telit.c
-index e3d32c8..c05bb31 100644
+index c05bb31..55a2225 100644
 --- a/plugins/telit.c
 +++ b/plugins/telit.c
-@@ -405,12 +405,43 @@ static void telit_set_online(struct ofono_modem *mode=
-m, ofono_bool_t online,
- 						cbd, g_free);
+@@ -280,6 +280,43 @@ static void rsen_enable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	}
  }
  =
 
-+static void telit_post_online(struct ofono_modem *modem)
++static void cfun_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
 +{
++	struct ofono_modem *modem =3D user_data;
 +	struct telit_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_message_waiting *mw;
-+	struct ofono_gprs *gprs;
-+	struct ofono_gprs_context *gc;
 +
 +	if(data->sap_modem)
 +		modem =3D data->sap_modem;
 +
 +	DBG("%p", modem);
 +
-+	ofono_netreg_create(modem, OFONO_VENDOR_TELIT, "atmodem", data->chat);
-+	ofono_ussd_create(modem, 0, "atmodem", data->chat);
-+	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
-+	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
-+	ofono_call_meter_create(modem, 0, "atmodem", data->chat);
-+	ofono_call_barring_create(modem, 0, "atmodem", data->chat);
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
 +
-+	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->chat);
-+	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->chat);
++	if (data->sim_inserted_source > 0)
++		g_source_remove(data->sim_inserted_source);
 +
-+	if (gprs && gc)
-+		ofono_gprs_add_context(gprs, gc);
++	if (ok)
++		ofono_modem_set_powered(modem, FALSE);
 +
-+	mw =3D ofono_message_waiting_create(modem);
-+	if (mw)
-+		ofono_message_waiting_register(mw);
++	data->sap_modem =3D NULL;
 +}
 +
- static struct bluetooth_sap_driver sap_driver =3D {
- 	.name =3D "telit",
- 	.enable =3D telit_sap_enable,
- 	.pre_sim =3D telit_pre_sim,
- 	.post_sim =3D telit_post_sim,
- 	.set_online =3D telit_set_online,
-+	.post_online =3D telit_post_online,
- 	.disable =3D telit_sap_disable,
- 	.open =3D telit_sap_open,
- };
-@@ -480,33 +511,6 @@ static int telit_disable(struct ofono_modem *modem)
- 	return -EINPROGRESS;
++static int telit_disable(struct ofono_modem *modem)
++{
++	struct telit_data *data =3D ofono_modem_get_data(modem);
++	DBG("%p", modem);
++
++	g_at_chat_cancel_all(data->chat);
++	g_at_chat_unregister_all(data->chat);
++
++	/* Power down modem */
++	g_at_chat_send(data->chat, "AT+CFUN=3D0", none_prefix,
++				cfun_disable_cb, modem, NULL);
++
++	return -EINPROGRESS;
++}
++
+ static void rsen_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+@@ -290,8 +327,7 @@ static void rsen_disable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	g_at_chat_unref(data->aux);
+ 	data->aux =3D NULL;
+ =
+
+-	if (ok)
+-		ofono_modem_set_powered(data->sap_modem, FALSE);
++	telit_disable(modem);
  }
  =
 
--static void telit_post_online(struct ofono_modem *modem)
+ static int telit_sap_open(struct ofono_modem *modem)
+@@ -350,10 +386,10 @@ static int telit_sap_disable(struct ofono_modem *mode=
+m)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	g_at_chat_cancel_all(data->chat);
+-	g_at_chat_unregister_all(data->chat);
++	g_at_chat_cancel_all(data->aux);
++	g_at_chat_unregister_all(data->aux);
+ =
+
+-	g_at_chat_send(data->chat, "AT#RSEN=3D0", rsen_prefix,
++	g_at_chat_send(data->aux, "AT#RSEN=3D0", rsen_prefix,
+ 				rsen_disable_cb, modem, NULL);
+ =
+
+ 	return 0;
+@@ -479,38 +515,6 @@ static void telit_remove(struct ofono_modem *modem)
+ 	g_free(data);
+ }
+ =
+
+-static void cfun_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
 -{
+-	struct ofono_modem *modem =3D user_data;
 -	struct telit_data *data =3D ofono_modem_get_data(modem);
--	struct ofono_message_waiting *mw;
--	struct ofono_gprs *gprs;
--	struct ofono_gprs_context *gc;
 -
 -	DBG("%p", modem);
 -
--	ofono_netreg_create(modem, OFONO_VENDOR_TELIT, "atmodem", data->chat);
--	ofono_ussd_create(modem, 0, "atmodem", data->chat);
--	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
--	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
--	ofono_call_meter_create(modem, 0, "atmodem", data->chat);
--	ofono_call_barring_create(modem, 0, "atmodem", data->chat);
+-	g_at_chat_unref(data->chat);
+-	data->chat =3D NULL;
 -
--	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->chat);
--	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->chat);
+-	if (data->sim_inserted_source > 0)
+-		g_source_remove(data->sim_inserted_source);
 -
--	if (gprs && gc)
--		ofono_gprs_add_context(gprs, gc);
+-	if (ok)
+-		ofono_modem_set_powered(modem, FALSE);
+-}
 -
--	mw =3D ofono_message_waiting_create(modem);
--	if (mw)
--		ofono_message_waiting_register(mw);
+-static int telit_disable(struct ofono_modem *modem)
+-{
+-	struct telit_data *data =3D ofono_modem_get_data(modem);
+-	DBG("%p", modem);
+-
+-	g_at_chat_cancel_all(data->chat);
+-	g_at_chat_unregister_all(data->chat);
+-
+-	/* Power down modem */
+-	g_at_chat_send(data->chat, "AT+CFUN=3D0", none_prefix,
+-				cfun_disable_cb, modem, NULL);
+-
+-	return -EINPROGRESS;
 -}
 -
  static struct ofono_modem_driver telit_driver =3D {
@@ -160,5 +150,5 @@ m, ofono_bool_t online,
 1.7.6.1
 
 
---===============4941214441310155110==--
+--===============2785222904490562600==--
 
