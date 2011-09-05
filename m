@@ -1,216 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============8196737643712938345=="
+Content-Type: multipart/mixed; boundary="===============6041398589184904867=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH 03/20] telit: add support to enable SAP client
-Date: Mon, 05 Sep 2011 15:03:32 -0300
-Message-ID: <1315245829-6887-4-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1315245829-6887-3-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH 05/20] telit: add #RSEN notify
+Date: Mon, 05 Sep 2011 15:03:34 -0300
+Message-ID: <1315245829-6887-6-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1315245829-6887-5-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8196737643712938345==
+--===============6041398589184904867==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 
+RSEN URC tells if the SAP Client was enabled or not
 ---
- plugins/bluetooth.h |    1 +
- plugins/sap.c       |    9 +++-
- plugins/telit.c     |  109 ++++++++++++++++++++++++++++++++++-------------=
-----
- 3 files changed, 81 insertions(+), 38 deletions(-)
+ plugins/telit.c |   19 +++++++++++++++++++
+ 1 files changed, 19 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index f980ebe..1658b75 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -45,6 +45,7 @@ struct bluetooth_profile {
- =
-
- struct bluetooth_sap_driver {
- 	const char *name;
-+	int (*enable) (struct ofono_modem *modem);
- };
- =
-
- struct server;
-diff --git a/plugins/sap.c b/plugins/sap.c
-index 55f1b29..2d4ef5f 100644
---- a/plugins/sap.c
-+++ b/plugins/sap.c
-@@ -116,9 +116,14 @@ static void sap_remove(struct ofono_modem *modem)
- /* power up hardware */
- static int sap_enable(struct ofono_modem *modem)
- {
--	DBG("%p", modem);
-+	struct sap_data *data =3D ofono_modem_get_data(modem);
-+	struct bluetooth_sap_driver *sap_driver;
- =
-
--	return 0;
-+	sap_driver =3D g_hash_table_lookup(sap_hw_hash, data->hw_modem);
-+	if (!sap_driver)
-+		return -ENODEV;
-+
-+	return sap_driver->enable(data->hw_modem);
- }
- =
-
- static int sap_disable(struct ofono_modem *modem)
 diff --git a/plugins/telit.c b/plugins/telit.c
-index 18cf0c4..cc10668 100644
+index cc10668..1f950aa 100644
 --- a/plugins/telit.c
 +++ b/plugins/telit.c
-@@ -58,6 +58,7 @@
- =
-
- static const char *none_prefix[] =3D { NULL };
- static const char *qss_prefix[] =3D { "#QSS:", NULL };
-+static const char *rsen_prefix[]=3D { "#RSEN:", NULL };
- =
-
- struct telit_data {
- 	GAtChat *chat;
-@@ -65,10 +66,6 @@ struct telit_data {
- 	guint sim_inserted_source;
- };
- =
-
--static struct bluetooth_sap_driver sap_driver =3D {
--	.name =3D "telit",
--};
--
- static void telit_debug(const char *str, void *user_data)
- {
- 	const char *prefix =3D user_data;
-@@ -76,6 +73,78 @@ static void telit_debug(const char *str, void *user_data)
- 	ofono_info("%s%s", prefix, str);
+@@ -105,6 +105,22 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	return chat;
  }
  =
 
-+static GAtChat *open_device(struct ofono_modem *modem,
-+				const char *key, char *debug)
-+{
-+	const char *device;
-+	GAtSyntax *syntax;
-+	GIOChannel *channel;
-+	GAtChat *chat;
-+
-+	device =3D ofono_modem_get_string(modem, key);
-+	if (device =3D=3D NULL)
-+		return NULL;
-+
-+	DBG("%s %s", key, device);
-+
-+	channel =3D g_at_tty_open(device, NULL);
-+	if (channel =3D=3D NULL)
-+		return NULL;
-+
-+	syntax =3D g_at_syntax_new_gsmv1();
-+	chat =3D g_at_chat_new(channel, syntax);
-+	g_at_syntax_unref(syntax);
-+	g_io_channel_unref(channel);
-+
-+	if (chat =3D=3D NULL)
-+		return NULL;
-+
-+	if (getenv("OFONO_AT_DEBUG"))
-+		g_at_chat_set_debug(chat, telit_debug, debug);
-+
-+	return chat;
-+}
-+
-+static void rsen_enable_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
++static void telit_rsen_notify(GAtResult *result, gpointer user_data)
 +{
 +	struct ofono_modem *modem =3D user_data;
-+	struct telit_data *data =3D ofono_modem_get_data(modem);
++	int status;
++	GAtResultIter iter;
 +
 +	DBG("%p", modem);
 +
-+	if (!ok) {
-+		g_at_chat_unref(data->chat);
-+		data->chat =3D NULL;
-+		ofono_modem_set_powered(modem, FALSE);
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "#RSEN:"))
 +		return;
-+	}
 +
++	g_at_result_iter_next_number(&iter, &status);
 +}
 +
-+static int telit_sap_enable(struct ofono_modem *modem)
-+{
-+	struct telit_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	data->chat =3D open_device(modem, "Data", "Aux: ");
-+	if (data->chat =3D=3D NULL)
-+		return -EINVAL;
-+
-+	g_at_chat_send(data->chat, "AT#NOPT=3D3", NULL, NULL, NULL, NULL);
-+
-+	/* Set SAP functionality */
-+	g_at_chat_send(data->chat, "AT#RSEN=3D1,1,0,2,0", rsen_prefix,
-+				rsen_enable_cb, modem, NULL);
-+
-+	return -EINPROGRESS;
-+}
-+
-+static struct bluetooth_sap_driver sap_driver =3D {
-+	.name =3D "telit",
-+	.enable =3D telit_sap_enable,
-+};
-+
- static int telit_probe(struct ofono_modem *modem)
+ static void rsen_enable_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
  {
- 	struct telit_data *data;
-@@ -232,38 +301,6 @@ static void cfun_disable_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 		ofono_modem_set_powered(modem, FALSE);
- }
+ 	struct ofono_modem *modem =3D user_data;
+@@ -131,6 +147,9 @@ static int telit_sap_enable(struct ofono_modem *modem)
+ 	if (data->chat =3D=3D NULL)
+ 		return -EINVAL;
  =
 
--static GAtChat *open_device(struct ofono_modem *modem,
--				const char *key, char *debug)
--{
--	const char *device;
--	GAtSyntax *syntax;
--	GIOChannel *channel;
--	GAtChat *chat;
--
--	device =3D ofono_modem_get_string(modem, key);
--	if (device =3D=3D NULL)
--		return NULL;
--
--	DBG("%s %s", key, device);
--
--	channel =3D g_at_tty_open(device, NULL);
--	if (channel =3D=3D NULL)
--		return NULL;
--
--	syntax =3D g_at_syntax_new_gsmv1();
--	chat =3D g_at_chat_new(channel, syntax);
--	g_at_syntax_unref(syntax);
--	g_io_channel_unref(channel);
--
--	if (chat =3D=3D NULL)
--		return NULL;
--
--	if (getenv("OFONO_AT_DEBUG"))
--		g_at_chat_set_debug(chat, telit_debug, debug);
--
--	return chat;
--}
--
- static int telit_enable(struct ofono_modem *modem)
- {
- 	struct telit_data *data =3D ofono_modem_get_data(modem);
++	g_at_chat_register(data->chat, "#RSEN:", telit_rsen_notify,
++				FALSE, modem, NULL);
++
+ 	g_at_chat_send(data->chat, "AT#NOPT=3D3", NULL, NULL, NULL, NULL);
+ =
+
+ 	/* Set SAP functionality */
 -- =
 
 1.7.6.1
 
 
---===============8196737643712938345==--
+--===============6041398589184904867==--
 
