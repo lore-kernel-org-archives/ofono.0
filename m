@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7602727232422440110=="
+Content-Type: multipart/mixed; boundary="===============1337363607654205108=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 06/12] hfpmodem: Support for +BSIR unsol. result codes
-Date: Fri, 09 Sep 2011 00:48:50 -0500
-Message-ID: <4E69A8C2.6060408@gmail.com>
-In-Reply-To: <1316104483-13144-7-git-send-email-mikel.astiz@bmw-carit.de>
+Subject: Re: [PATCH 08/12] handsfree: Expose RequestInput in D-Bus API
+Date: Fri, 09 Sep 2011 01:01:28 -0500
+Message-ID: <4E69ABB8.4030403@gmail.com>
+In-Reply-To: <1316104483-13144-9-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7602727232422440110==
+--===============1337363607654205108==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,73 +17,132 @@ Hi Mikel,
 
 On 09/15/2011 11:34 AM, Mikel Astiz wrote:
 > ---
->  drivers/hfpmodem/handsfree.c |   17 +++++++++++++++++
->  1 files changed, 17 insertions(+), 0 deletions(-)
+>  src/handsfree.c |   64 +++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 64 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/drivers/hfpmodem/handsfree.c b/drivers/hfpmodem/handsfree.c
-> index 9b7b986..a3e7978 100644
-> --- a/drivers/hfpmodem/handsfree.c
-> +++ b/drivers/hfpmodem/handsfree.c
-> @@ -43,6 +43,7 @@
->  =
-
->  struct hf_data {
->  	GAtChat *chat;
-> +	unsigned int vendor;
-
-If you're not planning to use the vendor member for anything then it is
-better left out.
-
+> diff --git a/src/handsfree.c b/src/handsfree.c
+> index 2bf2284..3138474 100644
+> --- a/src/handsfree.c
+> +++ b/src/handsfree.c
+> @@ -47,6 +47,7 @@ struct ofono_handsfree {
+>  	const struct ofono_handsfree_driver *driver;
+>  	void *driver_data;
+>  	struct ofono_atom *atom;
+> +	DBusMessage *pending;
 >  };
 >  =
 
->  static gboolean hfp_handsfree_register(gpointer user_data)
-> @@ -54,6 +55,19 @@ static gboolean hfp_handsfree_register(gpointer user_d=
-ata)
->  	return FALSE;
+>  void ofono_handsfree_set_inband_ringing(struct ofono_handsfree *hf,
+> @@ -118,11 +119,71 @@ static DBusMessage *handsfree_set_property(DBusConn=
+ection *conn,
+>  	return __ofono_error_invalid_args(msg);
 >  }
 >  =
 
-> +static void bsir_notify(GAtResult *result, gpointer user_data)
+> +static void request_phone_number_cb(const struct ofono_error *error,
+> +					const struct ofono_phone_number *number,
+> +					void *data)
 > +{
-> +	struct ofono_handsfree *hf =3D user_data;
-> +	struct hf_data *hd =3D ofono_handsfree_get_data(hf);
-> +	int value;
+> +	struct ofono_handsfree *hf =3D data;
+> +	DBusMessage *reply;
+> +	const char *phone_number;
 > +
-> +	if (at_util_parse_reg_unsolicited(result, "+BSIR:", &value,
-> +				NULL, NULL, NULL, hd->vendor) =3D=3D FALSE)
+> +	if (!hf->pending)
 > +		return;
+
+Is this check really necessary?
+
 > +
-> +	ofono_handsfree_set_inband_ringing(hf, (ofono_bool_t) value);
+> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+> +		DBG("Phone number request callback returned error: %s",
+> +			telephony_error_to_str(error));
+> +
+> +		reply =3D __ofono_error_failed(hf->pending);
+> +		__ofono_dbus_pending_reply(&hf->pending, reply);
+> +		return;
+> +	}
+> +
+> +	phone_number =3D phone_number_to_string(number);
+> +	reply =3D dbus_message_new_method_return(hf->pending);
+> +	dbus_message_append_args(reply, DBUS_TYPE_STRING, &phone_number,
+> +					DBUS_TYPE_INVALID);
+> +	__ofono_dbus_pending_reply(&hf->pending, reply);
 > +}
 > +
->  static int hfp_handsfree_probe(struct ofono_handsfree *hf,
->  				unsigned int vendor, void *data)
->  {
-> @@ -63,9 +77,12 @@ static int hfp_handsfree_probe(struct ofono_handsfree =
-*hf,
->  	DBG("");
->  	hd =3D g_new0(struct hf_data, 1);
->  	hd->chat =3D g_at_chat_clone(info->chat);
-> +	hd->vendor =3D vendor;
+> +static DBusMessage *handsfree_request_input(DBusConnection *conn,
+> +						DBusMessage *msg, void *data)
+> +{
+> +	struct ofono_handsfree *hf =3D data;
+> +	DBusMessageIter iter;
+> +	const char *name;
+> +
+> +	if (hf->pending)
+> +		return __ofono_error_busy(msg);
+> +
+> +	if (dbus_message_iter_init(msg, &iter) =3D=3D FALSE)
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	dbus_message_iter_get_basic(&iter, &name);
+> +
+> +	if (g_str_equal(name, "PhoneNumber")) {
+> +		if (!hf->driver->request_phone_number)
+> +			return __ofono_error_not_supported(msg);
+> +
+> +		hf->pending =3D dbus_message_ref(msg);
+> +		hf->driver->request_phone_number(hf, request_phone_number_cb,
+> +							hf);
+> +		return NULL;
+> +	}
+
+I'd rather not do it this way.  I know +BINP is supposed to be
+'extendable', but it hasn't been in what 5-6 years now?  Using
+RequestPhoneNumber or RequestNumberInput would probably be better.
+
+> +
+> +	return __ofono_error_invalid_args(msg);
+> +}
+> +
+>  static GDBusMethodTable handsfree_methods[] =3D {
+>  	{ "GetProperties",    "",    "a{sv}", handsfree_get_properties,
+>  		G_DBUS_METHOD_FLAG_ASYNC },
+>  	{ "SetProperty",      "sv",  "", handsfree_set_property,
+>  		G_DBUS_METHOD_FLAG_ASYNC },
+> +	{ "RequestInput",      "s",  "v", handsfree_request_input,
+> +		G_DBUS_METHOD_FLAG_ASYNC },
+
+You might want to submit a formal API proposal first (e.g. in doc/)
+before trying to implement the API.  This would make discussing API
+details easier.
+
+>  	{ NULL, NULL, NULL, NULL }
+>  };
 >  =
 
->  	ofono_handsfree_set_data(hf, hd);
+> @@ -143,6 +204,9 @@ static void handsfree_remove(struct ofono_atom *atom)
+>  	if (hf->driver !=3D NULL && hf->driver->remove !=3D NULL)
+>  		hf->driver->remove(hf);
 >  =
 
-> +	g_at_chat_register(hd->chat, "+BSIR:", bsir_notify, FALSE, hf, NULL);
+> +	if (hf->pending)
+> +		dbus_message_unref(hf->pending);
 > +
 
-Just a minor nitpick, but I'd like this to be done in hfp_handsfree_register
+The rest of the code doesn't do this, though it probably should.
+However, it probably belongs in _unregister, not _remove.  Using
+ofono_dbus_pending_reply might be better as well.
 
->  	g_idle_add(hfp_handsfree_register, hf);
+>  	g_free(hf);
+>  }
 >  =
 
->  	return 0;
 
 Regards,
 -Denis
 
---===============7602727232422440110==--
+--===============1337363607654205108==--
 
