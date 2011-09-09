@@ -1,135 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============7268459206940279944=="
+Content-Type: multipart/mixed; boundary="===============4855893889553902267=="
 MIME-Version: 1.0
-From: Artem Makhutov <artem@makhutov.org>
-Subject: Re: Udev detection broken?
-Date: Thu, 15 Sep 2011 20:24:10 +0200
-Message-ID: <4E7242CA.7060509@makhutov.org>
-In-Reply-To: <4E720CBC.2010507@zirak.it>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCHv6 3/3] Mobile broadband provider info plugin
+Date: Thu, 08 Sep 2011 23:58:35 -0500
+Message-ID: <4E699CFB.7090500@gmail.com>
+In-Reply-To: <1316006204-11390-4-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7268459206940279944==
+--===============4855893889553902267==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Paolo,
+Hi Oleg,
 
-Paolo Pellegrino schrieb:
-> Hi Artem,
->
-> Il 15/09/2011 9.48, Artem Makhutov ha scritto:
->> Hi,
->>
->> Artem Makhutov schrieb:
->>> Hello,
->>>
->>> I am trying to setup ofono on my PC again, unfortunatly ofono
->>> does not pick up the connected huawei modem. [...]
->>
->> I have done some more testing. Looks like the "OFONO_DRIVER=3Dhuawei"
->> is getting removed somehow by udev.
->>
->> With "udevadm monitor --property" I can see that
->> OFONO_DRIVER=3Dhuawei was set for
->> /devices/pci0000:00/0000:00:02.1/usb1/1-3 But "udevadm info
->> --query=3Dall --path=3D/devices/pci0000:00/0000:00:02.1/usb1/1-3" does
->> not show it. Ofono also can't find it.
->>
->> Any ideas that to do to trace down the problem?
->
-> We incurred in a similar problem some months ago, but we thought the
-> issue was related to some specific udev library version we were using
-> (v153 if I remember well).
-> [...]
-
-Yes this patch solved it. I am using udev 171-r2 on gentoo linux.
-
-Thank you, Artem
+On 09/14/2011 08:16 AM, Oleg Zhurakivskyy wrote:
+> ---
+>  plugins/mobile-broadband-provider-info.c |  804 ++++++++++++++++++++++++=
+++++++
+>  1 files changed, 804 insertions(+), 0 deletions(-)
+>  create mode 100644 plugins/mobile-broadband-provider-info.c
+> =
 
 
---===============7268459206940279944==
-Content-Type: application/pkcs7-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
+After reviewing this patch I got the impression that you were still
+making things just way too complicated and not taking full advantage of
+the push/pop semantics.  So just for fun I wrote my own version in
+plugins/mbpi.[ch] and reworked tools/lookup-apn to use that.  The code
+seems to be valgrind clean and can handle duplicate detection, bail out
+early, etc.
 
-MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIINATCCBjQw
-ggQcoAMCAQICASAwDQYJKoZIhvcNAQEFBQAwfTELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0YXJ0
-Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcxKTAn
-BgNVBAMTIFN0YXJ0Q29tIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MB4XDTA3MTAyNDIxMDI1NVoX
-DTE3MTAyNDIxMDI1NVowgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENvbSBMdGQuMSsw
-KQYDVQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYDVQQDEy9TdGFy
-dENvbSBDbGFzcyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQTCCASIwDQYJKoZIhvcN
-AQEBBQADggEPADCCAQoCggEBAMsohUWcASz7GfKrpTOMKqANy9BV7V0igWdGxA8IU77L3aTxErQ+
-fcxtDYZ36Z6GH0YFn7fq5RADteP0AYzrCA+EQTfi8q1+kA3m0nwtwXG94M5sIqsvs7lRP1aycBke
-/s5g9hJHryZ2acScnzczjBCAo7X1v5G3yw8MDP2m2RCye0KfgZ4nODerZJVzhAlOD9YejvAXZqHk
-sw56HzElVIoYSZ3q4+RJuPXXfIoyby+Y2m1E+YzX5iCZXBx05gk6MKAW1vaw4/v2OOLy6FZH3XHH
-tOkzUreG//CsFnB9+uaYSlR65cdGzTsmoIK8WH1ygoXhRBm98SD7Hf/r3FELNvUCAwEAAaOCAa0w
-ggGpMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMB0GA1UdDgQWBBSuVYNv7DHKufcd
-+q9rMfPIHeOsuzAfBgNVHSMEGDAWgBROC+8apEBbpRdphzDKNGhD0EGu8jBmBggrBgEFBQcBAQRa
-MFgwJwYIKwYBBQUHMAGGG2h0dHA6Ly9vY3NwLnN0YXJ0c3NsLmNvbS9jYTAtBggrBgEFBQcwAoYh
-aHR0cDovL3d3dy5zdGFydHNzbC5jb20vc2ZzY2EuY3J0MFsGA1UdHwRUMFIwJ6AloCOGIWh0dHA6
-Ly93d3cuc3RhcnRzc2wuY29tL3Nmc2NhLmNybDAnoCWgI4YhaHR0cDovL2NybC5zdGFydHNzbC5j
-b20vc2ZzY2EuY3JsMIGABgNVHSAEeTB3MHUGCysGAQQBgbU3AQIBMGYwLgYIKwYBBQUHAgEWImh0
-dHA6Ly93d3cuc3RhcnRzc2wuY29tL3BvbGljeS5wZGYwNAYIKwYBBQUHAgEWKGh0dHA6Ly93d3cu
-c3RhcnRzc2wuY29tL2ludGVybWVkaWF0ZS5wZGYwDQYJKoZIhvcNAQEFBQADggIBADqpJw3I07QW
-ke9plNBpxUxcffc7nUrIQpJHDci91DFG7fVhHRkMZ1J+BKg5UNUxIFJ2Z9B90Micc/NXcs7kPBRd
-n6XGO/vPc87Y6R+cWS9Nc9+fp3Enmsm94OxOwI9wn8qnr/6o3mD4noP9JphwUPTXwHovjavRnhUQ
-HLfo/i2NG0XXgTHXS2Xm0kVUozXqpYpAdumMiB/vezj1QHQJDmUdPYMcp+reg9901zkyT3fDW/iv
-JVv6pWtkh6Pw2ytZT7mvg7YhX3V50Nv860cV11mocUVcqBLv0gcT+HBDYtbuvexNftwNQKD5193A
-7zN4vG7CTYkXxytSjKuXrpEatEiFPxWgb84nVj25SU5q/r1Xhwby6mLhkbaXslkVtwEWT3Van49r
-KjlK4XrUKYYWtnfzq6aSak5u0Vpxd1rY79tWhD3EdCvOhNz/QplNa+VkIsrcp7+8ZhP1l1b2U6Ma
-xIVteuVMD3X0vziIwr7jxYae9FZjbxlpUemqXjcC0QaFfN7qI0JsQMALL7iGRBg7K0CoOBzECdD3
-fuZil5kU/LP9cr1BK31U0Uy651bFnAMMMkqhAChIbn0ei72VnbpSsrrSdF0BAGYQ8vyHae5aCg+H
-75dVCV33K6FuxZrf09yTz+Vx/PkdRUYkXmZz/OTfyJXsUOUXrym6KvI2rYpccSk5MIIGxTCCBa2g
-AwIBAgICA44wDQYJKoZIhvcNAQEFBQAwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENv
-bSBMdGQuMSswKQYDVQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYD
-VQQDEy9TdGFydENvbSBDbGFzcyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQTAeFw0w
-OTExMjcwNTQ1MTJaFw0xMTExMjgwMjUzMTZaMIG+MSAwHgYDVQQNExcxMDY3NDMtdW1QMktDaW40
-d3p6dFNsajELMAkGA1UEBhMCREUxDzANBgNVBAgTBkhlc3NlbjERMA8GA1UEBxMIRXNjaGJvcm4x
-LTArBgNVBAsTJFN0YXJ0Q29tIFZlcmlmaWVkIENlcnRpZmljYXRlIE1lbWJlcjEXMBUGA1UEAxMO
-QXJ0ZW0gTWFraHV0b3YxITAfBgkqhkiG9w0BCQEWEmFydGVtQG1ha2h1dG92Lm9yZzCCASIwDQYJ
-KoZIhvcNAQEBBQADggEPADCCAQoCggEBANGLq1WfGtwTc9SDQ8CWAI5zYaXUb5+o/03N/J9omALq
-bNubjbm9NQS3N767CUOHFThHBT29ORwxmmpAJ87yu/zsn4bDm1/MBj4p4M8MNEANetAQqz+b9sXA
-IKGyLYoJXIzCTtc/4tMvcB2cvHsXPRt1mmtTn1DCULf32kZT/RIbVshSvy38P3R7lRn8V72uD3Md
-5zRg0apK4dr0f19VLvgSsOmxVcnEVDjHYR33AtWFaPaTz02UfQ47VzaJP69E1QgxSEvUWIBYEp2P
-I+0S2LyQfG6XwpKmFGWxLGwViQrBoEFZJon6WIdfN6CxfaruE4ZIpt6bNL4ZTbvIZUwvJz8CAwEA
-AaOCAvswggL3MAkGA1UdEwQCMAAwCwYDVR0PBAQDAgSwMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggr
-BgEFBQcDBDAdBgNVHQ4EFgQUN8I0Ybt+O/B/IIXtOjuqth2grwcwHwYDVR0jBBgwFoAUrlWDb+wx
-yrn3HfqvazHzyB3jrLswHQYDVR0RBBYwFIESYXJ0ZW1AbWFraHV0b3Yub3JnMIIBQgYDVR0gBIIB
-OTCCATUwggExBgsrBgEEAYG1NwECATCCASAwLgYIKwYBBQUHAgEWImh0dHA6Ly93d3cuc3RhcnRz
-c2wuY29tL3BvbGljeS5wZGYwNAYIKwYBBQUHAgEWKGh0dHA6Ly93d3cuc3RhcnRzc2wuY29tL2lu
-dGVybWVkaWF0ZS5wZGYwgbcGCCsGAQUFBwICMIGqMBQWDVN0YXJ0Q29tIEx0ZC4wAwIBARqBkUxp
-bWl0ZWQgTGlhYmlsaXR5LCBzZWUgc2VjdGlvbiAqTGVnYWwgTGltaXRhdGlvbnMqIG9mIHRoZSBT
-dGFydENvbSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eSBQb2xpY3kgYXZhaWxhYmxlIGF0IGh0dHA6
-Ly93d3cuc3RhcnRzc2wuY29tL3BvbGljeS5wZGYwYwYDVR0fBFwwWjAroCmgJ4YlaHR0cDovL3d3
-dy5zdGFydHNzbC5jb20vY3J0dTItY3JsLmNybDAroCmgJ4YlaHR0cDovL2NybC5zdGFydHNzbC5j
-b20vY3J0dTItY3JsLmNybDCBjgYIKwYBBQUHAQEEgYEwfzA5BggrBgEFBQcwAYYtaHR0cDovL29j
-c3Auc3RhcnRzc2wuY29tL3N1Yi9jbGFzczIvY2xpZW50L2NhMEIGCCsGAQUFBzAChjZodHRwOi8v
-d3d3LnN0YXJ0c3NsLmNvbS9jZXJ0cy9zdWIuY2xhc3MyLmNsaWVudC5jYS5jcnQwIwYDVR0SBBww
-GoYYaHR0cDovL3d3dy5zdGFydHNzbC5jb20vMA0GCSqGSIb3DQEBBQUAA4IBAQAx4PyLMtjk9Wc/
-NhF5Tw5okWfzyPryTXk35OBOR/UW4PPmdX8iFvqPNZ1HhucLo9ggo8Aa9wvZq/eSuuLqXWcVcJiS
-ryLCmaCE2dlq5D+Rz3DSEj7ZCqyFvLkS/k2ZjGFo+DuOLENb3LimN5RC6AP6tYXNSIFwhMp4zBGA
-SS8eVyyFiWzQgiQqUOAK6ph7y9ZXN6zbiLqU40f2DcGYfhybMrONQo3qWF1V1U22WxKQvQnzBhC7
-WuRM8Lj4XwjdooEAYkWPw/r2560N/3d4UaAY2Q1L7nbKlfzgkjdygnSKDP5WGLT9cJUUTxQkszZ+
-jHm+PKrPCCF/QyJbUBhGW1vrMYIDzTCCA8kCAQEwgZMwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQK
-Ew1TdGFydENvbSBMdGQuMSswKQYDVQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWdu
-aW5nMTgwNgYDVQQDEy9TdGFydENvbSBDbGFzcyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVu
-dCBDQQICA44wCQYFKw4DAhoFAKCCAg4wGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG
-9w0BCQUxDxcNMTEwOTE1MTgyNDEwWjAjBgkqhkiG9w0BCQQxFgQUeIPJwVWFoCL/vZhH6DtwMeh7
-zd0wXwYJKoZIhvcNAQkPMVIwUDALBglghkgBZQMEAQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwIC
-AgCAMA0GCCqGSIb3DQMCAgFAMAcGBSsOAwIHMA0GCCqGSIb3DQMCAgEoMIGkBgkrBgEEAYI3EAQx
-gZYwgZMwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENvbSBMdGQuMSswKQYDVQQLEyJT
-ZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYDVQQDEy9TdGFydENvbSBDbGFz
-cyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQQICA44wgaYGCyqGSIb3DQEJEAILMYGW
-oIGTMIGMMQswCQYDVQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRkLjErMCkGA1UECxMiU2Vj
-dXJlIERpZ2l0YWwgQ2VydGlmaWNhdGUgU2lnbmluZzE4MDYGA1UEAxMvU3RhcnRDb20gQ2xhc3Mg
-MiBQcmltYXJ5IEludGVybWVkaWF0ZSBDbGllbnQgQ0ECAgOOMA0GCSqGSIb3DQEBAQUABIIBAHxn
-ub0dR50kBE6dCdZ5I3xGmLxqTXQX71r/NRvZkKe92kngtJ2GvLFz2NjQFaCqdUg+cYQdax9r367+
-lnn7RuVoXKndbepuOV/3FFwfUtEWBzGZrWdnLRzboUF5/gqRL8qOTSyYegCoLxhaTyqDTCsmYQy4
-h+B5WBYoku9K80x5lhKuIFtqeXKOQxUKElSSJUwYNaUk3S/KBtAktRGopKJ3lV2OPHdZfzw0sPv7
-1C83UDbT6R6bZXd+WQOk603ll2CKRR9wu2xhj42LR3ALMziUGRhz8D3rFThnn4abbfLAzR8NxOk2
-hYAtICaJCEry1RRMUjJK1yDpg1oj16j1X8cAAAAAAAA=
---===============7268459206940279944==--
+Can you please take a look and suggest improvements?  Once you think it
+is good enough, I'd like you to rewrite this patch series to utilize
+mbpi.c parser.
+
+Regards,
+-Denis
+
+--===============4855893889553902267==--
 
