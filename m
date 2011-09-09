@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2398841064268544138=="
+Content-Type: multipart/mixed; boundary="===============3845477237317390469=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 04/12] hfp_hf: Plugin creates handsfree atom
-Date: Fri, 09 Sep 2011 01:16:19 -0500
-Message-ID: <4E69AF33.4090905@gmail.com>
-In-Reply-To: <1316104483-13144-5-git-send-email-mikel.astiz@bmw-carit.de>
+Subject: Re: [PATCH 03/12] hfpmodem: Driver implements handsfree atom
+Date: Fri, 09 Sep 2011 01:14:48 -0500
+Message-ID: <4E69AED8.4060704@gmail.com>
+In-Reply-To: <1316104483-13144-4-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2398841064268544138==
+--===============3845477237317390469==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,8 +17,13 @@ Hi Mikel,
 
 On 09/15/2011 11:34 AM, Mikel Astiz wrote:
 > ---
->  plugins/hfp_hf.c |    2 ++
->  1 files changed, 2 insertions(+), 0 deletions(-)
+>  Makefile.am                  |    3 +-
+>  drivers/hfpmodem/handsfree.c |   98 ++++++++++++++++++++++++++++++++++++=
+++++++
+>  drivers/hfpmodem/hfpmodem.c  |    2 +
+>  drivers/hfpmodem/hfpmodem.h  |    3 +
+>  4 files changed, 105 insertions(+), 1 deletions(-)
+>  create mode 100644 drivers/hfpmodem/handsfree.c
 > =
 
 
@@ -27,5 +32,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============2398841064268544138==--
+--===============3845477237317390469==--
 
