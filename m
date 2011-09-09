@@ -1,32 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============0198274597183204140=="
+Content-Type: multipart/mixed; boundary="===============4935712360952404824=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: [PATCH 02/12] Add handsfree atom for HFP-specific capabilities
-Date: Fri, 16 Sep 2011 17:56:49 +0200
-Message-ID: <4E7371C1.5000804@monom.org>
-In-Reply-To: <1316104483-13144-3-git-send-email-mikel.astiz@bmw-carit.de>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 01/12] TODO: Task added for HFP-specific capabilities
+Date: Fri, 09 Sep 2011 00:10:45 -0500
+Message-ID: <4E699FD5.9000009@gmail.com>
+In-Reply-To: <1316104483-13144-2-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0198274597183204140==
+--===============4935712360952404824==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Mikel,
 
-> +++ b/include/handsfree.h
-> @@ -0,0 +1,57 @@
-> +/*
-> + *
-> + *  oFono - Open Source Telephony
-> + *
-> + *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
+On 09/15/2011 11:34 AM, Mikel Astiz wrote:
+> ---
+>  TODO |   11 +++++++++++
+>  1 files changed, 11 insertions(+), 0 deletions(-)
+> =
 
-BMW CarIT copyright statement? :)
 
-cheers,
-daniel
+Patch has been applied, thanks.
 
---===============0198274597183204140==--
+Regards,
+-Denis
+
+--===============4935712360952404824==--
 
