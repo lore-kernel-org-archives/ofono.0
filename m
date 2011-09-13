@@ -1,484 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============7024960704582755184=="
+Content-Type: multipart/mixed; boundary="===============7870571108661461462=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v2 02/24] sap: add basic SAP plugin
-Date: Tue, 13 Sep 2011 15:58:10 -0300
-Message-ID: <1315940312-1238-2-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1315940312-1238-1-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH -v2 01/24] udevng: look also to VID
+Date: Tue, 13 Sep 2011 15:58:09 -0300
+Message-ID: <1315940312-1238-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7024960704582755184==
+--===============7870571108661461462==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 
+Some drivers name are not properly set, so we need to rely on the VID
+information as well
 ---
- Makefile.am         |    3 +
- plugins/bluetooth.c |    1 -
- plugins/bluetooth.h |   12 ++
- plugins/hfp_hf.c    |    2 -
- plugins/sap.c       |  296 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- plugins/telit.c     |   10 ++
- 6 files changed, 321 insertions(+), 3 deletions(-)
- create mode 100644 plugins/sap.c
+ plugins/udevng.c |   14 ++++++++------
+ 1 files changed, 8 insertions(+), 6 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 9baab0c..2457e2b 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -366,6 +366,9 @@ builtin_sources +=3D plugins/hfp_ag.c plugins/bluetooth=
-.h
- builtin_modules +=3D dun_gw
- builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 1365bd1..5fd9475 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -857,14 +857,16 @@ static void check_usb_device(struct udev_device *devi=
+ce)
+ 		DBG("%s [%s:%s]", drv, vid, pid);
  =
 
-+builtin_modules +=3D sap
-+builtin_sources +=3D plugins/sap.c plugins/bluetooth.h
-+
- builtin_modules +=3D connman
- builtin_sources +=3D plugins/connman.c
- =
-
-diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index 1fdb579..9ac558e 100644
---- a/plugins/bluetooth.c
-+++ b/plugins/bluetooth.c
-@@ -33,7 +33,6 @@
- #include <gdbus.h>
- =
-
- #define OFONO_API_SUBJECT_TO_CHANGE
--#include <ofono/dbus.h>
- #include <ofono/plugin.h>
- #include <ofono/log.h>
- =
-
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index 6b3fef2..f980ebe 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -19,6 +19,9 @@
-  *
-  */
- =
-
-+#include <ofono/modem.h>
-+#include <ofono/dbus.h>
-+
- #define	BLUEZ_SERVICE "org.bluez"
- #define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
- #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
-@@ -30,6 +33,7 @@
- #define DUN_GW_UUID	"00001103-0000-1000-8000-00805f9b34fb"
- #define HFP_AG_UUID	"0000111f-0000-1000-8000-00805f9b34fb"
- #define HFP_HS_UUID	"0000111e-0000-1000-8000-00805f9b34fb"
-+#define SAP_UUID	"0000112d-0000-1000-8000-00805f9b34fb"
- =
-
- struct bluetooth_profile {
- 	const char *name;
-@@ -39,6 +43,10 @@ struct bluetooth_profile {
- 	void (*set_alias)(const char *device, const char *);
- };
- =
-
-+struct bluetooth_sap_driver {
-+	const char *name;
-+};
-+
- struct server;
- =
-
- typedef void (*ConnectFunc)(GIOChannel *io, GError *err, gpointer user_dat=
-a);
-@@ -60,3 +68,7 @@ int bluetooth_send_with_reply(const char *path, const cha=
-r *interface,
- 				void *user_data, DBusFreeFunction free_func,
- 				int timeout, int type, ...);
- void bluetooth_parse_properties(DBusMessage *reply, const char *property, =
-...);
-+
-+int bluetooth_sap_client_register(struct bluetooth_sap_driver *sap,
-+					struct ofono_modem *modem);
-+void bluetooth_sap_client_unregister(struct ofono_modem *modem);
-diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
-index 6516e75..717891b 100644
---- a/plugins/hfp_hf.c
-+++ b/plugins/hfp_hf.c
-@@ -44,8 +44,6 @@
- =
-
- #include <drivers/hfpmodem/slc.h>
- =
-
--#include <ofono/dbus.h>
+ 		for (i =3D 0; vendor_list[i].driver; i++) {
+-			if (g_str_equal(vendor_list[i].drv, drv) =3D=3D FALSE)
+-				continue;
 -
- #include "bluetooth.h"
+-			if (vendor_list[i].vid =3D=3D NULL) {
+-				driver =3D vendor_list[i].driver;
+-				break;
++			if (g_str_equal(vendor_list[i].drv, drv) =3D=3D TRUE) {
++				if (vendor_list[i].vid =3D=3D NULL) {
++					driver =3D vendor_list[i].driver;
++					break;
++				}
+ 			}
  =
 
- #define	BLUEZ_GATEWAY_INTERFACE		BLUEZ_SERVICE ".HandsfreeGateway"
-diff --git a/plugins/sap.c b/plugins/sap.c
-new file mode 100644
-index 0000000..88663c2
---- /dev/null
-+++ b/plugins/sap.c
-@@ -0,0 +1,296 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2010-2011  ProFUSION embedded systems
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+#include <string.h>
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include <errno.h>
-+#include <unistd.h>
-+#include <glib.h>
-+#include <gdbus.h>
-+#include <ofono.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+
-+#include "bluetooth.h"
-+
-+#ifndef DBUS_TYPE_UNIX_FD
-+#define DBUS_TYPE_UNIX_FD -1
-+#endif
-+
-+static DBusConnection *connection;
-+static GHashTable *modem_hash =3D NULL;
-+static GHashTable *sap_hw_hash =3D NULL;
-+
-+struct sap_data {
-+	char *server_path;
-+	struct ofono_modem *hw_modem;
-+	struct bluetooth_sap_driver *sap_driver;
-+};
-+
-+int bluetooth_sap_client_register(struct bluetooth_sap_driver *sap,
-+					struct ofono_modem *modem)
-+{
-+	if (g_hash_table_lookup(sap_hw_hash, modem) !=3D NULL)
-+		return -EALREADY;
-+
-+	g_hash_table_insert(sap_hw_hash, modem, sap);
-+
-+	return 0;
-+}
-+
-+static gboolean _remove_modem(gpointer data)
-+{
-+	struct ofono_modem *modem =3D data;
-+
-+	ofono_modem_remove(modem);
-+
-+	return FALSE;
-+}
-+
-+void bluetooth_sap_client_unregister(struct ofono_modem *modem)
-+{
-+	GHashTableIter iter;
-+	gpointer key, value;
-+
-+	if (modem_hash =3D=3D NULL)
-+		return;
-+
-+	g_hash_table_iter_init(&iter, modem_hash);
-+
-+	while (g_hash_table_iter_next(&iter, &key, &value)) {
-+		struct ofono_modem *sap_modem =3D value;
-+		struct sap_data *sap_data =3D ofono_modem_get_data(sap_modem);
-+
-+		if (sap_data->hw_modem =3D=3D modem)
-+			g_idle_add(_remove_modem, sap_modem);
-+	}
-+
-+	g_hash_table_remove(sap_hw_hash, modem);
-+
-+}
-+
-+static int sap_probe(struct ofono_modem *modem)
-+{
-+	DBG("%p", modem);
-+
-+	return 0;
-+}
-+
-+static void sap_remove(struct ofono_modem *modem)
-+{
-+	struct sap_data *data =3D ofono_modem_get_data(modem);
-+
-+	g_hash_table_remove(modem_hash, data->server_path);
-+
-+	g_free(data->server_path);
-+	g_free(data);
-+
-+	ofono_modem_set_data(modem, NULL);
-+}
-+
-+/* power up hardware */
-+static int sap_enable(struct ofono_modem *modem)
-+{
-+	DBG("%p", modem);
-+
-+	return 0;
-+}
-+
-+static int sap_disable(struct ofono_modem *modem)
-+{
-+	DBG("%p", modem);
-+
-+	return 0;
-+}
-+
-+static void sap_pre_sim(struct ofono_modem *modem)
-+{
-+	DBG("%p", modem);
-+}
-+
-+static void sap_post_sim(struct ofono_modem *modem)
-+{
-+	DBG("%p", modem);
-+}
-+
-+static int bluetooth_sap_probe(const char *device, const char *dev_addr,
-+				const char *adapter_addr, const char *alias)
-+{
-+	struct ofono_modem *modem;
-+	struct sap_data *data;
-+	char buf[256];
-+	GHashTableIter iter;
-+	gpointer key, value;
-+
-+	/* We already have this device in our hash, ignore */
-+	if (g_hash_table_lookup(modem_hash, device) !=3D NULL)
-+		return -EALREADY;
-+
-+	g_hash_table_iter_init(&iter, sap_hw_hash);
-+	while(g_hash_table_iter_next(&iter, &key, &value)) {
-+
-+		ofono_info("Using device: %s, devaddr: %s, adapter: %s",
-+				device, dev_addr, adapter_addr);
-+
-+		strcpy(buf, "sap/");
-+		bluetooth_create_path(dev_addr, adapter_addr, buf + 4,
-+							sizeof(buf) - 4);
-+
-+		modem =3D ofono_modem_create(buf, "sap");
-+		if (modem =3D=3D NULL)
-+			return -ENOMEM;
-+
-+		data =3D g_try_new0(struct sap_data, 1);
-+		if (data =3D=3D NULL)
-+			goto free;
-+
-+		data->server_path =3D g_strdup(device);
-+		if (data->server_path =3D=3D NULL)
-+			goto free;
-+
-+		data->hw_modem =3D key;
-+		data->sap_driver =3D value;
-+
-+		ofono_modem_set_data(modem, data);
-+		ofono_modem_set_name(modem, alias);
-+		ofono_modem_register(modem);
-+
-+		g_hash_table_insert(modem_hash, g_strdup(device), modem);
-+
-+		break;
-+
-+	}
-+
-+	return 0;
-+
-+free:
-+	g_free(data);
-+	ofono_modem_remove(modem);
-+
-+	return -ENOMEM;
-+}
-+
-+static gboolean sap_remove_modem(gpointer key, gpointer value,
-+					gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D value;
-+	const char *device =3D key;
-+	const char *prefix =3D user_data;
-+
-+	if (prefix && g_str_has_prefix(device, prefix) =3D=3D FALSE)
-+		return FALSE;
-+
-+	ofono_modem_remove(modem);
-+
-+	return TRUE;
-+}
-+
-+static void bluetooth_sap_remove(const char *prefix)
-+{
-+	DBG("%s", prefix);
-+
-+	if (modem_hash =3D=3D NULL)
-+		return;
-+
-+	g_hash_table_foreach_remove(modem_hash, sap_remove_modem,
-+							(gpointer) prefix);
-+}
-+
-+static void bluetooth_sap_set_alias(const char *device, const char *alias)
-+{
-+	struct ofono_modem *modem;
-+
-+	if (device =3D=3D NULL || alias =3D=3D NULL)
-+		return;
-+
-+	modem =3D	g_hash_table_lookup(modem_hash, device);
-+	if (modem =3D=3D NULL)
-+		return;
-+
-+	ofono_modem_set_name(modem, alias);
-+}
-+
-+static struct ofono_modem_driver sap_driver =3D {
-+	.name		=3D "sap",
-+	.probe		=3D sap_probe,
-+	.remove		=3D sap_remove,
-+	.enable		=3D sap_enable,
-+	.disable	=3D sap_disable,
-+	.pre_sim	=3D sap_pre_sim,
-+	.post_sim	=3D sap_post_sim,
-+};
-+
-+static struct bluetooth_profile sap =3D {
-+	.name		=3D "sap",
-+	.probe		=3D bluetooth_sap_probe,
-+	.remove		=3D bluetooth_sap_remove,
-+	.set_alias	=3D bluetooth_sap_set_alias,
-+};
-+
-+static int sap_init(void)
-+{
-+	int err;
-+
-+	if (DBUS_TYPE_UNIX_FD < 0)
-+		return -EBADF;
-+
-+	connection =3D ofono_dbus_get_connection();
-+
-+	err =3D ofono_modem_driver_register(&sap_driver);
-+	if (err < 0)
-+		return err;
-+
-+	err =3D bluetooth_register_uuid(SAP_UUID, &sap);
-+	if (err < 0) {
-+		ofono_modem_driver_unregister(&sap_driver);
-+		return err;
-+	}
-+
-+	modem_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+						g_free, NULL);
-+
-+	sap_hw_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+						NULL, NULL);
-+
-+	return 0;
-+}
-+
-+static void sap_exit(void)
-+{
-+	DBG("");
-+
-+	bluetooth_unregister_uuid(SAP_UUID);
-+	ofono_modem_driver_unregister(&sap_driver);
-+	g_hash_table_destroy(sap_hw_hash);
-+	g_hash_table_destroy(modem_hash);
-+	modem_hash =3D NULL;
-+}
-+
-+OFONO_PLUGIN_DEFINE(sap, "Sim Access Profile Plugins", VERSION,
-+			OFONO_PLUGIN_PRIORITY_DEFAULT, sap_init, sap_exit)
-diff --git a/plugins/telit.c b/plugins/telit.c
-index 9c8eb0d..18cf0c4 100644
---- a/plugins/telit.c
-+++ b/plugins/telit.c
-@@ -54,6 +54,8 @@
- #include <drivers/atmodem/atutil.h>
- #include <drivers/atmodem/vendor.h>
- =
-
-+#include "bluetooth.h"
-+
- static const char *none_prefix[] =3D { NULL };
- static const char *qss_prefix[] =3D { "#QSS:", NULL };
- =
-
-@@ -63,6 +65,10 @@ struct telit_data {
- 	guint sim_inserted_source;
- };
- =
-
-+static struct bluetooth_sap_driver sap_driver =3D {
-+	.name =3D "telit",
-+};
-+
- static void telit_debug(const char *str, void *user_data)
- {
- 	const char *prefix =3D user_data;
-@@ -82,6 +88,8 @@ static int telit_probe(struct ofono_modem *modem)
- =
-
- 	ofono_modem_set_data(modem, data);
- =
-
-+	bluetooth_sap_client_register(&sap_driver, modem);
-+
- 	return 0;
- }
- =
-
-@@ -91,6 +99,8 @@ static void telit_remove(struct ofono_modem *modem)
- =
-
- 	DBG("%p", modem);
- =
-
-+	bluetooth_sap_client_unregister(modem);
-+
- 	ofono_modem_set_data(modem, NULL);
- =
-
- 	if (data->sim_inserted_source > 0)
++			if (vendor_list[i].vid =3D=3D NULL)
++				continue;
++
+ 			if (g_str_equal(vendor_list[i].vid, vid) =3D=3D TRUE) {
+ 				if (vendor_list[i].pid =3D=3D NULL) {
+ 					if (driver =3D=3D NULL)
 -- =
 
 1.7.6.2
 
 
---===============7024960704582755184==--
+--===============7870571108661461462==--
 
