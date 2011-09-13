@@ -1,28 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============0155420912886532212=="
+Content-Type: multipart/mixed; boundary="===============0620231315756380197=="
 MIME-Version: 1.0
-From: Shaheer Ahmed <Shaheer.Ahmed@kpitcummins.com>
-Subject: Ofono Audio not coming.
-Date: Tue, 13 Sep 2011 13:02:18 +0000
-Message-ID: <5028AEF4CA436A4B99F9AD5F377D6BC308ACF67E@KCHJEXMB02.kpit.com>
+From: Gustavo Padovan <padovan@profusion.mobi>
+Subject: Re: Ofono Audio not coming.
+Date: Tue, 13 Sep 2011 16:01:13 -0300
+Message-ID: <20110913190113.GC16856@joana>
+In-Reply-To: <5028AEF4CA436A4B99F9AD5F377D6BC308ACF67E@KCHJEXMB02.kpit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0155420912886532212==
+--===============0620231315756380197==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Shaheer,
 
-Im trying to get Ofono HFP working on Ubuntu 11.04. I am able to successful=
-ly connect to HandsFreeGateway and place calls. But Im unable to hear any a=
-udio. PulseAudio doesnt detect any bluetooth card when im connected in HFP.=
- Kindly, please suggest something on the same.
+* Shaheer Ahmed <Shaheer.Ahmed@kpitcummins.com> [2011-09-13 13:02:18 +000=
+0]:
 
-Regards,
-Shaheer S.
+> Hi,
+> =
 
+> Im trying to get Ofono HFP working on Ubuntu 11.04. I am able to successf=
+ully connect to HandsFreeGateway and place calls. But Im unable to hear any=
+ audio. PulseAudio doesnt detect any bluetooth card when im connected in HF=
+P. Kindly, please suggest something on the same.
 
+Does your pulseaudio have bluetooth support enabled? please provide logs of
+bluetoothd and ofonod with debug log enabled.
 
---===============0155420912886532212==--
+	Gustavo
+
+--===============0620231315756380197==--
 
