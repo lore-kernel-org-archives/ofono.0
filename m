@@ -1,107 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============8682914053566868564=="
+Content-Type: multipart/mixed; boundary="===============5123749344218041039=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v2 04/24] sap: add support to connect the RFCOMM link
-Date: Tue, 13 Sep 2011 15:58:12 -0300
-Message-ID: <1315940312-1238-4-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1315940312-1238-3-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH -v2 05/24] telit: add #RSEN notify
+Date: Tue, 13 Sep 2011 15:58:13 -0300
+Message-ID: <1315940312-1238-5-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1315940312-1238-4-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8682914053566868564==
+--===============5123749344218041039==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 
+RSEN URC tells if the SAP Client was enabled or not
 ---
- plugins/sap.c |   45 ++++++++++++++++++++++++++++++++++++++++++++-
- 1 files changed, 44 insertions(+), 1 deletions(-)
+ plugins/telit.c |   19 +++++++++++++++++++
+ 1 files changed, 19 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/sap.c b/plugins/sap.c
-index 2a5db74..9f464e7 100644
---- a/plugins/sap.c
-+++ b/plugins/sap.c
-@@ -38,11 +38,14 @@
- #include <ofono/modem.h>
- =
-
- #include "bluetooth.h"
-+#include "util.h"
- =
-
- #ifndef DBUS_TYPE_UNIX_FD
- #define DBUS_TYPE_UNIX_FD -1
- #endif
- =
-
-+#define BLUEZ_SERIAL_INTERFACE	BLUEZ_SERVICE ".Serial"
-+
- static DBusConnection *connection;
- static GHashTable *modem_hash =3D NULL;
- static GHashTable *sap_hw_hash =3D NULL;
-@@ -114,12 +117,52 @@ static void sap_remove(struct ofono_modem *modem)
- 	ofono_modem_set_data(modem, NULL);
+diff --git a/plugins/telit.c b/plugins/telit.c
+index cc10668..1f950aa 100644
+--- a/plugins/telit.c
++++ b/plugins/telit.c
+@@ -105,6 +105,22 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	return chat;
  }
  =
 
-+static void sap_connect_reply(DBusPendingCall *call, gpointer user_data)
++static void telit_rsen_notify(GAtResult *result, gpointer user_data)
 +{
 +	struct ofono_modem *modem =3D user_data;
-+	DBusError derr;
-+	DBusMessage *reply;
-+
-+	DBG("");
-+
-+	reply =3D dbus_pending_call_steal_reply(call);
-+
-+	if (ofono_modem_get_powered(modem))
-+		goto done;
-+
-+	dbus_error_init(&derr);
-+	if (!dbus_set_error_from_message(&derr, reply))
-+		goto done;
-+
-+	DBG("Connect reply: %s", derr.message);
-+
-+	ofono_modem_set_powered(modem, FALSE);
-+
-+	dbus_error_free(&derr);
-+
-+done:
-+	dbus_message_unref(reply);
-+}
-+
- /* power up hardware */
- static int sap_enable(struct ofono_modem *modem)
- {
- 	struct sap_data *data =3D ofono_modem_get_data(modem);
 +	int status;
-+	const char *str =3D "sap";
++	GAtResultIter iter;
 +
 +	DBG("%p", modem);
 +
-+	status =3D bluetooth_send_with_reply(data->server_path,
-+					BLUEZ_SERIAL_INTERFACE, "ConnectFD",
-+					sap_connect_reply, modem, NULL,
-+					DBUS_TIMEOUT, DBUS_TYPE_STRING,
-+					&str, DBUS_TYPE_INVALID);
++	g_at_result_iter_init(&iter, result);
 +
-+	if (status < 0)
-+		return -EINVAL;
++	if (!g_at_result_iter_next(&iter, "#RSEN:"))
++		return;
++
++	g_at_result_iter_next_number(&iter, &status);
++}
++
+ static void rsen_enable_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+@@ -131,6 +147,9 @@ static int telit_sap_enable(struct ofono_modem *modem)
+ 	if (data->chat =3D=3D NULL)
+ 		return -EINVAL;
  =
 
--	return data->sap_driver->enable(data->hw_modem);
-+	return -EINPROGRESS;
- }
++	g_at_chat_register(data->chat, "#RSEN:", telit_rsen_notify,
++				FALSE, modem, NULL);
++
+ 	g_at_chat_send(data->chat, "AT#NOPT=3D3", NULL, NULL, NULL, NULL);
  =
 
- static int sap_disable(struct ofono_modem *modem)
+ 	/* Set SAP functionality */
 -- =
 
 1.7.6.2
 
 
---===============8682914053566868564==--
+--===============5123749344218041039==--
 
