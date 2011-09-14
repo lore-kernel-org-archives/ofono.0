@@ -1,171 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============7257540122640608238=="
+Content-Type: multipart/mixed; boundary="===============8518123614190683001=="
 MIME-Version: 1.0
-From: Shaheer Ahmed <Shaheer.Ahmed@kpitcummins.com>
-Subject: RE: Ofono Audio not coming.
-Date: Wed, 14 Sep 2011 13:12:53 +0000
-Message-ID: <5028AEF4CA436A4B99F9AD5F377D6BC308ACF820@KCHJEXMB02.kpit.com>
-In-Reply-To: <5028AEF4CA436A4B99F9AD5F377D6BC308ACF736@KCHJEXMB02.kpit.com>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv6 1/3] Mobile broadband provider info plugin makefile changes
+Date: Wed, 14 Sep 2011 16:16:42 +0300
+Message-ID: <1316006204-11390-2-git-send-email-oleg.zhurakivskyy@intel.com>
+In-Reply-To: <1316006204-11390-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7257540122640608238==
+--===============8518123614190683001==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ Makefile.am |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
 
-In addition to below mentioned setup details, we are using udev -162.
+diff --git a/Makefile.am b/Makefile.am
+index 832c8ac..d0fd056 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -376,6 +376,11 @@ builtin_libadd +=3D @BLUEZ_LIBS@
+ endif
+ endif
+ =
 
-Regards,
-Shaheer S
++if PROVIDER_INFO
++builtin_modules +=3D mobile_broadband_provider_info
++builtin_sources +=3D plugins/mobile-broadband-provider-info.c
++endif
++
+ if MAINTAINER_MODE
+ builtin_modules +=3D example_history
+ builtin_sources +=3D examples/history.c
+@@ -383,8 +388,10 @@ builtin_sources +=3D examples/history.c
+ builtin_modules +=3D example_nettime
+ builtin_sources +=3D examples/nettime.c
+ =
 
-________________________________
-From: Shaheer Ahmed
-Sent: Wednesday, September 14, 2011 12:56 PM
-To: ofono(a)ofono.org; Gustavo Padovan
-Subject: Re: Ofono Audio not coming.
++if !PROVIDER_INFO
+ builtin_modules +=3D example_provision
+ builtin_sources +=3D examples/provision.c
++endif
+ =
 
-Hi,
+ builtin_modules +=3D example_emulator
+ builtin_sources +=3D examples/emulator.c
+-- =
 
-Hi Gustavo,
-
-Please find attached logs of bluetoothd and ofonod as requested.
-
-My setup is as follows:
-1. Operating System - Ubuntu 11.04
-2. Bluez 4.95
-3. Ofono 0.51
-4. Dbus 1.4.6
-5. Pulseaudio 0.9.22 (compiled with enable bluez option)
-
-The bluetoohd_4.95_log.txt and ofonod_0.51_log.txt contain debug logs of HF=
-P connection and placing a outgoing call.
-
-Observation:
- PulseAudio is able to detect bluetooth card after making A2DP connection (=
-org.bluez.AudioSource). But in case of HFP connection no bluetooth card is =
-detected.
-
-Regards,
-Shaheer S.
-----------------------------------------------------------------------
-
-Message: 1
-Date: Tue, 13 Sep 2011 16:01:13 -0300
-From: Gustavo Padovan <padovan@profusion.mobi>
-To: ofono(a)ofono.org
-Subject: Re: Ofono Audio not coming.
-Message-ID: <20110913190113.GC16856@joana>
-Content-Type: text/plain; charset=3Dus-ascii
-
-Hi Shaheer,
-
-* Shaheer Ahmed <Shaheer.Ahmed@kpitcummins.com> [2011-09-13 13:02:18 +000=
-0]:
-
-> Hi,
->
-> Im trying to get Ofono HFP working on Ubuntu 11.04. I am able to successf=
-ully connect to HandsFreeGateway and place calls. But Im unable to hear any=
- audio. PulseAudio doesnt detect any bluetooth card when im connected in HF=
-P. Kindly, please suggest something on the same.
-
-Does your pulseaudio have bluetooth support enabled? please provide logs of
-bluetoothd and ofonod with debug log enabled.
-
-        Gustavo
+1.7.4.1
 
 
-------------------------------
-
-Regards,
-Shaheer Ahmed Shaikh
-SSE - A&E
-"Without a sense of urgency, desire loses its value."
-
-
---===============7257540122640608238==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgZGlyPSJsdHIiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBj
-b250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9aXNvLTg4NTktMSI+CjxzdHlsZSBpZD0ib3dhUGFy
-YVN0eWxlIiB0eXBlPSJ0ZXh0L2NzcyI+CjwhLS0KcAoJe21hcmdpbi10b3A6MDsKCW1hcmdpbi1i
-b3R0b206MH0KcAoJe21hcmdpbi10b3A6MDsKCW1hcmdpbi1ib3R0b206MH0KcAoJe21hcmdpbi10
-b3A6MDsKCW1hcmdpbi1ib3R0b206MH0KcAoJe21hcmdpbi10b3A6MDsKCW1hcmdpbi1ib3R0b206
-MH0KLS0+ClAge21hcmdpbi10b3A6MDttYXJnaW4tYm90dG9tOjA7fTwvc3R5bGU+CjwvaGVhZD4K
-PGJvZHkgb2NzaT0iMCIgZnBzdHlsZT0iMSI+CjxkaXYgc3R5bGU9ImRpcmVjdGlvbjogbHRyO2Zv
-bnQtZmFtaWx5OiBUYWhvbWE7Y29sb3I6ICMwMDAwMDA7Zm9udC1zaXplOiAxMHB0OyI+SGksPGJy
-Pgo8YnI+CkluIGFkZGl0aW9uIHRvIGJlbG93IG1lbnRpb25lZCBzZXR1cCBkZXRhaWxzLCB3ZSBh
-cmUgdXNpbmcgdWRldiAtMTYyLjxicj4KPGRpdj48YnI+CjxkaXYgY2xhc3M9IkJvZHlGcmFnbWVu
-dCI+PGZvbnQgc2l6ZT0iMiI+CjxkaXYgY2xhc3M9IlBsYWluVGV4dCI+UmVnYXJkcyw8YnI+ClNo
-YWhlZXIgUzxicj4KPGJyPgo8L2Rpdj4KPC9mb250PjwvZGl2Pgo8L2Rpdj4KPGRpdiBzdHlsZT0i
-Zm9udC1mYW1pbHk6IFRpbWVzIE5ldyBSb21hbjsgY29sb3I6IHJnYigwLCAwLCAwKTsgZm9udC1z
-aXplOiAxNnB4OyI+CjxociB0YWJpbmRleD0iLTEiPgo8ZGl2IHN0eWxlPSJkaXJlY3Rpb246IGx0
-cjsiIGlkPSJkaXZScEY1NDk4NDciPjxmb250IGNvbG9yPSIjMDAwMDAwIiBmYWNlPSJUYWhvbWEi
-IHNpemU9IjIiPjxiPkZyb206PC9iPiBTaGFoZWVyIEFobWVkPGJyPgo8Yj5TZW50OjwvYj4gV2Vk
-bmVzZGF5LCBTZXB0ZW1iZXIgMTQsIDIwMTEgMTI6NTYgUE08YnI+CjxiPlRvOjwvYj4gb2Zvbm9A
-b2Zvbm8ub3JnOyBHdXN0YXZvIFBhZG92YW48YnI+CjxiPlN1YmplY3Q6PC9iPiBSZTogT2Zvbm8g
-QXVkaW8gbm90IGNvbWluZy48YnI+CjwvZm9udD48YnI+CjwvZGl2Pgo8ZGl2PjwvZGl2Pgo8ZGl2
-Pgo8ZGl2IHN0eWxlPSJkaXJlY3Rpb246IGx0cjsgZm9udC1mYW1pbHk6IFRhaG9tYTsgY29sb3I6
-IHJnYigwLCAwLCAwKTsgZm9udC1zaXplOiAxMHB0OyI+CjxkaXYgc3R5bGU9ImRpcmVjdGlvbjog
-bHRyOyBmb250LWZhbWlseTogVGFob21hOyBjb2xvcjogcmdiKDAsIDAsIDApOyBmb250LXNpemU6
-IDEwcHQ7Ij4KPHNwYW4gc3R5bGU9ImZvbnQtd2VpZ2h0OiBib2xkOyI+PC9zcGFuPkhpLDxicj4K
-PGJyPgpIaSBHdXN0YXZvLDxicj4KPGJyPgpQbGVhc2UgZmluZCBhdHRhY2hlZCBsb2dzIG9mIGJs
-dWV0b290aGQgYW5kIG9mb25vZCBhcyByZXF1ZXN0ZWQuPGJyPgo8YnI+Ck15IHNldHVwIGlzIGFz
-IGZvbGxvd3M6PGJyPgoxLiBPcGVyYXRpbmcgU3lzdGVtIC0gVWJ1bnR1IDExLjA0PGJyPgoyLiBC
-bHVleiA0Ljk1PGJyPgozLiBPZm9ubyAwLjUxPGJyPgo0LiBEYnVzIDEuNC42PGJyPgo1LiBQdWxz
-ZWF1ZGlvIDAuOS4yMiAoY29tcGlsZWQgd2l0aCBlbmFibGUgYmx1ZXogb3B0aW9uKTxicj4KPGJy
-PgpUaGUgYmx1ZXRvb2hkXzQuOTVfbG9nLnR4dCBhbmQgb2Zvbm9kXzAuNTFfbG9nLnR4dCBjb250
-YWluIGRlYnVnIGxvZ3Mgb2YgSEZQIGNvbm5lY3Rpb24gYW5kIHBsYWNpbmcgYSBvdXRnb2luZyBj
-YWxsLjxicj4KPGJyPgpPYnNlcnZhdGlvbjo8YnI+CiZuYnNwO1B1bHNlQXVkaW8gaXMgYWJsZSB0
-byBkZXRlY3QgYmx1ZXRvb3RoIGNhcmQgYWZ0ZXIgbWFraW5nIEEyRFAgY29ubmVjdGlvbiAob3Jn
-LmJsdWV6LkF1ZGlvU291cmNlKS4gQnV0IGluIGNhc2Ugb2YgSEZQIGNvbm5lY3Rpb24gbm8gYmx1
-ZXRvb3RoIGNhcmQgaXMgZGV0ZWN0ZWQuPGJyPgo8YnI+ClJlZ2FyZHMsPGJyPgpTaGFoZWVyIFMu
-PGJyPgo8ZGl2IHN0eWxlPSJmb250LWZhbWlseTogVGltZXMgTmV3IFJvbWFuOyBjb2xvcjogcmdi
-KDAsIDAsIDApOyBmb250LXNpemU6IDE2cHg7Ij4KPGRpdj4KPGRpdiBzdHlsZT0iZGlyZWN0aW9u
-OiBsdHI7IGZvbnQtZmFtaWx5OiBUYWhvbWE7IGNvbG9yOiByZ2IoMCwgMCwgMCk7IGZvbnQtc2l6
-ZTogMTBwdDsiPgo8ZGl2IHN0eWxlPSJmb250LWZhbWlseTogVGltZXMgTmV3IFJvbWFuOyBjb2xv
-cjogcmdiKDAsIDAsIDApOyBmb250LXNpemU6IDE2cHg7Ij4KPGRpdj4KPGRpdiBzdHlsZT0iZGly
-ZWN0aW9uOiBsdHI7IGZvbnQtZmFtaWx5OiBUYWhvbWE7IGNvbG9yOiByZ2IoMCwgMCwgMCk7IGZv
-bnQtc2l6ZTogMTBwdDsiPgo8Zm9udCBzaXplPSIyIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOiAx
-MHB0OyI+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLTxicj4KPGJyPgpNZXNzYWdlOiAxPGJyPgpEYXRlOiBUdWUsIDEz
-IFNlcCAyMDExIDE2OjAxOjEzIC0wMzAwPGJyPgpGcm9tOiBHdXN0YXZvIFBhZG92YW4gJmx0O3Bh
-ZG92YW5AcHJvZnVzaW9uLm1vYmkmZ3Q7PGJyPgpUbzogb2Zvbm9Ab2Zvbm8ub3JnPGJyPgpTdWJq
-ZWN0OiBSZTogT2Zvbm8gQXVkaW8gbm90IGNvbWluZy48YnI+Ck1lc3NhZ2UtSUQ6ICZsdDsyMDEx
-MDkxMzE5MDExMy5HQzE2ODU2QGpvYW5hJmd0Ozxicj4KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWlu
-OyBjaGFyc2V0PXVzLWFzY2lpPGJyPgo8YnI+CkhpIFNoYWhlZXIsPGJyPgo8YnI+CiogU2hhaGVl
-ciBBaG1lZCAmbHQ7U2hhaGVlci5BaG1lZEBrcGl0Y3VtbWlucy5jb20mZ3Q7IFsyMDExLTA5LTEz
-IDEzOjAyOjE4ICYjNDM7MDAwMF06PGJyPgo8YnI+CiZndDsgSGksPGJyPgomZ3Q7IDxicj4KJmd0
-OyBJbSB0cnlpbmcgdG8gZ2V0IE9mb25vIEhGUCB3b3JraW5nIG9uIFVidW50dSAxMS4wNC4gSSBh
-bSBhYmxlIHRvIHN1Y2Nlc3NmdWxseSBjb25uZWN0IHRvIEhhbmRzRnJlZUdhdGV3YXkgYW5kIHBs
-YWNlIGNhbGxzLiBCdXQgSW0gdW5hYmxlIHRvIGhlYXIgYW55IGF1ZGlvLiBQdWxzZUF1ZGlvIGRv
-ZXNudCBkZXRlY3QgYW55IGJsdWV0b290aCBjYXJkIHdoZW4gaW0gY29ubmVjdGVkIGluIEhGUC4g
-S2luZGx5LCBwbGVhc2Ugc3VnZ2VzdCBzb21ldGhpbmcKIG9uIHRoZSBzYW1lLjxicj4KPGJyPgpE
-b2VzIHlvdXIgcHVsc2VhdWRpbyBoYXZlIGJsdWV0b290aCBzdXBwb3J0IGVuYWJsZWQ/IHBsZWFz
-ZSBwcm92aWRlIGxvZ3Mgb2Y8YnI+CmJsdWV0b290aGQgYW5kIG9mb25vZCB3aXRoIGRlYnVnIGxv
-ZyBlbmFibGVkLjxicj4KPGJyPgombmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
-bmJzcDsgR3VzdGF2bzxicj4KPGJyPgo8YnI+Ci0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LTwvc3Bhbj48L2ZvbnQ+CjxkaXY+PGJyPgo8ZGl2IGNsYXNzPSJCb2R5RnJhZ21lbnQiPjxmb250
-IHNpemU9IjIiPgo8ZGl2IGNsYXNzPSJQbGFpblRleHQiPlJlZ2FyZHMsPGJyPgpTaGFoZWVyIEFo
-bWVkIFNoYWlraDxicj4KU1NFIC0gQSZhbXA7RTxicj4KJnF1b3Q7V2l0aG91dCBhIHNlbnNlIG9m
-IHVyZ2VuY3ksIGRlc2lyZSBsb3NlcyBpdHMgdmFsdWUuJnF1b3Q7PC9kaXY+CjwvZm9udD48L2Rp
-dj4KPC9kaXY+CjwvZGl2Pgo8L2Rpdj4KPC9kaXY+CjwvZGl2Pgo8L2Rpdj4KPC9kaXY+CjwvZGl2
-Pgo8L2Rpdj4KPC9kaXY+CjwvZGl2Pgo8L2Rpdj4KPGJyIGNsZWFyPWFsbD4gVGhpcyBtZXNzYWdl
-IGNvbnRhaW5zIGluZm9ybWF0aW9uIHRoYXQgbWF5IGJlIHByaXZpbGVnZWQgb3IgY29uZmlkZW50
-aWFsIGFuZCBpcyB0aGUgcHJvcGVydHkgb2YgdGhlIEtQSVQgQ3VtbWlucyBJbmZvc3lzdGVtcyBM
-dGQuIEl0IGlzIGludGVuZGVkIG9ubHkgZm9yIHRoZSBwZXJzb24gdG8gd2hvbSBpdCBpcyBhZGRy
-ZXNzZWQuIElmIHlvdSBhcmUgbm90IHRoZSBpbnRlbmRlZCByZWNpcGllbnQsIHlvdSBhcmUgbm90
-IGF1dGhvcml6ZWQgdG8gcmVhZCwgcHJpbnQsIHJldGFpbiBjb3B5LCBkaXNzZW1pbmF0ZSwgZGlz
-dHJpYnV0ZSwgb3IgdXNlIHRoaXMgbWVzc2FnZSBvciBhbnkgcGFydCB0aGVyZW9mLiBJZiB5b3Ug
-cmVjZWl2ZSB0aGlzIG1lc3NhZ2UgaW4gZXJyb3IsIHBsZWFzZSBub3RpZnkgdGhlIHNlbmRlciBp
-bW1lZGlhdGVseSBhbmQgZGVsZXRlIGFsbCBjb3BpZXMgb2YgdGhpcyBtZXNzYWdlLiBLUElUIEN1
-bW1pbnMgSW5mb3N5c3RlbXMgTHRkLiBkb2VzIG5vdCBhY2NlcHQgYW55IGxpYWJpbGl0eSBmb3Ig
-dmlydXMgaW5mZWN0ZWQgbWFpbHMuCjwvYm9keT4KPC9odG1sPgoK
-
---===============7257540122640608238==--
+--===============8518123614190683001==--
 
