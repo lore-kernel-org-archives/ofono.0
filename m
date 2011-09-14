@@ -1,842 +1,169 @@
-Content-Type: multipart/mixed; boundary="===============8581908204107837696=="
+Content-Type: multipart/mixed; boundary="===============2212839573012207289=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv6 3/3] Mobile broadband provider info plugin
-Date: Wed, 14 Sep 2011 16:16:44 +0300
-Message-ID: <1316006204-11390-4-git-send-email-oleg.zhurakivskyy@intel.com>
-In-Reply-To: <1316006204-11390-1-git-send-email-oleg.zhurakivskyy@intel.com>
+From: Artem Makhutov <artem@makhutov.org>
+Subject: Udev detection broken?
+Date: Thu, 15 Sep 2011 00:01:00 +0200
+Message-ID: <4E71241C.9000407@makhutov.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8581908204107837696==
+--===============2212839573012207289==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/mobile-broadband-provider-info.c |  804 ++++++++++++++++++++++++++=
-++++
- 1 files changed, 804 insertions(+), 0 deletions(-)
- create mode 100644 plugins/mobile-broadband-provider-info.c
+Hello,
 
-diff --git a/plugins/mobile-broadband-provider-info.c b/plugins/mobile-broa=
-dband-provider-info.c
-new file mode 100644
-index 0000000..57a888f
---- /dev/null
-+++ b/plugins/mobile-broadband-provider-info.c
-@@ -0,0 +1,804 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <sys/stat.h>
-+#include <sys/mman.h>
-+
-+#include <errno.h>
-+#include <fcntl.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <unistd.h>
-+
-+#include <glib.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/types.h>
-+#include <ofono/log.h>
-+#include <ofono/plugin.h>
-+#include <ofono/modem.h>
-+#include <ofono/gprs-provision.h>
-+
-+#define MAX_APS	4
-+
-+#define _(x) case x: return (#x)
-+
-+enum provider_info_flags {
-+	PROVIDER_INFO_FLAG_MATCH_FOUND	=3D 0x01,
-+	PROVIDER_INFO_FLAG_AP_COMMIT	=3D 0x02,
-+	PROVIDER_INFO_FLAG_INTERNET	=3D 0x04,
-+	PROVIDER_INFO_FLAG_MMS		=3D 0x08,
-+	PROVIDER_INFO_FLAG_WAP		=3D 0x10,
-+};
-+
-+enum element_type {
-+	ELEMENT_NONE,
-+	ELEMENT_PROVIDER_NAME,
-+	ELEMENT_SPN,
-+	ELEMENT_GSM,
-+	ELEMENT_NETWORK_ID,
-+	ELEMENT_APN,
-+	ELEMENT_USAGE,
-+	ELEMENT_PLAN,
-+	ELEMENT_NAME,
-+	ELEMENT_USERNAME,
-+	ELEMENT_PASSWORD,
-+	ELEMENT_MAX,
-+};
-+
-+enum parser_return_code {
-+	PARSER_OK,
-+	PARSER_ERROR,
-+};
-+
-+enum parser_match_type {
-+	PARSER_MATCH_ALL,
-+	PARSER_MATCH_ONLY,
-+};
-+
-+struct element_parser {
-+	enum element_type type;
-+	enum parser_match_type match_type;
-+	GMarkupParser parser;
-+};
-+
-+struct provider_info {
-+	struct ofono_gprs_provision_data settings[MAX_APS];
-+	struct ofono_gprs_provision_data *ap;
-+	int ap_count;
-+	char *spn;
-+	const char *match_mcc;
-+	const char *match_mnc;
-+	const char *match_spn;
-+	enum element_type element;
-+	GQuark g_error_domain;
-+	const struct element_parser *subparser;
-+	guint8 flags;
-+};
-+
-+static struct provider_info provider_info;
-+
-+static const char *ap_type_name(enum ofono_gprs_context_type type)
-+{
-+	switch (type) {
-+		_(OFONO_GPRS_CONTEXT_TYPE_ANY);
-+		_(OFONO_GPRS_CONTEXT_TYPE_INTERNET);
-+		_(OFONO_GPRS_CONTEXT_TYPE_MMS);
-+		_(OFONO_GPRS_CONTEXT_TYPE_WAP);
-+		_(OFONO_GPRS_CONTEXT_TYPE_IMS);
-+	}
-+
-+	return "OFONO_GPRS_CONTEXT_TYPE_<UNKNOWN>";
-+}
-+
-+static enum element_type element_type(const gchar *element,
-+					GMarkupParseContext *context)
-+{
-+	switch (element[0]) {
-+	case 'a':
-+		if (g_str_equal(element, "apn") =3D=3D TRUE)
-+			return ELEMENT_APN;
-+		break;
-+	case 'g':
-+		if (g_str_equal(element, "gsm") =3D=3D TRUE)
-+			return ELEMENT_GSM;
-+		break;
-+	case 'n':
-+		if (g_str_equal(element, "name") =3D=3D TRUE) {
-+			GSList *l =3D (GSList *)
-+					g_markup_parse_context_get_element_stack
-+					(context);
-+
-+			if (!g_slist_length(l))
-+				break;
-+
-+			if (g_str_equal(g_slist_nth_data(l, 1),
-+					"provider") =3D=3D TRUE)
-+				return ELEMENT_PROVIDER_NAME;
-+			if (g_str_equal(g_slist_nth_data(l, 1),
-+					"apn") =3D=3D TRUE)
-+				return ELEMENT_NAME;
-+			break;
-+		}
-+		if (g_str_equal(element, "network-id") =3D=3D TRUE)
-+			return ELEMENT_NETWORK_ID;
-+		break;
-+	case 'p':
-+		if (g_str_equal(element, "plan") =3D=3D TRUE)
-+			return ELEMENT_PLAN;
-+		if (g_str_equal(element, "password") =3D=3D TRUE)
-+			return ELEMENT_PASSWORD;
-+		break;
-+	case 'u':
-+		if (g_str_equal(element, "usage") =3D=3D TRUE)
-+			return ELEMENT_USAGE;
-+		if (g_str_equal(element, "username") =3D=3D TRUE)
-+			return ELEMENT_USERNAME;
-+	}
-+
-+	return ELEMENT_NONE;
-+}
-+
-+static struct ofono_gprs_provision_data *ap_new(struct provider_info *data)
-+{
-+	if (data->ap_count < MAX_APS) {
-+		struct ofono_gprs_provision_data *ap =3D
-+			data->settings + data->ap_count++;
-+
-+		data->flags &=3D ~PROVIDER_INFO_FLAG_AP_COMMIT;
-+
-+		DBG("%p", ap);
-+
-+		return ap;
-+
-+	}
-+
-+	return NULL;
-+}
-+
-+static void ap_value_free(char **value)
-+{
-+	g_free(*value);
-+
-+	*value =3D NULL;
-+}
-+
-+static void ap_delete(struct provider_info *data)
-+{
-+	struct ofono_gprs_provision_data *ap =3D data->ap;
-+
-+	DBG("%p", ap);
-+
-+	ap_value_free(&ap->name);
-+
-+	ap_value_free(&ap->apn);
-+
-+	ap_value_free(&ap->username);
-+
-+	ap_value_free(&ap->password);
-+
-+	ap->type =3D OFONO_GPRS_CONTEXT_TYPE_ANY;
-+
-+	data->ap_count--;
-+
-+	data->ap--;
-+}
-+
-+static void provider_info_free(struct provider_info *data)
-+{
-+	while (data->ap_count)
-+		ap_delete(data);
-+
-+	g_free(data->spn);
-+
-+	data->spn =3D NULL;
-+}
-+
-+static int ap_type_valid(struct ofono_gprs_provision_data *ap)
-+{
-+	switch (ap->type) {
-+	case OFONO_GPRS_CONTEXT_TYPE_INTERNET:
-+	case OFONO_GPRS_CONTEXT_TYPE_MMS:
-+	case OFONO_GPRS_CONTEXT_TYPE_WAP:
-+		return 1;
-+	default:
-+		break;
-+	}
-+
-+	return 0;
-+}
-+
-+static int ap_type_is_configured(struct provider_info *data,
-+					enum ofono_gprs_context_type type)
-+{
-+	switch (type) {
-+	case OFONO_GPRS_CONTEXT_TYPE_INTERNET:
-+		return data->flags & PROVIDER_INFO_FLAG_INTERNET;
-+	case OFONO_GPRS_CONTEXT_TYPE_MMS:
-+		return data->flags & PROVIDER_INFO_FLAG_MMS;
-+	case OFONO_GPRS_CONTEXT_TYPE_WAP:
-+		return data->flags & PROVIDER_INFO_FLAG_WAP;
-+	default:
-+		break;
-+	}
-+
-+	return 0;
-+}
-+
-+static void ap_type_mark_configured(struct provider_info *data,
-+					enum ofono_gprs_context_type type)
-+{
-+	switch (type) {
-+	case OFONO_GPRS_CONTEXT_TYPE_INTERNET:
-+		data->flags |=3D PROVIDER_INFO_FLAG_INTERNET;
-+		break;
-+	case OFONO_GPRS_CONTEXT_TYPE_MMS:
-+		data->flags |=3D PROVIDER_INFO_FLAG_MMS;
-+		break;
-+	case OFONO_GPRS_CONTEXT_TYPE_WAP:
-+		data->flags |=3D PROVIDER_INFO_FLAG_WAP;
-+		break;
-+	default:
-+		break;
-+	}
-+}
-+
-+static inline int body_isprint(const gchar *text, gsize text_len)
-+{
-+	int print =3D 0;
-+	int i;
-+
-+	for (i =3D 0; i < (int)text_len; i++) {
-+		if (g_ascii_isprint(text[i])) {
-+			print =3D 1;
-+			break;
-+		}
-+	}
-+
-+	return print;
-+}
-+
-+static inline int subparser_push(enum element_type from,
-+					GMarkupParseContext *context,
-+					const gchar *element_name,
-+					const gchar **attribute_names,
-+					const gchar **attribute_values,
-+					gpointer user_data, GError **error)
-+{
-+	struct provider_info *data =3D user_data;
-+	enum element_type type;
-+
-+	type =3D element_type(element_name, context);
-+
-+	if (type =3D=3D from)
-+		return 0;
-+
-+	if (!data->subparser[type].type ||
-+			(data->subparser[type].match_type =3D=3D PARSER_MATCH_ONLY
-+			&& !(data->flags & PROVIDER_INFO_FLAG_MATCH_FOUND)))
-+		return 1;
-+
-+	DBG("%s", element_name);
-+
-+	if (data->subparser[type].parser.start_element)
-+		data->subparser[type].parser.start_element(context,
-+							element_name,
-+							attribute_names,
-+							attribute_values,
-+							user_data, error);
-+
-+	g_markup_parse_context_push(context, &data->subparser[type].parser,
-+					user_data);
-+	return 1;
-+}
-+
-+static inline int subparser_pop(enum element_type from,
-+				GMarkupParseContext *context,
-+				const gchar *element_name,
-+				gpointer user_data, GError **error)
-+{
-+	struct provider_info *data =3D user_data;
-+	enum element_type type;
-+
-+	type =3D element_type(element_name, context);
-+
-+	if (type =3D=3D from)
-+		return 0;
-+
-+	if (!data->subparser[type].type ||
-+			(data->subparser[type].match_type =3D=3D PARSER_MATCH_ONLY
-+			&& !(data->flags & PROVIDER_INFO_FLAG_MATCH_FOUND)))
-+		return 1;
-+
-+	if (data->subparser[type].parser.end_element)
-+		data->subparser[type].parser.end_element(context, element_name,
-+							user_data, error);
-+
-+	DBG("%s", element_name);
-+
-+	g_markup_parse_context_pop(context);
-+
-+	return 1;
-+}
-+
-+static void network_id_start(GMarkupParseContext *context,
-+					const gchar *element_name,
-+					const gchar **attribute_names,
-+					const gchar **attribute_values,
-+					gpointer user_data, GError **error)
-+{
-+	struct provider_info *data =3D user_data;
-+	const char *mcc =3D NULL, *mnc =3D NULL;
-+	int i;
-+
-+	DBG("%s", element_name);
-+
-+	for (i =3D 0; attribute_names[i]; i++) {
-+		if (g_str_equal(attribute_names[i], "mcc") =3D=3D TRUE)
-+			mcc =3D attribute_values[i];
-+		if (g_str_equal(attribute_names[i], "mnc") =3D=3D TRUE)
-+			mnc =3D attribute_values[i];
-+	}
-+
-+	if (g_strcmp0(mcc, data->match_mcc) =3D=3D 0 &&
-+			g_strcmp0(mnc, data->match_mnc) =3D=3D 0)
-+		data->flags |=3D PROVIDER_INFO_FLAG_MATCH_FOUND;
-+}
-+
-+static void gsm_start(GMarkupParseContext *context,
-+					const gchar *element_name,
-+					const gchar **attribute_names,
-+					const gchar **attribute_values,
-+					gpointer user_data, GError **error)
-+{
-+	if (subparser_push(ELEMENT_GSM, context, element_name,
-+				attribute_names, attribute_values,
-+				user_data, error))
-+		return;
-+
-+	DBG("%s", element_name);
-+}
-+
-+static void gsm_end(GMarkupParseContext *context,
-+					const gchar *element_name,
-+					gpointer user_data, GError **error)
-+{
-+	struct provider_info *data;
-+
-+	if (subparser_pop(ELEMENT_GSM, context, element_name, user_data,
-+				error))
-+		return;
-+
-+	DBG("%s", element_name);
-+
-+	data =3D user_data;
-+
-+	if (data->flags & PROVIDER_INFO_FLAG_MATCH_FOUND)
-+		g_set_error(error, data->g_error_domain, PARSER_OK,
-+				"end parsing");
-+}
-+
-+static void apn_start(GMarkupParseContext *context,
-+					const gchar *element_name,
-+					const gchar **attribute_names,
-+					const gchar **attribute_values,
-+					gpointer user_data, GError **error)
-+{
-+	struct provider_info *data;
-+	int i;
-+
-+	if (subparser_push(ELEMENT_APN, context, element_name,
-+				attribute_names, attribute_values,
-+				user_data, error))
-+		return;
-+
-+	DBG("%s", element_name);
-+
-+	data =3D user_data;
-+
-+	data->ap =3D ap_new(data);
-+	if (data->ap =3D=3D NULL) {
-+		g_set_error(error, data->g_error_domain, PARSER_ERROR,
-+				"MAX_APS %d reached, end parsing", MAX_APS);
-+		return;
-+	}
-+
-+	for (i =3D 0; attribute_names[i]; i++)
-+		if (g_str_equal(attribute_names[i], "value") =3D=3D TRUE) {
-+			data->ap->apn =3D g_strdup(attribute_values[i]);
-+			break;
-+		}
-+}
-+
-+static void apn_end(GMarkupParseContext *context,
-+					const gchar *element_name,
-+					gpointer user_data, GError **error)
-+{
-+	struct provider_info *data;
-+
-+	if (subparser_pop(ELEMENT_APN, context, element_name, user_data,
-+				error))
-+		return;
-+
-+	DBG("%s", element_name);
-+
-+	data =3D user_data;
-+
-+	if (!(data->flags & PROVIDER_INFO_FLAG_AP_COMMIT)) {
-+		ap_delete(data);
-+		return;
-+	}
-+
-+	if (!ap_type_valid(data->ap)) {
-+		DBG("AP '%s', type %s not present, AP ignored",
-+			data->ap->apn, ap_type_name(data->ap->type));
-+		ap_delete(data);
-+		return;
-+	}
-+
-+	ap_type_mark_configured(data, data->ap->type);
-+}
-+
-+static void plan_start(GMarkupParseContext *context,
-+					const gchar *element_name,
-+					const gchar **attribute_names,
-+					const gchar **attribute_values,
-+					gpointer user_data, GError **error)
-+{
-+	struct provider_info *data =3D user_data;
-+	int i;
-+
-+	DBG("%s", element_name);
-+
-+	for (i =3D 0; attribute_names[i]; i++)
-+		if (g_str_equal(attribute_names[i], "type") =3D=3D TRUE) {
-+			if (attribute_values[i] =3D=3D NULL) {
-+				DBG("AP '%s', plan is not present, AP ignored",
-+					data->ap->apn);
-+				break;
-+			}
-+
-+			if (g_str_equal(attribute_values[i],
-+					"postpaid") =3D=3D TRUE ||
-+					g_str_equal(attribute_values[i],
-+						"prepaid") =3D=3D TRUE) {
-+				data->flags |=3D PROVIDER_INFO_FLAG_AP_COMMIT;
-+				return;
-+			}
-+
-+			DBG("AP '%s', plan '%s' is not supported, AP ignored",
-+				data->ap->apn, attribute_values[i]);
-+			break;
-+		}
-+}
-+
-+static void usage_start(GMarkupParseContext *context,
-+					const gchar *element_name,
-+					const gchar **attribute_names,
-+					const gchar **attribute_values,
-+					gpointer user_data, GError **error)
-+{
-+	const char *usage =3D NULL;
-+	struct provider_info *data;
-+	struct ofono_gprs_provision_data *ap;
-+	enum ofono_gprs_context_type type;
-+	int i;
-+
-+	DBG("%s", element_name);
-+
-+	data =3D user_data;
-+	ap =3D data->ap;
-+
-+	for (i =3D 0; attribute_names[i]; i++)
-+		if (g_str_equal(attribute_names[i], "type") =3D=3D TRUE)
-+			usage =3D attribute_values[i];
-+
-+	if (usage =3D=3D NULL)
-+		return;
-+
-+	if (g_str_equal(usage, "internet") =3D=3D TRUE)
-+		type =3D OFONO_GPRS_CONTEXT_TYPE_INTERNET;
-+	else if (g_str_equal(usage, "mms") =3D=3D TRUE)
-+		type =3D OFONO_GPRS_CONTEXT_TYPE_MMS;
-+	else if (g_str_equal(usage, "wap") =3D=3D TRUE)
-+		type =3D OFONO_GPRS_CONTEXT_TYPE_WAP;
-+
-+	if (ap_type_is_configured(data, type)) {
-+		g_set_error(error, data->g_error_domain, PARSER_ERROR,
-+				"AP '%s', multiple settings "
-+				"for type '%s' found, fail provisioning",
-+				ap->apn, ap_type_name(type));
-+		ap_delete(data);
-+		return;
-+	}
-+
-+	ap->type =3D type;
-+}
-+
-+static void element_text_set(GMarkupParseContext *context, const gchar *te=
-xt,
-+				gsize text_len, char **s)
-+{
-+	if (!body_isprint(text, text_len))
-+		return;
-+
-+	DBG("%s '%*s'", g_markup_parse_context_get_element(context),
-+		(int)text_len, text);
-+
-+	*s =3D g_strndup(text, text_len);
-+}
-+
-+static void name_text(GMarkupParseContext *context, const gchar *text,
-+			gsize text_len, gpointer user_data, GError **error)
-+{
-+	struct provider_info *data =3D user_data;
-+
-+	element_text_set(context, text, text_len, &data->ap->name);
-+}
-+
-+static void username_text(GMarkupParseContext *context,
-+					const gchar *text, gsize text_len,
-+					gpointer user_data, GError **error)
-+{
-+	struct provider_info *data =3D user_data;
-+
-+	element_text_set(context, text, text_len, &data->ap->username);
-+}
-+
-+static void password_text(GMarkupParseContext *context,
-+					const gchar *text, gsize text_len,
-+					gpointer user_data, GError **error)
-+{
-+	struct provider_info *data =3D user_data;
-+
-+	element_text_set(context, text, text_len, &data->ap->password);
-+}
-+
-+static void element_start(GMarkupParseContext *context,
-+				const gchar *element_name,
-+				const gchar **attribute_names,
-+				const gchar **attribute_values,
-+				gpointer user_data, GError **error)
-+{
-+	struct provider_info *data =3D user_data;
-+
-+	if (subparser_push(ELEMENT_NONE, context, element_name, attribute_names,
-+			attribute_values, user_data, error))
-+		return;
-+
-+	if (data->flags & PROVIDER_INFO_FLAG_MATCH_FOUND)
-+		DBG("%s", element_name);
-+}
-+
-+static void element_end(GMarkupParseContext *context,
-+					const gchar *element_name,
-+					gpointer user_data, GError **error)
-+{
-+	struct provider_info *data =3D user_data;
-+
-+	if (subparser_pop(ELEMENT_NONE, context, element_name, user_data,
-+			error))
-+		return;
-+
-+	if (data->flags & PROVIDER_INFO_FLAG_MATCH_FOUND)
-+		DBG("%s", element_name);
-+}
-+
-+static void parser_error(GMarkupParseContext *context,
-+				GError *error, gpointer user_data)
-+{
-+	struct provider_info *data =3D user_data;
-+	gint line_number;
-+	gint char_number;
-+
-+	g_markup_parse_context_get_position(context, &line_number,
-+						&char_number);
-+
-+	if (error->domain !=3D data->g_error_domain) {
-+		ofono_error("Error parsing %s, line %d, char %d: %s",
-+				PROVIDER_DATABASE, line_number,
-+				char_number, error->message);
-+		return;
-+	}
-+
-+	if (error->code =3D=3D PARSER_OK)
-+		return;
-+
-+	ofono_warn("%s, line %d, char %d: %s", PROVIDER_DATABASE, line_number,
-+			char_number, error->message);
-+
-+	provider_info_free(data);
-+}
-+
-+#define _SP(_type, _match, _start, _end, _text) {	\
-+	ELEMENT_ ## _type,				\
-+	_match,						\
-+	{						\
-+		_start,					\
-+		_end,					\
-+		_text,					\
-+		NULL,					\
-+		NULL,					\
-+	}						\
-+},
-+
-+static const struct element_parser subparser[ELEMENT_MAX] =3D {
-+	_SP(NONE, PARSER_MATCH_ALL, NULL, NULL, NULL)
-+	_SP(PROVIDER_NAME, PARSER_MATCH_ALL, NULL, NULL, NULL)
-+	_SP(SPN, PARSER_MATCH_ALL, NULL, NULL, NULL)
-+	_SP(GSM, PARSER_MATCH_ALL, gsm_start, gsm_end, NULL)
-+	_SP(NETWORK_ID, PARSER_MATCH_ALL, network_id_start, NULL, NULL)
-+	_SP(APN, PARSER_MATCH_ONLY, apn_start, apn_end, NULL)
-+	_SP(USAGE, PARSER_MATCH_ONLY, usage_start, NULL, NULL)
-+	_SP(PLAN, PARSER_MATCH_ONLY, plan_start, NULL, NULL)
-+	_SP(NAME, PARSER_MATCH_ONLY, NULL, NULL, name_text)
-+	_SP(USERNAME, PARSER_MATCH_ONLY, NULL, NULL, username_text)
-+	_SP(PASSWORD, PARSER_MATCH_ONLY, NULL, NULL, password_text)
-+};
-+
-+static const GMarkupParser parser =3D {
-+	element_start,
-+	element_end,
-+	NULL,
-+	NULL,
-+	parser_error,
-+};
-+
-+static void parse_database(const char *data, ssize_t size,
-+				struct provider_info *provider_info)
-+{
-+	GMarkupParseContext *context;
-+	gboolean result;
-+
-+	provider_info->flags =3D 0;
-+
-+	context =3D g_markup_parse_context_new(&parser,
-+						G_MARKUP_TREAT_CDATA_AS_TEXT,
-+						provider_info, NULL);
-+
-+	result =3D g_markup_parse_context_parse(context, data, size, NULL);
-+	if (result =3D=3D TRUE)
-+		result =3D g_markup_parse_context_end_parse(context, NULL);
-+
-+	g_markup_parse_context_free(context);
-+}
-+
-+static int provider_info_lookup(struct provider_info *data, const char *mc=
-c,
-+				const char *mnc, const char *spn)
-+{
-+	struct stat st;
-+	char *map;
-+	int fd;
-+
-+	fd =3D open(PROVIDER_DATABASE, O_RDONLY);
-+	if (fd < 0) {
-+		ofono_error("Error: open(%s): %s", PROVIDER_DATABASE,
-+				strerror(errno));
-+		return -errno;
-+	}
-+
-+	if (fstat(fd, &st) < 0) {
-+		ofono_error("Error: fstat(%s): %s", PROVIDER_DATABASE,
-+				strerror(errno));
-+		close(fd);
-+		return -errno;
-+	}
-+
-+	map =3D mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
-+	if (map =3D=3D MAP_FAILED) {
-+		ofono_error("Error: mmap(%s): %s", PROVIDER_DATABASE,
-+				strerror(errno));
-+		close(fd);
-+		return -errno;
-+	}
-+
-+	memset(data, 0, sizeof(struct provider_info));
-+
-+	data->subparser =3D subparser;
-+
-+	data->match_mcc =3D mcc;
-+	data->match_mnc =3D mnc;
-+	data->match_spn =3D spn;
-+
-+	parse_database(map, st.st_size, data);
-+
-+	munmap(map, st.st_size);
-+
-+	close(fd);
-+
-+	return data->ap_count;
-+}
-+
-+static int mobile_broadband_provider_info_get(const char *mcc,
-+				const char *mnc, const char *spn,
-+				struct ofono_gprs_provision_data **settings,
-+				int *count)
-+{
-+	struct ofono_gprs_provision_data *aps;
-+	int ap_count;
-+	int i;
-+
-+	DBG("Provisioning for MCC %s, MNC %s, SPN '%s'", mcc, mnc, spn);
-+
-+	ap_count =3D provider_info_lookup(&provider_info, mcc, mnc, spn);
-+	if (ap_count <=3D 0) {
-+		provider_info_free(&provider_info);
-+		return -ENOENT;
-+	}
-+
-+	DBG("Found %d APs", ap_count);
-+
-+	aps =3D g_try_malloc_n(ap_count,
-+				sizeof(struct ofono_gprs_provision_data));
-+	if (aps =3D=3D NULL) {
-+		ofono_error("Error provisioning APNs: memory exhausted");
-+		provider_info_free(&provider_info);
-+		return -ENOMEM;
-+	}
-+
-+	memcpy(aps, provider_info.settings,
-+		sizeof(struct ofono_gprs_provision_data) * ap_count);
-+
-+	memset(provider_info.settings, 0,
-+		sizeof(struct ofono_gprs_provision_data) * ap_count);
-+
-+	*settings =3D aps;
-+	*count =3D ap_count;
-+
-+	for (i =3D 0; i < ap_count; aps++, i++) {
-+		DBG("Name: '%s'", aps->name);
-+		DBG("APN: '%s'", aps->apn);
-+		DBG("Type: %s", ap_type_name(aps->type));
-+		DBG("Username: '%s'", aps->username);
-+		DBG("Password: '%s'", aps->password);
-+	}
-+
-+	provider_info_free(&provider_info);
-+
-+	return 0;
-+}
-+
-+static struct ofono_gprs_provision_driver provision_driver =3D {
-+	.name		=3D "Mobile Broadband Provider Info",
-+	.get_settings	=3D mobile_broadband_provider_info_get
-+};
-+
-+static int mobile_broadband_provider_info_init(void)
-+{
-+	provider_info.g_error_domain =3D g_quark_from_string(
-+		provision_driver.name);
-+
-+	return ofono_gprs_provision_driver_register(&provision_driver);
-+}
-+
-+static void mobile_broadband_provider_info_exit(void)
-+{
-+	ofono_gprs_provision_driver_unregister(&provision_driver);
-+}
-+
-+OFONO_PLUGIN_DEFINE(mobile_broadband_provider_info,
-+			"Mobile Broadband Provider Info Plugin",
-+			VERSION, OFONO_PLUGIN_PRIORITY_DEFAULT,
-+			mobile_broadband_provider_info_init,
-+			mobile_broadband_provider_info_exit)
--- =
+I am trying to setup ofono on my PC again, unfortunatly ofono does not pick=
+ up the connected huawei modem.
 
-1.7.4.1
+I have traced it down to plugins/udev.c - get_property function.
+
+The udev rules seems to get ok, as I can see it in the udev logs:
+
+UDEV_LOG=3D3
+ACTION=3Dadd
+DEVPATH=3D/devices/pci0000:00/0000:00:02.1/usb1/1-3
+SUBSYSTEM=3Dusb
+DEVNAME=3D/dev/bus/usb/001/016
+DEVTYPE=3Dusb_device
+DEVICE=3D/proc/bus/usb/001/016
+PRODUCT=3D12d1/1001/0
+TYPE=3D0/0/0
+BUSNUM=3D001
+DEVNUM=3D016
+SEQNUM=3D9847
+ID_VENDOR=3DHUAWEI_Technology
+ID_VENDOR_ENC=3DHUAWEI\x20Technology
+ID_VENDOR_ID=3D12d1
+ID_MODEL=3DHUAWEI_Mobile
+ID_MODEL_ENC=3DHUAWEI\x20Mobile
+ID_MODEL_ID=3D1001
+ID_REVISION=3D0000
+ID_SERIAL=3DHUAWEI_Technology_HUAWEI_Mobile
+ID_BUS=3Dusb
+ID_USB_INTERFACES=3D:ffffff:
+OFONO_DRIVER=3Dhuawei
+MAJOR=3D189
+MINOR=3D15
+
+But get_property can not find the "OFONO_DRIVER" property.
+It only find the properties below:
+
+Sep 14 23:45:56 gandalf ofonod[19789]: plugins/udev.c:get_property() Name:U=
+DEV_LOG
+Sep 14 23:45:56 gandalf ofonod[19789]: plugins/udev.c:get_property() Name:D=
+EVPATH
+Sep 14 23:45:56 gandalf ofonod[19789]: plugins/udev.c:get_property() Name:M=
+AJOR
+Sep 14 23:45:56 gandalf ofonod[19789]: plugins/udev.c:get_property() Name:M=
+INOR
+Sep 14 23:45:56 gandalf ofonod[19789]: plugins/udev.c:get_property() Name:D=
+EVNAME
+Sep 14 23:45:56 gandalf ofonod[19789]: plugins/udev.c:get_property() Name:D=
+EVTYPE
+Sep 14 23:45:56 gandalf ofonod[19789]: plugins/udev.c:get_property() Name:D=
+RIVER
+Sep 14 23:45:56 gandalf ofonod[19789]: plugins/udev.c:get_property() Name:D=
+EVICE
+Sep 14 23:45:56 gandalf ofonod[19789]: plugins/udev.c:get_property() Name:P=
+RODUCT
+Sep 14 23:45:56 gandalf ofonod[19789]: plugins/udev.c:get_property() Name:T=
+YPE
+Sep 14 23:45:56 gandalf ofonod[19789]: plugins/udev.c:get_property() Name:B=
+USNUM
+Sep 14 23:45:56 gandalf ofonod[19789]: plugins/udev.c:get_property() Name:D=
+EVNUM
+Sep 14 23:45:56 gandalf ofonod[19789]: plugins/udev.c:get_property() Name:S=
+UBSYSTEM
+
+Any ideas why it does not find some properties?
+
+Thanks, Artem
 
 
---===============8581908204107837696==--
+--===============2212839573012207289==
+Content-Type: application/pkcs7-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIINATCCBjQw
+ggQcoAMCAQICASAwDQYJKoZIhvcNAQEFBQAwfTELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0YXJ0
+Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcxKTAn
+BgNVBAMTIFN0YXJ0Q29tIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MB4XDTA3MTAyNDIxMDI1NVoX
+DTE3MTAyNDIxMDI1NVowgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENvbSBMdGQuMSsw
+KQYDVQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYDVQQDEy9TdGFy
+dENvbSBDbGFzcyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQTCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAMsohUWcASz7GfKrpTOMKqANy9BV7V0igWdGxA8IU77L3aTxErQ+
+fcxtDYZ36Z6GH0YFn7fq5RADteP0AYzrCA+EQTfi8q1+kA3m0nwtwXG94M5sIqsvs7lRP1aycBke
+/s5g9hJHryZ2acScnzczjBCAo7X1v5G3yw8MDP2m2RCye0KfgZ4nODerZJVzhAlOD9YejvAXZqHk
+sw56HzElVIoYSZ3q4+RJuPXXfIoyby+Y2m1E+YzX5iCZXBx05gk6MKAW1vaw4/v2OOLy6FZH3XHH
+tOkzUreG//CsFnB9+uaYSlR65cdGzTsmoIK8WH1ygoXhRBm98SD7Hf/r3FELNvUCAwEAAaOCAa0w
+ggGpMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMB0GA1UdDgQWBBSuVYNv7DHKufcd
++q9rMfPIHeOsuzAfBgNVHSMEGDAWgBROC+8apEBbpRdphzDKNGhD0EGu8jBmBggrBgEFBQcBAQRa
+MFgwJwYIKwYBBQUHMAGGG2h0dHA6Ly9vY3NwLnN0YXJ0c3NsLmNvbS9jYTAtBggrBgEFBQcwAoYh
+aHR0cDovL3d3dy5zdGFydHNzbC5jb20vc2ZzY2EuY3J0MFsGA1UdHwRUMFIwJ6AloCOGIWh0dHA6
+Ly93d3cuc3RhcnRzc2wuY29tL3Nmc2NhLmNybDAnoCWgI4YhaHR0cDovL2NybC5zdGFydHNzbC5j
+b20vc2ZzY2EuY3JsMIGABgNVHSAEeTB3MHUGCysGAQQBgbU3AQIBMGYwLgYIKwYBBQUHAgEWImh0
+dHA6Ly93d3cuc3RhcnRzc2wuY29tL3BvbGljeS5wZGYwNAYIKwYBBQUHAgEWKGh0dHA6Ly93d3cu
+c3RhcnRzc2wuY29tL2ludGVybWVkaWF0ZS5wZGYwDQYJKoZIhvcNAQEFBQADggIBADqpJw3I07QW
+ke9plNBpxUxcffc7nUrIQpJHDci91DFG7fVhHRkMZ1J+BKg5UNUxIFJ2Z9B90Micc/NXcs7kPBRd
+n6XGO/vPc87Y6R+cWS9Nc9+fp3Enmsm94OxOwI9wn8qnr/6o3mD4noP9JphwUPTXwHovjavRnhUQ
+HLfo/i2NG0XXgTHXS2Xm0kVUozXqpYpAdumMiB/vezj1QHQJDmUdPYMcp+reg9901zkyT3fDW/iv
+JVv6pWtkh6Pw2ytZT7mvg7YhX3V50Nv860cV11mocUVcqBLv0gcT+HBDYtbuvexNftwNQKD5193A
+7zN4vG7CTYkXxytSjKuXrpEatEiFPxWgb84nVj25SU5q/r1Xhwby6mLhkbaXslkVtwEWT3Van49r
+KjlK4XrUKYYWtnfzq6aSak5u0Vpxd1rY79tWhD3EdCvOhNz/QplNa+VkIsrcp7+8ZhP1l1b2U6Ma
+xIVteuVMD3X0vziIwr7jxYae9FZjbxlpUemqXjcC0QaFfN7qI0JsQMALL7iGRBg7K0CoOBzECdD3
+fuZil5kU/LP9cr1BK31U0Uy651bFnAMMMkqhAChIbn0ei72VnbpSsrrSdF0BAGYQ8vyHae5aCg+H
+75dVCV33K6FuxZrf09yTz+Vx/PkdRUYkXmZz/OTfyJXsUOUXrym6KvI2rYpccSk5MIIGxTCCBa2g
+AwIBAgICA44wDQYJKoZIhvcNAQEFBQAwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENv
+bSBMdGQuMSswKQYDVQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYD
+VQQDEy9TdGFydENvbSBDbGFzcyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQTAeFw0w
+OTExMjcwNTQ1MTJaFw0xMTExMjgwMjUzMTZaMIG+MSAwHgYDVQQNExcxMDY3NDMtdW1QMktDaW40
+d3p6dFNsajELMAkGA1UEBhMCREUxDzANBgNVBAgTBkhlc3NlbjERMA8GA1UEBxMIRXNjaGJvcm4x
+LTArBgNVBAsTJFN0YXJ0Q29tIFZlcmlmaWVkIENlcnRpZmljYXRlIE1lbWJlcjEXMBUGA1UEAxMO
+QXJ0ZW0gTWFraHV0b3YxITAfBgkqhkiG9w0BCQEWEmFydGVtQG1ha2h1dG92Lm9yZzCCASIwDQYJ
+KoZIhvcNAQEBBQADggEPADCCAQoCggEBANGLq1WfGtwTc9SDQ8CWAI5zYaXUb5+o/03N/J9omALq
+bNubjbm9NQS3N767CUOHFThHBT29ORwxmmpAJ87yu/zsn4bDm1/MBj4p4M8MNEANetAQqz+b9sXA
+IKGyLYoJXIzCTtc/4tMvcB2cvHsXPRt1mmtTn1DCULf32kZT/RIbVshSvy38P3R7lRn8V72uD3Md
+5zRg0apK4dr0f19VLvgSsOmxVcnEVDjHYR33AtWFaPaTz02UfQ47VzaJP69E1QgxSEvUWIBYEp2P
+I+0S2LyQfG6XwpKmFGWxLGwViQrBoEFZJon6WIdfN6CxfaruE4ZIpt6bNL4ZTbvIZUwvJz8CAwEA
+AaOCAvswggL3MAkGA1UdEwQCMAAwCwYDVR0PBAQDAgSwMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggr
+BgEFBQcDBDAdBgNVHQ4EFgQUN8I0Ybt+O/B/IIXtOjuqth2grwcwHwYDVR0jBBgwFoAUrlWDb+wx
+yrn3HfqvazHzyB3jrLswHQYDVR0RBBYwFIESYXJ0ZW1AbWFraHV0b3Yub3JnMIIBQgYDVR0gBIIB
+OTCCATUwggExBgsrBgEEAYG1NwECATCCASAwLgYIKwYBBQUHAgEWImh0dHA6Ly93d3cuc3RhcnRz
+c2wuY29tL3BvbGljeS5wZGYwNAYIKwYBBQUHAgEWKGh0dHA6Ly93d3cuc3RhcnRzc2wuY29tL2lu
+dGVybWVkaWF0ZS5wZGYwgbcGCCsGAQUFBwICMIGqMBQWDVN0YXJ0Q29tIEx0ZC4wAwIBARqBkUxp
+bWl0ZWQgTGlhYmlsaXR5LCBzZWUgc2VjdGlvbiAqTGVnYWwgTGltaXRhdGlvbnMqIG9mIHRoZSBT
+dGFydENvbSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eSBQb2xpY3kgYXZhaWxhYmxlIGF0IGh0dHA6
+Ly93d3cuc3RhcnRzc2wuY29tL3BvbGljeS5wZGYwYwYDVR0fBFwwWjAroCmgJ4YlaHR0cDovL3d3
+dy5zdGFydHNzbC5jb20vY3J0dTItY3JsLmNybDAroCmgJ4YlaHR0cDovL2NybC5zdGFydHNzbC5j
+b20vY3J0dTItY3JsLmNybDCBjgYIKwYBBQUHAQEEgYEwfzA5BggrBgEFBQcwAYYtaHR0cDovL29j
+c3Auc3RhcnRzc2wuY29tL3N1Yi9jbGFzczIvY2xpZW50L2NhMEIGCCsGAQUFBzAChjZodHRwOi8v
+d3d3LnN0YXJ0c3NsLmNvbS9jZXJ0cy9zdWIuY2xhc3MyLmNsaWVudC5jYS5jcnQwIwYDVR0SBBww
+GoYYaHR0cDovL3d3dy5zdGFydHNzbC5jb20vMA0GCSqGSIb3DQEBBQUAA4IBAQAx4PyLMtjk9Wc/
+NhF5Tw5okWfzyPryTXk35OBOR/UW4PPmdX8iFvqPNZ1HhucLo9ggo8Aa9wvZq/eSuuLqXWcVcJiS
+ryLCmaCE2dlq5D+Rz3DSEj7ZCqyFvLkS/k2ZjGFo+DuOLENb3LimN5RC6AP6tYXNSIFwhMp4zBGA
+SS8eVyyFiWzQgiQqUOAK6ph7y9ZXN6zbiLqU40f2DcGYfhybMrONQo3qWF1V1U22WxKQvQnzBhC7
+WuRM8Lj4XwjdooEAYkWPw/r2560N/3d4UaAY2Q1L7nbKlfzgkjdygnSKDP5WGLT9cJUUTxQkszZ+
+jHm+PKrPCCF/QyJbUBhGW1vrMYIDzTCCA8kCAQEwgZMwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQK
+Ew1TdGFydENvbSBMdGQuMSswKQYDVQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWdu
+aW5nMTgwNgYDVQQDEy9TdGFydENvbSBDbGFzcyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVu
+dCBDQQICA44wCQYFKw4DAhoFAKCCAg4wGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG
+9w0BCQUxDxcNMTEwOTE0MjIwMTAwWjAjBgkqhkiG9w0BCQQxFgQUgn4n8rp8dOKh1StCUKWl14t6
+bYQwXwYJKoZIhvcNAQkPMVIwUDALBglghkgBZQMEAQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwIC
+AgCAMA0GCCqGSIb3DQMCAgFAMAcGBSsOAwIHMA0GCCqGSIb3DQMCAgEoMIGkBgkrBgEEAYI3EAQx
+gZYwgZMwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENvbSBMdGQuMSswKQYDVQQLEyJT
+ZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYDVQQDEy9TdGFydENvbSBDbGFz
+cyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQQICA44wgaYGCyqGSIb3DQEJEAILMYGW
+oIGTMIGMMQswCQYDVQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRkLjErMCkGA1UECxMiU2Vj
+dXJlIERpZ2l0YWwgQ2VydGlmaWNhdGUgU2lnbmluZzE4MDYGA1UEAxMvU3RhcnRDb20gQ2xhc3Mg
+MiBQcmltYXJ5IEludGVybWVkaWF0ZSBDbGllbnQgQ0ECAgOOMA0GCSqGSIb3DQEBAQUABIIBAGkK
+OmhL+ZTJUBX3dD7aj00VCRiyYpEGUvEmwakHnsgRpkri/4oSzcFA9euzyUMLOBqB4IRdI1fP+Ijh
+pQMqlsnM8Qj28usPvgMfJQqIcMG4wmZZL36JcQ+qxN2W/aDtKAMA5LbfdXOo/5qppOjPHgmp6RMZ
+DdkRkTcmOPiBMTLkpIaXFTMLL2McDYwitMmX96buj+5InMOC+vnZyk0wTVZfbhQxVMDFLxaXcvYj
+cW9D6l9b0RvLV0agxhdI1JSxgv/Vbb4JO0Ci9m20dwigfBMfbjHC73MzPS7pPYSast6V65uSjyuf
+hX1Y7z29YSlKHjyzai8T1A+B2ykbgit3H7YAAAAAAAA=
+--===============2212839573012207289==--
 
