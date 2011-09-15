@@ -1,127 +1,112 @@
-Content-Type: multipart/mixed; boundary="===============7005953659967611836=="
+Content-Type: multipart/mixed; boundary="===============1972444580193833101=="
 MIME-Version: 1.0
 From: Mikel Astiz <mikel.astiz@bmw-carit.de>
-Subject: [PATCH 08/12] handsfree: Expose RequestInput in D-Bus API
-Date: Thu, 15 Sep 2011 18:34:39 +0200
-Message-ID: <1316104483-13144-9-git-send-email-mikel.astiz@bmw-carit.de>
+Subject: [PATCH 09/12] hfpmodem: Support of number requests (AT+BINP=1)
+Date: Thu, 15 Sep 2011 18:34:40 +0200
+Message-ID: <1316104483-13144-10-git-send-email-mikel.astiz@bmw-carit.de>
 In-Reply-To: <1316104483-13144-1-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7005953659967611836==
+--===============1972444580193833101==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/handsfree.c |   64 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+ drivers/hfpmodem/handsfree.c |   59 ++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 64 insertions(+), 0 deletions(-)
+ 1 files changed, 59 insertions(+), 0 deletions(-)
 
-diff --git a/src/handsfree.c b/src/handsfree.c
-index 2bf2284..3138474 100644
---- a/src/handsfree.c
-+++ b/src/handsfree.c
-@@ -47,6 +47,7 @@ struct ofono_handsfree {
- 	const struct ofono_handsfree_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-+	DBusMessage *pending;
- };
+diff --git a/drivers/hfpmodem/handsfree.c b/drivers/hfpmodem/handsfree.c
+index a3e7978..cd6afc7 100644
+--- a/drivers/hfpmodem/handsfree.c
++++ b/drivers/hfpmodem/handsfree.c
+@@ -41,6 +41,8 @@
+ #include "hfpmodem.h"
+ #include "slc.h"
  =
 
- void ofono_handsfree_set_inband_ringing(struct ofono_handsfree *hf,
-@@ -118,11 +119,71 @@ static DBusMessage *handsfree_set_property(DBusConnec=
-tion *conn,
- 	return __ofono_error_invalid_args(msg);
++static const char *binp_prefix[] =3D { "+BINP:", NULL };
++
+ struct hf_data {
+ 	GAtChat *chat;
+ 	unsigned int vendor;
+@@ -98,10 +100,67 @@ static void hfp_handsfree_remove(struct ofono_handsfre=
+e *hf)
+ 	g_free(hd);
  }
  =
 
-+static void request_phone_number_cb(const struct ofono_error *error,
-+					const struct ofono_phone_number *number,
++static void hfp_request_phone_number_cb(gboolean ok, GAtResult *result,
++					gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_handsfree_phone_cb_t cb =3D cbd->cb;
++	void *data =3D cbd->data;
++	GAtResultIter iter;
++	const char *num;
++	int type;
++	struct ofono_phone_number phone_number;
++
++	if (!ok)
++		goto fail;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+BINP:"))
++		goto fail;
++
++	if (!g_at_result_iter_next_string(&iter, &num))
++		goto fail;
++
++	if (!g_at_result_iter_next_number(&iter, &type))
++		goto fail;
++
++	DBG("AT+BINP=3D1 response: %s %d", num, type);
++
++	strncpy(phone_number.number, num,
++		OFONO_MAX_PHONE_NUMBER_LENGTH);
++	phone_number.number[OFONO_MAX_PHONE_NUMBER_LENGTH] =3D '\0';
++	phone_number.type =3D type;
++
++	CALLBACK_WITH_SUCCESS(cb, &phone_number, data);
++	return;
++
++fail:
++	CALLBACK_WITH_FAILURE(cb, NULL, data);
++}
++
++static void hfp_request_phone_number(struct ofono_handsfree *hf,
++					ofono_handsfree_phone_cb_t cb,
 +					void *data)
 +{
-+	struct ofono_handsfree *hf =3D data;
-+	DBusMessage *reply;
-+	const char *phone_number;
++	struct hf_data *hd =3D ofono_handsfree_get_data(hf);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
 +
-+	if (!hf->pending)
++	if (g_at_chat_send(hd->chat, "AT+BINP=3D1", binp_prefix,
++				hfp_request_phone_number_cb,
++				cbd, g_free) > 0)
 +		return;
 +
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+		DBG("Phone number request callback returned error: %s",
-+			telephony_error_to_str(error));
++	g_free(cbd);
 +
-+		reply =3D __ofono_error_failed(hf->pending);
-+		__ofono_dbus_pending_reply(&hf->pending, reply);
-+		return;
-+	}
-+
-+	phone_number =3D phone_number_to_string(number);
-+	reply =3D dbus_message_new_method_return(hf->pending);
-+	dbus_message_append_args(reply, DBUS_TYPE_STRING, &phone_number,
-+					DBUS_TYPE_INVALID);
-+	__ofono_dbus_pending_reply(&hf->pending, reply);
++	CALLBACK_WITH_FAILURE(cb, NULL, data);
 +}
 +
-+static DBusMessage *handsfree_request_input(DBusConnection *conn,
-+						DBusMessage *msg, void *data)
-+{
-+	struct ofono_handsfree *hf =3D data;
-+	DBusMessageIter iter;
-+	const char *name;
-+
-+	if (hf->pending)
-+		return __ofono_error_busy(msg);
-+
-+	if (dbus_message_iter_init(msg, &iter) =3D=3D FALSE)
-+		return __ofono_error_invalid_args(msg);
-+
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
-+		return __ofono_error_invalid_args(msg);
-+
-+	dbus_message_iter_get_basic(&iter, &name);
-+
-+	if (g_str_equal(name, "PhoneNumber")) {
-+		if (!hf->driver->request_phone_number)
-+			return __ofono_error_not_supported(msg);
-+
-+		hf->pending =3D dbus_message_ref(msg);
-+		hf->driver->request_phone_number(hf, request_phone_number_cb,
-+							hf);
-+		return NULL;
-+	}
-+
-+	return __ofono_error_invalid_args(msg);
-+}
-+
- static GDBusMethodTable handsfree_methods[] =3D {
- 	{ "GetProperties",    "",    "a{sv}", handsfree_get_properties,
- 		G_DBUS_METHOD_FLAG_ASYNC },
- 	{ "SetProperty",      "sv",  "", handsfree_set_property,
- 		G_DBUS_METHOD_FLAG_ASYNC },
-+	{ "RequestInput",      "s",  "v", handsfree_request_input,
-+		G_DBUS_METHOD_FLAG_ASYNC },
- 	{ NULL, NULL, NULL, NULL }
+ static struct ofono_handsfree_driver driver =3D {
+ 	.name			=3D "hfpmodem",
+ 	.probe			=3D hfp_handsfree_probe,
+ 	.remove			=3D hfp_handsfree_remove,
++	.request_phone_number	=3D hfp_request_phone_number,
  };
  =
 
-@@ -143,6 +204,9 @@ static void handsfree_remove(struct ofono_atom *atom)
- 	if (hf->driver !=3D NULL && hf->driver->remove !=3D NULL)
- 		hf->driver->remove(hf);
- =
-
-+	if (hf->pending)
-+		dbus_message_unref(hf->pending);
-+
- 	g_free(hf);
- }
- =
-
+ void hfp_handsfree_init(void)
 -- =
 
 1.7.6
 
 
---===============7005953659967611836==--
+--===============1972444580193833101==--
 
