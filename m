@@ -1,131 +1,122 @@
-Content-Type: multipart/mixed; boundary="===============7693503392404589427=="
+Content-Type: multipart/mixed; boundary="===============5329423580065917330=="
 MIME-Version: 1.0
-From: Mikel Astiz <mikel.astiz@bmw-carit.de>
-Subject: [PATCH 12/12] hfpmodem: Support for AT+BVRA
-Date: Thu, 15 Sep 2011 18:34:43 +0200
-Message-ID: <1316104483-13144-13-git-send-email-mikel.astiz@bmw-carit.de>
-In-Reply-To: <1316104483-13144-1-git-send-email-mikel.astiz@bmw-carit.de>
+From: Artem Makhutov <artem@makhutov.org>
+Subject: Re: Udev detection broken?
+Date: Thu, 15 Sep 2011 20:03:16 +0200
+Message-ID: <4E723DE4.1040000@makhutov.org>
+In-Reply-To: <4E688180.7030907@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7693503392404589427==
+--===============5329423580065917330==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/hfpmodem/handsfree.c |   49 ++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 49 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/drivers/hfpmodem/handsfree.c b/drivers/hfpmodem/handsfree.c
-index cd6afc7..c061aa8 100644
---- a/drivers/hfpmodem/handsfree.c
-+++ b/drivers/hfpmodem/handsfree.c
-@@ -42,12 +42,25 @@
- #include "slc.h"
- =
+Denis Kenzior schrieb:
+> Hi Artem,
+>
+> On 09/14/2011 05:01 PM, Artem Makhutov wrote:
+>> Hello,
+>>
+>> I am trying to setup ofono on my PC again, unfortunatly ofono does not
+>> pick up the connected huawei modem.
+>>
+>> I have traced it down to plugins/udev.c - get_property function.
+>>
+>
+> Please note that huawei detection is now being done by plugins/udevng.c.
 
- static const char *binp_prefix[] =3D { "+BINP:", NULL };
-+static const char *bvra_prefix[] =3D { "+BVRA:", NULL };
- =
+Thanks, this is good to know.
 
- struct hf_data {
- 	GAtChat *chat;
- 	unsigned int vendor;
- };
- =
-
-+static void hf_generic_set_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_handsfree_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
-+
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	cb(&error, cbd->data);
-+}
-+
- static gboolean hfp_handsfree_register(gpointer user_data)
- {
- 	struct ofono_handsfree *hf =3D user_data;
-@@ -70,6 +83,19 @@ static void bsir_notify(GAtResult *result, gpointer user=
-_data)
- 	ofono_handsfree_set_inband_ringing(hf, (ofono_bool_t) value);
- }
- =
-
-+static void bvra_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_handsfree *hf =3D user_data;
-+	struct hf_data *hd =3D ofono_handsfree_get_data(hf);
-+	int value;
-+
-+	if (at_util_parse_reg_unsolicited(result, "+BVRA:", &value,
-+				NULL, NULL, NULL, hd->vendor) =3D=3D FALSE)
-+		return;
-+
-+	ofono_handsfree_set_voice_recognition(hf, (ofono_bool_t) value);
-+}
-+
- static int hfp_handsfree_probe(struct ofono_handsfree *hf,
- 				unsigned int vendor, void *data)
- {
-@@ -84,6 +110,7 @@ static int hfp_handsfree_probe(struct ofono_handsfree *h=
-f,
- 	ofono_handsfree_set_data(hf, hd);
- =
-
- 	g_at_chat_register(hd->chat, "+BSIR:", bsir_notify, FALSE, hf, NULL);
-+	g_at_chat_register(hd->chat, "+BVRA:", bvra_notify, FALSE, hf, NULL);
- =
-
- 	g_idle_add(hfp_handsfree_register, hf);
- =
-
-@@ -156,11 +183,33 @@ static void hfp_request_phone_number(struct ofono_han=
-dsfree *hf,
- 	CALLBACK_WITH_FAILURE(cb, NULL, data);
- }
- =
-
-+static void hfp_voice_recognition(struct ofono_handsfree *hf,
-+					ofono_bool_t enabled,
-+					ofono_handsfree_cb_t cb, void *data)
-+{
-+	struct hf_data *hd =3D ofono_handsfree_get_data(hf);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char buf[64];
-+
-+	snprintf(buf, sizeof(buf), "AT+BVRA=3D%d",
-+				(int)(enabled));
-+
-+	if (g_at_chat_send(hd->chat, buf, bvra_prefix,
-+				hf_generic_set_cb,
-+				cbd, g_free) > 0)
-+		return;
-+
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
- static struct ofono_handsfree_driver driver =3D {
- 	.name			=3D "hfpmodem",
- 	.probe			=3D hfp_handsfree_probe,
- 	.remove			=3D hfp_handsfree_remove,
- 	.request_phone_number	=3D hfp_request_phone_number,
-+	.voice_recognition	=3D hfp_voice_recognition,
- };
- =
-
- void hfp_handsfree_init(void)
--- =
-
-1.7.6
+Regards, Artem
 
 
---===============7693503392404589427==--
+
+--===============5329423580065917330==
+Content-Type: application/pkcs7-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIINATCCBjQw
+ggQcoAMCAQICASAwDQYJKoZIhvcNAQEFBQAwfTELMAkGA1UEBhMCSUwxFjAUBgNVBAoTDVN0YXJ0
+Q29tIEx0ZC4xKzApBgNVBAsTIlNlY3VyZSBEaWdpdGFsIENlcnRpZmljYXRlIFNpZ25pbmcxKTAn
+BgNVBAMTIFN0YXJ0Q29tIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MB4XDTA3MTAyNDIxMDI1NVoX
+DTE3MTAyNDIxMDI1NVowgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENvbSBMdGQuMSsw
+KQYDVQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYDVQQDEy9TdGFy
+dENvbSBDbGFzcyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQTCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAMsohUWcASz7GfKrpTOMKqANy9BV7V0igWdGxA8IU77L3aTxErQ+
+fcxtDYZ36Z6GH0YFn7fq5RADteP0AYzrCA+EQTfi8q1+kA3m0nwtwXG94M5sIqsvs7lRP1aycBke
+/s5g9hJHryZ2acScnzczjBCAo7X1v5G3yw8MDP2m2RCye0KfgZ4nODerZJVzhAlOD9YejvAXZqHk
+sw56HzElVIoYSZ3q4+RJuPXXfIoyby+Y2m1E+YzX5iCZXBx05gk6MKAW1vaw4/v2OOLy6FZH3XHH
+tOkzUreG//CsFnB9+uaYSlR65cdGzTsmoIK8WH1ygoXhRBm98SD7Hf/r3FELNvUCAwEAAaOCAa0w
+ggGpMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMB0GA1UdDgQWBBSuVYNv7DHKufcd
++q9rMfPIHeOsuzAfBgNVHSMEGDAWgBROC+8apEBbpRdphzDKNGhD0EGu8jBmBggrBgEFBQcBAQRa
+MFgwJwYIKwYBBQUHMAGGG2h0dHA6Ly9vY3NwLnN0YXJ0c3NsLmNvbS9jYTAtBggrBgEFBQcwAoYh
+aHR0cDovL3d3dy5zdGFydHNzbC5jb20vc2ZzY2EuY3J0MFsGA1UdHwRUMFIwJ6AloCOGIWh0dHA6
+Ly93d3cuc3RhcnRzc2wuY29tL3Nmc2NhLmNybDAnoCWgI4YhaHR0cDovL2NybC5zdGFydHNzbC5j
+b20vc2ZzY2EuY3JsMIGABgNVHSAEeTB3MHUGCysGAQQBgbU3AQIBMGYwLgYIKwYBBQUHAgEWImh0
+dHA6Ly93d3cuc3RhcnRzc2wuY29tL3BvbGljeS5wZGYwNAYIKwYBBQUHAgEWKGh0dHA6Ly93d3cu
+c3RhcnRzc2wuY29tL2ludGVybWVkaWF0ZS5wZGYwDQYJKoZIhvcNAQEFBQADggIBADqpJw3I07QW
+ke9plNBpxUxcffc7nUrIQpJHDci91DFG7fVhHRkMZ1J+BKg5UNUxIFJ2Z9B90Micc/NXcs7kPBRd
+n6XGO/vPc87Y6R+cWS9Nc9+fp3Enmsm94OxOwI9wn8qnr/6o3mD4noP9JphwUPTXwHovjavRnhUQ
+HLfo/i2NG0XXgTHXS2Xm0kVUozXqpYpAdumMiB/vezj1QHQJDmUdPYMcp+reg9901zkyT3fDW/iv
+JVv6pWtkh6Pw2ytZT7mvg7YhX3V50Nv860cV11mocUVcqBLv0gcT+HBDYtbuvexNftwNQKD5193A
+7zN4vG7CTYkXxytSjKuXrpEatEiFPxWgb84nVj25SU5q/r1Xhwby6mLhkbaXslkVtwEWT3Van49r
+KjlK4XrUKYYWtnfzq6aSak5u0Vpxd1rY79tWhD3EdCvOhNz/QplNa+VkIsrcp7+8ZhP1l1b2U6Ma
+xIVteuVMD3X0vziIwr7jxYae9FZjbxlpUemqXjcC0QaFfN7qI0JsQMALL7iGRBg7K0CoOBzECdD3
+fuZil5kU/LP9cr1BK31U0Uy651bFnAMMMkqhAChIbn0ei72VnbpSsrrSdF0BAGYQ8vyHae5aCg+H
+75dVCV33K6FuxZrf09yTz+Vx/PkdRUYkXmZz/OTfyJXsUOUXrym6KvI2rYpccSk5MIIGxTCCBa2g
+AwIBAgICA44wDQYJKoZIhvcNAQEFBQAwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENv
+bSBMdGQuMSswKQYDVQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYD
+VQQDEy9TdGFydENvbSBDbGFzcyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQTAeFw0w
+OTExMjcwNTQ1MTJaFw0xMTExMjgwMjUzMTZaMIG+MSAwHgYDVQQNExcxMDY3NDMtdW1QMktDaW40
+d3p6dFNsajELMAkGA1UEBhMCREUxDzANBgNVBAgTBkhlc3NlbjERMA8GA1UEBxMIRXNjaGJvcm4x
+LTArBgNVBAsTJFN0YXJ0Q29tIFZlcmlmaWVkIENlcnRpZmljYXRlIE1lbWJlcjEXMBUGA1UEAxMO
+QXJ0ZW0gTWFraHV0b3YxITAfBgkqhkiG9w0BCQEWEmFydGVtQG1ha2h1dG92Lm9yZzCCASIwDQYJ
+KoZIhvcNAQEBBQADggEPADCCAQoCggEBANGLq1WfGtwTc9SDQ8CWAI5zYaXUb5+o/03N/J9omALq
+bNubjbm9NQS3N767CUOHFThHBT29ORwxmmpAJ87yu/zsn4bDm1/MBj4p4M8MNEANetAQqz+b9sXA
+IKGyLYoJXIzCTtc/4tMvcB2cvHsXPRt1mmtTn1DCULf32kZT/RIbVshSvy38P3R7lRn8V72uD3Md
+5zRg0apK4dr0f19VLvgSsOmxVcnEVDjHYR33AtWFaPaTz02UfQ47VzaJP69E1QgxSEvUWIBYEp2P
+I+0S2LyQfG6XwpKmFGWxLGwViQrBoEFZJon6WIdfN6CxfaruE4ZIpt6bNL4ZTbvIZUwvJz8CAwEA
+AaOCAvswggL3MAkGA1UdEwQCMAAwCwYDVR0PBAQDAgSwMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggr
+BgEFBQcDBDAdBgNVHQ4EFgQUN8I0Ybt+O/B/IIXtOjuqth2grwcwHwYDVR0jBBgwFoAUrlWDb+wx
+yrn3HfqvazHzyB3jrLswHQYDVR0RBBYwFIESYXJ0ZW1AbWFraHV0b3Yub3JnMIIBQgYDVR0gBIIB
+OTCCATUwggExBgsrBgEEAYG1NwECATCCASAwLgYIKwYBBQUHAgEWImh0dHA6Ly93d3cuc3RhcnRz
+c2wuY29tL3BvbGljeS5wZGYwNAYIKwYBBQUHAgEWKGh0dHA6Ly93d3cuc3RhcnRzc2wuY29tL2lu
+dGVybWVkaWF0ZS5wZGYwgbcGCCsGAQUFBwICMIGqMBQWDVN0YXJ0Q29tIEx0ZC4wAwIBARqBkUxp
+bWl0ZWQgTGlhYmlsaXR5LCBzZWUgc2VjdGlvbiAqTGVnYWwgTGltaXRhdGlvbnMqIG9mIHRoZSBT
+dGFydENvbSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eSBQb2xpY3kgYXZhaWxhYmxlIGF0IGh0dHA6
+Ly93d3cuc3RhcnRzc2wuY29tL3BvbGljeS5wZGYwYwYDVR0fBFwwWjAroCmgJ4YlaHR0cDovL3d3
+dy5zdGFydHNzbC5jb20vY3J0dTItY3JsLmNybDAroCmgJ4YlaHR0cDovL2NybC5zdGFydHNzbC5j
+b20vY3J0dTItY3JsLmNybDCBjgYIKwYBBQUHAQEEgYEwfzA5BggrBgEFBQcwAYYtaHR0cDovL29j
+c3Auc3RhcnRzc2wuY29tL3N1Yi9jbGFzczIvY2xpZW50L2NhMEIGCCsGAQUFBzAChjZodHRwOi8v
+d3d3LnN0YXJ0c3NsLmNvbS9jZXJ0cy9zdWIuY2xhc3MyLmNsaWVudC5jYS5jcnQwIwYDVR0SBBww
+GoYYaHR0cDovL3d3dy5zdGFydHNzbC5jb20vMA0GCSqGSIb3DQEBBQUAA4IBAQAx4PyLMtjk9Wc/
+NhF5Tw5okWfzyPryTXk35OBOR/UW4PPmdX8iFvqPNZ1HhucLo9ggo8Aa9wvZq/eSuuLqXWcVcJiS
+ryLCmaCE2dlq5D+Rz3DSEj7ZCqyFvLkS/k2ZjGFo+DuOLENb3LimN5RC6AP6tYXNSIFwhMp4zBGA
+SS8eVyyFiWzQgiQqUOAK6ph7y9ZXN6zbiLqU40f2DcGYfhybMrONQo3qWF1V1U22WxKQvQnzBhC7
+WuRM8Lj4XwjdooEAYkWPw/r2560N/3d4UaAY2Q1L7nbKlfzgkjdygnSKDP5WGLT9cJUUTxQkszZ+
+jHm+PKrPCCF/QyJbUBhGW1vrMYIDzTCCA8kCAQEwgZMwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQK
+Ew1TdGFydENvbSBMdGQuMSswKQYDVQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWdu
+aW5nMTgwNgYDVQQDEy9TdGFydENvbSBDbGFzcyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVu
+dCBDQQICA44wCQYFKw4DAhoFAKCCAg4wGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG
+9w0BCQUxDxcNMTEwOTE1MTgwMzE2WjAjBgkqhkiG9w0BCQQxFgQUs2Ah7xiahSlhukc2zs49U1WQ
+/W0wXwYJKoZIhvcNAQkPMVIwUDALBglghkgBZQMEAQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwIC
+AgCAMA0GCCqGSIb3DQMCAgFAMAcGBSsOAwIHMA0GCCqGSIb3DQMCAgEoMIGkBgkrBgEEAYI3EAQx
+gZYwgZMwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENvbSBMdGQuMSswKQYDVQQLEyJT
+ZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYDVQQDEy9TdGFydENvbSBDbGFz
+cyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQQICA44wgaYGCyqGSIb3DQEJEAILMYGW
+oIGTMIGMMQswCQYDVQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRkLjErMCkGA1UECxMiU2Vj
+dXJlIERpZ2l0YWwgQ2VydGlmaWNhdGUgU2lnbmluZzE4MDYGA1UEAxMvU3RhcnRDb20gQ2xhc3Mg
+MiBQcmltYXJ5IEludGVybWVkaWF0ZSBDbGllbnQgQ0ECAgOOMA0GCSqGSIb3DQEBAQUABIIBAKSu
+g8p/n+3OQQnBo8lEudnwtPsu+MhnPzkY/KoPQnHwWyCnEMw7eqKjoWPfvCz15epSmHTLsPxCfxRB
+Vx0IjoWCViXkvJ6GvPOkKy295oBqt/5cIf1nhzJ1Aw7r3J7sUzdplnKI9K5HVZrWtYDZYlZKkLD+
+5Se/5xaulw6DWEPpM0aZ2rFq1WZ1aicPOj3q0ajNN6Y0LSd0mHm88LIKjvboGAACVPX0uVcz7DPq
+IrcEsCa2dvT353wuE4CqWG3HUf7zClqsXqNgQv97YwZRN5TPX6ld9jE1kQkl069avc0KiQrwo5em
+BQ0YcR1bq42cde6YO4ryKQlMbYrbbH2YfnsAAAAAAAA=
+--===============5329423580065917330==--
 
