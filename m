@@ -1,79 +1,103 @@
-Content-Type: multipart/mixed; boundary="===============6211805332193214684=="
+Content-Type: multipart/mixed; boundary="===============1501443914480307462=="
 MIME-Version: 1.0
 From: Mikel Astiz <mikel.astiz@bmw-carit.de>
-Subject: [PATCH 06/12] hfpmodem: Support for +BSIR unsol. result codes
-Date: Thu, 15 Sep 2011 18:34:37 +0200
-Message-ID: <1316104483-13144-7-git-send-email-mikel.astiz@bmw-carit.de>
+Subject: [PATCH 05/12] handsfree: Atom supports inband ringing status
+Date: Thu, 15 Sep 2011 18:34:36 +0200
+Message-ID: <1316104483-13144-6-git-send-email-mikel.astiz@bmw-carit.de>
 In-Reply-To: <1316104483-13144-1-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6211805332193214684==
+--===============1501443914480307462==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/hfpmodem/handsfree.c |   17 +++++++++++++++++
- 1 files changed, 17 insertions(+), 0 deletions(-)
+ include/handsfree.h |    3 +++
+ src/handsfree.c     |   26 ++++++++++++++++++++++++++
+ 2 files changed, 29 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/hfpmodem/handsfree.c b/drivers/hfpmodem/handsfree.c
-index 9b7b986..a3e7978 100644
---- a/drivers/hfpmodem/handsfree.c
-+++ b/drivers/hfpmodem/handsfree.c
-@@ -43,6 +43,7 @@
- =
-
- struct hf_data {
- 	GAtChat *chat;
-+	unsigned int vendor;
+diff --git a/include/handsfree.h b/include/handsfree.h
+index ddec353..cd60975 100644
+--- a/include/handsfree.h
++++ b/include/handsfree.h
+@@ -37,6 +37,9 @@ struct ofono_handsfree_driver {
+ 	void (*remove)(struct ofono_handsfree *hf);
  };
  =
 
- static gboolean hfp_handsfree_register(gpointer user_data)
-@@ -54,6 +55,19 @@ static gboolean hfp_handsfree_register(gpointer user_dat=
-a)
- 	return FALSE;
- }
++void ofono_handsfree_set_inband_ringing(struct ofono_handsfree *hf,
++						ofono_bool_t enabled);
++
+ int ofono_handsfree_driver_register(const struct ofono_handsfree_driver *d=
+);
+ void ofono_handsfree_driver_unregister(
+ 			const struct ofono_handsfree_driver *d);
+diff --git a/src/handsfree.c b/src/handsfree.c
+index 797fe69..2bf2284 100644
+--- a/src/handsfree.c
++++ b/src/handsfree.c
+@@ -43,17 +43,38 @@
+ static GSList *g_drivers =3D NULL;
  =
 
-+static void bsir_notify(GAtResult *result, gpointer user_data)
+ struct ofono_handsfree {
++	ofono_bool_t inband_ringing;
+ 	const struct ofono_handsfree_driver *driver;
+ 	void *driver_data;
+ 	struct ofono_atom *atom;
+ };
+ =
+
++void ofono_handsfree_set_inband_ringing(struct ofono_handsfree *hf,
++						ofono_bool_t enabled)
 +{
-+	struct ofono_handsfree *hf =3D user_data;
-+	struct hf_data *hd =3D ofono_handsfree_get_data(hf);
-+	int value;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(hf->atom);
++	dbus_bool_t dbus_enabled =3D enabled;
 +
-+	if (at_util_parse_reg_unsolicited(result, "+BSIR:", &value,
-+				NULL, NULL, NULL, hd->vendor) =3D=3D FALSE)
++	if (hf->inband_ringing =3D=3D enabled)
 +		return;
 +
-+	ofono_handsfree_set_inband_ringing(hf, (ofono_bool_t) value);
++	hf->inband_ringing =3D enabled;
++
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_HANDSFREE_INTERFACE,
++					"InbandRinging", DBUS_TYPE_BOOLEAN,
++					&dbus_enabled);
 +}
 +
- static int hfp_handsfree_probe(struct ofono_handsfree *hf,
- 				unsigned int vendor, void *data)
+ static DBusMessage *handsfree_get_properties(DBusConnection *conn,
+ 						DBusMessage *msg, void *data)
  {
-@@ -63,9 +77,12 @@ static int hfp_handsfree_probe(struct ofono_handsfree *h=
-f,
- 	DBG("");
- 	hd =3D g_new0(struct hf_data, 1);
- 	hd->chat =3D g_at_chat_clone(info->chat);
-+	hd->vendor =3D vendor;
++	struct ofono_handsfree *hf =3D data;
+ 	DBusMessage *reply;
+ 	DBusMessageIter iter;
+ 	DBusMessageIter dict;
++	dbus_bool_t inband_ringing;
  =
 
- 	ofono_handsfree_set_data(hf, hd);
- =
-
-+	g_at_chat_register(hd->chat, "+BSIR:", bsir_notify, FALSE, hf, NULL);
+ 	reply =3D dbus_message_new_method_return(msg);
+ 	if (reply =3D=3D NULL)
+@@ -64,6 +85,11 @@ static DBusMessage *handsfree_get_properties(DBusConnect=
+ion *conn,
+ 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+ 					OFONO_PROPERTIES_ARRAY_SIGNATURE,
+ 					&dict);
 +
- 	g_idle_add(hfp_handsfree_register, hf);
++	inband_ringing =3D hf->inband_ringing;
++	ofono_dbus_dict_append(&dict, "InbandRinging", DBUS_TYPE_BOOLEAN,
++				&inband_ringing);
++
+ 	dbus_message_iter_close_container(&iter, &dict);
  =
 
- 	return 0;
+ 	return reply;
 -- =
 
 1.7.6
 
 
---===============6211805332193214684==--
+--===============1501443914480307462==--
 
