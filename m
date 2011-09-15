@@ -1,41 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============5329423580065917330=="
+Content-Type: multipart/mixed; boundary="===============7268459206940279944=="
 MIME-Version: 1.0
 From: Artem Makhutov <artem@makhutov.org>
 Subject: Re: Udev detection broken?
-Date: Thu, 15 Sep 2011 20:03:16 +0200
-Message-ID: <4E723DE4.1040000@makhutov.org>
-In-Reply-To: <4E688180.7030907@gmail.com>
+Date: Thu, 15 Sep 2011 20:24:10 +0200
+Message-ID: <4E7242CA.7060509@makhutov.org>
+In-Reply-To: <4E720CBC.2010507@zirak.it>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5329423580065917330==
+--===============7268459206940279944==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hello Paolo,
 
-Denis Kenzior schrieb:
+Paolo Pellegrino schrieb:
 > Hi Artem,
 >
-> On 09/14/2011 05:01 PM, Artem Makhutov wrote:
->> Hello,
+> Il 15/09/2011 9.48, Artem Makhutov ha scritto:
+>> Hi,
 >>
->> I am trying to setup ofono on my PC again, unfortunatly ofono does not
->> pick up the connected huawei modem.
+>> Artem Makhutov schrieb:
+>>> Hello,
+>>>
+>>> I am trying to setup ofono on my PC again, unfortunatly ofono
+>>> does not pick up the connected huawei modem. [...]
 >>
->> I have traced it down to plugins/udev.c - get_property function.
+>> I have done some more testing. Looks like the "OFONO_DRIVER=3Dhuawei"
+>> is getting removed somehow by udev.
 >>
+>> With "udevadm monitor --property" I can see that
+>> OFONO_DRIVER=3Dhuawei was set for
+>> /devices/pci0000:00/0000:00:02.1/usb1/1-3 But "udevadm info
+>> --query=3Dall --path=3D/devices/pci0000:00/0000:00:02.1/usb1/1-3" does
+>> not show it. Ofono also can't find it.
+>>
+>> Any ideas that to do to trace down the problem?
 >
-> Please note that huawei detection is now being done by plugins/udevng.c.
+> We incurred in a similar problem some months ago, but we thought the
+> issue was related to some specific udev library version we were using
+> (v153 if I remember well).
+> [...]
 
-Thanks, this is good to know.
+Yes this patch solved it. I am using udev 171-r2 on gentoo linux.
 
-Regards, Artem
+Thank you, Artem
 
 
-
---===============5329423580065917330==
+--===============7268459206940279944==
 Content-Type: application/pkcs7-signature
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
@@ -104,19 +117,19 @@ jHm+PKrPCCF/QyJbUBhGW1vrMYIDzTCCA8kCAQEwgZMwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQK
 Ew1TdGFydENvbSBMdGQuMSswKQYDVQQLEyJTZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWdu
 aW5nMTgwNgYDVQQDEy9TdGFydENvbSBDbGFzcyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVu
 dCBDQQICA44wCQYFKw4DAhoFAKCCAg4wGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG
-9w0BCQUxDxcNMTEwOTE1MTgwMzE2WjAjBgkqhkiG9w0BCQQxFgQUs2Ah7xiahSlhukc2zs49U1WQ
-/W0wXwYJKoZIhvcNAQkPMVIwUDALBglghkgBZQMEAQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwIC
+9w0BCQUxDxcNMTEwOTE1MTgyNDEwWjAjBgkqhkiG9w0BCQQxFgQUeIPJwVWFoCL/vZhH6DtwMeh7
+zd0wXwYJKoZIhvcNAQkPMVIwUDALBglghkgBZQMEAQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwIC
 AgCAMA0GCCqGSIb3DQMCAgFAMAcGBSsOAwIHMA0GCCqGSIb3DQMCAgEoMIGkBgkrBgEEAYI3EAQx
 gZYwgZMwgYwxCzAJBgNVBAYTAklMMRYwFAYDVQQKEw1TdGFydENvbSBMdGQuMSswKQYDVQQLEyJT
 ZWN1cmUgRGlnaXRhbCBDZXJ0aWZpY2F0ZSBTaWduaW5nMTgwNgYDVQQDEy9TdGFydENvbSBDbGFz
 cyAyIFByaW1hcnkgSW50ZXJtZWRpYXRlIENsaWVudCBDQQICA44wgaYGCyqGSIb3DQEJEAILMYGW
 oIGTMIGMMQswCQYDVQQGEwJJTDEWMBQGA1UEChMNU3RhcnRDb20gTHRkLjErMCkGA1UECxMiU2Vj
 dXJlIERpZ2l0YWwgQ2VydGlmaWNhdGUgU2lnbmluZzE4MDYGA1UEAxMvU3RhcnRDb20gQ2xhc3Mg
-MiBQcmltYXJ5IEludGVybWVkaWF0ZSBDbGllbnQgQ0ECAgOOMA0GCSqGSIb3DQEBAQUABIIBAKSu
-g8p/n+3OQQnBo8lEudnwtPsu+MhnPzkY/KoPQnHwWyCnEMw7eqKjoWPfvCz15epSmHTLsPxCfxRB
-Vx0IjoWCViXkvJ6GvPOkKy295oBqt/5cIf1nhzJ1Aw7r3J7sUzdplnKI9K5HVZrWtYDZYlZKkLD+
-5Se/5xaulw6DWEPpM0aZ2rFq1WZ1aicPOj3q0ajNN6Y0LSd0mHm88LIKjvboGAACVPX0uVcz7DPq
-IrcEsCa2dvT353wuE4CqWG3HUf7zClqsXqNgQv97YwZRN5TPX6ld9jE1kQkl069avc0KiQrwo5em
-BQ0YcR1bq42cde6YO4ryKQlMbYrbbH2YfnsAAAAAAAA=
---===============5329423580065917330==--
+MiBQcmltYXJ5IEludGVybWVkaWF0ZSBDbGllbnQgQ0ECAgOOMA0GCSqGSIb3DQEBAQUABIIBAHxn
+ub0dR50kBE6dCdZ5I3xGmLxqTXQX71r/NRvZkKe92kngtJ2GvLFz2NjQFaCqdUg+cYQdax9r367+
+lnn7RuVoXKndbepuOV/3FFwfUtEWBzGZrWdnLRzboUF5/gqRL8qOTSyYegCoLxhaTyqDTCsmYQy4
+h+B5WBYoku9K80x5lhKuIFtqeXKOQxUKElSSJUwYNaUk3S/KBtAktRGopKJ3lV2OPHdZfzw0sPv7
+1C83UDbT6R6bZXd+WQOk603ll2CKRR9wu2xhj42LR3ALMziUGRhz8D3rFThnn4abbfLAzR8NxOk2
+hYAtICaJCEry1RRMUjJK1yDpg1oj16j1X8cAAAAAAAA=
+--===============7268459206940279944==--
 
