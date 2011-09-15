@@ -1,36 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============3195777931206276339=="
+Content-Type: multipart/mixed; boundary="===============5004020750977306747=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Udev detection broken?
-Date: Thu, 08 Sep 2011 03:49:04 -0500
-Message-ID: <4E688180.7030907@gmail.com>
-In-Reply-To: <4E71241C.9000407@makhutov.org>
+From: Mikel Astiz <mikel.astiz@bmw-carit.de>
+Subject: [PATCH 00/12] Bluetooth HFP-specific extensions
+Date: Thu, 15 Sep 2011 18:34:31 +0200
+Message-ID: <1316104483-13144-1-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3195777931206276339==
+--===============5004020750977306747==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Artem,
+Hi,
 
-On 09/14/2011 05:01 PM, Artem Makhutov wrote:
-> Hello,
-> =
+Here you have my first proposals to add a new atom to support HFP-specific
+capabilities, and the corresponding implementation in hfpmodem. Only some of
+these extensions have been included in this series. Hope this fits the ideas
+discussed in the mailing list.
 
-> I am trying to setup ofono on my PC again, unfortunatly ofono does not
-> pick up the connected huawei modem.
-> =
+Looking forward to your review,
 
-> I have traced it down to plugins/udev.c - get_property function.
-> =
+Mikel
+
+Mikel Astiz (12):
+  TODO: Task added for HFP-specific capabilities
+  Add handsfree atom for HFP-specific capabilities
+  hfpmodem: Driver implements handsfree atom
+  hfp_hf: Plugin creates handsfree atom
+  handsfree: Atom supports inband ringing status
+  hfpmodem: Support for +BSIR unsol. result codes
+  handsfree: Support for number requests (AT+BINP=3D1)
+  handsfree: Expose RequestInput in D-Bus API
+  hfpmodem: Support of number requests (AT+BINP=3D1)
+  handsfree: Read-only voice-recognition D-Bus prop
+  handsfree: Writable voice-recogn. prop (AT+BVRA)
+  hfpmodem: Support for AT+BVRA
+
+ Makefile.am                  |    9 +-
+ TODO                         |   11 ++
+ drivers/hfpmodem/handsfree.c |  223 ++++++++++++++++++++++++
+ drivers/hfpmodem/hfpmodem.c  |    2 +
+ drivers/hfpmodem/hfpmodem.h  |    3 +
+ include/dbus.h               |    1 +
+ include/handsfree.h          |   74 ++++++++
+ plugins/hfp_hf.c             |    2 +
+ src/handsfree.c              |  385 ++++++++++++++++++++++++++++++++++++++=
+++++
+ src/ofono.h                  |    1 +
+ 10 files changed, 708 insertions(+), 3 deletions(-)
+ create mode 100644 drivers/hfpmodem/handsfree.c
+ create mode 100644 include/handsfree.h
+ create mode 100644 src/handsfree.c
+
+-- =
+
+1.7.6
 
 
-Please note that huawei detection is now being done by plugins/udevng.c.
-
-Regards,
--Denis
-
---===============3195777931206276339==--
+--===============5004020750977306747==--
 
