@@ -1,42 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============4855893889553902267=="
+Content-Type: multipart/mixed; boundary="===============0198274597183204140=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv6 3/3] Mobile broadband provider info plugin
-Date: Thu, 08 Sep 2011 23:58:35 -0500
-Message-ID: <4E699CFB.7090500@gmail.com>
-In-Reply-To: <1316006204-11390-4-git-send-email-oleg.zhurakivskyy@intel.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [PATCH 02/12] Add handsfree atom for HFP-specific capabilities
+Date: Fri, 16 Sep 2011 17:56:49 +0200
+Message-ID: <4E7371C1.5000804@monom.org>
+In-Reply-To: <1316104483-13144-3-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4855893889553902267==
+--===============0198274597183204140==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Oleg,
+Hi Mikel,
 
-On 09/14/2011 08:16 AM, Oleg Zhurakivskyy wrote:
-> ---
->  plugins/mobile-broadband-provider-info.c |  804 ++++++++++++++++++++++++=
-++++++
->  1 files changed, 804 insertions(+), 0 deletions(-)
->  create mode 100644 plugins/mobile-broadband-provider-info.c
-> =
+> +++ b/include/handsfree.h
+> @@ -0,0 +1,57 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
 
+BMW CarIT copyright statement? :)
 
-After reviewing this patch I got the impression that you were still
-making things just way too complicated and not taking full advantage of
-the push/pop semantics.  So just for fun I wrote my own version in
-plugins/mbpi.[ch] and reworked tools/lookup-apn to use that.  The code
-seems to be valgrind clean and can handle duplicate detection, bail out
-early, etc.
+cheers,
+daniel
 
-Can you please take a look and suggest improvements?  Once you think it
-is good enough, I'd like you to rewrite this patch series to utilize
-mbpi.c parser.
-
-Regards,
--Denis
-
---===============4855893889553902267==--
+--===============0198274597183204140==--
 
