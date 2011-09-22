@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============8878819152176240731=="
+Content-Type: multipart/mixed; boundary="===============5270003341863214414=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [[PATCH -v4]] sap: add basic SAP plugin
-Date: Thu, 22 Sep 2011 17:03:13 -0300
-Message-ID: <1316721793-12224-1-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH -v5] sap: add basic sap plugin
+Date: Thu, 22 Sep 2011 17:20:45 -0300
+Message-ID: <1316722845-14965-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8878819152176240731==
+--===============5270003341863214414==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,12 +17,12 @@ From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 ---
  Makefile.am         |    3 +
  plugins/bluetooth.c |    1 -
- plugins/bluetooth.h |   12 ++
+ plugins/bluetooth.h |   12 +++
  plugins/hfp_hf.c    |    2 -
- plugins/sap.c       |  286 +++++++++++++++++++++++++++++++++++++++++++++++=
+ plugins/sap.c       |  266 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
  plugins/telit.c     |   10 ++
- 6 files changed, 311 insertions(+), 3 deletions(-)
+ 6 files changed, 291 insertions(+), 3 deletions(-)
  create mode 100644 plugins/sap.c
 
 diff --git a/Makefile.am b/Makefile.am
@@ -122,10 +122,10 @@ index 0c6ed83..d5f26c0 100644
  #define	BLUEZ_GATEWAY_INTERFACE		BLUEZ_SERVICE ".HandsfreeGateway"
 diff --git a/plugins/sap.c b/plugins/sap.c
 new file mode 100644
-index 0000000..b55f712
+index 0000000..daf1f97
 --- /dev/null
 +++ b/plugins/sap.c
-@@ -0,0 +1,286 @@
+@@ -0,0 +1,266 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -195,7 +195,7 @@ index 0000000..b55f712
 +	return 0;
 +}
 +
-+static gboolean _remove_modem(gpointer data)
++static gboolean sap_remove_modem(gpointer data)
 +{
 +	GHashTableIter iter;
 +	gpointer key, value;
@@ -204,8 +204,14 @@ index 0000000..b55f712
 +
 +	while (g_hash_table_iter_next(&iter, &key, &value)) {
 +		struct ofono_modem *modem =3D value;
++		struct sap_data *data =3D ofono_modem_get_data(modem);
 +
 +		g_hash_table_iter_remove(&iter);
++
++		g_free(data->server_path);
++		g_free(data);
++
++		ofono_modem_set_data(modem, NULL);
 +
 +		ofono_modem_remove(modem);
 +	}
@@ -218,7 +224,7 @@ index 0000000..b55f712
 +	if (sap_hw_modem =3D=3D NULL)
 +		return;
 +
-+	g_idle_add(_remove_modem, NULL);
++	sap_remove_modem(NULL);
 +
 +	sap_hw_modem =3D NULL;
 +	sap_hw_driver =3D NULL;
@@ -233,14 +239,7 @@ index 0000000..b55f712
 +
 +static void sap_remove(struct ofono_modem *modem)
 +{
-+	struct sap_data *data =3D ofono_modem_get_data(modem);
-+
-+	g_hash_table_remove(modem_hash, data->server_path);
-+
-+	g_free(data->server_path);
-+	g_free(data);
-+
-+	ofono_modem_set_data(modem, NULL);
++	DBG("%p", modem);
 +}
 +
 +/* power up hardware */
@@ -301,9 +300,6 @@ index 0000000..b55f712
 +	if (data->server_path =3D=3D NULL)
 +		goto free;
 +
-+	data->hw_modem =3D sap_hw_modem;
-+	data->sap_driver =3D sap_hw_driver;
-+
 +	ofono_modem_set_data(modem, data);
 +	ofono_modem_set_name(modem, alias);
 +	ofono_modem_register(modem);
@@ -319,21 +315,6 @@ index 0000000..b55f712
 +	return -ENOMEM;
 +}
 +
-+static gboolean sap_remove_modem(gpointer key, gpointer value,
-+					gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D value;
-+	const char *device =3D key;
-+	const char *prefix =3D user_data;
-+
-+	if (prefix && g_str_has_prefix(device, prefix) =3D=3D FALSE)
-+		return FALSE;
-+
-+	ofono_modem_remove(modem);
-+
-+	return TRUE;
-+}
-+
 +static void bluetooth_sap_remove(const char *prefix)
 +{
 +	DBG("%s", prefix);
@@ -341,8 +322,7 @@ index 0000000..b55f712
 +	if (modem_hash =3D=3D NULL)
 +		return;
 +
-+	g_hash_table_foreach_remove(modem_hash, sap_remove_modem,
-+							(gpointer) prefix);
++	sap_remove_modem(NULL);
 +}
 +
 +static void bluetooth_sap_set_alias(const char *device, const char *alias)
@@ -469,5 +449,5 @@ index 9c8eb0d..18cf0c4 100644
 1.7.6.2
 
 
---===============8878819152176240731==--
+--===============5270003341863214414==--
 
