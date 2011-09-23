@@ -1,35 +1,137 @@
-Content-Type: multipart/mixed; boundary="===============7864125622058823296=="
+Content-Type: multipart/mixed; boundary="===============8971694691769280769=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv7 3/3] plugins: Add provisioning plugin
-Date: Fri, 23 Sep 2011 14:41:10 +0300
-Message-ID: <1316778070-3862-4-git-send-email-oleg.zhurakivskyy@intel.com>
-In-Reply-To: <1316778070-3862-1-git-send-email-oleg.zhurakivskyy@intel.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH -v6] sap: Add basic sap plugin
+Date: Fri, 23 Sep 2011 20:08:02 -0300
+Message-ID: <1316819282-9119-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7864125622058823296==
+--===============8971694691769280769==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/provision.c |  586 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 586 insertions(+), 0 deletions(-)
- create mode 100644 plugins/provision.c
+From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 
-diff --git a/plugins/provision.c b/plugins/provision.c
+---
+ Makefile.am         |    3 +
+ plugins/bluetooth.c |    1 -
+ plugins/bluetooth.h |   12 ++
+ plugins/hfp_hf.c    |    2 -
+ plugins/sap.c       |  288 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ plugins/telit.c     |   10 ++
+ 6 files changed, 313 insertions(+), 3 deletions(-)
+ create mode 100644 plugins/sap.c
+
+diff --git a/Makefile.am b/Makefile.am
+index 71962ea..8771cb2 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -369,6 +369,9 @@ builtin_sources +=3D plugins/hfp_ag.c plugins/bluetooth=
+.h
+ builtin_modules +=3D dun_gw
+ builtin_sources +=3D plugins/dun_gw.c plugins/bluetooth.h
+ =
+
++builtin_modules +=3D sap
++builtin_sources +=3D plugins/sap.c plugins/bluetooth.h
++
+ builtin_modules +=3D connman
+ builtin_sources +=3D plugins/connman.c
+ =
+
+diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+index a286dd4..274d25b 100644
+--- a/plugins/bluetooth.c
++++ b/plugins/bluetooth.c
+@@ -33,7 +33,6 @@
+ #include <gdbus.h>
+ =
+
+ #define OFONO_API_SUBJECT_TO_CHANGE
+-#include <ofono/dbus.h>
+ #include <ofono/plugin.h>
+ #include <ofono/log.h>
+ =
+
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index 4056f0a..b21ab64 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -19,6 +19,9 @@
+  *
+  */
+ =
+
++#include <ofono/modem.h>
++#include <ofono/dbus.h>
++
+ #define	BLUEZ_SERVICE "org.bluez"
+ #define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
+ #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
+@@ -30,6 +33,7 @@
+ #define DUN_GW_UUID	"00001103-0000-1000-8000-00805f9b34fb"
+ #define HFP_AG_UUID	"0000111f-0000-1000-8000-00805f9b34fb"
+ #define HFP_HS_UUID	"0000111e-0000-1000-8000-00805f9b34fb"
++#define SAP_UUID	"0000112d-0000-1000-8000-00805f9b34fb"
+ =
+
+ struct bluetooth_profile {
+ 	const char *name;
+@@ -39,6 +43,10 @@ struct bluetooth_profile {
+ 	void (*set_alias)(const char *device, const char *);
+ };
+ =
+
++struct bluetooth_sap_driver {
++	const char *name;
++};
++
+ struct server;
+ =
+
+ typedef void (*ConnectFunc)(GIOChannel *io, GError *err, gpointer user_dat=
+a);
+@@ -60,3 +68,7 @@ int bluetooth_send_with_reply(const char *path, const cha=
+r *interface,
+ 				void *user_data, DBusFreeFunction free_func,
+ 				int timeout, int type, ...);
+ void bluetooth_parse_properties(DBusMessage *reply, const char *property, =
+...);
++
++int bluetooth_sap_client_register(struct bluetooth_sap_driver *sap,
++					struct ofono_modem *modem);
++void bluetooth_sap_client_unregister(struct ofono_modem *modem);
+diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
+index 0c6ed83..d5f26c0 100644
+--- a/plugins/hfp_hf.c
++++ b/plugins/hfp_hf.c
+@@ -45,8 +45,6 @@
+ =
+
+ #include <drivers/hfpmodem/slc.h>
+ =
+
+-#include <ofono/dbus.h>
+-
+ #include "bluetooth.h"
+ =
+
+ #define	BLUEZ_GATEWAY_INTERFACE		BLUEZ_SERVICE ".HandsfreeGateway"
+diff --git a/plugins/sap.c b/plugins/sap.c
 new file mode 100644
-index 0000000..9c67186
+index 0000000..bdded70
 --- /dev/null
-+++ b/plugins/provision.c
-@@ -0,0 +1,586 @@
++++ b/plugins/sap.c
+@@ -0,0 +1,288 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
 + *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2010-2011  ProFUSION embedded systems
 + *
 + *  This program is free software; you can redistribute it and/or modify
 + *  it under the terms of the GNU General Public License version 2 as
@@ -50,578 +152,324 @@ index 0000000..9c67186
 +#ifdef HAVE_CONFIG_H
 +#include <config.h>
 +#endif
-+
-+#include <sys/stat.h>
-+#include <sys/mman.h>
-+
-+#include <errno.h>
-+#include <fcntl.h>
 +#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <errno.h>
 +#include <unistd.h>
-+
 +#include <glib.h>
++#include <gdbus.h>
++#include <ofono.h>
 +
 +#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/types.h>
-+#include <ofono/log.h>
 +#include <ofono/plugin.h>
++#include <ofono/log.h>
 +#include <ofono/modem.h>
-+#include <ofono/gprs-provision.h>
 +
-+#define _(x) case x: return (#x)
++#include "bluetooth.h"
 +
-+enum PROVISION_ERROR {
-+	PROVISION_ERROR_DUPLICATE,
-+	PROVISION_ERROR_ENOMEM,
++#ifndef DBUS_TYPE_UNIX_FD
++#define DBUS_TYPE_UNIX_FD -1
++#endif
++
++static DBusConnection *connection;
++static GHashTable *modem_hash =3D NULL;
++static struct ofono_modem *sap_hw_modem =3D NULL;
++static struct bluetooth_sap_driver *sap_hw_driver =3D NULL;
++
++struct sap_data {
++	char *server_path;
++	struct ofono_modem *hw_modem;
++	struct bluetooth_sap_driver *sap_driver;
 +};
 +
-+struct gsm_data {
-+	const char *match_mcc;
-+	const char *match_mnc;
-+	GSList *apns;
-+	gboolean match_found;
-+	gboolean allow_duplicates;
-+};
-+
-+static const char *ap_type_name(enum ofono_gprs_context_type type)
++int bluetooth_sap_client_register(struct bluetooth_sap_driver *sap,
++					struct ofono_modem *modem)
 +{
-+	switch (type) {
-+		_(OFONO_GPRS_CONTEXT_TYPE_ANY);
-+		_(OFONO_GPRS_CONTEXT_TYPE_INTERNET);
-+		_(OFONO_GPRS_CONTEXT_TYPE_MMS);
-+		_(OFONO_GPRS_CONTEXT_TYPE_WAP);
-+		_(OFONO_GPRS_CONTEXT_TYPE_IMS);
-+	}
-+
-+	return "OFONO_GPRS_CONTEXT_TYPE_<UNKNOWN>";
-+}
-+
-+static struct ofono_gprs_provision_data *ap_new(const char *apn)
-+{
-+	struct ofono_gprs_provision_data *ap;
-+	gsize len;
-+
-+	ap =3D g_try_new0(struct ofono_gprs_provision_data, 1);
-+	if (ap =3D=3D NULL)
-+		return NULL;
-+
-+	len =3D strlen(apn) + 1;
-+
-+	ap->apn =3D g_try_new(char, len);
-+	if (ap->apn =3D=3D NULL) {
-+		g_free(ap);
-+		return NULL;
-+	}
-+
-+	memcpy(ap->apn, apn, len);
-+
-+	DBG("%p, APN: '%s'", ap, ap->apn);
-+
-+	ap->proto =3D OFONO_GPRS_PROTO_IP;
-+
-+	return ap;
-+}
-+
-+static void ap_free(struct ofono_gprs_provision_data *ap)
-+{
-+	DBG("%p", ap);
-+
-+	g_free(ap->name);
-+	g_free(ap->apn);
-+	g_free(ap->username);
-+	g_free(ap->password);
-+	g_free(ap->message_proxy);
-+	g_free(ap->message_center);
-+
-+	g_free(ap);
-+}
-+
-+static GQuark provision_error_quark(void)
-+{
-+	return g_quark_from_static_string("ofono-provision-error-quark");
-+}
-+
-+static void provision_g_set_error(GMarkupParseContext *context, GError **e=
-rr,
-+				GQuark domain, gint code, const gchar *fmt, ...)
-+{
-+	va_list ap;
-+	gint line_number, char_number;
-+
-+	g_markup_parse_context_get_position(context, &line_number,
-+						&char_number);
-+
-+	va_start(ap, fmt);
-+
-+	*err =3D g_error_new_valist(domain, code, fmt, ap);
-+
-+	va_end(ap);
-+
-+	g_prefix_error(err, "%s:%d ", PROVIDER_DATABASE, line_number);
-+}
-+
-+static void text_handler(GMarkupParseContext *context,
-+				const gchar *text, gsize text_len,
-+				gpointer userdata, GError **error)
-+{
-+	char **string =3D userdata;
-+
-+	if (*string !=3D NULL) {
-+		gint line_number, char_number;
-+
-+		g_markup_parse_context_get_position(context, &line_number,
-+							&char_number);
-+
-+		ofono_warn("%s:%d Ignored duplicate element %s",
-+				PROVIDER_DATABASE, line_number,
-+				g_markup_parse_context_get_element(context));
-+		return;
-+	}
-+
-+	DBG("%s: '%*s'", g_markup_parse_context_get_element(context),
-+		(int)text_len, text);
-+
-+	*string =3D g_try_new(char, text_len + 1);
-+	if (*string =3D=3D NULL) {
-+		provision_g_set_error(context, error, provision_error_quark(),
-+				PROVISION_ERROR_ENOMEM,
-+				"Can't allocate memory, memory exhausted");
-+		return;
-+	}
-+
-+	memcpy(*string, text, text_len);
-+
-+	(*string)[text_len] =3D '\0';
-+}
-+
-+static const GMarkupParser text_parser =3D {
-+	NULL,
-+	NULL,
-+	text_handler,
-+	NULL,
-+	NULL,
-+};
-+
-+static void usage_start(GMarkupParseContext *context, const gchar *element=
-_name,
-+			const gchar **attribute_names,
-+			const gchar **attribute_values,
-+			gpointer userdata, GError **error)
-+{
-+	enum ofono_gprs_context_type *type =3D userdata;
-+	const char *text =3D NULL;
-+	int i;
-+
-+	for (i =3D 0; attribute_names[i]; i++)
-+		if (g_str_equal(attribute_names[i], "type") =3D=3D TRUE)
-+			text =3D attribute_values[i];
-+
-+	if (text =3D=3D NULL)
-+		return;
-+
-+	DBG("%s: '%s'", element_name, text);
-+
-+	if (strcmp(text, "internet") =3D=3D 0)
-+		*type =3D OFONO_GPRS_CONTEXT_TYPE_INTERNET;
-+	else if (strcmp(text, "mms") =3D=3D 0)
-+		*type =3D OFONO_GPRS_CONTEXT_TYPE_MMS;
-+	else if (strcmp(text, "wap") =3D=3D 0)
-+		*type =3D OFONO_GPRS_CONTEXT_TYPE_WAP;
-+	else
-+		provision_g_set_error(context, error, G_MARKUP_ERROR,
-+				G_MARKUP_ERROR_UNKNOWN_ATTRIBUTE,
-+				"Unknown usage attribute value: %s", text);
-+}
-+
-+static void apn_start(GMarkupParseContext *context, const gchar *element_n=
-ame,
-+			const gchar **attribute_names,
-+			const gchar **attribute_values,
-+			gpointer userdata, GError **error)
-+{
-+	struct ofono_gprs_provision_data *apn =3D userdata;
-+
-+	if (g_str_equal(element_name, "name"))
-+		g_markup_parse_context_push(context, &text_parser, &apn->name);
-+	else if (g_str_equal(element_name, "username"))
-+		g_markup_parse_context_push(context, &text_parser,
-+						&apn->username);
-+	else if (g_str_equal(element_name, "password"))
-+		g_markup_parse_context_push(context, &text_parser,
-+						&apn->password);
-+	else if (g_str_equal(element_name, "usage"))
-+		usage_start(context, element_name, attribute_names,
-+				attribute_values, &apn->type, error);
-+}
-+
-+static void apn_end(GMarkupParseContext *context, const gchar *element_nam=
-e,
-+			gpointer userdata, GError **error)
-+{
-+	if (g_str_equal(element_name, "name") ||
-+			g_str_equal(element_name, "username") ||
-+			g_str_equal(element_name, "password"))
-+		g_markup_parse_context_pop(context);
-+}
-+
-+static void apn_error(GMarkupParseContext *context, GError *error,
-+			gpointer userdata)
-+{
-+	/*
-+	 * Note that even if the error happened in a subparser, this will
-+	 * be called.  So we always perform cleanup of the allocated
-+	 * provision data
-+	 */
-+	ap_free(userdata);
-+}
-+
-+static const GMarkupParser apn_parser =3D {
-+	apn_start,
-+	apn_end,
-+	NULL,
-+	NULL,
-+	apn_error,
-+};
-+
-+static const GMarkupParser skip_parser =3D {
-+	NULL,
-+	NULL,
-+	NULL,
-+	NULL,
-+	NULL,
-+};
-+
-+static void network_id_handler(GMarkupParseContext *context,
-+				struct gsm_data *gsm,
-+				const gchar **attribute_names,
-+				const gchar **attribute_values,
-+				GError **error)
-+{
-+	const char *mcc =3D NULL, *mnc =3D NULL;
-+	int i;
-+
-+	for (i =3D 0; attribute_names[i]; i++) {
-+		if (g_str_equal(attribute_names[i], "mcc") =3D=3D TRUE)
-+			mcc =3D attribute_values[i];
-+		if (g_str_equal(attribute_names[i], "mnc") =3D=3D TRUE)
-+			mnc =3D attribute_values[i];
-+	}
-+
-+	if (mcc =3D=3D NULL) {
-+		provision_g_set_error(context, error, G_MARKUP_ERROR,
-+					G_MARKUP_ERROR_MISSING_ATTRIBUTE,
-+					"Missing attribute: mcc");
-+		return;
-+	}
-+
-+	if (mnc =3D=3D NULL) {
-+		provision_g_set_error(context, error, G_MARKUP_ERROR,
-+					G_MARKUP_ERROR_MISSING_ATTRIBUTE,
-+					"Missing attribute: mnc");
-+		return;
-+	}
-+
-+	if (g_str_equal(mcc, gsm->match_mcc) &&
-+			g_str_equal(mnc, gsm->match_mnc))
-+		gsm->match_found =3D TRUE;
-+}
-+
-+static void apn_handler(GMarkupParseContext *context, struct gsm_data *gsm,
-+			const gchar **attribute_names,
-+			const gchar **attribute_values,
-+			GError **error)
-+{
-+	struct ofono_gprs_provision_data *ap;
-+	const char *apn;
-+	int i;
-+
-+	if (gsm->match_found =3D=3D FALSE) {
-+		g_markup_parse_context_push(context, &skip_parser, NULL);
-+		return;
-+	}
-+
-+	for (i =3D 0, apn =3D NULL; attribute_names[i]; i++) {
-+		if (g_str_equal(attribute_names[i], "value") =3D=3D FALSE)
-+			continue;
-+
-+		apn =3D attribute_values[i];
-+		break;
-+	}
-+
-+	if (apn =3D=3D NULL) {
-+		provision_g_set_error(context, error, G_MARKUP_ERROR,
-+					G_MARKUP_ERROR_MISSING_ATTRIBUTE,
-+					"APN attribute missing");
-+		return;
-+	}
-+
-+	ap =3D ap_new(apn);
-+	if (ap =3D=3D NULL) {
-+		provision_g_set_error(context, error, provision_error_quark(),
-+					PROVISION_ERROR_ENOMEM,
-+					"Can't allocate memory for APN: '%s', "
-+					"memory exhausted", apn);
-+		return;
-+	}
-+
-+	g_markup_parse_context_push(context, &apn_parser, ap);
-+}
-+
-+static void gsm_start(GMarkupParseContext *context, const gchar *element_n=
-ame,
-+			const gchar **attribute_names,
-+			const gchar **attribute_values,
-+			gpointer userdata, GError **error)
-+{
-+	if (g_str_equal(element_name, "network-id")) {
-+		struct gsm_data *gsm =3D userdata;
-+
-+		/*
-+		 * For entries with multiple network-id elements, don't bother
-+		 * searching if we already have a match
-+		 */
-+		if (gsm->match_found =3D=3D TRUE)
-+			return;
-+
-+		network_id_handler(context, userdata, attribute_names,
-+					attribute_values, error);
-+	} else if (g_str_equal(element_name, "apn"))
-+		apn_handler(context, userdata, attribute_names,
-+				attribute_values, error);
-+}
-+
-+static void gsm_end(GMarkupParseContext *context, const gchar *element_nam=
-e,
-+			gpointer userdata, GError **error)
-+{
-+	struct gsm_data *gsm;
-+	struct ofono_gprs_provision_data *ap;
-+
-+	if (!g_str_equal(element_name, "apn"))
-+		return;
-+
-+	gsm =3D userdata;
-+
-+	ap =3D g_markup_parse_context_pop(context);
-+	if (ap =3D=3D NULL)
-+		return;
-+
-+	if (gsm->allow_duplicates =3D=3D FALSE) {
-+		GSList *l;
-+
-+		for (l =3D gsm->apns; l; l =3D l->next) {
-+			struct ofono_gprs_provision_data *pd =3D l->data;
-+
-+			if (pd->type !=3D ap->type)
-+				continue;
-+
-+			provision_g_set_error(context, error,
-+						provision_error_quark(),
-+						PROVISION_ERROR_DUPLICATE,
-+						"Duplicate context detected");
-+
-+			ap_free(ap);
-+			return;
-+		}
-+	}
-+
-+	gsm->apns =3D g_slist_append(gsm->apns, ap);
-+}
-+
-+static const GMarkupParser gsm_parser =3D {
-+	gsm_start,
-+	gsm_end,
-+	NULL,
-+	NULL,
-+	NULL,
-+};
-+
-+static void toplevel_start(GMarkupParseContext *context,
-+					const gchar *element_name,
-+					const gchar **atribute_names,
-+					const gchar **attribute_values,
-+					gpointer userdata, GError **error)
-+{
-+	struct gsm_data *gsm =3D userdata;
-+
-+	if (g_str_equal(element_name, "gsm")) {
-+		gsm->match_found =3D FALSE;
-+		g_markup_parse_context_push(context, &gsm_parser, gsm);
-+	} else if (g_str_equal(element_name, "cdma"))
-+		g_markup_parse_context_push(context, &skip_parser, NULL);
-+}
-+
-+static void toplevel_end(GMarkupParseContext *context,
-+					const gchar *element_name,
-+					gpointer userdata, GError **error)
-+{
-+	if (g_str_equal(element_name, "gsm") ||
-+			g_str_equal(element_name, "cdma"))
-+		g_markup_parse_context_pop(context);
-+}
-+
-+static const GMarkupParser toplevel_parser =3D {
-+	toplevel_start,
-+	toplevel_end,
-+	NULL,
-+	NULL,
-+	NULL,
-+};
-+
-+static gboolean provision_parse(const char *data, ssize_t size,
-+				struct gsm_data *gsm, GError **error)
-+{
-+	GMarkupParseContext *context;
-+	gboolean ret;
-+
-+	context =3D g_markup_parse_context_new(&toplevel_parser,
-+						G_MARKUP_TREAT_CDATA_AS_TEXT,
-+						gsm, NULL);
-+
-+	ret =3D g_markup_parse_context_parse(context, data, size, error);
-+
-+	if (ret =3D=3D TRUE)
-+		g_markup_parse_context_end_parse(context, error);
-+
-+	g_markup_parse_context_free(context);
-+
-+	return ret;
-+}
-+
-+static GSList *provision_lookup(const char *mcc, const char *mnc,
-+				gboolean allow_duplicates, GError **error)
-+{
-+	struct stat st;
-+	char *db;
-+	int fd;
-+	struct gsm_data gsm;
-+	GSList *l;
-+
-+	fd =3D open(PROVIDER_DATABASE, O_RDONLY);
-+	if (fd < 0) {
-+		g_set_error(error, G_FILE_ERROR,
-+				g_file_error_from_errno(errno),
-+				"open failed: %s", g_strerror(errno));
-+		return NULL;
-+	}
-+
-+	if (fstat(fd, &st) < 0) {
-+		close(fd);
-+		g_set_error(error, G_FILE_ERROR,
-+				g_file_error_from_errno(errno),
-+				"fstat failed: %s", g_strerror(errno));
-+		return NULL;
-+	}
-+
-+	db =3D mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
-+	if (db =3D=3D MAP_FAILED) {
-+		close(fd);
-+		g_set_error(error, G_FILE_ERROR,
-+				g_file_error_from_errno(errno),
-+				"mmap failed: %s", g_strerror(errno));
-+		return NULL;
-+	}
-+
-+	memset(&gsm, 0, sizeof(gsm));
-+	gsm.match_mcc =3D mcc;
-+	gsm.match_mnc =3D mnc;
-+	gsm.allow_duplicates =3D allow_duplicates;
-+
-+	if (provision_parse(db, st.st_size, &gsm, error) =3D=3D FALSE) {
-+		for (l =3D gsm.apns; l; l =3D l->next)
-+			ap_free(l->data);
-+
-+		g_slist_free(gsm.apns);
-+		gsm.apns =3D NULL;
-+	}
-+
-+	munmap(db, st.st_size);
-+	close(fd);
-+
-+	return gsm.apns;
-+}
-+
-+static int provision_get_settings(const char *mcc, const char *mnc,
-+				const char *spn,
-+				struct ofono_gprs_provision_data **settings,
-+				int *count)
-+{
-+	GSList *l;
-+	GSList *apns;
-+	GError *error =3D NULL;
-+	int ap_count;
-+	int i;
-+
-+	DBG("Provisioning for MCC %s, MNC %s, SPN '%s'", mcc, mnc, spn);
-+
-+	apns =3D provision_lookup(mcc, mnc, FALSE, &error);
-+	if (apns =3D=3D NULL) {
-+		ofono_error("%s", error->message);
-+		return -ENOENT;
-+	}
-+
-+	ap_count =3D g_slist_length(apns);
-+
-+	DBG("Found %d APs", ap_count);
-+
-+	*settings =3D g_try_malloc_n(ap_count,
-+				sizeof(struct ofono_gprs_provision_data));
-+	if (*settings =3D=3D NULL) {
-+		ofono_error("Provisioning failed: %s", g_strerror(errno));
-+
-+		for (l =3D apns; l; l =3D l->next)
-+			ap_free(l->data);
-+
-+		g_slist_free(apns);
-+
-+		return -ENOMEM;
-+	}
-+
-+	*count =3D ap_count;
-+
-+	for (l =3D apns, i =3D 0; l; l =3D l->next, i++) {
-+		struct ofono_gprs_provision_data *ap =3D l->data;
-+
-+		DBG("Name: '%s'", ap->name);
-+		DBG("APN: '%s'", ap->apn);
-+		DBG("Type: %s", ap_type_name(ap->type));
-+		DBG("Username: '%s'", ap->username);
-+		DBG("Password: '%s'", ap->password);
-+
-+		*(*settings + i) =3D *ap;
-+
-+		memset(*settings + i, 0,
-+			sizeof(struct ofono_gprs_provision_data));
-+		ap_free(ap);
-+	}
-+
-+	g_slist_free(apns);
++	if (sap_hw_modem !=3D NULL)
++		return -EPERM;
++
++	sap_hw_modem =3D modem;
++	sap_hw_driver =3D sap;
 +
 +	return 0;
 +}
 +
-+static struct ofono_gprs_provision_driver provision_driver =3D {
-+	.name		=3D "Provisioning",
-+	.get_settings	=3D provision_get_settings
++static void sap_remove_modem(struct ofono_modem *modem)
++{
++	struct sap_data *data =3D ofono_modem_get_data(modem);
++
++	g_free(data->server_path);
++	g_free(data);
++
++	ofono_modem_set_data(modem, NULL);
++
++	ofono_modem_remove(modem);
++}
++
++static void sap_remove_all_modem(void)
++{
++	GHashTableIter iter;
++	gpointer key, value;
++
++	g_hash_table_iter_init(&iter, modem_hash);
++
++	while (g_hash_table_iter_next(&iter, &key, &value)) {
++
++		g_hash_table_iter_remove(&iter);
++
++		sap_remove_modem(value);
++	}
++}
++
++void bluetooth_sap_client_unregister(struct ofono_modem *modem)
++{
++	if (sap_hw_modem =3D=3D NULL)
++		return;
++
++	sap_remove_all_modem();
++
++	sap_hw_modem =3D NULL;
++	sap_hw_driver =3D NULL;
++}
++
++static int sap_probe(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++
++	return 0;
++}
++
++static void sap_remove(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++}
++
++/* power up hardware */
++static int sap_enable(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++
++	return 0;
++}
++
++static int sap_disable(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++
++	return 0;
++}
++
++static void sap_pre_sim(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++}
++
++static void sap_post_sim(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++}
++
++static int bluetooth_sap_probe(const char *device, const char *dev_addr,
++				const char *adapter_addr, const char *alias)
++{
++	struct ofono_modem *modem;
++	struct sap_data *data;
++	char buf[256];
++
++	if(sap_hw_modem =3D=3D NULL)
++		return -ENODEV;
++
++	/* We already have this device in our hash, ignore */
++	if (g_hash_table_lookup(modem_hash, device) !=3D NULL)
++		return -EALREADY;
++
++	ofono_info("Using device: %s, devaddr: %s, adapter: %s",
++			device, dev_addr, adapter_addr);
++
++	strcpy(buf, "sap/");
++	bluetooth_create_path(dev_addr, adapter_addr, buf + 4,
++						sizeof(buf) - 4);
++
++	modem =3D ofono_modem_create(buf, "sap");
++	if (modem =3D=3D NULL)
++		return -ENOMEM;
++
++	data =3D g_try_new0(struct sap_data, 1);
++	if (data =3D=3D NULL)
++		goto free;
++
++	data->server_path =3D g_strdup(device);
++	if (data->server_path =3D=3D NULL)
++		goto free;
++
++	ofono_modem_set_data(modem, data);
++	ofono_modem_set_name(modem, alias);
++	ofono_modem_register(modem);
++
++	g_hash_table_insert(modem_hash, g_strdup(device), modem);
++
++	return 0;
++
++free:
++	g_free(data);
++	ofono_modem_remove(modem);
++
++	return -ENOMEM;
++}
++
++static void bluetooth_sap_remove(const char *prefix)
++{
++	GHashTableIter iter;
++	gpointer key, value;
++
++	DBG("%s", prefix);
++
++	if (modem_hash =3D=3D NULL)
++		return;
++
++	if (prefix =3D=3D NULL) {
++		sap_remove_all_modem();
++		return;
++	}
++
++	g_hash_table_iter_init(&iter, modem_hash);
++
++	while (g_hash_table_iter_next(&iter, &key, &value)) {
++
++		if (!g_str_equal(prefix, (char *)key))
++			continue;
++
++		g_hash_table_iter_remove(&iter);
++
++		sap_remove_modem(value);
++		return;
++	}
++}
++
++static void bluetooth_sap_set_alias(const char *device, const char *alias)
++{
++	struct ofono_modem *modem;
++
++	if (device =3D=3D NULL || alias =3D=3D NULL)
++		return;
++
++	modem =3D	g_hash_table_lookup(modem_hash, device);
++	if (modem =3D=3D NULL)
++		return;
++
++	ofono_modem_set_name(modem, alias);
++}
++
++static struct ofono_modem_driver sap_driver =3D {
++	.name		=3D "sap",
++	.probe		=3D sap_probe,
++	.remove		=3D sap_remove,
++	.enable		=3D sap_enable,
++	.disable	=3D sap_disable,
++	.pre_sim	=3D sap_pre_sim,
++	.post_sim	=3D sap_post_sim,
 +};
 +
-+static int provision_init(void)
++static struct bluetooth_profile sap =3D {
++	.name		=3D "sap",
++	.probe		=3D bluetooth_sap_probe,
++	.remove		=3D bluetooth_sap_remove,
++	.set_alias	=3D bluetooth_sap_set_alias,
++};
++
++static int sap_init(void)
 +{
-+	return ofono_gprs_provision_driver_register(&provision_driver);
++	int err;
++
++	if (DBUS_TYPE_UNIX_FD < 0)
++		return -EBADF;
++
++	connection =3D ofono_dbus_get_connection();
++
++	err =3D ofono_modem_driver_register(&sap_driver);
++	if (err < 0)
++		return err;
++
++	err =3D bluetooth_register_uuid(SAP_UUID, &sap);
++	if (err < 0) {
++		ofono_modem_driver_unregister(&sap_driver);
++		return err;
++	}
++
++	modem_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++						g_free, NULL);
++
++	return 0;
 +}
 +
-+static void provision_exit(void)
++static void sap_exit(void)
 +{
-+	ofono_gprs_provision_driver_unregister(&provision_driver);
++	DBG("");
++
++	bluetooth_unregister_uuid(SAP_UUID);
++	ofono_modem_driver_unregister(&sap_driver);
++	g_hash_table_destroy(modem_hash);
++	modem_hash =3D NULL;
 +}
 +
-+OFONO_PLUGIN_DEFINE(provision, "Provisioning Plugin", VERSION,
-+			OFONO_PLUGIN_PRIORITY_DEFAULT,
-+			provision_init, provision_exit)
++OFONO_PLUGIN_DEFINE(sap, "Sim Access Profile Plugins", VERSION,
++			OFONO_PLUGIN_PRIORITY_DEFAULT, sap_init, sap_exit)
+diff --git a/plugins/telit.c b/plugins/telit.c
+index 9c8eb0d..18cf0c4 100644
+--- a/plugins/telit.c
++++ b/plugins/telit.c
+@@ -54,6 +54,8 @@
+ #include <drivers/atmodem/atutil.h>
+ #include <drivers/atmodem/vendor.h>
+ =
+
++#include "bluetooth.h"
++
+ static const char *none_prefix[] =3D { NULL };
+ static const char *qss_prefix[] =3D { "#QSS:", NULL };
+ =
+
+@@ -63,6 +65,10 @@ struct telit_data {
+ 	guint sim_inserted_source;
+ };
+ =
+
++static struct bluetooth_sap_driver sap_driver =3D {
++	.name =3D "telit",
++};
++
+ static void telit_debug(const char *str, void *user_data)
+ {
+ 	const char *prefix =3D user_data;
+@@ -82,6 +88,8 @@ static int telit_probe(struct ofono_modem *modem)
+ =
+
+ 	ofono_modem_set_data(modem, data);
+ =
+
++	bluetooth_sap_client_register(&sap_driver, modem);
++
+ 	return 0;
+ }
+ =
+
+@@ -91,6 +99,8 @@ static void telit_remove(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
++	bluetooth_sap_client_unregister(modem);
++
+ 	ofono_modem_set_data(modem, NULL);
+ =
+
+ 	if (data->sim_inserted_source > 0)
 -- =
 
-1.7.4.1
+1.7.6.2
 
 
---===============7864125622058823296==--
+--===============8971694691769280769==--
 
