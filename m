@@ -1,13 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8971694691769280769=="
+Content-Type: multipart/mixed; boundary="===============7452776993556046772=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v6] sap: Add basic sap plugin
-Date: Fri, 23 Sep 2011 20:08:02 -0300
-Message-ID: <1316819282-9119-1-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH -v3 02/23] sap: Add basic sap plugin
+Date: Mon, 26 Sep 2011 14:26:55 -0300
+Message-ID: <1317058036-32641-2-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1317058036-32641-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8971694691769280769==
+--===============7452776993556046772==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,10 +20,10 @@ From: "Gustavo F. Padovan" <padovan@profusion.mobi>
  plugins/bluetooth.c |    1 -
  plugins/bluetooth.h |   12 ++
  plugins/hfp_hf.c    |    2 -
- plugins/sap.c       |  288 +++++++++++++++++++++++++++++++++++++++++++++++=
+ plugins/sap.c       |  277 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
  plugins/telit.c     |   10 ++
- 6 files changed, 313 insertions(+), 3 deletions(-)
+ 6 files changed, 302 insertions(+), 3 deletions(-)
  create mode 100644 plugins/sap.c
 
 diff --git a/Makefile.am b/Makefile.am
@@ -122,10 +123,10 @@ index 0c6ed83..d5f26c0 100644
  #define	BLUEZ_GATEWAY_INTERFACE		BLUEZ_SERVICE ".HandsfreeGateway"
 diff --git a/plugins/sap.c b/plugins/sap.c
 new file mode 100644
-index 0000000..bdded70
+index 0000000..52fb2fb
 --- /dev/null
 +++ b/plugins/sap.c
-@@ -0,0 +1,288 @@
+@@ -0,0 +1,277 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -207,10 +208,13 @@ index 0000000..bdded70
 +	ofono_modem_remove(modem);
 +}
 +
-+static void sap_remove_all_modem(void)
++void bluetooth_sap_client_unregister(struct ofono_modem *modem)
 +{
 +	GHashTableIter iter;
 +	gpointer key, value;
++
++	if (sap_hw_modem =3D=3D NULL)
++		return;
 +
 +	g_hash_table_iter_init(&iter, modem_hash);
 +
@@ -220,14 +224,6 @@ index 0000000..bdded70
 +
 +		sap_remove_modem(value);
 +	}
-+}
-+
-+void bluetooth_sap_client_unregister(struct ofono_modem *modem)
-+{
-+	if (sap_hw_modem =3D=3D NULL)
-+		return;
-+
-+	sap_remove_all_modem();
 +
 +	sap_hw_modem =3D NULL;
 +	sap_hw_driver =3D NULL;
@@ -325,25 +321,19 @@ index 0000000..bdded70
 +
 +	DBG("%s", prefix);
 +
-+	if (modem_hash =3D=3D NULL)
++	if (modem_hash =3D=3D NULL || prefix =3D=3D NULL)
 +		return;
-+
-+	if (prefix =3D=3D NULL) {
-+		sap_remove_all_modem();
-+		return;
-+	}
 +
 +	g_hash_table_iter_init(&iter, modem_hash);
 +
 +	while (g_hash_table_iter_next(&iter, &key, &value)) {
 +
-+		if (!g_str_equal(prefix, (char *)key))
++		if (g_str_has_prefix((char *)key, prefix) =3D=3D FALSE)
 +			continue;
 +
 +		g_hash_table_iter_remove(&iter);
 +
 +		sap_remove_modem(value);
-+		return;
 +	}
 +}
 +
@@ -471,5 +461,5 @@ index 9c8eb0d..18cf0c4 100644
 1.7.6.2
 
 
---===============8971694691769280769==--
+--===============7452776993556046772==--
 
