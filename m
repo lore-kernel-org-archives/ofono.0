@@ -1,49 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============6348989428716823753=="
+Content-Type: multipart/mixed; boundary="===============1929458433249136684=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH -v3 04/23] sap: add support to connect the RFCOMM link
-Date: Mon, 26 Sep 2011 13:57:04 -0500
-Message-ID: <4E80CB00.9030103@gmail.com>
-In-Reply-To: <1317058036-32641-4-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH -v3 05/23] telit: add #RSEN notify
+Date: Mon, 26 Sep 2011 13:57:25 -0500
+Message-ID: <4E80CB15.5020607@gmail.com>
+In-Reply-To: <1317058036-32641-5-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6348989428716823753==
+--===============1929458433249136684==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
+
+Hi Gustavo,
 
 On 09/26/2011 12:26 PM, Gustavo F. Padovan wrote:
 > From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 > =
 
+> RSEN URC tells if the SAP Client was enabled or not
 > ---
->  plugins/sap.c |   45 ++++++++++++++++++++++++++++++++++++++++++++-
->  1 files changed, 44 insertions(+), 1 deletions(-)
+>  plugins/telit.c |   19 +++++++++++++++++++
+>  1 files changed, 19 insertions(+), 0 deletions(-)
 > =
 
 
-Patch applied, but...
-
->  /* power up hardware */
->  static int sap_enable(struct ofono_modem *modem)
->  {
->  	struct sap_data *data =3D ofono_modem_get_data(modem);
-> +	int status;
-> +	const char *str =3D "sap";
-> +
-> +	DBG("%p", modem);
-> +
-> +	status =3D bluetooth_send_with_reply(data->server_path,
-> +					BLUEZ_SERIAL_INTERFACE, "ConnectFD",
-> +					sap_connect_reply, modem, NULL,
-> +					DBUS_TIMEOUT, DBUS_TYPE_STRING,
-> +					&str, DBUS_TYPE_INVALID);
-
-I had to amend this part for it to compile
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============6348989428716823753==--
+--===============1929458433249136684==--
 
