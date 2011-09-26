@@ -1,43 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============1291151852358142773=="
+Content-Type: multipart/mixed; boundary="===============7019270094664189268=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v3 22/23] telit: add needed flags to proper connect the
- serial port
-Date: Mon, 26 Sep 2011 14:27:15 -0300
-Message-ID: <1317058036-32641-22-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1317058036-32641-21-git-send-email-padovan@profusion.mobi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH -v3 02/23] sap: Add basic sap plugin
+Date: Mon, 26 Sep 2011 13:55:49 -0500
+Message-ID: <4E80CAB5.4040606@gmail.com>
+In-Reply-To: <1317058036-32641-2-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1291151852358142773==
+--===============7019270094664189268==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: "Gustavo F. Padovan" <padovan@profusion.mobi>
+Hi Gustavo,
 
----
- plugins/telit.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+On 09/26/2011 12:26 PM, Gustavo F. Padovan wrote:
+> From: "Gustavo F. Padovan" <padovan@profusion.mobi>
+> =
 
-diff --git a/plugins/telit.c b/plugins/telit.c
-index 0c8061f..467a7b6 100644
---- a/plugins/telit.c
-+++ b/plugins/telit.c
-@@ -350,6 +350,8 @@ static int telit_sap_open(struct ofono_modem *modem)
- 	memset(&ti, 0, sizeof(ti));
- 	cfmakeraw(&ti);
- =
-
-+	ti.c_cflag |=3D (B115200 | CLOCAL | CREAD);
-+
- 	tcflush(fd, TCIOFLUSH);
- 	if (tcsetattr(fd, TCSANOW, &ti) < 0) {
- 		close(fd);
--- =
-
-1.7.6.2
+> ---
+>  Makefile.am         |    3 +
+>  plugins/bluetooth.c |    1 -
+>  plugins/bluetooth.h |   12 ++
+>  plugins/hfp_hf.c    |    2 -
+>  plugins/sap.c       |  277 +++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  plugins/telit.c     |   10 ++
+>  6 files changed, 302 insertions(+), 3 deletions(-)
+>  create mode 100644 plugins/sap.c
+> =
 
 
---===============1291151852358142773==--
+Patch has been applied, thanks.
+
+Regards,
+-Denis
+
+--===============7019270094664189268==--
 
