@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8516581249491201543=="
+Content-Type: multipart/mixed; boundary="===============2639336481334955502=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v4 11/21] sap: add post_sim handling
-Date: Tue, 27 Sep 2011 18:04:10 -0300
-Message-ID: <1317157460-17012-11-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1317157460-17012-10-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH -v4 13/21] telit: improve sap disable
+Date: Tue, 27 Sep 2011 18:04:12 -0300
+Message-ID: <1317157460-17012-13-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1317157460-17012-12-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8516581249491201543==
+--===============2639336481334955502==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,78 +16,139 @@ Content-Transfer-Encoding: quoted-printable
 From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 
 ---
- plugins/bluetooth.h |    1 +
- plugins/sap.c       |    4 ++++
- plugins/telit.c     |   13 +++++++++++++
- 3 files changed, 18 insertions(+), 0 deletions(-)
+ plugins/telit.c |   78 +++++++++++++++++++++++++++++----------------------=
+----
+ 1 files changed, 41 insertions(+), 37 deletions(-)
 
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index 257f092..8fe4093 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -47,6 +47,7 @@ struct bluetooth_sap_driver {
- 	const char *name;
- 	int (*enable) (struct ofono_modem *modem, struct ofono_modem *sap_modem);
- 	void (*pre_sim) (struct ofono_modem *modem);
-+	void (*post_sim) (struct ofono_modem *modem);
- 	void (*set_online) (struct ofono_modem *modem, ofono_bool_t online,
- 				ofono_modem_online_cb_t cb, void *user_data);
- 	int (*disable) (struct ofono_modem *modem);
-diff --git a/plugins/sap.c b/plugins/sap.c
-index 1713d4c..309028b 100644
---- a/plugins/sap.c
-+++ b/plugins/sap.c
-@@ -301,7 +301,11 @@ static void sap_pre_sim(struct ofono_modem *modem)
- =
-
- static void sap_post_sim(struct ofono_modem *modem)
- {
-+	struct sap_data *data =3D ofono_modem_get_data(modem);
-+
- 	DBG("%p", modem);
-+
-+	data->sap_driver->post_sim(data->hw_modem);
- }
- =
-
- static void sap_set_online(struct ofono_modem *modem, ofono_bool_t online,
 diff --git a/plugins/telit.c b/plugins/telit.c
-index da89b1c..7687162 100644
+index 0ae769d..6ceff57 100644
 --- a/plugins/telit.c
 +++ b/plugins/telit.c
-@@ -378,6 +378,18 @@ static void telit_pre_sim(struct ofono_modem *modem)
- 	ofono_voicecall_create(modem, 0, "atmodem", data->chat);
+@@ -280,6 +280,43 @@ static void rsen_enable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	}
  }
  =
 
-+static void telit_post_sim(struct ofono_modem *modem)
++static void cfun_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
 +{
++	struct ofono_modem *modem =3D user_data;
 +	struct telit_data *data =3D ofono_modem_get_data(modem);
 +
-+	if (data->sap_modem)
++	if(data->sap_modem)
 +		modem =3D data->sap_modem;
 +
 +	DBG("%p", modem);
 +
-+	ofono_sms_create(modem, 0, "atmodem", data->chat);
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
++
++	if (data->sim_inserted_source > 0)
++		g_source_remove(data->sim_inserted_source);
++
++	if (ok)
++		ofono_modem_set_powered(modem, FALSE);
++
++	data->sap_modem =3D NULL;
 +}
 +
- static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
++static int telit_disable(struct ofono_modem *modem)
++{
++	struct telit_data *data =3D ofono_modem_get_data(modem);
++	DBG("%p", modem);
++
++	g_at_chat_cancel_all(data->chat);
++	g_at_chat_unregister_all(data->chat);
++
++	/* Power down modem */
++	g_at_chat_send(data->chat, "AT+CFUN=3D0", none_prefix,
++				cfun_disable_cb, modem, NULL);
++
++	return -EINPROGRESS;
++}
++
+ static void rsen_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
  {
- 	struct cb_data *cbd =3D user_data;
-@@ -405,6 +417,7 @@ static struct bluetooth_sap_driver sap_driver =3D {
- 	.name =3D "telit",
- 	.enable =3D telit_sap_enable,
- 	.pre_sim =3D telit_pre_sim,
-+	.post_sim =3D telit_post_sim,
- 	.set_online =3D telit_set_online,
- 	.disable =3D telit_sap_disable,
- };
+ 	struct ofono_modem *modem =3D user_data;
+@@ -290,8 +327,7 @@ static void rsen_disable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	g_at_chat_unref(data->aux);
+ 	data->aux =3D NULL;
+ =
+
+-	if (ok)
+-		ofono_modem_set_powered(data->sap_modem, FALSE);
++	telit_disable(modem);
+ }
+ =
+
+ static int telit_sap_open()
+@@ -355,10 +391,10 @@ static int telit_sap_disable(struct ofono_modem *mode=
+m)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	g_at_chat_cancel_all(data->chat);
+-	g_at_chat_unregister_all(data->chat);
++	g_at_chat_cancel_all(data->aux);
++	g_at_chat_unregister_all(data->aux);
+ =
+
+-	g_at_chat_send(data->chat, "AT#RSEN=3D0", rsen_prefix,
++	g_at_chat_send(data->aux, "AT#RSEN=3D0", rsen_prefix,
+ 				rsen_disable_cb, modem, NULL);
+ =
+
+ 	return 0;
+@@ -486,38 +522,6 @@ static void telit_remove(struct ofono_modem *modem)
+ 	g_free(data);
+ }
+ =
+
+-static void cfun_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+-{
+-	struct ofono_modem *modem =3D user_data;
+-	struct telit_data *data =3D ofono_modem_get_data(modem);
+-
+-	DBG("%p", modem);
+-
+-	g_at_chat_unref(data->chat);
+-	data->chat =3D NULL;
+-
+-	if (data->sim_inserted_source > 0)
+-		g_source_remove(data->sim_inserted_source);
+-
+-	if (ok)
+-		ofono_modem_set_powered(modem, FALSE);
+-}
+-
+-static int telit_disable(struct ofono_modem *modem)
+-{
+-	struct telit_data *data =3D ofono_modem_get_data(modem);
+-	DBG("%p", modem);
+-
+-	g_at_chat_cancel_all(data->chat);
+-	g_at_chat_unregister_all(data->chat);
+-
+-	/* Power down modem */
+-	g_at_chat_send(data->chat, "AT+CFUN=3D0", none_prefix,
+-				cfun_disable_cb, modem, NULL);
+-
+-	return -EINPROGRESS;
+-}
+-
+ static struct ofono_modem_driver telit_driver =3D {
+ 	.name		=3D "telit",
+ 	.probe		=3D telit_probe,
 -- =
 
 1.7.6.2
 
 
---===============8516581249491201543==--
+--===============2639336481334955502==--
 
