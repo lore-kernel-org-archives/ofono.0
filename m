@@ -1,143 +1,102 @@
-Content-Type: multipart/mixed; boundary="===============8577351525947928140=="
+Content-Type: multipart/mixed; boundary="===============1772467209016334482=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v4 19/21] sap: remove server_path
-Date: Tue, 27 Sep 2011 18:04:18 -0300
-Message-ID: <1317157460-17012-19-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1317157460-17012-18-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH -v4 20/21] sap: clean up sap modem destruction
+Date: Tue, 27 Sep 2011 18:04:19 -0300
+Message-ID: <1317157460-17012-20-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1317157460-17012-19-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8577351525947928140==
+--===============1772467209016334482==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: "Gustavo F. Padovan" <gustavo@padovan.org>
 
-We use ofono_modem_set_string() instead to store it.
-This also remove the need to have sap_data allocation on
-bluetooth_sap_probe().
 ---
- plugins/sap.c |   38 +++++++++++++++-----------------------
- 1 files changed, 15 insertions(+), 23 deletions(-)
+ plugins/sap.c |   33 +++++++++++++++------------------
+ 1 files changed, 15 insertions(+), 18 deletions(-)
 
 diff --git a/plugins/sap.c b/plugins/sap.c
-index 9b8e670..ce5886d 100644
+index ce5886d..b128517 100644
 --- a/plugins/sap.c
 +++ b/plugins/sap.c
-@@ -53,7 +53,6 @@ static struct ofono_modem *sap_hw_modem =3D NULL;
- static struct bluetooth_sap_driver *sap_hw_driver =3D NULL;
- =
-
- struct sap_data {
--	char *server_path;
- 	struct ofono_modem *hw_modem;
- 	struct bluetooth_sap_driver *sap_driver;
- 	GIOChannel *bt_io;
-@@ -110,7 +109,6 @@ static void sap_remove_modem(struct ofono_modem *modem)
- 	if (data->call !=3D NULL)
- 		dbus_pending_call_cancel(data->call);
- =
-
--	g_free(data->server_path);
- 	g_free(data);
- =
-
- 	ofono_modem_set_data(modem, NULL);
-@@ -213,8 +211,16 @@ static gboolean hw_event_cb(GIOChannel *hw_io, GIOCond=
-ition condition,
- =
-
- static int sap_probe(struct ofono_modem *modem)
- {
-+	struct sap_data *data;
-+
- 	DBG("%p", modem);
- =
-
-+	data =3D g_try_new0(struct sap_data, 1);
-+	if (data =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	ofono_modem_set_data(modem, data);
-+
- 	return 0;
+@@ -100,22 +100,6 @@ static void sap_close_io(struct ofono_modem *modem)
+ 		g_source_remove(data->hw_watch);
  }
  =
 
-@@ -309,14 +315,15 @@ static int sap_enable(struct ofono_modem *modem)
- 	DBusPendingCall *call;
- 	int status;
- 	const char *str =3D "sap";
-+	const char *server_path =3D ofono_modem_get_string(modem, "ServerPath");
- =
-
- 	DBG("%p", modem);
- =
-
--	status =3D bluetooth_send_with_reply(data->server_path,
--					BLUEZ_SERIAL_INTERFACE, "ConnectFD",
--					&call, sap_connect_reply, modem, NULL,
--					DBUS_TIMEOUT, DBUS_TYPE_STRING,
--					&str, DBUS_TYPE_INVALID);
-+	status =3D bluetooth_send_with_reply(server_path, BLUEZ_SERIAL_INTERFACE,
-+					"ConnectFD", &call, sap_connect_reply,
-+					modem, NULL, DBUS_TIMEOUT,
-+					DBUS_TYPE_STRING, &str,
-+					DBUS_TYPE_INVALID);
- =
-
- 	if (status < 0)
- 		return -EINVAL;
-@@ -380,7 +387,6 @@ static int bluetooth_sap_probe(const char *device, cons=
-t char *dev_addr,
- 				const char *adapter_addr, const char *alias)
- {
- 	struct ofono_modem *modem;
--	struct sap_data *data;
- 	char buf[256];
- =
-
- 	if (sap_hw_modem =3D=3D NULL)
-@@ -401,27 +407,13 @@ static int bluetooth_sap_probe(const char *device, co=
-nst char *dev_addr,
- 	if (modem =3D=3D NULL)
- 		return -ENOMEM;
- =
-
--	data =3D g_try_new0(struct sap_data, 1);
--	if (data =3D=3D NULL)
--		goto free;
+-static void sap_remove_modem(struct ofono_modem *modem)
+-{
+-	struct sap_data *data =3D ofono_modem_get_data(modem);
 -
--	data->server_path =3D g_strdup(device);
--	if (data->server_path =3D=3D NULL)
--		goto free;
+-	sap_close_io(modem);
 -
--	ofono_modem_set_data(modem, data);
-+	ofono_modem_set_string(modem, "ServerPath", device);
- 	ofono_modem_set_name(modem, alias);
- 	ofono_modem_register(modem);
- =
-
- 	g_hash_table_insert(modem_hash, g_strdup(device), modem);
- =
-
- 	return 0;
+-	if (data->call !=3D NULL)
+-		dbus_pending_call_cancel(data->call);
 -
--free:
 -	g_free(data);
--	ofono_modem_remove(modem);
 -
--	return -ENOMEM;
+-	ofono_modem_set_data(modem, NULL);
+-
+-	ofono_modem_remove(modem);
+-}
+-
+ void bluetooth_sap_client_unregister(struct ofono_modem *modem)
+ {
+ 	GHashTableIter iter;
+@@ -128,7 +112,8 @@ void bluetooth_sap_client_unregister(struct ofono_modem=
+ *modem)
+ =
+
+ 	while (g_hash_table_iter_next(&iter, &key, &value)) {
+ 		g_hash_table_iter_remove(&iter);
+-		sap_remove_modem(value);
++
++		ofono_modem_remove(modem);
+ 	}
+ =
+
+ 	sap_hw_modem =3D NULL;
+@@ -226,7 +211,18 @@ static int sap_probe(struct ofono_modem *modem)
+ =
+
+ static void sap_remove(struct ofono_modem *modem)
+ {
++	struct sap_data *data =3D ofono_modem_get_data(modem);
++
+ 	DBG("%p", modem);
++
++	sap_close_io(modem);
++
++	if (data->call !=3D NULL)
++		dbus_pending_call_cancel(data->call);
++
++	g_free(data);
++
++	ofono_modem_set_data(modem, NULL);
  }
  =
 
- static void bluetooth_sap_remove(const char *prefix)
+ static void sap_failed_cb(struct ofono_modem *modem)
+@@ -433,7 +429,8 @@ static void bluetooth_sap_remove(const char *prefix)
+ 			continue;
+ =
+
+ 		g_hash_table_iter_remove(&iter);
+-		sap_remove_modem(value);
++
++		ofono_modem_remove(value);
+ 	}
+ }
+ =
+
 -- =
 
 1.7.6.2
 
 
---===============8577351525947928140==--
+--===============1772467209016334482==--
 
