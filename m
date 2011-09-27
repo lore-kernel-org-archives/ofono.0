@@ -1,137 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============1248843180904834466=="
+Content-Type: multipart/mixed; boundary="===============1552542705223453547=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v4 02/21] sap: add watch for the Bluetooth Link
-Date: Tue, 27 Sep 2011 18:04:01 -0300
-Message-ID: <1317157460-17012-2-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1317157460-17012-1-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH -v4 04/21] telit: add telit_sap_disable()
+Date: Tue, 27 Sep 2011 18:04:03 -0300
+Message-ID: <1317157460-17012-4-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1317157460-17012-3-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1248843180904834466==
+--===============1552542705223453547==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 
+Support to disable the SAP modem from the sap plugin
 ---
- plugins/sap.c |   59 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
----
- 1 files changed, 55 insertions(+), 4 deletions(-)
+ plugins/bluetooth.h |    1 +
+ plugins/telit.c     |   30 ++++++++++++++++++++++++++++++
+ 2 files changed, 31 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/sap.c b/plugins/sap.c
-index 169bb7f..004d225 100644
---- a/plugins/sap.c
-+++ b/plugins/sap.c
-@@ -55,6 +55,8 @@ struct sap_data {
- 	char *server_path;
- 	struct ofono_modem *hw_modem;
- 	struct bluetooth_sap_driver *sap_driver;
-+	GIOChannel *bt_io;
-+	guint bt_watch;
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index 6cde7bc..96e3215 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -46,6 +46,7 @@ struct bluetooth_profile {
+ struct bluetooth_sap_driver {
+ 	const char *name;
+ 	int (*enable) (struct ofono_modem *modem);
++	int (*disable) (struct ofono_modem *modem);
  };
  =
 
- int bluetooth_sap_client_register(struct bluetooth_sap_driver *sap,
-@@ -100,6 +102,36 @@ void bluetooth_sap_client_unregister(struct ofono_mode=
-m *modem)
- 	sap_hw_driver =3D NULL;
+ struct server;
+diff --git a/plugins/telit.c b/plugins/telit.c
+index a5f9941..b9a5b23 100644
+--- a/plugins/telit.c
++++ b/plugins/telit.c
+@@ -139,6 +139,20 @@ static void rsen_enable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	}
  }
  =
 
-+static void bt_watch_remove(gpointer userdata)
++static void rsen_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
 +{
-+	struct ofono_modem *modem =3D userdata;
-+	struct sap_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_modem *modem =3D user_data;
++	struct telit_data *data =3D ofono_modem_get_data(modem);
 +
-+	ofono_modem_set_powered(modem, FALSE);
++	DBG("%p", modem);
 +
-+	data->bt_watch =3D 0;
-+}
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
 +
-+static gboolean bt_event_cb(GIOChannel *bt_io, GIOCondition condition,
-+							gpointer data)
-+{
-+	if (condition & G_IO_IN) {
-+		GIOStatus status;
-+		gsize bytes_read;
-+		gchar buf[300];
-+
-+		status =3D g_io_channel_read_chars(bt_io, buf, 300,
-+							&bytes_read, NULL);
-+
-+		if (status !=3D G_IO_STATUS_NORMAL && status !=3D G_IO_STATUS_AGAIN)
-+			return FALSE;
-+
-+		return TRUE;
-+	}
-+
-+	return FALSE;
-+}
-+
- static int sap_probe(struct ofono_modem *modem)
- {
- 	DBG("%p", modem);
-@@ -115,8 +147,10 @@ static void sap_remove(struct ofono_modem *modem)
- static void sap_connect_reply(DBusPendingCall *call, gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
-+	struct sap_data *data =3D ofono_modem_get_data(modem);
- 	DBusError derr;
- 	DBusMessage *reply;
-+	int fd;
- =
-
- 	DBG("");
- =
-
-@@ -126,14 +160,31 @@ static void sap_connect_reply(DBusPendingCall *call, =
-gpointer user_data)
- 		goto done;
- =
-
- 	dbus_error_init(&derr);
--	if (!dbus_set_error_from_message(&derr, reply))
-+	if (dbus_set_error_from_message(&derr, reply)) {
-+
-+		DBG("Connect reply: %s", derr.message);
-+
++	if (ok)
 +		ofono_modem_set_powered(modem, FALSE);
++}
 +
-+		dbus_error_free(&derr);
- 		goto done;
-+	}
+ static int telit_sap_open()
+ {
+ 	const char *device =3D "/dev/ttyUSB4";
+@@ -191,9 +205,25 @@ static int telit_sap_enable(struct ofono_modem *modem)
+ 	return fd;
+ }
+ =
+
++static int telit_sap_disable(struct ofono_modem *modem)
++{
++	struct telit_data *data =3D ofono_modem_get_data(modem);
 +
-+	if (!dbus_message_get_args(reply, NULL, DBUS_TYPE_UNIX_FD, &fd,
-+				DBUS_TYPE_INVALID))
-+		return;
++	DBG("%p", modem);
++
++	g_at_chat_cancel_all(data->chat);
++	g_at_chat_unregister_all(data->chat);
++
++	g_at_chat_send(data->chat, "AT#RSEN=3D0", rsen_prefix,
++				rsen_disable_cb, modem, NULL);
++
++	return 0;
++}
++
+ static struct bluetooth_sap_driver sap_driver =3D {
+ 	.name =3D "telit",
+ 	.enable =3D telit_sap_enable,
++	.disable =3D telit_sap_disable,
+ };
  =
 
--	DBG("Connect reply: %s", derr.message);
-+	data->bt_io =3D g_io_channel_unix_new(fd);
-+	if (data->bt_io =3D=3D NULL)
-+		return;
- =
-
--	ofono_modem_set_powered(modem, FALSE);
-+	g_io_channel_set_encoding(data->bt_io, NULL, NULL);
-+	g_io_channel_set_buffered(data->bt_io, FALSE);
-+	g_io_channel_set_close_on_unref(data->bt_io, TRUE);
- =
-
--	dbus_error_free(&derr);
-+	data->bt_watch =3D g_io_add_watch_full(data->bt_io, G_PRIORITY_DEFAULT,
-+				G_IO_HUP | G_IO_ERR | G_IO_NVAL | G_IO_IN,
-+				bt_event_cb, modem, bt_watch_remove);
- =
-
- done:
- 	dbus_message_unref(reply);
+ static int telit_probe(struct ofono_modem *modem)
 -- =
 
 1.7.6.2
 
 
---===============1248843180904834466==--
+--===============1552542705223453547==--
 
