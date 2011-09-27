@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0508090404846965768=="
+Content-Type: multipart/mixed; boundary="===============5769086340043658832=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v4 15/21] sap: do a proper shutdown of the channels
-Date: Tue, 27 Sep 2011 18:04:14 -0300
-Message-ID: <1317157460-17012-15-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1317157460-17012-14-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH -v4 18/21] sap: de-register DBus callback if BlueZ goes down
+Date: Tue, 27 Sep 2011 18:04:17 -0300
+Message-ID: <1317157460-17012-18-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1317157460-17012-17-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0508090404846965768==
+--===============5769086340043658832==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,108 +16,82 @@ Content-Transfer-Encoding: quoted-printable
 From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 
 ---
- plugins/sap.c |   37 +++++++++++++++++++++++++++++++++++--
- 1 files changed, 35 insertions(+), 2 deletions(-)
+ plugins/sap.c |   11 ++++++++++-
+ 1 files changed, 10 insertions(+), 1 deletions(-)
 
 diff --git a/plugins/sap.c b/plugins/sap.c
-index 4f29477..c8b0ef5 100644
+index fbca3d8..9b8e670 100644
 --- a/plugins/sap.c
 +++ b/plugins/sap.c
-@@ -28,6 +28,7 @@
- #include <stdio.h>
- #include <errno.h>
- #include <unistd.h>
-+#include <sys/socket.h>
- #include <glib.h>
- #include <gdbus.h>
- #include <ofono.h>
-@@ -73,10 +74,36 @@ int bluetooth_sap_client_register(struct bluetooth_sap_=
-driver *sap,
- 	return 0;
- }
+@@ -60,6 +60,7 @@ struct sap_data {
+ 	GIOChannel *hw_io;
+ 	guint bt_watch;
+ 	guint hw_watch;
++	DBusPendingCall *call;
+ };
  =
 
-+static void sap_close_io(struct ofono_modem *modem)
-+{
-+	struct sap_data *data =3D ofono_modem_get_data(modem);
-+
-+	if (data->bt_io !=3D NULL) {
-+		int sk =3D g_io_channel_unix_get_fd(data->bt_io);
-+		shutdown(sk, SHUT_RDWR);
-+
-+		g_io_channel_unref(data->bt_io);
-+		data->bt_io =3D NULL;
-+	}
-+
-+	if (data->bt_watch > 0)
-+		g_source_remove(data->bt_watch);
-+
-+	if (data->hw_io !=3D NULL) {
-+		g_io_channel_unref(data->hw_io);
-+		data->hw_io =3D NULL;
-+	}
-+
-+	if (data->hw_watch > 0)
-+		g_source_remove(data->hw_watch);
-+}
-+
- static void sap_remove_modem(struct ofono_modem *modem)
- {
- 	struct sap_data *data =3D ofono_modem_get_data(modem);
+ int bluetooth_sap_client_register(struct bluetooth_sap_driver *sap,
+@@ -106,6 +107,9 @@ static void sap_remove_modem(struct ofono_modem *modem)
  =
 
-+	sap_close_io(modem);
+ 	sap_close_io(modem);
+ =
+
++	if (data->call !=3D NULL)
++		dbus_pending_call_cancel(data->call);
 +
  	g_free(data->server_path);
  	g_free(data);
  =
 
-@@ -193,6 +220,8 @@ static void sap_remove(struct ofono_modem *modem)
- static void sap_failed_cb(struct ofono_modem *modem)
- {
- 	DBG("%p", modem);
+@@ -238,6 +242,8 @@ static void sap_connect_reply(DBusPendingCall *call, gp=
+ointer user_data)
+ =
+
+ 	reply =3D dbus_pending_call_steal_reply(call);
+ =
+
++	data->call =3D NULL;
 +
-+	sap_close_io(modem);
+ 	if (ofono_modem_get_powered(modem))
+ 		goto done;
+ =
+
+@@ -300,6 +306,7 @@ done:
+ static int sap_enable(struct ofono_modem *modem)
+ {
+ 	struct sap_data *data =3D ofono_modem_get_data(modem);
++	DBusPendingCall *call;
+ 	int status;
+ 	const char *str =3D "sap";
+ =
+
+@@ -307,13 +314,15 @@ static int sap_enable(struct ofono_modem *modem)
+ =
+
+ 	status =3D bluetooth_send_with_reply(data->server_path,
+ 					BLUEZ_SERIAL_INTERFACE, "ConnectFD",
+-					NULL, sap_connect_reply, modem, NULL,
++					&call, sap_connect_reply, modem, NULL,
+ 					DBUS_TIMEOUT, DBUS_TYPE_STRING,
+ 					&str, DBUS_TYPE_INVALID);
+ =
+
+ 	if (status < 0)
+ 		return -EINVAL;
+ =
+
++	data->call =3D call;
++
+ 	return -EINPROGRESS;
  }
  =
 
- static void sap_connect_reply(DBusPendingCall *call, gpointer user_data)
-@@ -241,12 +270,14 @@ static void sap_connect_reply(DBusPendingCall *call, =
-gpointer user_data)
- 	data->sap_driver =3D sap_hw_driver;
- =
-
- 	fd =3D data->sap_driver->enable(data->hw_modem, modem, sap_failed_cb);
--	if (fd < 0)
-+	if (!fd)  {
-+		sap_close_io(modem);
- 		return;
-+	}
- =
-
- 	data->hw_io =3D g_io_channel_unix_new(fd);
- 	if (data->hw_io =3D=3D NULL) {
--		g_io_channel_unref(data->bt_io);
-+		sap_close_io(modem);
- 		close(fd);
- 		return;
- 	}
-@@ -290,6 +321,8 @@ static int sap_disable(struct ofono_modem *modem)
- =
-
- 	DBG("%p", modem);
- =
-
-+	sap_close_io(modem);
-+
- 	data->sap_driver->disable(data->hw_modem);
- =
-
- 	return 0;
 -- =
 
 1.7.6.2
 
 
---===============0508090404846965768==--
+--===============5769086340043658832==--
 
