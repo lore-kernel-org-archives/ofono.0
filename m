@@ -1,35 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============6893438419611015114=="
+Content-Type: multipart/mixed; boundary="===============5715729367105072701=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH -v4 21/21] sap: fix sap modem remove
-Date: Tue, 27 Sep 2011 23:45:36 -0500
-Message-ID: <4E82A670.5000802@gmail.com>
-In-Reply-To: <1317157460-17012-21-git-send-email-padovan@profusion.mobi>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH -v5 2/2] sap: clean up sap modem destruction
+Date: Wed, 28 Sep 2011 14:13:58 -0300
+Message-ID: <1317230038-28124-2-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1317230038-28124-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6893438419611015114==
+--===============5715729367105072701==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 
-On 09/27/2011 04:04 PM, Gustavo F. Padovan wrote:
-> From: "Gustavo F. Padovan" <gustavo@padovan.org>
-> =
+---
+ plugins/sap.c |   22 ++++++++++------------
+ 1 files changed, 10 insertions(+), 12 deletions(-)
 
-> prefix NULL means that the modem needs to be removed
-> ---
->  plugins/sap.c |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
-> =
+diff --git a/plugins/sap.c b/plugins/sap.c
+index 4579d8f..1c0d9ce 100644
+--- a/plugins/sap.c
++++ b/plugins/sap.c
+@@ -70,16 +70,6 @@ int bluetooth_sap_client_register(struct bluetooth_sap_d=
+river *sap,
+ 	return 0;
+ }
+ =
+
+-static void sap_remove_modem(struct ofono_modem *modem)
+-{
+-	struct sap_data *data =3D ofono_modem_get_data(modem);
+-
+-	g_free(data);
+-
+-	ofono_modem_set_data(modem, NULL);
+-
+-	ofono_modem_remove(modem);
+-}
+ =
+
+ void bluetooth_sap_client_unregister(struct ofono_modem *modem)
+ {
+@@ -93,7 +83,8 @@ void bluetooth_sap_client_unregister(struct ofono_modem *=
+modem)
+ =
+
+ 	while (g_hash_table_iter_next(&iter, &key, &value)) {
+ 		g_hash_table_iter_remove(&iter);
+-		sap_remove_modem(value);
++
++		ofono_modem_remove(value);
+ 	}
+ =
+
+ 	sap_hw_modem =3D NULL;
+@@ -117,7 +108,13 @@ static int sap_probe(struct ofono_modem *modem)
+ =
+
+ static void sap_remove(struct ofono_modem *modem)
+ {
++	struct sap_data *data =3D ofono_modem_get_data(modem);
++
+ 	DBG("%p", modem);
++
++	g_free(data);
++
++	ofono_modem_set_data(modem, NULL);
+ }
+ =
+
+ static void sap_connect_reply(DBusPendingCall *call, gpointer user_data)
+@@ -235,7 +232,8 @@ static void bluetooth_sap_remove(const char *prefix)
+ 			continue;
+ =
+
+ 		g_hash_table_iter_remove(&iter);
+-		sap_remove_modem(value);
++
++		ofono_modem_remove(value);
+ 	}
+ }
+ =
+
+-- =
+
+1.7.6.2
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============6893438419611015114==--
+--===============5715729367105072701==--
 
