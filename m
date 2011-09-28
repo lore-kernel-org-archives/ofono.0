@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4703694510888325426=="
+Content-Type: multipart/mixed; boundary="===============2877932335781415509=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v5 04/13] sap: enable SAP modem, when BlueZ replies
-Date: Wed, 28 Sep 2011 18:24:12 -0300
-Message-ID: <1317245061-6312-4-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1317245061-6312-3-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH -v5 05/13] telit: add suport the disable SAP client
+Date: Wed, 28 Sep 2011 18:24:13 -0300
+Message-ID: <1317245061-6312-5-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1317245061-6312-4-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4703694510888325426==
+--===============2877932335781415509==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,69 +16,174 @@ Content-Transfer-Encoding: quoted-printable
 From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 
 ---
- plugins/sap.c |   22 ++++++++++++++++++----
- 1 files changed, 18 insertions(+), 4 deletions(-)
+ plugins/bluetooth.h |    1 +
+ plugins/telit.c     |  100 ++++++++++++++++++++++++++++++++++-------------=
+---
+ 2 files changed, 69 insertions(+), 32 deletions(-)
 
-diff --git a/plugins/sap.c b/plugins/sap.c
-index 28b07e7..850ed2f 100644
---- a/plugins/sap.c
-+++ b/plugins/sap.c
-@@ -127,6 +127,7 @@ static void sap_connect_reply(DBusPendingCall *call, gp=
-ointer user_data)
- 	struct sap_data *data =3D ofono_modem_get_data(modem);
- 	DBusError derr;
- 	DBusMessage *reply;
-+	int fd, err;
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index 7e94f96..d38e72e 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -47,6 +47,7 @@ struct bluetooth_sap_driver {
+ 	const char *name;
+ 	int (*enable) (struct ofono_modem *modem, struct ofono_modem *sap_modem,
+ 								int bt_fd);
++	int (*disable) (struct ofono_modem *modem);
+ };
  =
 
- 	DBG("");
- =
-
-@@ -138,16 +139,29 @@ static void sap_connect_reply(DBusPendingCall *call, =
-gpointer user_data)
- 		goto done;
- =
-
- 	dbus_error_init(&derr);
--	if (!dbus_set_error_from_message(&derr, reply))
-+	if (dbus_set_error_from_message(&derr, reply)) {
-+
-+		DBG("Connect reply: %s", derr.message);
-+
-+		dbus_error_free(&derr);
- 		goto done;
-+	}
- =
-
--	DBG("Connect reply: %s", derr.message);
-+	if (!dbus_message_get_args(reply, NULL, DBUS_TYPE_UNIX_FD, &fd,
-+				DBUS_TYPE_INVALID))
-+		goto done;
- =
-
--	ofono_modem_set_powered(modem, FALSE);
-+	data->hw_modem =3D sap_hw_modem;
-+	data->sap_driver =3D sap_hw_driver;
- =
-
--	dbus_error_free(&derr);
-+	err =3D data->sap_driver->enable(data->hw_modem, modem, fd);
-+	if (err =3D=3D -EINPROGRESS) {
-+		dbus_message_unref(reply);
-+		return;
-+	}
- =
-
- done:
-+	ofono_modem_set_powered(modem, FALSE);
- 	dbus_message_unref(reply);
+ struct server;
+diff --git a/plugins/telit.c b/plugins/telit.c
+index 2e422e7..f39a7c4 100644
+--- a/plugins/telit.c
++++ b/plugins/telit.c
+@@ -245,6 +245,58 @@ static void rsen_enable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	}
  }
  =
 
++static void cfun_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct telit_data *data =3D ofono_modem_get_data(modem);
++
++	if(data->sap_modem)
++		modem =3D data->sap_modem;
++
++	DBG("%p", modem);
++
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
++
++	if (data->sim_inserted_source > 0)
++		g_source_remove(data->sim_inserted_source);
++
++	if (ok)
++		ofono_modem_set_powered(modem, FALSE);
++
++	data->sap_modem =3D NULL;
++}
++
++static int telit_disable(struct ofono_modem *modem)
++{
++	struct telit_data *data =3D ofono_modem_get_data(modem);
++	DBG("%p", modem);
++
++	g_at_chat_cancel_all(data->chat);
++	g_at_chat_unregister_all(data->chat);
++
++	/* Power down modem */
++	g_at_chat_send(data->chat, "AT+CFUN=3D0", none_prefix,
++				cfun_disable_cb, modem, NULL);
++
++	return -EINPROGRESS;
++}
++
++static void rsen_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct telit_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_at_chat_unref(data->aux);
++	data->aux =3D NULL;
++
++	sap_close_io(modem);
++
++	telit_disable(modem);
++}
++
+ static int telit_sap_open()
+ {
+ 	const char *device =3D "/dev/ttyUSB4";
+@@ -332,9 +384,25 @@ static int telit_sap_enable(struct ofono_modem *modem,
+ 	return -EINPROGRESS;
+ }
+ =
+
++static int telit_sap_disable(struct ofono_modem *modem)
++{
++	struct telit_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_at_chat_cancel_all(data->aux);
++	g_at_chat_unregister_all(data->aux);
++
++	g_at_chat_send(data->aux, "AT#RSEN=3D0", rsen_prefix,
++				rsen_disable_cb, modem, NULL);
++
++	return -EINPROGRESS;
++}
++
+ static struct bluetooth_sap_driver sap_driver =3D {
+ 	.name =3D "telit",
+ 	.enable =3D telit_sap_enable,
++	.disable =3D telit_sap_disable,
+ };
+ =
+
+ static int telit_probe(struct ofono_modem *modem)
+@@ -476,23 +544,6 @@ static void cfun_enable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 				telit_qss_cb, modem, NULL);
+ }
+ =
+
+-static void cfun_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+-{
+-	struct ofono_modem *modem =3D user_data;
+-	struct telit_data *data =3D ofono_modem_get_data(modem);
+-
+-	DBG("%p", modem);
+-
+-	g_at_chat_unref(data->chat);
+-	data->chat =3D NULL;
+-
+-	if (data->sim_inserted_source > 0)
+-		g_source_remove(data->sim_inserted_source);
+-
+-	if (ok)
+-		ofono_modem_set_powered(modem, FALSE);
+-}
+-
+ static int telit_enable(struct ofono_modem *modem)
+ {
+ 	struct telit_data *data =3D ofono_modem_get_data(modem);
+@@ -517,21 +568,6 @@ static int telit_enable(struct ofono_modem *modem)
+ 	return -EINPROGRESS;
+ }
+ =
+
+-static int telit_disable(struct ofono_modem *modem)
+-{
+-	struct telit_data *data =3D ofono_modem_get_data(modem);
+-	DBG("%p", modem);
+-
+-	g_at_chat_cancel_all(data->chat);
+-	g_at_chat_unregister_all(data->chat);
+-
+-	/* Power down modem */
+-	g_at_chat_send(data->chat, "AT+CFUN=3D0", none_prefix,
+-				cfun_disable_cb, modem, NULL);
+-
+-	return -EINPROGRESS;
+-}
+-
+ static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
+ {
+ 	struct cb_data *cbd =3D user_data;
 -- =
 
 1.7.6.2
 
 
---===============4703694510888325426==--
+--===============2877932335781415509==--
 
