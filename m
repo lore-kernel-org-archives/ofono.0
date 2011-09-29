@@ -1,43 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============0414475834156309270=="
+Content-Type: multipart/mixed; boundary="===============4621732789199886215=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCHv7 3/3] plugins: Add provisioning plugin
-Date: Thu, 29 Sep 2011 14:39:00 +0300
-Message-ID: <4E8458D4.7030506@intel.com>
-In-Reply-To: <4E82A123.9020408@gmail.com>
+Date: Thu, 29 Sep 2011 09:03:37 -0500
+Message-ID: <4E847AB9.6000407@gmail.com>
+In-Reply-To: <4E8458D4.7030506@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0414475834156309270==
+--===============4621732789199886215==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+Hi Oleg,
 
-On 09/28/2011 07:22 AM, Denis Kenzior wrote:
-> Please don't copy paste the contents of plugins/mbpi.c.  The intent is
-> to just re-use that code, similar to how tools/lookup-apn.c works.  If
-> you want to make any improvements to plugins/mbpi.c, then submit a
-> separate patch against that file.
+On 09/29/2011 06:39 AM, Oleg Zhurakivskyy wrote:
+> Hello Denis,
+> =
 
-I must have misunderstood the intent then. Just to make sure there's no fur=
-ther =
+> On 09/28/2011 07:22 AM, Denis Kenzior wrote:
+>> Please don't copy paste the contents of plugins/mbpi.c.  The intent is
+>> to just re-use that code, similar to how tools/lookup-apn.c works.  If
+>> you want to make any improvements to plugins/mbpi.c, then submit a
+>> separate patch against that file.
+> =
 
-misunderstanding on this, so the plugin plugins/provision.c would use the p=
-arser =
+> I must have misunderstood the intent then. Just to make sure there's no
+> further misunderstanding on this, so the plugin plugins/provision.c
+> would use the parser plugins/mpbi.c?
 
-plugins/mpbi.c?
+Correct.
 
 Regards,
-Oleg
--- =
+-Denis
 
-Intel Finland Oy
-Registered Address: PL 281, 00181 Helsinki
-Business Identity Code: 0357606 - 4
-Domiciled in Helsinki
-
-
---===============0414475834156309270==--
+--===============4621732789199886215==--
 
