@@ -1,42 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============3167423988170799985=="
+Content-Type: multipart/mixed; boundary="===============0414475834156309270=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v5 13/13] sap: clean up extra blank line
-Date: Wed, 28 Sep 2011 18:24:21 -0300
-Message-ID: <1317245061-6312-13-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1317245061-6312-12-git-send-email-padovan@profusion.mobi>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: Re: [PATCHv7 3/3] plugins: Add provisioning plugin
+Date: Thu, 29 Sep 2011 14:39:00 +0300
+Message-ID: <4E8458D4.7030506@intel.com>
+In-Reply-To: <4E82A123.9020408@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3167423988170799985==
+--===============0414475834156309270==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: "Gustavo F. Padovan" <padovan@profusion.mobi>
+Hello Denis,
 
----
- plugins/sap.c |    1 -
- 1 files changed, 0 insertions(+), 1 deletions(-)
+On 09/28/2011 07:22 AM, Denis Kenzior wrote:
+> Please don't copy paste the contents of plugins/mbpi.c.  The intent is
+> to just re-use that code, similar to how tools/lookup-apn.c works.  If
+> you want to make any improvements to plugins/mbpi.c, then submit a
+> separate patch against that file.
 
-diff --git a/plugins/sap.c b/plugins/sap.c
-index 1f760be..bad995d 100644
---- a/plugins/sap.c
-+++ b/plugins/sap.c
-@@ -71,7 +71,6 @@ int bluetooth_sap_client_register(struct bluetooth_sap_dr=
-iver *sap,
- 	return 0;
- }
- =
+I must have misunderstood the intent then. Just to make sure there's no fur=
+ther =
 
--
- void bluetooth_sap_client_unregister(struct ofono_modem *modem)
- {
- 	GHashTableIter iter;
+misunderstanding on this, so the plugin plugins/provision.c would use the p=
+arser =
+
+plugins/mpbi.c?
+
+Regards,
+Oleg
 -- =
 
-1.7.6.2
+Intel Finland Oy
+Registered Address: PL 281, 00181 Helsinki
+Business Identity Code: 0357606 - 4
+Domiciled in Helsinki
 
 
---===============3167423988170799985==--
+--===============0414475834156309270==--
 
