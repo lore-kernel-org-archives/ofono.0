@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4018733304682548083=="
+Content-Type: multipart/mixed; boundary="===============6040551573636919234=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH -v5 07/13] telit: enable the telit modem after enable SAP
- client
-Date: Thu, 29 Sep 2011 11:19:57 -0500
-Message-ID: <4E849AAD.8090400@gmail.com>
-In-Reply-To: <1317245061-6312-7-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH -v5 09/13] telit: add post_sim to SAP Client
+Date: Thu, 29 Sep 2011 11:20:27 -0500
+Message-ID: <4E849ACB.30105@gmail.com>
+In-Reply-To: <1317245061-6312-9-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4018733304682548083==
+--===============6040551573636919234==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -21,16 +20,14 @@ On 09/28/2011 04:24 PM, Gustavo F. Padovan wrote:
 > =
 
 > ---
->  plugins/telit.c |  271 +++++++++++++++++++++++++++++--------------------=
-------
->  1 files changed, 141 insertions(+), 130 deletions(-)
-> =
-
+>  plugins/bluetooth.h |    1 +
+>  plugins/telit.c     |   22 +++++++++++++---------
+>  2 files changed, 14 insertions(+), 9 deletions(-)
 
 Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============4018733304682548083==--
+--===============6040551573636919234==--
 
