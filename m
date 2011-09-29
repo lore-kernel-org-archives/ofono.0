@@ -1,34 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============7860243318141014915=="
+Content-Type: multipart/mixed; boundary="===============5713168678322510678=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH -v5 13/13] sap: clean up extra blank line
-Date: Thu, 29 Sep 2011 11:22:36 -0500
-Message-ID: <4E849B4C.9040006@gmail.com>
-In-Reply-To: <1317245061-6312-13-git-send-email-padovan@profusion.mobi>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH 1/6] sap: add sap modem disable() support
+Date: Thu, 29 Sep 2011 14:54:21 -0300
+Message-ID: <1317318866-9027-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7860243318141014915==
+--===============5713168678322510678==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 
-On 09/28/2011 04:24 PM, Gustavo F. Padovan wrote:
-> From: "Gustavo F. Padovan" <padovan@profusion.mobi>
-> =
+---
+ plugins/sap.c |    4 +++-
+ 1 files changed, 3 insertions(+), 1 deletions(-)
 
-> ---
->  plugins/sap.c |    1 -
->  1 files changed, 0 insertions(+), 1 deletions(-)
-> =
+diff --git a/plugins/sap.c b/plugins/sap.c
+index ab658a5..102abc9 100644
+--- a/plugins/sap.c
++++ b/plugins/sap.c
+@@ -191,9 +191,11 @@ static int sap_enable(struct ofono_modem *modem)
+ =
+
+ static int sap_disable(struct ofono_modem *modem)
+ {
++	struct sap_data *data =3D ofono_modem_get_data(modem);
++
+ 	DBG("%p", modem);
+ =
+
+-	return 0;
++	return data->sap_driver->disable(data->hw_modem);
+ }
+ =
+
+ static void sap_pre_sim(struct ofono_modem *modem)
+-- =
+
+1.7.6.2
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============7860243318141014915==--
+--===============5713168678322510678==--
 
