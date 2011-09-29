@@ -1,39 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============4621732789199886215=="
+Content-Type: multipart/mixed; boundary="===============7725625770456691127=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv7 3/3] plugins: Add provisioning plugin
-Date: Thu, 29 Sep 2011 09:03:37 -0500
-Message-ID: <4E847AB9.6000407@gmail.com>
-In-Reply-To: <4E8458D4.7030506@intel.com>
+Subject: Re: [PATCH -v5 02/13] sap: remove connect callback if enable fails
+Date: Thu, 29 Sep 2011 10:50:56 -0500
+Message-ID: <4E8493E0.6000008@gmail.com>
+In-Reply-To: <1317245061-6312-2-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4621732789199886215==
+--===============7725625770456691127==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Oleg,
+Hi Gustavo,
 
-On 09/29/2011 06:39 AM, Oleg Zhurakivskyy wrote:
-> Hello Denis,
+On 09/28/2011 04:24 PM, Gustavo F. Padovan wrote:
+> From: "Gustavo F. Padovan" <padovan@profusion.mobi>
 > =
 
-> On 09/28/2011 07:22 AM, Denis Kenzior wrote:
->> Please don't copy paste the contents of plugins/mbpi.c.  The intent is
->> to just re-use that code, similar to how tools/lookup-apn.c works.  If
->> you want to make any improvements to plugins/mbpi.c, then submit a
->> separate patch against that file.
+> ---
+>  plugins/sap.c |   13 ++++++++++++-
+>  1 files changed, 12 insertions(+), 1 deletions(-)
 > =
 
-> I must have misunderstood the intent then. Just to make sure there's no
-> further misunderstanding on this, so the plugin plugins/provision.c
-> would use the parser plugins/mpbi.c?
 
-Correct.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============4621732789199886215==--
+--===============7725625770456691127==--
 
