@@ -1,104 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============8502766929383213927=="
+Content-Type: multipart/mixed; boundary="===============8088076714632149733=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv8 6/6] tools: lookup-apn update
-Date: Fri, 30 Sep 2011 16:31:14 +0300
-Message-ID: <1317389474-16566-7-git-send-email-oleg.zhurakivskyy@intel.com>
-In-Reply-To: <1317389474-16566-1-git-send-email-oleg.zhurakivskyy@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCHv8 3/6] plugins: mobile-broadband-provider-info parser
+ changes
+Date: Fri, 30 Sep 2011 09:57:45 -0500
+Message-ID: <4E85D8E9.4010302@gmail.com>
+In-Reply-To: <1317389474-16566-4-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8502766929383213927==
+--===============8088076714632149733==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- tools/lookup-apn.c |   32 +++++++++++++++++---------------
- 1 files changed, 17 insertions(+), 15 deletions(-)
+Hi Oleg,
 
-diff --git a/tools/lookup-apn.c b/tools/lookup-apn.c
-index 2969baf..c4cb928 100644
---- a/tools/lookup-apn.c
-+++ b/tools/lookup-apn.c
-@@ -24,12 +24,7 @@
- #endif
- =
+On 09/30/2011 08:31 AM, Oleg Zhurakivskyy wrote:
+> ---
+>  plugins/mbpi.h |    4 +++-
+>  1 files changed, 3 insertions(+), 1 deletions(-)
+> =
 
- #include <stdio.h>
--#include <fcntl.h>
--#include <unistd.h>
- #include <stdlib.h>
--#include <string.h>
--#include <sys/stat.h>
--#include <sys/mman.h>
- =
+> diff --git a/plugins/mbpi.h b/plugins/mbpi.h
+> index fc9f738..bb6bfdc 100644
+> --- a/plugins/mbpi.h
+> +++ b/plugins/mbpi.h
+> @@ -19,7 +19,9 @@
+>   *
+>   */
+>  =
 
- #include <glib.h>
- =
+> -void mbpi_provision_data_free(struct ofono_gprs_provision_data *data);
+> +const char *mbpi_ap_type(enum ofono_gprs_context_type type);
+> +
+> +void mbpi_ap_free(struct ofono_gprs_provision_data *ap);
+>  =
 
-@@ -39,31 +34,38 @@
- =
+>  GSList *mbpi_lookup(const char *mcc, const char *mnc,
+>  			gboolean allow_duplicates, GError **error);
 
- #include "plugins/mbpi.h"
- =
+This patch makes no logical sense.  If you want to add a new
+mbpi_ap_type function, then send a patch against mbpi.h and mbpi.c
+adding such a function.
 
--static void lookup_apn(const char *match_mcc, const char *match_mnc)
-+static void lookup_apn(const char *mcc, const char *mnc)
- {
- 	GSList *l;
- 	GSList *apns;
- 	GError *error =3D NULL;
- =
+If you want to rename mbpi_provision_data_free to mbpi_ap_free, then
+send a patch against mbpi.h, mbpi.c and a separate patch against
+tools/lookup-apn.c
 
--	printf("Searching for info for network: %s%s\n", match_mcc, match_mnc);
-+	printf("Searching for info for network: %s%s\n", mcc, mnc);
- =
+The only time you should separate .h and .c patches are when you're
+modifying public API in include/*
 
--	apns =3D mbpi_lookup(match_mcc, match_mnc, TRUE, &error);
-+	apns =3D mbpi_lookup(mcc, mnc, FALSE, &error);
- =
+See HACKING document, the 'Submitting patches' section in particular.
 
- 	if (apns =3D=3D NULL) {
--		g_print("Lookup failed: %s\n", error->message);
-+		if (error !=3D NULL) {
-+			g_printerr("Lookup failed: %s\n", error->message);
-+			g_error_free(error);
-+		}
-+
- 		return;
- 	}
- =
+Regards,
+-Denis
 
-+	printf("Found %d APs\n", g_slist_length(apns));
-+
- 	for (l =3D apns; l; l =3D l->next) {
--		struct ofono_gprs_provision_data *apn =3D l->data;
-+		struct ofono_gprs_provision_data *ap =3D l->data;
- =
-
- 		printf("\n");
--		printf("Name: %s\n", apn->name);
--		printf("APN: %s\n", apn->apn);
--		printf("Username: %s\n", apn->username);
--		printf("Password: %s\n", apn->password);
-+		printf("Name: '%s'\n", ap->name);
-+		printf("APN: '%s'\n", ap->apn);
-+		printf("Type: %s\n", mbpi_ap_type(ap->type));
-+		printf("Username: '%s'\n", ap->username);
-+		printf("Password: '%s'\n", ap->password);
- =
-
--		mbpi_provision_data_free(apn);
-+		mbpi_ap_free(ap);
- 	}
- =
-
- 	g_slist_free(apns);
--- =
-
-1.7.4.1
-
-
---===============8502766929383213927==--
+--===============8088076714632149733==--
 
