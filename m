@@ -1,34 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============2817376444941712566=="
+Content-Type: multipart/mixed; boundary="===============1891707042688559765=="
 MIME-Version: 1.0
-From: Sankar <gsankar.gs@gmail.com>
-Subject: Source code
-Date: Tue, 04 Oct 2011 23:41:16 +0530
-Message-ID: <CAAUmvkmZk4RQcVcavnZAKJZkOjZpjfU8iBaAfpJREO7TFtT5-g@mail.gmail.com>
+From: Gustavo Padovan <padovan@profusion.mobi>
+Subject: Re: Source code
+Date: Tue, 04 Oct 2011 16:47:03 -0300
+Message-ID: <20111004194703.GA9945@joana>
+In-Reply-To: <CAAUmvkmZk4RQcVcavnZAKJZkOjZpjfU8iBaAfpJREO7TFtT5-g@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2817376444941712566==
+--===============1891707042688559765==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Sankar,
 
-I am trying to download the source code of oFono. Looks like the link is
-down.  Can some one pls help
+* Sankar <gsankar.gs@gmail.com> [2011-10-04 23:41:16 +0530]:
 
-Thanks,
-Sankar.
+> Hi,
+> =
 
---===============2817376444941712566==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+> I am trying to download the source code of oFono. Looks like the link is
+> down.  Can some one pls help
 
-PHA+SGksPC9wPgo8cD5JIGFtIHRyeWluZyB0byBkb3dubG9hZCB0aGUgc291cmNlIGNvZGUgb2Yg
-b0Zvbm8uIExvb2tzIGxpa2UgdGhlIGxpbmsgaXMgZG93bi6gIENhbiBzb21lIG9uZSBwbHMgaGVs
-cDwvcD4KPHA+VGhhbmtzLDxicj4KU2Fua2FyLjwvcD4K
+Kernel.org host is temporally down, meanwhile oFono is at =
 
---===============2817376444941712566==--
+
+http://github.com/connectivity/ofono/
+
+But once kernel.org is fully back with its hosting services, oFono git tree
+will be moved to there and github tree will be abandoned. Pay attention on
+this to not follow the wrong tree.
+
+	Gustavo
+
+--===============1891707042688559765==--
 
