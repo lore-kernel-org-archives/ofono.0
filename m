@@ -1,57 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============5430378716858512338=="
+Content-Type: multipart/mixed; boundary="===============0492068892329440441=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv9 05/16] mbpi: Improve mbpi_lookup() error reporting
-Date: Wed, 05 Oct 2011 16:18:28 +0300
-Message-ID: <1317820719-23609-6-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv9 06/16] lookup-apn: Remove unused includes
+Date: Wed, 05 Oct 2011 16:18:29 +0300
+Message-ID: <1317820719-23609-7-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1317820719-23609-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5430378716858512338==
+--===============0492068892329440441==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/mbpi.c |    9 ++++++---
- 1 files changed, 6 insertions(+), 3 deletions(-)
+ tools/lookup-apn.c |    5 -----
+ 1 files changed, 0 insertions(+), 5 deletions(-)
 
-diff --git a/plugins/mbpi.c b/plugins/mbpi.c
-index 8f3a4b4..0f7cd50 100644
---- a/plugins/mbpi.c
-+++ b/plugins/mbpi.c
-@@ -378,7 +378,8 @@ GSList *mbpi_lookup(const char *mcc, const char *mnc,
- 	if (fd < 0) {
- 		g_set_error(error, G_FILE_ERROR,
- 				g_file_error_from_errno(errno),
--				"open failed: %s", g_strerror(errno));
-+				"open(%s) failed: %s", MBPI_DATABASE,
-+				g_strerror(errno));
- 		return NULL;
- 	}
+diff --git a/tools/lookup-apn.c b/tools/lookup-apn.c
+index 2969baf..b192c7c 100644
+--- a/tools/lookup-apn.c
++++ b/tools/lookup-apn.c
+@@ -24,12 +24,7 @@
+ #endif
  =
 
-@@ -386,7 +387,8 @@ GSList *mbpi_lookup(const char *mcc, const char *mnc,
- 		close(fd);
- 		g_set_error(error, G_FILE_ERROR,
- 				g_file_error_from_errno(errno),
--				"fstat failed: %s", g_strerror(errno));
-+				"fstat(%s) failed: %s", MBPI_DATABASE,
-+				g_strerror(errno));
- 		return NULL;
- 	}
+ #include <stdio.h>
+-#include <fcntl.h>
+-#include <unistd.h>
+ #include <stdlib.h>
+-#include <string.h>
+-#include <sys/stat.h>
+-#include <sys/mman.h>
  =
 
-@@ -395,7 +397,8 @@ GSList *mbpi_lookup(const char *mcc, const char *mnc,
- 		close(fd);
- 		g_set_error(error, G_FILE_ERROR,
- 				g_file_error_from_errno(errno),
--				"mmap failed: %s", g_strerror(errno));
-+				"mmap(%s) failed: %s", MBPI_DATABASE,
-+				g_strerror(errno));
- 		return NULL;
- 	}
+ #include <glib.h>
  =
 
 -- =
@@ -59,5 +42,5 @@ index 8f3a4b4..0f7cd50 100644
 1.7.4.1
 
 
---===============5430378716858512338==--
+--===============0492068892329440441==--
 
