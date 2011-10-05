@@ -1,54 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============3169050248772037238=="
+Content-Type: multipart/mixed; boundary="===============4110742891929984217=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: Re: [PATCHv8 4/6] plugins: mobile-broadband-provider-info parser
- changes
-Date: Wed, 05 Oct 2011 11:07:43 +0300
-Message-ID: <4E8C104F.2090008@intel.com>
-In-Reply-To: <4E8B128D.5060203@gmail.com>
+Subject: [PATCHv9 00/16] Provisioning plugin
+Date: Wed, 05 Oct 2011 16:18:23 +0300
+Message-ID: <1317820719-23609-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3169050248772037238==
+--===============4110742891929984217==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+Hello,
 
-On 10/04/2011 05:05 PM, Denis Kenzior wrote:
-> While you're strictly right, in practice this is not something to worry
-> about.  Our convention is to ignore the possibility of failure on small
-> allocations, these can't really happen on Linux anyway.  The OOM killer
-> will kill something before that happens, likely a system daemon that is
-> even more important than oFono ;)
->
-> As a rule of thumb the only time you should worry about memory
-> allocations is when you're allocating more than a few pages worth of
-> memory.
+Please find the provisioning plugin ("Internet Access Provider database" TO=
+DO item).
 
-OK. Thanks for the clarification, I will follow this approach.
-
->> In case there are multiple "name", "username", "password" entries per
->> APN. In theory this can't happen with the proper validation of the
->> database, in practice users can edit it manually and use without the
->> validation, which would result in the memory leak. Does this make sense?
->
-> I don't think it does, no user should be able to edit the provisioning
-> database.  oFono is running as root and expects this to be readable by
-> root only.  If you really want to handle this case then returning an
-> error (since that is what it is) would be way better.
-
-OK, let's stick to the original approach here.
+If enabled, the plugin reads mobile-broadband-provider-info database entrie=
+s (PROVIDER_DATABASE) and returns GRPS context settings to oFono provisioni=
+ng module.
 
 Regards,
 Oleg
+
+Oleg Zhurakivskyy (16):
+  mbpi: Remove unused includes
+  mbpi: Split gsm_start() for readability
+  mbpi: Reflow gsm_end()
+  mbpi: Fix handling of the usage element
+  mbpi: Improve mbpi_lookup() error reporting
+  lookup-apn: Remove unused includes
+  lookup-apn: Fix crash on no APNs found
+  provision: Add provisioning plugin
+  mbpi: Add filename and line information on error
+  mbpi: Add mbpi_ap_type()
+  lookup-apn: Use mbpi_ap_type()
+  mbpi: Rename mbpi_provision_data_free() into mbpi_ap_free()
+  lookup-apn: Use mbpi_ap_free()
+  mbpi: Minor style issues
+  lookup-apn: Follow plugin's duplicates approach
+  lookup-apn: Minor style issues
+
+ Makefile.am         |    7 ++
+ configure.ac        |   23 +++--
+ plugins/mbpi.c      |  291 ++++++++++++++++++++++++++++++-----------------=
+----
+ plugins/mbpi.h      |    4 +-
+ plugins/provision.c |  120 +++++++++++++++++++++
+ tools/lookup-apn.c  |   34 +++---
+ 6 files changed, 336 insertions(+), 143 deletions(-)
+ create mode 100644 plugins/provision.c
+
 -- =
 
-Intel Finland Oy
-Registered Address: PL 281, 00181 Helsinki
-Business Identity Code: 0357606 - 4
-Domiciled in Helsinki
+1.7.4.1
 
---===============3169050248772037238==--
+
+--===============4110742891929984217==--
 
