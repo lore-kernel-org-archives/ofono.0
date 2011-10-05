@@ -1,98 +1,114 @@
-Content-Type: multipart/mixed; boundary="===============7730275660902935428=="
+Content-Type: multipart/mixed; boundary="===============4215011660769743947=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv9 03/16] mbpi: Reflow gsm_end()
-Date: Wed, 05 Oct 2011 16:18:26 +0300
-Message-ID: <1317820719-23609-4-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv9 04/16] mbpi: Fix handling of the usage element
+Date: Wed, 05 Oct 2011 16:18:27 +0300
+Message-ID: <1317820719-23609-5-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1317820719-23609-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7730275660902935428==
+--===============4215011660769743947==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/mbpi.c |   42 ++++++++++++++++++++++--------------------
- 1 files changed, 22 insertions(+), 20 deletions(-)
+ plugins/mbpi.c |   44 +++++++++++++++++++++++---------------------
+ 1 files changed, 23 insertions(+), 21 deletions(-)
 
 diff --git a/plugins/mbpi.c b/plugins/mbpi.c
-index 8cb4e23..fce70ba 100644
+index fce70ba..8f3a4b4 100644
 --- a/plugins/mbpi.c
 +++ b/plugins/mbpi.c
-@@ -270,35 +270,37 @@ static void gsm_start(GMarkupParseContext *context, c=
-onst gchar *element_name,
- static void gsm_end(GMarkupParseContext *context, const gchar *element_nam=
-e,
- 			gpointer userdata, GError **error)
+@@ -90,33 +90,36 @@ static const GMarkupParser text_parser =3D {
+ 	NULL,
+ };
+ =
+
+-static void usage_handler(GMarkupParseContext *context,
+-				const gchar *text, gsize text_len,
+-				gpointer userdata, GError **error)
++static void usage_start(const gchar **attribute_names,
++			const gchar **attribute_values,
++			enum ofono_gprs_context_type *type, GError **error)
  {
--	struct gsm_data *gsm =3D userdata;
-+	struct gsm_data *gsm;
-+	struct ofono_gprs_provision_data *apn;
+-	enum ofono_gprs_context_type *type =3D userdata;
++	const char *text =3D NULL;
++	int i;
 +
-+	if (!g_str_equal(element_name, "apn"))
-+		return;
- =
-
--	if (g_str_equal(element_name, "apn")) {
--		struct ofono_gprs_provision_data *apn =3D
--					g_markup_parse_context_pop(context);
-+	gsm =3D userdata;
- =
-
--		if (apn =3D=3D NULL)
--			return;
-+	apn =3D g_markup_parse_context_pop(context);
-+	if (apn =3D=3D NULL)
-+		return;
- =
-
--		if (gsm->allow_duplicates =3D=3D FALSE) {
--			GSList *l;
-+	if (gsm->allow_duplicates =3D=3D FALSE) {
-+		GSList *l;
- =
-
--			for (l =3D gsm->apns; l; l =3D l->next) {
--				struct ofono_gprs_provision_data *pd =3D l->data;
-+		for (l =3D gsm->apns; l; l =3D l->next) {
-+			struct ofono_gprs_provision_data *pd =3D l->data;
- =
-
--				if (pd->type !=3D apn->type)
--					continue;
-+			if (pd->type !=3D apn->type)
-+				continue;
- =
-
--				g_set_error(error, mbpi_error_quark(),
--						MBPI_ERROR_DUPLICATE,
--						"Duplicate context detected");
-+			g_set_error(error, mbpi_error_quark(),
-+					MBPI_ERROR_DUPLICATE,
-+					"Duplicate context detected");
- =
-
--				mbpi_provision_data_free(apn);
--				return;
--			}
-+			mbpi_provision_data_free(apn);
-+			return;
- 		}
--
--		gsm->apns =3D g_slist_append(gsm->apns, apn);
- 	}
++	for (i =3D 0; attribute_names[i]; i++)
++		if (g_str_equal(attribute_names[i], "type") =3D=3D TRUE)
++			text =3D attribute_values[i];
 +
-+	gsm->apns =3D g_slist_append(gsm->apns, apn);
++	if (text =3D=3D NULL) {
++		g_set_error(error, G_MARKUP_ERROR,
++				G_MARKUP_ERROR_MISSING_ATTRIBUTE,
++				"Missing attribute: type");
++		return;
++	}
+ =
+
+-	if (strncmp(text, "internet", text_len) =3D=3D 0)
++	if (strcmp(text, "internet") =3D=3D 0)
+ 		*type =3D OFONO_GPRS_CONTEXT_TYPE_INTERNET;
+-	else if (strncmp(text, "mms", text_len) =3D=3D 0)
++	else if (strcmp(text, "mms") =3D=3D 0)
+ 		*type =3D OFONO_GPRS_CONTEXT_TYPE_MMS;
+-	else if (strncmp(text, "wap", text_len) =3D=3D 0)
++	else if (strcmp(text, "wap") =3D=3D 0)
+ 		*type =3D OFONO_GPRS_CONTEXT_TYPE_WAP;
+ 	else
+ 		g_set_error(error, G_MARKUP_ERROR,
+ 					G_MARKUP_ERROR_UNKNOWN_ATTRIBUTE,
+-					"Unknown usage attribute: %.*s",
+-					(int) text_len, text);
++					"Unknown usage attribute: %s", text);
  }
  =
 
- static const GMarkupParser gsm_parser =3D {
+-static const GMarkupParser usage_parser =3D {
+-	NULL,
+-	NULL,
+-	usage_handler,
+-	NULL,
+-	NULL,
+-};
+-
+ static void apn_start(GMarkupParseContext *context, const gchar *element_n=
+ame,
+ 			const gchar **attribute_names,
+ 			const gchar **attribute_values,
+@@ -133,8 +136,8 @@ static void apn_start(GMarkupParseContext *context, con=
+st gchar *element_name,
+ 		g_markup_parse_context_push(context, &text_parser,
+ 						&apn->password);
+ 	else if (g_str_equal(element_name, "usage"))
+-		g_markup_parse_context_push(context, &usage_parser,
+-						&apn->type);
++		usage_start(attribute_names, attribute_values,
++				&apn->type, error);
+ }
+ =
+
+ static void apn_end(GMarkupParseContext *context, const gchar *element_nam=
+e,
+@@ -142,8 +145,7 @@ static void apn_end(GMarkupParseContext *context, const=
+ gchar *element_name,
+ {
+ 	if (g_str_equal(element_name, "name") ||
+ 			g_str_equal(element_name, "username") ||
+-			g_str_equal(element_name, "password") ||
+-			g_str_equal(element_name, "usage"))
++			g_str_equal(element_name, "password"))
+ 		g_markup_parse_context_pop(context);
+ }
+ =
+
 -- =
 
 1.7.4.1
 
 
---===============7730275660902935428==--
+--===============4215011660769743947==--
 
