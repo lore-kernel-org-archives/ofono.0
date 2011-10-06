@@ -1,101 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============3647048010651361598=="
+Content-Type: multipart/mixed; boundary="===============2944661398917645443=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv9 16/16] lookup-apn: Minor style issues
-Date: Wed, 05 Oct 2011 16:18:39 +0300
-Message-ID: <1317820719-23609-17-git-send-email-oleg.zhurakivskyy@intel.com>
-In-Reply-To: <1317820719-23609-1-git-send-email-oleg.zhurakivskyy@intel.com>
+From: Mikel Astiz <mikel.astiz@bmw-carit.de>
+Subject: AT commands not being parsed correctly from Samsung Wave HFP
+Date: Thu, 06 Oct 2011 19:45:18 +0200
+Message-ID: <4E8DE92E.30902@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3647048010651361598==
+--===============2944661398917645443==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- tools/lookup-apn.c |   23 +++++++++++------------
- 1 files changed, 11 insertions(+), 12 deletions(-)
+Hi all,
 
-diff --git a/tools/lookup-apn.c b/tools/lookup-apn.c
-index 9c0d345..29c0027 100644
---- a/tools/lookup-apn.c
-+++ b/tools/lookup-apn.c
-@@ -23,7 +23,6 @@
- #include <config.h>
- #endif
- =
+He are having some trouble with the Samsung Wave, apparently because the =
 
--#include <stdio.h>
- #include <stdlib.h>
- =
+AT commands are not being parsed correctly. Here you have the log from =
 
- #include <glib.h>
-@@ -40,7 +39,7 @@ static void lookup_apn(const char *match_mcc, const char =
-*match_mnc)
- 	GSList *apns;
- 	GError *error =3D NULL;
- =
+oFono:
 
--	printf("Searching for info for network: %s%s\n", match_mcc, match_mnc);
-+	g_print("Searching for info for network: %s%s\n", match_mcc, match_mnc);
- =
+ofonod[12078]: plugins/hfp_hf.c:hfp_enable() 0x1aa8f90
+ofonod[12078]: > AT+BRSF=3D118\r
+ofonod[12078]: < \r\n+BRSF: 481\r\n
+ofonod[12078]: < \r\nOK\r\n
+ofonod[12078]: > AT+CIND=3D?\r
+ofonod[12078]: < \r\n+CIND: =
 
- 	apns =3D mbpi_lookup(match_mcc, match_mnc, FALSE, &error);
- =
+("call",(0,1)),("callsetup",(0-3)),("service",(0,1)),("signal",(0-5)),("roa=
+m",(0,1)),("battchg",(0-5)),("callheld",(0-2))\r\n
+ofonod[12078]: < \r\nOK\r\n
+ofonod[12078]: > AT+CIND?\r
+ofonod[12078]: < \r\n+CIND: 0,0,1,5,0,1,0\r\n
+ofonod[12078]: < \r\nOK\r\n
+ofonod[12078]: > AT+CMER=3D3,0,0,1\r
+ofonod[12078]: < \r\nOK\r\n
+ofonod[12078]: > AT+CHLD=3D?\r
+ofonod[12078]: < \r\n+CHLD: (0,1,1x,2,2x,3,4)\r\n
+ofonod[12078]: < \r\nOK\r\n
+ofonod[12078]: src/modem.c:modem_change_state() old state: 0, new state: 1
+ofonod[12078]: plugins/hfp_hf.c:hfp_pre_sim() 0x1aa8f90
+ofonod[12078]: drivers/hfpmodem/call-volume.c:hfp_call_volume_probe()
+ofonod[12078]: drivers/hfpmodem/handsfree.c:hfp_handsfree_probe()
+ofonod[12078]: src/modem.c:modem_change_state() old state: 1, new state: 2
+ofonod[12078]: plugins/hfp_hf.c:hfp_post_sim() 0x1aa8f90
+ofonod[12078]: src/modem.c:modem_change_state() old state: 2, new state: 3
+ofonod[12078]: Service level connection established
+ofonod[12078]: > AT+CMEE=3D1\r
+ofonod[12078]: drivers/hfpmodem/call-volume.c:hfp_call_volume_register()
+ofonod[12078]: < \r\nOK\r\n
+ofonod[12078]: > AT+CLIP=3D1\r
+ofonod[12078]: < \r\nOK\r\n
+ofonod[12078]: > AT+CCWA=3D1\r
+ofonod[12078]: < \r\nOK\r\n
+ofonod[12078]: drivers/hfpmodem/voicecall.c:hfp_voicecall_initialized() =
 
-@@ -53,16 +52,16 @@ static void lookup_apn(const char *match_mcc, const cha=
-r *match_mnc)
- 	}
- =
-
- 	for (l =3D apns; l; l =3D l->next) {
--		struct ofono_gprs_provision_data *apn =3D l->data;
-+		struct ofono_gprs_provision_data *ap =3D l->data;
- =
-
--		printf("\n");
--		printf("Name: %s\n", apn->name);
--		printf("APN: %s\n", apn->apn);
--		printf("Type: %s\n", mbpi_ap_type(apn->type));
--		printf("Username: %s\n", apn->username);
--		printf("Password: %s\n", apn->password);
-+		g_print("\n");
-+		g_print("Name: %s\n", ap->name);
-+		g_print("APN: %s\n", ap->apn);
-+		g_print("Type: %s\n", mbpi_ap_type(ap->type));
-+		g_print("Username: %s\n", ap->username);
-+		g_print("Password: %s\n", ap->password);
- =
-
--		mbpi_ap_free(apn);
-+		mbpi_ap_free(ap);
- 	}
- =
-
- 	g_slist_free(apns);
-@@ -96,12 +95,12 @@ int main(int argc, char **argv)
- 	g_option_context_free(context);
- =
-
- 	if (option_version =3D=3D TRUE) {
--		printf("%s\n", VERSION);
-+		g_print("%s\n", VERSION);
- 		exit(0);
- 	}
- =
-
- 	if (argc < 2) {
--		fprintf(stderr, "Missing parameters\n");
-+		g_printerr("Missing parameters\n");
- 		exit(1);
- 	}
- =
-
--- =
-
-1.7.4.1
+hfp_voicecall_init: registering to notifications
+ofonod[12078]: > AT+CIND?\r
+ofonod[12078]: < \r\n+CIND: 0,0,1,5,0,1,0\r\n
+ofonod[12078]: < \r\nOK\r\n
+ofonod[12078]: > AT+VGS=3D7\r
+ofonod[12078]: < \r\nOK\r\n
+ofonod[12078]: > AT+VGM=3D7\r
+ofonod[12078]: < \r\nOK\r\n
+ofonod[12078]: > AT+CLCC\r
+ofonod[12078]: < \r\n\r\nOK\r\n\r\n
 
 
---===============3647048010651361598==--
+It seems that, after the last line, no other AT commands are parsed =
+
+correctly. Any ideas of what's wrong?
+
+Cheers,
+
+Mikel
+
+
+--===============2944661398917645443==--
 
