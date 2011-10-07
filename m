@@ -1,50 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============0480996622267903827=="
+Content-Type: multipart/mixed; boundary="===============8179230801240948253=="
 MIME-Version: 1.0
-From: Mikel Astiz <mikel.astiz@bmw-carit.de>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: AT commands not being parsed correctly from Samsung Wave HFP
-Date: Fri, 07 Oct 2011 12:57:17 +0200
-Message-ID: <4E8EDB0D.9020304@bmw-carit.de>
-In-Reply-To: <4E8DED34.5030906@gmail.com>
+Date: Fri, 07 Oct 2011 08:33:22 -0500
+Message-ID: <4E8EFFA2.6010009@gmail.com>
+In-Reply-To: <4E8EDB0D.9020304@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0480996622267903827==
+--===============8179230801240948253==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Mikel,
 
-On 10/06/2011 08:02 PM, Denis Kenzior wrote:
-> Hi Mikel,
->
->> ofonod[12078]:>  AT+CLCC\r
->> ofonod[12078]:<  \r\n\r\nOK\r\n\r\n
->>
->>
-> There is an extra set of \r\n at the end of the OK and the gsmv1 syntax
-> parser used by the hfp_hf plugin is quite strict.
->
->> It seems that, after the last line, no other AT commands are parsed
->> correctly. Any ideas of what's wrong?
-> Try using the permissive syntax parser.
->
-> Regards,
-> -Denis
+> =
 
-Right, the permissive one works perfectly. The phone has passed all our =
+> Right, the permissive one works perfectly. The phone has passed all our
+> tests.
+> =
 
-tests.
+> Now the next question is whether it would make sense to switch the HFP
+> plugin to this parser, or this would rather be done selectively.
+> =
 
-Now the next question is whether it would make sense to switch the HFP =
 
-plugin to this parser, or this would rather be done selectively.
+It should be fine to switch to the permissive syntax parser permanently.
+ The reason we used gsmv1 are largely historical (permissive did not
+exist at the time) and we also wanted to gauge just how broken some HFP
+implementations were.
 
-Which would be the drawbacks of using the permissive parser for all phones?
+> Which would be the drawbacks of using the permissive parser for all phone=
+s?
+> =
+
+
+Permissive has rather limited support for command echo (e.g. ATE1), but
+that should not cause any problems with HFP since the spec mandates echo
+to be disabled by default.  However, if manufacturers can't get <CR><LF>
+terminators right, maybe they also get this part wrong ;)
 
 Regards,
-Mikel
+-Denis
 
-
---===============0480996622267903827==--
+--===============8179230801240948253==--
 
