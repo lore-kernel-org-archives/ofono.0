@@ -1,35 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============3485992460475955357=="
+Content-Type: multipart/mixed; boundary="===============1756969131650475014=="
 MIME-Version: 1.0
-From: Scott Haynie <scottahaynie@yahoo.com>
-Subject: Re: No audio with HFP
-Date: Tue, 11 Oct 2011 17:18:17 -0700
-Message-ID: <1318378697.6207.androidMobile@web31810.mail.mud.yahoo.com>
+From: Mikel Astiz <mikel.astiz@bmw-carit.de>
+Subject: [PATCH v2 00/19] Bluetooth HFP-specific extensions
+Date: Wed, 12 Oct 2011 14:35:21 +0200
+Message-ID: <1318422940-14955-1-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3485992460475955357==
+--===============1756969131650475014==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Any pointers on how to do that?=C2=A0 Was looking at the "nohands" hfpforli=
-nux module as an alternative library, but had audio issues there as well.=
-=C2=A0 So I suspect whatever ends up working for ofono might also work with=
- hfpforlinux.
+This patch series is a revision of the HFP extensions proposed before,
+including some other minor extensions.
+
+Mikel Astiz (19):
+  handsfree: Copyright statement correction
+  handsfree: Copyright statement correction
+  hfpmodem: Copyright statement correction
+  doc: Add initial Handsfree API documentation
+  hfpmodem: Set initial state for inband ringing
+  hfpmodem: Support for +BSIR unsol. result codes
+  doc: Handsfree API support for +BINP=3D1
+  handsfree: Expose RequestPhoneNumber in D-Bus API
+  hfpmodem: Support of number requests (AT+BINP=3D1)
+  handsfree: Removed ASYNC flag from GetProperties
+  doc: Voice recognition function added in Handsfree
+  include: Voice recognition in handsfree public api
+  handsfree: Implement voice recognition function
+  hfpmodem: Support for AT+BVRA
+  doc: Handsfree exposes supported AG features
+  include: AG features added to handsfree public api
+  handsfree: Supported AG features exposed in D-Bus
+  hfpmodem: Report features supported by AG
+  hfp_hf: Switched to permissive AT syntax parser
+
+ doc/handsfree-api.txt        |   65 +++++++++++++
+ drivers/hfpmodem/handsfree.c |  133 +++++++++++++++++++++++++++
+ include/handsfree.h          |   10 ++
+ plugins/hfp_hf.c             |    2 +-
+ src/handsfree.c              |  205 ++++++++++++++++++++++++++++++++++++++=
++++-
+ 5 files changed, 412 insertions(+), 3 deletions(-)
+ create mode 100644 doc/handsfree-api.txt
+
+-- =
+
+1.7.6.4
 
 
---===============3485992460475955357==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PHRhYmxlIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iMCIgYm9yZGVyPSIwIj48dHI+PHRk
-IHZhbGlnbj0idG9wIiBzdHlsZT0iZm9udDogaW5oZXJpdDsiPjxwPkFueSBwb2ludGVycyBvbiBo
-b3cgdG8gZG8gdGhhdD8mIzE2MDsgV2FzIGxvb2tpbmcgYXQgdGhlICJub2hhbmRzIiBoZnBmb3Js
-aW51eCBtb2R1bGUgYXMgYW4gYWx0ZXJuYXRpdmUgbGlicmFyeSwgYnV0IGhhZCBhdWRpbyBpc3N1
-ZXMgdGhlcmUgYXMgd2VsbC4mIzE2MDsgU28gSSBzdXNwZWN0IHdoYXRldmVyIGVuZHMgdXAgd29y
-a2luZyBmb3Igb2Zvbm8gbWlnaHQgYWxzbyB3b3JrIHdpdGggaGZwZm9ybGludXguPC9wPgo8L3Rk
-PjwvdHI+PC90YWJsZT4=
---===============3485992460475955357==--
+--===============1756969131650475014==--
 
