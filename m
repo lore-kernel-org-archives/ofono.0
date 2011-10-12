@@ -1,48 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============8179230801240948253=="
+Content-Type: multipart/mixed; boundary="===============3485992460475955357=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: AT commands not being parsed correctly from Samsung Wave HFP
-Date: Fri, 07 Oct 2011 08:33:22 -0500
-Message-ID: <4E8EFFA2.6010009@gmail.com>
-In-Reply-To: <4E8EDB0D.9020304@bmw-carit.de>
+From: Scott Haynie <scottahaynie@yahoo.com>
+Subject: Re: No audio with HFP
+Date: Tue, 11 Oct 2011 17:18:17 -0700
+Message-ID: <1318378697.6207.androidMobile@web31810.mail.mud.yahoo.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8179230801240948253==
+--===============3485992460475955357==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mikel,
-
-> =
-
-> Right, the permissive one works perfectly. The phone has passed all our
-> tests.
-> =
-
-> Now the next question is whether it would make sense to switch the HFP
-> plugin to this parser, or this would rather be done selectively.
-> =
+Any pointers on how to do that?=C2=A0 Was looking at the "nohands" hfpforli=
+nux module as an alternative library, but had audio issues there as well.=
+=C2=A0 So I suspect whatever ends up working for ofono might also work with=
+ hfpforlinux.
 
 
-It should be fine to switch to the permissive syntax parser permanently.
- The reason we used gsmv1 are largely historical (permissive did not
-exist at the time) and we also wanted to gauge just how broken some HFP
-implementations were.
+--===============3485992460475955357==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-> Which would be the drawbacks of using the permissive parser for all phone=
-s?
-> =
-
-
-Permissive has rather limited support for command echo (e.g. ATE1), but
-that should not cause any problems with HFP since the spec mandates echo
-to be disabled by default.  However, if manufacturers can't get <CR><LF>
-terminators right, maybe they also get this part wrong ;)
-
-Regards,
--Denis
-
---===============8179230801240948253==--
+PHRhYmxlIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iMCIgYm9yZGVyPSIwIj48dHI+PHRk
+IHZhbGlnbj0idG9wIiBzdHlsZT0iZm9udDogaW5oZXJpdDsiPjxwPkFueSBwb2ludGVycyBvbiBo
+b3cgdG8gZG8gdGhhdD8mIzE2MDsgV2FzIGxvb2tpbmcgYXQgdGhlICJub2hhbmRzIiBoZnBmb3Js
+aW51eCBtb2R1bGUgYXMgYW4gYWx0ZXJuYXRpdmUgbGlicmFyeSwgYnV0IGhhZCBhdWRpbyBpc3N1
+ZXMgdGhlcmUgYXMgd2VsbC4mIzE2MDsgU28gSSBzdXNwZWN0IHdoYXRldmVyIGVuZHMgdXAgd29y
+a2luZyBmb3Igb2Zvbm8gbWlnaHQgYWxzbyB3b3JrIHdpdGggaGZwZm9ybGludXguPC9wPgo8L3Rk
+PjwvdHI+PC90YWJsZT4=
+--===============3485992460475955357==--
 
