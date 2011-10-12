@@ -1,60 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============5201975006905612946=="
+Content-Type: multipart/mixed; boundary="===============8282587249305810294=="
 MIME-Version: 1.0
 From: Mikel Astiz <mikel.astiz@bmw-carit.de>
-Subject: [PATCH v2 12/19] include: Voice recognition in handsfree public api
-Date: Wed, 12 Oct 2011 14:35:33 +0200
-Message-ID: <1318422940-14955-13-git-send-email-mikel.astiz@bmw-carit.de>
+Subject: [PATCH v2 11/19] doc: Voice recognition function added in Handsfree
+Date: Wed, 12 Oct 2011 14:35:32 +0200
+Message-ID: <1318422940-14955-12-git-send-email-mikel.astiz@bmw-carit.de>
 In-Reply-To: <1318422940-14955-1-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5201975006905612946==
+--===============8282587249305810294==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/handsfree.h |    7 +++++++
+ doc/handsfree-api.txt |    7 +++++++
  1 files changed, 7 insertions(+), 0 deletions(-)
 
-diff --git a/include/handsfree.h b/include/handsfree.h
-index d39d919..68b3e5b 100644
---- a/include/handsfree.h
-+++ b/include/handsfree.h
-@@ -31,6 +31,8 @@ extern "C" {
+diff --git a/doc/handsfree-api.txt b/doc/handsfree-api.txt
+index 023233c..9355946 100644
+--- a/doc/handsfree-api.txt
++++ b/doc/handsfree-api.txt
+@@ -41,3 +41,10 @@ Signals		PropertyChanged(string property, variant value)
+ Properties	boolean InbandRinging [readonly]
  =
 
- struct ofono_handsfree;
- =
-
-+typedef void (*ofono_handsfree_cb_t)(const struct ofono_error *error,
-+					void *data);
- typedef void (*ofono_handsfree_phone_cb_t)(const struct ofono_error *error,
- 					const struct ofono_phone_number *number,
- 					void *data);
-@@ -43,10 +45,15 @@ struct ofono_handsfree_driver {
- 	void (*request_phone_number) (struct ofono_handsfree *hf,
- 					ofono_handsfree_phone_cb_t cb,
- 					void *data);
-+	void (*voice_recognition)(struct ofono_handsfree *cv,
-+					ofono_bool_t enabled,
-+					ofono_handsfree_cb_t cb, void *data);
- };
- =
-
- void ofono_handsfree_set_inband_ringing(struct ofono_handsfree *hf,
- 						ofono_bool_t enabled);
-+void ofono_handsfree_set_voice_recognition(struct ofono_handsfree *hf,
-+						ofono_bool_t enabled);
- =
-
- int ofono_handsfree_driver_register(const struct ofono_handsfree_driver *d=
-);
- void ofono_handsfree_driver_unregister(
+ 			Boolean representing whether inband ringing is enabled.
++
++		boolean VoiceRecognition [readwrite]
++
++			Boolean representing whether voice recognition is
++			currently active in the AG. This property may be written
++			to activate or deactivate the function from the HF, or
++			the AG could autonomously initiate it.
 -- =
 
 1.7.6.4
 
 
---===============5201975006905612946==--
+--===============8282587249305810294==--
 
