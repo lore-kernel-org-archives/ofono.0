@@ -1,64 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============3978866535537432468=="
+Content-Type: multipart/mixed; boundary="===============3313968527522393874=="
 MIME-Version: 1.0
 From: Mikel Astiz <mikel.astiz@bmw-carit.de>
-Subject: [PATCH v2 04/19] doc: Add initial Handsfree API documentation
-Date: Wed, 12 Oct 2011 14:35:25 +0200
-Message-ID: <1318422940-14955-5-git-send-email-mikel.astiz@bmw-carit.de>
+Subject: [PATCH v2 05/19] hfpmodem: Set initial state for inband ringing
+Date: Wed, 12 Oct 2011 14:35:26 +0200
+Message-ID: <1318422940-14955-6-git-send-email-mikel.astiz@bmw-carit.de>
 In-Reply-To: <1318422940-14955-1-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3978866535537432468==
+--===============3313968527522393874==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-These basic features have already been implemented.
+According to the HFP specification, inband ringing will be enabled by
+default if the AG supports it. This setting could later be changed by
+the unsolicited result code +BSIR.
 ---
- doc/handsfree-api.txt |   30 ++++++++++++++++++++++++++++++
- 1 files changed, 30 insertions(+), 0 deletions(-)
- create mode 100644 doc/handsfree-api.txt
+ drivers/hfpmodem/handsfree.c |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-diff --git a/doc/handsfree-api.txt b/doc/handsfree-api.txt
-new file mode 100644
-index 0000000..4b2b156
---- /dev/null
-+++ b/doc/handsfree-api.txt
-@@ -0,0 +1,30 @@
-+Handsfree hierarchy
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+diff --git a/drivers/hfpmodem/handsfree.c b/drivers/hfpmodem/handsfree.c
+index d3b5b44..12a23fc 100644
+--- a/drivers/hfpmodem/handsfree.c
++++ b/drivers/hfpmodem/handsfree.c
+@@ -44,6 +44,7 @@
+ =
+
+ struct hf_data {
+ 	GAtChat *chat;
++	unsigned int ag_features;
+ };
+ =
+
+ static gboolean hfp_handsfree_register(gpointer user_data)
+@@ -52,6 +53,9 @@ static gboolean hfp_handsfree_register(gpointer user_data)
+ =
+
+ 	ofono_handsfree_register(hf);
+ =
+
++	if (hd->ag_features & HFP_AG_FEATURE_IN_BAND_RING_TONE)
++		ofono_handsfree_set_inband_ringing(hf, TRUE);
 +
-+Service		org.ofono
-+Interface	org.ofono.Handsfree
-+Object path	[variable prefix]/{modem0,modem1,...}
-+
-+Methods		dict GetProperties()
-+
-+			Returns properties for the Handsfree Interface. See the
-+			properties section for available properties.
-+
-+		void SetProperty(string property, variant value)
-+
-+			Changes the value of the specified property. Only
-+			properties that are listed as readwrite are
-+			changeable. On success a PropertyChanged signal
-+			will be emitted.
-+
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+
-+Signals		PropertyChanged(string property, variant value)
-+
-+			Signal is emitted whenever a property has changed.
-+			The new value is passed as the signal argument.
-+
-+Properties	boolean InbandRinging [readonly]
-+
-+			Boolean representing whether inband ringing is enabled.
+ 	return FALSE;
+ }
+ =
+
+@@ -64,6 +68,7 @@ static int hfp_handsfree_probe(struct ofono_handsfree *hf,
+ 	DBG("");
+ 	hd =3D g_new0(struct hf_data, 1);
+ 	hd->chat =3D g_at_chat_clone(info->chat);
++	hd->ag_features =3D info->ag_features;
+ =
+
+ 	ofono_handsfree_set_data(hf, hd);
+ =
+
 -- =
 
 1.7.6.4
 
 
---===============3978866535537432468==--
+--===============3313968527522393874==--
 
