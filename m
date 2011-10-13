@@ -1,43 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============8315893488630989407=="
+Content-Type: multipart/mixed; boundary="===============1254980060925844826=="
 MIME-Version: 1.0
-From: Mikel Astiz <mikel.astiz@bmw-carit.de>
-Subject: Re: [PATCH] hfp: Expose BT address using the serial number
-Date: Thu, 13 Oct 2011 18:32:15 +0200
-Message-ID: <4E97128F.4090805@bmw-carit.de>
-In-Reply-To: <4E96B0B9.3090509@gmail.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: [PATCH] doc: Clarifications on voice call behavior
+Date: Thu, 13 Oct 2011 10:42:33 -0700
+Message-ID: <1318527753-18801-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8315893488630989407==
+--===============1254980060925844826==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
-> Can we do this inside drivers/hfpmodem?
+---
+ doc/voicecall-api.txt        |    4 ++++
+ doc/voicecallmanager-api.txt |    7 ++++++-
+ 2 files changed, 10 insertions(+), 1 deletions(-)
 
-Sure. But before doing that, and despite my own patch, I would like to =
+diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
+index 7eb41aa..fb8f099 100644
+--- a/doc/voicecall-api.txt
++++ b/doc/voicecall-api.txt
+@@ -47,6 +47,10 @@ Methods		dict GetProperties()
+ 			of a held multiparty call might not be possible on some
+ 			implementations.
+ =
 
-bring up the discussion whether this is the best approach :-)
++			NOTE: Releasing active calls does not produce
++			side-effects.  That is the state of held or waiting
++			calls is not affected.
++
+ 			Possible Errors: [service].Error.InProgress
+ 					 [service].Error.Failed
+ 					 [service].Error.NotImplemented
+diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
+index bd38229..56dba8b 100644
+--- a/doc/voicecallmanager-api.txt
++++ b/doc/voicecallmanager-api.txt
+@@ -35,6 +35,10 @@ Methods		dict GetProperties()
+ =
 
-I would suggest adding a optional property in org.ofono.Modem such as =
+ 			This is usually implemented using the ATD AT command.
+ =
 
-"HardwareAddress" to expose this information. I guess this might sound =
++			NOTE: If an active call (single or multiparty) exists,
++			then it is automatically put on hold if the dial
++			procedure is successful.
++
+ 			Possible Errors: [service].Error.InProgress
+ 					 [service].Error.InvalidArguments
+ 					 [service].Error.InvalidFormat
+@@ -102,7 +106,8 @@ Methods		dict GetProperties()
+ =
 
-too bluetooth-specific, but still from my point of view it's the best =
+ 		void HangupAll()
+ =
 
-way to go.
+-			Releases all calls.
++			Releases all calls except waiting calls. This includes
++			multiparty calls.
+ =
 
-I guess it could even be pushed a bit further to make it more generic, =
+                         Possible Errors: [service].Error.InProgress
+ 					 [service].Error.NotImplemented
+-- =
 
-trying to somehow encode the address type there (URI, etc.). Consider =
-
-this an open proposal.
-
-Cheers,
-Mikel
+1.7.4.4
 
 
---===============8315893488630989407==--
+--===============1254980060925844826==--
 
