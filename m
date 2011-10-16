@@ -1,26 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============1675792185755524902=="
+Content-Type: multipart/mixed; boundary="===============7166585516914057485=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] udevng: add a driver name for telit
-Date: Sat, 15 Oct 2011 17:29:44 -0700
-Message-ID: <1318724986.15441.72.camel@aeonflux>
-In-Reply-To: <1318707227-5187-1-git-send-email-padovan@profusion.mobi>
+Subject: oFono 1.0 has been released
+Date: Sun, 16 Oct 2011 11:25:50 -0700
+Message-ID: <1318789553.15441.89.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1675792185755524902==
+--===============7166585516914057485==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hello everybody,
 
-> telit hardware needs usbserial.
-> ---
->  plugins/udevng.c |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
+I am pleased to announce that we have released oFono 1.0 this week. This
+marks a major step for oFono and we consider it fully feature complete
+for 2G and 3G telephony.
 
-patch has been applied. Thanks.
+oFono is released under GPL version 2 and is 100% open source. It
+includes support for the majority of data modem vendors and also full
+voice telephony support for Infineon (now IMC), ST-Ericsson, Nokia/ISI
+and also Calypso/Freerunner.
+
+All standard features including voice calls, supplementary services,
+text messaging, USSD, SIM Toolkit, network registration, multiple GPRS
+contexts and many more have been integrated with easy to use D-Bus APIs.
+
+With our 1.0 out of the door, we will continue to improve our CDMA
+support and also integrate LTE into oFono. So stay tuned for new
+features.
+
+The tarballs are not yet available due to the security breach on
+kernel.org, but will be uploaded as soon as service has been restored.
 
 Regards
 
@@ -28,5 +40,5 @@ Marcel
 
 
 
---===============1675792185755524902==--
+--===============7166585516914057485==--
 
