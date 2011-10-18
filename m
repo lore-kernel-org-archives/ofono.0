@@ -1,49 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============3921321627149044855=="
+Content-Type: multipart/mixed; boundary="===============6000196408125179353=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv10 1/9] mbpi: Minor style tweaks
-Date: Tue, 18 Oct 2011 14:04:57 +0300
-Message-ID: <1318935905-9087-2-git-send-email-oleg.zhurakivskyy@intel.com>
-In-Reply-To: <1318935905-9087-1-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv10 0/9] Provisioning plugin
+Date: Tue, 18 Oct 2011 14:04:56 +0300
+Message-ID: <1318935905-9087-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3921321627149044855==
+--===============6000196408125179353==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/mbpi.c |    7 ++++---
- 1 files changed, 4 insertions(+), 3 deletions(-)
+Hello,
 
-diff --git a/plugins/mbpi.c b/plugins/mbpi.c
-index ecb08eb..c5537d8 100644
---- a/plugins/mbpi.c
-+++ b/plugins/mbpi.c
-@@ -23,12 +23,13 @@
- #include <config.h>
- #endif
- =
+Please find corrections to the remaining parts of the provisioning plugin (=
+"Internet Access Provider database" TODO item).
 
--#include <string.h>
--#include <fcntl.h>
-+#include <sys/types.h>
- #include <sys/mman.h>
- #include <sys/stat.h>
--#include <sys/types.h>
-+
-+#include <fcntl.h>
- #include <errno.h>
-+#include <string.h>
- #include <unistd.h>
- =
+Regards,
+Oleg
 
- #include <glib.h>
+Oleg Zhurakivskyy (9):
+  mbpi: Minor style tweaks
+  provision: Add provisioning plugin
+  mbpi: Add mbpi_ap_type()
+  lookup-apn: Use mbpi_ap_type()
+  lookup-apn: Add command line option to control duplicates
+  mbpi: Rename mbpi_provision_data_free()
+  lookup-apn: Use mbpi_ap_free()
+  mbpi: Minor style issues
+  lookup-apn: Minor style issues
+
+ Makefile.am         |    7 +++
+ configure.ac        |   23 +++++++---
+ plugins/mbpi.c      |   68 ++++++++++++++++++-----------
+ plugins/mbpi.h      |    4 +-
+ plugins/provision.c |  118 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ tools/lookup-apn.c  |   32 ++++++++------
+ 6 files changed, 204 insertions(+), 48 deletions(-)
+ create mode 100644 plugins/provision.c
+
 -- =
 
 1.7.4.1
 
 
---===============3921321627149044855==--
+--===============6000196408125179353==--
 
