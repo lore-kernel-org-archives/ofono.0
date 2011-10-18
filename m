@@ -1,145 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============4625442664678293972=="
+Content-Type: multipart/mixed; boundary="===============4165836407308546248=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv10 8/9] mbpi: Minor style issues
-Date: Tue, 18 Oct 2011 14:05:04 +0300
-Message-ID: <1318935905-9087-9-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv10 9/9] lookup-apn: Minor style issues
+Date: Tue, 18 Oct 2011 14:05:05 +0300
+Message-ID: <1318935905-9087-10-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1318935905-9087-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4625442664678293972==
+--===============4165836407308546248==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/mbpi.c |   42 +++++++++++++++++++++---------------------
- 1 files changed, 21 insertions(+), 21 deletions(-)
+ tools/lookup-apn.c |   23 +++++++++++------------
+ 1 files changed, 11 insertions(+), 12 deletions(-)
 
-diff --git a/plugins/mbpi.c b/plugins/mbpi.c
-index 5e42287..6f77d9a 100644
---- a/plugins/mbpi.c
-+++ b/plugins/mbpi.c
-@@ -77,16 +77,16 @@ static GQuark mbpi_error_quark(void)
- 	return g_quark_from_static_string("ofono-mbpi-error-quark");
- }
+diff --git a/tools/lookup-apn.c b/tools/lookup-apn.c
+index f2727d3..b833b6c 100644
+--- a/tools/lookup-apn.c
++++ b/tools/lookup-apn.c
+@@ -23,7 +23,6 @@
+ #include <config.h>
+ #endif
  =
 
--void mbpi_ap_free(struct ofono_gprs_provision_data *data)
-+void mbpi_ap_free(struct ofono_gprs_provision_data *ap)
- {
--	g_free(data->name);
--	g_free(data->apn);
--	g_free(data->username);
--	g_free(data->password);
--	g_free(data->message_proxy);
--	g_free(data->message_center);
--
--	g_free(data);
-+	g_free(ap->name);
-+	g_free(ap->apn);
-+	g_free(ap->username);
-+	g_free(ap->password);
-+	g_free(ap->message_proxy);
-+	g_free(ap->message_center);
-+
-+	g_free(ap);
- }
+-#include <stdio.h>
+ #include <stdlib.h>
  =
 
- static void mbpi_g_set_error(GMarkupParseContext *context, GError **error,
-@@ -250,7 +250,7 @@ static void apn_handler(GMarkupParseContext *context, s=
-truct gsm_data *gsm,
- 			const gchar **attribute_values,
- 			GError **error)
- {
--	struct ofono_gprs_provision_data *pd;
-+	struct ofono_gprs_provision_data *ap;
- 	const char *apn;
- 	int i;
+ #include <glib.h>
+@@ -41,7 +40,7 @@ static void lookup_apn(const char *match_mcc, const char =
+*match_mnc,
+ 	GSList *apns;
+ 	GError *error =3D NULL;
  =
 
-@@ -274,12 +274,12 @@ static void apn_handler(GMarkupParseContext *context,=
- struct gsm_data *gsm,
- 		return;
+-	printf("Searching for info for network: %s%s\n", match_mcc, match_mnc);
++	g_print("Searching for info for network: %s%s\n", match_mcc, match_mnc);
+ =
+
+ 	apns =3D mbpi_lookup(match_mcc, match_mnc, allow_duplicates, &error);
+ =
+
+@@ -55,16 +54,16 @@ static void lookup_apn(const char *match_mcc, const cha=
+r *match_mnc,
  	}
  =
 
--	pd =3D g_new0(struct ofono_gprs_provision_data, 1);
--	pd->apn =3D g_strdup(apn);
--	pd->type =3D OFONO_GPRS_CONTEXT_TYPE_INTERNET;
--	pd->proto =3D OFONO_GPRS_PROTO_IP;
-+	ap =3D g_new0(struct ofono_gprs_provision_data, 1);
-+	ap->apn =3D g_strdup(apn);
-+	ap->type =3D OFONO_GPRS_CONTEXT_TYPE_INTERNET;
-+	ap->proto =3D OFONO_GPRS_PROTO_IP;
+ 	for (l =3D apns; l; l =3D l->next) {
+-		struct ofono_gprs_provision_data *apn =3D l->data;
++		struct ofono_gprs_provision_data *ap =3D l->data;
  =
 
--	g_markup_parse_context_push(context, &apn_parser, pd);
-+	g_markup_parse_context_push(context, &apn_parser, ap);
- }
+-		printf("\n");
+-		printf("Name: %s\n", apn->name);
+-		printf("APN: %s\n", apn->apn);
+-		printf("Type: %s\n", mbpi_ap_type(apn->type));
+-		printf("Username: %s\n", apn->username);
+-		printf("Password: %s\n", apn->password);
++		g_print("\n");
++		g_print("Name: %s\n", ap->name);
++		g_print("APN: %s\n", ap->apn);
++		g_print("Type: %s\n", mbpi_ap_type(ap->type));
++		g_print("Username: %s\n", ap->username);
++		g_print("Password: %s\n", ap->password);
  =
 
- static void gsm_start(GMarkupParseContext *context, const gchar *element_n=
-ame,
-@@ -308,15 +308,15 @@ static void gsm_end(GMarkupParseContext *context, con=
-st gchar *element_name,
- 			gpointer userdata, GError **error)
- {
- 	struct gsm_data *gsm;
--	struct ofono_gprs_provision_data *apn;
-+	struct ofono_gprs_provision_data *ap;
- =
-
- 	if (!g_str_equal(element_name, "apn"))
- 		return;
- =
-
- 	gsm =3D userdata;
- =
-
--	apn =3D g_markup_parse_context_pop(context);
--	if (apn =3D=3D NULL)
-+	ap =3D g_markup_parse_context_pop(context);
-+	if (ap =3D=3D NULL)
- 		return;
- =
-
- 	if (gsm->allow_duplicates =3D=3D FALSE) {
-@@ -325,19 +325,19 @@ static void gsm_end(GMarkupParseContext *context, con=
-st gchar *element_name,
- 		for (l =3D gsm->apns; l; l =3D l->next) {
- 			struct ofono_gprs_provision_data *pd =3D l->data;
- =
-
--			if (pd->type !=3D apn->type)
-+			if (pd->type !=3D ap->type)
- 				continue;
- =
-
- 			mbpi_g_set_error(context, error, mbpi_error_quark(),
- 						MBPI_ERROR_DUPLICATE,
- 						"Duplicate context detected");
- =
-
--			mbpi_ap_free(apn);
-+			mbpi_ap_free(ap);
- 			return;
- 		}
+-		mbpi_ap_free(apn);
++		mbpi_ap_free(ap);
  	}
  =
 
--	gsm->apns =3D g_slist_append(gsm->apns, apn);
-+	gsm->apns =3D g_slist_append(gsm->apns, ap);
- }
+ 	g_slist_free(apns);
+@@ -101,12 +100,12 @@ int main(int argc, char **argv)
+ 	g_option_context_free(context);
  =
 
- static const GMarkupParser gsm_parser =3D {
+ 	if (option_version =3D=3D TRUE) {
+-		printf("%s\n", VERSION);
++		g_print("%s\n", VERSION);
+ 		exit(0);
+ 	}
+ =
+
+ 	if (argc < 2) {
+-		fprintf(stderr, "Missing parameters\n");
++		g_printerr("Missing parameters\n");
+ 		exit(1);
+ 	}
+ =
+
 -- =
 
 1.7.4.1
 
 
---===============4625442664678293972==--
+--===============4165836407308546248==--
 
