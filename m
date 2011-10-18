@@ -1,34 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============4824772509724674001=="
+Content-Type: multipart/mixed; boundary="===============3921321627149044855=="
 MIME-Version: 1.0
-From: Abu Warez <abuwarez@googlemail.com>
-Subject: Enabling Voice and Sms Atoms for Sierra USB Modem
-Date: Mon, 17 Oct 2011 16:56:08 +0300
-Message-ID: <1318859768.2061.12.camel@ubuntu-desktop-10.4>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv10 1/9] mbpi: Minor style tweaks
+Date: Tue, 18 Oct 2011 14:04:57 +0300
+Message-ID: <1318935905-9087-2-git-send-email-oleg.zhurakivskyy@intel.com>
+In-Reply-To: <1318935905-9087-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4824772509724674001==
+--===============3921321627149044855==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+---
+ plugins/mbpi.c |    7 ++++---
+ 1 files changed, 4 insertions(+), 3 deletions(-)
 
-Hello,
+diff --git a/plugins/mbpi.c b/plugins/mbpi.c
+index ecb08eb..c5537d8 100644
+--- a/plugins/mbpi.c
++++ b/plugins/mbpi.c
+@@ -23,12 +23,13 @@
+ #include <config.h>
+ #endif
+ =
 
-Please advise me how to enable Ofono's SMS and Voice atoms for a Sierra
-USB Modem (AirPrime AR series). As far as I understand, ofono doesn't
-support voice for USB modems. In this phase of my project, I don't need
-to transfer any voice over USB. I just want to be able to initiate phone
-calls using dbus and ofono. Audio will be handled over the modem's hands
-free jack. Is there any documentation available related to these ofono
-atoms?
+-#include <string.h>
+-#include <fcntl.h>
++#include <sys/types.h>
+ #include <sys/mman.h>
+ #include <sys/stat.h>
+-#include <sys/types.h>
++
++#include <fcntl.h>
+ #include <errno.h>
++#include <string.h>
+ #include <unistd.h>
+ =
 
-Thanks,
-abuwz
+ #include <glib.h>
+-- =
 
-PS: I also tried #ofono @ freenode.net but did not receive any clear
-answers to my inquiries.
+1.7.4.1
 
 
---===============4824772509724674001==--
+--===============3921321627149044855==--
 
