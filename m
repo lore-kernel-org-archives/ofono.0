@@ -1,101 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============4165836407308546248=="
+Content-Type: multipart/mixed; boundary="===============8011898511920811859=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv10 9/9] lookup-apn: Minor style issues
-Date: Tue, 18 Oct 2011 14:05:05 +0300
-Message-ID: <1318935905-9087-10-git-send-email-oleg.zhurakivskyy@intel.com>
-In-Reply-To: <1318935905-9087-1-git-send-email-oleg.zhurakivskyy@intel.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Bluetooth Audio Handling IRC Meeting
+Date: Tue, 18 Oct 2011 16:33:01 +0200
+Message-ID: <4E9D8E1D.8050007@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4165836407308546248==
+--===============8011898511920811859==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- tools/lookup-apn.c |   23 +++++++++++------------
- 1 files changed, 11 insertions(+), 12 deletions(-)
+Hi Everyone,
 
-diff --git a/tools/lookup-apn.c b/tools/lookup-apn.c
-index f2727d3..b833b6c 100644
---- a/tools/lookup-apn.c
-+++ b/tools/lookup-apn.c
-@@ -23,7 +23,6 @@
- #include <config.h>
- #endif
- =
+[Sorry for cross posting but it might be interesting for someone on
+these mailing lists]
 
--#include <stdio.h>
- #include <stdlib.h>
- =
+I would like to invite to a IRC discussion on the HFP audio handling.
 
- #include <glib.h>
-@@ -41,7 +40,7 @@ static void lookup_apn(const char *match_mcc, const char =
-*match_mnc,
- 	GSList *apns;
- 	GError *error =3D NULL;
- =
+Topic is to find a solution for the handling/routing of the audio
+streams (SCO link) in BlueZ, PulseAudio and oFono.
 
--	printf("Searching for info for network: %s%s\n", match_mcc, match_mnc);
-+	g_print("Searching for info for network: %s%s\n", match_mcc, match_mnc);
- =
+- Currently, it is not possible for PulseAudio or BlueZ to know what the
+audio stream is carrying (*). This information is need for multi phone
+uses cases. Think about two connected phones at the same time and both
+are doing HFP.
 
- 	apns =3D mbpi_lookup(match_mcc, match_mnc, allow_duplicates, &error);
- =
+- If there is need for policy decisions, is desirable to have this done
+in one place only. With policy decision is meant deciding when to
+suspend and resume a SCO link. Of course we would have to agree first,
+if this should be done in placed into one component only.
 
-@@ -55,16 +54,16 @@ static void lookup_apn(const char *match_mcc, const cha=
-r *match_mnc,
- 	}
- =
+- For the two phone use cases I also like to discuss how to report the
+'content' (*) of the audio links, so the above policies can be
+implemented. oFono doesn't export this information and I assume we
+really don't want to have a dependency on PulseAudio from oFono.
 
- 	for (l =3D apns; l; l =3D l->next) {
--		struct ofono_gprs_provision_data *apn =3D l->data;
-+		struct ofono_gprs_provision_data *ap =3D l->data;
- =
+(*) in band ringing, active call, held call, etc.
 
--		printf("\n");
--		printf("Name: %s\n", apn->name);
--		printf("APN: %s\n", apn->apn);
--		printf("Type: %s\n", mbpi_ap_type(apn->type));
--		printf("Username: %s\n", apn->username);
--		printf("Password: %s\n", apn->password);
-+		g_print("\n");
-+		g_print("Name: %s\n", ap->name);
-+		g_print("APN: %s\n", ap->apn);
-+		g_print("Type: %s\n", mbpi_ap_type(ap->type));
-+		g_print("Username: %s\n", ap->username);
-+		g_print("Password: %s\n", ap->password);
- =
+irc server: freenode.net
+irc channel: #bop_audio
+date: 20.10.2011 (10/20/11 for the americans)
+time: 16:00 CEST (07:00 PDT, 09:00 CDT, 17:00 EEST)
+duration: < 1 hour (hopefully)
 
--		mbpi_ap_free(apn);
-+		mbpi_ap_free(ap);
- 	}
- =
+If the date/time is really bad for you (sorry Marcel), please let me
+know. Johan told me he could also attend it if we start one hour later.
 
- 	g_slist_free(apns);
-@@ -101,12 +100,12 @@ int main(int argc, char **argv)
- 	g_option_context_free(context);
- =
+cheers,
+daniel
 
- 	if (option_version =3D=3D TRUE) {
--		printf("%s\n", VERSION);
-+		g_print("%s\n", VERSION);
- 		exit(0);
- 	}
- =
-
- 	if (argc < 2) {
--		fprintf(stderr, "Missing parameters\n");
-+		g_printerr("Missing parameters\n");
- 		exit(1);
- 	}
- =
-
--- =
-
-1.7.4.1
-
-
---===============4165836407308546248==--
+--===============8011898511920811859==--
 
