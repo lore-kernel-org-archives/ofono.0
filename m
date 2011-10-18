@@ -1,85 +1,108 @@
-Content-Type: multipart/mixed; boundary="===============6636246533331206920=="
+Content-Type: multipart/mixed; boundary="===============6758622519481622860=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv10 5/9] lookup-apn: Add command line option to control
- duplicates
-Date: Tue, 18 Oct 2011 14:05:01 +0300
-Message-ID: <1318935905-9087-6-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv10 6/9] mbpi: Rename mbpi_provision_data_free()
+Date: Tue, 18 Oct 2011 14:05:02 +0300
+Message-ID: <1318935905-9087-7-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1318935905-9087-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6636246533331206920==
+--===============6758622519481622860==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- tools/lookup-apn.c |   10 +++++++---
- 1 files changed, 7 insertions(+), 3 deletions(-)
+ plugins/mbpi.c      |    8 ++++----
+ plugins/mbpi.h      |    2 +-
+ plugins/provision.c |    2 +-
+ 3 files changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/tools/lookup-apn.c b/tools/lookup-apn.c
-index c14cced..83a94bb 100644
---- a/tools/lookup-apn.c
-+++ b/tools/lookup-apn.c
-@@ -34,7 +34,8 @@
+diff --git a/plugins/mbpi.c b/plugins/mbpi.c
+index 7f533bc..5e42287 100644
+--- a/plugins/mbpi.c
++++ b/plugins/mbpi.c
+@@ -77,7 +77,7 @@ static GQuark mbpi_error_quark(void)
+ 	return g_quark_from_static_string("ofono-mbpi-error-quark");
+ }
  =
 
- #include "plugins/mbpi.h"
- =
-
--static void lookup_apn(const char *match_mcc, const char *match_mnc)
-+static void lookup_apn(const char *match_mcc, const char *match_mnc,
-+						gboolean allow_duplicates)
+-void mbpi_provision_data_free(struct ofono_gprs_provision_data *data)
++void mbpi_ap_free(struct ofono_gprs_provision_data *data)
  {
- 	GSList *l;
- 	GSList *apns;
-@@ -42,7 +43,7 @@ static void lookup_apn(const char *match_mcc, const char =
-*match_mnc)
- =
-
- 	printf("Searching for info for network: %s%s\n", match_mcc, match_mnc);
- =
-
--	apns =3D mbpi_lookup(match_mcc, match_mnc, TRUE, &error);
-+	apns =3D mbpi_lookup(match_mcc, match_mnc, allow_duplicates, &error);
- =
-
- 	if (apns =3D=3D NULL) {
- 		if (error !=3D NULL) {
-@@ -70,10 +71,13 @@ static void lookup_apn(const char *match_mcc, const cha=
-r *match_mnc)
+ 	g_free(data->name);
+ 	g_free(data->apn);
+@@ -191,7 +191,7 @@ static void apn_error(GMarkupParseContext *context, GEr=
+ror *error,
+ 	 * be called.  So we always perform cleanup of the allocated
+ 	 * provision data
+ 	 */
+-	mbpi_provision_data_free(userdata);
++	mbpi_ap_free(userdata);
  }
  =
 
- static gboolean option_version =3D FALSE;
-+static gboolean option_duplicates =3D FALSE;
+ static const GMarkupParser apn_parser =3D {
+@@ -332,7 +332,7 @@ static void gsm_end(GMarkupParseContext *context, const=
+ gchar *element_name,
+ 						MBPI_ERROR_DUPLICATE,
+ 						"Duplicate context detected");
  =
 
- static GOptionEntry options[] =3D {
- 	{ "version", 'v', 0, G_OPTION_ARG_NONE, &option_version,
- 				"Show version information and exit" },
-+	{ "allow-duplicates", 0, 0, G_OPTION_ARG_NONE, &option_duplicates,
-+				"Allow duplicate access point types" },
- 	{ NULL },
- };
- =
-
-@@ -106,7 +110,7 @@ int main(int argc, char **argv)
- 		exit(1);
+-			mbpi_provision_data_free(apn);
++			mbpi_ap_free(apn);
+ 			return;
+ 		}
  	}
+@@ -444,7 +444,7 @@ GSList *mbpi_lookup(const char *mcc, const char *mnc,
  =
 
--	lookup_apn(argv[1], argv[2]);
-+	lookup_apn(argv[1], argv[2], option_duplicates);
+ 	if (mbpi_parse(db, st.st_size, &gsm, error) =3D=3D FALSE) {
+ 		for (l =3D gsm.apns; l; l =3D l->next)
+-			mbpi_provision_data_free(l->data);
++			mbpi_ap_free(l->data);
  =
 
- 	return 0;
- }
+ 		g_slist_free(gsm.apns);
+ 		gsm.apns =3D NULL;
+diff --git a/plugins/mbpi.h b/plugins/mbpi.h
+index 5a844d1..42e439b 100644
+--- a/plugins/mbpi.h
++++ b/plugins/mbpi.h
+@@ -21,7 +21,7 @@
+ =
+
+ const char *mbpi_ap_type(enum ofono_gprs_context_type type);
+ =
+
+-void mbpi_provision_data_free(struct ofono_gprs_provision_data *data);
++void mbpi_ap_free(struct ofono_gprs_provision_data *data);
+ =
+
+ GSList *mbpi_lookup(const char *mcc, const char *mnc,
+ 			gboolean allow_duplicates, GError **error);
+diff --git a/plugins/provision.c b/plugins/provision.c
+index ca59c6a..06cba6f 100644
+--- a/plugins/provision.c
++++ b/plugins/provision.c
+@@ -69,7 +69,7 @@ static int provision_get_settings(const char *mcc, const =
+char *mnc,
+ 		ofono_error("Provisioning failed: %s", g_strerror(errno));
+ =
+
+ 		for (l =3D apns; l; l =3D l->next)
+-			mbpi_provision_data_free(l->data);
++			mbpi_ap_free(l->data);
+ =
+
+ 		g_slist_free(apns);
+ =
+
 -- =
 
 1.7.4.1
 
 
---===============6636246533331206920==--
+--===============6758622519481622860==--
 
