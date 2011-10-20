@@ -1,169 +1,154 @@
-Content-Type: multipart/mixed; boundary="===============3908210658430890295=="
+Content-Type: multipart/mixed; boundary="===============2870227479768199009=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 1/2] cdma-netreg: Add various cdma-netreg watches
-Date: Thu, 20 Oct 2011 17:41:31 +0200
-Message-ID: <1319125292-6204-2-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH 2/2] cdma-connman: Add cdma-netreg status watch to activate
+ data call
+Date: Thu, 20 Oct 2011 17:41:32 +0200
+Message-ID: <1319125292-6204-3-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1319125292-6204-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3908210658430890295==
+--===============2870227479768199009==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/cdma-netreg.h |    1 +
- src/cdma-netreg.c     |   58 +++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/ofono.h           |   13 +++++++++++
- 3 files changed, 72 insertions(+), 0 deletions(-)
+ src/cdma-connman.c |   74 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++-
+ 1 files changed, 72 insertions(+), 2 deletions(-)
 
-diff --git a/include/cdma-netreg.h b/include/cdma-netreg.h
-index 25888d1..31ed289 100644
---- a/include/cdma-netreg.h
-+++ b/include/cdma-netreg.h
-@@ -50,6 +50,7 @@ void ofono_cdma_netreg_strength_notify(struct ofono_cdma_=
-netreg *netreg,
- 					int strength);
- void ofono_cdma_netreg_data_strength_notify(struct ofono_cdma_netreg *netr=
-eg,
- 						int data_strength);
-+int ofono_cdma_netreg_get_status(struct ofono_cdma_netreg *netreg);
+diff --git a/src/cdma-connman.c b/src/cdma-connman.c
+index db8f6c5..edd71b5 100644
+--- a/src/cdma-connman.c
++++ b/src/cdma-connman.c
+@@ -52,6 +52,11 @@ struct cdma_connman_settings {
+ struct ofono_cdma_connman {
+ 	ofono_bool_t powered;
+ 	ofono_bool_t dormant;
++	ofono_bool_t attached;
++	int cdma_netreg_status;
++	struct ofono_cdma_netreg *cdma_netreg;
++	unsigned int cdma_netreg_watch;
++	unsigned int cdma_status_watch;
+ 	struct cdma_connman_settings *settings;
+ 	DBusMessage *pending;
+ 	const struct ofono_cdma_connman_driver *driver;
+@@ -465,7 +470,9 @@ static DBusMessage *cdma_connman_set_property(DBusConne=
+ction *conn,
  =
 
- int ofono_cdma_netreg_driver_register(
- 				const struct ofono_cdma_netreg_driver *d);
-diff --git a/src/cdma-netreg.c b/src/cdma-netreg.c
-index d88bfcc..d721098 100644
---- a/src/cdma-netreg.c
-+++ b/src/cdma-netreg.c
-@@ -35,6 +35,7 @@ struct ofono_cdma_netreg {
- 	enum cdma_netreg_status status;
- 	int strength;
- 	int hdr_strength;
-+	struct ofono_watchlist *status_watches;
- 	const struct ofono_cdma_netreg_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-@@ -119,6 +120,53 @@ static void set_registration_status(struct ofono_cdma_=
-netreg *cdma_netreg,
- 				&str_status);
- }
+ 		cm->pending =3D dbus_message_ref(msg);
  =
 
-+unsigned int __ofono_cdma_netreg_add_status_watch(
-+				struct ofono_cdma_netreg *cdma_netreg,
-+				ofono_cdma_netreg_status_notify_cb_t notify,
-+				void *data, ofono_destroy_func destroy)
-+{
-+	struct ofono_watchlist_item *item;
+-		/* TODO: add logic to support CDMA Network Registration */
++		if (value && !cm->attached)
++			return __ofono_error_not_attached(msg);
 +
-+	DBG("%p", cdma_netreg);
+ 		if (value)
+ 			cm->driver->activate(cm, cm->username, cm->password,
+ 						activate_callback, cm);
+@@ -531,9 +538,23 @@ static void cdma_connman_unregister(struct ofono_atom =
+*atom)
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+ 	struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
+ 	const char *path =3D __ofono_atom_get_path(atom);
++	struct ofono_cdma_connman *cm =3D __ofono_atom_get_data(atom);
+ =
+
+ 	DBG("");
+ =
+
++	if (cm->cdma_netreg_watch) {
++		if (cm->cdma_status_watch) {
++			__ofono_cdma_netreg_remove_status_watch(
++							cm->cdma_netreg,
++							cm->cdma_status_watch);
++			cm->cdma_status_watch =3D 0;
++		}
 +
-+	if (cdma_netreg =3D=3D NULL)
-+		return 0;
-+
-+	if (notify =3D=3D NULL)
-+		return 0;
-+
-+	item =3D g_new0(struct ofono_watchlist_item, 1);
-+
-+	item->notify =3D notify;
-+	item->destroy =3D destroy;
-+	item->notify_data =3D data;
-+
-+	return __ofono_watchlist_add_item(cdma_netreg->status_watches, item);
-+}
-+
-+gboolean __ofono_cdma_netreg_remove_status_watch(
-+					struct ofono_cdma_netreg *cdma_netreg,
-+					unsigned int id)
-+{
-+	DBG("%p", cdma_netreg);
-+
-+	return __ofono_watchlist_remove_item(cdma_netreg->status_watches, id);
-+}
-+
-+static void notify_status_watches(struct ofono_cdma_netreg *cdma_netreg)
-+{
-+	struct ofono_watchlist_item *item;
-+	GSList *l;
-+	ofono_cdma_netreg_status_notify_cb_t notify;
-+
-+	for (l =3D cdma_netreg->status_watches->items; l; l =3D l->next) {
-+		item =3D l->data;
-+		notify =3D item->notify;
-+
-+		notify(cdma_netreg->status, item->notify_data);
++		__ofono_modem_remove_atom_watch(modem, cm->cdma_netreg_watch);
++		cm->cdma_netreg_watch =3D 0;
++		cm->cdma_netreg =3D NULL;
 +	}
-+}
 +
- void ofono_cdma_netreg_status_notify(struct ofono_cdma_netreg *cdma_netreg,
- 					enum cdma_netreg_status status)
- {
-@@ -127,6 +175,8 @@ void ofono_cdma_netreg_status_notify(struct ofono_cdma_=
-netreg *cdma_netreg,
- =
-
- 	if (cdma_netreg->status !=3D status)
- 		set_registration_status(cdma_netreg, status);
-+
-+	notify_status_watches(cdma_netreg);
+ 	g_dbus_unregister_interface(conn, path,
+ 				OFONO_CDMA_CONNECTION_MANAGER_INTERFACE);
+ 	ofono_modem_remove_interface(modem,
+@@ -593,6 +614,53 @@ struct ofono_cdma_connman *ofono_cdma_connman_create(
+ 	return cm;
  }
  =
 
- static void strength_notify_common(struct ofono_cdma_netreg *netreg,
-@@ -173,6 +223,14 @@ void ofono_cdma_netreg_data_strength_notify(struct ofo=
-no_cdma_netreg *netreg,
- 					"DataStrength", &netreg->hdr_strength);
- }
- =
-
-+int ofono_cdma_netreg_get_status(struct ofono_cdma_netreg *netreg)
++static void cdma_connman_netreg_update(struct ofono_cdma_connman *cm)
 +{
-+	if (netreg =3D=3D NULL)
-+		return -1;
++	ofono_bool_t attach;
 +
-+	return netreg->status;
++	attach =3D cm->cdma_netreg_status =3D=3D
++			NETWORK_REGISTRATION_STATUS_REGISTERED;
++
++	/* TODO: Manager roaming case */
++
++	cm->attached =3D attach;
 +}
 +
- int ofono_cdma_netreg_driver_register(const struct ofono_cdma_netreg_drive=
-r *d)
++static void cdma_netreg_status_changed(int status, void *data)
++{
++	struct ofono_cdma_connman *cm =3D data;
++
++	DBG("%d", status);
++
++	if (cm->cdma_netreg_status =3D=3D status)
++		return;
++
++	cm->cdma_netreg_status =3D status;
++
++	cdma_connman_netreg_update(cm);
++}
++
++static void cdma_netreg_watch(struct ofono_atom *atom,
++				enum ofono_atom_watch_condition cond,
++				void *data)
++{
++	struct ofono_cdma_connman *cm =3D data;
++
++	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
++		cm->cdma_netreg_status =3D
++				NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
++		return;
++	}
++
++	cm->cdma_netreg =3D __ofono_atom_get_data(atom);
++	cm->cdma_netreg_status =3D ofono_cdma_netreg_get_status(cm->cdma_netreg);
++	cm->cdma_status_watch =3D
++			__ofono_cdma_netreg_add_status_watch(cm->cdma_netreg,
++					cdma_netreg_status_changed, cm, NULL);
++
++	cdma_connman_netreg_update(cm);
++}
++
+ void ofono_cdma_connman_register(struct ofono_cdma_connman *cm)
  {
- 	DBG("driver: %p, name: %s", d, d->name);
-diff --git a/src/ofono.h b/src/ofono.h
-index bd45560..ce2f0b6 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -485,7 +485,20 @@ void __ofono_gprs_provision_free_settings(
- #include <ofono/emulator.h>
- #include <ofono/gnss.h>
- #include <ofono/cdma-sms.h>
-+
- #include <ofono/cdma-netreg.h>
-+
-+typedef void (*ofono_cdma_netreg_status_notify_cb_t)(int status, void *dat=
-a);
-+
-+unsigned int __ofono_cdma_netreg_add_status_watch(
-+				struct ofono_cdma_netreg *cdma_netreg,
-+				ofono_cdma_netreg_status_notify_cb_t cb,
-+				void *data, ofono_destroy_func destroy);
-+
-+gboolean __ofono_cdma_netreg_remove_status_watch(
-+					struct ofono_cdma_netreg *cdma_netreg,
-+					unsigned int id);
-+
- #include <ofono/private-network.h>
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+@@ -613,7 +681,9 @@ void ofono_cdma_connman_register(struct ofono_cdma_conn=
+man *cm)
+ 	ofono_modem_add_interface(modem,
+ 				OFONO_CDMA_CONNECTION_MANAGER_INTERFACE);
  =
 
- void __ofono_private_network_release(int id);
+-	/* TODO: add watch to support CDMA Network Registration atom */
++	cm->cdma_netreg_watch =3D __ofono_modem_add_atom_watch(modem,
++					OFONO_ATOM_TYPE_CDMA_NETREG,
++					cdma_netreg_watch, cm, NULL);
+ =
+
+ 	__ofono_atom_register(cm->atom, cdma_connman_unregister);
+ }
 -- =
 
 1.7.1
 
 
---===============3908210658430890295==--
+--===============2870227479768199009==--
 
