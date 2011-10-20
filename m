@@ -1,128 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============5233179340216294800=="
+Content-Type: multipart/mixed; boundary="===============6370668513330741690=="
 MIME-Version: 1.0
 From: Mikel Astiz <mikel.astiz@bmw-carit.de>
-Subject: [PATCH v3 08/15] handsfree: Supported AG features exposed in D-Bus
-Date: Thu, 20 Oct 2011 18:38:13 +0200
-Message-ID: <1319128700-15841-9-git-send-email-mikel.astiz@bmw-carit.de>
+Subject: [PATCH v3 10/15] hfpmodem: Avoid segfault in network-registration
+Date: Thu, 20 Oct 2011 18:38:15 +0200
+Message-ID: <1319128700-15841-11-git-send-email-mikel.astiz@bmw-carit.de>
 In-Reply-To: <1319128700-15841-1-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5233179340216294800==
+--===============6370668513330741690==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+The use of g_idle_add can cause a segmentation fault if the object is
+destroyed in the meantime.
 ---
- src/handsfree.c |   58 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 58 insertions(+), 0 deletions(-)
+ drivers/hfpmodem/network-registration.c |    9 ++++++++-
+ 1 files changed, 8 insertions(+), 1 deletions(-)
 
-diff --git a/src/handsfree.c b/src/handsfree.c
-index 7f3882f..d3acb8b 100644
---- a/src/handsfree.c
-+++ b/src/handsfree.c
-@@ -41,9 +41,12 @@
- #include "ofono.h"
- #include "common.h"
- =
-
-+#define MAX_AG_FEATURE_COUNT 32
-+
- static GSList *g_drivers =3D NULL;
- =
-
- struct ofono_handsfree {
-+	unsigned int ag_features;
- 	ofono_bool_t inband_ringing;
- 	ofono_bool_t voicerec_state;
- 	ofono_bool_t pending_voicerec_state;
-@@ -54,6 +57,54 @@ struct ofono_handsfree {
- 	DBusMessage *pending;
+diff --git a/drivers/hfpmodem/network-registration.c b/drivers/hfpmodem/net=
+work-registration.c
+index da7d8eb..6c27a23 100644
+--- a/drivers/hfpmodem/network-registration.c
++++ b/drivers/hfpmodem/network-registration.c
+@@ -51,6 +51,7 @@ struct netreg_data {
+ 	GAtChat *chat;
+ 	unsigned char cind_pos[HFP_INDICATOR_LAST];
+ 	int cind_val[HFP_INDICATOR_LAST];
++	guint registration_event_id;
  };
  =
 
-+static void append_ag_features(struct ofono_handsfree *hf, char **features)
-+{
-+	unsigned int bit;
-+	int feature_count =3D 0;
-+
-+	for (bit =3D 1; bit !=3D 0; bit <<=3D 1) {
-+		if (hf->ag_features & bit) {
-+			char *name =3D NULL;
-+
-+			switch ((enum hfp_ag_feature) bit) {
-+			case HFP_AG_FEATURE_VOICE_RECOG:
-+				name =3D "VoiceRecognition";
-+				break;
-+			case HFP_AG_FEATURE_ATTACH_VOICE_TAG:
-+				name =3D "AttachVoiceTag";
-+				break;
-+			default:
-+				continue;
-+			}
-+
-+			features[feature_count++] =3D name;
-+		}
-+	}
-+
-+	features[feature_count] =3D NULL;
-+}
-+
-+void ofono_handsfree_set_ag_features(struct ofono_handsfree *hf,
-+					unsigned int ag_features)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path =3D __ofono_atom_get_path(hf->atom);
-+	char **features;
-+
-+	if (hf->ag_features =3D=3D ag_features)
-+		return;
-+
-+	hf->ag_features =3D ag_features;
-+
-+	features =3D g_new0(char *, MAX_AG_FEATURE_COUNT + 1);
-+	append_ag_features(hf, features);
-+	ofono_dbus_signal_array_property_changed(conn, path,
-+						OFONO_HANDSFREE_INTERFACE,
-+						"Features", DBUS_TYPE_STRING,
-+						&features);
-+	g_free(features);
-+}
-+
- void ofono_handsfree_set_inband_ringing(struct ofono_handsfree *hf,
- 						ofono_bool_t enabled)
+ static void cops_cb(gboolean ok, GAtResult *result, gpointer user_data)
+@@ -297,6 +298,9 @@ static void hfp_signal_strength(struct ofono_netreg *ne=
+treg,
+ static gboolean hfp_netreg_register(gpointer user_data)
  {
-@@ -102,6 +153,7 @@ static DBusMessage *handsfree_get_properties(DBusConnec=
-tion *conn,
- 	DBusMessageIter dict;
- 	dbus_bool_t inband_ringing;
- 	dbus_bool_t voicerec_state;
-+	char **features;
- =
-
- 	reply =3D dbus_message_new_method_return(msg);
- 	if (reply =3D=3D NULL)
-@@ -121,6 +173,12 @@ static DBusMessage *handsfree_get_properties(DBusConne=
-ction *conn,
- 	ofono_dbus_dict_append(&dict, "VoiceRecognition", DBUS_TYPE_BOOLEAN,
- 				&voicerec_state);
- =
-
-+	features =3D g_new0(char *, MAX_AG_FEATURE_COUNT + 1);
-+	append_ag_features(hf, features);
-+	ofono_dbus_dict_append_array(&dict, "Features", DBUS_TYPE_STRING,
-+					&features);
-+	g_free(features);
+ 	struct ofono_netreg *netreg =3D user_data;
++	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
 +
- 	dbus_message_iter_close_container(&iter, &dict);
++	nd->registration_event_id =3D 0;
  =
 
- 	return reply;
+ 	ofono_netreg_register(netreg);
+ =
+
+@@ -320,7 +324,7 @@ static int hfp_netreg_probe(struct ofono_netreg *netreg=
+, unsigned int vendor,
+ 	g_at_chat_register(nd->chat, "+CIEV:", ciev_notify, FALSE,
+ 				netreg, NULL);
+ =
+
+-	g_idle_add(hfp_netreg_register, netreg);
++	nd->registration_event_id =3D g_idle_add(hfp_netreg_register, netreg);
+ =
+
+ 	return 0;
+ }
+@@ -329,6 +333,9 @@ static void hfp_netreg_remove(struct ofono_netreg *netr=
+eg)
+ {
+ 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
+ =
+
++	if (nd->registration_event_id !=3D 0)
++		g_source_remove(nd->registration_event_id);
++
+ 	ofono_netreg_set_data(netreg, NULL);
+ =
+
+ 	g_at_chat_unref(nd->chat);
 -- =
 
 1.7.6.4
 
 
---===============5233179340216294800==--
+--===============6370668513330741690==--
 
