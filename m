@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2156796336345337119=="
+Content-Type: multipart/mixed; boundary="===============1295175161118856731=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3 01/15] hfpmodem: Support for +BSIR unsol. result codes
-Date: Thu, 20 Oct 2011 12:58:00 -0500
-Message-ID: <4EA06128.6000707@gmail.com>
-In-Reply-To: <1319128700-15841-2-git-send-email-mikel.astiz@bmw-carit.de>
+Subject: Re: [PATCH v3 15/15] hfpmodem: minor whitespace fix
+Date: Thu, 20 Oct 2011 12:58:17 -0500
+Message-ID: <4EA06139.7060905@gmail.com>
+In-Reply-To: <1319128700-15841-16-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2156796336345337119==
+--===============1295175161118856731==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,8 +17,8 @@ Hi Mikel,
 
 On 10/20/2011 11:38 AM, Mikel Astiz wrote:
 > ---
->  drivers/hfpmodem/handsfree.c |   19 +++++++++++++++++++
->  1 files changed, 19 insertions(+), 0 deletions(-)
+>  drivers/hfpmodem/call-volume.c |    1 -
+>  1 files changed, 0 insertions(+), 1 deletions(-)
 > =
 
 
@@ -27,5 +27,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============2156796336345337119==--
+--===============1295175161118856731==--
 
