@@ -1,132 +1,128 @@
-Content-Type: multipart/mixed; boundary="===============0051131719316521671=="
+Content-Type: multipart/mixed; boundary="===============1485977811241246640=="
 MIME-Version: 1.0
 From: Mikel Astiz <mikel.astiz@bmw-carit.de>
-Subject: [PATCH v4 03/12] hfpmodem: Support for AT+BVRA
-Date: Fri, 21 Oct 2011 18:51:28 +0200
-Message-ID: <1319215897-6310-4-git-send-email-mikel.astiz@bmw-carit.de>
+Subject: [PATCH v4 05/12] handsfree: Supported AG features exposed in D-Bus
+Date: Fri, 21 Oct 2011 18:51:30 +0200
+Message-ID: <1319215897-6310-6-git-send-email-mikel.astiz@bmw-carit.de>
 In-Reply-To: <1319215897-6310-1-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0051131719316521671==
+--===============1485977811241246640==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/hfpmodem/handsfree.c |   53 ++++++++++++++++++++++++++++++++++++++=
+ src/handsfree.c |   58 +++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 53 insertions(+), 0 deletions(-)
+ 1 files changed, 58 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/hfpmodem/handsfree.c b/drivers/hfpmodem/handsfree.c
-index 54a5fba..ad656ce 100644
---- a/drivers/hfpmodem/handsfree.c
-+++ b/drivers/hfpmodem/handsfree.c
-@@ -43,12 +43,25 @@
- #include "slc.h"
+diff --git a/src/handsfree.c b/src/handsfree.c
+index 24f2349..27af31c 100644
+--- a/src/handsfree.c
++++ b/src/handsfree.c
+@@ -41,9 +41,12 @@
+ #include "ofono.h"
+ #include "common.h"
  =
 
- static const char *binp_prefix[] =3D { "+BINP:", NULL };
-+static const char *bvra_prefix[] =3D { "+BVRA:", NULL };
++#define MAX_AG_FEATURE_COUNT 32
++
+ static GSList *g_drivers =3D NULL;
  =
 
- struct hf_data {
- 	GAtChat *chat;
- 	unsigned int ag_features;
+ struct ofono_handsfree {
++	unsigned int ag_features;
+ 	ofono_bool_t inband_ringing;
+ 	ofono_bool_t voice_recognition;
+ 	ofono_bool_t voice_recognition_pending;
+@@ -54,6 +57,54 @@ struct ofono_handsfree {
+ 	DBusMessage *pending;
  };
  =
 
-+static void hf_generic_set_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
++static void append_ag_features(struct ofono_handsfree *hf, char **features)
 +{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_handsfree_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
++	unsigned int bit;
++	int feature_count =3D 0;
 +
-+	decode_at_error(&error, g_at_result_final_response(result));
++	for (bit =3D 1; bit !=3D 0; bit <<=3D 1) {
++		if (hf->ag_features & bit) {
++			char *name =3D NULL;
 +
-+	cb(&error, cbd->data);
++			switch ((enum hfp_ag_feature) bit) {
++			case HFP_AG_FEATURE_VOICE_RECOG:
++				name =3D "voice-recognition";
++				break;
++			case HFP_AG_FEATURE_ATTACH_VOICE_TAG:
++				name =3D "attach-voice-tag";
++				break;
++			default:
++				continue;
++			}
++
++			features[feature_count++] =3D name;
++		}
++	}
++
++	features[feature_count] =3D NULL;
 +}
 +
- static void bsir_notify(GAtResult *result, gpointer user_data)
++void ofono_handsfree_set_ag_features(struct ofono_handsfree *hf,
++					unsigned int ag_features)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(hf->atom);
++	char **features;
++
++	if (hf->ag_features =3D=3D ag_features)
++		return;
++
++	hf->ag_features =3D ag_features;
++
++	features =3D g_new0(char *, MAX_AG_FEATURE_COUNT + 1);
++	append_ag_features(hf, features);
++	ofono_dbus_signal_array_property_changed(conn, path,
++						OFONO_HANDSFREE_INTERFACE,
++						"Features", DBUS_TYPE_STRING,
++						&features);
++	g_free(features);
++}
++
+ void ofono_handsfree_set_inband_ringing(struct ofono_handsfree *hf,
+ 						ofono_bool_t enabled)
  {
- 	struct ofono_handsfree *hf =3D user_data;
-@@ -66,12 +79,30 @@ static void bsir_notify(GAtResult *result, gpointer use=
-r_data)
- 	ofono_handsfree_set_inband_ringing(hf, (ofono_bool_t) value);
- }
+@@ -102,6 +153,7 @@ static DBusMessage *handsfree_get_properties(DBusConnec=
+tion *conn,
+ 	DBusMessageIter dict;
+ 	dbus_bool_t inband_ringing;
+ 	dbus_bool_t voice_recognition;
++	char **features;
  =
 
-+static void bvra_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_handsfree *hf =3D user_data;
-+	GAtResultIter iter;
-+	int value;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+BVRA:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &value))
-+		return;
-+
-+	ofono_handsfree_voice_recognition_notify(hf, (ofono_bool_t) value);
-+}
-+
- static gboolean hfp_handsfree_register(gpointer user_data)
- {
- 	struct ofono_handsfree *hf =3D user_data;
- 	struct hf_data *hd =3D ofono_handsfree_get_data(hf);
+ 	reply =3D dbus_message_new_method_return(msg);
+ 	if (reply =3D=3D NULL)
+@@ -121,6 +173,12 @@ static DBusMessage *handsfree_get_properties(DBusConne=
+ction *conn,
+ 	ofono_dbus_dict_append(&dict, "VoiceRecognition", DBUS_TYPE_BOOLEAN,
+ 				&voice_recognition);
  =
 
- 	g_at_chat_register(hd->chat, "+BSIR:", bsir_notify, FALSE, hf, NULL);
-+	g_at_chat_register(hd->chat, "+BVRA:", bvra_notify, FALSE, hf, NULL);
++	features =3D g_new0(char *, MAX_AG_FEATURE_COUNT + 1);
++	append_ag_features(hf, features);
++	ofono_dbus_dict_append_array(&dict, "Features", DBUS_TYPE_STRING,
++					&features);
++	g_free(features);
++
+ 	dbus_message_iter_close_container(&iter, &dict);
  =
 
- 	if (hd->ag_features & HFP_AG_FEATURE_IN_BAND_RING_TONE)
- 		ofono_handsfree_set_inband_ringing(hf, TRUE);
-@@ -169,11 +200,33 @@ static void hfp_request_phone_number(struct ofono_han=
-dsfree *hf,
- 	CALLBACK_WITH_FAILURE(cb, NULL, data);
- }
- =
-
-+static void hfp_voice_recognition(struct ofono_handsfree *hf,
-+					ofono_bool_t enabled,
-+					ofono_handsfree_cb_t cb, void *data)
-+{
-+	struct hf_data *hd =3D ofono_handsfree_get_data(hf);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char buf[64];
-+
-+	snprintf(buf, sizeof(buf), "AT+BVRA=3D%d",
-+				(int)(enabled));
-+
-+	if (g_at_chat_send(hd->chat, buf, bvra_prefix,
-+				hf_generic_set_cb,
-+				cbd, g_free) > 0)
-+		return;
-+
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
- static struct ofono_handsfree_driver driver =3D {
- 	.name			=3D "hfpmodem",
- 	.probe			=3D hfp_handsfree_probe,
- 	.remove			=3D hfp_handsfree_remove,
- 	.request_phone_number	=3D hfp_request_phone_number,
-+	.voice_recognition	=3D hfp_voice_recognition,
- };
- =
-
- void hfp_handsfree_init(void)
+ 	return reply;
 -- =
 
 1.7.6.4
 
 
---===============0051131719316521671==--
+--===============1485977811241246640==--
 
