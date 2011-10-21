@@ -1,49 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============8338479065581422429=="
+Content-Type: multipart/mixed; boundary="===============3290270480923592036=="
 MIME-Version: 1.0
 From: Mikel Astiz <mikel.astiz@bmw-carit.de>
-Subject: [PATCH v4 04/12] doc: Handsfree exposes supported AG features
-Date: Fri, 21 Oct 2011 18:51:29 +0200
-Message-ID: <1319215897-6310-5-git-send-email-mikel.astiz@bmw-carit.de>
+Subject: [PATCH v4 06/12] hfpmodem: Report features supported by AG
+Date: Fri, 21 Oct 2011 18:51:31 +0200
+Message-ID: <1319215897-6310-7-git-send-email-mikel.astiz@bmw-carit.de>
 In-Reply-To: <1319215897-6310-1-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8338479065581422429==
+--===============3290270480923592036==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/handsfree-api.txt |    9 ++++++++-
- 1 files changed, 8 insertions(+), 1 deletions(-)
+ drivers/hfpmodem/handsfree.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/doc/handsfree-api.txt b/doc/handsfree-api.txt
-index 9355946..7f9deec 100644
---- a/doc/handsfree-api.txt
-+++ b/doc/handsfree-api.txt
-@@ -38,7 +38,14 @@ Signals		PropertyChanged(string property, variant value)
- 			Signal is emitted whenever a property has changed.
- 			The new value is passed as the signal argument.
+diff --git a/drivers/hfpmodem/handsfree.c b/drivers/hfpmodem/handsfree.c
+index ad656ce..984708d 100644
+--- a/drivers/hfpmodem/handsfree.c
++++ b/drivers/hfpmodem/handsfree.c
+@@ -107,6 +107,7 @@ static gboolean hfp_handsfree_register(gpointer user_da=
+ta)
+ 	if (hd->ag_features & HFP_AG_FEATURE_IN_BAND_RING_TONE)
+ 		ofono_handsfree_set_inband_ringing(hf, TRUE);
  =
 
--Properties	boolean InbandRinging [readonly]
-+Properties	array{string} Features [readonly]
-+
-+			List of features supported by the AG. The currently
-+			supported values are:
-+				"voice-recognition"
-+				"attach-voice-tag"
-+
-+		boolean InbandRinging [readonly]
++	ofono_handsfree_set_ag_features(hf, hd->ag_features);
+ 	ofono_handsfree_register(hf);
  =
 
- 			Boolean representing whether inband ringing is enabled.
- =
-
+ 	return FALSE;
 -- =
 
 1.7.6.4
 
 
---===============8338479065581422429==--
+--===============3290270480923592036==--
 
