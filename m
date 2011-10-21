@@ -1,51 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============7374593308127797717=="
+Content-Type: multipart/mixed; boundary="===============5578371337475989432=="
 MIME-Version: 1.0
-From: Mikel Astiz <mikel.astiz@bmw-carit.de>
-Subject: [PATCH v4 12/12] hfp_hf: BT address exposed through Serial property
-Date: Fri, 21 Oct 2011 18:51:37 +0200
-Message-ID: <1319215897-6310-13-git-send-email-mikel.astiz@bmw-carit.de>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v4 00/12] Bluetooth HFP-specific extensions
+Date: Fri, 21 Oct 2011 14:30:14 -0500
+Message-ID: <4EA1C846.1080808@gmail.com>
 In-Reply-To: <1319215897-6310-1-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7374593308127797717==
+--===============5578371337475989432==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/hfp_hf.c |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+Hi Mikel,
 
-diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
-index ba06434..c9451d2 100644
---- a/plugins/hfp_hf.c
-+++ b/plugins/hfp_hf.c
-@@ -38,6 +38,7 @@
- #include <ofono/plugin.h>
- #include <ofono/log.h>
- #include <ofono/modem.h>
-+#include <ofono/devinfo.h>
- #include <ofono/netreg.h>
- #include <ofono/voicecall.h>
- #include <ofono/call-volume.h>
-@@ -232,6 +233,9 @@ static int hfp_hf_probe(const char *device, const char =
-*dev_addr,
- =
+On 10/21/2011 11:51 AM, Mikel Astiz wrote:
+> Modifications to the previously proposed patches, according to the review.
+> =
 
- 	ofono_modem_set_data(modem, data);
- 	ofono_modem_set_name(modem, alias);
-+
-+	ofono_devinfo_create(modem, 0, "hfpmodem", (void *) dev_addr);
-+
- 	ofono_modem_register(modem);
- =
+> Mikel Astiz (12):
+>   include: Voice recognition in handsfree public api
+>   handsfree: Implement voice recognition function
+>   hfpmodem: Support for AT+BVRA
+>   doc: Handsfree exposes supported AG features
+>   handsfree: Supported AG features exposed in D-Bus
+>   hfpmodem: Report features supported by AG
+>   hfpmodem: Avoid segfault in network-registration
+>   hfpmodem: Avoid segfault in call-volume
+>   hfpmodem: Avoid segfault in handsfree
+>   devinfo: avoid crash if query_model not supported
+>   hfpmodem: devinfo atom added to export BT address
+>   hfp_hf: BT address exposed through Serial property
+> =
 
- 	g_hash_table_insert(modem_hash, g_strdup(device), modem);
--- =
+>  Makefile.am                             |    1 +
+>  doc/handsfree-api.txt                   |    9 ++-
+>  drivers/hfpmodem/call-volume.c          |    8 ++-
+>  drivers/hfpmodem/devinfo.c              |  109 +++++++++++++++++++++++++
+>  drivers/hfpmodem/handsfree.c            |   62 ++++++++++++++-
+>  drivers/hfpmodem/hfpmodem.c             |    2 +
+>  drivers/hfpmodem/hfpmodem.h             |    3 +
+>  drivers/hfpmodem/network-registration.c |    9 ++-
+>  include/handsfree.h                     |    7 ++
+>  plugins/hfp_hf.c                        |    4 +
+>  src/handsfree.c                         |  133 +++++++++++++++++++++++++=
+++++++
+>  src/modem.c                             |    1 +
+>  12 files changed, 344 insertions(+), 4 deletions(-)
+>  create mode 100644 drivers/hfpmodem/devinfo.c
+> =
 
-1.7.6.4
 
+All patches in this series except patch 5 and 12 have been applied.  See
+my comments for those two patches.
 
---===============7374593308127797717==--
+Regards,
+-Denis
+
+--===============5578371337475989432==--
 
