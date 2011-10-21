@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============1998006913295750870=="
+Content-Type: multipart/mixed; boundary="===============6197780731884152883=="
 MIME-Version: 1.0
 From: Mikel Astiz <mikel.astiz@bmw-carit.de>
-Subject: [PATCH v4 08/12] hfpmodem: Avoid segfault in call-volume
-Date: Fri, 21 Oct 2011 18:51:33 +0200
-Message-ID: <1319215897-6310-9-git-send-email-mikel.astiz@bmw-carit.de>
+Subject: [PATCH v4 09/12] hfpmodem: Avoid segfault in handsfree
+Date: Fri, 21 Oct 2011 18:51:34 +0200
+Message-ID: <1319215897-6310-10-git-send-email-mikel.astiz@bmw-carit.de>
 In-Reply-To: <1319215897-6310-1-git-send-email-mikel.astiz@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1998006913295750870==
+--===============6197780731884152883==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,65 +16,64 @@ Content-Transfer-Encoding: quoted-printable
 The use of g_idle_add can cause a segmentation fault if the object is
 destroyed in the meantime.
 ---
- drivers/hfpmodem/call-volume.c |    8 +++++++-
+ drivers/hfpmodem/handsfree.c |    8 +++++++-
  1 files changed, 7 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/hfpmodem/call-volume.c b/drivers/hfpmodem/call-volume.c
-index 504b0a5..0d7431e 100644
---- a/drivers/hfpmodem/call-volume.c
-+++ b/drivers/hfpmodem/call-volume.c
-@@ -50,6 +50,7 @@ struct cv_data {
+diff --git a/drivers/hfpmodem/handsfree.c b/drivers/hfpmodem/handsfree.c
+index 984708d..abe2ad2 100644
+--- a/drivers/hfpmodem/handsfree.c
++++ b/drivers/hfpmodem/handsfree.c
+@@ -48,6 +48,7 @@ static const char *bvra_prefix[] =3D { "+BVRA:", NULL };
+ struct hf_data {
  	GAtChat *chat;
- 	unsigned char sp_volume;
- 	unsigned char mic_volume;
+ 	unsigned int ag_features;
 +	guint register_source;
  };
  =
 
- static void cv_generic_set_cb(gboolean ok, GAtResult *result,
-@@ -173,6 +174,8 @@ static gboolean hfp_call_volume_register(gpointer user_=
-data)
+ static void hf_generic_set_cb(gboolean ok, GAtResult *result,
+@@ -101,6 +102,8 @@ static gboolean hfp_handsfree_register(gpointer user_da=
+ta)
+ 	struct ofono_handsfree *hf =3D user_data;
+ 	struct hf_data *hd =3D ofono_handsfree_get_data(hf);
  =
 
- 	DBG("");
- =
-
-+	vd->register_source =3D 0;
++	hd->register_source =3D 0;
 +
- 	g_at_chat_register(vd->chat, "+VGS:", vgs_notify, FALSE, cv, NULL);
- 	g_at_chat_register(vd->chat, "+VGM:", vgm_notify, FALSE, cv, NULL);
+ 	g_at_chat_register(hd->chat, "+BSIR:", bsir_notify, FALSE, hf, NULL);
+ 	g_at_chat_register(hd->chat, "+BVRA:", bvra_notify, FALSE, hf, NULL);
  =
 
-@@ -197,7 +200,7 @@ static int hfp_call_volume_probe(struct ofono_call_volu=
-me *cv,
+@@ -126,7 +129,7 @@ static int hfp_handsfree_probe(struct ofono_handsfree *=
+hf,
  =
 
- 	ofono_call_volume_set_data(cv, vd);
+ 	ofono_handsfree_set_data(hf, hd);
  =
 
--	g_idle_add(hfp_call_volume_register, cv);
-+	vd->register_source =3D g_idle_add(hfp_call_volume_register, cv);
+-	g_idle_add(hfp_handsfree_register, hf);
++	hd->register_source =3D g_idle_add(hfp_handsfree_register, hf);
  =
 
  	return 0;
  }
-@@ -206,6 +209,9 @@ static void hfp_call_volume_remove(struct ofono_call_vo=
-lume *cv)
+@@ -135,6 +138,9 @@ static void hfp_handsfree_remove(struct ofono_handsfree=
+ *hf)
  {
- 	struct cv_data *vd =3D ofono_call_volume_get_data(cv);
+ 	struct hf_data *hd =3D ofono_handsfree_get_data(hf);
  =
 
-+	if (vd->register_source !=3D 0)
-+		g_source_remove(vd->register_source);
++	if (hd->register_source !=3D 0)
++		g_source_remove(hd->register_source);
 +
- 	ofono_call_volume_set_data(cv, NULL);
+ 	ofono_handsfree_set_data(hf, NULL);
  =
 
- 	g_at_chat_unref(vd->chat);
+ 	g_at_chat_unref(hd->chat);
 -- =
 
 1.7.6.4
 
 
---===============1998006913295750870==--
+--===============6197780731884152883==--
 
