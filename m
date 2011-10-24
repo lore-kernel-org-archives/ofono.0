@@ -1,49 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============3740825057695161511=="
+Content-Type: multipart/mixed; boundary="===============4533431340508386224=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: callhistory plug-in
-Date: Sun, 23 Oct 2011 15:34:20 -0500
-Message-ID: <4EA47A4C.9020404@gmail.com>
-In-Reply-To: <D289D719C4D273478F6F91853F18E304018119E1@SGPMBX03.APAC.bosch.com>
+From: Jean Parpaillon <jean.parpaillon@free.fr>
+Subject: Re: Ofono use
+Date: Mon, 24 Oct 2011 17:48:39 +0200
+Message-ID: <1319471319.32429.150.camel@talinn.home>
+In-Reply-To: <4EA47705.4050404@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3740825057695161511==
+--===============4533431340508386224==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Raj,
+Hi,
+Thak you all for your answer.
 
-On 10/24/2011 08:35 AM, Rajkumar Athimoolam (RBEI/ECG1) wrote:
-> Hi all,
->  =
+Le dimanche 23 octobre 2011 =C3=A0 15:20 -0500, Denis Kenzior a =C3=A9crit :
+> Hi Jean,
+> =
 
-> I have been looking for some solution to store the call history
-> information from oFono in EDS.
-> In ofono-paper.txt it is mentioned as=E2=80=9CMoblin uses oFono plugins t=
-o store
-> all call history information within Evolution Data Server.=E2=80=9D
+> On 10/24/2011 04:44 AM, Jean Parpaillon wrote:
+> > Hi all,
+> > I am currently trying to use ofono and I can not get how to register the
+> > modem in a reliable way.
+> > When I detect a modem, I set org.ofono.Modem.Powered to True.
+> > When SimManager interface is ready, I enter the pin.
+> > Then, I set the modem org.ofono.Modem.Online to True.
+> =
 
-This comment is/was true, but quite outdated.  While there was a call
-history plugin for EDS, it lived in a separate repository.
+> So far so good...
+> =
 
-> But in ofono source code I could only see the history plug-in interfaces.
-> Where I can find the upstream plug-in code for call history storage in ED=
-S?
-> Any thing related to this direction would be of great help. Thanks
->
+> > By the way, I wait for NetworkRegistration interface to be available.
+> > When it is available, I wait for NetworkRegistration.Name to be non
+> > empty to call NetworkRegistration.Register.
+> > =
 
-You might want to peek into meego-cellular group of projects on
-gitorious or look into the mailing list archives for previous
-discussions on this topic.
+> =
 
-> Please excuse if it is already somewhere discussed in the mail archives
->  =
+> oFono will automatically register unless the Mode property is set to
+> 'manual'.  So calling NetworkRegistration.Register is wholly pointless
+> if you obtain a NetworkRegistration.Name.  That means you're already
+> registered ;)
+> =
 
 
-Regards,
--Denis
+Noted :)
 
---===============3740825057695161511==--
+> > The point is setting Online property usually end with a timeout. It is
+> > the right workflow ? Must I look for other property ? =
+
+> =
+
+> What modem are you using?  In general Online should never result in a
+> timeout...
+> =
+
+
+I am using a Huawei 1752 USB dongle.
+After some time, modem is online, but I sometimes got a timeout. Really
+precise, isn't it ? ;)
+
+The really point now is I wanted to make voice calls but it appears that
+this modem come with voice call feature disabled by default. Arggg.
+
+> Regards,
+> -Denis
+
+Thanks again,
+Jean
+
+
+--===============4533431340508386224==--
 
