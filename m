@@ -1,79 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============7697666177558207777=="
+Content-Type: multipart/mixed; boundary="===============0099098967898056278=="
 MIME-Version: 1.0
-From: Jean Parpaillon <jean.parpaillon@free.fr>
-Subject: Re: Ofono use
-Date: Wed, 26 Oct 2011 13:17:17 +0200
-Message-ID: <1319627837.3807.20.camel@talinn.home>
-In-Reply-To: <4EA47705.4050404@gmail.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH v3 0/5] udev rules update
+Date: Wed, 26 Oct 2011 15:21:42 +0200
+Message-ID: <4EA80966.60607@linux.intel.com>
+In-Reply-To: <1314782795-9816-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7697666177558207777==
+--===============0099098967898056278==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Denis and Marcel,
 
-Le dimanche 23 octobre 2011 =C3=A0 15:20 -0500, Denis Kenzior a =C3=A9crit :
-> Hi Jean,
-> =
+On 31/08/2011 11:26, Philippe Nunes wrote:
+> The modification I did in udevng.c to prevent overiding of the OFONO_LABE=
+L based assignment, could break the default assignment.
+> I fixed this with this new patch.
+>
+> Philippe Nunes (5):
+>    udev: Add rules to support ZTE MF668 dongle
+>    udev: Add rules to support ZTE MF190 dongle
+>    udevng.c: tty assignment according OFONO_LABEL should take precedence
+>    udev: Add rules to support Speedup 7300 dongle
+>    udev: Add rules to support SpeedUp 9800 dongle
+>
+>   plugins/ofono.rules |   20 ++++++++++++++++
+>   plugins/udevng.c    |   61 +++++++++++++++++++++++++++++++-------------=
+------
+>   2 files changed, 58 insertions(+), 23 deletions(-)
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
-> On 10/24/2011 04:44 AM, Jean Parpaillon wrote:
-> > Hi all,
-> > I am currently trying to use ofono and I can not get how to register the
-> > modem in a reliable way.
-> > When I detect a modem, I set org.ofono.Modem.Powered to True.
-> > When SimManager interface is ready, I enter the pin.
-> > Then, I set the modem org.ofono.Modem.Online to True.
-> =
+As we would need this update to make some CDMA dongles working to test =
 
-> So far so good...
-> =
+UIM implementation, do you plan to apply those patches?
+Do you have another solution?
+Thanks.
 
-> > By the way, I wait for NetworkRegistration interface to be available.
-> > When it is available, I wait for NetworkRegistration.Name to be non
-> > empty to call NetworkRegistration.Register.
-> > =
+Kind regards,
+Guillaume
 
-> =
-
-> oFono will automatically register unless the Mode property is set to
-> 'manual'.  So calling NetworkRegistration.Register is wholly pointless
-> if you obtain a NetworkRegistration.Name.  That means you're already
-> registered ;)
-> =
-
-> > The point is setting Online property usually end with a timeout. It is
-> > the right workflow ? Must I look for other property ? =
-
-> =
-
-> What modem are you using?  In general Online should never result in a
-> timeout...
-> =
-
-
-At the end, setting Online to True always end in error if I follow the
-workflow described above. Error is:
-- First time:
-Error setting online: org.freedesktop.DBus.Error.NoReply: Did not
-receive a reply. Possible causes include: the remote application did not
-send a reply, the message bus security policy blocked the reply, the
-reply timeout expired, or the network connection was broken.
-- Then, if I retry before 30sec:
-Error setting online: org.ofono.Error.InProgress: Operation already in
-progress
-
-If I stop my program and come back after a while, modem is registered.
-Modem is Huawei 1752USB
-
-> Regards,
-> -Denis
-
-Best regards,
-Jean
-
-
---===============7697666177558207777==--
+--===============0099098967898056278==--
 
