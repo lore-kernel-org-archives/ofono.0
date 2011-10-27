@@ -1,179 +1,109 @@
-Content-Type: multipart/mixed; boundary="===============0412825959252463772=="
+Content-Type: multipart/mixed; boundary="===============4931604218836369706=="
 MIME-Version: 1.0
-From: Scott Haynie <scottahaynie@yahoo.com>
-Subject: Re: No audio with HFP
-Date: Wed, 26 Oct 2011 22:08:31 -0700
-Message-ID: <1319692111.55258.YahooMailNeo@web31805.mail.mud.yahoo.com>
-In-Reply-To: <1319479400.66494.YahooMailNeo@web31801.mail.mud.yahoo.com>
+From: Kristen Eisenberg <kristen.eisenberg@yahoo.com>
+Subject: [PATCH] Phonesim HACKING updated to refer to phonesim.conf instead of
+ modem.conf.
+Date: Thu, 27 Oct 2011 02:47:09 -0700
+Message-ID: <1319708829.80121.YahooMailNeo@web122319.mail.ne1.yahoo.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0412825959252463772==
+--===============4931604218836369706==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Just an update--- Decided to upgrade to Ubuntu 11.10 and had more success. =
-=C2=A0Finally got A2DP audio to pump successfully with the module-loopback =
-enabled (using bluez 4.96, pulseaudio 1:1.0-0, gnome-bluetooth 3.2.0) !
+Hi Essi,
 
-However, the HFP mode (i.e. Audio Gateway) still produces no call audio for=
- me :( =C2=A0Played with the PA Sound Profiles a bit (through the standard =
-Ubuntu sound-indicator GUI), noticing a "Handsfree Gateway" profile for my =
-Phone's sound device. =C2=A0Choosing this opens an audio stream (I can hear=
- a slight hiss), but still can't hear audio coming from the other end of th=
-e phone line. =C2=A0My /etc/bluetooth/audio.conf file is set to "Enable=3DS=
-ource,Sink,Gateway,Control".
+2011/2/1 Essi Vehmersalo <essi.vehmersalo@nokia.com>:
+> -automatically includes this option.
+> +automatically includes this option. See phonesim.conf sample configurati=
+on
+> +under ofono/plugins on how to configure oFono to use phonesim.
+>
+>   Run phonesim in foreground using the following options
+>     # ./src/phonesim -p 12345 -gui src/default.xml
+>
+> -Check your modem.conf file and enable the phonesim configuration before
+> -executing the above command. Argument -p should be followed by the proper
+> -port number, in case you have changed the default "12345". Argument -gui
+> -will launch the gui once the modem is enabled.
+> +Argument -p should be followed by the proper port number, in case you ha=
+ve
+> +changed the default "12345". Argument -gui will launch the gui once the
+> +modem is enabled.
 
-
-________________________________
-From: Scott Haynie <scottahaynie@yahoo.com>
-To: Gustavo Padovan <padovan@profusion.mobi>; "ofono(a)ofono.org" <ofono(=
-a)ofono.org>
-Sent: Monday, October 24, 2011 11:03 AM
-Subject: Re: No audio with HFP
-
-
-Tried those steps on that wiki and on the video. =C2=A0Still no audio comin=
-g through the speakers. =C2=A0No audio on the phone either, which means it'=
-s probably making its way to the PC, but not to the sound card.
-I've attached logs from bluetoothd, ofonod, and pulseaudio from pairing/con=
-necting with my phone, making a call, and enabling the module-loopback.
-Any help is much appreciated!
-Thanks,
-Scott
-
-
-________________________________
-From: Gustavo Padovan <padovan@profusion.mobi>
-To: Scott Haynie <scottahaynie@yahoo.com>; ofono(a)ofono.org
-Sent: Wednesday, September 21, 2011 2:43 PM
-Subject: Re: No audio with HFP
-
-Hi Scott,
-
-* Scott Haynie <scottahaynie@yahoo.com> [2011-09-21 14:19:46 -0700]:
-
-> Trying to get ofono HFP to work on my Ubuntu 11.04 box.=C2=A0 I can =
-
-> connect to the bluetooth device and initiate a voice call, but I can't =
-
-> hear any audio coming from the speakers.
-> Went through
- the =
-
-> instructions here: http://ofono.org/wiki/hands-free-profile . Saw =
-
-> something related to configuring pulse audio, but no pointers as to how =
-
-> to do that-- I do have the pulse audio package installed.
-
-Have a check at
-http://padovan.org/blog/2010/02/handsfree-profile-into-bluez-and-ofono/
-
-The audio is handled by pulseaudio, and you need to enable loopback between
-the Bluetooth stream and your mic and speaker.
-
-=C2=A0=C2=A0=C2=A0 Gustavo
+A couple of nits: there are some extra whitespace at the end of the
+lines, and also, the commit message header should be below 50
+characters.
 
 
 
-_______________________________________________
-ofono mailing list
-ofono(a)ofono.org
-http://lists.ofono.org/listinfo/ofono
+Kristen Eisenberg
+Billige Fl=C3=BCge
+Marketing GmbH
+Emanuelstr. 3,
+10317 Berlin
+Deutschland
+Telefon: +49 (33)
+5310967
+Email:
+utebachmeier at
+gmail.com
+Site:
+http://flug.airego.de
+- Billige Fl=C3=BCge vergleichen
 
---===============0412825959252463772==
+--===============4931604218836369706==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
 PGh0bWw+PGJvZHk+PGRpdiBzdHlsZT0iY29sb3I6IzAwMDsgYmFja2dyb3VuZC1jb2xvcjojZmZm
-OyBmb250LWZhbWlseTphcmlhbCwgaGVsdmV0aWNhLCBzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxMHB0
-Ij48ZGl2PjxzcGFuPkp1c3QgYW4gdXBkYXRlLS0tIERlY2lkZWQgdG8gdXBncmFkZSB0byBVYnVu
-dHUgMTEuMTAgYW5kIGhhZCBtb3JlIHN1Y2Nlc3MuICZuYnNwO0ZpbmFsbHkgZ290IEEyRFAgYXVk
-aW8gdG8gcHVtcCBzdWNjZXNzZnVsbHkgd2l0aCB0aGUgbW9kdWxlLWxvb3BiYWNrIGVuYWJsZWQg
-KHU8L3NwYW4+c2luZyBibHVleiA0Ljk2LCBwdWxzZWF1ZGlvIDE6MS4wLTAsIGdub21lLWJsdWV0
-b290aCAzLjIuMCkgITwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+SG93ZXZlciwgdGhlIEhGUCBt
-b2RlIChpLmUuIEF1ZGlvIEdhdGV3YXkpIHN0aWxsIHByb2R1Y2VzIG5vIGNhbGwgYXVkaW8gZm9y
-IG1lIDooICZuYnNwO1BsYXllZCB3aXRoIHRoZSBQQSBTb3VuZCBQcm9maWxlcyBhIGJpdCAodGhy
-b3VnaCB0aGUgc3RhbmRhcmQgVWJ1bnR1IHNvdW5kLWluZGljYXRvciBHVUkpLCBub3RpY2luZyBh
-ICJIYW5kc2ZyZWUgR2F0ZXdheSIgcHJvZmlsZSBmb3IgbXkgUGhvbmUncyBzb3VuZCBkZXZpY2Uu
-ICZuYnNwO0Nob29zaW5nIHRoaXMgb3BlbnMgYW4gYXVkaW8gc3RyZWFtIChJIGNhbiBoZWFyIGEg
-c2xpZ2h0IGhpc3MpLCBidXQgc3RpbGwgY2FuJ3QgaGVhciBhdWRpbyBjb21pbmcgZnJvbSB0aGUg
-b3RoZXIgZW5kIG9mIHRoZSBwaG9uZSBsaW5lLiAmbmJzcDtNeSAvZXRjL2JsdWV0b290aC9hdWRp
-by5jb25mIGZpbGUgaXMgc2V0IHRvICJFbmFibGU9U291cmNlLFNpbmssR2F0ZXdheSxDb250cm9s
-Ii48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2IHN0eWxlPSJmb250LXNpemU6IDEwcHQ7IGZvbnQt
-ZmFtaWx5OiBhcmlhbCwgaGVsdmV0aWNhLCBzYW5zLXNlcmlmOyAiPjxkaXYKIHN0eWxlPSJmb250
-LXNpemU6IDEycHQ7IGZvbnQtZmFtaWx5OiAndGltZXMgbmV3IHJvbWFuJywgJ25ldyB5b3JrJywg
-dGltZXMsIHNlcmlmOyAiPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48aHIgc2l6ZT0iMSI+
-PGI+PHNwYW4gc3R5bGU9ImZvbnQtd2VpZ2h0OmJvbGQ7Ij5Gcm9tOjwvc3Bhbj48L2I+IFNjb3R0
-IEhheW5pZSAmbHQ7c2NvdHRhaGF5bmllQHlhaG9vLmNvbSZndDs8YnI+PGI+PHNwYW4gc3R5bGU9
-ImZvbnQtd2VpZ2h0OiBib2xkOyI+VG86PC9zcGFuPjwvYj4gR3VzdGF2byBQYWRvdmFuICZsdDtw
-YWRvdmFuQHByb2Z1c2lvbi5tb2JpJmd0OzsgIm9mb25vQG9mb25vLm9yZyIgJmx0O29mb25vQG9m
-b25vLm9yZyZndDs8YnI+PGI+PHNwYW4gc3R5bGU9ImZvbnQtd2VpZ2h0OiBib2xkOyI+U2VudDo8
-L3NwYW4+PC9iPiBNb25kYXksIE9jdG9iZXIgMjQsIDIwMTEgMTE6MDMgQU08YnI+PGI+PHNwYW4g
-c3R5bGU9ImZvbnQtd2VpZ2h0OiBib2xkOyI+U3ViamVjdDo8L3NwYW4+PC9iPiBSZTogTm8gYXVk
-aW8gd2l0aCBIRlA8YnI+PC9mb250Pjxicj4KPGRpdiBpZD0ieWl2OTQ5MTQ5MTAwIj48ZGl2Pjxk
-aXYgc3R5bGU9ImNvbG9yOiByZ2IoMCwgMCwgMCk7IGJhY2tncm91bmQtY29sb3I6IHJnYigyNTUs
-IDI1NSwgMjU1KTsgZm9udC1zaXplOiAxMHB0OyBmb250LWZhbWlseTogYXJpYWwsIGhlbHZldGlj
-YSwgc2Fucy1zZXJpZjsgIj48ZGl2IGlkPSJ5aXY5NDkxNDkxMDAiPjxkaXY+PGRpdiBzdHlsZT0i
-Y29sb3I6IHJnYigwLCAwLCAwKTsgYmFja2dyb3VuZC1jb2xvcjogcmdiKDI1NSwgMjU1LCAyNTUp
-OyBmb250LXNpemU6IDEwcHQ7IGZvbnQtZmFtaWx5OiBhcmlhbCwgaGVsdmV0aWNhLCBzYW5zLXNl
-cmlmOyAiPjxkaXYgaWQ9Inlpdjk0OTE0OTEwMHl1aV8zXzJfMF8yM18xMzE5NDc1ODA2NTI3NDgi
-PjxzcGFuIGlkPSJ5aXY5NDkxNDkxMDB5dWlfM18yXzBfMjNfMTMxOTQ3NTgwNjUyNzcyIj5Ucmll
-ZCB0aG9zZSBzdGVwcyBvbiB0aGF0IHdpa2kgYW5kIG9uIHRoZSB2aWRlby4gJm5ic3A7U3RpbGwg
-bm8gYXVkaW8gY29taW5nIHRocm91Z2ggdGhlIHNwZWFrZXJzLiAmbmJzcDtObyBhdWRpbyBvbiB0
-aGUgcGhvbmUgZWl0aGVyLCB3aGljaCBtZWFucyBpdCdzIHByb2JhYmx5IG1ha2luZyBpdHMgd2F5
-IHRvIHRoZSBQQywgYnV0IG5vdCB0byB0aGUgc291bmQgY2FyZC48L3NwYW4+PC9kaXY+PGRpdiBp
-ZD0ieWl2OTQ5MTQ5MTAweXVpXzNfMl8wXzIzXzEzMTk0NzU4MDY1Mjc0OCI+PHNwYW4gaWQ9Inlp
-djk0OTE0OTEwMHl1aV8zXzJfMF8yM18xMzE5NDc1ODA2NTI3ODAiPkkndmUgYXR0YWNoZWQgbG9n
-cyBmcm9tIGJsdWV0b290aGQsIG9mb25vZCwgYW5kIHB1bHNlYXVkaW8gZnJvbSBwYWlyaW5nL2Nv
-bm5lY3Rpbmcgd2l0aCBteSBwaG9uZSwgbWFraW5nIGEgY2FsbCwgYW5kIGVuYWJsaW5nIHRoZSBt
-b2R1bGUtbG9vcGJhY2suPC9zcGFuPjwvZGl2PjxkaXYKIGlkPSJ5aXY5NDkxNDkxMDB5dWlfM18y
-XzBfMjNfMTMxOTQ3NTgwNjUyNzQ4Ij48c3BhbiBpZD0ieWl2OTQ5MTQ5MTAweXVpXzNfMl8wXzIz
-XzEzMTk0NzU4MDY1Mjc4OCI+QW55IGhlbHAgaXMgbXVjaCBhcHByZWNpYXRlZCE8L3NwYW4+PC9k
-aXY+PGRpdiBpZD0ieWl2OTQ5MTQ5MTAweXVpXzNfMl8wXzIzXzEzMTk0NzU4MDY1Mjc0OCI+PHNw
-YW4+VGhhbmtzLDwvc3Bhbj48L2Rpdj48ZGl2IGlkPSJ5aXY5NDkxNDkxMDB5dWlfM18yXzBfMjNf
-MTMxOTQ3NTgwNjUyNzQ4Ij48c3BhbiBpZD0ieWl2OTQ5MTQ5MTAweXVpXzNfMl8wXzIzXzEzMTk0
-NzU4MDY1Mjc5NyI+U2NvdHQ8L3NwYW4+PC9kaXY+PGRpdiBpZD0ieWl2OTQ5MTQ5MTAweXVpXzNf
-Ml8wXzIzXzEzMTk0NzU4MDY1Mjc4NSI+PGJyPjwvZGl2PjxkaXYgc3R5bGU9ImZvbnQtc2l6ZTog
-MTBwdDsgZm9udC1mYW1pbHk6IGFyaWFsLCBoZWx2ZXRpY2EsIHNhbnMtc2VyaWY7ICIgaWQ9Inlp
-djk0OTE0OTEwMHl1aV8zXzJfMF8yM18xMzE5NDc1ODA2NTI3NTQiIGNsYXNzPSJ5aXY5NDkxNDkx
-MDB5dWlfM18yXzBfMjNfMTMxOTQ3NTgwNjUyNzUyIj48ZGl2IHN0eWxlPSJmb250LXNpemU6IDEy
-cHQ7IGZvbnQtZmFtaWx5OiB0aW1lcywgc2VyaWY7ICIgY2xhc3M9Inlpdjk0OTE0OTEwMHl1aV8z
-XzJfMF8yM18xMzE5NDc1ODA2NTI3NTciPjxmb250IHNpemU9IjIiIGZhY2U9IkFyaWFsIj48aHIg
-c2l6ZT0iMSI+PGI+PHNwYW4gc3R5bGU9ImZvbnQtd2VpZ2h0OmJvbGQ7Ij5Gcm9tOjwvc3Bhbj48
-L2I+IEd1c3Rhdm8gUGFkb3ZhbiAmbHQ7cGFkb3ZhbkBwcm9mdXNpb24ubW9iaSZndDs8YnI+PGI+
-PHNwYW4gc3R5bGU9ImZvbnQtd2VpZ2h0OmJvbGQ7Ij5Ubzo8L3NwYW4+PC9iPiBTY290dCBIYXlu
-aWUgJmx0O3Njb3R0YWhheW5pZUB5YWhvby5jb20mZ3Q7OyBvZm9ub0BvZm9uby5vcmc8YnI+PGI+
-PHNwYW4KIHN0eWxlPSJmb250LXdlaWdodDpib2xkOyI+U2VudDo8L3NwYW4+PC9iPiBXZWRuZXNk
-YXksIFNlcHRlbWJlciAyMSwgMjAxMSAyOjQzIFBNPGJyPjxiPjxzcGFuIHN0eWxlPSJmb250LXdl
-aWdodDpib2xkOyI+U3ViamVjdDo8L3NwYW4+PC9iPiBSZTogTm8gYXVkaW8gd2l0aCBIRlA8YnI+
-PC9mb250Pjxicj5IaSBTY290dCw8YnI+PGJyPiogU2NvdHQgSGF5bmllICZsdDs8YSByZWw9Im5v
-Zm9sbG93IiB5bWFpbHRvPSJtYWlsdG86c2NvdHRhaGF5bmllQHlhaG9vLmNvbSIgdGFyZ2V0PSJf
-YmxhbmsiIGhyZWY9Im1haWx0bzpzY290dGFoYXluaWVAeWFob28uY29tIj5zY290dGFoYXluaWVA
-eWFob28uY29tPC9hPiZndDsgWzIwMTEtMDktMjEgMTQ6MTk6NDYgLTA3MDBdOjxicj48YnI+Jmd0
-OyBUcnlpbmcgdG8gZ2V0IG9mb25vIEhGUCB0byB3b3JrIG9uIG15IFVidW50dSAxMS4wNCBib3gu
-Jm5ic3A7IEkgY2FuIDxicj4mZ3Q7IGNvbm5lY3QgdG8gdGhlIGJsdWV0b290aCBkZXZpY2UgYW5k
-IGluaXRpYXRlIGEgdm9pY2UgY2FsbCwgYnV0IEkgY2FuJ3QgPGJyPiZndDsgaGVhciBhbnkgYXVk
-aW8gY29taW5nIGZyb20gdGhlIHNwZWFrZXJzLjxicj4mZ3Q7IFdlbnQgdGhyb3VnaAogdGhlIDxi
-cj4mZ3Q7IGluc3RydWN0aW9ucyBoZXJlOiBodHRwOi8vb2Zvbm8ub3JnL3dpa2kvaGFuZHMtZnJl
-ZS1wcm9maWxlIC4gU2F3IDxicj4mZ3Q7IHNvbWV0aGluZyByZWxhdGVkIHRvIGNvbmZpZ3VyaW5n
-IHB1bHNlIGF1ZGlvLCBidXQgbm8gcG9pbnRlcnMgYXMgdG8gaG93IDxicj4mZ3Q7IHRvIGRvIHRo
-YXQtLSBJIGRvIGhhdmUgdGhlIHB1bHNlIGF1ZGlvIHBhY2thZ2UgaW5zdGFsbGVkLjxicj48YnI+
-SGF2ZSBhIGNoZWNrIGF0PGJyPmh0dHA6Ly9wYWRvdmFuLm9yZy9ibG9nLzIwMTAvMDIvaGFuZHNm
-cmVlLXByb2ZpbGUtaW50by1ibHVlei1hbmQtb2Zvbm8vPGJyPjxicj5UaGUgYXVkaW8gaXMgaGFu
-ZGxlZCBieSBwdWxzZWF1ZGlvLCBhbmQgeW91IG5lZWQgdG8gZW5hYmxlIGxvb3BiYWNrIGJldHdl
-ZW48YnI+dGhlIEJsdWV0b290aCBzdHJlYW0gYW5kIHlvdXIgbWljIGFuZCBzcGVha2VyLjxicj48
-YnI+Jm5ic3A7Jm5ic3A7Jm5ic3A7IEd1c3Rhdm88YnI+PGJyPjxicj48L2Rpdj48L2Rpdj48L2Rp
-dj48L2Rpdj48L2Rpdj48L2Rpdj48L2Rpdj48L2Rpdj48YnI+X19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX188YnI+b2Zvbm8gbWFpbGluZyBsaXN0PGJyPjxhIHlt
-YWlsdG89Im1haWx0bzpvZm9ub0BvZm9uby5vcmciIGhyZWY9Im1haWx0bzpvZm9ub0BvZm9uby5v
-cmciPm9mb25vQG9mb25vLm9yZzwvYT48YnI+PGEgaHJlZj0iaHR0cDovL2xpc3RzLm9mb25vLm9y
-Zy9saXN0aW5mby9vZm9ubyIgdGFyZ2V0PSJfYmxhbmsiPmh0dHA6Ly9saXN0cy5vZm9uby5vcmcv
-bGlzdGluZm8vb2Zvbm88L2E+PGJyPjxicj48YnI+PC9kaXY+PC9kaXY+PC9kaXY+PC9ib2R5Pjwv
-aHRtbD4=
---===============0412825959252463772==--
+OyBmb250LWZhbWlseTp0aW1lcyBuZXcgcm9tYW4sIG5ldyB5b3JrLCB0aW1lcywgc2VyaWY7Zm9u
+dC1zaXplOjEycHQiPjxkaXY+SGkgRXNzaSw8YnI+PGJyPjIwMTEvMi8xIEVzc2kgVmVobWVyc2Fs
+byAmbHQ7ZXNzaS52ZWhtZXJzYWxvIGF0IG5va2lhLmNvbSZndDs6PGJyPiZndDsgLWF1dG9tYXRp
+Y2FsbHkgaW5jbHVkZXMgdGhpcyBvcHRpb24uPGJyPiZndDsgK2F1dG9tYXRpY2FsbHkgaW5jbHVk
+ZXMgdGhpcyBvcHRpb24uIFNlZSBwaG9uZXNpbS5jb25mIHNhbXBsZSBjb25maWd1cmF0aW9uPGJy
+PiZndDsgK3VuZGVyIG9mb25vL3BsdWdpbnMgb24gaG93IHRvIGNvbmZpZ3VyZSBvRm9ubyB0byB1
+c2UgcGhvbmVzaW0uPGJyPiZndDs8YnI+Jmd0OyAgIFJ1biBwaG9uZXNpbSBpbiBmb3JlZ3JvdW5k
+IHVzaW5nIHRoZSBmb2xsb3dpbmcgb3B0aW9uczxicj4mZ3Q7ICAgICAjIC4vc3JjL3Bob25lc2lt
+IC1wIDEyMzQ1IC1ndWkgc3JjL2RlZmF1bHQueG1sPGJyPiZndDs8YnI+Jmd0OyAtQ2hlY2sgeW91
+ciBtb2RlbS5jb25mIGZpbGUgYW5kIGVuYWJsZSB0aGUgcGhvbmVzaW0gY29uZmlndXJhdGlvbiBi
+ZWZvcmU8YnI+Jmd0OyAtZXhlY3V0aW5nIHRoZSBhYm92ZSBjb21tYW5kLiBBcmd1bWVudCAtcCBz
+aG91bGQgYmUgZm9sbG93ZWQgYnkgdGhlIHByb3Blcjxicj4mZ3Q7IC1wb3J0IG51bWJlciwgaW4g
+Y2FzZSB5b3UgaGF2ZSBjaGFuZ2VkIHRoZSBkZWZhdWx0ICIxMjM0NSIuIEFyZ3VtZW50IC1ndWk8
+YnI+Jmd0OyAtd2lsbCBsYXVuY2ggdGhlIGd1aSBvbmNlIHRoZSBtb2RlbSBpcyBlbmFibGVkLjxi
+cj4mZ3Q7ICtBcmd1bWVudCAtcCBzaG91bGQgYmUgZm9sbG93ZWQgYnkgdGhlIHByb3BlciBwb3J0
+IG51bWJlciwgaW4gY2FzZSB5b3UgaGF2ZTxicj4mZ3Q7ICtjaGFuZ2VkIHRoZSBkZWZhdWx0CiAi
+MTIzNDUiLiBBcmd1bWVudCAtZ3VpIHdpbGwgbGF1bmNoIHRoZSBndWkgb25jZSB0aGU8YnI+Jmd0
+OyArbW9kZW0gaXMgZW5hYmxlZC48YnI+PGJyPkEgY291cGxlIG9mIG5pdHM6IHRoZXJlIGFyZSBz
+b21lIGV4dHJhIHdoaXRlc3BhY2UgYXQgdGhlIGVuZCBvZiB0aGU8YnI+bGluZXMsIGFuZCBhbHNv
+LCB0aGUgY29tbWl0IG1lc3NhZ2UgaGVhZGVyIHNob3VsZCBiZSBiZWxvdyA1MDxicj5jaGFyYWN0
+ZXJzLjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+CgoKPGRpdiBjbGFz
+cz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJERSIgc3R5bGU9Im1zby1hbnNpLWxhbmd1YWdlOkRF
+Ij5LcmlzdGVuIEVpc2VuYmVyZzwvc3Bhbj48L2Rpdj4KCjxkaXYgY2xhc3M9Ik1zb05vcm1hbCI+
+PHNwYW4gbGFuZz0iREUiIHN0eWxlPSJtc28tYW5zaS1sYW5ndWFnZTpERSI+QmlsbGlnZSBGbPxn
+ZTwvc3Bhbj48L2Rpdj4KCjxkaXYgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iREUiIHN0
+eWxlPSJtc28tYW5zaS1sYW5ndWFnZTpERSI+TWFya2V0aW5nIEdtYkg8L3NwYW4+PC9kaXY+Cgo8
+ZGl2IGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9IkRFIiBzdHlsZT0ibXNvLWFuc2ktbGFu
+Z3VhZ2U6REUiPkVtYW51ZWxzdHIuIDMsPC9zcGFuPjwvZGl2PgoKPGRpdiBjbGFzcz0iTXNvTm9y
+bWFsIj48c3BhbiBsYW5nPSJERSIgc3R5bGU9Im1zby1hbnNpLWxhbmd1YWdlOkRFIj4xMDMxNyBC
+ZXJsaW48L3NwYW4+PC9kaXY+Cgo8ZGl2IGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9IkRF
+IiBzdHlsZT0ibXNvLWFuc2ktbGFuZ3VhZ2U6REUiPkRldXRzY2hsYW5kPC9zcGFuPjwvZGl2PgoK
+PGRpdiBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJERSIgc3R5bGU9Im1zby1hbnNpLWxh
+bmd1YWdlOkRFIj5UZWxlZm9uOiArNDkgKDMzKTwvc3Bhbj48L2Rpdj4KCjxkaXYgY2xhc3M9Ik1z
+b05vcm1hbCI+PHNwYW4gbGFuZz0iREUiIHN0eWxlPSJtc28tYW5zaS1sYW5ndWFnZTpERSI+NTMx
+MDk2Nzwvc3Bhbj48L2Rpdj4KCjxkaXYgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iREUi
+IHN0eWxlPSJtc28tYW5zaS1sYW5ndWFnZTpERSI+RW1haWw6PC9zcGFuPjwvZGl2PgoKPGRpdiBj
+bGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJERSIgc3R5bGU9Im1zby1hbnNpLWxhbmd1YWdl
+OkRFIj51dGViYWNobWVpZXIgYXQ8L3NwYW4+PC9kaXY+Cgo8ZGl2IGNsYXNzPSJNc29Ob3JtYWwi
+PjxzcGFuIGxhbmc9IkRFIiBzdHlsZT0ibXNvLWFuc2ktbGFuZ3VhZ2U6REUiPmdtYWlsLmNvbTwv
+c3Bhbj48L2Rpdj4KCjxkaXYgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4gbGFuZz0iREUiIHN0eWxl
+PSJtc28tYW5zaS1sYW5ndWFnZTpERSI+U2l0ZTo8L3NwYW4+PC9kaXY+Cgo8ZGl2IGNsYXNzPSJN
+c29Ob3JtYWwiPjxzcGFuIGxhbmc9IkRFIiBzdHlsZT0ibXNvLWFuc2ktbGFuZ3VhZ2U6REUiPmh0
+dHA6Ly9mbHVnLmFpcmVnby5kZQotIEJpbGxpZ2UgRmz8Z2UgdmVyZ2xlaWNoZW48L3NwYW4+PC9k
+aXY+PC9kaXY+PC9kaXY+PC9ib2R5PjwvaHRtbD4=
+--===============4931604218836369706==--
 
