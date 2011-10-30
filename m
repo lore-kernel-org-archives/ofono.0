@@ -1,37 +1,167 @@
-Content-Type: multipart/mixed; boundary="===============5712815798088881097=="
+Content-Type: multipart/mixed; boundary="===============6024753224667433704=="
 MIME-Version: 1.0
-From: gm praveen <gm_gm77@yahoo.com>
-Subject: about ofono
-Date: Thu, 27 Oct 2011 23:50:42 +0530
-Message-ID: <1319739642.26988.YahooMailNeo@web94702.mail.in2.yahoo.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/2] cdma-connman: Add cdma-netreg status watch to
+ activate data call
+Date: Sun, 30 Oct 2011 02:16:28 -0500
+Message-ID: <4EACF9CC.9010101@gmail.com>
+In-Reply-To: <1319125292-6204-3-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5712815798088881097==
+--===============6024753224667433704==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-hii
+Hi Guillaume,
 
-=C2=A0i have installed the ofono . can any one tell me what hardware requir=
-ements to start with.? guide for how to work
+On 10/20/2011 10:41 AM, Guillaume Zajac wrote:
+> ---
+>  src/cdma-connman.c |   74 ++++++++++++++++++++++++++++++++++++++++++++++=
+++++-
+>  1 files changed, 72 insertions(+), 2 deletions(-)
+> =
 
-regrads
-praveen kumar
+> diff --git a/src/cdma-connman.c b/src/cdma-connman.c
+> index db8f6c5..edd71b5 100644
+> --- a/src/cdma-connman.c
+> +++ b/src/cdma-connman.c
+> @@ -52,6 +52,11 @@ struct cdma_connman_settings {
+>  struct ofono_cdma_connman {
+>  	ofono_bool_t powered;
+>  	ofono_bool_t dormant;
+> +	ofono_bool_t attached;
+> +	int cdma_netreg_status;
+> +	struct ofono_cdma_netreg *cdma_netreg;
+> +	unsigned int cdma_netreg_watch;
+> +	unsigned int cdma_status_watch;
+>  	struct cdma_connman_settings *settings;
+>  	DBusMessage *pending;
+>  	const struct ofono_cdma_connman_driver *driver;
+> @@ -465,7 +470,9 @@ static DBusMessage *cdma_connman_set_property(DBusCon=
+nection *conn,
+>  =
 
---===============5712815798088881097==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+>  		cm->pending =3D dbus_message_ref(msg);
+>  =
 
-PGh0bWw+PGJvZHk+PGRpdiBzdHlsZT0iY29sb3I6IzAwMDsgYmFja2dyb3VuZC1jb2xvcjojZmZm
-OyBmb250LWZhbWlseTp0aW1lcyBuZXcgcm9tYW4sIG5ldyB5b3JrLCB0aW1lcywgc2VyaWY7Zm9u
-dC1zaXplOjEycHQiPjxkaXY+aGlpPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj4mbmJzcDtpIGhh
-dmUgaW5zdGFsbGVkIHRoZSBvZm9ubyAuIGNhbiBhbnkgb25lIHRlbGwgbWUgd2hhdCBoYXJkd2Fy
-ZSByZXF1aXJlbWVudHMgdG8gc3RhcnQgd2l0aC4/IGd1aWRlIGZvciBob3cgdG8gd29yazwvZGl2
-PjxkaXY+PGJyPjwvZGl2PjxkaXY+cmVncmFkczwvZGl2PjxkaXY+cHJhdmVlbiBrdW1hcjwvZGl2
-PjwvZGl2PjwvYm9keT48L2h0bWw+
---===============5712815798088881097==--
+> -		/* TODO: add logic to support CDMA Network Registration */
+> +		if (value && !cm->attached)
+> +			return __ofono_error_not_attached(msg);
+> +
+
+There is no concept of attachment in CDMA, so I'd prefer we not do it
+this way.  Can't we simply check the current netreg atom status here?
+
+>  		if (value)
+>  			cm->driver->activate(cm, cm->username, cm->password,
+>  						activate_callback, cm);
+> @@ -531,9 +538,23 @@ static void cdma_connman_unregister(struct ofono_ato=
+m *atom)
+>  	DBusConnection *conn =3D ofono_dbus_get_connection();
+>  	struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
+>  	const char *path =3D __ofono_atom_get_path(atom);
+> +	struct ofono_cdma_connman *cm =3D __ofono_atom_get_data(atom);
+>  =
+
+>  	DBG("");
+>  =
+
+> +	if (cm->cdma_netreg_watch) {
+> +		if (cm->cdma_status_watch) {
+> +			__ofono_cdma_netreg_remove_status_watch(
+> +							cm->cdma_netreg,
+> +							cm->cdma_status_watch);
+> +			cm->cdma_status_watch =3D 0;
+> +		}
+> +
+> +		__ofono_modem_remove_atom_watch(modem, cm->cdma_netreg_watch);
+> +		cm->cdma_netreg_watch =3D 0;
+> +		cm->cdma_netreg =3D NULL;
+> +	}
+> +
+>  	g_dbus_unregister_interface(conn, path,
+>  				OFONO_CDMA_CONNECTION_MANAGER_INTERFACE);
+>  	ofono_modem_remove_interface(modem,
+> @@ -593,6 +614,53 @@ struct ofono_cdma_connman *ofono_cdma_connman_create(
+>  	return cm;
+>  }
+>  =
+
+> +static void cdma_connman_netreg_update(struct ofono_cdma_connman *cm)
+> +{
+> +	ofono_bool_t attach;
+> +
+> +	attach =3D cm->cdma_netreg_status =3D=3D
+> +			NETWORK_REGISTRATION_STATUS_REGISTERED;
+> +
+> +	/* TODO: Manager roaming case */
+> +
+> +	cm->attached =3D attach;
+> +}
+> +
+> +static void cdma_netreg_status_changed(int status, void *data)
+> +{
+> +	struct ofono_cdma_connman *cm =3D data;
+> +
+> +	DBG("%d", status);
+> +
+> +	if (cm->cdma_netreg_status =3D=3D status)
+> +		return;
+> +
+> +	cm->cdma_netreg_status =3D status;
+> +
+> +	cdma_connman_netreg_update(cm);
+> +}
+> +
+> +static void cdma_netreg_watch(struct ofono_atom *atom,
+> +				enum ofono_atom_watch_condition cond,
+> +				void *data)
+> +{
+> +	struct ofono_cdma_connman *cm =3D data;
+> +
+> +	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
+> +		cm->cdma_netreg_status =3D
+> +				NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
+> +		return;
+> +	}
+> +
+> +	cm->cdma_netreg =3D __ofono_atom_get_data(atom);
+> +	cm->cdma_netreg_status =3D ofono_cdma_netreg_get_status(cm->cdma_netreg=
+);
+> +	cm->cdma_status_watch =3D
+> +			__ofono_cdma_netreg_add_status_watch(cm->cdma_netreg,
+> +					cdma_netreg_status_changed, cm, NULL);
+> +
+> +	cdma_connman_netreg_update(cm);
+> +}
+> +
+>  void ofono_cdma_connman_register(struct ofono_cdma_connman *cm)
+>  {
+>  	DBusConnection *conn =3D ofono_dbus_get_connection();
+> @@ -613,7 +681,9 @@ void ofono_cdma_connman_register(struct ofono_cdma_co=
+nnman *cm)
+>  	ofono_modem_add_interface(modem,
+>  				OFONO_CDMA_CONNECTION_MANAGER_INTERFACE);
+>  =
+
+> -	/* TODO: add watch to support CDMA Network Registration atom */
+> +	cm->cdma_netreg_watch =3D __ofono_modem_add_atom_watch(modem,
+> +					OFONO_ATOM_TYPE_CDMA_NETREG,
+> +					cdma_netreg_watch, cm, NULL);
+>  =
+
+>  	__ofono_atom_register(cm->atom, cdma_connman_unregister);
+>  }
+
+It seems to me that this is way too complicated.  All you want is to
+check the netreg status before trying to set powered.  If we lose netreg
+when the connection is active, then the regular cdma-connman
+notification procedures would apply.
+
+Regards,
+-Denis
+
+--===============6024753224667433704==--
 
