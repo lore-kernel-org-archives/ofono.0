@@ -1,47 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============1164621571699086438=="
+Content-Type: multipart/mixed; boundary="===============0782041654759090973=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v2 0/6] CDMA Network registration
-Date: Wed, 02 Nov 2011 11:37:55 +0100
-Message-ID: <1320230281-20743-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v2 2/6] doc: Add RoamingAllowed property
+Date: Wed, 02 Nov 2011 11:37:57 +0100
+Message-ID: <1320230281-20743-3-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1320230281-20743-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1164621571699086438==
+--===============0782041654759090973==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+---
+ doc/cdma-connman-api.txt |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-Change log from v1:
-	- create new D-Bus message error whenever modem is not registered to
-	  the network
-	- manage roaming case.
-	- notify cdma-connman atom when data connection is lost.
-	- remove cdma-netreg status watches.
+diff --git a/doc/cdma-connman-api.txt b/doc/cdma-connman-api.txt
+index 48699a3..e4d3d2f 100644
+--- a/doc/cdma-connman-api.txt
++++ b/doc/cdma-connman-api.txt
+@@ -35,6 +35,14 @@ Properties	boolean Powered [readwrite]
+ 			Contains whether the connection is dormant.  Will
+ 			always be false if the connection is not powered.
+ =
 
-Kind regards,
-Guillaume
++		boolean RoamingAllowed [readwrite]
++
++			Contains whether data roaming is allowed.  In the off
++			setting, if the packet radio registration state
++			indicates that the modem is roaming, oFono will
++			automatically disable connection and no further
++			connection establishment will be possible.
++
+ 		string Username [readwrite]
+ =
 
-Guillaume Zajac (6):
-  dbus: Add new D-Bus error message NotRegistered
-  doc: Add RoamingAllowed property
-  cdma-connman: Rely on roaming and cdma-netreg status to enable data
-    call
-  cdma-connman: Add public api to notify connection is lost
-  cdma-connman: Add public api definition
-  cdmamodem: Notify when connection is lost
+ 			Holds the username to be used for authentication
+-- =
 
- doc/cdma-connman-api.txt    |    8 ++++
- drivers/cdmamodem/connman.c |    2 +-
- include/cdma-connman.h      |    2 +
- src/cdma-connman.c          |   83 +++++++++++++++++++++++++++++++++++++++=
-++--
- src/dbus.c                  |    7 ++++
- src/ofono.h                 |    1 +
- 6 files changed, 99 insertions(+), 4 deletions(-)
+1.7.1
 
 
---===============1164621571699086438==--
+--===============0782041654759090973==--
 
