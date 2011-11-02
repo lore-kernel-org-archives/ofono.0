@@ -1,60 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============5355688891176907527=="
+Content-Type: multipart/mixed; boundary="===============1164621571699086438=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v2 1/6] dbus: Add new D-Bus error message NotRegistered
-Date: Wed, 02 Nov 2011 11:37:56 +0100
-Message-ID: <1320230281-20743-2-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1320230281-20743-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v2 0/6] CDMA Network registration
+Date: Wed, 02 Nov 2011 11:37:55 +0100
+Message-ID: <1320230281-20743-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5355688891176907527==
+--===============1164621571699086438==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/dbus.c  |    7 +++++++
- src/ofono.h |    1 +
- 2 files changed, 8 insertions(+), 0 deletions(-)
+Hi all,
 
-diff --git a/src/dbus.c b/src/dbus.c
-index a96b595..be2833d 100644
---- a/src/dbus.c
-+++ b/src/dbus.c
-@@ -349,6 +349,13 @@ DBusMessage *__ofono_error_attach_in_progress(DBusMess=
-age *msg)
- 				"GPRS Attach is in progress");
- }
- =
+Change log from v1:
+	- create new D-Bus message error whenever modem is not registered to
+	  the network
+	- manage roaming case.
+	- notify cdma-connman atom when data connection is lost.
+	- remove cdma-netreg status watches.
 
-+DBusMessage *__ofono_error_not_registered(DBusMessage *msg)
-+{
-+	return g_dbus_create_error(msg,
-+				OFONO_ERROR_INTERFACE ".NotRegistered",
-+				"CDMA modem is not registered to the network");
-+}
-+
- DBusMessage *__ofono_error_canceled(DBusMessage *msg)
- {
- 	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE ".Canceled",
-diff --git a/src/ofono.h b/src/ofono.h
-index bd45560..bfb534d 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -59,6 +59,7 @@ DBusMessage *__ofono_error_sim_not_ready(DBusMessage *msg=
-);
- DBusMessage *__ofono_error_in_use(DBusMessage *msg);
- DBusMessage *__ofono_error_not_attached(DBusMessage *msg);
- DBusMessage *__ofono_error_attach_in_progress(DBusMessage *msg);
-+DBusMessage *__ofono_error_not_registered(DBusMessage *msg);
- DBusMessage *__ofono_error_canceled(DBusMessage *msg);
- DBusMessage *__ofono_error_access_denied(DBusMessage *msg);
- DBusMessage *__ofono_error_emergency_active(DBusMessage *msg);
--- =
+Kind regards,
+Guillaume
 
-1.7.1
+Guillaume Zajac (6):
+  dbus: Add new D-Bus error message NotRegistered
+  doc: Add RoamingAllowed property
+  cdma-connman: Rely on roaming and cdma-netreg status to enable data
+    call
+  cdma-connman: Add public api to notify connection is lost
+  cdma-connman: Add public api definition
+  cdmamodem: Notify when connection is lost
+
+ doc/cdma-connman-api.txt    |    8 ++++
+ drivers/cdmamodem/connman.c |    2 +-
+ include/cdma-connman.h      |    2 +
+ src/cdma-connman.c          |   83 +++++++++++++++++++++++++++++++++++++++=
+++--
+ src/dbus.c                  |    7 ++++
+ src/ofono.h                 |    1 +
+ 6 files changed, 99 insertions(+), 4 deletions(-)
 
 
---===============5355688891176907527==--
+--===============1164621571699086438==--
 
