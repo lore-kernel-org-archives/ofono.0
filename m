@@ -1,38 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============1789655335066143292=="
+Content-Type: multipart/mixed; boundary="===============7517412704507227061=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: Re: ofono plugin
-Date: Fri, 04 Nov 2011 13:40:26 +0100
-Message-ID: <4EB3DD3A.9040408@monom.org>
-In-Reply-To: <4EB2A567.7040105@monom.org>
+Subject: [RFC v0] modem: Add ModemType
+Date: Fri, 04 Nov 2011 13:44:41 +0100
+Message-ID: <1320410681-3001-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1789655335066143292==
+--===============7517412704507227061==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+
+Indicate the kind of modem it is before it is powered up.
+---
+
 Hi,
 
-an update on this one. We had yesterday a long discussion again on
-#ofono. The result out of this discussion is:
+here is the proposal to add this additional flag, so =
 
-- DUN: ConnMan should directly talk to BlueZ. There are too many issues
-with having oFono in the middle. There is a strong relation ship between
-PAN and DUN and ConnMan needs to be aware of it. Think about the kill
-switch for bluetooth.
-
-- org.ofono.modem.Property will get something like a ModemType. Possible
-values are "hfp", "sap" and "hardware". ConnMan will take owner ship
-(e.g. powering them up and set them online) for the "hardware" ones. The
-other type of modems should be controlled by
-an other component (e.g. dialer). I'm going to send a API extension
-proposal on the ofone mailing list.
+that ConnMan only takes control over the real hardware.
 
 cheers,
 daniel
 
+ doc/modem-api.txt |   11 +++++++++++
+ 1 files changed, 11 insertions(+), 0 deletions(-)
 
---===============1789655335066143292==--
+diff --git a/doc/modem-api.txt b/doc/modem-api.txt
+index fa400a2..8a11bd4 100644
+--- a/doc/modem-api.txt
++++ b/doc/modem-api.txt
+@@ -98,3 +98,14 @@ Properties	boolean Powered [readwrite]
+ =
+
+ 			TODO: Better to split this into Status and
+ 			      Capabilites properties?
++
++		string ModemType [readonly]
++
++			Indicates whether the modem is virtual or a real
++			hardware one. This information should only be used
++			to identify which componet (e.g. ConnMan or a phone
++			dialer) should take control over the modem. It does
++			not give any hints on which Interfaces will be
++			supported by this modem.
++
++			Possible values are "hfp", "sap" and "hardware".
+-- =
+
+1.7.6.4
+
+
+--===============7517412704507227061==--
 
