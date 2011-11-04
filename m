@@ -1,45 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============4816509729678020953=="
+Content-Type: multipart/mixed; boundary="===============1789655335066143292=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v5] hfp_hf: BT address exposed through Serial property
-Date: Tue, 01 Nov 2011 18:52:51 -0500
-Message-ID: <4EB08653.5030400@gmail.com>
-In-Reply-To: <1320241555-16727-1-git-send-email-mikel.astiz@bmw-carit.de>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: ofono plugin
+Date: Fri, 04 Nov 2011 13:40:26 +0100
+Message-ID: <4EB3DD3A.9040408@monom.org>
+In-Reply-To: <4EB2A567.7040105@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4816509729678020953==
+--===============1789655335066143292==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mikel,
+Hi,
 
-On 11/02/2011 08:45 AM, Mikel Astiz wrote:
-> The devinfo atom is created in pre_sim (instead of probe).
-> ---
->  plugins/hfp_hf.c |   13 +++++++++++++
->  1 files changed, 13 insertions(+), 0 deletions(-)
-> =
+an update on this one. We had yesterday a long discussion again on
+#ofono. The result out of this discussion is:
+
+- DUN: ConnMan should directly talk to BlueZ. There are too many issues
+with having oFono in the middle. There is a strong relation ship between
+PAN and DUN and ConnMan needs to be aware of it. Think about the kill
+switch for bluetooth.
+
+- org.ofono.modem.Property will get something like a ModemType. Possible
+values are "hfp", "sap" and "hardware". ConnMan will take owner ship
+(e.g. powering them up and set them online) for the "hardware" ones. The
+other type of modems should be controlled by
+an other component (e.g. dialer). I'm going to send a API extension
+proposal on the ofone mailing list.
+
+cheers,
+daniel
 
 
-Patch has been applied, I did fix up a minor style violation in a follow
-on commit:
-> @@ -239,6 +246,10 @@ static int hfp_hf_probe(const char *device, const ch=
-ar *dev_addr,
->  	return 0;
->  =
-
->  free:
-> +	if (data !=3D NULL) {
-> +		g_free(data->handsfree_path);
-> +	}
-> +
-
-The brackets are not needed...
-
-Regards,
--Denis
-
---===============4816509729678020953==--
+--===============1789655335066143292==--
 
