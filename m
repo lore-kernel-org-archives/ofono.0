@@ -1,96 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============8390436512765479855=="
+Content-Type: multipart/mixed; boundary="===============4662805693202921383=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: CDMA modems and oFono
-Date: Tue, 08 Nov 2011 20:42:04 +0100
-Message-ID: <4EB9860C.8020400@linux.intel.com>
-In-Reply-To: <4EB448F5.6020802@gmail.com>
+Date: Sat, 05 Nov 2011 06:39:51 -0500
+Message-ID: <4EB52087.3040104@gmail.com>
+In-Reply-To: <4EB9860C.8020400@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8390436512765479855==
+--===============4662805693202921383==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Philippe,
 
-On 11/04/2011 09:20 PM, Denis Kenzior wrote:
-> Hi Guillaume,
->
-> On 11/04/2011 08:00 AM, Guillaume Zajac wrote:
->> Hi Denis,
->>
->> I have sent some patches concerning UIM for CDMA modem but I think I am
->> missing something around modem.c so you can give them up :)
->>
->> For the moment, "modem.c" is designed for GSM modem, SIM atom is watched
->> to add a state watch to make modem progressing into pre_sim post_sim
->> online states etc...
->> However in the case of a CDMA modem we will have to watch another type
->> of atom (UIM for instance) and make the modem progressing into the
->> following states: pre_uim post_uim etc...
->>
->
-> I think we need to understand in what ways UIM and SIMs are different.
-> E.g. is it a manner of different EFs being present and their read order
-> or something more fundamental.  To my understanding 3GPP just recycled
-> the SIM specs from ETSI, so the fundamentals should be the same.
->
+> =
 
-Looking to the R-UIM 3GPP2 specification (C.S0023), we can understand =
+> Looking to the R-UIM 3GPP2 specification (C.S0023), we can understand
+> indeed that R-UIM can be considered as an extension of SIM.
+> In practice, we can retrieve the same information as for SIM, based
+> obviously on different file ids (Emergency codes, preferred language,
+> service table, etc...)
+> =
 
-indeed that R-UIM can be considered as an extension of SIM.
-In practice, we can retrieve the same information as for SIM, based =
+> So far, we could imagine to extend the SIM atom to support also R-UIM
+> architecture but what could be the purpose of this extension?
+> Here, the UIM atom is introduced originally to collect a subscriber
+> identifier (MIN or True IMSI) in order to identify uniquely the
+> cdma-connman interface.
+> But you seems to look for a more global solution. Are we looking to
+> support also cdma for voice? cdma for card application tool kit?
+> =
 
-obviously on different file ids (Emergency codes, preferred language, =
 
-service table, etc...)
+Of course we do.  We want a fully functional CDMA stack at some point,
+with support for UIM, STK, voice, etc.  This is the reason why we
+defined the voice APIs for CDMA so early.
 
-So far, we could imagine to extend the SIM atom to support also R-UIM =
+While I'm not completely certain about using a unified Sim atom (CDMA
+experts feel free to chime in), I think fundamentally CDMA/GSM are very
+similar.  As you mention it is a matter of reading different EFs, while
+CHV/PIN handling, BDN, FDN, etc are the same.
 
-architecture but what could be the purpose of this extension?
-Here, the UIM atom is introduced originally to collect a subscriber =
+So ideally I'd like to figure out what parts are common, what parts are
+different and how do these parts overlap.  For example, the EFecc file
+is read by the voicecall atom in GSM.  The CDMA equivalent EFecc can be
+read by the cdma-voicecall atom, hence there's no real work to unify these.
 
-identifier (MIN or True IMSI) in order to identify uniquely the =
+If it is not infeasible to unify these, then that is what I would like
+to do.  Same goes for other atoms that might be similar enough, e.g.
+Phonebook.
 
-cdma-connman interface.
-But you seems to look for a more global solution. Are we looking to =
+> Now, if we just need to collect this CDMA subscriber identifier, I think
+> also excessive to introduce a specific atom for that.
+> =
 
-support also cdma for voice? cdma for card application tool kit?
 
-Now, if we just need to collect this CDMA subscriber identifier, I think =
-
-also excessive to introduce a specific atom for that.
+Sure, but unfortunately that is not the only thing you need.  Think
+about pin entry, puk entry, pin lock, unlock, retries, pin2 handling.
+Maybe you can get by without these, but then the user has to know all of
+these details; definitely not an attribute of a quality product ;)
 
 Regards,
+-Denis
 
-Philippe.
-
->> So what would you suggest to introduce CDMA modem into oFono?
->> Should we create another src/cdma_modem.c with its own watches, states
->> and cdma_atoms?
->> Or should we keep the current naming (e.g. pre_sim post_sim etc...) and
->> change current api to create cdma modem?
->> Something like: ofono_modem_create(cdma=3Dtrue/false) that is called from
->> udevng. Then this new modem would be tagged as cdma and we would look
->> for UIM atom intstead of SIM atom in case of cdma modem.
->>
->> What do you think about it?
->
-> I think we need to learn a bit more about UIMs first.  Ideally I'd like
-> to handle both in the sim atom if possible.  At least that would make
-> sense from dual-mode device standpoint (e.g. something than can use CDMA
-> and LTE)
->
-> Regards,
-> -Denis
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
-
-
---===============8390436512765479855==--
+--===============4662805693202921383==--
 
