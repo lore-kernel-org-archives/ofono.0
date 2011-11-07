@@ -1,38 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============1283531740142760292=="
+Content-Type: multipart/mixed; boundary="===============5500990323204922446=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] TODO: Add CDMA network name task
-Date: Mon, 07 Nov 2011 12:24:10 -0600
-Message-ID: <4EB8224A.8030206@gmail.com>
-In-Reply-To: <1320863642-27060-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCHv2 1/6] gatchat: Add IPv6 Control Protocol
+Date: Mon, 07 Nov 2011 12:26:33 -0600
+Message-ID: <4EB822D9.7050507@gmail.com>
+In-Reply-To: <1320756418-30890-2-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1283531740142760292==
+--===============5500990323204922446==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi Oleg,
 
-On 11/09/2011 12:34 PM, Philippe Nunes wrote:
-> As cdma dongles don't return any operator name in long alphanumeric forma=
-t, we
-> need to identify the serving network according to SID and retrieve the Op=
-erator
-> Name from a look-up table.
-> For that, I intend to extend mobile-broadband-provider-info plugin to par=
-se also
-> cdma providers and retrieve the operator name matching with the provided =
-SID.
+On 11/08/2011 06:46 AM, Oleg Zhurakivskyy wrote:
 > ---
->  TODO |    8 ++++++++
->  1 files changed, 8 insertions(+), 0 deletions(-)
+>  Makefile.am          |    2 +-
+>  gatchat/ppp.h        |    8 +
+>  gatchat/ppp_ipv6cp.c |  377 ++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  3 files changed, 386 insertions(+), 1 deletions(-)
+>  create mode 100644 gatchat/ppp_ipv6cp.c
 
-Patch has been applied, thanks.
+Patch has been applied, however you made one small error here:
+
+
+<snip>
+
+> +		switch (type) {
+> +		case IPV6CP_INTERFACE_ID:
+> +			memcpy(&ipv6cp->peer_addr, data,
+> +					sizeof(ipv6cp->peer_addr));
+> +			if (ipv6cp->peer_addr !=3D 0)
+> +				break;
+> +			/*
+> +			 * Fall through, reject zero Interface ID
+> +			 */
+> +			break;
+
+The break statement seems to be in error and I fixed it in a follow on
+commit.  Let me know if I was wrong.
+
+> +		default:
+> +			if (options =3D=3D NULL) {
+> +				guint16 max_len =3D ntohs(packet->length) - 4;
+> +				options =3D g_new0(guint8, max_len);
+> +			}
+> +
+> +			OPTION_COPY(options, len, options !=3D NULL,
+> +					type, data,
+> +					ppp_option_iter_get_length(&iter));
+> +			break;
+> +		}
+> +	}
+> +
 
 Regards,
 -Denis
 
---===============1283531740142760292==--
+--===============5500990323204922446==--
 
