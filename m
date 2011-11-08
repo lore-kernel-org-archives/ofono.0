@@ -1,134 +1,95 @@
-Content-Type: multipart/mixed; boundary="===============5636326123897376675=="
+Content-Type: multipart/mixed; boundary="===============6736512551441533841=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv2 5/6] gatppp: Add IPv6 CP connect, disconnect callbacks
-Date: Tue, 08 Nov 2011 14:46:57 +0200
-Message-ID: <1320756418-30890-6-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv2 6/6] gsmdial: Add IPv6 CP connect hook
+Date: Tue, 08 Nov 2011 14:46:58 +0200
+Message-ID: <1320756418-30890-7-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1320756418-30890-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5636326123897376675==
+--===============6736512551441533841==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatppp.c |   38 ++++++++++++++++++++++++++++++++++++++
- gatchat/gatppp.h |    9 ++++++++-
- 2 files changed, 46 insertions(+), 1 deletions(-)
+ gatchat/gsmdial.c |   44 +++++++++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 43 insertions(+), 1 deletions(-)
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index c425eae..5a34535 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -64,6 +64,7 @@ struct _GAtPPP {
- 	struct pppcp_data *ipcp;
- 	struct pppcp_data *ipv6cp;
- 	struct ppp_net *net;
-+	struct ppp_net *net6;
- 	struct ppp_chap *chap;
- 	GAtHDLC *hdlc;
- 	gint mru;
-@@ -75,6 +76,10 @@ struct _GAtPPP {
- 	GAtPPPDisconnectFunc disconnect_cb;
- 	gpointer disconnect_data;
- 	GAtPPPDisconnectReason disconnect_reason;
-+	GAtPPPConnect6Func connect6_cb;
-+	gpointer connect6_data;
-+	GAtPPPDisconnectFunc disconnect6_cb;
-+	gpointer disconnect6_data;
- 	GAtDebugFunc debugf;
- 	gpointer debug_data;
- 	gboolean sta_pending;
-@@ -454,7 +459,19 @@ void ppp_ipv6cp_up_notify(GAtPPP *ppp, const char *loc=
-al, const char *peer)
- {
- 	DBG(ppp, "local: %s, peer: %s", local, peer);
+diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
+index b4b2015..8031245 100644
+--- a/gatchat/gsmdial.c
++++ b/gatchat/gsmdial.c
+@@ -344,6 +344,44 @@ static void ppp_disconnect(GAtPPPDisconnectReason reas=
+on, gpointer user_data)
+ 	g_at_chat_resume(modem);
+ }
  =
 
-+	ppp->net6 =3D ppp_net_new(ppp, -1);
++static void ppp_ipv6_connect(const char *iface, const char *local,
++				const char *peer, gpointer user_data)
++{
++	struct in6_addr in6_local, in6_peer;
++	char local_addr[INET6_ADDRSTRLEN], peer_addr[INET6_ADDRSTRLEN];
++	char buf[512];
 +
-+	if (ppp->net6 =3D=3D NULL) {
-+		ppp->disconnect_reason =3D G_AT_PPP_REASON_NET_FAIL;
-+		pppcp_signal_close(ppp->lcp);
++	/* Add IPv6 link-local prefix */
++
++	inet_pton(AF_INET6, local, &in6_local);
++	in6_local.s6_addr16[0] =3D htons(0xfe80);
++	inet_ntop(AF_INET6, &in6_local, local_addr, INET6_ADDRSTRLEN);
++
++	inet_pton(AF_INET6, peer, &in6_peer);
++	in6_peer.s6_addr16[0] =3D htons(0xfe80);
++	inet_ntop(AF_INET6, &in6_peer, peer_addr, INET6_ADDRSTRLEN);
++
++	g_print("Network Device: %s\n", iface);
++	g_print("IPv6 Local Address: %s\n", local_addr);
++	g_print("IPv6 Peer Address: %s\n", peer_addr);
++
++	if (getuid() !=3D 0) {
++		g_print("Need root privilege to config PPP interface\n");
 +		return;
 +	}
 +
- 	ppp_enter_phase(ppp, PPP_PHASE_LINK_UP);
++	snprintf(buf, sizeof(buf), "%s %s up", IFCONFIG_PATH, iface);
++	execute(buf);
 +
-+	if (ppp->connect6_cb)
-+		ppp->connect6_cb(ppp_net_get_interface(ppp->net6),
-+					local, peer, ppp->connect6_data);
- }
- =
-
- void ppp_ipv6cp_down_notify(GAtPPP *ppp)
-@@ -831,6 +848,27 @@ gboolean g_at_ppp_set_ipv6cp_info(GAtPPP *ppp, gboolea=
-n is_server,
- 	return TRUE;
- }
- =
-
-+void g_at_ppp_set_ipv6_connect_function(GAtPPP *ppp, GAtPPPConnect6Func fu=
-nc,
-+							gpointer user_data)
-+{
-+	if (func =3D=3D NULL)
-+		return;
++	snprintf(buf, sizeof(buf), "%s %s inet6 add %s", IFCONFIG_PATH,
++			iface, local_addr);
++	execute(buf);
 +
-+	ppp->connect6_cb =3D func;
-+	ppp->connect6_data =3D user_data;
++	snprintf(buf, sizeof(buf), "ip -6 route add %s dev %s", peer_addr,
++								iface);
++	execute(buf);
 +}
 +
-+void g_at_ppp_set_ipv6_disconnect_function(GAtPPP *ppp,
-+						GAtPPPDisconnectFunc func,
-+						gpointer user_data)
-+{
-+	if (func =3D=3D NULL)
-+		return;
-+
-+	ppp->disconnect6_cb =3D func;
-+	ppp->disconnect6_data =3D user_data;
-+}
-+
- static GAtPPP *ppp_init_common(gboolean is_server, guint32 ip)
+ static void connect_cb(gboolean ok, GAtResult *result, gpointer user_data)
  {
- 	GAtPPP *ppp;
-diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
-index a41bf08..8fa1cd4 100644
---- a/gatchat/gatppp.h
-+++ b/gatchat/gatppp.h
-@@ -50,7 +50,8 @@ typedef void (*GAtPPPConnectFunc)(const char *iface, cons=
-t char *local,
- 					gpointer user_data);
- typedef void (*GAtPPPDisconnectFunc)(GAtPPPDisconnectReason reason,
- 					gpointer user_data);
--
-+typedef void (*GAtPPPConnect6Func)(const char *iface, const char *local,
-+					const char *peer, gpointer user_data);
- GAtPPP *g_at_ppp_new(void);
- GAtPPP *g_at_ppp_server_new(const char *local);
- GAtPPP *g_at_ppp_server_new_full(const char *local, int fd);
-@@ -84,6 +85,12 @@ void g_at_ppp_set_acfc_enabled(GAtPPP *ppp, gboolean ena=
-bled);
- void g_at_ppp_set_pfc_enabled(GAtPPP *ppp, gboolean enabled);
- gboolean g_at_ppp_set_ipv6cp_info(GAtPPP *ppp, gboolean is_server,
- 					const char *local, const char *peer);
-+void g_at_ppp_set_ipv6_connect_function(GAtPPP *ppp,
-+					GAtPPPConnect6Func callback,
-+					gpointer user_data);
-+void g_at_ppp_set_ipv6_disconnect_function(GAtPPP *ppp,
-+						GAtPPPDisconnectFunc func,
-+						gpointer user_data);
+ 	GAtIO *io;
+@@ -373,8 +411,12 @@ static void connect_cb(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 	if (option_pppdump)
+ 		g_at_ppp_set_recording(ppp, option_pppdump);
  =
 
- #ifdef __cplusplus
- }
+-	if (option_ipv6cp)
++	if (option_ipv6cp) {
+ 		g_at_ppp_set_ipv6cp_info(ppp, FALSE, NULL, NULL);
++		g_at_ppp_set_ipv6_connect_function(ppp, ppp_ipv6_connect, NULL);
++		g_at_ppp_set_ipv6_disconnect_function(ppp, ppp_disconnect,
++							NULL);
++	}
+ =
+
+ 	g_at_ppp_set_credentials(ppp, option_username, option_password);
+ =
+
 -- =
 
 1.7.5.4
 
 
---===============5636326123897376675==--
+--===============6736512551441533841==--
 
