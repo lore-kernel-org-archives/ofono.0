@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============0427263862642630294=="
+Content-Type: multipart/mixed; boundary="===============2641483872337510991=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
 Subject: [PATCH] TODO: Add CDMA network name task
-Date: Wed, 09 Nov 2011 19:34:02 +0100
-Message-ID: <1320863642-27060-1-git-send-email-philippe.nunes@linux.intel.com>
+Date: Wed, 09 Nov 2011 18:44:33 +0100
+Message-ID: <1320860673-27449-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0427263862642630294==
+--===============2641483872337510991==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -53,5 +53,5 @@ he
 1.7.1
 
 
---===============0427263862642630294==--
+--===============2641483872337510991==--
 
