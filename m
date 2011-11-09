@@ -1,69 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============4662805693202921383=="
+Content-Type: multipart/mixed; boundary="===============0427263862642630294=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: CDMA modems and oFono
-Date: Sat, 05 Nov 2011 06:39:51 -0500
-Message-ID: <4EB52087.3040104@gmail.com>
-In-Reply-To: <4EB9860C.8020400@linux.intel.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH] TODO: Add CDMA network name task
+Date: Wed, 09 Nov 2011 19:34:02 +0100
+Message-ID: <1320863642-27060-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4662805693202921383==
+--===============0427263862642630294==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+As cdma dongles don't return any operator name in long alphanumeric format,=
+ we
+need to identify the serving network according to SID and retrieve the Oper=
+ator
+Name from a look-up table.
+For that, I intend to extend mobile-broadband-provider-info plugin to parse=
+ also
+cdma providers and retrieve the operator name matching with the provided SI=
+D.
+---
+ TODO |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-> =
+diff --git a/TODO b/TODO
+index 326ebab..58c9f61 100644
+--- a/TODO
++++ b/TODO
+@@ -554,6 +554,14 @@ CDMA Network Acquisition
+   Priority: Medium
+   Complexity: C2
+ =
 
-> Looking to the R-UIM 3GPP2 specification (C.S0023), we can understand
-> indeed that R-UIM can be considered as an extension of SIM.
-> In practice, we can retrieve the same information as for SIM, based
-> obviously on different file ids (Emergency codes, preferred language,
-> service table, etc...)
-> =
++- Support reporting of the current registered operator name in long alphan=
+umeric
++  format. Based on the System Identifier (SID) broadcasted by the modem, t=
+he
++  CDMA network name is retrieved from a look-up table (aka the 'mobile
++  broadband provider info'data base).
++
++  Priority: Medium
++  Complexity: C2
++
+ CDMA Connection Manager
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ =
 
-> So far, we could imagine to extend the SIM atom to support also R-UIM
-> architecture but what could be the purpose of this extension?
-> Here, the UIM atom is introduced originally to collect a subscriber
-> identifier (MIN or True IMSI) in order to identify uniquely the
-> cdma-connman interface.
-> But you seems to look for a more global solution. Are we looking to
-> support also cdma for voice? cdma for card application tool kit?
-> =
+-- =
 
-
-Of course we do.  We want a fully functional CDMA stack at some point,
-with support for UIM, STK, voice, etc.  This is the reason why we
-defined the voice APIs for CDMA so early.
-
-While I'm not completely certain about using a unified Sim atom (CDMA
-experts feel free to chime in), I think fundamentally CDMA/GSM are very
-similar.  As you mention it is a matter of reading different EFs, while
-CHV/PIN handling, BDN, FDN, etc are the same.
-
-So ideally I'd like to figure out what parts are common, what parts are
-different and how do these parts overlap.  For example, the EFecc file
-is read by the voicecall atom in GSM.  The CDMA equivalent EFecc can be
-read by the cdma-voicecall atom, hence there's no real work to unify these.
-
-If it is not infeasible to unify these, then that is what I would like
-to do.  Same goes for other atoms that might be similar enough, e.g.
-Phonebook.
-
-> Now, if we just need to collect this CDMA subscriber identifier, I think
-> also excessive to introduce a specific atom for that.
-> =
+1.7.1
 
 
-Sure, but unfortunately that is not the only thing you need.  Think
-about pin entry, puk entry, pin lock, unlock, retries, pin2 handling.
-Maybe you can get by without these, but then the user has to know all of
-these details; definitely not an attribute of a quality product ;)
-
-Regards,
--Denis
-
---===============4662805693202921383==--
+--===============0427263862642630294==--
 
