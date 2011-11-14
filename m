@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============5738295473786829582=="
+Content-Type: multipart/mixed; boundary="===============3950763936969630670=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/3] mbpi: Add mbpi_lookup_cdma_provider_name API
-Date: Mon, 14 Nov 2011 14:42:09 -0600
-Message-ID: <4EC17D21.4000901@gmail.com>
-In-Reply-To: <1321362255-11262-3-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH 3/3] tools: Add utility for looking CDMA network name from
+ database
+Date: Mon, 14 Nov 2011 14:45:55 -0600
+Message-ID: <4EC17E03.6050303@gmail.com>
+In-Reply-To: <1321362255-11262-4-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5738295473786829582==
+--===============3950763936969630670==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,242 +18,167 @@ Hi Philippe,
 
 On 11/15/2011 07:04 AM, Philippe Nunes wrote:
 > ---
->  plugins/mbpi.c |  151 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+>  Makefile.am                  |    7 ++-
+>  tools/lookup-provider-name.c |  104 ++++++++++++++++++++++++++++++++++++=
 ++++++
->  plugins/mbpi.h |    2 +
->  2 files changed, 153 insertions(+), 0 deletions(-)
+>  2 files changed, 110 insertions(+), 1 deletions(-)
+>  create mode 100644 tools/lookup-provider-name.c
 > =
 
-> diff --git a/plugins/mbpi.c b/plugins/mbpi.c
-> index 1e41ecb..14aa339 100644
-> --- a/plugins/mbpi.c
-> +++ b/plugins/mbpi.c
-> @@ -58,6 +58,12 @@ struct gsm_data {
->  	gboolean allow_duplicates;
->  };
+> diff --git a/Makefile.am b/Makefile.am
+> index a28f790..337aeb7 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -627,7 +627,8 @@ TESTS =3D $(unit_tests)
 >  =
 
-> +struct cdma_data {
-> +	const char *match_sid;
-> +	char *provider_name;
-> +	gboolean match_found;
-> +};
-> +
->  const char *mbpi_ap_type(enum ofono_gprs_context_type type)
->  {
->  	switch (type) {
-> @@ -281,6 +287,34 @@ static void apn_handler(GMarkupParseContext *context=
-, struct gsm_data *gsm,
->  	g_markup_parse_context_push(context, &apn_parser, ap);
->  }
+>  if TOOLS
+>  noinst_PROGRAMS +=3D tools/huawei-audio tools/auto-enable \
+> -			tools/get-location tools/lookup-apn
+> +			tools/get-location tools/lookup-apn \
+> +			tools/lookup-provider-name
 >  =
 
-> +static void sid_handler(GMarkupParseContext *context,
-> +				struct cdma_data *cdma,
-> +				const gchar **attribute_names,
-> +				const gchar **attribute_values,
-> +				GError **error)
-> +{
-> +	const char *sid =3D NULL;
-> +	int i;
-> +
-> +	if (cdma->match_found =3D=3D TRUE)
-> +		return;
-
-Why do you check this here, but also make the same exact check in
-cdma_start?
-
-> +
-> +	for (i =3D 0; attribute_names[i]; i++) {
-> +		if (g_str_equal(attribute_names[i], "value") =3D=3D TRUE)
-> +			sid =3D attribute_values[i];
-
-Just a small nitpick, but you probably want to break from the loop once
-you find the value attribute.  Also, the braces around the outer for
-loop are not really necessary in this case and the style preference is
-not to include them.
-
-> +	}
-> +
-> +	if (sid =3D=3D NULL) {
-> +		mbpi_g_set_error(context, error, G_MARKUP_ERROR,
-> +					G_MARKUP_ERROR_MISSING_ATTRIBUTE,
-> +					"Missing attribute: sid");
-> +		return;
-> +	}
-> +
-> +	if (g_str_equal(sid, cdma->match_sid))
-> +		cdma->match_found =3D TRUE;
-> +}
-> +
->  static void gsm_start(GMarkupParseContext *context, const gchar *element=
-_name,
->  			const gchar **attribute_names,
->  			const gchar **attribute_values,
-> @@ -347,6 +381,74 @@ static const GMarkupParser gsm_parser =3D {
->  	NULL,
->  };
+>  tools_huawei_audio_SOURCES =3D $(gdbus_sources) tools/huawei-audio.c
+>  tools_huawei_audio_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
+> @@ -640,6 +641,10 @@ tools_get_location_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
 >  =
 
-> +static void cdma_start(GMarkupParseContext *context, const gchar *elemen=
-t_name,
-> +			const gchar **attribute_names,
-> +			const gchar **attribute_values,
-> +			gpointer userdata, GError **error)
+>  tools_lookup_apn_SOURCES =3D plugins/mbpi.c plugins/mbpi.h tools/lookup-=
+apn.c
+>  tools_lookup_apn_LDADD =3D @GLIB_LIBS@
+> +
+> +tools_lookup_provider_name_SOURCES =3D plugins/mbpi.c plugins/mbpi.h \
+> +				tools/lookup-provider-name.c
+> +tools_lookup_provider_name_LDADD =3D @GLIB_LIBS@
+>  endif
+>  =
+
+>  noinst_PROGRAMS +=3D gatchat/gsmdial gatchat/test-server gatchat/test-qc=
+dm
+> diff --git a/tools/lookup-provider-name.c b/tools/lookup-provider-name.c
+> new file mode 100644
+> index 0000000..dc91ae5
+> --- /dev/null
+> +++ b/tools/lookup-provider-name.c
+> @@ -0,0 +1,104 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifdef HAVE_CONFIG_H
+> +#include <config.h>
+> +#endif
+> +
+> +#include <stdlib.h>
+> +
+> +#include <glib.h>
+> +
+> +#define OFONO_API_SUBJECT_TO_CHANGE
+> +#include <ofono/modem.h>
+> +#include <ofono/gprs-provision.h>
+> +
+> +#include "plugins/mbpi.h"
+> +
+> +static void lookup_cdma_provider_name(const char *match_sid)
 > +{
-> +	if (g_str_equal(element_name, "sid")) {
-> +		struct cdma_data *cdma =3D userdata;
-> +		/*
-> +		 * For entries with multiple sid elements, don't bother
-> +		 * searching if we already have a match
-> +		 */
-> +		if (cdma->match_found =3D=3D TRUE)
-> +			return;
+> +	GError *error =3D NULL;
+> +	char *name;
 > +
-> +		sid_handler(context, cdma, attribute_names, attribute_values,
-> +				error);
-> +	}
-> +}
+> +	g_print("Searching for serving network name with SID: %s\n", match_sid);
 > +
-> +static const GMarkupParser cdma_parser =3D {
-> +	cdma_start,
-> +	NULL,
-> +	NULL,
-> +	NULL,
-> +	NULL,
-> +};
+> +	name =3D mbpi_lookup_cdma_provider_name(match_sid, &error);
 > +
-> +static void provider_start(GMarkupParseContext *context,
-> +				const gchar *element_name,
-> +				const gchar **attribute_names,
-> +				const gchar **attribute_values,
-> +				gpointer userdata, GError **error)
-> +{
-> +	struct cdma_data *cdma =3D userdata;
-> +
-> +	if (g_str_equal(element_name, "name")) {
-> +		if ((cdma->match_found =3D=3D FALSE) && (cdma->provider_name)) {
-
-This is against our style guidelines, please get rid of the parens.
-
-Also, do you ever expect this function to be called when match_found is
-not FALSE?  The DTD is funny here, it says that several name tags can be
-provided.  Not sure why anyone would do that or how we want to handle
-this.  However, all name elements must be before any cdma or gsm tags.
-
-> +			g_free(cdma->provider_name);
-> +			cdma->provider_name =3D NULL;
+> +	if (name =3D=3D NULL) {
+> +		if (error !=3D NULL) {
+> +			g_printerr("Lookup failed: %s\n", error->message);
+> +			g_error_free(error);
 > +		}
-> +
-> +		g_markup_parse_context_push(context, &text_parser,
-> +						&cdma->provider_name);
-> +	} else if (g_str_equal(element_name, "gsm"))
-> +		g_markup_parse_context_push(context, &skip_parser, NULL);
-> +	else if (g_str_equal(element_name, "cdma"))
-> +		g_markup_parse_context_push(context, &cdma_parser, userdata);
-> +}
-> +
-> +static void provider_end(GMarkupParseContext *context,
-> +					const gchar *element_name,
-> +					gpointer userdata, GError **error)
-> +{
-> +	if (g_str_equal(element_name, "name") ||
-> +				g_str_equal(element_name, "gsm") ||
-> +				g_str_equal(element_name, "cdma"))
-> +		g_markup_parse_context_pop(context);
-> +
-> +}
-> +
-> +static const GMarkupParser provider_parser =3D {
-> +	provider_start,
-> +	provider_end,
-> +	NULL,
-> +	NULL,
-> +	NULL,
-> +};
-> +
->  static void toplevel_gsm_start(GMarkupParseContext *context,
->  					const gchar *element_name,
->  					const gchar **atribute_names,
-> @@ -379,6 +481,40 @@ static const GMarkupParser toplevel_gsm_parser =3D {
->  	NULL,
->  };
->  =
-
-> +static void toplevel_cdma_start(GMarkupParseContext *context,
-> +					const gchar *element_name,
-> +					const gchar **atribute_names,
-> +					const gchar **attribute_values,
-> +					gpointer userdata, GError **error)
-> +{
-> +	struct cdma_data *cdma =3D userdata;
-> +
-> +	if (g_str_equal(element_name, "provider")) {
-> +		if (cdma->match_found =3D=3D TRUE)
-> +			g_markup_parse_context_push(context, &skip_parser,
-> +								NULL);
 > +		else
-> +			g_markup_parse_context_push(context, &provider_parser,
-> +								userdata);
+> +			g_printerr("Not found\n");
+
+Please re-read the kernel style guidelines with regard to placing of
+curly braces in compound statements.  It should be on the same line as
+the else statement.
+
+> +
+> +		return;
 > +	}
+> +
+> +	g_print("CDMA provider name: %s\n", name);
+> +
+> +	g_free(name);
 > +}
 > +
-> +static void toplevel_cdma_end(GMarkupParseContext *context,
-> +					const gchar *element_name,
-> +					gpointer userdata, GError **error)
-> +{
-> +	if (g_str_equal(element_name, "provider"))
-> +		g_markup_parse_context_pop(context);
-> +}
+> +static gboolean option_version =3D FALSE;
+> +static gboolean option_duplicates =3D FALSE;
 > +
-> +static const GMarkupParser toplevel_cdma_parser =3D {
-> +	toplevel_cdma_start,
-> +	toplevel_cdma_end,
-> +	NULL,
-> +	NULL,
-> +	NULL,
+> +static GOptionEntry options[] =3D {
+> +	{ "version", 'v', 0, G_OPTION_ARG_NONE, &option_version,
+> +				"Show version information and exit" },
+> +	{ "allow-duplicates", 0, 0, G_OPTION_ARG_NONE, &option_duplicates,
+> +				"Allow duplicate access point types" },
+
+Why exactly do we need this option?
+
+> +	{ NULL },
 > +};
 > +
->  static gboolean mbpi_parse(const GMarkupParser *parser, gpointer userdat=
-a,
->  				GError **error)
->  {
-> @@ -453,3 +589,18 @@ GSList *mbpi_lookup_apn(const char *mcc, const char =
-*mnc,
->  =
-
->  	return gsm.apns;
->  }
-> +
-> +char *mbpi_lookup_cdma_provider_name(const char *sid, GError **error)
+> +int main(int argc, char **argv)
 > +{
-> +	struct cdma_data cdma;
+> +	GOptionContext *context;
+> +	GError *error =3D NULL;
 > +
-> +	memset(&cdma, 0, sizeof(cdma));
-> +	cdma.match_sid =3D sid;
+> +	context =3D g_option_context_new(NULL);
+> +	g_option_context_add_main_entries(context, options, NULL);
 > +
-> +	if (mbpi_parse(&toplevel_cdma_parser, &cdma, error) =3D=3D FALSE) {
-> +		g_free(cdma.provider_name);
-> +		cdma.provider_name =3D NULL;
+> +	if (g_option_context_parse(context, &argc, &argv, &error) =3D=3D FALSE)=
+ {
+> +		if (error !=3D NULL) {
+> +			g_printerr("%s\n", error->message);
+> +			g_error_free(error);
+> +		} else
+> +			g_printerr("An unknown error occurred\n");
+> +		exit(1);
 > +	}
 > +
-> +	return cdma.provider_name;
-> +}
-> diff --git a/plugins/mbpi.h b/plugins/mbpi.h
-> index 6d34358..64b7ea5 100644
-> --- a/plugins/mbpi.h
-> +++ b/plugins/mbpi.h
-> @@ -25,3 +25,5 @@ void mbpi_ap_free(struct ofono_gprs_provision_data *dat=
-a);
->  =
-
->  GSList *mbpi_lookup_apn(const char *mcc, const char *mnc,
->  			gboolean allow_duplicates, GError **error);
+> +	g_option_context_free(context);
 > +
-> +char *mbpi_lookup_cdma_provider_name(const char *sid, GError **error);
+> +	if (option_version =3D=3D TRUE) {
+> +		g_print("%s\n", VERSION);
+> +		exit(0);
+> +	}
+> +
+> +	if (argc < 1) {
+> +		g_printerr("Missing parameters\n");
+> +		exit(1);
+> +	}
+> +
+> +	lookup_cdma_provider_name(argv[1]);
+> +
+> +	return 0;
+> +}
 
 Regards,
 -Denis
 
---===============5738295473786829582==--
+--===============3950763936969630670==--
 
