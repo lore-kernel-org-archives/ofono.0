@@ -1,412 +1,120 @@
-Content-Type: multipart/mixed; boundary="===============3863149246129374729=="
+Content-Type: multipart/mixed; boundary="===============3548141598389119755=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v0 3/3] huaweicdma: Add SIM creation and set_online method
- driver
-Date: Wed, 16 Nov 2011 15:49:01 +0100
-Message-ID: <1321454941-32022-4-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1321454941-32022-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCHv2 2/6] gatppp: Add IPv6 CP hooks
+Date: Tue, 15 Nov 2011 07:59:07 -0600
+Message-ID: <4EC2702B.7030308@gmail.com>
+In-Reply-To: <4EC3AF04.7030804@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3863149246129374729==
+--===============3548141598389119755==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/huaweicdma.c |  303 ++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 297 insertions(+), 6 deletions(-)
+Hi Oleg,
 
-diff --git a/plugins/huaweicdma.c b/plugins/huaweicdma.c
-index 4c83114..caa9a6e 100644
---- a/plugins/huaweicdma.c
-+++ b/plugins/huaweicdma.c
-@@ -37,10 +37,28 @@
- #include <ofono/cdma-netreg.h>
- #include <ofono/cdma-connman.h>
- #include <ofono/log.h>
-+#include <ofono.h>
-+
-+#include <drivers/atmodem/atutil.h>
-+#include <drivers/atmodem/vendor.h>
-+
-+static const char *none_prefix[] =3D { NULL };
-+static const char *sysinfo_prefix[] =3D { "^SYSINFO:", NULL };
-+
-+enum {
-+	SIM_STATE_VALID =3D		1,
-+	SIM_STATE_EMBEDDED =3D		240,
-+	SIM_STATE_NOT_EXISTENT =3D	255,
-+};
- =
+>>> +gboolean g_at_ppp_set_ipv6cp_info(GAtPPP *ppp, gboolean is_server,
+>>> +                    const char *local, const char *peer);
+>>
+>> So for consistency sake I think we should introduce
+>> g_at_ppp_set_ipv6_server_info(GAtPPP *ppp, const char *remote_prefix);
+>>
+>> For the local prefix, I'm leaning towards creating a new set of v6 and
+>> dual-stack specific constructors:
+>>
+>> g_at_ppp_ipv6_new(const char *local_prefix);
+>> g_at_ppp_ipv6_server_new(const char *local_prefix);
+>> g_at_ppp_ipv4v6_new(const char *local_prefix);
+>> g_at_ppp_ipv4v6_server_new(const char *local_ip, const char
+>> *local_prefix);
+>>
+>> The key difference between constructors being whether to create ipcp,
+>> ipv6cp or both.  We might need a _full version of the server
+>> constructors as well.  I'm not entirely happy with this, so if you have
+>> better ideas, I'd love to hear them.
+> =
 
- struct huaweicdma_data {
- 	GAtChat *modem;
- 	GAtChat *pcui;
-+	gboolean have_sim;
-+	int sim_state;
-+	guint sysinfo_poll_source;
-+	guint sysinfo_poll_count;
-+	struct cb_data *online_cbd;
- };
- =
+> That looks OK to me. Regarding alternatives, one would be:
+> =
 
- static void huaweicdma_debug(const char *str, void *data)
-@@ -79,6 +97,122 @@ static void huaweicdma_remove(struct ofono_modem *modem)
- 	g_free(data);
- }
- =
+> enum ofono_ppp_proto {
+>     OFONO_PPP_PROTO_IP     =3D 0x1,
+>     OFONO_PPP_PROTO_IPV6   =3D 0x2,
+>     OFONO_PPP_PROTO_IPV4V6 =3D 0x4,
+> };
+> =
 
-+static void simst_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-+	GAtResultIter iter;
-+	int sim_state;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "^SIMST:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &sim_state))
-+		return;
-+
-+	DBG("%d -> %d", data->sim_state, sim_state);
-+
-+	data->sim_state =3D sim_state;
-+}
-+
-+static gboolean parse_sysinfo_result(GAtResult *result, int *srv_status,
-+					int *srv_domain, int *sim_state)
-+{
-+	GAtResultIter iter;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "^SYSINFO:"))
-+		return FALSE;
-+
-+	if (!g_at_result_iter_next_number(&iter, srv_status))
-+		return FALSE;
-+
-+	if (!g_at_result_iter_next_number(&iter, srv_domain))
-+		return FALSE;
-+
-+	if (!g_at_result_iter_skip_next(&iter))
-+		return FALSE;
-+
-+	if (!g_at_result_iter_skip_next(&iter))
-+		return FALSE;
-+
-+	if (!g_at_result_iter_next_number(&iter, sim_state))
-+		return FALSE;
-+
-+	return TRUE;
-+}
-+
-+static void shutdown_device(struct huaweicdma_data *data)
-+{
-+	g_at_chat_cancel_all(data->modem);
-+	g_at_chat_unregister_all(data->modem);
-+
-+	g_at_chat_unref(data->modem);
-+	data->modem =3D NULL;
-+
-+	g_at_chat_cancel_all(data->pcui);
-+	g_at_chat_unregister_all(data->pcui);
-+
-+	g_at_chat_unref(data->pcui);
-+	data->pcui =3D NULL;
-+}
-+
-+static gboolean sysinfo_enable_check(gpointer user_data);
-+
-+static void sysinfo_enable_cb(gboolean ok, GAtResult *result,
-+						gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-+	int srv_status, srv_domain, sim_state;
-+
-+	if (!ok)
-+		goto failure;
-+
-+	if (parse_sysinfo_result(result, &srv_status, &srv_domain,
-+						&sim_state) =3D=3D FALSE)
-+		goto failure;
-+
-+	DBG("%d -> %d", data->sim_state, sim_state);
-+
-+	data->sim_state =3D sim_state;
-+
-+	if (sim_state =3D=3D SIM_STATE_NOT_EXISTENT) {
-+		data->sysinfo_poll_count++;
-+
-+		if (data->sysinfo_poll_count > 5)
-+			goto failure;
-+
-+		data->sysinfo_poll_source =3D g_timeout_add_seconds(1,
-+						sysinfo_enable_check, modem);
-+		return;
-+	}
-+
-+	data->have_sim =3D TRUE;
-+	ofono_modem_set_powered(modem, TRUE);
-+	return;
-+
-+failure:
-+	shutdown_device(data);
-+	ofono_modem_set_powered(modem, FALSE);
-+}
-+
-+static gboolean sysinfo_enable_check(gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-+
-+	data->sysinfo_poll_source =3D 0;
-+
-+	g_at_chat_send(data->pcui, "AT^SYSINFO", sysinfo_prefix,
-+					sysinfo_enable_cb, modem, NULL);
-+
-+	return FALSE;
-+}
-+
- static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
-@@ -87,14 +221,18 @@ static void cfun_enable(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 	DBG("");
- =
+> struct _GAtPPP {
+>     [...]
+>     guint8 proto;
+> };
+> =
 
- 	if (!ok) {
--		g_at_chat_unref(data->modem);
--		data->modem =3D NULL;
--
--		g_at_chat_unref(data->pcui);
--		data->pcui =3D NULL;
-+		shutdown_device(data);
-+		ofono_modem_set_powered(modem, FALSE);
-+		return;
- 	}
- =
+> g_at_ppp_new(guint8 proto);
+> =
 
--	ofono_modem_set_powered(modem, ok);
-+	/* Follow sim state changes */
-+	g_at_chat_register(data->pcui, "^SIMST:", simst_notify,
-+						FALSE, modem, NULL);
-+
-+	data->sysinfo_poll_count =3D 0;
-+
-+	sysinfo_enable_check(modem);
- }
- =
+> or/and
+> =
 
- static GAtChat *open_device(struct ofono_modem *modem,
-@@ -150,6 +288,8 @@ static int huaweicdma_enable(struct ofono_modem *modem)
- 	g_at_chat_send(data->modem, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
- 	g_at_chat_send(data->pcui, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
- =
+> g_at_ppp_set_proto(GAtPPP *ppp, guint8 proto, ...);
+> =
 
-+	data->sim_state =3D SIM_STATE_NOT_EXISTENT;
-+
- 	g_at_chat_send(data->pcui, "AT+CFUN=3D1", NULL,
- 					cfun_enable, modem, NULL);
- =
+> The usage would be:
+> =
 
-@@ -191,18 +331,168 @@ static int huaweicdma_disable(struct ofono_modem *mo=
-dem)
- 	return -EINPROGRESS;
- }
- =
+> - IPv4 only:
+> =
 
-+
-+static gboolean sysinfo_online_check(gpointer user_data);
-+
-+static void sysinfo_online_cb(gboolean ok, GAtResult *result,
-+						gpointer user_data)
-+{
-+	struct huaweicdma_data *data =3D user_data;
-+	ofono_modem_online_cb_t cb =3D data->online_cbd->cb;
-+	int srv_status, srv_domain, sim_state;
-+
-+	if (!ok)
-+		goto failure;
-+
-+	if (parse_sysinfo_result(result, &srv_status, &srv_domain,
-+							&sim_state) =3D=3D FALSE)
-+		goto failure;
-+
-+	DBG("%d -> %d", data->sim_state, sim_state);
-+
-+	data->sim_state =3D sim_state;
-+
-+	/* Valid service status and at minimum PS domain */
-+	if (srv_status > 0 && srv_domain > 1) {
-+		CALLBACK_WITH_SUCCESS(cb, data->online_cbd->data);
-+		goto done;
-+	}
-+
-+	switch (sim_state) {
-+	case SIM_STATE_VALID:
-+	case SIM_STATE_EMBEDDED:
-+		CALLBACK_WITH_SUCCESS(cb, data->online_cbd->data);
-+		goto done;
-+	}
-+
-+	data->sysinfo_poll_count++;
-+
-+	if (data->sysinfo_poll_count > 15)
-+		goto failure;
-+
-+	data->sysinfo_poll_source =3D g_timeout_add_seconds(2,
-+						sysinfo_online_check, data);
-+	return;
-+
-+failure:
-+	CALLBACK_WITH_FAILURE(cb, data->online_cbd->data);
-+
-+done:
-+	g_free(data->online_cbd);
-+	data->online_cbd =3D NULL;
-+}
-+
-+static gboolean sysinfo_online_check(gpointer user_data)
-+{
-+	struct huaweicdma_data *data =3D user_data;
-+
-+	data->sysinfo_poll_source =3D 0;
-+
-+	g_at_chat_send(data->pcui, "AT^SYSINFO", sysinfo_prefix,
-+					sysinfo_online_cb, data, NULL);
-+
-+	return FALSE;
-+}
-+
-+static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-+
-+	if (!ok) {
-+		ofono_modem_online_cb_t cb =3D data->online_cbd->cb;
-+
-+		CALLBACK_WITH_FAILURE(cb, data->online_cbd->data);
-+
-+		g_free(data->online_cbd);
-+		data->online_cbd =3D NULL;
-+		return;
-+	}
-+
-+	data->sysinfo_poll_count =3D 0;
-+
-+	sysinfo_online_check(data);
-+}
-+
-+static void set_offline_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_modem_online_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
-+
-+	decode_at_error(&error, g_at_result_final_response(result));
-+	cb(&error, cbd->data);
-+}
-+
-+static void huaweicdma_set_online(struct ofono_modem *modem,
-+				ofono_bool_t online,
-+				ofono_modem_online_cb_t cb, void *user_data)
-+{
-+	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("modem %p %s", modem, online ? "online" : "offline");
-+
-+	if (online =3D=3D TRUE) {
-+		data->online_cbd =3D cb_data_new(cb, user_data);
-+
-+		if (g_at_chat_send(data->pcui, "AT+CFUN=3D1", none_prefix,
-+					set_online_cb, modem, NULL) > 0)
-+			return;
-+
-+		g_free(data->online_cbd);
-+		data->online_cbd =3D NULL;
-+	} else {
-+		struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+
-+		if (g_at_chat_send(data->pcui, "AT+CFUN=3D4", none_prefix,
-+					set_offline_cb, cbd, g_free) > 0)
-+			return;
-+
-+		g_free(cbd);
-+	}
-+
-+	CALLBACK_WITH_FAILURE(cb, user_data);
-+}
-+
- static void huaweicdma_pre_sim(struct ofono_modem *modem)
- {
- 	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_sim *sim;
- =
+>     g_at_ppp_new(OFONO_GPRS_PROTO_IP);
+> =
 
- 	DBG("%p", modem);
- =
+> - IPv6 only:
+> =
 
- 	ofono_devinfo_create(modem, 0, "cdmamodem", data->pcui);
-+	sim =3D ofono_cdma_sim_create(modem, OFONO_VENDOR_HUAWEI,
-+					"atmodem", data->pcui);
-+
-+	if (sim && data->have_sim =3D=3D TRUE)
-+		ofono_sim_inserted_notify(sim, TRUE);
-+}
-+
-+static void sim_watch(struct ofono_atom *atom,
-+				enum ofono_atom_watch_condition cond,
-+				void *data)
-+{
-+	struct ofono_sim *sim =3D __ofono_atom_get_data(atom);
-+
-+	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_REGISTERED)
-+		__ofono_sim_recheck_pin(sim);
- }
- =
+>     g_at_ppp_new(OFONO_GPRS_PROTO_IPV6);
+> =
 
- static void huaweicdma_post_sim(struct ofono_modem *modem)
- {
-+	struct ofono_atom *atom;
-+	struct ofono_sim *sim;
-+
- 	DBG("%p", modem);
-+
-+	atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
-+	if (atom) {
-+		sim =3D __ofono_atom_get_data(atom);
-+		__ofono_sim_recheck_pin(sim);
-+	} else
-+		__ofono_modem_add_atom_watch(modem, OFONO_ATOM_TYPE_SIM,
-+						sim_watch, NULL, NULL);
- }
- =
+> - IPv4v6, both optional, but at least one is mandatory:
+> =
 
- static void huaweicdma_post_online(struct ofono_modem *modem)
-@@ -222,6 +512,7 @@ static struct ofono_modem_driver huaweicdma_driver =3D {
- 	.remove		=3D huaweicdma_remove,
- 	.enable		=3D huaweicdma_enable,
- 	.disable	=3D huaweicdma_disable,
-+	.set_online	=3D huaweicdma_set_online,
- 	.pre_sim	=3D huaweicdma_pre_sim,
- 	.post_sim	=3D huaweicdma_post_sim,
- 	.post_online	=3D huaweicdma_post_online,
--- =
+>     g_at_ppp_new(OFONO_GPRS_PROTO_IPV4V6);
+> =
 
-1.7.1
+> - IPv4v6, both mandatory:
+> =
+
+>     g_at_ppp_new(OFONO_GPRS_PROTO_IPV4V6 |
+>          OFONO_GPRS_PROTO_IP | OFONO_GPRS_PROTO_IPV6);
+> =
+
+> - IPv4v6, IPv4 mandatory:
+> =
+
+>     g_at_ppp_new(OFONO_GPRS_PROTO_IPV4V6 | OFONO_GPRS_PROTO_IP);
+> =
+
+> and so on.
+> =
+
+> For g_at_ppp_set_proto(GAtPPP *ppp, guint8 proto, ...) there might be
+> optional parameters (one IPv4/IPv6 local address or both IPv4 and IPv6
+> local addresses), depending on the need. And similarly for
+> g_at_ppp_set_server_info().
+> =
 
 
---===============3863149246129374729==--
+There are some interesting ideas here, but I want to keep the API
+changes and the impact on existing code minimal for now.  This means not
+touching the original API if possible.
+
+Besides, we simply don't know if we need all this flexibility, so lets
+just consider the ipv4 only, ipv6 only and both ipv4 and ipv6 being
+required as use cases we want to address.
+
+Regards,
+-Denis
+
+--===============3548141598389119755==--
 
