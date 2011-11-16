@@ -1,59 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============0417757370961871815=="
+Content-Type: multipart/mixed; boundary="===============0969079110958124674=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv2 5/6] gatppp: Add IPv6 CP connect, disconnect callbacks
-Date: Tue, 15 Nov 2011 07:43:29 -0600
-Message-ID: <4EC26C81.7010104@gmail.com>
-In-Reply-To: <4EC3C333.8000905@intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v0 0/3] Use sim atom with cdma modems
+Date: Wed, 16 Nov 2011 15:48:58 +0100
+Message-ID: <1321454941-32022-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0417757370961871815==
+--===============0969079110958124674==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Oleg,
+Hi,
 
-On 11/16/2011 08:05 AM, Oleg Zhurakivskyy wrote:
-> Hello Denis,
-> =
+This set of patch allows to use "atmodem" sim atom with CDMA modems.
+In this way IMSI can be retrieved for CDMA modems without using the sim file
+system.
+IMSI is needed by:
+	- oFono to store credentials while completing a data call.
+	- oFono to store voicecall numbers.
+	- ofono plugin from ConnMan to publish cellular service to
+	  complete a data call with CDMA modems.
 
-> On 11/15/2011 04:59 AM, Denis Kenzior wrote:
->>> @@ -64,6 +64,7 @@ struct _GAtPPP {
->>>       struct pppcp_data *ipcp;
->>>       struct pppcp_data *ipv6cp;
->>>       struct ppp_net *net;
->>> +    struct ppp_net *net6;
->>
->> Actually you can't do it this way.  There's only a single IP layer, so
->> it is considered 'live' as soon as one of the NCPs (e.g. IPCP or IPv6CP)
->> has been negotiated (e.g. went to 'up' state).
-> =
+Guillaume Zajac (3):
+  include: Add public API to create cdma_sim
+  sim: Don't use sim file system for CDMA sim
+  huaweicdma: Add SIM creation and set_online method driver
 
-> Thanks for the explanation of the semantics here.
-> =
-
-> Regarding the ppp_net, it might be possible to do just with one
-> instance, enhancing struct ppp_net with guint8 proto field. The protocol
-> that goes up first, creates the interface, the second one just adds
-> relevant protocol configuration. Maybe, the reference counter, would be
-> useful here then.
-> =
-
-> What would be the preferred approach here?
-> =
+ include/sim.h        |    4 +
+ plugins/huaweicdma.c |  303 ++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ src/sim.c            |   66 ++++++++++--
+ 3 files changed, 358 insertions(+), 15 deletions(-)
 
 
-That sounds fine, basically we need a single TUN interface to handle
-both IPv6 and IPv4 packets.  We can probably get by with simply checking
-the state of each NCP inside ppp_drop_packet on the rx side.
-
-On the tx side we most likely need to peek inside the IP packet to
-figure out and set the protocol accordingly.
-
-Regards,
--Denis
-
---===============0417757370961871815==--
+--===============0969079110958124674==--
 
