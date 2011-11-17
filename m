@@ -1,38 +1,90 @@
-Content-Type: multipart/mixed; boundary="===============5574281546866716372=="
+Content-Type: multipart/mixed; boundary="===============4390518550503965440=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: Re: [PATCHv2 5/6] gatppp: Add IPv6 CP connect, disconnect callbacks
-Date: Thu, 17 Nov 2011 10:10:21 +0200
-Message-ID: <4EC4C16D.20507@intel.com>
-In-Reply-To: <4EC26C81.7010104@gmail.com>
+From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
+Subject: [PATCH] udevng: Add support of SU-7300
+Date: Thu, 17 Nov 2011 14:59:43 +0100
+Message-ID: <1321538383-21015-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5574281546866716372==
+--===============4390518550503965440==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+Add setup_speedupcdma in order to support the specificities of cdma modems
 
-On 11/15/2011 03:43 PM, Denis Kenzior wrote:
-> That sounds fine, basically we need a single TUN interface to handle
-> both IPv6 and IPv4 packets.  We can probably get by with simply checking
-> the state of each NCP inside ppp_drop_packet on the rx side.
->
-> On the tx side we most likely need to peek inside the IP packet to
-> figure out and set the protocol accordingly.
+---
+ plugins/udevng.c |   44 +++++++++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 43 insertions(+), 1 deletions(-)
 
-OK, will make it so. Thanks for the idea!
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index e0f5fd8..35f8c1e 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -289,6 +289,48 @@ static gboolean setup_huawei(struct modem_info *modem)
+ 	return TRUE;
+ }
+ =
 
-Regards,
-Oleg
++static gboolean setup_speedupcdma(struct modem_info *modem)
++{
++	const char *aux =3D NULL, *mdm =3D NULL;
++	GSList *list;
++
++	DBG("%s", modem->syspath);
++
++	for (list =3D modem->devices; list; list =3D list->next) {
++		struct device_info *info =3D list->data;
++
++		DBG("%s %s %s %s", info->devnode, info->interface,
++						info->number, info->label);
++
++		if (g_strcmp0(info->label, "aux") =3D=3D 0) {
++			aux =3D info->devnode;
++			if (mdm !=3D NULL)
++				break;
++		} else if (g_strcmp0(info->label, "modem") =3D=3D 0) {
++			mdm =3D info->devnode;
++			if (aux !=3D NULL)
++				break;
++		} else if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
++			if (g_strcmp0(info->number, "00") =3D=3D 0)
++				mdm =3D info->devnode;
++			else if (g_strcmp0(info->number, "02") =3D=3D 0)
++				aux =3D info->devnode;
++			else if (g_strcmp0(info->number, "03") =3D=3D 0)
++				aux =3D info->devnode;
++		}
++	}
++
++	if (aux =3D=3D NULL || mdm =3D=3D NULL)
++		return FALSE;
++
++	DBG("aux=3D%s modem=3D%s", aux, mdm);
++
++	ofono_modem_set_string(modem->modem, "Aux", aux);
++	ofono_modem_set_string(modem->modem, "Modem", mdm);
++
++	return TRUE;
++}
++
+ static gboolean setup_speedup(struct modem_info *modem)
+ {
+ 	const char *aux =3D NULL, *mdm =3D NULL;
+@@ -614,7 +656,7 @@ static struct {
+ 	{ "sierra",	setup_sierra	},
+ 	{ "huawei",	setup_huawei	},
+ 	{ "huaweicdma",	setup_huawei	},
+-	{ "speedupcdma",setup_speedup	},
++	{ "speedupcdma",setup_speedupcdma},
+ 	{ "speedup",	setup_speedup	},
+ 	{ "linktop",	setup_linktop	},
+ 	{ "alcatel",	setup_alcatel	},
 -- =
 
-Intel Finland Oy
-Registered Address: PL 281, 00181 Helsinki
-Business Identity Code: 0357606 - 4
-Domiciled in Helsinki
+1.7.4.1
 
---===============5574281546866716372==--
+
+--===============4390518550503965440==--
 
