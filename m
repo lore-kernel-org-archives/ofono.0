@@ -1,43 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============7837942860483763662=="
+Content-Type: multipart/mixed; boundary="===============8647339001072161939=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v2 4/4] sim: Get IMSI if sim state is OFONO_SIM_STATE_INSERTED
-Date: Mon, 21 Nov 2011 11:54:05 +0100
-Message-ID: <1321872845-24754-5-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1321872845-24754-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Marko Saukko <marko.saukko@gmail.com>
+Subject: Anyone want to upstraem N950 patches from MeeGo/Mer?
+Date: Mon, 21 Nov 2011 15:18:11 +0000
+Message-ID: <4ECA6BA1.9040901@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7837942860483763662==
+--===============8647339001072161939==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-In case of CDAM modem sim can be embedded so that at AT+CPIN? query
-answer is +CME ERROR: 10 sim not inserted.
-We have to ignore this error and try to initialize the sim to
-retrieve the IMSI.
----
- src/sim.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/src/sim.c b/src/sim.c
-index d1d55c5..2c6fbe2 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -2406,6 +2406,8 @@ checkdone:
- 		sim_initialize_after_pin(sim);
- 		break;
- 	default:
-+		if (sim->state =3D=3D OFONO_SIM_STATE_INSERTED)
-+			sim_initialize_after_pin(sim);
- 		break;
- 	}
- }
--- =
+there are some Nokia N950 related ofono patches that never made to the =
 
-1.7.1
+upstream. I wonder if there is anyone that would be interested of fixing =
 
+and upstreaming these?
 
---===============7837942860483763662==--
+The patches seem to apply with minor modification on top of 1.0 tree, =
+
+but I'm not sure if changes are needed or not.
+
+Patches are:
+
+n950.patch
+n950-disable-cbs.patch
+
+And are available for example at
+http://gitweb.merproject.org/gitweb?p=3Dmer-core/ofono.git;a=3Dtree
+
+Regards,
+Marko
+
+--===============8647339001072161939==--
 
