@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2403829025384772794=="
+Content-Type: multipart/mixed; boundary="===============6578135497601850048=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v0 22/32] sierra: Add modem type hardware
-Date: Tue, 22 Nov 2011 18:09:51 +0100
-Message-ID: <1321981801-5452-23-git-send-email-wagi@monom.org>
+Subject: [PATCH v0 23/32] speedup: Add modem type hardware
+Date: Tue, 22 Nov 2011 18:09:52 +0100
+Message-ID: <1321981801-5452-24-git-send-email-wagi@monom.org>
 In-Reply-To: <1321981801-5452-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2403829025384772794==
+--===============6578135497601850048==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,27 +16,27 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- plugins/sierra.c |    1 +
+ plugins/speedup.c |    1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/sierra.c b/plugins/sierra.c
-index c41e2d1..6404ca6 100644
---- a/plugins/sierra.c
-+++ b/plugins/sierra.c
-@@ -243,6 +243,7 @@ static void sierra_post_online(struct ofono_modem *mode=
-m)
+diff --git a/plugins/speedup.c b/plugins/speedup.c
+index a90dfe3..f81d4a2 100644
+--- a/plugins/speedup.c
++++ b/plugins/speedup.c
+@@ -276,6 +276,7 @@ static void speedup_post_online(struct ofono_modem *mod=
+em)
  =
 
- static struct ofono_modem_driver sierra_driver =3D {
- 	.name		=3D "sierra",
+ static struct ofono_modem_driver speedup_driver =3D {
+ 	.name		=3D "speedup",
 +	.modem_type	=3D OFONO_MODEM_TYPE_HARDWARE,
- 	.probe		=3D sierra_probe,
- 	.remove		=3D sierra_remove,
- 	.enable		=3D sierra_enable,
+ 	.probe		=3D speedup_probe,
+ 	.remove		=3D speedup_remove,
+ 	.enable		=3D speedup_enable,
 -- =
 
 1.7.8.rc1.14.g248db
 
 
---===============2403829025384772794==--
+--===============6578135497601850048==--
 
