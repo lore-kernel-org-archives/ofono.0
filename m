@@ -1,106 +1,201 @@
-Content-Type: multipart/mixed; boundary="===============1721422575682079152=="
+Content-Type: multipart/mixed; boundary="===============6534953882385669742=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv3 6/6] gsmdial: Add IPv6 CP connect hook
-Date: Wed, 23 Nov 2011 14:57:52 +0200
-Message-ID: <1322053072-20252-7-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv3 5/6] gatppp: Add IPv6 CP connect callback
+Date: Wed, 23 Nov 2011 14:57:51 +0200
+Message-ID: <1322053072-20252-6-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1322053072-20252-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1721422575682079152==
+--===============6534953882385669742==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gsmdial.c |   54 +++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 53 insertions(+), 1 deletions(-)
+ gatchat/gatppp.c |   83 ++++++++++++++++++++++++++++++++++++--------------=
+---
+ gatchat/gatppp.h |    5 +++
+ 2 files changed, 61 insertions(+), 27 deletions(-)
 
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index 87541d1..90cd342 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -344,6 +344,51 @@ static void ppp_disconnect(GAtPPPDisconnectReason reas=
-on, gpointer user_data)
- 	g_at_chat_resume(modem);
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index be90e81..ac12758 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -72,6 +72,7 @@ struct _GAtPPP {
+ 	char password[256];
+ 	GAtPPPConnectFunc connect_cb;
+ 	gpointer connect_data;
++	GAtPPPConnect6Func connect6_cb;
+ 	GAtPPPDisconnectFunc disconnect_cb;
+ 	gpointer disconnect_data;
+ 	GAtPPPDisconnectReason disconnect_reason;
+@@ -369,6 +370,41 @@ static inline void ppp_enter_phase(GAtPPP *ppp, enum p=
+pp_phase phase)
+ 		ppp->ppp_dead_source =3D g_idle_add(ppp_dead, ppp);
  }
  =
 
-+static const char *ipv6_link_local(const char *addr, char *dst)
++static void ppp_net_up_notify(GAtPPP *ppp)
 +{
-+	struct in6_addr in6_addr;
-+
-+	/* Add IPv6 link-local prefix */
-+
-+	inet_pton(AF_INET6, addr, &in6_addr);
-+	in6_addr.s6_addr16[0] =3D htons(0xfe80);
-+	inet_ntop(AF_INET6, &in6_addr, dst, INET6_ADDRSTRLEN);
-+
-+	return dst;
-+}
-+
-+static void ppp_ipv6_connect(const char *iface, const char *local,
-+				const char *peer, gpointer user_data)
-+{
-+	char local_addr[INET6_ADDRSTRLEN], peer_addr[INET6_ADDRSTRLEN];
-+	char buf[512];
-+
-+	g_print("PPP IPv6 up\n");
-+
-+	ipv6_link_local(local, local_addr);
-+	ipv6_link_local(peer, peer_addr);
-+
-+	g_print("Network Device: %s\n", iface);
-+	g_print("IPv6 Local Address: %s\n", local_addr);
-+	g_print("IPv6 Peer Address: %s\n", peer_addr);
-+
-+	if (getuid() !=3D 0) {
-+		g_print("Need root privilege to config PPP interface\n");
++	if (ppp->net !=3D NULL) {
++		ppp_net_ref(ppp->net);
 +		return;
 +	}
 +
-+	snprintf(buf, sizeof(buf), "%s %s up", IFCONFIG_PATH, iface);
-+	execute(buf);
++	ppp->net =3D ppp_net_new(ppp, ppp->fd);
++	if (ppp->net =3D=3D NULL) {
++		ppp->disconnect_reason =3D G_AT_PPP_REASON_NET_FAIL;
++		pppcp_signal_close(ppp->lcp);
++		return;
++	}
 +
-+	snprintf(buf, sizeof(buf), "%s %s inet6 add %s", IFCONFIG_PATH,
-+			iface, local_addr);
-+	execute(buf);
++	/*
++	 * ppp_net_new took control over the fd, whatever happens is out of
++	 * our hands now
++	 */
++	ppp->fd =3D -1;
 +
-+	snprintf(buf, sizeof(buf), "ip -6 route add %s dev %s", peer_addr,
-+								iface);
-+	execute(buf);
++	if (ppp_net_set_mtu(ppp->net, ppp->mtu) =3D=3D FALSE)
++		DBG(ppp, "Unable to set MTU");
++
++	ppp_enter_phase(ppp, PPP_PHASE_LINK_UP);
 +}
 +
- static GAtPPP *ppp_new(gchar **type)
++static void ppp_net_down_notify(GAtPPP *ppp)
++{
++	/* Most likely we failed to create the interface */
++	if (ppp->net =3D=3D NULL)
++		return;
++
++	ppp_net_unref(&ppp->net);
++}
++
+ void ppp_set_auth(GAtPPP *ppp, const guint8* auth_data)
  {
- 	gboolean ipv4 =3D FALSE;
-@@ -401,9 +446,16 @@ static void connect_cb(gboolean ok, GAtResult *result,=
- gpointer user_data)
+ 	guint16 proto =3D get_host_short(auth_data);
+@@ -412,39 +448,17 @@ void ppp_auth_notify(GAtPPP *ppp, gboolean success)
+ void ppp_ipcp_up_notify(GAtPPP *ppp, const char *local, const char *peer,
+ 					const char *dns1, const char *dns2)
+ {
+-	ppp->net =3D ppp_net_new(ppp, ppp->fd);
+-
+-	/*
+-	 * ppp_net_new took control over the fd, whatever happens is out of
+-	 * our hands now
+-	 */
+-	ppp->fd =3D -1;
+-
+-	if (ppp->net =3D=3D NULL) {
+-		ppp->disconnect_reason =3D G_AT_PPP_REASON_NET_FAIL;
+-		pppcp_signal_close(ppp->lcp);
+-		return;
+-	}
+-
+-	if (ppp_net_set_mtu(ppp->net, ppp->mtu) =3D=3D FALSE)
+-		DBG(ppp, "Unable to set MTU");
+-
+-	ppp_enter_phase(ppp, PPP_PHASE_LINK_UP);
++	ppp_net_up_notify(ppp);
  =
 
- 		/* set connect and disconnect callbacks */
- 		g_at_ppp_set_connect_function(ppp, ppp_connect, NULL);
--		g_at_ppp_set_disconnect_function(ppp, ppp_disconnect, NULL);
- 	}
- =
-
-+	if (g_at_ppp_get_proto(ppp) & G_AT_PPP_PROTO_IPV6)
-+		g_at_ppp_set_ipv6_connect_function(ppp, ppp_ipv6_connect, NULL);
-+
-+	/* set common IPv4 and IPv6 disconnect callback */
-+	if (g_at_ppp_get_proto(ppp) & G_AT_PPP_PROTO_IP ||
-+			g_at_ppp_get_proto(ppp) & G_AT_PPP_PROTO_IPV6)
-+		g_at_ppp_set_disconnect_function(ppp, ppp_disconnect, NULL);
-+
- 	/* open the ppp connection */
- 	g_at_ppp_open(ppp, io);
+ 	if (ppp->connect_cb)
+ 		ppp->connect_cb(ppp_net_get_interface(ppp->net),
+-					local, peer, dns1, dns2,
+-					ppp->connect_data);
++				local, peer, dns1, dns2,
++				ppp->connect_data);
  }
+ =
+
+ void ppp_ipcp_down_notify(GAtPPP *ppp)
+ {
+-	/* Most likely we failed to create the interface */
+-	if (ppp->net =3D=3D NULL)
+-		return;
+-
+-	ppp_net_free(ppp->net);
+-	ppp->net =3D NULL;
++	ppp_net_down_notify(ppp);
+ }
+ =
+
+ void ppp_ipcp_finished_notify(GAtPPP *ppp)
+@@ -466,12 +480,18 @@ void ppp_ipv6cp_up_notify(GAtPPP *ppp, const char *lo=
+cal, const char *peer)
+ {
+ 	DBG(ppp, "local: %s, peer: %s", local, peer);
+ =
+
+-	ppp_enter_phase(ppp, PPP_PHASE_LINK_UP);
++	ppp_net_up_notify(ppp);
++
++	if (ppp->connect6_cb)
++		ppp->connect6_cb(ppp_net_get_interface(ppp->net),
++					local, peer, ppp->connect_data);
+ }
+ =
+
+ void ppp_ipv6cp_down_notify(GAtPPP *ppp)
+ {
+ 	DBG(ppp, "");
++
++	ppp_net_down_notify(ppp);
+ }
+ =
+
+ void ppp_ipv6cp_finished_notify(GAtPPP *ppp)
+@@ -682,6 +702,15 @@ void g_at_ppp_set_disconnect_function(GAtPPP *ppp, GAt=
+PPPDisconnectFunc func,
+ 	ppp->disconnect_data =3D user_data;
+ }
+ =
+
++void g_at_ppp_set_ipv6_connect_function(GAtPPP *ppp, GAtPPPConnect6Func fu=
+nc,
++							gpointer user_data)
++{
++	if (func =3D=3D NULL)
++		return;
++
++	ppp->connect6_cb =3D func;
++}
++
+ void g_at_ppp_set_debug(GAtPPP *ppp, GAtDebugFunc func, gpointer user_data)
+ {
+ 	if (ppp =3D=3D NULL)
+diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
+index b6eb40d..ead61ca 100644
+--- a/gatchat/gatppp.h
++++ b/gatchat/gatppp.h
+@@ -54,6 +54,8 @@ typedef void (*GAtPPPConnectFunc)(const char *iface, cons=
+t char *local,
+ 					gpointer user_data);
+ typedef void (*GAtPPPDisconnectFunc)(GAtPPPDisconnectReason reason,
+ 					gpointer user_data);
++typedef void (*GAtPPPConnect6Func)(const char *iface, const char *local,
++					const char *peer, gpointer user_data);
+ =
+
+ GAtPPP *g_at_ppp_new(void);
+ GAtPPP *g_at_ppp_ipv6_new(const char *local_prefix);
+@@ -76,6 +78,9 @@ void g_at_ppp_set_disconnect_function(GAtPPP *ppp, GAtPPP=
+DisconnectFunc func,
+ 					gpointer user_data);
+ void g_at_ppp_set_suspend_function(GAtPPP *ppp, GAtSuspendFunc func,
+ 					gpointer user_data);
++void g_at_ppp_set_ipv6_connect_function(GAtPPP *ppp,
++					GAtPPPConnect6Func callback,
++					gpointer user_data);
+ void g_at_ppp_set_debug(GAtPPP *ppp, GAtDebugFunc func, gpointer user_data=
+);
+ void g_at_ppp_shutdown(GAtPPP *ppp);
+ void g_at_ppp_suspend(GAtPPP *ppp);
 -- =
 
 1.7.5.4
 
 
---===============1721422575682079152==--
+--===============6534953882385669742==--
 
