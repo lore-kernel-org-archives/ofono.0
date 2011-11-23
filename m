@@ -1,49 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============7414512405836187644=="
+Content-Type: multipart/mixed; boundary="===============0666842635213135588=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v0 32/32] modem: Update documation on ModemType
-Date: Tue, 22 Nov 2011 18:10:01 +0100
-Message-ID: <1321981801-5452-33-git-send-email-wagi@monom.org>
-In-Reply-To: <1321981801-5452-1-git-send-email-wagi@monom.org>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv3 0/6] gatchat IPv6 CP support
+Date: Wed, 23 Nov 2011 14:57:46 +0200
+Message-ID: <1322053072-20252-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7414512405836187644==
+--===============0666842635213135588==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Hello,
 
-Indicate the kind of modem it is before it is powered up.
----
- doc/modem-api.txt |   11 +++++++++++
- 1 files changed, 11 insertions(+), 0 deletions(-)
+These patches add IPv6 CP support to gatppp and tools.
 
-diff --git a/doc/modem-api.txt b/doc/modem-api.txt
-index fa400a2..8a11bd4 100644
---- a/doc/modem-api.txt
-+++ b/doc/modem-api.txt
-@@ -98,3 +98,14 @@ Properties	boolean Powered [readwrite]
- =
+Changes from v2:
 
- 			TODO: Better to split this into Status and
- 			      Capabilites properties?
-+
-+		string ModemType [readonly]
-+
-+			Indicates whether the modem is virtual or a real
-+			hardware one. This information should only be used
-+			to identify which componet (e.g. ConnMan or a phone
-+			dialer) should take control over the modem. It does
-+			not give any hints on which Interfaces will be
-+			supported by this modem.
-+
-+			Possible values are "hfp", "sap" and "hardware".
+- gatppp API for IPv4, IPv6, IPv4v6 contexts reworked.
+- IPv6 CP integration with gatppp updated.
+- ppp_net is shared in between IPv4 and IPv6.
+- gsmdial, test-server tools updated.
+
+Regards,
+Oleg
+
+Oleg Zhurakivskyy (6):
+  gatppp: Add IPv6 CP hooks
+  gsmdial: Add IPv6 CP option
+  test-server: Add IPv6 CP options
+  ppp_net: Add reference count
+  gatppp: Add IPv6 CP connect callback
+  gsmdial: Add IPv6 CP connect hook
+
+ gatchat/gatppp.c      |  270 ++++++++++++++++++++++++++++++++++++++++-----=
+----
+ gatchat/gatppp.h      |   22 ++++
+ gatchat/gsmdial.c     |   93 ++++++++++++++++-
+ gatchat/ppp.h         |   10 ++-
+ gatchat/ppp_ipv6cp.c  |   54 +++++++---
+ gatchat/ppp_net.c     |   17 +++
+ gatchat/test-server.c |   52 ++++++++--
+ 7 files changed, 438 insertions(+), 80 deletions(-)
+
 -- =
 
-1.7.8.rc1.14.g248db
+1.7.5.4
 
 
---===============7414512405836187644==--
+--===============0666842635213135588==--
 
