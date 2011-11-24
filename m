@@ -1,54 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============5034454745878630276=="
+Content-Type: multipart/mixed; boundary="===============6393188521109717055=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 0/7] Get SID and provider name
-Date: Thu, 24 Nov 2011 18:46:17 +0100
-Message-ID: <1322156784-10402-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 4/7] cdma-netreg: Add 'serving_system' entry point to
+ cdma-netreg to get SID
+Date: Thu, 24 Nov 2011 18:46:21 +0100
+Message-ID: <1322156784-10402-5-git-send-email-philippe.nunes@linux.intel.com>
+In-Reply-To: <1322156784-10402-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5034454745878630276==
+--===============6393188521109717055==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ include/cdma-netreg.h |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
 
-The goal of these patch is to:
+diff --git a/include/cdma-netreg.h b/include/cdma-netreg.h
+index 31ed289..529dab5 100644
+--- a/include/cdma-netreg.h
++++ b/include/cdma-netreg.h
+@@ -36,12 +36,19 @@ enum cdma_netreg_status {
+ =
 
-- Merge the huaweicdmamodem driver with cdmamodem driver. =
+ struct ofono_cdma_netreg;
+ =
 
-- Add the serving system entry point in cdmamodem driver
-- Retrieve the provider name based on the SID provided by the modem.
++typedef void (*ofono_cdma_netreg_serving_system_cb_t)(
++				const struct ofono_error *error,
++				const char *sid,
++				void *data);
++
+ struct ofono_cdma_netreg_driver {
+ 	const char *name;
+ 	int (*probe)(struct ofono_cdma_netreg *cdma_netreg,
+ 				unsigned int vendor,
+ 				void *data);
+ 	void (*remove)(struct ofono_cdma_netreg *cdma_netreg);
++	void (*serving_system)(struct ofono_cdma_netreg *cdma_netreg,
++			ofono_cdma_netreg_serving_system_cb_t cb, void *data);
+ };
+ =
 
+ void ofono_cdma_netreg_status_notify(struct ofono_cdma_netreg *netreg,
+-- =
 
-Philippe Nunes (7):
-  Huaweicdmamodem: remove this specific driver
-  huaweicdmamodem: Merge this driver with cdmamodem driver
-  cdmamodem: Add CDMA network-registration support
-  cdma-netreg: Add 'serving_system' entry point to cdma-netreg to get
-    SID
-  cdmamodem: Add serving system identifier support
-  cdma-netreg: Make use of the new driver entry point serving_system
-  cdma-netreg: Add provider name support
-
- Makefile.am                                    |   13 +-
- drivers/cdmamodem/cdmamodem.c                  |    2 +
- drivers/cdmamodem/cdmamodem.h                  |    2 +
- drivers/cdmamodem/network-registration.c       |  278 ++++++++++++++++++++=
-++++
- drivers/huaweicdmamodem/huaweicdmamodem.c      |   45 ----
- drivers/huaweicdmamodem/huaweicdmamodem.h      |   23 --
- drivers/huaweicdmamodem/network-registration.c |  199 -----------------
- include/cdma-netreg.h                          |    7 +
- plugins/huaweicdma.c                           |    5 +-
- src/cdma-netreg.c                              |   55 +++++
- 10 files changed, 353 insertions(+), 276 deletions(-)
- create mode 100644 drivers/cdmamodem/network-registration.c
- delete mode 100644 drivers/huaweicdmamodem/huaweicdmamodem.c
- delete mode 100644 drivers/huaweicdmamodem/huaweicdmamodem.h
- delete mode 100644 drivers/huaweicdmamodem/network-registration.c
+1.7.1
 
 
---===============5034454745878630276==--
+--===============6393188521109717055==--
 
