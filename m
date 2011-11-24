@@ -1,34 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============3460547546851676415=="
+Content-Type: multipart/mixed; boundary="===============1971806770271894318=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v0 31/32] modem: Append ModemType to GetProperties()
-Date: Tue, 22 Nov 2011 20:44:18 -0600
-Message-ID: <4ECC5E02.5020503@gmail.com>
-In-Reply-To: <1321981801-5452-32-git-send-email-wagi@monom.org>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: Anyone want to upstraem N950 patches from MeeGo/Mer?
+Date: Thu, 24 Nov 2011 11:04:31 +0200
+Message-ID: <CANzBvORgW5OUe2y2B4_eM8QEv6ZA6o1VeQ=wN8cLU4R_GS=MPw@mail.gmail.com>
+In-Reply-To: <4ECB4EEF.3020306@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3460547546851676415==
+--===============1971806770271894318==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Daniel,
+Hi Marko,
 
-On 11/22/2011 11:10 AM, Daniel Wagner wrote:
-> From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-> =
+2011/11/22 Marko Saukko <marko.saukko@gmail.com>:
+> there are some Nokia N950 related ofono patches that never made to the
+> upstream. I wonder if there is anyone that would be interested of fixing
+> and upstreaming these?
+>
+> The patches seem to apply with minor modification on top of 1.0 tree,
+> but I'm not sure if changes are needed or not.
 
-> ---
->  src/modem.c |   18 ++++++++++++++++++
->  1 files changed, 18 insertions(+), 0 deletions(-)
-> =
+If you send the patches to the list, I can take a look.
 
+Cheers,
+Aki
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============3460547546851676415==--
+--===============1971806770271894318==--
 
