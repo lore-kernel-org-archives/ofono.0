@@ -1,142 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============1255891346290294400=="
+Content-Type: multipart/mixed; boundary="===============0722081525604214248=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 7/7] cdma-netreg: Add provider name support
-Date: Thu, 24 Nov 2011 18:46:24 +0100
-Message-ID: <1322156784-10402-8-git-send-email-philippe.nunes@linux.intel.com>
-In-Reply-To: <1322156784-10402-1-git-send-email-philippe.nunes@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 6/6] cdmamodem: Add serving system identifier support
+Date: Thu, 24 Nov 2011 01:03:04 -0600
+Message-ID: <4ECDEC28.4020505@gmail.com>
+In-Reply-To: <4ECE8064.7030803@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1255891346290294400==
+--===============0722081525604214248==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am       |    3 ++-
- src/cdma-netreg.c |   30 ++++++++++++++++++++++++++++++
- 2 files changed, 32 insertions(+), 1 deletions(-)
+Hi Philippe,
 
-diff --git a/Makefile.am b/Makefile.am
-index 6002eb0..978ac9f 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -275,7 +275,8 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/cdmamodem/voicecall.c \
- 			drivers/cdmamodem/devinfo.c \
- 			drivers/cdmamodem/connman.c \
--			drivers/cdmamodem/network-registration.c
-+			drivers/cdmamodem/network-registration.c \
-+			plugins/mbpi.c plugins/mbpi.h
- endif
- =
+On 11/24/2011 11:35 AM, Philippe Nunes wrote:
+> Hi Denis,
+> =
 
- builtin_modules +=3D g1
-diff --git a/src/cdma-netreg.c b/src/cdma-netreg.c
-index 222c3b7..19947ab 100644
---- a/src/cdma-netreg.c
-+++ b/src/cdma-netreg.c
-@@ -28,6 +28,7 @@
- #include <gdbus.h>
- =
+> On 11/18/2011 04:18 PM, Denis Kenzior wrote:
+>> Hi Philippe,
+>>
+>>>> I would also like to see how you're planning to use this information in
+>>>> the core, before reviewing this patch in detail.  Do note that after
+>>>> taking a quick peek at Huawei CDMA manuals and ModemManager, I very
+>>>> much
+>>>> doubt that +CSS is what you want to use in the first place.
+>>>
+>>> I'm really not familiar with Huawei CDMA AT commands but looking to the
+>>> command interface specification from Huawei and to TIA/EIA/IS-707, I
+>>> can't see other solution than the serving system query to retrieve the
+>>> SID. Also, I don't see any unsolicited result codes which could bring
+>>> such information.
+>>>
+>>> Note that this AT command seems supported by Huawei cdma modem according
+>>> the first revison of TIA/EIA/IS-707 (here, the band class is not
+>>> supported, neither the PREV field).
+>>>
+>>> Now, it's true that we would need to retrieve also the NID (as stated in
+>>> TODO), but so far, I don't see how...
+>>
+>> I don't really have the answer, but take a peek at ModemManager.  +CSS
+>> is not how it retrieves SID in the most common case.  In fact it doesn't
+>> even do it via AT commands.  If that's the case, then you might want to
+>> rethink this implementation completely.
+>>
+>> Regards,
+>> -Denis
+>>
+> =
 
- #include "ofono.h"
-+#include "plugins/mbpi.h"
- =
+> Looking to the modem manager, the priority is indeed to retrieve the SID
+> using the qcdm port com (thanks to the result of a radio status query).
+> In case of error, there is however a fallback to use the AT command
+> +CSS. Also, if no qcdm port is available, the SID is retrieved  by using
+> this AT command (please refer to 'legacy_get_serving_system').
+> =
 
- static GSList *g_drivers;
- =
+> Note that in modem manager, there is also a special treatment for Huawei
+> modem which use the IS-707-A format (no band and class).
 
-@@ -38,6 +39,7 @@ struct ofono_cdma_netreg {
- 	const struct ofono_cdma_netreg_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-+	char *provider_name;
- };
- =
+I also noticed various comments stating that +CSS does not report any
+information when registered to EV-DO and it seems that the Huawei driver
+doesn't even bother using fallback mechanisms for EVDO capable hardware
+in the first place.  But maybe I'm not reading the code right...
 
- static const char *cdma_netreg_status_to_string(enum cdma_netreg_status st=
-atus)
-@@ -90,6 +92,10 @@ static DBusMessage *network_get_properties(DBusConnectio=
-n *conn,
- 					&strength);
- 	}
- =
+> =
 
-+	if (cdma_netreg->provider_name)
-+		ofono_dbus_dict_append(&dict, "Name", DBUS_TYPE_STRING,
-+						&cdma_netreg->provider_name);
-+
- 	dbus_message_iter_close_container(&iter, &dict);
- =
+> So far, the AT command "Serving system" seems relevant. Now, do you
+> expect us to communicate also through the qcdm port when using cdma modem?
 
- 	return reply;
-@@ -108,6 +114,9 @@ static void serving_system_callback(const struct ofono_=
-error *error,
- 					const char *sid, void *data)
- {
- 	struct ofono_cdma_netreg *cdma_netreg =3D data;
-+	const char *path =3D __ofono_atom_get_path(cdma_netreg->atom);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	GError *err =3D NULL;
- =
+Have you tested that your theories work?  Right now I'm seeing you
+making lots of assumptions, and moving code from the huawei specific
+driver to some generic driver when in fact no such generality exists.
+CDMA does not have an AT command standard ;)
 
- 	if (cdma_netreg->status !=3D CDMA_NETWORK_REGISTRATION_STATUS_REGISTERED
- 			&& cdma_netreg->status !=3D
-@@ -120,6 +129,20 @@ static void serving_system_callback(const struct ofono=
-_error *error,
- 	}
- =
+And yes, if the AT command does not do what we need, then using QCDM
+would be required.
 
- 	DBG("Serving system Identifier: %s", sid);
-+
-+	g_free(cdma_netreg->provider_name);
-+	cdma_netreg->provider_name =3D NULL;
-+	cdma_netreg->provider_name =3D mbpi_lookup_cdma_provider_name(sid, &err);
-+
-+	if (cdma_netreg->provider_name)
-+		ofono_dbus_signal_property_changed(conn, path,
-+				OFONO_CDMA_NETWORK_REGISTRATION_INTERFACE,
-+				"Name", DBUS_TYPE_STRING,
-+				&cdma_netreg->provider_name);
-+	else if (err !=3D NULL) {
-+		ofono_error("%s", err->message);
-+		g_error_free(err);
-+	}
- }
- =
+Regards,
+-Denis
 
- static void set_registration_status(struct ofono_cdma_netreg *cdma_netreg,
-@@ -136,6 +159,12 @@ static void set_registration_status(struct ofono_cdma_=
-netreg *cdma_netreg,
- 				"Status", DBUS_TYPE_STRING,
- 				&str_status);
- =
-
-+	if (cdma_netreg->status =3D=3D
-+			CDMA_NETWORK_REGISTRATION_STATUS_NOT_REGISTERED) {
-+		g_free(cdma_netreg->provider_name);
-+		cdma_netreg->provider_name =3D NULL;
-+	}
-+
- 	if (cdma_netreg->status =3D=3D CDMA_NETWORK_REGISTRATION_STATUS_REGISTERED
- 			|| cdma_netreg->status =3D=3D
- 				CDMA_NETWORK_REGISTRATION_STATUS_ROAMING)
-@@ -251,6 +280,7 @@ static void cdma_netreg_remove(struct ofono_atom *atom)
- 	if (cdma_netreg->driver && cdma_netreg->driver->remove)
- 		cdma_netreg->driver->remove(cdma_netreg);
- =
-
-+	g_free(cdma_netreg->provider_name);
- 	g_free(cdma_netreg);
- }
- =
-
--- =
-
-1.7.1
-
-
---===============1255891346290294400==--
+--===============0722081525604214248==--
 
