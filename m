@@ -1,414 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============3275591201352653530=="
+Content-Type: multipart/mixed; boundary="===============8518737467227449854=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v2 3/4] huaweicdma: Add SIM creation and set_online method
- driver
-Date: Sun, 27 Nov 2011 08:29:44 -0600
-Message-ID: <4ED24958.6010602@gmail.com>
-In-Reply-To: <1321872845-24754-4-git-send-email-guillaume.zajac@linux.intel.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH 1/5] udev: Add rules to support ZTE MF668 dongle
+Date: Tue, 29 Nov 2011 13:21:17 +0100
+Message-ID: <1322569281-10908-2-git-send-email-philippe.nunes@linux.intel.com>
+In-Reply-To: <1322569281-10908-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3275591201352653530==
+--===============8518737467227449854==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+---
+ plugins/ofono.rules |    9 +++++++++
+ 1 files changed, 9 insertions(+), 0 deletions(-)
 
-On 11/21/2011 04:54 AM, Guillaume Zajac wrote:
-> ---
->  plugins/huaweicdma.c |  283 ++++++++++++++++++++++++++++++++++++++++++++=
-++++--
->  1 files changed, 276 insertions(+), 7 deletions(-)
-> =
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index 30a1b7e..c7fac57 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -15,6 +15,15 @@ KERNEL=3D=3D"shrm0", ENV{OFONO_DRIVER}=3D"u8500"
+ =
 
-> diff --git a/plugins/huaweicdma.c b/plugins/huaweicdma.c
-> index 4c83114..0fd9ef2 100644
-> --- a/plugins/huaweicdma.c
-> +++ b/plugins/huaweicdma.c
-> @@ -37,10 +37,28 @@
->  #include <ofono/cdma-netreg.h>
->  #include <ofono/cdma-connman.h>
->  #include <ofono/log.h>
-> +#include <ofono.h>
-> +
-> +#include <drivers/atmodem/atutil.h>
-> +#include <drivers/atmodem/vendor.h>
-> +
-> +static const char *none_prefix[] =3D { NULL };
-> +static const char *sysinfo_prefix[] =3D { "^SYSINFO:", NULL };
-> +
-> +enum {
-> +	SIM_STATE_VALID =3D		1,
-> +	SIM_STATE_EMBEDDED =3D		240,
-> +	SIM_STATE_NOT_EXISTENT =3D	255,
-> +};
->  =
+ LABEL=3D"ofono_isi_end"
+ =
 
->  struct huaweicdma_data {
->  	GAtChat *modem;
->  	GAtChat *pcui;
-> +	gboolean have_sim;
-> +	int sim_state;
-> +	guint sysinfo_poll_source;
-> +	guint sysinfo_poll_count;
++SUBSYSTEM!=3D"tty", GOTO=3D"ofono_tty_end"
++KERNEL!=3D"ttyUSB[0-9]*", GOTO=3D"ofono_tty_end"
++
++# ZTE
++ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0017", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"02", ENV{OFONO_LABEL}=3D"modem"
++ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0017", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"01", ENV{OFONO_LABEL}=3D"aux"
++
++LABEL=3D"ofono_tty_end"
++
+ SUBSYSTEM!=3D"usb", GOTO=3D"ofono_end"
+ ENV{DEVTYPE}!=3D"usb_device", GOTO=3D"ofono_end"
+ =
 
-You forgot to clean these up in huaweicdma_remove
+-- =
 
-> +	struct cb_data *online_cbd;
->  };
->  =
+1.7.1
 
->  static void huaweicdma_debug(const char *str, void *data)
-> @@ -79,6 +97,122 @@ static void huaweicdma_remove(struct ofono_modem *mod=
-em)
->  	g_free(data);
->  }
->  =
 
-> +static void simst_notify(GAtResult *result, gpointer user_data)
-> +{
-> +	struct ofono_modem *modem =3D user_data;
-> +	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-> +	GAtResultIter iter;
-> +	int sim_state;
-> +
-> +	g_at_result_iter_init(&iter, result);
-> +
-> +	if (!g_at_result_iter_next(&iter, "^SIMST:"))
-> +		return;
-> +
-> +	if (!g_at_result_iter_next_number(&iter, &sim_state))
-> +		return;
-> +
-> +	DBG("%d -> %d", data->sim_state, sim_state);
-> +
-> +	data->sim_state =3D sim_state;
-> +}
-> +
-> +static gboolean parse_sysinfo_result(GAtResult *result, int *srv_status,
-> +					int *srv_domain, int *sim_state)
-> +{
-> +	GAtResultIter iter;
-> +
-> +	g_at_result_iter_init(&iter, result);
-> +
-> +	if (!g_at_result_iter_next(&iter, "^SYSINFO:"))
-> +		return FALSE;
-> +
-> +	if (!g_at_result_iter_next_number(&iter, srv_status))
-> +		return FALSE;
-> +
-> +	if (!g_at_result_iter_next_number(&iter, srv_domain))
-> +		return FALSE;
-> +
-> +	if (!g_at_result_iter_skip_next(&iter))
-> +		return FALSE;
-> +
-> +	if (!g_at_result_iter_skip_next(&iter))
-> +		return FALSE;
-> +
-> +	if (!g_at_result_iter_next_number(&iter, sim_state))
-> +		return FALSE;
-
-This is an obvious candidate to refactor into a library
-
-> +
-> +	return TRUE;
-> +}
-> +
-> +static void shutdown_device(struct huaweicdma_data *data)
-> +{
-> +	g_at_chat_cancel_all(data->modem);
-> +	g_at_chat_unregister_all(data->modem);
-> +
-> +	g_at_chat_unref(data->modem);
-> +	data->modem =3D NULL;
-> +
-> +	g_at_chat_cancel_all(data->pcui);
-> +	g_at_chat_unregister_all(data->pcui);
-> +
-> +	g_at_chat_unref(data->pcui);
-> +	data->pcui =3D NULL;
-> +}
-> +
-> +static gboolean sysinfo_enable_check(gpointer user_data);
-> +
-> +static void sysinfo_enable_cb(gboolean ok, GAtResult *result,
-> +						gpointer user_data)
-> +{
-> +	struct ofono_modem *modem =3D user_data;
-> +	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-> +	int srv_status, srv_domain, sim_state;
-> +
-> +	if (!ok)
-> +		goto failure;
-> +
-> +	if (parse_sysinfo_result(result, &srv_status, &srv_domain,
-> +						&sim_state) =3D=3D FALSE)
-> +		goto failure;
-> +
-> +	DBG("%d -> %d", data->sim_state, sim_state);
-> +
-> +	data->sim_state =3D sim_state;
-> +
-> +	if (sim_state =3D=3D SIM_STATE_NOT_EXISTENT) {
-> +		data->sysinfo_poll_count++;
-> +
-> +		if (data->sysinfo_poll_count > 5)
-> +			goto failure;
-> +
-> +		data->sysinfo_poll_source =3D g_timeout_add_seconds(1,
-> +						sysinfo_enable_check, modem);
-> +		return;
-> +	}
-> +
-> +	data->have_sim =3D TRUE;
-> +	ofono_modem_set_powered(modem, TRUE);
-> +	return;
-> +
-> +failure:
-> +	shutdown_device(data);
-> +	ofono_modem_set_powered(modem, FALSE);
-> +}
-> +
-> +static gboolean sysinfo_enable_check(gpointer user_data)
-> +{
-> +	struct ofono_modem *modem =3D user_data;
-> +	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-> +
-> +	data->sysinfo_poll_source =3D 0;
-> +
-> +	g_at_chat_send(data->pcui, "AT^SYSINFO", sysinfo_prefix,
-> +					sysinfo_enable_cb, modem, NULL);
-> +
-> +	return FALSE;
-> +}
-> +
->  static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
->  {
->  	struct ofono_modem *modem =3D user_data;
-> @@ -87,14 +221,18 @@ static void cfun_enable(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
->  	DBG("");
->  =
-
->  	if (!ok) {
-> -		g_at_chat_unref(data->modem);
-> -		data->modem =3D NULL;
-> -
-> -		g_at_chat_unref(data->pcui);
-> -		data->pcui =3D NULL;
-> +		shutdown_device(data);
-> +		ofono_modem_set_powered(modem, FALSE);
-> +		return;
->  	}
->  =
-
-> -	ofono_modem_set_powered(modem, ok);
-> +	/* Follow sim state changes */
-> +	g_at_chat_register(data->pcui, "^SIMST:", simst_notify,
-> +						FALSE, modem, NULL);
-> +
-> +	data->sysinfo_poll_count =3D 0;
-> +
-> +	sysinfo_enable_check(modem);
->  }
->  =
-
->  static GAtChat *open_device(struct ofono_modem *modem,
-> @@ -150,6 +288,8 @@ static int huaweicdma_enable(struct ofono_modem *mode=
-m)
->  	g_at_chat_send(data->modem, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NUL=
-L);
->  	g_at_chat_send(data->pcui, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL=
-);
->  =
-
-> +	data->sim_state =3D SIM_STATE_NOT_EXISTENT;
-> +
->  	g_at_chat_send(data->pcui, "AT+CFUN=3D1", NULL,
->  					cfun_enable, modem, NULL);
->  =
-
-> @@ -191,18 +331,146 @@ static int huaweicdma_disable(struct ofono_modem *=
-modem)
->  	return -EINPROGRESS;
->  }
->  =
-
-> +
-> +static gboolean sysinfo_online_check(gpointer user_data);
-> +
-> +static void sysinfo_online_cb(gboolean ok, GAtResult *result,
-> +						gpointer user_data)
-> +{
-> +	struct huaweicdma_data *data =3D user_data;
-> +	ofono_modem_online_cb_t cb =3D data->online_cbd->cb;
-> +	int srv_status, srv_domain, sim_state;
-> +
-> +	if (!ok)
-> +		goto failure;
-> +
-> +	if (parse_sysinfo_result(result, &srv_status, &srv_domain,
-> +							&sim_state) =3D=3D FALSE)
-> +		goto failure;
-> +
-> +	DBG("%d -> %d", data->sim_state, sim_state);
-> +
-> +	data->sim_state =3D sim_state;
-> +
-> +	/* Valid service status and at minimum PS domain */
-> +	if (srv_status > 0 && srv_domain > 1) {
-> +		CALLBACK_WITH_SUCCESS(cb, data->online_cbd->data);
-> +		goto done;
-> +	}
-
-Why are you checking this here? PS domain is a GSM specific thing and
-should have no bearing.
-
-> +
-> +	switch (sim_state) {
-> +	case SIM_STATE_VALID:
-> +	case SIM_STATE_EMBEDDED:
-> +		CALLBACK_WITH_SUCCESS(cb, data->online_cbd->data);
-> +		goto done;
-> +	}
-
-Why are we not handling the EMBEDDED state elsewhere, e.g. to tell the
-core that no SIM is to be expected?
-
-> +
-> +	data->sysinfo_poll_count++;
-> +
-> +	if (data->sysinfo_poll_count > 15)
-> +		goto failure;
-> +
-> +	data->sysinfo_poll_source =3D g_timeout_add_seconds(2,
-> +						sysinfo_online_check, data);
-> +	return;
-> +
-> +failure:
-> +	CALLBACK_WITH_FAILURE(cb, data->online_cbd->data);
-> +
-> +done:
-> +	g_free(data->online_cbd);
-> +	data->online_cbd =3D NULL;
-> +}
-> +
-> +static gboolean sysinfo_online_check(gpointer user_data)
-> +{
-> +	struct huaweicdma_data *data =3D user_data;
-> +
-> +	data->sysinfo_poll_source =3D 0;
-> +
-> +	g_at_chat_send(data->pcui, "AT^SYSINFO", sysinfo_prefix,
-> +					sysinfo_online_cb, data, NULL);
-> +
-> +	return FALSE;
-> +}
-> +
-> +static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
-> +{
-> +	struct ofono_modem *modem =3D user_data;
-> +	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-> +
-> +	if (!ok) {
-> +		ofono_modem_online_cb_t cb =3D data->online_cbd->cb;
-> +
-> +		CALLBACK_WITH_FAILURE(cb, data->online_cbd->data);
-> +
-> +		g_free(data->online_cbd);
-> +		data->online_cbd =3D NULL;
-> +		return;
-> +	}
-> +
-> +	data->sysinfo_poll_count =3D 0;
-> +
-> +	sysinfo_online_check(data);
-> +}
-> +
-> +static void set_offline_cb(gboolean ok, GAtResult *result, gpointer user=
-_data)
-> +{
-> +	struct cb_data *cbd =3D user_data;
-> +	ofono_modem_online_cb_t cb =3D cbd->cb;
-> +	struct ofono_error error;
-> +
-> +	decode_at_error(&error, g_at_result_final_response(result));
-> +	cb(&error, cbd->data);
-> +}
-> +
-> +static void huaweicdma_set_online(struct ofono_modem *modem,
-> +				ofono_bool_t online,
-> +				ofono_modem_online_cb_t cb, void *user_data)
-> +{
-> +	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-> +
-> +	DBG("modem %p %s", modem, online ? "online" : "offline");
-> +
-> +	if (online =3D=3D TRUE) {
-> +		data->online_cbd =3D cb_data_new(cb, user_data);
-> +
-> +		if (g_at_chat_send(data->pcui, "AT+CFUN=3D1", none_prefix,
-> +					set_online_cb, modem, NULL) > 0)
-> +			return;
-> +
-> +		g_free(data->online_cbd);
-> +		data->online_cbd =3D NULL;
-> +	} else {
-> +		struct cb_data *cbd =3D cb_data_new(cb, user_data);
-> +
-> +		if (g_at_chat_send(data->pcui, "AT+CFUN=3D4", none_prefix,
-> +					set_offline_cb, cbd, g_free) > 0)
-> +			return;
-> +
-> +		g_free(cbd);
-> +	}
-> +
-> +	CALLBACK_WITH_FAILURE(cb, user_data);
-> +}
-> +
->  static void huaweicdma_pre_sim(struct ofono_modem *modem)
->  {
->  	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
-> +	struct ofono_sim *sim;
->  =
-
->  	DBG("%p", modem);
->  =
-
->  	ofono_devinfo_create(modem, 0, "cdmamodem", data->pcui);
-> +	sim =3D ofono_sim_create(modem, OFONO_VENDOR_HUAWEI,
-> +					"cdmamodem", data->pcui);
-> +
-> +	if (sim && data->have_sim =3D=3D TRUE)
-> +		ofono_sim_inserted_notify(sim, TRUE);
->  }
->  =
-
->  static void huaweicdma_post_sim(struct ofono_modem *modem)
->  {
-> -	DBG("%p", modem);
->  }
->  =
-
->  static void huaweicdma_post_online(struct ofono_modem *modem)
-> @@ -222,6 +490,7 @@ static struct ofono_modem_driver huaweicdma_driver =
-=3D {
->  	.remove		=3D huaweicdma_remove,
->  	.enable		=3D huaweicdma_enable,
->  	.disable	=3D huaweicdma_disable,
-> +	.set_online	=3D huaweicdma_set_online,
->  	.pre_sim	=3D huaweicdma_pre_sim,
->  	.post_sim	=3D huaweicdma_post_sim,
->  	.post_online	=3D huaweicdma_post_online,
-
-Regards,
--Denis
-
---===============3275591201352653530==--
+--===============8518737467227449854==--
 
