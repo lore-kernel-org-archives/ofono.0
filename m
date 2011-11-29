@@ -1,48 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============3958729857331326589=="
+Content-Type: multipart/mixed; boundary="===============6718352031840328052=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 5/5] udev: Add rules to support SpeedUp 9800 dongle
-Date: Tue, 29 Nov 2011 13:21:21 +0100
-Message-ID: <1322569281-10908-6-git-send-email-philippe.nunes@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 0/5] udev rules update
+Date: Tue, 29 Nov 2011 13:20:39 +0100
+Message-ID: <1322569239.29909.61.camel@aeonflux>
 In-Reply-To: <1322569281-10908-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3958729857331326589==
+--===============6718352031840328052==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/ofono.rules |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+Hi Philippe,
 
-diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-index 7f284d4..9e7a651 100644
---- a/plugins/ofono.rules
-+++ b/plugins/ofono.rules
-@@ -29,6 +29,10 @@ ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0124=
-", ENV{ID_USB_INTERFACE_NUM}=3D=3D"0
- ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9e00", ENV{ID_USB_INTE=
-RFACE_NUM}=3D=3D"00", ENV{OFONO_LABEL}=3D"modem"
- ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9e00", ENV{ID_USB_INTE=
-RFACE_NUM}=3D=3D"03", ENV{OFONO_LABEL}=3D"aux"
- =
+> This set of patches have been sent this summer but not upstreamed.
+> As few bugs have been opened which could be fixed by those patches, I res=
+end them
+> for review.
+> =
 
-+# SpeedUp 9800
-+ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9800", ENV{ID_USB_INTE=
-RFACE_NUM}=3D=3D"01", ENV{OFONO_LABEL}=3D"modem"
-+ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9800", ENV{ID_USB_INTE=
-RFACE_NUM}=3D=3D"02", ENV{OFONO_LABEL}=3D"aux"
-+
- LABEL=3D"ofono_tty_end"
- =
+> - For Speedup dongles, the logic in udevng is to assign the modem port on=
+ the
+> latest interface. This is not true for SpeedUp SU-7300U (BUG #23168) and =
 
- SUBSYSTEM!=3D"usb", GOTO=3D"ofono_end"
--- =
+> SpeedUp 9800 (BUG #23167). So, I added 2 specific rules for both dongles.
+> =
 
-1.7.1
+> - For dongle ZTE MF190, 6 interfaces are present and we shall use the int=
+erface
+> ttyUSB4 for modem channel. The logic in udevng is to assign the modem cha=
+nnel
+> on the latest interface. To not break the support of ZTE modems with 5 =
+
+> interfaces (which are using the 4th one for PPP, like K3570), I can't ext=
+end
+> the current logic to take into account the ttyUSB4. So, I added a specifi=
+c rule
+> for ZTE MF190.
+> I added also a specific rule for the dongle ZTE MF668 as the modem channe=
+l is
+> not on the latest interface (BUG #23683)
+
+why is all this reasoning here and not in the commit message of the
+patches? I expect that every patch has a proper commit message that
+explains its goal. Just a non-meaningful subject line is not enough.
+
+Regards
+
+Marcel
 
 
---===============3958729857331326589==--
+
+--===============6718352031840328052==--
 
