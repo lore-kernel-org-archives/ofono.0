@@ -1,49 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============0344056903831417482=="
+Content-Type: multipart/mixed; boundary="===============6843630657455168403=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v0 1/3] doc: Add RoamingAllowed property
-Date: Tue, 29 Nov 2011 11:40:39 -0600
-Message-ID: <4ED51917.9010808@gmail.com>
-In-Reply-To: <1322757634-18468-2-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: Re: ofono with serial modem
+Date: Wed, 30 Nov 2011 03:15:48 -0600
+Message-ID: <4ED5F444.3090401@gmail.com>
+In-Reply-To: <CAC+thW1qhfujn7NDmcWKHiY-BXtUYfvYE12VQdfHwL-k=B7SJg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0344056903831417482==
+--===============6843630657455168403==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Andrea,
 
-On 12/01/2011 10:40 AM, Guillaume Zajac wrote:
-> ---
->  doc/cdma-connman-api.txt |    8 ++++++++
->  1 files changed, 8 insertions(+), 0 deletions(-)
+On 12/02/2011 04:52 AM, Andrea Galbusera wrote:
+> Hi! I'm new to the list and ofono project. In these days I'm trying to
+> figure out if ofono can help me with some embedded projects involving
+> M2M GPRS connections on serial modems.
+> I have a few questions I was not able to give an answer to, neither
+> from wiki nor from doc files in source code. Hope not to bother with
+> too newbish questions here!
 > =
 
-> diff --git a/doc/cdma-connman-api.txt b/doc/cdma-connman-api.txt
-> index 48699a3..319c973 100644
-> --- a/doc/cdma-connman-api.txt
-> +++ b/doc/cdma-connman-api.txt
-> @@ -45,6 +45,14 @@ Properties	boolean Powered [readwrite]
->  			Holds the password to be used for authentication
->  			purposes.
->  =
+> 1. Are non-hot-pluggable serial modem supported by ofono? I believe
+> they should run with the atmodem driver: is this correct?
 
-> +		boolean RoamingAllowed [readwrite]
-> +
-> +			Contains whether data roaming is allowed.  In the off
-> +			setting, if the packet radio registration state
-> +			indicates that the modem is roaming, oFono will
-> +			automatically shutdown connection and no further
-> +			connection establishment will be possible.
-> +
+Yes they are, however they are still detected via udev and require a
+proper modem driver. 'atmodem' is a collection of atom drivers that
+implement generic 27.007 functionality.  The difference should be
+explained nicely in the presentations posted on the site.
 
-I'm still not convinced this is really needed.  Can you discuss a
-specific usecase you are trying to take care of here?
+See the calypso modem driver in plugins/calypso.c for an example as well
+as doc/calypso-modem.txt for an example udev rule.
+
+> =
+
+> 2. Is udev detection the only way to let ofono know about a modem? If
+> I'm not wrong, I read about support for some kind of static
+> configuration in the past (modem.conf file), but it seems gone in
+> these days. I'm definitely fine with udev: just need some hints on how
+> to setup a rule to let ofono know I have a pretty standard AT modem
+> on, say, ttyS0. I looked at ofono.rules, but I think it deals mainly
+> with usb modem.
+
+A udev rule like:
+KERNEL=3D=3D"ttyS0", ENV{OFONO_DRIVER}=3D"your_driver"
+
+should be all that is needed.
+
+> =
+
+> 3. ofono looks very promising for its integration with d-bus. I'm
+> looking forward to be able to have different applications to manage
+> GPRS context activation/deactivation while, i.e., monitoring signal
+> strength and maybe asynchronous notifications by the modem itself. Are
+> these tasks in the ofono's scope or not?
+
+Yes all the things you have listed are possible.
+
+> =
+
+> Thanks in advance for any clarifications!
+> =
+
 
 Regards,
 -Denis
 
---===============0344056903831417482==--
+--===============6843630657455168403==--
 
