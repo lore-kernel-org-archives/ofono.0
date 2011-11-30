@@ -1,33 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============1852226370300803556=="
+Content-Type: multipart/mixed; boundary="===============3410038208246376260=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 1/5] cdma-providers: add driver APIs header
-Date: Wed, 30 Nov 2011 22:20:56 +0100
-Message-ID: <1322688060-17588-2-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 3/5] cdma-providers: add driver APIs implementation
+Date: Wed, 30 Nov 2011 22:20:58 +0100
+Message-ID: <1322688060-17588-4-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1322688060-17588-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1852226370300803556==
+--===============3410038208246376260==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/cdma-providers.h |   44 ++++++++++++++++++++++++++++++++++++++++++=
-++
- 1 files changed, 44 insertions(+), 0 deletions(-)
- create mode 100644 include/cdma-providers.h
+ Makefile.am          |    4 +-
+ src/cdma-providers.c |   80 ++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 82 insertions(+), 2 deletions(-)
+ create mode 100644 src/cdma-providers.c
 
-diff --git a/include/cdma-providers.h b/include/cdma-providers.h
+diff --git a/Makefile.am b/Makefile.am
+index 337aeb7..dca9984 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -18,7 +18,7 @@ pkginclude_HEADERS =3D include/log.h include/plugin.h inc=
+lude/history.h \
+ 			include/location-reporting.h \
+ 			include/cdma-connman.h include/gnss.h \
+ 			include/private-network.h include/cdma-netreg.h \
+-			include/handsfree.h
++			include/cdma-providers.h include/handsfree.h
+ =
+
+ nodist_pkginclude_HEADERS =3D include/version.h
+ =
+
+@@ -430,7 +430,7 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
+es) src/ofono.ver \
+ 			src/gnssagent.c src/gnssagent.h \
+ 			src/cdma-smsutil.h src/cdma-smsutil.c \
+ 			src/cdma-sms.c src/private-network.c src/cdma-netreg.c \
+-			src/handsfree.c
++			src/cdma-providers.c src/handsfree.c
+ =
+
+ src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
+@ -ldl
+ =
+
+diff --git a/src/cdma-providers.c b/src/cdma-providers.c
 new file mode 100644
-index 0000000..8ee9e1e
+index 0000000..d02d41c
 --- /dev/null
-+++ b/include/cdma-providers.h
-@@ -0,0 +1,44 @@
++++ b/src/cdma-providers.c
+@@ -0,0 +1,80 @@
 +/*
 + *
-+ *  oFono - Open Telephony stack for Linux
++ *  oFono - Open Source Telephony
 + *
 + *  Copyright (C) 2011  Nokia Corporation and/or its subsidiary(-ies).
 + *
@@ -47,33 +77,69 @@ index 0000000..8ee9e1e
 + *
 + */
 +
-+#ifndef __OFONO_CDMA_PROVIDERS_H
-+#define __OFONO_CDMA_PROVIDERS_H
-+
-+#ifdef __cplusplus
-+extern "C" {
++#ifdef HAVE_CONFIG_H
++#include <config.h>
 +#endif
 +
-+struct ofono_cdma_providers_driver {
-+	const char *name;
-+	int priority;
-+	int (*get_provider_name)(const char *sid, char **name);
-+};
++#include <string.h>
++#include <glib.h>
++#include "ofono.h"
++
++static GSList *g_drivers =3D NULL;
++
++ofono_bool_t __ofono_cdma_providers_get_name(const char *sid, char **name)
++{
++	GSList *d;
++
++	if (sid =3D=3D NULL || strlen(sid) =3D=3D 0)
++		return FALSE;
++
++	for (d =3D g_drivers; d !=3D NULL; d =3D d->next) {
++		const struct ofono_cdma_providers_driver *driver =3D d->data;
++
++		if (driver->get_provider_name =3D=3D NULL)
++			continue;
++
++		DBG("Calling providers plugin '%s'", driver->name);
++
++		if (driver->get_provider_name(sid, name) < 0)
++			continue;
++
++		return TRUE;
++	}
++
++	return FALSE;
++}
++
++static gint compare_priority(gconstpointer a, gconstpointer b)
++{
++	const struct ofono_cdma_providers_driver *plugin1 =3D a;
++	const struct ofono_cdma_providers_driver *plugin2 =3D b;
++
++	return plugin2->priority - plugin1->priority;
++}
 +
 +int ofono_cdma_providers_driver_register(
-+		const struct ofono_cdma_providers_driver *driver);
-+void ofono_cdma_providers_driver_unregister(
-+		const struct ofono_cdma_providers_driver *driver);
++		const struct ofono_cdma_providers_driver *driver)
++{
++	DBG("driver: %p name: %s", driver, driver->name);
 +
-+#ifdef __cplusplus
++	g_drivers =3D g_slist_insert_sorted(g_drivers, (void *) driver,
++						compare_priority);
++	return 0;
 +}
-+#endif
 +
-+#endif /* __OFONO_CDMA_PROVIDERS_H */
++void ofono_cdma_providers_driver_unregister(
++		const struct ofono_cdma_providers_driver *driver)
++{
++	DBG("driver: %p name: %s", driver, driver->name);
++
++	g_drivers =3D g_slist_remove(g_drivers, driver);
++}
 -- =
 
 1.7.1
 
 
---===============1852226370300803556==--
+--===============3410038208246376260==--
 
