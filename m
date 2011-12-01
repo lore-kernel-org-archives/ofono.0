@@ -1,125 +1,95 @@
-Content-Type: multipart/mixed; boundary="===============4374109995054296739=="
+Content-Type: multipart/mixed; boundary="===============3010340286056069365=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: [PATCH 3/5] cdma-providers: add driver APIs implementation
-Date: Thu, 01 Dec 2011 08:56:09 +0000
-Message-ID: <ED4DEEB78293B34A9D0EAC02A474A46E07DBBA@IRSMSX102.ger.corp.intel.com>
-In-Reply-To: <1322688060-17588-4-git-send-email-philippe.nunes@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [RFC_v0] sierra: Add SIM state polling
+Date: Thu, 01 Dec 2011 16:37:11 +0100
+Message-ID: <1322753831-11643-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4374109995054296739==
+--===============3010340286056069365==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+It has been reported than for some Sierra modem, the SIM
+initialization process leads to +CME ERROR: 10 sim not
+present. The issue might come from SIM is not ready.
+---
+ plugins/sierra.c |   26 +++++++++++++++++++++++++-
+ 1 files changed, 25 insertions(+), 1 deletions(-)
 
-> diff --git a/src/cdma-providers.c b/src/cdma-providers.c new file mode 10=
-0644
-> index 0000000..d02d41c
-> --- /dev/null
-> +++ b/src/cdma-providers.c
-> @@ -0,0 +1,80 @@
-> +/*
-> + *
-> + *  oFono - Open Source Telephony
-> + *
-> + *  Copyright (C) 2011  Nokia Corporation and/or its subsidiary(-ies).
+diff --git a/plugins/sierra.c b/plugins/sierra.c
+index c41e2d1..db54817 100644
+--- a/plugins/sierra.c
++++ b/plugins/sierra.c
+@@ -47,6 +47,8 @@ static const char *none_prefix[] =3D { NULL };
+ =
 
-Same comment about copyright.
+ struct sierra_data {
+ 	GAtChat *chat;
++	gboolean have_sim;
++	struct at_util_sim_state_query *sim_state_query;
+ };
+ =
 
-> + *
-> + *  This program is free software; you can redistribute it and/or
-> +modify
-> + *  it under the terms of the GNU General Public License version 2 as
-> + *  published by the Free Software Foundation.
-> + *
-> + *  This program is distributed in the hope that it will be useful,
-> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + *  GNU General Public License for more details.
-> + *
-> + *  You should have received a copy of the GNU General Public License
-> + *  along with this program; if not, write to the Free Software
-> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-> +02110-1301  USA
-> + *
-> + */
-> +
-> +#ifdef HAVE_CONFIG_H
-> +#include <config.h>
-> +#endif
-> +
-> +#include <string.h>
-> +#include <glib.h>
-> +#include "ofono.h"
-> +
-> +static GSList *g_drivers =3D NULL;
-> +
-> +ofono_bool_t __ofono_cdma_providers_get_name(const char *sid, char
-> +**name) {
-> +	GSList *d;
-> +
-> +	if (sid =3D=3D NULL || strlen(sid) =3D=3D 0)
-> +		return FALSE;
-> +
-> +	for (d =3D g_drivers; d !=3D NULL; d =3D d->next) {
-> +		const struct ofono_cdma_providers_driver *driver =3D d->data;
-> +
-> +		if (driver->get_provider_name =3D=3D NULL)
-> +			continue;
-> +
-> +		DBG("Calling providers plugin '%s'", driver->name);
-> +
-> +		if (driver->get_provider_name(sid, name) < 0)
-> +			continue;
-> +
-> +		return TRUE;
-> +	}
-> +
-> +	return FALSE;
-> +}
-> +
-> +static gint compare_priority(gconstpointer a, gconstpointer b) {
-> +	const struct ofono_cdma_providers_driver *plugin1 =3D a;
-> +	const struct ofono_cdma_providers_driver *plugin2 =3D b;
-> +
-> +	return plugin2->priority - plugin1->priority; }
-> +
-> +int ofono_cdma_providers_driver_register(
-> +		const struct ofono_cdma_providers_driver *driver) {
-> +	DBG("driver: %p name: %s", driver, driver->name);
-> +
-> +	g_drivers =3D g_slist_insert_sorted(g_drivers, (void *) driver,
-> +						compare_priority);
-> +	return 0;
-> +}
-> +
-> +void ofono_cdma_providers_driver_unregister(
-> +		const struct ofono_cdma_providers_driver *driver) {
-> +	DBG("driver: %p name: %s", driver, driver->name);
-> +
-> +	g_drivers =3D g_slist_remove(g_drivers, driver); }
-> --
-> 1.7.1
+ static void sierra_debug(const char *str, void *user_data)
+@@ -79,6 +81,12 @@ static void sierra_remove(struct ofono_modem *modem)
+ =
 
-Regards,
+ 	ofono_modem_set_data(modem, NULL);
+ =
 
-Bertrand
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
++	/* Cleanup potential SIM state polling */
++	at_util_sim_state_query_free(data->sim_state_query);
++
++	/* Cleanup after hot-unplug */
++	g_at_chat_unref(data->chat);
++
+ 	g_free(data);
+ }
+ =
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+@@ -115,6 +123,21 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	return chat;
+ }
+ =
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
++static void sim_state_cb(gboolean present, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct sierra_data *data =3D ofono_modem_get_data(modem);
++
++	at_util_sim_state_query_free(data->sim_state_query);
++	data->sim_state_query =3D NULL;
++
++	data->have_sim =3D present;
++
++	ofono_modem_set_powered(modem, TRUE);
++
++	g_at_chat_send(data->chat, "AT&C0", NULL, NULL, NULL, NULL);
++}
++
+ static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+@@ -127,7 +150,8 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 		data->chat =3D NULL;
+ 	}
+ =
+
+-	ofono_modem_set_powered(modem, ok);
++	data->sim_state_query =3D at_util_sim_state_query_new(data->chat,
++						2, 20, sim_state_cb, modem);
+ }
+ =
+
+ static int sierra_enable(struct ofono_modem *modem)
+-- =
+
+1.7.1
 
 
---===============4374109995054296739==--
+--===============3010340286056069365==--
 
