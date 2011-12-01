@@ -1,59 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============5767972256578530080=="
+Content-Type: multipart/mixed; boundary="===============7847635662366578766=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v0 1/5] doc: Add bearer property
-Date: Wed, 30 Nov 2011 03:30:23 -0600
-Message-ID: <4ED5F7AF.5050908@gmail.com>
-In-Reply-To: <1322834454-451-2-git-send-email-guillaume.zajac@linux.intel.com>
+From: Aygon, Bertrand <bertrand.aygon@intel.com>
+Subject: RE: [PATCH 1/5] cdma-providers: add driver APIs header
+Date: Thu, 01 Dec 2011 08:51:01 +0000
+Message-ID: <ED4DEEB78293B34A9D0EAC02A474A46E07DB87@IRSMSX102.ger.corp.intel.com>
+In-Reply-To: <1322688060-17588-2-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5767972256578530080==
+--===============7847635662366578766==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Philippe,
 
-On 12/02/2011 08:00 AM, Guillaume Zajac wrote:
-> ---
->  doc/cdma-connman-api.txt |    8 ++++++++
->  1 files changed, 8 insertions(+), 0 deletions(-)
-> =
+> diff --git a/include/cdma-providers.h b/include/cdma-providers.h new file=
+ mode
+> 100644 index 0000000..8ee9e1e
+> --- /dev/null
+> +++ b/include/cdma-providers.h
+> @@ -0,0 +1,44 @@
+> +/*
+> + *
+> + *  oFono - Open Telephony stack for Linux
+> + *
+> + *  Copyright (C) 2011  Nokia Corporation and/or its subsidiary(-ies).
 
-> diff --git a/doc/cdma-connman-api.txt b/doc/cdma-connman-api.txt
-> index 48699a3..bf1ec1e 100644
-> --- a/doc/cdma-connman-api.txt
-> +++ b/doc/cdma-connman-api.txt
-> @@ -35,6 +35,14 @@ Properties	boolean Powered [readwrite]
->  			Contains whether the connection is dormant.  Will
->  			always be false if the connection is not powered.
->  =
+Are you sure about the copyright?
 
-> +		string Bearer [readonly, optional]
+> + *
+> + *  This program is free software; you can redistribute it and/or
+> +modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+> +02110-1301  USA
+> + *
+> + */
 > +
-> +			Contains the data bearer technology as reported by the
-> +			service registration (if known).
+> +#ifndef __OFONO_CDMA_PROVIDERS_H
+> +#define __OFONO_CDMA_PROVIDERS_H
 > +
-> +			Possible values are:
-> +			"none", "1x", "evdo", "svdo"
+> +#ifdef __cplusplus
+> +extern "C" {
+> +#endif
 > +
-
-The 1X and EVDO registration status is already handled by the
-NetworkRegistration interface (namely Strength for 1X and DataStrength
-for EV-DO).
-
-Whether we need an SVDO indicator is another question entirely, but it
-definitely does not belong in ConnectionManager.  All SVDO indicates is
-whether data + voice are possible simultaneously.
-
->  		string Username [readwrite]
->  =
-
->  			Holds the username to be used for authentication
+> +struct ofono_cdma_providers_driver {
+> +	const char *name;
+> +	int priority;
+> +	int (*get_provider_name)(const char *sid, char **name); };
+> +
+> +int ofono_cdma_providers_driver_register(
+> +		const struct ofono_cdma_providers_driver *driver); void
+> +ofono_cdma_providers_driver_unregister(
+> +		const struct ofono_cdma_providers_driver *driver);
+> +
+> +#ifdef __cplusplus
+> +}
+> +#endif
+> +
+> +#endif /* __OFONO_CDMA_PROVIDERS_H */
+> --
+> 1.7.1
 
 Regards,
--Denis
 
---===============5767972256578530080==--
+Bertrand
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============7847635662366578766==--
 
