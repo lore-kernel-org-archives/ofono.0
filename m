@@ -1,41 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============7181239428343384715=="
+Content-Type: multipart/mixed; boundary="===============2642580763549913452=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v0 0/5] Add bearer recovery implementation for CDMA modems
-Date: Fri, 02 Dec 2011 15:00:49 +0100
-Message-ID: <1322834454-451-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v0 2/5] cdma-connman: Add bearer notification public function
+ declaration
+Date: Fri, 02 Dec 2011 15:00:51 +0100
+Message-ID: <1322834454-451-3-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1322834454-451-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7181239428343384715==
+--===============2642580763549913452==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ include/cdma-connman.h |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-Those patches implement bearer recovery based on huaweicdma specifications.
-It will be followed by the Radio Access Technology setting for CDMA modem.
+diff --git a/include/cdma-connman.h b/include/cdma-connman.h
+index 7a115bf..ae84d40 100644
+--- a/include/cdma-connman.h
++++ b/include/cdma-connman.h
+@@ -59,6 +59,9 @@ struct ofono_cdma_connman_driver {
+ 						void *data);
+ };
+ =
 
-Kind regards,
-Guillaume
++void ofono_cdma_connman_bearer_notify(struct ofono_cdma_connman *cm,
++					int bearer);
++
+ int ofono_cdma_connman_driver_register(
+ 				const struct ofono_cdma_connman_driver *d);
+ void ofono_cdma_connman_driver_unregister(
+-- =
 
-Guillaume Zajac (5):
-  doc: Add bearer property
-  cdma-connman: Add bearer notification public function declaration
-  cdma-connman: Add bearer property implementation
-  cdmamodem: Add bearer recovery into connman driver
-  huaweicdma: Specify vendor ID while creating cdma-connman atom
-
- doc/cdma-connman-api.txt    |    8 +++++++
- drivers/cdmamodem/connman.c |   45 +++++++++++++++++++++++++++++++++++++++
- include/cdma-connman.h      |    3 ++
- plugins/huaweicdma.c        |    5 +++-
- src/cdma-connman.c          |   49 +++++++++++++++++++++++++++++++++++++++=
-++++
- src/common.h                |    1 +
- 6 files changed, 110 insertions(+), 1 deletions(-)
+1.7.1
 
 
---===============7181239428343384715==--
+--===============2642580763549913452==--
 
