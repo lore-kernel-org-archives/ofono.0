@@ -1,44 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============7986388009785154068=="
+Content-Type: multipart/mixed; boundary="===============8512294237217614070=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH_v0 1/3] doc: Add RoamingAllowed property
-Date: Fri, 02 Dec 2011 12:09:11 +0200
-Message-ID: <7737754.vMuGffl7lN@hector>
-In-Reply-To: <4ED51917.9010808@gmail.com>
+From: Andrea Galbusera <gizero@gmail.com>
+Subject: ofono with serial modem
+Date: Fri, 02 Dec 2011 11:52:30 +0100
+Message-ID: <CAC+thW1qhfujn7NDmcWKHiY-BXtUYfvYE12VQdfHwL-k=B7SJg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7986388009785154068==
+--===============8512294237217614070==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Le Mardi 29 Novembre 2011 11:40:39 ext Denis Kenzior a =C3=A9crit :
-> > +		boolean RoamingAllowed [readwrite]
-> > +
-> > +			Contains whether data roaming is allowed.  In the off
-> > +			setting, if the packet radio registration state
-> > +			indicates that the modem is roaming, oFono will
-> > +			automatically shutdown connection and no further
-> > +			connection establishment will be possible.
-> > +
-> =
+Hi! I'm new to the list and ofono project. In these days I'm trying to
+figure out if ofono can help me with some embedded projects involving
+M2M GPRS connections on serial modems.
+I have a few questions I was not able to give an answer to, neither
+from wiki nor from doc files in source code. Hope not to bother with
+too newbish questions here!
 
-> I'm still not convinced this is really needed.  Can you discuss a
-> specific usecase you are trying to take care of here?
+1. Are non-hot-pluggable serial modem supported by ofono? I believe
+they should run with the atmodem driver: is this correct?
 
-I do not know CDMA but I do not see why this would be needed at all at the =
+2. Is udev detection the only way to let ofono know about a modem? If
+I'm not wrong, I read about support for some kind of static
+configuration in the past (modem.conf file), but it seems gone in
+these days. I'm definitely fine with udev: just need some hints on how
+to setup a rule to let ofono know I have a pretty standard AT modem
+on, say, ttyS0. I looked at ofono.rules, but I think it deals mainly
+with usb modem.
 
-ConnectionManager atom level. If this is about pricing, it should probably =
-be =
+3. ofono looks very promising for its integration with d-bus. I'm
+looking forward to be able to have different applications to manage
+GPRS context activation/deactivation while, i.e., monitoring signal
+strength and maybe asynchronous notifications by the modem itself. Are
+these tasks in the ofono's scope or not?
 
-a per-context property instead, both for CDMA and GSM.
+Thanks in advance for any clarifications!
 
--- =
+Regards,
+Andrea
 
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net/
-
-
---===============7986388009785154068==--
+--===============8512294237217614070==--
 
