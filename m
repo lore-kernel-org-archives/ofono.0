@@ -1,53 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============1119773002361551926=="
+Content-Type: multipart/mixed; boundary="===============2635207101481803451=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCH 9/9] TODO: Remove completed CPHS SPN and short-SPN tasks
-Date: Fri, 02 Dec 2011 13:10:37 +0200
-Message-ID: <1322824237-10039-10-git-send-email-oleg.zhurakivskyy@intel.com>
-In-Reply-To: <1322824237-10039-1-git-send-email-oleg.zhurakivskyy@intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v0 1/5] doc: Add bearer property
+Date: Fri, 02 Dec 2011 15:00:50 +0100
+Message-ID: <1322834454-451-2-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1322834454-451-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1119773002361551926==
+--===============2635207101481803451==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- TODO |   14 --------------
- 1 files changed, 0 insertions(+), 14 deletions(-)
+ doc/cdma-connman-api.txt |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-diff --git a/TODO b/TODO
-index 159b325..a7dfca8 100644
---- a/TODO
-+++ b/TODO
-@@ -102,20 +102,6 @@ SIM / SIM File system
-   Priority: Low
-   Complexity: C4
+diff --git a/doc/cdma-connman-api.txt b/doc/cdma-connman-api.txt
+index 48699a3..bf1ec1e 100644
+--- a/doc/cdma-connman-api.txt
++++ b/doc/cdma-connman-api.txt
+@@ -35,6 +35,14 @@ Properties	boolean Powered [readwrite]
+ 			Contains whether the connection is dormant.  Will
+ 			always be false if the connection is not powered.
  =
 
--- CPHS SPN support
--
--  Support reading of the CPHS-defined SPN field from SIMs
--
--  Priority: High
--  Complexity: C1
--
--- CPHS Short SPN support
--
--  Support reading of the CPHS-defined short SPN field from SIMs
--
--  Priority: Medium
--  Complexity: C1
--
++		string Bearer [readonly, optional]
++
++			Contains the data bearer technology as reported by the
++			service registration (if known).
++
++			Possible values are:
++			"none", "1x", "evdo", "svdo"
++
+ 		string Username [readwrite]
  =
 
- Bluetooth HFP
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ 			Holds the username to be used for authentication
 -- =
 
-1.7.5.4
+1.7.1
 
 
---===============1119773002361551926==--
+--===============2635207101481803451==--
 
