@@ -1,45 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============8512294237217614070=="
+Content-Type: multipart/mixed; boundary="===============8174812285539643800=="
 MIME-Version: 1.0
-From: Andrea Galbusera <gizero@gmail.com>
-Subject: ofono with serial modem
-Date: Fri, 02 Dec 2011 11:52:30 +0100
-Message-ID: <CAC+thW1qhfujn7NDmcWKHiY-BXtUYfvYE12VQdfHwL-k=B7SJg@mail.gmail.com>
+From: Aygon, Bertrand <bertrand.aygon@intel.com>
+Subject: RE: [PATCH_v0 1/3] doc: Add RoamingAllowed property
+Date: Fri, 02 Dec 2011 10:54:59 +0000
+Message-ID: <ED4DEEB78293B34A9D0EAC02A474A46E07EEB5@IRSMSX102.ger.corp.intel.com>
+In-Reply-To: <7737754.vMuGffl7lN@hector>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8512294237217614070==
+--===============8174812285539643800==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi! I'm new to the list and ofono project. In these days I'm trying to
-figure out if ofono can help me with some embedded projects involving
-M2M GPRS connections on serial modems.
-I have a few questions I was not able to give an answer to, neither
-from wiki nor from doc files in source code. Hope not to bother with
-too newbish questions here!
+Hi,
 
-1. Are non-hot-pluggable serial modem supported by ofono? I believe
-they should run with the atmodem driver: is this correct?
+> > > +		boolean RoamingAllowed [readwrite]
+> > > +
+> > > +			Contains whether data roaming is allowed.  In the off
+> > > +			setting, if the packet radio registration state
+> > > +			indicates that the modem is roaming, oFono will
+> > > +			automatically shutdown connection and no further
+> > > +			connection establishment will be possible.
+> > > +
+> >
+> > I'm still not convinced this is really needed.  Can you discuss a
+> > specific usecase you are trying to take care of here?
+> =
 
-2. Is udev detection the only way to let ofono know about a modem? If
-I'm not wrong, I read about support for some kind of static
-configuration in the past (modem.conf file), but it seems gone in
-these days. I'm definitely fine with udev: just need some hints on how
-to setup a rule to let ofono know I have a pretty standard AT modem
-on, say, ttyS0. I looked at ofono.rules, but I think it deals mainly
-with usb modem.
+> I do not know CDMA but I do not see why this would be needed at all at the
+> ConnectionManager atom level. If this is about pricing, it should probabl=
+y be a
+> per-context property instead, both for CDMA and GSM.
 
-3. ofono looks very promising for its integration with d-bus. I'm
-looking forward to be able to have different applications to manage
-GPRS context activation/deactivation while, i.e., monitoring signal
-strength and maybe asynchronous notifications by the modem itself. Are
-these tasks in the ofono's scope or not?
+There is a RoamingAllowed property in the connman atom, and this property i=
+s used to set if the user want to do some data call while in roaming mode.
 
-Thanks in advance for any clarifications!
+Some months ago has been introduced a cdma-connman atom, but currently, the=
+re is no RoamingAllowed property in this version.
+
+The goal of this patch is to add the same property, so when doing a CDMA da=
+ta call, if we are in roaming, we can check if the user still want to do th=
+e data call or not.
+
+In CDMA, there is no context as in GSM.
 
 Regards,
-Andrea
 
---===============8512294237217614070==--
+Bertrand
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============8174812285539643800==--
 
