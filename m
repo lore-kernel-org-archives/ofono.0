@@ -1,20 +1,19 @@
-Content-Type: multipart/mixed; boundary="===============2591336015634545659=="
+Content-Type: multipart/mixed; boundary="===============7986388009785154068=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: [PATCH_v0 1/3] doc: Add RoamingAllowed property
-Date: Fri, 02 Dec 2011 08:48:42 +0000
-Message-ID: <ED4DEEB78293B34A9D0EAC02A474A46E07EC7B@IRSMSX102.ger.corp.intel.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH_v0 1/3] doc: Add RoamingAllowed property
+Date: Fri, 02 Dec 2011 12:09:11 +0200
+Message-ID: <7737754.vMuGffl7lN@hector>
 In-Reply-To: <4ED51917.9010808@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2591336015634545659==
+--===============7986388009785154068==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
-
+Le Mardi 29 Novembre 2011 11:40:39 ext Denis Kenzior a =C3=A9crit :
 > > +		boolean RoamingAllowed [readwrite]
 > > +
 > > +			Contains whether data roaming is allowed.  In the off
@@ -25,31 +24,21 @@ Hi Denis,
 > > +
 > =
 
-> I'm still not convinced this is really needed.  Can you discuss a specifi=
-c usecase
-> you are trying to take care of here?
+> I'm still not convinced this is really needed.  Can you discuss a
+> specific usecase you are trying to take care of here?
 
-This is the same use case as with GSM/3G network. During our testing in Ind=
-onesia, we have seen some situation where we were in roaming mode.
-So roaming mode is supported in CDMA, and I guess that this would have inci=
-dence on the billing (I will try to get some confirmation about this).
+I do not know CDMA but I do not see why this would be needed at all at the =
 
-Regards,
+ConnectionManager atom level. If this is about pricing, it should probably =
+be =
 
-Bertrand
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+a per-context property instead, both for CDMA and GSM.
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+-- =
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+R=C3=A9mi Denis-Courmont
+http://www.remlab.net/
 
 
---===============2591336015634545659==--
+--===============7986388009785154068==--
 
