@@ -1,97 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============4167481973283666347=="
+Content-Type: multipart/mixed; boundary="===============2591336015634545659=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [RFC_v1 2/2] sierra: Add SIM state polling
-Date: Thu, 01 Dec 2011 17:48:53 +0100
-Message-ID: <1322758133-19701-3-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1322758133-19701-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Aygon, Bertrand <bertrand.aygon@intel.com>
+Subject: RE: [PATCH_v0 1/3] doc: Add RoamingAllowed property
+Date: Fri, 02 Dec 2011 08:48:42 +0000
+Message-ID: <ED4DEEB78293B34A9D0EAC02A474A46E07EC7B@IRSMSX102.ger.corp.intel.com>
+In-Reply-To: <4ED51917.9010808@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4167481973283666347==
+--===============2591336015634545659==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-It has been reported than for some Sierra modem, the SIM
-initialization process leads to +CME ERROR: 10 sim not
-present. The issue might come from SIM is not ready.
----
- plugins/sierra.c |   26 +++++++++++++++++++++++++-
- 1 files changed, 25 insertions(+), 1 deletions(-)
+Hi Denis,
 
-diff --git a/plugins/sierra.c b/plugins/sierra.c
-index b33382d..45e75c1 100644
---- a/plugins/sierra.c
-+++ b/plugins/sierra.c
-@@ -47,6 +47,8 @@ static const char *none_prefix[] =3D { NULL };
- =
+> > +		boolean RoamingAllowed [readwrite]
+> > +
+> > +			Contains whether data roaming is allowed.  In the off
+> > +			setting, if the packet radio registration state
+> > +			indicates that the modem is roaming, oFono will
+> > +			automatically shutdown connection and no further
+> > +			connection establishment will be possible.
+> > +
+> =
 
- struct sierra_data {
- 	GAtChat *chat;
-+	gboolean have_sim;
-+	struct at_util_sim_state_query *sim_state_query;
- };
- =
+> I'm still not convinced this is really needed.  Can you discuss a specifi=
+c usecase
+> you are trying to take care of here?
 
- static void sierra_debug(const char *str, void *user_data)
-@@ -82,6 +84,9 @@ static void sierra_remove(struct ofono_modem *modem)
- 	/* Cleanup after hot-unplug */
- 	g_at_chat_unref(data->chat);
- =
+This is the same use case as with GSM/3G network. During our testing in Ind=
+onesia, we have seen some situation where we were in roaming mode.
+So roaming mode is supported in CDMA, and I guess that this would have inci=
+dence on the billing (I will try to get some confirmation about this).
 
-+	/* Cleanup potential SIM state polling */
-+	at_util_sim_state_query_free(data->sim_state_query);
-+
- 	g_free(data);
- }
- =
+Regards,
 
-@@ -118,6 +123,21 @@ static GAtChat *open_device(struct ofono_modem *modem,
- 	return chat;
- }
- =
+Bertrand
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-+static void sim_state_cb(gboolean present, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct sierra_data *data =3D ofono_modem_get_data(modem);
-+
-+	at_util_sim_state_query_free(data->sim_state_query);
-+	data->sim_state_query =3D NULL;
-+
-+	data->have_sim =3D present;
-+
-+	ofono_modem_set_powered(modem, TRUE);
-+
-+	g_at_chat_send(data->chat, "AT&C0", NULL, NULL, NULL, NULL);
-+}
-+
- static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
-@@ -128,9 +148,13 @@ static void cfun_enable(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 	if (!ok) {
- 		g_at_chat_unref(data->chat);
- 		data->chat =3D NULL;
-+
-+		ofono_modem_set_powered(modem, FALSE);
-+		return;
- 	}
- =
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
--	ofono_modem_set_powered(modem, ok);
-+	data->sim_state_query =3D at_util_sim_state_query_new(data->chat,
-+						2, 20, sim_state_cb, modem);
- }
- =
-
- static int sierra_enable(struct ofono_modem *modem)
--- =
-
-1.7.1
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
 
---===============4167481973283666347==--
+--===============2591336015634545659==--
 
