@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4194960025941753549=="
+Content-Type: multipart/mixed; boundary="===============3519431553814735317=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/9] network: M9 coding style corrections
-Date: Fri, 02 Dec 2011 16:03:09 -0600
-Message-ID: <4ED94B1D.5060409@gmail.com>
-In-Reply-To: <1322824237-10039-2-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: Re: [PATCH 2/9] network: Refactor sim_spn_read_cb()
+Date: Fri, 02 Dec 2011 16:03:35 -0600
+Message-ID: <4ED94B37.708@gmail.com>
+In-Reply-To: <1322824237-10039-3-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4194960025941753549==
+--===============3519431553814735317==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,16 +16,19 @@ Content-Transfer-Encoding: quoted-printable
 Hi Oleg,
 
 On 12/02/2011 05:10 AM, Oleg Zhurakivskyy wrote:
+> Refactor sim_spn_read_cb() for CPHS SPN, short-SPN inclusion
 > ---
->  src/network.c |   10 +++++-----
->  1 files changed, 5 insertions(+), 5 deletions(-)
+>  src/network.c |   82 +++++++++++++++++++++++++++++++++------------------=
+-----
+>  1 files changed, 48 insertions(+), 34 deletions(-)
 > =
 
 
-Patch has been applied, thanks.
+Patch has been applied, but I did tweak the new naming slightly in a
+follow on commit.
 
 Regards,
 -Denis
 
---===============4194960025941753549==--
+--===============3519431553814735317==--
 
