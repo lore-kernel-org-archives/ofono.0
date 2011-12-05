@@ -1,54 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============4405279322910549140=="
+Content-Type: multipart/mixed; boundary="===============6352785520371957718=="
 MIME-Version: 1.0
-From: Andrea Galbusera <gizero@gmail.com>
-Subject: Re: ofono with serial modem
-Date: Mon, 05 Dec 2011 14:52:03 +0100
-Message-ID: <CAC+thW0YjVzQ-w0FOC228d+48Ug0o2+xpO5x44XL8LhL+nP7hg@mail.gmail.com>
-In-Reply-To: <4ED5F444.3090401@gmail.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH_v1 1/2] doc: Add RoamingAllowed property
+Date: Mon, 05 Dec 2011 15:03:49 +0100
+Message-ID: <4EDCCF45.9080207@linux.intel.com>
+In-Reply-To: <1323083042-24416-2-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4405279322910549140==
+--===============6352785520371957718==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi, Denis!
-Thank you for clarifications. I'm getting better understanding of
-ofono architecture now. See a few more comments below.
+Hi,
 
-On Wed, Nov 30, 2011 at 10:15 AM, Denis Kenzior <denkenz@gmail.com> wrote:
->> 1. Are non-hot-pluggable serial modem supported by ofono? I believe
->> they should run with the atmodem driver: is this correct?
+On 05/12/2011 12:04, Guillaume Zajac wrote:
+> ---
+>   doc/cdma-connman-api.txt |    8 ++++++++
+>   1 files changed, 8 insertions(+), 0 deletions(-)
 >
-> Yes they are, however they are still detected via udev and require a
-> proper modem driver. 'atmodem' is a collection of atom drivers that
-> implement generic 27.007 functionality. =C2=A0The difference should be
-> explained nicely in the presentations posted on the site.
+> diff --git a/doc/cdma-connman-api.txt b/doc/cdma-connman-api.txt
+> index 48699a3..319c973 100644
+> --- a/doc/cdma-connman-api.txt
+> +++ b/doc/cdma-connman-api.txt
+> @@ -45,6 +45,14 @@ Properties	boolean Powered [readwrite]
+>   			Holds the password to be used for authentication
+>   			purposes.
+>
+> +		boolean RoamingAllowed [readwrite]
+> +
+> +			Contains whether data roaming is allowed.  In the off
+> +			setting, if the packet radio registration state
+> +			indicates that the modem is roaming, oFono will
+> +			automatically shutdown connection and no further
+> +			connection establishment will be possible.
+> +
 
-Just a suggestion here. It was quite difficult for me to find those
-presentations: links are only available as pretty old blog posts!
-It would probably be nice to link them in the Documentation section or
-in the wiki.
+The documentation is not up-to-date with the implementation.
+Please ignore this set of patches, I will send a v2.
 
-> See the calypso modem driver in plugins/calypso.c for an example as well
-> as doc/calypso-modem.txt for an example udev rule.
+>   		dict Settings [readonly, optional]
+>
+>   			Holds all the IP network settings
 
-At moment I'm interested in using ofono with a Telit GPRS module with
-serial interface.
-As far as I understand, there already exist a driver for Telit UC864-G
-in plugins dir. I'm trying to figure out how much of this driver can
-be used for other modules by Telit. I'm trying to follow the code path
-from udev detection down to driver selection. I'm therefore slightly
-confused by the interaction of the two modules udev.c and udevng.c. I
-see setup and init function for different modems in both of them. Are
-they supposed to provide different functions or is "ng" a short for
-new-generation or the like? If so, and supposed I need to write a new
-driver for the modem, where should I hook it?
+Kind regards,
+Guillaume
 
-Thanks again for your help
-Regards,
-Andrea
-
---===============4405279322910549140==--
+--===============6352785520371957718==--
 
