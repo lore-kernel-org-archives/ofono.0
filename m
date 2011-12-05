@@ -1,35 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============5770233348668920060=="
+Content-Type: multipart/mixed; boundary="===============6368895898235147951=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v1 0/2] cdma-connman add roaming support
-Date: Mon, 05 Dec 2011 12:04:00 +0100
-Message-ID: <1323083042-24416-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v1 2/2] cdma-connman: Add RoamingAllowed support
+Date: Mon, 05 Dec 2011 12:04:02 +0100
+Message-ID: <1323083042-24416-3-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1323083042-24416-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5770233348668920060==
+--===============6368895898235147951==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+We need to use status watch in case we are registered to a network
+and we pass into roaming status. We have to deactivate the data
+call.
+---
+ src/cdma-connman.c |   19 ++++++++++++++++++-
+ 1 files changed, 18 insertions(+), 1 deletions(-)
 
-Change log from v0:
-	- Remove cdma-netreg status watches
-	- Only change the property RomaingAllowed.
-	- Don't change the data call state when the property is changed.
+diff --git a/src/cdma-connman.c b/src/cdma-connman.c
+index 87cefd6..d880b94 100644
+--- a/src/cdma-connman.c
++++ b/src/cdma-connman.c
+@@ -52,6 +52,7 @@ struct cdma_connman_settings {
+ struct ofono_cdma_connman {
+ 	ofono_bool_t powered;
+ 	ofono_bool_t dormant;
++	ofono_bool_t roaming_allowed;
+ 	struct cdma_connman_settings *settings;
+ 	DBusMessage *pending;
+ 	const struct ofono_cdma_connman_driver *driver;
+@@ -354,8 +355,10 @@ static ofono_bool_t network_registered(struct ofono_cd=
+ma_connman *cm)
+ =
 
-Kind regards,
-Guilllaume
+ 	switch (status) {
+ 	case NETWORK_REGISTRATION_STATUS_REGISTERED:
+-	case NETWORK_REGISTRATION_STATUS_ROAMING:
+ 		return TRUE;
++	case NETWORK_REGISTRATION_STATUS_ROAMING:
++		if (cm->roaming_allowed =3D=3D TRUE)
++			return TRUE;
+ 	default:
+ 		break;
+ 	}
+@@ -390,6 +393,10 @@ static DBusMessage *cdma_connman_get_properties(DBusCo=
+nnection *conn,
+ 	value =3D cm->dormant;
+ 	ofono_dbus_dict_append(&dict, "Dormant", DBUS_TYPE_BOOLEAN, &value);
+ =
 
-Guillaume Zajac (2):
-  doc: Add RoamingAllowed property
-  cdma-connman: Add RoamingAllowed support
++	value =3D cm->roaming_allowed;
++	ofono_dbus_dict_append(&dict, "RoamingAllowed",
++				DBUS_TYPE_BOOLEAN, &value);
++
+ 	if (cm->settings)
+ 		cdma_connman_settings_append_properties(cm, &dict);
+ =
 
- doc/cdma-connman-api.txt |    8 ++++++++
- src/cdma-connman.c       |   19 ++++++++++++++++++-
- 2 files changed, 26 insertions(+), 1 deletions(-)
+@@ -512,6 +519,16 @@ static DBusMessage *cdma_connman_set_property(DBusConn=
+ection *conn,
+ =
+
+ 		dbus_message_iter_get_basic(&var, &str);
+ 		return cdma_connman_set_password(cm, conn, msg, str);
++	} else if (!strcmp(property, "RoamingAllowed")) {
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
++			return __ofono_error_invalid_args(msg);
++
++		dbus_message_iter_get_basic(&var, &value);
++
++		if (cm->roaming_allowed =3D=3D (ofono_bool_t) value)
++			return dbus_message_new_method_return(msg);
++
++		cm->roaming_allowed =3D value;
+ 	}
+ =
+
+ 	/* TODO: Dormant property. Not yet supported. */
+-- =
+
+1.7.1
 
 
---===============5770233348668920060==--
+--===============6368895898235147951==--
 
