@@ -1,124 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============1415926405290762105=="
+Content-Type: multipart/mixed; boundary="===============8236622595196108631=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [RFC_v1 2/2] sierra: Add SIM state polling
-Date: Mon, 05 Dec 2011 11:57:54 +0100
-Message-ID: <4EDCA3B2.2060406@linux.intel.com>
-In-Reply-To: <4ED51833.7050208@gmail.com>
+Subject: [PATCH_v1 1/2] doc: Add RoamingAllowed property
+Date: Mon, 05 Dec 2011 12:04:01 +0100
+Message-ID: <1323083042-24416-2-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1323083042-24416-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1415926405290762105==
+--===============8236622595196108631==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ doc/cdma-connman-api.txt |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-On 29/11/2011 18:36, Denis Kenzior wrote:
-> Hi Guillaume,
->
-> On 12/01/2011 10:48 AM, Guillaume Zajac wrote:
->> It has been reported than for some Sierra modem, the SIM
->> initialization process leads to +CME ERROR: 10 sim not
->> present. The issue might come from SIM is not ready.
-> Do you have an AT log of these reports?
+diff --git a/doc/cdma-connman-api.txt b/doc/cdma-connman-api.txt
+index 48699a3..319c973 100644
+--- a/doc/cdma-connman-api.txt
++++ b/doc/cdma-connman-api.txt
+@@ -45,6 +45,14 @@ Properties	boolean Powered [readwrite]
+ 			Holds the password to be used for authentication
+ 			purposes.
+ =
 
-Yes I had one but it was given to me through pastebin from IRC.
-As soon as I see the guy on #ofono, I will ask him to send the log over =
++		boolean RoamingAllowed [readwrite]
++
++			Contains whether data roaming is allowed.  In the off
++			setting, if the packet radio registration state
++			indicates that the modem is roaming, oFono will
++			automatically shutdown connection and no further
++			connection establishment will be possible.
++
+ 		dict Settings [readonly, optional]
+ =
 
-oFono mailing list.
+ 			Holds all the IP network settings
+-- =
 
->> ---
->>   plugins/sierra.c |   26 +++++++++++++++++++++++++-
->>   1 files changed, 25 insertions(+), 1 deletions(-)
->>
->> diff --git a/plugins/sierra.c b/plugins/sierra.c
->> index b33382d..45e75c1 100644
->> --- a/plugins/sierra.c
->> +++ b/plugins/sierra.c
->> @@ -47,6 +47,8 @@ static const char *none_prefix[] =3D { NULL };
->>
->>   struct sierra_data {
->>   	GAtChat *chat;
->> +	gboolean have_sim;
->> +	struct at_util_sim_state_query *sim_state_query;
->>   };
->>
->>   static void sierra_debug(const char *str, void *user_data)
->> @@ -82,6 +84,9 @@ static void sierra_remove(struct ofono_modem *modem)
->>   	/* Cleanup after hot-unplug */
->>   	g_at_chat_unref(data->chat);
->>
->> +	/* Cleanup potential SIM state polling */
->> +	at_util_sim_state_query_free(data->sim_state_query);
->> +
->>   	g_free(data);
->>   }
->>
->> @@ -118,6 +123,21 @@ static GAtChat *open_device(struct ofono_modem *mod=
-em,
->>   	return chat;
->>   }
->>
->> +static void sim_state_cb(gboolean present, gpointer user_data)
->> +{
->> +	struct ofono_modem *modem =3D user_data;
->> +	struct sierra_data *data =3D ofono_modem_get_data(modem);
->> +
->> +	at_util_sim_state_query_free(data->sim_state_query);
->> +	data->sim_state_query =3D NULL;
->> +
->> +	data->have_sim =3D present;
->> +
->> +	ofono_modem_set_powered(modem, TRUE);
->> +
->> +	g_at_chat_send(data->chat, "AT&C0", NULL, NULL, NULL, NULL);
-> Fair enough, however:
->
-> - You are not using data->have_sim anywhere, presumably you want to use
-> it in sierra_pre_sim to notify the sim inserted status...
+1.7.1
 
-Yes, I forgot to use it.
 
-> - The sierra driver does not instantiate any gprs_context drivers, so it
-> isn't even capable of GPRS in its current state.  Sending the&C0
-> command is only needed if you are planning to use PPP and probably
-> belongs in a separate patch.
->
-
-I didn't see the gprs context was never created into sierra plugin, do =
-
-we have a reason for that?
-
->> +}
->> +
->>   static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_=
-data)
->>   {
->>   	struct ofono_modem *modem =3D user_data;
->> @@ -128,9 +148,13 @@ static void cfun_enable(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
->>   	if (!ok) {
->>   		g_at_chat_unref(data->chat);
->>   		data->chat =3D NULL;
->> +
->> +		ofono_modem_set_powered(modem, FALSE);
->> +		return;
->>   	}
->>
->> -	ofono_modem_set_powered(modem, ok);
->> +	data->sim_state_query =3D at_util_sim_state_query_new(data->chat,
->> +						2, 20, sim_state_cb, modem);
->>   }
->>
->>   static int sierra_enable(struct ofono_modem *modem)
-> Regards,
-> -Denis
->
-
-Kind regards,
-Guillaume
-
---===============1415926405290762105==--
+--===============8236622595196108631==--
 
