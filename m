@@ -1,81 +1,124 @@
-Content-Type: multipart/mixed; boundary="===============8214771364582037212=="
+Content-Type: multipart/mixed; boundary="===============1415926405290762105=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH_v0 1/5] doc: Add bearer property
-Date: Mon, 05 Dec 2011 11:40:13 +0100
-Message-ID: <4EDC9F8D.30107@linux.intel.com>
-In-Reply-To: <4ED5F7AF.5050908@gmail.com>
+Subject: Re: [RFC_v1 2/2] sierra: Add SIM state polling
+Date: Mon, 05 Dec 2011 11:57:54 +0100
+Message-ID: <4EDCA3B2.2060406@linux.intel.com>
+In-Reply-To: <4ED51833.7050208@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8214771364582037212==
+--===============1415926405290762105==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-On 30/11/2011 10:30, Denis Kenzior wrote:
+On 29/11/2011 18:36, Denis Kenzior wrote:
 > Hi Guillaume,
 >
-> On 12/02/2011 08:00 AM, Guillaume Zajac wrote:
+> On 12/01/2011 10:48 AM, Guillaume Zajac wrote:
+>> It has been reported than for some Sierra modem, the SIM
+>> initialization process leads to +CME ERROR: 10 sim not
+>> present. The issue might come from SIM is not ready.
+> Do you have an AT log of these reports?
+
+Yes I had one but it was given to me through pastebin from IRC.
+As soon as I see the guy on #ofono, I will ask him to send the log over =
+
+oFono mailing list.
+
 >> ---
->>   doc/cdma-connman-api.txt |    8 ++++++++
->>   1 files changed, 8 insertions(+), 0 deletions(-)
+>>   plugins/sierra.c |   26 +++++++++++++++++++++++++-
+>>   1 files changed, 25 insertions(+), 1 deletions(-)
 >>
->> diff --git a/doc/cdma-connman-api.txt b/doc/cdma-connman-api.txt
->> index 48699a3..bf1ec1e 100644
->> --- a/doc/cdma-connman-api.txt
->> +++ b/doc/cdma-connman-api.txt
->> @@ -35,6 +35,14 @@ Properties	boolean Powered [readwrite]
->>   			Contains whether the connection is dormant.  Will
->>   			always be false if the connection is not powered.
+>> diff --git a/plugins/sierra.c b/plugins/sierra.c
+>> index b33382d..45e75c1 100644
+>> --- a/plugins/sierra.c
+>> +++ b/plugins/sierra.c
+>> @@ -47,6 +47,8 @@ static const char *none_prefix[] =3D { NULL };
 >>
->> +		string Bearer [readonly, optional]
+>>   struct sierra_data {
+>>   	GAtChat *chat;
+>> +	gboolean have_sim;
+>> +	struct at_util_sim_state_query *sim_state_query;
+>>   };
+>>
+>>   static void sierra_debug(const char *str, void *user_data)
+>> @@ -82,6 +84,9 @@ static void sierra_remove(struct ofono_modem *modem)
+>>   	/* Cleanup after hot-unplug */
+>>   	g_at_chat_unref(data->chat);
+>>
+>> +	/* Cleanup potential SIM state polling */
+>> +	at_util_sim_state_query_free(data->sim_state_query);
 >> +
->> +			Contains the data bearer technology as reported by the
->> +			service registration (if known).
+>>   	g_free(data);
+>>   }
+>>
+>> @@ -118,6 +123,21 @@ static GAtChat *open_device(struct ofono_modem *mod=
+em,
+>>   	return chat;
+>>   }
+>>
+>> +static void sim_state_cb(gboolean present, gpointer user_data)
+>> +{
+>> +	struct ofono_modem *modem =3D user_data;
+>> +	struct sierra_data *data =3D ofono_modem_get_data(modem);
 >> +
->> +			Possible values are:
->> +			"none", "1x", "evdo", "svdo"
+>> +	at_util_sim_state_query_free(data->sim_state_query);
+>> +	data->sim_state_query =3D NULL;
 >> +
-> The 1X and EVDO registration status is already handled by the
-> NetworkRegistration interface (namely Strength for 1X and DataStrength
-> for EV-DO).
+>> +	data->have_sim =3D present;
+>> +
+>> +	ofono_modem_set_powered(modem, TRUE);
+>> +
+>> +	g_at_chat_send(data->chat, "AT&C0", NULL, NULL, NULL, NULL);
+> Fair enough, however:
+>
+> - You are not using data->have_sim anywhere, presumably you want to use
+> it in sierra_pre_sim to notify the sim inserted status...
 
-As we propose this "bearer" property for GSM into connman-api.txt, why =
+Yes, I forgot to use it.
 
-don't we for CDMA?
-It would be easier to have same property in GSM and CDMA to recover the =
-
-info at network panel level for instance to display technology used.
-
-We have the same kind of information into network.c namely "technology", =
-
-should we add this property also into cdma-netreg.c?
-I saw it in a TODO into network-api.txt:
-[...]
-string Technology [readonly, optional]
-
-             Contains the technology of the current network.
-
-             The possible values are: "gsm", "edge", "umts", "hspa",
-                             "lte"
-
-             TODO: Values for CDMA and EVDO based networks.
-[...]
-We have to add the values into common.h, right?
-
-> Whether we need an SVDO indicator is another question entirely, but it
-> definitely does not belong in ConnectionManager.  All SVDO indicates is
-> whether data + voice are possible simultaneously.
+> - The sierra driver does not instantiate any gprs_context drivers, so it
+> isn't even capable of GPRS in its current state.  Sending the&C0
+> command is only needed if you are planning to use PPP and probably
+> belongs in a separate patch.
 >
 
-Can't we specify at least the technology?
+I didn't see the gprs context was never created into sierra plugin, do =
+
+we have a reason for that?
+
+>> +}
+>> +
+>>   static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_=
+data)
+>>   {
+>>   	struct ofono_modem *modem =3D user_data;
+>> @@ -128,9 +148,13 @@ static void cfun_enable(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+>>   	if (!ok) {
+>>   		g_at_chat_unref(data->chat);
+>>   		data->chat =3D NULL;
+>> +
+>> +		ofono_modem_set_powered(modem, FALSE);
+>> +		return;
+>>   	}
+>>
+>> -	ofono_modem_set_powered(modem, ok);
+>> +	data->sim_state_query =3D at_util_sim_state_query_new(data->chat,
+>> +						2, 20, sim_state_cb, modem);
+>>   }
+>>
+>>   static int sierra_enable(struct ofono_modem *modem)
+> Regards,
+> -Denis
+>
 
 Kind regards,
 Guillaume
 
-
---===============8214771364582037212==--
+--===============1415926405290762105==--
 
