@@ -1,89 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============6368895898235147951=="
+Content-Type: multipart/mixed; boundary="===============4405279322910549140=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v1 2/2] cdma-connman: Add RoamingAllowed support
-Date: Mon, 05 Dec 2011 12:04:02 +0100
-Message-ID: <1323083042-24416-3-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1323083042-24416-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Andrea Galbusera <gizero@gmail.com>
+Subject: Re: ofono with serial modem
+Date: Mon, 05 Dec 2011 14:52:03 +0100
+Message-ID: <CAC+thW0YjVzQ-w0FOC228d+48Ug0o2+xpO5x44XL8LhL+nP7hg@mail.gmail.com>
+In-Reply-To: <4ED5F444.3090401@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6368895898235147951==
+--===============4405279322910549140==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-We need to use status watch in case we are registered to a network
-and we pass into roaming status. We have to deactivate the data
-call.
----
- src/cdma-connman.c |   19 ++++++++++++++++++-
- 1 files changed, 18 insertions(+), 1 deletions(-)
+Hi, Denis!
+Thank you for clarifications. I'm getting better understanding of
+ofono architecture now. See a few more comments below.
 
-diff --git a/src/cdma-connman.c b/src/cdma-connman.c
-index 87cefd6..d880b94 100644
---- a/src/cdma-connman.c
-+++ b/src/cdma-connman.c
-@@ -52,6 +52,7 @@ struct cdma_connman_settings {
- struct ofono_cdma_connman {
- 	ofono_bool_t powered;
- 	ofono_bool_t dormant;
-+	ofono_bool_t roaming_allowed;
- 	struct cdma_connman_settings *settings;
- 	DBusMessage *pending;
- 	const struct ofono_cdma_connman_driver *driver;
-@@ -354,8 +355,10 @@ static ofono_bool_t network_registered(struct ofono_cd=
-ma_connman *cm)
- =
+On Wed, Nov 30, 2011 at 10:15 AM, Denis Kenzior <denkenz@gmail.com> wrote:
+>> 1. Are non-hot-pluggable serial modem supported by ofono? I believe
+>> they should run with the atmodem driver: is this correct?
+>
+> Yes they are, however they are still detected via udev and require a
+> proper modem driver. 'atmodem' is a collection of atom drivers that
+> implement generic 27.007 functionality. =C2=A0The difference should be
+> explained nicely in the presentations posted on the site.
 
- 	switch (status) {
- 	case NETWORK_REGISTRATION_STATUS_REGISTERED:
--	case NETWORK_REGISTRATION_STATUS_ROAMING:
- 		return TRUE;
-+	case NETWORK_REGISTRATION_STATUS_ROAMING:
-+		if (cm->roaming_allowed =3D=3D TRUE)
-+			return TRUE;
- 	default:
- 		break;
- 	}
-@@ -390,6 +393,10 @@ static DBusMessage *cdma_connman_get_properties(DBusCo=
-nnection *conn,
- 	value =3D cm->dormant;
- 	ofono_dbus_dict_append(&dict, "Dormant", DBUS_TYPE_BOOLEAN, &value);
- =
+Just a suggestion here. It was quite difficult for me to find those
+presentations: links are only available as pretty old blog posts!
+It would probably be nice to link them in the Documentation section or
+in the wiki.
 
-+	value =3D cm->roaming_allowed;
-+	ofono_dbus_dict_append(&dict, "RoamingAllowed",
-+				DBUS_TYPE_BOOLEAN, &value);
-+
- 	if (cm->settings)
- 		cdma_connman_settings_append_properties(cm, &dict);
- =
+> See the calypso modem driver in plugins/calypso.c for an example as well
+> as doc/calypso-modem.txt for an example udev rule.
 
-@@ -512,6 +519,16 @@ static DBusMessage *cdma_connman_set_property(DBusConn=
-ection *conn,
- =
+At moment I'm interested in using ofono with a Telit GPRS module with
+serial interface.
+As far as I understand, there already exist a driver for Telit UC864-G
+in plugins dir. I'm trying to figure out how much of this driver can
+be used for other modules by Telit. I'm trying to follow the code path
+from udev detection down to driver selection. I'm therefore slightly
+confused by the interaction of the two modules udev.c and udevng.c. I
+see setup and init function for different modems in both of them. Are
+they supposed to provide different functions or is "ng" a short for
+new-generation or the like? If so, and supposed I need to write a new
+driver for the modem, where should I hook it?
 
- 		dbus_message_iter_get_basic(&var, &str);
- 		return cdma_connman_set_password(cm, conn, msg, str);
-+	} else if (!strcmp(property, "RoamingAllowed")) {
-+		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
-+			return __ofono_error_invalid_args(msg);
-+
-+		dbus_message_iter_get_basic(&var, &value);
-+
-+		if (cm->roaming_allowed =3D=3D (ofono_bool_t) value)
-+			return dbus_message_new_method_return(msg);
-+
-+		cm->roaming_allowed =3D value;
- 	}
- =
+Thanks again for your help
+Regards,
+Andrea
 
- 	/* TODO: Dormant property. Not yet supported. */
--- =
-
-1.7.1
-
-
---===============6368895898235147951==--
+--===============4405279322910549140==--
 
