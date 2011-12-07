@@ -1,70 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============4339131238667988105=="
+Content-Type: multipart/mixed; boundary="===============8067517373872831171=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v0 6/6] test: Add script to set dormant interval
-Date: Wed, 07 Dec 2011 17:05:51 +0100
-Message-ID: <1323273951-24162-7-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1323273951-24162-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH_v0 1/6] doc: Add DormantInterval property
+Date: Wed, 07 Dec 2011 06:34:41 -0600
+Message-ID: <4EDF5D61.8080609@gmail.com>
+In-Reply-To: <1323273951-24162-2-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4339131238667988105==
+--===============8067517373872831171==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am                    |    1 +
- test/cdma-set-dormant-interval |   24 ++++++++++++++++++++++++
- 2 files changed, 25 insertions(+), 0 deletions(-)
- create mode 100755 test/cdma-set-dormant-interval
+Hi Guillaume,
 
-diff --git a/Makefile.am b/Makefile.am
-index 337aeb7..4555c09 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -549,6 +549,7 @@ test_scripts =3D test/backtrace \
- 		test/cdma-dial-number \
- 		test/cdma-hangup \
- 		test/cdma-set-credentials \
-+		test/cdma-set-dormant-interval \
- 		test/disable-call-forwarding \
- 		test/list-messages \
- 		test/test-sms \
-diff --git a/test/cdma-set-dormant-interval b/test/cdma-set-dormant-interval
-new file mode 100755
-index 0000000..f41bcd2
---- /dev/null
-+++ b/test/cdma-set-dormant-interval
-@@ -0,0 +1,24 @@
-+#!/usr/bin/python
-+
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
-+
-+modems =3D manager.GetModems()
-+
-+for path, properties in modems:
-+	if "org.ofono.cdma.ConnectionManager" not in properties["Interfaces"]:
-+		continue
-+
-+	cm =3D dbus.Interface(bus.get_object('org.ofono', path),
-+					'org.ofono.cdma.ConnectionManager')
-+
-+	print "Connecting CDMA Packet Data Service on modem %s..." % path
-+
-+	if len(sys.argv) > 1:
-+		cm.SetProperty("DormantInterval", int(sys.argv[1]))
-+		print "Setting Dormant Interval to %s seconds" % (sys.argv[1])
--- =
+On 12/07/2011 10:05 AM, Guillaume Zajac wrote:
+> ---
+>  doc/cdma-connman-api.txt |    5 +++++
+>  1 files changed, 5 insertions(+), 0 deletions(-)
+> =
 
-1.7.1
+> diff --git a/doc/cdma-connman-api.txt b/doc/cdma-connman-api.txt
+> index 48699a3..a6d1e56 100644
+> --- a/doc/cdma-connman-api.txt
+> +++ b/doc/cdma-connman-api.txt
+> @@ -35,6 +35,11 @@ Properties	boolean Powered [readwrite]
+>  			Contains whether the connection is dormant.  Will
+>  			always be false if the connection is not powered.
+>  =
 
+> +		int DormantInterval [readwrite]
+> +
+> +			Contains the interval in seconds to enter in dormant
+> +			Mode.
+> +
 
---===============4339131238667988105==--
+Why would the user want to mess with this setting? What would be the
+right interval?  Remember, oFono only exports settings that are useful
+to show to the user, and that the user can understand what to do with.
+This this one certainly doesn't fit the above description.
+
+Besides, we should simply disable dormancy mode in the first place.  The
+base station can more intelligently manage that anyway.
+
+>  		string Username [readwrite]
+>  =
+
+>  			Holds the username to be used for authentication
+
+Regards,
+-Denis
+
+--===============8067517373872831171==--
 
