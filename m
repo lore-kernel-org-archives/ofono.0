@@ -1,44 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============3752185235681107263=="
+Content-Type: multipart/mixed; boundary="===============4999304021689255013=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v0 1/6] doc: Add DormantInterval property
-Date: Wed, 07 Dec 2011 17:05:46 +0100
-Message-ID: <1323273951-24162-2-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v0 2/6] cdma-connman: Add dormant option configuration and
+ notification
+Date: Wed, 07 Dec 2011 17:05:47 +0100
+Message-ID: <1323273951-24162-3-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1323273951-24162-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3752185235681107263==
+--===============4999304021689255013==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/cdma-connman-api.txt |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+ include/cdma-connman.h |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
 
-diff --git a/doc/cdma-connman-api.txt b/doc/cdma-connman-api.txt
-index 48699a3..a6d1e56 100644
---- a/doc/cdma-connman-api.txt
-+++ b/doc/cdma-connman-api.txt
-@@ -35,6 +35,11 @@ Properties	boolean Powered [readwrite]
- 			Contains whether the connection is dormant.  Will
- 			always be false if the connection is not powered.
+diff --git a/include/cdma-connman.h b/include/cdma-connman.h
+index 7a115bf..665afec 100644
+--- a/include/cdma-connman.h
++++ b/include/cdma-connman.h
+@@ -57,6 +57,10 @@ struct ofono_cdma_connman_driver {
+ 	void (*deactivate)(struct ofono_cdma_connman *cm,
+ 						ofono_cdma_connman_cb_t cb,
+ 						void *data);
++	void (*set_dormant_interval)(struct ofono_cdma_connman *cm,
++						int dormant_interval,
++						ofono_cdma_connman_cb_t cb,
++						void *data);
+ };
  =
 
-+		int DormantInterval [readwrite]
-+
-+			Contains the interval in seconds to enter in dormant
-+			Mode.
-+
- 		string Username [readwrite]
+ int ofono_cdma_connman_driver_register(
+@@ -66,6 +70,9 @@ void ofono_cdma_connman_driver_unregister(
  =
 
- 			Holds the username to be used for authentication
+ void ofono_cdma_connman_deactivated(struct ofono_cdma_connman *cm);
+ =
+
++void ofono_cdma_connman_dormant_state_notify(struct ofono_cdma_connman *cm,
++						ofono_bool_t dormant);
++
+ struct ofono_cdma_connman *ofono_cdma_connman_create(
+ 						struct ofono_modem *modem,
+ 						unsigned int vendor,
 -- =
 
 1.7.1
 
 
---===============3752185235681107263==--
+--===============4999304021689255013==--
 
