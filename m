@@ -1,57 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============4968841112433220778=="
+Content-Type: multipart/mixed; boundary="===============1736721559318146654=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH_v0 1/6] doc: Add DormantInterval property
-Date: Thu, 08 Dec 2011 10:25:03 +0100
-Message-ID: <4EE0826F.50707@linux.intel.com>
-In-Reply-To: <4EDF5D61.8080609@gmail.com>
+Subject: [PATCH_v2 1/3] TODO: Mark network initiated disconnection task as done
+Date: Thu, 08 Dec 2011 10:58:16 +0100
+Message-ID: <1323338298-4625-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4968841112433220778==
+--===============1736721559318146654==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ TODO             |    6 ------
+ doc/features.txt |    6 ++++++
+ 2 files changed, 6 insertions(+), 6 deletions(-)
 
-On 07/12/2011 13:34, Denis Kenzior wrote:
-> Hi Guillaume,
->
-> On 12/07/2011 10:05 AM, Guillaume Zajac wrote:
->> ---
->>   doc/cdma-connman-api.txt |    5 +++++
->>   1 files changed, 5 insertions(+), 0 deletions(-)
->>
->> diff --git a/doc/cdma-connman-api.txt b/doc/cdma-connman-api.txt
->> index 48699a3..a6d1e56 100644
->> --- a/doc/cdma-connman-api.txt
->> +++ b/doc/cdma-connman-api.txt
->> @@ -35,6 +35,11 @@ Properties	boolean Powered [readwrite]
->>   			Contains whether the connection is dormant.  Will
->>   			always be false if the connection is not powered.
->>
->> +		int DormantInterval [readwrite]
->> +
->> +			Contains the interval in seconds to enter in dormant
->> +			Mode.
->> +
-> Why would the user want to mess with this setting? What would be the
-> right interval?  Remember, oFono only exports settings that are useful
-> to show to the user, and that the user can understand what to do with.
-> This this one certainly doesn't fit the above description.
->
-> Besides, we should simply disable dormancy mode in the first place.  The
-> base station can more intelligently manage that anyway.
->
+diff --git a/TODO b/TODO
+index 159b325..63d28ab 100644
+--- a/TODO
++++ b/TODO
+@@ -570,9 +570,3 @@ CDMA Connection Manager
+ =
 
-Right, the user can't manage this value, however Dormant property is =
+   Priority: Medium
+   Complexity: C4
+-
+-- Support Network Initiated disconnection of Packet Data Service over CDMA
+-  (1xRTT and 1xEV-DO) systems.
+-
+-  Priority: Medium
+-  Complexity: C2
+diff --git a/doc/features.txt b/doc/features.txt
+index ad4d176..d2bb171 100644
+--- a/doc/features.txt
++++ b/doc/features.txt
+@@ -684,3 +684,9 @@ Modem Emulator
+ - Support for Bluetooth DUN profile.  oFono supports the Dial Up Networking
+   profile and all mandatory commands specified by BT DUN 1.1.  For a list
+   of supported commands please see doc/dialup-command-set.txt.
++
++CDMA Connection Manager
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++- Support Network Initiated disconnection of Packet Data Service over CDMA
++  (1xRTT and 1xEV-DO) systems.
+-- =
 
-ReadOnly.
-So should we have a specific DBus API to disable/enable the dormancy mode?
+1.7.1
 
-Kind regards,
-Guillaume
 
---===============4968841112433220778==--
+--===============1736721559318146654==--
 
