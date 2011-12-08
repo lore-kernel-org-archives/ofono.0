@@ -1,126 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============3301292725698107740=="
+Content-Type: multipart/mixed; boundary="===============0376697258244039890=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v1 4/4] cdmamodem: Register dormant state callback for huawei
- modems
-Date: Thu, 08 Dec 2011 12:00:30 +0100
-Message-ID: <1323342030-9175-5-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1323342030-9175-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 00/12] Provider name and SID
+Date: Thu, 08 Dec 2011 15:49:51 +0100
+Message-ID: <1323355803-22096-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3301292725698107740==
+--===============0376697258244039890==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/cdmamodem/connman.c |   42 +++++++++++++++++++++++++++++++++++++++=
-+++
- 1 files changed, 42 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/drivers/cdmamodem/connman.c b/drivers/cdmamodem/connman.c
-index ec17e96..f27161b 100644
---- a/drivers/cdmamodem/connman.c
-+++ b/drivers/cdmamodem/connman.c
-@@ -41,6 +41,7 @@
- #include "gatppp.h"
- =
+change log from previous version:
 
- #include "cdmamodem.h"
-+#include "drivers/atmodem/vendor.h"
- =
+- Fix the copyrigths.
+- Add Qualcomm Diagnostic Monitor port support to get the SID with the comm=
+and
+'station status'. This diagnostic port is especially needed in case of EV-DO
+capable hardware for which the AT command AT+CSS? may not return a valid an=
+swer.
+- Assign by default the huawei QCDM port to the second interface (this rule=
+ is
+issued from a practical observation)
+- Fix the 'sysinfo' parsing. When the service domain is set to 'CDMA not su=
+pported'
+with EV-DO capable hardware, it doesn't mean that the network is not regist=
+ered.
 
- #define TUN_SYSFS_DIR "/sys/devices/virtual/misc/tun"
- =
+Regards,
 
-@@ -58,6 +59,7 @@ enum state {
- struct connman_data {
- 	GAtChat *chat;
- 	GAtPPP *ppp;
-+	unsigned int vendor;
- 	enum state state;
- 	char username[OFONO_CDMA_CONNMAN_MAX_USERNAME_LENGTH + 1];
- 	char password[OFONO_CDMA_CONNMAN_MAX_PASSWORD_LENGTH + 1];
-@@ -220,9 +222,38 @@ static void cdma_connman_deactivate(struct ofono_cdma_=
-connman *cm,
- 	g_at_ppp_shutdown(cd->ppp);
- }
- =
-
-+static void huawei_dsdormant_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_cdma_connman *cm =3D user_data;
-+	int dormant_state;
-+	GAtResultIter iter;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "^DSDORMANT:"))
-+		goto error;
-+
-+	if (!g_at_result_iter_next_number(&iter, &dormant_state))
-+		goto error;
-+
-+	if (dormant_state =3D=3D 1)
-+		ofono_cdma_connman_dormant_state_notify(cm, TRUE);
-+	else if (dormant_state =3D=3D 0)
-+		ofono_cdma_connman_dormant_state_notify(cm, FALSE);
-+	else
-+		goto error;
-+
-+	return;
-+
-+error:
-+	ofono_error("Invalid DSDORMANT value");
-+}
-+
- static void at_c0_cb(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct ofono_cdma_connman *cm =3D user_data;
-+	struct connman_data *cd =3D ofono_cdma_connman_get_data(cm);
-+	GAtChat *chat;
- =
-
- 	DBG("ok %d", ok);
- =
-
-@@ -232,6 +263,16 @@ static void at_c0_cb(gboolean ok, GAtResult *result, g=
-pointer user_data)
- 		return;
- 	}
- =
-
-+	switch (cd->vendor) {
-+	case OFONO_VENDOR_HUAWEI:
-+		chat =3D g_at_chat_get_slave(cd->chat);
-+		g_at_chat_register(chat, "^DSDORMANT", huawei_dsdormant_notify,
-+					FALSE, cm, NULL);
-+		break;
-+	default:
-+		break;
-+	}
-+
- 	ofono_cdma_connman_register(cm);
- }
- =
-
-@@ -254,6 +295,7 @@ static int cdma_connman_probe(struct ofono_cdma_connman=
- *cm,
- 		return -ENOMEM;
- =
-
- 	cd->chat =3D g_at_chat_clone(chat);
-+	cd->vendor =3D vendor;
- =
-
- 	ofono_cdma_connman_set_data(cm, cd);
- =
-
--- =
-
-1.7.1
+Philippe.
 
 
---===============3301292725698107740==--
+Philippe Nunes (12):
+  cdma-providers: add driver APIs header
+  ofono.h: add cdma-providers
+  cdma-providers: add driver APIs implementation
+  providers: Add cdma provider name plugin
+  cdma-netreg: Add provider name and SID support
+  gatchat: Add possibility to associate a diagnostic monitor to the
+    AT-capable port
+  huaweicdma: Use pcui port for cdma_netreg
+  huaweicdma: Open qcdm port to be used for signal quality or network
+    status
+  huaweicdmamodem: Probe the QCDM port with the version info request
+  huaweicdmamodem: Add 'serving_system' entry point to get SID
+  udevng: Add a default assignment for Huawei QCDM port
+  huaweicdmamodem: Fix sysinfo parsing
+
+ Makefile.am                                    |    4 +-
+ drivers/huaweicdmamodem/network-registration.c |  247 ++++++++++++++++++++=
+++-
+ gatchat/gatchat.c                              |   26 +++
+ gatchat/gatchat.h                              |    4 +
+ include/cdma-providers.h                       |   44 +++++
+ plugins/huaweicdma.c                           |   46 +++++-
+ plugins/providers.c                            |   79 ++++++++
+ plugins/udevng.c                               |   30 ++-
+ src/cdma-netreg.c                              |   40 ++++
+ src/cdma-providers.c                           |   80 ++++++++
+ src/ofono.h                                    |    4 +
+ 11 files changed, 581 insertions(+), 23 deletions(-)
+ create mode 100644 include/cdma-providers.h
+ create mode 100644 plugins/providers.c
+ create mode 100644 src/cdma-providers.c
+
+
+--===============0376697258244039890==--
 
