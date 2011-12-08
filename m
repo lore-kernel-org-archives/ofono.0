@@ -1,57 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============4544171588155641957=="
+Content-Type: multipart/mixed; boundary="===============4700849858303802143=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v1 2/4] cdma-connman: Add dormant state notification API
- definition
-Date: Thu, 08 Dec 2011 12:00:28 +0100
-Message-ID: <1323342030-9175-3-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v1 3/4] huaweicdma: Tweak plugin to notify dormant state
+Date: Thu, 08 Dec 2011 12:00:29 +0100
+Message-ID: <1323342030-9175-4-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1323342030-9175-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4544171588155641957==
+--===============4700849858303802143==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Specify vendor in creating cdma-connman atom.
+Set PCUI interface as slave of MODEM interface to receive dormant
+state notification during data call.
 ---
- src/cdma-connman.c |   17 +++++++++++++++++
- 1 files changed, 17 insertions(+), 0 deletions(-)
+ plugins/huaweicdma.c |    7 ++++++-
+ 1 files changed, 6 insertions(+), 1 deletions(-)
 
-diff --git a/src/cdma-connman.c b/src/cdma-connman.c
-index 87cefd6..d796d9e 100644
---- a/src/cdma-connman.c
-+++ b/src/cdma-connman.c
-@@ -572,6 +572,23 @@ void ofono_cdma_connman_deactivated(struct ofono_cdma_=
-connman *cm)
- 				"Powered", DBUS_TYPE_BOOLEAN, &value);
+diff --git a/plugins/huaweicdma.c b/plugins/huaweicdma.c
+index 4c83114..50b4761 100644
+--- a/plugins/huaweicdma.c
++++ b/plugins/huaweicdma.c
+@@ -38,6 +38,8 @@
+ #include <ofono/cdma-connman.h>
+ #include <ofono/log.h>
+ =
+
++#include "drivers/atmodem/vendor.h"
++
+ struct huaweicdma_data {
+ 	GAtChat *modem;
+ 	GAtChat *pcui;
+@@ -147,6 +149,8 @@ static int huaweicdma_enable(struct ofono_modem *modem)
+ 		return -EIO;
+ 	}
+ =
+
++	g_at_chat_set_slave(data->modem, data->pcui);
++
+ 	g_at_chat_send(data->modem, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
+ 	g_at_chat_send(data->pcui, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
+ =
+
+@@ -213,7 +217,8 @@ static void huaweicdma_post_online(struct ofono_modem *=
+modem)
+ =
+
+ 	ofono_cdma_netreg_create(modem, 0, "huaweicdmamodem", data->modem);
+ =
+
+-	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->modem);
++	ofono_cdma_connman_create(modem, OFONO_VENDOR_HUAWEI, "cdmamodem",
++					data->modem);
  }
  =
 
-+void ofono_cdma_connman_dormant_state_notify(struct ofono_cdma_connman *cm,
-+						ofono_bool_t dormant)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path;
-+
-+	if (cm =3D=3D NULL)
-+		return;
-+
-+	cm->dormant =3D dormant;
-+	path =3D __ofono_atom_get_path(cm->atom);
-+
-+	ofono_dbus_signal_property_changed(conn, path,
-+				OFONO_CDMA_CONNECTION_MANAGER_INTERFACE,
-+				"Dormant", DBUS_TYPE_BOOLEAN, &dormant);
-+}
-+
- static void cdma_connman_unregister(struct ofono_atom *atom)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
+ static struct ofono_modem_driver huaweicdma_driver =3D {
 -- =
 
 1.7.1
 
 
---===============4544171588155641957==--
+--===============4700849858303802143==--
 
