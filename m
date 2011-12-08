@@ -1,49 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============6901797565368714833=="
+Content-Type: multipart/mixed; boundary="===============4968841112433220778=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] TODO: Mark network initiated disconnection task as
- done
-Date: Wed, 07 Dec 2011 09:57:49 -0600
-Message-ID: <4EDF8CFD.4040001@gmail.com>
-In-Reply-To: <1323163458-507-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH_v0 1/6] doc: Add DormantInterval property
+Date: Thu, 08 Dec 2011 10:25:03 +0100
+Message-ID: <4EE0826F.50707@linux.intel.com>
+In-Reply-To: <4EDF5D61.8080609@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6901797565368714833==
+--===============4968841112433220778==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Denis,
 
-On 12/06/2011 03:24 AM, Guillaume Zajac wrote:
-> ---
->  TODO |    6 ------
->  1 files changed, 0 insertions(+), 6 deletions(-)
-> =
+On 07/12/2011 13:34, Denis Kenzior wrote:
+> Hi Guillaume,
+>
+> On 12/07/2011 10:05 AM, Guillaume Zajac wrote:
+>> ---
+>>   doc/cdma-connman-api.txt |    5 +++++
+>>   1 files changed, 5 insertions(+), 0 deletions(-)
+>>
+>> diff --git a/doc/cdma-connman-api.txt b/doc/cdma-connman-api.txt
+>> index 48699a3..a6d1e56 100644
+>> --- a/doc/cdma-connman-api.txt
+>> +++ b/doc/cdma-connman-api.txt
+>> @@ -35,6 +35,11 @@ Properties	boolean Powered [readwrite]
+>>   			Contains whether the connection is dormant.  Will
+>>   			always be false if the connection is not powered.
+>>
+>> +		int DormantInterval [readwrite]
+>> +
+>> +			Contains the interval in seconds to enter in dormant
+>> +			Mode.
+>> +
+> Why would the user want to mess with this setting? What would be the
+> right interval?  Remember, oFono only exports settings that are useful
+> to show to the user, and that the user can understand what to do with.
+> This this one certainly doesn't fit the above description.
+>
+> Besides, we should simply disable dormancy mode in the first place.  The
+> base station can more intelligently manage that anyway.
+>
 
-> diff --git a/TODO b/TODO
-> index 159b325..63d28ab 100644
-> --- a/TODO
-> +++ b/TODO
-> @@ -570,9 +570,3 @@ CDMA Connection Manager
->  =
+Right, the user can't manage this value, however Dormant property is =
 
->    Priority: Medium
->    Complexity: C4
-> -
-> -- Support Network Initiated disconnection of Packet Data Service over CD=
-MA
-> -  (1xRTT and 1xEV-DO) systems.
-> -
-> -  Priority: Medium
-> -  Complexity: C2
+ReadOnly.
+So should we have a specific DBus API to disable/enable the dormancy mode?
 
-When marking tasks as Done, please add corresponding entries to
-doc/features.txt.
+Kind regards,
+Guillaume
 
-Regards,
--Denis
-
---===============6901797565368714833==--
+--===============4968841112433220778==--
 
