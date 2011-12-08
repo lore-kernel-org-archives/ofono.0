@@ -1,61 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============0855563015790063882=="
+Content-Type: multipart/mixed; boundary="===============2445270541489818386=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v2 3/3] TODO: Mark RSSI measurement task as done
-Date: Thu, 08 Dec 2011 10:58:18 +0100
-Message-ID: <1323338298-4625-3-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1323338298-4625-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v1 0/4] Manage Dormant property notification for CDMA modems
+Date: Thu, 08 Dec 2011 12:00:26 +0100
+Message-ID: <1323342030-9175-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0855563015790063882==
+--===============2445270541489818386==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO             |    6 ------
- doc/features.txt |    6 ++++++
- 2 files changed, 6 insertions(+), 6 deletions(-)
+Hi,
 
-diff --git a/TODO b/TODO
-index 0b25806..df3b422 100644
---- a/TODO
-+++ b/TODO
-@@ -507,12 +507,6 @@ CDMA CMAS
- CDMA Network Acquisition
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- =
+Change log from v0:
+	- Only notify the dormant state to the cdma-connman atom
+	- A new set of patches will be sent to control dormancy
+	  mode.
 
--- Support reporting of the received signal strength indicator (RSSI)
--  measurement for the currently acquired CDMA network.
--
--  Priority: Medium
--  Complexity: C1
--
- - Support reporting of the pilot energy ratio (Ec/Io) measurement for the
-   currently acquired CDMA network.
- =
+Kind regards,
+Guillaume
 
-diff --git a/doc/features.txt b/doc/features.txt
-index d2bb171..2bca0c7 100644
---- a/doc/features.txt
-+++ b/doc/features.txt
-@@ -690,3 +690,9 @@ CDMA Connection Manager
- =
+Guillaume Zajac (4):
+  cdma-connman: Add dormant state notification API
+  cdma-connman: Add dormant state notification API definition
+  huaweicdma: Tweak plugin to notify dormant state
+  cdmamodem: Register dormant state callback for huawei modems
 
- - Support Network Initiated disconnection of Packet Data Service over CDMA
-   (1xRTT and 1xEV-DO) systems.
-+
-+CDMA Network Acquisition
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+- Support reporting of the received signal strength indicator (RSSI)
-+  measurement for the currently acquired CDMA network.
--- =
-
-1.7.1
+ drivers/cdmamodem/connman.c |   42 +++++++++++++++++++++++++++++++++++++++=
++++
+ include/cdma-connman.h      |    3 +++
+ plugins/huaweicdma.c        |    7 ++++++-
+ src/cdma-connman.c          |   17 +++++++++++++++++
+ 4 files changed, 68 insertions(+), 1 deletions(-)
 
 
---===============0855563015790063882==--
+--===============2445270541489818386==--
 
