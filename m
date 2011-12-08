@@ -1,85 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============2800893832580545165=="
+Content-Type: multipart/mixed; boundary="===============6884776265058329518=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2 11/12] udevng: Add a default assignment for Huawei QCDM port
-Date: Thu, 08 Dec 2011 15:50:02 +0100
-Message-ID: <1323355803-22096-12-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 12/12] huaweicdmamodem: Fix sysinfo parsing
+Date: Thu, 08 Dec 2011 15:50:03 +0100
+Message-ID: <1323355803-22096-13-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1323355803-22096-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2800893832580545165==
+--===============6884776265058329518==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+In practice, the service domain is set to 255 (cdma not supported)
+with an EV-DO capable hardware.
 ---
- plugins/udevng.c |   30 +++++++++++++++++++++---------
- 1 files changed, 21 insertions(+), 9 deletions(-)
+ drivers/huaweicdmamodem/network-registration.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index be87320..67660e3 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -235,6 +235,7 @@ static gboolean setup_sierra(struct modem_info *modem)
- static gboolean setup_huawei(struct modem_info *modem)
- {
- 	const char *mdm =3D NULL, *pcui =3D NULL, *diag =3D NULL;
-+	const char *default_pcui =3D NULL;
- 	GSList *list;
+diff --git a/drivers/huaweicdmamodem/network-registration.c b/drivers/huawe=
+icdmamodem/network-registration.c
+index 8b6378c..ca746f8 100644
+--- a/drivers/huaweicdmamodem/network-registration.c
++++ b/drivers/huaweicdmamodem/network-registration.c
+@@ -134,13 +134,13 @@ static gboolean parse_sysinfo(GAtResult *result, gint=
+ *status)
  =
 
- 	DBG("%s", modem->syspath);
-@@ -264,22 +265,33 @@ static gboolean setup_huawei(struct modem_info *modem)
- 			if (mdm !=3D NULL && pcui !=3D NULL)
- 				break;
- 		} else if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
--			if (g_strcmp0(info->number, "00") =3D=3D 0)
-+			if (mdm =3D=3D NULL && g_strcmp0(info->number, "00") =3D=3D 0)
- 				mdm =3D info->devnode;
--			else if (g_strcmp0(info->number, "01") =3D=3D 0)
--				pcui =3D info->devnode;
--			else if (g_strcmp0(info->number, "02") =3D=3D 0)
--				pcui =3D info->devnode;
--			else if (g_strcmp0(info->number, "03") =3D=3D 0)
--				pcui =3D info->devnode;
--			else if (g_strcmp0(info->number, "04") =3D=3D 0)
--				pcui =3D info->devnode;
-+			else if (diag =3D=3D NULL) {
-+				if (g_strcmp0(info->number, "01") =3D=3D 0)
-+					diag =3D info->devnode;
-+			} else if (pcui =3D=3D NULL) {
-+				if (g_strcmp0(info->number, "01") =3D=3D 0)
-+					default_pcui =3D info->devnode;
-+				else if (g_strcmp0(info->number, "02") =3D=3D 0)
-+					default_pcui =3D info->devnode;
-+				else if (g_strcmp0(info->number, "03") =3D=3D 0)
-+					default_pcui =3D info->devnode;
-+				else if (g_strcmp0(info->number, "04") =3D=3D 0)
-+					default_pcui =3D info->devnode;
-+			}
- 		}
+ 	switch (srv_domain) {
+ 	case 0: /* No service */
+-	case 255: /* CDMA not supported */
+ 		*status =3D CDMA_NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
+ 		break;
+ 	case 1: /* Only CS */
+ 	case 2: /* Only PS */
+ 	case 3: /* CS  PS */
+ 	case 4: /* CS registered, PS in searching state */
++	case 255: /* CDMA not supported */
+ 		break;
  	}
  =
 
-+	if (pcui =3D=3D NULL && default_pcui !=3D NULL)
-+		pcui =3D default_pcui;
-+
- 	if (mdm =3D=3D NULL || pcui =3D=3D NULL)
- 		return FALSE;
- =
-
-+	if (diag !=3D NULL && g_strcmp0(diag, pcui) =3D=3D 0)
-+		diag =3D NULL;
-+
- 	DBG("modem=3D%s pcui=3D%s diag=3D%s", mdm, pcui, diag);
- =
-
- 	ofono_modem_set_string(modem->modem, "Modem", mdm);
 -- =
 
 1.7.1
 
 
---===============2800893832580545165==--
+--===============6884776265058329518==--
 
