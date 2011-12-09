@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4233304297950321462=="
+Content-Type: multipart/mixed; boundary="===============0274050004698392557=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [RFC v2 08/11] elect: Add ppp callbacks to device
-Date: Fri, 09 Dec 2011 17:35:43 +0100
-Message-ID: <1323448546-2728-9-git-send-email-wagi@monom.org>
+Subject: [RFC v2 09/11] elect: Add GatChat and PPP handler
+Date: Fri, 09 Dec 2011 17:35:44 +0100
+Message-ID: <1323448546-2728-10-git-send-email-wagi@monom.org>
 In-Reply-To: <1323448546-2728-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4233304297950321462==
+--===============0274050004698392557==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,213 +16,249 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- Makefile.am    |    2 +-
- elect/device.c |   96 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am |    2 +-
+ elect/dun.c |  207 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- elect/elect.h  |   15 +++++++++
- 3 files changed, 112 insertions(+), 1 deletions(-)
+ 2 files changed, 208 insertions(+), 1 deletions(-)
+ create mode 100644 elect/dun.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 045ea2e..3e36d4e 100644
+index 3e36d4e..6afd3a0 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -653,7 +653,7 @@ sbin_PROGRAMS +=3D elect/electd
+@@ -651,7 +651,7 @@ if ELECT
  =
 
- elect_electd_SOURCES =3D $(gdbus_sources) $(btio_sources) \
+ sbin_PROGRAMS +=3D elect/electd
+ =
+
+-elect_electd_SOURCES =3D $(gdbus_sources) $(btio_sources) \
++elect_electd_SOURCES =3D $(gdbus_sources) $(btio_sources) $(gatchat_source=
+s) \
  			src/log.c src/dbus.c plugins/bluetooth.c \
--			elect/main.c elect/manager.c elect/device.c
-+			elect/main.c elect/manager.c elect/device.c elect/dun.c
+ 			elect/main.c elect/manager.c elect/device.c elect/dun.c
  =
 
- elect_electd_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LI=
-BS@ -ldl
- =
-
-diff --git a/elect/device.c b/elect/device.c
-index 13f2c70..e804eac 100644
---- a/elect/device.c
-+++ b/elect/device.c
-@@ -61,6 +61,7 @@ struct elect_device {
- 	struct ipv4_settings settings;
- =
-
- 	char *tty;
-+	struct elect_dun *dun;
- =
-
- 	DBusPendingCall *call;
- 	DBusMessage *pending;
-@@ -167,6 +168,26 @@ void __elect_device_foreach(elect_device_foreach_func =
-func, void *userdata)
- 	}
- }
- =
-
-+static void settings_changed(struct elect_device *device)
+diff --git a/elect/dun.c b/elect/dun.c
+new file mode 100644
+index 0000000..c4a3c5d
+--- /dev/null
++++ b/elect/dun.c
+@@ -0,0 +1,207 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2011  BMW Car IT GmbH. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <errno.h>
++#include <unistd.h>
++#include <sys/signalfd.h>
++#include <sys/socket.h>
++#include <netinet/in.h>
++#include <arpa/inet.h>
++
++#include <glib.h>
++#include <gatchat.h>
++#include <gattty.h>
++#include <gatppp.h>
++
++#include "elect.h"
++
++static const char *none_prefix[] =3D { NULL };
++
++struct elect_dun {
++	char *path;
++	void *data;
++
++	GAtPPP *ppp;
++	GAtChat *chat;
++
++	elect_dun_connect_cb_t connect_cb;
++	elect_dun_disconnect_cb_t disconnect_cb;
++};
++
++static void dun_debug(const char *str, void *data)
 +{
-+	DBusMessage *signal;
-+	DBusMessageIter iter;
-+	const char *key =3D "Settings";
++	DBG("%s: %s\n", (const char *) data, str);
++}
 +
-+	signal =3D dbus_message_new_signal(device->elect_path,
-+					ELECT_DEVICE_INTERFACE,
-+					"PropertyChanged");
++static void ppp_connect(const char *iface, const char *local, const char *=
+peer,
++			const char *dns1, const char *dns2,
++			gpointer user_data)
++{
++	struct elect_dun *dun =3D user_data;
 +
-+	if (signal =3D=3D NULL)
++	DBG("Network Device: %s\n", iface);
++	DBG("IP Address: %s\n", local);
++	DBG("Peer IP Address: %s\n", peer);
++	DBG("Primary DNS Server: %s\n", dns1);
++	DBG("Secondary DNS Server: %s\n", dns2);
++
++	if (dun->connect_cb)
++		dun->connect_cb(iface, local, peer, dns1, dns2, dun->data);
++}
++
++static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
+ta)
++{
++	struct elect_dun *dun =3D user_data;
++
++	DBG("PPP Link down: %d\n", reason);
++
++	g_at_ppp_unref(dun->ppp);
++	dun->ppp =3D NULL;
++
++	g_at_chat_resume(dun->chat);
++
++	if (dun->disconnect_cb)
++		dun->disconnect_cb(dun->data);
++}
++
++static void connect_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct elect_dun *dun =3D user_data;
++	GAtIO *io;
++
++	if (!ok) {
++		DBG("Unable to define context\n");
 +		return;
-+	dbus_message_iter_init_append(signal, &iter);
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &key);
++	}
 +
-+	settings_append(device, &iter);
++	/* get the data IO channel */
++	io =3D g_at_chat_get_io(dun->chat);
 +
-+	g_dbus_send_message(connection, signal);
++	/*
++	 * shutdown gatchat or else it tries to take all the input
++	 * from the modem and does not let PPP get it.
++	 */
++	g_at_chat_suspend(dun->chat);
++
++	/* open ppp */
++	dun->ppp =3D g_at_ppp_new();
++	if (dun->ppp =3D=3D NULL) {
++		DBG("Unable to create PPP object\n");
++		return;
++	}
++	g_at_ppp_set_debug(dun->ppp, dun_debug, "PPP");
++
++	/* set connect and disconnect callbacks */
++	g_at_ppp_set_connect_function(dun->ppp, ppp_connect, dun);
++	g_at_ppp_set_disconnect_function(dun->ppp, ppp_disconnect, dun);
++
++	/* open the ppp connection */
++	g_at_ppp_open(dun->ppp, io);
 +}
 +
- static DBusMessage *device_get_properties(DBusConnection *conn,
- 					DBusMessage *msg, void *data)
- {
-@@ -206,6 +227,9 @@ static void bt_disconnect_reply(DBusPendingCall *call, =
-gpointer user_data)
- =
-
- 	g_free(device->tty);
- 	device->tty =3D NULL;
-+
-+	__elect_dun_unref(device->dun);
-+	device->dun =3D NULL;
- }
- =
-
- static int bt_disconnect(struct elect_device *device)
-@@ -232,6 +256,71 @@ static int bt_disconnect(struct elect_device *device)
- 	return -EINPROGRESS;
- }
- =
-
-+static void disconnect_cb(void *data)
++static int open_serial(struct elect_dun *dun)
 +{
-+	struct elect_device *device =3D data;
++	GAtSyntax *syntax;
++	GIOChannel *channel;
 +
-+	DBG("%p", device);
++	channel =3D g_at_tty_open(dun->path, NULL);
++	if (channel =3D=3D NULL)
++		return -EIO;
 +
-+	g_free(device->settings.interface);
-+	g_free(device->settings.ip);
-+	g_strfreev(device->settings.nameservers);
-+	device->settings.interface =3D NULL;
-+	device->settings.ip =3D NULL;
-+	device->settings.nameservers =3D NULL;
++	syntax =3D g_at_syntax_new_gsm_permissive();
++	dun->chat =3D g_at_chat_new(channel, syntax);
++	g_io_channel_unref(channel);
++	g_at_syntax_unref(syntax);
 +
-+	device->active =3D FALSE;
++	if (dun->chat =3D=3D NULL)
++		return -EIO;
 +
-+	settings_changed(device);
-+	ofono_dbus_signal_property_changed(connection, device->elect_path,
-+					ELECT_DEVICE_INTERFACE, "Active",
-+					DBUS_TYPE_BOOLEAN, &device->active);
++	g_at_chat_set_debug(dun->chat, dun_debug, "Control");
 +
-+	bt_disconnect(device);
++	return 0;
 +}
-+
-+static void connect_cb(const char *interface, const char *ip,
-+			const char *peer, const char *dns1, const char *dns2,
-+			void *data)
-+{
-+	struct elect_device *device =3D data;
-+	const char *dns[3] =3D { dns1, dns2, 0 };
-+
-+	DBG("%p", device);
-+
-+	g_free(device->settings.interface);
-+	device->settings.interface =3D g_strdup(interface);
-+	if (device->settings.interface =3D=3D NULL)
-+		goto err;
-+
-+	g_free(device->settings.ip);
-+	device->settings.ip =3D g_strdup(ip);
-+	if (device->settings.ip =3D=3D NULL)
-+		goto err;
-+
-+	g_strfreev(device->settings.nameservers);
-+	device->settings.nameservers =3D g_strdupv((gchar **)dns);
-+	if (device->settings.nameservers =3D=3D NULL)
-+		goto err;
-+
-+	device->active =3D TRUE;
-+
-+	settings_changed(device);
-+	ofono_dbus_signal_property_changed(connection, device->elect_path,
-+					ELECT_DEVICE_INTERFACE, "Active",
-+					DBUS_TYPE_BOOLEAN, &device->active);
-+
-+	return;
-+
-+err:
-+	g_free(device->settings.interface);
-+	g_free(device->settings.ip);
-+	g_strfreev(device->settings.nameservers);
-+	device->settings.interface =3D NULL;
-+	device->settings.ip =3D NULL;
-+	device->settings.nameservers =3D NULL;
-+}
-+
- static void bt_connect_reply(DBusPendingCall *call, gpointer user_data)
- {
- 	struct elect_device *device =3D user_data;
-@@ -261,6 +350,10 @@ static void bt_connect_reply(DBusPendingCall *call, gp=
-ointer user_data)
- =
-
- 	device->tty =3D g_strdup(tty);
- =
-
-+	device->dun =3D __elect_dun_create(device->tty, connect_cb,
-+						disconnect_cb, device);
-+	__elect_dun_connect(device->dun);
-+
- done:
- 	dbus_message_unref(reply);
- =
-
-@@ -544,6 +637,9 @@ static void destroy_device(gpointer user)
- 	if (device->call)
- 		dbus_pending_call_cancel(device->call);
- =
-
-+	if (device->dun)
-+		__elect_dun_unref(device->dun);
-+
- 	g_free(device->settings.interface);
- 	g_free(device->settings.ip);
- 	g_strfreev(device->settings.nameservers);
-diff --git a/elect/elect.h b/elect/elect.h
-index b9ead99..fc1222c 100644
---- a/elect/elect.h
-+++ b/elect/elect.h
-@@ -83,3 +83,18 @@ void __elect_device_foreach(elect_device_foreach_func cb=
-, void *userdata);
- const char *__elect_device_get_path(struct elect_device *device);
- void __elect_device_append_properties(struct elect_device *device,
- 					DBusMessageIter *dict);
-+
-+
-+typedef void (*elect_dun_connect_cb_t)(const char *interface, const char *=
-ip,
-+				const char *peer,
-+				const char *dns1, const char *dns2,
-+				void *data);
-+typedef void (*elect_dun_disconnect_cb_t)(void *data);
 +
 +struct elect_dun *__elect_dun_create(const char *path,
 +				elect_dun_connect_cb_t connect_cb,
 +				elect_dun_disconnect_cb_t disconnect_cb,
-+				void *data);
-+int __elect_dun_connect(struct elect_dun *dun);
-+int __elect_dun_disconnect(struct elect_dun *dun);
-+void __elect_dun_unref(struct elect_dun *dun);
++				void *data)
++{
++	struct elect_dun *dun;
++
++	DBG("%s", path);
++
++	dun =3D g_try_new0(struct elect_dun, 1);
++	if (dun =3D=3D NULL)
++		return NULL;
++
++	dun->path =3D g_strdup(path);
++	dun->data =3D data;
++
++	dun->connect_cb =3D connect_cb;
++	dun->disconnect_cb =3D disconnect_cb;
++
++	return dun;
++}
++
++int __elect_dun_connect(struct elect_dun *dun)
++{
++	int err;
++
++	DBG("%s", dun->path);
++
++	err =3D open_serial(dun);
++	if (err < 0)
++		return err;
++
++	g_at_chat_send(dun->chat, "ATD*99#", none_prefix, connect_cb,
++		dun, NULL);
++
++	return 0;
++}
++
++int __elect_dun_disconnect(struct elect_dun *dun)
++{
++	DBG("%s", dun->path);
++
++	if (dun->ppp =3D=3D NULL)
++		return -EINVAL;
++
++	g_at_ppp_suspend(dun->ppp);
++
++	return 0;
++}
++
++void __elect_dun_unref(struct elect_dun *dun)
++{
++	DBG("%s", dun->path);
++
++	g_free(dun->path);
++
++	g_free(dun);
++}
 -- =
 
 1.7.8.110.g4cb5d1
 
 
---===============4233304297950321462==--
+--===============0274050004698392557==--
 
