@@ -1,36 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============4834493762799034966=="
+Content-Type: multipart/mixed; boundary="===============5567841537997097527=="
 MIME-Version: 1.0
-From: Sergey Lapin <slapinid@gmail.com>
-Subject: ofono usage on embedded device
-Date: Fri, 09 Dec 2011 16:08:17 +0300
-Message-ID: <CAFZPMoaC9LRW-=ApSY207eowO4BhkLZ+xBgpefNjRBBc5tdbpw@mail.gmail.com>
-In-Reply-To: <CAFZPMoZGOBOPGtKR578UB3+YRcOvYaR=8f7MM-DgpZQqnUq8Zg@mail.gmail.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: ofono usage on embedded device
+Date: Fri, 09 Dec 2011 14:12:37 +0100
+Message-ID: <4EE20945.9000805@monom.org>
+In-Reply-To: <CAFZPMoaC9LRW-=ApSY207eowO4BhkLZ+xBgpefNjRBBc5tdbpw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4834493762799034966==
+--===============5567841537997097527==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi, all!
+Hi Sergey,
 
-Is it possible to achieve the following with ofono: a) have pppd do
-its job re ppp b) use N_GSM in-kernel gsm0710 mux c) use ofono to
-start modem with
-GPIO, handle SMS and modem setup d) use fixed configuration without
-udev support?
+On 09.12.2011 14:08, Sergey Lapin wrote:
+> I'm interested in c) because somehow we have troubles with udev in our
+> device, systemd detects ttys perfectly while ofono can't find anything
+> and it seems
+> to see no tty devices at all, so we'd like to use systemd to provide
+> ofono with information regarding devices (tty and driver).
+> It is unable to connect to udev monitor also. udev version is 175.
 
-I'm interested in c) because somehow we have troubles with udev in our
-device, systemd detects ttys perfectly while ofono can't find anything
-and it seems
-to see no tty devices at all, so we'd like to use systemd to provide
-ofono with information regarding devices (tty and driver).
-It is unable to connect to udev monitor also. udev version is 175.
+Could you provide some logs?
 
-This is on generic fixed serial port AT-modem (sim900 actually).
+cheers,
+daniel
 
-S.
-
---===============4834493762799034966==--
+--===============5567841537997097527==--
 
