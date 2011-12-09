@@ -1,57 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============3059603300412491338=="
+Content-Type: multipart/mixed; boundary="===============1259584646648608678=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v1 0/4] Manage Dormant property notification for CDMA
- modems
-Date: Thu, 08 Dec 2011 06:24:49 -0600
-Message-ID: <4EE0AC91.4080506@gmail.com>
-In-Reply-To: <1323342030-9175-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH] cdmamodem: Disable dormant mode at initialization
+Date: Fri, 09 Dec 2011 12:04:38 +0100
+Message-ID: <1323428678-10373-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3059603300412491338==
+--===============1259584646648608678==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+---
+ drivers/cdmamodem/connman.c |   15 +++++++++++++++
+ 1 files changed, 15 insertions(+), 0 deletions(-)
 
-On 12/08/2011 05:00 AM, Guillaume Zajac wrote:
-> Hi,
-> =
+diff --git a/drivers/cdmamodem/connman.c b/drivers/cdmamodem/connman.c
+index c03841e..61573ff 100644
+--- a/drivers/cdmamodem/connman.c
++++ b/drivers/cdmamodem/connman.c
+@@ -276,6 +276,20 @@ static void at_c0_cb(gboolean ok, GAtResult *result, g=
+pointer user_data)
+ 	ofono_cdma_connman_register(cm);
+ }
+ =
 
-> Change log from v0:
-> 	- Only notify the dormant state to the cdma-connman atom
-> 	- A new set of patches will be sent to control dormancy
-> 	  mode.
-> =
++static void at_cta0_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_cdma_connman *cm =3D user_data;
++
++	DBG("ok %d", ok);
++
++	if (ok =3D=3D FALSE) {
++		ofono_info("Unable to configure Dormant mode");
++		return;
++	}
++
++	ofono_cdma_connman_dormant_notify(cm, FALSE);
++}
++
+ static int cdma_connman_probe(struct ofono_cdma_connman *cm,
+ 					unsigned int vendor, void *data)
+ {
+@@ -300,6 +314,7 @@ static int cdma_connman_probe(struct ofono_cdma_connman=
+ *cm,
+ 	ofono_cdma_connman_set_data(cm, cd);
+ =
 
-> Kind regards,
-> Guillaume
-> =
+ 	g_at_chat_send(cd->chat, "AT&C0", none_prefix, at_c0_cb, cm, NULL);
++	g_at_chat_send(cd->chat, "AT+CTA=3D0", none_prefix, at_cta0_cb, cm, NULL);
+ =
 
-> Guillaume Zajac (4):
->   cdma-connman: Add dormant state notification API
->   cdma-connman: Add dormant state notification API definition
->   huaweicdma: Tweak plugin to notify dormant state
->   cdmamodem: Register dormant state callback for huawei modems
-> =
+ 	return 0;
+ }
+-- =
 
->  drivers/cdmamodem/connman.c |   42 +++++++++++++++++++++++++++++++++++++=
-+++++
->  include/cdma-connman.h      |    3 +++
->  plugins/huaweicdma.c        |    7 ++++++-
->  src/cdma-connman.c          |   17 +++++++++++++++++
->  4 files changed, 68 insertions(+), 1 deletions(-)
-> =
+1.7.1
 
 
-I applied all four patches with minor amendments.  In the future please
-pay attention to keeping your commit headers under 50 characters per
-doc/coding-style.txt item M5.
-
-Regards,
--Denis
-
---===============3059603300412491338==--
+--===============1259584646648608678==--
 
