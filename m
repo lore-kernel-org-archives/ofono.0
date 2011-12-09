@@ -1,73 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============8726919812430249675=="
+Content-Type: multipart/mixed; boundary="===============7364157147628237792=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] cdmamodem: Disable dormant mode at initialization
-Date: Fri, 09 Dec 2011 05:37:20 -0600
-Message-ID: <4EE1F2F0.1040404@gmail.com>
-In-Reply-To: <1323428678-10373-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH v2 01/12] cdma-providers: add driver APIs header
+Date: Fri, 09 Dec 2011 05:50:51 -0600
+Message-ID: <4EE1F61B.4080100@gmail.com>
+In-Reply-To: <1323355803-22096-2-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8726919812430249675==
+--===============7364157147628237792==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Philippe,
 
-On 12/09/2011 05:04 AM, Guillaume Zajac wrote:
+On 12/08/2011 08:49 AM, Philippe Nunes wrote:
 > ---
->  drivers/cdmamodem/connman.c |   15 +++++++++++++++
->  1 files changed, 15 insertions(+), 0 deletions(-)
+>  include/cdma-providers.h |   44 ++++++++++++++++++++++++++++++++++++++++=
+++++
+>  1 files changed, 44 insertions(+), 0 deletions(-)
+>  create mode 100644 include/cdma-providers.h
 > =
 
-> diff --git a/drivers/cdmamodem/connman.c b/drivers/cdmamodem/connman.c
-> index c03841e..61573ff 100644
-> --- a/drivers/cdmamodem/connman.c
-> +++ b/drivers/cdmamodem/connman.c
-> @@ -276,6 +276,20 @@ static void at_c0_cb(gboolean ok, GAtResult *result,=
- gpointer user_data)
->  	ofono_cdma_connman_register(cm);
->  }
->  =
+> diff --git a/include/cdma-providers.h b/include/cdma-providers.h
+> new file mode 100644
+> index 0000000..6878087
+> --- /dev/null
+> +++ b/include/cdma-providers.h
+> @@ -0,0 +1,44 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifndef __OFONO_CDMA_PROVIDERS_H
+> +#define __OFONO_CDMA_PROVIDERS_H
+> +
+> +#ifdef __cplusplus
+> +extern "C" {
+> +#endif
+> +
+> +struct ofono_cdma_providers_driver {
+> +	const char *name;
+> +	int priority;
+> +	int (*get_provider_name)(const char *sid, char **name);
+> +};
 
-> +static void at_cta0_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-> +{
-> +	struct ofono_cdma_connman *cm =3D user_data;
+Please rename this to ofono_cdma_provision_driver.  We can later expand
+this to provision username and password settings.
+
 > +
-> +	DBG("ok %d", ok);
+> +int ofono_cdma_providers_driver_register(
+> +		const struct ofono_cdma_providers_driver *driver);
+> +void ofono_cdma_providers_driver_unregister(
+> +		const struct ofono_cdma_providers_driver *driver);
 > +
-> +	if (ok =3D=3D FALSE) {
-> +		ofono_info("Unable to configure Dormant mode");
-> +		return;
-> +	}
-> +
-> +	ofono_cdma_connman_dormant_notify(cm, FALSE);
+> +#ifdef __cplusplus
 > +}
+> +#endif
 > +
+> +#endif /* __OFONO_CDMA_PROVIDERS_H */
 
-The core atom will default to FALSE here anyway, so I see no need in
-this callback, so I pushed a much simplified patch upstream.
+Regards
 
->  static int cdma_connman_probe(struct ofono_cdma_connman *cm,
->  					unsigned int vendor, void *data)
->  {
-> @@ -300,6 +314,7 @@ static int cdma_connman_probe(struct ofono_cdma_connm=
-an *cm,
->  	ofono_cdma_connman_set_data(cm, cd);
->  =
-
->  	g_at_chat_send(cd->chat, "AT&C0", none_prefix, at_c0_cb, cm, NULL);
-> +	g_at_chat_send(cd->chat, "AT+CTA=3D0", none_prefix, at_cta0_cb, cm, NUL=
-L);
->  =
-
->  	return 0;
->  }
-
-Regards,
--Denis
-
---===============8726919812430249675==--
+--===============7364157147628237792==--
 
