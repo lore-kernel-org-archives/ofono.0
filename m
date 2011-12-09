@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0274050004698392557=="
+Content-Type: multipart/mixed; boundary="===============5833534352512414293=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [RFC v2 09/11] elect: Add GatChat and PPP handler
-Date: Fri, 09 Dec 2011 17:35:44 +0100
-Message-ID: <1323448546-2728-10-git-send-email-wagi@monom.org>
+Subject: [RFC v2 10/11] elect: Add test scripts
+Date: Fri, 09 Dec 2011 17:35:45 +0100
+Message-ID: <1323448546-2728-11-git-send-email-wagi@monom.org>
 In-Reply-To: <1323448546-2728-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0274050004698392557==
+--===============5833534352512414293==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,249 +16,186 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- Makefile.am |    2 +-
- elect/dun.c |  207 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ test/elect-connect    |   20 +++++++++
+ test/elect-disconnect |   20 +++++++++
+ test/monitor-elect    |  109 +++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 2 files changed, 208 insertions(+), 1 deletions(-)
- create mode 100644 elect/dun.c
+ 3 files changed, 149 insertions(+), 0 deletions(-)
+ create mode 100755 test/elect-connect
+ create mode 100755 test/elect-disconnect
+ create mode 100755 test/monitor-elect
 
-diff --git a/Makefile.am b/Makefile.am
-index 3e36d4e..6afd3a0 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -651,7 +651,7 @@ if ELECT
- =
-
- sbin_PROGRAMS +=3D elect/electd
- =
-
--elect_electd_SOURCES =3D $(gdbus_sources) $(btio_sources) \
-+elect_electd_SOURCES =3D $(gdbus_sources) $(btio_sources) $(gatchat_source=
-s) \
- 			src/log.c src/dbus.c plugins/bluetooth.c \
- 			elect/main.c elect/manager.c elect/device.c elect/dun.c
- =
-
-diff --git a/elect/dun.c b/elect/dun.c
-new file mode 100644
-index 0000000..c4a3c5d
+diff --git a/test/elect-connect b/test/elect-connect
+new file mode 100755
+index 0000000..09e592e
 --- /dev/null
-+++ b/elect/dun.c
-@@ -0,0 +1,207 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2011  BMW Car IT GmbH. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
++++ b/test/elect-connect
+@@ -0,0 +1,20 @@
++#!/usr/bin/python
 +
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
++import dbus
++import sys
 +
-+#include <string.h>
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include <errno.h>
-+#include <unistd.h>
-+#include <sys/signalfd.h>
-+#include <sys/socket.h>
-+#include <netinet/in.h>
-+#include <arpa/inet.h>
++bus =3D dbus.SystemBus()
 +
-+#include <glib.h>
-+#include <gatchat.h>
-+#include <gattty.h>
-+#include <gatppp.h>
++if len(sys.argv) =3D=3D 2:
++	path =3D sys.argv[1]
++else:
++	manager =3D dbus.Interface(bus.get_object('org.ofono.elect', '/'),
++			'org.ofono.elect.Manager')
++	devices =3D manager.GetDevices()
++	path =3D devices[0][0]
 +
-+#include "elect.h"
++print "Connect device %s..." % path
++device =3D dbus.Interface(bus.get_object('org.ofono.elect', path),
++						'org.ofono.elect.Device')
 +
-+static const char *none_prefix[] =3D { NULL };
++device.Connect()
+diff --git a/test/elect-disconnect b/test/elect-disconnect
+new file mode 100755
+index 0000000..76ff74c
+--- /dev/null
++++ b/test/elect-disconnect
+@@ -0,0 +1,20 @@
++#!/usr/bin/python
 +
-+struct elect_dun {
-+	char *path;
-+	void *data;
++import dbus
++import sys
 +
-+	GAtPPP *ppp;
-+	GAtChat *chat;
++bus =3D dbus.SystemBus()
 +
-+	elect_dun_connect_cb_t connect_cb;
-+	elect_dun_disconnect_cb_t disconnect_cb;
-+};
++if len(sys.argv) =3D=3D 2:
++	path =3D sys.argv[1]
++else:
++	manager =3D dbus.Interface(bus.get_object('org.ofono.elect', '/'),
++			'org.ofono.elect.Manager')
++	devices =3D manager.GetDevices()
++	path =3D devices[0][0]
 +
-+static void dun_debug(const char *str, void *data)
-+{
-+	DBG("%s: %s\n", (const char *) data, str);
-+}
++print "Disonnect device %s..." % path
++device =3D dbus.Interface(bus.get_object('org.ofono.elect', path),
++						'org.ofono.elect.Device')
 +
-+static void ppp_connect(const char *iface, const char *local, const char *=
-peer,
-+			const char *dns1, const char *dns2,
-+			gpointer user_data)
-+{
-+	struct elect_dun *dun =3D user_data;
++device.Disconnect()
+diff --git a/test/monitor-elect b/test/monitor-elect
+new file mode 100755
+index 0000000..684f5e3
+--- /dev/null
++++ b/test/monitor-elect
+@@ -0,0 +1,109 @@
++#!/usr/bin/python
 +
-+	DBG("Network Device: %s\n", iface);
-+	DBG("IP Address: %s\n", local);
-+	DBG("Peer IP Address: %s\n", peer);
-+	DBG("Primary DNS Server: %s\n", dns1);
-+	DBG("Secondary DNS Server: %s\n", dns2);
++import gobject
 +
-+	if (dun->connect_cb)
-+		dun->connect_cb(iface, local, peer, dns1, dns2, dun->data);
-+}
++import dbus
++import dbus.mainloop.glib
 +
-+static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
-ta)
-+{
-+	struct elect_dun *dun =3D user_data;
++_dbus2py =3D {
++	dbus.String : unicode,
++	dbus.UInt32 : int,
++	dbus.Int32 : int,
++	dbus.Int16 : int,
++	dbus.UInt16 : int,
++	dbus.UInt64 : int,
++	dbus.Int64 : int,
++	dbus.Byte : int,
++	dbus.Boolean : bool,
++	dbus.ByteArray : str,
++	dbus.ObjectPath : str
++    }
 +
-+	DBG("PPP Link down: %d\n", reason);
++def dbus2py(d):
++	t =3D type(d)
++	if t in _dbus2py:
++		return _dbus2py[t](d)
++	if t is dbus.Dictionary:
++		return dict([(dbus2py(k), dbus2py(v)) for k, v in d.items()])
++	if t is dbus.Array and d.signature =3D=3D "y":
++		return "".join([chr(b) for b in d])
++	if t is dbus.Array or t is list:
++		return [dbus2py(v) for v in d]
++	if t is dbus.Struct or t is tuple:
++		return tuple([dbus2py(v) for v in d])
++	return d
 +
-+	g_at_ppp_unref(dun->ppp);
-+	dun->ppp =3D NULL;
++def pretty(d):
++	d =3D dbus2py(d)
++	t =3D type(d)
 +
-+	g_at_chat_resume(dun->chat);
++	if t in (dict, tuple, list) and len(d) > 0:
++		if t is dict:
++			d =3D ", ".join(["%s =3D %s" % (k, pretty(v))
++					for k, v in d.items()])
++			return "{ %s }" % d
 +
-+	if (dun->disconnect_cb)
-+		dun->disconnect_cb(dun->data);
-+}
++		d =3D " ".join([pretty(e) for e in d])
 +
-+static void connect_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct elect_dun *dun =3D user_data;
-+	GAtIO *io;
++		if t is tuple:
++			return "( %s )" % d
 +
-+	if (!ok) {
-+		DBG("Unable to define context\n");
-+		return;
-+	}
++	return str(d)
 +
-+	/* get the data IO channel */
-+	io =3D g_at_chat_get_io(dun->chat);
++def property_changed(name, value, path, interface):
++	iface =3D interface[interface.rfind(".") + 1:]
++	print "{%s} [%s] %s =3D %s" % (iface, path, name, pretty(value))
 +
-+	/*
-+	 * shutdown gatchat or else it tries to take all the input
-+	 * from the modem and does not let PPP get it.
-+	 */
-+	g_at_chat_suspend(dun->chat);
++def added(name, value, member, path, interface):
++	iface =3D interface[interface.rfind(".") + 1:]
++	print "{%s} [%s] %s %s" % (iface, member, name, pretty(value))
 +
-+	/* open ppp */
-+	dun->ppp =3D g_at_ppp_new();
-+	if (dun->ppp =3D=3D NULL) {
-+		DBG("Unable to create PPP object\n");
-+		return;
-+	}
-+	g_at_ppp_set_debug(dun->ppp, dun_debug, "PPP");
++def removed(name, member, path, interface):
++	iface =3D interface[interface.rfind(".") + 1:]
++	print "{%s} [%s] %s" % (iface, member, name)
 +
-+	/* set connect and disconnect callbacks */
-+	g_at_ppp_set_connect_function(dun->ppp, ppp_connect, dun);
-+	g_at_ppp_set_disconnect_function(dun->ppp, ppp_disconnect, dun);
++def event(member, path, interface):
++	iface =3D interface[interface.rfind(".") + 1:]
++	print "{%s} [%s] %s" % (iface, path, member)
 +
-+	/* open the ppp connection */
-+	g_at_ppp_open(dun->ppp, io);
-+}
++def message(msg, args, member, path, interface):
++	iface =3D interface[interface.rfind(".") + 1:]
++	print "{%s} [%s] %s %s (%s)" % (iface, path, member,
++					str(msg), pretty(args))
 +
-+static int open_serial(struct elect_dun *dun)
-+{
-+	GAtSyntax *syntax;
-+	GIOChannel *channel;
++def ussd(msg, member, path, interface):
++	iface =3D interface[interface.rfind(".") + 1:]
++	print "{%s} [%s] %s %s" % (iface, path, member, str(msg))
 +
-+	channel =3D g_at_tty_open(dun->path, NULL);
-+	if (channel =3D=3D NULL)
-+		return -EIO;
++def value(value, member, path, interface):
++	iface =3D interface[interface.rfind(".") + 1:]
++	print "{%s} [%s] %s %s" % (iface, path, member, str(value))
 +
-+	syntax =3D g_at_syntax_new_gsm_permissive();
-+	dun->chat =3D g_at_chat_new(channel, syntax);
-+	g_io_channel_unref(channel);
-+	g_at_syntax_unref(syntax);
++if __name__ =3D=3D '__main__':
++	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
 +
-+	if (dun->chat =3D=3D NULL)
-+		return -EIO;
++	bus =3D dbus.SystemBus()
 +
-+	g_at_chat_set_debug(dun->chat, dun_debug, "Control");
++	bus.add_signal_receiver(property_changed,
++					bus_name=3D"org.ofono.elect",
++					signal_name =3D "PropertyChanged",
++						path_keyword=3D"path",
++						interface_keyword=3D"interface")
 +
-+	return 0;
-+}
++	bus.add_signal_receiver(added,
++					bus_name=3D"org.ofono.elect",
++					signal_name =3D "DeviceAdded",
++						member_keyword=3D"member",
++						path_keyword=3D"path",
++						interface_keyword=3D"interface")
 +
-+struct elect_dun *__elect_dun_create(const char *path,
-+				elect_dun_connect_cb_t connect_cb,
-+				elect_dun_disconnect_cb_t disconnect_cb,
-+				void *data)
-+{
-+	struct elect_dun *dun;
++	bus.add_signal_receiver(removed,
++					bus_name=3D"org.ofono.elect",
++					signal_name =3D "DeviceRemoved",
++						member_keyword=3D"member",
++						path_keyword=3D"path",
++						interface_keyword=3D"interface")
 +
-+	DBG("%s", path);
 +
-+	dun =3D g_try_new0(struct elect_dun, 1);
-+	if (dun =3D=3D NULL)
-+		return NULL;
-+
-+	dun->path =3D g_strdup(path);
-+	dun->data =3D data;
-+
-+	dun->connect_cb =3D connect_cb;
-+	dun->disconnect_cb =3D disconnect_cb;
-+
-+	return dun;
-+}
-+
-+int __elect_dun_connect(struct elect_dun *dun)
-+{
-+	int err;
-+
-+	DBG("%s", dun->path);
-+
-+	err =3D open_serial(dun);
-+	if (err < 0)
-+		return err;
-+
-+	g_at_chat_send(dun->chat, "ATD*99#", none_prefix, connect_cb,
-+		dun, NULL);
-+
-+	return 0;
-+}
-+
-+int __elect_dun_disconnect(struct elect_dun *dun)
-+{
-+	DBG("%s", dun->path);
-+
-+	if (dun->ppp =3D=3D NULL)
-+		return -EINVAL;
-+
-+	g_at_ppp_suspend(dun->ppp);
-+
-+	return 0;
-+}
-+
-+void __elect_dun_unref(struct elect_dun *dun)
-+{
-+	DBG("%s", dun->path);
-+
-+	g_free(dun->path);
-+
-+	g_free(dun);
-+}
++	mainloop =3D gobject.MainLoop()
++	mainloop.run()
 -- =
 
 1.7.8.110.g4cb5d1
 
 
---===============0274050004698392557==--
+--===============5833534352512414293==--
 
