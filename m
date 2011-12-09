@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============1148250620606801657=="
+Content-Type: multipart/mixed; boundary="===============6448068148061382960=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [RFC v2 01/11] elect: Add skeleton implementation
-Date: Fri, 09 Dec 2011 17:35:36 +0100
-Message-ID: <1323448546-2728-2-git-send-email-wagi@monom.org>
+Subject: [RFC v2 02/11] elect: Add Manager interface
+Date: Fri, 09 Dec 2011 17:35:37 +0100
+Message-ID: <1323448546-2728-3-git-send-email-wagi@monom.org>
 In-Reply-To: <1323448546-2728-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1148250620606801657==
+--===============6448068148061382960==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,211 +16,92 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- Makefile.am         |   24 +++++
- bootstrap-configure |    1 +
- configure.ac        |    4 +
- elect/elect.conf    |   23 +++++
- elect/elect.h       |   65 +++++++++++++
- elect/elect.service |   11 ++
- elect/main.c        |  255 +++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am     |    2 +-
+ elect/elect.h   |    8 ++++-
+ elect/main.c    |    9 ++---
+ elect/manager.c |   98 +++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 7 files changed, 383 insertions(+), 0 deletions(-)
- create mode 100644 elect/elect.conf
- create mode 100644 elect/elect.h
- create mode 100644 elect/elect.service
- create mode 100644 elect/main.c
+ 4 files changed, 109 insertions(+), 8 deletions(-)
+ create mode 100644 elect/manager.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 337aeb7..42cefbc 100644
+index 42cefbc..65036e9 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -647,6 +647,30 @@ tools_lookup_provider_name_SOURCES =3D plugins/mbpi.c =
-plugins/mbpi.h \
- tools_lookup_provider_name_LDADD =3D @GLIB_LIBS@
- endif
+@@ -653,7 +653,7 @@ sbin_PROGRAMS +=3D elect/electd
  =
 
-+if ELECT
-+
-+sbin_PROGRAMS +=3D elect/electd
-+
-+elect_electd_SOURCES =3D $(gdbus_sources) \
-+			src/log.c src/dbus.c \
-+			elect/main.c
-+
-+elect_electd_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LI=
+ elect_electd_SOURCES =3D $(gdbus_sources) \
+ 			src/log.c src/dbus.c \
+-			elect/main.c
++			elect/main.c elect/manager.c
+ =
+
+ elect_electd_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LI=
 BS@ -ldl
-+
-+if DATAFILES
-+
-+dist_dbusconf_DATA +=3D elect/elect.conf
-+
-+if SYSTEMD
-+systemdunitdir +=3D @SYSTEMD_UNITDIR@
-+
-+systemdunit_DATA +=3D elect/elect.service
-+endif
-+
-+endif
-+
-+endif
-+
- noinst_PROGRAMS +=3D gatchat/gsmdial gatchat/test-server gatchat/test-qcdm
  =
 
- gatchat_gsmdial_SOURCES =3D gatchat/gsmdial.c $(gatchat_sources)
-diff --git a/bootstrap-configure b/bootstrap-configure
-index db70c66..d80ed8b 100755
---- a/bootstrap-configure
-+++ b/bootstrap-configure
-@@ -14,4 +14,5 @@ fi
- 		--localstatedir=3D/var \
- 		--enable-capng \
- 		--enable-tools \
-+		--enable-elect \
- 		--disable-datafiles $*
-diff --git a/configure.ac b/configure.ac
-index 5e4d34f..f8f3387 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -165,6 +165,10 @@ if (test "${enable_tools}" =3D "yes"); then
- fi
- AM_CONDITIONAL(TOOLS, test "${enable_tools}" =3D "yes")
- =
-
-+AC_ARG_ENABLE(elect, AC_HELP_STRING([--enable-elect],
-+		[enable DUN deamon support]), [enable_elect=3D${enableval}])
-+AM_CONDITIONAL(ELECT, test "${enable_elect}" =3D "yes")
-+
- AC_ARG_ENABLE(atmodem, AC_HELP_STRING([--disable-atmodem],
- 				[disable ETSI AT modem support]),
- 					[enable_atmodem=3D${enableval}])
-diff --git a/elect/elect.conf b/elect/elect.conf
-new file mode 100644
-index 0000000..548ffe8
---- /dev/null
-+++ b/elect/elect.conf
-@@ -0,0 +1,23 @@
-+<!-- This configuration file specifies the required security policies
-+     for oFono elect (DUN) daemon to work. -->
-+
-+<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-BUS Bus Configuration 1.=
-0//EN"
-+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
-+<busconfig>
-+
-+  <!-- ../system.conf have denied everything, so we just punch some holes =
--->
-+
-+  <policy user=3D"root">
-+    <allow own=3D"org.ofono.elect"/>
-+    <allow send_destination=3D"org.ofono.elect"/>
-+  </policy>
-+
-+  <policy at_console=3D"true">
-+    <allow send_destination=3D"org.ofono.elect"/>
-+  </policy>
-+
-+  <policy context=3D"default">
-+    <deny send_destination=3D"org.ofono.elect"/>
-+  </policy>
-+
-+</busconfig>
 diff --git a/elect/elect.h b/elect/elect.h
-new file mode 100644
-index 0000000..62b9330
---- /dev/null
+index 62b9330..b395ca5 100644
+--- a/elect/elect.h
 +++ b/elect/elect.h
-@@ -0,0 +1,65 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2011  BMW Car IT GmbH. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
+@@ -38,7 +38,9 @@ void __ofono_log_enable(struct ofono_debug_desc *start,
+ =
+
+ #include <ofono/dbus.h>
+ =
+
+-#define ELECT_SERVICE		"org.ofono.elect"
++#define ELECT_SERVICE			"org.ofono.elect"
++#define ELECT_MANAGER_INTERFACE		"org.ofono.elect.Manager"
++#define ELECT_MANAGER_PATH		"/"
+ =
+
+ int __ofono_dbus_init(DBusConnection *conn);
+ void __ofono_dbus_cleanup(void);
+@@ -63,3 +65,7 @@ DBusMessage *__ofono_error_not_registered(DBusMessage *ms=
+g);
+ DBusMessage *__ofono_error_canceled(DBusMessage *msg);
+ DBusMessage *__ofono_error_access_denied(DBusMessage *msg);
+ DBusMessage *__ofono_error_emergency_active(DBusMessage *msg);
 +
-+#include <glib.h>
 +
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+
-+#include <ofono/types.h>
-+
-+void __elect_exit(void);
-+
-+#include <ofono/log.h>
-+
-+int __ofono_log_init(const char *program, const char *debug,
-+					ofono_bool_t detach);
-+void __ofono_log_cleanup(void);
-+void __ofono_log_enable(struct ofono_debug_desc *start,
-+					struct ofono_debug_desc *stop);
-+
-+#include <ofono/dbus.h>
-+
-+#define ELECT_SERVICE		"org.ofono.elect"
-+
-+int __ofono_dbus_init(DBusConnection *conn);
-+void __ofono_dbus_cleanup(void);
-+
-+void __ofono_dbus_pending_reply(DBusMessage **msg, DBusMessage *reply);
-+
-+DBusMessage *__ofono_error_invalid_args(DBusMessage *msg);
-+DBusMessage *__ofono_error_invalid_format(DBusMessage *msg);
-+DBusMessage *__ofono_error_not_implemented(DBusMessage *msg);
-+DBusMessage *__ofono_error_failed(DBusMessage *msg);
-+DBusMessage *__ofono_error_busy(DBusMessage *msg);
-+DBusMessage *__ofono_error_not_found(DBusMessage *msg);
-+DBusMessage *__ofono_error_not_active(DBusMessage *msg);
-+DBusMessage *__ofono_error_not_supported(DBusMessage *msg);
-+DBusMessage *__ofono_error_not_available(DBusMessage *msg);
-+DBusMessage *__ofono_error_timed_out(DBusMessage *msg);
-+DBusMessage *__ofono_error_sim_not_ready(DBusMessage *msg);
-+DBusMessage *__ofono_error_in_use(DBusMessage *msg);
-+DBusMessage *__ofono_error_not_attached(DBusMessage *msg);
-+DBusMessage *__ofono_error_attach_in_progress(DBusMessage *msg);
-+DBusMessage *__ofono_error_not_registered(DBusMessage *msg);
-+DBusMessage *__ofono_error_canceled(DBusMessage *msg);
-+DBusMessage *__ofono_error_access_denied(DBusMessage *msg);
-+DBusMessage *__ofono_error_emergency_active(DBusMessage *msg);
-diff --git a/elect/elect.service b/elect/elect.service
-new file mode 100644
-index 0000000..39d9349
---- /dev/null
-+++ b/elect/elect.service
-@@ -0,0 +1,11 @@
-+[Unit]
-+Description=3DDUN service
-+After=3Dsyslog.target
-+
-+[Service]
-+Type=3Ddbus
-+BusName=3Dorg.ofono.elect
-+ExecStart=3D/usr/sbin/electd -n
-+
-+[Install]
-+WantedBy=3Dmulti-user.target
++int __elect_manager_init(DBusConnection *conn);
++void __elect_manager_cleanup(void);
 diff --git a/elect/main.c b/elect/main.c
-new file mode 100644
-index 0000000..714f8c8
---- /dev/null
+index 714f8c8..36cd6a0 100644
+--- a/elect/main.c
 +++ b/elect/main.c
-@@ -0,0 +1,255 @@
+@@ -232,15 +232,12 @@ int main(int argc, char **argv)
+ =
+
+ 	__ofono_dbus_init(conn);
+ =
+
+-	/*
+-	 * The reason why this DBG is here is that we have the __stop__debug,
+-	 * __start__debug linking symbols in the object. As soon we
+-	 * have real DBG we can remove this one again.
+-	 */
+-	DBG("");
++	__elect_manager_init(conn);
+ =
+
+ 	g_main_loop_run(event_loop);
+ =
+
++	__elect_manager_cleanup();
++
+ 	__ofono_dbus_cleanup();
+ 	dbus_connection_unref(conn);
+ =
+
+diff --git a/elect/manager.c b/elect/manager.c
+new file mode 100644
+index 0000000..34a46a9
+--- /dev/null
++++ b/elect/manager.c
+@@ -0,0 +1,98 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -248,239 +129,82 @@ index 0000000..714f8c8
 +#include <config.h>
 +#endif
 +
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <unistd.h>
 +#include <string.h>
-+#include <signal.h>
-+#include <sys/signalfd.h>
-+
++#include <glib.h>
 +#include <gdbus.h>
-+
-+#ifdef HAVE_CAPNG
-+#include <cap-ng.h>
-+#endif
 +
 +#include "elect.h"
 +
-+#define SHUTDOWN_GRACE_SECONDS 10
++static DBusConnection *connection;
 +
-+static GMainLoop *event_loop;
-+
-+void __elect_exit(void)
++static DBusMessage *manager_get_devices(DBusConnection *conn,
++					DBusMessage *msg, void *data)
 +{
-+	g_main_loop_quit(event_loop);
-+}
++	DBusMessage *reply;
++	DBusMessageIter iter;
++	DBusMessageIter array;
 +
-+static gboolean quit_eventloop(gpointer user_data)
-+{
-+	__elect_exit();
-+	return FALSE;
-+}
-+
-+static unsigned int __terminated =3D 0;
-+
-+static gboolean signal_handler(GIOChannel *channel, GIOCondition cond,
-+							gpointer user_data)
-+{
-+	struct signalfd_siginfo si;
-+	ssize_t result;
-+	int fd;
-+
-+	if (cond & (G_IO_NVAL | G_IO_ERR | G_IO_HUP))
-+		return FALSE;
-+
-+	fd =3D g_io_channel_unix_get_fd(channel);
-+
-+	result =3D read(fd, &si, sizeof(si));
-+	if (result !=3D sizeof(si))
-+		return FALSE;
-+
-+	switch (si.ssi_signo) {
-+	case SIGINT:
-+	case SIGTERM:
-+		if (__terminated =3D=3D 0) {
-+			ofono_info("Terminating");
-+			g_timeout_add_seconds(SHUTDOWN_GRACE_SECONDS,
-+						quit_eventloop, NULL);
-+
-+			quit_eventloop(NULL);
-+		}
-+
-+		__terminated =3D 1;
-+		break;
-+	}
-+
-+	return TRUE;
-+}
-+
-+static guint setup_signalfd(void)
-+{
-+	GIOChannel *channel;
-+	guint source;
-+	sigset_t mask;
-+	int fd;
-+
-+	sigemptyset(&mask);
-+	sigaddset(&mask, SIGINT);
-+	sigaddset(&mask, SIGTERM);
-+
-+	if (sigprocmask(SIG_BLOCK, &mask, NULL) < 0) {
-+		perror("Failed to set signal mask");
-+		return 0;
-+	}
-+
-+	fd =3D signalfd(-1, &mask, 0);
-+	if (fd < 0) {
-+		perror("Failed to create signal descriptor");
-+		return 0;
-+	}
-+
-+	channel =3D g_io_channel_unix_new(fd);
-+
-+	g_io_channel_set_close_on_unref(channel, TRUE);
-+	g_io_channel_set_encoding(channel, NULL, NULL);
-+	g_io_channel_set_buffered(channel, FALSE);
-+
-+	source =3D g_io_add_watch(channel,
-+				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
-+				signal_handler, NULL);
-+
-+	g_io_channel_unref(channel);
-+
-+	return source;
-+}
-+
-+static void system_bus_disconnected(DBusConnection *conn, void *user_data)
-+{
-+	ofono_error("System bus has disconnected!");
-+
-+	g_main_loop_quit(event_loop);
-+}
-+
-+static gchar *option_debug =3D NULL;
-+static gboolean option_detach =3D TRUE;
-+static gboolean option_version =3D FALSE;
-+
-+static gboolean parse_debug(const char *key, const char *value,
-+					gpointer user_data, GError **error)
-+{
-+	if (value)
-+		option_debug =3D g_strdup(value);
-+	else
-+		option_debug =3D g_strdup("*");
-+
-+	return TRUE;
-+}
-+
-+static GOptionEntry options[] =3D {
-+	{ "debug", 'd', G_OPTION_FLAG_OPTIONAL_ARG,
-+				G_OPTION_ARG_CALLBACK, parse_debug,
-+				"Specify debug options to enable", "DEBUG" },
-+	{ "nodetach", 'n', G_OPTION_FLAG_REVERSE,
-+				G_OPTION_ARG_NONE, &option_detach,
-+				"Don't run as daemon in background" },
-+	{ "version", 'v', 0, G_OPTION_ARG_NONE, &option_version,
-+				"Show version information and exit" },
-+	{ NULL },
-+};
-+
-+int main(int argc, char **argv)
-+{
-+	GOptionContext *context;
-+	GError *err =3D NULL;
-+	DBusConnection *conn;
-+	DBusError error;
-+	guint signal;
-+
-+#ifdef HAVE_CAPNG
-+	/* Drop capabilities */
-+	capng_clear(CAPNG_SELECT_BOTH);
-+	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
-+				CAP_NET_BIND_SERVICE, CAP_NET_ADMIN,
-+				CAP_NET_RAW, CAP_SYS_ADMIN, -1);
-+	capng_apply(CAPNG_SELECT_BOTH);
-+#endif
-+
-+	context =3D g_option_context_new(NULL);
-+	g_option_context_add_main_entries(context, options, NULL);
-+
-+	if (g_option_context_parse(context, &argc, &argv, &err) =3D=3D FALSE) {
-+		if (err !=3D NULL) {
-+			g_printerr("%s\n", err->message);
-+			g_error_free(err);
-+			return 1;
-+		}
-+
-+		g_printerr("An unknown error occurred\n");
-+		return 1;
-+	}
-+
-+	g_option_context_free(context);
-+
-+	if (option_version =3D=3D TRUE) {
-+		printf("%s\n", VERSION);
-+		exit(0);
-+	}
-+
-+	if (option_detach =3D=3D TRUE) {
-+		if (daemon(0, 0)) {
-+			perror("Can't start daemon");
-+			return 1;
-+		}
-+	}
-+
-+	event_loop =3D g_main_loop_new(NULL, FALSE);
-+
-+	signal =3D setup_signalfd();
-+
-+	__ofono_log_init(argv[0], option_debug, option_detach);
-+
-+	dbus_error_init(&error);
-+
-+	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, ELECT_SERVICE, &error);
-+	if (conn =3D=3D NULL) {
-+		if (dbus_error_is_set(&error) =3D=3D TRUE) {
-+			ofono_error("Unable to hop onto D-Bus: %s",
-+					error.message);
-+			dbus_error_free(&error);
-+		} else {
-+			ofono_error("Unable to hop onto D-Bus");
-+		}
-+
-+		goto cleanup;
-+	}
-+
-+	g_dbus_set_disconnect_function(conn, system_bus_disconnected,
-+					NULL, NULL);
-+
-+	__ofono_dbus_init(conn);
-+
-+	/*
-+	 * The reason why this DBG is here is that we have the __stop__debug,
-+	 * __start__debug linking symbols in the object. As soon we
-+	 * have real DBG we can remove this one again.
-+	 */
 +	DBG("");
 +
-+	g_main_loop_run(event_loop);
++	reply =3D dbus_message_new_method_return(msg);
++	if (reply =3D=3D NULL)
++		return NULL;
 +
-+	__ofono_dbus_cleanup();
-+	dbus_connection_unref(conn);
++	dbus_message_iter_init_append(reply, &iter);
 +
-+cleanup:
-+	g_source_remove(signal);
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
++					DBUS_STRUCT_BEGIN_CHAR_AS_STRING
++					DBUS_TYPE_OBJECT_PATH_AS_STRING
++					DBUS_TYPE_ARRAY_AS_STRING
++					DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
++					DBUS_TYPE_STRING_AS_STRING
++					DBUS_TYPE_VARIANT_AS_STRING
++					DBUS_DICT_ENTRY_END_CHAR_AS_STRING
++					DBUS_STRUCT_END_CHAR_AS_STRING,
++					&array);
 +
-+	g_main_loop_unref(event_loop);
++	dbus_message_iter_close_container(&iter, &array);
 +
-+	__ofono_log_cleanup();
++	return reply;
++}
++
++static GDBusMethodTable manager_methods[] =3D {
++	{ "GetDevices",          "",    "a(oa{sv})",  manager_get_devices },
++	{ }
++};
++
++static GDBusSignalTable manager_signals[] =3D {
++	{ "DeviceAdded",        "oa{sv}" },
++	{ "DeviceRemoved",      "o" },
++	{ }
++};
++
++int __elect_manager_init(DBusConnection *conn)
++{
++	gboolean ret;
++
++	connection =3D conn;
++
++	ret =3D g_dbus_register_interface(connection, ELECT_MANAGER_PATH,
++					ELECT_MANAGER_INTERFACE,
++					manager_methods, manager_signals,
++					NULL, NULL, NULL);
++
++	if (ret =3D=3D FALSE)
++		return -1;
 +
 +	return 0;
++}
++
++void __elect_manager_cleanup(void)
++{
++	g_dbus_unregister_interface(connection, ELECT_MANAGER_PATH,
++					ELECT_MANAGER_INTERFACE);
 +}
 -- =
 
 1.7.8.110.g4cb5d1
 
 
---===============1148250620606801657==--
+--===============6448068148061382960==--
 
