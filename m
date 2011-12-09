@@ -1,33 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============3364785580115817996=="
+Content-Type: multipart/mixed; boundary="===============8715018063396176646=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 12/12] huaweicdmamodem: Fix sysinfo parsing
-Date: Fri, 09 Dec 2011 06:14:22 -0600
-Message-ID: <4EE1FB9E.6030203@gmail.com>
-In-Reply-To: <1323355803-22096-13-git-send-email-philippe.nunes@linux.intel.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: [RFC v2 00/11] Add DUN support
+Date: Fri, 09 Dec 2011 17:35:35 +0100
+Message-ID: <1323448546-2728-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3364785580115817996==
+--===============8715018063396176646==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
-On 12/08/2011 08:50 AM, Philippe Nunes wrote:
-> In practice, the service domain is set to 255 (cdma not supported)
-> with an EV-DO capable hardware.
-> ---
->  drivers/huaweicdmamodem/network-registration.c |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> =
+Hi,
+
+This is now the splittet version of the previous huge patch. =
+
+It is only compile tested so far. I have changed a few things
+and cleanup stuff. Consider this version just as work in progress.
+If you spot something stupid tell me now :)
+
+Have a nice weekend!
+daniel
+
+ps: yep, I know the commit message is crap. =
 
 
-Patch has been applied, thanks.
+Daniel Wagner (11):
+  elect: Add skeleton implementation
+  elect: Add Manager interface
+  elect: Add skeleton implementation for device
+  bluetooth: Add Serial interface definition
+  elect: Add BlueZ hooks to device
+  elect: Add device D-Bus interface
+  elect: Dis/Connect Serial interface
+  elect: Add ppp callbacks to device
+  elect: Add GatChat and PPP handler
+  elect: Add test scripts
+  elect: Add documentation
 
-Regards,
--Denis
+ Makefile.am           |   24 ++
+ bootstrap-configure   |    1 +
+ configure.ac          |    4 +
+ doc/elect-api.txt     |   86 ++++++
+ elect/device.c        |  696 +++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ elect/dun.c           |  207 +++++++++++++++
+ elect/elect.conf      |   23 ++
+ elect/elect.h         |  100 +++++++
+ elect/elect.service   |   11 +
+ elect/main.c          |  254 ++++++++++++++++++
+ elect/manager.c       |  120 +++++++++
+ plugins/bluetooth.h   |    1 +
+ test/elect-connect    |   20 ++
+ test/elect-disconnect |   20 ++
+ test/monitor-elect    |  109 ++++++++
+ 15 files changed, 1676 insertions(+), 0 deletions(-)
+ create mode 100644 doc/elect-api.txt
+ create mode 100644 elect/device.c
+ create mode 100644 elect/dun.c
+ create mode 100644 elect/elect.conf
+ create mode 100644 elect/elect.h
+ create mode 100644 elect/elect.service
+ create mode 100644 elect/main.c
+ create mode 100644 elect/manager.c
+ create mode 100755 test/elect-connect
+ create mode 100755 test/elect-disconnect
+ create mode 100755 test/monitor-elect
 
---===============3364785580115817996==--
+-- =
+
+1.7.8.110.g4cb5d1
+
+
+--===============8715018063396176646==--
 
