@@ -1,69 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============1050197501010377440=="
+Content-Type: multipart/mixed; boundary="===============0617305640443982076=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: [PATCH 1/3] n950: Add modem plugin for the N950
-Date: Mon, 12 Dec 2011 11:52:34 +0000
-Message-ID: <ED4DEEB78293B34A9D0EAC02A474A46E083BF3@IRSMSX102.ger.corp.intel.com>
-In-Reply-To: <1323689984-24866-2-git-send-email-marko.saukko@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] cdmamodem: Support speedup dormant notification
+Date: Sat, 10 Dec 2011 17:33:12 -0600
+Message-ID: <4EE3EC38.7020607@gmail.com>
+In-Reply-To: <1323688297-2538-2-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1050197501010377440==
+--===============0617305640443982076==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Guillaume,
 
-> -----Original Message-----
-> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On
-> Behalf Of marko.saukko(a)gmail.com
-> Sent: Monday, December 12, 2011 12:40 PM
-> To: ofono(a)ofono.org
-> Subject: [PATCH 1/3] n950: Add modem plugin for the N950
-> =
-
-> From: Aki Niemi <aki.niemi@nokia.com>
-> =
-
+On 12/12/2011 05:11 AM, Guillaume Zajac wrote:
 > ---
->  Makefile.am          |    3 +
->  plugins/n900.c       |   12 +-
->  plugins/n950.c       |  563
-> ++++++++++++++++++++++++++++++++++++++++++++++++++
->  plugins/nokia-gpio.c |  105 ++++------
->  plugins/nokia-gpio.h |   38 +++-
->  5 files changed, 651 insertions(+), 70 deletions(-)  create mode 100644
-> plugins/n950.c
+>  drivers/cdmamodem/connman.c |    5 +++++
+>  1 files changed, 5 insertions(+), 0 deletions(-)
 > =
 
+> diff --git a/drivers/cdmamodem/connman.c b/drivers/cdmamodem/connman.c
+> index 8c3265a..41708f7 100644
+> --- a/drivers/cdmamodem/connman.c
+> +++ b/drivers/cdmamodem/connman.c
+> @@ -264,6 +264,11 @@ static void at_c0_cb(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+>  	}
+>  =
 
-I would say that this patch doesn't add N950 plugin, but first rename some =
-nokia gpio function, update N900 plugin and then introduce the N950.
+>  	switch (cd->vendor) {
+> +	case OFONO_VENDOR_SPEEDUP:
+> +		/*
+> +		 * Fall through: SpeedUp modem uses same prefix as Huawei
+> +		 * modem for dormant notification.
+> +		 */
 
-So I would propose to split this patches in multiple:
- - a first one which modify nokia gpio APIs,
- - a second one that modify the N900 to reflect the changes
- - a third one that introduce the N950, wich may include your third patch t=
-hat disable the CBS
- - a fourth one that include the N950 plugin in the makefile.
+If the handling is exactly the same, then it is better to just skip this
+step.  Using OFONO_VENDOR_HUAWEI from the speedup plugin is just fine.
+
+>  	case OFONO_VENDOR_HUAWEI:
+>  		chat =3D g_at_chat_get_slave(cd->chat);
+>  		g_at_chat_register(chat, "^DSDORMANT", huawei_dsdormant_notify,
 
 Regards,
+-Denis
 
-Bertrand.
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============1050197501010377440==--
+--===============0617305640443982076==--
 
