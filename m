@@ -1,64 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============5925074339948647707=="
+Content-Type: multipart/mixed; boundary="===============8666880291457688308=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH] speedupcdma: Tweak plugin to notify dormant state
-Date: Mon, 12 Dec 2011 17:13:32 +0100
-Message-ID: <1323706412-3207-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] TODO: Split in 2 tasks RSSI and SINR measurement
+Date: Sat, 10 Dec 2011 18:50:22 -0600
+Message-ID: <4EE3FE4E.2000507@gmail.com>
+In-Reply-To: <1323681447-2962-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5925074339948647707==
+--===============8666880291457688308==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/speedupcdma.c |    7 ++++++-
- 1 files changed, 6 insertions(+), 1 deletions(-)
+Hi Guillaume,
 
-diff --git a/plugins/speedupcdma.c b/plugins/speedupcdma.c
-index 3b398aa..fbf516c 100644
---- a/plugins/speedupcdma.c
-+++ b/plugins/speedupcdma.c
-@@ -37,6 +37,8 @@
- #include <ofono/cdma-connman.h>
- #include <ofono/log.h>
- =
-
-+#include "drivers/atmodem/vendor.h"
-+
- struct speedupcdma_data {
- 	GAtChat *modem;
- 	GAtChat *aux;
-@@ -146,6 +148,8 @@ static int speedupcdma_enable(struct ofono_modem *modem)
- 		return -EIO;
- 	}
- =
-
-+	g_at_chat_set_slave(data->modem, data->aux);
-+
- 	g_at_chat_send(data->modem, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
- 	g_at_chat_send(data->aux, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
- =
-
-@@ -210,7 +214,8 @@ static void speedupcdma_post_online(struct ofono_modem =
-*modem)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->modem);
-+	ofono_cdma_connman_create(modem, OFONO_VENDOR_HUAWEI, "cdmamodem",
-+					data->modem);
- }
- =
-
- static struct ofono_modem_driver speedupcdma_driver =3D {
--- =
-
-1.7.1
+On 12/12/2011 03:17 AM, Guillaume Zajac wrote:
+> ---
+>  TODO |    9 +++++++--
+>  1 files changed, 7 insertions(+), 2 deletions(-)
+> =
 
 
---===============5925074339948647707==--
+Patch has been applied, thanks.
+
+Regards,
+-Denis
+
+--===============8666880291457688308==--
 
