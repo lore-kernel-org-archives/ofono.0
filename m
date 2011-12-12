@@ -1,51 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============0617305640443982076=="
+Content-Type: multipart/mixed; boundary="===============5925074339948647707=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] cdmamodem: Support speedup dormant notification
-Date: Sat, 10 Dec 2011 17:33:12 -0600
-Message-ID: <4EE3EC38.7020607@gmail.com>
-In-Reply-To: <1323688297-2538-2-git-send-email-guillaume.zajac@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH] speedupcdma: Tweak plugin to notify dormant state
+Date: Mon, 12 Dec 2011 17:13:32 +0100
+Message-ID: <1323706412-3207-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0617305640443982076==
+--===============5925074339948647707==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+---
+ plugins/speedupcdma.c |    7 ++++++-
+ 1 files changed, 6 insertions(+), 1 deletions(-)
 
-On 12/12/2011 05:11 AM, Guillaume Zajac wrote:
-> ---
->  drivers/cdmamodem/connman.c |    5 +++++
->  1 files changed, 5 insertions(+), 0 deletions(-)
-> =
+diff --git a/plugins/speedupcdma.c b/plugins/speedupcdma.c
+index 3b398aa..fbf516c 100644
+--- a/plugins/speedupcdma.c
++++ b/plugins/speedupcdma.c
+@@ -37,6 +37,8 @@
+ #include <ofono/cdma-connman.h>
+ #include <ofono/log.h>
+ =
 
-> diff --git a/drivers/cdmamodem/connman.c b/drivers/cdmamodem/connman.c
-> index 8c3265a..41708f7 100644
-> --- a/drivers/cdmamodem/connman.c
-> +++ b/drivers/cdmamodem/connman.c
-> @@ -264,6 +264,11 @@ static void at_c0_cb(gboolean ok, GAtResult *result,=
- gpointer user_data)
->  	}
->  =
++#include "drivers/atmodem/vendor.h"
++
+ struct speedupcdma_data {
+ 	GAtChat *modem;
+ 	GAtChat *aux;
+@@ -146,6 +148,8 @@ static int speedupcdma_enable(struct ofono_modem *modem)
+ 		return -EIO;
+ 	}
+ =
 
->  	switch (cd->vendor) {
-> +	case OFONO_VENDOR_SPEEDUP:
-> +		/*
-> +		 * Fall through: SpeedUp modem uses same prefix as Huawei
-> +		 * modem for dormant notification.
-> +		 */
++	g_at_chat_set_slave(data->modem, data->aux);
++
+ 	g_at_chat_send(data->modem, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
+ 	g_at_chat_send(data->aux, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
+ =
 
-If the handling is exactly the same, then it is better to just skip this
-step.  Using OFONO_VENDOR_HUAWEI from the speedup plugin is just fine.
+@@ -210,7 +214,8 @@ static void speedupcdma_post_online(struct ofono_modem =
+*modem)
+ =
 
->  	case OFONO_VENDOR_HUAWEI:
->  		chat =3D g_at_chat_get_slave(cd->chat);
->  		g_at_chat_register(chat, "^DSDORMANT", huawei_dsdormant_notify,
+ 	DBG("%p", modem);
+ =
 
-Regards,
--Denis
+-	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->modem);
++	ofono_cdma_connman_create(modem, OFONO_VENDOR_HUAWEI, "cdmamodem",
++					data->modem);
+ }
+ =
 
---===============0617305640443982076==--
+ static struct ofono_modem_driver speedupcdma_driver =3D {
+-- =
+
+1.7.1
+
+
+--===============5925074339948647707==--
 
