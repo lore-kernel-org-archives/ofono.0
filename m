@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4980738743516686873=="
+Content-Type: multipart/mixed; boundary="===============7044422380783268378=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [RFC v3 11/16] elect: Dis/Connect Serial interface
-Date: Tue, 13 Dec 2011 16:00:05 +0100
-Message-ID: <1323788410-9988-12-git-send-email-wagi@monom.org>
+Subject: [RFC v3 12/16] elect: Add skeleton dial implementation
+Date: Tue, 13 Dec 2011 16:00:06 +0100
+Message-ID: <1323788410-9988-13-git-send-email-wagi@monom.org>
 In-Reply-To: <1323788410-9988-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4980738743516686873==
+--===============7044422380783268378==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,198 +16,152 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- elect/device.c |  124 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 122 insertions(+), 2 deletions(-)
+ Makefile.am   |    3 +-
+ elect/dial.c  |   83 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ elect/elect.h |   16 +++++++++++
+ 3 files changed, 101 insertions(+), 1 deletions(-)
+ create mode 100644 elect/dial.c
 
-diff --git a/elect/device.c b/elect/device.c
-index f9a01fd..b404546 100644
---- a/elect/device.c
-+++ b/elect/device.c
-@@ -58,7 +58,10 @@ struct elect_device {
- 	gboolean active;
- 	struct ipv4_settings settings;
+diff --git a/Makefile.am b/Makefile.am
+index a11176e..588183d 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -653,7 +653,8 @@ sbin_PROGRAMS +=3D elect/electd
  =
 
-+	char *tty;
+ elect_electd_SOURCES =3D $(gdbus_sources) $(btio_sources) \
+ 			src/log.c src/dbus.c plugins/bluetooth.c \
+-			elect/main.c elect/dbus.c elect/manager.c elect/device.c
++			elect/main.c elect/dbus.c elect/manager.c elect/device.c \
++			elect/dial.c
+ =
+
+ elect_electd_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LI=
+BS@ -ldl
+ =
+
+diff --git a/elect/dial.c b/elect/dial.c
+new file mode 100644
+index 0000000..6f83981
+--- /dev/null
++++ b/elect/dial.c
+@@ -0,0 +1,83 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2011  BMW Car IT GmbH. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
- 	DBusPendingCall *call;
-+	DBusMessage *pending;
- };
- =
-
- const char *__elect_device_get_path(struct elect_device *device)
-@@ -187,11 +190,116 @@ static DBusMessage *device_get_properties(DBusConnec=
-tion *conn,
- 	return reply;
- }
- =
-
-+static void bt_disconnect_reply(DBusPendingCall *call, gpointer user_data)
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <glib.h>
++
++#include "elect.h"
++
++struct elect_dial {
++	char *path;
++	void *data;
++
++	elect_dial_connect_cb_t connect_cb;
++	elect_dial_disconnect_cb_t disconnect_cb;
++};
++
++struct elect_dial *__elect_dial_create(elect_dial_connect_cb_t connect_cb,
++				elect_dial_disconnect_cb_t disconnect_cb,
++				void *data)
 +{
-+	struct elect_device *device =3D user_data;
-+	DBusMessage *reply;
++	struct elect_dial *dial;
 +
-+	DBG("%p", device);
++	DBG("");
 +
-+	reply =3D dbus_pending_call_steal_reply(call);
-+	dbus_message_unref(reply);
++	dial =3D g_try_new0(struct elect_dial, 1);
++	if (dial =3D=3D NULL)
++		return NULL;
 +
-+	device->call =3D NULL;
++	dial->data =3D data;
 +
-+	g_free(device->tty);
-+	device->tty =3D NULL;
++	dial->connect_cb =3D connect_cb;
++	dial->disconnect_cb =3D disconnect_cb;
++
++	return dial;
 +}
 +
-+static int bt_disconnect(struct elect_device *device)
++int __elect_dial_connect(struct elect_dial *dial, const char *path)
 +{
-+	DBusPendingCall *call;
-+	int status;
++	DBG("%s", dial->path);
 +
-+	DBG("%p", device);
++	g_free(dial->path);
++	dial->path =3D g_strdup(path);	=
+
 +
-+	if (device->tty =3D=3D NULL)
-+		return 0;
-+
-+	status =3D bluetooth_send_with_reply(device->path,
-+					BLUEZ_SERIAL_INTERFACE, "Disconnect",
-+					&call, bt_disconnect_reply,
-+					device, NULL, DBUS_TIMEOUT,
-+					DBUS_TYPE_STRING, &device->tty,
-+					DBUS_TYPE_INVALID);
-+	if (status < 0)
-+		return -EINVAL;
-+
-+	device->call =3D call;
-+
-+	return -EINPROGRESS;
++	return 0;
 +}
 +
-+static void bt_connect_reply(DBusPendingCall *call, gpointer user_data)
++int __elect_dial_disconnect(struct elect_dial *dial)
 +{
-+	struct elect_device *device =3D user_data;
-+	DBusMessage *reply;
-+	DBusError derr;
-+	char *tty;
++	DBG("%s", dial->path);
 +
-+	DBG("%p", device);
-+
-+	reply =3D dbus_pending_call_steal_reply(call);
-+
-+	device->call =3D NULL;
-+
-+	dbus_error_init(&derr);
-+	if (dbus_set_error_from_message(&derr, reply)) {
-+		DBG("Connection to bt serial returned with error: %s, %s",
-+						derr.name, derr.message);
-+
-+		dbus_error_free(&derr);
-+		goto done;
-+	}
-+
-+	dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &tty,
-+			DBUS_TYPE_INVALID);
-+
-+	DBG("%p tty %s", device, tty);
-+
-+	device->tty =3D g_strdup(tty);
-+
-+done:
-+	dbus_message_unref(reply);
-+
-+	if (device->tty !=3D NULL)
-+		reply =3D dbus_message_new_method_return(device->pending);
-+	else
-+		reply =3D __elect_error_failed(device->pending);
-+
-+	__ofono_dbus_pending_reply(&device->pending, reply);
-+
-+	device->pending =3D NULL;
++	return 0;
 +}
 +
-+static int bt_connect(struct elect_device *device)
++void __elect_dial_unref(struct elect_dial *dial)
 +{
-+	DBusPendingCall *call;
-+	int status;
-+	char *profile =3D "dun";
++	DBG("%s", dial->path);
 +
-+	DBG("%p", device);
++	g_free(dial->path);
 +
-+	status =3D bluetooth_send_with_reply(device->path,
-+					BLUEZ_SERIAL_INTERFACE, "Connect",
-+					&call, bt_connect_reply,
-+					device, NULL, DBUS_TIMEOUT,
-+					DBUS_TYPE_STRING, &profile,
-+					DBUS_TYPE_INVALID);
-+	if (status < 0)
-+		return -EINVAL;
-+
-+	device->call =3D call;
-+
-+	return -EINPROGRESS;
++	g_free(dial);
 +}
+diff --git a/elect/elect.h b/elect/elect.h
+index b8cccda..e79acf7 100644
+--- a/elect/elect.h
++++ b/elect/elect.h
+@@ -70,3 +70,19 @@ void __elect_device_foreach(elect_device_foreach_func cb=
+, void *userdata);
+ const char *__elect_device_get_path(struct elect_device *device);
+ void __elect_device_append_properties(struct elect_device *device,
+ 					DBusMessageIter *dict);
 +
- static DBusMessage *set_property_active(struct elect_device *device,
- 					DBusMessage *msg,
- 					DBusMessageIter *var)
- {
- 	ofono_bool_t active;
-+	int err;
- =
-
- 	DBG("%p elect_path %s", device, device->elect_path);
- =
-
-@@ -200,9 +308,17 @@ static DBusMessage *set_property_active(struct elect_d=
-evice *device,
- =
-
- 	dbus_message_iter_get_basic(var, &active);
- =
-
--	device->active =3D active;
-+	if (active)
-+		err =3D bt_connect(device);
-+	else
-+		err =3D bt_disconnect(device);
- =
-
--	return g_dbus_create_reply(msg, DBUS_TYPE_INVALID);
-+	if (err !=3D -EINPROGRESS && err < 0)
-+		return __elect_error_failed(msg);
 +
-+	device->pending =3D dbus_message_ref(msg);
++struct elect_dial;
 +
-+	return NULL;
- }
- =
-
- static DBusMessage *device_set_property(DBusConnection *conn,
-@@ -419,6 +535,9 @@ static void destroy_device(gpointer user)
- {
- 	struct elect_device *device =3D user;
- =
-
-+	if (device->pending)
-+		dbus_message_unref(device->pending);
++typedef void (*elect_dial_connect_cb_t)(const char *interface, const char =
+*ip,
++				const char *peer,
++				const char *dns1, const char *dns2,
++				void *data);
++typedef void (*elect_dial_disconnect_cb_t)(void *data);
 +
- 	if (device->call)
- 		dbus_pending_call_cancel(device->call);
- =
-
-@@ -430,6 +549,7 @@ static void destroy_device(gpointer user)
- 	g_free(device->path);
- 	g_free(device->address);
- 	g_free(device->name);
-+	g_free(device->tty);
- =
-
- 	g_free(device);
- }
++struct elect_dial *__elect_dial_create(elect_dial_connect_cb_t connect_cb,
++				elect_dial_disconnect_cb_t disconnect_cb,
++				void *data);
++int __elect_dial_connect(struct elect_dial *dial, const char *path);
++int __elect_dial_disconnect(struct elect_dial *dial);
++void __elect_dial_unref(struct elect_dial *dial);
 -- =
 
 1.7.8.110.g4cb5d1
 
 
---===============4980738743516686873==--
+--===============7044422380783268378==--
 
