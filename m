@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7044422380783268378=="
+Content-Type: multipart/mixed; boundary="===============1282926914106216293=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [RFC v3 12/16] elect: Add skeleton dial implementation
-Date: Tue, 13 Dec 2011 16:00:06 +0100
-Message-ID: <1323788410-9988-13-git-send-email-wagi@monom.org>
+Subject: [RFC v3 13/16] elect: Add ppp callbacks to device
+Date: Tue, 13 Dec 2011 16:00:07 +0100
+Message-ID: <1323788410-9988-14-git-send-email-wagi@monom.org>
 In-Reply-To: <1323788410-9988-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7044422380783268378==
+--===============1282926914106216293==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,152 +16,185 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- Makefile.am   |    3 +-
- elect/dial.c  |   83 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ elect/device.c |  103 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- elect/elect.h |   16 +++++++++++
- 3 files changed, 101 insertions(+), 1 deletions(-)
- create mode 100644 elect/dial.c
+ 1 files changed, 103 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index a11176e..588183d 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -653,7 +653,8 @@ sbin_PROGRAMS +=3D elect/electd
+diff --git a/elect/device.c b/elect/device.c
+index b404546..b4cbbfc 100644
+--- a/elect/device.c
++++ b/elect/device.c
+@@ -59,6 +59,7 @@ struct elect_device {
+ 	struct ipv4_settings settings;
  =
 
- elect_electd_SOURCES =3D $(gdbus_sources) $(btio_sources) \
- 			src/log.c src/dbus.c plugins/bluetooth.c \
--			elect/main.c elect/dbus.c elect/manager.c elect/device.c
-+			elect/main.c elect/dbus.c elect/manager.c elect/device.c \
-+			elect/dial.c
- =
-
- elect_electd_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LI=
-BS@ -ldl
- =
-
-diff --git a/elect/dial.c b/elect/dial.c
-new file mode 100644
-index 0000000..6f83981
---- /dev/null
-+++ b/elect/dial.c
-@@ -0,0 +1,83 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2011  BMW Car IT GmbH. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <glib.h>
-+
-+#include "elect.h"
-+
-+struct elect_dial {
-+	char *path;
-+	void *data;
-+
-+	elect_dial_connect_cb_t connect_cb;
-+	elect_dial_disconnect_cb_t disconnect_cb;
-+};
-+
-+struct elect_dial *__elect_dial_create(elect_dial_connect_cb_t connect_cb,
-+				elect_dial_disconnect_cb_t disconnect_cb,
-+				void *data)
-+{
+ 	char *tty;
 +	struct elect_dial *dial;
-+
-+	DBG("");
-+
-+	dial =3D g_try_new0(struct elect_dial, 1);
-+	if (dial =3D=3D NULL)
-+		return NULL;
-+
-+	dial->data =3D data;
-+
-+	dial->connect_cb =3D connect_cb;
-+	dial->disconnect_cb =3D disconnect_cb;
-+
-+	return dial;
-+}
-+
-+int __elect_dial_connect(struct elect_dial *dial, const char *path)
-+{
-+	DBG("%s", dial->path);
-+
-+	g_free(dial->path);
-+	dial->path =3D g_strdup(path);	=
+ =
 
-+
-+	return 0;
-+}
-+
-+int __elect_dial_disconnect(struct elect_dial *dial)
+ 	DBusPendingCall *call;
+ 	DBusMessage *pending;
+@@ -165,6 +166,27 @@ void __elect_device_foreach(elect_device_foreach_func =
+func, void *userdata)
+ 	}
+ }
+ =
+
++static void settings_changed(struct elect_device *device)
 +{
-+	DBG("%s", dial->path);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	DBusMessage *signal;
++	DBusMessageIter iter;
++	const char *key =3D "Settings";
 +
-+	return 0;
++	signal =3D dbus_message_new_signal(device->elect_path,
++					ELECT_DEVICE_INTERFACE,
++					"PropertyChanged");
++
++	if (signal =3D=3D NULL)
++		return;
++	dbus_message_iter_init_append(signal, &iter);
++	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &key);
++
++	settings_append(device, &iter);
++
++	g_dbus_send_message(conn, signal);
 +}
 +
-+void __elect_dial_unref(struct elect_dial *dial)
+ static DBusMessage *device_get_properties(DBusConnection *conn,
+ 					DBusMessage *msg, void *data)
+ {
+@@ -230,6 +252,73 @@ static int bt_disconnect(struct elect_device *device)
+ 	return -EINPROGRESS;
+ }
+ =
+
++static void disconnect_cb(void *data)
 +{
-+	DBG("%s", dial->path);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	struct elect_device *device =3D data;
 +
-+	g_free(dial->path);
++	DBG("%p", device);
 +
-+	g_free(dial);
++	g_free(device->settings.interface);
++	g_free(device->settings.ip);
++	g_strfreev(device->settings.nameservers);
++	device->settings.interface =3D NULL;
++	device->settings.ip =3D NULL;
++	device->settings.nameservers =3D NULL;
++
++	device->active =3D FALSE;
++
++	settings_changed(device);
++	ofono_dbus_signal_property_changed(conn, device->elect_path,
++					ELECT_DEVICE_INTERFACE, "Active",
++					DBUS_TYPE_BOOLEAN, &device->active);
++
++	bt_disconnect(device);
 +}
-diff --git a/elect/elect.h b/elect/elect.h
-index b8cccda..e79acf7 100644
---- a/elect/elect.h
-+++ b/elect/elect.h
-@@ -70,3 +70,19 @@ void __elect_device_foreach(elect_device_foreach_func cb=
-, void *userdata);
- const char *__elect_device_get_path(struct elect_device *device);
- void __elect_device_append_properties(struct elect_device *device,
- 					DBusMessageIter *dict);
 +
++static void connect_cb(const char *interface, const char *ip,
++			const char *peer, const char *dns1, const char *dns2,
++			void *data)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	struct elect_device *device =3D data;
++	const char *dns[3] =3D { dns1, dns2, 0 };
 +
-+struct elect_dial;
++	DBG("%p", device);
 +
-+typedef void (*elect_dial_connect_cb_t)(const char *interface, const char =
-*ip,
-+				const char *peer,
-+				const char *dns1, const char *dns2,
-+				void *data);
-+typedef void (*elect_dial_disconnect_cb_t)(void *data);
++	g_free(device->settings.interface);
++	device->settings.interface =3D g_strdup(interface);
++	if (device->settings.interface =3D=3D NULL)
++		goto err;
 +
-+struct elect_dial *__elect_dial_create(elect_dial_connect_cb_t connect_cb,
-+				elect_dial_disconnect_cb_t disconnect_cb,
-+				void *data);
-+int __elect_dial_connect(struct elect_dial *dial, const char *path);
-+int __elect_dial_disconnect(struct elect_dial *dial);
-+void __elect_dial_unref(struct elect_dial *dial);
++	g_free(device->settings.ip);
++	device->settings.ip =3D g_strdup(ip);
++	if (device->settings.ip =3D=3D NULL)
++		goto err;
++
++	g_strfreev(device->settings.nameservers);
++	device->settings.nameservers =3D g_strdupv((gchar **)dns);
++	if (device->settings.nameservers =3D=3D NULL)
++		goto err;
++
++	device->active =3D TRUE;
++
++	settings_changed(device);
++	ofono_dbus_signal_property_changed(conn, device->elect_path,
++					ELECT_DEVICE_INTERFACE, "Active",
++					DBUS_TYPE_BOOLEAN, &device->active);
++
++	return;
++
++err:
++	g_free(device->settings.interface);
++	g_free(device->settings.ip);
++	g_strfreev(device->settings.nameservers);
++	device->settings.interface =3D NULL;
++	device->settings.ip =3D NULL;
++	device->settings.nameservers =3D NULL;
++}
++
+ static void bt_connect_reply(DBusPendingCall *call, gpointer user_data)
+ {
+ 	struct elect_device *device =3D user_data;
+@@ -258,6 +347,10 @@ static void bt_connect_reply(DBusPendingCall *call, gp=
+ointer user_data)
+ 	DBG("%p tty %s", device, tty);
+ =
+
+ 	device->tty =3D g_strdup(tty);
++	if (device->tty =3D=3D NULL)
++		goto done;
++
++	__elect_dial_connect(device->dial, device->tty);
+ =
+
+ done:
+ 	dbus_message_unref(reply);
+@@ -458,6 +551,10 @@ static int bt_probe(const char *path, const char *dev_=
+addr,
+ 	if (device->name =3D=3D NULL)
+ 		goto free;
+ =
+
++	device->dial =3D __elect_dial_create(connect_cb, disconnect_cb, device);
++	if (device->dial =3D=3D NULL)
++		goto free;
++
+ 	g_hash_table_insert(device_hash, g_strdup(path), device);
+ =
+
+ 	register_device(device);
+@@ -488,6 +585,9 @@ static gboolean bt_remove_device(gpointer key, gpointer=
+ value,
+ 	if (device->call !=3D NULL)
+ 		dbus_pending_call_cancel(device->call);
+ =
+
++	if (device->dial !=3D NULL)
++		__elect_dial_unref(device->dial);
++
+ 	if (prefix && g_str_has_prefix(path, prefix) =3D=3D FALSE)
+ 		return FALSE;
+ =
+
+@@ -541,6 +641,9 @@ static void destroy_device(gpointer user)
+ 	if (device->call)
+ 		dbus_pending_call_cancel(device->call);
+ =
+
++	if (device->dial)
++		__elect_dial_unref(device->dial);
++
+ 	g_free(device->settings.interface);
+ 	g_free(device->settings.ip);
+ 	g_strfreev(device->settings.nameservers);
 -- =
 
 1.7.8.110.g4cb5d1
 
 
---===============7044422380783268378==--
+--===============1282926914106216293==--
 
