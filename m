@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============1294476631866922452=="
+Content-Type: multipart/mixed; boundary="===============2228609098332962024=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [RFC v3 05/16] elect: Add Manager interface
-Date: Tue, 13 Dec 2011 15:59:59 +0100
-Message-ID: <1323788410-9988-6-git-send-email-wagi@monom.org>
+Subject: [RFC v3 06/16] elect: Add skeleton implementation for device
+Date: Tue, 13 Dec 2011 16:00:00 +0100
+Message-ID: <1323788410-9988-7-git-send-email-wagi@monom.org>
 In-Reply-To: <1323788410-9988-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1294476631866922452==
+--===============2228609098332962024==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,16 +16,16 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- Makefile.am     |    2 +-
- elect/elect.h   |    6 +++
- elect/main.c    |    9 ++---
- elect/manager.c |   97 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am    |    2 +-
+ elect/device.c |  100 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 4 files changed, 107 insertions(+), 7 deletions(-)
- create mode 100644 elect/manager.c
+ elect/elect.h  |   15 ++++++++
+ elect/main.c   |    4 ++-
+ 4 files changed, 119 insertions(+), 2 deletions(-)
+ create mode 100644 elect/device.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 43311b0..628cd0b 100644
+index 628cd0b..cdeab8d 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -653,7 +653,7 @@ sbin_PROGRAMS +=3D elect/electd
@@ -33,74 +33,21 @@ index 43311b0..628cd0b 100644
 
  elect_electd_SOURCES =3D $(gdbus_sources) \
  			src/log.c src/dbus.c \
--			elect/main.c elect/dbus.c
-+			elect/main.c elect/dbus.c elect/manager.c
+-			elect/main.c elect/dbus.c elect/manager.c
++			elect/main.c elect/dbus.c elect/manager.c elect/device.c
  =
 
  elect_electd_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LI=
 BS@ -ldl
  =
 
-diff --git a/elect/elect.h b/elect/elect.h
-index 7338c18..8ecd694 100644
---- a/elect/elect.h
-+++ b/elect/elect.h
-@@ -39,6 +39,8 @@ void __ofono_log_enable(struct ofono_debug_desc *start,
- #include <ofono/dbus.h>
- =
-
- #define ELECT_SERVICE			"org.ofono.elect"
-+#define ELECT_MANAGER_INTERFACE		"org.ofono.elect.Manager"
-+#define ELECT_MANAGER_PATH		"/"
- =
-
- int __ofono_dbus_init(DBusConnection *conn);
- void __ofono_dbus_cleanup(void);
-@@ -48,3 +50,7 @@ void __ofono_dbus_pending_reply(DBusMessage **msg, DBusMe=
-ssage *reply);
- DBusMessage *__elect_error_invalid_args(DBusMessage *msg);
- DBusMessage *__elect_error_failed(DBusMessage *msg);
- DBusMessage *__elect_error_connection_refused(DBusMessage *msg);
-+
-+
-+int __elect_manager_init(void);
-+void __elect_manager_cleanup(void);
-diff --git a/elect/main.c b/elect/main.c
-index 714f8c8..66c3ea9 100644
---- a/elect/main.c
-+++ b/elect/main.c
-@@ -232,15 +232,12 @@ int main(int argc, char **argv)
- =
-
- 	__ofono_dbus_init(conn);
- =
-
--	/*
--	 * The reason why this DBG is here is that we have the __stop__debug,
--	 * __start__debug linking symbols in the object. As soon we
--	 * have real DBG we can remove this one again.
--	 */
--	DBG("");
-+	__elect_manager_init();
- =
-
- 	g_main_loop_run(event_loop);
- =
-
-+	__elect_manager_cleanup();
-+
- 	__ofono_dbus_cleanup();
- 	dbus_connection_unref(conn);
- =
-
-diff --git a/elect/manager.c b/elect/manager.c
+diff --git a/elect/device.c b/elect/device.c
 new file mode 100644
-index 0000000..65c8242
+index 0000000..1198083
 --- /dev/null
-+++ b/elect/manager.c
-@@ -0,0 +1,97 @@
++++ b/elect/device.c
+@@ -0,0 +1,100 @@
 +/*
-+ *
 + *  oFono - Open Source Telephony
 + *
 + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
@@ -126,81 +73,143 @@ index 0000000..65c8242
 +#include <config.h>
 +#endif
 +
++#include <errno.h>
 +#include <string.h>
++#include <stdio.h>
++#include <netinet/ether.h>
++
 +#include <glib.h>
 +#include <gdbus.h>
 +
 +#include "elect.h"
 +
-+static DBusMessage *manager_get_devices(DBusConnection *conn,
-+					DBusMessage *msg, void *data)
++static GHashTable *device_hash;
++
++struct elect_device {
++};
++
++const char *__elect_device_get_path(struct elect_device *device)
 +{
-+	DBusMessage *reply;
-+	DBusMessageIter iter;
-+	DBusMessageIter array;
++	return "/";
++}
++
++void __elect_device_append_properties(struct elect_device *device,
++					DBusMessageIter *dict)
++{
++}
++
++void __elect_device_foreach(elect_device_foreach_func func, void *userdata)
++{
++	GHashTableIter iter;
++	gpointer key, value;
 +
 +	DBG("");
 +
-+	reply =3D dbus_message_new_method_return(msg);
-+	if (reply =3D=3D NULL)
-+		return NULL;
++	g_hash_table_iter_init(&iter, device_hash);
 +
-+	dbus_message_iter_init_append(reply, &iter);
++	while (g_hash_table_iter_next(&iter, &key, &value) =3D=3D TRUE) {
++		struct elect_device *device =3D value;
 +
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+					DBUS_STRUCT_BEGIN_CHAR_AS_STRING
-+					DBUS_TYPE_OBJECT_PATH_AS_STRING
-+					DBUS_TYPE_ARRAY_AS_STRING
-+					DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
-+					DBUS_TYPE_STRING_AS_STRING
-+					DBUS_TYPE_VARIANT_AS_STRING
-+					DBUS_DICT_ENTRY_END_CHAR_AS_STRING
-+					DBUS_STRUCT_END_CHAR_AS_STRING,
-+					&array);
-+
-+	dbus_message_iter_close_container(&iter, &array);
-+
-+	return reply;
++		func(device, userdata);
++	}
 +}
 +
-+static GDBusMethodTable manager_methods[] =3D {
-+	{ "GetDevices",          "",    "a(oa{sv})",  manager_get_devices },
-+	{ }
-+};
-+
-+static GDBusSignalTable manager_signals[] =3D {
-+	{ "DeviceAdded",        "oa{sv}" },
-+	{ "DeviceRemoved",      "o" },
-+	{ }
-+};
-+
-+int __elect_manager_init(void)
++static void destroy_device(gpointer user)
 +{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	gboolean ret;
++	struct elect_device *device =3D user;
 +
-+	ret =3D g_dbus_register_interface(conn, ELECT_MANAGER_PATH,
-+					ELECT_MANAGER_INTERFACE,
-+					manager_methods, manager_signals,
-+					NULL, NULL, NULL);
++	g_free(device);
++}
 +
-+	if (ret =3D=3D FALSE)
-+		return -1;
++static void device_shutdown(gpointer key, gpointer value, gpointer user_da=
+ta)
++{
++}
++
++void __elect_device_shutdown(void)
++{
++	g_hash_table_foreach(device_hash, device_shutdown, NULL);
++
++	__elect_exit();
++}
++
++int __elect_device_init(void)
++{
++	DBG("");
++
++	device_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++						g_free, destroy_device);
 +
 +	return 0;
 +}
 +
-+void __elect_manager_cleanup(void)
++void __elect_device_cleanup(void)
 +{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
++	DBG("");
 +
-+	g_dbus_unregister_interface(conn, ELECT_MANAGER_PATH,
-+					ELECT_MANAGER_INTERFACE);
++	g_hash_table_destroy(device_hash);
 +}
+diff --git a/elect/elect.h b/elect/elect.h
+index 8ecd694..3244a1e 100644
+--- a/elect/elect.h
++++ b/elect/elect.h
+@@ -54,3 +54,18 @@ DBusMessage *__elect_error_connection_refused(DBusMessag=
+e *msg);
+ =
+
+ int __elect_manager_init(void);
+ void __elect_manager_cleanup(void);
++
++
++struct elect_device;
++
++int __elect_device_init(void);
++void __elect_device_cleanup(void);
++void __elect_device_shutdown(void);
++
++typedef void (*elect_device_foreach_func)(struct elect_device *device,
++						void *data);
++void __elect_device_foreach(elect_device_foreach_func cb, void *userdata);
++
++const char *__elect_device_get_path(struct elect_device *device);
++void __elect_device_append_properties(struct elect_device *device,
++					DBusMessageIter *dict);
+diff --git a/elect/main.c b/elect/main.c
+index 66c3ea9..16303d5 100644
+--- a/elect/main.c
++++ b/elect/main.c
+@@ -80,7 +80,7 @@ static gboolean signal_handler(GIOChannel *channel, GIOCo=
+ndition cond,
+ 			g_timeout_add_seconds(SHUTDOWN_GRACE_SECONDS,
+ 						quit_eventloop, NULL);
+ =
+
+-			quit_eventloop(NULL);
++			__elect_device_shutdown();
+ 		}
+ =
+
+ 		__terminated =3D 1;
+@@ -233,9 +233,11 @@ int main(int argc, char **argv)
+ 	__ofono_dbus_init(conn);
+ =
+
+ 	__elect_manager_init();
++	__elect_device_init();
+ =
+
+ 	g_main_loop_run(event_loop);
+ =
+
++	__elect_device_cleanup();
+ 	__elect_manager_cleanup();
+ =
+
+ 	__ofono_dbus_cleanup();
 -- =
 
 1.7.8.110.g4cb5d1
 
 
---===============1294476631866922452==--
+--===============2228609098332962024==--
 
