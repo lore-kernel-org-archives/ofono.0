@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7399268489646243579=="
+Content-Type: multipart/mixed; boundary="===============4980738743516686873=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [RFC v3 10/16] elect: Add device D-Bus interface
-Date: Tue, 13 Dec 2011 16:00:04 +0100
-Message-ID: <1323788410-9988-11-git-send-email-wagi@monom.org>
+Subject: [RFC v3 11/16] elect: Dis/Connect Serial interface
+Date: Tue, 13 Dec 2011 16:00:05 +0100
+Message-ID: <1323788410-9988-12-git-send-email-wagi@monom.org>
 In-Reply-To: <1323788410-9988-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7399268489646243579==
+--===============4980738743516686873==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,351 +16,198 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- elect/device.c |  235 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- elect/elect.h  |    1 +
- 2 files changed, 236 insertions(+), 0 deletions(-)
+ elect/device.c |  124 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 files changed, 122 insertions(+), 2 deletions(-)
 
 diff --git a/elect/device.c b/elect/device.c
-index 13999fd..f9a01fd 100644
+index f9a01fd..b404546 100644
 --- a/elect/device.c
 +++ b/elect/device.c
-@@ -35,9 +35,17 @@
+@@ -58,7 +58,10 @@ struct elect_device {
+ 	gboolean active;
+ 	struct ipv4_settings settings;
  =
 
- #include "elect.h"
- =
-
-+#define STATIC_IP_NETMASK "255.255.255.255"
-+
- static int next_device_id =3D 0;
- static GHashTable *device_hash;
- =
-
-+struct ipv4_settings {
-+	char *interface;
-+	char *ip;
-+	char **nameservers;
-+};
-+
- struct elect_device {
- 	/* The D-Bus path to this device */
- 	char *elect_path;
-@@ -47,6 +55,9 @@ struct elect_device {
- 	char *address;
- 	char *name;
- =
-
-+	gboolean active;
-+	struct ipv4_settings settings;
++	char *tty;
 +
  	DBusPendingCall *call;
++	DBusMessage *pending;
  };
  =
 
-@@ -55,9 +66,84 @@ const char *__elect_device_get_path(struct elect_device =
-*device)
- 	return  device->elect_path;
+ const char *__elect_device_get_path(struct elect_device *device)
+@@ -187,11 +190,116 @@ static DBusMessage *device_get_properties(DBusConnec=
+tion *conn,
+ 	return reply;
  }
  =
 
-+static void settings_append(struct elect_device *device,
-+					DBusMessageIter *iter)
++static void bt_disconnect_reply(DBusPendingCall *call, gpointer user_data)
 +{
-+	DBusMessageIter variant;
-+	DBusMessageIter array;
-+	char typesig[5];
-+	char arraysig[6];
-+	const char *method;
-+	const char *netmask;
-+
-+	arraysig[0] =3D DBUS_TYPE_ARRAY;
-+	arraysig[1] =3D typesig[0] =3D DBUS_DICT_ENTRY_BEGIN_CHAR;
-+	arraysig[2] =3D typesig[1] =3D DBUS_TYPE_STRING;
-+	arraysig[3] =3D typesig[2] =3D DBUS_TYPE_VARIANT;
-+	arraysig[4] =3D typesig[3] =3D DBUS_DICT_ENTRY_END_CHAR;
-+	arraysig[5] =3D typesig[4] =3D '\0';
-+
-+	dbus_message_iter_open_container(iter, DBUS_TYPE_VARIANT,
-+						arraysig, &variant);
-+
-+	dbus_message_iter_open_container(&variant, DBUS_TYPE_ARRAY,
-+						typesig, &array);
-+
-+	if (device->active =3D=3D FALSE)
-+		goto out;
-+
-+	if (device->settings.interface)
-+		ofono_dbus_dict_append(&array, "Interface",
-+				DBUS_TYPE_STRING, &device->settings.interface);
-+
-+	method =3D "static";
-+	ofono_dbus_dict_append(&array, "Method", DBUS_TYPE_STRING, &method);
-+
-+	if (device->settings.ip)
-+		ofono_dbus_dict_append(&array, "Address", DBUS_TYPE_STRING,
-+					&device->settings.ip);
-+
-+	netmask =3D STATIC_IP_NETMASK;
-+	ofono_dbus_dict_append(&array, "Netmask", DBUS_TYPE_STRING,
-+					&netmask);
-+
-+	if (device->settings.nameservers)
-+		ofono_dbus_dict_append_array(&array, "DomainNameServers",
-+						DBUS_TYPE_STRING,
-+						&device->settings.nameservers);
-+
-+out:
-+	dbus_message_iter_close_container(&variant, &array);
-+
-+	dbus_message_iter_close_container(iter, &variant);
-+}
-+
-+static void settings_append_dict(struct elect_device *device,
-+				DBusMessageIter *dict)
-+{
-+	DBusMessageIter entry;
-+	const char *key =3D "Settings";
-+
-+	dbus_message_iter_open_container(dict, DBUS_TYPE_DICT_ENTRY,
-+						NULL, &entry);
-+
-+	dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &key);
-+
-+	settings_append(device, &entry);
-+
-+	dbus_message_iter_close_container(dict, &entry);
-+}
-+
- void __elect_device_append_properties(struct elect_device *device,
- 					DBusMessageIter *dict)
- {
-+	settings_append_dict(device, dict);
-+
-+	ofono_dbus_dict_append(dict, "Active", DBUS_TYPE_BOOLEAN,
-+				&device->active);
-+
-+	ofono_dbus_dict_append(dict, "Name", DBUS_TYPE_STRING,
-+				&device->name);
- }
- =
-
- void __elect_device_foreach(elect_device_foreach_func func, void *userdata)
-@@ -76,6 +162,144 @@ void __elect_device_foreach(elect_device_foreach_func =
-func, void *userdata)
- 	}
- }
- =
-
-+static DBusMessage *device_get_properties(DBusConnection *conn,
-+					DBusMessage *msg, void *data)
-+{
-+	struct elect_device *device =3D data;
++	struct elect_device *device =3D user_data;
 +	DBusMessage *reply;
-+	DBusMessageIter iter;
-+	DBusMessageIter dict;
 +
-+	reply =3D dbus_message_new_method_return(msg);
-+	if (reply =3D=3D NULL)
-+		return NULL;
++	DBG("%p", device);
 +
-+	dbus_message_iter_init_append(reply, &iter);
++	reply =3D dbus_pending_call_steal_reply(call);
++	dbus_message_unref(reply);
 +
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+					OFONO_PROPERTIES_ARRAY_SIGNATURE,
-+					&dict);
++	device->call =3D NULL;
 +
-+	__elect_device_append_properties(device, &dict);
-+
-+	dbus_message_iter_close_container(&iter, &dict);
-+
-+	return reply;
++	g_free(device->tty);
++	device->tty =3D NULL;
 +}
 +
-+static DBusMessage *set_property_active(struct elect_device *device,
-+					DBusMessage *msg,
-+					DBusMessageIter *var)
++static int bt_disconnect(struct elect_device *device)
 +{
-+	ofono_bool_t active;
++	DBusPendingCall *call;
++	int status;
 +
-+	DBG("%p elect_path %s", device, device->elect_path);
++	DBG("%p", device);
 +
-+	if (dbus_message_iter_get_arg_type(var) !=3D DBUS_TYPE_BOOLEAN)
-+		return __elect_error_invalid_args(msg);
++	if (device->tty =3D=3D NULL)
++		return 0;
 +
-+	dbus_message_iter_get_basic(var, &active);
++	status =3D bluetooth_send_with_reply(device->path,
++					BLUEZ_SERIAL_INTERFACE, "Disconnect",
++					&call, bt_disconnect_reply,
++					device, NULL, DBUS_TIMEOUT,
++					DBUS_TYPE_STRING, &device->tty,
++					DBUS_TYPE_INVALID);
++	if (status < 0)
++		return -EINVAL;
 +
-+	device->active =3D active;
++	device->call =3D call;
 +
-+	return g_dbus_create_reply(msg, DBUS_TYPE_INVALID);
++	return -EINPROGRESS;
 +}
 +
-+static DBusMessage *device_set_property(DBusConnection *conn,
-+					DBusMessage *msg, void *data)
++static void bt_connect_reply(DBusPendingCall *call, gpointer user_data)
 +{
-+	struct elect_device *device =3D data;
-+	DBusMessageIter iter, var;
-+	const char *name;
++	struct elect_device *device =3D user_data;
++	DBusMessage *reply;
++	DBusError derr;
++	char *tty;
 +
-+	if (dbus_message_iter_init(msg, &iter) =3D=3D FALSE)
-+		return __elect_error_invalid_args(msg);
++	DBG("%p", device);
 +
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
-+		return __elect_error_invalid_args(msg);
++	reply =3D dbus_pending_call_steal_reply(call);
 +
-+	dbus_message_iter_get_basic(&iter, &name);
-+	dbus_message_iter_next(&iter);
++	device->call =3D NULL;
 +
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
-+		return __elect_error_invalid_args(msg);
++	dbus_error_init(&derr);
++	if (dbus_set_error_from_message(&derr, reply)) {
++		DBG("Connection to bt serial returned with error: %s, %s",
++						derr.name, derr.message);
 +
-+	dbus_message_iter_recurse(&iter, &var);
-+
-+	if (g_str_equal(name, "Active"))
-+		return set_property_active(device, msg, &var);
-+
-+	return __elect_error_invalid_args(msg);
-+}
-+
-+static GDBusMethodTable device_methods[] =3D {
-+	{ "GetProperties",	"",	"a{sv}",	device_get_properties },
-+	{ "SetProperty",	"sv",	"",		device_set_property,
-+							G_DBUS_METHOD_FLAG_ASYNC },
-+	{ }
-+};
-+
-+static GDBusSignalTable device_signals[] =3D {
-+	{ "PropertyChanged",	"sv" },
-+	{ }
-+};
-+
-+static int register_device(struct elect_device *device)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	DBusMessage *signal;
-+	DBusMessageIter iter;
-+	DBusMessageIter dict;
-+
-+	DBG("%p elect_path %s", device, device->elect_path);
-+
-+	if (!g_dbus_register_interface(conn, device->elect_path,
-+					ELECT_DEVICE_INTERFACE,
-+					device_methods, device_signals,
-+					NULL, device, NULL)) {
-+		ofono_error("Could not register Device %s", device->path);
-+		return -EIO;
++		dbus_error_free(&derr);
++		goto done;
 +	}
 +
-+	signal =3D dbus_message_new_signal(ELECT_MANAGER_PATH,
-+						ELECT_MANAGER_INTERFACE,
-+						"DeviceAdded");
++	dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &tty,
++			DBUS_TYPE_INVALID);
 +
-+	if (signal =3D=3D NULL)
-+		return -ENOMEM;
++	DBG("%p tty %s", device, tty);
 +
-+	dbus_message_iter_init_append(signal, &iter);
++	device->tty =3D g_strdup(tty);
 +
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_OBJECT_PATH,
-+					&device->elect_path);
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+					OFONO_PROPERTIES_ARRAY_SIGNATURE,
-+					&dict);
-+	__elect_device_append_properties(device, &dict);
-+	dbus_message_iter_close_container(&iter, &dict);
++done:
++	dbus_message_unref(reply);
 +
-+	g_dbus_send_message(conn, signal);
++	if (device->tty !=3D NULL)
++		reply =3D dbus_message_new_method_return(device->pending);
++	else
++		reply =3D __elect_error_failed(device->pending);
 +
-+	return 0;
++	__ofono_dbus_pending_reply(&device->pending, reply);
++
++	device->pending =3D NULL;
 +}
 +
-+static int unregister_device(struct elect_device *device)
++static int bt_connect(struct elect_device *device)
 +{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
++	DBusPendingCall *call;
++	int status;
++	char *profile =3D "dun";
 +
-+	DBG("%p elect_path %s", device, device->elect_path);
++	DBG("%p", device);
 +
-+	g_dbus_unregister_interface(conn, device->elect_path,
-+					ELECT_DEVICE_INTERFACE);
++	status =3D bluetooth_send_with_reply(device->path,
++					BLUEZ_SERIAL_INTERFACE, "Connect",
++					&call, bt_connect_reply,
++					device, NULL, DBUS_TIMEOUT,
++					DBUS_TYPE_STRING, &profile,
++					DBUS_TYPE_INVALID);
++	if (status < 0)
++		return -EINVAL;
 +
-+	g_dbus_emit_signal(conn, ELECT_MANAGER_PATH,
-+				ELECT_MANAGER_INTERFACE, "DeviceRemoved",
-+				DBUS_TYPE_OBJECT_PATH, &device->elect_path,
-+				DBUS_TYPE_INVALID);
++	device->call =3D call;
 +
-+	return 0;
++	return -EINPROGRESS;
 +}
 +
- static int bt_probe(const char *path, const char *dev_addr,
- 				const char *adapter_addr, const char *alias)
+ static DBusMessage *set_property_active(struct elect_device *device,
+ 					DBusMessage *msg,
+ 					DBusMessageIter *var)
  {
-@@ -120,6 +344,8 @@ static int bt_probe(const char *path, const char *dev_a=
-ddr,
+ 	ofono_bool_t active;
++	int err;
  =
 
- 	g_hash_table_insert(device_hash, g_strdup(path), device);
+ 	DBG("%p elect_path %s", device, device->elect_path);
  =
 
-+	register_device(device);
+@@ -200,9 +308,17 @@ static DBusMessage *set_property_active(struct elect_d=
+evice *device,
+ =
+
+ 	dbus_message_iter_get_basic(var, &active);
+ =
+
+-	device->active =3D active;
++	if (active)
++		err =3D bt_connect(device);
++	else
++		err =3D bt_disconnect(device);
+ =
+
+-	return g_dbus_create_reply(msg, DBUS_TYPE_INVALID);
++	if (err !=3D -EINPROGRESS && err < 0)
++		return __elect_error_failed(msg);
 +
- 	next_device_id +=3D 1;
- =
-
- 	return 0;
-@@ -149,6 +375,8 @@ static gboolean bt_remove_device(gpointer key, gpointer=
- value,
- 	if (prefix && g_str_has_prefix(path, prefix) =3D=3D FALSE)
- 		return FALSE;
- =
-
-+	unregister_device(device);
++	device->pending =3D dbus_message_ref(msg);
 +
- 	return TRUE;
++	return NULL;
  }
  =
 
-@@ -194,6 +422,10 @@ static void destroy_device(gpointer user)
+ static DBusMessage *device_set_property(DBusConnection *conn,
+@@ -419,6 +535,9 @@ static void destroy_device(gpointer user)
+ {
+ 	struct elect_device *device =3D user;
+ =
+
++	if (device->pending)
++		dbus_message_unref(device->pending);
++
  	if (device->call)
  		dbus_pending_call_cancel(device->call);
  =
 
-+	g_free(device->settings.interface);
-+	g_free(device->settings.ip);
-+	g_strfreev(device->settings.nameservers);
-+
- 	g_free(device->elect_path);
+@@ -430,6 +549,7 @@ static void destroy_device(gpointer user)
  	g_free(device->path);
  	g_free(device->address);
-@@ -204,6 +436,9 @@ static void destroy_device(gpointer user)
+ 	g_free(device->name);
++	g_free(device->tty);
  =
 
- static void device_shutdown(gpointer key, gpointer value, gpointer user_da=
-ta)
- {
-+	struct elect_device *device =3D value;
-+
-+	unregister_device(device);
+ 	g_free(device);
  }
- =
-
- void __elect_device_shutdown(void)
-diff --git a/elect/elect.h b/elect/elect.h
-index 3244a1e..b8cccda 100644
---- a/elect/elect.h
-+++ b/elect/elect.h
-@@ -40,6 +40,7 @@ void __ofono_log_enable(struct ofono_debug_desc *start,
- =
-
- #define ELECT_SERVICE			"org.ofono.elect"
- #define ELECT_MANAGER_INTERFACE		"org.ofono.elect.Manager"
-+#define ELECT_DEVICE_INTERFACE		"org.ofono.elect.Device"
- #define ELECT_MANAGER_PATH		"/"
- =
-
- int __ofono_dbus_init(DBusConnection *conn);
 -- =
 
 1.7.8.110.g4cb5d1
 
 
---===============7399268489646243579==--
+--===============4980738743516686873==--
 
