@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============1282926914106216293=="
+Content-Type: multipart/mixed; boundary="===============8595446880336345904=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [RFC v3 13/16] elect: Add ppp callbacks to device
-Date: Tue, 13 Dec 2011 16:00:07 +0100
-Message-ID: <1323788410-9988-14-git-send-email-wagi@monom.org>
+Subject: [RFC v3 14/16] elect: Add GatChat and PPP handler
+Date: Tue, 13 Dec 2011 16:00:08 +0100
+Message-ID: <1323788410-9988-15-git-send-email-wagi@monom.org>
 In-Reply-To: <1323788410-9988-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1282926914106216293==
+--===============8595446880336345904==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,185 +16,220 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- elect/device.c |  103 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 103 insertions(+), 0 deletions(-)
+ Makefile.am  |    2 +-
+ elect/dial.c |  125 ++++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 2 files changed, 125 insertions(+), 2 deletions(-)
 
-diff --git a/elect/device.c b/elect/device.c
-index b404546..b4cbbfc 100644
---- a/elect/device.c
-+++ b/elect/device.c
-@@ -59,6 +59,7 @@ struct elect_device {
- 	struct ipv4_settings settings;
+diff --git a/Makefile.am b/Makefile.am
+index 588183d..f39035f 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -651,7 +651,7 @@ if ELECT
  =
 
- 	char *tty;
-+	struct elect_dial *dial;
+ sbin_PROGRAMS +=3D elect/electd
  =
 
- 	DBusPendingCall *call;
- 	DBusMessage *pending;
-@@ -165,6 +166,27 @@ void __elect_device_foreach(elect_device_foreach_func =
-func, void *userdata)
- 	}
- }
+-elect_electd_SOURCES =3D $(gdbus_sources) $(btio_sources) \
++elect_electd_SOURCES =3D $(gdbus_sources) $(btio_sources) $(gatchat_source=
+s) \
+ 			src/log.c src/dbus.c plugins/bluetooth.c \
+ 			elect/main.c elect/dbus.c elect/manager.c elect/device.c \
+ 			elect/dial.c
+diff --git a/elect/dial.c b/elect/dial.c
+index 6f83981..01ff4c2 100644
+--- a/elect/dial.c
++++ b/elect/dial.c
+@@ -24,18 +24,122 @@
+ #include <config.h>
+ #endif
  =
 
-+static void settings_changed(struct elect_device *device)
++#include <errno.h>
++
+ #include <glib.h>
+ =
+
++#include <gatchat.h>
++#include <gattty.h>
++#include <gatppp.h>
++
+ #include "elect.h"
+ =
+
++static const char *none_prefix[] =3D { NULL };
++
+ struct elect_dial {
+ 	char *path;
+ 	void *data;
+ =
+
++	GAtPPP *ppp;
++	GAtChat *chat;
++
+ 	elect_dial_connect_cb_t connect_cb;
+ 	elect_dial_disconnect_cb_t disconnect_cb;
+ };
+ =
+
++static void dial_debug(const char *str, void *data)
 +{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	DBusMessage *signal;
-+	DBusMessageIter iter;
-+	const char *key =3D "Settings";
++	DBG("%s: %s\n", (const char *) data, str);
++}
 +
-+	signal =3D dbus_message_new_signal(device->elect_path,
-+					ELECT_DEVICE_INTERFACE,
-+					"PropertyChanged");
++static void ppp_connect(const char *iface, const char *local, const char *=
+peer,
++			const char *dns1, const char *dns2,
++			gpointer user_data)
++{
++	struct elect_dial *dial =3D user_data;
 +
-+	if (signal =3D=3D NULL)
++	DBG("Network Device: %s\n", iface);
++	DBG("IP Address: %s\n", local);
++	DBG("Peer IP Address: %s\n", peer);
++	DBG("Primary DNS Server: %s\n", dns1);
++	DBG("Secondary DNS Server: %s\n", dns2);
++
++	if (dial->connect_cb)
++		dial->connect_cb(iface, local, peer, dns1, dns2, dial->data);
++}
++
++static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
+ta)
++{
++	struct elect_dial *dial =3D user_data;
++
++	DBG("PPP Link down: %d\n", reason);
++
++	g_at_ppp_unref(dial->ppp);
++	dial->ppp =3D NULL;
++
++	g_at_chat_resume(dial->chat);
++
++	if (dial->disconnect_cb)
++		dial->disconnect_cb(dial->data);
++}
++
++static void connect_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct elect_dial *dial =3D user_data;
++	GAtIO *io;
++
++	if (!ok) {
++		DBG("Unable to define context\n");
 +		return;
-+	dbus_message_iter_init_append(signal, &iter);
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &key);
++	}
 +
-+	settings_append(device, &iter);
++	/* get the data IO channel */
++	io =3D g_at_chat_get_io(dial->chat);
 +
-+	g_dbus_send_message(conn, signal);
++	/*
++	 * shutdown gatchat or else it tries to take all the input
++	 * from the modem and does not let PPP get it.
++	 */
++	g_at_chat_suspend(dial->chat);
++
++	/* open ppp */
++	dial->ppp =3D g_at_ppp_new();
++	if (dial->ppp =3D=3D NULL) {
++		DBG("Unable to create PPP object\n");
++		return;
++	}
++	g_at_ppp_set_debug(dial->ppp, dial_debug, "PPP");
++
++	/* set connect and disconnect callbacks */
++	g_at_ppp_set_connect_function(dial->ppp, ppp_connect, dial);
++	g_at_ppp_set_disconnect_function(dial->ppp, ppp_disconnect, dial);
++
++	/* open the ppp connection */
++	g_at_ppp_open(dial->ppp, io);
 +}
 +
- static DBusMessage *device_get_properties(DBusConnection *conn,
- 					DBusMessage *msg, void *data)
++static int open_serial(struct elect_dial *dial)
++{
++	GAtSyntax *syntax;
++	GIOChannel *channel;
++
++	channel =3D g_at_tty_open(dial->path, NULL);
++	if (channel =3D=3D NULL)
++		return -EIO;
++
++	syntax =3D g_at_syntax_new_gsm_permissive();
++	dial->chat =3D g_at_chat_new(channel, syntax);
++	g_io_channel_unref(channel);
++	g_at_syntax_unref(syntax);
++
++	if (dial->chat =3D=3D NULL)
++		return -EIO;
++
++	g_at_chat_set_debug(dial->chat, dial_debug, "Control");
++
++	return 0;
++}
++
+ struct elect_dial *__elect_dial_create(elect_dial_connect_cb_t connect_cb,
+ 				elect_dial_disconnect_cb_t disconnect_cb,
+ 				void *data)
+@@ -58,11 +162,19 @@ struct elect_dial *__elect_dial_create(elect_dial_conn=
+ect_cb_t connect_cb,
+ =
+
+ int __elect_dial_connect(struct elect_dial *dial, const char *path)
  {
-@@ -230,6 +252,73 @@ static int bt_disconnect(struct elect_device *device)
- 	return -EINPROGRESS;
++	int err;
+ 	DBG("%s", dial->path);
+ =
+
+ 	g_free(dial->path);
+ 	dial->path =3D g_strdup(path);	=
+
+ =
+
++	err =3D open_serial(dial);
++	if (err < 0)
++		return err;
++
++	g_at_chat_send(dial->chat, "ATD*99#", none_prefix, connect_cb,
++		dial, NULL);
++
+ 	return 0;
  }
  =
 
-+static void disconnect_cb(void *data)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct elect_device *device =3D data;
-+
-+	DBG("%p", device);
-+
-+	g_free(device->settings.interface);
-+	g_free(device->settings.ip);
-+	g_strfreev(device->settings.nameservers);
-+	device->settings.interface =3D NULL;
-+	device->settings.ip =3D NULL;
-+	device->settings.nameservers =3D NULL;
-+
-+	device->active =3D FALSE;
-+
-+	settings_changed(device);
-+	ofono_dbus_signal_property_changed(conn, device->elect_path,
-+					ELECT_DEVICE_INTERFACE, "Active",
-+					DBUS_TYPE_BOOLEAN, &device->active);
-+
-+	bt_disconnect(device);
-+}
-+
-+static void connect_cb(const char *interface, const char *ip,
-+			const char *peer, const char *dns1, const char *dns2,
-+			void *data)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct elect_device *device =3D data;
-+	const char *dns[3] =3D { dns1, dns2, 0 };
-+
-+	DBG("%p", device);
-+
-+	g_free(device->settings.interface);
-+	device->settings.interface =3D g_strdup(interface);
-+	if (device->settings.interface =3D=3D NULL)
-+		goto err;
-+
-+	g_free(device->settings.ip);
-+	device->settings.ip =3D g_strdup(ip);
-+	if (device->settings.ip =3D=3D NULL)
-+		goto err;
-+
-+	g_strfreev(device->settings.nameservers);
-+	device->settings.nameservers =3D g_strdupv((gchar **)dns);
-+	if (device->settings.nameservers =3D=3D NULL)
-+		goto err;
-+
-+	device->active =3D TRUE;
-+
-+	settings_changed(device);
-+	ofono_dbus_signal_property_changed(conn, device->elect_path,
-+					ELECT_DEVICE_INTERFACE, "Active",
-+					DBUS_TYPE_BOOLEAN, &device->active);
-+
-+	return;
-+
-+err:
-+	g_free(device->settings.interface);
-+	g_free(device->settings.ip);
-+	g_strfreev(device->settings.nameservers);
-+	device->settings.interface =3D NULL;
-+	device->settings.ip =3D NULL;
-+	device->settings.nameservers =3D NULL;
-+}
-+
- static void bt_connect_reply(DBusPendingCall *call, gpointer user_data)
+@@ -70,12 +182,23 @@ int __elect_dial_disconnect(struct elect_dial *dial)
  {
- 	struct elect_device *device =3D user_data;
-@@ -258,6 +347,10 @@ static void bt_connect_reply(DBusPendingCall *call, gp=
-ointer user_data)
- 	DBG("%p tty %s", device, tty);
+ 	DBG("%s", dial->path);
  =
 
- 	device->tty =3D g_strdup(tty);
-+	if (device->tty =3D=3D NULL)
-+		goto done;
++	if (dial->ppp =3D=3D NULL)
++		return -EINVAL;
 +
-+	__elect_dial_connect(device->dial, device->tty);
- =
-
- done:
- 	dbus_message_unref(reply);
-@@ -458,6 +551,10 @@ static int bt_probe(const char *path, const char *dev_=
-addr,
- 	if (device->name =3D=3D NULL)
- 		goto free;
- =
-
-+	device->dial =3D __elect_dial_create(connect_cb, disconnect_cb, device);
-+	if (device->dial =3D=3D NULL)
-+		goto free;
++	g_at_ppp_suspend(dial->ppp);
 +
- 	g_hash_table_insert(device_hash, g_strdup(path), device);
+ 	return 0;
+ }
  =
 
- 	register_device(device);
-@@ -488,6 +585,9 @@ static gboolean bt_remove_device(gpointer key, gpointer=
- value,
- 	if (device->call !=3D NULL)
- 		dbus_pending_call_cancel(device->call);
- =
-
-+	if (device->dial !=3D NULL)
-+		__elect_dial_unref(device->dial);
+ void __elect_dial_unref(struct elect_dial *dial)
+ {
+-	DBG("%s", dial->path);
++	DBG("");
 +
- 	if (prefix && g_str_has_prefix(path, prefix) =3D=3D FALSE)
- 		return FALSE;
- =
-
-@@ -541,6 +641,9 @@ static void destroy_device(gpointer user)
- 	if (device->call)
- 		dbus_pending_call_cancel(device->call);
- =
-
-+	if (device->dial)
-+		__elect_dial_unref(device->dial);
++	if (dial->chat !=3D NULL)
++		g_at_chat_unref(dial->chat);
 +
- 	g_free(device->settings.interface);
- 	g_free(device->settings.ip);
- 	g_strfreev(device->settings.nameservers);
++	if (dial->ppp !=3D NULL)
++		g_at_ppp_unref(dial->ppp);
+ =
+
+ 	g_free(dial->path);
+ =
+
 -- =
 
 1.7.8.110.g4cb5d1
 
 
---===============1282926914106216293==--
+--===============8595446880336345904==--
 
