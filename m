@@ -1,53 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============6124080398190077714=="
+Content-Type: multipart/mixed; boundary="===============6031841088903704099=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv2 3/3] TODO: Remove completed CPHS SPN and short-SPN tasks
-Date: Tue, 13 Dec 2011 13:36:24 +0200
-Message-ID: <1323776184-27086-4-git-send-email-oleg.zhurakivskyy@intel.com>
-In-Reply-To: <1323776184-27086-1-git-send-email-oleg.zhurakivskyy@intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v0] CDMA modem implementation support
+Date: Tue, 13 Dec 2011 15:40:36 +0100
+Message-ID: <1323787237-8307-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6124080398190077714==
+--===============6031841088903704099==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |   14 --------------
- 1 files changed, 0 insertions(+), 14 deletions(-)
+Hi,
 
-diff --git a/TODO b/TODO
-index 46dadce..484f829 100644
---- a/TODO
-+++ b/TODO
-@@ -102,20 +102,6 @@ SIM / SIM File system
-   Priority: Low
-   Complexity: C4
- =
+This is v0 of patch to support CDMA modems into ConnMan ofono plugin.
+Please tell me if it needs to be split.
 
--- CPHS SPN support
--
--  Support reading of the CPHS-defined SPN field from SIMs
--
--  Priority: High
--  Complexity: C1
--
--- CPHS Short SPN support
--
--  Support reading of the CPHS-defined short SPN field from SIMs
--
--  Priority: Medium
--  Complexity: C1
--
- =
+As current implementation is based on context that is GSM specific,
+a unique context is created for CDMA modems to be able to add the network as
+we can't trigger the context creation from oFono side.
+Maybe be should create a add_cdma_network() function no to be context
+dependant although we need to have one to store the IPv4/IPv6 settings, ind=
+ex,
+and modem path.
 
- Bluetooth HFP
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
--- =
+Kind regards,
+Guillaume
 
-1.7.5.4
+Guillaume Zajac (1):
+  ofono: Add support of CDMA modems
+
+ plugins/ofono.c |  356 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+++--
+ 1 files changed, 345 insertions(+), 11 deletions(-)
 
 
---===============6124080398190077714==--
+--===============6031841088903704099==--
 
