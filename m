@@ -1,103 +1,122 @@
-Content-Type: multipart/mixed; boundary="===============6258992399817018095=="
+Content-Type: multipart/mixed; boundary="===============7240217506796988664=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v3 06/10] gatchat: Add g_at_chat_set_slave_qcdm /
- g_at_chat_get_slave_qcdm
-Date: Wed, 14 Dec 2011 18:56:08 +0100
-Message-ID: <1323885372-3574-7-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v3 07/10] huaweicdma: Open qcdm port to be used for network
+ status and cell location
+Date: Wed, 14 Dec 2011 18:56:09 +0100
+Message-ID: <1323885372-3574-8-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1323885372-3574-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6258992399817018095==
+--===============7240217506796988664==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatchat.c |   26 ++++++++++++++++++++++++++
- gatchat/gatchat.h |    4 ++++
- 2 files changed, 30 insertions(+), 0 deletions(-)
+ plugins/huaweicdma.c |   44 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 44 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
-index 7a0ef35..2fde572 100644
---- a/gatchat/gatchat.c
-+++ b/gatchat/gatchat.c
-@@ -35,6 +35,7 @@
- #include "ringbuffer.h"
- #include "gatchat.h"
- #include "gatio.h"
-+#include "gathdlc.h"
- =
-
- /* #define WRITE_SCHEDULER_DEBUG 1 */
- =
-
-@@ -110,6 +111,7 @@ struct _GAtChat {
- 	struct at_chat *parent;
- 	guint group;
- 	GAtChat *slave;
-+	GAtHDLC	*qcdm;
+diff --git a/plugins/huaweicdma.c b/plugins/huaweicdma.c
+index 6fba0c1..f32e27f 100644
+--- a/plugins/huaweicdma.c
++++ b/plugins/huaweicdma.c
+@@ -43,6 +43,7 @@
+ struct huaweicdma_data {
+ 	GAtChat *modem;
+ 	GAtChat *pcui;
++	GAtHDLC *diag;
  };
  =
 
- struct terminator_info {
-@@ -1354,6 +1356,30 @@ GAtChat *g_at_chat_get_slave(GAtChat *chat)
- 	return chat->slave;
+ static void huaweicdma_debug(const char *str, void *data)
+@@ -77,6 +78,7 @@ static void huaweicdma_remove(struct ofono_modem *modem)
+ =
+
+ 	/* Cleanup after hot-unplug */
+ 	g_at_chat_unref(data->pcui);
++	g_at_hdlc_unref(data->diag);
+ =
+
+ 	g_free(data);
+ }
+@@ -94,6 +96,9 @@ static void cfun_enable(gboolean ok, GAtResult *result, g=
+pointer user_data)
+ =
+
+ 		g_at_chat_unref(data->pcui);
+ 		data->pcui =3D NULL;
++
++		g_at_hdlc_unref(data->diag);
++		data->diag =3D NULL;
+ 	}
+ =
+
+ 	ofono_modem_set_powered(modem, ok);
+@@ -132,6 +137,38 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	return chat;
  }
  =
 
-+GAtHDLC *g_at_chat_set_slave_qcdm(GAtChat *chat, GAtHDLC *diag)
++static GAtHDLC *open_qcdm(struct ofono_modem *modem)
 +{
-+	if (chat =3D=3D NULL)
++	const char *device;
++	GIOChannel *channel;
++	GAtHDLC *hdlc;
++
++	device =3D ofono_modem_get_string(modem, "Diag");
++	if (device =3D=3D NULL)
 +		return NULL;
 +
-+	if (chat->qcdm !=3D NULL)
-+		g_at_hdlc_unref(chat->qcdm);
++	DBG("Diagnostic Monitor %s", device);
 +
-+	if (diag !=3D NULL)
-+		chat->qcdm =3D g_at_hdlc_ref(diag);
-+	else
-+		chat->qcdm =3D NULL;
-+
-+	return chat->qcdm;
-+}
-+
-+GAtHDLC *g_at_chat_get_slave_qcdm(GAtChat *chat)
-+{
-+	if (chat =3D=3D NULL)
++	channel =3D g_at_tty_open_qcdm(device);
++	if (channel =3D=3D NULL)
 +		return NULL;
 +
-+	return chat->qcdm;
++	hdlc =3D g_at_hdlc_new(channel);
++
++	g_io_channel_unref(channel);
++
++	if (hdlc =3D=3D NULL)
++		return NULL;
++
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_hdlc_set_debug(hdlc, huaweicdma_debug, "DIAG: ");
++
++	g_at_hdlc_set_xmit_accm(hdlc, 0);
++	g_at_hdlc_set_recv_accm(hdlc, 0);
++
++	return hdlc;
 +}
 +
- GIOChannel *g_at_chat_get_channel(GAtChat *chat)
+ static int huaweicdma_enable(struct ofono_modem *modem)
  {
- 	if (chat =3D=3D NULL || chat->parent->io =3D=3D NULL)
-diff --git a/gatchat/gatchat.h b/gatchat/gatchat.h
-index 367581e..496b3dc 100644
---- a/gatchat/gatchat.h
-+++ b/gatchat/gatchat.h
-@@ -30,6 +30,7 @@ extern "C" {
- #include "gatsyntax.h"
- #include "gatutil.h"
- #include "gatio.h"
-+#include "gathdlc.h"
+ 	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
+@@ -149,6 +186,10 @@ static int huaweicdma_enable(struct ofono_modem *modem)
+ 		return -EIO;
+ 	}
  =
 
- struct _GAtChat;
- =
-
-@@ -68,6 +69,9 @@ GAtChat *g_at_chat_clone(GAtChat *chat);
- GAtChat *g_at_chat_set_slave(GAtChat *chat, GAtChat *slave);
- GAtChat *g_at_chat_get_slave(GAtChat *chat);
- =
-
-+GAtHDLC *g_at_chat_set_slave_qcdm(GAtChat *chat, GAtHDLC *diag);
-+GAtHDLC *g_at_chat_get_slave_qcdm(GAtChat *chat);
++	data->diag =3D open_qcdm(modem);
++	if (data->diag !=3D NULL)
++		g_at_chat_set_slave_qcdm(data->pcui, data->diag);
 +
- void g_at_chat_suspend(GAtChat *chat);
- void g_at_chat_resume(GAtChat *chat);
+ 	g_at_chat_set_slave(data->modem, data->pcui);
+ =
+
+ 	g_at_chat_send(data->modem, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
+@@ -186,6 +227,9 @@ static int huaweicdma_disable(struct ofono_modem *modem)
+ 	g_at_chat_unref(data->modem);
+ 	data->modem =3D NULL;
+ =
+
++	g_at_hdlc_unref(data->diag);
++	data->diag =3D NULL;
++
+ 	g_at_chat_cancel_all(data->pcui);
+ 	g_at_chat_unregister_all(data->pcui);
  =
 
 -- =
@@ -105,5 +124,5 @@ index 367581e..496b3dc 100644
 1.7.1
 
 
---===============6258992399817018095==--
+--===============7240217506796988664==--
 
