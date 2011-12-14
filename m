@@ -1,114 +1,127 @@
-Content-Type: multipart/mixed; boundary="===============8953003670127680358=="
+Content-Type: multipart/mixed; boundary="===============6234136374335810750=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v3 04/10] cdma-provision: Add cdma provisioning plugin
-Date: Wed, 14 Dec 2011 18:56:06 +0100
-Message-ID: <1323885372-3574-5-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v3 05/10] cdma-netreg: Add provider name and SID support
+Date: Wed, 14 Dec 2011 18:56:07 +0100
+Message-ID: <1323885372-3574-6-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1323885372-3574-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8953003670127680358==
+--===============6234136374335810750==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/cdma-provision.c |   79 ++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 79 insertions(+), 0 deletions(-)
- create mode 100644 plugins/cdma-provision.c
+ src/cdma-netreg.c |   40 ++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 40 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/cdma-provision.c b/plugins/cdma-provision.c
-new file mode 100644
-index 0000000..1ac7be7
---- /dev/null
-+++ b/plugins/cdma-provision.c
-@@ -0,0 +1,79 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <errno.h>
+diff --git a/src/cdma-netreg.c b/src/cdma-netreg.c
+index 222c3b7..1a88d33 100644
+--- a/src/cdma-netreg.c
++++ b/src/cdma-netreg.c
+@@ -24,6 +24,7 @@
+ #endif
+ =
+
+ #include <errno.h>
 +#include <string.h>
+ =
+
+ #include <gdbus.h>
+ =
+
+@@ -38,6 +39,8 @@ struct ofono_cdma_netreg {
+ 	const struct ofono_cdma_netreg_driver *driver;
+ 	void *driver_data;
+ 	struct ofono_atom *atom;
++	char *provider_name;
++	char *sid;
+ };
+ =
+
+ static const char *cdma_netreg_status_to_string(enum cdma_netreg_status st=
+atus)
+@@ -90,6 +93,15 @@ static DBusMessage *network_get_properties(DBusConnectio=
+n *conn,
+ 					&strength);
+ 	}
+ =
+
++	if (cdma_netreg->sid)
++		ofono_dbus_dict_append(&dict, "SystemIdentifier",
++						DBUS_TYPE_STRING,
++						&cdma_netreg->sid);
 +
-+#include <glib.h>
++	if (cdma_netreg->provider_name)
++		ofono_dbus_dict_append(&dict, "Name", DBUS_TYPE_STRING,
++						&cdma_netreg->provider_name);
 +
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/types.h>
-+#include <ofono/log.h>
-+#include <ofono/plugin.h>
-+#include <ofono/modem.h>
-+#include <ofono/gprs-provision.h>
-+#include <ofono/cdma-provision.h>
+ 	dbus_message_iter_close_container(&iter, &dict);
+ =
+
+ 	return reply;
+@@ -108,6 +120,8 @@ static void serving_system_callback(const struct ofono_=
+error *error,
+ 					const char *sid, void *data)
+ {
+ 	struct ofono_cdma_netreg *cdma_netreg =3D data;
++	const char *path =3D __ofono_atom_get_path(cdma_netreg->atom);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
+ =
+
+ 	if (cdma_netreg->status !=3D CDMA_NETWORK_REGISTRATION_STATUS_REGISTERED
+ 			&& cdma_netreg->status !=3D
+@@ -120,6 +134,30 @@ static void serving_system_callback(const struct ofono=
+_error *error,
+ 	}
+ =
+
+ 	DBG("Serving system Identifier: %s", sid);
 +
-+#include "mbpi.h"
++	if (cdma_netreg->sid !=3D NULL && !strcmp(cdma_netreg->sid, sid))
++		return;
 +
-+static int cdma_provision_get_provider_name(const char *sid, char **name)
-+{
-+	GError *error =3D NULL;
++	g_free(cdma_netreg->provider_name);
++	g_free(cdma_netreg->sid);
++	cdma_netreg->provider_name =3D NULL;
++	cdma_netreg->sid =3D g_strdup(sid);
 +
-+	DBG("Search provider name for SID %s", sid);
++	ofono_dbus_signal_property_changed(conn, path,
++				OFONO_CDMA_NETWORK_REGISTRATION_INTERFACE,
++				"SystemIdentifier", DBUS_TYPE_STRING,
++				&cdma_netreg->sid);
 +
-+	*name =3D mbpi_lookup_cdma_provider_name(sid, &error);
-+	if (*name =3D=3D NULL) {
-+		if (error !=3D NULL) {
-+			ofono_error("%s", error->message);
-+			g_error_free(error);
-+		}
-+
-+		return -ENOENT;
++	if (__ofono_cdma_provision_get_name(sid,
++				&cdma_netreg->provider_name) =3D=3D FALSE) {
++		ofono_warn("Provider name not found");
++		return;
 +	}
 +
-+	DBG("Found provider name: %s", *name);
-+
-+	return 0;
-+}
-+
-+static struct ofono_cdma_provision_driver provision_driver =3D {
-+	.name =3D "CDMA provisioning",
-+	.get_provider_name =3D cdma_provision_get_provider_name
-+};
-+
-+static int cdma_provision_init(void)
-+{
-+	return ofono_cdma_provision_driver_register(&provision_driver);
-+}
-+
-+static void cdma_provision_exit(void)
-+{
-+	ofono_cdma_provision_driver_unregister(&provision_driver);
-+}
-+
-+OFONO_PLUGIN_DEFINE(cdma_provision, "CDMA provisioning Plugin", VERSION,
-+			OFONO_PLUGIN_PRIORITY_DEFAULT,
-+			cdma_provision_init, cdma_provision_exit)
++	ofono_dbus_signal_property_changed(conn, path,
++				OFONO_CDMA_NETWORK_REGISTRATION_INTERFACE,
++				"Name", DBUS_TYPE_STRING,
++				&cdma_netreg->provider_name);
+ }
+ =
+
+ static void set_registration_status(struct ofono_cdma_netreg *cdma_netreg,
+@@ -251,6 +289,8 @@ static void cdma_netreg_remove(struct ofono_atom *atom)
+ 	if (cdma_netreg->driver && cdma_netreg->driver->remove)
+ 		cdma_netreg->driver->remove(cdma_netreg);
+ =
+
++	g_free(cdma_netreg->sid);
++	g_free(cdma_netreg->provider_name);
+ 	g_free(cdma_netreg);
+ }
+ =
+
 -- =
 
 1.7.1
 
 
---===============8953003670127680358==--
+--===============6234136374335810750==--
 
