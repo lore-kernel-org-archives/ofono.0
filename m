@@ -1,68 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============1626162889534218035=="
+Content-Type: multipart/mixed; boundary="===============2979375359709584815=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC v3 14/16] elect: Add GatChat and PPP handler
-Date: Wed, 14 Dec 2011 19:20:12 -0600
-Message-ID: <4EE94B4C.1010400@gmail.com>
-In-Reply-To: <1323788410-9988-15-git-send-email-wagi@monom.org>
+From: Christopher.Vogl@hale.at
+Subject: [PATCH] telit: use CIND "rssi" indicator instead of "signal"
+Date: Thu, 15 Dec 2011 14:34:41 +0100
+Message-ID: <1323956081-1079-1-git-send-email-Christopher.Vogl@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1626162889534218035==
+--===============2979375359709584815==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Daniel,
+From: Christopher Vogl <christopher.vogl@hale.at>
 
-On 12/13/2011 09:00 AM, Daniel Wagner wrote:
-> From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-> =
+"signal" indicator permanently reports 99 (not measurable).
+---
+ drivers/atmodem/network-registration.c |    7 +++++--
+ 1 files changed, 5 insertions(+), 2 deletions(-)
 
-> ---
->  Makefile.am  |    2 +-
->  elect/dial.c |  125 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++-
->  2 files changed, 125 insertions(+), 2 deletions(-)
-> =
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index 2d808ad..b943241 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -1288,6 +1288,7 @@ static void cind_support_cb(gboolean ok, GAtResult *r=
+esult, gpointer user_data)
+ 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
+ 	GAtResultIter iter;
+ 	const char *str;
++	char *signal_identifier =3D "signal";
+ 	int index;
+ 	int min =3D 0;
+ 	int max =3D 0;
+@@ -1306,8 +1307,10 @@ static void cind_support_cb(gboolean ok, GAtResult *=
+result, gpointer user_data)
+ 	 * Telit encapsulates the CIND=3D? tokens with braces
+ 	 * so we need to skip them
+ 	 */
+-	if (nd->vendor =3D=3D OFONO_VENDOR_TELIT)
++	if (nd->vendor =3D=3D OFONO_VENDOR_TELIT) {
+ 		g_at_result_iter_open_list(&iter);
++		signal_identifier =3D "rssi";
++	}
+ =
+
+ 	while (g_at_result_iter_open_list(&iter)) {
+ 		/* Reset invalid default value for every token */
+@@ -1333,7 +1336,7 @@ static void cind_support_cb(gboolean ok, GAtResult *r=
+esult, gpointer user_data)
+ 		if (!g_at_result_iter_close_list(&iter))
+ 			goto error;
+ =
+
+-		if (g_str_equal("signal", str) =3D=3D TRUE) {
++		if (g_str_equal(signal_identifier, str) =3D=3D TRUE) {
+ 			nd->signal_index =3D index;
+ 			nd->signal_min =3D min;
+ 			nd->signal_max =3D max;
+-- =
+
+1.7.4.4
 
 
-<snip>
 
-> +static int open_serial(struct elect_dial *dial)
-> +{
-> +	GAtSyntax *syntax;
-> +	GIOChannel *channel;
-> +
-> +	channel =3D g_at_tty_open(dial->path, NULL);
-> +	if (channel =3D=3D NULL)
-> +		return -EIO;
-> +
-> +	syntax =3D g_at_syntax_new_gsm_permissive();
-> +	dial->chat =3D g_at_chat_new(channel, syntax);
-> +	g_io_channel_unref(channel);
-> +	g_at_syntax_unref(syntax);
-> +
-> +	if (dial->chat =3D=3D NULL)
-> +		return -EIO;
-> +
-> +	g_at_chat_set_debug(dial->chat, dial_debug, "Control");
-> +
-> +	return 0;
-> +}
-> +
+--
+Scanned by MailScanner.
 
-This is another case where the setup of the transport is really breaking
-your abstractions.  While this might work for RFCOMM ttys which are just
-fake ttys (e.g. no serial options, etc) this won't work for real ttys.
-You really need to abstract this part and let the plugins setup the
-transports.  Ideally the core should receive a fully set-up file
-descriptor and take it from there.
 
-See src/emulator.c inside oFono for some ideas.
-
-Regards,
--Denis
-
---===============1626162889534218035==--
+--===============2979375359709584815==--
 
