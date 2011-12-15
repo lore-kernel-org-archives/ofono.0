@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5147439798697740386=="
+Content-Type: multipart/mixed; boundary="===============1061059113072014336=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC v3 11/16] elect: Dis/Connect Serial interface
-Date: Wed, 14 Dec 2011 18:56:13 -0600
-Message-ID: <4EE945AD.4020907@gmail.com>
-In-Reply-To: <1323788410-9988-12-git-send-email-wagi@monom.org>
+Subject: Re: [RFC v3 16/16] elect: Add documentation
+Date: Wed, 14 Dec 2011 19:10:55 -0600
+Message-ID: <4EE9491F.50709@gmail.com>
+In-Reply-To: <1323788410-9988-17-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5147439798697740386==
+--===============1061059113072014336==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -20,33 +20,124 @@ On 12/13/2011 09:00 AM, Daniel Wagner wrote:
 > =
 
 > ---
->  elect/device.c |  124 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++-
->  1 files changed, 122 insertions(+), 2 deletions(-)
+>  doc/elect-api.txt |   86 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 86 insertions(+), 0 deletions(-)
+>  create mode 100644 doc/elect-api.txt
+
+Logically this patch should probably be amongst the first, not dead last ;)
+
 > =
 
+> diff --git a/doc/elect-api.txt b/doc/elect-api.txt
+> new file mode 100644
+> index 0000000..a603266
+> --- /dev/null
+> +++ b/doc/elect-api.txt
+> @@ -0,0 +1,86 @@
+> +
+> +Manager hierarchy
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> +
+> +Service		org.ofono.elect
+> +Interface	org.ofono.elect.Manager
 
-Just taking a very cursory initial look:
+Any particular reason why the project is named 'elect'?
 
-<snip>
+> +Object path	/
+> +
+> +Methods		array{object,dict} GetDevices()
+> +
+> +			Get an array of device objects and properties
+> +			that represent the currently attached devices.
+> +
+> +			This method call should only be used once when an
+> +			application starts up. Further device additions
+> +			and removal shall be monitored via DeviceAdded and
+> +			DeviceRemoved signals.
+> +
+> +Signals		DeviceAdded(object path, dict properties)
+> +
+> +			Signal that is sent when a new device is added.  It
+> +			contains the object path of new device and its
+> +			properties.
+> +
+> +		DeviceRemoved(object path)
+> +
+> +			Signal that is sent when a device has been removed.
+> +			The object path is no longer accessible after this
+> +			signal and only emitted for reference.
+> +
+> +
+> +Device hierarchy
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> +
+> +Service		org.ofono.elect
+> +Interface	org.ofono.elect.Device
+> +Object path	/{device0,device1,...}
+> +
+> +Methods		dict GetProperties()
+> +
+> +			Returns properties for the device object. See
+> +			the properties section for available properties.
+> +
+> +Signals		PropertyChanged(string name, variant value)
+> +
+> +			This signal indicates a changed value of the given
+> +			property.
+> +
+> +Properties	string Name [readonly]
+> +
+> +			Friendly name of the device.
+> +
+> +		boolean Active [readwrite]
+> +
+> +			Holds whether the device is connected. A
+> +			connection will be established when this value
+> +			is set to true. A existing connection will be
+> +			teared down when set to false.
+> +
+> +		dict Settings [readonly]
+> +
+> +			Holds all the IP network settings.
+> +
+> +			string Interface [readonly, optional]
+> +
+> +				Holds the interface of the network interface
+> +				used by this connection (e.g. "ppp0" "usb0")
+> +
+> +			string Method [readonly, optional]
+> +
+> +				Holds the IP network config method.
+> +					"static"- Set IP network statically
+> +					"dhcp"  - Set IP network through DHCP
 
-> +	status =3D bluetooth_send_with_reply(device->path,
-> +					BLUEZ_SERIAL_INTERFACE, "Connect",
-> +					&call, bt_connect_reply,
-> +					device, NULL, DBUS_TIMEOUT,
-> +					DBUS_TYPE_STRING, &profile,
-> +					DBUS_TYPE_INVALID);
+Actually you should remove this, there is no dhcp configuration with
+PPP; it will always be static.
 
-I still say you don't want to use the RFCOMM tty layer.  You should
-probably use ConnectFD instead.
+> +
+> +			string Address [readonly, optional]
+> +
+> +				Holds the IP address for this connection.
+> +
+> +			string Netmask [readonly, optional]
+> +
+> +				Holds the Netmask for this connection.
 
-Also, the details of establishing a transport connection should ideally
-be abstracted away and implemented in plugins.  That way you can easily
-add bluetooth and usb, as well as whatever makes things easier for
-testing, e.g. tcp or evel local pseudo-ttys.
+Likely this will always be the same value (e.g. point to point netmask).
+ Whether you want to still include this is up to you.
+
+> +
+> +			array{string} DomainNameServers [readonly, optional]
+> +
+> +				Holds the list of domain name servers for this
+> +				connection.
+
+The obvious part that is missing is the dial string, but I guess you are
+leaving it out on purpose for now...
 
 Regards,
 -Denis
 
---===============5147439798697740386==--
+--===============1061059113072014336==--
 
