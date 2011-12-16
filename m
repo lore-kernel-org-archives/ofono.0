@@ -1,28 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============5808767671561430351=="
+Content-Type: multipart/mixed; boundary="===============7873257709478790524=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] udev: add another driver name for telit
-Date: Thu, 15 Dec 2011 22:39:24 -0600
-Message-ID: <4EEACB7C.8070802@gmail.com>
-In-Reply-To: <1323960181-15049-1-git-send-email-Christopher.Vogl@hale.at>
+Subject: Re: [PATCH] speedupcdma: Create cdma-netreg atom
+Date: Thu, 15 Dec 2011 22:40:16 -0600
+Message-ID: <4EEACBB0.90906@gmail.com>
+In-Reply-To: <1323958413-3921-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5808767671561430351==
+--===============7873257709478790524==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christopher,
+Hi Guillaume,
 
-On 12/15/2011 08:43 AM, Christopher.Vogl(a)hale.at wrote:
-> From: Christopher Vogl <christopher.vogl@hale.at>
-> =
-
-> some telit hardware needs option driver.
+On 12/15/2011 08:13 AM, Guillaume Zajac wrote:
+> According to SpeedUp 7300 specifications, SpeedUp uses
+> same AT command as Huawei so we can create cdma-netreg atom
+> using huaweicdma drivers.
 > ---
->  plugins/udevng.c |    1 +
->  1 files changed, 1 insertions(+), 0 deletions(-)
+>  plugins/speedupcdma.c |    3 +++
+>  1 files changed, 3 insertions(+), 0 deletions(-)
 > =
 
 
@@ -31,5 +30,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============5808767671561430351==--
+--===============7873257709478790524==--
 
