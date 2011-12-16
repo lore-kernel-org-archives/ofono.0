@@ -1,27 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============7873257709478790524=="
+Content-Type: multipart/mixed; boundary="===============5879904514466071723=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] speedupcdma: Create cdma-netreg atom
-Date: Thu, 15 Dec 2011 22:40:16 -0600
-Message-ID: <4EEACBB0.90906@gmail.com>
-In-Reply-To: <1323958413-3921-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCHv2 1/3] network: Use netreg_emit_operator_display_name()
+Date: Fri, 16 Dec 2011 00:46:24 -0600
+Message-ID: <4EEAE940.1020105@gmail.com>
+In-Reply-To: <1323776184-27086-2-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7873257709478790524==
+--===============5879904514466071723==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Oleg,
 
-On 12/15/2011 08:13 AM, Guillaume Zajac wrote:
-> According to SpeedUp 7300 specifications, SpeedUp uses
-> same AT command as Huawei so we can create cdma-netreg atom
-> using huaweicdma drivers.
+On 12/13/2011 05:36 AM, Oleg Zhurakivskyy wrote:
+> Redundant in place code removed, netreg_emit_operator_display_name()
+> is now used consistently everywhere in network.c
 > ---
->  plugins/speedupcdma.c |    3 +++
->  1 files changed, 3 insertions(+), 0 deletions(-)
+>  src/network.c |   76 ++++++++++++++++-----------------------------------=
+-----
+>  1 files changed, 22 insertions(+), 54 deletions(-)
 > =
 
 
@@ -30,5 +30,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============7873257709478790524==--
+--===============5879904514466071723==--
 
