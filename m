@@ -1,57 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============2604326886299390095=="
+Content-Type: multipart/mixed; boundary="===============3456977360987409256=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 5/5] udev: Add rules to support SpeedUp 9800 dongle
-Date: Sun, 18 Dec 2011 21:52:13 -0800
-Message-ID: <1324273933.1965.103.camel@aeonflux>
-In-Reply-To: <1322569281-10908-6-git-send-email-philippe.nunes@linux.intel.com>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: Re: [PATCHv2 2/3] network: Add CPHS SPN, short-SPN fallbacks
+Date: Mon, 19 Dec 2011 14:58:33 +0200
+Message-ID: <4EEF34F9.9050503@intel.com>
+In-Reply-To: <4EEBE831.8030701@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2604326886299390095==
+--===============3456977360987409256==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hello Denis,
 
->  plugins/ofono.rules |    4 ++++
->  1 files changed, 4 insertions(+), 0 deletions(-)
-> =
+On 12/17/2011 02:54 AM, Denis Kenzior wrote:
+> I went ahead and applied this patch, but modified it heavily afterward.
+>   Can you please check the changes starting at 7f18695f and make sure
+> that things are still working as intended and I didn't screw anything up.
 
-> diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-> index 7f284d4..9e7a651 100644
-> --- a/plugins/ofono.rules
-> +++ b/plugins/ofono.rules
-> @@ -29,6 +29,10 @@ ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"01=
-24", ENV{ID_USB_INTERFACE_NUM}=3D=3D"0
->  ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9e00", ENV{ID_USB_IN=
-TERFACE_NUM}=3D=3D"00", ENV{OFONO_LABEL}=3D"modem"
->  ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9e00", ENV{ID_USB_IN=
-TERFACE_NUM}=3D=3D"03", ENV{OFONO_LABEL}=3D"aux"
->  =
+Everything works as expected, thanks for the help!
 
-> +# SpeedUp 9800
-> +ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9800", ENV{ID_USB_IN=
-TERFACE_NUM}=3D=3D"01", ENV{OFONO_LABEL}=3D"modem"
-> +ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9800", ENV{ID_USB_IN=
-TERFACE_NUM}=3D=3D"02", ENV{OFONO_LABEL}=3D"aux"
-> +
->  LABEL=3D"ofono_tty_end"
->  =
+I just wonder now about the case when the SPN update would happen while the =
 
->  SUBSYSTEM!=3D"usb", GOTO=3D"ofono_end"
+NETWORK_REGISTRATION_FLAG_READING_SPN is on.
 
-same applies here. See my other comment.
+diff --git a/src/network.c b/src/network.c
+struct ofono_netreg {
+[...]
+         char *spn;
++       unsigned int spn_update;
+  };
+[...]
 
-And btw. does anybody bothered to look into the inf files from the
-Windows driver to figure out what the actual assignments are?
++static gboolean spn_update_cb(gpointer userdata)
++{
++       struct ofono_netreg *netreg =3D userdata;
++
++       if (netreg->flags & NETWORK_REGISTRATION_FLAG_READING_SPN)
++               return TRUE;
++
++       netreg->spn_update =3D 0;
++
++       sim_spn_changed(0, netreg);
++
++       return FALSE;
++}
++
+  static void sim_spn_changed(int id, void *userdata)
+  {
+         struct ofono_netreg *netreg =3D userdata;
+         gboolean had_spn;
 
-Regards
+-       if (netreg->flags & NETWORK_REGISTRATION_FLAG_READING_SPN)
++       if (netreg->flags & NETWORK_REGISTRATION_FLAG_READING_SPN) {
++               if (netreg->spn_update =3D=3D 0)
++                       netreg->spn_update =3D g_timeout_add(1000,
++                                                       spn_update_cb, netr=
+eg);
++
+                 return;
++       }
+[...]
 
-Marcel
+What do you think?
+
+I will be sending SPN changes for src/gprs.c soon.
+
+Regards,
+Oleg
+-- =
+
+Intel Finland Oy
+Registered Address: PL 281, 00181 Helsinki
+Business Identity Code: 0357606 - 4
+Domiciled in Helsinki
 
 
-
---===============2604326886299390095==--
+--===============3456977360987409256==--
 
