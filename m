@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5258454494343816884=="
+Content-Type: multipart/mixed; boundary="===============6133524085336649748=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [RFC v4 03/16] dundee: Add test scripts
-Date: Tue, 20 Dec 2011 15:47:06 +0100
-Message-ID: <1324392439-26508-4-git-send-email-wagi@monom.org>
+Subject: [RFC v4 04/16] dundee: Add skeleton implementation
+Date: Tue, 20 Dec 2011 15:47:07 +0100
+Message-ID: <1324392439-26508-5-git-send-email-wagi@monom.org>
 In-Reply-To: <1324392439-26508-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5258454494343816884==
+--===============6133524085336649748==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,186 +16,388 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- test/dundee-connect    |   20 +++++++++
- test/dundee-disconnect |   20 +++++++++
- test/monitor-dundee    |  109 ++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am         |   12 +++
+ bootstrap-configure |    1 +
+ configure.ac        |    4 +
+ dundee/dundee.h     |   46 +++++++++
+ dundee/main.c       |  255 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 3 files changed, 149 insertions(+), 0 deletions(-)
- create mode 100755 test/dundee-connect
- create mode 100755 test/dundee-disconnect
- create mode 100755 test/monitor-dundee
+ 5 files changed, 318 insertions(+), 0 deletions(-)
+ create mode 100644 dundee/dundee.h
+ create mode 100644 dundee/main.c
 
-diff --git a/test/dundee-connect b/test/dundee-connect
-new file mode 100755
-index 0000000..6cbc629
+diff --git a/Makefile.am b/Makefile.am
+index 337aeb7..f963918 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -647,6 +647,18 @@ tools_lookup_provider_name_SOURCES =3D plugins/mbpi.c =
+plugins/mbpi.h \
+ tools_lookup_provider_name_LDADD =3D @GLIB_LIBS@
+ endif
+ =
+
++if DUNDEE
++
++sbin_PROGRAMS +=3D dundee/dundee
++
++dundee_dundee_SOURCES =3D $(gdbus_sources) \
++			src/log.c src/dbus.c \
++			dundee/main.c
++
++dundee_dundee_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_L=
+IBS@ -ldl
++
++endif
++
+ noinst_PROGRAMS +=3D gatchat/gsmdial gatchat/test-server gatchat/test-qcdm
+ =
+
+ gatchat_gsmdial_SOURCES =3D gatchat/gsmdial.c $(gatchat_sources)
+diff --git a/bootstrap-configure b/bootstrap-configure
+index db70c66..1fae158 100755
+--- a/bootstrap-configure
++++ b/bootstrap-configure
+@@ -14,4 +14,5 @@ fi
+ 		--localstatedir=3D/var \
+ 		--enable-capng \
+ 		--enable-tools \
++		--enable-dundee \
+ 		--disable-datafiles $*
+diff --git a/configure.ac b/configure.ac
+index 5e4d34f..6305ec6 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -165,6 +165,10 @@ if (test "${enable_tools}" =3D "yes"); then
+ fi
+ AM_CONDITIONAL(TOOLS, test "${enable_tools}" =3D "yes")
+ =
+
++AC_ARG_ENABLE(dundee, AC_HELP_STRING([--enable-dundee],
++		[enable DUN deamon support]), [enable_dundee=3D${enableval}])
++AM_CONDITIONAL(DUNDEE, test "${enable_dundee}" =3D "yes")
++
+ AC_ARG_ENABLE(atmodem, AC_HELP_STRING([--disable-atmodem],
+ 				[disable ETSI AT modem support]),
+ 					[enable_atmodem=3D${enableval}])
+diff --git a/dundee/dundee.h b/dundee/dundee.h
+new file mode 100644
+index 0000000..270cefd
 --- /dev/null
-+++ b/test/dundee-connect
-@@ -0,0 +1,20 @@
-+#!/usr/bin/python
++++ b/dundee/dundee.h
+@@ -0,0 +1,46 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2011  BMW Car IT GmbH. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
-+import dbus
-+import sys
++#include <glib.h>
 +
-+bus =3D dbus.SystemBus()
++#define OFONO_API_SUBJECT_TO_CHANGE
 +
-+if len(sys.argv) =3D=3D 2:
-+	path =3D sys.argv[1]
-+else:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono.dundee', '/'),
-+			'org.ofono.dundee.Manager')
-+	devices =3D manager.GetDevices()
-+	path =3D devices[0][0]
++#include <ofono/types.h>
 +
-+print "Connect device %s..." % path
-+device =3D dbus.Interface(bus.get_object('org.ofono.dundee', path),
-+						'org.ofono.dundee.Device')
++void __dundee_exit(void);
 +
-+device.Connect()
-diff --git a/test/dundee-disconnect b/test/dundee-disconnect
-new file mode 100755
-index 0000000..76ff74c
++#include <ofono/log.h>
++
++int __ofono_log_init(const char *program, const char *debug,
++					ofono_bool_t detach);
++void __ofono_log_cleanup(void);
++void __ofono_log_enable(struct ofono_debug_desc *start,
++					struct ofono_debug_desc *stop);
++
++#include <ofono/dbus.h>
++
++#define DUNDEE_SERVICE			"org.ofono.dundee"
++
++int __ofono_dbus_init(DBusConnection *conn);
++void __ofono_dbus_cleanup(void);
++
++void __ofono_dbus_pending_reply(DBusMessage **msg, DBusMessage *reply);
+diff --git a/dundee/main.c b/dundee/main.c
+new file mode 100644
+index 0000000..dc5ed91
 --- /dev/null
-+++ b/test/dundee-disconnect
-@@ -0,0 +1,20 @@
-+#!/usr/bin/python
++++ b/dundee/main.c
+@@ -0,0 +1,255 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2011  BMW Car IT GmbH. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
-+import dbus
-+import sys
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
 +
-+bus =3D dbus.SystemBus()
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <string.h>
++#include <signal.h>
++#include <sys/signalfd.h>
 +
-+if len(sys.argv) =3D=3D 2:
-+	path =3D sys.argv[1]
-+else:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono.elect', '/'),
-+			'org.ofono.elect.Manager')
-+	devices =3D manager.GetDevices()
-+	path =3D devices[0][0]
++#include <gdbus.h>
 +
-+print "Disonnect device %s..." % path
-+device =3D dbus.Interface(bus.get_object('org.ofono.elect', path),
-+						'org.ofono.elect.Device')
++#ifdef HAVE_CAPNG
++#include <cap-ng.h>
++#endif
 +
-+device.Disconnect()
-diff --git a/test/monitor-dundee b/test/monitor-dundee
-new file mode 100755
-index 0000000..cf96ceb
---- /dev/null
-+++ b/test/monitor-dundee
-@@ -0,0 +1,109 @@
-+#!/usr/bin/python
++#include "dundee.h"
 +
-+import gobject
++#define SHUTDOWN_GRACE_SECONDS 10
 +
-+import dbus
-+import dbus.mainloop.glib
++static GMainLoop *event_loop;
 +
-+_dbus2py =3D {
-+	dbus.String : unicode,
-+	dbus.UInt32 : int,
-+	dbus.Int32 : int,
-+	dbus.Int16 : int,
-+	dbus.UInt16 : int,
-+	dbus.UInt64 : int,
-+	dbus.Int64 : int,
-+	dbus.Byte : int,
-+	dbus.Boolean : bool,
-+	dbus.ByteArray : str,
-+	dbus.ObjectPath : str
-+    }
++void __dundee_exit(void)
++{
++	g_main_loop_quit(event_loop);
++}
 +
-+def dbus2py(d):
-+	t =3D type(d)
-+	if t in _dbus2py:
-+		return _dbus2py[t](d)
-+	if t is dbus.Dictionary:
-+		return dict([(dbus2py(k), dbus2py(v)) for k, v in d.items()])
-+	if t is dbus.Array and d.signature =3D=3D "y":
-+		return "".join([chr(b) for b in d])
-+	if t is dbus.Array or t is list:
-+		return [dbus2py(v) for v in d]
-+	if t is dbus.Struct or t is tuple:
-+		return tuple([dbus2py(v) for v in d])
-+	return d
++static gboolean quit_eventloop(gpointer user_data)
++{
++	__dundee_exit();
++	return FALSE;
++}
 +
-+def pretty(d):
-+	d =3D dbus2py(d)
-+	t =3D type(d)
++static unsigned int __terminated =3D 0;
 +
-+	if t in (dict, tuple, list) and len(d) > 0:
-+		if t is dict:
-+			d =3D ", ".join(["%s =3D %s" % (k, pretty(v))
-+					for k, v in d.items()])
-+			return "{ %s }" % d
++static gboolean signal_handler(GIOChannel *channel, GIOCondition cond,
++							gpointer user_data)
++{
++	struct signalfd_siginfo si;
++	ssize_t result;
++	int fd;
 +
-+		d =3D " ".join([pretty(e) for e in d])
++	if (cond & (G_IO_NVAL | G_IO_ERR | G_IO_HUP))
++		return FALSE;
 +
-+		if t is tuple:
-+			return "( %s )" % d
++	fd =3D g_io_channel_unix_get_fd(channel);
 +
-+	return str(d)
++	result =3D read(fd, &si, sizeof(si));
++	if (result !=3D sizeof(si))
++		return FALSE;
 +
-+def property_changed(name, value, path, interface):
-+	iface =3D interface[interface.rfind(".") + 1:]
-+	print "{%s} [%s] %s =3D %s" % (iface, path, name, pretty(value))
++	switch (si.ssi_signo) {
++	case SIGINT:
++	case SIGTERM:
++		if (__terminated =3D=3D 0) {
++			ofono_info("Terminating");
++			g_timeout_add_seconds(SHUTDOWN_GRACE_SECONDS,
++						quit_eventloop, NULL);
 +
-+def added(name, value, member, path, interface):
-+	iface =3D interface[interface.rfind(".") + 1:]
-+	print "{%s} [%s] %s %s" % (iface, member, name, pretty(value))
++			quit_eventloop(NULL);
++		}
 +
-+def removed(name, member, path, interface):
-+	iface =3D interface[interface.rfind(".") + 1:]
-+	print "{%s} [%s] %s" % (iface, member, name)
++		__terminated =3D 1;
++		break;
++	}
 +
-+def event(member, path, interface):
-+	iface =3D interface[interface.rfind(".") + 1:]
-+	print "{%s} [%s] %s" % (iface, path, member)
++	return TRUE;
++}
 +
-+def message(msg, args, member, path, interface):
-+	iface =3D interface[interface.rfind(".") + 1:]
-+	print "{%s} [%s] %s %s (%s)" % (iface, path, member,
-+					str(msg), pretty(args))
++static guint setup_signalfd(void)
++{
++	GIOChannel *channel;
++	guint source;
++	sigset_t mask;
++	int fd;
 +
-+def ussd(msg, member, path, interface):
-+	iface =3D interface[interface.rfind(".") + 1:]
-+	print "{%s} [%s] %s %s" % (iface, path, member, str(msg))
++	sigemptyset(&mask);
++	sigaddset(&mask, SIGINT);
++	sigaddset(&mask, SIGTERM);
 +
-+def value(value, member, path, interface):
-+	iface =3D interface[interface.rfind(".") + 1:]
-+	print "{%s} [%s] %s %s" % (iface, path, member, str(value))
++	if (sigprocmask(SIG_BLOCK, &mask, NULL) < 0) {
++		perror("Failed to set signal mask");
++		return 0;
++	}
 +
-+if __name__ =3D=3D '__main__':
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
++	fd =3D signalfd(-1, &mask, 0);
++	if (fd < 0) {
++		perror("Failed to create signal descriptor");
++		return 0;
++	}
 +
-+	bus =3D dbus.SystemBus()
++	channel =3D g_io_channel_unix_new(fd);
 +
-+	bus.add_signal_receiver(property_changed,
-+					bus_name=3D"org.ofono.dundee",
-+					signal_name =3D "PropertyChanged",
-+						path_keyword=3D"path",
-+						interface_keyword=3D"interface")
++	g_io_channel_set_close_on_unref(channel, TRUE);
++	g_io_channel_set_encoding(channel, NULL, NULL);
++	g_io_channel_set_buffered(channel, FALSE);
 +
-+	bus.add_signal_receiver(added,
-+					bus_name=3D"org.ofono.dundee",
-+					signal_name =3D "DeviceAdded",
-+						member_keyword=3D"member",
-+						path_keyword=3D"path",
-+						interface_keyword=3D"interface")
++	source =3D g_io_add_watch(channel,
++				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
++				signal_handler, NULL);
 +
-+	bus.add_signal_receiver(removed,
-+					bus_name=3D"org.ofono.dundee",
-+					signal_name =3D "DeviceRemoved",
-+						member_keyword=3D"member",
-+						path_keyword=3D"path",
-+						interface_keyword=3D"interface")
++	g_io_channel_unref(channel);
 +
++	return source;
++}
 +
-+	mainloop =3D gobject.MainLoop()
-+	mainloop.run()
++static void system_bus_disconnected(DBusConnection *conn, void *user_data)
++{
++	ofono_error("System bus has disconnected!");
++
++	g_main_loop_quit(event_loop);
++}
++
++static gchar *option_debug =3D NULL;
++static gboolean option_detach =3D TRUE;
++static gboolean option_version =3D FALSE;
++
++static gboolean parse_debug(const char *key, const char *value,
++					gpointer user_data, GError **error)
++{
++	if (value)
++		option_debug =3D g_strdup(value);
++	else
++		option_debug =3D g_strdup("*");
++
++	return TRUE;
++}
++
++static GOptionEntry options[] =3D {
++	{ "debug", 'd', G_OPTION_FLAG_OPTIONAL_ARG,
++				G_OPTION_ARG_CALLBACK, parse_debug,
++				"Specify debug options to enable", "DEBUG" },
++	{ "nodetach", 'n', G_OPTION_FLAG_REVERSE,
++				G_OPTION_ARG_NONE, &option_detach,
++				"Don't run as daemon in background" },
++	{ "version", 'v', 0, G_OPTION_ARG_NONE, &option_version,
++				"Show version information and exit" },
++	{ NULL },
++};
++
++int main(int argc, char **argv)
++{
++	GOptionContext *context;
++	GError *err =3D NULL;
++	DBusConnection *conn;
++	DBusError error;
++	guint signal;
++
++#ifdef HAVE_CAPNG
++	/* Drop capabilities */
++	capng_clear(CAPNG_SELECT_BOTH);
++	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
++				CAP_NET_BIND_SERVICE, CAP_NET_ADMIN,
++				CAP_NET_RAW, CAP_SYS_ADMIN, -1);
++	capng_apply(CAPNG_SELECT_BOTH);
++#endif
++
++	context =3D g_option_context_new(NULL);
++	g_option_context_add_main_entries(context, options, NULL);
++
++	if (g_option_context_parse(context, &argc, &argv, &err) =3D=3D FALSE) {
++		if (err !=3D NULL) {
++			g_printerr("%s\n", err->message);
++			g_error_free(err);
++			return 1;
++		}
++
++		g_printerr("An unknown error occurred\n");
++		return 1;
++	}
++
++	g_option_context_free(context);
++
++	if (option_version =3D=3D TRUE) {
++		printf("%s\n", VERSION);
++		exit(0);
++	}
++
++	if (option_detach =3D=3D TRUE) {
++		if (daemon(0, 0)) {
++			perror("Can't start daemon");
++			return 1;
++		}
++	}
++
++	event_loop =3D g_main_loop_new(NULL, FALSE);
++
++	signal =3D setup_signalfd();
++
++	__ofono_log_init(argv[0], option_debug, option_detach);
++
++	dbus_error_init(&error);
++
++	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, DUNDEE_SERVICE, &error);
++	if (conn =3D=3D NULL) {
++		if (dbus_error_is_set(&error) =3D=3D TRUE) {
++			ofono_error("Unable to hop onto D-Bus: %s",
++					error.message);
++			dbus_error_free(&error);
++		} else {
++			ofono_error("Unable to hop onto D-Bus");
++		}
++
++		goto cleanup;
++	}
++
++	g_dbus_set_disconnect_function(conn, system_bus_disconnected,
++					NULL, NULL);
++
++	__ofono_dbus_init(conn);
++
++	/*
++	 * The reason why this DBG is here is that we have the __stop__debug,
++	 * __start__debug linking symbols in the object. As soon we
++	 * have real DBG we can remove this one again.
++	 */
++	DBG("");
++
++	g_main_loop_run(event_loop);
++
++	__ofono_dbus_cleanup();
++	dbus_connection_unref(conn);
++
++cleanup:
++	g_source_remove(signal);
++
++	g_main_loop_unref(event_loop);
++
++	__ofono_log_cleanup();
++
++	return 0;
++}
 -- =
 
 1.7.8.110.g4cb5d1
 
 
---===============5258454494343816884==--
+--===============6133524085336649748==--
 
