@@ -1,146 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============6222900723355421044=="
+Content-Type: multipart/mixed; boundary="===============8312617131997209716=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: The way to install proper driver for 3G dongle in oFono
-Date: Tue, 20 Dec 2011 12:02:35 +0100
-Message-ID: <4EF06B4B.90002@linux.intel.com>
-In-Reply-To: <CE59C043D0EC3349B2BF41C0EC72229B12E8C1FF98@shsmsx501.ccr.corp.intel.com>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: Re: [PATCHv2 2/3] network: Add CPHS SPN, short-SPN fallbacks
+Date: Tue, 20 Dec 2011 15:19:22 +0200
+Message-ID: <4EF08B5A.2060005@intel.com>
+In-Reply-To: <4EF02C71.7020008@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6222900723355421044==
+--===============8312617131997209716==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Deng,
+Hello Denis,
 
-On 20/12/2011 09:44, Deng, Ying An wrote:
+On 12/20/2011 08:34 AM, Denis Kenzior wrote:
+> You have to be careful here since you can't really guarantee that the
+> operation will succeed in your time allotted.  If you are unlucky the
+> timer will fire before the entire transaction succeeds and you might be
+> running the old transaction and the new transaction in parallel.  You
+> would have to check if the current code can handle this, but probably
+> not.  And of course you never know what timer value is large enough.
+
+Just a little more explanation here. The g_timeout_add() is periodical, in =
+
+unlucky case it will run a few times checking whether the SPN reading flag =
+is =
+
+cleared and only after that will trigger the new read operation and unregis=
+ter =
+
+itself. Since we clear the flag in all SPN read callbacks in all cases, thi=
+s =
+
+should be safe.
+
+> A better approach might be to set another flag in this case, e.g.
+> RECHECK_SPN, and re-do the transaction.  However, you'd also need to
+> make sure the sim file cache is flushed as well.
+
+This might be more efficient, let me check this.
+
+>> I will be sending SPN changes for src/gprs.c soon.
 >
-> Hi,
->
-> We are facing a problem in oFono when using 3G modems:
->
-> A CDMA2000 modem can have same PID with WCDMA modem, or TDS-CDMA modem =
+> Before you do this, a sanity check on whether any MVNOs actually use the
+> CPHS SPN field might be in order.  It may be that this complexity is not
+> needed in the gprs.c provisioning logic; and that the EFspn field is
+> sufficient.
 
-> -- 3G modem vendors already confirm they do that.
->
-> That's to say, if following current strategy, it will be a problem to =
+Sure, that makes sense. I haven't found anything on usage of CPHS SPN by MV=
+NOs. =
 
-> install proper driver for this kind of 3G modem.
->
-> So, is it feasible to find out a solution such as to probe the modem =
+However, that doesn't mean nobody is using it. Anyway, that change won't to=
+uch =
 
-> firstly, find out what kind of network modes it supports, and then =
+the provisioning logic, might this be useful, the patch is almost ready, ju=
+st =
 
-> install the driver?
->
-> The way to probe the modem could be some action as to read the =
+decide when you see it.
 
-> capability or get system mode, or issue some specific AT command that =
+Regards,
+Oleg
+-- =
 
-> only response to certain network mode?
->
+Intel Finland Oy
+Registered Address: PL 281, 00181 Helsinki
+Business Identity Code: 0357606 - 4
+Domiciled in Helsinki
 
-Indeed, we could use for Huawei modems for instance the AT^SYSINFO =
-
-command and retrieve the sys_mode field and parse it, I have found this =
-
-in public Huawei specifications:
-
-<sys_mode>: System mode. The values are as follows:
-0 No service.
-1 AMPS mode
-2 CDMA mode
-3 GSM/GPRS mode
-4 HDR mode
-5 WCDMA mode
-8 CDMA/HDR HYBRID mode
-
-Thus we can chose accordingly the drivers to create oFono atoms.
-
-Kind regards,
-Guillaume
-
---===============6222900723355421044==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMDEgVHJhbnNpdGlvbmFs
-Ly9FTiI+CjxodG1sPgogIDxoZWFkPgogICAgPG1ldGEgY29udGVudD0idGV4dC9odG1sOyBjaGFy
-c2V0PUlTTy04ODU5LTEiCiAgICAgIGh0dHAtZXF1aXY9IkNvbnRlbnQtVHlwZSI+CiAgPC9oZWFk
-PgogIDxib2R5IGJnY29sb3I9IiNmZmZmZmYiIHRleHQ9IiMwMDAwMDAiPgogICAgSGkgRGVuZyw8
-YnI+CiAgICA8YnI+CiAgICBPbiAyMC8xMi8yMDExIDA5OjQ0LCBEZW5nLCBZaW5nIEFuIHdyb3Rl
-OgogICAgPGJsb2NrcXVvdGUKY2l0ZT0ibWlkOkNFNTlDMDQzRDBFQzMzNDlCMkJGNDFDMEVDNzIy
-MjlCMTJFOEMxRkY5OEBzaHNtc3g1MDEuY2NyLmNvcnAuaW50ZWwuY29tIgogICAgICB0eXBlPSJj
-aXRlIj4KICAgICAgPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0
-L2h0bWw7CiAgICAgICAgY2hhcnNldD1JU08tODg1OS0xIj4KICAgICAgPG1ldGEgbmFtZT0iR2Vu
-ZXJhdG9yIiBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQKICAgICAgICBtZWRp
-dW0pIj4KICAgICAgPHN0eWxlPjwhLS0KLyogRm9udCBEZWZpbml0aW9ucyAqLwpAZm9udC1mYWNl
-Cgl7Zm9udC1mYW1pbHk6U2ltU3VuOwoJcGFub3NlLTE6MiAxIDYgMCAzIDEgMSAxIDEgMTt9CkBm
-b250LWZhY2UKCXtmb250LWZhbWlseToiQ2FtYnJpYSBNYXRoIjsKCXBhbm9zZS0xOjIgNCA1IDMg
-NSA0IDYgMyAyIDQ7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0x
-OjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OlNpbVN1bjsK
-CXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQovKiBTdHlsZSBEZWZpbml0aW9ucyAqLwpw
-Lk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsCgl7bWFyZ2luOjBjbTsKCW1h
-cmdpbi1ib3R0b206LjAwMDFwdDsKCXRleHQtYWxpZ246anVzdGlmeTsKCXRleHQtanVzdGlmeTpp
-bnRlci1pZGVvZ3JhcGg7Cglmb250LXNpemU6MTAuNXB0OwoJZm9udC1mYW1pbHk6IkNhbGlicmki
-LCJzYW5zLXNlcmlmIjt9CmE6bGluaywgc3Bhbi5Nc29IeXBlcmxpbmsKCXttc28tc3R5bGUtcHJp
-b3JpdHk6OTk7Cgljb2xvcjpibHVlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CmE6dmlz
-aXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZAoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsK
-CWNvbG9yOnB1cnBsZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpzcGFuLkVtYWlsU3R5
-bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7Cglmb250LWZhbWlseToiQ2Fs
-aWJyaSIsInNhbnMtc2VyaWYiOwoJY29sb3I6d2luZG93dGV4dDt9Ci5Nc29DaHBEZWZhdWx0Cgl7
-bXNvLXN0eWxlLXR5cGU6ZXhwb3J0LW9ubHk7fQovKiBQYWdlIERlZmluaXRpb25zICovCkBwYWdl
-IFdvcmRTZWN0aW9uMQoJe3NpemU6NjEyLjBwdCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBwdCA5MC4w
-cHQgNzIuMHB0IDkwLjBwdDt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9
-Ci0tPjwvc3R5bGU+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CjxvOnNoYXBlZGVmYXVsdHMgdjpl
-eHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3Rl
-IG1zbyA5XT48eG1sPgo8bzpzaGFwZWxheW91dCB2OmV4dD0iZWRpdCI+CjxvOmlkbWFwIHY6ZXh0
-PSJlZGl0IiBkYXRhPSIxIiAvPgo8L286c2hhcGVsYXlvdXQ+PC94bWw+PCFbZW5kaWZdLS0+CiAg
-ICAgIDxkaXYgY2xhc3M9IldvcmRTZWN0aW9uMSI+CiAgICAgICAgPHAgY2xhc3M9Ik1zb05vcm1h
-bCI+PHNwYW4gbGFuZz0iRU4tVVMiPkhpLDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KICAgICAgICA8
-cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJFTi1VUyI+PG86cD4mbmJzcDs8L286cD48
-L3NwYW4+PC9wPgogICAgICAgIDxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9IkVOLVVT
-Ij5XZSBhcmUgZmFjaW5nIGEgcHJvYmxlbQogICAgICAgICAgICBpbiBvRm9ubyB3aGVuIHVzaW5n
-IDNHIG1vZGVtczo8bzpwPjwvbzpwPjwvc3Bhbj48L3A+CiAgICAgICAgPHAgY2xhc3M9Ik1zb05v
-cm1hbCI+PHNwYW4gbGFuZz0iRU4tVVMiPkEgQ0RNQTIwMDAgbW9kZW0gY2FuCiAgICAgICAgICAg
-IGhhdmUgc2FtZSBQSUQgd2l0aCBXQ0RNQSBtb2RlbSwgb3IgVERTLUNETUEgbW9kZW0gJiM4MjEx
-OyAzRyBtb2RlbQogICAgICAgICAgICB2ZW5kb3JzIGFscmVhZHkgY29uZmlybSB0aGV5IGRvIHRo
-YXQuPG86cD48L286cD48L3NwYW4+PC9wPgogICAgICAgIDxwIGNsYXNzPSJNc29Ob3JtYWwiPjxz
-cGFuIGxhbmc9IkVOLVVTIj5UaGF0JiM4MjE3O3MgdG8gc2F5LCBpZgogICAgICAgICAgICBmb2xs
-b3dpbmcgY3VycmVudCBzdHJhdGVneSwgaXQgd2lsbCBiZSBhIHByb2JsZW0gdG8gaW5zdGFsbAog
-ICAgICAgICAgICBwcm9wZXIgZHJpdmVyIGZvciB0aGlzIGtpbmQgb2YgM0cgbW9kZW0uPG86cD48
-L286cD48L3NwYW4+PC9wPgogICAgICAgIDxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9
-IkVOLVVTIj48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+CiAgICAgICAgPHAgY2xhc3M9Ik1z
-b05vcm1hbCI+PHNwYW4gbGFuZz0iRU4tVVMiPlNvLCBpcyBpdCBmZWFzaWJsZSB0bwogICAgICAg
-ICAgICBmaW5kIG91dCBhIHNvbHV0aW9uIHN1Y2ggYXMgdG8gcHJvYmUgdGhlIG1vZGVtIGZpcnN0
-bHksIGZpbmQKICAgICAgICAgICAgb3V0IHdoYXQga2luZCBvZiBuZXR3b3JrIG1vZGVzIGl0IHN1
-cHBvcnRzLCBhbmQgdGhlbiBpbnN0YWxsCiAgICAgICAgICAgIHRoZSBkcml2ZXI/IDxvOnA+PC9v
-OnA+PC9zcGFuPjwvcD4KICAgICAgICA8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJF
-Ti1VUyI+VGhlIHdheSB0byBwcm9iZSB0aGUKICAgICAgICAgICAgbW9kZW0gY291bGQgYmUgc29t
-ZSBhY3Rpb24gYXMgdG8gcmVhZCB0aGUgY2FwYWJpbGl0eSBvciBnZXQKICAgICAgICAgICAgc3lz
-dGVtIG1vZGUsIG9yIGlzc3VlIHNvbWUgc3BlY2lmaWMgQVQgY29tbWFuZCB0aGF0IG9ubHkKICAg
-ICAgICAgICAgcmVzcG9uc2UgdG8gY2VydGFpbiBuZXR3b3JrIG1vZGU/PG86cD48L286cD48L3Nw
-YW4+PC9wPgogICAgICAgIDxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9IkVOLVVTIj48
-bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+CiAgICAgIDwvZGl2PgogICAgPC9ibG9ja3F1b3Rl
-PgogICAgPGJyPgogICAgSW5kZWVkLCB3ZSBjb3VsZCB1c2UgZm9yIEh1YXdlaSBtb2RlbXMgZm9y
-IGluc3RhbmNlIHRoZSBBVF5TWVNJTkZPCiAgICBjb21tYW5kIGFuZCByZXRyaWV2ZSB0aGUgc3lz
-X21vZGUgZmllbGQgYW5kIHBhcnNlIGl0LCBJIGhhdmUgZm91bmQKICAgIHRoaXMgaW4gcHVibGlj
-IEh1YXdlaSBzcGVjaWZpY2F0aW9uczo8YnI+CiAgICA8YnI+CiAgICA8c3BhbiBjbGFzcz0ibm90
-cmFuc2xhdGUiPjxzcGFuIGNsYXNzPSJhIiBzdHlsZT0ibGVmdDogMTAzMXB4OyB0b3A6CiAgICAg
-ICAgNDg2N3B4OyB3b3JkLXNwYWNpbmc6IDNweDsgbGV0dGVyLXNwYWNpbmc6IC0xcHg7Ij4mbHQ7
-c3lzX21vZGUmZ3Q7OgogICAgICAgIFN5c3RlbSBtb2RlLiBUaGUgdmFsdWVzIGFyZSBhcyBmb2xs
-b3dzOjwvc3Bhbj48c3BhbiBjbGFzcz0iYSIKICAgICAgICBzdHlsZT0ibGVmdDogMTAzMXB4OyB0
-b3A6IDQ5ODVweDsgd29yZC1zcGFjaW5nOiA2M3B4OyI+PGJyPgogICAgICA8L3NwYW4+PC9zcGFu
-PjAgTm8gc2VydmljZS48YnI+CiAgICAxIEFNUFMgbW9kZTxicj4KICAgIDIgQ0RNQSBtb2RlPGJy
-PgogICAgMyBHU00vR1BSUyBtb2RlPGJyPgogICAgNCBIRFIgbW9kZTxicj4KICAgIDUgV0NETUEg
-bW9kZTxicj4KICAgIDggQ0RNQS9IRFIgSFlCUklEIG1vZGU8YnI+CiAgICA8YnI+CiAgICBUaHVz
-IHdlIGNhbiBjaG9zZSBhY2NvcmRpbmdseSB0aGUgZHJpdmVycyB0byBjcmVhdGUgb0Zvbm8gYXRv
-bXMuPGJyPgogICAgPGJyPgogICAgS2luZCByZWdhcmRzLDxicj4KICAgIEd1aWxsYXVtZTxicj4K
-ICA8L2JvZHk+CjwvaHRtbD4K
-
---===============6222900723355421044==--
+--===============8312617131997209716==--
 
