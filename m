@@ -1,73 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============8312617131997209716=="
+Content-Type: multipart/mixed; boundary="===============3654750623966527068=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: Re: [PATCHv2 2/3] network: Add CPHS SPN, short-SPN fallbacks
-Date: Tue, 20 Dec 2011 15:19:22 +0200
-Message-ID: <4EF08B5A.2060005@intel.com>
-In-Reply-To: <4EF02C71.7020008@gmail.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: [RFC v4 01/16] bluetooth: Add Serial interface definition
+Date: Tue, 20 Dec 2011 15:47:04 +0100
+Message-ID: <1324392439-26508-2-git-send-email-wagi@monom.org>
+In-Reply-To: <1324392439-26508-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8312617131997209716==
+--===============3654750623966527068==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
-On 12/20/2011 08:34 AM, Denis Kenzior wrote:
-> You have to be careful here since you can't really guarantee that the
-> operation will succeed in your time allotted.  If you are unlucky the
-> timer will fire before the entire transaction succeeds and you might be
-> running the old transaction and the new transaction in parallel.  You
-> would have to check if the current code can handle this, but probably
-> not.  And of course you never know what timer value is large enough.
+---
+ plugins/bluetooth.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-Just a little more explanation here. The g_timeout_add() is periodical, in =
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index daa1873..4fc16ad 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -27,6 +27,7 @@
+ #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
+ #define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
+ #define	BLUEZ_SERVICE_INTERFACE		BLUEZ_SERVICE ".Service"
++#define BLUEZ_SERIAL_INTERFACE		BLUEZ_SERVICE ".Serial"
+ =
 
-unlucky case it will run a few times checking whether the SPN reading flag =
-is =
+ #define DBUS_TIMEOUT 15
+ =
 
-cleared and only after that will trigger the new read operation and unregis=
-ter =
-
-itself. Since we clear the flag in all SPN read callbacks in all cases, thi=
-s =
-
-should be safe.
-
-> A better approach might be to set another flag in this case, e.g.
-> RECHECK_SPN, and re-do the transaction.  However, you'd also need to
-> make sure the sim file cache is flushed as well.
-
-This might be more efficient, let me check this.
-
->> I will be sending SPN changes for src/gprs.c soon.
->
-> Before you do this, a sanity check on whether any MVNOs actually use the
-> CPHS SPN field might be in order.  It may be that this complexity is not
-> needed in the gprs.c provisioning logic; and that the EFspn field is
-> sufficient.
-
-Sure, that makes sense. I haven't found anything on usage of CPHS SPN by MV=
-NOs. =
-
-However, that doesn't mean nobody is using it. Anyway, that change won't to=
-uch =
-
-the provisioning logic, might this be useful, the patch is almost ready, ju=
-st =
-
-decide when you see it.
-
-Regards,
-Oleg
 -- =
 
-Intel Finland Oy
-Registered Address: PL 281, 00181 Helsinki
-Business Identity Code: 0357606 - 4
-Domiciled in Helsinki
+1.7.8.110.g4cb5d1
 
---===============8312617131997209716==--
+
+--===============3654750623966527068==--
 
