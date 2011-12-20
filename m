@@ -1,106 +1,140 @@
-Content-Type: multipart/mixed; boundary="===============5144316732491895919=="
+Content-Type: multipart/mixed; boundary="===============9076943889652638993=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv2 2/3] network: Add CPHS SPN, short-SPN fallbacks
-Date: Tue, 20 Dec 2011 00:34:25 -0600
-Message-ID: <4EF02C71.7020008@gmail.com>
-In-Reply-To: <4EEF34F9.9050503@intel.com>
+From: Deng, Ying An <ying.an.deng@intel.com>
+Subject: The way to install proper driver for 3G dongle in oFono
+Date: Tue, 20 Dec 2011 16:44:58 +0800
+Message-ID: <CE59C043D0EC3349B2BF41C0EC72229B12E8C1FF98@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5144316732491895919==
+--===============9076943889652638993==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Oleg,
+Hi,
 
-On 12/19/2011 06:58 AM, Oleg Zhurakivskyy wrote:
-> Hello Denis,
-> =
+We are facing a problem in oFono when using 3G modems:
+A CDMA2000 modem can have same PID with WCDMA modem, or TDS-CDMA modem - 3G=
+ modem vendors already confirm they do that.
+That's to say, if following current strategy, it will be a problem to insta=
+ll proper driver for this kind of 3G modem.
 
-> On 12/17/2011 02:54 AM, Denis Kenzior wrote:
->> I went ahead and applied this patch, but modified it heavily afterward.
->>   Can you please check the changes starting at 7f18695f and make sure
->> that things are still working as intended and I didn't screw anything up.
-> =
+So, is it feasible to find out a solution such as to probe the modem firstl=
+y, find out what kind of network modes it supports, and then install the dr=
+iver?
+The way to probe the modem could be some action as to read the capability o=
+r get system mode, or issue some specific AT command that only response to =
+certain network mode?
 
-> Everything works as expected, thanks for the help!
-> =
+Best regards,
+DengYingAn
 
-> I just wonder now about the case when the SPN update would happen while
-> the NETWORK_REGISTRATION_FLAG_READING_SPN is on.
-> =
+--===============9076943889652638993==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-
-This is possible if extremely unlikely.  However, the nasty part is that
-we probably would need to take care of other cases besides SPN...
-
-> diff --git a/src/network.c b/src/network.c
-> struct ofono_netreg {
-> [...]
->         char *spn;
-> +       unsigned int spn_update;
->  };
-> [...]
-> =
-
-> +static gboolean spn_update_cb(gpointer userdata)
-> +{
-> +       struct ofono_netreg *netreg =3D userdata;
-> +
-> +       if (netreg->flags & NETWORK_REGISTRATION_FLAG_READING_SPN)
-> +               return TRUE;
-> +
-> +       netreg->spn_update =3D 0;
-> +
-> +       sim_spn_changed(0, netreg);
-> +
-> +       return FALSE;
-> +}
-> +
->  static void sim_spn_changed(int id, void *userdata)
->  {
->         struct ofono_netreg *netreg =3D userdata;
->         gboolean had_spn;
-> =
-
-> -       if (netreg->flags & NETWORK_REGISTRATION_FLAG_READING_SPN)
-> +       if (netreg->flags & NETWORK_REGISTRATION_FLAG_READING_SPN) {
-> +               if (netreg->spn_update =3D=3D 0)
-> +                       netreg->spn_update =3D g_timeout_add(1000,
-> +                                                       spn_update_cb,
-> netreg);
-> +
->                 return;
-> +       }
-> [...]
-> =
-
-> What do you think?
-
-You have to be careful here since you can't really guarantee that the
-operation will succeed in your time allotted.  If you are unlucky the
-timer will fire before the entire transaction succeeds and you might be
-running the old transaction and the new transaction in parallel.  You
-would have to check if the current code can handle this, but probably
-not.  And of course you never know what timer value is large enough.
-
-A better approach might be to set another flag in this case, e.g.
-RECHECK_SPN, and re-do the transaction.  However, you'd also need to
-make sure the sim file cache is flushed as well.
-
-> =
-
-> I will be sending SPN changes for src/gprs.c soon.
-
-Before you do this, a sanity check on whether any MVNOs actually use the
-CPHS SPN field might be in order.  It may be that this complexity is not
-needed in the gprs.c provisioning logic; and that the EFspn field is
-sufficient.
-
-Regards,
--Denis
-
---===============5144316732491895919==--
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6eD0idXJuOnNjaGVtYXMtbWljcm9z
+b2Z0LWNvbTpvZmZpY2U6ZXhjZWwiIHhtbG5zOnA9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206
+b2ZmaWNlOnBvd2VycG9pbnQiIHhtbG5zOmE9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOmFjY2VzcyIgeG1sbnM6ZHQ9InV1aWQ6QzJGNDEwMTAtNjVCMy0xMWQxLUEyOUYtMDBBQTAw
+QzE0ODgyIiB4bWxuczpzPSJ1dWlkOkJEQzZFM0YwLTZEQTMtMTFkMS1BMkEzLTAwQUEwMEMxNDg4
+MiIgeG1sbnM6cnM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206cm93c2V0IiB4bWxuczp6PSIj
+Um93c2V0U2NoZW1hIiB4bWxuczpiPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpw
+dWJsaXNoZXIiIHhtbG5zOnNzPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzcHJl
+YWRzaGVldCIgeG1sbnM6Yz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6Y29tcG9u
+ZW50OnNwcmVhZHNoZWV0IiB4bWxuczpvZGM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOm9kYyIgeG1sbnM6b2E9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOmFjdGl2
+YXRpb24iIHhtbG5zOmh0bWw9Imh0dHA6Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiIHhtbG5z
+OnE9Imh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3NvYXAvZW52ZWxvcGUvIiB4bWxuczpydGM9
+Imh0dHA6Ly9taWNyb3NvZnQuY29tL29mZmljZW5ldC9jb25mZXJlbmNpbmciIHhtbG5zOkQ9IkRB
+VjoiIHhtbG5zOlJlcGw9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vcmVwbC8iIHhtbG5z
+Om10PSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC9tZWV0aW5n
+cy8iIHhtbG5zOngyPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS9leGNlbC8y
+MDAzL3htbCIgeG1sbnM6cHBkYT0iaHR0cDovL3d3dy5wYXNzcG9ydC5jb20vTmFtZVNwYWNlLnhz
+ZCIgeG1sbnM6b2lzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29h
+cC9vaXMvIiB4bWxuczpkaXI9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9zb2FwL2RpcmVjdG9yeS8iIHhtbG5zOmRzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3ht
+bGRzaWcjIiB4bWxuczpkc3A9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9kc3AiIHhtbG5zOnVkYz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYyIg
+eG1sbnM6eHNkPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6c3ViPSJo
+dHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC8yMDAyLzEvYWxlcnRz
+LyIgeG1sbnM6ZWM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZW5jIyIgeG1sbnM6c3A9
+Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC8iIHhtbG5zOnNwcz0iaHR0
+cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvIiB4bWxuczp4c2k9Imh0
+dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiB4bWxuczp1ZGNzPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3NvYXAiIHhtbG5zOnVkY3hmPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3htbGZpbGUiIHhtbG5zOnVkY3AycD0i
+aHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYy9wYXJ0dG9wYXJ0IiB4bWxuczp3
+Zj0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvd29ya2Zsb3cv
+IiB4bWxuczpkc3NzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS8yMDA2L2Rp
+Z3NpZy1zZXR1cCIgeG1sbnM6ZHNzaT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZp
+Y2UvMjAwNi9kaWdzaWciIHhtbG5zOm1kc3NpPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0
+cy5vcmcvcGFja2FnZS8yMDA2L2RpZ2l0YWwtc2lnbmF0dXJlIiB4bWxuczptdmVyPSJodHRwOi8v
+c2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvbWFya3VwLWNvbXBhdGliaWxpdHkvMjAwNiIgeG1s
+bnM6bT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4
+bWxuczptcmVscz0iaHR0cDovL3NjaGVtYXMub3BlbnhtbGZvcm1hdHMub3JnL3BhY2thZ2UvMjAw
+Ni9yZWxhdGlvbnNoaXBzIiB4bWxuczpzcHdwPSJodHRwOi8vbWljcm9zb2Z0LmNvbS9zaGFyZXBv
+aW50L3dlYnBhcnRwYWdlcyIgeG1sbnM6ZXgxMnQ9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5j
+b20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi90eXBlcyIgeG1sbnM6ZXgxMm09Imh0dHA6Ly9zY2hl
+bWFzLm1pY3Jvc29mdC5jb20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi9tZXNzYWdlcyIgeG1sbnM6
+cHB0c2w9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC9zb2FwL1NsaWRl
+TGlicmFyeS8iIHhtbG5zOnNwc2w9Imh0dHA6Ly9taWNyb3NvZnQuY29tL3dlYnNlcnZpY2VzL1No
+YXJlUG9pbnRQb3J0YWxTZXJ2ZXIvUHVibGlzaGVkTGlua3NTZXJ2aWNlIiB4bWxuczpaPSJ1cm46
+c2NoZW1hcy1taWNyb3NvZnQtY29tOiIgeG1sbnM6c3Q9IiYjMTsiIHhtbG5zPSJodHRwOi8vd3d3
+LnczLm9yZy9UUi9SRUMtaHRtbDQwIj48aGVhZD48bWV0YSBodHRwLWVxdWl2PUNvbnRlbnQtVHlw
+ZSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPjxtZXRhIG5hbWU9R2VuZXJh
+dG9yIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDEyIChmaWx0ZXJlZCBtZWRpdW0pIj48c3R5bGU+
+PCEtLQovKiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseTpTaW1T
+dW47CglwYW5vc2UtMToyIDEgNiAwIDMgMSAxIDEgMSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
+aWx5OiJDYW1icmlhIE1hdGgiOwoJcGFub3NlLTE6MiA0IDUgMyA1IDQgNiAzIDIgNDt9CkBmb250
+LWZhY2UKCXtmb250LWZhbWlseTpDYWxpYnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAy
+IDQ7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6U2ltU3VuOwoJcGFub3NlLTE6MiAxIDYgMCAz
+IDEgMSAxIDEgMTt9Ci8qIFN0eWxlIERlZmluaXRpb25zICovCnAuTXNvTm9ybWFsLCBsaS5Nc29O
+b3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0
+OwoJdGV4dC1hbGlnbjpqdXN0aWZ5OwoJdGV4dC1qdXN0aWZ5OmludGVyLWlkZW9ncmFwaDsKCWZv
+bnQtc2l6ZToxMC41cHQ7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTps
+aW5rLCBzcGFuLk1zb0h5cGVybGluawoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJs
+dWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVy
+bGlua0ZvbGxvd2VkCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4
+dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNwYW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5
+cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7
+Cgljb2xvcjp3aW5kb3d0ZXh0O30KLk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBv
+cnQtb25seTt9Ci8qIFBhZ2UgRGVmaW5pdGlvbnMgKi8KQHBhZ2UgV29yZFNlY3Rpb24xCgl7c2l6
+ZTo2MTIuMHB0IDc5Mi4wcHQ7CgltYXJnaW46NzIuMHB0IDkwLjBwdCA3Mi4wcHQgOTAuMHB0O30K
+ZGl2LldvcmRTZWN0aW9uMQoJe3BhZ2U6V29yZFNlY3Rpb24xO30KLS0+PC9zdHlsZT48IS0tW2lm
+IGd0ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVkZWZhdWx0cyB2OmV4dD0iZWRpdCIgc3BpZG1heD0i
+MTAyNiIgLz4KPC94bWw+PCFbZW5kaWZdLS0+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CjxvOnNo
+YXBlbGF5b3V0IHY6ZXh0PSJlZGl0Ij4KPG86aWRtYXAgdjpleHQ9ImVkaXQiIGRhdGE9IjEiIC8+
+CjwvbzpzaGFwZWxheW91dD48L3htbD48IVtlbmRpZl0tLT48L2hlYWQ+PGJvZHkgbGFuZz1aSC1D
+TiBsaW5rPWJsdWUgdmxpbms9cHVycGxlIHN0eWxlPSd0ZXh0LWp1c3RpZnktdHJpbTpwdW5jdHVh
+dGlvbic+PGRpdiBjbGFzcz1Xb3JkU2VjdGlvbjE+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxh
+bmc9RU4tVVM+SGksPG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3Bh
+biBsYW5nPUVOLVVTPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3Jt
+YWw+PHNwYW4gbGFuZz1FTi1VUz5XZSBhcmUgZmFjaW5nIGEgcHJvYmxlbSBpbiBvRm9ubyB3aGVu
+IHVzaW5nIDNHIG1vZGVtczo8bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFs
+PjxzcGFuIGxhbmc9RU4tVVM+QSBDRE1BMjAwMCBtb2RlbSBjYW4gaGF2ZSBzYW1lIFBJRCB3aXRo
+IFdDRE1BIG1vZGVtLCBvciBURFMtQ0RNQSBtb2RlbSAmIzgyMTE7IDNHIG1vZGVtIHZlbmRvcnMg
+YWxyZWFkeSBjb25maXJtIHRoZXkgZG8gdGhhdC48bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xh
+c3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+VGhhdCYjODIxNztzIHRvIHNheSwgaWYgZm9s
+bG93aW5nIGN1cnJlbnQgc3RyYXRlZ3ksIGl0IHdpbGwgYmUgYSBwcm9ibGVtIHRvIGluc3RhbGwg
+cHJvcGVyIGRyaXZlciBmb3IgdGhpcyBraW5kIG9mIDNHIG1vZGVtLjxvOnA+PC9vOnA+PC9zcGFu
+PjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpw
+Pjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+U28sIGlzIGl0
+IGZlYXNpYmxlIHRvIGZpbmQgb3V0IGEgc29sdXRpb24gc3VjaCBhcyB0byBwcm9iZSB0aGUgbW9k
+ZW0gZmlyc3RseSwgZmluZCBvdXQgd2hhdCBraW5kIG9mIG5ldHdvcmsgbW9kZXMgaXQgc3VwcG9y
+dHMsIGFuZCB0aGVuIGluc3RhbGwgdGhlIGRyaXZlcj8gPG86cD48L286cD48L3NwYW4+PC9wPjxw
+IGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPlRoZSB3YXkgdG8gcHJvYmUgdGhlIG1v
+ZGVtIGNvdWxkIGJlIHNvbWUgYWN0aW9uIGFzIHRvIHJlYWQgdGhlIGNhcGFiaWxpdHkgb3IgZ2V0
+IHN5c3RlbSBtb2RlLCBvciBpc3N1ZSBzb21lIHNwZWNpZmljIEFUIGNvbW1hbmQgdGhhdCBvbmx5
+IHJlc3BvbnNlIHRvIGNlcnRhaW4gbmV0d29yayBtb2RlPzxvOnA+PC9vOnA+PC9zcGFuPjwvcD48
+cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bh
+bj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+QmVzdCByZWdhcmRzLDxv
+OnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5E
+ZW5nWWluZ0FuPG86cD48L286cD48L3NwYW4+PC9wPjwvZGl2PjwvYm9keT48L2h0bWw+
+--===============9076943889652638993==--
 
