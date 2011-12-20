@@ -1,115 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============3172552289390835198=="
+Content-Type: multipart/mixed; boundary="===============5144316732491895919=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: Re: [PATCH 2/5] udev: Add rules to support ZTE MF190 dongle
-Date: Mon, 19 Dec 2011 18:45:53 +0100
-Message-ID: <4EEF7851.6000209@linux.intel.com>
-In-Reply-To: <1324273817.1965.101.camel@aeonflux>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCHv2 2/3] network: Add CPHS SPN, short-SPN fallbacks
+Date: Tue, 20 Dec 2011 00:34:25 -0600
+Message-ID: <4EF02C71.7020008@gmail.com>
+In-Reply-To: <4EEF34F9.9050503@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3172552289390835198==
+--===============5144316732491895919==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 12/19/2011 06:50 AM, Marcel Holtmann wrote:
-> Hi Philippe,
->
->>   plugins/ofono.rules |    3 +++
->>   1 files changed, 3 insertions(+), 0 deletions(-)
->>
->> diff --git a/plugins/ofono.rules b/plugins/ofono.rules
->> index c7fac57..079db07 100644
->> --- a/plugins/ofono.rules
->> +++ b/plugins/ofono.rules
->> @@ -22,6 +22,9 @@ KERNEL!=3D"ttyUSB[0-9]*", GOTO=3D"ofono_tty_end"
->>   ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0017", ENV{ID_USB_=
-INTERFACE_NUM}=3D=3D"02", ENV{OFONO_LABEL}=3D"modem"
->>   ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0017", ENV{ID_USB_=
-INTERFACE_NUM}=3D=3D"01", ENV{OFONO_LABEL}=3D"aux"
->>
->> +ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0124", ENV{ID_USB_I=
-NTERFACE_NUM}=3D=3D"04", ENV{OFONO_LABEL}=3D"modem"
->> +ATTRS{idVendor}=3D=3D"19d2", ATTRS{idProduct}=3D=3D"0124", ENV{ID_USB_I=
-NTERFACE_NUM}=3D=3D"01", ENV{OFONO_LABEL}=3D"aux"
->> +
->>   LABEL=3D"ofono_tty_end"
->>
->>   SUBSYSTEM!=3D"usb", GOTO=3D"ofono_end"
->
-> same here. The modem AUX port is always the second TTY and the modem TTY
-> is always the last one. Where is this not true?
+Hi Oleg,
+
+On 12/19/2011 06:58 AM, Oleg Zhurakivskyy wrote:
+> Hello Denis,
+> =
+
+> On 12/17/2011 02:54 AM, Denis Kenzior wrote:
+>> I went ahead and applied this patch, but modified it heavily afterward.
+>>   Can you please check the changes starting at 7f18695f and make sure
+>> that things are still working as intended and I didn't screw anything up.
+> =
+
+> Everything works as expected, thanks for the help!
+> =
+
+> I just wonder now about the case when the SPN update would happen while
+> the NETWORK_REGISTRATION_FLAG_READING_SPN is on.
+> =
 
 
-Actually, with this dongle ZTE MF190, we have 6 TTY (usb0 -> usb5) and =
+This is possible if extremely unlikely.  However, the nasty part is that
+we probably would need to take care of other cases besides SPN...
 
-usb-devices gives:
+> diff --git a/src/network.c b/src/network.c
+> struct ofono_netreg {
+> [...]
+>         char *spn;
+> +       unsigned int spn_update;
+>  };
+> [...]
+> =
 
-T:  Bus=3D02 Lev=3D02 Prnt=3D02 Port=3D00 Cnt=3D01 Dev#=3D 32 Spd=3D480 MxC=
-h=3D 0
-D:  Ver=3D 2.00 Cls=3D00(>ifc ) Sub=3D00 Prot=3D00 MxPS=3D64 #Cfgs=3D  1
-P:  Vendor=3D19d2 ProdID=3D0124 Rev=3D00.00
-S:  Manufacturer=3DZTE,Incorporated
-S:  Product=3DZTE WCDMA Technologies MSM
-S:  SerialNumber=3DP671A2TMED010000
-C:  #Ifs=3D 7 Cfg#=3D 1 Atr=3De0 MxPwr=3D500mA
-I:  If#=3D 0 Alt=3D 0 #EPs=3D 2 Cls=3Dff(vend.) Sub=3Dff Prot=3Dff Driver=
-=3Doption
-I:  If#=3D 1 Alt=3D 0 #EPs=3D 2 Cls=3Dff(vend.) Sub=3Dff Prot=3Dff Driver=
-=3Doption
-I:  If#=3D 2 Alt=3D 0 #EPs=3D 2 Cls=3Dff(vend.) Sub=3Dff Prot=3Dff Driver=
-=3Doption
-I:  If#=3D 3 Alt=3D 0 #EPs=3D 2 Cls=3Dff(vend.) Sub=3Dff Prot=3Dff Driver=
-=3Doption
-I:  If#=3D 4 Alt=3D 0 #EPs=3D 3 Cls=3Dff(vend.) Sub=3Dff Prot=3Dff Driver=
-=3Doption
-I:  If#=3D 5 Alt=3D 0 #EPs=3D 3 Cls=3Dff(vend.) Sub=3Dff Prot=3Dff Driver=
-=3Doption
-I:  If#=3D 6 Alt=3D 0 #EPs=3D 2 Cls=3D08(stor.) Sub=3D06 Prot=3D50 Driver=
-=3Dusb-storage
+> +static gboolean spn_update_cb(gpointer userdata)
+> +{
+> +       struct ofono_netreg *netreg =3D userdata;
+> +
+> +       if (netreg->flags & NETWORK_REGISTRATION_FLAG_READING_SPN)
+> +               return TRUE;
+> +
+> +       netreg->spn_update =3D 0;
+> +
+> +       sim_spn_changed(0, netreg);
+> +
+> +       return FALSE;
+> +}
+> +
+>  static void sim_spn_changed(int id, void *userdata)
+>  {
+>         struct ofono_netreg *netreg =3D userdata;
+>         gboolean had_spn;
+> =
 
-Now, ttyUSB5 is not responsive. So, for this particular dongle, the
-modem won't be on the latest interface. In practice, we shall use the =
+> -       if (netreg->flags & NETWORK_REGISTRATION_FLAG_READING_SPN)
+> +       if (netreg->flags & NETWORK_REGISTRATION_FLAG_READING_SPN) {
+> +               if (netreg->spn_update =3D=3D 0)
+> +                       netreg->spn_update =3D g_timeout_add(1000,
+> +                                                       spn_update_cb,
+> netreg);
+> +
+>                 return;
+> +       }
+> [...]
+> =
 
-interface ttyUSB4 for PPP.
+> What do you think?
 
-Windows Device Manager gives the following results:
-Vendor Id: 19d2 / Product Id: 0124 (same as after usb_modeswitch)
+You have to be careful here since you can't really guarantee that the
+operation will succeed in your time allotted.  If you are unlucky the
+timer will fire before the entire transaction succeeds and you might be
+running the old transaction and the new transaction in parallel.  You
+would have to check if the current code can handle this, but probably
+not.  And of course you never know what timer value is large enough.
 
-ZTE Diagnostic port             - 00
-ZTE AT port                 - 01
-ZTE ATExt2 port             - 02
-ZTE USB SmartCard Reader         - 03
-ZTE Proprietary USB Modem         - 04
-ZTE Mobile broadband Network manager     - 05
+A better approach might be to set another flag in this case, e.g.
+RECHECK_SPN, and re-do the transaction.  However, you'd also need to
+make sure the sim file cache is flushed as well.
 
-So, it confirms that the modem port com is on ttyUSB4.
+> =
 
-To not break the support of ZTE modems with 5 interfaces (which are =
+> I will be sending SPN changes for src/gprs.c soon.
 
-using the 4th one for PPP, like K3570), I can't extend the current logic =
-
-in udevng to take into account the ttyUSB4. So, I added a specific rule =
-
-for ZTE MF190.
+Before you do this, a sanity check on whether any MVNOs actually use the
+CPHS SPN field might be in order.  It may be that this complexity is not
+needed in the gprs.c provisioning logic; and that the EFspn field is
+sufficient.
 
 Regards,
+-Denis
 
-Philippe.
-
->
-> Regards
->
-> Marcel
->
->
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
-
-
---===============3172552289390835198==--
+--===============5144316732491895919==--
 
