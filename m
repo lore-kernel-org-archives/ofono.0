@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5307055718614815766=="
+Content-Type: multipart/mixed; boundary="===============7605262051832759802=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [RFC v4 09/16] dundee: Add skeleton implementation for device
-Date: Tue, 20 Dec 2011 15:47:12 +0100
-Message-ID: <1324392439-26508-10-git-send-email-wagi@monom.org>
+Subject: [RFC v4 10/16] dundee: Manager append devices
+Date: Tue, 20 Dec 2011 15:47:13 +0100
+Message-ID: <1324392439-26508-11-git-send-email-wagi@monom.org>
 In-Reply-To: <1324392439-26508-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5307055718614815766==
+--===============7605262051832759802==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,202 +16,58 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- Makefile.am     |    3 +-
- dundee/device.c |  100 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- dundee/dundee.h |   15 ++++++++
- dundee/main.c   |    4 ++-
- 4 files changed, 120 insertions(+), 2 deletions(-)
- create mode 100644 dundee/device.c
+ dundee/manager.c |   22 ++++++++++++++++++++++
+ 1 files changed, 22 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index b65f283..015f2d5 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -653,7 +653,8 @@ sbin_PROGRAMS +=3D dundee/dundee
+diff --git a/dundee/manager.c b/dundee/manager.c
+index 45f168e..628ca3a 100644
+--- a/dundee/manager.c
++++ b/dundee/manager.c
+@@ -30,6 +30,26 @@
  =
 
- dundee_dundee_SOURCES =3D $(gdbus_sources) \
- 			src/log.c src/dbus.c \
--			dundee/main.c dundee/dbus.c dundee/manager.c
-+			dundee/main.c dundee/dbus.c dundee/manager.c \
-+			dundee/device.c
+ #include "dundee.h"
  =
 
- dundee_dundee_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_L=
-IBS@ -ldl
- =
-
-diff --git a/dundee/device.c b/dundee/device.c
-new file mode 100644
-index 0000000..7ccf669
---- /dev/null
-+++ b/dundee/device.c
-@@ -0,0 +1,100 @@
-+/*
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2011  BMW Car IT GmbH. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <errno.h>
-+#include <string.h>
-+#include <stdio.h>
-+#include <netinet/ether.h>
-+
-+#include <glib.h>
-+#include <gdbus.h>
-+
-+#include "dundee.h"
-+
-+static GHashTable *device_hash;
-+
-+struct dundee_device {
-+};
-+
-+const char *__dundee_device_get_path(struct dundee_device *device)
++static void append_device(struct dundee_device *device, void *userdata)
 +{
-+	return "/";
++	DBusMessageIter *array =3D userdata;
++	const char *path =3D __dundee_device_get_path(device);
++	DBusMessageIter entry, dict;
++
++	dbus_message_iter_open_container(array, DBUS_TYPE_STRUCT,
++						NULL, &entry);
++	dbus_message_iter_append_basic(&entry, DBUS_TYPE_OBJECT_PATH,
++					&path);
++	dbus_message_iter_open_container(&entry, DBUS_TYPE_ARRAY,
++				OFONO_PROPERTIES_ARRAY_SIGNATURE,
++				&dict);
++
++	__dundee_device_append_properties(device, &dict);
++
++	dbus_message_iter_close_container(&entry, &dict);
++	dbus_message_iter_close_container(array, &entry);
 +}
 +
-+void __dundee_device_append_properties(struct dundee_device *device,
-+					DBusMessageIter *dict)
-+{
-+}
-+
-+void __dundee_device_foreach(dundee_device_foreach_func func, void *userda=
-ta)
-+{
-+	GHashTableIter iter;
-+	gpointer key, value;
-+
-+	DBG("");
-+
-+	g_hash_table_iter_init(&iter, device_hash);
-+
-+	while (g_hash_table_iter_next(&iter, &key, &value) =3D=3D TRUE) {
-+		struct dundee_device *device =3D value;
-+
-+		func(device, userdata);
-+	}
-+}
-+
-+static void destroy_device(gpointer user)
-+{
-+	struct dundee_device *device =3D user;
-+
-+	g_free(device);
-+}
-+
-+static void device_shutdown(gpointer key, gpointer value, gpointer user_da=
-ta)
-+{
-+}
-+
-+void __dundee_device_shutdown(void)
-+{
-+	g_hash_table_foreach(device_hash, device_shutdown, NULL);
-+
-+	__dundee_exit();
-+}
-+
-+int __dundee_device_init(void)
-+{
-+	DBG("");
-+
-+	device_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+						g_free, destroy_device);
-+
-+	return 0;
-+}
-+
-+void __dundee_device_cleanup(void)
-+{
-+	DBG("");
-+
-+	g_hash_table_destroy(device_hash);
-+}
-diff --git a/dundee/dundee.h b/dundee/dundee.h
-index a4d42d7..2ce4270 100644
---- a/dundee/dundee.h
-+++ b/dundee/dundee.h
-@@ -53,3 +53,18 @@ DBusMessage *__dundee_error_failed(DBusMessage *msg);
+ static DBusMessage *manager_get_devices(DBusConnection *conn,
+ 					DBusMessage *msg, void *data)
+ {
+@@ -56,6 +76,8 @@ static DBusMessage *manager_get_devices(DBusConnection *c=
+onn,
+ 					DBUS_STRUCT_END_CHAR_AS_STRING,
+ 					&array);
  =
 
- int __dundee_manager_init(void);
- void __dundee_manager_cleanup(void);
++	__dundee_device_foreach(append_device, &array);
 +
-+
-+struct dundee_device;
-+
-+int __dundee_device_init(void);
-+void __dundee_device_cleanup(void);
-+void __dundee_device_shutdown(void);
-+
-+typedef void (*dundee_device_foreach_func)(struct dundee_device *device,
-+						void *data);
-+void __dundee_device_foreach(dundee_device_foreach_func cb, void *userdata=
-);
-+
-+const char *__dundee_device_get_path(struct dundee_device *device);
-+void __dundee_device_append_properties(struct dundee_device *device,
-+					DBusMessageIter *dict);
-diff --git a/dundee/main.c b/dundee/main.c
-index 29991ff..07abc74 100644
---- a/dundee/main.c
-+++ b/dundee/main.c
-@@ -80,7 +80,7 @@ static gboolean signal_handler(GIOChannel *channel, GIOCo=
-ndition cond,
- 			g_timeout_add_seconds(SHUTDOWN_GRACE_SECONDS,
- 						quit_eventloop, NULL);
+ 	dbus_message_iter_close_container(&iter, &array);
  =
 
--			quit_eventloop(NULL);
-+			__dundee_device_shutdown();
- 		}
- =
-
- 		__terminated =3D 1;
-@@ -233,9 +233,11 @@ int main(int argc, char **argv)
- 	__ofono_dbus_init(conn);
- =
-
- 	__dundee_manager_init();
-+	__dundee_device_init();
- =
-
- 	g_main_loop_run(event_loop);
- =
-
-+	__dundee_device_cleanup();
- 	__dundee_manager_cleanup();
- =
-
- 	__ofono_dbus_cleanup();
+ 	return reply;
 -- =
 
 1.7.8.110.g4cb5d1
 
 
---===============5307055718614815766==--
+--===============7605262051832759802==--
 
