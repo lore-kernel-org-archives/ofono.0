@@ -1,95 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============2692667877701584544=="
+Content-Type: multipart/mixed; boundary="===============7847517112820445393=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: The way to install proper driver for 3G dongle in oFono
-Date: Tue, 20 Dec 2011 08:41:21 -0800
-Message-ID: <1324399281.1965.118.camel@aeonflux>
-In-Reply-To: <4EF0B158.9010301@linux.intel.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH 1/2] udevng: Do only label assignment for Speedup dongles
+Date: Tue, 20 Dec 2011 17:55:41 +0100
+Message-ID: <1324400142-23449-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2692667877701584544==
+--===============7847517112820445393==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+---
+ plugins/udevng.c |    7 -------
+ 1 files changed, 0 insertions(+), 7 deletions(-)
 
-> >> We are facing a problem in oFono when using 3G modems:
-> >>
-> >> A CDMA2000 modem can have same PID with WCDMA modem, or TDS-CDMA =
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index be87320..2c0633d 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -310,13 +310,6 @@ static gboolean setup_speedup(struct modem_info *modem)
+ 			mdm =3D info->devnode;
+ 			if (aux !=3D NULL)
+ 				break;
+-		} else if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
+-			if (g_strcmp0(info->number, "01") =3D=3D 0)
+-				aux =3D info->devnode;
+-			else if (g_strcmp0(info->number, "02") =3D=3D 0)
+-				mdm =3D info->devnode;
+-			else if (g_strcmp0(info->number, "03") =3D=3D 0)
+-				mdm =3D info->devnode;
+ 		}
+ 	}
+ =
 
-> >> modem -- 3G modem vendors already confirm they do that.
-> >>
-> >> That's to say, if following current strategy, it will be a problem to =
+-- =
 
-> >> install proper driver for this kind of 3G modem.
-> >>
-> >> So, is it feasible to find out a solution such as to probe the modem =
-
-> >> firstly, find out what kind of network modes it supports, and then =
-
-> >> install the driver?
-> >>
-> >> The way to probe the modem could be some action as to read the =
-
-> >> capability or get system mode, or issue some specific AT command that =
-
-> >> only response to certain network mode?
-> >>
-> >
-> > Indeed, we could use for Huawei modems for instance the AT^SYSINFO =
-
-> > command and retrieve the sys_mode field and parse it, I have found =
-
-> > this in public Huawei specifications:
-> >
-> > <sys_mode>: System mode. The values are as follows:
-> > 0 No service.
-> > 1 AMPS mode
-> > 2 CDMA mode
-> > 3 GSM/GPRS mode
-> > 4 HDR mode
-> > 5 WCDMA mode
-> > 8 CDMA/HDR HYBRID mode
-> >
-> > Thus we can chose accordingly the drivers to create oFono atoms.
-> =
-
-> After some investigations, it seems SYSINFO won't be enough to get the =
-
-> modem type because with this AT command we will have to be registered to =
-
-> the network to get the system mode.
-> The only way I found until now is using the AT+GCAP to check whether the =
-
-> modem is CDMA or GSM type.
-> However if we do the AT+GCAP request for each constructor plugin =
-
-> (huawei, zte, ...) it will bring some duplicated code.
-> Does someone see any better solution?
-
-I like to see that we do proper homework here. The first question is
-actually can you execute AT+GCAP if not SIM card has been inserted or is
-actually locked? And if not does, ATI provide an extra +GCAP response.
-Without a SIM atom you will not be able to unlock the modem. And you can
-only create the SIM atom if you know what modem technology you are
-using. Additionally of course additionally, what are the responses for
-various modem models and manufactures. Are they doing this actually
-properly.
-
-We need OFONO_AT_DEBUG traces for all the various permutations of this
-behavior. This needs to be documented first. Feel free to send patches
-to add the results to doc/ directory inside oFono.
-
-Just randomly hacking around will get us in trouble and will make well
-behaved modems like MBM or IFX fail or suffer for no apparent reasons.
-
-Regards
-
-Marcel
+1.7.1
 
 
-
---===============2692667877701584544==--
+--===============7847517112820445393==--
 
