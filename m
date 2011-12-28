@@ -1,229 +1,196 @@
-Content-Type: multipart/mixed; boundary="===============6965515841140370361=="
+Content-Type: multipart/mixed; boundary="===============4498614382502386077=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCH 2/3] network: Add SPN watch capability
-Date: Wed, 28 Dec 2011 15:18:43 +0200
-Message-ID: <1325078324-30548-3-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCH 3/3] gprs: Use netreg SPN watch API
+Date: Wed, 28 Dec 2011 15:18:44 +0200
+Message-ID: <1325078324-30548-4-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1325078324-30548-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6965515841140370361==
+--===============4498614382502386077==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/network.c |   95 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+---
- src/ofono.h   |    7 ++++
- 2 files changed, 97 insertions(+), 5 deletions(-)
+ src/gprs.c |   67 ++++++++++++++++++++++++++++++++------------------------=
+---
+ 1 files changed, 36 insertions(+), 31 deletions(-)
 
-diff --git a/src/network.c b/src/network.c
-index 92256a8..9a685d4 100644
---- a/src/network.c
-+++ b/src/network.c
-@@ -84,6 +84,7 @@ struct ofono_netreg {
- 	struct ofono_atom *atom;
- 	unsigned int hfp_watch;
- 	char *spn;
-+	struct ofono_watchlist *spn_watches;
- };
+diff --git a/src/gprs.c b/src/gprs.c
+index 4e46743..356479c 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -46,8 +46,9 @@
+ #include "simutil.h"
+ #include "util.h"
  =
 
- struct network_operator_data {
-@@ -1638,6 +1639,69 @@ static void sim_spdi_read_cb(int ok, int length, int=
- record,
- 	netreg_emit_operator_display_name(netreg);
+-#define GPRS_FLAG_ATTACHING 0x1
+-#define GPRS_FLAG_RECHECK 0x2
++#define GPRS_FLAG_ATTACHING	0x1
++#define GPRS_FLAG_RECHECK	0x2
++#define GPRS_FLAG_READ_SPN	0x4
+ =
+
+ #define SETTINGS_STORE "gprs"
+ #define SETTINGS_GROUP "Settings"
+@@ -87,6 +88,7 @@ struct ofono_gprs {
+ 	struct ofono_netreg *netreg;
+ 	unsigned int netreg_watch;
+ 	unsigned int status_watch;
++	unsigned int spn_watch;
+ 	GKeyFile *settings;
+ 	char *imsi;
+ 	DBusMessage *pending;
+@@ -148,6 +150,7 @@ struct pri_context {
+ =
+
+ static void gprs_netreg_update(struct ofono_gprs *gprs);
+ static void gprs_deactivate_next(struct ofono_gprs *gprs);
++static void spn_read_cb(gpointer spn, gpointer user_data);
+ =
+
+ static GSList *g_drivers =3D NULL;
+ static GSList *g_context_drivers =3D NULL;
+@@ -1528,11 +1531,15 @@ static void gprs_netreg_removed(struct ofono_gprs *=
+gprs)
+ {
+ 	gprs->netreg =3D NULL;
+ =
+
+-	gprs->flags &=3D ~(GPRS_FLAG_RECHECK | GPRS_FLAG_ATTACHING);
++	gprs->flags &=3D ~(GPRS_FLAG_RECHECK | GPRS_FLAG_ATTACHING |
++						GPRS_FLAG_READ_SPN);
+ 	gprs->status_watch =3D 0;
+ 	gprs->netreg_status =3D NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
+ 	gprs->driver_attached =3D FALSE;
+ =
+
++	if (gprs->spn_watch)
++		__ofono_netreg_remove_spn_watch(gprs->netreg, &gprs->spn_watch);
++
+ 	gprs_attached_update(gprs);
  }
  =
 
-+gboolean __ofono_netreg_add_spn_watch(struct ofono_netreg *netreg,
-+					unsigned int *id, GFunc cb,
-+					void *data, ofono_destroy_func destroy)
-+{
-+	struct ofono_watchlist_item *item;
-+	unsigned int watch_id;
+@@ -2625,6 +2632,12 @@ static void netreg_watch(struct ofono_atom *atom,
+ 					netreg_status_changed, gprs, NULL);
+ =
+
+ 	gprs_netreg_update(gprs);
 +
-+	DBG("%p", netreg);
-+
-+	if (netreg =3D=3D NULL)
-+		return 0;
-+
-+	item =3D g_new0(struct ofono_watchlist_item, 1);
-+
-+	item->notify =3D cb;
-+	item->destroy =3D destroy;
-+	item->notify_data =3D data;
-+
-+	watch_id =3D __ofono_watchlist_add_item(netreg->spn_watches, item);
-+	if (watch_id =3D=3D 0)
-+		return FALSE;
-+
-+	*id =3D watch_id;
-+
-+	if (item->notify !=3D NULL && netreg->spn !=3D NULL)
-+		cb(netreg->spn, item->notify_data);
-+
-+	return TRUE;
-+}
-+
-+gboolean __ofono_netreg_remove_spn_watch(struct ofono_netreg *netreg,
-+						unsigned int *id)
-+{
-+	gboolean ret;
-+
-+	DBG("%p", netreg);
-+
-+	if (netreg =3D=3D NULL)
-+		return FALSE;
-+
-+	ret =3D __ofono_watchlist_remove_item(netreg->spn_watches, *id);
-+	if (ret =3D=3D TRUE)
-+		*id =3D 0;
-+
-+	return ret;
-+}
-+
-+static void spn_watch_cb(gpointer data, gpointer user_data)
-+{
-+	struct ofono_watchlist_item *item =3D data;
-+
-+	if (item->notify)
-+		((GFunc) item->notify)(user_data, item->notify_data);
-+}
-+
-+static inline void spn_watches_notify(struct ofono_netreg *netreg)
-+{
-+	if (netreg->spn_watches->items =3D=3D NULL)
++	if (gprs->flags & GPRS_FLAG_READ_SPN) {
++		__ofono_netreg_add_spn_watch(gprs->netreg, &gprs->spn_watch,
++						spn_read_cb, gprs, NULL);
++		gprs->flags &=3D ~GPRS_FLAG_READ_SPN;
++	}
+ }
+ =
+
+ static gboolean load_context(struct ofono_gprs *gprs, const char *group)
+@@ -2948,34 +2961,29 @@ static void ofono_gprs_finish_register(struct ofono=
+_gprs *gprs)
+ 	ofono_modem_add_interface(modem,
+ 				OFONO_CONNECTION_MANAGER_INTERFACE);
+ =
+
+-	gprs->netreg_watch =3D __ofono_modem_add_atom_watch(modem,
+-					OFONO_ATOM_TYPE_NETREG,
+-					netreg_watch, gprs, NULL);
+-
+ 	__ofono_atom_register(gprs->atom, gprs_unregister);
+ }
+ =
+
+-static void sim_spn_read_cb(int ok, int length, int record,
+-				const unsigned char *data,
+-				int record_length, void *userdata)
++static void spn_read_cb(gpointer spn, gpointer user_data)
+ {
+-	struct ofono_gprs *gprs	=3D userdata;
+-	char *spn =3D NULL;
++	struct ofono_gprs *gprs	=3D user_data;
+ 	struct ofono_atom *sim_atom;
+-	struct ofono_sim *sim =3D NULL;
++	struct ofono_sim *sim;
+ =
+
+-	if (ok)
+-		spn =3D sim_string_to_utf8(data + 1, length - 1);
++	if (gprs->spn_watch =3D=3D 0)
 +		return;
 +
-+	g_slist_foreach(netreg->spn_watches->items, spn_watch_cb, netreg->spn);
-+}
++	__ofono_netreg_remove_spn_watch(gprs->netreg, &gprs->spn_watch);
+ =
+
+ 	sim_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(gprs->atom),
+ 						OFONO_ATOM_TYPE_SIM);
+-	if (sim_atom) {
++	if (sim_atom)
+ 		sim =3D __ofono_atom_get_data(sim_atom);
 +
- static void sim_spn_display_condition_parse(struct ofono_netreg *netreg,
- 						guint8 dcbyte)
- {
-@@ -1691,10 +1755,16 @@ static void sim_cphs_spn_short_read_cb(int ok, int =
-length, int record,
++	if (sim !=3D NULL && spn !=3D NULL)
+ 		provision_contexts(gprs, ofono_sim_get_mcc(sim),
+ 					ofono_sim_get_mnc(sim), spn);
+-	}
  =
 
- 	netreg->flags &=3D ~NETWORK_REGISTRATION_FLAG_READING_SPN;
+-	g_free(spn);
+ 	ofono_gprs_finish_register(gprs);
+ }
  =
 
--	if (!ok)
-+	if (!ok) {
-+		spn_watches_notify(netreg);
- 		return;
-+	}
-+
-+	sim_spn_parse(data, length, &netreg->spn);
+@@ -2985,27 +2993,24 @@ void ofono_gprs_register(struct ofono_gprs *gprs)
+ 	struct ofono_atom *sim_atom;
+ 	struct ofono_sim *sim =3D NULL;
  =
 
--	if (!sim_spn_parse(data, length, &netreg->spn))
-+	spn_watches_notify(netreg);
-+
-+	if (netreg->spn =3D=3D NULL)
- 		return;
+-	sim_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
++	sim_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(gprs->atom),
++						OFONO_ATOM_TYPE_SIM);
  =
 
- 	if (netreg->current_operator)
-@@ -1714,15 +1784,21 @@ static void sim_cphs_spn_read_cb(int ok, int length=
-, int record,
- 					SIM_EF_CPHS_SPN_SHORT_FILEID,
- 					OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
- 					sim_cphs_spn_short_read_cb, netreg);
--		else
-+		else {
- 			netreg->flags &=3D ~NETWORK_REGISTRATION_FLAG_READING_SPN;
-+			spn_watches_notify(netreg);
-+		}
+ 	if (sim_atom) {
+-		const char *imsi;
+ 		sim =3D __ofono_atom_get_data(sim_atom);
  =
 
- 		return;
+-		imsi =3D ofono_sim_get_imsi(sim);
+-		gprs_load_settings(gprs, imsi);
++		gprs_load_settings(gprs, ofono_sim_get_imsi(sim));
  	}
  =
 
- 	netreg->flags &=3D ~NETWORK_REGISTRATION_FLAG_READING_SPN;
+-	if (gprs->contexts =3D=3D NULL && sim !=3D NULL) {
+-		/* Get Service Provider Name from SIM for provisioning */
+-		gprs->sim_context =3D ofono_sim_context_create(sim);
++	if (gprs->contexts =3D=3D NULL && sim !=3D NULL)
++		gprs->flags |=3D GPRS_FLAG_READ_SPN;
  =
 
--	if (!sim_spn_parse(data, length, &netreg->spn))
-+	sim_spn_parse(data, length, &netreg->spn);
-+
-+	spn_watches_notify(netreg);
-+
-+	if (netreg->spn =3D=3D NULL)
- 		return;
+-		if (ofono_sim_read(gprs->sim_context, SIM_EFSPN_FILEID,
+-				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+-					sim_spn_read_cb, gprs) >=3D 0)
+-			return;
+-	}
++	gprs->netreg_watch =3D __ofono_modem_add_atom_watch(modem,
++					OFONO_ATOM_TYPE_NETREG,
++					netreg_watch, gprs, NULL);
  =
 
- 	if (netreg->current_operator)
-@@ -1746,7 +1822,11 @@ static void sim_spn_read_cb(int ok, int length, int =
-record,
+-	ofono_gprs_finish_register(gprs);
++	if (gprs->spn_watch =3D=3D 0)
++		ofono_gprs_finish_register(gprs);
+ }
  =
 
- 	netreg->flags &=3D ~NETWORK_REGISTRATION_FLAG_READING_SPN;
- =
-
--	if (!sim_spn_parse(data + 1, length - 1, &netreg->spn))
-+	sim_spn_parse(data + 1, length - 1, &netreg->spn);
-+
-+	spn_watches_notify(netreg);
-+
-+	if (netreg->spn =3D=3D NULL)
- 		return;
- =
-
- 	sim_spn_display_condition_parse(netreg, data[0]);
-@@ -1888,6 +1968,9 @@ static void netreg_unregister(struct ofono_atom *atom)
- =
-
- 	__ofono_modem_remove_atom_watch(modem, netreg->hfp_watch);
- =
-
-+	__ofono_watchlist_free(netreg->spn_watches);
-+	netreg->spn_watches =3D NULL;
-+
- 	__ofono_watchlist_free(netreg->status_watches);
- 	netreg->status_watches =3D NULL;
- =
-
-@@ -2171,6 +2254,8 @@ void ofono_netreg_register(struct ofono_netreg *netre=
-g)
- 		return;
- 	}
- =
-
-+	netreg->spn_watches =3D __ofono_watchlist_new(g_free);
-+
- 	netreg->status_watches =3D __ofono_watchlist_new(g_free);
- =
-
- 	ofono_modem_add_interface(modem, OFONO_NETWORK_REGISTRATION_INTERFACE);
-diff --git a/src/ofono.h b/src/ofono.h
-index 0e3009e..5427f0c 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -423,6 +423,13 @@ unsigned int __ofono_netreg_add_status_watch(struct of=
-ono_netreg *netreg,
- gboolean __ofono_netreg_remove_status_watch(struct ofono_netreg *netreg,
- 						unsigned int id);
- =
-
-+gboolean __ofono_netreg_add_spn_watch(struct ofono_netreg *netreg,
-+					unsigned int *id, GFunc cb,
-+					void *data, ofono_destroy_func destroy);
-+
-+gboolean __ofono_netreg_remove_spn_watch(struct ofono_netreg *netreg,
-+						unsigned int *id);
-+
- void __ofono_netreg_set_base_station_name(struct ofono_netreg *netreg,
- 						const char *name);
- =
-
+ void ofono_gprs_remove(struct ofono_gprs *gprs)
 -- =
 
 1.7.5.4
 
 
---===============6965515841140370361==--
+--===============4498614382502386077==--
 
