@@ -1,13 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6852976491797515463=="
+Content-Type: multipart/mixed; boundary="===============2545846492947054875=="
 MIME-Version: 1.0
 From: Syam Sidhardhan <syamsidhardh@gmail.com>
-Subject: [PATCH 1/2] hfp_ag: Fix empty parameter list in functions
-Date: Fri, 30 Dec 2011 03:30:32 +0530
-Message-ID: <1325196035-10461-1-git-send-email-syamsidhardh@gmail.com>
+Subject: [PATCH 2/3] hfp_ag: Fix empty parameter list in functions
+Date: Fri, 30 Dec 2011 03:30:33 +0530
+Message-ID: <1325196035-10461-2-git-send-email-syamsidhardh@gmail.com>
+In-Reply-To: <1325196035-10461-1-git-send-email-syamsidhardh@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6852976491797515463==
+--===============2545846492947054875==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -47,5 +48,5 @@ void *user)
 1.7.4.1
 
 
---===============6852976491797515463==--
+--===============2545846492947054875==--
 
