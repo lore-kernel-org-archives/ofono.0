@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3032094513609923103=="
+Content-Type: multipart/mixed; boundary="===============6450290324998801386=="
 MIME-Version: 1.0
 From: Syam Sidhardhan <syamsidhardh@gmail.com>
-Subject: [PATCH 2/2] telit: Fix empty parameter list in function
-Date: Fri, 30 Dec 2011 03:30:34 +0530
-Message-ID: <1325196035-10461-3-git-send-email-syamsidhardh@gmail.com>
+Subject: [PATCH 3/3] telit: Fix empty parameter list in function
+Date: Fri, 30 Dec 2011 03:30:35 +0530
+Message-ID: <1325196035-10461-4-git-send-email-syamsidhardh@gmail.com>
 In-Reply-To: <1325196035-10461-1-git-send-email-syamsidhardh@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3032094513609923103==
+--===============6450290324998801386==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -37,5 +37,5 @@ ult, gpointer user_data)
 1.7.4.1
 
 
---===============3032094513609923103==--
+--===============6450290324998801386==--
 
