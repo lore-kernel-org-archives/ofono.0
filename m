@@ -1,52 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============2545846492947054875=="
+Content-Type: multipart/mixed; boundary="===============3032094513609923103=="
 MIME-Version: 1.0
 From: Syam Sidhardhan <syamsidhardh@gmail.com>
-Subject: [PATCH 2/3] hfp_ag: Fix empty parameter list in functions
-Date: Fri, 30 Dec 2011 03:30:33 +0530
-Message-ID: <1325196035-10461-2-git-send-email-syamsidhardh@gmail.com>
+Subject: [PATCH 2/2] telit: Fix empty parameter list in function
+Date: Fri, 30 Dec 2011 03:30:34 +0530
+Message-ID: <1325196035-10461-3-git-send-email-syamsidhardh@gmail.com>
 In-Reply-To: <1325196035-10461-1-git-send-email-syamsidhardh@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2545846492947054875==
+--===============3032094513609923103==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/hfp_ag.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ plugins/telit.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/plugins/hfp_ag.c b/plugins/hfp_ag.c
-index 4a244d9..c2d1d30 100644
---- a/plugins/hfp_ag.c
-+++ b/plugins/hfp_ag.c
-@@ -190,7 +190,7 @@ static void call_modemwatch(struct ofono_modem *modem, =
-void *user)
- 	modem_watch(modem, TRUE, user);
+diff --git a/plugins/telit.c b/plugins/telit.c
+index 48087f2..6ae7249 100644
+--- a/plugins/telit.c
++++ b/plugins/telit.c
+@@ -436,7 +436,7 @@ static void rsen_disable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	telit_disable(modem);
  }
  =
 
--static int hfp_ag_init()
-+static int hfp_ag_init(void)
+-static int telit_sap_open()
++static int telit_sap_open(void)
  {
- 	sim_hash =3D g_hash_table_new(g_direct_hash, g_direct_equal);
- =
-
-@@ -200,7 +200,7 @@ static int hfp_ag_init()
- 	return 0;
- }
- =
-
--static void hfp_ag_exit()
-+static void hfp_ag_exit(void)
- {
- 	__ofono_modemwatch_remove(modemwatch_id);
- 	g_list_free(modems);
+ 	const char *device =3D "/dev/ttyUSB4";
+ 	struct termios ti;
 -- =
 
 1.7.4.1
 
 
---===============2545846492947054875==--
+--===============3032094513609923103==--
 
