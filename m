@@ -1,25 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============1197923101485783943=="
+Content-Type: multipart/mixed; boundary="===============6750724040253379966=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] atutil: Fix newline before EOF and coding guideline
- volation
-Date: Sun, 01 Jan 2012 18:18:07 -0600
-Message-ID: <4F00F7BF.7040507@gmail.com>
-In-Reply-To: <1325199481-27598-1-git-send-email-syamsidhardh@gmail.com>
+Subject: Re: [PATCH] sim: fix typo: "network" is matching pin type for
+ "networkpuk"
+Date: Sun, 01 Jan 2012 18:18:30 -0600
+Message-ID: <4F00F7D6.1080607@gmail.com>
+In-Reply-To: <1325507246-10210-1-git-send-email-jussi.kukkonen@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1197923101485783943==
+--===============6750724040253379966==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Syam,
+Hi Jussi,
 
-On 12/29/2011 04:58 PM, Syam Sidhardhan wrote:
+On 01/02/2012 06:27 AM, Jussi Kukkonen wrote:
 > ---
->  drivers/atmodem/atutil.h |    3 +--
->  1 files changed, 1 insertions(+), 2 deletions(-)
+> =
+
+> At least this looks like a typo -- can't say I know anything about the
+> stranger pin types though...
+> =
+
+> =
+
+>  src/sim.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
 > =
 
 
@@ -28,5 +36,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============1197923101485783943==--
+--===============6750724040253379966==--
 
