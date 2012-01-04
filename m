@@ -1,83 +1,112 @@
-Content-Type: multipart/mixed; boundary="===============2424315807454865619=="
+Content-Type: multipart/mixed; boundary="===============3674381599451472047=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v5 00/16] Add DUN support
-Date: Wed, 04 Jan 2012 18:17:34 +0100
-Message-ID: <1325697470-22227-1-git-send-email-wagi@monom.org>
+Subject: [PATCH v5 02/16] dundee: Add documentation
+Date: Wed, 04 Jan 2012 18:17:36 +0100
+Message-ID: <1325697470-22227-3-git-send-email-wagi@monom.org>
+In-Reply-To: <1325697470-22227-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2424315807454865619==
+--===============3674381599451472047==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
-Hi,
-
-I think this series is ready to be considered to be merged *hint* :)
-
-Changes v5:
- - Use Serial.ConnectFD() instead of Serial.Connect()
- - Small bug fix in disconnect callback
-
-cheers,
-daniel
-
-Daniel Wagner (16):
-  bluetooth: Add Serial interface definition
-  dundee: Add documentation
-  dundee: Add test scripts
-  dundee: Add skeleton implementation
-  dundee: Add D-Bus error messages
-  dundee: Add D-Bus configuration file
-  dundee: Add systemd configuration file
-  dundee: Add Manager interface
-  dundee: Add skeleton implementation for device
-  dundee: Manager append devices
-  dundee: Add callback helpers
-  dundee: Add device un/register
-  dundee: Add driver helper functions
-  dundee: Add device D-Bus interface
-  dundee: Add PPP handling code to device
-  dundee: Add Bluetooth DUN driver
-
- Makefile.am            |   25 ++
- bootstrap-configure    |    1 +
- configure.ac           |    4 +
- doc/dundee-api.txt     |   76 ++++++
- dundee/bluetooth.c     |  290 ++++++++++++++++++++++
- dundee/dbus.c          |   45 ++++
- dundee/device.c        |  646 ++++++++++++++++++++++++++++++++++++++++++++=
+---
+ doc/dundee-api.txt |   76 ++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- dundee/dundee.conf     |   23 ++
- dundee/dundee.h        |  145 +++++++++++
- dundee/dundee.service  |   11 +
- dundee/main.c          |  256 +++++++++++++++++++
- dundee/manager.c       |  119 +++++++++
- plugins/bluetooth.h    |    1 +
- test/dundee-connect    |   20 ++
- test/dundee-disconnect |   20 ++
- test/monitor-dundee    |  109 ++++++++
- 16 files changed, 1791 insertions(+), 0 deletions(-)
+ 1 files changed, 76 insertions(+), 0 deletions(-)
  create mode 100644 doc/dundee-api.txt
- create mode 100644 dundee/bluetooth.c
- create mode 100644 dundee/dbus.c
- create mode 100644 dundee/device.c
- create mode 100644 dundee/dundee.conf
- create mode 100644 dundee/dundee.h
- create mode 100644 dundee/dundee.service
- create mode 100644 dundee/main.c
- create mode 100644 dundee/manager.c
- create mode 100755 test/dundee-connect
- create mode 100755 test/dundee-disconnect
- create mode 100755 test/monitor-dundee
 
+diff --git a/doc/dundee-api.txt b/doc/dundee-api.txt
+new file mode 100644
+index 0000000..9f4cfe6
+--- /dev/null
++++ b/doc/dundee-api.txt
+@@ -0,0 +1,76 @@
++
++Manager hierarchy
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++Service		org.ofono.dundee
++Interface	org.ofono.dundee.Manager
++Object path	/
++
++Methods		array{object,dict} GetDevices()
++
++			Get an array of device objects and properties
++			that represent the currently attached devices.
++
++			This method call should only be used once when an
++			application starts up. Further device additions
++			and removal shall be monitored via DeviceAdded and
++			DeviceRemoved signals.
++
++Signals		DeviceAdded(object path, dict properties)
++
++			Signal that is sent when a new device is added.  It
++			contains the object path of new device and its
++			properties.
++
++		DeviceRemoved(object path)
++
++			Signal that is sent when a device has been removed.
++			The object path is no longer accessible after this
++			signal and only emitted for reference.
++
++
++Device hierarchy
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++Service		org.ofono.dundee
++Interface	org.ofono.dundee.Device
++Object path	/{device0,device1,...}
++
++Methods		dict GetProperties()
++
++			Returns properties for the device object. See
++			the properties section for available properties.
++
++Signals		PropertyChanged(string name, variant value)
++
++			This signal indicates a changed value of the given
++			property.
++
++Properties	string Name [readonly]
++
++			Friendly name of the device.
++
++		boolean Active [readwrite]
++
++			Holds whether the device is connected. A
++			connection will be established when this value
++			is set to true. A existing connection will be
++			teared down when set to false.
++
++		dict Settings [readonly]
++
++			Holds all the IP network settings.
++
++			string Interface [readonly, optional]
++
++				Holds the interface of the network interface
++				used by this connection (e.g. "ppp0" "usb0")
++
++			string Address [readonly, optional]
++
++				Holds the IP address for this connection.
++
++			array{string} DomainNameServers [readonly, optional]
++
++				Holds the list of domain name servers for this
++				connection.
 -- =
 
 1.7.8.2.302.g17b4
 
 
---===============2424315807454865619==--
+--===============3674381599451472047==--
 
