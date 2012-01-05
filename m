@@ -1,85 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============9156077143881555382=="
+Content-Type: multipart/mixed; boundary="===============1390874144002167178=="
 MIME-Version: 1.0
-From: Deng, Ying An <ying.an.deng@intel.com>
-Subject: RE: [PATCH] udevng: use huaweicdma driver for olive V-ME101
-Date: Fri, 06 Jan 2012 00:57:30 +0000
-Message-ID: <688E999A39D0DD478D9CFCDC485D6482AE23@SHSMSX102.ccr.corp.intel.com>
-In-Reply-To: <4F05CA3C.5090005@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: bug: NULL pointer access?
+Date: Thu, 05 Jan 2012 09:40:33 -0600
+Message-ID: <4F05C471.4040105@gmail.com>
+In-Reply-To: <4F05BAD7.9050206@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9156077143881555382==
+--===============1390874144002167178==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
->-----Original Message-----
->From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
-lf
->Of nicolas.bertrand
->Sent: Friday, January 06, 2012 12:05 AM
->To: ofono(a)ofono.org
->Subject: Re: [PATCH] udevng: use huaweicdma driver for olive V-ME101
->
->Hi Marcel,
->
->On 01/05/2012 09:03 AM, Marcel Holtmann wrote:
->> Hi Nicolas,
->>
->>>   plugins/udevng.c |    3 +--
->>>   1 files changed, 1 insertions(+), 2 deletions(-)
->>>
->>> diff --git a/plugins/udevng.c b/plugins/udevng.c
->>> index be87320..8d478cf 100644
->>> --- a/plugins/udevng.c
->>> +++ b/plugins/udevng.c
->>> @@ -800,11 +800,10 @@ static struct {
->>>   	{ "hso",	"hso"				},
->>>   	{ "gobi",	"qcserial"			},
->>>   	{ "sierra",	"sierra"			},
->>> -	{ "huawei",	"option",	"201e", "2009"	},
->>> +	{ "huaweicdma",	"option",	"201e", "2009"	},
->>>   	{ "huawei",	"cdc_ether",	"12d1"		},
->>>   	{ "huawei",	"option",	"12d1"		},
->>>   	{ "huaweicdma",	"option",	"12d1", "140b"	},
->>> -	{ "huaweicdma", "option",	"201e"		},
->>>   	{ "speedupcdma","option",	"1c9e", "9e00"	},
->>>   	{ "speedup",	"option",	"1c9e"		},
->>>   	{ "speedup",	"option",	"2020"		},
->>
->> the commit message does not explain why you are removing huaweicdma in
->> general for VID 0x201e.
->
->I've removed the generic configuration of HAIER's modem (0x201e) since
->there is only one product ID used for the moment by this vendor (seen in
->the option driver).
->
->Do I need to only use the generic configuration and removing the
->specific one to the PID 2009 or either simply add this comment in the
->commit message?
+Hi Daniel,
 
-Haier helps many carriers to OEM dongles, including GSM/CDMA/TDS-CDMA/LTE..
-So it'd not be a good idea to force all Haier dongle to load cdma driver.
+On 01/05/2012 08:59 AM, Daniel Wagner wrote:
+> Hi,
+> =
 
->>
->> Regards
->>
->> Marcel
->>
->>
->> _______________________________________________
->> ofono mailing list
->> ofono(a)ofono.org
->> http://lists.ofono.org/listinfo/ofono
->>
->
->--
->regards,
->Nico
->_______________________________________________
->ofono mailing list
->ofono(a)ofono.org
->http://lists.ofono.org/listinfo/ofono
+> I just managed to get this backtrace:
+> =
 
---===============9156077143881555382==--
+> ofonod[1808]: ++++++++ backtrace ++++++++
+> ofonod[1808]: #0  0x3366c0f500 in /lib64/libpthread.so.0
+> ofonod[1808]: #1  0x3366836285 in /lib64/libc.so.6
+> ofonod[1808]: #2  0x3366837b9b in /lib64/libc.so.6
+> ofonod[1808]: #3  0x336982fd85 in /lib64/libdbus-1.so.3
+> ofonod[1808]: #4  0x3369826e31 in /lib64/libdbus-1.so.3
+> ofonod[1808]: #5  0x336981b806 in /lib64/libdbus-1.so.3
+> ofonod[1808]: #6  0x4db083 in pri_activate_callback() at src/gprs.c:871
+> ofonod[1808]: #7  0x4611cf in ppp_connect() at drivers/atmodem/gprs-conte=
+xt.c:101
+> ofonod[1808]: #8  0x447fdd in ppp_ipcp_up_notify() at gatchat/gatppp.c:415
+> ofonod[1808]: #9  0x44bdbc in ipcp_up() at gatchat/ppp_ipcp.c:173
+> ofonod[1808]: #10 0x44911d in pppcp_this_layer_up() at gatchat/ppp_cp.c:3=
+22
+> ofonod[1808]: #11 0x449e5e in pppcp_generate_event() at gatchat/ppp_cp.c:=
+690
+> ofonod[1808]: #12 0x44a68b in pppcp_process_packet() at gatchat/ppp_cp.c:=
+967
+> ofonod[1808]: #13 0x447905 in ppp_receive() at gatchat/gatppp.c:224
+> ofonod[1808]: #14 0x446994 in new_bytes() at gatchat/gathdlc.c:301
+> ofonod[1808]: #15 0x43edf3 in received_data() at gatchat/gatio.c:124
+> ofonod[1808]: #16 0x3368844a7d in /lib64/libglib-2.0.so.0
+> ofonod[1808]: #17 0x3368845278 in /lib64/libglib-2.0.so.0
+> ofonod[1808]: #18 0x33688457c5 in /lib64/libglib-2.0.so.0
+> ofonod[1808]: #19 0x496c4e in main() at src/main.c:262
+> ofonod[1808]: #20 0x336682169d in /lib64/libc.so.6
+> ofonod[1808]: +++++++++++++++++++++++++++
+> =
+
+> =
+
+> static void pri_activate_callback(const struct ofono_error *error, void *=
+data)
+> {
+> 	[...]
+> =
+
+> 	__ofono_dbus_pending_reply(&ctx->pending,
+> 				dbus_message_new_method_return(ctx->pending));
+> =
+
+> 	[...]
+> }
+> =
+
+> I guess ctx->pending is NULL. =
+
+> =
+
+
+Sounds like it, but this makes no sense; pending is set right above the
+single instance of the driver operation with pri_activate_callback as
+the callback.  The only way for this to happen is if the callback is
+being called twice or some other interesting circumstance...
+
+Can you duplicate this reliably?
+
+Regards,
+-Denis
+
+--===============1390874144002167178==--
 
