@@ -1,74 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============0882093560759176482=="
+Content-Type: multipart/mixed; boundary="===============6749253100903853142=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: Re: [PATCH v5 00/16] Add DUN support
-Date: Thu, 05 Jan 2012 14:39:13 +0100
-Message-ID: <4F05A801.2030306@monom.org>
-In-Reply-To: <4670174.3vOMRVMVBI@hector>
+Subject: bug: NULL pointer access?
+Date: Thu, 05 Jan 2012 15:59:35 +0100
+Message-ID: <4F05BAD7.9050206@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0882093560759176482==
+--===============6749253100903853142==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi R=C3=A9mi,
+Hi,
 
-On 05.01.2012 13:07, R=C3=A9mi Denis-Courmont wrote:
-> Le Mercredi 4 Janvier 2012 18:17:34 ext Daniel Wagner a =C3=A9crit :
->> From: Daniel Wagner <daniel.wagner@bmw-carit.de>
->> I think this series is ready to be considered to be merged *hint* :)
-> =
+I just managed to get this backtrace:
 
-> I may be missing something obvious, but why is this a new daemon instead =
-of a =
+ofonod[1808]: ++++++++ backtrace ++++++++
+ofonod[1808]: #0  0x3366c0f500 in /lib64/libpthread.so.0
+ofonod[1808]: #1  0x3366836285 in /lib64/libc.so.6
+ofonod[1808]: #2  0x3366837b9b in /lib64/libc.so.6
+ofonod[1808]: #3  0x336982fd85 in /lib64/libdbus-1.so.3
+ofonod[1808]: #4  0x3369826e31 in /lib64/libdbus-1.so.3
+ofonod[1808]: #5  0x336981b806 in /lib64/libdbus-1.so.3
+ofonod[1808]: #6  0x4db083 in pri_activate_callback() at src/gprs.c:871
+ofonod[1808]: #7  0x4611cf in ppp_connect() at drivers/atmodem/gprs-context=
+.c:101
+ofonod[1808]: #8  0x447fdd in ppp_ipcp_up_notify() at gatchat/gatppp.c:415
+ofonod[1808]: #9  0x44bdbc in ipcp_up() at gatchat/ppp_ipcp.c:173
+ofonod[1808]: #10 0x44911d in pppcp_this_layer_up() at gatchat/ppp_cp.c:322
+ofonod[1808]: #11 0x449e5e in pppcp_generate_event() at gatchat/ppp_cp.c:690
+ofonod[1808]: #12 0x44a68b in pppcp_process_packet() at gatchat/ppp_cp.c:967
+ofonod[1808]: #13 0x447905 in ppp_receive() at gatchat/gatppp.c:224
+ofonod[1808]: #14 0x446994 in new_bytes() at gatchat/gathdlc.c:301
+ofonod[1808]: #15 0x43edf3 in received_data() at gatchat/gatio.c:124
+ofonod[1808]: #16 0x3368844a7d in /lib64/libglib-2.0.so.0
+ofonod[1808]: #17 0x3368845278 in /lib64/libglib-2.0.so.0
+ofonod[1808]: #18 0x33688457c5 in /lib64/libglib-2.0.so.0
+ofonod[1808]: #19 0x496c4e in main() at src/main.c:262
+ofonod[1808]: #20 0x336682169d in /lib64/libc.so.6
+ofonod[1808]: +++++++++++++++++++++++++++
 
-> driver or plugin inside oFono?
 
-There are a few reasons why a modem plugin is not really good. Here an
-summary from my original posting on the ConnMan mailing list:
+static void pri_activate_callback(const struct ofono_error *error, void *da=
+ta)
+{
+	[...]
 
+	__ofono_dbus_pending_reply(&ctx->pending,
+				dbus_message_new_method_return(ctx->pending));
 
-This is the 3rd attempt to get DUN done (pun!). The first and second
-attempt was to expose DUN devices through the oFono API. While this
-sounds like a reasonable way to go it has some - let's put it
-this way - ugliness involved. =
+	[...]
+}
 
+I guess ctx->pending is NULL. =
 
- - No SIM interface: This is not so bad but still we have to hack around
-   this problem. Since we need some uniqueness to distinguish between
-   services, the Serial property of the Modem interface has to be
-   abused for this.
- - No NetworkRegistration interface: DUN only specifies ATD*99# AT command.
-   All other AT commands might be supported (such as AT+COPS=3D?) but are n=
-ot
-   necessarily there. That means we might not get a name for a network. Whe=
-reas
-   you can rely to get this name for a regular modem you can't on DUN ones.
-   And guess what you cannot distinguish between real hardware modems and
-   virtual ones unless...
- - Abuse Modem.Type: ... add 'dun' type and adapt the oFono plugin. That
-   _is_ though a very bad idea. We just introduce a mighty switch for =
-
-   different oFono API behavior. Denis used strong words against this
-   approach.
- - oFono internal design: oFono is not designed to handle this kind
-   of modems. The dunmodem implementation is rather obscure. The result
-   of this is that, as soon as a DUN device pops up, an Serial channel is
-   opened (rfcomm) and kept alive. Unfortunately, there are phones outside
-   in the wild which like to close the serial link after PPP stops.
-   With oFono's separation of concerns this is not easy to get working.
- - Technology mess: In order to get DUN modems working you have to enable C=
-ellular
-   and Bluetooth technology. This is really really bad because we expose
-   the implementation details to the user. Sure, DUN is kind of dying etc.
-   but then, I don't think our standards are so low.
-
-(http://www.mail-archive.com/connman(a)connman.net/msg06971.html)
 
 cheers,
 daniel
 
---===============0882093560759176482==--
+--===============6749253100903853142==--
 
