@@ -1,208 +1,300 @@
-Content-Type: multipart/mixed; boundary="===============1005908681644668317=="
+Content-Type: multipart/mixed; boundary="===============8418483607148646365=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v0 2/3] huawei: Add modem type detection
-Date: Fri, 06 Jan 2012 16:28:37 +0100
-Message-ID: <1325863718-19357-3-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v0 3/3] huaweicdma: Delete unused plugin
+Date: Fri, 06 Jan 2012 16:28:38 +0100
+Message-ID: <1325863718-19357-4-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1325863718-19357-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1005908681644668317==
+--===============8418483607148646365==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This plugin is now merged with huaweicdma one.
-Atoms will now be created with GSM or CDMA drivers
-depending on the result of ATI command.
-No SIM atom is created for embedded sim from CDMA
-modems.
 ---
- plugins/huawei.c |   77 ++++++++++++++++++++++++++++++++++++++++++++++++--=
----
- 1 files changed, 69 insertions(+), 8 deletions(-)
+ Makefile.am          |    3 -
+ plugins/huaweicdma.c |  247 ----------------------------------------------=
+----
+ 2 files changed, 0 insertions(+), 250 deletions(-)
+ delete mode 100644 plugins/huaweicdma.c
 
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index ae15bf9..a3768c8 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -51,6 +51,9 @@
- #include <ofono/message-waiting.h>
- #include <ofono/log.h>
+diff --git a/Makefile.am b/Makefile.am
+index 9831924..ab99283 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -306,9 +306,6 @@ builtin_sources +=3D plugins/zte.c
+ builtin_modules +=3D huawei
+ builtin_sources +=3D plugins/huawei.c
  =
 
-+#include <ofono/cdma-netreg.h>
-+#include <ofono/cdma-connman.h>
-+
- #include <drivers/atmodem/atutil.h>
- #include <drivers/atmodem/vendor.h>
- =
-
-@@ -66,6 +69,7 @@ enum {
- 	SIM_STATE_INVALID_CS =3D		2,
- 	SIM_STATE_INVALID_PS =3D		3,
- 	SIM_STATE_INVALID_PS_AND_CS =3D	4,
-+	SIM_STATE_ROMSIM =3D		240,
- 	SIM_STATE_NOT_EXISTENT =3D	255,
- };
- =
-
-@@ -79,6 +83,7 @@ struct huawei_data {
- 	struct cb_data *online_cbd;
- 	const char *offline_command;
- 	gboolean voice;
-+	gboolean gsm;
- };
- =
-
- static int huawei_probe(struct ofono_modem *modem)
-@@ -405,7 +410,7 @@ static void rfswitch_support(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 	struct ofono_modem *modem =3D user_data;
- 	struct huawei_data *data =3D ofono_modem_get_data(modem);
- =
-
--	if (!ok)
-+	if (!ok || !data->gsm)
- 		data->offline_command =3D "AT+CFUN=3D5";
- 	else
- 		data->offline_command =3D "AT+CFUN=3D7";
-@@ -414,6 +419,44 @@ static void rfswitch_support(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- 					cfun_enable, modem, NULL);
- }
- =
-
-+static gboolean parse_ati_result(GAtResult *result)
-+{
-+	GAtResultIter iter;
-+	const char *line;
-+	int num =3D g_at_result_num_response_lines(result);
-+	int i;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	for (i =3D 0; i < num; i++) {
-+		g_at_result_iter_next(&iter, NULL);
-+		line =3D g_at_result_iter_raw_line(&iter);
-+		if (g_str_has_prefix(line, "+GCAP"))
-+			return (g_strrstr(line, "+CGSM") !=3D NULL);
-+	}
-+
-+	/* By default we consider modem is GSM type */
-+	return TRUE;
-+}
-+
-+static void ati_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct huawei_data *data =3D ofono_modem_get_data(modem);
-+
-+	/* By default we consider modem is GSM type */
-+	if (!ok)
-+		data->gsm =3D TRUE;
-+	else
-+		data->gsm =3D parse_ati_result(result);
-+
-+	data->sim_state =3D SIM_STATE_NOT_EXISTENT;
-+
-+	g_at_chat_send(data->pcui, "AT^RFSWITCH=3D?", rfswitch_prefix,
-+					rfswitch_support, modem, NULL);
-+}
-+
-+
- static GAtChat *open_device(struct ofono_modem *modem,
- 				const char *key, char *debug)
- {
-@@ -472,10 +515,7 @@ static int huawei_enable(struct ofono_modem *modem)
- 	g_at_chat_send(data->modem, "ATE0 +CMEE=3D1", NULL, NULL, NULL, NULL);
- 	g_at_chat_send(data->pcui, "ATE0 +CMEE=3D1", NULL, NULL, NULL, NULL);
- =
-
--	data->sim_state =3D SIM_STATE_NOT_EXISTENT;
+-builtin_modules +=3D huaweicdma
+-builtin_sources +=3D plugins/huaweicdma.c
 -
--	g_at_chat_send(data->pcui, "AT^RFSWITCH=3D?", rfswitch_prefix,
--					rfswitch_support, modem, NULL);
-+	g_at_chat_send(data->pcui, "ATI", NULL, ati_cb, modem, NULL);
+ builtin_modules +=3D sierra
+ builtin_sources +=3D plugins/sierra.c
  =
 
- 	return -EINPROGRESS;
- }
-@@ -555,6 +595,7 @@ static void sysinfo_online_cb(gboolean ok, GAtResult *r=
-esult,
- 	case SIM_STATE_INVALID_CS:
- 	case SIM_STATE_INVALID_PS:
- 	case SIM_STATE_INVALID_PS_AND_CS:
-+	case SIM_STATE_ROMSIM:
- 		CALLBACK_WITH_SUCCESS(cb, data->online_cbd->data);
- 		goto done;
- 	}
-@@ -650,13 +691,21 @@ static void huawei_set_online(struct ofono_modem *mod=
-em, ofono_bool_t online,
- static void huawei_pre_sim(struct ofono_modem *modem)
- {
- 	struct huawei_data *data =3D ofono_modem_get_data(modem);
--	struct ofono_sim *sim;
-+	struct ofono_sim *sim =3D NULL;
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_devinfo_create(modem, 0, "atmodem", data->pcui);
--	sim =3D ofono_sim_create(modem, OFONO_VENDOR_HUAWEI,
-+	if (data->gsm =3D=3D TRUE) {
-+		ofono_devinfo_create(modem, 0, "atmodem", data->pcui);
-+		sim =3D ofono_sim_create(modem, OFONO_VENDOR_HUAWEI,
- 					"atmodem", data->pcui);
-+	} else {
-+		ofono_devinfo_create(modem, 0, "cdmamodem", data->pcui);
-+		/* Create sim atom only if sim is not embedded */
-+		if (data->sim_state !=3D SIM_STATE_ROMSIM)
-+			sim =3D ofono_sim_create(modem, OFONO_VENDOR_HUAWEI,
-+						"atmodem", data->pcui);
-+	}
- =
-
- 	if (sim && data->have_sim =3D=3D TRUE)
- 		ofono_sim_inserted_notify(sim, TRUE);
-@@ -670,6 +719,9 @@ static void huawei_post_sim(struct ofono_modem *modem)
- =
-
- 	DBG("%p", modem);
- =
-
-+	if (data->gsm =3D=3D FALSE)
-+		return;
-+
- 	if (data->voice =3D=3D TRUE) {
- 		ofono_voicecall_create(modem, 0, "huaweimodem", data->pcui);
- 		ofono_audio_settings_create(modem, 0,
-@@ -695,6 +747,15 @@ static void huawei_post_online(struct ofono_modem *mod=
-em)
- =
-
- 	DBG("%p", modem);
- =
-
-+	if (data->gsm =3D=3D FALSE) {
-+		ofono_cdma_netreg_create(modem, 0, "huaweicdmamodem",
-+						data->pcui);
-+
-+		ofono_cdma_connman_create(modem, OFONO_VENDOR_HUAWEI,
-+						"cdmamodem", data->modem);
-+		return;
-+	}
-+
- 	ofono_netreg_create(modem, OFONO_VENDOR_HUAWEI, "atmodem", data->pcui);
- =
-
- 	ofono_cbs_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
+diff --git a/plugins/huaweicdma.c b/plugins/huaweicdma.c
+deleted file mode 100644
+index 6fba0c1..0000000
+--- a/plugins/huaweicdma.c
++++ /dev/null
+@@ -1,247 +0,0 @@
+-/*
+- *
+- *  oFono - Open Source Telephony
+- *
+- *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+- *
+- *  This program is free software; you can redistribute it and/or modify
+- *  it under the terms of the GNU General Public License version 2 as
+- *  published by the Free Software Foundation.
+- *
+- *  This program is distributed in the hope that it will be useful,
+- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- *  GNU General Public License for more details.
+- *
+- *  You should have received a copy of the GNU General Public License
+- *  along with this program; if not, write to the Free Software
+- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
+- *
+- */
+-
+-#ifdef HAVE_CONFIG_H
+-#include <config.h>
+-#endif
+-
+-#include <errno.h>
+-#include <stdlib.h>
+-
+-#include <glib.h>
+-#include <gatchat.h>
+-#include <gattty.h>
+-
+-#define OFONO_API_SUBJECT_TO_CHANGE
+-#include <ofono/plugin.h>
+-#include <ofono/modem.h>
+-#include <ofono/devinfo.h>
+-#include <ofono/cdma-netreg.h>
+-#include <ofono/cdma-connman.h>
+-#include <ofono/log.h>
+-
+-#include "drivers/atmodem/vendor.h"
+-
+-struct huaweicdma_data {
+-	GAtChat *modem;
+-	GAtChat *pcui;
+-};
+-
+-static void huaweicdma_debug(const char *str, void *data)
+-{
+-	const char *prefix =3D data;
+-
+-	ofono_info("%s%s", prefix, str);
+-}
+-
+-static int huaweicdma_probe(struct ofono_modem *modem)
+-{
+-	struct huaweicdma_data *data;
+-
+-	DBG("%p", modem);
+-
+-	data =3D g_try_new0(struct huaweicdma_data, 1);
+-	if (data =3D=3D NULL)
+-		return -ENOMEM;
+-
+-	ofono_modem_set_data(modem, data);
+-
+-	return 0;
+-}
+-
+-static void huaweicdma_remove(struct ofono_modem *modem)
+-{
+-	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
+-
+-	DBG("%p", modem);
+-
+-	ofono_modem_set_data(modem, NULL);
+-
+-	/* Cleanup after hot-unplug */
+-	g_at_chat_unref(data->pcui);
+-
+-	g_free(data);
+-}
+-
+-static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
+-{
+-	struct ofono_modem *modem =3D user_data;
+-	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
+-
+-	DBG("");
+-
+-	if (!ok) {
+-		g_at_chat_unref(data->modem);
+-		data->modem =3D NULL;
+-
+-		g_at_chat_unref(data->pcui);
+-		data->pcui =3D NULL;
+-	}
+-
+-	ofono_modem_set_powered(modem, ok);
+-}
+-
+-static GAtChat *open_device(struct ofono_modem *modem,
+-				const char *key, char *debug)
+-{
+-	const char *device;
+-	GIOChannel *channel;
+-	GAtSyntax *syntax;
+-	GAtChat *chat;
+-
+-	device =3D ofono_modem_get_string(modem, key);
+-	if (device =3D=3D NULL)
+-		return NULL;
+-
+-	DBG("%s %s", key, device);
+-
+-	channel =3D g_at_tty_open(device, NULL);
+-	if (channel =3D=3D NULL)
+-		return NULL;
+-
+-	syntax =3D g_at_syntax_new_gsm_permissive();
+-	chat =3D g_at_chat_new(channel, syntax);
+-	g_at_syntax_unref(syntax);
+-
+-	g_io_channel_unref(channel);
+-
+-	if (chat =3D=3D NULL)
+-		return NULL;
+-
+-	if (getenv("OFONO_AT_DEBUG"))
+-		g_at_chat_set_debug(chat, huaweicdma_debug, debug);
+-
+-	return chat;
+-}
+-
+-static int huaweicdma_enable(struct ofono_modem *modem)
+-{
+-	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
+-
+-	DBG("");
+-
+-	data->modem =3D open_device(modem, "Modem", "Modem: ");
+-	if (data->modem =3D=3D NULL)
+-		return -EINVAL;
+-
+-	data->pcui =3D open_device(modem, "Pcui", "PCUI: ");
+-	if (data->pcui =3D=3D NULL) {
+-		g_at_chat_unref(data->modem);
+-		data->modem =3D NULL;
+-		return -EIO;
+-	}
+-
+-	g_at_chat_set_slave(data->modem, data->pcui);
+-
+-	g_at_chat_send(data->modem, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
+-	g_at_chat_send(data->pcui, "ATE0 &C0 +CMEE=3D1", NULL, NULL, NULL, NULL);
+-
+-	g_at_chat_send(data->pcui, "AT+CFUN=3D1", NULL,
+-					cfun_enable, modem, NULL);
+-
+-	return -EINPROGRESS;
+-}
+-
+-static void cfun_disable(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
+-{
+-	struct ofono_modem *modem =3D user_data;
+-	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
+-
+-	DBG("");
+-
+-	g_at_chat_unref(data->pcui);
+-	data->pcui =3D NULL;
+-
+-	if (ok)
+-		ofono_modem_set_powered(modem, FALSE);
+-}
+-
+-static int huaweicdma_disable(struct ofono_modem *modem)
+-{
+-	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
+-
+-	DBG("%p", modem);
+-
+-	g_at_chat_cancel_all(data->modem);
+-	g_at_chat_unregister_all(data->modem);
+-
+-	g_at_chat_unref(data->modem);
+-	data->modem =3D NULL;
+-
+-	g_at_chat_cancel_all(data->pcui);
+-	g_at_chat_unregister_all(data->pcui);
+-
+-	g_at_chat_send(data->pcui, "AT+CFUN=3D0", NULL,
+-					cfun_disable, modem, NULL);
+-
+-	return -EINPROGRESS;
+-}
+-
+-static void huaweicdma_pre_sim(struct ofono_modem *modem)
+-{
+-	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
+-
+-	DBG("%p", modem);
+-
+-	ofono_devinfo_create(modem, 0, "cdmamodem", data->pcui);
+-}
+-
+-static void huaweicdma_post_sim(struct ofono_modem *modem)
+-{
+-	DBG("%p", modem);
+-}
+-
+-static void huaweicdma_post_online(struct ofono_modem *modem)
+-{
+-	struct huaweicdma_data *data =3D ofono_modem_get_data(modem);
+-
+-	DBG("%p", modem);
+-
+-	ofono_cdma_netreg_create(modem, 0, "huaweicdmamodem", data->pcui);
+-
+-	ofono_cdma_connman_create(modem, OFONO_VENDOR_HUAWEI, "cdmamodem",
+-					data->modem);
+-}
+-
+-static struct ofono_modem_driver huaweicdma_driver =3D {
+-	.name		=3D "huaweicdma",
+-	.probe		=3D huaweicdma_probe,
+-	.remove		=3D huaweicdma_remove,
+-	.enable		=3D huaweicdma_enable,
+-	.disable	=3D huaweicdma_disable,
+-	.pre_sim	=3D huaweicdma_pre_sim,
+-	.post_sim	=3D huaweicdma_post_sim,
+-	.post_online	=3D huaweicdma_post_online,
+-};
+-
+-static int huaweicdma_init(void)
+-{
+-	return ofono_modem_driver_register(&huaweicdma_driver);
+-}
+-
+-static void huaweicdma_exit(void)
+-{
+-	ofono_modem_driver_unregister(&huaweicdma_driver);
+-}
+-
+-OFONO_PLUGIN_DEFINE(huaweicdma, "Huawei CDMA modem driver", VERSION,
+-				OFONO_PLUGIN_PRIORITY_DEFAULT,
+-				huaweicdma_init, huaweicdma_exit)
 -- =
 
 1.7.1
 
 
---===============1005908681644668317==--
+--===============8418483607148646365==--
 
