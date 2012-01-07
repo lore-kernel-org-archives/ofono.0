@@ -1,73 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============5871842178210712205=="
+Content-Type: multipart/mixed; boundary="===============3663309420722060738=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 2/5] speedup: Check for supported modem capabilities first
-Date: Mon, 09 Jan 2012 11:36:20 -0800
-Message-ID: <1326137780.6454.151.camel@aeonflux>
-In-Reply-To: <4F088E4B.7010708@gmail.com>
+Date: Sat, 07 Jan 2012 13:26:40 -0600
+Message-ID: <4F089C70.6050907@gmail.com>
+In-Reply-To: <1326137780.6454.151.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5871842178210712205==
+--===============3663309420722060738==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Marcel,
 
-> >  plugins/speedup.c |   40 ++++++++++++++++++++++++++++++++++++++--
-> >  1 files changed, 38 insertions(+), 2 deletions(-)
-> > =
-
-> > diff --git a/plugins/speedup.c b/plugins/speedup.c
-> > index a90dfe3..f03f8f3 100644
-> > --- a/plugins/speedup.c
-> > +++ b/plugins/speedup.c
-> > @@ -25,6 +25,7 @@
-> >  =
-
-> >  #include <errno.h>
-> >  #include <stdlib.h>
-> > +#include <string.h>
-> >  =
-
-> >  #include <glib.h>
-> >  #include <gatchat.h>
-> > @@ -47,11 +48,15 @@
-> >  #include <drivers/atmodem/atutil.h>
-> >  #include <drivers/atmodem/vendor.h>
-> >  =
-
-> > +static const char *gcap_prefix[] =3D { "+GCAP:", NULL };
-> > +
-> >  struct speedup_data {
-> >  	GAtChat *modem;
-> >  	GAtChat *aux;
-> >  	gboolean have_sim;
-> >  	struct at_util_sim_state_query *sim_state_query;
-> > +	gboolean have_gsm;
-> > +	gboolean have_cdma;
+>>>  struct speedup_data {
+>>>  	GAtChat *modem;
+>>>  	GAtChat *aux;
+>>>  	gboolean have_sim;
+>>>  	struct at_util_sim_state_query *sim_state_query;
+>>> +	gboolean have_gsm;
+>>> +	gboolean have_cdma;
+>>
+>> It might be a good idea to use a single gboolean, or better yet an enum
+>> here instead.  There's no point to waste 8 bytes when a single byte can =
+do.
 > =
 
-> It might be a good idea to use a single gboolean, or better yet an enum
-> here instead.  There's no point to waste 8 bytes when a single byte can d=
-o.
+> I did this on purpose for the Huawei driver. We can unify this later on,
+> but at this moment I rather see what is actually happening.
+> =
 
-I did this on purpose for the Huawei driver. We can unify this later on,
-but at this moment I rather see what is actually happening.
+> Since we keep parsing all capabilities, I wanna avoid that a later one
+> overwrites a previous one. That said, just using some flags would be
+> better anyway. Especially since we also always have have_sim as well.
+> =
 
-Since we keep parsing all capabilities, I wanna avoid that a later one
-overwrites a previous one. That said, just using some flags would be
-better anyway. Especially since we also always have have_sim as well.
-
-However that can be done as a further optimization in the Speedup and
-Huawei drivers.
-
-Regards
-
-Marcel
+> However that can be done as a further optimization in the Speedup and
+> Huawei drivers.
+> =
 
 
+A flagged enum is indeed what I had in mind when I wrote this.  But fair
+enough on your reasoning.
 
---===============5871842178210712205==--
+Regards,
+-Denis
+
+--===============3663309420722060738==--
 
