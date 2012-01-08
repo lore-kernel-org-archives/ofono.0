@@ -1,72 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============1570538929660969832=="
+Content-Type: multipart/mixed; boundary="===============1397218154055014792=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 2/5] speedup: Check for supported modem capabilities first
-Date: Tue, 10 Jan 2012 14:43:35 +0100
-Message-ID: <4F0C4087.1030009@linux.intel.com>
-In-Reply-To: <4F089C70.6050907@gmail.com>
+Date: Sun, 08 Jan 2012 04:12:01 -0600
+Message-ID: <4F096BF1.5020406@gmail.com>
+In-Reply-To: <4F0C4087.1030009@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1570538929660969832==
+--===============1397218154055014792==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel and Denis,
+Hi Guillaume,
 
->>>>   struct speedup_data {
->>>>   	GAtChat *modem;
->>>>   	GAtChat *aux;
->>>>   	gboolean have_sim;
->>>>   	struct at_util_sim_state_query *sim_state_query;
->>>> +	gboolean have_gsm;
->>>> +	gboolean have_cdma;
->>> It might be a good idea to use a single gboolean, or better yet an enum
->>> here instead.  There's no point to waste 8 bytes when a single byte can=
- do.
->> I did this on purpose for the Huawei driver. We can unify this later on,
->> but at this moment I rather see what is actually happening.
->>
->> Since we keep parsing all capabilities, I wanna avoid that a later one
->> overwrites a previous one. That said, just using some flags would be
->> better anyway. Especially since we also always have have_sim as well.
->>
->> However that can be done as a further optimization in the Speedup and
->> Huawei drivers.
->>
-> A flagged enum is indeed what I had in mind when I wrote this.  But fair
-> enough on your reasoning
+On 01/10/2012 07:43 AM, Guillaume Zajac wrote:
+> Hi Marcel and Denis,
+> =
 
-As we are starting thinking about tweaking SIM atom to make it work with =
+>>>>>   struct speedup_data {
+>>>>>       GAtChat *modem;
+>>>>>       GAtChat *aux;
+>>>>>       gboolean have_sim;
+>>>>>       struct at_util_sim_state_query *sim_state_query;
+>>>>> +    gboolean have_gsm;
+>>>>> +    gboolean have_cdma;
+>>>> It might be a good idea to use a single gboolean, or better yet an enum
+>>>> here instead.  There's no point to waste 8 bytes when a single byte
+>>>> can do.
+>>> I did this on purpose for the Huawei driver. We can unify this later on,
+>>> but at this moment I rather see what is actually happening.
+>>>
+>>> Since we keep parsing all capabilities, I wanna avoid that a later one
+>>> overwrites a previous one. That said, just using some flags would be
+>>> better anyway. Especially since we also always have have_sim as well.
+>>>
+>>> However that can be done as a further optimization in the Speedup and
+>>> Huawei drivers.
+>>>
+>> A flagged enum is indeed what I had in mind when I wrote this.  But fair
+>> enough on your reasoning
+> =
 
-CDMA modem,
-maybe having quickly the flagged enum would be helpful to distinguish if =
+> As we are starting thinking about tweaking SIM atom to make it work with
+> CDMA modem,
+> maybe having quickly the flagged enum would be helpful to distinguish if
+> it is a CDMA or GSM modem that is asking for the SIM atom creation.
+> =
 
-it is a CDMA or GSM modem that is asking for the SIM atom creation.
+> Then where should this enum modem_type take place?
+> Should we tweak the already existing one into modem.h in replacing:
+> =
 
-Then where should this enum modem_type take place?
-Should we tweak the already existing one into modem.h in replacing:
+> OFONO_MODEM_TYPE_HARDWARE =3D 0,
+> OFONO_MODEM_TYPE_HFP,
+> OFONO_MODEM_TYPE_SAP,
+> =
 
-OFONO_MODEM_TYPE_HARDWARE =3D 0,
-OFONO_MODEM_TYPE_HFP,
-OFONO_MODEM_TYPE_SAP,
+> by
+> =
 
-by
+> OFONO_MODEM_TYPE_UNKNOWN_HARDWARE =3D 0,
+> OFONO_MODEM_TYPE_GSM_HARDWARE =3D 1,
+> OFONO_MODEM_TYPE_CDMA_HARDWARE =3D 2,
+> OFONO_MODEM_TYPE_HFP =3D 4,
+> OFONO_MODEM_TYPE_SAP =3D 8,
+> =
 
-OFONO_MODEM_TYPE_UNKNOWN_HARDWARE =3D 0,
-OFONO_MODEM_TYPE_GSM_HARDWARE =3D 1,
-OFONO_MODEM_TYPE_CDMA_HARDWARE =3D 2,
-OFONO_MODEM_TYPE_HFP =3D 4,
-OFONO_MODEM_TYPE_SAP =3D 8,
+> Then we have just to specify the modem_type in creating the SIM atom to
+> use its limited functionnalities when we have CDMA modem
+> e.g. manage only PIN protection.
 
-Then we have just to specify the modem_type in creating the SIM atom to =
+No, the type information is a kludge that will hamper us in the end, so
+I am against any such changes.  Even the current modem_type enum took
+some convincing and it is meant to be used as a hint for external
+applications, not used internally by oFono core in any way.
 
-use its limited functionnalities when we have CDMA modem
-e.g. manage only PIN protection.
+Regards,
+-Denis
 
-Kind regards,
-Guillaume
-
---===============1570538929660969832==--
+--===============1397218154055014792==--
 
