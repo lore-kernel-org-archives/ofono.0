@@ -1,49 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============6545453712873694549=="
+Content-Type: multipart/mixed; boundary="===============7607218324004415948=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv2 0/4] Unify SPN reading logic
-Date: Mon, 09 Jan 2012 12:30:40 +0200
-Message-ID: <1326105044-26408-1-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv2 1/4] sim: Minor style fixes
+Date: Mon, 09 Jan 2012 12:30:41 +0200
+Message-ID: <1326105044-26408-2-git-send-email-oleg.zhurakivskyy@intel.com>
+In-Reply-To: <1326105044-26408-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6545453712873694549==
+--===============7607218324004415948==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+---
+ src/sim.c |   24 ++++++++++++------------
+ 1 files changed, 12 insertions(+), 12 deletions(-)
 
-Please find the changes in order not to duplicate the SPN reading logic in =
-src/grps.c and src/network.c.
+diff --git a/src/sim.c b/src/sim.c
+index ceead1e..4ef14e3 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -46,10 +46,6 @@
+ #include "simfs.h"
+ #include "stkutil.h"
+ =
 
-Changes from v1:
+-static GSList *g_drivers =3D NULL;
+-
+-static void sim_own_numbers_update(struct ofono_sim *sim);
+-
+ struct ofono_sim {
+ 	/* Contents of the SIM file system, in rough initialization order */
+ 	char *iccid;
+@@ -140,6 +136,10 @@ static const char *const passwd_name[] =3D {
+ 	[OFONO_SIM_PASSWORD_PHCORP_PUK] =3D "corppuk",
+ };
+ =
 
-- SPN reading logic has been moved into the sim atom in order to avoid the =
-asymmetry in the API.
-- netreg and gprs atoms are simple consumers.
-- Added display condition to the SPN watch callback.
++static void sim_own_numbers_update(struct ofono_sim *sim);
++
++static GSList *g_drivers =3D NULL;
++
+ static const char *sim_passwd_name(enum ofono_sim_password_type type)
+ {
+ 	return passwd_name[type];
+@@ -1057,21 +1057,21 @@ static DBusMessage *sim_reset_pin(DBusConnection *c=
+onn, DBusMessage *msg,
+ }
+ =
 
-Regards,
-Oleg
-
-Oleg Zhurakivskyy (4):
-  sim: Minor style fixes
-  sim: Add SPN watch capability
-  gprs: Use sim SPN watch API
-  network: Use sim SPN watch API
-
- include/sim.h |    8 ++
- src/gprs.c    |  105 ++++++++++++++---------
- src/network.c |  163 +++++-------------------------------
- src/sim.c     |  264 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+---
- 4 files changed, 345 insertions(+), 195 deletions(-)
+ static GDBusMethodTable sim_methods[] =3D {
+-	{ "GetProperties",	"",	"a{sv}",	sim_get_properties	},
++	{ "GetProperties",	"",	"a{sv}",	sim_get_properties },
+ 	{ "SetProperty",	"sv",	"",		sim_set_property,
+-							G_DBUS_METHOD_FLAG_ASYNC },
++						G_DBUS_METHOD_FLAG_ASYNC },
+ 	{ "ChangePin",		"sss",	"",		sim_change_pin,
+-							G_DBUS_METHOD_FLAG_ASYNC },
++						G_DBUS_METHOD_FLAG_ASYNC },
+ 	{ "EnterPin",		"ss",	"",		sim_enter_pin,
+-							G_DBUS_METHOD_FLAG_ASYNC },
++						G_DBUS_METHOD_FLAG_ASYNC },
+ 	{ "ResetPin",		"sss",	"",		sim_reset_pin,
+-							G_DBUS_METHOD_FLAG_ASYNC },
++						G_DBUS_METHOD_FLAG_ASYNC },
+ 	{ "LockPin",		"ss",	"",		sim_lock_pin,
+-							G_DBUS_METHOD_FLAG_ASYNC },
++						G_DBUS_METHOD_FLAG_ASYNC },
+ 	{ "UnlockPin",		"ss",	"",		sim_unlock_pin,
+-							G_DBUS_METHOD_FLAG_ASYNC },
++						G_DBUS_METHOD_FLAG_ASYNC },
+ 	{ "GetIcon",		"y",	"ay",		sim_get_icon,
+-							G_DBUS_METHOD_FLAG_ASYNC },
++						G_DBUS_METHOD_FLAG_ASYNC },
+ 	{ }
+ };
+ =
 
 -- =
 
 1.7.5.4
 
 
---===============6545453712873694549==--
+--===============7607218324004415948==--
 
