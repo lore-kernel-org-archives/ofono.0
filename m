@@ -1,39 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============3085353766021614857=="
+Content-Type: multipart/mixed; boundary="===============6462979124562744384=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 0/5] Unify SpeedUp plugin
-Date: Mon, 09 Jan 2012 14:10:55 +0100
-Message-ID: <1326114660-10111-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH 1/5] udevng: Remove huaweicdma label from driver_list
+Date: Mon, 09 Jan 2012 14:10:56 +0100
+Message-ID: <1326114660-10111-2-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1326114660-10111-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3085353766021614857==
+--===============6462979124562744384==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-
-Patch 1 is deleting huaweicdma label in udevng.
-I submitted it again into this set of patch to avoid conflicts.
-The 4 next patches are doing same job as for Huawei plugin on SpeedUp plugi=
-n.
-
-Kind regards,
-Guillaume
-
-Guillaume Zajac (5):
-  udevng: Remove huaweicdma label from driver_list
-  speedup: Check for supported modem capabilities first
-  speedup: Create GSM/UMTS atoms only if support has been detected
-  speedup: Create CDMA atoms if support has been detected
-  udevng: Simplify vendor and driver list for SpeedUp
-
- plugins/speedup.c |   99 ++++++++++++++++++++++++++++++++++++++++---------=
 ---
- plugins/udevng.c  |    3 --
- 2 files changed, 76 insertions(+), 26 deletions(-)
+ plugins/udevng.c |    1 -
+ 1 files changed, 0 insertions(+), 1 deletions(-)
+
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 7d81416..315b8af 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -606,7 +606,6 @@ static struct {
+ 	{ "gobi",	setup_gobi,	},
+ 	{ "sierra",	setup_sierra	},
+ 	{ "huawei",	setup_huawei	},
+-	{ "huaweicdma",	setup_huawei	},
+ 	{ "speedupcdma",setup_speedup	},
+ 	{ "speedup",	setup_speedup	},
+ 	{ "linktop",	setup_linktop	},
+-- =
+
+1.7.1
 
 
---===============3085353766021614857==--
+--===============6462979124562744384==--
 
