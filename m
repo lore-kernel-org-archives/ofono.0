@@ -1,187 +1,234 @@
-Content-Type: multipart/mixed; boundary="===============3807350359364312463=="
+Content-Type: multipart/mixed; boundary="===============4967435187562764300=="
 MIME-Version: 1.0
-From: Jean-Christian de Rivaz <jc@eclis.ch>
-Subject: Some experiments with the SIMCOM SIM5216E modem on a ARM926 board
-Date: Tue, 10 Jan 2012 04:21:18 +0100
-Message-ID: <4F0BAEAE.9070402@eclis.ch>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Some experiments with the SIMCOM SIM5216E modem on a ARM926 board
+Date: Mon, 09 Jan 2012 22:03:33 -0800
+Message-ID: <1326175413.6454.185.camel@aeonflux>
+In-Reply-To: <4F0BAEAE.9070402@eclis.ch>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3807350359364312463==
+--===============4967435187562764300==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi Jean-Christian,
 
-I have got a custom board with a SIMCOM INCORPORATED SIM5216E modem, a =
+> I have got a custom board with a SIMCOM INCORPORATED SIM5216E modem, a =
 
-device not so common. I was able to successfully use it with Ofono, but =
+> device not so common. I was able to successfully use it with Ofono, but =
 
-I want to get some advise to polish the work, as I have observed a =
+> I want to get some advise to polish the work, as I have observed a =
 
-couple of strange things.
+> couple of strange things.
+> =
 
-The modem is connected by the USB and report: vendor=3D0x05c6 =
+> The modem is connected by the USB and report: vendor=3D0x05c6 =
 
-product=3D0x9000. This seem to indicate that it use a Qualcomm chip. It =
+> product=3D0x9000. This seem to indicate that it use a Qualcomm chip. It =
 
-expose 5 serial interfaces, where the 2 and 3 (starting from 0) are for =
+> expose 5 serial interfaces, where the 2 and 3 (starting from 0) are for =
 
-the AT commands. Since the "atgen" driver is no more, I tested it with =
+> the AT commands. Since the "atgen" driver is no more, I tested it with =
 
-the "g1" driver. It was only a guess and I would like to know if an =
+> the "g1" driver. It was only a guess and I would like to know if an =
 
-other driver is a better choice.
+> other driver is a better choice.
 
-The first problem I faced is that I use Buildroot and the uClibc without =
+you really want to have a custom modem plugin for this chip. It is
+pretty easy to develop this. Modem plugins are dirt simple to write and
+that is intentional of course :)
 
-udev (only devtmpfs) on the target system. Dependencies problemes into =
+I think there was some kind of SIMCOM patch (or similar enough) posted
+on the mailing list some weeks ago.
 
-Buildroot make it hard to provides the libudev at the needed version =
+> The first problem I faced is that I use Buildroot and the uClibc without =
 
-form Ofono 1.2. So I passed --disable-udev to the configure the get ride =
+> udev (only devtmpfs) on the target system. Dependencies problemes into =
 
-of it. While compiling for a uClibc system I have to remove the =
+> Buildroot make it hard to provides the libudev at the needed version =
 
-backtrace code from src/log.c since it is not available on the uClibc. =
+> form Ofono 1.2. So I passed --disable-udev to the configure the get ride =
 
-As others might like to use Ofono on the uClibc, I suggest to test the =
+> of it. While compiling for a uClibc system I have to remove the =
 
-presence of <execinfo.h>, but this is only a small glitch. Now the =
+> backtrace code from src/log.c since it is not available on the uClibc. =
 
-difficult part is to find a way to call ofono_modem_register() without =
+> As others might like to use Ofono on the uClibc, I suggest to test the =
 
-the udev plugin, since the modem.conf support have been removed. I did =
+> presence of <execinfo.h>, but this is only a small glitch. Now the =
 
-not find an other solution than writing a very small plugin that just do =
+> difficult part is to find a way to call ofono_modem_register() without =
 
-this in his init function:
-         modem =3D ofono_modem_create("simcom", "g1");
-         ofono_modem_set_string(modem, "Device", "/dev/ttyUSB3");
-         ofono_modem_register(modem);
-It work perfectly well, but look a bit overkill to force to write a =
+> the udev plugin, since the modem.conf support have been removed. I did =
 
-plugin for a such simple action. I have the feeling to have missed =
+> not find an other solution than writing a very small plugin that just do =
 
-something but I can't figure how I should have done this in a proper =
+> this in his init function:
+>          modem =3D ofono_modem_create("simcom", "g1");
+>          ofono_modem_set_string(modem, "Device", "/dev/ttyUSB3");
+>          ofono_modem_register(modem);
+> It work perfectly well, but look a bit overkill to force to write a =
 
-way. At one point I hesitate to add a AddModem method into the =
+> plugin for a such simple action. I have the feeling to have missed =
 
-org.ofono.Manager interface, but the plugin solution was a quicker hack.
+> something but I can't figure how I should have done this in a proper =
 
-The resulting executable work on the target. I can power up, power down =
+> way. At one point I hesitate to add a AddModem method into the =
 
-the modem, enter the SIM pin code, dial and receive call, as well as =
+> org.ofono.Manager interface, but the plugin solution was a quicker hack.
 
-sending a SMS. But the operations are not reliable. This is where I =
+Actually the udev solution is a lot simpler. We even use that for
+supporting Infineon/IMC modems and Calypso/Openmoko modems that are
+hardwired to SPI or UART interfaces.
 
-needs some hint if this is the normal consequence of the modification I =
+With USB as transport you really wanna do modem detection via udev. So
+you might wanna get this solved with uclibc.
 
-have made, or if I need to go into a deep debug session.
+For the backtrace() support, I am pretty disappointed that uclibc does
+not support this. It is a fundamental piece that you especially want in
+embedded system. So this is strange to me.
 
-While getting a call indication, sometimes I got this:
-ofonod[1346]: < \r\n+CDIP: "",128\r\n
-ofonod[1346]: < \r\n+CLIP: "0786577442",129,,,,0\r\n
-ofonod[1346]: CDIP for unknown call
-ofonod[1346]: CLIP for unknown call
-ofonod[1346]: < \r\n+CRING: VOICE\r\n
-ofonod[1346]: < \r\n+CLIP: "0786577442",129,,,,0\r\n\r\n+CDIP: "",128\r\n
-ofonod[1346]: drivers/atmodem/voicecall.c:cring_notify()
-ofonod[1346]: drivers/atmodem/voicecall.c:clip_notify() 0786577442 129 0
-ofonod[1346]: src/voicecall.c:ofono_voicecall_notify() Got a voicecall =
+Instead of us working around it, it might be better to get uclibc fixed
+to support this. On the other hand I am open to look at patches to make
+this optional.
 
-event, status: 4, id: 1, number: 0786577442 called_number: , called_name
-ofonod[1346]: src/voicecall.c:ofono_voicecall_notify() Did not find a =
+> The resulting executable work on the target. I can power up, power down =
 
-call with id: 1
-ofonod[1346]: drivers/atmodem/voicecall.c:cdip_notify()  128
-ofonod[1346]: src/voicecall.c:ofono_voicecall_notify() Got a voicecall =
+> the modem, enter the SIM pin code, dial and receive call, as well as =
 
-event, status: 4, id: 1, number: 0786577442 called_number: , called_name
-ofonod[1346]: src/voicecall.c:ofono_voicecall_notify() Found call with id: 1
-ofonod[1346]: > AT+CLCC\r
-ofonod[1346]: < \r\n+CLCC: 1,1,4,0,0,"0786577442",129\r\n\r\nOK\r\n
-ofonod[1346]: > AT+CLCC\r
-ofonod[1346]: < \r\n+CLCC: 1,1,4,0,0,"0786577442",129\r\n\r\nOK\r\n
-ofonod[1346]: > AT+CLCC\r
-ofonod[1346]: < \r\n+CLCC: 1,1,4,0,0,"0786577442",129\r\n\r\nOK\r\n
-ofonod[1346]: > AT+CLCC\r
-ofonod[1346]: < \r\n+CLCC: 1,1,4,0,0,"0786577442",129\r\n\r\nOK\r\n
-ofonod[1346]: > AT+CLCC\r
-ofonod[1346]: < \r\n+CLCC: 1,1,4,0,0,"0786577442",129\r\n\r\nOK\r\n
-ofonod[1346]: > AT+CLCC\r
-ofonod[1346]: < \r\n+CME ERROR: unknown\r\n
-ofonod[1346]: We are polling CLCC and received an error
-ofonod[1346]: All bets are off for call management
-ofonod[1346]: < \r\nMISSED_CALL: 09:34AM 0786577442\r\n
-After that Ofono seem to be lost and only able to be terminated.
+> sending a SMS. But the operations are not reliable. This is where I =
 
-While receiving a SMS I sometimes got this:
-ofonod[7191]: > AT+CIND?\r
-ofonod[7191]: < \r\n+CIND: 4,3,1,0,0,0,1,0\r\n\r\nOK\r\n
-ofonod[7191]: > AT+COPS=3D3,0\r
-ofonod[7191]: < \r\nOK\r\n
-ofonod[7191]: > AT+COPS?\r
-ofonod[7191]: < \r\n+COPS: 0,0,"orange CH",0\r\n\r\nOK\r\n
-ofonod[7191]: drivers/atmodem/network-registration.c:cops_cb() cops_cb: =
+> needs some hint if this is the normal consequence of the modification I =
 
-orange CH, 228 03 0
-ofonod[7191]: src/network.c:current_operator_callback() 0xf4eb8, 0xf69d8
-solution ofonod[7191]: < \r\n+CMT: =
+> have made, or if I need to go into a deep debug session.
+> =
 
-,24\r\n07911487777770F0040B911487567744F200002110013094744
-ofonod[7191]: < 005C3F79B1D02\r\n
-ofonod[7191]: drivers/atmodem/sms.c:at_cmt_notify() Got new SMS Deliver =
+> While getting a call indication, sometimes I got this:
+> ofonod[1346]: < \r\n+CDIP: "",128\r\n
+> ofonod[1346]: < \r\n+CLIP: "0786577442",129,,,,0\r\n
+> ofonod[1346]: CDIP for unknown call
+> ofonod[1346]: CLIP for unknown call
+> ofonod[1346]: < \r\n+CRING: VOICE\r\n
+> ofonod[1346]: < \r\n+CLIP: "0786577442",129,,,,0\r\n\r\n+CDIP: "",128\r\n
+> ofonod[1346]: drivers/atmodem/voicecall.c:cring_notify()
+> ofonod[1346]: drivers/atmodem/voicecall.c:clip_notify() 0786577442 129 0
+> ofonod[1346]: src/voicecall.c:ofono_voicecall_notify() Got a voicecall =
 
-PDU via CMT: =
+> event, status: 4, id: 1, number: 0786577442 called_number: , called_name
+> ofonod[1346]: src/voicecall.c:ofono_voicecall_notify() Did not find a =
 
-07911487777770F0040B911487567744F200002110013094744005C3F79B1D02, 24
-ofonod[7191]: src/sms.c:ofono_sms_deliver_notify() len 32 tpdu len 24
-ofonod[7191]: src/sms.c:handle_deliver()
-ofonod[7191]: src/sms.c:sms_dispatch()
-ofonod[7191]: src/sms.c:sms_dispatch() dst -1 src -1
-ofonod[7191]: drivers/atmodem/sms.c:at_ack_delivery()
-ofonod[7191]: > AT+CNMA=3D1,2\r
-ofonod[7191]: < \r\n>
-ofonod[7191]: > 0000<CtrlZ>
-ofonod[7191]: < \r\n\r\n+CMS ERROR: Invalid PDU mode parameter\r\n
-ofonod[7191]: CNMA acknowledgement failed: Further SMS reception is not =
+> call with id: 1
+> ofonod[1346]: drivers/atmodem/voicecall.c:cdip_notify()  128
+> ofonod[1346]: src/voicecall.c:ofono_voicecall_notify() Got a voicecall =
 
-guaranteed
+> event, status: 4, id: 1, number: 0786577442 called_number: , called_name
+> ofonod[1346]: src/voicecall.c:ofono_voicecall_notify() Found call with id=
+: 1
+> ofonod[1346]: > AT+CLCC\r
+> ofonod[1346]: < \r\n+CLCC: 1,1,4,0,0,"0786577442",129\r\n\r\nOK\r\n
+> ofonod[1346]: > AT+CLCC\r
+> ofonod[1346]: < \r\n+CLCC: 1,1,4,0,0,"0786577442",129\r\n\r\nOK\r\n
+> ofonod[1346]: > AT+CLCC\r
+> ofonod[1346]: < \r\n+CLCC: 1,1,4,0,0,"0786577442",129\r\n\r\nOK\r\n
+> ofonod[1346]: > AT+CLCC\r
+> ofonod[1346]: < \r\n+CLCC: 1,1,4,0,0,"0786577442",129\r\n\r\nOK\r\n
+> ofonod[1346]: > AT+CLCC\r
+> ofonod[1346]: < \r\n+CLCC: 1,1,4,0,0,"0786577442",129\r\n\r\nOK\r\n
+> ofonod[1346]: > AT+CLCC\r
+> ofonod[1346]: < \r\n+CME ERROR: unknown\r\n
+> ofonod[1346]: We are polling CLCC and received an error
+> ofonod[1346]: All bets are off for call management
+> ofonod[1346]: < \r\nMISSED_CALL: 09:34AM 0786577442\r\n
+> After that Ofono seem to be lost and only able to be terminated.
 
-And finally, when I send a SMS it could end badly this way:
-ofonod[6085]: > AT+CSCA?\r
-ofonod[6085]: < \r\n+CSCA: "+41787777070",145\r\n\r\nOK\r\n
-ofonod[6085]: drivers/atmodem/sms.c:at_csca_query_cb() csca_query_cb: =
+This looks like the voice call handling via AT+CLCC is really broken on
+this modem. So you have a real problem here.
 
-41787777070, 145
-ofonod[6085]: src/sms.c:tx_queue_entry_new() pdu_len: 26, tpdu_len: 25
-ofonod[6085]: src/sms.c:tx_next() tx_next: 0xf57c8
-ofonod[6085]: > AT+CMGS=3D25\r
-ofonod[6085]: < \r\n>
-ofonod[6085]: > 0011000B911487567744F20000A70CC8329BFD063DCD6FF73B04<CtrlZ>
-ofonod[6085]: < \r\n
-ofonod[6085]: < \r\n+CREG: 1, 1778, 4333\r\n\r\n+CMGS: 23\r\n\r\nOK\r\n
-ofonod[6085]: drivers/atmodem/sms.c:at_cmgs_cb() Got MR: 23
-ofonod[6085]: src/sms.c:tx_finished() tx_finished 0xf57c8
-ofonod[6085]: src/sms.c:sms_tx_queue_remove_entry() 0xf57c8
-ofonod[6085]: > AT+COPS=3D3,2\r
-ofonod[6085]: < \r\nOK\r\n
-ofonod[6085]: Aborting (signal 11) [ofonod]
-Since uClibc did not have the backtrace call, I have no more information.
+Do have the AT command specification for this modem? Maybe Simcom has a
+vendor specific command for voice call state handling. And you are
+suppose to use that instead.
 
-For the 3 issues, the problem is not systematic. It could work perfectly =
+> While receiving a SMS I sometimes got this:
+> ofonod[7191]: > AT+CIND?\r
+> ofonod[7191]: < \r\n+CIND: 4,3,1,0,0,0,1,0\r\n\r\nOK\r\n
+> ofonod[7191]: > AT+COPS=3D3,0\r
+> ofonod[7191]: < \r\nOK\r\n
+> ofonod[7191]: > AT+COPS?\r
+> ofonod[7191]: < \r\n+COPS: 0,0,"orange CH",0\r\n\r\nOK\r\n
+> ofonod[7191]: drivers/atmodem/network-registration.c:cops_cb() cops_cb: =
 
-well, or it could bug. Maybe a timing related problem, as I run Ofono on =
+> orange CH, 228 03 0
+> ofonod[7191]: src/network.c:current_operator_callback() 0xf4eb8, 0xf69d8
+> solution ofonod[7191]: < \r\n+CMT: =
 
-a slow ARM926 device.
+> ,24\r\n07911487777770F0040B911487567744F200002110013094744
+> ofonod[7191]: < 005C3F79B1D02\r\n
+> ofonod[7191]: drivers/atmodem/sms.c:at_cmt_notify() Got new SMS Deliver =
 
-As I am a newbie about Ofono, I like to get some critics on what I can =
+> PDU via CMT: =
 
-do to quickly get a reliable operation.
+> 07911487777770F0040B911487567744F200002110013094744005C3F79B1D02, 24
+> ofonod[7191]: src/sms.c:ofono_sms_deliver_notify() len 32 tpdu len 24
+> ofonod[7191]: src/sms.c:handle_deliver()
+> ofonod[7191]: src/sms.c:sms_dispatch()
+> ofonod[7191]: src/sms.c:sms_dispatch() dst -1 src -1
+> ofonod[7191]: drivers/atmodem/sms.c:at_ack_delivery()
+> ofonod[7191]: > AT+CNMA=3D1,2\r
+> ofonod[7191]: < \r\n>
+> ofonod[7191]: > 0000<CtrlZ>
+> ofonod[7191]: < \r\n\r\n+CMS ERROR: Invalid PDU mode parameter\r\n
+> ofonod[7191]: CNMA acknowledgement failed: Further SMS reception is not =
 
-Jean-Christian de Rivaz
+> guaranteed
 
---===============3807350359364312463==--
+Meaning that acknowledgment with a PDU is not supported. This is sort of
+normal.
+
+Check for /* support for ack pdu is not working */ in
+drivers/atmodem/sms.c. It does not list OFONO_VENDOR_QUALCOMM_MSM.
+
+However your main problem is that the g1.c modem plugin is the wrong
+base for your testing. You need to write your own modem plugin for this.
+
+> And finally, when I send a SMS it could end badly this way:
+> ofonod[6085]: > AT+CSCA?\r
+> ofonod[6085]: < \r\n+CSCA: "+41787777070",145\r\n\r\nOK\r\n
+> ofonod[6085]: drivers/atmodem/sms.c:at_csca_query_cb() csca_query_cb: =
+
+> 41787777070, 145
+> ofonod[6085]: src/sms.c:tx_queue_entry_new() pdu_len: 26, tpdu_len: 25
+> ofonod[6085]: src/sms.c:tx_next() tx_next: 0xf57c8
+> ofonod[6085]: > AT+CMGS=3D25\r
+> ofonod[6085]: < \r\n>
+> ofonod[6085]: > 0011000B911487567744F20000A70CC8329BFD063DCD6FF73B04<Ctrl=
+Z>
+> ofonod[6085]: < \r\n
+> ofonod[6085]: < \r\n+CREG: 1, 1778, 4333\r\n\r\n+CMGS: 23\r\n\r\nOK\r\n
+> ofonod[6085]: drivers/atmodem/sms.c:at_cmgs_cb() Got MR: 23
+> ofonod[6085]: src/sms.c:tx_finished() tx_finished 0xf57c8
+> ofonod[6085]: src/sms.c:sms_tx_queue_remove_entry() 0xf57c8
+> ofonod[6085]: > AT+COPS=3D3,2\r
+> ofonod[6085]: < \r\nOK\r\n
+> ofonod[6085]: Aborting (signal 11) [ofonod]
+> Since uClibc did not have the backtrace call, I have no more information.
+> =
+
+> For the 3 issues, the problem is not systematic. It could work perfectly =
+
+> well, or it could bug. Maybe a timing related problem, as I run Ofono on =
+
+> a slow ARM926 device.
+
+I think you caught a real bug here. I would be great to get a gdb
+backtrace to figure out what caused it.
+
+Regards
+
+Marcel
+
+
+
+--===============4967435187562764300==--
 
