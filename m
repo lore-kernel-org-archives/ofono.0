@@ -1,49 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============5327805696914756066=="
+Content-Type: multipart/mixed; boundary="===============1732265915641765304=="
 MIME-Version: 1.0
-From: r.r.zaripov@gmail.com
-Subject: [PATCH v4 3/3] Adding a short description for usage of SIM900 plugin.
-Date: Wed, 11 Jan 2012 17:59:03 +0400
-Message-ID: <1326290343-21973-3-git-send-email-r.r.zaripov@gmail.com>
-In-Reply-To: <1326290343-21973-1-git-send-email-r.r.zaripov@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: [PATCH_v0 2/3] huawei: Add modem type detection
+Date: Wed, 11 Jan 2012 15:46:38 +0100
+Message-ID: <1326293198.6454.230.camel@aeonflux>
+In-Reply-To: <688E999A39D0DD478D9CFCDC485D64820FC91725@SHSMSX151.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5327805696914756066==
+--===============1732265915641765304==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Renat Zaripov <r.r.zaripov@gmail.com>
+Hi Ying An,
 
-Adding a short description for usage of SIM900 plugin.
+> >Right, I see this is easier do to how I you submitted it :)
+> >However, I have a dongle EC1261 that is bugged because:
+> >         - when I send ATI, the capabilities line is returned with
+> >"+GCAP +GCAP:" prefix
+> >         - when I send AT+GCAP, the prefix is "+GCAP:"
+> >
+> >Unless the manufacturer fixes this issue, we won't be able to support
+> >this dongle...
+> >
+>
+> The modem returns following lines after ATI command:
+> =
 
----
- doc/sim900-modem.txt |   12 ++++++++++++
- 1 files changed, 12 insertions(+), 0 deletions(-)
- create mode 100644 doc/sim900-modem.txt
+> Manufacturer: +GMI: HUAWEI TECHNOLOGIES CO., LTD
+> Model: EC1261
+> Revision: +CGMR:11.102.11.00.45
+> ESN: +GSN:80c55faf
+> +GCAP: +GCAP: +CIS707-A,CIS-856-A,+MS, +ES, +DS, +FCLASS
+> =
 
-diff --git a/doc/sim900-modem.txt b/doc/sim900-modem.txt
-new file mode 100644
-index 0000000..b0c1871
---- /dev/null
-+++ b/doc/sim900-modem.txt
-@@ -0,0 +1,12 @@
-+SIM900 modem usage
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+To enable SIM900 module support you need to put the following
-+udev rule into appropriate file in /{etc,lib}/udev/rules.d:
-+
-+KERNEL=3D=3D"gsmtty3", ENV{OFONO_DRIVER}=3D"sim900"
-+
-+On the i-Tetra tracking device, the SIM900 is accessed
-+via N_GSM mux device. We use ofono as SMS message
-+service and incoming voice calls service, so we
-+use /dev/gsmtty3 provided by N_GSM mux.
--- =
+> So you can see, it is still with prefix "+GCAP:", although there's anothe=
+r "+GCAP:", but it does not impact the string search operation.
 
-1.7.7.3
+this is the most hilarious screw-up within a single AT command.
+
+Open your window, take this modem, and throw it out. Nothing can really
+help you here. If they did not get this one right, I do not wanna know
+what else is broken ;)
+
+Regards
+
+Marcel
 
 
---===============5327805696914756066==--
+
+--===============1732265915641765304==--
 
