@@ -1,51 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============2706264583635152012=="
+Content-Type: multipart/mixed; boundary="===============7651039621963908555=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4 1/3] SIMCOM SIM900 module support
-Date: Wed, 11 Jan 2012 05:41:49 -0600
-Message-ID: <4F0D757D.3000208@gmail.com>
-In-Reply-To: <1326295458.6454.238.camel@aeonflux>
+Subject: Re: How to tweak sim atom
+Date: Wed, 11 Jan 2012 05:47:40 -0600
+Message-ID: <4F0D76DC.3050605@gmail.com>
+In-Reply-To: <4F0DA6F3.8070702@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2706264583635152012==
+--===============7651039621963908555==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Guillaume,
 
-On 01/11/2012 09:24 AM, Marcel Holtmann wrote:
-> Hi Denis,
-> =
-
->>>> +	/* For obtain correct sms service number */
->>>> +	g_at_chat_send(data->modem, "AT+CSCS=3D\"GSM\"", NULL, =
-
->>>> +			NULL, NULL, NULL);
->>>
->>> you might better introduce a OFONO_VENDOR_SIM900 quirk and use that in
->>> the SMS atom driver. The phonebook support will also end up overwriting
->>> this one later on. So I am not even sure this works reliable this way.
->>> Might be just pure luck with the order of the atom.
->>>
->>
->> Actually this is fine assuming the modem does not support UTF-8
->> character set.  The builtin assumption for most atoms is that CSCS is
->> set to something sane before they're initialized.  The phonebook driver
->> will temporarily switch to UCS2 for the duration of the phonebook read
->> and restore the previous setting.
-> =
-
-> we did a vendor quirk for this for USSD of Qualcomm based modems. Maybe
-> we should then also move that into the modem plugins.
+> 4) Having 2 drivers can be a solution to make difference between CSIM
+> and (U)SIM:
+>         - "atmodem/sim.c" drivers
+>         - "cdmamodem/sim.c" drivers
+> There can be a lib simutil for PIN management and IMSI retrieval whose
+> APIs would be called by "atmodem" and "cdmamodem" drivers to avoid
+> duplicated code.
 > =
 
 
-Yes, I think that would be cleaner.  I'll take care of it.
+Why don't you try adding a 'atmodem-noef' driver to
+drivers/atmodem/sim.c and see how far you get?  You only need ~13 lines
+of code and a register / unregister driver call.
 
 Regards,
 -Denis
 
---===============2706264583635152012==--
+--===============7651039621963908555==--
 
