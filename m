@@ -1,89 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============4124272955825098441=="
+Content-Type: multipart/mixed; boundary="===============1594719434276286069=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: How to tweak sim atom
-Date: Wed, 11 Jan 2012 16:12:51 +0100
-Message-ID: <4F0DA6F3.8070702@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH v4 1/3] SIMCOM SIM900 module support
+Date: Wed, 11 Jan 2012 16:24:18 +0100
+Message-ID: <1326295458.6454.238.camel@aeonflux>
+In-Reply-To: <4F0D70AB.60904@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4124272955825098441==
+--===============1594719434276286069==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+Hi Denis,
 
-As the thread concerning SIM tweaking was growing fast, I summarized it =
+> >> +	/* For obtain correct sms service number */
+> >> +	g_at_chat_send(data->modem, "AT+CSCS=3D\"GSM\"", NULL, =
 
-in a new one.
+> >> +			NULL, NULL, NULL);
+> > =
 
-We want to use existing oFono sim atom with CSIM (CDMA SIM) to support =
+> > you might better introduce a OFONO_VENDOR_SIM900 quirk and use that in
+> > the SMS atom driver. The phonebook support will also end up overwriting
+> > this one later on. So I am not even sure this works reliable this way.
+> > Might be just pure luck with the order of the atom.
+> > =
 
-PIN management and get the IMSI at first place.
-So far we have to distinguish CSIM and (U)SIM in order into the atom to =
+> =
 
-use PIN management and get the IMSI, as other operations won't be =
+> Actually this is fine assuming the modem does not support UTF-8
+> character set.  The builtin assumption for most atoms is that CSCS is
+> set to something sane before they're initialized.  The phonebook driver
+> will temporarily switch to UCS2 for the duration of the phonebook read
+> and restore the previous setting.
 
-possible as explained below.
+we did a vendor quirk for this for USSD of Qualcomm based modems. Maybe
+we should then also move that into the modem plugins.
 
-1) 1st solution is to precise at sim atom creation the modem type, =
+Regards
 
-however Denis denied this solution. Modem type is used by external =
+Marcel
 
-application and not by oFono core.
 
-2) 2nd solution is to get sim_type by deduction of modem type into =
 
-Huawei plugin. Then we precise this sim_type during atom creation.
-
-3) Another method would be to implement a new entry point into =
-
-ofono_sim_driver, for instance ->GetSimType().
-However this method will require to access to the file system:
-         - for GSM, that can be done using AT+CRSM (EFdir) or AT+CUAD.
-         - for CDMA, we don't have any AT commands to do it.
-
-To complete this solution, we might need for CSIM file system access =
-
-some specific Qualcomm commands.
-But for the moment, we have no information/documentation from =
-
-manufacturer regarding CSIM file system access.
-Therefore, we will not be able to populate following properties:
-- MobileCountryCode
-- MobileNetworkCode
-- SubscriberNumbers
-- PreferredLanguages
-- ServiceNumbers
-- CardIdentifier
-- FixedDialing
-- BarredDialing
-
-4) Having 2 drivers can be a solution to make difference between CSIM =
-
-and (U)SIM:
-         - "atmodem/sim.c" drivers
-         - "cdmamodem/sim.c" drivers
-There can be a lib simutil for PIN management and IMSI retrieval whose =
-
-APIs would be called by "atmodem" and "cdmamodem" drivers to avoid =
-
-duplicated code.
-
-Thus we don't implement all file system access entry points for =
-
-"cdmamodem/sim.c", but we can keep suggested GetSimType() for both =
-
-drivers and return CSIM type for CDMA without asking modem (as we can't).
-Later this will help us to precise right file id (which is different =
-
-from (U)SIM) while reading CSIM file system, once we have the procedures =
-
-from manufacturer to do it.
-
-Kind regards,
-Guillaume
-
---===============4124272955825098441==--
+--===============1594719434276286069==--
 
