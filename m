@@ -1,112 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8011384957305227363=="
+Content-Type: multipart/mixed; boundary="===============3638681502182204282=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: plugins/mbpi.c compiler warnings
-Date: Tue, 10 Jan 2012 11:58:33 -0800
-Message-ID: <1326225513.6454.214.camel@aeonflux>
-In-Reply-To: <4F09A785.4090800@gmail.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH 2/5] speedup: Check for supported modem capabilities first
+Date: Wed, 11 Jan 2012 11:48:49 +0100
+Message-ID: <4F0D6911.5050007@linux.intel.com>
+In-Reply-To: <4F09A7D2.5090500@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8011384957305227363==
+--===============3638681502182204282==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-> >   CC     plugins/mbpi.o
-> > plugins/mbpi.c: In function =E2=80=98apn_start=E2=80=99:
-> > plugins/mbpi.c:170: warning: passing argument 2 of =E2=80=98g_markup_pa=
-rse_context_push=E2=80=99 discards qualifiers from pointer target type
-> > /usr/include/glib-2.0/glib/gmarkup.h:115: note: expected =E2=80=98struc=
-t GMarkupParser *=E2=80=99 but argument is of type =E2=80=98const struct GM=
-arkupParser *=E2=80=99
-> > plugins/mbpi.c:173: warning: passing argument 2 of =E2=80=98g_markup_pa=
-rse_context_push=E2=80=99 discards qualifiers from pointer target type
-> > /usr/include/glib-2.0/glib/gmarkup.h:115: note: expected =E2=80=98struc=
-t GMarkupParser *=E2=80=99 but argument is of type =E2=80=98const struct GM=
-arkupParser *=E2=80=99
-> > plugins/mbpi.c:176: warning: passing argument 2 of =E2=80=98g_markup_pa=
-rse_context_push=E2=80=99 discards qualifiers from pointer target type
-> > /usr/include/glib-2.0/glib/gmarkup.h:115: note: expected =E2=80=98struc=
-t GMarkupParser *=E2=80=99 but argument is of type =E2=80=98const struct GM=
-arkupParser *=E2=80=99
-> > plugins/mbpi.c: In function =E2=80=98apn_handler=E2=80=99:
-> > plugins/mbpi.c:263: warning: passing argument 2 of =E2=80=98g_markup_pa=
-rse_context_push=E2=80=99 discards qualifiers from pointer target type
-> > /usr/include/glib-2.0/glib/gmarkup.h:115: note: expected =E2=80=98struc=
-t GMarkupParser *=E2=80=99 but argument is of type =E2=80=98const struct GM=
-arkupParser *=E2=80=99
-> > plugins/mbpi.c:287: warning: passing argument 2 of =E2=80=98g_markup_pa=
-rse_context_push=E2=80=99 discards qualifiers from pointer target type
-> > /usr/include/glib-2.0/glib/gmarkup.h:115: note: expected =E2=80=98struc=
-t GMarkupParser *=E2=80=99 but argument is of type =E2=80=98const struct GM=
-arkupParser *=E2=80=99
-> > plugins/mbpi.c: In function =E2=80=98provider_start=E2=80=99:
-> > plugins/mbpi.c:423: warning: passing argument 2 of =E2=80=98g_markup_pa=
-rse_context_push=E2=80=99 discards qualifiers from pointer target type
-> > /usr/include/glib-2.0/glib/gmarkup.h:115: note: expected =E2=80=98struc=
-t GMarkupParser *=E2=80=99 but argument is of type =E2=80=98const struct GM=
-arkupParser *=E2=80=99
-> > plugins/mbpi.c:425: warning: passing argument 2 of =E2=80=98g_markup_pa=
-rse_context_push=E2=80=99 discards qualifiers from pointer target type
-> > /usr/include/glib-2.0/glib/gmarkup.h:115: note: expected =E2=80=98struc=
-t GMarkupParser *=E2=80=99 but argument is of type =E2=80=98const struct GM=
-arkupParser *=E2=80=99
-> > plugins/mbpi.c:427: warning: passing argument 2 of =E2=80=98g_markup_pa=
-rse_context_push=E2=80=99 discards qualifiers from pointer target type
-> > /usr/include/glib-2.0/glib/gmarkup.h:115: note: expected =E2=80=98struc=
-t GMarkupParser *=E2=80=99 but argument is of type =E2=80=98const struct GM=
-arkupParser *=E2=80=99
-> > plugins/mbpi.c: In function =E2=80=98toplevel_gsm_start=E2=80=99:
-> > plugins/mbpi.c:459: warning: passing argument 2 of =E2=80=98g_markup_pa=
-rse_context_push=E2=80=99 discards qualifiers from pointer target type
-> > /usr/include/glib-2.0/glib/gmarkup.h:115: note: expected =E2=80=98struc=
-t GMarkupParser *=E2=80=99 but argument is of type =E2=80=98const struct GM=
-arkupParser *=E2=80=99
-> > plugins/mbpi.c:461: warning: passing argument 2 of =E2=80=98g_markup_pa=
-rse_context_push=E2=80=99 discards qualifiers from pointer target type
-> > /usr/include/glib-2.0/glib/gmarkup.h:115: note: expected =E2=80=98struc=
-t GMarkupParser *=E2=80=99 but argument is of type =E2=80=98const struct GM=
-arkupParser *=E2=80=99
-> > plugins/mbpi.c: In function =E2=80=98toplevel_cdma_start=E2=80=99:
-> > plugins/mbpi.c:493: warning: passing argument 2 of =E2=80=98g_markup_pa=
-rse_context_push=E2=80=99 discards qualifiers from pointer target type
-> > /usr/include/glib-2.0/glib/gmarkup.h:115: note: expected =E2=80=98struc=
-t GMarkupParser *=E2=80=99 but argument is of type =E2=80=98const struct GM=
-arkupParser *=E2=80=99
-> > plugins/mbpi.c:495: warning: passing argument 2 of =E2=80=98g_markup_pa=
-rse_context_push=E2=80=99 discards qualifiers from pointer target type
-> > /usr/include/glib-2.0/glib/gmarkup.h:115: note: expected =E2=80=98struc=
-t GMarkupParser *=E2=80=99 but argument is of type =E2=80=98const struct GM=
-arkupParser *=E2=80=99
-> >   CC     plugins/provision.o
-> >   CC     plugins/cdma-provision.o
-> > =
+>> We can have a private enum modem type into plugin, but we won't be able
+>> to use it into any atoms.
+>> Maybe by deduction we can add an enum sim_type into sim.h store the type
+>> into the plugin data and pass it at SIM atom creation.
+>> What do you think?
+> Inside the plugin you can do whatever you want for determining the cdma
+> vs gsm modem type.  I'm not quite sure I follow your comment about sim.h.=
+..
 
-> =
+To use only PIN management and retrieving IMSI from current sim atom, =
 
-> What glib version are you using? Mine defines
-> g_markup_parse_context_push like this:
-> =
+sim type (R-UIM or SIM) has to be specified at atom creation.
+The sim type can is determined into Huawei plugin at the same time as =
 
-> void                 g_markup_parse_context_push  (GMarkupParseContext
-> *context,
->                                                    const GMarkupParser
-> *parser,
->                                                    gpointer
-> user_data);
+modem type:
+     - If modem type if GSM, sim type SIM.
+     - If modem type is CDMA, sim is R-UIM (sim atom is not created in =
 
-this was a test compile on an older version and it seems that GLib broke
-their API promise again. So just lets ignore these warnings since their
-is nothing we can do about it anyway.
+case of UIM/ROMSIM)
 
-Regards
+I was proposing to have those 2 types into include/sim.h.
+Thus, sim atom can be flagged as SIM or R-UIM to access or not to the =
 
-Marcel
+file system and use PIN management only e.g. in:
+sim_initialize() and sim_initialize_after_pin() we just get the imsi we =
+
+don't try to read the sim file system.
+
+Kind regards,
+Guillaume
 
 
 
---===============8011384957305227363==--
+
+--===============3638681502182204282==--
 
