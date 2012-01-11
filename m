@@ -1,78 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============1121291130119519719=="
+Content-Type: multipart/mixed; boundary="===============5431401268958941289=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v4 2/3] Add SIM900 detection support.
-Date: Wed, 11 Jan 2012 15:54:15 +0100
-Message-ID: <1326293655.6454.236.camel@aeonflux>
-In-Reply-To: <1326290343-21973-2-git-send-email-r.r.zaripov@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v4 1/3] SIMCOM SIM900 module support
+Date: Wed, 11 Jan 2012 05:21:15 -0600
+Message-ID: <4F0D70AB.60904@gmail.com>
+In-Reply-To: <1326293559.6454.234.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1121291130119519719==
+--===============5431401268958941289==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Renat,
+Hi Marcel,
 
-> This allows for detection of SIM900 modem module in case of
-> appropriate driver specified in udev rules.
+>> +	/* For obtain correct sms service number */
+>> +	g_at_chat_send(data->modem, "AT+CSCS=3D\"GSM\"", NULL, =
+
+>> +			NULL, NULL, NULL);
 > =
 
-> Example rule:
-> KERNEL=3D=3D"gsmtty3", ENV{OFONO_DRIVER}=3D"sim900"
-
-you could also use the 27.010 support that is included in oFono itself
-and set it up from within the plugin. I assume you have a reason for
-using N_GSM.
-
+> you might better introduce a OFONO_VENDOR_SIM900 quirk and use that in
+> the SMS atom driver. The phonebook support will also end up overwriting
+> this one later on. So I am not even sure this works reliable this way.
+> Might be just pure luck with the order of the atom.
 > =
 
-> ---
->  plugins/udev.c |   15 +++++++++++++++
->  1 files changed, 15 insertions(+), 0 deletions(-)
-> =
 
-> diff --git a/plugins/udev.c b/plugins/udev.c
-> index d0673f7..f05af48 100644
-> --- a/plugins/udev.c
-> +++ b/plugins/udev.c
-> @@ -193,6 +193,19 @@ static void add_nokiacdma(struct ofono_modem *modem,
->  	ofono_modem_register(modem);
->  }
->  =
+Actually this is fine assuming the modem does not support UTF-8
+character set.  The builtin assumption for most atoms is that CSCS is
+set to something sane before they're initialized.  The phonebook driver
+will temporarily switch to UCS2 for the duration of the phonebook read
+and restore the previous setting.
 
-> +static void add_sim900(struct ofono_modem *modem,
-> +                       struct udev_device *udev_device)
-> +{
-> +        const char *devnode;
-> +
-> +        DBG("modem %p", modem);
-> +
-> +        devnode =3D udev_device_get_devnode(udev_device);
-> +        ofono_modem_set_string(modem, "Device", devnode);
-> +
-> +        ofono_modem_register(modem);
-> +}
-> +
->  static void add_modem(struct udev_device *udev_device)
->  {
->  	struct ofono_modem *modem;
-> @@ -271,6 +284,8 @@ done:
->  		add_tc65(modem, udev_device);
->  	else if (g_strcmp0(driver, "nokiacdma") =3D=3D 0)
->  		add_nokiacdma(modem, udev_device);
-> +        else if (g_strcmp0(driver, "sim900") =3D=3D 0)
-> +                add_sim900(modem, udev_device);
->  }
+Regards,
+-Denis
 
-Something went wrong here. Spaces?
-
-Regards
-
-Marcel
-
-
-
---===============1121291130119519719==--
+--===============5431401268958941289==--
 
