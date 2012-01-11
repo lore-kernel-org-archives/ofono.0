@@ -1,32 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============8524741657947777989=="
+Content-Type: multipart/mixed; boundary="===============7907095533040803984=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v2 0/2] Create sim atom for CDMA modems
-Date: Wed, 11 Jan 2012 17:28:32 +0100
-Message-ID: <1326299314-13617-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH_v2 0/2] Create sim atom for CDMA modems
+Date: Wed, 11 Jan 2012 06:50:57 -0600
+Message-ID: <4F0D85B1.1060702@gmail.com>
+In-Reply-To: <1326299314-13617-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8524741657947777989==
+--===============7907095533040803984==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Guillaume,
 
-This new version contains patches from updated tree.
+On 01/11/2012 10:28 AM, Guillaume Zajac wrote:
+> Hi,
+> =
 
-Kind regards,
-Guillaume
+> This new version contains patches from updated tree.
+> =
 
-Guillaume Zajac (2):
-  atmodem: Create new sim driver without EF entries
-  huawei: Create sim atom for cdma modems
+> Kind regards,
+> Guillaume
+> =
 
- drivers/atmodem/sim.c |   16 ++++++++++++++++
- plugins/huawei.c      |   12 ++++++++++++
- 2 files changed, 28 insertions(+), 0 deletions(-)
+> Guillaume Zajac (2):
+>   atmodem: Create new sim driver without EF entries
+>   huawei: Create sim atom for cdma modems
+> =
+
+>  drivers/atmodem/sim.c |   16 ++++++++++++++++
+>  plugins/huawei.c      |   12 ++++++++++++
+>  2 files changed, 28 insertions(+), 0 deletions(-)
+> =
 
 
---===============8524741657947777989==--
+Both patches have been applied, however I refactored the second one
+slightly in a follow-on commit.  Please make sure I didn't screw
+anything up.
+
+Regards,
+-Denis
+
+--===============7907095533040803984==--
 
