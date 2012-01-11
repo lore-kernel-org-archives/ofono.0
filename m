@@ -1,54 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============1732265915641765304=="
+Content-Type: multipart/mixed; boundary="===============1711820696368299354=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH_v0 2/3] huawei: Add modem type detection
-Date: Wed, 11 Jan 2012 15:46:38 +0100
-Message-ID: <1326293198.6454.230.camel@aeonflux>
-In-Reply-To: <688E999A39D0DD478D9CFCDC485D64820FC91725@SHSMSX151.ccr.corp.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/5] speedup: Check for supported modem capabilities first
+Date: Wed, 11 Jan 2012 05:06:35 -0600
+Message-ID: <4F0D6D3B.5090802@gmail.com>
+In-Reply-To: <4F0D6911.5050007@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1732265915641765304==
+--===============1711820696368299354==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ying An,
+Hi Guillaume,
 
-> >Right, I see this is easier do to how I you submitted it :)
-> >However, I have a dongle EC1261 that is bugged because:
-> >         - when I send ATI, the capabilities line is returned with
-> >"+GCAP +GCAP:" prefix
-> >         - when I send AT+GCAP, the prefix is "+GCAP:"
-> >
-> >Unless the manufacturer fixes this issue, we won't be able to support
-> >this dongle...
-> >
->
-> The modem returns following lines after ATI command:
+On 01/11/2012 04:48 AM, Guillaume Zajac wrote:
+> Hi Denis,
 > =
 
-> Manufacturer: +GMI: HUAWEI TECHNOLOGIES CO., LTD
-> Model: EC1261
-> Revision: +CGMR:11.102.11.00.45
-> ESN: +GSN:80c55faf
-> +GCAP: +GCAP: +CIS707-A,CIS-856-A,+MS, +ES, +DS, +FCLASS
+>>> We can have a private enum modem type into plugin, but we won't be able
+>>> to use it into any atoms.
+>>> Maybe by deduction we can add an enum sim_type into sim.h store the type
+>>> into the plugin data and pass it at SIM atom creation.
+>>> What do you think?
+>> Inside the plugin you can do whatever you want for determining the cdma
+>> vs gsm modem type.  I'm not quite sure I follow your comment about
+>> sim.h...
 > =
 
-> So you can see, it is still with prefix "+GCAP:", although there's anothe=
-r "+GCAP:", but it does not impact the string search operation.
+> To use only PIN management and retrieving IMSI from current sim atom,
+> sim type (R-UIM or SIM) has to be specified at atom creation.
+> The sim type can is determined into Huawei plugin at the same time as
+> modem type:
+>     - If modem type if GSM, sim type SIM.
+>     - If modem type is CDMA, sim is R-UIM (sim atom is not created in
+> case of UIM/ROMSIM)
 
-this is the most hilarious screw-up within a single AT command.
+Yes, I understand that part ;)
 
-Open your window, take this modem, and throw it out. Nothing can really
-help you here. If they did not get this one right, I do not wanna know
-what else is broken ;)
+> =
 
-Regards
+> I was proposing to have those 2 types into include/sim.h.
+> Thus, sim atom can be flagged as SIM or R-UIM to access or not to the
+> file system and use PIN management only e.g. in:
+> sim_initialize() and sim_initialize_after_pin() we just get the imsi we
+> don't try to read the sim file system.
 
-Marcel
+And no, we're not going to do it this way.  In the end we must be able
+to read EFs from CDMA modems as well, since many of the EFs exist on
+RUIMs and the logic is exactly the same.  You must find another way.
 
+Regards,
+-Denis
 
-
---===============1732265915641765304==--
+--===============1711820696368299354==--
 
