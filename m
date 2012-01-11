@@ -1,65 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============3145296777083821766=="
+Content-Type: multipart/mixed; boundary="===============5504606004384698664=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v2 1/2] atmodem: Create new sim driver without EF entries
-Date: Wed, 11 Jan 2012 17:28:33 +0100
-Message-ID: <1326299314-13617-2-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v2 2/2] huawei: Create sim atom for cdma modems
+Date: Wed, 11 Jan 2012 17:28:34 +0100
+Message-ID: <1326299314-13617-3-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1326299314-13617-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3145296777083821766==
+--===============5504606004384698664==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This driver will be used by CDMA modems to support PIN
-management and IMSI retreival.
-EF entries for CDMA modems cannot be implemented without
-manufacturers specifications.
+Don't create atom if sim is embedded.
+Atom will use "atmodem-noef" drivers to support PIN management
+and IMSI retrieval.
 ---
- drivers/atmodem/sim.c |   16 ++++++++++++++++
- 1 files changed, 16 insertions(+), 0 deletions(-)
+ plugins/huawei.c |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 297914d..8edd582 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -1269,12 +1269,28 @@ static struct ofono_sim_driver driver =3D {
- 	.query_locked		=3D at_pin_query_enabled,
- };
- =
-
-+static struct ofono_sim_driver driver_noef =3D {
-+	.name			=3D "atmodem-noef",
-+	.probe			=3D at_sim_probe,
-+	.remove			=3D at_sim_remove,
-+	.read_imsi		=3D at_read_imsi,
-+	.query_passwd_state	=3D at_pin_query,
-+	.query_pin_retries	=3D at_pin_retries_query,
-+	.send_passwd		=3D at_pin_send,
-+	.reset_passwd		=3D at_pin_send_puk,
-+	.lock			=3D at_pin_enable,
-+	.change_passwd		=3D at_change_passwd,
-+	.query_locked		=3D at_pin_query_enabled,
-+};
+diff --git a/plugins/huawei.c b/plugins/huawei.c
+index 5030e00..bcec467 100644
+--- a/plugins/huawei.c
++++ b/plugins/huawei.c
+@@ -748,6 +748,18 @@ static void huawei_pre_sim(struct ofono_modem *modem)
+ 			ofono_sim_inserted_notify(sim, TRUE);
+ 	} else if (data->have_cdma =3D=3D TRUE) {
+ 		ofono_devinfo_create(modem, 0, "cdmamodem", data->pcui);
 +
- void at_sim_init(void)
- {
- 	ofono_sim_driver_register(&driver);
-+	ofono_sim_driver_register(&driver_noef);
++		/* Create SIM atom only if SIM is not embedded */
++		if (data->sim_state !=3D SIM_STATE_ROMSIM) {
++			struct ofono_sim *sim;
++
++			/* Use sim drivers without Elementary File entries */
++			sim =3D ofono_sim_create(modem, OFONO_VENDOR_HUAWEI,
++						"atmodem-noef", data->pcui);
++
++			if (sim && data->have_sim =3D=3D TRUE)
++				ofono_sim_inserted_notify(sim, TRUE);
++		}
+ 	}
  }
  =
 
- void at_sim_exit(void)
- {
- 	ofono_sim_driver_unregister(&driver);
-+	ofono_sim_driver_unregister(&driver_noef);
- }
 -- =
 
 1.7.1
 
 
---===============3145296777083821766==--
+--===============5504606004384698664==--
 
