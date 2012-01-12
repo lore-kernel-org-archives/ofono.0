@@ -1,48 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============6897739331180130323=="
+Content-Type: multipart/mixed; boundary="===============6128205844901397574=="
 MIME-Version: 1.0
 From: r.r.zaripov@gmail.com
-Subject: [PATCH v5 3/4] SIM900 driver usage documentation
-Date: Thu, 12 Jan 2012 16:32:21 +0400
-Message-ID: <1326371542-29964-3-git-send-email-r.r.zaripov@gmail.com>
+Subject: [PATCH v5 4/4] SIM900 vendor quirk 
+Date: Thu, 12 Jan 2012 16:32:22 +0400
+Message-ID: <1326371542-29964-4-git-send-email-r.r.zaripov@gmail.com>
 In-Reply-To: <1326371542-29964-1-git-send-email-r.r.zaripov@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6897739331180130323==
+--===============6128205844901397574==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Renat Zaripov <r.r.zaripov@gmail.com>
 
-Adding a short description for usage of SIM900 plugin.
+Adding vendor quirk for SIMCOM SIM900 modem module.
 ---
- doc/sim900-modem.txt |   12 ++++++++++++
- 1 files changed, 12 insertions(+), 0 deletions(-)
- create mode 100644 doc/sim900-modem.txt
+ drivers/atmodem/network-registration.c |    1 +
+ drivers/atmodem/vendor.h               |    1 +
+ 2 files changed, 2 insertions(+), 0 deletions(-)
 
-diff --git a/doc/sim900-modem.txt b/doc/sim900-modem.txt
-new file mode 100644
-index 0000000..e9f051c
---- /dev/null
-+++ b/doc/sim900-modem.txt
-@@ -0,0 +1,12 @@
-+SIM900 modem usage
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+To enable SIM900 module support you need to put the following
-+udev rule into appropriate file in /{etc,lib}/udev/rules.d:
-+
-+KERNEL=3D=3D"gsmtty3", ENV{OFONO_DRIVER}=3D"sim900"
-+
-+On the i-Tetra tracking device, the SIM900 is accessed
-+via N_GSM mux device. We use ofono as SMS message
-+service and incoming voice calls service, so we
-+use /dev/gsmtty1 provided by N_GSM mux.
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index b943241..78e73e2 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -1496,6 +1496,7 @@ static void at_creg_set_cb(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ 		break;
+ 	case OFONO_VENDOR_NOKIA:
+ 	case OFONO_VENDOR_SAMSUNG:
++	case OFONO_VENDOR_SIM900:
+ 		/* Signal strength reporting via CIND is not supported */
+ 		break;
+ 	default:
+diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
+index c4ef742..4aab7bf 100644
+--- a/drivers/atmodem/vendor.h
++++ b/drivers/atmodem/vendor.h
+@@ -38,4 +38,5 @@ enum ofono_vendor {
+ 	OFONO_VENDOR_TELIT,
+ 	OFONO_VENDOR_SPEEDUP,
+ 	OFONO_VENDOR_SAMSUNG,
++	OFONO_VENDOR_SIM900,
+ };
 -- =
 
 1.7.7.3
 
 
---===============6897739331180130323==--
+--===============6128205844901397574==--
 
