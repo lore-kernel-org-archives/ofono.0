@@ -1,54 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============6128205844901397574=="
+Content-Type: multipart/mixed; boundary="===============2986353487853178538=="
 MIME-Version: 1.0
-From: r.r.zaripov@gmail.com
-Subject: [PATCH v5 4/4] SIM900 vendor quirk 
-Date: Thu, 12 Jan 2012 16:32:22 +0400
-Message-ID: <1326371542-29964-4-git-send-email-r.r.zaripov@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v5 1/4] This patch add support for SIM900 GSM module
+Date: Wed, 11 Jan 2012 23:52:52 -0600
+Message-ID: <4F0E7534.40307@gmail.com>
 In-Reply-To: <1326371542-29964-1-git-send-email-r.r.zaripov@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6128205844901397574==
+--===============2986353487853178538==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Renat Zaripov <r.r.zaripov@gmail.com>
+Hi Renat,
 
-Adding vendor quirk for SIMCOM SIM900 modem module.
----
- drivers/atmodem/network-registration.c |    1 +
- drivers/atmodem/vendor.h               |    1 +
- 2 files changed, 2 insertions(+), 0 deletions(-)
+On 01/12/2012 06:32 AM, r.r.zaripov(a)gmail.com wrote:
+> From: Renat Zaripov <r.r.zaripov@gmail.com>
+> =
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index b943241..78e73e2 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -1496,6 +1496,7 @@ static void at_creg_set_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 		break;
- 	case OFONO_VENDOR_NOKIA:
- 	case OFONO_VENDOR_SAMSUNG:
-+	case OFONO_VENDOR_SIM900:
- 		/* Signal strength reporting via CIND is not supported */
- 		break;
- 	default:
-diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
-index c4ef742..4aab7bf 100644
---- a/drivers/atmodem/vendor.h
-+++ b/drivers/atmodem/vendor.h
-@@ -38,4 +38,5 @@ enum ofono_vendor {
- 	OFONO_VENDOR_TELIT,
- 	OFONO_VENDOR_SPEEDUP,
- 	OFONO_VENDOR_SAMSUNG,
-+	OFONO_VENDOR_SIM900,
- };
--- =
+> This patch add support for SIM900 GSM module
+> http://wm.sim.com/Sim/FrontShow_en/wireless/detail.aspx?cid=3D6&nid=3D770
+> =
 
-1.7.7.3
+> ---
+>  Makefile.am      |    3 +
+>  plugins/sim900.c |  261 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  2 files changed, 264 insertions(+), 0 deletions(-)
+>  create mode 100644 plugins/sim900.c
+> =
+
+> v4: Adding vendor quirk OFONO_VENDOR_SIM900
+> cleanup whitespaces
+> =
 
 
---===============6128205844901397574==--
+I went ahead and applied all four patches with some minor whitespace /
+style cleanups.  I have also renamed OFONO_VENDOR_SIM900 to
+OFONO_VENDOR_SIMCOM to be more in line with our historical naming.
+
+The plugin might need to be called simcom.c, but I leave this as is for now.
+
+Thanks!
+
+Regards,
+-Denis
+
+--===============2986353487853178538==--
 
