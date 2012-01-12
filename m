@@ -1,69 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============5963250584074847975=="
+Content-Type: multipart/mixed; boundary="===============6897739331180130323=="
 MIME-Version: 1.0
 From: r.r.zaripov@gmail.com
-Subject: [PATCH v5 2/4] Add SIM900 detection support.
-Date: Thu, 12 Jan 2012 16:32:20 +0400
-Message-ID: <1326371542-29964-2-git-send-email-r.r.zaripov@gmail.com>
+Subject: [PATCH v5 3/4] SIM900 driver usage documentation
+Date: Thu, 12 Jan 2012 16:32:21 +0400
+Message-ID: <1326371542-29964-3-git-send-email-r.r.zaripov@gmail.com>
 In-Reply-To: <1326371542-29964-1-git-send-email-r.r.zaripov@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5963250584074847975==
+--===============6897739331180130323==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Renat Zaripov <r.r.zaripov@gmail.com>
 
-This allows for detection of SIM900 modem module in case
-of appropriate driver specified in udev rules.
-
-Example rule:
-KERNEL=3D=3D"gsmtty3", ENV{OFONO_DRIVER}=3D"sim900"
+Adding a short description for usage of SIM900 plugin.
 ---
- plugins/udev.c |   15 +++++++++++++++
- 1 files changed, 15 insertions(+), 0 deletions(-)
+ doc/sim900-modem.txt |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
+ create mode 100644 doc/sim900-modem.txt
 
-diff --git a/plugins/udev.c b/plugins/udev.c
-index 79027d7..8cb87a5 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -193,6 +193,19 @@ static void add_nokiacdma(struct ofono_modem *modem,
- 	ofono_modem_register(modem);
- }
- =
-
-+static void add_sim900(struct ofono_modem *modem,
-+					struct udev_device *udev_device)
-+{
-+	const char *devnode;
+diff --git a/doc/sim900-modem.txt b/doc/sim900-modem.txt
+new file mode 100644
+index 0000000..e9f051c
+--- /dev/null
++++ b/doc/sim900-modem.txt
+@@ -0,0 +1,12 @@
++SIM900 modem usage
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 +
-+	DBG("modem %p", modem);
++To enable SIM900 module support you need to put the following
++udev rule into appropriate file in /{etc,lib}/udev/rules.d:
 +
-+	devnode =3D udev_device_get_devnode(udev_device);
-+	ofono_modem_set_string(modem, "Device", devnode);
++KERNEL=3D=3D"gsmtty3", ENV{OFONO_DRIVER}=3D"sim900"
 +
-+	ofono_modem_register(modem);
-+}
-+
- static void add_modem(struct udev_device *udev_device)
- {
- 	struct ofono_modem *modem;
-@@ -271,6 +284,8 @@ done:
- 		add_tc65(modem, udev_device);
- 	else if (g_strcmp0(driver, "nokiacdma") =3D=3D 0)
- 		add_nokiacdma(modem, udev_device);
-+	else if (g_strcmp0(driver, "sim900") =3D=3D 0)
-+		add_sim900(modem, udev_device);
- }
- =
-
- static gboolean devpath_remove(gpointer key, gpointer value, gpointer user=
-_data)
++On the i-Tetra tracking device, the SIM900 is accessed
++via N_GSM mux device. We use ofono as SMS message
++service and incoming voice calls service, so we
++use /dev/gsmtty1 provided by N_GSM mux.
 -- =
 
 1.7.7.3
 
 
---===============5963250584074847975==--
+--===============6897739331180130323==--
 
