@@ -1,58 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============5899224084517252999=="
+Content-Type: multipart/mixed; boundary="===============2980885333927660065=="
 MIME-Version: 1.0
-From: Deng, Ying An <ying.an.deng@intel.com>
-Subject: RE: [PATCH] dd support to u3501 dongle with PID 1c9e:9605 add support
- to u3501 dongle with PID 1c9e:9605
-Date: Thu, 12 Jan 2012 07:14:37 +0000
-Message-ID: <688E999A39D0DD478D9CFCDC485D64820FC919C8@SHSMSX151.ccr.corp.intel.com>
-In-Reply-To: <1326438457-11458-1-git-send-email-ying.an.deng@intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH 0/5] Unify SpeedUp plugin
+Date: Thu, 12 Jan 2012 11:00:58 +0100
+Message-ID: <4F0EAF5A.70905@linux.intel.com>
+In-Reply-To: <1326114660-10111-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5899224084517252999==
+--===============2980885333927660065==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Please just ignore this one, forget to add comments in patch...
+Hi Denis,
 
->-----Original Message-----
->From: Deng, Ying An
->Sent: Friday, January 13, 2012 3:08 PM
->To: ofono(a)ofono.org
->Cc: Deng, Ying An
->Subject: [PATCH] dd support to u3501 dongle with PID 1c9e:9605 add support=
- to
->u3501 dongle with PID 1c9e:9605
+On 09/01/2012 14:10, Guillaume Zajac wrote:
+> Hi,
 >
->From: DengYingAn <ying.an.deng@intel.com>
+> Patch 1 is deleting huaweicdma label in udevng.
+> I submitted it again into this set of patch to avoid conflicts.
+> The 4 next patches are doing same job as for Huawei plugin on SpeedUp plu=
+gin.
 >
->---
-> plugins/ofono-speedup.rules |    4 ++++
-> 1 files changed, 4 insertions(+), 0 deletions(-)
+> Kind regards,
+> Guillaume
 >
->diff --git a/plugins/ofono-speedup.rules b/plugins/ofono-speedup.rules
->index f43fc7b..1acbb79 100644
->--- a/plugins/ofono-speedup.rules
->+++ b/plugins/ofono-speedup.rules
->@@ -20,4 +20,8 @@ ATTRS{idVendor}=3D=3D"2020", ATTRS{idProduct}=3D=3D"1008=
-",
->ENV{ID_USB_INTERFACE_NUM}=3D=3D"0
-> ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9800",
->ENV{ID_USB_INTERFACE_NUM}=3D=3D"01", ENV{OFONO_LABEL}=3D"modem"
-> ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9800",
->ENV{ID_USB_INTERFACE_NUM}=3D=3D"02", ENV{OFONO_LABEL}=3D"aux"
+> Guillaume Zajac (5):
+>    udevng: Remove huaweicdma label from driver_list
+>    speedup: Check for supported modem capabilities first
+>    speedup: Create GSM/UMTS atoms only if support has been detected
+>    speedup: Create CDMA atoms if support has been detected
+>    udevng: Simplify vendor and driver list for SpeedUp
 >
->+# U3501
->+ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9605",
->ENV{ID_USB_INTERFACE_NUM}=3D=3D"03", ENV{OFONO_LABEL}=3D"modem"
->+ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9605",
->ENV{ID_USB_INTERFACE_NUM}=3D=3D"01", ENV{OFONO_LABEL}=3D"aux"
->+
-> LABEL=3D"ofono_speedup_end"
->--
->1.7.2.3
+>   plugins/speedup.c |   99 ++++++++++++++++++++++++++++++++++++++++------=
+------
+>   plugins/udevng.c  |    3 --
+>   2 files changed, 76 insertions(+), 26 deletions(-)
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
+As Marcel gave you some explanations concerning implementation are those =
 
---===============5899224084517252999==--
+patches ready to be applied or does it need some other changes?
+
+Kind regards,
+Guillaume
+
+--===============2980885333927660065==--
 
