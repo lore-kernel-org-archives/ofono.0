@@ -1,21 +1,20 @@
-Content-Type: multipart/mixed; boundary="===============4522896114451520556=="
+Content-Type: multipart/mixed; boundary="===============1261522086252884183=="
 MIME-Version: 1.0
 From: ying.an.deng@intel.com
-Subject: [PATCH] add support to u3501 dongle with PID 1c9e:9605
-Date: Fri, 13 Jan 2012 15:25:37 +0800
-Message-ID: <1326439537-11751-1-git-send-email-ying.an.deng@intel.com>
+Subject: [PATCH] dd support to u3501 dongle with PID 1c9e:9605 add support to
+ u3501 dongle with PID 1c9e:9605
+Date: Fri, 13 Jan 2012 15:07:37 +0800
+Message-ID: <1326438457-11458-1-git-send-email-ying.an.deng@intel.com>
 In-Reply-To: <ying.an.deng@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4522896114451520556==
+--===============1261522086252884183==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: DengYingAn <ying.an.deng@intel.com>
-
-Add support to u3501 dongle with PID 1c9e:9605
 
 ---
  plugins/ofono-speedup.rules |    4 ++++
@@ -45,5 +44,5 @@ RFACE_NUM}=3D=3D"01", ENV{OFONO_LABEL}=3D"aux"
 1.7.2.3
 
 
---===============4522896114451520556==--
+--===============1261522086252884183==--
 
