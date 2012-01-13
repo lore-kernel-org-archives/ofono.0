@@ -1,112 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============0310517117924693283=="
+Content-Type: multipart/mixed; boundary="===============5486305442624596157=="
 MIME-Version: 1.0
 From: Jean-Christian de Rivaz <jc@eclis.ch>
 Subject: Re: Some experiments with the SIMCOM SIM5216E modem on a ARM926 board
-Date: Fri, 13 Jan 2012 05:39:39 +0100
-Message-ID: <4F0FB58B.6020607@eclis.ch>
-In-Reply-To: <1326427044.6454.256.camel@aeonflux>
+Date: Fri, 13 Jan 2012 05:54:56 +0100
+Message-ID: <4F0FB920.8040309@eclis.ch>
+In-Reply-To: <1326426691.6454.255.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0310517117924693283==
+--===============5486305442624596157==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Marcel,
 
->> the USB interface index is:
->> >  0-       DIAG
->> >  1-       NMEA
->> >  2-       AT
->> >  3-       MODEM
->> >  4-       Ethernet
->> >  So, the port index 2 and port index 3 exposes a working AT command
->> >  interface.
+> So lets figure out which one is the NMEA port and which one is the
+> QCDM/DIAG port. Use gatchat/test-qcdm --device<tty>  and see which one
+> responds. That one is the QCDM port and the other is the NMEA port.
 
-> okay then, run ofonod -n -d '*udev*' and see if you get proper debug
-> output for your modem. Just pushed a udev patch that does the detection.
+As expected, now that we known the mapping:
 
-Thanks for it. Seem to be ok:
+$ test-qcdm --device /dev/ttyUSB0
+Device: /dev/ttyUSB0
+=3D=3D> Version information
+Compiled Date: Nov 25 2010
+Compiled Time: 10:41:31
+Release Date: Jun 21 2010
+Release Time: 01:00:00
+Model: KPUBL
+MSM version: 1
+=3D=3D> Features response
+=3D=3D> Invalid command response
 
-ofonod[484]: oFono version 1.2
-ofonod[484]: plugins/udevng.c:udev_start()
-ofonod[484]: plugins/udevng.c:enumerate_devices()
-ofonod[484]: plugins/udevng.c:check_usb_device() option [05c6:9000]
-ofonod[484]: plugins/udevng.c:add_device() =
+Others interfaces don't response, as expected.
 
-/sys/devices/platform/ohci.0/usb1/1-1/1-1:1.0/ttyUSB0/tty/ttyUSB0
-ofonod[484]: plugins/udevng.c:add_device() /dev/ttyUSB0 (simcom) =
+By the way, I just discover this test-qcdm utility. SIMCOM is currently =
 
-255/255/255 [00] =3D=3D> (null) (null)
-ofonod[484]: plugins/udevng.c:check_usb_device() option [05c6:9000]
-ofonod[484]: plugins/udevng.c:add_device() =
+evaluating the possibility to provide to me some additional hardware to =
 
-/sys/devices/platform/ohci.0/usb1/1-1/1-1:1.1/ttyUSB1/tty/ttyUSB1
-ofonod[484]: plugins/udevng.c:add_device() /dev/ttyUSB1 (simcom) =
+investigate the AT+CLCC issue as there can't reproduce it on there side. =
 
-255/255/255 [01] =3D=3D> (null) (null)
-ofonod[484]: plugins/udevng.c:check_usb_device() option [05c6:9000]
-ofonod[484]: plugins/udevng.c:add_device() =
+As far as understand, this would consist precisely in a software =
 
-/sys/devices/platform/ohci.0/usb1/1-1/1-1:1.2/ttyUSB2/tty/ttyUSB2
-ofonod[484]: plugins/udevng.c:add_device() /dev/ttyUSB2 (simcom) =
+connected to the diagnostic port. Did you think that test-qcdm is good =
 
-255/255/255 [02] =3D=3D> (null) (null)
-ofonod[484]: plugins/udevng.c:check_usb_device() option [05c6:9000]
-ofonod[484]: plugins/udevng.c:add_device() =
+enough for the task ?
 
-/sys/devices/platform/ohci.0/usb1/1-1/1-1:1.3/ttyUSB3/tty/ttyUSB3
-ofonod[484]: plugins/udevng.c:add_device() /dev/ttyUSB3 (simcom) =
+> I bet that interface #4 is actually some form of CDC Ethernet for
+> highspeed data transfers. So that you do not have to use PPP. Might
+> wanna ask SIM COM about it.
 
-255/255/255 [03] =3D=3D> (null) (null)
-ofonod[484]: plugins/udevng.c:check_usb_device() option [05c6:9000]
-ofonod[484]: plugins/udevng.c:add_device() =
-
-/sys/devices/platform/ohci.0/usb1/1-1/1-1:1.4/ttyUSB4/tty/ttyUSB4
-ofonod[484]: plugins/udevng.c:add_device() /dev/ttyUSB4 (simcom) =
-
-255/255/255 [04] =3D=3D> (null) (null)
-ofonod[484]: plugins/udevng.c:create_modem() =
-
-/sys/devices/platform/ohci.0/usb1/1-1
-ofonod[484]: plugins/udevng.c:create_modem() driver=3Dsimcom
-ofonod[484]: plugins/udevng.c:setup_simcom() =
-
-/sys/devices/platform/ohci.0/usb1/1-1
-ofonod[484]: plugins/udevng.c:setup_simcom() /dev/ttyUSB0 255/255/255 00 =
-
-(null)
-ofonod[484]: plugins/udevng.c:setup_simcom() /dev/ttyUSB1 255/255/255 01 =
-
-(null)
-ofonod[484]: plugins/udevng.c:setup_simcom() /dev/ttyUSB2 255/255/255 02 =
-
-(null)
-ofonod[484]: plugins/udevng.c:setup_simcom() /dev/ttyUSB3 255/255/255 03 =
-
-(null)
-ofonod[484]: plugins/udevng.c:setup_simcom() /dev/ttyUSB4 255/255/255 04 =
-
-(null)
-ofonod[484]: plugins/udevng.c:setup_simcom() modem=3D/dev/ttyUSB3 =
-
-aux=3D/dev/ttyUSB2 gps=3D/dev/ttyUSB1 diag=3D/dev/ttyUSB0
-
-But of course, since the "simcom" driver don't exists yet, there is =
-
-nothing after this:
-
-ofonod[1019]: src/modem.c:set_modem_property() modem 0xfbcf8 property Modem
-ofonod[1019]: src/modem.c:set_modem_property() modem 0xfbcf8 property Data
-ofonod[1019]: src/modem.c:set_modem_property() modem 0xfbcf8 property GPS
-ofonod[1019]: src/modem.c:ofono_modem_register() 0xfbcf8
-
-What is the best driver to fork as a base for the simcom driver ?
+Yes, would be great. I will ask them on that.
 
 Regards,
 
 Jean-Christian
 
---===============0310517117924693283==--
+
+--===============5486305442624596157==--
 
