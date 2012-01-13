@@ -1,51 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============2986353487853178538=="
+Content-Type: multipart/mixed; boundary="===============5360469841054132551=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v5 1/4] This patch add support for SIM900 GSM module
-Date: Wed, 11 Jan 2012 23:52:52 -0600
-Message-ID: <4F0E7534.40307@gmail.com>
-In-Reply-To: <1326371542-29964-1-git-send-email-r.r.zaripov@gmail.com>
+From: jc@eclis.ch
+Subject: [PATCH] Add autoconfigure rule to search for backtrace().
+Date: Fri, 13 Jan 2012 01:34:16 +0100
+Message-ID: <1326414856-13932-1-git-send-email-jc@eclis.ch>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2986353487853178538==
+--===============5360469841054132551==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Renat,
+On system with the uClibc, it can be into the libubacktrace.
+---
+ configure.ac |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-On 01/12/2012 06:32 AM, r.r.zaripov(a)gmail.com wrote:
-> From: Renat Zaripov <r.r.zaripov@gmail.com>
-> =
+diff --git a/configure.ac b/configure.ac
+index 3bffbb9..98d9e67 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -67,6 +67,10 @@ AC_CHECK_FUNC(signalfd, dummy=3Dyes,
+ AC_CHECK_LIB(dl, dlopen, dummy=3Dyes,
+ 			AC_MSG_ERROR(dynamic linking loader is required))
+ =
 
-> This patch add support for SIM900 GSM module
-> http://wm.sim.com/Sim/FrontShow_en/wireless/detail.aspx?cid=3D6&nid=3D770
-> =
++AC_SEARCH_LIBS([backtrace], [execinfo ubacktrace], [], [
++			AC_MSG_ERROR(backtrace support is required)
++])
++
+ PKG_CHECK_MODULES(GLIB, glib-2.0 >=3D 2.22, dummy=3Dyes,
+ 				AC_MSG_ERROR(GLib >=3D 2.22 is required))
+ AC_SUBST(GLIB_CFLAGS)
+-- =
 
-> ---
->  Makefile.am      |    3 +
->  plugins/sim900.c |  261 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  2 files changed, 264 insertions(+), 0 deletions(-)
->  create mode 100644 plugins/sim900.c
-> =
-
-> v4: Adding vendor quirk OFONO_VENDOR_SIM900
-> cleanup whitespaces
-> =
+1.7.2.5
 
 
-I went ahead and applied all four patches with some minor whitespace /
-style cleanups.  I have also renamed OFONO_VENDOR_SIM900 to
-OFONO_VENDOR_SIMCOM to be more in line with our historical naming.
-
-The plugin might need to be called simcom.c, but I leave this as is for now.
-
-Thanks!
-
-Regards,
--Denis
-
---===============2986353487853178538==--
+--===============5360469841054132551==--
 
