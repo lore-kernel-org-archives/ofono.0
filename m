@@ -1,109 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============3733386178275645325=="
+Content-Type: multipart/mixed; boundary="===============5228269637247487128=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v4 1/6] gatchat: Add g_at_chat_set_slave_qcdm /
- g_at_chat_get_slave_qcdm
-Date: Wed, 18 Jan 2012 18:05:12 +0100
-Message-ID: <1326906317-11601-2-git-send-email-philippe.nunes@linux.intel.com>
-In-Reply-To: <1326906317-11601-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v4 0/6] Provider name and SID
+Date: Wed, 18 Jan 2012 18:05:11 +0100
+Message-ID: <1326906317-11601-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3733386178275645325==
+--===============5228269637247487128==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- gatchat/gatchat.c |   26 ++++++++++++++++++++++++++
- gatchat/gatchat.h |    4 ++++
- 2 files changed, 30 insertions(+), 0 deletions(-)
+This version introduces a QCDM helper library.
+Also, to simplify the QCDM handling, a dedicated callback is set for each
+command sent.
+Currently, we are not considering that a new command can be issued before t=
+he
+answer from the previous command is handled. If this case occurs, then we w=
+ould
+need to introduce a command queue in the GAtHDLC structure to be able to in=
+voke
+properly the callbacks.
 
-diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
-index 7a0ef35..2fde572 100644
---- a/gatchat/gatchat.c
-+++ b/gatchat/gatchat.c
-@@ -35,6 +35,7 @@
- #include "ringbuffer.h"
- #include "gatchat.h"
- #include "gatio.h"
-+#include "gathdlc.h"
- =
-
- /* #define WRITE_SCHEDULER_DEBUG 1 */
- =
-
-@@ -110,6 +111,7 @@ struct _GAtChat {
- 	struct at_chat *parent;
- 	guint group;
- 	GAtChat *slave;
-+	GAtHDLC	*qcdm;
- };
- =
-
- struct terminator_info {
-@@ -1354,6 +1356,30 @@ GAtChat *g_at_chat_get_slave(GAtChat *chat)
- 	return chat->slave;
- }
- =
-
-+GAtHDLC *g_at_chat_set_slave_qcdm(GAtChat *chat, GAtHDLC *diag)
-+{
-+	if (chat =3D=3D NULL)
-+		return NULL;
-+
-+	if (chat->qcdm !=3D NULL)
-+		g_at_hdlc_unref(chat->qcdm);
-+
-+	if (diag !=3D NULL)
-+		chat->qcdm =3D g_at_hdlc_ref(diag);
-+	else
-+		chat->qcdm =3D NULL;
-+
-+	return chat->qcdm;
-+}
-+
-+GAtHDLC *g_at_chat_get_slave_qcdm(GAtChat *chat)
-+{
-+	if (chat =3D=3D NULL)
-+		return NULL;
-+
-+	return chat->qcdm;
-+}
-+
- GIOChannel *g_at_chat_get_channel(GAtChat *chat)
- {
- 	if (chat =3D=3D NULL || chat->parent->io =3D=3D NULL)
-diff --git a/gatchat/gatchat.h b/gatchat/gatchat.h
-index 367581e..496b3dc 100644
---- a/gatchat/gatchat.h
-+++ b/gatchat/gatchat.h
-@@ -30,6 +30,7 @@ extern "C" {
- #include "gatsyntax.h"
- #include "gatutil.h"
- #include "gatio.h"
-+#include "gathdlc.h"
- =
-
- struct _GAtChat;
- =
-
-@@ -68,6 +69,9 @@ GAtChat *g_at_chat_clone(GAtChat *chat);
- GAtChat *g_at_chat_set_slave(GAtChat *chat, GAtChat *slave);
- GAtChat *g_at_chat_get_slave(GAtChat *chat);
- =
-
-+GAtHDLC *g_at_chat_set_slave_qcdm(GAtChat *chat, GAtHDLC *diag);
-+GAtHDLC *g_at_chat_get_slave_qcdm(GAtChat *chat);
-+
- void g_at_chat_suspend(GAtChat *chat);
- void g_at_chat_resume(GAtChat *chat);
- =
-
--- =
-
-1.7.1
+Philippe.    =
 
 
---===============3733386178275645325==--
+Philippe Nunes (6):
+  gatchat: Add g_at_chat_set_slave_qcdm / g_at_chat_get_slave_qcdm
+  huawei: Open qcdm port to fetch network status & SID
+  gatqcdm: Add helper functions for QCDM handling
+  huaweimodem: Probe the QCDM port with the version info request
+  huaweimodem: Add 'serving_system' entry point to get SID
+  udevng: Add a default assignment for Huawei QCDM port
+
+ Makefile.am                       |    1 +
+ drivers/huaweimodem/cdma-netreg.c |  174 +++++++++++++++++++++++++++++++++=
++---
+ gatchat/gatchat.c                 |   26 ++++++
+ gatchat/gatchat.h                 |    4 +
+ gatchat/gatqcdm.c                 |   84 ++++++++++++++++++
+ gatchat/gatqcdm.h                 |   57 ++++++++++++
+ plugins/huawei.c                  |   44 +++++++++
+ plugins/udevng.c                  |   30 +++++--
+ 8 files changed, 400 insertions(+), 20 deletions(-)
+ create mode 100644 gatchat/gatqcdm.c
+ create mode 100644 gatchat/gatqcdm.h
+
+
+--===============5228269637247487128==--
 
