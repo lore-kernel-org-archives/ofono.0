@@ -1,188 +1,174 @@
-Content-Type: multipart/mixed; boundary="===============2713643929887672651=="
+Content-Type: multipart/mixed; boundary="===============2915799556086241963=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v4 4/6] huaweimodem: Probe the QCDM port with the version info
- request
-Date: Wed, 18 Jan 2012 18:05:15 +0100
-Message-ID: <1326906317-11601-5-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v4 5/6] huaweimodem: Add 'serving_system' entry point to get
+ SID
+Date: Wed, 18 Jan 2012 18:05:16 +0100
+Message-ID: <1326906317-11601-6-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1326906317-11601-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2713643929887672651==
+--===============2915799556086241963==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/huaweimodem/cdma-netreg.c |   66 ++++++++++++++++++++++++++++++---=
----
- 1 files changed, 55 insertions(+), 11 deletions(-)
+ drivers/huaweimodem/cdma-netreg.c |  108 +++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 108 insertions(+), 0 deletions(-)
 
 diff --git a/drivers/huaweimodem/cdma-netreg.c b/drivers/huaweimodem/cdma-n=
 etreg.c
-index 2ae66e1..bf48b53 100644
+index bf48b53..e9dd3e2 100644
 --- a/drivers/huaweimodem/cdma-netreg.c
 +++ b/drivers/huaweimodem/cdma-netreg.c
-@@ -24,6 +24,8 @@
- #endif
- =
-
- #define _GNU_SOURCE
-+#include <string.h>
-+#include <stdio.h>
- #include <glib.h>
- #include <errno.h>
- =
-
-@@ -32,11 +34,19 @@
- #include <ofono/cdma-netreg.h>
- =
-
- #include "gatchat.h"
-+#include "gatqcdm.h"
- =
-
- #include "huaweimodem.h"
- =
-
- static const char *sysinfo_prefix[] =3D { "^SYSINFO:", NULL };
- =
-
-+struct netreg_data {
-+	GAtChat *chat;
-+	GAtHDLC *diag;
-+	void *cb;
-+	void *cb_data;
-+};
-+
- static gboolean parse_sysinfo(GAtResult *result, gint *status)
- {
- 	GAtResultIter iter;
-@@ -107,12 +117,34 @@ static void sysinfo_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
+@@ -117,6 +117,66 @@ static void sysinfo_cb(gboolean ok, GAtResult *result,=
+ gpointer user_data)
  	ofono_cdma_netreg_status_notify(netreg, status);
  }
  =
 
-+static void version_info_cb(const unsigned char *buf, gsize len,
-+							gpointer user_data)
++static gboolean parse_css(GAtResult *result, const char **sid)
 +{
-+	struct ofono_cdma_netreg *netreg =3D user_data;
-+	struct netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg);
-+	struct version_info verinfo;
++	GAtResultIter iter;
++	/*
++	* According TIA/EIA/IS-707, CSS query returns <AB>,<SID> but
++	* according TIA/EIA/IS-707-A , it returns <Band_Class>,<Band>,<SID>.
++	* PREV field which has been added afterward is ignored
++	*/
 +
-+	if (!g_at_qcdm_result_get_version_info(buf, len, &verinfo)) {
-+		/* This is probably not a QCDM port */
-+		g_at_hdlc_unref(nd->diag);
-+		nd->diag =3D NULL;
++	g_at_result_iter_init(&iter, result);
++
++	g_at_result_iter_next(&iter, NULL);
++
++	/* Skip first field since we are not interested in this */
++	if (!g_at_result_iter_skip_next(&iter))
++		return FALSE;
++
++	if (!g_at_result_iter_next_unquoted_string(&iter, sid))
++		return FALSE;
++	/*
++	* As CSS answer may differ according which revision of TIA/EIA/IS-707
++	* the modem is compliant, we need to check if this field is Band or SID
++	*/
++	if ((*sid[0] >=3D 'A' && *sid[0] <=3D 'F') || (*sid[0] =3D=3D 'Z'))
++		/* This is the band field, the next field is the SID*/
++		if (!g_at_result_iter_next_unquoted_string(&iter, sid))
++			return FALSE;
++
++	if (!strcmp(*sid, "99999"))
++		/* The mobile station is not registered.*/
++		return FALSE;
++
++	return TRUE;
++}
++
++static void serving_system_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_cdma_netreg_serving_system_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++	const char *sid;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (!ok) {
++		cb(&error, NULL, cbd->data);
 +		return;
 +	}
 +
-+	DBG("Version information\n");
-+	DBG("Compiled Date: %s\n", verinfo.comp_date);
-+	DBG("Compiled Time: %s\n", verinfo.comp_time);
-+	DBG("Release Date: %s\n", verinfo.rel_date);
-+	DBG("Release Time: %s\n", verinfo.rel_time);
-+	DBG("Model: %s\n", verinfo.model);
-+	DBG("MSM version: %d\n", verinfo.msm_ver);
++	if (parse_css(result, &sid) =3D=3D FALSE) {
++		CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
++		return;
++	}
++
++	DBG("serving system: SID %s", sid);
++
++	cb(&error, sid, cbd->data);
 +}
++
+ static void version_info_cb(const unsigned char *buf, gsize len,
+ 							gpointer user_data)
+ {
+@@ -139,6 +199,32 @@ static void version_info_cb(const unsigned char *buf, =
+gsize len,
+ 	DBG("Model: %s\n", verinfo.model);
+ 	DBG("MSM version: %d\n", verinfo.msm_ver);
+ }
++
++static void status_cb(const unsigned char *buf, gsize len, gpointer user_d=
+ata)
++{
++	struct ofono_cdma_netreg *netreg =3D user_data;
++	struct netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg);
++	ofono_cdma_netreg_serving_system_cb_t cb =3D nd->cb;
++	char str[6];
++	guint16 sid;
++
++	if (!g_at_qcdm_result_parse_status(buf, len, &sid)) {
++		/* fall back to use +CSS */
++		if (g_at_chat_send(nd->chat, "AT+CSS=3D?", NULL,
++				serving_system_cb, netreg, NULL) > 0)
++			return;
++
++		CALLBACK_WITH_FAILURE(cb, NULL, nd->cb_data);
++		return;
++	}
++
++	snprintf(str, 6, "%d", sid);
++	DBG("Status command response\n");
++	DBG("Serving Identification number: SID %s", str);
++
++	CALLBACK_WITH_SUCCESS(cb, str, nd->cb_data);
++}
++
  static void mode_notify(GAtResult *result, gpointer user_data)
  {
  	struct ofono_cdma_netreg *netreg =3D user_data;
--	GAtChat *chat =3D ofono_cdma_netreg_get_data(netreg);
-+	struct netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg);
- =
-
--	g_at_chat_send(chat, "AT^SYSINFO", sysinfo_prefix,
-+	g_at_chat_send(nd->chat, "AT^SYSINFO", sysinfo_prefix,
- 				sysinfo_cb, netreg, NULL);
+@@ -254,10 +340,32 @@ static void huawei_cdma_netreg_remove(struct ofono_cd=
+ma_netreg *netreg)
+ 	g_free(nd);
  }
  =
 
-@@ -169,20 +201,20 @@ error:
- static void probe_cb(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct ofono_cdma_netreg *netreg =3D user_data;
--	GAtChat *chat =3D ofono_cdma_netreg_get_data(netreg);
++static void huaweicdma_netreg_serving_system(struct ofono_cdma_netreg *net=
+reg,
++		ofono_cdma_netreg_serving_system_cb_t cb, void *data)
++{
 +	struct netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg);
- =
-
- 	if (!ok) {
- 		ofono_cdma_netreg_remove(netreg);
- 		return;
- 	}
- =
-
--	g_at_chat_register(chat, "^MODE:",
-+	g_at_chat_register(nd->chat, "^MODE:",
- 				mode_notify, FALSE, netreg, NULL);
- =
-
--	g_at_chat_register(chat, "^RSSILVL:",
-+	g_at_chat_register(nd->chat, "^RSSILVL:",
- 				rssilvl_notify, FALSE, netreg, NULL);
- =
-
--	g_at_chat_register(chat, "^HRSSILVL:",
-+	g_at_chat_register(nd->chat, "^HRSSILVL:",
- 				hrssilvl_notify, FALSE, netreg, NULL);
- =
-
- 	ofono_cdma_netreg_register(netreg);
-@@ -191,23 +223,35 @@ static void probe_cb(gboolean ok, GAtResult *result, =
-gpointer user_data)
- static int huawei_cdma_netreg_probe(struct ofono_cdma_netreg *netreg,
- 				unsigned int vendor, void *data)
- {
--	GAtChat *chat =3D g_at_chat_clone(data);
-+	struct netreg_data *nd;
- =
-
--	ofono_cdma_netreg_set_data(netreg, chat);
-+	nd =3D g_new0(struct netreg_data, 1);
- =
-
--	g_at_chat_send(chat, "AT^SYSINFO", sysinfo_prefix,
-+	nd->chat =3D g_at_chat_clone(data);
-+	nd->diag =3D g_at_chat_get_slave_qcdm(data);
 +
-+	ofono_cdma_netreg_set_data(netreg, nd);
++	nd->cb =3D cb;
++	nd->cb_data =3D data;
 +
-+	g_at_chat_send(nd->chat, "AT^SYSINFO", sysinfo_prefix,
- 				probe_cb, netreg, NULL);
- =
-
-+	if (nd->diag)
-+		/* Request version info to probe the QCDM port */
-+		g_at_qcdm_send(nd->diag, G_AT_QCDM_CMD_VERSION_INFO,
-+					version_info_cb, netreg);
++	/* First use QCDM port if any */
++	if (nd->diag) {
++		/* Request Station status */
++		if (g_at_qcdm_send(nd->diag, G_AT_QCDM_CMD_STATUS,
++				status_cb, netreg) > 0)
++			return;
++	} else if (g_at_chat_send(nd->chat, "AT+CSS=3D?", NULL,
++					serving_system_cb, netreg, NULL) > 0)
++		return;
 +
- 	return 0;
- }
- =
-
- static void huawei_cdma_netreg_remove(struct ofono_cdma_netreg *netreg)
- {
--	GAtChat *chat =3D ofono_cdma_netreg_get_data(netreg);
-+	struct netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg);
- =
-
- 	ofono_cdma_netreg_set_data(netreg, NULL);
- =
-
--	g_at_chat_unref(chat);
-+	g_at_chat_unref(nd->chat);
-+	g_at_hdlc_unref(nd->diag);
-+	g_free(nd);
- }
- =
-
++	CALLBACK_WITH_FAILURE(cb, NULL, data);
++}
++
  static struct ofono_cdma_netreg_driver driver =3D {
+ 	.name	=3D "huaweimodem",
+ 	.probe	=3D huawei_cdma_netreg_probe,
+ 	.remove	=3D huawei_cdma_netreg_remove,
++	.serving_system =3D huaweicdma_netreg_serving_system,
+ };
+ =
+
+ void huawei_cdma_netreg_init(void)
 -- =
 
 1.7.1
 
 
---===============2713643929887672651==--
+--===============2915799556086241963==--
 
