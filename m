@@ -1,200 +1,188 @@
-Content-Type: multipart/mixed; boundary="===============4796004081585487598=="
+Content-Type: multipart/mixed; boundary="===============2713643929887672651=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v4 3/6] gatqcdm: Add helper functions for QCDM handling
-Date: Wed, 18 Jan 2012 18:05:14 +0100
-Message-ID: <1326906317-11601-4-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v4 4/6] huaweimodem: Probe the QCDM port with the version info
+ request
+Date: Wed, 18 Jan 2012 18:05:15 +0100
+Message-ID: <1326906317-11601-5-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1326906317-11601-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4796004081585487598==
+--===============2713643929887672651==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am       |    1 +
- gatchat/gatqcdm.c |   84 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- gatchat/gatqcdm.h |   57 ++++++++++++++++++++++++++++++++++++
- 3 files changed, 142 insertions(+), 0 deletions(-)
- create mode 100644 gatchat/gatqcdm.c
- create mode 100644 gatchat/gatqcdm.h
+ drivers/huaweimodem/cdma-netreg.c |   66 ++++++++++++++++++++++++++++++---=
+---
+ 1 files changed, 55 insertions(+), 11 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 0472dfa..fc8bc42 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -72,6 +72,7 @@ gatchat_sources =3D gatchat/gatchat.h gatchat/gatchat.c \
- 				gatchat/gatserver.h gatchat/gatserver.c \
- 				gatchat/gatrawip.h gatchat/gatrawip.c \
- 				gatchat/gathdlc.c gatchat/gathdlc.h \
-+				gatchat/gatqcdm.c gatchat/gatqcdm.h \
- 				gatchat/gatppp.c gatchat/gatppp.h \
- 				gatchat/ppp.h gatchat/ppp_cp.h \
- 				gatchat/ppp_cp.c gatchat/ppp_lcp.c \
-diff --git a/gatchat/gatqcdm.c b/gatchat/gatqcdm.c
-new file mode 100644
-index 0000000..3941a8e
---- /dev/null
-+++ b/gatchat/gatqcdm.c
-@@ -0,0 +1,84 @@
-+/*
-+ *
-+ *  AT chat library with GLib integration
-+ *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
+diff --git a/drivers/huaweimodem/cdma-netreg.c b/drivers/huaweimodem/cdma-n=
+etreg.c
+index 2ae66e1..bf48b53 100644
+--- a/drivers/huaweimodem/cdma-netreg.c
++++ b/drivers/huaweimodem/cdma-netreg.c
+@@ -24,6 +24,8 @@
+ #endif
+ =
+
+ #define _GNU_SOURCE
 +#include <string.h>
++#include <stdio.h>
+ #include <glib.h>
+ #include <errno.h>
+ =
+
+@@ -32,11 +34,19 @@
+ #include <ofono/cdma-netreg.h>
+ =
+
+ #include "gatchat.h"
 +#include "gatqcdm.h"
-+
-+#define QCDM_RESULT_VERSION_LENGTH	55
-+#define QCDM_RESULT_STATUS_LENGTH	48
-+
-+#define QCDM_RESULT_STATUS_CDMA_RX_STATE_OFFSET	23
-+#define QCDM_RESULT_STATUS_SID_OFFSET	39
-+
-+gboolean g_at_qcdm_send(GAtHDLC *hdlc, guint8 cmd, GAtReceiveFunc func,
-+							gpointer user_data)
-+{
-+	unsigned char cmdbuf[1];
-+
-+	cmdbuf[0] =3D cmd;
-+
-+	g_at_hdlc_set_receive(hdlc, func, user_data);
-+	return g_at_hdlc_send(hdlc, cmdbuf, sizeof(cmdbuf));
-+}
-+
-+
-+gboolean g_at_qcdm_result_get_version_info(const unsigned char *buf, gsize=
- len,
-+						struct version_info *verinfo)
-+{
-+	if (len < 1 || len > QCDM_RESULT_VERSION_LENGTH ||
-+			buf[0] !=3D G_AT_QCDM_CMD_VERSION_INFO)
-+		return FALSE;
-+
-+	memcpy(verinfo->comp_date, buf+1, 11);
-+	verinfo->comp_date[11] =3D '\0';
-+	memcpy(verinfo->comp_time, buf+12, 8);
-+	verinfo->comp_time[8] =3D '\0';
-+	memcpy(verinfo->rel_date, buf+20, 11);
-+	verinfo->rel_date[11] =3D '\0';
-+	memcpy(verinfo->rel_time, buf+31, 8);
-+	verinfo->rel_time[8] =3D '\0';
-+	memcpy(verinfo->model, buf+39, 8);
-+	verinfo->model[8] =3D '\0';
-+	verinfo->msm_ver =3D buf[53];
-+
-+	return TRUE;
-+}
-+
-+gboolean g_at_qcdm_result_parse_status(const unsigned char *buf, gsize len,
-+						guint16 *sid)
-+{
-+	if (len < 1 || len > QCDM_RESULT_STATUS_LENGTH ||
-+			buf[0] !=3D G_AT_QCDM_CMD_STATUS)
-+		return FALSE;
-+
-+	/* check if network is registered */
-+	if (buf[QCDM_RESULT_STATUS_CDMA_RX_STATE_OFFSET] =3D=3D 0)
-+		return FALSE;
-+
-+	*sid =3D buf[QCDM_RESULT_STATUS_SID_OFFSET+1] << 8 |
-+			buf[QCDM_RESULT_STATUS_SID_OFFSET];
-+
-+	return TRUE;
-+}
-diff --git a/gatchat/gatqcdm.h b/gatchat/gatqcdm.h
-new file mode 100644
-index 0000000..2e6cf46
---- /dev/null
-+++ b/gatchat/gatqcdm.h
-@@ -0,0 +1,57 @@
-+/*
-+ *
-+ *  AT chat library with GLib integration
-+ *
-+ *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifndef __G_AT_QCDM_H
-+#define __G_AT_QCDM_H
-+
-+#include <glib.h>
-+#include "gathdlc.h"
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+#define G_AT_QCDM_CMD_VERSION_INFO	0	/* Version info */
-+#define G_AT_QCDM_CMD_STATUS		12	/* Station status */
-+
-+struct version_info {
-+	char comp_date[12];
-+	char comp_time[9];
-+	char rel_date[12];
-+	char rel_time[9];
-+	char model[9];
-+	guint8 msm_ver;
+ =
+
+ #include "huaweimodem.h"
+ =
+
+ static const char *sysinfo_prefix[] =3D { "^SYSINFO:", NULL };
+ =
+
++struct netreg_data {
++	GAtChat *chat;
++	GAtHDLC *diag;
++	void *cb;
++	void *cb_data;
 +};
 +
-+gboolean g_at_qcdm_send(GAtHDLC *hdlc, guint8 cmd, GAtReceiveFunc func,
-+				gpointer user_data);
+ static gboolean parse_sysinfo(GAtResult *result, gint *status)
+ {
+ 	GAtResultIter iter;
+@@ -107,12 +117,34 @@ static void sysinfo_cb(gboolean ok, GAtResult *result=
+, gpointer user_data)
+ 	ofono_cdma_netreg_status_notify(netreg, status);
+ }
+ =
+
++static void version_info_cb(const unsigned char *buf, gsize len,
++							gpointer user_data)
++{
++	struct ofono_cdma_netreg *netreg =3D user_data;
++	struct netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg);
++	struct version_info verinfo;
 +
-+gboolean g_at_qcdm_result_get_version_info(const unsigned char *buf, gsize=
- len,
-+						struct version_info *verinfo);
++	if (!g_at_qcdm_result_get_version_info(buf, len, &verinfo)) {
++		/* This is probably not a QCDM port */
++		g_at_hdlc_unref(nd->diag);
++		nd->diag =3D NULL;
++		return;
++	}
 +
-+gboolean g_at_qcdm_result_parse_status(const unsigned char *buf, gsize len,
-+						guint16 *sid);
-+
-+#ifdef __cplusplus
++	DBG("Version information\n");
++	DBG("Compiled Date: %s\n", verinfo.comp_date);
++	DBG("Compiled Time: %s\n", verinfo.comp_time);
++	DBG("Release Date: %s\n", verinfo.rel_date);
++	DBG("Release Time: %s\n", verinfo.rel_time);
++	DBG("Model: %s\n", verinfo.model);
++	DBG("MSM version: %d\n", verinfo.msm_ver);
 +}
-+#endif
+ static void mode_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_cdma_netreg *netreg =3D user_data;
+-	GAtChat *chat =3D ofono_cdma_netreg_get_data(netreg);
++	struct netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg);
+ =
+
+-	g_at_chat_send(chat, "AT^SYSINFO", sysinfo_prefix,
++	g_at_chat_send(nd->chat, "AT^SYSINFO", sysinfo_prefix,
+ 				sysinfo_cb, netreg, NULL);
+ }
+ =
+
+@@ -169,20 +201,20 @@ error:
+ static void probe_cb(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_cdma_netreg *netreg =3D user_data;
+-	GAtChat *chat =3D ofono_cdma_netreg_get_data(netreg);
++	struct netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg);
+ =
+
+ 	if (!ok) {
+ 		ofono_cdma_netreg_remove(netreg);
+ 		return;
+ 	}
+ =
+
+-	g_at_chat_register(chat, "^MODE:",
++	g_at_chat_register(nd->chat, "^MODE:",
+ 				mode_notify, FALSE, netreg, NULL);
+ =
+
+-	g_at_chat_register(chat, "^RSSILVL:",
++	g_at_chat_register(nd->chat, "^RSSILVL:",
+ 				rssilvl_notify, FALSE, netreg, NULL);
+ =
+
+-	g_at_chat_register(chat, "^HRSSILVL:",
++	g_at_chat_register(nd->chat, "^HRSSILVL:",
+ 				hrssilvl_notify, FALSE, netreg, NULL);
+ =
+
+ 	ofono_cdma_netreg_register(netreg);
+@@ -191,23 +223,35 @@ static void probe_cb(gboolean ok, GAtResult *result, =
+gpointer user_data)
+ static int huawei_cdma_netreg_probe(struct ofono_cdma_netreg *netreg,
+ 				unsigned int vendor, void *data)
+ {
+-	GAtChat *chat =3D g_at_chat_clone(data);
++	struct netreg_data *nd;
+ =
+
+-	ofono_cdma_netreg_set_data(netreg, chat);
++	nd =3D g_new0(struct netreg_data, 1);
+ =
+
+-	g_at_chat_send(chat, "AT^SYSINFO", sysinfo_prefix,
++	nd->chat =3D g_at_chat_clone(data);
++	nd->diag =3D g_at_chat_get_slave_qcdm(data);
 +
-+#endif /* __G_AT_QCDM_H */
++	ofono_cdma_netreg_set_data(netreg, nd);
++
++	g_at_chat_send(nd->chat, "AT^SYSINFO", sysinfo_prefix,
+ 				probe_cb, netreg, NULL);
+ =
+
++	if (nd->diag)
++		/* Request version info to probe the QCDM port */
++		g_at_qcdm_send(nd->diag, G_AT_QCDM_CMD_VERSION_INFO,
++					version_info_cb, netreg);
++
+ 	return 0;
+ }
+ =
+
+ static void huawei_cdma_netreg_remove(struct ofono_cdma_netreg *netreg)
+ {
+-	GAtChat *chat =3D ofono_cdma_netreg_get_data(netreg);
++	struct netreg_data *nd =3D ofono_cdma_netreg_get_data(netreg);
+ =
+
+ 	ofono_cdma_netreg_set_data(netreg, NULL);
+ =
+
+-	g_at_chat_unref(chat);
++	g_at_chat_unref(nd->chat);
++	g_at_hdlc_unref(nd->diag);
++	g_free(nd);
+ }
+ =
+
+ static struct ofono_cdma_netreg_driver driver =3D {
 -- =
 
 1.7.1
 
 
---===============4796004081585487598==--
+--===============2713643929887672651==--
 
