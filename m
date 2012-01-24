@@ -1,59 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============4061400975471909048=="
+Content-Type: multipart/mixed; boundary="===============1524242595167982317=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: crash when unplugged modem when it was still initializing
-Date: Tue, 24 Jan 2012 11:35:56 -0600
-Message-ID: <4F1EEBFC.1020203@gmail.com>
-In-Reply-To: <CAHiDW_E10MmuxyvO3v9vXzCsA8A49WPULS=Q3C-pL4G98eRjmA@mail.gmail.com>
+From: Jussi Kukkonen <jussi.kukkonen@intel.com>
+Subject: Re: create_modem/destroy_modem() loop with Huawei USB modem
+Date: Wed, 25 Jan 2012 00:31:14 +0200
+Message-ID: <CAHiDW_GiyFxQeF0F=9yiTzDfofRGKdAdmRo2bUGiGJOiOAY2JA@mail.gmail.com>
+In-Reply-To: <CAHiDW_FQyQqiORS3jjvNTP7z+fUWdWOd9F9gZtCf4_a2BqC5Ag@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4061400975471909048==
+--===============1524242595167982317==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 01/24/2012 03:33 PM, Jussi Kukkonen wrote:
-> On Tue, Jan 24, 2012 at 11:19 PM, Jussi Kukkonen
-> <jussi.kukkonen@intel.com> wrote:
->> Hi,
->> I happened to unplug my dongle quite soon after starting ofono. It
->> promptly aborted.
-> =
+On Wed, Jan 4, 2012 at 2:30 PM, Jussi Kukkonen <jussi.kukkonen@intel.com>=
+ wrote:
+> I'm sometimes seeing a create_modem/destroy_modem() loop that seems to
+> go on forever: Maybe half an hour ago I inserted a USB modem and tried
+> to "test/enable-modem" (although I think enable-modem is not needed to
+> trigger it). Now the Modem objects keep appearing and disappearing on
+> the system bus: It's currently at "/huawei189" and counting.
+>
+> The device is a Huawei E1550, connected straight to a laptop USB port.
+> This has happened maybe five times altogether but it's not easily
+> reproducable. I have my own ofono client running but it doesn't really
+> do anything other than attach to Manager and Modem signals (and do the
+> corresponding initial GetModems()/GetProperties() method calls).
 
-> and it just happened again with no relation to unplugging devices or
-> starting ofonod s othose were red herrings. In fact I hadn't touched
-> anything for a moment: connmand and ofonod were both running.
-> =
+This has just started happening a lot (as in 100% for last 20 minutes)
+for an unknown reason -- this stress test was possibly how I found the
+crash I reported a few minutes ago... anyway, to be able to test other
+bugs I had to investigate this further: turns out this is probably not
+a ofono problem, but I would appreciate any help from this list.
 
+I'm seeing this happen constantly, over and over, even if ofonod is
+not running (as long as I've run it once to do the modeswitch) :
 
-Try the following patch.
+Jan 25 00:13:28 loki kernel: [  560.421045] usb 1-1.1: reset
+high-speed USB device number 66 using ehci_hcd
+Jan 25 00:13:28 loki kernel: [  560.518464] option 1-1.1:1.3: GSM
+modem (1-port) converter detected
+Jan 25 00:13:28 loki kernel: [  560.518619] usb 1-1.1: GSM modem
+(1-port) converter now attached to ttyUSB0
+Jan 25 00:13:28 loki kernel: [  560.518769] option 1-1.1:1.2: GSM
+modem (1-port) converter detected
+Jan 25 00:13:28 loki kernel: [  560.519447] usb 1-1.1: GSM modem
+(1-port) converter now attached to ttyUSB1
+Jan 25 00:13:28 loki kernel: [  560.520149] option 1-1.1:1.1: GSM
+modem (1-port) converter detected
+Jan 25 00:13:28 loki kernel: [  560.520321] usb 1-1.1: GSM modem
+(1-port) converter now attached to ttyUSB2
+Jan 25 00:13:28 loki kernel: [  560.520440] option 1-1.1:1.0: GSM
+modem (1-port) converter detected
+Jan 25 00:13:28 loki kernel: [  560.520584] usb 1-1.1: GSM modem
+(1-port) converter now attached to ttyUSB3
+Jan 25 00:13:28 loki kernel: [  560.542530] option1 ttyUSB3: GSM modem
+(1-port) converter now disconnected from ttyUSB3
+Jan 25 00:13:28 loki kernel: [  560.542548] option 1-1.1:1.0: device
+disconnected
+Jan 25 00:13:28 loki kernel: [  560.542766] option1 ttyUSB2: GSM modem
+(1-port) converter now disconnected from ttyUSB2
+Jan 25 00:13:28 loki kernel: [  560.542783] option 1-1.1:1.1: device
+disconnected
+Jan 25 00:13:28 loki kernel: [  560.543132] option1 ttyUSB1: GSM modem
+(1-port) converter now disconnected from ttyUSB1
+Jan 25 00:13:28 loki kernel: [  560.543149] option 1-1.1:1.2: device
+disconnected
+Jan 25 00:13:28 loki kernel: [  560.543204] option1 ttyUSB0: GSM modem
+(1-port) converter now disconnected from ttyUSB0
+Jan 25 00:13:28 loki kernel: [  560.543219] option 1-1.1:1.3: device
+disconnected
 
-Regards,
--Denis
+Any hints to what this might and and how I can avoid it are welcome.
 
---===============4061400975471909048==
-Content-Type: text/plain
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-sim-Fix-crash-due-to-uninitialized-spn_watch.patch"
+ - Jussi
 
-PkZyb20gNDNjYjk4YjcxMzRjZmY3NjVlMTBkYjJjOTQ0MDI2OTVmNzk1YjhmZiBNb24gU2VwIDE3
-IDAwOjAwOjAwIDIwMDEKRnJvbTogRGVuaXMgS2VuemlvciA8ZGVua2VuekBnbWFpbC5jb20+CkRh
-dGU6IFR1ZSwgMjQgSmFuIDIwMTIgMTE6MzM6MTYgLTA2MDAKU3ViamVjdDogW1BBVENIXSBzaW06
-IEZpeCBjcmFzaCBkdWUgdG8gdW5pbml0aWFsaXplZCBzcG5fd2F0Y2gKCi0tLQogc3JjL3NpbS5j
-IHwgICAgOCArKysrKysrKwogMSBmaWxlcyBjaGFuZ2VkLCA4IGluc2VydGlvbnMoKyksIDAgZGVs
-ZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvc3JjL3NpbS5jIGIvc3JjL3NpbS5jCmluZGV4IDcwM2Uw
-ZGIuLmViMjVlMDcgMTAwNjQ0Ci0tLSBhL3NyYy9zaW0uYworKysgYi9zcmMvc2ltLmMKQEAgLTI1
-MzAsNiArMjUzMCwxNCBAQCBzdGF0aWMgdm9pZCBzaW1fc3BuX2Nsb3NlKHN0cnVjdCBvZm9ub19z
-aW0gKnNpbSkKIAlfX29mb25vX3dhdGNobGlzdF9mcmVlKHNpbS0+c3BuX3dhdGNoZXMpOwogCXNp
-bS0+c3BuX3dhdGNoZXMgPSBOVUxMOwogCisJLyoKKwkgKiBXZSBoYXZlIG5vdCBpbml0aWFsaXpl
-ZCBTUE4gbG9naWMgYXQgYWxsIHlldCwgZWl0aGVyIGJlY2F1c2UKKwkgKiBubyBuZXRyZWcgLyBn
-cHJzIGF0b20gaGFzIGJlZW4gbmVlZGVkIG9yIHdlIGhhdmUgbm90IHJlYWNoZWQgdGhlCisJICog
-cG9zdF9zaW0gc3RhdGUKKwkgKi8KKwlpZiAoc2ltLT5lZl9zcG5fd2F0Y2ggPT0gMCkKKwkJcmV0
-dXJuOworCiAJb2Zvbm9fc2ltX3JlbW92ZV9maWxlX3dhdGNoKHNpbS0+Y29udGV4dCwgc2ltLT5l
-Zl9zcG5fd2F0Y2gpOwogCXNpbS0+ZWZfc3BuX3dhdGNoID0gMDsKIAotLSAKMS43LjMuNAoK
-
---===============4061400975471909048==--
+--===============1524242595167982317==--
 
