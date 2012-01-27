@@ -1,43 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============1596072038897250880=="
+Content-Type: multipart/mixed; boundary="===============2683379133896620950=="
 MIME-Version: 1.0
-From: Jussi Kukkonen <jussi.kukkonen@intel.com>
-Subject: Re: crash when unplugged modem when it was still initializing
-Date: Wed, 25 Jan 2012 16:23:56 +0200
-Message-ID: <CAHiDW_HE+xMaBYSkYqaNN+we7ZU5-ovRJzFHiZPsL7j3r=o=Jw@mail.gmail.com>
-In-Reply-To: <4F1EEBFC.1020203@gmail.com>
+From: yuvaraj r <yuvaraj.tr@gmail.com>
+Subject: Audio & video flow
+Date: Fri, 27 Jan 2012 11:34:46 +0530
+Message-ID: <CAK=eu+eFaKJ0+C8tSm+_qpOLrV1CX0PpJ8mCPyzFLtdAdWU_bw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1596072038897250880==
+--===============2683379133896620950==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, Jan 24, 2012 at 7:35 PM, Denis Kenzior <denkenz@gmail.com> wrote:
-> On 01/24/2012 03:33 PM, Jussi Kukkonen wrote:
->> On Tue, Jan 24, 2012 at 11:19 PM, Jussi Kukkonen
->> <jussi.kukkonen@intel.com> wrote:
->>> Hi,
->>> I happened to unplug my dongle quite soon after starting ofono. It
->>> promptly aborted.
->>
->> and it just happened again with no relation to unplugging devices or
->> starting ofonod s othose were red herrings. In fact I hadn't touched
->> anything for a moment: connmand and ofonod were both running.
->>
->
-> Try the following patch.
+Hi All,
 
-Actually I just figured out a way to reproduce this pretty consistently:
-* plug in modem, wait until it settles
-* kill ofonod if running, restart it, wait until it settles (mine is
-waiting for a pin entry)
-* unplug modem
 
-I confirm that it's hitting sim_spn_close() before spn stuff is
-initialized, and that your patch prevents the crash.
+I am thinking  that  audio and video is flowing between modem(Communication
+cpu) and Application Cpu via Network protocol sessions layer(Phonet,caif)
 
- - Jussi
+Is it correct or not ?
 
---===============1596072038897250880==--
+If i assumption is wrong
+
+Could anybody explain me , how audio and video flow happening between them?
+
+Does any special hardware interface is connected with modem?
+
+
+Thanks
+
+Yuvaraj R
+
+--===============2683379133896620950==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+SGkgQWxsLDxicj48YnI+PGJyPkkgYW0gdGhpbmtpbmegIHRoYXSgIGF1ZGlvIGFuZCB2aWRlbyBp
+cyBmbG93aW5nIGJldHdlZW4gbW9kZW0oQ29tbXVuaWNhdGlvbiBjcHUpIGFuZCBBcHBsaWNhdGlv
+biBDcHUgdmlhIE5ldHdvcmsgcHJvdG9jb2wgc2Vzc2lvbnMgbGF5ZXIoUGhvbmV0LGNhaWYpPGJy
+Pjxicj5JcyBpdCBjb3JyZWN0IG9yIG5vdCA/PGJyPjxicj5JZiBpIGFzc3VtcHRpb24gaXMgd3Jv
+bmcgPGJyPgo8YnI+Q291bGQgYW55Ym9keSBleHBsYWluIG1lICwgaG93IGF1ZGlvIGFuZCB2aWRl
+byBmbG93IGhhcHBlbmluZyBiZXR3ZWVuIHRoZW0/PGJyPjxicj5Eb2VzIGFueSBzcGVjaWFsIGhh
+cmR3YXJlIGludGVyZmFjZSBpcyBjb25uZWN0ZWQgd2l0aCBtb2RlbT88YnI+PGJyPjxicj5UaGFu
+a3M8YnI+PGJyPll1dmFyYWogUjxicj48YnI+PGJyPgo=
+
+--===============2683379133896620950==--
 
