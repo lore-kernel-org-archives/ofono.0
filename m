@@ -1,69 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============7012186552739916038=="
+Content-Type: multipart/mixed; boundary="===============3590268656766342263=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv2 3/8] call-forwarding: Don't set conditional cfs when cfu is
- active
-Date: Mon, 06 Feb 2012 14:33:56 +0200
-Message-ID: <1328531641-10612-4-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv2 4/8] call-forwarding: Don't report conditional cfs when cfu
+ is active
+Date: Mon, 06 Feb 2012 14:33:57 +0200
+Message-ID: <1328531641-10612-5-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1328531641-10612-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7012186552739916038==
+--===============3590268656766342263==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/call-forwarding.c |   18 ++++++++++++++++++
- 1 files changed, 18 insertions(+), 0 deletions(-)
+ src/call-forwarding.c |   20 +++++++++++++++++---
+ 1 files changed, 17 insertions(+), 3 deletions(-)
 
 diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index 8b8d5a8..3f9d816 100644
+index 3f9d816..f9bee6b 100644
 --- a/src/call-forwarding.c
 +++ b/src/call-forwarding.c
-@@ -802,6 +802,13 @@ static DBusMessage *cf_set_property(DBusConnection *co=
-nn, DBusMessage *msg,
- 		if (strlen(number) > 0 && !valid_phone_number_format(number))
- 			return __ofono_error_invalid_format(msg);
+@@ -503,6 +503,8 @@ static DBusMessage *cf_get_properties_reply(DBusMessage=
+ *msg,
+ 	DBusMessageIter dict;
+ 	int i;
+ 	dbus_bool_t status;
++	gboolean cfu_enabled;
++	GSList *cf_list;
  =
 
+ 	reply =3D dbus_message_new_method_return(msg);
+ 	if (reply =3D=3D NULL)
+@@ -514,14 +516,26 @@ static DBusMessage *cf_get_properties_reply(DBusMessa=
+ge *msg,
+ 					OFONO_PROPERTIES_ARRAY_SIGNATURE,
+ 						&dict);
+ =
+
+-	for (i =3D 0; i < 4; i++)
+-		property_append_cf_conditions(&dict, cf->cf_conditions[i],
++	cfu_enabled =3D is_cfu_enabled(cf);
++
++	for (i =3D 0; i < 4; i++) {
++
 +		/*
-+		 * Don't set conditional cfs when cfu is active
++		 * Report conditional cfs as empty when CFU is active
 +		 */
-+		if (type !=3D CALL_FORWARDING_TYPE_UNCONDITIONAL &&
-+				number[0] !=3D '\0' && is_cfu_enabled(cf))
-+			return __ofono_error_not_available(msg);
++		if (cfu_enabled && (i !=3D CALL_FORWARDING_TYPE_UNCONDITIONAL))
++			cf_list =3D NULL;
++		else
++			cf_list =3D cf->cf_conditions[i];
 +
- 		if (number[0] !=3D '\0')
- 			string_to_phone_number(number, &ph);
- =
-
-@@ -1159,6 +1166,17 @@ static gboolean cf_ss_control(int type, const char *=
-sc,
- 		return TRUE;
- 	}
- =
-
-+	/*
-+	 * Don't set conditional cfs when cfu is active
-+	 */
-+	if (type =3D=3D SS_CONTROL_TYPE_REGISTRATION &&
-+			cf_type !=3D CALL_FORWARDING_TYPE_UNCONDITIONAL &&
-+			sia[0] !=3D '\0' && is_cfu_enabled(cf)) {
-+		g_dbus_send_message(conn, __ofono_error_not_available(msg));
-+
-+		return TRUE;
++		property_append_cf_conditions(&dict, cf_list,
+ 						BEARER_CLASS_VOICE,
+ 						cf_type_lut[i]);
 +	}
-+
- 	cf->ss_req =3D g_try_new0(struct cf_ss_request, 1);
  =
 
- 	if (cf->ss_req =3D=3D NULL) {
+ 	if ((cf->flags & CALL_FORWARDING_FLAG_CPHS_CFF) ||
+ 			cf->cfis_record_id > 0)
+-		status =3D is_cfu_enabled(cf);
++		status =3D cfu_enabled;
+ 	else
+ 		status =3D FALSE;
+ =
+
 -- =
 
 1.7.5.4
 
 
---===============7012186552739916038==--
+--===============3590268656766342263==--
 
