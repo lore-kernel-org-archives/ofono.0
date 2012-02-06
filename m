@@ -1,73 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============6016142075612522048=="
+Content-Type: multipart/mixed; boundary="===============2024213541770020989=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv2 5/8] call-forwarding: Emit signals to mask/unmask
- conditional cfs
-Date: Mon, 06 Feb 2012 14:33:58 +0200
-Message-ID: <1328531641-10612-6-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv2 6/8] call-forwarding: Don't run conditional queries if cfu
+ is active
+Date: Mon, 06 Feb 2012 14:33:59 +0200
+Message-ID: <1328531641-10612-7-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1328531641-10612-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6016142075612522048==
+--===============2024213541770020989==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Emit signals to mask/unmask conditional cfs on cfu
-activation/deactivation.
 ---
- src/call-forwarding.c |   30 ++++++++++++++++++++++++++++++
- 1 files changed, 30 insertions(+), 0 deletions(-)
+ src/call-forwarding.c |   18 +++++++++++-------
+ 1 files changed, 11 insertions(+), 7 deletions(-)
 
 diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index f9bee6b..7b086e0 100644
+index 7b086e0..2813005 100644
 --- a/src/call-forwarding.c
 +++ b/src/call-forwarding.c
-@@ -436,6 +436,36 @@ static void set_new_cond_list(struct ofono_call_forwar=
-ding *cf,
+@@ -584,20 +584,24 @@ static void get_query_cf_callback(const struct ofono_=
+error *error, int total,
+ 	struct ofono_call_forwarding *cf =3D data;
  =
 
- 	if (new_cfu !=3D old_cfu) {
- 		ofono_bool_t status =3D new_cfu;
-+		int i;
+ 	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		GSList *l;
+-		l =3D cf_cond_list_create(total, list);
++		GSList *l =3D cf_cond_list_create(total, list);
 +
-+		/*
-+		 * Emit signals to mask/unmask conditional cfs on cfu change
-+		 */
-+		for (i =3D 0; i < 4; i++) {
-+			if (i =3D=3D CALL_FORWARDING_TYPE_UNCONDITIONAL)
-+				continue;
-+
-+			l =3D g_slist_find_custom(cf->cf_conditions[i],
-+					GINT_TO_POINTER(BEARER_CLASS_VOICE),
-+					cf_condition_find_with_cls);
-+
-+			if (l =3D=3D NULL)
-+				continue;
-+
-+			if (new_cfu)
-+				number =3D "";
-+			else {
-+				lc =3D l->data;
-+
-+				number =3D phone_number_to_string(
-+							&lc->phone_number);
-+			}
-+
-+			ofono_dbus_signal_property_changed(conn, path,
-+						OFONO_CALL_FORWARDING_INTERFACE,
-+						cf_type_lut[i],
-+						DBUS_TYPE_STRING, &number);
-+		}
+ 		set_new_cond_list(cf, cf->query_next, l);
  =
 
- 		ofono_dbus_signal_property_changed(conn, path,
- 					OFONO_CALL_FORWARDING_INTERFACE,
+ 		DBG("%s conditions:", cf_type_lut[cf->query_next]);
++
+ 		cf_cond_list_print(l);
++	}
+ =
+
+-		if (cf->query_next =3D=3D CALL_FORWARDING_TYPE_NOT_REACHABLE)
++	if ((is_cfu_enabled(cf) &&
++			cf->query_next =3D=3D CALL_FORWARDING_TYPE_UNCONDITIONAL) ||
++			cf->query_next =3D=3D CALL_FORWARDING_TYPE_NOT_REACHABLE) {
++
++		if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
+ 			cf->flags |=3D CALL_FORWARDING_FLAG_CACHED;
+-	}
+ =
+
+-	if (cf->query_next =3D=3D CALL_FORWARDING_TYPE_NOT_REACHABLE) {
+-		DBusMessage *reply =3D cf_get_properties_reply(cf->pending, cf);
+-		__ofono_dbus_pending_reply(&cf->pending, reply);
++		__ofono_dbus_pending_reply(&cf->pending,
++				cf_get_properties_reply(cf->pending, cf));
+ 		return;
+ 	}
+ =
+
 -- =
 
 1.7.5.4
 
 
---===============6016142075612522048==--
+--===============2024213541770020989==--
 
