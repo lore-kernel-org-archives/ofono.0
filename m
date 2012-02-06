@@ -1,122 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============3079797770405241877=="
+Content-Type: multipart/mixed; boundary="===============8512939422451128040=="
 MIME-Version: 1.0
-From: Jan Pohanka <xhpohanka@gmail.com>
-Subject: setup ofono for telit h910 on embedded system
-Date: Fri, 03 Feb 2012 15:34:16 +0100
-Message-ID: <op.v83xfep0yxxkfz@localhost.localdomain>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv2 0/8] Call forwarding state handling change
+Date: Mon, 06 Feb 2012 14:33:53 +0200
+Message-ID: <1328531641-10612-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3079797770405241877==
+--===============8512939422451128040==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hello,
 
-I'm working on embedded system with dm365 processor (arm926ej-s) and I  =
+Please find the changes in order to correct call forwarding states.
 
-want to use ofono with a Telit h910 modem connected by usb. The module  =
+Changes from v2:
 
-works, I can make a calls using AT commands on /dev/ttyACM3 (or ttyS1),  =
+- Don't run conditional queries if cfu is active.
+- Clear the conditional cache flag on conditional deactivation
+  while cfu is active.
 
-but I'm not able to register it with ofono.
+Regards,
+Oleg
 
-I have added following line to /lib/udev/rules.d/ofono.rules
-KERNEL=3D=3D"ttyACM3", ENV{OFONO_DRIVER}=3D"telit" (I have tried atgen also)
+Oleg Zhurakivskyy (8):
+  call-forwarding: Minor style fixes
+  call-forwarding: Minor refactoring of is_cfu_enabled()
+  call-forwarding: Don't set conditional cfs when cfu is active
+  call-forwarding: Don't report conditional cfs when cfu is active
+  call-forwarding: Emit signals to mask/unmask conditional cfs
+  call-forwarding: Don't run conditional queries if cfu is active
+  call-forwarding: Clear the conditional cache flag
+  TODO: Remove completed call forwarding state task
 
-After enabling the modem I'm getting following debug messages...
-ofonod[133]: plugins/udevng.c:udev_start()
-ofonod[133]: plugins/udevng.c:enumerate_devices()
-ofonod[133]: plugins/udevng.c:check_usb_device() MOSCHIP usb-ethernet  =
-
-driver [9710:7830]
-usb 1-1.3: new high speed USB device using musb_hdrc and address 5
-usb 1-1.3: config 1 interface 0 altsetting 0 endpoint 0x81 has an invalid  =
-
-bInterval 255, changing t
-o 11
-usb 1-1.3: New USB device found, idVendor=3D058b, idProduct=3D0041
-usb 1-1.3: New USB device strings: Mfr=3D0, Product=3D0, SerialNumber=3D0
-usb 1-1.3: configuration #1 chosen from 1 choice
-usb 1-1.3: USB disconnect, address 5
-usb 1-1.3: new high speed USB device using musb_hdrc and address 6
-usb 1-1.3: New USB device found, idVendor=3D1bc7, idProduct=3D0021
-usb 1-1.3: New USB device strings: Mfr=3D1, Product=3D2, SerialNumber=3D3
-usb 1-1.3: Product: Telit Wireless Module
-usb 1-1.3: Manufacturer: Telit wireless solutions
-usb 1-1.3: SerialNumber: 357164040028220
-usb 1-1.3: configuration #1 chosen from 1 choice
-cdc_acm 1-1.3:1.0: This device cannot do calls on its own. It is not a  =
-
-modem.
-cdc_acm 1-1.3:1.0: ttyACM0: USB ACM device
-cdc_acm 1-1.3:1.2: This device cannot do calls on its own. It is not a  =
-
-modem.
-cdc_acm 1-1.3:1.2: ttyACM1: USB ACM device
-cdc_acm 1-1.3:1.4: This device cannot do calls on its own. It is not a  =
-
-modem.
-cdc_acm 1-1.3:1.4: ttyACM2: USB ACM device
-cdc_acm 1-1.3:1.6: This device cannot do calls on its own. It is not a  =
-
-modem.
-cdc_acm 1-1.3:1.6: ttyACM3: USB ACM device
-cdc_acm 1-1.3:1.8: This device cannot do calls on its own. It is not a  =
-
-modem.
-cdc_acm 1-1.3:1.8: ttyACM4: USB ACM device
-cdc_acm 1-1.3:1.10: This device cannot do calls on its own. It is not a  =
-
-modem.
-cdc_acm 1-1.3:1.10: ttyACM5: USB ACM device
-cdc_acm 1-1.3:1.12: This device cannot do calls on its own. It is not a  =
-
-modem.
-cdc_acm 1-1.3:1.12: ttyACM6: USB ACM device
-ofonod[133]: plugins/udevng.c:check_usb_device() cdc_acm [1bc7:0021]
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty add
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty finished
-ofonod[133]: plugins/udevng.c:check_usb_device() cdc_acm [1bc7:0021]
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty add
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty finished
-ofonod[133]: plugins/udevng.c:check_usb_device() cdc_acm [1bc7:0021]
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty add
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty finished
-ofonod[133]: plugins/udevng.c:check_usb_device() cdc_acm [1bc7:0021]
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty add
-ofonod[133]: src/modem.c:ofono_modem_create() name: (null), type: atgen
-ofonod[133]: src/modem.c:set_modem_property() modem 0xeebb0 property Path
-ofonod[133]: plugins/udev.c:add_modem()  =
-
-/devices/platform/musb_hdrc/usb1/1-1/1-1.3/1-1.3:1.6/tty/ttyACM3 (atgen)
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty finished
-ofonod[133]: plugins/udevng.c:check_usb_device() cdc_acm [1bc7:0021]
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty add
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty finished
-ofonod[133]: plugins/udevng.c:check_usb_device() cdc_acm [1bc7:0021]
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty add
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty finished
-ofonod[133]: plugins/udevng.c:check_usb_device() cdc_acm [1bc7:0021]
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty add
-ofonod[133]: plugins/udev.c:udev_event() subsystem tty finished
-ofonod[133]: plugins/udevng.c:check_modem_list()
-
-
-Unfortunately list-modems command still return nothing.
-Could please anybody here give me some advice how to solve the problem?
-
-best regards
-Jan
-
+ TODO                  |   17 -----
+ src/call-forwarding.c |  182 ++++++++++++++++++++++++++++++++++-----------=
+---
+ 2 files changed, 129 insertions(+), 70 deletions(-)
 
 -- =
 
-Tato zpr=C3=A1va byla vytvo=C5=99ena p=C5=99evratn=C3=BDm po=C5=A1tovn=C3=
-=ADm klientem Opery:  =
+1.7.5.4
 
-http://www.opera.com/mail/
 
---===============3079797770405241877==--
+--===============8512939422451128040==--
 
