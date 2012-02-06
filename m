@@ -1,49 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============1331764047063477940=="
+Content-Type: multipart/mixed; boundary="===============1534404143353450932=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv2 7/8] call-forwarding: Clear the conditional cache flag
-Date: Mon, 06 Feb 2012 14:34:00 +0200
-Message-ID: <1328531641-10612-8-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv2 8/8] TODO: Remove completed call forwarding state task
+Date: Mon, 06 Feb 2012 14:34:01 +0200
+Message-ID: <1328531641-10612-9-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1328531641-10612-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1331764047063477940==
+--===============1534404143353450932==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If there is an successful attempt to deactivate conditional cf
-while cfu is active, the conditional cache flag is cleared.
 ---
- src/call-forwarding.c |    8 ++++++++
- 1 files changed, 8 insertions(+), 0 deletions(-)
+ TODO |   17 -----------------
+ 1 files changed, 0 insertions(+), 17 deletions(-)
 
-diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index 2813005..a38a743 100644
---- a/src/call-forwarding.c
-+++ b/src/call-forwarding.c
-@@ -722,6 +722,14 @@ static void set_query_cf_callback(const struct ofono_e=
-rror *error, int total,
- 	DBG("%s conditions:", cf_type_lut[cf->query_next]);
- 	cf_cond_list_print(l);
+diff --git a/TODO b/TODO
+index 1fef651..9948117 100644
+--- a/TODO
++++ b/TODO
+@@ -213,23 +213,6 @@ Supplementary Services
+   Priority: Low
+   Complexity: C8
  =
 
-+	/*
-+	 * If there is an successful attempt to deactivate conditional cf
-+	 * while cfu is active, the conditional cache flag is cleared.
-+	 */
-+	if (cf->query_next !=3D CALL_FORWARDING_TYPE_UNCONDITIONAL &&
-+			is_cfu_enabled(cf))
-+		cf->flags &=3D ~CALL_FORWARDING_FLAG_CACHED;
-+
- 	if (cf->query_next !=3D cf->query_end) {
- 		cf->query_next++;
- 		set_query_next_cf_cond(cf);
+-- Call forwarding state handling change
+-
+-  At the moment call forwarding states are not always correct. Any active
+-  conditional call forwarding should become quiescent while unconditional =
+call
+-  forwarding is activate. If call forwarding unconditional is subsequently
+-  deactivated, all the quiescent forwardings should become operative again.
+-  I.e. No conditional call forwarding string should be returned while
+-  unconditional call forwarding is active even if they exist.
+-
+-  If there is an successful attempt to activate/deactivate conditional call
+-  forwarding while unconditional call forwarding is active the conditional=
+ cache
+-  flag should cleared.
+-
+-  Priority: High
+-  Complexity: C1
+-  Owner: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
+-
+ =
+
+ Voicecall
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D
 -- =
 
 1.7.5.4
 
 
---===============1331764047063477940==--
+--===============1534404143353450932==--
 
