@@ -1,77 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============1544875099952954182=="
+Content-Type: multipart/mixed; boundary="===============1795075132746569473=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH] emulator: Fix start of RING event
-Date: Thu, 09 Feb 2012 15:12:43 +0100
-Message-ID: <1328796763-9777-1-git-send-email-frederic.danis@linux.intel.com>
+From: Robyn Minkler <rminkler@gmail.com>
+Subject: dbus error while trying to enable hfp connection with smartphone
+Date: Thu, 09 Feb 2012 11:41:47 -0800
+Message-ID: <1328816507.14667.5.camel@Ostrea-Edulis.lan>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1544875099952954182==
+--===============1795075132746569473==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-RING event should only be sent when callsetup indicator is set to
-Incoming and there is no active call.
-
-If call indicator is set to inactive while callsetup is
-already set to Incoming (waiting call has generated +CCWA),
-no RING event should be sent.
-
-Ref.: PTS test TC_AG_TWC_BV_02_I
----
- src/emulator.c |   18 +++---------------
- 1 files changed, 3 insertions(+), 15 deletions(-)
-
-diff --git a/src/emulator.c b/src/emulator.c
-index 262e782..0fa6eac 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -1219,23 +1219,12 @@ void ofono_emulator_set_indicator(struct ofono_emul=
-ator *em,
- 	}
- =
-
- 	/*
--	 * Ring timer should be started when:
--	 * - callsetup indicator is set to Incoming and there is no active call
--	 *   (not a waiting call)
--	 * - or call indicator is set to inactive while callsetup is already
--	 *   set to Incoming.
-+	 * Ring timer should be started when callsetup indicator is set to
-+	 * Incoming and there is no active call (not a waiting call).
- 	 * In those cases, a first RING should be sent just after the +CIEV
- 	 * Ring timer should be stopped for all other values of callsetup
- 	 */
--	if (waiting)
--		return;
--
--	/* Call state went from active/held + waiting -> incoming */
--	if (call && value =3D=3D OFONO_EMULATOR_CALL_INACTIVE &&
--			cs_ind->value =3D=3D OFONO_EMULATOR_CALLSETUP_INCOMING)
--		goto start_ring;
--
--	if (!callsetup)
-+	if (!callsetup || waiting)
- 		return;
- =
-
- 	if (value !=3D OFONO_EMULATOR_CALLSETUP_INCOMING) {
-@@ -1247,7 +1236,6 @@ void ofono_emulator_set_indicator(struct ofono_emulat=
-or *em,
- 		return;
- 	}
- =
-
--start_ring:
- 	notify_ring(em);
- 	em->callsetup_source =3D g_timeout_add_seconds(RING_TIMEOUT,
- 							notify_ring, em);
--- =
-
-1.7.1
+I'm trying to get ofono, telepathy-ring and empathy set up so that I can
+make and receive calls on my fedora 16 laptop. =
 
 
---===============1544875099952954182==--
+The list-modems script shows my phone, but I get a dbus error when I try
+to run enable-modems. More information below. =
+
+
+Does anyone have any suggestions about how I might debug this?
+
+This is with:
+dbus 1.4.10
+ofono 1.3
+
+./list-modems
+[ /hfp/889FFAEA6A1B_78471DBB098C ]
+    Name =3D Nexus S
+    Powered =3D 0
+    Lockdown =3D 0
+    Interfaces =3D =
+
+    Online =3D 0
+    Features =3D =
+
+
+./enable-modem
+Connecting modem /hfp/889FFAEA6A1B_78471DBB098C...
+Traceback (most recent call last):
+  File "./enable-modem", line 20, in <module>
+    modem.SetProperty("Powered", dbus.Boolean(1), timeout =3D 120)
+  File "/usr/lib/python2.7/site-packages/dbus/proxies.py", line 68, in
+__call__
+    return self._proxy_method(*args, **keywords)
+  File "/usr/lib/python2.7/site-packages/dbus/proxies.py", line 140, in
+__call__
+    **keywords)
+  File "/usr/lib/python2.7/site-packages/dbus/connection.py", line 630,
+in call_blocking
+    message, timeout)
+dbus.exceptions.DBusException: org.ofono.Error.Failed: Operation failed
+
+
+
+--===============1795075132746569473==--
 
