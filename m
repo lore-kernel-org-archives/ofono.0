@@ -1,122 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============8971980021196770587=="
+Content-Type: multipart/mixed; boundary="===============8627377680274006517=="
 MIME-Version: 1.0
-From: noah <noah@fttxtech.com>
-Subject: Re: Optical Module Transceiver/ SFP SFP+ XFP X2 /Manufacturer
-Date: Tue, 14 Feb 2012 12:56:51 +0000
-Message-ID: <201202142055074199910@fttxtech.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] emulator: Fix start of RING event
+Date: Wed, 15 Feb 2012 05:27:47 -0600
+Message-ID: <4F3B96B3.1060202@gmail.com>
+In-Reply-To: <1328796763-9777-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8971980021196770587==
+--===============8627377680274006517==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Dear friends,
-This is Noah Wang from Shenzhen FTTX Technology Co.,Ltd. I am writing in th=
-e hope of making friends and establishing a long-term business relationship=
- with you.
-Products we design and supply are as below,(E-catalog can be offered as you=
- wish)
-1. Compatible Optical Modules Transceiver
-2. SFP Duplex,Bi-Di and CWDM Transceiver
-3. GBIC Duplex,Bi-Di and CWDM Transceiver
-4. 10G SFP+ CWDM, DWDM Transceiver
-5. 10G XFP CWDM, DWDM Transceiver
-6. 10G X2 CWDM,DWDM Transceiver
-7. 10G XENPAK CWDM,DWDM Transceiver
-8. G-pon/E-pon ONU/OLT
-All with 3 years warranty and lifetime technical support.
-Free samples can be sent on request!
-Any interests in us or need an alternative supplier, please feel free to co=
-ntact us. Or just call me.
-Kind Regards, =
+Hi Fred,
+
+On 02/09/2012 08:12 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+> RING event should only be sent when callsetup indicator is set to
+> Incoming and there is no active call.
+> =
+
+> If call indicator is set to inactive while callsetup is
+> already set to Incoming (waiting call has generated +CCWA),
+> no RING event should be sent.
+> =
+
+> Ref.: PTS test TC_AG_TWC_BV_02_I
+> ---
+>  src/emulator.c |   18 +++---------------
+>  1 files changed, 3 insertions(+), 15 deletions(-)
+> =
 
 
+After looking at the test case, it seems to be dealing with testing the
+consequences of CHLD=3D1.  Essentially dropping the current active call
+and accepting the waiting call.  The logic you're changing is also
+dealing with a slightly different case, namely if the active call is
+dropped by the remote party during a waiting call.
 
+In the case of CHLD=3D1, the sequence should be one of these:
 
-Noah Wang - International Sales
-T:+86 755 86616808
-F:+86 755 86616809
-M:+86 15818507032
-Skype:noah-wan
-Shenzhen FTTX Technology CO., LTD.
+1. Active Call Index -> Disconnected, Waiting call Index -> Active
 
---===============8971980021196770587==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+In the case of remote party dropping the Active call, the sequences can be:
 
-PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMCBUcmFuc2l0aW9uYWwv
-L0VOIj4KPEhUTUw+PEhFQUQ+CjxNRVRBIGNvbnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD1nYjIz
-MTIiIGh0dHAtZXF1aXY9Q29udGVudC1UeXBlPgo8U1RZTEU+CkJMT0NLUVVPVEUgewoJTUFSR0lO
-LVRPUDogMHB4OyBNQVJHSU4tQk9UVE9NOiAwcHg7IE1BUkdJTi1MRUZUOiAyZW0KfQpPTCB7CglN
-QVJHSU4tVE9QOiAwcHg7IE1BUkdJTi1CT1RUT006IDBweAp9ClVMIHsKCU1BUkdJTi1UT1A6IDBw
-eDsgTUFSR0lOLUJPVFRPTTogMHB4Cn0KUCB7CglNQVJHSU4tVE9QOiAwcHg7IE1BUkdJTi1CT1RU
-T006IDBweAp9CkJPRFkgewoJTElORS1IRUlHSFQ6IDEuNTsgRk9OVC1GQU1JTFk6IM6iyO3Rxbra
-OyBDT0xPUjogIzAwMDAwMDsgRk9OVC1TSVpFOiAxMC41cHQKfQo8L1NUWUxFPgoKPE1FVEEgbmFt
-ZT1HRU5FUkFUT1IgY29udGVudD0iTVNIVE1MIDkuMDAuODExMi4xNjQ0MCI+PC9IRUFEPgo8Qk9E
-WSBzdHlsZT0iTUFSR0lOOiAxMHB4Ij4KPERJVj48U1BBTj4KPERJViBzdHlsZT0iRk9OVC1GQU1J
-TFk6IFZlcmRhbmEiPkRlYXIgZnJpZW5kcyw8L0RJVj4KPERJVj4KPERJViBjbGFzcz1Gb3hEaXYy
-MDEyMDIxNDEzNTUwODIwMzMyMj4KPERJViBzdHlsZT0iRk9OVC1GQU1JTFk6IFZlcmRhbmEiPgo8
-RElWIHN0eWxlPSJGT05ULUZBTUlMWTogVmVyZGFuYSI+CjxESVY+CjxESVYgY2xhc3M9Rm94RGl2
-MjAxMjAyMDcxMjM0NDA5ODQ0MzI+CjxESVYgc3R5bGU9IkZPTlQtRkFNSUxZOiBWZXJkYW5hIj4K
-PERJVj4KPERJViBzdHlsZT0iRk9OVC1GQU1JTFk6IFZlcmRhbmEiPgo8RElWPjxGT05UIHNpemU9
-Nj48Rk9OVCBzdHlsZT0iRk9OVC1GQU1JTFk6IENhbGlicmk7IEZPTlQtU0laRTogMTFwdCI+VGhp
-cyBpcyAKTm9haCBXYW5nIGZyb20gU2hlbnpoZW4gRlRUWCBUZWNobm9sb2d5IENvLixMdGQuPC9G
-T05UPjxGT05UIApzdHlsZT0iRk9OVC1GQU1JTFk6IENhbGlicmk7IEZPTlQtU0laRTogMTFwdCI+
-IEkgYW0gd3JpdGluZyBpbiB0aGUgaG9wZSBvZiAKbWFraW5nIGZyaWVuZHMgYW5kIGVzdGFibGlz
-aGluZyBhIGxvbmctdGVybSBidXNpbmVzcyByZWxhdGlvbnNoaXAgd2l0aCAKeW91LjwvRk9OVD48
-L0ZPTlQ+PC9ESVY+CjxESVY+PEZPTlQgc3R5bGU9IkZPTlQtRkFNSUxZOiBDYWxpYnJpOyBGT05U
-LVNJWkU6IDExcHQiIHNpemU9Nj5Qcm9kdWN0cyB3ZSAKZGVzaWduIGFuZCBzdXBwbHkgYXJlIGFz
-IGJlbG93LCg8U1BBTiAKc3R5bGU9IlRFWFQtREVDT1JBVElPTjogdW5kZXJsaW5lIj5FLWNhdGFs
-b2cgY2FuIGJlIG9mZmVyZWQgYXMgeW91IAp3aXNoPC9TUEFOPik8L0ZPTlQ+PC9ESVY+CjxESVY+
-CjxESVY+PEZPTlQgc3R5bGU9IkZPTlQtRkFNSUxZOiBDYWxpYnJpOyBGT05ULVNJWkU6IDExcHQi
-IGNvbG9yPSMwMDAwZmYgc2l6ZT0xIApmYWNlPSIiPjEuIENvbXBhdGlibGUgT3B0aWNhbCBNb2R1
-bGVzIFRyYW5zY2VpdmVyPC9GT05UPjwvRElWPgo8RElWPjxGT05UIHN0eWxlPSJGT05ULUZBTUlM
-WTogQ2FsaWJyaTsgRk9OVC1TSVpFOiAxMXB0IiBjb2xvcj0jMDAwMGZmIHNpemU9MSAKZmFjZT0i
-Ij4yLiBTRlAgRHVwbGV4LEJpLURpIGFuZCBDV0RNIFRyYW5zY2VpdmVyPC9GT05UPjwvRElWPgo8
-RElWPjxGT05UIHN0eWxlPSJGT05ULUZBTUlMWTogQ2FsaWJyaTsgRk9OVC1TSVpFOiAxMXB0IiBj
-b2xvcj0jMDAwMGZmIHNpemU9MSAKZmFjZT0iIj4zLiBHQklDIER1cGxleCxCaS1EaSBhbmQgQ1dE
-TSBUcmFuc2NlaXZlcjwvRk9OVD48L0RJVj4KPERJVj48Rk9OVCBzdHlsZT0iRk9OVC1GQU1JTFk6
-IENhbGlicmk7IEZPTlQtU0laRTogMTFwdCIgY29sb3I9IzAwMDBmZiBzaXplPTEgCmZhY2U9IiI+
-NC4gMTBHIFNGUCsgQ1dETSwgRFdETSBUcmFuc2NlaXZlcjwvRk9OVD48L0RJVj4KPERJVj48Rk9O
-VCBzdHlsZT0iRk9OVC1GQU1JTFk6IENhbGlicmk7IEZPTlQtU0laRTogMTFwdCIgY29sb3I9IzAw
-MDBmZiBzaXplPTEgCmZhY2U9IiI+NS4gMTBHIFhGUCBDV0RNLCBEV0RNIFRyYW5zY2VpdmVyPC9G
-T05UPjwvRElWPgo8RElWPjxGT05UIHN0eWxlPSJGT05ULUZBTUlMWTogQ2FsaWJyaTsgRk9OVC1T
-SVpFOiAxMXB0IiBjb2xvcj0jMDAwMGZmIHNpemU9MSAKZmFjZT0iIj42LiAxMEcgWDIgQ1dETSxE
-V0RNIFRyYW5zY2VpdmVyPC9GT05UPjwvRElWPgo8RElWPjxGT05UIHN0eWxlPSJGT05ULUZBTUlM
-WTogQ2FsaWJyaTsgRk9OVC1TSVpFOiAxMXB0IiBjb2xvcj0jMDAwMGZmIHNpemU9MSAKZmFjZT0i
-Ij43LiAxMEcgWEVOUEFLIENXRE0sRFdETSBUcmFuc2NlaXZlcjwvRk9OVD48L0RJVj4KPERJVj48
-Rk9OVCBzdHlsZT0iRk9OVC1GQU1JTFk6IENhbGlicmk7IEZPTlQtU0laRTogMTFwdCIgY29sb3I9
-IzAwMDBmZiBzaXplPTEgCmZhY2U9IiI+OC4gRy1wb24vRS1wb24gT05VL09MVDwvRk9OVD48L0RJ
-Vj48L0RJVj4KPERJVj48Rk9OVCBzdHlsZT0iRk9OVC1TSVpFOiAxMXB0IiBzaXplPTEgZmFjZT1D
-YWxpYnJpPkFsbCB3aXRoIDMgeWVhcnMgd2FycmFudHkgCmFuZCBsaWZldGltZSB0ZWNobmljYWwg
-c3VwcG9ydC48L0ZPTlQ+PC9ESVY+CjxESVY+PFUgc3R5bGU9IkZPTlQtRkFNSUxZOiBDYWxpYnJp
-OyBGT05ULVNJWkU6IDExcHQiPjxGT05UIApzdHlsZT0iQ09MT1I6ICMwMDAwZmYiIGNvbG9yPSMw
-MDAwMDEgc2l6ZT00PkZyZWUgc2FtcGxlcyBjYW4gYmUgc2VudCBvbiAKcmVxdWVzdCE8L0ZPTlQ+
-PC9VPjwvRElWPgo8RElWPjxGT05UIHN0eWxlPSJGT05ULUZBTUlMWTogQ2FsaWJyaTsgRk9OVC1T
-SVpFOiAxMXB0IiBzaXplPTEgZmFjZT0iIj5BbnkgCmludGVyZXN0cyBpbiB1cyBvciBuZWVkIGFu
-IGFsdGVybmF0aXZlIHN1cHBsaWVyLCBwbGVhc2UgZmVlbCBmcmVlIHRvIGNvbnRhY3QgdXMuIApP
-ciBqdXN0IGNhbGwgbWUuPC9GT05UPjwvRElWPgo8RElWPjwvRElWPjwvRElWPgo8RElWIHN0eWxl
-PSJGT05ULUZBTUlMWTogQ2FsaWJyaSI+PFNQQU4gc3R5bGU9IkZPTlQtU0laRTogMTFwdCI+S2lu
-ZCAKUmVnYXJkcyw8L1NQQU4+IDwvRElWPjwvRElWPjwvRElWPgo8SFIgc3R5bGU9IldJRFRIOiAy
-MTBweDsgSEVJR0hUOiAxcHgiIGFsaWduPWxlZnQgY29sb3I9I2I1YzRkZiBTSVpFPTE+Cgo8RElW
-IApzdHlsZT0iRk9OVC1GQU1JTFk6IFRpbWVzIE5ldyBSb21hbjsgQ09MT1I6ICMzMzMzOTk7IEZP
-TlQtU0laRTogMTAuNXB0OyBGT05ULVdFSUdIVDogYm9sZCI+CjxESVYgCnN0eWxlPSJGT05ULUZB
-TUlMWTogQ2FsaWJyaTsgQ09MT1I6ICMzMzMzOTk7IEZPTlQtU0laRTogMTBwdDsgRk9OVC1XRUlH
-SFQ6IGJvbGQiPk5vYWggCldhbmcgLSBJbnRlcm5hdGlvbmFsIFNhbGVzPC9ESVY+CjxESVYgc3R5
-bGU9IkZPTlQtRkFNSUxZOiBDYWxpYnJpOyBDT0xPUjogIzMzMzM5OTsgRk9OVC1TSVpFOiAxMHB0
-Ij5UOis4NiA3NTUgCjg2NjE2ODA4PC9ESVY+CjxESVYgc3R5bGU9IkZPTlQtRkFNSUxZOiBDYWxp
-YnJpOyBDT0xPUjogIzMzMzM5OTsgRk9OVC1TSVpFOiAxMHB0Ij5GOis4NiA3NTUgCjg2NjE2ODA5
-PC9ESVY+CjxESVYgc3R5bGU9IkZPTlQtRkFNSUxZOiBDYWxpYnJpOyBDT0xPUjogIzMzMzM5OTsg
-Rk9OVC1TSVpFOiAxMHB0Ij5NOis4NiAKMTU4MTg1MDcwMzI8L0RJVj4KPERJViAKc3R5bGU9IkZP
-TlQtRkFNSUxZOiBDYWxpYnJpOyBDT0xPUjogIzMzMzM5OTsgRk9OVC1TSVpFOiAxMHB0Ij5Ta3lw
-ZTpub2FoLXdhbjwvRElWPgo8RElWIHN0eWxlPSJGT05ULUZBTUlMWTogQ2FsaWJyaTsgQ09MT1I6
-ICMzMzY2ZmY7IEZPTlQtV0VJR0hUOiBib2xkIj5TaGVuemhlbiAKRlRUWCBUZWNobm9sb2d5IENP
-LiwgCkxURC48L0RJVj48L0RJVj48L0RJVj48L0RJVj48L0RJVj48L0RJVj48L0RJVj48L0RJVj48
-L1NQQU4+PC9ESVY+PC9CT0RZPjwvSFRNTD4K
+1. Active Call Index -> Disconnected, Waiting Call Index -> Incoming
 
---===============8971980021196770587==--
+The logic has to be modified to handle the transition state (e.g. call
+indicator going from 1 to 0, and waiting call present) and send the
+proper indicators when the final state is reached.  Likely our handling
+of the 'waiting' variable is incorrect, we cannot rely on the values of
+callsetup and call, but instead should try to find any calls in the
+'WAITING' state.
+
+I believe that sending a call=3D0, then callsetup=3D0, call=3D1 is acceptab=
+le,
+but ideally in the case of CHLD=3D1 we should be sending callsetup=3D0 only.
+
+Regards,
+-Denis
+
+--===============8627377680274006517==--
 
