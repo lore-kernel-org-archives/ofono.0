@@ -1,88 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============8581916330464141017=="
+Content-Type: multipart/mixed; boundary="===============5114305438105611722=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv2 6/8] call-forwarding: Don't run conditional queries if
- cfu is active
-Date: Wed, 22 Feb 2012 07:24:30 -0600
-Message-ID: <4F44EC8E.90501@gmail.com>
-In-Reply-To: <1328531641-10612-7-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: Re: [PATCHv2 7/8] call-forwarding: Clear the conditional cache flag
+Date: Wed, 22 Feb 2012 07:33:15 -0600
+Message-ID: <4F44EE9B.8000407@gmail.com>
+In-Reply-To: <1328531641-10612-8-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8581916330464141017==
+--===============5114305438105611722==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Oleg,
 
-On 02/06/2012 06:33 AM, Oleg Zhurakivskyy wrote:
+On 02/06/2012 06:34 AM, Oleg Zhurakivskyy wrote:
+> If there is an successful attempt to deactivate conditional cf
+> while cfu is active, the conditional cache flag is cleared.
 > ---
->  src/call-forwarding.c |   18 +++++++++++-------
->  1 files changed, 11 insertions(+), 7 deletions(-)
+>  src/call-forwarding.c |    8 ++++++++
+>  1 files changed, 8 insertions(+), 0 deletions(-)
 > =
 
 > diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-> index 7b086e0..2813005 100644
+> index 2813005..a38a743 100644
 > --- a/src/call-forwarding.c
 > +++ b/src/call-forwarding.c
-> @@ -584,20 +584,24 @@ static void get_query_cf_callback(const struct ofon=
-o_error *error, int total,
->  	struct ofono_call_forwarding *cf =3D data;
+> @@ -722,6 +722,14 @@ static void set_query_cf_callback(const struct ofono=
+_error *error, int total,
+>  	DBG("%s conditions:", cf_type_lut[cf->query_next]);
+>  	cf_cond_list_print(l);
 >  =
 
->  	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR) {
-> -		GSList *l;
-> -		l =3D cf_cond_list_create(total, list);
-> +		GSList *l =3D cf_cond_list_create(total, list);
+> +	/*
+> +	 * If there is an successful attempt to deactivate conditional cf
+> +	 * while cfu is active, the conditional cache flag is cleared.
+> +	 */
+> +	if (cf->query_next !=3D CALL_FORWARDING_TYPE_UNCONDITIONAL &&
+> +			is_cfu_enabled(cf))
+> +		cf->flags &=3D ~CALL_FORWARDING_FLAG_CACHED;
 > +
->  		set_new_cond_list(cf, cf->query_next, l);
->  =
+>  	if (cf->query_next !=3D cf->query_end) {
+>  		cf->query_next++;
+>  		set_query_next_cf_cond(cf);
 
->  		DBG("%s conditions:", cf_type_lut[cf->query_next]);
-> +
->  		cf_cond_list_print(l);
+This would cause us to re-query everything, which is a bit wasteful.
+Also, you have to handle the same action that might occur during
+supplementary services path, e.g. the user might deactivate / erase a
+conditional service there (see cf_ss_control and
+cf_ss_control_callback).  The DisableAll path also needs to be handled
+properly.
 
-I separated out two above chunks as a separate patch and applied them,
-since they are just cleanup anyway.
+Also, there is another path you need to take under consideration and
+that is the supplementary service interrogation path.  That one can
+update conditional settings erroneously if CFU is active.  See
+ss_set_query_cf_callback.
 
-
-> +	}
->  =
-
-> -		if (cf->query_next =3D=3D CALL_FORWARDING_TYPE_NOT_REACHABLE)
-> +	if ((is_cfu_enabled(cf) &&
-> +			cf->query_next =3D=3D CALL_FORWARDING_TYPE_UNCONDITIONAL) ||
-> +			cf->query_next =3D=3D CALL_FORWARDING_TYPE_NOT_REACHABLE) {
-> +
-> +		if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
->  			cf->flags |=3D CALL_FORWARDING_FLAG_CACHED;
-> -	}
->  =
-
-> -	if (cf->query_next =3D=3D CALL_FORWARDING_TYPE_NOT_REACHABLE) {
-> -		DBusMessage *reply =3D cf_get_properties_reply(cf->pending, cf);
-> -		__ofono_dbus_pending_reply(&cf->pending, reply);
-> +		__ofono_dbus_pending_reply(&cf->pending,
-> +				cf_get_properties_reply(cf->pending, cf));
->  		return;
->  	}
->  =
-
-
-The rest is on the right track, however I don't think this really works
-in the case where CFU is set when the query is being performed for the
-first time.
-
-e.g.
-- GetProperties -> query all
-- CFU is set, so don't query conditionals (which is correct since they
-are useless)
-- CFU is removed -> conditionals need to be updated now since they don't
-reflect reality
+We might need to track CFU and conditional caches separately to make
+things easier.  Let me know if you have any questions.  CallForwarding
+was one of the earliest implemented interfaces and turned out to be
+quite a bit more complicated than originally thought ;)
 
 Regards,
 -Denis
 
---===============8581916330464141017==--
+--===============5114305438105611722==--
 
