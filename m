@@ -1,72 +1,132 @@
-Content-Type: multipart/mixed; boundary="===============5998798414231012570=="
+Content-Type: multipart/mixed; boundary="===============2585512875978381766=="
 MIME-Version: 1.0
-From: Jussi Kukkonen <jussi.kukkonen@intel.com>
-Subject: Re: trying to understand context creation
-Date: Wed, 22 Feb 2012 11:58:07 +0200
-Message-ID: <CAHiDW_FfSoXvdsovuuyikOJswrF2AMLGksdAeQ_uUL==00wg5w@mail.gmail.com>
-In-Reply-To: <4F43A43D.3020503@gmail.com>
+From: r.r.zaripov@gmail.com
+Subject: [PATCH] sim900: Using AT+SPIC for obtaining times remains input SIM
+ PIN/PUK
+Date: Wed, 22 Feb 2012 16:18:37 +0400
+Message-ID: <1329913117-19530-1-git-send-email-r.r.zaripov@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5998798414231012570==
+--===============2585512875978381766==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, Feb 21, 2012 at 4:03 PM, Denis Kenzior <denkenz@gmail.com> wrote:
-> Hi Jussi,
+From: Renat Zaripov <r.r.zaripov@gmail.com>
 
-Hi, thanks for clarification, it helps a lot.
+In SIMCOM SIM900 not implemented AT+CPINR, but possible use AT+SPIC
+instead this one.
 
-> On 02/21/2012 09:20 AM, Jussi Kukkonen wrote:
- [clip]
->> * Modem with ConnectionManager appears
->> A ConnectionContext may have been created automatically or not. Under
->> what =C2=A0circumstances does this happen? E.g. If the mobile broadband =
-db
->> contains several plans for a MNC/MCC does ofono try them until one
->> works or is the selection left to user? Are there checks to make sure
->> the created context is valid for the network?
->
-> Actually this is really rather straight forward.
-> 1. oFono obtains the IMSI from the Sim Card, this is a unique identifier
-> of the subscriber.
-> 2. If the IMSI has not been seen before (e.g. a new never before sim
-> card is inserted) proceed to step 2a.
-> 2a. oFono obtains MCC/MNC & SPN from the SIM file system, and asks any
-> provisioning plugins to provide context information. =C2=A0The contract
-> between the provisioning plugin and oFono is that the information
-> provided must be unique. =C2=A0E.g. if there are any conflicts, or multip=
-le
-> matches for a given mcc/mnc/spn then provisioning should fail.
-> Successful provisioning results in a set of contexts being created
-> before ConnectionManager interface is registered.
-> 2b. If provisioning fails or mcc/mnc information is not known (e.g.
-> inadequate modem driver support) then a single, default, empty context
-> is created.
-> 3. If the IMSI has been seen before, then any contexts created
-> previously are loaded from the IMSI-keyed storage. =C2=A0This includes the
-> unprovisioned 'default, empty context' if it hasn't been provisioned
-> previously.
-> So to sum up, from a UI point of view, you only need to care about
-> provisioning if the UI detects a single, empty context of type
-> 'internet' with empty APN/username/password.
+AT+SPIC Times Remained to Input SIM PIN/PUK
 
-or if the user explicitly tells me he wants to mess the context up
-manually -- I will have to provide this possibility at all times if
-there's no way of knowing whether specific settings are considered
-valid by the network.
++SPIC: <pin1>,<pin2>,<puk1>,<puk2>
 
-> And no, there is absolutely no way to know whether a given context
-> settings are valid, but a good indication would be that a context
-> activation fails.
+Parameters
+<pin1> Times remained to input chv1
+<pin2> Times remained to input chv2
+<puk1> Times remained to input puk1
+<puk2> Times remained to input puk2
+---
+ drivers/atmodem/sim.c |   45 +++++++++++++++++++++++++++++++++++++++++++++
+ plugins/sim900.c      |    2 +-
+ 2 files changed, 46 insertions(+), 1 deletions(-)
 
-Aha... would you consider it a good/bad idea if a configuration UI
-activated/deactivated the context after modifications to check for
-this? This could be useful to say "We couldn't connect to the network
-with these settings, would you like try another configuration?"
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index 8edd582..8ee9822 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -62,6 +62,7 @@ static const char *zpinpuk_prefix[] =3D { "+ZPINPUK:", NU=
+LL };
+ static const char *oercn_prefix[] =3D { "_OERCN:", NULL };
+ static const char *cpinr_prefixes[] =3D { "+CPINR:", "+CPINRE:", NULL };
+ static const char *epin_prefix[] =3D { "*EPIN:", NULL };
++static const char *spic_prefix[] =3D { "+SPIC:", NULL };
+ static const char *none_prefix[] =3D { NULL };
+ =
 
- - Jussi
+ static void at_crsm_info_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+@@ -800,6 +801,45 @@ static void at_cpinr_cb(gboolean ok, GAtResult *result=
+, gpointer user_data)
+ 	cb(&error, retries, cbd->data);
+ }
+ =
 
---===============5998798414231012570==--
++static void at_spic_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_sim_pin_retries_cb_t cb =3D cbd->cb;
++	const char *final =3D g_at_result_final_response(result);
++	GAtResultIter iter;
++	struct ofono_error error;
++	int retries[OFONO_SIM_PASSWORD_INVALID];
++	size_t i;
++	static enum ofono_sim_password_type password_types[] =3D {
++		OFONO_SIM_PASSWORD_SIM_PIN,
++		OFONO_SIM_PASSWORD_SIM_PUK,
++		OFONO_SIM_PASSWORD_SIM_PIN2,
++		OFONO_SIM_PASSWORD_SIM_PUK2,
++	};
++
++	decode_at_error(&error, final);
++
++	if (!ok) {
++		cb(&error, NULL, cbd->data);
++		return;
++	}
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+SPIC:"))
++		goto error;
++
++	BUILD_PIN_RETRIES_ARRAY(password_types, ARRAY_SIZE(password_types),
++				retries);
++
++	cb(&error, retries, cbd->data);
++
++	return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
++}
++
+ static void at_pin_retries_query(struct ofono_sim *sim,
+ 					ofono_sim_pin_retries_cb_t cb,
+ 					void *data)
+@@ -840,6 +880,11 @@ static void at_pin_retries_query(struct ofono_sim *sim,
+ 					at_epin_cb, cbd, g_free) > 0)
+ 			return;
+ 		break;
++	case OFONO_VENDOR_SIMCOM:
++		if (g_at_chat_send(sd->chat, "AT+SPIC", spic_prefix,
++					at_spic_cb, cbd, g_free) > 0)
++			return;
++		break;
+ 	default:
+ 		if (g_at_chat_send(sd->chat, "AT+CPINR", cpinr_prefixes,
+ 					at_cpinr_cb, cbd, g_free) > 0)
+diff --git a/plugins/sim900.c b/plugins/sim900.c
+index bc5f9c5..87d640f 100644
+--- a/plugins/sim900.c
++++ b/plugins/sim900.c
+@@ -210,7 +210,7 @@ static void sim900_pre_sim(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	ofono_devinfo_create(modem, 0, "atmodem", data->modem);
+-	sim =3D ofono_sim_create(modem, 0, "atmodem", data->modem);
++	sim =3D ofono_sim_create(modem, OFONO_VENDOR_SIMCOM, "atmodem", data->mod=
+em);
+ =
+
+ 	if (sim)
+ 		ofono_sim_inserted_notify(sim, TRUE);
+-- =
+
+1.7.7.3
+
+
+--===============2585512875978381766==--
 
