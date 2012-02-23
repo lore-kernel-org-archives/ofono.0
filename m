@@ -1,37 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============8935963948451462901=="
+Content-Type: multipart/mixed; boundary="===============7012377207286734150=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: Re: [PATCHv2 6/8] call-forwarding: Don't run conditional queries if
- cfu is active
-Date: Thu, 23 Feb 2012 11:51:35 +0200
-Message-ID: <4F460C27.8040102@intel.com>
-In-Reply-To: <4F44EC8E.90501@gmail.com>
+Subject: Re: [PATCHv2 7/8] call-forwarding: Clear the conditional cache flag
+Date: Thu, 23 Feb 2012 11:52:04 +0200
+Message-ID: <4F460C44.2000004@intel.com>
+In-Reply-To: <4F44EE9B.8000407@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8935963948451462901==
+--===============7012377207286734150==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hello Denis,
 
-On 02/22/2012 03:24 PM, Denis Kenzior wrote:
-> The rest is on the right track, however I don't think this really works
-> in the case where CFU is set when the query is being performed for the
-> first time.
+On 02/22/2012 03:33 PM, Denis Kenzior wrote:
+> This would cause us to re-query everything, which is a bit wasteful.
+> Also, you have to handle the same action that might occur during
+> supplementary services path, e.g. the user might deactivate / erase a
+> conditional service there (see cf_ss_control and
+> cf_ss_control_callback).  The DisableAll path also needs to be handled
+> properly.
 >
-> e.g.
-> - GetProperties ->  query all
-> - CFU is set, so don't query conditionals (which is correct since they
-> are useless)
-> - CFU is removed ->  conditionals need to be updated now since they don't
-> reflect reality
+> Also, there is another path you need to take under consideration and
+> that is the supplementary service interrogation path.  That one can
+> update conditional settings erroneously if CFU is active.  See
+> ss_set_query_cf_callback.
+>
+> We might need to track CFU and conditional caches separately to make
+> things easier.  Let me know if you have any questions.  CallForwarding
+> was one of the earliest implemented interfaces and turned out to be
+> quite a bit more complicated than originally thought ;)
 
-Thanks for the review and for pointing this out. I will check how this coul=
-d be =
+Thanks for the help and ideas here. Let me check the supplementary services=
+ path =
 
-corrected.
+and how to deal with the caching. I will prepare patches to address these.
 
 Regards,
 Oleg
@@ -43,5 +48,5 @@ Business Identity Code: 0357606 - 4
 Domiciled in Helsinki
 
 
---===============8935963948451462901==--
+--===============7012377207286734150==--
 
