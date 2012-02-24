@@ -1,59 +1,92 @@
-Content-Type: multipart/mixed; boundary="===============7965166587912533234=="
+Content-Type: multipart/mixed; boundary="===============0006440965655301586=="
 MIME-Version: 1.0
-From: Jens Rehsack <jr_extern@vfnet.de>
-Subject: Re: Enhancing mmsd
-Date: Fri, 24 Feb 2012 16:17:13 +0100
-Message-ID: <4F47A9F9.7010407@vfnet.de>
-In-Reply-To: <4F47A235.40807@linux.intel.com>
+From: Jussi Kukkonen <jussi.kukkonen@intel.com>
+Subject: Re: trying to understand context creation
+Date: Fri, 24 Feb 2012 18:13:23 +0200
+Message-ID: <CAHiDW_H5u561E7kd4aNOmNVXni_-mBCASKzSQ4RS_HCdFA7QYg@mail.gmail.com>
+In-Reply-To: <4F471C2A.8070704@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7965166587912533234==
+--===============0006440965655301586==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Am 24.02.2012 15:44, schrieb Ronald Tessier:
-> Hi Jens,
-> =
+On Fri, Feb 24, 2012 at 7:12 AM, Denis Kenzior <denkenz@gmail.com> wrote:
+>> I'm trying to improve the two problem cases:
+>> =C2=A01. user has to run 3G wizard and makes poor selections
+>> =C2=A02. There's a HW problem
+>> As far as I can see the only way to do that is to fail as early as
+>> possible. Currently we fail as late as possible and that's a confusing
+>> user experience.
+>
+> I don't see how you are ever going to fix the HW problem part with a
+> better 3G settings wizard. =C2=A0If it doesn't work, no amount of helpful=
+ UIs
+> will make it work.
 
-> On 02/24/2012 02:29 PM, Jens Rehsack wrote:
->> Hi,
+User experience issues have more shades of grey than middleware
+issues... Failing early and clearly is significantly better UX than
+failing but leading the user to believe things work. I'm not "fixing"
+HW problems any more than I'm "fixing" connman crashes in my UI --
+both are still events I'd rather handle (witihin limits) if that makes
+the UX better.
+
+> And if the user is entering information without good understanding of
+> the questions he's answering then either the provisioning database needs
+> to be updated or we should be asking better questions.
+>
+> Of course, preferably we shouldn't even ask the user any questions if
+> possible ;)
+
+We are in total agreement. I will gladly remove this whole UI when you
+or someone else with knowledge on this tells me that ofono + mbpi can
+handle things. Likewise, if you tell me I can drop the manual settings
+part and that won't harm many users, I will do it in a heart beat.
+
+>>> Look at iOS for a
+>>> good example, the user doesn't have any UI to edit context settings, it
+>>> is all provisioned using carrier profiles. =C2=A0Granted, the provision=
+ing
+>>> database in use is a little bit better than what
+>>> mobile-broadband-provider-info provides, so some way to manually enter
+>>> details would still be required in our case; however we should strive to
+>>> make this as rarely used as possible.
+>>>
+>>> What you suggest is a good idea, but might be overkill...
 >>
->> as announced in my last mail, I'm here to work with + improve ofono
->> and related software.
+>> Since we have to let the user make a choice on something he does not
+>> understand, I don't see good alternatives: currently we do the worst
+>> possible thing: claim that everything is ok (by accepting the APN
+>> settings and even showing the cellular service) and then later fail
+>> when connecting -- and user has absolutely no way of knowing what the
+>> failure was about*. I'll gladly take suggestions for simpler solutions
+>> that lead to a UI that isn't confusing when things go wrong.
 >>
->> My next task will be to implement an ofono plugin which handles some
->> UPL push messages. Because there is only one "listener" at
->> org.ofono.PushNotificationAgent possible, I see two and a half way
->> to go on:
->>
->> 1) fork ofono-mmsd to handle more message types than mms
->>     (via plugins?)
->>     1b) fork ofono-mmsd to handle only SUPL push messages
->> 2) find a way for more listeners on push messages
->>
->> Any suggestions, preferred ways?
-> =
+>
+> If the user doesn't understand the choices he's making, then no amount
+> of helpful UIs will help here. =C2=A0Imagine you walk into a store with a
+> very helpful salesman, unfortunately you're speaking a different
+> language. =C2=A0If you don't have a very good idea of what you're looking
+> for, there's nothing he can do to help you.
+>
+> My point here is that we should re-examine what we can do to make
+> provisioning more fool proof, rather than trying to band-aid a settings
+> UI that is inherently not understandable to anyone who isn't a GSM geek.
 
-> I think there is a third way to do what you want : write a SUPL push
-> message consumer as an mmsd plugin and not as an ofono plugin. Actually,
-> mmsd already implements a WAP push message dispatch mechanism for other
-> push message than MMS.
-> To check if this fits your needs, please have a look at the consumer.txt
-> documentation from mmsd/doc/.
+Yes, we should. As upstream project developers we have the luxury of
+making statements like that (you here, I can do it in dawati-shell)
+and that is definitely what actually improves the whole stack in the
+long term.
 
-Yeah, you're right. I read it on my first day and had it totally
-forgotten meanwhile. Initially it confuses me, because I assumed
-there can be embedded documents in an mms - and didn't recognize
-that mms is the built-in plugin for mmsd - which should be renamed
-into wspd ;)
+Unfortunately I also have a role closer to an actual product where
+"yeah, the provisioning should be better" is not an acceptable answer
+to a bug report about the connectivity UI. My job is to make the UI
+work as well as it can with the middleware and provisining db we have
+right now. You can call it band-aiding but it's still my job.
 
-So my proposal 1 is already done - but I was to much confused to
-recognize it. Thanks to point me on it.
+- Jussi
 
-Best regards,
-Jens
-
---===============7965166587912533234==--
+--===============0006440965655301586==--
 
