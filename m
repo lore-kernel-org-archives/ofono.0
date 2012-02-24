@@ -1,73 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============4831533594678780107=="
+Content-Type: multipart/mixed; boundary="===============7965166587912533234=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: LG VX8360 HFP non-compliance issue
-Date: Thu, 23 Feb 2012 23:20:44 -0600
-Message-ID: <4F471E2C.9020208@gmail.com>
-In-Reply-To: <CAB7rCTiFvG17u=3x1vB1tOAKyM7xC1QObj43ScEX3Uk16kOeDw@mail.gmail.com>
+From: Jens Rehsack <jr_extern@vfnet.de>
+Subject: Re: Enhancing mmsd
+Date: Fri, 24 Feb 2012 16:17:13 +0100
+Message-ID: <4F47A9F9.7010407@vfnet.de>
+In-Reply-To: <4F47A235.40807@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4831533594678780107==
+--===============7965166587912533234==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mike,
-
-On 02/23/2012 06:49 PM, Mike wrote:
-> I'm getting weird behaviour from an LG VX8360, connected via bluetooth
-> HFP.  When the phone connects, I see a CallAdded signal go out over
-> dbus, despite there being no call on the phone itself.  You can see
-> the signal below.  The LineIdentification held the actual phone number
-> of the phone, but I replaced it with "xxxxxxxxxx".  I also copied in
-> the initial RFCOMM communication.  It looks to me like this phone does
-> not comply with the HFP spec in that it returns an answer to AT+CLCC
-> when there is no phone call present (and at that, an index of 0).  It
-> also happens that the status is a 6, which does not appear to be a
-> valid status in HFPv1.5.  This just happens to map to the enum
-> CALL_STATUS_DISCONNECTED, but I'm guessing this was merely
-> coincidence.  Since the state is broadcast as disconnected, I can
-> simply ignore it in my GUI application.  However, I'm wondering if
-> this is something that is better handled in the ofono side?
+Am 24.02.2012 15:44, schrieb Ronald Tessier:
+> Hi Jens,
 > =
 
-> Thanks,
-> Mike
+> On 02/24/2012 02:29 PM, Jens Rehsack wrote:
+>> Hi,
+>>
+>> as announced in my last mail, I'm here to work with + improve ofono
+>> and related software.
+>>
+>> My next task will be to implement an ofono plugin which handles some
+>> UPL push messages. Because there is only one "listener" at
+>> org.ofono.PushNotificationAgent possible, I see two and a half way
+>> to go on:
+>>
+>> 1) fork ofono-mmsd to handle more message types than mms
+>>     (via plugins?)
+>>     1b) fork ofono-mmsd to handle only SUPL push messages
+>> 2) find a way for more listeners on push messages
+>>
+>> Any suggestions, preferred ways?
 > =
 
+> I think there is a third way to do what you want : write a SUPL push
+> message consumer as an mmsd plugin and not as an ofono plugin. Actually,
+> mmsd already implements a WAP push message dispatch mechanism for other
+> push message than MMS.
+> To check if this fits your needs, please have a look at the consumer.txt
+> documentation from mmsd/doc/.
 
-Try the following patch.
+Yeah, you're right. I read it on my first day and had it totally
+forgotten meanwhile. Initially it confuses me, because I assumed
+there can be embedded documents in an mms - and didn't recognize
+that mms is the built-in plugin for mmsd - which should be renamed
+into wspd ;)
 
-Regards,
--Denis
+So my proposal 1 is already done - but I was to much confused to
+recognize it. Thanks to point me on it.
 
---===============4831533594678780107==
-Content-Type: text/plain
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-atutil-Ignore-invalid-CLCC-results.patch"
+Best regards,
+Jens
 
-PkZyb20gOTU5MWE3NzY4ZDkxMzE0ZThiNzJjMWU5M2Y1MTA4NjBiYmZmMWQwNCBNb24gU2VwIDE3
-IDAwOjAwOjAwIDIwMDEKRnJvbTogRGVuaXMgS2VuemlvciA8ZGVua2VuekBnbWFpbC5jb20+CkRh
-dGU6IFRodSwgMjMgRmViIDIwMTIgMjM6MTQ6MDggLTA2MDAKU3ViamVjdDogW1BBVENIXSBhdHV0
-aWw6IElnbm9yZSBpbnZhbGlkIENMQ0MgcmVzdWx0cwoKU29tZSBwaG9uZXMgcmVwb3J0IENMQ0Mg
-Y2FsbHMgd2l0aCBvdXQtb2YtcmFuZ2UgaW5mby4gIEUuZy4gY2FsbCBpbmRleApiZWluZyAwIChp
-dCBpcyAxIGJhc2VkIGFjY29yZGluZyB0byAyNy4wMDcpIGFuZCBjYWxsIHN0YXRlcyBiZWluZwpy
-ZXBvcnRlZCBhcyAnNicgKHZhbGlkIGNhbGwgc3RhdGVzIGFyZSAwLTUuKQotLS0KIGRyaXZlcnMv
-YXRtb2RlbS9hdHV0aWwuYyB8ICAgIDYgKysrKysrCiAxIGZpbGVzIGNoYW5nZWQsIDYgaW5zZXJ0
-aW9ucygrKSwgMCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9kcml2ZXJzL2F0bW9kZW0vYXR1
-dGlsLmMgYi9kcml2ZXJzL2F0bW9kZW0vYXR1dGlsLmMKaW5kZXggYjgyZWQyMC4uMGM2YWFiNCAx
-MDA2NDQKLS0tIGEvZHJpdmVycy9hdG1vZGVtL2F0dXRpbC5jCisrKyBiL2RyaXZlcnMvYXRtb2Rl
-bS9hdHV0aWwuYwpAQCAtMTMxLDEyICsxMzEsMTggQEAgR1NMaXN0ICphdF91dGlsX3BhcnNlX2Ns
-Y2MoR0F0UmVzdWx0ICpyZXN1bHQpCiAJCWlmICghZ19hdF9yZXN1bHRfaXRlcl9uZXh0X251bWJl
-cigmaXRlciwgJmlkKSkKIAkJCWNvbnRpbnVlOwogCisJCWlmIChpZCA9PSAwKQorCQkJY29udGlu
-dWU7CisKIAkJaWYgKCFnX2F0X3Jlc3VsdF9pdGVyX25leHRfbnVtYmVyKCZpdGVyLCAmZGlyKSkK
-IAkJCWNvbnRpbnVlOwogCiAJCWlmICghZ19hdF9yZXN1bHRfaXRlcl9uZXh0X251bWJlcigmaXRl
-ciwgJnN0YXR1cykpCiAJCQljb250aW51ZTsKIAorCQlpZiAoc3RhdHVzID4gNSkKKwkJCWNvbnRp
-bnVlOworCiAJCWlmICghZ19hdF9yZXN1bHRfaXRlcl9uZXh0X251bWJlcigmaXRlciwgJnR5cGUp
-KQogCQkJY29udGludWU7CiAKLS0gCjEuNy4zLjQKCg==
-
---===============4831533594678780107==--
+--===============7965166587912533234==--
 
