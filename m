@@ -1,37 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============4691534527718013258=="
+Content-Type: multipart/mixed; boundary="===============2756776610245739961=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Introducing Jens Rehsack
-Date: Sun, 26 Feb 2012 18:15:42 -0800
-Message-ID: <1330308942.3392.19.camel@aeonflux>
-In-Reply-To: <4F478144.1010208@vfnet.de>
+From: r.r.zaripov@gmail.com
+Subject: [PATCH 1/2] sim900: Add support for SIMCOM SMS delivery reports
+Date: Mon, 27 Feb 2012 11:19:43 +0400
+Message-ID: <1330327184-1497-1-git-send-email-r.r.zaripov@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4691534527718013258==
+--===============2756776610245739961==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jens,
+From: Renat Zaripov <r.r.zaripov@gmail.com>
 
-> before start to asking questions, I'd like to introduce myself and
-> why I joined into the community.
-> =
+---
+ plugins/sim900.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-> I'm hired by Vodafone Global (Vodafone Group Services GmbH) to
-> assist there on some networking services, currently location
-> services. One part of the job will be to work with oFono, using
-> it, learn some work flows - and when possible - improving it.
-> This part of the job will also include submitting patches.
+diff --git a/plugins/sim900.c b/plugins/sim900.c
+index f7b1642..b2d1b46 100644
+--- a/plugins/sim900.c
++++ b/plugins/sim900.c
+@@ -224,7 +224,8 @@ static void sim900_post_sim(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
 
-very much welcome and looking forward to patches from you.
+ 	ofono_phonebook_create(modem, 0, "atmodem", data->modem);
+-	ofono_sms_create(modem, 0, "atmodem", data->modem);
++	ofono_sms_create(modem, OFONO_VENDOR_SIMCOM, "atmodem", =
 
-Regards
++				data->modem);
+ }
+ =
 
-Marcel
+ static void sim900_post_online(struct ofono_modem *modem)
+-- =
+
+1.7.7.3
 
 
-
---===============4691534527718013258==--
+--===============2756776610245739961==--
 
