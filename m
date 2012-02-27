@@ -1,127 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============3252646663561727494=="
+Content-Type: multipart/mixed; boundary="===============6235007603766317034=="
 MIME-Version: 1.0
-From: Jens Rehsack <jr_extern@vfnet.de>
-Subject: [PATCH] configure/make basics
-Date: Mon, 27 Feb 2012 16:17:32 +0100
-Message-ID: <4F4B9E8C.3080809@vfnet.de>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] add some length verification to avoid reading not owned
+ memory
+Date: Mon, 27 Feb 2012 09:22:19 -0800
+Message-ID: <1330363339.3392.52.camel@aeonflux>
+In-Reply-To: <4F4B4B0B.7060606@vfnet.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3252646663561727494==
+--===============6235007603766317034==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Jens,
 
-while hacking on a plugin for mmsd to deal with supl push
-messages, I ran into a few "not so nice" solved things
-in configure.ac / Makefile.am
+> while reading mmsd sources I stumbled over missing length
+> checks in src/push.c:mms_push_notify(). I didn't re-read
+> the entire source to prove overall ;)
 
-1) libtool handling
-   libtool configuration is meanwhile done using LT_INIT(options)
-   instead of AC_PROC_LIBTOOL and alike
-   =3D=3D> because of libtool stores some of the configuration
-       in the generated libtool shell script, it's reasonable
-       to run LT_INIT as late as possible (painfully learned
-       while writing and porting c++ software for many OS)
-2) additional libraries
-   do no require explicit libraries (like -lresolv), always
-   let a devop in doubt invoke configure with
-   LIBS=3D"-lmyspecialwrapper" to wrap between available
-   libs/functions and requirements
-   See pkgsrc's nbcompat library for example
+please use git format-patch and git send-email to send us inline
+patches. In case your email client doesn't support inline patches
+nicely. Reviewing patches that are attached is super painful and in most
+cases they get ignored then.
 
-Best regards,
-Jens
+Regards
 
---===============3252646663561727494==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0002-changing-depreciated-libtool-initialization-to-moder.patch"
+Marcel
 
-PkZyb20gZjJmNWM5MTFjMGFjNzFhZTBjZGIwZDdmNTRiYmMwMjMyY2EwMDFhMSBNb24gU2VwIDE3
-IDAwOjAwOjAwIDIwMDEKRnJvbTogSmVucyBSZWhzYWNrIDxqcl9leHRlcm5AdmZuZXQuZGU+CkRh
-dGU6IE1vbiwgMjcgRmViIDIwMTIgMTU6NDE6MzQgKzAxMDAKU3ViamVjdDogW1BBVENIIDIvM10g
-Y2hhbmdpbmcgZGVwcmVjaWF0ZWQgbGlidG9vbCBpbml0aWFsaXphdGlvbiB0byBtb2Rlcm4KIG9u
-ZQoKLS0tCiBNYWtlZmlsZS5hbSAgfCAgICA0ICsrKysKIGNvbmZpZ3VyZS5hYyB8ICAgMTAgKysr
-KysrKystLQogMiBmaWxlcyBjaGFuZ2VkLCAxMiBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygt
-KQoKZGlmZiAtLWdpdCBhL01ha2VmaWxlLmFtIGIvTWFrZWZpbGUuYW0KaW5kZXggYzNhNDQ4Ni4u
-YmViY2I5MCAxMDA2NDQKLS0tIGEvTWFrZWZpbGUuYW0KKysrIGIvTWFrZWZpbGUuYW0KQEAgLTEs
-NiArMSwxMCBAQAogCiBBTV9NQUtFRkxBR1MgPSAtLW5vLXByaW50LWRpcmVjdG9yeQogCitMSUJU
-T09MX0RFUFMgPSBATElCVE9PTF9ERVBTQAorbGlidG9vbDogJChMSUJUT09MX0RFUFMpCisJJChT
-SEVMTCkgLi9jb25maWcuc3RhdHVzIGxpYnRvb2wKKwogZ2RidXNfc291cmNlcyA9IGdkYnVzL2dk
-YnVzLmggZ2RidXMvbWFpbmxvb3AuYyBnZGJ1cy93YXRjaC5jIFwKIAkJCQkJZ2RidXMvb2JqZWN0
-LmMgZ2RidXMvcG9sa2l0LmMKIApkaWZmIC0tZ2l0IGEvY29uZmlndXJlLmFjIGIvY29uZmlndXJl
-LmFjCmluZGV4IDM0Y2M1MjYuLmQ4MjU2OWIgMTAwNjQ0Ci0tLSBhL2NvbmZpZ3VyZS5hYworKysg
-Yi9jb25maWd1cmUuYWMKQEAgLTMxLDggKzMxLDggQEAgQUNfUFJPR19JTlNUQUxMCiBtNF9kZWZp
-bmUoW19MVF9BQ19UQUdDT05GSUddLCBbXSkKIG00X2lmZGVmKFtBQ19MSUJUT09MX1RBR1NdLCBb
-QUNfTElCVE9PTF9UQUdTKFtdKV0pCiAKLUFDX0RJU0FCTEVfU1RBVElDCi1BQ19QUk9HX0xJQlRP
-T0wKK2RubCBBQ19ESVNBQkxFX1NUQVRJQworZG5sIEFDX1BST0dfTElCVE9PTAogCiBBQ19BUkdf
-RU5BQkxFKG9wdGltaXphdGlvbiwgQUNfSEVMUF9TVFJJTkcoWy0tZGlzYWJsZS1vcHRpbWl6YXRp
-b25dLAogCQkJW2Rpc2FibGUgY29kZSBvcHRpbWl6YXRpb24gdGhyb3VnaCBjb21waWxlcl0pLCBb
-CkBAIC01OCw2ICs1OCwxMiBAQCBBQ19BUkdfRU5BQkxFKHBpZSwgQUNfSEVMUF9TVFJJTkcoWy0t
-ZW5hYmxlLXBpZV0sCiAJZmkKIF0pCiAKK2RubCBMVF9JTklUIHNob3VsZCBiZSBpbnZva2VkIGFm
-dGVyIGFsbCBjb21waWxlciBmbGFncyBjaGVja3MsIGJlY2F1c2UKK2RubCBvZiBMVF9JTklUIHJl
-bWVtYmVycyB0aGUgUlBBVEggc3RvcmVkIGluIHRlc3QgdGFyZ2V0cyB3aGljaCBtaWdodAorZG5s
-IGJlIGRpZmZlcmVudCBmb3IgZGlmZmVyZW50IGNvbXBpbGVyIGZsYWdzIChrbm93biBpc3N1ZSBv
-biBBSVgpCitMVF9JTklUKFtkbG9wZW4sZGlzYWJsZS1zdGF0aWNdKQorQUNfU1VCU1QoW0xJQlRP
-T0xfREVQU10pCisKIEFDX0NIRUNLX0hFQURFUlMocmVzb2x2LmgsIGR1bW15PXllcywKIAkJCUFD
-X01TR19FUlJPUihyZXNvbHZlciBoZWFkZXIgZmlsZXMgYXJlIHJlcXVpcmVkKSkKIEFDX0NIRUNL
-X0xJQihyZXNvbHYsIG5zX2luaXRwYXJzZSwgZHVtbXk9eWVzLCBbCi0tIAoxLjcuOS4xCgo=
 
---===============3252646663561727494==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0003-let-configure-find-required-libs.patch"
 
-PkZyb20gNDczODMxNDhjNzY2NzVkYTk5NjVhNGQ1NGUwZTFiOTg1ZGEyMmE2YSBNb24gU2VwIDE3
-IDAwOjAwOjAwIDIwMDEKRnJvbTogSmVucyBSZWhzYWNrIDxqcl9leHRlcm5AdmZuZXQuZGU+CkRh
-dGU6IE1vbiwgMjcgRmViIDIwMTIgMTY6MDc6MTggKzAxMDAKU3ViamVjdDogW1BBVENIIDMvM10g
-bGV0IGNvbmZpZ3VyZSBmaW5kIHJlcXVpcmVkIGxpYnMKCi0tLQogTWFrZWZpbGUuYW0gIHwgICAg
-MiArLQogY29uZmlndXJlLmFjIHwgICAyNCArKysrKysrKysrKysrKysrKy0tLS0tLS0KIDIgZmls
-ZXMgY2hhbmdlZCwgMTggaW5zZXJ0aW9ucygrKSwgOCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQg
-YS9NYWtlZmlsZS5hbSBiL01ha2VmaWxlLmFtCmluZGV4IGJlYmNiOTAuLjE3OGRlZjQgMTAwNjQ0
-Ci0tLSBhL01ha2VmaWxlLmFtCisrKyBiL01ha2VmaWxlLmFtCkBAIC0yOCw3ICsyOCw3IEBAIHNy
-Y19tbXNkX1NPVVJDRVMgPSAkKGdkYnVzX3NvdXJjZXMpICQoZ3dlYl9zb3VyY2VzKSAkKGJ1aWx0
-aW5fc291cmNlcykgXAogCQkJc3JjL3B1c2guaCBzcmMvcHVzaC5jIHNyYy9zdG9yZS5oIHNyYy9z
-dG9yZS5jIFwKIAkJCXNyYy93c3B1dGlsLmggc3JjL3dzcHV0aWwuYyBzcmMvbW1zdXRpbC5oIHNy
-Yy9tbXN1dGlsLmMKIAotc3JjX21tc2RfTERBREQgPSAkKGJ1aWx0aW5fbGliYWRkKSBAR0xJQl9M
-SUJTQCBAREJVU19MSUJTQCAtbHJlc29sdiAtbGRsCitzcmNfbW1zZF9MREFERCA9ICQoYnVpbHRp
-bl9saWJhZGQpIEBHTElCX0xJQlNAIEBEQlVTX0xJQlNACiAKIHNyY19tbXNkX0xERkxBR1MgPSAt
-V2wsLS1leHBvcnQtZHluYW1pYwogCmRpZmYgLS1naXQgYS9jb25maWd1cmUuYWMgYi9jb25maWd1
-cmUuYWMKaW5kZXggZDgyNTY5Yi4uODgzYjU5YyAxMDA2NDQKLS0tIGEvY29uZmlndXJlLmFjCisr
-KyBiL2NvbmZpZ3VyZS5hYwpAQCAtNjQsMTUgKzY0LDI1IEBAIGRubCBiZSBkaWZmZXJlbnQgZm9y
-IGRpZmZlcmVudCBjb21waWxlciBmbGFncyAoa25vd24gaXNzdWUgb24gQUlYKQogTFRfSU5JVChb
-ZGxvcGVuLGRpc2FibGUtc3RhdGljXSkKIEFDX1NVQlNUKFtMSUJUT09MX0RFUFNdKQogCitkbmwg
-Y2hlY2sgaG93IHdlIGNhbiB1c2UgdGhlIHJlc29sdmVyLiB3aGlsZSByZXNvbHYuaCBjb21lcyB3
-aXRoIGJpbmQsCitkbmwgaXQncyBwcm9iYWJseSByZWFzb25hYmxlIHRvIHVzZSBhIGNvbWJpbmVk
-IHNlYXJjaCBtYWNybyBsaWtlCitkbmwgc21hcnQtc25tcGQncyBBQ1hfQ0hFQ0tfTElCX0ZMQUdT
-CiBBQ19DSEVDS19IRUFERVJTKHJlc29sdi5oLCBkdW1teT15ZXMsCiAJCQlBQ19NU0dfRVJST1Io
-cmVzb2x2ZXIgaGVhZGVyIGZpbGVzIGFyZSByZXF1aXJlZCkpCi1BQ19DSEVDS19MSUIocmVzb2x2
-LCBuc19pbml0cGFyc2UsIGR1bW15PXllcywgWwotCUFDX0NIRUNLX0xJQihyZXNvbHYsIF9fbnNf
-aW5pdHBhcnNlLCBkdW1teT15ZXMsCi0JCQlBQ19NU0dfRVJST1IocmVzb2x2ZXIgbGlicmFyeSBz
-dXBwb3J0IGlzIHJlcXVpcmVkKSkKLV0pCi0KLUFDX0NIRUNLX0xJQihkbCwgZGxvcGVuLCBkdW1t
-eT15ZXMsCi0JCQlBQ19NU0dfRVJST1IoZHluYW1pYyBsaW5raW5nIGxvYWRlciBpcyByZXF1aXJl
-ZCkpCitkbmwgbnNfaW5pdHBhcnNlIGlzIGxpYnJlc29sdiBpbnRlcm5hbCB1c2Ugb25seSAtIGxp
-bWl0ZWQgdXNhZ2UgaW50ZW5kZWQ/CitBQ19TRUFSQ0hfTElCUyhuc19pbml0cGFyc2UsIHJlc29s
-diwgLAorCQlBQ19NU0dfRVJST1IocmVzb2x2ZXIgc3VwcG9ydCBpcyByZXF1aXJlZCkpCitkbmwg
-QUNfQ0hFQ0tfTElCKHJlc29sdiwgbnNfaW5pdHBhcnNlLCBkdW1teT15ZXMsIFsKK2RubCAJQUNf
-Q0hFQ0tfTElCKHJlc29sdiwgX19uc19pbml0cGFyc2UsIGR1bW15PXllcywKK2RubCAJCQlBQ19N
-U0dfRVJST1IocmVzb2x2ZXIgbGlicmFyeSBzdXBwb3J0IGlzIHJlcXVpcmVkKSkKK2RubCBdKQor
-Citkbmwgc2VhcmNoIGhvdyB3ZSBjYW4gbG9hZCBkeW5hbWljIGxpYnJhcmllcworZG5sIFRPRE8g
-dXNlIGxpYmx0ZGwsIHdoaWNoIHdvdWxkIHdvcmsgb24gQmVPUyAoSGFpa3UpLCBEYXJ3aW4gKE1h
-Y09TIFgpIG9yCitkbmwgICAgICBmb3IgZGVidWdnaW5nIHB1cnBvc2VzIHdpdGggbGlidG9vbCdz
-IGRscHJlb3BlbgorQUNfU0VBUkNIX0xJQlMoZGxvcGVuLCBkbCwgLCBBQ19NU0dfRVJST1IoZHlu
-YW1pYyBsaW5raW5nIGxvYWRlciBpcyByZXF1aXJlZCkpCitkbmwgQUNfQ0hFQ0tfTElCKGRsLCBk
-bG9wZW4sIGR1bW15PXllcywKK2RubCAJCQlBQ19NU0dfRVJST1IoZHluYW1pYyBsaW5raW5nIGxv
-YWRlciBpcyByZXF1aXJlZCkpCiAKIFBLR19DSEVDS19NT0RVTEVTKEdMSUIsIGdsaWItMi4wID49
-IDIuMTYsIGR1bW15PXllcywKIAkJCQlBQ19NU0dfRVJST1IoR0xpYiA+PSAyLjE2IGlzIHJlcXVp
-cmVkKSkKLS0gCjEuNy45LjEKCg==
-
---===============3252646663561727494==--
+--===============6235007603766317034==--
 
