@@ -1,127 +1,127 @@
-Content-Type: multipart/mixed; boundary="===============7421818612896054130=="
+Content-Type: multipart/mixed; boundary="===============3252646663561727494=="
 MIME-Version: 1.0
-From: Jussi Kukkonen <jussi.kukkonen@intel.com>
-Subject: Re: trying to understand context creation
-Date: Mon, 27 Feb 2012 15:20:45 +0200
-Message-ID: <CAHiDW_F06hjNRJuzNqCM3U1qinMmjOq35Dqp6wssGtL_4M8RbA@mail.gmail.com>
-In-Reply-To: <1330340049.3392.43.camel@aeonflux>
+From: Jens Rehsack <jr_extern@vfnet.de>
+Subject: [PATCH] configure/make basics
+Date: Mon, 27 Feb 2012 16:17:32 +0100
+Message-ID: <4F4B9E8C.3080809@vfnet.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7421818612896054130==
+--===============3252646663561727494==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, Feb 27, 2012 at 12:54 PM, Marcel Holtmann <marcel@holtmann.org> w=
-rote:
->> From a UI point of view, connman crashing and connman being stopped
->> are 100% same -- the only thing the UI can do is inform the user that
->> there is a critical =C2=A0problem, so they won't just wait there expecti=
-ng
->> that Wifi AP to show up any moment now... I hope the users would never
->> have to see that but they sometimes do.
->
-> I would do this centralized with a system that monitors systemd status
-> and make sure that systemd restarts ConnMan properly. So that even if
-> something goes wrong, the user never really sees this. Unless it is like
-> a real fatal problem.
->
-> But trying to handle this different than a restart of ConnMan is kinda
-> weird. I would not even bother. Especially since there is nothing you
-> can do about it anyway.
+Hi,
 
-I was maybe not clear enough. I only handle the case of connman
-disappearing from the bus. And by "handle" I mean "tell the user there
-is a problem".
+while hacking on a plugin for mmsd to deal with supl push
+messages, I ran into a few "not so nice" solved things
+in configure.ac / Makefile.am
 
-To be extra clear: I do not try to restart connman or ofono or
-anything stupid like that, I totally realize that's not for my
-component to do. The only thing I want to is to prevent user confusion
-about what they can do or cannot do at specific times. Exactly the
-same thing that I want to do when e.g. cellular services aren't
-appearing as expected or when they fail.
+1) libtool handling
+   libtool configuration is meanwhile done using LT_INIT(options)
+   instead of AC_PROC_LIBTOOL and alike
+   =3D=3D> because of libtool stores some of the configuration
+       in the generated libtool shell script, it's reasonable
+       to run LT_INIT as late as possible (painfully learned
+       while writing and porting c++ software for many OS)
+2) additional libraries
+   do no require explicit libraries (like -lresolv), always
+   let a devop in doubt invoke configure with
+   LIBS=3D"-lmyspecialwrapper" to wrap between available
+   libs/functions and requirements
+   See pkgsrc's nbcompat library for example
 
->> I'm not sure what you mean by "going out of my way". I either handle
->> this situation or I don't. The same goes for ofono contexts that are,
->> from my POV, broken.
->
-> Why are they broken again?
+Best regards,
+Jens
 
-I'm referring to the empty contexts I mentioned below. They are what I
-believe most ofono+mbpi users will get at the moment, and as far as I
-can tell they are useless, if not broken.
+--===============3252646663561727494==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0002-changing-depreciated-libtool-initialization-to-moder.patch"
 
->> >> We are in total agreement. I will gladly remove this whole UI when you
->> >> or someone else with knowledge on this tells me that ofono + mbpi can
->> >> handle things. Likewise, if you tell me I can drop the manual settings
->> >> part and that won't harm many users, I will do it in a heart beat.
->> >>
->> >
->> > I would guesstimate that it works in 90% of the cases today, the other
->> > 5-9% are handled using a simple dialog. =C2=A0If this is not the case,=
- then
->> > we would like to know what is failing / not working.
->> >
->> > Dropping the settings UI is probably never going to be feasible, but it
->> > should be made into an avenue of last resort. =C2=A0E.g. something tha=
-t the
->> > user can be guided through by tech support at the carrier for instance.
->> > =C2=A0Not something that the user should ever see under 99% of circums=
-tances.
->>
->> Let's work on this then -- that is my goal as well, but my
->> understanding of current situation was just way grimmer: maybe I've
->> missed some bit about how the provisioning works. This is my
->> understanding:
->> =C2=A0 * connman shows a cellular service for every internet context
->> =C2=A0 * ofono creates a internet context for every modem that is capable
->> =C2=A0 * if there are multiple APNs defined in mbpi for the carrier, the
->> ofono context will be empy
->> =C2=A0 * mbpi has lots and lots of carriers with multiple APNs, most of =
-the
->> big names I checked seem to have multiple ones.
->>
->> This seems to imply that by far the most common use case is this:
->> =C2=A0 * user plugs in a new modem
->> =C2=A0 * ofono creates an empty context (because of multiple APNs defined
->> for carrier)
->> =C2=A0 * connman shows a broken cellular service that does absolutely
->> nothing -- it stays in "idle" forever and does not react to anything.
->>
->> You said 90% of the cases should just work -- where does this
->> difference in experiences come from?
->
-> As pointed out by Denis, the automated setup experience can only be as
-> good as your database. However it is not our job to install or create
-> the perfect APN list. That is an OEMs job and it depends on what kind of
-> quality and experience they wanna have.
+PkZyb20gZjJmNWM5MTFjMGFjNzFhZTBjZGIwZDdmNTRiYmMwMjMyY2EwMDFhMSBNb24gU2VwIDE3
+IDAwOjAwOjAwIDIwMDEKRnJvbTogSmVucyBSZWhzYWNrIDxqcl9leHRlcm5AdmZuZXQuZGU+CkRh
+dGU6IE1vbiwgMjcgRmViIDIwMTIgMTU6NDE6MzQgKzAxMDAKU3ViamVjdDogW1BBVENIIDIvM10g
+Y2hhbmdpbmcgZGVwcmVjaWF0ZWQgbGlidG9vbCBpbml0aWFsaXphdGlvbiB0byBtb2Rlcm4KIG9u
+ZQoKLS0tCiBNYWtlZmlsZS5hbSAgfCAgICA0ICsrKysKIGNvbmZpZ3VyZS5hYyB8ICAgMTAgKysr
+KysrKystLQogMiBmaWxlcyBjaGFuZ2VkLCAxMiBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygt
+KQoKZGlmZiAtLWdpdCBhL01ha2VmaWxlLmFtIGIvTWFrZWZpbGUuYW0KaW5kZXggYzNhNDQ4Ni4u
+YmViY2I5MCAxMDA2NDQKLS0tIGEvTWFrZWZpbGUuYW0KKysrIGIvTWFrZWZpbGUuYW0KQEAgLTEs
+NiArMSwxMCBAQAogCiBBTV9NQUtFRkxBR1MgPSAtLW5vLXByaW50LWRpcmVjdG9yeQogCitMSUJU
+T09MX0RFUFMgPSBATElCVE9PTF9ERVBTQAorbGlidG9vbDogJChMSUJUT09MX0RFUFMpCisJJChT
+SEVMTCkgLi9jb25maWcuc3RhdHVzIGxpYnRvb2wKKwogZ2RidXNfc291cmNlcyA9IGdkYnVzL2dk
+YnVzLmggZ2RidXMvbWFpbmxvb3AuYyBnZGJ1cy93YXRjaC5jIFwKIAkJCQkJZ2RidXMvb2JqZWN0
+LmMgZ2RidXMvcG9sa2l0LmMKIApkaWZmIC0tZ2l0IGEvY29uZmlndXJlLmFjIGIvY29uZmlndXJl
+LmFjCmluZGV4IDM0Y2M1MjYuLmQ4MjU2OWIgMTAwNjQ0Ci0tLSBhL2NvbmZpZ3VyZS5hYworKysg
+Yi9jb25maWd1cmUuYWMKQEAgLTMxLDggKzMxLDggQEAgQUNfUFJPR19JTlNUQUxMCiBtNF9kZWZp
+bmUoW19MVF9BQ19UQUdDT05GSUddLCBbXSkKIG00X2lmZGVmKFtBQ19MSUJUT09MX1RBR1NdLCBb
+QUNfTElCVE9PTF9UQUdTKFtdKV0pCiAKLUFDX0RJU0FCTEVfU1RBVElDCi1BQ19QUk9HX0xJQlRP
+T0wKK2RubCBBQ19ESVNBQkxFX1NUQVRJQworZG5sIEFDX1BST0dfTElCVE9PTAogCiBBQ19BUkdf
+RU5BQkxFKG9wdGltaXphdGlvbiwgQUNfSEVMUF9TVFJJTkcoWy0tZGlzYWJsZS1vcHRpbWl6YXRp
+b25dLAogCQkJW2Rpc2FibGUgY29kZSBvcHRpbWl6YXRpb24gdGhyb3VnaCBjb21waWxlcl0pLCBb
+CkBAIC01OCw2ICs1OCwxMiBAQCBBQ19BUkdfRU5BQkxFKHBpZSwgQUNfSEVMUF9TVFJJTkcoWy0t
+ZW5hYmxlLXBpZV0sCiAJZmkKIF0pCiAKK2RubCBMVF9JTklUIHNob3VsZCBiZSBpbnZva2VkIGFm
+dGVyIGFsbCBjb21waWxlciBmbGFncyBjaGVja3MsIGJlY2F1c2UKK2RubCBvZiBMVF9JTklUIHJl
+bWVtYmVycyB0aGUgUlBBVEggc3RvcmVkIGluIHRlc3QgdGFyZ2V0cyB3aGljaCBtaWdodAorZG5s
+IGJlIGRpZmZlcmVudCBmb3IgZGlmZmVyZW50IGNvbXBpbGVyIGZsYWdzIChrbm93biBpc3N1ZSBv
+biBBSVgpCitMVF9JTklUKFtkbG9wZW4sZGlzYWJsZS1zdGF0aWNdKQorQUNfU1VCU1QoW0xJQlRP
+T0xfREVQU10pCisKIEFDX0NIRUNLX0hFQURFUlMocmVzb2x2LmgsIGR1bW15PXllcywKIAkJCUFD
+X01TR19FUlJPUihyZXNvbHZlciBoZWFkZXIgZmlsZXMgYXJlIHJlcXVpcmVkKSkKIEFDX0NIRUNL
+X0xJQihyZXNvbHYsIG5zX2luaXRwYXJzZSwgZHVtbXk9eWVzLCBbCi0tIAoxLjcuOS4xCgo=
 
-I understand this.
+--===============3252646663561727494==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0003-let-configure-find-required-libs.patch"
 
-I still have to provide a UI that works with the middleware we have
-and the mbpi we have.
+PkZyb20gNDczODMxNDhjNzY2NzVkYTk5NjVhNGQ1NGUwZTFiOTg1ZGEyMmE2YSBNb24gU2VwIDE3
+IDAwOjAwOjAwIDIwMDEKRnJvbTogSmVucyBSZWhzYWNrIDxqcl9leHRlcm5AdmZuZXQuZGU+CkRh
+dGU6IE1vbiwgMjcgRmViIDIwMTIgMTY6MDc6MTggKzAxMDAKU3ViamVjdDogW1BBVENIIDMvM10g
+bGV0IGNvbmZpZ3VyZSBmaW5kIHJlcXVpcmVkIGxpYnMKCi0tLQogTWFrZWZpbGUuYW0gIHwgICAg
+MiArLQogY29uZmlndXJlLmFjIHwgICAyNCArKysrKysrKysrKysrKysrKy0tLS0tLS0KIDIgZmls
+ZXMgY2hhbmdlZCwgMTggaW5zZXJ0aW9ucygrKSwgOCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQg
+YS9NYWtlZmlsZS5hbSBiL01ha2VmaWxlLmFtCmluZGV4IGJlYmNiOTAuLjE3OGRlZjQgMTAwNjQ0
+Ci0tLSBhL01ha2VmaWxlLmFtCisrKyBiL01ha2VmaWxlLmFtCkBAIC0yOCw3ICsyOCw3IEBAIHNy
+Y19tbXNkX1NPVVJDRVMgPSAkKGdkYnVzX3NvdXJjZXMpICQoZ3dlYl9zb3VyY2VzKSAkKGJ1aWx0
+aW5fc291cmNlcykgXAogCQkJc3JjL3B1c2guaCBzcmMvcHVzaC5jIHNyYy9zdG9yZS5oIHNyYy9z
+dG9yZS5jIFwKIAkJCXNyYy93c3B1dGlsLmggc3JjL3dzcHV0aWwuYyBzcmMvbW1zdXRpbC5oIHNy
+Yy9tbXN1dGlsLmMKIAotc3JjX21tc2RfTERBREQgPSAkKGJ1aWx0aW5fbGliYWRkKSBAR0xJQl9M
+SUJTQCBAREJVU19MSUJTQCAtbHJlc29sdiAtbGRsCitzcmNfbW1zZF9MREFERCA9ICQoYnVpbHRp
+bl9saWJhZGQpIEBHTElCX0xJQlNAIEBEQlVTX0xJQlNACiAKIHNyY19tbXNkX0xERkxBR1MgPSAt
+V2wsLS1leHBvcnQtZHluYW1pYwogCmRpZmYgLS1naXQgYS9jb25maWd1cmUuYWMgYi9jb25maWd1
+cmUuYWMKaW5kZXggZDgyNTY5Yi4uODgzYjU5YyAxMDA2NDQKLS0tIGEvY29uZmlndXJlLmFjCisr
+KyBiL2NvbmZpZ3VyZS5hYwpAQCAtNjQsMTUgKzY0LDI1IEBAIGRubCBiZSBkaWZmZXJlbnQgZm9y
+IGRpZmZlcmVudCBjb21waWxlciBmbGFncyAoa25vd24gaXNzdWUgb24gQUlYKQogTFRfSU5JVChb
+ZGxvcGVuLGRpc2FibGUtc3RhdGljXSkKIEFDX1NVQlNUKFtMSUJUT09MX0RFUFNdKQogCitkbmwg
+Y2hlY2sgaG93IHdlIGNhbiB1c2UgdGhlIHJlc29sdmVyLiB3aGlsZSByZXNvbHYuaCBjb21lcyB3
+aXRoIGJpbmQsCitkbmwgaXQncyBwcm9iYWJseSByZWFzb25hYmxlIHRvIHVzZSBhIGNvbWJpbmVk
+IHNlYXJjaCBtYWNybyBsaWtlCitkbmwgc21hcnQtc25tcGQncyBBQ1hfQ0hFQ0tfTElCX0ZMQUdT
+CiBBQ19DSEVDS19IRUFERVJTKHJlc29sdi5oLCBkdW1teT15ZXMsCiAJCQlBQ19NU0dfRVJST1Io
+cmVzb2x2ZXIgaGVhZGVyIGZpbGVzIGFyZSByZXF1aXJlZCkpCi1BQ19DSEVDS19MSUIocmVzb2x2
+LCBuc19pbml0cGFyc2UsIGR1bW15PXllcywgWwotCUFDX0NIRUNLX0xJQihyZXNvbHYsIF9fbnNf
+aW5pdHBhcnNlLCBkdW1teT15ZXMsCi0JCQlBQ19NU0dfRVJST1IocmVzb2x2ZXIgbGlicmFyeSBz
+dXBwb3J0IGlzIHJlcXVpcmVkKSkKLV0pCi0KLUFDX0NIRUNLX0xJQihkbCwgZGxvcGVuLCBkdW1t
+eT15ZXMsCi0JCQlBQ19NU0dfRVJST1IoZHluYW1pYyBsaW5raW5nIGxvYWRlciBpcyByZXF1aXJl
+ZCkpCitkbmwgbnNfaW5pdHBhcnNlIGlzIGxpYnJlc29sdiBpbnRlcm5hbCB1c2Ugb25seSAtIGxp
+bWl0ZWQgdXNhZ2UgaW50ZW5kZWQ/CitBQ19TRUFSQ0hfTElCUyhuc19pbml0cGFyc2UsIHJlc29s
+diwgLAorCQlBQ19NU0dfRVJST1IocmVzb2x2ZXIgc3VwcG9ydCBpcyByZXF1aXJlZCkpCitkbmwg
+QUNfQ0hFQ0tfTElCKHJlc29sdiwgbnNfaW5pdHBhcnNlLCBkdW1teT15ZXMsIFsKK2RubCAJQUNf
+Q0hFQ0tfTElCKHJlc29sdiwgX19uc19pbml0cGFyc2UsIGR1bW15PXllcywKK2RubCAJCQlBQ19N
+U0dfRVJST1IocmVzb2x2ZXIgbGlicmFyeSBzdXBwb3J0IGlzIHJlcXVpcmVkKSkKK2RubCBdKQor
+Citkbmwgc2VhcmNoIGhvdyB3ZSBjYW4gbG9hZCBkeW5hbWljIGxpYnJhcmllcworZG5sIFRPRE8g
+dXNlIGxpYmx0ZGwsIHdoaWNoIHdvdWxkIHdvcmsgb24gQmVPUyAoSGFpa3UpLCBEYXJ3aW4gKE1h
+Y09TIFgpIG9yCitkbmwgICAgICBmb3IgZGVidWdnaW5nIHB1cnBvc2VzIHdpdGggbGlidG9vbCdz
+IGRscHJlb3BlbgorQUNfU0VBUkNIX0xJQlMoZGxvcGVuLCBkbCwgLCBBQ19NU0dfRVJST1IoZHlu
+YW1pYyBsaW5raW5nIGxvYWRlciBpcyByZXF1aXJlZCkpCitkbmwgQUNfQ0hFQ0tfTElCKGRsLCBk
+bG9wZW4sIGR1bW15PXllcywKK2RubCAJCQlBQ19NU0dfRVJST1IoZHluYW1pYyBsaW5raW5nIGxv
+YWRlciBpcyByZXF1aXJlZCkpCiAKIFBLR19DSEVDS19NT0RVTEVTKEdMSUIsIGdsaWItMi4wID49
+IDIuMTYsIGR1bW15PXllcywKIAkJCQlBQ19NU0dfRVJST1IoR0xpYiA+PSAyLjE2IGlzIHJlcXVp
+cmVkKSkKLS0gCjEuNy45LjEKCg==
 
-> Problem is that MBPI needs to be clearly improved. It is currently a
-> dumping ground for random information. And btw. neither Apple nor
-> Android gets this fully right. I have an ICS that keep resetting the APN
-> configuration as TIM Italy while network is Wind in Canada.
->
-> So if you really care about ConnMan showing an empty cellular service,
-> then we can talk about adapting ConnMan to not bother showing that
-> service if the APN is empty.
-
-I still feel like I must be missing something: you seem to imply that
-I should _not_ care about connman showing a non-working cellular
-service that appears to most cellular users? I don't think that is a
-real option.
-
-If we have a way to make this work for ~95% of users -- yeah, I do
-want to do that. Not showing a service for empty internet contexts
-would seem to go a long way towards that goal, so I would be very
-happy with that.
-
-- Jussi
-
---===============7421818612896054130==--
+--===============3252646663561727494==--
 
