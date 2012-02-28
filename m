@@ -1,48 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============5711916624495474874=="
+Content-Type: multipart/mixed; boundary="===============4643147662895069487=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] add some length verification to avoid reading not owned
- memory
-Date: Mon, 27 Feb 2012 20:38:11 -0600
-Message-ID: <4F4C3E13.40906@gmail.com>
-In-Reply-To: <4F4C9099.7070609@vfnet.de>
+From: Jens Rehsack <jr_extern@vfnet.de>
+Subject: Re: [PATCH 2/3] changing depreciated libtool initialization to modern
+ one
+Date: Tue, 28 Feb 2012 17:15:42 +0100
+Message-ID: <4F4CFDAE.1090604@vfnet.de>
+In-Reply-To: <1330417045-26518-2-git-send-email-jr_extern@vfnet.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5711916624495474874==
+--===============4643147662895069487==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jens,
-
-> Well, my mail client (Thunderbird) and most modern clients I
-> know are able to show attached files of text/x-patch (and
-> similar) type. OTOH I wonder why you want to review patches
-> in your mail client. Wouldn't it much better to use a
-
-It is not that we read patches in the mail client, but that is also
-useful.  The main use-case is to be able to easily comment on the patch
-if changes are required.  And for that we require patches to be sent inline.
-
-> specialized too which highlights the changes like
-> $ gvim "+vert diffpatch <patchfile>" <originalfile>
-> $ emacs
-> or
-> $ xfdiff ?
-> Don't you have to save the patch files in such cases anyway?
+Am 28.02.2012 09:17, schrieb jr_extern(a)vfnet.de:
+> From: Jens Rehsack <jr_extern@vfnet.de>
 > =
 
+> ---
+>  Makefile.am  |    4 ++++
+>  configure.ac |   10 ++++++++--
+>  2 files changed, 12 insertions(+), 2 deletions(-)
+> =
 
-No, the typical workflow (at least for me) is to
+> diff --git a/Makefile.am b/Makefile.am
+> index c3a4486..bebcb90 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -1,6 +1,10 @@
+>  =
 
-- 'Save Email'
-- vim email
-- if looks okay, git am and compile test
+>  AM_MAKEFLAGS =3D --no-print-directory
+>  =
 
-Regards,
--Denis
+> +LIBTOOL_DEPS =3D @LIBTOOL_DEPS@
+> +libtool: $(LIBTOOL_DEPS)
+> +	$(SHELL) ./config.status libtool
+> +
+>  gdbus_sources =3D gdbus/gdbus.h gdbus/mainloop.c gdbus/watch.c \
+>  					gdbus/object.c gdbus/polkit.c
+>  =
+
+> diff --git a/configure.ac b/configure.ac
+> index 34cc526..d82569b 100644
+> --- a/configure.ac
+> +++ b/configure.ac
+> @@ -31,8 +31,8 @@ AC_PROG_INSTALL
+>  m4_define([_LT_AC_TAGCONFIG], [])
+>  m4_ifdef([AC_LIBTOOL_TAGS], [AC_LIBTOOL_TAGS([])])
+>  =
+
+> -AC_DISABLE_STATIC
+> -AC_PROG_LIBTOOL
+> +dnl AC_DISABLE_STATIC
+> +dnl AC_PROG_LIBTOOL
+>  =
+
+>  AC_ARG_ENABLE(optimization, AC_HELP_STRING([--disable-optimization],
+>  			[disable code optimization through compiler]), [
+> @@ -58,6 +58,12 @@ AC_ARG_ENABLE(pie, AC_HELP_STRING([--enable-pie],
+>  	fi
+>  ])
+>  =
+
+> +dnl LT_INIT should be invoked after all compiler flags checks, because
+> +dnl of LT_INIT remembers the RPATH stored in test targets which might
+> +dnl be different for different compiler flags (known issue on AIX)
+> +LT_INIT([dlopen,disable-static])
+This should be
++LT_INIT([dlopen disable-static])
+> +AC_SUBST([LIBTOOL_DEPS])
+> +
+>  AC_CHECK_HEADERS(resolv.h, dummy=3Dyes,
+>  			AC_MSG_ERROR(resolver header files are required))
+>  AC_CHECK_LIB(resolv, ns_initparse, dummy=3Dyes, [
 
 
---===============5711916624495474874==--
+--===============4643147662895069487==--
 
