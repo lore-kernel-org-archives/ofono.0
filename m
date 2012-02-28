@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0409890190489118484=="
+Content-Type: multipart/mixed; boundary="===============3869881673054410340=="
 MIME-Version: 1.0
 From: jr_extern@vfnet.de
-Subject: [PATCH 1/3] add some length verification to avoid reading not owned
- memory
-Date: Tue, 28 Feb 2012 09:17:23 +0100
-Message-ID: <1330417045-26518-1-git-send-email-jr_extern@vfnet.de>
+Subject: [PATCH 2/3] changing depreciated libtool initialization to modern one
+Date: Tue, 28 Feb 2012 09:17:24 +0100
+Message-ID: <1330417045-26518-2-git-send-email-jr_extern@vfnet.de>
+In-Reply-To: <1330417045-26518-1-git-send-email-jr_extern@vfnet.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0409890190489118484==
+--===============3869881673054410340==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,52 +16,63 @@ Content-Transfer-Encoding: quoted-printable
 From: Jens Rehsack <jr_extern@vfnet.de>
 
 ---
- src/push.c |    8 +++++++-
- 1 files changed, 7 insertions(+), 1 deletions(-)
+ Makefile.am  |    4 ++++
+ configure.ac |   10 ++++++++--
+ 2 files changed, 12 insertions(+), 2 deletions(-)
 
-diff --git a/src/push.c b/src/push.c
-index 6a54907..6107352 100644
---- a/src/push.c
-+++ b/src/push.c
-@@ -351,13 +351,16 @@ gboolean mms_push_notify(unsigned char *pdu, unsigned=
- int len,
- 	/* Consume TID and Type */
- 	nread =3D 2;
+diff --git a/Makefile.am b/Makefile.am
+index c3a4486..bebcb90 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1,6 +1,10 @@
  =
 
--	if (wsp_decode_uintvar(pdu + nread, len,
-+	if (wsp_decode_uintvar(pdu + nread, len - nread,
- 					&headerslen, &consumed) =3D=3D FALSE)
- 		return FALSE;
+ AM_MAKEFLAGS =3D --no-print-directory
  =
 
- 	/* Consume uintvar bytes */
- 	nread +=3D consumed;
++LIBTOOL_DEPS =3D @LIBTOOL_DEPS@
++libtool: $(LIBTOOL_DEPS)
++	$(SHELL) ./config.status libtool
++
+ gdbus_sources =3D gdbus/gdbus.h gdbus/mainloop.c gdbus/watch.c \
+ 					gdbus/object.c gdbus/polkit.c
  =
 
-+	/* Check if content type could be read */
-+	if (headerslen > (len - nread))
-+		return FALSE;
- 	/* Try to decode content-type */
- 	if (wsp_decode_content_type(pdu + nread, headerslen, &ct,
- 			&consumed, &param_len) =3D=3D FALSE)
-@@ -370,6 +373,9 @@ gboolean mms_push_notify(unsigned char *pdu, unsigned i=
-nt len,
- 	consumed +=3D param_len;
- 	nread +=3D consumed;
+diff --git a/configure.ac b/configure.ac
+index 34cc526..d82569b 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -31,8 +31,8 @@ AC_PROG_INSTALL
+ m4_define([_LT_AC_TAGCONFIG], [])
+ m4_ifdef([AC_LIBTOOL_TAGS], [AC_LIBTOOL_TAGS([])])
  =
 
-+	/* Check if application_id could be read */
-+	if ((headerslen - consumed) > (len - nread))
-+		return FALSE;
- 	/* Parse header to decode application_id */
- 	wsp_header_iter_init(&iter, pdu + nread, headerslen - consumed, 0);
+-AC_DISABLE_STATIC
+-AC_PROG_LIBTOOL
++dnl AC_DISABLE_STATIC
++dnl AC_PROG_LIBTOOL
  =
 
+ AC_ARG_ENABLE(optimization, AC_HELP_STRING([--disable-optimization],
+ 			[disable code optimization through compiler]), [
+@@ -58,6 +58,12 @@ AC_ARG_ENABLE(pie, AC_HELP_STRING([--enable-pie],
+ 	fi
+ ])
+ =
+
++dnl LT_INIT should be invoked after all compiler flags checks, because
++dnl of LT_INIT remembers the RPATH stored in test targets which might
++dnl be different for different compiler flags (known issue on AIX)
++LT_INIT([dlopen,disable-static])
++AC_SUBST([LIBTOOL_DEPS])
++
+ AC_CHECK_HEADERS(resolv.h, dummy=3Dyes,
+ 			AC_MSG_ERROR(resolver header files are required))
+ AC_CHECK_LIB(resolv, ns_initparse, dummy=3Dyes, [
 -- =
 
 1.7.9.1
 
 
---===============0409890190489118484==--
+--===============3869881673054410340==--
 
