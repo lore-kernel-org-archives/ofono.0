@@ -1,81 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============4643147662895069487=="
+Content-Type: multipart/mixed; boundary="===============6064413814360819070=="
 MIME-Version: 1.0
-From: Jens Rehsack <jr_extern@vfnet.de>
-Subject: Re: [PATCH 2/3] changing depreciated libtool initialization to modern
- one
-Date: Tue, 28 Feb 2012 17:15:42 +0100
-Message-ID: <4F4CFDAE.1090604@vfnet.de>
-In-Reply-To: <1330417045-26518-2-git-send-email-jr_extern@vfnet.de>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [RFC v0] ofono: Only register network when APN is set
+Date: Tue, 28 Feb 2012 08:33:27 -0800
+Message-ID: <1330446807.3392.83.camel@aeonflux>
+In-Reply-To: <CAHiDW_HN1X7zX-TpHgpwF=FL_zYxSPVYgtWJyiONERiAbX65WQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4643147662895069487==
+--===============6064413814360819070==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Am 28.02.2012 09:17, schrieb jr_extern(a)vfnet.de:
-> From: Jens Rehsack <jr_extern@vfnet.de>
+Hi guys,
+
+> > We should now show a network without an APN.
+> > ---
+> > I have not tested this one. But something like this should do
+> > the trick. Maybe someone with deeper knowledge on the APN
+> > behavior could explain under which circumstances the APN is set, e.g.
+> > see the netreg vs apn setting in this patch. Not sure if this is correc=
+t.
+> >
+> > cheers,
+> > daniel
 > =
 
-> ---
->  Makefile.am  |    4 ++++
->  configure.ac |   10 ++++++++--
->  2 files changed, 12 insertions(+), 2 deletions(-)
-> =
+> Thanks Daniel. This sort of works after some fixes but it looks like
+> there are still issues if modem or context properties change. I'll
+> have a go a fixing it later today. I'm including my initial comments
+> below for reference (just in case I don't manage to fix them).
 
-> diff --git a/Makefile.am b/Makefile.am
-> index c3a4486..bebcb90 100644
-> --- a/Makefile.am
-> +++ b/Makefile.am
-> @@ -1,6 +1,10 @@
->  =
+can you please move this to the ConnMan mailing list.
 
->  AM_MAKEFLAGS =3D --no-print-directory
->  =
+Regards
 
-> +LIBTOOL_DEPS =3D @LIBTOOL_DEPS@
-> +libtool: $(LIBTOOL_DEPS)
-> +	$(SHELL) ./config.status libtool
-> +
->  gdbus_sources =3D gdbus/gdbus.h gdbus/mainloop.c gdbus/watch.c \
->  					gdbus/object.c gdbus/polkit.c
->  =
-
-> diff --git a/configure.ac b/configure.ac
-> index 34cc526..d82569b 100644
-> --- a/configure.ac
-> +++ b/configure.ac
-> @@ -31,8 +31,8 @@ AC_PROG_INSTALL
->  m4_define([_LT_AC_TAGCONFIG], [])
->  m4_ifdef([AC_LIBTOOL_TAGS], [AC_LIBTOOL_TAGS([])])
->  =
-
-> -AC_DISABLE_STATIC
-> -AC_PROG_LIBTOOL
-> +dnl AC_DISABLE_STATIC
-> +dnl AC_PROG_LIBTOOL
->  =
-
->  AC_ARG_ENABLE(optimization, AC_HELP_STRING([--disable-optimization],
->  			[disable code optimization through compiler]), [
-> @@ -58,6 +58,12 @@ AC_ARG_ENABLE(pie, AC_HELP_STRING([--enable-pie],
->  	fi
->  ])
->  =
-
-> +dnl LT_INIT should be invoked after all compiler flags checks, because
-> +dnl of LT_INIT remembers the RPATH stored in test targets which might
-> +dnl be different for different compiler flags (known issue on AIX)
-> +LT_INIT([dlopen,disable-static])
-This should be
-+LT_INIT([dlopen disable-static])
-> +AC_SUBST([LIBTOOL_DEPS])
-> +
->  AC_CHECK_HEADERS(resolv.h, dummy=3Dyes,
->  			AC_MSG_ERROR(resolver header files are required))
->  AC_CHECK_LIB(resolv, ns_initparse, dummy=3Dyes, [
+Marcel
 
 
---===============4643147662895069487==--
+
+--===============6064413814360819070==--
 
