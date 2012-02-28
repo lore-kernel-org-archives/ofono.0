@@ -1,102 +1,164 @@
-Content-Type: multipart/mixed; boundary="===============2668704224206064244=="
+Content-Type: multipart/mixed; boundary="===============5345600635108255931=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH] emulator: Fix for PTS test TC_AG_TWC_BV_02_I
-Date: Tue, 28 Feb 2012 14:33:57 +0100
-Message-ID: <1330436037-18377-1-git-send-email-frederic.danis@linux.intel.com>
+From: Jussi Kukkonen <jussi.kukkonen@intel.com>
+Subject: Re: [RFC v0] ofono: Only register network when APN is set
+Date: Tue, 28 Feb 2012 16:06:17 +0200
+Message-ID: <CAHiDW_HN1X7zX-TpHgpwF=FL_zYxSPVYgtWJyiONERiAbX65WQ@mail.gmail.com>
+In-Reply-To: <1330420763-8244-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2668704224206064244==
+--===============5345600635108255931==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-RING event should only be sent when callsetup indicator is set to
-Incoming and there is no active call.
+On Tue, Feb 28, 2012 at 11:19 AM, Daniel Wagner <wagi@monom.org> wrote:
+> From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+>
+> We should now show a network without an APN.
+> ---
+> I have not tested this one. But something like this should do
+> the trick. Maybe someone with deeper knowledge on the APN
+> behavior could explain under which circumstances the APN is set, e.g.
+> see the netreg vs apn setting in this patch. Not sure if this is correct.
+>
+> cheers,
+> daniel
 
-If call indicator is set to inactive while callsetup is
-already set to Incoming (waiting call has generated +CCWA),
-RING event should be sent after all calls' state have been updated.
+Thanks Daniel. This sort of works after some fixes but it looks like
+there are still issues if modem or context properties change. I'll
+have a go a fixing it later today. I'm including my initial comments
+below for reference (just in case I don't manage to fix them).
 
-As state of calls are updated one by one, generating multiple calls
-to ofono_emulator_set_indicator(), do not call notify_ring() just
-after call indicator went from active/held to inactive (only start
-ring timer).
-In ring_timer(), in case of a call in waiting state, just exit and
-wait for next timeout.
----
- src/emulator.c |   21 +++++++++++----------
- 1 files changed, 11 insertions(+), 10 deletions(-)
+Also while I remember: cm_context_added() does a lookup on modem_hash
+when it probably shoud use context_hash. I'll include this in the
+patches.
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 262e782..fed699c 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -414,6 +414,13 @@ static gboolean notify_ring(void *user_data)
- 	if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP && em->slc =3D=3D FALSE)
- 		return TRUE;
- =
+> =C2=A0plugins/ofono.c | =C2=A0 25 +++++++++++++++++++++++++
+> =C2=A01 files changed, 25 insertions(+), 0 deletions(-)
+>
+> diff --git a/plugins/ofono.c b/plugins/ofono.c
+> index d87d7b6..c92c3cc 100644
+> --- a/plugins/ofono.c
+> +++ b/plugins/ofono.c
+> @@ -105,6 +105,9 @@ enum ofono_api {
+> =C2=A0* the plugin about IP configuration through the updating the contex=
+t's
+> =C2=A0* properties.
+> =C2=A0*
+> + * The network is only registered at the core when the AccessPointName
+> + * has been set.
+> + *
+> =C2=A0* CDMA working flow:
+> =C2=A0*
+> =C2=A0* When a new modem appears, the plugin always powers it up. This
+> @@ -172,6 +175,7 @@ struct modem_data {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0/* ConnectionContext Interface */
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0connman_bool_t active;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0connman_bool_t set_active;
+> + =C2=A0 =C2=A0 =C2=A0 char *apn;
 
-+	/*
-+	 * In case of waiting call becoming an incoming call, call status
-+	 * change may not have been done yet, wait for change has been completed
-+	 */
-+	if (find_call_with_status(em, CALL_STATUS_WAITING))
-+		return TRUE;
-+
- 	g_at_server_send_unsolicited(em->server, "RING");
- =
+probably makes sense to have this in network_context -- easier to keep
+them in sync if e.g. context disappears.
 
- 	if (!em->clip)
-@@ -421,13 +428,6 @@ static gboolean notify_ring(void *user_data)
- =
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0/* SimManager Interface */
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0char *imsi;
+> @@ -1105,6 +1109,10 @@ static int add_cm_context(struct modem_data *modem=
+, const char *context_path,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0dbus_message_iter_get_basic(&value, &active);
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0DBG("%s Active %d", modem->path, active);
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 } else if (g_str_equal=
+(key, "AccessPointName") =3D=3D TRUE) {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 dbus_message_iter_get_basic(&value, &modem->apn);
 
- 	c =3D find_call_with_status(em, CALL_STATUS_INCOMING);
- =
+copying needed.
 
--	/*
--	 * In case of waiting call becoming an incoming call, call status
--	 * change may not have been done yet, so try to find waiting call too
--	 */
--	if (c =3D=3D NULL)
--		c =3D find_call_with_status(em, CALL_STATUS_WAITING);
--
- 	if (c =3D=3D NULL)
- 		return TRUE;
- =
+> +
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 DBG("%s AccessPointName %s", modem->path, modem->apn);
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0}
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0dbus_message_iter_=
+next(dict);
+> @@ -1180,6 +1188,19 @@ static gboolean context_changed(DBusConnection *co=
+nnection,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0set_connected(modem);
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0else
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0set_disconnected(modem);
+> + =C2=A0 =C2=A0 =C2=A0 } else if (g_str_equal(key, "AccessPointName") =3D=
+=3D TRUE) {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_free(modem->apn);
+> +
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 dbus_message_iter_get_=
+basic(&value, &modem->apn);
+> +
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBG("%s AccessPointNam=
+e %s", modem->path, modem->apn);
 
-@@ -1221,10 +1221,10 @@ void ofono_emulator_set_indicator(struct ofono_emul=
-ator *em,
- 	/*
- 	 * Ring timer should be started when:
- 	 * - callsetup indicator is set to Incoming and there is no active call
--	 *   (not a waiting call)
-+	 *   (not a waiting call), in this case, a first RING should be sent
-+	 *   just after the +CIEV
- 	 * - or call indicator is set to inactive while callsetup is already
- 	 *   set to Incoming.
--	 * In those cases, a first RING should be sent just after the +CIEV
- 	 * Ring timer should be stopped for all other values of callsetup
- 	 */
- 	if (waiting)
-@@ -1247,8 +1247,9 @@ void ofono_emulator_set_indicator(struct ofono_emulat=
-or *em,
- 		return;
- 	}
- =
+copy needed as well
 
--start_ring:
- 	notify_ring(em);
-+
-+start_ring:
- 	em->callsetup_source =3D g_timeout_add_seconds(RING_TIMEOUT,
- 							notify_ring, em);
- }
--- =
+> +
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (has_interface(mode=
+m->interfaces,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 OFONO_API_NE=
+TREG) =3D=3D TRUE &&
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 modem->network !=3D NULL) {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 DBG("Register network at core");
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 add_network(modem);
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
 
-1.7.1
+* if a network exists and apn is empty -> remove_network()
+* if a network does not exist and netreg iface is supported  and apn
+is not empty -> add_network()
 
+also, probably need to call set_connected() if Active is set?
 
---===============2668704224206064244==--
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0}
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0return TRUE;
+> @@ -1518,6 +1539,9 @@ static void netreg_properties_reply(struct modem_da=
+ta *modem,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0}
+>
+> + =C2=A0 =C2=A0 =C2=A0 if (modem->apn =3D=3D NULL)
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
+> +
+
+This doesn't actually work as the 'empty' apn is "". Now that I think
+about it, it would be safer and easier to just save a boolean
+apn_is_valid...
+
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0add_network(modem);
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0if (modem->active =3D=3D TRUE)
+> @@ -2187,6 +2211,7 @@ static void remove_modem(gpointer data)
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0g_free(modem->serial);
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0g_free(modem->name);
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0g_free(modem->imsi);
+> + =C2=A0 =C2=A0 =C2=A0 g_free(modem->apn);
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0g_free(modem->path);
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0g_free(modem);
+> --
+> 1.7.9.48.g85da4d
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+
+--===============5345600635108255931==--
 
