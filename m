@@ -1,44 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============6064413814360819070=="
+Content-Type: multipart/mixed; boundary="===============7084763747300201804=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC v0] ofono: Only register network when APN is set
-Date: Tue, 28 Feb 2012 08:33:27 -0800
-Message-ID: <1330446807.3392.83.camel@aeonflux>
-In-Reply-To: <CAHiDW_HN1X7zX-TpHgpwF=FL_zYxSPVYgtWJyiONERiAbX65WQ@mail.gmail.com>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: [PATCH 0/2] phonesim: Add timer to set the variable with the delay
+Date: Wed, 29 Feb 2012 11:37:45 +0200
+Message-ID: <1330508267-8656-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6064413814360819070==
+--===============7084763747300201804==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi guys,
+Hello,
 
-> > We should now show a network without an APN.
-> > ---
-> > I have not tested this one. But something like this should do
-> > the trick. Maybe someone with deeper knowledge on the APN
-> > behavior could explain under which circumstances the APN is set, e.g.
-> > see the netreg vs apn setting in this patch. Not sure if this is correc=
-t.
-> >
-> > cheers,
-> > daniel
-> =
+Please find the changes in order to permit to set variables
+with the delay (specify the delay in milliseconds):
 
-> Thanks Daniel. This sort of works after some fixes but it looks like
-> there are still issues if modem or context properties change. I'll
-> have a go a fixing it later today. I'm including my initial comments
-> below for reference (just in case I don't manage to fix them).
+<chat>
+	<set name=3D"AAA" value=3D"BBB" delay=3D"30000"/>
+</chat>
 
-can you please move this to the ConnMan mailing list.
+This might be useful to simulate SIM PIN unlocking cases, etc.
 
-Regards
+Regards,
+Oleg
 
-Marcel
+Oleg Zhurakivskyy (2):
+  phonesim: Minor reflow in SimChat::command()
+  phonesim: Add timer to set the variable with the delay
+
+ src/phonesim.cpp |   49 ++++++++++++++++++++++++++++++++++++++-----------
+ src/phonesim.h   |   14 ++++++++++++++
+ 2 files changed, 52 insertions(+), 11 deletions(-)
+
+-- =
+
+1.7.5.4
 
 
-
---===============6064413814360819070==--
+--===============7084763747300201804==--
 
