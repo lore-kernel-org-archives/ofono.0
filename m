@@ -1,72 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============3832110875402257625=="
+Content-Type: multipart/mixed; boundary="===============8163165831306359439=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH] phonesim: Fix call scripting capability
-Date: Wed, 29 Feb 2012 14:56:05 +0100
-Message-ID: <1330523765-10592-1-git-send-email-frederic.danis@linux.intel.com>
+From: Mike <puffy.taco@gmail.com>
+Subject: Re: LG VX8360 HFP non-compliance issue
+Date: Wed, 29 Feb 2012 09:40:59 -0600
+Message-ID: <CAB7rCTj-jVhuQ55p0OSKMAxhNigrpcdePFoorZyxSBpuBCbjQg@mail.gmail.com>
+In-Reply-To: <4F471E2C.9020208@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3832110875402257625==
+--===============8163165831306359439==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/scriptable.txt |    6 +++---
- src/control.cpp    |    3 +++
- 2 files changed, 6 insertions(+), 3 deletions(-)
+On Thu, Feb 23, 2012 at 11:20 PM, Denis Kenzior <denkenz@gmail.com> wrote:
+> Hi Mike,
+>
+> On 02/23/2012 06:49 PM, Mike wrote:
+>> I'm getting weird behaviour from an LG VX8360, connected via bluetooth
+>> HFP. =C2=A0When the phone connects, I see a CallAdded signal go out over
+>> dbus, despite there being no call on the phone itself. =C2=A0You can see
+>> the signal below. =C2=A0The LineIdentification held the actual phone num=
+ber
+>> of the phone, but I replaced it with "xxxxxxxxxx". =C2=A0I also copied in
+>> the initial RFCOMM communication. =C2=A0It looks to me like this phone d=
+oes
+>> not comply with the HFP spec in that it returns an answer to AT+CLCC
+>> when there is no phone call present (and at that, an index of 0). =C2=A0=
+It
+>> also happens that the status is a 6, which does not appear to be a
+>> valid status in HFPv1.5. =C2=A0This just happens to map to the enum
+>> CALL_STATUS_DISCONNECTED, but I'm guessing this was merely
+>> coincidence. =C2=A0Since the state is broadcast as disconnected, I can
+>> simply ignore it in my GUI application. =C2=A0However, I'm wondering if
+>> this is something that is better handled in the ofono side?
+>>
+>> Thanks,
+>> Mike
+>>
+>
+> Try the following patch.
+>
+> Regards,
+> -Denis
 
-diff --git a/doc/scriptable.txt b/doc/scriptable.txt
-index 670bd21..95ae1e1 100644
---- a/doc/scriptable.txt
-+++ b/doc/scriptable.txt
-@@ -7,8 +7,8 @@ call, you have to do some operations manually within phones=
-im GUI).  Below are
- several examples:
- =
+I'm told the patch worked.  I don't have direct access to this phone
+to know exactly what that means, but the issue of incorrectly
+reporting a phonecall the moment the phone connects is solved.  I'm
+still seeking an answer to whether or not actual phonecalls work.
 
- 1. call.js (stand for incoming call and copy it to /tmp/call/)
--tabRegistration.gbIncomingCall.leCaller.text =3D "12345";
--tabRegistration.gbIncomingCall.pbIncomingCall.click();
-+tabCall.gbIncomingCall.leCaller.text =3D "12345";
-+tabCall.gbIncomingCall.pbIncomingCall.click();
- =
+Mike
 
- Then set the path of script and run the script with its name:
- =
-
-@@ -50,6 +50,6 @@ Reference" for details.
- For example, if you want to know the current incoming number, you may writ=
-e a
- script as below:
- // number.js
--tabRegistration.gbIncomingCall.leCaller.text
-+tabCall.gbIncomingCall.leCaller.text
- =
-
- After running the script the similar way as above, you may get the number.
-diff --git a/src/control.cpp b/src/control.cpp
-index 2666b4c..ee1e7d8 100644
---- a/src/control.cpp
-+++ b/src/control.cpp
-@@ -667,6 +667,9 @@ Script::Script(QObject *obj, Ui_ControlBase *ui) : QDBu=
-sAbstractAdaptor(obj)
- =
-
-     QScriptValue qsTab8 =3D engine.newQObject(ui->tab_8);
-     engine.globalObject().setProperty("tabPosition", qsTab8);
-+
-+    QScriptValue qsTab9 =3D engine.newQObject(ui->tab_9);
-+    engine.globalObject().setProperty("tabCall", qsTab9);
- }
- =
-
- void Script::SetPath(const QString &path, const QDBusMessage &msg)
--- =
-
-1.7.1
-
-
---===============3832110875402257625==--
+--===============8163165831306359439==--
 
