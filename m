@@ -1,32 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============8521575480272185812=="
+Content-Type: multipart/mixed; boundary="===============3786373273617575404=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] phonesim: Fix call scripting capability
-Date: Thu, 01 Mar 2012 22:16:56 -0600
-Message-ID: <4F5049B8.5090108@gmail.com>
-In-Reply-To: <1330523765-10592-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH 0/2] phonesim: Add timer to set the variable with the delay
+Date: Sun, 04 Mar 2012 14:56:00 -0600
+Message-ID: <4F53D6E0.7060402@gmail.com>
+In-Reply-To: <1330508267-8656-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8521575480272185812==
+--===============3786373273617575404==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hi Oleg,
 
-On 02/29/2012 07:56 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> ---
->  doc/scriptable.txt |    6 +++---
->  src/control.cpp    |    3 +++
->  2 files changed, 6 insertions(+), 3 deletions(-)
+On 02/29/2012 03:37 AM, Oleg Zhurakivskyy wrote:
+> Hello,
+> =
+
+> Please find the changes in order to permit to set variables
+> with the delay (specify the delay in milliseconds):
+> =
+
+> <chat>
+> 	<set name=3D"AAA" value=3D"BBB" delay=3D"30000"/>
+> </chat>
+> =
+
+> This might be useful to simulate SIM PIN unlocking cases, etc.
+> =
+
+> Regards,
+> Oleg
+> =
+
+> Oleg Zhurakivskyy (2):
+>   phonesim: Minor reflow in SimChat::command()
+>   phonesim: Add timer to set the variable with the delay
+> =
+
+>  src/phonesim.cpp |   49 ++++++++++++++++++++++++++++++++++++++-----------
+>  src/phonesim.h   |   14 ++++++++++++++
+>  2 files changed, 52 insertions(+), 11 deletions(-)
 > =
 
 
-Patch has been applied, thanks.
+Both patches have been applied, thanks.
 
 Regards,
 -Denis
 
---===============8521575480272185812==--
+--===============3786373273617575404==--
 
