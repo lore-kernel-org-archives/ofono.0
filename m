@@ -1,110 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============2813575159444022144=="
+Content-Type: multipart/mixed; boundary="===============4731934895666725494=="
 MIME-Version: 1.0
-From: Radek Polak <psonek2@seznam.cz>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [Gta04-owner] Polling CLCC error handling on Option modem (GTA04)
-Date: Tue, 06 Mar 2012 21:30:41 +0000
-Message-ID: <201203062130.41546.psonek2@seznam.cz>
-In-Reply-To: <2B3E493D-2A99-47FD-9AB7-C8669C14643A@goldelico.com>
+Date: Mon, 05 Mar 2012 13:46:20 -0600
+Message-ID: <4F55180C.1050501@gmail.com>
+In-Reply-To: <201203062130.41546.psonek2@seznam.cz>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2813575159444022144==
+--===============4731934895666725494==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tuesday 06 March 2012 20:17:32 Dr. H. Nikolaus Schaller wrote:
+Hi Radek,
 
-> @Radek: is it possible to manually contact the AT interface in this state
-> and try if it is still operational and another AT+CLCC would succeed?
+On 03/06/2012 03:30 PM, Radek Polak wrote:
+> On Tuesday 06 March 2012 20:17:32 Dr. H. Nikolaus Schaller wrote:
+> =
 
-It seems after few errors it starts working again - if i understand it righ=
-t =
+>> @Radek: is it possible to manually contact the AT interface in this state
+>> and try if it is still operational and another AT+CLCC would succeed?
+> =
 
-(see log below). Btw the probability of +CME ERROR increases with smaller C=
-LCC =
+> It seems after few errors it starts working again - if i understand it ri=
+ght =
 
-interval.
+> (see log below). Btw the probability of +CME ERROR increases with smaller=
+ CLCC =
 
-So ingoring the error and trying again is the way to go for us?
+> interval.
+> =
 
-Regards
 
-Radek
+FYI, CME ERROR: 100 means: "Unknown Error".  This firmware is rather
+helpful here isn't it?
 
-AtChat :  F : "+CLCC: 1,1,4,0,0,"+420608828973",145" =
+> So ingoring the error and trying again is the way to go for us?
+> =
 
-AtChat :  F : "OK" =
 
-AtChat :  T : "AT+CLCC" =
+That sounds like your only avenue at this point.  If you're doing this
+in oFono, then I would create an Option / GTA04 specific vendor quirk
+for the voicecall driver.  When this quirk is set, ignore CME ERROR 100
+errors (not any others) and retry the CLCC poll.
 
-AtChat :  F : "+CLCC: 1,1,4,0,0,"+420608828973",145" =
+Regards,
+-Denis
 
-AtChat :  F : "OK" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "+CLCC: 1,1,4,0,0,"+420608828973",145" =
-
-AtChat :  F : "OK" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "+CLCC: 1,1,4,0,0,"+420608828973",145" =
-
-AtChat :  F : "OK" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "+CME ERROR: 100" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "+CME ERROR: 100" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "+CME ERROR: 100" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "+CME ERROR: 100" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "OK" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "OK" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "OK" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "OK" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "OK" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "OK" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "OK" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "OK" =
-
-AtChat :  T : "AT+CLCC" =
-
-AtChat :  F : "OK"
-
---===============2813575159444022144==--
+--===============4731934895666725494==--
 
