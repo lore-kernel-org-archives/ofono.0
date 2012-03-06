@@ -1,62 +1,149 @@
-Content-Type: multipart/mixed; boundary="===============8289666999443775882=="
+Content-Type: multipart/mixed; boundary="===============1669247011748301612=="
 MIME-Version: 1.0
-From: Matthias Apitz <guru@unixarea.de>
-Subject: Re: [Gta04-owner] Polling CLCC error handling on Option modem (GTA04)
-Date: Wed, 07 Mar 2012 10:48:07 +0000
-Message-ID: <20120307104746.GA1221@tiny>
-In-Reply-To: <201203071136.24508.psonek2@seznam.cz>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH] emulator: Fix PTS test case TC_AG_TWC_BV_02_I
+Date: Tue, 06 Mar 2012 08:38:37 -0600
+Message-ID: <1331044717-8246-1-git-send-email-denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8289666999443775882==
+--===============1669247011748301612==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-El d=C3=ADa Wednesday, March 07, 2012 a las 11:36:24AM +0100, Radek Polak e=
-scribi=C3=B3:
+---
+ src/emulator.c |   48 +++++++++++++++++++++++++++++-------------------
+ 1 files changed, 29 insertions(+), 19 deletions(-)
 
-> On Monday 05 March 2012 20:26:29 Denis Kenzior wrote:
-> =
+diff --git a/src/emulator.c b/src/emulator.c
+index 262e782..5f460c2 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -36,6 +36,8 @@
+ =
 
-> > You can always try ignoring CME ERROR 100 and re-try the CLCC poll.
-> > Maybe the modem is in a transitional period (e.g. call being released)
-> > and it can't answer the CLCC properly.  In other words, there's a bug
-> > related to timing of call state changes & CLCC implementation in the
-> > modem firmware.
-> =
+ #define RING_TIMEOUT 3
+ =
 
-> Yes, it is definitely timing bug. Attached is patch that continues CLCC p=
-olling =
++#define EMULATOR_FLAG_WAITING_TRANSITION	1
++
+ struct ofono_emulator {
+ 	struct ofono_atom *atom;
+ 	enum ofono_emulator_type type;
+@@ -52,6 +54,7 @@ struct ofono_emulator {
+ 	gboolean clip;
+ 	gboolean ccwa;
+ 	int pns_id;
++	int flags;
+ };
+ =
 
-> even after error assuming that CLCC will start working again. It works fi=
-ne for =
+ struct indicator {
+@@ -420,14 +423,6 @@ static gboolean notify_ring(void *user_data)
+ 		return TRUE;
+ =
 
-> me (see log below). It would be nice to get this in ofono git.
-> =
+ 	c =3D find_call_with_status(em, CALL_STATUS_INCOMING);
+-
+-	/*
+-	 * In case of waiting call becoming an incoming call, call status
+-	 * change may not have been done yet, so try to find waiting call too
+-	 */
+-	if (c =3D=3D NULL)
+-		c =3D find_call_with_status(em, CALL_STATUS_WAITING);
+-
+ 	if (c =3D=3D NULL)
+ 		return TRUE;
+ =
 
-> ofonod[1188]: App: < \r\n+CLCC: 1,1,4,0,0,"+420608828973",145\r\n\r\nOK\r=
-\n
-> ofonod[1188]: App: > AT+CLCC\r
-> ofonod[1188]: App: < \r\n+CME ERROR: 100\r\n
-> ofonod[1188]: We are polling CLCC and received an error, retrying...
-> ofonod[1188]: App: > AT+CLCC\r
-> ofonod[1188]: App: < \r\nOK\r\n
-> ofonod[1188]: src/voicecall.c:ofono_voicecall_disconnected() Got disconne=
-ction =
+@@ -1186,19 +1181,29 @@ void ofono_emulator_set_indicator(struct ofono_emul=
+ator *em,
+ 	gboolean callsetup;
+ 	gboolean waiting;
+ =
 
-> event for id: 1, reason: 2
++	ofono_debug("name: %s, value: %d", name, value);
++
+ 	ind =3D find_indicator(em, name, &i);
+ =
 
-I'm wondering if this ofonod log has no timestamps in the log lines? Or
-is this something to be configured?
+-	if (ind =3D=3D NULL || ind->value =3D=3D value || value < ind->min
+-			|| value > ind->max)
++	if (ind =3D=3D NULL || value < ind->min || value > ind->max)
++		return;
++
++	cs_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALLSETUP, NULL);
++	callsetup =3D ind =3D=3D cs_ind;
++
++	if (em->flags & EMULATOR_FLAG_WAITING_TRANSITION) {
++		if (ind->value =3D=3D value && callsetup)
++			goto callsetup;
++	}
++
++	if (ind->value =3D=3D value)
+ 		return;
+ =
 
-	matthias
+ 	ind->value =3D value;
+ =
+
+ 	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
+-	cs_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALLSETUP, NULL);
+ =
+
+ 	call =3D ind =3D=3D call_ind;
+-	callsetup =3D ind =3D=3D cs_ind;
+ =
+
+ 	/*
+ 	 * When callsetup indicator goes to Incoming and there is an active
+@@ -1218,6 +1223,16 @@ void ofono_emulator_set_indicator(struct ofono_emula=
+tor *em,
+ 			ind->deferred =3D TRUE;
+ 	}
+ =
+
++callsetup:
++	/*
++	 * In case of waiting call becoming an incoming call, call status
++	 * change may not have been done yet, so do nothing
++	 */
++	if (find_call_with_status(em, CALL_STATUS_WAITING) !=3D NULL) {
++		em->flags |=3D EMULATOR_FLAG_WAITING_TRANSITION;
++		return;
++	}
++
+ 	/*
+ 	 * Ring timer should be started when:
+ 	 * - callsetup indicator is set to Incoming and there is no active call
+@@ -1227,17 +1242,12 @@ void ofono_emulator_set_indicator(struct ofono_emul=
+ator *em,
+ 	 * In those cases, a first RING should be sent just after the +CIEV
+ 	 * Ring timer should be stopped for all other values of callsetup
+ 	 */
+-	if (waiting)
+-		return;
+-
+-	/* Call state went from active/held + waiting -> incoming */
+-	if (call && value =3D=3D OFONO_EMULATOR_CALL_INACTIVE &&
+-			cs_ind->value =3D=3D OFONO_EMULATOR_CALLSETUP_INCOMING)
+-		goto start_ring;
+ =
+
+ 	if (!callsetup)
+ 		return;
+ =
+
++	em->flags &=3D ~EMULATOR_FLAG_WAITING_TRANSITION;
++
+ 	if (value !=3D OFONO_EMULATOR_CALLSETUP_INCOMING) {
+ 		if (em->callsetup_source > 0) {
+ 			g_source_remove(em->callsetup_source);
 -- =
 
-Matthias Apitz
-e <guru@unixarea.de> - w http://www.unixarea.de/
-UNIX since V7 on PDP-11, UNIX on mainframe since ESER 1055 (IBM /370)
-UNIX on x86 since SVR4.2 UnixWare 2.1.2, FreeBSD since 2.2.5
+1.7.3.4
 
---===============8289666999443775882==--
+
+--===============1669247011748301612==--
 
