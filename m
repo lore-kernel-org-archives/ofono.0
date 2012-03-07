@@ -1,67 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============6795027695227813296=="
+Content-Type: multipart/mixed; boundary="===============8289666999443775882=="
 MIME-Version: 1.0
-From: Radek Polak <psonek2@seznam.cz>
-Subject: Re: Polling CLCC error handling on Option modem (GTA04)
-Date: Wed, 07 Mar 2012 11:36:24 +0100
-Message-ID: <201203071136.24508.psonek2@seznam.cz>
-In-Reply-To: <4F551365.9000200@gmail.com>
+From: Matthias Apitz <guru@unixarea.de>
+Subject: Re: [Gta04-owner] Polling CLCC error handling on Option modem (GTA04)
+Date: Wed, 07 Mar 2012 10:48:07 +0000
+Message-ID: <20120307104746.GA1221@tiny>
+In-Reply-To: <201203071136.24508.psonek2@seznam.cz>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6795027695227813296==
+--===============8289666999443775882==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Monday 05 March 2012 20:26:29 Denis Kenzior wrote:
+El d=C3=ADa Wednesday, March 07, 2012 a las 11:36:24AM +0100, Radek Polak e=
+scribi=C3=B3:
 
-> You can always try ignoring CME ERROR 100 and re-try the CLCC poll.
-> Maybe the modem is in a transitional period (e.g. call being released)
-> and it can't answer the CLCC properly.  In other words, there's a bug
-> related to timing of call state changes & CLCC implementation in the
-> modem firmware.
+> On Monday 05 March 2012 20:26:29 Denis Kenzior wrote:
+> =
 
-Yes, it is definitely timing bug. Attached is patch that continues CLCC pol=
-ling =
+> > You can always try ignoring CME ERROR 100 and re-try the CLCC poll.
+> > Maybe the modem is in a transitional period (e.g. call being released)
+> > and it can't answer the CLCC properly.  In other words, there's a bug
+> > related to timing of call state changes & CLCC implementation in the
+> > modem firmware.
+> =
 
-even after error assuming that CLCC will start working again. It works fine=
- for =
+> Yes, it is definitely timing bug. Attached is patch that continues CLCC p=
+olling =
 
-me (see log below). It would be nice to get this in ofono git.
+> even after error assuming that CLCC will start working again. It works fi=
+ne for =
 
-ofonod[1188]: App: < \r\n+CLCC: 1,1,4,0,0,"+420608828973",145\r\n\r\nOK\r\n
-ofonod[1188]: App: > AT+CLCC\r
-ofonod[1188]: App: < \r\n+CME ERROR: 100\r\n
-ofonod[1188]: We are polling CLCC and received an error, retrying...
-ofonod[1188]: App: > AT+CLCC\r
-ofonod[1188]: App: < \r\nOK\r\n
-ofonod[1188]: src/voicecall.c:ofono_voicecall_disconnected() Got disconnect=
-ion =
+> me (see log below). It would be nice to get this in ofono git.
+> =
 
-event for id: 1, reason: 2
+> ofonod[1188]: App: < \r\n+CLCC: 1,1,4,0,0,"+420608828973",145\r\n\r\nOK\r=
+\n
+> ofonod[1188]: App: > AT+CLCC\r
+> ofonod[1188]: App: < \r\n+CME ERROR: 100\r\n
+> ofonod[1188]: We are polling CLCC and received an error, retrying...
+> ofonod[1188]: App: > AT+CLCC\r
+> ofonod[1188]: App: < \r\nOK\r\n
+> ofonod[1188]: src/voicecall.c:ofono_voicecall_disconnected() Got disconne=
+ction =
 
+> event for id: 1, reason: 2
 
-Regards
+I'm wondering if this ofonod log has no timestamps in the log lines? Or
+is this something to be configured?
 
-Radek
+	matthias
+-- =
 
---===============6795027695227813296==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="continue_clcc_after_error.patch"
+Matthias Apitz
+e <guru@unixarea.de> - w http://www.unixarea.de/
+UNIX since V7 on PDP-11, UNIX on mainframe since ESER 1055 (IBM /370)
+UNIX on x86 since SVR4.2 UnixWare 2.1.2, FreeBSD since 2.2.5
 
-ZGlmZiAtLWdpdCBhL2RyaXZlcnMvYXRtb2RlbS92b2ljZWNhbGwuYyBiL2RyaXZlcnMvYXRtb2Rl
-bS92b2ljZWNhbGwuYwppbmRleCBkMDcwNTJjLi4zMjRlYTRiIDEwMDY0NAotLS0gYS9kcml2ZXJz
-L2F0bW9kZW0vdm9pY2VjYWxsLmMKKysrIGIvZHJpdmVycy9hdG1vZGVtL3ZvaWNlY2FsbC5jCkBA
-IC0xNDcsOCArMTQ3LDkgQEAgc3RhdGljIHZvaWQgY2xjY19wb2xsX2NiKGdib29sZWFuIG9rLCBH
-QXRSZXN1bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9kYXRhKQogCWdib29sZWFuIHBvbGxfYWdh
-aW4gPSBGQUxTRTsKIAogCWlmICghb2spIHsKLQkJb2Zvbm9fZXJyb3IoIldlIGFyZSBwb2xsaW5n
-IENMQ0MgYW5kIHJlY2VpdmVkIGFuIGVycm9yIik7Ci0JCW9mb25vX2Vycm9yKCJBbGwgYmV0cyBh
-cmUgb2ZmIGZvciBjYWxsIG1hbmFnZW1lbnQiKTsKKwkJb2Zvbm9fZXJyb3IoIldlIGFyZSBwb2xs
-aW5nIENMQ0MgYW5kIHJlY2VpdmVkIGFuIGVycm9yLCByZXRyeWluZy4uLiIpOworCQl2ZC0+Y2xj
-Y19zb3VyY2UgPSBnX3RpbWVvdXRfYWRkKFBPTExfQ0xDQ19JTlRFUlZBTCwKKwkJCQkJCXBvbGxf
-Y2xjYywgdmMpOwogCQlyZXR1cm47CiAJfQogCg==
-
---===============6795027695227813296==--
+--===============8289666999443775882==--
 
