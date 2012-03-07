@@ -1,46 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============7215183598991952906=="
+Content-Type: multipart/mixed; boundary="===============2213577835168939996=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Radek Polak <psonek2@seznam.cz>
 Subject: Re: Polling CLCC error handling on Option modem (GTA04)
-Date: Tue, 06 Mar 2012 10:13:58 -0600
-Message-ID: <4F5637C6.6000708@gmail.com>
-In-Reply-To: <201203071136.24508.psonek2@seznam.cz>
+Date: Wed, 07 Mar 2012 19:19:02 +0000
+Message-ID: <201203071919.02494.psonek2@seznam.cz>
+In-Reply-To: <4F5637C6.6000708@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7215183598991952906==
+--===============2213577835168939996==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Radek,
+On Tuesday 06 March 2012 16:13:58 Denis Kenzior wrote:
 
-On 03/07/2012 04:36 AM, Radek Polak wrote:
-> On Monday 05 March 2012 20:26:29 Denis Kenzior wrote:
-> =
+> I pushed my own version of this patch that is a little bit more
+> paranoid.  git show ebac438d for more details.
 
->> You can always try ignoring CME ERROR 100 and re-try the CLCC poll.
->> Maybe the modem is in a transitional period (e.g. call being released)
->> and it can't answer the CLCC properly.  In other words, there's a bug
->> related to timing of call state changes & CLCC implementation in the
->> modem firmware.
-> =
+Great, thanks! It works nice:
 
-> Yes, it is definitely timing bug. Attached is patch that continues CLCC p=
-olling =
+ofonod[1217]: App: < \r\n+CLCC: 1,1,4,0,0,"+420608828973",145\r\n\r\nOK\r\n
+ofonod[1217]: App: < \r\n_OSIGQ: 17,0\r\n
+ofonod[1217]: src/network.c:ofono_netreg_strength_notify() strength 54
+ofonod[1217]: App: > AT+CLCC\r
+ofonod[1217]: App: < \r\n+CME ERROR: 100\r\n
+ofonod[1217]: App: > AT+CLCC\r
+ofonod[1217]: App: < \r\nOK\r\n
+ofonod[1217]: src/voicecall.c:ofono_voicecall_disconnected() Got disconnect=
+ion =
 
-> even after error assuming that CLCC will start working again. It works fi=
-ne for =
+event for id: 1, reason: 2
+ofonod[1217]: App: > AT+CLCC\r
+ofonod[1217]: App: < \r\nOK\r\n
 
-> me (see log below). It would be nice to get this in ofono git.
-> =
+Regards
 
+Radek
 
-I pushed my own version of this patch that is a little bit more
-paranoid.  git show ebac438d for more details.
-
-Regards,
--Denis
-
---===============7215183598991952906==--
+--===============2213577835168939996==--
 
