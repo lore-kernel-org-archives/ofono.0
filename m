@@ -1,39 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============5956007263625337706=="
+Content-Type: multipart/mixed; boundary="===============5540157189812522036=="
 MIME-Version: 1.0
-From: Neil Jerram <neil@ossau.homelinux.net>
-Subject: Re: [Gta04-owner] Polling CLCC error handling on Option modem (GTA04)
-Date: Wed, 07 Mar 2012 19:06:23 +0000
-Message-ID: <87fwdk8c40.fsf@neil-laptop.ossau.uklinux.net>
-In-Reply-To: <20120307104746.GA1221@tiny>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH] emulator: fix notify_ring
+Date: Thu, 08 Mar 2012 16:02:30 +0100
+Message-ID: <1331218950-6344-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5956007263625337706==
+--===============5540157189812522036==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Matthias Apitz <guru@unixarea.de> writes:
+notify_ring should not use information from waiting call
+---
+ src/emulator.c |    7 -------
+ 1 files changed, 0 insertions(+), 7 deletions(-)
 
->> ofonod[1188]: App: < \r\n+CLCC: 1,1,4,0,0,"+420608828973",145\r\n\r\nOK\=
-r\n
->> ofonod[1188]: App: > AT+CLCC\r
->> ofonod[1188]: App: < \r\n+CME ERROR: 100\r\n
->> ofonod[1188]: We are polling CLCC and received an error, retrying...
->> ofonod[1188]: App: > AT+CLCC\r
->> ofonod[1188]: App: < \r\nOK\r\n
->> ofonod[1188]: src/voicecall.c:ofono_voicecall_disconnected() Got disconn=
-ection =
+diff --git a/src/emulator.c b/src/emulator.c
+index 262e782..0f1ceca 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -421,13 +421,6 @@ static gboolean notify_ring(void *user_data)
+ =
 
->> event for id: 1, reason: 2
->
-> I'm wondering if this ofonod log has no timestamps in the log lines? Or
-> is this something to be configured?
+ 	c =3D find_call_with_status(em, CALL_STATUS_INCOMING);
+ =
 
-oFono does its logging by calling syslog, so maybe the absence of
-timestamps is to do with how syslog is configured on Radek's phone.
+-	/*
+-	 * In case of waiting call becoming an incoming call, call status
+-	 * change may not have been done yet, so try to find waiting call too
+-	 */
+-	if (c =3D=3D NULL)
+-		c =3D find_call_with_status(em, CALL_STATUS_WAITING);
+-
+ 	if (c =3D=3D NULL)
+ 		return TRUE;
+ =
 
-      Neil
+-- =
 
---===============5956007263625337706==--
+1.7.1
+
+
+--===============5540157189812522036==--
 
