@@ -1,101 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============3958886064874019787=="
+Content-Type: multipart/mixed; boundary="===============3943006043743930153=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 1/4] voicecall: Improve transitions check
-Date: Fri, 09 Mar 2012 16:26:52 +0100
-Message-ID: <1331306815-13424-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: [PATCH 3/4] emulator: Force indicator event implementation
+Date: Fri, 09 Mar 2012 16:26:54 +0100
+Message-ID: <1331306815-13424-3-git-send-email-frederic.danis@linux.intel.com>
+In-Reply-To: <1331306815-13424-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3958886064874019787==
+--===============3943006043743930153==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Indicators should not be updated if:
-- multiple separate calls are active at same time
-- a conf call and a call are active at same time
-- multiple separate calls are held at same time
-- a conf call and a call are held at same time
-- a conf call has call in active and held state
 ---
- src/voicecall.c |   29 +++++++++++++++++------------
- 1 files changed, 17 insertions(+), 12 deletions(-)
+ src/emulator.c |   18 ++++++++++++++++--
+ 1 files changed, 16 insertions(+), 2 deletions(-)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index c128227..dc4fdf5 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -779,6 +779,8 @@ static void notify_emulator_call_status(struct ofono_vo=
-icecall *vc)
- 	unsigned int non_mpty =3D 0;
- 	gboolean multiparty =3D FALSE;
- 	gboolean held =3D FALSE;
-+	unsigned int non_mpty_held =3D 0;
-+	gboolean multiparty_held =3D FALSE;
- 	gboolean incoming =3D FALSE;
- 	gboolean dialing =3D FALSE;
- 	gboolean alerting =3D FALSE;
-@@ -805,6 +807,12 @@ static void notify_emulator_call_status(struct ofono_v=
-oicecall *vc)
+diff --git a/src/emulator.c b/src/emulator.c
+index 0f1ceca..34329f0 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -62,6 +62,7 @@ struct indicator {
+ 	gboolean deferred;
+ 	gboolean active;
+ 	gboolean mandatory;
++	gboolean forced;
+ };
  =
 
- 		case CALL_STATUS_HELD:
- 			held =3D TRUE;
-+			if (g_slist_find_custom(vc->multiparty_list,
-+						GINT_TO_POINTER(v->call->id),
-+						call_compare_by_id))
-+				multiparty_held =3D TRUE;
-+			else
-+				non_mpty_held++;
- 			break;
+ static void emulator_debug(const char *str, void *data)
+@@ -1181,11 +1182,12 @@ void ofono_emulator_set_indicator(struct ofono_emul=
+ator *em,
  =
 
- 		case CALL_STATUS_DIALING:
-@@ -838,6 +846,15 @@ static void notify_emulator_call_status(struct ofono_v=
-oicecall *vc)
- 	if (waiting && (held =3D=3D FALSE && call =3D=3D FALSE))
+ 	ind =3D find_indicator(em, name, &i);
+ =
+
+-	if (ind =3D=3D NULL || ind->value =3D=3D value || value < ind->min
+-			|| value > ind->max)
++	if (ind =3D=3D NULL || (ind->value =3D=3D value && !ind->forced)
++			|| value < ind->min || value > ind->max)
  		return;
  =
 
-+	if (non_mpty > 1 || (non_mpty && multiparty))
-+		return;
-+
-+	if (non_mpty_held > 1 || (non_mpty_held && multiparty_held))
-+		return;
-+
-+	if (multiparty && multiparty_held)
-+		return;
-+
- 	data.status =3D call || held ? OFONO_EMULATOR_CALL_ACTIVE :
- 					OFONO_EMULATOR_CALL_INACTIVE;
+ 	ind->value =3D value;
++	ind->forced =3D FALSE;
  =
 
-@@ -864,18 +881,6 @@ static void notify_emulator_call_status(struct ofono_v=
-oicecall *vc)
- 	if (held)
- 		data.status =3D call ? OFONO_EMULATOR_CALLHELD_MULTIPLE :
- 					OFONO_EMULATOR_CALLHELD_ON_HOLD;
--	else if (non_mpty > 1 || (non_mpty && multiparty))
--		/*
--		 * After call swap, it is possible that all calls move
--		 * temporarily to active state (depending on call state update
--		 * order), generating an update of callheld indicator to 0.
--		 * This will fail PTS test TP/TWC/BV-03-I.
--		 *
--		 * So, in case of multiple active calls, or an active call with
--		 * an active mutiparty call, force update of callheld indicator
--		 * to 2 (intermediate state allowed).
--		 */
--		data.status =3D OFONO_EMULATOR_CALLHELD_ON_HOLD;
- 	else
- 		data.status =3D OFONO_EMULATOR_CALLHELD_NONE;
- =
-
+ 	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
+ 	cs_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALLSETUP, NULL);
+@@ -1245,3 +1247,15 @@ start_ring:
+ 	em->callsetup_source =3D g_timeout_add_seconds(RING_TIMEOUT,
+ 							notify_ring, em);
+ }
++
++void ofono_emulator_indicator_set_forced(struct ofono_emulator *em,
++					const char *name)
++{
++	struct indicator *ind;
++
++	ind =3D find_indicator(em, name, NULL);
++	if (ind =3D=3D NULL)
++		return;
++
++	ind->forced =3D TRUE;
++}
 -- =
 
 1.7.1
 
 
---===============3958886064874019787==--
+--===============3943006043743930153==--
 
