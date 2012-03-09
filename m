@@ -1,89 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============0376103352564877630=="
+Content-Type: multipart/mixed; boundary="===============3866619478939167740=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH 4/4] voicecall: Force callheld update after calls swap
-Date: Fri, 09 Mar 2012 16:26:55 +0100
-Message-ID: <1331306815-13424-4-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1331306815-13424-1-git-send-email-frederic.danis@linux.intel.com>
+From: Mike <puffy.taco@gmail.com>
+Subject: Re: obtain HFP disconnection event reason code
+Date: Fri, 09 Mar 2012 17:30:57 -0600
+Message-ID: <CAB7rCTimXWKSzpZCGaex=DKywnM6HKYZXC+GNHXNgAC-XzQ91A@mail.gmail.com>
+In-Reply-To: <CAB7rCThRVZmGensz_bv6rFFS5Pf_BvOiVW4dFjmC6KkoVLgvXQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0376103352564877630==
+--===============3866619478939167740==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-In HFP spec, a callheld indicator update should be sent after swapping
-calls, even if callheld value has not changed.
----
- src/voicecall.c |   17 +++++++++++++++++
- 1 files changed, 17 insertions(+), 0 deletions(-)
+On Thu, Mar 8, 2012 at 6:09 PM, Mike <puffy.taco@gmail.com> wrote:
+> In order to act like a better headset in the HFP HF role, I am in need
+> of the reason code from the disconnection event. =C2=A0This is so that I
+> can detect when a disconnect occurs as a result of the units moving
+> out of range of each other, rather than an intentional disconnect. =C2=A0=
+In
+> the event of a disconnection based on connection loss, I can then
+> periodically re-attempt the connection. =C2=A0I have not seen any D-Bus
+> messages that would indicate such an event.
+>
+> Any ideas on how to obtain this? =C2=A0I can see that in the hciops versi=
+on
+> of bluez, the reason code makes it into bluetoothd just because the
+> entire disconnect event is transferred. =C2=A0This is not the case in the
+> mgmtops version. =C2=A0It looks like the reason code also hops along the
+> L2CAP path, but I haven't yet tracked down where it ends up. =C2=A0I think
+> ideally it would end up somewhere that Ofono would be able to obtain
+> it.
+>
+> Thanks,
+> Mike
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index dc4fdf5..c3fbc7b 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -746,6 +746,16 @@ static void voicecall_emit_multiparty(struct voicecall=
- *call, gboolean mpty)
- 						&val);
- }
- =
+Alright, looks like the value shows up if I query SO_ERROR in Ofono
+when I get POLLERR/POLLHUP in the RFCOMM socket's poll routine.  That
+leaves it as an Ofono implementation task then; the bluez side is good
+to go.
 
-+static void emulator_indicator_set_forced(struct ofono_voicecall *vc,
-+							const char *name)
-+{
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
-+	struct ofono_emulator *em;
-+
-+	em =3D __ofono_atom_find(OFONO_ATOM_TYPE_EMULATOR_HFP, modem);
-+	ofono_emulator_indicator_set_forced(em, name);
-+}
-+
- static void emulator_call_status_cb(struct ofono_atom *atom, void *data)
- {
- 	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
-@@ -1621,6 +1631,8 @@ static DBusMessage *manager_swap_without_accept(DBusC=
-onnection *conn,
- =
+I'll keep playing with it.
 
- 	vc->pending =3D dbus_message_ref(msg);
- =
+Mike
 
-+	emulator_indicator_set_forced(vc, OFONO_EMULATOR_IND_CALLHELD);
-+
- 	vc->driver->swap_without_accept(vc, generic_callback, vc);
- =
-
- 	return NULL;
-@@ -1646,6 +1658,8 @@ static DBusMessage *manager_swap_calls(DBusConnection=
- *conn,
- =
-
- 	vc->pending =3D dbus_message_ref(msg);
- =
-
-+	emulator_indicator_set_forced(vc, OFONO_EMULATOR_IND_CALLHELD);
-+
- 	vc->driver->hold_all_active(vc, generic_callback, vc);
- =
-
- 	return NULL;
-@@ -3080,6 +3094,9 @@ static void emulator_chld_cb(struct ofono_emulator *e=
-m,
- 			if (vc->driver->hold_all_active =3D=3D NULL)
- 				goto fail;
- =
-
-+			ofono_emulator_indicator_set_forced(em,
-+						OFONO_EMULATOR_IND_CALLHELD);
-+
- 			vc->pending_em =3D em;
- 			vc->driver->hold_all_active(vc,
- 					emulator_generic_cb, vc);
--- =
-
-1.7.1
-
-
---===============0376103352564877630==--
+--===============3866619478939167740==--
 
