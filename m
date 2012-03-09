@@ -1,39 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============7955963251853290702=="
+Content-Type: multipart/mixed; boundary="===============3594781319004050424=="
 MIME-Version: 1.0
-From: Radek Polak <psonek2@seznam.cz>
-Subject: Re: Polling CLCC error handling on Option modem (GTA04)
-Date: Thu, 08 Mar 2012 23:47:00 +0000
-Message-ID: <201203082347.01005.psonek2@seznam.cz>
-In-Reply-To: <4F592AB3.2040206@eclis.ch>
+From: Mike <puffy.taco@gmail.com>
+Subject: obtain HFP disconnection event reason code
+Date: Thu, 08 Mar 2012 18:09:38 -0600
+Message-ID: <CAB7rCThRVZmGensz_bv6rFFS5Pf_BvOiVW4dFjmC6KkoVLgvXQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7955963251853290702==
+--===============3594781319004050424==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thursday 08 March 2012 21:54:59 Jean-Christian de Rivaz wrote:
+In order to act like a better headset in the HFP HF role, I am in need
+of the reason code from the disconnection event.  This is so that I
+can detect when a disconnect occurs as a result of the units moving
+out of range of each other, rather than an intentional disconnect.  In
+the event of a disconnection based on connection loss, I can then
+periodically re-attempt the connection.  I have not seen any D-Bus
+messages that would indicate such an event.
 
-> I observed on a SIMCOM modem that show the same issue, that the CLCC
-> error is temporary. It seem to occurs when the CLCC command is proceeded
-> by the modem at the same time that something change in the calling
-> state. The next CLCC command will return the expected result. Can you
-> observe that same behavior on your modem ?
+Any ideas on how to obtain this?  I can see that in the hciops version
+of bluez, the reason code makes it into bluetoothd just because the
+entire disconnect event is transferred.  This is not the case in the
+mgmtops version.  It looks like the reason code also hops along the
+L2CAP path, but I haven't yet tracked down where it ends up.  I think
+ideally it would end up somewhere that Ofono would be able to obtain
+it.
 
-Hi,
-yes i do. In fact the workaround is now in oFono GIT [1].
+Thanks,
+Mike
 
-Regards
-
-Radek
-
-[1] =
-
-http://git.kernel.org/?p=3Dnetwork/ofono/ofono.git;a=3Dcommitdiff;h=3Debac4=
-38d9325c34bfe22322c6234e25c86e125d7
-
-
-
---===============7955963251853290702==--
+--===============3594781319004050424==--
 
