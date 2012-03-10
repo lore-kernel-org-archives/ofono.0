@@ -1,50 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============1194784937950624224=="
+Content-Type: multipart/mixed; boundary="===============6495231843558697465=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Huawei voice output port issue + patch
-Date: Fri, 09 Mar 2012 18:26:28 -0800
-Message-ID: <1331346388.14217.36.camel@aeonflux>
-In-Reply-To: <4F5A9723.5000809@jlranta.com>
+From: Jarkko Lehtoranta <devel@jlranta.com>
+Subject: [PATCH] huawei: fix AT^DDSETEX=2 timing
+Date: Sat, 10 Mar 2012 14:22:27 +0200
+Message-ID: <4F5B4783.6000303@jlranta.com>
+In-Reply-To: <1331346388.14217.36.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1194784937950624224==
+--===============6495231843558697465==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jarkko,
-
-> Voice output serial port is enabled on some Huawei models (e.g. E169) =
-
-> without problems, but for example on E173u-2 it is never enabled during =
-
-> an incoming call. There might also be other Huawei models having the =
-
-> same issue.
-> =
-
-> I traced the issue down to "^DDSETEX" AT command, which is used to =
-
-> notify the device to start streaming audio. It seems that Ofono sends =
-
-> this command too early on incoming calls. The command should always be =
-
-> sent *after* the dial "D" or answer "A" command. The patch fixes this =
-
-> behavior and afterwards voice will also work on E173u-2.
-> =
-
-> Bug: https://bugs.meego.com/show_bug.cgi?id=3D25004
-> Patch: https://bugs.meego.com/attachment.cgi?id=3D9702
-
-inline patches please. I am not digging patches out of Bugzilla.
-
-Regards
-
-Marcel
+On 03/10/2012 04:26 AM, Marcel Holtmann wrote:
+> Hi Jarkko,
+>
+> inline patches please. I am not digging patches out of Bugzilla.
+>
+> Regards
+>
+> Marcel
+Here you go, patch for the Huawei voice output port issue.
 
 
 
---===============1194784937950624224==--
+--===============6495231843558697465==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="ofono_fix_huawei_ddsetex.patch"
+
+PkZyb20gZGIxM2RkMWRjZGFkZWZjOTMyNWZkMTU5YWViZWYxMGFjNGIzODhjNiBNb24gU2VwIDE3
+IDAwOjAwOjAwIDIwMDEKRnJvbTogSmFya2tvIExlaHRvcmFudGEgPGRldmVsQGpscmFudGEuY29t
+PgpEYXRlOiBGcmksIDkgTWFyIDIwMTIgMTk6NTE6MjkgKzAyMDAKU3ViamVjdDogW1BBVENIXSBo
+dWF3ZWk6IGZpeCBBVF5ERFNFVEVYPTIgdGltaW5nCgotLS0KIGRyaXZlcnMvaHVhd2VpbW9kZW0v
+dm9pY2VjYWxsLmMgfCAgIDEyICsrKysrKysrKy0tLQogMSBmaWxlcyBjaGFuZ2VkLCA5IGluc2Vy
+dGlvbnMoKyksIDMgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvZHJpdmVycy9odWF3ZWltb2Rl
+bS92b2ljZWNhbGwuYyBiL2RyaXZlcnMvaHVhd2VpbW9kZW0vdm9pY2VjYWxsLmMKaW5kZXggMWVh
+MjYxMy4uMzk1MmI5NSAxMDA2NDQKLS0tIGEvZHJpdmVycy9odWF3ZWltb2RlbS92b2ljZWNhbGwu
+YworKysgYi9kcml2ZXJzL2h1YXdlaW1vZGVtL3ZvaWNlY2FsbC5jCkBAIC03OCw5ICs3OCw2IEBA
+IHN0YXRpYyBzdHJ1Y3Qgb2Zvbm9fY2FsbCAqY3JlYXRlX2NhbGwoc3RydWN0IG9mb25vX3ZvaWNl
+Y2FsbCAqdmMsIGludCB0eXBlLAogCiAJZC0+Y2FsbHMgPSBnX3NsaXN0X2luc2VydF9zb3J0ZWQo
+ZC0+Y2FsbHMsIGNhbGwsIGF0X3V0aWxfY2FsbF9jb21wYXJlKTsKIAotCWdfYXRfY2hhdF9zZW5k
+KGQtPmNoYXQsICJBVF5ERFNFVEVYPTIiLCBub25lX3ByZWZpeCwKLQkJCQkJCU5VTEwsIE5VTEws
+IE5VTEwpOwotCiAJcmV0dXJuIGNhbGw7CiB9CiAKQEAgLTExNyw2ICsxMTQsNyBAQCBzdGF0aWMg
+dm9pZCBodWF3ZWlfZGlhbChzdHJ1Y3Qgb2Zvbm9fdm9pY2VjYWxsICp2YywKIAkJCQlvZm9ub192
+b2ljZWNhbGxfY2JfdCBjYiwgdm9pZCAqZGF0YSkKIHsKIAljaGFyIGJ1ZlsyNTZdOworCXN0cnVj
+dCB2b2ljZWNhbGxfZGF0YSAqdmQgPSBvZm9ub192b2ljZWNhbGxfZ2V0X2RhdGEodmMpOwogCiAJ
+aWYgKHBoLT50eXBlID09IDE0NSkKIAkJc25wcmludGYoYnVmLCBzaXplb2YoYnVmKSwgIkFURCsl
+cyIsIHBoLT5udW1iZXIpOwpAQCAtMTM3LDEyICsxMzUsMjAgQEAgc3RhdGljIHZvaWQgaHVhd2Vp
+X2RpYWwoc3RydWN0IG9mb25vX3ZvaWNlY2FsbCAqdmMsCiAJc3RyY2F0KGJ1ZiwgIjsiKTsKIAog
+CWh1YXdlaV90ZW1wbGF0ZSh2YywgYnVmLCBjYiwgZGF0YSk7CisJCisJZ19hdF9jaGF0X3NlbmQo
+dmQtPmNoYXQsICJBVF5ERFNFVEVYPTIiLCBub25lX3ByZWZpeCwKKwkJCQkJCU5VTEwsIE5VTEws
+IE5VTEwpOwogfQogCiBzdGF0aWMgdm9pZCBodWF3ZWlfYW5zd2VyKHN0cnVjdCBvZm9ub192b2lj
+ZWNhbGwgKnZjLAogCQkJCW9mb25vX3ZvaWNlY2FsbF9jYl90IGNiLCB2b2lkICpkYXRhKQogewor
+CXN0cnVjdCB2b2ljZWNhbGxfZGF0YSAqdmQgPSBvZm9ub192b2ljZWNhbGxfZ2V0X2RhdGEodmMp
+OworCQogCWh1YXdlaV90ZW1wbGF0ZSh2YywgIkFUQSIsIGNiLCBkYXRhKTsKKwkKKwlnX2F0X2No
+YXRfc2VuZCh2ZC0+Y2hhdCwgIkFUXkREU0VURVg9MiIsIG5vbmVfcHJlZml4LAorCQkJCQkJTlVM
+TCwgTlVMTCwgTlVMTCk7CiB9CiAKIHN0YXRpYyB2b2lkIGh1YXdlaV9oYW5ndXAoc3RydWN0IG9m
+b25vX3ZvaWNlY2FsbCAqdmMsCi0tIAoxLjcuMQoK
+
+--===============6495231843558697465==--
 
