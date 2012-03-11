@@ -1,83 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8386477026174849289=="
+Content-Type: multipart/mixed; boundary="===============5188719741914010522=="
 MIME-Version: 1.0
-From: devel@jlranta.com
-Subject: [PATCH] huawei: fix AT^DDSETEX=2 timing
-Date: Sat, 10 Mar 2012 18:46:13 +0200
-Message-ID: <1331397973-28076-2-git-send-email-devel@jlranta.com>
-In-Reply-To: <1331397973-28076-1-git-send-email-devel@jlranta.com>
+From: r.r.zaripov@gmail.com
+Subject: [PATCH] sim900: Add ussd and voice call support
+Date: Sun, 11 Mar 2012 10:08:38 +0400
+Message-ID: <1331446118-13750-1-git-send-email-r.r.zaripov@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8386477026174849289==
+--===============5188719741914010522==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Jarkko Lehtoranta <devel@jlranta.com>
+From: Renat Zaripov <r.r.zaripov@gmail.com>
 
 ---
- drivers/huaweimodem/voicecall.c |   12 +++++++++---
- 1 file changed, 9 insertions(+), 3 deletions(-)
+ plugins/sim900.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/huaweimodem/voicecall.c b/drivers/huaweimodem/voicecal=
-l.c
-index 1ea2613..3952b95 100644
---- a/drivers/huaweimodem/voicecall.c
-+++ b/drivers/huaweimodem/voicecall.c
-@@ -78,9 +78,6 @@ static struct ofono_call *create_call(struct ofono_voicec=
-all *vc, int type,
+diff --git a/plugins/sim900.c b/plugins/sim900.c
+index 1589a33..496faa6 100644
+--- a/plugins/sim900.c
++++ b/plugins/sim900.c
+@@ -43,6 +43,7 @@
+ #include <ofono/phonebook.h>
+ #include <ofono/history.h>
+ #include <ofono/log.h>
++#include <ofono/voicecall.h>
  =
 
- 	d->calls =3D g_slist_insert_sorted(d->calls, call, at_util_call_compare);
+ #include <drivers/atmodem/vendor.h>
  =
 
--	g_at_chat_send(d->chat, "AT^DDSETEX=3D2", none_prefix,
--						NULL, NULL, NULL);
--
- 	return call;
+@@ -235,6 +236,8 @@ static void sim900_post_online(struct ofono_modem *mode=
+m)
+ 	DBG("%p", modem);
+ =
+
+ 	ofono_netreg_create(modem, OFONO_VENDOR_SIMCOM, "atmodem", data->modem);
++	ofono_ussd_create(modem, 0, "atmodem", data->modem);
++	ofono_voicecall_create(modem, 0, "atmodem", data->modem);
  }
  =
 
-@@ -117,6 +114,7 @@ static void huawei_dial(struct ofono_voicecall *vc,
- 				ofono_voicecall_cb_t cb, void *data)
- {
- 	char buf[256];
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
- =
-
- 	if (ph->type =3D=3D 145)
- 		snprintf(buf, sizeof(buf), "ATD+%s", ph->number);
-@@ -137,12 +135,20 @@ static void huawei_dial(struct ofono_voicecall *vc,
- 	strcat(buf, ";");
- =
-
- 	huawei_template(vc, buf, cb, data);
-+	=
-
-+	g_at_chat_send(vd->chat, "AT^DDSETEX=3D2", none_prefix,
-+						NULL, NULL, NULL);
- }
- =
-
- static void huawei_answer(struct ofono_voicecall *vc,
- 				ofono_voicecall_cb_t cb, void *data)
- {
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-+	=
-
- 	huawei_template(vc, "ATA", cb, data);
-+	=
-
-+	g_at_chat_send(vd->chat, "AT^DDSETEX=3D2", none_prefix,
-+						NULL, NULL, NULL);
- }
- =
-
- static void huawei_hangup(struct ofono_voicecall *vc,
+ static struct ofono_modem_driver sim900_driver =3D {
 -- =
 
-1.7.9.3
+1.7.7.3
 
 
---===============8386477026174849289==--
+--===============5188719741914010522==--
 
