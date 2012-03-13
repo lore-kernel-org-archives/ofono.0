@@ -1,53 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============5188719741914010522=="
+Content-Type: multipart/mixed; boundary="===============4663911559132190325=="
 MIME-Version: 1.0
-From: r.r.zaripov@gmail.com
-Subject: [PATCH] sim900: Add ussd and voice call support
-Date: Sun, 11 Mar 2012 10:08:38 +0400
-Message-ID: <1331446118-13750-1-git-send-email-r.r.zaripov@gmail.com>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv3 00/12] Call forwarding state handling change
+Date: Tue, 13 Mar 2012 15:46:21 +0200
+Message-ID: <1331646393-5249-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5188719741914010522==
+--===============4663911559132190325==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Renat Zaripov <r.r.zaripov@gmail.com>
+Hello,
 
----
- plugins/sim900.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+Please find the changes in order to correct call forwarding states.
 
-diff --git a/plugins/sim900.c b/plugins/sim900.c
-index 1589a33..496faa6 100644
---- a/plugins/sim900.c
-+++ b/plugins/sim900.c
-@@ -43,6 +43,7 @@
- #include <ofono/phonebook.h>
- #include <ofono/history.h>
- #include <ofono/log.h>
-+#include <ofono/voicecall.h>
- =
+Changes from v2:
 
- #include <drivers/atmodem/vendor.h>
- =
+- Re-run conditional queries on cfu removal and mark cached.
+- Handle the caching properly on supplementary services path
+  unconditional/all/all conditional cfs modifications.
 
-@@ -235,6 +236,8 @@ static void sim900_post_online(struct ofono_modem *mode=
-m)
- 	DBG("%p", modem);
- =
+Regards,
+Oleg
 
- 	ofono_netreg_create(modem, OFONO_VENDOR_SIMCOM, "atmodem", data->modem);
-+	ofono_ussd_create(modem, 0, "atmodem", data->modem);
-+	ofono_voicecall_create(modem, 0, "atmodem", data->modem);
- }
- =
+Oleg Zhurakivskyy (12):
+  call-forwarding: Remove cf_list_clear()
+  call-forwarding: Inline get_query_next_cf_cond()
+  call-forwarding: Refactor cf_condition_find_with_cls() slightly
+  call-forwarding: Refactor cf_find_unconditional()
+  call-forwarding: Minor cleanup of set_query_cf_callback
+  call-forwarding: Don't run conditional queries if cfu is active
+  call-forwarding: Re-run conditional queries on cfu removal
+  call-forwarding: Toggle the cached flag on CFU changes
+  call-forwarding: Cache cfs on CFU removal
+  call-forwarding: Re-run ss path cfs queries on cfu changes
+  call-forwarding: Cache cfs on all/all conditional removal
+  TODO: Remove completed call forwarding state task
 
- static struct ofono_modem_driver sim900_driver =3D {
+ TODO                  |   17 ----
+ src/call-forwarding.c |  237 +++++++++++++++++++++------------------------=
+----
+ 2 files changed, 100 insertions(+), 154 deletions(-)
+
 -- =
 
-1.7.7.3
+1.7.5.4
 
 
---===============5188719741914010522==--
+--===============4663911559132190325==--
 
