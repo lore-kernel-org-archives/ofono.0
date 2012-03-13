@@ -1,53 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============4663911559132190325=="
+Content-Type: multipart/mixed; boundary="===============8203047104396222308=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv3 00/12] Call forwarding state handling change
-Date: Tue, 13 Mar 2012 15:46:21 +0200
-Message-ID: <1331646393-5249-1-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv3 01/12] call-forwarding: Remove cf_list_clear()
+Date: Tue, 13 Mar 2012 15:46:22 +0200
+Message-ID: <1331646393-5249-2-git-send-email-oleg.zhurakivskyy@intel.com>
+In-Reply-To: <1331646393-5249-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4663911559132190325==
+--===============8203047104396222308==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Use g_slist_free_full() instead.
+---
+ src/call-forwarding.c |   14 ++------------
+ 1 files changed, 2 insertions(+), 12 deletions(-)
 
-Please find the changes in order to correct call forwarding states.
+diff --git a/src/call-forwarding.c b/src/call-forwarding.c
+index 864be1b..0857362 100644
+--- a/src/call-forwarding.c
++++ b/src/call-forwarding.c
+@@ -183,22 +183,12 @@ static GSList *cf_cond_list_create(int total,
+ 	return l;
+ }
+ =
 
-Changes from v2:
+-static inline void cf_list_clear(GSList *cf_list)
+-{
+-	GSList *l;
+-
+-	for (l =3D cf_list; l; l =3D l->next)
+-		g_free(l->data);
+-
+-	g_slist_free(cf_list);
+-}
+-
+ static inline void cf_clear_all(struct ofono_call_forwarding *cf)
+ {
+ 	int i;
+ =
 
-- Re-run conditional queries on cfu removal and mark cached.
-- Handle the caching properly on supplementary services path
-  unconditional/all/all conditional cfs modifications.
+ 	for (i =3D 0; i < 4; i++) {
+-		cf_list_clear(cf->cf_conditions[i]);
++		g_slist_free_full(cf->cf_conditions[i], g_free);
+ 		cf->cf_conditions[i] =3D NULL;
+ 	}
+ }
+@@ -422,7 +412,7 @@ static void set_new_cond_list(struct ofono_call_forward=
+ing *cf,
+ 						&timeout);
+ 	}
+ =
 
-Regards,
-Oleg
+-	cf_list_clear(old);
++	g_slist_free_full(old, g_free);
+ 	cf->cf_conditions[type] =3D list;
+ =
 
-Oleg Zhurakivskyy (12):
-  call-forwarding: Remove cf_list_clear()
-  call-forwarding: Inline get_query_next_cf_cond()
-  call-forwarding: Refactor cf_condition_find_with_cls() slightly
-  call-forwarding: Refactor cf_find_unconditional()
-  call-forwarding: Minor cleanup of set_query_cf_callback
-  call-forwarding: Don't run conditional queries if cfu is active
-  call-forwarding: Re-run conditional queries on cfu removal
-  call-forwarding: Toggle the cached flag on CFU changes
-  call-forwarding: Cache cfs on CFU removal
-  call-forwarding: Re-run ss path cfs queries on cfu changes
-  call-forwarding: Cache cfs on all/all conditional removal
-  TODO: Remove completed call forwarding state task
-
- TODO                  |   17 ----
- src/call-forwarding.c |  237 +++++++++++++++++++++------------------------=
-----
- 2 files changed, 100 insertions(+), 154 deletions(-)
-
+ 	if (update_sim =3D=3D TRUE)
 -- =
 
 1.7.5.4
 
 
---===============4663911559132190325==--
+--===============8203047104396222308==--
 
