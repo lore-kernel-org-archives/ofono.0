@@ -1,24 +1,23 @@
-Content-Type: multipart/mixed; boundary="===============6049446626285657786=="
+Content-Type: multipart/mixed; boundary="===============7814401862735154481=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/1] service: mms_request_destroy shouldn't free msg
-Date: Tue, 13 Mar 2012 10:36:13 -0700
-Message-ID: <1331660173.14217.95.camel@aeonflux>
-In-Reply-To: <1331304703-25244-2-git-send-email-sebastien.bianti@linux.intel.com>
+Subject: Re: [PATCH 1/1] TODO: remove completed tasks
+Date: Tue, 13 Mar 2012 10:37:17 -0700
+Message-ID: <1331660237.14217.96.camel@aeonflux>
+In-Reply-To: <1331657847-2658-2-git-send-email-sebastien.bianti@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6049446626285657786==
+--===============7814401862735154481==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Sebastien,
 
-> mms_message is referenced in the hash table mms_service->messages
 > ---
->  src/service.c |    7 ++++---
->  1 files changed, 4 insertions(+), 3 deletions(-)
+>  TODO |   59 -----------------------------------------------------------
+>  1 files changed, 0 insertions(+), 59 deletions(-)
 
 patch has been applied.
 
@@ -28,5 +27,5 @@ Marcel
 
 
 
---===============6049446626285657786==--
+--===============7814401862735154481==--
 
