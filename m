@@ -1,55 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============7552124394295362934=="
+Content-Type: multipart/mixed; boundary="===============1260602885756211099=="
 MIME-Version: 1.0
-From: Frederic Danis <frederic.danis@linux.intel.com>
-Subject: Re: [PATCH] phonesim: Fix AT+CHLD=1x
-Date: Wed, 14 Mar 2012 12:39:33 +0100
-Message-ID: <4F608375.3040503@linux.intel.com>
-In-Reply-To: <4F6004B7.8050608@gmail.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH v2 1/3] emulator: Add API to force indicator event
+Date: Wed, 14 Mar 2012 17:00:51 +0100
+Message-ID: <1331740853-3994-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7552124394295362934==
+--===============1260602885756211099==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+For AT+CHLD=3D2, +CIEV unsollicited event for callheld should be sent even
+if it does not change
+---
+ include/emulator.h |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-Le 14/03/2012 03:38, Denis Kenzior a =C3=A9crit :
-> Hi Fr=C3=A9d=C3=A9ric,
->
-> On 03/13/2012 09:33 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
->> AT+CHLD=3D1x should only hangup active call
->> ---
->>   src/callmanager.cpp |   38 ++++++++++++++++++++++++--------------
->>   1 files changed, 24 insertions(+), 14 deletions(-)
->>
->
-> What are you trying to fix here?  Phonesim models the behavior of an
-> 'ideal' modem which can hangup any call using release_specific.  Plenty
-> of modems exhibit this behavior via vendor specific AT commands, so if
-> this is related to HFP emulation then we probably need to do something el=
-se.
->
-> Regards,
-> -Denis
->
+diff --git a/include/emulator.h b/include/emulator.h
+index 5cd894b..39f4ad7 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -105,6 +105,9 @@ enum ofono_emulator_request_type ofono_emulator_request=
+_get_type(
+ void ofono_emulator_set_indicator(struct ofono_emulator *em,
+ 					const char *name, int value);
+ =
 
-I found this during tests around AT+CHLD commands.
-I just follows HFP and 3GPP specs about the AT+CHLD=3D1x command : =
-
-"Releases a specific active call X.".
-But if this is the attended behavior in phonesim, just forget my patch.
-
-Regards
-
-Fred
-
++void ofono_emulator_set_indicator_forced(struct ofono_emulator *em,
++					const char *name, int value);
++
+ #ifdef __cplusplus
+ }
+ #endif
 -- =
 
-Frederic Danis                            Open Source Technology Center
-frederic.danis(a)intel.com                              Intel Corporation
+1.7.1
 
 
---===============7552124394295362934==--
+--===============1260602885756211099==--
 
