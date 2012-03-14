@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0140643002291229071=="
+Content-Type: multipart/mixed; boundary="===============7241176917157325052=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] emulator: Add API to force indicator event
-Date: Tue, 13 Mar 2012 21:45:36 -0500
-Message-ID: <4F600650.9010104@gmail.com>
-In-Reply-To: <1331306815-13424-2-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH 3/4] emulator: Force indicator event implementation
+Date: Tue, 13 Mar 2012 21:47:52 -0500
+Message-ID: <4F6006D8.5090006@gmail.com>
+In-Reply-To: <1331306815-13424-3-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0140643002291229071==
+--===============7241176917157325052==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,35 +16,69 @@ Content-Transfer-Encoding: quoted-printable
 Hi Fr=C3=A9d=C3=A9ric,
 
 On 03/09/2012 09:26 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> For AT+CHLD=3D2, +CIEV unsollicited event for callheld should be sent even
-> if it does not change
 > ---
->  include/emulator.h |    3 +++
->  1 files changed, 3 insertions(+), 0 deletions(-)
+>  src/emulator.c |   18 ++++++++++++++++--
+>  1 files changed, 16 insertions(+), 2 deletions(-)
 > =
 
-> diff --git a/include/emulator.h b/include/emulator.h
-> index 5cd894b..e6bfcbd 100644
-> --- a/include/emulator.h
-> +++ b/include/emulator.h
-> @@ -105,6 +105,9 @@ enum ofono_emulator_request_type ofono_emulator_reque=
-st_get_type(
->  void ofono_emulator_set_indicator(struct ofono_emulator *em,
->  					const char *name, int value);
+> diff --git a/src/emulator.c b/src/emulator.c
+> index 0f1ceca..34329f0 100644
+> --- a/src/emulator.c
+> +++ b/src/emulator.c
+> @@ -62,6 +62,7 @@ struct indicator {
+>  	gboolean deferred;
+>  	gboolean active;
+>  	gboolean mandatory;
+> +	gboolean forced;
+>  };
 >  =
 
-> +void ofono_emulator_indicator_set_forced(struct ofono_emulator *em,
-> +					const char *name);
-> +
+>  static void emulator_debug(const char *str, void *data)
+> @@ -1181,11 +1182,12 @@ void ofono_emulator_set_indicator(struct ofono_em=
+ulator *em,
+>  =
 
-Please name this ofono_emulator_set_indicator_forced for consistency.
+>  	ind =3D find_indicator(em, name, &i);
+>  =
 
->  #ifdef __cplusplus
+> -	if (ind =3D=3D NULL || ind->value =3D=3D value || value < ind->min
+> -			|| value > ind->max)
+> +	if (ind =3D=3D NULL || (ind->value =3D=3D value && !ind->forced)
+> +			|| value < ind->min || value > ind->max)
+>  		return;
+>  =
+
+>  	ind->value =3D value;
+> +	ind->forced =3D FALSE;
+>  =
+
+>  	call_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALL, NULL);
+>  	cs_ind =3D find_indicator(em, OFONO_EMULATOR_IND_CALLSETUP, NULL);
+> @@ -1245,3 +1247,15 @@ start_ring:
+>  	em->callsetup_source =3D g_timeout_add_seconds(RING_TIMEOUT,
+>  							notify_ring, em);
 >  }
->  #endif
+> +
+> +void ofono_emulator_indicator_set_forced(struct ofono_emulator *em,
+> +					const char *name)
+
+Why not just take the same arguments as ofono_emulator_set_indicator and...
+
+> +{
+> +	struct indicator *ind;
+> +
+> +	ind =3D find_indicator(em, name, NULL);
+> +	if (ind =3D=3D NULL)
+> +		return;
+> +
+> +	ind->forced =3D TRUE;
+> +}
+
+just simply update the value and emit the CIEV.  We only use it in a
+very specific circumstance anyway.
 
 Regards,
 -Denis
 
---===============0140643002291229071==--
+--===============7241176917157325052==--
 
