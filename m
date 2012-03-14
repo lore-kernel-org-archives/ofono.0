@@ -1,31 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============7814401862735154481=="
+Content-Type: multipart/mixed; boundary="===============8913409136564055569=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/1] TODO: remove completed tasks
-Date: Tue, 13 Mar 2012 10:37:17 -0700
-Message-ID: <1331660237.14217.96.camel@aeonflux>
-In-Reply-To: <1331657847-2658-2-git-send-email-sebastien.bianti@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] sim900: Add ussd and voice call support
+Date: Tue, 13 Mar 2012 21:31:52 -0500
+Message-ID: <4F600318.8060507@gmail.com>
+In-Reply-To: <1331446118-13750-1-git-send-email-r.r.zaripov@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7814401862735154481==
+--===============8913409136564055569==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sebastien,
+Hi Renat,
+
+On 03/11/2012 12:08 AM, r.r.zaripov(a)gmail.com wrote:
+> From: Renat Zaripov <r.r.zaripov@gmail.com>
+> =
 
 > ---
->  TODO |   59 -----------------------------------------------------------
->  1 files changed, 0 insertions(+), 59 deletions(-)
-
-patch has been applied.
-
-Regards
-
-Marcel
+>  plugins/sim900.c |    3 +++
+>  1 files changed, 3 insertions(+), 0 deletions(-)
+> =
 
 
+Patch has been applied, thanks.
 
---===============7814401862735154481==--
+Regards,
+-Denis
+
+--===============8913409136564055569==--
 
