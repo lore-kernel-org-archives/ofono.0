@@ -1,35 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============7415075358521050774=="
+Content-Type: multipart/mixed; boundary="===============5448963860695338674=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] phonesim: Fix AT+CHLD=1x
-Date: Tue, 13 Mar 2012 21:38:47 -0500
-Message-ID: <4F6004B7.8050608@gmail.com>
-In-Reply-To: <1331649195-23257-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH 1/4] voicecall: Improve transitions check
+Date: Tue, 13 Mar 2012 21:44:35 -0500
+Message-ID: <4F600613.4050404@gmail.com>
+In-Reply-To: <1331306815-13424-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7415075358521050774==
+--===============5448963860695338674==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Fr=C3=A9d=C3=A9ric,
 
-On 03/13/2012 09:33 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> AT+CHLD=3D1x should only hangup active call
+On 03/09/2012 09:26 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
+> Indicators should not be updated if:
+> - multiple separate calls are active at same time
+> - a conf call and a call are active at same time
+> - multiple separate calls are held at same time
+> - a conf call and a call are held at same time
+> - a conf call has call in active and held state
 > ---
->  src/callmanager.cpp |   38 ++++++++++++++++++++++++--------------
->  1 files changed, 24 insertions(+), 14 deletions(-)
+>  src/voicecall.c |   29 +++++++++++++++++------------
+>  1 files changed, 17 insertions(+), 12 deletions(-)
 > =
 
 
-What are you trying to fix here?  Phonesim models the behavior of an
-'ideal' modem which can hangup any call using release_specific.  Plenty
-of modems exhibit this behavior via vendor specific AT commands, so if
-this is related to HFP emulation then we probably need to do something else.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============7415075358521050774==--
+--===============5448963860695338674==--
 
