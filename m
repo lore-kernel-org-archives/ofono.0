@@ -1,42 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============5664290598696613440=="
+Content-Type: multipart/mixed; boundary="===============6249484981391158610=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Handling AT command with no response
-Date: Fri, 16 Mar 2012 16:31:26 -0500
-Message-ID: <4F63B12E.6070104@gmail.com>
-In-Reply-To: <87zkbgb66n.fsf@neil-laptop.ossau.uklinux.net>
+Subject: Re: [PATCHv3 01/12] call-forwarding: Remove cf_list_clear()
+Date: Mon, 19 Mar 2012 14:03:22 -0500
+Message-ID: <4F6782FA.9050206@gmail.com>
+In-Reply-To: <1331646393-5249-2-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5664290598696613440==
+--===============6249484981391158610==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Neil,
+Hi Oleg,
 
-On 03/16/2012 04:13 PM, Neil Jerram wrote:
-> Hi there,
-> =
-
-> Is there a way in oFono of sending an AT command and not waiting for any
-> response?
-> =
-
-> Specifically, AT+VTS doesn't give any response according to 27.007, and
-> this appears to be true in practice for the Option HSO modem (GTM601).
+On 03/13/2012 08:46 AM, Oleg Zhurakivskyy wrote:
+> Use g_slist_free_full() instead.
+> ---
+>  src/call-forwarding.c |   14 ++------------
+>  1 files changed, 2 insertions(+), 12 deletions(-)
 > =
 
 
-There is currently no support for this in GAtChat.  Most vendors choose
-to return OK here once the tone has been sent to the network and
-generated locally.  This is useful when sending multiple tones at once
-to know when the sending has finished.  Note that oFono expects a final
-response to the 'send_tones' method, so you would need to generate a
-reply to the core anyway.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============5664290598696613440==--
+--===============6249484981391158610==--
 
