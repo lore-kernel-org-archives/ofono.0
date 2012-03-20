@@ -1,31 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============2254055040950233933=="
+Content-Type: multipart/mixed; boundary="===============2248848615488005197=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?S=C3=A9bastien?= Bianti <sebastien.bianti@linux.intel.com>
-Subject: [PATCH 0/3] mmsd: removing dead files
-Date: Tue, 20 Mar 2012 19:42:20 +0100
-Message-ID: <1332268943-24300-1-git-send-email-sebastien.bianti@linux.intel.com>
+Subject: [PATCH 1/3] service: remove dead file
+Date: Tue, 20 Mar 2012 19:42:21 +0100
+Message-ID: <1332268943-24300-2-git-send-email-sebastien.bianti@linux.intel.com>
+In-Reply-To: <1332268943-24300-1-git-send-email-sebastien.bianti@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2254055040950233933==
+--===============2248848615488005197==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-These patches concern mmsd for ofono mailing list.
+---
+ src/service.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-S=C3=A9bastien Bianti (3):
-  service: remove dead file
-  service: fixed possible meta with NULL uuid
-  service: remove pdu without meta
+diff --git a/src/service.c b/src/service.c
+index ef6b544..3fdf4e0 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -755,6 +755,7 @@ static DBusMessage *send_message(DBusConnection *conn,
+ 		release_attachement_data(msg->attachments);
+ 		mms_message_free(msg);
+ =
 
- src/service.c |   21 ++++++++++++++++-----
- 1 files changed, 16 insertions(+), 5 deletions(-)
++		unlink(request->data_path);
+ 		mms_request_destroy(request);
+ =
 
+ 		return __mms_error_trans_failure(dbus_msg);
 -- =
 
 1.7.4.4
 
 
---===============2254055040950233933==--
+--===============2248848615488005197==--
 
