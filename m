@@ -1,31 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============4000761182033518661=="
+Content-Type: multipart/mixed; boundary="===============2254055040950233933=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv3 02/12] call-forwarding: Inline get_query_next_cf_cond()
-Date: Mon, 19 Mar 2012 14:03:38 -0500
-Message-ID: <4F67830A.2080100@gmail.com>
-In-Reply-To: <1331646393-5249-3-git-send-email-oleg.zhurakivskyy@intel.com>
+From: =?unknown-8bit?q?S=C3=A9bastien?= Bianti <sebastien.bianti@linux.intel.com>
+Subject: [PATCH 0/3] mmsd: removing dead files
+Date: Tue, 20 Mar 2012 19:42:20 +0100
+Message-ID: <1332268943-24300-1-git-send-email-sebastien.bianti@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4000761182033518661==
+--===============2254055040950233933==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Oleg,
+These patches concern mmsd for ofono mailing list.
 
-On 03/13/2012 08:46 AM, Oleg Zhurakivskyy wrote:
-> ---
->  src/call-forwarding.c |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> =
+S=C3=A9bastien Bianti (3):
+  service: remove dead file
+  service: fixed possible meta with NULL uuid
+  service: remove pdu without meta
+
+ src/service.c |   21 ++++++++++++++++-----
+ 1 files changed, 16 insertions(+), 5 deletions(-)
+
+-- =
+
+1.7.4.4
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============4000761182033518661==--
+--===============2254055040950233933==--
 
