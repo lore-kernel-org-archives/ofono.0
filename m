@@ -1,98 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============4125178039648266643=="
+Content-Type: multipart/mixed; boundary="===============2175235111913734149=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: [PATCH] sim: Use quoted string with AT+CRSM data parameter
-Date: Thu, 22 Mar 2012 08:58:36 +0000
-Message-ID: <ED4DEEB78293B34A9D0EAC02A474A46E18A82838@IRSMSX102.ger.corp.intel.com>
-In-Reply-To: <1332350294.1870.26.camel@aeonflux>
+From: Ronald Tessier <ronald.tessier@linux.intel.com>
+Subject: [PATCH 1/2] service: fix object path when unregistering msg
+Date: Thu, 22 Mar 2012 17:37:29 +0100
+Message-ID: <1332434252-23551-2-git-send-email-ronald.tessier@linux.intel.com>
+In-Reply-To: <1332434252-23551-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4125178039648266643==
+--===============2175235111913734149==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+The 'value' parameter is an mms_message pointer and not a pointer to
+the uuid.
+Don't need to remove message from the hash table (with
+g_hash_table_foreach_remove) since calling mms_message_unregister()
+on every messages will remove them from the hash table.
+---
+ src/service.c |   12 ++++--------
+ 1 files changed, 4 insertions(+), 8 deletions(-)
 
-> > Fix issue with some modems preventing to update elementary files
-> > (speedup, ZTE, huawei, MBM)
-> > ---
-> >  drivers/atmodem/sim.c |   52
-> ++++++++++++++++++++++++++++++++++++++++++------
-> >  1 files changed, 45 insertions(+), 7 deletions(-)
-> >
-> > diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c index
-> > 8ee9822..f307708 100644
-> > --- a/drivers/atmodem/sim.c
-> > +++ b/drivers/atmodem/sim.c
-> > @@ -305,18 +305,38 @@ static void at_sim_update_binary(struct
-> > ofono_sim *sim, int fileid,  {
-> >  	struct sim_data *sd =3D ofono_sim_get_data(sim);
-> >  	struct cb_data *cbd =3D cb_data_new(cb, data);
-> > -	char *buf =3D g_try_new(char, 36 + length * 2);
-> > +	char *buf;
-> >  	int len, ret;
-> > +	int size =3D 36 + length * 2;
-> >
-> > +	if (sd->vendor =3D=3D OFONO_VENDOR_MBM ||
-> > +			sd->vendor =3D=3D OFONO_VENDOR_ZTE ||
-> > +			sd->vendor =3D=3D OFONO_VENDOR_HUAWEI ||
-> > +			sd->vendor =3D=3D OFONO_VENDOR_SPEEDUP)
-> > +		size +=3D 2; /*Add quotes*/
-> =
+diff --git a/src/service.c b/src/service.c
+index ef6b544..fc69e0d 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -875,15 +875,12 @@ struct mms_service *mms_service_ref(struct mms_servic=
+e *service)
+ 	return service;
+ }
+ =
 
-> this is better done with a switch statement. And please fix the comment s=
-tyle to
-> adhere to the coding style.
-> =
+-static gboolean unregister_message(gpointer key, gpointer value,
+-							gpointer user_data)
++static void unregister_message(gpointer key, gpointer value, gpointer user=
+_data)
+ {
+ 	struct mms_service *service =3D user_data;
+-	char *uuid =3D value;
++	struct mms_message *msg =3D value;
+ =
 
-> > +
-> > +	buf =3D g_try_new(char, size);
-> >  	if (buf =3D=3D NULL)
-> >  		goto error;
-> >
-> >  	len =3D sprintf(buf, "AT+CRSM=3D214,%i,%i,%i,%i,", fileid,
-> >  			start >> 8, start & 0xff, length);
-> >
-> > +	if (sd->vendor =3D=3D OFONO_VENDOR_MBM ||
-> > +			sd->vendor =3D=3D OFONO_VENDOR_ZTE ||
-> > +			sd->vendor =3D=3D OFONO_VENDOR_HUAWEI ||
-> > +			sd->vendor =3D=3D OFONO_VENDOR_SPEEDUP)
-> > +		sprintf(buf + len, "\"");
-> > +
-> =
+-	mms_message_unregister(service, uuid);
+-
+-	return TRUE;
++	mms_message_unregister(service, msg->path);
+ }
+ =
 
-> I am getting a little bit worried about spreading sd->vendor checks at ma=
-ny
-> places here. Maybe this can be done smarter and cleaner.
+ static void destroy_message_table(struct mms_service *service)
+@@ -897,8 +894,7 @@ static void destroy_message_table(struct mms_service *s=
+ervice)
+ 	 * This step is required because we need access to mms_service when
+ 	 * unregistering the message object.
+ 	 */
+-	g_hash_table_foreach_remove(service->messages, unregister_message,
+-								service);
++	g_hash_table_foreach(service->messages, unregister_message, service);
+ =
 
-Maybe you can always add the 2 bytes for the memory allocation, whatever th=
-e modem is. The cost is not so high, and the memory is freed at the end of =
-the function.
+ 	g_hash_table_destroy(service->messages);
+ 	service->messages =3D NULL;
+-- =
 
-And then, you can create a small function that 'append' the hex value. So t=
-he modem check would be only in this function, instead of being in at_sim_u=
-pdate_binary, at_sim_update_binary and at_sim_update_cyclic.
-
-Doing this, you will have 2 modem checks instead of 9.
-
-Regards,
-
-Bertrand
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+1.7.4.1
 
 
---===============4125178039648266643==--
+--===============2175235111913734149==--
 
