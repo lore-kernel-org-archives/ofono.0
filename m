@@ -1,30 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============5747927621621341485=="
+Content-Type: multipart/mixed; boundary="===============5556202647001750351=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/1] service: remove unused mms_request's members
-Date: Thu, 22 Mar 2012 13:24:07 -0700
-Message-ID: <1332447847.1870.36.camel@aeonflux>
-In-Reply-To: <1332434252-23551-5-git-send-email-ronald.tessier@linux.intel.com>
+From: Ronald Tessier <ronald.tessier@linux.intel.com>
+Subject: [mmsd] Error handling while receiving message
+Date: Fri, 23 Mar 2012 10:40:54 +0100
+Message-ID: <4F6C4526.20502@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5747927621621341485==
+--===============5556202647001750351==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ronald,
+Hi,
 
->  src/service.c |    2 --
->  1 files changed, 0 insertions(+), 2 deletions(-)
+I'm working on handling errors while receiving an MMS (listed in TODO as =
 
-patch has been applied.
+: "Error cases should handled and reported to the application layer." in =
 
-Regards
+MMS Reception section).
 
-Marcel
+What kind of error do you want to report to the application : generic =
 
+MMS reception error such as "Unable to decode message", "Unable to =
 
+download message" ... or more accurate error (error code, "HTTP error =
 
---===============5747927621621341485==--
+XXX", "Communication error while downloading message"... ) ?
+
+Since the reception is automatically performed, there is no D-Bus reply =
+
+msg to use to send error back to the application !
+I cannot always handle the error in 'Message' interface since the D-Bus =
+
+object (associated to the message) does not exist before having =
+
+downloaded the entire message. More generally, how to handle errors that =
+
+occurs before the message D-Bus object has been published ?
+Should I define a new signal ("MessageError") in 'Service' interface to =
+
+report errors ?
+
+What kind of information the reported error should contain ? the sender =
+
+(if the notification has been decoded), the meta file path (if =
+
+available) ... ?
+
+Thanks in advance,
+Regards,
+
+Ronald
+
+--===============5556202647001750351==--
 
