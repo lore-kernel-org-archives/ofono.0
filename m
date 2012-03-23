@@ -1,39 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============7595163082433847241=="
+Content-Type: multipart/mixed; boundary="===============9031454032280512944=="
 MIME-Version: 1.0
-From: Jan Pohanka <xhpohanka@gmail.com>
-Subject: Re: If I send a sms I can't send another or make a call
-Date: Fri, 23 Mar 2012 14:56:28 +0100
-Message-ID: <op.wbmmcezhyxxkfz@pohanka-pc>
-In-Reply-To: <op.wbml7rp6yxxkfz@pohanka-pc>
+From: =?unknown-8bit?q?S=C3=A9bastien?= Bianti <sebastien.bianti@linux.intel.com>
+Subject: [PATCH v2 0/6] mmsd: bug fixing in send message recovery
+Date: Fri, 23 Mar 2012 17:45:35 +0100
+Message-ID: <1332521141-31865-1-git-send-email-sebastien.bianti@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7595163082433847241==
+--===============9031454032280512944==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Excuse me for double posting but I have forgotten one line in the command  =
+This series concerns mmsd for ofono mailing list.
 
-sequence
+Patch 1 to 3 fix some leaks when a problem arises when a send request is
+created.
+Patch 4 to 6 fix some mistakes in send message recovery.
 
-> test/enable-modem
-> test/online-modem
-> test/dial-number xxxxxxxxx
-> test/hangup-all
-> test/send-sms xxxxxxxxx "test sms" 0
+S=C3=A9bastien Bianti (6):
+  service: remove dead file
+  service: fixed possible meta with NULL uuid
+  service: remove pdu without meta
+  service: request_post_file opens the pdu itself
+  service: fix some leaks
+  service: request needs to keep msg
 
-test/dial-number xxxxxxxxx
-
-> the last command (dialing) fails with a timeout
-
+ src/service.c |   29 +++++++++++++++++++++++------
+ 1 files changed, 23 insertions(+), 6 deletions(-)
 
 -- =
 
-Tato zpr=C3=A1va byla vytvo=C5=99ena p=C5=99evratn=C3=BDm po=C5=A1tovn=C3=
-=ADm klientem Opery:  =
+1.7.4.4
 
-http://www.opera.com/mail/
 
---===============7595163082433847241==--
+--===============9031454032280512944==--
 
