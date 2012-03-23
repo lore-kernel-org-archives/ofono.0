@@ -1,57 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============5556202647001750351=="
+Content-Type: multipart/mixed; boundary="===============1515760018572490545=="
 MIME-Version: 1.0
-From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [mmsd] Error handling while receiving message
-Date: Fri, 23 Mar 2012 10:40:54 +0100
-Message-ID: <4F6C4526.20502@linux.intel.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH 0/3] ZTE: Create a modem driver to enable radio settings
+Date: Fri, 23 Mar 2012 12:01:07 +0100
+Message-ID: <1332500470-8297-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5556202647001750351==
+--===============1515760018572490545==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+ - Create ZTE modem driver
+ - Add radio settings support to ZTE modem driver
+ - Enable radio settings in ZTE plugin =
 
-I'm working on handling errors while receiving an MMS (listed in TODO as =
 
-: "Error cases should handled and reported to the application layer." in =
+Bertrand Aygon (3):
+  Add ZTE modem driver
+  ztemodem: Add radio settings support
+  zte: Add support for radio settings
 
-MMS Reception section).
+ Makefile.am                       |    6 +
+ drivers/ztemodem/radio-settings.c |  212 +++++++++++++++++++++++++++++++++=
+++++
+ drivers/ztemodem/ztemodem.c       |   49 +++++++++
+ drivers/ztemodem/ztemodem.h       |   25 +++++
+ plugins/zte.c                     |    3 +
+ 5 files changed, 295 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/ztemodem/radio-settings.c
+ create mode 100644 drivers/ztemodem/ztemodem.c
+ create mode 100644 drivers/ztemodem/ztemodem.h
 
-What kind of error do you want to report to the application : generic =
+-- =
 
-MMS reception error such as "Unable to decode message", "Unable to =
+1.7.5.4
 
-download message" ... or more accurate error (error code, "HTTP error =
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-XXX", "Communication error while downloading message"... ) ?
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
-Since the reception is automatically performed, there is no D-Bus reply =
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
-msg to use to send error back to the application !
-I cannot always handle the error in 'Message' interface since the D-Bus =
-
-object (associated to the message) does not exist before having =
-
-downloaded the entire message. More generally, how to handle errors that =
-
-occurs before the message D-Bus object has been published ?
-Should I define a new signal ("MessageError") in 'Service' interface to =
-
-report errors ?
-
-What kind of information the reported error should contain ? the sender =
-
-(if the notification has been decoded), the meta file path (if =
-
-available) ... ?
-
-Thanks in advance,
-Regards,
-
-Ronald
-
---===============5556202647001750351==--
+--===============1515760018572490545==--
 
