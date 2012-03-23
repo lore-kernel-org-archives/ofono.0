@@ -1,30 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============2506635305955011818=="
+Content-Type: multipart/mixed; boundary="===============9114157018200269938=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v2 6/6] service: request needs to keep msg
-Date: Fri, 23 Mar 2012 11:41:30 -0700
-Message-ID: <1332528090.1870.48.camel@aeonflux>
-In-Reply-To: <1332521141-31865-7-git-send-email-sebastien.bianti@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCHv2] sim: Use quoted string with AT+CRSM data parameter
+Date: Fri, 23 Mar 2012 08:39:51 -0500
+Message-ID: <4F6C7D27.40802@gmail.com>
+In-Reply-To: <1332437290-31190-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2506635305955011818==
+--===============9114157018200269938==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sebastien,
+Hi Nicolas,
 
->  src/service.c |    2 ++
->  1 files changed, 2 insertions(+), 0 deletions(-)
+On 03/22/2012 12:28 PM, Nicolas Bertrand wrote:
+> Fix issue with some modems preventing to update elementary files
+> (speedup, ZTE, huawei, MBM)
+> ---
+>  drivers/atmodem/sim.c |  127 ++++++++++++++++---------------------------=
+------
+>  1 files changed, 41 insertions(+), 86 deletions(-)
+>
 
-patch has been applied.
+Patch has been applied, but I had to fix up numerous coding style
+violations afterwards.  Please re-read doc/coding-style.txt and pay
+extra attention next time.
 
-Regards
+Just one more comment:
 
-Marcel
+> +	sprintf(buf + len, "%s", quote);
+>  =
 
 
+Something like this is really wasteful, you're invoking sprintf (which
+is quite a heavy hammer) just to put in a quote character.  Use buf[len]
+=3D '\"' next time.
 
---===============2506635305955011818==--
+Regards,
+-Denis
+
+--===============9114157018200269938==--
 
