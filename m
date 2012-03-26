@@ -1,112 +1,129 @@
-Content-Type: multipart/mixed; boundary="===============3691808215943252712=="
+Content-Type: multipart/mixed; boundary="===============4709388379918563037=="
 MIME-Version: 1.0
-From: Jan Pohanka <xhpohanka@gmail.com>
-Subject: Re: If I send a sms I can't send another or make a call
-Date: Mon, 26 Mar 2012 15:08:12 +0200
-Message-ID: <op.wbr33yhcyxxkfz@pohanka-pc>
-In-Reply-To: <op.wbr1ldx5yxxkfz@pohanka-pc>
+From: =?unknown-8bit?q?S=C3=A9bastien?= Bianti <sebastien.bianti@linux.intel.com>
+Subject: [PATCH v3 1/3] service: factorize error code
+Date: Mon, 26 Mar 2012 18:12:37 +0200
+Message-ID: <1332778359-5756-2-git-send-email-sebastien.bianti@linux.intel.com>
+In-Reply-To: <1332778359-5756-1-git-send-email-sebastien.bianti@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3691808215943252712==
+--===============4709388379918563037==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Problem solved,
+---
+ src/service.c |   55 +++++++++++++++++++----------------------------------=
+--
+ 1 files changed, 19 insertions(+), 36 deletions(-)
 
-ATV1 command has to be called in the enable function.
+diff --git a/src/service.c b/src/service.c
+index 5fda8a1..25a4fc4 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -733,30 +733,16 @@ static DBusMessage *send_message(DBusConnection *conn,
+ 	}
+ =
 
-regards
-Jan
+ 	msg->transaction_id =3D create_transaction_id();
+-	if (msg->transaction_id =3D=3D NULL) {
+-		release_attachement_data(msg->attachments);
+-		mms_message_free(msg);
+-
+-		return __mms_error_trans_failure(dbus_msg);
+-	}
++	if (msg->transaction_id =3D=3D NULL)
++		goto release_msg;
+ =
 
-Dne Mon, 26 Mar 2012 14:13:51 +0200 Jan Pohanka <xhpohanka@gmail.com>  =
+ 	request =3D create_request(MMS_REQUEST_TYPE_POST,
+ 				result_request_send_conf, NULL, service, msg);
+-	if (request =3D=3D NULL) {
+-		release_attachement_data(msg->attachments);
+-		mms_message_free(msg);
+-
+-		return __mms_error_trans_failure(dbus_msg);
+-	}
+-
+-	if (mms_message_encode(msg, request->fd) =3D=3D FALSE) {
+-		release_attachement_data(msg->attachments);
+-		mms_message_free(msg);
+-
+-		mms_request_destroy(request);
++	if (request =3D=3D NULL)
++		goto release_msg;
+ =
 
-napsal(a):
+-		return __mms_error_trans_failure(dbus_msg);
+-	}
++	if (mms_message_encode(msg, request->fd) =3D=3D FALSE)
++		goto release_request;
+ =
 
-> Hello,
->
-> I have done deeper investigation why I'm stuck with sms sending. SMS is  =
+ 	close(request->fd);
+ =
 
-> sent by the function tx_next which registers the callback tx_finished  =
+@@ -766,27 +752,15 @@ static DBusMessage *send_message(DBusConnection *conn,
+ 						request->data_path));
+ =
 
-> with the line
->
-> sms->driver->submit(sms, pdu->pdu, pdu->pdu_len, pdu->tpdu_len,
-> 				send_mms, tx_finished, sms);
->
-> Unfortunately the tx_finished is never called and hence the sms is left  =
+ 	meta =3D mms_store_meta_open(service->identity, msg->uuid);
+-	if (meta =3D=3D NULL) {
+-		release_attachement_data(msg->attachments);
+-		mms_message_free(msg);
+-
+-		mms_request_destroy(request);
+-
+-		return __mms_error_trans_failure(dbus_msg);
+-	}
++	if (meta =3D=3D NULL)
++		goto release_request;
+ =
 
-> in the queue even if it was sent.
-> submit function pointer calls atmodem/sms.c which creates AT command  =
+ 	g_key_file_set_string(meta, "info", "state", "draft");
+ =
 
-> sends it and also registers a callback at_cmgs_cb. I have added some  =
+ 	mms_store_meta_close(service->identity, msg->uuid, meta, TRUE);
+ =
 
-> debugging messages there and it seems that it is never called either.
->
-> Could please someone give me some advice where to search further? It  =
+-	if (mms_message_register(service, msg) < 0) {
+-		release_attachement_data(msg->attachments);
+-		mms_message_free(msg);
+-
+-		mms_request_destroy(request);
+-
+-		return __mms_error_trans_failure(dbus_msg);
+-	}
++	if (mms_message_register(service, msg) < 0)
++		goto release_request;
+ =
 
-> seems that modem does not respond to the CMGS command, but if I tried it  =
+ 	emit_message_added(service, msg);
+ =
 
-> manually in minicom the modem returns +CMGS and OK correctly.
->
->
-> Here is the log
-> ofonod[253]: src/network.c:ofono_netreg_status_notify() /telit2_0 status  =
+@@ -811,6 +785,15 @@ static DBusMessage *send_message(DBusConnection *conn,
+ 								&msg->path);
+ =
 
-> 1 tech 0
-> ofonod[253]: Modem: > AT+COPS=3D3,2\r
-> ofonod[253]: Modem: < \r\nOK\r\n
-> ofonod[253]: src/sms.c:tx_next() tx_next: 0x11dd80
-> ofonod[253]: Modem: > AT+COPS?\r
-> ofonod[253]: Modem: < \r\n+COPS: 0,2,"23002",0\r\n\r\nOK\r\n
-> ofonod[253]: drivers/atmodem/network-registration.c:cops_numeric_cb()  =
+ 	return reply;
++
++release_request:
++	mms_request_destroy(request);
++
++release_msg:
++	release_attachement_data(msg->attachments);
++	mms_message_free(msg);
++
++	return __mms_error_trans_failure(dbus_msg);
+ }
+ =
 
-> Cops numeric got mcc: 230, mnc: 02
-> ofonod[253]: Modem: > AT+CIND?\r
-> ofonod[253]: Modem: < \r\n+CIND: 0,99,1,0,0,0,0,0,5\r\n\r\nOK\r\n
-> ofonod[253]: src/network.c:ofono_netreg_strength_notify() strength 100
-> ofonod[253]: Modem: > AT+CMGS=3D41\r
-> ofonod[253]: Modem: < \r\n>
-> ofonod[253]: Modem: >  =
-
-> 001100098177740744F60000A7206FF3DBFD368741E8373B0C0AB3E76BB2DA0C0AA3C3EC3=
-9D9BC06A9D1<CtrlZ>
->
->
-> best regards
-> Jan
->
->
-> Dne Fri, 23 Mar 2012 14:56:28 +0100 Jan Pohanka <xhpohanka@gmail.com>  =
-
-> napsal(a):
->
->> Excuse me for double posting but I have forgotten one line in the  =
-
->> command sequence
->>
->>> test/enable-modem
->>> test/online-modem
->>> test/dial-number xxxxxxxxx
->>> test/hangup-all
->>> test/send-sms xxxxxxxxx "test sms" 0
->>
->> test/dial-number xxxxxxxxx
->>
->>> the last command (dialing) fails with a timeout
->>
->>
->
->
-
-
+ static GDBusMethodTable service_methods[] =3D {
 -- =
 
-Tato zpr=C3=A1va byla vytvo=C5=99ena p=C5=99evratn=C3=BDm po=C5=A1tovn=C3=
-=ADm klientem Opery:  =
+1.7.4.4
 
-http://www.opera.com/mail/
 
---===============3691808215943252712==--
+--===============4709388379918563037==--
 
