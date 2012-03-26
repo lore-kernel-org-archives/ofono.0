@@ -1,156 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============1213743681706009987=="
+Content-Type: multipart/mixed; boundary="===============0103914027498594943=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [RFC v2 11/12] emulator: Add AT+VGS support
-Date: Mon, 26 Mar 2012 11:25:28 +0200
-Message-ID: <1332753929-9711-12-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1332753929-9711-1-git-send-email-frederic.danis@linux.intel.com>
+From: Jan Pohanka <xhpohanka@gmail.com>
+Subject: Re: If I send a sms I can't send another or make a call
+Date: Mon, 26 Mar 2012 14:13:51 +0200
+Message-ID: <op.wbr1ldx5yxxkfz@pohanka-pc>
+In-Reply-To: <op.wbmmcezhyxxkfz@pohanka-pc>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1213743681706009987==
+--===============0103914027498594943==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/emulator.c |   81 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 81 insertions(+), 0 deletions(-)
+Hello,
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 8c5a89a..8ad0e90 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -57,6 +57,8 @@ struct ofono_emulator {
- 	guint audio_watch;
- 	int mic_gain;
- 	int mic_pending;
-+	int sp_gain;
-+	int sp_pending;
- };
- =
+I have done deeper investigation why I'm stuck with sms sending. SMS is  =
 
- struct indicator {
-@@ -992,6 +994,48 @@ fail:
- 	};
- }
- =
+sent by the function tx_next which registers the callback tx_finished with  =
 
-+static void vgs_cb(GAtServer *server, GAtServerRequestType type,
-+			GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_emulator *em =3D user_data;
-+	GAtResultIter iter;
-+	int val;
-+
-+	if (em->slc =3D=3D FALSE)
-+		goto fail;
-+
-+	switch (type) {
-+	case G_AT_SERVER_REQUEST_TYPE_SET:
-+		if (em->audio_transport =3D=3D NULL)
-+			goto fail;
-+
-+		g_at_result_iter_init(&iter, result);
-+		g_at_result_iter_next(&iter, "");
-+
-+		if (!g_at_result_iter_next_number(&iter, &val))
-+			goto fail;
-+
-+		if (val < 0 || val > 15)
-+			goto fail;
-+
-+		/* check this is last parameter */
-+		if (g_at_result_iter_skip_next(&iter))
-+			goto fail;
-+
-+		if (em->sp_pending !=3D -1)
-+			ofono_error("Receiving AT+VGS while processing one");
-+
-+		em->sp_pending =3D val;
-+		audio_transport_set_property(server, em->audio_transport,
-+					"SpeakerGain", DBUS_TYPE_UINT16, &val);
-+		break;
-+
-+	default:
-+fail:
-+		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
-+	};
-+}
-+
- static void emulator_add_indicator(struct ofono_emulator *em, const char* =
-name,
- 					int min, int max, int dflt,
- 					gboolean mandatory)
-@@ -1096,6 +1140,7 @@ void ofono_emulator_register(struct ofono_emulator *e=
-m, int fd)
- 		g_at_server_register(em->server, "+BIA", bia_cb, em, NULL);
- 		g_at_server_register(em->server, "+NREC", nrec_cb, em, NULL);
- 		g_at_server_register(em->server, "+VGM", vgm_cb, em, NULL);
-+		g_at_server_register(em->server, "+VGS", vgs_cb, em, NULL);
- 	}
- =
+the line
 
- 	__ofono_atom_register(em->atom, emulator_unregister);
-@@ -1161,6 +1206,7 @@ struct ofono_emulator *ofono_emulator_create(struct o=
-fono_modem *modem,
- 	em->events_mode =3D 3;	/* default mode is forwarding events */
- 	em->cmee_mode =3D 0;	/* CME ERROR disabled by default */
- 	em->mic_pending =3D -1;
-+	em->sp_pending =3D -1;
- =
+sms->driver->submit(sms, pdu->pdu, pdu->pdu_len, pdu->tpdu_len,
+				send_mms, tx_finished, sms);
 
- 	em->atom =3D __ofono_modem_add_atom_offline(modem, atom_t,
- 							emulator_remove, em);
-@@ -1243,6 +1289,41 @@ static gboolean audio_property_changed(DBusConnectio=
-n *connection,
- 		} else if (em->mic_pending =3D=3D value)
- 			em->mic_pending =3D -1;
- 		em->mic_gain =3D value;
-+	} else if (g_str_equal(property, "SpeakerGain") =3D=3D TRUE) {
-+		DBusMessageIter variant;
-+		int value;
-+
-+		if (!(em->r_features & HFP_HF_FEATURE_REMOTE_VOLUME_CONTROL))
-+			return TRUE;
-+
-+		if (!dbus_message_iter_next(&iter))
-+			return TRUE;
-+
-+		if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
-+			return TRUE;
-+
-+		dbus_message_iter_recurse(&iter, &variant);
-+
-+		if (dbus_message_iter_get_arg_type(&variant) !=3D
-+							DBUS_TYPE_UINT16)
-+			return TRUE;
-+
-+		dbus_message_iter_get_basic(&variant, &value);
-+
-+		/* Send unsolicited +VGS only if :
-+		 *   - the value has changed
-+		 *   - and this is not a side effect of AT+VGS
-+		 * But, if we receive a value change while waiting for another
-+		 * pending change, we may have to send +VGS for other changes
-+		 * (multiple AT+VGS received) to keep speaker gain in sync
-+		 */
-+		if (em->sp_pending !=3D value && em->sp_gain !=3D value) {
-+			sprintf(buf, "+VGS: %d", value);
-+			g_at_server_send_unsolicited(em->server, buf);
-+			em->sp_pending =3D -1;
-+		} else if (em->sp_pending =3D=3D value)
-+			em->sp_pending =3D -1;
-+		em->sp_gain =3D value;
- 	}
- =
+Unfortunately the tx_finished is never called and hence the sms is left in  =
 
- 	return TRUE;
+the queue even if it was sent.
+submit function pointer calls atmodem/sms.c which creates AT command sends  =
+
+it and also registers a callback at_cmgs_cb. I have added some debugging  =
+
+messages there and it seems that it is never called either.
+
+Could please someone give me some advice where to search further? It seems  =
+
+that modem does not respond to the CMGS command, but if I tried it  =
+
+manually in minicom the modem returns +CMGS and OK correctly.
+
+
+Here is the log
+ofonod[253]: src/network.c:ofono_netreg_status_notify() /telit2_0 status 1  =
+
+tech 0
+ofonod[253]: Modem: > AT+COPS=3D3,2\r
+ofonod[253]: Modem: < \r\nOK\r\n
+ofonod[253]: src/sms.c:tx_next() tx_next: 0x11dd80
+ofonod[253]: Modem: > AT+COPS?\r
+ofonod[253]: Modem: < \r\n+COPS: 0,2,"23002",0\r\n\r\nOK\r\n
+ofonod[253]: drivers/atmodem/network-registration.c:cops_numeric_cb() Cops  =
+
+numeric got mcc: 230, mnc: 02
+ofonod[253]: Modem: > AT+CIND?\r
+ofonod[253]: Modem: < \r\n+CIND: 0,99,1,0,0,0,0,0,5\r\n\r\nOK\r\n
+ofonod[253]: src/network.c:ofono_netreg_strength_notify() strength 100
+ofonod[253]: Modem: > AT+CMGS=3D41\r
+ofonod[253]: Modem: < \r\n>
+ofonod[253]: Modem: >  =
+
+001100098177740744F60000A7206FF3DBFD368741E8373B0C0AB3E76BB2DA0C0AA3C3EC39D=
+9BC06A9D1<CtrlZ>
+
+
+best regards
+Jan
+
+
+Dne Fri, 23 Mar 2012 14:56:28 +0100 Jan Pohanka <xhpohanka@gmail.com>  =
+
+napsal(a):
+
+> Excuse me for double posting but I have forgotten one line in the  =
+
+> command sequence
+>
+>> test/enable-modem
+>> test/online-modem
+>> test/dial-number xxxxxxxxx
+>> test/hangup-all
+>> test/send-sms xxxxxxxxx "test sms" 0
+>
+> test/dial-number xxxxxxxxx
+>
+>> the last command (dialing) fails with a timeout
+>
+>
+
+
 -- =
 
-1.7.1
+Tato zpr=C3=A1va byla vytvo=C5=99ena p=C5=99evratn=C3=BDm po=C5=A1tovn=C3=
+=ADm klientem Opery:  =
 
+http://www.opera.com/mail/
 
---===============1213743681706009987==--
+--===============0103914027498594943==--
 
