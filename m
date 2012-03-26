@@ -1,64 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============0220699608603219969=="
+Content-Type: multipart/mixed; boundary="===============4312930721044912769=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [RFC v2 06/12] emulator: Add audio transport set
-Date: Mon, 26 Mar 2012 11:25:23 +0200
-Message-ID: <1332753929-9711-7-git-send-email-frederic.danis@linux.intel.com>
+Subject: [RFC v2 07/12] hfp_ag: Add media transport support
+Date: Mon, 26 Mar 2012 11:25:24 +0200
+Message-ID: <1332753929-9711-8-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1332753929-9711-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0220699608603219969==
+--===============4312930721044912769==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/emulator.c |    8 ++++++++
- 1 files changed, 8 insertions(+), 0 deletions(-)
+ plugins/hfp_ag.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/src/emulator.c b/src/emulator.c
-index e7c7d41..dc3c10d 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -52,6 +52,7 @@ struct ofono_emulator {
- 	gboolean clip;
- 	gboolean ccwa;
- 	int pns_id;
-+	char *audio_transport;
- };
+diff --git a/plugins/hfp_ag.c b/plugins/hfp_ag.c
+index ea9c112..c12068a 100644
+--- a/plugins/hfp_ag.c
++++ b/plugins/hfp_ag.c
+@@ -82,6 +82,7 @@ static DBusMessage *hfp_ag_agent_new_connection(DBusConne=
+ction *conn,
+ 		return __ofono_error_failed(msg);
  =
 
- struct indicator {
-@@ -954,6 +955,7 @@ static void emulator_remove(struct ofono_atom *atom)
+ 	ofono_emulator_register(em, fd);
++	ofono_emulator_set_audio_transport(em, path);
  =
 
- 	DBG("atom: %p", atom);
- =
-
-+	g_free(em->audio_transport);
- 	g_free(em);
+ 	return dbus_message_new_method_return(msg);
  }
- =
-
-@@ -997,6 +999,12 @@ void ofono_emulator_remove(struct ofono_emulator *em)
- 	__ofono_atom_free(em->atom);
- }
- =
-
-+void ofono_emulator_set_audio_transport(struct ofono_emulator *em,
-+						const char *path)
-+{
-+	em->audio_transport =3D g_strdup(path);
-+}
-+
- void ofono_emulator_send_final(struct ofono_emulator *em,
- 				const struct ofono_error *final)
- {
 -- =
 
 1.7.1
 
 
---===============0220699608603219969==--
+--===============4312930721044912769==--
 
