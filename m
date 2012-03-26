@@ -1,328 +1,298 @@
-Content-Type: multipart/mixed; boundary="===============4216683154226387919=="
+Content-Type: multipart/mixed; boundary="===============3602585037574607613=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [RFC v2 01/12] bluetooth: Add org.bluez.Telephony helpers
-Date: Mon, 26 Mar 2012 11:25:18 +0200
-Message-ID: <1332753929-9711-2-git-send-email-frederic.danis@linux.intel.com>
+Subject: [RFC v2 02/12] hfp_hf: Update to org.bluez.Telephony interface
+Date: Mon, 26 Mar 2012 11:25:19 +0200
+Message-ID: <1332753929-9711-3-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1332753929-9711-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4216683154226387919==
+--===============3602585037574607613==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add function to register/unregister Telephony agent to BlueZ
+Bluez moves agent registration from a per device interface to
+a per adapter interface.
+Update hfp_hf modem to reflect this change.
 ---
- plugins/bluetooth.c |  199 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- plugins/bluetooth.h |   14 ++++
- 2 files changed, 213 insertions(+), 0 deletions(-)
+ plugins/hfp_hf.c |  165 ++++++++++++++++++++------------------------------=
+---
+ 1 files changed, 62 insertions(+), 103 deletions(-)
 
-diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index dbf79eb..0bde1a5 100644
---- a/plugins/bluetooth.c
-+++ b/plugins/bluetooth.c
-@@ -44,6 +44,7 @@ static GHashTable *uuid_hash =3D NULL;
- static GHashTable *adapter_address_hash =3D NULL;
- static gint bluetooth_refcount;
- static GSList *server_list =3D NULL;
-+static GSList *telephony_list =3D NULL;
- static const char *adapter_any_name =3D "any";
- static char *adapter_any_path;
+diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
+index 48a734a..7c3747b 100644
+--- a/plugins/hfp_hf.c
++++ b/plugins/hfp_hf.c
+@@ -51,7 +51,7 @@
  =
 
-@@ -65,6 +66,13 @@ struct cb_data {
- 	GIOChannel *io;
+ #define	BLUEZ_GATEWAY_INTERFACE		BLUEZ_SERVICE ".HandsfreeGateway"
+ =
+
+-#define HFP_AGENT_INTERFACE "org.bluez.HandsfreeAgent"
++#define HFP_AGENT_PATH "/hfp_hf"
+ #define HFP_AGENT_ERROR_INTERFACE "org.bluez.Error"
+ =
+
+ #ifndef DBUS_TYPE_UNIX_FD
+@@ -66,7 +66,6 @@ struct hfp_data {
+ 	char *handsfree_path;
+ 	char *handsfree_address;
+ 	DBusMessage *slc_msg;
+-	gboolean agent_registered;
+ 	DBusPendingCall *call;
  };
  =
 
-+struct agent {
-+	char *path;
-+	char *uuid;
-+	guint16 version;
-+	guint16 features;
+@@ -158,52 +157,6 @@ static int service_level_connection(struct ofono_modem=
+ *modem, int fd)
+ 	return -EINPROGRESS;
+ }
+ =
+
+-static DBusMessage *hfp_agent_new_connection(DBusConnection *conn,
+-						DBusMessage *msg, void *data)
+-{
+-	int fd, err;
+-	struct ofono_modem *modem =3D data;
+-	struct hfp_data *hfp_data =3D ofono_modem_get_data(modem);
+-	guint16 version;
+-
+-	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_UNIX_FD, &fd,
+-				DBUS_TYPE_UINT16, &version, DBUS_TYPE_INVALID))
+-		return __ofono_error_invalid_args(msg);
+-
+-	hfp_slc_info_init(&hfp_data->info, version);
+-
+-	err =3D service_level_connection(modem, fd);
+-	if (err < 0 && err !=3D -EINPROGRESS)
+-		return __ofono_error_failed(msg);
+-
+-	hfp_data->slc_msg =3D msg;
+-	dbus_message_ref(msg);
+-
+-	return NULL;
+-}
+-
+-static DBusMessage *hfp_agent_release(DBusConnection *conn,
+-					DBusMessage *msg, void *data)
+-{
+-	struct ofono_modem *modem =3D data;
+-	struct hfp_data *hfp_data =3D ofono_modem_get_data(modem);
+-	const char *obj_path =3D ofono_modem_get_path(modem);
+-
+-	g_dbus_unregister_interface(connection, obj_path, HFP_AGENT_INTERFACE);
+-	hfp_data->agent_registered =3D FALSE;
+-
+-	ofono_modem_remove(modem);
+-
+-	return dbus_message_new_method_return(msg);
+-}
+-
+-static GDBusMethodTable agent_methods[] =3D {
+-	{ "NewConnection", "hq", "", hfp_agent_new_connection,
+-		G_DBUS_METHOD_FLAG_ASYNC },
+-	{ "Release", "", "", hfp_agent_release },
+-	{ NULL, NULL, NULL, NULL }
+-};
+-
+ static int hfp_hf_probe(const char *device, const char *dev_addr,
+ 				const char *adapter_addr, const char *alias)
+ {
+@@ -295,77 +248,23 @@ static void hfp_hf_set_alias(const char *device, cons=
+t char *alias)
+ 	ofono_modem_set_name(modem, alias);
+ }
+ =
+
+-static int hfp_register_ofono_handsfree(struct ofono_modem *modem)
+-{
+-	const char *obj_path =3D ofono_modem_get_path(modem);
+-	struct hfp_data *data =3D ofono_modem_get_data(modem);
+-	DBusMessage *msg;
+-
+-	DBG("Registering oFono Agent to bluetooth daemon");
+-
+-	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, data->handsfree_path,
+-				BLUEZ_GATEWAY_INTERFACE, "RegisterAgent");
+-	if (msg =3D=3D NULL)
+-		return -ENOMEM;
+-
+-	dbus_message_append_args(msg, DBUS_TYPE_OBJECT_PATH, &obj_path,
+-				DBUS_TYPE_INVALID);
+-
+-	g_dbus_send_message(connection, msg);
+-	return 0;
+-}
+-
+-static int hfp_unregister_ofono_handsfree(struct ofono_modem *modem)
+-{
+-	const char *obj_path =3D ofono_modem_get_path(modem);
+-	struct hfp_data *data =3D ofono_modem_get_data(modem);
+-	DBusMessage *msg;
+-
+-	DBG("Unregistering oFono Agent from bluetooth daemon");
+-
+-	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, data->handsfree_path,
+-				BLUEZ_GATEWAY_INTERFACE, "UnregisterAgent");
+-	if (msg =3D=3D NULL)
+-		return -ENOMEM;
+-
+-	dbus_message_append_args(msg, DBUS_TYPE_OBJECT_PATH, &obj_path,
+-				DBUS_TYPE_INVALID);
+-
+-	g_dbus_send_message(connection, msg);
+-	return 0;
+-}
+-
+ static int hfp_probe(struct ofono_modem *modem)
+ {
+-	const char *obj_path =3D ofono_modem_get_path(modem);
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
+ =
+
+ 	if (data =3D=3D NULL)
+ 		return -EINVAL;
+ =
+
+-	g_dbus_register_interface(connection, obj_path, HFP_AGENT_INTERFACE,
+-			agent_methods, NULL, NULL, modem, NULL);
+-
+-	data->agent_registered =3D TRUE;
+-
+-	if (hfp_register_ofono_handsfree(modem) !=3D 0)
+-		return -EINVAL;
+-
+ 	return 0;
+ }
+ =
+
+ static void hfp_remove(struct ofono_modem *modem)
+ {
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
+-	const char *obj_path =3D ofono_modem_get_path(modem);
+ =
+
+ 	if (data->call !=3D NULL)
+ 		dbus_pending_call_cancel(data->call);
+ =
+
+-	if (g_dbus_unregister_interface(connection, obj_path,
+-					HFP_AGENT_INTERFACE))
+-		hfp_unregister_ofono_handsfree(modem);
+-
+ 	g_hash_table_remove(modem_hash, data->handsfree_path);
+ =
+
+ 	g_free(data->handsfree_address);
+@@ -465,7 +364,7 @@ static int hfp_disable(struct ofono_modem *modem)
+ 	g_at_chat_unref(data->info.chat);
+ 	data->info.chat =3D NULL;
+ =
+
+-	if (data->agent_registered) {
++	if (ofono_modem_get_powered(modem)) {
+ 		status =3D bluetooth_send_with_reply(data->handsfree_path,
+ 					BLUEZ_GATEWAY_INTERFACE, "Disconnect",
+ 					&data->call, hfp_power_down,
+@@ -497,6 +396,59 @@ static void hfp_post_sim(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ }
+ =
+
++static DBusMessage *hfp_agent_new_connection(DBusConnection *conn,
++						DBusMessage *msg, void *data)
++{
++	int fd, err;
++	struct ofono_modem *modem;
++	struct hfp_data *hfp_data;
++	const char *device, *uuid;
++	const char *path =3D NULL;
++	guint16 features =3D 0;
++	guint16 version =3D 0;
++
++	fd =3D bluetooth_parse_newconnection_message(msg, &device, &uuid,
++						&version, &features, &path);
++	if (fd < 0)
++		return __ofono_error_invalid_args(msg);
++
++	DBG("New connection for %s on %s (version 0x%04X, features 0x%02X, " \
++					"media transport path: %s)",
++					device, uuid, version, features, path);
++
++	modem =3D g_hash_table_lookup(modem_hash, device);
++	if (modem =3D=3D NULL)
++		return __ofono_error_invalid_args(msg);
++
++	hfp_data =3D ofono_modem_get_data(modem);
++
++	hfp_slc_info_init(&hfp_data->info, version);
++
++	err =3D service_level_connection(modem, fd);
++	if (err < 0 && err !=3D -EINPROGRESS)
++		return __ofono_error_failed(msg);
++
++	hfp_data->slc_msg =3D msg;
++	dbus_message_ref(msg);
++
++	return NULL;
++}
++
++static DBusMessage *hfp_agent_release(DBusConnection *conn,
++					DBusMessage *msg, void *data)
++{
++	DBG("");
++
++	return dbus_message_new_method_return(msg);
++}
++
++static GDBusMethodTable agent_methods[] =3D {
++	{ "NewConnection", "ha{sv}", "", hfp_agent_new_connection,
++		G_DBUS_METHOD_FLAG_ASYNC },
++	{ "Release", "", "", hfp_agent_release },
++	{ NULL, NULL, NULL, NULL }
 +};
 +
- void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,
- 				char *buf, int size)
+ static struct ofono_modem_driver hfp_driver =3D {
+ 	.name		=3D "hfp",
+ 	.modem_type	=3D OFONO_MODEM_TYPE_HFP,
+@@ -517,6 +469,8 @@ static struct bluetooth_profile hfp_hf =3D {
+ =
+
+ static int hfp_init(void)
  {
-@@ -146,6 +154,60 @@ fail:
- 	return err;
++	dbus_uint16_t features =3D HFP_HF_FEATURE_3WAY | HFP_HF_FEATURE_CLIP |
++					HFP_HF_FEATURE_REMOTE_VOLUME_CONTROL;
+ 	int err;
+ =
+
+ 	if (DBUS_TYPE_UNIX_FD < 0)
+@@ -537,11 +491,16 @@ static int hfp_init(void)
+ 	modem_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+ 						g_free, NULL);
+ =
+
++	bluetooth_register_telephony_agent(HFP_AGENT_PATH, HFP_HS_UUID,
++						HFP_VERSION_1_5, features,
++						agent_methods, NULL, NULL);
++
+ 	return 0;
  }
  =
 
-+static void register_telephony_agent(const char *path, const char *handle,
-+						struct agent *agent)
-+{
-+	DBusMessage *msg;
-+	DBusMessageIter iter, dict;
-+
-+	DBG("Registering oFono Agent for %s to %s", agent->uuid, path);
-+
-+	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, path,
-+				BLUEZ_TELEPHONY_INTERFACE, "RegisterAgent");
-+	if (msg =3D=3D NULL)
-+		return;
-+
-+	dbus_message_iter_init_append(msg, &iter);
-+
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_OBJECT_PATH,
-+							&agent->path);
-+
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+			DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
-+			DBUS_TYPE_STRING_AS_STRING DBUS_TYPE_VARIANT_AS_STRING
-+			DBUS_DICT_ENTRY_END_CHAR_AS_STRING, &dict);
-+
-+	ofono_dbus_dict_append(&dict, "UUID", DBUS_TYPE_STRING, &agent->uuid);
-+
-+	ofono_dbus_dict_append(&dict, "Version", DBUS_TYPE_UINT16,
-+							&agent->version);
-+	ofono_dbus_dict_append(&dict, "Features", DBUS_TYPE_UINT16,
-+							&agent->features);
-+
-+	dbus_message_iter_close_container(&iter, &dict);
-+
-+	g_dbus_send_message(connection, msg);
-+}
-+
-+static void unregister_telephony_agent(const char *path, const char *handl=
-e,
-+						struct agent *agent)
-+{
-+	DBusMessage *msg;
-+
-+	DBG("Unregistering oFono Agent for %s from %s", agent->uuid, path);
-+
-+	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, path,
-+					BLUEZ_TELEPHONY_INTERFACE,
-+					"UnregisterAgent");
-+	if (msg =3D=3D NULL)
-+		return;
-+
-+	dbus_message_append_args(msg, DBUS_TYPE_OBJECT_PATH, &agent->path,
-+					DBUS_TYPE_INVALID);
-+
-+	g_dbus_send_message(connection, msg);
-+}
-+
- typedef void (*PropertyHandler)(DBusMessageIter *iter, gpointer user_data);
- =
-
- struct property_handler {
-@@ -702,6 +764,7 @@ static gboolean adapter_added(DBusConnection *connectio=
-n, DBusMessage *message,
- 				void *user_data)
+ static void hfp_exit(void)
  {
- 	const char *path;
-+	GSList *l;
++	bluetooth_unregister_telephony_agent(HFP_AGENT_PATH);
+ 	bluetooth_unregister_uuid(HFP_AG_UUID);
+ 	ofono_modem_driver_unregister(&hfp_driver);
  =
 
- 	dbus_message_get_args(message, NULL, DBUS_TYPE_OBJECT_PATH, &path,
- 				DBUS_TYPE_INVALID);
-@@ -710,6 +773,9 @@ static gboolean adapter_added(DBusConnection *connectio=
-n, DBusMessage *message,
- 			"GetProperties", NULL, adapter_properties_cb,
- 			g_strdup(path), g_free, -1, DBUS_TYPE_INVALID);
- =
-
-+	for (l =3D telephony_list; l; l =3D l->next)
-+		register_telephony_agent(path, NULL, l->data);
-+
- 	return TRUE;
- }
- =
-
-@@ -982,5 +1048,138 @@ void bluetooth_unregister_server(struct server *serv=
-er)
- 	bluetooth_unref();
- }
- =
-
-+int bluetooth_parse_newconnection_message(DBusMessage *msg, const char **d=
-evice,
-+					const char **uuid, guint16 *version,
-+					guint16 *features,
-+					const char **transport_path)
-+{
-+	DBusMessageIter args, props;
-+	int fd;
-+	gboolean has_device =3D FALSE;
-+	gboolean has_uuid =3D FALSE;
-+
-+	dbus_message_iter_init(msg, &args);
-+
-+	if (dbus_message_iter_get_arg_type(&args) !=3D DBUS_TYPE_UNIX_FD)
-+		return -EINVAL;
-+
-+	dbus_message_iter_get_basic(&args, &fd);
-+	dbus_message_iter_next(&args);
-+
-+	dbus_message_iter_recurse(&args, &props);
-+	if (dbus_message_iter_get_arg_type(&props) !=3D DBUS_TYPE_DICT_ENTRY)
-+		return -EINVAL;
-+
-+	while (dbus_message_iter_get_arg_type(&props) =3D=3D DBUS_TYPE_DICT_ENTRY=
-) {
-+		const char *key;
-+		DBusMessageIter value, entry;
-+		int var;
-+
-+		dbus_message_iter_recurse(&props, &entry);
-+		dbus_message_iter_get_basic(&entry, &key);
-+
-+		dbus_message_iter_next(&entry);
-+		dbus_message_iter_recurse(&entry, &value);
-+
-+		var =3D dbus_message_iter_get_arg_type(&value);
-+		if (strcasecmp(key, "Device") =3D=3D 0) {
-+			if (var !=3D DBUS_TYPE_OBJECT_PATH)
-+				return -EINVAL;
-+			dbus_message_iter_get_basic(&value, device);
-+			has_device =3D TRUE;
-+		} else if (strcasecmp(key, "UUID") =3D=3D 0) {
-+			if (var !=3D DBUS_TYPE_STRING)
-+				return -EINVAL;
-+			dbus_message_iter_get_basic(&value, uuid);
-+			has_uuid =3D TRUE;
-+		} else if (strcasecmp(key, "Version") =3D=3D 0) {
-+			if (var !=3D DBUS_TYPE_UINT16)
-+				return -EINVAL;
-+			dbus_message_iter_get_basic(&value, version);
-+		} else if (strcasecmp(key, "Features") =3D=3D 0) {
-+			if (var !=3D DBUS_TYPE_UINT16)
-+				return -EINVAL;
-+			dbus_message_iter_get_basic(&value, features);
-+		} else if (strcasecmp(key, "Transport") =3D=3D 0) {
-+			if (var !=3D DBUS_TYPE_OBJECT_PATH)
-+				return -EINVAL;
-+			dbus_message_iter_get_basic(&value, transport_path);
-+		}
-+
-+		dbus_message_iter_next(&props);
-+	}
-+
-+	return (has_device && has_uuid) ? fd : -EINVAL;
-+}
-+
-+void bluetooth_register_telephony_agent(const char *path, const char *uuid,
-+					guint16 version, guint16 features,
-+					const GDBusMethodTable *methods,
-+					void *user_data,
-+					GDBusDestroyFunction destroy)
-+{
-+	GSList *l;
-+	struct agent *agent;
-+
-+	for (l =3D telephony_list; l; l =3D l->next) {
-+		agent =3D l->data;
-+
-+		if (g_strcmp0(path, agent->path) =3D=3D 0) {
-+			ofono_error("Telephony agent path \"%s\" already " \
-+					"registered", path);
-+			return;
-+		}
-+	}
-+
-+	agent =3D g_try_new0(struct agent, 1);
-+	if (!agent)
-+		return;
-+
-+	agent->path =3D g_strdup(path);
-+	agent->uuid =3D g_strdup(uuid);
-+	agent->version =3D version;
-+	agent->features =3D features;
-+
-+	bluetooth_ref();
-+
-+	g_dbus_register_interface(connection, path,
-+				BLUEZ_TELEPHONY_AGENT_INTERFACE, methods, NULL,
-+				NULL, user_data, destroy);
-+
-+	telephony_list =3D g_slist_prepend(telephony_list, agent);
-+
-+	g_hash_table_foreach(adapter_address_hash,
-+			(GHFunc) register_telephony_agent, agent);
-+}
-+
-+void bluetooth_unregister_telephony_agent(const char *path)
-+{
-+	GSList *l;
-+	struct agent *agent;
-+
-+	for (l =3D telephony_list; l; l =3D l->next) {
-+		agent =3D l->data;
-+
-+		if (g_strcmp0(path, agent->path) =3D=3D 0)
-+			break;
-+	}
-+
-+	if (l =3D=3D NULL)
-+		return;
-+
-+	g_hash_table_foreach(adapter_address_hash,
-+			(GHFunc) unregister_telephony_agent, agent);
-+
-+	telephony_list =3D g_slist_remove(telephony_list, agent);
-+	g_free(agent->path);
-+	g_free(agent->uuid);
-+	g_free(agent);
-+
-+	g_dbus_unregister_interface(connection, path,
-+				BLUEZ_TELEPHONY_AGENT_INTERFACE);
-+
-+	bluetooth_unref();
-+}
-+
- OFONO_PLUGIN_DEFINE(bluetooth, "Bluetooth Utils Plugins", VERSION,
- 			OFONO_PLUGIN_PRIORITY_DEFAULT, NULL, NULL)
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index daa1873..f81fc99 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -21,12 +21,15 @@
- =
-
- #include <ofono/modem.h>
- #include <ofono/dbus.h>
-+#include <gdbus.h>
- =
-
- #define	BLUEZ_SERVICE "org.bluez"
- #define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
- #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
- #define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
- #define	BLUEZ_SERVICE_INTERFACE		BLUEZ_SERVICE ".Service"
-+#define	BLUEZ_TELEPHONY_INTERFACE	BLUEZ_SERVICE ".Telephony"
-+#define	BLUEZ_TELEPHONY_AGENT_INTERFACE	BLUEZ_SERVICE ".TelephonyAgent"
- =
-
- #define DBUS_TIMEOUT 15
- =
-
-@@ -81,3 +84,14 @@ void bluetooth_parse_properties(DBusMessage *reply, cons=
-t char *property, ...);
- int bluetooth_sap_client_register(struct bluetooth_sap_driver *sap,
- 					struct ofono_modem *modem);
- void bluetooth_sap_client_unregister(struct ofono_modem *modem);
-+
-+int bluetooth_parse_newconnection_message(DBusMessage *msg, const char **d=
-evice,
-+					const char **uuid, guint16 *version,
-+					guint16 *features,
-+					const char **transport_path);
-+void bluetooth_register_telephony_agent(const char *path, const char *uuid,
-+					guint16 version, guint16 features,
-+					const GDBusMethodTable *methods,
-+					void *user_data,
-+					GDBusDestroyFunction destroy);
-+void bluetooth_unregister_telephony_agent(const char *path);
 -- =
 
 1.7.1
 
 
---===============4216683154226387919==--
+--===============3602585037574607613==--
 
