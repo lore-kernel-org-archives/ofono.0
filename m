@@ -1,50 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============8707108366313069783=="
+Content-Type: multipart/mixed; boundary="===============4951863828998832639=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/3] ZTE: Create a modem driver to enable radio settings
-Date: Mon, 26 Mar 2012 16:51:49 -0500
-Message-ID: <4F70E4F5.1090708@gmail.com>
-In-Reply-To: <1332500470-8297-1-git-send-email-bertrand.aygon@intel.com>
+From: Aaron Huslage <huslage@tethr.org>
+Subject: Configuring a TCP-connected Modem
+Date: Tue, 27 Mar 2012 15:37:35 -0400
+Message-ID: <CAE_x+2CWUv15tqji+zYhOB4Qym=Qb7ibkx+q81PqCgnALeoqqg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8707108366313069783==
+--===============4951863828998832639==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bertrand,
+I have a sort of strange question. I'd like to be able to configure an
+Inmarsat BGAN modem with ofono using a TCP connection to a port on the
+modem. The modem is connected via Ethernet.
 
-On 03/23/2012 06:01 AM, Bertrand Aygon wrote:
->  - Create ZTE modem driver
->  - Add radio settings support to ZTE modem driver
->  - Enable radio settings in ZTE plugin =
+Has this sort of thing been done? Any ideas on what it would take to get
+this working?
 
-> =
+-- =
 
-> Bertrand Aygon (3):
->   Add ZTE modem driver
->   ztemodem: Add radio settings support
->   zte: Add support for radio settings
-> =
+Aaron Huslage
+VP Technology - Tethr
++1-919-600-1712
+Schedule a meeting with me. <http://tungle.me/huslage>
 
->  Makefile.am                       |    6 +
->  drivers/ztemodem/radio-settings.c |  212 +++++++++++++++++++++++++++++++=
-++++++
->  drivers/ztemodem/ztemodem.c       |   49 +++++++++
->  drivers/ztemodem/ztemodem.h       |   25 +++++
->  plugins/zte.c                     |    3 +
->  5 files changed, 295 insertions(+), 0 deletions(-)
->  create mode 100644 drivers/ztemodem/radio-settings.c
->  create mode 100644 drivers/ztemodem/ztemodem.c
->  create mode 100644 drivers/ztemodem/ztemodem.h
-> =
+--===============4951863828998832639==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
+SSBoYXZlIGEgc29ydCBvZiBzdHJhbmdlIHF1ZXN0aW9uLiBJJiMzOTtkIGxpa2UgdG8gYmUgYWJs
+ZSB0byBjb25maWd1cmUgYW4gSW5tYXJzYXQgQkdBTiBtb2RlbSB3aXRoIG9mb25vIHVzaW5nIGEg
+VENQIGNvbm5lY3Rpb24gdG8gYSBwb3J0IG9uIHRoZSBtb2RlbS4gVGhlIG1vZGVtIGlzIGNvbm5l
+Y3RlZCB2aWEgRXRoZXJuZXQuPGJyPjxicj5IYXMgdGhpcyBzb3J0IG9mIHRoaW5nIGJlZW4gZG9u
+ZT8gQW55IGlkZWFzIG9uIHdoYXQgaXQgd291bGQgdGFrZSB0byBnZXQgdGhpcyB3b3JraW5nPzxi
+ciBjbGVhcj0iYWxsIj4KPGJyPi0tIDxicj5BYXJvbiBIdXNsYWdlPGJyPlZQIFRlY2hub2xvZ3kg
+LSBUZXRocjxicj4rMS05MTktNjAwLTE3MTI8YnI+PGEgaHJlZj0iaHR0cDovL3R1bmdsZS5tZS9o
+dXNsYWdlIiB0YXJnZXQ9Il9ibGFuayI+U2NoZWR1bGUgYSBtZWV0aW5nIHdpdGggbWUuPC9hPjxi
+cj48YnI+Cg==
 
-All three patches have been applied, thanks.
-
-Regards,
--Denis
-
---===============8707108366313069783==--
+--===============4951863828998832639==--
 
