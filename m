@@ -1,30 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============0194702511349661881=="
+Content-Type: multipart/mixed; boundary="===============8631469028281802672=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/2] complete storage task
-Date: Fri, 30 Mar 2012 17:49:06 +0200
-Message-ID: <1333122546.1870.257.camel@aeonflux>
-In-Reply-To: <1333122053-30708-1-git-send-email-sebastien.bianti@linux.intel.com>
+Subject: Re: [PATCH v3 0/3] bug fixing in send message recovery
+Date: Fri, 30 Mar 2012 17:49:18 +0200
+Message-ID: <1333122558.1870.259.camel@aeonflux>
+In-Reply-To: <1332778359-5756-1-git-send-email-sebastien.bianti@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0194702511349661881==
+--===============8631469028281802672==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Sebastien,
 
-> These patches concern mmsd for ofono mailing list.
+> Patch 1 to 3 fix some leaks when a problem arises when a send request is
+> created.
 > =
 
 > =
 
-> S=C3=A9bastien Bianti (2):
->   service: transaction id should'nt be NULL
->   TODO: storage task complete
+> S=C3=A9bastien Bianti (3):
+>   service: factorize error code
+>   service: NULL uuid here is an error
+>   service: remove orphan file
 
-both patches have been applied.
+all three patches have been applied.
 
 Regards
 
@@ -32,5 +34,5 @@ Marcel
 
 
 
---===============0194702511349661881==--
+--===============8631469028281802672==--
 
