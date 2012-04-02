@@ -1,44 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============3709417613699272037=="
+Content-Type: multipart/mixed; boundary="===============6900080208144407935=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [RFC v3 12/12] hfp_ag: Update supported features
-Date: Mon, 02 Apr 2012 15:27:22 +0200
-Message-ID: <1333373242-11117-13-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1333373242-11117-1-git-send-email-frederic.danis@linux.intel.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: [PATCH v6 01/16] bluetooth: Add Serial interface definition
+Date: Mon, 02 Apr 2012 18:19:59 +0200
+Message-ID: <1333383614-4921-2-git-send-email-wagi@monom.org>
+In-Reply-To: <1333383614-4921-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3709417613699272037==
+--===============6900080208144407935==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add ECNR (Echo Cancelation/Noise Reduction) and Inband Ringtone
-capabilities to supported features in HFP AG SDP record
----
- plugins/hfp_ag.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
-diff --git a/plugins/hfp_ag.c b/plugins/hfp_ag.c
-index c12068a..52a8f83 100644
---- a/plugins/hfp_ag.c
-+++ b/plugins/hfp_ag.c
-@@ -37,7 +37,9 @@
+---
+ plugins/bluetooth.h |    1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index daa1873..4fc16ad 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -27,6 +27,7 @@
+ #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
+ #define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
+ #define	BLUEZ_SERVICE_INTERFACE		BLUEZ_SERVICE ".Service"
++#define BLUEZ_SERIAL_INTERFACE		BLUEZ_SERVICE ".Serial"
  =
 
- #define AGENT_PATH "/hfp_ag"
- #define VERSION_1_5 0x0105
--#define FEATURES	(HFP_AG_FEATURE_3WAY | HFP_AG_FEATURE_REJECT_CALL | \
-+#define FEATURES	(HFP_AG_FEATURE_3WAY | HFP_AG_FEATURE_ECNR | \
-+			HFP_AG_FEATURE_IN_BAND_RING_TONE | \
-+			HFP_AG_FEATURE_REJECT_CALL | \
- 			HFP_AG_FEATURE_ENHANCED_CALL_STATUS | \
- 			HFP_AG_FEATURE_ENHANCED_CALL_CONTROL | \
- 			HFP_AG_FEATURE_EXTENDED_RES_CODE)
+ #define DBUS_TIMEOUT 15
+ =
+
 -- =
 
-1.7.1
+1.7.10.rc3.1.gb3065
 
 
---===============3709417613699272037==--
+--===============6900080208144407935==--
 
