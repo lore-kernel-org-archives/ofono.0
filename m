@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4293034909026107418=="
+Content-Type: multipart/mixed; boundary="===============8272644463757025370=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v6 10/16] dundee: Manager append devices
-Date: Mon, 02 Apr 2012 18:20:08 +0200
-Message-ID: <1333383614-4921-11-git-send-email-wagi@monom.org>
+Subject: [PATCH v6 11/16] dundee: Add callback helpers
+Date: Mon, 02 Apr 2012 18:20:09 +0200
+Message-ID: <1333383614-4921-12-git-send-email-wagi@monom.org>
 In-Reply-To: <1333383614-4921-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4293034909026107418==
+--===============8272644463757025370==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,58 +16,71 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- dundee/manager.c |   22 ++++++++++++++++++++++
- 1 file changed, 22 insertions(+)
+ dundee/dundee.h |   44 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 44 insertions(+)
 
-diff --git a/dundee/manager.c b/dundee/manager.c
-index 9ffe5c0..58a5804 100644
---- a/dundee/manager.c
-+++ b/dundee/manager.c
-@@ -30,6 +30,26 @@
+diff --git a/dundee/dundee.h b/dundee/dundee.h
+index 4fe801b..01edd53 100644
+--- a/dundee/dundee.h
++++ b/dundee/dundee.h
+@@ -28,6 +28,50 @@
  =
 
- #include "dundee.h"
+ void __dundee_exit(void);
  =
 
-+static void append_device(struct dundee_device *device, void *userdata)
++enum dundee_error_type {
++	DUNDEE_ERROR_TYPE_NO_ERROR =3D 0,
++	DUNDEE_ERROR_TYPE_FAILURE,
++};
++
++struct dundee_error {
++	enum dundee_error_type type;
++	int error;
++};
++
++struct cb_data {
++	void *cb;
++	void *data;
++	void *user;
++};
++
++static inline struct cb_data *cb_data_new(void *cb, void *data)
 +{
-+	DBusMessageIter *array =3D userdata;
-+	const char *path =3D __dundee_device_get_path(device);
-+	DBusMessageIter entry, dict;
++	struct cb_data *ret;
 +
-+	dbus_message_iter_open_container(array, DBUS_TYPE_STRUCT,
-+						NULL, &entry);
-+	dbus_message_iter_append_basic(&entry, DBUS_TYPE_OBJECT_PATH,
-+					&path);
-+	dbus_message_iter_open_container(&entry, DBUS_TYPE_ARRAY,
-+				OFONO_PROPERTIES_ARRAY_SIGNATURE,
-+				&dict);
++	ret =3D g_new0(struct cb_data, 1);
++	ret->cb =3D cb;
++	ret->data =3D data;
 +
-+	__dundee_device_append_properties(device, &dict);
-+
-+	dbus_message_iter_close_container(&entry, &dict);
-+	dbus_message_iter_close_container(array, &entry);
++	return ret;
 +}
 +
- static DBusMessage *manager_get_devices(DBusConnection *conn,
- 					DBusMessage *msg, void *data)
- {
-@@ -56,6 +76,8 @@ static DBusMessage *manager_get_devices(DBusConnection *c=
-onn,
- 					DBUS_STRUCT_END_CHAR_AS_STRING,
- 					&array);
- =
-
-+	__dundee_device_foreach(append_device, &array);
++#define CALLBACK_WITH_FAILURE(cb, args...)		\
++	do {						\
++		struct dundee_error cb_e;		\
++		cb_e.type =3D DUNDEE_ERROR_TYPE_FAILURE;	\
++		cb_e.error =3D 0;				\
++							\
++		cb(&cb_e, ##args);			\
++	} while (0)					\
 +
- 	dbus_message_iter_close_container(&iter, &array);
++#define CALLBACK_WITH_SUCCESS(f, args...)		\
++	do {						\
++		struct dundee_error e;			\
++		e.type =3D DUNDEE_ERROR_TYPE_NO_ERROR;	\
++		e.error =3D 0;				\
++		f(&e, ##args);				\
++	} while(0)					\
++
+ #include <ofono/log.h>
  =
 
- 	return reply;
+ int __ofono_log_init(const char *program, const char *debug,
 -- =
 
 1.7.10.rc3.1.gb3065
 
 
---===============4293034909026107418==--
+--===============8272644463757025370==--
 
