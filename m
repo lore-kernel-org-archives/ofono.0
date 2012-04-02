@@ -1,241 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3016169120169800456=="
+Content-Type: multipart/mixed; boundary="===============0042946781233711633=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [RFC v3 03/12] hfp_ag: Update to org.bluez.Telephony interface
-Date: Mon, 02 Apr 2012 15:27:13 +0200
-Message-ID: <1333373242-11117-4-git-send-email-frederic.danis@linux.intel.com>
+Subject: [RFC v3 04/12] bluetooth: Add org.bluez.MediaTransport interface
+Date: Mon, 02 Apr 2012 15:27:14 +0200
+Message-ID: <1333373242-11117-5-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1333373242-11117-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3016169120169800456==
+--===============0042946781233711633==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Bluez moves agent registration from a per device interface to
-a per adapter interface.
-Update hfp_ag modem emulator to reflect this change.
 ---
- plugins/hfp_ag.c |  126 ++++++++++++++++++++++++--------------------------=
-----
- 1 files changed, 56 insertions(+), 70 deletions(-)
+ plugins/bluetooth.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/hfp_ag.c b/plugins/hfp_ag.c
-index c2d1d30..ea9c112 100644
---- a/plugins/hfp_ag.c
-+++ b/plugins/hfp_ag.c
-@@ -35,97 +35,83 @@
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index f81fc99..ee3c71e 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -30,6 +30,7 @@
+ #define	BLUEZ_SERVICE_INTERFACE		BLUEZ_SERVICE ".Service"
+ #define	BLUEZ_TELEPHONY_INTERFACE	BLUEZ_SERVICE ".Telephony"
+ #define	BLUEZ_TELEPHONY_AGENT_INTERFACE	BLUEZ_SERVICE ".TelephonyAgent"
++#define	BLUEZ_TRANSPORT_INTERFACE	BLUEZ_SERVICE ".MediaTransport"
  =
 
- #include "bluetooth.h"
+ #define DBUS_TIMEOUT 15
  =
 
--#define HFP_AG_CHANNEL	13
-+#define AGENT_PATH "/hfp_ag"
-+#define VERSION_1_5 0x0105
-+#define FEATURES	(HFP_AG_FEATURE_3WAY | HFP_AG_FEATURE_REJECT_CALL | \
-+			HFP_AG_FEATURE_ENHANCED_CALL_STATUS | \
-+			HFP_AG_FEATURE_ENHANCED_CALL_CONTROL | \
-+			HFP_AG_FEATURE_EXTENDED_RES_CODE)
-+
-+#ifndef DBUS_TYPE_UNIX_FD
-+#define DBUS_TYPE_UNIX_FD -1
-+#endif
- =
-
--static struct server *server;
- static guint modemwatch_id;
- static GList *modems;
- static GHashTable *sim_hash =3D NULL;
- =
-
--static const gchar *hfp_ag_record =3D
--"<?xml version=3D\"1.0\" encoding=3D\"UTF-8\" ?>\n"
--"<record>\n"
--"  <attribute id=3D\"0x0001\">\n"
--"    <sequence>\n"
--"      <uuid value=3D\"0x111F\"/>\n"
--"      <uuid value=3D\"0x1203\"/>\n"
--"    </sequence>\n"
--"  </attribute>\n"
--"\n"
--"  <attribute id=3D\"0x0004\">\n"
--"    <sequence>\n"
--"      <sequence>\n"
--"        <uuid value=3D\"0x0100\"/>\n"
--"      </sequence>\n"
--"      <sequence>\n"
--"        <uuid value=3D\"0x0003\"/>\n"
--"        <uint8 value=3D\"13\" name=3D\"channel\"/>\n"
--"      </sequence>\n"
--"    </sequence>\n"
--"  </attribute>\n"
--"\n"
--"  <attribute id=3D\"0x0009\">\n"
--"    <sequence>\n"
--"      <sequence>\n"
--"        <uuid value=3D\"0x111E\"/>\n"
--"        <uint16 value=3D\"0x0105\" name=3D\"version\"/>\n"
--"      </sequence>\n"
--"    </sequence>\n"
--"  </attribute>\n"
--"\n"
--"  <attribute id=3D\"0x0100\">\n"
--"    <text value=3D\"Hands-Free Audio Gateway\" name=3D\"name\"/>\n"
--"  </attribute>\n"
--"\n"
--"  <attribute id=3D\"0x0301\">\n"
--"    <uint8 value=3D\"0x01\" />\n"
--"  </attribute>\n"
--"\n"
--"  <attribute id=3D\"0x0311\">\n"
--"    <uint16 value=3D\"0x0001\" />\n"
--"  </attribute>\n"
--"</record>\n";
--
--static void hfp_ag_connect_cb(GIOChannel *io, GError *err, gpointer user_d=
-ata)
-+static DBusMessage *hfp_ag_agent_new_connection(DBusConnection *conn,
-+						DBusMessage *msg, void *data)
- {
--	struct ofono_modem *modem;
--	struct ofono_emulator *em;
- 	int fd;
-+	const char *device, *uuid;
-+	const char *path =3D NULL;
-+	guint16 version =3D 0;
-+	guint16 features =3D 0;
-+	struct ofono_emulator *em;
-+	struct ofono_modem *modem;
- =
-
--	DBG("");
-+	fd =3D bluetooth_parse_newconnection_message(msg, &device, &uuid,
-+						&version, &features, &path);
-+	if (fd < 0)
-+		return __ofono_error_invalid_args(msg);
- =
-
--	if (err) {
--		DBG("%s", err->message);
--		return;
--	}
-+	DBG("New connection for %s on %s (version 0x%04X, features 0x%02X, " \
-+					"media transport path: %s)",
-+					device, uuid, version, features, path);
- =
-
- 	/* Pick the first voicecall capable modem */
- 	modem =3D modems->data;
- 	if (modem =3D=3D NULL)
--		return;
-+		return __ofono_error_failed(msg);
- =
-
- 	DBG("Picked modem %p for emulator", modem);
- =
-
- 	em =3D ofono_emulator_create(modem, OFONO_EMULATOR_TYPE_HFP);
- 	if (em =3D=3D NULL)
--		return;
--
--	fd =3D g_io_channel_unix_get_fd(io);
--	g_io_channel_set_close_on_unref(io, FALSE);
-+		return __ofono_error_failed(msg);
- =
-
- 	ofono_emulator_register(em, fd);
-+
-+	return dbus_message_new_method_return(msg);
- }
- =
-
-+static DBusMessage *hfp_ag_agent_release(DBusConnection *conn,
-+					DBusMessage *msg, void *data)
-+{
-+	DBG("");
-+
-+	return dbus_message_new_method_return(msg);
-+}
-+
-+static GDBusMethodTable agent_methods[] =3D {
-+	{ "NewConnection", "ha{sv}", "", hfp_ag_agent_new_connection,
-+		G_DBUS_METHOD_FLAG_ASYNC },
-+	{ "Release", "", "", hfp_ag_agent_release },
-+	{ NULL, NULL, NULL, NULL }
-+};
-+
- static void sim_state_watch(enum ofono_sim_state new_state, void *data)
- {
- 	struct ofono_modem *modem =3D data;
- =
-
- 	if (new_state !=3D OFONO_SIM_STATE_READY) {
-+		if (modems =3D=3D NULL)
-+			return;
-+
- 		modems =3D g_list_remove(modems, modem);
--		if (modems =3D=3D NULL && server !=3D NULL) {
--			bluetooth_unregister_server(server);
--			server =3D NULL;
--		}
-+		if (modems =3D=3D NULL)
-+			bluetooth_unregister_telephony_agent(AGENT_PATH);
- =
-
- 		return;
- 	}
-@@ -138,8 +124,9 @@ static void sim_state_watch(enum ofono_sim_state new_st=
-ate, void *data)
- 	if (modems->next !=3D NULL)
- 		return;
- =
-
--	server =3D bluetooth_register_server(HFP_AG_CHANNEL, hfp_ag_record,
--						hfp_ag_connect_cb, NULL);
-+	bluetooth_register_telephony_agent(AGENT_PATH, HFP_AG_UUID,
-+						VERSION_1_5, FEATURES,
-+						agent_methods, NULL, NULL);
- }
- =
-
- static gboolean sim_watch_remove(gpointer key, gpointer value,
-@@ -192,6 +179,9 @@ static void call_modemwatch(struct ofono_modem *modem, =
-void *user)
- =
-
- static int hfp_ag_init(void)
- {
-+	if (DBUS_TYPE_UNIX_FD < 0)
-+		return -EBADF;
-+
- 	sim_hash =3D g_hash_table_new(g_direct_hash, g_direct_equal);
- =
-
- 	modemwatch_id =3D __ofono_modemwatch_add(modem_watch, NULL, NULL);
-@@ -203,14 +193,10 @@ static int hfp_ag_init(void)
- static void hfp_ag_exit(void)
- {
- 	__ofono_modemwatch_remove(modemwatch_id);
-+
- 	g_list_free(modems);
- 	g_hash_table_foreach_remove(sim_hash, sim_watch_remove, NULL);
- 	g_hash_table_destroy(sim_hash);
--
--	if (server) {
--		bluetooth_unregister_server(server);
--		server =3D NULL;
--	}
- }
- =
-
- OFONO_PLUGIN_DEFINE(hfp_ag, "Hands-Free Audio Gateway Profile Plugins", VE=
-RSION,
 -- =
 
 1.7.1
 
 
---===============3016169120169800456==--
+--===============0042946781233711633==--
 
