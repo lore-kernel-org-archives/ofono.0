@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3040068111374898813=="
+Content-Type: multipart/mixed; boundary="===============6382633500019661574=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v6 07/16] dundee: Add systemd configuration file
-Date: Mon, 02 Apr 2012 18:20:05 +0200
-Message-ID: <1333383614-4921-8-git-send-email-wagi@monom.org>
+Subject: [PATCH v6 06/16] dundee: Add D-Bus configuration file
+Date: Mon, 02 Apr 2012 18:20:04 +0200
+Message-ID: <1333383614-4921-7-git-send-email-wagi@monom.org>
 In-Reply-To: <1333383614-4921-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3040068111374898813==
+--===============6382633500019661574==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,65 +16,67 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- Makefile.am              |    6 ++++++
- configure.ac             |    3 ++-
- dundee/dundee.service.in |   11 +++++++++++
- 3 files changed, 19 insertions(+), 1 deletion(-)
- create mode 100644 dundee/dundee.service.in
+ Makefile.am        |    6 ++++++
+ dundee/dundee.conf |   23 +++++++++++++++++++++++
+ 2 files changed, 29 insertions(+)
+ create mode 100644 dundee/dundee.conf
 
 diff --git a/Makefile.am b/Makefile.am
-index ad61106..fb79a1d 100644
+index fb0de75..ad61106 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -681,6 +681,12 @@ if DATAFILES
+@@ -677,6 +677,12 @@ dundee_dundee_SOURCES =3D $(gdbus_sources) \
  =
 
- dist_dbusconf_DATA +=3D dundee/dundee.conf
+ dundee_dundee_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_L=
+IBS@ -ldl
  =
 
-+if SYSTEMD
++if DATAFILES
 +
-+systemdunit_DATA +=3D dundee/dundee.service
++dist_dbusconf_DATA +=3D dundee/dundee.conf
 +
 +endif
 +
  endif
  =
 
- endif
-diff --git a/configure.ac b/configure.ac
-index 1e21cc4..acc8114 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -255,4 +255,5 @@ fi
- AC_DEFINE_UNQUOTED(CONFIGDIR, "${configdir}",
- 			[Directory for the configuration files])
- =
-
--AC_OUTPUT(Makefile include/version.h src/ofono.service ofono.pc)
-+AC_OUTPUT(Makefile include/version.h src/ofono.service ofono.pc \
-+	   dundee/dundee.service)
-diff --git a/dundee/dundee.service.in b/dundee/dundee.service.in
+ noinst_PROGRAMS +=3D gatchat/gsmdial gatchat/test-server gatchat/test-qcdm
+diff --git a/dundee/dundee.conf b/dundee/dundee.conf
 new file mode 100644
-index 0000000..c57c618
+index 0000000..de79dd5
 --- /dev/null
-+++ b/dundee/dundee.service.in
-@@ -0,0 +1,11 @@
-+[Unit]
-+Description=3DDUN service
-+After=3Dsyslog.target
++++ b/dundee/dundee.conf
+@@ -0,0 +1,23 @@
++<!-- This configuration file specifies the required security policies
++     for oFono dundee (DUN) daemon to work. -->
 +
-+[Service]
-+Type=3Ddbus
-+BusName=3Dorg.ofono.dundee
-+ExecStart=3D@prefix@/sbin/dundee -n
++<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-BUS Bus Configuration 1.=
+0//EN"
++ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
++<busconfig>
 +
-+[Install]
-+WantedBy=3Dmulti-user.target
++  <!-- ../system.conf have denied everything, so we just punch some holes =
+-->
++
++  <policy user=3D"root">
++    <allow own=3D"org.ofono.dundee"/>
++    <allow send_destination=3D"org.ofono.dundee"/>
++  </policy>
++
++  <policy at_console=3D"true">
++    <allow send_destination=3D"org.ofono.dundee"/>
++  </policy>
++
++  <policy context=3D"default">
++    <deny send_destination=3D"org.ofono.dundee"/>
++  </policy>
++
++</busconfig>
 -- =
 
 1.7.10.rc3.1.gb3065
 
 
---===============3040068111374898813==--
+--===============6382633500019661574==--
 
