@@ -1,218 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============1512662050347270825=="
+Content-Type: multipart/mixed; boundary="===============4616251462761075606=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC v3 08/12] emulator: Add AT+NREC support
-Date: Tue, 03 Apr 2012 22:38:35 -0500
-Message-ID: <4F7BC23B.2000607@gmail.com>
-In-Reply-To: <1333373242-11117-9-git-send-email-frederic.danis@linux.intel.com>
+From: Mike <puffy.taco@gmail.com>
+Subject: hfp voicecall fails to register in ofono with iPhone voicemail
+Date: Thu, 05 Apr 2012 23:28:38 -0500
+Message-ID: <CAB7rCThxStzipw-2SJ1dc03RwT-+dby1f3L9+=xdXS3HkLXrog@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1512662050347270825==
+--===============4616251462761075606==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+I'm experiencing an issue where the +CLCC response provided by an
+iPhone is ignored in the case of a user utilizing visual voicemail.
+The problem here is that the AT+CLCC is being sent in response to a
++CIEV indicating call setup, but by the time the +CLCC response comes
+back, the call status is active.  This is a problem because the
+callback, sync_dialing_cb, is specifically looking for calls in the
+dialing state.  It looks like at least some bits from clcc_poll_cb
+should be copied into sync_dialing_cb (or a helper function) because I
+would think any time we get a +CLCC we would want to completely update
+our call list (and therefore fix the issue I'm encountering).  I'm
+still digging into this, but as I'm not familiar with all the quirks
+of devices out there, I'm throwing this out there in case anyone has
+some ideas on this.
 
-On 04/02/2012 08:27 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> ---
->  src/emulator.c |  120 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 120 insertions(+), 0 deletions(-)
-> =
+Thanks,
+Mike
 
-> diff --git a/src/emulator.c b/src/emulator.c
-> index dc3c10d..c5ec105 100644
-> --- a/src/emulator.c
-> +++ b/src/emulator.c
-> @@ -33,6 +33,7 @@
->  #include "common.h"
->  #include "gatserver.h"
->  #include "gatppp.h"
-> +#include "../plugins/bluetooth.h"
+> ACL data: handle 1 flags 0x02 dlen 141
+    L2CAP(d): cid 0x0040 len 137 [psm 3]
+      RFCOMM(d): UIH: cr 1 dlci 14 pf 0 ilen 132 fcs 0xa5
+      0000: 0d 0a 2b 43 49 4e 44 3a  20 28 22 73 65 72 76 69  ..+CIND: ("se=
+rvi
+      0010: 63 65 22 2c 28 30 2d 31  29 29 2c 28 22 63 61 6c  ce",(0-1)),("=
+cal
+      0020: 6c 22 2c 28 30 2d 31 29  29 2c 28 22 63 61 6c 6c  l",(0-1)),("c=
+all
+      0030: 73 65 74 75 70 22 2c 28  30 2d 33 29 29 2c 28 22  setup",(0-3))=
+,("
+      0040: 62 61 74 74 63 68 67 22  2c 28 30 2d 35 29 29 2c  battchg",(0-5=
+)),
+      0050: 28 22 73 69 67 6e 61 6c  22 2c 28 30 2d 35 29 29  ("signal",(0-=
+5))
+      0060: 2c 28 22 72 6f 61 6d 22  2c 28 30 2d 31 29 29 2c  ,("roam",(0-1=
+)),
+      0070: 28 22 63 61 6c 6c 68 65  6c 64 22 2c 28 30 2d 32  ("callheld",(=
+0-2
+      0080: 29 29 0d 0a                                       ))..
 
-What is going on here?  We really should not be including anything from
-directories other than src/ and include/, and in the case of emulator.c
-from gatchat.
+...
 
->  =
+> ACL data: handle 1 flags 0x02 dlen 22
+    L2CAP(d): cid 0x0040 len 18 [psm 3]
+      RFCOMM(d): UIH: cr 1 dlci 14 pf 0 ilen 14 fcs 0xa5
+      0000: 0d 0a 2b 43 49 45 56 3a  20 33 2c 32 0d 0a        ..+CIEV: 3,2..
+< ACL data: handle 1 flags 0x02 dlen 16
+    L2CAP(d): cid 0x7800 len 12 [psm 3]
+      RFCOMM(d): UIH: cr 0 dlci 14 pf 0 ilen 8 fcs 0x7f
+      0000: 41 54 2b 43 4c 43 43 0d                           AT+CLCC.
+> HCI Event: Number of Completed Packets (0x13) plen 5
+    handle 1 packets 1
+> HCI Event: Connect Request (0x04) plen 10
+    bdaddr 90:27:E4:58:B8:DC class 0x7a020c type eSCO
+< HCI Command: Accept Synchronous Connection (0x01|0x0029) plen 21
+    bdaddr 90:27:E4:58:B8:DC
+    0000: 40 1f 00 00 40 1f 00 00  ff ff 60 00 ff 3f 00     @...@.....`..=
+?.
+> HCI Event: Command Status (0x0f) plen 4
+    Accept Synchronous Connection (0x01|0x0029) status 0x00 ncmd 1
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17
+    status 0x00 handle 257 bdaddr 90:27:E4:58:B8:DC type eSCO
+    Air mode: CVSD
+> ACL data: handle 1 flags 0x02 dlen 22
+    L2CAP(d): cid 0x0040 len 18 [psm 3]
+      RFCOMM(d): UIH: cr 1 dlci 14 pf 0 ilen 14 fcs 0xa5
+      0000: 0d 0a 2b 43 49 45 56 3a  20 32 2c 31 0d 0a        ..+CIEV: 2,1..
+> ACL data: handle 1 flags 0x02 dlen 22
+    L2CAP(d): cid 0x0040 len 18 [psm 3]
+      RFCOMM(d): UIH: cr 1 dlci 14 pf 0 ilen 14 fcs 0xa5
+      0000: 0d 0a 2b 43 49 45 56 3a  20 33 2c 30 0d 0a        ..+CIEV: 3,0..
+> ACL data: handle 1 flags 0x02 dlen 56
+    L2CAP(d): cid 0x0040 len 52 [psm 3]
+      RFCOMM(d): UIH: cr 1 dlci 14 pf 0 ilen 48 fcs 0xa5
+      0000: 0d 0a 2b 43 4c 43 43 3a  20 31 2c 30 2c 30 2c 30  ..+CLCC: 1,0,=
+0,0
+      0010: 2c 30 2c 22 2a 2a 32 31  31 35 33 2a 2a 22 2c 31  ,0,"**21153**=
+",1
+      0020: 32 39 2c 22 56 6f 69 63  65 6d 61 69 6c 22 0d 0a  29,"Voicemail=
+"..
+> ACL data: handle 1 flags 0x02 dlen 14
+    L2CAP(d): cid 0x0040 len 10 [psm 3]
+      RFCOMM(d): UIH: cr 1 dlci 14 pf 0 ilen 6 fcs 0xa5
+      0000: 0d 0a 4f 4b 0d 0a                                 ..OK..
 
->  #define RING_TIMEOUT 3
->  =
-
-> @@ -312,6 +313,85 @@ error:
->  	}
->  }
->  =
-
-> +static void audio_transport_set_property_cb(DBusPendingCall *call,
-> +						gpointer user_data)
-> +{
-> +	GAtServer *server =3D user_data;
-> +	DBusMessage *reply;
-> +	struct DBusError derr;
-> +	GAtServerResult result;
-> +
-> +	reply =3D dbus_pending_call_steal_reply(call);
-> +
-> +	dbus_error_init(&derr);
-> +
-> +	if (dbus_set_error_from_message(&derr, reply)) {
-> +		ofono_error("MediaTransport.SetProperties replied an error: " \
-> +				"%s, %s", derr.name, derr.message);
-> +		dbus_error_free(&derr);
-> +		result =3D G_AT_SERVER_RESULT_ERROR;
-> +	} else
-> +		result =3D G_AT_SERVER_RESULT_OK;
-> +
-> +	g_at_server_send_final(server, result);
-> +
-> +	dbus_message_unref(reply);
-> +}
-> +
-> +static void audio_transport_set_property(GAtServer *server, const char *=
-path,
-> +						const char *name, int type,
-> +						const void *value)
-> +{
-> +	DBusMessage *msg;
-> +	DBusMessageIter iter, var;
-> +	const char *str_type;
-> +	DBusConnection *connection;
-> +	DBusPendingCall *c;
-> +
-> +	if (path =3D=3D NULL)
-> +		return;
-> +
-> +	switch (type) {
-> +	case DBUS_TYPE_BOOLEAN:
-> +		str_type =3D DBUS_TYPE_BOOLEAN_AS_STRING;
-> +		break;
-> +
-> +	case DBUS_TYPE_UINT16:
-> +		str_type =3D DBUS_TYPE_UINT16_AS_STRING;
-> +		break;
-> +
-> +	default:
-> +		return;
-> +	}
-> +
-> +	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, path,
-> +				BLUEZ_TRANSPORT_INTERFACE, "SetProperty");
-> +	if (msg =3D=3D NULL)
-> +		return;
-> +
-> +	dbus_message_iter_init_append(msg, &iter);
-> +	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &name);
-> +
-> +	dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT, str_type,
-> +						&var);
-> +	dbus_message_iter_append_basic(&var, type, value);
-> +	dbus_message_iter_close_container(&iter, &var);
-> +
-> +	connection =3D ofono_dbus_get_connection();
-> +
-> +	if (!dbus_connection_send_with_reply(connection, msg, &c, -1)) {
-> +		ofono_error("Sending SetProperty failed");
-> +		goto fail;
-> +	}
-> +
-> +	dbus_pending_call_set_notify(c, audio_transport_set_property_cb, server,
-> +									NULL);
-> +	dbus_pending_call_unref(c);
-> +
-> +fail:
-> +	dbus_message_unref(msg);
-> +}
-> +
-
-We can't do it this way, we cannot depend on any specific APIs within
-the core besides the dependencies we have already established (e.g.
-GLib, DBus).  So any BlueZ specifics must be put into a plugin and an
-abstraction created if necessary.  Think of it this way, it must be
-possible to integrate any Bluetooth stack with oFono, not only BlueZ.
-
->  static struct indicator *find_indicator(struct ofono_emulator *em,
->  						const char *name, int *index)
->  {
-> @@ -829,6 +909,44 @@ fail:
->  	}
->  }
->  =
-
-> +static void nrec_cb(GAtServer *server, GAtServerRequestType type,
-> +			GAtResult *result, gpointer user_data)
-> +{
-> +	struct ofono_emulator *em =3D user_data;
-> +	GAtResultIter iter;
-> +	int val;
-> +
-> +	if (em->slc =3D=3D FALSE)
-> +		goto fail;
-> +
-> +	switch (type) {
-> +	case G_AT_SERVER_REQUEST_TYPE_SET:
-> +		if (em->audio_transport =3D=3D NULL)
-> +			goto fail;
-> +
-> +		g_at_result_iter_init(&iter, result);
-> +		g_at_result_iter_next(&iter, "");
-> +
-> +		if (!g_at_result_iter_next_number(&iter, &val))
-> +			goto fail;
-> +
-> +		if (val !=3D 0 && val !=3D 1)
-> +			goto fail;
-> +
-> +		/* check this is last parameter */
-> +		if (g_at_result_iter_skip_next(&iter))
-> +			goto fail;
-> +
-> +		audio_transport_set_property(server, em->audio_transport,
-> +					"NREC", DBUS_TYPE_BOOLEAN, &val);
-> +		break;
-> +
-> +	default:
-> +fail:
-> +		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
-> +	};
-> +}
-> +
-
-Perhaps this belongs in a BlueZ specific implementation, e.g. by using
-g_at_server_register from within the bluez plugin.
-
-Alternatively, we can create a driver abstraction for nrec, vgm, vgs and
-friends.
-
->  static void emulator_add_indicator(struct ofono_emulator *em, const char=
-* name,
->  					int min, int max, int dflt,
->  					gboolean mandatory)
-> @@ -931,6 +1049,7 @@ void ofono_emulator_register(struct ofono_emulator *=
-em, int fd)
->  		g_at_server_register(em->server, "+CCWA", ccwa_cb, em, NULL);
->  		g_at_server_register(em->server, "+CMEE", cmee_cb, em, NULL);
->  		g_at_server_register(em->server, "+BIA", bia_cb, em, NULL);
-> +		g_at_server_register(em->server, "+NREC", nrec_cb, em, NULL);
->  	}
->  =
-
->  	__ofono_atom_register(em->atom, emulator_unregister);
-> @@ -981,6 +1100,7 @@ struct ofono_emulator *ofono_emulator_create(struct =
-ofono_modem *modem,
->  =
-
->  	em->type =3D type;
->  	em->l_features |=3D HFP_AG_FEATURE_3WAY;
-> +	em->l_features |=3D HFP_AG_FEATURE_ECNR;
->  	em->l_features |=3D HFP_AG_FEATURE_REJECT_CALL;
->  	em->l_features |=3D HFP_AG_FEATURE_ENHANCED_CALL_STATUS;
->  	em->l_features |=3D HFP_AG_FEATURE_ENHANCED_CALL_CONTROL;
-
-Regards,
--Denis
-
---===============1512662050347270825==--
+--===============4616251462761075606==--
 
