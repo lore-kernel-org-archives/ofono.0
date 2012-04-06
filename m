@@ -1,43 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============0500522296281014123=="
+Content-Type: multipart/mixed; boundary="===============0774244933596108362=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [RFC v4 10/10] emulator: Update supported features
-Date: Fri, 06 Apr 2012 15:17:12 +0200
-Message-ID: <1333718232-8447-11-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1333718232-8447-1-git-send-email-frederic.danis@linux.intel.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] Add udev rules for SpeedUp U3501
+Date: Fri, 06 Apr 2012 15:30:32 +0200
+Message-ID: <1333719032-7719-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0500522296281014123==
+--===============0774244933596108362==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add ECNR (Echo Cancelation/Noise Reduction) and Inband Ringtone
-capabilities to supported features (+BRSF event)
 ---
- src/emulator.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ plugins/ofono-speedup.rules |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-diff --git a/src/emulator.c b/src/emulator.c
-index e7c7d41..371e96c 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -979,6 +979,8 @@ struct ofono_emulator *ofono_emulator_create(struct ofo=
-no_modem *modem,
+diff --git a/plugins/ofono-speedup.rules b/plugins/ofono-speedup.rules
+index f43fc7b..acf8857 100644
+--- a/plugins/ofono-speedup.rules
++++ b/plugins/ofono-speedup.rules
+@@ -20,4 +20,8 @@ ATTRS{idVendor}=3D=3D"2020", ATTRS{idProduct}=3D=3D"1008"=
+, ENV{ID_USB_INTERFACE_NUM}=3D=3D"0
+ ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9800", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"01", ENV{OFONO_LABEL}=3D"modem"
+ ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9800", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"02", ENV{OFONO_LABEL}=3D"aux"
  =
 
- 	em->type =3D type;
- 	em->l_features |=3D HFP_AG_FEATURE_3WAY;
-+	em->l_features |=3D HFP_AG_FEATURE_ECNR;
-+	em->l_features |=3D HFP_AG_FEATURE_IN_BAND_RING_TONE;
- 	em->l_features |=3D HFP_AG_FEATURE_REJECT_CALL;
- 	em->l_features |=3D HFP_AG_FEATURE_ENHANCED_CALL_STATUS;
- 	em->l_features |=3D HFP_AG_FEATURE_ENHANCED_CALL_CONTROL;
++# SpeedUp U3501
++ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9605", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"03", ENV{OFONO_LABEL}=3D"modem"
++ATTRS{idVendor}=3D=3D"1c9e", ATTRS{idProduct}=3D=3D"9605", ENV{ID_USB_INTE=
+RFACE_NUM}=3D=3D"01", ENV{OFONO_LABEL}=3D"aux"
++
+ LABEL=3D"ofono_speedup_end"
 -- =
 
-1.7.1
+1.7.5.4
 
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
---===============0500522296281014123==--
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============0774244933596108362==--
 
