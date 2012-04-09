@@ -1,51 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============6303922699973067983=="
+Content-Type: multipart/mixed; boundary="===============8613603116202056610=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC v4 10/10] emulator: Update supported features
-Date: Fri, 06 Apr 2012 12:38:51 -0500
-Message-ID: <4F7F2A2B.8070708@gmail.com>
-In-Reply-To: <1333718232-8447-11-git-send-email-frederic.danis@linux.intel.com>
+From: Vijay Chavan (RBEI/ECP2) <Vijay.Chavan@in.bosch.com>
+Subject: Bluetooth HFP Audio
+Date: Mon, 09 Apr 2012 13:27:37 +0800
+Message-ID: <FA8F3B2820BFA148821EFF56C25430EA07ADE654@SGPMBX03.APAC.bosch.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6303922699973067983==
+--===============8613603116202056610==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Hello All,
 
-On 04/06/2012 08:17 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> Add ECNR (Echo Cancelation/Noise Reduction) and Inband Ringtone
-> capabilities to supported features (+BRSF event)
-> ---
->  src/emulator.c |    2 ++
->  1 files changed, 2 insertions(+), 0 deletions(-)
-> =
+I am using Ofono-0.41 on Meego-1.2 & Ubuntu-11.04 for Bluetooth HFP telepho=
+ny.
 
-> diff --git a/src/emulator.c b/src/emulator.c
-> index e7c7d41..371e96c 100644
-> --- a/src/emulator.c
-> +++ b/src/emulator.c
-> @@ -979,6 +979,8 @@ struct ofono_emulator *ofono_emulator_create(struct o=
-fono_modem *modem,
->  =
+All the call handing works fine but I am not able to get audio for phone ca=
+lls.
 
->  	em->type =3D type;
->  	em->l_features |=3D HFP_AG_FEATURE_3WAY;
-> +	em->l_features |=3D HFP_AG_FEATURE_ECNR;
-> +	em->l_features |=3D HFP_AG_FEATURE_IN_BAND_RING_TONE;
->  	em->l_features |=3D HFP_AG_FEATURE_REJECT_CALL;
->  	em->l_features |=3D HFP_AG_FEATURE_ENHANCED_CALL_STATUS;
->  	em->l_features |=3D HFP_AG_FEATURE_ENHANCED_CALL_CONTROL;
+Has any one tried bluetooth audio? Any clue will be a great help.
 
-I think it would be better for the features to be modified based on what
-command handlers are registered.  E.g. if NREC handler is registered in
-ofono_emulator_add_handler then add ECNR to local features, etc.
+Thanks...
 
-Regards,
--Denis
+Mit freundlichen Gr=C3=BC=C3=9Fen / Best regards
+
+Vijay Chavan
+RBEI/ECP2
+
+Tel. +91(80) 66575647
 
 
---===============6303922699973067983==--
+
+
+--===============8613603116202056610==--
 
