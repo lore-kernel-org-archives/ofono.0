@@ -1,50 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============6248941565305604161=="
+Content-Type: multipart/mixed; boundary="===============3529643064116598003=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv4 11/13] call-forwarding: Re-run ss path queries on CFU unset
-Date: Tue, 10 Apr 2012 15:17:32 +0300
-Message-ID: <1334060254-29547-12-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv4 13/13] TODO: Remove completed call forwarding state task
+Date: Tue, 10 Apr 2012 15:17:34 +0300
+Message-ID: <1334060254-29547-14-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1334060254-29547-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6248941565305604161==
+--===============3529643064116598003==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/call-forwarding.c |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+ TODO |   17 -----------------
+ 1 files changed, 0 insertions(+), 17 deletions(-)
 
-diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index aa1ece7..204ecc7 100644
---- a/src/call-forwarding.c
-+++ b/src/call-forwarding.c
-@@ -1004,6 +1004,16 @@ static void ss_set_query_cf_callback(const struct of=
-ono_error *error, int total,
+diff --git a/TODO b/TODO
+index 1fef651..9948117 100644
+--- a/TODO
++++ b/TODO
+@@ -213,23 +213,6 @@ Supplementary Services
+   Priority: Low
+   Complexity: C8
  =
 
- 	set_new_cond_list(cf, cf->query_next, l);
+-- Call forwarding state handling change
+-
+-  At the moment call forwarding states are not always correct. Any active
+-  conditional call forwarding should become quiescent while unconditional =
+call
+-  forwarding is activate. If call forwarding unconditional is subsequently
+-  deactivated, all the quiescent forwardings should become operative again.
+-  I.e. No conditional call forwarding string should be returned while
+-  unconditional call forwarding is active even if they exist.
+-
+-  If there is an successful attempt to activate/deactivate conditional call
+-  forwarding while unconditional call forwarding is active the conditional=
+ cache
+-  flag should cleared.
+-
+-  Priority: High
+-  Complexity: C1
+-  Owner: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
+-
  =
 
-+	if (cf->query_next =3D=3D CALL_FORWARDING_TYPE_UNCONDITIONAL &&
-+			cf->query_next =3D=3D cf->query_end) {
-+		cf->flags |=3D CALL_FORWARDING_FLAG_CACHED;
-+		/*
-+		 * CFU has been disabled, conditionals need to be updated
-+		 */
-+		if (is_cfu_enabled(cf) =3D=3D FALSE)
-+			cf->query_end =3D CALL_FORWARDING_TYPE_NOT_REACHABLE;
-+	}
-+
- 	if (cf->query_next !=3D cf->query_end) {
- 		cf->query_next++;
- 		ss_set_query_next_cf_cond(cf);
+ Voicecall
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D
 -- =
 
 1.7.5.4
 
 
---===============6248941565305604161==--
+--===============3529643064116598003==--
 
