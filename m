@@ -1,55 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============6373361913372186743=="
+Content-Type: multipart/mixed; boundary="===============7074194368013976258=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv4 00/13] Call forwarding state handling change
-Date: Tue, 10 Apr 2012 15:17:21 +0300
-Message-ID: <1334060254-29547-1-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv4 01/13] call-forwarding: Refactor cf_condition_compare()
+Date: Tue, 10 Apr 2012 15:17:22 +0300
+Message-ID: <1334060254-29547-2-git-send-email-oleg.zhurakivskyy@intel.com>
+In-Reply-To: <1334060254-29547-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6373361913372186743==
+--===============7074194368013976258==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+---
+ src/call-forwarding.c |   13 +++----------
+ 1 files changed, 3 insertions(+), 10 deletions(-)
 
-Please find the changes in order to correct call forwarding states.
+diff --git a/src/call-forwarding.c b/src/call-forwarding.c
+index 8b6659a..2b91250 100644
+--- a/src/call-forwarding.c
++++ b/src/call-forwarding.c
+@@ -86,18 +86,12 @@ static void get_query_next_cf_cond(struct ofono_call_fo=
+rwarding *cf);
+ static void set_query_next_cf_cond(struct ofono_call_forwarding *cf);
+ static void ss_set_query_next_cf_cond(struct ofono_call_forwarding *cf);
+ =
 
-Changes from v3:
+-static gint cf_condition_compare(gconstpointer a, gconstpointer b)
++static gint cf_cond_compare(gconstpointer a, gconstpointer b)
+ {
+ 	const struct ofono_call_forwarding_condition *ca =3D a;
+ 	const struct ofono_call_forwarding_condition *cb =3D b;
+ =
 
-- Re-run conditional queries on cfu removal and mark cached.
-- End querying once cfu is active.
-- Handle the caching on supplementary services path
-  cfs modifications.
+-	if (ca->cls < cb->cls)
+-		return -1;
+-
+-	if (ca->cls > cb->cls)
+-		return 1;
+-
+-	return 0;
++	return ca->cls - cb->cls;
+ }
+ =
 
-Regards,
-Oleg
+ static gint cf_condition_find_with_cls(gconstpointer a, gconstpointer b)
+@@ -175,8 +169,7 @@ static GSList *cf_cond_list_create(int total,
+ 				sizeof(struct ofono_call_forwarding_condition));
+ 			cond->cls =3D j;
+ =
 
-Oleg Zhurakivskyy (13):
-  call-forwarding: Refactor cf_condition_compare()
-  call-forwarding: Refactor cf_condition_find_with_cls()
-  call-forwarding: Get rid of extra variable
-  call-forwarding: Streamline number assignment
-  call-forwarding: Streamline cf_find_timeout() logic
-  call-forwarding: Refactor cf_find_unconditional()
-  call-forwarding: Streamline set_query_cf_callback()
-  call-forwarding: Remove unneeded variable
-  call-forwarding: End querying once cfu is active
-  call-forwarding: CFU unset, update conditionals
-  call-forwarding: Re-run ss path queries on CFU unset
-  call-forwarding: Cache ss TYPE_ALL modifications
-  TODO: Remove completed call forwarding state task
-
- TODO                  |   17 -----
- src/call-forwarding.c |  168 ++++++++++++++++++++-------------------------=
-----
- 2 files changed, 68 insertions(+), 117 deletions(-)
+-			l =3D g_slist_insert_sorted(l, cond,
+-							cf_condition_compare);
++			l =3D g_slist_insert_sorted(l, cond, cf_cond_compare);
+ 		}
+ 	}
+ =
 
 -- =
 
 1.7.5.4
 
 
---===============6373361913372186743==--
+--===============7074194368013976258==--
 
