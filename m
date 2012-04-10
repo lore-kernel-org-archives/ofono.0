@@ -1,43 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============6588052929297702286=="
+Content-Type: multipart/mixed; boundary="===============0334527700783552639=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] SpeedUp: enable online/offline
-Date: Tue, 10 Apr 2012 02:40:12 -0500
-Message-ID: <4F83E3DC.30203@gmail.com>
-In-Reply-To: <1334052671-6638-1-git-send-email-bertrand.aygon@intel.com>
+Subject: Re: [PATCH 2/2] ussd: Fix speedup ussd encoding
+Date: Tue, 10 Apr 2012 02:53:02 -0500
+Message-ID: <4F83E6DE.7040203@gmail.com>
+In-Reply-To: <1334072105-32105-3-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6588052929297702286==
+--===============0334527700783552639==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bertrand,
+Hi Nicolas,
 
-> @@ -232,12 +236,122 @@ static int speedup_disable(struct ofono_modem *mod=
-em)
->  	g_at_chat_cancel_all(data->aux);
->  	g_at_chat_unregister_all(data->aux);
->  =
+On 04/10/2012 10:35 AM, Nicolas Bertrand wrote:
+> Speedup dongles encode USSD strings in GSM7
+> packed, so we don't have to pack it ourselves.
+> ---
+>  drivers/atmodem/ussd.c |   13 ++++++++++---
+>  plugins/speedup.c      |    2 +-
+>  2 files changed, 11 insertions(+), 4 deletions(-)
+> =
 
-> +	/* Cleanup potential online enable polling */
-> +	if (data->online_poll_source > 0) {
-> +		g_source_remove(data->online_poll_source);
-> +		data->online_poll_source =3D 0;
-> +
-> +		g_free(data->online_cbd);
-> +		data->online_cbd =3D NULL;
-> +	}
-> +
 
-This looks fine, but it is actually in the wrong place.  The core
-doesn't allow concurrent online and disable operations.  This really
-belongs in speedup_remove so that you take care of the case where the
-modem is physically yanked out.
+Patch looks good, but please split it into two in accordance with our
+patch submission guidelines.  See HACKING document, 'Submitting patches'
+section.
 
 Regards,
 -Denis
 
---===============6588052929297702286==--
+--===============0334527700783552639==--
 
