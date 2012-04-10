@@ -1,33 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============8832289292375297305=="
+Content-Type: multipart/mixed; boundary="===============5309180297264458922=="
 MIME-Version: 1.0
 From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH 0/2] ussd fixes
-Date: Tue, 10 Apr 2012 17:35:03 +0200
-Message-ID: <1334072105-32105-1-git-send-email-nicolas.bertrand@linux.intel.com>
+Subject: [PATCH 1/2] ussd: rise up buffer lenght for ussd strings
+Date: Tue, 10 Apr 2012 17:35:04 +0200
+Message-ID: <1334072105-32105-2-git-send-email-nicolas.bertrand@linux.intel.com>
+In-Reply-To: <1334072105-32105-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8832289292375297305==
+--===============5309180297264458922==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Fix some issues with ussd:
-        - Crash with speedup dongles
-        - Crash with ZTE dongles
+Some ZTE modems used to convert any ussd strings in UCS2,
+and so the buffer length is double. Considering the limit of
+182 characters, 364 will avoid crash.
+---
+ drivers/atmodem/ussd.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-Nicolas Bertrand (2):
-  ussd: rise up buffer lenght for ussd strings
-  ussd: Fix speedup ussd encoding
-
- drivers/atmodem/ussd.c |   15 +++++++++++----
- plugins/speedup.c      |    2 +-
- 2 files changed, 12 insertions(+), 5 deletions(-)
+diff --git a/drivers/atmodem/ussd.c b/drivers/atmodem/ussd.c
+index 443251a..f5b38e2 100644
+--- a/drivers/atmodem/ussd.c
++++ b/drivers/atmodem/ussd.c
+@@ -106,7 +106,7 @@ static void cusd_parse(GAtResult *result, struct ofono_=
+ussd *ussd)
+ 	const char *content;
+ 	int dcs;
+ 	enum sms_charset charset;
+-	unsigned char msg[160];
++	unsigned char msg[364];
+ 	const unsigned char *msg_ptr =3D NULL;
+ 	long msg_len;
+ =
 
 -- =
 
 1.7.5.4
 
 
---===============8832289292375297305==--
+--===============5309180297264458922==--
 
