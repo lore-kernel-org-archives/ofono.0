@@ -1,66 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============1877269464681699437=="
+Content-Type: multipart/mixed; boundary="===============4375399864565207876=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: hfp voicecall fails to register in ofono with iPhone voicemail
-Date: Tue, 10 Apr 2012 20:33:19 -0500
-Message-ID: <4F84DF5F.6080008@gmail.com>
-In-Reply-To: <CAB7rCThYWhiNbvtkvMvr_pkGtaX4uihULKqnoWb__b0365VBcQ@mail.gmail.com>
+From: Aygon, Bertrand <bertrand.aygon@intel.com>
+Subject: RE: [PATCH v2] SpeedUp: enable online/offline
+Date: Wed, 11 Apr 2012 07:17:46 +0000
+Message-ID: <ED4DEEB78293B34A9D0EAC02A474A46E18A91056@IRSMSX102.ger.corp.intel.com>
+In-Reply-To: <4F83E3DC.30203@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1877269464681699437==
+--===============4375399864565207876==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mike,
+Hi Denis,
 
-On 04/10/2012 05:53 PM, Mike wrote:
-> On Fri, Apr 6, 2012 at 10:53 AM, Mike <puffy.taco@gmail.com> wrote:
->> Hi Denis,
->>
->> On Fri, Apr 6, 2012 at 9:36 AM, Denis Kenzior <denkenz@gmail.com> wrot=
-e:
->>> Hi Mike,
->>>
->>> On 04/05/2012 11:28 PM, Mike wrote:
->>>> I'm experiencing an issue where the +CLCC response provided by an
->>>> iPhone is ignored in the case of a user utilizing visual voicemail.
->>>> The problem here is that the AT+CLCC is being sent in response to a
->>>> +CIEV indicating call setup, but by the time the +CLCC response comes
->>>> back, the call status is active.  This is a problem because the
->>>> callback, sync_dialing_cb, is specifically looking for calls in the
->>>> dialing state.  It looks like at least some bits from clcc_poll_cb
->>>> should be copied into sync_dialing_cb (or a helper function) because I
->>>> would think any time we get a +CLCC we would want to completely update
->>>> our call list (and therefore fix the issue I'm encountering).  I'm
->>>> still digging into this, but as I'm not familiar with all the quirks
->>>> of devices out there, I'm throwing this out there in case anyone has
->>>> some ideas on this.
->>>
->>> Are you dialing from the HF or the AG side?  And yes, the logic in
->>> find_dialing() might indeed need to be changed to also find single
->>> active calls.
->>
->> Dialing is on the AG side.
+> > @@ -232,12 +236,122 @@ static int speedup_disable(struct ofono_modem
+> *modem)
+> >  	g_at_chat_cancel_all(data->aux);
+> >  	g_at_chat_unregister_all(data->aux);
+> >
+> > +	/* Cleanup potential online enable polling */
+> > +	if (data->online_poll_source > 0) {
+> > +		g_source_remove(data->online_poll_source);
+> > +		data->online_poll_source =3D 0;
+> > +
+> > +		g_free(data->online_cbd);
+> > +		data->online_cbd =3D NULL;
+> > +	}
+> > +
 > =
 
-> It looks like simply adding "	clcc_poll_cb(ok, result, user_data);" to
-> the end of sync_dialing_cb fixes this problem.  We end up parsing the
-> result twice, but it was an easy test.  Does that seem like the right
-> path?
-> =
+> This looks fine, but it is actually in the wrong place.  The core doesn't=
+ allow
+> concurrent online and disable operations.  This really belongs in
+> speedup_remove so that you take care of the case where the modem is
+> physically yanked out.
 
-
-Yes, sync_dialing_cb was likely a holdover from when we didn't think
-we'd need the expensive clcc polling logic.  Hence a somewhat optimized
-version that doesn't seem to work in case a call skips the alerting stage.
-
-Removing sync_dialing_cb and using clcc_poll_cb seems reasonable to me.
- Care to test this theory and submit a patch?
+Ok, I see. In fact, I used Huawei plugin as example, so I will also fix it =
+:)
 
 Regards,
--Denis
 
---===============1877269464681699437==--
+Bertrand
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============4375399864565207876==--
 
