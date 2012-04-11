@@ -1,170 +1,147 @@
-Content-Type: multipart/mixed; boundary="===============0182523867502712339=="
+Content-Type: multipart/mixed; boundary="===============3319105188384883583=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v1 2/2] service: handle error while receiving messages
-Date: Wed, 11 Apr 2012 20:31:27 +0200
-Message-ID: <1334169087.16897.128.camel@aeonflux>
-In-Reply-To: <1333720967-17878-3-git-send-email-ronald.tessier@linux.intel.com>
+From: Mike Brudevold <puffy.taco@gmail.com>
+Subject: [PATCH] hfpmodem: use full CLCC handling in dialing case
+Date: Wed, 11 Apr 2012 14:36:38 -0500
+Message-ID: <1334172998-3969-1-git-send-email-puffy.taco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0182523867502712339==
+--===============3319105188384883583==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ronald,
+From: Michael Brudevold <michael.brudevold@logicpd.com>
 
->  src/service.c |   94 ++++++++++++++++++++++++++++++++++++++++++++-------=
------
->  1 files changed, 74 insertions(+), 20 deletions(-)
-> =
+A call that moves from the dialing to active state before the +CLCC response
+will not properly be added as a voicecall. This is because the dialing call=
+back
+was using simplified handling and only looked for calls in the dialing or
+alerting state.
 
-> diff --git a/src/service.c b/src/service.c
-> index 851db34..c3fc0c6 100644
-> --- a/src/service.c
-> +++ b/src/service.c
-> @@ -55,6 +55,7 @@
->  #define CONTENT_TYPE_APP_SMIL "Content-Type: \"application/smil\";charse=
-t=3Dutf-8"
-> =
+AT sequence that exhibited the failure (AG device was an iPhone accessing
+visual voicemail):
 
->  #define MAX_ATTACHMENTS_NUMBER 25
-> +#define MAX_ATTEMPTS 3
-> =
+> +CIND: ("service",(0-1)),("call",(0-1)),("callsetup",(0-3)),
+("battchg",(0-5)),("signal",(0-5)),("roam",(0-1)),("callheld",(0-2))
+...
+> +CIEV: 3,2
+< AT+CLCC
+> +CIEV: 2,1
+> +CIEV: 3,0
+> +CLCC: 1,0,0,0,0,"**21153**",129,"Voicemail"
+---
+ drivers/hfpmodem/voicecall.c |   68 +-------------------------------------=
+----
+ 1 files changed, 1 insertions(+), 67 deletions(-)
 
->  #define uninitialized_var(x) x =3D x
-> =
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index bcf4292..505601c 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -123,19 +123,6 @@ static struct ofono_call *create_call(struct ofono_voi=
+cecall *vc, int type,
+ 	return call;
+ }
+ =
 
-> @@ -98,6 +99,7 @@ struct mms_request {
->  	gsize data_size;
->  	int fd;
->  	guint16 status;
-> +	guint16 attempt;
->  	struct mms_service *service;
->  	mms_request_result_cb_t result_cb;
->  	struct mms_message *msg;
-> @@ -526,6 +528,8 @@ static struct mms_request *create_request(enum mms_re=
-quest_type type,
-> =
+-static struct ofono_call *new_call_notify(struct ofono_voicecall *vc, int =
+type,
+-					int direction, int status,
+-					const char *num, int num_type, int clip)
+-{
+-	struct ofono_call *c;
+-
+-	c =3D create_call(vc, type, direction, status, num, num_type, clip);
+-
+-	ofono_voicecall_notify(vc, c);
+-
+-	return c;
+-}
+-
+ static void release_call(struct ofono_voicecall *vc, struct ofono_call *ca=
+ll)
+ {
+ 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+@@ -849,59 +836,6 @@ static void ciev_call_notify(struct ofono_voicecall *v=
+c,
+ 	vd->cind_val[HFP_INDICATOR_CALL] =3D value;
+ }
+ =
 
->  	request->status =3D 0;
-> =
+-static void sync_dialing_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+-{
+-	struct ofono_voicecall *vc =3D user_data;
+-	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+-	struct ofono_error error;
+-	GSList *calls;
+-	GSList *o;
+-	GSList *n;
+-	struct ofono_call *oc;
+-	struct ofono_call *nc;
+-
+-	decode_at_error(&error, g_at_result_final_response(result));
+-
+-	if (!ok)
+-		return;
+-
+-	calls =3D at_util_parse_clcc(result);
+-
+-	if (calls =3D=3D NULL)
+-		return;
+-
+-	/* Look for dialing or alerting calls on the new list */
+-	n =3D find_dialing(calls);
+-
+-	/* Let us find if we have done the dial from HF by looking for
+-	 * existing dialing or alerting calls
+-	 */
+-	o =3D find_dialing(vd->calls);
+-
+-	if (n =3D=3D NULL && o) {
+-		oc =3D o->data;
+-		release_call(vc, oc);
+-		vd->calls =3D g_slist_remove(vd->calls, oc);
+-	} else if (n && o =3D=3D NULL) {
+-		nc =3D n->data;
+-		new_call_notify(vc, nc->type, nc->direction, nc->status,
+-				nc->phone_number.number, nc->phone_number.type,
+-				nc->clip_validity);
+-	} else if (n && o) {
+-		oc =3D o->data;
+-		nc =3D n->data;
+-
+-		memcpy(&oc->phone_number, &nc->phone_number,
+-				sizeof(struct ofono_phone_number));
+-		oc->status =3D nc->status;
+-		oc->clip_validity =3D nc->clip_validity;
+-		ofono_voicecall_notify(vc, oc);
+-	}
+-
+-	g_slist_foreach(calls, (GFunc) g_free, NULL);
+-	g_slist_free(calls);
+-}
+-
+ static void ciev_callsetup_notify(struct ofono_voicecall *vc,
+ 					unsigned int value)
+ {
+@@ -979,7 +913,7 @@ static void ciev_callsetup_notify(struct ofono_voicecal=
+l *vc,
+ 		 * from AG: query and create call.
+ 		 */
+ 		g_at_chat_send(vd->chat, "AT+CLCC", clcc_prefix,
+-				sync_dialing_cb, vc, NULL);
++				clcc_poll_cb, vc, NULL);
+ 		break;
+ =
 
-> +	request->attempt =3D 0;
-> +
->  	return request;
->  }
-> =
+ 	case 3:
+-- =
 
-> @@ -1656,17 +1660,22 @@ int mms_service_set_bearer_handler(struct mms_ser=
-vice *service,
->  	return 0;
->  }
-> =
-
-> -static void deactivate_bearer(struct mms_service *service)
-> +static inline gboolean bearer_is_active(struct mms_service *service)
->  {
-> -	DBG("service %p", service);
-> -
->  	if (service->bearer_setup =3D=3D TRUE)
-> -		return;
-> -
-> -	if (service->bearer_active =3D=3D FALSE)
-> -		return;
-> +		return FALSE;
-> =
-
->  	if (service->bearer_handler =3D=3D NULL)
-> +		return FALSE;
-> +
-> +	return service->bearer_active;
-> +}
-> +
-> +static void deactivate_bearer(struct mms_service *service)
-> +{
-> +	DBG("service %p", service);
-> +
-> +	if (bearer_is_active(service) =3D=3D FALSE)
->  		return;
-> =
-
->  	DBG("service %p", service);
-> @@ -1798,16 +1807,42 @@ exit:
->  	munmap(pdu, len);
->  }
-> =
-
-> +static gboolean mms_requeue_request(struct mms_request *request)
-> +{
-> +	request->attempt +=3D 1;
-> +
-> +	if (request->attempt =3D=3D MAX_ATTEMPTS)
-> +		return FALSE;
-> +
-> +	if (request->type =3D=3D MMS_REQUEST_TYPE_GET) {
-> +		request->fd =3D open(request->data_path, O_WRONLY | O_TRUNC,
-> +							S_IWUSR | S_IRUSR);
-> +		if (request->fd < 0)
-> +			return FALSE;
-> +	}
-> +
-> +	g_queue_push_tail(request->service->request_queue, request);
-> +
-> +	return TRUE;
-> +}
-> +
->  static gboolean web_get_cb(GWebResult *result, gpointer user_data)
->  {
->  	gsize written;
->  	gsize chunk_size;
->  	struct mms_request *request =3D user_data;
-> -	struct mms_service *service;
->  	const guint8 *chunk;
-> =
-
-> -	if (g_web_result_get_chunk(result, &chunk, &chunk_size) =3D=3D FALSE)
-> -		goto error;
-> +	if (g_web_result_get_chunk(result, &chunk, &chunk_size) =3D=3D FALSE) {
-> +		mms_error("Fail to get data chunk");
-> +
-> +		close(request->fd);
-> +
-> +		if (mms_requeue_request(request) =3D=3D FALSE)
-> +			unlink(request->data_path);
-> +
-> +		goto exit;
-> +	}
-> =
-
->  	if (chunk_size =3D=3D 0) {
->  		close(request->fd);
-> @@ -1826,26 +1861,35 @@ static gboolean web_get_cb(GWebResult *result, gp=
-ointer user_data)
-> =
-
->  	if (written !=3D chunk_size) {
->  		mms_error("only %zd/%zd bytes written\n", written, chunk_size);
-> -		goto error;
-> +
-> +		close(request->fd);
-> +		unlink(request->data_path);
-> +
-> +		goto complete;
->  	}
-> =
+1.7.5.4
 
 
-same here. I do not like this. Please make clean and small changes that
-are not re-factoring major pieces. If re-factoring seems to be needed,
-please separate them out so they can be reviewed.
-
-Regards
-
-Marcel
-
-
-
---===============0182523867502712339==--
+--===============3319105188384883583==--
 
