@@ -1,55 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============0710308716855051577=="
+Content-Type: multipart/mixed; boundary="===============7753242807108155187=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] hfpmodem: use full CLCC handling in dialing case
-Date: Wed, 11 Apr 2012 23:56:26 -0500
-Message-ID: <4F86607A.8080304@gmail.com>
-In-Reply-To: <1334172998-3969-1-git-send-email-puffy.taco@gmail.com>
+From: Bertrand Aygon <bertrand.aygon@intel.com>
+Subject: [PATCH] Huawei: core does not allow concurrent online and disable
+ operations
+Date: Thu, 12 Apr 2012 11:15:56 +0200
+Message-ID: <1334222156-10301-1-git-send-email-bertrand.aygon@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0710308716855051577==
+--===============7753242807108155187==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Michael,
+---
+ plugins/huawei.c |   14 ++++----------
+ 1 files changed, 4 insertions(+), 10 deletions(-)
 
-On 04/11/2012 02:36 PM, Mike Brudevold wrote:
-> From: Michael Brudevold <michael.brudevold@logicpd.com>
-> =
+diff --git a/plugins/huawei.c b/plugins/huawei.c
+index 5d8875a..f025be9 100644
+--- a/plugins/huawei.c
++++ b/plugins/huawei.c
+@@ -115,9 +115,12 @@ static void huawei_remove(struct ofono_modem *modem)
+ 	ofono_modem_set_data(modem, NULL);
+ =
 
-> A call that moves from the dialing to active state before the +CLCC respo=
-nse
-> will not properly be added as a voicecall. This is because the dialing ca=
-llback
-> was using simplified handling and only looked for calls in the dialing or
-> alerting state.
-> =
+ 	/* Cleanup after potential enable polling */
+-	if (data->sysinfo_poll_source > 0)
++	if (data->sysinfo_poll_source > 0) {
+ 		g_source_remove(data->sysinfo_poll_source);
+ =
 
-> AT sequence that exhibited the failure (AG device was an iPhone accessing
-> visual voicemail):
-> =
++		g_free(data->online_cbd);
++	}
++
+ 	/* Cleanup after hot-unplug */
+ 	g_at_chat_unref(data->pcui);
+ =
 
->> +CIND: ("service",(0-1)),("call",(0-1)),("callsetup",(0-3)),
-> ("battchg",(0-5)),("signal",(0-5)),("roam",(0-1)),("callheld",(0-2))
-> ...
->> +CIEV: 3,2
-> < AT+CLCC
->> +CIEV: 2,1
->> +CIEV: 3,0
->> +CLCC: 1,0,0,0,0,"**21153**",129,"Voicemail"
-> ---
->  drivers/hfpmodem/voicecall.c |   68 +-----------------------------------=
-------
->  1 files changed, 1 insertions(+), 67 deletions(-)
-> =
+@@ -637,15 +640,6 @@ static int huawei_disable(struct ofono_modem *modem)
+ 	g_at_chat_cancel_all(data->pcui);
+ 	g_at_chat_unregister_all(data->pcui);
+ =
 
+-	/* Cleanup potential online enable polling */
+-	if (data->sysinfo_poll_source > 0) {
+-		g_source_remove(data->sysinfo_poll_source);
+-		data->sysinfo_poll_source =3D 0;
+-
+-		g_free(data->online_cbd);
+-		data->online_cbd =3D NULL;
+-	}
+-
+ 	g_at_chat_send(data->pcui, "AT+CFUN=3D0", none_prefix,
+ 					cfun_disable, modem, NULL);
+ =
 
-Patch looks good to me.  Applied, thanks.
+-- =
 
-Regards,
--Denis
+1.7.5.4
 
---===============0710308716855051577==--
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============7753242807108155187==--
 
