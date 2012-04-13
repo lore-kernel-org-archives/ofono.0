@@ -1,64 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============5509102861820217560=="
+Content-Type: multipart/mixed; boundary="===============2124168143801532415=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?S=C3=A9bastien?= Bianti <sebastien.bianti@linux.intel.com>
-Subject: [PATCH v2 03/10] service: remove useless variable
-Date: Fri, 13 Apr 2012 18:33:42 +0200
-Message-ID: <1334334829-31617-4-git-send-email-sebastien.bianti@linux.intel.com>
+Subject: [PATCH v2 04/10] service: add attempts counter variable
+Date: Fri, 13 Apr 2012 18:33:43 +0200
+Message-ID: <1334334829-31617-5-git-send-email-sebastien.bianti@linux.intel.com>
 In-Reply-To: <1334334829-31617-1-git-send-email-sebastien.bianti@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5509102861820217560==
+--===============2124168143801532415==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/service.c |    7 ++-----
- 1 files changed, 2 insertions(+), 5 deletions(-)
+ src/service.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
 diff --git a/src/service.c b/src/service.c
-index 6041d6d..7969988 100644
+index 7969988..a4f236b 100644
 --- a/src/service.c
 +++ b/src/service.c
-@@ -1801,7 +1801,6 @@ static gboolean web_get_cb(GWebResult *result, gpoint=
-er user_data)
- 	gsize written;
- 	gsize chunk_size;
- 	struct mms_request *request =3D user_data;
--	struct mms_service *service;
- 	const guint8 *chunk;
+@@ -55,6 +55,7 @@
+ #define CONTENT_TYPE_APP_SMIL "Content-Type: \"application/smil\";charset=
+=3Dutf-8"
  =
 
- 	if (g_web_result_get_chunk(result, &chunk, &chunk_size) =3D=3D FALSE) {
-@@ -1836,16 +1835,14 @@ error:
- 	unlink(request->data_path);
+ #define MAX_ATTACHMENTS_NUMBER 25
++#define MAX_ATTEMPTS 3
  =
 
- complete:
--	service =3D request->service;
--
- 	if (request->result_cb !=3D NULL)
- 		request->result_cb(request);
+ #define uninitialized_var(x) x =3D x
  =
 
- 	mms_request_destroy(request);
+@@ -98,6 +99,7 @@ struct mms_request {
+ 	gsize data_size;
+ 	int fd;
+ 	guint16 status;
++	guint16 attempt;
+ 	struct mms_service *service;
+ 	mms_request_result_cb_t result_cb;
+ 	struct mms_message *msg;
+@@ -526,6 +528,8 @@ static struct mms_request *create_request(enum mms_requ=
+est_type type,
  =
 
--	service->current_request_id =3D 0;
-+	request->service->current_request_id =3D 0;
+ 	request->status =3D 0;
  =
 
--	process_request_queue(service);
-+	process_request_queue(request->service);
- =
-
- 	return FALSE;
++	request->attempt =3D 0;
++
+ 	return request;
  }
+ =
+
 -- =
 
 1.7.4.4
 
 
---===============5509102861820217560==--
+--===============2124168143801532415==--
 
