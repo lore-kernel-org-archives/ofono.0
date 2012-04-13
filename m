@@ -1,67 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============5775074785409313689=="
+Content-Type: multipart/mixed; boundary="===============4041940091590581523=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] atmodem: Do some polling on at_pin_query
-Date: Thu, 12 Apr 2012 14:36:20 -0500
-Message-ID: <4F872EB4.60207@gmail.com>
-In-Reply-To: <1334240913-27063-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: =?unknown-8bit?q?S=C3=A9bastien?= Bianti <sebastien.bianti@linux.intel.com>
+Subject: [PATCH v2 00/10] mmsd: error management
+Date: Fri, 13 Apr 2012 18:33:39 +0200
+Message-ID: <1334334829-31617-1-git-send-email-sebastien.bianti@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5775074785409313689==
+--===============4041940091590581523==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi,
 
-On 04/12/2012 09:28 AM, Guillaume Zajac wrote:
-> For some modem like ZTE MF180/190, we need to do some
-> polling to check SIM state when it returns +CME ERROR: 14 busy.
-> ---
->  drivers/atmodem/sim.c |   59 +++++++++++++++++++++++++++++++++++++++----=
------
->  1 files changed, 48 insertions(+), 11 deletions(-)
-> =
+This series concerns mmsd for ofono mailing list.
+
+This is essentially a rework of Ronald's patches.
+
+Was:
+> Hi,
+
+> These patches concern mmsd and are related to error handling while
+> receiving message.
+> The main idea is to try to recover error internally when possible and
+> drop messages that are not decodable.
 
 
-<snip>
+Ronald Tessier (1):
+  service: remove files when unable to decode received msg
 
-> @@ -874,9 +878,22 @@ static void at_cpin_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
->  	else
->  		decode_at_error(&error, final);
->  =
+S=C3=A9bastien Bianti (9):
+  service: add debug prints
+  service: remove useless variable
+  service: add attempts counter variable
+  service: move destroy request into process_request
+  service: refactoring file closure
+  service: callbacks should return a boolean
+  service: refactoring error code
+  service: add requeue functionality
+  service: bearer activity needs to be checked
 
-> -	if (!ok) {
-> +	switch (error.type) {
-> +	case OFONO_ERROR_TYPE_NO_ERROR:
-> +		break;
-> +	case OFONO_ERROR_TYPE_CME:
-> +		/* Check for SIM busy - try again later */
-> +		if (error.error =3D=3D 14) {
-> +			if (sd->poll_count++ < 12) {
-> +				sd->poll_source =3D g_timeout_add_seconds(2,
-> +						sim_state_check, cbd);
-> +				return;
-> +			}
-> +		}
-> +		/* fall through */
-> +	default:
->  		cb(&error, -1, cbd->data);
-> -		return;
-> +		goto done;
->  	}
->  =
+ src/service.c |  134 ++++++++++++++++++++++++++++++++++++++---------------=
+----
+ 1 files changed, 90 insertions(+), 44 deletions(-)
 
->  	if (sd->vendor =3D=3D OFONO_VENDOR_WAVECOM) {
+-- =
 
-Is there a reason we are not using at_util_sim_state_query_new?
+1.7.4.4
 
-<snip>
 
-Regards,
--Denis
-
---===============5775074785409313689==--
+--===============4041940091590581523==--
 
