@@ -1,53 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============4649287965681593269=="
+Content-Type: multipart/mixed; boundary="===============8927769142289008229=="
 MIME-Version: 1.0
 From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH 2/3] Speedup: Use speedup specific driver for ussd
-Date: Mon, 16 Apr 2012 17:10:22 +0200
-Message-ID: <1334589023-3633-3-git-send-email-nicolas.bertrand@linux.intel.com>
+Subject: [PATCH 3/3] Makefile: Add speedup modem target
+Date: Mon, 16 Apr 2012 17:10:23 +0200
+Message-ID: <1334589023-3633-4-git-send-email-nicolas.bertrand@linux.intel.com>
 In-Reply-To: <1334589023-3633-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4649287965681593269==
+--===============8927769142289008229==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/speedup.c |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
+ Makefile.am |    6 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/speedup.c b/plugins/speedup.c
-index ca6ed13..8b95286 100644
---- a/plugins/speedup.c
-+++ b/plugins/speedup.c
-@@ -2,7 +2,7 @@
-  *
-  *  oFono - Open Source Telephony
-  *
-- *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2008-2012  Intel Corporation. All rights reserved.
-  *
-  *  This program is free software; you can redistribute it and/or modify
-  *  it under the terms of the GNU General Public License version 2 as
-@@ -282,8 +282,8 @@ static void speedup_post_online(struct ofono_modem *mod=
-em)
+diff --git a/Makefile.am b/Makefile.am
+index a28198b..b80f501 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -272,6 +272,12 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
+ 			drivers/hfpmodem/devinfo.c \
+ 			drivers/hfpmodem/handsfree.c
  =
 
- 	ofono_cbs_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
- 						"atmodem", data->aux);
--	ofono_ussd_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
--						"atmodem", data->aux);
-+	ofono_ussd_create(modem, OFONO_VENDOR_SPEEDUP,
-+						"speedupmodem", data->aux);
- }
- =
-
- static struct ofono_modem_driver speedup_driver =3D {
++builtin_modules +=3D speedupmodem
++builtin_sources +=3D drivers/atmodem/atutil.h \
++			drivers/speedupmodem/speedupmodem.h \
++			drivers/speedupmodem/speedupmodem.c \
++			drivers/speedupmodem/ussd.c
++
+ if PHONESIM
+ builtin_modules +=3D phonesim
+ builtin_sources +=3D plugins/phonesim.c
 -- =
 
 1.7.5.4
 
 
---===============4649287965681593269==--
+--===============8927769142289008229==--
 
