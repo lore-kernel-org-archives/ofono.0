@@ -1,78 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============0075892402841901960=="
+Content-Type: multipart/mixed; boundary="===============6120185867158298825=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?S=C3=A9bastien?= Bianti <sebastien.bianti@linux.intel.com>
-Subject: [PATCH v2 10/10] service: bearer activity needs to be checked
-Date: Fri, 13 Apr 2012 18:33:49 +0200
-Message-ID: <1334334829-31617-11-git-send-email-sebastien.bianti@linux.intel.com>
-In-Reply-To: <1334334829-31617-1-git-send-email-sebastien.bianti@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH] atmodem: Do some polling on at_pin_query
+Date: Mon, 16 Apr 2012 10:06:15 +0200
+Message-ID: <4F8BD2F7.10906@linux.intel.com>
+In-Reply-To: <4F872EB4.60207@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0075892402841901960==
+--===============6120185867158298825==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Because failure and requeing reason can be network lost, and we should
-wait for recovery.
----
- src/service.c |   22 +++++++++++++++-------
- 1 files changed, 15 insertions(+), 7 deletions(-)
+Hi Denis,
 
-diff --git a/src/service.c b/src/service.c
-index 01d9886..550f193 100644
---- a/src/service.c
-+++ b/src/service.c
-@@ -1660,17 +1660,22 @@ int mms_service_set_bearer_handler(struct mms_servi=
-ce *service,
- 	return 0;
- }
- =
+On 12/04/2012 21:36, Denis Kenzior wrote:
+> Hi Guillaume,
+>
+> On 04/12/2012 09:28 AM, Guillaume Zajac wrote:
+>> For some modem like ZTE MF180/190, we need to do some
+>> polling to check SIM state when it returns +CME ERROR: 14 busy.
+>> ---
+>>   drivers/atmodem/sim.c |   59 +++++++++++++++++++++++++++++++++++++++--=
+-------
+>>   1 files changed, 48 insertions(+), 11 deletions(-)
+>>
+> <snip>
+>
+>> @@ -874,9 +878,22 @@ static void at_cpin_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+>>   	else
+>>   		decode_at_error(&error, final);
+>>
+>> -	if (!ok) {
+>> +	switch (error.type) {
+>> +	case OFONO_ERROR_TYPE_NO_ERROR:
+>> +		break;
+>> +	case OFONO_ERROR_TYPE_CME:
+>> +		/* Check for SIM busy - try again later */
+>> +		if (error.error =3D=3D 14) {
+>> +			if (sd->poll_count++<  12) {
+>> +				sd->poll_source =3D g_timeout_add_seconds(2,
+>> +						sim_state_check, cbd);
+>> +				return;
+>> +			}
+>> +		}
+>> +		/* fall through */
+>> +	default:
+>>   		cb(&error, -1, cbd->data);
+>> -		return;
+>> +		goto done;
+>>   	}
+>>
+>>   	if (sd->vendor =3D=3D OFONO_VENDOR_WAVECOM) {
+> Is there a reason we are not using at_util_sim_state_query_new?
 
--static void deactivate_bearer(struct mms_service *service)
-+static inline gboolean bearer_is_active(struct mms_service *service)
- {
--	DBG("service %p", service);
--
- 	if (service->bearer_setup =3D=3D TRUE)
--		return;
--
--	if (service->bearer_active =3D=3D FALSE)
--		return;
-+		return FALSE;
- =
+This function is only giving sim present information through its =
 
- 	if (service->bearer_handler =3D=3D NULL)
-+		return FALSE;
-+
-+	return service->bearer_active;
-+}
-+
-+static void deactivate_bearer(struct mms_service *service)
-+{
-+	DBG("service %p", service);
-+
-+	if (bearer_is_active(service) =3D=3D FALSE)
- 		return;
- =
+callback, however I also need to parse the answer from AT+CPIN?
+So it means we would send once the AT+CPIN? using atutil helper and once =
 
- 	DBG("service %p", service);
-@@ -1959,6 +1964,9 @@ static void process_request_queue(struct mms_service =
-*service)
- 		return;
- =
+to parse the answer.
+I thought about implementing a new atutil helper function or a new =
 
- 	while (1) {
-+		if (bearer_is_active(service) =3D=3D FALSE)
-+			return;
-+
- 		request =3D g_queue_pop_head(service->request_queue);
- 		if (request =3D=3D NULL)
- 			break;
--- =
+g_at_chat_send_recursive() function but I saw in =
 
-1.7.4.4
+drivers/atmodem/phonebook.c on AT+CPBS=3D? command that polling mechanism =
+
+is integrated into the driver itself.
+That's why I have chosen this solution.
+
+> <snip>
+>
+> Regards,
+> -Denis
+
+Kind regards,
+Guillaume
 
 
---===============0075892402841901960==--
+--===============6120185867158298825==--
 
