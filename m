@@ -1,56 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============7480568039337444136=="
+Content-Type: multipart/mixed; boundary="===============8901226447967746187=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 2/3] Speedup: Use speedup specific driver for ussd
-Date: Mon, 16 Apr 2012 19:02:34 +0200
-Message-ID: <1334595754.16897.177.camel@aeonflux>
-In-Reply-To: <1334589023-3633-3-git-send-email-nicolas.bertrand@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/3] Speedup: Add speedup driver to handle USSD
+Date: Mon, 16 Apr 2012 13:17:55 -0500
+Message-ID: <4F8C6253.5000104@gmail.com>
+In-Reply-To: <1334589023-3633-2-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7480568039337444136==
+--===============8901226447967746187==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Nicolas,
 
->  plugins/speedup.c |    6 +++---
->  1 files changed, 3 insertions(+), 3 deletions(-)
+On 04/16/2012 10:10 AM, Nicolas Bertrand wrote:
+> ---
+>  drivers/speedupmodem/speedupmodem.c |   49 ++++++++
+>  drivers/speedupmodem/speedupmodem.h |   25 ++++
+>  drivers/speedupmodem/ussd.c         |  224 +++++++++++++++++++++++++++++=
+++++++
+>  3 files changed, 298 insertions(+), 0 deletions(-)
+>  create mode 100644 drivers/speedupmodem/speedupmodem.c
+>  create mode 100644 drivers/speedupmodem/speedupmodem.h
+>  create mode 100644 drivers/speedupmodem/ussd.c
 > =
 
-> diff --git a/plugins/speedup.c b/plugins/speedup.c
-> index ca6ed13..8b95286 100644
-> --- a/plugins/speedup.c
-> +++ b/plugins/speedup.c
-> @@ -2,7 +2,7 @@
->   *
->   *  oFono - Open Source Telephony
->   *
-> - *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
-> + *  Copyright (C) 2008-2012  Intel Corporation. All rights reserved.
->   *
->   *  This program is free software; you can redistribute it and/or modify
->   *  it under the terms of the GNU General Public License version 2 as
-> @@ -282,8 +282,8 @@ static void speedup_post_online(struct ofono_modem *m=
-odem)
->  =
 
->  	ofono_cbs_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
->  						"atmodem", data->aux);
-> -	ofono_ussd_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
-> -						"atmodem", data->aux);
-> +	ofono_ussd_create(modem, OFONO_VENDOR_SPEEDUP,
-> +						"speedupmodem", data->aux);
+Patch has been applied, thanks.  I made a few tiny fixes afterwards.
 
-you do not need both here. Either "speedupmodem" or OFONO_VENDOR_SPEEDUP
-quirk.
+Regards,
+-Denis
 
-Regards
-
-Marcel
-
-
-
---===============7480568039337444136==--
+--===============8901226447967746187==--
 
