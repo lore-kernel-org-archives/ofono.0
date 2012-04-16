@@ -1,203 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============1478981263283121851=="
+Content-Type: multipart/mixed; boundary="===============5797605079565278003=="
 MIME-Version: 1.0
-From: Bertrand Aygon <bertrand.aygon@intel.com>
-Subject: [PATCH v3] SpeedUp: enable online/offline
-Date: Mon, 16 Apr 2012 15:10:08 +0200
-Message-ID: <1334581808-5380-1-git-send-email-bertrand.aygon@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] atmodem: Do some polling on at_pin_query
+Date: Mon, 16 Apr 2012 09:15:55 -0500
+Message-ID: <4F8C299B.1030105@gmail.com>
+In-Reply-To: <4F8BD2F7.10906@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1478981263283121851==
+--===============5797605079565278003==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add speedup_set_online.
-Add a polling mechanism since most speedup dongles failed in couple of
-AT commands following the CFUN=3D1 when they are offline.
-Cleanup online polling in case modem is removed during online process.
+Hi Guillaume,
 
----
- plugins/speedup.c |  113 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 113 insertions(+), 0 deletions(-)
+On 04/16/2012 03:06 AM, Guillaume Zajac wrote:
+> Hi Denis,
+> =
 
-diff --git a/plugins/speedup.c b/plugins/speedup.c
-index ca6ed13..0d7c795 100644
---- a/plugins/speedup.c
-+++ b/plugins/speedup.c
-@@ -47,12 +47,16 @@
- #include <drivers/atmodem/atutil.h>
- #include <drivers/atmodem/vendor.h>
- =
+> On 12/04/2012 21:36, Denis Kenzior wrote:
+>> Hi Guillaume,
+>>
+>> On 04/12/2012 09:28 AM, Guillaume Zajac wrote:
+>>> For some modem like ZTE MF180/190, we need to do some
+>>> polling to check SIM state when it returns +CME ERROR: 14 busy.
+>>> ---
+>>>   drivers/atmodem/sim.c |   59
+>>> +++++++++++++++++++++++++++++++++++++++---------
+>>>   1 files changed, 48 insertions(+), 11 deletions(-)
+>>>
+>> <snip>
+>>
+>>> @@ -874,9 +878,22 @@ static void at_cpin_cb(gboolean ok, GAtResult
+>>> *result, gpointer user_data)
+>>>       else
+>>>           decode_at_error(&error, final);
+>>>
+>>> -    if (!ok) {
+>>> +    switch (error.type) {
+>>> +    case OFONO_ERROR_TYPE_NO_ERROR:
+>>> +        break;
+>>> +    case OFONO_ERROR_TYPE_CME:
+>>> +        /* Check for SIM busy - try again later */
+>>> +        if (error.error =3D=3D 14) {
+>>> +            if (sd->poll_count++<  12) {
+>>> +                sd->poll_source =3D g_timeout_add_seconds(2,
+>>> +                        sim_state_check, cbd);
+>>> +                return;
+>>> +            }
+>>> +        }
+>>> +        /* fall through */
+>>> +    default:
+>>>           cb(&error, -1, cbd->data);
+>>> -        return;
+>>> +        goto done;
+>>>       }
+>>>
+>>>       if (sd->vendor =3D=3D OFONO_VENDOR_WAVECOM) {
+>> Is there a reason we are not using at_util_sim_state_query_new?
+> =
 
-+static const char *creg_prefix[] =3D { "+CREG:", NULL };
- static const char *none_prefix[] =3D { NULL };
- =
+> This function is only giving sim present information through its
+> callback, however I also need to parse the answer from AT+CPIN?
+> So it means we would send once the AT+CPIN? using atutil helper and once
+> to parse the answer.
+> I thought about implementing a new atutil helper function or a new
+> g_at_chat_send_recursive() function but I saw in
+> drivers/atmodem/phonebook.c on AT+CPBS=3D? command that polling mechanism
+> is integrated into the driver itself.
+> That's why I have chosen this solution.
+> =
 
- struct speedup_data {
- 	GAtChat *modem;
- 	GAtChat *aux;
- 	gboolean have_sim;
-+	guint online_poll_source;
-+	guint online_poll_count;
-+	struct cb_data *online_cbd;
- 	struct at_util_sim_state_query *sim_state_query;
- };
- =
 
-@@ -82,6 +86,13 @@ static void speedup_remove(struct ofono_modem *modem)
- 	/* Cleanup potential SIM state polling */
- 	at_util_sim_state_query_free(data->sim_state_query);
- =
+Then I'm a bit lost what you're trying to solve.  The ZTE modem driver
+is already running CPIN query repeatedly to figure out the SIM state.
+So the only reason why we might be receiving a CME ERROR 14 is if we
+(successfully) entered the PIN but the modem is busy initializing the
+SIM.  In this case polling until CPIN becomes ready from within
+at_pin_send_cb seems good enough.  Or is there something I am missing?
 
-+	/* Cleanup potential online enable polling */
-+	if (data->online_poll_source > 0) {
-+		g_source_remove(data->online_poll_source);
-+
-+		g_free(data->online_cbd);
-+	}
-+
- 	/* Cleanup after hot-unplug */
- 	g_at_chat_unref(data->aux);
- =
+Regards,
+-Denis
 
-@@ -238,6 +249,107 @@ static int speedup_disable(struct ofono_modem *modem)
- 	return -EINPROGRESS;
- }
- =
-
-+static gboolean creg_online_check(gpointer user_data);
-+
-+static void creg_online_cb(gboolean ok, GAtResult *result,
-+						gpointer user_data)
-+{
-+	struct speedup_data *data =3D user_data;
-+	ofono_modem_online_cb_t cb =3D data->online_cbd->cb;
-+
-+	if (ok) {
-+		CALLBACK_WITH_SUCCESS(cb, data->online_cbd->data);
-+		goto done;
-+	}
-+
-+	data->online_poll_count++;
-+
-+	if (data->online_poll_count > 15)
-+		goto failure;
-+
-+	data->online_poll_source =3D g_timeout_add_seconds(2,
-+						creg_online_check, data);
-+	return;
-+
-+failure:
-+	CALLBACK_WITH_FAILURE(cb, data->online_cbd->data);
-+
-+done:
-+	g_free(data->online_cbd);
-+	data->online_cbd =3D NULL;
-+}
-+
-+static gboolean creg_online_check(gpointer user_data)
-+{
-+	struct speedup_data *data =3D user_data;
-+
-+	data->online_poll_source =3D 0;
-+
-+	g_at_chat_send(data->aux, "AT+CREG=3D?", creg_prefix,
-+					creg_online_cb, data, NULL);
-+
-+	return FALSE;
-+}
-+
-+static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct speedup_data *data =3D ofono_modem_get_data(modem);
-+
-+	if (!ok) {
-+		ofono_modem_online_cb_t cb =3D data->online_cbd->cb;
-+
-+		CALLBACK_WITH_FAILURE(cb, data->online_cbd->data);
-+
-+		g_free(data->online_cbd);
-+		data->online_cbd =3D NULL;
-+		return;
-+	}
-+
-+	data->online_poll_count =3D 0;
-+
-+	creg_online_check(data);
-+}
-+
-+static void set_offline_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_modem_online_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
-+
-+	decode_at_error(&error, g_at_result_final_response(result));
-+	cb(&error, cbd->data);
-+}
-+
-+static void speedup_set_online(struct ofono_modem *modem, ofono_bool_t onl=
-ine,
-+				ofono_modem_online_cb_t cb, void *user_data)
-+{
-+	struct speedup_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("modem %p %s", modem, online ? "online" : "offline");
-+
-+	if (online =3D=3D TRUE) {
-+		data->online_cbd =3D cb_data_new(cb, user_data);
-+
-+		if (g_at_chat_send(data->aux, "AT+CFUN=3D1", none_prefix,
-+					set_online_cb, modem, NULL) > 0)
-+			return;
-+
-+		g_free(data->online_cbd);
-+		data->online_cbd =3D NULL;
-+	} else {
-+		struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+
-+		if (g_at_chat_send(data->aux, "AT+CFUN=3D4",
-+				none_prefix, set_offline_cb, cbd, g_free) > 0)
-+			return;
-+
-+		g_free(cbd);
-+	}
-+
-+	CALLBACK_WITH_FAILURE(cb, user_data);
-+}
-+
- static void speedup_pre_sim(struct ofono_modem *modem)
- {
- 	struct speedup_data *data =3D ofono_modem_get_data(modem);
-@@ -292,6 +404,7 @@ static struct ofono_modem_driver speedup_driver =3D {
- 	.remove		=3D speedup_remove,
- 	.enable		=3D speedup_enable,
- 	.disable	=3D speedup_disable,
-+	.set_online	=3D speedup_set_online,
- 	.pre_sim	=3D speedup_pre_sim,
- 	.post_sim	=3D speedup_post_sim,
- 	.post_online	=3D speedup_post_online,
--- =
-
-1.7.5.4
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============1478981263283121851==--
+--===============5797605079565278003==--
 
