@@ -1,89 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============0577807726646108905=="
+Content-Type: multipart/mixed; boundary="===============0829644061962458327=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH] atmodem: Do some polling on at_pin_query
-Date: Tue, 17 Apr 2012 09:52:04 +0200
-Message-ID: <4F8D2124.1040508@linux.intel.com>
-In-Reply-To: <4F8C299B.1030105@gmail.com>
+Subject: [PATCH_v2] atmodem: Poll SIM state after having entered PIN
+Date: Tue, 17 Apr 2012 09:52:14 +0200
+Message-ID: <1334649134-17056-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0577807726646108905==
+--===============0829644061962458327==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Some modems use SIM notification to check SIM state.
+If not do some poll using atutil helper.
+---
+ drivers/atmodem/sim.c |   28 ++++++++++++++++++++++++++++
+ 1 files changed, 28 insertions(+), 0 deletions(-)
 
-On 16/04/2012 16:15, Denis Kenzior wrote:
-> Hi Guillaume,
->
-> On 04/16/2012 03:06 AM, Guillaume Zajac wrote:
->> Hi Denis,
->>
->> On 12/04/2012 21:36, Denis Kenzior wrote:
->>> Hi Guillaume,
->>>
->>> On 04/12/2012 09:28 AM, Guillaume Zajac wrote:
->>>> For some modem like ZTE MF180/190, we need to do some
->>>> polling to check SIM state when it returns +CME ERROR: 14 busy.
->>>> ---
->>>>    drivers/atmodem/sim.c |   59
->>>> +++++++++++++++++++++++++++++++++++++++---------
->>>>    1 files changed, 48 insertions(+), 11 deletions(-)
->>>>
->>> <snip>
->>>
->>>> @@ -874,9 +878,22 @@ static void at_cpin_cb(gboolean ok, GAtResult
->>>> *result, gpointer user_data)
->>>>        else
->>>>            decode_at_error(&error, final);
->>>>
->>>> -    if (!ok) {
->>>> +    switch (error.type) {
->>>> +    case OFONO_ERROR_TYPE_NO_ERROR:
->>>> +        break;
->>>> +    case OFONO_ERROR_TYPE_CME:
->>>> +        /* Check for SIM busy - try again later */
->>>> +        if (error.error =3D=3D 14) {
->>>> +            if (sd->poll_count++<   12) {
->>>> +                sd->poll_source =3D g_timeout_add_seconds(2,
->>>> +                        sim_state_check, cbd);
->>>> +                return;
->>>> +            }
->>>> +        }
->>>> +        /* fall through */
->>>> +    default:
->>>>            cb(&error, -1, cbd->data);
->>>> -        return;
->>>> +        goto done;
->>>>        }
->>>>
->>>>        if (sd->vendor =3D=3D OFONO_VENDOR_WAVECOM) {
->>> Is there a reason we are not using at_util_sim_state_query_new?
->> This function is only giving sim present information through its
->> callback, however I also need to parse the answer from AT+CPIN?
->> So it means we would send once the AT+CPIN? using atutil helper and once
->> to parse the answer.
->> I thought about implementing a new atutil helper function or a new
->> g_at_chat_send_recursive() function but I saw in
->> drivers/atmodem/phonebook.c on AT+CPBS=3D? command that polling mechanism
->> is integrated into the driver itself.
->> That's why I have chosen this solution.
->>
-> Then I'm a bit lost what you're trying to solve.  The ZTE modem driver
-> is already running CPIN query repeatedly to figure out the SIM state.
-> So the only reason why we might be receiving a CME ERROR 14 is if we
-> (successfully) entered the PIN but the modem is busy initializing the
-> SIM.  In this case polling until CPIN becomes ready from within
-> at_pin_send_cb seems good enough.  Or is there something I am missing
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index c51b1d4..269079a 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -51,6 +51,7 @@ struct sim_data {
+ 	GAtChat *chat;
+ 	unsigned int vendor;
+ 	guint ready_id;
++	struct at_util_sim_state_query *sim_state_query;
+ };
+ =
 
-According to our discussion on IRC, I will send a v2 for which the =
+ static const char *crsm_prefix[] =3D { "+CRSM:", NULL };
+@@ -972,6 +973,23 @@ static void at_epev_notify(GAtResult *result, gpointer=
+ user_data)
+ 	sd->ready_id =3D 0;
+ }
+ =
 
-polling is done after PIN is entered.
++static void sim_state_cb(gboolean present, gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	struct sim_data *sd =3D cbd->user;
++	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
++
++	at_util_sim_state_query_free(sd->sim_state_query);
++	sd->sim_state_query =3D NULL;
++
++	if (present =3D=3D 1)
++		CALLBACK_WITH_SUCCESS(cb, cbd->data);
++	else
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
++
++	g_free(cbd);
++}
++
+ static void at_pin_send_cb(gboolean ok, GAtResult *result,
+ 				gpointer user_data)
+ {
+@@ -1005,6 +1023,13 @@ static void at_pin_send_cb(gboolean ok, GAtResult *r=
+esult,
+ 		sd->ready_id =3D g_at_chat_register(sd->chat, "*EPEV",
+ 							at_epev_notify,
+ 							FALSE, cbd, g_free);
++		/*
++		 * After pin is entered, SIM state is check by doing
++		 * some polling if modem doesn't use notification.
++		 */
++	default:
++		sd->sim_state_query =3D at_util_sim_state_query_new(sd->chat,
++						2, 20, sim_state_cb, cbd);
+ 		return;
+ 	}
+ =
 
-Kind regards,
-Guillaume
+@@ -1246,6 +1271,9 @@ static void at_sim_remove(struct ofono_sim *sim)
+ {
+ 	struct sim_data *sd =3D ofono_sim_get_data(sim);
+ =
 
---===============0577807726646108905==--
++	/* Cleanup potential SIM state polling */
++	at_util_sim_state_query_free(sd->sim_state_query);
++
+ 	ofono_sim_set_data(sim, NULL);
+ =
+
+ 	g_at_chat_unref(sd->chat);
+-- =
+
+1.7.4.1
+
+
+--===============0829644061962458327==--
 
