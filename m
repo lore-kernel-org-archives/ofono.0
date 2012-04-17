@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3557892046555923412=="
+Content-Type: multipart/mixed; boundary="===============7090674000423813403=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 2/2] plugins: Update new at_util_sim_state_query_new()
+Subject: [PATCH_v3] plugins: Update new at_util_sim_state_query_new()
  prototype use
-Date: Tue, 17 Apr 2012 16:48:24 +0200
-Message-ID: <1334674104-30039-3-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1334674104-30039-1-git-send-email-guillaume.zajac@linux.intel.com>
+Date: Tue, 17 Apr 2012 16:49:56 +0200
+Message-ID: <1334674196-30150-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3557892046555923412==
+--===============7090674000423813403==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -109,5 +108,5 @@ index 3a83c8b..53beefe 100644
 1.7.4.1
 
 
---===============3557892046555923412==--
+--===============7090674000423813403==--
 
