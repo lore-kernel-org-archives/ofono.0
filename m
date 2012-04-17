@@ -1,41 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============8989418337044023432=="
+Content-Type: multipart/mixed; boundary="===============8821266211994525764=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v2] atmodem: Poll SIM state after having entered PIN
-Date: Tue, 17 Apr 2012 03:10:33 -0500
-Message-ID: <4F8D2579.6090901@gmail.com>
-In-Reply-To: <4F8D42CA.4050102@linux.intel.com>
+Subject: Re: [PATCH v2] Speedup: Use speedup specific driver for ussd
+Date: Tue, 17 Apr 2012 03:11:30 -0500
+Message-ID: <4F8D25B2.7060404@gmail.com>
+In-Reply-To: <1334665051-22125-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8989418337044023432==
+--===============8821266211994525764==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Nicolas,
 
->> Who owns the cbd data in this case? Are we not leaking that here?
->>
-> =
-
-> Yes, we are. I see 2 options here:
-> a- Tweaking current at_util_sim_state_query_new(GAtChat *chat,
->                         guint interval, guint num_times,
->                         at_util_sim_inserted_cb_t cb,
->                         void *userdata, GDestroyNotify data_destroy); in
-> adding a destroyer for user data
-> =
-
-> b- Implementing new gpointer at_util_sim_state_query_get_data(struct
-> at_util_sim_state_query *req); and free user_data during remove
+On 04/17/2012 07:17 AM, Nicolas Bertrand wrote:
+> ---
+>  plugins/speedup.c |    5 ++---
+>  1 files changed, 2 insertions(+), 3 deletions(-)
 > =
 
 
-Option a would be fine.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============8989418337044023432==--
+--===============8821266211994525764==--
 
