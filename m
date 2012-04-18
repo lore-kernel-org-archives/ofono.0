@@ -1,90 +1,97 @@
-Content-Type: multipart/mixed; boundary="===============0935084021526900006=="
+Content-Type: multipart/mixed; boundary="===============2392696084355602409=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v3 1/3] atutil: Add destroyer in at_util_sim_state_query_new
- prototype
-Date: Wed, 18 Apr 2012 14:16:08 +0200
-Message-ID: <1334751370-5134-2-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v3 3/3] atmodem: Poll SIM state after having entered PIN
+Date: Wed, 18 Apr 2012 14:16:10 +0200
+Message-ID: <1334751370-5134-4-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1334751370-5134-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0935084021526900006==
+--===============2392696084355602409==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+We encountered the problem of CME ERROR 14: SIM busy on ZTE modems.
+ZTE modems don't use SIM notification to check SIM state.
+We poll SIM ready state before confirming PIN is entered.
 ---
- drivers/atmodem/atutil.c |    8 +++++++-
- drivers/atmodem/atutil.h |    3 ++-
- 2 files changed, 9 insertions(+), 2 deletions(-)
+ drivers/atmodem/sim.c |   29 +++++++++++++++++++++++++++++
+ 1 files changed, 29 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
-index 0c6aab4..7c46dc5 100644
---- a/drivers/atmodem/atutil.c
-+++ b/drivers/atmodem/atutil.c
-@@ -45,6 +45,7 @@ struct at_util_sim_state_query {
- 	guint num_times;
- 	at_util_sim_inserted_cb_t cb;
- 	void *userdata;
-+	GDestroyNotify data_destroy;
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index c51b1d4..865d758 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -51,6 +51,7 @@ struct sim_data {
+ 	GAtChat *chat;
+ 	unsigned int vendor;
+ 	guint ready_id;
++	struct at_util_sim_state_query *sim_state_query;
  };
  =
 
- static gboolean cpin_check(gpointer userdata);
-@@ -574,7 +575,8 @@ static gboolean cpin_check(gpointer userdata)
- struct at_util_sim_state_query *at_util_sim_state_query_new(GAtChat *chat,
- 						guint interval, guint num_times,
- 						at_util_sim_inserted_cb_t cb,
--						void *userdata)
-+						void *userdata,
-+						GDestroyNotify data_destroy)
- {
- 	struct at_util_sim_state_query *req;
- =
-
-@@ -585,6 +587,7 @@ struct at_util_sim_state_query *at_util_sim_state_query=
-_new(GAtChat *chat,
- 	req->num_times =3D num_times;
- 	req->cb =3D cb;
- 	req->userdata =3D userdata;
-+	req->data_destroy =3D data_destroy;
- =
-
- 	cpin_check(req);
- =
-
-@@ -599,5 +602,8 @@ void at_util_sim_state_query_free(struct at_util_sim_st=
-ate_query *req)
- 	if (req->cpin_poll_source > 0)
- 		g_source_remove(req->cpin_poll_source);
- =
-
-+	if (req->data_destroy)
-+		req->data_destroy(req->userdata);
-+
- 	g_free(req);
+ static const char *crsm_prefix[] =3D { "+CRSM:", NULL };
+@@ -972,6 +973,21 @@ static void at_epev_notify(GAtResult *result, gpointer=
+ user_data)
+ 	sd->ready_id =3D 0;
  }
-diff --git a/drivers/atmodem/atutil.h b/drivers/atmodem/atutil.h
-index 5046547..5ab9901 100644
---- a/drivers/atmodem/atutil.h
-+++ b/drivers/atmodem/atutil.h
-@@ -79,7 +79,8 @@ gboolean at_util_parse_attr(GAtResult *result, const char=
- *prefix,
- struct at_util_sim_state_query *at_util_sim_state_query_new(GAtChat *chat,
- 						guint interval, guint num_times,
- 						at_util_sim_inserted_cb_t cb,
--						void *userdata);
-+						void *userdata,
-+						GDestroyNotify data_destroy);
- void at_util_sim_state_query_free(struct at_util_sim_state_query *req);
  =
 
- struct cb_data {
++static void sim_state_cb(gboolean present, gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	struct sim_data *sd =3D cbd->user;
++	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
++
++	at_util_sim_state_query_free(sd->sim_state_query);
++	sd->sim_state_query =3D NULL;
++
++	if (present =3D=3D 1)
++		CALLBACK_WITH_SUCCESS(cb, cbd->data);
++	else
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
++}
++
+ static void at_pin_send_cb(gboolean ok, GAtResult *result,
+ 				gpointer user_data)
+ {
+@@ -1005,6 +1021,16 @@ static void at_pin_send_cb(gboolean ok, GAtResult *r=
+esult,
+ 		sd->ready_id =3D g_at_chat_register(sd->chat, "*EPEV",
+ 							at_epev_notify,
+ 							FALSE, cbd, g_free);
++	case OFONO_VENDOR_ZTE:
++		/*
++		 * On ZTE modems, after pin is entered, SIM state is check
++		 * by doing some polling as their modem doesn't use
++		 * notification.
++		 */
++	default:
++		sd->sim_state_query =3D at_util_sim_state_query_new(sd->chat,
++						2, 20, sim_state_cb, cbd,
++						g_free);
+ 		return;
+ 	}
+ =
+
+@@ -1246,6 +1272,9 @@ static void at_sim_remove(struct ofono_sim *sim)
+ {
+ 	struct sim_data *sd =3D ofono_sim_get_data(sim);
+ =
+
++	/* Cleanup potential SIM state polling */
++	at_util_sim_state_query_free(sd->sim_state_query);
++
+ 	ofono_sim_set_data(sim, NULL);
+ =
+
+ 	g_at_chat_unref(sd->chat);
 -- =
 
 1.7.5.4
 
 
---===============0935084021526900006==--
+--===============2392696084355602409==--
 
