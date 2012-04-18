@@ -1,49 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============5203532228245709419=="
+Content-Type: multipart/mixed; boundary="===============5578561441392349107=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH 0/2] Tweak at_util_sim_state_query_new() function
-Date: Wed, 18 Apr 2012 12:06:30 +0200
-Message-ID: <4F8E9226.403@linux.intel.com>
-In-Reply-To: <1334674104-30039-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v3 0/3] Poll SIM state for ZTE modem when PIN is entered
+Date: Wed, 18 Apr 2012 14:16:07 +0200
+Message-ID: <1334751370-5134-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5203532228245709419==
+--===============5578561441392349107==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-On 17/04/2012 16:48, Guillaume Zajac wrote:
-> Hi all,
->
-> First patch improves at_util_sim_state_query_new() function.
-> A user data destroyer can be now specifed.
-> Second is just updating the plugins that are using this function.
->
-> Kind regards,
-> Guillaume
->
-> Guillaume Zajac (2):
->    atutil: Add destroyer in at_util_sim_state_query_new prototype
->    plugins: Update new at_util_sim_state_query_new() prototype use
->
->   drivers/atmodem/atutil.c |    8 +++++++-
->   drivers/atmodem/atutil.h |    3 ++-
->   plugins/alcatel.c        |    3 ++-
->   plugins/mbm.c            |    2 +-
->   plugins/samsung.c        |    3 ++-
->   plugins/speedup.c        |    3 ++-
->   plugins/zte.c            |    3 ++-
->   7 files changed, 18 insertions(+), 7 deletions(-)
->
+This set of patch contains:
+	- at_util_sim_state_query_new() function improvement,
+	  add possibility to add a user data destroyer.
+	- update of plugins using this new function.
+	- poll SIM state for ZTE modems using this new function.
 
-I need to integrate these patches with SIM polling patch to be more clear.
-I will send a new version.
+N.B.: For the moment we noticed +CME ERROR 14: SIM busy error after
+having entered PIN code only on ZTE modems.
 
 Kind regards,
 Guillaume
 
---===============5203532228245709419==--
+Guillaume Zajac (3):
+  atutil: Add destroyer in at_util_sim_state_query_new prototype
+  plugins: Update new at_util_sim_state_query_new() prototype use
+  atmodem: Poll SIM state after having entered PIN
+
+ drivers/atmodem/atutil.c |    8 +++++++-
+ drivers/atmodem/atutil.h |    3 ++-
+ drivers/atmodem/sim.c    |   29 +++++++++++++++++++++++++++++
+ plugins/alcatel.c        |    3 ++-
+ plugins/mbm.c            |    2 +-
+ plugins/samsung.c        |    3 ++-
+ plugins/speedup.c        |    3 ++-
+ plugins/zte.c            |    3 ++-
+ 8 files changed, 47 insertions(+), 7 deletions(-)
+
+-- =
+
+1.7.5.4
+
+
+--===============5578561441392349107==--
 
