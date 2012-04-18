@@ -1,38 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============3508111585068659713=="
+Content-Type: multipart/mixed; boundary="===============2357170234718159014=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3] SpeedUp: enable online/offline
-Date: Wed, 18 Apr 2012 04:03:17 -0500
-Message-ID: <4F8E8355.4050703@gmail.com>
-In-Reply-To: <1334581808-5380-1-git-send-email-bertrand.aygon@intel.com>
+Subject: Re: [PATCH_v3 1/3] atutil: Add destroyer in
+ at_util_sim_state_query_new prototype
+Date: Wed, 18 Apr 2012 04:10:07 -0500
+Message-ID: <4F8E84EF.6040200@gmail.com>
+In-Reply-To: <1334751370-5134-2-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3508111585068659713==
+--===============2357170234718159014==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bertrand,
-
-On 04/16/2012 08:10 AM, Bertrand Aygon wrote:
-> Add speedup_set_online.
-> Add a polling mechanism since most speedup dongles failed in couple of
-> AT commands following the CFUN=3D1 when they are offline.
-> Cleanup online polling in case modem is removed during online process.
-> =
-
+On 04/18/2012 07:16 AM, Guillaume Zajac wrote:
 > ---
->  plugins/speedup.c |  113 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 113 insertions(+), 0 deletions(-)
+>  drivers/atmodem/atutil.c |    8 +++++++-
+>  drivers/atmodem/atutil.h |    3 ++-
+>  2 files changed, 9 insertions(+), 2 deletions(-)
 > =
 
 
-Patch has been applied, thanks.
+Patch has been applied, thanks.  I did amend the naming of data_destroy
+to be more consistent with existing code.
 
 Regards,
 -Denis
 
---===============3508111585068659713==--
+--===============2357170234718159014==--
 
