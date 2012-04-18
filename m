@@ -1,49 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============2041728417740940898=="
+Content-Type: multipart/mixed; boundary="===============6237620871939322281=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCHv3 00/10] mmsd: error management
-Date: Wed, 18 Apr 2012 15:27:38 +0200
-Message-ID: <1334755668-27458-1-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCHv3 01/10] service: remove files when unable to decode received
+ msg
+Date: Wed, 18 Apr 2012 15:27:39 +0200
+Message-ID: <1334755668-27458-2-git-send-email-ronald.tessier@linux.intel.com>
+In-Reply-To: <1334755668-27458-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2041728417740940898==
+--===============6237620871939322281==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-These patches concern mmsd and are related to error handling while
-receiving message.
-The main idea is to try to recover error internally when possible
-and drop messages that are not decodable.
-
-Please, ignore previous set of patches sent by Sebastien (when he
-reworked my patches) since these are the same except the first
-patch (don't always remove message's files, only when the message
-is not decodable).
-
-
-Ronald Tessier (1):
-  service: remove files when unable to decode received msg
-
-S=C3=A9bastien Bianti (9):
-  service: add debug prints
-  service: remove useless variable
-  service: add attempts counter variable
-  service: move destroy request into process_request
-  service: refactoring file closure
-  service: callbacks should return a boolean
-  service: refactoring error code
-  service: add requeue functionality
-  service: bearer activity needs to be checked
-
- src/service.c |  136 ++++++++++++++++++++++++++++++++++++++---------------=
+Remove files when message is not decodable.
 ---
- 1 files changed, 92 insertions(+), 44 deletions(-)
+ src/service.c |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
+
+diff --git a/src/service.c b/src/service.c
+index f148252..7f2a302 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -961,6 +961,7 @@ static gboolean load_message_from_store(const char *ser=
+vice_id,
+ 	gboolean read_status;
+ 	char *data_path =3D NULL;
+ 	gboolean success =3D FALSE;
++	gboolean tainted =3D FALSE;
+ 	void *pdu;
+ 	size_t len;
+
+@@ -984,6 +985,7 @@ static gboolean load_message_from_store(const char *ser=
+vice_id,
+ 	if (mms_message_decode(pdu, len, msg) =3D=3D FALSE) {
+ 		mms_error("Failed to decode %s", data_path);
+ 		munmap(pdu, len);
++		tainted =3D TRUE;
+ 		goto out;
+ 	}
+
+@@ -1019,6 +1021,9 @@ out:
+
+ 	mms_store_meta_close(service_id, uuid, meta, FALSE);
+
++	if (tainted =3D=3D TRUE)
++		mms_store_remove(service_id, uuid);
++
+ 	return success;
+ }
 
 --
 1.7.4.1
 
 
---===============2041728417740940898==--
+--===============6237620871939322281==--
 
