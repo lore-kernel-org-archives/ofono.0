@@ -1,97 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============4590124785589537842=="
+Content-Type: multipart/mixed; boundary="===============2810467921714311418=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v4] atmodem: Poll SIM state after having entered PIN
-Date: Wed, 18 Apr 2012 14:39:48 +0200
-Message-ID: <1334752788-5597-1-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1334751370-5134-4-git-send-email-guillaume.zajac@linux.intel.com>
+From: Ronald Tessier <ronald.tessier@linux.intel.com>
+Subject: Re: [PATCH v2 00/10] mmsd: error management
+Date: Wed, 18 Apr 2012 15:26:13 +0200
+Message-ID: <4F8EC0F5.9090405@linux.intel.com>
+In-Reply-To: <1334334829-31617-1-git-send-email-sebastien.bianti@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4590124785589537842==
+--===============2810467921714311418==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-We encountered the problem of CME ERROR 14: SIM busy on ZTE modems.
-ZTE modems don't use SIM notification to check SIM state.
-We poll SIM ready state before confirming PIN is entered.
----
- drivers/atmodem/sim.c |   29 +++++++++++++++++++++++++++++
- 1 files changed, 29 insertions(+), 0 deletions(-)
+Hi all,
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index c51b1d4..1c9a7f3 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -51,6 +51,7 @@ struct sim_data {
- 	GAtChat *chat;
- 	unsigned int vendor;
- 	guint ready_id;
-+	struct at_util_sim_state_query *sim_state_query;
- };
- =
+On 04/13/2012 06:33 PM, S=C3=A9bastien Bianti wrote:
+> Hi,
+>
+> This series concerns mmsd for ofono mailing list.
+>
+> This is essentially a rework of Ronald's patches.
+>
+> Was:
+>> Hi,
+>
+>> These patches concern mmsd and are related to error handling while
+>> receiving message.
+>> The main idea is to try to recover error internally when possible and
+>> drop messages that are not decodable.
+>
+>
+> Ronald Tessier (1):
+>    service: remove files when unable to decode received msg
+>
+> S=C3=A9bastien Bianti (9):
+>    service: add debug prints
+>    service: remove useless variable
+>    service: add attempts counter variable
+>    service: move destroy request into process_request
+>    service: refactoring file closure
+>    service: callbacks should return a boolean
+>    service: refactoring error code
+>    service: add requeue functionality
+>    service: bearer activity needs to be checked
+>
+>   src/service.c |  134 ++++++++++++++++++++++++++++++++++++++------------=
+-------
+>   1 files changed, 90 insertions(+), 44 deletions(-)
+>
 
- static const char *crsm_prefix[] =3D { "+CRSM:", NULL };
-@@ -972,6 +973,21 @@ static void at_epev_notify(GAtResult *result, gpointer=
- user_data)
- 	sd->ready_id =3D 0;
- }
- =
+Please ignore this set of patches since the first patch has to be =
 
-+static void sim_state_cb(gboolean present, gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	struct sim_data *sd =3D cbd->user;
-+	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
-+
-+	at_util_sim_state_query_free(sd->sim_state_query);
-+	sd->sim_state_query =3D NULL;
-+
-+	if (present =3D=3D 1)
-+		CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+	else
-+		CALLBACK_WITH_FAILURE(cb, cbd->data);
-+}
-+
- static void at_pin_send_cb(gboolean ok, GAtResult *result,
- 				gpointer user_data)
- {
-@@ -1006,6 +1022,16 @@ static void at_pin_send_cb(gboolean ok, GAtResult *r=
-esult,
- 							at_epev_notify,
- 							FALSE, cbd, g_free);
- 		return;
-+	case OFONO_VENDOR_ZTE:
-+		/*
-+		 * On ZTE modems, after pin is entered, SIM state is check
-+		 * by doing some polling as their modem doesn't use
-+		 * notification.
-+		 */
-+		sd->sim_state_query =3D at_util_sim_state_query_new(sd->chat,
-+						2, 20, sim_state_cb, cbd,
-+						g_free);
-+		return;
- 	}
- =
+modified. I send an updated version.
+Regards
 
- done:
-@@ -1246,6 +1272,9 @@ static void at_sim_remove(struct ofono_sim *sim)
- {
- 	struct sim_data *sd =3D ofono_sim_get_data(sim);
- =
+Ronald
 
-+	/* Cleanup potential SIM state polling */
-+	at_util_sim_state_query_free(sd->sim_state_query);
-+
- 	ofono_sim_set_data(sim, NULL);
- =
-
- 	g_at_chat_unref(sd->chat);
--- =
-
-1.7.5.4
-
-
---===============4590124785589537842==--
+--===============2810467921714311418==--
 
