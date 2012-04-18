@@ -1,113 +1,90 @@
-Content-Type: multipart/mixed; boundary="===============0132666634142043758=="
+Content-Type: multipart/mixed; boundary="===============0935084021526900006=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v3 2/3] plugins: Update new at_util_sim_state_query_new()
- prototype use
-Date: Wed, 18 Apr 2012 14:16:09 +0200
-Message-ID: <1334751370-5134-3-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v3 1/3] atutil: Add destroyer in at_util_sim_state_query_new
+ prototype
+Date: Wed, 18 Apr 2012 14:16:08 +0200
+Message-ID: <1334751370-5134-2-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1334751370-5134-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0132666634142043758==
+--===============0935084021526900006==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/alcatel.c |    3 ++-
- plugins/mbm.c     |    2 +-
- plugins/samsung.c |    3 ++-
- plugins/speedup.c |    3 ++-
- plugins/zte.c     |    3 ++-
- 5 files changed, 9 insertions(+), 5 deletions(-)
+ drivers/atmodem/atutil.c |    8 +++++++-
+ drivers/atmodem/atutil.h |    3 ++-
+ 2 files changed, 9 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/alcatel.c b/plugins/alcatel.c
-index fd0e4ec..8005170 100644
---- a/plugins/alcatel.c
-+++ b/plugins/alcatel.c
-@@ -157,7 +157,8 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
- gpointer user_data)
- 	}
+diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
+index 0c6aab4..7c46dc5 100644
+--- a/drivers/atmodem/atutil.c
++++ b/drivers/atmodem/atutil.c
+@@ -45,6 +45,7 @@ struct at_util_sim_state_query {
+ 	guint num_times;
+ 	at_util_sim_inserted_cb_t cb;
+ 	void *userdata;
++	GDestroyNotify data_destroy;
+ };
  =
 
- 	data->sim_state_query =3D at_util_sim_state_query_new(data->aux,
--						2, 20, sim_state_cb, modem);
-+						2, 20, sim_state_cb, modem,
-+						NULL);
+ static gboolean cpin_check(gpointer userdata);
+@@ -574,7 +575,8 @@ static gboolean cpin_check(gpointer userdata)
+ struct at_util_sim_state_query *at_util_sim_state_query_new(GAtChat *chat,
+ 						guint interval, guint num_times,
+ 						at_util_sim_inserted_cb_t cb,
+-						void *userdata)
++						void *userdata,
++						GDestroyNotify data_destroy)
+ {
+ 	struct at_util_sim_state_query *req;
+ =
+
+@@ -585,6 +587,7 @@ struct at_util_sim_state_query *at_util_sim_state_query=
+_new(GAtChat *chat,
+ 	req->num_times =3D num_times;
+ 	req->cb =3D cb;
+ 	req->userdata =3D userdata;
++	req->data_destroy =3D data_destroy;
+ =
+
+ 	cpin_check(req);
+ =
+
+@@ -599,5 +602,8 @@ void at_util_sim_state_query_free(struct at_util_sim_st=
+ate_query *req)
+ 	if (req->cpin_poll_source > 0)
+ 		g_source_remove(req->cpin_poll_source);
+ =
+
++	if (req->data_destroy)
++		req->data_destroy(req->userdata);
++
+ 	g_free(req);
  }
+diff --git a/drivers/atmodem/atutil.h b/drivers/atmodem/atutil.h
+index 5046547..5ab9901 100644
+--- a/drivers/atmodem/atutil.h
++++ b/drivers/atmodem/atutil.h
+@@ -79,7 +79,8 @@ gboolean at_util_parse_attr(GAtResult *result, const char=
+ *prefix,
+ struct at_util_sim_state_query *at_util_sim_state_query_new(GAtChat *chat,
+ 						guint interval, guint num_times,
+ 						at_util_sim_inserted_cb_t cb,
+-						void *userdata);
++						void *userdata,
++						GDestroyNotify data_destroy);
+ void at_util_sim_state_query_free(struct at_util_sim_state_query *req);
  =
 
- static int alcatel_enable(struct ofono_modem *modem)
-diff --git a/plugins/mbm.c b/plugins/mbm.c
-index 32c7665..035f87e 100644
---- a/plugins/mbm.c
-+++ b/plugins/mbm.c
-@@ -164,7 +164,7 @@ done:
- 	data->sim_state_query =3D at_util_sim_state_query_new(data->modem_port,
- 								1, 5,
- 								sim_state_cb,
--								modem);
-+								modem, NULL);
- }
- =
-
- static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
-diff --git a/plugins/samsung.c b/plugins/samsung.c
-index 8e0d360..68a9b0a 100644
---- a/plugins/samsung.c
-+++ b/plugins/samsung.c
-@@ -142,7 +142,8 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
- gpointer user_data)
- 	}
- =
-
- 	data->sim_state_query =3D at_util_sim_state_query_new(data->chat,
--						1, 5, sim_state_cb, modem);
-+						1, 5, sim_state_cb, modem,
-+						NULL);
- }
- =
-
- static int samsung_enable(struct ofono_modem *modem)
-diff --git a/plugins/speedup.c b/plugins/speedup.c
-index ca6ed13..ca33f48 100644
---- a/plugins/speedup.c
-+++ b/plugins/speedup.c
-@@ -174,7 +174,8 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
- gpointer user_data)
- 	}
- =
-
- 	data->sim_state_query =3D at_util_sim_state_query_new(data->aux,
--						2, 20, sim_state_cb, modem);
-+						2, 20, sim_state_cb, modem,
-+						NULL);
- }
- =
-
- static int speedup_enable(struct ofono_modem *modem)
-diff --git a/plugins/zte.c b/plugins/zte.c
-index 3a83c8b..53beefe 100644
---- a/plugins/zte.c
-+++ b/plugins/zte.c
-@@ -218,7 +218,8 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
- gpointer user_data)
- 	}
- =
-
- 	data->sim_state_query =3D at_util_sim_state_query_new(data->aux,
--						2, 20, sim_state_cb, modem);
-+						2, 20, sim_state_cb, modem,
-+						NULL);
- }
- =
-
- static int zte_enable(struct ofono_modem *modem)
+ struct cb_data {
 -- =
 
 1.7.5.4
 
 
---===============0132666634142043758==--
+--===============0935084021526900006==--
 
