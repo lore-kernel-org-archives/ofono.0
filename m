@@ -1,83 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============3149435096049625656=="
+Content-Type: multipart/mixed; boundary="===============3545218682048613039=="
 MIME-Version: 1.0
-From: Mikel Astiz <mikel.astiz.oss@gmail.com>
-Subject: [PATCH] hfp_hf: Fix modifying hash table while iterating
-Date: Wed, 18 Apr 2012 17:19:36 +0200
-Message-ID: <1334762376-24124-1-git-send-email-mikel.astiz.oss@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCHv3 00/10] mmsd: error management
+Date: Wed, 18 Apr 2012 17:30:25 +0200
+Message-ID: <1334763025.16897.240.camel@aeonflux>
+In-Reply-To: <1334755668-27458-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3149435096049625656==
+--===============3545218682048613039==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Calling ofono_remove_modem() while iterating the hash table is not safe
-given that it can modify the table in hfp_remove().
+Hi Ronald,
 
-A simple way to reproduce the problem is to pair some Bluetooth phones
-and remove the Bluetooth adapter, triggering a GLib-CRITICAL assertion.
+> These patches concern mmsd and are related to error handling while
+> receiving message.
+> The main idea is to try to recover error internally when possible
+> and drop messages that are not decodable.
+> =
 
-This approach proposes a two-step removal: first, the hash table is
-iterated and all modems to be removed are marked as pending (thus
-removed from the hash table and put in a temporary list), and afterwards
-all pending modems are actually removed.
----
- plugins/hfp_hf.c |   11 ++++++++++-
- 1 files changed, 10 insertions(+), 1 deletions(-)
+> Please, ignore previous set of patches sent by Sebastien (when he
+> reworked my patches) since these are the same except the first
+> patch (don't always remove message's files, only when the message
+> is not decodable).
+> =
 
-diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
-index 48a734a..0028e21 100644
---- a/plugins/hfp_hf.c
-+++ b/plugins/hfp_hf.c
-@@ -60,6 +60,7 @@
- =
+> =
 
- static DBusConnection *connection;
- static GHashTable *modem_hash =3D NULL;
-+static GSList *pending_removals =3D NULL;
- =
+> Ronald Tessier (1):
+>   service: remove files when unable to decode received msg
+> =
 
- struct hfp_data {
- 	struct hfp_slc_info info;
-@@ -265,11 +266,16 @@ static gboolean hfp_remove_modem(gpointer key, gpoint=
-er value,
- 	if (prefix && g_str_has_prefix(device, prefix) =3D=3D FALSE)
- 		return FALSE;
- =
+> S=C3=A9bastien Bianti (9):
+>   service: add debug prints
+>   service: remove useless variable
+>   service: add attempts counter variable
+>   service: move destroy request into process_request
+>   service: refactoring file closure
+>   service: callbacks should return a boolean
+>   service: refactoring error code
+>   service: add requeue functionality
+>   service: bearer activity needs to be checked
+> =
 
--	ofono_modem_remove(modem);
-+	pending_removals =3D g_slist_append(pending_removals, modem);
- =
+>  src/service.c |  136 ++++++++++++++++++++++++++++++++++++++-------------=
+-----
+>  1 files changed, 92 insertions(+), 44 deletions(-)
 
- 	return TRUE;
- }
- =
+all 10 patches have been applied.
 
-+static void hfp_remove_pending_modem(gpointer data)
-+{
-+	ofono_modem_remove(data);
-+}
-+
- static void hfp_hf_remove(const char *prefix)
- {
- 	DBG("%s", prefix);
-@@ -279,6 +285,9 @@ static void hfp_hf_remove(const char *prefix)
- =
+Regards
 
- 	g_hash_table_foreach_remove(modem_hash, hfp_remove_modem,
- 							(gpointer) prefix);
-+
-+	g_slist_free_full(pending_removals, hfp_remove_pending_modem);
-+	pending_removals =3D NULL;
- }
- =
-
- static void hfp_hf_set_alias(const char *device, const char *alias)
--- =
-
-1.7.7.6
+Marcel
 
 
---===============3149435096049625656==--
+
+--===============3545218682048613039==--
 
