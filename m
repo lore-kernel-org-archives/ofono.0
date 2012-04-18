@@ -1,50 +1,113 @@
-Content-Type: multipart/mixed; boundary="===============5578561441392349107=="
+Content-Type: multipart/mixed; boundary="===============0132666634142043758=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v3 0/3] Poll SIM state for ZTE modem when PIN is entered
-Date: Wed, 18 Apr 2012 14:16:07 +0200
-Message-ID: <1334751370-5134-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v3 2/3] plugins: Update new at_util_sim_state_query_new()
+ prototype use
+Date: Wed, 18 Apr 2012 14:16:09 +0200
+Message-ID: <1334751370-5134-3-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1334751370-5134-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5578561441392349107==
+--===============0132666634142043758==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ plugins/alcatel.c |    3 ++-
+ plugins/mbm.c     |    2 +-
+ plugins/samsung.c |    3 ++-
+ plugins/speedup.c |    3 ++-
+ plugins/zte.c     |    3 ++-
+ 5 files changed, 9 insertions(+), 5 deletions(-)
 
-This set of patch contains:
-	- at_util_sim_state_query_new() function improvement,
-	  add possibility to add a user data destroyer.
-	- update of plugins using this new function.
-	- poll SIM state for ZTE modems using this new function.
+diff --git a/plugins/alcatel.c b/plugins/alcatel.c
+index fd0e4ec..8005170 100644
+--- a/plugins/alcatel.c
++++ b/plugins/alcatel.c
+@@ -157,7 +157,8 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 	}
+ =
 
-N.B.: For the moment we noticed +CME ERROR 14: SIM busy error after
-having entered PIN code only on ZTE modems.
+ 	data->sim_state_query =3D at_util_sim_state_query_new(data->aux,
+-						2, 20, sim_state_cb, modem);
++						2, 20, sim_state_cb, modem,
++						NULL);
+ }
+ =
 
-Kind regards,
-Guillaume
+ static int alcatel_enable(struct ofono_modem *modem)
+diff --git a/plugins/mbm.c b/plugins/mbm.c
+index 32c7665..035f87e 100644
+--- a/plugins/mbm.c
++++ b/plugins/mbm.c
+@@ -164,7 +164,7 @@ done:
+ 	data->sim_state_query =3D at_util_sim_state_query_new(data->modem_port,
+ 								1, 5,
+ 								sim_state_cb,
+-								modem);
++								modem, NULL);
+ }
+ =
 
-Guillaume Zajac (3):
-  atutil: Add destroyer in at_util_sim_state_query_new prototype
-  plugins: Update new at_util_sim_state_query_new() prototype use
-  atmodem: Poll SIM state after having entered PIN
+ static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
+diff --git a/plugins/samsung.c b/plugins/samsung.c
+index 8e0d360..68a9b0a 100644
+--- a/plugins/samsung.c
++++ b/plugins/samsung.c
+@@ -142,7 +142,8 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 	}
+ =
 
- drivers/atmodem/atutil.c |    8 +++++++-
- drivers/atmodem/atutil.h |    3 ++-
- drivers/atmodem/sim.c    |   29 +++++++++++++++++++++++++++++
- plugins/alcatel.c        |    3 ++-
- plugins/mbm.c            |    2 +-
- plugins/samsung.c        |    3 ++-
- plugins/speedup.c        |    3 ++-
- plugins/zte.c            |    3 ++-
- 8 files changed, 47 insertions(+), 7 deletions(-)
+ 	data->sim_state_query =3D at_util_sim_state_query_new(data->chat,
+-						1, 5, sim_state_cb, modem);
++						1, 5, sim_state_cb, modem,
++						NULL);
+ }
+ =
 
+ static int samsung_enable(struct ofono_modem *modem)
+diff --git a/plugins/speedup.c b/plugins/speedup.c
+index ca6ed13..ca33f48 100644
+--- a/plugins/speedup.c
++++ b/plugins/speedup.c
+@@ -174,7 +174,8 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 	}
+ =
+
+ 	data->sim_state_query =3D at_util_sim_state_query_new(data->aux,
+-						2, 20, sim_state_cb, modem);
++						2, 20, sim_state_cb, modem,
++						NULL);
+ }
+ =
+
+ static int speedup_enable(struct ofono_modem *modem)
+diff --git a/plugins/zte.c b/plugins/zte.c
+index 3a83c8b..53beefe 100644
+--- a/plugins/zte.c
++++ b/plugins/zte.c
+@@ -218,7 +218,8 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 	}
+ =
+
+ 	data->sim_state_query =3D at_util_sim_state_query_new(data->aux,
+-						2, 20, sim_state_cb, modem);
++						2, 20, sim_state_cb, modem,
++						NULL);
+ }
+ =
+
+ static int zte_enable(struct ofono_modem *modem)
 -- =
 
 1.7.5.4
 
 
---===============5578561441392349107==--
+--===============0132666634142043758==--
 
