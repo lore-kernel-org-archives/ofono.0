@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7651994958885910436=="
+Content-Type: multipart/mixed; boundary="===============3289189883242656329=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCHv3 04/10] service: add attempts counter variable
-Date: Wed, 18 Apr 2012 15:27:42 +0200
-Message-ID: <1334755668-27458-5-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCHv3 06/10] service: refactoring file closure
+Date: Wed, 18 Apr 2012 15:27:44 +0200
+Message-ID: <1334755668-27458-7-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1334755668-27458-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7651994958885910436==
+--===============3289189883242656329==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,43 +16,40 @@ Content-Transfer-Encoding: quoted-printable
 From: S=C3=A9bastien Bianti <sebastien.bianti@linux.intel.com>
 
 ---
- src/service.c |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+ src/service.c |    5 ++---
+ 1 files changed, 2 insertions(+), 3 deletions(-)
 
 diff --git a/src/service.c b/src/service.c
-index 4ec49e6..4c8a87e 100644
+index efb90cb..70b3dda 100644
 --- a/src/service.c
 +++ b/src/service.c
-@@ -55,6 +55,7 @@
- #define CONTENT_TYPE_APP_SMIL "Content-Type: \"application/smil\";charset=
-=3Dutf-8"
+@@ -1815,8 +1815,6 @@ static gboolean web_get_cb(GWebResult *result, gpoint=
+er user_data)
+ 	}
 
- #define MAX_ATTACHMENTS_NUMBER 25
-+#define MAX_ATTEMPTS 3
+ 	if (chunk_size =3D=3D 0) {
+-		close(request->fd);
+-
+ 		request->status =3D g_web_result_get_status(result);
 
- #define uninitialized_var(x) x =3D x
+ 		DBG("status: %03u", request->status);
+@@ -1837,10 +1835,11 @@ static gboolean web_get_cb(GWebResult *result, gpoi=
+nter user_data)
+ 	return TRUE;
 
-@@ -98,6 +99,7 @@ struct mms_request {
- 	gsize data_size;
- 	int fd;
- 	guint16 status;
-+	guint16 attempt;
- 	struct mms_service *service;
- 	mms_request_result_cb_t result_cb;
- 	struct mms_message *msg;
-@@ -526,6 +528,8 @@ static struct mms_request *create_request(enum mms_requ=
-est_type type,
+ error:
+-	close(request->fd);
+ 	unlink(request->data_path);
 
- 	request->status =3D 0;
-
-+	request->attempt =3D 0;
+ complete:
++	close(request->fd);
 +
- 	return request;
- }
+ 	if (request->result_cb !=3D NULL)
+ 		request->result_cb(request);
 
 --
 1.7.4.1
 
 
---===============7651994958885910436==--
+--===============3289189883242656329==--
 
