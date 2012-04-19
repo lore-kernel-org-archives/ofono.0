@@ -1,60 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============6207461352395210049=="
+Content-Type: multipart/mixed; boundary="===============8537796478822761750=="
 MIME-Version: 1.0
-From: Mikel Astiz <mikel.astiz.oss@gmail.com>
-Subject: [PATCH v2] hfp_hf: Fix modifying hash table while iterating
-Date: Thu, 19 Apr 2012 08:58:58 +0200
-Message-ID: <1334818738-14217-1-git-send-email-mikel.astiz.oss@gmail.com>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: [PATCH 0/7] History agent interface
+Date: Thu, 19 Apr 2012 11:20:49 +0300
+Message-ID: <1334823656-3366-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6207461352395210049==
+--===============8537796478822761750==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Calling ofono_remove_modem() while iterating the hash table is not safe
-given that it can modify the table in hfp_remove().
+Hello,
 
-A simple way to reproduce the problem is to pair some Bluetooth phones
-and remove the Bluetooth adapter, triggering a GLib-CRITICAL assertion.
+Please find the patches for the history agent interface.
 
-This patch just removes the update of the hash table inside
-hfp_remove(). This can be safe as long as all calls to
-ofono_modem_remove() are accompanied by a hash table update. The only
-example of this kind right now is hfp_agent_release().
----
- plugins/hfp_hf.c |    3 +--
- 1 files changed, 1 insertions(+), 2 deletions(-)
+This is just an integration of Marcel's history implementation.
 
-diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
-index 48a734a..c11525e 100644
---- a/plugins/hfp_hf.c
-+++ b/plugins/hfp_hf.c
-@@ -192,6 +192,7 @@ static DBusMessage *hfp_agent_release(DBusConnection *c=
-onn,
- 	g_dbus_unregister_interface(connection, obj_path, HFP_AGENT_INTERFACE);
- 	hfp_data->agent_registered =3D FALSE;
- =
+If anything is still missing, please comment.
 
-+	g_hash_table_remove(modem_hash, hfp_data->handsfree_path);
- 	ofono_modem_remove(modem);
- =
+Regards,
+Oleg
 
- 	return dbus_message_new_method_return(msg);
-@@ -366,8 +367,6 @@ static void hfp_remove(struct ofono_modem *modem)
- 					HFP_AGENT_INTERFACE))
- 		hfp_unregister_ofono_handsfree(modem);
- =
+Marcel Holtmann (2):
+  doc: Add description for history agent interface
+  modules: Add support for history agent interface
 
--	g_hash_table_remove(modem_hash, data->handsfree_path);
--
- 	g_free(data->handsfree_address);
- 	g_free(data->handsfree_path);
- 	g_free(data);
+Oleg Zhurakivskyy (5):
+  history-agent: Make compile
+  history-agent: Update copyright
+  plugins: Add history-agent
+  ofono.conf: Punch hole for HistoryAgent
+  test: Add test-history script
+
+ Makefile.am               |    3 +
+ doc/history-agent-api.txt |   83 ++++++
+ plugins/history-agent.c   |  689 +++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/ofono.conf            |    1 +
+ test/test-history         |   71 +++++
+ 5 files changed, 847 insertions(+), 0 deletions(-)
+ create mode 100644 doc/history-agent-api.txt
+ create mode 100644 plugins/history-agent.c
+ create mode 100755 test/test-history
+
 -- =
 
-1.7.7.6
+1.7.5.4
 
 
---===============6207461352395210049==--
+--===============8537796478822761750==--
 
