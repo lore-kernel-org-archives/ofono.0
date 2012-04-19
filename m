@@ -1,43 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============7632258523333713713=="
+Content-Type: multipart/mixed; boundary="===============6014092652078152133=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] hfp_hf: Fix modifying hash table while iterating
-Date: Thu, 19 Apr 2012 07:41:56 -0500
-Message-ID: <4F900814.4030507@gmail.com>
-In-Reply-To: <1334818738-14217-1-git-send-email-mikel.astiz.oss@gmail.com>
+Subject: Re: [PATCH] voicecall: fix release and answer existing call validation
+Date: Thu, 19 Apr 2012 08:42:25 -0500
+Message-ID: <4F901641.2020104@gmail.com>
+In-Reply-To: <1334873443-21124-1-git-send-email-puffy.taco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7632258523333713713==
+--===============6014092652078152133==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mikel,
+Hi Michael,
 
-On 04/19/2012 01:58 AM, Mikel Astiz wrote:
-> Calling ofono_remove_modem() while iterating the hash table is not safe
-> given that it can modify the table in hfp_remove().
+On 04/19/2012 05:10 PM, Mike Brudevold wrote:
+> From: Michael Brudevold <michael.brudevold@logicpd.com>
 > =
 
-> A simple way to reproduce the problem is to pair some Bluetooth phones
-> and remove the Bluetooth adapter, triggering a GLib-CRITICAL assertion.
-> =
-
-> This patch just removes the update of the hash table inside
-> hfp_remove(). This can be safe as long as all calls to
-> ofono_modem_remove() are accompanied by a hash table update. The only
-> example of this kind right now is hfp_agent_release().
+> Release and answer should be allowed when there are held calls as well as=
+ the
+> existing check for waiting calls.  Most implementations use AT+CHLD=3D1 w=
+hich
+> will resume the other call, be it waiting or held.  This follows the HFP,
+> GSM 07.07 and 3GPP 27.007 specs.
 > ---
->  plugins/hfp_hf.c |    3 +--
->  1 files changed, 1 insertions(+), 2 deletions(-)
+>  src/voicecall.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
 > =
 
 
-Patch has been applied, thanks.
+This isn't really a bug, but an explicit choice we made with the API.
+See the previous discussion here:
+http://lists.ofono.org/pipermail/ofono/2011-January/008029.html.
+
+For HFP this is further made funny by the fact that CHLD=3D1X is supposed
+to retrieve the held call automatically for you by the AG according to
+section 4.32.1, making CHLD=3D1 behavior in question somewhat redundant.
+
+However, I do see that this could be useful, so I suggest we add a new
+ReleaseAndSwap method.  I prefer this approach especially since the
+current D-Bus API is frozen and I don't want to modify the behavior of
+existing methods.
 
 Regards,
 -Denis
 
---===============7632258523333713713==--
+--===============6014092652078152133==--
 
