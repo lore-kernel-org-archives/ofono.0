@@ -1,54 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============8475033533548282582=="
+Content-Type: multipart/mixed; boundary="===============6207461352395210049=="
 MIME-Version: 1.0
 From: Mikel Astiz <mikel.astiz.oss@gmail.com>
-Subject: Re: [PATCH] hfp_hf: Fix modifying hash table while iterating
-Date: Thu, 19 Apr 2012 08:54:21 +0200
-Message-ID: <CANT-zCUrNSM4xRhwj_CiiCZeJoMV-vDkqKC4pj=Co6y3Q8AhWw@mail.gmail.com>
-In-Reply-To: <4F8EE3E1.4070502@gmail.com>
+Subject: [PATCH v2] hfp_hf: Fix modifying hash table while iterating
+Date: Thu, 19 Apr 2012 08:58:58 +0200
+Message-ID: <1334818738-14217-1-git-send-email-mikel.astiz.oss@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8475033533548282582==
+--===============6207461352395210049==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Calling ofono_remove_modem() while iterating the hash table is not safe
+given that it can modify the table in hfp_remove().
 
-On Wed, Apr 18, 2012 at 5:55 PM, Denis Kenzior <denkenz@gmail.com> wrote:
-> Hi Mikel,
->
-> On 04/18/2012 10:19 AM, Mikel Astiz wrote:
->> Calling ofono_remove_modem() while iterating the hash table is not safe
->> given that it can modify the table in hfp_remove().
->>
->> A simple way to reproduce the problem is to pair some Bluetooth phones
->> and remove the Bluetooth adapter, triggering a GLib-CRITICAL assertion.
->>
->> This approach proposes a two-step removal: first, the hash table is
->> iterated and all modems to be removed are marked as pending (thus
->> removed from the hash table and put in a temporary list), and afterwards
->> all pending modems are actually removed.
->> ---
->> =C2=A0plugins/hfp_hf.c | =C2=A0 11 ++++++++++-
->> =C2=A01 files changed, 10 insertions(+), 1 deletions(-)
->>
->
-> The patch looks absolutely fine, however can you check whether removing
-> g_hashtable_remove from hfp_remove would do the trick as well? =C2=A0We d=
-on't
-> seem to be doing this in the sap driver, and I no longer recall whether
-> this was done in hfp_hf to keep valgrind happy or is simply a mistake.
+A simple way to reproduce the problem is to pair some Bluetooth phones
+and remove the Bluetooth adapter, triggering a GLib-CRITICAL assertion.
 
-I was reluctant to make such a change because I wasn't entirely sure about
-which assumptions are made by the core about modem removals.
+This patch just removes the update of the hash table inside
+hfp_remove(). This can be safe as long as all calls to
+ofono_modem_remove() are accompanied by a hash table update. The only
+example of this kind right now is hfp_agent_release().
+---
+ plugins/hfp_hf.c |    3 +--
+ 1 files changed, 1 insertions(+), 2 deletions(-)
 
-If we know that all calls to ofono_modem_remove() will be originated in
-hfp_hf.c, then your proposal would just work. I will send the corresponding
-patch soon.
+diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
+index 48a734a..c11525e 100644
+--- a/plugins/hfp_hf.c
++++ b/plugins/hfp_hf.c
+@@ -192,6 +192,7 @@ static DBusMessage *hfp_agent_release(DBusConnection *c=
+onn,
+ 	g_dbus_unregister_interface(connection, obj_path, HFP_AGENT_INTERFACE);
+ 	hfp_data->agent_registered =3D FALSE;
+ =
 
-Cheers,
-Mikel
++	g_hash_table_remove(modem_hash, hfp_data->handsfree_path);
+ 	ofono_modem_remove(modem);
+ =
 
---===============8475033533548282582==--
+ 	return dbus_message_new_method_return(msg);
+@@ -366,8 +367,6 @@ static void hfp_remove(struct ofono_modem *modem)
+ 					HFP_AGENT_INTERFACE))
+ 		hfp_unregister_ofono_handsfree(modem);
+ =
+
+-	g_hash_table_remove(modem_hash, data->handsfree_path);
+-
+ 	g_free(data->handsfree_address);
+ 	g_free(data->handsfree_path);
+ 	g_free(data);
+-- =
+
+1.7.7.6
+
+
+--===============6207461352395210049==--
 
