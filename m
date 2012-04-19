@@ -1,42 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============0144028346311387129=="
+Content-Type: multipart/mixed; boundary="===============2700097638051317256=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCH 3/7] history-agent: Make compile
-Date: Thu, 19 Apr 2012 11:20:52 +0300
-Message-ID: <1334823656-3366-4-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCH 4/7] history-agent: Update copyright
+Date: Thu, 19 Apr 2012 11:20:53 +0300
+Message-ID: <1334823656-3366-5-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1334823656-3366-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0144028346311387129==
+--===============2700097638051317256==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Handle OFONO_HISTORY_SMS_STATUS_SUBMIT_CANCELLED case too.
 ---
- plugins/history-agent.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ plugins/history-agent.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
 diff --git a/plugins/history-agent.c b/plugins/history-agent.c
-index 6979195..040df13 100644
+index 040df13..2c4c01e 100644
 --- a/plugins/history-agent.c
 +++ b/plugins/history-agent.c
-@@ -639,6 +639,9 @@ static void history_sms_send_status(struct ofono_histor=
-y_context *context,
- 	case OFONO_HISTORY_SMS_STATUS_SUBMIT_FAILED:
- 		status_str =3D "submit-failed";
- 		break;
-+	case OFONO_HISTORY_SMS_STATUS_SUBMIT_CANCELLED:
-+		status_str =3D "submit-cancelled";
-+		break;
- 	case OFONO_HISTORY_SMS_STATUS_DELIVERED:
- 		status_str =3D "delivered";
- 		break;
+@@ -2,7 +2,7 @@
+  *
+  *  oFono - Open Source Telephony
+  *
+- *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2008-2012  Intel Corporation. All rights reserved.
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License version 2 as
 -- =
 
 1.7.5.4
 
 
---===============0144028346311387129==--
+--===============2700097638051317256==--
 
