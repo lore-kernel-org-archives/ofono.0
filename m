@@ -1,49 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8572836753808735490=="
+Content-Type: multipart/mixed; boundary="===============7632258523333713713=="
 MIME-Version: 1.0
-From: Mike Brudevold <puffy.taco@gmail.com>
-Subject: [PATCH] voicecall: fix release and answer existing call validation
-Date: Thu, 19 Apr 2012 17:10:43 -0500
-Message-ID: <1334873443-21124-1-git-send-email-puffy.taco@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2] hfp_hf: Fix modifying hash table while iterating
+Date: Thu, 19 Apr 2012 07:41:56 -0500
+Message-ID: <4F900814.4030507@gmail.com>
+In-Reply-To: <1334818738-14217-1-git-send-email-mikel.astiz.oss@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8572836753808735490==
+--===============7632258523333713713==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Michael Brudevold <michael.brudevold@logicpd.com>
+Hi Mikel,
 
-Release and answer should be allowed when there are held calls as well as t=
-he
-existing check for waiting calls.  Most implementations use AT+CHLD=3D1 whi=
-ch
-will resume the other call, be it waiting or held.  This follows the HFP,
-GSM 07.07 and 3GPP 27.007 specs.
----
- src/voicecall.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+On 04/19/2012 01:58 AM, Mikel Astiz wrote:
+> Calling ofono_remove_modem() while iterating the hash table is not safe
+> given that it can modify the table in hfp_remove().
+> =
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 263f1ee..2d261bf 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -1684,7 +1684,7 @@ static DBusMessage *manager_release_and_answer(DBusCo=
-nnection *conn,
- 	if (vc->pending || vc->dial_req || vc->pending_em)
- 		return __ofono_error_busy(msg);
- =
+> A simple way to reproduce the problem is to pair some Bluetooth phones
+> and remove the Bluetooth adapter, triggering a GLib-CRITICAL assertion.
+> =
 
--	if (!voicecalls_have_waiting(vc))
-+	if (!(voicecalls_have_waiting(vc) || voicecalls_have_held(vc)))
- 		return __ofono_error_failed(msg);
- =
-
- 	if (vc->driver->release_all_active =3D=3D NULL)
--- =
-
-1.7.5.4
+> This patch just removes the update of the hash table inside
+> hfp_remove(). This can be safe as long as all calls to
+> ofono_modem_remove() are accompanied by a hash table update. The only
+> example of this kind right now is hfp_agent_release().
+> ---
+>  plugins/hfp_hf.c |    3 +--
+>  1 files changed, 1 insertions(+), 2 deletions(-)
+> =
 
 
---===============8572836753808735490==--
+Patch has been applied, thanks.
+
+Regards,
+-Denis
+
+--===============7632258523333713713==--
 
