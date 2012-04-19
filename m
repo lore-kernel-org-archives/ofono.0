@@ -1,105 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============6593681667542921413=="
+Content-Type: multipart/mixed; boundary="===============6260599546639774101=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCH 7/7] test: Add test-history script
-Date: Thu, 19 Apr 2012 11:20:56 +0300
-Message-ID: <1334823656-3366-8-git-send-email-oleg.zhurakivskyy@intel.com>
-In-Reply-To: <1334823656-3366-1-git-send-email-oleg.zhurakivskyy@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] hfp_hf: Fix modifying hash table while iterating
+Date: Wed, 18 Apr 2012 19:55:11 -0500
+Message-ID: <4F8F626F.3060008@gmail.com>
+In-Reply-To: <CANT-zCUrNSM4xRhwj_CiiCZeJoMV-vDkqKC4pj=Co6y3Q8AhWw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6593681667542921413==
+--===============6260599546639774101==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- test/test-history |   71 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 71 insertions(+), 0 deletions(-)
- create mode 100755 test/test-history
+Hi Mikel,
 
-diff --git a/test/test-history b/test/test-history
-new file mode 100755
-index 0000000..c93c816
---- /dev/null
-+++ b/test/test-history
-@@ -0,0 +1,71 @@
-+#!/usr/bin/python
-+
-+import gobject
-+import sys
-+
-+import dbus
-+import dbus.service
-+import dbus.mainloop.glib
-+
-+HISTORY_INTERFACE =3D "org.ofono.History"
-+AGENT_INTERFACE =3D "org.ofono.HistoryAgent"
-+
-+def print_data(data):
-+	print "%s()" % sys._getframe(1).f_code.co_name
-+	for key in data.keys():
-+		print "\t%-10s %s" % (key, data[key])
-+
-+class HistoryAgent(dbus.service.Object):
-+	@dbus.service.method(AGENT_INTERFACE)
-+	def Release(self):
-+		print "Release()"
-+		mainloop.quit()
-+
-+	@dbus.service.method(AGENT_INTERFACE, in_signature=3D"a{sv}")
-+	def CallEnded(self, data):
-+		print_data(data)
-+
-+	@dbus.service.method(AGENT_INTERFACE, in_signature=3D"a{sv}")
-+	def CallMissed(self, data):
-+		print_data(data)
-+
-+	@dbus.service.method(AGENT_INTERFACE, in_signature=3D"a{sv}")
-+	def MessageReceived(self, data):
-+		print_data(data)
-+
-+	@dbus.service.method(AGENT_INTERFACE, in_signature=3D"a{sv}")
-+	def MessageSubmitted(self, data):
-+		print_data(data)
-+
-+	@dbus.service.method(AGENT_INTERFACE, in_signature=3D"a{sv}")
-+	def MessageStatus(self, data):
-+		print_data(data)
-+
-+if __name__ =3D=3D '__main__':
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+	bus =3D dbus.SystemBus()
-+	manager =3D dbus.Interface(bus.get_object("org.ofono", "/"),
-+			"org.ofono.Manager")
-+
-+	modems =3D manager.GetModems()
-+	for path, properties in modems:
-+		if HISTORY_INTERFACE not in properties["Interfaces"]:
-+			continue
-+
-+		history =3D dbus.Interface(bus.get_object("org.ofono", path),
-+					HISTORY_INTERFACE)
-+
-+	path =3D "/test/history"
-+	agent =3D HistoryAgent(bus, path)
-+
-+	history.RegisterAgent(path)
-+	print "HistoryAgent registered"
-+
-+	mainloop =3D gobject.MainLoop()
-+
-+	try:
-+		mainloop.run()
-+	except KeyboardInterrupt:
-+		history.UnregisterAgent(path)
-+		mainloop.quit()
-+
--- =
+>> The patch looks absolutely fine, however can you check whether removing
+>> g_hashtable_remove from hfp_remove would do the trick as well?  We don't
+>> seem to be doing this in the sap driver, and I no longer recall whether
+>> this was done in hfp_hf to keep valgrind happy or is simply a mistake.
+> =
 
-1.7.5.4
+> I was reluctant to make such a change because I wasn't entirely sure about
+> which assumptions are made by the core about modem removals.
+> =
 
+> If we know that all calls to ofono_modem_remove() will be originated in
+> hfp_hf.c, then your proposal would just work. I will send the correspondi=
+ng
+> patch soon.
 
---===============6593681667542921413==--
+The core does not call ofono_modem_remove on its own, this is triggered
+by the plugins (e.g. udev, bluetooth).  So Under normal circumstances
+all calls to ofono_modem_remove would be triggered by BlueZ reporting
+something, e.g. adapter removed, device removed, etc.
+
+The only time this might be a problem is during shutdown, hence my
+comment about keeping valgrind happy.
+
+Regards,
+-Denis
+
+--===============6260599546639774101==--
 
