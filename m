@@ -1,61 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============2151664236696276078=="
+Content-Type: multipart/mixed; boundary="===============3569372364853118727=="
 MIME-Version: 1.0
-From: Aygon, Bertrand <bertrand.aygon@intel.com>
-Subject: RE: scan problem
-Date: Fri, 20 Apr 2012 12:00:42 +0000
-Message-ID: <ED4DEEB78293B34A9D0EAC02A474A46E18AA2B78@IRSMSX102.ger.corp.intel.com>
-In-Reply-To: <4F914D79.4060403@fairwaves.ru>
+From: Max <Max.Suraev@fairwaves.ru>
+Subject: Re: scan problem
+Date: Fri, 20 Apr 2012 20:50:08 +0800
+Message-ID: <4F915B80.1000105@fairwaves.ru>
+In-Reply-To: <ED4DEEB78293B34A9D0EAC02A474A46E18AA2B78@IRSMSX102.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2151664236696276078==
+--===============3569372364853118727==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+20.04.2012 20:00, Aygon, Bertrand =D0=BD=D0=B0=D0=BF=D0=B8=D1=81=D0=B0=D0=
+=BB:
 
-> > OFONO_AT_DEBUG=3D1 ./src/ofonod -n -d '*'
+> So your modem doesn't reply to the first AT command sent.
 > =
 
-> Awesome! The log is attached: 1st I run `./enable-modem /wavecom_q_0` than
-> wait for few seconds and run `./online-modem /wavecom_q_0` which gives me
-> Setting modem /wavecom_q_0 online...
-> Traceback (most recent call last):
->   File "./online-modem", line 17, in <module>
->     modem.SetProperty("Online", dbus.Boolean(1), timeout =3D 120)
->   File "/usr/lib/pymodules/python2.6/dbus/proxies.py", line 68, in __call=
-__
->     return self._proxy_method(*args, **keywords)
->   File "/usr/lib/pymodules/python2.6/dbus/proxies.py", line 140, in __cal=
-l__
->     **keywords)
->   File "/usr/lib/pymodules/python2.6/dbus/connection.py", line 620, in
-> call_blocking
->     message, timeout)
-> dbus.exceptions.DBusException: org.ofono.Error.NotImplemented:
-> Implementation not provided
+> Can you try to open one of the many /dev/ttyUSB1 to /dev/ttyUSB16 using m=
+inicom and send some AT command to see if you got an answer?
 
-So your modem doesn't reply to the first AT command sent.
+Doh! You're right - the minicom just hangs. I'll try to contact vendor with=
+ my
+sincere wtf :)
+In a mean time - should I file FR for more descriptive error handling in of=
+ono? It
+would be way more convenient if absence of AT-command response from modem w=
+ill be
+reported as such and not as some cryptic python message.
 
-Can you try to open one of the many /dev/ttyUSB1 to /dev/ttyUSB16 using min=
-icom and send some AT command to see if you got an answer?
+thanks for help anyway,
+Max.
 
-Regards,
 
-Bertrand
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============2151664236696276078==--
+--===============3569372364853118727==--
 
