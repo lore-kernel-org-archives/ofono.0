@@ -1,39 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============3569372364853118727=="
+Content-Type: multipart/mixed; boundary="===============5713668085727908342=="
 MIME-Version: 1.0
-From: Max <Max.Suraev@fairwaves.ru>
-Subject: Re: scan problem
-Date: Fri, 20 Apr 2012 20:50:08 +0800
-Message-ID: <4F915B80.1000105@fairwaves.ru>
-In-Reply-To: <ED4DEEB78293B34A9D0EAC02A474A46E18AA2B78@IRSMSX102.ger.corp.intel.com>
+From: Mike <puffy.taco@gmail.com>
+Subject: Re: [PATCH] voicecall: send CallRemoved for calls when voicecall atom
+ is unregistered
+Date: Fri, 20 Apr 2012 08:36:41 -0500
+Message-ID: <CAB7rCThudSadVMt67vs73af265VPfUAP=B6usyn8S3hBgCG7DA@mail.gmail.com>
+In-Reply-To: <4F901ADA.8010808@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3569372364853118727==
+--===============5713668085727908342==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-20.04.2012 20:00, Aygon, Bertrand =D0=BD=D0=B0=D0=BF=D0=B8=D1=81=D0=B0=D0=
-=BB:
+Hi Denis,
 
-> So your modem doesn't reply to the first AT command sent.
-> =
+On Thu, Apr 19, 2012 at 9:02 AM, Denis Kenzior <denkenz@gmail.com> wrote:
+> Hi Mike,
+>
+>>
+>> The only reason I added it is 4 hours of debugging my GUI and ofono to
+>> figure out why the GUI didn't notice the D-Bus path for the voice call
+>> was no longer around. =C2=A0The documentation for CallRemoved says "Sign=
+al
+>> that is sent when a voice call has been released." =C2=A0This implies it
+>> should be sent every time it is released. =C2=A0If you update the
+>> documentation to make it clear that this is not always the case, then
+>> it's fine by me.
+>>
+>
+> Please check that commit 7f51df4d satisfies your requirements.
 
-> Can you try to open one of the many /dev/ttyUSB1 to /dev/ttyUSB16 using m=
-inicom and send some AT command to see if you got an answer?
+Looks good, thanks!
 
-Doh! You're right - the minicom just hangs. I'll try to contact vendor with=
- my
-sincere wtf :)
-In a mean time - should I file FR for more descriptive error handling in of=
-ono? It
-would be way more convenient if absence of AT-command response from modem w=
-ill be
-reported as such and not as some cryptic python message.
+Mike
 
-thanks for help anyway,
-Max.
+>
+> Regards,
+> -Denis
 
-
---===============3569372364853118727==--
+--===============5713668085727908342==--
 
