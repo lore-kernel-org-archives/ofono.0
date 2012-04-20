@@ -1,37 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============4917997132073800607=="
+Content-Type: multipart/mixed; boundary="===============4577798618216717171=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] voicecall: send CallRemoved for calls when voicecall atom
- is unregistered
-Date: Thu, 19 Apr 2012 09:02:02 -0500
-Message-ID: <4F901ADA.8010808@gmail.com>
-In-Reply-To: <CAB7rCThu4QsYXn+R9JTRSgfcP5xo1XffrBc0WsqFtOxDi4psLg@mail.gmail.com>
+From: Max <Max.Suraev@fairwaves.ru>
+Subject: scan problem
+Date: Fri, 20 Apr 2012 12:14:34 +0800
+Message-ID: <4F90E2AA.70002@fairwaves.ru>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4917997132073800607==
+--===============4577798618216717171==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mike,
+Hello.
 
-> =
+I've got following error while trying to scan for operator with ofono from =
+git:
 
-> The only reason I added it is 4 hours of debugging my GUI and ofono to
-> figure out why the GUI didn't notice the D-Bus path for the voice call
-> was no longer around.  The documentation for CallRemoved says "Signal
-> that is sent when a voice call has been released."  This implies it
-> should be sent every time it is released.  If you update the
-> documentation to make it clear that this is not always the case, then
-> it's fine by me.
-> =
+./scan-for-operators /wavecom_q_0
+Scanning operators on modem /wavecom_q_0...
+Traceback (most recent call last):
+  File "./scan-for-operators", line 20, in <module>
+    operators =3D netreg.Scan(timeout=3D100);
+  File "/usr/lib/pymodules/python2.6/dbus/proxies.py", line 68, in __call__
+    return self._proxy_method(*args, **keywords)
+  File "/usr/lib/pymodules/python2.6/dbus/proxies.py", line 140, in __call__
+    **keywords)
+  File "/usr/lib/pymodules/python2.6/dbus/connection.py", line 620, in call=
+_blocking
+    message, timeout)
+dbus.exceptions.DBusException: org.freedesktop.DBus.Error.UnknownMethod: Me=
+thod
+"Scan" with signature "" on interface "org.ofono.NetworkRegistration" doesn=
+'t exist
 
+Is this some known bug or some sort of misconfiguration on my side?
 
-Please check that commit 7f51df4d satisfies your requirements.
+best regards,
+Max.
 
-Regards,
--Denis
-
---===============4917997132073800607==--
+--===============4577798618216717171==--
 
