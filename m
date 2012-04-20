@@ -1,44 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============5713668085727908342=="
+Content-Type: multipart/mixed; boundary="===============4771550191408240340=="
 MIME-Version: 1.0
-From: Mike <puffy.taco@gmail.com>
-Subject: Re: [PATCH] voicecall: send CallRemoved for calls when voicecall atom
- is unregistered
-Date: Fri, 20 Apr 2012 08:36:41 -0500
-Message-ID: <CAB7rCThudSadVMt67vs73af265VPfUAP=B6usyn8S3hBgCG7DA@mail.gmail.com>
-In-Reply-To: <4F901ADA.8010808@gmail.com>
+From: =?unknown-8bit?q?S=C3=A9bastien?= Bianti <sebastien.bianti@linux.intel.com>
+Subject: [PATCH 0/3] mmsd: bug fix
+Date: Fri, 20 Apr 2012 18:39:03 +0200
+Message-ID: <1334939946-8835-1-git-send-email-sebastien.bianti@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5713668085727908342==
+--===============4771550191408240340==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+This set concerns mmsd for ofono mailing list.
 
-On Thu, Apr 19, 2012 at 9:02 AM, Denis Kenzior <denkenz@gmail.com> wrote:
-> Hi Mike,
->
->>
->> The only reason I added it is 4 hours of debugging my GUI and ofono to
->> figure out why the GUI didn't notice the D-Bus path for the voice call
->> was no longer around. =C2=A0The documentation for CallRemoved says "Sign=
-al
->> that is sent when a voice call has been released." =C2=A0This implies it
->> should be sent every time it is released. =C2=A0If you update the
->> documentation to make it clear that this is not always the case, then
->> it's fine by me.
->>
->
-> Please check that commit 7f51df4d satisfies your requirements.
+S=C3=A9bastien Bianti (3):
+  mmsutil: add mms_message_status_get_string API
+  service: use proper status value string
+  service: fix for message_delete bug
 
-Looks good, thanks!
+ src/mmsutil.c |   25 +++++++++++++++++++++++++
+ src/mmsutil.h |    1 +
+ src/service.c |    9 +++++++--
+ 3 files changed, 33 insertions(+), 2 deletions(-)
 
-Mike
+-- =
 
->
-> Regards,
-> -Denis
+1.7.4.4
 
---===============5713668085727908342==--
+
+--===============4771550191408240340==--
 
