@@ -1,60 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============8110460013872166015=="
+Content-Type: multipart/mixed; boundary="===============1565147788783502497=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?S=C3=A9bastien?= Bianti <sebastien.bianti@linux.intel.com>
-Subject: [PATCH 3/3] service: fix for message_delete bug
-Date: Fri, 20 Apr 2012 18:39:06 +0200
-Message-ID: <1334939946-8835-4-git-send-email-sebastien.bianti@linux.intel.com>
-In-Reply-To: <1334939946-8835-1-git-send-email-sebastien.bianti@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/3] mmsutil: add mms_message_status_get_string API
+Date: Fri, 20 Apr 2012 18:44:11 +0200
+Message-ID: <1334940251.16897.332.camel@aeonflux>
+In-Reply-To: <1334939946-8835-2-git-send-email-sebastien.bianti@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8110460013872166015==
+--===============1565147788783502497==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-mms_message_unregister destroyes the message
----
- src/service.c |    7 ++++++-
- 1 files changed, 6 insertions(+), 1 deletions(-)
+Hi Sebastien,
 
-diff --git a/src/service.c b/src/service.c
-index 5520012..f89fd3f 100644
---- a/src/service.c
-+++ b/src/service.c
-@@ -134,6 +134,7 @@ static DBusMessage *msg_delete(DBusConnection *conn,
- 	struct mms_service *service =3D user_data;
- 	struct mms_message *mms;
- 	const char *path;
-+	char *uuid;
- =
+>  src/mmsutil.c |   25 +++++++++++++++++++++++++
+>  src/mmsutil.h |    1 +
+>  2 files changed, 26 insertions(+), 0 deletions(-)
+> =
 
- 	path =3D dbus_message_get_path(msg);
- =
+> diff --git a/src/mmsutil.c b/src/mmsutil.c
+> index c507d6f..725849b 100644
+> --- a/src/mmsutil.c
+> +++ b/src/mmsutil.c
+> @@ -1661,3 +1661,28 @@ gboolean mms_message_encode(struct mms_message *ms=
+g, int fd)
+>  =
 
-@@ -143,10 +144,14 @@ static DBusMessage *msg_delete(DBusConnection *conn,
- 	if (mms =3D=3D NULL)
- 		return __mms_error_invalid_args(msg);
- =
+>  	return FALSE;
+>  }
+> +
+> +char *mms_message_status_get_string(enum mms_message_status status)
+> +{
+> +	char *status_str;
+> +
+> +	switch (status) {
+> +	case MMS_MESSAGE_STATUS_DOWNLOADED:
+> +		status_str =3D "downloaded";
+> +		break;
+> +	case MMS_MESSAGE_STATUS_RECEIVED:
+> +		status_str =3D "received";
+> +		break;
+> +	case MMS_MESSAGE_STATUS_READ:
+> +		status_str =3D "read";
+> +		break;
+> +	case MMS_MESSAGE_STATUS_SENT:
+> +		status_str =3D "sent";
+> +		break;
+> +	case MMS_MESSAGE_STATUS_DRAFT:
+> +		status_str =3D "draft";
+> +		break;
+> +	}
+> +
+> +	return status_str;
+> +}
 
-+	uuid =3D g_strdup(mms->uuid);
-+
- 	if (mms_message_unregister(service, path) < 0)
- 		return __mms_error_invalid_args(msg);
- =
+why bother with status_str here. Just call return right away. Also the
+return value is const char *.
 
--	mms_store_remove(service->identity, mms->uuid);
-+	mms_store_remove(service->identity, uuid);
-+
-+	g_free(uuid);
- =
+> diff --git a/src/mmsutil.h b/src/mmsutil.h
+> index b2a0418..d3b507f 100644
+> --- a/src/mmsutil.h
+> +++ b/src/mmsutil.h
+> @@ -146,3 +146,4 @@ gboolean mms_message_decode(const unsigned char *pdu,
+>  				unsigned int len, struct mms_message *out);
+>  gboolean mms_message_encode(struct mms_message *msg, int fd);
+>  void mms_message_free(struct mms_message *msg);
+> +char *mms_message_status_get_string(enum mms_message_status status);
 
- 	return g_dbus_create_reply(msg, DBUS_TYPE_INVALID);
- }
--- =
+Regards
 
-1.7.4.4
+Marcel
 
 
---===============8110460013872166015==--
+
+--===============1565147788783502497==--
 
