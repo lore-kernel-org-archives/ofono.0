@@ -1,41 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============6890434639176340648=="
+Content-Type: multipart/mixed; boundary="===============5352508720930312439=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?S=C3=A9bastien?= Bianti <sebastien.bianti@linux.intel.com>
-Subject: [PATCH v2 2/2] service: use proper status value string
-Date: Mon, 23 Apr 2012 10:31:49 +0200
-Message-ID: <1335169909-12531-3-git-send-email-sebastien.bianti@linux.intel.com>
+From: =?unknown-8bit?q?S=C3=A9bastien?= bianti <sebastien.bianti@linux.intel.com>
+Subject: Re: [PATCH v2 0/2] mmsd: bug fix
+Date: Mon, 23 Apr 2012 10:54:02 +0200
+Message-ID: <4F9518AA.7040607@linux.intel.com>
 In-Reply-To: <1335169909-12531-1-git-send-email-sebastien.bianti@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6890434639176340648==
+--===============5352508720930312439==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/service.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Please forget this, I forgot to change the return value.
 
-diff --git a/src/service.c b/src/service.c
-index 469393a..f89fd3f 100644
---- a/src/service.c
-+++ b/src/service.c
-@@ -1502,7 +1502,7 @@ static void append_sr_msg_properties(DBusMessageIter =
-*dict,
- 					struct mms_message *msg)
- {
- 	const char *date =3D time_to_str(&msg->rc.date);
--	const char *status =3D "draft";
-+	const char *status =3D mms_message_status_get_string(msg->sr.status);
- =
-
- 	mms_dbus_dict_append_basic(dict, "Status",
- 					DBUS_TYPE_STRING, &status);
--- =
-
-1.7.4.4
+Le 23/04/2012 10:31, S=C3=A9bastien Bianti a =C3=A9crit :
+> S=C3=A9bastien Bianti (2):
+>    mmsutil: add mms_message_status_get_string API
+>    service: use proper status value string
+>
+>   src/mmsutil.c |   18 ++++++++++++++++++
+>   src/mmsutil.h |    1 +
+>   src/service.c |    2 +-
+>   3 files changed, 20 insertions(+), 1 deletions(-)
+>
 
 
---===============6890434639176340648==--
+--===============5352508720930312439==--
 
