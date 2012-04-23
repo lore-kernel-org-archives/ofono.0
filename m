@@ -1,70 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============3429165714853852003=="
+Content-Type: multipart/mixed; boundary="===============8524886327082849858=="
 MIME-Version: 1.0
-From: Frederic Danis <frederic.danis@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [RFC v4 10/10] emulator: Update supported features
-Date: Mon, 23 Apr 2012 16:01:28 +0200
-Message-ID: <4F9560B8.3090708@linux.intel.com>
-In-Reply-To: <4F7F2A2B.8070708@gmail.com>
+Date: Sun, 22 Apr 2012 19:03:58 -0500
+Message-ID: <4F949C6E.90102@gmail.com>
+In-Reply-To: <4F9560B8.3090708@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3429165714853852003==
+--===============8524886327082849858==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+Hi Frederic,
 
-Le 06/04/2012 19:38, Denis Kenzior a =C3=A9crit :
-> Hi Fr=C3=A9d=C3=A9ric,
->
-> On 04/06/2012 08:17 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
->> Add ECNR (Echo Cancelation/Noise Reduction) and Inband Ringtone
->> capabilities to supported features (+BRSF event)
->> ---
->>   src/emulator.c |    2 ++
->>   1 files changed, 2 insertions(+), 0 deletions(-)
->>
->> diff --git a/src/emulator.c b/src/emulator.c
->> index e7c7d41..371e96c 100644
->> --- a/src/emulator.c
->> +++ b/src/emulator.c
->> @@ -979,6 +979,8 @@ struct ofono_emulator *ofono_emulator_create(struct =
-ofono_modem *modem,
->>
->>   	em->type =3D type;
->>   	em->l_features |=3D HFP_AG_FEATURE_3WAY;
->> +	em->l_features |=3D HFP_AG_FEATURE_ECNR;
->> +	em->l_features |=3D HFP_AG_FEATURE_IN_BAND_RING_TONE;
->>   	em->l_features |=3D HFP_AG_FEATURE_REJECT_CALL;
->>   	em->l_features |=3D HFP_AG_FEATURE_ENHANCED_CALL_STATUS;
->>   	em->l_features |=3D HFP_AG_FEATURE_ENHANCED_CALL_CONTROL;
->
-> I think it would be better for the features to be modified based on what
-> command handlers are registered.  E.g. if NREC handler is registered in
-> ofono_emulator_add_handler then add ECNR to local features, etc.
+>> I think it would be better for the features to be modified based on what
+>> command handlers are registered.  E.g. if NREC handler is registered in
+>> ofono_emulator_add_handler then add ECNR to local features, etc.
+> =
 
-Local features are sent during reply to AT+BRSF command (after emulator =
+> Local features are sent during reply to AT+BRSF command (after emulator
+> creation and command handlers registration), but also in the Bluetooth
+> SDP record, before client connection (so before emulator creation).
+> =
 
-creation and command handlers registration), but also in the Bluetooth =
 
-SDP record, before client connection (so before emulator creation).
+Fair enough, however the SDP record is not a 1:1 mapping to BRSF, only a
+subset is covered.
 
-Imho, local features value should only be created in hfp_ag.c file, and =
+> Imho, local features value should only be created in hfp_ag.c file, and
+> passed to the emulator through ofono_emulator_create() or a new
+> ofono_emulator_set_features() API.
 
-passed to the emulator through ofono_emulator_create() or a new =
+The thing is that the plugin has no knowledge of whether 3WAY, enhanced
+call status, enhanced call control, etc are supported.  Right now these
+are hard-coded, but they might depend on driver / technology.  So at
+best the emulator_create would be a mask to be ORed onto the local
+features set from the core.
 
-ofono_emulator_set_features() API.
+In the end I'm fine either way, but it might be easier to avoid the
+extra step in the plugin if the core can do this easily just based on
+the command handlers being registered.
 
 Regards,
+-Denis
 
-Fred
-
--- =
-
-Frederic Danis                            Open Source Technology Center
-frederic.danis(a)intel.com                              Intel Corporation
-
-
---===============3429165714853852003==--
+--===============8524886327082849858==--
 
