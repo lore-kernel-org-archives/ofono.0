@@ -1,133 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============6437640101426437163=="
+Content-Type: multipart/mixed; boundary="===============8178570358486263810=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: [PATCH v6 03/16] dundee: Add test scripts
-Date: Tue, 24 Apr 2012 14:33:11 +0200
-Message-ID: <4F969D87.6070700@monom.org>
-In-Reply-To: <2CF57A644018A745B8FE029C7223E16E0FD1CDB4@SHSMSX102.ccr.corp.intel.com>
+From: Frederic Danis <frederic.danis@linux.intel.com>
+Subject: Re: [RFC v4 09/10] hfp_ag: Add media transport support
+Date: Tue, 24 Apr 2012 18:19:51 +0200
+Message-ID: <4F96D2A7.1090903@linux.intel.com>
+In-Reply-To: <4F7F29FA.5060106@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6437640101426437163==
+--===============8178570358486263810==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Wu,
+Hello Denis,
 
-On 23.04.2012 12:13, Zheng, Wu wrote:
-> Hi Daniel,
+Le 06/04/2012 19:38, Denis Kenzior a =C3=A9crit :
+> Hi Fr=C3=A9d=C3=A9ric,
 >
-> I try to test your patches.
-
-Thanks for giving them a try.
-
->> -----Original Message-----
->> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Be=
-half
->> Of Daniel Wagner
->> Sent: Tuesday, April 03, 2012 12:20 AM
->> To: ofono(a)ofono.org
->> Cc: Daniel Wagner
->> Subject: [PATCH v6 03/16] dundee: Add test scripts
+>> @@ -82,6 +93,12 @@ static DBusMessage *hfp_ag_agent_new_connection(DBusC=
+onnection *conn,
+>>   		return __ofono_error_failed(msg);
 >>
->> From: Daniel Wagner<daniel.wagner@bmw-carit.de>
->>
->> ---
->>   test/dundee-connect    |   20 +++++++++
->>   test/dundee-disconnect |   20 +++++++++
->>   test/monitor-dundee    |  109
->> ++++++++++++++++++++++++++++++++++++++++++++++++
->>   3 files changed, 149 insertions(+)
->>   create mode 100755 test/dundee-connect
->>   create mode 100755 test/dundee-disconnect  create mode 100755
->> test/monitor-dundee
->>
->> diff --git a/test/dundee-connect b/test/dundee-connect new file mode 100=
-755
->> index 0000000..6cbc629
->> --- /dev/null
->> +++ b/test/dundee-connect
->> @@ -0,0 +1,20 @@
->> +#!/usr/bin/python
+>>   	ofono_emulator_register(em, fd);
+>> +	audio =3D bluetooth_set_audio_management(em, path, features);
 >> +
->> +import dbus
->> +import sys
->> +
->> +bus =3D dbus.SystemBus()
->> +
->> +if len(sys.argv) =3D=3D 2:
->> +	path =3D sys.argv[1]
->> +else:
->> +	manager =3D dbus.Interface(bus.get_object('org.ofono.dundee', '/'),
->> +			'org.ofono.dundee.Manager')
->> +	devices =3D manager.GetDevices()
->> +	path =3D devices[0][0]
->> +
->> +print "Connect device %s..." % path
->> +device =3D dbus.Interface(bus.get_object('org.ofono.dundee', path),
->> +						'org.ofono.dundee.Device')
->> +
->> +device.Connect()
+>> +	io =3D g_io_channel_unix_new(fd);
+>> +	g_io_add_watch_full(io, G_PRIORITY_HIGH,
+>> +				G_IO_HUP | G_IO_ERR | G_IO_NVAL, client_event,
+>> +				audio, NULL);
 >
-> The dbus method connect() does not exist on org.ofono.dundee.Device, it c=
-annot be found in device.c and doc/dundee-api.txt.
-> Why?
->
-> Best regards
->
->> diff --git a/test/dundee-disconnect b/test/dundee-disconnect new file mo=
-de
->> 100755 index 0000000..e67d8cd
->> --- /dev/null
->> +++ b/test/dundee-disconnect
->> @@ -0,0 +1,20 @@
->> +#!/usr/bin/python
->> +
->> +import dbus
->> +import sys
->> +
->> +bus =3D dbus.SystemBus()
->> +
->> +if len(sys.argv) =3D=3D 2:
->> +	path =3D sys.argv[1]
->> +else:
->> +	manager =3D dbus.Interface(bus.get_object('org.ofono.dundee', '/'),
->> +			'org.ofono.dundee.Manager')
->> +	devices =3D manager.GetDevices()
->> +	path =3D devices[0][0]
->> +
->> +print "Disonnect device %s..." % path
->> +device =3D dbus.Interface(bus.get_object('org.ofono.dundee', path),
->> +						'org.ofono.dundee.Device')
->> +
->> +device.Disconnect()
+> It might be better to register to atom removal rather than an IO watch.
 
-Change this line to
+As modem can have multiple emulator atoms (in case of connection to =
 
-device.SetProperty("Active", True)
+multiple headsets), I do not think that registering for atom removal =
 
-That should do the trick.
+using __ofono_modem_add_atom_watch() will be OK.
 
-> The dbus method Disconnect() does not exist on org.ofono.dundee.Device, i=
-t cannot be found in device.c and doc/dundee-api.txt.
-> Why?
+I may add an API to emulator to register a disconnection callback:
+     ofono_emulator_set_disconnect_cb(em, cb, cb_data)
 
-The documentation and the script are not in sync with the =
+This keep separation between oFono core and HFP AG plug-in.
 
-implementation. I'll fix that.
+Regards
 
-Documentation change:
+Fred
 
-Methods
-	SetProperty()
+-- =
 
-Test script change:
+Frederic Danis                            Open Source Technology Center
+frederic.danis(a)intel.com                              Intel Corporation
 
-	device.SetProperty("Active", True)
 
-cheers,
-daniel
-
---===============6437640101426437163==--
+--===============8178570358486263810==--
 
