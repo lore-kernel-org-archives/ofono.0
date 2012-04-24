@@ -1,64 +1,133 @@
-Content-Type: multipart/mixed; boundary="===============7079415556618763611=="
+Content-Type: multipart/mixed; boundary="===============6437640101426437163=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCH] controlbase: Remove html property from teSMSText
-Date: Tue, 24 Apr 2012 12:40:10 +0300
-Message-ID: <1335260410-5798-1-git-send-email-oleg.zhurakivskyy@intel.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [PATCH v6 03/16] dundee: Add test scripts
+Date: Tue, 24 Apr 2012 14:33:11 +0200
+Message-ID: <4F969D87.6070700@monom.org>
+In-Reply-To: <2CF57A644018A745B8FE029C7223E16E0FD1CDB4@SHSMSX102.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7079415556618763611==
+--===============6437640101426437163==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The content of this property adds a few extra newlines
-into QTextEdit, which is probably not the intention.
----
- src/controlbase.ui |   13 -------------
- 1 files changed, 0 insertions(+), 13 deletions(-)
+Hi Wu,
 
-diff --git a/src/controlbase.ui b/src/controlbase.ui
-index 50315db..ce675d2 100644
---- a/src/controlbase.ui
-+++ b/src/controlbase.ui
-@@ -746,19 +746,6 @@
-             <property name=3D"tabChangesFocus">
-              <bool>true</bool>
-             </property>
--            <property name=3D"html">
--             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//=
-EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
--&lt;html&gt;&lt;head&gt;&lt;meta name=3D&quot;qrichtext&quot; content=3D&q=
-uot;1&quot; /&gt;&lt;style type=3D&quot;text/css&quot;&gt;
--p, li { white-space: pre-wrap; }
--&lt;/style&gt;&lt;/head&gt;&lt;body style=3D&quot; font-family:'Sans Serif=
-'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
--&lt;table border=3D&quot;0&quot; style=3D&quot;-qt-table-type: root; margi=
-n-top:4px; margin-bottom:4px; margin-left:4px; margin-right:4px;&quot;&gt;
--&lt;tr&gt;
--&lt;td style=3D&quot;border: none;&quot;&gt;
--&lt;p style=3D&quot;-qt-paragraph-type:empty; margin-top:0px; margin-botto=
-m:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0=
-px;&quot;&gt;&lt;/p&gt;
--&lt;p style=3D&quot;-qt-paragraph-type:empty; margin-top:0px; margin-botto=
-m:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0=
-px;&quot;&gt;&lt;/p&gt;
--&lt;p style=3D&quot;-qt-paragraph-type:empty; margin-top:0px; margin-botto=
-m:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0=
-px;&quot;&gt;&lt;/p&gt;
--&lt;p style=3D&quot;-qt-paragraph-type:empty; margin-top:0px; margin-botto=
-m:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0=
-px;&quot;&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/body&gt;&lt=
-;/html&gt;</string>
--            </property>
-            </widget>
-           </item>
-          </layout>
--- =
+On 23.04.2012 12:13, Zheng, Wu wrote:
+> Hi Daniel,
+>
+> I try to test your patches.
 
-1.7.5.4
+Thanks for giving them a try.
 
+>> -----Original Message-----
+>> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Be=
+half
+>> Of Daniel Wagner
+>> Sent: Tuesday, April 03, 2012 12:20 AM
+>> To: ofono(a)ofono.org
+>> Cc: Daniel Wagner
+>> Subject: [PATCH v6 03/16] dundee: Add test scripts
+>>
+>> From: Daniel Wagner<daniel.wagner@bmw-carit.de>
+>>
+>> ---
+>>   test/dundee-connect    |   20 +++++++++
+>>   test/dundee-disconnect |   20 +++++++++
+>>   test/monitor-dundee    |  109
+>> ++++++++++++++++++++++++++++++++++++++++++++++++
+>>   3 files changed, 149 insertions(+)
+>>   create mode 100755 test/dundee-connect
+>>   create mode 100755 test/dundee-disconnect  create mode 100755
+>> test/monitor-dundee
+>>
+>> diff --git a/test/dundee-connect b/test/dundee-connect new file mode 100=
+755
+>> index 0000000..6cbc629
+>> --- /dev/null
+>> +++ b/test/dundee-connect
+>> @@ -0,0 +1,20 @@
+>> +#!/usr/bin/python
+>> +
+>> +import dbus
+>> +import sys
+>> +
+>> +bus =3D dbus.SystemBus()
+>> +
+>> +if len(sys.argv) =3D=3D 2:
+>> +	path =3D sys.argv[1]
+>> +else:
+>> +	manager =3D dbus.Interface(bus.get_object('org.ofono.dundee', '/'),
+>> +			'org.ofono.dundee.Manager')
+>> +	devices =3D manager.GetDevices()
+>> +	path =3D devices[0][0]
+>> +
+>> +print "Connect device %s..." % path
+>> +device =3D dbus.Interface(bus.get_object('org.ofono.dundee', path),
+>> +						'org.ofono.dundee.Device')
+>> +
+>> +device.Connect()
+>
+> The dbus method connect() does not exist on org.ofono.dundee.Device, it c=
+annot be found in device.c and doc/dundee-api.txt.
+> Why?
+>
+> Best regards
+>
+>> diff --git a/test/dundee-disconnect b/test/dundee-disconnect new file mo=
+de
+>> 100755 index 0000000..e67d8cd
+>> --- /dev/null
+>> +++ b/test/dundee-disconnect
+>> @@ -0,0 +1,20 @@
+>> +#!/usr/bin/python
+>> +
+>> +import dbus
+>> +import sys
+>> +
+>> +bus =3D dbus.SystemBus()
+>> +
+>> +if len(sys.argv) =3D=3D 2:
+>> +	path =3D sys.argv[1]
+>> +else:
+>> +	manager =3D dbus.Interface(bus.get_object('org.ofono.dundee', '/'),
+>> +			'org.ofono.dundee.Manager')
+>> +	devices =3D manager.GetDevices()
+>> +	path =3D devices[0][0]
+>> +
+>> +print "Disonnect device %s..." % path
+>> +device =3D dbus.Interface(bus.get_object('org.ofono.dundee', path),
+>> +						'org.ofono.dundee.Device')
+>> +
+>> +device.Disconnect()
 
---===============7079415556618763611==--
+Change this line to
+
+device.SetProperty("Active", True)
+
+That should do the trick.
+
+> The dbus method Disconnect() does not exist on org.ofono.dundee.Device, i=
+t cannot be found in device.c and doc/dundee-api.txt.
+> Why?
+
+The documentation and the script are not in sync with the =
+
+implementation. I'll fix that.
+
+Documentation change:
+
+Methods
+	SetProperty()
+
+Test script change:
+
+	device.SetProperty("Active", True)
+
+cheers,
+daniel
+
+--===============6437640101426437163==--
 
