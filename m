@@ -1,57 +1,98 @@
-Content-Type: multipart/mixed; boundary="===============0795800980898011814=="
+Content-Type: multipart/mixed; boundary="===============8984895571734385454=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCHv1 2/5] service: Retrieve get_conversation() args
-Date: Wed, 25 Apr 2012 11:01:50 +0200
-Message-ID: <1335344513-2347-3-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCHv1 3/5] service: Fill conversation list with messages
+Date: Wed, 25 Apr 2012 11:01:51 +0200
+Message-ID: <1335344513-2347-4-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1335344513-2347-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0795800980898011814==
+--===============8984895571734385454==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/service.c |   37 +++++++++++++++++++++++++++++++++++++
- 1 files changed, 37 insertions(+), 0 deletions(-)
+ src/service.c |   88 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 files changed, 87 insertions(+), 1 deletions(-)
 
 diff --git a/src/service.c b/src/service.c
-index 24c89b6..18c11f4 100644
+index 18c11f4..2787c3a 100644
 --- a/src/service.c
 +++ b/src/service.c
-@@ -690,11 +690,48 @@ static DBusMessage *get_messages(DBusConnection *conn,
- 	return reply;
+@@ -719,13 +719,85 @@ static gboolean get_conversation_get_args(DBusMessage=
+ *dbus_msg,
+ 	return TRUE;
  }
 
-+static gboolean get_conversation_get_args(DBusMessage *dbus_msg,
-+				const char **number, unsigned int *count)
++static gboolean is_recipient(const char *recipients, const char *number)
 +{
-+	DBusMessageIter top_iter;
++	const char *rec, *num;
 +
-+	if (dbus_message_iter_init(dbus_msg, &top_iter) =3D=3D FALSE)
-+		return FALSE;
++	while (*recipients !=3D '\0') {
++		rec =3D recipients;
++		num =3D number;
 +
-+	if (dbus_message_iter_get_arg_type(&top_iter) !=3D DBUS_TYPE_STRING)
-+		return FALSE;
++		while (*rec !=3D '\0' && *num !=3D '\0') {
++			if (*rec =3D=3D *num) {
++				rec++;
++				num++;
++			} else {
++				if (*rec =3D=3D '-' || *rec =3D=3D '.') {
++					rec++;
++					continue;
++				}
 +
-+	dbus_message_iter_get_basic(&top_iter, number);
-+	if (*number[0] =3D=3D '\0')
-+		return FALSE;
++				if (*num =3D=3D '-' || *num =3D=3D '.') {
++					num++;
++					continue;
++				}
 +
-+	if (valid_number_format(*number) =3D=3D FALSE)
-+		return FALSE;
++				rec++;
++				break;
++			}
++		}
 +
-+	if (!dbus_message_iter_next(&top_iter))
-+		return FALSE;
++		/*
++		 * Phone numbers in recipients end with /TYPE=3DPLMN, so the
++		 * wanted number is found if the whole string number is found
++		 * and if the matched phone number ends with the wanted number
++		 * (i.e.: "/TYPE=3DPLMN" must follow).
++		 */
++		if (*num =3D=3D '\0' && *rec =3D=3D '/')
++			return TRUE;
 +
-+	if (dbus_message_iter_get_arg_type(&top_iter) !=3D DBUS_TYPE_UINT32)
-+		return FALSE;
++		recipients =3D rec;
++	}
 +
-+	dbus_message_iter_get_basic(&top_iter, count);
++	return FALSE;
++}
 +
-+	return TRUE;
++static GList *fill_conversation(const struct mms_service *service,
++				GList *conversation, const char *number)
++{
++	GHashTableIter table_iter;
++	gpointer key, value;
++
++	g_hash_table_iter_init(&table_iter, service->messages);
++	while (g_hash_table_iter_next(&table_iter, &key, &value)) {
++		struct mms_message *msg =3D value;
++		char *recipients;
++
++		if (msg->type =3D=3D MMS_MESSAGE_TYPE_SEND_REQ)
++			recipients =3D msg->sr.to;
++		else if (msg->type =3D=3D MMS_MESSAGE_TYPE_RETRIEVE_CONF)
++			recipients =3D msg->rc.from;
++		else
++			continue;
++
++		if (is_recipient(recipients, number) =3D=3D TRUE)
++			conversation =3D g_list_prepend(conversation, value);
++	}
++
++	return conversation;
 +}
 +
  static DBusMessage *get_conversation(DBusConnection *conn,
@@ -59,20 +100,41 @@ index 24c89b6..18c11f4 100644
  {
  	DBusMessage *reply;
  	DBusMessageIter iter, array;
-+	const char *number;
-+	unsigned int count;
-+
-+	if (get_conversation_get_args(dbus_msg, &number, &count) =3D=3D FALSE) {
-+		mms_debug("Invalid arguments");
-+
-+		return __mms_error_invalid_args(dbus_msg);
-+	}
++	const struct mms_service *service =3D data;
++	struct mms_message *msg;
++	GList *msg_elt =3D NULL;
++	GList *conversation =3D NULL;
+ 	const char *number;
+-	unsigned int count;
++	unsigned int count, i;
 
- 	reply =3D dbus_message_new_method_return(dbus_msg);
- 	if (reply =3D=3D NULL)
+ 	if (get_conversation_get_args(dbus_msg, &number, &count) =3D=3D FALSE) {
+ 		mms_debug("Invalid arguments");
+@@ -742,6 +814,20 @@ static DBusMessage *get_conversation(DBusConnection *c=
+onn,
+ 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+ 							"(oa{sv})", &array);
+
++	conversation =3D fill_conversation(service, conversation, number);
++	if (conversation =3D=3D NULL)
++		goto out;
++
++	i =3D 0;
++
++	for (msg_elt =3D g_list_first(conversation); msg_elt !=3D NULL;
++					msg_elt =3D g_list_next(msg_elt), i++) {
++		if (count !=3D 0 && i =3D=3D count)
++			break;
++		msg =3D msg_elt->data;
++		append_message_entry(msg->path, service, msg, &array);
++	}
++out:
+ 	dbus_message_iter_close_container(&iter, &array);
+
+ 	return reply;
 --
 1.7.4.1
 
 
---===============0795800980898011814==--
+--===============8984895571734385454==--
 
