@@ -1,49 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============1689083521122425146=="
+Content-Type: multipart/mixed; boundary="===============0784450306660950511=="
 MIME-Version: 1.0
-From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCHv1 5/5] doc: Update service-api.txt
-Date: Wed, 25 Apr 2012 11:01:53 +0200
-Message-ID: <1335344513-2347-6-git-send-email-ronald.tessier@linux.intel.com>
-In-Reply-To: <1335344513-2347-1-git-send-email-ronald.tessier@linux.intel.com>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Subject: Re: [PATCHv4 09/13] call-forwarding: End querying once cfu is active
+Date: Wed, 25 Apr 2012 13:58:04 +0300
+Message-ID: <4F97D8BC.9070808@intel.com>
+In-Reply-To: <4F95C5C5.5040306@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1689083521122425146==
+--===============0784450306660950511==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/service-api.txt |    9 ++++++++-
- 1 files changed, 8 insertions(+), 1 deletions(-)
+Hello Denis,
 
-diff --git a/doc/service-api.txt b/doc/service-api.txt
-index 46989f4..99e80be 100644
---- a/doc/service-api.txt
-+++ b/doc/service-api.txt
-@@ -24,11 +24,18 @@ Methods		array{object,dict} GetMessages()
- 			that are part of a conversation between the service
- 			entity and the number provided.
+On 04/24/2012 12:12 AM, Denis Kenzior wrote:
+> This patch looks fine to me, but I'd like to wait until the rest is
+> ready before applying it.
 
-+			The number parameter must only contains	significant digits
-+			to look for (i.e.: n last digits of the phone number), only
-+			messages with a recipient containing the given number will
-+			be part of the GetConversation result.
-+
- 			The count parameter can either be 0 for unlimited
- 			messages in the conversation or limit the conversation
- 			to count last messages.
+Sure, let's do so.
 
--			Possible Errors: [service].Error.InvalidArguments
-+			Possible Errors:
-+				[service].Error.InvalidArguments
-+				[service].Error.TransientFailure
+Regards,
+Oleg
+-- =
 
- 		object SendMessage(array{string} recipients, string smil,
- 					array{string id, string content-type,
---
-1.7.4.1
+Intel Finland Oy
+Registered Address: PL 281, 00181 Helsinki
+Business Identity Code: 0357606 - 4
+Domiciled in Helsinki
 
 
---===============1689083521122425146==--
+--===============0784450306660950511==--
 
