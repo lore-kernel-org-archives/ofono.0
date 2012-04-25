@@ -1,72 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============6182631848355178108=="
+Content-Type: multipart/mixed; boundary="===============1689083521122425146=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCHv1 4/5] service: Sort conversation list by message date
-Date: Wed, 25 Apr 2012 11:01:52 +0200
-Message-ID: <1335344513-2347-5-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCHv1 5/5] doc: Update service-api.txt
+Date: Wed, 25 Apr 2012 11:01:53 +0200
+Message-ID: <1335344513-2347-6-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1335344513-2347-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6182631848355178108==
+--===============1689083521122425146==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/service.c |   27 +++++++++++++++++++++++++++
- 1 files changed, 27 insertions(+), 0 deletions(-)
+ doc/service-api.txt |    9 ++++++++-
+ 1 files changed, 8 insertions(+), 1 deletions(-)
 
-diff --git a/src/service.c b/src/service.c
-index 2787c3a..1bd4671 100644
---- a/src/service.c
-+++ b/src/service.c
-@@ -719,6 +719,31 @@ static gboolean get_conversation_get_args(DBusMessage =
-*dbus_msg,
- 	return TRUE;
- }
+diff --git a/doc/service-api.txt b/doc/service-api.txt
+index 46989f4..99e80be 100644
+--- a/doc/service-api.txt
++++ b/doc/service-api.txt
+@@ -24,11 +24,18 @@ Methods		array{object,dict} GetMessages()
+ 			that are part of a conversation between the service
+ 			entity and the number provided.
 
-+static gint fill_conversation_sort(gconstpointer a, gconstpointer b)
-+{
-+	const struct mms_message *msg1 =3D a;
-+	const struct mms_message *msg2 =3D b;
-+	time_t date1, date2;
++			The number parameter must only contains	significant digits
++			to look for (i.e.: n last digits of the phone number), only
++			messages with a recipient containing the given number will
++			be part of the GetConversation result.
 +
-+	if (msg1->type =3D=3D MMS_MESSAGE_TYPE_SEND_REQ)
-+		date1 =3D msg1->sr.date;
-+	else
-+		date1 =3D msg1->rc.date;
-+
-+	if (msg2->type =3D=3D MMS_MESSAGE_TYPE_SEND_REQ)
-+		date2 =3D msg2->sr.date;
-+	else
-+		date2 =3D msg2->rc.date;
-+
-+	if (date1 > date2)
-+		return 1;
-+
-+	if (date1 < date2)
-+		return -1;
-+
-+	return 0;
-+}
-+
- static gboolean is_recipient(const char *recipients, const char *number)
- {
- 	const char *rec, *num;
-@@ -784,6 +809,8 @@ static GList *fill_conversation(const struct mms_servic=
-e *service,
- 			conversation =3D g_list_prepend(conversation, value);
- 	}
+ 			The count parameter can either be 0 for unlimited
+ 			messages in the conversation or limit the conversation
+ 			to count last messages.
 
-+	conversation =3D g_list_sort(conversation, fill_conversation_sort);
-+
- 	return conversation;
- }
+-			Possible Errors: [service].Error.InvalidArguments
++			Possible Errors:
++				[service].Error.InvalidArguments
++				[service].Error.TransientFailure
 
+ 		object SendMessage(array{string} recipients, string smil,
+ 					array{string id, string content-type,
 --
 1.7.4.1
 
 
---===============6182631848355178108==--
+--===============1689083521122425146==--
 
