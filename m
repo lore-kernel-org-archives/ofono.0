@@ -1,65 +1,116 @@
-Content-Type: multipart/mixed; boundary="===============6147031814913417710=="
+Content-Type: multipart/mixed; boundary="===============0856114638385932785=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [RFC v5 04/12] bluetooth: Add audio APIs for HFP AG
-Date: Thu, 26 Apr 2012 16:26:56 +0200
-Message-ID: <1335450424-19964-5-git-send-email-frederic.danis@linux.intel.com>
+Subject: [RFC v5 06/12] bluetooth: Add +BSIR support
+Date: Thu, 26 Apr 2012 16:26:58 +0200
+Message-ID: <1335450424-19964-7-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1335450424-19964-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6147031814913417710==
+--===============0856114638385932785==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/bluetooth.h |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+ plugins/bluetooth.c |   49 +++++++++++++++++++++++++++++++++++++++++++++++=
+++
+ 1 files changed, 49 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index f81fc99..87563e7 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -30,6 +30,7 @@
- #define	BLUEZ_SERVICE_INTERFACE		BLUEZ_SERVICE ".Service"
- #define	BLUEZ_TELEPHONY_INTERFACE	BLUEZ_SERVICE ".Telephony"
- #define	BLUEZ_TELEPHONY_AGENT_INTERFACE	BLUEZ_SERVICE ".TelephonyAgent"
-+#define	BLUEZ_TRANSPORT_INTERFACE	BLUEZ_SERVICE ".MediaTransport"
- =
-
- #define DBUS_TIMEOUT 15
- =
-
-@@ -59,6 +60,7 @@ struct bluetooth_sap_driver {
+diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+index 6624718..75a4f00 100644
+--- a/plugins/bluetooth.c
++++ b/plugins/bluetooth.c
+@@ -80,6 +80,7 @@ struct bt_audio {
+ 	char *path;
+ 	guint16 r_features;
+ 	DBusPendingCall *call;
++	guint watch;
  };
  =
 
- struct server;
-+struct bt_audio;
+ void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,
+@@ -282,6 +283,46 @@ fail:
+ 	};
+ }
  =
 
- typedef void (*ConnectFunc)(GIOChannel *io, GError *err, gpointer user_dat=
-a);
++static gboolean audio_property_changed(DBusConnection *connection,
++					DBusMessage *message, void *user_data)
++{
++	struct bt_audio *audio =3D user_data;
++	const char *property;
++	char buf[10];
++	DBusMessageIter iter;
++
++	dbus_message_iter_init(message, &iter);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return FALSE;
++
++	dbus_message_iter_get_basic(&iter, &property);
++
++	if (g_str_equal(property, "InbandRingtone") =3D=3D TRUE) {
++		DBusMessageIter variant;
++		gboolean value;
++
++		if (!dbus_message_iter_next(&iter))
++			return TRUE;
++
++		if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
++			return TRUE;
++
++		dbus_message_iter_recurse(&iter, &variant);
++
++		if (dbus_message_iter_get_arg_type(&variant) !=3D
++							DBUS_TYPE_BOOLEAN)
++			return TRUE;
++
++		dbus_message_iter_get_basic(&variant, &value);
++
++		sprintf(buf, "+BSIR: %d", value);
++		ofono_emulator_send_unsolicited(audio->em, buf);
++	}
++
++	return TRUE;
++}
++
+ void bluetooth_free_audio_management(struct bt_audio *audio)
+ {
+ 	DBG("");
+@@ -292,6 +333,8 @@ void bluetooth_free_audio_management(struct bt_audio *a=
+udio)
+ 	if (audio->call)
+ 		dbus_pending_call_cancel(audio->call);
  =
 
-@@ -85,6 +87,9 @@ int bluetooth_sap_client_register(struct bluetooth_sap_dr=
-iver *sap,
- 					struct ofono_modem *modem);
- void bluetooth_sap_client_unregister(struct ofono_modem *modem);
++	g_dbus_remove_watch(connection, audio->watch);
++
+ 	g_free(audio->path);
+ 	g_free(audio);
+ }
+@@ -310,6 +353,12 @@ struct bt_audio *bluetooth_set_audio_management(void *=
+em, const char *path,
  =
 
-+struct bt_audio *bluetooth_set_audio_management(void *em, const char *path,
-+							guint16 features);
-+void bluetooth_free_audio_management(struct bt_audio *audio);
- int bluetooth_parse_newconnection_message(DBusMessage *msg, const char **d=
-evice,
- 					const char **uuid, guint16 *version,
- 					guint16 *features,
+ 	ofono_emulator_add_handler(em, "+NREC", emulator_nrec_cb, audio, NULL);
+ =
+
++	audio->watch =3D g_dbus_add_signal_watch(connection, NULL, path,
++						BLUEZ_TRANSPORT_INTERFACE,
++						"PropertyChanged",
++						audio_property_changed,
++						audio, NULL);
++
+ 	return audio;
+ }
+ =
+
 -- =
 
 1.7.1
 
 
---===============6147031814913417710==--
+--===============0856114638385932785==--
 
