@@ -1,73 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============7340492020366195112=="
+Content-Type: multipart/mixed; boundary="===============5511505642418035046=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [RFC v5 10/12] emulator: add set/get data APIs
-Date: Thu, 26 Apr 2012 16:27:02 +0200
-Message-ID: <1335450424-19964-11-git-send-email-frederic.danis@linux.intel.com>
+Subject: [RFC v5 11/12] hfp_ag: Add media transport support
+Date: Thu, 26 Apr 2012 16:27:03 +0200
+Message-ID: <1335450424-19964-12-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1335450424-19964-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7340492020366195112==
+--===============5511505642418035046==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/emulator.c |   17 +++++++++++++++++
- 1 files changed, 17 insertions(+), 0 deletions(-)
+ plugins/hfp_ag.c |    8 +++++++-
+ 1 files changed, 7 insertions(+), 1 deletions(-)
 
-diff --git a/src/emulator.c b/src/emulator.c
-index e7c7d41..2c40898 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -52,6 +52,8 @@ struct ofono_emulator {
- 	gboolean clip;
- 	gboolean ccwa;
- 	int pns_id;
-+	void *data;
-+	ofono_destroy_func destroy;
- };
+diff --git a/plugins/hfp_ag.c b/plugins/hfp_ag.c
+index ea9c112..9279745 100644
+--- a/plugins/hfp_ag.c
++++ b/plugins/hfp_ag.c
+@@ -37,7 +37,9 @@
  =
 
- struct indicator {
-@@ -954,6 +956,9 @@ static void emulator_remove(struct ofono_atom *atom)
+ #define AGENT_PATH "/hfp_ag"
+ #define VERSION_1_5 0x0105
+-#define FEATURES	(HFP_AG_FEATURE_3WAY | HFP_AG_FEATURE_REJECT_CALL | \
++#define FEATURES	(HFP_AG_FEATURE_3WAY | HFP_AG_FEATURE_ECNR | \
++			HFP_AG_FEATURE_IN_BAND_RING_TONE | \
++			HFP_AG_FEATURE_REJECT_CALL | \
+ 			HFP_AG_FEATURE_ENHANCED_CALL_STATUS | \
+ 			HFP_AG_FEATURE_ENHANCED_CALL_CONTROL | \
+ 			HFP_AG_FEATURE_EXTENDED_RES_CODE)
+@@ -60,6 +62,7 @@ static DBusMessage *hfp_ag_agent_new_connection(DBusConne=
+ction *conn,
+ 	guint16 features =3D 0;
+ 	struct ofono_emulator *em;
+ 	struct ofono_modem *modem;
++	struct bt_audio *audio;
  =
 
- 	DBG("atom: %p", atom);
+ 	fd =3D bluetooth_parse_newconnection_message(msg, &device, &uuid,
+ 						&version, &features, &path);
+@@ -82,6 +85,9 @@ static DBusMessage *hfp_ag_agent_new_connection(DBusConne=
+ction *conn,
+ 		return __ofono_error_failed(msg);
  =
 
-+	if (em->destroy)
-+		em->destroy(em->data);
-+
- 	g_free(em);
+ 	ofono_emulator_register(em, fd);
++	audio =3D bluetooth_set_audio_management(em, path, features);
++	ofono_emulator_set_data(em, audio,
++			(ofono_destroy_func)bluetooth_free_audio_management);
+ =
+
+ 	return dbus_message_new_method_return(msg);
  }
- =
-
-@@ -997,6 +1002,18 @@ void ofono_emulator_remove(struct ofono_emulator *em)
- 	__ofono_atom_free(em->atom);
- }
- =
-
-+void ofono_emulator_set_data(struct ofono_emulator *em, void *data,
-+						ofono_destroy_func destroy)
-+{
-+	em->data =3D data;
-+	em->destroy =3D destroy;
-+}
-+
-+void *ofono_emulator_get_data(struct ofono_emulator *em)
-+{
-+	return em->data;
-+}
-+
- void ofono_emulator_send_final(struct ofono_emulator *em,
- 				const struct ofono_error *final)
- {
 -- =
 
 1.7.1
 
 
---===============7340492020366195112==--
+--===============5511505642418035046==--
 
