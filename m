@@ -1,69 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============2510068057033297146=="
+Content-Type: multipart/mixed; boundary="===============6039046447743412841=="
 MIME-Version: 1.0
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: Re: [PATCHv4 11/13] call-forwarding: Re-run ss path queries on CFU
- unset
-Date: Thu, 26 Apr 2012 10:54:48 +0300
-Message-ID: <4F98FF48.70201@intel.com>
-In-Reply-To: <4F970B3E.6010006@gmail.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [RFC v5 00/12] org.bluez.Telephony interface integration
+Date: Thu, 26 Apr 2012 16:26:52 +0200
+Message-ID: <1335450424-19964-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2510068057033297146==
+--===============6039046447743412841==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+Those patches integrates the future org.bluez.Telephony interface into
+oFono for HFP HF and HFP AG plugins.
 
-On 04/24/2012 11:21 PM, Denis Kenzior wrote:
->> OK, thanks, I see. Would it make sense to return the method immediately
->> and then to re-query the conditionals? Or, just to wait until anybody
->> needs them?
->
-> This probably needs a bit of thought, but here's one possible strategy,
-> feel free to suggest any improvements:
->
-> - If unconditional is reset and conditionals are known (e.g. they were
-> queried before and not cleared) then we can simply signal them here
->
-> - If the unconditional is reset and the CACHED flag is not set (e.g. the
-> application didn't trigger a GetProperties yet) then we probably can
-> skip the re-query, the next GetProperties will do it for us.
->
-> - If unconditional is reset and CACHED is set but we don't know the
-> conditionals, then we should query all conditionals before returning
-> from the method call.
+For HFP AG plugin, the bluetooth rfcomm server is replaced by a
+Telephony Agent registered to org.bluez.Telephony.
+For HFP HF plugin, RegisterAgent call of org.bluez.HandsfreeGateway is
+replaced by the one of org.bluez.Telephony
 
-Thanks for the help here. On a first thought, in order to differ 1) from 3) =
+Since latest RFC :
+- Patch 4
+  forward declare the structute used in bluetooth plug-in by
+  bluetooth_set_audio_management() and bluetooth_free_audio_management()
+- Patch 5
+  Fix DBus pending call management in case of HFP emulator unregistration
+  Remove ofono_emulator_remove_handler() calls
+- Patches 9 and 10
+  Add APIs to set/get data for emulator atom
+- Patch 11 (previously 9)
+  Remove IO watch as data destroyer associated to emulator will be called
+  on atom removal
 
-might require a flag, but let me check if the specific code path for re-que=
-rying =
-
-the conditionals might be cleaner.
-
->>> Also, there is an optimization we can make here, e.g. if we queried the
->>> conditional forwarding settings prior to CFU being enabled, then we can
->>> keep those around.  This is why the TODO item refers to the 'conditional
->>> cache.'  In the case of CFU being flipped to enabled and then disabled,
->>> we do not need to query.
->>
->> Thanks for the help here. Let's go for this approach too.
->
-> Okay, just remember the conditionals can be erased when CFU is active,
-> including through MMI codes.
-
-OK, thanks, will check regarding MMI.
-
-Regards,
-Oleg
--- =
-
-Intel Finland Oy
-Registered Address: PL 281, 00181 Helsinki
-Business Identity Code: 0357606 - 4
-Domiciled in Helsinki
+RFC v4:
+- Patche 1
+  move agent registration from adapter_added() to adapter_properties_cb()
+- Patches 4 to 10:
+  Rewrote support of AT+NREC, AT+VGM, +VGM, AT+VGS, +VGS and +BSIR into
+  bluetooth plugin
 
 
---===============2510068057033297146==--
+Fr=C3=A9d=C3=A9ric Danis (12):
+  bluetooth: Add org.bluez.Telephony helpers
+  hfp_hf: Update to org.bluez.Telephony interface
+  hfp_ag: Update to org.bluez.Telephony interface
+  bluetooth: Add audio APIs for HFP AG
+  bluetooth: Add AT+NREC support
+  bluetooth: Add +BSIR support
+  bluetooth: Add AT+VGM support
+  bluetooth: Add AT+VGS support
+  include: add set/get data APIs to emulator
+  emulator: add set/get data APIs
+  hfp_ag: Add media transport support
+  emulator: Update supported features
+
+ include/emulator.h  |    5 +
+ plugins/bluetooth.c |  546 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ plugins/bluetooth.h |   19 ++
+ plugins/hfp_ag.c    |  132 ++++++-------
+ plugins/hfp_hf.c    |  166 ++++++----------
+ src/emulator.c      |   19 ++
+ 6 files changed, 714 insertions(+), 173 deletions(-)
+
+
+--===============6039046447743412841==--
 
