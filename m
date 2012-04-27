@@ -1,43 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============2292011315788711335=="
+Content-Type: multipart/mixed; boundary="===============2569318156615980057=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [RFC v5 12/12] emulator: Update supported features
-Date: Thu, 26 Apr 2012 16:27:04 +0200
-Message-ID: <1335450424-19964-13-git-send-email-frederic.danis@linux.intel.com>
-In-Reply-To: <1335450424-19964-1-git-send-email-frederic.danis@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCHv1 5/5] doc: Update service-api.txt
+Date: Fri, 27 Apr 2012 14:20:14 +0200
+Message-ID: <1335529214.16897.462.camel@aeonflux>
+In-Reply-To: <1335344513-2347-6-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2292011315788711335==
+--===============2569318156615980057==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add ECNR (Echo Cancelation/Noise Reduction) and Inband Ringtone
-capabilities to supported features (+BRSF event)
----
- src/emulator.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+Hi Ronald,
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 2c40898..93f49e7 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -984,6 +984,8 @@ struct ofono_emulator *ofono_emulator_create(struct ofo=
-no_modem *modem,
- =
+>  doc/service-api.txt |    9 ++++++++-
+>  1 files changed, 8 insertions(+), 1 deletions(-)
+> =
 
- 	em->type =3D type;
- 	em->l_features |=3D HFP_AG_FEATURE_3WAY;
-+	em->l_features |=3D HFP_AG_FEATURE_ECNR;
-+	em->l_features |=3D HFP_AG_FEATURE_IN_BAND_RING_TONE;
- 	em->l_features |=3D HFP_AG_FEATURE_REJECT_CALL;
- 	em->l_features |=3D HFP_AG_FEATURE_ENHANCED_CALL_STATUS;
- 	em->l_features |=3D HFP_AG_FEATURE_ENHANCED_CALL_CONTROL;
--- =
+> diff --git a/doc/service-api.txt b/doc/service-api.txt
+> index 46989f4..99e80be 100644
+> --- a/doc/service-api.txt
+> +++ b/doc/service-api.txt
+> @@ -24,11 +24,18 @@ Methods		array{object,dict} GetMessages()
+>  			that are part of a conversation between the service
+>  			entity and the number provided.
+> =
 
-1.7.1
+> +			The number parameter must only contains	significant digits
+
+actually using "must" is a wrong description.
+> +			to look for (i.e.: n last digits of the phone number), only
+> +			messages with a recipient containing the given number will
+> +			be part of the GetConversation result.
+
+And I am not sure we do wanna make some sort of assumption here anyway.
+These are not CLIP numbers where the operators don't seem to get this
+right. For SMS and MMS is seems the international numbering plan is
+used.
+
+Or do you have counter examples. If so, please post them here first.
+
+> +
+>  			The count parameter can either be 0 for unlimited
+>  			messages in the conversation or limit the conversation
+>  			to count last messages.
+> =
+
+> -			Possible Errors: [service].Error.InvalidArguments
+> +			Possible Errors:
+> +				[service].Error.InvalidArguments
+> +				[service].Error.TransientFailure
+
+Please don't invent your own indentation here. Keep it aligned as all
+the other documents in oFono and mmsd do.
+
+Regards
+
+Marcel
 
 
---===============2292011315788711335==--
+
+--===============2569318156615980057==--
 
