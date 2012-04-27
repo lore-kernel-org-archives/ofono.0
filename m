@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2791549357626440027=="
+Content-Type: multipart/mixed; boundary="===============2194416580481300719=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCHv1 3/5] service: Fill conversation list with messages
-Date: Fri, 27 Apr 2012 14:25:22 +0200
-Message-ID: <1335529522.16897.470.camel@aeonflux>
-In-Reply-To: <1335344513-2347-4-git-send-email-ronald.tessier@linux.intel.com>
+Subject: Re: [PATCHv1 2/5] service: Retrieve get_conversation() args
+Date: Fri, 27 Apr 2012 14:25:27 +0200
+Message-ID: <1335529527.16897.471.camel@aeonflux>
+In-Reply-To: <1335344513-2347-3-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2791549357626440027==
+--===============2194416580481300719==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,66 +16,71 @@ Content-Transfer-Encoding: quoted-printable
 Hi Ronald,
 
 > ---
->  src/service.c |   88 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++-
->  1 files changed, 87 insertions(+), 1 deletions(-)
+>  src/service.c |   37 +++++++++++++++++++++++++++++++++++++
+>  1 files changed, 37 insertions(+), 0 deletions(-)
 > =
 
 > diff --git a/src/service.c b/src/service.c
-> index 18c11f4..2787c3a 100644
+> index 24c89b6..18c11f4 100644
 > --- a/src/service.c
 > +++ b/src/service.c
-> @@ -719,13 +719,85 @@ static gboolean get_conversation_get_args(DBusMessa=
-ge *dbus_msg,
->  	return TRUE;
+> @@ -690,11 +690,48 @@ static DBusMessage *get_messages(DBusConnection *co=
+nn,
+>  	return reply;
 >  }
 > =
 
-> +static gboolean is_recipient(const char *recipients, const char *number)
+> +static gboolean get_conversation_get_args(DBusMessage *dbus_msg,
+> +				const char **number, unsigned int *count)
 > +{
-> +	const char *rec, *num;
+> +	DBusMessageIter top_iter;
 > +
-> +	while (*recipients !=3D '\0') {
-> +		rec =3D recipients;
-> +		num =3D number;
+> +	if (dbus_message_iter_init(dbus_msg, &top_iter) =3D=3D FALSE)
+> +		return FALSE;
 > +
-> +		while (*rec !=3D '\0' && *num !=3D '\0') {
-> +			if (*rec =3D=3D *num) {
-> +				rec++;
-> +				num++;
-> +			} else {
-> +				if (*rec =3D=3D '-' || *rec =3D=3D '.') {
-> +					rec++;
-> +					continue;
-> +				}
+> +	if (dbus_message_iter_get_arg_type(&top_iter) !=3D DBUS_TYPE_STRING)
+> +		return FALSE;
 > +
-> +				if (*num =3D=3D '-' || *num =3D=3D '.') {
-> +					num++;
-> +					continue;
-> +				}
+> +	dbus_message_iter_get_basic(&top_iter, number);
+> +	if (*number[0] =3D=3D '\0')
+> +		return FALSE;
 > +
-> +				rec++;
-> +				break;
-> +			}
-> +		}
+> +	if (valid_number_format(*number) =3D=3D FALSE)
+> +		return FALSE;
 > +
-> +		/*
-> +		 * Phone numbers in recipients end with /TYPE=3DPLMN, so the
-> +		 * wanted number is found if the whole string number is found
-> +		 * and if the matched phone number ends with the wanted number
-> +		 * (i.e.: "/TYPE=3DPLMN" must follow).
-> +		 */
-> +		if (*num =3D=3D '\0' && *rec =3D=3D '/')
-> +			return TRUE;
+> +	if (!dbus_message_iter_next(&top_iter))
+> +		return FALSE;
 > +
-> +		recipients =3D rec;
-> +	}
+> +	if (dbus_message_iter_get_arg_type(&top_iter) !=3D DBUS_TYPE_UINT32)
+> +		return FALSE;
 > +
-> +	return FALSE;
+> +	dbus_message_iter_get_basic(&top_iter, count);
+> +
+> +	return TRUE;
 > +}
+> +
+>  static DBusMessage *get_conversation(DBusConnection *conn,
+>  					DBusMessage *dbus_msg, void *data)
+>  {
+>  	DBusMessage *reply;
+>  	DBusMessageIter iter, array;
+> +	const char *number;
+> +	unsigned int count;
+> +
+> +	if (get_conversation_get_args(dbus_msg, &number, &count) =3D=3D FALSE) {
+> +		mms_debug("Invalid arguments");
+> +
+> +		return __mms_error_invalid_args(dbus_msg);
+> +	}
 
-please explain what this function is actually doing? Adding a comment
-seems like a good idea here.
+in this case I don't really see that it is useful to split this into a
+separate function. And the debug print is actually useless. Please
+remove that one.
+
+> =
+
+>  	reply =3D dbus_message_new_method_return(dbus_msg);
+>  	if (reply =3D=3D NULL)
 
 Regards
 
@@ -83,5 +88,5 @@ Marcel
 
 
 
---===============2791549357626440027==--
+--===============2194416580481300719==--
 
