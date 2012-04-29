@@ -1,124 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============1011656738427112881=="
+Content-Type: multipart/mixed; boundary="===============8012669894710834505=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?S=C3=A9bastien?= Bianti <sebastien.bianti@linux.intel.com>
-Subject: [PATCH 2/2] service: emit signal when send has failed
-Date: Fri, 27 Apr 2012 17:47:04 +0200
-Message-ID: <1335541624-23000-3-git-send-email-sebastien.bianti@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 0/2] mmsd: error management
+Date: Sun, 29 Apr 2012 13:30:48 +0200
+Message-ID: <1335699048.5970.4.camel@aeonflux>
 In-Reply-To: <1335541624-23000-1-git-send-email-sebastien.bianti@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1011656738427112881==
+--===============8012669894710834505==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Event if status doesn't really change, we need to alert the application
-by sending the same value "draft" which means the message hasn't been recei=
-ved.
----
- src/service.c |   32 ++++++++++++++++++++------------
- 1 files changed, 20 insertions(+), 12 deletions(-)
+Hi Sebastien,
 
-diff --git a/src/service.c b/src/service.c
-index f89fd3f..8dd0a2e 100644
---- a/src/service.c
-+++ b/src/service.c
-@@ -596,16 +596,23 @@ static gboolean result_request_send_conf(struct mms_r=
-equest *request)
- 	size_t len;
- 	char *path;
- =
+> The first patch removes the MMS reception part from TODO file which
+> has been done some times ago.
+> This model of error management applies also for MMS emission, except that
+> it shouldn't be silent because initiated by the user.
+> =
 
--	if (request->status !=3D 200)
-+	if (request->msg =3D=3D NULL)
- 		return FALSE;
- =
+> S=C3=A9bastien Bianti (2):
+>   TODO: MMS reception error management done
+>   service: emit signal when send has failed
+> =
 
-+	uuid =3D request->msg->uuid;
-+
-+	path =3D g_strdup_printf("%s/%s/%s", MMS_PATH, service->identity,	uuid);
-+
-+	if (request->status !=3D 200)
-+		goto error;
-+
- 	msg =3D g_try_new0(struct mms_message, 1);
- 	if (msg =3D=3D NULL)
--		return FALSE;
-+		goto error;
- =
+>  TODO          |   13 -------------
+>  src/service.c |   32 ++++++++++++++++++++------------
+>  2 files changed, 20 insertions(+), 25 deletions(-)
 
- 	if (mmap_file(request->data_path, &pdu, &len) =3D=3D FALSE) {
- 		mms_message_free(msg);
--		return FALSE;
-+		goto error;
- 	}
- =
+both patches have been applied.
 
- 	if (mms_message_decode(pdu, len, msg) =3D=3D FALSE) {
-@@ -615,7 +622,7 @@ static gboolean result_request_send_conf(struct mms_req=
-uest *request)
- =
+Regards
 
- 		mms_message_free(msg);
- =
-
--		return FALSE;
-+		goto error;
- 	}
- =
-
- 	mms_debug("response status : %d", msg->sc.rsp_status);
-@@ -626,26 +633,27 @@ static gboolean result_request_send_conf(struct mms_r=
-equest *request)
- =
-
- 	unlink(request->data_path);
- =
-
--	if (request->msg =3D=3D NULL)
--		return FALSE;
--
--	uuid =3D request->msg->uuid;
--
- 	meta =3D mms_store_meta_open(service->identity, uuid);
- 	if (meta =3D=3D NULL)
--		return FALSE;
-+		goto error;
- =
-
- 	g_key_file_set_string(meta, "info", "state", "sent");
- =
-
- 	mms_store_meta_close(service->identity, uuid, meta, TRUE);
- =
-
--	path =3D g_strdup_printf("%s/%s/%s", MMS_PATH, service->identity,	uuid);
--
- 	emit_msg_status_changed(path, "sent");
- =
-
- 	g_free(path);
- =
-
- 	return TRUE;
-+
-+error:
-+	if (request->attempt =3D=3D MAX_ATTEMPTS)
-+		emit_msg_status_changed(path, "draft");
-+
-+	g_free(path);
-+
-+	return FALSE;
- }
- =
-
- static void append_message(const char *path, const struct mms_service *ser=
-vice,
--- =
-
-1.7.4.4
+Marcel
 
 
---===============1011656738427112881==--
+
+--===============8012669894710834505==--
 
