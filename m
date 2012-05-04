@@ -1,47 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============3930248006198287980=="
+Content-Type: multipart/mixed; boundary="===============4734526636484800083=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCHv2 4/4] doc: Update service-api.txt
-Date: Thu, 03 May 2012 15:20:03 +0200
-Message-ID: <1336051203-15512-5-git-send-email-ronald.tessier@linux.intel.com>
-In-Reply-To: <1336051203-15512-1-git-send-email-ronald.tessier@linux.intel.com>
+Subject: mms: next steps
+Date: Fri, 04 May 2012 17:18:54 +0200
+Message-ID: <4FA3F35E.2070008@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3930248006198287980==
+--===============4734526636484800083==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/service-api.txt |    6 ++++++
- 1 files changed, 6 insertions(+), 0 deletions(-)
+Hi Marcel,
 
-diff --git a/doc/service-api.txt b/doc/service-api.txt
-index 46989f4..36e1161 100644
---- a/doc/service-api.txt
-+++ b/doc/service-api.txt
-@@ -24,11 +24,17 @@ Methods		array{object,dict} GetMessages()
- 			that are part of a conversation between the service
- 			entity and the number provided.
+Now that mms' TODO is almost empty (I've sent a set of patches yesterday =
 
-+			The number parameter contains digits to look for
-+			(i.e.: n last digits of the phone number), only messages
-+			with a recipient which ends with the given number will
-+			be part of the GetConversation result.
-+
- 			The count parameter can either be 0 for unlimited
- 			messages in the conversation or limit the conversation
- 			to count last messages.
+that implement the last entry of the TODO).
+What should we add to release a first version of MMS ?
 
- 			Possible Errors: [service].Error.InvalidArguments
-+					 [service].Error.TransientFailure
+What's already in place :
+- MMS submission,
+- MMS reception (automatic retrieval support),
+- MMS storage with status support,
+- (Basic) error management with transaction completion on restart.
 
- 		object SendMessage(array{string} recipients, string smil,
- 					array{string id, string content-type,
---
-1.7.4.1
+What can be added :
+- Manual retrieval support for MMS reception,
+- Delivery report support (M-Delivered.ind),
+- Enhance D-Bus API (DeleteMessages(), DeleteConversation() ...)
+- or something else ...
 
+How do you see the next actions to take?
 
---===============3930248006198287980==--
+Thanks in advance for your feedback.
+Best regards,
+
+Ronald
+
+--===============4734526636484800083==--
 
