@@ -1,43 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============0518155842742473948=="
+Content-Type: multipart/mixed; boundary="===============8376032993665557897=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] doc: Update service-api doc to match the code
-Date: Wed, 09 May 2012 10:20:42 -0700
-Message-ID: <1336584042.5970.177.camel@aeonflux>
-In-Reply-To: <1336567936-4624-1-git-send-email-ronald.tessier@linux.intel.com>
+Subject: Re: [PATCHv2 0/4] mmsd: GetConversation support
+Date: Wed, 09 May 2012 10:22:18 -0700
+Message-ID: <1336584138.5970.178.camel@aeonflux>
+In-Reply-To: <1336051203-15512-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0518155842742473948==
+--===============8376032993665557897==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Ronald,
 
-> GetMessages method has no argument and the implementation does not
-> return any error.
+> These patches concern mmsd and implement "GetConversation" D-Bus API.
 > =
 
-> ---
->  doc/service-api.txt |    2 --
->  1 files changed, 0 insertions(+), 2 deletions(-)
+> Ronald Tessier (4):
+>   service: Retrieve get_conversation() args
+>   service: Fill conversation list with messages
+>   service: Sort conversation list by message date
+>   doc: Update service-api.txt
 > =
 
-> diff --git a/doc/service-api.txt b/doc/service-api.txt
-> index 46989f4..d87644b 100644
-> --- a/doc/service-api.txt
-> +++ b/doc/service-api.txt
-> @@ -16,8 +16,6 @@ Methods		array{object,dict} GetMessages()
->  			and removal shall be monitored via MessageAdded and
->  			MessageRemoved signals.
-> =
+>  doc/service-api.txt |    6 ++
+>  src/service.c       |  141 +++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  2 files changed, 147 insertions(+), 0 deletions(-)
 
-> -			Possible Errors: [service].Error.InvalidArguments
-> -
-
-actually this error is valid. For example in case you call GetMessages
-with an argument. So the error should stay.
+all 4 patches have been applied.
 
 Regards
 
@@ -45,5 +38,5 @@ Marcel
 
 
 
---===============0518155842742473948==--
+--===============8376032993665557897==--
 
