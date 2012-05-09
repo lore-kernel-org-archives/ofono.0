@@ -1,42 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============4734526636484800083=="
+Content-Type: multipart/mixed; boundary="===============6808850764566307197=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: mms: next steps
-Date: Fri, 04 May 2012 17:18:54 +0200
-Message-ID: <4FA3F35E.2070008@linux.intel.com>
+Subject: [PATCH] doc: Update service-api doc to match the code
+Date: Wed, 09 May 2012 14:52:16 +0200
+Message-ID: <1336567936-4624-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4734526636484800083==
+--===============6808850764566307197==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+GetMessages method has no argument and the implementation does not
+return any error.
 
-Now that mms' TODO is almost empty (I've sent a set of patches yesterday =
+---
+ doc/service-api.txt |    2 --
+ 1 files changed, 0 insertions(+), 2 deletions(-)
 
-that implement the last entry of the TODO).
-What should we add to release a first version of MMS ?
+diff --git a/doc/service-api.txt b/doc/service-api.txt
+index 46989f4..d87644b 100644
+--- a/doc/service-api.txt
++++ b/doc/service-api.txt
+@@ -16,8 +16,6 @@ Methods		array{object,dict} GetMessages()
+ 			and removal shall be monitored via MessageAdded and
+ 			MessageRemoved signals.
 
-What's already in place :
-- MMS submission,
-- MMS reception (automatic retrieval support),
-- MMS storage with status support,
-- (Basic) error management with transaction completion on restart.
+-			Possible Errors: [service].Error.InvalidArguments
+-
+ 		array{object,dict} GetConversation(string number, uint32 count)
 
-What can be added :
-- Manual retrieval support for MMS reception,
-- Delivery report support (M-Delivered.ind),
-- Enhance D-Bus API (DeleteMessages(), DeleteConversation() ...)
-- or something else ...
+ 			Get an array of message objects and properties
+--
+1.7.4.1
 
-How do you see the next actions to take?
 
-Thanks in advance for your feedback.
-Best regards,
-
-Ronald
-
---===============4734526636484800083==--
+--===============6808850764566307197==--
 
