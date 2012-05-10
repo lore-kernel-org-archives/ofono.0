@@ -1,52 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============5422693004812863425=="
+Content-Type: multipart/mixed; boundary="===============5091733534923289763=="
 MIME-Version: 1.0
-From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 2/2] TODO: Update TODO to remove GetConversation entry
-Date: Thu, 10 May 2012 16:32:27 +0200
-Message-ID: <1336660347-10739-3-git-send-email-ronald.tessier@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 0/2] mmsd: GetConversation
+Date: Thu, 10 May 2012 07:46:21 -0700
+Message-ID: <1336661181.5970.193.camel@aeonflux>
 In-Reply-To: <1336660347-10739-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5422693004812863425==
+--===============5091733534923289763==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |   10 ----------
- 1 files changed, 0 insertions(+), 10 deletions(-)
+Hi Ronald,
 
-diff --git a/TODO b/TODO
-index 8d82b90..a4330b3 100644
---- a/TODO
-+++ b/TODO
-@@ -16,16 +16,6 @@ Background
-   once the task is better understood.
- =
+> These patches concern mmsd and are related to lastest patches applied.
+> =
 
- =
+> Ronald Tessier (2):
+>   test: Add python get-conversation test
+>   TODO: Update TODO to remove GetConversation entry
+> =
 
--D-Bus API
--=3D=3D=3D=3D=3D=3D=3D=3D=3D
--
--- Add the "org.ofono.mms.Service" interface "GetConversation" method =
+>  Makefile.am           |    3 ++-
+>  TODO                  |   10 ----------
+>  test/get-conversation |   34 ++++++++++++++++++++++++++++++++++
+>  3 files changed, 36 insertions(+), 11 deletions(-)
+>  create mode 100755 test/get-conversation
 
--  implementation.
--  The D-Bus Message API documentation is available under /doc/service-api.=
-txt.
--
--  Priority: Low
--  Complexity: C4
--
- Miscellaneous
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- =
+both patches have been applied.
 
--- =
+Regards
 
-1.7.4.1
+Marcel
 
 
---===============5422693004812863425==--
+
+--===============5091733534923289763==--
 
