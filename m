@@ -1,54 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============5322339957551413212=="
+Content-Type: multipart/mixed; boundary="===============0418608993541280690=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: mms: next steps
-Date: Thu, 10 May 2012 07:06:56 -0700
-Message-ID: <1336658816.5970.188.camel@aeonflux>
-In-Reply-To: <4FA3F35E.2070008@linux.intel.com>
+From: Ronald Tessier <ronald.tessier@linux.intel.com>
+Subject: [PATCH 0/2] mmsd: GetConversation
+Date: Thu, 10 May 2012 16:32:25 +0200
+Message-ID: <1336660347-10739-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5322339957551413212==
+--===============0418608993541280690==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ronald,
+These patches concern mmsd and are related to lastest patches applied.
 
-> Now that mms' TODO is almost empty (I've sent a set of patches yesterday =
+Ronald Tessier (2):
+  test: Add python get-conversation test
+  TODO: Update TODO to remove GetConversation entry
 
-> that implement the last entry of the TODO).
-> What should we add to release a first version of MMS ?
-> =
+ Makefile.am           |    3 ++-
+ TODO                  |   10 ----------
+ test/get-conversation |   34 ++++++++++++++++++++++++++++++++++
+ 3 files changed, 36 insertions(+), 11 deletions(-)
+ create mode 100755 test/get-conversation
 
-> What's already in place :
-> - MMS submission,
-> - MMS reception (automatic retrieval support),
-> - MMS storage with status support,
-> - (Basic) error management with transaction completion on restart.
-> =
-
-> What can be added :
-> - Manual retrieval support for MMS reception,
-
-I think we should not do that. Manual has never been a good idea. Lets
-try to just have proper error recovery and do this without user
-interaction.
-
-> - Delivery report support (M-Delivered.ind),
-
-Sounds like a good thing to add now.
-
-> - Enhance D-Bus API (DeleteMessages(), DeleteConversation() ...)
-
-Send proposals for this. Sounds on the first look reasonable. However
-the devil might be in the details.
-
-Regards
-
-Marcel
+--
+1.7.4.1
 
 
-
---===============5322339957551413212==--
+--===============0418608993541280690==--
 
