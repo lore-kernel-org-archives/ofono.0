@@ -1,39 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============8767396018617631385=="
+Content-Type: multipart/mixed; boundary="===============1347844723527700517=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Marko Saukko <marko.saukko@gmail.com>
 Subject: Re: [PATCH] bluez version 4.99 is required.
-Date: Mon, 14 May 2012 13:03:33 -0700
-Message-ID: <1337025813.5970.242.camel@aeonflux>
-In-Reply-To: <1337025177-16039-1-git-send-email-marko.saukko@gmail.com>
+Date: Mon, 14 May 2012 23:11:28 +0300
+Message-ID: <4FB166F0.4020002@gmail.com>
+In-Reply-To: <1337025813.5970.242.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8767396018617631385==
+--===============1347844723527700517==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marko,
+On 14.05.2012 23:03, Marcel Holtmann wrote:
+> Hi Marko,
+>
+>> bluez 4.99 introduced key_size to bt_security struct that is used in
+>> ofono, thus the requirement needs to be higher.
+>>
+>> Signed-off-by: Marko Saukko<marko.saukko@gmail.com>
+>> ---
+>>   configure.ac |    4 ++--
+>>   1 files changed, 2 insertions(+), 2 deletions(-)
+>
+> patch has been applied.
+>
+> However keep in mind no Signed-off-by line here. I fixed that up for you
+> now. Next time, it is your job.
+>
+> Regards
+>
+> Marcel
+>
+>
 
-> bluez 4.99 introduced key_size to bt_security struct that is used in
-> ofono, thus the requirement needs to be higher.
-> =
+Ah, that was my bad and declining the patch would have been ok as well. =
 
-> Signed-off-by: Marko Saukko <marko.saukko@gmail.com>
-> ---
->  configure.ac |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
+It is easier to learn when you do it yourself IMO. :)
 
-patch has been applied.
+Regards,
+Marko
 
-However keep in mind no Signed-off-by line here. I fixed that up for you
-now. Next time, it is your job.
-
-Regards
-
-Marcel
-
-
-
---===============8767396018617631385==--
+--===============1347844723527700517==--
 
