@@ -1,119 +1,136 @@
-Content-Type: multipart/mixed; boundary="===============4865427127579534535=="
+Content-Type: multipart/mixed; boundary="===============2556567364430869336=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH mmsd 07/12] gdbus: loop over args to check message signature
-Date: Fri, 18 May 2012 16:44:07 -0300
-Message-ID: <1337370252-29346-7-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH mmsd 08/12] Do not set signature and reply in GDBus tables
+Date: Fri, 18 May 2012 16:44:08 -0300
+Message-ID: <1337370252-29346-8-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1337370252-29346-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4865427127579534535==
+--===============2556567364430869336==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Use GDBUS_* macros, so signature and reply fields are not set in each
+method/signal.
 ---
- gdbus/object.c |   34 +++++++++++++++++++++++++++-------
- 1 file changed, 27 insertions(+), 7 deletions(-)
+ plugins/ofono.c |    4 ++--
+ src/service.c   |   25 +++++++++++--------------
+ 2 files changed, 13 insertions(+), 16 deletions(-)
 
-diff --git a/gdbus/object.c b/gdbus/object.c
-index 3ac6a0b..b187bb5 100644
---- a/gdbus/object.c
-+++ b/gdbus/object.c
-@@ -374,6 +374,27 @@ static struct interface_data *find_interface(GSList *i=
-nterfaces,
- 	return NULL;
+diff --git a/plugins/ofono.c b/plugins/ofono.c
+index fcdb228..45fac91 100644
+--- a/plugins/ofono.c
++++ b/plugins/ofono.c
+@@ -115,11 +115,11 @@ static DBusMessage *agent_release(DBusConnection *con=
+n,
  }
  =
 
-+static gboolean g_dbus_args_have_signature(const GDBusArgInfo *args,
-+							DBusMessage *message)
-+{
-+	const char *sig =3D dbus_message_get_signature(message);
-+	const char *p =3D NULL;
-+
-+	for (; args && args->signature && *sig; args++) {
-+		p =3D args->signature;
-+
-+		for (; *sig && *p; sig++, p++) {
-+			if (*p !=3D *sig)
-+				return FALSE;
-+		}
-+	}
-+
-+	if (*sig || (p && *p) || (args && args->signature))
-+		return FALSE;
-+
-+	return TRUE;
-+}
-+
- static DBusHandlerResult generic_message(DBusConnection *connection,
- 					DBusMessage *message, void *user_data)
- {
-@@ -394,8 +415,8 @@ static DBusHandlerResult generic_message(DBusConnection=
- *connection,
- 							method->name) =3D=3D FALSE)
- 			continue;
+ static const GDBusMethodTable agent_methods[] =3D {
+-	{ _GDBUS_METHOD("ReceiveNotification", "aya{sv}", "",
++	{ GDBUS_METHOD("ReceiveNotification",
+ 			GDBUS_ARGS({ "notification", "ay" },
+ 						{ "info", "a{sv}" }),
+ 			NULL, agent_receive) },
+-	{ _GDBUS_NOREPLY_METHOD("Release", "", "", NULL, NULL, agent_release) },
++	{ GDBUS_NOREPLY_METHOD("Release", NULL, NULL, agent_release) },
+ 	{ }
+ };
  =
 
--		if (dbus_message_has_signature(message,
--						method->signature) =3D=3D FALSE)
-+		if (g_dbus_args_have_signature(method->in_args,
-+							message) =3D=3D FALSE)
- 			continue;
+diff --git a/src/service.c b/src/service.c
+index 669d10e..83e1fe1 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -223,13 +223,13 @@ static DBusMessage *msg_mark_read(DBusConnection *con=
+n,
+ }
  =
 
- 		if (check_privilege(connection, message, method,
-@@ -552,7 +573,7 @@ static void object_path_unref(DBusConnection *connectio=
-n, const char *path)
+ static const GDBusMethodTable message_methods[] =3D {
+-	{ _GDBUS_METHOD("MarkRead", "", "", NULL, NULL, msg_mark_read) },
+-	{ _GDBUS_METHOD("Delete", "", "", NULL, NULL, msg_delete) },
++	{ GDBUS_METHOD("MarkRead", NULL, NULL, msg_mark_read) },
++	{ GDBUS_METHOD("Delete", NULL, NULL, msg_delete) },
+ 	{ }
+ };
  =
 
- static gboolean check_signal(DBusConnection *conn, const char *path,
- 				const char *interface, const char *name,
--				const char **args)
-+				const GDBusArgInfo **args)
- {
- 	struct generic_data *data =3D NULL;
- 	struct interface_data *iface;
-@@ -575,7 +596,7 @@ static gboolean check_signal(DBusConnection *conn, cons=
-t char *path,
+ static const GDBusSignalTable message_signals[] =3D {
+-	{ _GDBUS_SIGNAL("PropertyChanged", "sv",
++	{ GDBUS_SIGNAL("PropertyChanged",
+ 			GDBUS_ARGS({ "name", "s" }, { "value", "v" })) },
+ 	{ }
+ };
+@@ -981,16 +981,16 @@ release_msg:
+ }
  =
 
- 	for (signal =3D iface->signals; signal && signal->name; signal++) {
- 		if (!strcmp(signal->name, name)) {
--			*args =3D signal->signature;
-+			*args =3D signal->args;
- 			break;
- 		}
- 	}
-@@ -597,7 +618,7 @@ static dbus_bool_t emit_signal_valist(DBusConnection *c=
-onn,
- {
- 	DBusMessage *signal;
- 	dbus_bool_t ret;
--	const char *signature, *args;
-+	const GDBusArgInfo *args;
+ static const GDBusMethodTable service_methods[] =3D {
+-	{ _GDBUS_METHOD("SendMessage", "assa(sss)", "o",
++	{ GDBUS_METHOD("SendMessage",
+ 			GDBUS_ARGS({ "recipients", "as" }, { "smil", "s" },
+ 						{ "attachments", "a(sss)" }),
+ 			GDBUS_ARGS({ "path", "o" }),
+ 			send_message) },
+-	{ _GDBUS_METHOD("GetMessages", "", "a(oa{sv})",
++	{ GDBUS_METHOD("GetMessages",
+ 			NULL,
+ 			GDBUS_ARGS({ "messages_with_properties", "a(oa{sv})" }),
+ 			get_messages) },
+-	{ _GDBUS_METHOD("GetConversation", "su", "a(oa{sv})",
++	{ GDBUS_METHOD("GetConversation",
+ 			GDBUS_ARGS({ "number", "s" }, { "count", "s" }),
+ 			GDBUS_ARGS({ "messages_with_properties", "a(oa{sv}" }),
+ 			get_conversation) },
+@@ -998,10 +998,9 @@ static const GDBusMethodTable service_methods[] =3D {
+ };
  =
 
- 	if (!check_signal(conn, path, interface, name, &args))
- 		return FALSE;
-@@ -612,8 +633,7 @@ static dbus_bool_t emit_signal_valist(DBusConnection *c=
-onn,
- 	if (!ret)
- 		goto fail;
+ static const GDBusSignalTable service_signals[] =3D {
+-	{ _GDBUS_SIGNAL("MessageAdded", "oa{sv}",
+-				GDBUS_ARGS({ "path", "o" },
++	{ GDBUS_SIGNAL("MessageAdded", GDBUS_ARGS({ "path", "o" },
+ 						{ "properties", "a{sv}" })) },
+-	{ _GDBUS_SIGNAL("MessageRemoved", "o", GDBUS_ARGS({ "path", "o" })) },
++	{ GDBUS_SIGNAL("MessageRemoved", GDBUS_ARGS({ "path", "o" })) },
+ 	{ }
+ };
  =
 
--	signature =3D dbus_message_get_signature(signal);
--	if (strcmp(args, signature) !=3D 0) {
-+	if (g_dbus_args_have_signature(args, signal) =3D=3D FALSE) {
- 		error("%s.%s: expected signature'%s' but got '%s'",
- 				interface, name, args, signature);
- 		ret =3D FALSE;
+@@ -2356,18 +2355,16 @@ static DBusMessage *get_services(DBusConnection *co=
+nn,
+ }
+ =
+
+ static const GDBusMethodTable manager_methods[] =3D {
+-	{ _GDBUS_METHOD("GetServices", "", "a(oa{sv})",
+-			NULL,
++	{ GDBUS_METHOD("GetServices", NULL,
+ 			GDBUS_ARGS({ "services_with_properties", "a(oa{sv})" }),
+ 			get_services) },
+ 	{ }
+ };
+ =
+
+ static const GDBusSignalTable manager_signals[] =3D {
+-	{ _GDBUS_SIGNAL("ServiceAdded", "oa{sv}",
+-				GDBUS_ARGS({ "path", "o" },
++	{ GDBUS_SIGNAL("ServiceAdded", GDBUS_ARGS({ "path", "o" },
+ 						{ "properties", "a{sv}" })) },
+-	{ _GDBUS_SIGNAL("ServiceRemoved", "o", GDBUS_ARGS({ "path", "o" })) },
++	{ GDBUS_SIGNAL("ServiceRemoved", GDBUS_ARGS({ "path", "o" })) },
+ 	{ }
+ };
+ =
+
 -- =
 
 1.7.10.2
 
 
---===============4865427127579534535==--
+--===============2556567364430869336==--
 
