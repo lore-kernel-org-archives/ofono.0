@@ -1,136 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============2273915376632345792=="
+Content-Type: multipart/mixed; boundary="===============4398265735537117953=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH mmsd 09/12] gdbus: remove signature and reply from tables
-Date: Fri, 18 May 2012 16:59:56 -0300
-Message-ID: <1337371199-29496-9-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH mmsd 10/12] gdbus: add Deprecated annotation in introspection
+Date: Fri, 18 May 2012 16:59:57 -0300
+Message-ID: <1337371199-29496-10-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1337371199-29496-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2273915376632345792==
+--===============4398265735537117953==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gdbus/gdbus.h  |   60 ----------------------------------------------------=
-----
- gdbus/object.c |    2 +-
- 2 files changed, 1 insertion(+), 61 deletions(-)
+ gdbus/object.c |   19 +++++++++++++++++--
+ 1 file changed, 17 insertions(+), 2 deletions(-)
 
-diff --git a/gdbus/gdbus.h b/gdbus/gdbus.h
-index 868c8d5..0a8a27c 100644
---- a/gdbus/gdbus.h
-+++ b/gdbus/gdbus.h
-@@ -89,8 +89,6 @@ typedef struct {
- =
-
- typedef struct {
- 	const char *name;
--	const char *signature;
--	const char *reply;
- 	GDBusMethodFunction function;
- 	GDBusMethodFlags flags;
- 	unsigned int privilege;
-@@ -100,7 +98,6 @@ typedef struct {
- =
-
- typedef struct {
- 	const char *name;
--	const char *signature;
- 	GDBusSignalFlags flags;
- 	const GDBusArgInfo *args;
- } GDBusSignalTable;
-@@ -120,63 +117,6 @@ typedef struct {
- =
-
- #define GDBUS_ARGS(args...) (const GDBusArgInfo[]) { args, { } }
- =
-
--#define _GDBUS_METHOD(_name, _signature, _reply, _in_args, _out_args, _fun=
-ction) \
--	.name =3D _name, \
--	.signature =3D _signature, \
--	.reply =3D _reply, \
--	.in_args =3D _in_args, \
--	.out_args =3D _out_args, \
--	.function =3D _function
--
--#define _GDBUS_ASYNC_METHOD(_name, _signature, _reply, _in_args, _out_args=
-, _function) \
--	.name =3D _name, \
--	.signature =3D _signature, \
--	.reply =3D _reply, \
--	.in_args =3D _in_args, \
--	.out_args =3D _out_args, \
--	.function =3D _function, \
--	.flags =3D G_DBUS_METHOD_FLAG_ASYNC
--
--#define _GDBUS_DEPRECATED_METHOD(_name, _signature, _reply, _in_args, _out=
-_args, _function) \
--	.name =3D _name, \
--	.signature =3D _signature, \
--	.reply =3D _reply, \
--	.in_args =3D _in_args, \
--	.out_args =3D _out_args, \
--	.function =3D _function, \
--	.flags =3D G_DBUS_METHOD_FLAG_DEPRECATED
--
--#define _GDBUS_DEPRECATED_ASYNC_METHOD(_name, _signature, _reply, _in_args=
-, _out_args, _function) \
--	.name =3D _name, \
--	.signature =3D _signature, \
--	.reply =3D _reply, \
--	.in_args =3D _in_args, \
--	.out_args =3D _out_args, \
--	.function =3D _function, \
--	.flags =3D G_DBUS_METHOD_FLAG_ASYNC | G_DBUS_METHOD_FLAG_DEPRECATED
--
--#define _GDBUS_NOREPLY_METHOD(_name, _signature, _reply, _in_args, _out_ar=
-gs, _function) \
--	.name =3D _name, \
--	.signature =3D _signature, \
--	.reply =3D _reply, \
--	.in_args =3D _in_args, \
--	.out_args =3D _out_args, \
--	.function =3D _function, \
--	.flags =3D G_DBUS_METHOD_FLAG_NOREPLY
--
--#define _GDBUS_SIGNAL(_name, _signature, _args) \
--	.name =3D _name, \
--	.signature =3D _signature, \
--	.args =3D _args
--
--#define _GDBUS_DEPRECATED_SIGNAL(_name, _signature, _args) \
--	.name =3D _name, \
--	.signature =3D _signature, \
--	.args =3D _args, \
--	.flags =3D G_DBUS_SIGNAL_FLAG_DEPRECATED
--
--/* Helpers with no signature and reply */
--
- #define GDBUS_METHOD(_name, _in_args, _out_args, _function) \
- 	.name =3D _name, \
- 	.in_args =3D _in_args, \
 diff --git a/gdbus/object.c b/gdbus/object.c
-index b187bb5..fcdd6ec 100644
+index fcdd6ec..95947f3 100644
 --- a/gdbus/object.c
 +++ b/gdbus/object.c
-@@ -471,7 +471,7 @@ done:
- }
+@@ -82,7 +82,11 @@ static void generate_interface_xml(GString *gstr, struct=
+ interface_data *iface)
+ 	const GDBusSignalTable *signal;
  =
 
- static const GDBusMethodTable introspect_methods[] =3D {
--	{ _GDBUS_METHOD("Introspect", "", "s", NULL,
-+	{ GDBUS_METHOD("Introspect", NULL,
- 			GDBUS_ARGS({ "xml", "s" }), introspect) },
- 	{ }
- };
+ 	for (method =3D iface->methods; method && method->name; method++) {
+-		if (!(method->in_args && method->in_args->name) &&
++		gboolean deprecated =3D method->flags &
++						G_DBUS_METHOD_FLAG_DEPRECATED;
++
++		if (!deprecated &&
++				!(method->in_args && method->in_args->name) &&
+ 				!(method->out_args && method->out_args->name))
+ 			g_string_append_printf(gstr, "\t\t<method name=3D\"%s\"/>\n",
+ 								method->name);
+@@ -91,18 +95,29 @@ static void generate_interface_xml(GString *gstr, struc=
+t interface_data *iface)
+ 								method->name);
+ 			print_arguments(gstr, method->in_args, "in");
+ 			print_arguments(gstr, method->out_args, "out");
++
++			if (deprecated)
++				g_string_append_printf(gstr, "\t\t\t<annotation name=3D\"org.freedeskt=
+op.DBus.Deprecated\" value=3D\"true\"/>\n");
++
+ 			g_string_append_printf(gstr, "\t\t</method>\n");
+ 		}
+ 	}
+ =
+
+ 	for (signal =3D iface->signals; signal && signal->name; signal++) {
+-		if (!(signal->args && signal->args->name))
++		gboolean deprecated =3D signal->flags &
++						G_DBUS_SIGNAL_FLAG_DEPRECATED;
++
++		if (!deprecated && !(signal->args && signal->args->name))
+ 			g_string_append_printf(gstr, "\t\t<signal name=3D\"%s\"/>\n",
+ 								signal->name);
+ 		else {
+ 			g_string_append_printf(gstr, "\t\t<signal name=3D\"%s\">\n",
+ 								signal->name);
+ 			print_arguments(gstr, signal->args, NULL);
++
++			if (deprecated)
++				g_string_append_printf(gstr, "\t\t\t<annotation name=3D\"org.freedeskt=
+op.DBus.Deprecated\" value=3D\"true\"/>\n");
++
+ 			g_string_append_printf(gstr, "\t\t</signal>\n");
+ 		}
+ 	}
 -- =
 
 1.7.10.2
 
 
---===============2273915376632345792==--
+--===============4398265735537117953==--
 
