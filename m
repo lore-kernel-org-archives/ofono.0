@@ -1,136 +1,136 @@
-Content-Type: multipart/mixed; boundary="===============8510699977676240646=="
+Content-Type: multipart/mixed; boundary="===============2273915376632345792=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH mmsd 08/12] Do not set signature and reply in GDBus tables
-Date: Fri, 18 May 2012 16:59:55 -0300
-Message-ID: <1337371199-29496-8-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH mmsd 09/12] gdbus: remove signature and reply from tables
+Date: Fri, 18 May 2012 16:59:56 -0300
+Message-ID: <1337371199-29496-9-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1337371199-29496-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8510699977676240646==
+--===============2273915376632345792==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Use GDBUS_* macros, so signature and reply fields are not set in each
-method/signal.
 ---
- plugins/ofono.c |    4 ++--
- src/service.c   |   25 +++++++++++--------------
- 2 files changed, 13 insertions(+), 16 deletions(-)
+ gdbus/gdbus.h  |   60 ----------------------------------------------------=
+----
+ gdbus/object.c |    2 +-
+ 2 files changed, 1 insertion(+), 61 deletions(-)
 
-diff --git a/plugins/ofono.c b/plugins/ofono.c
-index fcdb228..45fac91 100644
---- a/plugins/ofono.c
-+++ b/plugins/ofono.c
-@@ -115,11 +115,11 @@ static DBusMessage *agent_release(DBusConnection *con=
-n,
+diff --git a/gdbus/gdbus.h b/gdbus/gdbus.h
+index 868c8d5..0a8a27c 100644
+--- a/gdbus/gdbus.h
++++ b/gdbus/gdbus.h
+@@ -89,8 +89,6 @@ typedef struct {
+ =
+
+ typedef struct {
+ 	const char *name;
+-	const char *signature;
+-	const char *reply;
+ 	GDBusMethodFunction function;
+ 	GDBusMethodFlags flags;
+ 	unsigned int privilege;
+@@ -100,7 +98,6 @@ typedef struct {
+ =
+
+ typedef struct {
+ 	const char *name;
+-	const char *signature;
+ 	GDBusSignalFlags flags;
+ 	const GDBusArgInfo *args;
+ } GDBusSignalTable;
+@@ -120,63 +117,6 @@ typedef struct {
+ =
+
+ #define GDBUS_ARGS(args...) (const GDBusArgInfo[]) { args, { } }
+ =
+
+-#define _GDBUS_METHOD(_name, _signature, _reply, _in_args, _out_args, _fun=
+ction) \
+-	.name =3D _name, \
+-	.signature =3D _signature, \
+-	.reply =3D _reply, \
+-	.in_args =3D _in_args, \
+-	.out_args =3D _out_args, \
+-	.function =3D _function
+-
+-#define _GDBUS_ASYNC_METHOD(_name, _signature, _reply, _in_args, _out_args=
+, _function) \
+-	.name =3D _name, \
+-	.signature =3D _signature, \
+-	.reply =3D _reply, \
+-	.in_args =3D _in_args, \
+-	.out_args =3D _out_args, \
+-	.function =3D _function, \
+-	.flags =3D G_DBUS_METHOD_FLAG_ASYNC
+-
+-#define _GDBUS_DEPRECATED_METHOD(_name, _signature, _reply, _in_args, _out=
+_args, _function) \
+-	.name =3D _name, \
+-	.signature =3D _signature, \
+-	.reply =3D _reply, \
+-	.in_args =3D _in_args, \
+-	.out_args =3D _out_args, \
+-	.function =3D _function, \
+-	.flags =3D G_DBUS_METHOD_FLAG_DEPRECATED
+-
+-#define _GDBUS_DEPRECATED_ASYNC_METHOD(_name, _signature, _reply, _in_args=
+, _out_args, _function) \
+-	.name =3D _name, \
+-	.signature =3D _signature, \
+-	.reply =3D _reply, \
+-	.in_args =3D _in_args, \
+-	.out_args =3D _out_args, \
+-	.function =3D _function, \
+-	.flags =3D G_DBUS_METHOD_FLAG_ASYNC | G_DBUS_METHOD_FLAG_DEPRECATED
+-
+-#define _GDBUS_NOREPLY_METHOD(_name, _signature, _reply, _in_args, _out_ar=
+gs, _function) \
+-	.name =3D _name, \
+-	.signature =3D _signature, \
+-	.reply =3D _reply, \
+-	.in_args =3D _in_args, \
+-	.out_args =3D _out_args, \
+-	.function =3D _function, \
+-	.flags =3D G_DBUS_METHOD_FLAG_NOREPLY
+-
+-#define _GDBUS_SIGNAL(_name, _signature, _args) \
+-	.name =3D _name, \
+-	.signature =3D _signature, \
+-	.args =3D _args
+-
+-#define _GDBUS_DEPRECATED_SIGNAL(_name, _signature, _args) \
+-	.name =3D _name, \
+-	.signature =3D _signature, \
+-	.args =3D _args, \
+-	.flags =3D G_DBUS_SIGNAL_FLAG_DEPRECATED
+-
+-/* Helpers with no signature and reply */
+-
+ #define GDBUS_METHOD(_name, _in_args, _out_args, _function) \
+ 	.name =3D _name, \
+ 	.in_args =3D _in_args, \
+diff --git a/gdbus/object.c b/gdbus/object.c
+index b187bb5..fcdd6ec 100644
+--- a/gdbus/object.c
++++ b/gdbus/object.c
+@@ -471,7 +471,7 @@ done:
  }
  =
 
- static const GDBusMethodTable agent_methods[] =3D {
--	{ _GDBUS_METHOD("ReceiveNotification", "aya{sv}", "",
-+	{ GDBUS_METHOD("ReceiveNotification",
- 			GDBUS_ARGS({ "notification", "ay" },
- 						{ "info", "a{sv}" }),
- 			NULL, agent_receive) },
--	{ _GDBUS_NOREPLY_METHOD("Release", "", "", NULL, NULL, agent_release) },
-+	{ GDBUS_NOREPLY_METHOD("Release", NULL, NULL, agent_release) },
+ static const GDBusMethodTable introspect_methods[] =3D {
+-	{ _GDBUS_METHOD("Introspect", "", "s", NULL,
++	{ GDBUS_METHOD("Introspect", NULL,
+ 			GDBUS_ARGS({ "xml", "s" }), introspect) },
  	{ }
  };
- =
-
-diff --git a/src/service.c b/src/service.c
-index 669d10e..83e1fe1 100644
---- a/src/service.c
-+++ b/src/service.c
-@@ -223,13 +223,13 @@ static DBusMessage *msg_mark_read(DBusConnection *con=
-n,
- }
- =
-
- static const GDBusMethodTable message_methods[] =3D {
--	{ _GDBUS_METHOD("MarkRead", "", "", NULL, NULL, msg_mark_read) },
--	{ _GDBUS_METHOD("Delete", "", "", NULL, NULL, msg_delete) },
-+	{ GDBUS_METHOD("MarkRead", NULL, NULL, msg_mark_read) },
-+	{ GDBUS_METHOD("Delete", NULL, NULL, msg_delete) },
- 	{ }
- };
- =
-
- static const GDBusSignalTable message_signals[] =3D {
--	{ _GDBUS_SIGNAL("PropertyChanged", "sv",
-+	{ GDBUS_SIGNAL("PropertyChanged",
- 			GDBUS_ARGS({ "name", "s" }, { "value", "v" })) },
- 	{ }
- };
-@@ -981,16 +981,16 @@ release_msg:
- }
- =
-
- static const GDBusMethodTable service_methods[] =3D {
--	{ _GDBUS_METHOD("SendMessage", "assa(sss)", "o",
-+	{ GDBUS_METHOD("SendMessage",
- 			GDBUS_ARGS({ "recipients", "as" }, { "smil", "s" },
- 						{ "attachments", "a(sss)" }),
- 			GDBUS_ARGS({ "path", "o" }),
- 			send_message) },
--	{ _GDBUS_METHOD("GetMessages", "", "a(oa{sv})",
-+	{ GDBUS_METHOD("GetMessages",
- 			NULL,
- 			GDBUS_ARGS({ "messages_with_properties", "a(oa{sv})" }),
- 			get_messages) },
--	{ _GDBUS_METHOD("GetConversation", "su", "a(oa{sv})",
-+	{ GDBUS_METHOD("GetConversation",
- 			GDBUS_ARGS({ "number", "s" }, { "count", "s" }),
- 			GDBUS_ARGS({ "messages_with_properties", "a(oa{sv}" }),
- 			get_conversation) },
-@@ -998,10 +998,9 @@ static const GDBusMethodTable service_methods[] =3D {
- };
- =
-
- static const GDBusSignalTable service_signals[] =3D {
--	{ _GDBUS_SIGNAL("MessageAdded", "oa{sv}",
--				GDBUS_ARGS({ "path", "o" },
-+	{ GDBUS_SIGNAL("MessageAdded", GDBUS_ARGS({ "path", "o" },
- 						{ "properties", "a{sv}" })) },
--	{ _GDBUS_SIGNAL("MessageRemoved", "o", GDBUS_ARGS({ "path", "o" })) },
-+	{ GDBUS_SIGNAL("MessageRemoved", GDBUS_ARGS({ "path", "o" })) },
- 	{ }
- };
- =
-
-@@ -2356,18 +2355,16 @@ static DBusMessage *get_services(DBusConnection *co=
-nn,
- }
- =
-
- static const GDBusMethodTable manager_methods[] =3D {
--	{ _GDBUS_METHOD("GetServices", "", "a(oa{sv})",
--			NULL,
-+	{ GDBUS_METHOD("GetServices", NULL,
- 			GDBUS_ARGS({ "services_with_properties", "a(oa{sv})" }),
- 			get_services) },
- 	{ }
- };
- =
-
- static const GDBusSignalTable manager_signals[] =3D {
--	{ _GDBUS_SIGNAL("ServiceAdded", "oa{sv}",
--				GDBUS_ARGS({ "path", "o" },
-+	{ GDBUS_SIGNAL("ServiceAdded", GDBUS_ARGS({ "path", "o" },
- 						{ "properties", "a{sv}" })) },
--	{ _GDBUS_SIGNAL("ServiceRemoved", "o", GDBUS_ARGS({ "path", "o" })) },
-+	{ GDBUS_SIGNAL("ServiceRemoved", GDBUS_ARGS({ "path", "o" })) },
- 	{ }
- };
- =
-
 -- =
 
 1.7.10.2
 
 
---===============8510699977676240646==--
+--===============2273915376632345792==--
 
