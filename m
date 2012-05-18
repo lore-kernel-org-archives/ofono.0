@@ -1,149 +1,119 @@
-Content-Type: multipart/mixed; boundary="===============3448656124429451862=="
+Content-Type: multipart/mixed; boundary="===============4865427127579534535=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH mmsd 06/12] gdbus: use GDBusArgInfo to generate introspection
-Date: Fri, 18 May 2012 16:44:06 -0300
-Message-ID: <1337370252-29346-6-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH mmsd 07/12] gdbus: loop over args to check message signature
+Date: Fri, 18 May 2012 16:44:07 -0300
+Message-ID: <1337370252-29346-7-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1337370252-29346-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3448656124429451862==
+--===============4865427127579534535==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-By using GDBusArgInfo in methods and signals, the introspection
-generation is much simpler and we can add each argument name.
 ---
- gdbus/object.c |   75 +++++++++++-----------------------------------------=
-----
- 1 file changed, 14 insertions(+), 61 deletions(-)
+ gdbus/object.c |   34 +++++++++++++++++++++++++++-------
+ 1 file changed, 27 insertions(+), 7 deletions(-)
 
 diff --git a/gdbus/object.c b/gdbus/object.c
-index 2ddc574..3ac6a0b 100644
+index 3ac6a0b..b187bb5 100644
 --- a/gdbus/object.c
 +++ b/gdbus/object.c
-@@ -59,68 +59,20 @@ struct security_data {
- 	void *iface_user_data;
- };
- =
-
--static void print_arguments(GString *gstr, const char *sig,
-+static void print_arguments(GString *gstr, const GDBusArgInfo *args,
- 						const char *direction)
- {
--	int i;
--
--	for (i =3D 0; sig[i]; i++) {
--		char type[32];
--		int struct_level, dict_level;
--		unsigned int len;
--		gboolean complete;
--
--		complete =3D FALSE;
--		struct_level =3D dict_level =3D 0;
--
--		/* Gather enough data to have a single complete type */
--		for (len =3D 0; len < (sizeof(type) - 1) && sig[i]; len++, i++) {
--			switch (sig[i]) {
--			case '(':
--				struct_level++;
--				break;
--			case ')':
--				struct_level--;
--				if (struct_level <=3D 0 && dict_level <=3D 0)
--					complete =3D TRUE;
--				break;
--			case '{':
--				dict_level++;
--				break;
--			case '}':
--				dict_level--;
--				if (struct_level <=3D 0 && dict_level <=3D 0)
--					complete =3D TRUE;
--				break;
--			case 'a':
--				break;
--			default:
--				if (struct_level <=3D 0 && dict_level <=3D 0)
--					complete =3D TRUE;
--				break;
--			}
--
--			type[len] =3D sig[i];
--
--			if (complete)
--				break;
--		}
--
--		type[len + 1] =3D '\0';
--
--		if (!complete) {
--			error("Unexpected signature: %s", sig);
--			return;
--		}
-+	for (; args && args->name; args++) {
-+		g_string_append_printf(gstr,
-+					"\t\t\t<arg name=3D\"%s\" type=3D\"%s\"",
-+					args->name, args->signature);
- =
-
- 		if (direction)
- 			g_string_append_printf(gstr,
--					"\t\t\t<arg type=3D\"%s\" direction=3D\"%s\"/>\n",
--					type, direction);
-+					" direction=3D\"%s\"/>\n", direction);
- 		else
--			g_string_append_printf(gstr,
--					"\t\t\t<arg type=3D\"%s\"/>\n",
--					type);
-+			g_string_append_printf(gstr, "/>\n");
-+
- 	}
+@@ -374,6 +374,27 @@ static struct interface_data *find_interface(GSList *i=
+nterfaces,
+ 	return NULL;
  }
  =
 
-@@ -130,26 +82,27 @@ static void generate_interface_xml(GString *gstr, stru=
-ct interface_data *iface)
- 	const GDBusSignalTable *signal;
++static gboolean g_dbus_args_have_signature(const GDBusArgInfo *args,
++							DBusMessage *message)
++{
++	const char *sig =3D dbus_message_get_signature(message);
++	const char *p =3D NULL;
++
++	for (; args && args->signature && *sig; args++) {
++		p =3D args->signature;
++
++		for (; *sig && *p; sig++, p++) {
++			if (*p !=3D *sig)
++				return FALSE;
++		}
++	}
++
++	if (*sig || (p && *p) || (args && args->signature))
++		return FALSE;
++
++	return TRUE;
++}
++
+ static DBusHandlerResult generic_message(DBusConnection *connection,
+ 					DBusMessage *message, void *user_data)
+ {
+@@ -394,8 +415,8 @@ static DBusHandlerResult generic_message(DBusConnection=
+ *connection,
+ 							method->name) =3D=3D FALSE)
+ 			continue;
  =
 
- 	for (method =3D iface->methods; method && method->name; method++) {
--		if (!strlen(method->signature) && !strlen(method->reply))
-+		if (!(method->in_args && method->in_args->name) &&
-+				!(method->out_args && method->out_args->name))
- 			g_string_append_printf(gstr, "\t\t<method name=3D\"%s\"/>\n",
- 								method->name);
- 		else {
- 			g_string_append_printf(gstr, "\t\t<method name=3D\"%s\">\n",
- 								method->name);
--			print_arguments(gstr, method->signature, "in");
--			print_arguments(gstr, method->reply, "out");
-+			print_arguments(gstr, method->in_args, "in");
-+			print_arguments(gstr, method->out_args, "out");
- 			g_string_append_printf(gstr, "\t\t</method>\n");
- 		}
- 	}
+-		if (dbus_message_has_signature(message,
+-						method->signature) =3D=3D FALSE)
++		if (g_dbus_args_have_signature(method->in_args,
++							message) =3D=3D FALSE)
+ 			continue;
+ =
+
+ 		if (check_privilege(connection, message, method,
+@@ -552,7 +573,7 @@ static void object_path_unref(DBusConnection *connectio=
+n, const char *path)
+ =
+
+ static gboolean check_signal(DBusConnection *conn, const char *path,
+ 				const char *interface, const char *name,
+-				const char **args)
++				const GDBusArgInfo **args)
+ {
+ 	struct generic_data *data =3D NULL;
+ 	struct interface_data *iface;
+@@ -575,7 +596,7 @@ static gboolean check_signal(DBusConnection *conn, cons=
+t char *path,
  =
 
  	for (signal =3D iface->signals; signal && signal->name; signal++) {
--		if (!strlen(signal->signature))
-+		if (!(signal->args && signal->args->name))
- 			g_string_append_printf(gstr, "\t\t<signal name=3D\"%s\"/>\n",
- 								signal->name);
- 		else {
- 			g_string_append_printf(gstr, "\t\t<signal name=3D\"%s\">\n",
- 								signal->name);
--			print_arguments(gstr, signal->signature, NULL);
-+			print_arguments(gstr, signal->args, NULL);
- 			g_string_append_printf(gstr, "\t\t</signal>\n");
+ 		if (!strcmp(signal->name, name)) {
+-			*args =3D signal->signature;
++			*args =3D signal->args;
+ 			break;
  		}
  	}
+@@ -597,7 +618,7 @@ static dbus_bool_t emit_signal_valist(DBusConnection *c=
+onn,
+ {
+ 	DBusMessage *signal;
+ 	dbus_bool_t ret;
+-	const char *signature, *args;
++	const GDBusArgInfo *args;
+ =
+
+ 	if (!check_signal(conn, path, interface, name, &args))
+ 		return FALSE;
+@@ -612,8 +633,7 @@ static dbus_bool_t emit_signal_valist(DBusConnection *c=
+onn,
+ 	if (!ret)
+ 		goto fail;
+ =
+
+-	signature =3D dbus_message_get_signature(signal);
+-	if (strcmp(args, signature) !=3D 0) {
++	if (g_dbus_args_have_signature(args, signal) =3D=3D FALSE) {
+ 		error("%s.%s: expected signature'%s' but got '%s'",
+ 				interface, name, args, signature);
+ 		ret =3D FALSE;
 -- =
 
 1.7.10.2
 
 
---===============3448656124429451862==--
+--===============4865427127579534535==--
 
