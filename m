@@ -1,72 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============3051170644344592303=="
+Content-Type: multipart/mixed; boundary="===============2877198609973469082=="
 MIME-Version: 1.0
-From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: Re: [PATCH] Add WSP_VALUE_TYPE_TEXT support in
- wsp_decode_application_id()
-Date: Fri, 18 May 2012 14:59:31 +0200
-Message-ID: <4FB647B3.8090906@linux.intel.com>
-In-Reply-To: <4FB3D362.9080001@vfnet.de>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH mmsd 01/12] Constify GDBus tables
+Date: Fri, 18 May 2012 16:44:01 -0300
+Message-ID: <1337370252-29346-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3051170644344592303==
+--===============2877198609973469082==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jens,
+Constify method tables with the following commands:
 
-On 05/16/2012 06:18 PM, Jens Rehsack wrote:
-> On 16.05.2012 17:45, Ronald Tessier wrote:
->> Hi Jens,
->
-> Hi Ronald,
->
->> On 05/16/2012 04:03 PM, Jens Rehsack wrote:
->>> From: Jens Rehsack<sno@NetBSD.org>
->>>
->>> ---
->>>    src/wsputil.c |    6 ++++++
->>>    1 Datei ge=C3=A4ndert, 6 Zeilen hinzugef=C3=BCgt(+)
->>>
->>> diff --git a/src/wsputil.c b/src/wsputil.c
->>> index 1b2b2b7..c4c9d62 100644
->>> --- a/src/wsputil.c
->>> +++ b/src/wsputil.c
->>> @@ -496,6 +496,12 @@ gboolean wsp_decode_application_id(struct
->>> wsp_header_iter *iter,
->>>         */
->>>        if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_SHO=
-RT) {
->>>            val =3D *pdu_val&   0x7f;
->>> +    } else if (wsp_header_iter_get_val_type(iter) =3D=3D
->>> WSP_VALUE_TYPE_TEXT) {
->>> +        val_len =3D wsp_header_iter_get_val_len(iter);
->>> +        val =3D -1;
->>> +
->>> +        if (out_value)
->>> +            *out_value =3D pdu_val;
->>>        } else {
->>>            val_len =3D wsp_header_iter_get_val_len(iter);
->>>
->>
->> Unless I miss something, if the application_id is given as TEXT (in the
->> pdu) the *out_value will always be NULL (it will be set to the result of
->> get_text_entry()).
->>
->> I think you don't need to set val_len and val, you can just return TRUE
->> after doing *out_value =3D pdu_val.
->
-> Probably. Do you want me to act on this and submit a new version (not
-> before Monday - commuting now) or will you fix it on your own?
->
+find . -name '*.[ch]' -exec sed -i \
+	     's/\(c\)\(GDBusSignalTable .* =3D\)/\1 const \2/g' {} \;
 
-Indeed it can easily wait until Monday ...
-Please, submit a new version of your patch to be reviewed by a maintainer.
+find . -name '*.[ch]' -exec sed -i \
+	     's/\(c\)\(GDBusMethodTable .* =3D\)/\1 const \2/g' {} \;
+---
+ plugins/ofono.c |    2 +-
+ src/service.c   |   12 ++++++------
+ 2 files changed, 7 insertions(+), 7 deletions(-)
 
-Best regards,
+diff --git a/plugins/ofono.c b/plugins/ofono.c
+index f598c5e..29e8f06 100644
+--- a/plugins/ofono.c
++++ b/plugins/ofono.c
+@@ -114,7 +114,7 @@ static DBusMessage *agent_release(DBusConnection *conn,
+ 	return NULL;
+ }
+ =
 
-Ronald
+-static GDBusMethodTable agent_methods[] =3D {
++static const GDBusMethodTable agent_methods[] =3D {
+ 	{ "ReceiveNotification", "aya{sv}", "", agent_receive },
+ 	{ "Release",             "",        "", agent_release,
+ 						G_DBUS_METHOD_FLAG_NOREPLY },
+diff --git a/src/service.c b/src/service.c
+index 6bcdede..a269556 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -222,13 +222,13 @@ static DBusMessage *msg_mark_read(DBusConnection *con=
+n,
+ 	return g_dbus_create_reply(msg, DBUS_TYPE_INVALID);
+ }
+ =
 
---===============3051170644344592303==--
+-static GDBusMethodTable message_methods[] =3D {
++static const GDBusMethodTable message_methods[] =3D {
+ 	{ "MarkRead", "", "", msg_mark_read },
+ 	{ "Delete",   "", "", msg_delete },
+ 	{ }
+ };
+ =
+
+-static GDBusSignalTable message_signals[] =3D {
++static const GDBusSignalTable message_signals[] =3D {
+ 	{ "PropertyChanged", "sv" },
+ 	{ }
+ };
+@@ -979,14 +979,14 @@ release_msg:
+ 	return __mms_error_trans_failure(dbus_msg);
+ }
+ =
+
+-static GDBusMethodTable service_methods[] =3D {
++static const GDBusMethodTable service_methods[] =3D {
+ 	{ "SendMessage", "assa(sss)", "o", send_message },
+ 	{ "GetMessages", "", "a(oa{sv})", get_messages },
+ 	{ "GetConversation", "su", "a(oa{sv})", get_conversation },
+ 	{ }
+ };
+ =
+
+-static GDBusSignalTable service_signals[] =3D {
++static const GDBusSignalTable service_signals[] =3D {
+ 	{ "MessageAdded",   "oa{sv}" },
+ 	{ "MessageRemoved", "o" },
+ 	{ }
+@@ -2342,12 +2342,12 @@ static DBusMessage *get_services(DBusConnection *co=
+nn,
+ 	return reply;
+ }
+ =
+
+-static GDBusMethodTable manager_methods[] =3D {
++static const GDBusMethodTable manager_methods[] =3D {
+ 	{ "GetServices", "", "a(oa{sv})", get_services },
+ 	{ }
+ };
+ =
+
+-static GDBusSignalTable manager_signals[] =3D {
++static const GDBusSignalTable manager_signals[] =3D {
+ 	{ "ServiceAdded",   "oa{sv}" },
+ 	{ "ServiceRemoved", "o"      },
+ 	{ }
+-- =
+
+1.7.10.2
+
+
+--===============2877198609973469082==--
 
