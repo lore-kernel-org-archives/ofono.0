@@ -1,114 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============0868465484598847857=="
+Content-Type: multipart/mixed; boundary="===============3204914097298143329=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 1/3] TODO: Add new tasks
-Date: Mon, 21 May 2012 17:59:21 +0200
-Message-ID: <1337615963-9443-2-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 3/3] doc: Add new D-Bus methods to service interface
+Date: Mon, 21 May 2012 17:59:23 +0200
+Message-ID: <1337615963-9443-4-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1337615963-9443-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0868465484598847857==
+--===============3204914097298143329==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- TODO |   67 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 67 insertions(+), 0 deletions(-)
+ doc/service-api.txt |   20 ++++++++++++++++++++
+ 1 files changed, 20 insertions(+), 0 deletions(-)
 
-diff --git a/TODO b/TODO
-index a4330b3..6e54f6f 100644
---- a/TODO
-+++ b/TODO
-@@ -16,6 +16,73 @@ Background
-   once the task is better understood.
+diff --git a/doc/service-api.txt b/doc/service-api.txt
+index 36e1161..02396ff 100644
+--- a/doc/service-api.txt
++++ b/doc/service-api.txt
+@@ -63,6 +63,26 @@ Methods		array{object,dict} GetMessages()
+ 				[service].Error.PermanentContentNotAccepted
+ 				[service].Error.PermanentLackOfPrepaid
  =
 
++		void DeleteMessages(array{object})
++
++			Delete an array of message objects that represents
++			the currently stored messages to delete.
++
++			Possible Errors: [service].Error.InvalidArguments
++
++		void DeleteConversation(string number)
++
++			Delete the messages that belongs to the conversation
++			defined by the given number.
++
++			The number parameter contains digits to look for
++			(i.e.: n last digits of the phone number), only messages
++			with a recipient which ends with the given number will
++			be member of the conversation and thus will be deleted.
++
++			Possible Errors: [service].Error.InvalidArguments
++
++
+ Signals		MessageAdded(object path, dict properties)
  =
 
-+MMS Delivery Report
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+- Add delivery report request when sending message.
-+  Modify SendMessage D-Bus API to add delivery report request flag.
-+  Update message structure to manage this flag.
-+  Modify MMS M-Send.Req PDU encoder to encode delivery report request.
-+  Modify test script related to message sending to support new delivery fl=
-ag.
-+
-+  Priority: Medium
-+  Complexity: C2
-+  Owner: Ronald Tessier <ronald.tessier@linux.intel.com>
-+
-+- Update message status stored in its associated Meta file.
-+  Add a group [delivery_status] in the message status to handle delivery
-+  reports, this group contains an entry for each message recipients.
-+  Each recipient entry will be updated when the corresponding report will =
-be
-+  received and then remove the temporary stored delivery report.
-+  Upon M-Send.Conf reception, store the received Message_ID to match deliv=
-ery
-+  reports (needed only if delivery report was requested).
-+
-+  Priority: Medium
-+  Complexity: C2
-+  Depends:
-+  Owner: S=C3=A9bastien Bianti <sebastien.bianti@linux.intel.com>
-+
-+- Add MMS M-Delivery.ind PDU decoding support.
-+  Modify mms_service_push_notify() to handle MMS Delivery Report WAP Push
-+  notification and temporary store the M-Delivery.ind PDU.
-+  Decode M-Delivery.ind PDU.
-+  Add MMS M-Delivery.ind PDU sample PDU to unit test.
-+
-+  Priority: Medium
-+  Complexity: C2
-+  Depends:
-+  Owner: Ronald Tessier <ronald.tessier@linux.intel.com>
-+
-+- Update message Meta file.
-+  Upon MMS M-Delivery.ind PDU reception, update delivery_status recipient =
-entry
-+  with the received status (this is described in doc/storage.txt).
-+
-+  Priority: Medium
-+  Complexity: C2
-+  Depends:
-+  Owner: S=C3=A9bastien Bianti <sebastien.bianti@linux.intel.com>
-+
-+
-+D-Bus API
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+- Add the "org.ofono.mms.Service" interface "DeleteMessages" method
-+  implementation.
-+  The D-Bus Message API documentation is available under /doc/service-api.=
-txt.
-+
-+  Priority: Medium
-+  Complexity: C2
-+  Owner: S=C3=A9bastien Bianti <sebastien.bianti@linux.intel.com>
-+
-+- Add the "org.ofono.mms.Service" interface "DeleteConversation" method
-+  implementation.
-+  The D-Bus Message API documentation is available under /doc/service-api.=
-txt.
-+
-+  Priority: Medium
-+  Complexity: C2
-+  Owner: Ronald Tessier <ronald.tessier@linux.intel.com>
-+
-+
- Miscellaneous
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- =
-
+ 			Signal that is sent when a new message is added. It
 -- =
 
 1.7.4.1
 
 
---===============0868465484598847857==--
+--===============3204914097298143329==--
 
