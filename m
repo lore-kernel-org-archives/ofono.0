@@ -1,66 +1,92 @@
-Content-Type: multipart/mixed; boundary="===============0480052894780159881=="
+Content-Type: multipart/mixed; boundary="===============0575905549068058201=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 01/12] Constify GDBus method tables
-Date: Sun, 20 May 2012 02:48:31 -0700
-Message-ID: <1337507311.15105.0.camel@aeonflux>
-In-Reply-To: <1337490456-10941-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Jens Rehsack <jr_extern@vfnet.de>
+Subject: [PATCH] Add WSP_VALUE_TYPE_TEXT support in wsp_decode_application_id()
+Date: Mon, 21 May 2012 12:54:14 +0200
+Message-ID: <1337597654-26049-1-git-send-email-jr_extern@vfnet.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0480052894780159881==
+--===============0575905549068058201==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+From: Jens Rehsack <sno@NetBSD.org>
 
-> Constify method tables with the following command:
-> =
+---
+ src/wsputil.c |   43 ++++++++++++++++++++++++++-----------------
+ 1 Datei ge=C3=A4ndert, 26 Zeilen hinzugef=C3=BCgt(+), 17 Zeilen entfernt(-)
 
-> find . -name '*.[ch]' -exec \
->              sed -i 's/\(GDBusMethodTable .* =3D\)/const \1/g' {} \;
-> ---
->  plugins/hfp_hf.c            |    2 +-
->  plugins/push-notification.c |    2 +-
->  plugins/smart-messaging.c   |    2 +-
->  src/audio-settings.c        |    2 +-
->  src/call-barring.c          |    2 +-
->  src/call-forwarding.c       |    2 +-
->  src/call-meter.c            |    2 +-
->  src/call-settings.c         |    2 +-
->  src/call-volume.c           |    2 +-
->  src/cbs.c                   |    2 +-
->  src/cdma-connman.c          |    2 +-
->  src/cdma-netreg.c           |    2 +-
->  src/cdma-sms.c              |    2 +-
->  src/cdma-voicecall.c        |    2 +-
->  src/ctm.c                   |    2 +-
->  src/gnss.c                  |    2 +-
->  src/gprs.c                  |    4 ++--
->  src/handsfree.c             |    2 +-
->  src/location-reporting.c    |    2 +-
->  src/manager.c               |    2 +-
->  src/message-waiting.c       |    2 +-
->  src/message.c               |    2 +-
->  src/modem.c                 |    2 +-
->  src/network.c               |    4 ++--
->  src/phonebook.c             |    2 +-
->  src/radio-settings.c        |    2 +-
->  src/sim.c                   |    2 +-
->  src/sms.c                   |    2 +-
->  src/stk.c                   |    2 +-
->  src/ussd.c                  |    2 +-
->  src/voicecall.c             |    4 ++--
->  31 files changed, 34 insertions(+), 34 deletions(-)
+diff --git a/src/wsputil.c b/src/wsputil.c
+index 1b2b2b7..5611ed2 100644
+--- a/src/wsputil.c
++++ b/src/wsputil.c
+@@ -486,28 +486,37 @@ gboolean wsp_decode_application_id(struct wsp_header_=
+iter *iter,
+ 							const void **out_value)
+ {
+ 	const unsigned char *pdu_val =3D wsp_header_iter_get_val(iter);
+-	unsigned int val;
+-	unsigned int val_len;
+-	unsigned int i;
+ =
 
-all 12 patches have been applied.
+-	/*
+-	 * Well-known field values MUST be encoded using the
+-	 * compact binary formats
+-	 */
+-	if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_SHORT) {
+-		val =3D *pdu_val & 0x7f;
++	if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_TEXT) {
++		wsp_header_iter_get_val_len(iter);
++
++		if (out_value)
++			*out_value =3D pdu_val;
+ 	} else {
+-		val_len =3D wsp_header_iter_get_val_len(iter);
++		unsigned int val;
+ =
 
-Regards
+-		if (val_len > 2)
+-			return FALSE;
++		/*
++		 * Well-known field values MUST be encoded using the
++		 * compact binary formats
++		 */
++		if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_SHORT) {
++			val =3D *pdu_val & 0x7f;
++		} else  {
++			unsigned int val_len;
++			unsigned int i;
+ =
 
-Marcel
+-		for (i =3D 0, val =3D 0; i < val_len && i < sizeof(val); i++)
+-			val =3D (val << 8) | pdu_val[i];
+-	}
++			val_len =3D wsp_header_iter_get_val_len(iter);
+ =
+
+-	if (out_value)
+-		*out_value =3D get_text_entry(val, app_id);
++			if (val_len > 2)
++				return FALSE;
++
++			for (i =3D 0, val =3D 0; i < val_len && i < sizeof(val); i++)
++				val =3D (val << 8) | pdu_val[i];
++		}
++
++		if (out_value)
++			*out_value =3D get_text_entry(val, app_id);
++	}
+ =
+
+ 	return TRUE;
+ }
+-- =
+
+1.7.10.1
 
 
-
---===============0480052894780159881==--
+--===============0575905549068058201==--
 
