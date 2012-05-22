@@ -1,46 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============2661125304333327493=="
+Content-Type: multipart/mixed; boundary="===============1238673431984086505=="
 MIME-Version: 1.0
-From: Gustavo Sverzut Barbieri <barbieri@profusion.mobi>
-Subject: Re: [HEADS UP] vim users
-Date: Tue, 22 May 2012 18:36:01 +0000
-Message-ID: <CAPdpN3BAmTtdtOaKj9OTbA53THPRubArGS3h49htk-5YJYTCMQ@mail.gmail.com>
-In-Reply-To: <CAMOw1v5cNQ9csPn7k6k7g2v+YdRdZq5-MVHeVfHH+bLzA6qd0Q@mail.gmail.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [PATCH v7 00/16] Add DUN support
+Date: Tue, 22 May 2012 21:10:25 +0200
+Message-ID: <4FBBE4A1.9070909@monom.org>
+In-Reply-To: <1337704404-5260-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2661125304333327493==
+--===============1238673431984086505==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, May 22, 2012 at 12:38 PM, Lucas De Marchi
-<lucas.demarchi@profusion.mobi> wrote:
->
-> Hey,
->
-> As I sent previously to BlueZ mailing list, the patches for d-bus
-> introspection exposes a bug in vim c syntax highlight. There's already
-> a fix for that:
-> https://groups.google.com/forum/#!msg/vim_dev/_IL5jM1-t_w/D-vIwZM2RfwJ
->
-> I'm not sure when there will be a new version, so I'm attaching to
-> this email the fixed c.vim file. Replace
-> /usr/share/vim/vim73/syntax/c.vim with this one and highlight will be
-> fixed.
+On 05/22/2012 06:33 PM, Daniel Wagner wrote:
+> From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+> =
 
-this vim crap is seriously b0rken. Just change to emacs, and start to
-properly align your parenthesis contents ;-)
+> Hi,
+> =
 
-</endtrolljoke>
+> Changes v7:
+>  - Fixed test scripts
+>  - SetProperty("Active", True) will be deferred until PPP link is up =
+
+>    or an error happens
+>  - GDBUS changes added
+>  - Fixed a crash in set_property_active: device->ppp can be NULL
+>  - Copyright year update and whitespace fixes
+
+All patches applied.
 
 
---
-Gustavo Sverzut Barbieri
-http://profusion.mobi embedded systems
---------------------------------------
-MSN: barbieri(a)gmail.com
-Skype: gsbarbieri
-Mobile: +55 (19) 9225-2202
-
---===============2661125304333327493==--
+--===============1238673431984086505==--
 
