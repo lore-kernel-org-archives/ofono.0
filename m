@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7793642961279118637=="
+Content-Type: multipart/mixed; boundary="===============1106293312779784438=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v7 11/16] dundee: Add callback helpers
-Date: Tue, 22 May 2012 18:33:19 +0200
-Message-ID: <1337704404-5260-12-git-send-email-wagi@monom.org>
+Subject: [PATCH v7 12/16] dundee: Add device un/register
+Date: Tue, 22 May 2012 18:33:20 +0200
+Message-ID: <1337704404-5260-13-git-send-email-wagi@monom.org>
 In-Reply-To: <1337704404-5260-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7793642961279118637==
+--===============1106293312779784438==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,71 +16,165 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- dundee/dundee.h |   44 ++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 44 insertions(+)
+ dundee/device.c |   69 +++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ dundee/dundee.h |   21 +++++++++++++++++
+ 2 files changed, 89 insertions(+), 1 deletion(-)
 
-diff --git a/dundee/dundee.h b/dundee/dundee.h
-index 4f8aa10..366938e 100644
---- a/dundee/dundee.h
-+++ b/dundee/dundee.h
-@@ -28,6 +28,50 @@
+diff --git a/dundee/device.c b/dundee/device.c
+index d9fc928..9ed1687 100644
+--- a/dundee/device.c
++++ b/dundee/device.c
+@@ -33,14 +33,19 @@
  =
 
- void __dundee_exit(void);
+ #include "dundee.h"
  =
 
-+enum dundee_error_type {
-+	DUNDEE_ERROR_TYPE_NO_ERROR =3D 0,
-+	DUNDEE_ERROR_TYPE_FAILURE,
-+};
++static int next_device_id =3D 0;
+ static GHashTable *device_hash;
+ =
+
+ struct dundee_device {
++	char *path;
++	struct dundee_device_driver *driver;
++	gboolean registered;
 +
-+struct dundee_error {
-+	enum dundee_error_type type;
-+	int error;
-+};
-+
-+struct cb_data {
-+	void *cb;
-+	void *data;
-+	void *user;
-+};
-+
-+static inline struct cb_data *cb_data_new(void *cb, void *data)
+ };
+ =
+
+ const char *__dundee_device_get_path(struct dundee_device *device)
+ {
+-	return "/";
++	return device->path;
+ }
+ =
+
+ void __dundee_device_append_properties(struct dundee_device *device,
+@@ -64,15 +69,77 @@ void __dundee_device_foreach(dundee_device_foreach_func=
+ func, void *userdata)
+ 	}
+ }
+ =
+
++static int register_device(struct dundee_device *device)
 +{
-+	struct cb_data *ret;
-+
-+	ret =3D g_new0(struct cb_data, 1);
-+	ret->cb =3D cb;
-+	ret->data =3D data;
-+
-+	return ret;
++	return 0;
 +}
 +
-+#define CALLBACK_WITH_FAILURE(cb, args...)		\
-+	do {						\
-+		struct dundee_error cb_e;		\
-+		cb_e.type =3D DUNDEE_ERROR_TYPE_FAILURE;	\
-+		cb_e.error =3D 0;				\
-+							\
-+		cb(&cb_e, ##args);			\
-+	} while (0)					\
++static int unregister_device(struct dundee_device *device)
++{
++	return 0;
++}
 +
-+#define CALLBACK_WITH_SUCCESS(f, args...)		\
-+	do {						\
-+		struct dundee_error e;			\
-+		e.type =3D DUNDEE_ERROR_TYPE_NO_ERROR;	\
-+		e.error =3D 0;				\
-+		f(&e, ##args);				\
-+	} while(0)					\
-+
- #include <ofono/log.h>
+ static void destroy_device(gpointer user)
+ {
+ 	struct dundee_device *device =3D user;
  =
 
- int __ofono_log_init(const char *program, const char *debug,
++	g_free(device->path);
++
+ 	g_free(device);
+ }
+ =
+
++struct dundee_device *dundee_device_create(struct dundee_device_driver *d)
++{
++	struct dundee_device *device;
++
++	device =3D g_try_new0(struct dundee_device, 1);
++	if (device =3D=3D NULL)
++		return NULL;
++
++	device->driver =3D d;
++
++	device->path =3D g_strdup_printf("/device%d", next_device_id);
++	if (device->path =3D=3D NULL) {
++		g_free(device);
++		return NULL;
++	}
++
++	next_device_id +=3D 1;
++
++	return device;
++}
++
++int dundee_device_register(struct dundee_device *device)
++{
++	int err;
++
++	err =3D register_device(device);
++	if (err < 0)
++		return err;
++
++	device->registered =3D TRUE;
++
++	g_hash_table_insert(device_hash, g_strdup(device->path), device);
++
++	return 0;
++}
++
++void dundee_device_unregister(struct dundee_device *device)
++{
++	DBG("%p", device);
++
++	unregister_device(device);
++
++	device->registered =3D FALSE;
++
++	g_hash_table_remove(device_hash, device->path);
++}
++
+ static void device_shutdown(gpointer key, gpointer value, gpointer user_da=
+ta)
+ {
++	struct dundee_device *device =3D value;
++
++	unregister_device(device);
+ }
+ =
+
+ void __dundee_device_shutdown(void)
+diff --git a/dundee/dundee.h b/dundee/dundee.h
+index 366938e..ae14e01 100644
+--- a/dundee/dundee.h
++++ b/dundee/dundee.h
+@@ -105,6 +105,27 @@ int __dundee_device_init(void);
+ void __dundee_device_cleanup(void);
+ void __dundee_device_shutdown(void);
+ =
+
++typedef void (*dundee_device_connect_cb_t)(const struct dundee_error *erro=
+r,
++						int fd, void *data);
++typedef void (*dundee_device_disconnect_cb_t)(const struct dundee_error *e=
+rror,
++						void *data);
++
++struct dundee_device_driver {
++	const char *name;
++
++	/* Connect and dial */
++	void (*connect)(struct dundee_device *device,
++			dundee_device_connect_cb_t cb, void *data);
++
++	/* Hangup and disconnect */
++	void (*disconnect)(struct dundee_device *device,
++			dundee_device_disconnect_cb_t cb, void *data);
++};
++
++struct dundee_device *dundee_device_create(struct dundee_device_driver *d);
++int dundee_device_register(struct dundee_device *device);
++void dundee_device_unregister(struct dundee_device *device);
++
+ typedef void (*dundee_device_foreach_func)(struct dundee_device *device,
+ 						void *data);
+ void __dundee_device_foreach(dundee_device_foreach_func cb, void *userdata=
+);
 -- =
 
 1.7.10.130.g36e6c
 
 
---===============7793642961279118637==--
+--===============1106293312779784438==--
 
