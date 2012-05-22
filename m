@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5678753650658268236=="
+Content-Type: multipart/mixed; boundary="===============6653889545494580722=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v7 15/16] dundee: Add PPP handling code to device
-Date: Tue, 22 May 2012 18:33:23 +0200
-Message-ID: <1337704404-5260-16-git-send-email-wagi@monom.org>
+Subject: [PATCH v7 16/16] dundee: Add Bluetooth DUN driver
+Date: Tue, 22 May 2012 18:33:24 +0200
+Message-ID: <1337704404-5260-17-git-send-email-wagi@monom.org>
 In-Reply-To: <1337704404-5260-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5678753650658268236==
+--===============6653889545494580722==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,361 +16,371 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- Makefile.am     |    2 +-
- dundee/device.c |  254 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 2 files changed, 253 insertions(+), 3 deletions(-)
+ Makefile.am        |    6 +-
+ dundee/bluetooth.c |  290 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ dundee/dundee.h    |    3 +
+ dundee/main.c      |    2 +
+ 4 files changed, 298 insertions(+), 3 deletions(-)
+ create mode 100644 dundee/bluetooth.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 1e0934d..19261ce 100644
+index 19261ce..19844d9 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -687,7 +687,7 @@ if DUNDEE
+@@ -687,10 +687,10 @@ if DUNDEE
  =
 
  sbin_PROGRAMS +=3D dundee/dundee
  =
 
--dundee_dundee_SOURCES =3D $(gdbus_sources) \
-+dundee_dundee_SOURCES =3D $(gdbus_sources) $(gatchat_sources) \
- 			src/log.c src/dbus.c \
+-dundee_dundee_SOURCES =3D $(gdbus_sources) $(gatchat_sources) \
+-			src/log.c src/dbus.c \
++dundee_dundee_SOURCES =3D $(gdbus_sources) $(gatchat_sources) $(btio_sourc=
+es) \
++			src/log.c src/dbus.c plugins/bluetooth.c \
  			dundee/dundee.h dundee/main.c dundee/dbus.c \
- 			dundee/manager.c dundee/device.c
-diff --git a/dundee/device.c b/dundee/device.c
-index 8baf760..709919a 100644
---- a/dundee/device.c
-+++ b/dundee/device.c
-@@ -30,12 +30,16 @@
+-			dundee/manager.c dundee/device.c
++			dundee/manager.c dundee/device.c dundee/bluetooth.c
  =
 
- #include <glib.h>
- #include <gdbus.h>
-+#include <gatchat.h>
-+#include <gatppp.h>
+ dundee_dundee_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_L=
+IBS@ -ldl
  =
 
- #include "dundee.h"
- =
-
- static int next_device_id =3D 0;
- static GHashTable *device_hash;
- =
-
-+static const char *none_prefix[] =3D { NULL };
+diff --git a/dundee/bluetooth.c b/dundee/bluetooth.c
+new file mode 100644
+index 0000000..e2e2bca
+--- /dev/null
++++ b/dundee/bluetooth.c
+@@ -0,0 +1,290 @@
++/*
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2012  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2012  BMW Car IT GmbH. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
- struct ipv4_settings {
- 	char *interface;
- 	char *ip;
-@@ -47,10 +51,14 @@ struct dundee_device {
- 	struct dundee_device_driver *driver;
- 	gboolean registered;
- =
-
-+	GAtPPP *ppp;
-+	GAtChat *chat;
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
 +
- 	char *name;
- 	gboolean active;
- 	struct ipv4_settings settings;
- =
-
-+	DBusMessage *pending;
- 	void *data;
- };
- =
-
-@@ -146,6 +154,27 @@ void __dundee_device_foreach(dundee_device_foreach_fun=
-c func, void *userdata)
- 	}
- }
- =
-
-+static void settings_changed(struct dundee_device *device)
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <string.h>
++#include <errno.h>
++
++#include <glib.h>
++
++#include "plugins/bluetooth.h"
++
++#include "dundee.h"
++
++static GHashTable *bluetooth_hash;
++
++struct bluetooth_device {
++	struct dundee_device *device;
++
++	char *path;
++	char *address;
++	char *name;
++
++	DBusPendingCall *call;
++};
++
++static void bt_disconnect(struct dundee_device *device,
++				dundee_device_disconnect_cb_t cb, void *data)
 +{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	DBusMessage *signal;
-+	DBusMessageIter iter;
-+	const char *key =3D "Settings";
++	struct bluetooth_device *bt =3D dundee_device_get_data(device);
 +
-+	signal =3D dbus_message_new_signal(device->path,
-+					DUNDEE_DEVICE_INTERFACE,
-+					"PropertyChanged");
++	DBG("%p", bt);
 +
-+	if (signal =3D=3D NULL)
-+		return;
-+	dbus_message_iter_init_append(signal, &iter);
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &key);
-+
-+	settings_append(device, &iter);
-+
-+	g_dbus_send_message(conn, signal);
++	CALLBACK_WITH_SUCCESS(cb, data);
 +}
 +
- static DBusMessage *device_get_properties(DBusConnection *conn,
- 					DBusMessage *msg, void *data)
- {
-@@ -171,6 +200,213 @@ static DBusMessage *device_get_properties(DBusConnect=
-ion *conn,
- 	return reply;
- }
- =
-
-+
-+static void debug(const char *str, void *data)
++static void bt_connect_reply(DBusPendingCall *call, gpointer user_data)
 +{
-+	DBG("%s: %s\n", (const char *) data, str);
++	struct cb_data *cbd =3D user_data;
++	dundee_device_connect_cb_t cb =3D cbd->cb;
++	struct bluetooth_device *bt =3D cbd->user;
++	DBusMessage *reply;
++	DBusError derr;
++	int fd;
++
++	DBG("%p", bt);
++
++	reply =3D dbus_pending_call_steal_reply(call);
++
++	bt->call =3D NULL;
++
++	dbus_error_init(&derr);
++	if (dbus_set_error_from_message(&derr, reply)) {
++		DBG("Connection to bt serial returned with error: %s, %s",
++						derr.name, derr.message);
++
++		dbus_error_free(&derr);
++
++		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
++		goto done;
++	}
++
++	dbus_message_get_args(reply, NULL, DBUS_TYPE_UNIX_FD, &fd,
++			DBUS_TYPE_INVALID);
++
++	DBG("%p fd %d", bt, fd);
++
++	if (fd < 0) {
++		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
++		goto done;
++	}
++
++	CALLBACK_WITH_SUCCESS(cb, fd, cbd->data);
++
++done:
++	dbus_message_unref(reply);
++	g_free(cbd);
 +}
 +
-+static void ppp_connect(const char *iface, const char *local, const char *=
-peer,
-+			const char *dns1, const char *dns2,
-+			gpointer user_data)
++static void bt_connect(struct dundee_device *device,
++			dundee_device_connect_cb_t cb, void *data)
 +{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct dundee_device *device =3D user_data;
-+	const char *dns[3] =3D { dns1, dns2, 0 };
++	struct bluetooth_device *bt =3D dundee_device_get_data(device);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char *profile =3D "dun";
++	int status;
 +
-+	DBG("%p", device);
-+	DBG("Network Device: %s\n", iface);
-+	DBG("IP Address: %s\n", local);
-+	DBG("Peer IP Address: %s\n", peer);
-+	DBG("Primary DNS Server: %s\n", dns1);
-+	DBG("Secondary DNS Server: %s\n", dns2);
++	DBG("%p", bt);
 +
-+	g_free(device->settings.interface);
-+	device->settings.interface =3D g_strdup(iface);
-+	if (device->settings.interface =3D=3D NULL)
-+		goto err;
++	cbd->user =3D bt;
 +
-+	g_free(device->settings.ip);
-+	device->settings.ip =3D g_strdup(local);
-+	if (device->settings.ip =3D=3D NULL)
-+		goto err;
-+
-+	g_strfreev(device->settings.nameservers);
-+	device->settings.nameservers =3D g_strdupv((gchar **)dns);
-+	if (device->settings.nameservers =3D=3D NULL)
-+		goto err;
-+
-+	__ofono_dbus_pending_reply(&device->pending,
-+			dbus_message_new_method_return(device->pending));
-+	device->pending =3D NULL;
-+
-+	device->active =3D TRUE;
-+
-+	settings_changed(device);
-+	ofono_dbus_signal_property_changed(conn, device->path,
-+					DUNDEE_DEVICE_INTERFACE, "Active",
-+					DBUS_TYPE_BOOLEAN, &device->active);
-+
-+	return;
-+
-+err:
-+	g_free(device->settings.interface);
-+	g_free(device->settings.ip);
-+	g_strfreev(device->settings.nameservers);
-+	device->settings.interface =3D NULL;
-+	device->settings.ip =3D NULL;
-+	device->settings.nameservers =3D NULL;
-+
-+	__ofono_dbus_pending_reply(&device->pending,
-+				__dundee_error_failed(device->pending));
-+	device->pending =3D NULL;
-+}
-+
-+static void disconnect_callback(const struct dundee_error *error, void *da=
-ta)
-+{
-+	struct dundee_device *device =3D data;
-+
-+	DBG("%p", device);
-+
-+	g_at_chat_unref(device->chat);
-+	device->chat =3D NULL;
-+
-+	if (device->pending =3D=3D NULL)
++	status =3D bluetooth_send_with_reply(bt->path,
++					BLUEZ_SERIAL_INTERFACE, "ConnectFD",
++					&bt->call, bt_connect_reply,
++					cbd, NULL, DBUS_TIMEOUT,
++					DBUS_TYPE_STRING, &profile,
++					DBUS_TYPE_INVALID);
++	if (status =3D=3D 0)
 +		return;
 +
-+	if (error->type !=3D DUNDEE_ERROR_TYPE_NO_ERROR) {
-+		__ofono_dbus_pending_reply(&device->pending,
-+					__dundee_error_failed(device->pending));
-+		goto out;
-+	}
++	g_free(cbd);
 +
-+	__ofono_dbus_pending_reply(&device->pending,
-+		dbus_message_new_method_return(device->pending));
-+
-+out:
-+	device->pending =3D NULL;
++	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
 +}
 +
-+static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
-ta)
++struct dundee_device_driver bluetooth_driver =3D {
++	.name =3D "bluetooth",
++	.connect =3D bt_connect,
++	.disconnect =3D bt_disconnect,
++};
++
++static int bt_probe(const char *path, const char *dev_addr,
++				const char *adapter_addr, const char *alias)
 +{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct dundee_device *device =3D user_data;
++	struct bluetooth_device *bt;
++	struct dundee_device *device;
++	char buf[256];
 +
-+	DBG("%p", device);
-+	DBG("PPP Link down: %d\n", reason);
++	DBG("");
 +
-+	g_at_ppp_unref(device->ppp);
-+	device->ppp =3D NULL;
++	/* We already have this device in our hash, ignore */
++	if (g_hash_table_lookup(bluetooth_hash, path) !=3D NULL)
++		return -EALREADY;
 +
-+	g_at_chat_resume(device->chat);
++	ofono_info("Using device: %s, devaddr: %s, adapter: %s",
++			path, dev_addr, adapter_addr);
 +
-+	g_free(device->settings.interface);
-+	g_free(device->settings.ip);
-+	g_strfreev(device->settings.nameservers);
-+	device->settings.interface =3D NULL;
-+	device->settings.ip =3D NULL;
-+	device->settings.nameservers =3D NULL;
++	strcpy(buf, "dun/");
++	bluetooth_create_path(dev_addr, adapter_addr, buf + 4, sizeof(buf) - 4);
 +
-+	device->active =3D FALSE;
++	bt =3D g_try_new0(struct bluetooth_device, 1);
++	if (bt =3D=3D NULL)
++		return -ENOMEM;
 +
-+	settings_changed(device);
-+	ofono_dbus_signal_property_changed(conn, device->path,
-+					DUNDEE_DEVICE_INTERFACE, "Active",
-+					DBUS_TYPE_BOOLEAN, &device->active);
++	DBG("%p", bt);
 +
-+	device->driver->disconnect(device, disconnect_callback, device);
-+}
++	device =3D dundee_device_create(&bluetooth_driver);
++	if (device =3D=3D NULL)
++		goto free;
 +
-+static void dial_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct dundee_device *device =3D user_data;
-+	GAtIO *io;
++	dundee_device_set_data(device, bt);
 +
-+	if (!ok) {
-+		DBG("Unable to define context\n");
-+		goto err;
++	bt->path =3D g_strdup(path);
++	if (bt->path =3D=3D NULL)
++		goto free;
++
++	bt->address =3D g_strdup(dev_addr);
++	if (bt->address =3D=3D NULL)
++		goto free;
++
++	bt->name =3D g_strdup(alias);
++	if (bt->name =3D=3D NULL)
++		goto free;
++
++	dundee_device_set_name(device, bt->name);
++
++	if (dundee_device_register(device) < 0) {
++		g_free(device);
++		goto free;
 +	}
 +
-+	/* get the data IO channel */
-+	io =3D g_at_chat_get_io(device->chat);
++	bt->device =3D device;
++	g_hash_table_insert(bluetooth_hash, g_strdup(path), bt);
 +
-+	/*
-+	 * shutdown gatchat or else it tries to take all the input
-+	 * from the modem and does not let PPP get it.
-+	 */
-+	g_at_chat_suspend(device->chat);
++	return 0;
 +
-+	/* open ppp */
-+	device->ppp =3D g_at_ppp_new();
-+	if (device->ppp =3D=3D NULL) {
-+		DBG("Unable to create PPP object\n");
-+		goto err;
-+	}
-+	g_at_ppp_set_debug(device->ppp, debug, "PPP");
++free:
++	g_free(bt->path);
++	g_free(bt->address);
++	g_free(bt->name);
++	g_free(bt);
 +
-+	/* set connect and disconnect callbacks */
-+	g_at_ppp_set_connect_function(device->ppp, ppp_connect, device);
-+	g_at_ppp_set_disconnect_function(device->ppp, ppp_disconnect, device);
-+
-+	/* open the ppp connection */
-+	g_at_ppp_open(device->ppp, io);
-+
-+	return;
-+
-+err:
-+	__ofono_dbus_pending_reply(&device->pending,
-+				__dundee_error_failed(device->pending));
-+	device->pending =3D NULL;
++	return -ENOMEM;
 +}
 +
-+static int device_dial_setup(struct dundee_device *device, int fd)
++static void destroy_device(gpointer user)
 +{
-+	GAtSyntax *syntax;
-+	GIOChannel *io;
++	struct bluetooth_device *bt =3D user;
 +
-+	io =3D g_io_channel_unix_new(fd);
-+	if (io =3D=3D NULL)
-+		return -EIO;
++	DBG("%p", bt);
 +
-+	syntax =3D g_at_syntax_new_gsm_permissive();
-+	device->chat =3D g_at_chat_new(io, syntax);
-+	g_io_channel_unref(io);
-+	g_at_syntax_unref(syntax);
++	if (bt->call !=3D NULL)
++		dbus_pending_call_cancel(bt->call);
 +
-+	if (device->chat =3D=3D NULL)
-+		return -EIO;
++	g_free(bt->path);
++	g_free(bt->address);
 +
-+	g_at_chat_set_debug(device->chat, debug, "Control");
++	g_free(bt);
++}
 +
-+	g_at_chat_send(device->chat, "ATD*99#", none_prefix, dial_cb,
-+			device, NULL);
++static gboolean bt_remove_device(gpointer key, gpointer value,
++					gpointer user_data)
++{
++	struct bluetooth_device *bt =3D value;
++	const char *path =3D key;
++	const char *prefix =3D user_data;
++
++	DBG("%p", bt);
++
++	if (prefix && g_str_has_prefix(path, prefix) =3D=3D FALSE)
++		return FALSE;
++
++	dundee_device_unregister(bt->device);
++
++	return TRUE;
++}
++
++static void bt_remove(const char *prefix)
++{
++	DBG("%s", prefix);
++
++	if (bluetooth_hash =3D=3D NULL)
++		return;
++
++	g_hash_table_foreach_remove(bluetooth_hash, bt_remove_device,
++							(gpointer) prefix);
++}
++
++static void bt_set_alias(const char *path, const char *alias)
++{
++	struct bluetooth_device *bt;
++
++	DBG("");
++
++	if (path =3D=3D NULL || alias =3D=3D NULL)
++		return;
++
++	bt =3D g_hash_table_lookup(bluetooth_hash, path);
++	if (bt =3D=3D NULL)
++		return;
++
++	g_free(bt->name);
++	bt->name =3D g_strdup(alias);
++
++	dundee_device_set_name(bt->device, bt->name);
++}
++
++static struct bluetooth_profile dun_profile =3D {
++	.name		=3D "dun_dt",
++	.probe		=3D bt_probe,
++	.remove		=3D bt_remove,
++	.set_alias	=3D bt_set_alias,
++};
++
++int __dundee_bluetooth_init(void)
++{
++	int err;
++
++	DBG("");
++
++	err =3D bluetooth_register_uuid(DUN_GW_UUID, &dun_profile);
++	if (err < 0)
++		return err;
++
++	bluetooth_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++						g_free, destroy_device);
 +
 +	return 0;
 +}
 +
-+static void connect_callback(const struct dundee_error *error,
-+				int fd, void *data)
++void  __dundee_bluetooth_cleanup(void)
 +{
-+	struct dundee_device *device =3D data;
-+	int err;
++	DBG("");
 +
-+	DBG("%p", device);
-+
-+	if (error->type !=3D DUNDEE_ERROR_TYPE_NO_ERROR)
-+		goto err;
-+
-+	err =3D device_dial_setup(device, fd);
-+	if (err < 0)
-+		goto err;
-+
-+	return;
-+
-+err:
-+	__ofono_dbus_pending_reply(&device->pending,
-+				__dundee_error_failed(device->pending));
-+	device->pending =3D NULL;
++	bluetooth_unregister_uuid(DUN_GW_UUID);
++	g_hash_table_destroy(bluetooth_hash);
 +}
+diff --git a/dundee/dundee.h b/dundee/dundee.h
+index 7104531..8866007 100644
+--- a/dundee/dundee.h
++++ b/dundee/dundee.h
+@@ -139,3 +139,6 @@ void __dundee_device_foreach(dundee_device_foreach_func=
+ cb, void *userdata);
+ const char *__dundee_device_get_path(struct dundee_device *device);
+ void __dundee_device_append_properties(struct dundee_device *device,
+ 					DBusMessageIter *dict);
 +
- static DBusMessage *set_property_active(struct dundee_device *device,
- 					DBusMessage *msg,
- 					DBusMessageIter *var)
-@@ -184,9 +420,14 @@ static DBusMessage *set_property_active(struct dundee_=
-device *device,
++int __dundee_bluetooth_init(void);
++void  __dundee_bluetooth_cleanup(void);
+diff --git a/dundee/main.c b/dundee/main.c
+index 2d3d75e..5e2da80 100644
+--- a/dundee/main.c
++++ b/dundee/main.c
+@@ -234,9 +234,11 @@ int main(int argc, char **argv)
  =
 
- 	dbus_message_iter_get_basic(var, &active);
+ 	__dundee_manager_init();
+ 	__dundee_device_init();
++	__dundee_bluetooth_init();
  =
 
--	device->active =3D active;
-+	device->pending =3D dbus_message_ref(msg);
-+
-+	if (active)
-+		device->driver->connect(device, connect_callback, device);
-+	else if (device->ppp)
-+		g_at_ppp_shutdown(device->ppp);
+ 	g_main_loop_run(event_loop);
  =
 
--	return g_dbus_create_reply(msg, DBUS_TYPE_INVALID);
-+	return NULL;
- }
++	__dundee_bluetooth_cleanup();
+ 	__dundee_device_cleanup();
+ 	__dundee_manager_cleanup();
  =
 
- static DBusMessage *device_set_property(DBusConnection *conn,
-@@ -292,6 +533,15 @@ static void destroy_device(gpointer user)
- {
- 	struct dundee_device *device =3D user;
- =
-
-+	if (device->chat !=3D NULL)
-+		g_at_chat_unref(device->chat);
-+
-+	if (device->ppp !=3D NULL)
-+		g_at_ppp_unref(device->ppp);
-+
-+	if (device->pending)
-+		dbus_message_unref(device->pending);
-+
- 	g_free(device->settings.interface);
- 	g_free(device->settings.ip);
- 	g_strfreev(device->settings.nameservers);
 -- =
 
 1.7.10.130.g36e6c
 
 
---===============5678753650658268236==--
+--===============6653889545494580722==--
 
