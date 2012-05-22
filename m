@@ -1,386 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============6653889545494580722=="
+Content-Type: multipart/mixed; boundary="===============2661125304333327493=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v7 16/16] dundee: Add Bluetooth DUN driver
-Date: Tue, 22 May 2012 18:33:24 +0200
-Message-ID: <1337704404-5260-17-git-send-email-wagi@monom.org>
-In-Reply-To: <1337704404-5260-1-git-send-email-wagi@monom.org>
+From: Gustavo Sverzut Barbieri <barbieri@profusion.mobi>
+Subject: Re: [HEADS UP] vim users
+Date: Tue, 22 May 2012 18:36:01 +0000
+Message-ID: <CAPdpN3BAmTtdtOaKj9OTbA53THPRubArGS3h49htk-5YJYTCMQ@mail.gmail.com>
+In-Reply-To: <CAMOw1v5cNQ9csPn7k6k7g2v+YdRdZq5-MVHeVfHH+bLzA6qd0Q@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6653889545494580722==
+--===============2661125304333327493==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+On Tue, May 22, 2012 at 12:38 PM, Lucas De Marchi
+<lucas.demarchi@profusion.mobi> wrote:
+>
+> Hey,
+>
+> As I sent previously to BlueZ mailing list, the patches for d-bus
+> introspection exposes a bug in vim c syntax highlight. There's already
+> a fix for that:
+> https://groups.google.com/forum/#!msg/vim_dev/_IL5jM1-t_w/D-vIwZM2RfwJ
+>
+> I'm not sure when there will be a new version, so I'm attaching to
+> this email the fixed c.vim file. Replace
+> /usr/share/vim/vim73/syntax/c.vim with this one and highlight will be
+> fixed.
 
----
- Makefile.am        |    6 +-
- dundee/bluetooth.c |  290 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- dundee/dundee.h    |    3 +
- dundee/main.c      |    2 +
- 4 files changed, 298 insertions(+), 3 deletions(-)
- create mode 100644 dundee/bluetooth.c
+this vim crap is seriously b0rken. Just change to emacs, and start to
+properly align your parenthesis contents ;-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 19261ce..19844d9 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -687,10 +687,10 @@ if DUNDEE
- =
-
- sbin_PROGRAMS +=3D dundee/dundee
- =
-
--dundee_dundee_SOURCES =3D $(gdbus_sources) $(gatchat_sources) \
--			src/log.c src/dbus.c \
-+dundee_dundee_SOURCES =3D $(gdbus_sources) $(gatchat_sources) $(btio_sourc=
-es) \
-+			src/log.c src/dbus.c plugins/bluetooth.c \
- 			dundee/dundee.h dundee/main.c dundee/dbus.c \
--			dundee/manager.c dundee/device.c
-+			dundee/manager.c dundee/device.c dundee/bluetooth.c
- =
-
- dundee_dundee_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_L=
-IBS@ -ldl
- =
-
-diff --git a/dundee/bluetooth.c b/dundee/bluetooth.c
-new file mode 100644
-index 0000000..e2e2bca
---- /dev/null
-+++ b/dundee/bluetooth.c
-@@ -0,0 +1,290 @@
-+/*
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2012  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2012  BMW Car IT GmbH. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <fcntl.h>
-+#include <string.h>
-+#include <errno.h>
-+
-+#include <glib.h>
-+
-+#include "plugins/bluetooth.h"
-+
-+#include "dundee.h"
-+
-+static GHashTable *bluetooth_hash;
-+
-+struct bluetooth_device {
-+	struct dundee_device *device;
-+
-+	char *path;
-+	char *address;
-+	char *name;
-+
-+	DBusPendingCall *call;
-+};
-+
-+static void bt_disconnect(struct dundee_device *device,
-+				dundee_device_disconnect_cb_t cb, void *data)
-+{
-+	struct bluetooth_device *bt =3D dundee_device_get_data(device);
-+
-+	DBG("%p", bt);
-+
-+	CALLBACK_WITH_SUCCESS(cb, data);
-+}
-+
-+static void bt_connect_reply(DBusPendingCall *call, gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	dundee_device_connect_cb_t cb =3D cbd->cb;
-+	struct bluetooth_device *bt =3D cbd->user;
-+	DBusMessage *reply;
-+	DBusError derr;
-+	int fd;
-+
-+	DBG("%p", bt);
-+
-+	reply =3D dbus_pending_call_steal_reply(call);
-+
-+	bt->call =3D NULL;
-+
-+	dbus_error_init(&derr);
-+	if (dbus_set_error_from_message(&derr, reply)) {
-+		DBG("Connection to bt serial returned with error: %s, %s",
-+						derr.name, derr.message);
-+
-+		dbus_error_free(&derr);
-+
-+		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-+		goto done;
-+	}
-+
-+	dbus_message_get_args(reply, NULL, DBUS_TYPE_UNIX_FD, &fd,
-+			DBUS_TYPE_INVALID);
-+
-+	DBG("%p fd %d", bt, fd);
-+
-+	if (fd < 0) {
-+		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-+		goto done;
-+	}
-+
-+	CALLBACK_WITH_SUCCESS(cb, fd, cbd->data);
-+
-+done:
-+	dbus_message_unref(reply);
-+	g_free(cbd);
-+}
-+
-+static void bt_connect(struct dundee_device *device,
-+			dundee_device_connect_cb_t cb, void *data)
-+{
-+	struct bluetooth_device *bt =3D dundee_device_get_data(device);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char *profile =3D "dun";
-+	int status;
-+
-+	DBG("%p", bt);
-+
-+	cbd->user =3D bt;
-+
-+	status =3D bluetooth_send_with_reply(bt->path,
-+					BLUEZ_SERIAL_INTERFACE, "ConnectFD",
-+					&bt->call, bt_connect_reply,
-+					cbd, NULL, DBUS_TIMEOUT,
-+					DBUS_TYPE_STRING, &profile,
-+					DBUS_TYPE_INVALID);
-+	if (status =3D=3D 0)
-+		return;
-+
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-+}
-+
-+struct dundee_device_driver bluetooth_driver =3D {
-+	.name =3D "bluetooth",
-+	.connect =3D bt_connect,
-+	.disconnect =3D bt_disconnect,
-+};
-+
-+static int bt_probe(const char *path, const char *dev_addr,
-+				const char *adapter_addr, const char *alias)
-+{
-+	struct bluetooth_device *bt;
-+	struct dundee_device *device;
-+	char buf[256];
-+
-+	DBG("");
-+
-+	/* We already have this device in our hash, ignore */
-+	if (g_hash_table_lookup(bluetooth_hash, path) !=3D NULL)
-+		return -EALREADY;
-+
-+	ofono_info("Using device: %s, devaddr: %s, adapter: %s",
-+			path, dev_addr, adapter_addr);
-+
-+	strcpy(buf, "dun/");
-+	bluetooth_create_path(dev_addr, adapter_addr, buf + 4, sizeof(buf) - 4);
-+
-+	bt =3D g_try_new0(struct bluetooth_device, 1);
-+	if (bt =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	DBG("%p", bt);
-+
-+	device =3D dundee_device_create(&bluetooth_driver);
-+	if (device =3D=3D NULL)
-+		goto free;
-+
-+	dundee_device_set_data(device, bt);
-+
-+	bt->path =3D g_strdup(path);
-+	if (bt->path =3D=3D NULL)
-+		goto free;
-+
-+	bt->address =3D g_strdup(dev_addr);
-+	if (bt->address =3D=3D NULL)
-+		goto free;
-+
-+	bt->name =3D g_strdup(alias);
-+	if (bt->name =3D=3D NULL)
-+		goto free;
-+
-+	dundee_device_set_name(device, bt->name);
-+
-+	if (dundee_device_register(device) < 0) {
-+		g_free(device);
-+		goto free;
-+	}
-+
-+	bt->device =3D device;
-+	g_hash_table_insert(bluetooth_hash, g_strdup(path), bt);
-+
-+	return 0;
-+
-+free:
-+	g_free(bt->path);
-+	g_free(bt->address);
-+	g_free(bt->name);
-+	g_free(bt);
-+
-+	return -ENOMEM;
-+}
-+
-+static void destroy_device(gpointer user)
-+{
-+	struct bluetooth_device *bt =3D user;
-+
-+	DBG("%p", bt);
-+
-+	if (bt->call !=3D NULL)
-+		dbus_pending_call_cancel(bt->call);
-+
-+	g_free(bt->path);
-+	g_free(bt->address);
-+
-+	g_free(bt);
-+}
-+
-+static gboolean bt_remove_device(gpointer key, gpointer value,
-+					gpointer user_data)
-+{
-+	struct bluetooth_device *bt =3D value;
-+	const char *path =3D key;
-+	const char *prefix =3D user_data;
-+
-+	DBG("%p", bt);
-+
-+	if (prefix && g_str_has_prefix(path, prefix) =3D=3D FALSE)
-+		return FALSE;
-+
-+	dundee_device_unregister(bt->device);
-+
-+	return TRUE;
-+}
-+
-+static void bt_remove(const char *prefix)
-+{
-+	DBG("%s", prefix);
-+
-+	if (bluetooth_hash =3D=3D NULL)
-+		return;
-+
-+	g_hash_table_foreach_remove(bluetooth_hash, bt_remove_device,
-+							(gpointer) prefix);
-+}
-+
-+static void bt_set_alias(const char *path, const char *alias)
-+{
-+	struct bluetooth_device *bt;
-+
-+	DBG("");
-+
-+	if (path =3D=3D NULL || alias =3D=3D NULL)
-+		return;
-+
-+	bt =3D g_hash_table_lookup(bluetooth_hash, path);
-+	if (bt =3D=3D NULL)
-+		return;
-+
-+	g_free(bt->name);
-+	bt->name =3D g_strdup(alias);
-+
-+	dundee_device_set_name(bt->device, bt->name);
-+}
-+
-+static struct bluetooth_profile dun_profile =3D {
-+	.name		=3D "dun_dt",
-+	.probe		=3D bt_probe,
-+	.remove		=3D bt_remove,
-+	.set_alias	=3D bt_set_alias,
-+};
-+
-+int __dundee_bluetooth_init(void)
-+{
-+	int err;
-+
-+	DBG("");
-+
-+	err =3D bluetooth_register_uuid(DUN_GW_UUID, &dun_profile);
-+	if (err < 0)
-+		return err;
-+
-+	bluetooth_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+						g_free, destroy_device);
-+
-+	return 0;
-+}
-+
-+void  __dundee_bluetooth_cleanup(void)
-+{
-+	DBG("");
-+
-+	bluetooth_unregister_uuid(DUN_GW_UUID);
-+	g_hash_table_destroy(bluetooth_hash);
-+}
-diff --git a/dundee/dundee.h b/dundee/dundee.h
-index 7104531..8866007 100644
---- a/dundee/dundee.h
-+++ b/dundee/dundee.h
-@@ -139,3 +139,6 @@ void __dundee_device_foreach(dundee_device_foreach_func=
- cb, void *userdata);
- const char *__dundee_device_get_path(struct dundee_device *device);
- void __dundee_device_append_properties(struct dundee_device *device,
- 					DBusMessageIter *dict);
-+
-+int __dundee_bluetooth_init(void);
-+void  __dundee_bluetooth_cleanup(void);
-diff --git a/dundee/main.c b/dundee/main.c
-index 2d3d75e..5e2da80 100644
---- a/dundee/main.c
-+++ b/dundee/main.c
-@@ -234,9 +234,11 @@ int main(int argc, char **argv)
- =
-
- 	__dundee_manager_init();
- 	__dundee_device_init();
-+	__dundee_bluetooth_init();
- =
-
- 	g_main_loop_run(event_loop);
- =
-
-+	__dundee_bluetooth_cleanup();
- 	__dundee_device_cleanup();
- 	__dundee_manager_cleanup();
- =
-
--- =
-
-1.7.10.130.g36e6c
+</endtrolljoke>
 
 
---===============6653889545494580722==--
+--
+Gustavo Sverzut Barbieri
+http://profusion.mobi embedded systems
+--------------------------------------
+MSN: barbieri(a)gmail.com
+Skype: gsbarbieri
+Mobile: +55 (19) 9225-2202
+
+--===============2661125304333327493==--
 
