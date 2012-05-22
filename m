@@ -1,203 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============7818315040986983731=="
+Content-Type: multipart/mixed; boundary="===============3912612071434344082=="
 MIME-Version: 1.0
-From: Jens Rehsack <jr_extern@vfnet.de>
-Subject: Re: [PATCH] Add WSP_VALUE_TYPE_TEXT support in
- wsp_decode_application_id()
-Date: Tue, 22 May 2012 10:09:41 +0200
-Message-ID: <4FBB49C5.70508@vfnet.de>
-In-Reply-To: <4FBA6C04.1060303@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH] test: Add timeout to be compliant with GCF
+Date: Tue, 22 May 2012 14:49:16 +0200
+Message-ID: <1337690956-3199-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7818315040986983731==
+--===============3912612071434344082==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 21.05.2012 18:23, Ronald Tessier wrote:
-> Hi Jens,
-> =
+With some GCF test cases, default python script timeout
+is too short to pass the tests.
+---
+ test/private-chat |    2 +-
+ test/swap-calls   |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-> On 05/21/2012 12:54 PM, Jens Rehsack wrote:
->> From: Jens Rehsack<sno@NetBSD.org>
->>
->> ---
->>   src/wsputil.c |   43 ++++++++++++++++++++++++++-----------------
->>   1 Datei ge=C3=A4ndert, 26 Zeilen hinzugef=C3=BCgt(+), 17 Zeilen entfer=
-nt(-)
->>
->> diff --git a/src/wsputil.c b/src/wsputil.c
->> index 1b2b2b7..5611ed2 100644
->> --- a/src/wsputil.c
->> +++ b/src/wsputil.c
->> @@ -486,28 +486,37 @@ gboolean wsp_decode_application_id(struct
->> wsp_header_iter *iter,
->>                               const void **out_value)
->>   {
->>       const unsigned char *pdu_val =3D wsp_header_iter_get_val(iter);
->> -    unsigned int val;
->> -    unsigned int val_len;
->> -    unsigned int i;
->>
->> -    /*
->> -     * Well-known field values MUST be encoded using the
->> -     * compact binary formats
->> -     */
->> -    if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_SHORT)=
- {
->> -        val =3D *pdu_val&  0x7f;
->> +    if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_TEXT) {
->> +        wsp_header_iter_get_val_len(iter);
->> +
->> +        if (out_value)
->> +            *out_value =3D pdu_val;
-> =
+diff --git a/test/private-chat b/test/private-chat
+index 4938a25..e7c8026 100755
+--- a/test/private-chat
++++ b/test/private-chat
+@@ -14,7 +14,7 @@ path =3D modems[0][0]
+ manager =3D dbus.Interface(bus.get_object('org.ofono', path),
+ 						'org.ofono.VoiceCallManager')
+ =
 
-> Why not just returning if the type is TEXT ?
-> Something like :
-> =
+-mpty =3D manager.PrivateChat(sys.argv[1])
++mpty =3D manager.PrivateChat(sys.argv[1], timeout=3D100)
+ =
 
->     const unsigned char *pdu_val =3D wsp_header_iter_get_val(iter);
->     unsigned int val;
->     unsigned int val_len;
->     unsigned int i;
-> =
+ for path in mpty:
+ 	print path
+diff --git a/test/swap-calls b/test/swap-calls
+index 4996e0c..eeb257b 100755
+--- a/test/swap-calls
++++ b/test/swap-calls
+@@ -17,4 +17,4 @@ if (len(sys.argv) =3D=3D 2):
+ manager =3D dbus.Interface(bus.get_object('org.ofono', modem),
+ 						'org.ofono.VoiceCallManager')
+ =
 
-> +    if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_TEXT) {
-> +        if (out_value)
-> +            *out_value =3D pdu_val;
-> +
-> +        return TRUE;
-> +    }
-> +
->     /*
->      * Well-known field values MUST be encoded using the
->      * compact binary formats
->      */
->     if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_SHORT) {
-> =
+-manager.SwapCalls()
++manager.SwapCalls(timeout=3D100)
+-- =
+
+1.7.5.4
 
 
-I do not like several returns in a longer subroutine. The way
-you format code makes code longer - fair enough, but for me to
-long to introduce early return statements.
-
-> I think it does the same thing but more readable (you don't break the 80
-> col. limit).
-
-I'm fine with your way to do it, too. But I wouldn't want my name being
-assigned with it (because of the early return ...). I strongly
-distinguish between readable and understandable, and I prefer the
-understandable way.
-
-How about:
-
-diff --git a/src/wsputil.c b/src/wsputil.c
-index 1b2b2b7..385acaa 100644
---- a/src/wsputil.c
-+++ b/src/wsputil.c
-@@ -490,13 +490,26 @@ gboolean wsp_decode_application_id(struct
-wsp_header_iter *iter,
-        unsigned int val_len;
-        unsigned int i;
-
-+       switch (wsp_header_iter_get_val_type(iter)) {
-+       case WSP_VALUE_TYPE_TEXT:
-+               if (out_value)
-+                       *out_value =3D pdu_val;
-+
-+               break;
-+
-        /*
-         * Well-known field values MUST be encoded using the
-         * compact binary formats
-         */
--       if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_SHORT)=
- {
-+       case WSP_VALUE_TYPE_SHORT:
-                val =3D *pdu_val & 0x7f;
--       } else {
-+
-+               if (out_value)
-+                       *out_value =3D get_text_entry(val, app_id);
-+
-+               break;
-+
-+       default:
-                val_len =3D wsp_header_iter_get_val_len(iter);
-
-                if (val_len > 2)
-@@ -504,10 +517,13 @@ gboolean wsp_decode_application_id(struct
-wsp_header_iter *iter,
-
-                for (i =3D 0, val =3D 0; i < val_len && i < sizeof(val); i+=
-+)
-                        val =3D (val << 8) | pdu_val[i];
-+
-+               if (out_value)
-+                       *out_value =3D get_text_entry(val, app_id);
-+
-+               break;
-        }
-
--       if (out_value)
--               *out_value =3D get_text_entry(val, app_id);
-
-        return TRUE;
- }
-
-
-> Best regards,
-> =
-
-> Ronald
-
-Best regards,
-Jens
-
->>       } else {
->> -        val_len =3D wsp_header_iter_get_val_len(iter);
->> +        unsigned int val;
->>
->> -        if (val_len>  2)
->> -            return FALSE;
->> +        /*
->> +         * Well-known field values MUST be encoded using the
->> +         * compact binary formats
->> +         */
->> +        if (wsp_header_iter_get_val_type(iter) =3D=3D
->> WSP_VALUE_TYPE_SHORT) {
->> +            val =3D *pdu_val&  0x7f;
->> +        } else  {
->> +            unsigned int val_len;
->> +            unsigned int i;
->>
->> -        for (i =3D 0, val =3D 0; i<  val_len&&  i<  sizeof(val); i++)
->> -            val =3D (val<<  8) | pdu_val[i];
->> -    }
->> +            val_len =3D wsp_header_iter_get_val_len(iter);
->>
->> -    if (out_value)
->> -        *out_value =3D get_text_entry(val, app_id);
->> +            if (val_len>  2)
->> +                return FALSE;
->> +
->> +            for (i =3D 0, val =3D 0; i<  val_len&&  i<  sizeof(val); i+=
-+)
->> +                val =3D (val<<  8) | pdu_val[i];
->> +        }
->> +
->> +        if (out_value)
->> +            *out_value =3D get_text_entry(val, app_id);
->> +    }
->>
->>       return TRUE;
->>   }
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
-
-
---===============7818315040986983731==--
+--===============3912612071434344082==--
 
