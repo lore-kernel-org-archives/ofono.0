@@ -1,53 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============5048152870771142562=="
+Content-Type: multipart/mixed; boundary="===============3032027214701469163=="
 MIME-Version: 1.0
-From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: Re: [PATCH 3/3] doc: Add new D-Bus methods to service interface
-Date: Tue, 22 May 2012 16:03:24 +0200
-Message-ID: <4FBB9CAC.7090401@linux.intel.com>
-In-Reply-To: <CAMOw1v7m-RrXE26cA0ggdT3VW3mF8XbJkuGYu8Zd2Ak64X7-wA@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] test: Add timeout to be compliant with GCF
+Date: Mon, 21 May 2012 20:54:37 -0500
+Message-ID: <4FBAF1DD.7020108@gmail.com>
+In-Reply-To: <1337690956-3199-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5048152870771142562==
+--===============3032027214701469163==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 05/22/2012 03:22 PM, Lucas De Marchi wrote:
-> On Mon, May 21, 2012 at 12:59 PM, Ronald Tessier
-> <ronald.tessier@linux.intel.com>  wrote:
->> ---
->>   doc/service-api.txt |   20 ++++++++++++++++++++
->>   1 files changed, 20 insertions(+), 0 deletions(-)
->>
->> diff --git a/doc/service-api.txt b/doc/service-api.txt
->> index 36e1161..02396ff 100644
->> --- a/doc/service-api.txt
->> +++ b/doc/service-api.txt
->> @@ -63,6 +63,26 @@ Methods              array{object,dict} GetMessages()
->>                                 [service].Error.PermanentContentNotAccep=
-ted
->>                                 [service].Error.PermanentLackOfPrepaid
->>
->> +               void DeleteMessages(array{object})
->> +
->> +                       Delete an array of message objects that represen=
-ts
->> +                       the currently stored messages to delete.
->> +
->> +                       Possible Errors: [service].Error.InvalidArguments
->> +
->> +               void DeleteConversation(string number)
->
->
-> Could we mark these as [TODO], so we don't  get confused while reading
-> the doc + code and realizing they don't match?
+Hi Guillaume,
+
+On 05/22/2012 07:49 AM, Guillaume Zajac wrote:
+> With some GCF test cases, default python script timeout
+> is too short to pass the tests.
+> ---
+>   test/private-chat |    2 +-
+>   test/swap-calls   |    2 +-
+>   2 files changed, 2 insertions(+), 2 deletions(-)
 >
 
-Sure, I re-sent a set of patches with the [TODO].
-Thanks for the remark,
+Patch has been applied, thanks.
 
-Ronald
+Regards,
+-Denis
 
---===============5048152870771142562==--
+
+--===============3032027214701469163==--
 
