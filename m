@@ -1,229 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============1755013745603302262=="
+Content-Type: multipart/mixed; boundary="===============2824476410918523918=="
 MIME-Version: 1.0
-From: pablo@gnumonks.org
-Subject: [PATCH] wavecom: add support for Wavecom Q2403/Q2686 modems
-Date: Tue, 29 May 2012 04:14:27 +0200
-Message-ID: <1338257667-24281-3-git-send-email-pablo@gnumonks.org>
-In-Reply-To: <1338257667-24281-1-git-send-email-pablo@gnumonks.org>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH 0/6] Return specific ofono errors after SS transaction 
+Date: Tue, 29 May 2012 18:38:31 +0200
+Message-ID: <1338309517-14808-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1755013745603302262==
+--===============2824476410918523918==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pablo Neira Ayuso <pablo@gnumonks.org>
+As pointed by the first GCF tests, the user indication does not distinguish=
+ the type of error occured after an SS request.
+Actually, the ofono error type .Failed is returned whatever is the telephon=
+y error.
+In order to return more specific ofono error types, I introduced an utility=
+ function to map the telephony errors into ofono errors.
+I extended also the ofono error types to match more closely with the teleph=
+ony errors. =
 
-This patch extends the existing wavecom plugin to include the new
-wavecom 2xxx plugin.
----
- plugins/udev.c    |   15 ++++++++++++
- plugins/wavecom.c |   77 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++++-----
- 2 files changed, 86 insertions(+), 6 deletions(-)
 
-diff --git a/plugins/udev.c b/plugins/udev.c
-index 8cb87a5..6e3205e 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -167,6 +167,19 @@ static void add_calypso(struct ofono_modem *modem,
- 	ofono_modem_register(modem);
- }
- =
+Philippe Nunes (6):
+  common: Fix typos in error strings
+  dbus: Add new error types
+  error-mapping: Add function to map telephony errors into ofono error
+    types
+  build: Add error-mapping utility to build
+  Return specific ofono errors according telephony errors
+  Extend the list of ofono error types returned by the method initiate
 
-+static void add_wavecom_q2xxx(struct ofono_modem *modem,
-+					struct udev_device *udev_device)
-+{
-+	const char *devnode;
-+
-+	DBG("modem %p", modem);
-+
-+	devnode =3D udev_device_get_devnode(udev_device);
-+	ofono_modem_set_string(modem, "Device", devnode);
-+
-+	ofono_modem_register(modem);
-+}
-+
- static void add_tc65(struct ofono_modem *modem,
- 			struct udev_device *udev_device)
- {
-@@ -286,6 +299,8 @@ done:
- 		add_nokiacdma(modem, udev_device);
- 	else if (g_strcmp0(driver, "sim900") =3D=3D 0)
- 		add_sim900(modem, udev_device);
-+	else if (g_strcmp0(driver, "wavecom_q2xxx") =3D=3D 0)
-+		add_wavecom_q2xxx(modem, udev_device);
- }
- =
+ Makefile.am                       |    1 +
+ doc/supplementaryservices-api.txt |    6 +++
+ src/call-barring.c                |   11 ++++--
+ src/call-forwarding.c             |    6 ++-
+ src/call-settings.c               |   18 +++++----
+ src/common.c                      |   19 ++++-----
+ src/dbus.c                        |   13 +++++++
+ src/error-mapping.c               |   77 +++++++++++++++++++++++++++++++++=
+++++
+ src/error-mapping.h               |   25 ++++++++++++
+ src/ofono.h                       |    2 +
+ 10 files changed, 155 insertions(+), 23 deletions(-)
+ create mode 100644 src/error-mapping.c
+ create mode 100644 src/error-mapping.h
 
- static gboolean devpath_remove(gpointer key, gpointer value, gpointer user=
-_data)
-diff --git a/plugins/wavecom.c b/plugins/wavecom.c
-index 5d30f39..c8bd55b 100644
---- a/plugins/wavecom.c
-+++ b/plugins/wavecom.c
-@@ -66,7 +66,7 @@ static void wavecom_debug(const char *str, void *user_dat=
-a)
- 	ofono_info("%s%s", prefix, str);
- }
- =
-
--static int wavecom_enable(struct ofono_modem *modem)
-+static int wavecom_generic_enable(struct ofono_modem *modem, int vendor)
- {
- 	GAtChat *chat;
- 	GIOChannel *channel;
-@@ -104,6 +104,8 @@ static int wavecom_enable(struct ofono_modem *modem)
- 	syntax =3D g_at_syntax_new_gsm_permissive();
- =
-
- 	chat =3D g_at_chat_new(channel, syntax);
-+	if (vendor =3D=3D OFONO_VENDOR_WAVECOM_Q2XXX)
-+		g_at_chat_add_terminator(chat, "+CPIN: READY", -1, TRUE);
- 	g_at_syntax_unref(syntax);
- 	g_io_channel_unref(channel);
- =
-
-@@ -118,6 +120,16 @@ static int wavecom_enable(struct ofono_modem *modem)
- 	return 0;
- }
- =
-
-+static int wavecom_enable(struct ofono_modem *modem)
-+{
-+	return wavecom_generic_enable(modem, OFONO_VENDOR_WAVECOM);
-+}
-+
-+static int wavecom_q2xxx_enable(struct ofono_modem *modem)
-+{
-+	return wavecom_generic_enable(modem, OFONO_VENDOR_WAVECOM_Q2XXX);
-+}
-+
- static int wavecom_disable(struct ofono_modem *modem)
- {
- 	GAtChat *chat =3D ofono_modem_get_data(modem);
-@@ -131,18 +143,32 @@ static int wavecom_disable(struct ofono_modem *modem)
- 	return 0;
- }
- =
-
--static void wavecom_pre_sim(struct ofono_modem *modem)
-+static void wavecom_generic_pre_sim(struct ofono_modem *modem, int vendor)
- {
- 	GAtChat *chat =3D ofono_modem_get_data(modem);
-+	struct ofono_sim *sim;
- =
-
- 	DBG("%p", modem);
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", chat);
--	ofono_sim_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
-+	sim =3D ofono_sim_create(modem, vendor, "atmodem", chat);
-+	if (vendor =3D=3D OFONO_VENDOR_WAVECOM_Q2XXX)
-+		ofono_sim_inserted_notify(sim, TRUE);
-+
- 	ofono_voicecall_create(modem, 0, "atmodem", chat);
- }
- =
-
--static void wavecom_post_sim(struct ofono_modem *modem)
-+static void wavecom_pre_sim(struct ofono_modem *modem)
-+{
-+	wavecom_generic_pre_sim(modem, OFONO_VENDOR_WAVECOM);
-+}
-+
-+static void wavecom_q2xxx_pre_sim(struct ofono_modem *modem)
-+{
-+	wavecom_generic_pre_sim(modem, OFONO_VENDOR_WAVECOM_Q2XXX);
-+}
-+
-+static void wavecom_generic_post_sim(struct ofono_modem *modem, int vendor)
- {
- 	GAtChat *chat =3D ofono_modem_get_data(modem);
- 	struct ofono_message_waiting *mw;
-@@ -155,7 +181,8 @@ static void wavecom_post_sim(struct ofono_modem *modem)
- 	ofono_netreg_create(modem, 0, "atmodem", chat);
- 	ofono_call_meter_create(modem, 0, "atmodem", chat);
- 	ofono_call_barring_create(modem, 0, "atmodem", chat);
--	ofono_sms_create(modem, 0, "atmodem", chat);
-+	/* We have to specify the vendor to support AT+CPMS=3D? reply in Q2xxx */
-+	ofono_sms_create(modem, vendor, "atmodem", chat);
- 	ofono_phonebook_create(modem, 0, "atmodem", chat);
- =
-
- 	mw =3D ofono_message_waiting_create(modem);
-@@ -163,6 +190,16 @@ static void wavecom_post_sim(struct ofono_modem *modem)
- 		ofono_message_waiting_register(mw);
- }
- =
-
-+static void wavecom_post_sim(struct ofono_modem *modem)
-+{
-+	wavecom_generic_post_sim(modem, OFONO_VENDOR_WAVECOM);
-+}
-+
-+static void wavecom_q2xxx_post_sim(struct ofono_modem *modem)
-+{
-+	wavecom_generic_post_sim(modem, OFONO_VENDOR_WAVECOM_Q2XXX);
-+}
-+
- static struct ofono_modem_driver wavecom_driver =3D {
- 	.name		=3D "wavecom",
- 	.probe		=3D wavecom_probe,
-@@ -173,15 +210,43 @@ static struct ofono_modem_driver wavecom_driver =3D {
- 	.post_sim	=3D wavecom_post_sim,
- };
- =
-
-+static struct ofono_modem_driver wavecom_q2xxx_driver =3D {
-+	.name		=3D "wavecom_q2xxx",
-+	.probe		=3D wavecom_probe,
-+	.remove		=3D wavecom_remove,
-+	.enable		=3D wavecom_q2xxx_enable,
-+	.disable	=3D wavecom_disable,
-+	.pre_sim	=3D wavecom_q2xxx_pre_sim,
-+	.post_sim	=3D wavecom_q2xxx_post_sim,
-+};
-+
- static int wavecom_init(void)
- {
--	return ofono_modem_driver_register(&wavecom_driver);
-+	int ret;
-+
-+	ret =3D ofono_modem_driver_register(&wavecom_driver);
-+	if (ret < 0)
-+		goto err;
-+
-+	ret =3D ofono_modem_driver_register(&wavecom_q2xxx_driver);
-+	if (ret < 0)
-+		goto err_wavecom;
-+
-+	return ret;
-+
-+err_wavecom:
-+	ofono_modem_driver_unregister(&wavecom_driver);
-+err:
-+	return ret;
- }
- =
-
- static void wavecom_exit(void)
- {
- 	ofono_modem_driver_unregister(&wavecom_driver);
-+	ofono_modem_driver_unregister(&wavecom_q2xxx_driver);
- }
- =
-
- OFONO_PLUGIN_DEFINE(wavecom, "Wavecom driver", VERSION,
- 		OFONO_PLUGIN_PRIORITY_DEFAULT, wavecom_init, wavecom_exit)
-+OFONO_PLUGIN_DEFINE(wavecom_q2xxx, "Wavecom Q2XXX driver", VERSION,
-+		OFONO_PLUGIN_PRIORITY_DEFAULT, wavecom_init, wavecom_exit)
 -- =
 
-1.7.10
+1.7.9.5
 
 
---===============1755013745603302262==--
+--===============2824476410918523918==--
 
