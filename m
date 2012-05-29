@@ -1,130 +1,229 @@
-Content-Type: multipart/mixed; boundary="===============6208314879337315520=="
+Content-Type: multipart/mixed; boundary="===============1755013745603302262=="
 MIME-Version: 1.0
 From: pablo@gnumonks.org
-Subject: [PATCH] drivers: add support for Wavecom Q2403/Q2686 modems
-Date: Tue, 29 May 2012 04:14:26 +0200
-Message-ID: <1338257667-24281-2-git-send-email-pablo@gnumonks.org>
+Subject: [PATCH] wavecom: add support for Wavecom Q2403/Q2686 modems
+Date: Tue, 29 May 2012 04:14:27 +0200
+Message-ID: <1338257667-24281-3-git-send-email-pablo@gnumonks.org>
 In-Reply-To: <1338257667-24281-1-git-send-email-pablo@gnumonks.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6208314879337315520==
+--===============1755013745603302262==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pablo Neira Ayuso <pablo@gnumonks.org>
 
-This patch adds a couple of quirks to support Q2403/Q2686.
-
-The existing wavecom driver in tree slightly differs from these
-modems. Thus, it doesn't work work with them. We (the osmocom
-team) use these Wavecom Q2403/Q2686 modems in our testbed.
+This patch extends the existing wavecom plugin to include the new
+wavecom 2xxx plugin.
 ---
- drivers/atmodem/sim.c    |    3 ++-
- drivers/atmodem/sms.c    |   27 ++++++++++++++++++++++-----
- drivers/atmodem/vendor.h |    1 +
- 3 files changed, 25 insertions(+), 6 deletions(-)
+ plugins/udev.c    |   15 ++++++++++++
+ plugins/wavecom.c |   77 +++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++++-----
+ 2 files changed, 86 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 971b0ea..79db63d 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -926,7 +926,8 @@ static void at_cpin_cb(gboolean ok, GAtResult *result, =
-gpointer user_data)
- 		return;
- 	}
+diff --git a/plugins/udev.c b/plugins/udev.c
+index 8cb87a5..6e3205e 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -167,6 +167,19 @@ static void add_calypso(struct ofono_modem *modem,
+ 	ofono_modem_register(modem);
+ }
  =
 
--	if (sd->vendor =3D=3D OFONO_VENDOR_WAVECOM) {
-+	if (sd->vendor =3D=3D OFONO_VENDOR_WAVECOM ||
-+	    sd->vendor =3D=3D OFONO_VENDOR_WAVECOM_Q2XXX) {
- 		/* +CPIN: <pin> */
- 		pin_required =3D final + 7;
- 	} else {
-diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
-index f2dc257..62933f8 100644
---- a/drivers/atmodem/sms.c
-+++ b/drivers/atmodem/sms.c
-@@ -985,8 +985,11 @@ static gboolean set_cpms(gpointer user_data)
- 	const char *incoming =3D storages[data->incoming];
- 	char buf[128];
- =
-
--	snprintf(buf, sizeof(buf), "AT+CPMS=3D\"%s\",\"%s\",\"%s\"",
--			store, store, incoming);
-+	if (data->vendor =3D=3D OFONO_VENDOR_WAVECOM_Q2XXX)
-+		snprintf(buf, sizeof(buf), "AT+CPMS=3D\"%s\"", store);
-+	else
-+		snprintf(buf, sizeof(buf), "AT+CPMS=3D\"%s\",\"%s\",\"%s\"",
-+				store, store, incoming);
- =
-
- 	g_at_chat_send(data->chat, buf, cpms_prefix,
- 			at_cpms_set_cb, sms, NULL);
-@@ -1038,7 +1041,7 @@ static void at_cpms_query_cb(gboolean ok, GAtResult *=
-result,
- 	gboolean supported =3D FALSE;
- =
-
- 	if (ok) {
--		int mem =3D 0;
-+		int mem =3D 0, mem_max;
- 		GAtResultIter iter;
- 		const char *store;
- 		gboolean me_supported[3];
-@@ -1054,7 +1057,20 @@ static void at_cpms_query_cb(gboolean ok, GAtResult =
-*result,
- 		if (!g_at_result_iter_next(&iter, "+CPMS:"))
- 			goto out;
- =
-
--		for (mem =3D 0; mem < 3; mem++) {
-+		if (data->vendor =3D=3D OFONO_VENDOR_WAVECOM_Q2XXX) {
-+			/* skip initial `(' */
-+			if (!g_at_result_iter_open_list(&iter))
-+				goto out;
++static void add_wavecom_q2xxx(struct ofono_modem *modem,
++					struct udev_device *udev_device)
++{
++	const char *devnode;
 +
-+			/*
-+			 * Wavecom Q2 replies: +CPMS: (("SM","BM","SR"),("SM"))
-+			 * This reply is broken according to 3GPP TS 07.05.
-+			 */
-+			mem_max =3D 2;
-+		} else
-+			mem_max =3D 3;
++	DBG("modem %p", modem);
 +
-+		for (mem =3D 0; mem < mem_max; mem++) {
- 			if (!g_at_result_iter_open_list(&iter))
- 				goto out;
++	devnode =3D udev_device_get_devnode(udev_device);
++	ofono_modem_set_string(modem, "Device", devnode);
++
++	ofono_modem_register(modem);
++}
++
+ static void add_tc65(struct ofono_modem *modem,
+ 			struct udev_device *udev_device)
+ {
+@@ -286,6 +299,8 @@ done:
+ 		add_nokiacdma(modem, udev_device);
+ 	else if (g_strcmp0(driver, "sim900") =3D=3D 0)
+ 		add_sim900(modem, udev_device);
++	else if (g_strcmp0(driver, "wavecom_q2xxx") =3D=3D 0)
++		add_wavecom_q2xxx(modem, udev_device);
+ }
  =
 
-@@ -1071,7 +1087,8 @@ static void at_cpms_query_cb(gboolean ok, GAtResult *=
-result,
- 				goto out;
- 		}
+ static gboolean devpath_remove(gpointer key, gpointer value, gpointer user=
+_data)
+diff --git a/plugins/wavecom.c b/plugins/wavecom.c
+index 5d30f39..c8bd55b 100644
+--- a/plugins/wavecom.c
++++ b/plugins/wavecom.c
+@@ -66,7 +66,7 @@ static void wavecom_debug(const char *str, void *user_dat=
+a)
+ 	ofono_info("%s%s", prefix, str);
+ }
  =
 
--		if (!sm_supported[2] && !me_supported[2] && !mt_supported[2])
-+		if (data->vendor !=3D OFONO_VENDOR_WAVECOM_Q2XXX &&
-+		    !sm_supported[2] && !me_supported[2] && !mt_supported[2])
- 			goto out;
+-static int wavecom_enable(struct ofono_modem *modem)
++static int wavecom_generic_enable(struct ofono_modem *modem, int vendor)
+ {
+ 	GAtChat *chat;
+ 	GIOChannel *channel;
+@@ -104,6 +104,8 @@ static int wavecom_enable(struct ofono_modem *modem)
+ 	syntax =3D g_at_syntax_new_gsm_permissive();
  =
 
- 		if (sm_supported[0] && sm_supported[1]) {
-diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
-index 25c09f6..80aed3e 100644
---- a/drivers/atmodem/vendor.h
-+++ b/drivers/atmodem/vendor.h
-@@ -40,4 +40,5 @@ enum ofono_vendor {
- 	OFONO_VENDOR_SAMSUNG,
- 	OFONO_VENDOR_SIMCOM,
- 	OFONO_VENDOR_ICERA,
-+	OFONO_VENDOR_WAVECOM_Q2XXX,
+ 	chat =3D g_at_chat_new(channel, syntax);
++	if (vendor =3D=3D OFONO_VENDOR_WAVECOM_Q2XXX)
++		g_at_chat_add_terminator(chat, "+CPIN: READY", -1, TRUE);
+ 	g_at_syntax_unref(syntax);
+ 	g_io_channel_unref(channel);
+ =
+
+@@ -118,6 +120,16 @@ static int wavecom_enable(struct ofono_modem *modem)
+ 	return 0;
+ }
+ =
+
++static int wavecom_enable(struct ofono_modem *modem)
++{
++	return wavecom_generic_enable(modem, OFONO_VENDOR_WAVECOM);
++}
++
++static int wavecom_q2xxx_enable(struct ofono_modem *modem)
++{
++	return wavecom_generic_enable(modem, OFONO_VENDOR_WAVECOM_Q2XXX);
++}
++
+ static int wavecom_disable(struct ofono_modem *modem)
+ {
+ 	GAtChat *chat =3D ofono_modem_get_data(modem);
+@@ -131,18 +143,32 @@ static int wavecom_disable(struct ofono_modem *modem)
+ 	return 0;
+ }
+ =
+
+-static void wavecom_pre_sim(struct ofono_modem *modem)
++static void wavecom_generic_pre_sim(struct ofono_modem *modem, int vendor)
+ {
+ 	GAtChat *chat =3D ofono_modem_get_data(modem);
++	struct ofono_sim *sim;
+ =
+
+ 	DBG("%p", modem);
+ =
+
+ 	ofono_devinfo_create(modem, 0, "atmodem", chat);
+-	ofono_sim_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
++	sim =3D ofono_sim_create(modem, vendor, "atmodem", chat);
++	if (vendor =3D=3D OFONO_VENDOR_WAVECOM_Q2XXX)
++		ofono_sim_inserted_notify(sim, TRUE);
++
+ 	ofono_voicecall_create(modem, 0, "atmodem", chat);
+ }
+ =
+
+-static void wavecom_post_sim(struct ofono_modem *modem)
++static void wavecom_pre_sim(struct ofono_modem *modem)
++{
++	wavecom_generic_pre_sim(modem, OFONO_VENDOR_WAVECOM);
++}
++
++static void wavecom_q2xxx_pre_sim(struct ofono_modem *modem)
++{
++	wavecom_generic_pre_sim(modem, OFONO_VENDOR_WAVECOM_Q2XXX);
++}
++
++static void wavecom_generic_post_sim(struct ofono_modem *modem, int vendor)
+ {
+ 	GAtChat *chat =3D ofono_modem_get_data(modem);
+ 	struct ofono_message_waiting *mw;
+@@ -155,7 +181,8 @@ static void wavecom_post_sim(struct ofono_modem *modem)
+ 	ofono_netreg_create(modem, 0, "atmodem", chat);
+ 	ofono_call_meter_create(modem, 0, "atmodem", chat);
+ 	ofono_call_barring_create(modem, 0, "atmodem", chat);
+-	ofono_sms_create(modem, 0, "atmodem", chat);
++	/* We have to specify the vendor to support AT+CPMS=3D? reply in Q2xxx */
++	ofono_sms_create(modem, vendor, "atmodem", chat);
+ 	ofono_phonebook_create(modem, 0, "atmodem", chat);
+ =
+
+ 	mw =3D ofono_message_waiting_create(modem);
+@@ -163,6 +190,16 @@ static void wavecom_post_sim(struct ofono_modem *modem)
+ 		ofono_message_waiting_register(mw);
+ }
+ =
+
++static void wavecom_post_sim(struct ofono_modem *modem)
++{
++	wavecom_generic_post_sim(modem, OFONO_VENDOR_WAVECOM);
++}
++
++static void wavecom_q2xxx_post_sim(struct ofono_modem *modem)
++{
++	wavecom_generic_post_sim(modem, OFONO_VENDOR_WAVECOM_Q2XXX);
++}
++
+ static struct ofono_modem_driver wavecom_driver =3D {
+ 	.name		=3D "wavecom",
+ 	.probe		=3D wavecom_probe,
+@@ -173,15 +210,43 @@ static struct ofono_modem_driver wavecom_driver =3D {
+ 	.post_sim	=3D wavecom_post_sim,
  };
+ =
+
++static struct ofono_modem_driver wavecom_q2xxx_driver =3D {
++	.name		=3D "wavecom_q2xxx",
++	.probe		=3D wavecom_probe,
++	.remove		=3D wavecom_remove,
++	.enable		=3D wavecom_q2xxx_enable,
++	.disable	=3D wavecom_disable,
++	.pre_sim	=3D wavecom_q2xxx_pre_sim,
++	.post_sim	=3D wavecom_q2xxx_post_sim,
++};
++
+ static int wavecom_init(void)
+ {
+-	return ofono_modem_driver_register(&wavecom_driver);
++	int ret;
++
++	ret =3D ofono_modem_driver_register(&wavecom_driver);
++	if (ret < 0)
++		goto err;
++
++	ret =3D ofono_modem_driver_register(&wavecom_q2xxx_driver);
++	if (ret < 0)
++		goto err_wavecom;
++
++	return ret;
++
++err_wavecom:
++	ofono_modem_driver_unregister(&wavecom_driver);
++err:
++	return ret;
+ }
+ =
+
+ static void wavecom_exit(void)
+ {
+ 	ofono_modem_driver_unregister(&wavecom_driver);
++	ofono_modem_driver_unregister(&wavecom_q2xxx_driver);
+ }
+ =
+
+ OFONO_PLUGIN_DEFINE(wavecom, "Wavecom driver", VERSION,
+ 		OFONO_PLUGIN_PRIORITY_DEFAULT, wavecom_init, wavecom_exit)
++OFONO_PLUGIN_DEFINE(wavecom_q2xxx, "Wavecom Q2XXX driver", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, wavecom_init, wavecom_exit)
 -- =
 
 1.7.10
 
 
---===============6208314879337315520==--
+--===============1755013745603302262==--
 
