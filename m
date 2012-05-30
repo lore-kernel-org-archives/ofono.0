@@ -1,94 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============3750032452254286180=="
+Content-Type: multipart/mixed; boundary="===============2225910947378056897=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v2] test: Add new script for SS GCF test cases
-Date: Wed, 30 May 2012 10:28:16 +0200
-Message-ID: <1338366496-17700-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Jens Rehsack <jr_extern@vfnet.de>
+Subject: [PATCH] Add WSP_VALUE_TYPE_TEXT support in wsp_decode_application_id()
+Date: Wed, 30 May 2012 10:59:19 +0200
+Message-ID: <1338368359-28724-1-git-send-email-jr_extern@vfnet.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3750032452254286180==
+--===============2225910947378056897==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This script uses dynamic SS codes in input and
-displays answers to the different requests.
-It handles all SS: call barring, call forwarding,
-call waiting, CLIP, CLIR, ...
----
- Makefile.am  |    1 +
- test/test-ss |   42 ++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 43 insertions(+), 0 deletions(-)
- create mode 100755 test/test-ss
+From: Jens Rehsack <sno@NetBSD.org>
 
-diff --git a/Makefile.am b/Makefile.am
-index 56fa75a..f4bca7f 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -558,6 +558,7 @@ test_scripts =3D test/backtrace \
- 		test/test-network-registration \
- 		test/test-phonebook \
- 		test/test-cbs \
-+		test/test-ss \
- 		test/test-ss-control-cb \
- 		test/test-ss-control-cf \
- 		test/test-ss-control-cs \
-diff --git a/test/test-ss b/test/test-ss
-new file mode 100755
-index 0000000..d5488d7
---- /dev/null
-+++ b/test/test-ss
-@@ -0,0 +1,42 @@
-+#!/usr/bin/python
+---
+ src/wsputil.c |   24 ++++++++++++++++++++----
+ 1 Datei ge=C3=A4ndert, 20 Zeilen hinzugef=C3=BCgt(+), 4 Zeilen entfernt(-)
+
+diff --git a/src/wsputil.c b/src/wsputil.c
+index 1b2b2b7..ece58e6 100644
+--- a/src/wsputil.c
++++ b/src/wsputil.c
+@@ -490,13 +490,26 @@ gboolean wsp_decode_application_id(struct wsp_header_=
+iter *iter,
+ 	unsigned int val_len;
+ 	unsigned int i;
+ =
+
++	switch (wsp_header_iter_get_val_type(iter)) {
++	case WSP_VALUE_TYPE_TEXT:
++		if (out_value)
++			*out_value =3D pdu_val;
 +
-+import sys
-+import dbus
++		break;
 +
-+bus =3D dbus.SystemBus()
+ 	/*
+ 	 * Well-known field values MUST be encoded using the
+ 	 * compact binary formats
+ 	 */
+-	if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_SHORT) {
++	case WSP_VALUE_TYPE_SHORT:
+ 		val =3D *pdu_val & 0x7f;
+-	} else {
 +
-+manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
++		if (out_value)
++			*out_value =3D get_text_entry(val, app_id);
 +
-+modems =3D manager.GetModems()
-+modem =3D modems[0][0]
++		break;
 +
-+if (len(sys.argv) =3D=3D 2):
-+	ss_code =3D sys.argv[1]
-+else:
-+	modem =3D sys.argv[1]
-+	ss_code =3D sys.argv[2]
++	case WSP_VALUE_TYPE_LONG:
+ 		val_len =3D wsp_header_iter_get_val_len(iter);
+ =
+
+ 		if (val_len > 2)
+@@ -504,10 +517,13 @@ gboolean wsp_decode_application_id(struct wsp_header_=
+iter *iter,
+ =
+
+ 		for (i =3D 0, val =3D 0; i < val_len && i < sizeof(val); i++)
+ 			val =3D (val << 8) | pdu_val[i];
 +
-+ss =3D dbus.Interface(bus.get_object('org.ofono', modem),
-+				'org.ofono.SupplementaryServices')
++		if (out_value)
++			*out_value =3D get_text_entry(val, app_id);
 +
-+try:
-+	ss_type, properties =3D ss.Initiate(ss_code, timeout=3D100)
-+except dbus.DBusException, e:
-+	print "Unable to perform operation: ", e
-+	sys.exit(1);
-+
-+if (ss_type =3D=3D "CallBarring"):
-+	print "%s : Operation [ %s ] Service Type [ %s ]" % (ss_type, properties[=
-0], properties[1])
-+	for key in properties[2]:
-+		print "%s : %s" % (key, properties[2][key])
-+elif (ss_type =3D=3D "CallForwarding"):
-+	print "%s : Operation [ %s ] Service Type [ %s ]" % (ss_type, properties[=
-0], properties[1])
-+	for key in properties[2]:
-+		print "%s : %s" % (key, properties[2][key])
-+elif (ss_type =3D=3D "CallWaiting"):
-+	print "%s : Operation [ %s ]" % (ss_type, properties[0])
-+	for key in properties[1]:
-+		print "%s : %s" % (key, properties[1][key])
-+else:
-+	print "%s : Operation [ %s ] Status [ %s ]" % (ss_type, properties[0], pr=
-operties[1])
++		break;
+ 	}
+ =
+
+-	if (out_value)
+-		*out_value =3D get_text_entry(val, app_id);
+ =
+
+ 	return TRUE;
+ }
 -- =
 
-1.7.5.4
+1.7.10.1
 
 
---===============3750032452254286180==--
+--===============2225910947378056897==--
 
