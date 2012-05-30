@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5137474004360369181=="
+Content-Type: multipart/mixed; boundary="===============7006301603565273540=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] n950: Add new plugin for Nokia N950
-Date: Wed, 30 May 2012 00:53:21 -0500
-Message-ID: <4FC5B5D1.8040100@gmail.com>
-In-Reply-To: <1337018591-6553-2-git-send-email-aki.niemi@nokia.com>
+Subject: Re: [PATCH 1/4] n900: Use consistent naming in GPIO API
+Date: Wed, 30 May 2012 00:54:23 -0500
+Message-ID: <4FC5B60F.7070204@gmail.com>
+In-Reply-To: <1337018591-6553-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5137474004360369181==
+--===============7006301603565273540==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,25 +16,17 @@ Content-Transfer-Encoding: quoted-printable
 Hi Aki,
 
 On 05/14/2012 01:03 PM, Aki Niemi wrote:
-> ---
->   plugins/n950.c |  563 +++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   1 files changed, 563 insertions(+), 0 deletions(-)
->   create mode 100644 plugins/n950.c
->
+> In addition, add header guards as the API can be used from more than
+> one plugin.
 
-Running diff plugins/n950.c plugins/n900.c I see no differences to note =
+This part makes no sense, nokia-gpio.h is a private header and should =
 
-besides:
+not need include guards.  And in fact works just fine without them, =
 
-< 		DBG("Error: %s", g_isi_msg_strerror(msg));
----
- > 		DBG("Error: %s", strerror(-g_isi_msg_error(msg)));
-
-Do we really need a new driver for the n950?
+please remove these.
 
 Regards,
 -Denis
 
---===============5137474004360369181==--
+--===============7006301603565273540==--
 
