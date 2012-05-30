@@ -1,118 +1,143 @@
-Content-Type: multipart/mixed; boundary="===============4327495622756868749=="
+Content-Type: multipart/mixed; boundary="===============0287708239759620638=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] test: Add new script for SS GCF test cases
-Date: Tue, 29 May 2012 23:54:13 -0500
-Message-ID: <4FC5A7F5.2020109@gmail.com>
-In-Reply-To: <1337762521-5210-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH] drivers: add support for Wavecom Q2403/Q2686 modems
+Date: Wed, 30 May 2012 00:05:05 -0500
+Message-ID: <4FC5AA81.2050605@gmail.com>
+In-Reply-To: <1338257667-24281-2-git-send-email-pablo@gnumonks.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4327495622756868749==
+--===============0287708239759620638==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Pablo,
 
-On 05/23/2012 03:42 AM, Guillaume Zajac wrote:
-> This script uses dynamic SS codes in input and
-> displays answers to the different requests.
-> It handles all SS: call barring, call forwarding,
-> call waiting, CLIP, CLIR, ...
-> ---
->   test/test-ss |   55 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
->   1 files changed, 55 insertions(+), 0 deletions(-)
->   create mode 100755 test/test-ss
+On 05/28/2012 09:14 PM, pablo(a)gnumonks.org wrote:
+> From: Pablo Neira Ayuso<pablo@gnumonks.org>
 >
-> diff --git a/test/test-ss b/test/test-ss
-> new file mode 100755
-> index 0000000..adeff33
-> --- /dev/null
-> +++ b/test/test-ss
-> @@ -0,0 +1,55 @@
-> +#!/usr/bin/python
+> This patch adds a couple of quirks to support Q2403/Q2686.
+>
+> The existing wavecom driver in tree slightly differs from these
+> modems. Thus, it doesn't work work with them. We (the osmocom
+> team) use these Wavecom Q2403/Q2686 modems in our testbed.
+> ---
+>   drivers/atmodem/sim.c    |    3 ++-
+>   drivers/atmodem/sms.c    |   27 ++++++++++++++++++++++-----
+>   drivers/atmodem/vendor.h |    1 +
+>   3 files changed, 25 insertions(+), 6 deletions(-)
+>
+
+Actually we prefer each atom driver change to be in a separate patch, =
+
+but I fixed this up for you.
+
+> diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+> index 971b0ea..79db63d 100644
+> --- a/drivers/atmodem/sim.c
+> +++ b/drivers/atmodem/sim.c
+> @@ -926,7 +926,8 @@ static void at_cpin_cb(gboolean ok, GAtResult *result=
+, gpointer user_data)
+>   		return;
+>   	}
+>
+> -	if (sd->vendor =3D=3D OFONO_VENDOR_WAVECOM) {
+> +	if (sd->vendor =3D=3D OFONO_VENDOR_WAVECOM ||
+> +	    sd->vendor =3D=3D OFONO_VENDOR_WAVECOM_Q2XXX) {
+
+Please do not use spaces for indentation, our coding style guidelines =
+
+can be found in doc/coding-style.txt and explain this quite thoroughly. =
+
+  I went ahead and fixed this up for you.
+
+>   		/* +CPIN:<pin>  */
+>   		pin_required =3D final + 7;
+>   	} else {
+> diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
+> index f2dc257..62933f8 100644
+> --- a/drivers/atmodem/sms.c
+> +++ b/drivers/atmodem/sms.c
+> @@ -985,8 +985,11 @@ static gboolean set_cpms(gpointer user_data)
+>   	const char *incoming =3D storages[data->incoming];
+>   	char buf[128];
+>
+> -	snprintf(buf, sizeof(buf), "AT+CPMS=3D\"%s\",\"%s\",\"%s\"",
+> -			store, store, incoming);
+> +	if (data->vendor =3D=3D OFONO_VENDOR_WAVECOM_Q2XXX)
+> +		snprintf(buf, sizeof(buf), "AT+CPMS=3D\"%s\"", store);
+> +	else
+> +		snprintf(buf, sizeof(buf), "AT+CPMS=3D\"%s\",\"%s\",\"%s\"",
+> +				store, store, incoming);
+>
+>   	g_at_chat_send(data->chat, buf, cpms_prefix,
+>   			at_cpms_set_cb, sms, NULL);
+> @@ -1038,7 +1041,7 @@ static void at_cpms_query_cb(gboolean ok, GAtResult=
+ *result,
+>   	gboolean supported =3D FALSE;
+>
+>   	if (ok) {
+> -		int mem =3D 0;
+> +		int mem =3D 0, mem_max;
+>   		GAtResultIter iter;
+>   		const char *store;
+>   		gboolean me_supported[3];
+> @@ -1054,7 +1057,20 @@ static void at_cpms_query_cb(gboolean ok, GAtResul=
+t *result,
+>   		if (!g_at_result_iter_next(&iter, "+CPMS:"))
+>   			goto out;
+>
+> -		for (mem =3D 0; mem<  3; mem++) {
+> +		if (data->vendor =3D=3D OFONO_VENDOR_WAVECOM_Q2XXX) {
+> +			/* skip initial `(' */
+> +			if (!g_at_result_iter_open_list(&iter))
+> +				goto out;
 > +
-> +import sys
-> +import gobject
-
-What is gobject for?
+> +			/*
+> +			 * Wavecom Q2 replies: +CPMS: (("SM","BM","SR"),("SM"))
+> +			 * This reply is broken according to 3GPP TS 07.05.
+> +			 */
+> +			mem_max =3D 2;
+> +		} else
+> +			mem_max =3D 3;
 > +
-> +import dbus
-> +import dbus.mainloop.glib
+> +		for (mem =3D 0; mem<  mem_max; mem++) {
+>   			if (!g_at_result_iter_open_list(&iter))
+>   				goto out;
+>
+> @@ -1071,7 +1087,8 @@ static void at_cpms_query_cb(gboolean ok, GAtResult=
+ *result,
+>   				goto out;
+>   		}
+>
+> -		if (!sm_supported[2]&&  !me_supported[2]&&  !mt_supported[2])
+> +		if (data->vendor !=3D OFONO_VENDOR_WAVECOM_Q2XXX&&
+> +		    !sm_supported[2]&&  !me_supported[2]&&  !mt_supported[2])
 
-Why do you need the mainloop?
+Same as above.
 
-> +
-> +if __name__ =3D=3D "__main__":
-> +	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-> +
-> +	bus =3D dbus.SystemBus()
-> +
-> +	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-> +							'org.ofono.Manager')
-> +
-> +	modems =3D manager.GetModems()
-> +	modem =3D modems[0][0]
-> +
-> +	if (len(sys.argv) =3D=3D 2):
-> +		ss_code =3D sys.argv[1]
-> +	else:
-> +		modem =3D sys.argv[1]
-> +		ss_code =3D sys.argv[2]
-> +
-> +	ss =3D dbus.Interface(bus.get_object('org.ofono', modem),
-> +					'org.ofono.SupplementaryServices')
-> +
-> +	try:
-> +		ss_type, properties =3D ss.Initiate(ss_code, timeout=3D100)
-> +	except dbus.DBusException, e:
-> +		print "Unable to perform operation: ", e
-> +		sys.exit(1);
-> +
-> +	if (ss_type =3D=3D "CallBarring"):
-> +		print "%s : Operation [ %s ] Service Type [ %s ]" % (ss_type, properti=
-es[0], properties[1])
-> +		for key in properties[2]:
-> +			print "%s : %s" % (key, properties[2][key])
-> +		sys.exit(1);
+>   			goto out;
+>
+>   		if (sm_supported[0]&&  sm_supported[1]) {
+> diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
+> index 25c09f6..80aed3e 100644
+> --- a/drivers/atmodem/vendor.h
+> +++ b/drivers/atmodem/vendor.h
+> @@ -40,4 +40,5 @@ enum ofono_vendor {
+>   	OFONO_VENDOR_SAMSUNG,
+>   	OFONO_VENDOR_SIMCOM,
+>   	OFONO_VENDOR_ICERA,
+> +	OFONO_VENDOR_WAVECOM_Q2XXX,
+>   };
 
-This sys.exit seems unnecessary, and since the operation succeeded you =
+I broke up the patch into 3 and amended the aforementioned areas.  These =
 
-should be returning 0 anyway.
-
-> +	elif (ss_type =3D=3D "CallForwarding"):
-> +		print "%s : Operation [ %s ] Service Type [ %s ]" % (ss_type, properti=
-es[0], properties[1])
-> +		for key in properties[2]:
-> +			print "%s : %s" % (key, properties[2][key])
-> +		sys.exit(1);
-
-ditto
-
-> +	elif (ss_type =3D=3D "CallWaiting"):
-> +		print "%s : Operation [ %s ]" % (ss_type, properties[0])
-> +		for key in properties[1]:
-> +			print "%s : %s" % (key, properties[1][key])
-> +		sys.exit(1);
-
-ditto
-
-> +	else:
-> +		print "%s : Operation [ %s ] Status [ %s ]" % (ss_type, properties[0],=
- properties[1])
-> +		sys.exit(1);
-
-ditto
-> +
-> +	mainloop =3D gobject.MainLoop()
-> +	mainloop.run()
-
-This seems unnecessary as well since you're not actually using a main loop.
+have been pushed, thanks.
 
 Regards,
 -Denis
 
---===============4327495622756868749==--
+--===============0287708239759620638==--
 
