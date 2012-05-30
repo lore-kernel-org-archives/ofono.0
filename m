@@ -1,107 +1,135 @@
-Content-Type: multipart/mixed; boundary="===============3766707183339925901=="
+Content-Type: multipart/mixed; boundary="===============5802982434015943301=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2 1/2] dbus: Add __ofono_error_from_error utility function
-Date: Wed, 30 May 2012 15:53:09 +0200
-Message-ID: <1338385990-27526-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 2/2] SS: Return specific ofono errors after SS failure
+Date: Wed, 30 May 2012 15:53:10 +0200
+Message-ID: <1338385990-27526-2-git-send-email-philippe.nunes@linux.intel.com>
+In-Reply-To: <1338385990-27526-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3766707183339925901==
+--===============5802982434015943301==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/dbus.c  |   42 ++++++++++++++++++++++++++++++++++++++++++
- src/ofono.h |    3 +++
- 2 files changed, 45 insertions(+)
+ src/call-barring.c    |   10 ++++++----
+ src/call-forwarding.c |    5 +++--
+ src/call-settings.c   |   15 +++++++++------
+ 3 files changed, 18 insertions(+), 12 deletions(-)
 
-diff --git a/src/dbus.c b/src/dbus.c
-index 5cccc32..4ae6969 100644
---- a/src/dbus.c
-+++ b/src/dbus.c
-@@ -32,6 +32,21 @@
+diff --git a/src/call-barring.c b/src/call-barring.c
+index ddf4c73..53847fb 100644
+--- a/src/call-barring.c
++++ b/src/call-barring.c
+@@ -323,9 +323,10 @@ static void cb_ss_set_lock_callback(const struct ofono=
+_error *error,
+ 	struct ofono_call_barring *cb =3D data;
  =
 
- static DBusConnection *g_connection;
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Enabling/disabling Call Barring via SS failed");
++		DBG("Enabling/disabling Call Barring via SS failed with err:%s",
++			telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&cb->pending,
+-					__ofono_error_failed(cb->pending));
++			__ofono_error_from_error(error, cb->pending));
+ 		return;
+ 	}
  =
 
-+struct error_mapping_entry {
-+	int error;
-+	DBusMessage *(*ofono_error_func)(DBusMessage *);
-+};
-+
-+struct error_mapping_entry cme_errors_mapping[] =3D {
-+	{ 3,	__ofono_error_not_allowed },
-+	{ 4,	__ofono_error_not_supported },
-+	{ 16,	__ofono_error_incorrect_password },
-+	{ 30,	__ofono_error_not_registered },
-+	{ 31,	__ofono_error_timed_out },
-+	{ 32,	__ofono_error_access_denied },
-+	{ 50,	__ofono_error_invalid_args },
-+};
-+
- static void append_variant(DBusMessageIter *iter,
- 				int type, void *value)
- {
-@@ -388,6 +403,33 @@ DBusMessage *__ofono_error_not_allowed(DBusMessage *ms=
-g)
- 					"Operation is not allowed");
- }
+@@ -485,8 +486,9 @@ static void cb_set_passwd_callback(const struct ofono_e=
+rror *error, void *data)
+ 	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
+ 		reply =3D dbus_message_new_method_return(cb->pending);
+ 	else {
+-		reply =3D __ofono_error_failed(cb->pending);
+-		DBG("Changing Call Barring password via SS failed");
++		DBG("Changing Call Barring password via SS failed with err: %s",
++				telephony_error_to_str(error));
++		reply =3D __ofono_error_from_error(error, cb->pending);
+ 	}
  =
 
-+DBusMessage *__ofono_error_from_error(const struct ofono_error *error,
-+						DBusMessage *msg)
-+{
-+	struct error_mapping_entry *e;
-+	int maxentries;
-+	int i;
-+
-+	switch (error->type) {
-+	case OFONO_ERROR_TYPE_CME:
-+		e =3D cme_errors_mapping;
-+		maxentries =3D sizeof(cme_errors_mapping) /
-+					sizeof(struct error_mapping_entry);
-+		for (i =3D 0; i < maxentries; i++)
-+			if (e[i].error =3D=3D error->error)
-+				return e[i].ofono_error_func(msg);
-+		break;
-+	case OFONO_ERROR_TYPE_CMS:
-+		return __ofono_error_failed(msg);
-+	case OFONO_ERROR_TYPE_CEER:
-+		return __ofono_error_failed(msg);
-+	default:
-+		return __ofono_error_failed(msg);
-+	}
-+
-+	return __ofono_error_failed(msg);
-+}
-+
- void __ofono_dbus_pending_reply(DBusMessage **msg, DBusMessage *reply)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
-diff --git a/src/ofono.h b/src/ofono.h
-index 81d5f71..f0e1072 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -66,6 +66,9 @@ DBusMessage *__ofono_error_emergency_active(DBusMessage *=
-msg);
- DBusMessage *__ofono_error_incorrect_password(DBusMessage *msg);
- DBusMessage *__ofono_error_not_allowed(DBusMessage *msg);
+ 	__ofono_dbus_pending_reply(&cb->pending, reply);
+diff --git a/src/call-forwarding.c b/src/call-forwarding.c
+index 3d9c5c1..5acbd67 100644
+--- a/src/call-forwarding.c
++++ b/src/call-forwarding.c
+@@ -1020,10 +1020,11 @@ static void cf_ss_control_callback(const struct ofo=
+no_error *error, void *data)
+ 	struct ofono_call_forwarding *cf =3D data;
  =
 
-+DBusMessage *__ofono_error_from_error(const struct ofono_error *error,
-+						DBusMessage *msg);
-+
- void __ofono_dbus_pending_reply(DBusMessage **msg, DBusMessage *reply);
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error occurred during cf ss control set/erasure");
  =
 
- gboolean __ofono_dbus_valid_object_path(const char *path);
++		DBG("CF ss control set/erasure failed with error: %s",
++						telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&cf->pending,
+-					__ofono_error_failed(cf->pending));
++				__ofono_error_from_error(error, cf->pending));
+ 		g_free(cf->ss_req);
+ 		cf->ss_req =3D NULL;
+ 		return;
+diff --git a/src/call-settings.c b/src/call-settings.c
+index 6bc9658..4bfb561 100644
+--- a/src/call-settings.c
++++ b/src/call-settings.c
+@@ -477,9 +477,10 @@ static void cw_ss_set_callback(const struct ofono_erro=
+r *error, void *data)
+ 	struct ofono_call_settings *cs =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("setting CW via SS failed");
++		DBG("setting CW via SS failed with error: %s",
++			telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&cs->pending,
+-					__ofono_error_failed(cs->pending));
++			__ofono_error_from_error(error, cs->pending));
+ =
+
+ 		return;
+ 	}
+@@ -614,9 +615,10 @@ static void clip_cnap_colp_colr_ss_query_cb(const stru=
+ct ofono_error *error,
+ 	const char *value;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error occurred during ss control query");
++		DBG("SS control query failed with error: %s",
++			telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&cs->pending,
+-					__ofono_error_failed(cs->pending));
++			__ofono_error_from_error(error, cs->pending));
+ =
+
+ 		return;
+ 	}
+@@ -772,9 +774,10 @@ static void clir_ss_set_callback(const struct ofono_er=
+ror *error, void *data)
+ 	struct ofono_call_settings *cs =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("setting clir via SS failed");
++		DBG("setting clir via SS failed with error: %s",
++			telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&cs->pending,
+-					__ofono_error_failed(cs->pending));
++			__ofono_error_from_error(error, cs->pending));
+ =
+
+ 		return;
+ 	}
 -- =
 
 1.7.9.5
 
 
---===============3766707183339925901==--
+--===============5802982434015943301==--
 
