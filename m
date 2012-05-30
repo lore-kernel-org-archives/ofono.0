@@ -1,213 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============6335070247800836219=="
+Content-Type: multipart/mixed; boundary="===============3750032452254286180=="
 MIME-Version: 1.0
-From: Jens Rehsack <jr_extern@vfnet.de>
-Subject: Re: [PATCH] Add WSP_VALUE_TYPE_TEXT support in
- wsp_decode_application_id()
-Date: Wed, 30 May 2012 09:11:37 +0200
-Message-ID: <4FC5C829.1040900@vfnet.de>
-In-Reply-To: <4FBB49C5.70508@vfnet.de>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v2] test: Add new script for SS GCF test cases
+Date: Wed, 30 May 2012 10:28:16 +0200
+Message-ID: <1338366496-17700-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6335070247800836219==
+--===============3750032452254286180==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 22.05.2012 10:09, Jens Rehsack wrote:
-> On 21.05.2012 18:23, Ronald Tessier wrote:
->> Hi Jens,
->>
->> On 05/21/2012 12:54 PM, Jens Rehsack wrote:
->>> From: Jens Rehsack<sno@NetBSD.org>
->>>
->>> ---
->>>   src/wsputil.c |   43 ++++++++++++++++++++++++++-----------------
->>>   1 Datei ge=C3=A4ndert, 26 Zeilen hinzugef=C3=BCgt(+), 17 Zeilen entfe=
-rnt(-)
->>>
->>> diff --git a/src/wsputil.c b/src/wsputil.c
->>> index 1b2b2b7..5611ed2 100644
->>> --- a/src/wsputil.c
->>> +++ b/src/wsputil.c
->>> @@ -486,28 +486,37 @@ gboolean wsp_decode_application_id(struct
->>> wsp_header_iter *iter,
->>>                               const void **out_value)
->>>   {
->>>       const unsigned char *pdu_val =3D wsp_header_iter_get_val(iter);
->>> -    unsigned int val;
->>> -    unsigned int val_len;
->>> -    unsigned int i;
->>>
->>> -    /*
->>> -     * Well-known field values MUST be encoded using the
->>> -     * compact binary formats
->>> -     */
->>> -    if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_SHORT=
-) {
->>> -        val =3D *pdu_val&  0x7f;
->>> +    if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_TEXT)=
- {
->>> +        wsp_header_iter_get_val_len(iter);
->>> +
->>> +        if (out_value)
->>> +            *out_value =3D pdu_val;
->>
->> Why not just returning if the type is TEXT ?
->> Something like :
->>
->>     const unsigned char *pdu_val =3D wsp_header_iter_get_val(iter);
->>     unsigned int val;
->>     unsigned int val_len;
->>     unsigned int i;
->>
->> +    if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_TEXT) {
->> +        if (out_value)
->> +            *out_value =3D pdu_val;
->> +
->> +        return TRUE;
->> +    }
->> +
->>     /*
->>      * Well-known field values MUST be encoded using the
->>      * compact binary formats
->>      */
->>     if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_SHORT) {
->>
-> =
+This script uses dynamic SS codes in input and
+displays answers to the different requests.
+It handles all SS: call barring, call forwarding,
+call waiting, CLIP, CLIR, ...
+---
+ Makefile.am  |    1 +
+ test/test-ss |   42 ++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 43 insertions(+), 0 deletions(-)
+ create mode 100755 test/test-ss
 
-> I do not like several returns in a longer subroutine. The way
-> you format code makes code longer - fair enough, but for me to
-> long to introduce early return statements.
-> =
+diff --git a/Makefile.am b/Makefile.am
+index 56fa75a..f4bca7f 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -558,6 +558,7 @@ test_scripts =3D test/backtrace \
+ 		test/test-network-registration \
+ 		test/test-phonebook \
+ 		test/test-cbs \
++		test/test-ss \
+ 		test/test-ss-control-cb \
+ 		test/test-ss-control-cf \
+ 		test/test-ss-control-cs \
+diff --git a/test/test-ss b/test/test-ss
+new file mode 100755
+index 0000000..d5488d7
+--- /dev/null
++++ b/test/test-ss
+@@ -0,0 +1,42 @@
++#!/usr/bin/python
++
++import sys
++import dbus
++
++bus =3D dbus.SystemBus()
++
++manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++						'org.ofono.Manager')
++
++modems =3D manager.GetModems()
++modem =3D modems[0][0]
++
++if (len(sys.argv) =3D=3D 2):
++	ss_code =3D sys.argv[1]
++else:
++	modem =3D sys.argv[1]
++	ss_code =3D sys.argv[2]
++
++ss =3D dbus.Interface(bus.get_object('org.ofono', modem),
++				'org.ofono.SupplementaryServices')
++
++try:
++	ss_type, properties =3D ss.Initiate(ss_code, timeout=3D100)
++except dbus.DBusException, e:
++	print "Unable to perform operation: ", e
++	sys.exit(1);
++
++if (ss_type =3D=3D "CallBarring"):
++	print "%s : Operation [ %s ] Service Type [ %s ]" % (ss_type, properties[=
+0], properties[1])
++	for key in properties[2]:
++		print "%s : %s" % (key, properties[2][key])
++elif (ss_type =3D=3D "CallForwarding"):
++	print "%s : Operation [ %s ] Service Type [ %s ]" % (ss_type, properties[=
+0], properties[1])
++	for key in properties[2]:
++		print "%s : %s" % (key, properties[2][key])
++elif (ss_type =3D=3D "CallWaiting"):
++	print "%s : Operation [ %s ]" % (ss_type, properties[0])
++	for key in properties[1]:
++		print "%s : %s" % (key, properties[1][key])
++else:
++	print "%s : Operation [ %s ] Status [ %s ]" % (ss_type, properties[0], pr=
+operties[1])
+-- =
 
->> I think it does the same thing but more readable (you don't break the 80
->> col. limit).
-> =
-
-> I'm fine with your way to do it, too. But I wouldn't want my name being
-> assigned with it (because of the early return ...). I strongly
-> distinguish between readable and understandable, and I prefer the
-> understandable way.
-> =
-
-> How about:
-> =
-
-> diff --git a/src/wsputil.c b/src/wsputil.c
-> index 1b2b2b7..385acaa 100644
-> --- a/src/wsputil.c
-> +++ b/src/wsputil.c
-> @@ -490,13 +490,26 @@ gboolean wsp_decode_application_id(struct
-> wsp_header_iter *iter,
->         unsigned int val_len;
->         unsigned int i;
-> =
-
-> +       switch (wsp_header_iter_get_val_type(iter)) {
-> +       case WSP_VALUE_TYPE_TEXT:
-> +               if (out_value)
-> +                       *out_value =3D pdu_val;
-> +
-> +               break;
-> +
->         /*
->          * Well-known field values MUST be encoded using the
->          * compact binary formats
->          */
-> -       if (wsp_header_iter_get_val_type(iter) =3D=3D WSP_VALUE_TYPE_SHOR=
-T) {
-> +       case WSP_VALUE_TYPE_SHORT:
->                 val =3D *pdu_val & 0x7f;
-> -       } else {
-> +
-> +               if (out_value)
-> +                       *out_value =3D get_text_entry(val, app_id);
-> +
-> +               break;
-> +
-> +       default:
->                 val_len =3D wsp_header_iter_get_val_len(iter);
-> =
-
->                 if (val_len > 2)
-> @@ -504,10 +517,13 @@ gboolean wsp_decode_application_id(struct
-> wsp_header_iter *iter,
-> =
-
->                 for (i =3D 0, val =3D 0; i < val_len && i < sizeof(val); =
-i++)
->                         val =3D (val << 8) | pdu_val[i];
-> +
-> +               if (out_value)
-> +                       *out_value =3D get_text_entry(val, app_id);
-> +
-> +               break;
->         }
-> =
-
-> -       if (out_value)
-> -               *out_value =3D get_text_entry(val, app_id);
-> =
-
->         return TRUE;
->  }
-> =
-
-> =
-
->> Best regards,
->>
->> Ronald
-> =
-
-> Best regards,
-> Jens
-> =
-
->>>       } else {
->>> -        val_len =3D wsp_header_iter_get_val_len(iter);
->>> +        unsigned int val;
->>>
->>> -        if (val_len>  2)
->>> -            return FALSE;
->>> +        /*
->>> +         * Well-known field values MUST be encoded using the
->>> +         * compact binary formats
->>> +         */
->>> +        if (wsp_header_iter_get_val_type(iter) =3D=3D
->>> WSP_VALUE_TYPE_SHORT) {
->>> +            val =3D *pdu_val&  0x7f;
->>> +        } else  {
->>> +            unsigned int val_len;
->>> +            unsigned int i;
->>>
->>> -        for (i =3D 0, val =3D 0; i<  val_len&&  i<  sizeof(val); i++)
->>> -            val =3D (val<<  8) | pdu_val[i];
->>> -    }
->>> +            val_len =3D wsp_header_iter_get_val_len(iter);
->>>
->>> -    if (out_value)
->>> -        *out_value =3D get_text_entry(val, app_id);
->>> +            if (val_len>  2)
->>> +                return FALSE;
->>> +
->>> +            for (i =3D 0, val =3D 0; i<  val_len&&  i<  sizeof(val); i=
-++)
->>> +                val =3D (val<<  8) | pdu_val[i];
->>> +        }
->>> +
->>> +        if (out_value)
->>> +            *out_value =3D get_text_entry(val, app_id);
->>> +    }
->>>
->>>       return TRUE;
->>>   }
-
-What's the state?
-
-/Jens
+1.7.5.4
 
 
---===============6335070247800836219==--
+--===============3750032452254286180==--
 
