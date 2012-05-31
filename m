@@ -1,56 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8006673218958313326=="
+Content-Type: multipart/mixed; boundary="===============8289600750186252944=="
 MIME-Version: 1.0
-From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 3/3] doc: Add new D-Bus methods to service interface
-Date: Thu, 31 May 2012 10:52:56 +0200
-Message-ID: <1338454376-12806-4-git-send-email-ronald.tessier@linux.intel.com>
-In-Reply-To: <1338454376-12806-1-git-send-email-ronald.tessier@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [RFC 0/3] Fix crash when network is lost
+Date: Thu, 31 May 2012 11:59:05 +0200
+Message-ID: <1338458348-335-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8006673218958313326==
+--===============8289600750186252944==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/service-api.txt |   20 ++++++++++++++++++++
- 1 files changed, 20 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/doc/service-api.txt b/doc/service-api.txt
-index 36e1161..5c18cad 100644
---- a/doc/service-api.txt
-+++ b/doc/service-api.txt
-@@ -63,6 +63,26 @@ Methods		array{object,dict} GetMessages()
- 				[service].Error.PermanentContentNotAccepted
- 				[service].Error.PermanentLackOfPrepaid
+Problem description:
+Some Huawei modems are trying to keep PPP session with the network alive ev=
+en if the network is lost.
+Thus oFono PPP session with the modem is never ended. Currently when networ=
+k is lost, oFono will release the active contexts into the core however the=
+ context is still active at driver level. If the connection with the networ=
+k is established again and we try to enable a data call, we have a crash.
 
-+		[TODO] void DeleteMessages(array{object})
-+
-+			Delete an array of message objects that represents
-+			the currently stored messages to delete.
-+
-+			Possible Errors: [service].Error.InvalidArguments
-+
-+		[TODO] void DeleteConversation(string number)
-+
-+			Delete the messages that belongs to the conversation
-+			defined by the given number.
-+
-+			The number parameter contains digits to look for
-+			(i.e.: n last digits of the phone number), only messages
-+			with a recipient which ends with the given number will
-+			be member of the conversation and thus will be deleted.
-+
-+			Possible Errors: [service].Error.InvalidArguments
-+
-+
- Signals		MessageAdded(object path, dict properties)
+This issue is very tricky there might be multiple solutions, here is one I =
+discussed with Denis yesterday.
+A new driver entry is added to release context into the driver in shutting =
+down the PPP session between oFono and the modem.
+Then ofono_context_deactivated() is called to signal the context is inactiv=
+e at driver level.
+In the case we lost the network and we are reattaching to the network but t=
+he PPP session had no time to be released, there is a mechanism to wait for=
+ the previous context to be released and then signal modem is reattached to=
+ the network. ConnMan can do again a data call.
 
- 			Signal that is sent when a new message is added. It
---
-1.7.4.1
+Guillaume Zajac (3):
+  gprs-context: Add new driver entry
+  gprs-context: Add new driver entry definition
+  gprs: Release context in driver and core when network is lost
+
+ drivers/atmodem/gprs-context.c |   11 +++++
+ include/gprs-context.h         |    2 +
+ src/gprs.c                     |   84 ++++++++++++++++++++++++++++++------=
+----
+ 3 files changed, 76 insertions(+), 21 deletions(-)
+
+-- =
+
+1.7.5.4
 
 
---===============8006673218958313326==--
+--===============8289600750186252944==--
 
