@@ -1,156 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============3729569720710639910=="
+Content-Type: multipart/mixed; boundary="===============1467829751593902630=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [RFC 3/3] gprs: Release context in driver and core when network is
- lost
-Date: Thu, 31 May 2012 11:59:08 +0200
-Message-ID: <1338458348-335-4-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1338458348-335-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: pablo@gnumonks.org
+Subject: [PATCH 1/2] udev: add Wavecom support
+Date: Thu, 31 May 2012 16:01:24 +0200
+Message-ID: <1338472885-30645-2-git-send-email-pablo@gnumonks.org>
+In-Reply-To: <1338472885-30645-1-git-send-email-pablo@gnumonks.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3729569720710639910==
+--===============1467829751593902630==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Pablo Neira Ayuso <pablo@gnumonks.org>
+
+This adds OFONO_WAVECOM_MODEL that can set in the udev rules file
+to indicate the modem model, eg.
+
+ ENV{OFONO_WAVECOM_MODEL}=3D"Q2XXX"
 ---
- src/gprs.c |   84 +++++++++++++++++++++++++++++++++++++++++++++-----------=
-----
- 1 files changed, 63 insertions(+), 21 deletions(-)
+ plugins/udev.c |   27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 994607d..9ec0ca1 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -48,6 +48,7 @@
- =
-
- #define GPRS_FLAG_ATTACHING 0x1
- #define GPRS_FLAG_RECHECK 0x2
-+#define GPRS_FLAG_ATTACHED_UPDATE 0x4
- =
-
- #define SETTINGS_STORE "gprs"
- #define SETTINGS_GROUP "Settings"
-@@ -1440,6 +1441,44 @@ void ofono_gprs_resume_notify(struct ofono_gprs *gpr=
-s)
- 	update_suspended_property(gprs, FALSE);
+diff --git a/plugins/udev.c b/plugins/udev.c
+index 8cb87a5..a78cd41 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -167,6 +167,31 @@ static void add_calypso(struct ofono_modem *modem,
+ 	ofono_modem_register(modem);
  }
  =
 
-+static gboolean check_active_contexts(struct ofono_gprs *gprs)
++static void add_wavecom(struct ofono_modem *modem,
++					struct udev_device *udev_device)
 +{
-+	GSList *l;
-+	struct pri_context *ctx;
++	const char *devnode;
++	struct udev_list_entry *entry;
 +
-+	for (l =3D gprs->contexts; l; l =3D l->next) {
-+		ctx =3D l->data;
++	DBG("modem %p", modem);
 +
-+		if (ctx->active =3D=3D TRUE)
-+			return TRUE;
++	devnode =3D udev_device_get_devnode(udev_device);
++	ofono_modem_set_string(modem, "Device", devnode);
++
++	entry =3D udev_device_get_properties_list_entry(udev_device);
++	while (entry) {
++		const char *name =3D udev_list_entry_get_name(entry);
++		const char *value =3D udev_list_entry_get_value(entry);
++
++		if (g_str_equal(name, "OFONO_WAVECOM_MODEL") =3D=3D TRUE)
++			ofono_modem_set_string(modem, "Model", value);
++
++		entry =3D udev_list_entry_get_next(entry);
 +	}
 +
-+	return FALSE;
++	ofono_modem_register(modem);
 +}
 +
-+static void release_active_contexts(struct ofono_gprs *gprs)
-+{
-+	GSList *l;
-+	struct pri_context *ctx;
-+
-+	for (l =3D gprs->contexts; l; l =3D l->next) {
-+		struct ofono_gprs_context *gc;
-+
-+		ctx =3D l->data;
-+
-+		if (ctx->active =3D=3D FALSE)
-+			continue;
-+
-+		/* This context is already being messed with */
-+		if (ctx->pending)
-+			continue;
-+
-+		gc =3D ctx->context_driver;
-+
-+		gc->driver->release_primary(gc, ctx->context.cid);
-+	}
-+}
-+
- static void gprs_attached_update(struct ofono_gprs *gprs)
+ static void add_tc65(struct ofono_modem *modem,
+ 			struct udev_device *udev_device)
  {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
-@@ -1454,30 +1493,23 @@ static void gprs_attached_update(struct ofono_gprs =
-*gprs)
- 	if (attached =3D=3D gprs->attached)
- 		return;
- =
-
--	gprs->attached =3D attached;
--
--	if (gprs->attached =3D=3D FALSE) {
--		GSList *l;
--		struct pri_context *ctx;
--
--		for (l =3D gprs->contexts; l; l =3D l->next) {
--			ctx =3D l->data;
--
--			if (ctx->active =3D=3D FALSE)
--				continue;
--
--			pri_reset_context_settings(ctx);
--			release_context(ctx);
--
--			value =3D FALSE;
--			ofono_dbus_signal_property_changed(conn, ctx->path,
--					OFONO_CONNECTION_CONTEXT_INTERFACE,
--					"Active", DBUS_TYPE_BOOLEAN, &value);
--		}
--
-+	/*
-+	 * If an active context is found, a PPP session might be still active
-+	 * at driver level. "Attached" =3D TRUE property can't be signalled to
-+	 * the applications registered on GPRS properties.
-+	 * Active contexts have to be release at driver level.
-+	 */
-+	if (attached =3D=3D FALSE) {
-+		release_active_contexts(gprs);
- 		gprs->bearer =3D -1;
-+	} else if (check_active_contexts(gprs) =3D=3D TRUE) {
-+		gprs->flags |=3D GPRS_FLAG_ATTACHED_UPDATE;
-+		release_active_contexts(gprs);
-+		return;
- 	}
- =
-
-+	gprs->attached =3D attached;
-+
- 	path =3D __ofono_atom_get_path(gprs->atom);
- 	value =3D attached;
- 	ofono_dbus_signal_property_changed(conn, path,
-@@ -2266,6 +2298,16 @@ void ofono_gprs_context_deactivated(struct ofono_gpr=
-s_context *gc,
- 					OFONO_CONNECTION_CONTEXT_INTERFACE,
- 					"Active", DBUS_TYPE_BOOLEAN, &value);
- 	}
-+
-+	/*
-+	 * If "Attached" property was about to be signalled as TRUE but there
-+	 * were still active contexts, try again to signal "Attached" property
-+	 * to registered applications after active contexts have been released.
-+	 */
-+	if (gc->gprs->flags & GPRS_FLAG_ATTACHED_UPDATE) {
-+		gc->gprs->flags &=3D ~GPRS_FLAG_ATTACHED_UPDATE;
-+		gprs_attached_update(gc->gprs);
-+	}
+@@ -286,6 +311,8 @@ done:
+ 		add_nokiacdma(modem, udev_device);
+ 	else if (g_strcmp0(driver, "sim900") =3D=3D 0)
+ 		add_sim900(modem, udev_device);
++	else if (g_strcmp0(driver, "wavecom") =3D=3D 0)
++		add_wavecom(modem, udev_device);
  }
  =
 
- int ofono_gprs_context_driver_register(
+ static gboolean devpath_remove(gpointer key, gpointer value, gpointer user=
+_data)
 -- =
 
-1.7.5.4
+1.7.10
 
 
---===============3729569720710639910==--
+--===============1467829751593902630==--
 
