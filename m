@@ -1,34 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============8652889373442868480=="
+Content-Type: multipart/mixed; boundary="===============1187039673210316375=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 2/2] SS: Return specific ofono errors after SS failure
-Date: Wed, 30 May 2012 09:07:35 -0500
-Message-ID: <4FC629A7.4050306@gmail.com>
-In-Reply-To: <1338385990-27526-2-git-send-email-philippe.nunes@linux.intel.com>
+From: Ronald Tessier <ronald.tessier@linux.intel.com>
+Subject: [PATCH 1/3] TODO: Add new tasks
+Date: Thu, 31 May 2012 10:52:54 +0200
+Message-ID: <1338454376-12806-2-git-send-email-ronald.tessier@linux.intel.com>
+In-Reply-To: <1338454376-12806-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8652889373442868480==
+--===============1187039673210316375==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+---
+ TODO |   67 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 67 insertions(+), 0 deletions(-)
 
-On 05/30/2012 08:53 AM, Philippe Nunes wrote:
-> ---
->   src/call-barring.c    |   10 ++++++----
->   src/call-forwarding.c |    5 +++--
->   src/call-settings.c   |   15 +++++++++------
->   3 files changed, 18 insertions(+), 12 deletions(-)
-
-I broke this patch into three, one for each file, and applied them.  I =
-
-tweaked the commit message slightly.
-
-Thanks,
--Denis
+diff --git a/TODO b/TODO
+index a4330b3..6e54f6f 100644
+--- a/TODO
++++ b/TODO
+@@ -16,6 +16,73 @@ Background
+   once the task is better understood.
 
 
---===============8652889373442868480==--
++MMS Delivery Report
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++- Add delivery report request when sending message.
++  Modify SendMessage D-Bus API to add delivery report request flag.
++  Update message structure to manage this flag.
++  Modify MMS M-Send.Req PDU encoder to encode delivery report request.
++  Modify test script related to message sending to support new delivery fl=
+ag.
++
++  Priority: Medium
++  Complexity: C2
++  Owner: Ronald Tessier <ronald.tessier@linux.intel.com>
++
++- Update message status stored in its associated Meta file.
++  Add a group [delivery_status] in the message status to handle delivery
++  reports, this group contains an entry for each message recipients.
++  Each recipient entry will be updated when the corresponding report will =
+be
++  received and then remove the temporary stored delivery report.
++  Upon M-Send.Conf reception, store the received Message_ID to match deliv=
+ery
++  reports (needed only if delivery report was requested).
++
++  Priority: Medium
++  Complexity: C2
++  Depends:
++  Owner: S=C3=A9bastien Bianti <sebastien.bianti@linux.intel.com>
++
++- Add MMS M-Delivery.ind PDU decoding support.
++  Modify mms_service_push_notify() to handle MMS Delivery Report WAP Push
++  notification and temporary store the M-Delivery.ind PDU.
++  Decode M-Delivery.ind PDU.
++  Add MMS M-Delivery.ind PDU sample PDU to unit test.
++
++  Priority: Medium
++  Complexity: C2
++  Depends:
++  Owner: Ronald Tessier <ronald.tessier@linux.intel.com>
++
++- Update message Meta file.
++  Upon MMS M-Delivery.ind PDU reception, update delivery_status recipient =
+entry
++  with the received status (this is described in doc/storage.txt).
++
++  Priority: Medium
++  Complexity: C2
++  Depends:
++  Owner: S=C3=A9bastien Bianti <sebastien.bianti@linux.intel.com>
++
++
++D-Bus API
++=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++- Add the "org.ofono.mms.Service" interface "DeleteMessages" method
++  implementation.
++  The D-Bus Message API documentation is available under /doc/service-api.=
+txt.
++
++  Priority: Medium
++  Complexity: C2
++  Owner: S=C3=A9bastien Bianti <sebastien.bianti@linux.intel.com>
++
++- Add the "org.ofono.mms.Service" interface "DeleteConversation" method
++  implementation.
++  The D-Bus Message API documentation is available under /doc/service-api.=
+txt.
++
++  Priority: Medium
++  Complexity: C2
++  Owner: Ronald Tessier <ronald.tessier@linux.intel.com>
++
++
+ Miscellaneous
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+
+--
+1.7.4.1
+
+
+--===============1187039673210316375==--
 
