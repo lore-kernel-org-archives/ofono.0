@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3923283149284420756=="
+Content-Type: multipart/mixed; boundary="===============5217095391367578148=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v0 2/3] bluetooth: Add PAN UUID
-Date: Mon, 04 Jun 2012 16:11:31 +0200
-Message-ID: <1338819092-28696-3-git-send-email-wagi@monom.org>
+Subject: [PATCH v0 3/3] dundee: Ignore DUN device if PAN is present
+Date: Mon, 04 Jun 2012 16:11:32 +0200
+Message-ID: <1338819092-28696-4-git-send-email-wagi@monom.org>
 In-Reply-To: <1338819092-28696-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3923283149284420756==
+--===============5217095391367578148==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,26 +16,37 @@ Content-Transfer-Encoding: quoted-printable
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
 ---
- plugins/bluetooth.h |    1 +
- 1 file changed, 1 insertion(+)
+ dundee/bluetooth.c |    9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index c06abf7..e801bfc 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -32,6 +32,7 @@
- #define DBUS_TIMEOUT 15
+diff --git a/dundee/bluetooth.c b/dundee/bluetooth.c
+index 5a913cc..8762f51 100644
+--- a/dundee/bluetooth.c
++++ b/dundee/bluetooth.c
+@@ -141,6 +141,15 @@ static int bt_probe(GSList *uuids, const char *path, c=
+onst char *dev_addr,
  =
 
- #define DUN_GW_UUID	"00001103-0000-1000-8000-00805f9b34fb"
-+#define NAP_UUID	"00001116-0000-1000-8000-00805f9b34fb"
- #define HFP_AG_UUID	"0000111f-0000-1000-8000-00805f9b34fb"
- #define HFP_HS_UUID	"0000111e-0000-1000-8000-00805f9b34fb"
- #define SAP_UUID	"0000112d-0000-1000-8000-00805f9b34fb"
+ 	DBG("");
+ =
+
++	for (; uuids; uuids =3D uuids->next) {
++		const char *uuid =3D uuids->data;
++
++		if (g_strcmp0(uuid, NAP_UUID) =3D=3D 0) {
++			ofono_info("Device %s supports DUN and PAN at the same time. DUN is ign=
+ored", path);
++			return -EUNATCH;
++		}
++	}
++
+ 	/* We already have this device in our hash, ignore */
+ 	if (g_hash_table_lookup(bluetooth_hash, path) !=3D NULL)
+ 		return -EALREADY;
 -- =
 
 1.7.10.130.g36e6c
 
 
---===============3923283149284420756==--
+--===============5217095391367578148==--
 
