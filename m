@@ -1,51 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============2807487050963865202=="
+Content-Type: multipart/mixed; boundary="===============1770942258823611016=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v0 0/4] Add Serial and Type property to dundee
-Date: Tue, 05 Jun 2012 15:48:15 +0200
-Message-ID: <1338904099-13612-1-git-send-email-wagi@monom.org>
+Subject: [PATCH v0 1/4] dundee: Fix signal name
+Date: Tue, 05 Jun 2012 15:48:16 +0200
+Message-ID: <1338904099-13612-2-git-send-email-wagi@monom.org>
+In-Reply-To: <1338904099-13612-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2807487050963865202==
+--===============1770942258823611016==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
-Hi,
+---
+ dundee/manager.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-The first patch is fixes an obvious typo in the introspection.
+diff --git a/dundee/manager.c b/dundee/manager.c
+index d7374d6..e8a37bf 100644
+--- a/dundee/manager.c
++++ b/dundee/manager.c
+@@ -90,7 +90,7 @@ static const GDBusMethodTable manager_methods[] =3D {
+ };
+ =
 
-The next three patches punch a whole through the DUN device
-abstraction. If a Bluetooth device supports PAN and DUN at the same
-time, there is no real good reason to offer both services to
-user. ConnMan needs to figure out if a device supports both profile
-(and then picking PAN). For this we need to provide an device
-identifier. This API estension is modeled after the modem API, where
-we have to do the same thing for HFP.
-
-cheers,
-daniel
-
-Daniel Wagner (4):
-  dundee: Fix signal name
-  dundee: Add Serial and Type documantation
-  dundee: Add Serial property
-  dundee: Add Type property
-
- doc/dundee-api.txt |   12 ++++++++++++
- dundee/bluetooth.c |   11 +++++++++++
- dundee/device.c    |   27 +++++++++++++++++++++++++++
- dundee/dundee.h    |    9 +++++++++
- dundee/manager.c   |    2 +-
- 5 files changed, 60 insertions(+), 1 deletion(-)
-
+ static const GDBusSignalTable manager_signals[] =3D {
+-	{ GDBUS_SIGNAL("DevicesAdded",
++	{ GDBUS_SIGNAL("DeviceAdded",
+ 		GDBUS_ARGS({ "path", "o"},{ "properties", "a{sv}" })) },
+ 	{ GDBUS_SIGNAL("DeviceRemoved",
+ 		GDBUS_ARGS({ "path", "o"})) },
 -- =
 
 1.7.10.130.g36e6c
 
 
---===============2807487050963865202==--
+--===============1770942258823611016==--
 
