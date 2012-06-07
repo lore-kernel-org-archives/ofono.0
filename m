@@ -1,43 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============0761995884155321400=="
+Content-Type: multipart/mixed; boundary="===============1865711407863397962=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Subject: [PATCHv5 3/5] call-forwarding: End querying once CFU is active
-Date: Thu, 07 Jun 2012 10:21:42 +0300
-Message-ID: <1339053704-8749-4-git-send-email-oleg.zhurakivskyy@intel.com>
+Subject: [PATCHv5 2/5] call-forwarding: Don't query cfs if CFU is active
+Date: Thu, 07 Jun 2012 10:21:41 +0300
+Message-ID: <1339053704-8749-3-git-send-email-oleg.zhurakivskyy@intel.com>
 In-Reply-To: <1339053704-8749-1-git-send-email-oleg.zhurakivskyy@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0761995884155321400==
+--===============1865711407863397962==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/call-forwarding.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
+ src/call-forwarding.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
 diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index 343f958..3df009b 100644
+index 7b0a10e..343f958 100644
 --- a/src/call-forwarding.c
 +++ b/src/call-forwarding.c
-@@ -542,7 +542,9 @@ static void get_query_cf_callback(const struct ofono_er=
-ror *error, int total,
- 			cf->flags |=3D CALL_FORWARDING_FLAG_CACHED;
- 	}
+@@ -565,7 +565,8 @@ static DBusMessage *cf_get_properties(DBusConnection *c=
+onn, DBusMessage *msg,
+ 	struct ofono_modem *modem =3D __ofono_atom_get_modem(cf->atom);
  =
 
--	if (cf->query_next =3D=3D CALL_FORWARDING_TYPE_NOT_REACHABLE) {
-+	if (cf->query_next =3D=3D CALL_FORWARDING_TYPE_NOT_REACHABLE ||
-+			(cf->query_next =3D=3D CALL_FORWARDING_TYPE_UNCONDITIONAL &&
-+			is_cfu_enabled(cf))) {
- 		__ofono_dbus_pending_reply(&cf->pending,
- 				cf_get_properties_reply(cf->pending, cf));
- 		return;
+ 	if ((cf->flags & CALL_FORWARDING_FLAG_CACHED) ||
+-			ofono_modem_get_online(modem) =3D=3D FALSE)
++			ofono_modem_get_online(modem) =3D=3D FALSE ||
++			is_cfu_enabled(cf))
+ 		return cf_get_properties_reply(msg, cf);
+ =
+
+ 	if (cf->driver->query =3D=3D NULL)
 -- =
 
 1.7.5.4
 
 
---===============0761995884155321400==--
+--===============1865711407863397962==--
 
