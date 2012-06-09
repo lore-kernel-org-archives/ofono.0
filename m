@@ -1,101 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============4107037984529030130=="
+Content-Type: multipart/mixed; boundary="===============0138202092752533701=="
 MIME-Version: 1.0
-From: Audric Schiltknecht <audric.schiltknecht@toulouse.viveris.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Implement signal strength polling in plugin/driver
-Date: Mon, 11 Jun 2012 16:28:05 +0200
-Message-ID: <e3040137c4170fb3c32fa98bec49ea37@toulouse.viveris.com>
-In-Reply-To: <4FD5F9F7.4010005@linux.intel.com>
+Date: Sat, 09 Jun 2012 01:16:41 -0500
+Message-ID: <4FD2EA49.8060805@gmail.com>
+In-Reply-To: <d9e9c17c27aa80d12803dbaa87b8b971@toulouse.viveris.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4107037984529030130==
+--===============0138202092752533701==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Guillaume,
+Hi Audric,
 
-On Mon, 11 Jun 2012 16:00:23 +0200, Guillaume Zajac wrote:
-> Hi Audric,
->
-> On 07/06/2012 17:20, Audric Schiltknecht wrote:
->> Hi guys,
->>
->>
->> I am currently developing an ofono-based GSM control interface, =
+> I found by looking in include/netreg.h that it should be up to the
+> plugin to
+> implement CSQ polling, however I can't find how it is supposed to be done.
+> Indeed, the plugin has no access to the netreg atom nor structure, so
+> how is it
+> supposed to update one of these properties ?
 
->> using a Sagem
->> Hilo modem (I wrote the appropriate plugin) with the atmodem driver.
->>
->> I am having trouble with signal strength reporting. The terminal =
+Drivers do not modify DBus properties directly.  Instead you should be =
 
->> does not report
->> signal strength by event. Hence, it is not possible to get the value =
+signaling the change to the core the regular way, via =
 
->> from Ofono,
->> since Ofono expects it to be updated on a +CIEV event. I implemented =
+ofono_netreg_strength_notify.
 
->> a
->> new DBus method in the NetworkRegistration interface to force AT+CSQ =
+If you want to implement periodic signal strength reporting, then use =
 
->> command and
->> update the property value, but this is clearly not a valid solution.
->
-> Do you know in modem specifications if Sagem is using a specific
-> signal strength notifications command?
-> If yes, then you should update in
-> drivers/atmodem/network-registration.c the at_creg_set_cb() function
-> to handle OFONO_VENDOR_SAGEM case.
-> Thus you can use register to the good comman notification.
+g_idle_add_seconds to periodically send the +CSQ query.  Please note =
 
-According to the modem specification, the modem should use a standard =
+that doing it this way you'd have to keep track of other states.  For =
 
-+CIEV
-event to report signal strength.
-However, I found that the strength is never notified as expected,
-whereas it is correctly returned when using an AT+CSQ read command.
-Moreover, the value returned in +CIEV is theoretically an integer in =
+example, you might want to stop polling when the registration is lost, etc.
 
-the range 0-4,
-when AT+CSQ returns a well more fine-grained value (integer between =
+Ideally you should be asking your vendor why the signal strength isn't =
 
-0-31).
+reported properly.
 
-> Could you also give us your AT log and more particulary the
-> "AT+CMER=3D3,0,0,1" answer?
-> Maybe, this configuration is not supported by your modem and you
-> should change it.
+Regards,
+-Denis
 
-Indeed, mode 3 is not supported, and I modified the driver to use mode =
-
-1.
-
->> I found by looking in include/netreg.h that it should be up to the =
-
->> plugin to
->> implement CSQ polling, however I can't find how it is supposed to be =
-
->> done.
->> Indeed, the plugin has no access to the netreg atom nor structure, =
-
->> so how is it
->> supposed to update one of these properties ?
->
-> Indeed, if you use it for instance with ConnMan signal strength
-> notification won't work or maybe I miss something.
-
-I use my own DBus client, but the effect is the same: no notification =
-
-of signal
-strength change, unless I explicitly call the custom function I added =
-
-in src/network.c
-to force polling of the strength.
-
-Thanks for your support.
-Audric
-
-
-
---===============4107037984529030130==--
+--===============0138202092752533701==--
 
