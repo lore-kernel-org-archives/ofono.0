@@ -1,96 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============7583492270072333214=="
+Content-Type: multipart/mixed; boundary="===============8836664050726734629=="
 MIME-Version: 1.0
-From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 6/6] test: Support delivery_report in Send-Message script
-Date: Tue, 12 Jun 2012 16:04:15 +0200
-Message-ID: <1339509855-7467-7-git-send-email-ronald.tessier@linux.intel.com>
-In-Reply-To: <1339509855-7467-1-git-send-email-ronald.tessier@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH] TODO: Remove infeasible SIM task
+Date: Tue, 12 Jun 2012 17:05:46 +0200
+Message-ID: <1339513546-14612-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7583492270072333214==
+--===============8836664050726734629==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/send-message |   19 +++++++++++++------
- 1 files changed, 13 insertions(+), 6 deletions(-)
+ TODO |   17 -----------------
+ 1 files changed, 0 insertions(+), 17 deletions(-)
 
-diff --git a/test/send-message b/test/send-message
-index 558fdaa..8522375 100755
---- a/test/send-message
-+++ b/test/send-message
-@@ -4,20 +4,23 @@ import sys
- import dbus
- import csv
+diff --git a/TODO b/TODO
+index 1fef651..3ddf363 100644
+--- a/TODO
++++ b/TODO
+@@ -66,23 +66,6 @@ SIM / SIM File system
+   Priority: Low
+   Complexity: C2
  =
 
--if (len(sys.argv) < 4):
-+if (len(sys.argv) < 5):
- 	print "Usage: %s"\
- 		" <recipient>,..."\
-+		"<delivery-report>"\
- 		" <smil-file-path>"\
- 		" <<content-id>,<content-type>,<file-path>>,..."\
- 		% (sys.argv[0])
- 	print "Sample(Related): %s"\
- 		" \"+33611111111,+33622222222\""\
-+		" \"TRUE\""\
- 		" \"smil.txt\""\
- 		" \"cid-1,text/plain,text.txt\""\
- 		" \"cid-2,image/jpeg,image.jpg\""\
- 		% (sys.argv[0])
- 	print "Sample(Mixed): %s"\
- 		" \"+33611111111,+33622222222\""\
-+		" \"FALSE\""\
- 		" \"\""\
- 		" \"cid-1,text/plain,text.txt\""\
- 		" \"cid-2,image/jpeg,image.jpg\""\
-@@ -42,18 +45,22 @@ for r in reader:
- 	for i in r:
- 		recipients.append(dbus.String(i))
+-- Add support for SIM 'ready' notifications from the driver to the core.  =
+Most
+-  modem manufacturers initialize the SIM (e.g. cache SIM file system, STK
+-  initialization, etc) internally before allowing the telephony stack to
+-  access these portions.  When the PIN is locked, this can lead to oFono b=
+eing
+-  too fast for the modem and asking it for things before the firmware is r=
+eady.
+-
+-  The proposal is to introduce a new sim function:
+-    void ofono_sim_ready_notify(struct ofono_sim *sim);
+-
+-  When oFono determines the SIM PIN is READY, it checks whether
+-  ofono_sim_ready_notify has been called.  If it hasn't, then it stalls the
+-  initialization procedure (and calling post_sim) until
+-  ofono_sim_ready_notify is called.
+-
+-  Priority: High
+-  Complexity: C2
+-
+ - Support SIM authentication: SIM and AKA suites.
  =
 
-+if sys.argv[2].capitalize() =3D=3D 'True':
-+	delivery =3D True
-+else:
-+	delivery =3D False
- =
-
--if sys.argv[2] =3D=3D "":
-+if sys.argv[3] =3D=3D "":
- 	print "Send MMS as Mixed"
- 	smil =3D ""
- else:
- 	print "Send MMS as Related"
--	print "Smil path: %s" % (sys.argv[2])
--	file =3D open(sys.argv[2],"r")
-+	print "Smil path: %s" % (sys.argv[3])
-+	file =3D open(sys.argv[3],"r")
- 	smil =3D dbus.String(file.read())
- =
-
- attachments =3D dbus.Array([],signature=3Ddbus.Signature('(sss)'))
--for a in sys.argv[3:]:
-+for a in sys.argv[4:]:
- 	print "Attachment: (%s)" % a
- 	reader =3D csv.reader([a])
- 	for r in reader:
-@@ -62,6 +69,6 @@ for a in sys.argv[3:]:
- 						dbus.String(r[2])
- 						), signature=3DNone))
- =
-
--path =3D service.SendMessage(recipients, smil, attachments)
-+path =3D service.SendMessage(recipients, delivery, smil, attachments)
- =
-
- print path
+   Priority: Medium
 -- =
 
-1.7.4.1
+1.7.5.4
 
 
---===============7583492270072333214==--
+--===============8836664050726734629==--
 
