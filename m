@@ -1,39 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============2541379246215297739=="
+Content-Type: multipart/mixed; boundary="===============9167837414338585059=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 1/6] mmsutil: Add delivery report to send_req struct
-Date: Tue, 12 Jun 2012 16:04:10 +0200
-Message-ID: <1339509855-7467-2-git-send-email-ronald.tessier@linux.intel.com>
-In-Reply-To: <1339509855-7467-1-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 0/6] mmsd : Add delivery report support
+Date: Tue, 12 Jun 2012 16:04:09 +0200
+Message-ID: <1339509855-7467-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2541379246215297739==
+--===============9167837414338585059==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/mmsutil.h |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+This set of patches concerns mmsd and implements the first task listed in t=
+he
+MMS Delivery Report section of TODO.
 
-diff --git a/src/mmsutil.h b/src/mmsutil.h
-index 79c74db..6c7b37f 100644
---- a/src/mmsutil.h
-+++ b/src/mmsutil.h
-@@ -105,6 +105,7 @@ struct mms_send_req {
- 	char *to;
- 	time_t date;
- 	char *content_type;
-+	gboolean dr;
- };
- =
+Ronald Tessier (6):
+  mmsutil: Add delivery report to send_req struct
+  doc: Modify SendMessage D-Bus API
+  service: Retrieve delivery-report parameter
+  mmsutil: Encode delivery-report in send_req msg
+  unit: Add delivery_report to send_req testing
+  test: Support delivery_report in Send-Message script
 
- struct mms_send_conf {
--- =
+ doc/service-api.txt |    3 ++-
+ src/mmsutil.c       |    9 ++++++++-
+ src/mmsutil.h       |    6 ++++++
+ src/service.c       |   12 +++++++++++-
+ test/send-message   |   19 +++++++++++++------
+ unit/test-mmsutil.c |    3 ++-
+ 6 files changed, 42 insertions(+), 10 deletions(-)
 
+--
 1.7.4.1
 
 
---===============2541379246215297739==--
+--===============9167837414338585059==--
 
