@@ -1,58 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============8836664050726734629=="
+Content-Type: multipart/mixed; boundary="===============6239773057420531811=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH] TODO: Remove infeasible SIM task
-Date: Tue, 12 Jun 2012 17:05:46 +0200
-Message-ID: <1339513546-14612-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Audric Schiltknecht <audric.schiltknecht@toulouse.viveris.com>
+Subject: Re: Implement signal strength polling in plugin/driver
+Date: Thu, 14 Jun 2012 14:21:05 +0200
+Message-ID: <de52a13b2cbbedf98839eff324eed197@toulouse.viveris.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8836664050726734629==
+--===============6239773057420531811==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |   17 -----------------
- 1 files changed, 0 insertions(+), 17 deletions(-)
+Denis,
 
-diff --git a/TODO b/TODO
-index 1fef651..3ddf363 100644
---- a/TODO
-+++ b/TODO
-@@ -66,23 +66,6 @@ SIM / SIM File system
-   Priority: Low
-   Complexity: C2
- =
+>> I found by looking in include/netreg.h that it should be up to the
+>> plugin to
+>> implement CSQ polling, however I can't find how it is supposed to be =
 
--- Add support for SIM 'ready' notifications from the driver to the core.  =
-Most
--  modem manufacturers initialize the SIM (e.g. cache SIM file system, STK
--  initialization, etc) internally before allowing the telephony stack to
--  access these portions.  When the PIN is locked, this can lead to oFono b=
-eing
--  too fast for the modem and asking it for things before the firmware is r=
-eady.
--
--  The proposal is to introduce a new sim function:
--    void ofono_sim_ready_notify(struct ofono_sim *sim);
--
--  When oFono determines the SIM PIN is READY, it checks whether
--  ofono_sim_ready_notify has been called.  If it hasn't, then it stalls the
--  initialization procedure (and calling post_sim) until
--  ofono_sim_ready_notify is called.
--
--  Priority: High
--  Complexity: C2
--
- - Support SIM authentication: SIM and AKA suites.
- =
+>> done.
+>> Indeed, the plugin has no access to the netreg atom nor structure, =
 
-   Priority: Medium
--- =
+>> so
+>> how is it
+>> supposed to update one of these properties ?
+>
+> Drivers do not modify DBus properties directly.  Instead you should
+> be signaling the change to the core the regular way, via
+> ofono_netreg_strength_notify.
+>
+> If you want to implement periodic signal strength reporting, then use
+> g_idle_add_seconds to periodically send the +CSQ query.  Please note
+> that doing it this way you'd have to keep track of other states.  For
+> example, you might want to stop polling when the registration is =
 
-1.7.5.4
+> lost,
+> etc.
 
+Oh, I see. Indeed, I noticed that signal strength reporting
+is stopped when modem is not registered. I'll keep that in mind.
+Thank you for the lead on this matter.
 
---===============8836664050726734629==--
+>
+> Ideally you should be asking your vendor why the signal strength
+> isn't reported properly.
+
+Sure, it would be great to not have to do all these hacks to get it =
+
+working right !
+
+Regards,
+Audric
+
+--===============6239773057420531811==--
 
