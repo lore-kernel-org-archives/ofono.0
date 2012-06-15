@@ -1,55 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============4546893177217421630=="
+Content-Type: multipart/mixed; boundary="===============3471195219337915847=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Gustavo Padovan <gustavo@padovan.org>
 Subject: Re: oFono DUN server issue
-Date: Thu, 14 Jun 2012 17:46:34 -0500
-Message-ID: <4FDA69CA.5080100@gmail.com>
-In-Reply-To: <20120615025829.GB3538@joana>
+Date: Fri, 15 Jun 2012 00:11:39 -0300
+Message-ID: <20120615031139.GC3538@joana>
+In-Reply-To: <4FD9F380.2060202@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4546893177217421630==
+--===============3471195219337915847==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Guillaume,
 
->>> We actually don't have an client uuid for DUN, and we need to put the s=
-erver
->>> uuid here in order to find the remote DUN Gateways.
->>> Other than that he reported an issue in oFono, so how can dundee interf=
-ere on
->>> it?
->>
->> I'm just speculating, but the problem here is that both dundee and
->> the modem emulator are registering the DUN service.  Unfortunately
->> dundee is implementing the client role and modem emulator is
->> implementing the server role.
->
-> They aren't, DUN server register a server, through
-> bluetooth_register_server(), there is no UUID on this. Only DUN Service
-> register itself as DUN on BlueZ.
->
->>
->> Perhaps dundee does not need to register an SDP record at all.  I'm
->> too lazy to dig out the DUN spec.
->
-> It doesn't need because it doesn't have one. We use DUN_GW_UUID here beca=
-use
-> we want plugins/bluetooth.c to notify us when a DUN_GW device appears so =
-then
-> we can use or DUN Client (dundee) to connect to it.
->
-> HFP does the same, in the Handsfree side we register for the UUID of the
-> Gateway side because you want to know about new HFP  gateways on the syst=
-em.
->
+* Guillaume Zajac <guillaume.zajac@linux.intel.com> [2012-06-14 16:21:52 =
++0200]:
 
-Fair enough.  Then I have no idea what is causing this regression.
+> Hi,
+> =
 
-Regards,
--Denis
+> I tested oFono DUN server to be sure it was still working with
+> latest oFono version, however I have an issue with udev/udevng.
+> =
 
---===============4546893177217421630==--
+> My current "phone like" configuration is:
+>     - laptop with Ubuntu 11.10
+>     - oFono + ConnMan running together (network-manager +
+> modem-manager stopped)
+>     - Huawei dongle for data connection
+> =
+
+> I am using a Windows 7 DUN client to connect to the laptop.
+> =
+
+> Binding with client is fine but when I try to dial to connect to the
+> server with the DUN client I got this into oFono log:
+> =
+
+> ...
+> ofonod[20340]: plugins/udev.c:udev_event() subsystem tty add
+> ofonod[20340]: plugins/udev.c:udev_event() subsystem tty finished
+> ofonod[20340]: plugins/udev.c:udev_event() subsystem tty move
+> ofonod[20340]: plugins/udev.c:udev_event() subsystem tty finished
+> ofonod[20340]: plugins/udev.c:udev_event() subsystem tty move
+> ofonod[20340]: plugins/udev.c:udev_event() subsystem tty finished
+> ofonod[20340]: plugins/udevng.c:remove_device()
+> /sys/devices/virtual/tty/rfcomm0
+> ofonod[20340]: plugins/udev.c:udev_event() subsystem tty remove
+> ofonod[20340]: plugins/udev.c:remove_modem() /devices/virtual/tty/rfcomm0
+> ofonod[20340]: plugins/udev.c:udev_event() subsystem tty finished
+> ofonod[20340]: plugins/udevng.c:check_modem_list()
+> ...
+> =
+
+> and the DUN client is getting a timeout error.
+> =
+
+> Does anybody have any idea about this issue?
+
+I suggest you to also send bluetooth hcidump log. It look like the connecti=
+on
+attempt never arrives to ofono (new_connection() on plugins/bluetooth.c).
+
+Does this work when you try to connect from a different DUN Client, like
+dundee, or even trying to open the RFCOMM channel by hand using the rfcomm
+tool?
+
+	Gustavo
+
+--===============3471195219337915847==--
 
