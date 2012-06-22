@@ -1,35 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============6636667217654948757=="
+Content-Type: multipart/mixed; boundary="===============7213402968279529947=="
 MIME-Version: 1.0
-From: Audric Schiltknecht <audric.schiltknecht@toulouse.viveris.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Unable to decode PDU for SMS-STATUS-REPORT
-Date: Mon, 25 Jun 2012 18:20:16 +0200
-Message-ID: <c672aae055cfb534c0e37639c1bfa323@toulouse.viveris.com>
+Date: Fri, 22 Jun 2012 03:28:55 -0500
+Message-ID: <4FE42CC7.5050209@gmail.com>
 In-Reply-To: <d075607b731e301c6ab7b10bb99a5774@toulouse.viveris.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6636667217654948757==
+--===============7213402968279529947==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, 25 Jun 2012 18:10:36 +0200, Audric Schiltknecht wrote:
+Hi Audric,
+
+On 06/25/2012 11:10 AM, Audric Schiltknecht wrote:
 > Hi guys.
 >
 > I'm having troubles with delivery reports.
 >
-> When I send a message with the property "UseDeliveryReports" set to =
-
-> "true",
-> I can get the delivery report from the GSM modem, but ofono is unable
-> to decode it:
+> When I send a message with the property "UseDeliveryReports" set to "true=
+",
+> I can get the delivery report from the GSM modem, but ofono is unable to
+> decode it:
 >
-> ofonod[677]: SMS:    < \r\n+CDS:
-> =
-
+> ofonod[677]: SMS: < \r\n+CDS:
 > 32\r\n07913386094000F006DB0A810011223344216052714081802160527140228000\r\n
-> ofonod[677]: drivers/atmodem/sms.c:at_cds_notify() Got new
-> Status-Report PDU via CDS:
+> ofonod[677]: drivers/atmodem/sms.c:at_cds_notify() Got new Status-Report
+> PDU via CDS:
 > 07913386094000F006DB0A810011223344216052714081802160527140228000, 32
 > ofonod[677]: src/sms.c:ofono_sms_status_notify() len 32 tpdu len 32
 > ofonod[677]: Unable to decode PDU
@@ -39,29 +38,28 @@ On Mon, 25 Jun 2012 18:10:36 +0200, Audric Schiltknecht wrote:
 > It seems that sms_decode does not correctly handle the SMSCC part
 > (913386094000F0),
 > and tries to decode it as the sender address, which obviously fails.
+>
 
+Likely it is because your modem is being stupid.  3GPP 27.005 states:
 
-Digging a little further in the code, I found that the sms_decode() =
+<length> integer type value indicating in the text mode (+CMGF=3D1) the =
 
-function is responsible
-of decoding the SMSC part of the PDU. However, this is done if tpdu_len =
+length of the message body <data> > (or <cdata>) in characters; or in =
 
-< len, which is not the case,
-since both of them equal to 32.
+PDU mode (+CMGF=3D0), the length of the actual TP data unit in octets =
 
-If I correctly understand, 'tpdu' is returned by the modem in the +CDS =
+(i.e. the RP layer SMSC address octets are not counted in the length)
 
-notification.
-Here, its value is 32, which is correct as shown in the logs.
-'len' is calculated in the decode_hex_own_buffer() function called in =
+So in the case above it should be reporting the length of the payload, =
 
-the +CDS notification callback.
-Here, its value also is 32, and I do not see how it could not be that.
+not the length of the entire hex string.
 
-Any help to point out my mistake(s) will be appreciated ;)
+See if the PDU is decoded successfully by setting tpdu_len to the =
+
+appropriate value.
 
 Regards,
-Audric Schiltknecht
+-Denis
 
---===============6636667217654948757==--
+--===============7213402968279529947==--
 
