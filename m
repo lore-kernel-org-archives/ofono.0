@@ -1,76 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============7949996718222572396=="
+Content-Type: multipart/mixed; boundary="===============1004566822120456874=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 7/7] hardwaremanipulator: Add USC2 encoding support for USSD.
-Date: Mon, 25 Jun 2012 16:38:03 +0200
-Message-ID: <1340635083-5877-8-git-send-email-philippe.nunes@linux.intel.com>
-In-Reply-To: <1340635083-5877-1-git-send-email-philippe.nunes@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/2] emulator: Fix crash when dundee is disconnecting
+Date: Fri, 22 Jun 2012 02:46:04 -0500
+Message-ID: <4FE422BC.3040507@gmail.com>
+In-Reply-To: <1340633992-14599-2-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7949996718222572396==
+--===============1004566822120456874==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/hardwaremanipulator.cpp |   31 +++++++++++++++++++++++++++----
- 1 file changed, 27 insertions(+), 4 deletions(-)
+Hi Guillaume,
 
-diff --git a/src/hardwaremanipulator.cpp b/src/hardwaremanipulator.cpp
-index b746229..056480c 100644
---- a/src/hardwaremanipulator.cpp
-+++ b/src/hardwaremanipulator.cpp
-@@ -320,14 +320,37 @@ void HardwareManipulator::sendVMNotify( int type, int=
- count, const QList<QVMMess
- void HardwareManipulator::sendUSSD( bool cancel, bool response,
- 		const QString &content )
- {
--    QTextCodec *codec =3D QAtUtils::codec( rules->variable("SCS") );
-     /* TODO: if rules->variable("USD") =3D=3D "0" then return */
-     if (cancel)
-         emit unsolicitedCommand( "+CUSD: 2" );
--    else
-+    else {
-+        QTextCodec *codec =3D QAtUtils::codec( "gsm-noloss" );
-+        bool gsmSafe;
-+        QString request;
-+
-+        // Check the body for non-GSM characters.
-+        gsmSafe =3D codec->canEncode( content );
-+
-+        // Use the default alphabet if everything is GSM-compatible.
-+        if ( gsmSafe ) {
-+            QTextCodec *codec =3D QAtUtils::codec( rules->variable("SCS") =
-);
-+            request=3D QAtUtils::quote( content, codec );
-+        } else {
-+            // Encode the text using the 16-bit UCS2 alphabet.
-+            uint u;
-+            QByteArray binary;
-+            uint len =3D content.length();
-+
-+            for ( u =3D 0; u < len; u++ ) {
-+                binary +=3D (unsigned char)(content[u].unicode() >> 8);
-+                binary +=3D (unsigned char)(content[u].unicode() & 0xFF);
-+            }
-+            request =3D PS_toHex( binary );
-+        }
-         emit unsolicitedCommand( "+CUSD: " +
--                        QString::number( response ? 1 : 0 ) + ",\"" +
--                        QAtUtils::quote( content, codec ) + "\",0" );
-+                    QString::number( response ? 1 : 0 ) + ",\"" +
-+                    request + "\"," + QString::number( gsmSafe ? 0 : 0x48 =
-));
-+    }
- }
- =
+On 06/25/2012 09:19 AM, Guillaume Zajac wrote:
+> Dundee is not waiting to receive the NO CARRIER notification
+> to close the IO channel with oFono so that oFono is trying to
+> send a NO CARRIER although GAtServer is removed.
+> ---
+>   src/emulator.c |    9 ++++++++-
+>   1 files changed, 8 insertions(+), 1 deletions(-)
+>
+> diff --git a/src/emulator.c b/src/emulator.c
+> index c3165eb..cbee6ad 100644
+> --- a/src/emulator.c
+> +++ b/src/emulator.c
+> @@ -101,7 +101,14 @@ static void cleanup_ppp(struct ofono_emulator *em)
+>   	em->pns_id =3D 0;
+>
+>   	g_at_server_resume(em->server);
+> -	g_at_server_send_final(em->server, G_AT_SERVER_RESULT_NO_CARRIER);
+> +
+> +	/*
+> +	 * If GAtServer IO is lost, GAtServer can have been removed
+> +	 * through emulator disconnect routine.
+> +	 */
+> +	if (em->server !=3D NULL)
+> +		g_at_server_send_final(em->server,
+> +					G_AT_SERVER_RESULT_NO_CARRIER);
 
- bool HardwareManipulator::getSimPresent()
--- =
+If server is NULL then either it should be a global check like before =
 
-1.7.9.5
+(prior to proposed patch 1), or you should add a NULL check to =
 
+g_at_server_send_final itself.
 
---===============7949996718222572396==--
+>   }
+>
+>   static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user=
+_data)
+
+Regards,
+-Denis
+
+--===============1004566822120456874==--
 
