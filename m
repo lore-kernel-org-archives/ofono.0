@@ -1,32 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============3835349682755750970=="
+Content-Type: multipart/mixed; boundary="===============8777420573731013068=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] bluetooth: ignore error if driver returns -EALREADY
-Date: Fri, 22 Jun 2012 02:47:13 -0500
-Message-ID: <4FE42301.6010107@gmail.com>
-In-Reply-To: <1340614475-32177-1-git-send-email-luiz.dentz@gmail.com>
+Subject: Re: [PATCH 2/7] controbase: Add combobox for CBS scheme selection
+Date: Fri, 22 Jun 2012 03:08:29 -0500
+Message-ID: <4FE427FD.1040300@gmail.com>
+In-Reply-To: <1340635083-5877-3-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3835349682755750970==
+--===============8777420573731013068==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Luiz,
+Hi Philippe,
 
-On 06/25/2012 03:54 AM, Luiz Augusto von Dentz wrote:
-> From: Luiz Augusto von Dentz<luiz.von.dentz@intel.com>
->
-> ---
->   plugins/bluetooth.c |    2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
->
+> +<item row=3D"0" column=3D"3">
+> +<widget class=3D"QComboBox" name=3D"cbScheme">
+> +<property name=3D"currentIndex">
+> +<number>0</number>
+> +</property>
+> +<item>
+> +<property name=3D"text">
+> +<string>Default GSM</string>
+> +</property>
+> +</item>
+> +<item>
+> +<property name=3D"text">
+> +<string>UCS2</string>
+> +</property>
+> +</item>
+> +</widget>
+> +</item>
 
-Patch has been applied, thanks.
+Since you're adding intelligence to figure out the 'best' encoding =
+
+scheme anyway, are you sure these are actually needed?  The only reason =
+
+to add this is if you have english characters but want to force encoding =
+
+in UCS2.
 
 Regards,
 -Denis
 
---===============3835349682755750970==--
+--===============8777420573731013068==--
 
