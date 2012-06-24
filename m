@@ -1,65 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============2524113694558783875=="
+Content-Type: multipart/mixed; boundary="===============6555368457015675475=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 2/4] bluetooth: watch for signals only on BLUEZ_SERVICE
-Date: Thu, 28 Jun 2012 10:59:19 -0300
-Message-ID: <1340891961-9809-3-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <1340891961-9809-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/6] qcbsmessage: Add bestScheme method in QCBSMessage
+ class
+Date: Sun, 24 Jun 2012 16:44:00 -0500
+Message-ID: <4FE78A20.90908@gmail.com>
+In-Reply-To: <1340809845-26595-3-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2524113694558783875==
+--===============6555368457015675475==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/bluetooth.c | 13 ++++++++-----
- 1 file changed, 8 insertions(+), 5 deletions(-)
+Hi Philippe,
 
-diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index cb5fe24..91c8d18 100644
---- a/plugins/bluetooth.c
-+++ b/plugins/bluetooth.c
-@@ -840,22 +840,25 @@ static void bluetooth_ref(void)
- 					bluetooth_connect,
- 					bluetooth_disconnect, NULL, NULL);
- =
+On 06/27/2012 10:10 AM, Philippe Nunes wrote:
+> ---
+>   src/qcbsmessage.cpp |   10 ++++++++--
+>   src/qcbsmessage.h   |    1 +
+>   2 files changed, 9 insertions(+), 2 deletions(-)
+>
 
--	adapter_added_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
--						BLUEZ_MANAGER_INTERFACE,
-+	adapter_added_watch =3D g_dbus_add_signal_watch(connection, BLUEZ_SERVICE,
-+						NULL, BLUEZ_MANAGER_INTERFACE,
- 						"AdapterAdded",
- 						adapter_added, NULL, NULL);
- =
+Patch has been applied, thanks.
 
--	adapter_removed_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
-+	adapter_removed_watch =3D g_dbus_add_signal_watch(connection,
-+						BLUEZ_SERVICE, NULL,
- 						BLUEZ_MANAGER_INTERFACE,
- 						"AdapterRemoved",
- 						adapter_removed, NULL, NULL);
- =
-
--	device_removed_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
-+	device_removed_watch =3D g_dbus_add_signal_watch(connection,
-+						BLUEZ_SERVICE, NULL,
- 						BLUEZ_ADAPTER_INTERFACE,
- 						"DeviceRemoved",
- 						device_removed, NULL, NULL);
- =
-
--	property_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
-+	property_watch =3D g_dbus_add_signal_watch(connection,
-+						BLUEZ_SERVICE, NULL,
- 						BLUEZ_DEVICE_INTERFACE,
- 						"PropertyChanged",
- 						property_changed, NULL, NULL);
--- =
-
-1.7.11.1
+Regards,
+-Denis
 
 
---===============2524113694558783875==--
+--===============6555368457015675475==--
 
