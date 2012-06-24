@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7181178822263323087=="
+Content-Type: multipart/mixed; boundary="===============9130338082653127726=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 5/6] phonesim: Add support for USSD answer
-Date: Sun, 24 Jun 2012 16:44:17 -0500
-Message-ID: <4FE78A31.10501@gmail.com>
-In-Reply-To: <1340809845-26595-6-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH 6/6] phonesim: Add support for USSD session cancellation
+Date: Sun, 24 Jun 2012 16:44:33 -0500
+Message-ID: <4FE78A41.4020500@gmail.com>
+In-Reply-To: <1340809845-26595-7-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7181178822263323087==
+--===============9130338082653127726==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -27,5 +27,5 @@ Regards,
 -Denis
 
 
---===============7181178822263323087==--
+--===============9130338082653127726==--
 
