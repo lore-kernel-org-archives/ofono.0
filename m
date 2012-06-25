@@ -1,70 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============0597878308753927058=="
+Content-Type: multipart/mixed; boundary="===============5538461738032881277=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 5/7] hardwaremanipulator: Add multi-page support for CBS
- message
-Date: Fri, 22 Jun 2012 03:12:22 -0500
-Message-ID: <4FE428E6.6050000@gmail.com>
-In-Reply-To: <1340635083-5877-6-git-send-email-philippe.nunes@linux.intel.com>
+From: Audric Schiltknecht <audric.schiltknecht@toulouse.viveris.com>
+Subject: Unable to decode PDU for SMS-STATUS-REPORT
+Date: Mon, 25 Jun 2012 18:10:36 +0200
+Message-ID: <d075607b731e301c6ab7b10bb99a5774@toulouse.viveris.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0597878308753927058==
+--===============5538461738032881277==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi guys.
 
-On 06/25/2012 09:38 AM, Philippe Nunes wrote:
-> ---
->   src/hardwaremanipulator.cpp |   35 +++++++++++++++++++++++++++++++++--
->   1 file changed, 33 insertions(+), 2 deletions(-)
->
-> diff --git a/src/hardwaremanipulator.cpp b/src/hardwaremanipulator.cpp
-> index c19b507..b746229 100644
-> --- a/src/hardwaremanipulator.cpp
-> +++ b/src/hardwaremanipulator.cpp
-> @@ -123,13 +123,44 @@ void HardwareManipulator::constructCBMessage(const =
-QString&messageCode, int geo
->       m.setPage(pag);
->       m.setText(content);
->
-> +    uint nbPages, spaceLeftInLast;
-> +
-> +    if ( scheme =3D=3D 0&&  content.length()>  (15*93)) {
-> +        warning(tr("Text too long"),
-> +        tr("The maximum number of pages (15) "
-> +                          "is reached - text is truncated"));
-> +        m.setText(content.mid( 0, 15*93 ));
-> +    } else if (content.length()>  (15*40)) {
-> +        warning(tr("Text too long"),
-> +        tr("The maximum number of pages (15) "
-> +                           "is reached - text is truncated"));
-> +        m.setText(content.mid( 0, 15*40 ));
-> +    }
-> +
-> +    m.computeSize( nbPages, spaceLeftInLast );
-> +    if ( npag<  nbPages ) {
-> +	    warning(tr("Invalid number of pages"),
-> +		tr("The required number of pages is "
-> +	                   "higher than the given number"));
-> +	    m.setNumPages(nbPages);
-> +    }
-> +
+I'm having troubles with delivery reports.
 
-Since you're doing this, feel free to simply take out the 'Page' and =
+When I send a message with the property "UseDeliveryReports" set to =
 
-'Number of pages' entries in the UI.
+"true",
+I can get the delivery report from the GSM modem, but ofono is unable =
 
-The current UI provides way too much detail as it was used to test the =
+to decode it:
 
-oFono handling of repeated pages, outdated update numbers, out-of-order =
+ofonod[677]: SMS:    < \r\n+CDS: =
 
-pages, etc.  However, these can be just as easily done as a unit test now.
+32\r\n07913386094000F006DB0A810011223344216052714081802160527140228000\r\n
+ofonod[677]: drivers/atmodem/sms.c:at_cds_notify() Got new =
 
-Regards,
--Denis
+Status-Report PDU via CDS: =
 
---===============0597878308753927058==--
+07913386094000F006DB0A810011223344216052714081802160527140228000, 32
+ofonod[677]: src/sms.c:ofono_sms_status_notify() len 32 tpdu len 32
+ofonod[677]: Unable to decode PDU
+
+The PDU is valid, since I can decode it using some online tool.
+
+It seems that sms_decode does not correctly handle the SMSCC part =
+
+(913386094000F0),
+and tries to decode it as the sender address, which obviously fails.
+
+If in decode_deliver() function, I shift the PDU of 9 bytes (ie. PDU is =
+
+DB0A810011223344216052714081802160527140228000),
+then the function still fails (more or less expected), but the sender =
+
+address is correctly decoded.
+
+
+Do any of you have an idea on this matter ?
+
+
+Regards.
+Audric Schiltknecht
+
+--===============5538461738032881277==--
 
