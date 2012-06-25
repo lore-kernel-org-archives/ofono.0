@@ -1,30 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============7323848146184293517=="
+Content-Type: multipart/mixed; boundary="===============9169314554348732229=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 5/6] unit: Add delivery_report to send_req testing
-Date: Mon, 25 Jun 2012 00:12:51 -0700
-Message-ID: <1340608371.29898.8.camel@aeonflux>
-In-Reply-To: <1339509855-7467-6-git-send-email-ronald.tessier@linux.intel.com>
+From: August Mayer <august.mayer@hale.at>
+Subject: Re: GPRS re-connect problem
+Date: Mon, 25 Jun 2012 10:17:26 +0200
+Message-ID: <4FE81E96.5010108@hale.at>
+In-Reply-To: <4FE0388F.4060203@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7323848146184293517==
+--===============9169314554348732229==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ronald,
+Hello Denis,
 
->  unit/test-mmsutil.c |    3 ++-
->  1 files changed, 2 insertions(+), 1 deletions(-)
+Wow, that was it exactly! After initialising with AT&C0, the serial data =
 
-patch has been applied.
+connection isn't closed anymore. Never thought that the close would =
 
-Regards
+originate from the modem!
 
-Marcel
-
+Many thanks for your help & greetings     August
 
 
---===============7323848146184293517==--
+Am 2012-06-19 10:30, schrieb Denis Kenzior:
+> Hi August,
+>
+> On 06/21/2012 05:51 AM, August Mayer wrote:
+>> Hello,
+>>
+>> When connecting again to GPRS / PPP, after an Internet connection has
+>> been closed previously, the connection seems to fail. It looks like the
+>> ofono_modem serial data channel is completely closed when a PPP
+>> connection is shut down. I'm using a Telit Modem, which provides several
+>> serial ports, and am right now using separate serials for the AT chat
+>> and the data/PPP; for this reason, the AT chat continues working, but
+>> the data channel is dead.
+>>
+>
+> Something similar was happening on Qualcomm based modems from Huawei, =
+
+> ZTE, etc.  The modem was sending a HUP on the PPP channel after PPP =
+
+> link was dropped.  I believe the preferred solution was to send AT&C0 =
+
+> when initializing that port.
+>
+>> My question is, is it somehow necessary to re-initialise the modem data
+>> serial channel after a PPP connection? Or could there be a conceptual
+>> problem that I have overlooked?
+>>
+>
+> This can be possible as well.  See commit =
+
+> 7ed56d6844f8131cbf981e482b7bded8b20db7ab for another possible solution =
+
+> (prior to &C0) that can be used as well.
+>
+> Regards,
+> -Denis
+>
+> -- =
+
+> Scanned by MailScanner.
+>
+
+
+--
+Scanned by MailScanner.
+
+
+--===============9169314554348732229==--
 
