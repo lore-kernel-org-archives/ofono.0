@@ -1,86 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============6811328298180084000=="
+Content-Type: multipart/mixed; boundary="===============7949996718222572396=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 5/7] hardwaremanipulator: Add multi-page support for CBS
- message
-Date: Mon, 25 Jun 2012 16:38:01 +0200
-Message-ID: <1340635083-5877-6-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 7/7] hardwaremanipulator: Add USC2 encoding support for USSD.
+Date: Mon, 25 Jun 2012 16:38:03 +0200
+Message-ID: <1340635083-5877-8-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1340635083-5877-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6811328298180084000==
+--===============7949996718222572396==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/hardwaremanipulator.cpp |   35 +++++++++++++++++++++++++++++++++--
- 1 file changed, 33 insertions(+), 2 deletions(-)
+ src/hardwaremanipulator.cpp |   31 +++++++++++++++++++++++++++----
+ 1 file changed, 27 insertions(+), 4 deletions(-)
 
 diff --git a/src/hardwaremanipulator.cpp b/src/hardwaremanipulator.cpp
-index c19b507..b746229 100644
+index b746229..056480c 100644
 --- a/src/hardwaremanipulator.cpp
 +++ b/src/hardwaremanipulator.cpp
-@@ -123,13 +123,44 @@ void HardwareManipulator::constructCBMessage(const QS=
-tring &messageCode, int geo
-     m.setPage(pag);
-     m.setText(content);
- =
-
-+    uint nbPages, spaceLeftInLast;
-+
-+    if ( scheme =3D=3D 0 && content.length() > (15*93)) {
-+        warning(tr("Text too long"),
-+        tr("The maximum number of pages (15) "
-+                          "is reached - text is truncated"));
-+        m.setText(content.mid( 0, 15*93 ));
-+    } else if (content.length() > (15*40)) {
-+        warning(tr("Text too long"),
-+        tr("The maximum number of pages (15) "
-+                           "is reached - text is truncated"));
-+        m.setText(content.mid( 0, 15*40 ));
-+    }
-+
-+    m.computeSize( nbPages, spaceLeftInLast );
-+    if ( npag < nbPages ) {
-+	    warning(tr("Invalid number of pages"),
-+		tr("The required number of pages is "
-+	                   "higher than the given number"));
-+	    m.setNumPages(nbPages);
-+    }
-+
-     sendCBS(m);
- }
- =
-
- void HardwareManipulator::sendCBS( const QCBSMessage &m )
+@@ -320,14 +320,37 @@ void HardwareManipulator::sendVMNotify( int type, int=
+ count, const QList<QVMMess
+ void HardwareManipulator::sendUSSD( bool cancel, bool response,
+ 		const QString &content )
  {
--    QByteArray pdu =3D m.toPdu();
--    emit unsolicitedCommand(QString("+CBM: ")+QString::number(pdu.length()=
-)+'\r'+'\n'+ PS_toHex(pdu));
-+    if( m.shouldSplit() ) {
-+        QList<QCBSMessage> list =3D m.split();
+-    QTextCodec *codec =3D QAtUtils::codec( rules->variable("SCS") );
+     /* TODO: if rules->variable("USD") =3D=3D "0" then return */
+     if (cancel)
+         emit unsolicitedCommand( "+CUSD: 2" );
+-    else
++    else {
++        QTextCodec *codec =3D QAtUtils::codec( "gsm-noloss" );
++        bool gsmSafe;
++        QString request;
 +
-+        for( int i =3D0; i < list.count(); i++ ) {
-+            QByteArray pdu =3D list[i].toPdu();
-+             emit unsolicitedCommand(QString("+CBM: ")+QString::number(pdu=
-.length())+'\r'+'\n'+ PS_toHex(pdu));
-+         }
-+    } else {
-+        QByteArray pdu =3D m.toPdu();
-+        emit unsolicitedCommand(QString("+CBM: ")+QString::number(pdu.leng=
-th())+'\r'+'\n'+ PS_toHex(pdu));
++        // Check the body for non-GSM characters.
++        gsmSafe =3D codec->canEncode( content );
++
++        // Use the default alphabet if everything is GSM-compatible.
++        if ( gsmSafe ) {
++            QTextCodec *codec =3D QAtUtils::codec( rules->variable("SCS") =
+);
++            request=3D QAtUtils::quote( content, codec );
++        } else {
++            // Encode the text using the 16-bit UCS2 alphabet.
++            uint u;
++            QByteArray binary;
++            uint len =3D content.length();
++
++            for ( u =3D 0; u < len; u++ ) {
++                binary +=3D (unsigned char)(content[u].unicode() >> 8);
++                binary +=3D (unsigned char)(content[u].unicode() & 0xFF);
++            }
++            request =3D PS_toHex( binary );
++        }
+         emit unsolicitedCommand( "+CUSD: " +
+-                        QString::number( response ? 1 : 0 ) + ",\"" +
+-                        QAtUtils::quote( content, codec ) + "\",0" );
++                    QString::number( response ? 1 : 0 ) + ",\"" +
++                    request + "\"," + QString::number( gsmSafe ? 0 : 0x48 =
+));
 +    }
  }
  =
 
- void HardwareManipulator::constructSMSMessage( const int type, const QStri=
-ng &sender, const QString &serviceCenter, const QString &text )
+ bool HardwareManipulator::getSimPresent()
 -- =
 
 1.7.9.5
 
 
---===============6811328298180084000==--
+--===============7949996718222572396==--
 
