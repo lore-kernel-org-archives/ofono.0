@@ -1,79 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============4276856463633363360=="
+Content-Type: multipart/mixed; boundary="===============4823608897942619565=="
 MIME-Version: 1.0
-From: Audric Schiltknecht <audric.schiltknecht@toulouse.viveris.com>
-Subject: Re: Unable to decode PDU for SMS-STATUS-REPORT
-Date: Tue, 26 Jun 2012 09:18:00 +0200
-Message-ID: <c0891f374d865e94c4fad5ffa5c3da07@toulouse.viveris.com>
-In-Reply-To: <4FE42CC7.5050209@gmail.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH 2/2] emulator: Fix crash when dundee is disconnecting
+Date: Tue, 26 Jun 2012 10:00:25 +0200
+Message-ID: <4FE96C19.6090700@linux.intel.com>
+In-Reply-To: <4FE422BC.3040507@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4276856463633363360==
+--===============4823608897942619565==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+Hi Denis,
 
-On Fri, 22 Jun 2012 03:28:55 -0500, Denis Kenzior wrote:
-> Hi Audric,
+>> Dundee is not waiting to receive the NO CARRIER notification
+>> to close the IO channel with oFono so that oFono is trying to
+>> send a NO CARRIER although GAtServer is removed.
+>> ---
+>>   src/emulator.c |    9 ++++++++-
+>>   1 files changed, 8 insertions(+), 1 deletions(-)
+>>
+>> diff --git a/src/emulator.c b/src/emulator.c
+>> index c3165eb..cbee6ad 100644
+>> --- a/src/emulator.c
+>> +++ b/src/emulator.c
+>> @@ -101,7 +101,14 @@ static void cleanup_ppp(struct ofono_emulator *em)
+>>       em->pns_id =3D 0;
+>>
+>>       g_at_server_resume(em->server);
+>> -    g_at_server_send_final(em->server, G_AT_SERVER_RESULT_NO_CARRIER);
+>> +
+>> +    /*
+>> +     * If GAtServer IO is lost, GAtServer can have been removed
+>> +     * through emulator disconnect routine.
+>> +     */
+>> +    if (em->server !=3D NULL)
+>> +        g_at_server_send_final(em->server,
+>> +                    G_AT_SERVER_RESULT_NO_CARRIER);
 >
-> On 06/25/2012 11:10 AM, Audric Schiltknecht wrote:
->> Hi guys.
->>
->> I'm having troubles with delivery reports.
->>
->> When I send a message with the property "UseDeliveryReports" set to =
+> If server is NULL then either it should be a global check like before =
 
->> "true",
->> I can get the delivery report from the GSM modem, but ofono is =
+> (prior to proposed patch 1), or you should add a NULL check to =
 
->> unable to
->> decode it:
->>
->> ofonod[677]: SMS: < \r\n+CDS:
->> =
+> g_at_server_send_final itself.
 
->> 32\r\n07913386094000F006DB0A810011223344216052714081802160527140228000\r=
-\n
->> ofonod[677]: drivers/atmodem/sms.c:at_cds_notify() Got new =
+In this specific case the server is removed during g_at_server_resume(), =
 
->> Status-Report
->> PDU via CDS:
->> 07913386094000F006DB0A810011223344216052714081802160527140228000, 32
->> ofonod[677]: src/sms.c:ofono_sms_status_notify() len 32 tpdu len 32
->> ofonod[677]: Unable to decode PDU
->>
->> The PDU is valid, since I can decode it using some online tool.
->>
->> It seems that sms_decode does not correctly handle the SMSCC part
->> (913386094000F0),
->> and tries to decode it as the sender address, which obviously fails.
->>
->
-> Likely it is because your modem is being stupid.  3GPP 27.005 states:
->
-> <length> integer type value indicating in the text mode (+CMGF=3D1) the
-> length of the message body <data> > (or <cdata>) in characters; or in
-> PDU mode (+CMGF=3D0), the length of the actual TP data unit in octets
-> (i.e. the RP layer SMSC address octets are not counted in the length)
->
-> So in the case above it should be reporting the length of the
-> payload, not the length of the entire hex string.
-
-Oh, I see. I must have missed this part in the specs.
+so I will add the NULL check into g_at_server_send_final()
 
 >
-> See if the PDU is decoded successfully by setting tpdu_len to the
-> appropriate value.
+>>   }
+>>
+>>   static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer =
 
-You are quite right on this, the modem is to blame...
-I should have guessed it ;-)
+>> user_data)
+>
+> Regards,
+> -Denis
+>
 
-Thank you again for your help.
+Kind regards,
+Guillaume
 
-Regards,
-Audric
-
---===============4276856463633363360==--
+--===============4823608897942619565==--
 
