@@ -1,83 +1,117 @@
-Content-Type: multipart/mixed; boundary="===============3617751648338176351=="
+Content-Type: multipart/mixed; boundary="===============2047987189488135430=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: Re: Unable to decode PDU for SMS-STATUS-REPORT
-Date: Tue, 26 Jun 2012 11:14:58 +0200
-Message-ID: <4FE97D92.7030306@linux.intel.com>
-In-Reply-To: <c672aae055cfb534c0e37639c1bfa323@toulouse.viveris.com>
+From: Jens Rehsack <jr_extern@vfnet.de>
+Subject: New test scripts ...
+Date: Tue, 26 Jun 2012 11:24:59 +0200
+Message-ID: <4FE97FEB.3080607@vfnet.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3617751648338176351==
+--===============2047987189488135430==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi all,
 
-On 06/25/2012 06:20 PM, Audric Schiltknecht wrote:
-> On Mon, 25 Jun 2012 18:10:36 +0200, Audric Schiltknecht wrote:
->> Hi guys.
->>
->> I'm having troubles with delivery reports.
->>
->> When I send a message with the property "UseDeliveryReports" set to
->> "true",
->> I can get the delivery report from the GSM modem, but ofono is unable
->> to decode it:
->>
->> ofonod[677]: SMS: < \r\n+CDS:
->>
->> 32\r\n07913386094000F006DB0A810011223344216052714081802160527140228000\r=
-\n
->>
->> ofonod[677]: drivers/atmodem/sms.c:at_cds_notify() Got new
->> Status-Report PDU via CDS:
->> 07913386094000F006DB0A810011223344216052714081802160527140228000, 32
->> ofonod[677]: src/sms.c:ofono_sms_status_notify() len 32 tpdu len 32
->> ofonod[677]: Unable to decode PDU
->>
->> The PDU is valid, since I can decode it using some online tool.
->>
->> It seems that sms_decode does not correctly handle the SMSCC part
->> (913386094000F0),
->> and tries to decode it as the sender address, which obviously fails.
->
->
-> Digging a little further in the code, I found that the sms_decode()
-> function is responsible
-> of decoding the SMSC part of the PDU. However, this is done if tpdu_len
-> < len, which is not the case,
-> since both of them equal to 32.
->
-> If I correctly understand, 'tpdu' is returned by the modem in the +CDS
-> notification.
-> Here, its value is 32, which is correct as shown in the logs.
-> 'len' is calculated in the decode_hex_own_buffer() function called in
-> the +CDS notification callback.
-> Here, its value also is 32, and I do not see how it could not be that.
->
-> Any help to point out my mistake(s) will be appreciated ;)
->
+for personal requirements (debugging) I added 3 simple scripts
+(attached) to dump the properties of specific modem interfaces.
 
-As pointed by Denis, the length given by the CDS notification should be =
+Shall I send patches for them or are they useless for the project?
+(For the records: I don't mind either)
 
-the length of the TPDU part (PDU without SMSC). In your case, this value =
+Best regards,
+Jens
 
-should be 24 and not 32.
+--===============2047987189488135430==
+Content-Type: text/plain
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="nw-properties.ksh"
 
-07913386094000F0 | 06DB0A810011223344216052714081802160527140228000
-----------------   ------------------------------------------------
-SMSC (8 octets)  |           TPDU (24 octets)
+IyEvdXNyL2Jpbi9weXRob24KCiMgZnJvbSBkYnVzIGltcG9ydCBTeXN0ZW1CdXMsIEludGVyZmFj
+ZSwgREJ1c0V4Y2VwdGlvbiwgVUludDMyLCBJbnQzMiwgVUludDY0LCBJbnQ2NCwgQm9vbGVhbgpp
+bXBvcnQgc3lzCmltcG9ydCBkYnVzCgpkZWYgZGVkYnVzdHlwZSh2KToKCWlmIGlzaW5zdGFuY2Uo
+diwgYm9vbCkgb3IgaXNpbnN0YW5jZSh2LCBkYnVzLkJvb2xlYW4pOgoJCXJldHVybiBib29sKHYp
+CgllbGlmIGlzaW5zdGFuY2UodiwgZmxvYXQpOgoJCXJldHVybiBmbG9hdCh2KQoJZWxpZiBpc2lu
+c3RhbmNlKHYsIGludCkgb3IgaXNpbnN0YW5jZSh2LCBkYnVzLkludDY0KSBvciBpc2luc3RhbmNl
+KHYsIGRidXMuVUludDY0KSBvciBpc2luc3RhbmNlKHYsIGRidXMuSW50MzIpIG9yIGlzaW5zdGFu
+Y2UodiwgZGJ1cy5VSW50MzIpOgoJCXJldHVybiBpbnQodikKCWVsaWYgaXNpbnN0YW5jZSh2LCBi
+YXNlc3RyaW5nKToKCQlyZXR1cm4gdW5pY29kZSh2KQoJZWxpZiBpc2luc3RhbmNlKHYsIGRpY3Qp
+OgoJCXJldHVybiBkaWN0KFsoc3RyKG4pLCBkZWRidXN0eXBlKG0pLCApIGZvciBuLCBtIGluIHYu
+aXRlbXMoKV0pICMgdXNlIHN0cmluZ3MgZm9yIG5hbWVzIHRvIGFsbG93ICoqCgllbGlmIGlzaW5z
+dGFuY2UodiwgbGlzdCkgb3IgaXNpbnN0YW5jZSh2LCB0dXBsZSk6CgkJcmV0dXJuIFtkZWRidXN0
+eXBlKG0pIGZvciBtIGluIHZdCgllbHNlOgoJCXJhaXNlIEV4Y2VwdGlvbigndW5zdXBwb3J0ZWQg
+dHlwZSAlcyclIHR5cGUodikpCgpidXMgPSBkYnVzLlN5c3RlbUJ1cygpCgppZiBsZW4oc3lzLmFy
+Z3YpID09IDI6CglwYXRoID0gc3lzLmFyZ3ZbMV0KZWxpZiBsZW4oc3lzLmFyZ3YpID09IDE6Cglt
+YW5hZ2VyID0gZGJ1cy5JbnRlcmZhY2UoYnVzLmdldF9vYmplY3QoJ29yZy5vZm9ubycsICcvJyks
+CgkJCQkJJ29yZy5vZm9uby5NYW5hZ2VyJykKCW1vZGVtcyA9IG1hbmFnZXIuR2V0TW9kZW1zKCkK
+CXBhdGggPSBtb2RlbXNbMF1bMF0KZWxzZToKCXByaW50ICIlcyBbUEFUSF0iICUgKHN5cy5hcmd2
+WzBdKQoJc3lzLmV4aXQoMCkKCm53bWFuYWdlciA9IGRidXMuSW50ZXJmYWNlKGJ1cy5nZXRfb2Jq
+ZWN0KCdvcmcub2Zvbm8nLCBwYXRoKSwKCQkJCSdvcmcub2Zvbm8uTmV0d29ya1JlZ2lzdHJhdGlv
+bicpCnByb3BlcnRpZXMgPSBud21hbmFnZXIuR2V0UHJvcGVydGllcygpCmRkX3AgPSBkZWRidXN0
+eXBlKHByb3BlcnRpZXMpCnByaW50ICctLS0gbndyZWdfcHJvcGVydGllcycsIGRkX3AKb3BlcmF0
+b3JzID0gbndtYW5hZ2VyLkdldE9wZXJhdG9ycygpCmRkX28gPSBkZWRidXN0eXBlKG9wZXJhdG9y
+cykKcHJpbnQgJy0tLSBud3JlZ19vcGVyYXRvcnMnLCBkZF9vCg==
 
-decode_hex_own_buffer() function returns the length of the PDU =
+--===============2047987189488135430==
+Content-Type: text/plain
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="sim-properties.ksh"
 
-(including the SMSC). In your case, this value is indeed 32.
+IyEvdXNyL2Jpbi9weXRob24KCiMgZnJvbSBkYnVzIGltcG9ydCBTeXN0ZW1CdXMsIEludGVyZmFj
+ZSwgREJ1c0V4Y2VwdGlvbiwgVUludDMyLCBJbnQzMiwgVUludDY0LCBJbnQ2NCwgQm9vbGVhbgpp
+bXBvcnQgc3lzCmltcG9ydCBkYnVzCgpkZWYgZGVkYnVzdHlwZSh2KToKCWlmIGlzaW5zdGFuY2Uo
+diwgYm9vbCkgb3IgaXNpbnN0YW5jZSh2LCBkYnVzLkJvb2xlYW4pOgoJCXJldHVybiBib29sKHYp
+CgllbGlmIGlzaW5zdGFuY2UodiwgZmxvYXQpOgoJCXJldHVybiBmbG9hdCh2KQoJZWxpZiBpc2lu
+c3RhbmNlKHYsIGludCkgb3IgaXNpbnN0YW5jZSh2LCBkYnVzLkludDY0KSBvciBpc2luc3RhbmNl
+KHYsIGRidXMuVUludDY0KSBvciBpc2luc3RhbmNlKHYsIGRidXMuSW50MzIpIG9yIGlzaW5zdGFu
+Y2UodiwgZGJ1cy5VSW50MzIpOgoJCXJldHVybiBpbnQodikKCWVsaWYgaXNpbnN0YW5jZSh2LCBi
+YXNlc3RyaW5nKToKCQlyZXR1cm4gdW5pY29kZSh2KQoJZWxpZiBpc2luc3RhbmNlKHYsIGRpY3Qp
+OgoJCXJldHVybiBkaWN0KFsoc3RyKG4pLCBkZWRidXN0eXBlKG0pLCApIGZvciBuLCBtIGluIHYu
+aXRlbXMoKV0pICMgdXNlIHN0cmluZ3MgZm9yIG5hbWVzIHRvIGFsbG93ICoqCgllbGlmIGlzaW5z
+dGFuY2UodiwgbGlzdCkgb3IgaXNpbnN0YW5jZSh2LCB0dXBsZSk6CgkJcmV0dXJuIFtkZWRidXN0
+eXBlKG0pIGZvciBtIGluIHZdCgllbHNlOgoJCXJhaXNlIEV4Y2VwdGlvbigndW5zdXBwb3J0ZWQg
+dHlwZSAlcyclIHR5cGUodikpCgpidXMgPSBkYnVzLlN5c3RlbUJ1cygpCgppZiBsZW4oc3lzLmFy
+Z3YpID09IDI6CglwYXRoID0gc3lzLmFyZ3ZbMV0KZWxpZiBsZW4oc3lzLmFyZ3YpID09IDE6Cglt
+YW5hZ2VyID0gZGJ1cy5JbnRlcmZhY2UoYnVzLmdldF9vYmplY3QoJ29yZy5vZm9ubycsICcvJyks
+CgkJCQkJJ29yZy5vZm9uby5NYW5hZ2VyJykKCW1vZGVtcyA9IG1hbmFnZXIuR2V0TW9kZW1zKCkK
+CXBhdGggPSBtb2RlbXNbMF1bMF0KZWxzZToKCXByaW50ICIlcyBbUEFUSF0iICUgKHN5cy5hcmd2
+WzBdKQoJc3lzLmV4aXQoMCkKCnNpbW1hbmFnZXIgPSBkYnVzLkludGVyZmFjZShidXMuZ2V0X29i
+amVjdCgnb3JnLm9mb25vJywgcGF0aCksCgkJCQknb3JnLm9mb25vLlNpbU1hbmFnZXInKQpwcm9w
+ZXJ0aWVzID0gc2ltbWFuYWdlci5HZXRQcm9wZXJ0aWVzKCkKZGRfcCA9IGRlZGJ1c3R5cGUocHJv
+cGVydGllcykKcHJpbnQgJy0tLSBzaW1fbWFuYWdlcl9wcm9wZXJ0aWVzJywgZGRfcAo=
 
-So, you're facing definitely with an incorrect modem behavior.
-Regards,
+--===============2047987189488135430==
+Content-Type: text/plain
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="radio-properties.ksh"
 
-Philippe.
+IyEvdXNyL2Jpbi9weXRob24KCiMgZnJvbSBkYnVzIGltcG9ydCBTeXN0ZW1CdXMsIEludGVyZmFj
+ZSwgREJ1c0V4Y2VwdGlvbiwgVUludDMyLCBJbnQzMiwgVUludDY0LCBJbnQ2NCwgQm9vbGVhbgpp
+bXBvcnQgc3lzCmltcG9ydCBkYnVzCgpkZWYgZGVkYnVzdHlwZSh2KToKCWlmIGlzaW5zdGFuY2Uo
+diwgYm9vbCkgb3IgaXNpbnN0YW5jZSh2LCBkYnVzLkJvb2xlYW4pOgoJCXJldHVybiBib29sKHYp
+CgllbGlmIGlzaW5zdGFuY2UodiwgZmxvYXQpOgoJCXJldHVybiBmbG9hdCh2KQoJZWxpZiBpc2lu
+c3RhbmNlKHYsIGludCkgb3IgaXNpbnN0YW5jZSh2LCBkYnVzLkludDY0KSBvciBpc2luc3RhbmNl
+KHYsIGRidXMuVUludDY0KSBvciBpc2luc3RhbmNlKHYsIGRidXMuSW50MzIpIG9yIGlzaW5zdGFu
+Y2UodiwgZGJ1cy5VSW50MzIpOgoJCXJldHVybiBpbnQodikKCWVsaWYgaXNpbnN0YW5jZSh2LCBi
+YXNlc3RyaW5nKToKCQlyZXR1cm4gdW5pY29kZSh2KQoJZWxpZiBpc2luc3RhbmNlKHYsIGRpY3Qp
+OgoJCXJldHVybiBkaWN0KFsoc3RyKG4pLCBkZWRidXN0eXBlKG0pLCApIGZvciBuLCBtIGluIHYu
+aXRlbXMoKV0pICMgdXNlIHN0cmluZ3MgZm9yIG5hbWVzIHRvIGFsbG93ICoqCgllbGlmIGlzaW5z
+dGFuY2UodiwgbGlzdCkgb3IgaXNpbnN0YW5jZSh2LCB0dXBsZSk6CgkJcmV0dXJuIFtkZWRidXN0
+eXBlKG0pIGZvciBtIGluIHZdCgllbHNlOgoJCXJhaXNlIEV4Y2VwdGlvbigndW5zdXBwb3J0ZWQg
+dHlwZSAlcyclIHR5cGUodikpCgpidXMgPSBkYnVzLlN5c3RlbUJ1cygpCgppZiBsZW4oc3lzLmFy
+Z3YpID09IDI6CglwYXRoID0gc3lzLmFyZ3ZbMV0KZWxpZiBsZW4oc3lzLmFyZ3YpID09IDE6Cglt
+YW5hZ2VyID0gZGJ1cy5JbnRlcmZhY2UoYnVzLmdldF9vYmplY3QoJ29yZy5vZm9ubycsICcvJyks
+CgkJCQkJJ29yZy5vZm9uby5NYW5hZ2VyJykKCW1vZGVtcyA9IG1hbmFnZXIuR2V0TW9kZW1zKCkK
+CXBhdGggPSBtb2RlbXNbMF1bMF0KZWxzZToKCXByaW50ICIlcyBbUEFUSF0iICUgKHN5cy5hcmd2
+WzBdKQoJc3lzLmV4aXQoMCkKCnJhZGlvc2V0dGluZ3MgPSBkYnVzLkludGVyZmFjZShidXMuZ2V0
+X29iamVjdCgnb3JnLm9mb25vJywgcGF0aCksCgkJCQknb3JnLm9mb25vLlJhZGlvU2V0dGluZ3Mn
+KQpwcm9wZXJ0aWVzID0gcmFkaW9zZXR0aW5ncy5HZXRQcm9wZXJ0aWVzKCkKZGRfciA9IGRlZGJ1
+c3R5cGUocHJvcGVydGllcykKcHJpbnQgJy0tLSByYWRpb19zZXR0aW5nc19wcm9wZXJ0aWVzJywg
+ZGRfcgo=
 
---===============3617751648338176351==--
+--===============2047987189488135430==--
 
