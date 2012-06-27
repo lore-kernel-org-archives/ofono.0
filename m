@@ -1,45 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============4929707943569003316=="
+Content-Type: multipart/mixed; boundary="===============5931704293078205933=="
 MIME-Version: 1.0
-From: Jens Rehsack <jr_extern@vfnet.de>
-Subject: Re: New test scripts ...
-Date: Wed, 27 Jun 2012 12:15:29 +0200
-Message-ID: <4FEADD41.3000307@vfnet.de>
-In-Reply-To: <1340722566.29898.27.camel@aeonflux>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH 0/6] phonesim: CBS/USSD improvments
+Date: Wed, 27 Jun 2012 17:10:39 +0200
+Message-ID: <1340809845-26595-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4929707943569003316==
+--===============5931704293078205933==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 26.06.2012 16:56, Marcel Holtmann wrote:
-> Hi Jens,
+-CBS message is encoded using the best CBS data coding scheme. In case of =
 
-Hi Marcel,
+non-GSM characters in the plain text body, the UCS-2 alphabet is used.
 
->> for personal requirements (debugging) I added 3 simple scripts
->> (attached) to dump the properties of specific modem interfaces.
->>
->> Shall I send patches for them or are they useless for the project?
->> (For the records: I don't mind either)
-> =
+-CBS message is splitted automatically in pages if needed. The UI entries
+related to the page number and the maximum of pages are removed since this =
+is
+handled internally.
 
-> sending patches would be better. Especially since you might wanna have
-> them added to Makefile.am as well.
+-USSD answer and cancellation commands are now supported.
 
-I just wanted to know if it's worth (for them and for future),
-... scheduling prepare the patches
+Philippe Nunes (6):
+  controbase: Remove entries in CBM UI
+  qcbsmessage: Add bestScheme method in QCBSMessage class
+  hardwaremanipulator: Use the best scheme for CBS message
+  hardwaremanipulator: Add multi-page support for CBS message
+  phonesim: Add support for USSD answer
+  phonesim: Add support for USSD session cancellation
 
-> As a note, have you considered creating one script with different
-> command line options? Our script collection is getting kinda big ;)
+ src/control.cpp             |    9 +--
+ src/controlbase.ui          |  184 ++++++++++++++++-----------------------=
+----
+ src/default.xml             |   14 ++++
+ src/hardwaremanipulator.cpp |   70 +++++++++-------
+ src/hardwaremanipulator.h   |    6 +-
+ src/qcbsmessage.cpp         |   10 ++-
+ src/qcbsmessage.h           |    1 +
+ 7 files changed, 137 insertions(+), 157 deletions(-)
 
-No, I didn't - to keep it easy (and I don't know how to do that
-in Python). For universal access with CLI I'd blow up the announced
-Net::Radio::oFono Perl5 module :)
+-- =
 
-Best regards,
-Jens
+1.7.9.5
 
---===============4929707943569003316==--
+
+--===============5931704293078205933==--
 
