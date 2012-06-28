@@ -1,146 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============1104034961480021521=="
+Content-Type: multipart/mixed; boundary="===============4660482683911194422=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH] test-ussd: USSD request is optional to monitor SS interface
-Date: Wed, 27 Jun 2012 17:26:54 +0200
-Message-ID: <1340810814-27481-1-git-send-email-philippe.nunes@linux.intel.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH 3/4] stemgr: watch for signals only on MGR_SERVICE
+Date: Thu, 28 Jun 2012 10:59:20 -0300
+Message-ID: <1340891961-9809-4-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1340891961-9809-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1104034961480021521==
+--===============4660482683911194422==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/test-ussd |   60 ++++++++++++++++++++++++++++++++++++++--------------=
-----
- 1 file changed, 41 insertions(+), 19 deletions(-)
+ plugins/stemgr.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/test/test-ussd b/test/test-ussd
-index c21f5e3..c8099b0 100755
---- a/test/test-ussd
-+++ b/test/test-ussd
-@@ -9,12 +9,28 @@ import dbus.mainloop.glib
+diff --git a/plugins/stemgr.c b/plugins/stemgr.c
+index 126ec4e..7e434d3 100644
+--- a/plugins/stemgr.c
++++ b/plugins/stemgr.c
+@@ -337,8 +337,8 @@ static gboolean property_changed(DBusConnection *connec=
+tion,
  =
 
- state =3D None
- =
-
-+def clear_screen(numlines=3D100):
-+	import os
-+	if os.name =3D=3D "posix":
-+		os.system('clear')
-+
-+	elif os.name in ("nt", "dos", "ce"):
-+		os.system('CLS')
-+
-+	else:
-+		print '\n' * numlines
-+
-+def print_menu():
-+	if state =3D=3D "user-response":
-+		print "Enter response (c for cancel - x for exit):"
-+	elif state =3D=3D "idle":
-+		print "Enter USSD request (x for exit):"
-+
- def ussd_notification_received(content):
- 	print("Network sent a Notification: " + content)
- =
-
- def ussd_request_received(content):
- 	print("Network sent a Request: " + content)
--	ss.Cancel()
- =
-
- def ussd_property_changed(name, value):
- 	global state
-@@ -23,23 +39,27 @@ def ussd_property_changed(name, value):
- 	print("USSD session state is " + value)
- 	state =3D str(value)
- =
-
-+	print_menu()
-+
- def stdin_handler(fd, condition):
--	s =3D os.read(fd.fileno(), 160).rstrip()
--	if not s:
--		ss.Cancel()
-+	s =3D os.read(fd.fileno(), 182).rstrip()
-+
-+	if s =3D=3D 'c':
-+		if state =3D=3D "user-response" or state =3D=3D 'active':
-+			clear_screen
-+			ss.Cancel()
-+	elif s =3D=3D 'x':
-+		sys.exit(1)
- 	elif state =3D=3D "user-response":
-+		clear_screen()
- 		print ss.Respond(s, timeout =3D 100)
- 	elif state =3D=3D "idle":
-+		clear_screen()
- 		print ss.Initiate(s, timeout =3D 100)
--	else:
--		print "Invalid state", state
-+
- 	return True
- =
-
- if __name__ =3D=3D "__main__":
--	if (len(sys.argv) < 2):
--		print "Usage: %s [modem] <ussd-string>" % (sys.argv[0])
--		sys.exit(1)
--
- 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
- =
-
- 	bus =3D dbus.SystemBus()
-@@ -50,24 +70,26 @@ if __name__ =3D=3D "__main__":
- 	modems =3D manager.GetModems()
- 	modem =3D modems[0][0]
- =
-
--	if (len(sys.argv) =3D=3D 2):
--		ussd =3D sys.argv[1]
--	else:
-+	if (len(sys.argv) =3D=3D 3):
- 		modem =3D sys.argv[1]
--		ussd =3D sys.argv[2]
- =
-
- 	ss =3D dbus.Interface(bus.get_object('org.ofono', modem),
- 					'org.ofono.SupplementaryServices')
- =
-
--	props =3D ss.GetProperties()
--	for p in props:
--		ussd_property_changed(p, props[p])
--
- 	ss.connect_to_signal("NotificationReceived", ussd_notification_received)
- 	ss.connect_to_signal("RequestReceived", ussd_request_received)
- 	ss.connect_to_signal("PropertyChanged", ussd_property_changed)
- =
-
--	print ss.Initiate(ussd, timeout=3D100)
-+	if (len(sys.argv) > 1):
-+		if (len(sys.argv) =3D=3D 2):
-+			ussd =3D sys.argv[1]
-+		elif (len(sys.argv) =3D=3D 3):
-+			ussd =3D sys.argv[2]
-+		print ss.Initiate(ussd, timeout=3D100)
-+	else:
-+		props =3D ss.GetProperties()
-+		for p in props:
-+			ussd_property_changed(p, props[p])
- =
-
- 	gobject.io_add_watch(sys.stdin, gobject.IO_IN, stdin_handler)
- =
-
+ static void mgr_connect(DBusConnection *connection, void *user_data)
+ {
+-	property_changed_watch =3D g_dbus_add_signal_watch(connection, NULL,
+-						NULL,
++	property_changed_watch =3D g_dbus_add_signal_watch(connection,
++						MGR_SERVICE, NULL,
+ 						MGR_MODEM_INTERFACE,
+ 						PROPERTY_CHANGED,
+ 						property_changed,
 -- =
 
-1.7.9.5
+1.7.11.1
 
 
---===============1104034961480021521==--
+--===============4660482683911194422==--
 
