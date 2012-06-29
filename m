@@ -1,147 +1,211 @@
-Content-Type: multipart/mixed; boundary="===============7997907484454120403=="
+Content-Type: multipart/mixed; boundary="===============4794392354940258026=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2 2/4] qcbsmessage: apply the same coding scheme for all the
- pages
-Date: Fri, 29 Jun 2012 17:53:01 +0200
-Message-ID: <1340985183-22049-3-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 3/4] hardwaremanipulator: Use the best scheme for CBS
+ message
+Date: Fri, 29 Jun 2012 17:53:02 +0200
+Message-ID: <1340985183-22049-4-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1340985183-22049-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7997907484454120403==
+--===============4794392354940258026==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/qcbsmessage.cpp |   38 ++++++++++++++------------------------
- src/qcbsmessage.h   |    1 -
- 2 files changed, 14 insertions(+), 25 deletions(-)
+ src/control.cpp             |    9 +++------
+ src/hardwaremanipulator.cpp |   42 ++++++++++++---------------------------=
+---
+ src/hardwaremanipulator.h   |    6 ++++--
+ 3 files changed, 19 insertions(+), 38 deletions(-)
 
-diff --git a/src/qcbsmessage.cpp b/src/qcbsmessage.cpp
-index e4403ae..da975dd 100644
---- a/src/qcbsmessage.cpp
-+++ b/src/qcbsmessage.cpp
-@@ -408,6 +408,9 @@ int QCBSMessage::bestScheme() const
-     uint len =3D body.length();
-     bool gsmSafe;
+diff --git a/src/control.cpp b/src/control.cpp
+index 27910c2..9085acd 100644
+--- a/src/control.cpp
++++ b/src/control.cpp
+@@ -329,12 +329,9 @@ void ControlWidget::sendREG()
  =
 
-+    if ( d->mDataCodingScheme !=3D (QSMSDataCodingScheme)-1 )
-+        return d->mDataCodingScheme;
-+
-     // Encode zero-length bodies in the default alphabet.
-     if ( len =3D=3D 0 )
-         return QSMS_DefaultAlphabet;
-@@ -430,14 +433,8 @@ int QCBSMessage::bestScheme() const
- QByteArray QCBSMessage::toPdu() const
+ void ControlWidget::sendCBM()
  {
-     QCBSDeliverMessage deliver;
--    QSMSDataCodingScheme scheme;
+-    QString pdu =3D p->constructCBMessage(ui->leMessageCode->text(),ui->cb=
+GeographicalScope->currentIndex(),
+-                       ui->leUpdateNumber->text(),ui->leChannel->text(),ui=
+->leScheme->text(),
+-                       ui->cbLanguage->currentIndex(),ui->leNumPages->text=
+(),ui->lePage->text(),
+-                       ui->teContent->toPlainText());
 -
--    if(dataCodingScheme() =3D=3D -1)
--        scheme =3D (QSMSDataCodingScheme)bestScheme();
--    else
--        scheme =3D (QSMSDataCodingScheme)dataCodingScheme();
- =
-
--    deliver.pack( *this, scheme );
-+    deliver.pack( *this, (QSMSDataCodingScheme)bestScheme() );
-     return deliver.toByteArray();
+-    emit unsolicitedCommand(QString("+CBM: ")+QString::number(pdu.length()=
+/2)+'\r'+'\n'+ pdu);
++    p->constructCBMessage(ui->leMessageCode->text(),ui->cbGeographicalScop=
+e->currentIndex(),
++                       ui->leUpdateNumber->text(),ui->leChannel->text(),
++                       ui->cbLanguage->currentIndex(),ui->teContent->toPla=
+inText());
  }
  =
 
-@@ -461,7 +458,7 @@ void QCBSMessage::computeSize( uint& numPages, uint& sp=
-aceLeftInLast ) const
+ void ControlWidget::sendSMSMessage()
+diff --git a/src/hardwaremanipulator.cpp b/src/hardwaremanipulator.cpp
+index 2d7b141..93a9e02 100644
+--- a/src/hardwaremanipulator.cpp
++++ b/src/hardwaremanipulator.cpp
+@@ -62,8 +62,8 @@ void HardwareManipulator::setPhoneNumber( const QString& )
+ =
+
+ QString PS_toHex( const QByteArray& binary );
+ =
+
+-QString HardwareManipulator::constructCBMessage(const QString &messageCode=
+, int geographicalScope, const QString &updateNumber,
+-    const QString &channel, const QString &/*scheme*/, int language, const=
+ QString &numPages, const QString &page, const QString &content)
++void HardwareManipulator::constructCBMessage(const QString &messageCode, i=
+nt geographicalScope, const QString &updateNumber,
++    const QString &channel, int language, const QString &content)
  {
-     QString body =3D text();
-     uint len =3D body.length();
--    uint scheme=3D dataCodingScheme();
-+    uint scheme=3D bestScheme();
  =
 
-     if ( scheme =3D=3D QSMS_DefaultAlphabet ) {
-         // Encode the message using 7-bit GSM.
-@@ -493,19 +490,6 @@ void QCBSMessage::computeSize( uint& numPages, uint& s=
-paceLeftInLast ) const
- }
- =
-
- /*!
--    Returns true if this message needs to be split into multiple messages
--    before being transmitted over a GSM network; otherwise returns false.
--
--    \sa split()
--*/
--bool QCBSMessage::shouldSplit() const
--{
--    uint numPages, spaceLeftInLast;
--    this->computeSize( numPages, spaceLeftInLast );
--    return ( numPages <=3D1 ? false : true );
--}
--
--/*!
-     Split this message into several pages of 88 bytes for
-     transmission over a GSM network.
- =
-
-@@ -521,11 +505,13 @@ QList<QCBSMessage> QCBSMessage::split() const
-         // Splitting is not necessary, so return a list with one page.
-         list +=3D *this;
-         return list;
--    }
-+    } else if ( numPages > 15)
-+        //Up to 15 pages can be concatenated to form a CBS message
-+        numPages =3D 15;
- =
-
-     // Get the number of characters to transmit in each page.
-     int split;
--    uint scheme=3D dataCodingScheme();
-+    uint scheme=3D bestScheme();
- =
-
-     switch ( scheme ) {
-         case QSMS_UCS2Alphabet:
-@@ -542,7 +528,7 @@ QList<QCBSMessage> QCBSMessage::split() const
-     QCBSMessage tmp;
-     number =3D 1;
-     QString txt =3D text();
--    while ( posn < txt.length() ) {
-+    while ( posn < txt.length() && number <=3D numPages ) {
-         tmp =3D *this;
-         len =3D txt.length() - posn;
-         if ( len > split ) {
-@@ -550,6 +536,10 @@ QList<QCBSMessage> QCBSMessage::split() const
-         }
-         tmp.setText( txt.mid( posn, len ) );
-         tmp.setPage( number++ );
-+        tmp.setNumPages(numPages);
-+        // Set mDataCodingScheme to apply the same scheme for all the pages
-+        // of the CBS message
-+        tmp.setDataCodingScheme(scheme);
-         posn +=3D len;
-         list.append(tmp);
+     bool ok;
+@@ -71,10 +71,9 @@ QString HardwareManipulator::constructCBMessage(const QS=
+tring &messageCode, int
+     if ( !ok ) {
+         warning(tr("Invalid Message Code"),
+                 tr("Message code 3 hex digits long and no larger than 3FF"=
+));
+-        return "";
++        return;
      }
-diff --git a/src/qcbsmessage.h b/src/qcbsmessage.h
-index 0f055b7..bfb879a 100644
---- a/src/qcbsmessage.h
-+++ b/src/qcbsmessage.h
-@@ -97,7 +97,6 @@ public:
-     static QCBSMessage fromPdu( const QByteArray& pdu );
  =
 
-     int bestScheme() const;
--    bool shouldSplit() const;
-     QList<QCBSMessage> split() const;
-     void computeSize( uint& numPages, uint& spaceLeftInLast ) const;
+-
+     QCBSMessage::GeographicalScope gs =3D (QCBSMessage::GeographicalScope)=
+geographicalScope;
  =
 
+     uint un =3D convertString(updateNumber,NIBBLE_MAX,ONE_CHAR,HEX_BASE,&o=
+k);
+@@ -82,7 +81,7 @@ QString HardwareManipulator::constructCBMessage(const QSt=
+ring &messageCode, int
+         warning(tr("Invalid Update Number"),
+                 tr("Update number must be 1 hex digit long"
+                    "and no larger than F"));
+-        return "";
++        return;
+     }
+ =
+
+ =
+
+@@ -91,43 +90,26 @@ QString HardwareManipulator::constructCBMessage(const Q=
+String &messageCode, int
+         warning(tr("Invalid Channel,"),
+                 tr("Channel  must be 4 hex digits long "
+                    "and no larger than FFFF"));
+-        return "";
++        return;
+     }
+ =
+
+-    //scheme is currently hardcoded to QSMS8_BitCodingScheme
+-    //uint sch =3D convertString(scheme, NIBBLE_MAX, ONE_CHAR,HEX_BASE,&ok=
+);
+-    //if ( !ok )
+-    //    return "";
+-
+     QCBSMessage::Language lang =3D (QCBSMessage::Language)language;
+ =
+
+-    uint npag =3D convertString(numPages, NIBBLE_MAX,ONE_CHAR,HEX_BASE,&ok=
+);
+-    if ( !ok ) {
+-        warning(tr("Invalid number of pages,"),
+-                tr("Number of pages  must be 1 hex digit long "
+-                   "and no larger than F"));
+-        return "";
+-    }
+-
+-    uint pag =3D convertString(page, NIBBLE_MAX,ONE_CHAR,HEX_BASE,&ok);
+-    if ( !ok ) {
+-        warning(tr("Invalid page number,"),
+-                tr("Page number  must be 1 hex digit long "
+-                   "and no larger than F"));
+-        return "";
+-    }
+-
+     QCBSMessage m;
+     m.setMessageCode(mc);
+     m.setScope(gs);
+     m.setUpdateNumber(un);
+     m.setChannel(ch);
+     m.setLanguage(lang);
+-    m.setNumPages(npag);
+-    m.setPage(pag);
+     m.setText(content);
+ =
+
+-    return PS_toHex( m.toPdu() );
++    sendCBS(m);
++}
++
++void HardwareManipulator::sendCBS( const QCBSMessage &m )
++{
++    QByteArray pdu =3D m.toPdu();
++    emit unsolicitedCommand(QString("+CBM: ")+QString::number(pdu.length()=
+)+'\r'+'\n'+ PS_toHex(pdu));
+ }
+ =
+
+ void HardwareManipulator::constructSMSMessage( const int type, const QStri=
+ng &sender, const QString &serviceCenter, const QString &text )
+diff --git a/src/hardwaremanipulator.h b/src/hardwaremanipulator.h
+index 881125e..87a8c6e 100644
+--- a/src/hardwaremanipulator.h
++++ b/src/hardwaremanipulator.h
+@@ -25,6 +25,7 @@
+ #include "qsmsmessagelist.h"
+ =
+
+ class QSMSMessage;
++class QCBSMessage;
+ class QVMMessage;
+ class SimRules;
+ struct CallInfo;
+@@ -43,6 +44,7 @@ public slots:
+     virtual void handleToData( const QString& );
+     virtual void setPhoneNumber( const QString& );
+     virtual void constructSMSMessage(const int type, const QString &sender=
+, const QString &serviceCenter, const QString &text);
++    virtual void sendCBS( const QCBSMessage& m );
+     virtual void sendSMS( const QSMSMessage& m );
+     virtual void sendVMNotify( int type, int count, const QList<QVMMessage=
+> &received, const QList<QVMMessage> &deleted, const QString &mailbox );
+     virtual void sendUSSD( bool cancel, bool response, const QString &cont=
+ent );
+@@ -63,8 +65,8 @@ signals:
+     void stateChangedToHangup( int callId );
+ =
+
+ protected:
+-    virtual QString constructCBMessage(const QString &messageCode, int geo=
+graphicalScope, const QString &updateNumber, const QString &channel,
+-    const QString &scheme, int language, const QString &numPages, const QS=
+tring &page, const QString &content);
++    virtual void constructCBMessage(const QString &messageCode, int geogra=
+phicalScope, const QString &updateNumber, const QString &channel,
++    int language, const QString &content);
+     virtual void constructSMSDatagram(int src, int dst, const QString &sen=
+der,  const QByteArray &data, const QByteArray &contentType);
+ =
+
+     virtual void warning(const QString &title, const QString &message);
 -- =
 
 1.7.9.5
 
 
---===============7997907484454120403==--
+--===============4794392354940258026==--
 
