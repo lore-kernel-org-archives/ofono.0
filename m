@@ -1,31 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============6767464183564045851=="
+Content-Type: multipart/mixed; boundary="===============4098151603664877368=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Write a ofono plugin
-Date: Tue, 10 Jul 2012 09:36:53 -0300
-Message-ID: <1341923813.31958.8.camel@aeonflux>
-In-Reply-To: <5028AEF4CA436A4B99F9AD5F377D6BC343495F38@KCHJEXMB01.kpit.com>
+From: Simon Busch <morphis@gravedo.de>
+Subject: [PATCH] phonesim: one small fix regarding the dbus interface
+Date: Thu, 12 Jul 2012 10:06:09 +0200
+Message-ID: <1342080370-24537-1-git-send-email-morphis@gravedo.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6767464183564045851==
+--===============4098151603664877368==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Shaheer,
+Heyho,
 
-> Kindly, please guide me on the steps of writing a ofono plugin.
-> Please let me know about any references or so.
+while working with phonesim's dbus interface I discovered it's not using fo=
+r each reported
+error the same error domain. The attached patch fixes this.
 
-have a look at the existing plugins inside plugins/ or example/
-directories.
+regards,
+Simon
 
-Regards
+Simon Busch (1):
+  control: use correct dbus error domain
 
-Marcel
+ src/control.cpp |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+-- =
+
+1.7.9.5
 
 
-
---===============6767464183564045851==--
+--===============4098151603664877368==--
 
