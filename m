@@ -1,756 +1,813 @@
-Content-Type: multipart/mixed; boundary="===============7428522589101702868=="
+Content-Type: multipart/mixed; boundary="===============7149591540644072492=="
 MIME-Version: 1.0
-From: Christopher Vogl <christopher.vogl@hale.at>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
 Subject: Re: Re-activating a context.
-Date: Fri, 13 Jul 2012 12:12:27 +0200
-Message-ID: <4FFFF48B.7040903@hale.at>
-In-Reply-To: <4FFF3858.8000605@gmail.com>
+Date: Fri, 13 Jul 2012 15:39:37 +0200
+Message-ID: <50002519.3060105@linux.intel.com>
+In-Reply-To: <4FFFF48B.7040903@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7428522589101702868==
+--===============7149591540644072492==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Christopher,
 
+On 13/07/2012 12:12, Christopher Vogl wrote:
+>>>
+>>> I am trying to simulate a connection loss and after a valid ppp
+>>> connection I disconnect the antenna to get detached from GPRS.
+>>> After reconnecting the antenna everything seems to work fine just until
+>>> activating the context.
+>>>
+>>> Ofono seems to get stuck in
+>>> drivers/atmodem/gprs-context.c:at_gprs_activate_primary() and
+>>> AT+CGDCONT=3D1 is missing on the debug output.
+>>> When I retry to activate the context after some minutes with a =
 
-On 12/07/12 22:49, Denis Kenzior wrote:
-> Hi Christopher,
+>>> dbus-send
+>>> call, I receive an operation in progress error.
+>>>
+>>> Below I have attached ofono's debug output and dbus-send calls for
+>>> important interfaces
+>>> - before removing the antenna
+>>> - after removing the antenna
+>>> - after reconnecting the antenna
+>>>
+>>> Modem in use: Telit UC864-G
+>>>
+>>> connMan in the debug output is my own simple connection manger. I am =
+
+>>> not
+>>> sure if I missed to set some ofono state or if there is a known issue.
+>>> I really would appreciate a hint in this case.
+>>>
+>>
+>> To me it looks like your PPP connection has not been dropped when the =
+
+>> antenna has been removed.  Today oFono assumes that the PPP =
+
+>> connection will be dropped by the modem in this case, and your modem =
+
+>> does not do this.  This leads to problems because the AT channel on =
+
+>> which the PPP connection is being run can not accept additional =
+
+>> commands.  This is why you're not seeing the CGDCONT.
+>>
+>> A while ago Guillaume posted a patch to fix this problem (we saw this =
+
+>> with Huawei PPP based devices).  The patch looked good to me but =
+
+>> needed further testing (e.g. for regressions).  Can you dig the =
+
+>> mailing archives and test that patch?
+>>
+>> Or maybe Guillaume will be nice enough to repost it to the mailing list.
 >
-> On 07/12/2012 09:50 AM, Christopher Vogl wrote:
->> Hello,
->>
->> I am trying to simulate a connection loss and after a valid ppp
->> connection I disconnect the antenna to get detached from GPRS.
->> After reconnecting the antenna everything seems to work fine just until
->> activating the context.
->>
->> Ofono seems to get stuck in
->> drivers/atmodem/gprs-context.c:at_gprs_activate_primary() and
->> AT+CGDCONT=3D1 is missing on the debug output.
->> When I retry to activate the context after some minutes with a dbus-send
->> call, I receive an operation in progress error.
->>
->> Below I have attached ofono's debug output and dbus-send calls for
->> important interfaces
->> - before removing the antenna
->> - after removing the antenna
->> - after reconnecting the antenna
->>
->> Modem in use: Telit UC864-G
->>
->> connMan in the debug output is my own simple connection manger. I am not
->> sure if I missed to set some ofono state or if there is a known issue.
->> I really would appreciate a hint in this case.
->>
 >
-> To me it looks like your PPP connection has not been dropped when the =
+> Thanks Denis!
+> I found the patch from Guillaume and applied it (ofono 1.7 & 1.8).
+> The ppp connection seems to get dropped now when I remove the antenna =
 
-> antenna has been removed.  Today oFono assumes that the PPP connection =
-
-> will be dropped by the modem in this case, and your modem does not do =
-
-> this.  This leads to problems because the AT channel on which the PPP =
-
-> connection is being run can not accept additional commands.  This is =
-
-> why you're not seeing the CGDCONT.
+> but does not come up again correctly when I reconnect the antenna.
 >
-> A while ago Guillaume posted a patch to fix this problem (we saw this =
 
-> with Huawei PPP based devices).  The patch looked good to me but =
+I have a new version but only naming is changed but the main goal of =
 
-> needed further testing (e.g. for regressions).  Can you dig the =
+this set of patches is to end properly the PPP connection which goal you =
 
-> mailing archives and test that patch?
+seem to have reached.
+I guess you are using upstream oFono and ConnMan version right?
+
 >
-> Or maybe Guillaume will be nice enough to repost it to the mailing list.
+> After disconnecting the antenna:
+>
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CREG: 2\r\n
+> Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
 
-Thanks Denis!
-I found the patch from Guillaume and applied it (ofono 1.7 & 1.8).
-The ppp connection seems to get dropped now when I remove the antenna =
+> src/network.c:ofono_netreg_status_notify() /telit_0 status 2 tech -1
+> Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
 
-but does not come up again correctly when I reconnect the antenna.
+> src/network.c:current_operator_callback() 0x1bed30, (nil)
+> Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
 
+> src/gprs.c:netreg_status_changed() 2
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: Aux: > AT+CGATT=3D0\r
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGREG: =
 
-Regards,
-Christopher
+> 2\r\n
+> Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
 
+> src/gprs.c:ofono_gprs_status_notify() /telit_0 status 2
+> Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
 
+> drivers/atmodem/gprs-context.c:at_gprs_release_primary() cid 1
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
+> pppcp_generate_event: current state 9:OPENED
+> Jan  1 01:18:53 mx31tt01 user.debug connMan[803]: Got network =
 
-After disconnecting the antenna:
+> registration signal Status: 'searching'
+> Jan  1 01:18:53 mx31tt01 user.err connMan[803]: =
 
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CREG: 2\r\n
-Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
+> checkAndSetOperatorSelection()
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: event: 3 =
 
-src/network.c:ofono_netreg_status_notify() /telit_0 status 2 tech -1
-Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
+> (Close), action: 8224, new_state: 4 (CLOSING)
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-src/network.c:current_operator_callback() 0x1bed30, (nil)
-Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
+> pppcp_initialize_restart_count: current state 9:OPENED
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-src/gprs.c:netreg_status_changed() 2
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: Aux: > AT+CGATT=3D0\r
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGREG: 2\r\n
-Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
+> pppcp_send_terminate_request: current state 9:OPENED
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-src/gprs.c:ofono_gprs_status_notify() /telit_0 status 2
-Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
+> pppcp_generate_event: current state 9:OPENED
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: event: 1 =
 
-drivers/atmodem/gprs-context.c:at_gprs_release_primary() cid 1
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> (Down), action: 201, new_state: 1 (STARTING)
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: =
 
-pppcp_generate_event: current state 9:OPENED
-Jan  1 01:18:53 mx31tt01 user.debug connMan[803]: Got network =
+> gatchat/gatppp.c:ppp_enter_phase() 5
+> Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
 
-registration signal Status: 'searching'
-Jan  1 01:18:53 mx31tt01 user.err connMan[803]: =
+> plugins/udevng.c:remove_device() /sys/devices/virtual/net/ppp0
+> Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
 
-checkAndSetOperatorSelection()
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: event: 3 (Close), =
+> plugins/udev.c:udev_event() subsystem net remove
+> Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
 
-action: 8224, new_state: 4 (CLOSING)
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> plugins/udev.c:remove_modem() /devices/virtual/net/ppp0
+> Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
 
-pppcp_initialize_restart_count: current state 9:OPENED
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> plugins/udev.c:udev_event() subsystem net finished
+> Jan  1 01:18:53 mx31tt01 user.debug connMan[803]: Got connection =
 
-pppcp_send_terminate_request: current state 9:OPENED
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> manager signal Attached, Val =3D false
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-pppcp_generate_event: current state 9:OPENED
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: event: 1 (Down), =
+> pppcp_process_terminate_ack: current state 4:CLOSING
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-action: 201, new_state: 1 (STARTING)
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: =
+> pppcp_generate_event: current state 4:CLOSING
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: event: 11 =
 
-gatchat/gatppp.c:ppp_enter_phase() 5
-Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
+> (RTA), action: 802, new_state: 2 (CLOSED)
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-plugins/udevng.c:remove_device() /sys/devices/virtual/net/ppp0
-Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
+> pppcp_this_layer_finished: current state 2:CLOSED
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: =
 
-plugins/udev.c:udev_event() subsystem net remove
-Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
+> gatchat/gatppp.c:ppp_enter_phase() 0
+> Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
 
-plugins/udev.c:remove_modem() /devices/virtual/net/ppp0
-Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
+> drivers/atmodem/gprs-context.c:at_gprs_deactivate_primary() cid 1
+> Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: =
 
-plugins/udev.c:udev_event() subsystem net finished
-Jan  1 01:18:53 mx31tt01 user.debug connMan[803]: Got connection manager =
+> gatchat/gatppp.c:ppp_dead()
+> Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
 
-signal Attached, Val =3D false
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> drivers/atmodem/gprs-context.c:ppp_disconnect()
+> Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
 
-pppcp_process_terminate_ack: current state 4:CLOSING
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> src/gprs.c:gprs_remove_context() Unregistering context: /telit_0/context1
+> Jan  1 01:18:53 mx31tt01 user.debug connMan[803]: Got connection =
 
-pppcp_generate_event: current state 4:CLOSING
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: event: 11 (RTA), =
+> manager signal Powered, Val =3D false
+> Jan  1 01:18:57 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CME =
 
-action: 802, new_state: 2 (CLOSED)
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> ERROR: 30\r\n
+> Jan  1 01:18:57 mx31tt01 daemon.debug ofonod[810]: =
 
-pppcp_this_layer_finished: current state 2:CLOSED
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: =
+> src/gprs.c:gprs_attach_callback() /telit_0 error =3D 1
+> Jan  1 01:18:57 mx31tt01 daemon.info ofonod[810]: Aux: > AT+CGREG?\r
+> Jan  1 01:18:57 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGREG: =
 
-gatchat/gatppp.c:ppp_enter_phase() 0
-Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
+> 2,2\r\n\r\nOK\r\n
+> Jan  1 01:18:57 mx31tt01 daemon.debug ofonod[810]: =
 
-drivers/atmodem/gprs-context.c:at_gprs_deactivate_primary() cid 1
-Jan  1 01:18:53 mx31tt01 daemon.info ofonod[810]: PPP: =
+> src/gprs.c:registration_status_cb() /telit_0 error 0 status 2
+> Jan  1 01:18:57 mx31tt01 daemon.debug ofonod[810]: =
 
-gatchat/gatppp.c:ppp_dead()
-Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
+> src/gprs.c:ofono_gprs_status_notify() /telit_0 status 2
+>
+> Jan  1 01:19:30 mx31tt01 daemon.info ofonod[810]: Modem: < \r\nNO =
 
-drivers/atmodem/gprs-context.c:ppp_disconnect()
-Jan  1 01:18:53 mx31tt01 daemon.debug ofonod[810]: =
+> CARRIER\r\n
+>
+>
 
-src/gprs.c:gprs_remove_context() Unregistering context: /telit_0/context1
-Jan  1 01:18:53 mx31tt01 user.debug connMan[803]: Got connection manager =
+So your PPP session seems to be well ended.
 
-signal Powered, Val =3D false
-Jan  1 01:18:57 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CME ERROR: =
+>
+>
+> After reconnecting the antenna:
+>
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Modem: < \r\n+CGEV: =
 
-30\r\n
-Jan  1 01:18:57 mx31tt01 daemon.debug ofonod[810]: =
+> ME DETACH\r\n
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGEV: ME =
 
-src/gprs.c:gprs_attach_callback() /telit_0 error =3D 1
-Jan  1 01:18:57 mx31tt01 daemon.info ofonod[810]: Aux: > AT+CGREG?\r
-Jan  1 01:18:57 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGREG: =
+> DETACH\r\n
+> Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
 
-2,2\r\n\r\nOK\r\n
-Jan  1 01:18:57 mx31tt01 daemon.debug ofonod[810]: =
+> src/gprs.c:ofono_gprs_detached_notify() /telit_0
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Modem: < \r\n+CREG: =
 
-src/gprs.c:registration_status_cb() /telit_0 error 0 status 2
-Jan  1 01:18:57 mx31tt01 daemon.debug ofonod[810]: =
+> 1,"0340","C149"\r\n
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CREG: =
 
-src/gprs.c:ofono_gprs_status_notify() /telit_0 status 2
+> 1,"0340","C149"\r\n
+> Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
 
-Jan  1 01:19:30 mx31tt01 daemon.info ofonod[810]: Modem: < \r\nNO =
+> src/network.c:ofono_netreg_status_notify() /telit_0 status 1 tech 3
+> Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
 
-CARRIER\r\n
+> registration signal Status: 'registered'
+> Jan  1 01:20:12 mx31tt01 user.err connMan[803]: =
 
+> checkAndSetOperatorSelection()
+> Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
 
+> src/gprs.c:netreg_status_changed() 1
+> Jan  1 01:20:12 mx31tt01 user.notice ttsession: void =
 
+> hale::gtk::StatusBar::on_tech_changed(const std::string&), this =3D =
 
-After reconnecting the antenna:
+> 0x1316000, New technology: edge
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+COPS=3D3,2\r
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGREG: =
 
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Modem: < \r\n+CGEV: ME =
+> 0\r\n
+> Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
 
-DETACH\r\n
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGEV: ME =
+> src/gprs.c:ofono_gprs_status_notify() /telit_0 status 0
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Modem: < \r\n+CGREG: =
 
-DETACH\r\n
-Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
+> 0\r\n
+> Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
 
-src/gprs.c:ofono_gprs_detached_notify() /telit_0
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Modem: < \r\n+CREG: =
+> registration signal LocationAreaCode: uint16 832
+> Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
 
-1,"0340","C149"\r\n
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CREG: =
+> registration signal CellId: uint32 49481
+> Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
 
-1,"0340","C149"\r\n
-Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
+> registration signal Technology: 'edge'
+> Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got connection =
 
-src/network.c:ofono_netreg_status_notify() /telit_0 status 1 tech 3
-Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
+> manager signal Powered, Val =3D true
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\nOK\r\n
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+COPS?\r
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+COPS: =
 
-registration signal Status: 'registered'
-Jan  1 01:20:12 mx31tt01 user.err connMan[803]: =
+> 0,2,"26202",0\r\n\r\nOK\r\n
+> Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
 
-checkAndSetOperatorSelection()
-Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
+> drivers/atmodem/network-registration.c:cops_numeric_cb() Cops numeric =
 
-src/gprs.c:netreg_status_changed() 1
-Jan  1 01:20:12 mx31tt01 user.notice ttsession: void =
+> got mcc: 262, mnc: 02
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+CIND?\r
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CIND: =
 
-hale::gtk::StatusBar::on_tech_changed(const std::string&), this =3D =
+> 4,99,1,0,0,0,0,0,1\r\n\r\nOK\r\n
+> Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
 
-0x1316000, New technology: edge
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+COPS=3D3,2\r
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGREG: 0\r\n
-Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
+> src/network.c:ofono_netreg_strength_notify() strength 20
+> Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
 
-src/gprs.c:ofono_gprs_status_notify() /telit_0 status 0
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Modem: < \r\n+CGREG: =
+> registration signal Strength: byte 0x14
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+CGATT=3D1\r
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\nOK\r\n
+> Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
 
-0\r\n
-Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
+> src/gprs.c:gprs_attach_callback() /telit_0 error =3D 0
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+COPS=3D3,0\r
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\nOK\r\n
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+COPS?\r
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+COPS: =
 
-registration signal LocationAreaCode: uint16 832
-Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
+> 0,0,"Vodafone D2",0\r\n\r\nOK\r\n
+> Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
 
-registration signal CellId: uint32 49481
-Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
+> drivers/atmodem/network-registration.c:cops_cb() cops_cb: Vodafone D2, =
 
-registration signal Technology: 'edge'
-Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got connection manager =
+> 262 02 0
+> Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
 
-signal Powered, Val =3D true
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\nOK\r\n
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+COPS?\r
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+COPS: =
+> src/network.c:current_operator_callback() 0x1bed30, (nil)
+> Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
 
-0,2,"26202",0\r\n\r\nOK\r\n
-Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
+> registration signal Name: 'Vodafone D2'
+> Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
 
-drivers/atmodem/network-registration.c:cops_numeric_cb() Cops numeric =
+> src/gprs.c:netreg_status_changed() 1
+> Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
 
-got mcc: 262, mnc: 02
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+CIND?\r
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CIND: =
+> registration signal MobileCountryCode: '262'
+> Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
 
-4,99,1,0,0,0,0,0,1\r\n\r\nOK\r\n
-Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
+> registration signal MobileNetworkCode: '02'
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+CGREG?\r
+> Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGREG: =
 
-src/network.c:ofono_netreg_strength_notify() strength 20
-Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
+> 2,0\r\n\r\nOK\r\n
+> Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
 
-registration signal Strength: byte 0x14
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+CGATT=3D1\r
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\nOK\r\n
-Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
+> src/gprs.c:registration_status_cb() /telit_0 error 0 status 0
+> Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
 
-src/gprs.c:gprs_attach_callback() /telit_0 error =3D 0
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+COPS=3D3,0\r
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\nOK\r\n
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+COPS?\r
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+COPS: =
+> src/gprs.c:ofono_gprs_status_notify() /telit_0 status 0
+> Jan  1 01:20:14 mx31tt01 daemon.info ofonod[810]: Modem: < \r\n+CGREG: =
 
-0,0,"Vodafone D2",0\r\n\r\nOK\r\n
-Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
+> 2\r\n
+> Jan  1 01:20:14 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGREG: =
 
-drivers/atmodem/network-registration.c:cops_cb() cops_cb: Vodafone D2, =
+> 2\r\n
+> Jan  1 01:20:14 mx31tt01 daemon.debug ofonod[810]: =
 
-262 02 0
-Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
+> src/gprs.c:ofono_gprs_status_notify() /telit_0 status 2
+> Jan  1 01:20:14 mx31tt01 daemon.info ofonod[810]: Modem: < \r\n+CGREG: =
 
-src/network.c:current_operator_callback() 0x1bed30, (nil)
-Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
+> 1,"0340","C149"\r\n
+> Jan  1 01:20:14 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGREG: =
 
-registration signal Name: 'Vodafone D2'
-Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
+> 1,"0340","C149"\r\n
+> Jan  1 01:20:14 mx31tt01 daemon.debug ofonod[810]: =
 
-src/gprs.c:netreg_status_changed() 1
-Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
+> src/gprs.c:ofono_gprs_status_notify() /telit_0 status 1
+> Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Got connection =
 
-registration signal MobileCountryCode: '262'
-Jan  1 01:20:12 mx31tt01 user.debug connMan[803]: Got network =
+> manager signal Attached, Val =3D true
+> Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Getting first =
 
-registration signal MobileNetworkCode: '02'
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: > AT+CGREG?\r
-Jan  1 01:20:12 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGREG: =
+> internet context ...
+> Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: No internet context =
 
-2,0\r\n\r\nOK\r\n
-Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
+> found! Adding a new internet context.
+> Jan  1 01:20:14 mx31tt01 daemon.debug ofonod[810]: =
 
-src/gprs.c:registration_status_cb() /telit_0 error 0 status 0
-Jan  1 01:20:12 mx31tt01 daemon.debug ofonod[810]: =
+> src/gprs.c:add_context() Registering new context
+> Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Context path: =
 
-src/gprs.c:ofono_gprs_status_notify() /telit_0 status 0
-Jan  1 01:20:14 mx31tt01 daemon.info ofonod[810]: Modem: < \r\n+CGREG: =
+> /telit_0/context2
+> Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Connecting to =
 
-2\r\n
-Jan  1 01:20:14 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGREG: 2\r\n
-Jan  1 01:20:14 mx31tt01 daemon.debug ofonod[810]: =
+> org.ofono.ConnectionContext PropertyChanged signal.
+> Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Connecting to =
 
-src/gprs.c:ofono_gprs_status_notify() /telit_0 status 2
-Jan  1 01:20:14 mx31tt01 daemon.info ofonod[810]: Modem: < \r\n+CGREG: =
+> org.ofono.ConnectionContext ContextAdded signal.
+> Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Connecting to =
 
-1,"0340","C149"\r\n
-Jan  1 01:20:14 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGREG: =
+> org.ofono.ConnectionContext ContextRemoved signal.
+> Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: =
 
-1,"0340","C149"\r\n
-Jan  1 01:20:14 mx31tt01 daemon.debug ofonod[810]: =
+> set_and_activate_context()
+> Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Setting and =
 
-src/gprs.c:ofono_gprs_status_notify() /telit_0 status 1
-Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Got connection manager =
+> Activating the Internet connection context.
+> Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: mccmnc =3D '26202', =
 
-signal Attached, Val =3D true
-Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Getting first internet =
+> len =3D 5
+> Jan  1 01:20:15 mx31tt01 user.debug connMan[803]: Provider name '1&1'
+> Jan  1 01:20:15 mx31tt01 user.debug connMan[803]: Set AccessPointName: =
 
-context ...
-Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: No internet context =
+> web.vodafone.de
+> Jan  1 01:20:15 mx31tt01 user.debug connMan[803]: Set Username:
+> Jan  1 01:20:15 mx31tt01 user.debug connMan[803]: Set Password:
+> Jan  1 01:20:15 mx31tt01 user.debug connMan[803]: Trying to set =
 
-found! Adding a new internet context.
-Jan  1 01:20:14 mx31tt01 daemon.debug ofonod[810]: =
+> context:web.vodafone.de
+> Jan  1 01:20:15 mx31tt01 daemon.debug ofonod[810]: =
 
-src/gprs.c:add_context() Registering new context
-Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Context path: =
+> drivers/atmodem/gprs-context.c:at_gprs_activate_primary() cid 1
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: Modem: > =
 
-/telit_0/context2
-Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Connecting to =
+> AT+CGDCONT=3D1,"IP","web.vodafone.de"\r
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: Modem: < \r\nOK\r\n
+> Jan  1 01:20:15 mx31tt01 daemon.debug ofonod[810]: =
 
-org.ofono.ConnectionContext PropertyChanged signal.
-Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Connecting to =
+> drivers/atmodem/gprs-context.c:at_cgdcont_cb() ok 1
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: Modem: > =
 
-org.ofono.ConnectionContext ContextAdded signal.
-Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Connecting to =
+> AT+CGDATA=3D"PPP",1\r
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: Modem: < =
 
-org.ofono.ConnectionContext ContextRemoved signal.
-Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: =
+> \r\nCONNECT\r\n
+> Jan  1 01:20:15 mx31tt01 daemon.debug ofonod[810]: =
 
-set_and_activate_context()
-Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: Setting and Activating =
+> drivers/atmodem/gprs-context.c:at_cgdata_cb() ok 1
+> Jan  1 01:20:15 mx31tt01 daemon.debug ofonod[810]: =
 
-the Internet connection context.
-Jan  1 01:20:14 mx31tt01 user.debug connMan[803]: mccmnc =3D '26202', len =
-=3D 5
-Jan  1 01:20:15 mx31tt01 user.debug connMan[803]: Provider name '1&1'
-Jan  1 01:20:15 mx31tt01 user.debug connMan[803]: Set AccessPointName: =
+> drivers/atmodem/gprs-context.c:setup_ppp()
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-web.vodafone.de
-Jan  1 01:20:15 mx31tt01 user.debug connMan[803]: Set Username:
-Jan  1 01:20:15 mx31tt01 user.debug connMan[803]: Set Password:
-Jan  1 01:20:15 mx31tt01 user.debug connMan[803]: Trying to set =
+> pppcp_generate_event: current state 0:INITIAL
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: event: 0 (Up), =
 
-context:web.vodafone.de
-Jan  1 01:20:15 mx31tt01 daemon.debug ofonod[810]: =
+> action: 2, new_state: 2 (CLOSED)
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-drivers/atmodem/gprs-context.c:at_gprs_activate_primary() cid 1
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: Modem: > =
+> pppcp_generate_event: current state 2:CLOSED
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: event: 2 =
 
-AT+CGDCONT=3D1,"IP","web.vodafone.de"\r
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: Modem: < \r\nOK\r\n
-Jan  1 01:20:15 mx31tt01 daemon.debug ofonod[810]: =
+> (Open), action: 1026, new_state: 6 (REQSENT)
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-drivers/atmodem/gprs-context.c:at_cgdcont_cb() ok 1
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: Modem: > =
+> pppcp_initialize_restart_count: current state 2:CLOSED
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-AT+CGDATA=3D"PPP",1\r
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: Modem: < \r\nCONNECT\r\n
-Jan  1 01:20:15 mx31tt01 daemon.debug ofonod[810]: =
+> pppcp_send_configure_request: current state 2:CLOSED
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: =
 
-drivers/atmodem/gprs-context.c:at_cgdata_cb() ok 1
-Jan  1 01:20:15 mx31tt01 daemon.debug ofonod[810]: =
+> gatchat/gatppp.c:ppp_enter_phase() 1
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-drivers/atmodem/gprs-context.c:setup_ppp()
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> pppcp_process_configure_request: current state 6:REQSENT
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-pppcp_generate_event: current state 0:INITIAL
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: event: 0 (Up), =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: event: 6 =
 
-action: 2, new_state: 2 (CLOSED)
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> (RCR+), action: 2008, new_state: 8 (ACKSENT)
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-pppcp_generate_event: current state 2:CLOSED
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: event: 2 (Open), =
+> pppcp_send_configure_ack: current state 6:REQSENT
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-action: 1026, new_state: 6 (REQSENT)
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> pppcp_process_configure_ack: current state 8:ACKSENT
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-pppcp_initialize_restart_count: current state 2:CLOSED
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> pppcp_generate_event: current state 8:ACKSENT
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: event: 8 (RCA), =
 
-pppcp_send_configure_request: current state 2:CLOSED
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: =
+> action: 129, new_state: 9 (OPENED)
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-gatchat/gatppp.c:ppp_enter_phase() 1
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> pppcp_initialize_restart_count: current state 8:ACKSENT
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: =
 
-pppcp_process_configure_request: current state 6:REQSENT
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> gatchat/gatppp.c:ppp_enter_phase() 2
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: event: 6 (RCR+), =
+As you use no username and no password authentication phase is passed =
 
-action: 2008, new_state: 8 (ACKSENT)
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+through. It is ok.
 
-pppcp_send_configure_ack: current state 6:REQSENT
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: =
 
-pppcp_process_configure_ack: current state 8:ACKSENT
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> gatchat/gatppp.c:ppp_enter_phase() 3
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_generate_event: current state 8:ACKSENT
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: event: 8 (RCA), =
+> pppcp_generate_event: current state 0:INITIAL
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: event: 2 =
 
-action: 129, new_state: 9 (OPENED)
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> (Open), action: 401, new_state: 1 (STARTING)
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_initialize_restart_count: current state 8:ACKSENT
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: =
+> pppcp_generate_event: current state 1:STARTING
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: event: 0 (Up), =
 
-gatchat/gatppp.c:ppp_enter_phase() 2
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: =
+> action: 1026, new_state: 6 (REQSENT)
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-gatchat/gatppp.c:ppp_enter_phase() 3
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_initialize_restart_count: current state 1:STARTING
+> Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_generate_event: current state 0:INITIAL
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: event: 2 (Open), =
+> pppcp_send_configure_request: current state 1:STARTING
+> Jan  1 01:20:16 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-action: 401, new_state: 1 (STARTING)
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_process_configure_nak: current state 6:REQSENT
+> Jan  1 01:20:16 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_generate_event: current state 1:STARTING
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: event: 0 (Up), =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:16 mx31tt01 daemon.info ofonod[810]: PPP: event: 9 (RCN), =
 
-action: 1026, new_state: 6 (REQSENT)
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> action: 1026, new_state: 6 (REQSENT)
+> Jan  1 01:20:16 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_initialize_restart_count: current state 1:STARTING
-Jan  1 01:20:15 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_initialize_restart_count: current state 6:REQSENT
+> Jan  1 01:20:16 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 1:STARTING
-Jan  1 01:20:16 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:17 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_process_configure_nak: current state 6:REQSENT
-Jan  1 01:20:16 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_process_configure_nak: current state 6:REQSENT
+> Jan  1 01:20:17 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:16 mx31tt01 daemon.info ofonod[810]: PPP: event: 9 (RCN), =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:17 mx31tt01 daemon.info ofonod[810]: PPP: event: 9 (RCN), =
 
-action: 1026, new_state: 6 (REQSENT)
-Jan  1 01:20:16 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> action: 1026, new_state: 6 (REQSENT)
+> Jan  1 01:20:17 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_initialize_restart_count: current state 6:REQSENT
-Jan  1 01:20:16 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_initialize_restart_count: current state 6:REQSENT
+> Jan  1 01:20:17 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:17 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:18 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_process_configure_nak: current state 6:REQSENT
-Jan  1 01:20:17 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_process_configure_nak: current state 6:REQSENT
+> Jan  1 01:20:18 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:17 mx31tt01 daemon.info ofonod[810]: PPP: event: 9 (RCN), =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:18 mx31tt01 daemon.info ofonod[810]: PPP: event: 9 (RCN), =
 
-action: 1026, new_state: 6 (REQSENT)
-Jan  1 01:20:17 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> action: 1026, new_state: 6 (REQSENT)
+> Jan  1 01:20:18 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_initialize_restart_count: current state 6:REQSENT
-Jan  1 01:20:17 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_initialize_restart_count: current state 6:REQSENT
+> Jan  1 01:20:18 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:18 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:19 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_process_configure_nak: current state 6:REQSENT
-Jan  1 01:20:18 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_process_configure_nak: current state 6:REQSENT
+> Jan  1 01:20:19 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:18 mx31tt01 daemon.info ofonod[810]: PPP: event: 9 (RCN), =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:19 mx31tt01 daemon.info ofonod[810]: PPP: event: 9 (RCN), =
 
-action: 1026, new_state: 6 (REQSENT)
-Jan  1 01:20:18 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> action: 1026, new_state: 6 (REQSENT)
+> Jan  1 01:20:19 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_initialize_restart_count: current state 6:REQSENT
-Jan  1 01:20:18 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_initialize_restart_count: current state 6:REQSENT
+> Jan  1 01:20:19 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:19 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:20 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_process_configure_nak: current state 6:REQSENT
-Jan  1 01:20:19 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_process_configure_nak: current state 6:REQSENT
+> Jan  1 01:20:20 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:19 mx31tt01 daemon.info ofonod[810]: PPP: event: 9 (RCN), =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:20 mx31tt01 daemon.info ofonod[810]: PPP: event: 9 (RCN), =
 
-action: 1026, new_state: 6 (REQSENT)
-Jan  1 01:20:19 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> action: 1026, new_state: 6 (REQSENT)
+> Jan  1 01:20:20 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_initialize_restart_count: current state 6:REQSENT
-Jan  1 01:20:19 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_initialize_restart_count: current state 6:REQSENT
+> Jan  1 01:20:20 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:20 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_process_configure_nak: current state 6:REQSENT
-Jan  1 01:20:20 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_process_configure_nak: current state 6:REQSENT
+> Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:20 mx31tt01 daemon.info ofonod[810]: PPP: event: 9 (RCN), =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: PPP: event: 9 (RCN), =
 
-action: 1026, new_state: 6 (REQSENT)
-Jan  1 01:20:20 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> action: 1026, new_state: 6 (REQSENT)
+> Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_initialize_restart_count: current state 6:REQSENT
-Jan  1 01:20:20 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_initialize_restart_count: current state 6:REQSENT
+> Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
 
-pppcp_process_configure_nak: current state 6:REQSENT
-Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGEV: ME =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: PPP: event: 9 (RCN), =
+> DEACT IP, , 1\r\n
 
-action: 1026, new_state: 6 (REQSENT)
-Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+It seems IP Control Protocol is failing so that modem cannot receive the =
 
-pppcp_initialize_restart_count: current state 6:REQSENT
-Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+IP configuration from the network.
+IP phase is deactivated by the modem itself.
+I don't know what is happening there.
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGEV: ME =
+> Jan  1 01:20:24 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-DEACT IP, , 1\r\n
-Jan  1 01:20:24 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_timeout: current state 6:REQSENT
+> Jan  1 01:20:24 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_timeout: current state 6:REQSENT
-Jan  1 01:20:24 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:24 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:24 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
+> action: 1006, new_state: 6 (REQSENT)
+> Jan  1 01:20:24 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-action: 1006, new_state: 6 (REQSENT)
-Jan  1 01:20:24 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:27 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:27 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_timeout: current state 6:REQSENT
+> Jan  1 01:20:27 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_timeout: current state 6:REQSENT
-Jan  1 01:20:27 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:27 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:27 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
+> action: 1006, new_state: 6 (REQSENT)
+> Jan  1 01:20:27 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-action: 1006, new_state: 6 (REQSENT)
-Jan  1 01:20:27 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:30 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:30 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_timeout: current state 6:REQSENT
+> Jan  1 01:20:30 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_timeout: current state 6:REQSENT
-Jan  1 01:20:30 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:30 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:30 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
+> action: 1006, new_state: 6 (REQSENT)
+> Jan  1 01:20:30 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-action: 1006, new_state: 6 (REQSENT)
-Jan  1 01:20:30 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:33 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:33 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_timeout: current state 6:REQSENT
+> Jan  1 01:20:33 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_timeout: current state 6:REQSENT
-Jan  1 01:20:33 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:33 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:33 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
+> action: 1006, new_state: 6 (REQSENT)
+> Jan  1 01:20:33 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-action: 1006, new_state: 6 (REQSENT)
-Jan  1 01:20:33 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:36 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:36 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_timeout: current state 6:REQSENT
+> Jan  1 01:20:36 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_timeout: current state 6:REQSENT
-Jan  1 01:20:36 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:36 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:36 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
+> action: 1006, new_state: 6 (REQSENT)
+> Jan  1 01:20:36 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-action: 1006, new_state: 6 (REQSENT)
-Jan  1 01:20:36 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:39 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:39 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_timeout: current state 6:REQSENT
+> Jan  1 01:20:39 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_timeout: current state 6:REQSENT
-Jan  1 01:20:39 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:39 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:39 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
+> action: 1006, new_state: 6 (REQSENT)
+> Jan  1 01:20:39 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-action: 1006, new_state: 6 (REQSENT)
-Jan  1 01:20:39 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:40 mx31tt01 user.debug connMan[803]: Got connection =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:40 mx31tt01 user.debug connMan[803]: Got connection context =
+> context signal AccessPointName, Val =3D 'web.vodafone.de'
+> Jan  1 01:20:40 mx31tt01 user.info connMan[803]: APN: web.vodafone.de
+> Jan  1 01:20:42 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-signal AccessPointName, Val =3D 'web.vodafone.de'
-Jan  1 01:20:40 mx31tt01 user.info connMan[803]: APN: web.vodafone.de
-Jan  1 01:20:42 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_timeout: current state 6:REQSENT
+> Jan  1 01:20:42 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_timeout: current state 6:REQSENT
-Jan  1 01:20:42 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:42 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:42 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
+> action: 1006, new_state: 6 (REQSENT)
+> Jan  1 01:20:42 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-action: 1006, new_state: 6 (REQSENT)
-Jan  1 01:20:42 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:45 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:45 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_timeout: current state 6:REQSENT
+> Jan  1 01:20:45 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_timeout: current state 6:REQSENT
-Jan  1 01:20:45 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:45 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:45 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
+> action: 1006, new_state: 6 (REQSENT)
+> Jan  1 01:20:45 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-action: 1006, new_state: 6 (REQSENT)
-Jan  1 01:20:45 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:48 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:48 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_timeout: current state 6:REQSENT
+> Jan  1 01:20:48 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_timeout: current state 6:REQSENT
-Jan  1 01:20:48 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:48 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:48 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
+> action: 1006, new_state: 6 (REQSENT)
+> Jan  1 01:20:48 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-action: 1006, new_state: 6 (REQSENT)
-Jan  1 01:20:48 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_send_configure_request: current state 6:REQSENT
+> Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_configure_request: current state 6:REQSENT
-Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_timeout: current state 6:REQSENT
+> Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_timeout: current state 6:REQSENT
-Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_generate_event: current state 6:REQSENT
+> Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: event: 5 (TO-), =
 
-pppcp_generate_event: current state 6:REQSENT
-Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: event: 5 (TO-), =
+> action: 803, new_state: 3 (STOPPED)
+> Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-action: 803, new_state: 3 (STOPPED)
-Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_this_layer_finished: current state 3:STOPPED
+> Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_this_layer_finished: current state 3:STOPPED
-Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_generate_event: current state 3:STOPPED
+> Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: event: 3 =
 
-pppcp_generate_event: current state 3:STOPPED
-Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: event: 3 (Close), =
+> (Close), action: 2, new_state: 2 (CLOSED)
+> Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-action: 2, new_state: 2 (CLOSED)
-Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> pppcp_generate_event: current state 9:OPENED
+> Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: event: 3 =
 
-pppcp_generate_event: current state 9:OPENED
-Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: event: 3 (Close), =
+> (Close), action: 8224, new_state: 4 (CLOSING)
+> Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-action: 8224, new_state: 4 (CLOSING)
-Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> pppcp_initialize_restart_count: current state 9:OPENED
+> Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-pppcp_initialize_restart_count: current state 9:OPENED
-Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> pppcp_send_terminate_request: current state 9:OPENED
+> Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
 
-pppcp_send_terminate_request: current state 9:OPENED
-Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> pppcp_generate_event: current state 2:CLOSED
+> Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: event: 1 =
 
-pppcp_generate_event: current state 2:CLOSED
-Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: event: 1 (Down), =
+> (Down), action: 0, new_state: 0 (INITIAL)
+> Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: =
 
-action: 0, new_state: 0 (INITIAL)
-Jan  1 01:20:51 mx31tt01 daemon.info ofonod[810]: PPP: =
+> gatchat/gatppp.c:ppp_enter_phase() 5
+> Jan  1 01:20:54 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-gatchat/gatppp.c:ppp_enter_phase() 5
-Jan  1 01:20:54 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> pppcp_timeout: current state 4:CLOSING
+> Jan  1 01:20:54 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-pppcp_timeout: current state 4:CLOSING
-Jan  1 01:20:54 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> pppcp_generate_event: current state 4:CLOSING
+> Jan  1 01:20:54 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
 
-pppcp_generate_event: current state 4:CLOSING
-Jan  1 01:20:54 mx31tt01 daemon.info ofonod[810]: PPP: event: 4 (TO+), =
+> action: 8004, new_state: 4 (CLOSING)
+> Jan  1 01:20:54 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-action: 8004, new_state: 4 (CLOSING)
-Jan  1 01:20:54 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> pppcp_send_terminate_request: current state 4:CLOSING
+> Jan  1 01:20:57 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-pppcp_send_terminate_request: current state 4:CLOSING
-Jan  1 01:20:57 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> pppcp_timeout: current state 4:CLOSING
+> Jan  1 01:20:57 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-pppcp_timeout: current state 4:CLOSING
-Jan  1 01:20:57 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> pppcp_generate_event: current state 4:CLOSING
+> Jan  1 01:20:57 mx31tt01 daemon.info ofonod[810]: PPP: event: 5 (TO-), =
 
-pppcp_generate_event: current state 4:CLOSING
-Jan  1 01:20:57 mx31tt01 daemon.info ofonod[810]: PPP: event: 5 (TO-), =
+> action: 802, new_state: 2 (CLOSED)
+> Jan  1 01:20:57 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
 
-action: 802, new_state: 2 (CLOSED)
-Jan  1 01:20:57 mx31tt01 daemon.info ofonod[810]: PPP: lcp: =
+> pppcp_this_layer_finished: current state 2:CLOSED
+> Jan  1 01:20:57 mx31tt01 daemon.info ofonod[810]: PPP: =
 
-pppcp_this_layer_finished: current state 2:CLOSED
-Jan  1 01:20:57 mx31tt01 daemon.info ofonod[810]: PPP: =
+> gatchat/gatppp.c:ppp_enter_phase() 0
+> Jan  1 01:20:57 mx31tt01 daemon.info ofonod[810]: PPP: =
 
-gatchat/gatppp.c:ppp_enter_phase() 0
-Jan  1 01:20:57 mx31tt01 daemon.info ofonod[810]: PPP: =
+> gatchat/gatppp.c:ppp_dead()
 
-gatchat/gatppp.c:ppp_dead()
-Jan  1 01:20:57 mx31tt01 daemon.debug ofonod[810]: =
+> Jan  1 01:20:57 mx31tt01 daemon.debug ofonod[810]: =
 
-drivers/atmodem/gprs-context.c:ppp_disconnect()
-Jan  1 01:20:57 mx31tt01 daemon.debug ofonod[810]: =
+> drivers/atmodem/gprs-context.c:ppp_disconnect()
 
-src/gprs.c:pri_activate_callback() 0x1ce500
-Jan  1 01:20:57 mx31tt01 daemon.debug ofonod[810]: =
+I guess the disconnect reason is G_AT_PPP_REASON_IPCP_FAIL( according to =
 
-src/gprs.c:pri_activate_callback() Activating context failed with error: =
+gatppp.h enum) but you could still add a trace in ppp_disconnect() into  =
 
-Unknown error type
+drivers/atmodem/gprs-context.c:
 
+DBG("Reason: %d", reason);
 
+to be sure.
 
+> Jan  1 01:20:57 mx31tt01 daemon.debug ofonod[810]: =
 
+> src/gprs.c:pri_activate_callback() 0x1ce500
+> Jan  1 01:20:57 mx31tt01 daemon.debug ofonod[810]: =
 
---
-Scanned by MailScanner.
+> src/gprs.c:pri_activate_callback() Activating context failed with =
 
+> error: Unknown error type
+>
 
---===============7428522589101702868==--
+Did you try to activate manually the context from oFono test scripts =
+
+after this failure?
+Although ConnMan is correctly waiting for the modem to be attached to =
+
+the network before trying to reconnect, maybe modem is not internally =
+
+ready to reconnect. The reason might be PPP session ending is initiated =
+
+by oFono core and not the modem itself.
+With Huawei modems we also noticed that automatic reconnection was =
+
+sometime failing also. But testing conditions were not the same as we =
+
+could not disconnect the antenna.
+Anyway I am not a PPP expert but something wrong is happening between =
+
+the network and your modem because not IP configuration is sent by the =
+
+network.
+
+Kind regards,
+Guillaume
+
+
+--===============7149591540644072492==--
 
