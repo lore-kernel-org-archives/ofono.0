@@ -1,156 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============6179273427759982496=="
+Content-Type: multipart/mixed; boundary="===============4106708871374648417=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [RFC_v2 3/3] gprs: Release context in driver and core when network is
- lost
-Date: Fri, 13 Jul 2012 15:44:28 +0200
-Message-ID: <1342187068-10418-4-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1342187068-10418-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Ruptash, Brian <Brian.Ruptash@GTECH.COM>
+Subject: SIM Insertion Notification
+Date: Sat, 14 Jul 2012 12:31:49 -0400
+Message-ID: <AC43737FA4508F468C9A8245BF95DAE652C7B08F9A@RIMAILMBX1.gtk.gtech.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6179273427759982496==
+--===============4106708871374648417==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/gprs.c |   84 +++++++++++++++++++++++++++++++++++++++++++++-----------=
-----
- 1 files changed, 63 insertions(+), 21 deletions(-)
+I'm running ofono 1.7, with a Cinterion PH8-P plugin I wrote and will submi=
+t once I've fully tested it.  One problem I have is I never receive notific=
+ation of SIM insertion, i.e. the Present propertyChanged.  Looking at the c=
+ode it seems pretty obvious why, unless I'm (probably) missing something.
 
-diff --git a/src/gprs.c b/src/gprs.c
-index a8f584c..0808c56 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -48,6 +48,7 @@
- =
+All the plugins, including mine, do similar to the following:
 
- #define GPRS_FLAG_ATTACHING 0x1
- #define GPRS_FLAG_RECHECK 0x2
-+#define GPRS_FLAG_ATTACHED_UPDATE 0x4
- =
+    static void ph8_pre_sim(struct ofono_modem *modem)
+    {
+        struct ph8_data *data =3D ofono_modem_get_data(modem);
+        struct ofono_sim *sim;
 
- #define SETTINGS_STORE "gprs"
- #define SETTINGS_GROUP "Settings"
-@@ -1440,6 +1441,45 @@ void ofono_gprs_resume_notify(struct ofono_gprs *gpr=
-s)
- 	update_suspended_property(gprs, FALSE);
- }
- =
+        ofono_devinfo_create(modem, 0, "atmodem", data->app);
+        sim =3D ofono_sim_create(modem, OFONO_VENDOR_CINTERION_PH8,
+                    "atmodem", data->app);
 
-+static gboolean have_active_contexts(struct ofono_gprs *gprs)
-+{
-+	GSList *l;
-+	struct pri_context *ctx;
-+
-+	for (l =3D gprs->contexts; l; l =3D l->next) {
-+		ctx =3D l->data;
-+
-+		if (ctx->active =3D=3D TRUE)
-+			return TRUE;
-+	}
-+
-+	return FALSE;
-+}
-+
-+static void release_active_contexts(struct ofono_gprs *gprs)
-+{
-+	GSList *l;
-+	struct pri_context *ctx;
-+
-+	for (l =3D gprs->contexts; l; l =3D l->next) {
-+		struct ofono_gprs_context *gc;
-+
-+		ctx =3D l->data;
-+
-+		if (ctx->active =3D=3D FALSE)
-+			continue;
-+
-+		/* This context is already being messed with */
-+		if (ctx->pending)
-+			continue;
-+
-+		gc =3D ctx->context_driver;
-+
-+		if (gc->driver->detach_shutdown !=3D NULL)
-+			gc->driver->detach_shutdown(gc, ctx->context.cid);
-+	}
-+}
-+
- static void gprs_attached_update(struct ofono_gprs *gprs)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
-@@ -1454,30 +1494,22 @@ static void gprs_attached_update(struct ofono_gprs =
-*gprs)
- 	if (attached =3D=3D gprs->attached)
- 		return;
- =
+        if (sim && data->have_sim =3D=3D TRUE)
+            ofono_sim_inserted_notify(sim, TRUE);
+    }
 
--	gprs->attached =3D attached;
--
--	if (gprs->attached =3D=3D FALSE) {
--		GSList *l;
--		struct pri_context *ctx;
--
--		for (l =3D gprs->contexts; l; l =3D l->next) {
--			ctx =3D l->data;
--
--			if (ctx->active =3D=3D FALSE)
--				continue;
--
--			pri_reset_context_settings(ctx);
--			release_context(ctx);
--
--			value =3D FALSE;
--			ofono_dbus_signal_property_changed(conn, ctx->path,
--					OFONO_CONNECTION_CONTEXT_INTERFACE,
--					"Active", DBUS_TYPE_BOOLEAN, &value);
--		}
--
-+	/*
-+	 * If an active context is found, a PPP session might be still active
-+	 * at driver level. "Attached" =3D TRUE property can't be signalled to
-+	 * the applications registered on GPRS properties.
-+	 * Active contexts have to be release at driver level.
-+	 */
-+	if (attached =3D=3D FALSE) {
-+		release_active_contexts(gprs);
- 		gprs->bearer =3D -1;
-+	} else if (have_active_contexts(gprs) =3D=3D TRUE) {
-+		gprs->flags |=3D GPRS_FLAG_ATTACHED_UPDATE;
-+		return;
- 	}
- =
+The call to ofono_sim_create() probes the atmodem driver, which ends with:
 
-+	gprs->attached =3D attached;
-+
- 	path =3D __ofono_atom_get_path(gprs->atom);
- 	value =3D attached;
- 	ofono_dbus_signal_property_changed(conn, path,
-@@ -2266,6 +2298,16 @@ void ofono_gprs_context_deactivated(struct ofono_gpr=
-s_context *gc,
- 					OFONO_CONNECTION_CONTEXT_INTERFACE,
- 					"Active", DBUS_TYPE_BOOLEAN, &value);
- 	}
-+
-+	/*
-+	 * If "Attached" property was about to be signalled as TRUE but there
-+	 * were still active contexts, try again to signal "Attached" property
-+	 * to registered applications after active contexts have been released.
-+	 */
-+	if (gc->gprs->flags & GPRS_FLAG_ATTACHED_UPDATE) {
-+		gc->gprs->flags &=3D ~GPRS_FLAG_ATTACHED_UPDATE;
-+		gprs_attached_update(gc->gprs);
-+	}
- }
- =
+    g_idle_add(at_sim_register, sim);
 
- int ofono_gprs_context_driver_register(
--- =
+So the subsequent call to ofono_sim_inserted_notify() will fail, as at_sim_=
+register() is called later when it is scheduled.
 
-1.7.5.4
+The logs bear this out, so I'm at a loss to understand how anyone receives =
+a SIM notification... What am I missing here?
 
+-- Brian
 
---===============6179273427759982496==--
+CONFIDENTIALITY NOTICE: The information contained in this email message is =
+intended only for use of the intended recipient. If the reader of this mess=
+age is not the intended recipient, you are hereby notified that any dissemi=
+nation, distribution or copying of this communication is strictly prohibite=
+d. If you have received this communication in error, please immediately del=
+ete it from your system and notify the sender by replying to this email. =
+=C2=A0Thank you.
+
+--===============4106708871374648417==--
 
