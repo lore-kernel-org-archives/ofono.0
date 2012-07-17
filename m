@@ -1,55 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============7643094294686434562=="
+Content-Type: multipart/mixed; boundary="===============8042415333110226560=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/3] mmsd: get delivery_report setting
-Date: Mon, 16 Jul 2012 21:00:29 -0500
-Message-ID: <5004C73D.7090207@gmail.com>
-In-Reply-To: <500520BB.8050107@linux.intel.com>
+Subject: Re: [PATCH] util: Fix GSM to UTF8 conversion mechanism
+Date: Mon, 16 Jul 2012 21:09:43 -0500
+Message-ID: <5004C967.2040304@gmail.com>
+In-Reply-To: <5005254A.6000309@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7643094294686434562==
+--===============8042415333110226560==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ronald,
+Hi Guillaume,
 
-On 07/17/2012 03:22 AM, Ronald Tessier wrote:
-> Hi Denis,
+>>> + /*
+>>> + * According to the 3GPP specifications 23.038
+>>> + * section 6.2.1.1:
+>>> + * In the case there is no character in the extension
+>>> + * table, the character of the main default alphabet
+>>> + * table or the character from the National Language
+>>> + * Locking Shift Table should be displayed.
+>>> + */
+>>
+>> What version of 23.038 are you using? I cannot find such wording in R9
+>> or R10 specs.
 >
-> On 07/16/2012 09:25 AM, Denis Kenzior wrote:
->> Hi Ronald,
->>
->> On 07/06/2012 04:32 AM, Ronald Tessier wrote:
->>> This set of patches concerns mmsd and is related to delivery_report.
->>> Add delivery report flag and API (to set its value) to service.
->>> Get and track the delivery report setting used by oFono in the message
->>> manager
->>> and use it in mmsd.
->>
->> Maybe I'm not seeing something, but why are we tracking the delivery
->> report flag in oFono in mmsd? I'm guessing you want to synchronize the
->> two, but I do not see why you would want to?
->>
->> Regards,
->> -Denis
->>
->
-> This flag is set by the application layer to request delivery report in
-> oFono, since mmsd is an oFono plugin I want to use the same flag for all
-> kind of messages (SMS and MMS) and not add a new flag in mmsd.
->
-> If you prefer, I define a new flag (with almost the same API and file
-> settings mechanism) in mmsd. Let me know.
+> It is not the exact wording, I have just rephrased the comment.
+> The exact wording it just below the GSM 7 bits default alphabet
+> extension table in section 6.2.1.1
+> Generally, do you prefer having an exact extract of the 3GPP spec or
+> just an explanation of what is happening?
 >
 
-I think that would be a good idea, the two delivery report settings are =
+The preference is to quote the spec verbatim and enclose the quote in =
 
-not really related and should be controlled separately.
+"".  You can quote fragments of a sentence, etc.
+
+You can paraphrase, but I prefer that we only do that to distill =
+
+something simple, e.g. maximum size of a structure/member.
 
 Regards,
 -Denis
 
---===============7643094294686434562==--
+--===============8042415333110226560==--
 
