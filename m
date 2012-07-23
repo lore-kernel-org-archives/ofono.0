@@ -1,127 +1,115 @@
-Content-Type: multipart/mixed; boundary="===============7909503115607738258=="
+Content-Type: multipart/mixed; boundary="===============7052051153128227657=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 2/4] service: Load delivery-report from mms settings
-Date: Mon, 23 Jul 2012 16:18:15 +0200
-Message-ID: <1343053097-8908-3-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 3/4] service: Add DBus method to set delivery-report
+Date: Mon, 23 Jul 2012 16:18:16 +0200
+Message-ID: <1343053097-8908-4-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1343053097-8908-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7909503115607738258==
+--===============7052051153128227657==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/service.c |   42 ++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 42 insertions(+)
+ doc/service-api.txt |    6 ++++++
+ src/service.c       |   46 ++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 52 insertions(+)
+
+diff --git a/doc/service-api.txt b/doc/service-api.txt
+index 02396ff..f247d3a 100644
+--- a/doc/service-api.txt
++++ b/doc/service-api.txt
+@@ -82,6 +82,12 @@ Methods		array{object,dict} GetMessages()
+ =
+
+ 			Possible Errors: [service].Error.InvalidArguments
+ =
+
++		void SetProperty(string name, variant value)
++
++			Changes the value of the specified property.
++
++			Possible Errors: [service].Error.InvalidArguments
++
+ =
+
+ Signals		MessageAdded(object path, dict properties)
+ =
 
 diff --git a/src/service.c b/src/service.c
-index 83e1fe1..7243efd 100644
+index 7243efd..c1ca4ab 100644
 --- a/src/service.c
 +++ b/src/service.c
-@@ -57,6 +57,9 @@
- #define MAX_ATTACHMENTS_NUMBER 25
- #define MAX_ATTEMPTS 3
+@@ -887,6 +887,48 @@ out:
+ 	return reply;
+ }
  =
 
-+#define SETTINGS_STORE "mms"
-+#define SETTINGS_GROUP "Settings"
++static DBusMessage *set_property(DBusConnection *conn, DBusMessage *dbus_m=
+sg,
++								void *data)
++{
++	struct mms_service *service =3D data;
++	DBusMessageIter iter;
++	DBusMessageIter var;
++	const char *property;
 +
- #define uninitialized_var(x) x =3D x
- =
-
- static const char *ctl_chars =3D "\x01\x02\x03\x04\x05\x06\x07\x08\x0A"
-@@ -84,6 +87,8 @@ struct mms_service {
- 	guint current_request_id;
- 	GWeb *web;
- 	GHashTable *messages;
-+	GKeyFile *settings;
-+	gboolean use_delivery_reports;
++	if (!dbus_message_iter_init(dbus_msg, &iter))
++		return __mms_error_invalid_args(dbus_msg);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return __mms_error_invalid_args(dbus_msg);
++
++	dbus_message_iter_get_basic(&iter, &property);
++	dbus_message_iter_next(&iter);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
++		return __mms_error_invalid_args(dbus_msg);
++
++	dbus_message_iter_recurse(&iter, &var);
++
++	if (!strcmp(property, "UseDeliveryReports")) {
++		dbus_bool_t value;
++
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
++			return __mms_error_invalid_args(dbus_msg);
++
++		dbus_message_iter_get_basic(&var, &value);
++
++		if (service->use_delivery_reports !=3D (gboolean) value) {
++			DBG("use_delivery_reports =3D %d", value);
++
++			service->use_delivery_reports =3D value;
++		}
++
++		return g_dbus_create_reply(dbus_msg, DBUS_TYPE_INVALID);
++	}
++
++	return __mms_error_invalid_args(dbus_msg);
++}
++
+ static gboolean mms_attachment_is_smil(const struct mms_attachment *part)
+ {
+ 	if (g_str_has_prefix(part->content_type, "application/smil"))
+@@ -1023,6 +1065,10 @@ static const GDBusMethodTable service_methods[] =3D {
+ 			GDBUS_ARGS({ "number", "s" }, { "count", "s" }),
+ 			GDBUS_ARGS({ "messages_with_properties", "a(oa{sv}" }),
+ 			get_conversation) },
++	{ GDBUS_METHOD("SetProperty",
++			GDBUS_ARGS({ "property", "s" }, { "value", "v" }),
++		       NULL,
++			set_property) },
+ 	{ }
  };
  =
 
- enum mms_request_type {
-@@ -111,6 +116,28 @@ static DBusConnection *connection;
- =
-
- static guint32 transaction_id_start =3D 0;
- =
-
-+static void mms_load_settings(struct mms_service *service)
-+{
-+	GError *error;
-+
-+	service->settings =3D mms_settings_open(service->identity,
-+							SETTINGS_STORE);
-+	if (service->settings =3D=3D NULL)
-+		return;
-+
-+	error =3D NULL;
-+	service->use_delivery_reports =3D
-+		g_key_file_get_boolean(service->settings, SETTINGS_GROUP,
-+						"UseDeliveryReports", &error);
-+
-+	if (error) {
-+		g_error_free(error);
-+		g_key_file_set_boolean(service->settings, SETTINGS_GROUP,
-+						"UseDeliveryReports",
-+						service->use_delivery_reports);
-+	}
-+}
-+
- static void mms_request_destroy(struct mms_request *request)
- {
- 	g_free(request->data_path);
-@@ -903,6 +930,8 @@ static DBusMessage *send_message(DBusConnection *conn,
- =
-
- 	msg->sr.status =3D MMS_MESSAGE_STATUS_DRAFT;
- =
-
-+	msg->sr.dr =3D service->use_delivery_reports;
-+
- 	if (send_message_get_args(dbus_msg, msg) =3D=3D FALSE) {
- 		mms_debug("Invalid arguments");
- =
-
-@@ -1407,6 +1436,8 @@ int mms_service_register(struct mms_service *service)
- =
-
- 	emit_service_added(service);
- =
-
-+	mms_load_settings(service);
-+
- 	load_messages(service);
- =
-
- 	return 0;
-@@ -1425,6 +1456,17 @@ int mms_service_unregister(struct mms_service *servi=
-ce)
- 	if (service->messages !=3D NULL)
- 		destroy_message_table(service);
- =
-
-+	if (service->settings !=3D NULL) {
-+		g_key_file_set_boolean(service->settings, SETTINGS_GROUP,
-+					"UseDeliveryReports",
-+					service->use_delivery_reports);
-+
-+		mms_settings_close(service->identity, SETTINGS_STORE,
-+						service->settings, TRUE);
-+
-+		service->settings =3D NULL;
-+	}
-+
- 	if (g_dbus_unregister_interface(connection, service->path,
- 					MMS_SERVICE_INTERFACE) =3D=3D FALSE) {
- 		mms_error("Failed to unregister service interface");
 -- =
 
 1.7.9.5
 
 
---===============7909503115607738258==--
+--===============7052051153128227657==--
 
