@@ -1,106 +1,127 @@
-Content-Type: multipart/mixed; boundary="===============2128695131175982565=="
+Content-Type: multipart/mixed; boundary="===============7909503115607738258=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 1/4] store: Add utilities for mms settings file access
-Date: Mon, 23 Jul 2012 16:18:14 +0200
-Message-ID: <1343053097-8908-2-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 2/4] service: Load delivery-report from mms settings
+Date: Mon, 23 Jul 2012 16:18:15 +0200
+Message-ID: <1343053097-8908-3-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1343053097-8908-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2128695131175982565==
+--===============7909503115607738258==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/store.c |   56 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- src/store.h |    4 ++++
- 2 files changed, 60 insertions(+)
+ src/service.c |   42 ++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
 
-diff --git a/src/store.c b/src/store.c
-index 88d9e77..b09c17b 100644
---- a/src/store.c
-+++ b/src/store.c
-@@ -358,3 +358,59 @@ void mms_store_meta_close(const char *service_id, cons=
-t char *uuid,
+diff --git a/src/service.c b/src/service.c
+index 83e1fe1..7243efd 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -57,6 +57,9 @@
+ #define MAX_ATTACHMENTS_NUMBER 25
+ #define MAX_ATTEMPTS 3
  =
 
- 	g_key_file_free(keyfile);
- }
++#define SETTINGS_STORE "mms"
++#define SETTINGS_GROUP "Settings"
 +
-+GKeyFile *mms_settings_open(const char *service_id, const char *store)
+ #define uninitialized_var(x) x =3D x
+ =
+
+ static const char *ctl_chars =3D "\x01\x02\x03\x04\x05\x06\x07\x08\x0A"
+@@ -84,6 +87,8 @@ struct mms_service {
+ 	guint current_request_id;
+ 	GWeb *web;
+ 	GHashTable *messages;
++	GKeyFile *settings;
++	gboolean use_delivery_reports;
+ };
+ =
+
+ enum mms_request_type {
+@@ -111,6 +116,28 @@ static DBusConnection *connection;
+ =
+
+ static guint32 transaction_id_start =3D 0;
+ =
+
++static void mms_load_settings(struct mms_service *service)
 +{
-+	GKeyFile *keyfile;
-+	char *path;
++	GError *error;
 +
-+	if (store =3D=3D NULL)
-+		return NULL;
-+
-+	path =3D mms_store_get_path(service_id, store);
-+	if (path =3D=3D NULL)
-+		return NULL;
-+
-+	if (create_dirs(path, S_IRUSR | S_IWUSR | S_IXUSR) !=3D 0) {
-+		mms_error("Failed to create path %s", path);
-+
-+		g_free(path);
-+		return NULL;
-+	}
-+
-+	keyfile =3D g_key_file_new();
-+
-+	g_key_file_load_from_file(keyfile, path, 0, NULL);
-+
-+	g_free(path);
-+
-+	return keyfile;
-+}
-+
-+static void settings_sync(const char *service_id, const char *store,
-+							GKeyFile *keyfile)
-+{
-+	char *path;
-+	char *data;
-+	gsize length =3D 0;
-+
-+	path =3D mms_store_get_path(service_id, store);
-+	if (path =3D=3D NULL)
++	service->settings =3D mms_settings_open(service->identity,
++							SETTINGS_STORE);
++	if (service->settings =3D=3D NULL)
 +		return;
 +
-+	data =3D g_key_file_to_data(keyfile, &length, NULL);
++	error =3D NULL;
++	service->use_delivery_reports =3D
++		g_key_file_get_boolean(service->settings, SETTINGS_GROUP,
++						"UseDeliveryReports", &error);
 +
-+	g_file_set_contents(path, data, length, NULL);
-+
-+	g_free(data);
-+	g_free(path);
++	if (error) {
++		g_error_free(error);
++		g_key_file_set_boolean(service->settings, SETTINGS_GROUP,
++						"UseDeliveryReports",
++						service->use_delivery_reports);
++	}
 +}
 +
-+void mms_settings_close(const char *service_id, const char *store,
-+					GKeyFile *keyfile, gboolean save)
-+{
-+	if (save =3D=3D TRUE)
-+		settings_sync(service_id, store, keyfile);
+ static void mms_request_destroy(struct mms_request *request)
+ {
+ 	g_free(request->data_path);
+@@ -903,6 +930,8 @@ static DBusMessage *send_message(DBusConnection *conn,
+ =
+
+ 	msg->sr.status =3D MMS_MESSAGE_STATUS_DRAFT;
+ =
+
++	msg->sr.dr =3D service->use_delivery_reports;
 +
-+	g_key_file_free(keyfile);
-+}
-diff --git a/src/store.h b/src/store.h
-index 21f11be..ba2c080 100644
---- a/src/store.h
-+++ b/src/store.h
-@@ -28,3 +28,7 @@ char *mms_store_get_path(const char *service_id, const ch=
-ar *uuid);
- GKeyFile *mms_store_meta_open(const char *service_id, const char *uuid);
- void mms_store_meta_close(const char *service_id, const char *uuid,
- 					GKeyFile *keyfile, gboolean save);
+ 	if (send_message_get_args(dbus_msg, msg) =3D=3D FALSE) {
+ 		mms_debug("Invalid arguments");
+ =
+
+@@ -1407,6 +1436,8 @@ int mms_service_register(struct mms_service *service)
+ =
+
+ 	emit_service_added(service);
+ =
+
++	mms_load_settings(service);
 +
-+GKeyFile *mms_settings_open(const char *service_id, const char *store);
-+void mms_settings_close(const char *service_id, const char *store,
-+					GKeyFile *keyfile, gboolean save);
+ 	load_messages(service);
+ =
+
+ 	return 0;
+@@ -1425,6 +1456,17 @@ int mms_service_unregister(struct mms_service *servi=
+ce)
+ 	if (service->messages !=3D NULL)
+ 		destroy_message_table(service);
+ =
+
++	if (service->settings !=3D NULL) {
++		g_key_file_set_boolean(service->settings, SETTINGS_GROUP,
++					"UseDeliveryReports",
++					service->use_delivery_reports);
++
++		mms_settings_close(service->identity, SETTINGS_STORE,
++						service->settings, TRUE);
++
++		service->settings =3D NULL;
++	}
++
+ 	if (g_dbus_unregister_interface(connection, service->path,
+ 					MMS_SERVICE_INTERFACE) =3D=3D FALSE) {
+ 		mms_error("Failed to unregister service interface");
 -- =
 
 1.7.9.5
 
 
---===============2128695131175982565==--
+--===============7909503115607738258==--
 
