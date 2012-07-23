@@ -1,115 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============7052051153128227657=="
+Content-Type: multipart/mixed; boundary="===============5426658057174225028=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 3/4] service: Add DBus method to set delivery-report
-Date: Mon, 23 Jul 2012 16:18:16 +0200
-Message-ID: <1343053097-8908-4-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 4/4] test: Add a script to set the delivery-report flag
+Date: Mon, 23 Jul 2012 16:18:17 +0200
+Message-ID: <1343053097-8908-5-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1343053097-8908-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7052051153128227657==
+--===============5426658057174225028==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/service-api.txt |    6 ++++++
- src/service.c       |   46 ++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 52 insertions(+)
+ test/set-dr |   25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+ create mode 100755 test/set-dr
 
-diff --git a/doc/service-api.txt b/doc/service-api.txt
-index 02396ff..f247d3a 100644
---- a/doc/service-api.txt
-+++ b/doc/service-api.txt
-@@ -82,6 +82,12 @@ Methods		array{object,dict} GetMessages()
- =
-
- 			Possible Errors: [service].Error.InvalidArguments
- =
-
-+		void SetProperty(string name, variant value)
+diff --git a/test/set-dr b/test/set-dr
+new file mode 100755
+index 0000000..99c72b1
+--- /dev/null
++++ b/test/set-dr
+@@ -0,0 +1,25 @@
++#!/usr/bin/python
 +
-+			Changes the value of the specified property.
++import sys
++import dbus
 +
-+			Possible Errors: [service].Error.InvalidArguments
++bus =3D dbus.SessionBus()
 +
- =
-
- Signals		MessageAdded(object path, dict properties)
- =
-
-diff --git a/src/service.c b/src/service.c
-index 7243efd..c1ca4ab 100644
---- a/src/service.c
-+++ b/src/service.c
-@@ -887,6 +887,48 @@ out:
- 	return reply;
- }
- =
-
-+static DBusMessage *set_property(DBusConnection *conn, DBusMessage *dbus_m=
-sg,
-+								void *data)
-+{
-+	struct mms_service *service =3D data;
-+	DBusMessageIter iter;
-+	DBusMessageIter var;
-+	const char *property;
++manager =3D dbus.Interface(bus.get_object('org.ofono.mms', '/org/ofono/mms=
+'),
++					'org.ofono.mms.Manager')
 +
-+	if (!dbus_message_iter_init(dbus_msg, &iter))
-+		return __mms_error_invalid_args(dbus_msg);
++services =3D manager.GetServices()
++path =3D services[0][0]
 +
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
-+		return __mms_error_invalid_args(dbus_msg);
++service =3D dbus.Interface(bus.get_object('org.ofono.mms', path),
++						'org.ofono.mms.Service')
 +
-+	dbus_message_iter_get_basic(&iter, &property);
-+	dbus_message_iter_next(&iter);
++if len(sys.argv) > 1:
++	allowed =3D dbus.Boolean(int(sys.argv[1]))
++else:
++	allowed =3D dbus.Boolean(1)
 +
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
-+		return __mms_error_invalid_args(dbus_msg);
++service.SetProperty("UseDeliveryReports", allowed)
 +
-+	dbus_message_iter_recurse(&iter, &var);
-+
-+	if (!strcmp(property, "UseDeliveryReports")) {
-+		dbus_bool_t value;
-+
-+		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
-+			return __mms_error_invalid_args(dbus_msg);
-+
-+		dbus_message_iter_get_basic(&var, &value);
-+
-+		if (service->use_delivery_reports !=3D (gboolean) value) {
-+			DBG("use_delivery_reports =3D %d", value);
-+
-+			service->use_delivery_reports =3D value;
-+		}
-+
-+		return g_dbus_create_reply(dbus_msg, DBUS_TYPE_INVALID);
-+	}
-+
-+	return __mms_error_invalid_args(dbus_msg);
-+}
-+
- static gboolean mms_attachment_is_smil(const struct mms_attachment *part)
- {
- 	if (g_str_has_prefix(part->content_type, "application/smil"))
-@@ -1023,6 +1065,10 @@ static const GDBusMethodTable service_methods[] =3D {
- 			GDBUS_ARGS({ "number", "s" }, { "count", "s" }),
- 			GDBUS_ARGS({ "messages_with_properties", "a(oa{sv}" }),
- 			get_conversation) },
-+	{ GDBUS_METHOD("SetProperty",
-+			GDBUS_ARGS({ "property", "s" }, { "value", "v" }),
-+		       NULL,
-+			set_property) },
- 	{ }
- };
- =
-
++print "Setting delivery report use for %s...(UseDeliveryReports=3D%d)" %\
++	(path, allowed)
 -- =
 
 1.7.9.5
 
 
---===============7052051153128227657==--
+--===============5426658057174225028==--
 
