@@ -1,30 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============2130135871557831297=="
+Content-Type: multipart/mixed; boundary="===============2900580034909697187=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH_v2] unit: Update test_invalid() unit test
-Date: Tue, 17 Jul 2012 14:29:13 -0500
-Message-ID: <5005BD09.1080008@gmail.com>
-In-Reply-To: <1342624692-3773-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Ronald Tessier <ronald.tessier@linux.intel.com>
+Subject: [PATCH 0/4] mmsd: delivery-report flag
+Date: Mon, 23 Jul 2012 16:18:13 +0200
+Message-ID: <1343053097-8908-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2130135871557831297==
+--===============2900580034909697187==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+This patch concerns mmsd and is related to delivery-report flag setting.
+A specific delivery-report flag is defined for mmsd, it is managed via a DB=
+us
+api (SetProperty, described in the doc section) and stored in a setting fil=
+e.
 
-On 07/18/2012 10:18 AM, Guillaume Zajac wrote:
-> ---
->   unit/test-util.c |   26 +++++++++++++++++++++++---
->   1 files changed, 23 insertions(+), 3 deletions(-)
->
+Ronald Tessier (4):
+  store: Add utilities for mms settings file access
+  service: Load delivery-report from mms settings
+  service: Add DBus method to set delivery-report
+  test: Add a script to set the delivery-report flag
 
-I applied this patch, but simplified it slightly in a follow-on commit.
+ doc/service-api.txt |    6 ++++
+ src/service.c       |   88 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/store.c         |   56 ++++++++++++++++++++++++++++++++
+ src/store.h         |    4 +++
+ test/set-dr         |   25 +++++++++++++++
+ 5 files changed, 179 insertions(+)
+ create mode 100755 test/set-dr
 
-Regards,
--Denis
+-- =
 
---===============2130135871557831297==--
+1.7.9.5
+
+
+--===============2900580034909697187==--
 
