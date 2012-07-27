@@ -1,99 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============7196894270184976705=="
+Content-Type: multipart/mixed; boundary="===============7261183007718338989=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH] smsutil: <CR> is not necessarily a padding character in CBS
- message
-Date: Fri, 27 Jul 2012 17:08:31 +0200
-Message-ID: <1343401711-31526-1-git-send-email-philippe.nunes@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] monitor-ofono: Fix to print non-English characters
+Date: Fri, 27 Jul 2012 00:34:50 -0500
+Message-ID: <5012287A.4010109@gmail.com>
+In-Reply-To: <1343318274-19845-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7196894270184976705==
+--===============7261183007718338989==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/smsutil.c |   37 ++++++++++++++++++++++++++++++-------
- 1 file changed, 30 insertions(+), 7 deletions(-)
+Hi Philippe,
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index a541964..59eb7b1 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -4090,7 +4090,7 @@ char *cbs_decode_text(GSList *cbs_list, char *iso639_=
-lang)
- 			unsigned char unpacked[CBS_MAX_GSM_CHARS];
- 			long written;
- 			int max_chars;
--			int i;
-+			int i, j;
- =
+On 07/26/2012 10:57 AM, Philippe Nunes wrote:
+> The default encoding for a Python bytestring is ASCII. But the
+> SMS/USSD text is encoded in UTF-8.
+> This is why trying to convert non-English characters (Unicode
+> characters beyond 128) produces the error
+> "UnicodeEncodeError: 'ascii' codec can't encode character".
+> ---
+>   test/monitor-ofono |    4 ++--
+>   1 file changed, 2 insertions(+), 2 deletions(-)
+>
 
- 			max_chars =3D
- 				sms_text_capacity_gsm(CBS_MAX_GSM_CHARS, taken);
-@@ -4102,12 +4102,24 @@ char *cbs_decode_text(GSList *cbs_list, char *iso63=
-9_lang)
- 			i =3D iso639 ? 3 : 0;
- =
+Patch has been applied, thanks.
 
- 			/*
--			 * CR is a padding character, which means we can
--			 * safely discard everything afterwards
-+			 * CR can be used as a padding character, which means
-+			 * we can safely discard everything afterwards
- 			 */
-+
- 			for (; i < written; i++, bufsize++) {
--				if (unpacked[i] =3D=3D '\r')
--					break;
-+				if (unpacked[i] =3D=3D '\r') {
-+					/*
-+					 * check if this is a padding character or =
+Regards,
+-Denis
 
-+					 * if it is a wanted <CR>
-+					 */
-+					for (j=3Di+1; j < written; j++)
-+						if (unpacked[j] !=3D '\r')
-+							break;
-+
-+					if (j =3D=3D written)
-+						break;
-+				}
-+
- =
-
- 				buf[bufsize] =3D unpacked[i];
- 			}
-@@ -4135,8 +4147,19 @@ char *cbs_decode_text(GSList *cbs_list, char *iso639=
-_lang)
- 			}
- =
-
- 			while (i < max_offset) {
--				if (ud[i] =3D=3D 0x00 && ud[i+1] =3D=3D '\r')
--					break;
-+				if (ud[i] =3D=3D 0x00 && ud[i+1] =3D=3D '\r') {
-+					int j =3D i+2;
-+
-+					while (j < max_offset) {
-+						if (ud[j] !=3D 0x00 || ud[j+1] !=3D '\r')
-+							break;
-+
-+						j +=3D 2;
-+					}
-+
-+					if (j =3D=3D max_offset)
-+						break;
-+				}
- =
-
- 				buf[bufsize] =3D ud[i];
- 				buf[bufsize + 1] =3D ud[i+1];
--- =
-
-1.7.9.5
-
-
---===============7196894270184976705==--
+--===============7261183007718338989==--
 
