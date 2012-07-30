@@ -1,44 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============7059116288700231281=="
+Content-Type: multipart/mixed; boundary="===============0683127553204248575=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH] test: Add new script for GCF testing
-Date: Mon, 30 Jul 2012 16:18:24 +0200
-Message-ID: <1343657904-11712-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH 1/2] test: Rename script hangup-active to hangup
+Date: Mon, 30 Jul 2012 17:45:08 +0200
+Message-ID: <1343663109-5542-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7059116288700231281==
+--===============0683127553204248575==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am          |    3 ++-
- test/hold-and-answer |   20 ++++++++++++++++++++
- 2 files changed, 22 insertions(+), 1 deletions(-)
- create mode 100755 test/hold-and-answer
+ Makefile.am        |    2 +-
+ test/hangup        |   29 +++++++++++++++++++++++++++++
+ test/hangup-active |   29 -----------------------------
+ 3 files changed, 30 insertions(+), 30 deletions(-)
+ create mode 100755 test/hangup
+ delete mode 100755 test/hangup-active
 
 diff --git a/Makefile.am b/Makefile.am
-index b35cf1f..4410043 100644
+index 4410043..a3681c3 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -622,7 +622,8 @@ test_scripts =3D test/backtrace \
- 		test/set-context-property \
- 		test/test-gnss \
- 		test/swap-calls \
--		test/release-and-answer
-+		test/release-and-answer \
-+		test/hold-and-answer
- =
-
- if TEST
- testdir =3D $(pkglibdir)/test
-diff --git a/test/hold-and-answer b/test/hold-and-answer
+@@ -554,7 +554,7 @@ test_scripts =3D test/backtrace \
+ 		test/enter-pin \
+ 		test/reset-pin \
+ 		test/hangup-all \
+-		test/hangup-active \
++		test/hangup \
+ 		test/set-mms-details \
+ 		test/set-roaming-allowed \
+ 		test/list-contexts \
+diff --git a/test/hangup b/test/hangup
 new file mode 100755
-index 0000000..2c47e27
+index 0000000..6444b23
 --- /dev/null
-+++ b/test/hold-and-answer
-@@ -0,0 +1,20 @@
++++ b/test/hangup
+@@ -0,0 +1,29 @@
 +#!/usr/bin/python
 +
 +import sys
@@ -50,19 +50,63 @@ index 0000000..2c47e27
 +						'org.ofono.Manager')
 +
 +modems =3D manager.GetModems()
-+modem =3D modems[0][0]
++path =3D modems[0][0]
 +
-+if (len(sys.argv) =3D=3D 2):
-+	modem =3D sys.argv[1]
-+
-+manager =3D dbus.Interface(bus.get_object('org.ofono', modem),
++manager =3D dbus.Interface(bus.get_object('org.ofono', path),
 +						'org.ofono.VoiceCallManager')
 +
-+manager.HoldAndAnswer(timeout=3D100)
++calls =3D manager.GetCalls()
++
++for path, properties in calls:
++		state =3D properties["State"]
++		print "[ %s ] %s" % (path, state)
++
++		if state !=3D "active":
++			continue
++
++		call =3D dbus.Interface(bus.get_object('org.ofono', path),
++						'org.ofono.VoiceCall')
++
++		call.Hangup()
+diff --git a/test/hangup-active b/test/hangup-active
+deleted file mode 100755
+index 6444b23..0000000
+--- a/test/hangup-active
++++ /dev/null
+@@ -1,29 +0,0 @@
+-#!/usr/bin/python
+-
+-import sys
+-import dbus
+-
+-bus =3D dbus.SystemBus()
+-
+-manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
+-						'org.ofono.Manager')
+-
+-modems =3D manager.GetModems()
+-path =3D modems[0][0]
+-
+-manager =3D dbus.Interface(bus.get_object('org.ofono', path),
+-						'org.ofono.VoiceCallManager')
+-
+-calls =3D manager.GetCalls()
+-
+-for path, properties in calls:
+-		state =3D properties["State"]
+-		print "[ %s ] %s" % (path, state)
+-
+-		if state !=3D "active":
+-			continue
+-
+-		call =3D dbus.Interface(bus.get_object('org.ofono', path),
+-						'org.ofono.VoiceCall')
+-
+-		call.Hangup()
 -- =
 
 1.7.5.4
 
 
---===============7059116288700231281==--
+--===============0683127553204248575==--
 
