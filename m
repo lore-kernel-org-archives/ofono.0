@@ -1,61 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============7989010246658884480=="
+Content-Type: multipart/mixed; boundary="===============3657108767456782623=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 2/2] test: Tweak hangup script to clear waiting active and
- held calls
-Date: Mon, 30 Jul 2012 09:50:05 -0700
-Message-ID: <1343667005.1803.56.camel@aeonflux>
-In-Reply-To: <1343663109-5542-2-git-send-email-guillaume.zajac@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v2 0/2] Add new scripts for GCF testing
+Date: Tue, 31 Jul 2012 11:45:25 +0200
+Message-ID: <1343727927-15424-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7989010246658884480==
+--===============3657108767456782623==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi,
 
->  test/hangup |   12 +++++++++++-
->  1 files changed, 11 insertions(+), 1 deletions(-)
+1st patch adds hold-and-answer script needed GPP test cases:
+31.3.2.1, 31.3.2.2 and 31.3.2.3 in 3GPP 51.010.
 
-this is a case where you should have done a summary email to describe
-why are you doing things.
+2nd patch adds hangup <call_state> script needed for 3GPP test case 31.3.1.=
+3.1
+in 3GPP 51.0.10.
 
-> =
+Guillaume Zajac (2):
+  test: Add hold-and-answer script for GCF testing
+  test: Add hangup script for GCF testing
 
-> diff --git a/test/hangup b/test/hangup
-> index 6444b23..60858a8 100755
-> --- a/test/hangup
-> +++ b/test/hangup
-> @@ -3,6 +3,16 @@
->  import sys
->  import dbus
->  =
+ Makefile.am          |    4 ++-
+ test/hangup          |   53 ++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ test/hold-and-answer |   20 ++++++++++++++++++
+ 3 files changed, 76 insertions(+), 1 deletions(-)
+ create mode 100755 test/hangup
+ create mode 100755 test/hold-and-answer
 
-> +if (len(sys.argv) < 2):
-> +	print "Usage: %s <call state>" % (sys.argv[0])
-> +	sys.exit(1)
-> +
-> +cstate =3D sys.argv[1]
-> +
-> +if cstate !=3D "active" and cstate !=3D "waiting" and cstate !=3D "held":
-> +	print "Valid <call state> is active / waiting / held"
-> +	sys.exit(1)
-> +
+-- =
 
-If you wanna do things like this, then at least the call without
-parameter should list the current calls and in what state they are.
-Otherwise this is making things worse.
-
-And don't bother renaming the script first. Just introduce a new script
-and delete the duplicate later on.
-
-Regards
-
-Marcel
+1.7.5.4
 
 
-
---===============7989010246658884480==--
+--===============3657108767456782623==--
 
