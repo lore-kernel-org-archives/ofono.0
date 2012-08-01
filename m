@@ -1,40 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============0317482752734537703=="
+Content-Type: multipart/mixed; boundary="===============1640830930647053754=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [RFC v6 04/12] bluetooth: Add define for MediaTransport interface
-Date: Wed, 01 Aug 2012 12:09:39 +0200
-Message-ID: <1343815787-22670-5-git-send-email-frederic.danis@linux.intel.com>
+Subject: [RFC v6 05/12] include: Add set/get data APIs to emulator
+Date: Wed, 01 Aug 2012 12:09:40 +0200
+Message-ID: <1343815787-22670-6-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1343815787-22670-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0317482752734537703==
+--===============1640830930647053754==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/bluetooth.h |    1 +
- 1 file changed, 1 insertion(+)
+ include/emulator.h |    5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index 6a2fbf0..ecc89c3 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -31,6 +31,7 @@
- #define BLUEZ_SERIAL_INTERFACE		BLUEZ_SERVICE ".Serial"
- #define	BLUEZ_TELEPHONY_INTERFACE	BLUEZ_SERVICE ".Telephony"
- #define	BLUEZ_TELEPHONY_AGENT_INTERFACE	BLUEZ_SERVICE ".TelephonyAgent"
-+#define	BLUEZ_TRANSPORT_INTERFACE	BLUEZ_SERVICE ".MediaTransport"
+diff --git a/include/emulator.h b/include/emulator.h
+index 5cd894b..6dc1938 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -74,6 +74,11 @@ void ofono_emulator_register(struct ofono_emulator *em, =
+int fd);
  =
 
- #define DBUS_TIMEOUT 15
+ void ofono_emulator_remove(struct ofono_emulator *em);
  =
 
++void ofono_emulator_set_data(struct ofono_emulator *em, void *data,
++						ofono_destroy_func destroy);
++
++void *ofono_emulator_get_data(struct ofono_emulator *em);
++
+ void ofono_emulator_send_final(struct ofono_emulator *em,
+ 				const struct ofono_error *final);
+ void ofono_emulator_send_unsolicited(struct ofono_emulator *em,
 -- =
 
 1.7.9.5
 
 
---===============0317482752734537703==--
+--===============1640830930647053754==--
 
