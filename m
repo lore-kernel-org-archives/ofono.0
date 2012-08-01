@@ -1,216 +1,120 @@
-Content-Type: multipart/mixed; boundary="===============4681151495255668533=="
+Content-Type: multipart/mixed; boundary="===============3448197808617451514=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [RFC v6 07/12] hfp_ag: Add AT+NREC support
-Date: Wed, 01 Aug 2012 12:09:42 +0200
-Message-ID: <1343815787-22670-8-git-send-email-frederic.danis@linux.intel.com>
+Subject: [RFC v6 08/12] hfp_ag: Add +BSIR support
+Date: Wed, 01 Aug 2012 12:09:43 +0200
+Message-ID: <1343815787-22670-9-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1343815787-22670-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4681151495255668533==
+--===============3448197808617451514==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/hfp_ag.c |  153 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 file changed, 152 insertions(+), 1 deletion(-)
+ plugins/hfp_ag.c |   52 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+++
+ 1 file changed, 52 insertions(+)
 
 diff --git a/plugins/hfp_ag.c b/plugins/hfp_ag.c
-index 2652f3f..342f959 100644
+index 342f959..6821500 100644
 --- a/plugins/hfp_ag.c
 +++ b/plugins/hfp_ag.c
-@@ -37,7 +37,8 @@
- =
-
+@@ -38,6 +38,7 @@
  #define AGENT_PATH "/hfp_ag"
  #define VERSION_1_5 0x0105
--#define FEATURES	(HFP_AG_FEATURE_3WAY | HFP_AG_FEATURE_REJECT_CALL | \
-+#define FEATURES	(HFP_AG_FEATURE_3WAY | HFP_AG_FEATURE_ECNR | \
-+			HFP_AG_FEATURE_REJECT_CALL | \
+ #define FEATURES	(HFP_AG_FEATURE_3WAY | HFP_AG_FEATURE_ECNR | \
++			HFP_AG_FEATURE_IN_BAND_RING_TONE | \
+ 			HFP_AG_FEATURE_REJECT_CALL | \
  			HFP_AG_FEATURE_ENHANCED_CALL_STATUS | \
  			HFP_AG_FEATURE_ENHANCED_CALL_CONTROL | \
- 			HFP_AG_FEATURE_EXTENDED_RES_CODE)
-@@ -46,10 +47,150 @@
- #define DBUS_TYPE_UNIX_FD -1
- #endif
+@@ -52,6 +53,7 @@ struct bt_audio {
+ 	char *path;
+ 	guint16 r_features;
+ 	DBusPendingCall *call;
++	guint watch;
+ };
  =
 
-+struct bt_audio {
-+	struct ofono_emulator *em;
-+	char *path;
-+	guint16 r_features;
-+	DBusPendingCall *call;
-+};
-+
  static guint modemwatch_id;
- static GList *modems;
- static GHashTable *sim_hash =3D NULL;
+@@ -177,8 +179,50 @@ fail:
+ 	};
+ }
  =
 
-+static void audio_transport_set_property_cb(DBusPendingCall *call,
-+						gpointer user_data)
++static gboolean audio_property_changed(DBusConnection *connection,
++					DBusMessage *message, void *user_data)
 +{
 +	struct bt_audio *audio =3D user_data;
-+	DBusMessage *reply;
-+	struct DBusError derr;
-+	struct ofono_error result;
++	const char *property;
++	char buf[10];
++	DBusMessageIter iter;
 +
-+	reply =3D dbus_pending_call_steal_reply(call);
++	dbus_message_iter_init(message, &iter);
 +
-+	dbus_error_init(&derr);
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return FALSE;
 +
-+	if (dbus_set_error_from_message(&derr, reply)) {
-+		ofono_error("MediaTransport.SetProperties replied an error: " \
-+				"%s, %s", derr.name, derr.message);
-+		dbus_error_free(&derr);
-+		result.type =3D OFONO_ERROR_TYPE_FAILURE;
-+	} else
-+		result.type =3D OFONO_ERROR_TYPE_NO_ERROR;
++	dbus_message_iter_get_basic(&iter, &property);
 +
-+	result.error =3D 0;
-+	ofono_emulator_send_final(audio->em, &result);
++	if (g_str_equal(property, "InbandRingtone") =3D=3D TRUE) {
++		DBusMessageIter variant;
++		gboolean value;
 +
-+	dbus_message_unref(reply);
++		if (!dbus_message_iter_next(&iter))
++			return TRUE;
 +
-+	dbus_pending_call_unref(audio->call);
-+	audio->call =3D NULL;
-+}
++		if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
++			return TRUE;
 +
-+static void audio_transport_set_property(struct bt_audio *audio,
-+				const char *name, int type, const void *value)
-+{
-+	DBusMessage *msg;
-+	DBusMessageIter iter, var;
-+	const char *str_type;
-+	DBusConnection *connection;
-+	struct ofono_error result;
++		dbus_message_iter_recurse(&iter, &variant);
 +
-+	if (audio->call !=3D NULL)
-+		goto fail;
++		if (dbus_message_iter_get_arg_type(&variant) !=3D
++							DBUS_TYPE_BOOLEAN)
++			return TRUE;
 +
-+	if (audio->path =3D=3D NULL)
-+		goto fail;
++		dbus_message_iter_get_basic(&variant, &value);
 +
-+	switch (type) {
-+	case DBUS_TYPE_BOOLEAN:
-+		str_type =3D DBUS_TYPE_BOOLEAN_AS_STRING;
-+		break;
-+
-+	case DBUS_TYPE_UINT16:
-+		str_type =3D DBUS_TYPE_UINT16_AS_STRING;
-+		break;
-+
-+	default:
-+		goto fail;
++		sprintf(buf, "+BSIR: %d", value);
++		ofono_emulator_send_unsolicited(audio->em, buf);
 +	}
 +
-+	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, audio->path,
-+				BLUEZ_TRANSPORT_INTERFACE, "SetProperty");
-+	if (msg =3D=3D NULL)
-+		goto fail;
-+
-+	dbus_message_iter_init_append(msg, &iter);
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &name);
-+
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT, str_type,
-+						&var);
-+	dbus_message_iter_append_basic(&var, type, value);
-+	dbus_message_iter_close_container(&iter, &var);
-+
-+	connection =3D ofono_dbus_get_connection();
-+
-+	if (!dbus_connection_send_with_reply(connection, msg, &audio->call,
-+									-1)) {
-+		ofono_error("Sending SetProperty failed");
-+		dbus_message_unref(msg);
-+		goto fail;
-+	}
-+
-+	dbus_pending_call_set_notify(audio->call,
-+						audio_transport_set_property_cb,
-+						audio, NULL);
-+
-+	dbus_message_unref(msg);
-+	return;
-+
-+fail:
-+	result.error =3D 0;
-+	result.type =3D OFONO_ERROR_TYPE_FAILURE;
-+	ofono_emulator_send_final(audio->em, &result);
++	return TRUE;
 +}
 +
-+static void emulator_nrec_cb(struct ofono_emulator *em,
-+			struct ofono_emulator_request *req, void *userdata)
-+{
-+	struct bt_audio *audio =3D userdata;
-+	struct ofono_error result;
-+	int val;
-+
-+	switch (ofono_emulator_request_get_type(req)) {
-+	case OFONO_EMULATOR_REQUEST_TYPE_SET:
-+		if (!ofono_emulator_request_next_number(req, &val))
-+			goto fail;
-+
-+		if (val !=3D 0 && val !=3D 1)
-+			goto fail;
-+
-+		audio_transport_set_property(audio, "NREC", DBUS_TYPE_BOOLEAN,
-+									&val);
-+		break;
-+
-+	default:
-+fail:
-+		result.error =3D 0;
-+		result.type =3D OFONO_ERROR_TYPE_FAILURE;
-+		ofono_emulator_send_final(em, &result);
-+	};
-+}
-+
-+static void free_audio_management(struct bt_audio *audio)
-+{
-+	DBG("");
-+
-+	if (audio =3D=3D NULL)
-+		return;
-+
-+	if (audio->call)
-+		dbus_pending_call_cancel(audio->call);
-+
-+	g_free(audio->path);
-+	g_free(audio);
-+}
-+
- static DBusMessage *hfp_ag_agent_new_connection(DBusConnection *conn,
- 						DBusMessage *msg, void *data)
+ static void free_audio_management(struct bt_audio *audio)
  {
-@@ -60,6 +201,7 @@ static DBusMessage *hfp_ag_agent_new_connection(DBusConn=
-ection *conn,
- 	guint16 features =3D 0;
- 	struct ofono_emulator *em;
- 	struct ofono_modem *modem;
-+	struct bt_audio *audio;
- =
-
- 	fd =3D bluetooth_parse_newconnection_message(msg, &device, &version,
- 							&features, &path);
-@@ -83,6 +225,15 @@ static DBusMessage *hfp_ag_agent_new_connection(DBusCon=
-nection *conn,
- =
-
- 	ofono_emulator_register(em, fd);
- =
-
-+	audio =3D g_new0(struct bt_audio, 1);
-+	audio->em =3D em;
-+	audio->path =3D g_strdup(path);
-+	audio->r_features =3D features;
-+	ofono_emulator_set_data(em, audio,
-+				(ofono_destroy_func)free_audio_management);
++	DBusConnection *connection =3D ofono_dbus_get_connection();
 +
-+	ofono_emulator_add_handler(em, "+NREC", emulator_nrec_cb, audio, NULL);
+ 	DBG("");
+ =
+
+ 	if (audio =3D=3D NULL)
+@@ -187,6 +231,8 @@ static void free_audio_management(struct bt_audio *audi=
+o)
+ 	if (audio->call)
+ 		dbus_pending_call_cancel(audio->call);
+ =
+
++	g_dbus_remove_watch(connection, audio->watch);
++
+ 	g_free(audio->path);
+ 	g_free(audio);
+ }
+@@ -234,6 +280,12 @@ static DBusMessage *hfp_ag_agent_new_connection(DBusCo=
+nnection *conn,
+ =
+
+ 	ofono_emulator_add_handler(em, "+NREC", emulator_nrec_cb, audio, NULL);
+ =
+
++	audio->watch =3D g_dbus_add_signal_watch(conn, NULL, path,
++						BLUEZ_TRANSPORT_INTERFACE,
++						"PropertyChanged",
++						audio_property_changed,
++						audio, NULL);
 +
  	return dbus_message_new_method_return(msg);
  }
@@ -221,5 +125,5 @@ nection *conn,
 1.7.9.5
 
 
---===============4681151495255668533==--
+--===============3448197808617451514==--
 
