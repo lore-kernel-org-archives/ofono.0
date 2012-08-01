@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0726244367978077748=="
+Content-Type: multipart/mixed; boundary="===============5627567573739988310=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [RFC v6 09/12] hfp_ag: Add AT+VGM support
-Date: Wed, 01 Aug 2012 12:09:44 +0200
-Message-ID: <1343815787-22670-10-git-send-email-frederic.danis@linux.intel.com>
+Subject: [RFC v6 10/12] hfp_ag: Add AT+VGS support
+Date: Wed, 01 Aug 2012 12:09:45 +0200
+Message-ID: <1343815787-22670-11-git-send-email-frederic.danis@linux.intel.com>
 In-Reply-To: <1343815787-22670-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0726244367978077748==
+--===============5627567573739988310==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,26 +19,26 @@ Content-Transfer-Encoding: quoted-printable
  1 file changed, 74 insertions(+)
 
 diff --git a/plugins/hfp_ag.c b/plugins/hfp_ag.c
-index 6821500..f865208 100644
+index f865208..3084cd6 100644
 --- a/plugins/hfp_ag.c
 +++ b/plugins/hfp_ag.c
-@@ -54,6 +54,8 @@ struct bt_audio {
- 	guint16 r_features;
- 	DBusPendingCall *call;
+@@ -56,6 +56,8 @@ struct bt_audio {
  	guint watch;
-+	int mic_gain;
-+	int mic_pending;
+ 	int mic_gain;
+ 	int mic_pending;
++	int sp_gain;
++	int sp_pending;
  };
  =
 
  static guint modemwatch_id;
-@@ -179,6 +181,39 @@ fail:
+@@ -214,6 +216,39 @@ fail:
  	};
  }
  =
 
-+static void emulator_vgm_cb(struct ofono_emulator *em,
-+			struct ofono_emulator_request *req, void *userdata)
++static void emulator_vgs_cb(struct ofono_emulator *em,
++		struct ofono_emulator_request *req, void *userdata)
 +{
 +	struct bt_audio *audio =3D userdata;
 +	struct ofono_error result;
@@ -53,12 +53,12 @@ index 6821500..f865208 100644
 +		if (val < 0 && val > 15)
 +			goto fail;
 +
-+		if (audio->mic_pending !=3D -1)
-+			ofono_error("Receiving AT+VGM while processing one");
++		if (audio->sp_pending !=3D -1)
++			ofono_error("Receiving AT+VGS while processing one");
 +
-+		audio->mic_pending =3D val;
++		audio->sp_pending =3D val;
 +		dbus_val =3D val;
-+		audio_transport_set_property(audio, "InputGain",
++		audio_transport_set_property(audio, "OutputGain",
 +						DBUS_TYPE_UINT16, &dbus_val);
 +		break;
 +
@@ -73,13 +73,12 @@ index 6821500..f865208 100644
  static gboolean audio_property_changed(DBusConnection *connection,
  					DBusMessage *message, void *user_data)
  {
-@@ -214,6 +249,43 @@ static gboolean audio_property_changed(DBusConnection =
+@@ -286,6 +321,43 @@ static gboolean audio_property_changed(DBusConnection =
 *connection,
- =
-
- 		sprintf(buf, "+BSIR: %d", value);
- 		ofono_emulator_send_unsolicited(audio->em, buf);
-+	} else if (g_str_equal(property, "InputGain") =3D=3D TRUE) {
+ 		} else if (audio->mic_pending =3D=3D value)
+ 			audio->mic_pending =3D -1;
+ 		audio->mic_gain =3D value;
++	} else if (g_str_equal(property, "OutputGain") =3D=3D TRUE) {
 +		DBusMessageIter variant;
 +		dbus_uint16_t dbus_val;
 +		int value;
@@ -102,36 +101,37 @@ index 6821500..f865208 100644
 +		dbus_message_iter_get_basic(&variant, &dbus_val);
 +		value =3D dbus_val;
 +
-+		/* Send unsolicited +VGM only if :
++		/* Send unsolicited +VGS only if :
 +		 *   - the value has changed
-+		 *   - and this is not a side effect of AT+VGM
++		 *   - and this is not a side effect of AT+VGS
 +		 * But, if we receive a value change while waiting for another
-+		 * pending change, we may have to send +VGM for other changes
-+		 * (multiple AT+VGM received) to keep mic gain in sync
++		 * pending change, we may have to send +VGS for other changes
++		 * (multiple AT+VGS received) to keep speaker gain in sync
 +		 */
-+		if (audio->mic_pending !=3D value && audio->mic_gain !=3D value) {
-+			sprintf(buf, "+VGM: %d", value);
++		if (audio->sp_pending !=3D value && audio->sp_gain !=3D value) {
++			sprintf(buf, "+VGS: %d", value);
 +			ofono_emulator_send_unsolicited(audio->em, buf);
-+			audio->mic_pending =3D -1;
-+		} else if (audio->mic_pending =3D=3D value)
-+			audio->mic_pending =3D -1;
-+		audio->mic_gain =3D value;
++			audio->sp_pending =3D -1;
++		} else if (audio->sp_pending =3D=3D value)
++			audio->sp_pending =3D -1;
++		audio->sp_gain =3D value;
  	}
  =
 
  	return TRUE;
-@@ -275,10 +347,12 @@ static DBusMessage *hfp_ag_agent_new_connection(DBusC=
+@@ -348,11 +420,13 @@ static DBusMessage *hfp_ag_agent_new_connection(DBusC=
 onnection *conn,
- 	audio->em =3D em;
  	audio->path =3D g_strdup(path);
  	audio->r_features =3D features;
-+	audio->mic_pending =3D -1;
+ 	audio->mic_pending =3D -1;
++	audio->sp_pending =3D -1;
  	ofono_emulator_set_data(em, audio,
  				(ofono_destroy_func)free_audio_management);
  =
 
  	ofono_emulator_add_handler(em, "+NREC", emulator_nrec_cb, audio, NULL);
-+	ofono_emulator_add_handler(em, "+VGM", emulator_vgm_cb, audio, NULL);
+ 	ofono_emulator_add_handler(em, "+VGM", emulator_vgm_cb, audio, NULL);
++	ofono_emulator_add_handler(em, "+VGS", emulator_vgs_cb, audio, NULL);
  =
 
  	audio->watch =3D g_dbus_add_signal_watch(conn, NULL, path,
@@ -141,5 +141,5 @@ onnection *conn,
 1.7.9.5
 
 
---===============0726244367978077748==--
+--===============5627567573739988310==--
 
