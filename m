@@ -1,45 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============5413441219758936444=="
+Content-Type: multipart/mixed; boundary="===============8478833857533227722=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v3 3/3] test: Add hangup-call script for GCF testing
-Date: Thu, 02 Aug 2012 11:41:03 +0200
-Message-ID: <1343900463-24917-4-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v3 2/3] test: Add hangup-call-state script for GCF testing
+Date: Thu, 02 Aug 2012 11:41:02 +0200
+Message-ID: <1343900463-24917-3-git-send-email-guillaume.zajac@linux.intel.com>
 In-Reply-To: <1343900463-24917-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5413441219758936444==
+--===============8478833857533227722==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am      |    3 ++-
- test/hangup-call |   39 +++++++++++++++++++++++++++++++++++++++
- 2 files changed, 41 insertions(+), 1 deletions(-)
- create mode 100755 test/hangup-call
+ Makefile.am            |    3 +-
+ test/hangup-call-state |   53 ++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 55 insertions(+), 1 deletions(-)
+ create mode 100755 test/hangup-call-state
 
 diff --git a/Makefile.am b/Makefile.am
-index a689483..534245e 100644
+index 4410043..a689483 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -624,7 +624,8 @@ test_scripts =3D test/backtrace \
+@@ -623,7 +623,8 @@ test_scripts =3D test/backtrace \
+ 		test/test-gnss \
  		test/swap-calls \
  		test/release-and-answer \
- 		test/hold-and-answer \
--		test/hangup-call-state
-+		test/hangup-call-state \
-+		test/hangup-call
+-		test/hold-and-answer
++		test/hold-and-answer \
++		test/hangup-call-state
  =
 
  if TEST
  testdir =3D $(pkglibdir)/test
-diff --git a/test/hangup-call b/test/hangup-call
+diff --git a/test/hangup-call-state b/test/hangup-call-state
 new file mode 100755
-index 0000000..926efc4
+index 0000000..0be2dea
 --- /dev/null
-+++ b/test/hangup-call
-@@ -0,0 +1,39 @@
++++ b/test/hangup-call-state
+@@ -0,0 +1,53 @@
 +#!/usr/bin/python
 +
 +import sys
@@ -62,27 +63,41 @@ index 0000000..926efc4
 +	sys.exit(1)
 +
 +if (len(sys.argv) < 2):
-+	i =3D 0
++	print
++	print "[ call path ]		< call state >"
++	print
 +	for path, properties in calls:
-+		multi =3D properties["Multiparty"]
-+		print "Call ID [ %d ] Multiparty %d" % (i, multi)
++		state =3D properties["State"]
++		print "[ %s ] < %s >" % (path, state)
 +		print
-+		i +=3D 1
 +
-+	print "Usage: %s [ Call ID ]" % (sys.argv[0])
++	print "Usage: %s < call state >" % (sys.argv[0])
 +	print
 +	sys.exit(1)
 +
-+path =3D calls[int(sys.argv[1])][0]
++cstate =3D sys.argv[1]
 +
-+call =3D dbus.Interface(bus.get_object('org.ofono', path),
++if (cstate !=3D "active" and cstate !=3D "waiting" and cstate !=3D "held"):
++	print "Valid < call state > is active / waiting / held"
++	sys.exit(1)
++
++for path, properties in calls:
++		print
++		state =3D properties["State"]
++		print "[ %s ] < %s >" % (path, state)
++		print
++
++		if state !=3D cstate:
++			continue
++
++		call =3D dbus.Interface(bus.get_object('org.ofono', path),
 +						'org.ofono.VoiceCall')
 +
-+call.Hangup()
++		call.Hangup()
 -- =
 
 1.7.5.4
 
 
---===============5413441219758936444==--
+--===============8478833857533227722==--
 
