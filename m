@@ -1,116 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============1972608633313755938=="
+Content-Type: multipart/mixed; boundary="===============3020377271907390202=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH_v3 2/2] unit: Add padding character decoding test
-Date: Fri, 03 Aug 2012 15:44:43 +0200
-Message-ID: <1344001483-9901-3-git-send-email-guillaume.zajac@linux.intel.com>
-In-Reply-To: <1344001483-9901-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH_v3 1/2] test: Add hangup-multiparty script for GCF testing
+Date: Fri, 03 Aug 2012 16:50:01 +0200
+Message-ID: <1344005402-15253-2-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1344005402-15253-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1972608633313755938==
+--===============3020377271907390202==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- unit/test-sms.c |   58 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 58 insertions(+), 0 deletions(-)
+ Makefile.am            |    3 ++-
+ test/hangup-multiparty |   20 ++++++++++++++++++++
+ 2 files changed, 22 insertions(+), 1 deletions(-)
+ create mode 100755 test/hangup-multiparty
 
-diff --git a/unit/test-sms.c b/unit/test-sms.c
-index e510554..04a8874 100644
---- a/unit/test-sms.c
-+++ b/unit/test-sms.c
-@@ -1236,6 +1236,10 @@ static const char *cbs2 =3D "0110003201114679785E963=
-71A8D46A3D168341A8D46A3D1683"
- 	"41A8D46A3D168341A8D46A3D168341A8D46A3D168341A8D46A3D168341A8D46A3D168"
- 	"341A8D46A3D168341A8D46A3D168341A8D46A3D168341A8D46A3D100";
+diff --git a/Makefile.am b/Makefile.am
+index 99d4ab0..7e8f12c 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -624,7 +624,8 @@ test_scripts =3D test/backtrace \
+ 		test/test-gnss \
+ 		test/swap-calls \
+ 		test/release-and-answer \
+-		test/hold-and-answer
++		test/hold-and-answer \
++		test/hangup-multiparty
  =
 
-+static const char *cbs3 =3D "001000000111E280604028180E888462C168381E90886=
-442A95"
-+	"82E988C66C3E9783EA09068442A994EA8946AC56AB95EB0986C46ABD96EB89C6EC7EBF"
-+	"97EC0A070482C1A8FC8A472C96C3A9FD0A8744AAD5AAFD8AC76CB05";
+ if TEST
+ testdir =3D $(pkglibdir)/test
+diff --git a/test/hangup-multiparty b/test/hangup-multiparty
+new file mode 100755
+index 0000000..48fe342
+--- /dev/null
++++ b/test/hangup-multiparty
+@@ -0,0 +1,20 @@
++#!/usr/bin/python
 +
- static void test_cbs_encode_decode(void)
- {
- 	unsigned char *decoded_pdu;
-@@ -1389,6 +1393,58 @@ static void test_cbs_assembly(void)
- 	cbs_assembly_free(assembly);
- }
- =
-
-+static void test_cbs_padding_character(void)
-+{
-+	unsigned char *decoded_pdu;
-+	long pdu_len;
-+	gboolean ret;
-+	struct cbs cbs;
-+	GSList *l;
-+	char iso639_lang[3];
-+	char *utf8;
++import sys
++import dbus
 +
-+	decoded_pdu =3D decode_hex(cbs3, -1, &pdu_len, 0);
++bus =3D dbus.SystemBus()
 +
-+	g_assert(decoded_pdu);
-+	g_assert(pdu_len =3D=3D (long)strlen(cbs1) / 2);
-+	g_assert(pdu_len =3D=3D 88);
++manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++						'org.ofono.Manager')
 +
-+	ret =3D cbs_decode(decoded_pdu, pdu_len, &cbs);
++modems =3D manager.GetModems()
++modem =3D modems[0][0]
 +
-+	g_free(decoded_pdu);
++if (len(sys.argv) =3D=3D 2):
++	modem =3D sys.argv[1]
 +
-+	g_assert(ret);
++manager =3D dbus.Interface(bus.get_object('org.ofono', modem),
++						'org.ofono.VoiceCallManager')
 +
-+	g_assert(cbs.gs =3D=3D CBS_GEO_SCOPE_CELL_IMMEDIATE);
-+	g_assert(cbs.message_code =3D=3D 1);
-+	g_assert(cbs.update_number =3D=3D 0);
-+	g_assert(cbs.message_identifier =3D=3D 0);
-+	g_assert(cbs.dcs =3D=3D 1);
-+	g_assert(cbs.max_pages =3D=3D 1);
-+	g_assert(cbs.page =3D=3D 1);
-+
-+	l =3D g_slist_append(NULL, &cbs);
-+
-+	utf8 =3D cbs_decode_text(l, iso639_lang);
-+
-+	g_assert(utf8);
-+
-+	if (g_test_verbose()) {
-+		g_printf("%s\n", utf8);
-+		if (iso639_lang[0] =3D=3D '\0')
-+			g_printf("Lang: Unspecified\n");
-+		else
-+			g_printf("Lang: %s\n", iso639_lang);
-+	}
-+
-+	g_assert(strlen(utf8) =3D=3D 122);
-+	g_assert(strcmp(iso639_lang, "en") =3D=3D 0);
-+
-+	g_free(utf8);
-+
-+	g_slist_free(l);
-+}
-+
- static const char *ranges[] =3D { "1-5, 2, 3, 600, 569-900, 999",
- 				"0-20, 33, 44, 50-60, 20-50, 1-5, 5, 3, 5",
- 				NULL };
-@@ -1679,6 +1735,8 @@ int main(int argc, char **argv)
- 			test_cbs_encode_decode);
- 	g_test_add_func("/testsms/Test CBS Assembly", test_cbs_assembly);
- =
-
-+	g_test_add_func("/testsms/Test CBS Padding Character",
-+			test_cbs_padding_character);
- 	g_test_add_func("/testsms/Range minimizer", test_range_minimizer);
- =
-
- 	g_test_add_func("/testsms/Status Report Assembly", test_sr_assembly);
++manager.HangupMultiparty()
 -- =
 
 1.7.5.4
 
 
---===============1972608633313755938==--
+--===============3020377271907390202==--
 
