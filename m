@@ -1,59 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============5979264626141499785=="
+Content-Type: multipart/mixed; boundary="===============5275183300080263887=="
 MIME-Version: 1.0
-From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 4/4] test: Add a script to set the delivery-report flag
-Date: Mon, 06 Aug 2012 17:31:00 +0200
-Message-ID: <1344267060-5541-5-git-send-email-ronald.tessier@linux.intel.com>
-In-Reply-To: <1344267060-5541-1-git-send-email-ronald.tessier@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH] oFono GCF certification 2G test plan
+Date: Mon, 06 Aug 2012 17:34:20 +0200
+Message-ID: <1344267261-28317-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5979264626141499785==
+--===============5275183300080263887==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- test/set-dr |   25 +++++++++++++++++++++++++
- 1 file changed, 25 insertions(+)
- create mode 100755 test/set-dr
+Hi, =
 
-diff --git a/test/set-dr b/test/set-dr
-new file mode 100755
-index 0000000..99c72b1
---- /dev/null
-+++ b/test/set-dr
-@@ -0,0 +1,25 @@
-+#!/usr/bin/python
-+
-+import sys
-+import dbus
-+
-+bus =3D dbus.SessionBus()
-+
-+manager =3D dbus.Interface(bus.get_object('org.ofono.mms', '/org/ofono/mms=
-'),
-+					'org.ofono.mms.Manager')
-+
-+services =3D manager.GetServices()
-+path =3D services[0][0]
-+
-+service =3D dbus.Interface(bus.get_object('org.ofono.mms', path),
-+						'org.ofono.mms.Service')
-+
-+if len(sys.argv) > 1:
-+	allowed =3D dbus.Boolean(int(sys.argv[1]))
-+else:
-+	allowed =3D dbus.Boolean(1)
-+
-+service.SetProperty("UseDeliveryReports", allowed)
-+
-+print "Setting delivery report use for %s...(UseDeliveryReports=3D%d)" %\
-+	(path, allowed)
+
+This patch is containing the 3GPP test plan needed for GCF certifcation and
+some other 3GPP  test cases relelvant to oFono and interesting to pass.
+This document is organized like below description:
+
+X.X.X.X
+=3D=3D=3D=3D=3D=3D=3D
+Test / Case / Name
+
+Steps to execute:
+-
+
+Expected result:
+-
+
+This is not a fixed document. It is supposed to evolve during the test camp=
+aign.
+For some tests, we are not sure about oFono behavior, this is why the quest=
+ion
+asked by the System Simulator during the test is completely written into the
+expected result field.
+Same kind of document will be also posted soon for 3G test campaign.
+
+Kind regards,
+Guillaume
+
+
+Guillaume Zajac (1):
+  doc: Add 2G GCF test plan for certification
+
+ doc/gcf-testplan-gsm.txt | 5180 ++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 5180 insertions(+), 0 deletions(-)
+ create mode 100644 doc/gcf-testplan-gsm.txt
+
 -- =
 
-1.7.9.5
+1.7.5.4
 
 
---===============5979264626141499785==--
+--===============5275183300080263887==--
 
