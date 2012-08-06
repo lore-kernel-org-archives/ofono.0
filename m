@@ -1,106 +1,115 @@
-Content-Type: multipart/mixed; boundary="===============9124070024134013669=="
+Content-Type: multipart/mixed; boundary="===============1520277912714156887=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 1/4] store: Add utilities for mms settings file access
-Date: Mon, 06 Aug 2012 17:30:57 +0200
-Message-ID: <1344267060-5541-2-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 3/4] service: Add DBus method to set delivery-report
+Date: Mon, 06 Aug 2012 17:30:59 +0200
+Message-ID: <1344267060-5541-4-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1344267060-5541-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9124070024134013669==
+--===============1520277912714156887==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/store.c |   56 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- src/store.h |    4 ++++
- 2 files changed, 60 insertions(+)
+ doc/service-api.txt |    6 ++++++
+ src/service.c       |   46 ++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 52 insertions(+)
 
-diff --git a/src/store.c b/src/store.c
-index 88d9e77..b09c17b 100644
---- a/src/store.c
-+++ b/src/store.c
-@@ -358,3 +358,59 @@ void mms_store_meta_close(const char *service_id, cons=
-t char *uuid,
+diff --git a/doc/service-api.txt b/doc/service-api.txt
+index 02396ff..f247d3a 100644
+--- a/doc/service-api.txt
++++ b/doc/service-api.txt
+@@ -82,6 +82,12 @@ Methods		array{object,dict} GetMessages()
  =
 
- 	g_key_file_free(keyfile);
+ 			Possible Errors: [service].Error.InvalidArguments
+ =
+
++		void SetProperty(string name, variant value)
++
++			Changes the value of the specified property.
++
++			Possible Errors: [service].Error.InvalidArguments
++
+ =
+
+ Signals		MessageAdded(object path, dict properties)
+ =
+
+diff --git a/src/service.c b/src/service.c
+index 7243efd..c1ca4ab 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -887,6 +887,48 @@ out:
+ 	return reply;
  }
-+
-+GKeyFile *mms_settings_open(const char *service_id, const char *store)
+ =
+
++static DBusMessage *set_property(DBusConnection *conn, DBusMessage *dbus_m=
+sg,
++								void *data)
 +{
-+	GKeyFile *keyfile;
-+	char *path;
++	struct mms_service *service =3D data;
++	DBusMessageIter iter;
++	DBusMessageIter var;
++	const char *property;
 +
-+	if (store =3D=3D NULL)
-+		return NULL;
++	if (!dbus_message_iter_init(dbus_msg, &iter))
++		return __mms_error_invalid_args(dbus_msg);
 +
-+	path =3D mms_store_get_path(service_id, store);
-+	if (path =3D=3D NULL)
-+		return NULL;
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return __mms_error_invalid_args(dbus_msg);
 +
-+	if (create_dirs(path, S_IRUSR | S_IWUSR | S_IXUSR) !=3D 0) {
-+		mms_error("Failed to create path %s", path);
++	dbus_message_iter_get_basic(&iter, &property);
++	dbus_message_iter_next(&iter);
 +
-+		g_free(path);
-+		return NULL;
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
++		return __mms_error_invalid_args(dbus_msg);
++
++	dbus_message_iter_recurse(&iter, &var);
++
++	if (!strcmp(property, "UseDeliveryReports")) {
++		dbus_bool_t value;
++
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
++			return __mms_error_invalid_args(dbus_msg);
++
++		dbus_message_iter_get_basic(&var, &value);
++
++		if (service->use_delivery_reports !=3D (gboolean) value) {
++			DBG("use_delivery_reports =3D %d", value);
++
++			service->use_delivery_reports =3D value;
++		}
++
++		return g_dbus_create_reply(dbus_msg, DBUS_TYPE_INVALID);
 +	}
 +
-+	keyfile =3D g_key_file_new();
-+
-+	g_key_file_load_from_file(keyfile, path, 0, NULL);
-+
-+	g_free(path);
-+
-+	return keyfile;
++	return __mms_error_invalid_args(dbus_msg);
 +}
 +
-+static void settings_sync(const char *service_id, const char *store,
-+							GKeyFile *keyfile)
-+{
-+	char *path;
-+	char *data;
-+	gsize length =3D 0;
-+
-+	path =3D mms_store_get_path(service_id, store);
-+	if (path =3D=3D NULL)
-+		return;
-+
-+	data =3D g_key_file_to_data(keyfile, &length, NULL);
-+
-+	g_file_set_contents(path, data, length, NULL);
-+
-+	g_free(data);
-+	g_free(path);
-+}
-+
-+void mms_settings_close(const char *service_id, const char *store,
-+					GKeyFile *keyfile, gboolean save)
-+{
-+	if (save =3D=3D TRUE)
-+		settings_sync(service_id, store, keyfile);
-+
-+	g_key_file_free(keyfile);
-+}
-diff --git a/src/store.h b/src/store.h
-index 21f11be..ba2c080 100644
---- a/src/store.h
-+++ b/src/store.h
-@@ -28,3 +28,7 @@ char *mms_store_get_path(const char *service_id, const ch=
-ar *uuid);
- GKeyFile *mms_store_meta_open(const char *service_id, const char *uuid);
- void mms_store_meta_close(const char *service_id, const char *uuid,
- 					GKeyFile *keyfile, gboolean save);
-+
-+GKeyFile *mms_settings_open(const char *service_id, const char *store);
-+void mms_settings_close(const char *service_id, const char *store,
-+					GKeyFile *keyfile, gboolean save);
+ static gboolean mms_attachment_is_smil(const struct mms_attachment *part)
+ {
+ 	if (g_str_has_prefix(part->content_type, "application/smil"))
+@@ -1023,6 +1065,10 @@ static const GDBusMethodTable service_methods[] =3D {
+ 			GDBUS_ARGS({ "number", "s" }, { "count", "s" }),
+ 			GDBUS_ARGS({ "messages_with_properties", "a(oa{sv}" }),
+ 			get_conversation) },
++	{ GDBUS_METHOD("SetProperty",
++			GDBUS_ARGS({ "property", "s" }, { "value", "v" }),
++		       NULL,
++			set_property) },
+ 	{ }
+ };
+ =
+
 -- =
 
 1.7.9.5
 
 
---===============9124070024134013669==--
+--===============1520277912714156887==--
 
