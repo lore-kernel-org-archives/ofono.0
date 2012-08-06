@@ -1,42 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============4840411407067751340=="
+Content-Type: multipart/mixed; boundary="===============5979264626141499785=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 0/4] mmsd: delivery-report flag
-Date: Mon, 06 Aug 2012 17:30:56 +0200
-Message-ID: <1344267060-5541-1-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 4/4] test: Add a script to set the delivery-report flag
+Date: Mon, 06 Aug 2012 17:31:00 +0200
+Message-ID: <1344267060-5541-5-git-send-email-ronald.tessier@linux.intel.com>
+In-Reply-To: <1344267060-5541-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4840411407067751340==
+--===============5979264626141499785==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch concerns mmsd and is related to delivery-report flag setting.
-A specific delivery-report flag is defined for mmsd, it is managed via a DB=
-us
-api (SetProperty, described in the doc section) and stored in a setting fil=
-e.
-
-Ronald Tessier (4):
-  store: Add utilities for mms settings file access
-  service: Load delivery-report from mms settings
-  service: Add DBus method to set delivery-report
-  test: Add a script to set the delivery-report flag
-
- doc/service-api.txt |    6 ++++
- src/service.c       |   88 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/store.c         |   56 ++++++++++++++++++++++++++++++++
- src/store.h         |    4 +++
- test/set-dr         |   25 +++++++++++++++
- 5 files changed, 179 insertions(+)
+---
+ test/set-dr |   25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
  create mode 100755 test/set-dr
 
+diff --git a/test/set-dr b/test/set-dr
+new file mode 100755
+index 0000000..99c72b1
+--- /dev/null
++++ b/test/set-dr
+@@ -0,0 +1,25 @@
++#!/usr/bin/python
++
++import sys
++import dbus
++
++bus =3D dbus.SessionBus()
++
++manager =3D dbus.Interface(bus.get_object('org.ofono.mms', '/org/ofono/mms=
+'),
++					'org.ofono.mms.Manager')
++
++services =3D manager.GetServices()
++path =3D services[0][0]
++
++service =3D dbus.Interface(bus.get_object('org.ofono.mms', path),
++						'org.ofono.mms.Service')
++
++if len(sys.argv) > 1:
++	allowed =3D dbus.Boolean(int(sys.argv[1]))
++else:
++	allowed =3D dbus.Boolean(1)
++
++service.SetProperty("UseDeliveryReports", allowed)
++
++print "Setting delivery report use for %s...(UseDeliveryReports=3D%d)" %\
++	(path, allowed)
 -- =
 
 1.7.9.5
 
 
---===============4840411407067751340==--
+--===============5979264626141499785==--
 
