@@ -1,32 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============5022935800835994862=="
+Content-Type: multipart/mixed; boundary="===============7122861855021758794=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH_v6] test: Add hangup-call script for GCF testing
-Date: Mon, 06 Aug 2012 08:53:08 -0700
-Message-ID: <1344268388.2083.35.camel@aeonflux>
-In-Reply-To: <1344267756-29989-1-git-send-email-guillaume.zajac@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [PATCH 1/2] test: Tweak monitor-ofono to display CSSI/CSSU
+ notifications
+Date: Tue, 07 Aug 2012 16:02:31 +0200
+Message-ID: <1344348152-20479-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5022935800835994862==
+--===============7122861855021758794==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+---
+ test/monitor-ofono |   14 ++++++++++++++
+ 1 files changed, 14 insertions(+), 0 deletions(-)
 
->  Makefile.am      |    3 ++-
->  test/hangup-call |   14 ++++++++++++++
->  2 files changed, 16 insertions(+), 1 deletions(-)
->  create mode 100755 test/hangup-call
+diff --git a/test/monitor-ofono b/test/monitor-ofono
+index dcc5ff5..1f3fc56 100755
+--- a/test/monitor-ofono
++++ b/test/monitor-ofono
+@@ -161,6 +161,20 @@ if __name__ =3D=3D '__main__':
+ 						path_keyword=3D"path",
+ 						interface_keyword=3D"interface")
+ =
 
-patch has been applied.
++	bus.add_signal_receiver(value,
++				bus_name=3D"org.ofono",
++					signal_name =3D "Forwarded",
++						member_keyword=3D"member",
++						path_keyword=3D"path",
++						interface_keyword=3D"interface")
++
++	bus.add_signal_receiver(value,
++				bus_name=3D"org.ofono",
++					signal_name =3D "BarringActive",
++						member_keyword=3D"member",
++						path_keyword=3D"path",
++						interface_keyword=3D"interface")
++
+ 	for member in ["IncomingBroadcast", "EmergencyBroadcast",
+ 			"IncomingMessage", "ImmediateMessage"]:
+ 		bus.add_signal_receiver(message,
+-- =
 
-Regards
-
-Marcel
+1.7.5.4
 
 
-
---===============5022935800835994862==--
+--===============7122861855021758794==--
 
