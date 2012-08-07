@@ -1,52 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============7122861855021758794=="
+Content-Type: multipart/mixed; boundary="===============5277006633391941782=="
 MIME-Version: 1.0
 From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: [PATCH 1/2] test: Tweak monitor-ofono to display CSSI/CSSU
- notifications
-Date: Tue, 07 Aug 2012 16:02:31 +0200
-Message-ID: <1344348152-20479-1-git-send-email-guillaume.zajac@linux.intel.com>
+Subject: [PATCH 2/2] test: tweak monitor-ofono to display special characters
+Date: Tue, 07 Aug 2012 16:02:32 +0200
+Message-ID: <1344348152-20479-2-git-send-email-guillaume.zajac@linux.intel.com>
+In-Reply-To: <1344348152-20479-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7122861855021758794==
+--===============5277006633391941782==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/monitor-ofono |   14 ++++++++++++++
- 1 files changed, 14 insertions(+), 0 deletions(-)
+ test/monitor-ofono |    4 +++-
+ 1 files changed, 3 insertions(+), 1 deletions(-)
 
 diff --git a/test/monitor-ofono b/test/monitor-ofono
-index dcc5ff5..1f3fc56 100755
+index 1f3fc56..f3c765a 100755
 --- a/test/monitor-ofono
 +++ b/test/monitor-ofono
-@@ -161,6 +161,20 @@ if __name__ =3D=3D '__main__':
- 						path_keyword=3D"path",
- 						interface_keyword=3D"interface")
+@@ -2,8 +2,10 @@
  =
 
-+	bus.add_signal_receiver(value,
-+				bus_name=3D"org.ofono",
-+					signal_name =3D "Forwarded",
-+						member_keyword=3D"member",
-+						path_keyword=3D"path",
-+						interface_keyword=3D"interface")
-+
-+	bus.add_signal_receiver(value,
-+				bus_name=3D"org.ofono",
-+					signal_name =3D "BarringActive",
-+						member_keyword=3D"member",
-+						path_keyword=3D"path",
-+						interface_keyword=3D"interface")
-+
- 	for member in ["IncomingBroadcast", "EmergencyBroadcast",
- 			"IncomingMessage", "ImmediateMessage"]:
- 		bus.add_signal_receiver(message,
+ import gobject
+ =
+
++import sys
+ import dbus
+ import dbus.mainloop.glib
++locale =3D sys.stdout.encoding
+ =
+
+ _dbus2py =3D {
+ 	dbus.String : unicode,
+@@ -73,7 +75,7 @@ def message(msg, args, member, path, interface):
+ =
+
+ def ussd(msg, member, path, interface):
+ 	iface =3D interface[interface.rfind(".") + 1:]
+-	print "{%s} [%s] %s %s" % (iface, path, member, msg)
++	print "{%s} [%s] %s %s" % (iface, path, member, str(msg))
+ =
+
+ def value(value, member, path, interface):
+ 	iface =3D interface[interface.rfind(".") + 1:]
 -- =
 
 1.7.5.4
 
 
---===============7122861855021758794==--
+--===============5277006633391941782==--
 
