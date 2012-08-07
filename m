@@ -1,227 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============3285400298777037995=="
+Content-Type: multipart/mixed; boundary="===============1497251973687526672=="
 MIME-Version: 1.0
-From: Bret Hassler <bret_hassler@starkey.com>
-Subject: Outgoing call from AG fails
-Date: Tue, 07 Aug 2012 21:58:17 +0000
-Message-ID: <7B61C5BDDF8BC44292054F5CB731ED1E031CBF@ep2p-exmbs2.ms.starkey.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Outgoing call from AG fails
+Date: Tue, 07 Aug 2012 08:17:02 -0500
+Message-ID: <5021154E.6020305@gmail.com>
+In-Reply-To: <7B61C5BDDF8BC44292054F5CB731ED1E031CBF@ep2p-exmbs2.ms.starkey.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3285400298777037995==
+--===============1497251973687526672==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-I have a handsfree unit with ofono connecting to a VTech landline phone as =
-audio gateway. On outgoing calls, the only HFP notification for the call is=
- only a +CIEV: call status,1.
-drivers/hfpmodem/voicecall.c: ciev_call_notify() will not do anything if wi=
-thout a call already created.  The VTech phone also returns error to AT+CLC=
-C command.
+Hi Bret,
 
-I am thinking to create the ofono_call in drivers/hfpmodem/voicecall.c: cie=
-v_call_notify() if no call has been created. However, this might have big i=
-mpacts other phones. Specifically, does "+CIEV: call status,1" get emitted =
-outside of standard phone calls, such as for alarms or notifications with s=
-ome phones? Any thoughts on this?
+On 08/07/2012 04:58 PM, Bret Hassler wrote:
+> I have a handsfree unit with ofono connecting to a VTech landline phone
+> as audio gateway. On outgoing calls, the only HFP notification for the
+> call is only a +CIEV: call status,1.
+>
 
-The following is the hcidump for an outgoing call and hangup from the audio=
- gateway:
+call indicator should not be going to 1 without first having the =
 
-> HCI Event: Mode Change (0x14) plen 6
-    status 0x00 handle 1 mode 0x00 interval 0
-    Mode: Active
-> HCI Event: Max Slots Change (0x1b) plen 3
-    handle 1 slots 5
-> HCI Event: Max Slots Change (0x1b) plen 3
-    handle 1 slots 1
-> HCI Event: Connect Request (0x04) plen 10
-    bdaddr 00:11:A0:23:54:B6 class 0x000000 type eSCO
-< HCI Command: Accept Synchronous Connection (0x01|0x0029) plen 21
-    bdaddr 00:11:A0:23:54:B6
-    @ . . . @ . . . . . ` . . ? .
-> HCI Event: Command Status (0x0f) plen 4
-    Accept Synchronous Connection (0x01|0x0029) status 0x00 ncmd 1
-> HCI Event: Synchronous Connect Complete (0x2c) plen 17
-    status 0x00 handle 257 bdaddr 00:11:A0:23:54:B6 type eSCO
-    Air mode: CVSD
-> ACL data: handle 1 flags 0x02 dlen 22
-    L2CAP(d): cid 0x0041 len 18 [psm 3]
-      RFCOMM(d): UIH: cr 0 dlci 8 pf 0 ilen 14 fcs 0x80
-      . . + C I E V :   1 , 1 . .
-> HCI Event: Mode Change (0x14) plen 6
-    status 0x00 handle 1 mode 0x02 interval 150
-    Mode: Sniff
-> HCI Event: Sniff Subrate (0x2e) plen 11
-    status 0x00 handle 1
-    max latency transmit 150 receive 1200
-    min timeout remote 0 local 2
+callsetup indicator going to 1.  Doesn't sound like this is a proper HFP =
 
-> HCI Event: Disconn Complete (0x05) plen 4
-    status 0x00 handle 257 reason 0x13
-    Reason: Remote User Terminated Connection
-> ACL data: handle 1 flags 0x02 dlen 22
-    L2CAP(d): cid 0x0041 len 18 [psm 3]
-      RFCOMM(d): UIH: cr 0 dlci 8 pf 0 ilen 14 fcs 0x80
-      . . + C I E V :   1 , 0 . .
-> HCI Event: Mode Change (0x14) plen 6
-    status 0x00 handle 1 mode 0x00 interval 0
-    Mode: Active
-> HCI Event: Max Slots Change (0x1b) plen 3
-    handle 1 slots 5
-> HCI Event: Max Slots Change (0x1b) plen 3
-    handle 1 slots 1
-> HCI Event: Mode Change (0x14) plen 6
-    status 0x00 handle 1 mode 0x02 interval 798
-    Mode: Sniff
-> HCI Event: Sniff Subrate (0x2e) plen 11
-    status 0x00 handle 1
-    max latency transmit 798 receive 798
-    min timeout remote 0 local 2
+device.  What type of device is this?
 
+> drivers/hfpmodem/voicecall.c: ciev_call_notify() will not do anything if
+> without a call already created. The VTech phone also returns error to
+> AT+CLCC command.
+>
+> I am thinking to create the ofono_call in drivers/hfpmodem/voicecall.c:
+> ciev_call_notify() if no call has been created. However, this might have
+> big impacts other phones. Specifically, does =E2=80=9C+CIEV: call status,=
+1=E2=80=9D get
+> emitted outside of standard phone calls, such as for alarms or
+> notifications with some phones? Any thoughts on this?
+>
+
+Instead of hcidump you might want to use the built-in oFono AT logging. =
+
+  See HACKING for details.
 
 Regards,
-Bret
+-Denis
 
-
---===============3285400298777037995==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNv
-bnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxtZXRhIG5hbWU9IkdlbmVyYXRv
-ciIgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+
-PCEtLQovKiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseTpDYWxp
-YnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAyIDQ7fQpAZm9udC1mYWNlCgl7Zm9udC1m
-YW1pbHk6VGFob21hOwoJcGFub3NlLTE6MiAxMSA2IDQgMyA1IDQgNCAyIDQ7fQovKiBTdHlsZSBE
-ZWZpbml0aW9ucyAqLwpwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsCgl7
-bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglm
-b250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVy
-bGluawoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRp
-b246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7bXNv
-LXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVy
-bGluZTt9CnAuTXNvQWNldGF0ZSwgbGkuTXNvQWNldGF0ZSwgZGl2Lk1zb0FjZXRhdGUKCXttc28t
-c3R5bGUtcHJpb3JpdHk6OTk7Cgltc28tc3R5bGUtbGluazoiQmFsbG9vbiBUZXh0IENoYXIiOwoJ
-bWFyZ2luOjBpbjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZTo4LjBwdDsKCWZv
-bnQtZmFtaWx5OiJUYWhvbWEiLCJzYW5zLXNlcmlmIjt9CnNwYW4uRW1haWxTdHlsZTE3Cgl7bXNv
-LXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fu
-cy1zZXJpZiI7Cgljb2xvcjp3aW5kb3d0ZXh0O30Kc3Bhbi5CYWxsb29uVGV4dENoYXIKCXttc28t
-c3R5bGUtbmFtZToiQmFsbG9vbiBUZXh0IENoYXIiOwoJbXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJ
-bXNvLXN0eWxlLWxpbms6IkJhbGxvb24gVGV4dCI7Cglmb250LWZhbWlseToiVGFob21hIiwic2Fu
-cy1zZXJpZiI7fQouTXNvQ2hwRGVmYXVsdAoJe21zby1zdHlsZS10eXBlOmV4cG9ydC1vbmx5OwoJ
-Zm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjt9CkBwYWdlIFdvcmRTZWN0aW9uMQoJ
-e3NpemU6OC41aW4gMTEuMGluOwoJbWFyZ2luOjEuMGluIDEuMGluIDEuMGluIDEuMGluO30KZGl2
-LldvcmRTZWN0aW9uMQoJe3BhZ2U6V29yZFNlY3Rpb24xO30KLS0+PC9zdHlsZT48IS0tW2lmIGd0
-ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVkZWZhdWx0cyB2OmV4dD0iZWRpdCIgc3BpZG1heD0iMTAy
-NiIgLz4KPC94bWw+PCFbZW5kaWZdLS0+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CjxvOnNoYXBl
-bGF5b3V0IHY6ZXh0PSJlZGl0Ij4KPG86aWRtYXAgdjpleHQ9ImVkaXQiIGRhdGE9IjEiIC8+Cjwv
-bzpzaGFwZWxheW91dD48L3htbD48IVtlbmRpZl0tLT4KPC9oZWFkPgo8Ym9keSBsYW5nPSJFTi1V
-UyIgbGluaz0iYmx1ZSIgdmxpbms9InB1cnBsZSI+CjxkaXYgY2xhc3M9IldvcmRTZWN0aW9uMSI+
-CjxwIGNsYXNzPSJNc29Ob3JtYWwiPkkgaGF2ZSBhIGhhbmRzZnJlZSB1bml0IHdpdGggb2Zvbm8g
-Y29ubmVjdGluZyB0byBhIFZUZWNoIGxhbmRsaW5lIHBob25lIGFzIGF1ZGlvIGdhdGV3YXkuIE9u
-IG91dGdvaW5nIGNhbGxzLCB0aGUgb25seSBIRlAgbm90aWZpY2F0aW9uIGZvciB0aGUgY2FsbCBp
-cyBvbmx5IGEgJiM0MztDSUVWOiBjYWxsIHN0YXR1cywxLiAmbmJzcDs8bzpwPjwvbzpwPjwvcD4K
-PHAgY2xhc3M9Ik1zb05vcm1hbCI+ZHJpdmVycy9oZnBtb2RlbS92b2ljZWNhbGwuYzogY2lldl9j
-YWxsX25vdGlmeSgpIHdpbGwgbm90IGRvIGFueXRoaW5nIGlmIHdpdGhvdXQgYSBjYWxsIGFscmVh
-ZHkgY3JlYXRlZC4gJm5ic3A7VGhlIFZUZWNoIHBob25lIGFsc28gcmV0dXJucyBlcnJvciB0byBB
-VCYjNDM7Q0xDQyBjb21tYW5kLjxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48
-bzpwPiZuYnNwOzwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+SSBhbSB0aGlua2luZyB0
-byBjcmVhdGUgdGhlIG9mb25vX2NhbGwgaW4gZHJpdmVycy9oZnBtb2RlbS92b2ljZWNhbGwuYzog
-Y2lldl9jYWxsX25vdGlmeSgpIGlmIG5vIGNhbGwgaGFzIGJlZW4gY3JlYXRlZC4gSG93ZXZlciwg
-dGhpcyBtaWdodCBoYXZlIGJpZyBpbXBhY3RzIG90aGVyIHBob25lcy4gU3BlY2lmaWNhbGx5LCBk
-b2VzICYjODIyMDsmIzQzO0NJRVY6IGNhbGwgc3RhdHVzLDEmIzgyMjE7IGdldCBlbWl0dGVkIG91
-dHNpZGUgb2YKIHN0YW5kYXJkIHBob25lIGNhbGxzLCBzdWNoIGFzIGZvciBhbGFybXMgb3Igbm90
-aWZpY2F0aW9ucyB3aXRoIHNvbWUgcGhvbmVzPyBBbnkgdGhvdWdodHMgb24gdGhpcz88bzpwPjwv
-bzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86cD4mbmJzcDs8L286cD48L3A+CjxwIGNs
-YXNzPSJNc29Ob3JtYWwiPlRoZSBmb2xsb3dpbmcgaXMgdGhlIGhjaWR1bXAgZm9yIGFuIG91dGdv
-aW5nIGNhbGwgYW5kIGhhbmd1cCBmcm9tIHRoZSBhdWRpbyBnYXRld2F5OjxvOnA+PC9vOnA+PC9w
-Pgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1z
-b05vcm1hbCI+Jmd0OyBIQ0kgRXZlbnQ6IE1vZGUgQ2hhbmdlICgweDE0KSBwbGVuIDY8bzpwPjwv
-bzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7IHN0YXR1cyAw
-eDAwIGhhbmRsZSAxIG1vZGUgMHgwMCBpbnRlcnZhbCAwPG86cD48L286cD48L3A+CjxwIGNsYXNz
-PSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNwOyBNb2RlOiBBY3RpdmU8bzpwPjwvbzpwPjwv
-cD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jmd0OyBIQ0kgRXZlbnQ6IE1heCBTbG90cyBDaGFuZ2Ug
-KDB4MWIpIHBsZW4gMzxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4mbmJzcDsm
-bmJzcDsmbmJzcDsgaGFuZGxlIDEgc2xvdHMgNTxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNv
-Tm9ybWFsIj4mZ3Q7IEhDSSBFdmVudDogTWF4IFNsb3RzIENoYW5nZSAoMHgxYikgcGxlbiAzPG86
-cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNwOyBoYW5k
-bGUgMSBzbG90cyAxPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZndDsgSENJ
-IEV2ZW50OiBDb25uZWN0IFJlcXVlc3QgKDB4MDQpIHBsZW4gMTA8bzpwPjwvbzpwPjwvcD4KPHAg
-Y2xhc3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7IGJkYWRkciAwMDoxMTpBMDoyMzo1
-NDpCNiBjbGFzcyAweDAwMDAwMCB0eXBlIGVTQ088bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1z
-b05vcm1hbCI+Jmx0OyBIQ0kgQ29tbWFuZDogQWNjZXB0IFN5bmNocm9ub3VzIENvbm5lY3Rpb24g
-KDB4MDF8MHgwMDI5KSBwbGVuIDIxPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwi
-PiZuYnNwOyZuYnNwOyZuYnNwOyBiZGFkZHIgMDA6MTE6QTA6MjM6NTQ6QjY8bzpwPjwvbzpwPjwv
-cD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7IEAgLiAuIC4gQCAuIC4g
-LiAuIC4gYCAuIC4gPyAuIDxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4mZ3Q7
-IEhDSSBFdmVudDogQ29tbWFuZCBTdGF0dXMgKDB4MGYpIHBsZW4gNDxvOnA+PC9vOnA+PC9wPgo8
-cCBjbGFzcz0iTXNvTm9ybWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsgQWNjZXB0IFN5bmNocm9ub3Vz
-IENvbm5lY3Rpb24gKDB4MDF8MHgwMDI5KSBzdGF0dXMgMHgwMCBuY21kIDE8bzpwPjwvbzpwPjwv
-cD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jmd0OyBIQ0kgRXZlbnQ6IFN5bmNocm9ub3VzIENvbm5l
-Y3QgQ29tcGxldGUgKDB4MmMpIHBsZW4gMTc8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05v
-cm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7IHN0YXR1cyAweDAwIGhhbmRsZSAyNTcgYmRhZGRyIDAw
-OjExOkEwOjIzOjU0OkI2IHR5cGUgZVNDTzxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9y
-bWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsgQWlyIG1vZGU6IENWU0Q8bzpwPjwvbzpwPjwvcD4KPHAg
-Y2xhc3M9Ik1zb05vcm1hbCI+Jmd0OyBBQ0wgZGF0YTogaGFuZGxlIDEgZmxhZ3MgMHgwMiBkbGVu
-IDIyPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNw
-OyBMMkNBUChkKTogY2lkIDB4MDA0MSBsZW4gMTggW3BzbSAzXTxvOnA+PC9vOnA+PC9wPgo8cCBj
-bGFzcz0iTXNvTm9ybWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgUkZDT01NKGQp
-OiBVSUg6IGNyIDAgZGxjaSA4IHBmIDAgaWxlbiAxNCBmY3MgMHg4MCA8bzpwPgo8L286cD48L3A+
-CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
-Oy4gLiAmIzQzOyBDIEkgRSBWIDombmJzcDsmbmJzcDsgMSAsIDEgLiAuIDxvOnA+PC9vOnA+PC9w
-Pgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4mZ3Q7IEhDSSBFdmVudDogTW9kZSBDaGFuZ2UgKDB4MTQp
-IHBsZW4gNjxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4mbmJzcDsmbmJzcDsm
-bmJzcDsgc3RhdHVzIDB4MDAgaGFuZGxlIDEgbW9kZSAweDAyIGludGVydmFsIDE1MDxvOnA+PC9v
-OnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsgTW9kZTogU25p
-ZmY8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jmd0OyBIQ0kgRXZlbnQ6IFNu
-aWZmIFN1YnJhdGUgKDB4MmUpIHBsZW4gMTE8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05v
-cm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7IHN0YXR1cyAweDAwIGhhbmRsZSAxPG86cD48L286cD48
-L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNwOyBtYXggbGF0ZW5jeSB0
-cmFuc21pdCAxNTAgcmVjZWl2ZSAxMjAwPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3Jt
-YWwiPiZuYnNwOyZuYnNwOyZuYnNwOyBtaW4gdGltZW91dCByZW1vdGUgMCBsb2NhbCAyPG86cD48
-L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgo8cCBj
-bGFzcz0iTXNvTm9ybWFsIj4mZ3Q7IEhDSSBFdmVudDogRGlzY29ubiBDb21wbGV0ZSAoMHgwNSkg
-cGxlbiA0PG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZu
-YnNwOyBzdGF0dXMgMHgwMCBoYW5kbGUgMjU3IHJlYXNvbiAweDEzPG86cD48L286cD48L3A+Cjxw
-IGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNwOyBSZWFzb246IFJlbW90ZSBVc2Vy
-IFRlcm1pbmF0ZWQgQ29ubmVjdGlvbjxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFs
-Ij4mZ3Q7IEFDTCBkYXRhOiBoYW5kbGUgMSBmbGFncyAweDAyIGRsZW4gMjI8bzpwPjwvbzpwPjwv
-cD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7IEwyQ0FQKGQpOiBjaWQg
-MHgwMDQxIGxlbiAxOCBbcHNtIDNdPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwi
-PiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyBSRkNPTU0oZCk6IFVJSDogY3IgMCBkbGNp
-IDggcGYgMCBpbGVuIDE0IGZjcyAweDgwIDxvOnA+CjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05v
-cm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7LiAuICYjNDM7IEMgSSBF
-IFYgOiZuYnNwOyZuYnNwOyAxICwgMCAuIC4gPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29O
-b3JtYWwiPiZndDsgSENJIEV2ZW50OiBNb2RlIENoYW5nZSAoMHgxNCkgcGxlbiA2PG86cD48L286
-cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZuYnNwOyZuYnNwOyBzdGF0dXMgMHgw
-MCBoYW5kbGUgMSBtb2RlIDB4MDAgaW50ZXJ2YWwgMDxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0i
-TXNvTm9ybWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsgTW9kZTogQWN0aXZlPG86cD48L286cD48L3A+
-CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZndDsgSENJIEV2ZW50OiBNYXggU2xvdHMgQ2hhbmdlICgw
-eDFiKSBwbGVuIDM8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5i
-c3A7Jm5ic3A7IGhhbmRsZSAxIHNsb3RzIDU8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05v
-cm1hbCI+Jmd0OyBIQ0kgRXZlbnQ6IE1heCBTbG90cyBDaGFuZ2UgKDB4MWIpIHBsZW4gMzxvOnA+
-PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsgaGFuZGxl
-IDEgc2xvdHMgMTxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4mZ3Q7IEhDSSBF
-dmVudDogTW9kZSBDaGFuZ2UgKDB4MTQpIHBsZW4gNjxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0i
-TXNvTm9ybWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsgc3RhdHVzIDB4MDAgaGFuZGxlIDEgbW9kZSAw
-eDAyIGludGVydmFsIDc5ODxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj4mbmJz
-cDsmbmJzcDsmbmJzcDsgTW9kZTogU25pZmY8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05v
-cm1hbCI+Jmd0OyBIQ0kgRXZlbnQ6IFNuaWZmIFN1YnJhdGUgKDB4MmUpIHBsZW4gMTE8bzpwPjwv
-bzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7IHN0YXR1cyAw
-eDAwIGhhbmRsZSAxPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPiZuYnNwOyZu
-YnNwOyZuYnNwOyBtYXggbGF0ZW5jeSB0cmFuc21pdCA3OTggcmVjZWl2ZSA3OTg8bzpwPjwvbzpw
-PjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7IG1pbiB0aW1lb3V0
-IHJlbW90ZSAwIGxvY2FsIDI8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86
-cD4mbmJzcDs8L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxvOnA+Jm5ic3A7PC9vOnA+
-PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj5SZWdhcmRzLDxvOnA+PC9vOnA+PC9wPgo8cCBjbGFz
-cz0iTXNvTm9ybWFsIj5CcmV0PG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxv
-OnA+Jm5ic3A7PC9vOnA+PC9wPgo8L2Rpdj4KPC9ib2R5Pgo8L2h0bWw+Cg==
-
---===============3285400298777037995==--
+--===============1497251973687526672==--
 
