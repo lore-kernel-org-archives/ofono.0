@@ -1,53 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============2255445269129277807=="
+Content-Type: multipart/mixed; boundary="===============7540221258753699436=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCHv2 2/3] doc: Describe DBus method to set delivery-report
-Date: Wed, 08 Aug 2012 15:21:45 +0200
-Message-ID: <1344432106-23105-3-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCHv2 3/3] test: Add a script to set the delivery-report flag
+Date: Wed, 08 Aug 2012 15:21:46 +0200
+Message-ID: <1344432106-23105-4-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1344432106-23105-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2255445269129277807==
+--===============7540221258753699436==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/service-api.txt |   13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ Makefile.am |    2 +-
+ test/set-dr |   25 +++++++++++++++++++++++++
+ 2 files changed, 26 insertions(+), 1 deletion(-)
+ create mode 100755 test/set-dr
 
-diff --git a/doc/service-api.txt b/doc/service-api.txt
-index 02396ff..25f2d0d 100644
---- a/doc/service-api.txt
-+++ b/doc/service-api.txt
-@@ -82,6 +82,12 @@ Methods		array{object,dict} GetMessages()
+diff --git a/Makefile.am b/Makefile.am
+index 3ae0749..6130ba2 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -52,7 +52,7 @@ CLEANFILES =3D src/builtin.h
 
- 			Possible Errors: [service].Error.InvalidArguments
+ test_scripts =3D test/monitor-mms test/get-services test/send-message \
+ 		test/delete-message test/mark-message-read test/get-messages \
+-		test/get-conversation
++		test/get-conversation test/set-dr
 
-+		void SetProperty(string name, variant value)
+ doc_files =3D doc/architecture.txt doc/consumer.txt doc/manager-api.txt \
+ 				doc/service-api.txt doc/message-api.txt \
+diff --git a/test/set-dr b/test/set-dr
+new file mode 100755
+index 0000000..2143807
+--- /dev/null
++++ b/test/set-dr
+@@ -0,0 +1,25 @@
++#!/usr/bin/python
 +
-+			Changes the value of the specified property.
++import sys
++import dbus
 +
-+			Possible Errors: [service].Error.InvalidArguments
++bus =3D dbus.SessionBus()
 +
-
- Signals		MessageAdded(object path, dict properties)
-
-@@ -94,3 +100,10 @@ Signals		MessageAdded(object path, dict properties)
- 			Signal that is sent when a message has been removed.
- 			The object path is no longer accessible after this
- 			signal and only emitted for reference.
++manager =3D dbus.Interface(bus.get_object('org.ofono.mms', '/org/ofono/mms=
+'),
++					'org.ofono.mms.Manager')
 +
-+Properties	boolean UseDeliveryReports
++services =3D manager.GetServices()
++path =3D services[0][0]
 +
-+			This property controls whether MMS Status Reports,
-+			sometimes better known as Delivery Reports are to be
-+			used.  If enabled, all outgoing MMS messages will be
-+			flagged to request a status report from the MMSC.
++service =3D dbus.Interface(bus.get_object('org.ofono.mms', path),
++						'org.ofono.mms.Service')
++
++if len(sys.argv) > 1:
++	allowed =3D dbus.Boolean(int(sys.argv[1]))
++else:
++	allowed =3D dbus.Boolean(1)
++
++print "Setting delivery report use for %s...(UseDeliveryReports=3D%d)" %\
++	(path, allowed)
++
++service.SetProperty("UseDeliveryReports", allowed)
 --
 1.7.9.5
 
 
---===============2255445269129277807==--
+--===============7540221258753699436==--
 
