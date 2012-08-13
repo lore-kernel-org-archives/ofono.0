@@ -1,34 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============6165173398846362171=="
+Content-Type: multipart/mixed; boundary="===============2182722112648640849=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] doc: Trivial whitespace fixes
-Date: Mon, 13 Aug 2012 07:45:37 -0700
-Message-ID: <1344869137.1780.18.camel@aeonflux>
-In-Reply-To: <1344845186-16355-1-git-send-email-mikel.astiz.oss@gmail.com>
+From: Gustavo Padovan <gustavo@padovan.org>
+Subject: [PATCH] dundee: disconnect bluetooth link in case dial fails
+Date: Mon, 13 Aug 2012 18:52:06 -0300
+Message-ID: <1344894726-19836-1-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6165173398846362171==
+--===============2182722112648640849==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mikel,
+From: Gustavo Padovan <gustavo.padovan@collabora.co.uk>
 
-> Always use tabs instead of spaces for indentation in documentation
-> files.
-> ---
->  doc/location-reporting-api.txt |    2 +-
->  doc/voicecallmanager-api.txt   |   12 ++++++------
->  2 files changed, 7 insertions(+), 7 deletions(-)
+If the ATD*99# dial fails for some reason, NO CARRIER, for example, we
+need to disconnect the bluetooth link and do further clean up on
+disconnect_callback().
+---
+ dundee/device.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-patch has been applied.
+diff --git a/dundee/device.c b/dundee/device.c
+index 709919a..5126071 100644
+--- a/dundee/device.c
++++ b/dundee/device.c
+@@ -357,6 +357,8 @@ err:
+ 	__ofono_dbus_pending_reply(&device->pending,
+ 				__dundee_error_failed(device->pending));
+ 	device->pending =3D NULL;
++
++	device->driver->disconnect(device, disconnect_callback, device);
+ }
+ =
 
-Regards
+ static int device_dial_setup(struct dundee_device *device, int fd)
+-- =
 
-Marcel
+1.7.11.2
 
 
-
---===============6165173398846362171==--
+--===============2182722112648640849==--
 
