@@ -1,116 +1,182 @@
-Content-Type: multipart/mixed; boundary="===============7915871881976306545=="
+Content-Type: multipart/mixed; boundary="===============8875903197436078188=="
 MIME-Version: 1.0
-From: Mikel Astiz <mikel.astiz.oss@gmail.com>
-Subject: [PATCH] doc: Trivial whitespace fixes
-Date: Mon, 13 Aug 2012 10:06:26 +0200
-Message-ID: <1344845186-16355-1-git-send-email-mikel.astiz.oss@gmail.com>
+From: Christopher Vogl <christopher.vogl@hale.at>
+Subject: [PATCH 1/8] telit: notify sim inserted when sim ready
+Date: Mon, 13 Aug 2012 15:16:52 +0200
+Message-ID: <1344863812-22857-1-git-send-email-christopher.vogl@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7915871881976306545==
+--===============8875903197436078188==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Mikel Astiz <mikel.astiz@bmw-carit.de>
+Use AT#QSS=3D2 instead of AT#QSS=3D1 to get an URC when the SIM is not only
+inserted but ready to be used.
 
-Always use tabs instead of spaces for indentation in documentation
-files.
+Remove sim_inserted_source and sim_inserted_timeout_cb which are not
+needed anymore as a consequence.
+By the way the 1 second timeout was an ugly hack.
+
+Don't query current SIM status in cfun_enable_cb() as the SIM is
+disabled due to prior AT+CFUN=3D4.
+
+Remove telit_qss_cb() which was used as a callback for querying the
+current SIM status.
 ---
- doc/location-reporting-api.txt |    2 +-
- doc/voicecallmanager-api.txt   |   12 ++++++------
- 2 files changed, 7 insertions(+), 7 deletions(-)
+ plugins/telit.c |   44 ++++++++++----------------------------------
+ 1 files changed, 10 insertions(+), 34 deletions(-)
 
-diff --git a/doc/location-reporting-api.txt b/doc/location-reporting-api.txt
-index e6e5d54..21e346d 100644
---- a/doc/location-reporting-api.txt
-+++ b/doc/location-reporting-api.txt
-@@ -31,7 +31,7 @@ Methods		dict GetProperties()
+diff --git a/plugins/telit.c b/plugins/telit.c
+index 6ae7249..853fd44 100644
+--- a/plugins/telit.c
++++ b/plugins/telit.c
+@@ -68,7 +68,6 @@ struct telit_data {
+ 	GAtChat *chat;
+ 	GAtChat *aux;
+ 	struct ofono_sim *sim;
+-	guint sim_inserted_source;
+ 	struct ofono_modem *sap_modem;
+ 	GIOChannel *bt_io;
+ 	GIOChannel *hw_io;
+@@ -211,20 +210,6 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	return chat;
+ }
  =
 
- Properties	boolean Enabled [readonly]
+-static gboolean sim_inserted_timeout_cb(gpointer user_data)
+-{
+-	struct ofono_modem *modem =3D user_data;
+-	struct telit_data *data =3D ofono_modem_get_data(modem);
+-
+-	DBG("%p", modem);
+-
+-	data->sim_inserted_source =3D 0;
+-
+-	ofono_sim_inserted_notify(data->sim, TRUE);
+-
+-	return FALSE;
+-}
+-
+ static void switch_sim_state_status(struct ofono_modem *modem, int status)
+ {
+ 	struct telit_data *data =3D ofono_modem_get_data(modem);
+@@ -238,16 +223,13 @@ static void switch_sim_state_status(struct ofono_mode=
+m *modem, int status)
+ 		break;
+ 	case 1:
+ 		DBG("SIM inserted");
+-		/* We need to sleep a bit */
+-		data->sim_inserted_source =3D g_timeout_add_seconds(1,
+-							sim_inserted_timeout_cb,
+-							modem);
+ 		break;
+ 	case 2:
+ 		DBG("SIM inserted and PIN unlocked");
+ 		break;
+ 	case 3:
+ 		DBG("SIM inserted and ready");
++		ofono_sim_inserted_notify(data->sim, TRUE);
+ 		break;
+ 	}
+ }
+@@ -270,6 +252,13 @@ static void telit_qss_notify(GAtResult *result, gpoint=
+er user_data)
+ 	switch_sim_state_status(modem, status);
+ }
  =
 
--                        Boolean representing the state of the NMEA stream.
-+			Boolean representing the state of the NMEA stream.
++/*
++ * This function was used as a callback for querying the current SIM status
++ * with 'AT#QSS?'. As this was done in cfun_enable_cb(), in a state where =
+the
++ * SIM is disabled because of 'AT+CFUN=3D4', the querying was removed.
++ * As soon as the modem is set online with 'AT+CFUN=3D1' (SIM is enabled a=
+gain),
++ * we will start receiving QSS notifications - which makes querying the SIM
++ * status redundant.
+ static void telit_qss_cb(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+@@ -288,6 +277,7 @@ static void telit_qss_cb(gboolean ok, GAtResult *result=
+, gpointer user_data)
  =
 
- 		string Type [readonly]
+ 	switch_sim_state_status(modem, status);
+ }
++*/
  =
 
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index 6af7d33..34a9b25 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -125,7 +125,7 @@ Methods		dict GetProperties()
- 			Held calls is invalid, since in GSM a user can have
- 			only a single Held call at a time.
+ static void cfun_enable_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
+ {
+@@ -308,15 +298,11 @@ static void cfun_enable_cb(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ 	ofono_modem_set_powered(m, TRUE);
  =
 
--                        Possible Errors: [service].Error.InProgress
-+			Possible Errors: [service].Error.InProgress
- 					 [service].Error.NotImplemented
- 					 [service].Error.Failed
+ 	/* Enable sim state notification */
+-	g_at_chat_send(data->chat, "AT#QSS=3D1", none_prefix, NULL, NULL, NULL);
++	g_at_chat_send(data->chat, "AT#QSS=3D2", none_prefix, NULL, NULL, NULL);
  =
 
-@@ -134,7 +134,7 @@ Methods		dict GetProperties()
- 			Releases all calls except waiting calls. This includes
- 			multiparty calls.
+ 	/* Follow sim state */
+ 	g_at_chat_register(data->chat, "#QSS:", telit_qss_notify,
+ 				FALSE, modem, NULL);
+-
+-	/* Query current sim state */
+-	g_at_chat_send(data->chat, "AT#QSS?", qss_prefix,
+-				telit_qss_cb, modem, NULL);
+ }
  =
 
--                        Possible Errors: [service].Error.InProgress
-+			Possible Errors: [service].Error.InProgress
- 					 [service].Error.NotImplemented
- 					 [service].Error.Failed
+ static int telit_enable(struct ofono_modem *modem)
+@@ -397,9 +383,6 @@ static void cfun_disable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	g_at_chat_unref(data->chat);
+ 	data->chat =3D NULL;
  =
 
-@@ -151,7 +151,7 @@ Methods		dict GetProperties()
+-	if (data->sim_inserted_source > 0)
+-		g_source_remove(data->sim_inserted_source);
+-
+ 	if (ok)
+ 		ofono_modem_set_powered(modem, FALSE);
  =
 
- 			This is usually implemented using the +CHLD=3D2X command.
+@@ -650,18 +633,11 @@ static int telit_probe(struct ofono_modem *modem)
  =
 
--                        Possible Errors: [service].Error.InProgress
-+			Possible Errors: [service].Error.InProgress
- 					 [service].Error.InvalidArguments
- 					 [service].Error.InvalidFormat
- 					 [service].Error.NotFound
-@@ -172,7 +172,7 @@ Methods		dict GetProperties()
- 			This is usually implemented using the +CHLD=3D3 AT
- 			command.
+ static void telit_remove(struct ofono_modem *modem)
+ {
+-	struct telit_data *data =3D ofono_modem_get_data(modem);
+-
+ 	DBG("%p", modem);
  =
 
--                        Possible Errors: [service].Error.InProgress
-+			Possible Errors: [service].Error.InProgress
- 					 [service].Error.NotImplemented
- 					 [service].Error.Failed
+ 	bluetooth_sap_client_unregister(modem);
  =
 
-@@ -181,7 +181,7 @@ Methods		dict GetProperties()
- 			Hangs up the multi-party call.  All participating
- 			calls are released.
+ 	ofono_modem_set_data(modem, NULL);
+-
+-	if (data->sim_inserted_source > 0)
+-		g_source_remove(data->sim_inserted_source);
+-
+-	g_free(data);
+ }
  =
 
--                        Possible Errors: [service].Error.InProgress
-+			Possible Errors: [service].Error.InProgress
- 					 [service].Error.NotImplemented
- 					 [service].Error.Failed
- =
-
-@@ -192,7 +192,7 @@ Methods		dict GetProperties()
- 			'*', '#', 'A', 'B', 'C', 'D'.  The last four are
- 			typically not used in normal circumstances.
- =
-
--                        Possible Errors: [service].Error.InProgress
-+			Possible Errors: [service].Error.InProgress
- 					 [service].Error.NotImplemented
- 					 [service].Error.InvalidArguments
- 					 [service].Error.InvalidFormat
+ static struct ofono_modem_driver telit_driver =3D {
 -- =
 
 1.7.7.6
 
 
---===============7915871881976306545==--
+--
+Scanned by MailScanner.
+
+
+--===============8875903197436078188==--
 
