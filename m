@@ -1,158 +1,239 @@
-Content-Type: multipart/mixed; boundary="===============8875903197436078188=="
+Content-Type: multipart/mixed; boundary="===============6801747385967740338=="
 MIME-Version: 1.0
 From: Christopher Vogl <christopher.vogl@hale.at>
-Subject: [PATCH 1/8] telit: notify sim inserted when sim ready
-Date: Mon, 13 Aug 2012 15:16:52 +0200
-Message-ID: <1344863812-22857-1-git-send-email-christopher.vogl@hale.at>
+Subject: [PATCH 2/8] telit: add additional port for data connection
+Date: Mon, 13 Aug 2012 15:17:39 +0200
+Message-ID: <1344863859-22900-1-git-send-email-christopher.vogl@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8875903197436078188==
+--===============6801747385967740338==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Use AT#QSS=3D2 instead of AT#QSS=3D1 to get an URC when the SIM is not only
-inserted but ready to be used.
+Use MDM port for data service and AUX for the AT chat.
+Disable DCD so that the modem does not hangup after a data connection.
+Add vendor for sim and gprs.
 
-Remove sim_inserted_source and sim_inserted_timeout_cb which are not
-needed anymore as a consequence.
-By the way the 1 second timeout was an ugly hack.
+udevng: rename aux port from Data to Aux for telit.
 
-Don't query current SIM status in cfun_enable_cb() as the SIM is
-disabled due to prior AT+CFUN=3D4.
-
-Remove telit_qss_cb() which was used as a callback for querying the
-current SIM status.
+Telit software user guide says:
+USB AUX doesn=E2=80=99t support any flow control method. Therefore, this po=
+rt
+isn=E2=80=99t suitable for DATA service port.
+We recommend this port should be used only for AT command
+and URC processing.
 ---
- plugins/telit.c |   44 ++++++++++----------------------------------
- 1 files changed, 10 insertions(+), 34 deletions(-)
+ plugins/telit.c  |   76 +++++++++++++++++++++++++++++++++++++-------------=
+---
+ plugins/udevng.c |    2 +-
+ 2 files changed, 54 insertions(+), 24 deletions(-)
 
 diff --git a/plugins/telit.c b/plugins/telit.c
-index 6ae7249..853fd44 100644
+index 853fd44..8446a22 100644
 --- a/plugins/telit.c
 +++ b/plugins/telit.c
-@@ -68,7 +68,6 @@ struct telit_data {
- 	GAtChat *chat;
- 	GAtChat *aux;
+@@ -65,8 +65,8 @@ static const char *qss_prefix[] =3D { "#QSS:", NULL };
+ static const char *rsen_prefix[]=3D { "#RSEN:", NULL };
+ =
+
+ struct telit_data {
+-	GAtChat *chat;
+-	GAtChat *aux;
++	GAtChat *chat;		/* AT chat */
++	GAtChat *modem;		/* Data port */
  	struct ofono_sim *sim;
--	guint sim_inserted_source;
  	struct ofono_modem *sap_modem;
  	GIOChannel *bt_io;
- 	GIOChannel *hw_io;
-@@ -211,20 +210,6 @@ static GAtChat *open_device(struct ofono_modem *modem,
- 	return chat;
- }
- =
-
--static gboolean sim_inserted_timeout_cb(gpointer user_data)
--{
--	struct ofono_modem *modem =3D user_data;
--	struct telit_data *data =3D ofono_modem_get_data(modem);
--
--	DBG("%p", modem);
--
--	data->sim_inserted_source =3D 0;
--
--	ofono_sim_inserted_notify(data->sim, TRUE);
--
--	return FALSE;
--}
--
- static void switch_sim_state_status(struct ofono_modem *modem, int status)
- {
- 	struct telit_data *data =3D ofono_modem_get_data(modem);
-@@ -238,16 +223,13 @@ static void switch_sim_state_status(struct ofono_mode=
-m *modem, int status)
- 		break;
- 	case 1:
- 		DBG("SIM inserted");
--		/* We need to sleep a bit */
--		data->sim_inserted_source =3D g_timeout_add_seconds(1,
--							sim_inserted_timeout_cb,
--							modem);
- 		break;
- 	case 2:
- 		DBG("SIM inserted and PIN unlocked");
- 		break;
- 	case 3:
- 		DBG("SIM inserted and ready");
-+		ofono_sim_inserted_notify(data->sim, TRUE);
- 		break;
+@@ -295,6 +295,13 @@ static void cfun_enable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 		return;
  	}
- }
-@@ -270,6 +252,13 @@ static void telit_qss_notify(GAtResult *result, gpoint=
-er user_data)
- 	switch_sim_state_status(modem, status);
- }
  =
 
-+/*
-+ * This function was used as a callback for querying the current SIM status
-+ * with 'AT#QSS?'. As this was done in cfun_enable_cb(), in a state where =
-the
-+ * SIM is disabled because of 'AT+CFUN=3D4', the querying was removed.
-+ * As soon as the modem is set online with 'AT+CFUN=3D1' (SIM is enabled a=
-gain),
-+ * we will start receiving QSS notifications - which makes querying the SIM
-+ * status redundant.
- static void telit_qss_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
- {
- 	struct ofono_modem *modem =3D user_data;
-@@ -288,6 +277,7 @@ static void telit_qss_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- =
-
- 	switch_sim_state_status(modem, status);
- }
-+*/
- =
-
- static void cfun_enable_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
- {
-@@ -308,15 +298,11 @@ static void cfun_enable_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
++	/*
++	 * Switch data carrier detect signal off.
++	 * When the DCD is disabled the modem does not hangup anymore
++	 * after the data connection.
++	 */
++	g_at_chat_send(data->chat, "AT&C0", NULL, NULL, NULL, NULL);
++
  	ofono_modem_set_powered(m, TRUE);
  =
 
  	/* Enable sim state notification */
--	g_at_chat_send(data->chat, "AT#QSS=3D1", none_prefix, NULL, NULL, NULL);
-+	g_at_chat_send(data->chat, "AT#QSS=3D2", none_prefix, NULL, NULL, NULL);
+@@ -311,10 +318,19 @@ static int telit_enable(struct ofono_modem *modem)
  =
 
- 	/* Follow sim state */
- 	g_at_chat_register(data->chat, "#QSS:", telit_qss_notify,
- 				FALSE, modem, NULL);
--
--	/* Query current sim state */
--	g_at_chat_send(data->chat, "AT#QSS?", qss_prefix,
--				telit_qss_cb, modem, NULL);
- }
+ 	DBG("%p", modem);
  =
 
- static int telit_enable(struct ofono_modem *modem)
-@@ -397,9 +383,6 @@ static void cfun_disable_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
+-	data->chat =3D open_device(modem, "Modem", "Modem: ");
+-	if (data->chat =3D=3D NULL)
++	data->modem =3D open_device(modem, "Modem", "Modem: ");
++	if (data->modem =3D=3D NULL)
+ 		return -EINVAL;
+ =
+
++	data->chat =3D open_device(modem, "Aux", "Aux: ");
++	if (data->chat =3D=3D NULL) {
++		g_at_chat_unref(data->modem);
++		data->modem =3D NULL;
++		return -EIO;
++	}
++
++	g_at_chat_set_slave(data->modem, data->chat);
++
+ 	/*
+ 	 * Disable command echo and
+ 	 * enable the Extended Error Result Codes
+@@ -362,8 +378,6 @@ static void rsen_enable_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+ 	DBG("%p", modem);
+ =
+
+ 	if (!ok) {
+-		g_at_chat_unref(data->aux);
+-		data->aux =3D NULL;
+ 		ofono_modem_set_powered(data->sap_modem, FALSE);
+ 		sap_close_io(modem);
+ 		return;
+@@ -380,6 +394,21 @@ static void cfun_disable_cb(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ =
+
+ 	DBG("%p", modem);
+ =
+
++	GIOChannel *channel =3D g_at_chat_get_channel(data->modem);
++	if(channel) {
++		g_io_channel_unref(channel);
++		channel =3D NULL;
++	}
++
++	g_at_chat_unref(data->modem);
++	data->modem =3D NULL;
++
++	channel =3D g_at_chat_get_channel(data->chat);
++	if(channel) {
++		g_io_channel_unref(channel);
++		channel =3D NULL;
++	}
++
  	g_at_chat_unref(data->chat);
  	data->chat =3D NULL;
  =
 
--	if (data->sim_inserted_source > 0)
--		g_source_remove(data->sim_inserted_source);
--
- 	if (ok)
- 		ofono_modem_set_powered(modem, FALSE);
+@@ -394,6 +423,9 @@ static int telit_disable(struct ofono_modem *modem)
+ 	struct telit_data *data =3D ofono_modem_get_data(modem);
+ 	DBG("%p", modem);
  =
 
-@@ -650,18 +633,11 @@ static int telit_probe(struct ofono_modem *modem)
++	g_at_chat_cancel_all(data->modem);
++	g_at_chat_unregister_all(data->modem);
++
+ 	g_at_chat_cancel_all(data->chat);
+ 	g_at_chat_unregister_all(data->chat);
+ =
+
+@@ -411,9 +443,6 @@ static void rsen_disable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	g_at_chat_unref(data->aux);
+-	data->aux =3D NULL;
+-
+ 	sap_close_io(modem);
+ =
+
+ 	telit_disable(modem);
+@@ -469,10 +498,6 @@ static int telit_sap_enable(struct ofono_modem *modem,
+ 	g_io_channel_set_buffered(data->hw_io, FALSE);
+ 	g_io_channel_set_close_on_unref(data->hw_io, TRUE);
+ =
+
+-	data->aux =3D open_device(modem, "Data", "Aux: ");
+-	if (data->aux =3D=3D NULL)
+-		goto error;
+-
+ 	data->bt_io =3D g_io_channel_unix_new(bt_fd);
+ 	if (data->bt_io =3D=3D NULL)
+ 		goto error;
+@@ -491,13 +516,13 @@ static int telit_sap_enable(struct ofono_modem *modem,
+ =
+
+ 	data->sap_modem =3D sap_modem;
+ =
+
+-	g_at_chat_register(data->aux, "#RSEN:", telit_rsen_notify,
++	g_at_chat_register(data->chat, "#RSEN:", telit_rsen_notify,
+ 				FALSE, modem, NULL);
+ =
+
+-	g_at_chat_send(data->aux, "AT#NOPT=3D0", NULL, NULL, NULL, NULL);
++	g_at_chat_send(data->chat, "AT#NOPT=3D0", NULL, NULL, NULL, NULL);
+ =
+
+ 	/* Set SAP functionality */
+-	g_at_chat_send(data->aux, "AT#RSEN=3D1,1,0,2,0", rsen_prefix,
++	g_at_chat_send(data->chat, "AT#RSEN=3D1,1,0,2,0", rsen_prefix,
+ 				rsen_enable_cb, modem, NULL);
+ =
+
+ 	return -EINPROGRESS;
+@@ -516,10 +541,7 @@ static int telit_sap_disable(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	g_at_chat_cancel_all(data->aux);
+-	g_at_chat_unregister_all(data->aux);
+-
+-	g_at_chat_send(data->aux, "AT#RSEN=3D0", rsen_prefix,
++	g_at_chat_send(data->chat, "AT#RSEN=3D0", rsen_prefix,
+ 				rsen_disable_cb, modem, NULL);
+ =
+
+ 	return -EINPROGRESS;
+@@ -535,7 +557,7 @@ static void telit_pre_sim(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
+-	data->sim =3D ofono_sim_create(modem, 0, "atmodem", data->chat);
++	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_TELIT, "atmodem", data=
+->chat);
+ 	ofono_voicecall_create(modem, 0, "atmodem", data->chat);
+ }
+ =
+
+@@ -593,8 +615,8 @@ static void telit_post_online(struct ofono_modem *modem)
+ 	ofono_call_meter_create(modem, 0, "atmodem", data->chat);
+ 	ofono_call_barring_create(modem, 0, "atmodem", data->chat);
+ =
+
+-	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->chat);
+-	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->chat);
++	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_TELIT, "atmodem", data->ch=
+at);
++	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
+ =
+
+ 	if (gprs && gc)
+ 		ofono_gprs_add_context(gprs, gc);
+@@ -633,11 +655,19 @@ static int telit_probe(struct ofono_modem *modem)
  =
 
  static void telit_remove(struct ofono_modem *modem)
  {
--	struct telit_data *data =3D ofono_modem_get_data(modem);
--
++	struct telit_data *data =3D ofono_modem_get_data(modem);
++	=
+
  	DBG("%p", modem);
  =
 
@@ -160,15 +241,33 @@ ult, gpointer user_data)
  =
 
  	ofono_modem_set_data(modem, NULL);
--
--	if (data->sim_inserted_source > 0)
--		g_source_remove(data->sim_inserted_source);
--
--	g_free(data);
++	=
+
++	/* Cleanup after hot-unplug */
++	g_at_chat_unref(data->chat);
++	g_at_chat_unref(data->modem);
++	=
+
++	g_free(data);
  }
  =
 
  static struct ofono_modem_driver telit_driver =3D {
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 872039a..bd5e5e0 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -615,7 +615,7 @@ static gboolean setup_telit(struct modem_info *modem)
+ 	DBG("modem=3D%s aux=3D%s gps=3D%s diag=3D%s", mdm, aux, gps, diag);
+ =
+
+ 	ofono_modem_set_string(modem->modem, "Modem", mdm);
+-	ofono_modem_set_string(modem->modem, "Data", aux);
++	ofono_modem_set_string(modem->modem, "Aux", aux);
+ 	ofono_modem_set_string(modem->modem, "GPS", gps);
+ =
+
+ 	return TRUE;
 -- =
 
 1.7.7.6
@@ -178,5 +277,5 @@ ult, gpointer user_data)
 Scanned by MailScanner.
 
 
---===============8875903197436078188==--
+--===============6801747385967740338==--
 
