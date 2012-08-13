@@ -1,158 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============4174866455826887124=="
+Content-Type: multipart/mixed; boundary="===============6096540053590771475=="
 MIME-Version: 1.0
 From: Christopher Vogl <christopher.vogl@hale.at>
-Subject: [PATCH 7/8] netreg: adapt CMER and CIEV for telit
-Date: Mon, 13 Aug 2012 15:23:38 +0200
-Message-ID: <1344864218-23167-1-git-send-email-christopher.vogl@hale.at>
+Subject: [PATCH 8/8] gprs: fix bearer dbus signal interface
+Date: Mon, 13 Aug 2012 15:23:58 +0200
+Message-ID: <1344864238-23203-1-git-send-email-christopher.vogl@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4174866455826887124==
+--===============6096540053590771475==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Telit uses a 2 to enable indicator event reporting and
-indicators in a +CIEV URC are identified by strings, not numbers.
+According to the documentation the data bearer property should be
+located on interface org.ofono.ConnectionManager.
 ---
- drivers/atmodem/network-registration.c |   46 +++++++++++++++++++++++++---=
-----
- 1 files changed, 36 insertions(+), 10 deletions(-)
+ src/gprs.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index 3d09913..7083efe 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -54,6 +54,7 @@ struct netreg_data {
- 	GAtChat *chat;
- 	char mcc[OFONO_MAX_MCC_LENGTH + 1];
- 	char mnc[OFONO_MAX_MNC_LENGTH + 1];
-+	const char *signal_identifier;
- 	int signal_index; /* If strength is reported via CIND */
- 	int signal_min; /* min strength reported via CIND */
- 	int signal_max; /* max strength reported via CIND */
-@@ -734,6 +735,7 @@ static void ciev_notify(GAtResult *result, gpointer use=
-r_data)
- 	struct ofono_netreg *netreg =3D user_data;
- 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
- 	int strength, ind;
-+	const char *ind_str;
- 	GAtResultIter iter;
- =
-
- 	g_at_result_iter_init(&iter, result);
-@@ -741,11 +743,23 @@ static void ciev_notify(GAtResult *result, gpointer u=
-ser_data)
- 	if (!g_at_result_iter_next(&iter, "+CIEV:"))
- 		return;
- =
-
--	if (!g_at_result_iter_next_number(&iter, &ind))
--		return;
-+	/*
-+	 * Telit uses strings to identify indicators.
-+	 */
-+	if (nd->vendor =3D=3D OFONO_VENDOR_TELIT) {
-+		if (!g_at_result_iter_next_unquoted_string(&iter, &ind_str))
-+			return;
- =
-
--	if (ind !=3D nd->signal_index)
--		return;
-+		if (!g_str_equal(nd->signal_identifier, ind_str))
-+			return;
-+	}
-+	else {
-+		if (!g_at_result_iter_next_number(&iter, &ind))
-+			return;
-+		=
-
-+		if (ind !=3D nd->signal_index)
-+			return;
-+	}
- =
-
- 	if (!g_at_result_iter_next_number(&iter, &strength))
- 		return;
-@@ -754,6 +768,8 @@ static void ciev_notify(GAtResult *result, gpointer use=
-r_data)
- 		strength =3D -1;
- 	else
- 		strength =3D (strength * 100) / (nd->signal_max - nd->signal_min);
-+	=
-
-+	DBG("Strength: %d", strength);
- =
-
- 	ofono_netreg_strength_notify(netreg, strength);
+diff --git a/src/gprs.c b/src/gprs.c
+index 0286e52..e379f7b 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -2266,7 +2266,7 @@ void ofono_gprs_bearer_notify(struct ofono_gprs *gprs=
+, int bearer)
+ 	path =3D __ofono_atom_get_path(gprs->atom);
+ 	value =3D packet_bearer_to_string(bearer);
+ 	ofono_dbus_signal_property_changed(conn, path,
+-					OFONO_CONNECTION_CONTEXT_INTERFACE,
++					OFONO_CONNECTION_MANAGER_INTERFACE,
+ 					"Bearer", DBUS_TYPE_STRING, &value);
  }
-@@ -1401,12 +1417,12 @@ static void cind_support_cb(gboolean ok, GAtResult =
-*result, gpointer user_data)
- 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
- 	GAtResultIter iter;
- 	const char *str;
--	char *signal_identifier =3D "signal";
-+	const char *cmd;
- 	int index;
- 	int min =3D 0;
- 	int max =3D 0;
- 	int tmp_min, tmp_max, invalid;
--
-+	=
-
- 	if (!ok)
- 		goto error;
  =
 
-@@ -1422,8 +1438,10 @@ static void cind_support_cb(gboolean ok, GAtResult *=
-result, gpointer user_data)
- 	 */
- 	if (nd->vendor =3D=3D OFONO_VENDOR_TELIT) {
- 		g_at_result_iter_open_list(&iter);
--		signal_identifier =3D "rssi";
-+		nd->signal_identifier =3D "rssi";
- 	}
-+	else
-+		nd->signal_identifier =3D "signal";
- =
-
- 	while (g_at_result_iter_open_list(&iter)) {
- 		/* Reset invalid default value for every token */
-@@ -1449,7 +1467,7 @@ static void cind_support_cb(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- 		if (!g_at_result_iter_close_list(&iter))
- 			goto error;
- =
-
--		if (g_str_equal(signal_identifier, str) =3D=3D TRUE) {
-+		if (g_str_equal(nd->signal_identifier, str) =3D=3D TRUE) {
- 			nd->signal_index =3D index;
- 			nd->signal_min =3D min;
- 			nd->signal_max =3D max;
-@@ -1464,8 +1482,16 @@ static void cind_support_cb(gboolean ok, GAtResult *=
-result, gpointer user_data)
- =
-
- 	if (nd->signal_index =3D=3D 0)
- 		goto error;
--
--	g_at_chat_send(nd->chat, "AT+CMER=3D3,0,0,1", NULL,
-+	=
-
-+	/*
-+	 * Telit uses a 2 to enable indicator event reporting, 1 is undefined.
-+	 */
-+	if (nd->vendor =3D=3D OFONO_VENDOR_TELIT)
-+		cmd =3D "AT+CMER=3D3,0,0,2";
-+	else
-+		cmd =3D "AT+CMER=3D3,0,0,1";
-+	=
-
-+	g_at_chat_send(nd->chat, cmd, NULL,
- 			NULL, NULL, NULL);
- 	g_at_chat_register(nd->chat, "+CIEV:",
- 				ciev_notify, FALSE, netreg, NULL);
 -- =
 
 1.7.7.6
@@ -162,5 +42,5 @@ result, gpointer user_data)
 Scanned by MailScanner.
 
 
---===============4174866455826887124==--
+--===============6096540053590771475==--
 
