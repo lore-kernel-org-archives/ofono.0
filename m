@@ -1,132 +1,158 @@
-Content-Type: multipart/mixed; boundary="===============1301203761659982250=="
+Content-Type: multipart/mixed; boundary="===============4174866455826887124=="
 MIME-Version: 1.0
 From: Christopher Vogl <christopher.vogl@hale.at>
-Subject: [PATCH 6/8] gprs: data bearer for telit with PSNT
-Date: Mon, 13 Aug 2012 15:23:13 +0200
-Message-ID: <1344864193-23132-1-git-send-email-christopher.vogl@hale.at>
+Subject: [PATCH 7/8] netreg: adapt CMER and CIEV for telit
+Date: Mon, 13 Aug 2012 15:23:38 +0200
+Message-ID: <1344864218-23167-1-git-send-email-christopher.vogl@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1301203761659982250==
+--===============4174866455826887124==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: August Mayer <august.mayer@hale.at>
-
-Telit neither supports '+CPSB' nor reports the data bearer through
-'+CGREG'. It has its own +PSNT command.
+Telit uses a 2 to enable indicator event reporting and
+indicators in a +CIEV URC are identified by strings, not numbers.
 ---
- drivers/atmodem/gprs.c |   76 ++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 76 insertions(+), 0 deletions(-)
+ drivers/atmodem/network-registration.c |   46 +++++++++++++++++++++++++---=
+----
+ 1 files changed, 36 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index f87548e..ffb8dfe 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -44,6 +44,7 @@
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index 3d09913..7083efe 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -54,6 +54,7 @@ struct netreg_data {
+ 	GAtChat *chat;
+ 	char mcc[OFONO_MAX_MCC_LENGTH + 1];
+ 	char mnc[OFONO_MAX_MNC_LENGTH + 1];
++	const char *signal_identifier;
+ 	int signal_index; /* If strength is reported via CIND */
+ 	int signal_min; /* min strength reported via CIND */
+ 	int signal_max; /* max strength reported via CIND */
+@@ -734,6 +735,7 @@ static void ciev_notify(GAtResult *result, gpointer use=
+r_data)
+ 	struct ofono_netreg *netreg =3D user_data;
+ 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
+ 	int strength, ind;
++	const char *ind_str;
+ 	GAtResultIter iter;
  =
 
- static const char *cgreg_prefix[] =3D { "+CGREG:", NULL };
- static const char *cgdcont_prefix[] =3D { "+CGDCONT:", NULL };
-+static const char *psnt_prefix[] =3D { "#PSNT:", NULL };
- static const char *none_prefix[] =3D { NULL };
+ 	g_at_result_iter_init(&iter, result);
+@@ -741,11 +743,23 @@ static void ciev_notify(GAtResult *result, gpointer u=
+ser_data)
+ 	if (!g_at_result_iter_next(&iter, "+CIEV:"))
+ 		return;
  =
 
- struct gprs_data {
-@@ -247,6 +248,73 @@ static void huawei_mode_notify(GAtResult *result, gpoi=
-nter user_data)
- 	ofono_gprs_bearer_notify(gprs, bearer);
- }
+-	if (!g_at_result_iter_next_number(&iter, &ind))
+-		return;
++	/*
++	 * Telit uses strings to identify indicators.
++	 */
++	if (nd->vendor =3D=3D OFONO_VENDOR_TELIT) {
++		if (!g_at_result_iter_next_unquoted_string(&iter, &ind_str))
++			return;
  =
 
-+static gint psnt_to_bearer(gint network_type)
-+{
-+	gint bearer;
-+
-+	switch (network_type) {
-+	case 0:
-+		bearer =3D 1;	/* GPRS */
-+		break;
-+	case 1:
-+		bearer =3D 2;	/* EDGE */
-+		break;
-+	case 2:
-+		bearer =3D 3;	/* UMTS */
-+		break;
-+	case 3:
-+		bearer =3D 5;	/* HSDPA */
-+		break;
-+	default:
-+		bearer =3D 0;
-+		break;
+-	if (ind !=3D nd->signal_index)
+-		return;
++		if (!g_str_equal(nd->signal_identifier, ind_str))
++			return;
 +	}
-+
-+	return bearer;
-+}
-+
-+static void at_psnt_test_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	GAtResultIter iter;
-+	gint nt, bearer;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "#PSNT:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, NULL))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &nt))
-+		return;
-+
-+	bearer =3D psnt_to_bearer(nt);
-+
-+	ofono_gprs_bearer_notify(gprs, bearer);
-+}
-+
-+static void telit_mode_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	GAtResultIter iter;
-+	gint nt, bearer;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "#PSNT:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &nt))
-+		return;
-+
-+	bearer =3D psnt_to_bearer(nt);
-+
-+	ofono_gprs_bearer_notify(gprs, bearer);
-+}
-+
- static void cpsb_notify(GAtResult *result, gpointer user_data)
- {
- 	struct ofono_gprs *gprs =3D user_data;
-@@ -281,6 +349,14 @@ static void gprs_initialized(gboolean ok, GAtResult *r=
++	else {
++		if (!g_at_result_iter_next_number(&iter, &ind))
++			return;
++		=
+
++		if (ind !=3D nd->signal_index)
++			return;
++	}
+ =
+
+ 	if (!g_at_result_iter_next_number(&iter, &strength))
+ 		return;
+@@ -754,6 +768,8 @@ static void ciev_notify(GAtResult *result, gpointer use=
+r_data)
+ 		strength =3D -1;
+ 	else
+ 		strength =3D (strength * 100) / (nd->signal_max - nd->signal_min);
++	=
+
++	DBG("Strength: %d", strength);
+ =
+
+ 	ofono_netreg_strength_notify(netreg, strength);
+ }
+@@ -1401,12 +1417,12 @@ static void cind_support_cb(gboolean ok, GAtResult =
+*result, gpointer user_data)
+ 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
+ 	GAtResultIter iter;
+ 	const char *str;
+-	char *signal_identifier =3D "signal";
++	const char *cmd;
+ 	int index;
+ 	int min =3D 0;
+ 	int max =3D 0;
+ 	int tmp_min, tmp_max, invalid;
+-
++	=
+
+ 	if (!ok)
+ 		goto error;
+ =
+
+@@ -1422,8 +1438,10 @@ static void cind_support_cb(gboolean ok, GAtResult *=
+result, gpointer user_data)
+ 	 */
+ 	if (nd->vendor =3D=3D OFONO_VENDOR_TELIT) {
+ 		g_at_result_iter_open_list(&iter);
+-		signal_identifier =3D "rssi";
++		nd->signal_identifier =3D "rssi";
+ 	}
++	else
++		nd->signal_identifier =3D "signal";
+ =
+
+ 	while (g_at_result_iter_open_list(&iter)) {
+ 		/* Reset invalid default value for every token */
+@@ -1449,7 +1467,7 @@ static void cind_support_cb(gboolean ok, GAtResult *r=
 esult, gpointer user_data)
- 		g_at_chat_register(gd->chat, "^MODE:", huawei_mode_notify,
- 						FALSE, gprs, NULL);
- 		break;
-+	case OFONO_VENDOR_TELIT:
-+		g_at_chat_register(gd->chat, "#PSNT:", telit_mode_notify,
-+						FALSE, gprs, NULL);
-+		g_at_chat_send(gd->chat, "AT#PSNT=3D1", none_prefix,
-+						NULL, NULL, NULL);
-+		g_at_chat_send(gd->chat, "AT#PSNT?", psnt_prefix,
-+			at_psnt_test_cb, gprs, NULL);
-+		break;
- 	default:
- 		g_at_chat_register(gd->chat, "+CPSB:", cpsb_notify,
- 						FALSE, gprs, NULL);
+ 		if (!g_at_result_iter_close_list(&iter))
+ 			goto error;
+ =
+
+-		if (g_str_equal(signal_identifier, str) =3D=3D TRUE) {
++		if (g_str_equal(nd->signal_identifier, str) =3D=3D TRUE) {
+ 			nd->signal_index =3D index;
+ 			nd->signal_min =3D min;
+ 			nd->signal_max =3D max;
+@@ -1464,8 +1482,16 @@ static void cind_support_cb(gboolean ok, GAtResult *=
+result, gpointer user_data)
+ =
+
+ 	if (nd->signal_index =3D=3D 0)
+ 		goto error;
+-
+-	g_at_chat_send(nd->chat, "AT+CMER=3D3,0,0,1", NULL,
++	=
+
++	/*
++	 * Telit uses a 2 to enable indicator event reporting, 1 is undefined.
++	 */
++	if (nd->vendor =3D=3D OFONO_VENDOR_TELIT)
++		cmd =3D "AT+CMER=3D3,0,0,2";
++	else
++		cmd =3D "AT+CMER=3D3,0,0,1";
++	=
+
++	g_at_chat_send(nd->chat, cmd, NULL,
+ 			NULL, NULL, NULL);
+ 	g_at_chat_register(nd->chat, "+CIEV:",
+ 				ciev_notify, FALSE, netreg, NULL);
 -- =
 
 1.7.7.6
@@ -136,5 +162,5 @@ esult, gpointer user_data)
 Scanned by MailScanner.
 
 
---===============1301203761659982250==--
+--===============4174866455826887124==--
 
