@@ -1,56 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============7855593169004355965=="
+Content-Type: multipart/mixed; boundary="===============5508362974229960223=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 7/8] netreg: adapt CMER and CIEV for telit
-Date: Tue, 14 Aug 2012 01:46:59 -0500
-Message-ID: <5029F463.7000801@gmail.com>
-In-Reply-To: <502A5DBE.1010404@hale.at>
+Subject: Re: [PATCH 6/8] gprs: data bearer for telit with PSNT
+Date: Tue, 14 Aug 2012 01:53:06 -0500
+Message-ID: <5029F5D2.5060304@gmail.com>
+In-Reply-To: <502A7133.1010307@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7855593169004355965==
+--===============5508362974229960223==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Christopher,
 
-On 08/14/2012 09:16 AM, Christopher Vogl wrote:
-> Hi Denis,
->
-> On 13/08/12 18:25, Denis Kenzior wrote:
->> Hi Christopher,
->>
->> On 08/13/2012 08:23 AM, Christopher Vogl wrote:
->>> Telit uses a 2 to enable indicator event reporting and
->>> indicators in a +CIEV URC are identified by strings, not numbers.
->>
->> Yikes, can you include a sample AT trace? It sounds like something is
->> going terribly wrong with CIEVs.
-> I included a debug output from the start of ofono until a valid ppp
-> connection.
-> I attached it at the end as it is quite long and would make this
-> unreadable.
->
+>> Do you really need to query this? In theory if we are turning off
+>> auto-attach, we should never be in a state where the bearer should be
+>> queried.
+> Once '#PSNT=3D1' is sent, the modem emits #PSNT URCs even just after
+> enabling the modem (e.g. after changing the SIM or setting the modem
+> online again).
 
-Okay, it looks like the Telit firmware does indeed get this wrong.  So =
+By the way, the gprs atom is meant to be put into the post_sim phase now.
 
-feel free to add a Telit specific CIEV parser.
+> So if the value does not change incidentally in gprs phase, the modem
+> will not send an URC. That's why I added the query. Is this ok in this
+> case?
 
-Also, I'm seeing:
-Aug  8 11:36:04 mx31tt01 daemon.debug ofonod[496]: =
+I still don't see how it can not change.  If you go offline you should =
 
-src/simfs.c:sim_fs_op_read_block() bufoff: 0, seekoff: 39, toread: 17
-Aug  8 11:36:04 mx31tt01 daemon.err ofonod[496]: EFspn read =
+be detached and only attaching once the gprs atom tells you to.  I =
 
-successfully, but couldn't parse
+presume the PSNT will change during / after the attach procedure =
 
-That looks a bit strange.  Can you rm -rf /var/lib/ofono, rerun oFono =
+completes, not before.  That means just the URC is enough.  Same with =
 
-and see if that message persists?
+sim change, etc.
+
+Lets get a version of this patch upstream without the query.  If you can =
+
+show that we still need to query then I have no problems pushing that =
+
+afterwards as well.
 
 Regards,
 -Denis
 
---===============7855593169004355965==--
+--===============5508362974229960223==--
 
