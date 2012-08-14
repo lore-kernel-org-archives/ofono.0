@@ -1,32 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============5206283196232553879=="
+Content-Type: multipart/mixed; boundary="===============8038317625285728128=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 8/8] gprs: fix bearer dbus signal interface
-Date: Mon, 13 Aug 2012 09:49:39 -0500
-Message-ID: <50291403.4070402@gmail.com>
-In-Reply-To: <1344864238-23203-1-git-send-email-christopher.vogl@hale.at>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: [PATCH ell 1/2] io: Fix not returning an error when watch_add() fails
+Date: Mon, 13 Aug 2012 21:41:39 -0300
+Message-ID: <1344904900-13807-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5206283196232553879==
+--===============8038317625285728128==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christopher,
+---
+ ell/io.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-On 08/13/2012 08:23 AM, Christopher Vogl wrote:
-> According to the documentation the data bearer property should be
-> located on interface org.ofono.ConnectionManager.
-> ---
->   src/gprs.c |    2 +-
->   1 files changed, 1 insertions(+), 1 deletions(-)
->
+diff --git a/ell/io.c b/ell/io.c
+index f4ce174..8a17b94 100644
+--- a/ell/io.c
++++ b/ell/io.c
+@@ -149,6 +149,7 @@ static void io_callback(int fd, uint32_t events, void *=
+user_data)
+ LIB_EXPORT struct l_io *l_io_new(int fd)
+ {
+ 	struct l_io *io;
++	int err;
+ =
 
-Good catch. Patch has been applied, thanks.
+ 	if (unlikely(fd < 0))
+ 		return NULL;
+@@ -159,7 +160,11 @@ LIB_EXPORT struct l_io *l_io_new(int fd)
+ 	io->events =3D 0;
+ 	io->close_on_destroy =3D false;
+ =
 
-Regards,
--Denis
+-	watch_add(io->fd, io->events, io_callback, io, io_cleanup);
++	err =3D watch_add(io->fd, io->events, io_callback, io, io_cleanup);
++	if (err) {
++		l_free(io);
++		return NULL;
++	}
+ =
 
---===============5206283196232553879==--
+ 	return io;
+ }
+-- =
+
+1.7.11.4
+
+
+--===============8038317625285728128==--
 
