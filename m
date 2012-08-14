@@ -1,81 +1,103 @@
-Content-Type: multipart/mixed; boundary="===============6541128921446408797=="
+Content-Type: multipart/mixed; boundary="===============4301163355489466948=="
 MIME-Version: 1.0
-From: Gustavo Padovan <gustavo@padovan.org>
-Subject: [PATCH 2/2] dundee: explicit shutdown the bluetooth file descriptor
-Date: Tue, 14 Aug 2012 04:14:32 -0300
-Message-ID: <1344928472-29531-2-git-send-email-gustavo@padovan.org>
-In-Reply-To: <1344928472-29531-1-git-send-email-gustavo@padovan.org>
+From: Simon Lemoine <simon.lemoine@dunasys.com>
+Subject: sierra wireless MC8092
+Date: Tue, 14 Aug 2012 11:19:44 +0200
+Message-ID: <001f01cd79fd$f19b3560$d4d1a020$@lemoine@dunasys.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6541128921446408797==
+--===============4301163355489466948==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Gustavo Padovan <gustavo.padovan@collabora.co.uk>
+Hi,
 
-If we do not shut it down the fd can remain opened. This make impossible
-to try a re-connect: busy is returned in this case.
-
-We call shutdown here to make sure that the link is always closed.
----
- dundee/bluetooth.c | 7 +++++++
- 1 file changed, 7 insertions(+)
-
-diff --git a/dundee/bluetooth.c b/dundee/bluetooth.c
-index e2e2bca..9ddc72c 100644
---- a/dundee/bluetooth.c
-+++ b/dundee/bluetooth.c
-@@ -28,6 +28,7 @@
- #include <fcntl.h>
- #include <string.h>
- #include <errno.h>
-+#include <sys/socket.h>
  =
 
- #include <glib.h>
+
+I'm trying to use a Sierra Wireless MC8092 card with Ofono on an embedded
+system, but Ofono fail to setup the card because there are only five
+interfaces ttyUSB0 to ttyUSB4. =
+
+
+I have seen in function setup_sierra (plugins/udevng.c) that Ofono expects
+to have a NetworkInterface on the interface 7. =
+
+
  =
 
-@@ -44,6 +45,8 @@ struct bluetooth_device {
- 	char *address;
- 	char *name;
+
+Does anybody know why the MC8092 doesn't have seven interfaces? Or which of
+the five interfaces could be the NetworkInterface?
+
  =
 
-+	int fd;
-+
- 	DBusPendingCall *call;
- };
+
+Regards,
+
  =
 
-@@ -54,6 +57,8 @@ static void bt_disconnect(struct dundee_device *device,
+
+Simon Lemoine
+
  =
 
- 	DBG("%p", bt);
- =
-
-+	shutdown(bt->fd, SHUT_RDWR);
-+
- 	CALLBACK_WITH_SUCCESS(cb, data);
- }
- =
-
-@@ -93,6 +98,8 @@ static void bt_connect_reply(DBusPendingCall *call, gpoin=
-ter user_data)
- 		goto done;
- 	}
- =
-
-+	bt->fd =3D fd;
-+
- 	CALLBACK_WITH_SUCCESS(cb, fd, cbd->data);
- =
-
- done:
--- =
-
-1.7.11.2
 
 
---===============6541128921446408797==--
+--===============4301163355489466948==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29u
+dGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEgbmFtZT1HZW5lcmF0b3Ig
+Y29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTIgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+Cjwh
+LS0KIC8qIEZvbnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseTpDYWxp
+YnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAyIDQ7fQogLyogU3R5bGUgRGVmaW5pdGlv
+bnMgKi8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46
+MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFt
+aWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7fQphOmxpbmssIHNwYW4uTXNvSHlwZXJsaW5rCgl7
+bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6Ymx1ZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRl
+cmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlwZXJsaW5rRm9sbG93ZWQKCXttc28tc3R5bGUt
+cHJpb3JpdHk6OTk7Cgljb2xvcjpwdXJwbGU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30K
+c3Bhbi5FbWFpbFN0eWxlMTcKCXttc28tc3R5bGUtdHlwZTpwZXJzb25hbC1jb21wb3NlOwoJZm9u
+dC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjsKCWNvbG9yOndpbmRvd3RleHQ7fQouTXNv
+Q2hwRGVmYXVsdAoJe21zby1zdHlsZS10eXBlOmV4cG9ydC1vbmx5O30KQHBhZ2UgU2VjdGlvbjEK
+CXtzaXplOjYxMi4wcHQgNzkyLjBwdDsKCW1hcmdpbjo3MC44NXB0IDcwLjg1cHQgNzAuODVwdCA3
+MC44NXB0O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9Ci0tPgo8L3N0eWxlPgo8IS0t
+W2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlZGVmYXVsdHMgdjpleHQ9ImVkaXQiIHNwaWRt
+YXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPgog
+PG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgogIDxvOmlkbWFwIHY6ZXh0PSJlZGl0IiBkYXRh
+PSIxIiAvPgogPC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlmXS0tPgo8L2hlYWQ+Cgo8Ym9k
+eSBsYW5nPUZSIGxpbms9Ymx1ZSB2bGluaz1wdXJwbGU+Cgo8ZGl2IGNsYXNzPVNlY3Rpb24xPgoK
+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+SGksPG86cD48L286cD48L3NwYW4+
+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286
+cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+SSYjODIx
+NzttIHRyeWluZyB0byB1c2UgYSBTaWVycmEgV2lyZWxlc3MKTUM4MDkyIGNhcmQgd2l0aCBPZm9u
+byBvbiBhbiBlbWJlZGRlZCBzeXN0ZW0sIGJ1dCBPZm9ubyBmYWlsIHRvIHNldHVwIHRoZSBjYXJk
+IGJlY2F1c2UKdGhlcmUgYXJlIG9ubHkgZml2ZSBpbnRlcmZhY2VzIHR0eVVTQjAgdG8gdHR5VVNC
+NC4gPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9
+RU4tVVM+SSBoYXZlIHNlZW4gaW4gZnVuY3Rpb24gc2V0dXBfc2llcnJhIChwbHVnaW5zL3VkZXZu
+Zy5jKQp0aGF0IE9mb25vIGV4cGVjdHMgdG8gaGF2ZSBhIE5ldHdvcmtJbnRlcmZhY2Ugb24gdGhl
+IGludGVyZmFjZSA3LiA8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+
+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1N
+c29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5Eb2VzIGFueWJvZHkga25vdyB3aHkgdGhlIE1DODA5
+MiBkb2VzbiYjODIxNzt0CmhhdmUgc2V2ZW4gaW50ZXJmYWNlcz8gT3Igd2hpY2ggb2YgdGhlIGZp
+dmUgaW50ZXJmYWNlcyBjb3VsZCBiZSB0aGUKTmV0d29ya0ludGVyZmFjZT88bzpwPjwvbzpwPjwv
+c3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNw
+OzwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5S
+ZWdhcmRzLDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBs
+YW5nPUVOLVVTPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1h
+bD48c3BhbiBsYW5nPUVOLVVTPlNpbW9uIExlbW9pbmU8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8
+cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bh
+bj48L3A+Cgo8L2Rpdj4KCjwvYm9keT4KCjwvaHRtbD4K
+
+--===============4301163355489466948==--
 
