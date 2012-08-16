@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0317723607146945439=="
+Content-Type: multipart/mixed; boundary="===============4457126852083622041=="
 MIME-Version: 1.0
 From: Christopher Vogl <christopher.vogl@hale.at>
-Subject: [PATCH 1/3] sim: add function to get password type
-Date: Thu, 16 Aug 2012 09:37:18 +0200
-Message-ID: <1345102640-8465-1-git-send-email-christopher.vogl@hale.at>
+Subject: [PATCH 2/3] sim: implement function to get password type
+Date: Thu, 16 Aug 2012 09:37:19 +0200
+Message-ID: <1345102640-8465-2-git-send-email-christopher.vogl@hale.at>
 In-Reply-To: <50292E2D.8040403@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0317723607146945439==
+--===============4457126852083622041==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,26 +16,32 @@ Content-Transfer-Encoding: quoted-printable
 From: August Mayer <august.mayer@hale.at>
 
 ---
- include/sim.h |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ src/sim.c |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-diff --git a/include/sim.h b/include/sim.h
-index 508ff24..3e5797c 100644
---- a/include/sim.h
-+++ b/include/sim.h
-@@ -189,6 +189,8 @@ enum ofono_sim_phase ofono_sim_get_phase(struct ofono_s=
-im *sim);
- enum ofono_sim_cphs_phase ofono_sim_get_cphs_phase(struct ofono_sim *sim);
- const unsigned char *ofono_sim_get_cphs_service_table(struct ofono_sim *si=
-m);
+diff --git a/src/sim.c b/src/sim.c
+index 4384eb0..8059d2b 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -2243,6 +2243,14 @@ enum ofono_sim_cphs_phase ofono_sim_get_cphs_phase(s=
+truct ofono_sim *sim)
+ 	return sim->cphs_phase;
+ }
  =
 
 +enum ofono_sim_password_type ofono_sim_get_password_type(struct ofono_sim =
-*sim);
+*sim)
++{
++	if (sim =3D=3D NULL)
++		return OFONO_SIM_PASSWORD_NONE;
 +
- unsigned int ofono_sim_add_state_watch(struct ofono_sim *sim,
- 					ofono_sim_state_event_cb_t cb,
- 					void *data, ofono_destroy_func destroy);
++	return sim->pin_type;
++}
++
+ const unsigned char *ofono_sim_get_cphs_service_table(struct ofono_sim *si=
+m)
+ {
+ 	if (sim =3D=3D NULL)
 -- =
 
 1.7.7.6
@@ -45,5 +51,5 @@ m);
 Scanned by MailScanner.
 
 
---===============0317723607146945439==--
+--===============4457126852083622041==--
 
