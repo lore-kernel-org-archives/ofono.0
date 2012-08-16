@@ -1,44 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============1955483400348668740=="
+Content-Type: multipart/mixed; boundary="===============7602770443832927499=="
 MIME-Version: 1.0
 From: Christopher Vogl <christopher.vogl@hale.at>
-Subject: [PATCH] gprs: skip CGAUTO for telit
-Date: Thu, 16 Aug 2012 11:33:49 +0200
-Message-ID: <1345109629-29468-1-git-send-email-christopher.vogl@hale.at>
-In-Reply-To: <502902F0.8010008@gmail.com>
+Subject: [PATCH] telit: disable auto attach procedures with AUTOATT
+Date: Thu, 16 Aug 2012 11:48:30 +0200
+Message-ID: <1345110510-1536-1-git-send-email-christopher.vogl@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1955483400348668740==
+--===============7602770443832927499==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Telit does not support +CGAUTO and will just return an error.
-To not confuse people reading the debug output, don't send the command
-for telit.
 ---
- drivers/atmodem/gprs.c |    6 +++++-
- 1 files changed, 5 insertions(+), 1 deletions(-)
+ plugins/telit.c |    6 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index 65a8b7b..4e0823c 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -342,7 +342,11 @@ retry:
- 		goto error;
+diff --git a/plugins/telit.c b/plugins/telit.c
+index 6ae7249..feedd18 100644
+--- a/plugins/telit.c
++++ b/plugins/telit.c
+@@ -307,6 +307,12 @@ static void cfun_enable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
  =
 
- 	g_at_chat_send(gd->chat, cmd, none_prefix, NULL, NULL, NULL);
--	g_at_chat_send(gd->chat, "AT+CGAUTO=3D0", none_prefix, NULL, NULL, NULL);
+ 	ofono_modem_set_powered(m, TRUE);
+ =
+
++	/*
++	 * Tell the modem not to automatically initiate auto-attach
++	 * proceedures on its own.
++	 */
++	g_at_chat_send(data->chat, "AT#AUTOATT=3D0", none_prefix, NULL, NULL, NUL=
+L);
 +
-+	if (gd->vendor =3D=3D OFONO_VENDOR_TELIT)
-+		DBG("Telit does not support +CGAUTO command.");
-+	else
-+		g_at_chat_send(gd->chat, "AT+CGAUTO=3D0", none_prefix, NULL, NULL, NULL);
+ 	/* Enable sim state notification */
+ 	g_at_chat_send(data->chat, "AT#QSS=3D1", none_prefix, NULL, NULL, NULL);
  =
 
- 	switch (gd->vendor) {
- 	case OFONO_VENDOR_MBM:
 -- =
 
 1.7.7.6
@@ -48,5 +47,5 @@ index 65a8b7b..4e0823c 100644
 Scanned by MailScanner.
 
 
---===============1955483400348668740==--
+--===============7602770443832927499==--
 
