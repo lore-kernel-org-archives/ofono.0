@@ -1,74 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============3634206891434413158=="
+Content-Type: multipart/mixed; boundary="===============6286398849949455169=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 04/12] service: Move mms_address_to_string() up
-Date: Fri, 17 Aug 2012 16:35:05 +0200
-Message-ID: <1345214113-25597-5-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 05/12] service: Add a group [delivery_status] in the msg status
+Date: Fri, 17 Aug 2012 16:35:06 +0200
+Message-ID: <1345214113-25597-6-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1345214113-25597-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3634206891434413158==
+--===============6286398849949455169==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This group contains an entry for each message recipients. Each recipient
+entry will be updated when the corresponding report will be received
+and then remove the temporary stored delivery report.
 ---
- src/service.c |   26 +++++++++++++-------------
- 1 file changed, 13 insertions(+), 13 deletions(-)
+ src/service.c |   33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
 
 diff --git a/src/service.c b/src/service.c
-index b073ca9..c3dc40a 100644
+index c3dc40a..ec1b1b9 100644
 --- a/src/service.c
 +++ b/src/service.c
-@@ -354,6 +354,19 @@ static gboolean mmap_file(const char *path, void **out=
-_pdu, size_t *out_len)
- 	return TRUE;
- }
+@@ -69,6 +69,17 @@ static const char *ctl_chars =3D "\x01\x02\x03\x04\x05\x=
+06\x07\x08\x0A"
  =
 
-+static const char *mms_address_to_string(char *mms_address)
-+{
-+	unsigned int prefix_len;
+ static const char *sep_chars =3D "()<>@,;:\\\"/[]?=3D{} \t";
+ =
+
++static const char *delivery_status[] =3D {
++	"none",
++	"expired",
++	"retrieved",
++	"rejected",
++	"deferred",
++	"indeterminate",
++	"forwarded",
++	"unreachable"
++};
 +
-+	if (g_str_has_suffix(mms_address, "/TYPE=3DPLMN") =3D=3D TRUE) {
-+		prefix_len =3D strlen(mms_address) - 10;
+ struct mms_request;
+ =
+
+ typedef gboolean (*mms_request_result_cb_t) (struct mms_request *request);
+@@ -1058,6 +1069,28 @@ static DBusMessage *send_message(DBusConnection *con=
+n,
+ =
+
+ 	g_key_file_set_string(meta, "info", "state", "draft");
+ =
+
++	if (service->use_delivery_reports) {
++		char **tos;
++		int i;
 +
-+		mms_address[prefix_len] =3D '\0';
++		tos =3D g_strsplit(msg->sr.to, ",", 0);
++
++		for (i =3D 0; tos[i] !=3D NULL; i++) {
++			char *to =3D g_strdup(tos[i]);
++
++			mms_address_to_string(to);
++
++			DBG("%s=3D%s", to, delivery_status[0]);
++
++			g_key_file_set_string(meta, "delivery_status", to,
++							delivery_status[0]);
++
++			g_free(to);
++		}
++
++		g_strfreev(tos);
 +	}
 +
-+	return (const char *) mms_address;
-+}
-+
- static gboolean send_message_get_recipients(DBusMessageIter *top_iter,
- 						struct mms_message *msg)
- {
-@@ -1702,19 +1715,6 @@ static void append_msg_attachments(DBusMessageIter *=
-dict, const char *path,
- 	}
- }
+ 	mms_store_meta_close(service->identity, msg->uuid, meta, TRUE);
  =
 
--static const char *mms_address_to_string(char *mms_address)
--{
--	unsigned int prefix_len;
--
--	if (g_str_has_suffix(mms_address, "/TYPE=3DPLMN") =3D=3D TRUE) {
--		prefix_len =3D strlen(mms_address) - 10;
--
--		mms_address[prefix_len] =3D '\0';
--	}
--
--	return (const char *) mms_address;
--}
--
- static void append_msg_recipients(DBusMessageIter *dict,
- 					struct mms_message *msg)
- {
+ 	if (mms_message_register(service, msg) < 0)
 -- =
 
 1.7.9.5
 
 
---===============3634206891434413158==--
+--===============6286398849949455169==--
 
