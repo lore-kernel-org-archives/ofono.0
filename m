@@ -1,48 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============8792378506062922745=="
+Content-Type: multipart/mixed; boundary="===============6344820687301200554=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 01/12] mmsutil: Define mms_delivery_ind struct
-Date: Fri, 17 Aug 2012 16:35:02 +0200
-Message-ID: <1345214113-25597-2-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 02/12] mmsutil: Decode delivery_ind msg
+Date: Fri, 17 Aug 2012 16:35:03 +0200
+Message-ID: <1345214113-25597-3-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1345214113-25597-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8792378506062922745==
+--===============6344820687301200554==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/mmsutil.h |    8 ++++++++
- 1 file changed, 8 insertions(+)
+ src/mmsutil.c |   22 +++++++++++++++++++++-
+ 1 file changed, 21 insertions(+), 1 deletion(-)
 
-diff --git a/src/mmsutil.h b/src/mmsutil.h
-index cc3ec67..e32c761 100644
---- a/src/mmsutil.h
-+++ b/src/mmsutil.h
-@@ -122,6 +122,13 @@ struct mms_notification_resp_ind {
- 	enum mms_message_notify_status notify_status;
- };
+diff --git a/src/mmsutil.c b/src/mmsutil.c
+index a9a12eb..7042276 100644
+--- a/src/mmsutil.c
++++ b/src/mmsutil.c
+@@ -964,6 +964,24 @@ static gboolean decode_send_req(struct wsp_header_iter=
+ *iter,
+ 	return TRUE;
+ }
  =
 
-+struct mms_delivery_ind {
-+	enum mms_message_delivery_status dr_status;
-+	char *msgid;
-+	char *to;
-+	time_t date;
-+};
++static gboolean decode_delivery_ind(struct wsp_header_iter *iter,
++						struct mms_message *out)
++{
++	return mms_parse_headers(iter, MMS_HEADER_MMS_VERSION,
++				HEADER_FLAG_MANDATORY | HEADER_FLAG_PRESET_POS,
++				&out->version,
++				MMS_HEADER_MESSAGE_ID,
++				HEADER_FLAG_MANDATORY, &out->di.msgid,
++				MMS_HEADER_TO,
++				HEADER_FLAG_MANDATORY, &out->di.to,
++				MMS_HEADER_DATE,
++				HEADER_FLAG_MANDATORY, &out->di.date,
++				MMS_HEADER_STATUS,
++				HEADER_FLAG_MANDATORY, &out->di.dr_status,
++				MMS_HEADER_INVALID);
++}
 +
- struct mms_attachment {
- 	unsigned char *data;
- 	size_t offset;
-@@ -143,6 +150,7 @@ struct mms_message {
- 		struct mms_send_req sr;
- 		struct mms_send_conf sc;
- 		struct mms_notification_resp_ind nri;
-+		struct mms_delivery_ind di;
- 	};
- };
++
+ #define CHECK_WELL_KNOWN_HDR(hdr)			\
+ 	if (wsp_header_iter_next(&iter) =3D=3D FALSE)	\
+ 		return FALSE;				\
+@@ -1016,7 +1034,7 @@ gboolean mms_message_decode(const unsigned char *pdu,
+ 	case MMS_MESSAGE_TYPE_ACKNOWLEDGE_IND:
+ 		return FALSE;
+ 	case MMS_MESSAGE_TYPE_DELIVERY_IND:
+-		return FALSE;
++		return decode_delivery_ind(&iter, out);
+ 	}
+ =
+
+ 	return FALSE;
+@@ -1051,6 +1069,8 @@ void mms_message_free(struct mms_message *msg)
+ 	case MMS_MESSAGE_TYPE_ACKNOWLEDGE_IND:
+ 		break;
+ 	case MMS_MESSAGE_TYPE_DELIVERY_IND:
++		g_free(msg->di.msgid);
++		g_free(msg->di.to);
+ 		break;
+ 	}
  =
 
 -- =
@@ -50,5 +73,5 @@ index cc3ec67..e32c761 100644
 1.7.9.5
 
 
---===============8792378506062922745==--
+--===============6344820687301200554==--
 
