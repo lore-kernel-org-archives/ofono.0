@@ -1,125 +1,188 @@
-Content-Type: multipart/mixed; boundary="===============1417332571189751068=="
+Content-Type: multipart/mixed; boundary="===============5334639321091832522=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 10/12] service: Send a delivery changed signal
-Date: Fri, 17 Aug 2012 16:35:11 +0200
-Message-ID: <1345214113-25597-11-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 09/12] service: Process delivery_ind notification
+Date: Fri, 17 Aug 2012 16:35:10 +0200
+Message-ID: <1345214113-25597-10-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1345214113-25597-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1417332571189751068==
+--===============5334639321091832522==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/service.c |   48 +++++++++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 45 insertions(+), 3 deletions(-)
+ src/service.c |  111 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
++---
+ 1 file changed, 107 insertions(+), 4 deletions(-)
 
 diff --git a/src/service.c b/src/service.c
-index 44184cb..ba23b4a 100644
+index b3ecc1e..44184cb 100644
 --- a/src/service.c
 +++ b/src/service.c
-@@ -218,6 +218,40 @@ static void emit_msg_status_changed(const char *path, =
-const char *new_status)
- 	g_dbus_send_message(connection, signal);
+@@ -1300,6 +1300,104 @@ static void emit_service_removed(struct mms_service=
+ *service)
+ 				&service->path, DBUS_TYPE_INVALID);
  }
  =
 
-+static void emit_msg_delivery_changed(const char *path, const char *rec,
-+							const char *status)
++static gboolean get_meta_by_msgid(struct mms_service *service,
++						const char *msgid,
++						char *uuid)
 +{
-+	DBusMessage *signal;
-+	DBusMessageIter iter;
-+	DBusMessageIter variant;
-+	const char *type =3D "delivery_report";
++	GDir *dir;
++	GKeyFile *meta;
++	const char *file;
++	const char *homedir;
++	const char *service_id;
++	char *service_path;
 +
-+	signal =3D dbus_message_new_signal(path, MMS_MESSAGE_INTERFACE,
-+							"ReportChanged");
-+	if (signal =3D=3D NULL)
-+		return;
++	homedir =3D g_get_home_dir();
++	if (homedir =3D=3D NULL)
++		return FALSE;
 +
-+	dbus_message_iter_init_append(signal, &iter);
++	service_id =3D service->identity;
 +
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &type);
++	service_path =3D g_strdup_printf("%s/.mms/%s/", homedir, service_id);
 +
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT,
-+					DBUS_TYPE_STRING_AS_STRING, &variant);
++	dir =3D g_dir_open(service_path, 0, NULL);
++	g_free(service_path);
++	if (dir =3D=3D NULL)
++		return FALSE;
 +
-+	dbus_message_iter_append_basic(&variant, DBUS_TYPE_STRING, &rec);
++	while ((file =3D g_dir_read_name(dir)) !=3D NULL) {
++		char *id;
 +
-+	dbus_message_iter_close_container(&iter, &variant);
++		if (g_str_has_suffix(file, MMS_META_UUID_SUFFIX) =3D=3D FALSE)
++			continue;
 +
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT,
-+					DBUS_TYPE_STRING_AS_STRING, &variant);
++		if (strlen(file) !=3D MMS_META_UUID_LEN +
++						MMS_META_UUID_SUFFIX_LEN)
++			continue;
 +
-+	dbus_message_iter_append_basic(&variant, DBUS_TYPE_STRING, &status);
++		strncpy(uuid, file, MMS_META_UUID_LEN);
++		uuid[MMS_META_UUID_LEN] =3D 0;
 +
-+	dbus_message_iter_close_container(&iter, &variant);
++		meta =3D mms_store_meta_open(service_id, uuid);
++		if (meta =3D=3D NULL)
++			goto bail;
 +
-+	g_dbus_send_message(connection, signal);
++		id =3D g_key_file_get_string(meta, "info", "id", NULL);
++		if (id =3D=3D NULL) {
++			mms_store_meta_close(service_id, uuid, meta, FALSE);
++			continue;
++		}
++
++		if (g_strcmp0(msgid, id) =3D=3D 0) {
++			mms_store_meta_close(service_id, uuid, meta, FALSE);
++			g_dir_close(dir);
++			return TRUE;
++		}
++
++		mms_store_meta_close(service_id, uuid, meta, FALSE);
++	}
++
++bail:
++	g_dir_close(dir);
++
++	return FALSE;
 +}
 +
- static DBusMessage *msg_mark_read(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
- {
-@@ -269,6 +303,10 @@ static const GDBusMethodTable message_methods[] =3D {
- static const GDBusSignalTable message_signals[] =3D {
- 	{ GDBUS_SIGNAL("PropertyChanged",
- 			GDBUS_ARGS({ "name", "s" }, { "value", "v" })) },
-+	{ GDBUS_SIGNAL("ReportChanged",
-+			GDBUS_ARGS({ "name", "s" },
-+					{ "rec", "v" },
-+					{ "status", "v" })) },
- 	{ }
- };
- =
-
-@@ -1369,6 +1407,7 @@ static void process_delivery_ind_notification(struct =
-mms_service *service,
- 	char uuid[MMS_META_UUID_LEN + 1];
- 	char *path;
- 	char *to;
-+	const char *new_status;
- =
-
- 	if (get_meta_by_msgid(service, di_msg->di.msgid, uuid) =3D=3D FALSE)
- 		goto bail;
-@@ -1381,15 +1420,18 @@ static void process_delivery_ind_notification(struc=
-t mms_service *service,
- =
-
- 	mms_address_to_string(to);
- =
-
--	g_key_file_set_string(meta, "delivery_status", to,
--				delivery_status[di_msg->di.dr_status - 127]);
-+	new_status =3D delivery_status[di_msg->di.dr_status - 127];
- =
-
--	g_free(to);
-+	g_key_file_set_string(meta, "delivery_status", to, new_status);
- =
-
- 	mms_store_meta_close(service->identity, uuid, meta, TRUE);
- =
-
- 	path =3D g_strdup_printf("%s/%s/%s", MMS_PATH, service->identity, uuid);
- =
-
-+	emit_msg_delivery_changed(path, to, new_status);
++static void process_delivery_ind_notification(struct mms_service *service,
++						struct mms_message *di_msg)
++{
++	GKeyFile *meta;
++	char uuid[MMS_META_UUID_LEN + 1];
++	char *path;
++	char *to;
++
++	if (get_meta_by_msgid(service, di_msg->di.msgid, uuid) =3D=3D FALSE)
++		goto bail;
++
++	meta =3D mms_store_meta_open(service->identity, uuid);
++	if (meta =3D=3D NULL)
++		return;
++
++	to =3D g_strdup(di_msg->di.to);
++
++	mms_address_to_string(to);
++
++	g_key_file_set_string(meta, "delivery_status", to,
++				delivery_status[di_msg->di.dr_status - 127]);
 +
 +	g_free(to);
 +
- 	g_free(path);
++	mms_store_meta_close(service->identity, uuid, meta, TRUE);
++
++	path =3D g_strdup_printf("%s/%s/%s", MMS_PATH, service->identity, uuid);
++
++	g_free(path);
++
++bail:
++	mms_store_remove(service->identity, di_msg->uuid);
++
++	mms_message_free(di_msg);
++}
++
+ static gboolean load_message_from_store(const char *service_id,
+ 				const char *uuid, struct mms_message *msg)
+ {
+@@ -1485,6 +1583,7 @@ register_sr:
+ 		}
+ 	} else if (msg->type =3D=3D MMS_MESSAGE_TYPE_DELIVERY_IND) {
+ 		request =3D NULL;
++		process_delivery_ind_notification(service, msg);
+ 	} else
+ 		request =3D NULL;
  =
 
- bail:
+@@ -1514,15 +1613,17 @@ static void load_messages(struct mms_service *servi=
+ce)
+ 		return;
+ =
+
+ 	while ((file =3D g_dir_read_name(dir)) !=3D NULL) {
+-		const size_t suffix_len =3D 7;
+ 		char *uuid;
++		size_t uuid_len;
+ =
+
+-		if (g_str_has_suffix(file, ".status") =3D=3D FALSE)
++		if (g_str_has_suffix(file, MMS_META_UUID_SUFFIX) =3D=3D FALSE)
+ 			continue;
+-		if (strlen(file) - suffix_len =3D=3D 0)
++
++		uuid_len =3D strlen(file) - MMS_META_UUID_SUFFIX_LEN;
++		if (uuid_len =3D=3D 0)
+ 			continue;
+ =
+
+-		uuid =3D g_strndup(file, strlen(file) - suffix_len);
++		uuid =3D g_strndup(file, uuid_len);
+ =
+
+ 		process_message_on_start(service, uuid);
+ =
+
+@@ -2401,6 +2502,8 @@ void mms_service_push_notify(struct mms_service *serv=
+ice,
+ =
+
+ 		mms_store_meta_close(service->identity, uuid, meta, TRUE);
+ =
+
++		process_delivery_ind_notification(service, msg);
++
+ 		return;
+ 	}
+ =
+
 -- =
 
 1.7.9.5
 
 
---===============1417332571189751068==--
+--===============5334639321091832522==--
 
