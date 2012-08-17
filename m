@@ -1,88 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============6286398849949455169=="
+Content-Type: multipart/mixed; boundary="===============7867045023676058369=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 05/12] service: Add a group [delivery_status] in the msg status
-Date: Fri, 17 Aug 2012 16:35:06 +0200
-Message-ID: <1345214113-25597-6-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 06/12] service: Support M-Delivery.ind in
+ mms_service_push_notify()
+Date: Fri, 17 Aug 2012 16:35:07 +0200
+Message-ID: <1345214113-25597-7-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1345214113-25597-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6286398849949455169==
+--===============7867045023676058369==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This group contains an entry for each message recipients. Each recipient
-entry will be updated when the corresponding report will be received
-and then remove the temporary stored delivery report.
 ---
- src/service.c |   33 +++++++++++++++++++++++++++++++++
- 1 file changed, 33 insertions(+)
+ src/service.c |   31 +++++++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
 
 diff --git a/src/service.c b/src/service.c
-index c3dc40a..ec1b1b9 100644
+index ec1b1b9..8087477 100644
 --- a/src/service.c
 +++ b/src/service.c
-@@ -69,6 +69,17 @@ static const char *ctl_chars =3D "\x01\x02\x03\x04\x05\x=
-06\x07\x08\x0A"
+@@ -2325,6 +2325,21 @@ static void process_request_queue(struct mms_service=
+ *service)
+ 						bearer_idle_timeout, service);
+ }
  =
 
- static const char *sep_chars =3D "()<>@,;:\\\"/[]?=3D{} \t";
++static void dump_delivery_ind(struct mms_message *msg)
++{
++	char buf[128];
++
++	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", localtime(&msg->di.date));
++	buf[127] =3D '\0';
++
++	mms_info("MMS version: %u.%u\n", (msg->version & 0x70) >> 4,
++						msg->version & 0x0f);
++	mms_info("Msg ID: %s\n", msg->di.msgid);
++	mms_info("To: %s\n", msg->di.to);
++	mms_info("Date: %s\n", buf);
++	mms_info("Delivery Report status: %d\n", msg->di.dr_status);
++}
++
+ static void dump_notification_ind(struct mms_message *msg)
+ {
+ 	char buf[128];
+@@ -2370,6 +2385,22 @@ void mms_service_push_notify(struct mms_service *ser=
+vice,
+ 	if (mms_message_decode(data + nread, len - nread, msg) =3D=3D FALSE)
+ 		goto error;
  =
 
-+static const char *delivery_status[] =3D {
-+	"none",
-+	"expired",
-+	"retrieved",
-+	"rejected",
-+	"deferred",
-+	"indeterminate",
-+	"forwarded",
-+	"unreachable"
-+};
++	if (msg->type =3D=3D MMS_MESSAGE_TYPE_DELIVERY_IND) {
++		msg->uuid =3D g_strdup(uuid);
 +
- struct mms_request;
- =
-
- typedef gboolean (*mms_request_result_cb_t) (struct mms_request *request);
-@@ -1058,6 +1069,28 @@ static DBusMessage *send_message(DBusConnection *con=
-n,
- =
-
- 	g_key_file_set_string(meta, "info", "state", "draft");
- =
-
-+	if (service->use_delivery_reports) {
-+		char **tos;
-+		int i;
++		dump_delivery_ind(msg);
 +
-+		tos =3D g_strsplit(msg->sr.to, ",", 0);
++		meta =3D mms_store_meta_open(service->identity, uuid);
++		if (meta =3D=3D NULL)
++			goto error;
 +
-+		for (i =3D 0; tos[i] !=3D NULL; i++) {
-+			char *to =3D g_strdup(tos[i]);
++		g_key_file_set_string(meta, "info", "state", "notification");
 +
-+			mms_address_to_string(to);
++		mms_store_meta_close(service->identity, uuid, meta, TRUE);
 +
-+			DBG("%s=3D%s", to, delivery_status[0]);
-+
-+			g_key_file_set_string(meta, "delivery_status", to,
-+							delivery_status[0]);
-+
-+			g_free(to);
-+		}
-+
-+		g_strfreev(tos);
++		return;
 +	}
 +
- 	mms_store_meta_close(service->identity, msg->uuid, meta, TRUE);
+ 	if (msg->type !=3D MMS_MESSAGE_TYPE_NOTIFICATION_IND)
+ 		goto error;
  =
 
- 	if (mms_message_register(service, msg) < 0)
 -- =
 
 1.7.9.5
 
 
---===============6286398849949455169==--
+--===============7867045023676058369==--
 
