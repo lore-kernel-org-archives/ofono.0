@@ -1,57 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============2658785030322749055=="
+Content-Type: multipart/mixed; boundary="===============8270865679001608539=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 11/12] test: Add ReportChanged to monitored signals
-Date: Fri, 17 Aug 2012 16:35:12 +0200
-Message-ID: <1345214113-25597-12-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 12/12] doc: Add ReportChanged signal description
+Date: Fri, 17 Aug 2012 16:35:13 +0200
+Message-ID: <1345214113-25597-13-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1345214113-25597-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2658785030322749055==
+--===============8270865679001608539==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/monitor-mms |   10 ++++++++++
- 1 file changed, 10 insertions(+)
+ doc/message-api.txt |    7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/test/monitor-mms b/test/monitor-mms
-index 188d028..ef17a13 100755
---- a/test/monitor-mms
-+++ b/test/monitor-mms
-@@ -29,6 +29,10 @@ def property_changed(name, value, member, path, interfac=
-e):
- 	iface =3D interface[interface.rfind(".") + 1:]
- 	print "{%s} [%s] %s %s" % (iface, name, member, value)
+diff --git a/doc/message-api.txt b/doc/message-api.txt
+index 2922e5d..274bb98 100644
+--- a/doc/message-api.txt
++++ b/doc/message-api.txt
+@@ -31,6 +31,13 @@ Signals		PropertyChanged(string name, variant value)
+ 			The only expected property change is for the
+ 			message status.
  =
 
-+def report_changed(type, rec, status, path, interface):
-+	iface =3D interface[interface.rfind(".") + 1:]
-+	print "{%s} [%s] <%s> %s : %s" % (iface, path, type, rec, status)
++		ReportChanged(string type, variant recipient, variant status)
 +
- if __name__ =3D=3D '__main__':
- 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
- =
-
-@@ -75,5 +79,11 @@ if __name__ =3D=3D '__main__':
- 						path_keyword=3D"path",
- 						interface_keyword=3D"interface")
- =
-
-+	bus.add_signal_receiver(report_changed,
-+					bus_name=3D"org.ofono.mms",
-+					signal_name =3D "ReportChanged",
-+						path_keyword=3D"path",
-+						interface_keyword=3D"interface")
++			Signal that is sent when a report has been received and
++			processed. It contains the type of the report
++			("delivery_report" or other), the recipient concerned
++			and its new status.
 +
- 	mainloop =3D gobject.MainLoop()
- 	mainloop.run()
+ Properties	string Status [readonly]
+ =
+
+ 			The status of the message.  Possible values are
 -- =
 
 1.7.9.5
 
 
---===============2658785030322749055==--
+--===============8270865679001608539==--
 
