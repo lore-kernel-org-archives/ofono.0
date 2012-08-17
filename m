@@ -1,52 +1,98 @@
-Content-Type: multipart/mixed; boundary="===============3563007703592661630=="
+Content-Type: multipart/mixed; boundary="===============5787662095502549535=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 07/12] service: Support delivery_ind notif on start
-Date: Fri, 17 Aug 2012 16:35:08 +0200
-Message-ID: <1345214113-25597-8-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 08/12] store: Define MMS_META_UUID_XXX len and suffix
+Date: Fri, 17 Aug 2012 16:35:09 +0200
+Message-ID: <1345214113-25597-9-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1345214113-25597-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3563007703592661630==
+--===============5787662095502549535==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/service.c |    5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ src/store.c |    8 +++-----
+ src/store.h |    5 +++++
+ 2 files changed, 8 insertions(+), 5 deletions(-)
 
-diff --git a/src/service.c b/src/service.c
-index 8087477..b3ecc1e 100644
---- a/src/service.c
-+++ b/src/service.c
-@@ -1357,7 +1357,8 @@ static gboolean load_message_from_store(const char *s=
-ervice_id,
- 	else if (strcmp(state, "draft") =3D=3D 0
- 			&& msg->type =3D=3D MMS_MESSAGE_TYPE_SEND_REQ)
- 		msg->sr.status =3D MMS_MESSAGE_STATUS_DRAFT;
--	else if (msg->type !=3D MMS_MESSAGE_TYPE_NOTIFICATION_IND)
-+	else if (msg->type !=3D MMS_MESSAGE_TYPE_NOTIFICATION_IND &&
-+			msg->type !=3D MMS_MESSAGE_TYPE_DELIVERY_IND)
- 		goto out;
+diff --git a/src/store.c b/src/store.c
+index b09c17b..f1c5714 100644
+--- a/src/store.c
++++ b/src/store.c
+@@ -42,8 +42,6 @@
+ #define TFR
+ #endif
  =
 
- 	success =3D TRUE;
-@@ -1482,6 +1483,8 @@ register_sr:
- 			request =3D NULL;
- 			mms_message_register(service, msg);
- 		}
-+	} else if (msg->type =3D=3D MMS_MESSAGE_TYPE_DELIVERY_IND) {
-+		request =3D NULL;
- 	} else
- 		request =3D NULL;
+-#define MMS_SHA1_UUID_LEN 20
+-
+ static const char *digest_to_str(const unsigned char *digest)
+ {
+ 	static char buf[MMS_SHA1_UUID_LEN * 2 + 1];
+@@ -293,7 +291,7 @@ void mms_store_remove(const char *service_id, const cha=
+r *uuid)
  =
 
+ 	unlink(pdu_path);
+ =
+
+-	meta_path =3D g_strdup_printf("%s%s", pdu_path, ".status");
++	meta_path =3D g_strdup_printf("%s%s", pdu_path, MMS_META_UUID_SUFFIX);
+ =
+
+ 	g_free(pdu_path);
+ =
+
+@@ -312,7 +310,7 @@ GKeyFile *mms_store_meta_open(const char *service_id, c=
+onst char *uuid)
+ 	if (pdu_path =3D=3D NULL)
+ 		return NULL;
+ =
+
+-	meta_path =3D g_strdup_printf("%s%s", pdu_path, ".status");
++	meta_path =3D g_strdup_printf("%s%s", pdu_path, MMS_META_UUID_SUFFIX);
+ =
+
+ 	g_free(pdu_path);
+ =
+
+@@ -337,7 +335,7 @@ static void meta_store_sync(const char *service_id, con=
+st char *uuid,
+ 	if (pdu_path =3D=3D NULL)
+ 		return;
+ =
+
+-	meta_path =3D g_strdup_printf("%s%s", pdu_path, ".status");
++	meta_path =3D g_strdup_printf("%s%s", pdu_path, MMS_META_UUID_SUFFIX);
+ =
+
+ 	g_free(pdu_path);
+ =
+
+diff --git a/src/store.h b/src/store.h
+index ba2c080..fb2ca9f 100644
+--- a/src/store.h
++++ b/src/store.h
+@@ -19,6 +19,11 @@
+  *
+  */
+ =
+
++#define MMS_SHA1_UUID_LEN 20
++#define MMS_META_UUID_SUFFIX ".status"
++#define MMS_META_UUID_SUFFIX_LEN 7
++#define MMS_META_UUID_LEN (MMS_SHA1_UUID_LEN * 2)
++
+ const char *mms_store(const char *service_id, unsigned char *pdu,
+ 							unsigned int len);
+ const char *mms_store_file(const char *service_id, const char *path);
 -- =
 
 1.7.9.5
 
 
---===============3563007703592661630==--
+--===============5787662095502549535==--
 
