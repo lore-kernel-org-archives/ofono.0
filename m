@@ -1,21 +1,20 @@
-Content-Type: multipart/mixed; boundary="===============7219191850978822950=="
+Content-Type: multipart/mixed; boundary="===============4562550731386224082=="
 MIME-Version: 1.0
 From: Christopher Vogl <christopher.vogl@hale.at>
 Subject: [PATCH 2/2] telit: add additional port for data connection
-Date: Fri, 17 Aug 2012 10:53:10 +0200
-Message-ID: <1345193591-30179-1-git-send-email-christopher.vogl@hale.at>
-In-Reply-To: <50293379.7090003@gmail.com>
+Date: Fri, 17 Aug 2012 11:04:36 +0200
+Message-ID: <1345194276-30324-1-git-send-email-christopher.vogl@hale.at>
+In-Reply-To: <1345193591-30179-1-git-send-email-christopher.vogl@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7219191850978822950==
+--===============4562550731386224082==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Use MDM port for data service and AUX for the AT chat.
 Disable DCD so that the modem does not hangup after a data connection.
-Add vendor for sim and gprs.
 ---
  plugins/telit.c |   55 ++++++++++++++++++++++++++++++++++-----------------=
 ----
@@ -200,5 +199,5 @@ ult, gpointer user_data)
 Scanned by MailScanner.
 
 
---===============7219191850978822950==--
+--===============4562550731386224082==--
 
