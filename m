@@ -1,69 +1,144 @@
-Content-Type: multipart/mixed; boundary="===============1832460772869377525=="
+Content-Type: multipart/mixed; boundary="===============1646680399853171701=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] telit: disable auto attach procedures with AUTOATT
-Date: Mon, 20 Aug 2012 08:23:33 -0500
-Message-ID: <50323A55.1050709@gmail.com>
-In-Reply-To: <50321B49.7020008@hale.at>
+Subject: Re: Unable to establish a complete PPP link on Sagem Hilo GPRS modem
+Date: Mon, 20 Aug 2012 08:29:31 -0500
+Message-ID: <50323BBB.3020008@gmail.com>
+In-Reply-To: <2F3DAB62ECFFCE41A6C553644B76A1AF0106718B@HEFRMBX01.sofr.hefr.lan>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1832460772869377525==
+--===============1646680399853171701==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christopher,
+Hi Nicolas,
 
-On 08/20/2012 06:11 AM, Christopher Vogl wrote:
-> Hi Denis,
+<snip>
+
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: Aux:>  ATD*99***1#\r
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: Aux:<  \r\nCONNECT\=
+r\n
+> Jan  2 16:25:14 109656587698 daemon.debug ofonod[600]: drivers/atmodem/gp=
+rs-context.c:at_cgdata_cb() ok 1
+> Jan  2 16:25:14 109656587698 daemon.debug ofonod[600]: drivers/atmodem/gp=
+rs-context.c:setup_ppp()
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_gen=
+erate_event: current state 0:INITIAL
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: event: 0 (Up),=
+ action: 2, new_state: 2 (CLOSED)
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_gen=
+erate_event: current state 2:CLOSED
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: event: 2 (Open=
+), action: 1026, new_state: 6 (REQSENT)
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_ini=
+tialize_restart_count: current state 2:CLOSED
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_sen=
+d_configure_request: current state 2:CLOSED
 >
-> On 16/08/12 08:26, Denis Kenzior wrote:
->> Hi Christopher,
->>
->> On 08/16/2012 04:48 AM, Christopher Vogl wrote:
->>> ---
->>> plugins/telit.c | 6 ++++++
->>> 1 files changed, 6 insertions(+), 0 deletions(-)
->>>
->>> diff --git a/plugins/telit.c b/plugins/telit.c
->>> index 6ae7249..feedd18 100644
->>> --- a/plugins/telit.c
->>> +++ b/plugins/telit.c
->>> @@ -307,6 +307,12 @@ static void cfun_enable_cb(gboolean ok,
->>> GAtResult *result, gpointer user_data)
->>>
->>> ofono_modem_set_powered(m, TRUE);
->>>
->>> + /*
->>> + * Tell the modem not to automatically initiate auto-attach
->>> + * proceedures on its own.
->>> + */
->>> + g_at_chat_send(data->chat, "AT#AUTOATT=3D0", none_prefix, NULL, NULL,
->>> NULL);
->>
->> This line is over 80 character limit.
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: gatchat/gatppp=
+.c:ppp_enter_phase() 1
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_pro=
+cess_configure_ack: current state 6:REQSENT
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_gen=
+erate_event: current state 6:REQSENT
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: event: 8 (RCA)=
+, action: 27, new_state: 7 (ACKRCVD)
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_ini=
+tialize_restart_count: current state 6:REQSENT
 >
-> This will not happen again now. I will correct that in the new patch.
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_pro=
+cess_configure_request: current state 7:ACKRCVD
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_gen=
+erate_event: current state 7:ACKRCVD
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: event: 7 (RCR-=
+), action: 4007, new_state: 7 (ACKRCVD)
 >
-
-Cool ;)
-
->>
->> Also, are you sure this can be sent even if the PIN is locked?
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_sen=
+d_configure_nak: current state 7:ACKRCVD
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_pro=
+cess_configure_request: current state 7:ACKRCVD
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_gen=
+erate_event: current state 7:ACKRCVD
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: event: 6 (RCR+=
+), action: 2109, new_state: 9 (OPENED)
 >
-> I have tried it with and without PIN locked and I always get an OK back.
-> Where would you logically put it? Better move it to 'post sim'?
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_sen=
+d_configure_ack: current state 7:ACKRCVD
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: gatchat/gatppp=
+.c:ppp_enter_phase() 2
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: gatchat/gatppp=
+.c:ppp_enter_phase() 3
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_ge=
+nerate_event: current state 0:INITIAL
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: event: 2 (Open=
+), action: 401, new_state: 1 (STARTING)
 >
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_ge=
+nerate_event: current state 1:STARTING
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: event: 0 (Up),=
+ action: 1026, new_state: 6 (REQSENT)
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_in=
+itialize_restart_count: current state 1:STARTING
+> Jan  2 16:25:14 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_se=
+nd_configure_request: current state 1:STARTING
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_ti=
+meout: current state 6:REQSENT
+>
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_ge=
+nerate_event: current state 6:REQSENT
+>
+>
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: event: 4 (TO+)=
+, action: 1006, new_state: 6 (REQSENT)
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_se=
+nd_configure_request: current state 6:REQSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_pr=
+ocess_configure_request: current state 6:REQSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_ge=
+nerate_event: current state 6:REQSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: event: 6 (RCR+=
+), action: 2008, new_state: 8 (ACKSENT)
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_se=
+nd_configure_ack: current state 6:REQSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_pr=
+ocess_configure_reject: current state 8:ACKSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_ge=
+nerate_event: current state 8:ACKSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: event: 9 (RCN)=
+, action: 1028, new_state: 8 (ACKSENT)
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_in=
+itialize_restart_count: current state 8:ACKSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_se=
+nd_configure_request: current state 8:ACKSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_pr=
+ocess_configure_nak: current state 8:ACKSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_ge=
+nerate_event: current state 8:ACKSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: event: 9 (RCN)=
+, action: 1028, new_state: 8 (ACKSENT)
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_in=
+itialize_restart_count: current state 8:ACKSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_se=
+nd_configure_request: current state 8:ACKSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_pr=
+ocess_configure_ack: current state 8:ACKSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_ge=
+nerate_event: current state 8:ACKSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: event: 8 (RCA)=
+, action: 129, new_state: 9 (OPENED)
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: ipcp: pppcp_in=
+itialize_restart_count: current state 8:ACKSENT
+> Jan  2 16:25:18 109656587698 daemon.info ofonod[600]: PPP: lcp: pppcp_gen=
+erate_event: current state 9:OPENED
 
-If it needed to be done after the SIM PIN was entered, then the best =
+So we were able to negotiate IPCP parameters but network setup failed.
 
-place is in the gprs driver using a vendor quirk.  If it can always be =
-
-sent, then doing it like you had originally is just fine.
+Are you running as root and is your tun module loaded?
 
 Regards,
 -Denis
 
---===============1832460772869377525==--
+--===============1646680399853171701==--
 
