@@ -1,63 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============3626520538756354347=="
+Content-Type: multipart/mixed; boundary="===============4612989210958588935=="
 MIME-Version: 1.0
-From: Christopher Vogl <christopher.vogl@hale.at>
-Subject: Re: [PATCH] telit: disable auto attach procedures with AUTOATT
-Date: Mon, 20 Aug 2012 13:11:05 +0200
-Message-ID: <50321B49.7020008@hale.at>
-In-Reply-To: <502C92A2.3010506@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/2] telit: add additional port for data connection
+Date: Mon, 20 Aug 2012 08:11:38 -0500
+Message-ID: <5032378A.50403@gmail.com>
+In-Reply-To: <1345194276-30324-1-git-send-email-christopher.vogl@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3626520538756354347==
+--===============4612989210958588935==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Christopher,
 
-On 16/08/12 08:26, Denis Kenzior wrote:
-> Hi Christopher,
+On 08/17/2012 04:04 AM, Christopher Vogl wrote:
+> Use MDM port for data service and AUX for the AT chat.
+> Disable DCD so that the modem does not hangup after a data connection.
+> ---
+>   plugins/telit.c |   55 ++++++++++++++++++++++++++++++++++--------------=
+-------
+>   1 files changed, 34 insertions(+), 21 deletions(-)
 >
-> On 08/16/2012 04:48 AM, Christopher Vogl wrote:
->> ---
->>   plugins/telit.c |    6 ++++++
->>   1 files changed, 6 insertions(+), 0 deletions(-)
->>
->> diff --git a/plugins/telit.c b/plugins/telit.c
->> index 6ae7249..feedd18 100644
->> --- a/plugins/telit.c
->> +++ b/plugins/telit.c
->> @@ -307,6 +307,12 @@ static void cfun_enable_cb(gboolean ok, =
 
->> GAtResult *result, gpointer user_data)
->>
->>       ofono_modem_set_powered(m, TRUE);
->>
->> +    /*
->> +     * Tell the modem not to automatically initiate auto-attach
->> +     * proceedures on its own.
->> +     */
->> +    g_at_chat_send(data->chat, "AT#AUTOATT=3D0", none_prefix, NULL, =
+Both patches have been applied, however I had to fix:
 
->> NULL, NULL);
->
-> This line is over 80 character limit.
-
-This will not happen again now. I will correct that in the new patch.
-
->
-> Also, are you sure this can be sent even if the PIN is locked?
-
-I have tried it with and without PIN locked and I always get an OK back.
-Where would you logically put it? Better move it to 'post sim'?
+     plugins/telit.c: In function =E2=80=98rsen_disable_cb=E2=80=99:
+     plugins/telit.c:446:21: error: unused variable =E2=80=98data=E2=80=99
 
 Regards,
-Christopher
+-Denis
 
 
---
-Scanned by MailScanner.
-
-
---===============3626520538756354347==--
+--===============4612989210958588935==--
 
