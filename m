@@ -1,38 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============5730219819634225321=="
+Content-Type: multipart/mixed; boundary="===============8522571543815625167=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Timeout when powering modem
-Date: Mon, 20 Aug 2012 08:32:50 -0500
-Message-ID: <50323C82.8030205@gmail.com>
-In-Reply-To: <50321615.3060403@hale.at>
+From: Christopher Vogl <christopher.vogl@hale.at>
+Subject: Re: [PATCH 1/8] telit: notify sim inserted when sim ready
+Date: Mon, 20 Aug 2012 16:34:45 +0200
+Message-ID: <50324B05.1080807@hale.at>
+In-Reply-To: <5028FFC6.2030807@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5730219819634225321==
+--===============8522571543815625167==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christopher,
+Hi Denis,
 
-On 08/20/2012 05:48 AM, Christopher Vogl wrote:
-> On 20/08/12 10:35, Christopher Vogl wrote:
->> Hi,
+On 13/08/12 15:23, Denis Kenzior wrote:
+> Hi Christopher,
+>
+> On 08/13/2012 08:16 AM, Christopher Vogl wrote:
 >>
->> I constantly get a timeout when trying to power the modem.
+>>   static void switch_sim_state_status(struct ofono_modem *modem, int =
+
+>> status)
+>>   {
+>>       struct telit_data *data =3D ofono_modem_get_data(modem);
+>> @@ -238,16 +223,13 @@ static void switch_sim_state_status(struct =
+
+>> ofono_modem *modem, int status)
+>>           break;
+>>       case 1:
+>>           DBG("SIM inserted");
+>> -        /* We need to sleep a bit */
+>> -        data->sim_inserted_source =3D g_timeout_add_seconds(1,
+>> -                            sim_inserted_timeout_cb,
+>> -                            modem);
+>>           break;
+>>       case 2:
+>>           DBG("SIM inserted and PIN unlocked");
+>>           break;
+>>       case 3:
+>>           DBG("SIM inserted and ready");
+>> +        ofono_sim_inserted_notify(data->sim, TRUE);
+>>           break;
+>>       }
 >
-> I have to correct myself. After trying many times it seems to happen
-> very frequently but not always.
+> According to Telit documentation 1 is inserted, 2 is inserted and pin =
+
+> unlocked, 3 is unlocked and phonebook ready.  How do you plan on =
+
+> handling PIN-locked SIMs?  You can't run commands such as EnterPin =
+
+> until the sim is at least inserted.
+Yes you are perfectly right, I can't do it that way. Working with an =
+
+unlocked PIN is not always a good idea.
+
 >
+> You might need to do the same thing as we did for e.g. IFX and STE. =
 
-Is something auto-powering up the modem?  Perhaps the modem hardware is =
+> notify sim insertion on #QSS: 1, and only return from CPIN once #QSS: =
 
-not quite ready when it hops on the USB bus.  Does delaying the power-up =
+> 3 has been sent.  See drivers/atmodem/sim.c at_epev_notify() or =
 
-a couple of seconds help?
+> at_xsim_notify() for an example.
+
+This works fine in case the PIN is locked, but has the unpleasant side =
+
+effect that I receive a timeout when calling the D-Bus method to enter =
+
+the PIN because #QSS: 3 takes so long (e.g. 32 seconds from entering the =
+
+PIN until a #QSS: 3).
+If the PIN is unlocked I will never get to at_pin_send_cb(), where =
+
++XSIM, *EPEV or #QSS are registered, and ofono will step to post-sim =
+
+phase (where sms and phonebook atoms are created) immediately without =
+
+waiting for #QSS: 3.
 
 Regards,
--Denis
+Christopher
 
---===============5730219819634225321==--
+
+
+
+
+
+--
+Scanned by MailScanner.
+
+
+--===============8522571543815625167==--
 
