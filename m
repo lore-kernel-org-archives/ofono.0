@@ -1,63 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============1206552633747847142=="
+Content-Type: multipart/mixed; boundary="===============5364175586063194060=="
 MIME-Version: 1.0
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: Re: [RFC] gatchat: Print error message if opening tun failes
-Date: Tue, 21 Aug 2012 17:06:17 +0200
-Message-ID: <5033A3E9.4080308@bmw-carit.de>
-In-Reply-To: <1345554014.13726.85.camel@aeonflux>
+From: Christopher Vogl <christopher.vogl@hale.at>
+Subject: [PATCH] telit: disable auto attach procedures with AUTOATT
+Date: Tue, 21 Aug 2012 17:06:37 +0200
+Message-ID: <1345561597-30140-1-git-send-email-christopher.vogl@hale.at>
+In-Reply-To: <50323A55.1050709@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1206552633747847142==
+--===============5364175586063194060==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+---
+ plugins/telit.c |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
 
-On 21.08.2012 15:00, Marcel Holtmann wrote:
->> This is a very common misstake. Let's help the users to
->> configure their system correctly.
->> ---
->>   gatchat/ppp_net.c | 6 +++++-
->>   1 file changed, 5 insertions(+), 1 deletion(-)
->>
->> diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
->> index 1609b99..7082de7 100644
->> --- a/gatchat/ppp_net.c
->> +++ b/gatchat/ppp_net.c
->> @@ -155,8 +155,12 @@ struct ppp_net *ppp_net_new(GAtPPP *ppp, int fd)
->>   	if (fd < 0) {
->>   		/* open a tun interface */
->>   		fd =3D open("/dev/net/tun", O_RDWR);
->> -		if (fd < 0)
->> +		if (fd < 0) {
->> +			fprintf(stderr, "Couldn't open tun device. "
->> +					"Do you run oFono as root and do you "
->> +					"have the TUN module loaded?");
->
-> really, stderr?
+diff --git a/plugins/telit.c b/plugins/telit.c
+index 20ab1df..ec57f01 100644
+--- a/plugins/telit.c
++++ b/plugins/telit.c
+@@ -314,6 +314,13 @@ static void cfun_enable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ =
 
-I was not sure what 'channel' to use to report something from gatchat. =
+ 	ofono_modem_set_powered(m, TRUE);
+ =
 
-Would g_print() be the right choice?
++	/*
++	 * Tell the modem not to automatically initiate auto-attach
++	 * proceedures on its own.
++	 */
++	g_at_chat_send(data->chat, "AT#AUTOATT=3D0", none_prefix,
++				NULL, NULL, NULL);
++
+ 	/* Enable sim state notification */
+ 	g_at_chat_send(data->chat, "AT#QSS=3D1", none_prefix, NULL, NULL, NULL);
+ =
 
->>   			goto error;
->> +		}
->>
->>   		ifr.ifr_flags =3D IFF_TUN | IFF_NO_PI;
->>   		strcpy(ifr.ifr_name, "ppp%d");
->
-> Aren't the atom drivers checking this case for you?
+-- =
 
-I don't know, but I had the exactly the same problem and I am pretty =
+1.7.7.6
 
-sure that there was not log entry in any kind. If there is better place =
 
-to add such a log entry, I happy to send a patch.
+--
+Scanned by MailScanner.
 
-cheers,
-daniel
 
---===============1206552633747847142==--
+--===============5364175586063194060==--
 
