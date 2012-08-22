@@ -1,49 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============0449700098849439927=="
+Content-Type: multipart/mixed; boundary="===============3793264855853917115=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 5/8] call-barring: Return specific errors for SS query
-Date: Wed, 22 Aug 2012 18:18:20 +0200
-Message-ID: <1345652303-12866-5-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 6/8] call-barring: class applied is the class given by SS code
+Date: Wed, 22 Aug 2012 18:18:21 +0200
+Message-ID: <1345652303-12866-6-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1345652303-12866-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0449700098849439927==
+--===============3793264855853917115==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Trace is modified as a CB query is not necessarily done after a CB setting
-via SS.
+The default class is applied when no class is specified in the SS code.
 ---
- src/call-barring.c |    7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ src/call-barring.c |    6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
 
 diff --git a/src/call-barring.c b/src/call-barring.c
-index 53847fb..68533c2 100644
+index 68533c2..a372792 100644
 --- a/src/call-barring.c
 +++ b/src/call-barring.c
-@@ -284,14 +284,13 @@ static void cb_ss_query_next_lock_callback(const stru=
-ct ofono_error *error,
- 	struct ofono_call_barring *cb =3D data;
+@@ -308,11 +308,7 @@ static void cb_ss_query_next_lock_callback(const struc=
+t ofono_error *error,
  =
 
- 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
--		if (cb->ss_req_type !=3D SS_CONTROL_TYPE_QUERY)
--			ofono_error("Enabling/disabling Call Barring via SS "
--					"successful, but query was not");
-+		ofono_error("Query failed with error: %s",
-+						telephony_error_to_str(error));
- =
-
- 		cb->flags &=3D ~CALL_BARRING_FLAG_CACHED;
- =
-
- 		__ofono_dbus_pending_reply(&cb->pending,
--					__ofono_error_failed(cb->pending));
-+				__ofono_error_from_error(error, cb->pending));
- 		return;
- 	}
+ static void cb_ss_query_next_lock(struct ofono_call_barring *cb)
+ {
+-	int cls;
+-
+-	cls =3D cb->ss_req_cls | BEARER_CLASS_DEFAULT;
+-
+-	cb->driver->query(cb, cb_locks[cb->query_next].fac, cls,
++	cb->driver->query(cb, cb_locks[cb->query_next].fac, cb->ss_req_cls,
+ 			cb_ss_query_next_lock_callback, cb);
+ }
  =
 
 -- =
@@ -51,5 +43,5 @@ ct ofono_error *error,
 1.7.9.5
 
 
---===============0449700098849439927==--
+--===============3793264855853917115==--
 
