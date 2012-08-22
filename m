@@ -1,74 +1,104 @@
-Content-Type: multipart/mixed; boundary="===============4426921748258264718=="
+Content-Type: multipart/mixed; boundary="===============1202824502402134992=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 8/8] call-settings: class applied is the class given by SS
- code.
-Date: Wed, 22 Aug 2012 18:18:23 +0200
-Message-ID: <1345652303-12866-8-git-send-email-philippe.nunes@linux.intel.com>
-In-Reply-To: <1345652303-12866-1-git-send-email-philippe.nunes@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/8] stkagent: '+' is considered as a digit
+Date: Wed, 22 Aug 2012 17:55:25 -0500
+Message-ID: <5035635D.5020800@gmail.com>
+In-Reply-To: <1345652303-12866-2-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4426921748258264718==
+--===============1202824502402134992==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The default class is applied when no class is specified by SS code.
----
- src/call-settings.c |   11 +++++------
- 1 file changed, 5 insertions(+), 6 deletions(-)
+Hi Philippe,
 
-diff --git a/src/call-settings.c b/src/call-settings.c
-index 51f96bf..d63d9d8 100644
---- a/src/call-settings.c
-+++ b/src/call-settings.c
-@@ -485,7 +485,7 @@ static void cw_ss_set_callback(const struct ofono_error=
- *error, void *data)
- 		return;
- 	}
- =
+On 08/22/2012 11:18 AM, Philippe Nunes wrote:
+> The function 'valid_phone_number_format' does not comply with GCF test ca=
+ses
+> expectation. For STK, the character '+' should be considered as a whole d=
+igit.
+> ---
+>   src/stkagent.c |   26 ++++++++++++++++++++++++--
+>   1 file changed, 24 insertions(+), 2 deletions(-)
+>
+> diff --git a/src/stkagent.c b/src/stkagent.c
+> index 7c3f697..392a2b2 100644
+> --- a/src/stkagent.c
+> +++ b/src/stkagent.c
+> @@ -69,6 +69,27 @@ struct stk_agent {
+>   #define TERMINATE_ERROR ERROR_PREFIX ".EndSession"
+>   #define BUSY_ERROR ERROR_PREFIX ".Busy"
+>
+> +static gboolean check_digit(const char *digit)
 
--	cs->driver->cw_query(cs, BEARER_CLASS_DEFAULT,
-+	cs->driver->cw_query(cs, cs->ss_req_cls,
- 				cw_ss_query_callback, cs);
- }
- =
+I really don't like the name...
 
-@@ -533,13 +533,13 @@ static gboolean cw_ss_control(int type,
- 			goto bad_format;
- 	}
- =
+> +{
+> +	int len =3D strlen(digit);
+> +	int i;
+> +
+> +	if (!len)
+> +		return FALSE;
+> +
+> +	for (i =3D 0; i<  len; i++) {
+> +		if (digit[i]>=3D '0'&&  digit[i]<=3D '9')
+> +			continue;
+> +
+> +		if (digit[i] =3D=3D '*' || digit[i] =3D=3D '#' || digit[i] =3D=3D '+')
+> +			continue;
+> +
+> +		return FALSE;
+> +	}
+> +
+> +	return TRUE;
 
--	cs->ss_req_cls =3D cls;
--	cs->pending =3D dbus_message_ref(msg);
--
- 	/* For the default case use the more readily accepted value */
- 	if (cls =3D=3D BEARER_CLASS_SS_DEFAULT)
- 		cls =3D BEARER_CLASS_DEFAULT;
- =
+And this function is entirely too long-winded for what it is doing. =
 
-+	cs->ss_req_cls =3D cls;
-+	cs->pending =3D dbus_message_ref(msg);
-+
- 	switch (type) {
- 	case SS_CONTROL_TYPE_REGISTRATION:
- 	case SS_CONTROL_TYPE_ACTIVATION:
-@@ -554,8 +554,7 @@ static gboolean cw_ss_control(int type,
- 		 * according to 22.004 Appendix A, so CLASS_DEFAULT
- 		 * is safe to use here
- 		 */
--		cs->driver->cw_query(cs, BEARER_CLASS_DEFAULT,
--					cw_ss_query_callback, cs);
-+		cs->driver->cw_query(cs, cls, cw_ss_query_callback, cs);
- 		break;
- =
+Please refer to 'man strspn'.  It might be easier to simply use strspn =
 
- 	case SS_CONTROL_TYPE_DEACTIVATION:
--- =
+below...
 
-1.7.9.5
+> +}
+> +
+>   static void stk_agent_send_noreply(struct stk_agent *agent, const char =
+*method)
+>   {
+>   	DBusConnection *conn =3D ofono_dbus_get_connection();
+> @@ -541,7 +562,7 @@ static void get_digit_cb(DBusPendingCall *call, void =
+*data)
+>   					DBUS_TYPE_STRING,&digit,
+>   					DBUS_TYPE_INVALID) =3D=3D FALSE ||
+>   			strlen(digit) !=3D 1 ||
+> -			!valid_phone_number_format(digit)) {
+> +			!check_digit(digit)) {
 
+This is still wrong as it also needs to take care of the hidden_input =
 
---===============4426921748258264718==--
+case where the '+' is not allowed.
+
+>   		ofono_error("Can't parse the reply to GetDigit()");
+>   		remove_agent =3D TRUE;
+>   		goto error;
+> @@ -675,7 +696,8 @@ static void get_digits_cb(DBusPendingCall *call, void=
+ *data)
+>
+>   	if (dbus_message_get_args(reply, NULL,
+>   					DBUS_TYPE_STRING,&string,
+> -					DBUS_TYPE_INVALID) =3D=3D FALSE) {
+> +					DBUS_TYPE_INVALID) =3D=3D FALSE ||
+> +					!check_digit(string)) {
+
+As above
+
+>   		ofono_error("Can't parse the reply to GetDigits()");
+>   		remove_agent =3D TRUE;
+>   		goto error;
+
+Regards,
+-Denis
+
+--===============1202824502402134992==--
 
