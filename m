@@ -1,47 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============3793264855853917115=="
+Content-Type: multipart/mixed; boundary="===============6510256265150251557=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 6/8] call-barring: class applied is the class given by SS code
-Date: Wed, 22 Aug 2012 18:18:21 +0200
-Message-ID: <1345652303-12866-6-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 7/8] call-settings: Return specific errors for SS query
+Date: Wed, 22 Aug 2012 18:18:22 +0200
+Message-ID: <1345652303-12866-7-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1345652303-12866-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3793264855853917115==
+--===============6510256265150251557==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The default class is applied when no class is specified in the SS code.
+Trace is modified as clir query is not necessarily done after a clir
+setting via SS.
 ---
- src/call-barring.c |    6 +-----
- 1 file changed, 1 insertion(+), 5 deletions(-)
+ src/call-settings.c |    5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/src/call-barring.c b/src/call-barring.c
-index 68533c2..a372792 100644
---- a/src/call-barring.c
-+++ b/src/call-barring.c
-@@ -308,11 +308,7 @@ static void cb_ss_query_next_lock_callback(const struc=
-t ofono_error *error,
+diff --git a/src/call-settings.c b/src/call-settings.c
+index 4bfb561..51f96bf 100644
+--- a/src/call-settings.c
++++ b/src/call-settings.c
+@@ -726,9 +726,10 @@ static void clir_ss_query_callback(const struct ofono_=
+error *error,
+ 	const char *value;
  =
 
- static void cb_ss_query_next_lock(struct ofono_call_barring *cb)
- {
--	int cls;
--
--	cls =3D cb->ss_req_cls | BEARER_CLASS_DEFAULT;
--
--	cb->driver->query(cb, cb_locks[cb->query_next].fac, cls,
-+	cb->driver->query(cb, cb_locks[cb->query_next].fac, cb->ss_req_cls,
- 			cb_ss_query_next_lock_callback, cb);
- }
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("setting clir via SS failed");
++		DBG("clir query via SS failed with error: %s",
++					telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&cs->pending,
+-					__ofono_error_failed(cs->pending));
++				__ofono_error_from_error(error, cs->pending));
  =
 
+ 		return;
+ 	}
 -- =
 
 1.7.9.5
 
 
---===============3793264855853917115==--
+--===============6510256265150251557==--
 
