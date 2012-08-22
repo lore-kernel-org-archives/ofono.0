@@ -1,84 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============0144694796593469104=="
+Content-Type: multipart/mixed; boundary="===============0449700098849439927=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 4/8] call-forwarding: class applied is the class given by SS
- code
-Date: Wed, 22 Aug 2012 18:18:19 +0200
-Message-ID: <1345652303-12866-4-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 5/8] call-barring: Return specific errors for SS query
+Date: Wed, 22 Aug 2012 18:18:20 +0200
+Message-ID: <1345652303-12866-5-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1345652303-12866-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0144694796593469104==
+--===============0449700098849439927==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-GCF test cases 31.2.1.6.1/2 are asking to make a query according a specific
-class.
-The default class is applied when no class is specified in the SS code.
+Trace is modified as a CB query is not necessarily done after a CB setting
+via SS.
 ---
- src/call-forwarding.c |   22 +++++++++++-----------
- 1 file changed, 11 insertions(+), 11 deletions(-)
+ src/call-barring.c |    7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
 
-diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index 91e34c6..7531f07 100644
---- a/src/call-forwarding.c
-+++ b/src/call-forwarding.c
-@@ -1012,7 +1012,7 @@ static void ss_set_query_cf_callback(const struct ofo=
-no_error *error, int total,
+diff --git a/src/call-barring.c b/src/call-barring.c
+index 53847fb..68533c2 100644
+--- a/src/call-barring.c
++++ b/src/call-barring.c
+@@ -284,14 +284,13 @@ static void cb_ss_query_next_lock_callback(const stru=
+ct ofono_error *error,
+ 	struct ofono_call_barring *cb =3D data;
  =
 
- static void ss_set_query_next_cf_cond(struct ofono_call_forwarding *cf)
- {
--	cf->driver->query(cf, cf->query_next, BEARER_CLASS_DEFAULT,
-+	cf->driver->query(cf, cf->query_next, cf->ss_req->cls,
- 			ss_set_query_cf_callback, cf);
- }
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		if (cb->ss_req_type !=3D SS_CONTROL_TYPE_QUERY)
+-			ofono_error("Enabling/disabling Call Barring via SS "
+-					"successful, but query was not");
++		ofono_error("Query failed with error: %s",
++						telephony_error_to_str(error));
  =
 
-@@ -1167,6 +1167,16 @@ static gboolean cf_ss_control(int type, const char *=
-sc,
- 		return TRUE;
+ 		cb->flags &=3D ~CALL_BARRING_FLAG_CACHED;
+ =
+
+ 		__ofono_dbus_pending_reply(&cb->pending,
+-					__ofono_error_failed(cb->pending));
++				__ofono_error_from_error(error, cb->pending));
+ 		return;
  	}
  =
 
-+	/*
-+	 * Some modems don't understand all classes very well, particularly
-+	 * the older models.  So if the bearer class is the default, we
-+	 * just use the more commonly understood value of 7 since BEARER_SMS
-+	 * is not applicable to CallForwarding conditions according to 22.004
-+	 * Annex A
-+	 */
-+	if (cls =3D=3D BEARER_CLASS_SS_DEFAULT)
-+		cls =3D BEARER_CLASS_DEFAULT;
-+
- 	cf->ss_req->ss_type =3D type;
- 	cf->ss_req->cf_type =3D cf_type;
- 	cf->ss_req->cls =3D cls;
-@@ -1188,16 +1198,6 @@ static gboolean cf_ss_control(int type, const char *=
-sc,
- 		break;
- 	}
- =
-
--	/*
--	 * Some modems don't understand all classes very well, particularly
--	 * the older models.  So if the bearer class is the default, we
--	 * just use the more commonly understood value of 7 since BEARER_SMS
--	 * is not applicable to CallForwarding conditions according to 22.004
--	 * Annex A
--	 */
--	if (cls =3D=3D BEARER_CLASS_SS_DEFAULT)
--		cls =3D BEARER_CLASS_DEFAULT;
--
- 	switch (cf->ss_req->ss_type) {
- 	case SS_CONTROL_TYPE_REGISTRATION:
- 		string_to_phone_number(sia, &ph);
 -- =
 
 1.7.9.5
 
 
---===============0144694796593469104==--
+--===============0449700098849439927==--
 
