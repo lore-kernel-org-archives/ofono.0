@@ -1,104 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============1202824502402134992=="
+Content-Type: multipart/mixed; boundary="===============4109493864047792893=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/8] stkagent: '+' is considered as a digit
-Date: Wed, 22 Aug 2012 17:55:25 -0500
-Message-ID: <5035635D.5020800@gmail.com>
-In-Reply-To: <1345652303-12866-2-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH] sms: Add delay before submitting multiple SMS to modem
+Date: Wed, 22 Aug 2012 17:57:16 -0500
+Message-ID: <503563CC.2000503@gmail.com>
+In-Reply-To: <1345627755-14091-1-git-send-email-guillaume.zajac@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1202824502402134992==
+--===============4109493864047792893==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi Guillaume,
 
-On 08/22/2012 11:18 AM, Philippe Nunes wrote:
-> The function 'valid_phone_number_format' does not comply with GCF test ca=
-ses
-> expectation. For STK, the character '+' should be considered as a whole d=
-igit.
+On 08/22/2012 04:29 AM, Guillaume Zajac wrote:
+> For 3GPP GSM test case 34.2.9.1 and 34.2.9.1 and WCDMA test
+> case 16.1.9.1 and 16.1.9.2, we need to transmitmultiple SMS
+> using same RRC channel.
+> oFono needs to wait its tx queue to be filled in with the
+> next SMS before submitting the first one to use +CMMS=3D1 modem
+> option.
 > ---
->   src/stkagent.c |   26 ++++++++++++++++++++++++--
->   1 file changed, 24 insertions(+), 2 deletions(-)
+>   src/sms.c |    4 +++-
+>   1 files changed, 3 insertions(+), 1 deletions(-)
 >
-> diff --git a/src/stkagent.c b/src/stkagent.c
-> index 7c3f697..392a2b2 100644
-> --- a/src/stkagent.c
-> +++ b/src/stkagent.c
-> @@ -69,6 +69,27 @@ struct stk_agent {
->   #define TERMINATE_ERROR ERROR_PREFIX ".EndSession"
->   #define BUSY_ERROR ERROR_PREFIX ".Busy"
+> diff --git a/src/sms.c b/src/sms.c
+> index acfc39b..443e502 100644
+> --- a/src/sms.c
+> +++ b/src/sms.c
+> @@ -50,6 +50,8 @@
+>   #define TXQ_MAX_RETRIES 4
+>   #define NETWORK_TIMEOUT 332
 >
-> +static gboolean check_digit(const char *digit)
-
-I really don't like the name...
-
-> +{
-> +	int len =3D strlen(digit);
-> +	int i;
+> +#define SMS_TX_NEXT 500
 > +
-> +	if (!len)
-> +		return FALSE;
-> +
-> +	for (i =3D 0; i<  len; i++) {
-> +		if (digit[i]>=3D '0'&&  digit[i]<=3D '9')
-> +			continue;
-> +
-> +		if (digit[i] =3D=3D '*' || digit[i] =3D=3D '#' || digit[i] =3D=3D '+')
-> +			continue;
-> +
-> +		return FALSE;
-> +	}
-> +
-> +	return TRUE;
-
-And this function is entirely too long-winded for what it is doing. =
-
-Please refer to 'man strspn'.  It might be easier to simply use strspn =
-
-below...
-
-> +}
-> +
->   static void stk_agent_send_noreply(struct stk_agent *agent, const char =
-*method)
->   {
->   	DBusConnection *conn =3D ofono_dbus_get_connection();
-> @@ -541,7 +562,7 @@ static void get_digit_cb(DBusPendingCall *call, void =
-*data)
->   					DBUS_TYPE_STRING,&digit,
->   					DBUS_TYPE_INVALID) =3D=3D FALSE ||
->   			strlen(digit) !=3D 1 ||
-> -			!valid_phone_number_format(digit)) {
-> +			!check_digit(digit)) {
-
-This is still wrong as it also needs to take care of the hidden_input =
-
-case where the '+' is not allowed.
-
->   		ofono_error("Can't parse the reply to GetDigit()");
->   		remove_agent =3D TRUE;
->   		goto error;
-> @@ -675,7 +696,8 @@ static void get_digits_cb(DBusPendingCall *call, void=
- *data)
+>   static gboolean tx_next(gpointer user_data);
 >
->   	if (dbus_message_get_args(reply, NULL,
->   					DBUS_TYPE_STRING,&string,
-> -					DBUS_TYPE_INVALID) =3D=3D FALSE) {
-> +					DBUS_TYPE_INVALID) =3D=3D FALSE ||
-> +					!check_digit(string)) {
+>   static GSList *g_drivers =3D NULL;
+> @@ -2072,7 +2074,7 @@ int __ofono_sms_txq_submit(struct ofono_sms *sms, G=
+SList *list,
+>   	g_queue_push_tail(sms->txq, entry);
+>
+>   	if (sms->registered&&  g_queue_get_length(sms->txq) =3D=3D 1)
+> -		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
+> +		sms->tx_source =3D g_timeout_add(SMS_TX_NEXT, tx_next, sms);
+>
 
-As above
+Umm, I don't even know how to respond to this.  Lets just say that this =
 
->   		ofono_error("Can't parse the reply to GetDigits()");
->   		remove_agent =3D TRUE;
->   		goto error;
+isn't going to be accepted upstream ;)  Why don't you use multi-segment =
+
+SMS, or queue the messages offline.
+
+>   	if (uuid)
+>   		memcpy(uuid,&entry->uuid, sizeof(*uuid));
 
 Regards,
 -Denis
 
---===============1202824502402134992==--
+--===============4109493864047792893==--
 
