@@ -1,48 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============6510256265150251557=="
+Content-Type: multipart/mixed; boundary="===============4426921748258264718=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 7/8] call-settings: Return specific errors for SS query
-Date: Wed, 22 Aug 2012 18:18:22 +0200
-Message-ID: <1345652303-12866-7-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 8/8] call-settings: class applied is the class given by SS
+ code.
+Date: Wed, 22 Aug 2012 18:18:23 +0200
+Message-ID: <1345652303-12866-8-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1345652303-12866-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6510256265150251557==
+--===============4426921748258264718==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Trace is modified as clir query is not necessarily done after a clir
-setting via SS.
+The default class is applied when no class is specified by SS code.
 ---
- src/call-settings.c |    5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ src/call-settings.c |   11 +++++------
+ 1 file changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/src/call-settings.c b/src/call-settings.c
-index 4bfb561..51f96bf 100644
+index 51f96bf..d63d9d8 100644
 --- a/src/call-settings.c
 +++ b/src/call-settings.c
-@@ -726,9 +726,10 @@ static void clir_ss_query_callback(const struct ofono_=
-error *error,
- 	const char *value;
- =
-
- 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
--		DBG("setting clir via SS failed");
-+		DBG("clir query via SS failed with error: %s",
-+					telephony_error_to_str(error));
- 		__ofono_dbus_pending_reply(&cs->pending,
--					__ofono_error_failed(cs->pending));
-+				__ofono_error_from_error(error, cs->pending));
- =
-
+@@ -485,7 +485,7 @@ static void cw_ss_set_callback(const struct ofono_error=
+ *error, void *data)
  		return;
  	}
+ =
+
+-	cs->driver->cw_query(cs, BEARER_CLASS_DEFAULT,
++	cs->driver->cw_query(cs, cs->ss_req_cls,
+ 				cw_ss_query_callback, cs);
+ }
+ =
+
+@@ -533,13 +533,13 @@ static gboolean cw_ss_control(int type,
+ 			goto bad_format;
+ 	}
+ =
+
+-	cs->ss_req_cls =3D cls;
+-	cs->pending =3D dbus_message_ref(msg);
+-
+ 	/* For the default case use the more readily accepted value */
+ 	if (cls =3D=3D BEARER_CLASS_SS_DEFAULT)
+ 		cls =3D BEARER_CLASS_DEFAULT;
+ =
+
++	cs->ss_req_cls =3D cls;
++	cs->pending =3D dbus_message_ref(msg);
++
+ 	switch (type) {
+ 	case SS_CONTROL_TYPE_REGISTRATION:
+ 	case SS_CONTROL_TYPE_ACTIVATION:
+@@ -554,8 +554,7 @@ static gboolean cw_ss_control(int type,
+ 		 * according to 22.004 Appendix A, so CLASS_DEFAULT
+ 		 * is safe to use here
+ 		 */
+-		cs->driver->cw_query(cs, BEARER_CLASS_DEFAULT,
+-					cw_ss_query_callback, cs);
++		cs->driver->cw_query(cs, cls, cw_ss_query_callback, cs);
+ 		break;
+ =
+
+ 	case SS_CONTROL_TYPE_DEACTIVATION:
 -- =
 
 1.7.9.5
 
 
---===============6510256265150251557==--
+--===============4426921748258264718==--
 
