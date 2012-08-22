@@ -1,47 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============8603218834818210108=="
+Content-Type: multipart/mixed; boundary="===============0144694796593469104=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 3/8] call-forwarding: return specific errors for SS query
-Date: Wed, 22 Aug 2012 18:18:18 +0200
-Message-ID: <1345652303-12866-3-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 4/8] call-forwarding: class applied is the class given by SS
+ code
+Date: Wed, 22 Aug 2012 18:18:19 +0200
+Message-ID: <1345652303-12866-4-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1345652303-12866-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8603218834818210108==
+--===============0144694796593469104==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Trace is modified as a CF query is not necessarily done after a CF setting
-via SS.
+GCF test cases 31.2.1.6.1/2 are asking to make a query according a specific
+class.
+The default class is applied when no class is specified in the SS code.
 ---
- src/call-forwarding.c |    5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ src/call-forwarding.c |   22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
 
 diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index 5acbd67..91e34c6 100644
+index 91e34c6..7531f07 100644
 --- a/src/call-forwarding.c
 +++ b/src/call-forwarding.c
-@@ -981,9 +981,10 @@ static void ss_set_query_cf_callback(const struct ofon=
-o_error *error, int total,
- 	DBusMessage *reply;
+@@ -1012,7 +1012,7 @@ static void ss_set_query_cf_callback(const struct ofo=
+no_error *error, int total,
  =
 
- 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
--		ofono_error("Setting succeeded, but query failed");
-+		ofono_error("Query failed with error: %s",
-+						telephony_error_to_str(error));
- 		cf->flags &=3D ~CALL_FORWARDING_FLAG_CACHED;
--		reply =3D __ofono_error_failed(cf->pending);
-+		reply =3D __ofono_error_from_error(error, cf->pending);
- 		__ofono_dbus_pending_reply(&cf->pending, reply);
- 		return;
+ static void ss_set_query_next_cf_cond(struct ofono_call_forwarding *cf)
+ {
+-	cf->driver->query(cf, cf->query_next, BEARER_CLASS_DEFAULT,
++	cf->driver->query(cf, cf->query_next, cf->ss_req->cls,
+ 			ss_set_query_cf_callback, cf);
+ }
+ =
+
+@@ -1167,6 +1167,16 @@ static gboolean cf_ss_control(int type, const char *=
+sc,
+ 		return TRUE;
  	}
+ =
+
++	/*
++	 * Some modems don't understand all classes very well, particularly
++	 * the older models.  So if the bearer class is the default, we
++	 * just use the more commonly understood value of 7 since BEARER_SMS
++	 * is not applicable to CallForwarding conditions according to 22.004
++	 * Annex A
++	 */
++	if (cls =3D=3D BEARER_CLASS_SS_DEFAULT)
++		cls =3D BEARER_CLASS_DEFAULT;
++
+ 	cf->ss_req->ss_type =3D type;
+ 	cf->ss_req->cf_type =3D cf_type;
+ 	cf->ss_req->cls =3D cls;
+@@ -1188,16 +1198,6 @@ static gboolean cf_ss_control(int type, const char *=
+sc,
+ 		break;
+ 	}
+ =
+
+-	/*
+-	 * Some modems don't understand all classes very well, particularly
+-	 * the older models.  So if the bearer class is the default, we
+-	 * just use the more commonly understood value of 7 since BEARER_SMS
+-	 * is not applicable to CallForwarding conditions according to 22.004
+-	 * Annex A
+-	 */
+-	if (cls =3D=3D BEARER_CLASS_SS_DEFAULT)
+-		cls =3D BEARER_CLASS_DEFAULT;
+-
+ 	switch (cf->ss_req->ss_type) {
+ 	case SS_CONTROL_TYPE_REGISTRATION:
+ 		string_to_phone_number(sia, &ph);
 -- =
 
 1.7.9.5
 
 
---===============8603218834818210108==--
+--===============0144694796593469104==--
 
