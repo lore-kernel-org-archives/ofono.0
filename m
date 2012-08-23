@@ -1,133 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============9193473730785158092=="
+Content-Type: multipart/mixed; boundary="===============4826117725088437271=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: Re: [PATCH 2/8] stkagent: '+' is considered as a digit
-Date: Thu, 23 Aug 2012 17:53:55 +0200
-Message-ID: <50365213.7070607@linux.intel.com>
-In-Reply-To: <5035635D.5020800@gmail.com>
+From: Christopher Vogl <christopher.vogl@hale.at>
+Subject: Re: [PATCH] telit: sim status notification without polling
+Date: Thu, 23 Aug 2012 18:00:42 +0200
+Message-ID: <503653AA.9030506@hale.at>
+In-Reply-To: <50363C6D.3090509@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9193473730785158092==
+--===============4826117725088437271==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-On 08/23/2012 12:55 AM, Denis Kenzior wrote:
-> Hi Philippe,
+On 23/08/12 16:21, Denis Kenzior wrote:
+> Hi Christopher,
 >
-> On 08/22/2012 11:18 AM, Philippe Nunes wrote:
->> The function 'valid_phone_number_format' does not comply with GCF test
->> cases
->> expectation. For STK, the character '+' should be considered as a
->> whole digit.
+> On 08/22/2012 09:24 AM, Christopher Vogl wrote:
+>> Use AT#QSS=3D2 instead of AT#QSS=3D1 to get an URC when the SIM is not o=
+nly
+>> inserted but also when PIN is unlocked and when SMS + phonebook are
+>> ready to be used.
+>>
+>> Disable sim state notification in telit_enable() so that we sure get a
+>> notification when we enable it later again. This way we don't have to
+>> query the state the first time. Without this the Telit modem does not
+>> always send an URC when AT#QSS=3D2 is sent.
+>>
+>> Remove sim_inserted_source and sim_inserted_timeout_cb which are not
+>> needed anymore as a consequence.
+>> By the way the 1 second timeout was an ugly hack.
+>>
+>> Don't query current SIM status in cfun_enable_cb() as the SIM is
+>> disabled due to prior AT+CFUN=3D4.
+>>
+>> Register '#QSS:' before enabling sim state notifications.
+>>
+>> Remove telit_qss_cb() which was used as a callback for querying the
+>> current SIM status.
 >> ---
->> src/stkagent.c | 26 ++++++++++++++++++++++++--
->> 1 file changed, 24 insertions(+), 2 deletions(-)
+>>   plugins/telit.c |   96 =
+
+>> +++++++++++++++++++-----------------------------------
+>>   1 files changed, 34 insertions(+), 62 deletions(-)
 >>
->> diff --git a/src/stkagent.c b/src/stkagent.c
->> index 7c3f697..392a2b2 100644
->> --- a/src/stkagent.c
->> +++ b/src/stkagent.c
->> @@ -69,6 +69,27 @@ struct stk_agent {
->> #define TERMINATE_ERROR ERROR_PREFIX ".EndSession"
->> #define BUSY_ERROR ERROR_PREFIX ".Busy"
->>
->> +static gboolean check_digit(const char *digit)
 >
-> I really don't like the name...
+> Patch looks good to me overall, however:
 >
->> +{
->> + int len =3D strlen(digit);
->> + int i;
->> +
->> + if (!len)
->> + return FALSE;
->> +
->> + for (i =3D 0; i< len; i++) {
->> + if (digit[i]>=3D '0'&& digit[i]<=3D '9')
->> + continue;
->> +
->> + if (digit[i] =3D=3D '*' || digit[i] =3D=3D '#' || digit[i] =3D=3D '+')
->> + continue;
->> +
->> + return FALSE;
->> + }
->> +
->> + return TRUE;
->
-> And this function is entirely too long-winded for what it is doing.
-> Please refer to 'man strspn'. It might be easier to simply use strspn
-> below...
->
->> +}
->> +
->> static void stk_agent_send_noreply(struct stk_agent *agent, const char
->> *method)
->> {
->> DBusConnection *conn =3D ofono_dbus_get_connection();
->> @@ -541,7 +562,7 @@ static void get_digit_cb(DBusPendingCall *call,
->> void *data)
->> DBUS_TYPE_STRING,&digit,
->> DBUS_TYPE_INVALID) =3D=3D FALSE ||
->> strlen(digit) !=3D 1 ||
->> - !valid_phone_number_format(digit)) {
->> + !check_digit(digit)) {
->
-> This is still wrong as it also needs to take care of the hidden_input
-> case where the '+' is not allowed.
+> cc1: warnings being treated as errors
+> plugins/telit.c: In function =E2=80=98switch_sim_state_status=E2=80=99:
+> plugins/telit.c:226:4: error: statement with no effect
+> plugins/telit.c:240:4: error: statement with no effect
+> plugins/telit.c: At top level:
+> plugins/telit.c:64:20: error: =E2=80=98qss_prefix=E2=80=99 defined but no=
+t used
+Sorry, it is getting embarrassing now.
 
-Good point. But then, it requires to retrieve the command qualifier (or =
+> Also, one other thing I'm concerned about is the CFUN=3D4 usage when we =
 
-at least the hidden_val property from the agent->msg).
+> try to set the modem offline.  Your comments indicate that the Telit =
 
-I think this is more complicated to perform this checking here. It =
+> modem resets the SIM when we issue CFUN=3D4.  Going from Online True -> =
 
-should be more convenient to place this in the callback (here =
+> False we don't actually want to reset the SIM. Does CFUN take an extra =
 
-'request_key_cb').
-But we can think also to simply remove any checking. For GET_INPUT, we =
+> parameter to turn SIM reset off by any chance?
 
-are not checking the min/max length ;o)
+Telit documentation says that +CFUN supports a second parameter which =
 
-Note that apparently, we missed to consider the hidden property in =
+should turn reset off.
+AT+CFUN=3D? also returns  +CFUN: (0,1,2,4,5),(0)
+AT reference manual: "reset flag    0 - do not reset the ME before =
 
-'handle_command_get_inkey'. Therefore, we are not sending this =
+setting it to <fun> functionality level"
 
-information to the STK agent. I'm willing to correct this.
+But the modem keeps returning +CME ERROR: 4  when I try it (no matter =
+
+which CFUN level).
+
+The modem behaves very strange sometimes. I kept getting timeouts when =
+
+setting AT+CFUN=3D4. I once tried it manually and it took 26 seconds until =
+
+I got an OK.
+Currently it works fine again.
+
 
 Regards,
+Christopher
 
-Philippe.
-
-
-
-
->
->> ofono_error("Can't parse the reply to GetDigit()");
->> remove_agent =3D TRUE;
->> goto error;
->> @@ -675,7 +696,8 @@ static void get_digits_cb(DBusPendingCall *call,
->> void *data)
->>
->> if (dbus_message_get_args(reply, NULL,
->> DBUS_TYPE_STRING,&string,
->> - DBUS_TYPE_INVALID) =3D=3D FALSE) {
->> + DBUS_TYPE_INVALID) =3D=3D FALSE ||
->> + !check_digit(string)) {
->
-> As above
->
->> ofono_error("Can't parse the reply to GetDigits()");
->> remove_agent =3D TRUE;
->> goto error;
->
-> Regards,
-> -Denis
->
+--
+Scanned by MailScanner.
 
 
---===============9193473730785158092==--
+--===============4826117725088437271==--
 
