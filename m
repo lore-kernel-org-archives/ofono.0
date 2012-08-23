@@ -1,68 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============8176375693058338284=="
+Content-Type: multipart/mixed; boundary="===============4457067490238765235=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] ussd: Recover idle state in case of response sending
- failure
-Date: Thu, 23 Aug 2012 13:03:05 -0500
-Message-ID: <50367059.9050406@gmail.com>
-In-Reply-To: <1345739265-3080-2-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH 2/8] stkagent: '+' is considered as a digit
+Date: Thu, 23 Aug 2012 13:15:48 -0500
+Message-ID: <50367354.2080004@gmail.com>
+In-Reply-To: <50365213.7070607@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8176375693058338284==
+--===============4457067490238765235==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Philippe,
 
-On 08/23/2012 11:27 AM, Philippe Nunes wrote:
-> GCF test case 31.8.1.2.3 is rejecting the user response.
-> Any subsequent USSD notification are not handled because USSD is always in
-> state user-action.
-> ---
->   src/ussd.c |   12 ++++++++++++
->   1 file changed, 12 insertions(+)
+>>> +}
+>>> +
+>>> static void stk_agent_send_noreply(struct stk_agent *agent, const char
+>>> *method)
+>>> {
+>>> DBusConnection *conn =3D ofono_dbus_get_connection();
+>>> @@ -541,7 +562,7 @@ static void get_digit_cb(DBusPendingCall *call,
+>>> void *data)
+>>> DBUS_TYPE_STRING,&digit,
+>>> DBUS_TYPE_INVALID) =3D=3D FALSE ||
+>>> strlen(digit) !=3D 1 ||
+>>> - !valid_phone_number_format(digit)) {
+>>> + !check_digit(digit)) {
+>>
+>> This is still wrong as it also needs to take care of the hidden_input
+>> case where the '+' is not allowed.
 >
-> diff --git a/src/ussd.c b/src/ussd.c
-> index 74888b2..21e0164 100644
-> --- a/src/ussd.c
-> +++ b/src/ussd.c
-> @@ -414,6 +414,18 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int =
-status, int dcs,
->   		return;
->   	}
+> Good point. But then, it requires to retrieve the command qualifier (or
+> at least the hidden_val property from the agent->msg).
 >
-> +	if (status =3D=3D OFONO_USSD_STATUS_TERMINATED&&
-> +			(ussd->state =3D=3D USSD_STATE_IDLE ||
-> +			ussd->state =3D=3D USSD_STATE_USER_ACTION)) {
+> I think this is more complicated to perform this checking here. It
+> should be more convenient to place this in the callback (here
+> 'request_key_cb').
+> But we can think also to simply remove any checking. For GET_INPUT, we
+> are not checking the min/max length ;o)
 
-This check makes no sense, why bother checking for ussd->state =3D=3D =
+No, we do need to sanitize any output from the agent.  We do this in a =
 
-USSD_STATE_IDLE?
+half assed way right now and that needs to be fixed.
 
-> +		ussd_change_state(ussd, USSD_STATE_IDLE);
-> +
-> +		if (ussd->pending =3D=3D NULL)
-> +			return;
-> +
-> +		reply =3D __ofono_error_not_supported(ussd->pending);
-> +		goto out;
-> +	}
-> +
-
-I would handle it just like the 'Not Supported' case but with a new =
-
-__ofono_error_network_terminated error reply.  Or perhaps re-use =
-
-__ofono_error_canceled.
-
->   	if (status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED) {
->   		ussd_change_state(ussd, USSD_STATE_IDLE);
 >
+> Note that apparently, we missed to consider the hidden property in
+> 'handle_command_get_inkey'. Therefore, we are not sending this
+> information to the STK agent. I'm willing to correct this.
+
+Please do.
 
 Regards,
 -Denis
 
---===============8176375693058338284==--
+--===============4457067490238765235==--
 
