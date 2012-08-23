@@ -1,101 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============2039489730936689937=="
+Content-Type: multipart/mixed; boundary="===============8227015839669249839=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [PATCH] sms: Add delay before submitting multiple SMS to modem
-Date: Thu, 23 Aug 2012 11:04:05 +0200
-Message-ID: <5035F205.8040008@linux.intel.com>
-In-Reply-To: <503563CC.2000503@gmail.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH 1/8] ussd: Recover idle state in case of response sending
+ failure
+Date: Thu, 23 Aug 2012 12:30:33 +0200
+Message-ID: <50360649.40403@linux.intel.com>
+In-Reply-To: <50356520.9090109@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2039489730936689937==
+--===============8227015839669249839==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-On 23/08/2012 00:57, Denis Kenzior wrote:
-> Hi Guillaume,
+On 08/23/2012 01:02 AM, Denis Kenzior wrote:
+> Hi Philippe,
 >
-> On 08/22/2012 04:29 AM, Guillaume Zajac wrote:
->> For 3GPP GSM test case 34.2.9.1 and 34.2.9.1 and WCDMA test
->> case 16.1.9.1 and 16.1.9.2, we need to transmitmultiple SMS
->> using same RRC channel.
->> oFono needs to wait its tx queue to be filled in with the
->> next SMS before submitting the first one to use +CMMS=3D1 modem
->> option.
+> On 08/22/2012 11:18 AM, Philippe Nunes wrote:
+>> GCF test case 31.8.1.2.3 is rejecting the user response.
+>> Any subsequent USSD notification are not handled because USSD is
+>> always in
+>> state user-action.
 >> ---
->>   src/sms.c |    4 +++-
->>   1 files changed, 3 insertions(+), 1 deletions(-)
+>> src/ussd.c | 8 +++++++-
+>> 1 file changed, 7 insertions(+), 1 deletion(-)
 >>
->> diff --git a/src/sms.c b/src/sms.c
->> index acfc39b..443e502 100644
->> --- a/src/sms.c
->> +++ b/src/sms.c
->> @@ -50,6 +50,8 @@
->>   #define TXQ_MAX_RETRIES 4
->>   #define NETWORK_TIMEOUT 332
+>> diff --git a/src/ussd.c b/src/ussd.c
+>> index 74888b2..0ad4f61 100644
+>> --- a/src/ussd.c
+>> +++ b/src/ussd.c
+>> @@ -414,6 +414,10 @@ void ofono_ussd_notify(struct ofono_ussd *ussd,
+>> int status, int dcs,
+>> return;
+>> }
 >>
->> +#define SMS_TX_NEXT 500
+>> + if (status =3D=3D OFONO_USSD_STATUS_TERMINATED&&
+>> + ussd->state =3D=3D USSD_STATE_IDLE)
+>> + return;
 >> +
->>   static gboolean tx_next(gpointer user_data);
->>
->>   static GSList *g_drivers =3D NULL;
->> @@ -2072,7 +2074,7 @@ int __ofono_sms_txq_submit(struct ofono_sms =
-
->> *sms, GSList *list,
->>       g_queue_push_tail(sms->txq, entry);
->>
->>       if (sms->registered&& g_queue_get_length(sms->txq) =3D=3D 1)
->> -        sms->tx_source =3D g_timeout_add(0, tx_next, sms);
->> +        sms->tx_source =3D g_timeout_add(SMS_TX_NEXT, tx_next, sms);
+>> if (status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED) {
+>> ussd_change_state(ussd, USSD_STATE_IDLE);
 >>
 >
-> Umm, I don't even know how to respond to this.  Lets just say that =
-
-> this isn't going to be accepted upstream ;)  Why don't you use =
-
-> multi-segment SMS, or queue the messages offline.
-
-We can forget about queuing messages offline because the simulator needs =
-
-to check we are registered to the network before asking to send the 3 =
-
-multiple SMS.
-So this will break the sequences expected by the test.
-Concerning Multi-segment message, we already knew it was working for GSM =
-
-test cases 34.2.9.1 and 34.2.9.1 because message content is not checked.
-However for WCDMA test case we have a message specified by the test to =
-
-send and I was expecting the simulator to check the content of each =
-
-multiple messages. That's why I chose to use a delay. Fortunately for =
-
-practical purposes, the test is passing in sending multi-segment =
-
-messages even with a text not corresponding to the one specified by the =
-
-test.
-Unfortunately I come to the conclusion that if I want to send one same =
-
-SMS to 3/4/5/... recipients with an application using oFono middleware, =
-
-I will not be able to send them through the same RRC channel, unless I =
-
-queue them offline.
-
+> How about you simply handle the TERMINATED notification properly here and
 >
+>> @@ -595,9 +599,11 @@ static void ussd_response_callback(const struct
+>> ofono_error *error, void *data)
+>> struct ofono_ussd *ussd =3D data;
+>> DBusMessage *reply;
+>>
+>> - if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
+>> + if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+>> DBG("ussd response failed with error: %s",
+>> telephony_error_to_str(error));
+>> + ussd_change_state(ussd, USSD_STATE_IDLE);
+>> + }
+>>
+>> if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR) {
+>> ussd_change_state(ussd, USSD_STATE_RESPONSE_SENT);
 >
->>       if (uuid)
->>           memcpy(uuid,&entry->uuid, sizeof(*uuid));
+> Take out this chunk.
 >
-> Regards,
-> -Denis
 
-Kind regards,
-Guillaume
+In fact, that's what I did first.
+But then, I moved to this version as it looked more logical for me.
+In practice, the ussd_response_callback is handled before the TERMINATED =
 
---===============2039489730936689937==--
+notification and it is more meaningful to link the error to the 'idle' =
+
+state recovery.
+Anyway, I send you a new patch.
+
+Regards,
+
+Philippe.
+
+--===============8227015839669249839==--
 
