@@ -1,70 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============8971258181318692959=="
+Content-Type: multipart/mixed; boundary="===============4797362754108693139=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] telit: sim status notification without polling
-Date: Thu, 23 Aug 2012 09:21:33 -0500
-Message-ID: <50363C6D.3090509@gmail.com>
-In-Reply-To: <1345645446-3387-2-git-send-email-christopher.vogl@hale.at>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH] sms: Add delay before submitting multiple SMS to modem
+Date: Thu, 23 Aug 2012 16:26:35 +0200
+Message-ID: <50363D9B.80400@linux.intel.com>
+In-Reply-To: <503634B1.90701@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8971258181318692959==
+--===============4797362754108693139==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christopher,
+Hi Denis,
 
-On 08/22/2012 09:24 AM, Christopher Vogl wrote:
-> Use AT#QSS=3D2 instead of AT#QSS=3D1 to get an URC when the SIM is not on=
-ly
-> inserted but also when PIN is unlocked and when SMS + phonebook are
-> ready to be used.
+On 23/08/2012 15:48, Denis Kenzior wrote:
+> Hi Guillaume,
 >
-> Disable sim state notification in telit_enable() so that we sure get a
-> notification when we enable it later again. This way we don't have to
-> query the state the first time. Without this the Telit modem does not
-> always send an URC when AT#QSS=3D2 is sent.
+> <snip>
 >
-> Remove sim_inserted_source and sim_inserted_timeout_cb which are not
-> needed anymore as a consequence.
-> By the way the 1 second timeout was an ugly hack.
+>> Unfortunately I come to the conclusion that if I want to send one same
+>> SMS to 3/4/5/... recipients with an application using oFono middleware,
+>> I will not be able to send them through the same RRC channel, unless I
+>> queue them offline.
+>>
 >
-> Don't query current SIM status in cfun_enable_cb() as the SIM is
-> disabled due to prior AT+CFUN=3D4.
+> If such a feature is important, then you do have a point. However, =
+
+> implementing _anything_ by introducing an arbitrary delay is simply =
+
+> wrong.  I believe they teach the reasons for that in Operating Systems =
+
+> 101.  You are introducing a race condition that will break things at =
+
+> the most inopportune time.
+
+I agree that it is not the most elegant/cleanest solution.
+
 >
-> Register '#QSS:' before enabling sim state notifications.
->
-> Remove telit_qss_cb() which was used as a callback for querying the
-> current SIM status.
-> ---
->   plugins/telit.c |   96 +++++++++++++++++++-----------------------------=
-------
->   1 files changed, 34 insertions(+), 62 deletions(-)
->
+> If we really require multi-recipient SMS to go on the same RRC =
 
-Patch looks good to me overall, however:
+> channel, then the best way to do so would be to introduce a new API =
 
-cc1: warnings being treated as errors
-plugins/telit.c: In function =E2=80=98switch_sim_state_status=E2=80=99:
-plugins/telit.c:226:4: error: statement with no effect
-plugins/telit.c:240:4: error: statement with no effect
-plugins/telit.c: At top level:
-plugins/telit.c:64:20: error: =E2=80=98qss_prefix=E2=80=99 defined but not =
-used
+> specifically for this use case.
 
-Also, one other thing I'm concerned about is the CFUN=3D4 usage when we =
+Having a new API for multi-recipient SMS would be indeed the best solution.
+With current implementation the test is passing with multi-segment SMS =
 
-try to set the modem offline.  Your comments indicate that the Telit =
+using script but GCF test description is mentioning 3 different SMS.
+During device certification (with applications), the tester will try to =
 
-modem resets the SIM when we issue CFUN=3D4.  Going from Online True -> =
+send an SMS to 3 recipients but it will fail.
+Another solution would be to remove multi-SMS support from the PICS.
 
-False we don't actually want to reset the SIM.  Does CFUN take an extra =
+Kind regards,
+Guillaume
 
-parameter to turn SIM reset off by any chance?
 
-Regards,
--Denis
-
---===============8971258181318692959==--
+--===============4797362754108693139==--
 
