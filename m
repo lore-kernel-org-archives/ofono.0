@@ -1,44 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============6109737638456069980=="
+Content-Type: multipart/mixed; boundary="===============1841885345445537319=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2] call-forwarding: class applied is the class given by SS
- code
-Date: Thu, 23 Aug 2012 18:27:44 +0200
-Message-ID: <1345739265-3080-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v2] ussd: Recover idle state in case of response sending
+ failure
+Date: Thu, 23 Aug 2012 18:27:45 +0200
+Message-ID: <1345739265-3080-2-git-send-email-philippe.nunes@linux.intel.com>
+In-Reply-To: <1345739265-3080-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6109737638456069980==
+--===============1841885345445537319==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-GCF test cases 31.2.1.6.1/2 are asking to make a query according a specific
-class.
-The default class is applied when no class is specified in the SS code.
+GCF test case 31.8.1.2.3 is rejecting the user response.
+Any subsequent USSD notification are not handled because USSD is always in
+state user-action.
 ---
- src/call-forwarding.c |    7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+ src/ussd.c |   12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
-diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index 91e34c6..d73bcc0 100644
---- a/src/call-forwarding.c
-+++ b/src/call-forwarding.c
-@@ -1012,7 +1012,12 @@ static void ss_set_query_cf_callback(const struct of=
-ono_error *error, int total,
+diff --git a/src/ussd.c b/src/ussd.c
+index 74888b2..21e0164 100644
+--- a/src/ussd.c
++++ b/src/ussd.c
+@@ -414,6 +414,18 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int st=
+atus, int dcs,
+ 		return;
+ 	}
  =
 
- static void ss_set_query_next_cf_cond(struct ofono_call_forwarding *cf)
- {
--	cf->driver->query(cf, cf->query_next, BEARER_CLASS_DEFAULT,
-+	int cls;
++	if (status =3D=3D OFONO_USSD_STATUS_TERMINATED &&
++			(ussd->state =3D=3D USSD_STATE_IDLE ||
++			ussd->state =3D=3D USSD_STATE_USER_ACTION)) {
++		ussd_change_state(ussd, USSD_STATE_IDLE);
 +
-+	cls =3D (cf->ss_req->cls =3D=3D BEARER_CLASS_SS_DEFAULT) ?
-+			BEARER_CLASS_DEFAULT : cf->ss_req->cls;
++		if (ussd->pending =3D=3D NULL)
++			return;
 +
-+	cf->driver->query(cf, cf->query_next, cls,
- 			ss_set_query_cf_callback, cf);
- }
++		reply =3D __ofono_error_not_supported(ussd->pending);
++		goto out;
++	}
++
+ 	if (status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED) {
+ 		ussd_change_state(ussd, USSD_STATE_IDLE);
  =
 
 -- =
@@ -46,5 +52,5 @@ ono_error *error, int total,
 1.7.9.5
 
 
---===============6109737638456069980==--
+--===============1841885345445537319==--
 
