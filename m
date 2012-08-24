@@ -1,49 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============1837111306884264982=="
+Content-Type: multipart/mixed; boundary="===============8160622110734926537=="
 MIME-Version: 1.0
-From: Tomasz Bursztyka <tomasz.bursztyka@linux.intel.com>
-Subject: [PATCH] gdbus: Fix crash error when calling g_dbus_remove_all_watches
-Date: Fri, 24 Aug 2012 13:16:05 +0300
-Message-ID: <1345803365-11861-1-git-send-email-tomasz.bursztyka@linux.intel.com>
+From: Christopher Vogl <christopher.vogl@hale.at>
+Subject: Re: [PATCH] telit: sim status notification without polling
+Date: Fri, 24 Aug 2012 12:26:19 +0200
+Message-ID: <503756CB.5090708@hale.at>
+In-Reply-To: <50366A44.3030202@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1837111306884264982==
+--===============8160622110734926537==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
-Hi,
+Hi Denis,
 
-While using gdbus on some other code, I found out that bug around g_dbus_re=
-move_all_watches() usage.
+On 23/08/12 19:37, Denis Kenzior wrote:
+> Hi Christopher,
+>
+>>> Also, one other thing I'm concerned about is the CFUN=3D4 usage when we
+>>> try to set the modem offline. Your comments indicate that the Telit
+>>> modem resets the SIM when we issue CFUN=3D4. Going from Online True ->
+>>> False we don't actually want to reset the SIM. Does CFUN take an extra
+>>> parameter to turn SIM reset off by any chance?
+>>
+>> Telit documentation says that +CFUN supports a second parameter which
+>> should turn reset off.
+>> AT+CFUN=3D? also returns +CFUN: (0,1,2,4,5),(0)
+>> AT reference manual: "reset flag 0 - do not reset the ME before setting
+>> it to <fun> functionality level"
+>>
+>> But the modem keeps returning +CME ERROR: 4 when I try it (no matter
+>> which CFUN level).
+>
+> That is funny.  Maybe the modem does not support a true 'offline' or =
 
-Tomasz
+> 'airplane' mode.  In which case the driver might need to be modified =
 
- gdbus/watch.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+> somewhat.
+>
+> This is something we will need to solve in the future.  If not fixed, =
 
-diff --git a/gdbus/watch.c b/gdbus/watch.c
-index d749176..968a38a 100644
---- a/gdbus/watch.c
-+++ b/gdbus/watch.c
-@@ -298,6 +298,9 @@ static void filter_data_call_and_free(struct filter_dat=
-a *data)
- 		g_free(cb);
- 	}
- =
+> I'm guessing that going Online then Offline will reset the SIM and =
 
-+	g_slist_free(data->callbacks);
-+	data->callbacks =3D NULL;
-+
- 	filter_data_free(data);
- }
- =
+> cause all kinds of funny behavior.
+>
+>>
+>> The modem behaves very strange sometimes. I kept getting timeouts when
+>> setting AT+CFUN=3D4. I once tried it manually and it took 26 seconds unt=
+il
+>> I got an OK.
+>> Currently it works fine again.
+>>
+>
+> Is there a newer firmware available by any chance?
+>
 
--- =
+I'm currently using firmware version 08.01.107. Apparently there is a =
 
-1.7.8.6
+08.01.108 version. I contacted the Telit support and they said they are =
+
+testing this version, so I don't know if it is available now. I hope we =
+
+are getting an official Telit support with the possibility for updates =
+
+soon - will know more on Tuesday.
+
+Regards,
+Christopher
+
+--
+Scanned by MailScanner.
 
 
---===============1837111306884264982==--
+--===============8160622110734926537==--
 
