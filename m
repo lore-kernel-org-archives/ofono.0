@@ -1,61 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============3528360015411669834=="
+Content-Type: multipart/mixed; boundary="===============7247086684433562413=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH] test: Add test script to list services properties
-Date: Fri, 24 Aug 2012 14:58:18 +0200
-Message-ID: <1345813098-15516-2-git-send-email-ronald.tessier@linux.intel.com>
-In-Reply-To: <1345813098-15516-1-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 00/12] mmsd: (resending) Support Delivery Report notification
+Date: Fri, 24 Aug 2012 15:05:59 +0200
+Message-ID: <1345813571-15775-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3528360015411669834==
+--===============7247086684433562413==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- test/list-services |   27 +++++++++++++++++++++++++++
- 1 file changed, 27 insertions(+)
- create mode 100755 test/list-services
+These patches concern mmsd and add delivery report notification support.
+Add MMS M-Delivery.ind PDU decoding support.
+Update meta file of the sent message to store the received msg_id and to ad=
+d a
+group [delivery_status] if delivery_report is requested.
+Upon MMS M-Delivery.ind PDU reception, update delivery_status recipient ent=
+ry
+with the received status (this is described in doc/storage.txt) and signal =
+the
+new delivery_report status for the recipient concerned.
+Modify the monitor_mms test script to add report_changed monitoring.
+Update message-api.txt doc to describe new ReportChanged signal.
 
-diff --git a/test/list-services b/test/list-services
-new file mode 100755
-index 0000000..bd52d71
---- /dev/null
-+++ b/test/list-services
-@@ -0,0 +1,27 @@
-+#!/usr/bin/python
-+
-+import dbus
-+
-+bus =3D dbus.SessionBus()
-+
-+manager =3D dbus.Interface(bus.get_object('org.ofono.mms', '/org/ofono/mms=
-'),
-+						'org.ofono.mms.Manager')
-+
-+services =3D manager.GetServices()
-+
-+for path, properties in services:
-+	print "[ %s ]" % (path)
-+
-+	object =3D dbus.Interface(bus.get_object('org.ofono.mms', path),
-+						'org.ofono.mms.Service')
-+
-+	try:
-+		properties =3D object.GetProperties()
-+	except:
-+		continue
-+
-+	for key in properties.keys():
-+		val =3D str(properties[key])
-+		print "        %s =3D %s" % (key, val)
-+
-+	print
--- =
+Ronald Tessier (12):
+  mmsutil: Define mms_delivery_ind struct
+  mmsutil: Decode delivery_ind msg
+  service: Store msg_id provided by M-Send.conf PDU
+  service: Move mms_address_to_string() up
+  service: Add a group [delivery_status] in the msg status
+  service: Support M-Delivery.ind in mms_service_push_notify()
+  service: Support delivery_ind notif on start
+  store: Define MMS_META_UUID_XXX len and suffix
+  service: Process delivery_ind notification
+  service: Send a delivery changed signal
+  test: Add ReportChanged to monitored signals
+  doc: Add ReportChanged signal description
 
+ doc/message-api.txt |    7 ++
+ src/mmsutil.c       |   22 ++++-
+ src/mmsutil.h       |    8 ++
+ src/service.c       |  260 ++++++++++++++++++++++++++++++++++++++++++++++-=
+----
+ src/store.c         |    8 +-
+ src/store.h         |    5 +
+ test/monitor-mms    |   10 ++
+ 7 files changed, 292 insertions(+), 28 deletions(-)
+
+--
 1.7.9.5
 
 
---===============3528360015411669834==--
+--===============7247086684433562413==--
 
