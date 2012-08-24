@@ -1,32 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============1851096335759995458=="
+Content-Type: multipart/mixed; boundary="===============9023066809833514443=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] test: Add test script to list services properties
-Date: Fri, 24 Aug 2012 10:54:38 -0500
-Message-ID: <5037A3BE.4070205@gmail.com>
-In-Reply-To: <1345813098-15516-2-git-send-email-ronald.tessier@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [RFC] Multi-recipient SMS implementation proposals
+Date: Fri, 24 Aug 2012 15:31:47 -0700
+Message-ID: <1345847507.1779.26.camel@aeonflux>
+In-Reply-To: <50375283.9080600@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1851096335759995458==
+--===============9023066809833514443==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ronald,
+Hi Guillaume,
 
-On 08/24/2012 07:58 AM, Ronald Tessier wrote:
-> ---
->   test/list-services |   27 +++++++++++++++++++++++++++
->   1 file changed, 27 insertions(+)
->   create mode 100755 test/list-services
->
+<snip>
 
-Patch has been applied, thanks.
+> 2-Modify existing SendMessage API in adding a new mms argument:
+> GDBUS_ASYNC_METHOD("SendMessage",
+>          GDBUS_ARGS({ "to", "s" }, { "text", "s" }, { "mms", "i" }),
+>          GDBUS_ARGS({ "path", "o" }),
+>          sms_send_message)
 
-Regards,
--Denis
+oFono 1.x has a stable API. Why are you proposing to break the API?
+
+Regards
+
+Marcel
 
 
---===============1851096335759995458==--
+
+--===============9023066809833514443==--
 
