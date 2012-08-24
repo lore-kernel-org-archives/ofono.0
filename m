@@ -1,77 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============8448950261997272474=="
+Content-Type: multipart/mixed; boundary="===============0411724712142603049=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 02/12] mmsutil: Decode delivery_ind msg
-Date: Fri, 24 Aug 2012 15:06:01 +0200
-Message-ID: <1345813571-15775-3-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 05/12] service: Add a group [delivery_status] in the msg status
+Date: Fri, 24 Aug 2012 15:06:04 +0200
+Message-ID: <1345813571-15775-6-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1345813571-15775-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8448950261997272474==
+--===============0411724712142603049==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This group contains an entry for each message recipients. Each recipient
+entry will be updated when the corresponding report will be received
+and then remove the temporary stored delivery report.
 ---
- src/mmsutil.c |   22 +++++++++++++++++++++-
- 1 file changed, 21 insertions(+), 1 deletion(-)
+ src/service.c |   33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
 
-diff --git a/src/mmsutil.c b/src/mmsutil.c
-index a9a12eb..7042276 100644
---- a/src/mmsutil.c
-+++ b/src/mmsutil.c
-@@ -964,6 +964,24 @@ static gboolean decode_send_req(struct wsp_header_iter=
- *iter,
- 	return TRUE;
- }
+diff --git a/src/service.c b/src/service.c
+index c3dc40a..ec1b1b9 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -69,6 +69,17 @@ static const char *ctl_chars =3D "\x01\x02\x03\x04\x05\x=
+06\x07\x08\x0A"
  =
 
-+static gboolean decode_delivery_ind(struct wsp_header_iter *iter,
-+						struct mms_message *out)
-+{
-+	return mms_parse_headers(iter, MMS_HEADER_MMS_VERSION,
-+				HEADER_FLAG_MANDATORY | HEADER_FLAG_PRESET_POS,
-+				&out->version,
-+				MMS_HEADER_MESSAGE_ID,
-+				HEADER_FLAG_MANDATORY, &out->di.msgid,
-+				MMS_HEADER_TO,
-+				HEADER_FLAG_MANDATORY, &out->di.to,
-+				MMS_HEADER_DATE,
-+				HEADER_FLAG_MANDATORY, &out->di.date,
-+				MMS_HEADER_STATUS,
-+				HEADER_FLAG_MANDATORY, &out->di.dr_status,
-+				MMS_HEADER_INVALID);
-+}
+ static const char *sep_chars =3D "()<>@,;:\\\"/[]?=3D{} \t";
+ =
+
++static const char *delivery_status[] =3D {
++	"none",
++	"expired",
++	"retrieved",
++	"rejected",
++	"deferred",
++	"indeterminate",
++	"forwarded",
++	"unreachable"
++};
 +
+ struct mms_request;
+ =
+
+ typedef gboolean (*mms_request_result_cb_t) (struct mms_request *request);
+@@ -1058,6 +1069,28 @@ static DBusMessage *send_message(DBusConnection *con=
+n,
+ =
+
+ 	g_key_file_set_string(meta, "info", "state", "draft");
+ =
+
++	if (service->use_delivery_reports) {
++		char **tos;
++		int i;
 +
- #define CHECK_WELL_KNOWN_HDR(hdr)			\
- 	if (wsp_header_iter_next(&iter) =3D=3D FALSE)	\
- 		return FALSE;				\
-@@ -1016,7 +1034,7 @@ gboolean mms_message_decode(const unsigned char *pdu,
- 	case MMS_MESSAGE_TYPE_ACKNOWLEDGE_IND:
- 		return FALSE;
- 	case MMS_MESSAGE_TYPE_DELIVERY_IND:
--		return FALSE;
-+		return decode_delivery_ind(&iter, out);
- 	}
++		tos =3D g_strsplit(msg->sr.to, ",", 0);
++
++		for (i =3D 0; tos[i] !=3D NULL; i++) {
++			char *to =3D g_strdup(tos[i]);
++
++			mms_address_to_string(to);
++
++			DBG("%s=3D%s", to, delivery_status[0]);
++
++			g_key_file_set_string(meta, "delivery_status", to,
++							delivery_status[0]);
++
++			g_free(to);
++		}
++
++		g_strfreev(tos);
++	}
++
+ 	mms_store_meta_close(service->identity, msg->uuid, meta, TRUE);
  =
 
- 	return FALSE;
-@@ -1051,6 +1069,8 @@ void mms_message_free(struct mms_message *msg)
- 	case MMS_MESSAGE_TYPE_ACKNOWLEDGE_IND:
- 		break;
- 	case MMS_MESSAGE_TYPE_DELIVERY_IND:
-+		g_free(msg->di.msgid);
-+		g_free(msg->di.to);
- 		break;
- 	}
- =
-
+ 	if (mms_message_register(service, msg) < 0)
 -- =
 
 1.7.9.5
 
 
---===============8448950261997272474==--
+--===============0411724712142603049==--
 
