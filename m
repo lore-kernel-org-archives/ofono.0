@@ -1,57 +1,125 @@
-Content-Type: multipart/mixed; boundary="===============3018230665218054851=="
+Content-Type: multipart/mixed; boundary="===============8624635409126277464=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 11/12] test: Add ReportChanged to monitored signals
-Date: Fri, 24 Aug 2012 15:06:10 +0200
-Message-ID: <1345813571-15775-12-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 10/12] service: Send a delivery changed signal
+Date: Fri, 24 Aug 2012 15:06:09 +0200
+Message-ID: <1345813571-15775-11-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1345813571-15775-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3018230665218054851==
+--===============8624635409126277464==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/monitor-mms |   10 ++++++++++
- 1 file changed, 10 insertions(+)
+ src/service.c |   48 +++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 45 insertions(+), 3 deletions(-)
 
-diff --git a/test/monitor-mms b/test/monitor-mms
-index 188d028..ef17a13 100755
---- a/test/monitor-mms
-+++ b/test/monitor-mms
-@@ -29,6 +29,10 @@ def property_changed(name, value, member, path, interfac=
-e):
- 	iface =3D interface[interface.rfind(".") + 1:]
- 	print "{%s} [%s] %s %s" % (iface, name, member, value)
+diff --git a/src/service.c b/src/service.c
+index 44184cb..ba23b4a 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -218,6 +218,40 @@ static void emit_msg_status_changed(const char *path, =
+const char *new_status)
+ 	g_dbus_send_message(connection, signal);
+ }
  =
 
-+def report_changed(type, rec, status, path, interface):
-+	iface =3D interface[interface.rfind(".") + 1:]
-+	print "{%s} [%s] <%s> %s : %s" % (iface, path, type, rec, status)
++static void emit_msg_delivery_changed(const char *path, const char *rec,
++							const char *status)
++{
++	DBusMessage *signal;
++	DBusMessageIter iter;
++	DBusMessageIter variant;
++	const char *type =3D "delivery_report";
 +
- if __name__ =3D=3D '__main__':
- 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
- =
-
-@@ -75,5 +79,11 @@ if __name__ =3D=3D '__main__':
- 						path_keyword=3D"path",
- 						interface_keyword=3D"interface")
- =
-
-+	bus.add_signal_receiver(report_changed,
-+					bus_name=3D"org.ofono.mms",
-+					signal_name =3D "ReportChanged",
-+						path_keyword=3D"path",
-+						interface_keyword=3D"interface")
++	signal =3D dbus_message_new_signal(path, MMS_MESSAGE_INTERFACE,
++							"ReportChanged");
++	if (signal =3D=3D NULL)
++		return;
 +
- 	mainloop =3D gobject.MainLoop()
- 	mainloop.run()
++	dbus_message_iter_init_append(signal, &iter);
++
++	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &type);
++
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT,
++					DBUS_TYPE_STRING_AS_STRING, &variant);
++
++	dbus_message_iter_append_basic(&variant, DBUS_TYPE_STRING, &rec);
++
++	dbus_message_iter_close_container(&iter, &variant);
++
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT,
++					DBUS_TYPE_STRING_AS_STRING, &variant);
++
++	dbus_message_iter_append_basic(&variant, DBUS_TYPE_STRING, &status);
++
++	dbus_message_iter_close_container(&iter, &variant);
++
++	g_dbus_send_message(connection, signal);
++}
++
+ static DBusMessage *msg_mark_read(DBusConnection *conn,
+ 					DBusMessage *msg, void *user_data)
+ {
+@@ -269,6 +303,10 @@ static const GDBusMethodTable message_methods[] =3D {
+ static const GDBusSignalTable message_signals[] =3D {
+ 	{ GDBUS_SIGNAL("PropertyChanged",
+ 			GDBUS_ARGS({ "name", "s" }, { "value", "v" })) },
++	{ GDBUS_SIGNAL("ReportChanged",
++			GDBUS_ARGS({ "name", "s" },
++					{ "rec", "v" },
++					{ "status", "v" })) },
+ 	{ }
+ };
+ =
+
+@@ -1369,6 +1407,7 @@ static void process_delivery_ind_notification(struct =
+mms_service *service,
+ 	char uuid[MMS_META_UUID_LEN + 1];
+ 	char *path;
+ 	char *to;
++	const char *new_status;
+ =
+
+ 	if (get_meta_by_msgid(service, di_msg->di.msgid, uuid) =3D=3D FALSE)
+ 		goto bail;
+@@ -1381,15 +1420,18 @@ static void process_delivery_ind_notification(struc=
+t mms_service *service,
+ =
+
+ 	mms_address_to_string(to);
+ =
+
+-	g_key_file_set_string(meta, "delivery_status", to,
+-				delivery_status[di_msg->di.dr_status - 127]);
++	new_status =3D delivery_status[di_msg->di.dr_status - 127];
+ =
+
+-	g_free(to);
++	g_key_file_set_string(meta, "delivery_status", to, new_status);
+ =
+
+ 	mms_store_meta_close(service->identity, uuid, meta, TRUE);
+ =
+
+ 	path =3D g_strdup_printf("%s/%s/%s", MMS_PATH, service->identity, uuid);
+ =
+
++	emit_msg_delivery_changed(path, to, new_status);
++
++	g_free(to);
++
+ 	g_free(path);
+ =
+
+ bail:
 -- =
 
 1.7.9.5
 
 
---===============3018230665218054851==--
+--===============8624635409126277464==--
 
