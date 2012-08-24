@@ -1,76 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============6735806646863187866=="
+Content-Type: multipart/mixed; boundary="===============2915255550114777413=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 2/4] stkagent: Add argument to notify when immediate digit
- response is required
-Date: Fri, 24 Aug 2012 16:28:23 +0200
-Message-ID: <1345818505-17175-3-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 3/4] doc: Update STK API regarding the new argument
+ immediate_response
+Date: Fri, 24 Aug 2012 16:28:24 +0200
+Message-ID: <1345818505-17175-4-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1345818505-17175-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6735806646863187866==
+--===============2915255550114777413==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkagent.c |    6 ++++--
- src/stkagent.h |    5 +++--
- 2 files changed, 7 insertions(+), 4 deletions(-)
+ doc/stk-api.txt |   13 +++++++++----
+ 1 file changed, 9 insertions(+), 4 deletions(-)
 
-diff --git a/src/stkagent.c b/src/stkagent.c
-index 7c3f697..ed5d28a 100644
---- a/src/stkagent.c
-+++ b/src/stkagent.c
-@@ -554,8 +554,9 @@ static void get_digit_cb(DBusPendingCall *call, void *d=
-ata)
+diff --git a/doc/stk-api.txt b/doc/stk-api.txt
+index 471e5d6..0d96246 100644
+--- a/doc/stk-api.txt
++++ b/doc/stk-api.txt
+@@ -170,8 +170,9 @@ Methods		byte RequestSelection(string title, byte icon_=
+id,
+ 					string default, byte min, byte max,
+ 					boolean hide_typing)
  =
 
- int stk_agent_request_digit(struct stk_agent *agent, const char *text,
- 				const struct stk_icon_id *icon,
--				stk_agent_string_cb cb, void *user_data,
--				ofono_destroy_func destroy, int timeout)
-+				ofono_bool_t immediate, stk_agent_string_cb cb,
-+				void *user_data, ofono_destroy_func destroy,
-+				int timeout)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
+-			Same as GetInput but only digit characters (0-9, *#+)
+-			are expected.
++			Same as RequestInput but only digit characters
++			(0-9, *#+) are expected. In hidden entry mode, "+" is
++			not allowed for user input.
  =
 
-@@ -568,6 +569,7 @@ int stk_agent_request_digit(struct stk_agent *agent, co=
-nst char *text,
- 	dbus_message_append_args(agent->msg,
- 					DBUS_TYPE_STRING, &text,
- 					DBUS_TYPE_BYTE, &icon->id,
-+					DBUS_TYPE_BOOLEAN, &immediate,
- 					DBUS_TYPE_INVALID);
+ 			Possible Errors: [service].Error.SimToolkit.GoBack
+ 					 [service].Error.SimToolkit.EndSession
+@@ -185,10 +186,14 @@ Methods		byte RequestSelection(string title, byte ico=
+n_id,
+ 			Possible Errors: [service].Error.SimToolkit.GoBack
+ 					 [service].Error.SimToolkit.EndSession
  =
 
- 	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
-diff --git a/src/stkagent.h b/src/stkagent.h
-index 6e267fc..e797c1e 100644
---- a/src/stkagent.h
-+++ b/src/stkagent.h
-@@ -99,8 +99,9 @@ int stk_agent_request_confirmation(struct stk_agent *agen=
-t, const char *text,
+-		string RequestDigit(string alpha, byte icon_id)
++		string RequestDigit(string alpha, byte icon_id,
++					boolean immediate_response)
  =
 
- int stk_agent_request_digit(struct stk_agent *agent, const char *text,
- 				const struct stk_icon_id *icon,
--				stk_agent_string_cb cb, void *user_data,
--				ofono_destroy_func destroy, int timeout);
-+				ofono_bool_t immediate, stk_agent_string_cb cb,
-+				void *user_data, ofono_destroy_func destroy,
-+				int timeout);
+ 			Same as above, but only digits (0-9, *#+) are
+-			expected.
++			expected. The parameter immediate_response indicates
++			that the entered digit shall not be displayed and the
++			response shall be sent immediately after the key press.
++			"+" is not allowed for user input in this mode.
  =
 
- int stk_agent_request_key(struct stk_agent *agent, const char *text,
- 				const struct stk_icon_id *icon,
+ 			Possible Errors: [service].Error.SimToolkit.GoBack
+ 					 [service].Error.SimToolkit.EndSession
 -- =
 
 1.7.9.5
 
 
---===============6735806646863187866==--
+--===============2915255550114777413==--
 
