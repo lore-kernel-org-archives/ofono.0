@@ -1,64 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============6965505136531956227=="
+Content-Type: multipart/mixed; boundary="===============4002281014356357798=="
 MIME-Version: 1.0
 From: Nicolas Bertrand <nicolas.bertrand@linux.intel.com>
-Subject: [PATCH 1/3] phonesim: accept STK command without application
-Date: Fri, 24 Aug 2012 10:32:33 +0200
-Message-ID: <1345797155-27517-2-git-send-email-nicolas.bertrand@linux.intel.com>
+Subject: [PATCH 2/3] controlbase_ui: Add manual stk command editor
+Date: Fri, 24 Aug 2012 10:32:34 +0200
+Message-ID: <1345797155-27517-3-git-send-email-nicolas.bertrand@linux.intel.com>
 In-Reply-To: <1345797155-27517-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6965505136531956227==
+--===============4002281014356357798==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If the STK command is rightly formated, send OK even if
-the sim application does not handle it. it's needed to
-be able to manualy send STK command.
 ---
- src/phonesim.cpp |    8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ src/controlbase.ui |   46 ++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 46 insertions(+)
 
-diff --git a/src/phonesim.cpp b/src/phonesim.cpp
-index 276ae47..aa4f8a2 100644
---- a/src/phonesim.cpp
-+++ b/src/phonesim.cpp
-@@ -985,8 +985,10 @@ bool SimRules::simCommand( const QString& cmd )
-         QByteArray response =3D QAtUtils::fromHex( cmd.mid(start) );
-         QSimTerminalResponse resp =3D QSimTerminalResponse::fromPdu( respo=
-nse );
- =
-
--        if ( !toolkitApp || !toolkitApp->response( resp ) )
-+        if ( ( resp.command().type() =3D=3D QSimCommand::NoCommand ) || !t=
-oolkitApp )
-             respond( "ERROR" );
-+        else if ( !toolkitApp->response( resp ) )
-+            respond( "OK" );
- =
-
-         return true;
-     }
-@@ -997,8 +999,10 @@ bool SimRules::simCommand( const QString& cmd )
-         QByteArray envelope =3D QAtUtils::fromHex( cmd.mid(start) );
-         QSimEnvelope env =3D QSimEnvelope::fromPdu( envelope );
- =
-
--        if (!toolkitApp || !toolkitApp->envelope( env ) )
-+        if ( ( env.type() =3D=3D QSimEnvelope::NoEnvelope ) || !toolkitApp=
- )
-             respond( "ERROR" );
-+        else if ( !toolkitApp->envelope( env ) )
-+            respond( "OK" );
- =
-
-         return true;
-     }
+diff --git a/src/controlbase.ui b/src/controlbase.ui
+index 4eb1355..e230d7c 100644
+--- a/src/controlbase.ui
++++ b/src/controlbase.ui
+@@ -1161,6 +1161,52 @@
+         </widget>
+        </item>
+        <item>
++        <widget class=3D"QGroupBox" name=3D"gbSTKCmd">
++         <property name=3D"title">
++          <string>STK Command</string>
++         </property>
++         <property name=3D"flat">
++          <bool>false</bool>
++         </property>
++         <widget class=3D"QPushButton" name=3D"pbSTKCmdSend">
++          <property name=3D"geometry">
++           <rect>
++            <x>80</x>
++            <y>150</y>
++            <width>141</width>
++            <height>31</height>
++           </rect>
++          </property>
++          <property name=3D"text">
++           <string>Send</string>
++          </property>
++         </widget>
++         <widget class=3D"QTextEdit" name=3D"teSTKCmdEditor">
++          <property name=3D"geometry">
++           <rect>
++            <x>235</x>
++            <y>20</y>
++            <width>401</width>
++            <height>161</height>
++           </rect>
++          </property>
++         </widget>
++         <widget class=3D"QPushButton" name=3D"pbSTKClear">
++          <property name=3D"geometry">
++           <rect>
++            <x>80</x>
++            <y>100</y>
++            <width>141</width>
++            <height>31</height>
++           </rect>
++          </property>
++          <property name=3D"text">
++           <string>Clear</string>
++          </property>
++         </widget>
++        </widget>
++       </item>
++       <item>
+         <widget class=3D"QGroupBox" name=3D"gbSATK">
+          <property name=3D"title">
+           <string>Application</string>
 -- =
 
 1.7.9.5
 
 
---===============6965505136531956227==--
+--===============4002281014356357798==--
 
