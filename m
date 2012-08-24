@@ -1,77 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============8160622110734926537=="
+Content-Type: multipart/mixed; boundary="===============3615040374743378744=="
 MIME-Version: 1.0
-From: Christopher Vogl <christopher.vogl@hale.at>
-Subject: Re: [PATCH] telit: sim status notification without polling
-Date: Fri, 24 Aug 2012 12:26:19 +0200
-Message-ID: <503756CB.5090708@hale.at>
-In-Reply-To: <50366A44.3030202@gmail.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: [RFC v1] gatchat: Print error message if opening tun failes
+Date: Fri, 24 Aug 2012 14:16:39 +0200
+Message-ID: <1345810599-22871-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8160622110734926537==
+--===============3615040374743378744==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
-On 23/08/12 19:37, Denis Kenzior wrote:
-> Hi Christopher,
->
->>> Also, one other thing I'm concerned about is the CFUN=3D4 usage when we
->>> try to set the modem offline. Your comments indicate that the Telit
->>> modem resets the SIM when we issue CFUN=3D4. Going from Online True ->
->>> False we don't actually want to reset the SIM. Does CFUN take an extra
->>> parameter to turn SIM reset off by any chance?
->>
->> Telit documentation says that +CFUN supports a second parameter which
->> should turn reset off.
->> AT+CFUN=3D? also returns +CFUN: (0,1,2,4,5),(0)
->> AT reference manual: "reset flag 0 - do not reset the ME before setting
->> it to <fun> functionality level"
->>
->> But the modem keeps returning +CME ERROR: 4 when I try it (no matter
->> which CFUN level).
->
-> That is funny.  Maybe the modem does not support a true 'offline' or =
+This is a very common misstake. Let's help the users to
+configure their system correctly.
+---
+Hi,
 
-> 'airplane' mode.  In which case the driver might need to be modified =
+I was not able to find out why the check in at_grps_context_prope() does not
+hit when the tun module is not loaded. Therefore, this on gets only
+an RFC state...
 
-> somewhat.
->
-> This is something we will need to solve in the future.  If not fixed, =
+cheers,
+daniel
 
-> I'm guessing that going Online then Offline will reset the SIM and =
+ gatchat/ppp_net.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-> cause all kinds of funny behavior.
->
->>
->> The modem behaves very strange sometimes. I kept getting timeouts when
->> setting AT+CFUN=3D4. I once tried it manually and it took 26 seconds unt=
-il
->> I got an OK.
->> Currently it works fine again.
->>
->
-> Is there a newer firmware available by any chance?
->
+diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
+index 1609b99..813ed9b 100644
+--- a/gatchat/ppp_net.c
++++ b/gatchat/ppp_net.c
+@@ -155,8 +155,12 @@ struct ppp_net *ppp_net_new(GAtPPP *ppp, int fd)
+ 	if (fd < 0) {
+ 		/* open a tun interface */
+ 		fd =3D open("/dev/net/tun", O_RDWR);
+-		if (fd < 0)
++		if (fd < 0) {
++			ppp_debug(ppp, "Couldn't open tun device. "
++					"Do you run oFono as root and do you "
++					"have the TUN module loaded?");
+ 			goto error;
++		}
+ =
 
-I'm currently using firmware version 08.01.107. Apparently there is a =
+ 		ifr.ifr_flags =3D IFF_TUN | IFF_NO_PI;
+ 		strcpy(ifr.ifr_name, "ppp%d");
+-- =
 
-08.01.108 version. I contacted the Telit support and they said they are =
-
-testing this version, so I don't know if it is available now. I hope we =
-
-are getting an official Telit support with the possibility for updates =
-
-soon - will know more on Tuesday.
-
-Regards,
-Christopher
-
---
-Scanned by MailScanner.
+1.7.12.rc1.16.g05a20c8
 
 
---===============8160622110734926537==--
+--===============3615040374743378744==--
 
