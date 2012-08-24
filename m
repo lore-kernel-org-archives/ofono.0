@@ -1,46 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7088282878179023481=="
+Content-Type: multipart/mixed; boundary="===============1312539691727935774=="
 MIME-Version: 1.0
-From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 12/12] doc: Add ReportChanged signal description
-Date: Fri, 24 Aug 2012 15:06:11 +0200
-Message-ID: <1345813571-15775-13-git-send-email-ronald.tessier@linux.intel.com>
-In-Reply-To: <1345813571-15775-1-git-send-email-ronald.tessier@linux.intel.com>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH 0/4] Immediate digit response
+Date: Fri, 24 Aug 2012 16:28:21 +0200
+Message-ID: <1345818505-17175-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7088282878179023481==
+--===============1312539691727935774==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/message-api.txt |    7 +++++++
- 1 file changed, 7 insertions(+)
+For GET-INPUT proactive command, the command qualifier can require
+to send the response immediately after the user has entered a digit.
+In this mode, the entered digit shall not be displayed and the character
+'+' is not allowed for user input.
 
-diff --git a/doc/message-api.txt b/doc/message-api.txt
-index 2922e5d..274bb98 100644
---- a/doc/message-api.txt
-+++ b/doc/message-api.txt
-@@ -31,6 +31,13 @@ Signals		PropertyChanged(string name, variant value)
- 			The only expected property change is for the
- 			message status.
- =
+Philippe Nunes (4):
+  stk: check if immediate digit response is requested
+  stkagent: Add argument to notify when immediate digit response is
+    required
+  doc: Update STK API regarding the new argument immediate_response
+  test: Print the immediate_response argument for RequestDigit
 
-+		ReportChanged(string type, variant recipient, variant status)
-+
-+			Signal that is sent when a report has been received and
-+			processed. It contains the type of the report
-+			("delivery_report" or other), the recipient concerned
-+			and its new status.
-+
- Properties	string Status [readonly]
- =
+ doc/stk-api.txt    |   13 +++++++++----
+ src/stk.c          |    6 ++++--
+ src/stkagent.c     |    6 ++++--
+ src/stkagent.h     |    5 +++--
+ test/test-stk-menu |    5 +++--
+ 5 files changed, 23 insertions(+), 12 deletions(-)
 
- 			The status of the message.  Possible values are
 -- =
 
 1.7.9.5
 
 
---===============7088282878179023481==--
+--===============1312539691727935774==--
 
