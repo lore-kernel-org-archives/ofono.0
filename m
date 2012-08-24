@@ -1,57 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============3615040374743378744=="
+Content-Type: multipart/mixed; boundary="===============0513166637275697383=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: [RFC v1] gatchat: Print error message if opening tun failes
-Date: Fri, 24 Aug 2012 14:16:39 +0200
-Message-ID: <1345810599-22871-1-git-send-email-wagi@monom.org>
+From: Ronald Tessier <ronald.tessier@linux.intel.com>
+Subject: [PATCH] mmsd: (resending) Add list-services script
+Date: Fri, 24 Aug 2012 14:58:17 +0200
+Message-ID: <1345813098-15516-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3615040374743378744==
+--===============0513166637275697383==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Add list-services script.
+This script lists all services with their properties.
 
-This is a very common misstake. Let's help the users to
-configure their system correctly.
----
-Hi,
+Ronald Tessier (1):
+  test: Add test script to list services properties
 
-I was not able to find out why the check in at_grps_context_prope() does not
-hit when the tun module is not loaded. Therefore, this on gets only
-an RFC state...
+ test/list-services |   27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+ create mode 100755 test/list-services
 
-cheers,
-daniel
-
- gatchat/ppp_net.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
-
-diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
-index 1609b99..813ed9b 100644
---- a/gatchat/ppp_net.c
-+++ b/gatchat/ppp_net.c
-@@ -155,8 +155,12 @@ struct ppp_net *ppp_net_new(GAtPPP *ppp, int fd)
- 	if (fd < 0) {
- 		/* open a tun interface */
- 		fd =3D open("/dev/net/tun", O_RDWR);
--		if (fd < 0)
-+		if (fd < 0) {
-+			ppp_debug(ppp, "Couldn't open tun device. "
-+					"Do you run oFono as root and do you "
-+					"have the TUN module loaded?");
- 			goto error;
-+		}
- =
-
- 		ifr.ifr_flags =3D IFF_TUN | IFF_NO_PI;
- 		strcpy(ifr.ifr_name, "ppp%d");
--- =
-
-1.7.12.rc1.16.g05a20c8
+--
+1.7.9.5
 
 
---===============3615040374743378744==--
+--===============0513166637275697383==--
 
