@@ -1,85 +1,95 @@
-Content-Type: multipart/mixed; boundary="===============0767884460015223026=="
+Content-Type: multipart/mixed; boundary="===============9171068599647028725=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/8] call-forwarding: class applied is the class given by
- SS code
-Date: Thu, 23 Aug 2012 13:32:43 -0500
-Message-ID: <5036774B.4040801@gmail.com>
-In-Reply-To: <50364CA7.1070804@linux.intel.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: Re: [PATCH] sms: Add delay before submitting multiple SMS to modem
+Date: Fri, 24 Aug 2012 10:16:46 +0200
+Message-ID: <5037386E.6090806@linux.intel.com>
+In-Reply-To: <5036694F.7030805@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0767884460015223026==
+--===============9171068599647028725==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi Denis,
 
-<snip>
-
->>> + /*
->>> + * Some modems don't understand all classes very well, particularly
->>> + * the older models. So if the bearer class is the default, we
->>> + * just use the more commonly understood value of 7 since BEARER_SMS
->>> + * is not applicable to CallForwarding conditions according to 22.004
->>> + * Annex A
->>> + */
->>> + if (cls =3D=3D BEARER_CLASS_SS_DEFAULT)
->>> + cls =3D BEARER_CLASS_DEFAULT;
->>> +
+On 23/08/2012 19:33, Denis Kenzior wrote:
+> Hi Guillaume,
+>
+> On 08/23/2012 09:26 AM, Guillaume Zajac wrote:
+>> Hi Denis,
 >>
->> Strictly speaking this is wrong. You cannot modify the cls here as it is
->> used to generate the reply in cf_ss_control_reply. Since
->> BEARER_CLASS_SS_DEFAULT !=3D BEARER_CLASS_DEFAULT you will generate the
->> wrong result.
+>> On 23/08/2012 15:48, Denis Kenzior wrote:
+>>> Hi Guillaume,
+>>>
+>>> <snip>
+>>>
+>>>> Unfortunately I come to the conclusion that if I want to send one same
+>>>> SMS to 3/4/5/... recipients with an application using oFono =
+
+>>>> middleware,
+>>>> I will not be able to send them through the same RRC channel, unless I
+>>>> queue them offline.
+>>>>
+>>>
+>>> If such a feature is important, then you do have a point. However,
+>>> implementing _anything_ by introducing an arbitrary delay is simply
+>>> wrong. I believe they teach the reasons for that in Operating Systems
+>>> 101. You are introducing a race condition that will break things at
+>>> the most inopportune time.
+>>
+>> I agree that it is not the most elegant/cleanest solution.
 >>
 >
-> OK, but I don't understand why we intend to generate a reply including
-> classes for which we don't know the status?
+> Then please refrain from sending patches which contain 'not the most =
+
+> elegant/cleanest' solution in the future.  oFono has a very high =
+
+> standard of quality, and the standard is even higher in the core than =
+
+> the driver code.
 >
-> With BEARER_CLASS_SS_DEFAULT, we are considering the classes
-> DataSync/DataAsync/Fax/Sms/Voice.
+> You are better off starting a discussion on IRC or describing the =
 
-For some bizarre reason 22.030 specifies that all bearers are queried in =
-
-the case that the mmi service code is omitted.  That means SMS as well. =
-
-  However, half the bearers are not even applicable to call forwarding.
-
-When reporting the results we report all bearers that were queried, even =
-
-if some of them are not applicable or not known.  This is because we do =
-
-not want to require the calling application to have any intelligence in =
-
-this area.  It should simply display the results as given by oFono.
-
+> problem in detail on the mailing list asking for possible solutions.
 >
-> But by default, the query is asking the status only for
-> BEARER_CLASS_DEFAULT (Data/Fax/Voice).
-> So, why, don't we match strictly the reply with the query?
+>>>
+>>> If we really require multi-recipient SMS to go on the same RRC
+>>> channel, then the best way to do so would be to introduce a new API
+>>> specifically for this use case.
+>>
+>> Having a new API for multi-recipient SMS would be indeed the best =
 
-We do, but querying with class is broken on many modems, hence the =
+>> solution.
+>> With current implementation the test is passing with multi-segment SMS
+>> using script but GCF test description is mentioning 3 different SMS.
+>> During device certification (with applications), the tester will try to
+>> send an SMS to 3 recipients but it will fail.
+>> Another solution would be to remove multi-SMS support from the PICS.
+>
+> Our current goal is just the baseline.  That means if we're missing a =
 
-comment and why we optimize this case.  If we pass in an explicit mmi =
+> feature, then we need to note that down and continue on.
+>
+> This is where the TODO file comes in.  If you see features that are =
 
-service code then that is what will be used instead.
+> missing, then send a patch to the TODO file describing the feature and =
 
-If your question is why we always query with the default, the answer is =
+> the preferred approach (after the relevant discussions on IRC/mailing =
 
-why not?  Default literally means Voice, Data, Fax.  Where Data is =
+> list).  The feature priority assignment / implementation can then =
 
-equivalent to DataAsync | DataSync in 27.007.  So in effect we get a =
+> proceed with the well-established workflow.
+>
 
-full set of results and we return only the applicable set to the =
+Ok I will send a RFC about this new feature, this will be the new thread =
 
-application.  Just because the GCF testing methodology is broken in this =
+to discuss on it.
 
-area does not mean that this approach is incorrect.
+Kind regards,
+Guillaume
 
-Regards,
--Denis
-
---===============0767884460015223026==--
+--===============9171068599647028725==--
 
