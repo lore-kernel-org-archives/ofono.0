@@ -1,67 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============2915255550114777413=="
+Content-Type: multipart/mixed; boundary="===============5887123799063411539=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 3/4] doc: Update STK API regarding the new argument
- immediate_response
-Date: Fri, 24 Aug 2012 16:28:24 +0200
-Message-ID: <1345818505-17175-4-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 1/4] stk: check if immediate digit response is requested
+Date: Fri, 24 Aug 2012 16:28:22 +0200
+Message-ID: <1345818505-17175-2-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1345818505-17175-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2915255550114777413==
+--===============5887123799063411539==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/stk-api.txt |   13 +++++++++----
- 1 file changed, 9 insertions(+), 4 deletions(-)
+ src/stk.c |    6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-index 471e5d6..0d96246 100644
---- a/doc/stk-api.txt
-+++ b/doc/stk-api.txt
-@@ -170,8 +170,9 @@ Methods		byte RequestSelection(string title, byte icon_=
-id,
- 					string default, byte min, byte max,
- 					boolean hide_typing)
+diff --git a/src/stk.c b/src/stk.c
+index 7a7bd75..3883d11 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -1519,6 +1519,7 @@ static gboolean handle_command_get_inkey(const struct=
+ stk_command *cmd,
+ 	gboolean alphabet =3D (qualifier & (1 << 0)) !=3D 0;
+ 	gboolean ucs2 =3D (qualifier & (1 << 1)) !=3D 0;
+ 	gboolean yesno =3D (qualifier & (1 << 2)) !=3D 0;
++	gboolean immediate =3D (qualifier & (1 << 3)) !=3D 0;
+ 	/*
+ 	 * Note: immediate response and help parameter values are not
+ 	 * provided by current api.
+@@ -1547,8 +1548,9 @@ static gboolean handle_command_get_inkey(const struct=
+ stk_command *cmd,
+ 						timeout);
+ 	else
+ 		err =3D stk_agent_request_digit(stk->current_agent, text,
+-						&gi->icon_id, request_key_cb,
+-						stk, NULL, timeout);
++						&gi->icon_id, immediate,
++						request_key_cb, stk, NULL,
++						timeout);
  =
 
--			Same as GetInput but only digit characters (0-9, *#+)
--			are expected.
-+			Same as RequestInput but only digit characters
-+			(0-9, *#+) are expected. In hidden entry mode, "+" is
-+			not allowed for user input.
+ 	g_free(text);
  =
 
- 			Possible Errors: [service].Error.SimToolkit.GoBack
- 					 [service].Error.SimToolkit.EndSession
-@@ -185,10 +186,14 @@ Methods		byte RequestSelection(string title, byte ico=
-n_id,
- 			Possible Errors: [service].Error.SimToolkit.GoBack
- 					 [service].Error.SimToolkit.EndSession
- =
-
--		string RequestDigit(string alpha, byte icon_id)
-+		string RequestDigit(string alpha, byte icon_id,
-+					boolean immediate_response)
- =
-
- 			Same as above, but only digits (0-9, *#+) are
--			expected.
-+			expected. The parameter immediate_response indicates
-+			that the entered digit shall not be displayed and the
-+			response shall be sent immediately after the key press.
-+			"+" is not allowed for user input in this mode.
- =
-
- 			Possible Errors: [service].Error.SimToolkit.GoBack
- 					 [service].Error.SimToolkit.EndSession
 -- =
 
 1.7.9.5
 
 
---===============2915255550114777413==--
+--===============5887123799063411539==--
 
