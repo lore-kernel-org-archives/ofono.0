@@ -1,98 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============5766351328735234512=="
+Content-Type: multipart/mixed; boundary="===============0596577543673432038=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: Re: [PATCH v2] ussd: Recover idle state in case of response sending
- failure
-Date: Fri, 24 Aug 2012 11:15:03 +0200
-Message-ID: <50374617.7050401@linux.intel.com>
-In-Reply-To: <50367059.9050406@gmail.com>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Subject: [RFC] Multi-recipient SMS implementation proposals
+Date: Fri, 24 Aug 2012 12:08:03 +0200
+Message-ID: <50375283.9080600@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5766351328735234512==
+--===============0596577543673432038==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 08/23/2012 08:03 PM, Denis Kenzior wrote:
-> Hi Philippe,
->
-> On 08/23/2012 11:27 AM, Philippe Nunes wrote:
->> GCF test case 31.8.1.2.3 is rejecting the user response.
->> Any subsequent USSD notification are not handled because USSD is
->> always in
->> state user-action.
->> ---
->> src/ussd.c | 12 ++++++++++++
->> 1 file changed, 12 insertions(+)
->>
->> diff --git a/src/ussd.c b/src/ussd.c
->> index 74888b2..21e0164 100644
->> --- a/src/ussd.c
->> +++ b/src/ussd.c
->> @@ -414,6 +414,18 @@ void ofono_ussd_notify(struct ofono_ussd *ussd,
->> int status, int dcs,
->> return;
->> }
->>
->> + if (status =3D=3D OFONO_USSD_STATUS_TERMINATED&&
->> + (ussd->state =3D=3D USSD_STATE_IDLE ||
->> + ussd->state =3D=3D USSD_STATE_USER_ACTION)) {
->
-> This check makes no sense, why bother checking for ussd->state =3D=3D
-> USSD_STATE_IDLE?
+Hi all,
 
-The issue has been unveiled after a network initiated USSD request:
+Mutli-recipient SMS implementation is needed to pass GCF test cases =
 
-\r\n+CUSD: 1,"Type *70*635*562# and send",15\r\n
-src/ussd.c:ofono_ussd_notify() status: 1 ACTION_REQUIRED, state: 0 IDLE
+34.2.9.1 and 34.2.9.2 for GSM; 16.1.9.1 and 16.1.9.2 for WCDMA.
+A new task should be added to oFono TODO and as requested by Denis we =
 
-then we try to  give an answer:
+have to discuss first the proposals.
+I have in mind 2 solutions:
 
-AT+CUSD=3D1,"*70*635*562#",15\r
-\r\n+CUSD: 2\r\n
-\r\n+CME ERROR: 100\r\n
+1- Add a new API in message manager methods using an array of string =
 
+containing all the recipients and returning an array of message paths:
+GDBUS_ASYNC_METHOD("SendMultipleMessage",
+         GDBUS_ARGS({ "to", "a{s}" }, { "text", "s" }),
+         GDBUS_ARGS({ "paths", "a{o}" }),
+         sms_send_multiple_message)
+It requires also to implement a new function in core based on =
 
-I presume that the same error could occur after a user USSD request. In =
+__ofono_sms_txq_submit() to fill in the TX queue with all recipients =
 
-this case, the state is still 'idle' and the "Terminated" notification =
+before submitting the message.
 
-results in a "NotificationReceived" signal with a NULL string. To avoid =
+2-Modify existing SendMessage API in adding a new mms argument:
+GDBUS_ASYNC_METHOD("SendMessage",
+         GDBUS_ARGS({ "to", "s" }, { "text", "s" }, { "mms", "i" }),
+         GDBUS_ARGS({ "path", "o" }),
+         sms_send_message)
+It requires to add a new field in struct ofono_sms like 'int send_mms'.
+tx_next() function should be modified to check 'int mms' option before =
 
-this, I need to check also for ussd->state =3D=3D USSD_STATE_IDLE. That's =
+analysing the TX queue size.
+We should determine if send_mms =3D 2 options could be used. Even if we =
 
-why the first version was for me more appropriate.
+don't use it, send_mms should be set to 0 once all the multi-recipient =
 
+SMS have been transmitted.
 
->
->> + ussd_change_state(ussd, USSD_STATE_IDLE);
->> +
->> + if (ussd->pending =3D=3D NULL)
->> + return;
->> +
->> + reply =3D __ofono_error_not_supported(ussd->pending);
->> + goto out;
->> + }
->> +
->
-> I would handle it just like the 'Not Supported' case but with a new
-> __ofono_error_network_terminated error reply. Or perhaps re-use
-> __ofono_error_canceled.
+Kind regards,
+Guillaume
 
-In practice, I don't ever expect to send a reply since the =
-
-ussd_response_callback/ ussd_callback is invoked before the TERMINATED =
-
-notification. The error returned in the callback is __ofono_error_failed.
-So, what about changing the state to 'idle' if not already set and =
-
-simply return?
-
-Regards,
-
-Philippe.
-
-
---===============5766351328735234512==--
+--===============0596577543673432038==--
 
