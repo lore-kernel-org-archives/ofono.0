@@ -1,47 +1,145 @@
-Content-Type: multipart/mixed; boundary="===============1907653814414321195=="
+Content-Type: multipart/mixed; boundary="===============4266333982187598111=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 4/4] test: Print the immediate_response argument for
- RequestDigit
-Date: Fri, 24 Aug 2012 16:28:25 +0200
-Message-ID: <1345818505-17175-5-git-send-email-philippe.nunes@linux.intel.com>
-In-Reply-To: <1345818505-17175-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH] phonesim: Add GET_INPUT test case
+Date: Fri, 24 Aug 2012 16:35:36 +0200
+Message-ID: <1345818936-17602-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1907653814414321195==
+--===============4266333982187598111==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This test case is used to check the immediate digit response flag.
 ---
- test/test-stk-menu |    5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ src/conformancesimapplication.cpp |   25 ++++++++++++++++++++-----
+ src/qsimcommand.cpp               |   32 ++++++++++++++++++++++++++++++++
+ src/qsimcommand.h                 |    3 +++
+ 3 files changed, 55 insertions(+), 5 deletions(-)
 
-diff --git a/test/test-stk-menu b/test/test-stk-menu
-index a9f92e8..3bd4483 100755
---- a/test/test-stk-menu
-+++ b/test/test-stk-menu
-@@ -113,10 +113,11 @@ class StkAgent(dbus.service.Object):
- 			return key
+diff --git a/src/conformancesimapplication.cpp b/src/conformancesimapplicat=
+ion.cpp
+index baf3538..a2bd3af 100644
+--- a/src/conformancesimapplication.cpp
++++ b/src/conformancesimapplication.cpp
+@@ -81,11 +81,12 @@ const QString ConformanceSimApplication::getName()
+ #define GetInkeyMenu_Cyrillic_Display_2  4
+ #define GetInkeyMenu_Cyrillic_Entry      5
+ #define GetInkeyMenu_YesNo_Response      6
+-#define GetInkeyMenu_Icon                7
+-#define GetInkeyMenu_Help                8
+-#define GetInkeyMenu_Variable_Timeout    9
+-#define GetInkeyMenu_Text_Attribute     10
+-#define GetInkeyMenu_Main               11
++#define GetInkeyMenu_ImmediateResponse   7
++#define GetInkeyMenu_Icon                8
++#define GetInkeyMenu_Help                9
++#define GetInkeyMenu_Variable_Timeout   10
++#define GetInkeyMenu_Text_Attribute     11
++#define GetInkeyMenu_Main               12
  =
 
- 	@dbus.service.method("org.ofono.SimToolkitAgent",
--				in_signature=3D"sy", out_signature=3D"s")
--	def RequestDigit(self, title, icon):
-+				in_signature=3D"sys", out_signature=3D"s")
-+	def RequestDigit(self, title, icon, immediate_response):
- 		print "Title: (%s)" % (title)
- 		print "Icon: (%d)" % (icon)
-+		print "Immediate response: (%s)" % (immediate_response)
- 		key =3D raw_input("Enter Digit (t, b):")
+ #define GetInputMenu_Normal              1
+ #define GetInputMenu_No_Response         2
+@@ -677,6 +678,10 @@ void ConformanceSimApplication::sendGetInkeyMenu()
+     item.setLabel( "Yes/No response for the input" );
+     items +=3D item;
  =
 
- 		if key =3D=3D 'b':
++    item.setIdentifier( GetInkeyMenu_ImmediateResponse );
++    item.setLabel( "Immediate response for the digit input" );
++    items +=3D item;
++
+     item.setIdentifier( GetInkeyMenu_Icon );
+     item.setLabel( "Display of icon" );
+     items +=3D item;
+@@ -887,6 +892,16 @@ void ConformanceSimApplication::GetInkeyMenu( const QS=
+imTerminalResponse& resp )
+         }
+         break;
+ =
+
++        case GetInkeyMenu_ImmediateResponse:
++        {
++            cmd.setType( QSimCommand::GetInkey );
++            cmd.setDestinationDevice( QSimCommand::ME );
++            cmd.setWantImmediateResponse( true );
++            cmd.setText( "Enter 1" );
++            command( cmd, this, SLOT(sendGetInkeyMenu()) );
++        }
++        break;
++
+         case GetInkeyMenu_Icon:
+         {
+             sendGetInkeyIconMenu();
+diff --git a/src/qsimcommand.cpp b/src/qsimcommand.cpp
+index f5dbdf2..7ef9c2e 100644
+--- a/src/qsimcommand.cpp
++++ b/src/qsimcommand.cpp
+@@ -1312,6 +1312,38 @@ void QSimCommand::setWantYesNo( bool value )
+ =
+
+ =
+
+ /*!
++    Returns true if \c GetInkey wants that the response is immediately sent
++    after key press.  The default value is false.
++
++    Applies to: \c GetInkey
++
++    \sa setWantImmediateResponse()
++*/
++bool QSimCommand::wantImmediateResponse() const
++{
++    if ( d->type =3D=3D QSimCommand::GetInkey )
++        return d->qualifierBit( 0x08 );
++    else
++        return false;
++}
++
++
++/*!
++    Sets the flag that determines if \c GetInkey wants that
++    the response is immediately sent after key press.
++
++    Applies to: \c GetInkey
++
++    \sa wantImmediateResponse()
++*/
++void QSimCommand::setWantImmediateResponse( bool value )
++{
++    if ( d->type =3D=3D QSimCommand::GetInkey )
++        dwrite()->setQualifierBit( 0x08, value );
++}
++
++
++/*!
+     Returns the minimum text length for input.  The default value is 0.
+ =
+
+     Applies to: \c GetInput.
+diff --git a/src/qsimcommand.h b/src/qsimcommand.h
+index 3b34be9..2c1b423 100644
+--- a/src/qsimcommand.h
++++ b/src/qsimcommand.h
+@@ -292,6 +292,9 @@ public:
+     bool echo() const;
+     void setEcho( bool value );
+ =
+
++    bool wantImmediateResponse() const;
++    void setWantImmediateResponse( bool value );
++
+     QSimCommand::Disposition disposition() const;
+     void setDisposition( QSimCommand::Disposition value );
+ =
+
 -- =
 
 1.7.9.5
 
 
---===============1907653814414321195==--
+--===============4266333982187598111==--
 
