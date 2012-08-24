@@ -1,98 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============1707265177097075979=="
+Content-Type: multipart/mixed; boundary="===============3018230665218054851=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCH 08/12] store: Define MMS_META_UUID_XXX len and suffix
-Date: Fri, 24 Aug 2012 15:06:07 +0200
-Message-ID: <1345813571-15775-9-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCH 11/12] test: Add ReportChanged to monitored signals
+Date: Fri, 24 Aug 2012 15:06:10 +0200
+Message-ID: <1345813571-15775-12-git-send-email-ronald.tessier@linux.intel.com>
 In-Reply-To: <1345813571-15775-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1707265177097075979==
+--===============3018230665218054851==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/store.c |    8 +++-----
- src/store.h |    5 +++++
- 2 files changed, 8 insertions(+), 5 deletions(-)
+ test/monitor-mms |   10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-diff --git a/src/store.c b/src/store.c
-index b09c17b..f1c5714 100644
---- a/src/store.c
-+++ b/src/store.c
-@@ -42,8 +42,6 @@
- #define TFR
- #endif
+diff --git a/test/monitor-mms b/test/monitor-mms
+index 188d028..ef17a13 100755
+--- a/test/monitor-mms
++++ b/test/monitor-mms
+@@ -29,6 +29,10 @@ def property_changed(name, value, member, path, interfac=
+e):
+ 	iface =3D interface[interface.rfind(".") + 1:]
+ 	print "{%s} [%s] %s %s" % (iface, name, member, value)
  =
 
--#define MMS_SHA1_UUID_LEN 20
--
- static const char *digest_to_str(const unsigned char *digest)
- {
- 	static char buf[MMS_SHA1_UUID_LEN * 2 + 1];
-@@ -293,7 +291,7 @@ void mms_store_remove(const char *service_id, const cha=
-r *uuid)
- =
-
- 	unlink(pdu_path);
- =
-
--	meta_path =3D g_strdup_printf("%s%s", pdu_path, ".status");
-+	meta_path =3D g_strdup_printf("%s%s", pdu_path, MMS_META_UUID_SUFFIX);
- =
-
- 	g_free(pdu_path);
- =
-
-@@ -312,7 +310,7 @@ GKeyFile *mms_store_meta_open(const char *service_id, c=
-onst char *uuid)
- 	if (pdu_path =3D=3D NULL)
- 		return NULL;
- =
-
--	meta_path =3D g_strdup_printf("%s%s", pdu_path, ".status");
-+	meta_path =3D g_strdup_printf("%s%s", pdu_path, MMS_META_UUID_SUFFIX);
- =
-
- 	g_free(pdu_path);
- =
-
-@@ -337,7 +335,7 @@ static void meta_store_sync(const char *service_id, con=
-st char *uuid,
- 	if (pdu_path =3D=3D NULL)
- 		return;
- =
-
--	meta_path =3D g_strdup_printf("%s%s", pdu_path, ".status");
-+	meta_path =3D g_strdup_printf("%s%s", pdu_path, MMS_META_UUID_SUFFIX);
- =
-
- 	g_free(pdu_path);
- =
-
-diff --git a/src/store.h b/src/store.h
-index ba2c080..fb2ca9f 100644
---- a/src/store.h
-+++ b/src/store.h
-@@ -19,6 +19,11 @@
-  *
-  */
- =
-
-+#define MMS_SHA1_UUID_LEN 20
-+#define MMS_META_UUID_SUFFIX ".status"
-+#define MMS_META_UUID_SUFFIX_LEN 7
-+#define MMS_META_UUID_LEN (MMS_SHA1_UUID_LEN * 2)
++def report_changed(type, rec, status, path, interface):
++	iface =3D interface[interface.rfind(".") + 1:]
++	print "{%s} [%s] <%s> %s : %s" % (iface, path, type, rec, status)
 +
- const char *mms_store(const char *service_id, unsigned char *pdu,
- 							unsigned int len);
- const char *mms_store_file(const char *service_id, const char *path);
+ if __name__ =3D=3D '__main__':
+ 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
+ =
+
+@@ -75,5 +79,11 @@ if __name__ =3D=3D '__main__':
+ 						path_keyword=3D"path",
+ 						interface_keyword=3D"interface")
+ =
+
++	bus.add_signal_receiver(report_changed,
++					bus_name=3D"org.ofono.mms",
++					signal_name =3D "ReportChanged",
++						path_keyword=3D"path",
++						interface_keyword=3D"interface")
++
+ 	mainloop =3D gobject.MainLoop()
+ 	mainloop.run()
 -- =
 
 1.7.9.5
 
 
---===============1707265177097075979==--
+--===============3018230665218054851==--
 
