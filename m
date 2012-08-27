@@ -1,35 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============9023066809833514443=="
+Content-Type: multipart/mixed; boundary="===============4744329318677595499=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
 Subject: Re: [RFC] Multi-recipient SMS implementation proposals
-Date: Fri, 24 Aug 2012 15:31:47 -0700
-Message-ID: <1345847507.1779.26.camel@aeonflux>
-In-Reply-To: <50375283.9080600@linux.intel.com>
+Date: Mon, 27 Aug 2012 10:06:11 +0200
+Message-ID: <503B2A73.5000504@linux.intel.com>
+In-Reply-To: <1345847507.1779.26.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9023066809833514443==
+--===============4744329318677595499==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Marcel,
 
-<snip>
+On 25/08/2012 00:31, Marcel Holtmann wrote:
+> Hi Guillaume,
+>
+> <snip>
+>
+>> 2-Modify existing SendMessage API in adding a new mms argument:
+>> GDBUS_ASYNC_METHOD("SendMessage",
+>>           GDBUS_ARGS({ "to", "s" }, { "text", "s" }, { "mms", "i" }),
+>>           GDBUS_ARGS({ "path", "o" }),
+>>           sms_send_message)
+> oFono 1.x has a stable API. Why are you proposing to break the API?
 
-> 2-Modify existing SendMessage API in adding a new mms argument:
-> GDBUS_ASYNC_METHOD("SendMessage",
->          GDBUS_ARGS({ "to", "s" }, { "text", "s" }, { "mms", "i" }),
->          GDBUS_ARGS({ "path", "o" }),
->          sms_send_message)
+Ok, and what is your opinion about the first solution?
 
-oFono 1.x has a stable API. Why are you proposing to break the API?
+Kind regards,
+Guillaume
 
-Regards
-
-Marcel
-
-
-
---===============9023066809833514443==--
+--===============4744329318677595499==--
 
