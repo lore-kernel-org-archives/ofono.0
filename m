@@ -1,51 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============6065536964763929662=="
+Content-Type: multipart/mixed; boundary="===============0367797330743209989=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/3] Add STK APDU editor
-Date: Tue, 28 Aug 2012 09:47:21 -0500
-Message-ID: <503CD9F9.101@gmail.com>
-In-Reply-To: <1345797155-27517-1-git-send-email-nicolas.bertrand@linux.intel.com>
+From: Christopher Vogl <christopher.vogl@hale.at>
+Subject: Re: [PATCH] telit: sim status notification without polling
+Date: Tue, 28 Aug 2012 17:19:38 +0200
+Message-ID: <503CE18A.9060300@hale.at>
+In-Reply-To: <50366A44.3030202@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6065536964763929662==
+--===============0367797330743209989==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nicolas,
+Hi Denis,
 
-On 08/24/2012 03:32 AM, Nicolas Bertrand wrote:
-> Add to phonesim the capability to symply send STK APDU
+On 23/08/12 19:37, Denis Kenzior wrote:
+> Hi Christopher,
 >
-> Nicolas Bertrand (3):
->    phonesim: accept STK command without application
->    controlbase_ui: Add manual stk command editor
->    control: Link functionnality to STK command editor
+>>> Also, one other thing I'm concerned about is the CFUN=3D4 usage when we
+>>> try to set the modem offline. Your comments indicate that the Telit
+>>> modem resets the SIM when we issue CFUN=3D4. Going from Online True ->
+>>> False we don't actually want to reset the SIM. Does CFUN take an extra
+>>> parameter to turn SIM reset off by any chance?
+>>
+>> Telit documentation says that +CFUN supports a second parameter which
+>> should turn reset off.
+>> AT+CFUN=3D? also returns +CFUN: (0,1,2,4,5),(0)
+>> AT reference manual: "reset flag 0 - do not reset the ME before setting
+>> it to <fun> functionality level"
+>>
+>> But the modem keeps returning +CME ERROR: 4 when I try it (no matter
+>> which CFUN level).
 >
->   src/control.cpp    |   12 ++++++++++++
->   src/control.h      |    2 ++
->   src/controlbase.ui |   46 ++++++++++++++++++++++++++++++++++++++++++++++
->   src/phonesim.cpp   |    8 ++++++--
->   4 files changed, 66 insertions(+), 2 deletions(-)
+> That is funny.  Maybe the modem does not support a true 'offline' or =
+
+> 'airplane' mode.  In which case the driver might need to be modified =
+
+> somewhat.
 >
+> This is something we will need to solve in the future.  If not fixed, =
 
-I don't like this idea at all, pasting arbitrary PDUs is slow, error =
+> I'm guessing that going Online then Offline will reset the SIM and =
 
-prone and does not encourage any sort of automation.  While Phonesim is =
+> cause all kinds of funny behavior.
+>
+>>
+>> The modem behaves very strange sometimes. I kept getting timeouts when
+>> setting AT+CFUN=3D4. I once tried it manually and it took 26 seconds unt=
+il
+>> I got an OK.
+>> Currently it works fine again.
+>>
+>
+> Is there a newer firmware available by any chance? =
 
-meant for people who know what they're doing, I'd still like to maintain =
 
-at least some resemblance of user-friendliness.
+Telit support was so kind to send me a firmware version (08.01.108-B006) =
 
-If you really need some way of sending PDUs that phonesim is incapable =
+which supports +CFUN without resetting.
+I suppose this is not an official version yet and if I adapt the code in =
 
-of, feel free to modify the conformance application to emit the PDU in =
+the telit plugin I will probably be the only one who can use it.
+Is it ok if I send a corrected version of this patch and change the =
 
-question.
+offline/online mode handling in a further patch when it is sure =
+
+supported by an official firmware version?
 
 Regards,
--Denis
 
---===============6065536964763929662==--
+Christopher
+
+--
+Scanned by MailScanner.
+
+
+--===============0367797330743209989==--
 
