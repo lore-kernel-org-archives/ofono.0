@@ -1,32 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============7503047007866253255=="
+Content-Type: multipart/mixed; boundary="===============6065536964763929662=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 2/2] phonesim: Add GET_INPUT test case
-Date: Tue, 28 Aug 2012 09:35:16 -0500
-Message-ID: <503CD724.9000800@gmail.com>
-In-Reply-To: <1346160298-11307-2-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH 0/3] Add STK APDU editor
+Date: Tue, 28 Aug 2012 09:47:21 -0500
+Message-ID: <503CD9F9.101@gmail.com>
+In-Reply-To: <1345797155-27517-1-git-send-email-nicolas.bertrand@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7503047007866253255==
+--===============6065536964763929662==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi Nicolas,
 
-On 08/28/2012 08:24 AM, Philippe Nunes wrote:
-> This test case is used to check the immediate digit response flag.
-> ---
->   src/conformancesimapplication.cpp |   25 ++++++++++++++++++++-----
->   1 file changed, 20 insertions(+), 5 deletions(-)
+On 08/24/2012 03:32 AM, Nicolas Bertrand wrote:
+> Add to phonesim the capability to symply send STK APDU
+>
+> Nicolas Bertrand (3):
+>    phonesim: accept STK command without application
+>    controlbase_ui: Add manual stk command editor
+>    control: Link functionnality to STK command editor
+>
+>   src/control.cpp    |   12 ++++++++++++
+>   src/control.h      |    2 ++
+>   src/controlbase.ui |   46 ++++++++++++++++++++++++++++++++++++++++++++++
+>   src/phonesim.cpp   |    8 ++++++--
+>   4 files changed, 66 insertions(+), 2 deletions(-)
 >
 
-Patch has been applied, thanks.
+I don't like this idea at all, pasting arbitrary PDUs is slow, error =
+
+prone and does not encourage any sort of automation.  While Phonesim is =
+
+meant for people who know what they're doing, I'd still like to maintain =
+
+at least some resemblance of user-friendliness.
+
+If you really need some way of sending PDUs that phonesim is incapable =
+
+of, feel free to modify the conformance application to emit the PDU in =
+
+question.
 
 Regards,
 -Denis
 
-
---===============7503047007866253255==--
+--===============6065536964763929662==--
 
