@@ -1,87 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============8671465119254991877=="
+Content-Type: multipart/mixed; boundary="===============0524677008031257521=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2 1/2] phonesim: Add methods to handle the 'immediate digit
- response' flag
-Date: Tue, 28 Aug 2012 15:24:57 +0200
-Message-ID: <1346160298-11307-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 2/2] phonesim: Add GET_INPUT test case
+Date: Tue, 28 Aug 2012 15:24:58 +0200
+Message-ID: <1346160298-11307-2-git-send-email-philippe.nunes@linux.intel.com>
+In-Reply-To: <1346160298-11307-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8671465119254991877==
+--===============0524677008031257521==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This test case is used to check the immediate digit response flag.
 ---
- src/qsimcommand.cpp |   30 ++++++++++++++++++++++++++++++
- src/qsimcommand.h   |    3 +++
- 2 files changed, 33 insertions(+)
+ src/conformancesimapplication.cpp |   25 ++++++++++++++++++++-----
+ 1 file changed, 20 insertions(+), 5 deletions(-)
 
-diff --git a/src/qsimcommand.cpp b/src/qsimcommand.cpp
-index f5dbdf2..97e0b28 100644
---- a/src/qsimcommand.cpp
-+++ b/src/qsimcommand.cpp
-@@ -1312,6 +1312,36 @@ void QSimCommand::setWantYesNo( bool value )
+diff --git a/src/conformancesimapplication.cpp b/src/conformancesimapplicat=
+ion.cpp
+index baf3538..a2bd3af 100644
+--- a/src/conformancesimapplication.cpp
++++ b/src/conformancesimapplication.cpp
+@@ -81,11 +81,12 @@ const QString ConformanceSimApplication::getName()
+ #define GetInkeyMenu_Cyrillic_Display_2  4
+ #define GetInkeyMenu_Cyrillic_Entry      5
+ #define GetInkeyMenu_YesNo_Response      6
+-#define GetInkeyMenu_Icon                7
+-#define GetInkeyMenu_Help                8
+-#define GetInkeyMenu_Variable_Timeout    9
+-#define GetInkeyMenu_Text_Attribute     10
+-#define GetInkeyMenu_Main               11
++#define GetInkeyMenu_ImmediateResponse   7
++#define GetInkeyMenu_Icon                8
++#define GetInkeyMenu_Help                9
++#define GetInkeyMenu_Variable_Timeout   10
++#define GetInkeyMenu_Text_Attribute     11
++#define GetInkeyMenu_Main               12
  =
 
+ #define GetInputMenu_Normal              1
+ #define GetInputMenu_No_Response         2
+@@ -677,6 +678,10 @@ void ConformanceSimApplication::sendGetInkeyMenu()
+     item.setLabel( "Yes/No response for the input" );
+     items +=3D item;
  =
 
- /*!
-+    Returns true if \c GetInkey wants that the response is immediately sent
-+    after key press.  The default value is false.
++    item.setIdentifier( GetInkeyMenu_ImmediateResponse );
++    item.setLabel( "Immediate response for the digit input" );
++    items +=3D item;
 +
-+    Applies to: \c GetInkey
-+
-+    \sa setWantImmediateResponse()
-+*/
-+bool QSimCommand::wantImmediateResponse() const
-+{
-+    if ( d->type =3D=3D QSimCommand::GetInkey )
-+        return d->qualifierBit( 0x08 );
-+    else
-+        return false;
-+}
-+
-+/*!
-+    Sets the flag that determines if \c GetInkey wants that
-+    the response is immediately sent after key press.
-+
-+    Applies to: \c GetInkey
-+
-+    \sa wantImmediateResponse()
-+*/
-+void QSimCommand::setWantImmediateResponse( bool value )
-+{
-+    if ( d->type =3D=3D QSimCommand::GetInkey )
-+        dwrite()->setQualifierBit( 0x08, value );
-+}
-+
-+/*!
-     Returns the minimum text length for input.  The default value is 0.
+     item.setIdentifier( GetInkeyMenu_Icon );
+     item.setLabel( "Display of icon" );
+     items +=3D item;
+@@ -887,6 +892,16 @@ void ConformanceSimApplication::GetInkeyMenu( const QS=
+imTerminalResponse& resp )
+         }
+         break;
  =
 
-     Applies to: \c GetInput.
-diff --git a/src/qsimcommand.h b/src/qsimcommand.h
-index 3b34be9..2c1b423 100644
---- a/src/qsimcommand.h
-+++ b/src/qsimcommand.h
-@@ -292,6 +292,9 @@ public:
-     bool echo() const;
-     void setEcho( bool value );
- =
-
-+    bool wantImmediateResponse() const;
-+    void setWantImmediateResponse( bool value );
++        case GetInkeyMenu_ImmediateResponse:
++        {
++            cmd.setType( QSimCommand::GetInkey );
++            cmd.setDestinationDevice( QSimCommand::ME );
++            cmd.setWantImmediateResponse( true );
++            cmd.setText( "Enter 1" );
++            command( cmd, this, SLOT(sendGetInkeyMenu()) );
++        }
++        break;
 +
-     QSimCommand::Disposition disposition() const;
-     void setDisposition( QSimCommand::Disposition value );
- =
-
+         case GetInkeyMenu_Icon:
+         {
+             sendGetInkeyIconMenu();
 -- =
 
 1.7.9.5
 
 
---===============8671465119254991877==--
+--===============0524677008031257521==--
 
