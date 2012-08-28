@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5264881283033526942=="
+Content-Type: multipart/mixed; boundary="===============7503047007866253255=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 1/2] phonesim: Add methods to handle the 'immediate
- digit response' flag
-Date: Tue, 28 Aug 2012 09:34:57 -0500
-Message-ID: <503CD711.9020904@gmail.com>
-In-Reply-To: <1346160298-11307-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH v2 2/2] phonesim: Add GET_INPUT test case
+Date: Tue, 28 Aug 2012 09:35:16 -0500
+Message-ID: <503CD724.9000800@gmail.com>
+In-Reply-To: <1346160298-11307-2-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5264881283033526942==
+--===============7503047007866253255==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,18 +16,17 @@ Content-Transfer-Encoding: quoted-printable
 Hi Philippe,
 
 On 08/28/2012 08:24 AM, Philippe Nunes wrote:
+> This test case is used to check the immediate digit response flag.
 > ---
->   src/qsimcommand.cpp |   30 ++++++++++++++++++++++++++++++
->   src/qsimcommand.h   |    3 +++
->   2 files changed, 33 insertions(+)
+>   src/conformancesimapplication.cpp |   25 ++++++++++++++++++++-----
+>   1 file changed, 20 insertions(+), 5 deletions(-)
 >
 
-Patch has been applied, however I had to re-write the overly long commit =
-
-header.  Please limit all commit headers to 72 characters or less.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============5264881283033526942==--
+
+--===============7503047007866253255==--
 
