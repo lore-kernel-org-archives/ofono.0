@@ -1,58 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============4033466728919112112=="
+Content-Type: multipart/mixed; boundary="===============5388648532630792720=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2 3/4] stk: Ask for immediate digit response if specified by
- command qualifier
-Date: Tue, 28 Aug 2012 15:21:21 +0200
-Message-ID: <1346160082-11077-4-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 4/4] test: Update with RequestQuickDigit API
+Date: Tue, 28 Aug 2012 15:21:22 +0200
+Message-ID: <1346160082-11077-5-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1346160082-11077-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4033466728919112112==
+--===============5388648532630792720==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |    9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ test/test-stk-menu |   37 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
 
-diff --git a/src/stk.c b/src/stk.c
-index 7a7bd75..38f2e18 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -1519,9 +1519,9 @@ static gboolean handle_command_get_inkey(const struct=
- stk_command *cmd,
- 	gboolean alphabet =3D (qualifier & (1 << 0)) !=3D 0;
- 	gboolean ucs2 =3D (qualifier & (1 << 1)) !=3D 0;
- 	gboolean yesno =3D (qualifier & (1 << 2)) !=3D 0;
-+	gboolean immediate =3D (qualifier & (1 << 3)) !=3D 0;
- 	/*
--	 * Note: immediate response and help parameter values are not
--	 * provided by current api.
-+	 * Note: help parameter value is not provided by current api.
- 	 */
- 	int err;
+diff --git a/test/test-stk-menu b/test/test-stk-menu
+index a9f92e8..476d949 100755
+--- a/test/test-stk-menu
++++ b/test/test-stk-menu
+@@ -7,6 +7,27 @@ import dbus
+ import dbus.service
+ import dbus.mainloop.glib
  =
 
-@@ -1545,6 +1545,11 @@ static gboolean handle_command_get_inkey(const struc=
-t stk_command *cmd,
- 						&gi->icon_id, ucs2,
- 						request_key_cb, stk, NULL,
- 						timeout);
-+	else if (immediate)
-+		err =3D stk_agent_request_quick_digit(stk->current_agent,
-+							text, &gi->icon_id,
-+							request_key_cb, stk,
-+							NULL, timeout);
- 	else
- 		err =3D stk_agent_request_digit(stk->current_agent, text,
- 						&gi->icon_id, request_key_cb,
++
++
++class _GetchUnix:
++    def __init__(self):
++        import tty, sys
++
++    def __call__(self):
++        import sys, tty, termios
++        fd =3D sys.stdin.fileno()
++        old_settings =3D termios.tcgetattr(fd)
++        try:
++            tty.setraw(sys.stdin.fileno())
++            ch =3D sys.stdin.read(1)
++        finally:
++            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
++        return ch
++
++
++getch =3D _GetchUnix()
++
++
+ class GoBack(dbus.DBusException):
+ 	_dbus_error_name =3D "org.ofono.Error.GoBack"
+ =
+
+@@ -127,6 +148,22 @@ class StkAgent(dbus.service.Object):
+ 			return key
+ =
+
+ 	@dbus.service.method("org.ofono.SimToolkitAgent",
++				in_signature=3D"sy", out_signature=3D"s")
++	def RequestQuickDigit(self, title, icon):
++		print "Title: (%s)" % (title)
++		print "Icon: (%d)" % (icon)
++		print "Single key press (t, b, 0-9,*,#)" =
+
++		key =3D getch();
++
++		if key =3D=3D 'b':
++			raise GoBack("User wishes to go back");
++		elif key =3D=3D 't':
++			raise EndSession("User wishes to terminate session");
++		else:
++			print "."			=
+
++			return key
++
++	@dbus.service.method("org.ofono.SimToolkitAgent",
+ 				in_signature=3D"sy", out_signature=3D"b")
+ 	def RequestConfirmation(self, title, icon):
+ 		print "Title: (%s)" % (title)
 -- =
 
 1.7.9.5
 
 
---===============4033466728919112112==--
+--===============5388648532630792720==--
 
