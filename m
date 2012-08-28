@@ -1,93 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============5390031187067678581=="
+Content-Type: multipart/mixed; boundary="===============4033466728919112112=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2 2/4] stkagent: Add new API to get digit response on single
- key press
-Date: Tue, 28 Aug 2012 15:21:20 +0200
-Message-ID: <1346160082-11077-3-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 3/4] stk: Ask for immediate digit response if specified by
+ command qualifier
+Date: Tue, 28 Aug 2012 15:21:21 +0200
+Message-ID: <1346160082-11077-4-git-send-email-philippe.nunes@linux.intel.com>
 In-Reply-To: <1346160082-11077-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5390031187067678581==
+--===============4033466728919112112==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkagent.c |   32 ++++++++++++++++++++++++++++++++
- src/stkagent.h |    5 +++++
- 2 files changed, 37 insertions(+)
+ src/stk.c |    9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/src/stkagent.c b/src/stkagent.c
-index 7c3f697..63b82f3 100644
---- a/src/stkagent.c
-+++ b/src/stkagent.c
-@@ -584,6 +584,38 @@ int stk_agent_request_digit(struct stk_agent *agent, c=
-onst char *text,
- 	return 0;
- }
+diff --git a/src/stk.c b/src/stk.c
+index 7a7bd75..38f2e18 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -1519,9 +1519,9 @@ static gboolean handle_command_get_inkey(const struct=
+ stk_command *cmd,
+ 	gboolean alphabet =3D (qualifier & (1 << 0)) !=3D 0;
+ 	gboolean ucs2 =3D (qualifier & (1 << 1)) !=3D 0;
+ 	gboolean yesno =3D (qualifier & (1 << 2)) !=3D 0;
++	gboolean immediate =3D (qualifier & (1 << 3)) !=3D 0;
+ 	/*
+-	 * Note: immediate response and help parameter values are not
+-	 * provided by current api.
++	 * Note: help parameter value is not provided by current api.
+ 	 */
+ 	int err;
  =
 
-+int stk_agent_request_quick_digit(struct stk_agent *agent, const char *tex=
-t,
-+				const struct stk_icon_id *icon,
-+				stk_agent_string_cb cb, void *user_data,
-+				ofono_destroy_func destroy, int timeout)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+
-+	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
-+							OFONO_SIM_APP_INTERFACE,
-+							"RequestQuickDigit");
-+	if (agent->msg =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	dbus_message_append_args(agent->msg,
-+					DBUS_TYPE_STRING, &text,
-+					DBUS_TYPE_BYTE, &icon->id,
-+					DBUS_TYPE_INVALID);
-+
-+	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
-+						timeout) =3D=3D FALSE ||
-+			agent->call =3D=3D NULL)
-+		return -EIO;
-+
-+	agent->user_cb =3D cb;
-+	agent->user_data =3D user_data;
-+	agent->user_destroy =3D destroy;
-+
-+	dbus_pending_call_set_notify(agent->call, get_digit_cb, agent, NULL);
-+
-+	return 0;
-+}
-+
- static void get_key_cb(DBusPendingCall *call, void *data)
- {
- 	struct stk_agent *agent =3D data;
-diff --git a/src/stkagent.h b/src/stkagent.h
-index 6e267fc..f66f038 100644
---- a/src/stkagent.h
-+++ b/src/stkagent.h
-@@ -102,6 +102,11 @@ int stk_agent_request_digit(struct stk_agent *agent, c=
-onst char *text,
- 				stk_agent_string_cb cb, void *user_data,
- 				ofono_destroy_func destroy, int timeout);
- =
-
-+int stk_agent_request_quick_digit(struct stk_agent *agent, const char *tex=
-t,
-+				const struct stk_icon_id *icon,
-+				stk_agent_string_cb cb, void *user_data,
-+				ofono_destroy_func destroy, int timeout);
-+
- int stk_agent_request_key(struct stk_agent *agent, const char *text,
- 				const struct stk_icon_id *icon,
- 				ofono_bool_t unicode_charset,
+@@ -1545,6 +1545,11 @@ static gboolean handle_command_get_inkey(const struc=
+t stk_command *cmd,
+ 						&gi->icon_id, ucs2,
+ 						request_key_cb, stk, NULL,
+ 						timeout);
++	else if (immediate)
++		err =3D stk_agent_request_quick_digit(stk->current_agent,
++							text, &gi->icon_id,
++							request_key_cb, stk,
++							NULL, timeout);
+ 	else
+ 		err =3D stk_agent_request_digit(stk->current_agent, text,
+ 						&gi->icon_id, request_key_cb,
 -- =
 
 1.7.9.5
 
 
---===============5390031187067678581==--
+--===============4033466728919112112==--
 
