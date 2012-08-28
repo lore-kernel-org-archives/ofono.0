@@ -1,39 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============3710192914684266899=="
+Content-Type: multipart/mixed; boundary="===============1853885313780043163=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v2 0/4] Immediate digit response
-Date: Tue, 28 Aug 2012 15:21:18 +0200
-Message-ID: <1346160082-11077-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 1/4] doc: Add new STK Agent API to get digit response on
+ single key press
+Date: Tue, 28 Aug 2012 15:21:19 +0200
+Message-ID: <1346160082-11077-2-git-send-email-philippe.nunes@linux.intel.com>
+In-Reply-To: <1346160082-11077-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3710192914684266899==
+--===============1853885313780043163==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Introduce a new STK method to get digit response on single key press.
-This method asks to not display the entered digit and does not accept
-the character '+'.
+---
+ doc/stk-api.txt |    9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-Philippe Nunes (4):
-  doc: Add new STK Agent API to get digit response on single key press
-  stkagent: Add new API to get digit response on single key press
-  stk: Ask for immediate digit response if specified by command
-    qualifier
-  test: Update with RequestQuickDigit API
+diff --git a/doc/stk-api.txt b/doc/stk-api.txt
+index 471e5d6..6875354 100644
+--- a/doc/stk-api.txt
++++ b/doc/stk-api.txt
+@@ -193,6 +193,15 @@ Methods		byte RequestSelection(string title, byte icon=
+_id,
+ 			Possible Errors: [service].Error.SimToolkit.GoBack
+ 					 [service].Error.SimToolkit.EndSession
+ =
 
- doc/stk-api.txt    |    9 +++++++++
- src/stk.c          |    9 +++++++--
- src/stkagent.c     |   32 ++++++++++++++++++++++++++++++++
- src/stkagent.h     |    5 +++++
- test/test-stk-menu |   37 +++++++++++++++++++++++++++++++++++++
- 5 files changed, 90 insertions(+), 2 deletions(-)
++		string RequestQuickDigit(string alpha, byte icon_id)
++
++			Same as above but the entered digit shall not be
++			displayed and the response shall be sent immediately
++			after the key press. "+" is not allowed for user input.
++
++			Possible Errors: [service].Error.SimToolkit.GoBack
++					 [service].Error.SimToolkit.EndSession		=
 
++
+ 		boolean RequestConfirmation(string alpha, byte icon_id)
+ =
+
+ 			Asks the agent to get confirmation from the user.
 -- =
 
 1.7.9.5
 
 
---===============3710192914684266899==--
+--===============1853885313780043163==--
 
