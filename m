@@ -1,36 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============4744329318677595499=="
+Content-Type: multipart/mixed; boundary="===============3710192914684266899=="
 MIME-Version: 1.0
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
-Subject: Re: [RFC] Multi-recipient SMS implementation proposals
-Date: Mon, 27 Aug 2012 10:06:11 +0200
-Message-ID: <503B2A73.5000504@linux.intel.com>
-In-Reply-To: <1345847507.1779.26.camel@aeonflux>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH v2 0/4] Immediate digit response
+Date: Tue, 28 Aug 2012 15:21:18 +0200
+Message-ID: <1346160082-11077-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4744329318677595499==
+--===============3710192914684266899==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Introduce a new STK method to get digit response on single key press.
+This method asks to not display the entered digit and does not accept
+the character '+'.
 
-On 25/08/2012 00:31, Marcel Holtmann wrote:
-> Hi Guillaume,
->
-> <snip>
->
->> 2-Modify existing SendMessage API in adding a new mms argument:
->> GDBUS_ASYNC_METHOD("SendMessage",
->>           GDBUS_ARGS({ "to", "s" }, { "text", "s" }, { "mms", "i" }),
->>           GDBUS_ARGS({ "path", "o" }),
->>           sms_send_message)
-> oFono 1.x has a stable API. Why are you proposing to break the API?
+Philippe Nunes (4):
+  doc: Add new STK Agent API to get digit response on single key press
+  stkagent: Add new API to get digit response on single key press
+  stk: Ask for immediate digit response if specified by command
+    qualifier
+  test: Update with RequestQuickDigit API
 
-Ok, and what is your opinion about the first solution?
+ doc/stk-api.txt    |    9 +++++++++
+ src/stk.c          |    9 +++++++--
+ src/stkagent.c     |   32 ++++++++++++++++++++++++++++++++
+ src/stkagent.h     |    5 +++++
+ test/test-stk-menu |   37 +++++++++++++++++++++++++++++++++++++
+ 5 files changed, 90 insertions(+), 2 deletions(-)
 
-Kind regards,
-Guillaume
+-- =
 
---===============4744329318677595499==--
+1.7.9.5
+
+
+--===============3710192914684266899==--
 
