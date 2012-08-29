@@ -1,76 +1,314 @@
-Content-Type: multipart/mixed; boundary="===============4033891883642742298=="
+Content-Type: multipart/mixed; boundary="===============0227009252355038042=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] telit: sim status notification without polling
-Date: Tue, 28 Aug 2012 09:53:29 -0500
-Message-ID: <503CDB69.5040705@gmail.com>
-In-Reply-To: <503CE18A.9060300@hale.at>
+Subject: Re: [PATCH] Add SMS initialize retry
+Date: Tue, 28 Aug 2012 20:32:57 -0500
+Message-ID: <503D7149.9070502@gmail.com>
+In-Reply-To: <1345606365-4368-1-git-send-email-caiwen.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4033891883642742298==
+--===============0227009252355038042==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christopher,
+Hi Caiwen,
 
-On 08/28/2012 10:19 AM, Christopher Vogl wrote:
-> Hi Denis,
+On 08/21/2012 10:32 PM, caiwen.zhang(a)intel.com wrote:
+> From: Caiwen Zhang<caiwen.zhang@intel.com>
 >
-> On 23/08/12 19:37, Denis Kenzior wrote:
->> Hi Christopher,
->>
->>>> Also, one other thing I'm concerned about is the CFUN=3D4 usage when we
->>>> try to set the modem offline. Your comments indicate that the Telit
->>>> modem resets the SIM when we issue CFUN=3D4. Going from Online True ->
->>>> False we don't actually want to reset the SIM. Does CFUN take an extra
->>>> parameter to turn SIM reset off by any chance?
->>>
->>> Telit documentation says that +CFUN supports a second parameter which
->>> should turn reset off.
->>> AT+CFUN=3D? also returns +CFUN: (0,1,2,4,5),(0)
->>> AT reference manual: "reset flag 0 - do not reset the ME before setting
->>> it to <fun> functionality level"
->>>
->>> But the modem keeps returning +CME ERROR: 4 when I try it (no matter
->>> which CFUN level).
->>
->> That is funny. Maybe the modem does not support a true 'offline' or
->> 'airplane' mode. In which case the driver might need to be modified
->> somewhat.
->>
->> This is something we will need to solve in the future. If not fixed,
->> I'm guessing that going Online then Offline will reset the SIM and
->> cause all kinds of funny behavior.
->>
->>>
->>> The modem behaves very strange sometimes. I kept getting timeouts when
->>> setting AT+CFUN=3D4. I once tried it manually and it took 26 seconds un=
-til
->>> I got an OK.
->>> Currently it works fine again.
->>>
->>
->> Is there a newer firmware available by any chance?
+> Before SMS fuction is useable, it will do some initialization. Following
+> AT command will be sent:
+>    AT+CSMS=3D?
+>    AT+CSMS=3Dxx
+>    AT+CSMS?
+>    AT+CMGF=3D?
+>    AT+CPMS=3D?
+> *  AT+CMGF=3Dxx
+> *  AT+CPMS=3Dxx
+>    AT+CNMI=3D?
+>    AT+CNMI=3Dxx
 >
-> Telit support was so kind to send me a firmware version (08.01.108-B006)
-> which supports +CFUN without resetting.
-> I suppose this is not an official version yet and if I adapt the code in
-> the telit plugin I will probably be the only one who can use it.
-> Is it ok if I send a corrected version of this patch and change the
-> offline/online mode handling in a further patch when it is sure
-> supported by an official firmware version?
+> It is possible that the modem will return error. Currently, only two AT
+> command(AT+CMGF=3Dxx and AT+CPMS=3Dxx) errors are handled. If other AT co=
+mmand
+> return error reslut, it will be considered as the modem does not support
+> SMS. It will cause SMS function unavailable.
 >
+> Sometimes, if the SIM is busy when receive above AT command, it will retu=
+rn
+> "(U)SIM busy" error. e.g.
+>
+> ofonod[274]: Aux:>  AT+CMGF=3D?\r
+> ofonod[274]: Aux:<  \r\n+CMGF: (0-1)\r\n\r\nOK\r\n
+> ofonod[274]: Aux:>  AT+CPMS=3D?\r
+> ofonod[274]: Aux:<  \r\n+CMS ERROR: 314\r\n
+>
+> This patch is to avoid this issue. When (U)SIM busy error occur, it will =
+retry
+>   1 second later.
 
-Just send it in, their official docs do mention the reset parameter, so =
+What modems are we talking about?  The way to handle this properly is =
 
-if the modem rejects it then that is a firmware bug.  The end-user will =
+not to initialize the sms atom until the modem tells us it is safe to do =
 
-have to upgrade the firmware in that case.
+so.  See for example %CSTAT in calypso or #QSS on Telit or +PBREADY on IMC.
+
+Polling should be the last resort...
+
+>
+> ---
+>   drivers/atmodem/sms.c |  109 ++++++++++++++++++++++++++++--------------=
+-------
+>   1 files changed, 62 insertions(+), 47 deletions(-)
+>
+> diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
+> index fde90ba..cac184c 100644
+> --- a/drivers/atmodem/sms.c
+> +++ b/drivers/atmodem/sms.c
+> @@ -52,12 +52,11 @@ static const char *cmgs_prefix[] =3D { "+CMGS:", NULL=
+ };
+>   static const char *cmgl_prefix[] =3D { "+CMGL:", NULL };
+>   static const char *none_prefix[] =3D { NULL };
+>
+> -static gboolean set_cmgf(gpointer user_data);
+> -static gboolean set_cpms(gpointer user_data);
+>   static void at_cmgl_set_cpms(struct ofono_sms *sms, int store);
+> +static gboolean at_sms_start_init(gpointer user_data);
+>
+> -#define MAX_CMGF_RETRIES 10
+> -#define MAX_CPMS_RETRIES 10
+> +#define ERROR_SIM_BUSY 314
+> +#define MAX_SIM_BUSY_RETRIES 10
+>
+>   static const char *storages[] =3D {
+>   	"SM",
+> @@ -737,6 +736,9 @@ static void at_sms_initialized(struct ofono_sms *sms)
+>   	else
+>   		at_cmgl_set_cpms(sms, data->incoming);
+>
+> +	data->retries =3D 0;
+> +	data->timeout_source =3D 0;
+> +
+>   	ofono_sms_register(sms);
+>   }
+>
+> @@ -748,12 +750,38 @@ static void at_sms_not_supported(struct ofono_sms *=
+sms)
+>   	ofono_sms_remove(sms);
+>   }
+>
+> +static void at_sms_init_fail(struct ofono_sms *sms, GAtResult *result,
+> +					gboolean force)
+> +{
+> +	struct ofono_error error;
+> +	struct sms_data *data =3D ofono_sms_get_data(sms);
+> +
+> +	decode_at_error(&error, g_at_result_final_response(result));
+> +
+> +	/** If SMS init fail due to SIM is busy or force retry,
+> +		retry 1 sec later */
+> +	if (error.error =3D=3D ERROR_SIM_BUSY || force =3D=3D TRUE) {
+> +		data->retries +=3D 1;
+> +
+> +		if (data->retries =3D=3D MAX_SIM_BUSY_RETRIES) {
+> +			DBG("Up to max retry times");
+> +			return at_sms_not_supported(sms);
+> +		}
+> +
+> +		data->timeout_source =3D
+> +			g_timeout_add_seconds(1, at_sms_start_init, sms);
+> +		return;
+> +	}
+> +
+> +	at_sms_not_supported(sms);
+> +}
+> +
+>   static void at_cnmi_set_cb(gboolean ok, GAtResult *result, gpointer use=
+r_data)
+>   {
+>   	struct ofono_sms *sms =3D user_data;
+>
+>   	if (!ok)
+> -		return at_sms_not_supported(sms);
+> +		return at_sms_init_fail(sms, result, FALSE);
+
+I really prefer we not try to make catch-all behavior like this.  And =
+
+re-starting the whole initialization procedure is not really a good idea =
+
+either.  If CPMS needs to be polled to figure out that the EFsms has =
+
+been initialized properly by the modem, then just do that.
+
+>
+>   	at_sms_initialized(sms);
+>   }
+> @@ -945,7 +973,7 @@ static void at_cnmi_query_cb(gboolean ok, GAtResult *=
+result, gpointer user_data)
+>
+>   out:
+>   	if (!supported)
+> -		return at_sms_not_supported(sms);
+> +		return at_sms_init_fail(sms, result, FALSE);
+>
+>   	g_at_chat_send(data->chat, buf, cnmi_prefix,
+>   			at_cnmi_set_cb, sms, NULL);
+> @@ -962,22 +990,14 @@ static void at_query_cnmi(struct ofono_sms *sms)
+>   static void at_cpms_set_cb(gboolean ok, GAtResult *result, gpointer use=
+r_data)
+>   {
+>   	struct ofono_sms *sms =3D user_data;
+> -	struct sms_data *data =3D ofono_sms_get_data(sms);
+>
+>   	if (ok)
+> -		return at_query_cnmi(sms);
+> -
+> -	data->retries +=3D 1;
+> -
+> -	if (data->retries =3D=3D MAX_CPMS_RETRIES) {
+> -		ofono_error("Unable to set preferred storage");
+> -		return at_sms_not_supported(sms);
+> -	}
+> -
+> -	data->timeout_source =3D g_timeout_add_seconds(1, set_cpms, sms);
+> +		at_query_cnmi(sms);
+> +	else
+> +		at_sms_init_fail(sms, result, TRUE);
+>   }
+>
+> -static gboolean set_cpms(gpointer user_data)
+> +static void set_cpms(gpointer user_data)
+>   {
+>   	struct ofono_sms *sms =3D user_data;
+>   	struct sms_data *data =3D ofono_sms_get_data(sms);
+> @@ -993,44 +1013,25 @@ static gboolean set_cpms(gpointer user_data)
+>
+>   	g_at_chat_send(data->chat, buf, cpms_prefix,
+>   			at_cpms_set_cb, sms, NULL);
+> -
+> -	data->timeout_source =3D 0;
+> -
+> -	return FALSE;
+>   }
+>
+>   static void at_cmgf_set_cb(gboolean ok, GAtResult *result, gpointer use=
+r_data)
+>   {
+>   	struct ofono_sms *sms =3D user_data;
+> -	struct sms_data *data =3D ofono_sms_get_data(sms);
+>
+> -	if (ok) {
+> -		data->retries =3D 0;
+> +	if (ok)
+>   		set_cpms(sms);
+> -		return;
+> -	}
+> -
+> -	data->retries +=3D 1;
+> -
+> -	if (data->retries =3D=3D MAX_CMGF_RETRIES) {
+> -		DBG("Unable to enter PDU mode");
+> -		return at_sms_not_supported(sms);
+> -	}
+> -
+> -	data->timeout_source =3D g_timeout_add_seconds(1, set_cmgf, sms);
+> +	else
+> +		at_sms_init_fail(sms, result, TRUE);
+>   }
+>
+> -static gboolean set_cmgf(gpointer user_data)
+> +static void set_cmgf(gpointer user_data)
+>   {
+>   	struct ofono_sms *sms =3D user_data;
+>   	struct sms_data *data =3D ofono_sms_get_data(sms);
+>
+>   	g_at_chat_send(data->chat, "AT+CMGF=3D0", cmgf_prefix,
+>   			at_cmgf_set_cb, sms, NULL);
+> -
+> -	data->timeout_source =3D 0;
+> -
+> -	return FALSE;
+>   }
+>
+>   static void at_cpms_query_cb(gboolean ok, GAtResult *result,
+> @@ -1117,7 +1118,7 @@ static void at_cpms_query_cb(gboolean ok, GAtResult=
+ *result,
+>   	}
+>   out:
+>   	if (!supported)
+> -		return at_sms_not_supported(sms);
+> +		return at_sms_init_fail(sms, result, FALSE);
+>
+>   	set_cmgf(sms);
+>   }
+> @@ -1149,7 +1150,7 @@ static void at_cmgf_query_cb(gboolean ok, GAtResult=
+ *result,
+>
+>   out:
+>   	if (!supported)
+> -		return at_sms_not_supported(sms);
+> +		return at_sms_init_fail(sms, result, FALSE);
+>
+>   	g_at_chat_send(data->chat, "AT+CPMS=3D?", cpms_prefix,
+>   			at_cpms_query_cb, sms, NULL);
+> @@ -1201,7 +1202,7 @@ static void at_csms_status_cb(gboolean ok, GAtResul=
+t *result,
+>
+>   out:
+>   	if (!supported)
+> -		return at_sms_not_supported(sms);
+> +		return at_sms_init_fail(sms, result, FALSE);
+>
+>   	/* Now query supported text format */
+>   	g_at_chat_send(data->chat, "AT+CMGF=3D?", cmgf_prefix,
+> @@ -1229,7 +1230,7 @@ static void at_csms_query_cb(gboolean ok, GAtResult=
+ *result,
+>   	char buf[128];
+>
+>   	if (!ok)
+> -		return at_sms_not_supported(sms);
+> +		return at_sms_init_fail(sms, result, FALSE);
+>
+>   	g_at_result_iter_init(&iter, result);
+>
+> @@ -1251,6 +1252,18 @@ out:
+>   			at_csms_set_cb, sms, NULL);
+>   }
+>
+> +/** start init modem sms relative setting */
+> +static gboolean at_sms_start_init(gpointer user_data)
+> +{
+> +	struct ofono_sms *sms =3D user_data;
+> +	struct sms_data *data =3D ofono_sms_get_data(sms);
+> +
+> +	g_at_chat_send(data->chat, "AT+CSMS=3D?", csms_prefix,
+> +			at_csms_query_cb, sms, NULL);
+> +
+> +	return FALSE;
+> +}
+> +
+>   static int at_sms_probe(struct ofono_sms *sms, unsigned int vendor,
+>   				void *user)
+>   {
+> @@ -1263,8 +1276,10 @@ static int at_sms_probe(struct ofono_sms *sms, uns=
+igned int vendor,
+>
+>   	ofono_sms_set_data(sms, data);
+>
+> -	g_at_chat_send(data->chat, "AT+CSMS=3D?", csms_prefix,
+> -			at_csms_query_cb, sms, NULL);
+> +	data->retries =3D 0;
+> +	data->timeout_source =3D 0;
+> +
+> +	at_sms_start_init(sms);
+>
+>   	return 0;
+>   }
 
 Regards,
 -Denis
 
---===============4033891883642742298==--
+--===============0227009252355038042==--
 
