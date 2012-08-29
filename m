@@ -1,100 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============8752680360943340489=="
+Content-Type: multipart/mixed; boundary="===============2226347292045626689=="
 MIME-Version: 1.0
-From: Chrisopher Vogl <christopher.vogl@hale.at>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Re-activating a context.
-Date: Wed, 29 Aug 2012 20:40:51 +0200
-Message-ID: <1646126421.203726.1346265651893.JavaMail.root@mail.hale>
-In-Reply-To: <50002519.3060105@linux.intel.com>
+Date: Wed, 29 Aug 2012 18:56:50 -0500
+Message-ID: <503EAC42.3070104@gmail.com>
+In-Reply-To: <1646126421.203726.1346265651893.JavaMail.root@mail.hale>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8752680360943340489==
+--===============2226347292045626689==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume and Denis,
+Hi Christopher,
 
 <snip>
 
->> pppcp_initialize_restart_count: current state 6:REQSENT
->> Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: PPP: ipcp: =
+> I now know why I receive '+CGEV: ME DEACT IP, , 1\r\n'.
+> According to Telit support this happens because the context does not get =
+deactivated
+> and ofono is trying to request a new IP address although the previous one=
+ is still valid.
+>
+> After the antenna gets disconnected, the modem sends '+CREG: 2' and '+CGR=
+EG: 2'.
+> In consequence drivers/atmodem/gprs-context.c:telit_gprs_detach_shutdown(=
+) is called to end ppp connection and
+> 'AT+CGATT=3D0' is sent.
+> 'AT+CGATT=3D0' should normally deactivate all active contexts, but it ret=
+urns '+CME ERROR: 30'.
 
->> pppcp_send_configure_request: current state 6:REQSENT
+That sounds like a firmware bug, we should be able to tell the modem to =
 
->> Jan  1 01:20:21 mx31tt01 daemon.info ofonod[810]: Aux: < \r\n+CGEV: ME =
+abort the attach procedure or detach at any time.
 
->> DEACT IP, , 1\r\n
+> When I try to deactivate the context with +CGACT like ifx does in
+> drivers/ifxmodem/gprs-context.c:ifx_gprs_deactivate_primary(), then I get=
+ '+CME ERROR: 0' (phone failure).
+>
 
-> It seems IP Control Protocol is failing so that modem cannot receive the =
+Does sending 'AT+CGACT=3D0' per 3GPP 27.007 10.1.10 work?
 
-> IP configuration from the network.
-> IP phase is deactivated by the modem itself.
-> I don't know what is happening there.
+> Furthermore I thought that when I receive 'NO CARRIER' at least then all =
+context should be deactivated.
+>  From a Cinterion manual (as the Telit manual is very poor):
+> "If the TE wants to close the LCP link the MT may perform an LCP terminat=
+ion request procedure on PPP level.
+> After this LCP termination procedure the MT deactivates the PDP context a=
+utomatically and the MT returns to
+> V.250 command mode and issues the final result code NO CARRIER."
 
-<snip>
+Yes, that is the expected behavior, NO CARRIER means context is =
 
-> Although ConnMan is correctly waiting for the modem to be attached to =
+deactivated.  We've had problems with Huawei modems that try to keep the =
 
-> the network before trying to reconnect, maybe modem is not internally =
+PPP link alive when network registration is lost.  We then had to =
 
-> ready to reconnect. The reason might be PPP session ending is initiated =
+force-deactivate them by sending the relevant LCP close procedure.  But =
 
-> by oFono core and not the modem itself.
-> With Huawei modems we also noticed that automatic reconnection was =
+that doesn't seem to be the issue here...
 
-> sometime failing also. But testing conditions were not the same as we =
+>
+> I don't know if this is a firmware or ofono issue as I don't know how thi=
+s should be handled correctly.
+>
 
-> could not disconnect the antenna.
-> Anyway I am not a PPP expert but something wrong is happening between =
+Sounds like firmware is at fault, or maybe the Telit modem has to be =
 
-> the network and your modem because not IP configuration is sent by the =
-
-> network.
-
-
-I now know why I receive '+CGEV: ME DEACT IP, , 1\r\n'.
-According to Telit support this happens because the context does not get de=
-activated
-and ofono is trying to request a new IP address although the previous one i=
-s still valid.
-
-After the antenna gets disconnected, the modem sends '+CREG: 2' and '+CGREG=
-: 2'.
-In consequence drivers/atmodem/gprs-context.c:telit_gprs_detach_shutdown() =
-is called to end ppp connection and
-'AT+CGATT=3D0' is sent.
-'AT+CGATT=3D0' should normally deactivate all active contexts, but it retur=
-ns '+CME ERROR: 30'.
-When I try to deactivate the context with +CGACT like ifx does in
-drivers/ifxmodem/gprs-context.c:ifx_gprs_deactivate_primary(), then I get '=
-+CME ERROR: 0' (phone failure).
-
-Furthermore I thought that when I receive 'NO CARRIER' at least then all co=
-ntext should be deactivated.
-From a Cinterion manual (as the Telit manual is very poor):
-"If the TE wants to close the LCP link the MT may perform an LCP terminatio=
-n request procedure on PPP level.
-After this LCP termination procedure the MT deactivates the PDP context aut=
-omatically and the MT returns to
-V.250 command mode and issues the final result code NO CARRIER."
-
-I don't know if this is a firmware or ofono issue as I don't know how this =
-should be handled correctly.
-
+driven 'differently', but I do not see how.
 
 Regards,
+-Denis
 
-Christopher
-
-
-
-
-
-
---
-Scanned by MailScanner.
-
-
---===============8752680360943340489==--
+--===============2226347292045626689==--
 
