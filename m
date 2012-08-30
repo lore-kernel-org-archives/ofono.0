@@ -1,62 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============5225284895241984861=="
+Content-Type: multipart/mixed; boundary="===============6954583267241870641=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] telit: enable extended sim status notification
-Date: Thu, 30 Aug 2012 09:46:18 -0500
-Message-ID: <503F7CBA.5010302@gmail.com>
-In-Reply-To: <1346252469-29513-1-git-send-email-christopher.vogl@hale.at>
+From: Philippe Nunes <philippe.nunes@linux.intel.com>
+Subject: [PATCH] stk: Check if an agent is registered when UI is required
+Date: Thu, 30 Aug 2012 18:20:41 +0200
+Message-ID: <1346343641-27051-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5225284895241984861==
+--===============6954583267241870641==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christopher,
+In case of unsolicited proactive command, we could have a crash
+when no agent was registered.
+---
+ src/stk.c |    9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-On 08/29/2012 10:01 AM, Christopher Vogl wrote:
-> Use AT#QSS=3D2 instead of AT#QSS=3D1 to get an URC when the SIM is not on=
-ly
-> inserted but also when PIN is unlocked and when SMS + phonebook are
-> ready to be used.
->
-> Disable sim state notification in telit_enable() so that we sure get a
-> notification when we enable it later again. This way we don't have to
-> query the state the first time. Without this the Telit modem does not
-> always send an URC when AT#QSS=3D2 is sent.
->
-> Remove sim_inserted_source and sim_inserted_timeout_cb which are not
-> needed anymore as a consequence.
-> By the way the 1 second timeout was an ugly hack.
->
-> Don't query current SIM status in cfun_enable_cb() as the SIM is
-> disabled due to prior AT+CFUN=3D4.
->
-> Register '#QSS:' before enabling sim state notifications.
->
-> Remove telit_qss_cb() which was used as a callback for querying the
-> current SIM status.
->
-> Move sms atom creation into switch_sim_state_status() and add creation
-> of phonebook atom. These are created when QSS: 3 is received.
->
-> Avoid a reset  when switching between online and offline (airplane)
-> mode in telit_set_online(). +CFUN accepts a second parameter (0), which
-> disables a reset: AT+CFUN=3Dx,0.
-> ---
->   plugins/telit.c |   99 +++++++++++++++++++-----------------------------=
-------
->   1 files changed, 35 insertions(+), 64 deletions(-)
->
+diff --git a/src/stk.c b/src/stk.c
+index 18a8eaf..4c24abb 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -515,6 +515,9 @@ static gboolean stk_alpha_id_set(struct ofono_stk *stk,
+ 	if (alpha =3D=3D NULL)
+ 		return FALSE;
+ =
 
-Patch has been applied, however I broke it up into two.  One for the =
++	if (stk->current_agent =3D=3D NULL)
++		return FALSE;
++
+ 	if (stk->respond_on_exit)
+ 		stk_agent_display_action(stk->current_agent, alpha, icon,
+ 						user_termination_cb, stk, NULL);
+@@ -2645,6 +2648,9 @@ static gboolean handle_setup_call_confirmation_req(st=
+ruct stk_command *cmd,
+ 	if (alpha_id =3D=3D NULL)
+ 		goto out;
+ =
 
-extra CFUN parameter changes and the rest.
++	if (stk->current_agent =3D=3D FALSE)
++		goto out;
++
+ 	err =3D stk_agent_confirm_call(stk->current_agent, alpha_id,
+ 					&sc->icon_id_usr_cfm,
+ 					confirm_handled_call_cb,
+@@ -2752,6 +2758,9 @@ void ofono_stk_proactive_command_notify(struct ofono_=
+stk *stk,
+ 		case STK_COMMAND_TYPE_GET_INPUT:
+ 		case STK_COMMAND_TYPE_PLAY_TONE:
+ 		case STK_COMMAND_TYPE_SETUP_CALL:
++		case STK_COMMAND_TYPE_SEND_SMS:
++		case STK_COMMAND_TYPE_SEND_USSD:
++		case STK_COMMAND_TYPE_SEND_DTMF:
+ 			send_simple_response(stk, STK_RESULT_TYPE_NOT_CAPABLE);
+ 			return;
+ =
 
-Regards,
--Denis
+-- =
+
+1.7.9.5
 
 
---===============5225284895241984861==--
+--===============6954583267241870641==--
 
