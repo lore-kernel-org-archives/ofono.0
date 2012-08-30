@@ -1,33 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============6057060422548658670=="
+Content-Type: multipart/mixed; boundary="===============8500061091032876091=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] stk: Check if an agent is registered when UI is required
-Date: Thu, 30 Aug 2012 16:47:45 -0500
-Message-ID: <503FDF81.8040503@gmail.com>
-In-Reply-To: <1346343641-27051-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH v2 1/4] doc: Add new STK Agent API to get digit response
+ on single key press
+Date: Thu, 30 Aug 2012 16:58:12 -0500
+Message-ID: <503FE1F4.4050408@gmail.com>
+In-Reply-To: <1346160082-11077-2-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6057060422548658670==
+--===============8500061091032876091==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Philippe,
 
-On 08/30/2012 11:20 AM, Philippe Nunes wrote:
-> In case of unsolicited proactive command, we could have a crash
-> when no agent was registered.
+On 08/28/2012 08:21 AM, Philippe Nunes wrote:
 > ---
->   src/stk.c |    9 +++++++++
+>   doc/stk-api.txt |    9 +++++++++
 >   1 file changed, 9 insertions(+)
 >
 
-Patch has been applied, thanks.
+I applied this patch, after having to manually fix trailing whitespace =
+
+errors.
 
 Regards,
 -Denis
 
-
---===============6057060422548658670==--
+--===============8500061091032876091==--
 
