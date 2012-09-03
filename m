@@ -1,124 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============8616512569221389331=="
+Content-Type: multipart/mixed; boundary="===============5515816789586729454=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH v4 3/3] unit: Add test to check CBS padding character
-Date: Fri, 31 Aug 2012 17:03:58 +0200
-Message-ID: <1346425438-12220-3-git-send-email-philippe.nunes@linux.intel.com>
-In-Reply-To: <1346425438-12220-1-git-send-email-philippe.nunes@linux.intel.com>
+From: Cedric Jehasse <cedric.jehasse@gmail.com>
+Subject: context activation quickly after context deactivation fails
+Date: Mon, 03 Sep 2012 14:50:20 +0200
+Message-ID: <CABvLYuD17J3urLnbzDuzM95BPbRDs1Y6Mgi9=6yX3wPunxz6LA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8616512569221389331==
+--===============5515816789586729454==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Guillaume Zajac <guillaume.zajac@linux.intel.com>
+Hi,
 
-This CBS unit test is used to check that the <CR> character can
-be interpreted as a wanted carriage return and not necessarily
-as a padding character.
----
- unit/test-sms.c |   59 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 file changed, 59 insertions(+)
+When i want to change a Property (eg. APN) of an Active
+ConnectionContext. I first deactivate the context, wait for a reply
+then set the property and re-activate the context.
+The problem is i'm already trying to re-activate the context, before
+oFono gets a "NO CARRIER" from the modem. oFono tries to send
+AT+CGDCONT, but get's a "NO CARRIER" response and fails to activate
+the context.
+Is there a way to tell if it's ready to re-activate? Should oFono wait
+for the "NO CARRIER" before it sends a reply to the deactivation?
 
-diff --git a/unit/test-sms.c b/unit/test-sms.c
-index e510554..31e18f8 100644
---- a/unit/test-sms.c
-+++ b/unit/test-sms.c
-@@ -1236,6 +1236,10 @@ static const char *cbs2 =3D "0110003201114679785E963=
-71A8D46A3D168341A8D46A3D1683"
- 	"41A8D46A3D168341A8D46A3D168341A8D46A3D168341A8D46A3D168341A8D46A3D168"
- 	"341A8D46A3D168341A8D46A3D168341A8D46A3D168341A8D46A3D100";
- =
+Here's a log of the problem
+Jan  4 22:14:38 ofonod[3022]:
+drivers/atmodem/gprs-context.c:at_gprs_deactivate_primary() cid 1
+Jan  4 22:14:38 ofonod[3022]: PPP: lcp: pppcp_generate_event: current
+state 9:OPENED
+Jan  4 22:14:38 ofonod[3022]: PPP: event: 3 (Close), action: 8224,
+new_state: 4 (CLOSING)
+Jan  4 22:14:38 ofonod[3022]: PPP: lcp:
+pppcp_initialize_restart_count: current state 9:OPENED
+Jan  4 22:14:38 ofonod[3022]: PPP: lcp: pppcp_send_terminate_request:
+current state 9:OPENED
+Jan  4 22:14:38 ofonod[3022]: PPP: ipcp: pppcp_generate_event: current
+state 9:OPENED
+Jan  4 22:14:38 ofonod[3022]: PPP: event: 1 (Down), action: 201,
+new_state: 1 (STARTING)
+Jan  4 22:14:38 ofonod[3022]: PPP: gatchat/gatppp.c:ppp_enter_phase() 5
+Jan  4 22:14:38 ofonod[3022]: plugins/udevng.c:remove_device()
+/sys/devices/virtual/net/ppp0
+Jan  4 22:14:38 ofonod[3022]: plugins/udev.c:udev_event() subsystem net rem=
+ove
+Jan  4 22:14:38 ofonod[3022]: plugins/udev.c:remove_modem()
+/devices/virtual/net/ppp0
+Jan  4 22:14:38 ofonod[3022]: plugins/udev.c:udev_event() subsystem net fin=
+ished
+Jan  4 22:14:38 ofonod[3022]: PPP: lcp: pppcp_process_terminate_ack:
+current state 4:CLOSING
+Jan  4 22:14:38 ofonod[3022]: PPP: lcp: pppcp_generate_event: current
+state 4:CLOSING
+Jan  4 22:14:38 ofonod[3022]: PPP: event: 11 (RTA), action: 802,
+new_state: 2 (CLOSED)
+Jan  4 22:14:38 ofonod[3022]: PPP: lcp: pppcp_this_layer_finished:
+current state 2:CLOSED
+Jan  4 22:14:38 ofonod[3022]: PPP: gatchat/gatppp.c:ppp_enter_phase() 0
+Jan  4 22:14:38 ofonod[3022]: PPP: gatchat/gatppp.c:ppp_dead()
+Jan  4 22:14:38 ofonod[3022]: src/gprs.c:assign_context()
+Jan  4 22:14:38 ofonod[3022]: src/gprs.c:assign_context()
+gprs[0x557f80] context_driver[0x556a40]
+Jan  4 22:14:38 ofonod[3022]:
+drivers/atmodem/gprs-context.c:at_gprs_activate_primary() cid 1
+Jan  4 22:14:38 ofonod[3022]: Modem: > AT+CGDCONT=3D1,"IP","test"\r
+Jan  4 22:14:39 ofonod[3022]: PCUI: < \r\n^RSSI:17\r\n
+Jan  4 22:14:40 ofonod[3022]: PCUI: < \r\n^MODE:5,4\r\n
+Jan  4 22:14:40 ofonod[3022]: Modem: < \r\nNO CARRIER\r\n
+Jan  4 22:14:40 ofonod[3022]:
+drivers/atmodem/gprs-context.c:at_cgdcont_cb() ok 0
+Jan  4 22:14:40 ofonod[3022]: src/gprs.c:pri_activate_callback() 0x55dc88
+Jan  4 22:14:40 ofonod[3022]: src/gprs.c:pri_activate_callback()
+Activating context failed with error: Unknown error type
 
-+static const char *cbs3 =3D "001000000111E280604028180E888462C168381E90886=
-442A95"
-+	"82E988C66C3E9783EA09068442A994EA8946AC56AB95EB0986C46ABD96EB89C6EC7EBF"
-+	"97EC0A070482C1A8FC8A472C96C3A9FD0A8744AAD5AAFD8AC76CB05";
-+
- static void test_cbs_encode_decode(void)
- {
- 	unsigned char *decoded_pdu;
-@@ -1389,6 +1393,58 @@ static void test_cbs_assembly(void)
- 	cbs_assembly_free(assembly);
- }
- =
+Thanks,
+Cedric
 
-+static void test_cbs_padding_character(void)
-+{
-+	unsigned char *decoded_pdu;
-+	long pdu_len;
-+	gboolean ret;
-+	struct cbs cbs;
-+	GSList *l;
-+	char iso639_lang[3];
-+	char *utf8;
-+
-+	decoded_pdu =3D decode_hex(cbs3, -1, &pdu_len, 0);
-+
-+	g_assert(decoded_pdu);
-+	g_assert(pdu_len =3D=3D 88);
-+
-+	ret =3D cbs_decode(decoded_pdu, pdu_len, &cbs);
-+
-+	g_free(decoded_pdu);
-+
-+	g_assert(ret);
-+
-+	g_assert(cbs.gs =3D=3D CBS_GEO_SCOPE_CELL_IMMEDIATE);
-+	g_assert(cbs.message_code =3D=3D 1);
-+	g_assert(cbs.update_number =3D=3D 0);
-+	g_assert(cbs.message_identifier =3D=3D 0);
-+	g_assert(cbs.dcs =3D=3D 1);
-+	g_assert(cbs.max_pages =3D=3D 1);
-+	g_assert(cbs.page =3D=3D 1);
-+
-+	l =3D g_slist_append(NULL, &cbs);
-+
-+	utf8 =3D cbs_decode_text(l, iso639_lang);
-+
-+	g_assert(utf8);
-+
-+	if (g_test_verbose()) {
-+		g_printf("%s\n", utf8);
-+		if (iso639_lang[0] =3D=3D '\0')
-+			g_printf("Lang: Unspecified\n");
-+		else
-+			g_printf("Lang: %s\n", iso639_lang);
-+	}
-+
-+	g_assert(strcmp(utf8, "b=C2=A3$=C2=A5=C3=A8=C3=A9=C3=B9=C3=AC=C3=B2=C3=87=
-\x0A=C3=98=C3=B8\x0D=C3=85=C3=A5=CE=94_=CE=A6=CE=93=CE=9B=CE=A9=CE=A0=CE=A8=
-=CE=A3=CE=98=CE=9E=C3=86=C3=A6=C3=9F=C3=89 !\"#=C2=A4"
-+				"\x25&'()*+,-./0123456789:;<=3D>?=C2=A1ABCDEFGHIJKLM"
-+				"NOPQRSTUVWXYZ=C3=84=C3=96") =3D=3D 0);
-+	g_assert(strcmp(iso639_lang, "en") =3D=3D 0);
-+
-+	g_free(utf8);
-+	g_slist_free(l);
-+}
-+
- static const char *ranges[] =3D { "1-5, 2, 3, 600, 569-900, 999",
- 				"0-20, 33, 44, 50-60, 20-50, 1-5, 5, 3, 5",
- 				NULL };
-@@ -1679,6 +1735,9 @@ int main(int argc, char **argv)
- 			test_cbs_encode_decode);
- 	g_test_add_func("/testsms/Test CBS Assembly", test_cbs_assembly);
- =
-
-+	g_test_add_func("/testsms/Test CBS Padding Character",
-+			test_cbs_padding_character);
-+
- 	g_test_add_func("/testsms/Range minimizer", test_range_minimizer);
- =
-
- 	g_test_add_func("/testsms/Status Report Assembly", test_sr_assembly);
--- =
-
-1.7.9.5
-
-
---===============8616512569221389331==--
+--===============5515816789586729454==--
 
