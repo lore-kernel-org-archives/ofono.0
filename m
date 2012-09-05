@@ -1,48 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============3808948399939347430=="
+Content-Type: multipart/mixed; boundary="===============4107954607186431143=="
 MIME-Version: 1.0
-From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 3/3] phonesim: Reject specific outgoing call for SAT test
- purpose
-Date: Wed, 05 Sep 2012 19:21:07 +0200
-Message-ID: <1346865667-24888-3-git-send-email-philippe.nunes@linux.intel.com>
-In-Reply-To: <1346865667-24888-1-git-send-email-philippe.nunes@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/4] common: Accept pause character in the dialing number
+Date: Wed, 05 Sep 2012 14:25:36 -0500
+Message-ID: <5047A730.4060008@gmail.com>
+In-Reply-To: <1346865579-24794-3-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3808948399939347430==
+--===============4107954607186431143==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/callmanager.cpp |    7 +++++++
- 1 file changed, 7 insertions(+)
+Hi Philippe,
 
-diff --git a/src/callmanager.cpp b/src/callmanager.cpp
-index 4567548..1995c6d 100644
---- a/src/callmanager.cpp
-+++ b/src/callmanager.cpp
-@@ -79,6 +79,13 @@ bool CallManager::command( const QString& cmd )
-             return true;
-         }
- =
+On 09/05/2012 12:19 PM, Philippe Nunes wrote:
+> ---
+>   src/common.c |    2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/src/common.c b/src/common.c
+> index 94d70dd..de1ad26 100644
+> --- a/src/common.c
+> +++ b/src/common.c
+> @@ -257,7 +257,7 @@ gboolean valid_number_format(const char *number, int =
+length)
+>   		if (number[i]>=3D '0'&&  number[i]<=3D '9')
+>   			continue;
+>
+> -		if (number[i] =3D=3D '*' || number[i] =3D=3D '#')
+> +		if (number[i] =3D=3D '*' || number[i] =3D=3D '#' || number[i] =3D=3D '=
+p')
+>   			continue;
+>
+>   		return FALSE;
 
-+        // For SAT test purpose, reject the dialing number 0123401234 if t=
-here
-+        // is a connected call.
-+        if ( hasCall( CallState_Active ) && number =3D=3D "+0123401234" ) {
-+            send( "NO CARRIER" );
-+            return true;
-+         }
-+
-         // If there is a connected call, place it on hold.
-         changeGroup( CallState_Active, CallState_Held );
- =
+You can't really mess directly with this function since it is used in =
 
--- =
+places where pause characters are not appropriate, e.g. SMS, Call =
 
-1.7.9.5
+Forwarding, Deflection, numbers stored on the SIM, etc.
 
+Also, we can't simply accept the pause character in the voicecall atom =
 
---===============3808948399939347430==--
+today.  That would require us to implement proper dial string support as =
+
+sending pause characters directly is not really supported on many modems.
+
+Regards,
+-Denis
+
+--===============4107954607186431143==--
 
