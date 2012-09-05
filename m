@@ -1,44 +1,338 @@
-Content-Type: multipart/mixed; boundary="===============1877034307861672098=="
+Content-Type: multipart/mixed; boundary="===============6954074964179369757=="
 MIME-Version: 1.0
 From: Philippe Nunes <philippe.nunes@linux.intel.com>
-Subject: [PATCH 4/4] stk: AID shall not be displayed in case of self
- explanatory icon
-Date: Wed, 05 Sep 2012 19:19:39 +0200
-Message-ID: <1346865579-24794-5-git-send-email-philippe.nunes@linux.intel.com>
-In-Reply-To: <1346865579-24794-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: [PATCH 1/3] phonesim: Extend conformance menu with Setup Call items
+Date: Wed, 05 Sep 2012 19:21:05 +0200
+Message-ID: <1346865667-24888-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1877034307861672098==
+--===============6954074964179369757==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |    5 +++++
- 1 file changed, 5 insertions(+)
+ src/conformancesimapplication.cpp |  247 +++++++++++++++++++++++++++++++++=
+++++
+ src/simapplication.h              |    2 +
+ 2 files changed, 249 insertions(+)
 
-diff --git a/src/stk.c b/src/stk.c
-index 5c79183..e242bf5 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -539,6 +539,11 @@ static gboolean stk_alpha_id_set(struct ofono_stk *stk,
- 	if (stk->current_agent =3D=3D NULL)
- 		return FALSE;
+diff --git a/src/conformancesimapplication.cpp b/src/conformancesimapplicat=
+ion.cpp
+index a2bd3af..11265a5 100644
+--- a/src/conformancesimapplication.cpp
++++ b/src/conformancesimapplication.cpp
+@@ -41,6 +41,7 @@ const QString ConformanceSimApplication::getName()
+ #define ConformanceMenu_GetInkey    2
+ #define ConformanceMenu_GetInput    3
+ #define ConformanceMenu_MoreTime    4
++#define ConformanceMenu_SetupCall   5
  =
 
-+	/* AID shall not be displayed in case of self explanatory icon */
-+	if (icon->id !=3D 0 && icon->qualifier =3D=3D
-+			STK_ICON_QUALIFIER_TYPE_SELF_EXPLANATORY)
-+		alpha[0]=3D'\0';
+ #define NormalMenu_1_1    1
+ #define NormalMenu_1_2    2
+@@ -101,6 +102,20 @@ const QString ConformanceSimApplication::getName()
+ #define GetInputMenu_Text_Attribute     11
+ #define GetInputMenu_Main               12
+ =
+
++#define SetupCall_Confirmed                1
++#define SetupCall_Long_AID                 2
++#define SetupCall_Subaddress_Not_Supported 3
++#define SetupCall_Rejected                 4
++#define SetupCall_Putting_On_Hold          5
++#define SetupCall_Disconnect_Others        6
++#define SetupCall_If_Not_Busy              7
++#define SetupCall_On_Hold_Not_allowed      8
++#define SetupCall_Max_Dialing_Number       9
++#define SetupCall_Two_AID                 10
++#define SetupCall_Basic_icon              11
++#define SetupCall_Self_basic_icon         12
++#define SetupCall_Basic_icon_during_call  13
 +
- 	if (stk->respond_on_exit)
- 		stk_agent_display_action(stk->current_agent, alpha, icon,
- 						user_termination_cb, stk, NULL);
+ void ConformanceSimApplication::mainMenu()
+ {
+     QSimCommand cmd;
+@@ -126,6 +141,10 @@ void ConformanceSimApplication::mainMenu()
+     item.setLabel( "More Time" );
+     items +=3D item;
+ =
+
++    item.setIdentifier( ConformanceMenu_SetupCall );
++    item.setLabel( "Setup Call" );
++    items +=3D item;
++
+     cmd.setMenuItems( items );
+ =
+
+     command( cmd, 0, 0 );
+@@ -162,6 +181,12 @@ void ConformanceSimApplication::mainMenuSelection( int=
+ id )
+         }
+         break;
+ =
+
++        case ConformanceMenu_SetupCall:
++        {
++            sendSetupCallMenu();
++        }
++        break;
++
+         default:
+         {
+             // Don't know what this item is, so just re-display the main m=
+enu.
+@@ -1746,3 +1771,225 @@ void ConformanceSimApplication::GetInputIconMenu( c=
+onst QSimTerminalResponse& re
+         break;
+     }
+ }
++
++void ConformanceSimApplication::sendSetupCallMenu()
++{
++    QSimCommand cmd;
++    QSimMenuItem item;
++    QList<QSimMenuItem> items;
++
++    cmd.setType( QSimCommand::SelectItem );
++    cmd.setTitle( "Setup Call (Icon support)" );
++
++    item.setIdentifier( SetupCall_Confirmed );
++    item.setLabel( "Call confirmed and connected" );
++    items +=3D item;
++
++    item.setIdentifier( SetupCall_Long_AID );
++    item.setLabel( "Long first alpha identifier" );
++    items +=3D item;
++
++    item.setIdentifier( SetupCall_Subaddress_Not_Supported );
++    item.setLabel( "Called party subaddress not supported" );
++    items +=3D item;
++
++    item.setIdentifier( SetupCall_Rejected );
++    item.setLabel( "Call rejected by the user" );
++    items +=3D item;
++
++    item.setIdentifier( SetupCall_Putting_On_Hold );
++    item.setLabel( "Putting all other calls on hold" );
++    items +=3D item;
++
++    item.setIdentifier( SetupCall_Disconnect_Others );
++    item.setLabel( "Disconnecting all other calls" );
++    items +=3D item;
++
++    item.setIdentifier( SetupCall_If_Not_Busy );
++    item.setLabel( "Only if not currently busy on another call" );
++    items +=3D item;
++
++    item.setIdentifier( SetupCall_On_Hold_Not_allowed );
++    item.setLabel( "Call hold is not allowed" );
++    items +=3D item;
++
++    item.setIdentifier( SetupCall_Max_Dialing_Number );
++    item.setLabel( "Max dialling number string, no alpha" );
++    items +=3D item;
++
++    item.setIdentifier( SetupCall_Two_AID );
++    item.setLabel( "Two alpha identifiers" );
++    items +=3D item;
++
++    item.setIdentifier( SetupCall_Basic_icon );
++    item.setLabel( "Basic icon" );
++    items +=3D item;
++
++    item.setIdentifier( SetupCall_Self_basic_icon );
++    item.setLabel( "Self-explanatory basic icon" );
++    items +=3D item;
++
++    item.setIdentifier( SetupCall_Basic_icon_during_call );
++    item.setLabel( "Icon during setup call" );
++    items +=3D item;
++
++    cmd.setMenuItems( items );
++
++    command( cmd, this, SLOT(SetupCallMenu(QSimTerminalResponse)) );
++}
++
++void ConformanceSimApplication::SetupCallMenu( const QSimTerminalResponse&=
+ resp )
++{
++    QSimCommand cmd;
++
++    if ( resp.result() !=3D QSimTerminalResponse::Success ) {
++        /* Unknown response - just go back to the main menu. */
++        endSession();
++
++        return;
++    }
++
++    /* Item selected. */
++    switch ( resp.menuItem() ) {
++        case SetupCall_Confirmed:
++        case SetupCall_If_Not_Busy:
++        case SetupCall_Rejected:
++        {
++            cmd.setType( QSimCommand::SetupCall );
++            cmd.setDestinationDevice( QSimCommand::Network );
++            cmd.setText( "Not busy" );
++            cmd.setNumber( "+012340123456p1p2" );
++            cmd.setDisposition( QSimCommand::IfNoOtherCalls );
++            command( cmd, this, SLOT(sendSetupCallMenu()) );
++        }
++        break;
++
++        case SetupCall_Long_AID:
++        {
++            cmd.setType( QSimCommand::SetupCall );
++            cmd.setDestinationDevice( QSimCommand::Network );
++            cmd.setText( "Three types are defined: - set up a call, but on=
+ly "
++                      "if not currently busy on another call; - set up a c=
+all"
++                      ", putting all other calls (if any) on hold; - set u=
+p a"
++                      " call, disconnecting all other calls (if any) first=
+."
++                      " For each of these types," );
++            cmd.setNumber( "+01" );
++            cmd.setDisposition( QSimCommand::IfNoOtherCalls );
++            command( cmd, this, SLOT(sendSetupCallMenu()) );
++        }
++        break;
++
++        case SetupCall_Subaddress_Not_Supported:
++        {
++            cmd.setType( QSimCommand::SetupCall );
++            cmd.setDestinationDevice( QSimCommand::Network );
++            cmd.setText( "Called party" );
++            cmd.setNumber( "+012340123456p1p2" );
++            cmd.setSubAddress ("9595959595");
++            cmd.setDisposition( QSimCommand::IfNoOtherCalls );
++            command( cmd, this, SLOT(sendSetupCallMenu()) );
++        }
++        break;
++
++        case SetupCall_Putting_On_Hold:
++        {
++            cmd.setType( QSimCommand::SetupCall );
++            cmd.setDestinationDevice( QSimCommand::Network );
++            cmd.setText( "On hold" );
++            cmd.setNumber( "+012340123456p1p2" );
++            cmd.setDisposition( QSimCommand::PutOnHold );
++            command( cmd, this, SLOT(sendSetupCallMenu()) );
++        }
++        break;
++
++        case SetupCall_On_Hold_Not_allowed:
++        {
++            cmd.setType( QSimCommand::SetupCall );
++            cmd.setDestinationDevice( QSimCommand::Network );
++            cmd.setText( "On hold" );
++            cmd.setNumber( "+0123401234" );
++            cmd.setDisposition( QSimCommand::PutOnHold );
++            command( cmd, this, SLOT(sendSetupCallMenu()) );
++        }
++        break;
++
++        case SetupCall_Disconnect_Others:
++        {
++            cmd.setType( QSimCommand::SetupCall );
++            cmd.setDestinationDevice( QSimCommand::Network );
++            cmd.setText( "Disconnect" );
++            cmd.setNumber( "+012340123456p1p2" );
++            cmd.setDisposition( QSimCommand::Disconnect );
++            command( cmd, this, SLOT(sendSetupCallMenu()) );
++        }
++        break;
++
++        case SetupCall_Max_Dialing_Number:
++          {
++              cmd.setType( QSimCommand::SetupCall );
++              cmd.setDestinationDevice( QSimCommand::Network );
++              cmd.setNumber( "+01234567890123456789012345678901" );
++              cmd.setDisposition( QSimCommand::Disconnect );
++              command( cmd, this, SLOT(sendSetupCallMenu()) );
++          }
++          break;
++
++        case SetupCall_Two_AID:
++         {
++             cmd.setType( QSimCommand::SetupCall );
++             cmd.setDestinationDevice( QSimCommand::Network );
++             cmd.setText( "CONFIRMATION" );
++             cmd.setOtherText( "CALL" );
++             cmd.setNumber( "+012340123456p1p2" );
++             cmd.setDisposition( QSimCommand::Disconnect );
++             command( cmd, this, SLOT(sendSetupCallMenu()) );
++         }
++         break;
++
++        case SetupCall_Basic_icon:
++        {
++            cmd.setType( QSimCommand::SetupCall );
++            cmd.setDestinationDevice( QSimCommand::Network );
++            cmd.setText( "Set up call Icon 3.1.1" );
++            cmd.setNumber( "+012340123456p1p2" );
++            cmd.setIconId( 1 );
++            cmd.setIconSelfExplanatory( false );
++            cmd.setDisposition( QSimCommand::IfNoOtherCalls );
++            command( cmd, this, SLOT(sendSetupCallMenu()) );
++        }
++        break;
++
++        case SetupCall_Self_basic_icon:
++         {
++             cmd.setType( QSimCommand::SetupCall );
++             cmd.setDestinationDevice( QSimCommand::Network );
++             cmd.setText( "Set up call Icon 3.2.1" );
++             cmd.setNumber( "+012340123456p1p2" );
++             cmd.setIconId( 1 );
++             cmd.setIconSelfExplanatory( true );
++             cmd.setDisposition( QSimCommand::IfNoOtherCalls );
++             command( cmd, this, SLOT(sendSetupCallMenu()) );
++         }
++         break;
++
++        case SetupCall_Basic_icon_during_call:
++         {
++             cmd.setType( QSimCommand::SetupCall );
++             cmd.setDestinationDevice( QSimCommand::Network );
++             cmd.setText( "Set up call Icon 3.4.1" );
++             cmd.setNumber( "+012340123456p1p2" );
++             cmd.setIconId( 1 );
++             cmd.setIconSelfExplanatory( true );
++             cmd.setOtherText( "Set up call Icon 3.4.2" );
++             cmd.setOtherIconId( 1 );
++             cmd.setOtherIconSelfExplanatory( true );
++             cmd.setDisposition( QSimCommand::IfNoOtherCalls );
++             command( cmd, this, SLOT(sendSetupCallMenu()) );
++         }
++         break;
++
++        default:
++            endSession();
++        break;
++    }
++}
+diff --git a/src/simapplication.h b/src/simapplication.h
+index 54ef103..f5b54b5 100644
+--- a/src/simapplication.h
++++ b/src/simapplication.h
+@@ -174,6 +174,8 @@ protected slots:
+     void sendGetInputNormalMenu();
+     void sendGetInputIconMenu();
+     void GetInputIconMenu( const QSimTerminalResponse& resp );
++    void sendSetupCallMenu();
++    void SetupCallMenu( const QSimTerminalResponse& resp );
+ };
+ =
+
+ #endif
 -- =
 
 1.7.9.5
 
 
---===============1877034307861672098==--
+--===============6954074964179369757==--
 
