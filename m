@@ -1,48 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============3010795060798329522=="
+Content-Type: multipart/mixed; boundary="===============0406137276777248980=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 12/12] doc: Add ReportChanged signal description
-Date: Tue, 04 Sep 2012 14:20:00 -0500
-Message-ID: <50465460.7080706@gmail.com>
-In-Reply-To: <50461DAA.2090602@linux.intel.com>
+From: Cornel Spinu <cornel.spinu@windriver.com>
+Subject: Sim plug-and-play
+Date: Wed, 05 Sep 2012 11:38:53 +0000
+Message-ID: <loom.20120905T133456-510@post.gmane.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3010795060798329522==
+--===============0406137276777248980==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ronald,
+Hi,
 
->>> + ReportChanged(string type, variant recipient, variant status)
->>> +
->>> + Signal that is sent when a report has been received and
->>> + processed. It contains the type of the report
->>> + ("delivery_report" or other), the recipient concerned
->>> + and its new status.
->>> +
->>
->> Why are we not simply changing the 'Status' to delivered/expired, etc?
->
-> Unfortunately, we cannot use the message status because there is one
-> delivery status per recipient (a message can be sent to 2 (or more)
-> recipients, so it can be delivered to one of them and "not yet
-> delivered" to the other one).
->
+I'm using ofono 0.48 with a cinterion modem and I want enable an plug-and-p=
+lay
+sim. Basically when I insert a sim into the modem, I want to do an pin chec=
+k and
+then continue with other procedures. I was think of creating a notify funct=
+ion
+when AT^SCKS function returns 1 (sim inserted). The thing is I dont know wh=
+ere
+to capture the response from that command. Can anyone give me a suggetion?
 
-So how do you expect this to work? Is the application responsible for =
+Thank you,
+Cornel
 
-aggregating the recipients?  If so, then that is not a good idea, mmsd =
 
-should be doing as much work as possible here.
-
-Can't we use delivered/partially_delivered/expired and provide exact =
-
-status details as a dictionary?
-
-Regards,
--Denis
-
---===============3010795060798329522==--
+--===============0406137276777248980==--
 
