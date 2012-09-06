@@ -1,32 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============8808084901188366237=="
+Content-Type: multipart/mixed; boundary="===============2250742675452565664=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] phonesim: Reject specific outgoing call for SAT test
- purpose
-Date: Wed, 05 Sep 2012 15:14:58 -0500
-Message-ID: <5047B2C2.4060309@gmail.com>
-In-Reply-To: <1346865667-24888-3-git-send-email-philippe.nunes@linux.intel.com>
+From: Cornel Spinu <cornel.spinu@windriver.com>
+Subject: Re: Sim plug-and-play
+Date: Thu, 06 Sep 2012 07:26:17 +0000
+Message-ID: <loom.20120906T092441-123@post.gmane.org>
+In-Reply-To: <loom.20120905T145925-454@post.gmane.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8808084901188366237==
+--===============2250742675452565664==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Cornel Spinu <cornel.spinu@...> writes:
 
-On 09/05/2012 12:21 PM, Philippe Nunes wrote:
-> ---
->   src/callmanager.cpp |    7 +++++++
->   1 file changed, 7 insertions(+)
->
+> =
 
-Patch has been applied, thanks.
+> Hi Denis,
+> =
 
-Regards,
--Denis
+> Thank you for your reply.
+>  I will look into ifx.c as an example, try to implement
+> something like that on cinterion side,
+>  and return with a response with my progress.
+> =
+
+> Thanks,
+> Cornel
+> =
+
+> =
 
 
---===============8808084901188366237==--
+I've done the implemention based on that example. Everything seems to be wo=
+rking
+good. Only issue left is that sometimes i get sim busy, but this is related=
+ to
+the external sim holder i am using. due to the low connection speed.
+
+Thank you,
+Cornel
+
+
+
+
+--===============2250742675452565664==--
 
