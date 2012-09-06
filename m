@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4831231165645122430=="
+Content-Type: multipart/mixed; boundary="===============8989109997961798826=="
 MIME-Version: 1.0
 From: christopher.vogl@hale.at
 Subject: [PATCH 2/2] netreg: Add telit version for ciev notification
-Date: Thu, 06 Sep 2012 11:36:01 +0200
-Message-ID: <1346924162-32264-1-git-send-email-christopher.vogl@hale.at>
+Date: Thu, 06 Sep 2012 11:49:17 +0200
+Message-ID: <1346924958-32644-1-git-send-email-christopher.vogl@hale.at>
 In-Reply-To: <50292A75.3040005@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4831231165645122430==
+--===============8989109997961798826==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -92,5 +92,9 @@ result, gpointer user_data)
 1.7.7.6
 
 
---===============4831231165645122430==--
+--
+Scanned by MailScanner.
+
+
+--===============8989109997961798826==--
 
