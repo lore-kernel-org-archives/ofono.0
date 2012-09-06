@@ -1,33 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============0006197813220111938=="
+Content-Type: multipart/mixed; boundary="===============2029526674453781732=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4 2/2] ussd: Recover idle state after a transaction error
-Date: Thu, 06 Sep 2012 10:22:25 -0500
-Message-ID: <5048BFB1.8030309@gmail.com>
-In-Reply-To: <1346941306-3168-2-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH v2] phonesim: Extend STK conformance menu with Setup Call
+ items
+Date: Thu, 06 Sep 2012 10:25:39 -0500
+Message-ID: <5048C073.3080907@gmail.com>
+In-Reply-To: <1346942582-4873-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0006197813220111938==
+--===============2029526674453781732==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Philippe,
 
-On 09/06/2012 09:21 AM, Philippe Nunes wrote:
-> The "USSD terminated by network" notification is handled to recover
-> the idle state in case of USSD transaction error.
+On 09/06/2012 09:43 AM, Philippe Nunes wrote:
 > ---
->   src/ussd.c |   10 ++++++++++
->   1 file changed, 10 insertions(+)
->
+>   src/conformancesimapplication.cpp |  247 ++++++++++++++++++++++++++++++=
++++++++
+>   src/simapplication.h              |    2 +
+>   2 files changed, 249 insertions(+)
 
-Patch has been applied, thanks.
+Patch has been applied, but I still had to amend a spot you missed:
+
+> +        case SetupCall_Two_AID:
+> +        {
+> +            cmd.setType( QSimCommand::SetupCall );
+> +            cmd.setDestinationDevice( QSimCommand::Network );
+> +            cmd.setText( "CONFIRMATION" );
+> +            cmd.setOtherText( "CALL" );
+> +            cmd.setNumber( "+012340123456p1p2" );
+> +            cmd.setDisposition( QSimCommand::Disconnect );
+> +            command( cmd, this, SLOT(sendSetupCallMenu()) );
+> +         }
+> +         break;
+
+^^^
 
 Regards,
 -Denis
 
-
---===============0006197813220111938==--
+--===============2029526674453781732==--
 
