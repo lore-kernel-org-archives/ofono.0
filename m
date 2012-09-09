@@ -1,34 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8625226300920904331=="
+Content-Type: multipart/mixed; boundary="===============3937639630512735852=="
 MIME-Version: 1.0
-From: Cedric Jehasse <cedric.jehasse@gmail.com>
-Subject: Re: context activation quickly after context deactivation fails
-Date: Fri, 07 Sep 2012 11:27:02 +0200
-Message-ID: <CABvLYuD5h8WQ_Fm66uFmg2LrRpJNMXZGT2hvo-pK-36aBoDbeg@mail.gmail.com>
-In-Reply-To: <5048BD8B.6070103@gmail.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [RFC v1] gatchat: Print error message if opening tun failes
+Date: Sun, 09 Sep 2012 21:41:00 +0200
+Message-ID: <504CF0CC.8020806@monom.org>
+In-Reply-To: <503FE419.3050908@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8625226300920904331==
+--===============3937639630512735852==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dennis,
+Hi Denis,
 
-> Can you change:
-> +       g_at_chat_register(chat, "NO CARRIER", no_carrier_notify,
-> +                               FALSE, gc, NULL);
->
-> to read:
->
-> +       g_at_chat_register(gcd->chat, "NO CARRIER", no_carrier_notify,
-> +                               FALSE, gc, NULL);
->
+On 08/31/2012 12:07 AM, Denis Kenzior wrote:
+> On 08/24/2012 07:16 AM, Daniel Wagner wrote:
+>> From: Daniel Wagner<daniel.wagner@bmw-carit.de>
+>>
+>> This is a very common misstake. Let's help the users to
+>> configure their system correctly.
+>> ---
+>> Hi,
+>>
+>> I was not able to find out why the check in at_grps_context_prope() =
 
-it's working now!
+>> does not
+>> hit when the tun module is not loaded. Therefore, this on gets only
+>> an RFC state...
+>>
+>> cheers,
+>> daniel
+>>
+>>   gatchat/ppp_net.c | 6 +++++-
+>>   1 file changed, 5 insertions(+), 1 deletion(-)
+>>
+> =
 
-Thanks,
-Cedric
+> I went ahead and applied this patch, thanks.
 
---===============8625226300920904331==--
+I wonder if we should do something like this here
+
+http://git.kernel.org/?p=3Dnetwork/connman/connman.git;a=3Dcommitdiff;h=3D4=
+fe07dfed4f720136ee142e56a9d43242c8c78dc
+
+cheers,
+daniel
+
+
+--===============3937639630512735852==--
 
