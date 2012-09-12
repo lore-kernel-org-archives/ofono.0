@@ -1,47 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============8026698472188330637=="
+Content-Type: multipart/mixed; boundary="===============1814458908834356906=="
 MIME-Version: 1.0
 From: Ronald Tessier <ronald.tessier@linux.intel.com>
-Subject: [PATCHv2 0/6] mmsd: support delivery_ind notification
-Date: Wed, 12 Sep 2012 15:55:07 +0200
-Message-ID: <1347458113-29039-1-git-send-email-ronald.tessier@linux.intel.com>
+Subject: [PATCHv2 1/6] service: Use MMS_META_UUID_SUFFIX
+Date: Wed, 12 Sep 2012 15:55:08 +0200
+Message-ID: <1347458113-29039-2-git-send-email-ronald.tessier@linux.intel.com>
+In-Reply-To: <1347458113-29039-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8026698472188330637==
+--===============1814458908834356906==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-These patches concern mmsd and add support for delivery report notification.
-I splitted the old "Process delivery_ind notification" patch in 2 parts to =
-use
-MMS_META_UUID_SUFFIX in a separate patch and process delivery_ind notificat=
-ion
-in the other one.
-The ReportChanged signal documentation now comes before its implementation =
-in
-the serie. Furthermore, the signal now sends a global status
-(delivered/partially_delivered/not_delivered) with the details as a diction=
-ary.
+---
+ src/service.c |   10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
 
-Ronald Tessier (6):
-  service: Use MMS_META_UUID_SUFFIX
-  mmsutil: Decode delivery_ind msg
-  service: Process delivery_ind notification
-  doc: Add ReportChanged signal description
-  test: Add ReportChanged to monitored signals
-  service: Send a delivery changed signal
+diff --git a/src/service.c b/src/service.c
+index b3ecc1e..ab88370 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -1514,15 +1514,17 @@ static void load_messages(struct mms_service *servi=
+ce)
+ 		return;
 
- doc/message-api.txt |    8 ++
- src/mmsutil.c       |   21 ++++-
- src/service.c       |  231 +++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- test/monitor-mms    |   13 +++
- 4 files changed, 268 insertions(+), 5 deletions(-)
+ 	while ((file =3D g_dir_read_name(dir)) !=3D NULL) {
+-		const size_t suffix_len =3D 7;
+ 		char *uuid;
++		size_t uuid_len;
+
+-		if (g_str_has_suffix(file, ".status") =3D=3D FALSE)
++		if (g_str_has_suffix(file, MMS_META_UUID_SUFFIX) =3D=3D FALSE)
+ 			continue;
+-		if (strlen(file) - suffix_len =3D=3D 0)
++
++		uuid_len =3D strlen(file) - MMS_META_UUID_SUFFIX_LEN;
++		if (uuid_len =3D=3D 0)
+ 			continue;
+
+-		uuid =3D g_strndup(file, strlen(file) - suffix_len);
++		uuid =3D g_strndup(file, uuid_len);
+
+ 		process_message_on_start(service, uuid);
 
 --
 1.7.9.5
 
 
---===============8026698472188330637==--
+--===============1814458908834356906==--
 
