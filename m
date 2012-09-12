@@ -1,41 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============6978333191083510256=="
+Content-Type: multipart/mixed; boundary="===============4426848109834490422=="
 MIME-Version: 1.0
-From: Christopher Vogl <christopher.vogl@hale.at>
-Subject: Re: [PATCH 2/2] netreg: Add telit version for ciev notification
-Date: Wed, 12 Sep 2012 17:07:51 +0200
-Message-ID: <5050A547.7080109@hale.at>
-In-Reply-To: <505093BE.2080203@gmail.com>
+From: Ronald Tessier <ronald.tessier@linux.intel.com>
+Subject: [PATCH] TODO: Set number of significant digits in settings
+Date: Wed, 12 Sep 2012 17:33:30 +0200
+Message-ID: <1347464010-30242-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6978333191083510256==
+--===============4426848109834490422==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+This patch concerns mmsd.
+The number of significant digits is country dependant, mmsd cannot know the
+local numbering plan and so needs this information from the upper layer.
 
-> Strange, ofono shouldn't even let you attach or activate the context =
+---
+ TODO |   13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-> until after the netreg atom is fully initialized.  Do you have a log?
-
-I don't know how this could have happened, but before I tried it two =
-
-times and I surely saw the ppp-setup after netreg was removed (should =
-
-have saved the log).
-Now I cannot reproduce it and it works as it should - netreg gets remove =
-
-and no GPRS attachment.
-
-Regards,
-Christopher
+diff --git a/TODO b/TODO
+index 6e54f6f..3635a2f 100644
+--- a/TODO
++++ b/TODO
+@@ -63,6 +63,19 @@ MMS Delivery Report
+   Owner: S=C3=A9bastien Bianti <sebastien.bianti@linux.intel.com>
 
 
++MMS Settings
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++- Add an entry in MMS settings file to set number of significant digits
++  (i.e.: last digits of the phone number).
++  Use this value to match international and local phone number when dealin=
+g with
++  conversation or delivery report.
++
++  Priority: Medium
++  Complexity: C2
++  Owner:
++
++
+ D-Bus API
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D
 
 --
-Scanned by MailScanner.
+1.7.9.5
 
 
---===============6978333191083510256==--
+--===============4426848109834490422==--
 
