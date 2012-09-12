@@ -1,30 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============7830607763358673967=="
+Content-Type: multipart/mixed; boundary="===============7239830082210684102=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] test: Update with RequestQuickDigit API
-Date: Tue, 11 Sep 2012 23:27:40 -0500
-Message-ID: <50500F3C.1050303@gmail.com>
-In-Reply-To: <1346942327-4448-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH] isimodem: voicecall answer fix for Nemo on N9
+Date: Tue, 11 Sep 2012 23:30:56 -0500
+Message-ID: <50501000.6020209@gmail.com>
+In-Reply-To: <1347279367-21026-1-git-send-email-jarko.poutiainen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7830607763358673967==
+--===============7239830082210684102==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi Jarko,
 
-On 09/06/2012 09:38 AM, Philippe Nunes wrote:
+On 09/10/2012 07:16 AM, Jarko Poutiainen wrote:
+> Voicecall answering in Mer/Nemomobile run on Nokia N9 will fail unless ca=
+ll id is passed to modem. This patch fixes that issue.
+>
 > ---
->   test/test-stk-menu |   14 ++++++++++++++
->   1 file changed, 14 insertions(+)
+>   drivers/isimodem/voicecall.c |   15 ++++++++++++++-
+>   1 file changed, 14 insertions(+), 1 deletion(-)
 >
 
-All three patches have been applied, thanks.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============7830607763358673967==--
+
+--===============7239830082210684102==--
 
