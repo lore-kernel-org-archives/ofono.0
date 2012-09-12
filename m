@@ -1,100 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============7391490379363332646=="
+Content-Type: multipart/mixed; boundary="===============7925403643143021546=="
 MIME-Version: 1.0
-From: Erik <stimpit@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Getting started (serial GPRS modem)
-Date: Wed, 12 Sep 2012 10:40:37 +0200
-Message-ID: <CAK2MJLqFZqRqk8e-PKE9xQU9NuRE8ZpwbnH9tYdW5_wGnwT_rg@mail.gmail.com>
-In-Reply-To: <50501458.3050003@gmail.com>
+Date: Wed, 12 Sep 2012 08:35:39 -0500
+Message-ID: <50508FAB.2030609@gmail.com>
+In-Reply-To: <CAK2MJLqFZqRqk8e-PKE9xQU9NuRE8ZpwbnH9tYdW5_wGnwT_rg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7391490379363332646==
+--===============7925403643143021546==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis!
+Hi Erik,
 
-Thanks a lot for your reply!
+> I picked a driver at random. What I was looking for was basically to see
+> if I could at least see some trace of AT commands being sent. I'll care a=
+bout
+> if they are the right ones when I understand how stuff work. Something
+> apparently understood that it should use the port I specified. What happe=
+ns
+> next? I understand that list-modems ends up doing some dbus magic
+> in src/manager.c but I haven't really figured out more. Any hints on debu=
+gging
+> except running ofono with the -d option? Should I be using some dbus
+> tracing utility? I have no experience *at all* of using dbus myself. i ba=
+sically
+> know more or less what it is but not more than that.
 
-On Wed, Sep 12, 2012 at 6:49 AM, Denis Kenzior <denkenz@gmail.com> wrote:
-> Formal getting started documentation is lacking at the moment. Documentat=
-ion contributions are always welcome ;)
+There's d-feet and the like for tracing D-Bus, however most everything =
 
-I'll write something up if I end up doing something with ofono. I have
-no problems sharing code either if I write something using
-ofono.
+can be done using the included test scripts in ofono/test.  e.g. =
 
-> There are plenty of working examples to learn from however.
+monitor-ofono, list-modems, etc.
+
+The modem detection logic is handled in plugins/udevng.c and =
+
+plugins/udev.c  You want to modify the latter which takes care of serial =
+
+tty based devices.  Create a new modem driver and add it to the =
+
+add_modem function.  Your udev changes seem fine.
+
+> Hm. I wouldn't say GPRS *requires* multiplexing. I've written a GSM0710 M=
+UX
+> code before and I know that my current modem supports it (I even made sure
+> to get the specification for it when we selected this modem) but surely i=
+t's
+> possible to set up a GPRS connection without it, even though such a setup
+> is quite limited.
+
+For all practical purposes it does, unless you feel like giving even =
+
+basic things like signal strength reporting while the context is active. =
+
+  You can try to write a driver without it, and it should even work. =
+
+However, oFono has multiplexing support already assuming your modem is =
+
+07.10 compliant.  See plugins/calypso.c on how to setup the multiplexer.
+
 >
->> Second, the modem is a serial GPRS modem connected through a serial
->> line. This has to be farily common. Isn't there a simple way of just
->> testing ofono without adding udev rules, writing drivers, etc? What I
->> would like is basically to start ofonod with a path to the serial
->> device, telling it to use only standard (not device-specific) AT command=
-s.
+> I found Android's reference-ril code (not trying to offend anyone, not su=
+re
+> about any potential religious wars going on here) which seems really
+> simple. I'll see if that might suit my immediate needs better. But I have=
+n't
+> written off ofono yet.
 >
-> We have tried that, unfortunately we have yet to encounter a piece of har=
-dware that can be driven entirely using standard AT commands.  There are to=
-o many vendor commands and behavioral quirks that have to be accounted for.
-
-Ok. I have only used three different modems altogether. Maybe the reality
-is not as good as I thought it was...
-
->> I don't think what I'd like to do is possible. So I added an udev rule
->> in the form of:
->>
->> KERNEL=3D=3D"ttyUSB*", ENV{OFONO_DRIVER}=3D"nokia"
+> I suppose what I'm looking for is a really quick way of doing what I can =
+do
+> with chat and pppd but with potential of doing much more in the future.
 >
-> Are you picking a driver at random or is it indeed a Nokia modem?
 
-I picked a driver at random. What I was looking for was basically to see
-if I could at least see some trace of AT commands being sent. I'll care abo=
-ut
-if they are the right ones when I understand how stuff work. Something
-apparently understood that it should use the port I specified. What happens
-next? I understand that list-modems ends up doing some dbus magic
-in src/manager.c but I haven't really figured out more. Any hints on debugg=
-ing
-except running ofono with the -d option? Should I be using some dbus
-tracing utility? I have no experience *at all* of using dbus myself. i basi=
-cally
-know more or less what it is but not more than that.
+I doubt you can enable a modem faster with any other stack out there =
 
->> Do the existing drivers check that the modem is actually a modem of that
->> type (nokia in this case)?
+today.  You do need to write about 500 lines of code for a new modem =
 
-> No, but the list of modem drivers that support a serial port is only a su=
-bset of all the drivers available.  See add_modem() function in plugins/ude=
-v.c for more details.  The subset is currently limited to ifx, calypso, tc6=
-5, wavecom, sim900 and a few others.  These devices are true serial port de=
-vices and frequently require multiplexing, etc.
->>
->> I am not looking for anything fancy. I basically only want to set up a
->> GPRS connection and maybe do operator selection.
->> No voice, no SMS, nothing more.
->
-> If you're wanting GPRS on a true serial port based device, then you defin=
-itely need to write your own modem driver for it.  GPRS requires multiple A=
-T ports to drive successfully which requires multiplexing (e.g. via CMUX). =
- Multiplexing details are frequently vendor-specific, so these have to be h=
-andled in your driver.
+driver though ;)
 
-Hm. I wouldn't say GPRS *requires* multiplexing. I've written a GSM0710 MUX
-code before and I know that my current modem supports it (I even made sure
-to get the specification for it when we selected this modem) but surely it's
-possible to set up a GPRS connection without it, even though such a setup
-is quite limited.
+Regards,
+-Denis
 
-I found Android's reference-ril code (not trying to offend anyone, not sure
-about any potential religious wars going on here) which seems really
-simple. I'll see if that might suit my immediate needs better. But I haven't
-written off ofono yet.
-
-I suppose what I'm looking for is a really quick way of doing what I can do
-with chat and pppd but with potential of doing much more in the future.
-
-/Erik
-
---===============7391490379363332646==--
+--===============7925403643143021546==--
 
