@@ -1,53 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============9049526815043059319=="
+Content-Type: multipart/mixed; boundary="===============2299752866789824184=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH 1/1] Set MNC length to 2 if EFad doesn't specify it
-Date: Thu, 13 Sep 2012 08:44:19 +0000
-Message-ID: <1347525847-2991-1-git-send-email-jonas@southpole.se>
+From: Daniele Palmas <Daniele.Palmas@telit.com>
+Subject: Re: Getting started (serial GPRS modem)
+Date: Thu, 13 Sep 2012 12:44:28 +0000
+Message-ID: <159F4FBE0126984EABAC4A5C555EDE13297CF524@srv-its-xch02.tmt.telital.com>
+In-Reply-To: <CAC+thW3oXq=3thd0q05S-R-i7WQ2z-gZipFSi5OkTsGuncTgiw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9049526815043059319==
+--===============2299752866789824184==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Byte 4 of the EFAD structure, which specifies the MNC length, is optional.
-If this byte is not present, then there is no way to determine the length
-of the MNC.  As the, by far, most common length is 2, we might as well
-default to this value.
+Hi Andrea,
 
-This patch changes the ofono_error to a warning as it's not really an
-error that we're encountering, but the user should nonetheless be given
-a heads-up that something might not work as expected.
+Da: ofono-bounces(a)ofono.org [ofono-bounces(a)ofono.org] per conto di Andr=
+ea Galbusera [gizero(a)gmail.com]
+Inviato: mercoled=C3=AC 12 settembre 2012 19.31
+A: ofono(a)ofono.org
+Oggetto: Re: Getting started (serial GPRS modem)
 
-Signed-off-by: Jonas Bonn <jonas@southpole.se>
----
- src/sim.c |    4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+>Hi Daniele,
+>
+>On Wed, Sep 12, 2012 at 5:55 PM, Daniele Palmas
+><Daniele.Palmas@telit.com> wrote:
+>> Hi Erik,
+>>
+>> Da: ofono-bounces(a)ofono.org [ofono-bounces(a)ofono.org] per conto di E=
+rik [stimpit(a)gmail.com]
+>> Inviato: mercoled=C3=AC 12 settembre 2012 10.40
+>> A: ofono(a)ofono.org
+>> Oggetto: Re: Getting started (serial GPRS modem)
+>>
+>>> I found Android's reference-ril code (not trying to offend anyone, not =
+sure
+>>> about any potential religious wars going on here) which seems really
+>>> simple. I'll see if that might suit my immediate needs better. But I ha=
+ven't
+>>> written off ofono yet.
+>>
+>> The reference-ril code is indeed simple to customize, but consider that =
+most of the intelligence in the Android RIL is in the Java layer.
 
-diff --git a/src/sim.c b/src/sim.c
-index 4384eb0..f6109c6 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -1760,7 +1760,9 @@ static void sim_ad_read_cb(int ok, int length, int re=
-cord,
- 		return;
- =
+>Nice to see @telit.com people listening to this list! ;-) Me and most
+>actively some other guys are working with ofono and Telit devices.
+>
+>On my side, the reason I started looking at ofono was that using a
+>modem in Linux for embedded "the old way" (mgetty, ppp, etc...) was
+>getting too limiting and frustrating. On the other hand, developing
+>all that FSM stuff on my own was too much work and I'd even ended up
+>with something probably too coupled with specific hardware. I believe
+>that the driver architecture ofono is designed on, based on plugins,
+>will make using modern modems advanced features more affordable.
+>
+>BTW, is there any interest by Telit to support ofono drivers for their dev=
+ices?
 
- 	if (length < 4) {
--		ofono_error("EFad should contain@least four bytes");
-+		ofono_warn("EFad does not specify (optional) MNC length"
-+			   ", defaulting to 2");
-+		sim->mnc_length =3D 2;
- 		return;
- 	}
- =
+At the moment there are no plans.
 
--- =
+We started to look at it in the beginning of the project, then Android beca=
+me more and more popular, so we mainly focused our effort on it.
 
-1.7.9.5
+Personally speaking, I'm always checking what's happening in Ofono, because=
+ I consider it a very interesting project.
+
+Regards,
+Daniele
 
 
---===============9049526815043059319==--
+
+--===============2299752866789824184==--
 
