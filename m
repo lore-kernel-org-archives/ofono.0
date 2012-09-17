@@ -1,36 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============4457712972496684573=="
+Content-Type: multipart/mixed; boundary="===============0156550136599676361=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4 3/3] unit: Add test to check CBS padding character
-Date: Mon, 17 Sep 2012 11:58:42 -0500
-Message-ID: <505756C2.1070106@gmail.com>
-In-Reply-To: <1346425438-12220-3-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH] TODO: Set number of significant digits in settings
+Date: Mon, 17 Sep 2012 12:04:42 -0500
+Message-ID: <5057582A.5010408@gmail.com>
+In-Reply-To: <1347464010-30242-1-git-send-email-ronald.tessier@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4457712972496684573==
+--===============0156550136599676361==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi Ronald,
 
-On 08/31/2012 10:03 AM, Philippe Nunes wrote:
-> From: Guillaume Zajac<guillaume.zajac@linux.intel.com>
+On 09/12/2012 10:33 AM, Ronald Tessier wrote:
+> This patch concerns mmsd.
+> The number of significant digits is country dependant, mmsd cannot know t=
+he
+> local numbering plan and so needs this information from the upper layer.
 >
-> This CBS unit test is used to check that the<CR>  character can
-> be interpreted as a wanted carriage return and not necessarily
-> as a padding character.
 > ---
->   unit/test-sms.c |   59 ++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   1 file changed, 59 insertions(+)
+>   TODO |   13 +++++++++++++
+>   1 file changed, 13 insertions(+)
 >
+> diff --git a/TODO b/TODO
+> index 6e54f6f..3635a2f 100644
+> --- a/TODO
+> +++ b/TODO
+> @@ -63,6 +63,19 @@ MMS Delivery Report
+>     Owner: S=C3=A9bastien Bianti<sebastien.bianti@linux.intel.com>
+>
+>
+> +MMS Settings
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> +
+> +- Add an entry in MMS settings file to set number of significant digits
+> +  (i.e.: last digits of the phone number).
+> +  Use this value to match international and local phone number when deal=
+ing with
+> +  conversation or delivery report.
+> +
 
-Patch has been applied.  Do you have test data for the UCS2 case?
+Actually I'd rather not do that, we should pick a sane default instead. =
+
+  For example, oFono uses the last 6 digits, or as many digits as are =
+
+available.
+
+Do we have any other information we can use, like some sort of identifier ?
 
 Regards,
 -Denis
 
---===============4457712972496684573==--
+--===============0156550136599676361==--
 
