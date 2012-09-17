@@ -1,35 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============2239193299729041204=="
+Content-Type: multipart/mixed; boundary="===============7235812676221771303=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 1/2] stk: convert to phone number format and remove
- DTMF string
-Date: Mon, 17 Sep 2012 11:27:11 -0500
-Message-ID: <50574F5F.1070503@gmail.com>
-In-Reply-To: <1346941589-3335-1-git-send-email-philippe.nunes@linux.intel.com>
+Subject: Re: [PATCH v4 1/3] smsutil: Fix style issues
+Date: Mon, 17 Sep 2012 11:57:20 -0500
+Message-ID: <50575670.2020708@gmail.com>
+In-Reply-To: <1346425438-12220-1-git-send-email-philippe.nunes@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2239193299729041204==
+--===============7235812676221771303==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Philippe,
 
-On 09/06/2012 09:26 AM, Philippe Nunes wrote:
-> The dialing number provided by the Setup Call proactive command
-> may contain pause and DTMF characters.
+On 08/31/2012 10:03 AM, Philippe Nunes wrote:
 > ---
->   src/stk.c |   58 +++++++++++++++++++++++++++++++++++++++++++-----------=
-----
->   1 file changed, 43 insertions(+), 15 deletions(-)
+>   src/smsutil.c |   28 ++++++++++++++--------------
+>   1 file changed, 14 insertions(+), 14 deletions(-)
 >
 
-Both patches have been applied, thanks.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
 
---===============2239193299729041204==--
+--===============7235812676221771303==--
 
