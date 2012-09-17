@@ -1,32 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============0082852319302932499=="
+Content-Type: multipart/mixed; boundary="===============9029706767344139013=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] stkagent: Sanitize any output from the agent
-Date: Mon, 17 Sep 2012 12:07:07 -0500
-Message-ID: <505758BB.3040202@gmail.com>
-In-Reply-To: <1346160761-11888-1-git-send-email-philippe.nunes@linux.intel.com>
+From: Cedric Jehasse <cedric.jehasse@gmail.com>
+Subject: Re: ofono exits after DBUS error
+Date: Mon, 17 Sep 2012 19:49:07 +0200
+Message-ID: <CABvLYuCY1KE5btF59ioXesRg3o=BYJBbaZyt1bodHMLDoMf+2A@mail.gmail.com>
+In-Reply-To: <50574530.3030709@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0082852319302932499==
+--===============9029706767344139013==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi Denis,
 
-On 08/28/2012 08:32 AM, Philippe Nunes wrote:
-> ---
->   src/stkagent.c |   56 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++---
->   1 file changed, 53 insertions(+), 3 deletions(-)
+> To me it sounds like the output should be BASE followed by the inverted '=
+!'
+> sign.  Unfortunately the modem is sending ISO-8859-1 characters instead of
+> GSM like it is being told to do by the driver.  That particular character=
+ is
+> not valid utf8, hence we go kaboom.
 >
+> Having said that, I'm not familiar with 'BASE', does the above sound
+> reasonable?
 
-Patch has been applied, thanks.
+The operator's name is just "BASE", so i wouldn't see why there would
+be an inverted '!' sign. In some AT logs i've also seen "BASE0" as a
+response to AT+COPS?, so i'm thinking this last character is just
+garbage.
 
-Regards,
--Denis
+regards,
+Cedric
 
-
---===============0082852319302932499==--
+--===============9029706767344139013==--
 
