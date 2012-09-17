@@ -1,57 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============1710148661308585507=="
+Content-Type: multipart/mixed; boundary="===============6163304778754800607=="
 MIME-Version: 1.0
-From: Cedric Jehasse <cedric.jehasse@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: ofono exits after DBUS error
-Date: Sat, 15 Sep 2012 11:20:31 +0200
-Message-ID: <CABvLYuBcjxmc2a4ZUwYj36qbpJrvkuHfL7sQU2+arGW=Yt2cTw@mail.gmail.com>
-In-Reply-To: <505358EF.8000305@gmail.com>
+Date: Mon, 17 Sep 2012 10:43:44 -0500
+Message-ID: <50574530.3030709@gmail.com>
+In-Reply-To: <CABvLYuBcjxmc2a4ZUwYj36qbpJrvkuHfL7sQU2+arGW=Yt2cTw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1710148661308585507==
+--===============6163304778754800607==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Cedric,
 
-I know the modem is buggy. But oFono could skip invalid characters,
-this would be better then exiting.
+Just a gentle reminder not to top-post on this mailing list
 
-Actually the output should be "Mobile Vikings" :-) (but this is
-another bug in the modem). So "BASE" would be the correct output for
-oFono.
+On 09/15/2012 04:20 AM, Cedric Jehasse wrote:
+> Hi Denis,
+>
+> I know the modem is buggy. But oFono could skip invalid characters,
+> this would be better then exiting.
+>
+> Actually the output should be "Mobile Vikings" :-) (but this is
+> another bug in the modem). So "BASE" would be the correct output for
+> oFono.
 
-Thanks,
-Cedric
+To me it sounds like the output should be BASE followed by the inverted =
 
+'!' sign.  Unfortunately the modem is sending ISO-8859-1 characters =
 
-On Fri, Sep 14, 2012 at 6:18 PM, Denis Kenzior <denkenz@gmail.com> wrote:
-> Hi Cedric,
->
->
-> On 09/14/2012 08:41 AM, Cedric Jehasse wrote:
->>
->> Hi,
->>
->> It looks like "AT+COPS?" returns an invalid character. I guess this is
->> passed to DBUS which causes oFono to exit.
->>
->
-> Correct, but looks like the modem is doing something stupid.
->
->
->> ofonod[10318]: PCUI:>  AT+COPS?\r
->> ofonod[10318]: PCUI:<  \r\n+COPS: 0,0,"BASE\241",2\r\n\r\nOK\r\n
->
->
-> I have no idea what it is sending out, but in theory COPS responses are
-> limited to IRA characters.  \241 is clearly not.
->
-> The question is, what should the output look like?
->
-> Regards,
-> -Denis
+instead of GSM like it is being told to do by the driver.  That =
 
---===============1710148661308585507==--
+particular character is not valid utf8, hence we go kaboom.
+
+Having said that, I'm not familiar with 'BASE', does the above sound =
+
+reasonable?
+
+Regards,
+-Denis
+
+--===============6163304778754800607==--
 
