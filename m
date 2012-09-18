@@ -1,49 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============6135690398913042278=="
+Content-Type: multipart/mixed; boundary="===============5020200326939915557=="
 MIME-Version: 1.0
 From: Simon Busch <morphis@gravedo.de>
-Subject: [PATCH 07/11] samsungipcmodem: add network registration driver
- implementation
-Date: Tue, 18 Sep 2012 20:18:51 +0200
-Message-ID: <1347992335-9016-8-git-send-email-morphis@gravedo.de>
+Subject: [PATCH 08/11] samsungipcmodem: add voicecall driver implementation
+Date: Tue, 18 Sep 2012 20:18:52 +0200
+Message-ID: <1347992335-9016-9-git-send-email-morphis@gravedo.de>
 In-Reply-To: <1347992335-9016-1-git-send-email-morphis@gravedo.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6135690398913042278==
+--===============5020200326939915557==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am                                    |    3 +-
- drivers/samsungipcmodem/network-registration.c |  398 ++++++++++++++++++++=
+ Makefile.am                               |    3 +-
+ drivers/samsungipcmodem/samsungipcmodem.c |    2 +
+ drivers/samsungipcmodem/samsungipcmodem.h |    2 +
+ drivers/samsungipcmodem/voicecall.c       |  358 +++++++++++++++++++++++++=
 ++++
- drivers/samsungipcmodem/samsungipcmodem.c      |    2 +
- drivers/samsungipcmodem/samsungipcmodem.h      |    2 +
- 4 files changed, 404 insertions(+), 1 deletion(-)
- create mode 100644 drivers/samsungipcmodem/network-registration.c
+ 4 files changed, 364 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/samsungipcmodem/voicecall.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 5553489..32ed3de 100644
+index 32ed3de..012c78d 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -189,7 +189,8 @@ builtin_sources +=3D \
- 	drivers/samsungipcmodem/ipc.c \
+@@ -190,7 +190,8 @@ builtin_sources +=3D \
  	drivers/samsungipcmodem/ipc.h \
  	drivers/samsungipcmodem/devinfo.c \
--	drivers/samsungipcmodem/sim.c
-+	drivers/samsungipcmodem/sim.c \
-+	drivers/samsungipcmodem/network-registration.c
+ 	drivers/samsungipcmodem/sim.c \
+-	drivers/samsungipcmodem/network-registration.c
++	drivers/samsungipcmodem/network-registration.c \
++	drivers/samsungipcmodem/voicecall.c
  builtin_cflags +=3D @SAMSUNGIPC_CFLAGS@
  builtin_libadd +=3D @SAMSUNGIPC_LIBS@
  endif
-diff --git a/drivers/samsungipcmodem/network-registration.c b/drivers/samsu=
-ngipcmodem/network-registration.c
+diff --git a/drivers/samsungipcmodem/samsungipcmodem.c b/drivers/samsungipc=
+modem/samsungipcmodem.c
+index a192686..72553a5 100644
+--- a/drivers/samsungipcmodem/samsungipcmodem.c
++++ b/drivers/samsungipcmodem/samsungipcmodem.c
+@@ -33,11 +33,13 @@ static int samsungipcmodem_init(void)
+ 	samsungipc_devinfo_init();
+ 	samsungipc_sim_init();
+ 	samsungipc_netreg_init();
++	samsungipc_voicecall_init();
+ 	return 0;
+ }
+ =
+
+ static void samsungipcmodem_exit(void)
+ {
++	samsungipc_voicecall_exit();
+ 	samsungipc_netreg_exit();
+ 	samsungipc_sim_exit();
+ 	samsungipc_devinfo_exit();
+diff --git a/drivers/samsungipcmodem/samsungipcmodem.h b/drivers/samsungipc=
+modem/samsungipcmodem.h
+index 3f4d5ad..092effd 100644
+--- a/drivers/samsungipcmodem/samsungipcmodem.h
++++ b/drivers/samsungipcmodem/samsungipcmodem.h
+@@ -25,3 +25,5 @@ extern void samsungipc_sim_init(void);
+ extern void samsungipc_sim_exit(void);
+ extern void samsungipc_netreg_init(void);
+ extern void samsungipc_netreg_exit(void);
++extern void samsungipc_voicecall_init(void);
++extern void samsungipc_voicecall_exit(void);
+diff --git a/drivers/samsungipcmodem/voicecall.c b/drivers/samsungipcmodem/=
+voicecall.c
 new file mode 100644
-index 0000000..f8ea22f
+index 0000000..5236e0f
 --- /dev/null
-+++ b/drivers/samsungipcmodem/network-registration.c
-@@ -0,0 +1,398 @@
++++ b/drivers/samsungipcmodem/voicecall.c
+@@ -0,0 +1,358 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -67,6 +97,10 @@ rved.
 + *
 + */
 +
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
 +#define _GNU_SOURCE
 +#include <string.h>
 +#include <stdlib.h>
@@ -77,92 +111,86 @@ rved.
 +
 +#include <ofono/log.h>
 +#include <ofono/modem.h>
-+#include <ofono/netreg.h>
++#include <ofono/voicecall.h>
 +
 +#include "samsungipcmodem.h"
 +#include "ipc.h"
 +#include "util.h"
 +
-+struct netreg_data {
++/* Amount of ms we wait between call status requests */
++#define CALL_STATUS_POLL_INTERVAL 500
++
++struct voicecall_data {
 +	struct ipc_device *device;
-+	guint status_watch;
-+	guint rssi_watch;
-+	int strength;
++	int dtmf_active;
++	unsigned int status_update_pending;
 +};
 +
-+static void list_operators_cb(uint16_t cmd, void *data, uint16_t length, u=
-int8_t error, void *user_data)
++static void send_dtmf_cb(uint16_t cmd, void *data, uint16_t length, uint8_=
+t error, void *user_data)
 +{
 +	struct cb_data *cbd =3D user_data;
-+	ofono_netreg_operator_list_cb_t cb =3D cbd->cb;
-+	struct ofono_network_operator *list;
-+	struct ofono_network_operator *op;
-+	struct ipc_net_plmn_entries *resp =3D data;
-+	struct ipc_net_plmn_entry *entries =3D data + sizeof(struct ipc_net_plmn_=
-entries);
-+	struct ipc_net_plmn_entry *entry;
-+	int i;
-+
-+	DBG("Got %d elements", resp->num);
++	ofono_voicecall_cb_t cb =3D cbd->cb;
++	unsigned char ret;
 +
 +	if (error) {
-+		CALLBACK_WITH_FAILURE(cb, 0, NULL, cbd->data);
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
 +		goto done;
 +	}
 +
-+	list =3D g_try_new0(struct ofono_network_operator, resp->num);
-+	if (list =3D=3D NULL) {
-+		CALLBACK_WITH_FAILURE(cb, 0, NULL, cbd->data);
++	ret =3D *((unsigned char*) data);
++	if (!ret) {
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
 +		goto done;
 +	}
 +
-+	for (i =3D 0; i < resp->num; i++) {
-+		op =3D &list[i];
-+		entry =3D &entries[i];
-+
-+		op->status =3D entry->status - 1;
-+
-+		strncpy(op->mcc, entry->plmn, 3);
-+		op->mcc[OFONO_MAX_MCC_LENGTH] =3D '\0';
-+
-+		strncpy(op->mnc, entry->plmn + 3, 2);
-+		op->mnc[OFONO_MAX_MNC_LENGTH] =3D '\0';
-+	}
-+
-+	CALLBACK_WITH_SUCCESS(cb, resp->num, list, cbd->data);
++	CALLBACK_WITH_SUCCESS(cb, cbd->data);
 +
 +done:
 +	g_free(cbd);
 +}
 +
-+static void samsungipc_list_operators(struct ofono_netreg *netreg,
-+				ofono_netreg_operator_list_cb_t cb, void *data)
++static void samsungipc_send_dtmf(struct ofono_voicecall *vc, const char *d=
+tmf,
++			ofono_voicecall_cb_t cb, void *data)
 +{
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
++	struct cb_data *cbd;
++	struct ipc_call_cont_dtmf *reqs;
++	int tone_count;
++	int n;
 +
-+	if(ipc_device_enqueue_message(nd->device, IPC_NET_PLMN_LIST, IPC_TYPE_GET,
-+						NULL, 0, list_operators_cb, cbd) > 0)
++	DBG("");
++
++	tone_count =3D strlen(dtmf);
++
++	reqs =3D g_try_new0(struct ipc_call_cont_dtmf, tone_count);
++	if (!reqs) {
++		CALLBACK_WITH_FAILURE(cb, data);
++		return;
++	}
++
++	cbd =3D cb_data_new(cb, data);
++
++	for (n =3D 0; n > tone_count; n++) {
++		reqs[n].state =3D IPC_CALL_DTMF_STATE_START;
++		reqs[n].tone =3D dtmf[n];
++	}
++
++	if(ipc_device_enqueue_message(vd->device, IPC_CALL_RELEASE, IPC_TYPE_EXEC,
++						reqs, sizeof(struct ipc_call_cont_dtmf) * tone_count,
++						send_dtmf_cb, cbd) > 0)
 +		return;
 +
++	CALLBACK_WITH_FAILURE(cb, data);
 +	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, 0, NULL, data);
 +}
 +
-+static void samsungipc_signal_strength(struct ofono_netreg *netreg,
-+				ofono_netreg_strength_cb_t cb, void *data)
-+{
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+
-+	CALLBACK_WITH_SUCCESS(cb, nd->strength, data);
-+}
-+
-+static void network_register_cb(uint16_t cmd, void *data, uint16_t length,=
- uint8_t error, void *user_data)
++static void common_call_cb(uint16_t cmd, void *data, uint16_t length, uint=
+8_t error, void *user_data)
 +{
 +	struct cb_data *cbd =3D user_data;
-+	ofono_netreg_register_cb_t cb =3D cbd->cb;
++	ofono_voicecall_cb_t cb =3D cbd->cb;
 +	struct ipc_gen_phone_res *resp =3D data;
 +
 +	if (error || ipc_gen_phone_res_check(resp) < 0) {
@@ -176,322 +204,258 @@ entries);
 +	g_free(cbd);
 +}
 +
-+static void samsungipc_register_manual(struct ofono_netreg *netreg,
-+				const char *mcc, const char *mnc,
-+				ofono_netreg_register_cb_t cb, void *data)
++static void samsungipc_hangup_active(struct ofono_voicecall *vc,
++				ofono_voicecall_cb_t cb, void *data)
 +{
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+	struct cb_data *cbd;
-+	struct ipc_net_plmn_sel_set *req;
-+	char plmn[5];
-+
-+	req =3D g_try_new0(struct ipc_net_plmn_sel_set, 1);
-+	if (!req) {
-+		CALLBACK_WITH_FAILURE(cb, data);
-+		return;
-+	}
-+
-+	cbd =3D cb_data_new(cb, data);
-+
-+	snprintf(plmn, 5, "%s%s", mcc, mnc);
-+	ipc_net_plmn_sel_set_setup(req, IPC_NET_PLMN_SEL_MANUAL, plmn,
-+						IPC_NET_ACCESS_TECHNOLOGY_UMTS);
-+
-+	if(ipc_device_enqueue_message(nd->device, IPC_NET_PLMN_SEL, IPC_TYPE_SET,
-+						req, sizeof(struct ipc_net_plmn_sel_set),
-+						network_register_cb, cbd) > 0)
-+		return;
-+
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+static void samsungipc_register_auto(struct ofono_netreg *netreg,
-+				ofono_netreg_register_cb_t cb, void *data)
-+{
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+	struct cb_data *cbd;
-+	struct ipc_net_plmn_sel_set *req;
-+
-+	req =3D g_try_new0(struct ipc_net_plmn_sel_set, 1);
-+	if (!req) {
-+		CALLBACK_WITH_FAILURE(cb, data);
-+		return;
-+	}
-+
-+	cbd =3D cb_data_new(cb, data);
-+
-+	ipc_net_plmn_sel_set_setup(req, IPC_NET_PLMN_SEL_AUTO, NULL,
-+						IPC_NET_ACCESS_TECHNOLOGY_UNKNOWN);
-+
-+	if(ipc_device_enqueue_message(nd->device, IPC_NET_PLMN_SEL, IPC_TYPE_SET,
-+						req, sizeof(struct ipc_net_plmn_sel_set),
-+						network_register_cb, cbd) > 0)
-+		return;
-+
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+static void current_operator_cb(uint16_t cmd, void *data, uint16_t length,=
- uint8_t error, void *user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_netreg_operator_cb_t cb =3D cbd->cb;
-+	struct ipc_net_current_plmn_response *resp =3D data;
-+	struct ofono_network_operator op;
-+
-+	if (error) {
-+		CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
-+		goto done;
-+	}
-+
-+	strncpy(op.mcc, resp->plmn, 3);
-+	op.mcc[OFONO_MAX_MCC_LENGTH] =3D '\0';
-+
-+	strncpy(op.mnc, &resp->plmn[3], 2);
-+	op.mnc[OFONO_MAX_MNC_LENGTH] =3D '\0';
-+
-+	memset(op.name, 0, OFONO_MAX_OPERATOR_NAME_LENGTH);
-+
-+	/* Set to current */
-+	op.status =3D 2;
-+	/* FIXME check wether this is correct! */
-+	op.tech =3D resp->type;
-+
-+	DBG("current_operator_cb: mcc=3D%s, mnc=3D%s, reg_state=3D%d, tech=3D%d",
-+		op.mcc, op.mnc, op.status, op.tech);
-+
-+	CALLBACK_WITH_SUCCESS(cb, &op, cbd->data);
-+
-+done:
-+	g_free(cbd);
-+}
-+
-+static void samsungipc_current_operator(struct ofono_netreg *netreg,
-+				ofono_netreg_operator_cb_t cb, void *data)
-+{
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
 +	struct cb_data *cbd =3D cb_data_new(cb, data);
 +
-+	if(ipc_device_enqueue_message(nd->device, IPC_NET_CURRENT_PLMN, IPC_TYPE_=
-GET,
-+						NULL, 0, current_operator_cb, cbd) > 0)
++	DBG("");
++
++	if(ipc_device_enqueue_message(vd->device, IPC_CALL_RELEASE, IPC_TYPE_EXEC,
++						NULL, 0, common_call_cb, cbd) > 0)
 +		return;
 +
-+	CALLBACK_WITH_FAILURE(cb, NULL, data);
-+
++	CALLBACK_WITH_FAILURE(cb, data);
 +	g_free(cbd);
 +}
 +
-+static void net_status_cb(uint16_t cmd, void *data, uint16_t length, uint8=
-_t error, void *user_data)
++static void samsungipc_answer(struct ofono_voicecall *vc,
++				ofono_voicecall_cb_t cb, void *data)
 +{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_netreg_status_cb_t cb =3D cbd->cb;
-+	struct ipc_net_regist_response *resp =3D data;
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
 +
-+	if (error) {
-+		CALLBACK_WITH_FAILURE(cb, -1, -1, -1, -1, cbd->data);
-+		goto done;
-+	}
++	DBG("");
 +
-+	DBG("reg_state=3D%i, lac=3D%i, cid=3D%i, act=3D%i", resp->reg_state - 1,
-+		resp->lac, resp->cid, resp->act);
++	if(ipc_device_enqueue_message(vd->device, IPC_CALL_ANSWER, IPC_TYPE_EXEC,
++						NULL, 0, common_call_cb, cbd) > 0)
++		return;
 +
-+	CALLBACK_WITH_SUCCESS(cb, resp->reg_state - 1, resp->lac,
-+					resp->cid, resp->act, cbd->data);
-+
-+done:
++	CALLBACK_WITH_FAILURE(cb, data);
 +	g_free(cbd);
 +}
 +
-+static void samsungipc_registration_status(struct ofono_netreg *netreg,
-+					ofono_netreg_status_cb_t cb,
-+					void *data)
++static void samsungipc_dial(struct ofono_voicecall *vc,
++			const struct ofono_phone_number *ph,
++			enum ofono_clir_option clir, ofono_voicecall_cb_t cb,
++			void *data)
 +{
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
++	struct ipc_call_outgoing *req;
 +	struct cb_data *cbd;
-+	struct ipc_net_regist_get *req;
 +
-+	req =3D g_try_new0(struct ipc_net_regist_get, 1);
++	DBG("");
++
++	req =3D g_try_new0(struct ipc_call_outgoing, 1);
 +	if (!req) {
-+		CALLBACK_WITH_FAILURE(cb, -1, -1, -1, -1, data);
++		CALLBACK_WITH_FAILURE(cb, data);
 +		return;
 +	}
 +
 +	cbd =3D cb_data_new(cb, data);
 +
-+	ipc_net_regist_get_setup(req, IPC_NET_SERVICE_DOMAIN_GSM);
++	switch (clir) {
++	case OFONO_CLIR_OPTION_DEFAULT:
++		req->identity =3D IPC_CALL_IDENTITY_DEFAULT;
++		break;
++	case OFONO_CLIR_OPTION_INVOCATION:
++		req->identity =3D IPC_CALL_IDENTITY_SHOW;
++		break;
++	case OFONO_CLIR_OPTION_SUPPRESSION:
++		req->identity =3D IPC_CALL_IDENTITY_HIDE;
++		break;
++	}
 +
-+	if(ipc_device_enqueue_message(nd->device, IPC_NET_REGIST, IPC_TYPE_GET,
-+						req, sizeof(struct ipc_net_regist_get),
-+						net_status_cb, cbd) > 0)
++	req->type =3D IPC_CALL_TYPE_VOICE;
++	req->prefix =3D (ph->type =3D=3D 145) ? IPC_CALL_PREFIX_INTL : IPC_CALL_P=
+REFIX_NONE;
++	req->length =3D strlen(ph->number);
++	strncpy((char*) req->number, ph->number, 86);
++
++	if(ipc_device_enqueue_message(vd->device, IPC_CALL_OUTGOING, IPC_TYPE_EXE=
+C,
++						req, sizeof(struct ipc_call_outgoing),
++						common_call_cb, cbd) > 0)
 +		return;
 +
-+	CALLBACK_WITH_FAILURE(cb, -1, -1, -1, -1, data);
++	CALLBACK_WITH_FAILURE(cb, data);
 +
 +	g_free(cbd);
 +}
 +
-+static void notify_status_cb(uint16_t cmd, void *data, uint16_t length, vo=
-id *user_data)
++static void call_list_cb(uint16_t cmd, void *data, uint16_t length, uint8_=
+t error, void *user_data)
 +{
-+	struct ofono_netreg *netreg =3D user_data;
-+	struct ipc_net_regist_response *resp =3D data;
++	struct ofono_voicecall *vc =3D user_data;
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
++	struct ipc_message_info resp;
++	struct ipc_call_list_entry *entry;
++	struct ofono_call call;
++	char *entry_number;
++	int num_entries;
++	int n;
 +
-+	if (resp->domain =3D=3D IPC_NET_SERVICE_DOMAIN_GPRS)
++	DBG("");
++
++	if (error)
 +		return;
 +
-+	DBG("reg_state=3D%i, lac=3D%i, cid=3D%i, act=3D%i", resp->reg_state - 1,
-+		resp->lac, resp->cid, resp->act);
++	resp.data =3D data;
++	resp.length =3D length;
 +
-+	ofono_netreg_status_notify(netreg, resp->reg_state - 1,
-+							resp->lac, resp->cid, resp->act);
++	num_entries =3D ipc_call_list_response_get_num_entries(&resp);
++
++	DBG("Got %i entries", num_entries);
++
++	for (n =3D 0; n < num_entries; n++) {
++		ofono_call_init(&call);
++
++		entry =3D ipc_call_list_response_get_entry(&resp, n);
++
++		call.id =3D entry->idx;
++		call.type =3D (entry->type =3D=3D IPC_CALL_TYPE_VOICE) ? 0 : 1;
++		call.direction =3D (entry->term =3D=3D IPC_CALL_TERM_MT) ? 0 : 1;
++		call.status =3D entry->state - 1;
++
++		memset(&call.phone_number.type, 0, OFONO_MAX_PHONE_NUMBER_LENGTH);
++
++		entry_number =3D ipc_call_list_response_get_entry_number(&resp, n);
++		if (entry_number !=3D NULL) {
++			strncpy(call.phone_number.number, entry_number, OFONO_MAX_CALLER_NAME_L=
+ENGTH);
++			call.phone_number.number[entry->number_len] =3D '\0';
++			call.phone_number.type =3D (entry->number_len > 0 && call.phone_number.=
+number[0] =3D=3D '+') ? 145 : 129;
++			g_free(entry_number);
++		}
++
++		DBG("id=3D%i, type=3D%i, direction=3D%i, status=3D%i, number=3D%s",
++			call.id, call.type, call.direction, call.status,
++			call.phone_number.number);
++
++		ofono_voicecall_notify(vc, &call);
++	}
++
++	vd->status_update_pending =3D 0;
 +}
 +
-+static int convert_signal_strength(unsigned char rssi)
++static void update_call_status(struct ofono_voicecall *vc)
 +{
-+	int strength =3D 0;
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
 +
-+	if (rssi < 0x6f)
-+		strength =3D ((((rssi - 0x71) * -1) - (((rssi - 0x71) * -1) % 2)) / 2);
++	if (vd->status_update_pending)
++		return;
 +
-+	if (strength > 31)
-+		strength =3D 31;
++	vd->status_update_pending =3D 1;
 +
-+	return ((strength * 100) / (31));
++	if(ipc_device_enqueue_message(vd->device, IPC_CALL_LIST, IPC_TYPE_GET,
++						NULL, 0, call_list_cb, vc) > 0)
++		return;
 +}
 +
-+static void notify_rssi_cb(uint16_t cmd, void *data, uint16_t length, void=
- *user_data)
++static void notify_call_incoming_cb(uint16_t cmd, void *data, uint16_t len=
+gth, void *user_data)
 +{
-+	struct ofono_netreg *netreg =3D user_data;
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+	struct ipc_disp_rssi_info *resp =3D data;
++	struct ofono_voicecall *vc =3D user_data;
 +
-+	nd->strength =3D convert_signal_strength(resp->rssi);
-+
-+	DBG("rssi=3D%i, strength=3D%i", resp->rssi, nd->strength);
-+
-+	ofono_netreg_strength_notify(netreg, nd->strength);
++	update_call_status(vc);
 +}
 +
-+static void initial_status_cb(uint16_t cmd, void *data, uint16_t length, v=
-oid *user_data)
++static void notify_call_status_cb(uint16_t cmd, void *data, uint16_t lengt=
+h, void *user_data)
 +{
-+	struct ofono_netreg *netreg =3D user_data;
-+	struct ipc_net_regist_response *resp =3D data;
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
++	struct ofono_voicecall *vc =3D user_data;
++	struct ipc_call_status *resp =3D data;
 +
-+	ofono_netreg_register(netreg);
++	DBG("");
 +
-+	ofono_netreg_status_notify(netreg, resp->reg_state - 1,
-+							resp->lac, resp->cid, resp->act);
++	if (resp->state =3D=3D IPC_CALL_STATE_RELEASED) {
++		// FIXME what are possible values for resp->reason?
++		ofono_voicecall_disconnected(vc, resp->id, OFONO_DISCONNECT_REASON_UNKNO=
+WN, NULL);
++		return;
++	}
 +
-+	ipc_device_remove_watch(nd->device, nd->status_watch);
-+
-+	nd->status_watch =3D ipc_device_add_notifcation_watch(nd->device, IPC_NET=
-_REGIST,
-+								notify_status_cb, netreg);
-+
-+	nd->rssi_watch =3D ipc_device_add_notifcation_watch(nd->device, IPC_DISP_=
-RSSI_INFO,
-+													notify_rssi_cb, netreg);
++	update_call_status(vc);
 +}
 +
-+static int samsungipc_netreg_probe(struct ofono_netreg *netreg, unsigned i=
-nt vendor,
++static gboolean initialization_done_cb(gpointer user_data)
++{
++	struct ofono_voicecall *vc =3D user_data;
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
++
++	ipc_device_add_notifcation_watch(vd->device, IPC_CALL_INCOMING, notify_ca=
+ll_incoming_cb, vc);
++	ipc_device_add_notifcation_watch(vd->device, IPC_CALL_STATUS, notify_call=
+_status_cb, vc);
++	ipc_device_add_notifcation_watch(vd->device, IPC_CALL_RELEASE, notify_cal=
+l_status_cb, vc);
++	ipc_device_add_notifcation_watch(vd->device, IPC_CALL_ANSWER, notify_call=
+_status_cb, vc);
++	ipc_device_add_notifcation_watch(vd->device, IPC_CALL_OUTGOING, notify_ca=
+ll_status_cb, vc);
++	ipc_device_add_notifcation_watch(vd->device, IPC_CALL_WAITING, notify_cal=
+l_status_cb, vc);
++
++	ofono_voicecall_register(vc);
++
++	return FALSE;
++}
++
++static int samsungipc_voicecall_probe(struct ofono_voicecall *vc, unsigned=
+ int vendor,
 +				void *data)
 +{
-+	struct netreg_data *nd;
++	struct voicecall_data *vd;
 +
-+	nd =3D g_new0(struct netreg_data, 1);
-+	if (!nd)
++	DBG("");
++
++	vd =3D g_try_new0(struct voicecall_data, 1);
++	if (vd =3D=3D NULL)
 +		return -ENOMEM;
 +
-+	nd->device =3D data;
-+	nd->strength =3D 0;
++	vd->device =3D data;
++	vd->dtmf_active =3D 0;
++	vd->status_update_pending =3D 0;
 +
-+	ofono_netreg_set_data(netreg, nd);
++	ofono_voicecall_set_data(vc, vd);
 +
-+	nd->status_watch =3D ipc_device_add_notifcation_watch(nd->device, IPC_NET=
-_REGIST,
-+												initial_status_cb, netreg);
++	g_timeout_add_seconds(0, initialization_done_cb, vc);
 +
 +	return 0;
 +}
 +
-+static void samsungipc_netreg_remove(struct ofono_netreg *netreg)
++static void samsungipc_voicecall_remove(struct ofono_voicecall *vc)
 +{
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
 +
-+	ipc_device_remove_watch(nd->device, nd->status_watch);
-+	ipc_device_remove_watch(nd->device, nd->rssi_watch);
-+
-+	ofono_netreg_set_data(netreg, NULL);
-+
-+	g_free(nd);
++	g_free(vd);
 +}
 +
-+static struct ofono_netreg_driver driver =3D {
-+	.name					=3D "samsungipcmodem",
-+	.probe					=3D samsungipc_netreg_probe,
-+	.remove					=3D samsungipc_netreg_remove,
-+	.registration_status	=3D samsungipc_registration_status,
-+	.current_operator		=3D samsungipc_current_operator,
-+	.register_auto			=3D samsungipc_register_auto,
-+	.register_manual		=3D samsungipc_register_manual,
-+	.strength				=3D samsungipc_signal_strength,
-+	.list_operators			=3D samsungipc_list_operators,
++static struct ofono_voicecall_driver driver =3D {
++	.name			=3D "samsungipcmodem",
++	.probe			=3D samsungipc_voicecall_probe,
++	.remove			=3D samsungipc_voicecall_remove,
++	.dial			=3D samsungipc_dial,
++	.answer			=3D samsungipc_answer,
++	.hangup_active	=3D samsungipc_hangup_active,
++	.send_tones		=3D samsungipc_send_dtmf,
 +};
 +
-+void samsungipc_netreg_init(void)
++void samsungipc_voicecall_init(void)
 +{
-+	ofono_netreg_driver_register(&driver);
++	ofono_voicecall_driver_register(&driver);
 +}
 +
-+void samsungipc_netreg_exit(void)
++void samsungipc_voicecall_exit(void)
 +{
-+	ofono_netreg_driver_unregister(&driver);
++	ofono_voicecall_driver_unregister(&driver);
 +}
-diff --git a/drivers/samsungipcmodem/samsungipcmodem.c b/drivers/samsungipc=
-modem/samsungipcmodem.c
-index 78e698c..a192686 100644
---- a/drivers/samsungipcmodem/samsungipcmodem.c
-+++ b/drivers/samsungipcmodem/samsungipcmodem.c
-@@ -32,11 +32,13 @@ static int samsungipcmodem_init(void)
- {
- 	samsungipc_devinfo_init();
- 	samsungipc_sim_init();
-+	samsungipc_netreg_init();
- 	return 0;
- }
- =
-
- static void samsungipcmodem_exit(void)
- {
-+	samsungipc_netreg_exit();
- 	samsungipc_sim_exit();
- 	samsungipc_devinfo_exit();
- }
-diff --git a/drivers/samsungipcmodem/samsungipcmodem.h b/drivers/samsungipc=
-modem/samsungipcmodem.h
-index c98d213..3f4d5ad 100644
---- a/drivers/samsungipcmodem/samsungipcmodem.h
-+++ b/drivers/samsungipcmodem/samsungipcmodem.h
-@@ -23,3 +23,5 @@ extern void samsungipc_devinfo_init(void);
- extern void samsungipc_devinfo_exit(void);
- extern void samsungipc_sim_init(void);
- extern void samsungipc_sim_exit(void);
-+extern void samsungipc_netreg_init(void);
-+extern void samsungipc_netreg_exit(void);
 -- =
 
 1.7.9.5
 
 
---===============6135690398913042278==--
+--===============5020200326939915557==--
 
