@@ -1,54 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============9044227194847785801=="
+Content-Type: multipart/mixed; boundary="===============6251729170124251982=="
 MIME-Version: 1.0
 From: Simon Busch <morphis@gravedo.de>
-Subject: [PATCH 10/11] samsungipcmodem: add gprs-context driver implementation
-Date: Tue, 18 Sep 2012 20:18:54 +0200
-Message-ID: <1347992335-9016-11-git-send-email-morphis@gravedo.de>
+Subject: [PATCH 11/11] samsungipc: Add initial implementation of the Samsung
+ IPC modem plugin
+Date: Tue, 18 Sep 2012 20:18:55 +0200
+Message-ID: <1347992335-9016-12-git-send-email-morphis@gravedo.de>
 In-Reply-To: <1347992335-9016-1-git-send-email-morphis@gravedo.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9044227194847785801==
+--===============6251729170124251982==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am                               |    3 +-
- drivers/samsungipcmodem/gprs-context.c    |  311 +++++++++++++++++++++++++=
+ Makefile.am          |    3 +
+ plugins/samsungipc.c |  414 ++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- drivers/samsungipcmodem/samsungipcmodem.c |    2 +
- drivers/samsungipcmodem/samsungipcmodem.h |    2 +
- 4 files changed, 317 insertions(+), 1 deletion(-)
- create mode 100644 drivers/samsungipcmodem/gprs-context.c
+ 2 files changed, 417 insertions(+)
+ create mode 100644 plugins/samsungipc.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 1bfdf91..769f848 100644
+index 769f848..ba2e51e 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -192,7 +192,8 @@ builtin_sources +=3D \
- 	drivers/samsungipcmodem/sim.c \
- 	drivers/samsungipcmodem/network-registration.c \
- 	drivers/samsungipcmodem/voicecall.c \
--	drivers/samsungipcmodem/gprs.c
-+	drivers/samsungipcmodem/gprs.c \
-+	drivers/samsungipcmodem/gprs-context.c
- builtin_cflags +=3D @SAMSUNGIPC_CFLAGS@
- builtin_libadd +=3D @SAMSUNGIPC_LIBS@
+@@ -392,6 +392,9 @@ builtin_sources +=3D plugins/stemgr.c
+ if SAMSUNGIPCMODEM
+ builtin_modules +=3D samsungmgr
+ builtin_sources +=3D plugins/samsungmgr.c
++
++builtin_modules +=3D samsungipc
++builtin_sources +=3D plugins/samsungipc.c
  endif
-diff --git a/drivers/samsungipcmodem/gprs-context.c b/drivers/samsungipcmod=
-em/gprs-context.c
+ =
+
+ builtin_modules +=3D caif
+diff --git a/plugins/samsungipc.c b/plugins/samsungipc.c
 new file mode 100644
-index 0000000..aae1365
+index 0000000..98d13eb
 --- /dev/null
-+++ b/drivers/samsungipcmodem/gprs-context.c
-@@ -0,0 +1,311 @@
++++ b/plugins/samsungipc.c
+@@ -0,0 +1,414 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
 + *
-+ *  Copyright (C) 2012 Simon Busch <morphis@gravedo.de>. All rights rese=
-rved.
++ *  Copyright (C) 2012 Simon Busch <morphis@gravedo.de>
 + *
 + *  This program is free software; you can redistribute it and/or modify
 + *  it under the terms of the GNU General Public License version 2 as
@@ -70,338 +68,410 @@ rved.
 +#include <config.h>
 +#endif
 +
-+#define _GNU_SOURCE
-+#include <string.h>
-+#include <stdlib.h>
-+#include <stdio.h>
 +#include <errno.h>
-+
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/gprs-context.h>
++#include <unistd.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/socket.h>
++#include <netinet/in.h>
++#include <arpa/inet.h>
++#include <stdio.h>
 +
 +#include <glib.h>
 +
-+#include "samsungipcmodem.h"
-+#include "ipc.h"
-+#include "util.h"
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/devinfo.h>
++#include <ofono/message-waiting.h>
++#include <ofono/netreg.h>
++#include <ofono/sim.h>
++#include <ofono/phonebook.h>
++#include <ofono/voicecall.h>
++#include <ofono/gprs.h>
++#include <ofono/gprs-context.h>
++#include <ofono/sms.h>
 +
-+#define IP_MAX_LENGTH	15
++#include "drivers/samsungipcmodem/ipc.h"
++#include "drivers/samsungipcmodem/util.h"
 +
-+struct gprs_context_data {
++#include <samsung-ipc.h>
++
++struct samsungipc_data {
 +	struct ipc_device *device;
-+	unsigned int active_context;
-+	unsigned int enabled;
-+	char username[OFONO_GPRS_MAX_USERNAME_LENGTH + 1];
-+	char password[OFONO_GPRS_MAX_PASSWORD_LENGTH + 1];
++	struct ipc_client *client;
++	ofono_bool_t in_forwarding_mode;
++	uint16_t state;
++	guint power_state_watch;
 +};
 +
-+static void notify_gprs_ip_configuration_cb(uint16_t cmd, void *data, uint=
-16_t length,
-+										void *user_data)
++static void samsungipc_debug(const char *str, void *user_data)
 +{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_gprs_context_cb_t cb =3D cbd->cb;
-+	struct ofono_gprs_context *gc =3D cbd->user;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct ipc_gprs_ip_configuration *resp =3D data;
-+	struct ipc_client *client;
-+	char local[IP_MAX_LENGTH];
-+	char dns1[IP_MAX_LENGTH];
-+	char dns2[IP_MAX_LENGTH];
-+	char gateway[IP_MAX_LENGTH];
-+	char subnetmask[IP_MAX_LENGTH];
-+	const char *dns[3];
-+	char *interface;
++	const char *prefix =3D user_data;
 +
-+	snprintf(local, IP_MAX_LENGTH, "%i.%i.%i.%i", resp->ip[0], resp->ip[1],
-+			 resp->ip[2], resp->ip[3]);
-+	snprintf(dns1, IP_MAX_LENGTH, "%i.%i.%i.%i", resp->dns1[0], resp->dns1[1],
-+			 resp->dns1[2], resp->dns1[3]);
-+	snprintf(dns2, IP_MAX_LENGTH, "%i.%i.%i.%i", resp->dns2[0], resp->dns2[1],
-+			 resp->dns2[2], resp->dns2[3]);
-+	snprintf(local, IP_MAX_LENGTH, "%i.%i.%i.%i", resp->gateway[0], resp->gat=
-eway[1],
-+			 resp->gateway[2], resp->gateway[3]);
-+	snprintf(local, IP_MAX_LENGTH, "%i.%i.%i.%i", resp->subnet_mask[0], resp-=
->subnet_mask[1],
-+			 resp->subnet_mask[2], resp->subnet_mask[3]);
-+
-+	dns[0] =3D dns1;
-+	dns[1] =3D dns2;
-+	dns[2] =3D 0;
-+
-+	client =3D ipc_device_get_client(gcd->device);
-+	interface =3D ipc_client_gprs_get_iface(client, gcd->active_context);
-+
-+	ofono_gprs_context_set_interface(gc, interface);
-+	ofono_gprs_context_set_ipv4_address(gc, local, TRUE);
-+	ofono_gprs_context_set_ipv4_netmask(gc, subnetmask);
-+	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
-+	ofono_gprs_context_set_ipv4_gateway(gc, gateway);
-+
-+	gcd->enabled =3D 1;
-+
-+	CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+
-+	g_free(cbd);
-+	g_free(interface);
++	ofono_info("%s%s", prefix, str);
 +}
 +
-+static void pdp_context_activate_cb(uint16_t cmd, void *data, uint16_t len=
-gth, uint8_t error, void *user_data)
++static int samsungipc_probe(struct ofono_modem *modem)
 +{
-+	struct cb_data *cbd =3D user_data;
-+	struct ofono_gprs_context *gc =3D cbd->user;
-+	ofono_gprs_context_cb_t cb =3D cbd->cb;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct samsungipc_data *data;
 +
-+	if (error) {
-+		CALLBACK_WITH_FAILURE(cb, cbd->data);
-+		gcd->active_context =3D 0;
-+		g_free(cbd);
-+		return;
-+	}
++	DBG("%p", modem);
 +
-+	ipc_device_add_notifcation_watch(gcd->device, IPC_GPRS_IP_CONFIGURATION,
-+								notify_gprs_ip_configuration_cb, cbd);
-+}
-+
-+static void define_pdp_context_cb(uint16_t cmd, void *data, uint16_t lengt=
-h, uint8_t error, void *user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_gprs_context_cb_t cb =3D cbd->cb;
-+	struct ofono_gprs_context *gc =3D cbd->user;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct ipc_gen_phone_res *resp =3D data;
-+	struct ipc_gprs_pdp_context_set *req;
-+
-+	if (error || ipc_gen_phone_res_check(resp) < 0)
-+		goto error;
-+
-+	req =3D g_try_new0(struct ipc_gprs_pdp_context_set, 1);
-+	if (!req)
-+		goto error;
-+
-+	ipc_gprs_pdp_context_setup(req, 1, /* activate the context */
-+					gcd->active_context, gcd->username, gcd->password);
-+
-+	if(ipc_device_enqueue_message(gcd->device, IPC_GPRS_DEFINE_PDP_CONTEXT, I=
-PC_TYPE_SET,
-+						req, sizeof(struct ipc_gprs_pdp_context_set),
-+						pdp_context_activate_cb, cbd) > 0)
-+		return;
-+
-+error:
-+	gcd->active_context =3D 0;
-+	CALLBACK_WITH_FAILURE(cb, cbd->data);
-+	g_free(cbd);
-+}
-+
-+static void samsungipc_gprs_activate_primary(struct ofono_gprs_context *gc,
-+				const struct ofono_gprs_primary_context *ctx,
-+				ofono_gprs_context_cb_t cb, void *data)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct ipc_gprs_define_pdp_context *req;
-+	struct cb_data *cbd;
-+
-+	req =3D g_try_new0(struct ipc_gprs_define_pdp_context, 1);
-+	if (!req) {
-+		CALLBACK_WITH_FAILURE(cb, data);
-+		return;
-+	}
-+
-+	cbd =3D cb_data_new(cb, data);
-+	cbd->user =3D gc;
-+
-+	/* IPv6 support not implemented */
-+	if (ctx->proto !=3D OFONO_GPRS_PROTO_IP)
-+		goto error;
-+
-+	DBG("cid %u", ctx->cid);
-+
-+	gcd->active_context =3D ctx->cid;
-+	memcpy(gcd->username, ctx->username, sizeof(ctx->username));
-+	memcpy(gcd->password, ctx->password, sizeof(ctx->password));
-+
-+	req->cid =3D ctx->cid;
-+	req->enable =3D 1; /* enable the context */
-+	strncpy((char*) req->apn, ctx->apn, 124);
-+
-+	if(ipc_device_enqueue_message(gcd->device, IPC_GPRS_DEFINE_PDP_CONTEXT, I=
-PC_TYPE_SET,
-+						req, sizeof(struct ipc_gprs_define_pdp_context),
-+						define_pdp_context_cb, cbd) > 0)
-+		return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+static void pdp_context_deactivate_cb(uint16_t cmd, void *data, uint16_t l=
-ength, uint8_t error, void *user_data)
-+{
-+	struct ipc_gen_phone_res *resp =3D data;
-+	struct cb_data *cbd =3D user_data;
-+	ofono_gprs_context_cb_t cb =3D cbd->cb;
-+	struct gprs_context_data *gcd =3D cbd->user;
-+
-+	if (error || ipc_gen_phone_res_check(resp) < 0) {
-+		CALLBACK_WITH_FAILURE(cb, cbd->data);
-+		goto done;
-+	}
-+
-+	gcd->enabled =3D 0;
-+	gcd->active_context =3D 0;
-+
-+	CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+
-+done:
-+	g_free(cbd);
-+}
-+
-+static void samsungipc_gprs_deactivate_primary(struct ofono_gprs_context *=
-gc,
-+					unsigned int cid,
-+					ofono_gprs_context_cb_t cb, void *data)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct ipc_gprs_pdp_context_set *req;
-+	struct cb_data *cbd;
-+
-+	DBG("cid %u", cid);
-+
-+	req =3D g_try_new0(struct ipc_gprs_pdp_context_set, 1);
-+	if (!req) {
-+		CALLBACK_WITH_FAILURE(cb, data);
-+		return;
-+	}
-+
-+	cbd =3D cb_data_new(cb, data);
-+	cbd->user =3D gcd;
-+
-+	ipc_gprs_pdp_context_setup(req, 0, /* deactivate the context */
-+					cid, NULL, NULL);
-+
-+	if(ipc_device_enqueue_message(gcd->device, IPC_GPRS_DEFINE_PDP_CONTEXT, I=
-PC_TYPE_SET,
-+						req, sizeof(struct ipc_gprs_pdp_context_set),
-+						pdp_context_deactivate_cb, cbd) > 0)
-+		return;
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+	g_free(cbd);
-+}
-+
-+static void samsungipc_gprs_detach_shutdown(struct ofono_gprs_context *gc,
-+					unsigned int cid)
-+{
-+	DBG("cid %u", cid);
-+}
-+
-+static void notify_gprs_status_cb(uint16_t cmd, void *data, uint16_t lengt=
-h, void *user_data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct ipc_gprs_call_status *resp =3D data;
-+
-+	if (gcd->enabled &&
-+		(resp->state =3D=3D IPC_GPRS_STATE_NOT_ENABLED ||
-+		 resp->state =3D=3D IPC_GPRS_STATE_DISABLED)) {
-+		ofono_gprs_context_deactivated(gc, gcd->active_context);
-+	}
-+}
-+
-+static int samsungipc_gprs_context_probe(struct ofono_gprs_context *gc,
-+					unsigned int vendor, void *data)
-+{
-+	struct gprs_context_data *gcd;
-+
-+	DBG("");
-+
-+	gcd =3D g_try_new0(struct gprs_context_data, 1);
-+	if (gcd =3D=3D NULL)
++	data =3D g_try_new0(struct samsungipc_data, 1);
++	if (data =3D=3D NULL)
 +		return -ENOMEM;
 +
-+	gcd->device =3D data;
-+	gcd->active_context =3D 0;
-+	gcd->enabled =3D 0;
++	data->in_forwarding_mode =3D FALSE;
 +
-+	ofono_gprs_context_set_data(gc, gcd);
-+
-+	ipc_device_add_notifcation_watch(gcd->device, IPC_GPRS_CALL_STATUS,
-+								notify_gprs_status_cb, gc);
++	ofono_modem_set_data(modem, data);
 +
 +	return 0;
 +}
 +
-+static void samsungipc_gprs_context_remove(struct ofono_gprs_context *gc)
++static void samsungipc_remove(struct ofono_modem *modem)
 +{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct samsungipc_data *data =3D ofono_modem_get_data(modem);
 +
-+	DBG("");
++	DBG("%p", modem);
 +
-+	ofono_gprs_context_set_data(gc, NULL);
++	ofono_modem_set_data(modem, NULL);
 +
-+	g_free(gcd);
++	g_free(data);
 +}
 +
-+static struct ofono_gprs_context_driver driver =3D {
-+	.name			=3D "samsungipcmodem",
-+	.probe			=3D samsungipc_gprs_context_probe,
-+	.remove			=3D samsungipc_gprs_context_remove,
-+	.activate_primary	=3D samsungipc_gprs_activate_primary,
-+	.deactivate_primary	=3D samsungipc_gprs_deactivate_primary,
-+	.detach_shutdown	=3D samsungipc_gprs_detach_shutdown,
++static int connect_socket(const char *address, int port)
++{
++	struct sockaddr_in addr;
++	int sk;
++	int err;
++
++	sk =3D socket(PF_INET, SOCK_STREAM, 0);
++	if (sk < 0)
++		return -EINVAL;
++
++	memset(&addr, 0, sizeof(addr));
++	addr.sin_family =3D AF_INET;
++	addr.sin_addr.s_addr =3D inet_addr(address);
++	addr.sin_port =3D htons(port);
++
++	err =3D connect(sk, (struct sockaddr *) &addr, sizeof(addr));
++	if (err < 0) {
++		close(sk);
++		return -errno;
++	}
++
++	return sk;
++}
++
++static int modem_data_read(void *buf, unsigned int size, void *user_data)
++{
++	struct samsungipc_data *data =3D user_data;
++	int ret, fd;
++
++	fd =3D ipc_device_get_fd(data->device);
++	if (fd < 0)
++		return -1;
++
++	ret =3D read(fd, buf, size);
++	if (ret < 0)
++		return -1;
++
++	return ret;
++}
++
++static int modem_data_write(void *buf, unsigned int size, void *user_data)
++{
++	struct samsungipc_data *data =3D user_data;
++	int ret, fd;
++
++	fd =3D ipc_device_get_fd(data->device);
++	if (fd < 0)
++		return -1;
++
++	ret =3D write(fd, buf, size);
++	if (ret < 0)
++		return -1;
++
++	return ret;
++}
++
++static void retrieve_power_state_cb(uint16_t cmd, void *data, uint16_t len=
+gth, uint8_t error, void *user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct samsungipc_data *ipcdata =3D ofono_modem_get_data(modem);
++	uint16_t state;
++
++	if (error) {
++		ofono_error("Received error instead of power state response");
++		return;
++	}
++
++	state =3D IPC_PWR_R(*((uint16_t*) data));
++
++	switch (state) {
++	case IPC_PWR_R(IPC_PWR_PHONE_STATE_NORMAL):
++		ofono_error("Modem is already in NORMAL power state; thats wrong!");
++		// FIXME shutdown everything here or switch to LPM/perform a modem reset?
++		break;
++	case IPC_PWR_R(IPC_PWR_PHONE_STATE_LPM):
++		ofono_modem_set_powered(modem, TRUE);
++		ipcdata->state =3D IPC_PWR_PHONE_STATE_LPM;
++		break;
++	}
++}
++
++static void log_handler(const char *message, void *user_data)
++{
++	ofono_debug("IPC: %s", message);
++}
++
++static int samsungipc_enable(struct ofono_modem *modem)
++{
++	struct samsungipc_data *data =3D ofono_modem_get_data(modem);
++	const char *address;
++	int port, fd;
++
++	DBG("%p", modem);
++
++	data->client =3D ipc_client_new(IPC_CLIENT_TYPE_FMT);
++	if (getenv("OFONO_IPC_DEBUG"))
++		ipc_client_set_log_handler(data->client, log_handler, data);
++
++	/* if address and port are set we are using a remote device */
++	address =3D ofono_modem_get_string(modem, "Address");
++	if (address !=3D NULL) {
++		port =3D ofono_modem_get_integer(modem, "Port");
++		if (port < 0)
++			return -EINVAL;
++
++		data->in_forwarding_mode =3D TRUE;
++
++		fd =3D connect_socket(address, port);
++		if (fd < 0)
++			return fd;
++
++		ipc_client_set_io_handlers(data->client, modem_data_read, data,
++							modem_data_write, data);
++
++		ipc_device_set_close_on_unref(data->device, true);
++	}
++	else {
++		ipc_client_create_handlers_common_data(data->client);
++		ipc_client_open(data->client);
++		fd =3D ipc_client_get_handlers_common_data_fd(data->client);
++
++		if (fd < 0) {
++			ipc_client_close(data->client);
++			ipc_client_destroy_handlers_common_data(data->client);
++			return fd;
++		}
++	}
++
++	data->device =3D ipc_device_new(fd, data->client);
++	ipc_device_set_debug(data->device, samsungipc_debug, "IPC: ");
++
++	ipc_device_enqueue_message(data->device, IPC_PWR_PHONE_STATE, IPC_TYPE_GE=
+T,
++						NULL, 0, retrieve_power_state_cb, modem);
++
++	return -EINPROGRESS;
++}
++
++static int samsungipc_disable(struct ofono_modem *modem)
++{
++	struct samsungipc_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	ipc_client_close(data->client);
++
++	if (data->in_forwarding_mode)
++		ipc_client_destroy_handlers_common_data(data->client);
++
++	ipc_device_unref(data->device);
++
++	return 0;
++}
++
++static void samsungipc_pre_sim(struct ofono_modem *modem)
++{
++	struct samsungipc_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	ofono_devinfo_create(modem, 0, "samsungipcmodem", data->device);
++	ofono_sim_create(modem, 0, "samsungipcmodem", data->device);
++}
++
++static void samsungipc_post_sim(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++}
++
++static void notify_power_state_cb(uint16_t cmd, void *data, uint16_t lengt=
+h, void *user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	struct samsungipc_data *sid =3D cbd->user;
++	ofono_modem_online_cb_t cb =3D cbd->cb;
++
++	CALLBACK_WITH_SUCCESS(cb, cbd->data);
++
++	ipc_device_remove_watch(sid->device, sid->power_state_watch);
++
++	g_free(cbd);
++}
++
++static void set_device_rf_power_state_cb(uint16_t cmd, void *data, uint16_=
+t length, uint8_t error, void *user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_modem_online_cb_t cb =3D cbd->cb;
++	struct samsungipc_data *sid =3D cbd->user;
++	struct ipc_gen_phone_res *resp =3D data;
++
++	if (error || ipc_gen_phone_res_check(resp) < 0) {
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
++		g_free(cbd);
++		return;
++	}
++
++	sid->power_state_watch =3D ipc_device_add_notifcation_watch(sid->device, =
+IPC_PWR_PHONE_STATE,
++														notify_power_state_cb, cbd);
++}
++
++static void set_device_rf_power_state(struct ofono_modem *modem, uint16_t =
+state, struct cb_data *cbd)
++{
++	struct samsungipc_data *sid =3D ofono_modem_get_data(modem);
++	uint8_t *msg;
++	ofono_modem_online_cb_t cb =3D cbd->cb;
++
++	msg =3D g_try_new0(uint8_t, 2);
++	if (!msg)
++		return;
++
++	memcpy(msg, &state, sizeof(uint16_t));
++
++	switch (state) {
++	case IPC_PWR_PHONE_STATE_NORMAL:
++		ipc_device_enqueue_message(sid->device, IPC_PWR_PHONE_STATE, IPC_TYPE_EX=
+EC, msg, 2,
++							set_device_rf_power_state_cb, cbd);
++
++		ofono_debug("Done sending power state change to NORMAL level");
++
++		break;
++	case IPC_PWR_PHONE_STATE_LPM:
++		/* We will not get any response for this request! */
++		ipc_device_enqueue_message(sid->device, IPC_PWR_PHONE_STATE, IPC_TYPE_EX=
+EC, msg, 2,
++							NULL, NULL);
++
++		ofono_debug("Done sending power state change to LPM level");
++
++		/* FIXME maybe retrieving power state from modem to make sure it's set? =
+*/
++
++		CALLBACK_WITH_SUCCESS(cb, cbd->data);
++		g_free(cbd);
++
++		break;
++	default:
++		/* Not supported power state */
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
++		g_free(cbd);
++
++		break;
++	}
++}
++
++static void samsungipc_set_online(struct ofono_modem *modem, ofono_bool_t =
+online,
++							ofono_modem_online_cb_t cb, void *user_data)
++{
++	struct samsungipc_data *sid =3D ofono_modem_get_data(modem);
++	struct cb_data *cbd;
++	uint16_t state;
++
++	state =3D online ? IPC_PWR_PHONE_STATE_NORMAL : IPC_PWR_PHONE_STATE_LPM;
++
++	cbd =3D cb_data_new(cb, user_data);
++	cbd->user =3D sid;
++
++	set_device_rf_power_state(modem, state, cbd);
++}
++
++static void samsungipc_post_online(struct ofono_modem *modem)
++{
++	struct samsungipc_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_gprs *gprs;
++	struct ofono_gprs_context *gc;
++
++	DBG("%p", modem);
++
++	ofono_netreg_create(modem, 0, "samsungipcmodem", data->device);
++	ofono_voicecall_create(modem, 0, "samsungipcmodem", data->device);
++	gprs =3D ofono_gprs_create(modem, 0, "samsungipcmodem", data->device);
++	gc =3D ofono_gprs_context_create(modem, 0, "samsungipcmodem", data->devic=
+e);
++
++	if (gprs && gc)
++		ofono_gprs_add_context(gprs, gc);
++}
++
++static struct ofono_modem_driver samsungipc_driver =3D {
++	.name		=3D "samsungipc",
++	.probe		=3D samsungipc_probe,
++	.remove		=3D samsungipc_remove,
++	.enable		=3D samsungipc_enable,
++	.disable	=3D samsungipc_disable,
++	.pre_sim	=3D samsungipc_pre_sim,
++	.post_sim	=3D samsungipc_post_sim,
++	.set_online	=3D samsungipc_set_online,
++	.post_online	=3D samsungipc_post_online,
 +};
 +
-+void samsungipc_gprs_context_init(void)
++static int samsungipc_init(void)
 +{
-+	ofono_gprs_context_driver_register(&driver);
++	int err;
++	char *remote;
++	struct ofono_modem *modem;
++
++	err =3D ofono_modem_driver_register(&samsungipc_driver);
++	if (err < 0)
++		return err;
++
++	remote =3D getenv("OFONO_SAMSUNGIPC_REMOTE");
++	if (remote !=3D NULL) {
++		modem =3D ofono_modem_create(NULL, "samsungipc");
++		if (modem =3D=3D NULL)
++			return -1;
++
++		ofono_modem_set_string(modem, "Address", remote);
++		ofono_modem_set_integer(modem, "Port", 3001);
++
++		ofono_modem_register(modem);
++	}
++
++	return 0;
 +}
 +
-+void samsungipc_gprs_context_exit(void)
++static void samsungipc_exit(void)
 +{
-+	ofono_gprs_context_driver_unregister(&driver);
++	ofono_modem_driver_unregister(&samsungipc_driver);
 +}
-diff --git a/drivers/samsungipcmodem/samsungipcmodem.c b/drivers/samsungipc=
-modem/samsungipcmodem.c
-index c99887d..df55cf5 100644
---- a/drivers/samsungipcmodem/samsungipcmodem.c
-+++ b/drivers/samsungipcmodem/samsungipcmodem.c
-@@ -35,11 +35,13 @@ static int samsungipcmodem_init(void)
- 	samsungipc_netreg_init();
- 	samsungipc_voicecall_init();
- 	samsungipc_gprs_init();
-+	samsungipc_gprs_context_exit();
- 	return 0;
- }
- =
-
- static void samsungipcmodem_exit(void)
- {
-+	samsungipc_gprs_context_exit();
- 	samsungipc_gprs_exit();
- 	samsungipc_voicecall_exit();
- 	samsungipc_netreg_exit();
-diff --git a/drivers/samsungipcmodem/samsungipcmodem.h b/drivers/samsungipc=
-modem/samsungipcmodem.h
-index 2ee5f43..fe1f64b 100644
---- a/drivers/samsungipcmodem/samsungipcmodem.h
-+++ b/drivers/samsungipcmodem/samsungipcmodem.h
-@@ -29,3 +29,5 @@ extern void samsungipc_voicecall_init(void);
- extern void samsungipc_voicecall_exit(void);
- extern void samsungipc_gprs_init(void);
- extern void samsungipc_gprs_exit(void);
-+extern void samsungipc_gprs_context_init(void);
-+extern void samsungipc_gprs_context_exit(void);
++
++OFONO_PLUGIN_DEFINE(samsungipc, "Samsung IPC driver", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, samsungipc_init, samsungipc_exit)
 -- =
 
 1.7.9.5
 
 
---===============9044227194847785801==--
+--===============6251729170124251982==--
 
