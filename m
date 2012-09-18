@@ -1,55 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============2612087624625910186=="
+Content-Type: multipart/mixed; boundary="===============7174672533067969689=="
 MIME-Version: 1.0
 From: Simon Busch <morphis@gravedo.de>
-Subject: [PATCH 03/11] samsungmgr: plugin for powering up samsung related
- modems via an additional daemon
-Date: Tue, 18 Sep 2012 20:18:47 +0200
-Message-ID: <1347992335-9016-4-git-send-email-morphis@gravedo.de>
+Subject: [PATCH 04/11] samsungipcmodem: implement the transport layer for the
+ IPC protocol
+Date: Tue, 18 Sep 2012 20:18:48 +0200
+Message-ID: <1347992335-9016-5-git-send-email-morphis@gravedo.de>
 In-Reply-To: <1347992335-9016-1-git-send-email-morphis@gravedo.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2612087624625910186==
+--===============7174672533067969689==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am          |    5 ++
- plugins/samsungmgr.c |  199 ++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am                    |    4 +-
+ drivers/samsungipcmodem/ipc.c  |  443 ++++++++++++++++++++++++++++++++++++=
 ++++
- 2 files changed, 204 insertions(+)
- create mode 100644 plugins/samsungmgr.c
+ drivers/samsungipcmodem/ipc.h  |   58 ++++++
+ drivers/samsungipcmodem/util.h |   57 ++++++
+ 4 files changed, 561 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/samsungipcmodem/ipc.c
+ create mode 100644 drivers/samsungipcmodem/ipc.h
+ create mode 100644 drivers/samsungipcmodem/util.h
 
 diff --git a/Makefile.am b/Makefile.am
-index a7d2d6e..f4e9b8f 100644
+index f4e9b8f..4c13ec0 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -381,6 +381,11 @@ builtin_sources +=3D plugins/ste.c
- builtin_modules +=3D stemgr
- builtin_sources +=3D plugins/stemgr.c
- =
-
-+if SAMSUNGIPCMODEM
-+builtin_modules +=3D samsungmgr
-+builtin_sources +=3D plugins/samsungmgr.c
-+endif
-+
- builtin_modules +=3D caif
- builtin_sources +=3D plugins/caif.c
- =
-
-diff --git a/plugins/samsungmgr.c b/plugins/samsungmgr.c
+@@ -185,7 +185,9 @@ if SAMSUNGIPCMODEM
+ builtin_modules +=3D samsungipcmodem
+ builtin_sources +=3D \
+ 	drivers/samsungipcmodem/samsungipcmodem.c \
+-	drivers/samsungipcmodem/samsungipcmodem.h
++	drivers/samsungipcmodem/samsungipcmodem.h \
++	drivers/samsungipcmodem/ipc.c \
++	drivers/samsungipcmodem/ipc.h
+ builtin_cflags +=3D @SAMSUNGIPC_CFLAGS@
+ builtin_libadd +=3D @SAMSUNGIPC_LIBS@
+ endif
+diff --git a/drivers/samsungipcmodem/ipc.c b/drivers/samsungipcmodem/ipc.c
 new file mode 100644
-index 0000000..fd0f364
+index 0000000..d742acc
 --- /dev/null
-+++ b/plugins/samsungmgr.c
-@@ -0,0 +1,199 @@
++++ b/drivers/samsungipcmodem/ipc.c
+@@ -0,0 +1,443 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
 + *
-+ *  Copyright (C) 2012 Simon Busch <morphis@gravedo.de>
++ *  Copyright (C) 2012 Simon Busch <morphis@gravedo.de>. All rights rese=
+rved.
++ *
++ *  Some parts of the code below are copied from drivers/qmimodem/qmi.c an=
+d are
++ *  Copyright (C) 2011-2012  Intel Corporation. All rights reserved.
 + *
 + *  This program is free software; you can redistribute it and/or modify
 + *  it under the terms of the GNU General Public License version 2 as
@@ -71,186 +77,578 @@ index 0000000..fd0f364
 +#include <config.h>
 +#endif
 +
-+#include <errno.h>
++#define _GNU_SOURCE
++#include <stdio.h>
++#include <ctype.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <stdlib.h>
 +#include <string.h>
 +
 +#include <glib.h>
-+#include <gdbus.h>
 +
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
 +#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/dbus.h>
 +
-+#define MGR_SERVICE		"org.samsung.modem"
-+#define MGR_INTERFACE		MGR_SERVICE ".Manager"
++#include "ipc.h"
 +
-+enum modem_status {
-+	OFFLINE,
-+	INITIALIZING,
-+	ONLINE
++struct ipc_request {
++	uint16_t command;
++	uint8_t type;
++	uint8_t id;
++	void *data;
++	uint16_t length;
++	ipc_response_func_t cb;
++	void *cb_data;
 +};
 +
-+static guint modem_daemon_watch;
-+static guint property_changed_watch;
-+static DBusConnection *connection;
-+static enum modem_status modem_status =3D OFFLINE;
-+struct ofono_modem *modem;
++struct ipc_device {
++	int ref_count;
++	int fd;
++	GIOChannel *io;
++	bool close_on_unref;
++	guint read_watch;
++	guint write_watch;
++	ipc_debug_func_t debug_func;
++	void *debug_data;
++	struct ipc_client *client;
++	uint8_t next_id;
++	GQueue *req_queue;
++	GQueue *wait_queue;
++	GList *notification_watches;
++	guint next_watch_id;
++};
 +
-+static void set_modem_power_reply(DBusPendingCall *call, void *user_data)
++struct notication_watch {
++	guint id;
++	uint8_t type;
++	uint16_t cmd;
++	ipc_notify_func_t notify_cb;
++	void *notify_data;
++};
++
++static void __debug_device(struct ipc_device *device,
++						const char *format, ...)
 +{
-+	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
-+	DBusError err;
++	char strbuf[72 + 16];
++	va_list ap;
 +
-+	dbus_error_init(&err);
++	if (!device->debug_func)
++		return;
 +
-+	if (dbus_set_error_from_message(&err, reply) =3D=3D TRUE) {
-+		g_printerr("%s: %s\n", err.name, err.message);
-+		dbus_error_free(&err);
-+	}
++	va_start(ap, format);
++	vsnprintf(strbuf, sizeof(strbuf), format, ap);
++	va_end(ap);
 +
-+	dbus_message_unref(reply);
++	device->debug_func(strbuf, device->debug_data);
 +}
 +
-+static int set_modem_power(ofono_bool_t power)
++static guint next_message_id(struct ipc_device *device)
 +{
-+	DBusMessage *msg;
-+	DBusMessageIter iter, value;
-+	DBusPendingCall *call;
-+	const char *key =3D "Powered";
++	if (device->next_id =3D=3D 255)
++		device->next_id =3D 1;
 +
-+	msg =3D dbus_message_new_method_call(MGR_SERVICE, "/",
-+					MGR_INTERFACE, "SetProperty");
-+	if (msg =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	dbus_message_set_auto_start(msg, FALSE);
-+
-+	dbus_message_iter_init_append(msg, &iter);
-+
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &key);
-+
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT,
-+							DBUS_TYPE_BOOLEAN_AS_STRING, &value);
-+	dbus_message_iter_append_basic(&value, DBUS_TYPE_BOOLEAN, &power);
-+	dbus_message_iter_close_container(&iter, &value);
-+
-+	if (dbus_connection_send_with_reply(connection, msg, &call, -1) =3D=3D FA=
-LSE) {
-+		dbus_message_unref(msg);
-+		return -EIO;
-+	}
-+
-+	dbus_message_unref(msg);
-+
-+	if (call =3D=3D NULL)
-+		return -EINVAL;
-+
-+	dbus_pending_call_set_notify(call, set_modem_power_reply, NULL, NULL);
-+
-+	dbus_pending_call_unref(call);
-+
-+	return 0;
++	return device->next_id++;
 +}
 +
-+static void modem_status_changed(const char *status)
++static guint next_watch_id(struct ipc_device *device)
 +{
-+	switch (modem_status) {
-+		case OFFLINE:
-+			if(g_str_equal(status, "online") =3D=3D TRUE) {
-+				modem =3D ofono_modem_create(NULL, "samsungipc");
-+				if (modem =3D=3D NULL) {
-+					ofono_error("Could not create modem");
-+					return;
-+				}
-+				DBG("registering samsung ipc modem ...");
-+				ofono_modem_register(modem);
-+				modem_status =3D ONLINE;
-+			}
-+			break;
-+		case ONLINE:
-+			if (g_str_equal(status, "offline") =3D=3D TRUE) {
-+				DBG("Samsung modem unregistering");
-+				ofono_modem_remove(modem);
-+				modem =3D NULL;
-+				modem_status =3D OFFLINE;
-+			}
-+			break;
-+		default:
-+			break;
++	if (device->next_watch_id =3D=3D G_MAXUINT)
++		device->next_watch_id =3D 1;
++
++	return device->next_watch_id++;
++}
++
++static gint __request_compare(gconstpointer a, gconstpointer b)
++{
++	const struct ipc_request *req =3D a;
++	uint16_t id =3D GPOINTER_TO_UINT(b);
++
++	return req->id - id;
++}
++
++static void handle_response(struct ipc_device *device, struct ipc_message_=
+info *resp)
++{
++	GList *list;
++	struct ipc_request *req;
++
++	list =3D g_queue_find_custom(device->wait_queue,
++			GUINT_TO_POINTER(resp->aseq), __request_compare);
++	if (!list) {
++		__debug_device(device, "Did not found corresponding request for received=
+ response message");
++		return;
++	}
++
++	req =3D list->data;
++	if (req->cb)
++		req->cb(resp->cmd, resp->data, resp->length, 0, req->cb_data);
++}
++
++static void handle_notification(struct ipc_device *device, struct ipc_mess=
+age_info *resp)
++{
++	GList *list;
++
++	for (list =3D g_list_first(device->notification_watches); list;
++						list =3D g_list_next(list)) {
++		struct notication_watch *watch =3D list->data;
++
++		if (!watch)
++			continue;
++
++		if (watch->type =3D=3D resp->type && watch->cmd =3D=3D resp->cmd)
++			watch->notify_cb(resp->cmd, resp->data, resp->length, watch->notify_dat=
+a);
 +	}
 +}
 +
-+static gboolean property_changed(DBusConnection *conn,
-+					DBusMessage *message, void *user_data)
++static gboolean received_data(GIOChannel *channel, GIOCondition cond,
++							  gpointer user_data)
 +{
-+	DBusMessageIter iter, value;
-+	const char *key, *status;
++	struct ipc_device *device =3D user_data;
++	struct ipc_message_info resp;
++	int ret;
 +
-+	if (dbus_message_iter_init(message, &iter) =3D=3D FALSE)
-+		return TRUE;
++	if (cond & G_IO_NVAL)
++		return FALSE;
 +
-+	dbus_message_iter_get_basic(&iter, &key);
-+
-+	dbus_message_iter_next(&iter);
-+	dbus_message_iter_recurse(&iter, &value);
-+
-+	if (g_str_equal(key, "Status") =3D=3D TRUE) {
-+		dbus_message_iter_get_basic(&value, &status);
-+		modem_status_changed(status);
++	ret =3D ipc_client_recv(device->client, &resp);
++	if (ret < 0) {
++		ofono_error("Could not receive IPC message from modem");
++		return FALSE;
 +	}
++
++	switch (resp.type) {
++	case IPC_TYPE_RESP:
++		ofono_debug("Received IPC response message [id=3D%i, type=3D%s cmd=3D%s]=
+",
++				resp.aseq, ipc_response_type_to_str(resp.type),
++				ipc_command_to_str(resp.cmd));
++		handle_response(device, &resp);
++		break;
++	case IPC_TYPE_NOTI:
++	case IPC_TYPE_INDI:
++		ofono_debug("Received IPC %s message [id=3D%i, type=3D%s, cmd=3D%s]",
++				resp.type =3D=3D IPC_TYPE_NOTI ? "notification" : "indication",
++				resp.aseq, ipc_response_type_to_str(resp.type),
++				ipc_command_to_str(resp.cmd));
++		handle_notification(device, &resp);
++		break;
++		break;
++	default:
++		ofono_error("Received unhandled IPC message type [id=3D%i, type=3D%s, cm=
+d=3D%s]",
++				resp.aseq, ipc_response_type_to_str(resp.type),
++				ipc_command_to_str(resp.cmd));
++		break;
++	}
++
++	// FIXME this leads to a SEGV somehow:
++	// g_source_callback_ref (cb_data=3D0x0)@/build/buildd/glib2.0-2.32.3/=
+./glib/gmain.c:1275
++	// 1275/build/buildd/glib2.0-2.32.3/.32/glib/gmain.c: Datei oder Verzeich=
+nis nicht gefunden.
++	// ipc_client_response_free(device->client, &resp);
 +
 +	return TRUE;
 +}
 +
-+static void mgr_connect(DBusConnection *conn, void *user_data)
++static void read_watch_destroy(gpointer user_data)
 +{
-+	property_changed_watch =3D g_dbus_add_signal_watch(conn,
-+						MGR_SERVICE, NULL,
-+						MGR_INTERFACE,
-+						"PropertyChanged",
-+						property_changed,
-+						NULL, NULL);
++	struct ipc_device *device =3D user_data;
 +
-+	// FIXME check wether modem is already powered up
-+
-+	set_modem_power(TRUE);
++	device->read_watch =3D 0;
 +}
 +
-+static void mgr_disconnect(DBusConnection *conn, void *user_data)
++static gboolean can_write_data(GIOChannel *channel, GIOCondition cond,
++							gpointer user_data)
 +{
-+	g_dbus_remove_watch(conn, property_changed_watch);
-+	property_changed_watch =3D 0;
++	struct ipc_device *device =3D user_data;
++	struct ipc_request *req;
++
++	req =3D g_queue_pop_head(device->req_queue);
++	if (!req)
++		return FALSE;
++
++	ofono_debug("Sending IPC request message [id=3D%i, cmd=3D%s, type=3D%s]",
++			req->id, ipc_command_to_str(req->command),
++			ipc_request_type_to_str(req->type));
++
++	ipc_client_send(device->client, req->command, req->type,
++				req->data, req->length, req->id);
++
++	// FIXME start timeout for message
++
++	g_free(req->data);
++	req->data =3D NULL;
++
++	if (req->cb !=3D NULL)
++		g_queue_push_tail(device->wait_queue, req);
++
++	if (g_queue_get_length(device->req_queue) > 0)
++		return TRUE;
++
++	return FALSE;
 +}
 +
-+static int samsungmgr_init(void)
++static void write_watch_destroy(gpointer user_data)
 +{
-+	connection =3D ofono_dbus_get_connection();
++	struct ipc_device *device =3D user_data;
 +
-+	modem_daemon_watch =3D g_dbus_add_service_watch(connection, MGR_SERVICE,
-+				mgr_connect, mgr_disconnect, NULL, NULL);
-+
-+	return 0;
++	device->write_watch =3D 0;
 +}
 +
-+static void samsungmgr_exit(void)
++static void wakeup_writer(struct ipc_device *device)
 +{
-+	set_modem_power(FALSE);
++	if (device->write_watch > 0)
++		return;
 +
-+	g_dbus_remove_watch(connection, modem_daemon_watch);
-+
-+	if (property_changed_watch > 0)
-+		g_dbus_remove_watch(connection, property_changed_watch);
++	device->write_watch =3D g_io_add_watch_full(device->io, G_PRIORITY_HIGH,
++				G_IO_OUT | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
++				can_write_data, device, write_watch_destroy);
 +}
 +
-+OFONO_PLUGIN_DEFINE(samsungmgr, "Samsung Modem Init Daemon detection", VER=
-SION,
-+			OFONO_PLUGIN_PRIORITY_DEFAULT, samsungmgr_init, samsungmgr_exit)
++struct ipc_device *ipc_device_new(int fd, struct ipc_client *client)
++{
++	struct ipc_device *device;
++
++	device =3D g_try_new0(struct ipc_device, 1);
++	if (!device)
++		return NULL;
++
++	device->ref_count =3D 1;
++	device->fd =3D fd;
++	device->next_id =3D 1;
++	device->next_watch_id =3D 1;
++	device->client =3D client;
++	device->close_on_unref =3D false;
++	device->req_queue =3D g_queue_new();
++	device->wait_queue =3D g_queue_new();
++	device->notification_watches =3D g_list_alloc();
++
++	device->io =3D g_io_channel_unix_new(device->fd);
++
++	g_io_channel_set_encoding(device->io, NULL, NULL);
++	g_io_channel_set_buffered(device->io, FALSE);
++
++	device->read_watch =3D g_io_add_watch_full(device->io, G_PRIORITY_DEFAULT,
++				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
++				received_data, device, read_watch_destroy);
++
++	g_io_channel_unref(device->io);
++
++	return device;
++}
++
++struct ipc_device *ipc_device_ref(struct ipc_device *device)
++{
++	if (!device)
++		return NULL;
++
++	__sync_fetch_and_add(&device->ref_count, 1);
++
++	return device;
++}
++
++static void free_notification_watch(gpointer data)
++{
++	struct notication_watch *watch =3D data;
++	free(watch);
++}
++
++void ipc_device_unref(struct ipc_device *device)
++{
++	if (!device)
++		return;
++
++	if (__sync_sub_and_fetch(&device->ref_count, 1))
++		return;
++
++	__debug_device(device, "device %p free", device);
++
++	if (device->write_watch > 0)
++		g_source_remove(device->write_watch);
++
++	if (device->read_watch > 0)
++		g_source_remove(device->read_watch);
++
++	if (device->close_on_unref)
++		close(device->fd);
++
++	g_list_free_full(device->notification_watches, free_notification_watch);
++
++	g_free(device);
++}
++
++static guint add_response_watch(struct ipc_device *device, uint8_t type, u=
+int16_t cmd,
++							ipc_notify_func_t notify_cb, void *user_data)
++{
++	struct notication_watch *watch;
++
++	watch =3D g_try_new0(struct notication_watch, 1);
++	if (!watch)
++		return -1;
++
++	watch->id =3D next_watch_id(device);
++	watch->type =3D type;
++	watch->cmd =3D cmd;
++	watch->notify_cb =3D notify_cb;
++	watch->notify_data =3D user_data;
++
++	device->notification_watches =3D g_list_append(device->notification_watch=
+es, watch);
++
++	return watch->id;
++}
++
++guint ipc_device_add_notifcation_watch(struct ipc_device *device, uint16_t=
+ cmd,
++							ipc_notify_func_t notify_cb, void *user_data)
++{
++	return add_response_watch(device, IPC_TYPE_NOTI, cmd, notify_cb, user_dat=
+a);
++}
++
++guint ipc_device_add_indication_watch(struct ipc_device *device, uint16_t =
+cmd,
++							ipc_notify_func_t notify_cb, void *user_data)
++{
++	return add_response_watch(device, IPC_TYPE_INDI, cmd, notify_cb, user_dat=
+a);
++}
++
++static gint __notification_watch_id_compare(gconstpointer a, gconstpointer=
+ b)
++{
++	const struct notication_watch *watch =3D a;
++	const guint id =3D GPOINTER_TO_UINT(b);
++
++	if (a =3D=3D NULL || b =3D=3D NULL)
++		return -1;
++
++	return watch->id - id;
++}
++
++static void remove_response_watch(struct ipc_device *device, guint id)
++{
++	GList *watches;
++
++	watches =3D g_list_find_custom(device->notification_watches,
++						GUINT_TO_POINTER(id), __notification_watch_id_compare);
++
++	if (watches =3D=3D NULL)
++		return;
++
++	device->notification_watches =3D g_list_delete_link(device->notification_=
+watches, watches);
++}
++
++void ipc_device_remove_watch(struct ipc_device *device, guint id)
++{
++	remove_response_watch(device, id);
++}
++
++int ipc_device_get_fd(struct ipc_device *device)
++{
++	if (!device)
++		return -1;
++
++	return device->fd;
++}
++
++struct ipc_client *ipc_device_get_client(struct ipc_device *device)
++{
++	if (!device)
++		return NULL;
++
++	return device->client;
++}
++
++int ipc_device_enqueue_message(struct ipc_device *device,
++			uint16_t command, uint8_t type, void *data, uint16_t length,
++			ipc_response_func_t cb, void *user_data)
++{
++	struct ipc_request *req;
++
++	req =3D g_try_new0(struct ipc_request, 1);
++	if (!req)
++		return -1;
++
++	req->command =3D command;
++	req->type =3D type;
++	req->cb =3D cb;
++	req->cb_data =3D user_data;
++	req->id =3D next_message_id(device);
++	req->data =3D data;
++	req->length =3D length;
++
++	g_queue_push_tail(device->req_queue, req);
++
++	wakeup_writer(device);
++
++	return req->id;
++}
++
++void ipc_device_set_debug(struct ipc_device *device,
++				ipc_debug_func_t func, void *user_data)
++{
++	if (device =3D=3D NULL)
++		return;
++
++	device->debug_func =3D func;
++	device->debug_data =3D user_data;
++}
++
++void ipc_device_set_close_on_unref(struct ipc_device *device, bool do_clos=
+e)
++{
++	if (!device)
++		return;
++
++	device->close_on_unref =3D do_close;
++}
+diff --git a/drivers/samsungipcmodem/ipc.h b/drivers/samsungipcmodem/ipc.h
+new file mode 100644
+index 0000000..16dd8e4
+--- /dev/null
++++ b/drivers/samsungipcmodem/ipc.h
+@@ -0,0 +1,58 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2012 Simon Busch <morphis@gravedo.de>. All rights rese=
+rved.
++ *
++ *  Some parts of the code below are copied from drivers/qmimodem/qmi.c an=
+d are
++ *  Copyright (C) 2011-2012  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#include <stdbool.h>
++#include <stdint.h>
++
++#include <samsung-ipc.h>
++
++typedef void (*ipc_debug_func_t)(const char *str, void *user_data);
++typedef void (*ipc_response_func_t)(uint16_t cmd, void *data, uint16_t len=
+gth, uint8_t error, void *user_data);
++typedef void (*ipc_notify_func_t)(uint16_t cmd, void *data, uint16_t lengt=
+h, void *user_data);
++
++struct ipc_device;
++
++struct ipc_device *ipc_device_new(int fd, struct ipc_client *client);
++struct ipc_device *ipc_device_ref(struct ipc_device *device);
++void ipc_device_unref(struct ipc_device *device);
++
++guint ipc_device_add_notifcation_watch(struct ipc_device *device, uint16_t=
+ cmd,
++							ipc_notify_func_t notify_cb, void *user_data);
++guint ipc_device_add_indication_watch(struct ipc_device *device, uint16_t =
+cmd,
++							ipc_notify_func_t notify_cb, void *user_data);
++
++void ipc_device_remove_watch(struct ipc_device *device, guint id);
++
++int ipc_device_get_fd(struct ipc_device *device);
++
++struct ipc_client *ipc_device_get_client(struct ipc_device *device);
++
++int ipc_device_enqueue_message(struct ipc_device *device,
++			uint16_t command, uint8_t type, void *data, uint16_t length,
++			ipc_response_func_t cb, void *user_data);
++
++void ipc_device_set_debug(struct ipc_device *device,
++				ipc_debug_func_t func, void *user_data);
++
++void ipc_device_set_close_on_unref(struct ipc_device *device, bool do_clos=
+e);
+diff --git a/drivers/samsungipcmodem/util.h b/drivers/samsungipcmodem/util.h
+new file mode 100644
+index 0000000..cf053f0
+--- /dev/null
++++ b/drivers/samsungipcmodem/util.h
+@@ -0,0 +1,57 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2011-2012  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#include <glib.h>
++
++struct cb_data {
++	void *cb;
++	void *data;
++	void *user;
++};
++
++static inline struct cb_data *cb_data_new(void *cb, void *data)
++{
++	struct cb_data *ret;
++
++	ret =3D g_new0(struct cb_data, 1);
++	ret->cb =3D cb;
++	ret->data =3D data;
++	ret->user =3D NULL;
++
++	return ret;
++}
++
++#define CALLBACK_WITH_FAILURE(cb, args...)		\
++	do {						\
++		struct ofono_error cb_e;		\
++		cb_e.type =3D OFONO_ERROR_TYPE_FAILURE;	\
++		cb_e.error =3D 0;				\
++							\
++		cb(&cb_e, ##args);			\
++	} while (0)					\
++
++#define CALLBACK_WITH_SUCCESS(f, args...)		\
++	do {						\
++		struct ofono_error e;			\
++		e.type =3D OFONO_ERROR_TYPE_NO_ERROR;	\
++		e.error =3D 0;				\
++		f(&e, ##args);				\
++	} while (0)
 -- =
 
 1.7.9.5
 
 
---===============2612087624625910186==--
+--===============7174672533067969689==--
 
