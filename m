@@ -1,47 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============9121771941559197801=="
+Content-Type: multipart/mixed; boundary="===============9044227194847785801=="
 MIME-Version: 1.0
 From: Simon Busch <morphis@gravedo.de>
-Subject: [PATCH 09/11] samsungipcmodem: add gprs driver implementation
-Date: Tue, 18 Sep 2012 20:18:53 +0200
-Message-ID: <1347992335-9016-10-git-send-email-morphis@gravedo.de>
+Subject: [PATCH 10/11] samsungipcmodem: add gprs-context driver implementation
+Date: Tue, 18 Sep 2012 20:18:54 +0200
+Message-ID: <1347992335-9016-11-git-send-email-morphis@gravedo.de>
 In-Reply-To: <1347992335-9016-1-git-send-email-morphis@gravedo.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9121771941559197801==
+--===============9044227194847785801==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
  Makefile.am                               |    3 +-
- drivers/samsungipcmodem/gprs.c            |  215 +++++++++++++++++++++++++=
+ drivers/samsungipcmodem/gprs-context.c    |  311 +++++++++++++++++++++++++=
 ++++
  drivers/samsungipcmodem/samsungipcmodem.c |    2 +
  drivers/samsungipcmodem/samsungipcmodem.h |    2 +
- 4 files changed, 221 insertions(+), 1 deletion(-)
- create mode 100644 drivers/samsungipcmodem/gprs.c
+ 4 files changed, 317 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/samsungipcmodem/gprs-context.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 012c78d..1bfdf91 100644
+index 1bfdf91..769f848 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -191,7 +191,8 @@ builtin_sources +=3D \
- 	drivers/samsungipcmodem/devinfo.c \
+@@ -192,7 +192,8 @@ builtin_sources +=3D \
  	drivers/samsungipcmodem/sim.c \
  	drivers/samsungipcmodem/network-registration.c \
--	drivers/samsungipcmodem/voicecall.c
-+	drivers/samsungipcmodem/voicecall.c \
-+	drivers/samsungipcmodem/gprs.c
+ 	drivers/samsungipcmodem/voicecall.c \
+-	drivers/samsungipcmodem/gprs.c
++	drivers/samsungipcmodem/gprs.c \
++	drivers/samsungipcmodem/gprs-context.c
  builtin_cflags +=3D @SAMSUNGIPC_CFLAGS@
  builtin_libadd +=3D @SAMSUNGIPC_LIBS@
  endif
-diff --git a/drivers/samsungipcmodem/gprs.c b/drivers/samsungipcmodem/gprs.c
+diff --git a/drivers/samsungipcmodem/gprs-context.c b/drivers/samsungipcmod=
+em/gprs-context.c
 new file mode 100644
-index 0000000..f728bc7
+index 0000000..aae1365
 --- /dev/null
-+++ b/drivers/samsungipcmodem/gprs.c
-@@ -0,0 +1,215 @@
++++ b/drivers/samsungipcmodem/gprs-context.c
+@@ -0,0 +1,311 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -69,9 +70,15 @@ rved.
 +#include <config.h>
 +#endif
 +
++#define _GNU_SOURCE
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <errno.h>
++
 +#include <ofono/log.h>
 +#include <ofono/modem.h>
-+#include <ofono/gprs.h>
++#include <ofono/gprs-context.h>
 +
 +#include <glib.h>
 +
@@ -79,229 +86,322 @@ rved.
 +#include "ipc.h"
 +#include "util.h"
 +
-+struct gprs_data {
++#define IP_MAX_LENGTH	15
++
++struct gprs_context_data {
 +	struct ipc_device *device;
-+	guint status_watch;
-+	guint hsdpa_status_watch;
++	unsigned int active_context;
++	unsigned int enabled;
++	char username[OFONO_GPRS_MAX_USERNAME_LENGTH + 1];
++	char password[OFONO_GPRS_MAX_PASSWORD_LENGTH + 1];
 +};
 +
-+static void samsungipc_set_attached(struct ofono_gprs *gprs, int attached,
-+					ofono_gprs_cb_t cb, void *data)
++static void notify_gprs_ip_configuration_cb(uint16_t cmd, void *data, uint=
+16_t length,
++										void *user_data)
 +{
-+	/* No attach/detach possible so always succeed here */
-+	CALLBACK_WITH_SUCCESS(cb, data);
++	struct cb_data *cbd =3D user_data;
++	ofono_gprs_context_cb_t cb =3D cbd->cb;
++	struct ofono_gprs_context *gc =3D cbd->user;
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct ipc_gprs_ip_configuration *resp =3D data;
++	struct ipc_client *client;
++	char local[IP_MAX_LENGTH];
++	char dns1[IP_MAX_LENGTH];
++	char dns2[IP_MAX_LENGTH];
++	char gateway[IP_MAX_LENGTH];
++	char subnetmask[IP_MAX_LENGTH];
++	const char *dns[3];
++	char *interface;
++
++	snprintf(local, IP_MAX_LENGTH, "%i.%i.%i.%i", resp->ip[0], resp->ip[1],
++			 resp->ip[2], resp->ip[3]);
++	snprintf(dns1, IP_MAX_LENGTH, "%i.%i.%i.%i", resp->dns1[0], resp->dns1[1],
++			 resp->dns1[2], resp->dns1[3]);
++	snprintf(dns2, IP_MAX_LENGTH, "%i.%i.%i.%i", resp->dns2[0], resp->dns2[1],
++			 resp->dns2[2], resp->dns2[3]);
++	snprintf(local, IP_MAX_LENGTH, "%i.%i.%i.%i", resp->gateway[0], resp->gat=
+eway[1],
++			 resp->gateway[2], resp->gateway[3]);
++	snprintf(local, IP_MAX_LENGTH, "%i.%i.%i.%i", resp->subnet_mask[0], resp-=
+>subnet_mask[1],
++			 resp->subnet_mask[2], resp->subnet_mask[3]);
++
++	dns[0] =3D dns1;
++	dns[1] =3D dns2;
++	dns[2] =3D 0;
++
++	client =3D ipc_device_get_client(gcd->device);
++	interface =3D ipc_client_gprs_get_iface(client, gcd->active_context);
++
++	ofono_gprs_context_set_interface(gc, interface);
++	ofono_gprs_context_set_ipv4_address(gc, local, TRUE);
++	ofono_gprs_context_set_ipv4_netmask(gc, subnetmask);
++	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
++	ofono_gprs_context_set_ipv4_gateway(gc, gateway);
++
++	gcd->enabled =3D 1;
++
++	CALLBACK_WITH_SUCCESS(cb, cbd->data);
++
++	g_free(cbd);
++	g_free(interface);
 +}
 +
-+static void gprs_attached_status_cb(uint16_t cmd, void *data, uint16_t len=
++static void pdp_context_activate_cb(uint16_t cmd, void *data, uint16_t len=
 gth, uint8_t error, void *user_data)
 +{
 +	struct cb_data *cbd =3D user_data;
-+	ofono_gprs_status_cb_t cb =3D cbd->cb;
-+	struct ipc_net_regist_response *resp =3D data;
++	struct ofono_gprs_context *gc =3D cbd->user;
++	ofono_gprs_context_cb_t cb =3D cbd->cb;
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
 +
 +	if (error) {
-+		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
++		gcd->active_context =3D 0;
++		g_free(cbd);
++		return;
++	}
++
++	ipc_device_add_notifcation_watch(gcd->device, IPC_GPRS_IP_CONFIGURATION,
++								notify_gprs_ip_configuration_cb, cbd);
++}
++
++static void define_pdp_context_cb(uint16_t cmd, void *data, uint16_t lengt=
+h, uint8_t error, void *user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_gprs_context_cb_t cb =3D cbd->cb;
++	struct ofono_gprs_context *gc =3D cbd->user;
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct ipc_gen_phone_res *resp =3D data;
++	struct ipc_gprs_pdp_context_set *req;
++
++	if (error || ipc_gen_phone_res_check(resp) < 0)
++		goto error;
++
++	req =3D g_try_new0(struct ipc_gprs_pdp_context_set, 1);
++	if (!req)
++		goto error;
++
++	ipc_gprs_pdp_context_setup(req, 1, /* activate the context */
++					gcd->active_context, gcd->username, gcd->password);
++
++	if(ipc_device_enqueue_message(gcd->device, IPC_GPRS_DEFINE_PDP_CONTEXT, I=
+PC_TYPE_SET,
++						req, sizeof(struct ipc_gprs_pdp_context_set),
++						pdp_context_activate_cb, cbd) > 0)
++		return;
++
++error:
++	gcd->active_context =3D 0;
++	CALLBACK_WITH_FAILURE(cb, cbd->data);
++	g_free(cbd);
++}
++
++static void samsungipc_gprs_activate_primary(struct ofono_gprs_context *gc,
++				const struct ofono_gprs_primary_context *ctx,
++				ofono_gprs_context_cb_t cb, void *data)
++{
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct ipc_gprs_define_pdp_context *req;
++	struct cb_data *cbd;
++
++	req =3D g_try_new0(struct ipc_gprs_define_pdp_context, 1);
++	if (!req) {
++		CALLBACK_WITH_FAILURE(cb, data);
++		return;
++	}
++
++	cbd =3D cb_data_new(cb, data);
++	cbd->user =3D gc;
++
++	/* IPv6 support not implemented */
++	if (ctx->proto !=3D OFONO_GPRS_PROTO_IP)
++		goto error;
++
++	DBG("cid %u", ctx->cid);
++
++	gcd->active_context =3D ctx->cid;
++	memcpy(gcd->username, ctx->username, sizeof(ctx->username));
++	memcpy(gcd->password, ctx->password, sizeof(ctx->password));
++
++	req->cid =3D ctx->cid;
++	req->enable =3D 1; /* enable the context */
++	strncpy((char*) req->apn, ctx->apn, 124);
++
++	if(ipc_device_enqueue_message(gcd->device, IPC_GPRS_DEFINE_PDP_CONTEXT, I=
+PC_TYPE_SET,
++						req, sizeof(struct ipc_gprs_define_pdp_context),
++						define_pdp_context_cb, cbd) > 0)
++		return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, data);
++}
++
++static void pdp_context_deactivate_cb(uint16_t cmd, void *data, uint16_t l=
+ength, uint8_t error, void *user_data)
++{
++	struct ipc_gen_phone_res *resp =3D data;
++	struct cb_data *cbd =3D user_data;
++	ofono_gprs_context_cb_t cb =3D cbd->cb;
++	struct gprs_context_data *gcd =3D cbd->user;
++
++	if (error || ipc_gen_phone_res_check(resp) < 0) {
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
 +		goto done;
 +	}
 +
-+	CALLBACK_WITH_SUCCESS(cb, resp->reg_state - 1, cbd->data);
++	gcd->enabled =3D 0;
++	gcd->active_context =3D 0;
++
++	CALLBACK_WITH_SUCCESS(cb, cbd->data);
 +
 +done:
 +	g_free(cbd);
 +}
 +
-+static void samsungipc_attached_status(struct ofono_gprs *gprs,
-+				ofono_gprs_status_cb_t cb, void *data)
++static void samsungipc_gprs_deactivate_primary(struct ofono_gprs_context *=
+gc,
++					unsigned int cid,
++					ofono_gprs_context_cb_t cb, void *data)
 +{
-+	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct ipc_gprs_pdp_context_set *req;
 +	struct cb_data *cbd;
-+	struct ipc_net_regist_get *req;
 +
-+	DBG("");
++	DBG("cid %u", cid);
 +
-+	req =3D g_try_new0(struct ipc_net_regist_get, 1);
++	req =3D g_try_new0(struct ipc_gprs_pdp_context_set, 1);
 +	if (!req) {
-+		CALLBACK_WITH_FAILURE(cb, -1, data);
++		CALLBACK_WITH_FAILURE(cb, data);
 +		return;
 +	}
 +
 +	cbd =3D cb_data_new(cb, data);
++	cbd->user =3D gcd;
 +
-+	ipc_net_regist_get_setup(req, IPC_NET_SERVICE_DOMAIN_GPRS);
++	ipc_gprs_pdp_context_setup(req, 0, /* deactivate the context */
++					cid, NULL, NULL);
 +
-+	if(ipc_device_enqueue_message(gd->device, IPC_NET_REGIST, IPC_TYPE_GET,
-+						req, sizeof(struct ipc_net_regist_get),
-+						gprs_attached_status_cb, cbd) > 0)
++	if(ipc_device_enqueue_message(gcd->device, IPC_GPRS_DEFINE_PDP_CONTEXT, I=
+PC_TYPE_SET,
++						req, sizeof(struct ipc_gprs_pdp_context_set),
++						pdp_context_deactivate_cb, cbd) > 0)
 +		return;
 +
-+	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-+
++	CALLBACK_WITH_FAILURE(cb, data);
 +	g_free(cbd);
-+	g_free(req);
++}
++
++static void samsungipc_gprs_detach_shutdown(struct ofono_gprs_context *gc,
++					unsigned int cid)
++{
++	DBG("cid %u", cid);
 +}
 +
 +static void notify_gprs_status_cb(uint16_t cmd, void *data, uint16_t lengt=
 h, void *user_data)
 +{
-+	struct ofono_gprs *gprs =3D user_data;
-+	struct ipc_net_regist_response *resp =3D data;
++	struct ofono_gprs_context *gc =3D user_data;
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct ipc_gprs_call_status *resp =3D data;
 +
-+	if (resp->domain !=3D IPC_NET_SERVICE_DOMAIN_GPRS)
-+		return;
-+
-+	ofono_gprs_status_notify(gprs, resp->reg_state - 1);
++	if (gcd->enabled &&
++		(resp->state =3D=3D IPC_GPRS_STATE_NOT_ENABLED ||
++		 resp->state =3D=3D IPC_GPRS_STATE_DISABLED)) {
++		ofono_gprs_context_deactivated(gc, gcd->active_context);
++	}
 +}
 +
-+static void gprs_status_cb(uint16_t cmd, void *data, uint16_t length, uint=
-8_t error, void *user_data)
++static int samsungipc_gprs_context_probe(struct ofono_gprs_context *gc,
++					unsigned int vendor, void *data)
 +{
-+	struct ofono_gprs *gprs =3D user_data;
-+	struct ipc_net_regist_response *resp =3D data;
-+
-+	if (resp->domain !=3D IPC_NET_SERVICE_DOMAIN_GPRS || error)
-+		return;
-+
-+	ofono_gprs_status_notify(gprs, resp->reg_state - 1);
-+}
-+
-+static void notify_hsdpa_status_cb(uint16_t cmd, void *data, uint16_t leng=
-th, void *user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
-+	struct ipc_net_regist_get *req;
++	struct gprs_context_data *gcd;
 +
 +	DBG("");
 +
-+	req =3D g_try_new0(struct ipc_net_regist_get, 1);
-+	if (!req)
-+		return;
++	gcd =3D g_try_new0(struct gprs_context_data, 1);
++	if (gcd =3D=3D NULL)
++		return -ENOMEM;
 +
-+	ipc_net_regist_get_setup(req, IPC_NET_SERVICE_DOMAIN_GPRS);
++	gcd->device =3D data;
++	gcd->active_context =3D 0;
++	gcd->enabled =3D 0;
 +
-+	if(ipc_device_enqueue_message(gd->device, IPC_NET_REGIST, IPC_TYPE_GET,
-+						req, sizeof(struct ipc_net_regist_get),
-+						gprs_status_cb, gprs) > 0)
-+		return;
++	ofono_gprs_context_set_data(gc, gcd);
 +
-+	g_free(req);
-+}
-+
-+static void initial_status_cb(uint16_t cmd, void *data, uint16_t length, v=
-oid *user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	struct ipc_net_regist_response *resp =3D data;
-+	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
-+
-+	if (resp->domain !=3D IPC_NET_SERVICE_DOMAIN_GPRS)
-+		return;
-+
-+	ofono_gprs_register(gprs);
-+
-+	ofono_gprs_status_notify(gprs, resp->reg_state - 1);
-+
-+	ipc_device_remove_watch(gd->device, gd->status_watch);
-+
-+	gd->status_watch =3D ipc_device_add_notifcation_watch(gd->device, IPC_NET=
-_REGIST,
-+								notify_gprs_status_cb, gprs);
-+}
-+
-+static int samsungipc_gprs_probe(struct ofono_gprs *gprs,
-+				unsigned int vendor, void *user_data)
-+{
-+	struct gprs_data *gd;
-+	struct ipc_client *client;
-+	struct ipc_client_gprs_capabilities caps;
-+
-+	DBG("");
-+
-+	gd =3D g_new0(struct gprs_data, 1);
-+	gd->device =3D user_data;
-+
-+	ofono_gprs_set_data(gprs, gd);
-+
-+	gd->status_watch =3D ipc_device_add_notifcation_watch(gd->device, IPC_NET=
-_REGIST,
-+												initial_status_cb, gprs);
-+	gd->hsdpa_status_watch =3D ipc_device_add_notifcation_watch(gd->device, I=
-PC_GPRS_HSDPA_STATUS,
-+														notify_hsdpa_status_cb, gprs);
-+
-+	client =3D ipc_device_get_client(gd->device);
-+	ipc_client_gprs_get_capabilities(client, &caps);
-+
-+	ofono_gprs_set_cid_range(gprs, 1, caps.cid_max);
++	ipc_device_add_notifcation_watch(gcd->device, IPC_GPRS_CALL_STATUS,
++								notify_gprs_status_cb, gc);
 +
 +	return 0;
 +}
 +
-+static void samsungipc_gprs_remove(struct ofono_gprs *gprs)
++static void samsungipc_gprs_context_remove(struct ofono_gprs_context *gc)
 +{
-+	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
 +
 +	DBG("");
 +
-+	ipc_device_remove_watch(gd->device, gd->status_watch);
++	ofono_gprs_context_set_data(gc, NULL);
 +
-+	ofono_gprs_set_data(gprs, NULL);
-+
-+	g_free(gd);
++	g_free(gcd);
 +}
 +
-+static struct ofono_gprs_driver driver =3D {
++static struct ofono_gprs_context_driver driver =3D {
 +	.name			=3D "samsungipcmodem",
-+	.probe			=3D samsungipc_gprs_probe,
-+	.remove			=3D samsungipc_gprs_remove,
-+	.attached_status	=3D samsungipc_attached_status,
-+	.set_attached	=3D samsungipc_set_attached,
++	.probe			=3D samsungipc_gprs_context_probe,
++	.remove			=3D samsungipc_gprs_context_remove,
++	.activate_primary	=3D samsungipc_gprs_activate_primary,
++	.deactivate_primary	=3D samsungipc_gprs_deactivate_primary,
++	.detach_shutdown	=3D samsungipc_gprs_detach_shutdown,
 +};
 +
-+void samsungipc_gprs_init(void)
++void samsungipc_gprs_context_init(void)
 +{
-+	ofono_gprs_driver_register(&driver);
++	ofono_gprs_context_driver_register(&driver);
 +}
 +
-+void samsungipc_gprs_exit(void)
++void samsungipc_gprs_context_exit(void)
 +{
-+	ofono_gprs_driver_unregister(&driver);
++	ofono_gprs_context_driver_unregister(&driver);
 +}
 diff --git a/drivers/samsungipcmodem/samsungipcmodem.c b/drivers/samsungipc=
 modem/samsungipcmodem.c
-index 72553a5..c99887d 100644
+index c99887d..df55cf5 100644
 --- a/drivers/samsungipcmodem/samsungipcmodem.c
 +++ b/drivers/samsungipcmodem/samsungipcmodem.c
-@@ -34,11 +34,13 @@ static int samsungipcmodem_init(void)
- 	samsungipc_sim_init();
+@@ -35,11 +35,13 @@ static int samsungipcmodem_init(void)
  	samsungipc_netreg_init();
  	samsungipc_voicecall_init();
-+	samsungipc_gprs_init();
+ 	samsungipc_gprs_init();
++	samsungipc_gprs_context_exit();
  	return 0;
  }
  =
 
  static void samsungipcmodem_exit(void)
  {
-+	samsungipc_gprs_exit();
++	samsungipc_gprs_context_exit();
+ 	samsungipc_gprs_exit();
  	samsungipc_voicecall_exit();
  	samsungipc_netreg_exit();
- 	samsungipc_sim_exit();
 diff --git a/drivers/samsungipcmodem/samsungipcmodem.h b/drivers/samsungipc=
 modem/samsungipcmodem.h
-index 092effd..2ee5f43 100644
+index 2ee5f43..fe1f64b 100644
 --- a/drivers/samsungipcmodem/samsungipcmodem.h
 +++ b/drivers/samsungipcmodem/samsungipcmodem.h
-@@ -27,3 +27,5 @@ extern void samsungipc_netreg_init(void);
- extern void samsungipc_netreg_exit(void);
- extern void samsungipc_voicecall_init(void);
+@@ -29,3 +29,5 @@ extern void samsungipc_voicecall_init(void);
  extern void samsungipc_voicecall_exit(void);
-+extern void samsungipc_gprs_init(void);
-+extern void samsungipc_gprs_exit(void);
+ extern void samsungipc_gprs_init(void);
+ extern void samsungipc_gprs_exit(void);
++extern void samsungipc_gprs_context_init(void);
++extern void samsungipc_gprs_context_exit(void);
 -- =
 
 1.7.9.5
 
 
---===============9121771941559197801==--
+--===============9044227194847785801==--
 
