@@ -1,49 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============4713612100893808228=="
+Content-Type: multipart/mixed; boundary="===============4123199826399743397=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Cedric Jehasse <cedric.jehasse@gmail.com>
 Subject: Re: ofono exits after DBUS error
-Date: Mon, 17 Sep 2012 13:12:09 -0500
-Message-ID: <505767F9.9060909@gmail.com>
-In-Reply-To: <CABvLYuCY1KE5btF59ioXesRg3o=BYJBbaZyt1bodHMLDoMf+2A@mail.gmail.com>
+Date: Tue, 18 Sep 2012 10:34:03 +0200
+Message-ID: <CABvLYuDhE3Qeko2sffSt25yp1OOgdzJ2N0LSf_E6E_-vspY0Lw@mail.gmail.com>
+In-Reply-To: <505767F9.9060909@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4713612100893808228==
+--===============4123199826399743397==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Cedric,
+Hi Denis,
 
-On 09/17/2012 12:49 PM, Cedric Jehasse wrote:
-> Hi Denis,
->
->> To me it sounds like the output should be BASE followed by the inverted =
-'!'
->> sign.  Unfortunately the modem is sending ISO-8859-1 characters instead =
-of
->> GSM like it is being told to do by the driver.  That particular characte=
-r is
->> not valid utf8, hence we go kaboom.
->>
->> Having said that, I'm not familiar with 'BASE', does the above sound
->> reasonable?
->
-> The operator's name is just "BASE", so i wouldn't see why there would
-> be an inverted '!' sign. In some AT logs i've also seen "BASE0" as a
-> response to AT+COPS?, so i'm thinking this last character is just
-> garbage.
+> What devices have you tried?  It may be the character is garbage, but it
+> might also be it is not.  From the AT log the character you're getting is
+> inverted exclamation point in Latin1 and it is a valid character in GSM
+> character set...
 
-What devices have you tried?  It may be the character is garbage, but it =
+Let me give you a background on the operators first. The operator i'm
+using is is "Mobile Vikings", this is a virtual operator using the
+network of an operator called "BASE".
 
-might also be it is not.  From the AT log the character you're getting =
+I have three devices to test on:
+- Huawei E1552:
+  The first response to AT+COPS? to this device returns "Mobile
+Vikings". After oFono changes to numeric format and back (AT+COPS=3D3,2
+then back to AT+COPS=3D3,0), the device starts to return "BASEx". I've
+already seen this return "BASE\241", "BASE0" or "BASEP". So the last
+character seems pseudo-random.
 
-is inverted exclamation point in Latin1 and it is a valid character in =
+- Huawei E352:
+  For some reason this device doesn't register on the network, so i
+don't know the output for AT+COPS?
 
-GSM character set...
+- Option ICON 431:
+  This always returns "Mobile Vikings" to AT+COPS?
 
-Regards,
--Denis
+regards,
+Cedric
 
---===============4713612100893808228==--
+--===============4123199826399743397==--
 
