@@ -1,46 +1,95 @@
-Content-Type: multipart/mixed; boundary="===============4123199826399743397=="
+Content-Type: multipart/mixed; boundary="===============2716674282409913977=="
 MIME-Version: 1.0
-From: Cedric Jehasse <cedric.jehasse@gmail.com>
-Subject: Re: ofono exits after DBUS error
-Date: Tue, 18 Sep 2012 10:34:03 +0200
-Message-ID: <CABvLYuDhE3Qeko2sffSt25yp1OOgdzJ2N0LSf_E6E_-vspY0Lw@mail.gmail.com>
-In-Reply-To: <505767F9.9060909@gmail.com>
+From: Simon Busch <morphis@gravedo.de>
+Subject: [PATCH 00/11] Samsung IPC modem support
+Date: Tue, 18 Sep 2012 20:18:44 +0200
+Message-ID: <1347992335-9016-1-git-send-email-morphis@gravedo.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4123199826399743397==
+--===============2716674282409913977==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Heyho,
 
-> What devices have you tried?  It may be the character is garbage, but it
-> might also be it is not.  From the AT log the character you're getting is
-> inverted exclamation point in Latin1 and it is a valid character in GSM
-> character set...
+the following patch series adds support for the Samsung IPC protocol which =
+is implemented
+in an external library called libsamsung-ipc (see [0]). The library contain=
+s the
+implementation of the protocol used in most Samsung mobile handsets. As of =
+right now the
+implementation contains drivers for the devinfo, sim, voicecall, gprs and g=
+prs-context
+subsystems. Implementation for other subsystems like sms will follow.
 
-Let me give you a background on the operators first. The operator i'm
-using is is "Mobile Vikings", this is a virtual operator using the
-network of an operator called "BASE".
+I submit the patches here for a first review to make sure things I did are =
+right and are
+fine for inclusion in ofono. Anyway the code is not ready yet and needs mor=
+e tweaking and
+testing but I think it's time for a first look.
 
-I have three devices to test on:
-- Huawei E1552:
-  The first response to AT+COPS? to this device returns "Mobile
-Vikings". After oFono changes to numeric format and back (AT+COPS=3D3,2
-then back to AT+COPS=3D3,0), the device starts to return "BASEx". I've
-already seen this return "BASE\241", "BASE0" or "BASEP". So the last
-character seems pseudo-random.
-
-- Huawei E352:
-  For some reason this device doesn't register on the network, so i
-don't know the output for AT+COPS?
-
-- Option ICON 431:
-  This always returns "Mobile Vikings" to AT+COPS?
+One thing about libsamsung-ipc: The library itself needs some rework and fi=
+ne tuning and
+is not ready for a release yet so this is a hard dependency for the inclusi=
+on in ofono.
 
 regards,
-Cedric
+Simon
 
---===============4123199826399743397==--
+[0]: https://github.com/morphis/libsamsung-ipc
+
+Simon Busch (11):
+  build: Add skeleton for Samsung IPC modem driver
+  build: add dependency for samsung-ipc library
+  samsungmgr: plugin for powering up samsung related modems via an
+    additional daemon
+  samsungipcmodem: implement the transport layer for the IPC protocol
+  samsungipcmodem: add devinfo driver implementation
+  samsungipcmodem: add sim driver implementation
+  samsungipcmodem: add network registration driver implementation
+  samsungipcmodem: add voicecall driver implementation
+  samsungipcmodem: add gprs driver implementation
+  samsungipcmodem: add gprs-context driver implementation
+  samsungipc: Add initial implementation of the Samsung IPC modem
+    plugin
+
+ Makefile.am                                    |   25 +
+ configure.ac                                   |   11 +
+ drivers/samsungipcmodem/devinfo.c              |  214 ++++++++
+ drivers/samsungipcmodem/gprs-context.c         |  311 +++++++++++
+ drivers/samsungipcmodem/gprs.c                 |  215 ++++++++
+ drivers/samsungipcmodem/ipc.c                  |  443 ++++++++++++++++
+ drivers/samsungipcmodem/ipc.h                  |   58 ++
+ drivers/samsungipcmodem/network-registration.c |  398 ++++++++++++++
+ drivers/samsungipcmodem/samsungipcmodem.c      |   53 ++
+ drivers/samsungipcmodem/samsungipcmodem.h      |   33 ++
+ drivers/samsungipcmodem/sim.c                  |  674 ++++++++++++++++++++=
+++++
+ drivers/samsungipcmodem/util.h                 |   57 ++
+ drivers/samsungipcmodem/voicecall.c            |  358 +++++++++++++
+ plugins/samsungipc.c                           |  414 +++++++++++++++
+ plugins/samsungmgr.c                           |  199 +++++++
+ 15 files changed, 3463 insertions(+)
+ create mode 100644 drivers/samsungipcmodem/devinfo.c
+ create mode 100644 drivers/samsungipcmodem/gprs-context.c
+ create mode 100644 drivers/samsungipcmodem/gprs.c
+ create mode 100644 drivers/samsungipcmodem/ipc.c
+ create mode 100644 drivers/samsungipcmodem/ipc.h
+ create mode 100644 drivers/samsungipcmodem/network-registration.c
+ create mode 100644 drivers/samsungipcmodem/samsungipcmodem.c
+ create mode 100644 drivers/samsungipcmodem/samsungipcmodem.h
+ create mode 100644 drivers/samsungipcmodem/sim.c
+ create mode 100644 drivers/samsungipcmodem/util.h
+ create mode 100644 drivers/samsungipcmodem/voicecall.c
+ create mode 100644 plugins/samsungipc.c
+ create mode 100644 plugins/samsungmgr.c
+
+-- =
+
+1.7.9.5
+
+
+--===============2716674282409913977==--
 
