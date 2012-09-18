@@ -1,95 +1,149 @@
-Content-Type: multipart/mixed; boundary="===============2716674282409913977=="
+Content-Type: multipart/mixed; boundary="===============6983887972898022629=="
 MIME-Version: 1.0
 From: Simon Busch <morphis@gravedo.de>
-Subject: [PATCH 00/11] Samsung IPC modem support
-Date: Tue, 18 Sep 2012 20:18:44 +0200
-Message-ID: <1347992335-9016-1-git-send-email-morphis@gravedo.de>
+Subject: [PATCH 01/11] build: Add skeleton for Samsung IPC modem driver
+Date: Tue, 18 Sep 2012 20:18:45 +0200
+Message-ID: <1347992335-9016-2-git-send-email-morphis@gravedo.de>
+In-Reply-To: <1347992335-9016-1-git-send-email-morphis@gravedo.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2716674282409913977==
+--===============6983887972898022629==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Heyho,
-
-the following patch series adds support for the Samsung IPC protocol which =
-is implemented
-in an external library called libsamsung-ipc (see [0]). The library contain=
-s the
-implementation of the protocol used in most Samsung mobile handsets. As of =
-right now the
-implementation contains drivers for the devinfo, sim, voicecall, gprs and g=
-prs-context
-subsystems. Implementation for other subsystems like sms will follow.
-
-I submit the patches here for a first review to make sure things I did are =
-right and are
-fine for inclusion in ofono. Anyway the code is not ready yet and needs mor=
-e tweaking and
-testing but I think it's time for a first look.
-
-One thing about libsamsung-ipc: The library itself needs some rework and fi=
-ne tuning and
-is not ready for a release yet so this is a hard dependency for the inclusi=
-on in ofono.
-
-regards,
-Simon
-
-[0]: https://github.com/morphis/libsamsung-ipc
-
-Simon Busch (11):
-  build: Add skeleton for Samsung IPC modem driver
-  build: add dependency for samsung-ipc library
-  samsungmgr: plugin for powering up samsung related modems via an
-    additional daemon
-  samsungipcmodem: implement the transport layer for the IPC protocol
-  samsungipcmodem: add devinfo driver implementation
-  samsungipcmodem: add sim driver implementation
-  samsungipcmodem: add network registration driver implementation
-  samsungipcmodem: add voicecall driver implementation
-  samsungipcmodem: add gprs driver implementation
-  samsungipcmodem: add gprs-context driver implementation
-  samsungipc: Add initial implementation of the Samsung IPC modem
-    plugin
-
- Makefile.am                                    |   25 +
- configure.ac                                   |   11 +
- drivers/samsungipcmodem/devinfo.c              |  214 ++++++++
- drivers/samsungipcmodem/gprs-context.c         |  311 +++++++++++
- drivers/samsungipcmodem/gprs.c                 |  215 ++++++++
- drivers/samsungipcmodem/ipc.c                  |  443 ++++++++++++++++
- drivers/samsungipcmodem/ipc.h                  |   58 ++
- drivers/samsungipcmodem/network-registration.c |  398 ++++++++++++++
- drivers/samsungipcmodem/samsungipcmodem.c      |   53 ++
- drivers/samsungipcmodem/samsungipcmodem.h      |   33 ++
- drivers/samsungipcmodem/sim.c                  |  674 ++++++++++++++++++++=
+---
+ Makefile.am                               |    7 +++++
+ configure.ac                              |    5 ++++
+ drivers/samsungipcmodem/samsungipcmodem.c |   41 +++++++++++++++++++++++++=
 ++++
- drivers/samsungipcmodem/util.h                 |   57 ++
- drivers/samsungipcmodem/voicecall.c            |  358 +++++++++++++
- plugins/samsungipc.c                           |  414 +++++++++++++++
- plugins/samsungmgr.c                           |  199 +++++++
- 15 files changed, 3463 insertions(+)
- create mode 100644 drivers/samsungipcmodem/devinfo.c
- create mode 100644 drivers/samsungipcmodem/gprs-context.c
- create mode 100644 drivers/samsungipcmodem/gprs.c
- create mode 100644 drivers/samsungipcmodem/ipc.c
- create mode 100644 drivers/samsungipcmodem/ipc.h
- create mode 100644 drivers/samsungipcmodem/network-registration.c
+ drivers/samsungipcmodem/samsungipcmodem.h |   20 ++++++++++++++
+ 4 files changed, 73 insertions(+)
  create mode 100644 drivers/samsungipcmodem/samsungipcmodem.c
  create mode 100644 drivers/samsungipcmodem/samsungipcmodem.h
- create mode 100644 drivers/samsungipcmodem/sim.c
- create mode 100644 drivers/samsungipcmodem/util.h
- create mode 100644 drivers/samsungipcmodem/voicecall.c
- create mode 100644 plugins/samsungipc.c
- create mode 100644 plugins/samsungmgr.c
 
+diff --git a/Makefile.am b/Makefile.am
+index 40a83dc..4cfec6b 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -181,6 +181,13 @@ builtin_modules +=3D gobi
+ builtin_sources +=3D plugins/gobi.c
+ endif
+ =
+
++if SAMSUNGIPCMODEM
++builtin_modules +=3D samsungipcmodem
++builtin_sources +=3D \
++	drivers/samsungipcmodem/samsungipcmodem.c \
++	drivers/samsungipcmodem/samsungipcmodem.h
++endif
++
+ if ATMODEM
+ builtin_modules +=3D atmodem
+ builtin_sources +=3D $(gatchat_sources) \
+diff --git a/configure.ac b/configure.ac
+index 2d6247d..3835d35 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -172,6 +172,11 @@ AC_ARG_ENABLE(qmimodem, AC_HELP_STRING([--disable-qmim=
+odem],
+ 					[enable_qmimodem=3D${enableval}])
+ AM_CONDITIONAL(QMIMODEM, test "${enable_qmimodem}" !=3D "no")
+ =
+
++AC_ARG_ENABLE(samsungipc, AC_HELP_STRING([--disable-samsungipcmodem],
++				[disable Samsung IPC modem support]),
++					[enable_samsungipc=3D${enableval}])
++AM_CONDITIONAL(SAMSUNGIPCMODEM, test "${enable_samsungipc}" !=3D "no")
++
+ AC_ARG_ENABLE(bluetooth, AC_HELP_STRING([--disable-bluetooth],
+ 				[disable Bluetooth modem support]),
+ 					[enable_bluetooth=3D${enableval}])
+diff --git a/drivers/samsungipcmodem/samsungipcmodem.c b/drivers/samsungipc=
+modem/samsungipcmodem.c
+new file mode 100644
+index 0000000..c302dfd
+--- /dev/null
++++ b/drivers/samsungipcmodem/samsungipcmodem.c
+@@ -0,0 +1,41 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2012 Simon Busch <morphis@gravedo.de>. All rights rese=
+rved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++
++#include "samsungipcmodem.h"
++
++static int samsungipcmodem_init(void)
++{
++	return 0;
++}
++
++static void samsungipcmodem_exit(void)
++{
++}
++
++OFONO_PLUGIN_DEFINE(samsungipcmodem, "Samsung IPC modem driver", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, samsungipcmodem_init, samsungipcmodem_exi=
+t)
+diff --git a/drivers/samsungipcmodem/samsungipcmodem.h b/drivers/samsungipc=
+modem/samsungipcmodem.h
+new file mode 100644
+index 0000000..3f9b386
+--- /dev/null
++++ b/drivers/samsungipcmodem/samsungipcmodem.h
+@@ -0,0 +1,20 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2012 Simon Busch <morphis@gravedo.de>. All rights rese=
+rved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 -- =
 
 1.7.9.5
 
 
---===============2716674282409913977==--
+--===============6983887972898022629==--
 
