@@ -1,37 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============1026779346798983010=="
+Content-Type: multipart/mixed; boundary="===============3952473278123952959=="
 MIME-Version: 1.0
-From: Patrik Flykt <patrik.flykt@linux.intel.com>
-Subject: Re: [PATCH 0/3] gdbus patches
-Date: Fri, 28 Sep 2012 15:18:39 +0300
-Message-ID: <1348834719.3757.280.camel@pflykt-mobl1>
-In-Reply-To: <1348747139-1881-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: PinRequired value during sim initialization
+Date: Fri, 28 Sep 2012 10:18:09 -0500
+Message-ID: <5065BFB1.3040309@gmail.com>
+In-Reply-To: <90rnby.mb1xsn.2znelj-qmf@mx.google.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1026779346798983010==
+--===============3952473278123952959==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2012-09-27 at 08:58 -0300, Lucas De Marchi wrote:
-> These patches were applied to BlueZ repository. Please, have a look and a=
-pply
-> them on other projects.
-> =
+Hi Martin,
 
-> Johan Hedberg (1):
->   gdbus: Fix crash when getting disconnected from the bus
-> =
+Please do not top-post on this mailing list.
 
-> Lucas De Marchi (2):
->   gdbus: Fix wrong signal handler match
->   gdbus: Refactor filter_data_find()
+On 09/28/2012 03:48 AM, martin.grimme(a)gmail.com wrote:
+> Hi,
+>
+>
+> I wouldn't rely on the Present property too much. I have seen modems
+> where the SimManager interface is not even available if the SIM was
+> missing. And I have seen modems where Present was still true after I
+> have pulled out the SIM...
+>
 
-All three patches applied to ConnMan. Thanks!
+Sounds like your hardware does not support SIM hot-swap.
 
+Regards,
+-Denis
 
-	Patrik
-
-
---===============1026779346798983010==--
+--===============3952473278123952959==--
 
