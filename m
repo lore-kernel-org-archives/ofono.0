@@ -1,99 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============3764702802908552888=="
+Content-Type: multipart/mixed; boundary="===============1026779346798983010=="
 MIME-Version: 1.0
-From: martin.grimme@gmail.com
-Subject: Re: PinRequired value during sim initialization
-Date: Fri, 28 Sep 2012 08:48:11 +0000
-Message-ID: <90rnby.mb1xsn.2znelj-qmf@mx.google.com>
-In-Reply-To: <CABvLYuC_TVS+1AcEdbFq4SNXmV0+WLYfESK0ztL3=QRHAa82RA@mail.gmail.com>
+From: Patrik Flykt <patrik.flykt@linux.intel.com>
+Subject: Re: [PATCH 0/3] gdbus patches
+Date: Fri, 28 Sep 2012 15:18:39 +0300
+Message-ID: <1348834719.3757.280.camel@pflykt-mobl1>
+In-Reply-To: <1348747139-1881-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3764702802908552888==
+--===============1026779346798983010==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+On Thu, 2012-09-27 at 08:58 -0300, Lucas De Marchi wrote:
+> These patches were applied to BlueZ repository. Please, have a look and a=
+pply
+> them on other projects.
+> =
 
-I wouldn't rely on the Present property too much. I have seen modems where =
-the SimManager interface is not even available if the SIM was missing. And =
-I have seen modems where Present was still true after I have pulled out the=
- SIM...
+> Johan Hedberg (1):
+>   gdbus: Fix crash when getting disconnected from the bus
+> =
 
+> Lucas De Marchi (2):
+>   gdbus: Fix wrong signal handler match
+>   gdbus: Refactor filter_data_find()
 
-Regards,
-Martin
-
-
-Cedric Jehasse schrieb am 28.09.12 10:03:
-
-Hi,
-
-
-Immediately after the 'Present' property changes to true on
-org.ofono.SimManager, i read the 'PinRequired' property. Because the
-sim is not yet initialized this is set to "none". It would be nice if
-this was set to "notinitialized", or if there would be an additional
-property to know if sim initialization is done.
+All three patches applied to ConnMan. Thanks!
 
 
-Thanks,
-Cedric
-
-_______________________________________________
-
-ofono mailing list
-
-ofono(a)ofono.org
-http://lists.ofono.org/listinfo/ofono
+	Patrik
 
 
-
-
---===============3764702802908552888==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWw+PGhlYWQ+PHN0eWxlIHR5cGU9InRleHQvY3NzIj5ib2R5LCBwLCBsaSB7IGZvbnQtZmFt
-aWx5OiBOb2tpYVB1cmVUZXh0TGlnaHQ7IH08L3N0eWxlPjwvaGVhZD48Ym9keT48ZGl2IGlkPSJm
-ZW5peC11c2VyLWNvbnRlbnQiPgo8cCBzdHlsZT0iIG1hcmdpbi10b3A6MHB4OyBtYXJnaW4tYm90
-dG9tOjBweDsgbWFyZ2luLWxlZnQ6MHB4OyBtYXJnaW4tcmlnaHQ6MHB4OyAtcXQtYmxvY2staW5k
-ZW50OjA7IHRleHQtaW5kZW50OjBweDsiPkhpLDwvcD4KPHAgc3R5bGU9Ii1xdC1wYXJhZ3JhcGgt
-dHlwZTplbXB0eTsgbWFyZ2luLXRvcDowcHg7IG1hcmdpbi1ib3R0b206MHB4OyBtYXJnaW4tbGVm
-dDowcHg7IG1hcmdpbi1yaWdodDowcHg7IC1xdC1ibG9jay1pbmRlbnQ6MDsgdGV4dC1pbmRlbnQ6
-MHB4OyI+PGJyPjwvcD4KPHAgc3R5bGU9IiBtYXJnaW4tdG9wOjBweDsgbWFyZ2luLWJvdHRvbTow
-cHg7IG1hcmdpbi1sZWZ0OjBweDsgbWFyZ2luLXJpZ2h0OjBweDsgLXF0LWJsb2NrLWluZGVudDow
-OyB0ZXh0LWluZGVudDowcHg7Ij5JIHdvdWxkbid0IHJlbHkgb24gdGhlIFByZXNlbnQgcHJvcGVy
-dHkgdG9vIG11Y2guIEkgaGF2ZSBzZWVuIG1vZGVtcyB3aGVyZSB0aGUgU2ltTWFuYWdlciBpbnRl
-cmZhY2UgaXMgbm90IGV2ZW4gYXZhaWxhYmxlIGlmIHRoZSBTSU0gd2FzIG1pc3NpbmcuIEFuZCBJ
-IGhhdmUgc2VlbiBtb2RlbXMgd2hlcmUgUHJlc2VudCB3YXMgc3RpbGwgdHJ1ZSBhZnRlciBJIGhh
-dmUgcHVsbGVkIG91dCB0aGUgU0lNLi4uPC9wPgo8cCBzdHlsZT0iLXF0LXBhcmFncmFwaC10eXBl
-OmVtcHR5OyBtYXJnaW4tdG9wOjBweDsgbWFyZ2luLWJvdHRvbTowcHg7IG1hcmdpbi1sZWZ0OjBw
-eDsgbWFyZ2luLXJpZ2h0OjBweDsgLXF0LWJsb2NrLWluZGVudDowOyB0ZXh0LWluZGVudDowcHg7
-Ij48YnI+PC9wPgo8cCBzdHlsZT0iLXF0LXBhcmFncmFwaC10eXBlOmVtcHR5OyBtYXJnaW4tdG9w
-OjBweDsgbWFyZ2luLWJvdHRvbTowcHg7IG1hcmdpbi1sZWZ0OjBweDsgbWFyZ2luLXJpZ2h0OjBw
-eDsgLXF0LWJsb2NrLWluZGVudDowOyB0ZXh0LWluZGVudDowcHg7Ij48YnI+PC9wPgo8cCBzdHls
-ZT0iIG1hcmdpbi10b3A6MHB4OyBtYXJnaW4tYm90dG9tOjBweDsgbWFyZ2luLWxlZnQ6MHB4OyBt
-YXJnaW4tcmlnaHQ6MHB4OyAtcXQtYmxvY2staW5kZW50OjA7IHRleHQtaW5kZW50OjBweDsiPlJl
-Z2FyZHMsPC9wPgo8cCBzdHlsZT0iIG1hcmdpbi10b3A6MHB4OyBtYXJnaW4tYm90dG9tOjBweDsg
-bWFyZ2luLWxlZnQ6MHB4OyBtYXJnaW4tcmlnaHQ6MHB4OyAtcXQtYmxvY2staW5kZW50OjA7IHRl
-eHQtaW5kZW50OjBweDsiPk1hcnRpbjwvcD48L2Rpdj48YnI+PGRpdiBpZD0iZmVuaXgtcmVwbHkt
-aGVhZGVyIj48cD5DZWRyaWMgSmVoYXNzZSBzY2hyaWViIGFtIDI4LjA5LjEyIDEwOjAzOjxicj48
-L3A+PC9kaXY+PGRpdiBpZD0iZmVuaXgtcXVvdGVkLWJvZHkiPjxkaXY+CkhpLDxicj4KPGJyPgo8
-L2Rpdj4KPGRpdj4KSW1tZWRpYXRlbHkgYWZ0ZXIgdGhlICdQcmVzZW50JyBwcm9wZXJ0eSBjaGFu
-Z2VzIHRvIHRydWUgb248YnI+Cm9yZy5vZm9uby5TaW1NYW5hZ2VyLCBpIHJlYWQgdGhlICdQaW5S
-ZXF1aXJlZCcgcHJvcGVydHkuIEJlY2F1c2UgdGhlPGJyPgpzaW0gaXMgbm90IHlldCBpbml0aWFs
-aXplZCB0aGlzIGlzIHNldCB0byAibm9uZSIuIEl0IHdvdWxkIGJlIG5pY2UgaWY8YnI+CnRoaXMg
-d2FzIHNldCB0byAibm90aW5pdGlhbGl6ZWQiLCBvciBpZiB0aGVyZSB3b3VsZCBiZSBhbiBhZGRp
-dGlvbmFsPGJyPgpwcm9wZXJ0eSB0byBrbm93IGlmIHNpbSBpbml0aWFsaXphdGlvbiBpcyBkb25l
-Ljxicj4KPGJyPgo8L2Rpdj4KPGRpdj4KVGhhbmtzLDxicj4KQ2VkcmljPGJyPgo8L2Rpdj4KPGRp
-dj4KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX188YnI+Cjwv
-ZGl2Pgo8ZGl2PgpvZm9ubyBtYWlsaW5nIGxpc3Q8YnI+CjwvZGl2Pgo8ZGl2Pgo8YSBocmVmPSJt
-YWlsdG86b2Zvbm9Ab2Zvbm8ub3JnIj5vZm9ub0BvZm9uby5vcmc8L2E+PGJyPgo8YSBocmVmPSJo
-dHRwOi8vbGlzdHMub2Zvbm8ub3JnL2xpc3RpbmZvL29mb25vIj5odHRwOi8vbGlzdHMub2Zvbm8u
-b3JnL2xpc3RpbmZvL29mb25vPC9hPjxicj4KPGJyPgo8L2Rpdj4KPC9kaXY+PGJyPjwvYm9keT48
-L2h0bWw+
---===============3764702802908552888==--
+--===============1026779346798983010==--
 
