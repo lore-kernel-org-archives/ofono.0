@@ -1,37 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============8813809279829736723=="
+Content-Type: multipart/mixed; boundary="===============5203472533005111606=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] systemd: prevent duplicate logging messages in journal
-Date: Thu, 25 Oct 2012 16:29:00 -0700
-Message-ID: <1351207740.25783.1.camel@aeonflux>
-In-Reply-To: <1351190250-15850-1-git-send-email-marti@juffo.org>
+From: Rohit Pathania <rohit.pathania1987@gmail.com>
+Subject: Ofono code flow info
+Date: Sat, 27 Oct 2012 11:05:38 +0530
+Message-ID: <CANZwo0U=gnKiQb=nPmPAuVbAdRn40H1hdaKqRqAab4H-Reg4AA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8813809279829736723==
+--===============5203472533005111606==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marti,
+Hi Sir/Mam,
+    I want to get information on ofono and its dbus api. How to build it.
+So I can write some application by using ofono.
+I am doing this because of interste in telephony.
 
-> By default, both stderr and syslog messages go to the systemd journal,
-> which results in duplicate messages being logged.
-> =
+so please help in it.
 
-> Thanks to Vinicius Costa Gomes for pointing out this problem.
-> ---
->  dundee/dundee.service.in | 1 +
->  src/ofono.service.in     | 1 +
->  2 files changed, 2 insertions(+)
+Thanks & Regards,
+Rohit
 
-patch has been applied.
+--===============5203472533005111606==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-Regards
+SGkgU2lyL01hbSw8YnI+oKCgIEkgd2FudCB0byBnZXQgaW5mb3JtYXRpb24gb24gb2Zvbm8gYW5k
+IGl0cyBkYnVzIGFwaS4gSG93IHRvIGJ1aWxkIGl0LiBTbyBJIGNhbiB3cml0ZSBzb21lIGFwcGxp
+Y2F0aW9uIGJ5IHVzaW5nIG9mb25vLjxicj5JIGFtIGRvaW5nIHRoaXMgYmVjYXVzZSBvZiBpbnRl
+cnN0ZSBpbiB0ZWxlcGhvbnkuPGJyPjxicj5zbyBwbGVhc2UgaGVscCBpbiBpdC48YnI+Cjxicj5U
+aGFua3MgJmFtcDsgUmVnYXJkcyw8YnI+Um9oaXQ8YnI+Cg==
 
-Marcel
-
-
-
---===============8813809279829736723==--
+--===============5203472533005111606==--
 
