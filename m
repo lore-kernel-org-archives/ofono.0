@@ -1,66 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============6593633752187303905=="
+Content-Type: multipart/mixed; boundary="===============5644315744819354217=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Ofono can't work with ZTE MF190S
-Date: Wed, 31 Oct 2012 16:02:36 -0500
-Message-ID: <509191EC.8060102@gmail.com>
-In-Reply-To: <CADV-EXGTZGDbRWE-KGYXVWOh+bk3FMV0kaCBwfReZ9N+fKfQiQ@mail.gmail.com>
+Subject: Re: [PATCH] sim: Fix the quirk handling of CPIN for Wavecom Q2XXX
+Date: Wed, 31 Oct 2012 16:16:16 -0500
+Message-ID: <50919520.8090600@gmail.com>
+In-Reply-To: <1351726211-10255-1-git-send-email-holger@freyther.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6593633752187303905==
+--===============5644315744819354217==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yevhen,
+Hi Holger,
 
-On 10/09/2012 05:44 PM, Yevhen Kyriukha wrote:
-> Hello!
+On 10/31/2012 06:30 PM, Holger Hans Peter Freyther wrote:
+> From: Holger Hans Peter Freyther<hfreyther@sysmocom.de>
 >
-> I have a problems with Ofono while working with my 3G modem *ZTE MF190S*.
-> I can't connect to GPRS network.
-> I'm getting an error when I run *enable-gprs* test script.
+> Commit 1ccecfe01eb7f9f4d1d931814deb66ef37840b73 added the quirk
+> handling for the Q2XXX module but it missed the first part of
+> the Wavecom quirk handling.
 >
-> Log files are attached.
+> If decode_at_error is not fed with OK the error variable will be
+> set to an error and the sim_pin_query_cb will exit before doing
+> any notifications. This started to happen after git commit
+> 72ce19bf3e87b5e73c053f7ea1095a5006f1aea9).
+> ---
+>   drivers/atmodem/sim.c |    3 ++-
+>   1 file changed, 2 insertions(+), 1 deletion(-)
 >
-> As you can see there are messages like
-> *GPRS not supported on this device*
-> and
-> *Unable to initialize Network Registration*
-> in ofono.log and ofono-at.log.
+> diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+> index cf3345c..89445bb 100644
+> --- a/drivers/atmodem/sim.c
+> +++ b/drivers/atmodem/sim.c
+> @@ -980,7 +980,8 @@ static void at_cpin_cb(gboolean ok, GAtResult *result=
+, gpointer user_data)
+>   	int len =3D sizeof(at_sim_name) / sizeof(*at_sim_name);
+>   	const char *final =3D g_at_result_final_response(result);
 >
+> -	if (sd->vendor =3D=3D OFONO_VENDOR_WAVECOM&&  ok&&  strlen(final)>  7)
+> +	if ((sd->vendor =3D=3D OFONO_VENDOR_WAVECOM ||
+> +			sd->vendor =3D=3D OFONO_VENDOR_WAVECOM_Q2XXX)&&  ok&&  strlen(final)>=
+  7)
 
-The issue is here:
+Patch looks good to me, but can you please make sure this line doesn't =
 
-ofonod[2536]: Aux: > AT+CGREG=3D?\r
-ofonod[2536]: Aux: < \r\nOK\r\n
-ofonod[2536]: GPRS not supported on this device
+go above 80 characters per our coding guidelines?  See doc/coding-style.txt
 
-The correct response to this query according to 27.007 is of the =
-
-following form:
-
-+CREG=3D?
-+CREG: (list of supported <n>s)
-
-Since the hardware simply returns 'OK' (which is not valid according to =
-
-the spec) we do not know what modes (1 vs 2) of CREG it supports.  Hence =
-
-we have no idea how to drive this hardware.  This can be fixed via a =
-
-driver quirk, but we need to know whether e.g. AT+CGREG=3D2 works...
-
-ofonod[2536]: src/gprs.c:gprs_remove() atom: 0x8f935e0
-ofonod[2536]: Aux: > AT+CREG=3D?\r
-ofonod[2536]: Aux: < \r\nOK\r\n
-ofonod[2536]: Unable to initialize Network Registration
-
-Same issue as above...  The response to +CREG=3D? is not valid.
+>   		decode_at_error(&error, "OK");
+>   	else
+>   		decode_at_error(&error, final);
 
 Regards,
 -Denis
 
---===============6593633752187303905==--
+--===============5644315744819354217==--
 
