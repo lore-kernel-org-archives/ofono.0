@@ -1,38 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============5203472533005111606=="
+Content-Type: multipart/mixed; boundary="===============3035232961021006745=="
 MIME-Version: 1.0
-From: Rohit Pathania <rohit.pathania1987@gmail.com>
-Subject: Ofono code flow info
-Date: Sat, 27 Oct 2012 11:05:38 +0530
-Message-ID: <CANZwo0U=gnKiQb=nPmPAuVbAdRn40H1hdaKqRqAab4H-Reg4AA@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/1] Set MNC length to 2 if EFad doesn't specify it
+Date: Wed, 31 Oct 2012 15:09:24 -0500
+Message-ID: <50918574.8060600@gmail.com>
+In-Reply-To: <1347525847-2991-1-git-send-email-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5203472533005111606==
+--===============3035232961021006745==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sir/Mam,
-    I want to get information on ofono and its dbus api. How to build it.
-So I can write some application by using ofono.
-I am doing this because of interste in telephony.
+Hi Jonas,
 
-so please help in it.
+On 09/13/2012 03:44 AM, Jonas Bonn wrote:
+> Byte 4 of the EFAD structure, which specifies the MNC length, is optional.
+> If this byte is not present, then there is no way to determine the length
+> of the MNC.  As the, by far, most common length is 2, we might as well
+> default to this value.
 
-Thanks & Regards,
-Rohit
+Depends on the continent.  On some it is not common at all.
 
---===============5203472533005111606==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+>
+> This patch changes the ofono_error to a warning as it's not really an
+> error that we're encountering, but the user should nonetheless be given
+> a heads-up that something might not work as expected.
 
-SGkgU2lyL01hbSw8YnI+oKCgIEkgd2FudCB0byBnZXQgaW5mb3JtYXRpb24gb24gb2Zvbm8gYW5k
-IGl0cyBkYnVzIGFwaS4gSG93IHRvIGJ1aWxkIGl0LiBTbyBJIGNhbiB3cml0ZSBzb21lIGFwcGxp
-Y2F0aW9uIGJ5IHVzaW5nIG9mb25vLjxicj5JIGFtIGRvaW5nIHRoaXMgYmVjYXVzZSBvZiBpbnRl
-cnN0ZSBpbiB0ZWxlcGhvbnkuPGJyPjxicj5zbyBwbGVhc2UgaGVscCBpbiBpdC48YnI+Cjxicj5U
-aGFua3MgJmFtcDsgUmVnYXJkcyw8YnI+Um9oaXQ8YnI+Cg==
+What spec are you reading? 31.102 says it is mandatory ;)
 
---===============5203472533005111606==--
+>
+> Signed-off-by: Jonas Bonn<jonas@southpole.se>
+
+We do not use Signed-off-by here.
+
+> ---
+>   src/sim.c |    4 +++-
+>   1 file changed, 3 insertions(+), 1 deletion(-)
+>
+> diff --git a/src/sim.c b/src/sim.c
+> index 4384eb0..f6109c6 100644
+> --- a/src/sim.c
+> +++ b/src/sim.c
+> @@ -1760,7 +1760,9 @@ static void sim_ad_read_cb(int ok, int length, int =
+record,
+>   		return;
+>
+>   	if (length<  4) {
+> -		ofono_error("EFad should contain at least four bytes");
+> +		ofono_warn("EFad does not specify (optional) MNC length"
+> +			   ", defaulting to 2");
+> +		sim->mnc_length =3D 2;
+
+And I'd rather not do this.  If mnc_length is unable to be determined, =
+
+then oFono does not guess, but simply does not provide this information. =
+
+  This hack might work for really old 2G devices which did not =
+
+understand length 3 MNCs and always assumed length 2, but that is not =
+
+really oFono's target.
+
+>   		return;
+>   	}
+>
+
+Regards,
+-Denis
+
+--===============3035232961021006745==--
 
