@@ -1,74 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============3035232961021006745=="
+Content-Type: multipart/mixed; boundary="===============6593633752187303905=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/1] Set MNC length to 2 if EFad doesn't specify it
-Date: Wed, 31 Oct 2012 15:09:24 -0500
-Message-ID: <50918574.8060600@gmail.com>
-In-Reply-To: <1347525847-2991-1-git-send-email-jonas@southpole.se>
+Subject: Re: Ofono can't work with ZTE MF190S
+Date: Wed, 31 Oct 2012 16:02:36 -0500
+Message-ID: <509191EC.8060102@gmail.com>
+In-Reply-To: <CADV-EXGTZGDbRWE-KGYXVWOh+bk3FMV0kaCBwfReZ9N+fKfQiQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3035232961021006745==
+--===============6593633752187303905==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+Hi Yevhen,
 
-On 09/13/2012 03:44 AM, Jonas Bonn wrote:
-> Byte 4 of the EFAD structure, which specifies the MNC length, is optional.
-> If this byte is not present, then there is no way to determine the length
-> of the MNC.  As the, by far, most common length is 2, we might as well
-> default to this value.
-
-Depends on the continent.  On some it is not common at all.
-
+On 10/09/2012 05:44 PM, Yevhen Kyriukha wrote:
+> Hello!
 >
-> This patch changes the ofono_error to a warning as it's not really an
-> error that we're encountering, but the user should nonetheless be given
-> a heads-up that something might not work as expected.
-
-What spec are you reading? 31.102 says it is mandatory ;)
-
+> I have a problems with Ofono while working with my 3G modem *ZTE MF190S*.
+> I can't connect to GPRS network.
+> I'm getting an error when I run *enable-gprs* test script.
 >
-> Signed-off-by: Jonas Bonn<jonas@southpole.se>
-
-We do not use Signed-off-by here.
-
-> ---
->   src/sim.c |    4 +++-
->   1 file changed, 3 insertions(+), 1 deletion(-)
+> Log files are attached.
 >
-> diff --git a/src/sim.c b/src/sim.c
-> index 4384eb0..f6109c6 100644
-> --- a/src/sim.c
-> +++ b/src/sim.c
-> @@ -1760,7 +1760,9 @@ static void sim_ad_read_cb(int ok, int length, int =
-record,
->   		return;
+> As you can see there are messages like
+> *GPRS not supported on this device*
+> and
+> *Unable to initialize Network Registration*
+> in ofono.log and ofono-at.log.
 >
->   	if (length<  4) {
-> -		ofono_error("EFad should contain at least four bytes");
-> +		ofono_warn("EFad does not specify (optional) MNC length"
-> +			   ", defaulting to 2");
-> +		sim->mnc_length =3D 2;
 
-And I'd rather not do this.  If mnc_length is unable to be determined, =
+The issue is here:
 
-then oFono does not guess, but simply does not provide this information. =
+ofonod[2536]: Aux: > AT+CGREG=3D?\r
+ofonod[2536]: Aux: < \r\nOK\r\n
+ofonod[2536]: GPRS not supported on this device
 
-  This hack might work for really old 2G devices which did not =
+The correct response to this query according to 27.007 is of the =
 
-understand length 3 MNCs and always assumed length 2, but that is not =
+following form:
 
-really oFono's target.
++CREG=3D?
++CREG: (list of supported <n>s)
 
->   		return;
->   	}
->
+Since the hardware simply returns 'OK' (which is not valid according to =
+
+the spec) we do not know what modes (1 vs 2) of CREG it supports.  Hence =
+
+we have no idea how to drive this hardware.  This can be fixed via a =
+
+driver quirk, but we need to know whether e.g. AT+CGREG=3D2 works...
+
+ofonod[2536]: src/gprs.c:gprs_remove() atom: 0x8f935e0
+ofonod[2536]: Aux: > AT+CREG=3D?\r
+ofonod[2536]: Aux: < \r\nOK\r\n
+ofonod[2536]: Unable to initialize Network Registration
+
+Same issue as above...  The response to +CREG=3D? is not valid.
 
 Regards,
 -Denis
 
---===============3035232961021006745==--
+--===============6593633752187303905==--
 
