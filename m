@@ -1,34 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============5780667037941007961=="
+Content-Type: multipart/mixed; boundary="===============2928632327917281251=="
 MIME-Version: 1.0
-From: Holger Freyther <holger@freyther.de>
-Subject: Re: [PATCH] sim: Fix the quirk handling of CPIN for Wavecom
-Date: Thu, 01 Nov 2012 09:22:13 +0000
-Message-ID: <loom.20121101T101932-157@post.gmane.org>
-In-Reply-To: <1351760703-28090-1-git-send-email-holger@freyther.de>
+From: Holger Hans Peter Freyther <holger@freyther.de>
+Subject: [PATCH] modem: Make it possible to identify the physical device of
+ the modem
+Date: Thu, 01 Nov 2012 11:39:28 +0100
+Message-ID: <1351766368-30075-1-git-send-email-holger@freyther.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5780667037941007961==
+--===============2928632327917281251==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Holger Hans Peter Freyther <holger@...> writes:
+From: Holger Hans Peter Freyther <hfreyther@sysmocom.de>
+
+The naming of modems might not reflect the physical order of devices.
+E.g. /dev/ttyUSB0 might end up as /wavecom_3 and /dev/ttyUSB2 might be
+/wavecom_1. Add a 'Device' property to be able to identify the port.
+
+An application can then use sysfs to identify the bus and device to
+rebuild the physical order. This way we can map the modem path to the
+port number on our modem bank.
+---
+ doc/modem-api.txt |    5 +++++
+ src/modem.c       |    6 ++++++
+ 2 files changed, 11 insertions(+)
+
+diff --git a/doc/modem-api.txt b/doc/modem-api.txt
+index 1c4e440..68e719e 100644
+--- a/doc/modem-api.txt
++++ b/doc/modem-api.txt
+@@ -168,3 +168,8 @@ Properties	boolean Powered [readwrite]
+ 			supported by this modem.
+ =
+
+ 			Possible values are "hfp", "sap" and "hardware".
++
++		string Device [readonly, optional]
++
++			The physical device the modem is connected to. This
++			can be used to identify the physical port of the modem.
+diff --git a/src/modem.c b/src/modem.c
+index db62e2d..e542fac 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -771,6 +771,7 @@ void __ofono_modem_append_properties(struct ofono_modem=
+ *modem,
+ 	struct ofono_devinfo *info;
+ 	dbus_bool_t emergency =3D ofono_modem_get_emergency_mode(modem);
+ 	const char *strtype;
++	const char *device;
+ =
+
+ 	ofono_dbus_dict_append(dict, "Online", DBUS_TYPE_BOOLEAN,
+ 				&modem->online);
+@@ -826,6 +827,11 @@ void __ofono_modem_append_properties(struct ofono_mode=
+m *modem,
+ =
+
+ 	strtype =3D modem_type_to_string(modem->driver->modem_type);
+ 	ofono_dbus_dict_append(dict, "Type", DBUS_TYPE_STRING, &strtype);
++
++	device =3D ofono_modem_get_string(modem, "Device");
++	if (device)
++		ofono_dbus_dict_append(dict, "Device", DBUS_TYPE_STRING,
++					&device);
+ }
+ =
+
+ static DBusMessage *modem_get_properties(DBusConnection *conn,
+-- =
+
+1.7.10.4
 
 
-> Apply the CPIN quirk for both WAVECOM and WAVECOM_Q2XXX inside the
-> sim.c file. Introduce needs_wavecom_sim_quirk to handle it for
-> WAVECOM and WAVECOM_Q2XXX.
-
-The OFONO_VENDOR_WAVECOM_Q2XXX is now only used in the SMS code and I
-assume we can simply turn this into OFONO_VENDOR_WAVECOM and remove
-the _Q2XXX vendor.
-
-This is mostly based on the assumption that plain wavecom has been
-broken (adding a terminator on a cloned chat which will do nothing).
-
-holger
-
-
---===============5780667037941007961==--
+--===============2928632327917281251==--
 
