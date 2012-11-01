@@ -1,54 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============8951731500267811581=="
+Content-Type: multipart/mixed; boundary="===============8868100651966234460=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim: Fix the quirk handling of CPIN for Wavecom
-Date: Thu, 01 Nov 2012 05:00:20 -0500
-Message-ID: <50924834.4050504@gmail.com>
-In-Reply-To: <1351760703-28090-1-git-send-email-holger@freyther.de>
+From: Holger Hans Peter Freyther <holger@freyther.de>
+Subject: Re: [PATCH] modem: Make it possible to identify the physical device
+ of the modemy
+Date: Thu, 01 Nov 2012 17:16:08 +0100
+Message-ID: <20121101161608.GH26158@xiaoyu.lan>
+In-Reply-To: <509245B1.5000804@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8951731500267811581==
+--===============8868100651966234460==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Holger,
+On Thu, Nov 01, 2012 at 04:49:37AM -0500, Denis Kenzior wrote:
+> Hi Holger,
+ =
 
-On 11/01/2012 04:05 AM, Holger Hans Peter Freyther wrote:
-> From: Holger Hans Peter Freyther<hfreyther@sysmocom.de>
->
-> The Wavecom Q2XXX support broke in commit 72ce19bf3e87b5e73c053f7ea1.
-> This is because at_cpin_cb called decode_at_error with final and not
-> with OK. This lead to an error being set in the error variable and the
-> new code returns early when an error is set.
->
-> The addition of the terminator in at_sim_probe for Wavecom broke in
-> git commit ac524be99f8c72a2593e4ffcecad8beea7679e55 because
-> terminators can not be added on cloned chats.
->
-> Move the addition of the terminator from the atmodem to the wavecom
-> plugin. Use the same terminator for Q2XXX and the normal Wavecom
-> class. The WAVECOM terminator has been tested on a Q2XXX modem.
->
-> Apply the CPIN quirk for both WAVECOM and WAVECOM_Q2XXX inside the
-> sim.c file. Introduce needs_wavecom_sim_quirk to handle it for
-> WAVECOM and WAVECOM_Q2XXX.
-> ---
->   drivers/atmodem/sim.c |   24 +++++++++---------------
->   plugins/wavecom.c     |    2 ++
->   2 files changed, 11 insertions(+), 15 deletions(-)
->
+> I really do not think exposing the device name is a good idea.
+> First of all, no normal application can make use of it anyway.  Once
+> the modem is powered on oFono takes exclusive rights to it.
+> Secondly, most USB sticks are actually multi-device groupings
+> anyway, so this property really makes no sense.
 
-Patch has been applied, however I broke it up into two with accordance =
+the alternative would be to add the sysfs path directly but this
+probably doesn't change your argument.
 
-to our patch submission guidelines.  Please see HACKING 'Submitting =
+> =
 
-patches' section.
+> Why don't you simply assign a name to the modem using
+> ofono_modem_set_name.  This can be done by assigning the name
+> directly in the udev rule and having the necessary magic inside
+> plugins/udev.c. The name can be anything you wish in that case.
 
-Regards,
--Denis
+I will have to take a look at this. I never wrote advanced udev
+rules and I don't know how much sense it makes to put handling
+for our product into plugins/udev.c.
 
+h
 
---===============8951731500267811581==--
+--===============8868100651966234460==--
 
