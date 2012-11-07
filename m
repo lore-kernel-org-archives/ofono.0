@@ -1,55 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============6249911430653606653=="
+Content-Type: multipart/mixed; boundary="===============5064852226138310617=="
 MIME-Version: 1.0
-From: Jan Pohanka <xhpohanka@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: ofono and connecting to an APN
-Date: Wed, 07 Nov 2012 07:42:17 +0100
-Message-ID: <op.wnd4wrs4yxxkfz@pohanka-pc>
-In-Reply-To: <50992742.7080109@gmail.com>
+Date: Wed, 07 Nov 2012 08:17:05 -0600
+Message-ID: <509A6D61.4020200@gmail.com>
+In-Reply-To: <op.wnd4wrs4yxxkfz@pohanka-pc>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6249911430653606653==
+--===============5064852226138310617==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Jan,
 
-thank you for the answer.
-
+>> oFono is the one establishing the GPRS context. Some other daemon
+>> makes the control decisions on what context should be established and
+>> when. e.g. connman makes this decision in the case of Type=3Dinternet
+>> contexts and something like mmsd makes this decision for Type=3Dmms
+>> contexts.
 >
-> oFono is the one establishing the GPRS context.  Some other daemon makes  =
+> I will check mmsd thank you for the info. Do you know if it is a mature
+> project? I mean if it can be used for basic mms sending?
+>
 
-> the control decisions on what context should be established and when.  =
+It should be complete enough to allow basic mms send and receive, yes. =
 
-> e.g. connman makes this decision in the case of Type=3Dinternet contexts  =
+However, the project is not (yet) up to the same level of maturity / =
 
-> and something like mmsd makes this decision for Type=3Dmms contexts.
+quality / stability as oFono.
 
-I will check mmsd thank you for the info. Do you know if it is a mature  =
-
-project? I mean if it can be used for basic mms sending?
-
->> task for another daemon like connman or something similar? If yes how
->> these daemons communicate with ofono when they are grabbing the
->> interface for making ppp conection?
+>>> task for another daemon like connman or something similar? If yes how
+>>> these daemons communicate with ofono when they are grabbing the
+>>> interface for making ppp conection?
+>>>
 >>
+>> I'm not quite sure I understand the question? The context
+>> establishment is achieved using org.ofono.ConnectionContext interface,
+>> e.g. by setting the 'Active' property. The PPP connection is done by
+>> oFono itself.
 >
-> I'm not quite sure I understand the question?  The context establishment  =
+> I'd like to use ofono to be able to do voice calls and sms messaging.
+> Without ofono, I'm able to connect to internet over PPP using pppd
+> daemon with proper script using one of the modem interfaces
+> (ttyUSBx/ttyACMx). Such connection can be done directly using ofono
+> (without pppd)?
 
-> is achieved using org.ofono.ConnectionContext interface, e.g. by setting  =
+oFono has its own internal ppp stack, no pppd is required.  If your =
 
-> the 'Active' property.  The PPP connection is done by oFono itself.
+modem supports a high-speed interface, then that should be used instead.
 
-I'd like to use ofono to be able to do voice calls and sms messaging.
-Without ofono, I'm able to connect to internet over PPP using pppd daemon  =
+And yes, you can do voice calls, sms and internet at the same time with =
 
-with proper script using one of the modem interfaces (ttyUSBx/ttyACMx).  =
+oFono.  Assuming of course you have at least two ttys available or your =
 
-Such connection can be done directly using ofono (without pppd)?
+modem supports multiplexing.
 
-best regards
-Jan
+Regards,
+-Denis
 
---===============6249911430653606653==--
+--===============5064852226138310617==--
 
