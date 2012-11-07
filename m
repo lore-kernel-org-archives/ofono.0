@@ -1,64 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============5064852226138310617=="
+Content-Type: multipart/mixed; boundary="===============0035073950627798093=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Jan Pohanka <xhpohanka@gmail.com>
 Subject: Re: ofono and connecting to an APN
-Date: Wed, 07 Nov 2012 08:17:05 -0600
-Message-ID: <509A6D61.4020200@gmail.com>
-In-Reply-To: <op.wnd4wrs4yxxkfz@pohanka-pc>
+Date: Wed, 07 Nov 2012 15:46:22 +0100
+Message-ID: <op.wnerbky9yxxkfz@pohanka-pc>
+In-Reply-To: <509A6D61.4020200@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5064852226138310617==
+--===============0035073950627798093==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jan,
+Hi Denis.
 
->> oFono is the one establishing the GPRS context. Some other daemon
->> makes the control decisions on what context should be established and
->> when. e.g. connman makes this decision in the case of Type=3Dinternet
->> contexts and something like mmsd makes this decision for Type=3Dmms
->> contexts.
+> oFono has its own internal ppp stack, no pppd is required.  If your  =
+
+> modem supports a high-speed interface, then that should be used instead.
 >
-> I will check mmsd thank you for the info. Do you know if it is a mature
-> project? I mean if it can be used for basic mms sending?
->
+> And yes, you can do voice calls, sms and internet at the same time with  =
 
-It should be complete enough to allow basic mms send and receive, yes. =
+> oFono.  Assuming of course you have at least two ttys available or your  =
 
-However, the project is not (yet) up to the same level of maturity / =
+> modem supports multiplexing.
 
-quality / stability as oFono.
+Could you please give me some example how to connect a device to internet  =
 
->>> task for another daemon like connman or something similar? If yes how
->>> these daemons communicate with ofono when they are grabbing the
->>> interface for making ppp conection?
->>>
->>
->> I'm not quite sure I understand the question? The context
->> establishment is achieved using org.ofono.ConnectionContext interface,
->> e.g. by setting the 'Active' property. The PPP connection is done by
->> oFono itself.
->
-> I'd like to use ofono to be able to do voice calls and sms messaging.
-> Without ofono, I'm able to connect to internet over PPP using pppd
-> daemon with proper script using one of the modem interfaces
-> (ttyUSBx/ttyACMx). Such connection can be done directly using ofono
-> (without pppd)?
+through ofono? When I use pppd I can see a new pppd interface in ifconfig.  =
 
-oFono has its own internal ppp stack, no pppd is required.  If your =
+Can ofono do the same?
 
-modem supports a high-speed interface, then that should be used instead.
+I know the test scripts in ofono/test directory, but does there exist any  =
 
-And yes, you can do voice calls, sms and internet at the same time with =
+more complex ofono client which one can use as a reference?
 
-oFono.  Assuming of course you have at least two ttys available or your =
+best regards
+Jan
 
-modem supports multiplexing.
 
-Regards,
--Denis
+-- =
 
---===============5064852226138310617==--
+Tato zpr=C3=A1va byla vytvo=C5=99ena p=C5=99evratn=C3=BDm po=C5=A1tovn=C3=
+=ADm klientem Opery:  =
+
+http://www.opera.com/mail/
+
+--===============0035073950627798093==--
 
