@@ -1,60 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============7908774250886431572=="
+Content-Type: multipart/mixed; boundary="===============6141008835758550119=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Alcatel Onetouch X515 support
-Date: Thu, 08 Nov 2012 11:29:13 -0600
-Message-ID: <509BEBE9.4070908@gmail.com>
-In-Reply-To: <CABvLYuBU9h+RJuutiFf3EYaiydj2Rd2MQWKY0u2ZjhdOCGfaBg@mail.gmail.com>
+From: Cedric Jehasse <cedric.jehasse@gmail.com>
+Subject: [PATCH] atmodem: Poll SIM state after entering PIN
+Date: Fri, 09 Nov 2012 14:16:53 +0100
+Message-ID: <1352467013-1418-1-git-send-email-cedric.jehasse@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7908774250886431572==
+--===============6141008835758550119==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Cedric,
+From: Cedric Jehasse <cedric.jehasse@softathome.com>
 
-On 11/08/2012 10:43 AM, Cedric Jehasse wrote:
-> Hi Denis,
->
->     The SIM busy stuff is tricky.  oFono reads lots of files from the
->     SIM before even checking CPIN.  So you need to check the CPIN SIM
->     busy condition before signaling that the SIM is inserted.  As I
->     said, check how other Qualcomm based devices are doing this.  E.g.
->     Huawei, ZTE, etc.
->
->
-> I've checked this, and i think we're talking about different things.
->  From what i understand you're talking about the sim being busy at early
-> sim initialization (after enabling the modem it must wait for the sim to
-> be ready before notifying the core a sim is inserted).
-> I'm talking about the sim being busy right after entering the pin. The
-> sim is initialized, and "AT+CPIN?" returns " +CPIN: SIM PIN". Then i
-> enter the pin with AT+CPIN=3D"xxxx". Right after this the pin is checked
-> with "AT+CPIN?" and now it returns "+CME ERROR: 14".
+Encountered a problem of CME ERROR 14: SIM busy on Alcatel and Huawei modem.
+The Huawei modem has a ^SIMST unsollicited sim state indication, but not all
+Huawei modems support this.
+So poll the SIM state, as was already done for ZTE modems.
+---
+ drivers/atmodem/sim.c    |    2 ++
+ drivers/atmodem/vendor.h |    1 +
+ 2 files changed, 3 insertions(+), 0 deletions(-)
 
-Ah, I see now.  Yes you are correct.
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index ea3b180..9f05f4b 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -1179,6 +1179,8 @@ static void at_pin_send_cb(gboolean ok, GAtResult *re=
+sult,
+ 							FALSE, cbd, g_free);
+ 		return;
+ 	case OFONO_VENDOR_ZTE:
++	case OFONO_VENDOR_ALCATEL:
++	case OFONO_VENDOR_HUAWEI:
+ 		/*
+ 		 * On ZTE modems, after pin is entered, SIM state is checked
+ 		 * by polling CPIN as their modem doesn't provide unsolicited
+diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
+index 80aed3e..0532d10 100644
+--- a/drivers/atmodem/vendor.h
++++ b/drivers/atmodem/vendor.h
+@@ -41,4 +41,5 @@ enum ofono_vendor {
+ 	OFONO_VENDOR_SIMCOM,
+ 	OFONO_VENDOR_ICERA,
+ 	OFONO_VENDOR_WAVECOM_Q2XXX,
++	OFONO_VENDOR_ALCATEL
+ };
+-- =
 
->
-> In at_pin_send_cb i see that for ZTE the state is polled with
->   at_util_sim_state_query_new, i think this also must be done for
-> Alcatel. And for huawei this should probably look at ^SIMST.
+1.7.1
 
-Yes, the intent is for the gory details to be taken care of by the sim =
 
-atom driver.  Most 'real' phone modems provide an unsolicited =
-
-notification for this.  If the hardware does not provide such a =
-
-notification then you have to poll.  If you can make Huawei work with =
-
-^SIMST, that would be great as well.  It should work similarly to the =
-
-IFX XSIM or the MBM EPEV notification.
-
-Regards,
--Denis
-
---===============7908774250886431572==--
+--===============6141008835758550119==--
 
