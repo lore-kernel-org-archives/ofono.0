@@ -1,56 +1,119 @@
-Content-Type: multipart/mixed; boundary="===============6141008835758550119=="
+Content-Type: multipart/mixed; boundary="===============1242181169308465879=="
 MIME-Version: 1.0
-From: Cedric Jehasse <cedric.jehasse@gmail.com>
-Subject: [PATCH] atmodem: Poll SIM state after entering PIN
-Date: Fri, 09 Nov 2012 14:16:53 +0100
-Message-ID: <1352467013-1418-1-git-send-email-cedric.jehasse@gmail.com>
+From: Holger Hans Peter Freyther <holger@freyther.de>
+Subject: Memory corruption when submitting a huge number of SMS
+Date: Sun, 11 Nov 2012 09:44:08 +0100
+Message-ID: <20121111084408.GA10708@xiaoyu.lan>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6141008835758550119==
+--===============1242181169308465879==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Cedric Jehasse <cedric.jehasse@softathome.com>
+Hi,
 
-Encountered a problem of CME ERROR 14: SIM busy on Alcatel and Huawei modem.
-The Huawei modem has a ^SIMST unsollicited sim state indication, but not all
-Huawei modems support this.
-So poll the SIM state, as was already done for ZTE modems.
----
- drivers/atmodem/sim.c    |    2 ++
- drivers/atmodem/vendor.h |    1 +
- 2 files changed, 3 insertions(+), 0 deletions(-)
+I am using our modem bank with four SIM cards and send 1000 per
+SIM card and ofono is segfaulting in the process of doing so. The
+crash appears to be due a memory corruption and I wonder if you
+have experience in debugging those. This is ofono-1.11 with some
+patches to build on debian stable.
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index ea3b180..9f05f4b 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -1179,6 +1179,8 @@ static void at_pin_send_cb(gboolean ok, GAtResult *re=
-sult,
- 							FALSE, cbd, g_free);
- 		return;
- 	case OFONO_VENDOR_ZTE:
-+	case OFONO_VENDOR_ALCATEL:
-+	case OFONO_VENDOR_HUAWEI:
- 		/*
- 		 * On ZTE modems, after pin is entered, SIM state is checked
- 		 * by polling CPIN as their modem doesn't provide unsolicited
-diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
-index 80aed3e..0532d10 100644
---- a/drivers/atmodem/vendor.h
-+++ b/drivers/atmodem/vendor.h
-@@ -41,4 +41,5 @@ enum ofono_vendor {
- 	OFONO_VENDOR_SIMCOM,
- 	OFONO_VENDOR_ICERA,
- 	OFONO_VENDOR_WAVECOM_Q2XXX,
-+	OFONO_VENDOR_ALCATEL
- };
--- =
-
-1.7.1
+kind regards
+	holger
 
 
---===============6141008835758550119==--
+gdb backtrace:
+#0  0xb7e51c02 in dbus_connection_get_dispatch_status ()
+   from /lib/i386-linux-gnu/libdbus-1.so.3
+#1  0x08054be6 in watch_func (chan=3D0x8712e78, cond=3D0, data=3D0x8713590)=
+ at gdbus/mainloop.c:105
+#2  0xb7f1b6fe in ?? () from /lib/i386-linux-gnu/libglib-2.0.so.0
+#3  0xb7eda6d3 in g_main_context_dispatch () from /lib/i386-linux-gnu/libgl=
+ib-2.0.so.0
+#4  0xb7edaa70 in ?? () from /lib/i386-linux-gnu/libglib-2.0.so.0
+#5  0xb7edaecb in g_main_loop_run () from /lib/i386-linux-gnu/libglib-2.0.s=
+o.0
+#6  0x080d378a in main (argc=3D1, argv=3D0xbffff764) at src/main.c:247
+
+
+valgrind:
+=3D=3D10495=3D=3D Invalid read of size 4
+=3D=3D10495=3D=3D    at 0x8054BDB: watch_func (mainloop.c:105)
+=3D=3D10495=3D=3D    by 0x410C6FD: ??? (in /lib/i386-linux-gnu/libglib-2.0.=
+so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x40CB6D2: g_main_context_dispatch (in /lib/i386-li=
+nux-gnu/libglib-2.0.so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x40CBA6F: ??? (in /lib/i386-linux-gnu/libglib-2.0.=
+so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x40CBECA: g_main_loop_run (in /lib/i386-linux-gnu/=
+libglib-2.0.so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x4208E45: (below main) (libc-start.c:228)
+=3D=3D10495=3D=3D  Address 0x47ba830 is 8 bytes inside a block of size 12 f=
+ree'd
+=3D=3D10495=3D=3D    at 0x402768C: free (vg_replace_malloc.c:446)
+=3D=3D10495=3D=3D    by 0x40D177A: ??? (in /lib/i386-linux-gnu/libglib-2.0.=
+so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x41A81AC: ??? (in /lib/i386-linux-gnu/libdbus-1.so=
+.3.7.2)
+=3D=3D10495=3D=3D    by 0x418AD21: ??? (in /lib/i386-linux-gnu/libdbus-1.so=
+.3.7.2)
+=3D=3D10495=3D=3D    by 0x41A6BEC: ??? (in /lib/i386-linux-gnu/libdbus-1.so=
+.3.7.2)
+=3D=3D10495=3D=3D    by 0x41A7901: ??? (in /lib/i386-linux-gnu/libdbus-1.so=
+.3.7.2)
+=3D=3D10495=3D=3D    by 0x41A6028: ??? (in /lib/i386-linux-gnu/libdbus-1.so=
+.3.7.2)
+=3D=3D10495=3D=3D    by 0x418DA0A: ??? (in /lib/i386-linux-gnu/libdbus-1.so=
+.3.7.2)
+=3D=3D10495=3D=3D    by 0x410C6FD: ??? (in /lib/i386-linux-gnu/libglib-2.0.=
+so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x40CB6D2: g_main_context_dispatch (in /lib/i386-li=
+nux-gnu/libglib-2.0.so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x40CBA6F: ??? (in /lib/i386-linux-gnu/libglib-2.0.=
+so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x40CBECA: g_main_loop_run (in /lib/i386-linux-gnu/=
+libglib-2.0.so.0.3200.4)
+=3D=3D10495=3D=3D =
+
+=3D=3D10495=3D=3D Invalid read of size 4
+=3D=3D10495=3D=3D    at 0x8054BE6: watch_func (mainloop.c:106)
+=3D=3D10495=3D=3D    by 0x410C6FD: ??? (in /lib/i386-linux-gnu/libglib-2.0.=
+so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x40CB6D2: g_main_context_dispatch (in /lib/i386-li=
+nux-gnu/libglib-2.0.so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x40CBA6F: ??? (in /lib/i386-linux-gnu/libglib-2.0.=
+so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x40CBECA: g_main_loop_run (in /lib/i386-linux-gnu/=
+libglib-2.0.so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x4208E45: (below main) (libc-start.c:228)
+=3D=3D10495=3D=3D  Address 0x47ba830 is 8 bytes inside a block of size 12 f=
+ree'd
+=3D=3D10495=3D=3D    at 0x402768C: free (vg_replace_malloc.c:446)
+=3D=3D10495=3D=3D    by 0x40D177A: ??? (in /lib/i386-linux-gnu/libglib-2.0.=
+so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x41A81AC: ??? (in /lib/i386-linux-gnu/libdbus-1.so=
+.3.7.2)
+=3D=3D10495=3D=3D    by 0x418AD21: ??? (in /lib/i386-linux-gnu/libdbus-1.so=
+.3.7.2)
+=3D=3D10495=3D=3D    by 0x41A6BEC: ??? (in /lib/i386-linux-gnu/libdbus-1.so=
+.3.7.2)
+=3D=3D10495=3D=3D    by 0x41A7901: ??? (in /lib/i386-linux-gnu/libdbus-1.so=
+.3.7.2)
+=3D=3D10495=3D=3D    by 0x41A6028: ??? (in /lib/i386-linux-gnu/libdbus-1.so=
+.3.7.2)
+=3D=3D10495=3D=3D    by 0x418DA0A: ??? (in /lib/i386-linux-gnu/libdbus-1.so=
+.3.7.2)
+=3D=3D10495=3D=3D    by 0x410C6FD: ??? (in /lib/i386-linux-gnu/libglib-2.0.=
+so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x40CB6D2: g_main_context_dispatch (in /lib/i386-li=
+nux-gnu/libglib-2.0.so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x40CBA6F: ??? (in /lib/i386-linux-gnu/libglib-2.0.=
+so.0.3200.4)
+=3D=3D10495=3D=3D    by 0x40CBECA: g_main_loop_run (in /lib/i386-linux-gnu/=
+libglib-2.0.so.0.3200.4)
+=3D=3D10495=3D=3D=20
+
+--===============1242181169308465879==--
 
