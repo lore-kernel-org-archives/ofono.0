@@ -1,40 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============0393963487424339350=="
+Content-Type: multipart/mixed; boundary="===============3961084057372091123=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] atmodem: Poll SIM state after entering PIN
-Date: Mon, 12 Nov 2012 13:32:10 -0600
-Message-ID: <50A14EBA.9090702@gmail.com>
-In-Reply-To: <1352467013-1418-1-git-send-email-cedric.jehasse@gmail.com>
+From: Holger Hans Peter Freyther <holger@freyther.de>
+Subject: Re: Memory corruption when submitting a huge number of SMS
+Date: Tue, 13 Nov 2012 00:02:43 +0100
+Message-ID: <20121112230243.GN31742@xiaoyu.lan>
+In-Reply-To: <50A14E06.5020204@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0393963487424339350==
+--===============3961084057372091123==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Cedric,
+On Mon, Nov 12, 2012 at 01:29:10PM -0600, Denis Kenzior wrote:
+> Hi Holger,
+> =
 
-On 11/09/2012 07:16 AM, Cedric Jehasse wrote:
-> From: Cedric Jehasse<cedric.jehasse@softathome.com>
->
-> Encountered a problem of CME ERROR 14: SIM busy on Alcatel and Huawei mod=
-em.
-> The Huawei modem has a ^SIMST unsollicited sim state indication, but not =
-all
-> Huawei modems support this.
-> So poll the SIM state, as was already done for ZTE modems.
-> ---
->   drivers/atmodem/sim.c    |    2 ++
->   drivers/atmodem/vendor.h |    1 +
->   2 files changed, 3 insertions(+), 0 deletions(-)
+> Not a whole lot to go on.  Looks like the crash happens in gdbus.
+> Is the dbus daemon crashing or bumping ofono off the bus by any
+> chance?
 
-Patch has been applied, however I broke it up into two commits per our =
+the dbus-daemon is running since the start of my laptop.
 
-Patch Submission Guidelines.  See HACKING.
+> =
 
-Regards,
--Denis
+> Have you tried making a debug build and seeing if you get slightly
+> better debug information?  Just set CFLAGS to -O0 and --enable-debug
+> when configuring.
 
---===============0393963487424339350==--
+not yet. I might need to travel this week so it might take until Wed or Fri
+to test this. Is ofono using multiple threads? this somehow sounds like a m=
+ismatch
+of first deregister from the glib event loop and then free...
+
+holger
+
+--===============3961084057372091123==--
 
