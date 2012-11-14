@@ -1,36 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8504409237709473099=="
+Content-Type: multipart/mixed; boundary="===============6173288990311434635=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Memory corruption when submitting a huge number of SMS
-Date: Mon, 12 Nov 2012 18:26:47 -0600
-Message-ID: <50A193C7.9090403@gmail.com>
-In-Reply-To: <20121112230243.GN31742@xiaoyu.lan>
+From: Cedric Jehasse <cedric.jehasse@gmail.com>
+Subject: [PATCH] alcatel: create sim atom with vendor alcatel
+Date: Wed, 14 Nov 2012 12:08:40 +0100
+Message-ID: <1352891320-29766-1-git-send-email-cedric.jehasse@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8504409237709473099==
+--===============6173288990311434635==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Holger,
+From: Cedric Jehasse <cedric.jehasse@softathome.com>
 
->> Have you tried making a debug build and seeing if you get slightly
->> better debug information?  Just set CFLAGS to -O0 and --enable-debug
->> when configuring.
->
-> not yet. I might need to travel this week so it might take until Wed or F=
-ri
-> to test this. Is ofono using multiple threads? this somehow sounds like a=
- mismatch
-> of first deregister from the glib event loop and then free...
->
+---
+ plugins/alcatel.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-No, oFono doesn't use threads.
+diff --git a/plugins/alcatel.c b/plugins/alcatel.c
+index 8005170..e3e7086 100644
+--- a/plugins/alcatel.c
++++ b/plugins/alcatel.c
+@@ -230,7 +230,7 @@ static void alcatel_pre_sim(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
 
-Regards,
--Denis
+ 	ofono_devinfo_create(modem, 0, "atmodem", data->aux);
+-	sim =3D ofono_sim_create(modem, 0, "atmodem", data->aux);
++	sim =3D ofono_sim_create(modem, OFONO_VENDOR_ALCATEL, "atmodem", data->au=
+x);
+ =
+
+ 	if (sim && data->have_sim =3D=3D TRUE)
+ 		ofono_sim_inserted_notify(sim, TRUE);
+-- =
+
+1.7.1
 
 
---===============8504409237709473099==--
+--===============6173288990311434635==--
 
