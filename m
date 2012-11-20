@@ -1,183 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============7089354374848904619=="
+Content-Type: multipart/mixed; boundary="===============4424708448185272705=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 4/4] bluetooth: Fix Device PropertyChanged
-Date: Tue, 20 Nov 2012 09:12:19 -0300
-Message-ID: <1353413539-19693-4-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 3/4] bluetooth: Fix read device properties
+Date: Tue, 20 Nov 2012 09:12:18 -0300
+Message-ID: <1353413539-19693-3-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1353413539-19693-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7089354374848904619==
+--===============4424708448185272705==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-BlueZ PropertyChanged signal for Device objects was replaced by
-PropertiesChanged emitted on org.freedesktop.DBus.Properties interface.
+This patch replaces GetProperties method by the GetAll method of the
+object manager to read the device properties.
 ---
- plugins/bluetooth.c | 105 ++++++++++++++++++++++++++++++------------------=
-----
- 1 file changed, 61 insertions(+), 44 deletions(-)
+ plugins/bluetooth.c | 26 +++++++++++++++++---------
+ 1 file changed, 17 insertions(+), 9 deletions(-)
 
 diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index 675e53d..09c9870 100644
+index 1ab3214..675e53d 100644
 --- a/plugins/bluetooth.c
 +++ b/plugins/bluetooth.c
-@@ -364,64 +364,81 @@ static void get_device_properties(const char *path)
- 				DBUS_TYPE_INVALID);
+@@ -299,7 +299,8 @@ static void device_properties_cb(DBusPendingCall *call,=
+ gpointer user_data)
+ 	dbus_error_init(&derr);
+ =
+
+ 	if (dbus_set_error_from_message(&derr, reply)) {
+-		ofono_error("Device.GetProperties replied an error: %s, %s",
++		ofono_error("%s GetAll(\"%s\") replied an error: %s, %s",
++					path, FREEDESKTOP_PROPERTIES_INTERFACE,
+ 					derr.name, derr.message);
+ 		dbus_error_free(&derr);
+ 		goto done;
+@@ -350,6 +351,19 @@ static void parse_devices(DBusMessageIter *array, gpoi=
+nter user_data)
+ 	}
  }
  =
 
--static gboolean property_changed(DBusConnection *conn, DBusMessage *msg,
-+static gboolean properties_changed(DBusConnection *conn, DBusMessage *msg,
++static void get_device_properties(const char *path)
++{
++	const char *interface =3D BLUEZ_DEVICE_INTERFACE;
++
++	DBG("Calling %s GetAll(%s)", path, interface);
++
++	bluetooth_send_with_reply(path, FREEDESKTOP_PROPERTIES_INTERFACE,
++				"GetAll", NULL, device_properties_cb,
++				g_strdup(path), g_free, -1,
++				DBUS_TYPE_STRING, &interface,
++				DBUS_TYPE_INVALID);
++}
++
+ static gboolean property_changed(DBusConnection *conn, DBusMessage *msg,
  				void *user_data)
  {
--	const char *property;
--	DBusMessageIter iter;
-+	const char *property, *interface;
-+	DBusMessageIter iter, dict, entry, variant;
-+
-+	DBG("");
+@@ -382,10 +396,7 @@ static gboolean property_changed(DBusConnection *conn,=
+ DBusMessage *msg,
+ 		 * refetch everything again
+ 		 */
+ 		if (uuids)
+-			bluetooth_send_with_reply(path, BLUEZ_DEVICE_INTERFACE,
+-					"GetProperties", NULL,
+-					device_properties_cb, g_strdup(path),
+-					g_free, -1, DBUS_TYPE_INVALID);
++			get_device_properties(path);
+ 	} else if (g_str_equal(property, "Alias") =3D=3D TRUE) {
+ 		const char *path =3D dbus_message_get_path(msg);
+ 		struct bluetooth_profile *profile;
+@@ -450,10 +461,7 @@ static void adapter_properties_cb(DBusPendingCall *cal=
+l, gpointer user_data)
+ 	for (l =3D device_list; l; l =3D l->next) {
+ 		const char *device =3D l->data;
  =
 
--	dbus_message_iter_init(msg, &iter);
-+	if (dbus_message_iter_init(msg, &iter) =3D=3D FALSE)
-+		return FALSE;
+-		bluetooth_send_with_reply(device, BLUEZ_DEVICE_INTERFACE,
+-					"GetProperties", NULL,
+-					device_properties_cb, g_strdup(device),
+-					g_free, -1, DBUS_TYPE_INVALID);
++		get_device_properties(device);
+ 	}
  =
 
-+	/* Reading the interface */
- 	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
-+		return TRUE;
-+
-+	dbus_message_iter_get_basic(&iter, &interface);
-+	if (g_strcmp0(BLUEZ_DEVICE_INTERFACE, interface) !=3D 0)
-+		return TRUE;
-+
-+	if (!dbus_message_iter_next(&iter))
- 		return FALSE;
- =
-
--	dbus_message_iter_get_basic(&iter, &property);
--	if (g_str_equal(property, "UUIDs") =3D=3D TRUE) {
--		GSList *uuids =3D NULL;
--		const char *path =3D dbus_message_get_path(msg);
--		DBusMessageIter variant;
-+	/* Reading Dict entries containing properties */
-+	dbus_message_iter_recurse(&iter, &dict);
- =
-
--		if (!dbus_message_iter_next(&iter))
-+	do {
-+		if (dbus_message_iter_get_arg_type(&dict) !=3D
-+						DBUS_TYPE_DICT_ENTRY)
- 			return FALSE;
- =
-
--		if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
--			return FALSE;
-+		dbus_message_iter_recurse(&dict, &entry);
- =
-
--		dbus_message_iter_recurse(&iter, &variant);
--
--		parse_uuids(&variant, &uuids);
--
--		/* We need the full set of properties to be able to create
--		 * the modem properly, including Adapter and Alias, so
--		 * refetch everything again
--		 */
--		if (uuids)
--			get_device_properties(path);
--	} else if (g_str_equal(property, "Alias") =3D=3D TRUE) {
--		const char *path =3D dbus_message_get_path(msg);
--		struct bluetooth_profile *profile;
--		const char *alias =3D NULL;
--		DBusMessageIter variant;
--		GHashTableIter hash_iter;
--		gpointer key, value;
--
--		if (!dbus_message_iter_next(&iter))
-+		if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_STRING)
- 			return FALSE;
- =
-
--		if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
--			return FALSE;
-+		dbus_message_iter_get_basic(&entry, &property);
- =
-
--		dbus_message_iter_recurse(&iter, &variant);
-+		if (!dbus_message_iter_next(&entry))
-+			return FALSE;
- =
-
--		parse_string(&variant, &alias);
-+		if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_VARIANT)
-+			return FALSE;
- =
-
--		g_hash_table_iter_init(&hash_iter, uuid_hash);
--		while (g_hash_table_iter_next(&hash_iter, &key, &value)) {
--			profile =3D value;
--			if (profile->set_alias)
--				profile->set_alias(path, alias);
-+		dbus_message_iter_recurse(&entry, &variant);
-+		if (g_str_equal(property, "UUIDs") =3D=3D TRUE) {
-+			GSList *uuids =3D NULL;
-+			const char *path =3D dbus_message_get_path(msg);
-+
-+			parse_uuids(&variant, &uuids);
-+
-+			/* We need the full set of properties to be able to
-+			 * create the modem properly, including Adapter and
-+			 * Alias, so refetch everything again
-+			 */
-+			if (uuids)
-+				get_device_properties(path);
-+		} else if (g_str_equal(property, "Alias") =3D=3D TRUE) {
-+			const char *path =3D dbus_message_get_path(msg);
-+			struct bluetooth_profile *profile;
-+			const char *alias =3D NULL;
-+			GHashTableIter hash_iter;
-+			gpointer key, value;
-+
-+			parse_string(&variant, &alias);
-+
-+			g_hash_table_iter_init(&hash_iter, uuid_hash);
-+			while (g_hash_table_iter_next(&hash_iter, &key,
-+								&value)) {
-+				profile =3D value;
-+				if (profile->set_alias)
-+					profile->set_alias(path, alias);
-+			}
- 		}
--	}
-+
-+	} while (dbus_message_iter_next(&dict));
- =
-
- 	return TRUE;
- }
-@@ -882,9 +899,9 @@ static void bluetooth_ref(void)
- =
-
- 	property_watch =3D g_dbus_add_signal_watch(connection,
- 						BLUEZ_SERVICE, NULL,
--						BLUEZ_DEVICE_INTERFACE,
--						"PropertyChanged",
--						property_changed, NULL, NULL);
-+						FREEDESKTOP_PROPERTIES_INTERFACE,
-+						"PropertiesChanged",
-+						properties_changed, NULL, NULL);
- =
-
- 	if (bluetooth_watch =3D=3D 0 || adapter_added_watch =3D=3D 0 ||
- 			adapter_removed_watch =3D=3D 0 || property_watch =3D=3D 0) {
+ done:
 -- =
 
 1.7.11.7
 
 
---===============7089354374848904619==--
+--===============4424708448185272705==--
 
