@@ -1,52 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============0493213757547313879=="
+Content-Type: multipart/mixed; boundary="===============2079775944873155189=="
 MIME-Version: 1.0
-From: Johan Hedberg <johan.hedberg@gmail.com>
-Subject: Re: [RFC v0 00/11] External HFP Profile
-Date: Fri, 23 Nov 2012 13:43:06 +0200
-Message-ID: <20121123114306.GA10157@x220.ger.corp.intel.com>
-In-Reply-To: <1353606808-25032-1-git-send-email-claudio.takahasi@openbossa.org>
+From: Cedric Jehasse <cedric.jehasse@gmail.com>
+Subject: Re: Can't power on modem
+Date: Fri, 23 Nov 2012 17:26:20 +0100
+Message-ID: <CABvLYuABScaWL4gq_SUdbaofv155BRpKS+ppt=dXL7wAHvifjQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0493213757547313879==
+--===============2079775944873155189==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Claudio,
+Hi Yevhen,
 
-On Thu, Nov 22, 2012, Claudio Takahasi wrote:
-> BlueZ supports now external profile registration, see:
-> bluez/doc/profile-api.txt
-> =
+I've seen the same issue before with an Huawei modem.
+It looks like not all modems can handle sending "ATE0 +CMEE=3D1" to the mod=
+em
+and pcui port simultaneously.
 
-> This patch series has the initial implementation of the HFP external
-> profile in oFono. HandsfreeAgent and HandsfreeGateway interfaces were
-> removed from BlueZ.
+Try removing this line from huawei_enable():
+g_at_chat_send(data->modem, "ATE0 +CMEE=3D1", NULL, NULL, NULL, NULL);
 
-I also got this weirdness:
+Regards,
+Cedric
 
-ofonod[9813]: plugins/hfp_hf.c:profile_new_connection() Profile handler New=
-Connection
-ofonod[9813]: plugins/hfp_hf.c:profile_new_connection() /org/bluez/hci0/dev=
-_70_F9_27_18_1F_B9: doesn't support HFP
+--===============2079775944873155189==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-Which seems to be from the following set of code in
-profile_new_connection():
+SGkgWWV2aGVuLDxkaXY+PGJyPjwvZGl2PjxkaXY+SSYjMzk7dmUgc2VlbiB0aGUgc2FtZSBpc3N1
+ZSBiZWZvcmUgd2l0aCBhbiBIdWF3ZWkgbW9kZW0uoDwvZGl2PjxkaXY+SXQgbG9va3MgbGlrZSBu
+b3QgYWxsIG1vZGVtcyBjYW4gaGFuZGxlIHNlbmRpbmcgJnF1b3Q7QVRFMCArQ01FRT0xJnF1b3Q7
+IHRvIHRoZSBtb2RlbSBhbmQgcGN1aSBwb3J0IHNpbXVsdGFuZW91c2x5LqA8L2Rpdj48ZGl2Pgo8
+YnI+PC9kaXY+PGRpdj5UcnkgcmVtb3ZpbmcgdGhpcyBsaW5lIGZyb20gaHVhd2VpX2VuYWJsZSgp
+OjwvZGl2PjxkaXY+Z19hdF9jaGF0X3NlbmQoZGF0YS0mZ3Q7bW9kZW0sICZxdW90O0FURTAgK0NN
+RUU9MSZxdW90OywgTlVMTCwgTlVMTCwgTlVMTCwgTlVMTCk7PC9kaXY+PGRpdj48YnI+PC9kaXY+
+PGRpdj5SZWdhcmRzLDwvZGl2PjxkaXY+Q2VkcmljPC9kaXY+Cg==
 
-	hfp_data =3D g_hash_table_lookup(hfp_hash, device);
-	if (hfp_data =3D=3D NULL) {
-		DBG("%s: doesn't support HFP", device);
-		goto error;
-	}
-
-You can't rely on SDP having been completed by the time there's an
-incoming HFP connection. This is a very likely scenario when the remote
-initiates the connection. In such a case the mere fact that the remote
-has connected HFP to us *is* the proof that the remote supports HFP and
-you should just accept such connection attempts.
-
-Johan
-
---===============0493213757547313879==--
+--===============2079775944873155189==--
 
