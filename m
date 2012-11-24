@@ -1,44 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============2079775944873155189=="
+Content-Type: multipart/mixed; boundary="===============2719073843719051147=="
 MIME-Version: 1.0
-From: Cedric Jehasse <cedric.jehasse@gmail.com>
+From: Yevhen Kyriukha <kirgene@gmail.com>
 Subject: Re: Can't power on modem
-Date: Fri, 23 Nov 2012 17:26:20 +0100
-Message-ID: <CABvLYuABScaWL4gq_SUdbaofv155BRpKS+ppt=dXL7wAHvifjQ@mail.gmail.com>
+Date: Sat, 24 Nov 2012 15:43:51 +0200
+Message-ID: <CADV-EXGEu0Yo2od=gsFQfqgCP-zLMoKE2T-WRaMuQ=qRAt-noA@mail.gmail.com>
+In-Reply-To: <CADV-EXEasSRPh2nU0k6qjqvFW26khx+Mkz+rauta=9KxBOEHdA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2079775944873155189==
+--===============2719073843719051147==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yevhen,
+Thanks, Cedric! That works!
 
-I've seen the same issue before with an Huawei modem.
-It looks like not all modems can handle sending "ATE0 +CMEE=3D1" to the mod=
-em
-and pcui port simultaneously.
+But now I have another problem with enabling context. I'll create separate
+thread for that.
 
-Try removing this line from huawei_enable():
-g_at_chat_send(data->modem, "ATE0 +CMEE=3D1", NULL, NULL, NULL, NULL);
+-- =
 
-Regards,
-Cedric
+Best regards,
+Yevhen
 
---===============2079775944873155189==
+--===============2719073843719051147==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-SGkgWWV2aGVuLDxkaXY+PGJyPjwvZGl2PjxkaXY+SSYjMzk7dmUgc2VlbiB0aGUgc2FtZSBpc3N1
-ZSBiZWZvcmUgd2l0aCBhbiBIdWF3ZWkgbW9kZW0uoDwvZGl2PjxkaXY+SXQgbG9va3MgbGlrZSBu
-b3QgYWxsIG1vZGVtcyBjYW4gaGFuZGxlIHNlbmRpbmcgJnF1b3Q7QVRFMCArQ01FRT0xJnF1b3Q7
-IHRvIHRoZSBtb2RlbSBhbmQgcGN1aSBwb3J0IHNpbXVsdGFuZW91c2x5LqA8L2Rpdj48ZGl2Pgo8
-YnI+PC9kaXY+PGRpdj5UcnkgcmVtb3ZpbmcgdGhpcyBsaW5lIGZyb20gaHVhd2VpX2VuYWJsZSgp
-OjwvZGl2PjxkaXY+Z19hdF9jaGF0X3NlbmQoZGF0YS0mZ3Q7bW9kZW0sICZxdW90O0FURTAgK0NN
-RUU9MSZxdW90OywgTlVMTCwgTlVMTCwgTlVMTCwgTlVMTCk7PC9kaXY+PGRpdj48YnI+PC9kaXY+
-PGRpdj5SZWdhcmRzLDwvZGl2PjxkaXY+Q2VkcmljPC9kaXY+Cg==
+PHNwYW4gc3R5bGU9ImNvbG9yOnJnYigzNCwzNCwzNCk7Zm9udC1mYW1pbHk6YXJpYWwsc2Fucy1z
+ZXJpZjtmb250LXNpemU6MTNweDtiYWNrZ3JvdW5kLWNvbG9yOnJnYigyNTUsMjU1LDI1NSkiPlRo
+YW5rcywgQ2VkcmljISBUaGF0IHdvcmtzITwvc3Bhbj48ZGl2Pjxmb250IGNvbG9yPSIjMjIyMjIy
+IiBmYWNlPSJhcmlhbCwgc2Fucy1zZXJpZiI+PGJyPjwvZm9udD48L2Rpdj48ZGl2Pjxmb250IGNv
+bG9yPSIjMjIyMjIyIiBmYWNlPSJhcmlhbCwgc2Fucy1zZXJpZiI+QnV0IG5vdyBJIGhhdmUgYW5v
+dGhlciBwcm9ibGVtIHdpdGggZW5hYmxpbmcgY29udGV4dC4gSSYjMzk7bGwgY3JlYXRlIHNlcGFy
+YXRlIHRocmVhZCBmb3IgdGhhdC48L2ZvbnQ+PGRpdj4KPGRpdj48YnI+PC9kaXY+LS0gPGJyPkJl
+c3QgcmVnYXJkcyw8YnI+WWV2aGVuPGJyPgo8L2Rpdj48L2Rpdj4K
 
---===============2079775944873155189==--
+--===============2719073843719051147==--
 
