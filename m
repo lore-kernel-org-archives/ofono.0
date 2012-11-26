@@ -1,67 +1,90 @@
-Content-Type: multipart/mixed; boundary="===============7658370224180174120=="
+Content-Type: multipart/mixed; boundary="===============6745543173432835301=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [RFC v1 00/15] External HFP Profile
-Date: Mon, 26 Nov 2012 10:26:54 -0300
-Message-ID: <1353936429-9997-1-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1353606808-25032-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [RFC v1 03/15] hfp_hf: Add parsing of Profile NewConnection call
+Date: Mon, 26 Nov 2012 10:26:57 -0300
+Message-ID: <1353936429-9997-4-git-send-email-claudio.takahasi@openbossa.org>
+In-Reply-To: <1353936429-9997-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7658370224180174120==
+--===============6745543173432835301==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-BlueZ supports now external profile registration, see:
-bluez/doc/profile-api.txt
+This patch adds the parsing of the mandatory arguments in NewConnection
+method call implemented in Profile1 interface.
+---
+ plugins/bluetooth.h |  1 +
+ plugins/hfp_hf.c    | 33 +++++++++++++++++++++++++++++++++
+ 2 files changed, 34 insertions(+)
 
-This patch series has the initial implementation of the HFP external
-profile in oFono. HandsfreeAgent and HandsfreeGateway interfaces were
-removed from BlueZ.
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index 96f3a53..a9355f6 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -24,6 +24,7 @@
+ =
 
-Modem are being registered dinamically when the new connection is
-notified instead of registering the modem when the Bluetooth device
-is created/probed.
+ #define	BLUEZ_SERVICE "org.bluez"
+ #define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
++#define	BLUEZ_ERROR_INTERFACE		BLUEZ_SERVICE ".Error"
+ #define BLUEZ_PROFILE_MGMT_INTERFACE   BLUEZ_SERVICE ".ProfileManager1"
+ #define	BLUEZ_PROFILE_INTERFACE		BLUEZ_SERVICE ".Profile1"
+ #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
+diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
+index 405ada2..edb7671 100644
+--- a/plugins/hfp_hf.c
++++ b/plugins/hfp_hf.c
+@@ -342,8 +342,41 @@ static int hfp_unregister_ofono_handsfree(struct ofono=
+_modem *modem)
+ static DBusMessage *profile_new_connection(DBusConnection *conn,
+ 					DBusMessage *msg, void *data)
+ {
++	struct ofono_modem *modem;
++	const char *device;
++	DBusMessageIter entry;
++	int fd;
++
+ 	DBG("Profile handler NewConnection");
++
++	if (dbus_message_iter_init(msg, &entry) =3D=3D FALSE)
++		goto error;
++
++	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_OBJECT_PATH)
++		goto error;
++
++	dbus_message_iter_get_basic(&entry, &device);
++	modem =3D g_hash_table_lookup(modem_hash, device);
++	if (modem =3D=3D NULL) {
++		DBG("%s: modem not found", device);
++		goto error;
++	}
++
++	dbus_message_iter_next(&entry);
++	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_UNIX_FD)
++		goto error;
++
++	dbus_message_iter_get_basic(&entry, &fd);
++	if (fd < 0)
++		goto error;
++
++	DBG("modem %p, SLC FD: %d", modem, fd);
++
+ 	return dbus_message_new_method_return(msg);
++
++error:
++	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE ".Rejected",
++					"Invalid arguments in method call");
+ }
+ =
 
-* Needs to be applied after "[PATCH v0 1/4] bluetooth: Fix reading
-Bluetooth Adapters" series
-
-Changes from RFC v0:
-- memory leak fixes
-- fixed invalid read
-- handle connections if the Bluetooth device is still being created
-  (eg: SDP running).
-
-The next step: implement SCO connection handling in oFono.
-
-Claudio Takahasi (15):
-  hfp_hf: Add HFP external Profile registration
-  hfp_hf: Add BlueZ Profile handler
-  hfp_hf: Add parsing of Profile NewConnection call
-  hfp_hf: Add SLC setup
-  hfp_hf: Add Profile1 Release
-  hfp_hf: Remove HandsfreeAgent and HandsfreeGateway
-  hfp_hf: Register HFP modem dynamically
-  hfp_hf: Fix updating alias
-  bluetooth: Reuse D-Bus dictionary parser function
-  hfp_hf: Add Version and Features parsing
-  bluetooth: Use generic function to parse dict
-  hfp_hf: Request secure connections
-  bluetooth: Fix memory leak of adapter_any_path
-  hfp_hf: Handle connections before probe
-  bluetooth: Fix memory leak of UUIDs list
-
- plugins/bluetooth.c | 275 ++++++++++++++++++++++++--------
- plugins/bluetooth.h |  12 +-
- plugins/hfp_hf.c    | 447 ++++++++++++++++++++++++++----------------------=
-----
- 3 files changed, 449 insertions(+), 285 deletions(-)
-
+ static DBusMessage *profile_release(DBusConnection *conn,
 -- =
 
 1.7.11.7
 
 
---===============7658370224180174120==--
+--===============6745543173432835301==--
 
