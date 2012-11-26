@@ -1,103 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============3574218718578048495=="
+Content-Type: multipart/mixed; boundary="===============3495665927520686192=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [RFC v1 10/15] hfp_hf: Add Version and Features parsing
-Date: Mon, 26 Nov 2012 10:27:04 -0300
-Message-ID: <1353936429-9997-11-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [RFC v1 13/15] bluetooth: Fix memory leak of adapter_any_path
+Date: Mon, 26 Nov 2012 10:27:07 -0300
+Message-ID: <1353936429-9997-14-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1353936429-9997-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3574218718578048495==
+--===============3495665927520686192==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds parsing of the Version and Features properties of the
-NewConnection fd_dictionary.
+This patch fixes a memory leak when BlueZ service re-connects to the
+system Bus and oFono calls FindAdapter method.
 ---
- plugins/hfp_hf.c | 27 +++++++++++++++++++++++----
- 1 file changed, 23 insertions(+), 4 deletions(-)
+ plugins/bluetooth.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
-index 326f5d9..70005f0 100644
---- a/plugins/hfp_hf.c
-+++ b/plugins/hfp_hf.c
-@@ -79,6 +79,16 @@ static void hfp_data_free(gpointer user_data)
- 	g_free(hfp_data);
- }
+diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+index 3b11b63..92e11f0 100644
+--- a/plugins/bluetooth.c
++++ b/plugins/bluetooth.c
+@@ -45,7 +45,7 @@ static GHashTable *adapter_address_hash =3D NULL;
+ static gint bluetooth_refcount;
+ static GSList *server_list =3D NULL;
+ static const char *adapter_any_name =3D "any";
+-static char *adapter_any_path;
++static char *adapter_any_path =3D NULL;
  =
 
-+static void parse_guint16(DBusMessageIter *iter, gpointer user_data)
-+{
-+	guint16 *value =3D user_data;
-+
-+	if (dbus_message_iter_get_arg_type(iter) !=3D  DBUS_TYPE_UINT16)
-+		return;
-+
-+	dbus_message_iter_get_basic(iter, value);
-+}
-+
- static void hfp_debug(const char *str, void *user_data)
- {
- 	const char *prefix =3D user_data;
-@@ -172,11 +182,11 @@ static int service_level_connection(struct ofono_mode=
-m *modem, int fd)
- 	return -EINPROGRESS;
- }
+ #define TIMEOUT 60 /* Timeout for user response (seconds) */
  =
 
--static int modem_register(const char *device, struct hfp_data *hfp_data, i=
-nt fd)
-+static int modem_register(const char *device, struct hfp_data *hfp_data,
-+							int fd, guint16 version)
- {
- 	struct ofono_modem *modem;
- 	char buf[256];
--	guint16 version =3D 0x0105;
+@@ -733,6 +733,7 @@ static void find_adapter_cb(DBusPendingCall *call, gpoi=
+nter user_data)
+ 	dbus_message_get_args(reply, NULL, DBUS_TYPE_OBJECT_PATH, &path,
+ 					DBUS_TYPE_INVALID);
  =
 
- 	/* We already have this device in our hash, ignore */
- 	if (g_hash_table_lookup(modem_hash, device) !=3D NULL)
-@@ -294,6 +304,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
-on *conn,
- 	const char *device;
- 	DBusMessageIter entry;
- 	int fd, err;
-+	guint16 version =3D 0x0105, features =3D 0x0000;
++	g_free(adapter_any_path);
+ 	adapter_any_path =3D g_strdup(path);
  =
 
- 	DBG("Profile handler NewConnection");
- =
-
-@@ -318,9 +329,17 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
- 	if (fd < 0)
- 		goto error;
- =
-
--	DBG("hfp_data: %p SLC FD: %d", hfp_data, fd);
-+	dbus_message_iter_next(&entry);
-+
-+	bluetooth_parse_properties(&entry,
-+					"Version", parse_guint16, &version,
-+					"Features", parse_guint16, &features,
-+					NULL);
-+
-+	DBG("hfp_data: %p SLC FD: %d Version: 0x%04x Features: 0x%04x",
-+					hfp_data, fd, version, features);
- =
-
--	err =3D modem_register(device, hfp_data, fd);
-+	err =3D modem_register(device, hfp_data, fd, version);
- 	if (err < 0 && err !=3D -EINPROGRESS)
- 		return __ofono_error_failed(msg);
- =
-
+ 	g_slist_foreach(server_list, (GFunc) add_record, NULL);
 -- =
 
 1.7.11.7
 
 
---===============3574218718578048495==--
+--===============3495665927520686192==--
 
