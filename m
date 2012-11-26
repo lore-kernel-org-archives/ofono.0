@@ -1,54 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============3495665927520686192=="
+Content-Type: multipart/mixed; boundary="===============4721427205179880523=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [RFC v1 13/15] bluetooth: Fix memory leak of adapter_any_path
-Date: Mon, 26 Nov 2012 10:27:07 -0300
-Message-ID: <1353936429-9997-14-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [RFC v1 12/15] hfp_hf: Request secure connections
+Date: Mon, 26 Nov 2012 10:27:06 -0300
+Message-ID: <1353936429-9997-13-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1353936429-9997-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3495665927520686192==
+--===============4721427205179880523==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch fixes a memory leak when BlueZ service re-connects to the
-system Bus and oFono calls FindAdapter method.
+This patch changes the HFP external profile registration requesting
+authentication and authorization for new connections.
 ---
- plugins/bluetooth.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ plugins/bluetooth.c | 9 ++++++++-
+ plugins/bluetooth.h | 2 +-
+ plugins/hfp_hf.c    | 2 +-
+ 3 files changed, 10 insertions(+), 3 deletions(-)
 
 diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index 3b11b63..92e11f0 100644
+index a3dccee..3b11b63 100644
 --- a/plugins/bluetooth.c
 +++ b/plugins/bluetooth.c
-@@ -45,7 +45,7 @@ static GHashTable *adapter_address_hash =3D NULL;
- static gint bluetooth_refcount;
- static GSList *server_list =3D NULL;
- static const char *adapter_any_name =3D "any";
--static char *adapter_any_path;
-+static char *adapter_any_path =3D NULL;
+@@ -1002,7 +1002,7 @@ done:
+ }
  =
 
- #define TIMEOUT 60 /* Timeout for user response (seconds) */
+ int bluetooth_register_profile(const char *uuid, const char *name,
+-							const char *object)
++					const char *object, gboolean secure)
+ {
+ 	DBusMessageIter iter, dict;
+ 	DBusPendingCall *c;
+@@ -1019,6 +1019,13 @@ int bluetooth_register_profile(const char *uuid, con=
+st char *name,
  =
 
-@@ -733,6 +733,7 @@ static void find_adapter_cb(DBusPendingCall *call, gpoi=
-nter user_data)
- 	dbus_message_get_args(reply, NULL, DBUS_TYPE_OBJECT_PATH, &path,
- 					DBUS_TYPE_INVALID);
+ 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "{sv}", &dict);
+ 	dict_append_entry(&dict, "Name", DBUS_TYPE_STRING, &name);
++	if (secure) {
++		dict_append_entry(&dict, "RequireAuthentication",
++						DBUS_TYPE_BOOLEAN, &secure);
++		dict_append_entry(&dict, "RequireAuthorization",
++						DBUS_TYPE_BOOLEAN, &secure);
++	}
++
+ 	dbus_message_iter_close_container(&iter, &dict);
  =
 
-+	g_free(adapter_any_path);
- 	adapter_any_path =3D g_strdup(path);
+ 	if (!dbus_connection_send_with_reply(connection, msg, &c, -1)) {
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index 5b4d9d4..a3937ac 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -70,7 +70,7 @@ int bluetooth_register_uuid(const char *uuid,
+ 				struct bluetooth_profile *profile);
+ void bluetooth_unregister_uuid(const char *uuid);
+ int bluetooth_register_profile(const char *uuid, const char *name,
+-							const char *object);
++					const char *object, gboolean secure);
+ void bluetooth_unregister_profile(const char *object);
+ struct server *bluetooth_register_server(guint8 channel, const char *sdp_r=
+ecord,
+ 					ConnectFunc cb, gpointer user_data);
+diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
+index 70005f0..22514da 100644
+--- a/plugins/hfp_hf.c
++++ b/plugins/hfp_hf.c
+@@ -497,7 +497,7 @@ static int hfp_init(void)
+ 	}
  =
 
- 	g_slist_foreach(server_list, (GFunc) add_record, NULL);
+ 	err =3D bluetooth_register_profile(HFP_HS_UUID, "hfp_hf",
+-						HFP_EXT_PROFILE_PATH);
++						HFP_EXT_PROFILE_PATH, TRUE);
+ 	if (err < 0) {
+ 		g_dbus_unregister_interface(connection, HFP_EXT_PROFILE_PATH,
+ 						BLUEZ_PROFILE_INTERFACE);
 -- =
 
 1.7.11.7
 
 
---===============3495665927520686192==--
+--===============4721427205179880523==--
 
