@@ -1,80 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============4773014156002643023=="
+Content-Type: multipart/mixed; boundary="===============3598490421933243838=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Cedric Jehasse <cedric.jehasse@gmail.com>
 Subject: Re: qmi on huawei
-Date: Mon, 26 Nov 2012 16:30:44 +0100
-Message-ID: <1353943844.1837.2.camel@aeonflux>
-In-Reply-To: <CABvLYuAOC9uTod+r_bQZaDUrMibA64y2ApCZ_AWbLa6Lk+YWXg@mail.gmail.com>
+Date: Mon, 26 Nov 2012 17:42:40 +0100
+Message-ID: <CABvLYuBKGB6foJqo0CXdkXpfKUjCtNPU=Jh=bAS67oS6UYr1FA@mail.gmail.com>
+In-Reply-To: <1353943844.1837.2.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4773014156002643023==
+--===============3598490421933243838==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Cedric,
-
-> I have a Huawei E398 dongle with a qmi interface, and i'm trying to make
-> ofono use the qmi interface for the gprs-context atom. I have this workin=
-g,
-> but depending on how i unref the qmi_device in huawei_disable, ofono
-> crashes or there's have a memory leak.
-> =
-
-> The first approach i've tried is the same as in the gobi plugin.
-> I call qmi_device_shutdown() from huawei_disable(), and unref the
-> qmi_device from the callback.
-> The problem with this is: when i unplug the device ofono crashes.
-> When the device is unplugged, first  huawei_disable() is called, then
-> huawei_remove(), and
-> afterwards shutdown_cb() is called. At that time the ofono_modem struct is
-> already freed, shutdown_cb() tries to access it and crashes.
-> =
-
-> The second approach i've tried is to unref the qmi_device directly from
-> huawei_disable.
-> With this approach, i see a memory leak of the qmi_service.
-> qmi_gprs_context_remove() is being called from flush_atoms(). And i can s=
-ee
-> release_client() is being called. But the service_release_callback(), whi=
-ch
-> should free the service, is never being called.
-> I think the request get's canceled because qmi_device_unref() is being
-> called from huawei_disable(). The request is destroyed and the callback
-> which should free the qmi_service is never called.
-> =
-
-> Does anyone have thoughts/ideas on how i can fix this?
-
-actually what I am doing with the E398 is just to switch the driver to
-"gobi" instead of "huawei". For testing you can just hardcode it.
-
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index afb02ca..53b12b3 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -338,6 +338,9 @@ static gboolean setup_huawei(struct modem_info *modem)
-                }
-        }
- =
-
-+       qmi =3D "/dev/cdc-wdm0";
-+       net =3D "wwan0";
-+
-        if (qmi !=3D NULL && net !=3D NULL) {
-                ofono_modem_set_driver(modem->modem, "gobi");
-                goto done;
-
-The ofono.git HEAD already sets the driver, but the qmi and net
-detection is not always correct. So just overwrite the values for the
-device nodes and see if that works for you.
-
-Regards
-
-Marcel
+Hi Marcel,
 
 
+> The ofono.git HEAD already sets the driver, but the qmi and net
+> detection is not always correct. So just overwrite the values for the
+> device nodes and see if that works for you.
+>
+> Thanks for the suggestion, i started on this before this change was
+commited.
+I also had the issue to detect qmi, because udev doesn't export the usb
+properties for cdc-wdm devices.
+The patch i did for this, is check ID_VENDOR_ID and ID_MODEL_ID of
+usb_device instead of device in check_usb_devices().
 
---===============4773014156002643023==--
+Using the gobi driver for the E398, it looks like there's a memory leak of
+qmi_service when plugging/unplugging the device.
+
+thanks,
+Cedric
+
+--===============3598490421933243838==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+SGkgTWFyY2VsLDxkaXY+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPjxkaXYgY2xhc3M9ImdtYWls
+X3F1b3RlIj48ZGl2PqA8YnI+PC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBz
+dHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGlu
+Zy1sZWZ0OjFleCI+ClRoZSBvZm9uby5naXQgSEVBRCBhbHJlYWR5IHNldHMgdGhlIGRyaXZlciwg
+YnV0IHRoZSBxbWkgYW5kIG5ldDxicj4KZGV0ZWN0aW9uIGlzIG5vdCBhbHdheXMgY29ycmVjdC4g
+U28ganVzdCBvdmVyd3JpdGUgdGhlIHZhbHVlcyBmb3IgdGhlPGJyPgpkZXZpY2Ugbm9kZXMgYW5k
+IHNlZSBpZiB0aGF0IHdvcmtzIGZvciB5b3UuPGJyPgo8YnI+PC9ibG9ja3F1b3RlPjxkaXY+VGhh
+bmtzIGZvciB0aGUgc3VnZ2VzdGlvbiwgaSBzdGFydGVkIG9uIHRoaXMgYmVmb3JlIHRoaXMgY2hh
+bmdlIHdhcyBjb21taXRlZC48L2Rpdj48ZGl2PkkgYWxzbyBoYWQgdGhlIGlzc3VlIHRvIGRldGVj
+dCBxbWksIGJlY2F1c2UgdWRldiBkb2VzbiYjMzk7dCBleHBvcnQgdGhlIHVzYiBwcm9wZXJ0aWVz
+IGZvciBjZGMtd2RtIGRldmljZXMuPC9kaXY+CjxkaXY+VGhlIHBhdGNoIGkgZGlkIGZvciB0aGlz
+LCBpcyBjaGVjayBJRF9WRU5ET1JfSUQgYW5kIElEX01PREVMX0lEIG9mIHVzYl9kZXZpY2UgaW5z
+dGVhZCBvZiBkZXZpY2UgaW4gY2hlY2tfdXNiX2RldmljZXMoKS48L2Rpdj48ZGl2Pjxicj48L2Rp
+dj48ZGl2PlVzaW5nIHRoZSBnb2JpIGRyaXZlciBmb3IgdGhlIEUzOTgsIGl0IGxvb2tzIGxpa2Ug
+dGhlcmUmIzM5O3MgYSBtZW1vcnkgbGVhayBvZiBxbWlfc2VydmljZSB3aGVuIHBsdWdnaW5nL3Vu
+cGx1Z2dpbmcgdGhlIGRldmljZS48L2Rpdj4KPGRpdj48YnI+PC9kaXY+PGRpdj50aGFua3MsPC9k
+aXY+PGRpdj5DZWRyaWM8L2Rpdj48L2Rpdj48L2Rpdj48L2Rpdj4K
+
+--===============3598490421933243838==--
 
