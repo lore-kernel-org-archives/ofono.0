@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============0609115070829194950=="
+Content-Type: multipart/mixed; boundary="===============7119874076259040923=="
 MIME-Version: 1.0
 From: Cedric Jehasse <cedric.jehasse@gmail.com>
 Subject: qmi on huawei
-Date: Mon, 26 Nov 2012 16:32:37 +0100
-Message-ID: <CABvLYuAOC9uTod+r_bQZaDUrMibA64y2ApCZ_AWbLa6Lk+YWXg@mail.gmail.com>
+Date: Mon, 26 Nov 2012 16:32:39 +0100
+Message-ID: <CABvLYuCnj1rRCLFKU+0-4kXofWdh+Od2EPGo2BWEsf0VLQciig@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0609115070829194950==
+--===============7119874076259040923==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -197,7 +197,7 @@ OFONO_VENDOR_HUAWEI,
                 if (gprs && gc)
                         ofono_gprs_add_context(gprs, gc);
 
---===============0609115070829194950==
+--===============7119874076259040923==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
@@ -347,5 +347,5 @@ dj6gPC9kaXY+PGRpdj6gIKAgoCCgIKAgoCCgIKAgaWYgKGdwcnMgJmFtcDsmYW1wOyBnYyk8L2Rp
 dj4KPGRpdj6gIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCBvZm9ub19ncHJzX2FkZF9jb250ZXh0KGdw
 cnMsIGdjKTs8L2Rpdj48L2Rpdj48ZGl2Pjxicj48L2Rpdj4K
 
---===============0609115070829194950==--
+--===============7119874076259040923==--
 
