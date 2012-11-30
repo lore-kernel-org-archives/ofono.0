@@ -1,66 +1,142 @@
-Content-Type: multipart/mixed; boundary="===============1133974155603829137=="
+Content-Type: multipart/mixed; boundary="===============5304072755110069619=="
 MIME-Version: 1.0
-From: Rohit Pathania <rohit.pathania1987@gmail.com>
-Subject: Re: Ofono Modem Service acces
-Date: Fri, 30 Nov 2012 19:07:43 +0530
-Message-ID: <CANZwo0Ug7F4m8xsp71-JU+Dq7RE8Ky0mvGCFJ4gEuau=SuNgkw@mail.gmail.com>
-In-Reply-To: <1354279037.1837.10.camel@aeonflux>
+From: Ming Li Wu <mingli@southpole.se>
+Subject: Telit HE910 modem --- unable be put on line by Connman
+Date: Fri, 30 Nov 2012 16:40:27 +0100
+Message-ID: <50B8D36B.1070305@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1133974155603829137==
+--===============5304072755110069619==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel/All,
-     Thanks for the information. Sorry if you felt it naive questioning :).
-I am in learning stage of it.
-So Qmi, ISI,phonet all this interface is written in ofono for support the
-different vendor modems?
-But I think qmi is qualcomm proprietary interface for accessing the modem
-services.
+Hello,
 
-One more question as per my information with the help of AT commands(3GPP
-27.007) we can access one service of a modem on the given one port. So how
-multiple services are getting accessed.
+I am working on Telit HE910 modem.
+
+I am using ofono 1.11, and the commit is
+6e3a6156b34c52bde253b097976d0ba9dd575879.
+
+For the Telit modem, "AT+CFUN=3D4" is used to enable
+the modem. According to "Telit He910 AT Commands
+Reference Guide", "issuing AT+CFUN=3D4[,0] actually
+causes the module to perform either a network
+deregistration and a SIM deactivation."
+
+After this command is sent out, an unsolicited indication
+"\r\n#QSS: 0\r\n" is received by of ofono. This means that
+the sim card cannot be detected by the modem. It turns out
+that Connman will not put the modem on line.
+
+if "AT+CFUN=3D5" was used, it worked fine.
+
+My questions are:
+1. Why is "AT+CFUN=3D4" used to enable the modem, instead of "AT+CFUN=3D1" =
+
+or "AT+CFUN=3D5"?
+2. If "AT+CFUN=3D4" is reasonable, are there any solutions to solve this =
+
+problem?
+
+Thanks!
+
+Mingli
 
 
-Sorry if question look like simple. I have confused with all thise basic
-things.
+The following is the log  when "AT+CFUN=3D4" was used.
+ofonod[358]: plugins/udevng.c:setup_telit() modem=3D/dev/ttyACM0 =
 
-Thanks & Regards,
-Rohit Pathania.
+aux=3D/dev/ttyACM3 gps=3D(null) diag=3D/dev/ttyACM1
+ofonod[358]: src/modem.c:set_modem_property() modem 0x1152008 property =
 
-On Fri, Nov 30, 2012 at 6:07 PM, Marcel Holtmann <marcel@holtmann.org>wro=
-te:
+Modem
+ofonod[358]: src/modem.c:set_modem_property() modem 0x1152008 property Aux
+ofonod[358]: src/modem.c:set_modem_property() modem 0x1152008 property Diag
+ofonod[358]: src/modem.c:ofono_modem_register() 0x1152008
+ofonod[358]: plugins/telit.c:telit_probe() 0x1152008
+ofonod[358]: src/modem.c:emit_modem_added() 0x1152008
+ofonod[358]: src/modem.c:call_modemwatches() 0x1152008 added:1
+ofonod[358]: plugins/hfp_ag.c:modem_watch() modem: 0x1152008, added: 1
+ofonod[358]: plugins/dun_gw.c:modem_watch() modem: 0x1152008, added: 1
+ofonod[358]: plugins/smart-messaging.c:modem_watch() modem: 0x1152008, =
 
-> 3GPP 27.007
+added: 1
+ofonod[358]: plugins/push-notification.c:modem_watch() modem: 0x1152008, =
 
---===============1133974155603829137==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+added: 1
+ofonod[358]: plugins/telit.c:telit_enable() 0x1152008
+ofonod[358]: src/modem.c:get_modem_property() modem 0x1152008 property =
 
-SGkgTWFyY2VsL0FsbCw8YnI+oKCgoCBUaGFua3MgZm9yIHRoZSBpbmZvcm1hdGlvbi4gU29ycnkg
-aWYgeW91IGZlbHQgaXQgbmFpdmUgcXVlc3Rpb25pbmcgOikuIEkgYW0gaW4gbGVhcm5pbmcgc3Rh
-Z2Ugb2YgaXQuPGJyPlNvIFFtaSwgSVNJLHBob25ldCBhbGwgdGhpcyBpbnRlcmZhY2UgaXMgd3Jp
-dHRlbiBpbiBvZm9ubyBmb3Igc3VwcG9ydCB0aGUgZGlmZmVyZW50IHZlbmRvciBtb2RlbXM/PGJy
-PgpCdXQgSSB0aGluayBxbWkgaXMgcXVhbGNvbW0gcHJvcHJpZXRhcnkgaW50ZXJmYWNlIGZvciBh
-Y2Nlc3NpbmcgdGhlIG1vZGVtIHNlcnZpY2VzLjxicj48YnI+T25lIG1vcmUgcXVlc3Rpb24gYXMg
-cGVyIG15IGluZm9ybWF0aW9uIHdpdGggdGhlIGhlbHAgb2YgQVQgY29tbWFuZHMoM0dQUCAyNy4w
-MDcpIHdlIGNhbiBhY2Nlc3Mgb25lIHNlcnZpY2Ugb2YgYSBtb2RlbSBvbiB0aGUgZ2l2ZW4gb25l
-IHBvcnQuIFNvIGhvdyBtdWx0aXBsZSBzZXJ2aWNlcyBhcmUgZ2V0dGluZyBhY2Nlc3NlZC48YnI+
-Cjxicj48YnI+U29ycnkgaWYgcXVlc3Rpb24gbG9vayBsaWtlIHNpbXBsZS4gSSBoYXZlIGNvbmZ1
-c2VkIHdpdGggYWxsIHRoaXNlIGJhc2ljIHRoaW5ncy48YnI+PGJyPlRoYW5rcyAmYW1wOyBSZWdh
-cmRzLDxicj5Sb2hpdCBQYXRoYW5pYS48YnI+PGJyPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj5P
-biBGcmksIE5vdiAzMCwgMjAxMiBhdCA2OjA3IFBNLCBNYXJjZWwgSG9sdG1hbm4gPHNwYW4gZGly
-PSJsdHIiPiZsdDs8YSBocmVmPSJtYWlsdG86bWFyY2VsQGhvbHRtYW5uLm9yZyIgdGFyZ2V0PSJf
-YmxhbmsiPm1hcmNlbEBob2x0bWFubi5vcmc8L2E+Jmd0Ozwvc3Bhbj4gd3JvdGU6PGJyPgo8Ymxv
-Y2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhleDtib3Jk
-ZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij4zR1BQIDI3LjAwNzwvYmxv
-Y2txdW90ZT48L2Rpdj48YnI+Cg==
+Modem
+ofonod[358]: plugins/telit.c:open_device() Modem /dev/ttyACM0
+ofonod[358]: src/modem.c:get_modem_property() modem 0x1152008 property Aux
+ofonod[358]: plugins/telit.c:open_device() Aux /dev/ttyACM3
+ofonod[358]: Aux: > ATE0 +CMEE=3D1\r
+ofonod[358]: Aux: < \r\nOK\r\n
+ofonod[358]: Aux: > AT#QSS=3D0\r
+ofonod[358]: Aux: < \r\nOK\r\n
+ofonod[358]: Aux: > AT+CFUN=3D4\r
+ofonod[358]: Aux: < \r\nOK\r\n
+ofonod[358]: plugins/telit.c:cfun_enable_cb() 0x1152008
+ofonod[358]: src/modem.c:modem_change_state() old state: 0, new state: 1
+ofonod[358]: plugins/telit.c:telit_pre_sim() 0x1152008
+ofonod[358]: Aux: > AT&C0\r
+ofonod[358]: src/sim.c:ofono_sim_add_state_watch() 0x1153d30
+ofonod[358]: src/sim.c:ofono_sim_add_state_watch() 0x1153d30
+ofonod[358]: src/sim.c:ofono_sim_add_state_watch() 0x1153d30
+ofonod[358]: Aux: < \r\nOK\r\n
+ofonod[358]: Aux: > AT+GCAP\r
+ofonod[358]: Aux: < \r\n+GCAP: +CGSM,+DS,+FCLASS,+MS,+ES\r\n\r\nOK\r\n
+ofonod[358]: Aux: > AT+CRC=3D1\r
+ofonod[358]: Aux: < \r\nOK\r\n
+ofonod[358]: Aux: > AT+CLIP=3D1\r
+ofonod[358]: Aux: < \r\nOK\r\n
+ofonod[358]: Aux: > AT+CDIP=3D1\r
+ofonod[358]: Aux: < \r\nERROR\r\n
+ofonod[358]: Aux: > AT+CNAP=3D1\r
+ofonod[358]: Aux: < \r\nERROR\r\n
+ofonod[358]: Aux: > AT+COLP=3D1\r
+ofonod[358]: Aux: < \r\nOK\r\n
+ofonod[358]: Aux: > AT+CSSN=3D1,1\r
+ofonod[358]: Aux: < \r\nOK\r\n
+ofonod[358]: Aux: > AT+VTD?\r
+ofonod[358]: Aux: < \r\n0\r\n\r\nOK\r\n
+ofonod[358]: Aux: > AT+CCWA=3D1\r
+ofonod[358]: Aux: < \r\nOK\r\n
+ofonod[358]: drivers/atmodem/voicecall.c:at_voicecall_initialized() =
 
---===============1133974155603829137==--
+voicecall_init: registering to notifications
+ofonod[358]: src/sim.c:ofono_sim_add_state_watch() 0x1153d30
+ofonod[358]: Aux: > AT#AUTOATT=3D0\r
+ofonod[358]: Aux: < \r\nOK\r\n
+ofonod[358]: Aux: > AT#QSS=3D2\r
+ofonod[358]: Aux: < \r\nOK\r\n
+ofonod[358]: Aux: > AT+CGMI\r
+ofonod[358]: Aux: < \r\nTelit\r\n\r\nOK\r\n
+ofonod[358]: Aux: > AT+CLCC\r
+ofonod[358]: Aux: < \r\nOK\r\n
+ofonod[358]: Aux: > AT+CGMM\r
+ofonod[358]: Aux: < \r\nHE910\r\n\r\nOK\r\n
+ofonod[358]: Aux: > AT+CGMR\r
+ofonod[358]: Aux: < \r\n12.00.003\r\n\r\nOK\r\n
+ofonod[358]: Aux: > AT+CGSN\r
+ofonod[358]: Aux: < \r\n357164040533674\r\n\r\nOK\r\n
+ofonod[358]: Aux: < \r\n#QSS: 0\r\n
+ofonod[358]: plugins/telit.c:telit_qss_notify() 0x1152008
+ofonod[358]: plugins/telit.c:switch_sim_state_status() 0x1152008, SIM =
+
+status: 0
+
+
+-- =
+
+Mingli Wu                       South Pole AB
+Phone:  +46 8 56237100          Anderstorpsv=C3=A4gen 16
+Mobile: +46 73 7628460          SE - 171 54 Solna
+e-mail: mingli(a)southpole.se      www.southpole.se
+
+
+--===============5304072755110069619==--
 
