@@ -1,79 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============8755959858065019192=="
+Content-Type: multipart/mixed; boundary="===============2987174141450595664=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 03/14] hfp_hf: Add parsing of Profile NewConnection call
-Date: Mon, 03 Dec 2012 10:11:44 -0300
-Message-ID: <1354540315-27731-4-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 04/14] hfp_hf: Add SLC setup
+Date: Mon, 03 Dec 2012 10:11:45 -0300
+Message-ID: <1354540315-27731-5-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1354540315-27731-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8755959858065019192==
+--===============2987174141450595664==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds the parsing of the mandatory arguments in NewConnection
-method call implemented in Profile1 interface.
+This patch adds the SLC setup when the NewConnection is notified.
 ---
- plugins/hfp_hf.c | 37 ++++++++++++++++++++++++++++++++++---
- 1 file changed, 34 insertions(+), 3 deletions(-)
+ plugins/hfp_hf.c | 24 ++++++++++++++++++------
+ 1 file changed, 18 insertions(+), 6 deletions(-)
 
 diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
-index 6836c45..03f3371 100644
+index 03f3371..644067c 100644
 --- a/plugins/hfp_hf.c
 +++ b/plugins/hfp_hf.c
-@@ -342,10 +342,41 @@ static int hfp_unregister_ofono_handsfree(struct ofon=
-o_modem *modem)
- static DBusMessage *profile_new_connection(DBusConnection *conn,
- 					DBusMessage *msg, void *data)
- {
-+	struct ofono_modem *modem;
-+	const char *device;
-+	DBusMessageIter entry;
-+	int fd;
-+
- 	DBG("Profile handler NewConnection");
--	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
--					".NotImplemented",
--					"Implementation not provided");
-+
-+	if (dbus_message_iter_init(msg, &entry) =3D=3D FALSE)
-+		goto error;
-+
-+	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_OBJECT_PATH)
-+		goto error;
-+
-+	dbus_message_iter_get_basic(&entry, &device);
-+	modem =3D g_hash_table_lookup(modem_hash, device);
-+	if (modem =3D=3D NULL) {
-+		DBG("%s: modem not found", device);
-+		goto error;
-+	}
-+
-+	dbus_message_iter_next(&entry);
-+	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_UNIX_FD)
-+		goto error;
-+
-+	dbus_message_iter_get_basic(&entry, &fd);
-+	if (fd < 0)
-+		goto error;
-+
-+	DBG("modem %p, SLC FD: %d", modem, fd);
-+
-+	return dbus_message_new_method_return(msg);
-+
-+error:
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE ".Rejected",
-+					"Invalid arguments in method call");
- }
+@@ -101,9 +101,10 @@ static void slc_failed(gpointer userdata)
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
+ 	DBusMessage *msg;
  =
 
- static DBusMessage *profile_release(DBusConnection *conn,
+-	msg =3D g_dbus_create_error(data->slc_msg, HFP_AGENT_ERROR_INTERFACE
+-					".Failed",
+-					"HFP Handshake failed");
++	msg =3D g_dbus_create_error(data->slc_msg, BLUEZ_ERROR_INTERFACE
++						".Failed",
++						"HFP Handshake failed");
++
+ 	g_dbus_send_message(connection, msg);
+ 	dbus_message_unref(data->slc_msg);
+ 	data->slc_msg =3D NULL;
+@@ -343,9 +344,11 @@ static DBusMessage *profile_new_connection(DBusConnect=
+ion *conn,
+ 					DBusMessage *msg, void *data)
+ {
+ 	struct ofono_modem *modem;
++	struct hfp_data *hfp_data;
+ 	const char *device;
+ 	DBusMessageIter entry;
+-	int fd;
++	int fd, err;
++	guint16 version =3D 0x0105;
+ =
+
+ 	DBG("Profile handler NewConnection");
+ =
+
+@@ -370,9 +373,18 @@ static DBusMessage *profile_new_connection(DBusConnect=
+ion *conn,
+ 	if (fd < 0)
+ 		goto error;
+ =
+
+-	DBG("modem %p, SLC FD: %d", modem, fd);
++	hfp_data =3D ofono_modem_get_data(modem);
++	DBG("modem %p, hfp_data: %p SLC FD: %d", modem, hfp_data, fd);
+ =
+
+-	return dbus_message_new_method_return(msg);
++	hfp_slc_info_init(&hfp_data->info, version);
++
++	err =3D service_level_connection(modem, fd);
++	if (err < 0 && err !=3D -EINPROGRESS)
++		return __ofono_error_failed(msg);
++
++	hfp_data->slc_msg =3D dbus_message_ref(msg);
++
++	return NULL;
+ =
+
+ error:
+ 	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE ".Rejected",
 -- =
 
 1.7.11.7
 
 
---===============8755959858065019192==--
+--===============2987174141450595664==--
 
