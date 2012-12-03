@@ -1,62 +1,144 @@
-Content-Type: multipart/mixed; boundary="===============6662273435905241840=="
+Content-Type: multipart/mixed; boundary="===============7308018849290900751=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 08/14] hfp_hf: Fix updating alias
-Date: Mon, 03 Dec 2012 10:11:49 -0300
-Message-ID: <1354540315-27731-9-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 09/14] bluetooth: Reuse D-Bus dictionary parser function
+Date: Mon, 03 Dec 2012 10:11:50 -0300
+Message-ID: <1354540315-27731-10-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1354540315-27731-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6662273435905241840==
+--===============7308018849290900751==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch fixes the Bluetooth device alias for the HFP when the modem
-is not registered yet. Modem is being created with the first alias
-informed when in the Bluetooth profile probe callback.
+This patch changes the Bluetooth D-Bus property parser function to allow
+reusing on other messages. The dictionary can be placed on any position
+of the message, the current implementation assumes that the first
+message parameter should be a dictionary.
 ---
- plugins/hfp_hf.c | 13 +++++++++----
- 1 file changed, 9 insertions(+), 4 deletions(-)
+ plugins/bluetooth.c | 27 ++++++++++++++++-----------
+ plugins/bluetooth.h |  3 ++-
+ 2 files changed, 18 insertions(+), 12 deletions(-)
 
-diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
-index 1d1edf1..da20917 100644
---- a/plugins/hfp_hf.c
-+++ b/plugins/hfp_hf.c
-@@ -271,15 +271,20 @@ static void hfp_hf_remove(const char *prefix)
- static void hfp_hf_set_alias(const char *device, const char *alias)
- {
- 	struct ofono_modem *modem;
-+	struct hfp_data *hfp_data;
- =
-
- 	if (device =3D=3D NULL || alias =3D=3D NULL)
- 		return;
- =
-
--	modem =3D	g_hash_table_lookup(modem_hash, device);
--	if (modem =3D=3D NULL)
--		return;
-+	hfp_data =3D g_hash_table_lookup(hfp_hash, device);
-+	if (hfp_data) {
-+		g_free(hfp_data->device_alias);
-+		hfp_data->device_alias =3D g_strdup(alias);
-+	}
- =
-
--	ofono_modem_set_name(modem, alias);
-+	modem =3D	g_hash_table_lookup(modem_hash, device);
-+	if (modem)
-+		ofono_modem_set_name(modem, alias);
+diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+index 201c851..37738e7 100644
+--- a/plugins/bluetooth.c
++++ b/plugins/bluetooth.c
+@@ -195,11 +195,14 @@ static gint property_handler_compare(gconstpointer a,=
+ gconstpointer b)
+ 	return strcmp(handler->property, property);
  }
  =
 
- static DBusMessage *profile_new_connection(DBusConnection *conn,
+-void bluetooth_parse_properties(DBusMessage *reply, const char *property, =
+...)
++void bluetooth_parse_properties(DBusMessageIter *array, const char *proper=
+ty, ...)
+ {
+ 	va_list args;
+ 	GSList *prop_handlers =3D NULL;
+-	DBusMessageIter array, dict;
++	DBusMessageIter dict;
++
++	if (dbus_message_iter_get_arg_type(array) !=3D DBUS_TYPE_ARRAY)
++		goto done;
+ =
+
+ 	va_start(args, property);
+ =
+
+@@ -218,13 +221,7 @@ void bluetooth_parse_properties(DBusMessage *reply, co=
+nst char *property, ...)
+ =
+
+ 	va_end(args);
+ =
+
+-	if (dbus_message_iter_init(reply, &array) =3D=3D FALSE)
+-		goto done;
+-
+-	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_ARRAY)
+-		goto done;
+-
+-	dbus_message_iter_recurse(&array, &dict);
++	dbus_message_iter_recurse(array, &dict);
+ =
+
+ 	while (dbus_message_iter_get_arg_type(&dict) =3D=3D DBUS_TYPE_DICT_ENTRY)=
+ {
+ 		DBusMessageIter entry, value;
+@@ -324,6 +321,7 @@ static void device_properties_cb(DBusPendingCall *call,=
+ gpointer user_data)
+ 	const char *adapter_addr =3D NULL;
+ 	const char *device_addr =3D NULL;
+ 	const char *alias =3D NULL;
++	DBusMessageIter iter;
+ 	struct DBusError derr;
+ 	GSList *uuids =3D NULL;
+ =
+
+@@ -341,7 +339,10 @@ static void device_properties_cb(DBusPendingCall *call=
+, gpointer user_data)
+ =
+
+ 	DBG("");
+ =
+
+-	bluetooth_parse_properties(reply, "UUIDs", parse_uuids, &uuids,
++	if (dbus_message_iter_init(reply, &iter) =3D=3D FALSE)
++		goto done;
++
++	bluetooth_parse_properties(&iter, "UUIDs", parse_uuids, &uuids,
+ 				"Adapter", parse_string, &adapter,
+ 				"Address", parse_string, &device_addr,
+ 				"Alias", parse_string, &alias, NULL);
+@@ -480,6 +481,7 @@ static void adapter_properties_cb(DBusPendingCall *call=
+, gpointer user_data)
+ {
+ 	const char *path =3D user_data;
+ 	DBusMessage *reply;
++	DBusMessageIter iter;
+ 	DBusError derr;
+ 	GSList *device_list =3D NULL;
+ 	GSList *l;
+@@ -499,7 +501,10 @@ static void adapter_properties_cb(DBusPendingCall *cal=
+l, gpointer user_data)
+ =
+
+ 	DBG("");
+ =
+
+-	bluetooth_parse_properties(reply,
++	if (dbus_message_iter_init(reply, &iter) =3D=3D FALSE)
++		goto done;
++
++	bluetooth_parse_properties(&iter,
+ 					"Devices", parse_devices, &device_list,
+ 					"Address", parse_string, &addr,
+ 					NULL);
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index a9355f6..5b4d9d4 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -84,7 +84,8 @@ int bluetooth_send_with_reply(const char *path, const cha=
+r *interface,
+ 				DBusPendingCallNotifyFunction cb,
+ 				void *user_data, DBusFreeFunction free_func,
+ 				int timeout, int type, ...);
+-void bluetooth_parse_properties(DBusMessage *reply, const char *property, =
+...);
++void bluetooth_parse_properties(DBusMessageIter *array,
++						const char *property, ...);
+ =
+
+ int bluetooth_sap_client_register(struct bluetooth_sap_driver *sap,
+ 					struct ofono_modem *modem);
 -- =
 
 1.7.11.7
 
 
---===============6662273435905241840==--
+--===============7308018849290900751==--
 
