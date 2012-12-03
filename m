@@ -1,103 +1,134 @@
-Content-Type: multipart/mixed; boundary="===============5338368270394175941=="
+Content-Type: multipart/mixed; boundary="===============0204143053011084463=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 10/14] hfp_hf: Add Version and Features parsing
-Date: Mon, 03 Dec 2012 10:11:51 -0300
-Message-ID: <1354540315-27731-11-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 11/14] bluetooth: Use generic function to parse dict
+Date: Mon, 03 Dec 2012 10:11:52 -0300
+Message-ID: <1354540315-27731-12-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1354540315-27731-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5338368270394175941==
+--===============0204143053011084463==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds parsing of the Version and Features properties of the
-NewConnection fd_dictionary.
+This patch changes the Device PropertiesChanged signal parser to use
+the generic utility function to decode dictionary entries.
 ---
- plugins/hfp_hf.c | 27 +++++++++++++++++++++++----
- 1 file changed, 23 insertions(+), 4 deletions(-)
+ plugins/bluetooth.c | 81 ++++++++++++++++++-------------------------------=
+----
+ 1 file changed, 27 insertions(+), 54 deletions(-)
 
-diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
-index da20917..8dd8dd9 100644
---- a/plugins/hfp_hf.c
-+++ b/plugins/hfp_hf.c
-@@ -79,6 +79,16 @@ static void hfp_data_free(gpointer user_data)
- 	g_free(hfp_data);
- }
- =
-
-+static void parse_guint16(DBusMessageIter *iter, gpointer user_data)
-+{
-+	guint16 *value =3D user_data;
-+
-+	if (dbus_message_iter_get_arg_type(iter) !=3D  DBUS_TYPE_UINT16)
-+		return;
-+
-+	dbus_message_iter_get_basic(iter, value);
-+}
-+
- static void hfp_debug(const char *str, void *user_data)
+diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+index 37738e7..a3dccee 100644
+--- a/plugins/bluetooth.c
++++ b/plugins/bluetooth.c
+@@ -401,8 +401,9 @@ static void get_device_properties(const char *path)
+ static gboolean properties_changed(DBusConnection *conn, DBusMessage *msg,
+ 				void *user_data)
  {
- 	const char *prefix =3D user_data;
-@@ -172,11 +182,11 @@ static int service_level_connection(struct ofono_mode=
-m *modem, int fd)
- 	return -EINPROGRESS;
+-	const char *property, *interface;
+-	DBusMessageIter iter, dict, entry, variant;
++	const char *interface, *path, *alias =3D NULL;
++	DBusMessageIter iter;
++	GSList *uuids =3D NULL;
+ =
+
+ 	DBG("");
+ =
+
+@@ -420,59 +421,31 @@ static gboolean properties_changed(DBusConnection *co=
+nn, DBusMessage *msg,
+ 	if (!dbus_message_iter_next(&iter))
+ 		return FALSE;
+ =
+
+-	/* Reading Dict entries containing properties */
+-	dbus_message_iter_recurse(&iter, &dict);
+-
+-	do {
+-		if (dbus_message_iter_get_arg_type(&dict) !=3D
+-						DBUS_TYPE_DICT_ENTRY)
+-			return FALSE;
+-
+-		dbus_message_iter_recurse(&dict, &entry);
+-
+-		if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_STRING)
+-			return FALSE;
+-
+-		dbus_message_iter_get_basic(&entry, &property);
+-
+-		if (!dbus_message_iter_next(&entry))
+-			return FALSE;
+-
+-		if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_VARIANT)
+-			return FALSE;
+-
+-		dbus_message_iter_recurse(&entry, &variant);
+-		if (g_str_equal(property, "UUIDs") =3D=3D TRUE) {
+-			GSList *uuids =3D NULL;
+-			const char *path =3D dbus_message_get_path(msg);
+-
+-			parse_uuids(&variant, &uuids);
+-
+-			/* We need the full set of properties to be able to
+-			 * create the modem properly, including Adapter and
+-			 * Alias, so refetch everything again
+-			 */
+-			if (uuids)
+-				get_device_properties(path);
+-		} else if (g_str_equal(property, "Alias") =3D=3D TRUE) {
+-			const char *path =3D dbus_message_get_path(msg);
+-			struct bluetooth_profile *profile;
+-			const char *alias =3D NULL;
+-			GHashTableIter hash_iter;
+-			gpointer key, value;
+-
+-			parse_string(&variant, &alias);
+-
+-			g_hash_table_iter_init(&hash_iter, uuid_hash);
+-			while (g_hash_table_iter_next(&hash_iter, &key,
+-								&value)) {
+-				profile =3D value;
+-				if (profile->set_alias)
+-					profile->set_alias(path, alias);
+-			}
++	bluetooth_parse_properties(&iter,
++			"UUIDs", parse_uuids, &uuids,
++			"Alias", parse_string, &alias,
++			NULL);
++
++	path =3D dbus_message_get_path(msg);
++
++	/* We need the full set of properties to be able to
++	 * create the modem properly, including Adapter and
++	 * Alias, so refetch everything again
++	 */
++	if (uuids)
++		get_device_properties(path);
++
++	if (alias) {
++		GHashTableIter hash_iter;
++		gpointer key, value;
++
++		g_hash_table_iter_init(&hash_iter, uuid_hash);
++		while (g_hash_table_iter_next(&hash_iter, &key, &value)) {
++			struct bluetooth_profile *profile =3D value;
++			if (profile->set_alias)
++				profile->set_alias(path, alias);
+ 		}
+-
+-	} while (dbus_message_iter_next(&dict));
++	}
+ =
+
+ 	return TRUE;
  }
- =
-
--static int modem_register(const char *device, struct hfp_data *hfp_data, i=
-nt fd)
-+static int modem_register(const char *device, struct hfp_data *hfp_data,
-+							int fd, guint16 version)
- {
- 	struct ofono_modem *modem;
- 	char buf[256];
--	guint16 version =3D 0x0105;
- =
-
- 	/* We already have this device in our hash, ignore */
- 	if (g_hash_table_lookup(modem_hash, device) !=3D NULL)
-@@ -294,6 +304,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
-on *conn,
- 	const char *device;
- 	DBusMessageIter entry;
- 	int fd, err;
-+	guint16 version =3D 0x0105, features =3D 0x0000;
- =
-
- 	DBG("Profile handler NewConnection");
- =
-
-@@ -318,9 +329,17 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
- 	if (fd < 0)
- 		goto error;
- =
-
--	DBG("hfp_data: %p SLC FD: %d", hfp_data, fd);
-+	dbus_message_iter_next(&entry);
-+
-+	bluetooth_parse_properties(&entry,
-+					"Version", parse_guint16, &version,
-+					"Features", parse_guint16, &features,
-+					NULL);
-+
-+	DBG("hfp_data: %p SLC FD: %d Version: 0x%04x Features: 0x%04x",
-+					hfp_data, fd, version, features);
- =
-
--	err =3D modem_register(device, hfp_data, fd);
-+	err =3D modem_register(device, hfp_data, fd, version);
- 	if (err < 0 && err !=3D -EINPROGRESS)
- 		return __ofono_error_failed(msg);
- =
-
 -- =
 
 1.7.11.7
 
 
---===============5338368270394175941==--
+--===============0204143053011084463==--
 
