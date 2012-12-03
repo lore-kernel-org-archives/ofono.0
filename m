@@ -1,284 +1,361 @@
-Content-Type: multipart/mixed; boundary="===============5945951352944224197=="
+Content-Type: multipart/mixed; boundary="===============2605322195783073856=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 07/14] hfp_hf: Register HFP modem dynamically
-Date: Mon, 03 Dec 2012 10:11:48 -0300
-Message-ID: <1354540315-27731-8-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 06/14] hfp_hf: Remove HandsfreeAgent and HandsfreeGateway
+Date: Mon, 03 Dec 2012 10:11:47 -0300
+Message-ID: <1354540315-27731-7-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1354540315-27731-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5945951352944224197==
+--===============2605322195783073856==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch moves the modem creation from the Bluetooth profile probe
-to the NewConnection method call. HFP modem is now registered when
-the Bluetooth link is established.
+This patch removes the deprecated HandsfreeAgent and HandsfreeGateway
+interfaces. New connections are now being managed by a BlueZ external
+Profile handler.
 ---
- plugins/hfp_hf.c | 109 +++++++++++++++++++++++++++++++++++++--------------=
+ plugins/hfp_hf.c | 215 ++-------------------------------------------------=
 ----
- 1 file changed, 73 insertions(+), 36 deletions(-)
+ 1 file changed, 7 insertions(+), 208 deletions(-)
 
 diff --git a/plugins/hfp_hf.c b/plugins/hfp_hf.c
-index d91c197..1d1edf1 100644
+index dd09142..d91c197 100644
 --- a/plugins/hfp_hf.c
 +++ b/plugins/hfp_hf.c
-@@ -57,13 +57,28 @@
+@@ -49,11 +49,6 @@
  =
 
- static DBusConnection *connection;
- static GHashTable *modem_hash =3D NULL;
-+static GHashTable *hfp_hash =3D NULL;
+ #include "bluetooth.h"
+ =
+
+-#define	BLUEZ_GATEWAY_INTERFACE		BLUEZ_SERVICE ".HandsfreeGateway"
+-
+-#define HFP_AGENT_INTERFACE "org.bluez.HandsfreeAgent"
+-#define HFP_AGENT_ERROR_INTERFACE "org.bluez.Error"
+-
+ #define HFP_EXT_PROFILE_PATH   "/bluetooth/profile/hfp_hf"
+ =
+
+ #ifndef DBUS_TYPE_UNIX_FD
+@@ -65,11 +60,8 @@ static GHashTable *modem_hash =3D NULL;
  =
 
  struct hfp_data {
  	struct hfp_slc_info info;
--	char *handsfree_address;
-+	gchar *device_address;
-+	gchar *adapter_address;
-+	gchar *device_alias;
-+	gchar *device_path;
+-	char *handsfree_path;
+ 	char *handsfree_address;
  	DBusMessage *slc_msg;
+-	gboolean agent_registered;
+-	DBusPendingCall *call;
  };
  =
 
-+static void hfp_data_free(gpointer user_data)
-+{
-+	struct hfp_data *hfp_data =3D user_data;
-+
-+	g_free(hfp_data->device_address);
-+	g_free(hfp_data->adapter_address);
-+	g_free(hfp_data->device_alias);
-+	g_free(hfp_data->device_path);
-+	g_free(hfp_data);
-+}
-+
  static void hfp_debug(const char *str, void *user_data)
- {
- 	const char *prefix =3D user_data;
-@@ -117,6 +132,10 @@ static void hfp_disconnected_cb(gpointer user_data)
- =
-
- 	g_at_chat_unref(data->info.chat);
- 	data->info.chat =3D NULL;
-+
-+	g_hash_table_remove(modem_hash, data->device_path);
-+
-+	ofono_modem_remove(modem);
- }
- =
-
- /* either oFono or Phone could request SLC connection */
-@@ -153,46 +172,72 @@ static int service_level_connection(struct ofono_mode=
-m *modem, int fd)
+@@ -161,54 +153,6 @@ static int service_level_connection(struct ofono_modem=
+ *modem, int fd)
  	return -EINPROGRESS;
  }
  =
 
--static int hfp_hf_probe(const char *device, const char *dev_addr,
--				const char *adapter_addr, const char *alias)
-+static int modem_register(const char *device, struct hfp_data *hfp_data, i=
-nt fd)
- {
- 	struct ofono_modem *modem;
--	struct hfp_data *data;
- 	char buf[256];
-+	guint16 version =3D 0x0105;
- =
-
- 	/* We already have this device in our hash, ignore */
- 	if (g_hash_table_lookup(modem_hash, device) !=3D NULL)
- 		return -EALREADY;
- =
-
--	ofono_info("Using device: %s, devaddr: %s, adapter: %s",
--			device, dev_addr, adapter_addr);
+-static DBusMessage *hfp_agent_new_connection(DBusConnection *conn,
+-						DBusMessage *msg, void *data)
+-{
+-	int fd, err;
+-	struct ofono_modem *modem =3D data;
+-	struct hfp_data *hfp_data =3D ofono_modem_get_data(modem);
+-	guint16 version;
 -
- 	strcpy(buf, "hfp/");
--	bluetooth_create_path(dev_addr, adapter_addr, buf + 4, sizeof(buf) - 4);
-+	bluetooth_create_path(hfp_data->device_address,
-+			hfp_data->adapter_address, buf + 4, sizeof(buf) - 4);
- =
-
- 	modem =3D ofono_modem_create(buf, "hfp");
- 	if (modem =3D=3D NULL)
- 		return -ENOMEM;
- =
-
--	data =3D g_try_new0(struct hfp_data, 1);
--	if (data =3D=3D NULL)
-+	ofono_modem_set_data(modem, hfp_data);
-+	ofono_modem_set_name(modem, hfp_data->device_alias);
-+	ofono_modem_register(modem);
-+
-+	g_hash_table_insert(modem_hash, g_strdup(device), modem);
-+
-+	hfp_slc_info_init(&hfp_data->info, version);
-+
-+	return service_level_connection(modem, fd);
-+}
-+
-+static int hfp_hf_probe(const char *device, const char *dev_addr,
-+				const char *adapter_addr, const char *alias)
-+{
-+	struct hfp_data *hfp_data;
-+
-+	if (g_hash_table_lookup(hfp_hash, device) !=3D NULL)
-+		return -EALREADY;
-+
-+	ofono_info("Using device: %s, devaddr: %s, adapter: %s",
-+					device, dev_addr, adapter_addr);
-+
-+	hfp_data =3D g_try_new0(struct hfp_data, 1);
-+	if (hfp_data =3D=3D NULL)
+-	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_UNIX_FD, &fd,
+-				DBUS_TYPE_UINT16, &version, DBUS_TYPE_INVALID))
+-		return __ofono_error_invalid_args(msg);
+-
+-	hfp_slc_info_init(&hfp_data->info, version);
+-
+-	err =3D service_level_connection(modem, fd);
+-	if (err < 0 && err !=3D -EINPROGRESS)
+-		return __ofono_error_failed(msg);
+-
+-	hfp_data->slc_msg =3D msg;
+-	dbus_message_ref(msg);
+-
+-	return NULL;
+-}
+-
+-static DBusMessage *hfp_agent_release(DBusConnection *conn,
+-					DBusMessage *msg, void *data)
+-{
+-	struct ofono_modem *modem =3D data;
+-	struct hfp_data *hfp_data =3D ofono_modem_get_data(modem);
+-	const char *obj_path =3D ofono_modem_get_path(modem);
+-
+-	g_dbus_unregister_interface(connection, obj_path, HFP_AGENT_INTERFACE);
+-	hfp_data->agent_registered =3D FALSE;
+-
+-	g_hash_table_remove(modem_hash, hfp_data->handsfree_path);
+-	ofono_modem_remove(modem);
+-
+-	return dbus_message_new_method_return(msg);
+-}
+-
+-static const GDBusMethodTable agent_methods[] =3D {
+-	{ GDBUS_ASYNC_METHOD("NewConnection",
+-				GDBUS_ARGS({ "fd", "h" }, { "version", "q" }),
+-				NULL, hfp_agent_new_connection) },
+-	{ GDBUS_METHOD("Release", NULL, NULL, hfp_agent_release) },
+-	{ }
+-};
+-
+ static int hfp_hf_probe(const char *device, const char *dev_addr,
+ 				const char *adapter_addr, const char *alias)
+ {
+@@ -234,10 +178,6 @@ static int hfp_hf_probe(const char *device, const char=
+ *dev_addr,
+ 	if (data =3D=3D NULL)
  		goto free;
  =
 
--	data->handsfree_address =3D g_strdup(dev_addr);
--	if (data->handsfree_address =3D=3D NULL)
-+	hfp_data->adapter_address =3D g_strdup(adapter_addr);
-+	if (hfp_data->adapter_address =3D=3D NULL)
+-	data->handsfree_path =3D g_strdup(device);
+-	if (data->handsfree_path =3D=3D NULL)
+-		goto free;
+-
+ 	data->handsfree_address =3D g_strdup(dev_addr);
+ 	if (data->handsfree_address =3D=3D NULL)
  		goto free;
- =
-
--	ofono_modem_set_data(modem, data);
--	ofono_modem_set_name(modem, alias);
--	ofono_modem_register(modem);
-+	hfp_data->device_address =3D g_strdup(dev_addr);
-+	if (hfp_data->device_address =3D=3D NULL)
-+		goto free;
- =
-
--	g_hash_table_insert(modem_hash, g_strdup(device), modem);
-+	hfp_data->device_path =3D g_strdup(device);
-+	if (hfp_data->device_path =3D=3D NULL)
-+		goto free;
-+
-+	hfp_data->device_alias =3D g_strdup(alias);
-+	if (hfp_data->device_alias =3D=3D NULL)
-+		goto free;
-+
-+	g_hash_table_insert(hfp_hash, g_strdup(device), hfp_data);
- =
-
+@@ -251,9 +191,6 @@ static int hfp_hf_probe(const char *device, const char =
+*dev_addr,
  	return 0;
  =
 
  free:
--	g_free(data);
--	ofono_modem_remove(modem);
-+	hfp_data_free(hfp_data);
+-	if (data !=3D NULL)
+-		g_free(data->handsfree_path);
+-
+ 	g_free(data);
+ 	ofono_modem_remove(modem);
  =
 
- 	return -ENOMEM;
+@@ -300,46 +237,6 @@ static void hfp_hf_set_alias(const char *device, const=
+ char *alias)
+ 	ofono_modem_set_name(modem, alias);
  }
-@@ -240,12 +285,10 @@ static void hfp_hf_set_alias(const char *device, cons=
-t char *alias)
+ =
+
+-static int hfp_register_ofono_handsfree(struct ofono_modem *modem)
+-{
+-	const char *obj_path =3D ofono_modem_get_path(modem);
+-	struct hfp_data *data =3D ofono_modem_get_data(modem);
+-	DBusMessage *msg;
+-
+-	DBG("Registering oFono Agent to bluetooth daemon");
+-
+-	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, data->handsfree_path,
+-				BLUEZ_GATEWAY_INTERFACE, "RegisterAgent");
+-	if (msg =3D=3D NULL)
+-		return -ENOMEM;
+-
+-	dbus_message_append_args(msg, DBUS_TYPE_OBJECT_PATH, &obj_path,
+-				DBUS_TYPE_INVALID);
+-
+-	g_dbus_send_message(connection, msg);
+-	return 0;
+-}
+-
+-static int hfp_unregister_ofono_handsfree(struct ofono_modem *modem)
+-{
+-	const char *obj_path =3D ofono_modem_get_path(modem);
+-	struct hfp_data *data =3D ofono_modem_get_data(modem);
+-	DBusMessage *msg;
+-
+-	DBG("Unregistering oFono Agent from bluetooth daemon");
+-
+-	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, data->handsfree_path,
+-				BLUEZ_GATEWAY_INTERFACE, "UnregisterAgent");
+-	if (msg =3D=3D NULL)
+-		return -ENOMEM;
+-
+-	dbus_message_append_args(msg, DBUS_TYPE_OBJECT_PATH, &obj_path,
+-				DBUS_TYPE_INVALID);
+-
+-	g_dbus_send_message(connection, msg);
+-	return 0;
+-}
+-
  static DBusMessage *profile_new_connection(DBusConnection *conn,
  					DBusMessage *msg, void *data)
  {
--	struct ofono_modem *modem;
- 	struct hfp_data *hfp_data;
- 	const char *device;
- 	DBusMessageIter entry;
- 	int fd, err;
--	guint16 version =3D 0x0105;
+@@ -437,19 +334,7 @@ static const GDBusMethodTable profile_methods[] =3D {
  =
 
- 	DBG("Profile handler NewConnection");
- =
-
-@@ -256,9 +299,9 @@ static DBusMessage *profile_new_connection(DBusConnecti=
-on *conn,
- 		goto error;
- =
-
- 	dbus_message_iter_get_basic(&entry, &device);
--	modem =3D g_hash_table_lookup(modem_hash, device);
--	if (modem =3D=3D NULL) {
--		DBG("%s: modem not found", device);
-+	hfp_data =3D g_hash_table_lookup(hfp_hash, device);
-+	if (hfp_data =3D=3D NULL) {
-+		DBG("%s: doesn't support HFP", device);
- 		goto error;
- 	}
- =
-
-@@ -270,12 +313,9 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
- 	if (fd < 0)
- 		goto error;
- =
-
--	hfp_data =3D ofono_modem_get_data(modem);
--	DBG("modem %p, hfp_data: %p SLC FD: %d", modem, hfp_data, fd);
--
--	hfp_slc_info_init(&hfp_data->info, version);
-+	DBG("hfp_data: %p SLC FD: %d", hfp_data, fd);
- =
-
--	err =3D service_level_connection(modem, fd);
-+	err =3D modem_register(device, hfp_data, fd);
- 	if (err < 0 && err !=3D -EINPROGRESS)
- 		return __ofono_error_failed(msg);
- =
-
-@@ -341,14 +381,7 @@ static int hfp_probe(struct ofono_modem *modem)
- =
-
- static void hfp_remove(struct ofono_modem *modem)
+ static int hfp_probe(struct ofono_modem *modem)
  {
+-	const char *obj_path =3D ofono_modem_get_path(modem);
 -	struct hfp_data *data =3D ofono_modem_get_data(modem);
 -
- 	DBG("modem: %p", modem);
+-	if (data =3D=3D NULL)
+-		return -EINVAL;
 -
--	g_free(data->handsfree_address);
--	g_free(data);
+-	g_dbus_register_interface(connection, obj_path, HFP_AGENT_INTERFACE,
+-			agent_methods, NULL, NULL, modem, NULL);
 -
--	ofono_modem_set_data(modem, NULL);
+-	data->agent_registered =3D TRUE;
+-
+-	if (hfp_register_ofono_handsfree(modem) !=3D 0)
+-		return -EINVAL;
++	DBG("modem: %p", modem);
+ =
+
+ 	return 0;
+ }
+@@ -457,124 +342,38 @@ static int hfp_probe(struct ofono_modem *modem)
+ static void hfp_remove(struct ofono_modem *modem)
+ {
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
+-	const char *obj_path =3D ofono_modem_get_path(modem);
+-
+-	if (data->call !=3D NULL)
+-		dbus_pending_call_cancel(data->call);
+ =
+
+-	if (g_dbus_unregister_interface(connection, obj_path,
+-					HFP_AGENT_INTERFACE))
+-		hfp_unregister_ofono_handsfree(modem);
++	DBG("modem: %p", modem);
+ =
+
+ 	g_free(data->handsfree_address);
+-	g_free(data->handsfree_path);
+ 	g_free(data);
+ =
+
+ 	ofono_modem_set_data(modem, NULL);
  }
  =
 
+-static void hfp_connect_reply(DBusPendingCall *call, gpointer user_data)
+-{
+-	struct ofono_modem *modem =3D user_data;
+-	struct hfp_data *data =3D ofono_modem_get_data(modem);
+-	DBusError derr;
+-	DBusMessage *reply, *msg;
+-
+-	reply =3D dbus_pending_call_steal_reply(call);
+-
+-	if (ofono_modem_get_powered(modem))
+-		goto done;
+-
+-	dbus_error_init(&derr);
+-	if (!dbus_set_error_from_message(&derr, reply))
+-		goto done;
+-
+-	DBG("Connect reply: %s", derr.message);
+-
+-	if (dbus_error_has_name(&derr, DBUS_ERROR_NO_REPLY)) {
+-		msg =3D dbus_message_new_method_call(BLUEZ_SERVICE,
+-				data->handsfree_path,
+-				BLUEZ_GATEWAY_INTERFACE, "Disconnect");
+-		if (msg =3D=3D NULL)
+-			ofono_error("Disconnect failed");
+-		else
+-			g_dbus_send_message(connection, msg);
+-	}
+-
+-	ofono_modem_set_powered(modem, FALSE);
+-
+-	dbus_error_free(&derr);
+-
+-done:
+-	dbus_message_unref(reply);
+-	data->call =3D NULL;
+-}
+-
  /* power up hardware */
-@@ -382,7 +415,7 @@ static void hfp_pre_sim(struct ofono_modem *modem)
+ static int hfp_enable(struct ofono_modem *modem)
+ {
+-	struct hfp_data *data =3D ofono_modem_get_data(modem);
+-	int status;
+-
+ 	DBG("%p", modem);
+ =
+
+-	status =3D bluetooth_send_with_reply(data->handsfree_path,
+-					BLUEZ_GATEWAY_INTERFACE, "Connect",
+-					&data->call, hfp_connect_reply,
+-					modem, NULL,
+-					DBUS_TIMEOUT, DBUS_TYPE_INVALID);
+-
+-	if (status < 0)
+-		return -EINVAL;
+-
+-	return -EINPROGRESS;
+-}
+-
+-static void hfp_power_down(DBusPendingCall *call, gpointer user_data)
+-{
+-	struct ofono_modem *modem =3D user_data;
+-	struct hfp_data *data =3D ofono_modem_get_data(modem);
+-	DBusMessage *reply;
+-	DBusError derr;
+-
+-	reply =3D dbus_pending_call_steal_reply(call);
+-
+-	dbus_error_init(&derr);
+-	if (dbus_set_error_from_message(&derr, reply)) {
+-		DBG("Disconnect reply: %s", derr.message);
+-		dbus_error_free(&derr);
+-		goto done;
+-	}
+-
+-	ofono_modem_set_powered(modem, FALSE);
++	if (ofono_modem_get_powered(modem))
++		return 0;
+ =
+
+-done:
+-	dbus_message_unref(reply);
+-	data->call =3D NULL;
++	return -ENOTCONN;
+ }
+ =
+
+ static int hfp_disable(struct ofono_modem *modem)
+ {
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
+-	int status;
  =
 
  	DBG("%p", modem);
  =
 
--	ofono_devinfo_create(modem, 0, "hfpmodem", data->handsfree_address);
-+	ofono_devinfo_create(modem, 0, "hfpmodem", data->device_address);
- 	ofono_voicecall_create(modem, 0, "hfpmodem", &data->info);
- 	ofono_netreg_create(modem, 0, "hfpmodem", &data->info);
- 	ofono_call_volume_create(modem, 0, "hfpmodem", &data->info);
-@@ -456,6 +489,9 @@ static int hfp_init(void)
- 	modem_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
- 						g_free, NULL);
+ 	g_at_chat_unref(data->info.chat);
+ 	data->info.chat =3D NULL;
  =
 
-+	hfp_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal, g_free,
-+								hfp_data_free);
-+
- 	return 0;
+-	if (data->agent_registered) {
+-		status =3D bluetooth_send_with_reply(data->handsfree_path,
+-					BLUEZ_GATEWAY_INTERFACE, "Disconnect",
+-					&data->call, hfp_power_down,
+-					modem, NULL,
+-					DBUS_TIMEOUT, DBUS_TYPE_INVALID);
+-
+-		if (status < 0)
+-			return -EINVAL;
+-	}
++	ofono_modem_set_powered(modem, FALSE);
+ =
+
+-	return -EINPROGRESS;
++	return 0;
  }
  =
 
-@@ -468,6 +504,7 @@ static void hfp_exit(void)
- 	ofono_modem_driver_unregister(&hfp_driver);
- =
-
- 	g_hash_table_destroy(modem_hash);
-+	g_hash_table_destroy(hfp_hash);
- }
- =
-
- OFONO_PLUGIN_DEFINE(hfp, "Hands-Free Profile Plugins", VERSION,
+ static void hfp_pre_sim(struct ofono_modem *modem)
 -- =
 
 1.7.11.7
 
 
---===============5945951352944224197==--
+--===============2605322195783073856==--
 
