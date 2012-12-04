@@ -1,84 +1,124 @@
-Content-Type: multipart/mixed; boundary="===============8338171349583964491=="
+Content-Type: multipart/mixed; boundary="===============5510206720033032551=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: Telit HE910 modem --- unable be put on line by Connman
-Date: Mon, 03 Dec 2012 14:13:47 +0100
-Message-ID: <50BCA58B.6080102@southpole.se>
-In-Reply-To: <50BC8FB6.7020309@southpole.se>
+Subject: [PATCH 1/1] atmodem: remove pending idle callbacks at device removal
+Date: Tue, 04 Dec 2012 16:33:47 +0100
+Message-ID: <1354635227-9344-1-git-send-email-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8338171349583964491==
+--===============5510206720033032551==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 12/03/2012 12:40 PM, Jonas Bonn wrote:
-> So, my thinking is that we need to do something like this:
->
-> i)   At telit_enable, set CFUN=3D1 and wait for QSS=3D2 or QSS=3D3.
-> ii)  When we get QSS=3D2 or QSS=3D3 then we can set SIM_READY state so th=
-at
-> post_sim gets called... this should be called after all the IMSI
-> querying, etc. (right?)
-> iii) Once we're in SIM_READY state, we set CFUN=3D4... this is the 'end'
-> of the 'telit_enable' phase
-> iv)  While in CFUN=3D4 state, we ignore QSS: 0
-> V)   This should result in the GPRS interface being exported so that
-> connman can call 'online' call which will result in the switch to the
-> "real" CFUN=3D1
+From: Mingli Wu <mingli@southpole.se>
 
-I gave this a try with the HE910 from Telit and the following works (not =
+If device probe and removal happen in short succession, it's possible
+that the idle handler registered in the probe function doesn't run before
+the device is removed.  In this case, the idle handler needs to be
+unregistered so that it does not run and try to access the data that's
+destroyed during the removal.
+---
+ drivers/atmodem/call-barring.c    |    1 +
+ drivers/atmodem/call-forwarding.c |    1 +
+ drivers/atmodem/call-settings.c   |    1 +
+ drivers/atmodem/sim-auth.c        |    1 +
+ drivers/atmodem/sim.c             |    1 +
+ drivers/atmodem/stk.c             |    1 +
+ 6 files changed, 6 insertions(+)
 
-in git format, this is just for reference... I will resubmit it later =
+diff --git a/drivers/atmodem/call-barring.c b/drivers/atmodem/call-barring.c
+index a2417c7..1239d05 100644
+--- a/drivers/atmodem/call-barring.c
++++ b/drivers/atmodem/call-barring.c
+@@ -207,6 +207,7 @@ static void at_call_barring_remove(struct ofono_call_ba=
+rring *cb)
+ {
+ 	GAtChat *chat =3D ofono_call_barring_get_data(cb);
+ =
 
-after comment).  Just note that it takes about 1 min for the SIM to =
++	g_idle_remove_by_data(cb);
+ 	g_at_chat_unref(chat);
+ 	ofono_call_barring_set_data(cb, NULL);
+ }
+diff --git a/drivers/atmodem/call-forwarding.c b/drivers/atmodem/call-forwa=
+rding.c
+index cbe4b24..e2020d3 100644
+--- a/drivers/atmodem/call-forwarding.c
++++ b/drivers/atmodem/call-forwarding.c
+@@ -259,6 +259,7 @@ static void at_ccfc_remove(struct ofono_call_forwarding=
+ *cf)
+ {
+ 	GAtChat *chat =3D ofono_call_forwarding_get_data(cf);
+ =
 
-reach "ready" state after power up.
++	g_idle_remove_by_data(cf);
+ 	g_at_chat_unref(chat);
+ 	ofono_call_forwarding_set_data(cf, NULL);
+ }
+diff --git a/drivers/atmodem/call-settings.c b/drivers/atmodem/call-setting=
+s.c
+index 2dc16e4..f017ab5 100644
+--- a/drivers/atmodem/call-settings.c
++++ b/drivers/atmodem/call-settings.c
+@@ -393,6 +393,7 @@ static void at_call_settings_remove(struct ofono_call_s=
+ettings *cs)
+ {
+ 	GAtChat *chat =3D ofono_call_settings_get_data(cs);
+ =
 
-This also doesn't account for QSS: 0 occurring during 'offline' state... =
++	g_idle_remove_by_data(cs);
+ 	g_at_chat_unref(chat);
+ 	ofono_call_settings_set_data(cs, NULL);
+ }
+diff --git a/drivers/atmodem/sim-auth.c b/drivers/atmodem/sim-auth.c
+index 9ce810f..271ceed 100644
+--- a/drivers/atmodem/sim-auth.c
++++ b/drivers/atmodem/sim-auth.c
+@@ -139,6 +139,7 @@ static void at_sim_auth_remove(struct ofono_sim_auth *s=
+a)
+ {
+ 	struct sim_auth_data *sad =3D ofono_sim_auth_get_data(sa);
+ =
 
-need to check what happens there.
++	g_idle_remove_by_data(sa);
+ 	ofono_sim_auth_set_data(sa, NULL);
+ =
 
-Comments?
+ 	g_at_chat_unref(sad->chat);
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index effc595..4095337 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -1493,6 +1493,7 @@ static void at_sim_remove(struct ofono_sim *sim)
+ {
+ 	struct sim_data *sd =3D ofono_sim_get_data(sim);
+ =
+
++	g_idle_remove_by_data(sim);
+ 	/* Cleanup potential SIM state polling */
+ 	at_util_sim_state_query_free(sd->sim_state_query);
+ =
+
+diff --git a/drivers/atmodem/stk.c b/drivers/atmodem/stk.c
+index f0bd3a0..b4fb2f2 100644
+--- a/drivers/atmodem/stk.c
++++ b/drivers/atmodem/stk.c
+@@ -216,6 +216,7 @@ static void at_stk_remove(struct ofono_stk *stk)
+ {
+ 	struct stk_data *sd =3D ofono_stk_get_data(stk);
+ =
+
++	g_idle_remove_by_data(stk);
+ 	ofono_stk_set_data(stk, NULL);
+ =
+
+ 	g_at_chat_unref(sd->chat);
+-- =
+
+1.7.10.4
 
 
-diff --git a/plugins/telit.c b/plugins/telit.c
-index fe2ccd6..40d72fe 100644
---- a/plugins/telit.c
-+++ b/plugins/telit.c
-@@ -339,7 +339,7 @@ static int telit_enable(struct ofono_modem *modem)
-         g_at_chat_send(data->chat, "AT#QSS=3D0", none_prefix, NULL, NULL, =
-
-NULL);
-
-         /* Set phone functionality */
--       g_at_chat_send(data->chat, "AT+CFUN=3D4", none_prefix,
-+       g_at_chat_send(data->chat, "AT+CFUN=3D1", none_prefix,
-                                 cfun_enable_cb, modem, NULL);
-
-         return -EINPROGRESS;
-@@ -565,6 +565,16 @@ static void telit_post_sim(struct ofono_modem *modem)
-
-         if (gprs && gc)
-                 ofono_gprs_add_context(gprs, gc);
-+
-+       /*
-+        * We need the modem in CFUN!=3D4 state in order to get to
-+        * post_sim... now we can check if we really should be offline
-+        * and, if so, set CFUN=3D4
-+        */
-+       if (!ofono_modem_get_online(modem)) {
-+               g_at_chat_send(data->chat, "AT+CFUN=3D4", none_prefix,
-+                               NULL, NULL, NULL);
-+       }
-  }
-
-  static void set_online_cb(gboolean ok, GAtResult *result, gpointer =
-
-user_data)
-
-/Jonas
-
---===============8338171349583964491==--
+--===============5510206720033032551==--
 
