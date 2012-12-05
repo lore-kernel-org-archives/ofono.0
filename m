@@ -1,43 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============4921254314561309767=="
+Content-Type: multipart/mixed; boundary="===============7561723681892402303=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/1] atmodem: remove pending idle callbacks at device
- removal
-Date: Tue, 04 Dec 2012 23:49:48 -0600
-Message-ID: <50BEE07C.1070500@gmail.com>
-In-Reply-To: <1354635227-9344-1-git-send-email-jonas@southpole.se>
+Subject: Re: [PATCH 1/1] telit: stay 'online' until POST_SIM state reached
+Date: Tue, 04 Dec 2012 23:55:39 -0600
+Message-ID: <50BEE1DB.10905@gmail.com>
+In-Reply-To: <1354636010-9624-1-git-send-email-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4921254314561309767==
+--===============7561723681892402303==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mingli,
+Hi Jonas,
 
-On 12/04/2012 09:33 AM, Jonas Bonn wrote:
-> From: Mingli Wu<mingli@southpole.se>
->
-> If device probe and removal happen in short succession, it's possible
-> that the idle handler registered in the probe function doesn't run before
-> the device is removed.  In this case, the idle handler needs to be
-> unregistered so that it does not run and try to access the data that's
-> destroyed during the removal.
-> ---
->   drivers/atmodem/call-barring.c    |    1 +
->   drivers/atmodem/call-forwarding.c |    1 +
->   drivers/atmodem/call-settings.c   |    1 +
->   drivers/atmodem/sim-auth.c        |    1 +
->   drivers/atmodem/sim.c             |    1 +
->   drivers/atmodem/stk.c             |    1 +
->   6 files changed, 6 insertions(+)
->
+On 12/04/2012 09:46 AM, Jonas Bonn wrote:
+> In offline state where CFUN=3D4, the Telit HE910 also powers down the SIM
+> card so AT commands that query the SIM will fail.  These failures result
+> in ofono not getting to POST_SIM state where it will export the GPRS
+> feature.
 
-Patch has been applied, thanks.
+Does the HE910 have a proper CFUN mode where it does not turn off the =
+
+SIM?  You are making some nasty hacks because of it, and the other Telit =
+
+devices support this just fine.
+
+>
+> This patch changes the Telit driver so it will not go immediately
+> to CFUN=3D4 after enable, but to wait for the post_sim state to be
+> reached before doing so.  In addition, the HE910 might send QSS: 0
+> unsolicited reports while in CFUN=3D4 state... this patch makes it so
+> that these are ignored until the modem is onlined and the actual
+> SIM state can be queried again.
+
+Also remember the modem can be 'Online' even without a SIM, or in =
+
+pre-SIM state for e.g. emergency calls.  So much of the logic might break.
 
 Regards,
 -Denis
 
---===============4921254314561309767==--
+--===============7561723681892402303==--
 
