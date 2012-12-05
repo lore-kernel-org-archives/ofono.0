@@ -1,140 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============6023250020941809859=="
+Content-Type: multipart/mixed; boundary="===============9146293662112227413=="
 MIME-Version: 1.0
-From: Yevhen Kyriukha <kirgene@gmail.com>
-Subject: [PATCH 1/1] atmodem: reset modem if it stops responding (Yevhen
- Kyriukha)
-Date: Thu, 06 Dec 2012 18:46:18 +0200
-Message-ID: <CADV-EXEry-3wPWQ5V1pfBuSo+9wkzcvsF2zNc=CTF3pE1R2ptQ@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Telit HE910: CMER command problem
+Date: Tue, 04 Dec 2012 23:40:25 -0600
+Message-ID: <50BEDE49.7030601@gmail.com>
+In-Reply-To: <50C0B87E.2090702@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6023250020941809859==
+--===============9146293662112227413==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+Hi Mingli,
 
-I'd tested a lot of ZTE and Huawei modems and noticed that each of them can
-hang and become unusable anymore for establishing internet connection.
-Some modems may hang right after boot, some of them after connection was
-dropped several times.
-The problem is that the "Modem" port hangs and doesn't accept any commands.
-The only way to bring it to work is to reset the modem.
+On 12/06/2012 09:23 AM, Ming Li Wu wrote:
+> Hello,
+>
+> I am using Telit HE910 modem,
+>
+> After sending AT+CMER=3D3,0,0,2 I always got "sim card is busy".
+>
+> The followoing is the part of log:
+> ofonod[446]: Aux: > AT+CMER=3D3,0,0,2\r
+> ofonod[446]: Aux: < \r\n+CME ERROR: 14\r\n
+> ofonod[446]: +CMER not supported by this modem. If this is an error
+> please submit patches to support this hardware
+>
+> My question is :
+> How important is this command.?
+> I mean what the worst consequence will be if I just ignore this error
+> message,
+>
 
-This is very important issue for devices that needs to be connected through
-3G modem all the time and work in automatic mode!
+CMER is used to set the appropriate CIND mode.  For Telit this is mainly =
 
-So I created a patch that resolves this issue by checking modem port before
-establishing connection.
-If we get no answer during some time, we reset the modem and it can be
-usable again.
+used for signal strength reporting, so if this is not set correctly =
 
-Patch is attached to this message.
+there might be some side-effects in that area.
 
--- =
+Regards,
+-Denis
 
-Best regards,
-Yevhen
-
---===============6023250020941809859==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-SGkhPGRpdj48YnI+PC9kaXY+PGRpdj5JJiMzOTtkIHRlc3RlZCBhIGxvdCBvZiBaVEUgYW5kIEh1
-YXdlaSBtb2RlbXMgYW5kIG5vdGljZWQgdGhhdCBlYWNoIG9mIHRoZW0gY2FuIGhhbmcgYW5kIGJl
-Y29tZSB1bnVzYWJsZSBhbnltb3JlIGZvciBlc3RhYmxpc2hpbmcgaW50ZXJuZXQgY29ubmVjdGlv
-bi48L2Rpdj48ZGl2PlNvbWUgbW9kZW1zIG1heSBoYW5nIHJpZ2h0IGFmdGVyIGJvb3QsIHNvbWUg
-b2YgdGhlbSBhZnRlciBjb25uZWN0aW9uIHdhcyBkcm9wcGVkIHNldmVyYWwgdGltZXMuPC9kaXY+
-CjxkaXY+VGhlIHByb2JsZW0gaXMgdGhhdCB0aGUgJnF1b3Q7TW9kZW0mcXVvdDsgcG9ydCBoYW5n
-cyBhbmQgZG9lc24mIzM5O3QgYWNjZXB0IGFueSBjb21tYW5kcy48L2Rpdj48ZGl2PlRoZSBvbmx5
-IHdheSB0byBicmluZyBpdCB0byB3b3JrIGlzIHRvIHJlc2V0IHRoZSBtb2RlbS48L2Rpdj48ZGl2
-Pjxicj48L2Rpdj48ZGl2PlRoaXMgaXMgdmVyeSBpbXBvcnRhbnQgaXNzdWUgZm9yIGRldmljZXMg
-dGhhdCBuZWVkcyB0byBiZSBjb25uZWN0ZWQgdGhyb3VnaCAzRyBtb2RlbSBhbGwgdGhlIHRpbWUg
-YW5kIHdvcmsgaW4gYXV0b21hdGljIG1vZGUhPC9kaXY+CjxkaXY+PGJyPjwvZGl2PjxkaXY+U28g
-SSBjcmVhdGVkIGEgcGF0Y2ggdGhhdCByZXNvbHZlcyB0aGlzIGlzc3VlIGJ5IGNoZWNraW5nIG1v
-ZGVtIHBvcnQgYmVmb3JlIGVzdGFibGlzaGluZyBjb25uZWN0aW9uLjwvZGl2PjxkaXY+SWYgd2Ug
-Z2V0IG5vIGFuc3dlciBkdXJpbmcgc29tZSB0aW1lLCB3ZSByZXNldCB0aGUgbW9kZW0gYW5kIGl0
-IGNhbiBiZSB1c2FibGUgYWdhaW4uPC9kaXY+CjxkaXY+PGJyPjwvZGl2PjxkaXY+UGF0Y2ggaXMg
-YXR0YWNoZWQgdG8gdGhpcyBtZXNzYWdlLjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+LS0gPGJy
-PkJlc3QgcmVnYXJkcyw8YnI+WWV2aGVuPGJyPgo8L2Rpdj4K
-
---===============6023250020941809859==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="modem-reset.patch"
-
-SW5kZXg6IG9mb25vLTEuMTEvZHJpdmVycy9hdG1vZGVtL2dwcnMtY29udGV4dC5jCj09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT0KLS0tIG9mb25vLTEuMTEub3JpZy9kcml2ZXJzL2F0bW9kZW0vZ3Bycy1jb250ZXh0LmMgIDIw
-MTItMDktMTEgMTM6MDk6MjUuMDAwMDAwMDAwICswMzAwCisrKyBvZm9uby0xLjExL2RyaXZlcnMv
-YXRtb2RlbS9ncHJzLWNvbnRleHQuYyAgIDIwMTItMTItMDMgMDA6NTc6MzkuMDU1NTkwMjk1ICsw
-MjAwCkBAIC01OSw2ICs1OSw4IEBACiBzdHJ1Y3QgZ3Byc19jb250ZXh0X2RhdGEgewogCUdBdENo
-YXQgKmNoYXQ7CiAJdW5zaWduZWQgaW50IGFjdGl2ZV9jb250ZXh0OworCWd1aW50IG1vZGVtX3Jl
-YWR5X3RpbWVvdXQ7CisJY2hhciBhcG5bT0ZPTk9fR1BSU19NQVhfQVBOX0xFTkdUSCArIDFdOwog
-CWNoYXIgdXNlcm5hbWVbT0ZPTk9fR1BSU19NQVhfVVNFUk5BTUVfTEVOR1RIICsgMV07CiAJY2hh
-ciBwYXNzd29yZFtPRk9OT19HUFJTX01BWF9QQVNTV09SRF9MRU5HVEggKyAxXTsKIAlHQXRQUFAg
-KnBwcDsKQEAgLTIxOSwxMyArMjIxLDczIEBACiAJQ0FMTEJBQ0tfV0lUSF9GQUlMVVJFKGdjZC0+
-Y2IsIGdjZC0+Y2JfZGF0YSk7CiB9CiAKK3N0YXRpYyB2b2lkIGFjdGl2YXRlX3ByaW1hcnkoc3Ry
-dWN0IG9mb25vX2dwcnNfY29udGV4dCAqZ2MpCit7CisJc3RydWN0IGdwcnNfY29udGV4dF9kYXRh
-ICpnY2QgPSBvZm9ub19ncHJzX2NvbnRleHRfZ2V0X2RhdGEoZ2MpOworCisJY2hhciBidWZbT0ZP
-Tk9fR1BSU19NQVhfQVBOX0xFTkdUSCArIDEyOF07CisJaW50IGxlbjsKKworCURCRygiY2lkICV1
-IiwgZ2NkLT5hY3RpdmVfY29udGV4dCk7CisKKwlsZW4gPSBzbnByaW50ZihidWYsIHNpemVvZihi
-dWYpLCAiQVQrQ0dEQ09OVD0ldSxcIklQXCIiLCBnY2QtPmFjdGl2ZV9jb250ZXh0KTsKKworCWlm
-IChnY2QtPmFwbikKKwkJc25wcmludGYoYnVmICsgbGVuLCBzaXplb2YoYnVmKSAtIGxlbiAtIDMs
-ICIsXCIlc1wiIiwgZ2NkLT5hcG4pOworCisJaWYgKGdfYXRfY2hhdF9zZW5kKGdjZC0+Y2hhdCwg
-YnVmLCBub25lX3ByZWZpeCwgYXRfY2dkY29udF9jYiwgZ2MsIE5VTEwpID4gMCkKKwkJcmV0dXJu
-OworCisJQ0FMTEJBQ0tfV0lUSF9GQUlMVVJFKGdjZC0+Y2IsIGdjZC0+Y2JfZGF0YSk7Cit9CisK
-K3N0YXRpYyBnYm9vbGVhbiBhdF9tb2RlbV9ub3RfcmVhZHlfY2IoZ3BvaW50ZXIgdXNlcl9kYXRh
-KQoreworCXN0cnVjdCBvZm9ub19ncHJzX2NvbnRleHQgKmdjID0gdXNlcl9kYXRhOworCXN0cnVj
-dCBncHJzX2NvbnRleHRfZGF0YSAqZ2NkID0gb2Zvbm9fZ3Byc19jb250ZXh0X2dldF9kYXRhKGdj
-KTsKKwlHQXRDaGF0ICpjaGF0ID0gZ19hdF9jaGF0X2dldF9zbGF2ZShnY2QtPmNoYXQpOworCisJ
-Z2NkLT5hY3RpdmVfY29udGV4dCA9IDA7CisJZ2NkLT5zdGF0ZSA9IFNUQVRFX0lETEU7CisJZ2Nk
-LT5tb2RlbV9yZWFkeV90aW1lb3V0ID0gMDsKKworCW9mb25vX2Vycm9yKCJNb2RlbSBub3QgcmVz
-cG9uZGluZyIpOworCURCRygicmVzZXR0aW5nIG1vZGVtLi4uIik7CisJQ0FMTEJBQ0tfV0lUSF9G
-QUlMVVJFKGdjZC0+Y2IsIGdjZC0+Y2JfZGF0YSk7CisKKwlnX2F0X2NoYXRfc2VuZChjaGF0LCAi
-QVQrQ0ZVTj0xLDEiLCBub25lX3ByZWZpeCwgTlVMTCwgTlVMTCwgTlVMTCk7CisKKwlyZXR1cm4g
-RkFMU0U7Cit9CisKK3N0YXRpYyB2b2lkIGF0X21vZGVtX3JlYWR5X2NiKGdib29sZWFuIG9rLCBH
-QXRSZXN1bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9kYXRhKQoreworCXN0cnVjdCBvZm9ub19n
-cHJzX2NvbnRleHQgKmdjID0gdXNlcl9kYXRhOworCXN0cnVjdCBncHJzX2NvbnRleHRfZGF0YSAq
-Z2NkID0gb2Zvbm9fZ3Byc19jb250ZXh0X2dldF9kYXRhKGdjKTsKKwlpZiAoZ2NkLT5tb2RlbV9y
-ZWFkeV90aW1lb3V0ID09IDApCisJCXJldHVybjsgIC8vIFRvbyBsYXRlLCBtb2RlbSBhbHJlYWR5
-IGJlZW4gcmVzZXQKKwlEQkcoIm1vZGVtIGlzIHJlYWR5Iik7CisJZ19zb3VyY2VfcmVtb3ZlKGdj
-ZC0+bW9kZW1fcmVhZHlfdGltZW91dCk7CisJYWN0aXZhdGVfcHJpbWFyeShnYyk7Cit9CisKK3N0
-YXRpYyB2b2lkIGF0X2FjdGl2YXRlX3ByaW1hcnlfd2l0aF9jaGVjayhzdHJ1Y3Qgb2Zvbm9fZ3By
-c19jb250ZXh0ICpnYykKK3sKKwlzdHJ1Y3QgZ3Byc19jb250ZXh0X2RhdGEgKmdjZCA9IG9mb25v
-X2dwcnNfY29udGV4dF9nZXRfZGF0YShnYyk7CisJZ2NkLT5tb2RlbV9yZWFkeV90aW1lb3V0ID0g
-Z190aW1lb3V0X2FkZF9zZWNvbmRzKDcwLCBhdF9tb2RlbV9ub3RfcmVhZHlfY2IsIGdjKTsKKwln
-X2F0X2NoYXRfc2VuZChnY2QtPmNoYXQsICJBVCIsIG5vbmVfcHJlZml4LCBhdF9tb2RlbV9yZWFk
-eV9jYiwgZ2MsIE5VTEwpOworfQorCitzdGF0aWMgdm9pZCBhdF9ncHJzX2FjdGl2YXRlX3ByaW1h
-cnlfY2IoZ2Jvb2xlYW4gb2ssIEdBdFJlc3VsdCAqcmVzdWx0LCBncG9pbnRlciB1c2VyX2RhdGEp
-Cit7CisJYXRfYWN0aXZhdGVfcHJpbWFyeV93aXRoX2NoZWNrKHVzZXJfZGF0YSk7Cit9CisKIHN0
-YXRpYyB2b2lkIGF0X2dwcnNfYWN0aXZhdGVfcHJpbWFyeShzdHJ1Y3Qgb2Zvbm9fZ3Byc19jb250
-ZXh0ICpnYywKIAkJCQljb25zdCBzdHJ1Y3Qgb2Zvbm9fZ3Byc19wcmltYXJ5X2NvbnRleHQgKmN0
-eCwKIAkJCQlvZm9ub19ncHJzX2NvbnRleHRfY2JfdCBjYiwgdm9pZCAqZGF0YSkKIHsKIAlzdHJ1
-Y3QgZ3Byc19jb250ZXh0X2RhdGEgKmdjZCA9IG9mb25vX2dwcnNfY29udGV4dF9nZXRfZGF0YShn
-Yyk7Ci0JY2hhciBidWZbT0ZPTk9fR1BSU19NQVhfQVBOX0xFTkdUSCArIDEyOF07Ci0JaW50IGxl
-bjsKIAogCS8qIElQdjYgc3VwcG9ydCBub3QgaW1wbGVtZW50ZWQgKi8KIAlpZiAoY3R4LT5wcm90
-byAhPSBPRk9OT19HUFJTX1BST1RPX0lQKQpAQCAtMjM4LDYgKzMwMCw3IEBACiAJZ2NkLT5jYl9k
-YXRhID0gZGF0YTsKIAltZW1jcHkoZ2NkLT51c2VybmFtZSwgY3R4LT51c2VybmFtZSwgc2l6ZW9m
-KGN0eC0+dXNlcm5hbWUpKTsKIAltZW1jcHkoZ2NkLT5wYXNzd29yZCwgY3R4LT5wYXNzd29yZCwg
-c2l6ZW9mKGN0eC0+cGFzc3dvcmQpKTsKKwltZW1jcHkoZ2NkLT5hcG4sIGN0eC0+YXBuLCBzaXpl
-b2YoY3R4LT5hcG4pKTsKIAogCWdjZC0+c3RhdGUgPSBTVEFURV9FTkFCTElORzsKIApAQCAtMjU4
-LDE5ICszMjEsMTQgQEAKIAkJICogbmVlZHMgdG8gYmUgc2VuZCBvbiB0aGUgY29udHJvbCBwb3J0
-IG9mIGNvdXJzZS4KIAkJICoKIAkJICovCi0JCWdfYXRfY2hhdF9zZW5kKGNoYXQsICJBVCtaT1BS
-VD8iLCBub25lX3ByZWZpeCwKLQkJCQkJCU5VTEwsIE5VTEwsIE5VTEwpOworCQlpZiAoZ19hdF9j
-aGF0X3NlbmQoY2hhdCwgIkFUK1pPUFJUPyIsIG5vbmVfcHJlZml4LAorCQkJCQkJYXRfZ3Byc19h
-Y3RpdmF0ZV9wcmltYXJ5X2NiLCBnYywgTlVMTCkgPiAwKQorCQkJcmV0dXJuOworCQlnb3RvIGVy
-cm9yOwogCX0KIAotCWxlbiA9IHNucHJpbnRmKGJ1Ziwgc2l6ZW9mKGJ1ZiksICJBVCtDR0RDT05U
-PSV1LFwiSVBcIiIsIGN0eC0+Y2lkKTsKLQotCWlmIChjdHgtPmFwbikKLQkJc25wcmludGYoYnVm
-ICsgbGVuLCBzaXplb2YoYnVmKSAtIGxlbiAtIDMsICIsXCIlc1wiIiwKLQkJCQljdHgtPmFwbik7
-Ci0KLQlpZiAoZ19hdF9jaGF0X3NlbmQoZ2NkLT5jaGF0LCBidWYsIG5vbmVfcHJlZml4LAotCQkJ
-CWF0X2NnZGNvbnRfY2IsIGdjLCBOVUxMKSA+IDApCi0JCXJldHVybjsKKwlhdF9hY3RpdmF0ZV9w
-cmltYXJ5X3dpdGhfY2hlY2soZ2MpOworCXJldHVybjsKIAogZXJyb3I6CiAJQ0FMTEJBQ0tfV0lU
-SF9GQUlMVVJFKGNiLCBkYXRhKTsK
-
---===============6023250020941809859==--
+--===============9146293662112227413==--
 
