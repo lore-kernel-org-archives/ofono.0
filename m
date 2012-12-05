@@ -1,107 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============2592729288675733760=="
+Content-Type: multipart/mixed; boundary="===============0891205231054496976=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/1] telit: stay 'online' until POST_SIM state reached
-Date: Sun, 02 Dec 2012 13:40:52 -0600
-Message-ID: <50BBAEC4.5060304@gmail.com>
-In-Reply-To: <1354639658.1837.14.camel@aeonflux>
+From: Forest Bond <forest@alittletooquiet.net>
+Subject: [PATCH 1/2] gprs: Support probing provision data from device.
+Date: Wed, 05 Dec 2012 14:01:44 -0500
+Message-ID: <20121205190143.GA27739@alittletooquiet.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2592729288675733760==
+--===============0891205231054496976==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+From: Forest Bond <forest.bond@rapidrollout.com>
 
-On 12/04/2012 10:47 AM, Marcel Holtmann wrote:
-> Hi Jonas,
->
->> In offline state where CFUN=3D4, the Telit HE910 also powers down the SIM
->> card so AT commands that query the SIM will fail.  These failures result
->> in ofono not getting to POST_SIM state where it will export the GPRS
->> feature.
->>
->> This patch changes the Telit driver so it will not go immediately
->> to CFUN=3D4 after enable, but to wait for the post_sim state to be
->> reached before doing so.  In addition, the HE910 might send QSS: 0
->> unsolicited reports while in CFUN=3D4 state... this patch makes it so
->> that these are ignored until the modem is onlined and the actual
->> SIM state can be queried again.
->> ---
->>
->> This patch has been tested with a Telit HE910 and it works fine there.  =
-It
->> would be great if someone with other Telit modems could check if
->> this works with those models or whether we need to wrap some of this with
->> checks for model type, firmware version, etc...
->>
->> Thanks,
->> Jonas
->>
->>
->>   plugins/telit.c |   64 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++----
->>   1 file changed, 60 insertions(+), 4 deletions(-)
->>
->> diff --git a/plugins/telit.c b/plugins/telit.c
->> index fe2ccd6..a0f7deb 100644
->> --- a/plugins/telit.c
->> +++ b/plugins/telit.c
->> @@ -62,6 +62,7 @@
->>
->>   static const char *none_prefix[] =3D { NULL };
->>   static const char *rsen_prefix[]=3D { "#RSEN:", NULL };
->> +static const char *qss_prefix[] =3D { "#QSS:", NULL };
->>
->>   struct telit_data {
->>   	GAtChat *chat;		/* AT chat */
->> @@ -219,7 +220,7 @@ static void switch_sim_state_status(struct ofono_mod=
-em *modem, int status)
->>
->>   	switch (status) {
->>   	case 0:	/* SIM not inserted */
->> -		if (data->have_sim =3D=3D TRUE) {
->> +		if (data->have_sim =3D=3D TRUE&&  ofono_modem_get_online(modem)) {
->>   			ofono_sim_inserted_notify(data->sim, FALSE);
->>   			data->have_sim =3D FALSE;
->>   			data->sms_phonebook_added =3D FALSE;
->> @@ -233,6 +234,14 @@ static void switch_sim_state_status(struct ofono_mo=
-dem *modem, int status)
->>   		}
->>   		break;
->>   	case 3:	/* SIM inserted, SMS and phonebook ready */
->> +		/* It's possible that we arrive at QSS=3D3 state without
->> +		 * ever seeing QSS=3D2, so we need to make sure that we've
->> +		 * also done the QSS=3D2 work, as well
->> +		 */
->> +		if (data->have_sim =3D=3D FALSE) {
->> +			ofono_sim_inserted_notify(data->sim, TRUE);
->> +			data->have_sim =3D TRUE;
->> +		}
->>   		if (data->sms_phonebook_added =3D=3D FALSE) {
->>   			ofono_phonebook_create(modem, 0, "atmodem", data->chat);
->>   			ofono_sms_create(modem, 0, "atmodem", data->chat);
->
-> I don't remember how this made it upstream. The SMS and Phonebook atom
-> drivers should have vendor quirks to not register until the SIM is fully
-> ready. We do that for IFX for Phonebook and I was going to add another
-> one for IFX and SMS handling. Telit should do the same.
->
-> I am surprised adding atoms outside of pre_sim, post_sim and post_online
-> works as it should. Since that clearly has never been fully tested. And
-> is not our recommended way of adding atoms.
->
+Many devices retain previously defined PDP context parameters.  Now
+drivers can retrieve and store this information during probe and it is
+used as a fallback if normal provisioning fails.
+---
+ include/gprs.h |    3 +++
+ src/gprs.c     |   12 ++++++++++++
+ 2 files changed, 15 insertions(+), 0 deletions(-)
 
-There's no reason why it wouldn't.  Those call-backs are strong hints, =
+diff --git a/include/gprs.h b/include/gprs.h
+index 6c46d18..72ac0fa 100644
+--- a/include/gprs.h
++++ b/include/gprs.h
+@@ -30,6 +30,7 @@ extern "C" {
+ =
 
-however one can add atoms at any time.  For example, emulators do this =
+ struct ofono_gprs;
+ struct ofono_gprs_context;
++struct ofono_gprs_provision_data;
+ =
 
-at semi-random times.
+ typedef void (*ofono_gprs_status_cb_t)(const struct ofono_error *error,
+ 						int status, void *data);
+@@ -75,6 +76,8 @@ void *ofono_gprs_get_data(struct ofono_gprs *gprs);
+ =
 
-Regards,
--Denis
+ void ofono_gprs_set_cid_range(struct ofono_gprs *gprs,
+ 				unsigned int min, unsigned int max);
++void ofono_gprs_set_probed_ap(struct ofono_gprs *gprs,
++				struct ofono_gprs_provision_data *ap);
+ void ofono_gprs_add_context(struct ofono_gprs *gprs,
+ 				struct ofono_gprs_context *gc);
+ =
 
---===============2592729288675733760==--
+diff --git a/src/gprs.c b/src/gprs.c
+index e379f7b..5768642 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -96,6 +96,7 @@ struct ofono_gprs {
+ 	void *driver_data;
+ 	struct ofono_atom *atom;
+ 	unsigned int spn_watch;
++	struct ofono_gprs_provision_data *probed_ap;
+ };
+ =
+
+ struct ipv4_settings {
+@@ -2594,6 +2595,8 @@ static void gprs_unregister(struct ofono_atom *atom)
+ 		ofono_sim_remove_spn_watch(sim, &gprs->spn_watch);
+ 	}
+ =
+
++	g_free(gprs->probed_ap);
++
+ 	ofono_modem_remove_interface(modem,
+ 					OFONO_CONNECTION_MANAGER_INTERFACE);
+ 	g_dbus_unregister_interface(conn, path,
+@@ -3016,6 +3019,12 @@ static void ofono_gprs_finish_register(struct ofono_=
+gprs *gprs)
+ 	__ofono_atom_register(gprs->atom, gprs_unregister);
+ }
+ =
+
++void ofono_gprs_set_probed_ap(struct ofono_gprs *gprs,
++				struct ofono_gprs_provision_data *ap)
++{
++	gprs->probed_ap =3D ap;
++}
++
+ static void spn_read_cb(const char *spn, const char *dc, void *data)
+ {
+ 	struct ofono_gprs *gprs	=3D data;
+@@ -3027,6 +3036,9 @@ static void spn_read_cb(const char *spn, const char *=
+dc, void *data)
+ =
+
+ 	ofono_sim_remove_spn_watch(sim, &gprs->spn_watch);
+ =
+
++	if (gprs->contexts =3D=3D NULL && gprs->probed_ap !=3D NULL)
++		provision_context(gprs->probed_ap, gprs);
++
+ 	ofono_gprs_finish_register(gprs);
+ }
+ =
+
+-- =
+
+1.7.0.4
+
+--===============0891205231054496976==--
 
