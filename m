@@ -1,47 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============9146293662112227413=="
+Content-Type: multipart/mixed; boundary="===============4921254314561309767=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Telit HE910: CMER command problem
-Date: Tue, 04 Dec 2012 23:40:25 -0600
-Message-ID: <50BEDE49.7030601@gmail.com>
-In-Reply-To: <50C0B87E.2090702@southpole.se>
+Subject: Re: [PATCH 1/1] atmodem: remove pending idle callbacks at device
+ removal
+Date: Tue, 04 Dec 2012 23:49:48 -0600
+Message-ID: <50BEE07C.1070500@gmail.com>
+In-Reply-To: <1354635227-9344-1-git-send-email-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9146293662112227413==
+--===============4921254314561309767==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Mingli,
 
-On 12/06/2012 09:23 AM, Ming Li Wu wrote:
-> Hello,
+On 12/04/2012 09:33 AM, Jonas Bonn wrote:
+> From: Mingli Wu<mingli@southpole.se>
 >
-> I am using Telit HE910 modem,
->
-> After sending AT+CMER=3D3,0,0,2 I always got "sim card is busy".
->
-> The followoing is the part of log:
-> ofonod[446]: Aux: > AT+CMER=3D3,0,0,2\r
-> ofonod[446]: Aux: < \r\n+CME ERROR: 14\r\n
-> ofonod[446]: +CMER not supported by this modem. If this is an error
-> please submit patches to support this hardware
->
-> My question is :
-> How important is this command.?
-> I mean what the worst consequence will be if I just ignore this error
-> message,
+> If device probe and removal happen in short succession, it's possible
+> that the idle handler registered in the probe function doesn't run before
+> the device is removed.  In this case, the idle handler needs to be
+> unregistered so that it does not run and try to access the data that's
+> destroyed during the removal.
+> ---
+>   drivers/atmodem/call-barring.c    |    1 +
+>   drivers/atmodem/call-forwarding.c |    1 +
+>   drivers/atmodem/call-settings.c   |    1 +
+>   drivers/atmodem/sim-auth.c        |    1 +
+>   drivers/atmodem/sim.c             |    1 +
+>   drivers/atmodem/stk.c             |    1 +
+>   6 files changed, 6 insertions(+)
 >
 
-CMER is used to set the appropriate CIND mode.  For Telit this is mainly =
-
-used for signal strength reporting, so if this is not set correctly =
-
-there might be some side-effects in that area.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============9146293662112227413==--
+--===============4921254314561309767==--
 
