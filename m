@@ -1,116 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============2109329436442243487=="
+Content-Type: multipart/mixed; boundary="===============0743186745703628521=="
 MIME-Version: 1.0
-From: Forest Bond <forest@alittletooquiet.net>
-Subject: [PATCH 2/2] atmodem: Probe device for previous APN.
-Date: Wed, 05 Dec 2012 14:02:04 -0500
-Message-ID: <20121205190204.GB27739@alittletooquiet.net>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 2/2] atmodem: Probe device for previous APN.
+Date: Thu, 06 Dec 2012 00:12:26 +0100
+Message-ID: <1354749146.1815.11.camel@aeonflux>
+In-Reply-To: <20121205190204.GB27739@alittletooquiet.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2109329436442243487==
+--===============0743186745703628521==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Forest Bond <forest.bond@rapidrollout.com>
+Hi Forest,
 
-If the device has retained parameters for a previously defined IP
-context, is is probed via AT+CGDCONT?.
----
- drivers/atmodem/gprs.c |   55 ++++++++++++++++++++++++++++++++++++++++++++=
-++-
- 1 files changed, 53 insertions(+), 2 deletions(-)
+> If the device has retained parameters for a previously defined IP
+> context, is is probed via AT+CGDCONT?.
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index 3005867..280ca49 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -35,6 +35,7 @@
- #include <ofono/log.h>
- #include <ofono/modem.h>
- #include <ofono/gprs.h>
-+#include <ofono/gprs-provision.h>
- =
+this is really not a good idea. The AT+CGDCONT? settings are on a per
+device basis. That is not how oFono actually works. It operates on a per
+SIM card basis. And since you do not know to what SIM card these
+previous settings apply to, the only sensible thing to do is to ignore
+them.
 
- #include "gatchat.h"
- #include "gatresult.h"
-@@ -408,6 +409,56 @@ error:
- 	ofono_gprs_remove(gprs);
- }
- =
+You do know that oFono does keep its settings per SIM card persistent.
+So no matter what device you enter that SIM card into, the settings will
+be available the next time you try to connect. So it is a one time
+configuration option.
 
-+static void at_cgdcont_read_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
-+	GAtResultIter iter;
-+	gint cid;
-+	const char *pdp_type;
-+	const char *apn;
-+	struct ofono_gprs_provision_data *ap;
-+	gboolean found =3D FALSE;
-+
-+	if (!ok)
-+		goto done;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	while (!found && g_at_result_iter_next(&iter, "+CGDCONT:")) {
-+		if (!g_at_result_iter_next_number(&iter, &cid))
-+			continue;
-+
-+		if (!g_at_result_iter_next_string(&iter, &pdp_type))
-+			continue;
-+
-+		if (!g_at_result_iter_next_string(&iter, &apn))
-+			continue;
-+
-+		/* We look for IP PDPs */
-+		if (g_str_equal(pdp_type, "IP"))
-+			found =3D TRUE;
-+	}
-+
-+	if (found =3D=3D FALSE)
-+		goto done;
-+
-+	ap =3D g_try_new0(struct ofono_gprs_provision_data, 1);
-+	if (ap =3D=3D NULL)
-+		goto done;
-+
-+	ap->type =3D OFONO_GPRS_CONTEXT_TYPE_INTERNET;
-+	ap->proto =3D OFONO_GPRS_PROTO_IP;
-+	ap->apn =3D g_strdup(apn);
-+	ofono_info("Probed AP %s from device", apn);
-+	ofono_gprs_set_probed_ap(gprs, ap);
-+
-+done:
-+	g_at_chat_send(gd->chat, "AT+CGREG=3D?", cgreg_prefix,
-+			at_cgreg_test_cb, gprs, NULL);
-+}
-+
- static void at_cgdcont_test_cb(gboolean ok, GAtResult *result,
- 				gpointer user_data)
- {
-@@ -454,8 +505,8 @@ static void at_cgdcont_test_cb(gboolean ok, GAtResult *=
-result,
- =
+Regards
 
- 	ofono_gprs_set_cid_range(gprs, min, max);
- =
+Marcel
 
--	g_at_chat_send(gd->chat, "AT+CGREG=3D?", cgreg_prefix,
--			at_cgreg_test_cb, gprs, NULL);
-+	g_at_chat_send(gd->chat, "AT+CGDCONT?", cgdcont_prefix,
-+			at_cgdcont_read_cb, gprs, NULL);
- =
 
- 	return;
- =
 
--- =
-
-1.7.0.4
-
---===============2109329436442243487==--
+--===============0743186745703628521==--
 
