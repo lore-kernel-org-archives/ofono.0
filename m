@@ -1,54 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============1751686793578880488=="
+Content-Type: multipart/mixed; boundary="===============4056675033364057395=="
 MIME-Version: 1.0
-From: Christopher Vogl <christopher.vogl@hale.at>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 1/1] telit: stay 'online' until POST_SIM state reached
-Date: Mon, 10 Dec 2012 13:20:42 +0100
-Message-ID: <50C5D39A.3070007@hale.at>
-In-Reply-To: <50C1F5E8.2030803@gmail.com>
+Date: Mon, 10 Dec 2012 10:49:35 -0600
+Message-ID: <50C6129F.20006@gmail.com>
+In-Reply-To: <50C5BEDF.8040709@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1751686793578880488==
+--===============4056675033364057395==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Christopher,
+
+> I also tried the HE910 and had the same problem. In case a PIN is
+> required, the following solves the problem:
+>
+> In /drivers/atmodem/sim.c, at_qss_notify()
+> case 2: /* PIN unlocked */
+> has to be changed to
+> case 3: /* SIM INSERTED and READY */
+>
+>
+> After the PIN was entered, we wait until the modem states that the SIM
+> is ready, i.e. #QSS: 3.
+>
+>
+> I haven't found a proper way to do this in case there is no PIN required.
+> We should only get to "post sim state" if we received #QSS: 3
+>
+
+The current work around is to signal sim_inserted only when you know it =
+
+is ready.  This is less than ideal since oFono can read non-PIN =
+
+protected files from the SIM as soon as the SIM is inserted (e.g. ICCID, =
+
+EFpl, etc).  However, the modem behavior is quite strange in this area.
 
 >
-> I read the description of CFUN in that document and got lost rather =
+> Is it really unusual for a modem to deactivate the SIM in flight mode? I
+> had a look at some mobile phones and they seem to deactivate the SIM in
+> flight mode.
+>
 
-> quickly.  The bottom line is that oFono does not use any serial =
+I've not seen one that turns off the SIM.  After all, it would be pretty =
 
-> signaling, so all of these DTR and RTS conditions do not apply.  If =
+inconvenient not to read SMS messages or access contacts, or mess with =
 
-> the Telit modems do not support radio off with SIM on, then you need =
-
-> to structure the driver differently, most likely removing the 'online' =
-
-> method implementation would do what you want, and use only =
-
-> enable/disable.  In theory that should work putting the modem online =
-
-> as soon as the sim is in the ready state. =
-
-
-OFONO_SIM_STATE_READY is set in sim.c, sim_set_ready() when the IMSI was =
-
-obtained.
-What do you think about letting modems (plugins), which have a SIM state =
-
-notification, set that state on their own?
-
+MSISDN, or any other setting that is on the SIM.
 
 Regards,
+-Denis
 
-Christopher
-
-
---
-Scanned by MailScanner.
-
-
---===============1751686793578880488==--
+--===============4056675033364057395==--
 
