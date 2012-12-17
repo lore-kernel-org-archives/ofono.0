@@ -1,61 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============9144720780434342516=="
+Content-Type: multipart/mixed; boundary="===============5043445113596817109=="
 MIME-Version: 1.0
-From: Christopher Vogl <christopher.vogl@hale.at>
-Subject: [PATCH] telit: set baud rate to 115200
-Date: Mon, 17 Dec 2012 11:15:57 +0100
-Message-ID: <1355739357-24794-1-git-send-email-christopher.vogl@hale.at>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: Re: [PATCH v0 1/4] bluetooth: Fix reading Bluetooth Adapters
+Date: Mon, 17 Dec 2012 11:25:30 -0300
+Message-ID: <CAKT1EBf2L0DK3qEW7mX7Z52i2j4Y=rokVsMNzJ_CmiQTXL3pXA@mail.gmail.com>
+In-Reply-To: <1353413539-19693-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9144720780434342516==
+--===============5043445113596817109==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Telit HE910 needs the baud rate to be set.
----
- plugins/telit.c |    9 ++++++++-
- 1 files changed, 8 insertions(+), 1 deletions(-)
+Hi Marcel:
 
-diff --git a/plugins/telit.c b/plugins/telit.c
-index fe2ccd6..64f763a 100644
---- a/plugins/telit.c
-+++ b/plugins/telit.c
-@@ -186,6 +186,7 @@ static GAtChat *open_device(struct ofono_modem *modem,
- 	GAtSyntax *syntax;
- 	GIOChannel *channel;
- 	GAtChat *chat;
-+	GHashTable *options;
- =
+On Tue, Nov 20, 2012 at 9:12 AM, Claudio Takahasi
+<claudio.takahasi@openbossa.org> wrote:
+> This patch replaces GetProperties method by the Get method of the
+> object manager to read the available Bluetooth adapters.
+> ---
+>  plugins/bluetooth.c | 30 ++++++++++++++++++++++--------
+>  plugins/bluetooth.h |  2 ++
+>  2 files changed, 24 insertions(+), 8 deletions(-)
 
- 	device =3D ofono_modem_get_string(modem, key);
- 	if (device =3D=3D NULL)
-@@ -193,7 +194,13 @@ static GAtChat *open_device(struct ofono_modem *modem,
- =
+Please ignore this patch series.
 
- 	DBG("%s %s", key, device);
- =
+As discussed in the IRC, we will split the Bluetooth/HFP plugins to
+keep the compatibility with BlueZ 4 and BlueZ 5. I will send a new
+patch series as soon as possible.
 
--	channel =3D g_at_tty_open(device, NULL);
-+	options =3D g_hash_table_new(g_str_hash, g_str_equal);
-+	if (options =3D=3D NULL)
-+		return NULL;
-+
-+	g_hash_table_insert(options, "Baud", "115200");
-+
-+	channel =3D g_at_tty_open(device, options);
- 	if (channel =3D=3D NULL)
- 		return NULL;
- =
+Regards,
+Claudio.
 
--- =
-
-1.7.7.6
-
-
---
-Scanned by MailScanner.
-
-
---===============9144720780434342516==--
+--===============5043445113596817109==--
 
