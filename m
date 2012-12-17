@@ -1,65 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============1074748665689551318=="
+Content-Type: multipart/mixed; boundary="===============5604525627476575451=="
 MIME-Version: 1.0
-From: Christopher Vogl <christopher.vogl@hale.at>
-Subject: [PATCH] telit: set baud rate to 115200
-Date: Mon, 17 Dec 2012 17:07:51 +0100
-Message-ID: <1355760471-530-1-git-send-email-christopher.vogl@hale.at>
-In-Reply-To: <50CF3AF1.2060003@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] telit: signal sim inserted when sim ready.
+Date: Mon, 17 Dec 2012 10:17:00 -0600
+Message-ID: <50CF457C.5030201@gmail.com>
+In-Reply-To: <50CF434D.6060305@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1074748665689551318==
+--===============5604525627476575451==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Telit HE910 needs the baud rate to be set.
----
- plugins/telit.c |   12 +++++++++++-
- 1 files changed, 11 insertions(+), 1 deletions(-)
+Hi Christopher,
 
-diff --git a/plugins/telit.c b/plugins/telit.c
-index fe2ccd6..79bc421 100644
---- a/plugins/telit.c
-+++ b/plugins/telit.c
-@@ -186,6 +186,7 @@ static GAtChat *open_device(struct ofono_modem *modem,
- 	GAtSyntax *syntax;
- 	GIOChannel *channel;
- 	GAtChat *chat;
-+	GHashTable *options;
- =
+> I also realised that we only get #QSS: 1 iff a PIN is required, i.e. the
+> modem firmware is doing the +CPIN query implicitly for us.
+> If there is no PIN required we always get #QSS: 2 (SIM UNLOCKED) instead
+> of #QSS: 1.
+> Better leave the PIN querying or would you remove it?
 
- 	device =3D ofono_modem_get_string(modem, key);
- 	if (device =3D=3D NULL)
-@@ -193,7 +194,16 @@ static GAtChat *open_device(struct ofono_modem *modem,
- =
+If this behavior is consistent, then just get rid of CPIN query.  We can =
 
- 	DBG("%s %s", key, device);
- =
+always add it back later if we really need it.
 
--	channel =3D g_at_tty_open(device, NULL);
-+	options =3D g_hash_table_new(g_str_hash, g_str_equal);
-+	if (options =3D=3D NULL)
-+		return NULL;
-+
-+	g_hash_table_insert(options, "Baud", "115200");
-+
-+	channel =3D g_at_tty_open(device, options);
-+
-+	g_hash_table_destroy(options);
-+
- 	if (channel =3D=3D NULL)
- 		return NULL;
- =
+Regards,
+-Denis
 
--- =
-
-1.7.7.6
-
-
---
-Scanned by MailScanner.
-
-
---===============1074748665689551318==--
+--===============5604525627476575451==--
 
