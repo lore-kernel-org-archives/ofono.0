@@ -1,54 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============4562370547375982523=="
+Content-Type: multipart/mixed; boundary="===============5724938601876664903=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: Re: [PATCH v0 00/14] External HFP Profile
-Date: Mon, 17 Dec 2012 11:28:21 -0300
-Message-ID: <CAKT1EBf_EnD+TNp-q_sBMo3DQcNf0=jKAU=fB7w9ihjPWPZhug@mail.gmail.com>
-In-Reply-To: <1354540315-27731-1-git-send-email-claudio.takahasi@openbossa.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] telit: set baud rate to 115200
+Date: Mon, 17 Dec 2012 09:32:01 -0600
+Message-ID: <50CF3AF1.2060003@gmail.com>
+In-Reply-To: <1355739357-24794-1-git-send-email-christopher.vogl@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4562370547375982523==
+--===============5724938601876664903==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel:
+Hi Christopher,
 
-On Mon, Dec 3, 2012 at 10:11 AM, Claudio Takahasi
-<claudio.takahasi@openbossa.org> wrote:
-> BlueZ supports now external profile registration, see:
-> bluez/doc/profile-api.txt
+On 12/17/2012 04:15 AM, Christopher Vogl wrote:
+> Telit HE910 needs the baud rate to be set.
+> ---
+>   plugins/telit.c |    9 ++++++++-
+>   1 files changed, 8 insertions(+), 1 deletions(-)
 >
-> This patch series has the initial implementation of the HFP external
-> profile in oFono. HandsfreeAgent and HandsfreeGateway interfaces were
-> removed from BlueZ.
+> diff --git a/plugins/telit.c b/plugins/telit.c
+> index fe2ccd6..64f763a 100644
+> --- a/plugins/telit.c
+> +++ b/plugins/telit.c
+> @@ -186,6 +186,7 @@ static GAtChat *open_device(struct ofono_modem *modem,
+>   	GAtSyntax *syntax;
+>   	GIOChannel *channel;
+>   	GAtChat *chat;
+> +	GHashTable *options;
 >
-> Modem are being registered dinamically when the new connection is
-> notified instead of registering the modem when the Bluetooth device
-> is created/probed.
+>   	device =3D ofono_modem_get_string(modem, key);
+>   	if (device =3D=3D NULL)
+> @@ -193,7 +194,13 @@ static GAtChat *open_device(struct ofono_modem *mode=
+m,
 >
-> * Needs to be applied after "[PATCH v0 1/4] bluetooth: Fix reading
-> Bluetooth Adapters" series
+>   	DBG("%s %s", key, device);
 >
-> Changes from RFC v1:
-> - Remove optional RequireAuthorization & RequireAuthentication to
->   Register HFP profile.
->
-> Next actions:
->  - Implement MediaTransport
->  - MediaEndpoint set configuration
->
-> Development branch:
-> git://git.infradead.org/users/cktakahasi/ofono.git hfp
+> -	channel =3D g_at_tty_open(device, NULL);
+> +	options =3D g_hash_table_new(g_str_hash, g_str_equal);
+> +	if (options =3D=3D NULL)
+> +		return NULL;
+> +
+> +	g_hash_table_insert(options, "Baud", "115200");
+> +
+> +	channel =3D g_at_tty_open(device, options);
 
-Ignore this patch series also.
+Are you leaking the hash table object here?
 
-As discussed in the IRC, we will split the Bluetooth/HFP plugins to
-keep the compatibility with BlueZ 4 and BlueZ 5.
+>   	if (channel =3D=3D NULL)
+>   		return NULL;
+>
 
 Regards,
-Claudio.
+-Denis
 
---===============4562370547375982523==--
+--===============5724938601876664903==--
 
