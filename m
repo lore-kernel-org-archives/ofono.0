@@ -1,32 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============8343187129498571192=="
+Content-Type: multipart/mixed; boundary="===============1587898022594701113=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] telit: set baud rate to 115200
-Date: Mon, 17 Dec 2012 10:18:30 -0600
-Message-ID: <50CF45D6.4050302@gmail.com>
-In-Reply-To: <1355760471-530-1-git-send-email-christopher.vogl@hale.at>
+From: Mingli Wu <mingli@southpole.se>
+Subject: [PATCH 0/3] Telit HE910
+Date: Mon, 17 Dec 2012 17:22:15 +0100
+Message-ID: <1355761338-9081-1-git-send-email-mingli@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8343187129498571192==
+--===============1587898022594701113==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Christopher,
 
-On 12/17/2012 10:07 AM, Christopher Vogl wrote:
-> Telit HE910 needs the baud rate to be set.
-> ---
->   plugins/telit.c |   12 +++++++++++-
->   1 files changed, 11 insertions(+), 1 deletions(-)
->
+I've been working on the Telit HE910 modem too, as I see from
+the mailing list that you have been.
 
-Patch has been applied, thanks.
+Allow me to send a coule of patches that I have in progress and
+that are needed for things to work.  Could you take a look at
+these and possibily incorporate them into ofono in a way that's
+acceptable to upstream?
 
-Regards,
--Denis
+The first patch in the series is similar to what you sent to
+the mailing list today but sets more options... I can't recall
+if setting only baud rate was insufficient, right now, so I'll
+just send the entire patch.
+
+Thanks,
+Mingli Wu
+
+Mingli Wu (3):
+  Support Telit cdc acm device
+  Drop checking whether +CMER is supported.
+  Delay 10 seconds between CFUN=3D4 and CFUN=3D1
+
+ drivers/atmodem/network-registration.c |    2 -
+ include/modem.h                        |    3 +
+ plugins/telit.c                        |  101 ++++++++++++++++++++++++++++=
++++-
+ plugins/udevng.c                       |   30 +++++++++-
+ src/modem.c                            |   11 ++++
+ 5 files changed, 143 insertions(+), 4 deletions(-)
+
+-- =
+
+1.7.9.5
 
 
---===============8343187129498571192==--
+--===============1587898022594701113==--
 
