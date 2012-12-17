@@ -1,31 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============3051892324444984035=="
+Content-Type: multipart/mixed; boundary="===============0050312354838665301=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim: return from cpin when sim ready for telit
-Date: Mon, 17 Dec 2012 09:51:12 -0600
-Message-ID: <50CF3F70.7040700@gmail.com>
-In-Reply-To: <1355494782-31572-1-git-send-email-christopher.vogl@hale.at>
+Subject: Re: [PATCH] atutil: Remove unused macro
+Date: Mon, 17 Dec 2012 09:51:31 -0600
+Message-ID: <50CF3F83.2050409@gmail.com>
+In-Reply-To: <1355135839-27306-1-git-send-email-wagi@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3051892324444984035==
+--===============0050312354838665301==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christopher,
+Hi Daniel,
 
-On 12/14/2012 08:19 AM, christopher.vogl(a)hale.at wrote:
-> From: Christopher Vogl<christopher.vogl@hale.at>
+On 12/10/2012 04:37 AM, Daniel Wagner wrote:
+> From: Daniel Wagner<daniel.wagner@bmw-carit.de>
 >
-> Especially for Telit HE910 it is not enough to wait for
-> entering a PIN code.
-> If we do not wait for #QSS: 3, subsequent commands,
-> like +CMER will report SIM BUSY and the network registration
-> atom will be removed as a consequence.
+> With commit 6ee21a3fc18460cc12dbddb3b7ec70e941fa4bbc
+> the usage DECLARE_FAILURE was removed.
 > ---
->   drivers/atmodem/sim.c |    2 +-
->   1 files changed, 1 insertions(+), 1 deletions(-)
+>   drivers/atmodem/atutil.h | 5 -----
+>   1 file changed, 5 deletions(-)
 >
 
 Patch has been applied, thanks.
@@ -33,5 +30,6 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============3051892324444984035==--
+
+--===============0050312354838665301==--
 
