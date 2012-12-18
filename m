@@ -1,59 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============4030541559907088586=="
+Content-Type: multipart/mixed; boundary="===============2596736631544640382=="
 MIME-Version: 1.0
-From: Ming Li Wu <mingli@southpole.se>
-Subject: Re: [PATCH 1/3] Support Telit cdc acm device
-Date: Mon, 17 Dec 2012 19:39:40 +0100
-Message-ID: <50CF66EC.7030408@southpole.se>
-In-Reply-To: <50CF4992.4080209@gmail.com>
+From: Christopher Vogl <christopher.vogl@hale.at>
+Subject: [PATCH] udevng: support telit modems using cdc-acm driver
+Date: Tue, 18 Dec 2012 09:32:39 +0100
+Message-ID: <1355819559-7956-1-git-send-email-christopher.vogl@hale.at>
+In-Reply-To: <50CF3CB1.9070401@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4030541559907088586==
+--===============2596736631544640382==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
->> +    /* This is for Telit HE910. */
->> +    if(udevng_match_modem_id(modem, "1bc7", "0021")){
->> +        options =3D g_hash_table_new(g_str_hash, g_str_equal);
->> +
->> +        if (options =3D=3D NULL)
->> +            return NULL;
->> +
->> +        g_hash_table_insert(options, "Baud", "115200");
->> +        g_hash_table_insert(options, "Parity", "none");
->> +        g_hash_table_insert(options, "StopBits", "1");
->> +        g_hash_table_insert(options, "DataBits", "8");
->> +        g_hash_table_insert(options, "XonXoff", "off");
->> +        g_hash_table_insert(options, "Local", "on");
->> +        g_hash_table_insert(options, "RtsCts", "on");
->> +    }
->> +
->> +    channel =3D g_at_tty_open(device, options);
->> +    if(options){
->> +        g_hash_table_destroy(options);
->> +    }
->> +
->
-> This was already taken care of by the patch from Christopher that was =
+Add support for Telit modem using the cdc-acm driver, like the Telit
+HE910.
+---
+ plugins/udevng.c |   11 ++++++++++-
+ 1 files changed, 10 insertions(+), 1 deletions(-)
 
-> applied today.
->
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index afb02ca..16515e3 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -619,6 +619,13 @@ static gboolean setup_telit(struct modem_info *modem)
+ 				gps =3D info->devnode;
+ 			else if (g_strcmp0(info->number, "03") =3D=3D 0)
+ 				aux =3D info->devnode;
++		} else if (g_strcmp0(info->interface, "2/2/1") =3D=3D 0) {
++			if (g_strcmp0(info->number, "00") =3D=3D 0)
++				mdm =3D info->devnode;
++			else if (g_strcmp0(info->number, "02") =3D=3D 0)
++				diag =3D info->devnode;
++			else if (g_strcmp0(info->number, "06") =3D=3D 0)
++				aux =3D info->devnode;
+ 		}
+ 	}
+ =
 
-I have two questions about settings of serial ports:
+@@ -630,6 +637,7 @@ static gboolean setup_telit(struct modem_info *modem)
+ 	ofono_modem_set_string(modem->modem, "Modem", mdm);
+ 	ofono_modem_set_string(modem->modem, "Aux", aux);
+ 	ofono_modem_set_string(modem->modem, "GPS", gps);
++	ofono_modem_set_string(modem->modem, "Diag", diag);
+ =
 
-1. Are the following settings necessary?
-         g_hash_table_insert(options, "XonXoff", "off");
-         g_hash_table_insert(options, "Local", "on");
-         g_hash_table_insert(options, "RtsCts", "on");
+ 	return TRUE;
+ }
+@@ -777,7 +785,7 @@ static struct {
+ 	{ "alcatel",	setup_alcatel	},
+ 	{ "novatel",	setup_novatel	},
+ 	{ "nokia",	setup_nokia	},
+-	{ "telit",	setup_telit	},
++	{ "telit",	setup_telit,	"device/interface"	},
+ 	{ "simcom",	setup_simcom	},
+ 	{ "zte",	setup_zte	},
+ 	{ "icera",	setup_icera	},
+@@ -987,6 +995,7 @@ static struct {
+ 	{ "zte",	"option",	"19d2"		},
+ 	{ "simcom",	"option",	"05c6", "9000"	},
+ 	{ "telit",	"usbserial",	"1bc7"		},
++	{ "telit",	"cdc_acm",	"1bc7"		},
+ 	{ "telit",	"option",	"1bc7"		},
+ 	{ "nokia",	"option",	"0421", "060e"	},
+ 	{ "nokia",	"option",	"0421", "0623"	},
+-- =
 
-2.Should settings of modem port and aux port be different?
+1.7.7.6
 
 
-Thanks!
+--
+Scanned by MailScanner.
 
-Mingli
 
---===============4030541559907088586==--
+--===============2596736631544640382==--
 
