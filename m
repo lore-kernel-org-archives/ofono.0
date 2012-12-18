@@ -1,38 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============0828584301304579350=="
+Content-Type: multipart/mixed; boundary="===============2125467641479742676=="
 MIME-Version: 1.0
-From: Christopher Vogl <christopher.vogl@hale.at>
-Subject: Re: [PATCH 2/3] Drop checking whether +CMER is supported.
-Date: Tue, 18 Dec 2012 11:08:14 +0100
-Message-ID: <50D0408E.40100@hale.at>
-In-Reply-To: <1355761338-9081-3-git-send-email-mingli@southpole.se>
+From: Mingli Wu <mingli@southpole.se>
+Subject: [PATCH] Add a timer for CPIN callback
+Date: Tue, 18 Dec 2012 18:14:30 +0100
+Message-ID: <1355850871-28886-1-git-send-email-mingli@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0828584301304579350==
+--===============2125467641479742676==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 17/12/12 17:22, Mingli Wu wrote:
-> For Telit HE910,  ofono always got "\r\n+CME ERROR: 14\r\n"
-> after issuing "AT+CMER=3D3,0,0,2\r" command. "CME ERROR: 14"
-> means that SIM is busy. Now we igonre the result of the
-> command "AT+CMER=3D3,0,0,2\r", and register network anyway.
-> ---
+Hi Christopher,
 
-I submitted some patches which will solve this problem.
-You should not get CME ERROR: 14 anymore and hence
-the netreg atom will not be removed.
-There is not need to make changes in the network registration atom.
-Telit supports +CMER but without waiting for the modem to be ready
-the command will fail.
+I tested your patch:
+"telit: signal sim inserted when sim ready"
 
-Regards,
-Christopher
+It did not work with some sim cards which do not support
+SMS. After "AT+CPIN?" was sent, ofono could not get QSS 2
+or QSS 3.
 
---
-Scanned by MailScanner.
+I made a patch for this problem, and please help me check if
+this solution is reasonable.
+
+Thanks.
+
+Mingli Wu
+
+Mingli Wu (1):
+  Add a timer for CPIN callback
+
+ plugins/telit.c |   49 ++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 48 insertions(+), 1 deletion(-)
+
+-- =
+
+1.7.9.5
 
 
---===============0828584301304579350==--
+--===============2125467641479742676==--
 
