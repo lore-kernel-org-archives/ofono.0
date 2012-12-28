@@ -1,82 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============5445388417459327597=="
+Content-Type: multipart/mixed; boundary="===============8177265434116673484=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: [ANNOUNCE] oFono v1.12 and GCF USAT testing status
-Date: Thu, 20 Dec 2012 01:38:52 +0000
-Message-ID: <449511B60B07F243AAB9127EA4776CD01C1BDC@SHSMSX101.ccr.corp.intel.com>
-In-Reply-To: <50D251E4.8080307@gmail.com>
+From: Forest Bond <forest@alittletooquiet.net>
+Subject: [PATCH 0/8] Sierra Wireless CDMA modem support
+Date: Fri, 28 Dec 2012 14:31:41 -0500
+Message-ID: <20121228193141.GF18339@alittletooquiet.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5445388417459327597==
+--===============8177265434116673484==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+From: Forest Bond <forest.bond@rapidrollout.com>
 
-> -----Original Message-----
-> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beh=
-alf
-> Of Denis Kenzior
-> Sent: Thursday, December 20, 2012 7:47 AM
-> To: ofono(a)ofono.org
-> Subject: [ANNOUNCE] oFono v1.12 and GCF USAT testing status
-> =
+This series adds support for Sierra Wireless CDMA modems.  Tested with
+the MC5728V on the Sprint CDMA network.
 
-> Hi Everyone,
-> =
+Forest Bond (8):
+  sierramodem: Add skeleton for Sierra Wireless modem driver
+  sierramodem: Add skeleton cdma netreg driver
+  sierramodem: Add ERI parsing functions
+  sierramodem: Report network registration status
+  sierra: Create GPRS context in post_sim function
+  sierra: Initialize GSM error reporting separately
+  sierra: Support CDMA modems
+  udevng: Support single-interface sierra devices
 
-> Our long standing task is to get oFono ready to pass GCF/PTCRB certificat=
-ion.
-> One of the key areas of these certifications is USIM Application Toolkit =
-(USAT).  In
-> late November we took oFono to a GCF/PTCRB certified test laboratory to p=
-erform
-> a baseline test run to understand how ready the oFono USAT implementation=
- is.
-> We are happy to report that we have obtained an outstanding result.
-> =
+ Makefile.am                       |    8 +
+ drivers/sierramodem/cdma-netreg.c |  385 +++++++++++++++++++++++++++++++++=
+++++
+ drivers/sierramodem/eri.c         |  282 +++++++++++++++++++++++++++
+ drivers/sierramodem/eri.h         |   23 +++
+ drivers/sierramodem/sierramodem.c |   50 +++++
+ drivers/sierramodem/sierramodem.h |   26 +++
+ plugins/sierra.c                  |  117 +++++++++---
+ plugins/udevng.c                  |   43 ++++-
+ 8 files changed, 900 insertions(+), 34 deletions(-)
+ create mode 100644 drivers/sierramodem/cdma-netreg.c
+ create mode 100644 drivers/sierramodem/eri.c
+ create mode 100644 drivers/sierramodem/eri.h
+ create mode 100644 drivers/sierramodem/sierramodem.c
+ create mode 100644 drivers/sierramodem/sierramodem.h
 
-> The process took about a week and a half, during which time we ran a tota=
-l of 248
-> test cases.  Not everything went smoothly, as is always the case.  We fou=
-nd
-> several bugs and fixed them in real-time in the lab.
-> Surprisingly, most were quite minor.  In the end we were able to pass all=
- but 2 test
-> cases.  This is a pass rate of 99.2%.  If you are interested in the detai=
-led test
-> report, the distilled version can be found in the oFono git repository un=
-der
-> doc/usat-certification-status.txt.  Here is a direct link:
-> http://git.kernel.org/?p=3Dnetwork/ofono/ofono.git;a=3Dblob;f=3Ddoc/usat-=
-certification-stat
-> us.txt;hb=3DHEAD
-> =
+-- =
 
-> The recently released oFono 1.12 incorporates all of the fixes from our t=
-est lab visit
-> as well as several other improvements.  We believe that this is a signifi=
-cant
-> accomplishment, and wish to send big Kudos to everyone involved, in parti=
-cular:
-> Andrzej Zaborowski, Yang Gu, Jeevaka Badrappan, Marcel Holtmann, Kristen
-> Carlson Accardi and Philippe Nunes.
-> =
+Forest Bond
+http://www.alittletooquiet.net
+http://www.rapidrollout.com
 
-> To everyone involved with the project: Thank you guys and Happy New Year!=
-!!
-
-It's really a good news for this morning, and actually I've been waiting fo=
-r this for a long time:) This called some memory that you and Marcel had a =
-very good design of framework on USAT and Andrew did everything very quickl=
-y. =
-
-
-
-Regards,
--Yang
-
---===============5445388417459327597==--
+--===============8177265434116673484==--
 
