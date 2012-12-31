@@ -1,39 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============4179923658028196691=="
+Content-Type: multipart/mixed; boundary="===============5696033317026112584=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 7/8] sierra: Support CDMA modems
-Date: Sun, 30 Dec 2012 20:34:29 -0600
-Message-ID: <50E0F9B5.20906@gmail.com>
-In-Reply-To: <20121228193613.GM18339@alittletooquiet.net>
+Subject: Re: [PATCH 5/8] sierra: Create GPRS context in post_sim function
+Date: Sun, 30 Dec 2012 20:39:37 -0600
+Message-ID: <50E0FAE9.1030204@gmail.com>
+In-Reply-To: <20121228193546.GK18339@alittletooquiet.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4179923658028196691==
+--===============5696033317026112584==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Forest,
 
-> -	ofono_netreg_create(modem, 0, "atmodem", data->modem);
-> +	if (data->have_gsm =3D=3D TRUE) {
-> +		ofono_netreg_create(modem, 0, "atmodem", data->modem);
-> +	} else if (data->have_cdma =3D=3D TRUE) {
-> +		/*
-> +		 * Once we have CnS protocol support, we should be able to do
-> +		 * netreg that way instead of using the same port for both.
-> +		 */
-> +		ofono_cdma_netreg_create(modem, 0, "sierramodem", data->modem);
-> +		ofono_cdma_connman_create(modem, OFONO_VENDOR_SIERRA,
-> +						"cdmamodem", data->modem);
-> +	}
+On 12/28/2012 01:35 PM, Forest Bond wrote:
+> From: Forest Bond<forest.bond@rapidrollout.com>
+>
+> This matches the huawei plugin.
+> ---
+>   plugins/sierra.c |   16 ++++++++--------
+>   1 files changed, 8 insertions(+), 8 deletions(-)
+>
 
-Ah I see what you're doing now.  This is really not going to work too =
-
-well if you have just one AT port available...
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============4179923658028196691==--
+--===============5696033317026112584==--
 
