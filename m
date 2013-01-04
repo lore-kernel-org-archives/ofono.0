@@ -1,33 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============2985351863676264896=="
+Content-Type: multipart/mixed; boundary="===============4073797585874963813=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 6/8] sierra: Initialize GSM error reporting separately
-Date: Sun, 30 Dec 2012 20:40:01 -0600
-Message-ID: <50E0FB01.1030202@gmail.com>
-In-Reply-To: <20121228193600.GL18339@alittletooquiet.net>
+From: Khem Raj <raj.khem@gmail.com>
+Subject: [PATCH] src/storage.h: include unistd.h
+Date: Fri, 04 Jan 2013 10:21:44 -0800
+Message-ID: <1357323704-2610-1-git-send-email-raj.khem@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2985351863676264896==
+--===============4073797585874963813==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Forest,
+ssize_t is otherwise reported as undefined when compiling ofono
+with glibc 2.17
 
-On 12/28/2012 01:36 PM, Forest Bond wrote:
-> From: Forest Bond<forest.bond@rapidrollout.com>
->
-> ---
->   plugins/sierra.c |    5 +++--
->   1 files changed, 3 insertions(+), 2 deletions(-)
->
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ src/storage.h |    1 +
+ 1 file changed, 1 insertion(+)
 
-Patch has been applied, thanks.
+diff --git a/src/storage.h b/src/storage.h
+index c455bae..dbb51bc 100644
+--- a/src/storage.h
++++ b/src/storage.h
+@@ -26,6 +26,7 @@
+ #endif
+ =
 
-Regards,
--Denis
+ #include <fcntl.h>
++#include <unistd.h>
+ =
+
+ int create_dirs(const char *filename, const mode_t mode);
+ =
+
+-- =
+
+1.7.9.5
 
 
---===============2985351863676264896==--
+--===============4073797585874963813==--
 
