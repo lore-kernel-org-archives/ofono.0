@@ -1,41 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============5258083455654158535=="
+Content-Type: multipart/mixed; boundary="===============6117614195928485489=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH mmsd 1/3] README: add information about mailing list
-Date: Thu, 10 Jan 2013 13:11:09 -0200
-Message-ID: <1357830671-10783-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH mmsd 2/3] build: Do not use deprecated AM_CONFIG_HEADER
+Date: Thu, 10 Jan 2013 13:11:10 -0200
+Message-ID: <1357830671-10783-2-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1357830671-10783-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5258083455654158535==
+--===============6117614195928485489==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+The long-obsoleted AM_CONFIG_HEADER macro was removed in automake 1.13.
+Use AC_CONFIG_HEADERS instead.
 ---
- README | 6 ++++++
- 1 file changed, 6 insertions(+)
+ configure.ac | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/README b/README
-index e33be69..fdfeafb 100644
---- a/README
-+++ b/README
-@@ -19,3 +19,9 @@ Configure automatically searches for all required compone=
-nts and packages.
+diff --git a/configure.ac b/configure.ac
+index 6b5e1b1..dd8e93a 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -2,7 +2,7 @@ AC_PREREQ(2.60)
+ AC_INIT(mmsd, 0.0)
  =
 
- To compile and install run:
- 	make && make install
-+
-+Information
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+Mailing list:
-+	ofono(a)ofono.org
+ AM_INIT_AUTOMAKE([foreign subdir-objects color-tests])
+-AM_CONFIG_HEADER(config.h)
++AC_CONFIG_HEADERS(config.h)
+ =
+
+ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+ =
+
 -- =
 
 1.8.1
 
 
---===============5258083455654158535==--
+--===============6117614195928485489==--
 
