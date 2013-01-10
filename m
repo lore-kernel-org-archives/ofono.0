@@ -1,165 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============4123840121384160100=="
+Content-Type: multipart/mixed; boundary="===============5258083455654158535=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 6/6] hfp_hf: Add BlueZ Profile handler
-Date: Thu, 10 Jan 2013 11:44:49 -0300
-Message-ID: <1357829089-16029-7-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1357829089-16029-1-git-send-email-claudio.takahasi@openbossa.org>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH mmsd 1/3] README: add information about mailing list
+Date: Thu, 10 Jan 2013 13:11:09 -0200
+Message-ID: <1357830671-10783-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4123840121384160100==
+--===============5258083455654158535==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch declares the external HFP Profile handler. It contains the
-initial implementation of the D-Bus Profile1 interface and methods
-responsible for handling Bluetooth connections.
 ---
- plugins/bluez5.h        |  2 ++
- plugins/hfp_hf_bluez5.c | 74 +++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 2 files changed, 75 insertions(+), 1 deletion(-)
+ README | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/plugins/bluez5.h b/plugins/bluez5.h
-index e403b85..e832791 100644
---- a/plugins/bluez5.h
-+++ b/plugins/bluez5.h
-@@ -20,6 +20,8 @@
-  */
+diff --git a/README b/README
+index e33be69..fdfeafb 100644
+--- a/README
++++ b/README
+@@ -19,3 +19,9 @@ Configure automatically searches for all required compone=
+nts and packages.
  =
 
- #define	BLUEZ_SERVICE "org.bluez"
-+#define BLUEZ_PROFILE_INTERFACE		BLUEZ_SERVICE ".Profile1"
-+#define BLUEZ_ERROR_INTERFACE		BLUEZ_SERVICE ".Error"
- =
-
- #define HFP_HS_UUID	"0000111e-0000-1000-8000-00805f9b34fb"
- =
-
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index ff70481..0a63f14 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -26,6 +26,8 @@
- #include <errno.h>
- #include <glib.h>
- =
-
-+#include <gdbus.h>
+ To compile and install run:
+ 	make && make install
 +
- #define OFONO_API_SUBJECT_TO_CHANGE
- #include <ofono/modem.h>
- #include <ofono/dbus.h>
-@@ -88,6 +90,59 @@ static struct ofono_modem_driver hfp_driver =3D {
- 	.post_sim	=3D hfp_post_sim,
- };
- =
-
-+static DBusMessage *profile_new_connection(DBusConnection *conn,
-+					DBusMessage *msg, void *user_data)
-+{
-+	DBG("Profile handler NewConnection");
++Information
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 +
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
-+					".NotImplemented",
-+					"Implementation not provided");
-+}
-+
-+static DBusMessage *profile_release(DBusConnection *conn,
-+					DBusMessage *msg, void *user_data)
-+{
-+	DBG("Profile handler Release");
-+
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
-+						".NotImplemented",
-+						"Implementation not provided");
-+}
-+
-+static DBusMessage *profile_cancel(DBusConnection *conn,
-+					DBusMessage *msg, void *user_data)
-+{
-+	DBG("Profile handler Cancel");
-+
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
-+					".NotImplemented",
-+					"Implementation not provided");
-+}
-+
-+static DBusMessage *profile_disconnection(DBusConnection *conn,
-+					DBusMessage *msg, void *user_data)
-+{
-+	DBG("Profile handler RequestDisconnection");
-+
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
-+					".NotImplemented",
-+					"Implementation not provided");
-+}
-+
-+static const GDBusMethodTable profile_methods[] =3D {
-+	{ GDBUS_ASYNC_METHOD("NewConnection",
-+				GDBUS_ARGS({ "device", "o"}, { "fd", "h"},
-+						{ "fd_properties", "a{sv}" }),
-+				NULL, profile_new_connection) },
-+	{ GDBUS_METHOD("Release", NULL, NULL, profile_release) },
-+	{ GDBUS_METHOD("Cancel", NULL, NULL, profile_cancel) },
-+	{ GDBUS_METHOD("RequestDisconnection",
-+				GDBUS_ARGS({"device", "o"}), NULL,
-+				profile_disconnection) },
-+	{ }
-+};
-+
- static int hfp_init(void)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
-@@ -96,13 +151,28 @@ static int hfp_init(void)
- 	if (DBUS_TYPE_UNIX_FD < 0)
- 		return -EBADF;
- =
-
-+	/* Registers External Profile handler */
-+	if (!g_dbus_register_interface(conn, HFP_EXT_PROFILE_PATH,
-+					BLUEZ_PROFILE_INTERFACE,
-+					profile_methods, NULL,
-+					NULL, NULL, NULL)) {
-+		ofono_error("Register Profile interface failed: %s",
-+						HFP_EXT_PROFILE_PATH);
-+		return -EIO;
-+	}
-+
- 	err =3D ofono_modem_driver_register(&hfp_driver);
--	if (err < 0)
-+	if (err < 0) {
-+		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
-+						BLUEZ_PROFILE_INTERFACE);
- 		return err;
-+	}
- =
-
- 	err =3D bluetooth_register_profile(conn, HFP_HS_UUID, "hfp_hf",
- 						HFP_EXT_PROFILE_PATH);
- 	if (err < 0) {
-+		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
-+						BLUEZ_PROFILE_INTERFACE);
- 		ofono_modem_driver_unregister(&hfp_driver);
- 		return err;
- 	}
-@@ -115,6 +185,8 @@ static void hfp_exit(void)
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
- =
-
- 	bluetooth_unregister_profile(conn, HFP_EXT_PROFILE_PATH);
-+	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
-+						BLUEZ_PROFILE_INTERFACE);
- 	ofono_modem_driver_unregister(&hfp_driver);
- }
- =
-
++Mailing list:
++	ofono(a)ofono.org
 -- =
 
-1.7.11.7
+1.8.1
 
 
---===============4123840121384160100==--
+--===============5258083455654158535==--
 
