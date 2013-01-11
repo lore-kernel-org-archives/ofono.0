@@ -1,38 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============4883569667006372942=="
+Content-Type: multipart/mixed; boundary="===============3281895067536904703=="
 MIME-Version: 1.0
-From: Rafael Ignacio Zurita <rafaelignacio.zurita@gmail.com>
-Subject: Re: [PATCH mmsd 1/3] README: add information about mailing list
-Date: Thu, 10 Jan 2013 14:42:45 -0300
-Message-ID: <CABt34dVfYpSqZMb+iFvo9JzA+9714_9Pn3MJ_EB-6UrKq8=+6g@mail.gmail.com>
-In-Reply-To: <1357830671-10783-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Mikel Astiz <mikel.astiz.oss@gmail.com>
+Subject: Re: [PATCH v0 0/6] HFP HF: External Profile
+Date: Fri, 11 Jan 2013 10:27:39 +0100
+Message-ID: <CANT-zCVAf7_hzO1a4PsuC_EbhhxjEKdLF7M_HPg3X2ZAaEx1dA@mail.gmail.com>
+In-Reply-To: <1357829089-16029-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4883569667006372942==
+--===============3281895067536904703==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hey Lucas!,
+Hi Claudio,
 
-On Thu, Jan 10, 2013 at 12:11 PM, Lucas De Marchi
-<lucas.demarchi@profusion.mobi> wrote:
-> ---
->  README | 6 ++++++
->  1 file changed, 6 insertions(+)
+On Thu, Jan 10, 2013 at 3:44 PM, Claudio Takahasi
+<claudio.takahasi@openbossa.org> wrote:
+> This is the first group of the patches which introduces the Handsfree
+> BlueZ external profile.
 >
-> diff --git a/README b/README
-...
-> +
-> +Information
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> +
-> +Mailing list:
-> +       ofono(a)ofono.org
+> The following patches contain only initial files and basic structures
+> for the HFP HF plugin (since files and plugins names are one of
+> controversial points).
+>
+> Remaining HFP HF patches:
+> git://git.infradead.org/users/cktakahasi/ofono.git HF-20130109
 
-Would be it useful without extra details?
+Regarding these remaining patches, I know it's WIP but just to make
+sure, please consider the latest Media API changes introduced by the
+BlueZ patchset "Media API clarifications":
+1. Return org.bluez.Error.NotAvailable if TryAcquire() fails because
+SCO is down.
+2. Add SpeakerGain/MicrophoneGain properties to the transport, and
+note that they are uint8.
 
-Rafa
+Cheers,
+Mikel
 
---===============4883569667006372942==--
+--===============3281895067536904703==--
 
