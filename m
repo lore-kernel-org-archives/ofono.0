@@ -1,35 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============0240499207418037660=="
+Content-Type: multipart/mixed; boundary="===============5042140485810559462=="
 MIME-Version: 1.0
-From: Cornel Spinu <cornel.spinu@gmail.com>
-Subject: AT command to modem via ofono from 3rd party
-Date: Fri, 11 Jan 2013 12:08:57 +0200
-Message-ID: <50EFE4B9.6050305@gmail.com>
+From: mail@timomueller.eu
+Subject: [PATCH] Delay AT+CLCC request after setup of an outgoing call
+Date: Fri, 11 Jan 2013 14:00:31 +0100
+Message-ID: <cover.1357896034.git.timo.mueller@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0240499207418037660==
+--===============5042140485810559462==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+From: Timo Mueller <timo.mueller@bmw-carit.de>
 
-I'm using an cinterion modem, and I wanna send AT commands directly to =
+Hi,
 
-the app port from a 3rd party application.
-I am considering exposing my own method on dBus. The problem is that =
+this fixes an issue we've been experiencing with the Nokia N9. When
+placing an outgoing call from the N9 (AG device) the responded list
+does not containt the new outgoing call as the N9 did not update the
+list yet.
+I tried reqesting the list a second time right after the first request
+and the response always contained the call. In conclusion I added a
+delay to the first request to give the AG device some time to update
+the list before requesting it.
 
-from the dbus layer, I do not have access to the low-level part.
-As far as I noticed, the only place I have access to the modem and app =
+Best regards,
+Timo
 
-port, is in plugins/ . The fact that I wanna expose a new method
-on org.ofono.Modem, which is in src/modem.c , I do not see a way how I =
+Timo Mueller (1):
+  hfpmodem: Delay AT+CLCC request after outgoing callsetup
 
-can connect those two. I'm looking for any suggestions if
-anyone can help.
+ drivers/hfpmodem/voicecall.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-Thank you,
-Cornel Spinu
+-- =
 
---===============0240499207418037660==--
+1.7.11.7
+
+
+--===============5042140485810559462==--
 
