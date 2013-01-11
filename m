@@ -1,65 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============1843988380806749945=="
+Content-Type: multipart/mixed; boundary="===============2795489465701910812=="
 MIME-Version: 1.0
-From: mail@timomueller.eu
-Subject: [PATCH] hfpmodem: Delay AT+CLCC request after outgoing callsetup
-Date: Fri, 11 Jan 2013 14:00:32 +0100
-Message-ID: <c97f1d8ae1e614a832b53b2b0c6f5da33c710a97.1357896034.git.timo.mueller@bmw-carit.de>
-In-Reply-To: <cover.1357896034.git.timo.mueller@bmw-carit.de>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: Re: [PATCH v0 0/6] HFP HF: External Profile
+Date: Fri, 11 Jan 2013 11:26:55 -0300
+Message-ID: <CAKT1EBebwLntE3tvL0O_D9m1jqhATfUB1NuJ_VrrohKeaZQuVQ@mail.gmail.com>
+In-Reply-To: <CANT-zCVAf7_hzO1a4PsuC_EbhhxjEKdLF7M_HPg3X2ZAaEx1dA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1843988380806749945==
+--===============2795489465701910812==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Timo Mueller <timo.mueller@bmw-carit.de>
+Hi Mikel:
 
-Currently the list of current calls is requested right after an
-outgoing callsetup has been reported by the AG device. If the AG
-device updates the list after reporting the callsetup the +CLCC
-response may not contain the new call and it is not registered
-with oFono.
+> > Remaining HFP HF patches:
+> > git://git.infradead.org/users/cktakahasi/ofono.git HF-20130109
+>
+> Regarding these remaining patches, I know it's WIP but just to make
+> sure, please consider the latest Media API changes introduced by the
+> BlueZ patchset "Media API clarifications":
+> 1. Return org.bluez.Error.NotAvailable if TryAcquire() fails because
+> SCO is down.
 
-AT sequence that exhibited the failure (AG device was a Nokia N9
-placing an outgoing call)
+Fixed!
 
-< \r\n+CIEV: 5,2\r\n
-> AT+CLCC\r
-< \r\nOK\r\n
-< \r\n+VGS=3D7\r\n
-< \r\n+VGM=3D7\r\n
-< \r\n+CIEV: 5,3\r\n
-< \r\n+CIEV: 4,1\r\n
-< \r\n+CIEV: 5,0\r\n
----
- drivers/hfpmodem/voicecall.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+I think we should add InProgress error to avoid the same "owner" to
+call Acquire(or TryAcquire) for a previously "acquired" fd without
+calling Release.
+Do you agree?
 
-diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index 505601c..c7c5f45 100644
---- a/drivers/hfpmodem/voicecall.c
-+++ b/drivers/hfpmodem/voicecall.c
-@@ -912,8 +912,11 @@ static void ciev_callsetup_notify(struct ofono_voiceca=
-ll *vc,
- 		 * from HF: query and sync the phone number.
- 		 * from AG: query and create call.
- 		 */
--		g_at_chat_send(vd->chat, "AT+CLCC", clcc_prefix,
--				clcc_poll_cb, vc, NULL);
-+		if (vd->clcc_source)
-+			g_source_remove(vd->clcc_source);
-+
-+		vd->clcc_source =3D g_timeout_add(POLL_CLCC_DELAY,
-+							poll_clcc, vc);
- 		break;
- =
+> 2. Add SpeakerGain/MicrophoneGain properties to the transport, and
+> note that they are uint8.
 
- 	case 3:
--- =
+ok. We gonna investigate it.
 
-1.7.11.7
+Regards,
+Claudio
 
-
---===============1843988380806749945==--
+--===============2795489465701910812==--
 
