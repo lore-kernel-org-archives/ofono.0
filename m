@@ -1,55 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============0449323277131807745=="
+Content-Type: multipart/mixed; boundary="===============2874078680848145312=="
 MIME-Version: 1.0
-From: Mikel Astiz <mikel.astiz.oss@gmail.com>
-Subject: Re: [PATCH v0 0/6] HFP HF: External Profile
-Date: Fri, 11 Jan 2013 17:05:32 +0100
-Message-ID: <CANT-zCUkhcNyW1t-iqZmM=cRSLtJzRsu+zA8RKQsL-vn2S-WhA@mail.gmail.com>
-In-Reply-To: <CAKT1EBebwLntE3tvL0O_D9m1jqhATfUB1NuJ_VrrohKeaZQuVQ@mail.gmail.com>
+From: Marko Lindqvist <cazfi74@gmail.com>
+Subject: [PATCH] Fix build with automake-1.13
+Date: Sat, 12 Jan 2013 11:22:39 +0200
+Message-ID: <CAF6bG8eQqF+s1VECb_1fEZHxkdnaDccF0ku0OL0vrQWitJM6jg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0449323277131807745==
+--===============2874078680848145312==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Claudio,
+Automake-1.13 removed long obsolete AM_CONFIG_HEADER completely (
+http://lists.gnu.org/archive/html/automake/2012-12/msg00038.html ) and
+errors out upon seeing it.
 
-On Fri, Jan 11, 2013 at 3:26 PM, Claudio Takahasi
-<claudio.takahasi@openbossa.org> wrote:
-> Hi Mikel:
->
->> > Remaining HFP HF patches:
->> > git://git.infradead.org/users/cktakahasi/ofono.git HF-20130109
->>
->> Regarding these remaining patches, I know it's WIP but just to make
->> sure, please consider the latest Media API changes introduced by the
->> BlueZ patchset "Media API clarifications":
->> 1. Return org.bluez.Error.NotAvailable if TryAcquire() fails because
->> SCO is down.
->
-> Fixed!
->
-> I think we should add InProgress error to avoid the same "owner" to
-> call Acquire(or TryAcquire) for a previously "acquired" fd without
-> calling Release.
-> Do you agree?
+Attached patch replaces it with proper AC_CONFIG_HEADERS.
 
-I can't imagine any usage scenario where this is relevant: the client
-should be aware of having acquired the transport before, so I don't
-see the interest of defining a specific error for such a case.
+ I'm not subscribed to mailing list.
 
->
->> 2. Add SpeakerGain/MicrophoneGain properties to the transport, and
->> note that they are uint8.
->
-> ok. We gonna investigate it.
+----
 
-I'll send the updated PulseAudio patches early next week. Please note
-that the last RFC v0 I sent is not up-to-date.
+I'm mass-submitting automake-1.13 fixes. Please see what you can do so
+I don't need to do the same when automake-1.14 comes out:
+http://cazfi.livejournal.com/195108.html
 
-Cheers,
-Mikel
 
---===============0449323277131807745==--
+ - ML
+
+--===============2874078680848145312==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="obsolete_automake_macros.patch"
+
+ZGlmZiAtTnVyZCBvZm9uby0xLjEyL2NvbmZpZ3VyZS5hYyBvZm9uby0xLjEyL2NvbmZpZ3VyZS5h
+YwotLS0gb2Zvbm8tMS4xMi9jb25maWd1cmUuYWMJMjAxMi0xMi0xOSAyMToyODo0NC4wMDAwMDAw
+MDAgKzAyMDAKKysrIG9mb25vLTEuMTIvY29uZmlndXJlLmFjCTIwMTMtMDEtMTIgMTE6MTg6NDAu
+NjgxNDEwNzU3ICswMjAwCkBAIC0yLDcgKzIsNyBAQAogQUNfSU5JVChvZm9ubywgMS4xMikKIAog
+QU1fSU5JVF9BVVRPTUFLRShbZm9yZWlnbiBzdWJkaXItb2JqZWN0cyBjb2xvci10ZXN0c10pCi1B
+TV9DT05GSUdfSEVBREVSKGNvbmZpZy5oKQorQUNfQ09ORklHX0hFQURFUlMoY29uZmlnLmgpCiAK
+IG00X2lmZGVmKFtBTV9TSUxFTlRfUlVMRVNdLCBbQU1fU0lMRU5UX1JVTEVTKFt5ZXNdKV0pCiAK
+
+--===============2874078680848145312==--
 
