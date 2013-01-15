@@ -1,165 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============3874185532928355819=="
+Content-Type: multipart/mixed; boundary="===============5344811253857099454=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 6/6] hfp_hf: Add BlueZ Profile handler
-Date: Tue, 15 Jan 2013 15:24:48 -0300
-Message-ID: <1358274288-24857-7-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v1 1/6] Makefile: Add configure option for BlueZ 4 and 5
+Date: Tue, 15 Jan 2013 15:24:43 -0300
+Message-ID: <1358274288-24857-2-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1358274288-24857-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3874185532928355819==
+--===============5344811253857099454==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch declares the external HFP Profile handler. It contains the
-initial implementation of the D-Bus Profile1 interface and methods
-responsible for handling Bluetooth connections.
+BlueZ 5 is the default option. If --enable-bluez4 is provided, oFono
+plugins based on BlueZ 4 are enabled prior to BlueZ 5.
+--disable-bluetooth configure option disables BlueZ 5 and BlueZ 4
+plugins.
 ---
- plugins/bluez5.h        |  2 ++
- plugins/hfp_hf_bluez5.c | 74 +++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 2 files changed, 75 insertions(+), 1 deletion(-)
+ Makefile.am  |  4 +++-
+ configure.ac | 24 ++++++++++++++++--------
+ 2 files changed, 19 insertions(+), 9 deletions(-)
 
-diff --git a/plugins/bluez5.h b/plugins/bluez5.h
-index 99bf896..01ecfe8 100644
---- a/plugins/bluez5.h
-+++ b/plugins/bluez5.h
-@@ -20,6 +20,8 @@
-  */
+diff --git a/Makefile.am b/Makefile.am
+index 0d2ba9f..811a3f5 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -407,7 +407,7 @@ builtin_sources +=3D plugins/samsung.c
+ builtin_modules +=3D sim900
+ builtin_sources +=3D plugins/sim900.c
  =
 
- #define	BLUEZ_SERVICE "org.bluez"
-+#define BLUEZ_PROFILE_INTERFACE		BLUEZ_SERVICE ".Profile1"
-+#define BLUEZ_ERROR_INTERFACE		BLUEZ_SERVICE ".Error"
+-if BLUETOOTH
++if BLUEZ4
+ builtin_modules +=3D bluetooth
+ builtin_sources +=3D plugins/bluetooth.c plugins/bluetooth.h
  =
 
- #define HFP_HS_UUID	"0000111e-0000-1000-8000-00805f9b34fb"
+@@ -742,6 +742,7 @@ tools_stktest_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
+ endif
+ endif
  =
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 0cd0d23..e024838 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -26,6 +26,8 @@
- #include <errno.h>
- #include <glib.h>
++if BLUEZ4
+ if DUNDEE
+ sbin_PROGRAMS +=3D dundee/dundee
  =
 
-+#include <gdbus.h>
-+
- #define OFONO_API_SUBJECT_TO_CHANGE
- #include <ofono/modem.h>
- #include <ofono/dbus.h>
-@@ -88,6 +90,59 @@ static struct ofono_modem_driver hfp_driver =3D {
- 	.post_sim	=3D hfp_post_sim,
- };
+@@ -759,6 +760,7 @@ if SYSTEMD
+ systemdunit_DATA +=3D dundee/dundee.service
+ endif
+ endif
++endif
  =
 
-+static DBusMessage *profile_new_connection(DBusConnection *conn,
-+					DBusMessage *msg, void *user_data)
-+{
-+	DBG("Profile handler NewConnection");
-+
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
-+					".NotImplemented",
-+					"Implementation not provided");
-+}
-+
-+static DBusMessage *profile_release(DBusConnection *conn,
-+					DBusMessage *msg, void *user_data)
-+{
-+	DBG("Profile handler Release");
-+
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
-+						".NotImplemented",
-+						"Implementation not provided");
-+}
-+
-+static DBusMessage *profile_cancel(DBusConnection *conn,
-+					DBusMessage *msg, void *user_data)
-+{
-+	DBG("Profile handler Cancel");
-+
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
-+					".NotImplemented",
-+					"Implementation not provided");
-+}
-+
-+static DBusMessage *profile_disconnection(DBusConnection *conn,
-+					DBusMessage *msg, void *user_data)
-+{
-+	DBG("Profile handler RequestDisconnection");
-+
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
-+					".NotImplemented",
-+					"Implementation not provided");
-+}
-+
-+static const GDBusMethodTable profile_methods[] =3D {
-+	{ GDBUS_ASYNC_METHOD("NewConnection",
-+				GDBUS_ARGS({ "device", "o"}, { "fd", "h"},
-+						{ "fd_properties", "a{sv}" }),
-+				NULL, profile_new_connection) },
-+	{ GDBUS_METHOD("Release", NULL, NULL, profile_release) },
-+	{ GDBUS_METHOD("Cancel", NULL, NULL, profile_cancel) },
-+	{ GDBUS_METHOD("RequestDisconnection",
-+				GDBUS_ARGS({"device", "o"}), NULL,
-+				profile_disconnection) },
-+	{ }
-+};
-+
- static int hfp_init(void)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
-@@ -96,13 +151,28 @@ static int hfp_init(void)
- 	if (DBUS_TYPE_UNIX_FD < 0)
- 		return -EBADF;
+ endif
  =
 
-+	/* Registers External Profile handler */
-+	if (!g_dbus_register_interface(conn, HFP_EXT_PROFILE_PATH,
-+					BLUEZ_PROFILE_INTERFACE,
-+					profile_methods, NULL,
-+					NULL, NULL, NULL)) {
-+		ofono_error("Register Profile interface failed: %s",
-+						HFP_EXT_PROFILE_PATH);
-+		return -EIO;
-+	}
+diff --git a/configure.ac b/configure.ac
+index 450352b..47b0600 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -173,15 +173,23 @@ AC_ARG_ENABLE(qmimodem, AC_HELP_STRING([--disable-qmi=
+modem],
+ AM_CONDITIONAL(QMIMODEM, test "${enable_qmimodem}" !=3D "no")
+ =
+
+ AC_ARG_ENABLE(bluetooth, AC_HELP_STRING([--disable-bluetooth],
+-				[disable Bluetooth modem support]),
+-					[enable_bluetooth=3D${enableval}])
+-if (test "${enable_bluetooth}" !=3D "no"); then
+-	PKG_CHECK_MODULES(BLUEZ, bluez >=3D 4.99, dummy=3Dyes,
+-			AC_MSG_ERROR(Bluetooth library >=3D 4.99 is required))
++				[disable BlueZ 4 and BlueZ 5 plugins support]),
++					[enable_bluez5=3D${enableval}])
 +
- 	err =3D ofono_modem_driver_register(&hfp_driver);
--	if (err < 0)
-+	if (err < 0) {
-+		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
-+						BLUEZ_PROFILE_INTERFACE);
- 		return err;
-+	}
++AC_ARG_ENABLE(bluez4, AC_HELP_STRING([--enable-bluez4],
++				[enable BlueZ 4 plugins support prior to BlueZ 5]),
++					[enable_bluez4=3D${enableval}])
++
++if (test "${enable_bluez4}" =3D "yes"); then
++	PKG_CHECK_MODULES(BLUEZ, bluez >=3D 4.99 bluez < 5,
++			  enable_bluez4=3Dyes enable_bluez5=3Dno,
++			  AC_MSG_ERROR(Bluetooth library >=3D 4.99 and < 5 is required))
++	AC_SUBST(BLUEZ_CFLAGS)
++	AC_SUBST(BLUEZ_LIBS)
+ fi
+-AC_SUBST(BLUEZ_CFLAGS)
+-AC_SUBST(BLUEZ_LIBS)
+-AM_CONDITIONAL(BLUETOOTH, test "${enable_bluetooth}" !=3D "no")
++
++AM_CONDITIONAL(BLUEZ4, test "${enable_bluez4}" =3D "yes")
++AM_CONDITIONAL(BLUEZ5, test "${enable_bluez5}" !=3D "no" && test "${enable=
+_bluez4}" !=3D "yes")
  =
 
- 	err =3D bluetooth_register_profile(conn, HFP_HS_UUID, "hfp_hf",
- 						HFP_EXT_PROFILE_PATH);
- 	if (err < 0) {
-+		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
-+						BLUEZ_PROFILE_INTERFACE);
- 		ofono_modem_driver_unregister(&hfp_driver);
- 		return err;
- 	}
-@@ -115,6 +185,8 @@ static void hfp_exit(void)
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
- =
-
- 	bluetooth_unregister_profile(conn, HFP_EXT_PROFILE_PATH);
-+	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
-+						BLUEZ_PROFILE_INTERFACE);
- 	ofono_modem_driver_unregister(&hfp_driver);
- }
- =
-
+ AC_ARG_WITH([provisiondb], AC_HELP_STRING([--with-provisiondb=3DFILE],
+ 	[location of provision database]), [path_provisiondb=3D${withval}])
 -- =
 
 1.7.11.7
 
 
---===============3874185532928355819==--
+--===============5344811253857099454==--
 
