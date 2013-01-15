@@ -1,73 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============4631950034489740606=="
+Content-Type: multipart/mixed; boundary="===============4311255994492896480=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 0/6] HFP HF: External Profile
-Date: Tue, 15 Jan 2013 15:24:42 -0300
-Message-ID: <1358274288-24857-1-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1357829089-16029-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v1 3/6] bluetooth: Initial files for BlueZ 5
+Date: Tue, 15 Jan 2013 15:24:45 -0300
+Message-ID: <1358274288-24857-4-git-send-email-claudio.takahasi@openbossa.org>
+In-Reply-To: <1358274288-24857-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4631950034489740606==
+--===============4311255994492896480==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This is the first group of the patches which introduces the Handsfree
-BlueZ external profile.
-
-The following patches contain only initial files and basic structures
-for the HFP HF plugin (since files and plugins names are one of the
-controversial points).
-
-Remaining HFP HF patches:
-git://git.infradead.org/users/cktakahasi/ofono.git HF-20130115
-
-Changes from v0:
-* Append BlueZ version to hfp_hf* files
-* --enable-bluez4 configure option
-
-Claudio Takahasi (6):
-  Makefile: Add configure option for BlueZ 4 and 5
-  bluetooth: Add versioning information to BlueZ plugins
-  bluetooth: Initial files for BlueZ 5
-  hfp_hf: Add initial file for external HFP
-  hfp_hf: Add hfp_driver
-  hfp_hf: Add BlueZ Profile handler
-
- Makefile.am             |  30 +-
- configure.ac            |  24 +-
- dundee/bluetooth.c      |   2 +-
- plugins/bluetooth.c     | 989 --------------------------------------------=
-----
- plugins/bluetooth.h     |  84 ----
- plugins/bluez4.c        | 989 ++++++++++++++++++++++++++++++++++++++++++++=
-++++
- plugins/bluez4.h        |  84 ++++
- plugins/bluez5.c        | 145 +++++++
- plugins/bluez5.h        |  31 ++
- plugins/dun_gw.c        |   2 +-
- plugins/hfp_ag.c        |   2 +-
- plugins/hfp_hf.c        | 552 ---------------------------
- plugins/hfp_hf_bluez4.c | 552 +++++++++++++++++++++++++++
- plugins/hfp_hf_bluez5.c | 194 ++++++++++
- plugins/sap.c           |   2 +-
- plugins/telit.c         |   2 +-
- 16 files changed, 2036 insertions(+), 1648 deletions(-)
- delete mode 100644 plugins/bluetooth.c
- delete mode 100644 plugins/bluetooth.h
- create mode 100644 plugins/bluez4.c
- create mode 100644 plugins/bluez4.h
+This patch adds the file for Bluetooth(BlueZ 5) oFono plugin.
+---
+ Makefile.am      |  5 +++++
+ plugins/bluez5.c | 33 +++++++++++++++++++++++++++++++++
+ 2 files changed, 38 insertions(+)
  create mode 100644 plugins/bluez5.c
- create mode 100644 plugins/bluez5.h
- delete mode 100644 plugins/hfp_hf.c
- create mode 100644 plugins/hfp_hf_bluez4.c
- create mode 100644 plugins/hfp_hf_bluez5.c
 
+diff --git a/Makefile.am b/Makefile.am
+index 85824be..2f50673 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -407,6 +407,11 @@ builtin_sources +=3D plugins/samsung.c
+ builtin_modules +=3D sim900
+ builtin_sources +=3D plugins/sim900.c
+ =
+
++if BLUEZ5
++builtin_modules +=3D bluez5
++builtin_sources +=3D plugins/bluez5.c
++endif
++
+ if BLUEZ4
+ builtin_modules +=3D bluez4
+ builtin_sources +=3D plugins/bluez4.c plugins/bluez4.h
+diff --git a/plugins/bluez5.c b/plugins/bluez5.c
+new file mode 100644
+index 0000000..335331c
+--- /dev/null
++++ b/plugins/bluez5.c
+@@ -0,0 +1,33 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2013  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <glib.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++
++OFONO_PLUGIN_DEFINE(bluez5, "BlueZ 5 Utils Plugin", VERSION,
++			OFONO_PLUGIN_PRIORITY_DEFAULT, NULL, NULL)
 -- =
 
 1.7.11.7
 
 
---===============4631950034489740606==--
+--===============4311255994492896480==--
 
