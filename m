@@ -1,85 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============2283554504395326743=="
+Content-Type: multipart/mixed; boundary="===============6616756909046988545=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 0/6] HFP HF: External Profile
-Date: Wed, 16 Jan 2013 14:16:28 -0600
-Message-ID: <50F70A9C.9040500@gmail.com>
-In-Reply-To: <1358343091-23350-1-git-send-email-claudio.takahasi@openbossa.org>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH 1/3] build: Do not use deprecated AM_CONFIG_HEADER
+Date: Wed, 16 Jan 2013 19:11:22 -0200
+Message-ID: <1358370684-22649-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2283554504395326743==
+--===============6616756909046988545==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Claudio,
+The long-obsoleted AM_CONFIG_HEADER macro was removed in automake 1.13.
+Use AC_CONFIG_HEADERS instead.
+---
+ configure.ac | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-On 01/16/2013 07:31 AM, Claudio Takahasi wrote:
-> This is the first group of patches which introduces the Handsfree
-> BlueZ external profile.
->
-> The following patches contain only initial files and basic structures
-> for the HFP HF plugin (since files and plugins names are one of the
-> controversial points).
->
-> Remaining HFP HF patches:
-> git://git.infradead.org/users/cktakahasi/ofono.git HF-20130116
->
-> Changed between v0-v1:
-> * Append BlueZ version to hfp_hf* files
-> * --enable-bluez4 configure option
->
-> Changed between v1-v2:
-> * Make BLUEZ4 conditional dependent on BLUETOOTH. BlueZ 5 is enabled by
->    default(--enable-bluetooth can be omitted), BlueZ 4 support is enabled
->    only if --enable-bluez4 is informed. --disable-bluetooth disables all
->    BlueZ related plugins.
->
-> Claudio Takahasi (6):
->    Makefile: Add configure option for BlueZ 4 and 5
->    bluetooth: Add versioning information to BlueZ plugins
->    bluetooth: Initial files for BlueZ 5
->    hfp_hf: Add initial file for external HFP
->    hfp_hf: Add hfp_driver
->    hfp_hf: Add BlueZ Profile handler
->
->   Makefile.am             |  31 +-
->   configure.ac            |  20 +-
->   dundee/bluetooth.c      |   2 +-
->   plugins/bluetooth.c     | 989 -----------------------------------------=
--------
->   plugins/bluetooth.h     |  84 ----
->   plugins/bluez4.c        | 989 +++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   plugins/bluez4.h        |  84 ++++
->   plugins/bluez5.c        | 145 +++++++
->   plugins/bluez5.h        |  31 ++
->   plugins/dun_gw.c        |   2 +-
->   plugins/hfp_ag.c        |   2 +-
->   plugins/hfp_hf.c        | 552 ---------------------------
->   plugins/hfp_hf_bluez4.c | 552 +++++++++++++++++++++++++++
->   plugins/hfp_hf_bluez5.c | 194 ++++++++++
->   plugins/sap.c           |   2 +-
->   plugins/telit.c         |   2 +-
->   16 files changed, 2035 insertions(+), 1646 deletions(-)
->   delete mode 100644 plugins/bluetooth.c
->   delete mode 100644 plugins/bluetooth.h
->   create mode 100644 plugins/bluez4.c
->   create mode 100644 plugins/bluez4.h
->   create mode 100644 plugins/bluez5.c
->   create mode 100644 plugins/bluez5.h
->   delete mode 100644 plugins/hfp_hf.c
->   create mode 100644 plugins/hfp_hf_bluez4.c
->   create mode 100644 plugins/hfp_hf_bluez5.c
->
+diff --git a/configure.ac b/configure.ac
+index 7db4198..a4a350f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -2,7 +2,7 @@ AC_PREREQ(2.60)
+ AC_INIT(ofono, 1.12)
+ =
 
-All 6 patches have been applied.  I did split patch 5 and 6, so it =
+ AM_INIT_AUTOMAKE([foreign subdir-objects color-tests])
+-AM_CONFIG_HEADER(config.h)
++AC_CONFIG_HEADERS(config.h)
+ =
 
-resulted in 8 commits.
+ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+ =
 
-Regards,
--Denis
+-- =
 
---===============2283554504395326743==--
+1.8.1.1
+
+
+--===============6616756909046988545==--
 
