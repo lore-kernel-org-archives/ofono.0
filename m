@@ -1,43 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============4802368871640553685=="
+Content-Type: multipart/mixed; boundary="===============3491671435829727386=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 3/3] storage: Include sys/types.h for ssize_t
-Date: Wed, 16 Jan 2013 19:11:24 -0200
-Message-ID: <1358370684-22649-3-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <1358370684-22649-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 3/3] storage: Include sys/types.h for ssize_t
+Date: Wed, 16 Jan 2013 13:14:48 -0800
+Message-ID: <1358370888.3059.0.camel@aeonflux>
+In-Reply-To: <1358370684-22649-3-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4802368871640553685==
+--===============3491671435829727386==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-src/storage.h:32:1: error: unknown type name 'ssize_t'
-src/storage.h:36:1: error: unknown type name 'ssize_t'
----
- src/storage.h | 1 +
- 1 file changed, 1 insertion(+)
+Hi Lucas,
 
-diff --git a/src/storage.h b/src/storage.h
-index c455bae..70446ad 100644
---- a/src/storage.h
-+++ b/src/storage.h
-@@ -26,6 +26,7 @@
- #endif
- =
+> src/storage.h:32:1: error: unknown type name 'ssize_t'
+> src/storage.h:36:1: error: unknown type name 'ssize_t'
+> ---
+>  src/storage.h | 1 +
+>  1 file changed, 1 insertion(+)
 
- #include <fcntl.h>
-+#include <sys/types.h>
- =
+patch has been applied.
 
- int create_dirs(const char *filename, const mode_t mode);
- =
+Regards
 
--- =
-
-1.8.1.1
+Marcel
 
 
---===============4802368871640553685==--
+
+--===============3491671435829727386==--
 
