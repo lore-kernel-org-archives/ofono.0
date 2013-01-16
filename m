@@ -1,25 +1,25 @@
-Content-Type: multipart/mixed; boundary="===============3491671435829727386=="
+Content-Type: multipart/mixed; boundary="===============7731791450907630485=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 3/3] storage: Include sys/types.h for ssize_t
-Date: Wed, 16 Jan 2013 13:14:48 -0800
-Message-ID: <1358370888.3059.0.camel@aeonflux>
-In-Reply-To: <1358370684-22649-3-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH 1/3] build: Do not use deprecated AM_CONFIG_HEADER
+Date: Wed, 16 Jan 2013 13:15:22 -0800
+Message-ID: <1358370922.3059.1.camel@aeonflux>
+In-Reply-To: <1358370684-22649-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3491671435829727386==
+--===============7731791450907630485==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Lucas,
 
-> src/storage.h:32:1: error: unknown type name 'ssize_t'
-> src/storage.h:36:1: error: unknown type name 'ssize_t'
+> The long-obsoleted AM_CONFIG_HEADER macro was removed in automake 1.13.
+> Use AC_CONFIG_HEADERS instead.
 > ---
->  src/storage.h | 1 +
->  1 file changed, 1 insertion(+)
+>  configure.ac | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 
 patch has been applied.
 
@@ -29,5 +29,5 @@ Marcel
 
 
 
---===============3491671435829727386==--
+--===============7731791450907630485==--
 
