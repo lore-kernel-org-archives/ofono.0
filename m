@@ -1,113 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============3606984369316502294=="
+Content-Type: multipart/mixed; boundary="===============4817107053710394645=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v2 1/6] Makefile: Add configure option for BlueZ 4 and 5
-Date: Wed, 16 Jan 2013 10:31:26 -0300
-Message-ID: <1358343091-23350-2-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v2 3/6] bluetooth: Initial files for BlueZ 5
+Date: Wed, 16 Jan 2013 10:31:28 -0300
+Message-ID: <1358343091-23350-4-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1358343091-23350-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3606984369316502294==
+--===============4817107053710394645==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-BlueZ 5 is the default option. If --enable-bluez4 is provided, oFono
-plugins based on BlueZ 4 are enabled prior to BlueZ 5.
---disable-bluetooth configure option disables BlueZ 5 and BlueZ 4
-plugins.
+This patch adds the file for Bluetooth(BlueZ 5) oFono plugin.
 ---
- Makefile.am  |  7 ++++++-
- configure.ac | 20 ++++++++++++++------
- 2 files changed, 20 insertions(+), 7 deletions(-)
+ Makefile.am      |  3 +++
+ plugins/bluez5.c | 33 +++++++++++++++++++++++++++++++++
+ 2 files changed, 36 insertions(+)
+ create mode 100644 plugins/bluez5.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 0d2ba9f..c2bd4a4 100644
+index 63e6fdb..3c4b588 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -408,6 +408,7 @@ builtin_modules +=3D sim900
- builtin_sources +=3D plugins/sim900.c
- =
-
- if BLUETOOTH
-+if BLUEZ4
- builtin_modules +=3D bluetooth
- builtin_sources +=3D plugins/bluetooth.c plugins/bluetooth.h
- =
-
-@@ -434,6 +435,7 @@ builtin_cflags +=3D @BLUEZ_CFLAGS@
+@@ -433,6 +433,9 @@ builtin_sources +=3D plugins/connman.c
+ builtin_sources +=3D $(btio_sources)
+ builtin_cflags +=3D @BLUEZ_CFLAGS@
  builtin_libadd +=3D @BLUEZ_LIBS@
++else
++builtin_modules +=3D bluez5
++builtin_sources +=3D plugins/bluez5.c
  endif
  endif
-+endif
- =
-
- if PROVISION
- builtin_sources +=3D plugins/mbpi.h plugins/mbpi.c
-@@ -742,6 +744,8 @@ tools_stktest_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
  endif
- endif
- =
-
-+if BLUETOOTH
-+if BLUEZ4
- if DUNDEE
- sbin_PROGRAMS +=3D dundee/dundee
- =
-
-@@ -759,7 +763,8 @@ if SYSTEMD
- systemdunit_DATA +=3D dundee/dundee.service
- endif
- endif
--
-+endif
-+endif
- endif
- =
-
- noinst_PROGRAMS +=3D gatchat/gsmdial gatchat/test-server gatchat/test-qcdm
-diff --git a/configure.ac b/configure.ac
-index 450352b..7db4198 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -173,14 +173,22 @@ AC_ARG_ENABLE(qmimodem, AC_HELP_STRING([--disable-qmi=
-modem],
- AM_CONDITIONAL(QMIMODEM, test "${enable_qmimodem}" !=3D "no")
- =
-
- AC_ARG_ENABLE(bluetooth, AC_HELP_STRING([--disable-bluetooth],
--				[disable Bluetooth modem support]),
-+				[disable BlueZ 4 and BlueZ 5 plugins support]),
- 					[enable_bluetooth=3D${enableval}])
--if (test "${enable_bluetooth}" !=3D "no"); then
--	PKG_CHECK_MODULES(BLUEZ, bluez >=3D 4.99, dummy=3Dyes,
--			AC_MSG_ERROR(Bluetooth library >=3D 4.99 is required))
+diff --git a/plugins/bluez5.c b/plugins/bluez5.c
+new file mode 100644
+index 0000000..335331c
+--- /dev/null
++++ b/plugins/bluez5.c
+@@ -0,0 +1,33 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2013  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
-+AC_ARG_ENABLE(bluez4, AC_HELP_STRING([--enable-bluez4],
-+				[enable BlueZ 4 plugins support prior to BlueZ 5]),
-+					[enable_bluez4=3D${enableval}])
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
 +
-+if (test "${enable_bluez4}" =3D "yes"); then
-+	PKG_CHECK_MODULES(BLUEZ, bluez >=3D 4.99 bluez < 5,
-+			  enable_bluez4=3Dyes,
-+			  AC_MSG_ERROR(Bluetooth library >=3D 4.99 and < 5 is required))
-+	AC_SUBST(BLUEZ_CFLAGS)
-+	AC_SUBST(BLUEZ_LIBS)
- fi
--AC_SUBST(BLUEZ_CFLAGS)
--AC_SUBST(BLUEZ_LIBS)
++#include <glib.h>
 +
-+AM_CONDITIONAL(BLUEZ4, test "${enable_bluetooth}" !=3D "no" && test "${ena=
-ble_bluez4}" =3D "yes")
- AM_CONDITIONAL(BLUETOOTH, test "${enable_bluetooth}" !=3D "no")
- =
-
- AC_ARG_WITH([provisiondb], AC_HELP_STRING([--with-provisiondb=3DFILE],
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++
++OFONO_PLUGIN_DEFINE(bluez5, "BlueZ 5 Utils Plugin", VERSION,
++			OFONO_PLUGIN_PRIORITY_DEFAULT, NULL, NULL)
 -- =
 
 1.7.11.7
 
 
---===============3606984369316502294==--
+--===============4817107053710394645==--
 
