@@ -1,110 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============5921525533218028703=="
+Content-Type: multipart/mixed; boundary="===============6021730851655743775=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v1 1/6] Makefile: Add configure option for BlueZ 4 and 5
-Date: Tue, 15 Jan 2013 11:01:44 -0800
-Message-ID: <1358276504.2445.3.camel@aeonflux>
-In-Reply-To: <1358274288-24857-2-git-send-email-claudio.takahasi@openbossa.org>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: [PATCH v2 0/6] HFP HF: External Profile
+Date: Wed, 16 Jan 2013 10:31:25 -0300
+Message-ID: <1358343091-23350-1-git-send-email-claudio.takahasi@openbossa.org>
+In-Reply-To: <1358274288-24857-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5921525533218028703==
+--===============6021730851655743775==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Claudio,
+This is the first group of patches which introduces the Handsfree
+BlueZ external profile.
 
-> BlueZ 5 is the default option. If --enable-bluez4 is provided, oFono
-> plugins based on BlueZ 4 are enabled prior to BlueZ 5.
-> --disable-bluetooth configure option disables BlueZ 5 and BlueZ 4
-> plugins.
-> ---
->  Makefile.am  |  4 +++-
->  configure.ac | 24 ++++++++++++++++--------
->  2 files changed, 19 insertions(+), 9 deletions(-)
-> =
+The following patches contain only initial files and basic structures
+for the HFP HF plugin (since files and plugins names are one of the
+controversial points).
 
-> diff --git a/Makefile.am b/Makefile.am
-> index 0d2ba9f..811a3f5 100644
-> --- a/Makefile.am
-> +++ b/Makefile.am
-> @@ -407,7 +407,7 @@ builtin_sources +=3D plugins/samsung.c
->  builtin_modules +=3D sim900
->  builtin_sources +=3D plugins/sim900.c
->  =
+Remaining HFP HF patches:
+git://git.infradead.org/users/cktakahasi/ofono.git HF-20130116
 
-> -if BLUETOOTH
-> +if BLUEZ4
->  builtin_modules +=3D bluetooth
->  builtin_sources +=3D plugins/bluetooth.c plugins/bluetooth.h
->  =
+Changed between v0-v1:
+* Append BlueZ version to hfp_hf* files
+* --enable-bluez4 configure option
 
-> @@ -742,6 +742,7 @@ tools_stktest_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
->  endif
->  endif
->  =
+Changed between v1-v2:
+* Make BLUEZ4 conditional dependent on BLUETOOTH. BlueZ 5 is enabled by
+  default(--enable-bluetooth can be omitted), BlueZ 4 support is enabled
+  only if --enable-bluez4 is informed. --disable-bluetooth disables all
+  BlueZ related plugins.
 
-> +if BLUEZ4
->  if DUNDEE
->  sbin_PROGRAMS +=3D dundee/dundee
->  =
+Claudio Takahasi (6):
+  Makefile: Add configure option for BlueZ 4 and 5
+  bluetooth: Add versioning information to BlueZ plugins
+  bluetooth: Initial files for BlueZ 5
+  hfp_hf: Add initial file for external HFP
+  hfp_hf: Add hfp_driver
+  hfp_hf: Add BlueZ Profile handler
 
-> @@ -759,6 +760,7 @@ if SYSTEMD
->  systemdunit_DATA +=3D dundee/dundee.service
->  endif
->  endif
-> +endif
->  =
+ Makefile.am             |  31 +-
+ configure.ac            |  20 +-
+ dundee/bluetooth.c      |   2 +-
+ plugins/bluetooth.c     | 989 --------------------------------------------=
+----
+ plugins/bluetooth.h     |  84 ----
+ plugins/bluez4.c        | 989 ++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ plugins/bluez4.h        |  84 ++++
+ plugins/bluez5.c        | 145 +++++++
+ plugins/bluez5.h        |  31 ++
+ plugins/dun_gw.c        |   2 +-
+ plugins/hfp_ag.c        |   2 +-
+ plugins/hfp_hf.c        | 552 ---------------------------
+ plugins/hfp_hf_bluez4.c | 552 +++++++++++++++++++++++++++
+ plugins/hfp_hf_bluez5.c | 194 ++++++++++
+ plugins/sap.c           |   2 +-
+ plugins/telit.c         |   2 +-
+ 16 files changed, 2035 insertions(+), 1646 deletions(-)
+ delete mode 100644 plugins/bluetooth.c
+ delete mode 100644 plugins/bluetooth.h
+ create mode 100644 plugins/bluez4.c
+ create mode 100644 plugins/bluez4.h
+ create mode 100644 plugins/bluez5.c
+ create mode 100644 plugins/bluez5.h
+ delete mode 100644 plugins/hfp_hf.c
+ create mode 100644 plugins/hfp_hf_bluez4.c
+ create mode 100644 plugins/hfp_hf_bluez5.c
 
->  endif
->  =
+-- =
 
-> diff --git a/configure.ac b/configure.ac
-> index 450352b..47b0600 100644
-> --- a/configure.ac
-> +++ b/configure.ac
-> @@ -173,15 +173,23 @@ AC_ARG_ENABLE(qmimodem, AC_HELP_STRING([--disable-q=
-mimodem],
->  AM_CONDITIONAL(QMIMODEM, test "${enable_qmimodem}" !=3D "no")
->  =
-
->  AC_ARG_ENABLE(bluetooth, AC_HELP_STRING([--disable-bluetooth],
-> -				[disable Bluetooth modem support]),
-> -					[enable_bluetooth=3D${enableval}])
-> -if (test "${enable_bluetooth}" !=3D "no"); then
-> -	PKG_CHECK_MODULES(BLUEZ, bluez >=3D 4.99, dummy=3Dyes,
-> -			AC_MSG_ERROR(Bluetooth library >=3D 4.99 is required))
-> +				[disable BlueZ 4 and BlueZ 5 plugins support]),
-> +					[enable_bluez5=3D${enableval}])
-> +
-> +AC_ARG_ENABLE(bluez4, AC_HELP_STRING([--enable-bluez4],
-> +				[enable BlueZ 4 plugins support prior to BlueZ 5]),
-> +					[enable_bluez4=3D${enableval}])
-> +
-> +if (test "${enable_bluez4}" =3D "yes"); then
-> +	PKG_CHECK_MODULES(BLUEZ, bluez >=3D 4.99 bluez < 5,
-> +			  enable_bluez4=3Dyes enable_bluez5=3Dno,
-> +			  AC_MSG_ERROR(Bluetooth library >=3D 4.99 and < 5 is required))
-> +	AC_SUBST(BLUEZ_CFLAGS)
-> +	AC_SUBST(BLUEZ_LIBS)
->  fi
-> -AC_SUBST(BLUEZ_CFLAGS)
-> -AC_SUBST(BLUEZ_LIBS)
-> -AM_CONDITIONAL(BLUETOOTH, test "${enable_bluetooth}" !=3D "no")
-> +
-> +AM_CONDITIONAL(BLUEZ4, test "${enable_bluez4}" =3D "yes")
-> +AM_CONDITIONAL(BLUEZ5, test "${enable_bluez5}" !=3D "no" && test "${enab=
-le_bluez4}" !=3D "yes")
-
-can we keep BLUETOOTH conditional for overall Bluetooth enabled/disabled
-and just make BLUEZ4 the if-else statement for selecting which one.
-
-Regards
-
-Marcel
+1.7.11.7
 
 
-
---===============5921525533218028703==--
+--===============6021730851655743775==--
 
