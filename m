@@ -1,63 +1,191 @@
-Content-Type: multipart/mixed; boundary="===============4194287542592689022=="
+Content-Type: multipart/mixed; boundary="===============3846128830476034054=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 5/8] hfpmodem: Send the AT+BAC command with the supported
- codecs
-Date: Thu, 17 Jan 2013 12:13:08 -0300
-Message-ID: <1358435591-14757-6-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 4/8] hfpmodem: Add support for storing the supported codecs
+Date: Thu, 17 Jan 2013 12:13:07 -0300
+Message-ID: <1358435591-14757-5-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1358435591-14757-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4194287542592689022==
+--===============3846128830476034054==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
 
-Before, the AT+BAC command was being sent with fixed information,
-now we send the command (that inform the AG of the codecs supported by
-the HF) with the codecs that come from the profile implementation.
+As informing the AG of the supported codecs is part of the setup
+of the SLC, it makes sense to have this information inside the SLC
+establishment part.
+
+Now the hfp_slc_info structure has dynamic information, and so the
+hfp_slc_info_free() function is used.
 ---
- drivers/hfpmodem/slc.c | 13 ++++++++++++-
- 1 file changed, 12 insertions(+), 1 deletion(-)
+ drivers/hfpmodem/slc.c  | 14 +++++++++++++-
+ drivers/hfpmodem/slc.h  | 10 +++++++++-
+ plugins/hfp_hf_bluez4.c |  5 ++++-
+ plugins/phonesim.c      | 12 +++++++-----
+ 4 files changed, 33 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/hfpmodem/slc.c b/drivers/hfpmodem/slc.c
-index 288afdd..e9427a9 100644
+index 646befa..288afdd 100644
 --- a/drivers/hfpmodem/slc.c
 +++ b/drivers/hfpmodem/slc.c
-@@ -316,10 +316,21 @@ static void brsf_cb(gboolean ok, GAtResult *result, g=
-pointer user_data)
+@@ -52,7 +52,8 @@ struct slc_establish_data {
+ 	gpointer userdata;
+ };
  =
 
- 	if (info->ag_features & HFP_AG_FEATURE_CODEC_NEGOTIATION &&
- 			info->hf_features & HFP_HF_FEATURE_CODEC_NEGOTIATION) {
-+		GString *str =3D g_string_new("AT+BAC=3D");
-+		int i;
-+
-+		for (i =3D 0; i < info->codecs_len; i++) {
-+			g_string_append_printf(str, "%d", info->codecs[i]);
-+			if (i + 1 < info->codecs_len)
-+				str =3D g_string_append(str, ",");
-+		}
+-void hfp_slc_info_init(struct hfp_slc_info *info, guint16 version)
++void hfp_slc_info_init(struct hfp_slc_info *info, guint16 version,
++						unsigned char *codecs, int len)
+ {
+ 	info->ag_features =3D 0;
+ 	info->ag_mpty_features =3D 0;
+@@ -72,11 +73,22 @@ void hfp_slc_info_init(struct hfp_slc_info *info, guint=
+16 version)
  =
 
- 		slc_establish_data_ref(sed);
--		g_at_chat_send(info->chat, "AT+BAC=3D1", NULL, bac_cb, sed,
-+		g_at_chat_send(info->chat, str->str, NULL, bac_cb, sed,
- 						slc_establish_data_unref);
-+
-+		g_string_free(str, TRUE);
-+
- 		return;
- 	}
+ 	info->hf_features |=3D HFP_HF_FEATURE_CODEC_NEGOTIATION;
  =
 
++	info->codecs =3D g_memdup(codecs, len);
++	info->codecs_len =3D len;
++
+ done:
+ 	memset(info->cind_val, 0, sizeof(info->cind_val));
+ 	memset(info->cind_pos, 0, sizeof(info->cind_pos));
+ }
+ =
+
++void hfp_slc_info_free(struct hfp_slc_info *info)
++{
++	g_free(info->codecs);
++
++	g_at_chat_unref(info->chat);
++	info->chat =3D NULL;
++}
++
+ static void slc_establish_data_unref(gpointer userdata)
+ {
+ 	struct slc_establish_data *sed =3D userdata;
+diff --git a/drivers/hfpmodem/slc.h b/drivers/hfpmodem/slc.h
+index b71ffe9..d7c90a2 100644
+--- a/drivers/hfpmodem/slc.h
++++ b/drivers/hfpmodem/slc.h
+@@ -44,6 +44,11 @@ enum hfp_indicator {
+ 	HFP_INDICATOR_LAST
+ };
+ =
+
++enum hfp_codec {
++	HFP_CODEC_CVSD =3D 0x01,
++	HFP_CODEC_MSBC =3D 0x02,
++};
++
+ typedef void (*hfp_slc_cb_t)(void *userdata);
+ =
+
+ struct hfp_slc_info {
+@@ -53,9 +58,12 @@ struct hfp_slc_info {
+ 	unsigned int hf_features;
+ 	unsigned char cind_pos[HFP_INDICATOR_LAST];
+ 	unsigned int cind_val[HFP_INDICATOR_LAST];
++	unsigned char *codecs;
++	int codecs_len;
+ };
+ =
+
+-void hfp_slc_info_init(struct hfp_slc_info *info, guint16 version);
++void hfp_slc_info_init(struct hfp_slc_info *info, guint16 version,
++					unsigned char *codecs, int len);
+ void hfp_slc_info_free(struct hfp_slc_info *info);
+ =
+
+ void hfp_slc_establish(struct hfp_slc_info *info, hfp_slc_cb_t connect_cb,
+diff --git a/plugins/hfp_hf_bluez4.c b/plugins/hfp_hf_bluez4.c
+index 450c183..f27b0e1 100644
+--- a/plugins/hfp_hf_bluez4.c
++++ b/plugins/hfp_hf_bluez4.c
+@@ -165,12 +165,15 @@ static DBusMessage *hfp_agent_new_connection(DBusConn=
+ection *conn,
+ 	struct ofono_modem *modem =3D data;
+ 	struct hfp_data *hfp_data =3D ofono_modem_get_data(modem);
+ 	guint16 version;
++	unsigned char codecs[1];
+ =
+
+ 	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_UNIX_FD, &fd,
+ 				DBUS_TYPE_UINT16, &version, DBUS_TYPE_INVALID))
+ 		return __ofono_error_invalid_args(msg);
+ =
+
+-	hfp_slc_info_init(&hfp_data->info, version);
++	memset(&codecs, 0, sizeof(codecs));
++	codecs[0] =3D HFP_CODEC_CVSD;
++	hfp_slc_info_init(&hfp_data->info, version, codecs, 1);
+ =
+
+ 	err =3D service_level_connection(modem, fd);
+ 	if (err < 0 && err !=3D -EINPROGRESS)
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index 26f96d0..63590a9 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -885,8 +885,7 @@ static void slc_failed(gpointer userdata)
+ =
+
+ 	ofono_modem_set_powered(modem, FALSE);
+ =
+
+-	g_at_chat_unref(info->chat);
+-	info->chat =3D NULL;
++	hfp_slc_info_free(info);
+ }
+ =
+
+ static int localhfp_enable(struct ofono_modem *modem)
+@@ -896,6 +895,7 @@ static int localhfp_enable(struct ofono_modem *modem)
+ 	GAtSyntax *syntax;
+ 	GAtChat *chat;
+ 	const char *address;
++	unsigned char codecs[1];
+ 	int sk, port;
+ =
+
+ 	address =3D ofono_modem_get_string(modem, "Address");
+@@ -929,7 +929,10 @@ static int localhfp_enable(struct ofono_modem *modem)
+ =
+
+ 	g_at_chat_set_disconnect_function(chat, slc_failed, modem);
+ =
+
+-	hfp_slc_info_init(info, HFP_VERSION_LATEST);
++	memset(codecs, 0, sizeof(codecs));
++	codecs[0] =3D HFP_CODEC_CVSD;
++
++	hfp_slc_info_init(info, HFP_VERSION_LATEST, codecs, 1);
+ 	info->chat =3D chat;
+ 	hfp_slc_establish(info, slc_established, slc_failed, modem);
+ =
+
+@@ -940,8 +943,7 @@ static int localhfp_disable(struct ofono_modem *modem)
+ {
+ 	struct hfp_slc_info *info =3D ofono_modem_get_data(modem);
+ =
+
+-	g_at_chat_unref(info->chat);
+-	info->chat =3D NULL;
++	hfp_slc_info_free(info);
+ =
+
+ 	return 0;
+ }
 -- =
 
 1.7.11.7
 
 
---===============4194287542592689022==--
+--===============3846128830476034054==--
 
