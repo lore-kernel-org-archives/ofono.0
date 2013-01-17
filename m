@@ -1,102 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============8986428535156791750=="
+Content-Type: multipart/mixed; boundary="===============5042019011495533495=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: fix for +CMER parser of AT driver (fixes registration)
-Date: Wed, 16 Jan 2013 21:28:22 -0600
-Message-ID: <50F76FD6.30008@gmail.com>
-In-Reply-To: <20130107205823.GI7263@emdete.de>
+Subject: Re: [PATCH] hfpmodem: Delay AT+CLCC request after outgoing callsetup
+Date: Wed, 16 Jan 2013 21:37:12 -0600
+Message-ID: <50F771E8.1000305@gmail.com>
+In-Reply-To: <c97f1d8ae1e614a832b53b2b0c6f5da33c710a97.1357896034.git.timo.mueller@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8986428535156791750==
+--===============5042019011495533495==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Michael,
+Hi Timo,
 
-On 01/07/2013 02:58 PM, M. Dietrich wrote:
-> Hi All,
+On 01/11/2013 07:00 AM, mail(a)timomueller.eu wrote:
+> From: Timo Mueller<timo.mueller@bmw-carit.de>
 >
+> Currently the list of current calls is requested right after an
+> outgoing callsetup has been reported by the AG device. If the AG
+> device updates the list after reporting the callsetup the +CLCC
+> response may not contain the new call and it is not registered
+> with oFono.
 >
-> i recently noticed that the at driver did not reach the state "registered=
-".
-> marcel pointer me to the message
+> AT sequence that exhibited the failure (AG device was a Nokia N9
+> placing an outgoing call)
 >
-> 	+CMER not supported by this modem.  If this is an error please submit
-> 	patches to support this hardware
+> <  \r\n+CIEV: 5,2\r\n
+
+So here it tells us that the callsetup is 2 (e.g. dialing)
+
+>> AT+CLCC\r
+> <  \r\nOK\r\n
+
+And then it tells us "There are no calls to see here..."
+
+Big. Fail. ;)
+
+> <  \r\n+VGS=3D7\r\n
+> <  \r\n+VGM=3D7\r\n
+> <  \r\n+CIEV: 5,3\r\n
+> <  \r\n+CIEV: 4,1\r\n
+> <  \r\n+CIEV: 5,0\r\n
+> ---
+>   drivers/hfpmodem/voicecall.c | 7 +++++--
+>   1 file changed, 5 insertions(+), 2 deletions(-)
 >
-> and i started digging. problem was parsing of the response
+> diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+> index 505601c..c7c5f45 100644
+> --- a/drivers/hfpmodem/voicecall.c
+> +++ b/drivers/hfpmodem/voicecall.c
+> @@ -912,8 +912,11 @@ static void ciev_callsetup_notify(struct ofono_voice=
+call *vc,
+>   		 * from HF: query and sync the phone number.
+>   		 * from AG: query and create call.
+>   		 */
+> -		g_at_chat_send(vd->chat, "AT+CLCC", clcc_prefix,
+> -				clcc_poll_cb, vc, NULL);
+> +		if (vd->clcc_source)
+> +			g_source_remove(vd->clcc_source);
+> +
+> +		vd->clcc_source =3D g_timeout_add(POLL_CLCC_DELAY,
+> +							poll_clcc, vc);
+
+Actually I really don't like this, you are delaying the call detection =
+
+for all devices (even good ones) because of one broken one.
+
+I'd rather we request the CLCC immediately, but set a flag to retry the =
+
+CLCC after a timeout in case the call list is not what we expected.
+
+>   		break;
 >
-> 	+CMER: (0,3),(0,2),0,(0-1),0
-
-This is quite obviously wrong.  Quoting v.250:
-
-"When the action accepts a single numeric subparameter, or the parameter =
-
-accepts only one numeric value, the set of supported values may be =
-
-presented in the information text as an ordered list of
-values. The list shall be preceded by a left parenthesis ("(", IA5 2/8), =
-
-and is followed by a right parenthesis (")", IA5 2/9). If only a single =
-
-value is supported, it shall appear between the parentheses. If more =
-
-than one value is supported, then the values may be listed individually, =
-
-separated by comma characters (IA5 2/12), or, when a continuous range of =
-
-values is supported, by the first value in the range, followed by a =
-
-hyphen character (IA5 2/13), followed by the last value in the range. =
-
-The specification of single values and ranges of values may be =
-
-intermixed within a single information text. In all cases, the supported =
-
-values shall be indicated in ascending order."
-
->
-> that expresses the allowed options of CMER. neither (a list of) single in=
-teger
-
-I'm pretty sure that this is supported by GAtChat.
-
-> "(0,3)" (in opposite to range "(0-1)") nor missing brackets "0" were supp=
-orted
-> by ofono so i added this (see patch).
->
-> i'm not sure if missing brackets are allowed or espress something differe=
-nt,
-> maybe a AT-guru can tell. for now "(0)" behaves like "0".
->
-> i assume that also other response-parsing flows in ofono have that problem
-> so either a generic aproach should be implemented or other places be revi=
-ewed.
->
-
-It is only a problem if the modem is broken, in which case you need to =
-
-use a quirk and parsing the result of CMER=3D? is likely unnecessary.  For =
-
-broken devices it is likely easier to simply skip CMER probing and just =
-
-set the wanted CMER settings.
-
-> marcel already pointer out that a generic aproach may be unnecessarily co=
-mplex
-> where i agree if it comes to strings and nested brackets but for plain in=
-teger
-> cases it would be quite useful to get this done in one place for all. if
-> interested i could implement such stuff into gatchat/gatresult.c which th=
-en can
-> be used for the integer-only cases. what do you think?
-
-Not sure what you're asking here, can you elaborate?
+>   	case 3:
 
 Regards,
 -Denis
 
---===============8986428535156791750==--
+--===============5042019011495533495==--
 
