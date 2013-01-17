@@ -1,83 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============5042019011495533495=="
+Content-Type: multipart/mixed; boundary="===============3282734432410909040=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] hfpmodem: Delay AT+CLCC request after outgoing callsetup
-Date: Wed, 16 Jan 2013 21:37:12 -0600
-Message-ID: <50F771E8.1000305@gmail.com>
-In-Reply-To: <c97f1d8ae1e614a832b53b2b0c6f5da33c710a97.1357896034.git.timo.mueller@bmw-carit.de>
+From: Andrea Galbusera <gizero@gmail.com>
+Subject: Re: [PATCH] Fix build with automake-1.13
+Date: Thu, 17 Jan 2013 08:18:18 +0100
+Message-ID: <CAC+thW1mwyLNMjh4ZvEr1f_7TpFWXyC_0BPLQq68FvGTsr39Vg@mail.gmail.com>
+In-Reply-To: <CAF6bG8eQqF+s1VECb_1fEZHxkdnaDccF0ku0OL0vrQWitJM6jg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5042019011495533495==
+--===============3282734432410909040==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Timo,
+Hi Marko,
 
-On 01/11/2013 07:00 AM, mail(a)timomueller.eu wrote:
-> From: Timo Mueller<timo.mueller@bmw-carit.de>
+On Sat, Jan 12, 2013 at 10:22 AM, Marko Lindqvist <cazfi74@gmail.com> wro=
+te:
+
+> Automake-1.13 removed long obsolete AM_CONFIG_HEADER completely (
+> http://lists.gnu.org/archive/html/automake/2012-12/msg00038.html ) and
+> errors out upon seeing it.
 >
-> Currently the list of current calls is requested right after an
-> outgoing callsetup has been reported by the AG device. If the AG
-> device updates the list after reporting the callsetup the +CLCC
-> response may not contain the new call and it is not registered
-> with oFono.
+> Attached patch replaces it with proper AC_CONFIG_HEADERS.
 >
-> AT sequence that exhibited the failure (AG device was a Nokia N9
-> placing an outgoing call)
+>  I'm not subscribed to mailing list.
 >
-> <  \r\n+CIEV: 5,2\r\n
 
-So here it tells us that the callsetup is 2 (e.g. dialing)
+FYI since I see you are not on the list: a similar patch was recently
+submitted by Lucas De Marchi, and just applied by Marcel.
 
->> AT+CLCC\r
-> <  \r\nOK\r\n
+--===============3282734432410909040==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-And then it tells us "There are no calls to see here..."
+PGRpdiBkaXI9Imx0ciI+SGkgTWFya28sPGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPjxicj48ZGl2
+IGNsYXNzPSJnbWFpbF9xdW90ZSI+T24gU2F0LCBKYW4gMTIsIDIwMTMgYXQgMTA6MjIgQU0sIE1h
+cmtvIExpbmRxdmlzdCA8c3BhbiBkaXI9Imx0ciI+Jmx0OzxhIGhyZWY9Im1haWx0bzpjYXpmaTc0
+QGdtYWlsLmNvbSIgdGFyZ2V0PSJfYmxhbmsiPmNhemZpNzRAZ21haWwuY29tPC9hPiZndDs8L3Nw
+YW4+IHdyb3RlOjxicj4KCgoKPGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0i
+bWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0
+OjFleCI+QXV0b21ha2UtMS4xMyByZW1vdmVkIGxvbmcgb2Jzb2xldGUgQU1fQ09ORklHX0hFQURF
+UiBjb21wbGV0ZWx5ICg8YnI+CjxhIGhyZWY9Imh0dHA6Ly9saXN0cy5nbnUub3JnL2FyY2hpdmUv
+aHRtbC9hdXRvbWFrZS8yMDEyLTEyL21zZzAwMDM4Lmh0bWwiIHRhcmdldD0iX2JsYW5rIj5odHRw
+Oi8vbGlzdHMuZ251Lm9yZy9hcmNoaXZlL2h0bWwvYXV0b21ha2UvMjAxMi0xMi9tc2cwMDAzOC5o
+dG1sPC9hPiApIGFuZDxicj4KZXJyb3JzIG91dCB1cG9uIHNlZWluZyBpdC48YnI+Cjxicj4KQXR0
+YWNoZWQgcGF0Y2ggcmVwbGFjZXMgaXQgd2l0aCBwcm9wZXIgQUNfQ09ORklHX0hFQURFUlMuPGJy
+Pgo8YnI+CqBJJiMzOTttIG5vdCBzdWJzY3JpYmVkIHRvIG1haWxpbmcgbGlzdC48YnI+PC9ibG9j
+a3F1b3RlPjxkaXY+PGJyPjwvZGl2PjxkaXY+RllJIHNpbmNlIEkgc2VlIHlvdSBhcmUgbm90IG9u
+IHRoZSBsaXN0OiBhIHNpbWlsYXIgcGF0Y2ggd2FzIHJlY2VudGx5IHN1Ym1pdHRlZCBieSBMdWNh
+cyBEZSBNYXJjaGksIGFuZCBqdXN0IGFwcGxpZWQgYnkgTWFyY2VsLjxicj48L2Rpdj48L2Rpdj4K
+PC9kaXY+PC9kaXY+Cg==
 
-Big. Fail. ;)
-
-> <  \r\n+VGS=3D7\r\n
-> <  \r\n+VGM=3D7\r\n
-> <  \r\n+CIEV: 5,3\r\n
-> <  \r\n+CIEV: 4,1\r\n
-> <  \r\n+CIEV: 5,0\r\n
-> ---
->   drivers/hfpmodem/voicecall.c | 7 +++++--
->   1 file changed, 5 insertions(+), 2 deletions(-)
->
-> diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-> index 505601c..c7c5f45 100644
-> --- a/drivers/hfpmodem/voicecall.c
-> +++ b/drivers/hfpmodem/voicecall.c
-> @@ -912,8 +912,11 @@ static void ciev_callsetup_notify(struct ofono_voice=
-call *vc,
->   		 * from HF: query and sync the phone number.
->   		 * from AG: query and create call.
->   		 */
-> -		g_at_chat_send(vd->chat, "AT+CLCC", clcc_prefix,
-> -				clcc_poll_cb, vc, NULL);
-> +		if (vd->clcc_source)
-> +			g_source_remove(vd->clcc_source);
-> +
-> +		vd->clcc_source =3D g_timeout_add(POLL_CLCC_DELAY,
-> +							poll_clcc, vc);
-
-Actually I really don't like this, you are delaying the call detection =
-
-for all devices (even good ones) because of one broken one.
-
-I'd rather we request the CLCC immediately, but set a flag to retry the =
-
-CLCC after a timeout in case the call list is not what we expected.
-
->   		break;
->
->   	case 3:
-
-Regards,
--Denis
-
---===============5042019011495533495==--
+--===============3282734432410909040==--
 
