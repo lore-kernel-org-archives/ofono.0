@@ -1,86 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============6576747269322905936=="
+Content-Type: multipart/mixed; boundary="===============2066306049915779121=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v0 1/8] hfp_hf: Add NewConnection arguments parsing
-Date: Thu, 17 Jan 2013 12:38:01 -0600
-Message-ID: <50F84509.8090509@gmail.com>
-In-Reply-To: <CAKT1EBd5iqcMHNtWE2EQEtUQWkm2cezFsTNqAhevqShZ=z-o7g@mail.gmail.com>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH v0 4/8] hfpmodem: Add support for storing the supported
+ codecs
+Date: Thu, 17 Jan 2013 15:55:40 -0300
+Message-ID: <20130117185539.GA18094@samus>
+In-Reply-To: <50F834F9.4010409@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6576747269322905936==
+--===============2066306049915779121==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Claudio,
+Hi Denis,
 
-On 01/17/2013 11:58 AM, Claudio Takahasi wrote:
-> Hi Denis:
->
->> Please separate this into three patches, one for bluez5.[ch] changes, one
->> for media.[ch] changes and one for the hfp_hf_bluez5.c changes. Also, is
->> there a compelling reason to not roll media.[ch] into bluez5.[ch]?  It is
->> being put into plugins directory and it is not really a plugin.  We made=
- a
->> couple exceptions (e.g. for mbpi.c) but I do not really want to make this
->> into a habit.
->
-> We will analyze if it is better to move media.[ch] functions to
-> bluez5.[ch] or hfp_hf_bluez5.[ch]
->
-> media.[ch]  contains HF related functions, and bluez5.[ch] should
-> contain common functions used by hfp and others BlueZ 5 based plugins:
-> sap, dun, ...
->
+On 11:29 Thu 17 Jan, Denis Kenzior wrote:
+> Hi Claudio,
+> =
 
-The media API is also part of BlueZ 5, so it makes sense to move it to me...
+> On 01/17/2013 09:13 AM, Claudio Takahasi wrote:
+> >From: Vinicius Costa Gomes<vinicius.gomes@openbossa.org>
+> >
+> >As informing the AG of the supported codecs is part of the setup
+> >of the SLC, it makes sense to have this information inside the SLC
+> >establishment part.
+> >
+> >Now the hfp_slc_info structure has dynamic information, and so the
+> >hfp_slc_info_free() function is used.
+> >---
+> >  drivers/hfpmodem/slc.c  | 14 +++++++++++++-
+> >  drivers/hfpmodem/slc.h  | 10 +++++++++-
+> >  plugins/hfp_hf_bluez4.c |  5 ++++-
+> >  plugins/phonesim.c      | 12 +++++++-----
+> >  4 files changed, 33 insertions(+), 8 deletions(-)
+> =
 
-<snip>
+> This patch needs to be broken up.  First it needs to implement the
+> hfp_slc_info_free function, then update all existing plugins to use
+> that.  Then introduce hfp_slc_info_init changes and whatever else.
 
->>> +
->>> +void bluetooth_iter_parse_properties(DBusMessageIter *array,
->>> +                                               const char *property, .=
-..)
->>
->> Is this a copy-paste job out of bluez4.c?
->
-> Yes. It is a *partial* copy of bluez4.c with minor changes. If the
-> plan is to drop BlueZ 4 support, we need avoid including bluez4.h
-> header.
->
+Ok. Sure.
 
-Perhaps this part needs to be moved into another utility file.  Either =
+[snip]
 
-inside gdbus or into src/dbus.c.
+> =
 
-<snip>
+> >diff --git a/plugins/hfp_hf_bluez4.c b/plugins/hfp_hf_bluez4.c
+> >index 450c183..f27b0e1 100644
+> >--- a/plugins/hfp_hf_bluez4.c
+> >+++ b/plugins/hfp_hf_bluez4.c
+> >@@ -165,12 +165,15 @@ static DBusMessage *hfp_agent_new_connection(DBusC=
+onnection *conn,
+> >  	struct ofono_modem *modem =3D data;
+> >  	struct hfp_data *hfp_data =3D ofono_modem_get_data(modem);
+> >  	guint16 version;
+> >+	unsigned char codecs[1];
+> >
+> >  	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_UNIX_FD,&fd,
+> >  				DBUS_TYPE_UINT16,&version, DBUS_TYPE_INVALID))
+> >  		return __ofono_error_invalid_args(msg);
+> >
+> >-	hfp_slc_info_init(&hfp_data->info, version);
+> >+	memset(&codecs, 0, sizeof(codecs));
+> >+	codecs[0] =3D HFP_CODEC_CVSD;
+> >+	hfp_slc_info_init(&hfp_data->info, version, codecs, 1);
+> =
 
->>> +
->>> +               bluetooth_iter_parse_properties(&variant,
->>> +                               "Path", parse_string,&path,
->>> +                               "Codec", parse_byte,&codec,
->>> +                               "Capabilities",
->>> parse_byte_array,&capabilities,
->>> +                               NULL);
->>
->>
->> Sounds like you should be passing in the endpoint structure here instead
->>
->
-> Media endpoint structure is opaque, the field are not accessible here
-> unless we move media.[ch] functions to this file.
+> Why do you need this info for HFP 1.5?
 
-One can always implement the parser inside media.c as well.  However, it =
+You are right, I don't need it. But being pedantic, it is more because
+in the BlueZ 4 case it won't support codec negotiation than because of
+the version.
 
-seems to me that long-term you do not want to store both the media =
+And that reminds me that in the case that I only have one codec (CVSD),
+I am sending the supported codecs needlessly. Will fix it as well.
 
-endpoint objects and the slc_info codecs at the same time.  One or the =
 
-other is enough, they are the same information.
+Cheers,
+-- =
 
-Regards,
--Denis
+Vinicius
 
---===============6576747269322905936==--
+--===============2066306049915779121==--
 
