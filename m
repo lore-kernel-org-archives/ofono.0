@@ -1,44 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============8702910258696309473=="
+Content-Type: multipart/mixed; boundary="===============4194287542592689022=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 2/8] hfpmodem: Add version defines for HFP 1.6
-Date: Thu, 17 Jan 2013 12:13:05 -0300
-Message-ID: <1358435591-14757-3-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 5/8] hfpmodem: Send the AT+BAC command with the supported
+ codecs
+Date: Thu, 17 Jan 2013 12:13:08 -0300
+Message-ID: <1358435591-14757-6-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1358435591-14757-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8702910258696309473==
+--===============4194287542592689022==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
 
+Before, the AT+BAC command was being sent with fixed information,
+now we send the command (that inform the AG of the codecs supported by
+the HF) with the codecs that come from the profile implementation.
 ---
- drivers/hfpmodem/slc.h | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ drivers/hfpmodem/slc.c | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/hfpmodem/slc.h b/drivers/hfpmodem/slc.h
-index a9f42f7..b71ffe9 100644
---- a/drivers/hfpmodem/slc.h
-+++ b/drivers/hfpmodem/slc.h
-@@ -29,7 +29,8 @@
+diff --git a/drivers/hfpmodem/slc.c b/drivers/hfpmodem/slc.c
+index 288afdd..e9427a9 100644
+--- a/drivers/hfpmodem/slc.c
++++ b/drivers/hfpmodem/slc.c
+@@ -316,10 +316,21 @@ static void brsf_cb(gboolean ok, GAtResult *result, g=
+pointer user_data)
  =
 
- enum hfp_version {
- 	HFP_VERSION_1_5 =3D	0x0105,
--	HFP_VERSION_LATEST =3D	HFP_VERSION_1_5,
-+	HFP_VERSION_1_6 =3D	0x0106,
-+	HFP_VERSION_LATEST =3D	HFP_VERSION_1_6,
- };
+ 	if (info->ag_features & HFP_AG_FEATURE_CODEC_NEGOTIATION &&
+ 			info->hf_features & HFP_HF_FEATURE_CODEC_NEGOTIATION) {
++		GString *str =3D g_string_new("AT+BAC=3D");
++		int i;
++
++		for (i =3D 0; i < info->codecs_len; i++) {
++			g_string_append_printf(str, "%d", info->codecs[i]);
++			if (i + 1 < info->codecs_len)
++				str =3D g_string_append(str, ",");
++		}
  =
 
- enum hfp_indicator {
+ 		slc_establish_data_ref(sed);
+-		g_at_chat_send(info->chat, "AT+BAC=3D1", NULL, bac_cb, sed,
++		g_at_chat_send(info->chat, str->str, NULL, bac_cb, sed,
+ 						slc_establish_data_unref);
++
++		g_string_free(str, TRUE);
++
+ 		return;
+ 	}
+ =
+
 -- =
 
 1.7.11.7
 
 
---===============8702910258696309473==--
+--===============4194287542592689022==--
 
