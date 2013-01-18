@@ -1,50 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============7792869119681847685=="
+Content-Type: multipart/mixed; boundary="===============4680659614349060159=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v2 05/10] hfpmodem: Implement hfp_slc_info_free
-Date: Fri, 18 Jan 2013 20:38:55 -0300
-Message-ID: <1358552340-29393-6-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v2 06/10] phonesim: Use hfp_slc_info_free()
+Date: Fri, 18 Jan 2013 20:38:56 -0300
+Message-ID: <1358552340-29393-7-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1358552340-29393-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7792869119681847685==
+--===============4680659614349060159==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
 
-hfp_slc_info_free() was already being declared, but it was not defined
-until now.
+Now that we have a function that takes care of free'ing that structure
+we should use it.
 ---
- drivers/hfpmodem/slc.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ plugins/phonesim.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/hfpmodem/slc.c b/drivers/hfpmodem/slc.c
-index 06153fc..f088a46 100644
---- a/drivers/hfpmodem/slc.c
-+++ b/drivers/hfpmodem/slc.c
-@@ -81,6 +81,14 @@ done:
- 	memset(info->cind_pos, 0, sizeof(info->cind_pos));
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index 8631039..63590a9 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -885,8 +885,7 @@ static void slc_failed(gpointer userdata)
+ =
+
+ 	ofono_modem_set_powered(modem, FALSE);
+ =
+
+-	g_at_chat_unref(info->chat);
+-	info->chat =3D NULL;
++	hfp_slc_info_free(info);
  }
  =
 
-+void hfp_slc_info_free(struct hfp_slc_info *info)
-+{
-+	g_free(info->codecs);
-+
-+	g_at_chat_unref(info->chat);
-+	info->chat =3D NULL;
-+}
-+
- static void slc_establish_data_unref(gpointer userdata)
+ static int localhfp_enable(struct ofono_modem *modem)
+@@ -944,8 +943,7 @@ static int localhfp_disable(struct ofono_modem *modem)
  {
- 	struct slc_establish_data *sed =3D userdata;
+ 	struct hfp_slc_info *info =3D ofono_modem_get_data(modem);
+ =
+
+-	g_at_chat_unref(info->chat);
+-	info->chat =3D NULL;
++	hfp_slc_info_free(info);
+ =
+
+ 	return 0;
+ }
 -- =
 
 1.7.11.7
 
 
---===============7792869119681847685==--
+--===============4680659614349060159==--
 
