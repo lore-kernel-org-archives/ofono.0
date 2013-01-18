@@ -1,61 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============6355721832260870204=="
+Content-Type: multipart/mixed; boundary="===============4164236191763793697=="
 MIME-Version: 1.0
-From: M. Dietrich <ofono@emdete.de>
-Subject: Re:  fix for +CMER parser of AT driver (fixes registration)
-Date: Fri, 18 Jan 2013 23:44:52 +0100
-Message-ID: <20130118224452.GS3604@emdete.de>
-In-Reply-To: <50F76FD6.30008@gmail.com>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: [PATCH v1 00/10] HFP HF: Service Level/Codec negotiation
+Date: Fri, 18 Jan 2013 20:21:46 -0300
+Message-ID: <1358551316-27305-1-git-send-email-claudio.takahasi@openbossa.org>
+In-Reply-To: <1358435591-14757-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6355721832260870204==
+--===============4164236191763793697==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Second group of patches related to HFP external profile.
 
-On Wed, Jan 16, 2013 at 09:28:22PM -0600, Denis Kenzior wrote:
-> It is only a problem if the modem is broken, in which case you need to
-> use a quirk and parsing the result of CMER=3D? is likely unnecessary.
-> For broken devices it is likely easier to simply skip CMER probing and
-> just set the wanted CMER settings.
+The following patches contain the HFP 1.6 codec negotiation.
 
-i assume more or less all modems are in one or the other way
-"broken". even the spec is (in my opinion) broken.
+Changed between v0-v1:
+* deleted media.[ch], functions moved to bluez5.[ch]
+* replaced 'bluetooth_' prefix by 'bt_' for BlueZ 5 functions
+* splitted HFP SLC patches
+* new oFono D-Bus utility function to parse dictionaries
 
-so if only the output of an option list just does not follow the spec
-but most other stuff of the modem works fine why not be more tolerant
-parsing the option list?
+Claudio Takahasi (2):
+  hfp_hf: Register the HFP modem
+  hfp_hf: Add service level negotiation
 
-if you instead have a quirk for this and only this modem you fixed only
-a single one. i assume that also other modems are broken in this way and
-fixing it in the parser would enable more modems to work.
+Vinicius Costa Gomes (8):
+  dbus: Add ofono_dbus_iter_parse_properties()
+  bluez5: Rename register/unregister profile
+  hfp_hf: Add NewConnection arguments parsing
+  hfpmodem: Add support for storing the supported codecs
+  hfpmodem: Implement hfp_slc_info_free
+  phonesim: Use hfp_slc_info_free()
+  hfpmodem: Send the AT+BAC command with the supported codecs
+  hfp_hf: Add support for codec negotiation
 
-> >marcel already pointer out that a generic aproach may be
-> >unnecessarily complex where i agree if it comes to strings and nested
-> >brackets but for plain integer cases it would be quite useful to get
-> >this done in one place for all. if interested i could implement such
-> >stuff into gatchat/gatresult.c which then can be used for the
-> >integer-only cases. what do you think?
-> Not sure what you're asking here, can you elaborate?
-
-the AT parser code for the option list is redundant, a re-use of a
-single implementation would make some sense and i offered a more generic
-way of parsing an option list. marcel pointed out that a completly
-generic parser would be unnecessarily complex and i agree. so i suggest
-a re-usable code for integer option lists.
-
-anyway i would like to see the patch in ofono. on the one side it does
-not break any existing modem, on the other side it makes some modem
-work.
-
-regards,
-	michael
+ drivers/hfpmodem/slc.c  |  29 +++-
+ drivers/hfpmodem/slc.h  |  10 +-
+ include/dbus.h          |   6 +
+ plugins/bluez5.c        |  39 ++++-
+ plugins/bluez5.h        |  12 +-
+ plugins/hfp_hf_bluez4.c |   2 +-
+ plugins/hfp_hf_bluez5.c | 417 ++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ plugins/phonesim.c      |  12 +-
+ src/dbus.c              |  90 +++++++++++
+ 9 files changed, 598 insertions(+), 19 deletions(-)
 
 -- =
 
-M. Dietrich
+1.7.11.7
 
---===============6355721832260870204==--
+
+--===============4164236191763793697==--
 
