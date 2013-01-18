@@ -1,59 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============8793557248512717675=="
+Content-Type: multipart/mixed; boundary="===============2537401626918541875=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 06/10] phonesim: Use hfp_slc_info_free()
-Date: Fri, 18 Jan 2013 20:21:52 -0300
-Message-ID: <1358551316-27305-7-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v1 07/10] hfpmodem: Send the AT+BAC command with the supported
+ codecs
+Date: Fri, 18 Jan 2013 20:21:53 -0300
+Message-ID: <1358551316-27305-8-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1358551316-27305-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8793557248512717675==
+--===============2537401626918541875==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
 
-Now that we have a function that takes care of free'ing that structure
-we should use it.
+Before, the AT+BAC command was being sent with fixed information,
+now we send the command (that inform the AG of the codecs supported by
+the HF) with the codecs that come from the profile implementation.
 ---
- plugins/phonesim.c | 6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+ drivers/hfpmodem/slc.c | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
 
-diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-index 8631039..63590a9 100644
---- a/plugins/phonesim.c
-+++ b/plugins/phonesim.c
-@@ -885,8 +885,7 @@ static void slc_failed(gpointer userdata)
+diff --git a/drivers/hfpmodem/slc.c b/drivers/hfpmodem/slc.c
+index f088a46..54766bb 100644
+--- a/drivers/hfpmodem/slc.c
++++ b/drivers/hfpmodem/slc.c
+@@ -316,10 +316,21 @@ static void brsf_cb(gboolean ok, GAtResult *result, g=
+pointer user_data)
  =
 
- 	ofono_modem_set_powered(modem, FALSE);
+ 	if (info->ag_features & HFP_AG_FEATURE_CODEC_NEGOTIATION &&
+ 			info->hf_features & HFP_HF_FEATURE_CODEC_NEGOTIATION) {
++		GString *str =3D g_string_new("AT+BAC=3D");
++		int i;
++
++		for (i =3D 0; i < info->codecs_len; i++) {
++			g_string_append_printf(str, "%d", info->codecs[i]);
++			if (i + 1 < info->codecs_len)
++				str =3D g_string_append(str, ",");
++		}
  =
 
--	g_at_chat_unref(info->chat);
--	info->chat =3D NULL;
-+	hfp_slc_info_free(info);
- }
+ 		slc_establish_data_ref(sed);
+-		g_at_chat_send(info->chat, "AT+BAC=3D1", NULL, bac_cb, sed,
++		g_at_chat_send(info->chat, str->str, NULL, bac_cb, sed,
+ 						slc_establish_data_unref);
++
++		g_string_free(str, TRUE);
++
+ 		return;
+ 	}
  =
 
- static int localhfp_enable(struct ofono_modem *modem)
-@@ -944,8 +943,7 @@ static int localhfp_disable(struct ofono_modem *modem)
- {
- 	struct hfp_slc_info *info =3D ofono_modem_get_data(modem);
- =
-
--	g_at_chat_unref(info->chat);
--	info->chat =3D NULL;
-+	hfp_slc_info_free(info);
- =
-
- 	return 0;
- }
 -- =
 
 1.7.11.7
 
 
---===============8793557248512717675==--
+--===============2537401626918541875==--
 
