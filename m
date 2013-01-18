@@ -1,61 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============4412270036515269337=="
+Content-Type: multipart/mixed; boundary="===============6355721832260870204=="
 MIME-Version: 1.0
-From: Cedric Jehasse <cedric.jehasse@gmail.com>
-Subject: [PATCH] qmimodem: convert tid in service header to little endian.
-Date: Fri, 18 Jan 2013 11:28:02 +0100
-Message-ID: <1358504882-21514-1-git-send-email-cedric.jehasse@gmail.com>
+From: M. Dietrich <ofono@emdete.de>
+Subject: Re:  fix for +CMER parser of AT driver (fixes registration)
+Date: Fri, 18 Jan 2013 23:44:52 +0100
+Message-ID: <20130118224452.GS3604@emdete.de>
+In-Reply-To: <50F76FD6.30008@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4412270036515269337==
+--===============6355721832260870204==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Cedric Jehasse <cedric.jehasse@softathome.com>
+Hi,
 
----
- drivers/qmimodem/qmi.c |    6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+On Wed, Jan 16, 2013 at 09:28:22PM -0600, Denis Kenzior wrote:
+> It is only a problem if the modem is broken, in which case you need to
+> use a quirk and parsing the result of CMER=3D? is likely unnecessary.
+> For broken devices it is likely easier to simply skip CMER probing and
+> just set the wanted CMER settings.
 
-diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 3389bb1..aaefe9e 100644
---- a/drivers/qmimodem/qmi.c
-+++ b/drivers/qmimodem/qmi.c
-@@ -1867,6 +1867,7 @@ uint16_t qmi_service_send(struct qmi_service *service,
- 	struct service_send_data *data;
- 	struct qmi_request *req;
- 	struct qmi_service_hdr *hdr;
-+	uint16_t tid;
- =
+i assume more or less all modems are in one or the other way
+"broken". even the spec is (in my opinion) broken.
 
- 	if (!service)
- 		return 0;
-@@ -1901,12 +1902,13 @@ uint16_t qmi_service_send(struct qmi_service *servi=
-ce,
- 	if (device->next_service_tid < 256)
- 		device->next_service_tid =3D 256;
- =
+so if only the output of an option list just does not follow the spec
+but most other stuff of the modem works fine why not be more tolerant
+parsing the option list?
 
-+	tid =3D device->next_service_tid++;
- 	hdr->type =3D 0x00;
--	hdr->transaction =3D device->next_service_tid++;
-+	hdr->transaction =3D GUINT16_TO_LE(tid);
- =
+if you instead have a quirk for this and only this modem you fixed only
+a single one. i assume that also other modems are broken in this way and
+fixing it in the parser would enable more modems to work.
 
- 	__request_submit(device, req, hdr->transaction);
- =
+> >marcel already pointer out that a generic aproach may be
+> >unnecessarily complex where i agree if it comes to strings and nested
+> >brackets but for plain integer cases it would be quite useful to get
+> >this done in one place for all. if interested i could implement such
+> >stuff into gatchat/gatresult.c which then can be used for the
+> >integer-only cases. what do you think?
+> Not sure what you're asking here, can you elaborate?
 
--	return hdr->transaction;
-+	return tid;
- }
- =
+the AT parser code for the option list is redundant, a re-use of a
+single implementation would make some sense and i offered a more generic
+way of parsing an option list. marcel pointed out that a completly
+generic parser would be unnecessarily complex and i agree. so i suggest
+a re-usable code for integer option lists.
 
- bool qmi_service_cancel(struct qmi_service *service, uint16_t id)
+anyway i would like to see the patch in ofono. on the one side it does
+not break any existing modem, on the other side it makes some modem
+work.
+
+regards,
+	michael
+
 -- =
 
-1.7.9.5
+M. Dietrich
 
-
---===============4412270036515269337==--
+--===============6355721832260870204==--
 
