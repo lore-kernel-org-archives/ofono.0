@@ -1,232 +1,197 @@
-Content-Type: multipart/mixed; boundary="===============1999177491211391083=="
+Content-Type: multipart/mixed; boundary="===============6814682287509775750=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v2 08/10] hfp_hf: Register the HFP modem
-Date: Fri, 18 Jan 2013 20:38:58 -0300
-Message-ID: <1358552340-29393-9-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v2 09/10] hfp_hf: Add service level negotiation
+Date: Fri, 18 Jan 2013 20:38:59 -0300
+Message-ID: <1358552340-29393-10-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1358552340-29393-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1999177491211391083==
+--===============6814682287509775750==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch registers the HFP modem when Bluetooth link is established.
+This patch adds service level negotiation and callbacks to handle
+success and failure.
 ---
- plugins/hfp_hf_bluez5.c | 105 ++++++++++++++++++++++++++++++++++++++++++++=
+ plugins/hfp_hf_bluez5.c | 113 ++++++++++++++++++++++++++++++++++++++++++++=
 +++-
- 1 file changed, 104 insertions(+), 1 deletion(-)
+ 1 file changed, 112 insertions(+), 1 deletion(-)
 
 diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index ef9af62..b3f8a1c 100644
+index b3f8a1c..17421d0 100644
 --- a/plugins/hfp_hf_bluez5.c
 +++ b/plugins/hfp_hf_bluez5.c
-@@ -24,16 +24,27 @@
+@@ -24,6 +24,7 @@
  #endif
  =
 
  #include <errno.h>
-+#include <string.h>
-+
- #include <glib.h>
++#include <stdlib.h>
  #include <string.h>
  =
 
- #include <gdbus.h>
-+#include <gatchat.h>
-+#include <gattty.h>
- =
-
- #define OFONO_API_SUBJECT_TO_CHANGE
- #include <ofono/modem.h>
- #include <ofono/dbus.h>
- #include <ofono/plugin.h>
- #include <ofono/log.h>
-+#include <ofono/devinfo.h>
-+#include <ofono/netreg.h>
-+#include <ofono/voicecall.h>
-+#include <ofono/call-volume.h>
-+#include <ofono/handsfree.h>
-+
-+#include <drivers/hfpmodem/slc.h>
- =
-
- #include "bluez5.h"
- =
-
-@@ -48,6 +59,62 @@ struct capabilities {
- 	int size;
+ #include <glib.h>
+@@ -64,6 +65,7 @@ struct hfp {
+ 	char *device_path;
+ 	struct hfp_slc_info info;
+ 	DBusMessage *msg;
++	GIOChannel *slcio;
+ 	GSList *endpoints;
  };
  =
 
-+struct hfp {
-+	char *device_address;
-+	char *device_path;
-+	struct hfp_slc_info info;
-+	DBusMessage *msg;
-+	GSList *endpoints;
-+};
+@@ -76,6 +78,9 @@ static void hfp_free(gpointer user_data)
+ 	if (hfp->msg)
+ 		dbus_message_unref(hfp->msg);
+ =
+
++	if (hfp->slcio)
++		g_io_channel_unref(hfp->slcio);
 +
-+static GHashTable *modem_hash =3D NULL;
-+
-+static void hfp_free(gpointer user_data)
+ 	g_slist_free(hfp->endpoints);
+ 	g_free(hfp->device_address);
+ 	g_free(hfp->device_path);
+@@ -90,12 +95,111 @@ static void modem_data_free(gpointer user_data)
+ 	hfp_free(hfp);
+ }
+ =
+
++static void hfp_debug(const char *str, void *user_data)
 +{
-+	struct hfp *hfp =3D user_data;
++	const char *prefix =3D user_data;
 +
-+	if (hfp->msg)
-+		dbus_message_unref(hfp->msg);
-+
-+	g_slist_free(hfp->endpoints);
-+	g_free(hfp->device_address);
-+	g_free(hfp->device_path);
-+	g_free(hfp);
++	ofono_info("%s%s", prefix, str);
 +}
 +
-+static void modem_data_free(gpointer user_data)
++static void slc_established(gpointer userdata)
++{
++	struct ofono_modem *modem =3D userdata;
++	struct hfp *hfp =3D ofono_modem_get_data(modem);
++	DBusMessage *msg;
++
++	ofono_modem_set_powered(modem, TRUE);
++
++	msg =3D dbus_message_new_method_return(hfp->msg);
++	g_dbus_send_message(ofono_dbus_get_connection(), msg);
++	dbus_message_unref(hfp->msg);
++	hfp->msg =3D NULL;
++
++	ofono_info("Service level connection established");
++}
++
++static void slc_failed(gpointer userdata)
++{
++	struct ofono_modem *modem =3D userdata;
++	struct hfp *hfp =3D ofono_modem_get_data(modem);
++	DBusMessage *msg;
++
++	msg =3D g_dbus_create_error(hfp->msg, BLUEZ_ERROR_INTERFACE
++						".Failed",
++						"HFP Handshake failed");
++
++	g_dbus_send_message(ofono_dbus_get_connection(), msg);
++	dbus_message_unref(hfp->msg);
++	hfp->msg =3D NULL;
++
++	ofono_error("Service level connection failed");
++	ofono_modem_set_powered(modem, FALSE);
++
++	hfp_slc_info_free(&hfp->info);
++}
++
++static void hfp_disconnected_cb(gpointer user_data)
 +{
 +	struct ofono_modem *modem =3D user_data;
 +	struct hfp *hfp =3D ofono_modem_get_data(modem);
 +
-+	hfp_free(hfp);
-+}
++	DBG("HFP disconnected");
 +
-+static int modem_register(struct hfp *hfp, const char *alias, int fd,
-+							guint16 version)
-+{
-+	struct ofono_modem *modem;
-+	int err =3D 0;
-+	char *path;
++	hfp_slc_info_free(&hfp->info);
 +
-+	path =3D g_strconcat("hfp", hfp->device_path, NULL);
-+
-+	modem =3D ofono_modem_create(path, "hfp");
-+
-+	g_free(path);
-+
-+	if (modem =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	ofono_modem_set_data(modem, hfp);
-+	ofono_modem_set_name(modem, alias);
-+	ofono_modem_register(modem);
-+
-+	g_hash_table_insert(modem_hash, g_strdup(hfp->device_path), modem);
-+
-+	return err;
-+}
-+
- static void parse_guint16(DBusMessageIter *iter, gpointer user_data)
- {
- 	guint16 *value =3D user_data;
-@@ -165,6 +232,11 @@ static int hfp_enable(struct ofono_modem *modem)
- {
- 	DBG("%p", modem);
- =
-
-+	if (ofono_modem_get_powered(modem))
-+		return 0;
-+
-+	ofono_modem_set_powered(modem, TRUE);
-+
- 	return 0;
- }
- =
-
-@@ -172,12 +244,22 @@ static int hfp_disable(struct ofono_modem *modem)
- {
- 	DBG("%p", modem);
- =
-
 +	ofono_modem_set_powered(modem, FALSE);
++}
 +
- 	return 0;
- }
- =
-
- static void hfp_pre_sim(struct ofono_modem *modem)
- {
++static GIOChannel *service_level_connection(struct ofono_modem *modem,
++							int fd, int *err)
++{
 +	struct hfp *hfp =3D ofono_modem_get_data(modem);
++	GIOChannel *io;
++	GAtSyntax *syntax;
++	GAtChat *chat;
 +
- 	DBG("%p", modem);
-+
-+	ofono_devinfo_create(modem, 0, "hfpmodem", hfp->device_address);
-+	ofono_voicecall_create(modem, 0, "hfpmodem", &hfp->info);
-+	ofono_netreg_create(modem, 0, "hfpmodem", &hfp->info);
-+	ofono_call_volume_create(modem, 0, "hfpmodem", &hfp->info);
-+	ofono_handsfree_create(modem, 0, "hfpmodem", &hfp->info);
- }
- =
-
- static void hfp_post_sim(struct ofono_modem *modem)
-@@ -199,11 +281,12 @@ static struct ofono_modem_driver hfp_driver =3D {
- static DBusMessage *profile_new_connection(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
- {
-+	struct hfp *hfp;
- 	DBusMessageIter entry;
- 	const char *device;
- 	GSList *endpoints =3D NULL;
- 	guint16 version, features;
--	int fd;
-+	int fd, err;
- =
-
- 	DBG("Profile handler NewConnection");
- =
-
-@@ -236,6 +319,21 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
- 		ofono_error("Media Endpoint missing");
- 		goto error;
- 	}
-+
-+	hfp =3D g_new0(struct hfp, 1);
-+	hfp->device_address =3D g_strdup("unknown");
-+	hfp->device_path =3D g_strdup(device);
-+	hfp->endpoints =3D endpoints;
-+	hfp->msg =3D dbus_message_ref(msg);
-+
-+	err =3D modem_register(hfp, "unknown", fd, version);
-+	if (err < 0 && err !=3D -EINPROGRESS) {
-+		hfp_free(hfp);
-+		return g_dbus_create_error(msg,
-+				BLUEZ_ERROR_INTERFACE ".Rejected",
-+				"%s", strerror(-err));
++	io =3D g_io_channel_unix_new(fd);
++	if (io =3D=3D NULL) {
++		ofono_error("Service level connection failed: %s (%d)",
++						strerror(errno), errno);
++		*err =3D -EIO;
++		return NULL;
 +	}
 +
- 	return NULL;
- =
-
- error:
-@@ -320,6 +418,9 @@ static int hfp_init(void)
- 		return err;
- 	}
- =
-
-+	modem_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal, g_free,
-+								modem_data_free);
++	syntax =3D g_at_syntax_new_gsm_permissive();
++	chat =3D g_at_chat_new(io, syntax);
++	g_at_syntax_unref(syntax);
++	g_io_channel_set_close_on_unref(io, TRUE);
 +
- 	return 0;
++	if (chat =3D=3D NULL) {
++		*err =3D -ENOMEM;
++		goto fail;
++	}
++
++	g_at_chat_set_disconnect_function(chat, hfp_disconnected_cb, modem);
++
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(chat, hfp_debug, "");
++
++	hfp->info.chat =3D chat;
++	hfp_slc_establish(&hfp->info, slc_established, slc_failed, modem);
++
++	*err =3D -EINPROGRESS;
++
++	return io;
++
++fail:
++	g_io_channel_unref(io);
++	return NULL;
++}
++
+ static int modem_register(struct hfp *hfp, const char *alias, int fd,
+ 							guint16 version)
+ {
+ 	struct ofono_modem *modem;
+-	int err =3D 0;
++	guint8 codecs[1];
+ 	char *path;
++	int err;
+ =
+
+ 	path =3D g_strconcat("hfp", hfp->device_path, NULL);
+ =
+
+@@ -112,6 +216,13 @@ static int modem_register(struct hfp *hfp, const char =
+*alias, int fd,
+ =
+
+ 	g_hash_table_insert(modem_hash, g_strdup(hfp->device_path), modem);
+ =
+
++	memset(codecs, 0, sizeof(codecs));
++	codecs[0] =3D HFP_CODEC_CVSD;
++
++	hfp_slc_info_init(&hfp->info, version, codecs, 1);
++
++	hfp->slcio =3D service_level_connection(modem, fd, &err);
++
+ 	return err;
  }
  =
 
-@@ -331,6 +432,8 @@ static void hfp_exit(void)
- 	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
- 						BLUEZ_PROFILE_INTERFACE);
- 	ofono_modem_driver_unregister(&hfp_driver);
-+
-+	g_hash_table_destroy(modem_hash);
- }
- =
-
- OFONO_PLUGIN_DEFINE(hfp_bluez5, "External Hands-Free Profile Plugin", VERS=
-ION,
 -- =
 
 1.7.11.7
 
 
---===============1999177491211391083==--
+--===============6814682287509775750==--
 
