@@ -1,61 +1,169 @@
-Content-Type: multipart/mixed; boundary="===============6861859835326806103=="
+Content-Type: multipart/mixed; boundary="===============1751925580238237897=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v2 00/10] HFP HF: Service Level/Codec negotiation
-Date: Fri, 18 Jan 2013 20:38:50 -0300
-Message-ID: <1358552340-29393-1-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1358551316-27305-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v2 01/10] dbus: Add ofono_dbus_iter_parse_properties()
+Date: Fri, 18 Jan 2013 20:38:51 -0300
+Message-ID: <1358552340-29393-2-git-send-email-claudio.takahasi@openbossa.org>
+In-Reply-To: <1358552340-29393-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6861859835326806103==
+--===============1751925580238237897==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Second group of patches related to HFP external profile.
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
 
-The following patches contain the HFP 1.6 codec negotiation.
+With the move of BlueZ to DBus ObjectManager and the ProfileManager1
+interface, the case that ofono receives a message with a properties
+dictionary should be more common, so we add a function to help deal
+with it.
+---
+ include/dbus.h |  6 ++++
+ src/dbus.c     | 90 ++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 96 insertions(+)
 
-Changed between v0-v1:
-* deleted media.[ch], functions moved to bluez5.[ch]
-* replaced 'bluetooth_' prefix by 'bt_' for BlueZ 5 functions
-* splitted HFP SLC patches
-* new oFono D-Bus utility function to parse dictionaries
+diff --git a/include/dbus.h b/include/dbus.h
+index 44faa7f..3901a96 100644
+--- a/include/dbus.h
++++ b/include/dbus.h
+@@ -100,6 +100,12 @@ int ofono_dbus_signal_dict_property_changed(DBusConnec=
+tion *conn,
+ 						const char *name, int type,
+ 						void *value);
+ =
 
-Changed between v1-v2:
-* fixed wrong commit messages
++typedef void (*property_handler_cb)(DBusMessageIter *iter, void *user_data=
+);
++
++void ofono_dbus_iter_parse_properties(DBusMessageIter *array,
++				const char *property, property_handler_cb cb,
++				void *user_data, ...);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/src/dbus.c b/src/dbus.c
+index 1558a51..1afbb44 100644
+--- a/src/dbus.c
++++ b/src/dbus.c
+@@ -30,6 +30,14 @@
+ =
 
-Claudio Takahasi (2):
-  hfp_hf: Register the HFP modem
-  hfp_hf: Add service level negotiation
+ #define OFONO_ERROR_INTERFACE "org.ofono.Error"
+ =
 
-Vinicius Costa Gomes (8):
-  dbus: Add ofono_dbus_iter_parse_properties()
-  bluez5: Rename register/unregister profile
-  hfp_hf: Add NewConnection arguments parsing
-  hfpmodem: Add support for storing the supported codecs
-  hfpmodem: Implement hfp_slc_info_free
-  phonesim: Use hfp_slc_info_free()
-  hfpmodem: Send the AT+BAC command with the supported codecs
-  hfp_hf: Add support for codec negotiation
++typedef void (*property_handler_cb)(DBusMessageIter *iter, void *user_data=
+);
++
++struct property_handler {
++	const char *property;
++	property_handler_cb callback;
++	void *user_data;
++};
++
+ static DBusConnection *g_connection;
+ =
 
- drivers/hfpmodem/slc.c  |  29 +++-
- drivers/hfpmodem/slc.h  |  10 +-
- include/dbus.h          |   6 +
- plugins/bluez5.c        |  39 ++++-
- plugins/bluez5.h        |  12 +-
- plugins/hfp_hf_bluez4.c |   2 +-
- plugins/hfp_hf_bluez5.c | 417 ++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- plugins/phonesim.c      |  12 +-
- src/dbus.c              |  90 +++++++++++
- 9 files changed, 598 insertions(+), 19 deletions(-)
+ struct error_mapping_entry {
+@@ -273,6 +281,88 @@ int ofono_dbus_signal_dict_property_changed(DBusConnec=
+tion *conn,
+ 	return g_dbus_send_message(conn, signal);
+ }
+ =
 
++static gint property_handler_compare(gconstpointer a, gconstpointer b)
++{
++	const struct property_handler *handler =3D a;
++	const char *property =3D b;
++
++	return g_strcmp0(handler->property, property);
++}
++
++void ofono_dbus_iter_parse_properties(DBusMessageIter *array,
++				const char *property, property_handler_cb cb,
++				void *user_data, ...)
++{
++	va_list args;
++	GSList *prop_handlers =3D NULL;
++	DBusMessageIter dict;
++
++	if (dbus_message_iter_get_arg_type(array) !=3D DBUS_TYPE_ARRAY)
++		goto done;
++
++	va_start(args, user_data);
++
++	if (property =3D=3D NULL)
++		return;
++
++	while (1) {
++		struct property_handler *handler =3D
++					g_new0(struct property_handler, 1);
++
++		handler->property =3D property;
++		handler->callback =3D cb;
++		handler->user_data =3D user_data;
++
++		prop_handlers =3D g_slist_prepend(prop_handlers, handler);
++
++		property =3D va_arg(args, const char *);
++		if (property =3D=3D NULL)
++			break;
++
++		cb =3D va_arg(args, property_handler_cb);
++		user_data =3D va_arg(args, void *);
++	}
++
++	va_end(args);
++
++	dbus_message_iter_recurse(array, &dict);
++
++	while (dbus_message_iter_get_arg_type(&dict) =3D=3D DBUS_TYPE_DICT_ENTRY)=
+ {
++		DBusMessageIter entry, value;
++		const char *key;
++		GSList *l;
++
++		dbus_message_iter_recurse(&dict, &entry);
++
++		if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_STRING)
++			goto done;
++
++		dbus_message_iter_get_basic(&entry, &key);
++
++		dbus_message_iter_next(&entry);
++
++		if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_VARIANT)
++			goto done;
++
++		dbus_message_iter_recurse(&entry, &value);
++
++		l =3D g_slist_find_custom(prop_handlers, key,
++					property_handler_compare);
++
++		if (l) {
++			struct property_handler *handler =3D l->data;
++
++			handler->callback(&value, handler->user_data);
++		}
++
++		dbus_message_iter_next(&dict);
++	}
++
++done:
++	g_slist_foreach(prop_handlers, (GFunc) g_free, NULL);
++	g_slist_free(prop_handlers);
++}
++
+ DBusMessage *__ofono_error_invalid_args(DBusMessage *msg)
+ {
+ 	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE
 -- =
 
 1.7.11.7
 
 
---===============6861859835326806103==--
+--===============1751925580238237897==--
 
