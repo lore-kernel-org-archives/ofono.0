@@ -1,198 +1,129 @@
-Content-Type: multipart/mixed; boundary="===============5878399141945210950=="
+Content-Type: multipart/mixed; boundary="===============5272409448801671392=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 09/10] hfp_hf: Add service level negotiation
-Date: Fri, 18 Jan 2013 20:21:55 -0300
-Message-ID: <1358551316-27305-10-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v1 10/10] hfp_hf: Add support for codec negotiation
+Date: Fri, 18 Jan 2013 20:21:56 -0300
+Message-ID: <1358551316-27305-11-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1358551316-27305-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5878399141945210950==
+--===============5272409448801671392==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds the service level negotiation and the callbacks to
-handle success and failure situations. The HFP modem is being destroyed
-when the service level connection is dropped.
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+
+The negotiation is very simple, if the codec the AG requests is present
+in the supported codec list that the HF sent, the codec is accepted, if
+not, we send the list of supported codecs again, and expect that the AG
+re-sends the request with an acceptable codec.
 ---
- plugins/hfp_hf_bluez5.c | 113 ++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 file changed, 112 insertions(+), 1 deletion(-)
+ plugins/hfp_hf_bluez5.c | 50 +++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 file changed, 50 insertions(+)
 
 diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index b3f8a1c..17421d0 100644
+index 17421d0..d8ec0f2 100644
 --- a/plugins/hfp_hf_bluez5.c
 +++ b/plugins/hfp_hf_bluez5.c
-@@ -24,6 +24,7 @@
- #endif
+@@ -25,6 +25,7 @@
  =
 
  #include <errno.h>
-+#include <stdlib.h>
+ #include <stdlib.h>
++#include <stdio.h>
  #include <string.h>
  =
 
  #include <glib.h>
 @@ -64,6 +65,7 @@ struct hfp {
+ 	char *device_address;
  	char *device_path;
  	struct hfp_slc_info info;
++	guint8 current_codec;
  	DBusMessage *msg;
-+	GIOChannel *slcio;
+ 	GIOChannel *slcio;
  	GSList *endpoints;
- };
- =
-
-@@ -76,6 +78,9 @@ static void hfp_free(gpointer user_data)
- 	if (hfp->msg)
- 		dbus_message_unref(hfp->msg);
- =
-
-+	if (hfp->slcio)
-+		g_io_channel_unref(hfp->slcio);
-+
- 	g_slist_free(hfp->endpoints);
- 	g_free(hfp->device_address);
- 	g_free(hfp->device_path);
-@@ -90,12 +95,111 @@ static void modem_data_free(gpointer user_data)
- 	hfp_free(hfp);
+@@ -102,12 +104,59 @@ static void hfp_debug(const char *str, void *user_dat=
+a)
+ 	ofono_info("%s%s", prefix, str);
  }
  =
 
-+static void hfp_debug(const char *str, void *user_data)
++static void bcs_notify(GAtResult *result, gpointer user_data)
 +{
-+	const char *prefix =3D user_data;
++	struct hfp *hfp =3D user_data;
++	struct hfp_slc_info *info =3D &hfp->info;
++	GAtResultIter iter;
++	GString *str;
++	int i, value;
 +
-+	ofono_info("%s%s", prefix, str);
-+}
++	g_at_result_iter_init(&iter, result);
 +
-+static void slc_established(gpointer userdata)
-+{
-+	struct ofono_modem *modem =3D userdata;
-+	struct hfp *hfp =3D ofono_modem_get_data(modem);
-+	DBusMessage *msg;
++	if (!g_at_result_iter_next(&iter, "+BCS:"))
++		return;
 +
-+	ofono_modem_set_powered(modem, TRUE);
++	if (!g_at_result_iter_next_number(&iter, &value))
++		return;
 +
-+	msg =3D dbus_message_new_method_return(hfp->msg);
-+	g_dbus_send_message(ofono_dbus_get_connection(), msg);
-+	dbus_message_unref(hfp->msg);
-+	hfp->msg =3D NULL;
++	/* If some codec matches, we confirm it */
++	for (i =3D 0; i < info->codecs_len; i++) {
++		if (info->codecs[i] =3D=3D value) {
++			char buf[32];
 +
-+	ofono_info("Service level connection established");
-+}
++			hfp->current_codec =3D value;
++			DBG("Negotiated HFP codec: %d", value);
 +
-+static void slc_failed(gpointer userdata)
-+{
-+	struct ofono_modem *modem =3D userdata;
-+	struct hfp *hfp =3D ofono_modem_get_data(modem);
-+	DBusMessage *msg;
-+
-+	msg =3D g_dbus_create_error(hfp->msg, BLUEZ_ERROR_INTERFACE
-+						".Failed",
-+						"HFP Handshake failed");
-+
-+	g_dbus_send_message(ofono_dbus_get_connection(), msg);
-+	dbus_message_unref(hfp->msg);
-+	hfp->msg =3D NULL;
-+
-+	ofono_error("Service level connection failed");
-+	ofono_modem_set_powered(modem, FALSE);
-+
-+	hfp_slc_info_free(&hfp->info);
-+}
-+
-+static void hfp_disconnected_cb(gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct hfp *hfp =3D ofono_modem_get_data(modem);
-+
-+	DBG("HFP disconnected");
-+
-+	hfp_slc_info_free(&hfp->info);
-+
-+	ofono_modem_set_powered(modem, FALSE);
-+}
-+
-+static GIOChannel *service_level_connection(struct ofono_modem *modem,
-+							int fd, int *err)
-+{
-+	struct hfp *hfp =3D ofono_modem_get_data(modem);
-+	GIOChannel *io;
-+	GAtSyntax *syntax;
-+	GAtChat *chat;
-+
-+	io =3D g_io_channel_unix_new(fd);
-+	if (io =3D=3D NULL) {
-+		ofono_error("Service level connection failed: %s (%d)",
-+						strerror(errno), errno);
-+		*err =3D -EIO;
-+		return NULL;
++			snprintf(buf, sizeof(buf), "AT+BCS=3D%d", value);
++			g_at_chat_send(info->chat, buf, NULL, NULL,
++							NULL, NULL);
++			return;
++		}
 +	}
 +
-+	syntax =3D g_at_syntax_new_gsm_permissive();
-+	chat =3D g_at_chat_new(io, syntax);
-+	g_at_syntax_unref(syntax);
-+	g_io_channel_set_close_on_unref(io, TRUE);
++	/* If none matches, we send our supported codecs again */
++	str =3D g_string_new("AT+BAC=3D");
 +
-+	if (chat =3D=3D NULL) {
-+		*err =3D -ENOMEM;
-+		goto fail;
++	for (i =3D 0; i < info->codecs_len; i++) {
++		g_string_append_printf(str, "%d", info->codecs[i]);
++		if (i + 1 < info->codecs_len)
++			str =3D g_string_append(str, ",");
 +	}
 +
-+	g_at_chat_set_disconnect_function(chat, hfp_disconnected_cb, modem);
-+
-+	if (getenv("OFONO_AT_DEBUG"))
-+		g_at_chat_set_debug(chat, hfp_debug, "");
-+
-+	hfp->info.chat =3D chat;
-+	hfp_slc_establish(&hfp->info, slc_established, slc_failed, modem);
-+
-+	*err =3D -EINPROGRESS;
-+
-+	return io;
-+
-+fail:
-+	g_io_channel_unref(io);
-+	return NULL;
++	g_at_chat_send(info->chat, str->str, NULL, NULL, NULL, NULL);
++	g_string_free(str, TRUE);
 +}
 +
- static int modem_register(struct hfp *hfp, const char *alias, int fd,
- 							guint16 version)
+ static void slc_established(gpointer userdata)
  {
- 	struct ofono_modem *modem;
--	int err =3D 0;
-+	guint8 codecs[1];
- 	char *path;
-+	int err;
+ 	struct ofono_modem *modem =3D userdata;
+ 	struct hfp *hfp =3D ofono_modem_get_data(modem);
++	struct hfp_slc_info *info =3D &hfp->info;
+ 	DBusMessage *msg;
  =
 
- 	path =3D g_strconcat("hfp", hfp->device_path, NULL);
- =
-
-@@ -112,6 +216,13 @@ static int modem_register(struct hfp *hfp, const char =
-*alias, int fd,
- =
-
- 	g_hash_table_insert(modem_hash, g_strdup(hfp->device_path), modem);
- =
-
-+	memset(codecs, 0, sizeof(codecs));
-+	codecs[0] =3D HFP_CODEC_CVSD;
++	g_at_chat_register(info->chat, "+BCS:", bcs_notify, FALSE, hfp, NULL);
 +
-+	hfp_slc_info_init(&hfp->info, version, codecs, 1);
-+
-+	hfp->slcio =3D service_level_connection(modem, fd, &err);
-+
- 	return err;
- }
+ 	ofono_modem_set_powered(modem, TRUE);
  =
 
+ 	msg =3D dbus_message_new_method_return(hfp->msg);
+@@ -436,6 +485,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
+on *conn,
+ 	hfp->device_path =3D g_strdup(device);
+ 	hfp->endpoints =3D endpoints;
+ 	hfp->msg =3D dbus_message_ref(msg);
++	hfp->current_codec =3D HFP_CODEC_CVSD;
+ =
+
+ 	err =3D modem_register(hfp, "unknown", fd, version);
+ 	if (err < 0 && err !=3D -EINPROGRESS) {
 -- =
 
 1.7.11.7
 
 
---===============5878399141945210950==--
+--===============5272409448801671392==--
 
