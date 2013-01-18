@@ -1,169 +1,100 @@
-Content-Type: multipart/mixed; boundary="===============6655124504836396038=="
+Content-Type: multipart/mixed; boundary="===============4209908936842680137=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 01/10] dbus: Add ofono_dbus_iter_parse_properties()
-Date: Fri, 18 Jan 2013 20:21:47 -0300
-Message-ID: <1358551316-27305-2-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v1 02/10] bluez5: Rename register/unregister profile
+Date: Fri, 18 Jan 2013 20:21:48 -0300
+Message-ID: <1358551316-27305-3-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1358551316-27305-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6655124504836396038==
+--===============4209908936842680137==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
 
-With the move of BlueZ to DBus ObjectManager and the ProfileManager1
-interface, the case that ofono receives a message with a properties
-dictionary should be more common, so we add a function to help deal
-with it.
+Using 'bt_' prefix will be more suitable for the upcoming
+functions, and structure names avoiding long names and improving
+code readability.
 ---
- include/dbus.h |  6 ++++
- src/dbus.c     | 90 ++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 96 insertions(+)
+ plugins/bluez5.c        | 4 ++--
+ plugins/bluez5.h        | 4 ++--
+ plugins/hfp_hf_bluez5.c | 4 ++--
+ 3 files changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/include/dbus.h b/include/dbus.h
-index 44faa7f..3901a96 100644
---- a/include/dbus.h
-+++ b/include/dbus.h
-@@ -100,6 +100,12 @@ int ofono_dbus_signal_dict_property_changed(DBusConnec=
-tion *conn,
- 						const char *name, int type,
- 						void *value);
- =
-
-+typedef void (*property_handler_cb)(DBusMessageIter *iter, void *user_data=
-);
-+
-+void ofono_dbus_iter_parse_properties(DBusMessageIter *array,
-+				const char *property, property_handler_cb cb,
-+				void *user_data, ...);
-+
- #ifdef __cplusplus
- }
- #endif
-diff --git a/src/dbus.c b/src/dbus.c
-index 1558a51..1afbb44 100644
---- a/src/dbus.c
-+++ b/src/dbus.c
-@@ -30,6 +30,14 @@
- =
-
- #define OFONO_ERROR_INTERFACE "org.ofono.Error"
- =
-
-+typedef void (*property_handler_cb)(DBusMessageIter *iter, void *user_data=
-);
-+
-+struct property_handler {
-+	const char *property;
-+	property_handler_cb callback;
-+	void *user_data;
-+};
-+
- static DBusConnection *g_connection;
- =
-
- struct error_mapping_entry {
-@@ -273,6 +281,88 @@ int ofono_dbus_signal_dict_property_changed(DBusConnec=
-tion *conn,
- 	return g_dbus_send_message(conn, signal);
+diff --git a/plugins/bluez5.c b/plugins/bluez5.c
+index 84ba47d..589658a 100644
+--- a/plugins/bluez5.c
++++ b/plugins/bluez5.c
+@@ -80,7 +80,7 @@ done:
+ 	dbus_message_unref(reply);
  }
  =
 
-+static gint property_handler_compare(gconstpointer a, gconstpointer b)
-+{
-+	const struct property_handler *handler =3D a;
-+	const char *property =3D b;
-+
-+	return g_strcmp0(handler->property, property);
-+}
-+
-+void ofono_dbus_iter_parse_properties(DBusMessageIter *array,
-+				const char *property, property_handler_cb cb,
-+				void *user_data, ...)
-+{
-+	va_list args;
-+	GSList *prop_handlers =3D NULL;
-+	DBusMessageIter dict;
-+
-+	if (dbus_message_iter_get_arg_type(array) !=3D DBUS_TYPE_ARRAY)
-+		goto done;
-+
-+	va_start(args, user_data);
-+
-+	if (property =3D=3D NULL)
-+		return;
-+
-+	while (1) {
-+		struct property_handler *handler =3D
-+					g_new0(struct property_handler, 1);
-+
-+		handler->property =3D property;
-+		handler->callback =3D cb;
-+		handler->user_data =3D user_data;
-+
-+		prop_handlers =3D g_slist_prepend(prop_handlers, handler);
-+
-+		property =3D va_arg(args, const char *);
-+		if (property =3D=3D NULL)
-+			break;
-+
-+		cb =3D va_arg(args, property_handler_cb);
-+		user_data =3D va_arg(args, void *);
-+	}
-+
-+	va_end(args);
-+
-+	dbus_message_iter_recurse(array, &dict);
-+
-+	while (dbus_message_iter_get_arg_type(&dict) =3D=3D DBUS_TYPE_DICT_ENTRY)=
+-int bluetooth_register_profile(DBusConnection *conn, const char *uuid,
++int bt_register_profile(DBusConnection *conn, const char *uuid,
+ 					const char *name, const char *object)
  {
-+		DBusMessageIter entry, value;
-+		const char *key;
-+		GSList *l;
-+
-+		dbus_message_iter_recurse(&dict, &entry);
-+
-+		if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_STRING)
-+			goto done;
-+
-+		dbus_message_iter_get_basic(&entry, &key);
-+
-+		dbus_message_iter_next(&entry);
-+
-+		if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_VARIANT)
-+			goto done;
-+
-+		dbus_message_iter_recurse(&entry, &value);
-+
-+		l =3D g_slist_find_custom(prop_handlers, key,
-+					property_handler_compare);
-+
-+		if (l) {
-+			struct property_handler *handler =3D l->data;
-+
-+			handler->callback(&value, handler->user_data);
-+		}
-+
-+		dbus_message_iter_next(&dict);
-+	}
-+
-+done:
-+	g_slist_foreach(prop_handlers, (GFunc) g_free, NULL);
-+	g_slist_free(prop_handlers);
-+}
-+
- DBusMessage *__ofono_error_invalid_args(DBusMessage *msg)
+ 	DBusMessageIter iter, dict;
+@@ -115,7 +115,7 @@ int bluetooth_register_profile(DBusConnection *conn, co=
+nst char *uuid,
+ 	return 0;
+ }
+ =
+
+-void bluetooth_unregister_profile(DBusConnection *conn, const char *object)
++void bt_unregister_profile(DBusConnection *conn, const char *object)
  {
- 	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE
+ 	DBusMessageIter iter;
+ 	DBusPendingCall *c;
+diff --git a/plugins/bluez5.h b/plugins/bluez5.h
+index 01ecfe8..3088c7d 100644
+--- a/plugins/bluez5.h
++++ b/plugins/bluez5.h
+@@ -25,7 +25,7 @@
+ =
+
+ #define HFP_HS_UUID	"0000111e-0000-1000-8000-00805f9b34fb"
+ =
+
+-int bluetooth_register_profile(DBusConnection *conn, const char *uuid,
++int bt_register_profile(DBusConnection *conn, const char *uuid,
+ 					const char *name, const char *object);
+ =
+
+-void bluetooth_unregister_profile(DBusConnection *conn, const char *object=
+);
++void bt_unregister_profile(DBusConnection *conn, const char *object);
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index e024838..f1f8891 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -168,7 +168,7 @@ static int hfp_init(void)
+ 		return err;
+ 	}
+ =
+
+-	err =3D bluetooth_register_profile(conn, HFP_HS_UUID, "hfp_hf",
++	err =3D bt_register_profile(conn, HFP_HS_UUID, "hfp_hf",
+ 						HFP_EXT_PROFILE_PATH);
+ 	if (err < 0) {
+ 		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+@@ -184,7 +184,7 @@ static void hfp_exit(void)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+ =
+
+-	bluetooth_unregister_profile(conn, HFP_EXT_PROFILE_PATH);
++	bt_unregister_profile(conn, HFP_EXT_PROFILE_PATH);
+ 	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+ 						BLUEZ_PROFILE_INTERFACE);
+ 	ofono_modem_driver_unregister(&hfp_driver);
 -- =
 
 1.7.11.7
 
 
---===============6655124504836396038==--
+--===============4209908936842680137==--
 
