@@ -1,129 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============9222223753879777684=="
+Content-Type: multipart/mixed; boundary="===============3165852283466521560=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v2 10/10] hfp_hf: Add support for codec negotiation
-Date: Fri, 18 Jan 2013 20:39:00 -0300
-Message-ID: <1358552340-29393-11-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1358552340-29393-1-git-send-email-claudio.takahasi@openbossa.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: fix for +CMER parser of AT driver (fixes registration)
+Date: Fri, 18 Jan 2013 18:05:08 -0600
+Message-ID: <50F9E334.4090901@gmail.com>
+In-Reply-To: <20130118224452.GS3604@emdete.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9222223753879777684==
+--===============3165852283466521560==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Hi,
 
-The negotiation is very simple, if the codec the AG requests is present
-in the supported codec list that the HF sent, the codec is accepted, if
-not, we send the list of supported codecs again, and expect that the AG
-re-sends the request with an acceptable codec.
----
- plugins/hfp_hf_bluez5.c | 50 +++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 file changed, 50 insertions(+)
+> so if only the output of an option list just does not follow the spec
+> but most other stuff of the modem works fine why not be more tolerant
+> parsing the option list?
+>
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 17421d0..d8ec0f2 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -25,6 +25,7 @@
- =
+Actually we do not want to be tolerant.  If something is broken, we want =
 
- #include <errno.h>
- #include <stdlib.h>
-+#include <stdio.h>
- #include <string.h>
- =
+to make sure that any work-around code-path is explicitly called out. =
 
- #include <glib.h>
-@@ -64,6 +65,7 @@ struct hfp {
- 	char *device_address;
- 	char *device_path;
- 	struct hfp_slc_info info;
-+	guint8 current_codec;
- 	DBusMessage *msg;
- 	GIOChannel *slcio;
- 	GSList *endpoints;
-@@ -102,12 +104,59 @@ static void hfp_debug(const char *str, void *user_dat=
-a)
- 	ofono_info("%s%s", prefix, str);
- }
- =
+There are many reasons for this, one of the main ones being code =
 
-+static void bcs_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct hfp *hfp =3D user_data;
-+	struct hfp_slc_info *info =3D &hfp->info;
-+	GAtResultIter iter;
-+	GString *str;
-+	int i, value;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+BCS:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &value))
-+		return;
-+
-+	/* If some codec matches, we confirm it */
-+	for (i =3D 0; i < info->codecs_len; i++) {
-+		if (info->codecs[i] =3D=3D value) {
-+			char buf[32];
-+
-+			hfp->current_codec =3D value;
-+			DBG("Negotiated HFP codec: %d", value);
-+
-+			snprintf(buf, sizeof(buf), "AT+BCS=3D%d", value);
-+			g_at_chat_send(info->chat, buf, NULL, NULL,
-+							NULL, NULL);
-+			return;
-+		}
-+	}
-+
-+	/* If none matches, we send our supported codecs again */
-+	str =3D g_string_new("AT+BAC=3D");
-+
-+	for (i =3D 0; i < info->codecs_len; i++) {
-+		g_string_append_printf(str, "%d", info->codecs[i]);
-+		if (i + 1 < info->codecs_len)
-+			str =3D g_string_append(str, ",");
-+	}
-+
-+	g_at_chat_send(info->chat, str->str, NULL, NULL, NULL, NULL);
-+	g_string_free(str, TRUE);
-+}
-+
- static void slc_established(gpointer userdata)
- {
- 	struct ofono_modem *modem =3D userdata;
- 	struct hfp *hfp =3D ofono_modem_get_data(modem);
-+	struct hfp_slc_info *info =3D &hfp->info;
- 	DBusMessage *msg;
- =
+efficiency.  The other code readability.  Over time such 'workarounds' =
 
-+	g_at_chat_register(info->chat, "+BCS:", bcs_notify, FALSE, hfp, NULL);
-+
- 	ofono_modem_set_powered(modem, TRUE);
- =
+pollute the code base and make it ugly; and the reasons for why it is =
 
- 	msg =3D dbus_message_new_method_return(hfp->msg);
-@@ -436,6 +485,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
-on *conn,
- 	hfp->device_path =3D g_strdup(device);
- 	hfp->endpoints =3D endpoints;
- 	hfp->msg =3D dbus_message_ref(msg);
-+	hfp->current_codec =3D HFP_CODEC_CVSD;
- =
+that way are either lost or become murky.  Case in point your patch, =
 
- 	err =3D modem_register(hfp, "unknown", fd, version);
- 	if (err < 0 && err !=3D -EINPROGRESS) {
--- =
+which doesn't even contain a code comment block on what it is trying to =
 
-1.7.11.7
+accomplish.  (And by the way your coding style is still wrong in several =
 
+places...)
 
---===============9222223753879777684==--
+> if you instead have a quirk for this and only this modem you fixed only
+> a single one. i assume that also other modems are broken in this way and
+> fixing it in the parser would enable more modems to work.
+>
+
+I do not accept your assumption.  We have been using almost the exact =
+
+same structure for parsing parameter lists in the SMS driver for over 3 =
+
+years.  So far you are the first to report a modem that behaves in this =
+
+manner when it comes to parameter lists.
+
+Regards,
+-Denis
+
+--===============3165852283466521560==--
 
