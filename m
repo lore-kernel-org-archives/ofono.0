@@ -1,58 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============0625001077007925845=="
+Content-Type: multipart/mixed; boundary="===============1762005759782075360=="
 MIME-Version: 1.0
-From: M. Dietrich <ofono@emdete.de>
-Subject: Re:  fix for +CMER parser of AT driver (fixes registration)
-Date: Sat, 19 Jan 2013 19:28:30 +0100
-Message-ID: <20130119182830.GT3604@emdete.de>
-In-Reply-To: <50F9E334.4090901@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: fix for +CMER parser of AT driver (fixes registration)
+Date: Sat, 19 Jan 2013 13:05:11 -0600
+Message-ID: <50FAEE67.1090206@gmail.com>
+In-Reply-To: <20130119182830.GT3604@emdete.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0625001077007925845==
+--===============1762005759782075360==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Michael,
 
-On Fri, Jan 18, 2013 at 06:05:08PM -0600, Denis Kenzior wrote:
-> Case in point your patch, which doesn't even contain a code comment block=
- on
-> what it is trying to accomplish.
+>> So far you are the first to report a modem that behaves in this manner w=
+hen
+>> it comes to parameter lists.
+>
+> yes, because i am probably the first that investigated the problem in dep=
+th. i
+> saw alot of complains that the registration state is not reached from many
+> ofono users. cause for that is exactly the +CMER answer of those modems.
+>
 
-i understood the response of the modem follows the spec so i thought this w=
-ould
-be standard. but you are deeper in the specs and i won't tell otherwise.
+Please understand, I'm not denying there's a problem, just that it is =
 
-> (And by the way your coding style is still wrong in several places...)
+the first I've heard of it.  Please mention these reports on IRC or the =
 
-i just tried to intuitively follow the code standard i found in ofono, sorr=
-y if
-i got that wrong.
+Mailing List to me in the future so we can get them addressed quicker.
 
-> So far you are the first to report a modem that behaves in this manner wh=
-en
-> it comes to parameter lists.
+> as the modem in question is used in many thinkpads and other notebooks i =
+assume
+> that the many people can't use ofono out of this reason.
 
-yes, because i am probably the first that investigated the problem in depth=
-. i
-saw alot of complains that the registration state is not reached from many
-ofono users. cause for that is exactly the +CMER answer of those modems.
+Can you actually tell me what this modem is?  Maybe I can test it on my end?
 
-as the modem in question is used in many thinkpads and other notebooks i as=
-sume
-that the many people can't use ofono out of this reason.
+>
+> so what do you suggest to support this modem? how would a quirk as you
+> suggested look like?
+>
 
-so what do you suggest to support this modem? how would a quirk as you
-suggested look like?
+The CMER parser was introduced in commit b87619.  It was essentially a =
 
+straight forward port from the SMS driver and meant to fix the =
 
-regards,
-	michael
+particular behaviors of the Telit devices.  This was early September, =
 
--- =
+surprising that no one complained in 4 months...
 
-M. Dietrich
+The way I suggest to fix it would be to skip probing CMER if a quirk is =
 
---===============0625001077007925845==--
+enabled for your particular device and simply send the appropriate CMER =
+
+command.  Prior to September oFono simply used to send 'AT+CMER=3D3,0,0,1'
+
+Regards,
+-Denis
+
+--===============1762005759782075360==--
 
