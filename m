@@ -1,58 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============3165852283466521560=="
+Content-Type: multipart/mixed; boundary="===============0625001077007925845=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: fix for +CMER parser of AT driver (fixes registration)
-Date: Fri, 18 Jan 2013 18:05:08 -0600
-Message-ID: <50F9E334.4090901@gmail.com>
-In-Reply-To: <20130118224452.GS3604@emdete.de>
+From: M. Dietrich <ofono@emdete.de>
+Subject: Re:  fix for +CMER parser of AT driver (fixes registration)
+Date: Sat, 19 Jan 2013 19:28:30 +0100
+Message-ID: <20130119182830.GT3604@emdete.de>
+In-Reply-To: <50F9E334.4090901@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3165852283466521560==
+--===============0625001077007925845==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Denis,
 
-> so if only the output of an option list just does not follow the spec
-> but most other stuff of the modem works fine why not be more tolerant
-> parsing the option list?
->
+On Fri, Jan 18, 2013 at 06:05:08PM -0600, Denis Kenzior wrote:
+> Case in point your patch, which doesn't even contain a code comment block=
+ on
+> what it is trying to accomplish.
 
-Actually we do not want to be tolerant.  If something is broken, we want =
+i understood the response of the modem follows the spec so i thought this w=
+ould
+be standard. but you are deeper in the specs and i won't tell otherwise.
 
-to make sure that any work-around code-path is explicitly called out. =
+> (And by the way your coding style is still wrong in several places...)
 
-There are many reasons for this, one of the main ones being code =
+i just tried to intuitively follow the code standard i found in ofono, sorr=
+y if
+i got that wrong.
 
-efficiency.  The other code readability.  Over time such 'workarounds' =
+> So far you are the first to report a modem that behaves in this manner wh=
+en
+> it comes to parameter lists.
 
-pollute the code base and make it ugly; and the reasons for why it is =
+yes, because i am probably the first that investigated the problem in depth=
+. i
+saw alot of complains that the registration state is not reached from many
+ofono users. cause for that is exactly the +CMER answer of those modems.
 
-that way are either lost or become murky.  Case in point your patch, =
+as the modem in question is used in many thinkpads and other notebooks i as=
+sume
+that the many people can't use ofono out of this reason.
 
-which doesn't even contain a code comment block on what it is trying to =
+so what do you suggest to support this modem? how would a quirk as you
+suggested look like?
 
-accomplish.  (And by the way your coding style is still wrong in several =
 
-places...)
+regards,
+	michael
 
-> if you instead have a quirk for this and only this modem you fixed only
-> a single one. i assume that also other modems are broken in this way and
-> fixing it in the parser would enable more modems to work.
->
+-- =
 
-I do not accept your assumption.  We have been using almost the exact =
+M. Dietrich
 
-same structure for parsing parameter lists in the SMS driver for over 3 =
-
-years.  So far you are the first to report a modem that behaves in this =
-
-manner when it comes to parameter lists.
-
-Regards,
--Denis
-
---===============3165852283466521560==--
+--===============0625001077007925845==--
 
