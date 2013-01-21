@@ -1,153 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============1209290623170342530=="
+Content-Type: multipart/mixed; boundary="===============4761046437933852019=="
 MIME-Version: 1.0
 From: Mikel Astiz <mikel.astiz.oss@gmail.com>
-Subject: [PATCH v0 3/3] hfpmodem: Fix release-and-swap without +CIEV
-Date: Mon, 21 Jan 2013 11:10:28 +0100
-Message-ID: <1358763028-20412-4-git-send-email-mikel.astiz.oss@gmail.com>
+Subject: [PATCH v0 2/3] hfpmodem: Avoid transitional voicecall states
+Date: Mon, 21 Jan 2013 11:10:27 +0100
+Message-ID: <1358763028-20412-3-git-send-email-mikel.astiz.oss@gmail.com>
 In-Reply-To: <1358763028-20412-1-git-send-email-mikel.astiz.oss@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1209290623170342530==
+--===============4761046437933852019==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Mikel Astiz <mikel.astiz@bmw-carit.de>
 
-Some phones do not send the corresponding call state update (+CIEV)
-after a successful release-and-swap operation (AT+CHLD=3D1).
+While processing the result of AT+CLCC, process the differences in a way
+that disconnections are reported first, then call state changes and
+finally new calls.
 
-This has been observed with a Nokia 500, while testing ReleaseAndSwap()
-while an active and a held call exist:
-
-ofonod[20414]: > AT+CLCC\r
-ofonod[20414]: < \r\n+CLCC: 1,0,1,0,0,"<number1>",145\r\n
-ofonod[20414]: < \r\n+CLCC: 2,0,0,0,0,"<number2>",145\r\n
-ofonod[20414]: < \r\nOK\r\n
-ofonod[20414]: > AT+CHLD=3D1\r
-ofonod[20414]: < \r\nOK\r\n
-
-After this, no +CIEV is received, but the call has been hung up.
-
-The proposed approach to solve this consists of using AT+CLCC, unless
-a call release has been received within a specific time period.
-
-The result fixes the problem as can be seen below:
-
-ofonod[20847]: < \r\n+CLCC: 1,0,1,0,0,"<number1>",145\r\n
-ofonod[20847]: < \r\n+CLCC: 2,0,0,0,0,"<number2>",145\r\n
-ofonod[20847]: < \r\nOK\r\n
-ofonod[20847]: > AT+CHLD=3D1\r
-ofonod[20847]: < \r\nOK\r\n
-ofonod[20847]: > AT+CLCC\r
-ofonod[20847]: < \r\n+CLCC: 1,0,0,0,0,"<number1>",145\r\n
-ofonod[20847]: < \r\nOK\r\n
-ofonod[20847]: < \r\n+CIEV: 5,2\r\n
-ofonod[20847]: < \r\n+CIEV: 5,0\r\n
+The goal is to avoid unnecessary transitional states such as two active
+calls existing at the same time.
 ---
- drivers/hfpmodem/voicecall.c | 46 ++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 file changed, 45 insertions(+), 1 deletion(-)
+ drivers/hfpmodem/voicecall.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index 7a89658..61902c4 100644
+index 9770059..7a89658 100644
 --- a/drivers/hfpmodem/voicecall.c
 +++ b/drivers/hfpmodem/voicecall.c
-@@ -43,6 +43,7 @@
+@@ -205,6 +205,7 @@ static void clcc_poll_cb(gboolean ok, GAtResult *result=
+, gpointer user_data)
+ 	struct ofono_call *nc, *oc;
+ 	unsigned int num_active =3D 0;
+ 	unsigned int num_held =3D 0;
++	GSList *notify_calls =3D NULL;
  =
 
- #define POLL_CLCC_INTERVAL 2000
- #define POLL_CLCC_DELAY 50
-+#define EXPECT_RELEASE_DELAY 50
- #define CLIP_TIMEOUT 500
- =
-
- static const char *none_prefix[] =3D { NULL };
-@@ -57,6 +58,7 @@ struct voicecall_data {
- 	int cind_val[HFP_INDICATOR_LAST];
- 	unsigned int local_release;
- 	unsigned int clcc_source;
-+	unsigned int expect_release_source;
- 	unsigned int clip_source;
- };
- =
-
-@@ -194,6 +196,11 @@ static void release_with_status(struct ofono_voicecall=
- *vc, int status)
- 		c =3D c->next;
- 		g_slist_free_1(t);
- 	}
-+
-+	if (vd->expect_release_source) {
-+		g_source_remove(vd->expect_release_source);
-+		vd->expect_release_source =3D 0;
-+	}
- }
- =
-
- static void clcc_poll_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-@@ -469,13 +476,47 @@ static void hfp_set_udub(struct ofono_voicecall *vc,
- 	CALLBACK_WITH_FAILURE(cb, data);
- }
- =
-
-+static gboolean expect_release(gpointer user_data)
-+{
-+	struct ofono_voicecall *vc =3D user_data;
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-+
-+	g_at_chat_send(vd->chat, "AT+CLCC", clcc_prefix,
-+				clcc_poll_cb, vc, NULL);
-+
-+	vd->expect_release_source =3D 0;
-+
-+	return FALSE;
-+}
-+
-+static void release_all_active_cb(gboolean ok, GAtResult *result,
-+							gpointer user_data)
-+{
-+	struct change_state_req *req =3D user_data;
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(req->vc);
-+
-+	if (!ok)
-+		goto out;
-+
-+	if (vd->expect_release_source)
-+		g_source_remove(vd->expect_release_source);
-+
-+	vd->expect_release_source =3D g_timeout_add(EXPECT_RELEASE_DELAY,
-+							expect_release,
-+							req->vc);
-+
-+out:
-+	generic_cb(ok, result, user_data);
-+}
-+
- static void hfp_release_all_active(struct ofono_voicecall *vc,
- 					ofono_voicecall_cb_t cb, void *data)
- {
- 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
- =
-
- 	if (vd->ag_mpty_features & AG_CHLD_1) {
--		hfp_template("AT+CHLD=3D1", vc, generic_cb, 0x1, cb, data);
-+		hfp_template("AT+CHLD=3D1", vc, release_all_active_cb, 0x1, cb,
-+									data);
+ 	if (!ok)
  		return;
+@@ -242,7 +243,7 @@ static void clcc_poll_cb(gboolean ok, GAtResult *result=
+, gpointer user_data)
+ 		} else if (nc && (oc =3D=3D NULL || (nc->id < oc->id))) {
+ 			/* new call, signal it */
+ 			if (nc->type =3D=3D 0)
+-				ofono_voicecall_notify(vc, nc);
++				notify_calls =3D g_slist_append(notify_calls, nc);
+ =
+
+ 			n =3D n->next;
+ 		} else {
+@@ -257,13 +258,20 @@ static void clcc_poll_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+ =
+
+ 			if (memcmp(nc, oc, sizeof(struct ofono_call)) &&
+ 					!nc->type)
+-				ofono_voicecall_notify(vc, nc);
++				notify_calls =3D g_slist_prepend(notify_calls,
++									nc);
+ =
+
+ 			n =3D n->next;
+ 			o =3D o->next;
+ 		}
  	}
  =
 
-@@ -1109,6 +1150,9 @@ static void hfp_voicecall_remove(struct ofono_voiceca=
-ll *vc)
- 	if (vd->clip_source)
- 		g_source_remove(vd->clip_source);
- =
-
-+	if (vd->expect_release_source)
-+		g_source_remove(vd->expect_release_source);
++	/* Disconnections were already reported, so process the rest of the
++	 * notifications. Note that the new calls are placed at the end of the
++	 * list, before other state changes */
++	g_slist_foreach(notify_calls, voicecall_notify, vc);
++	g_slist_free(notify_calls);
 +
  	g_slist_foreach(vd->calls, (GFunc) g_free, NULL);
  	g_slist_free(vd->calls);
@@ -158,5 +82,5 @@ ll *vc)
 1.7.11.7
 
 
---===============1209290623170342530==--
+--===============4761046437933852019==--
 
