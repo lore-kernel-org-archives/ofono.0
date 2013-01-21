@@ -1,63 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============1762005759782075360=="
+Content-Type: multipart/mixed; boundary="===============3798835909248594937=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: fix for +CMER parser of AT driver (fixes registration)
-Date: Sat, 19 Jan 2013 13:05:11 -0600
-Message-ID: <50FAEE67.1090206@gmail.com>
-In-Reply-To: <20130119182830.GT3604@emdete.de>
+From: Mikel Astiz <mikel.astiz.oss@gmail.com>
+Subject: [PATCH v0 0/3] HFP driver improvements
+Date: Mon, 21 Jan 2013 11:10:25 +0100
+Message-ID: <1358763028-20412-1-git-send-email-mikel.astiz.oss@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1762005759782075360==
+--===============3798835909248594937==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Michael,
+From: Mikel Astiz <mikel.astiz@bmw-carit.de>
 
->> So far you are the first to report a modem that behaves in this manner w=
-hen
->> it comes to parameter lists.
->
-> yes, because i am probably the first that investigated the problem in dep=
-th. i
-> saw alot of complains that the registration state is not reached from many
-> ofono users. cause for that is exactly the +CMER answer of those modems.
->
+While testing the HFP modem driver with several phones, I found out an issu=
+e with the Nokia 500, as described in patch v0 3/3.
 
-Please understand, I'm not denying there's a problem, just that it is =
+The first two patches address a somehow unrelated issue regarding how call =
+states should be reported.
 
-the first I've heard of it.  Please mention these reports on IRC or the =
+Mikel Astiz (3):
+  hfpmodem: Refactor voicecall notify with foreach
+  hfpmodem: Avoid transitional voicecall states
+  hfpmodem: Fix release-and-swap without +CIEV
 
-Mailing List to me in the future so we can get them addressed quicker.
+ drivers/hfpmodem/voicecall.c | 70 ++++++++++++++++++++++++++++++++++++++++=
+----
+ 1 file changed, 64 insertions(+), 6 deletions(-)
 
-> as the modem in question is used in many thinkpads and other notebooks i =
-assume
-> that the many people can't use ofono out of this reason.
+-- =
 
-Can you actually tell me what this modem is?  Maybe I can test it on my end?
+1.7.11.7
 
->
-> so what do you suggest to support this modem? how would a quirk as you
-> suggested look like?
->
 
-The CMER parser was introduced in commit b87619.  It was essentially a =
-
-straight forward port from the SMS driver and meant to fix the =
-
-particular behaviors of the Telit devices.  This was early September, =
-
-surprising that no one complained in 4 months...
-
-The way I suggest to fix it would be to skip probing CMER if a quirk is =
-
-enabled for your particular device and simply send the appropriate CMER =
-
-command.  Prior to September oFono simply used to send 'AT+CMER=3D3,0,0,1'
-
-Regards,
--Denis
-
---===============1762005759782075360==--
+--===============3798835909248594937==--
 
