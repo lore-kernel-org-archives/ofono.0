@@ -1,46 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============1021973118407372322=="
+Content-Type: multipart/mixed; boundary="===============1762869785308413601=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 07/10] hfpmodem: Implement hfp_slc_info_free
-Date: Tue, 22 Jan 2013 18:43:22 -0300
-Message-ID: <1358891005-24688-8-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH 09/10] phonesim: Use hfp_slc_info_free()
+Date: Tue, 22 Jan 2013 18:43:24 -0300
+Message-ID: <1358891005-24688-10-git-send-email-vinicius.gomes@openbossa.org>
 In-Reply-To: <1358891005-24688-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1021973118407372322==
+--===============1762869785308413601==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add missing hfp_slc_info_free function declaration.
+Now that we have a function that takes care of free'ing that structure
+we should use it.
 ---
- drivers/hfpmodem/slc.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+ plugins/phonesim.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/hfpmodem/slc.c b/drivers/hfpmodem/slc.c
-index 825b8a9..3ac2b9e 100644
---- a/drivers/hfpmodem/slc.c
-+++ b/drivers/hfpmodem/slc.c
-@@ -84,6 +84,13 @@ done:
- 	return info;
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index 9210e02..a9b77b9 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -885,8 +885,7 @@ static void slc_failed(gpointer userdata)
+ =
+
+ 	ofono_modem_set_powered(modem, FALSE);
+ =
+
+-	g_at_chat_unref(info->chat);
+-	info->chat =3D NULL;
++	hfp_slc_info_free(info);
  }
  =
 
-+void hfp_slc_info_free(struct hfp_slc_info *info)
-+{
-+	g_at_chat_unref(info->chat);
-+
-+	g_free(info);
-+}
-+
- static void slc_establish_data_unref(gpointer userdata)
+ static int localhfp_enable(struct ofono_modem *modem)
+@@ -940,8 +939,7 @@ static int localhfp_disable(struct ofono_modem *modem)
  {
- 	struct slc_establish_data *sed =3D userdata;
+ 	struct hfp_slc_info *info =3D ofono_modem_get_data(modem);
+ =
+
+-	g_at_chat_unref(info->chat);
+-	info->chat =3D NULL;
++	hfp_slc_info_free(info);
+ =
+
+ 	return 0;
+ }
 -- =
 
 1.8.1.1
 
 
---===============1021973118407372322==--
+--===============1762869785308413601==--
 
