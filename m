@@ -1,48 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============7333072857247079608=="
+Content-Type: multipart/mixed; boundary="===============7240504885043107189=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v1 0/3] HFP driver improvements
-Date: Mon, 21 Jan 2013 09:42:31 -0600
-Message-ID: <50FD61E7.9070201@gmail.com>
-In-Reply-To: <1358782224-28632-1-git-send-email-mikel.astiz.oss@gmail.com>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH v2 00/10] HFP HF: Service Level/Codec negotiation
+Date: Tue, 22 Jan 2013 18:42:19 -0300
+Message-ID: <20130122214219.GB1119@samus>
+In-Reply-To: <1358552340-29393-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7333072857247079608==
+--===============7240504885043107189==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mikel,
+Hi,
 
-On 01/21/2013 09:30 AM, Mikel Astiz wrote:
-> From: Mikel Astiz<mikel.astiz@bmw-carit.de>
->
-> v1 fixes the comment added in patch v0 2/3, otherwise the rest stays the =
-same.
->
->  From original cover-letter:
->
-> While testing the HFP modem driver with several phones, I found out an is=
-sue with the Nokia 500, as described in patch v0 3/3.
->
-> The first two patches address a somehow unrelated issue regarding how cal=
-l states should be reported.
->
-> Mikel Astiz (3):
->    hfpmodem: Refactor voicecall notify with foreach
->    hfpmodem: Avoid transitional voicecall states
->    hfpmodem: Fix release-and-swap without +CIEV
->
->   drivers/hfpmodem/voicecall.c | 72 +++++++++++++++++++++++++++++++++++++=
-+++----
->   1 file changed, 66 insertions(+), 6 deletions(-)
->
+On 20:38 Fri 18 Jan, Claudio Takahasi wrote:
+> Second group of patches related to HFP external profile.
+> =
 
-All three patches have been applied, thanks.
+> The following patches contain the HFP 1.6 codec negotiation.
+> =
 
-Regards,
--Denis
 
---===============7333072857247079608==--
+Please ignore this series.
+
+As discussed on IRC, it was agreed that the series should follow a more
+logical flow. And so, things that were present in later patches were moved
+to earlier ones, for example, the use of GDBusProxy.
+
+The next series should appear on the list in a few moments, with things
+related to the HFP modem registration and SLC establishment.
+
+
+Cheeers,
+-- =
+
+Vinicius
+
+--===============7240504885043107189==--
 
