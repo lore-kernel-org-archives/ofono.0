@@ -1,42 +1,163 @@
-Content-Type: multipart/mixed; boundary="===============7240504885043107189=="
+Content-Type: multipart/mixed; boundary="===============7702301008273887535=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: Re: [PATCH v2 00/10] HFP HF: Service Level/Codec negotiation
-Date: Tue, 22 Jan 2013 18:42:19 -0300
-Message-ID: <20130122214219.GB1119@samus>
-In-Reply-To: <1358552340-29393-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH 01/10] hfp_hf_bluez5: Initial GDBusClient for BlueZ
+Date: Tue, 22 Jan 2013 18:43:16 -0300
+Message-ID: <1358891005-24688-2-git-send-email-vinicius.gomes@openbossa.org>
+In-Reply-To: <1358891005-24688-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7240504885043107189==
+--===============7702301008273887535==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+This patch adds the initial callbacks to track when BlueZ connects or
+disconnects from the system bus. And tracks the interfaces added or
+removed.
+---
+ plugins/bluez5.h        |  3 ++-
+ plugins/hfp_hf_bluez5.c | 72 ++++++++++++++++++++++++++++++++++++++++++---=
+----
+ 2 files changed, 65 insertions(+), 10 deletions(-)
 
-On 20:38 Fri 18 Jan, Claudio Takahasi wrote:
-> Second group of patches related to HFP external profile.
-> =
+diff --git a/plugins/bluez5.h b/plugins/bluez5.h
+index 01ecfe8..893072f 100644
+--- a/plugins/bluez5.h
++++ b/plugins/bluez5.h
+@@ -19,7 +19,8 @@
+  *
+  */
+ =
 
-> The following patches contain the HFP 1.6 codec negotiation.
-> =
+-#define	BLUEZ_SERVICE "org.bluez"
++#define BLUEZ_SERVICE			"org.bluez"
++#define BLUEZ_MANAGER_PATH		"/"
+ #define BLUEZ_PROFILE_INTERFACE		BLUEZ_SERVICE ".Profile1"
+ #define BLUEZ_ERROR_INTERFACE		BLUEZ_SERVICE ".Error"
+ =
 
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index e024838..c5c5cd7 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -42,6 +42,8 @@
+ =
 
-Please ignore this series.
+ #define HFP_EXT_PROFILE_PATH   "/bluetooth/profile/hfp_hf"
+ =
 
-As discussed on IRC, it was agreed that the series should follow a more
-logical flow. And so, things that were present in later patches were moved
-to earlier ones, for example, the use of GDBusProxy.
++static GDBusClient *bluez =3D NULL;
++
+ static int hfp_probe(struct ofono_modem *modem)
+ {
+ 	DBG("modem: %p", modem);
+@@ -143,6 +145,60 @@ static const GDBusMethodTable profile_methods[] =3D {
+ 	{ }
+ };
+ =
 
-The next series should appear on the list in a few moments, with things
-related to the HFP modem registration and SLC establishment.
++static void connect_handler(DBusConnection *conn, void *user_data)
++{
++	DBG("Registering External Profile handler ...");
++
++	if (!g_dbus_register_interface(conn, HFP_EXT_PROFILE_PATH,
++					BLUEZ_PROFILE_INTERFACE,
++					profile_methods, NULL,
++					NULL, NULL, NULL)) {
++		ofono_error("Register Profile interface failed: %s",
++						HFP_EXT_PROFILE_PATH);
++	}
++
++	bluetooth_register_profile(conn, HFP_HS_UUID, "hfp_hf",
++						   HFP_EXT_PROFILE_PATH);
++}
++
++static void disconnect_handler(DBusConnection *conn, void *user_data)
++{
++
++	DBG("Unregistering External Profile handler ...");
++
++	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
++						BLUEZ_PROFILE_INTERFACE);
++}
++
++static void proxy_added(GDBusProxy *proxy, void *user_data)
++{
++	const char *path;
++
++	path =3D g_dbus_proxy_get_path(proxy);
++
++	DBG("Device proxy: %s(%p)", path, proxy);
++}
++
++static void proxy_removed(GDBusProxy *proxy, void *user_data)
++{
++	const char *path;
++
++	path =3D g_dbus_proxy_get_path(proxy);
++
++	DBG("Device proxy: %s(%p)", path, proxy);
++}
++
++static void property_changed(GDBusProxy *proxy, const char *name,
++					DBusMessageIter *iter, void *user_data)
++{
++	const char *interface, *path;
++
++	interface =3D g_dbus_proxy_get_interface(proxy);
++	path =3D g_dbus_proxy_get_path(proxy);
++
++	DBG("path: %s interface: %s", path, interface);
++}
++
+ static int hfp_init(void)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+@@ -161,19 +217,16 @@ static int hfp_init(void)
+ 		return -EIO;
+ 	}
+ =
 
+-	err =3D ofono_modem_driver_register(&hfp_driver);
+-	if (err < 0) {
+-		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+-						BLUEZ_PROFILE_INTERFACE);
+-		return err;
+-	}
++	bluez =3D g_dbus_client_new(conn, BLUEZ_SERVICE, BLUEZ_MANAGER_PATH);
++	g_dbus_client_set_connect_watch(bluez, connect_handler, NULL);
++	g_dbus_client_set_disconnect_watch(bluez, disconnect_handler, NULL);
++	g_dbus_client_set_proxy_handlers(bluez, proxy_added, proxy_removed,
++						property_changed, NULL);
+ =
 
-Cheeers,
+-	err =3D bluetooth_register_profile(conn, HFP_HS_UUID, "hfp_hf",
+-						HFP_EXT_PROFILE_PATH);
++	err =3D ofono_modem_driver_register(&hfp_driver);
+ 	if (err < 0) {
+ 		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+ 						BLUEZ_PROFILE_INTERFACE);
+-		ofono_modem_driver_unregister(&hfp_driver);
+ 		return err;
+ 	}
+ =
+
+@@ -188,6 +241,7 @@ static void hfp_exit(void)
+ 	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+ 						BLUEZ_PROFILE_INTERFACE);
+ 	ofono_modem_driver_unregister(&hfp_driver);
++	g_dbus_client_unref(bluez);
+ }
+ =
+
+ OFONO_PLUGIN_DEFINE(hfp_bluez5, "External Hands-Free Profile Plugin", VERS=
+ION,
 -- =
 
-Vinicius
+1.8.1.1
 
---===============7240504885043107189==--
+
+--===============7702301008273887535==--
 
