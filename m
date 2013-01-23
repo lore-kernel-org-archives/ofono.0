@@ -1,110 +1,179 @@
-Content-Type: multipart/mixed; boundary="===============5164996226316106704=="
+Content-Type: multipart/mixed; boundary="===============8132018587354916532=="
 MIME-Version: 1.0
-From: Kling, Andreas <Andreas.Kling@peiker.de>
-Subject: AW: [PATCH 05/10] hfp_hf_bluez5: Handle NewConnection from BlueZ
-Date: Wed, 23 Jan 2013 13:03:34 +0100
-Message-ID: <sig.9735c4f085.B3F251FD87EC894A88C2221EEEBDF54807096F7F55@Exchange>
-In-Reply-To: <1358891005-24688-6-git-send-email-vinicius.gomes@openbossa.org>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH 01/10] hfp_hf_bluez5: Initial GDBusClient for BlueZ
+Date: Wed, 23 Jan 2013 11:16:38 -0300
+Message-ID: <20130123141638.GA6545@samus>
+In-Reply-To: <50FF675D.5060005@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5164996226316106704==
+--===============8132018587354916532==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Denis,
 
->Parse the essential arguments in the message, in this case only the
->file descriptor, and register the modem if it is not already
->registered. This is necessary because in some cases, we may receive a
->NewConnection call, and the SDP process is still taking place.
->---
-> plugins/hfp_hf_bluez5.c | 47 ++++++++++++++++++++++++++++++++++++++++++++=
----
-> 1 file changed, 44 insertions(+), 3 deletions(-)
->
->diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
->index 74ca570..39853e3 100644
->--- a/plugins/hfp_hf_bluez5.c
->+++ b/plugins/hfp_hf_bluez5.c
->@@ -24,6 +24,8 @@
-> #endif
->
-> #include <errno.h>
->+#include <unistd.h>
->+
-> #include <glib.h>
->
-> #include <gdbus.h>
->@@ -124,11 +126,50 @@ static struct ofono_modem_driver hfp_driver =3D {
-> static DBusMessage *profile_new_connection(DBusConnection *conn,
->                                        DBusMessage *msg, void *user_data)
-> {
->+       struct ofono_modem *modem;
->+       DBusMessageIter iter;
->+       GDBusProxy *proxy;
->+       DBusMessageIter entry;
->+       const char *device, *alias;
->+       int fd;
->+
->        DBG("Profile handler NewConnection");
->
->-       return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
->-                                       ".NotImplemented",
->-                                       "Implementation not provided");
->+       if (dbus_message_iter_init(msg, &entry) =3D=3D FALSE)
->+               goto error;
->+
->+       if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_OBJECT_P=
-ATH)
->+               goto error;
->+
->+       dbus_message_iter_get_basic(&entry, &device);
->+
->+       proxy =3D g_hash_table_lookup(devices_proxies, device);
->+       if (proxy =3D=3D NULL)
->+               goto error;
->+
->+       if (g_dbus_proxy_get_property(proxy, "Alias", &iter) =3D=3D FALSE)
->+               alias =3D "unknown";
->+       else
->+               dbus_message_iter_get_basic(&iter, &alias);
->+
->+       dbus_message_iter_next(&entry);
->+       if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_UNIX_FD)
->+               goto error;
->+
->+       dbus_message_iter_get_basic(&entry, &fd);
->+       if (fd < 0)
->+               goto error;
->+
->+       modem =3D modem_register(device, alias);
->+       if (modem =3D=3D NULL)
->+               goto error;
->+
->+       return NULL;
->+
->+error:
->+       close(fd);
->+       return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE ".Rejected",
->+                                       "Invalid arguments in method call"=
-);
-> }
->
-> static DBusMessage *profile_release(DBusConnection *conn,
->--
->1.8.1.1
+On 22:30 Tue 22 Jan, Denis Kenzior wrote:
+> Hi Vinicius,
+> =
 
-fd is closed always on error, even if uninitialized
+> On 01/22/2013 03:43 PM, Vinicius Costa Gomes wrote:
+> >This patch adds the initial callbacks to track when BlueZ connects or
+> >disconnects from the system bus. And tracks the interfaces added or
+> >removed.
+> >---
+> >  plugins/bluez5.h        |  3 ++-
+> >  plugins/hfp_hf_bluez5.c | 72 +++++++++++++++++++++++++++++++++++++++++=
++-------
+> >  2 files changed, 65 insertions(+), 10 deletions(-)
+> >
 
-I assume returning NULL is ok here if nothing went wrong?
-I'm not familiar with plain dbus API, just using glib gdbus, there I would =
-expect to create an answer to the call.
+[snip]
 
-kind regards
+> >@@ -143,6 +145,60 @@ static const GDBusMethodTable profile_methods[] =3D=
+ {
+> >  	{ }
+> >  };
+> >
+> >+static void connect_handler(DBusConnection *conn, void *user_data)
+> >+{
+> >+	DBG("Registering External Profile handler ...");
+> >+
+> >+	if (!g_dbus_register_interface(conn, HFP_EXT_PROFILE_PATH,
+> >+					BLUEZ_PROFILE_INTERFACE,
+> >+					profile_methods, NULL,
+> >+					NULL, NULL, NULL)) {
+> =
 
-andy
+> We just performed this operation in hfp_init, why are we doing it
+> again here?
 
---===============5164996226316106704==--
+Most probably it was a copy and paste error because our rebase. Fixed now.
+
+> =
+
+> >+		ofono_error("Register Profile interface failed: %s",
+> >+						HFP_EXT_PROFILE_PATH);
+> >+	}
+> >+
+> >+	bluetooth_register_profile(conn, HFP_HS_UUID, "hfp_hf",
+> >+						   HFP_EXT_PROFILE_PATH);
+> =
+
+> You have a whitespace violation here, mixing tabs & spaces.
+
+Don't know what happened here. Fixed.
+
+> =
+
+> >+}
+> >+
+> >+static void disconnect_handler(DBusConnection *conn, void *user_data)
+> >+{
+> >+
+> >+	DBG("Unregistering External Profile handler ...");
+> >+
+> >+	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+> >+						BLUEZ_PROFILE_INTERFACE);
+> =
+
+> Why do we bother?  Should we not leave this always registered?
+
+Fixed. This function is unnecessary really. Thanks for pointing this out.
+
+> =
+
+> >+}
+> >+
+> >+static void proxy_added(GDBusProxy *proxy, void *user_data)
+> >+{
+> >+	const char *path;
+> >+
+> >+	path =3D g_dbus_proxy_get_path(proxy);
+> >+
+> >+	DBG("Device proxy: %s(%p)", path, proxy);
+> >+}
+> >+
+> >+static void proxy_removed(GDBusProxy *proxy, void *user_data)
+> >+{
+> >+	const char *path;
+> >+
+> >+	path =3D g_dbus_proxy_get_path(proxy);
+> >+
+> >+	DBG("Device proxy: %s(%p)", path, proxy);
+> >+}
+> >+
+> >+static void property_changed(GDBusProxy *proxy, const char *name,
+> >+					DBusMessageIter *iter, void *user_data)
+> >+{
+> >+	const char *interface, *path;
+> >+
+> >+	interface =3D g_dbus_proxy_get_interface(proxy);
+> >+	path =3D g_dbus_proxy_get_path(proxy);
+> >+
+> >+	DBG("path: %s interface: %s", path, interface);
+> >+}
+> >+
+> >  static int hfp_init(void)
+> >  {
+> >  	DBusConnection *conn =3D ofono_dbus_get_connection();
+> >@@ -161,19 +217,16 @@ static int hfp_init(void)
+> >  		return -EIO;
+> >  	}
+> >
+> >-	err =3D ofono_modem_driver_register(&hfp_driver);
+> >-	if (err<  0) {
+> >-		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+> >-						BLUEZ_PROFILE_INTERFACE);
+> >-		return err;
+> >-	}
+> >+	bluez =3D g_dbus_client_new(conn, BLUEZ_SERVICE, BLUEZ_MANAGER_PATH);
+> >+	g_dbus_client_set_connect_watch(bluez, connect_handler, NULL);
+> >+	g_dbus_client_set_disconnect_watch(bluez, disconnect_handler, NULL);
+> >+	g_dbus_client_set_proxy_handlers(bluez, proxy_added, proxy_removed,
+> >+						property_changed, NULL);
+> =
+
+> Error handling here is all messed up.  ofono_modem_driver_register
+> operation might still fail below and you never destroy the 'bluez'
+> object in that case.
+
+Fixed.
+
+> =
+
+> >
+> >-	err =3D bluetooth_register_profile(conn, HFP_HS_UUID, "hfp_hf",
+> >-						HFP_EXT_PROFILE_PATH);
+> >+	err =3D ofono_modem_driver_register(&hfp_driver);
+> >  	if (err<  0) {
+> >  		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+> >  						BLUEZ_PROFILE_INTERFACE);
+> >-		ofono_modem_driver_unregister(&hfp_driver);
+> >  		return err;
+> >  	}
+> >
+> >@@ -188,6 +241,7 @@ static void hfp_exit(void)
+> >  	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+> >  						BLUEZ_PROFILE_INTERFACE);
+> >  	ofono_modem_driver_unregister(&hfp_driver);
+> >+	g_dbus_client_unref(bluez);
+> >  }
+> >
+> >  OFONO_PLUGIN_DEFINE(hfp_bluez5, "External Hands-Free Profile Plugin", =
+VERSION,
+> =
+
+> Regards,
+> -Denis
+
+
+Cheers,
+-- =
+
+Vinicius
+
+--===============8132018587354916532==--
 
