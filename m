@@ -1,40 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============2760176936630844033=="
+Content-Type: multipart/mixed; boundary="===============2027605746010667543=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
 Subject: Re: AW: [PATCH 05/10] hfp_hf_bluez5: Handle NewConnection from BlueZ
-Date: Wed, 23 Jan 2013 08:49:58 -0600
-Message-ID: <50FFF896.4080800@gmail.com>
-In-Reply-To: <sig.9735c4f085.B3F251FD87EC894A88C2221EEEBDF54807096F7F55@Exchange>
+Date: Wed, 23 Jan 2013 13:39:52 -0300
+Message-ID: <20130123163951.GC6545@samus>
+In-Reply-To: <50FFF896.4080800@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2760176936630844033==
+--===============2027605746010667543==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andreas,
+Hi,
 
-<snip>
+On 08:49 Wed 23 Jan, Denis Kenzior wrote:
+> Hi Andreas,
+> =
 
-> I assume returning NULL is ok here if nothing went wrong?
-> I'm not familiar with plain dbus API, just using glib gdbus, there I woul=
-d expect to create an answer to the call.
+> <snip>
+> =
 
-The NewConnection method is marked as 'ASYNC' in the method table (see =
+> >I assume returning NULL is ok here if nothing went wrong?
+> >I'm not familiar with plain dbus API, just using glib gdbus, there I wou=
+ld expect to create an answer to the call.
+> =
 
-profile_methods).  In our gdbus library, returning NULL here means that =
+> The NewConnection method is marked as 'ASYNC' in the method table
+> (see profile_methods).  In our gdbus library, returning NULL here
+> means that the method return is deferred until a later time.  E.g.
+> when we try to establish a SLC connection and fail / succeed.
+> =
 
-the method return is deferred until a later time.  E.g. when we try to =
+> In this patch it is left kind of hanging out there and you would
+> need to peek at patch 10 to really know what happens to it.
+> Confusing, I know ;)
 
-establish a SLC connection and fail / succeed.
+Do you think it is worth adding a comment in the code, that would be later
+removed?
 
-In this patch it is left kind of hanging out there and you would need to =
+> =
 
-peek at patch 10 to really know what happens to it.  Confusing, I know ;)
+> Regards,
+> -Denis
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
 
-Regards,
--Denis
 
---===============2760176936630844033==--
+Cheers,
+-- =
+
+Vinicius
+
+--===============2027605746010667543==--
 
