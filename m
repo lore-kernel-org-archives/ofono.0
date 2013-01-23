@@ -1,41 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============6594964030018412988=="
+Content-Type: multipart/mixed; boundary="===============4045942548798331331=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] hfp_hf_bluez5: Add SLC establishment procedure
-Date: Wed, 23 Jan 2013 17:29:31 -0600
-Message-ID: <5100725B.5020507@gmail.com>
-In-Reply-To: <1358982509-8685-1-git-send-email-vinicius.gomes@openbossa.org>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 2/3] bluez5: Add bt_bacpy
+Date: Wed, 23 Jan 2013 20:46:40 -0300
+Message-ID: <1358984801-23640-2-git-send-email-claudio.takahasi@openbossa.org>
+In-Reply-To: <1358984801-23640-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6594964030018412988==
+--===============4045942548798331331==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vinicius,
+Adds a copy of BlueZ bacpy function.
+---
+ plugins/bluez5.c | 8 +++++++-
+ plugins/bluez5.h | 2 ++
+ 2 files changed, 9 insertions(+), 1 deletion(-)
 
-On 01/23/2013 05:08 PM, Vinicius Costa Gomes wrote:
-> When receiving a NewConnection call from BlueZ, initiates the Service
-> Level Connection using the received file descriptor. The HFP modem
-> sub-components (devinfo, voicecall, netreg, handsfree and callvolume)
-> are created at this point.
-> ---
->
-> Now that we don't change how hfp_slc_info is allocated, this is the last
-> patch in the "HFP Service Level Connection establishment" series.
->
->
->   plugins/hfp_hf_bluez5.c | 175 +++++++++++++++++++++++++++++++++++++++++=
-+++++--
->   1 file changed, 169 insertions(+), 6 deletions(-)
->
+diff --git a/plugins/bluez5.c b/plugins/bluez5.c
+index d471454..ea74fac 100644
+--- a/plugins/bluez5.c
++++ b/plugins/bluez5.c
+@@ -23,9 +23,10 @@
+ #include <config.h>
+ #endif
+ =
 
-Patch has been applied, thanks.
+-#include <errno.h>
+ #include <stdint.h>
++#include <errno.h>
+ #include <sys/socket.h>
++#include <string.h>
+ =
 
-Regards,
--Denis
+ #include <glib.h>
+ =
+
+@@ -39,6 +40,11 @@
+ =
+
+ #define BLUEZ_PROFILE_MGMT_INTERFACE   BLUEZ_SERVICE ".ProfileManager1"
+ =
+
++void bt_bacpy(bdaddr_t *dst, const bdaddr_t *src)
++{
++	memcpy(dst, src, sizeof(bdaddr_t));
++}
++
+ static void profile_register_cb(DBusPendingCall *call, gpointer user_data)
+ {
+ 	DBusMessage *reply;
+diff --git a/plugins/bluez5.h b/plugins/bluez5.h
+index fd0704e..3921c7b 100644
+--- a/plugins/bluez5.h
++++ b/plugins/bluez5.h
+@@ -56,6 +56,8 @@ struct sockaddr_sco {
+ 	bdaddr_t	sco_bdaddr;
+ };
+ =
+
++void bt_bacpy(bdaddr_t *dst, const bdaddr_t *src);
++
+ int bluetooth_register_profile(DBusConnection *conn, const char *uuid,
+ 					const char *name, const char *object);
+ =
+
+-- =
+
+1.7.11.7
 
 
---===============6594964030018412988==--
+--===============4045942548798331331==--
 
