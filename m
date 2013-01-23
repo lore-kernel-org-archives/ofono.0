@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8837647608865915940=="
+Content-Type: multipart/mixed; boundary="===============7881646934106988078=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 01/10] hfp_hf_bluez5: Initial GDBusClient for BlueZ
-Date: Tue, 22 Jan 2013 22:30:21 -0600
-Message-ID: <50FF675D.5060005@gmail.com>
-In-Reply-To: <1358891005-24688-2-git-send-email-vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH 05/10] hfp_hf_bluez5: Handle NewConnection from BlueZ
+Date: Tue, 22 Jan 2013 22:54:53 -0600
+Message-ID: <50FF6D1D.1050907@gmail.com>
+In-Reply-To: <1358891005-24688-6-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8837647608865915940==
+--===============7881646934106988078==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,159 +16,93 @@ Content-Transfer-Encoding: quoted-printable
 Hi Vinicius,
 
 On 01/22/2013 03:43 PM, Vinicius Costa Gomes wrote:
-> This patch adds the initial callbacks to track when BlueZ connects or
-> disconnects from the system bus. And tracks the interfaces added or
-> removed.
+> Parse the essential arguments in the message, in this case only the
+> file descriptor, and register the modem if it is not already
+> registered. This is necessary because in some cases, we may receive a
+> NewConnection call, and the SDP process is still taking place.
 > ---
->   plugins/bluez5.h        |  3 ++-
->   plugins/hfp_hf_bluez5.c | 72 ++++++++++++++++++++++++++++++++++++++++++=
--------
->   2 files changed, 65 insertions(+), 10 deletions(-)
->
-> diff --git a/plugins/bluez5.h b/plugins/bluez5.h
-> index 01ecfe8..893072f 100644
-> --- a/plugins/bluez5.h
-> +++ b/plugins/bluez5.h
-> @@ -19,7 +19,8 @@
->    *
->    */
->
-> -#define	BLUEZ_SERVICE "org.bluez"
-> +#define BLUEZ_SERVICE			"org.bluez"
-> +#define BLUEZ_MANAGER_PATH		"/"
->   #define BLUEZ_PROFILE_INTERFACE		BLUEZ_SERVICE ".Profile1"
->   #define BLUEZ_ERROR_INTERFACE		BLUEZ_SERVICE ".Error"
+>   plugins/hfp_hf_bluez5.c | 47 ++++++++++++++++++++++++++++++++++++++++++=
+++---
+>   1 file changed, 44 insertions(+), 3 deletions(-)
 >
 > diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-> index e024838..c5c5cd7 100644
+> index 74ca570..39853e3 100644
 > --- a/plugins/hfp_hf_bluez5.c
 > +++ b/plugins/hfp_hf_bluez5.c
-> @@ -42,6 +42,8 @@
+> @@ -24,6 +24,8 @@
+>   #endif
 >
->   #define HFP_EXT_PROFILE_PATH   "/bluetooth/profile/hfp_hf"
->
-> +static GDBusClient *bluez =3D NULL;
+>   #include<errno.h>
+> +#include<unistd.h>
 > +
->   static int hfp_probe(struct ofono_modem *modem)
+>   #include<glib.h>
+>
+>   #include<gdbus.h>
+> @@ -124,11 +126,50 @@ static struct ofono_modem_driver hfp_driver =3D {
+>   static DBusMessage *profile_new_connection(DBusConnection *conn,
+>   					DBusMessage *msg, void *user_data)
 >   {
->   	DBG("modem: %p", modem);
-> @@ -143,6 +145,60 @@ static const GDBusMethodTable profile_methods[] =3D {
->   	{ }
->   };
+> +	struct ofono_modem *modem;
+> +	DBusMessageIter iter;
+> +	GDBusProxy *proxy;
+> +	DBusMessageIter entry;
+> +	const char *device, *alias;
+> +	int fd;
+> +
+>   	DBG("Profile handler NewConnection");
 >
-> +static void connect_handler(DBusConnection *conn, void *user_data)
-> +{
-> +	DBG("Registering External Profile handler ...");
+> -	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
+> -					".NotImplemented",
+> -					"Implementation not provided");
+> +	if (dbus_message_iter_init(msg,&entry) =3D=3D FALSE)
+> +		goto error;
 > +
-> +	if (!g_dbus_register_interface(conn, HFP_EXT_PROFILE_PATH,
-> +					BLUEZ_PROFILE_INTERFACE,
-> +					profile_methods, NULL,
-> +					NULL, NULL, NULL)) {
+> +	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_OBJECT_PATH)
+> +		goto error;
+> +
+> +	dbus_message_iter_get_basic(&entry,&device);
+> +
+> +	proxy =3D g_hash_table_lookup(devices_proxies, device);
+> +	if (proxy =3D=3D NULL)
+> +		goto error;
 
-We just performed this operation in hfp_init, why are we doing it again =
+So we return 'Invalid Arguments' even if we failed to lookup the proxy =
 
-here?
+in the hash?  Lets be a bit nicer here
 
-> +		ofono_error("Register Profile interface failed: %s",
-> +						HFP_EXT_PROFILE_PATH);
-> +	}
 > +
-> +	bluetooth_register_profile(conn, HFP_HS_UUID, "hfp_hf",
-> +						   HFP_EXT_PROFILE_PATH);
+> +	if (g_dbus_proxy_get_property(proxy, "Alias",&iter) =3D=3D FALSE)
+> +		alias =3D "unknown";
+> +	else
+> +		dbus_message_iter_get_basic(&iter,&alias);
 
-You have a whitespace violation here, mixing tabs & spaces.
+This looks suspicious, under what circumstances are we missing the alias?
 
-> +}
 > +
-> +static void disconnect_handler(DBusConnection *conn, void *user_data)
-> +{
+> +	dbus_message_iter_next(&entry);
+> +	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_UNIX_FD)
+> +		goto error;
 > +
-> +	DBG("Unregistering External Profile handler ...");
+> +	dbus_message_iter_get_basic(&entry,&fd);
+> +	if (fd<  0)
+> +		goto error;
 > +
-> +	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
-> +						BLUEZ_PROFILE_INTERFACE);
-
-Why do we bother?  Should we not leave this always registered?
-
-> +}
+> +	modem =3D modem_register(device, alias);
+> +	if (modem =3D=3D NULL)
+> +		goto error;
 > +
-> +static void proxy_added(GDBusProxy *proxy, void *user_data)
-> +{
-> +	const char *path;
+> +	return NULL;
 > +
-> +	path =3D g_dbus_proxy_get_path(proxy);
-> +
-> +	DBG("Device proxy: %s(%p)", path, proxy);
-> +}
-> +
-> +static void proxy_removed(GDBusProxy *proxy, void *user_data)
-> +{
-> +	const char *path;
-> +
-> +	path =3D g_dbus_proxy_get_path(proxy);
-> +
-> +	DBG("Device proxy: %s(%p)", path, proxy);
-> +}
-> +
-> +static void property_changed(GDBusProxy *proxy, const char *name,
-> +					DBusMessageIter *iter, void *user_data)
-> +{
-> +	const char *interface, *path;
-> +
-> +	interface =3D g_dbus_proxy_get_interface(proxy);
-> +	path =3D g_dbus_proxy_get_path(proxy);
-> +
-> +	DBG("path: %s interface: %s", path, interface);
-> +}
-> +
->   static int hfp_init(void)
->   {
->   	DBusConnection *conn =3D ofono_dbus_get_connection();
-> @@ -161,19 +217,16 @@ static int hfp_init(void)
->   		return -EIO;
->   	}
->
-> -	err =3D ofono_modem_driver_register(&hfp_driver);
-> -	if (err<  0) {
-> -		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
-> -						BLUEZ_PROFILE_INTERFACE);
-> -		return err;
-> -	}
-> +	bluez =3D g_dbus_client_new(conn, BLUEZ_SERVICE, BLUEZ_MANAGER_PATH);
-> +	g_dbus_client_set_connect_watch(bluez, connect_handler, NULL);
-> +	g_dbus_client_set_disconnect_watch(bluez, disconnect_handler, NULL);
-> +	g_dbus_client_set_proxy_handlers(bluez, proxy_added, proxy_removed,
-> +						property_changed, NULL);
-
-Error handling here is all messed up.  ofono_modem_driver_register =
-
-operation might still fail below and you never destroy the 'bluez' =
-
-object in that case.
-
->
-> -	err =3D bluetooth_register_profile(conn, HFP_HS_UUID, "hfp_hf",
-> -						HFP_EXT_PROFILE_PATH);
-> +	err =3D ofono_modem_driver_register(&hfp_driver);
->   	if (err<  0) {
->   		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
->   						BLUEZ_PROFILE_INTERFACE);
-> -		ofono_modem_driver_unregister(&hfp_driver);
->   		return err;
->   	}
->
-> @@ -188,6 +241,7 @@ static void hfp_exit(void)
->   	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
->   						BLUEZ_PROFILE_INTERFACE);
->   	ofono_modem_driver_unregister(&hfp_driver);
-> +	g_dbus_client_unref(bluez);
+> +error:
+> +	close(fd);
+> +	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE ".Rejected",
+> +					"Invalid arguments in method call");
 >   }
 >
->   OFONO_PLUGIN_DEFINE(hfp_bluez5, "External Hands-Free Profile Plugin", V=
-ERSION,
+>   static DBusMessage *profile_release(DBusConnection *conn,
 
 Regards,
 -Denis
 
---===============8837647608865915940==--
+--===============7881646934106988078==--
 
