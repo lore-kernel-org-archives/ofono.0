@@ -1,155 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============4745064485050705663=="
+Content-Type: multipart/mixed; boundary="===============2760176936630844033=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: Re: [PATCH 03/10] hfp_hf_bluez5: Register modem for HFP AG capable
- devices
-Date: Wed, 23 Jan 2013 11:22:41 -0300
-Message-ID: <20130123142241.GB6545@samus>
-In-Reply-To: <50FF6E2E.6030706@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: AW: [PATCH 05/10] hfp_hf_bluez5: Handle NewConnection from BlueZ
+Date: Wed, 23 Jan 2013 08:49:58 -0600
+Message-ID: <50FFF896.4080800@gmail.com>
+In-Reply-To: <sig.9735c4f085.B3F251FD87EC894A88C2221EEEBDF54807096F7F55@Exchange>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4745064485050705663==
+--===============2760176936630844033==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Andreas,
 
+<snip>
 
-On 22:59 Tue 22 Jan, Denis Kenzior wrote:
-> Hi Vinicius,
-> =
+> I assume returning NULL is ok here if nothing went wrong?
+> I'm not familiar with plain dbus API, just using glib gdbus, there I woul=
+d expect to create an answer to the call.
 
-> On 01/22/2013 03:43 PM, Vinicius Costa Gomes wrote:
-> >Now that we are able to keep track of devices appearing and
-> >disappearing from BlueZ, we are able to register the modem when a
-> >device that supports the HFP AG UUID appears.
-> >---
-> >  plugins/bluez5.h        |  1 +
-> >  plugins/hfp_hf_bluez5.c | 88 +++++++++++++++++++++++++++++++++++++++++=
-+++++++-
-> >  2 files changed, 88 insertions(+), 1 deletion(-)
-> >
+The NewConnection method is marked as 'ASYNC' in the method table (see =
 
-[snip]
+profile_methods).  In our gdbus library, returning NULL here means that =
 
-> >@@ -184,11 +235,36 @@ static void proxy_added(GDBusProxy *proxy, void *u=
-ser_data)
-> >  	g_hash_table_insert(devices_proxies, g_strdup(path),
-> >  						g_dbus_proxy_ref(proxy));
-> >  	DBG("Device proxy: %s(%p)", path, proxy);
-> >+
-> >+	if (g_dbus_proxy_get_property(proxy, "UUIDs",&iter) =3D=3D FALSE)
-> >+		return;
-> >+
-> >+	parse_uuids(&iter,&uuids);
-> >+
-> >+	for (l =3D uuids; l; l =3D l->next) {
-> >+		const char *uuid =3D l->data;
-> >+
-> =
+the method return is deferred until a later time.  E.g. when we try to =
 
-> Next we traverse the list
-> =
+establish a SLC connection and fail / succeed.
 
-> >+		if (g_str_equal(uuid, HFP_AG_UUID) =3D=3D TRUE)
-> >+			break;
-> =
+In this patch it is left kind of hanging out there and you would need to =
 
-> And if we find the UUID we break
-> =
+peek at patch 10 to really know what happens to it.  Confusing, I know ;)
 
-> >+	}
-> >+
-> >+	g_slist_free_full(uuids, g_free);
-> >+
-> =
+Regards,
+-Denis
 
-> And now we free the all the g_strdup()ed strings.  Why? Why do we
-> bother doing all this work?  Just rename parse_uuids into something
-> sensible, like 'has_hfp_ag_uuid' and make it return a boolean.
-
-Cool. Thanks. I made it return a gboolean, but couldn't find a standard abo=
-ut
-to return a gboolean or a ofono_bool_t.
-
-> =
-
-> >+	if (l =3D=3D NULL)
-> >+		return;
-> >+
-> >+	if (g_dbus_proxy_get_property(proxy, "Alias",&iter) =3D=3D FALSE)
-> >+		return;
-> >+
-> >+	dbus_message_iter_get_basic(&iter,&alias);
-> >+
-> >+	modem_register(path, alias);
-> =
-
-> And why do we do all this work without first checking whether the
-> modem is already in the modem_hash?
-
-This would only happen on a very uncommon case: we receive from BlueZ a
-NewConnection() (we register the modem there) and after that we receive
-the InterfacesAdded signal. I don't think the increase in complexity is wor=
-th.
-And inside the modem_register() we check if the modem is already registered.
-
-
-> =
-
-> >  }
-> >
-> >  static void proxy_removed(GDBusProxy *proxy, void *user_data)
-> >  {
-> >  	const char *interface, *path;
-> >+	struct ofono_modem *modem;
-> >
-> >  	interface =3D g_dbus_proxy_get_interface(proxy);
-> >  	path =3D g_dbus_proxy_get_path(proxy);
-> >@@ -198,6 +274,12 @@ static void proxy_removed(GDBusProxy *proxy, void *=
-user_data)
-> >  		DBG("Device proxy: %s(%p)", path, proxy);
-> >  	}
-> >
-> >+	modem =3D g_hash_table_lookup(modem_hash, path);
-> >+	if (modem =3D=3D NULL)
-> >+		return;
-> >+
-> >+	g_hash_table_remove(modem_hash, path);
-> >+	ofono_modem_remove(modem);
-> >  }
-> >
-> >  static void property_changed(GDBusProxy *proxy, const char *name,
-> >@@ -242,6 +324,9 @@ static int hfp_init(void)
-> >  		return err;
-> >  	}
-> >
-> >+	modem_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal, g_free,
-> >+								NULL);
-> >+
-> >  	devices_proxies =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-> >  				g_free, (GDestroyNotify) g_dbus_proxy_unref);
-> >
-> >@@ -258,6 +343,7 @@ static void hfp_exit(void)
-> >  	ofono_modem_driver_unregister(&hfp_driver);
-> >  	g_dbus_client_unref(bluez);
-> >
-> >+	g_hash_table_destroy(modem_hash);
-> >  	g_hash_table_destroy(devices_proxies);
-> >  }
-> >
-> =
-
-> Regards,
-> -Denis
-
-
-Cheers,
--- =
-
-Vinicius
-
---===============4745064485050705663==--
+--===============2760176936630844033==--
 
