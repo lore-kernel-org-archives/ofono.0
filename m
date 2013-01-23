@@ -1,36 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============8720909827963405882=="
+Content-Type: multipart/mixed; boundary="===============3533640866510353323=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v1 05/10] hfp_hf_bluez5: Handle NewConnection from BlueZ
-Date: Wed, 23 Jan 2013 14:32:54 -0600
-Message-ID: <510048F6.3030708@gmail.com>
-In-Reply-To: <1358965681-7420-6-git-send-email-vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH v1 06/10] hfpmodem: Add dynamic hfp_slc_info allocation
+Date: Wed, 23 Jan 2013 14:34:00 -0600
+Message-ID: <51004938.30503@gmail.com>
+In-Reply-To: <1358965681-7420-7-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8720909827963405882==
+--===============3533640866510353323==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Vinicius,
 
-On 01/23/2013 12:27 PM, Vinicius Costa Gomes wrote:
-> Parse the essential arguments in the message, in this case only the
-> file descriptor, and register the modem if it is not already
-> registered. This is necessary because in some cases, we may receive a
-> NewConnection call, and the SDP process is still taking place.
-> ---
->   plugins/hfp_hf_bluez5.c | 51 ++++++++++++++++++++++++++++++++++++++++++=
-++++---
->   1 file changed, 48 insertions(+), 3 deletions(-)
+> diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+> index 26f96d0..9210e02 100644
+> --- a/plugins/phonesim.c
+> +++ b/plugins/phonesim.c
+> @@ -929,8 +929,8 @@ static int localhfp_enable(struct ofono_modem *modem)
 >
+>   	g_at_chat_set_disconnect_function(chat, slc_failed, modem);
+>
+> -	hfp_slc_info_init(info, HFP_VERSION_LATEST);
+> -	info->chat =3D chat;
+> +	info =3D hfp_slc_info_init(chat, HFP_VERSION_LATEST);
+> +	g_at_chat_unref(chat);
+>   	hfp_slc_establish(info, slc_established, slc_failed, modem);
+>
+>   	return -EINPROGRESS;
 
-Patch has been applied, thanks.
+This part makes no sense.  I refer you to localhfp_probe() function. =
+
+Are you testing any of your changes?
 
 Regards,
 -Denis
 
-
---===============8720909827963405882==--
+--===============3533640866510353323==--
 
