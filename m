@@ -1,161 +1,284 @@
-Content-Type: multipart/mixed; boundary="===============9161559404137850743=="
+Content-Type: multipart/mixed; boundary="===============7436775607008824503=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 3/3] hfp_hf_bluez5: Add SCO listen socket
-Date: Wed, 23 Jan 2013 20:46:41 -0300
-Message-ID: <1358984801-23640-3-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1358984801-23640-1-git-send-email-claudio.takahasi@openbossa.org>
+From: Viallard Anthony <viallard@syscom-instruments.com>
+Subject: SIMCOM support
+Date: Thu, 24 Jan 2013 13:48:43 +0100
+Message-ID: <51012DAB.9000108@syscom-instruments.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9161559404137850743==
+--===============7436775607008824503==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds the initial SCO server socket handling.
----
- plugins/hfp_hf_bluez5.c | 95 +++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 file changed, 95 insertions(+)
+Hello ofono guys,
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 0e496ee..84c4a55 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -64,6 +64,8 @@ struct hfp {
- static GHashTable *modem_hash =3D NULL;
- static GHashTable *devices_proxies =3D NULL;
- static GDBusClient *bluez =3D NULL;
-+static GIOChannel *sco_io =3D NULL;
-+static guint sco_watch =3D 0;
- =
+I've got a embedded device with SIM5216E modem. Based on the previous =
 
- static void hfp_debug(const char *str, void *user_data)
- {
-@@ -378,6 +380,87 @@ static const GDBusMethodTable profile_methods[] =3D {
- 	{ }
- };
- =
+work done by my colleague Jean-Christian de Rivaz (you can see previous =
 
-+static gboolean sco_accept(GIOChannel *io, GIOCondition cond,
-+							gpointer user_data)
-+{
-+	struct sockaddr_sco saddr;
-+	socklen_t optlen;
-+	int sk, nsk;
-+
-+	if (cond & (G_IO_ERR | G_IO_HUP | G_IO_NVAL))
-+		return FALSE;
-+
-+	sk =3D g_io_channel_unix_get_fd(io);
-+
-+	memset(&saddr, 0, sizeof(saddr));
-+	optlen =3D sizeof(saddr);
-+
-+	nsk =3D accept(sk, (struct sockaddr *) &saddr, &optlen);
-+	if (nsk < 0)
-+		return TRUE;
-+
-+	/* TODO: Verify if the device has a modem */
-+
-+	return TRUE;
-+}
-+
-+static GIOChannel *sco_listen(int *err)
-+{
-+	struct sockaddr_sco addr;
-+	GIOChannel *io;
-+	int sk, defer_setup =3D 1;
-+
-+	sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET, BTPROTO_SCO);
-+	if (sk < 0) {
-+		*err =3D -errno;
-+		return NULL;
-+	}
-+
-+	/* Bind to local address */
-+	memset(&addr, 0, sizeof(addr));
-+	addr.sco_family =3D AF_BLUETOOTH;
-+	bt_bacpy(&addr.sco_bdaddr, BDADDR_ANY);
-+
-+	if (bind(sk, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-+		close(sk);
-+		*err =3D -errno;
-+		return NULL;
-+	}
-+
-+	if (setsockopt(sk, SOL_BLUETOOTH, BT_DEFER_SETUP,
-+				&defer_setup, sizeof(defer_setup)) < 0) {
-+		ofono_warn("Can't enable deferred setup: %s (%d)",
-+						strerror(errno), errno);
-+		*err =3D -errno;
-+	}
-+
-+	io =3D g_io_channel_unix_new(sk);
-+	g_io_channel_set_close_on_unref(io, TRUE);
-+	g_io_channel_set_flags(io, G_IO_FLAG_NONBLOCK, NULL);
-+
-+	if (listen(sk, 5) < 0) {
-+		g_io_channel_unref(io);
-+		*err =3D -errno;
-+		return NULL;
-+	}
-+
-+	return io;
-+}
-+
-+static int sco_init(void)
-+{
-+	GIOCondition cond =3D G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL;
-+	int err =3D 0;
-+
-+	sco_io =3D sco_listen(&err);
-+	if (sco_io =3D=3D NULL)
-+		return err;
-+
-+	sco_watch =3D g_io_add_watch(sco_io, cond, sco_accept, NULL);
-+
-+	return 0;
-+}
-+
- static void connect_handler(DBusConnection *conn, void *user_data)
- {
- 	DBG("Registering External Profile handler ...");
-@@ -500,6 +583,12 @@ static int hfp_init(void)
- 	if (DBUS_TYPE_UNIX_FD < 0)
- 		return -EBADF;
- =
+talk on this mailing list about this modem "Some experiments with the =
 
-+	err =3D sco_init();
-+	if (err < 0) {
-+		ofono_error("SCO: %s(%d)", strerror(-err), -err);
-+		return err;
-+	}
-+
- 	/* Registers External Profile handler */
- 	if (!g_dbus_register_interface(conn, HFP_EXT_PROFILE_PATH,
- 					BLUEZ_PROFILE_INTERFACE,
-@@ -550,6 +639,12 @@ static void hfp_exit(void)
- =
+SIMCOM SIM5216E modem on a ARM926 board"), the simcom AT doc, my =
 
- 	g_hash_table_destroy(modem_hash);
- 	g_hash_table_destroy(devices_proxies);
-+
-+	if (sco_watch)
-+		g_source_remove(sco_watch);
-+
-+	if (sco_io)
-+		g_io_channel_unref(sco_io);
- }
- =
+MacGyver kit and my resourcefulness, i do a patch for ofono to support =
 
- OFONO_PLUGIN_DEFINE(hfp_bluez5, "External Hands-Free Profile Plugin", VERS=
-ION,
--- =
+this modem (and maybe others models).
 
-1.7.11.7
+I attach the patch to this email.
+
+While making this patch, I wondered about that :
+
+    * After entering a pin code, ofono goes too fast and checks too =
+
+early the sim pin status with "CPIN?". The ME responds "CME Error : 14 =
+
+(SIM busy)" and ofono stops here. Ofono doesn't send more CPIN? or =
+
+intercept the "+CPIN: READY" that the modem send after a while when SIM =
+
+is back online. So, I use the same workaround that for ZTE : sending =
+
+severals AT+CPIN? commands during 20 seconds until having "+CPIN: =
+
+READY". It works well but as my modem sends the "+CPIN: READY" from its =
+
+own, I think I can use another mechanism more "standard" in ofono, isn't =
+
+it ?
+
+    * I want to save power when i doesn't need the modem. So, i guess it =
+
+is the purpose of the "org.ofono.Modem.SetProperty" dbus method and the =
+
+setting "Powered". When I set "Powered" to "False", I see ofono calls =
+
+the "disable" callback of "struct ofono_modem_driver", so I think its =
+
+here I must write the famous CFUN command(s) to put modem down. In the =
+
+AT doc for SIMCOM, I have severals CFUN values for, i think, disable =
+
+purpose :
+
+0 =E2=80=93 minimum functionality
+4 =E2=80=93 disable phone both transmit and receive RF circuits
+7 =E2=80=93 Offline Mode
+
+For now, i do a CFUN=3D4 but maybe i need to do more and add CFUN=3D7 ? Or =
+
+maybe use CFUN=3D0 ?
+
+Can the "disable" callback be called by ofono in other case and so, i =
+
+must only do a CFUN=3D4 ?
+
+    * I would like to do a reset of the modem at start and at end of =
+
+ofono life (with AT+CFUN=3D6 or AT+CRESET). The purpose is having a modem =
+
+always in init state for ofono and the others programs. Do you think its =
+
+a good idea ?
+
+Best regards,
+Anthony Viallard.
 
 
---===============9161559404137850743==--
+
+--===============7436775607008824503==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="ofono-simcom-support.patch"
+
+QWRkIFNJTUNPTSBzdXBwb3J0LgoKSSBkZXZlbG9wIHRoaXMgd2l0aCB0aGUgU0lNNTIxNkUgY2hp
+cHNldC4gU01TIGFuZCBHUFJTIHdvcmsuCkkgZG9uJ3QgZG8gdGhlIHZvaWNlIGNhbGwgcGFydCBi
+ZWNhdXNlIGkgZG9uJ3QgbmVlZCBpdC4KClNpZ25lZC1vZmYtYnk6IEFudGhvbnkgVmlhbGxhcmQg
+PGhvbWVyMjQyIGF0IGdtYWlsLmNvbT4KLS0tIG9mb25vLTEuNi5vcmlnL01ha2VmaWxlLmFtCTIw
+MTItMDQtMjAgMjE6MDY6MjkuMDAwMDAwMDAwICswMjAwCisrKyBvZm9uby0xLjYvTWFrZWZpbGUu
+YW0JMjAxMy0wMS0yMSAxNzoxNzo0OC4wODk2MjcyNzcgKzAxMDAKQEAgLTM3MSw2ICszNzEsOSBA
+QCBidWlsdGluX3NvdXJjZXMgKz0gcGx1Z2lucy9zYW1zdW5nLmMKIGJ1aWx0aW5fbW9kdWxlcyAr
+PSBzaW05MDAKIGJ1aWx0aW5fc291cmNlcyArPSBwbHVnaW5zL3NpbTkwMC5jCiAKK2J1aWx0aW5f
+bW9kdWxlcyArPSBzaW1jb20KK2J1aWx0aW5fc291cmNlcyArPSBwbHVnaW5zL3NpbWNvbS5jCisK
+IGlmIEJMVUVUT09USAogYnVpbHRpbl9tb2R1bGVzICs9IGJsdWV0b290aAogYnVpbHRpbl9zb3Vy
+Y2VzICs9IHBsdWdpbnMvYmx1ZXRvb3RoLmMgcGx1Z2lucy9ibHVldG9vdGguaAotLS0gb2Zvbm8t
+MS42Lm9yaWcvZHJpdmVycy9hdG1vZGVtL3Ntcy5jCTIwMTItMDQtMjAgMjE6MDY6MjkuMDAwMDAw
+MDAwICswMjAwCisrKyBvZm9uby0xLjYvZHJpdmVycy9hdG1vZGVtL3Ntcy5jCTIwMTMtMDEtMjEg
+MTY6NDg6NDQuNDYwNjI3NDg1ICswMTAwCkBAIC04MDUsNiArODA3LDcgQEAgc3RhdGljIGdib29s
+ZWFuIGJ1aWxkX2NubWlfc3RyaW5nKGNoYXIgKgogCWNhc2UgT0ZPTk9fVkVORE9SX05PVkFURUw6
+CiAJY2FzZSBPRk9OT19WRU5ET1JfSFVBV0VJOgogCWNhc2UgT0ZPTk9fVkVORE9SX1pURToKKwlj
+YXNlIE9GT05PX1ZFTkRPUl9TSU1DT006CiAJCS8qIE1TTSBkZXZpY2VzIGFkdmVydGlzZSBzdXBw
+b3J0IGZvciBtb2RlIDIsIGJ1dCByZXR1cm4gYW4KIAkJICogZXJyb3IgaWYgd2UgYXR0ZW1wdCB0
+byBhY3R1YWxseSB1c2UgaXQuICovCiAJCW1vZGUgPSAiMSI7CmRpZmYgLXBydU4gb2Zvbm8tMS42
+Lm9yaWcvZHJpdmVycy9hdG1vZGVtL3NpbS5jIG9mb25vLTEuNi9kcml2ZXJzL2F0bW9kZW0vc2lt
+LmMKLS0tIG9mb25vLTEuNi5vcmlnL2RyaXZlcnMvYXRtb2RlbS9zaW0uYwkyMDEzLTAxLTIzIDEx
+OjM4OjIyLjk1OTYwOTA4NyArMDEwMAorKysgb2Zvbm8tMS42L2RyaXZlcnMvYXRtb2RlbS9zaW0u
+YwkyMDEzLTAxLTIzIDExOjU3OjUyLjYwMjYwODk0OCArMDEwMApAQCAtMTAyMywxMCArMTAyMywx
+NiBAQCBzdGF0aWMgdm9pZCBhdF9waW5fc2VuZF9jYihnYm9vbGVhbiBvaywKIAkJCQkJCQlGQUxT
+RSwgY2JkLCBnX2ZyZWUpOwogCQlyZXR1cm47CiAJY2FzZSBPRk9OT19WRU5ET1JfWlRFOgorCWNh
+c2UgT0ZPTk9fVkVORE9SX1NJTUNPTToKIAkJLyoKIAkJICogT24gWlRFIG1vZGVtcywgYWZ0ZXIg
+cGluIGlzIGVudGVyZWQsIFNJTSBzdGF0ZSBpcyBjaGVja2VkCiAJCSAqIGJ5IHBvbGxpbmcgQ1BJ
+TiBhcyB0aGVpciBtb2RlbSBkb2Vzbid0IHByb3ZpZGUgdW5zb2xpY2l0ZWQKIAkJICogbm90aWZp
+Y2F0aW9uIG9mIFNJTSByZWFkaW5lc3MuCisJCSAqCisJCSAqIE9uIFNJTUNPTSBtb2RlbXMsIFNJ
+TSBpcyBidXN5IGFmdGVyIHBpbiBpcyBlbnRlcmVkICh3ZSd2ZQorCQkgKiBnb3QgYW4gIitDTUUg
+RVJST1I6IDE0IiBhdCAiQVQrQ1BJTj8iIHJlcXVlc3QpIGFuZCBvZm9ubworCQkgKiBkb24ndCBj
+YXRjaCB0aGUgIitDUElOOiBSRUFEWSIgbWVzc2FnZSBzZW50IGJ5IHRoZSBtb2RlbQorCQkgKiB3
+aGVuIFNJTSBpcyByZWFkeS4gU28sIHVzZSBleHRyYSBDUElOIHRvIGNoZWNrIHRoZSBzdGF0ZS4K
+IAkJICovCiAJCXNkLT5zaW1fc3RhdGVfcXVlcnkgPSBhdF91dGlsX3NpbV9zdGF0ZV9xdWVyeV9u
+ZXcoc2QtPmNoYXQsCiAJCQkJCQkyLCAyMCwgc2ltX3N0YXRlX2NiLCBjYmQsCmRpZmYgLXB1ck4g
+b2Zvbm8tMS42L2RyaXZlcnMvYXRtb2RlbS9uZXR3b3JrLXJlZ2lzdHJhdGlvbi5jIG9mb25vLXBh
+dGNoZWQvZHJpdmVycy9hdG1vZGVtL25ldHdvcmstcmVnaXN0cmF0aW9uLmMKLS0tIG9mb25vLTEu
+Ni9kcml2ZXJzL2F0bW9kZW0vbmV0d29yay1yZWdpc3RyYXRpb24uYwkyMDEzLTAxLTE4IDE1OjA0
+OjAzLjU5ODY1OTE2NSArMDEwMAorKysgb2Zvbm8tcGF0Y2hlZC9kcml2ZXJzL2F0bW9kZW0vbmV0
+d29yay1yZWdpc3RyYXRpb24uYwkyMDEzLTAxLTE4IDE0OjU0OjAzLjI1NjY1OTIzNiArMDEwMApA
+QCAtMTQxMSw2ICsxNDExLDE0IEBAIHN0YXRpYyB2b2lkIGF0X2NyZWdfc2V0X2NiKGdib29sZWFu
+IG9rLAogCX0KIAogCXN3aXRjaCAobmQtPnZlbmRvcikgeworCWNhc2UgT0ZPTk9fVkVORE9SX1NJ
+TUNPTToKKwkJLyogUmVnaXN0ZXIgZm9yIENTUSBjaGFuZ2VzICovCisJCWdfYXRfY2hhdF9zZW5k
+KG5kLT5jaGF0LCAiQVQrQVVUT0NTUT0xLDEiLCBub25lX3ByZWZpeCwKKwkJCQlOVUxMLCBOVUxM
+LCBOVUxMKTsKKworCQlnX2F0X2NoYXRfcmVnaXN0ZXIobmQtPmNoYXQsICIrQ1NROiIsCisgCQkJ
+CSAgIGNzcV9ub3RpZnksIEZBTFNFLCBuZXRyZWcsIE5VTEwpOworIAkJYnJlYWs7CiAJY2FzZSBP
+Rk9OT19WRU5ET1JfUEhPTkVTSU06CiAJCWdfYXRfY2hhdF9yZWdpc3RlcihuZC0+Y2hhdCwgIitD
+U1E6IiwKIAkJCQkJY3NxX25vdGlmeSwgRkFMU0UsIG5ldHJlZywgTlVMTCk7CkBAIC0xNTM0LDcg
+KzE1MzcsNiBAQCBzdGF0aWMgdm9pZCBhdF9jcmVnX3NldF9jYihnYm9vbGVhbiBvaywKIAkJYnJl
+YWs7CiAJY2FzZSBPRk9OT19WRU5ET1JfTk9LSUE6CiAJY2FzZSBPRk9OT19WRU5ET1JfU0FNU1VO
+RzoKLQljYXNlIE9GT05PX1ZFTkRPUl9TSU1DT006CiAJCS8qIFNpZ25hbCBzdHJlbmd0aCByZXBv
+cnRpbmcgdmlhIENJTkQgaXMgbm90IHN1cHBvcnRlZCAqLwogCQlicmVhazsKIAlkZWZhdWx0Ogot
+LS0gL2Rldi9udWxsCTIwMTMtMDEtMTYgMTA6NTQ6NDEuNTUxMDg5NTY3ICswMTAwCisrKyBvZm9u
+by0xLjYvcGx1Z2lucy9zaW1jb20uYwkyMDEzLTAxLTIzIDEwOjQzOjA1LjYzMTYwOTQ4MyArMDEw
+MApAQCAtMCwwICsxLDMwOCBAQAorLyoKKyAqCisgKiAgb0Zvbm8gLSBPcGVuIFNvdXJjZSBUZWxl
+cGhvbnkKKyAqCisgKiAgQ29weXJpZ2h0IChDKSAyMDA4LTIwMTEgIEludGVsIENvcnBvcmF0aW9u
+LiBBbGwgcmlnaHRzIHJlc2VydmVkLgorICoKKyAqICBUaGlzIHByb2dyYW0gaXMgZnJlZSBzb2Z0
+d2FyZTsgeW91IGNhbiByZWRpc3RyaWJ1dGUgaXQgYW5kL29yIG1vZGlmeQorICogIGl0IHVuZGVy
+IHRoZSB0ZXJtcyBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgdmVyc2lvbiAyIGFz
+CisgKiAgcHVibGlzaGVkIGJ5IHRoZSBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb24uCisgKgorICog
+IFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmlidXRlZCBpbiB0aGUgaG9wZSB0aGF0IGl0IHdpbGwgYmUg
+dXNlZnVsLAorICogIGJ1dCBXSVRIT1VUIEFOWSBXQVJSQU5UWTsgd2l0aG91dCBldmVuIHRoZSBp
+bXBsaWVkIHdhcnJhbnR5IG9mCisgKiAgTUVSQ0hBTlRBQklMSVRZIG9yIEZJVE5FU1MgRk9SIEEg
+UEFSVElDVUxBUiBQVVJQT1NFLiAgU2VlIHRoZQorICogIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNl
+bnNlIGZvciBtb3JlIGRldGFpbHMuCisgKgorICogIFlvdSBzaG91bGQgaGF2ZSByZWNlaXZlZCBh
+IGNvcHkgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlCisgKiAgYWxvbmcgd2l0aCB0
+aGlzIHByb2dyYW07IGlmIG5vdCwgd3JpdGUgdG8gdGhlIEZyZWUgU29mdHdhcmUKKyAqICBGb3Vu
+ZGF0aW9uLCBJbmMuLCA1MSBGcmFua2xpbiBTdCwgRmlmdGggRmxvb3IsIEJvc3RvbiwgTUEgIDAy
+MTEwLTEzMDEgIFVTQQorICoKKyAqLworCisjaWZkZWYgSEFWRV9DT05GSUdfSAorI2luY2x1ZGUg
+PGNvbmZpZy5oPgorI2VuZGlmCisKKyNpbmNsdWRlIDxlcnJuby5oPgorI2luY2x1ZGUgPHN0ZGxp
+Yi5oPgorCisjaW5jbHVkZSA8Z2xpYi5oPgorI2luY2x1ZGUgPGdhdGNoYXQuaD4KKyNpbmNsdWRl
+IDxnYXR0dHkuaD4KKworI2RlZmluZSBPRk9OT19BUElfU1VCSkVDVF9UT19DSEFOR0UKKyNpbmNs
+dWRlIDxvZm9uby9wbHVnaW4uaD4KKyNpbmNsdWRlIDxvZm9uby9tb2RlbS5oPgorI2luY2x1ZGUg
+PG9mb25vL2RldmluZm8uaD4KKyNpbmNsdWRlIDxvZm9uby9uZXRyZWcuaD4KKyNpbmNsdWRlIDxv
+Zm9uby9zaW0uaD4KKyNpbmNsdWRlIDxvZm9uby9jYnMuaD4KKyNpbmNsdWRlIDxvZm9uby9zbXMu
+aD4KKyNpbmNsdWRlIDxvZm9uby91c3NkLmg+CisjaW5jbHVkZSA8b2Zvbm8vZ3Bycy5oPgorI2lu
+Y2x1ZGUgPG9mb25vL2dwcnMtY29udGV4dC5oPgorI2luY2x1ZGUgPG9mb25vL3JhZGlvLXNldHRp
+bmdzLmg+CisjaW5jbHVkZSA8b2Zvbm8vcGhvbmVib29rLmg+CisjaW5jbHVkZSA8b2Zvbm8vbG9n
+Lmg+CisKKyNpbmNsdWRlIDxkcml2ZXJzL2F0bW9kZW0vYXR1dGlsLmg+CisjaW5jbHVkZSA8ZHJp
+dmVycy9hdG1vZGVtL3ZlbmRvci5oPgorCitzdGF0aWMgY29uc3QgY2hhciAqbm9uZV9wcmVmaXhb
+XSA9IHsgTlVMTCB9OworCitzdHJ1Y3Qgc2ltY29tX2RhdGEgeworCUdBdENoYXQgKm1vZGVtOwor
+CUdBdENoYXQgKmRhdGE7Cit9OworCisvKiBDYWxsYmFjayBhbmQgaGVscGVycyBmdW5jdGlvbnMg
+Ki8KK3N0YXRpYyB2b2lkIHNpbWNvbV9kZWJ1Zyhjb25zdCBjaGFyICpzdHIsIHZvaWQgKnVzZXJf
+ZGF0YSkKK3sKKwljb25zdCBjaGFyICpwcmVmaXggPSB1c2VyX2RhdGE7CisKKwlvZm9ub19pbmZv
+KCIlcyVzIiwgcHJlZml4LCBzdHIpOworfQorCitzdGF0aWMgdm9pZCBjZnVuX2VuYWJsZShnYm9v
+bGVhbiBvaywgR0F0UmVzdWx0ICpyZXN1bHQsIGdwb2ludGVyIHVzZXJfZGF0YSkKK3sKKwlzdHJ1
+Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtID0gdXNlcl9kYXRhOworCXN0cnVjdCBzaW1jb21fZGF0YSAq
+ZGF0YSA9IG9mb25vX21vZGVtX2dldF9kYXRhKG1vZGVtKTsKKworCURCRygiIik7CisKKwlpZiAo
+IW9rKSB7CisJCWdfYXRfY2hhdF91bnJlZihkYXRhLT5tb2RlbSk7CisJCWRhdGEtPm1vZGVtID0g
+TlVMTDsKKworCQlnX2F0X2NoYXRfdW5yZWYoZGF0YS0+ZGF0YSk7CisJCWRhdGEtPmRhdGEgPSBO
+VUxMOworCisJCW9mb25vX21vZGVtX3NldF9wb3dlcmVkKG1vZGVtLCBGQUxTRSk7CisJCXJldHVy
+bjsKKwl9CisKKwlvZm9ub19tb2RlbV9zZXRfcG93ZXJlZChtb2RlbSwgVFJVRSk7Cit9CisKK3N0
+YXRpYyB2b2lkIGNmdW5fZGlzYWJsZShnYm9vbGVhbiBvaywgR0F0UmVzdWx0ICpyZXN1bHQsIGdw
+b2ludGVyIHVzZXJfZGF0YSkKK3sKKwlzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtID0gdXNlcl9k
+YXRhOworCXN0cnVjdCBzaW1jb21fZGF0YSAqZGF0YSA9IG9mb25vX21vZGVtX2dldF9kYXRhKG1v
+ZGVtKTsKKworCURCRygiIik7CisKKwlnX2F0X2NoYXRfdW5yZWYoZGF0YS0+ZGF0YSk7CisJZGF0
+YS0+ZGF0YSA9IE5VTEw7CisKKwlpZiAob2spCisJCW9mb25vX21vZGVtX3NldF9wb3dlcmVkKG1v
+ZGVtLCBGQUxTRSk7Cit9CisKK3N0YXRpYyBHQXRDaGF0ICpvcGVuX2RldmljZShzdHJ1Y3Qgb2Zv
+bm9fbW9kZW0gKm1vZGVtLAorCQkJICAgIGNvbnN0IGNoYXIgKmtleSwKKwkJCSAgICBjaGFyICpk
+ZWJ1ZykKK3sKKwljb25zdCBjaGFyICpkZXZpY2U7CisJR0lPQ2hhbm5lbCAqY2hhbm5lbDsKKwlH
+QXRTeW50YXggKnN5bnRheDsKKwlHQXRDaGF0ICpjaGF0OworCS8qIEdIYXNoVGFibGUgKm9wdGlv
+bnM7ICovCisKKwlkZXZpY2UgPSBvZm9ub19tb2RlbV9nZXRfc3RyaW5nKG1vZGVtLCBrZXkpOwor
+CWlmIChkZXZpY2UgPT0gTlVMTCkKKwkJcmV0dXJuIE5VTEw7CisKKwlEQkcoIiVzICVzIiwga2V5
+LCBkZXZpY2UpOworCisJLyogb3B0aW9ucyA9IGdfaGFzaF90YWJsZV9uZXcoZ19zdHJfaGFzaCwg
+Z19zdHJfZXF1YWwpOyAqLworCS8qIGlmIChvcHRpb25zID09IE5VTEwpICovCisJLyogCXJldHVy
+biBOVUxMOyAqLworCisJLyogZ19oYXNoX3RhYmxlX2luc2VydChvcHRpb25zLCAiQmF1ZCIsICIx
+MTUyMDAiKTsgKi8KKwkvKiBnX2hhc2hfdGFibGVfaW5zZXJ0KG9wdGlvbnMsICJQYXJpdHkiLCAi
+bm9uZSIpOyAqLworCS8qIGdfaGFzaF90YWJsZV9pbnNlcnQob3B0aW9ucywgIlN0b3BCaXRzIiwg
+IjEiKTsgKi8KKwkvKiBnX2hhc2hfdGFibGVfaW5zZXJ0KG9wdGlvbnMsICJEYXRhQml0cyIsICI4
+Iik7ICovCisJLyogZ19oYXNoX3RhYmxlX2luc2VydChvcHRpb25zLCAiWG9uWG9mZiIsICJvZmYi
+KTsgKi8KKwkvKiBnX2hhc2hfdGFibGVfaW5zZXJ0KG9wdGlvbnMsICJSdHNDdHMiLCAib24iKTsg
+Ki8KKwkvKiBnX2hhc2hfdGFibGVfaW5zZXJ0KG9wdGlvbnMsICJMb2NhbCIsICJvbiIpOyAqLwor
+CS8qIGdfaGFzaF90YWJsZV9pbnNlcnQob3B0aW9ucywgIlJlYWQiLCAib24iKTsgKi8KKworCWNo
+YW5uZWwgPSBnX2F0X3R0eV9vcGVuKGRldmljZSwgTlVMTCk7CisKKwkvKiBnX2hhc2hfdGFibGVf
+ZGVzdHJveShvcHRpb25zKTsgKi8KKworCWlmIChjaGFubmVsID09IE5VTEwpCisJCXJldHVybiBO
+VUxMOworCisJc3ludGF4ID0gZ19hdF9zeW50YXhfbmV3X2dzbV9wZXJtaXNzaXZlKCk7CisJY2hh
+dCA9IGdfYXRfY2hhdF9uZXcoY2hhbm5lbCwgc3ludGF4KTsKKwlnX2F0X3N5bnRheF91bnJlZihz
+eW50YXgpOworCisJZ19pb19jaGFubmVsX3VucmVmKGNoYW5uZWwpOworCisJaWYgKGNoYXQgPT0g
+TlVMTCkKKwkJcmV0dXJuIE5VTEw7CisKKwlpZiAoZ2V0ZW52KCJPRk9OT19BVF9ERUJVRyIpKQor
+CQlnX2F0X2NoYXRfc2V0X2RlYnVnKGNoYXQsIHNpbWNvbV9kZWJ1ZywgZGVidWcpOworCisJcmV0
+dXJuIGNoYXQ7Cit9CisKKy8qIE1vZGVtIGludGVyZmFjZSBmdW5jdGlvbiAqLworc3RhdGljIGlu
+dCBzaW1jb21fcHJvYmUoc3RydWN0IG9mb25vX21vZGVtICptb2RlbSkKK3sKKwlzdHJ1Y3Qgc2lt
+Y29tX2RhdGEgKmRhdGE7CisKKwlEQkcoIiVwIiwgbW9kZW0pOworCisJZGF0YSA9IGdfdHJ5X25l
+dzAoc3RydWN0IHNpbWNvbV9kYXRhLCAxKTsKKwlpZiAoZGF0YSA9PSBOVUxMKQorCQlyZXR1cm4g
+LUVOT01FTTsKKworCW9mb25vX21vZGVtX3NldF9kYXRhKG1vZGVtLCBkYXRhKTsKKworCXJldHVy
+biAwOworfQorCitzdGF0aWMgdm9pZCBzaW1jb21fcmVtb3ZlKHN0cnVjdCBvZm9ub19tb2RlbSAq
+bW9kZW0pCit7CisJc3RydWN0IHNpbWNvbV9kYXRhICpkYXRhID0gb2Zvbm9fbW9kZW1fZ2V0X2Rh
+dGEobW9kZW0pOworCisJREJHKCIlcCIsIG1vZGVtKTsKKworCW9mb25vX21vZGVtX3NldF9kYXRh
+KG1vZGVtLCBOVUxMKTsKKworCS8qIENsZWFudXAgYWZ0ZXIgaG90LXVucGx1ZyAqLworCWdfYXRf
+Y2hhdF91bnJlZihkYXRhLT5kYXRhKTsKKworCWdfZnJlZShkYXRhKTsKK30KKworc3RhdGljIGlu
+dCBzaW1jb21fZW5hYmxlKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pCit7CisJc3RydWN0IHNp
+bWNvbV9kYXRhICpkYXRhID0gb2Zvbm9fbW9kZW1fZ2V0X2RhdGEobW9kZW0pOworCisJREJHKCIl
+cCIsIG1vZGVtKTsKKworCWRhdGEtPm1vZGVtID0gb3Blbl9kZXZpY2UobW9kZW0sICJNb2RlbSIs
+ICJNb2RlbTogIik7CisJaWYgKGRhdGEtPm1vZGVtID09IE5VTEwpCisJCXJldHVybiAtRUlOVkFM
+OworCisJZGF0YS0+ZGF0YSA9IG9wZW5fZGV2aWNlKG1vZGVtLCAiRGF0YSIsICJEYXRhOiAiKTsK
+KwlpZiAoZGF0YS0+ZGF0YSA9PSBOVUxMKSB7CisJCWdfYXRfY2hhdF91bnJlZihkYXRhLT5tb2Rl
+bSk7CisJCWRhdGEtPm1vZGVtID0gTlVMTDsKKwkJcmV0dXJuIC1FSU87CisJfQorCisJZ19hdF9j
+aGF0X3NldF9zbGF2ZShkYXRhLT5tb2RlbSwgZGF0YS0+ZGF0YSk7CisKKwlnX2F0X2NoYXRfYmxh
+Y2tsaXN0X3Rlcm1pbmF0b3IoZGF0YS0+ZGF0YSwKKwkJCQkJR19BVF9DSEFUX1RFUk1JTkFUT1Jf
+Tk9fQ0FSUklFUik7CisKKwkvKiBpbml0IG1vZGVtICovCisJZ19hdF9jaGF0X3NlbmQoZGF0YS0+
+bW9kZW0sICJBVEUwICtDTUVFPTEiLCBOVUxMLCBOVUxMLCBOVUxMLCBOVUxMKTsKKwlnX2F0X2No
+YXRfc2VuZChkYXRhLT5kYXRhLCAiQVRFMCArQ01FRT0xIiwgTlVMTCwgTlVMTCwgTlVMTCwgTlVM
+TCk7CisKKwlnX2F0X2NoYXRfc2VuZChkYXRhLT5kYXRhLCAiQVQrQ0ZVTj0xIiwgbm9uZV9wcmVm
+aXgsCisJCSAgICAgICBjZnVuX2VuYWJsZSwgbW9kZW0sIE5VTEwpOworCisJcmV0dXJuIC1FSU5Q
+Uk9HUkVTUzsKK30KKworc3RhdGljIGludCBzaW1jb21fZGlzYWJsZShzdHJ1Y3Qgb2Zvbm9fbW9k
+ZW0gKm1vZGVtKQoreworCXN0cnVjdCBzaW1jb21fZGF0YSAqZGF0YSA9IG9mb25vX21vZGVtX2dl
+dF9kYXRhKG1vZGVtKTsKKworCURCRygiJXAiLCBtb2RlbSk7CisKKwlnX2F0X2NoYXRfY2FuY2Vs
+X2FsbChkYXRhLT5tb2RlbSk7CisJZ19hdF9jaGF0X3VucmVnaXN0ZXJfYWxsKGRhdGEtPm1vZGVt
+KTsKKworCWdfYXRfY2hhdF91bnJlZihkYXRhLT5tb2RlbSk7CisJZGF0YS0+bW9kZW0gPSBOVUxM
+OworCisJZ19hdF9jaGF0X2NhbmNlbF9hbGwoZGF0YS0+ZGF0YSk7CisJZ19hdF9jaGF0X3VucmVn
+aXN0ZXJfYWxsKGRhdGEtPmRhdGEpOworCisJZ19hdF9jaGF0X3NlbmQoZGF0YS0+ZGF0YSwgIkFU
+K0NGVU49NCIsIG5vbmVfcHJlZml4LAorCQkgICAgICAgY2Z1bl9kaXNhYmxlLCBtb2RlbSwgTlVM
+TCk7CisKKwlyZXR1cm4gLUVJTlBST0dSRVNTOworfQorCitzdGF0aWMgdm9pZCBzaW1jb21fcHJl
+X3NpbShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQoreworCXN0cnVjdCBzaW1jb21fZGF0YSAq
+ZGF0YSA9IG9mb25vX21vZGVtX2dldF9kYXRhKG1vZGVtKTsKKwlzdHJ1Y3Qgb2Zvbm9fc2ltICpz
+aW07CisKKwlEQkcoIiVwIiwgbW9kZW0pOworCisJb2Zvbm9fZGV2aW5mb19jcmVhdGUobW9kZW0s
+IDAsICJhdG1vZGVtIiwgZGF0YS0+ZGF0YSk7CisJc2ltID0gb2Zvbm9fc2ltX2NyZWF0ZShtb2Rl
+bSwgT0ZPTk9fVkVORE9SX1NJTUNPTSwgImF0bW9kZW0iLAorCQkJCWRhdGEtPmRhdGEpOworCisJ
+aWYgKHNpbSkKKwkJb2Zvbm9fc2ltX2luc2VydGVkX25vdGlmeShzaW0sIFRSVUUpOworfQorCitz
+dGF0aWMgdm9pZCBzaW1jb21fcG9zdF9zaW0oc3RydWN0IG9mb25vX21vZGVtICptb2RlbSkKK3sK
+KwlzdHJ1Y3Qgc2ltY29tX2RhdGEgKmRhdGEgPSBvZm9ub19tb2RlbV9nZXRfZGF0YShtb2RlbSk7
+CisJc3RydWN0IG9mb25vX21lc3NhZ2Vfd2FpdGluZyAqbXc7CisJc3RydWN0IG9mb25vX2dwcnMg
+KmdwcnM7CisJc3RydWN0IG9mb25vX2dwcnNfY29udGV4dCAqZ2M7CisKKwlEQkcoIiVwIiwgbW9k
+ZW0pOworCisJb2Zvbm9fcGhvbmVib29rX2NyZWF0ZShtb2RlbSwgMCwgImF0bW9kZW0iLCBkYXRh
+LT5kYXRhKTsKKworCW9mb25vX3Ntc19jcmVhdGUobW9kZW0sIE9GT05PX1ZFTkRPUl9TSU1DT00s
+ICJhdG1vZGVtIiwKKwkJCQlkYXRhLT5kYXRhKTsKKworCS8qIGdwcnMgdGhpbmdzICovCisJZ3By
+cyA9IG9mb25vX2dwcnNfY3JlYXRlKG1vZGVtLCAwLCAiYXRtb2RlbSIsIGRhdGEtPmRhdGEpOwor
+CWdjID0gb2Zvbm9fZ3Byc19jb250ZXh0X2NyZWF0ZShtb2RlbSwgMCwgImF0bW9kZW0iLCBkYXRh
+LT5tb2RlbSk7CisKKwlpZihncHJzICYmIGdjKQorCXsKKwkJb2Zvbm9fZ3Byc19hZGRfY29udGV4
+dChncHJzLCBnYyk7CisJfQorfQorCitzdGF0aWMgdm9pZCBzaW1jb21fcG9zdF9vbmxpbmUoc3Ry
+dWN0IG9mb25vX21vZGVtICptb2RlbSkKK3sKKwlzdHJ1Y3Qgc2ltY29tX2RhdGEgKmRhdGEgPSBv
+Zm9ub19tb2RlbV9nZXRfZGF0YShtb2RlbSk7CisKKwlEQkcoIiVwIiwgbW9kZW0pOworCisJb2Zv
+bm9fbmV0cmVnX2NyZWF0ZShtb2RlbSwgT0ZPTk9fVkVORE9SX1NJTUNPTSwgImF0bW9kZW0iLCBk
+YXRhLT5kYXRhKTsKKwlvZm9ub19jYnNfY3JlYXRlKG1vZGVtLCAwLCAiYXRtb2RlbSIsIGRhdGEt
+PmRhdGEpOworCW9mb25vX3Vzc2RfY3JlYXRlKG1vZGVtLCAwLCAiYXRtb2RlbSIsIGRhdGEtPmRh
+dGEpOworfQorCitzdGF0aWMgc3RydWN0IG9mb25vX21vZGVtX2RyaXZlciBzaW1jb21fZHJpdmVy
+ID0geworCS5uYW1lCQk9ICJzaW1jb20iLAorCS5wcm9iZQkJPSBzaW1jb21fcHJvYmUsCisJLnJl
+bW92ZQkJPSBzaW1jb21fcmVtb3ZlLAorCS5lbmFibGUJCT0gc2ltY29tX2VuYWJsZSwKKwkuZGlz
+YWJsZQk9IHNpbWNvbV9kaXNhYmxlLAorCS5wcmVfc2ltCT0gc2ltY29tX3ByZV9zaW0sCisJLnBv
+c3Rfc2ltCT0gc2ltY29tX3Bvc3Rfc2ltLAorCS5wb3N0X29ubGluZQk9IHNpbWNvbV9wb3N0X29u
+bGluZSwKK307CisKK3N0YXRpYyBpbnQgc2ltY29tX2luaXQodm9pZCkKK3sKKwlyZXR1cm4gb2Zv
+bm9fbW9kZW1fZHJpdmVyX3JlZ2lzdGVyKCZzaW1jb21fZHJpdmVyKTsKK30KKworc3RhdGljIHZv
+aWQgc2ltY29tX2V4aXQodm9pZCkKK3sKKwlvZm9ub19tb2RlbV9kcml2ZXJfdW5yZWdpc3Rlcigm
+c2ltY29tX2RyaXZlcik7Cit9CisKK09GT05PX1BMVUdJTl9ERUZJTkUoc2ltY29tLCAiU0lNQ09N
+IG1vZGVtIGRyaXZlciIsIFZFUlNJT04sCisJCSAgICBPRk9OT19QTFVHSU5fUFJJT1JJVFlfREVG
+QVVMVCwKKwkJICAgIHNpbWNvbV9pbml0LCBzaW1jb21fZXhpdCkK
+
+--===============7436775607008824503==--
 
