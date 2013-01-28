@@ -1,102 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============0358329188388870810=="
+Content-Type: multipart/mixed; boundary="===============6675069882913694045=="
 MIME-Version: 1.0
 From: Timo Mueller <mail@timomueller.eu>
-Subject: [PATCHv2 1/2] hfpmodem: Retry AT+CLCC request after outgoing callsetup
-Date: Mon, 28 Jan 2013 11:13:16 +0100
-Message-ID: <07c8015b845d8b1a310dc9f33397cda7dd42e4a2.1359360111.git.timo.mueller@bmw-carit.de>
-In-Reply-To: <cover.1359360111.git.timo.mueller@bmw-carit.de>
+Subject: [PATCHv2 2/2] hfpmodem: Request AT+CLCC again after callheld=<2 or 3>
+Date: Mon, 28 Jan 2013 11:13:17 +0100
+Message-ID: <70cf00e077ef3e1dff65de3f6fcb5df7c754734f.1359360111.git.timo.mueller@bmw-carit.de>
+In-Reply-To: <07c8015b845d8b1a310dc9f33397cda7dd42e4a2.1359360111.git.timo.mueller@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0358329188388870810==
+--===============6675069882913694045==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Timo Mueller <timo.mueller@bmw-carit.de>
 
-Currently the list of current calls is requested right after an
-outgoing callsetup has been reported by the AG device. If the AG
-device updates the list after reporting the callsetup the +CLCC
-response may not contain the new call and it is not registered
-with oFono.
+With a call being active, placing a second call on the AG device will
+lead to the active call being put on hold. During the transition some
+phones do not update the list of current calls. This leads to an +CLCC
+response that does not contain the new outgoing call, even though an
+outgoing callsetup was reported.
 
-In this case AT+CLCC should be requested again once after a small
-delay.
+The list will be updated once the active call was put on hold and
+callheld=3D2 is reported. In this case the list has to be requested
+again (AT+CLCC).
 
 AT sequence that exhibited the failure (AG device was a Nokia N9
-placing an outgoing call)
+having an active outgoing call and placing a second outgoing call)
 
 < \r\n+CIEV: 5,2\r\n
 > AT+CLCC\r
+< \r\n+CLCC: 1,0,0,0,0,"+49xxx1",145\r\n
 < \r\nOK\r\n
-< \r\n+VGS=3D7\r\n
-< \r\n+VGM=3D7\r\n
+< \r\n+CIEV: 6,2\r\n
 < \r\n+CIEV: 5,3\r\n
-< \r\n+CIEV: 4,1\r\n
+< \r\n+CIEV: 6,1\r\n
+> AT+CLCC\r
 < \r\n+CIEV: 5,0\r\n
+< \r\n+CLCC: 1,0,1,0,0,"+49xxx1",145\r\n
+< \r\n+CLCC: 2,0,0,0,0,"+49xxx2",145\r\n
+< \r\nOK\r\n
 ---
-v2: Request CLCC immediately and schedule a second request if the
-call was not found in the response. Recheck CLCC when callheld=3D2 was
-received after a callsetup=3D<2 or 3>.
-
- drivers/hfpmodem/voicecall.c | 28 +++++++++++++++++++++++++++-
- 1 file changed, 27 insertions(+), 1 deletion(-)
+ drivers/hfpmodem/voicecall.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
 diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index 33dd05e..18ed54a 100644
+index 18ed54a..482b325 100644
 --- a/drivers/hfpmodem/voicecall.c
 +++ b/drivers/hfpmodem/voicecall.c
-@@ -295,6 +295,31 @@ static void clcc_poll_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- 							vc);
- }
- =
-
-+static void clcc_poll_dialing_cb(gboolean ok, GAtResult *result,
-+			gpointer user_data)
-+{
-+	struct ofono_voicecall *vc =3D user_data;
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-+	GSList *calls, *dialing;
-+
-+	if (!ok)
-+		return;
-+
-+	calls =3D at_util_parse_clcc(result);
-+	dialing =3D find_dialing(calls);
-+
-+	if (dialing =3D=3D NULL) {
-+		if (vd->clcc_source)
-+			g_source_remove(vd->clcc_source);
-+
-+		vd->clcc_source =3D g_timeout_add(POLL_CLCC_DELAY,
-+												poll_clcc, vc);
-+		return;
-+	}
-+
-+	clcc_poll_cb(ok, result, user_data);
-+}
-+
- static gboolean poll_clcc(gpointer user_data)
+@@ -1035,8 +1035,10 @@ static void ciev_callheld_notify(struct ofono_voicec=
+all *vc,
  {
- 	struct ofono_voicecall *vc =3D user_data;
-@@ -977,7 +1002,8 @@ static void ciev_callsetup_notify(struct ofono_voiceca=
-ll *vc,
- 		 * from AG: query and create call.
- 		 */
- 		g_at_chat_send(vd->chat, "AT+CLCC", clcc_prefix,
--				clcc_poll_cb, vc, NULL);
-+				clcc_poll_dialing_cb, vc, NULL);
-+
- 		break;
+ 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+ 	GSList *l;
++	GSList *dialing;
+ 	struct ofono_call *call;
+ 	unsigned int callheld =3D vd->cind_val[HFP_INDICATOR_CALLHELD];
++	unsigned int callsetup =3D vd->cind_val[HFP_INDICATOR_CALLSETUP];
  =
 
- 	case 3:
+ 	switch (value) {
+ 	case 0:
+@@ -1072,6 +1074,14 @@ static void ciev_callheld_notify(struct ofono_voicec=
+all *vc,
+ 				call->status =3D CALL_STATUS_HELD;
+ 				ofono_voicecall_notify(vc, call);
+ 			}
++
++			if (callsetup =3D=3D 2 || callsetup =3D=3D 3) {
++				dialing =3D find_dialing(vd->calls);
++
++				if (dialing =3D=3D NULL)
++					g_at_chat_send(vd->chat, "AT+CLCC", clcc_prefix,
++						clcc_poll_cb, vc, NULL);
++			}
+ 		} else if (callheld =3D=3D 1) {
+ 			if (vd->clcc_source)
+ 				g_source_remove(vd->clcc_source);
 -- =
 
 1.7.11.7
 
 
---===============0358329188388870810==--
+--===============6675069882913694045==--
 
