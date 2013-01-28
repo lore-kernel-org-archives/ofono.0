@@ -1,66 +1,215 @@
-Content-Type: multipart/mixed; boundary="===============6874023961986683087=="
+Content-Type: multipart/mixed; boundary="===============0773635401455174361=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: Re: [PATCH v0 5/9] bluez5: Add bt_getsockpeers()
-Date: Mon, 28 Jan 2013 13:34:34 -0300
-Message-ID: <CAKT1EBdjfAxp7-uBrxNEr-rFp_WFSXcKrKzx=d=u+zDzGythEQ@mail.gmail.com>
-In-Reply-To: <1359387137.16748.30.camel@aeonflux>
+Subject: Re: [PATCH v0 3/9] hfp_hf_bluez5: Add SCO listen socket
+Date: Mon, 28 Jan 2013 13:43:32 -0300
+Message-ID: <CAKT1EBeEYteROt80jU8XZW312mp=8sPHVBTrLL+i6-riwO4tNw@mail.gmail.com>
+In-Reply-To: <1359388779.16748.35.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6874023961986683087==
+--===============0773635401455174361==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Marcel:
 
-On Mon, Jan 28, 2013 at 12:32 PM, Marcel Holtmann <marcel@holtmann.org> w=
+On Mon, Jan 28, 2013 at 12:59 PM, Marcel Holtmann <marcel@holtmann.org> w=
 rote:
 > Hi Claudio,
 >
->> This patch adds a generic Bluetooth helper function to allow getting
->> the adapter and device Bluetooth Address from Bluetooth sockets.
+>> This patch adds the initial SCO server socket handling. BtIO and BlueZ
+>> functions should not be used, with the new Profile API the objetive is
+>> to get rid of these dependencies.
 >> ---
->>  plugins/bluez5.c | 22 ++++++++++++++++++++++
->>  plugins/bluez5.h |  3 +++
->>  2 files changed, 25 insertions(+)
+>>  plugins/hfp_hf_bluez5.c | 93 ++++++++++++++++++++++++++++++++++++++++++=
++++++++
+>>  1 file changed, 93 insertions(+)
 >>
->> diff --git a/plugins/bluez5.c b/plugins/bluez5.c
->> index d7e85f2..06629e1 100644
->> --- a/plugins/bluez5.c
->> +++ b/plugins/bluez5.c
->> @@ -52,6 +52,28 @@ int bt_ba2str(const bdaddr_t *ba, char *str)
->>               ba->b[5], ba->b[4], ba->b[3], ba->b[2], ba->b[1], ba->b[0]=
-);
->>  }
+>> diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+>> index 0e496ee..398dee0 100644
+>> --- a/plugins/hfp_hf_bluez5.c
+>> +++ b/plugins/hfp_hf_bluez5.c
+>> @@ -64,6 +64,7 @@ struct hfp {
+>>  static GHashTable *modem_hash =3D NULL;
+>>  static GHashTable *devices_proxies =3D NULL;
+>>  static GDBusClient *bluez =3D NULL;
+>> +static guint sco_watch =3D 0;
 >>
->> +int bt_getsockpeers(int sock, struct sockaddr *src, struct sockaddr *ds=
-t,
->> +                                                             socklen_t =
-len)
+>>  static void hfp_debug(const char *str, void *user_data)
+>>  {
+>> @@ -378,6 +379,89 @@ static const GDBusMethodTable profile_methods[] =3D=
+ {
+>>       { }
+>>  };
+>>
+>> +static gboolean sco_accept(GIOChannel *io, GIOCondition cond,
+>> +                                                     gpointer user_data)
+>> +{
+>> +     struct sockaddr_sco saddr;
+>> +     socklen_t optlen;
+>> +     int sk, nsk;
+>> +
+>> +     if (cond & (G_IO_ERR | G_IO_HUP | G_IO_NVAL))
+>> +             return FALSE;
+>> +
+>> +     sk =3D g_io_channel_unix_get_fd(io);
+>> +
+>> +     memset(&saddr, 0, sizeof(saddr));
+>> +     optlen =3D sizeof(saddr);
+>> +
+>> +     nsk =3D accept(sk, (struct sockaddr *) &saddr, &optlen);
+>> +     if (nsk < 0)
+>> +             return TRUE;
+>> +
+>> +     /* TODO: Verify if the device has a modem */
+>> +
+>> +     return TRUE;
+>> +}
+>> +
+>> +static GIOChannel *sco_listen(int *err)
 >> +{
 >
-> I really do not get why this is helpful at all. Except for making the
-> code less readable. So please do not do it. Call the socket functions
-> directly from where they are used.
->
-> In addition the name of this function is totally misleading. It does not
-> describe at all what it does. The peer is always the remote address. You
-> are not getting the src and dst peers here. That is not how the socket
-> nomenclature works. It is either socket name for the local address or
-> peer name for the remote address.
->
-> Regards
->
-> Marcel
+> I do not like this int *err. Why is this a separate function anyway.
+> Just do the whole SCO server socket setup with accept watch setup in one
+> function. There is no advantage in having two functions.
 
-Ok. I will remove this function. I added this function here because
-other oFono Plugins will need a similar function.
-We can add it later if we notice that it is really necessary.
+OK. I will fix it.
+
+>
+>> +     struct sockaddr_sco addr;
+>> +     GIOChannel *io;
+>> +     int sk, defer_setup =3D 1;
+>> +
+>> +     sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET, BTPROTO_SCO);
+>> +     if (sk < 0) {
+>> +             *err =3D -errno;
+>> +             return NULL;
+>> +     }
+>> +
+>> +     /* Bind to local address */
+>> +     memset(&addr, 0, sizeof(addr));
+>> +     addr.sco_family =3D AF_BLUETOOTH;
+>> +     bt_bacpy(&addr.sco_bdaddr, BDADDR_ANY);
+>> +
+>> +     if (bind(sk, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+>> +             close(sk);
+>> +             *err =3D -errno;
+>> +             return NULL;
+>> +     }
+>> +
+>> +     if (setsockopt(sk, SOL_BLUETOOTH, BT_DEFER_SETUP,
+>> +                             &defer_setup, sizeof(defer_setup)) < 0) {
+>> +             ofono_warn("Can't enable deferred setup: %s (%d)",
+>> +                                             strerror(errno), errno);
+>> +             *err =3D -errno;
+>
+> This is semantically incorrect. You can not return non-NULL and an
+> error.
+
+It will be removed.
+
+>
+> Can we actually make HFP 1.6 work properly without defer setup enabled?
+
+You can't make HFP1.6 work properly, but you need to "start" the
+system to support 1.5, don't set the codec negotiation flag and export
+the correct SDP record.
+
+>
+>> +     }
+>> +
+>> +     io =3D g_io_channel_unix_new(sk);
+>> +     g_io_channel_set_close_on_unref(io, TRUE);
+>> +     g_io_channel_set_flags(io, G_IO_FLAG_NONBLOCK, NULL);
+>
+> Can you just open the SOCK_NONBLOCK and SOCK_CLOEXEC as we should be
+> always doing.
+
+ok. It will be fixed.
+
+>
+>> +
+>> +     if (listen(sk, 5) < 0) {
+>> +             g_io_channel_unref(io);
+>> +             *err =3D -errno;
+>> +             return NULL;
+>> +     }
+>> +
+>> +     return io;
+>> +}
+>> +
+>> +static int sco_init(void)
+>> +{
+>> +     GIOCondition cond =3D G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL;
+>
+> What is this extra declaration good for? I rather have it inside the
+> call that is adding the watch.
+
+ok. I will fix it.
+IMO it makes the code more readable. The compiler will optimize it anyway.
+
+>
+>> +     GIOChannel *sco_io;
+>> +     int err =3D 0;
+>> +
+>> +     sco_io =3D sco_listen(&err);
+>> +     if (sco_io =3D=3D NULL)
+>> +             return err;
+>> +
+>> +     sco_watch =3D g_io_add_watch(sco_io, cond, sco_accept, NULL);
+>> +     g_io_channel_unref(sco_io);
+>> +
+>> +     return 0;
+>> +}
+>> +
+>>  static void connect_handler(DBusConnection *conn, void *user_data)
+>>  {
+>>       DBG("Registering External Profile handler ...");
+>> @@ -500,6 +584,12 @@ static int hfp_init(void)
+>>       if (DBUS_TYPE_UNIX_FD < 0)
+>>               return -EBADF;
+>>
+>> +     err =3D sco_init();
+>> +     if (err < 0) {
+>> +             ofono_error("SCO: %s(%d)", strerror(-err), -err);
+>> +             return err;
+>> +     }
+>> +
+>>       /* Registers External Profile handler */
+>>       if (!g_dbus_register_interface(conn, HFP_EXT_PROFILE_PATH,
+>>                                       BLUEZ_PROFILE_INTERFACE,
+>> @@ -550,6 +640,9 @@ static void hfp_exit(void)
+>>
+>>       g_hash_table_destroy(modem_hash);
+>>       g_hash_table_destroy(devices_proxies);
+>> +
+>> +     if (sco_watch)
+>
+> Normally we do sco_watch > 0 for the GLib sources.
+
+ok. I will fix it.
 
 Regards,
 Claudio
 
---===============6874023961986683087==--
+>
+>> +             g_source_remove(sco_watch);
+>>  }
+>>
+>>  OFONO_PLUGIN_DEFINE(hfp_bluez5, "External Hands-Free Profile Plugin", V=
+ERSION,
+>
+> Regards
+>
+> Marcel
+>
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+
+--===============0773635401455174361==--
 
