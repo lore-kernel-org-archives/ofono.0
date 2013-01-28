@@ -1,49 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============2714222823878741494=="
+Content-Type: multipart/mixed; boundary="===============5220060770530995986=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 9/9] hfp_hf_bluez5: Fix missing fd close
-Date: Mon, 28 Jan 2013 11:44:19 -0300
-Message-ID: <1359384259-5384-10-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1359384259-5384-1-git-send-email-claudio.takahasi@openbossa.org>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH v0 5/9] bluez5: Add bt_getsockpeers()
+Date: Mon, 28 Jan 2013 16:32:17 +0100
+Message-ID: <1359387137.16748.30.camel@aeonflux>
+In-Reply-To: <1359384259-5384-6-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2714222823878741494==
+--===============5220060770530995986==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch fix an unusual scenario, service_level_connection() fails if
-GIOChannel or GAtChat memory allocation fails.
----
- plugins/hfp_hf_bluez5.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+Hi Claudio,
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 504b0f3..17c343b 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -346,10 +346,12 @@ static DBusMessage *profile_new_connection(DBusConnec=
-tion *conn,
- 	}
- =
+> This patch adds a generic Bluetooth helper function to allow getting
+> the adapter and device Bluetooth Address from Bluetooth sockets.
+> ---
+>  plugins/bluez5.c | 22 ++++++++++++++++++++++
+>  plugins/bluez5.h |  3 +++
+>  2 files changed, 25 insertions(+)
+> =
 
- 	err =3D service_level_connection(modem, fd, HFP_VERSION_LATEST);
--	if (err < 0 && err !=3D -EINPROGRESS)
-+	if (err < 0 && err !=3D -EINPROGRESS) {
-+		close(fd);
- 		return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
- 					".Rejected",
- 					"Not enough resources");
-+	}
- =
+> diff --git a/plugins/bluez5.c b/plugins/bluez5.c
+> index d7e85f2..06629e1 100644
+> --- a/plugins/bluez5.c
+> +++ b/plugins/bluez5.c
+> @@ -52,6 +52,28 @@ int bt_ba2str(const bdaddr_t *ba, char *str)
+>  		ba->b[5], ba->b[4], ba->b[3], ba->b[2], ba->b[1], ba->b[0]);
+>  }
+>  =
 
- 	hfp =3D ofono_modem_get_data(modem);
- 	hfp->msg =3D dbus_message_ref(msg);
--- =
+> +int bt_getsockpeers(int sock, struct sockaddr *src, struct sockaddr *dst,
+> +								socklen_t len)
+> +{
 
-1.7.11.7
+I really do not get why this is helpful at all. Except for making the
+code less readable. So please do not do it. Call the socket functions
+directly from where they are used.
+
+In addition the name of this function is totally misleading. It does not
+describe at all what it does. The peer is always the remote address. You
+are not getting the src and dst peers here. That is not how the socket
+nomenclature works. It is either socket name for the local address or
+peer name for the remote address.
+
+Regards
+
+Marcel
 
 
---===============2714222823878741494==--
+
+--===============5220060770530995986==--
 
