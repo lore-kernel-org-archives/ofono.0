@@ -1,61 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============0655009835456230242=="
+Content-Type: multipart/mixed; boundary="===============7922066535504887455=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 5/8] bluez5: Add bt_bacmp()
-Date: Mon, 28 Jan 2013 18:11:05 -0300
-Message-ID: <1359407468-5110-6-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v1 6/8] bluez5: Add RFCOMM socket address declaration
+Date: Mon, 28 Jan 2013 18:11:06 -0300
+Message-ID: <1359407468-5110-7-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1359407468-5110-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0655009835456230242==
+--===============7922066535504887455==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Adds a copy of BlueZ bacmp() function.
+This patch adds a copy of Bluetooth RFCOMM socket declaration.
 ---
- plugins/bluez5.c | 5 +++++
- plugins/bluez5.h | 2 ++
- 2 files changed, 7 insertions(+)
+ plugins/bluez5.h | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/plugins/bluez5.c b/plugins/bluez5.c
-index d7e85f2..d5c566e 100644
---- a/plugins/bluez5.c
-+++ b/plugins/bluez5.c
-@@ -52,6 +52,11 @@ int bt_ba2str(const bdaddr_t *ba, char *str)
- 		ba->b[5], ba->b[4], ba->b[3], ba->b[2], ba->b[1], ba->b[0]);
- }
- =
-
-+int bt_bacmp(const bdaddr_t *ba1, const bdaddr_t *ba2)
-+{
-+	return memcmp(ba1, ba2, sizeof(bdaddr_t));
-+}
-+
- static void profile_register_cb(DBusPendingCall *call, gpointer user_data)
- {
- 	DBusMessage *reply;
 diff --git a/plugins/bluez5.h b/plugins/bluez5.h
-index 204c41d..95914c2 100644
+index 95914c2..cdbfe72 100644
 --- a/plugins/bluez5.h
 +++ b/plugins/bluez5.h
-@@ -60,6 +60,8 @@ void bt_bacpy(bdaddr_t *dst, const bdaddr_t *src);
+@@ -50,6 +50,13 @@ typedef struct {
  =
 
- int bt_ba2str(const bdaddr_t *ba, char *str);
+ #define BDADDR_ANY   (&(bdaddr_t) {{0, 0, 0, 0, 0, 0}})
  =
 
-+int bt_bacmp(const bdaddr_t *ba1, const bdaddr_t *ba2);
++/* RFCOMM socket address */
++struct sockaddr_rc {
++	sa_family_t	rc_family;
++	bdaddr_t	rc_bdaddr;
++	uint8_t		rc_channel;
++};
 +
- int bluetooth_register_profile(DBusConnection *conn, const char *uuid,
- 					const char *name, const char *object);
- =
-
+ /* SCO socket address */
+ struct sockaddr_sco {
+ 	sa_family_t	sco_family;
 -- =
 
 1.7.11.7
 
 
---===============0655009835456230242==--
+--===============7922066535504887455==--
 
