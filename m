@@ -1,205 +1,200 @@
-Content-Type: multipart/mixed; boundary="===============0773635401455174361=="
+Content-Type: multipart/mixed; boundary="===============3349375315821451433=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: Re: [PATCH v0 3/9] hfp_hf_bluez5: Add SCO listen socket
-Date: Mon, 28 Jan 2013 13:43:32 -0300
-Message-ID: <CAKT1EBeEYteROt80jU8XZW312mp=8sPHVBTrLL+i6-riwO4tNw@mail.gmail.com>
-In-Reply-To: <1359388779.16748.35.camel@aeonflux>
+Subject: Re: [PATCH v0 8/9] hfp_hf_bluez5: Reject SCO if source doesn't match
+Date: Mon, 28 Jan 2013 13:56:19 -0300
+Message-ID: <CAKT1EBdE6nW2g5sgdLTUqgce9LWtSw2e932AD=SbvDeo5SKP1g@mail.gmail.com>
+In-Reply-To: <1359389092.16748.38.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0773635401455174361==
+--===============3349375315821451433==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Marcel:
 
-On Mon, Jan 28, 2013 at 12:59 PM, Marcel Holtmann <marcel@holtmann.org> w=
-rote:
+On Mon, Jan 28, 2013 at 1:04 PM, Marcel Holtmann <marcel@holtmann.org> wr=
+ote:
 > Hi Claudio,
 >
->> This patch adds the initial SCO server socket handling. BtIO and BlueZ
->> functions should not be used, with the new Profile API the objetive is
->> to get rid of these dependencies.
+>> This patch implements additional verification checking the Bluetooth
+>> source address instead of the remote address only.
 >> ---
->>  plugins/hfp_hf_bluez5.c | 93 ++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->>  1 file changed, 93 insertions(+)
+>>  plugins/hfp_hf_bluez5.c | 64 ++++++++++++++++++++++++++++++++++--------=
+-------
+>>  1 file changed, 45 insertions(+), 19 deletions(-)
 >>
 >> diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
->> index 0e496ee..398dee0 100644
+>> index d79647b..504b0f3 100644
 >> --- a/plugins/hfp_hf_bluez5.c
 >> +++ b/plugins/hfp_hf_bluez5.c
->> @@ -64,6 +64,7 @@ struct hfp {
->>  static GHashTable *modem_hash =3D NULL;
->>  static GHashTable *devices_proxies =3D NULL;
->>  static GDBusClient *bluez =3D NULL;
->> +static guint sco_watch =3D 0;
->>
->>  static void hfp_debug(const char *str, void *user_data)
->>  {
->> @@ -378,6 +379,89 @@ static const GDBusMethodTable profile_methods[] =3D=
- {
->>       { }
->>  };
->>
->> +static gboolean sco_accept(GIOChannel *io, GIOCondition cond,
->> +                                                     gpointer user_data)
->> +{
->> +     struct sockaddr_sco saddr;
->> +     socklen_t optlen;
->> +     int sk, nsk;
+>> @@ -60,6 +60,12 @@
+>>  struct hfp {
+>>       struct hfp_slc_info info;
+>>       DBusMessage *msg;
+>> +     char adapter[18];
+>> +};
 >> +
->> +     if (cond & (G_IO_ERR | G_IO_HUP | G_IO_NVAL))
+>> +struct bt_peer {
+>> +     char adapter[18];
+>> +     char device[18];
+>>  };
+>
+> I do not get this. I am really not sure what this is all about and why
+> having Bluetooth addresses as strings here is a good idea.
+
+Ok. I will use the bdaddr_t
+
+I am trying to keep a standard: the device address is a string stored
+in the modem "object".
+hfp_hf_bluez4 is also using the same approach.
+
+>
+>>
+>>  static GHashTable *modem_hash =3D NULL;
+>> @@ -70,11 +76,18 @@ static guint sco_watch =3D 0;
+>>  static gboolean modem_address_cmp(gpointer key, gpointer value,
+>>                                               gpointer user_data)
+>>  {
+>> -     const char *dst =3D user_data;
+>> +     const struct bt_peer *bt_peer =3D user_data;
+>>       struct ofono_modem *modem =3D value;
+>> -     const char *address =3D ofono_modem_get_string(modem, "Address");
+>> +     const char *device =3D ofono_modem_get_string(modem, "Address");
+>> +     struct hfp *hfp;
+>> +     gboolean ret;
+>>
+>> -     return g_strcmp0(address, dst) !=3D 0 ? FALSE : TRUE;
+>> +     ret =3D g_strcmp0(device, bt_peer->device);
+>> +     if (ret !=3D 0)
 >> +             return FALSE;
 >> +
->> +     sk =3D g_io_channel_unix_get_fd(io);
->> +
->> +     memset(&saddr, 0, sizeof(saddr));
->> +     optlen =3D sizeof(saddr);
->> +
->> +     nsk =3D accept(sk, (struct sockaddr *) &saddr, &optlen);
->> +     if (nsk < 0)
->> +             return TRUE;
->> +
->> +     /* TODO: Verify if the device has a modem */
->> +
->> +     return TRUE;
->> +}
->> +
->> +static GIOChannel *sco_listen(int *err)
->> +{
->
-> I do not like this int *err. Why is this a separate function anyway.
-> Just do the whole SCO server socket setup with accept watch setup in one
-> function. There is no advantage in having two functions.
-
-OK. I will fix it.
-
->
->> +     struct sockaddr_sco addr;
->> +     GIOChannel *io;
->> +     int sk, defer_setup =3D 1;
->> +
->> +     sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET, BTPROTO_SCO);
->> +     if (sk < 0) {
->> +             *err =3D -errno;
->> +             return NULL;
->> +     }
->> +
->> +     /* Bind to local address */
->> +     memset(&addr, 0, sizeof(addr));
->> +     addr.sco_family =3D AF_BLUETOOTH;
->> +     bt_bacpy(&addr.sco_bdaddr, BDADDR_ANY);
->> +
->> +     if (bind(sk, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
->> +             close(sk);
->> +             *err =3D -errno;
->> +             return NULL;
->> +     }
->> +
->> +     if (setsockopt(sk, SOL_BLUETOOTH, BT_DEFER_SETUP,
->> +                             &defer_setup, sizeof(defer_setup)) < 0) {
->> +             ofono_warn("Can't enable deferred setup: %s (%d)",
->> +                                             strerror(errno), errno);
->> +             *err =3D -errno;
->
-> This is semantically incorrect. You can not return non-NULL and an
-> error.
-
-It will be removed.
-
->
-> Can we actually make HFP 1.6 work properly without defer setup enabled?
-
-You can't make HFP1.6 work properly, but you need to "start" the
-system to support 1.5, don't set the codec negotiation flag and export
-the correct SDP record.
-
->
->> +     }
->> +
->> +     io =3D g_io_channel_unix_new(sk);
->> +     g_io_channel_set_close_on_unref(io, TRUE);
->> +     g_io_channel_set_flags(io, G_IO_FLAG_NONBLOCK, NULL);
->
-> Can you just open the SOCK_NONBLOCK and SOCK_CLOEXEC as we should be
-> always doing.
-
-ok. It will be fixed.
-
->
->> +
->> +     if (listen(sk, 5) < 0) {
->> +             g_io_channel_unref(io);
->> +             *err =3D -errno;
->> +             return NULL;
->> +     }
->> +
->> +     return io;
->> +}
->> +
->> +static int sco_init(void)
->> +{
->> +     GIOCondition cond =3D G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL;
->
-> What is this extra declaration good for? I rather have it inside the
-> call that is adding the watch.
-
-ok. I will fix it.
-IMO it makes the code more readable. The compiler will optimize it anyway.
-
->
->> +     GIOChannel *sco_io;
->> +     int err =3D 0;
->> +
->> +     sco_io =3D sco_listen(&err);
->> +     if (sco_io =3D=3D NULL)
->> +             return err;
->> +
->> +     sco_watch =3D g_io_add_watch(sco_io, cond, sco_accept, NULL);
->> +     g_io_channel_unref(sco_io);
->> +
->> +     return 0;
->> +}
->> +
->>  static void connect_handler(DBusConnection *conn, void *user_data)
->>  {
->>       DBG("Registering External Profile handler ...");
->> @@ -500,6 +584,12 @@ static int hfp_init(void)
->>       if (DBUS_TYPE_UNIX_FD < 0)
->>               return -EBADF;
->>
->> +     err =3D sco_init();
->> +     if (err < 0) {
->> +             ofono_error("SCO: %s(%d)", strerror(-err), -err);
->> +             return err;
->> +     }
->> +
->>       /* Registers External Profile handler */
->>       if (!g_dbus_register_interface(conn, HFP_EXT_PROFILE_PATH,
->>                                       BLUEZ_PROFILE_INTERFACE,
->> @@ -550,6 +640,9 @@ static void hfp_exit(void)
->>
->>       g_hash_table_destroy(modem_hash);
->>       g_hash_table_destroy(devices_proxies);
->> +
->> +     if (sco_watch)
->
-> Normally we do sco_watch > 0 for the GLib sources.
-
-ok. I will fix it.
-
-Regards,
-Claudio
-
->
->> +             g_source_remove(sco_watch);
+>> +     hfp =3D ofono_modem_get_data(modem);
+>> +     return g_strcmp0(hfp->adapter, bt_peer->adapter) !=3D 0 ? FALSE : =
+TRUE;
 >>  }
 >>
->>  OFONO_PLUGIN_DEFINE(hfp_bluez5, "External Hands-Free Profile Plugin", V=
-ERSION,
+>>  static void hfp_debug(const char *str, void *user_data)
+>> @@ -284,14 +297,14 @@ static DBusMessage *profile_new_connection(DBusCon=
+nection *conn,
+>>  {
+>>       struct hfp *hfp;
+>>       struct ofono_modem *modem;
+>> +     struct sockaddr_rc src, dst;
+>>       DBusMessageIter iter;
+>>       GDBusProxy *proxy;
+>>       DBusMessageIter entry;
+>> -     const char *device, *alias, *address;
+>> +     const char *device, *alias;
+>> +     char device_address[18];
+>>       int fd, err;
+>>
+>> -     DBG("Profile handler NewConnection");
+>> -
+>>       if (dbus_message_iter_init(msg, &entry) =3D=3D FALSE)
+>>               goto invalid;
+>>
+>> @@ -310,11 +323,6 @@ static DBusMessage *profile_new_connection(DBusConn=
+ection *conn,
+>>
+>>       dbus_message_iter_get_basic(&iter, &alias);
+>>
+>> -     if (g_dbus_proxy_get_property(proxy, "Address", &iter) =3D=3D FALS=
+E)
+>> -             goto invalid;
+>> -
+>> -     dbus_message_iter_get_basic(&iter, &address);
+>> -
+>>       dbus_message_iter_next(&entry);
+>>       if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_UNIX_FD)
+>>               goto invalid;
+>> @@ -323,7 +331,13 @@ static DBusMessage *profile_new_connection(DBusConn=
+ection *conn,
+>>       if (fd < 0)
+>>               goto invalid;
+>>
+>> -     modem =3D modem_register(device, address, alias);
+>> +     if (bt_getsockpeers(fd, (struct sockaddr *) &src,
+>> +                             (struct sockaddr *) &dst,
+>> +                             sizeof(struct sockaddr_rc)) < 0)
+>> +             goto invalid;
+>> +
+>> +     bt_ba2str(&dst.rc_bdaddr, device_address);
+>> +     modem =3D modem_register(device, device_address, alias);
+>>       if (modem =3D=3D NULL) {
+>>               close(fd);
+>>               return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
+>> @@ -339,6 +353,9 @@ static DBusMessage *profile_new_connection(DBusConne=
+ction *conn,
+>>
+>>       hfp =3D ofono_modem_get_data(modem);
+>>       hfp->msg =3D dbus_message_ref(msg);
+>> +     bt_ba2str(&src.rc_bdaddr, hfp->adapter);
+>> +
+>> +     DBG("Profile handler NewConnection: %s", device_address);
+>>
+>>       return NULL;
+>>
+>> @@ -394,9 +411,9 @@ static gboolean sco_accept(GIOChannel *io, GIOCondit=
+ion cond,
+>>                                                       gpointer user_data)
+>>  {
+>>       struct ofono_modem *modem;
+>> -     struct sockaddr_sco saddr;
+>> +     struct sockaddr_sco src, dst;
+>> +     struct bt_peer bt_peer;
+>>       socklen_t optlen;
+>> -     char dst[18];
+>>       int sk, nsk;
+>>
+>>       if (cond & (G_IO_ERR | G_IO_HUP | G_IO_NVAL))
+>> @@ -404,15 +421,24 @@ static gboolean sco_accept(GIOChannel *io, GIOCond=
+ition cond,
+>>
+>>       sk =3D g_io_channel_unix_get_fd(io);
+>>
+>> -     memset(&saddr, 0, sizeof(saddr));
+>> -     optlen =3D sizeof(saddr);
+>> +     memset(&dst, 0, sizeof(dst));
+>> +     optlen =3D sizeof(dst);
+>>
+>> -     nsk =3D accept(sk, (struct sockaddr *) &saddr, &optlen);
+>> +     nsk =3D accept(sk, (struct sockaddr *) &dst, &optlen);
+>>       if (nsk < 0)
+>>               return TRUE;
+>>
+>> -     bt_ba2str(&saddr.sco_bdaddr, dst);
+>> -     modem =3D g_hash_table_find(modem_hash, modem_address_cmp, dst);
+>> +     if (bt_getsockpeers(nsk, (struct sockaddr *) &src, NULL, optlen) <=
+ 0) {
+>> +             close(nsk);
+>> +             return TRUE;
+>> +     }
+>> +
+>> +     bt_ba2str(&src.sco_bdaddr, bt_peer.adapter);
+>> +     bt_ba2str(&dst.sco_bdaddr, bt_peer.device);
+>> +
+>> +     DBG("SCO: %s < %s", bt_peer.adapter, bt_peer.device);
+>> +
+>> +     modem =3D g_hash_table_find(modem_hash, modem_address_cmp, &bt_pee=
+r);
+>
+> You do realize that using a hash table if you have to iterate it is
+> pretty inefficient. Have you compared your find vs lookup operations?
+
+I agree, but did you realize that the hash key is the device object
+path(not the address)?
+Remember that we need to support multiple adapters also. NewConnection
+sends the device object, Device InterfaceAdded informs the device
+object path, the device address and the adapter *object path*.
+I could add an additional adapter proxy hash table to be able to map
+adapter path to adapter Bluetooth Address, but it doesn't worth.
+
+Regards,
+Claudio.
+
 >
 > Regards
 >
@@ -211,5 +206,5 @@ ERSION,
 > ofono(a)ofono.org
 > http://lists.ofono.org/listinfo/ofono
 
---===============0773635401455174361==--
+--===============3349375315821451433==--
 
