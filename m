@@ -1,80 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============8806884159124961702=="
+Content-Type: multipart/mixed; boundary="===============8956023470745946516=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 5/9] bluez5: Add bt_getsockpeers()
-Date: Mon, 28 Jan 2013 11:44:15 -0300
-Message-ID: <1359384259-5384-6-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 7/9] hfp_hf_bluez5: Add rejecting SCO connection
+Date: Mon, 28 Jan 2013 11:44:17 -0300
+Message-ID: <1359384259-5384-8-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1359384259-5384-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8806884159124961702==
+--===============8956023470745946516==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds a generic Bluetooth helper function to allow getting
-the adapter and device Bluetooth Address from Bluetooth sockets.
+This patch rejects the SCO incoming connection if there isn't a modem
+(service level connection) associated with the address. At the moment,
+only the remote address is verified.
 ---
- plugins/bluez5.c | 22 ++++++++++++++++++++++
- plugins/bluez5.h |  3 +++
- 2 files changed, 25 insertions(+)
+ plugins/hfp_hf_bluez5.c | 20 +++++++++++++++++++-
+ 1 file changed, 19 insertions(+), 1 deletion(-)
 
-diff --git a/plugins/bluez5.c b/plugins/bluez5.c
-index d7e85f2..06629e1 100644
---- a/plugins/bluez5.c
-+++ b/plugins/bluez5.c
-@@ -52,6 +52,28 @@ int bt_ba2str(const bdaddr_t *ba, char *str)
- 		ba->b[5], ba->b[4], ba->b[3], ba->b[2], ba->b[1], ba->b[0]);
- }
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index a4a0894..d79647b 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -67,6 +67,16 @@ static GHashTable *devices_proxies =3D NULL;
+ static GDBusClient *bluez =3D NULL;
+ static guint sco_watch =3D 0;
  =
 
-+int bt_getsockpeers(int sock, struct sockaddr *src, struct sockaddr *dst,
-+								socklen_t len)
++static gboolean modem_address_cmp(gpointer key, gpointer value,
++						gpointer user_data)
 +{
-+	socklen_t olen;
++	const char *dst =3D user_data;
++	struct ofono_modem *modem =3D value;
++	const char *address =3D ofono_modem_get_string(modem, "Address");
 +
-+	if (src) {
-+		memset(src, 0, len);
-+		olen =3D len;
-+		if (getsockname(sock, src, &olen) < 0)
-+			return -errno;
-+	}
-+
-+	if (dst) {
-+		memset(dst, 0, len);
-+		olen =3D len;
-+		if (getpeername(sock, dst, &olen) < 0)
-+			return -errno;
-+	}
-+
-+	return 0;
++	return g_strcmp0(address, dst) !=3D 0 ? FALSE : TRUE;
 +}
 +
- static void profile_register_cb(DBusPendingCall *call, gpointer user_data)
+ static void hfp_debug(const char *str, void *user_data)
  {
- 	DBusMessage *reply;
-diff --git a/plugins/bluez5.h b/plugins/bluez5.h
-index 204c41d..2d70fbf 100644
---- a/plugins/bluez5.h
-+++ b/plugins/bluez5.h
-@@ -60,6 +60,9 @@ void bt_bacpy(bdaddr_t *dst, const bdaddr_t *src);
+ 	const char *prefix =3D user_data;
+@@ -383,8 +393,10 @@ static const GDBusMethodTable profile_methods[] =3D {
+ static gboolean sco_accept(GIOChannel *io, GIOCondition cond,
+ 							gpointer user_data)
+ {
++	struct ofono_modem *modem;
+ 	struct sockaddr_sco saddr;
+ 	socklen_t optlen;
++	char dst[18];
+ 	int sk, nsk;
  =
 
- int bt_ba2str(const bdaddr_t *ba, char *str);
+ 	if (cond & (G_IO_ERR | G_IO_HUP | G_IO_NVAL))
+@@ -399,7 +411,13 @@ static gboolean sco_accept(GIOChannel *io, GIOConditio=
+n cond,
+ 	if (nsk < 0)
+ 		return TRUE;
  =
 
-+int bt_getsockpeers(int sock, struct sockaddr *src, struct sockaddr *dst,
-+								socklen_t len);
-+
- int bluetooth_register_profile(DBusConnection *conn, const char *uuid,
- 					const char *name, const char *object);
+-	/* TODO: Verify if the device has a modem */
++	bt_ba2str(&saddr.sco_bdaddr, dst);
++	modem =3D g_hash_table_find(modem_hash, modem_address_cmp, dst);
++	if (modem =3D=3D NULL) {
++		ofono_error("Rejecting SCO: SLC connection missing!");
++		close(nsk);
++		return TRUE;
++	}
  =
 
+ 	return TRUE;
+ }
 -- =
 
 1.7.11.7
 
 
---===============8806884159124961702==--
+--===============8956023470745946516==--
 
