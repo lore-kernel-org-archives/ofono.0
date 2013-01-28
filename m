@@ -1,35 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============0526526560979502625=="
+Content-Type: multipart/mixed; boundary="===============1675879331823461162=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: Re: [PATCH v0 1/3] bluez5: Add SCO socket declarations
-Date: Mon, 28 Jan 2013 11:19:38 -0300
-Message-ID: <CAKT1EBd8L42P4S8ZVDWavL0r+j6OyWw1V1X076xPeU_1fPzJwQ@mail.gmail.com>
-In-Reply-To: <1358984801-23640-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 0/9] External HFP: Add SCO
+Date: Mon, 28 Jan 2013 11:44:10 -0300
+Message-ID: <1359384259-5384-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0526526560979502625==
+--===============1675879331823461162==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis
+This patch series adds Bluetooth SCO socket declaration and the initial =
 
-On Wed, Jan 23, 2013 at 8:46 PM, Claudio Takahasi
-<claudio.takahasi@openbossa.org> wrote:
-> Adds local copy of SCO Bluetooth sockets declarations, since the
-> objective to avoid including BlueZ library headers.
-> ---
->  plugins/bluez5.c        |  3 +++
->  plugins/bluez5.h        | 28 ++++++++++++++++++++++++++++
->  plugins/hfp_hf_bluez5.c |  2 ++
->  3 files changed, 33 insertions(+)
+code to manage HF audio connections.
 
-Ignore this patch series. I will send a new series containing more SCO
-related patches.
+Some Bluetooth functions and structs are being declared locally, Bluetooth
+headers dependency will be removed in the future.
 
-Regards,
-Claudio
+Claudio Takahasi (9):
+  bluez5: Add SCO socket declarations
+  bluez5: Add bt_bacpy()
+  hfp_hf_bluez5: Add SCO listen socket
+  bluez5: Add bt_ba2str()
+  bluez5: Add bt_getsockpeers()
+  bluez5: Add RFCOMM socket address declaration
+  hfp_hf_bluez5: Add rejecting SCO connection
+  hfp_hf_bluez5: Reject SCO if source doesn't match
+  hfp_hf_bluez5: Fix missing fd close
 
---===============0526526560979502625==--
+ plugins/bluez5.c        |  38 ++++++++++++
+ plugins/bluez5.h        |  42 +++++++++++++
+ plugins/hfp_hf_bluez5.c | 162 ++++++++++++++++++++++++++++++++++++++++++++=
++---
+ 3 files changed, 232 insertions(+), 10 deletions(-)
+
+-- =
+
+1.7.11.7
+
+
+--===============1675879331823461162==--
 
