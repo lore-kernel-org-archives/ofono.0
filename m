@@ -1,122 +1,177 @@
-Content-Type: multipart/mixed; boundary="===============5195844000047338553=="
+Content-Type: multipart/mixed; boundary="===============8520010718855653445=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 3/4] hfp_hf_bluez5: Add rejecting SCO connection
-Date: Tue, 29 Jan 2013 17:38:39 -0300
-Message-ID: <1359491920-15963-4-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 2/4] hfp_hf_bluez5: Set the 'Remote' and 'Local' properties
+Date: Tue, 29 Jan 2013 17:38:38 -0300
+Message-ID: <1359491920-15963-3-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1359491920-15963-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5195844000047338553==
+--===============8520010718855653445==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch rejects the SCO incoming connection if there isn't a service
-level connection associated with the Bluetooth address pair.
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+
+On modem registration, set both these properties so later on, the modem can=
+ be
+fully indentified by both addresses. For example, if an incoming SCO connec=
+tion
+comes and do not match this pair, the connection will be rejected.
 ---
- plugins/hfp_hf_bluez5.c | 50 ++++++++++++++++++++++++++++++++++++++++++++-=
+ plugins/hfp_hf_bluez5.c | 55 +++++++++++++++++++++++++++++++++++----------=
 ----
- 1 file changed, 45 insertions(+), 5 deletions(-)
+ 1 file changed, 39 insertions(+), 16 deletions(-)
 
 diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 49a84c5..28c57c3 100644
+index c4a3f32..49a84c5 100644
 --- a/plugins/hfp_hf_bluez5.c
 +++ b/plugins/hfp_hf_bluez5.c
-@@ -63,11 +63,34 @@ struct hfp {
- 	DBusMessage *msg;
- };
+@@ -166,15 +166,22 @@ static int service_level_connection(struct ofono_mode=
+m *modem,
+ 	return -EINPROGRESS;
+ }
  =
 
-+struct address_pair {
-+	char local[18];
-+	char remote[18];
-+};
-+
- static GHashTable *modem_hash =3D NULL;
- static GHashTable *devices_proxies =3D NULL;
- static GDBusClient *bluez =3D NULL;
- static guint sco_watch =3D 0;
- =
-
-+static gboolean modem_cmp(gpointer key, gpointer value,
-+						gpointer user_data)
-+{
-+	const struct address_pair *pair =3D user_data;
-+	struct ofono_modem *modem =3D value;
-+	const char *local, *remote;
-+	int ret;
-+
-+	local =3D ofono_modem_get_string(modem, "Local");
-+	remote =3D ofono_modem_get_string(modem, "Remote");
-+
-+	ret =3D g_strcmp0(pair->remote, remote);
-+	if (ret !=3D 0)
-+		return FALSE;
-+
-+	return g_strcmp0(pair->local, local) =3D=3D 0;
-+}
-+
- static void hfp_debug(const char *str, void *user_data)
+-static struct ofono_modem *modem_register(const char *device,
+-				const char *device_address, const char *alias)
++static struct ofono_modem *modem_register(const char *device, const char *=
+local,
++				const char *remote, const char *alias)
  {
- 	const char *prefix =3D user_data;
-@@ -407,7 +430,9 @@ static const GDBusMethodTable profile_methods[] =3D {
- static gboolean sco_accept(GIOChannel *io, GIOCondition cond,
- 							gpointer user_data)
+ 	struct ofono_modem *modem;
+ 	char *path;
+ =
+
+ 	modem =3D g_hash_table_lookup(modem_hash, device);
+-	if (modem !=3D NULL)
++	if (modem !=3D NULL) {
++		/*
++		 * When the modem is created, it may be created with
++		 * only the Remote property, in the case that the modem
++		 * was registered from a device proxy
++		 */
++		ofono_modem_set_string(modem, "Local", local);
+ 		return modem;
++	}
+ =
+
+ 	path =3D g_strconcat("hfp", device, NULL);
+ =
+
+@@ -185,7 +192,9 @@ static struct ofono_modem *modem_register(const char *d=
+evice,
+ 	if (modem =3D=3D NULL)
+ 		return NULL;
+ =
+
+-	ofono_modem_set_string(modem, "Remote", device_address);
++	/* The "Remote" property needs to be available before pre-sim */
++	ofono_modem_set_string(modem, "Local", local);
++	ofono_modem_set_string(modem, "Remote", remote);
+ =
+
+ 	ofono_modem_set_name(modem, alias);
+ 	ofono_modem_register(modem);
+@@ -275,14 +284,15 @@ static DBusMessage *profile_new_connection(DBusConnec=
+tion *conn,
  {
--	struct sockaddr_sco saddr;
-+	struct ofono_modem *modem;
-+	struct sockaddr_sco laddr, raddr;
-+	struct address_pair pair;
- 	socklen_t alen;
- 	int sk, nsk;
+ 	struct hfp *hfp;
+ 	struct ofono_modem *modem;
++	struct sockaddr_rc laddr, raddr;
++	socklen_t alen;
+ 	DBusMessageIter iter;
+ 	GDBusProxy *proxy;
+ 	DBusMessageIter entry;
+-	const char *device, *alias, *address;
++	const char *device, *alias;
++	char local[18], remote[18];
+ 	int fd, err;
  =
 
-@@ -416,14 +441,29 @@ static gboolean sco_accept(GIOChannel *io, GIOConditi=
-on cond,
+-	DBG("Profile handler NewConnection");
+-
+ 	if (dbus_message_iter_init(msg, &entry) =3D=3D FALSE)
+ 		goto invalid;
  =
 
- 	sk =3D g_io_channel_unix_get_fd(io);
+@@ -301,11 +311,6 @@ static DBusMessage *profile_new_connection(DBusConnect=
+ion *conn,
  =
 
--	memset(&saddr, 0, sizeof(saddr));
--	alen =3D sizeof(saddr);
-+	memset(&raddr, 0, sizeof(raddr));
-+	alen =3D sizeof(raddr);
+ 	dbus_message_iter_get_basic(&iter, &alias);
  =
 
--	nsk =3D accept(sk, (struct sockaddr *) &saddr, &alen);
-+	nsk =3D accept(sk, (struct sockaddr *) &raddr, &alen);
- 	if (nsk < 0)
- 		return TRUE;
+-	if (g_dbus_proxy_get_property(proxy, "Address", &iter) =3D=3D FALSE)
+-		goto invalid;
+-
+-	dbus_message_iter_get_basic(&iter, &address);
+-
+ 	dbus_message_iter_next(&entry);
+ 	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_UNIX_FD)
+ 		goto invalid;
+@@ -314,7 +319,25 @@ static DBusMessage *profile_new_connection(DBusConnect=
+ion *conn,
+ 	if (fd < 0)
+ 		goto invalid;
  =
 
--	/* TODO: Verify if the device has a modem */
+-	modem =3D modem_register(device, address, alias);
 +	memset(&laddr, 0, sizeof(laddr));
 +	alen =3D sizeof(laddr);
-+	if (getsockname(nsk, (struct sockaddr *) &laddr, &alen) < 0) {
-+		close(nsk);
-+		return TRUE;
++	if (getsockname(fd, (struct sockaddr *) &laddr, &alen) < 0) {
++		close(fd);
++		goto invalid;
 +	}
 +
-+	bt_ba2str(&laddr.sco_bdaddr, pair.local);
-+	bt_ba2str(&raddr.sco_bdaddr, pair.remote);
-+
-+	modem =3D g_hash_table_find(modem_hash, modem_cmp, &pair);
-+	if (modem =3D=3D NULL) {
-+		ofono_error("Rejecting SCO: SLC connection missing!");
-+		close(nsk);
-+		return TRUE;
++	memset(&raddr, 0, sizeof(raddr));
++	alen =3D sizeof(raddr);
++	if (getpeername(fd, (struct sockaddr *) &raddr, &alen) < 0) {
++		close(fd);
++		goto invalid;
 +	}
++
++	bt_ba2str(&laddr.rc_bdaddr, local);
++	bt_ba2str(&raddr.rc_bdaddr, remote);
++	DBG("Profile handler NewConnection: %s", remote);
++
++	modem =3D modem_register(device, local, remote, alias);
+ 	if (modem =3D=3D NULL) {
+ 		close(fd);
+ 		return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
+@@ -479,7 +502,7 @@ static gboolean has_hfp_ag_uuid(DBusMessageIter *array)
  =
 
- 	return TRUE;
+ static void proxy_added(GDBusProxy *proxy, void *user_data)
+ {
+-	const char *interface, *path, *alias, *address;
++	const char *interface, *path, *alias, *remote;
+ 	DBusMessageIter iter;
+ =
+
+ 	interface =3D g_dbus_proxy_get_interface(proxy);
+@@ -507,9 +530,9 @@ static void proxy_added(GDBusProxy *proxy, void *user_d=
+ata)
+ 	if (g_dbus_proxy_get_property(proxy, "Address", &iter) =3D=3D FALSE)
+ 		return;
+ =
+
+-	dbus_message_iter_get_basic(&iter, &address);
++	dbus_message_iter_get_basic(&iter, &remote);
+ =
+
+-	modem_register(path, address, alias);
++	modem_register(path, NULL, remote, alias);
  }
+ =
+
+ static void proxy_removed(GDBusProxy *proxy, void *user_data)
 -- =
 
 1.7.11.7
 
 
---===============5195844000047338553==--
+--===============8520010718855653445==--
 
