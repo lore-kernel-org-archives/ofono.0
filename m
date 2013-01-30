@@ -1,37 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============3103224837734876520=="
+Content-Type: multipart/mixed; boundary="===============1757493351663359624=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: bluez5 support for dundee
-Date: Wed, 30 Jan 2013 13:22:13 -0600
-Message-ID: <510972E5.3090304@gmail.com>
-In-Reply-To: <CAE6HaM=9ZOoGoxXZAF-kxPNkZS_oSXaCDRzuHmHUB04FPkfvuQ@mail.gmail.com>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: [PATCH] TODO: Add task for supporting BlueZ 5 in dundee
+Date: Wed, 30 Jan 2013 18:12:30 -0300
+Message-ID: <1359580350-26208-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3103224837734876520==
+--===============1757493351663359624==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vinicius,
+---
+ TODO | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-On 01/30/2013 06:31 AM, Vinicius Gomes wrote:
-> Hi Daniel,
->
-> On Wed, Jan 30, 2013 at 7:13 AM, Daniel Wagner<wagi@monom.org>  wrote:
->> Hi,
->>
->> Is someone working on bluez5 support for dundee?
->
-> Our intern (Paulo Borges) is working on it.
->
+diff --git a/TODO b/TODO
+index 1fef651..c579718 100644
+--- a/TODO
++++ b/TODO
+@@ -159,6 +159,15 @@ Modem Emulator
+   Priority: Medium
+   Depends: HFP AG emulator as BlueZ service
+ =
 
-Can you guys actually add a task to the TODO list and assign him as the =
++- Add support for BlueZ 5 Profile1 API to dundee
++  BlueZ 5 introduced a new API for registration of external profiles, which
++  obsoletes the Serial API currently in use by dundee. The BlueZ 4 related
++  code will be kept around for some time still.
++
++  Complexity: C2
++  Priority: Medium
++  Owner: Paulo Borges <paulo.borges@openbossa.org>
++
+ PPP
+ =3D=3D=3D
+ =
 
-owner?
+-- =
 
-Regards,
--Denis
+1.8.1.1
 
---===============3103224837734876520==--
+
+--===============1757493351663359624==--
 
