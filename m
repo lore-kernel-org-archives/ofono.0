@@ -1,89 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============5873142126359663435=="
+Content-Type: multipart/mixed; boundary="===============7058329699707223336=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv2 2/2] hfpmodem: Request AT+CLCC again after callheld=<2
- or 3>
-Date: Wed, 30 Jan 2013 22:09:12 -0600
-Message-ID: <5109EE68.5050109@gmail.com>
-In-Reply-To: <70cf00e077ef3e1dff65de3f6fcb5df7c754734f.1359360111.git.timo.mueller@bmw-carit.de>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: Re: [PATCH v0 2/2] hfp_hf_bluez5: Only register modems for Paired
+ devices
+Date: Thu, 31 Jan 2013 09:12:59 -0300
+Message-ID: <CAKT1EBeRdy5Fw8DzQOuyL06JciwMpga8Q+9xcbKB4f1rt0XiEA@mail.gmail.com>
+In-Reply-To: <5109E897.2020800@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5873142126359663435==
+--===============7058329699707223336==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Timo,
+Hi Denis:
 
-On 01/28/2013 04:13 AM, Timo Mueller wrote:
-> From: Timo Mueller<timo.mueller@bmw-carit.de>
+On Thu, Jan 31, 2013 at 12:44 AM, Denis Kenzior <denkenz@gmail.com> wrote:
+> Hi Vinicius,
 >
-> With a call being active, placing a second call on the AG device will
-> lead to the active call being put on hold. During the transition some
-> phones do not update the list of current calls. This leads to an +CLCC
-> response that does not contain the new outgoing call, even though an
-> outgoing callsetup was reported.
 >
-> The list will be updated once the active call was put on hold and
-> callheld=3D2 is reported. In this case the list has to be requested
-> again (AT+CLCC).
+> On 01/30/2013 10:24 AM, Claudio Takahasi wrote:
+>>
+>> From: Vinicius Costa Gomes<vinicius.gomes@openbossa.org>
+>>
+>> When there are many devices around that support the HFP AG profile,
+>> we may have a lot of modems that the user will never use.
+>> ---
+>>   plugins/hfp_hf_bluez5.c | 61
+>> +++++++++++++++++++++++++++++++++----------------
+>>   1 file changed, 41 insertions(+), 20 deletions(-)
+>>
 >
-> AT sequence that exhibited the failure (AG device was a Nokia N9
-> having an active outgoing call and placing a second outgoing call)
+> Patch has been applied, however:
 >
+>
+>> -       if (g_str_equal("Alias", name) =3D=3D FALSE)
+>> +       if (g_str_equal("Paired", name) =3D=3D TRUE) {
+>> +               modem_register_from_proxy(proxy, path);
+>>                 return;
+>> +       }
+>
+>
+> This part looks suspicious in the case where Paired goes to false.  If Bl=
+ueZ
+> behaves in a certain way when the device is unpaired then I'd like to see=
+ a
+> comment here explaining that.
 
-Ugh.
+It is possible to unpair a device using the Bluetooth Management
+interface, but there isn't D-Bus API to unpair a device. The user
+needs to call RemoveDevice(), in this case
+hfp_hf_bluez5:proxy_removed() will be called and the modem will be
+removed.
 
-<snip>
-
-> @@ -1072,6 +1074,14 @@ static void ciev_callheld_notify(struct ofono_voic=
-ecall *vc,
->   				call->status =3D CALL_STATUS_HELD;
->   				ofono_voicecall_notify(vc, call);
->   			}
-> +
-> +			if (callsetup =3D=3D 2 || callsetup =3D=3D 3) {
-> +				dialing =3D find_dialing(vd->calls);
-> +
-> +				if (dialing =3D=3D NULL)
-> +					g_at_chat_send(vd->chat, "AT+CLCC", clcc_prefix,
-> +						clcc_poll_cb, vc, NULL);
-> +			}
->   		} else if (callheld =3D=3D 1) {
->   			if (vd->clcc_source)
->   				g_source_remove(vd->clcc_source);
-
-I'm seeing reports of too many devices doing too many weird things, and =
-
-if we change the core logic for each and every one then the code becomes =
-
-a huge mess quickly.  It would be hard to validate or regression test it =
-
-without massive investment in automated interoperability testing.
-
-Marcel and I spoke briefly about this and our belief is that we need to =
-
-introduce manufacturer specific quirks to HFP drivers instead of trying =
-
-to solve this generically.
-
-BlueZ should be able to provide us enough information about the remote =
-
-device for us to make a fairly good guess as to the manufacturer / =
-
-version.  Additional details can be queried by manufacturer specific =
-
-commands (e.g. in the case of iOS).  That should be enough for us to =
-
-simply set the vendor / quirk ID and take appropriate action in the driver.
-
-We can always fall back to strict spec compliant behavior by default if =
-
-the manufacturer quirks cannot be determined.  What do you think?
+Even for MGMT Unpair command the device is being remove, I am not sure
+if this is a feature or a bug ;-)
 
 Regards,
--Denis
+Claudio.
 
---===============5873142126359663435==--
+--===============7058329699707223336==--
 
