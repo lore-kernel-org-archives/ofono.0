@@ -1,48 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============1092126848916398273=="
+Content-Type: multipart/mixed; boundary="===============5047382244820952133=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH] hfp_hf_bluez5: Remove error handling for
- g_io_channel_unix_new()
-Date: Thu, 31 Jan 2013 15:30:08 -0300
-Message-ID: <1359657008-16198-1-git-send-email-vinicius.gomes@openbossa.org>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 1/2] hfp_hf_bluez5: Fix registering modem on NewConnection
+Date: Thu, 31 Jan 2013 16:01:53 -0300
+Message-ID: <1359658914-24892-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1092126848916398273==
+--===============5047382244820952133==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Apart from g_io_channel_unix_new() not setting errno, it never
-returns an NULL pointer on error, because in practice it only
-calls g_new().
+HFP modem will be registered when Proxy Added callback gets called
+or when Pair is True. This patch removes the support for dynamic modem
+registration when a new connection is notified and there isn't a modem
+associated with the Bluetooth remote device.
+
+BlueZ behaviour has been changed and a NewConnection is not notified
+before the service discovery finishes.
 ---
- plugins/hfp_hf_bluez5.c | 5 -----
- 1 file changed, 5 deletions(-)
+ plugins/hfp_hf_bluez5.c | 23 +++--------------------
+ 1 file changed, 3 insertions(+), 20 deletions(-)
 
 diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 8cac945..ff4dbad 100644
+index ff4dbad..d2f3abb 100644
 --- a/plugins/hfp_hf_bluez5.c
 +++ b/plugins/hfp_hf_bluez5.c
-@@ -137,11 +137,6 @@ static int service_level_connection(struct ofono_modem=
- *modem,
- 	GAtChat *chat;
+@@ -270,10 +270,8 @@ static DBusMessage *profile_new_connection(DBusConnect=
+ion *conn,
+ {
+ 	struct hfp *hfp;
+ 	struct ofono_modem *modem;
+-	DBusMessageIter iter;
+-	GDBusProxy *proxy;
+ 	DBusMessageIter entry;
+-	const char *device, *alias, *address;
++	const char *device;
+ 	int fd, err;
  =
 
- 	io =3D g_io_channel_unix_new(fd);
--	if (io =3D=3D NULL) {
--		ofono_error("Service level connection failed: %s (%d)",
--						strerror(errno), errno);
--		return -EIO;
--	}
+ 	DBG("Profile handler NewConnection");
+@@ -286,21 +284,6 @@ static DBusMessage *profile_new_connection(DBusConnect=
+ion *conn,
  =
 
- 	syntax =3D g_at_syntax_new_gsm_permissive();
- 	chat =3D g_at_chat_new(io, syntax);
+ 	dbus_message_iter_get_basic(&entry, &device);
+ =
+
+-	proxy =3D g_hash_table_lookup(devices_proxies, device);
+-	if (proxy =3D=3D NULL)
+-		return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
+-					".Rejected",
+-					"Unknown Bluetooth device");
+-
+-	g_dbus_proxy_get_property(proxy, "Alias", &iter);
+-
+-	dbus_message_iter_get_basic(&iter, &alias);
+-
+-	if (g_dbus_proxy_get_property(proxy, "Address", &iter) =3D=3D FALSE)
+-		goto invalid;
+-
+-	dbus_message_iter_get_basic(&iter, &address);
+-
+ 	dbus_message_iter_next(&entry);
+ 	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_UNIX_FD)
+ 		goto invalid;
+@@ -309,12 +292,12 @@ static DBusMessage *profile_new_connection(DBusConnec=
+tion *conn,
+ 	if (fd < 0)
+ 		goto invalid;
+ =
+
+-	modem =3D modem_register(device, address, alias);
++	modem =3D g_hash_table_lookup(modem_hash, device);
+ 	if (modem =3D=3D NULL) {
+ 		close(fd);
+ 		return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
+ 					".Rejected",
+-					"Could not register HFP modem");
++					"Unknown Bluetooth device");
+ 	}
+ =
+
+ 	err =3D service_level_connection(modem, fd, HFP_VERSION_LATEST);
 -- =
 
-1.8.1.1
+1.7.11.7
 
 
---===============1092126848916398273==--
+--===============5047382244820952133==--
 
