@@ -1,39 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============0308631912665439195=="
+Content-Type: multipart/mixed; boundary="===============8064294323611414504=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] hfp_ag: Add BlueZ 5 version
-Date: Thu, 31 Jan 2013 16:19:12 -0600
-Message-ID: <510AEDE0.20107@gmail.com>
-In-Reply-To: <1359456160-9514-2-git-send-email-frederic.danis@linux.intel.com>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: [PATCH] hfp_hf_bluez5: Remove unneeded modem hash lookup
+Date: Fri, 01 Feb 2013 10:24:30 -0300
+Message-ID: <1359725070-11626-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0308631912665439195==
+--===============8064294323611414504==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fr=C3=A9d=C3=A9ric,
+Modem object is created when the Device Proxy is added, and it is
+paired. Another path is when the Device "Paired" property changes
+to True.
+---
+ plugins/hfp_hf_bluez5.c | 4 ----
+ 1 file changed, 4 deletions(-)
 
-On 01/29/2013 04:42 AM, Fr=C3=A9d=C3=A9ric Danis wrote:
-> This patch adds initial implementation of the D-Bus Profile1
-> interface and methods responsible for handling Bluetooth connections.
->
-> The HFP AG profile interface is registered as soon as a voice capable
-> modem is registered in oFono.
-> ---
->   Makefile.am             |    3 +
->   plugins/hfp_ag_bluez5.c |  269 ++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   2 files changed, 272 insertions(+)
->   create mode 100644 plugins/hfp_ag_bluez5.c
->
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index 2f4a89e..543bf0f 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -166,10 +166,6 @@ static struct ofono_modem *modem_register(const char *=
+device,
+ 	struct ofono_modem *modem;
+ 	char *path;
+ =
 
-Patch has been applied, thanks.
+-	modem =3D g_hash_table_lookup(modem_hash, device);
+-	if (modem !=3D NULL)
+-		return modem;
+-
+ 	path =3D g_strconcat("hfp", device, NULL);
+ =
 
-Regards,
--Denis
+ 	modem =3D ofono_modem_create(path, "hfp");
+-- =
+
+1.7.11.7
 
 
---===============0308631912665439195==--
+--===============8064294323611414504==--
 
