@@ -1,108 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============5135358890481454381=="
+Content-Type: multipart/mixed; boundary="===============1372189905024999141=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 4/4] hfp_hf_bluez5: Add support for Enabling/Disabling the
- modem
-Date: Fri, 01 Feb 2013 20:33:09 -0300
-Message-ID: <1359761589-18561-4-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH 3/4] hfp_hf_bluez5: Add Profile RequestDisconnection
+Date: Fri, 01 Feb 2013 20:33:08 -0300
+Message-ID: <1359761589-18561-3-git-send-email-vinicius.gomes@openbossa.org>
 In-Reply-To: <1359761589-18561-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5135358890481454381==
+--===============1372189905024999141==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Now that we have the support for sending the correct messages
-to BlueZ, we are able to dynamically power up/down the HFP modem.
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
 
-We add another property to the modem to be able to get the D-Bus
-object path that represents the remote device.
+This patch implements RequestDisconnection method of the Profile1
+interface. This method gets called when the profile gets disconnected.
+The profile implementation needs to cleanup the resources related to
+the informed device.
 ---
- plugins/hfp_hf_bluez5.c | 39 +++++++++++++++++++++++++++++++++++++--
- 1 file changed, 37 insertions(+), 2 deletions(-)
+ plugins/hfp_hf_bluez5.c | 35 ++++++++++++++++++++++++++++++++---
+ 1 file changed, 32 insertions(+), 3 deletions(-)
 
 diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 0d6bdd9..de580f2 100644
+index cd3f9a6..0d6bdd9 100644
 --- a/plugins/hfp_hf_bluez5.c
 +++ b/plugins/hfp_hf_bluez5.c
-@@ -180,6 +180,7 @@ static struct ofono_modem *modem_register(const char *d=
-evice,
- 		return NULL;
- =
-
- 	ofono_modem_set_string(modem, "Remote", device_address);
-+	ofono_modem_set_string(modem, "DevicePath", device);
- =
-
- 	ofono_modem_set_name(modem, alias);
- 	ofono_modem_register(modem);
-@@ -219,19 +220,53 @@ static void hfp_remove(struct ofono_modem *modem)
- 	ofono_modem_set_data(modem, NULL);
- }
- =
-
-+static void connect_cb(gboolean success, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
+@@ -340,11 +340,40 @@ static DBusMessage *profile_cancel(DBusConnection *co=
+nn,
+ static DBusMessage *profile_disconnection(DBusConnection *conn,
+ 					DBusMessage *msg, void *user_data)
+ {
++	struct ofono_modem *modem;
++	struct hfp *hfp;
++	const char *device;
++	struct hfp_slc_info *info;
++	DBusMessageIter entry;
 +
-+	if (success)
-+		return;
+ 	DBG("Profile handler RequestDisconnection");
+ =
+
+-	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
+-					".NotImplemented",
+-					"Implementation not provided");
++	if (dbus_message_iter_init(msg, &entry) =3D=3D FALSE)
++		goto error;
++
++	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_OBJECT_PATH)
++		goto error;
++
++	dbus_message_iter_get_basic(&entry, &device);
++
++	modem =3D g_hash_table_lookup(modem_hash, device);
++	if (modem =3D=3D NULL)
++		goto error;
 +
 +	ofono_modem_set_powered(modem, FALSE);
-+}
 +
- /* power up hardware */
- static int hfp_enable(struct ofono_modem *modem)
- {
-+	const char *path;
++	hfp =3D ofono_modem_get_data(modem);
++	info =3D &hfp->info;
 +
- 	DBG("%p", modem);
- =
-
--	return 0;
-+	path =3D ofono_modem_get_string(modem, "DevicePath");
++	g_at_chat_unref(info->chat);
++	info->chat =3D NULL;
 +
-+	/*
-+	 * We call Device1.ConnectProfile() with our UUID, and we hope for the
-+	 * NewConnection() method to be called, if ConnectProfile() fails we
-+	 * force the modem to powered off
-+	 */
-+	bt_connect_profile(ofono_dbus_get_connection(), path, HFP_AG_UUID,
-+							connect_cb, modem);
++	return dbus_message_new_method_return(msg);
 +
-+	return -EINPROGRESS;
++error:
++	return g_dbus_create_error(msg,
++			BLUEZ_ERROR_INTERFACE ".Rejected",
++			"Invalid arguments in method call");
  }
  =
 
- static int hfp_disable(struct ofono_modem *modem)
- {
-+	const char *path;
-+
- 	DBG("%p", modem);
- =
-
--	return 0;
-+	path =3D ofono_modem_get_string(modem, "DevicePath");
-+
-+	/*
-+	 * We call Device1.DisconnectProfile() for the connection to be
-+	 * dropped, which will cause the profile RequestDisconnection() method
-+	 * to be called which will bring the modem down
-+	 */
-+	bt_disconnect_profile(ofono_dbus_get_connection(), path, HFP_AG_UUID,
-+							NULL, NULL);
-+
-+	return -EINPROGRESS;
- }
- =
-
- static void hfp_pre_sim(struct ofono_modem *modem)
+ static const GDBusMethodTable profile_methods[] =3D {
 -- =
 
 1.8.1.1
 
 
---===============5135358890481454381==--
+--===============1372189905024999141==--
 
