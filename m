@@ -1,83 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============1372189905024999141=="
+Content-Type: multipart/mixed; boundary="===============0072199920358746741=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 3/4] hfp_hf_bluez5: Add Profile RequestDisconnection
-Date: Fri, 01 Feb 2013 20:33:08 -0300
-Message-ID: <1359761589-18561-3-git-send-email-vinicius.gomes@openbossa.org>
-In-Reply-To: <1359761589-18561-1-git-send-email-vinicius.gomes@openbossa.org>
+From: =?unknown-8bit?q?Bj=C3=B8rn?= Mork <bjorn@mork.no>
+Subject: [PATCH 3/4] udevng: support Huawei QMI modems on newer kernels
+Date: Sun, 03 Feb 2013 22:39:46 +0100
+Message-ID: <1359927587-24353-4-git-send-email-bjorn@mork.no>
+In-Reply-To: <1359927587-24353-1-git-send-email-bjorn@mork.no>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1372189905024999141==
+--===============0072199920358746741==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-
-This patch implements RequestDisconnection method of the Profile1
-interface. This method gets called when the profile gets disconnected.
-The profile implementation needs to cleanup the resources related to
-the informed device.
+Signed-off-by: Bj=C3=B8rn Mork <bjorn@mork.no>
 ---
- plugins/hfp_hf_bluez5.c | 35 ++++++++++++++++++++++++++++++++---
- 1 file changed, 32 insertions(+), 3 deletions(-)
+ plugins/udevng.c |    5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index cd3f9a6..0d6bdd9 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -340,11 +340,40 @@ static DBusMessage *profile_cancel(DBusConnection *co=
-nn,
- static DBusMessage *profile_disconnection(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
- {
-+	struct ofono_modem *modem;
-+	struct hfp *hfp;
-+	const char *device;
-+	struct hfp_slc_info *info;
-+	DBusMessageIter entry;
-+
- 	DBG("Profile handler RequestDisconnection");
- =
-
--	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
--					".NotImplemented",
--					"Implementation not provided");
-+	if (dbus_message_iter_init(msg, &entry) =3D=3D FALSE)
-+		goto error;
-+
-+	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_OBJECT_PATH)
-+		goto error;
-+
-+	dbus_message_iter_get_basic(&entry, &device);
-+
-+	modem =3D g_hash_table_lookup(modem_hash, device);
-+	if (modem =3D=3D NULL)
-+		goto error;
-+
-+	ofono_modem_set_powered(modem, FALSE);
-+
-+	hfp =3D ofono_modem_get_data(modem);
-+	info =3D &hfp->info;
-+
-+	g_at_chat_unref(info->chat);
-+	info->chat =3D NULL;
-+
-+	return dbus_message_new_method_return(msg);
-+
-+error:
-+	return g_dbus_create_error(msg,
-+			BLUEZ_ERROR_INTERFACE ".Rejected",
-+			"Invalid arguments in method call");
- }
- =
-
- static const GDBusMethodTable profile_methods[] =3D {
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 9fee7c2..d27dd67 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -324,7 +324,10 @@ static gboolean setup_huawei(struct modem_info *modem)
+ 			net =3D info->devnode;
+ 		} else if (g_strcmp0(info->interface, "255/1/9") =3D=3D 0 ||
+ 				g_strcmp0(info->interface, "255/1/57") =3D=3D 0) {
+-			qmi =3D info->devnode;
++			if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
++				net =3D info->devnode;
++			else
++				qmi =3D info->devnode;
+ 		} else if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
+ 			if (g_strcmp0(info->number, "00") =3D=3D 0)
+ 				mdm =3D info->devnode;
 -- =
 
-1.8.1.1
+1.7.10.4
 
 
---===============1372189905024999141==--
+--===============0072199920358746741==--
 
