@@ -1,113 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============2348197864399368979=="
+Content-Type: multipart/mixed; boundary="===============7880041773020852594=="
 MIME-Version: 1.0
-From: Timo Mueller <mail@timomueller.eu>
-Subject: [PATCHv3 3/3] hfpmodem: Add N9 quirk to run CLCC after callheld=<2 or
- 3>
-Date: Wed, 13 Feb 2013 09:36:11 +0100
-Message-ID: <2ec1b7ac69aac4f0edbc6cef843c63684ee16995.1360663430.git.timo.mueller@bmw-carit.de>
-In-Reply-To: <d928220c40964749f7c79822563087cdf3af74a1.1360663430.git.timo.mueller@bmw-carit.de>
+From: Cedric Jehasse <cedric.jehasse@gmail.com>
+Subject: Re: [PATCH 1/2] qmimodem: add uim message types
+Date: Wed, 13 Feb 2013 14:01:00 +0100
+Message-ID: <CABvLYuA19S+H4XW=Yqn4VZtuinS8m5p4Uty=AfY1DHsftosCwA@mail.gmail.com>
+In-Reply-To: <1358499069-13103-1-git-send-email-cedric.jehasse@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2348197864399368979==
+--===============7880041773020852594==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Timo Mueller <timo.mueller@bmw-carit.de>
+Hi,
 
-On the Nokia N9 with a call being active, placing a second call on the
-AG device will lead to the active call being put on hold. During the
-transition the phone does not update the list of current calls. This
-leads to an +CLCC response that does not contain the new outgoing
-call, even though an outgoing callsetup was reported.
+I made 2 patches to implement send_passwd on qmi some time ago. Are
+these patches going to be applied or is there something wrong with it?
+I'd like to know, because i'm making other changes on the qmi sim code.
 
-The list will be updated once the active call was put on hold and
-callheld=3D2 is reported. In this case the list has to be requested
-again (AT+CLCC).
+Thanks,
+Cedric
 
-AT sequence that exhibited the failure (AG device was a Nokia N9
-having an active outgoing call and placing a second outgoing call)
+On Fri, Jan 18, 2013 at 9:51 AM, Cedric Jehasse
+<cedric.jehasse@gmail.com> wrote:
+> From: Cedric Jehasse <cedric.jehasse@softathome.com>
+>
+> Define message types for verify pin and card status indication.
+> ---
+>  drivers/qmimodem/uim.h |    3 +++
+>  1 file changed, 3 insertions(+)
+>
+> diff --git a/drivers/qmimodem/uim.h b/drivers/qmimodem/uim.h
+> index 8f123e7..73e9c94 100644
+> --- a/drivers/qmimodem/uim.h
+> +++ b/drivers/qmimodem/uim.h
+> @@ -24,10 +24,13 @@
+>  #define QMI_UIM_WRITE_TRANSPARENT      34      /* Write data */
+>  #define QMI_UIM_WRITE_RECORD           35      /* Write a record */
+>  #define QMI_UIM_GET_FILE_ATTRIBUTES    36      /* Get file attributes */
+> +#define QMI_UIM_VERIFY_PIN             38      /* Verify PIN*/
+>
+>  #define QMI_UIM_EVENT_REGISTRATION     46      /* Register for indicatio=
+ns */
+>  #define QMI_UIM_GET_CARD_STATUS                47      /* Get card statu=
+s */
+>
+> +#define QMI_UIM_CARD_STATUS_IND                50      /* Card status in=
+dication*/
+> +
+>
+>  /* Register for indications */
+>  #define QMI_UIM_PARAM_EVENT_MASK       0x01    /* uint32 */
+> --
+> 1.7.9.5
+>
 
-< \r\n+CIEV: 5,2\r\n
-> AT+CLCC\r
-< \r\n+CLCC: 1,0,0,0,0,"+49xxx1",145\r\n
-< \r\nOK\r\n
-< \r\n+CIEV: 6,2\r\n
-< \r\n+CIEV: 5,3\r\n
-< \r\n+CIEV: 6,1\r\n
-> AT+CLCC\r
-< \r\n+CIEV: 5,0\r\n
-< \r\n+CLCC: 1,0,1,0,0,"+49xxx1",145\r\n
-< \r\n+CLCC: 2,0,0,0,0,"+49xxx2",145\r\n
-< \r\nOK\r\n
----
- drivers/hfpmodem/vendor.h    |  3 ++-
- drivers/hfpmodem/voicecall.c | 17 +++++++++++++++++
- 2 files changed, 19 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/hfpmodem/vendor.h b/drivers/hfpmodem/vendor.h
-index fca847a..597ddee 100644
---- a/drivers/hfpmodem/vendor.h
-+++ b/drivers/hfpmodem/vendor.h
-@@ -21,5 +21,6 @@
-  */
- =
-
- enum ofono_vendor {
--	OFONO_VENDOR_GENERIC =3D 0
-+	OFONO_VENDOR_GENERIC =3D 0,
-+	OFONO_VENDOR_NOKIA_N9
- };
-diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index 7d2988e..af2aa75 100644
---- a/drivers/hfpmodem/voicecall.c
-+++ b/drivers/hfpmodem/voicecall.c
-@@ -1041,13 +1041,20 @@ out:
- 	vd->cind_val[HFP_INDICATOR_CALLSETUP] =3D value;
- }
- =
-
-+static int needs_callheld_clcc_quirk(int vendor)
-+{
-+		return vendor =3D=3D OFONO_VENDOR_NOKIA_N9;
-+}
-+
- static void ciev_callheld_notify(struct ofono_voicecall *vc,
- 					unsigned int value)
- {
- 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
- 	GSList *l;
-+	GSList *dialing;
- 	struct ofono_call *call;
- 	unsigned int callheld =3D vd->cind_val[HFP_INDICATOR_CALLHELD];
-+	unsigned int callsetup =3D vd->cind_val[HFP_INDICATOR_CALLSETUP];
- =
-
- 	switch (value) {
- 	case 0:
-@@ -1083,6 +1090,16 @@ static void ciev_callheld_notify(struct ofono_voicec=
-all *vc,
- 				call->status =3D CALL_STATUS_HELD;
- 				ofono_voicecall_notify(vc, call);
- 			}
-+
-+			if (needs_callheld_clcc_quirk(vd->vendor)) {
-+				if (callsetup =3D=3D 2 || callsetup =3D=3D 3) {
-+					dialing =3D find_dialing(vd->calls);
-+
-+					if (dialing =3D=3D NULL)
-+						g_at_chat_send(vd->chat, "AT+CLCC", clcc_prefix,
-+								clcc_poll_cb, vc, NULL);
-+				}
-+			}
- 		} else if (callheld =3D=3D 1) {
- 			if (vd->clcc_source)
- 				g_source_remove(vd->clcc_source);
--- =
-
-1.7.11.7
-
-
---===============2348197864399368979==--
+--===============7880041773020852594==--
 
