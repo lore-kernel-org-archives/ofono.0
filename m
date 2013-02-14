@@ -1,45 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============5790601781909719660=="
+Content-Type: multipart/mixed; boundary="===============4451730068878451532=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH mmsd 3/3] build: Use AM_CPPFLAGS instead of INCLUDES
-Date: Thu, 14 Feb 2013 12:18:13 -0200
-Message-ID: <1360851493-31131-3-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <1360851493-31131-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] hfp_hf_bluez5: Remove unneeded modem hash lookup
+Date: Thu, 14 Feb 2013 08:52:48 -0600
+Message-ID: <511CFA40.5080902@gmail.com>
+In-Reply-To: <1359725070-11626-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5790601781909719660==
+--===============4451730068878451532==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Makefile.am:49: warning: 'INCLUDES' is the old name for 'AM_CPPFLAGS' (or '=
-*_CPPFLAGS')
----
- Makefile.am | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Claudio,
 
-diff --git a/Makefile.am b/Makefile.am
-index f802388..ee2c715 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -46,7 +46,7 @@ AM_CFLAGS =3D @GLIB_CFLAGS@ @DBUS_CFLAGS@ $(builtin_cflag=
-s) \
- 					-DPLUGINDIR=3D\""$(plugindir)"\" \
- 					-DPUSHCONFDIR=3D\""$(pushconfdir)"\"
- =
+On 02/01/2013 07:24 AM, Claudio Takahasi wrote:
+> Modem object is created when the Device Proxy is added, and it is
+> paired. Another path is when the Device "Paired" property changes
+> to True.
+> ---
+>   plugins/hfp_hf_bluez5.c | 4 ----
+>   1 file changed, 4 deletions(-)
+>
 
--INCLUDES =3D -I$(builddir)/src -I$(srcdir)/src -I$(srcdir)/gdbus
-+AM_CPPFLAGS =3D -I$(builddir)/src -I$(srcdir)/src -I$(srcdir)/gdbus
- =
+Patch has been applied, thanks.
 
- CLEANFILES =3D src/builtin.h
- =
-
--- =
-
-1.8.1.3
+Regards,
+-Denis
 
 
---===============5790601781909719660==--
+--===============4451730068878451532==--
 
