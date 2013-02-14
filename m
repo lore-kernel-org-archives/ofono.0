@@ -1,44 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============8811639735738413461=="
+Content-Type: multipart/mixed; boundary="===============1712376714109011761=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: Re: [PATCH] hfp_hf_bluez5: Remove unneeded modem hash lookup
-Date: Thu, 14 Feb 2013 09:33:29 -0300
-Message-ID: <CAKT1EBerPiNjSvX+5mvcxetTyzJ9n2uPDXLLBitPedgyOw8vPw@mail.gmail.com>
-In-Reply-To: <CAKT1EBdHmx8CqThVsfAwKzbg0YWNPp9pOuPT61ZR3OcLbezmwg@mail.gmail.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH mmsd 1/3] README: add information about mailing list
+Date: Thu, 14 Feb 2013 12:18:11 -0200
+Message-ID: <1360851493-31131-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8811639735738413461==
+--===============1712376714109011761==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Denis:
+---
+ README | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-On Fri, Feb 1, 2013 at 11:03 AM, Claudio Takahasi
-<claudio.takahasi@openbossa.org> wrote:
-> Hi Denis:
->
-> On Fri, Feb 1, 2013 at 10:24 AM, Claudio Takahasi
-> <claudio.takahasi@openbossa.org> wrote:
->> Modem object is created when the Device Proxy is added, and it is
->> paired. Another path is when the Device "Paired" property changes
->> to True.
->
-> Ignore this patch. This verification is needed: Property Changed
-> callback for "Paired" is *always* called after Proxy Added.
->
-> Regards,
-> Claudio
+diff --git a/README b/README
+index e33be69..fdfeafb 100644
+--- a/README
++++ b/README
+@@ -19,3 +19,9 @@ Configure automatically searches for all required compone=
+nts and packages.
+ =
 
-This patch can be applied now.
+ To compile and install run:
+ 	make && make install
++
++Information
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++Mailing list:
++	ofono(a)ofono.org
+-- =
 
-The patch "gdbus: Don't call property changed callback during client
-init" fixes the problem that I reported.
+1.8.1.3
 
 
-Regards,
-Claudio.
-
---===============8811639735738413461==--
+--===============1712376714109011761==--
 
