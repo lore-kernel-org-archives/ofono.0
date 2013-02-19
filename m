@@ -1,125 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============2691393960308602654=="
+Content-Type: multipart/mixed; boundary="===============8972805000286406894=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 07/11] hfp_audio: Add repeated Agent registration
- verification
-Date: Tue, 19 Feb 2013 17:44:48 -0300
-Message-ID: <1361306692-959-8-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 08/11] hfp_audio: Free agents when exiting
+Date: Tue, 19 Feb 2013 17:44:49 -0300
+Message-ID: <1361306692-959-9-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1361306692-959-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2691393960308602654==
+--===============8972805000286406894==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-
-This patch checks if the Handsfree Audio Manager already has an agent
-registered for the same owner and object path.
+Free agents allocated resources when hfp_audio plugin exits.
 ---
- plugins/hfp_audio.c | 41 ++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 40 insertions(+), 1 deletion(-)
+ plugins/hfp_audio.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
 diff --git a/plugins/hfp_audio.c b/plugins/hfp_audio.c
-index db21a5d..32ddebc 100644
+index 32ddebc..ffc3138 100644
 --- a/plugins/hfp_audio.c
 +++ b/plugins/hfp_audio.c
-@@ -25,6 +25,7 @@
+@@ -51,6 +51,16 @@ enum hfp_codec {
  =
 
- #include <errno.h>
- #include <stdio.h>
-+#include <string.h>
+ static GSList *agents =3D NULL;
  =
 
- #include <gdbus.h>
- =
-
-@@ -35,12 +36,34 @@
- =
-
- #define HFP_AUDIO_MANAGER_INTERFACE		OFONO_SERVICE ".HandsfreeAudioManager"
- =
-
-+struct agent {
-+	char *owner;
-+	char *path;
-+	unsigned char *codecs;
-+	int codecs_len;
-+};
-+
- /* Supported agents codecs */
- enum hfp_codec {
- 	HFP_CODEC_CVSD =3D 0x01,
- 	HFP_CODEC_MSBC =3D 0x02,
- };
- =
-
-+static GSList *agents =3D NULL;
-+
-+static int agent_cmp(gconstpointer a, gconstpointer b)
++static void agent_free(gpointer data)
 +{
-+	const struct agent *agent =3D a;
-+	const struct agent *match =3D b;
-+	int ret;
++	struct agent *agent =3D data;
 +
-+	ret =3D strcmp(agent->owner, match->owner);
-+	if (ret !=3D 0)
-+		return ret;
-+
-+	return strcmp(agent->path, match->path);
++	g_free(agent->owner);
++	g_free(agent->path);
++	g_free(agent->codecs);
++	g_free(agent);
 +}
 +
- static DBusMessage *am_get_cards(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
+ static int agent_cmp(gconstpointer a, gconstpointer b)
  {
-@@ -52,11 +75,14 @@ static DBusMessage *am_get_cards(DBusConnection *conn,
- static DBusMessage *am_agent_register(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
+ 	const struct agent *agent =3D a;
+@@ -158,6 +168,8 @@ static void hfp_audio_exit(void)
  {
--	const char *path;
-+	struct agent match, *agent;
-+	const char *sender, *path;
- 	unsigned char *codecs;
- 	DBusMessageIter iter, array;
- 	int length, i;
+ 	g_dbus_unregister_interface(ofono_dbus_get_connection(), "/",
+ 						HFP_AUDIO_MANAGER_INTERFACE);
++
++	g_slist_free_full(agents, agent_free);
+ }
  =
 
-+	sender =3D dbus_message_get_sender(msg);
-+
- 	if (dbus_message_iter_init(msg, &iter) =3D=3D FALSE)
- 		goto invalid_args;
- =
-
-@@ -75,6 +101,19 @@ static DBusMessage *am_agent_register(DBusConnection *c=
-onn,
- 			goto invalid_args;
- 	}
- =
-
-+	match.owner =3D (char *) sender;
-+	match.path =3D (char *) path;
-+	if (g_slist_find_custom(agents, &match, agent_cmp))
-+		goto invalid_args;
-+
-+	agent =3D g_new0(struct agent, 1);
-+	agent->owner =3D g_strdup(sender);
-+	agent->path =3D g_strdup(path);
-+	agent->codecs =3D g_memdup(codecs, length);
-+	agent->codecs_len =3D length;
-+
-+	agents =3D g_slist_prepend(agents, agent);
-+
- 	return dbus_message_new_method_return(msg);
- =
-
- invalid_args:
+ OFONO_PLUGIN_DEFINE(hfp_audio, "Handsfree Audio Plugin", VERSION,
 -- =
 
 1.7.11.7
 
 
---===============2691393960308602654==--
+--===============8972805000286406894==--
 
