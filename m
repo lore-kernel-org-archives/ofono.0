@@ -1,85 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============7094441791705522074=="
+Content-Type: multipart/mixed; boundary="===============3862077051010035123=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 01/11] hfp_audio: Adds initial plugin files
-Date: Tue, 19 Feb 2013 17:44:42 -0300
-Message-ID: <1361306692-959-2-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1361306692-959-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 00/11] Initial support for Handsfree Audio Manager
+Date: Tue, 19 Feb 2013 17:44:41 -0300
+Message-ID: <1361306692-959-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7094441791705522074==
+--===============3862077051010035123==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds a plugin related to a new experimental Handsfree Audio
-interface. HF and AG will expose Handsfree Audio Cards to a Handfree
-Audio Agent.
----
- Makefile.am         |  3 +++
- plugins/hfp_audio.c | 32 ++++++++++++++++++++++++++++++++
- 2 files changed, 35 insertions(+)
+The following patches implement the initial functionality of the experiment=
+al
+Handsfree Audio Manager interface defined in doc/handsfree-audio-api.txt
+
+This series add the Register and Unregister methods. A new plugin "hfp_audi=
+o"
+is being added allowing to share the functions between AG and HF.
+
+
+Claudio Takahasi (9):
+  hfp_audio: Adds initial plugin files
+  ofono: Add option for experimental interfaces
+  dbus: Move oFono error define to dbus.h
+  hfp_audio: Add initial manager methods declaration
+  hfp_audio: Add "Register" agent arguments parsing
+  hfp_audio: Free agents when exiting
+  hfp_audio: Call Agent "Release" when exiting
+  hfp_audio: Add Agent "Unregister"
+  hfp_audio: Add Agent tracking
+
+Vinicius Costa Gomes (2):
+  hfp_audio: Add codec array validation
+  hfp_audio: Add repeated Agent registration verification
+
+ Makefile.am         |   3 +
+ include/dbus.h      |   1 +
+ plugins/hfp_audio.c | 229 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/dbus.c          |   2 -
+ src/main.c          |   9 +++
+ 5 files changed, 242 insertions(+), 2 deletions(-)
  create mode 100644 plugins/hfp_audio.c
 
-diff --git a/Makefile.am b/Makefile.am
-index ef4d314..8fc6dca 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -434,6 +434,9 @@ builtin_sources +=3D $(btio_sources)
- builtin_cflags +=3D @BLUEZ_CFLAGS@
- builtin_libadd +=3D @BLUEZ_LIBS@
- else
-+builtin_modules +=3D hfp_audio
-+builtin_sources +=3D plugins/hfp_audio.c
-+
- builtin_modules +=3D bluez5
- builtin_sources +=3D plugins/bluez5.c plugins/bluez5.h
- =
-
-diff --git a/plugins/hfp_audio.c b/plugins/hfp_audio.c
-new file mode 100644
-index 0000000..e90d35b
---- /dev/null
-+++ b/plugins/hfp_audio.c
-@@ -0,0 +1,32 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2013  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <stdio.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
-+
-+OFONO_PLUGIN_DEFINE(hfp_audio, "Handsfree Audio Plugin", VERSION,
-+			OFONO_PLUGIN_PRIORITY_DEFAULT, NULL, NULL)
 -- =
 
 1.7.11.7
 
 
---===============7094441791705522074==--
+--===============3862077051010035123==--
 
