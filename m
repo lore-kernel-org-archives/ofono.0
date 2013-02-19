@@ -1,54 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============3862077051010035123=="
+Content-Type: multipart/mixed; boundary="===============0684135999944240725=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 00/11] Initial support for Handsfree Audio Manager
-Date: Tue, 19 Feb 2013 17:44:41 -0300
-Message-ID: <1361306692-959-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 02/11] ofono: Add option for experimental interfaces
+Date: Tue, 19 Feb 2013 17:44:43 -0300
+Message-ID: <1361306692-959-3-git-send-email-claudio.takahasi@openbossa.org>
+In-Reply-To: <1361306692-959-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3862077051010035123==
+--===============0684135999944240725==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The following patches implement the initial functionality of the experiment=
-al
-Handsfree Audio Manager interface defined in doc/handsfree-audio-api.txt
+This patch adds a command line option for enabling experimental D-Bus
+interfaces. --experimental/-E enables experimental interfaces.
+---
+ src/main.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-This series add the Register and Unregister methods. A new plugin "hfp_audi=
-o"
-is being added allowing to share the functions between AG and HF.
+diff --git a/src/main.c b/src/main.c
+index 46bb90b..1e99b13 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -133,6 +133,7 @@ static gchar *option_plugin =3D NULL;
+ static gchar *option_noplugin =3D NULL;
+ static gboolean option_detach =3D TRUE;
+ static gboolean option_version =3D FALSE;
++static gboolean option_experimental =3D FALSE;
+ =
 
+ static gboolean parse_debug(const char *key, const char *value,
+ 					gpointer user_data, GError **error)
+@@ -153,6 +154,8 @@ static GOptionEntry options[] =3D {
+ 				"Specify plugins to load", "NAME,..," },
+ 	{ "noplugin", 'P', 0, G_OPTION_ARG_STRING, &option_noplugin,
+ 				"Specify plugins not to load", "NAME,..." },
++	{ "experimental", 'E', 0, G_OPTION_ARG_NONE, &option_experimental,
++				"Enable experimental interfaces" },
+ 	{ "nodetach", 'n', G_OPTION_FLAG_REVERSE,
+ 				G_OPTION_ARG_NONE, &option_detach,
+ 				"Don't run as daemon in background" },
+@@ -168,6 +171,7 @@ int main(int argc, char **argv)
+ 	DBusConnection *conn;
+ 	DBusError error;
+ 	guint signal;
++	int gdbus_flags =3D 0;
+ =
 
-Claudio Takahasi (9):
-  hfp_audio: Adds initial plugin files
-  ofono: Add option for experimental interfaces
-  dbus: Move oFono error define to dbus.h
-  hfp_audio: Add initial manager methods declaration
-  hfp_audio: Add "Register" agent arguments parsing
-  hfp_audio: Free agents when exiting
-  hfp_audio: Call Agent "Release" when exiting
-  hfp_audio: Add Agent "Unregister"
-  hfp_audio: Add Agent tracking
+ #ifdef NEED_THREADS
+ 	if (g_thread_supported() =3D=3D FALSE)
+@@ -233,6 +237,11 @@ int main(int argc, char **argv)
+ 	g_dbus_set_disconnect_function(conn, system_bus_disconnected,
+ 					NULL, NULL);
+ =
 
-Vinicius Costa Gomes (2):
-  hfp_audio: Add codec array validation
-  hfp_audio: Add repeated Agent registration verification
++	if (option_experimental)
++		gdbus_flags =3D G_DBUS_FLAG_ENABLE_EXPERIMENTAL;
++
++	g_dbus_set_flags(gdbus_flags);
++
+ 	__ofono_dbus_init(conn);
+ =
 
- Makefile.am         |   3 +
- include/dbus.h      |   1 +
- plugins/hfp_audio.c | 229 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/dbus.c          |   2 -
- src/main.c          |   9 +++
- 5 files changed, 242 insertions(+), 2 deletions(-)
- create mode 100644 plugins/hfp_audio.c
-
+ 	__ofono_modemwatch_init();
 -- =
 
 1.7.11.7
 
 
---===============3862077051010035123==--
+--===============0684135999944240725==--
 
