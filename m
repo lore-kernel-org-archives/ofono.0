@@ -1,76 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============7455922301371564416=="
+Content-Type: multipart/mixed; boundary="===============9057432176803696719=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 6/7] handsfree-audio: Add Agent "Unregister"
-Date: Wed, 20 Feb 2013 18:55:50 -0300
-Message-ID: <1361397351-5841-7-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v1 7/7] handsfree-audio: Add Agent tracking
+Date: Wed, 20 Feb 2013 18:55:51 -0300
+Message-ID: <1361397351-5841-8-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1361397351-5841-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7455922301371564416==
+--===============9057432176803696719==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch implements the "Unregister" method of the Handsfree Audio
-Manager. The agent is unregistered if sender and path match.
+This patch tracks when the Handsfree Audio Agent leaves the system BUS,
+and free agent allocated resources.
 ---
- src/handsfree-audio.c | 25 ++++++++++++++++++++++++-
- 1 file changed, 24 insertions(+), 1 deletion(-)
+ src/handsfree-audio.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
 
 diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 07dbda0..2635d76 100644
+index 2635d76..f10aeb4 100644
 --- a/src/handsfree-audio.c
 +++ b/src/handsfree-audio.c
-@@ -25,6 +25,7 @@
+@@ -45,12 +45,16 @@ struct agent {
+ 	char *path;
+ 	unsigned char *codecs;
+ 	int codecs_len;
++	guint watch;
+ };
  =
 
- #include <errno.h>
- #include <stdio.h>
-+#include <string.h>
+ static struct agent *agent =3D NULL;
  =
 
- #include <gdbus.h>
- =
-
-@@ -115,7 +116,29 @@ static DBusMessage *am_agent_register(DBusConnection *=
-conn,
- static DBusMessage *am_agent_unregister(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
+ static void agent_free(struct agent *agent)
  {
--	return __ofono_error_not_implemented(msg);
-+	const char *sender, *path;
-+	DBusMessageIter iter;
++	if (agent->watch > 0)
++		g_dbus_remove_watch(ofono_dbus_get_connection(), agent->watch);
 +
-+	if (agent =3D=3D NULL)
-+		return __ofono_error_not_found(msg);
-+
-+	sender =3D dbus_message_get_sender(msg);
-+
-+	if (dbus_message_iter_init(msg, &iter) =3D=3D FALSE)
-+		return __ofono_error_invalid_args(msg);
-+
-+	dbus_message_iter_get_basic(&iter, &path);
-+
-+	if (strcmp(sender, agent->owner) !=3D 0)
-+		return __ofono_error_not_allowed(msg);
-+
-+	if (strcmp(path, agent->path) !=3D 0)
-+		return __ofono_error_not_found(msg);
-+
-+	agent_free(agent);
-+	agent =3D NULL;
-+
-+	return dbus_message_new_method_return(msg);
+ 	g_free(agent->owner);
+ 	g_free(agent->path);
+ 	g_free(agent->codecs);
+@@ -67,6 +71,14 @@ static void agent_release(struct agent *agent)
+ 	g_dbus_send_message(ofono_dbus_get_connection(), msg);
  }
  =
 
- static const GDBusMethodTable am_methods[] =3D {
++static void agent_disconnect(DBusConnection *conn, void *user_data)
++{
++	DBG("Agent %s disconnected", agent->owner);
++
++	agent_free(agent);
++	agent =3D NULL;
++}
++
+ static DBusMessage *am_get_cards(DBusConnection *conn,
+ 					DBusMessage *msg, void *user_data)
+ {
+@@ -109,6 +121,8 @@ static DBusMessage *am_agent_register(DBusConnection *c=
+onn,
+ 	agent->path =3D g_strdup(path);
+ 	agent->codecs =3D g_memdup(codecs, length);
+ 	agent->codecs_len =3D length;
++	agent->watch =3D g_dbus_add_disconnect_watch(conn, sender,
++						agent_disconnect, NULL, NULL);
+ =
+
+ 	return dbus_message_new_method_return(msg);
+ }
 -- =
 
 1.7.11.7
 
 
---===============7455922301371564416==--
+--===============9057432176803696719==--
 
