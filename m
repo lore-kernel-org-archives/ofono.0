@@ -1,78 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============9057432176803696719=="
+Content-Type: multipart/mixed; boundary="===============2669313427832566633=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 7/7] handsfree-audio: Add Agent tracking
-Date: Wed, 20 Feb 2013 18:55:51 -0300
-Message-ID: <1361397351-5841-8-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1361397351-5841-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 1/2] hfp_hf_bluez5: Add local HFP version tracking
+Date: Wed, 20 Feb 2013 19:26:18 -0300
+Message-ID: <1361399179-16734-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9057432176803696719==
+--===============2669313427832566633==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch tracks when the Handsfree Audio Agent leaves the system BUS,
-and free agent allocated resources.
+Fallback to HFP 1.5 if defer setup is not supported since it is not
+possible to proceed with codec negotiation.
 ---
- src/handsfree-audio.c | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
+ plugins/hfp_hf_bluez5.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 2635d76..f10aeb4 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -45,12 +45,16 @@ struct agent {
- 	char *path;
- 	unsigned char *codecs;
- 	int codecs_len;
-+	guint watch;
- };
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index 5de6188..cc4e0a2 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -65,6 +65,7 @@ struct hfp {
  =
 
- static struct agent *agent =3D NULL;
+ static GDBusClient *bluez =3D NULL;
+ static guint sco_watch =3D 0;
++static uint16_t local_hfp_version =3D HFP_VERSION_1_6;
  =
 
- static void agent_free(struct agent *agent)
+ static void hfp_debug(const char *str, void *user_data)
  {
-+	if (agent->watch > 0)
-+		g_dbus_remove_watch(ofono_dbus_get_connection(), agent->watch);
-+
- 	g_free(agent->owner);
- 	g_free(agent->path);
- 	g_free(agent->codecs);
-@@ -67,6 +71,14 @@ static void agent_release(struct agent *agent)
- 	g_dbus_send_message(ofono_dbus_get_connection(), msg);
- }
+@@ -502,9 +503,11 @@ static int sco_init(void)
+ 	}
  =
 
-+static void agent_disconnect(DBusConnection *conn, void *user_data)
-+{
-+	DBG("Agent %s disconnected", agent->owner);
-+
-+	agent_free(agent);
-+	agent =3D NULL;
-+}
-+
- static DBusMessage *am_get_cards(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
- {
-@@ -109,6 +121,8 @@ static DBusMessage *am_agent_register(DBusConnection *c=
-onn,
- 	agent->path =3D g_strdup(path);
- 	agent->codecs =3D g_memdup(codecs, length);
- 	agent->codecs_len =3D length;
-+	agent->watch =3D g_dbus_add_disconnect_watch(conn, sender,
-+						agent_disconnect, NULL, NULL);
+ 	if (setsockopt(sk, SOL_BLUETOOTH, BT_DEFER_SETUP,
+-				&defer_setup, sizeof(defer_setup)) < 0)
++				&defer_setup, sizeof(defer_setup)) < 0) {
+ 		ofono_warn("Can't enable deferred setup: %s (%d)",
+ 						strerror(errno), errno);
++		local_hfp_version =3D HFP_VERSION_1_5;
++	}
  =
 
- 	return dbus_message_new_method_return(msg);
- }
+ 	if (listen(sk, 5) < 0) {
+ 		close(sk);
 -- =
 
 1.7.11.7
 
 
---===============9057432176803696719==--
+--===============2669313427832566633==--
 
