@@ -1,71 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============2180586316484536741=="
+Content-Type: multipart/mixed; boundary="===============7455922301371564416=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 5/7] handsfree-audio: Call Agent "Release" when exiting
-Date: Wed, 20 Feb 2013 18:55:49 -0300
-Message-ID: <1361397351-5841-6-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v1 6/7] handsfree-audio: Add Agent "Unregister"
+Date: Wed, 20 Feb 2013 18:55:50 -0300
+Message-ID: <1361397351-5841-7-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1361397351-5841-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2180586316484536741==
+--===============7455922301371564416==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch notifies the Agent implementation that it is no longer
-registered to the service daemon.
+This patch implements the "Unregister" method of the Handsfree Audio
+Manager. The agent is unregistered if sender and path match.
 ---
- src/handsfree-audio.c | 15 ++++++++++++++-
- 1 file changed, 14 insertions(+), 1 deletion(-)
+ src/handsfree-audio.c | 25 ++++++++++++++++++++++++-
+ 1 file changed, 24 insertions(+), 1 deletion(-)
 
 diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 28053b4..07dbda0 100644
+index 07dbda0..2635d76 100644
 --- a/src/handsfree-audio.c
 +++ b/src/handsfree-audio.c
-@@ -31,6 +31,7 @@
- #include "ofono.h"
+@@ -25,6 +25,7 @@
  =
 
- #define HFP_AUDIO_MANAGER_INTERFACE		OFONO_SERVICE ".HandsfreeAudioManager"
-+#define HFP_AUDIO_AGENT_INTERFACE		OFONO_SERVICE ".HandsfreeAudioAgent"
+ #include <errno.h>
+ #include <stdio.h>
++#include <string.h>
  =
 
- /* Supported agent codecs */
- enum hfp_codec {
-@@ -55,6 +56,16 @@ static void agent_free(struct agent *agent)
- 	g_free(agent);
- }
+ #include <gdbus.h>
  =
 
-+static void agent_release(struct agent *agent)
-+{
-+	DBusMessage *msg;
-+
-+	msg =3D dbus_message_new_method_call(agent->owner, agent->path,
-+					HFP_AUDIO_AGENT_INTERFACE, "Release");
-+
-+	g_dbus_send_message(ofono_dbus_get_connection(), msg);
-+}
-+
- static DBusMessage *am_get_cards(DBusConnection *conn,
+@@ -115,7 +116,29 @@ static DBusMessage *am_agent_register(DBusConnection *=
+conn,
+ static DBusMessage *am_agent_unregister(DBusConnection *conn,
  					DBusMessage *msg, void *user_data)
  {
-@@ -136,6 +147,8 @@ void __ofono_handsfree_audio_manager_cleanup(void)
- 	g_dbus_unregister_interface(ofono_dbus_get_connection(), "/",
- 						HFP_AUDIO_MANAGER_INTERFACE);
+-	return __ofono_error_not_implemented(msg);
++	const char *sender, *path;
++	DBusMessageIter iter;
++
++	if (agent =3D=3D NULL)
++		return __ofono_error_not_found(msg);
++
++	sender =3D dbus_message_get_sender(msg);
++
++	if (dbus_message_iter_init(msg, &iter) =3D=3D FALSE)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_get_basic(&iter, &path);
++
++	if (strcmp(sender, agent->owner) !=3D 0)
++		return __ofono_error_not_allowed(msg);
++
++	if (strcmp(path, agent->path) !=3D 0)
++		return __ofono_error_not_found(msg);
++
++	agent_free(agent);
++	agent =3D NULL;
++
++	return dbus_message_new_method_return(msg);
+ }
  =
 
--	if (agent)
-+	if (agent) {
-+		agent_release(agent);
- 		agent_free(agent);
-+	}
- }
+ static const GDBusMethodTable am_methods[] =3D {
 -- =
 
 1.7.11.7
 
 
---===============2180586316484536741==--
+--===============7455922301371564416==--
 
