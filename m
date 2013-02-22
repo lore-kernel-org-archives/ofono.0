@@ -1,40 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============2004461327053874548=="
+Content-Type: multipart/mixed; boundary="===============0404276621974271690=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH 1/2] dundee: Fix typo in Manager's signal DeviceAdded
-Date: Fri, 22 Feb 2013 14:01:11 -0300
-Message-ID: <1361552472-23096-1-git-send-email-paulo.borges@openbossa.org>
+Subject: [PATCH 2/2] dundee: Fix typo in dundee-disconnect test
+Date: Fri, 22 Feb 2013 14:01:12 -0300
+Message-ID: <1361552472-23096-2-git-send-email-paulo.borges@openbossa.org>
+In-Reply-To: <1361552472-23096-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2004461327053874548==
+--===============0404276621974271690==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This typo was preventing dundee from sending the signal.
 ---
- dundee/manager.c |    2 +-
+ test/dundee-disconnect |    2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/dundee/manager.c b/dundee/manager.c
-index d7374d6..e8a37bf 100644
---- a/dundee/manager.c
-+++ b/dundee/manager.c
-@@ -90,7 +90,7 @@ static const GDBusMethodTable manager_methods[] =3D {
- };
+diff --git a/test/dundee-disconnect b/test/dundee-disconnect
+index 5b3113e..a285dc8 100755
+--- a/test/dundee-disconnect
++++ b/test/dundee-disconnect
+@@ -13,7 +13,7 @@ else:
+ 	devices =3D manager.GetDevices()
+ 	path =3D devices[0][0]
  =
 
- static const GDBusSignalTable manager_signals[] =3D {
--	{ GDBUS_SIGNAL("DevicesAdded",
-+	{ GDBUS_SIGNAL("DeviceAdded",
- 		GDBUS_ARGS({ "path", "o"},{ "properties", "a{sv}" })) },
- 	{ GDBUS_SIGNAL("DeviceRemoved",
- 		GDBUS_ARGS({ "path", "o"})) },
+-print "Disonnect device %s..." % path
++print "Disconnect device %s..." % path
+ device =3D dbus.Interface(bus.get_object('org.ofono.dundee', path),
+ 						'org.ofono.dundee.Device')
+ =
+
 -- =
 
 1.7.9.5
 
 
---===============2004461327053874548==--
+--===============0404276621974271690==--
 
