@@ -1,41 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============0404276621974271690=="
+Content-Type: multipart/mixed; boundary="===============1773777696466346466=="
 MIME-Version: 1.0
-From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH 2/2] dundee: Fix typo in dundee-disconnect test
-Date: Fri, 22 Feb 2013 14:01:12 -0300
-Message-ID: <1361552472-23096-2-git-send-email-paulo.borges@openbossa.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] dundee: Fix typo in Manager's signal DeviceAdded
+Date: Fri, 22 Feb 2013 11:30:29 -0600
+Message-ID: <5127AB35.5050009@gmail.com>
 In-Reply-To: <1361552472-23096-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0404276621974271690==
+--===============1773777696466346466==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- test/dundee-disconnect |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Paulo,
 
-diff --git a/test/dundee-disconnect b/test/dundee-disconnect
-index 5b3113e..a285dc8 100755
---- a/test/dundee-disconnect
-+++ b/test/dundee-disconnect
-@@ -13,7 +13,7 @@ else:
- 	devices =3D manager.GetDevices()
- 	path =3D devices[0][0]
- =
+On 02/22/2013 11:01 AM, Paulo Borges wrote:
+> This typo was preventing dundee from sending the signal.
+> ---
+>   dundee/manager.c |    2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+>
 
--print "Disonnect device %s..." % path
-+print "Disconnect device %s..." % path
- device =3D dbus.Interface(bus.get_object('org.ofono.dundee', path),
- 						'org.ofono.dundee.Device')
- =
+Both patches have been applied, thanks.
 
--- =
-
-1.7.9.5
+Regards,
+-Denis
 
 
---===============0404276621974271690==--
+--===============1773777696466346466==--
 
