@@ -1,50 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============5845217770233353964=="
+Content-Type: multipart/mixed; boundary="===============7362942093602889072=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@linux.intel.com>
-Subject: [PATCH 2/2] handsfree-audio: Build handsfree-audio command line tool
-Date: Mon, 25 Feb 2013 17:00:35 +0100
-Message-ID: <1361808035-25951-2-git-send-email-frederic.dalleau@linux.intel.com>
-In-Reply-To: <1361808035-25951-1-git-send-email-frederic.dalleau@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] audio-settings: Fix unneeded async for GetProperties
+Date: Mon, 25 Feb 2013 12:21:49 -0600
+Message-ID: <512BABBD.3040909@gmail.com>
+In-Reply-To: <1361800119-10775-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5845217770233353964==
+--===============7362942093602889072==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am |    6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+Hi Claudio,
 
-diff --git a/Makefile.am b/Makefile.am
-index 557f499..68ae85d 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -718,11 +718,15 @@ TESTS =3D $(unit_tests)
- if TOOLS
- noinst_PROGRAMS +=3D tools/huawei-audio tools/auto-enable \
- 			tools/get-location tools/lookup-apn \
--			tools/lookup-provider-name tools/tty-redirector
-+			tools/lookup-provider-name tools/tty-redirector \
-+			tools/handsfree-audio
- =
+On 02/25/2013 07:48 AM, Claudio Takahasi wrote:
+> GetProperties method call for Audio settings returns the reply in the
+> same iteraction, it doesn't need to be asynchronous.
+> ---
+>   src/audio-settings.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+>
 
- tools_huawei_audio_SOURCES =3D $(gdbus_sources) tools/huawei-audio.c
- tools_huawei_audio_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
- =
+Patch has been applied, thanks.
 
-+tools_handsfree_audio_SOURCES =3D $(gdbus_sources) tools/handsfree-audio.c
-+tools_handsfree_audio_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
-+
- tools_auto_enable_SOURCES =3D $(gdbus_sources) tools/auto-enable.c
- tools_auto_enable_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
- =
-
--- =
-
-1.7.9.5
+Regards,
+-Denis
 
 
---===============5845217770233353964==--
+--===============7362942093602889072==--
 
