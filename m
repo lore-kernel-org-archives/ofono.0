@@ -1,46 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============8981628000337386710=="
+Content-Type: multipart/mixed; boundary="===============6502567798978907796=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] handsfree-audio: Fix missing card index increment
-Date: Tue, 26 Feb 2013 15:48:11 -0600
-Message-ID: <512D2D9B.7030801@gmail.com>
-In-Reply-To: <1361914963-24197-1-git-send-email-claudio.takahasi@openbossa.org>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: Re: [PATCH] handsfree-audio: Fix not emitting CardRemoved
+Date: Tue, 26 Feb 2013 19:06:05 -0300
+Message-ID: <CAKT1EBdh3UOoW8WxKm+br7jkq0xNr3s1kTcynmBH9nTxXWeJ9w@mail.gmail.com>
+In-Reply-To: <1361912683-18938-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8981628000337386710==
+--===============6502567798978907796==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Claudio,
+Hi:
 
-On 02/26/2013 03:42 PM, Claudio Takahasi wrote:
+On Tue, Feb 26, 2013 at 6:04 PM, Claudio Takahasi
+<claudio.takahasi@openbossa.org> wrote:
 > ---
->   src/handsfree-audio.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
+>  src/handsfree-audio.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 >
 > diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-> index db65971..acd08e4 100644
+> index db65971..c99d65b 100644
 > --- a/src/handsfree-audio.c
 > +++ b/src/handsfree-audio.c
-> @@ -165,7 +165,7 @@ int ofono_handsfree_card_register(struct ofono_handsf=
-ree_card *card)
->   	if (card =3D=3D NULL)
->   		return -EINVAL;
+> @@ -194,10 +194,10 @@ static void card_unregister(struct ofono_handsfree_=
+card *card)
+>  {
+>         DBusConnection *conn =3D ofono_dbus_get_connection();
 >
-> -	snprintf(path, sizeof(path), "/card_%d", next_card_id);
-> +	snprintf(path, sizeof(path), "/card_%d", next_card_id++);
+> -       g_dbus_unregister_interface(conn, card->path, HFP_AUDIO_CARD_INTE=
+RFACE);
+> -
+>         emit_card_removed(card);
 >
->   	if (!g_dbus_register_interface(ofono_dbus_get_connection(), path,
->   					HFP_AUDIO_CARD_INTERFACE,
+> +       g_dbus_unregister_interface(conn, card->path, HFP_AUDIO_CARD_INTE=
+RFACE);
+> +
+>         g_free(card->path);
+>         card->path =3D NULL;
+>  }
+> --
+> 1.7.11.7
 
-Darn, I had to forget something :)
+Ignore this patch.
 
-My own fix pushed that is a little bit more paranoid.
+I messed up the object path name and interface.
 
-Regards,
--Denis
+Claudio.
 
---===============8981628000337386710==--
+--===============6502567798978907796==--
 
