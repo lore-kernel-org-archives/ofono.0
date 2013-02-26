@@ -1,84 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============2524576015626891952=="
+Content-Type: multipart/mixed; boundary="===============9142651516992381378=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 8/9] handsfree-audio: Add Audio Cards hash table
-Date: Tue, 26 Feb 2013 10:50:52 -0300
-Message-ID: <1361886653-30873-9-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v1 9/9] handsfree-audio: Add Audio Manager GetCards
+Date: Tue, 26 Feb 2013 10:50:53 -0300
+Message-ID: <1361886653-30873-10-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1361886653-30873-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2524576015626891952==
+--===============9142651516992381378==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds a hash table to store the created Audio Cards. This
-hash is required to create Audio Manager GetCards() reply.
+This patch adds the Handsfree Audio Manager GetCards() method
+implementation. It returns an array of Audio Cards, where each
+entry is composed by the object path of the Audio Card, and a
+dictionary of it's properties.
 ---
- src/handsfree-audio.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ src/handsfree-audio.c | 46 +++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 45 insertions(+), 1 deletion(-)
 
 diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index f8c598f..d839131 100644
+index d839131..b562859 100644
 --- a/src/handsfree-audio.c
 +++ b/src/handsfree-audio.c
-@@ -57,6 +57,7 @@ struct audio_card {
- =
-
- static struct agent *agent =3D NULL;
- static int ref_count =3D 0;
-+static GHashTable *cards_hash =3D NULL;
- =
-
- static void agent_free(struct agent *agent)
- {
-@@ -327,6 +328,8 @@ char *ofono_handsfree_card_create(const char *remote)
- 	card->remote =3D g_strdup(remote);
- 	am_emit_card_added(path, card);
- =
-
-+	g_hash_table_insert(cards_hash, g_strdup(path), card);
-+
- 	DBG("Audio Card added: %s", path);
- =
-
- 	return path;
-@@ -334,6 +337,9 @@ char *ofono_handsfree_card_create(const char *remote)
- =
-
- void ofono_handsfree_card_remove(const char *path)
- {
-+	if (!g_hash_table_remove(cards_hash, path))
-+		return;
-+
- 	am_emit_card_removed(path);
- =
-
- 	g_dbus_unregister_interface(ofono_dbus_get_connection(), path,
-@@ -344,6 +350,8 @@ void ofono_handsfree_card_remove(const char *path)
- =
-
- int __ofono_handsfree_audio_manager_init(void)
- {
-+	cards_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+							g_free, NULL);
- 	return 0;
+@@ -111,10 +111,54 @@ static void card_append_properties(DBusMessageIter *i=
+ter,
+ 	dbus_message_iter_close_container(iter, &dict);
  }
  =
 
-@@ -357,4 +365,6 @@ void __ofono_handsfree_audio_manager_cleanup(void)
++static void hash_card_entry(gpointer key, gpointer value, gpointer user_da=
+ta)
++{
++	const char *path =3D key;
++	struct audio_card *card =3D value;
++	DBusMessageIter entry, *array =3D user_data;
++
++	dbus_message_iter_open_container(array, DBUS_TYPE_STRUCT,
++							NULL, &entry);
++
++	dbus_message_iter_append_basic(&entry, DBUS_TYPE_OBJECT_PATH, &path);
++
++	card_append_properties(&entry, card);
++
++	dbus_message_iter_close_container(array, &entry);
++}
++
+ static DBusMessage *am_get_cards(DBusConnection *conn,
+ 					DBusMessage *msg, void *user_data)
+ {
+-	return __ofono_error_not_implemented(msg);
++	DBusMessage *reply;
++	DBusMessageIter iter, array;
++
++	reply =3D dbus_message_new_method_return(msg);
++	if (reply =3D=3D NULL)
++		return NULL;
++
++	dbus_message_iter_init_append(reply, &iter);
++
++	/*
++	 * a{oa{sv}}: Array of cards containing the object path of the
++	 * Audio Card and a dictionary of it's properties
++	 */
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
++					DBUS_STRUCT_BEGIN_CHAR_AS_STRING
++					DBUS_TYPE_OBJECT_PATH_AS_STRING
++					DBUS_TYPE_ARRAY_AS_STRING
++					DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
++					DBUS_TYPE_STRING_AS_STRING
++					DBUS_TYPE_VARIANT_AS_STRING
++					DBUS_DICT_ENTRY_END_CHAR_AS_STRING
++					DBUS_STRUCT_END_CHAR_AS_STRING,
++					&array);
++
++	g_hash_table_foreach(cards_hash, hash_card_entry, &iter);
++
++	dbus_message_iter_close_container(&iter, &array);
++
++	return reply;
+ }
  =
 
- 	ref_count =3D 1;
- 	ofono_handsfree_audio_unref();
-+
-+	g_hash_table_destroy(cards_hash);
- }
+ static DBusMessage *am_agent_register(DBusConnection *conn,
 -- =
 
 1.7.11.7
 
 
---===============2524576015626891952==--
+--===============9142651516992381378==--
 
