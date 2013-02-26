@@ -1,54 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============8618978643079636429=="
+Content-Type: multipart/mixed; boundary="===============5685480305291152606=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH] doc: Add possible handsfree-audio API errors
-Date: Tue, 26 Feb 2013 12:59:03 -0300
-Message-ID: <1361894343-11452-1-git-send-email-claudio.takahasi@openbossa.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] bluez4: Increase Bluez 4 D-Bus timeouts to 60 seconds
+Date: Tue, 26 Feb 2013 14:16:09 -0600
+Message-ID: <512D1809.6000704@gmail.com>
+In-Reply-To: <1361877352-2728-1-git-send-email-patrik.flykt@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8618978643079636429==
+--===============5685480305291152606==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds possible errors that can be returned by Register and
-Unregister methods of the Manager interface.
----
- doc/handsfree-audio-api.txt | 7 +++++++
- 1 file changed, 7 insertions(+)
+Hi Patrik,
 
-diff --git a/doc/handsfree-audio-api.txt b/doc/handsfree-audio-api.txt
-index 78ba9e1..6c3c8b5 100644
---- a/doc/handsfree-audio-api.txt
-+++ b/doc/handsfree-audio-api.txt
-@@ -25,11 +25,18 @@ Methods		array{object,dict} GetCards()
- 				1	CVSD
- 				2	mSBC
- =
+On 02/26/2013 05:15 AM, Patrik Flykt wrote:
+> RequestAuthorization method call may trigger pairing and/or pop up a
+> dialog in the remote device to which the user needs to react. Thus
+> increase D-Bus timeouts to 60 seconds for the Bluez 4 plugin.
+> ---
+>   plugins/bluez4.h |    2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+>
 
-+			Possible Errors: [service].Error.InvalidArguments
-+					 [service].Error.InUse
-+
- 		void Unregister(object path)
- =
+Patch has been applied, thanks.
 
- 			Unregisters a Handsfree Audio agent registered
- 			through the Register method.
- =
-
-+			Possible Errors: [service].Error.NotFound
-+					 [service].Error.InvalidArguments
-+					 [service].Error.NotAllowed
-+
- Signals		CardAdded(object path, dict properties)
- =
-
- 			Signal that is sent when a new card is added.  It
--- =
-
-1.7.11.7
+Regards,
+-Denis
 
 
---===============8618978643079636429==--
+--===============5685480305291152606==--
 
