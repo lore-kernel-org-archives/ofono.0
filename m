@@ -1,40 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============8052056521305058595=="
+Content-Type: multipart/mixed; boundary="===============3041359627512561200=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 5/9] handsfree-audio: Remove Audio Card when HFP is removed
-Date: Tue, 26 Feb 2013 10:50:49 -0300
-Message-ID: <1361886653-30873-6-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v1 6/9] handsfree-audio: Remove Audio Card for local initiated
+ disconnection
+Date: Tue, 26 Feb 2013 10:50:50 -0300
+Message-ID: <1361886653-30873-7-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1361886653-30873-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8052056521305058595==
+--===============3041359627512561200==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch removes a registered Handsfree Audio Card when the HFP remove
-callback gets called.
+This patch removes a registered Handsfree Audio Card when the local host
+requests disconnection of the service level connection.
 ---
- plugins/hfp_hf_bluez5.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+ plugins/hfp_hf_bluez5.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
 diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index f22b030..26946af 100644
+index 26946af..494f33c 100644
 --- a/plugins/hfp_hf_bluez5.c
 +++ b/plugins/hfp_hf_bluez5.c
-@@ -129,6 +129,7 @@ static void hfp_disconnected_cb(gpointer user_data)
- 	if (hfp->card) {
- 		ofono_handsfree_card_remove(hfp->card);
- 		g_free(hfp->card);
-+		hfp->card =3D NULL;
- 	}
- =
-
- 	g_at_chat_unref(info->chat);
-@@ -216,6 +217,12 @@ static void hfp_remove(struct ofono_modem *modem)
- 	if (hfp->msg)
- 		dbus_message_unref(hfp->msg);
+@@ -427,6 +427,12 @@ static DBusMessage *profile_disconnection(DBusConnecti=
+on *conn,
+ 	hfp =3D ofono_modem_get_data(modem);
+ 	info =3D &hfp->info;
  =
 
 +	if (hfp->card) {
@@ -44,13 +37,13 @@ index f22b030..26946af 100644
 +	}
 +
  	g_at_chat_unref(info->chat);
+ 	info->chat =3D NULL;
  =
 
- 	g_free(hfp);
 -- =
 
 1.7.11.7
 
 
---===============8052056521305058595==--
+--===============3041359627512561200==--
 
