@@ -1,94 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============9142651516992381378=="
+Content-Type: multipart/mixed; boundary="===============8618978643079636429=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 9/9] handsfree-audio: Add Audio Manager GetCards
-Date: Tue, 26 Feb 2013 10:50:53 -0300
-Message-ID: <1361886653-30873-10-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1361886653-30873-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH] doc: Add possible handsfree-audio API errors
+Date: Tue, 26 Feb 2013 12:59:03 -0300
+Message-ID: <1361894343-11452-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9142651516992381378==
+--===============8618978643079636429==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds the Handsfree Audio Manager GetCards() method
-implementation. It returns an array of Audio Cards, where each
-entry is composed by the object path of the Audio Card, and a
-dictionary of it's properties.
+This patch adds possible errors that can be returned by Register and
+Unregister methods of the Manager interface.
 ---
- src/handsfree-audio.c | 46 +++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 45 insertions(+), 1 deletion(-)
+ doc/handsfree-audio-api.txt | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index d839131..b562859 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -111,10 +111,54 @@ static void card_append_properties(DBusMessageIter *i=
-ter,
- 	dbus_message_iter_close_container(iter, &dict);
- }
+diff --git a/doc/handsfree-audio-api.txt b/doc/handsfree-audio-api.txt
+index 78ba9e1..6c3c8b5 100644
+--- a/doc/handsfree-audio-api.txt
++++ b/doc/handsfree-audio-api.txt
+@@ -25,11 +25,18 @@ Methods		array{object,dict} GetCards()
+ 				1	CVSD
+ 				2	mSBC
  =
 
-+static void hash_card_entry(gpointer key, gpointer value, gpointer user_da=
-ta)
-+{
-+	const char *path =3D key;
-+	struct audio_card *card =3D value;
-+	DBusMessageIter entry, *array =3D user_data;
++			Possible Errors: [service].Error.InvalidArguments
++					 [service].Error.InUse
 +
-+	dbus_message_iter_open_container(array, DBUS_TYPE_STRUCT,
-+							NULL, &entry);
-+
-+	dbus_message_iter_append_basic(&entry, DBUS_TYPE_OBJECT_PATH, &path);
-+
-+	card_append_properties(&entry, card);
-+
-+	dbus_message_iter_close_container(array, &entry);
-+}
-+
- static DBusMessage *am_get_cards(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
- {
--	return __ofono_error_not_implemented(msg);
-+	DBusMessage *reply;
-+	DBusMessageIter iter, array;
-+
-+	reply =3D dbus_message_new_method_return(msg);
-+	if (reply =3D=3D NULL)
-+		return NULL;
-+
-+	dbus_message_iter_init_append(reply, &iter);
-+
-+	/*
-+	 * a{oa{sv}}: Array of cards containing the object path of the
-+	 * Audio Card and a dictionary of it's properties
-+	 */
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+					DBUS_STRUCT_BEGIN_CHAR_AS_STRING
-+					DBUS_TYPE_OBJECT_PATH_AS_STRING
-+					DBUS_TYPE_ARRAY_AS_STRING
-+					DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
-+					DBUS_TYPE_STRING_AS_STRING
-+					DBUS_TYPE_VARIANT_AS_STRING
-+					DBUS_DICT_ENTRY_END_CHAR_AS_STRING
-+					DBUS_STRUCT_END_CHAR_AS_STRING,
-+					&array);
-+
-+	g_hash_table_foreach(cards_hash, hash_card_entry, &iter);
-+
-+	dbus_message_iter_close_container(&iter, &array);
-+
-+	return reply;
- }
+ 		void Unregister(object path)
  =
 
- static DBusMessage *am_agent_register(DBusConnection *conn,
+ 			Unregisters a Handsfree Audio agent registered
+ 			through the Register method.
+ =
+
++			Possible Errors: [service].Error.NotFound
++					 [service].Error.InvalidArguments
++					 [service].Error.NotAllowed
++
+ Signals		CardAdded(object path, dict properties)
+ =
+
+ 			Signal that is sent when a new card is added.  It
 -- =
 
 1.7.11.7
 
 
---===============9142651516992381378==--
+--===============8618978643079636429==--
 
