@@ -1,100 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============6003664854156714982=="
+Content-Type: multipart/mixed; boundary="===============2855750781068351634=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 1/6] hfp_hf_bluez5: Add registering Audio Card
-Date: Wed, 27 Feb 2013 17:33:49 -0300
-Message-ID: <1361997234-13804-2-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1361997234-13804-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v1 0/6] hfp_hf_bluez5: Register Audio Cards in handsfree
+ manager
+Date: Wed, 27 Feb 2013 17:33:48 -0300
+Message-ID: <1361997234-13804-1-git-send-email-claudio.takahasi@openbossa.org>
+In-Reply-To: <1361987924-497-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6003664854156714982==
+--===============2855750781068351634==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch registers the Handsfree Audio Card when the service level
-connection is established.
----
- plugins/hfp_hf_bluez5.c | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
+This patch series contains the changes in the hfp_hf_bluez5 plugin to
+create/register/remove audio cards.
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 7057d71..436d98c 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -46,6 +46,7 @@
- #include <ofono/netreg.h>
- #include <ofono/voicecall.h>
- #include <ofono/call-volume.h>
-+#include <ofono/handsfree-audio.h>
- #include <ofono/handsfree.h>
- =
+Changes from v0-v1:
+* Removed commit "Switch argument order when creating card"
 
- #include <drivers/hfpmodem/slc.h>
-@@ -61,6 +62,7 @@
- struct hfp {
- 	struct hfp_slc_info info;
- 	DBusMessage *msg;
-+	struct ofono_handsfree_card *card;
- };
- =
+Claudio Takahasi (6):
+  hfp_hf_bluez5: Add registering Audio Card
+  hfp_hf_bluez5: Add local Bluetooth address to Audio Card
+  hfp_hf_bluez5: Remove Audio Card when SLC fails
+  hfp_hf_bluez5: Remove Audio Card when SLC is disconnected
+  hfp_hf_bluez5: Remove Audio Card when modem is disabled
+  hfp_hf_bluez5: Remove Audio Card when disconnection is requested
 
- static GDBusClient *bluez =3D NULL;
-@@ -88,6 +90,8 @@ static void slc_established(gpointer userdata)
- 	hfp->msg =3D NULL;
- =
-
- 	ofono_info("Service level connection established");
-+
-+	ofono_handsfree_card_register(hfp->card);
- }
- =
-
- static void slc_failed(gpointer userdata)
-@@ -315,8 +319,11 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
- {
- 	struct hfp *hfp;
- 	struct ofono_modem *modem;
-+	struct sockaddr_rc saddr;
-+	socklen_t optlen;
- 	DBusMessageIter entry;
- 	const char *device;
-+	char remote[18];
- 	int fd, err;
- =
-
- 	DBG("Profile handler NewConnection");
-@@ -353,8 +360,20 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
- 					"Not enough resources");
- 	}
- =
-
-+	memset(&saddr, 0, sizeof(saddr));
-+	optlen =3D sizeof(saddr);
-+	if (getpeername(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
-+		err =3D errno;
-+		ofono_error("RFCOMM getpeername(): %s (%d)", strerror(err), err);
-+		close(fd);
-+		goto invalid;
-+	}
-+
-+	bt_ba2str(&saddr.rc_bdaddr, remote);
-+
- 	hfp =3D ofono_modem_get_data(modem);
- 	hfp->msg =3D dbus_message_ref(msg);
-+	hfp->card =3D ofono_handsfree_card_create(remote, NULL);
- =
-
- 	return NULL;
- =
+ plugins/hfp_hf_bluez5.c | 42 ++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
 
 -- =
 
 1.7.11.7
 
 
---===============6003664854156714982==--
+--===============2855750781068351634==--
 
