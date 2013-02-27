@@ -1,76 +1,98 @@
-Content-Type: multipart/mixed; boundary="===============2659151453831684950=="
+Content-Type: multipart/mixed; boundary="===============6814212069402295643=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v2 2/6] hfp_hf_bluez5: Add local Bluetooth address to Audio
- Card
-Date: Wed, 27 Feb 2013 18:02:58 -0300
-Message-ID: <1361998978-26744-1-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1361997234-13804-3-git-send-email-claudio.takahasi@openbossa.org>
+From: Paulo Borges <paulo.borges@openbossa.org>
+Subject: [PATCH] bluez5: Move ref / unref handsfree audio
+Date: Wed, 27 Feb 2013 18:49:13 -0300
+Message-ID: <1362001753-6607-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2659151453831684950==
+--===============6814212069402295643==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This commit moves the ref / unref to hfp_hf_bluez5 to make
+bluez5 more generic and reusable.
 ---
- plugins/hfp_hf_bluez5.c | 16 ++++++++++++++--
- 1 file changed, 14 insertions(+), 2 deletions(-)
+ plugins/bluez5.c        |   15 +--------------
+ plugins/hfp_hf_bluez5.c |    5 +++++
+ 2 files changed, 6 insertions(+), 14 deletions(-)
 
+diff --git a/plugins/bluez5.c b/plugins/bluez5.c
+index 788f3a2..9233a2b 100644
+--- a/plugins/bluez5.c
++++ b/plugins/bluez5.c
+@@ -35,7 +35,6 @@
+ #include <ofono/dbus.h>
+ #include <ofono/plugin.h>
+ #include <ofono/log.h>
+-#include <ofono/handsfree-audio.h>
+ =
+
+ #include <gdbus/gdbus.h>
+ #include "bluez5.h"
+@@ -257,17 +256,5 @@ void bt_disconnect_profile(DBusConnection *conn,
+ 							cb, user_data);
+ }
+ =
+
+-static int bluez5_init(void)
+-{
+-	ofono_handsfree_audio_ref();
+-
+-	return 0;
+-}
+-
+-static void bluez5_exit(void)
+-{
+-	ofono_handsfree_audio_unref();
+-}
+-
+ OFONO_PLUGIN_DEFINE(bluez5, "BlueZ 5 Utils Plugin", VERSION,
+-			OFONO_PLUGIN_PRIORITY_DEFAULT, bluez5_init, bluez5_exit)
++			OFONO_PLUGIN_PRIORITY_DEFAULT, NULL, NULL)
 diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index dbb1303..ac2ed61 100644
+index 7057d71..ad52027 100644
 --- a/plugins/hfp_hf_bluez5.c
 +++ b/plugins/hfp_hf_bluez5.c
-@@ -323,7 +323,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
-on *conn,
- 	socklen_t optlen;
- 	DBusMessageIter entry;
- 	const char *device;
--	char remote[18];
-+	char local[18], remote[18];
- 	int fd, err;
+@@ -47,6 +47,7 @@
+ #include <ofono/voicecall.h>
+ #include <ofono/call-volume.h>
+ #include <ofono/handsfree.h>
++#include <ofono/handsfree-audio.h>
  =
 
- 	DBG("Profile handler NewConnection");
-@@ -362,6 +362,18 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
+ #include <drivers/hfpmodem/slc.h>
  =
 
- 	memset(&saddr, 0, sizeof(saddr));
- 	optlen =3D sizeof(saddr);
-+	if (getsockname(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
-+		err =3D errno;
-+		ofono_error("RFCOMM getsockname(): %s (%d)", strerror(err),
-+									err);
-+		close(fd);
-+		goto invalid;
-+	}
+@@ -683,6 +684,8 @@ static int hfp_init(void)
+ 	g_dbus_client_set_proxy_handlers(bluez, proxy_added, NULL,
+ 						property_changed, NULL);
+ =
+
++	ofono_handsfree_audio_ref();
 +
-+	bt_ba2str(&saddr.rc_bdaddr, local);
+ 	return 0;
+ }
+ =
+
+@@ -698,6 +701,8 @@ static void hfp_exit(void)
+ =
+
+ 	if (sco_watch > 0)
+ 		g_source_remove(sco_watch);
 +
-+	memset(&saddr, 0, sizeof(saddr));
-+	optlen =3D sizeof(saddr);
- 	if (getpeername(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
- 		err =3D errno;
- 		ofono_error("RFCOMM getpeername(): %s (%d)", strerror(err),
-@@ -374,7 +386,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
-on *conn,
++	ofono_handsfree_audio_unref();
+ }
  =
 
- 	hfp =3D ofono_modem_get_data(modem);
- 	hfp->msg =3D dbus_message_ref(msg);
--	hfp->card =3D ofono_handsfree_card_create(remote, NULL);
-+	hfp->card =3D ofono_handsfree_card_create(remote, local);
- =
-
- 	return NULL;
- =
-
+ OFONO_PLUGIN_DEFINE(hfp_bluez5, "External Hands-Free Profile Plugin", VERS=
+ION,
 -- =
 
-1.7.11.7
+1.7.9.5
 
 
---===============2659151453831684950==--
+--===============6814212069402295643==--
 
