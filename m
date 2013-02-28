@@ -1,92 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============8519964425284151547=="
+Content-Type: multipart/mixed; boundary="===============2179852977575970909=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v3 1/6] hfp_hf_bluez5: Add registering Audio Card
-Date: Thu, 28 Feb 2013 13:01:05 -0300
-Message-ID: <1362067270-8632-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v3 2/6] hfp_hf_bluez5: Add local address to Audio Card
+Date: Thu, 28 Feb 2013 13:01:06 -0300
+Message-ID: <1362067270-8632-2-git-send-email-claudio.takahasi@openbossa.org>
+In-Reply-To: <1362067270-8632-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8519964425284151547==
+--===============2179852977575970909==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch registers the Handsfree Audio Card when the service level
-connection is established.
 ---
- plugins/hfp_hf_bluez5.c | 21 +++++++++++++++++++++
- 1 file changed, 21 insertions(+)
+ plugins/hfp_hf_bluez5.c | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
 
 diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 7057d71..87d7e91 100644
+index 87d7e91..3960d7a 100644
 --- a/plugins/hfp_hf_bluez5.c
 +++ b/plugins/hfp_hf_bluez5.c
-@@ -46,6 +46,7 @@
- #include <ofono/netreg.h>
- #include <ofono/voicecall.h>
- #include <ofono/call-volume.h>
-+#include <ofono/handsfree-audio.h>
- #include <ofono/handsfree.h>
- =
-
- #include <drivers/hfpmodem/slc.h>
-@@ -61,6 +62,7 @@
- struct hfp {
- 	struct hfp_slc_info info;
- 	DBusMessage *msg;
-+	struct ofono_handsfree_card *card;
- };
- =
-
- static GDBusClient *bluez =3D NULL;
-@@ -88,6 +90,8 @@ static void slc_established(gpointer userdata)
- 	hfp->msg =3D NULL;
- =
-
- 	ofono_info("Service level connection established");
-+
-+	ofono_handsfree_card_register(hfp->card);
- }
- =
-
- static void slc_failed(gpointer userdata)
-@@ -315,8 +319,11 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
- {
- 	struct hfp *hfp;
- 	struct ofono_modem *modem;
-+	struct sockaddr_rc saddr;
-+	socklen_t optlen;
+@@ -323,7 +323,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
+on *conn,
+ 	socklen_t optlen;
  	DBusMessageIter entry;
  	const char *device;
-+	char remote[18];
+-	char remote[18];
++	char local[18], remote[18];
  	int fd, err;
  =
 
  	DBG("Profile handler NewConnection");
-@@ -353,8 +360,22 @@ static DBusMessage *profile_new_connection(DBusConnect=
+@@ -363,6 +363,19 @@ static DBusMessage *profile_new_connection(DBusConnect=
 ion *conn,
- 					"Not enough resources");
- 	}
+ 	memset(&saddr, 0, sizeof(saddr));
+ 	optlen =3D sizeof(saddr);
  =
 
-+	memset(&saddr, 0, sizeof(saddr));
-+	optlen =3D sizeof(saddr);
-+
-+	if (getpeername(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
++	if (getsockname(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
 +		err =3D errno;
-+		ofono_error("RFCOMM getpeername(): %s (%d)", strerror(err),
++		ofono_error("RFCOMM getsockname(): %s (%d)", strerror(err),
 +									err);
 +		close(fd);
 +		goto invalid;
 +	}
 +
-+	bt_ba2str(&saddr.rc_bdaddr, remote);
++	bt_ba2str(&saddr.rc_bdaddr, local);
 +
++	memset(&saddr, 0, sizeof(saddr));
++	optlen =3D sizeof(saddr);
++
+ 	if (getpeername(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
+ 		err =3D errno;
+ 		ofono_error("RFCOMM getpeername(): %s (%d)", strerror(err),
+@@ -375,7 +388,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
+on *conn,
+ =
+
  	hfp =3D ofono_modem_get_data(modem);
  	hfp->msg =3D dbus_message_ref(msg);
-+	hfp->card =3D ofono_handsfree_card_create(remote, NULL);
+-	hfp->card =3D ofono_handsfree_card_create(remote, NULL);
++	hfp->card =3D ofono_handsfree_card_create(remote, local);
  =
 
  	return NULL;
@@ -97,5 +72,5 @@ ion *conn,
 1.7.11.7
 
 
---===============8519964425284151547==--
+--===============2179852977575970909==--
 
