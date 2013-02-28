@@ -1,52 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============1995388851365824482=="
+Content-Type: multipart/mixed; boundary="===============6355822032459009418=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Add vendor quirk for SIMCOM
-Date: Thu, 28 Feb 2013 10:44:49 -0600
-Message-ID: <512F8981.1020401@gmail.com>
-In-Reply-To: <1362066215-27452-2-git-send-email-r.r.zaripov@gmail.com>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 00/10] handsfree-audio: Add Agent NewConnection()
+Date: Thu, 28 Feb 2013 15:52:42 -0300
+Message-ID: <1362077572-28049-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1995388851365824482==
+--===============6355822032459009418==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Renat,
+This patch series moves the SCO connection handling from hfp_hf_bluez5.c
+to src/handsfree-audio.c, and adds the Agent NewConnection() method call
+to pass the SCO file descriptor from oFono to the Agent implementation.
 
-On 02/28/2013 09:43 AM, r.r.zaripov(a)gmail.com wrote:
-> From: Renat Zaripov<r.r.zaripov@gmail.com>
->
-> ---
->   drivers/atmodem/gprs-context.c |    6 +++++-
->   1 file changed, 5 insertions(+), 1 deletion(-)
->
-> diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-contex=
-t.c
-> index 3694c27..c5a0ae7 100644
-> --- a/drivers/atmodem/gprs-context.c
-> +++ b/drivers/atmodem/gprs-context.c
-> @@ -208,7 +208,11 @@ static void at_cgdcont_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
->   		return;
->   	}
->
-> -	sprintf(buf, "AT+CGDATA=3D\"PPP\",%u", gcd->active_context);
-> +	if (gcd->vendor =3D=3D OFONO_VENDOR_SIMCOM)
-> +		memcpy(buf, "ATD*99#", 7);
+Claudio Takahasi (10):
+  bluetooth: Add new Bluetooth header
+  handsfree-audio: Move SCO to handsfree-audio.c
+  handsfree-audio: Remove modem dependency
+  handsfree-audio: Add NewConnection
+  handsfree-audio: Check local SCO address
+  handsfree-audio: Reject SCO if Card is not ready
+  handsfree-audio: Reject SCO if agent is unavailable
+  handsfree-audio: Check CVSD when registering agent
+  handsfree-audio: Add function to get hfp version
+  hfp_hf_bluez5: Fix hard-coded hfp version
 
-At lease use strcpy, since you're not copying the '\0' here actually.
+ Makefile.am               |   2 +-
+ include/handsfree-audio.h |   1 +
+ plugins/bluez5.c          |  17 -----
+ plugins/bluez5.h          |  41 ------------
+ plugins/hfp_hf_bluez5.c   | 105 +-----------------------------
+ src/bluetooth.h           |  71 ++++++++++++++++++++
+ src/handsfree-audio.c     | 162 ++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 7 files changed, 235 insertions(+), 164 deletions(-)
+ create mode 100644 src/bluetooth.h
 
-> +	else
-> +		sprintf(buf, "AT+CGDATA=3D\"PPP\",%u", gcd->active_context);
-> +
->   	if (g_at_chat_send(gcd->chat, buf, none_prefix,
->   				at_cgdata_cb, gc, NULL)>  0)
->   		return;
+-- =
 
-Regards,
--Denis
+1.7.11.7
 
---===============1995388851365824482==--
+
+--===============6355822032459009418==--
 
