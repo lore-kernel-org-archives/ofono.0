@@ -1,30 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============6605220475534768986=="
+Content-Type: multipart/mixed; boundary="===============4627121927790136579=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v3 3/6] hfp_hf_bluez5: Remove Card when SLC fails
-Date: Thu, 28 Feb 2013 13:01:07 -0300
-Message-ID: <1362067270-8632-3-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v3 4/6] hfp_hf_bluez5: Remove Card if SLC is disconnected
+Date: Thu, 28 Feb 2013 13:01:08 -0300
+Message-ID: <1362067270-8632-4-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1362067270-8632-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6605220475534768986==
+--===============4627121927790136579==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch removes the previously created Audio Card if the service
-level negotiation fails.
+This patch removes previous registered Audio Card when the remote
+Bluetooth device triggers the service level disconnection.
 ---
  plugins/hfp_hf_bluez5.c | 3 +++
  1 file changed, 3 insertions(+)
 
 diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 3960d7a..98cef7c 100644
+index 98cef7c..5db7bb8 100644
 --- a/plugins/hfp_hf_bluez5.c
 +++ b/plugins/hfp_hf_bluez5.c
-@@ -112,6 +112,9 @@ static void slc_failed(gpointer userdata)
- 	ofono_error("Service level connection failed");
+@@ -129,6 +129,9 @@ static void hfp_disconnected_cb(gpointer user_data)
+ =
+
  	ofono_modem_set_powered(modem, FALSE);
  =
 
@@ -39,5 +40,5 @@ index 3960d7a..98cef7c 100644
 1.7.11.7
 
 
---===============6605220475534768986==--
+--===============4627121927790136579==--
 
