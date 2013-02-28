@@ -1,61 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============6723581926637657791=="
+Content-Type: multipart/mixed; boundary="===============5244612726147729063=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 09/10] handsfree-audio: Add function to get hfp version
-Date: Thu, 28 Feb 2013 15:52:51 -0300
-Message-ID: <1362077572-28049-10-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 10/10] hfp_hf_bluez5: Fix hard-coded hfp version
+Date: Thu, 28 Feb 2013 15:52:52 -0300
+Message-ID: <1362077572-28049-11-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1362077572-28049-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6723581926637657791==
+--===============5244612726147729063==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds a new function to read the local supported Handsfree
-Profile version.
+This patch removes the hard-coded Handsfree Profile version to register
+the external BlueZ profile.
 ---
- include/handsfree-audio.h | 1 +
- src/handsfree-audio.c     | 5 +++++
- 2 files changed, 6 insertions(+)
+ plugins/hfp_hf_bluez5.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/include/handsfree-audio.h b/include/handsfree-audio.h
-index c5403c7..96597c2 100644
---- a/include/handsfree-audio.h
-+++ b/include/handsfree-audio.h
-@@ -34,6 +34,7 @@ struct ofono_handsfree_card *ofono_handsfree_card_create(=
-const char *remote,
- 							const char *local);
- int ofono_handsfree_card_register(struct ofono_handsfree_card *card);
- void ofono_handsfree_card_remove(struct ofono_handsfree_card *card);
-+enum hfp_version ofono_handsfree_get_version();
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index ea2c848..c1f3ba2 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -484,8 +484,8 @@ static void connect_handler(DBusConnection *conn, void =
+*user_data)
+ {
+ 	DBG("Registering External Profile handler ...");
  =
 
- void ofono_handsfree_audio_ref(void);
- void ofono_handsfree_audio_unref(void);
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index d0ccf29..955c6ef 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -363,6 +363,11 @@ void ofono_handsfree_card_remove(struct ofono_handsfre=
-e_card *card)
- 	g_free(card);
+-	bt_register_profile(conn, HFP_HS_UUID, HFP_VERSION_1_5, "hfp_hf",
+-						HFP_EXT_PROFILE_PATH);
++	bt_register_profile(conn, HFP_HS_UUID, ofono_handsfree_get_version(),
++					"hfp_hf", HFP_EXT_PROFILE_PATH);
  }
  =
 
-+enum hfp_version ofono_handsfree_get_version()
-+{
-+	return local_hfp_version;
-+}
-+
- static void agent_free(struct agent *agent)
- {
- 	if (agent->watch > 0)
+ static gboolean has_hfp_ag_uuid(DBusMessageIter *array)
 -- =
 
 1.7.11.7
 
 
---===============6723581926637657791==--
+--===============5244612726147729063==--
 
