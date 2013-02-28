@@ -1,65 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============8808897761286629899=="
+Content-Type: multipart/mixed; boundary="===============6723581926637657791=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 08/10] handsfree-audio: Check CVSD when registering agent
-Date: Thu, 28 Feb 2013 15:52:50 -0300
-Message-ID: <1362077572-28049-9-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 09/10] handsfree-audio: Add function to get hfp version
+Date: Thu, 28 Feb 2013 15:52:51 -0300
+Message-ID: <1362077572-28049-10-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1362077572-28049-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8808897761286629899==
+--===============6723581926637657791==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch makes CVSD codec mandatory when registering a Handsfree
-Audio Agent.
+This patch adds a new function to read the local supported Handsfree
+Profile version.
 ---
- src/handsfree-audio.c | 11 +++++++++--
- 1 file changed, 9 insertions(+), 2 deletions(-)
+ include/handsfree-audio.h | 1 +
+ src/handsfree-audio.c     | 5 +++++
+ 2 files changed, 6 insertions(+)
 
+diff --git a/include/handsfree-audio.h b/include/handsfree-audio.h
+index c5403c7..96597c2 100644
+--- a/include/handsfree-audio.h
++++ b/include/handsfree-audio.h
+@@ -34,6 +34,7 @@ struct ofono_handsfree_card *ofono_handsfree_card_create(=
+const char *remote,
+ 							const char *local);
+ int ofono_handsfree_card_register(struct ofono_handsfree_card *card);
+ void ofono_handsfree_card_remove(struct ofono_handsfree_card *card);
++enum hfp_version ofono_handsfree_get_version();
+ =
+
+ void ofono_handsfree_audio_ref(void);
+ void ofono_handsfree_audio_unref(void);
 diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 50bd861..d0ccf29 100644
+index d0ccf29..955c6ef 100644
 --- a/src/handsfree-audio.c
 +++ b/src/handsfree-audio.c
-@@ -448,6 +448,7 @@ static DBusMessage *am_agent_register(DBusConnection *c=
-onn,
- 	unsigned char *codecs;
- 	DBusMessageIter iter, array;
- 	int length, i;
-+	gboolean has_cvsd =3D FALSE;
+@@ -363,6 +363,11 @@ void ofono_handsfree_card_remove(struct ofono_handsfre=
+e_card *card)
+ 	g_free(card);
+ }
  =
 
- 	if (agent)
- 		return __ofono_error_in_use(msg);
-@@ -467,11 +468,17 @@ static DBusMessage *am_agent_register(DBusConnection =
-*conn,
- 		return __ofono_error_invalid_args(msg);
- =
-
- 	for (i =3D 0; i < length; i++) {
--		if (codecs[i] !=3D HFP_CODEC_CVSD &&
--				codecs[i] !=3D HFP_CODEC_MSBC)
-+		if (codecs[i] =3D=3D HFP_CODEC_CVSD)
-+			has_cvsd =3D TRUE;
-+		else if (codecs[i] !=3D HFP_CODEC_MSBC)
- 			return __ofono_error_invalid_args(msg);
- 	}
- =
-
-+	if (has_cvsd =3D=3D FALSE) {
-+		ofono_error("CVSD codec is mandatory");
-+		return __ofono_error_invalid_args(msg);
-+	}
++enum hfp_version ofono_handsfree_get_version()
++{
++	return local_hfp_version;
++}
 +
- 	agent =3D g_new0(struct agent, 1);
- 	agent->owner =3D g_strdup(sender);
- 	agent->path =3D g_strdup(path);
+ static void agent_free(struct agent *agent)
+ {
+ 	if (agent->watch > 0)
 -- =
 
 1.7.11.7
 
 
---===============8808897761286629899==--
+--===============6723581926637657791==--
 
