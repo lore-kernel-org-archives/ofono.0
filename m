@@ -1,54 +1,92 @@
-Content-Type: multipart/mixed; boundary="===============2732780093600674913=="
+Content-Type: multipart/mixed; boundary="===============0567441383937224850=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: Re: [PATCH v2] bluez5: Add role parameter to bt_register_profile
-Date: Fri, 01 Mar 2013 17:02:16 -0300
-Message-ID: <CAG7KCRGGGHOtapszi3YLXvmpPpnF=YEwYNWK72_O4KBgUmjPvg@mail.gmail.com>
-In-Reply-To: <513104C2.2090500@gmail.com>
+Subject: [PATCH] bluez5: Add bt_register_profile_with_role
+Date: Fri, 01 Mar 2013 18:58:59 -0300
+Message-ID: <1362175139-25370-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2732780093600674913==
+--===============0567441383937224850==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> Which profiles actually need this?  If this is an extreme minority, then
-> I'd rather see a dedicated function for this.  e.g.
->
-> bt_register_profile_with_role(**)
->
-> Regards,
-> -Denis
->
+This function allows to specify which role is registering when the
+profile does not have specific UUIDs for each role.
+---
+ plugins/bluez5.c |   15 +++++++++++++--
+ plugins/bluez5.h |    4 ++++
+ 2 files changed, 17 insertions(+), 2 deletions(-)
 
-Hi,
+diff --git a/plugins/bluez5.c b/plugins/bluez5.c
+index 9233a2b..7cc11fd 100644
+--- a/plugins/bluez5.c
++++ b/plugins/bluez5.c
+@@ -107,9 +107,9 @@ done:
+ 	dbus_message_unref(reply);
+ }
+ =
 
-In oFono, only the DUN profile use it.
+-int bt_register_profile(DBusConnection *conn, const char *uuid,
++int bt_register_profile_with_role(DBusConnection *conn, const char *uuid,
+ 					uint16_t version, const char *name,
+-					const char *object)
++					const char *object, const char *role)
+ {
+ 	DBusMessageIter iter, dict;
+ 	DBusPendingCall *c;
+@@ -128,6 +128,9 @@ int bt_register_profile(DBusConnection *conn, const cha=
+r *uuid,
+ 	ofono_dbus_dict_append(&dict, "Name", DBUS_TYPE_STRING, &name);
+ 	ofono_dbus_dict_append(&dict, "Version", DBUS_TYPE_UINT16, &version);
+ =
 
-I'll create the new function, as specified.
++	if (role)
++		ofono_dbus_dict_append(&dict, "Role", DBUS_TYPE_STRING, &role);
++
+ 	dbus_message_iter_close_container(&iter, &dict);
+ =
 
---===============2732780093600674913==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+ 	if (!dbus_connection_send_with_reply(conn, msg, &c, -1)) {
+@@ -144,6 +147,14 @@ int bt_register_profile(DBusConnection *conn, const ch=
+ar *uuid,
+ 	return 0;
+ }
+ =
 
-PGJyPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVv
-dGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhleDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtw
-YWRkaW5nLWxlZnQ6MWV4Ij4KV2hpY2ggcHJvZmlsZXMgYWN0dWFsbHkgbmVlZCB0aGlzPyCgSWYg
-dGhpcyBpcyBhbiBleHRyZW1lIG1pbm9yaXR5LCB0aGVuIEkmIzM5O2QgcmF0aGVyIHNlZSBhIGRl
-ZGljYXRlZCBmdW5jdGlvbiBmb3IgdGhpcy4goGUuZy48YnI+Cjxicj4KYnRfcmVnaXN0ZXJfcHJv
-ZmlsZV93aXRoX3JvbGUoPHU+PC91Pik8YnI+Cjxicj4KUmVnYXJkcyw8YnI+Ci1EZW5pczxicj4K
-PC9ibG9ja3F1b3RlPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+SGksPC9kaXY+PGJyPjxkaXY+
-PHNwYW4gc3R5bGU9ImNvbG9yOnJnYigzNCwzNCwzNCk7Zm9udC1mYW1pbHk6YXJpYWwsc2Fucy1z
-ZXJpZjtmb250LXNpemU6MTNweDtiYWNrZ3JvdW5kLWNvbG9yOnJnYigyNTUsMjU1LDI1NSkiPklu
-IG9Gb25vLCBvbmx5IHRoZSBEVU4gcHJvZmlsZSB1c2UgaXQuPC9zcGFuPjxkaXYgc3R5bGU9ImNv
-bG9yOnJnYigzNCwzNCwzNCk7Zm9udC1mYW1pbHk6YXJpYWwsc2Fucy1zZXJpZjtmb250LXNpemU6
-MTNweDtiYWNrZ3JvdW5kLWNvbG9yOnJnYigyNTUsMjU1LDI1NSkiPgo8YnI+PC9kaXY+PGRpdiBz
-dHlsZT0iY29sb3I6cmdiKDM0LDM0LDM0KTtmb250LWZhbWlseTphcmlhbCxzYW5zLXNlcmlmO2Zv
-bnQtc2l6ZToxM3B4O2JhY2tncm91bmQtY29sb3I6cmdiKDI1NSwyNTUsMjU1KSI+SSYjMzk7bGwg
-Y3JlYXRlIHRoZSBuZXcgZnVuY3Rpb24sIGFzIHNwZWNpZmllZC48L2Rpdj48L2Rpdj4K
++int bt_register_profile(DBusConnection *conn, const char *uuid,
++					uint16_t version, const char *name,
++							const char *object)
++{
++	return bt_register_profile_with_role(conn, uuid, version, name, object,
++									NULL);
++}
++
+ void bt_unregister_profile(DBusConnection *conn, const char *object)
+ {
+ 	DBusMessageIter iter;
+diff --git a/plugins/bluez5.h b/plugins/bluez5.h
+index 1432068..f7f3d7e 100644
+--- a/plugins/bluez5.h
++++ b/plugins/bluez5.h
+@@ -69,6 +69,10 @@ int bt_ba2str(const bdaddr_t *ba, char *str);
+ =
 
---===============2732780093600674913==--
+ int bt_bacmp(const bdaddr_t *ba1, const bdaddr_t *ba2);
+ =
+
++int bt_register_profile_with_role(DBusConnection *conn, const char *uuid,
++					uint16_t version, const char *name,
++					const char *object, const char *role);
++
+ int bt_register_profile(DBusConnection *conn, const char *uuid,
+ 					uint16_t version, const char *name,
+ 					const char *object);
+-- =
+
+1.7.9.5
+
+
+--===============0567441383937224850==--
 
