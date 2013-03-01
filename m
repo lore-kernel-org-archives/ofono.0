@@ -1,43 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============4534953172098871258=="
+Content-Type: multipart/mixed; boundary="===============4044264935128617281=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@linux.intel.com>
-Subject: [RFC 4/5] handsfree-audio: Link tool with Alsa
-Date: Fri, 01 Mar 2013 19:42:45 +0100
-Message-ID: <1362163366-11027-4-git-send-email-frederic.dalleau@linux.intel.com>
+Subject: [RFC 3/5] handsfree-audio: Add Alsa dependancy
+Date: Fri, 01 Mar 2013 19:42:44 +0100
+Message-ID: <1362163366-11027-3-git-send-email-frederic.dalleau@linux.intel.com>
 In-Reply-To: <1362163366-11027-1-git-send-email-frederic.dalleau@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4534953172098871258==
+--===============4044264935128617281==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ configure.ac |    5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/Makefile.am b/Makefile.am
-index 68ae85d..ab687db 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -725,7 +725,7 @@ tools_huawei_audio_SOURCES =3D $(gdbus_sources) tools/h=
-uawei-audio.c
- tools_huawei_audio_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
+diff --git a/configure.ac b/configure.ac
+index a4a350f..9be3ebf 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -121,6 +121,11 @@ if (test "${enable_tools}" =3D "yes"); then
+ 				AC_MSG_ERROR(USB library is required))
+ 	AC_SUBST(USB_CFLAGS)
+ 	AC_SUBST(USB_LIBS)
++
++	PKG_CHECK_MODULES(ALSA, alsa >=3D 1.0.0, dummy=3Dyes,
++				AC_MSG_ERROR(Alsa library is required))
++	AC_SUBST(ALSA_CFLAGS)
++	AC_SUBST(ALSA_LIBS)
+ fi
+ AM_CONDITIONAL(TOOLS, test "${enable_tools}" =3D "yes")
  =
 
- tools_handsfree_audio_SOURCES =3D $(gdbus_sources) tools/handsfree-audio.c
--tools_handsfree_audio_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
-+tools_handsfree_audio_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@ @ALSA_LIBS@ -lpthr=
-ead
- =
-
- tools_auto_enable_SOURCES =3D $(gdbus_sources) tools/auto-enable.c
- tools_auto_enable_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
 -- =
 
 1.7.9.5
 
 
---===============4534953172098871258==--
+--===============4044264935128617281==--
 
