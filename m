@@ -1,92 +1,138 @@
-Content-Type: multipart/mixed; boundary="===============0567441383937224850=="
+Content-Type: multipart/mixed; boundary="===============6512758792718525994=="
 MIME-Version: 1.0
-From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH] bluez5: Add bt_register_profile_with_role
-Date: Fri, 01 Mar 2013 18:58:59 -0300
-Message-ID: <1362175139-25370-1-git-send-email-paulo.borges@openbossa.org>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: Re: [PATCH v0 02/10] handsfree-audio: Move SCO to handsfree-audio.c
+Date: Mon, 04 Mar 2013 12:44:49 -0300
+Message-ID: <CAKT1EBexBCj+Xz3NJrg7=oyJitYVk4DXMS-r0QnPfW_3YpDuQQ@mail.gmail.com>
+In-Reply-To: <5130FF6E.1030807@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0567441383937224850==
+--===============6512758792718525994==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This function allows to specify which role is registering when the
-profile does not have specific UUIDs for each role.
----
- plugins/bluez5.c |   15 +++++++++++++--
- plugins/bluez5.h |    4 ++++
- 2 files changed, 17 insertions(+), 2 deletions(-)
+Hi Denis
 
-diff --git a/plugins/bluez5.c b/plugins/bluez5.c
-index 9233a2b..7cc11fd 100644
---- a/plugins/bluez5.c
-+++ b/plugins/bluez5.c
-@@ -107,9 +107,9 @@ done:
- 	dbus_message_unref(reply);
- }
- =
+On Fri, Mar 1, 2013 at 4:20 PM, Denis Kenzior <denkenz@gmail.com> wrote:
+> Hi Claudio,
+>
+>
+> On 02/28/2013 12:52 PM, Claudio Takahasi wrote:
+>>
+>>   This patch moves the SCO socket handling from hfp_hf_bluez5 plugin to
+>>   handsfree-audio.c file.
+>>
+>>   This is the initial step to be able to support sending the file
+>>   descriptor through the Agent NewConnection method.
+>> ---
+>>   plugins/hfp_hf_bluez5.c | 102
+>> +----------------------------------------------
+>>   src/handsfree-audio.c   | 103
+>> +++++++++++++++++++++++++++++++++++++++++++++++-
+>>   2 files changed, 103 insertions(+), 102 deletions(-)
+>>
+>
+> <snip>
+>
+>
+>> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+>> index b2d4b97..14488ac 100644
+>> --- a/src/handsfree-audio.c
+>> +++ b/src/handsfree-audio.c
+>> @@ -25,12 +25,19 @@
+>>
+>>   #include<errno.h>
+>>   #include<stdio.h>
+>> +#include<stdint.h>
+>>   #include<string.h>
+>> +#include<fcntl.h>
+>> +#include<unistd.h>
+>> +#include<sys/socket.h>
+>>
+>>   #include<gdbus.h>
+>> +#include<gatchat.h>
+>
+>
+> Why do you need this?
 
--int bt_register_profile(DBusConnection *conn, const char *uuid,
-+int bt_register_profile_with_role(DBusConnection *conn, const char *uuid,
- 					uint16_t version, const char *name,
--					const char *object)
-+					const char *object, const char *role)
- {
- 	DBusMessageIter iter, dict;
- 	DBusPendingCall *c;
-@@ -128,6 +128,9 @@ int bt_register_profile(DBusConnection *conn, const cha=
-r *uuid,
- 	ofono_dbus_dict_append(&dict, "Name", DBUS_TYPE_STRING, &name);
- 	ofono_dbus_dict_append(&dict, "Version", DBUS_TYPE_UINT16, &version);
- =
+drivers/hfpmodem/slc.h requires:
+struct hfp_slc_info {
+        GAtChat *chat;
+...
+}
 
-+	if (role)
-+		ofono_dbus_dict_append(&dict, "Role", DBUS_TYPE_STRING, &role);
-+
- 	dbus_message_iter_close_container(&iter, &dict);
- =
-
- 	if (!dbus_connection_send_with_reply(conn, msg, &c, -1)) {
-@@ -144,6 +147,14 @@ int bt_register_profile(DBusConnection *conn, const ch=
-ar *uuid,
- 	return 0;
- }
- =
-
-+int bt_register_profile(DBusConnection *conn, const char *uuid,
-+					uint16_t version, const char *name,
-+							const char *object)
-+{
-+	return bt_register_profile_with_role(conn, uuid, version, name, object,
-+									NULL);
-+}
-+
- void bt_unregister_profile(DBusConnection *conn, const char *object)
- {
- 	DBusMessageIter iter;
-diff --git a/plugins/bluez5.h b/plugins/bluez5.h
-index 1432068..f7f3d7e 100644
---- a/plugins/bluez5.h
-+++ b/plugins/bluez5.h
-@@ -69,6 +69,10 @@ int bt_ba2str(const bdaddr_t *ba, char *str);
- =
-
- int bt_bacmp(const bdaddr_t *ba1, const bdaddr_t *ba2);
- =
-
-+int bt_register_profile_with_role(DBusConnection *conn, const char *uuid,
-+					uint16_t version, const char *name,
-+					const char *object, const char *role);
-+
- int bt_register_profile(DBusConnection *conn, const char *uuid,
- 					uint16_t version, const char *name,
- 					const char *object);
--- =
-
-1.7.9.5
+>
+>>
+>> +#include<drivers/hfpmodem/slc.h>
+>
+>
+> Or this?
+enum hfp_version {
+....
+HFP_VERSION_1_6
+....
+}
 
 
---===============0567441383937224850==--
+>
+>
+>>   #include<ofono/handsfree-audio.h>
+>>
+>> +#include "bluetooth.h"
+>>   #include "ofono.h"
+>>
+>>   #define HFP_AUDIO_MANAGER_INTERFACE   OFONO_SERVICE
+>> ".HandsfreeAudioManager"
+>> @@ -60,6 +67,97 @@ struct agent {
+>>   static struct agent *agent =3D NULL;
+>>   static int ref_count =3D 0;
+>>   static GSList *card_list =3D 0;
+>> +static guint sco_watch =3D 0;
+>> +static uint16_t local_hfp_version =3D HFP_VERSION_1_6;
+>
+>
+> Why do we need this?
+
+We gonna need it later to set the socket options for SCO: CVSD or
+Transparent (mSBC). I will try to post-pone it until we really need
+it.
+
+BlueZ uses the values directly instead of defines/enum, this approach
+will avoid "#include<drivers/hfpmodem/slc.h>". Move the "enum
+hfp_version" to a new header (eg: bluetooth.h ) without GAtChat
+dependency is another alternative. Which approach do you prefer?
+
+>
+>
+>> +
+>> +static ofono_bool_t slc_match(struct ofono_modem *modem, void *userdata)
+>> +{
+>> +       const char *remote =3D userdata;
+>> +       const char *value =3D ofono_modem_get_string(modem, "Remote");
+>> +
+>> +       if (value =3D=3D NULL)
+>> +               return FALSE;
+>> +
+>> +       /* Make sure SLC has been established */
+>> +       if (ofono_modem_get_powered(modem) !=3D TRUE)
+>> +               return FALSE;
+>> +
+>> +       return g_str_equal(remote, value);
+>
+>
+> The matching should be done on cards, not modems.
+
+Yes, I know. My approach was: move the code first and fix it later
+making clear which changes are required when the code was moved from
+hfp_hf_bluez5.c to src/handsfree-audio.c
+
+Regards,
+Claudio
+
+Regards,
+Claudio
+
+--===============6512758792718525994==--
 
