@@ -1,58 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============8535627377838565576=="
+Content-Type: multipart/mixed; boundary="===============6497901481822932512=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v1 0/6] handsfree-audio: Add Agent NewConnection()
-Date: Mon, 04 Mar 2013 16:44:49 -0600
-Message-ID: <513523E1.3020202@gmail.com>
-In-Reply-To: <1362430133-6870-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: Re: [PATCH 7/8] sierra: Support CDMA modems
+Date: Mon, 04 Mar 2013 17:03:37 -0600
+Message-ID: <51352849.9080506@gmail.com>
+In-Reply-To: <20130304164836.GI11149@alittletooquiet.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8535627377838565576==
+--===============6497901481822932512==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Claudio,
+Hi Forest,
 
-On 03/04/2013 02:48 PM, Claudio Takahasi wrote:
-> This patch series moves the SCO connection handling from hfp_hf_bluez5.c
-> to src/handsfree-audio.c, and adds the Agent NewConnection() method call
-> to pass the SCO file descriptor from oFono to the Agent implementation.
+On 03/04/2013 10:48 AM, Forest Bond wrote:
+> Hi Denis,
 >
-> Changes between v0-v1:
-> * Merged commits "Move SCO to handsfree-audio.c" and "Remove modem
-> dependency"
-> * Removed tracking of supported local HFP version in handsfree-audio
-> * Removed ofono_handsfree_get_version()
+> On Sun, Dec 30, 2012 at 08:34:29PM -0600, Denis Kenzior wrote:
+>>> -	ofono_netreg_create(modem, 0, "atmodem", data->modem);
+>>> +	if (data->have_gsm =3D=3D TRUE) {
+>>> +		ofono_netreg_create(modem, 0, "atmodem", data->modem);
+>>> +	} else if (data->have_cdma =3D=3D TRUE) {
+>>> +		/*
+>>> +		 * Once we have CnS protocol support, we should be able to do
+>>> +		 * netreg that way instead of using the same port for both.
+>>> +		 */
+>>> +		ofono_cdma_netreg_create(modem, 0, "sierramodem", data->modem);
+>>> +		ofono_cdma_connman_create(modem, OFONO_VENDOR_SIERRA,
+>>> +						"cdmamodem", data->modem);
+>>> +	}
+>>
+>> Ah I see what you're doing now.  This is really not going to work
+>> too well if you have just one AT port available...
 >
-> Claudio Takahasi (6):
->    bluetooth: Add new Bluetooth header
->    handsfree-audio: Move SCO to handsfree-audio.c
->    handsfree-audio: Add NewConnection
->    handsfree-audio: Check local SCO address
->    handsfree-audio: Reject SCO if Card is not ready
->    handsfree-audio: Reject SCO if agent is unavailable
->
->   Makefile.am             |   2 +-
->   plugins/bluez5.c        |  17 ------
->   plugins/bluez5.h        |  41 --------------
->   plugins/hfp_hf_bluez5.c | 103 +----------------------------------
->   src/bluetooth.h         |  71 ++++++++++++++++++++++++
->   src/handsfree-audio.c   | 141 +++++++++++++++++++++++++++++++++++++++++=
-++++++-
->   6 files changed, 214 insertions(+), 161 deletions(-)
->   create mode 100644 src/bluetooth.h
->
+> I'm looking to pick this series back up now.  I understand the implementa=
+tion is
+> not ideal, but it at least provides for basic connectivity until we have =
+support
+> for the CnS protocol.  Will you accept the full series if I address the o=
+ther
+> issues with the code that you mentioned?
 
-I applied this series.  I did re-order and split the patches to be in =
+If we accept something upstream we assume full responsibility for the =
 
-accordance to our patch submission guidelines.  Please refer to the =
+code, and everything that entails, including future maintenance.  Thus =
 
-HACKING document for more details.
+we do not have a habit of accepting functionality that is inherently =
+
+broken.  So unless you can convince me otherwise, my answer is: "I'd =
+
+rather not" ;)
 
 Regards,
 -Denis
 
---===============8535627377838565576==--
+--===============6497901481822932512==--
 
