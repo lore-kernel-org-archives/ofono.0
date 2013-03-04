@@ -1,48 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============9169447173342873464=="
+Content-Type: multipart/mixed; boundary="===============8535627377838565576=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 6/6] handsfree-audio: Reject SCO if agent is unavailable
-Date: Mon, 04 Mar 2013 17:48:53 -0300
-Message-ID: <1362430133-6870-7-git-send-email-claudio.takahasi@openbossa.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v1 0/6] handsfree-audio: Add Agent NewConnection()
+Date: Mon, 04 Mar 2013 16:44:49 -0600
+Message-ID: <513523E1.3020202@gmail.com>
 In-Reply-To: <1362430133-6870-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9169447173342873464==
+--===============8535627377838565576==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch rejects the incoming SCO connection if there isn't a
-Handsfree Audio Agent registered.
----
- src/handsfree-audio.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+Hi Claudio,
 
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 857c258..73c6183 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -123,6 +123,12 @@ static gboolean sco_accept(GIOChannel *io, GIOConditio=
-n cond,
- 	if (nsk < 0)
- 		return TRUE;
- =
+On 03/04/2013 02:48 PM, Claudio Takahasi wrote:
+> This patch series moves the SCO connection handling from hfp_hf_bluez5.c
+> to src/handsfree-audio.c, and adds the Agent NewConnection() method call
+> to pass the SCO file descriptor from oFono to the Agent implementation.
+>
+> Changes between v0-v1:
+> * Merged commits "Move SCO to handsfree-audio.c" and "Remove modem
+> dependency"
+> * Removed tracking of supported local HFP version in handsfree-audio
+> * Removed ofono_handsfree_get_version()
+>
+> Claudio Takahasi (6):
+>    bluetooth: Add new Bluetooth header
+>    handsfree-audio: Move SCO to handsfree-audio.c
+>    handsfree-audio: Add NewConnection
+>    handsfree-audio: Check local SCO address
+>    handsfree-audio: Reject SCO if Card is not ready
+>    handsfree-audio: Reject SCO if agent is unavailable
+>
+>   Makefile.am             |   2 +-
+>   plugins/bluez5.c        |  17 ------
+>   plugins/bluez5.h        |  41 --------------
+>   plugins/hfp_hf_bluez5.c | 103 +----------------------------------
+>   src/bluetooth.h         |  71 ++++++++++++++++++++++++
+>   src/handsfree-audio.c   | 141 +++++++++++++++++++++++++++++++++++++++++=
+++++++-
+>   6 files changed, 214 insertions(+), 161 deletions(-)
+>   create mode 100644 src/bluetooth.h
+>
 
-+	if (agent =3D=3D NULL) {
-+		ofono_error("Reject SCO: Agent not registered");
-+		close(nsk);
-+		return TRUE;
-+	}
-+
- 	bt_ba2str(&saddr.sco_bdaddr, remote);
- =
+I applied this series.  I did re-order and split the patches to be in =
 
- 	memset(&saddr, 0, sizeof(saddr));
--- =
+accordance to our patch submission guidelines.  Please refer to the =
 
-1.7.11.7
+HACKING document for more details.
 
+Regards,
+-Denis
 
---===============9169447173342873464==--
+--===============8535627377838565576==--
 
