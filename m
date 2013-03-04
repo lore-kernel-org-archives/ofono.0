@@ -1,93 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============9050649493875024581=="
+Content-Type: multipart/mixed; boundary="===============3933290185932654618=="
 MIME-Version: 1.0
-From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH 09/13] dundee: Register/unregister dundee device
-Date: Mon, 04 Mar 2013 16:33:10 -0300
-Message-ID: <1362425590-26075-10-git-send-email-paulo.borges@openbossa.org>
-In-Reply-To: <1362425590-26075-1-git-send-email-paulo.borges@openbossa.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v0 09/10] handsfree-audio: Add function to get hfp version
+Date: Mon, 04 Mar 2013 13:30:33 -0600
+Message-ID: <5134F659.9040900@gmail.com>
+In-Reply-To: <E1347878-A569-47A0-A0E1-7B2F34E8B7A6@holtmann.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9050649493875024581==
+--===============3933290185932654618==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds the dundee device struct to the our Bluetooth
-device representation.
----
- dundee/bluez5.c |   25 +++++++++++++++++++++++++
- 1 file changed, 25 insertions(+)
+Hi Marcel,
 
-diff --git a/dundee/bluez5.c b/dundee/bluez5.c
-index 19111e7..12f0cf0 100644
---- a/dundee/bluez5.c
-+++ b/dundee/bluez5.c
-@@ -35,6 +35,8 @@ static GDBusClient *bluez;
- static GHashTable *registered_devices;
- =
+>>
+>> I don't see why not.  Both Codec Negotiation and Wide-band speech are la=
+beled optional for HF/AG in Table 3.1.  The only note there says: "If Wide =
+Band Speech is supported, Codec Negotiation shall also be supported."  Howe=
+ver, there is no note vice-versa.  So my interpretation is that Codec Negot=
+iation can always be supported.  Can we check the test spec?
+>>
+>> The problem I see is that by the time we register the SDP record, we sti=
+ll do not know for sure whether the audio framework truly supports mSBC.
+>
+> so we want to expose HFP 1.6 and codec negogiation all the time. Even if =
+mSBC codec is not available, because PA does not support it or is not runni=
+ng. I read the spec the same way that this fully spec compliant.
+>
+> If at some point in the future this changes, we can deal with that at tha=
+t point. No need to over engineer it at this point.
+>
 
- struct bluetooth_device {
-+	struct dundee_device *device;
-+
- 	char *path;
- 	char *address;
- 	char *name;
-@@ -46,6 +48,9 @@ static void bluetooth_device_destroy(gpointer user_data)
- =
+Exactly,  Codec negotiation should always be supported.
+.  What my last comment was about is that:
 
- 	DBG("%s", bt_device->path);
- =
+If mSBC is not supported by PA, then it would be nice to not set the =
 
-+	if (bt_device->device !=3D NULL)
-+		dundee_device_unregister(bt_device->device);
-+
- 	g_free(bt_device->path);
- 	g_free(bt_device->address);
- 	g_free(bt_device->name);
-@@ -93,6 +98,7 @@ static void bluetooth_device_register(GDBusProxy *proxy)
- 	const char *path =3D g_dbus_proxy_get_path(proxy);
- 	const char *alias, *address;
- 	struct bluetooth_device *bt_device;
-+	struct dundee_device *device;
- 	DBusMessageIter iter;
- =
+wide-band speech bit in the SDP record to true.  However, we do not know =
 
- 	DBG("%s", path);
-@@ -116,7 +122,26 @@ static void bluetooth_device_register(GDBusProxy *prox=
-y)
- 		return;
- 	}
- =
+this information in the current set up until too late.
 
-+	device =3D dundee_device_create(&bluetooth_driver);
-+	if (device =3D=3D NULL)
-+		goto free;
-+
-+	dundee_device_set_data(device, bt_device);
-+	dundee_device_set_name(device, bt_device->name);
-+
-+	if (dundee_device_register(device) < 0) {
-+		g_free(device);
-+		goto free;
-+	}
-+
-+	bt_device->device =3D device;
- 	g_hash_table_insert(registered_devices, g_strdup(path), bt_device);
-+
-+	return;
-+
-+free:
-+	bluetooth_device_destroy(bt_device);
-+	return;
- }
- =
+Regards,
+-Denis
 
- static void bluetooth_device_unregister(const char *path)
--- =
-
-1.7.9.5
-
-
---===============9050649493875024581==--
+--===============3933290185932654618==--
 
