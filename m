@@ -1,138 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============6512758792718525994=="
+Content-Type: multipart/mixed; boundary="===============2284938667973942059=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: Re: [PATCH v0 02/10] handsfree-audio: Move SCO to handsfree-audio.c
-Date: Mon, 04 Mar 2013 12:44:49 -0300
-Message-ID: <CAKT1EBexBCj+Xz3NJrg7=oyJitYVk4DXMS-r0QnPfW_3YpDuQQ@mail.gmail.com>
-In-Reply-To: <5130FF6E.1030807@gmail.com>
+Subject: Re: [PATCH v0 03/10] handsfree-audio: Remove modem dependency
+Date: Mon, 04 Mar 2013 12:45:19 -0300
+Message-ID: <CAKT1EBeHCACLjNRnzBSwExmbSR7c9j-+V=XJmCzd69Ms1wPh+Q@mail.gmail.com>
+In-Reply-To: <513101AB.4070801@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6512758792718525994==
+--===============2284938667973942059==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis
+Hi Denis:
 
-On Fri, Mar 1, 2013 at 4:20 PM, Denis Kenzior <denkenz@gmail.com> wrote:
+On Fri, Mar 1, 2013 at 4:29 PM, Denis Kenzior <denkenz@gmail.com> wrote:
 > Hi Claudio,
 >
 >
 > On 02/28/2013 12:52 PM, Claudio Takahasi wrote:
 >>
->>   This patch moves the SCO socket handling from hfp_hf_bluez5 plugin to
->>   handsfree-audio.c file.
->>
->>   This is the initial step to be able to support sending the file
->>   descriptor through the Agent NewConnection method.
+>> This patch replaces the handsfree modem verification by the Audio Card.
+>> Audio Cards are created when the RFCOMM fd descriptor is received, and
+>> registered when the service level connetion is established.
 >> ---
->>   plugins/hfp_hf_bluez5.c | 102
->> +----------------------------------------------
->>   src/handsfree-audio.c   | 103
->> +++++++++++++++++++++++++++++++++++++++++++++++-
->>   2 files changed, 103 insertions(+), 102 deletions(-)
+>>   src/handsfree-audio.c | 19 ++++++-------------
+>>   1 file changed, 6 insertions(+), 13 deletions(-)
 >>
->
-> <snip>
->
->
 >> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
->> index b2d4b97..14488ac 100644
+>> index 14488ac..6657bc5 100644
 >> --- a/src/handsfree-audio.c
 >> +++ b/src/handsfree-audio.c
->> @@ -25,12 +25,19 @@
+>> @@ -70,19 +70,12 @@ static GSList *card_list =3D 0;
+>>   static guint sco_watch =3D 0;
+>>   static uint16_t local_hfp_version =3D HFP_VERSION_1_6;
 >>
->>   #include<errno.h>
->>   #include<stdio.h>
->> +#include<stdint.h>
->>   #include<string.h>
->> +#include<fcntl.h>
->> +#include<unistd.h>
->> +#include<sys/socket.h>
+>> -static ofono_bool_t slc_match(struct ofono_modem *modem, void *userdata)
+>> +static int card_cmp(gconstpointer a, gconstpointer b)
+>>   {
+>> -       const char *remote =3D userdata;
+>> -       const char *value =3D ofono_modem_get_string(modem, "Remote");
+>> +       const struct ofono_handsfree_card *card =3D a;
+>> +       const char *remote =3D b;
 >>
->>   #include<gdbus.h>
->> +#include<gatchat.h>
->
->
-> Why do you need this?
-
-drivers/hfpmodem/slc.h requires:
-struct hfp_slc_info {
-        GAtChat *chat;
-...
-}
-
->
+>> -       if (value =3D=3D NULL)
+>> -               return FALSE;
+>> -
+>> -       /* Make sure SLC has been established */
+>> -       if (ofono_modem_get_powered(modem) !=3D TRUE)
+>> -               return FALSE;
+>> -
+>> -       return g_str_equal(remote, value);
+>> +       return g_strcmp0(card->remote, remote);
+>>   }
 >>
->> +#include<drivers/hfpmodem/slc.h>
->
->
-> Or this?
-enum hfp_version {
-....
-HFP_VERSION_1_6
-....
-}
-
-
->
->
->>   #include<ofono/handsfree-audio.h>
+>>   static gboolean sco_accept(GIOChannel *io, GIOCondition cond,
+>> @@ -107,8 +100,8 @@ static gboolean sco_accept(GIOChannel *io,
+>> GIOCondition cond,
 >>
->> +#include "bluetooth.h"
->>   #include "ofono.h"
+>>         bt_ba2str(&saddr.sco_bdaddr, remote);
 >>
->>   #define HFP_AUDIO_MANAGER_INTERFACE   OFONO_SERVICE
->> ".HandsfreeAudioManager"
->> @@ -60,6 +67,97 @@ struct agent {
->>   static struct agent *agent =3D NULL;
->>   static int ref_count =3D 0;
->>   static GSList *card_list =3D 0;
->> +static guint sco_watch =3D 0;
->> +static uint16_t local_hfp_version =3D HFP_VERSION_1_6;
+>> -       if (ofono_modem_find(slc_match, remote) =3D=3D NULL) {
+>> -               ofono_error("Rejecting SCO: No SLC connection found!");
+>> +       if (g_slist_find_custom(card_list, remote, card_cmp) =3D=3D NULL=
+) {
+>> +               ofono_error("Rejecting SCO: Audio Card not found!");
+>>                 close(nsk);
+>>                 return TRUE;
+>>         }
 >
 >
-> Why do we need this?
+> Please don't do it this way, I do not want to introduce irrelevant code j=
+ust
+> to remove it right away.  Merge this patch into the previous one or cut d=
+own
+> the first patch to just the bare necessities.
+>
+> Regards,
+> -Denis
 
-We gonna need it later to set the socket options for SCO: CVSD or
-Transparent (mSBC). I will try to post-pone it until we really need
-it.
-
-BlueZ uses the values directly instead of defines/enum, this approach
-will avoid "#include<drivers/hfpmodem/slc.h>". Move the "enum
-hfp_version" to a new header (eg: bluetooth.h ) without GAtChat
-dependency is another alternative. Which approach do you prefer?
-
->
->
->> +
->> +static ofono_bool_t slc_match(struct ofono_modem *modem, void *userdata)
->> +{
->> +       const char *remote =3D userdata;
->> +       const char *value =3D ofono_modem_get_string(modem, "Remote");
->> +
->> +       if (value =3D=3D NULL)
->> +               return FALSE;
->> +
->> +       /* Make sure SLC has been established */
->> +       if (ofono_modem_get_powered(modem) !=3D TRUE)
->> +               return FALSE;
->> +
->> +       return g_str_equal(remote, value);
->
->
-> The matching should be done on cards, not modems.
-
-Yes, I know. My approach was: move the code first and fix it later
-making clear which changes are required when the code was moved from
-hfp_hf_bluez5.c to src/handsfree-audio.c
+OK. I will squash it in the previous commit.
 
 Regards,
 Claudio
 
-Regards,
-Claudio
-
---===============6512758792718525994==--
+--===============2284938667973942059==--
 
