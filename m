@@ -1,132 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============1421361427977357324=="
+Content-Type: multipart/mixed; boundary="===============4784272218257395048=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v0 09/10] handsfree-audio: Add function to get hfp version
-Date: Mon, 04 Mar 2013 11:24:54 -0800
-Message-ID: <E1347878-A569-47A0-A0E1-7B2F34E8B7A6@holtmann.org>
-In-Reply-To: <5134E223.1040807@gmail.com>
+From: Paulo Borges <paulo.borges@openbossa.org>
+Subject: [PATCH 00/13] Add support for BlueZ 5 Profile1 API to dundee
+Date: Mon, 04 Mar 2013 16:33:01 -0300
+Message-ID: <1362425590-26075-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1421361427977357324==
+--===============4784272218257395048==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+This series implements support for BlueZ 5 to dundee. It uses the
+org.bluez.Profile1 API to register an external profile.
 
->>>> This patch adds a new function to read the local supported Handsfree
->>>> Profile version.
->>>> ---
->>>>   include/handsfree-audio.h | 1 +
->>>>   src/handsfree-audio.c     | 5 +++++
->>>>   2 files changed, 6 insertions(+)
->>>> =
+While the interface between BlueZ and dundee has changed, the interfaces
+"org.ofono.dundee.Device" and "org.ofono.dundee.Manager" remains
+unchanged.
 
->>>> diff --git a/include/handsfree-audio.h b/include/handsfree-audio.h
->>>> index c5403c7..96597c2 100644
->>>> --- a/include/handsfree-audio.h
->>>> +++ b/include/handsfree-audio.h
->>>> @@ -34,6 +34,7 @@ struct ofono_handsfree_card
->>>> *ofono_handsfree_card_create(const char *remote,
->>>>                                                         const char
->>>> *local);
->>>>   int ofono_handsfree_card_register(struct ofono_handsfree_card *card);
->>>>   void ofono_handsfree_card_remove(struct ofono_handsfree_card *card);
->>>> +enum hfp_version ofono_handsfree_get_version();
->>>> =
+Paulo Borges (13):
+  dundee: Rename dundee BlueZ 4 support
+  dundee: Start BlueZ 5 support
+  bluez5: Add DUN_UUID
+  dundee: Initial GDBusClient for BlueZ 5
+  dundee: Add mechanism to store bluetooth devices
+  dundee: Add tracking of bluetooth devices
+  dundee: Listen to devices property changes
+  dundee: Add dundee device driver skeleton
+  dundee: Register/unregister dundee device
+  dundee: Add BlueZ Profile handler
+  dundee: Add support for driver connect
+  dundee: Add dundee disconnect function
+  dundee: Handle Profile connect and disconnect
 
->>> =
+ Makefile.am        |   16 +-
+ dundee/bluetooth.c |  297 -----------------------------------
+ dundee/bluez4.c    |  297 +++++++++++++++++++++++++++++++++++
+ dundee/bluez5.c    |  445 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ dundee/device.c    |   14 +-
+ dundee/dundee.h    |    5 +
+ plugins/bluez5.h   |    1 +
+ 7 files changed, 769 insertions(+), 306 deletions(-)
+ delete mode 100644 dundee/bluetooth.c
+ create mode 100644 dundee/bluez4.c
+ create mode 100644 dundee/bluez5.c
 
->>> I'd like to avoid such details in the card functionality.
->>> =
+-- =
 
->>> Are our possible scenarios the following?
->>> =
-
->>> 1. SCO defer in kernel, CVSD mSBC supported
->> =
-
->> yes.
->> =
-
->>> 2. SCO defer not in kernel, CVSD mSBC supported
->> =
-
->> not possible. Wide band speech requires defer setup to set the SCO
->> parameters properly.
->> =
-
->>> 3. SCO defer in kernel, CVSD supported
->> =
-
->> yes.
->> =
-
->>> 4. SCO defer not in kernel, CVSD supported
->> =
-
->> yes.
->> =
-
->>> =
-
->>> If so, can we always advertise HFP 1.6, but only declare support for CV=
-SD in
->>> case 2?
->> =
-
->> I am not a spec (or qualification) expert, but  I will try to expose
->> my understanding of the docs:
->> =
-
->> For case 2, my understanding is: if HF supports *only* CVSD
->> (mandatory), it doesn't make sense to inform that codec negotiation is
->> supported. HFP 1.5 (or older) shall not indicate that it supports
->> codec negotiation (during service level connection negotiation) and it
->> should not set the wide band speech support in the service record.
->> =
-
-> =
-
-> There are other features of 1.6 though that might be useful.  For example=
-, BTRH status is properly shown in CLCC, and a few other niceties.  I see n=
-o reason to fall back to 1.5 just because we do not support wide-band speec=
-h.
-> =
-
-> Either way, the version decision is not up to the card, it is up to the p=
-lugin.  The function to get the version information needs to be dropped.
-> =
-
->> One thing that I can't answer is if it is allowed to inform in the
->> service record that the HF supports HFP 1.6 (version), but don't set
->> the wide band speech feature in record.
->> =
-
-> =
-
-> I don't see why not.  Both Codec Negotiation and Wide-band speech are lab=
-eled optional for HF/AG in Table 3.1.  The only note there says: "If Wide B=
-and Speech is supported, Codec Negotiation shall also be supported."  Howev=
-er, there is no note vice-versa.  So my interpretation is that Codec Negoti=
-ation can always be supported.  Can we check the test spec?
-> =
-
-> The problem I see is that by the time we register the SDP record, we stil=
-l do not know for sure whether the audio framework truly supports mSBC.
-
-so we want to expose HFP 1.6 and codec negogiation all the time. Even if mS=
-BC codec is not available, because PA does not support it or is not running=
-. I read the spec the same way that this fully spec compliant.
-
-If at some point in the future this changes, we can deal with that at that =
-point. No need to over engineer it at this point.
-
-Regards
-
-Marcel
+1.7.9.5
 
 
---===============1421361427977357324==--
+--===============4784272218257395048==--
 
