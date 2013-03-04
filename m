@@ -1,49 +1,139 @@
-Content-Type: multipart/mixed; boundary="===============3933290185932654618=="
+Content-Type: multipart/mixed; boundary="===============5514958982791874093=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v0 09/10] handsfree-audio: Add function to get hfp version
-Date: Mon, 04 Mar 2013 13:30:33 -0600
-Message-ID: <5134F659.9040900@gmail.com>
-In-Reply-To: <E1347878-A569-47A0-A0E1-7B2F34E8B7A6@holtmann.org>
+From: Paulo Borges <paulo.borges@openbossa.org>
+Subject: [PATCH 10/13] dundee: Add BlueZ Profile handler
+Date: Mon, 04 Mar 2013 16:37:36 -0300
+Message-ID: <1362425856-26206-1-git-send-email-paulo.borges@openbossa.org>
+In-Reply-To: <1362425590-26075-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3933290185932654618==
+--===============5514958982791874093==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+This patch declares the external dundee Profile handler. It
+contains the initial implementation of the D-Bus Profile1
+interface and methods responsible for handling Bluetooth
+connections.
+---
+ dundee/bluez5.c |   68 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 file changed, 68 insertions(+)
 
->>
->> I don't see why not.  Both Codec Negotiation and Wide-band speech are la=
-beled optional for HF/AG in Table 3.1.  The only note there says: "If Wide =
-Band Speech is supported, Codec Negotiation shall also be supported."  Howe=
-ver, there is no note vice-versa.  So my interpretation is that Codec Negot=
-iation can always be supported.  Can we check the test spec?
->>
->> The problem I see is that by the time we register the SDP record, we sti=
-ll do not know for sure whether the audio framework truly supports mSBC.
->
-> so we want to expose HFP 1.6 and codec negogiation all the time. Even if =
-mSBC codec is not available, because PA does not support it or is not runni=
-ng. I read the spec the same way that this fully spec compliant.
->
-> If at some point in the future this changes, we can deal with that at tha=
-t point. No need to over engineer it at this point.
->
+diff --git a/dundee/bluez5.c b/dundee/bluez5.c
+index 12f0cf0..becff32 100644
+--- a/dundee/bluez5.c
++++ b/dundee/bluez5.c
+@@ -25,6 +25,7 @@
+ #include <stdint.h>
+ #include <sys/socket.h>
+ #include <gdbus.h>
++#include <errno.h>
+ =
 
-Exactly,  Codec negotiation should always be supported.
-.  What my last comment was about is that:
+ #include "dundee.h"
+ #include "plugins/bluez5.h"
+@@ -42,6 +43,59 @@ struct bluetooth_device {
+ 	char *name;
+ };
+ =
 
-If mSBC is not supported by PA, then it would be nice to not set the =
++static DBusMessage *profile_new_connection(DBusConnection *conn,
++					DBusMessage *msg, void *user_data)
++{
++	DBG("");
++
++	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
++						".NotImplemented",
++						"Implementation not provided");
++}
++
++static DBusMessage *profile_release(DBusConnection *conn,
++					DBusMessage *msg, void *user_data)
++{
++	DBG("");
++
++	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
++						".NotImplemented",
++						"Implementation not provided");
++}
++
++static DBusMessage *profile_cancel(DBusConnection *conn,
++					DBusMessage *msg, void *user_data)
++{
++	DBG("");
++
++	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
++						".NotImplemented",
++						"Implementation not provided");
++}
++
++static DBusMessage *profile_disconnection(DBusConnection *conn,
++					DBusMessage *msg, void *user_data)
++{
++	DBG("");
++
++	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
++						".NotImplemented",
++						"Implementation not provided");
++}
++
++static const GDBusMethodTable profile_methods[] =3D {
++	{ GDBUS_ASYNC_METHOD("NewConnection",
++				GDBUS_ARGS({ "device", "o"}, { "fd", "h"},
++						{ "fd_properties", "a{sv}" }),
++				NULL, profile_new_connection) },
++	{ GDBUS_METHOD("Release", NULL, NULL, profile_release) },
++	{ GDBUS_METHOD("Cancel", NULL, NULL, profile_cancel) },
++	{ GDBUS_METHOD("RequestDisconnection",
++				GDBUS_ARGS({"device", "o"}), NULL,
++				profile_disconnection) },
++	{ }
++};
++
+ static void bluetooth_device_destroy(gpointer user_data)
+ {
+ 	struct bluetooth_device *bt_device =3D user_data;
+@@ -257,6 +311,15 @@ int __dundee_bluetooth_init(void)
+ =
 
-wide-band speech bit in the SDP record to true.  However, we do not know =
+ 	DBG("");
+ =
 
-this information in the current set up until too late.
++	if (!g_dbus_register_interface(conn, DUN_DT_PROFILE_PATH,
++					BLUEZ_PROFILE_INTERFACE,
++					profile_methods, NULL,
++					NULL, NULL, NULL)) {
++		ofono_error("Register Profile interface failed: %s",
++						DUN_DT_PROFILE_PATH);
++		return -EIO;
++	}
++
+ 	bluez =3D g_dbus_client_new(conn, BLUEZ_SERVICE, BLUEZ_MANAGER_PATH);
+ 	g_dbus_client_set_connect_watch(bluez, connect_handler, NULL);
+ 	g_dbus_client_set_proxy_handlers(bluez, proxy_added, proxy_removed,
+@@ -270,8 +333,13 @@ int __dundee_bluetooth_init(void)
+ =
 
-Regards,
--Denis
+ void __dundee_bluetooth_cleanup(void)
+ {
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++
+ 	DBG("");
+ =
 
---===============3933290185932654618==--
++	g_dbus_unregister_interface(conn, DUN_DT_PROFILE_PATH,
++						BLUEZ_PROFILE_INTERFACE);
++
+ 	g_dbus_client_unref(bluez);
+ 	g_hash_table_destroy(registered_devices);
+ }
+-- =
+
+1.7.9.5
+
+
+--===============5514958982791874093==--
 
