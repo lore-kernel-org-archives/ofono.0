@@ -1,206 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============5879978430401435881=="
+Content-Type: multipart/mixed; boundary="===============5870289649259474426=="
 MIME-Version: 1.0
-From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH 13/13] dundee: Handle Profile connect and disconnect
-Date: Mon, 04 Mar 2013 16:39:05 -0300
-Message-ID: <1362425945-26315-1-git-send-email-paulo.borges@openbossa.org>
-In-Reply-To: <1362425590-26075-1-git-send-email-paulo.borges@openbossa.org>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: Re: [PATCH v0 09/10] handsfree-audio: Add function to get hfp version
+Date: Mon, 04 Mar 2013 16:54:03 -0300
+Message-ID: <CAKT1EBdK+=abT_QF71-nkidfKaJWK8qJ88SCHmurgbftNN-2Aw@mail.gmail.com>
+In-Reply-To: <5134F659.9040900@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5879978430401435881==
+--===============5870289649259474426==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- dundee/bluez5.c |  115 ++++++++++++++++++++++++++++++++++++++++++++++++++-=
-----
- 1 file changed, 105 insertions(+), 10 deletions(-)
+Hi Denis:
 
-diff --git a/dundee/bluez5.c b/dundee/bluez5.c
-index 31bdfea..a92cbae 100644
---- a/dundee/bluez5.c
-+++ b/dundee/bluez5.c
-@@ -41,16 +41,63 @@ struct bluetooth_device {
- 	char *path;
- 	char *address;
- 	char *name;
-+
-+	struct cb_data *connect_cbd;
-+
-+	int fd;
- };
- =
+On Mon, Mar 4, 2013 at 4:30 PM, Denis Kenzior <denkenz@gmail.com> wrote:
+> Hi Marcel,
+>
+>
+>>>
+>>> I don't see why not.  Both Codec Negotiation and Wide-band speech are
+>>> labeled optional for HF/AG in Table 3.1.  The only note there says: "If=
+ Wide
+>>> Band Speech is supported, Codec Negotiation shall also be supported."
+>>> However, there is no note vice-versa.  So my interpretation is that Cod=
+ec
+>>> Negotiation can always be supported.  Can we check the test spec?
+>>>
+>>> The problem I see is that by the time we register the SDP record, we
+>>> still do not know for sure whether the audio framework truly supports m=
+SBC.
+>>
+>>
+>> so we want to expose HFP 1.6 and codec negogiation all the time. Even if
+>> mSBC codec is not available, because PA does not support it or is not
+>> running. I read the spec the same way that this fully spec compliant.
+>>
+>> If at some point in the future this changes, we can deal with that at th=
+at
+>> point. No need to over engineer it at this point.
+>>
+>
+> Exactly,  Codec negotiation should always be supported.
+> .  What my last comment was about is that:
+>
+> If mSBC is not supported by PA, then it would be nice to not set the
+> wide-band speech bit in the SDP record to true.  However, we do not know
+> this information in the current set up until too late.
 
- static DBusMessage *profile_new_connection(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
- {
--	DBG("");
-+	struct bluetooth_device *bt_device;
-+	dundee_device_connect_cb_t cb;
-+	DBusMessageIter iter;
-+	const char *path;
-+	int fd;
- =
+F.Y.I. some results from the test plan generator consistency check:
+* if wide band speech is Not supported Codec negotiation is excluded
+* if wide band speech is Supported, mSBC is mandatory
 
--	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
--						".NotImplemented",
--						"Implementation not provided");
-+	if (dbus_message_iter_init(msg, &iter) =3D=3D FALSE)
-+		goto error;
-+
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_OBJECT_PATH)
-+		goto error;
-+
-+	dbus_message_iter_get_basic(&iter, &path);
-+
-+	bt_device =3D g_hash_table_lookup(registered_devices, path);
-+	if (bt_device =3D=3D NULL)
-+		goto error;
-+
-+	cb =3D bt_device->connect_cbd->cb;
-+
-+	dbus_message_iter_next(&iter);
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_UNIX_FD)
-+		goto call_failure;
-+
-+	dbus_message_iter_get_basic(&iter, &fd);
-+	if (fd < 0)
-+		goto call_failure;
-+
-+	DBG("%s %d", bt_device->path, fd);
-+
-+	bt_device->fd =3D fd;
-+
-+	CALLBACK_WITH_SUCCESS(cb, fd, bt_device->connect_cbd->data);
-+
-+	g_free(bt_device->connect_cbd);
-+	bt_device->connect_cbd =3D NULL;
-+
-+	return dbus_message_new_method_return(msg);
-+
-+call_failure:
-+	CALLBACK_WITH_FAILURE(cb, -1, bt_device->connect_cbd->data);
-+
-+	g_free(bt_device->connect_cbd);
-+	bt_device->connect_cbd =3D NULL;
-+
-+error:
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE ".Rejected",
-+					"Invalid arguments in method call");
- }
- =
+Anyway, I will implementing what you are suggesting. We can fix it
+later if necessary.
 
- static DBusMessage *profile_release(DBusConnection *conn,
-@@ -76,11 +123,31 @@ static DBusMessage *profile_cancel(DBusConnection *con=
-n,
- static DBusMessage *profile_disconnection(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
- {
--	DBG("");
-+	struct bluetooth_device *bt_device;
-+	DBusMessageIter iter;
-+	const char *path;
- =
+Regards,
+Claudio
 
--	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
--						".NotImplemented",
--						"Implementation not provided");
-+	if (dbus_message_iter_init(msg, &iter) =3D=3D FALSE)
-+		goto error;
-+
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_OBJECT_PATH)
-+		goto error;
-+
-+	dbus_message_iter_get_basic(&iter, &path);
-+
-+	bt_device =3D g_hash_table_lookup(registered_devices, path);
-+	if (bt_device =3D=3D NULL)
-+		goto error;
-+
-+	DBG("%s", bt_device->path);
-+
-+	CALLBACK_WITH_SUCCESS(dundee_device_disconnect, bt_device->device);
-+
-+	return dbus_message_new_method_return(msg);
-+
-+error:
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE ".Rejected",
-+					"Invalid arguments in method call");
- }
- =
-
- static const GDBusMethodTable profile_methods[] =3D {
-@@ -105,27 +172,55 @@ static void bluetooth_device_destroy(gpointer user_da=
-ta)
- 	if (bt_device->device !=3D NULL)
- 		dundee_device_unregister(bt_device->device);
- =
-
-+	if (bt_device->connect_cbd !=3D NULL)
-+		g_free(bt_device->connect_cbd);
-+
- 	g_free(bt_device->path);
- 	g_free(bt_device->address);
- 	g_free(bt_device->name);
- 	g_free(bt_device);
- }
- =
-
-+static void bluetooth_device_connect_callback(gboolean success,
-+							gpointer user_data)
-+{
-+	struct bluetooth_device *bt_device =3D user_data;
-+
-+	if (success) {
-+		DBG("Success");
-+		return;
-+	}
-+
-+	DBG("ConnectProfile() returned an error");
-+
-+	g_free(bt_device->connect_cbd);
-+	bt_device->connect_cbd =3D NULL;
-+}
-+
- static void bluetooth_device_connect(struct dundee_device *device,
- 			dundee_device_connect_cb_t cb, void *data)
- {
- 	struct bluetooth_device *bt_device =3D dundee_device_get_data(device);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
- =
-
- 	DBG("%s", bt_device->path);
- =
-
-+	cbd->user =3D bt_device;
-+	bt_device->connect_cbd =3D cbd;
-+
- 	bt_connect_profile(ofono_dbus_get_connection(), bt_device->path,
--						DUN_DT_UUID, NULL, NULL);
-+		DUN_UUID, bluetooth_device_connect_callback, bt_device);
- }
- =
-
- static void bluetooth_device_disconnect(struct dundee_device *device,
- 				dundee_device_disconnect_cb_t cb, void *data)
- {
--	DBG("");
-+	struct bluetooth_device *bt_device =3D dundee_device_get_data(device);
-+
-+	DBG("%s", bt_device->path);
-+
-+	shutdown(bt_device->fd, SHUT_RDWR);
-+	CALLBACK_WITH_SUCCESS(cb, data);
- }
- =
-
- struct dundee_device_driver bluetooth_driver =3D {
--- =
-
-1.7.9.5
-
-
---===============5879978430401435881==--
+--===============5870289649259474426==--
 
