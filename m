@@ -1,87 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============0416463209174482157=="
+Content-Type: multipart/mixed; boundary="===============3293754652606718360=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: Re: [PATCH v0 09/10] handsfree-audio: Add function to get hfp version
-Date: Mon, 04 Mar 2013 13:02:22 -0300
-Message-ID: <CAKT1EBd2hUz1vAGbfX2rQC=5zuSdYn+g1W+OQ8sBE0gQjzL8Vw@mail.gmail.com>
-In-Reply-To: <5131042F.7030208@gmail.com>
+From: Forest Bond <forest@alittletooquiet.net>
+Subject: Re: [PATCH 7/8] sierra: Support CDMA modems
+Date: Mon, 04 Mar 2013 11:48:36 -0500
+Message-ID: <20130304164836.GI11149@alittletooquiet.net>
+In-Reply-To: <50E0F9B5.20906@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0416463209174482157==
+--===============3293754652606718360==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis:
+Hi Denis,
 
-On Fri, Mar 1, 2013 at 4:40 PM, Denis Kenzior <denkenz@gmail.com> wrote:
-> Hi Claudio,
->
->
-> On 02/28/2013 12:52 PM, Claudio Takahasi wrote:
->>
->> This patch adds a new function to read the local supported Handsfree
->> Profile version.
->> ---
->>   include/handsfree-audio.h | 1 +
->>   src/handsfree-audio.c     | 5 +++++
->>   2 files changed, 6 insertions(+)
->>
->> diff --git a/include/handsfree-audio.h b/include/handsfree-audio.h
->> index c5403c7..96597c2 100644
->> --- a/include/handsfree-audio.h
->> +++ b/include/handsfree-audio.h
->> @@ -34,6 +34,7 @@ struct ofono_handsfree_card
->> *ofono_handsfree_card_create(const char *remote,
->>                                                         const char
->> *local);
->>   int ofono_handsfree_card_register(struct ofono_handsfree_card *card);
->>   void ofono_handsfree_card_remove(struct ofono_handsfree_card *card);
->> +enum hfp_version ofono_handsfree_get_version();
->>
->
-> I'd like to avoid such details in the card functionality.
->
-> Are our possible scenarios the following?
->
-> 1. SCO defer in kernel, CVSD mSBC supported
+On Sun, Dec 30, 2012 at 08:34:29PM -0600, Denis Kenzior wrote:
+> >-	ofono_netreg_create(modem, 0, "atmodem", data->modem);
+> >+	if (data->have_gsm =3D=3D TRUE) {
+> >+		ofono_netreg_create(modem, 0, "atmodem", data->modem);
+> >+	} else if (data->have_cdma =3D=3D TRUE) {
+> >+		/*
+> >+		 * Once we have CnS protocol support, we should be able to do
+> >+		 * netreg that way instead of using the same port for both.
+> >+		 */
+> >+		ofono_cdma_netreg_create(modem, 0, "sierramodem", data->modem);
+> >+		ofono_cdma_connman_create(modem, OFONO_VENDOR_SIERRA,
+> >+						"cdmamodem", data->modem);
+> >+	}
+> =
 
-yes.
+> Ah I see what you're doing now.  This is really not going to work
+> too well if you have just one AT port available...
 
-> 2. SCO defer not in kernel, CVSD mSBC supported
+I'm looking to pick this series back up now.  I understand the implementati=
+on is
+not ideal, but it at least provides for basic connectivity until we have su=
+pport
+for the CnS protocol.  Will you accept the full series if I address the oth=
+er
+issues with the code that you mentioned?
 
-not possible. Wide band speech requires defer setup to set the SCO
-parameters properly.
+Thanks,
+Forest
+-- =
 
-> 3. SCO defer in kernel, CVSD supported
+Forest Bond
+http://www.alittletooquiet.net
+http://www.rapidrollout.com
 
-yes.
+--===============3293754652606718360==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
-> 4. SCO defer not in kernel, CVSD supported
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEuNC4xMCAoR05V
+L0xpbnV4KQoKaUVZRUFSRUNBQVlGQWxFMDBHUUFDZ2tRUk80ZlFRZHY1QXdJSndDZEdoRStjUTFp
+aWdOR2NudlhoVGpIcm5sVApFRjhBbmluekI0c0ZCME9vcHVhSGlmNUF2VXVmZDMrcAo9Q2ZMbwot
+LS0tLUVORCBQR1AgU0lHTkFUVVJFLS0tLS0K
 
-yes.
-
->
-> If so, can we always advertise HFP 1.6, but only declare support for CVSD=
- in
-> case 2?
-
-I am not a spec (or qualification) expert, but  I will try to expose
-my understanding of the docs:
-
-For case 2, my understanding is: if HF supports *only* CVSD
-(mandatory), it doesn't make sense to inform that codec negotiation is
-supported. HFP 1.5 (or older) shall not indicate that it supports
-codec negotiation (during service level connection negotiation) and it
-should not set the wide band speech support in the service record.
-
-One thing that I can't answer is if it is allowed to inform in the
-service record that the HF supports HFP 1.6 (version), but don't set
-the wide band speech feature in record.
-
-Regards,
-Claudio
-
---===============0416463209174482157==--
+--===============3293754652606718360==--
 
