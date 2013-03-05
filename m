@@ -1,60 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============6497901481822932512=="
+Content-Type: multipart/mixed; boundary="===============4743801331794597782=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 7/8] sierra: Support CDMA modems
-Date: Mon, 04 Mar 2013 17:03:37 -0600
-Message-ID: <51352849.9080506@gmail.com>
-In-Reply-To: <20130304164836.GI11149@alittletooquiet.net>
+From: Viallard Anthony <viallard@syscom-instruments.com>
+Subject: Randomly SMS sent passes or fails
+Date: Tue, 05 Mar 2013 16:27:38 +0100
+Message-ID: <51360EEA.6090506@syscom-instruments.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6497901481822932512==
+--===============4743801331794597782==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Forest,
+Hello,
 
-On 03/04/2013 10:48 AM, Forest Bond wrote:
-> Hi Denis,
->
-> On Sun, Dec 30, 2012 at 08:34:29PM -0600, Denis Kenzior wrote:
->>> -	ofono_netreg_create(modem, 0, "atmodem", data->modem);
->>> +	if (data->have_gsm =3D=3D TRUE) {
->>> +		ofono_netreg_create(modem, 0, "atmodem", data->modem);
->>> +	} else if (data->have_cdma =3D=3D TRUE) {
->>> +		/*
->>> +		 * Once we have CnS protocol support, we should be able to do
->>> +		 * netreg that way instead of using the same port for both.
->>> +		 */
->>> +		ofono_cdma_netreg_create(modem, 0, "sierramodem", data->modem);
->>> +		ofono_cdma_connman_create(modem, OFONO_VENDOR_SIERRA,
->>> +						"cdmamodem", data->modem);
->>> +	}
->>
->> Ah I see what you're doing now.  This is really not going to work
->> too well if you have just one AT port available...
->
-> I'm looking to pick this series back up now.  I understand the implementa=
-tion is
-> not ideal, but it at least provides for basic connectivity until we have =
-support
-> for the CnS protocol.  Will you accept the full series if I address the o=
-ther
-> issues with the code that you mentioned?
+I've a weird issue. I don't know what's going on...
 
-If we accept something upstream we assume full responsibility for the =
+I try to send SMS with a T-mobile SIM card in Germany. The SIM card =
 
-code, and everything that entails, including future maintenance.  Thus =
+doesn't require PIN code. I can get the GSM network and I don't use GPRS.
 
-we do not have a habit of accepting functionality that is inherently =
+Sometimes, I can send SMS, and another time, It fails. More precisely, =
 
-broken.  So unless you can convince me otherwise, my answer is: "I'd =
+when I've got an ofono which can send SMS, I can send all the SMS I =
 
-rather not" ;)
+want, it works. But if I restart ofono, either it works or not.
+
+I added OFONO_AT_DEBUG=3D1 in my env, and tried to find some troubles in =
+
+the logs. I've got some errors but I don't think they are criticals and
+anyway, they appeared when SMS working too :
+
+-------------------------------
+ > AT+CPINR\r
+< \r\nERROR\r\n
+Querying remaining pin retries failed
+
+[...]
+
+Provisioning failed
+-------------------------------
+
+I can see some differences in time for "AT+CRSM" commands but, they are =
+
+in the same order. And, after many tests, I don't think the problem is here.
+
+And, when the SMS send fails, the modem tells me :
+
+-------------------------------
+CMS ERROR: Unknown error\r\n
+
+-------------------------------
+
+Not very useful....
+
+Also,@same time, I tested in Switzerland with SwissCom and I don't =
+
+have problem.
+
+1 month ago, it worked well. I don't get it...
+
+I've got a "SIMCOM_SIM5216E" modem. Using the driver g1 or the new =
+
+simcom driver I developped, with ofono 1.6 or 1.12, it's the same behavior.
+
+Maybe have you already see this kind of things ? My brain is lost.
 
 Regards,
--Denis
+avd.
 
---===============6497901481822932512==--
+-- =
+
+.-------------------.-----------------------.-------------------.
+| Viallard Anthony  | Syscom Instruments SA | Embedded System   |
+| +41 024 455 24 82 | Rue de l'industrie 21 | Software Designer |
+| ~~~~~~~~~~~~~~~~~ | 1450 Sainte-Croix     | ~~~~~~~~~~~~~~~~~ |
+'-------------------^-----------------------^-------------------^
+
+--===============4743801331794597782==--
 
