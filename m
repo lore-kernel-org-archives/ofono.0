@@ -1,90 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============1265898100675158757=="
+Content-Type: multipart/mixed; boundary="===============2091520660108301233=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Randomly SMS sent passes or fails
-Date: Tue, 05 Mar 2013 14:43:00 -0600
-Message-ID: <513658D4.8040508@gmail.com>
-In-Reply-To: <51360EEA.6090506@syscom-instruments.com>
+Subject: Re: [PATCH 7/8] sierra: Support CDMA modems
+Date: Tue, 05 Mar 2013 14:52:09 -0600
+Message-ID: <51365AF9.6040600@gmail.com>
+In-Reply-To: <20130305193619.GK11149@alittletooquiet.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1265898100675158757==
+--===============2091520660108301233==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Forest,
 
-On 03/05/2013 09:27 AM, Viallard Anthony wrote:
-> Hello,
+>>> I'm looking to pick this series back up now.  I understand the implemen=
+tation is
+>>> not ideal, but it at least provides for basic connectivity until we hav=
+e support
+>>> for the CnS protocol.  Will you accept the full series if I address the=
+ other
+>>> issues with the code that you mentioned?
+>>
+>> If we accept something upstream we assume full responsibility for
+>> the code, and everything that entails, including future maintenance.
+>> Thus we do not have a habit of accepting functionality that is
+>> inherently broken.  So unless you can convince me otherwise, my
+>> answer is: "I'd rather not" ;)
 >
-> I've a weird issue. I don't know what's going on...
->
-> I try to send SMS with a T-mobile SIM card in Germany. The SIM card
-> doesn't require PIN code. I can get the GSM network and I don't use GPRS.
->
-> Sometimes, I can send SMS, and another time, It fails. More precisely,
-> when I've got an ofono which can send SMS, I can send all the SMS I
-> want, it works. But if I restart ofono, either it works or not.
->
-> I added OFONO_AT_DEBUG=3D1 in my env, and tried to find some troubles in
-> the logs. I've got some errors but I don't think they are criticals and
-> anyway, they appeared when SMS working too :
->
-> -------------------------------
->  > AT+CPINR\r
-> < \r\nERROR\r\n
-> Querying remaining pin retries failed
+> Well I think the argument to make is that we ought to be able to graceful=
+ly
+> degrade to handle a device that we have limited support for.  We know how=
+ to
+> bring up a connection on this device.  I think users would prefer to have=
+ a
+> device that works with a limited feature set than one that doesn't work a=
+t all.
 
-This is not supported by all modems, it is a generic 27.007 command for =
+Don't get me wrong, we do want to enable as many devices as possible... =
 
-pin retry counts.  However it was added in a fairly late version of the =
+The problem is that the oFono clients do not know when the device is in =
 
-spec, so not many devices support this.
+'degraded' mode.  Our assumption was that we always have multiple AT =
+
+ports available or we are using high-speed interfaces.  If the AT chat =
+
+is blocked by PPP, then we can't even get basic things like signal =
+
+strength notifications while on a data connection.  To me that is =
+
+unacceptable, especially since we know that any AT command based =
+
+implementation is a long-term dead end.
 
 >
-> [...]
->
-> Provisioning failed
-> -------------------------------
+> Anyway, I notice that one of the ports appears to be QCDM.  It appears th=
+at QCDM
+> support is partially implemented in oFono?  But I don't know QCDM at all.=
+  Can
+> we use it to do netreg?
 
-This should not affect anything, unless your operator requires SMS to be =
+oFono QCDM support is quite bare, not much beyond a test tool. =
 
-sent over GPRS.
+Contributions are always welcome!
 
 >
-> I can see some differences in time for "AT+CRSM" commands but, they are
-> in the same order. And, after many tests, I don't think the problem is
-> here.
->
-
-Nope
-
-> And, when the SMS send fails, the modem tells me :
->
-> -------------------------------
-> CMS ERROR: Unknown error\r\n
->
-> -------------------------------
->
-> Not very useful....
->
-> Also, at same time, I tested in Switzerland with SwissCom and I don't
-> have problem.
->
-> 1 month ago, it worked well. I don't get it...
->
-> I've got a "SIMCOM_SIM5216E" modem. Using the driver g1 or the new
-> simcom driver I developped, with ofono 1.6 or 1.12, it's the same behavio=
-r.
->
-> Maybe have you already see this kind of things ? My brain is lost.
+> If not, I could probably implement (partial) CnS support at some point.  =
+I'm
+> just not sure I will have time to do it right away.
 >
 
-Nope, can't really help here; perhaps if you shared a detailed AT log?
+That would be great.
+
+> I assume a proper netreg implementation on one of these other ports would
+> address your primary concern?
+
+Yep, correct.
+
+>
+> Thanks,
+> Forest
 
 Regards,
 -Denis
 
---===============1265898100675158757==--
+--===============2091520660108301233==--
 
