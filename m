@@ -1,90 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8871821369154666880=="
+Content-Type: multipart/mixed; boundary="===============8234372387579225897=="
 MIME-Version: 1.0
-From: Forest Bond <forest@alittletooquiet.net>
-Subject: Re: [PATCH 7/8] sierra: Support CDMA modems
-Date: Tue, 05 Mar 2013 14:36:19 -0500
-Message-ID: <20130305193619.GK11149@alittletooquiet.net>
-In-Reply-To: <51352849.9080506@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v1 0/6] handsfree-audio: Add Agent NewConnection()
+Date: Tue, 05 Mar 2013 14:38:20 -0600
+Message-ID: <513657BC.3050804@gmail.com>
+In-Reply-To: <CAKT1EBezfORJSbDWAgSgcThBKg449ZnZHBqkMPN6L9b-a_ZmTA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8871821369154666880==
+--===============8234372387579225897==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Claudio,
 
-On Mon, Mar 04, 2013 at 05:03:37PM -0600, Denis Kenzior wrote:
-> On 03/04/2013 10:48 AM, Forest Bond wrote:
-> >On Sun, Dec 30, 2012 at 08:34:29PM -0600, Denis Kenzior wrote:
-> >>>-	ofono_netreg_create(modem, 0, "atmodem", data->modem);
-> >>>+	if (data->have_gsm =3D=3D TRUE) {
-> >>>+		ofono_netreg_create(modem, 0, "atmodem", data->modem);
-> >>>+	} else if (data->have_cdma =3D=3D TRUE) {
-> >>>+		/*
-> >>>+		 * Once we have CnS protocol support, we should be able to do
-> >>>+		 * netreg that way instead of using the same port for both.
-> >>>+		 */
-> >>>+		ofono_cdma_netreg_create(modem, 0, "sierramodem", data->modem);
-> >>>+		ofono_cdma_connman_create(modem, OFONO_VENDOR_SIERRA,
-> >>>+						"cdmamodem", data->modem);
-> >>>+	}
-> >>
-> >>Ah I see what you're doing now.  This is really not going to work
-> >>too well if you have just one AT port available...
-> >
-> >I'm looking to pick this series back up now.  I understand the implement=
-ation is
-> >not ideal, but it at least provides for basic connectivity until we have=
- support
-> >for the CnS protocol.  Will you accept the full series if I address the =
-other
-> >issues with the code that you mentioned?
-> =
+>>
+>> I applied this series.  I did re-order and split the patches to be in
+>> accordance to our patch submission guidelines.  Please refer to the HACK=
+ING
+>> document for more details.
+>>
+>
+> I thought that taking care not to break compilation was more
+> important. Sometimes I avoid to split patches to avoid breaking the
+> compilation. Especially when it is necessary to change header files.
+>
 
-> If we accept something upstream we assume full responsibility for
-> the code, and everything that entails, including future maintenance.
-> Thus we do not have a habit of accepting functionality that is
-> inherently broken.  So unless you can convince me otherwise, my
-> answer is: "I'd rather not" ;)
+Understandable, however we actually optimize the other way.  Because all =
 
-Well I think the argument to make is that we ought to be able to gracefully
-degrade to handle a device that we have limited support for.  We know how to
-bring up a connection on this device.  I think users would prefer to have a
-device that works with a limited feature set than one that doesn't work at =
-all.
+patches are thoroughly reviewed we tend not to need git bisect often. =
 
-Anyway, I notice that one of the ports appears to be QCDM.  It appears that=
- QCDM
-support is partially implemented in oFono?  But I don't know QCDM at all.  =
-Can
-we use it to do netreg?
+In situations like these the primary goal is to still follow the general =
 
-If not, I could probably implement (partial) CnS support at some point.  I'm
-just not sure I will have time to do it right away.
+patch submission guidelines.  e.g. breaking up patches per directory. =
 
-I assume a proper netreg implementation on one of these other ports would
-address your primary concern?
+The secondary goal is to keep git bisect happy if at all possible.  If =
 
-Thanks,
-Forest
--- =
+it is not, then you are allowed to break it.
 
-Forest Bond
-http://www.alittletooquiet.net
-http://www.rapidrollout.com
+The rules of thumb are
+1. Break up patches appropriately (e.g. in line with HACKING)
+2. When adding new code everything must compile individually
+3. When refactoring code (which should not happen often), try very hard =
 
---===============8871821369154666880==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
+to do same as 2.
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEuNC4xMCAoR05V
-L0xpbnV4KQoKaUVZRUFSRUNBQVlGQWxFMlNUTUFDZ2tRUk80ZlFRZHY1QXpralFDZEdHNWRCZFN1
-VlZ6Rm44NTVvNWViMGEwVQo1eThBbjJFK0s1NUhaU1dYR1RlSjkzR2N0Y0ZUQTRJTgo9Z3c3Ugot
-LS0tLUVORCBQR1AgU0lHTkFUVVJFLS0tLS0K
+Regards,
+-Denis
 
---===============8871821369154666880==--
+--===============8234372387579225897==--
 
