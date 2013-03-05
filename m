@@ -1,81 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============4743801331794597782=="
+Content-Type: multipart/mixed; boundary="===============8040028566067291464=="
 MIME-Version: 1.0
-From: Viallard Anthony <viallard@syscom-instruments.com>
-Subject: Randomly SMS sent passes or fails
-Date: Tue, 05 Mar 2013 16:27:38 +0100
-Message-ID: <51360EEA.6090506@syscom-instruments.com>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: Re: [PATCH v1 0/6] handsfree-audio: Add Agent NewConnection()
+Date: Tue, 05 Mar 2013 13:40:11 -0300
+Message-ID: <CAKT1EBezfORJSbDWAgSgcThBKg449ZnZHBqkMPN6L9b-a_ZmTA@mail.gmail.com>
+In-Reply-To: <513523E1.3020202@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4743801331794597782==
+--===============8040028566067291464==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi Denis:
 
-I've a weird issue. I don't know what's going on...
+On Mon, Mar 4, 2013 at 7:44 PM, Denis Kenzior <denkenz@gmail.com> wrote:
+> Hi Claudio,
+>
+>
+> On 03/04/2013 02:48 PM, Claudio Takahasi wrote:
+>>
+>> This patch series moves the SCO connection handling from hfp_hf_bluez5.c
+>> to src/handsfree-audio.c, and adds the Agent NewConnection() method call
+>> to pass the SCO file descriptor from oFono to the Agent implementation.
+>>
+>> Changes between v0-v1:
+>> * Merged commits "Move SCO to handsfree-audio.c" and "Remove modem
+>> dependency"
+>> * Removed tracking of supported local HFP version in handsfree-audio
+>> * Removed ofono_handsfree_get_version()
+>>
+>> Claudio Takahasi (6):
+>>    bluetooth: Add new Bluetooth header
+>>    handsfree-audio: Move SCO to handsfree-audio.c
+>>    handsfree-audio: Add NewConnection
+>>    handsfree-audio: Check local SCO address
+>>    handsfree-audio: Reject SCO if Card is not ready
+>>    handsfree-audio: Reject SCO if agent is unavailable
+>>
+>>   Makefile.am             |   2 +-
+>>   plugins/bluez5.c        |  17 ------
+>>   plugins/bluez5.h        |  41 --------------
+>>   plugins/hfp_hf_bluez5.c | 103 +----------------------------------
+>>   src/bluetooth.h         |  71 ++++++++++++++++++++++++
+>>   src/handsfree-audio.c   | 141
+>> +++++++++++++++++++++++++++++++++++++++++++++++-
+>>   6 files changed, 214 insertions(+), 161 deletions(-)
+>>   create mode 100644 src/bluetooth.h
+>>
+>
+> I applied this series.  I did re-order and split the patches to be in
+> accordance to our patch submission guidelines.  Please refer to the HACKI=
+NG
+> document for more details.
+>
+> Regards,
+> -Denis
 
-I try to send SMS with a T-mobile SIM card in Germany. The SIM card =
-
-doesn't require PIN code. I can get the GSM network and I don't use GPRS.
-
-Sometimes, I can send SMS, and another time, It fails. More precisely, =
-
-when I've got an ofono which can send SMS, I can send all the SMS I =
-
-want, it works. But if I restart ofono, either it works or not.
-
-I added OFONO_AT_DEBUG=3D1 in my env, and tried to find some troubles in =
-
-the logs. I've got some errors but I don't think they are criticals and
-anyway, they appeared when SMS working too :
-
--------------------------------
- > AT+CPINR\r
-< \r\nERROR\r\n
-Querying remaining pin retries failed
-
-[...]
-
-Provisioning failed
--------------------------------
-
-I can see some differences in time for "AT+CRSM" commands but, they are =
-
-in the same order. And, after many tests, I don't think the problem is here.
-
-And, when the SMS send fails, the modem tells me :
-
--------------------------------
-CMS ERROR: Unknown error\r\n
-
--------------------------------
-
-Not very useful....
-
-Also,@same time, I tested in Switzerland with SwissCom and I don't =
-
-have problem.
-
-1 month ago, it worked well. I don't get it...
-
-I've got a "SIMCOM_SIM5216E" modem. Using the driver g1 or the new =
-
-simcom driver I developped, with ofono 1.6 or 1.12, it's the same behavior.
-
-Maybe have you already see this kind of things ? My brain is lost.
+I thought that taking care not to break compilation was more
+important. Sometimes I avoid to split patches to avoid breaking the
+compilation. Especially when it is necessary to change header files.
 
 Regards,
-avd.
+Claudio.
 
--- =
-
-.-------------------.-----------------------.-------------------.
-| Viallard Anthony  | Syscom Instruments SA | Embedded System   |
-| +41 024 455 24 82 | Rue de l'industrie 21 | Software Designer |
-| ~~~~~~~~~~~~~~~~~ | 1450 Sainte-Croix     | ~~~~~~~~~~~~~~~~~ |
-'-------------------^-----------------------^-------------------^
-
---===============4743801331794597782==--
+--===============8040028566067291464==--
 
