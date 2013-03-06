@@ -1,309 +1,670 @@
-Content-Type: multipart/mixed; boundary="===============3300882963937425443=="
+Content-Type: multipart/mixed; boundary="===============0579169839603370306=="
 MIME-Version: 1.0
-From: Viallard Anthony <viallard@syscom-instruments.com>
-Subject: Re: Randomly SMS sent passes or fails
-Date: Wed, 06 Mar 2013 10:23:57 +0100
-Message-ID: <51370B2D.5050904@syscom-instruments.com>
-In-Reply-To: <513658D4.8040508@gmail.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@linux.intel.com>
+Subject: [RFC v2 5/8] handsfree-audio: Implement alsa playback
+Date: Wed, 06 Mar 2013 10:25:31 +0100
+Message-ID: <1362561934-24913-5-git-send-email-frederic.dalleau@linux.intel.com>
+In-Reply-To: <1362561934-24913-1-git-send-email-frederic.dalleau@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3300882963937425443==
+--===============0579169839603370306==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 05. 03. 13 21:43, Denis Kenzior wrote:
+---
+ tools/handsfree-audio.c |  472 +++++++++++++++++++++++++++++++++++++++++--=
+----
+ 1 file changed, 416 insertions(+), 56 deletions(-)
 
->
-> Nope, can't really help here; perhaps if you shared a detailed AT log?
->
-> Regards,
-> -Denis
+diff --git a/tools/handsfree-audio.c b/tools/handsfree-audio.c
+index 88310aa..a0cb380 100644
+--- a/tools/handsfree-audio.c
++++ b/tools/handsfree-audio.c
+@@ -30,10 +30,17 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <signal.h>
++#include <sys/time.h>
++#include <poll.h>
+ =
 
-Hi Denis,
+ #include <gdbus.h>
+ #include <glib.h>
+ =
 
-Here the logs when it fails (AT + ofono full debug) :
++#include <alsa/asoundlib.h>
++#include <pthread.h>
++#include <bluetooth/bluetooth.h>
++#include <bluetooth/sco.h>
++
+ #define OFONO_SERVICE			"org.ofono"
+ #define HFP_AUDIO_MANAGER_PATH		"/"
+ #define HFP_AUDIO_MANAGER_INTERFACE	OFONO_SERVICE ".HandsfreeAudioManager"
+@@ -50,47 +57,257 @@
+ /* DBus related */
+ static GMainLoop *main_loop =3D NULL;
+ static DBusConnection *conn;
+-static GSList *hcons =3D NULL;
++static GSList *threads =3D NULL;
+ =
 
---------------------------------------------------------------------------
-plugins/g1.c:g1_enable()
-src/modem.c:get_modem_property() modem 0xf4030 property Device
-src/modem.c:modem_change_state() old state: 0, new state: 1
-plugins/g1.c:g1_pre_sim()
- > ATE0Q0V1\r
-< ATE0Q0V1\r\r\nOK\r\n
- > AT+CFUN=3D1\r
-src/sim.c:ofono_sim_add_state_watch() 0xf1b50
-src/sim.c:ofono_sim_add_state_watch() 0xf1b50
-src/sim.c:ofono_sim_add_state_watch() 0xf1b50
-< \r\nOK\r\n
-plugins/g1.c:cfun_set_on_cb()
- > AT+GCAP\r
-< \r\n+GCAP: +CGSM,+DS,+ES\r\n\r\nOK\r\n
- > AT+CRC=3D1\r
-< \r\nOK\r\n
- > AT+CLIP=3D1\r
-< \r\nOK\r\n
- > AT+CDIP=3D1\r
-< \r\nOK\r\n
- > AT+CNAP=3D1\r
-< \r\nERROR\r\n
- > AT+COLP=3D1\r
-< \r\nOK\r\n
- > AT+CSSN=3D1,1\r
-< \r\nOK\r\n
- > AT+VTD?\r
-< \r\n+VTD: 0\r\n\r\nOK\r\n
- > AT+CCWA=3D1\r
-< \r\nOK\r\n
-drivers/atmodem/voicecall.c:at_voicecall_initialized() voicecall_init: =
+ static gboolean option_nocvsd =3D FALSE;
+ static gboolean option_nomsbc =3D FALSE;
++static gboolean option_server =3D FALSE;
++static gboolean option_defer =3D FALSE;
++static gchar *option_client_addr =3D NULL;
+ =
 
-registering to notifications
-src/sim.c:ofono_sim_add_state_watch() 0xf1b50
- > AT+CRSM=3D192,12258\r
-< \r\n+CRSM: 144,0,""\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_crsm_info_cb() crsm_info_cb: 90, 00, 0
- > AT+CGMI\r
-< \r\nSIMCOM INCORPORATED\r\n\r\nOK\r\n
- > AT+CLCC\r
-< \r\nOK\r\n
- > AT+CGMM\r
-< \r\nSIMCOM_SIM5216E\r\n\r\nOK\r\n
- > AT+CRSM=3D192,28421\r
-< \r\n+CRSM: 106,130,""\r\n\r\nOK\r\n
- > AT+CGMR\r
-< \r\n+CGMR: SIM5216E_V1.5\r\n\r\nOK\r\n
- > AT+CGSN\r
-< \r\n359769031171256\r\n\r\nOK\r\n
- > AT+CRSM=3D192,12037\r
-< \r\n+CRSM: 144,0,""\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_crsm_info_cb() crsm_info_cb: 90, 00, 0
- > AT+CPIN?\r
-< \r\n+CPIN: READY\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_cpin_cb() crsm_pin_cb: READY
-drivers/atmodem/sim.c:at_pin_retries_query()
- > AT+CPINR\r
-< \r\nERROR\r\n
-Querying remaining pin retries failed
- > AT+CRSM=3D192,28599\r
-< \r\n+CRSM: 144,0,""\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_crsm_info_cb() crsm_info_cb: 90, 00, 0
-src/voicecall.c:ecc_g2_read_cb() 0
- > AT+CRSM=3D192,28599\r
-< \r\n+CRSM: 144,0,""\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_crsm_info_cb() crsm_info_cb: 90, 00, 0
-src/voicecall.c:ecc_g3_read_cb() 0
- > AT+CRSM=3D192,28590\r
-< \r\n+CRSM: 106,130,""\r\n\r\nOK\r\n
- > AT+CRSM=3D192,28589\r
-< \r\n+CRSM: 144,0,""\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_crsm_info_cb() crsm_info_cb: 90, 00, 0
- > AT+CRSM=3D192,28438\r
-< \r\n+CRSM: 106,130,""\r\n\r\nOK\r\n
- > AT+CRSM=3D192,28472\r
-< \r\n+CRSM: 144,0,""\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_crsm_info_cb() crsm_info_cb: 90, 00, 0
- > AT+CIMI\r
-< \r\n262015500220406\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_cimi_cb() cimi_cb: 262015500220406
-src/modem.c:modem_change_state() old state: 1, new state: 2
-plugins/g1.c:g1_post_sim()
-drivers/atmodem/gprs-context.c:at_gprs_context_probe()
-src/modem.c:modem_change_state() old state: 2, new state: 3
- > AT+CSCS?\r
-< \r\n+CSCS: "IRA"\r\n\r\nOK\r\n
- > AT+CUSD=3D1\r
-< \r\nOK\r\n
- > AT+CREG=3D?\r
-< \r\n+CREG: (0-2)\r\n\r\nOK\r\n
- > AT+CAOC=3D2\r
-< \r\nOK\r\n
- > AT+CCWE=3D1\r
-< \r\nERROR\r\n
- > AT+CSMS=3D?\r
-< \r\n+CSMS: (0-1)\r\n\r\nOK\r\n
-drivers/atmodem/sms.c:at_csms_query_cb() CSMS query parsed successfully
- > AT+CSCS=3D?\r
-< \r\n+CSCS: ("IRA","GSM","UCS2")\r\n\r\nOK\r\n
- > AT+CGDCONT=3D?\r
-< \r\n+CGDCONT: (1-16),"IP",,,(0-2),(0-4)\r\n+CGDCONT: =
+-struct hfp_audio_conn {
++struct hfp_audio_thread {
+ 	unsigned char codec;
+-	int watch;
++	int fd;
++	int running;
++	pthread_t thread;
+ };
+ =
 
-(1-16),"PPP",,,(0-2),(0-4)\r\n+CGDCONT: =
+-static void hfp_audio_conn_free(struct hfp_audio_conn *hcon)
++static int btstr2ba(const char *str, bdaddr_t *ba)
++{
++	int i;
++
++	for (i =3D 5; i >=3D 0; i--, str +=3D 3)
++		ba->b[i] =3D strtol(str, NULL, 16);
++
++	return 0;
++}
++
++static snd_pcm_t *hfp_audio_pcm_init(snd_pcm_stream_t stream)
++{
++	snd_pcm_t *pcm;
++	DBG("Initializing pcm for %s", (stream =3D=3D SND_PCM_STREAM_CAPTURE) ?
++			"capture" : "playback");
++
++	if (snd_pcm_open(&pcm, "default", stream, SND_PCM_NONBLOCK) < 0) {
++		DBG("Failed to open pcm");
++		return NULL;
++	}
++
++	/* 8000 khz, 16 bits, 128000 bytes/s, 48 bytes/frame, 6000 fps */
++	if (snd_pcm_set_params(pcm, SND_PCM_FORMAT_S16_LE,
++					SND_PCM_ACCESS_RW_INTERLEAVED,
++					1, 8000, 1, 20000) < 0) {
++		DBG("Failed to set pcm params");
++		snd_pcm_close(pcm);
++		pcm =3D NULL;
++	}
++
++	return pcm;
++}
++
++static void hfp_audio_thread_free(struct hfp_audio_thread *hcon)
+ {
+ 	DBG("Freeing audio connection %p", hcon);
++	if (!hcon)
++		return;
++
++	hcon->running =3D 0;
++	if (hcon->thread)
++		pthread_join(hcon->thread, NULL);
+ =
 
-(1-16),"IPV6",,,(0-2),(0-4)\r\n\r\nOK\r\n
- > AT+CREG=3D2\r
-< \r\nOK\r\n
- > AT+CSMS=3D1\r
-< \r\n+CSMS: 1,1,1\r\n\r\nOK\r\n
- > AT+CPBS=3D?\r
-< \r\n+CPBS: ("SM","DC","FD","LD","MC","ME","RC","EN","ON")\r\n\r\nOK\r\n
- > AT+CGREG=3D?\r
-< \r\n+CGREG: (0-2)\r\n\r\nOK\r\n
- > AT+CIND=3D?\r
-< \r\n+CIND: =
+-	hcons =3D g_slist_remove(hcons, hcon);
+-	g_source_remove(hcon->watch);
++	threads =3D g_slist_remove(threads, hcon);
+ 	g_free(hcon);
++	DBG("freed %p", hcon);
+ }
+ =
 
-("battchg",(0-5)),("signal",(0-5)),("service",(0-1)),("call",(0-1)),("roam"=
-,(0-1)),("smsfull",(0-1)),("GPRS =
+-static gboolean hfp_audio_cb(GIOChannel *io, GIOCondition cond, gpointer d=
+ata)
++/* Returns the number of data on sco socket */
++static int hfp_audio_playback(int fd, snd_pcm_t *playback)
+ {
+-	struct hfp_audio_conn *hcon =3D data;
+-	gsize read;
+-	gsize written;
+-	char buf[60];
++	char buf[800];
++	snd_pcm_sframes_t frames;
++	int bytes;
++
++	bytes =3D read(fd, buf, sizeof(buf));
++	if (bytes < 0) {
++		DBG("Failed to read: bytes %d, errno %d", bytes, errno);
++		switch (errno) {
++		case ENOTCONN:
++			return -ENOTCONN;
++		case EAGAIN:
++			return 0;
++		default:
++			return -EINVAL;
++		}
++	}
+ =
 
-coverage",(0-1)),("callsetup",(0-3))\r\n\r\nOK\r\n
-src/sim.c:ofono_sim_add_spn_watch() 0xf1b50
- > AT+CSMS?\r
-< \r\n+CSMS: 1,1,1,1\r\n\r\nOK\r\n
- > AT+CGREG=3D2\r
-< \r\nOK\r\n
- > AT+CGAUTO=3D0\r
-< \r\nOK\r\n
- > AT+CGEREP=3D2,1\r
-< \r\nOK\r\n
-src/sim.c:ofono_sim_add_spn_watch() 0xf1b50
- > AT+CMER=3D3,0,0,1\r
-< \r\nOK\r\n
- > AT+CREG?\r
-< \r\n+CREG: 2,1, 889D, 13EB0D\r\n\r\nOK\r\n
-src/network.c:ofono_netreg_status_notify() /g1_0 status 1 tech -1
- > AT+CMGF=3D?\r
-< \r\n+CMGF: (0-1)\r\n\r\nOK\r\n
- > AT+CPSB=3D1\r
-< \r\nERROR\r\n
- > AT+COPS=3D3,2\r
-< \r\nOK\r\n
- > AT+COPS?\r
-< \r\n+COPS: 0,2,"26201",2\r\n\r\nOK\r\n
-drivers/atmodem/network-registration.c:cops_numeric_cb() Cops numeric =
+-	if (cond & (G_IO_HUP | G_IO_NVAL | G_IO_ERR))
+-		goto fail;
++	frames =3D snd_pcm_writei(playback, buf, bytes / 2);
++	switch (frames) {
++	case -EPIPE:
++		DBG("Playback underrun");
++		snd_pcm_prepare(playback);
++		return bytes;
++	case -EAGAIN:
++		DBG("??? %d", bytes / 2);
++		return bytes;
++	case -EBADFD:
++	case -ESTRPIPE:
++		return -EINVAL;
++	}
+ =
 
-got mcc: 262, mnc: 01
- > AT+CIND?\r
-< \r\n+CIND: 4,3,1,0,0,0,1,0\r\n\r\nOK\r\n
-src/network.c:ofono_netreg_strength_notify() strength 60
- > AT+CIND?\r
-< \r\n+CIND: 4,3,1,0,0,0,1,0\r\n\r\nOK\r\n
- > AT+CPMS=3D?\r
-< \r\n+CPMS: =
+-	if (g_io_channel_read_chars(io, buf, sizeof(buf), &read, NULL) !=3D
+-			G_IO_STATUS_NORMAL)
+-		goto fail;
++	if (frames < bytes / 2)
++		DBG("played %d < requested %d", (int)frames, bytes / 2);
+ =
 
-("ME","MT","SM","SR"),("ME","MT","SM","SR"),("ME","SM")\r\n\r\nOK\r\n
- > AT+CRSM=3D192,28480\r
-< \r\n+CRSM: 144,0,""\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_crsm_info_cb() crsm_info_cb: 90, 00, 0
- > AT+COPS=3D3,0\r
-< \r\nOK\r\n
- > AT+COPS?\r
-< \r\n+COPS: 0,0,"T-Mobile D",2\r\n\r\nOK\r\n
-drivers/atmodem/network-registration.c:cops_cb() cops_cb: T-Mobile D, =
+-	g_io_channel_write_chars(io, buf+written, read, &written, NULL);
++	return bytes;
++}
+ =
 
-262 01 2
-src/network.c:current_operator_callback() 0xff868, (nil)
- > AT+CMGF=3D0\r
-< \r\nOK\r\n
- > AT+CPMS=3D"ME","ME","ME"\r
-< \r\n+CPMS: 0,255,0,255,0,255\r\n\r\nOK\r\n
- > AT+CNMI=3D?\r
-< \r\n+CNMI: (0,1,2),(0,1,2,3),(0,2),(0,1,2),(0,1)\r\n\r\nOK\r\n
-drivers/atmodem/sms.c:build_cnmi_string()
-drivers/atmodem/sms.c:construct_ack_pdu()
- > AT+CNMI=3D1,2,2,1,0\r
-< \r\nOK\r\n
-src/network.c:__ofono_netreg_add_status_watch() 0xff868
-src/sms.c:sms_restore_tx_queue()
-plugins/push-notification.c:sms_watch() registered
-plugins/smart-messaging.c:sms_watch() registered
- > AT+CMGL=3D4\r
-< \r\nOK\r\n
-drivers/atmodem/sms.c:at_cmgl_done()
- > AT+CGSMS=3D3\r
-< \r\nOK\r\n
- > AT+CRSM=3D192,28489\r
-< \r\n+CRSM: 106,130,""\r\n\r\nOK\r\n
- > AT+CRSM=3D192,20256\r
-< \r\n+CRSM: 144,0,""\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_crsm_info_cb() crsm_info_cb: 90, 00, 0
- > AT+CRSM=3D192,28618\r
-< \r\n+CRSM: 144,0,""\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_crsm_info_cb() crsm_info_cb: 90, 00, 0
-Unable to read waiting messages numbers from SIM
- > AT+CRSM=3D192,28617\r
-< \r\n+CRSM: 144,0,""\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_crsm_info_cb() crsm_info_cb: 90, 00, 0
-Unable to read mailbox identifies from SIM
- > AT+CRSM=3D192,28433\r
-< \r\n+CRSM: 106,130,""\r\n\r\nOK\r\n
-src/message-waiting.c:mw_cphs_mwis_read_cb() No CPHS MWIS on SIM
- > AT+CRSM=3D192,28613\r
-< \r\n+CRSM: 144,0,""\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_crsm_info_cb() crsm_info_cb: 90, 00, 0
- > AT+CRSM=3D192,28486\r
-< \r\n+CRSM: 144,0,""\r\n\r\nOK\r\n
-drivers/atmodem/sim.c:at_crsm_info_cb() crsm_info_cb: 90, 00, 0
- > AT+CRSM=3D192,28437\r
-< \r\n+CRSM: 106,130,""\r\n\r\nOK\r\n
- > AT+CRSM=3D192,28435\r
-< \r\n+CRSM: 106,130,""\r\n\r\nOK\r\n
- > AT+CRSM=3D192,28436\r
-< \r\n+CRSM: 106,130,""\r\n\r\nOK\r\n
-Provisioning failed
-src/sim.c:ofono_sim_remove_spn_watch() 0xf1b50
-src/gprs.c:add_context() Registering new context
-src/network.c:__ofono_netreg_add_status_watch() 0xff868
- > AT+CGATT=3D1\r
-< \r\nOK\r\n
-src/gprs.c:gprs_attach_callback() /g1_0 error =3D 0
- > AT+CGREG?\r
-< \r\n+CGREG: 2,1, 889D, 13EB0D\r\n\r\nOK\r\n
-src/gprs.c:registration_status_cb() /g1_0 error 0 status 1
-src/gprs.c:ofono_gprs_status_notify() /g1_0 status 1
-src/sms.c:tx_queue_entry_new() pdu_len: 27, tpdu_len: 26
-src/sms.c:tx_next() tx_next: 0xfe1a0
- > AT+CMGS=3D26\r
-< \r\n>
- > 0011000B911487584414F70000A70DCDF7FBFD7EBFDFEFF71B1402<CtrlZ>
-< \r\n
-< \r\n+CMS ERROR: Unknown error\r\n
-src/sms.c:tx_finished() tx_finished 0xfe1a0
-src/sms.c:sms_tx_queue_remove_entry() 0xfe1a0
---------------------------------------------------------------------------
+-	return TRUE;
++/* Returns the number of data on sco socket */
++static int hfp_audio_capture(int fd, snd_pcm_t *capture, GList **outq, int=
+ mtu)
++{
++	snd_pcm_sframes_t frames;
++	gchar *buf;
++
++	buf =3D g_try_malloc(mtu);
++	if (!buf)
++		return -ENOMEM;
++
++	frames =3D snd_pcm_readi(capture, buf, mtu / 2);
++	switch (frames) {
++	case -EPIPE:
++		DBG("Capture overrun");
++		snd_pcm_prepare(capture);
++		g_free(buf);
++		return 0;
++	case -EAGAIN:
++		DBG("No data to capture");
++		g_free(buf);
++		return 0;
++	case -EBADFD:
++	case -ESTRPIPE:
++		DBG("Other error");
++		g_free(buf);
++		return -EINVAL;
++	}
++
++	if (frames < mtu / 2)
++		DBG("Small frame: %d", (int) frames);
++
++	if (g_list_length(*outq) > 32)
++		DBG("Too many queued packets");
++
++	*outq =3D g_list_append(*outq, buf);
++
++	return frames * 2;
++}
++
++static void pop_outq(int fd, GList **outq, int mtu)
++{
++	GList *el;
++
++	el =3D g_list_first(*outq);
++	if (!el)
++		return;
++
++	*outq =3D g_list_remove_link(*outq, el);
+ =
 
-I tried to find some information about the operator and SMS/GPRS. I =
++	if (write(fd, el->data, mtu) < 0)
++		DBG("Failed to write: %d", errno);
++
++	g_free(el->data);
++	g_list_free(el);
++}
++
++static void *thread_func(void *userdata)
++{
++	struct hfp_audio_thread *hcon =3D userdata;
++	snd_pcm_t *playback, *capture;
++	GList *outq =3D NULL;
++	struct sco_options  opts;
++	struct pollfd fds[8];
++
++	DBG("thread started");
++
++	capture =3D hfp_audio_pcm_init(SND_PCM_STREAM_CAPTURE);
++	if (!capture)
++		return NULL;
++
++	playback =3D hfp_audio_pcm_init(SND_PCM_STREAM_PLAYBACK);
++	if (!playback) {
++		snd_pcm_close(capture);
++		return NULL;
++	}
++
++	/* Force defered setup */
++	if (read(hcon->fd, &opts, sizeof(opts)) < 0)
++		DBG("Defered setup failed: %d (%s)", errno, strerror(errno));
++
++	/* Add SCO options
++	len =3D sizeof(opts);
++	if (getsockopt(hcon->fd, SOL_SCO, SCO_OPTIONS, &opts, &len) < 0) {
++		DBG("getsockopt failed %d", errno);
++		return NULL;
++	}
++	*/
++	opts.mtu =3D 48;
++	DBG("mtu %d", opts.mtu);
++
++	while (hcon->running) {
++		/* Queue alsa captured data (snd_pcm_poll_descriptors failed) */
++		if (hfp_audio_capture(hcon->fd, capture, &outq, opts.mtu) < 0) {
++			DBG("Failed to capture");
++			break;
++		}
++
++		memset(fds, 0, sizeof(fds));
++		fds[0].fd =3D hcon->fd;
++		fds[0].events =3D POLLIN | POLLERR | POLLHUP | POLLNVAL;
++		if (poll(fds, 1, 200) =3D=3D 0)
++			continue;
++
++		if (fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) {
++			DBG("POLLERR | POLLHUP | POLLNVAL triggered");
++			break;
++		}
++
++		if (!fds[0].revents & POLLIN)
++			continue;
++
++		if (hfp_audio_playback(hcon->fd, playback) < 0) {
++			DBG("POLLIN triggered, but read error");
++			break;
++		}
++
++		/* Dequeue in sync with readings */
++		pop_outq(hcon->fd, &outq, opts.mtu);
++	}
++
++	DBG("thread terminating");
++	snd_pcm_close(playback);
++	snd_pcm_close(capture);
++	return NULL;
++}
++
++static int new_connection(int fd, int codec)
++{
++	struct hfp_audio_thread *hcon;
++	DBG("New connection: fd=3D%d codec=3D%d", fd, codec);
++	hcon =3D g_try_malloc0(sizeof(struct hfp_audio_thread));
++	if (hcon =3D=3D NULL)
++		return -ENOMEM;
++
++	hcon->fd =3D fd;
++	hcon->codec =3D codec;
++	hcon->running =3D 1;
++
++	if (pthread_create(&hcon->thread, NULL, thread_func, hcon) < 0)
++		goto fail;
++
++	/* FIXME thread is not detached until we quit */
++
++	threads =3D g_slist_prepend(threads, hcon);
++	return 0;
+ fail:
+-	DBG("Disconnected");
+-	hfp_audio_conn_free(hcon);
+-	return FALSE;
++	hfp_audio_thread_free(hcon);
++	return -EINVAL;
+ }
+ =
 
-didn't find documentation in my fluent language. I will ask to a german =
+ static DBusMessage *agent_newconnection(DBusConnection *conn, DBusMessage =
+*msg,
+@@ -99,8 +316,7 @@ static DBusMessage *agent_newconnection(DBusConnection *=
+conn, DBusMessage *msg,
+ 	const char *card;
+ 	int fd;
+ 	unsigned char codec;
+-	GIOChannel *io;
+-	struct hfp_audio_conn *hcon;
++	DBusMessage *reply;
+ =
 
-guy. Maybe, there are a AT command to know wether operator supports this ?
+ 	DBG("New connection");
+ =
 
-Otherwise, I try to find documentation about this amazing SMS over GPRS =
+@@ -112,30 +328,32 @@ static DBusMessage *agent_newconnection(DBusConnectio=
+n *conn, DBusMessage *msg,
+ 				HFP_AUDIO_AGENT_INTERFACE ".InvalidArguments",
+ 				"Invalid arguments");
+ =
 
-feature. From what I read, there an AT command to select the behavior. I =
+-	DBG("New connection: card=3D%s fd=3D%d codec=3D%d", card, fd, codec);
++	reply =3D dbus_message_new_method_return(msg);
++	if (!reply)
++		goto fail;
+ =
 
-guess it's the AT+CGSMS command. Ofono set CGSMS to 3 :
+-	io =3D g_io_channel_unix_new(fd);
++	if (new_connection(fd, codec) >=3D 0)
++		return reply;
+ =
 
-AT+CGSMS=3D3
+-	hcon =3D g_try_malloc0(sizeof(struct hfp_audio_conn));
+-	if (hcon =3D=3D NULL)
+-		return NULL;
+-
+-	hcon->codec =3D codec;
+-	hcon->watch =3D g_io_add_watch(io, G_IO_IN, hfp_audio_cb, hcon);
+-	hcons =3D g_slist_prepend(hcons, hcon);
++	dbus_message_unref(reply);
+ =
 
- From the modem documentation, I see :
+-	return dbus_message_new_method_return(msg);
++fail:
++	return g_dbus_create_error(msg,
++			HFP_AUDIO_AGENT_INTERFACE ".Failed", "Failed to start");
+ }
+ =
 
-A numeric parameter which indicates the service or service preference to =
+ static DBusMessage *agent_release(DBusConnection *conn, DBusMessage *msg,
+ 					void *data)
+ {
+ 	DBG("HFP audio agent released");
++	/* agent will be registered on next oFono startup */
+ 	return dbus_message_new_method_return(msg);
+ }
+ =
 
-be used
-0 =E2=80=93 GPRS(value is not really supported and is internally mapped to =
-2)
-1 =E2=80=93 circuit switched(value is not really supported and is internall=
-y =
+ static const GDBusMethodTable agent_methods[] =3D {
+-	{ GDBUS_METHOD("NewConnection", NULL, NULL, agent_newconnection) },
++	{ GDBUS_METHOD("NewConnection",
++		GDBUS_ARGS({ "path", "o" }, { "fd", "h" }, { "codec", "y" }),
++		NULL, agent_newconnection) },
+ 	{ GDBUS_METHOD("Release", NULL, NULL, agent_release) },
+ 	{ },
+ };
+@@ -167,7 +385,7 @@ static void hfp_audio_agent_register(DBusConnection *co=
+nn)
+ 	const unsigned char *pcodecs =3D codecs;
+ 	int ncodecs =3D 0;
+ =
 
-mapped to 3)
-2 =E2=80=93 GPRS preferred (use circuit switched if GPRS not available)
-3 =E2=80=93 circuit switched preferred (use GPRS if circuit switched not av=
-ailable)
+-	DBG("Registering audio agent");
++	DBG("Registering audio agent in oFono");
+ =
 
-Maybe the "circuit switched" has got some troubles on the operator =
+ 	msg =3D dbus_message_new_method_call(OFONO_SERVICE,
+ 						HFP_AUDIO_MANAGER_PATH,
+@@ -196,20 +414,147 @@ static void hfp_audio_agent_register(DBusConnection =
+*conn)
+ =
 
-network and as I disabled GPRS, the SMS sending failed most of the time ?
+ 	dbus_message_unref(msg);
+ =
 
-There also the command AT+CSMS :
+-	if (call =3D=3D NULL) {
+-		DBG("Unable to register agent");
+-		return;
+-	}
+-
+ 	dbus_pending_call_set_notify(call, hfp_audio_agent_register_reply,
+ 						NULL, NULL);
+ =
 
-+CSMS: 1,1,1
+ 	dbus_pending_call_unref(call);
+ }
+ =
 
-The first 1 tells the "SMS@command is compatible with GSM phase 2+.". =
++static gboolean sco_accept_cb(GIOChannel *io, GIOCondition cond, gpointer =
+data)
++{
++	struct sockaddr_sco addr;
++	socklen_t optlen;
++	int sk, nsk;
++
++	if (cond & (G_IO_HUP | G_IO_NVAL | G_IO_ERR))
++		goto fail;
++
++	DBG("Incoming connection");
++	sk =3D g_io_channel_unix_get_fd(io);
++	nsk =3D accept(sk, (struct sockaddr *) &addr, &optlen);
++
++	if (nsk > 0)
++		new_connection(nsk, HFP_AUDIO_CVSD);
++
++	return TRUE;
++
++fail:
++	DBG("Server disconnected");
++	return FALSE;
++}
++
++static gboolean sco_connect_cb(GIOChannel *io, GIOCondition cond, gpointer=
+ data)
++{
++	int sk;
++
++	if (cond & (G_IO_HUP | G_IO_NVAL | G_IO_ERR))
++		goto fail;
++
++	DBG("Connected");
++	sk =3D g_io_channel_unix_get_fd(io);
++	if (sk > 0)
++		new_connection(sk, HFP_AUDIO_CVSD);
++
++	return FALSE;
++
++fail:
++	DBG("Connection failed");
++	return FALSE;
++}
++
++static int sco_listen_watch()
++{
++	struct sockaddr_sco saddr;
++	int sk;
++	GIOChannel *io;
++
++	/* Create socket */
++	sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET, BTPROTO_SCO);
++	if (sk < 0) {
++		DBG("Can't create socket: %s (%d)", strerror(errno), errno);
++		return -1;
++	}
++
++	/* Bind to local address */
++	memset(&saddr, 0, sizeof(saddr));
++	saddr.sco_family =3D AF_BLUETOOTH;
++
++	if (bind(sk, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
++		DBG("Can't bind socket: %s (%d)", strerror(errno), errno);
++		goto error;
++	}
++
++	/* Enable deferred setup */
++	if (option_defer && setsockopt(sk, SOL_BLUETOOTH, BT_DEFER_SETUP,
++				&option_defer, sizeof(option_defer)) < 0) {
++		DBG("Can't defer setup : %s (%d)", strerror(errno), errno);
++		goto error;
++	}
++
++	/* Listen for connections */
++	if (listen(sk, 10)) {
++		DBG("Can not listen socket: %s (%d)", strerror(errno), errno);
++		goto error;
++	}
++
++	DBG("Waiting for connection ...");
++	io =3D g_io_channel_unix_new(sk);
++	if (!io)
++		goto error;
++
++	return g_io_add_watch(io, G_IO_IN, sco_accept_cb, NULL);
++
++error:
++	close(sk);
++	return -1;
++}
++
++static int sco_connect_watch()
++{
++	struct sockaddr_sco saddr;
++	int sk;
++	GIOChannel *io;
++
++	/* Create socket */
++	sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET, BTPROTO_SCO);
++	if (sk < 0) {
++		DBG("Can't create socket: %s (%d)", strerror(errno), errno);
++		return -1;
++	}
++
++	/* Bind to local address */
++	memset(&saddr, 0, sizeof(saddr));
++	saddr.sco_family =3D AF_BLUETOOTH;
++
++	if (bind(sk, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
++		DBG("Can't bind socket: %s (%d)", strerror(errno), errno);
++		goto error;
++	}
++
++	/* Connect to remote address */
++	memset(&saddr, 0, sizeof(saddr));
++	saddr.sco_family =3D AF_BLUETOOTH;
++	btstr2ba(option_client_addr, &saddr.sco_bdaddr);
++	if (connect(sk, (struct sockaddr *) &saddr, sizeof(saddr))) {
++		DBG("Can not connect socket: %s (%d)", strerror(errno), errno);
++		goto error;
++	}
++
++	DBG("Connecting to %s...", option_client_addr);
++	io =3D g_io_channel_unix_new(sk);
++	if (!io)
++		goto error;
++
++	return g_io_add_watch(io, G_IO_IN|G_IO_OUT, sco_connect_cb, NULL);
++
++error:
++	close(sk);
++	return -1;
++}
++
+ static void hfp_audio_agent_create(DBusConnection *conn)
+ {
+-	DBG("Creating audio agent");
++	DBG("Registering audio agent on DBUS");
+ =
 
-Perhaps, the thing has an impact about the issue ...
+ 	if (!g_dbus_register_interface(conn, HFP_AUDIO_AGENT_PATH,
+ 					HFP_AUDIO_AGENT_INTERFACE,
+@@ -222,7 +567,7 @@ static void hfp_audio_agent_create(DBusConnection *conn)
+ =
 
-Regards,
-avd.
+ static void hfp_audio_agent_destroy(DBusConnection *conn)
+ {
+-	DBG("Destroying audio agent");
++	DBG("Unregistering audio agent on DBUS");
+ =
 
---===============3300882963937425443==--
+ 	g_dbus_unregister_interface(conn, HFP_AUDIO_AGENT_PATH,
+ 						HFP_AUDIO_AGENT_INTERFACE);
+@@ -259,6 +604,12 @@ static GOptionEntry options[] =3D {
+ 				"Disable CVSD support" },
+ 	{ "nomsbc", 'm', 0, G_OPTION_ARG_NONE, &option_nomsbc,
+ 				"Disable MSBC support" },
++	{ "defer", 'd', 0, G_OPTION_ARG_NONE, &option_defer,
++				"Defered socket support" },
++	{ "server", 'S', 0, G_OPTION_ARG_NONE, &option_server,
++				"Server" },
++	{ "client", 'C', 1, G_OPTION_ARG_STRING, &option_client_addr,
++				"Client addr" },
+ 	{ NULL },
+ };
+ =
+
+@@ -293,6 +644,11 @@ int main(int argc, char **argv)
+ =
+
+ 	dbus_error_init(&err);
+ =
+
++	memset(&sa, 0, sizeof(sa));
++	sa.sa_handler =3D sig_term;
++	sigaction(SIGINT, &sa, NULL);
++	sigaction(SIGTERM, &sa, NULL);
++
+ 	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, NULL, &err);
+ 	if (conn =3D=3D NULL) {
+ 		if (dbus_error_is_set(&err) =3D=3D TRUE) {
+@@ -305,24 +661,28 @@ int main(int argc, char **argv)
+ =
+
+ 	g_dbus_set_disconnect_function(conn, disconnect_callback, NULL, NULL);
+ =
+
+-	memset(&sa, 0, sizeof(sa));
+-	sa.sa_handler =3D sig_term;
+-	sigaction(SIGINT, &sa, NULL);
+-	sigaction(SIGTERM, &sa, NULL);
+-
+-	hfp_audio_agent_create(conn);
+-
+-	watch =3D g_dbus_add_service_watch(conn, OFONO_SERVICE,
++	if (option_server) {
++		watch =3D sco_listen_watch();
++	} else if (option_client_addr !=3D NULL) {
++		watch =3D sco_connect_watch();
++	} else {
++		hfp_audio_agent_create(conn);
++		watch =3D g_dbus_add_service_watch(conn, OFONO_SERVICE,
+ 				ofono_connect, ofono_disconnect, NULL, NULL);
+-
++	}
+ 	g_main_loop_run(main_loop);
+ =
+
+-	g_dbus_remove_watch(conn, watch);
+-
+-	while (hcons !=3D NULL)
+-		hfp_audio_conn_free(hcons->data);
++	while (threads !=3D NULL)
++		hfp_audio_thread_free(threads->data);
+ =
+
+-	hfp_audio_agent_destroy(conn);
++	if (option_server) {
++		g_source_remove(watch);
++	} else if (option_client_addr !=3D NULL) {
++		g_source_remove(watch);
++	} else {
++		g_dbus_remove_watch(conn, watch);
++		hfp_audio_agent_destroy(conn);
++	}
+ =
+
+ 	dbus_connection_unref(conn);
+ =
+
+-- =
+
+1.7.9.5
+
+
+--===============0579169839603370306==--
 
