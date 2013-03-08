@@ -1,97 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============3440910532503197872=="
+Content-Type: multipart/mixed; boundary="===============5198049614993503530=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [RFC v0 03/13] hfp_hf_bluez5: Add extracting version
-Date: Fri, 08 Mar 2013 20:11:15 -0300
-Message-ID: <1362784285-22731-4-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [RFC v0 04/13] handsfree-audio: Add version to card driver
+Date: Fri, 08 Mar 2013 20:11:16 -0300
+Message-ID: <1362784285-22731-5-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1362784285-22731-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3440910532503197872==
+--===============5198049614993503530==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch parses and reads the profile "Version" that comes in the fd
-dictionary of the NewConnection method. "Version" is input for Audio Card
-registration.
 ---
- plugins/hfp_hf_bluez5.c | 37 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 37 insertions(+)
+ include/handsfree-audio.h | 4 +++-
+ src/handsfree-audio.c     | 5 ++++-
+ 2 files changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 0b9061d..56aa7ef 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -343,6 +343,37 @@ static ofono_bool_t device_path_compare(struct ofono_m=
-odem *modem,
- 	return g_str_equal(path, value);
- }
+diff --git a/include/handsfree-audio.h b/include/handsfree-audio.h
+index 69f5a8e..e99a2dd 100644
+--- a/include/handsfree-audio.h
++++ b/include/handsfree-audio.h
+@@ -26,11 +26,13 @@
+ extern "C" {
+ #endif
  =
 
-+static int get_version(DBusMessageIter *iter, uint16_t *version)
-+{
-+	DBusMessageIter dict, entry, valiter;
-+	const char *key;
-+	uint16_t value;
-+
-+	dbus_message_iter_recurse(iter, &dict);
-+
-+	/* Dict entry key */
-+	dbus_message_iter_recurse(&dict, &entry);
-+	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_STRING)
-+		return -EINVAL;
-+
-+	dbus_message_iter_get_basic(&entry, &key);
-+	if (g_str_equal("Version", key) =3D=3D FALSE)
-+		return -EINVAL;
-+
-+	/* Dict entry value */
-+	dbus_message_iter_next(&entry);
-+	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_VARIANT)
-+		return -EINVAL;
-+
-+	dbus_message_iter_recurse(&entry, &valiter);
-+	dbus_message_iter_get_basic(&valiter, &value);
-+
-+	if (version)
-+		*version =3D value;
-+
-+	return 0;
-+}
-+
- static DBusMessage *profile_new_connection(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
- {
-@@ -353,6 +384,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
-on *conn,
- 	DBusMessageIter entry;
- 	const char *device;
- 	char local[18], remote[18];
++#include <stdint.h>
+ #include <ofono/types.h>
+ =
+
+ struct ofono_handsfree_card;
+ =
+
+ struct ofono_handsfree_card_driver {
 +	uint16_t version;
- 	int fd, err;
+ 	int (*probe) (struct ofono_handsfree_card *card, void *data);
+ 	void (*remove) (struct ofono_handsfree_card *card);
+ 	int (*audio_connect) (const char *remote, const char *local);
+@@ -42,7 +44,7 @@ void ofono_handsfree_card_driver_unregister(
+ 			const struct ofono_handsfree_card_driver *d);
  =
 
- 	DBG("Profile handler NewConnection");
-@@ -373,6 +405,11 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
- 	if (fd < 0)
- 		goto invalid;
+ struct ofono_handsfree_card *ofono_handsfree_card_create(const char *remot=
+e,
+-							const char *local);
++					const char *local, uint16_t version);
+ int ofono_handsfree_card_register(struct ofono_handsfree_card *card);
+ void ofono_handsfree_card_remove(struct ofono_handsfree_card *card);
  =
 
-+	dbus_message_iter_next(&entry);
+diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+index ffae47b..1e636cc 100644
+--- a/src/handsfree-audio.c
++++ b/src/handsfree-audio.c
+@@ -254,7 +254,7 @@ static const GDBusSignalTable card_signals[] =3D {
+ };
+ =
+
+ struct ofono_handsfree_card *ofono_handsfree_card_create(const char *remot=
+e,
+-							const char *local)
++					const char *local, uint16_t version)
+ {
+ 	struct ofono_handsfree_card *card;
+ 	GSList *l;
+@@ -269,6 +269,9 @@ struct ofono_handsfree_card *ofono_handsfree_card_creat=
+e(const char *remote,
+ 	for (l =3D g_drivers; l; l =3D g_slist_next(l)) {
+ 		const struct ofono_handsfree_card_driver *drv =3D l->data;
+ =
+
++		if (drv->version !=3D version)
++			continue;
 +
-+	if (get_version(&entry, &version) < 0)
-+		goto invalid;
-+
- 	modem =3D ofono_modem_find(device_path_compare, (void *) device);
- 	if (modem =3D=3D NULL) {
- 		close(fd);
+ 		if (drv->probe(card, NULL) < 0)
+ 			continue;
+ =
+
 -- =
 
 1.7.11.7
 
 
---===============3440910532503197872==--
+--===============5198049614993503530==--
 
