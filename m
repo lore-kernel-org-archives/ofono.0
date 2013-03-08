@@ -1,87 +1,97 @@
-Content-Type: multipart/mixed; boundary="===============3449466267469047195=="
+Content-Type: multipart/mixed; boundary="===============3440910532503197872=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [RFC v0 02/13] hfp_hf_bluez5: Register handsfree audio driver
-Date: Fri, 08 Mar 2013 20:11:14 -0300
-Message-ID: <1362784285-22731-3-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [RFC v0 03/13] hfp_hf_bluez5: Add extracting version
+Date: Fri, 08 Mar 2013 20:11:15 -0300
+Message-ID: <1362784285-22731-4-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1362784285-22731-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3449466267469047195==
+--===============3440910532503197872==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch registers the Handsfree Audio Card driver for devices
-compliant with HFP 1.5.
+This patch parses and reads the profile "Version" that comes in the fd
+dictionary of the NewConnection method. "Version" is input for Audio Card
+registration.
 ---
- plugins/hfp_hf_bluez5.c | 29 +++++++++++++++++++++++++++++
- 1 file changed, 29 insertions(+)
+ plugins/hfp_hf_bluez5.c | 37 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
 
 diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 381a541..0b9061d 100644
+index 0b9061d..56aa7ef 100644
 --- a/plugins/hfp_hf_bluez5.c
 +++ b/plugins/hfp_hf_bluez5.c
-@@ -311,6 +311,26 @@ static struct ofono_modem_driver hfp_driver =3D {
- 	.post_sim	=3D hfp_post_sim,
- };
+@@ -343,6 +343,37 @@ static ofono_bool_t device_path_compare(struct ofono_m=
+odem *modem,
+ 	return g_str_equal(path, value);
+ }
  =
 
-+static int card_probe(struct ofono_handsfree_card *card, void *data)
++static int get_version(DBusMessageIter *iter, uint16_t *version)
 +{
++	DBusMessageIter dict, entry, valiter;
++	const char *key;
++	uint16_t value;
++
++	dbus_message_iter_recurse(iter, &dict);
++
++	/* Dict entry key */
++	dbus_message_iter_recurse(&dict, &entry);
++	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_STRING)
++		return -EINVAL;
++
++	dbus_message_iter_get_basic(&entry, &key);
++	if (g_str_equal("Version", key) =3D=3D FALSE)
++		return -EINVAL;
++
++	/* Dict entry value */
++	dbus_message_iter_next(&entry);
++	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_VARIANT)
++		return -EINVAL;
++
++	dbus_message_iter_recurse(&entry, &valiter);
++	dbus_message_iter_get_basic(&valiter, &value);
++
++	if (version)
++		*version =3D value;
++
 +	return 0;
 +}
 +
-+static void card_remove(struct ofono_handsfree_card *card)
-+{
-+}
-+
-+static int card_audio_connect(const char *remote, const char *local)
-+{
-+	return 0;
-+}
-+
-+static struct ofono_handsfree_card_driver card_driver15 =3D {
-+	.probe		=3D card_probe,
-+	.remove		=3D card_remove,
-+	.audio_connect	=3D card_audio_connect,
-+};
-+
- static ofono_bool_t device_path_compare(struct ofono_modem *modem,
- 					void *userdata)
+ static DBusMessage *profile_new_connection(DBusConnection *conn,
+ 					DBusMessage *msg, void *user_data)
  {
-@@ -615,8 +635,16 @@ static int hfp_init(void)
- 		return -EIO;
- 	}
+@@ -353,6 +384,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
+on *conn,
+ 	DBusMessageIter entry;
+ 	const char *device;
+ 	char local[18], remote[18];
++	uint16_t version;
+ 	int fd, err;
  =
 
-+	err =3D ofono_handsfree_card_driver_register(&card_driver15);
-+	if (err < 0) {
-+		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
-+						BLUEZ_PROFILE_INTERFACE);
-+		return err;
-+	}
+ 	DBG("Profile handler NewConnection");
+@@ -373,6 +405,11 @@ static DBusMessage *profile_new_connection(DBusConnect=
+ion *conn,
+ 	if (fd < 0)
+ 		goto invalid;
+ =
+
++	dbus_message_iter_next(&entry);
 +
- 	err =3D ofono_modem_driver_register(&hfp_driver);
- 	if (err < 0) {
-+		ofono_handsfree_card_driver_register(&card_driver15);
- 		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
- 						BLUEZ_PROFILE_INTERFACE);
- 		return err;
-@@ -647,6 +675,7 @@ static void hfp_exit(void)
- 	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
- 						BLUEZ_PROFILE_INTERFACE);
- 	ofono_modem_driver_unregister(&hfp_driver);
-+	ofono_handsfree_card_driver_register(&card_driver15);
- 	g_dbus_client_unref(bluez);
- =
-
- 	ofono_handsfree_audio_unref();
++	if (get_version(&entry, &version) < 0)
++		goto invalid;
++
+ 	modem =3D ofono_modem_find(device_path_compare, (void *) device);
+ 	if (modem =3D=3D NULL) {
+ 		close(fd);
 -- =
 
 1.7.11.7
 
 
---===============3449466267469047195==--
+--===============3440910532503197872==--
 
