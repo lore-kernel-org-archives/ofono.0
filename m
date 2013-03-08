@@ -1,54 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============8199237195235331186=="
+Content-Type: multipart/mixed; boundary="===============1285296868278829303=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [RFC v0 09/13] handsfree-audio: Add calling connect callback
-Date: Fri, 08 Mar 2013 20:11:21 -0300
-Message-ID: <1362784285-22731-10-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [RFC v0 08/13] hfp_hf_bluez5: Add HFP 1.5 card connect callback
+Date: Fri, 08 Mar 2013 20:11:20 -0300
+Message-ID: <1362784285-22731-9-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1362784285-22731-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8199237195235331186==
+--===============1285296868278829303==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds the call of the connect callback implemented in the
-driver when "Connect" method of the Audio Card gets called.
+This patch adds the Audio Card driver connect callback implementation
+to handle SCO connection requested by the driver. This approach
+addresses devices compliant with HFP 1.5
 ---
- src/handsfree-audio.c | 13 ++++++++++++-
- 1 file changed, 12 insertions(+), 1 deletion(-)
+ plugins/hfp_hf_bluez5.c | 31 ++++++++++++++++++++++++++++++-
+ 1 file changed, 30 insertions(+), 1 deletion(-)
 
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index c11c325..8a0d97d 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -237,7 +237,18 @@ static DBusMessage *card_get_properties(DBusConnection=
- *conn,
- static DBusMessage *card_connect(DBusConnection *conn,
- 						DBusMessage *msg, void *data)
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index 00159fa..bc91cfc 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -322,7 +322,36 @@ static void card_remove(struct ofono_handsfree_card *c=
+ard)
+ =
+
+ static int card_audio_connect(const char *remote, const char *local)
  {
--	return __ofono_error_not_implemented(msg);
-+	struct ofono_handsfree_card *card =3D data;
-+	const struct ofono_handsfree_card_driver *driver =3D card->driver;
-+	int sk;
+-	return 0;
++	struct sockaddr_sco addr;
++	int sk, ret;
 +
-+	if (driver =3D=3D NULL)
-+		return __ofono_error_not_implemented(msg);
-+
-+	sk =3D driver->audio_connect(card->remote, card->local);
++	sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET | O_NONBLOCK | SOCK_CLOEXEC,
++								BTPROTO_SCO);
 +	if (sk < 0)
-+		return __ofono_error_failed(msg);
++		return -1;
 +
-+	return NULL;
++	/* Bind to local address */
++	memset(&addr, 0, sizeof(addr));
++	addr.sco_family =3D AF_BLUETOOTH;
++	bt_str2ba(local, &addr.sco_bdaddr);
++
++	if (bind(sk, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
++		close(sk);
++		return -1;
++	}
++
++	/* Connect to remote device */
++	memset(&addr, 0, sizeof(addr));
++	addr.sco_family =3D AF_BLUETOOTH;
++	bt_str2ba(remote, &addr.sco_bdaddr);
++
++	ret =3D connect(sk, (struct sockaddr *) &addr, sizeof(addr));
++	if (ret < 0 && !(errno =3D=3D EAGAIN || errno =3D=3D EINPROGRESS)) {
++		close(sk);
++		return -1;
++	}
++
++	return sk;
  }
  =
 
- static const GDBusMethodTable card_methods[] =3D {
+ static struct ofono_handsfree_card_driver card_driver15 =3D {
 -- =
 
 1.7.11.7
 
 
---===============8199237195235331186==--
+--===============1285296868278829303==--
 
