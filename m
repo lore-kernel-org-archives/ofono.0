@@ -1,40 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============1350863745742383823=="
+Content-Type: multipart/mixed; boundary="===============4364179497253915946=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [RFC v0 06/13] hfp_hf_bluez5: Add version to HFP 1.5 card driver
-Date: Fri, 08 Mar 2013 20:11:18 -0300
-Message-ID: <1362784285-22731-7-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [RFC v0 07/13] core: Add bt_str2ba() to bluetooth.h
+Date: Fri, 08 Mar 2013 20:11:19 -0300
+Message-ID: <1362784285-22731-8-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1362784285-22731-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1350863745742383823==
+--===============4364179497253915946==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This patch adds a utility Bluetooth function to convert Bluetooth
+address from string to bdaddr_t.
 ---
- plugins/hfp_hf_bluez5.c | 1 +
- 1 file changed, 1 insertion(+)
+ src/bluetooth.h       | 8 ++++++++
+ src/handsfree-audio.c | 1 +
+ 2 files changed, 9 insertions(+)
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 4524e13..00159fa 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -326,6 +326,7 @@ static int card_audio_connect(const char *remote, const=
- char *local)
+diff --git a/src/bluetooth.h b/src/bluetooth.h
+index 1584109..af6f02c 100644
+--- a/src/bluetooth.h
++++ b/src/bluetooth.h
+@@ -69,3 +69,11 @@ static inline int bt_bacmp(const bdaddr_t *ba1, const bd=
+addr_t *ba2)
+ {
+ 	return memcmp(ba1, ba2, sizeof(bdaddr_t));
  }
- =
-
- static struct ofono_handsfree_card_driver card_driver15 =3D {
-+	.version	=3D HFP_VERSION_1_5,
- 	.probe		=3D card_probe,
- 	.remove		=3D card_remove,
- 	.audio_connect	=3D card_audio_connect,
++
++static inline void bt_str2ba(const char *str, bdaddr_t *ba)
++{
++	int i;
++
++	for (i =3D 5; i >=3D 0; i--, str +=3D 3)
++		ba->b[i] =3D strtol(str, NULL, 16);
++}
+diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+index 1e636cc..c11c325 100644
+--- a/src/handsfree-audio.c
++++ b/src/handsfree-audio.c
+@@ -26,6 +26,7 @@
+ #include <errno.h>
+ #include <stdio.h>
+ #include <stdint.h>
++#include <stdlib.h>
+ #include <string.h>
+ #include <fcntl.h>
+ #include <unistd.h>
 -- =
 
 1.7.11.7
 
 
---===============1350863745742383823==--
+--===============4364179497253915946==--
 
