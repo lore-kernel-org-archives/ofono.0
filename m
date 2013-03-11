@@ -1,35 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8501116249113798820=="
+Content-Type: multipart/mixed; boundary="===============8820700388574239217=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
+From: Paulo Borges <paulo.borges@openbossa.org>
 Subject: Re: [PATCH 00/13] Add support for BlueZ 5 Profile1 API to dundee
-Date: Mon, 11 Mar 2013 18:23:07 +0100
-Message-ID: <513E12FB.8070405@monom.org>
-In-Reply-To: <1362425590-26075-1-git-send-email-paulo.borges@openbossa.org>
+Date: Mon, 11 Mar 2013 17:41:31 -0300
+Message-ID: <CAG7KCRGb7ne2q+h4id2noDKv_PSGiOsgH+qbCvUkPc7vmJHduQ@mail.gmail.com>
+In-Reply-To: <513E12FB.8070405@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8501116249113798820==
+--===============8820700388574239217==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Paulo,
+Hi Daniel,
 
-On 03/04/2013 08:33 PM, Paulo Borges wrote:
-> This series implements support for BlueZ 5 to dundee. It uses the
-> org.bluez.Profile1 API to register an external profile.
+On Mon, Mar 11, 2013 at 2:23 PM, Daniel Wagner <wagi@monom.org> wrote:
+
+> Hi Paulo,
 >
-> While the interface between BlueZ and dundee has changed, the interfaces
-> "org.ofono.dundee.Device" and "org.ofono.dundee.Manager" remains
-> unchanged.
+> Thanks for your patches. They look pretty good to me. Let's see if Denis
+> or Marcel have something to say.
+>
+> cheer,
+> daniel
+>
 
-Thanks for your patches. They look pretty good to me. Let's see if Denis =
+Thank you for reviewing my patches! I'll fix the mentioned points and send
+a v2 soon.
 
-or Marcel have something to say.
+Paulo
 
-cheer,
-daniel
+--===============8820700388574239217==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
+SGkgRGFuaWVsLDxicj48YnI+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPk9uIE1vbiwgTWFyIDEx
+LCAyMDEzIGF0IDI6MjMgUE0sIERhbmllbCBXYWduZXIgPHNwYW4gZGlyPSJsdHIiPiZsdDs8YSBo
+cmVmPSJtYWlsdG86d2FnaUBtb25vbS5vcmciIHRhcmdldD0iX2JsYW5rIj53YWdpQG1vbm9tLm9y
+ZzwvYT4mZ3Q7PC9zcGFuPiB3cm90ZTo8YnI+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3Rl
+IiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFk
+ZGluZy1sZWZ0OjFleCI+CgpIaSBQYXVsbyw8ZGl2Pjxicj48L2Rpdj4KVGhhbmtzIGZvciB5b3Vy
+IHBhdGNoZXMuIFRoZXkgbG9vayBwcmV0dHkgZ29vZCB0byBtZS4gTGV0JiMzOTtzIHNlZSBpZiBE
+ZW5pcyBvciBNYXJjZWwgaGF2ZSBzb21ldGhpbmcgdG8gc2F5Ljxicj4KPGJyPgpjaGVlciw8YnI+
+CmRhbmllbDxicj4KPC9ibG9ja3F1b3RlPjwvZGl2Pjxicj48ZGl2PlRoYW5rIHlvdSBmb3IgcmV2
+aWV3aW5nIG15IHBhdGNoZXMhIEkmIzM5O2xsIGZpeCB0aGUgbWVudGlvbmVkIHBvaW50cyBhbmQg
+c2VuZCBhIHYyIHNvb24uPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5QYXVsbzwvZGl2Pgo=
 
---===============8501116249113798820==--
+--===============8820700388574239217==--
 
