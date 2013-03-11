@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7601963679816526807=="
+Content-Type: multipart/mixed; boundary="===============8263004186775588705=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: Re: [PATCH 04/13] dundee: Initial GDBusClient for BlueZ 5
-Date: Mon, 11 Mar 2013 18:08:45 +0100
-Message-ID: <513E0F9D.6050207@monom.org>
-In-Reply-To: <1362425590-26075-5-git-send-email-paulo.borges@openbossa.org>
+Subject: Re: [PATCH 07/13] dundee: Listen to devices property changes
+Date: Mon, 11 Mar 2013 18:17:52 +0100
+Message-ID: <513E11C0.40304@monom.org>
+In-Reply-To: <1362425590-26075-8-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7601963679816526807==
+--===============8263004186775588705==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,48 +16,66 @@ Content-Transfer-Encoding: quoted-printable
 Hi Paulo,
 
 On 03/04/2013 08:33 PM, Paulo Borges wrote:
-> This patch adds the callbacks to track additions and removals of
-> BlueZ related interfaces and property changes in these interfaces.
+> When a bluetooth device property change and this property is Alias
+> or UUIDs, we need to refresh our representation of this device.
 > ---
->   dundee/bluez5.c |   60 ++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   dundee/dundee.h |    2 ++
->   2 files changed, 62 insertions(+)
+>   dundee/bluez5.c |   26 +++++++++++++++++++++++++-
+>   1 file changed, 25 insertions(+), 1 deletion(-)
 >
 > diff --git a/dundee/bluez5.c b/dundee/bluez5.c
-> index 6685b4c..40df700 100644
+> index 8d8e656..623201f 100644
 > --- a/dundee/bluez5.c
 > +++ b/dundee/bluez5.c
-> @@ -22,16 +22,76 @@
->   #include <config.h>
->   #endif
+> @@ -169,11 +169,35 @@ static void property_changed(GDBusProxy *proxy, con=
+st char *name,
+>   {
+>   	const char *path =3D g_dbus_proxy_get_path(proxy);
+>   	const char *interface =3D g_dbus_proxy_get_interface(proxy);
+> +	const char *alias;
+> +	struct bluetooth_device *bt_device;
+> +	gboolean uuid;
 >
-> +#include <stdint.h>
-> +#include <sys/socket.h>
-> +#include <gdbus.h>
+>   	if (g_str_equal(BLUEZ_DEVICE_INTERFACE, interface) =3D=3D FALSE)
+>   		return;
+>
+> -	DBG("%s %s.%s", path, interface, name);
+> +	bt_device =3D g_hash_table_lookup(registered_devices, path);
 > +
->   #include "dundee.h"
-> +#include "plugins/bluez5.h"
+> +	if (g_str_equal(name, "Alias") =3D=3D TRUE) {
+> +		if (bt_device =3D=3D NULL)
+> +			return;
 > +
-> +#define DUN_DT_PROFILE_PATH   "/bluetooth/profile/dun_dt"
+> +		dbus_message_iter_get_basic(iter, &alias);
 > +
-> +static GDBusClient *bluez;
+> +		DBG("%s alias changed: %s", path, alias);
 > +
-> +static void proxy_added(GDBusProxy *proxy, void *user_data)
-> +{
-> +	const char *path =3D g_dbus_proxy_get_path(proxy);
-> +	const char *interface =3D g_dbus_proxy_get_interface(proxy);
+> +		bt_device->name =3D g_strdup(alias);
+> +	} else if (g_str_equal(name, "UUIDs") =3D=3D TRUE) {
+> +		DBG("%s uuids changed", path);
 > +
-> +	if (g_str_equal(BLUEZ_DEVICE_INTERFACE, interface) =3D=3D FALSE)
-> +		return;
+> +		uuid =3D has_dun_uuid(iter);
+> +
+> +		if (bt_device !=3D NULL && uuid =3D=3D FALSE)
+> +			bluetooth_device_unregister(path);
+> +
+> +		else if (bt_device =3D=3D NULL && uuid =3D=3D TRUE)
+> +			bluetooth_device_register(proxy);
+> +	}
 
-In oFono, just use let the '=3D=3D FALSE' part away. The same applies for =
+I find this a bit hard to read. What about
 
-the rest of the series.
+	if (uuid)
+		if (bt_device !=3D NULL)
+			bluetooth_device_unregister(path);
+	else
+		if (bt_device =3D=3D NULL)
+			bluetooth_device_regster(path);
 
+? I am not sure if Denis or Marcel approves this :)
 
 cheers,
 daniel
 
---===============7601963679816526807==--
+
+--===============8263004186775588705==--
 
