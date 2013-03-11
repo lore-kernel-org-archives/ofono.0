@@ -1,73 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============1583610079303948645=="
+Content-Type: multipart/mixed; boundary="===============6865126309040237132=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: Re: [RFC v0 11/13] handsfree-audio: Add sending SCO fd
-Date: Mon, 11 Mar 2013 13:36:49 -0300
-Message-ID: <CAKT1EBfVkZ7KjzL6o++tENtY=aOGViZv6ZzoNAoTK3om9bdnNQ@mail.gmail.com>
-In-Reply-To: <20130311145547.GA28047@x220>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [PATCH 02/13] dundee: Start BlueZ 5 support
+Date: Mon, 11 Mar 2013 18:01:39 +0100
+Message-ID: <513E0DF3.90200@monom.org>
+In-Reply-To: <1362425590-26075-3-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1583610079303948645==
+--===============6865126309040237132==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Johan:
+Hi Paulo,
 
-On Mon, Mar 11, 2013 at 11:55 AM, Johan Hedberg <johan.hedberg@gmail.com>=
- wrote:
-> Hi Claudio,
+I guess, I am in charge to review your patches. Let's start then :)
+
+Just a nitpick in this one.
+
+On 03/04/2013 08:33 PM, Paulo Borges wrote:
+> This patch adds the BlueZ 5 support file for dundee.
+> ---
+>   Makefile.am     |   16 ++++++++++------
+>   dundee/bluez5.c |   37 +++++++++++++++++++++++++++++++++++++
+>   2 files changed, 47 insertions(+), 6 deletions(-)
+>   create mode 100644 dundee/bluez5.c
 >
-> On Fri, Mar 08, 2013, Claudio Takahasi wrote:
->> This patch adds the call of NewConnection method when the SCO connection
->> is established for HF initiated scenarios.
->> ---
->>  src/handsfree-audio.c | 7 +++++++
->>  1 file changed, 7 insertions(+)
->>
->> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
->> index f5d0a7b..6fa8b67 100644
->> --- a/src/handsfree-audio.c
->> +++ b/src/handsfree-audio.c
->> @@ -242,12 +242,19 @@ static gboolean sco_connect_cb(GIOChannel *io, GIO=
-Condition cond,
->>  {
->>       struct ofono_handsfree_card *card =3D user_data;
->>       DBusMessage *reply;
->> +     int sk;
->>
->>       if (cond & (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
->>               reply =3D __ofono_error_failed(card->msg);
->>               goto done;
->>       }
->>
->> +     sk =3D g_io_channel_unix_get_fd(io);
->> +
->> +     send_new_connection(card->path, sk);
->> +
->> +     close(sk);
->> +
->>       reply =3D dbus_message_new_method_return(card->msg);
+> diff --git a/Makefile.am b/Makefile.am
+> index ed35988..1748d06 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -756,24 +756,28 @@ endif
+>   endif
 >
-> Shouldn't you be adding a watch for the connected SCO socket instead of
-> closing it? Is it not necessary for oFono to know the SCO state? (to
-> detect when PA did shutdown() on the socket, return "already connected"
-> for Connect(), etc.)
+>   if BLUETOOTH
+> -if BLUEZ4
+>   if DUNDEE
+>   sbin_PROGRAMS +=3D dundee/dundee
+>
+> -dundee_dundee_SOURCES =3D $(gdbus_sources) $(gatchat_sources) $(btio_sou=
+rces) \
+> -			src/log.c src/dbus.c plugins/bluez4.c \
+> -			dundee/dundee.h dundee/main.c dundee/dbus.c \
+> -			dundee/manager.c dundee/device.c dundee/bluez4.c
+> +dundee_common_sources =3D $(gdbus_sources) $(gatchat_sources) \
+> +			src/log.c src/dbus.c dundee/dundee.h dundee/main.c \
+> +			dundee/dbus.c dundee/manager.c dundee/device.c
+>
+>   dundee_dundee_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ -ldl
+>
+>   if DATAFILES
+>   dist_dbusconf_DATA +=3D dundee/dundee.conf
+> -
+>   if SYSTEMD
+>   systemdunit_DATA +=3D dundee/dundee.service
+>   endif
+>   endif
 
-In the current implementation if the user calls Connect and the audio
-connection is established already, Handsfree Audio Card returns
-'org.ofono.Error.Failed: Operation failed'
+The line removal seems not necessary.
 
-In the current API, it is not necessary to track the state or emit
-signals. I prefer to keep this simple approach than add additional
-logic to track incoming/outgoing SCO connections.
-We can improve it later if necessary, as soon as Denis pushes the
-basic functionality we can fix the corner cases and issues like this
-one.
+cheers,
+daniel
 
-Regards,
-Claudio.
-
---===============1583610079303948645==--
+--===============6865126309040237132==--
 
