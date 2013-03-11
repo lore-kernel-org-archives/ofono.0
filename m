@@ -1,49 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============3318179252030708094=="
+Content-Type: multipart/mixed; boundary="===============5847535727449891405=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [RFC v0 13/13] handsfree-audio: Check agent before sending fd
-Date: Fri, 08 Mar 2013 20:11:25 -0300
-Message-ID: <1362784285-22731-14-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1362784285-22731-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: Re: [RFC v0 02/13] hfp_hf_bluez5: Register handsfree audio driver
+Date: Mon, 11 Mar 2013 11:30:58 -0300
+Message-ID: <CAKT1EBdAxrR3+aCS2t-59p0isp=9MMA2CAjpM_ZkTH0GMTS3dA@mail.gmail.com>
+In-Reply-To: <1362784285-22731-3-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3318179252030708094==
+--===============5847535727449891405==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch avoids sending the SCO fd when the connection is established
-and the agent left the bus. This check covers the scenario when the
-agent leaves the bus between "Connect" method call until the callback
-get called.
----
- src/handsfree-audio.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+Hi Denis:
 
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 8950347..49cdb4c 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -251,7 +251,8 @@ static gboolean sco_connect_cb(GIOChannel *io, GIOCondi=
-tion cond,
- =
+<snip>
 
- 	sk =3D g_io_channel_unix_get_fd(io);
- =
+>         if (err < 0) {
+> +               ofono_handsfree_card_driver_register(&card_driver15);
 
--	send_new_connection(card->path, sk);
-+	if (agent)
-+		send_new_connection(card->path, sk);
- =
+I will fix it in the next series. Copy & paste error: It is unregister
+instead of register.
 
- 	close(sk);
- =
+>                 g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+>                                                 BLUEZ_PROFILE_INTERFACE);
+>                 return err;
+> @@ -647,6 +675,7 @@ static void hfp_exit(void)
+>         g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+>                                                 BLUEZ_PROFILE_INTERFACE);
+>         ofono_modem_driver_unregister(&hfp_driver);
+> +       ofono_handsfree_card_driver_register(&card_driver15);
 
--- =
+Same here.
 
-1.7.11.7
+>         g_dbus_client_unref(bluez);
+>
+>         ofono_handsfree_audio_unref();
+> --
+> 1.7.11.7
+>
 
+Regards,
+Claudio
 
---===============3318179252030708094==--
+--===============5847535727449891405==--
 
