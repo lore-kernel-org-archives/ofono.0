@@ -1,58 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============6733044001514877853=="
+Content-Type: multipart/mixed; boundary="===============0860634879802002325=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 07/15] core: Add bt_str2ba() to bluetooth.h
-Date: Tue, 12 Mar 2013 09:42:05 -0300
-Message-ID: <1363092133-1092-8-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 08/15] hfp_hf_bluez5: Add HFP 1.5 connect implementation
+Date: Tue, 12 Mar 2013 09:42:06 -0300
+Message-ID: <1363092133-1092-9-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1363092133-1092-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6733044001514877853==
+--===============0860634879802002325==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds a utility Bluetooth function to convert Bluetooth
-address from string to bdaddr_t.
+This patch adds the Audio Card driver connect callback implementation
+to handle SCO connection requested by the driver. This approach
+addresses devices compliant with HFP 1.5
 ---
- src/bluetooth.h       | 8 ++++++++
- src/handsfree-audio.c | 1 +
- 2 files changed, 9 insertions(+)
+ plugins/hfp_hf_bluez5.c | 31 ++++++++++++++++++++++++++++++-
+ 1 file changed, 30 insertions(+), 1 deletion(-)
 
-diff --git a/src/bluetooth.h b/src/bluetooth.h
-index 1584109..af6f02c 100644
---- a/src/bluetooth.h
-+++ b/src/bluetooth.h
-@@ -69,3 +69,11 @@ static inline int bt_bacmp(const bdaddr_t *ba1, const bd=
-addr_t *ba2)
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index 1b3b7bc..f1c3027 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -322,7 +322,36 @@ static void card_remove(struct ofono_handsfree_card *c=
+ard)
+ =
+
+ static int card_audio_connect15(const char *remote, const char *local)
  {
- 	return memcmp(ba1, ba2, sizeof(bdaddr_t));
+-	return 0;
++	struct sockaddr_sco addr;
++	int sk, ret;
++
++	sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET | O_NONBLOCK | SOCK_CLOEXEC,
++								BTPROTO_SCO);
++	if (sk < 0)
++		return -1;
++
++	/* Bind to local address */
++	memset(&addr, 0, sizeof(addr));
++	addr.sco_family =3D AF_BLUETOOTH;
++	bt_str2ba(local, &addr.sco_bdaddr);
++
++	if (bind(sk, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
++		close(sk);
++		return -1;
++	}
++
++	/* Connect to remote device */
++	memset(&addr, 0, sizeof(addr));
++	addr.sco_family =3D AF_BLUETOOTH;
++	bt_str2ba(remote, &addr.sco_bdaddr);
++
++	ret =3D connect(sk, (struct sockaddr *) &addr, sizeof(addr));
++	if (ret < 0 && !(errno =3D=3D EAGAIN || errno =3D=3D EINPROGRESS)) {
++		close(sk);
++		return -1;
++	}
++
++	return sk;
  }
-+
-+static inline void bt_str2ba(const char *str, bdaddr_t *ba)
-+{
-+	int i;
-+
-+	for (i =3D 5; i >=3D 0; i--, str +=3D 3)
-+		ba->b[i] =3D strtol(str, NULL, 16);
-+}
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 1e636cc..c11c325 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -26,6 +26,7 @@
- #include <errno.h>
- #include <stdio.h>
- #include <stdint.h>
-+#include <stdlib.h>
- #include <string.h>
- #include <fcntl.h>
- #include <unistd.h>
+ =
+
+ static struct ofono_handsfree_card_driver card_driver15 =3D {
 -- =
 
 1.7.11.7
 
 
---===============6733044001514877853==--
+--===============0860634879802002325==--
 
