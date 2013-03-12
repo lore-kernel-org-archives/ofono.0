@@ -1,58 +1,97 @@
-Content-Type: multipart/mixed; boundary="===============6490001261963270578=="
+Content-Type: multipart/mixed; boundary="===============5251722556203957367=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 00/15] Add handsfree audio card driver
-Date: Tue, 12 Mar 2013 09:41:58 -0300
-Message-ID: <1363092133-1092-1-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1362784285-22731-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 03/15] hfp_hf_bluez5: Add extracting version
+Date: Tue, 12 Mar 2013 09:42:01 -0300
+Message-ID: <1363092133-1092-4-git-send-email-claudio.takahasi@openbossa.org>
+In-Reply-To: <1363092133-1092-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6490001261963270578==
+--===============5251722556203957367==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch series adds an abstraction to allow HFP 1.5 and HFP 1.6
-to use the same infra-structure. It avoids adding the slc.h and
-gatchat.h dependency to the core (src/handsfree-audio.c)
+This patch parses and reads the profile "Version" that comes in the fd
+dictionary of the NewConnection method. "Version" is input for Audio Card
+registration.
+---
+ plugins/hfp_hf_bluez5.c | 37 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
 
-Remaining patches (HFP 1.6 and service level negotiation):
-git://git.infradead.org/users/cktakahasi/ofono.git external-hfp16
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index 2020e63..a8d8277 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -343,6 +343,37 @@ static ofono_bool_t device_path_compare(struct ofono_m=
+odem *modem,
+ 	return g_str_equal(path, value);
+ }
+ =
 
-Changes between RFC v0 and PATCH v0:
-* Fixed register/unregister of the Card driver
-* Changed handsfree-audio doc: added possible errors
++static int get_version(DBusMessageIter *iter, uint16_t *version)
++{
++	DBusMessageIter dict, entry, valiter;
++	const char *key;
++	uint16_t value;
++
++	dbus_message_iter_recurse(iter, &dict);
++
++	/* Dict entry key */
++	dbus_message_iter_recurse(&dict, &entry);
++	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_STRING)
++		return -EINVAL;
++
++	dbus_message_iter_get_basic(&entry, &key);
++	if (g_str_equal("Version", key) =3D=3D FALSE)
++		return -EINVAL;
++
++	/* Dict entry value */
++	dbus_message_iter_next(&entry);
++	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_VARIANT)
++		return -EINVAL;
++
++	dbus_message_iter_recurse(&entry, &valiter);
++	dbus_message_iter_get_basic(&valiter, &value);
++
++	if (version)
++		*version =3D value;
++
++	return 0;
++}
++
+ static DBusMessage *profile_new_connection(DBusConnection *conn,
+ 					DBusMessage *msg, void *user_data)
+ {
+@@ -353,6 +384,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
+on *conn,
+ 	DBusMessageIter entry;
+ 	const char *device;
+ 	char local[18], remote[18];
++	uint16_t version;
+ 	int fd, err;
+ =
 
-Claudio Takahasi (15):
-  handsfree-audio: Add card driver
-  hfp_hf_bluez5: Register handsfree audio driver
-  hfp_hf_bluez5: Add extracting version
-  handsfree-audio: Add version to card driver
-  hfp_hf_bluez5: Pass version to card registration
-  hfp_hf_bluez5: Add version to HFP 1.5 card driver
-  core: Add bt_str2ba() to bluetooth.h
-  hfp_hf_bluez5: Add HFP 1.5 connect implementation
-  handsfree-audio: Add calling connect callback
-  handsfree-audio: Add connect GIOChannel watch
-  handsfree-audio: Add sending SCO fd
-  handsfree-audio: Return NotAvailable on "Connect"
-  handsfree-audio: Return InProgress on Connect
-  handsfree-audio: Check agent before sending fd
-  doc: Add Handsfree Audio Card "Connect" errors
+ 	DBG("Profile handler NewConnection");
+@@ -373,6 +405,11 @@ static DBusMessage *profile_new_connection(DBusConnect=
+ion *conn,
+ 	if (fd < 0)
+ 		goto invalid;
+ =
 
- doc/handsfree-audio-api.txt |   5 ++
- include/handsfree-audio.h   |  15 +++++-
- plugins/hfp_hf_bluez5.c     |  98 ++++++++++++++++++++++++++++++++++++++-
- src/bluetooth.h             |   8 ++++
- src/handsfree-audio.c       | 110 ++++++++++++++++++++++++++++++++++++++++=
-+++-
- 5 files changed, 232 insertions(+), 4 deletions(-)
-
++	dbus_message_iter_next(&entry);
++
++	if (get_version(&entry, &version) < 0)
++		goto invalid;
++
+ 	modem =3D ofono_modem_find(device_path_compare, (void *) device);
+ 	if (modem =3D=3D NULL) {
+ 		close(fd);
 -- =
 
 1.7.11.7
 
 
---===============6490001261963270578==--
+--===============5251722556203957367==--
 
