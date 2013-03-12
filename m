@@ -1,68 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============7362331308815198182=="
+Content-Type: multipart/mixed; boundary="===============8448384605621243933=="
 MIME-Version: 1.0
-From: Viallard Anthony <viallard@syscom-instruments.com>
-Subject: Re: [PATCH] Add vendor quirk for SIMCOM
-Date: Tue, 12 Mar 2013 16:18:48 +0100
-Message-ID: <513F4758.3060801@syscom-instruments.com>
-In-Reply-To: <1363099212-13463-1-git-send-email-r.r.zaripov@gmail.com>
+From: Frederic Danis <frederic.danis@linux.intel.com>
+Subject: Re: [PATCH v0 13/15] handsfree-audio: Return InProgress on Connect
+Date: Tue, 12 Mar 2013 16:26:54 +0100
+Message-ID: <513F493E.9090104@linux.intel.com>
+In-Reply-To: <1363092133-1092-14-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7362331308815198182==
+--===============8448384605621243933==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 12. 03. 13 15:40, r.r.zaripov(a)gmail.com wrote:
-> From: Renat Zaripov<r.r.zaripov@gmail.com>
->
+Hello Claudio,
+
+On 12/03/2013 13:42, Claudio Takahasi wrote:
+> This patch returns "Operation already in progress" if there is a
+> pending Handsfree Audio Card "Connect" method call pending.
 > ---
->   drivers/atmodem/gprs-context.c |    6 +++++-
->   1 file changed, 5 insertions(+), 1 deletion(-)
+>   src/handsfree-audio.c | 3 +++
+>   1 file changed, 3 insertions(+)
 >
-> diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-contex=
-t.c
-> index 3694c27..0fb63c4 100644
-> --- a/drivers/atmodem/gprs-context.c
-> +++ b/drivers/atmodem/gprs-context.c
-> @@ -208,7 +208,11 @@ static void at_cgdcont_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
->   		return;
->   	}
+> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+> index 8950347..805f3b6 100644
+> --- a/src/handsfree-audio.c
+> +++ b/src/handsfree-audio.c
+> @@ -285,6 +285,9 @@ static DBusMessage *card_connect(DBusConnection *conn,
+>   	if (agent =3D=3D NULL)
+>   		return __ofono_error_not_available(msg);
 >
-> -	sprintf(buf, "AT+CGDATA=3D\"PPP\",%u", gcd->active_context);
-> +	if (gcd->vendor =3D=3D OFONO_VENDOR_SIMCOM)
-> +		strcpy(buf, "ATD*99#\0");
-> +	else
-> +		sprintf(buf, "AT+CGDATA=3D\"PPP\",%u", gcd->active_context);
+> +	if (card->msg)
+> +		return __ofono_error_busy(msg);
 > +
->   	if (g_at_chat_send(gcd->chat, buf, none_prefix,
->   				at_cgdata_cb, gc, NULL)>  0)
->   		return;
+>   	sk =3D driver->audio_connect(card->remote, card->local);
+>   	if (sk < 0)
+>   		return __ofono_error_failed(msg);
+>
 
-Hello Renat,
+Shouldn't you also test if there is already a SCO connection (sco_watch) ?
+I think that only one SCO link can be connected at a time for a =
 
-I watched the AT commands set for my SIM5216 and I found AT+CGDATA. =
+Handsfree Audio Card.
 
-There isn't this command for sim900 ?
+Regards
 
-And, I saw "ATD*99#" cryptic command was already used in =
+Fred
 
-gatchat/gsmdial.c if bluetooth is enabled.
+-- =
 
-Maybe, it's a specific command for your purpose ? I mean, do you need =
+Frederic Danis                            Open Source Technology Center
+frederic.danis(a)intel.com                              Intel Corporation
 
-this command to "establish communication between the TE and the network =
 
-using one or more Packet Domain PDP types." ? If it's the case, the =
-
-quirk is only for your device and so, it's not a vendor quirk.
-	=
-
-Otherwise, why this \0 after ATD*99# ? :)
-
-Regards,
-Anthony.
-
---===============7362331308815198182==--
+--===============8448384605621243933==--
 
