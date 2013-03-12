@@ -1,93 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============6607614126786096972=="
+Content-Type: multipart/mixed; boundary="===============4933960535893020405=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: Re: [RFC v0 10/20] hfpmodem: Send AT+BAC with the supported codecs
-Date: Tue, 12 Mar 2013 14:44:01 -0300
-Message-ID: <20130312174401.GA19904@echo>
-In-Reply-To: <1363098104-16467-11-git-send-email-claudio.takahasi@openbossa.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Telit he910 ---- modem port got stuck
+Date: Tue, 12 Mar 2013 12:53:08 -0500
+Message-ID: <513F6B84.8030909@gmail.com>
+In-Reply-To: <513F30AB.6060806@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6607614126786096972==
+--===============4933960535893020405==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Jonas,
 
-On 11:21 Tue 12 Mar, Claudio Takahasi wrote:
-> From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-> =
+On 03/12/2013 08:42 AM, Jonas Bonn wrote:
+> On 03/12/2013 02:26 PM, Ming Li Wu wrote:
+>> Hello,
+>>
+>> I am using Telit HE910 modem, the version of firmware is 12.00.03.
+>>
+>> Sometimes, the modem port got stuck after sending AT+CGDCONT=3D1.
+>> (Such as AT+CGDCONT=3D1,"IP","internet.tele2.se").
+>>
+>>
+>> The following was the situation when this problem happened
+>> Aux: > AT+CRSM=3D192,28621\r
+>> Modem: > AT+CGDCONT=3D1,"IP","internet.tele2.se"\r
+>> Modem: < AT+CGDCONT=3D1,"IP","internet.tele2.se"\r
+>> Aux: < \r\n+CME ERROR: 4\r\n
+>
+> The problem, in short, is that the Telit HE910 does not support sending
+> any AT command on the Modem port while there is an outstanding command
+> on the Aux port (this should be true for all Telit modems). Does Ofono
 
-> Before, the AT+BAC command was being sent with fixed information,
-> now we send the command (that inform the AG of the codecs supported by
-> the HF) with the codecs supported by the registered Handsfree Audio
-> Agent.
-> ---
->  drivers/hfpmodem/slc.c | 21 ++++++++++++++++++++-
->  1 file changed, 20 insertions(+), 1 deletion(-)
-> =
+Many M2M setups use the modem from multiple applications (e.g. one app =
 
-> diff --git a/drivers/hfpmodem/slc.c b/drivers/hfpmodem/slc.c
-> index 646befa..b9b687b 100644
-> --- a/drivers/hfpmodem/slc.c
-> +++ b/drivers/hfpmodem/slc.c
-> @@ -34,6 +34,7 @@
->  #include <ofono/log.h>
->  #include <ofono/modem.h>
->  #include <ofono/emulator.h>
-> +#include <ofono/handsfree-audio.h>
->  =
+uses one port for SMS, another for data, another for GPRS).  So I'd be =
 
->  #include <drivers/atmodem/atutil.h>
->  =
+surprised if the Telit firmware had such a limitation.  If that is the =
 
-> @@ -305,9 +306,27 @@ static void brsf_cb(gboolean ok, GAtResult *result, =
-gpointer user_data)
->  	if (info->ag_features & HFP_AG_FEATURE_CODEC_NEGOTIATION &&
->  			info->hf_features & HFP_HF_FEATURE_CODEC_NEGOTIATION) {
->  =
+case, then the Telit firmware is broken and should be fixed.
 
-> +		unsigned char codecs[8];
-> +		GString *str;
-> +		int i, len;
-> +
-> +		len =3D ofono_handsfree_get_codecs(codecs, sizeof(codecs));
-> +		if (len < 0)
+> support synchronizing these two channels so that they effectively share
+> a common command queue? If yes, how?
 
-This should read "if (len <=3D 0)". Will fix it in the next round.
+There is no such capability.  That would defeat the purpose of having =
 
-> +			goto error;
-> +
-> +		str =3D g_string_new("AT+BAC=3D");
-> +
-> +		for (i =3D 0; i < (len - 1); i++)
-> +			g_string_append_printf(str, "%d,", codecs[i]);
-> +
-> +		g_string_append_printf(str, "%d", codecs[i]);
-> +
->  		slc_establish_data_ref(sed);
-> -		g_at_chat_send(info->chat, "AT+BAC=3D1", NULL, bac_cb, sed,
-> +		g_at_chat_send(info->chat, str->str, NULL, bac_cb, sed,
->  						slc_establish_data_unref);
-> +
-> +		g_string_free(str, TRUE);
-> +
->  		return;
->  	}
->  =
+multiple channels in the first place.  About the only thing you can do =
 
-> -- =
+is drive everything off of the AUX serial port and only use the Modem =
 
-> 1.7.11.7
-> =
+port for entering into PPP mode.
 
+Regards,
+-Denis
 
-
-Cheers,
--- =
-
-Vinicius
-
---===============6607614126786096972==--
+--===============4933960535893020405==--
 
