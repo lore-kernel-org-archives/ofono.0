@@ -1,52 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============7746394127625016698=="
+Content-Type: multipart/mixed; boundary="===============4819916546615871965=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [RFC v0 19/20] bluetooth: Add define for SCO voice settings
-Date: Tue, 12 Mar 2013 11:21:43 -0300
-Message-ID: <1363098104-16467-20-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [RFC v0 20/20] handsfree-audio: Add setting SCO air mode
+Date: Tue, 12 Mar 2013 11:21:44 -0300
+Message-ID: <1363098104-16467-21-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1363098104-16467-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7746394127625016698==
+--===============4819916546615871965==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add defines for SCO voice setting (Air Coding). Air mode "Transparent
-Data" shall be supported if wide band speech is supported.
 ---
- src/bluetooth.h | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+ src/handsfree-audio.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
 
-diff --git a/src/bluetooth.h b/src/bluetooth.h
-index af6f02c..f2fd7d5 100644
---- a/src/bluetooth.h
-+++ b/src/bluetooth.h
-@@ -54,6 +54,18 @@ struct sockaddr_sco {
- 	bdaddr_t	sco_bdaddr;
- };
+diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+index b644b0b..725b81c 100644
+--- a/src/handsfree-audio.c
++++ b/src/handsfree-audio.c
+@@ -91,6 +91,16 @@ static inline void clear_bit(int nr, void *addr)
+ 	*((uint32_t *) addr + (nr >> 5)) &=3D ~(1 << (nr & 31));
+ }
  =
 
-+/* SCO socket options */
-+#define SCO_OPTIONS		0x01
++static uint8_t codec2mode(uint8_t codec)
++{
++	switch (codec) {
++		case HFP_CODEC_CVSD:
++			return SCO_MODE_CVSD;
++		default:
++			return SCO_MODE_TRANSPARENT;
++	}
++}
 +
-+#define SCO_MODE_CVSD		0x00
-+#define SCO_MODE_TRANSPARENT	0x01
-+#define SCO_MODE_ENHANCED	0x02
-+
-+struct sco_options {
-+	uint16_t mtu;
-+	uint8_t mode;
-+};
-+
- static inline void bt_bacpy(bdaddr_t *dst, const bdaddr_t *src)
+ static void send_new_connection(const char *card, int fd, uint8_t codec)
  {
- 	memcpy(dst, src, sizeof(bdaddr_t));
+ 	DBusMessage *msg;
+@@ -130,6 +140,7 @@ static gboolean sco_accept(GIOChannel *io, GIOCondition=
+ cond,
+ {
+ 	struct ofono_handsfree_card *card;
+ 	struct sockaddr_sco saddr;
++	struct sco_options options;
+ 	socklen_t alen;
+ 	int sk, nsk;
+ 	char local[18], remote[18];
+@@ -180,6 +191,14 @@ static gboolean sco_accept(GIOChannel *io, GIOConditio=
+n cond,
+ 		card->msg =3D NULL;
+ 	}
+ =
+
++	memset(&options, 0, sizeof(options));
++	options.mode =3D codec2mode(card->selected_codec);
++
++	if (setsockopt(sk, SOL_SCO, SCO_OPTIONS, &options,
++						sizeof(options)) < 0)
++		ofono_error("Can't set SCO options: %s (%d)", strerror(errno),
++									errno);
++
+ 	send_new_connection(card->path, nsk, card->selected_codec);
+ 	close(nsk);
+ =
+
 -- =
 
 1.7.11.7
 
 
---===============7746394127625016698==--
+--===============4819916546615871965==--
 
