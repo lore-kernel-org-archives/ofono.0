@@ -1,44 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============3423523128898993725=="
+Content-Type: multipart/mixed; boundary="===============4618982765166862243=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: Telit he910 ---- modem port got stuck
-Date: Tue, 12 Mar 2013 14:42:03 +0100
-Message-ID: <513F30AB.6060806@southpole.se>
-In-Reply-To: <513F2CF7.7040704@southpole.se>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: [RFC v0 00/20] HFP1.6: Codec negotiation and HF Connect
+Date: Tue, 12 Mar 2013 11:21:24 -0300
+Message-ID: <1363098104-16467-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3423523128898993725==
+--===============4618982765166862243==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 03/12/2013 02:26 PM, Ming Li Wu wrote:
-> Hello,
->
-> I am using Telit HE910 modem, the version of firmware is 12.00.03.
->
-> Sometimes, the modem port got stuck after sending AT+CGDCONT=3D1.
-> (Such as AT+CGDCONT=3D1,"IP","internet.tele2.se").
->
->
-> The following was the situation when this problem happened
->   Aux: > AT+CRSM=3D192,28621\r
->   Modem: > AT+CGDCONT=3D1,"IP","internet.tele2.se"\r
->   Modem: < AT+CGDCONT=3D1,"IP","internet.tele2.se"\r
->   Aux: < \r\n+CME ERROR: 4\r\n
+This RFC implements codec negotiation and HF initiated audio
+connection for HFP 1.6
 
-The problem, in short, is that the Telit HE910 does not support sending =
+Dependency: "[PATCH v0 00/15] Add handsfree audio card driver"
 
-any AT command on the Modem port while there is an outstanding command =
+Open issues:
+* Use bitmask or keep the array to store the supported audio codecs?
+* Return -EINPROGRESS for Audio Connect. Is it acceptable?
 
-on the Aux port (this should be true for all Telit modems).  Does Ofono =
+Missing:
+* Unregister the codec watcher
+* Some errors handling
 
-support synchronizing these two channels so that they effectively share =
+Development branch:
+git://git.infradead.org/users/cktakahasi/ofono.git external-hfp16
 
-a common command queue?  If yes, how?
+Claudio Takahasi (18):
+  handsfree-audio: Add card driver for HFP 1.6
+  handsfree-audio: Add user data to card driver
+  hfp_hf_bluez5: Pass modem as user data
+  handsfree-audio: Add user data to connect declaration
+  hfp_hf_bluez5: Add user data to connect implementation
+  hfp_hf_bluez5: Add HFP 1.6 connect implementation
+  handsfree-audio: Add HFP 1.6 connect hook
+  handsfree-audio: Add "Connect" reply for HFP 1.6
+  handsfree-audio: Add function to get the codecs
+  hfp_hf_bluez5: Register codec watcher
+  handsfree-audio: Add function to select the codec
+  hfp_hf_bluez5: Set the audio codec in the card
+  handsfree-audio: Send the selected codec
+  handsfree-audio: Set CVSD as default in the card
+  handsfree-audio: Use bitmask for supported codecs
+  handsfree-audio: Disable mSBC if defer is off
+  bluetooth: Add define for SCO voice settings
+  handsfree-audio: Add setting SCO air mode
 
-/Jonas
+Vinicius Costa Gomes (2):
+  hfpmodem: Send AT+BAC with the supported codecs
+  hfpmodem: Add codec watcher register
 
---===============3423523128898993725==--
+ drivers/hfpmodem/slc.c    |  89 +++++++++++++++++++++++++++++++-
+ drivers/hfpmodem/slc.h    |   4 ++
+ include/handsfree-audio.h |   9 +++-
+ plugins/hfp_hf_bluez5.c   |  56 +++++++++++++++++++-
+ src/bluetooth.h           |  12 +++++
+ src/handsfree-audio.c     | 127 +++++++++++++++++++++++++++++++++++++++---=
+----
+ 6 files changed, 274 insertions(+), 23 deletions(-)
+
+-- =
+
+1.7.11.7
+
+
+--===============4618982765166862243==--
 
