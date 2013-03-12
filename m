@@ -1,38 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============0347582408646755647=="
+Content-Type: multipart/mixed; boundary="===============4455565953666344238=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Add vendor quirk for SIMCOM
-Date: Tue, 12 Mar 2013 13:02:42 -0500
-Message-ID: <513F6DC2.8070803@gmail.com>
-In-Reply-To: <513F4758.3060801@syscom-instruments.com>
+Subject: Re: [PATCH] hfp_hf_bluez5: Remove duplicated include
+Date: Tue, 12 Mar 2013 13:04:05 -0500
+Message-ID: <513F6E15.4010201@gmail.com>
+In-Reply-To: <1362784128-22661-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0347582408646755647==
+--===============4455565953666344238==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Anthony,
+Hi Claudio,
 
-> And, I saw "ATD*99#" cryptic command was already used in
-> gatchat/gsmdial.c if bluetooth is enabled.
+On 03/08/2013 05:08 PM, Claudio Takahasi wrote:
+> ---
+>   plugins/hfp_hf_bluez5.c | 1 -
+>   1 file changed, 1 deletion(-)
 >
 
-This is a legacy operation for entering into data mode.  Refer to 27.007 =
-
-Section 10.2.1.1.  It can be used as a shortcut for CGDCONT/CGDATA, and =
-
-it seems that some modems do not implement CGDATA at all.
-
-> Otherwise, why this \0 after ATD*99# ? :)
->
-
-Good spot ;)
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
 
---===============0347582408646755647==--
+--===============4455565953666344238==--
 
