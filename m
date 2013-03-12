@@ -1,69 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============1063090005753287837=="
+Content-Type: multipart/mixed; boundary="===============3151986960676583128=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [RFC v0 09/20] handsfree-audio: Add function to get the codecs
-Date: Tue, 12 Mar 2013 11:21:33 -0300
-Message-ID: <1363098104-16467-10-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [RFC v0 10/20] hfpmodem: Send AT+BAC with the supported codecs
+Date: Tue, 12 Mar 2013 11:21:34 -0300
+Message-ID: <1363098104-16467-11-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1363098104-16467-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1063090005753287837==
+--===============3151986960676583128==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds a new handsfree-audio public function to read the
-available codecs registered by the agent.
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+
+Before, the AT+BAC command was being sent with fixed information,
+now we send the command (that inform the AG of the codecs supported by
+the HF) with the codecs supported by the registered Handsfree Audio
+Agent.
 ---
- include/handsfree-audio.h |  1 +
- src/handsfree-audio.c     | 13 +++++++++++++
- 2 files changed, 14 insertions(+)
+ drivers/hfpmodem/slc.c | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
 
-diff --git a/include/handsfree-audio.h b/include/handsfree-audio.h
-index c7a37dc..839f0f8 100644
---- a/include/handsfree-audio.h
-+++ b/include/handsfree-audio.h
-@@ -49,6 +49,7 @@ struct ofono_handsfree_card *ofono_handsfree_card_create(=
-const char *remote,
- 					void *data);
- int ofono_handsfree_card_register(struct ofono_handsfree_card *card);
- void ofono_handsfree_card_remove(struct ofono_handsfree_card *card);
-+int ofono_handsfree_get_codecs(unsigned char *buffer, int buffer_len);
+diff --git a/drivers/hfpmodem/slc.c b/drivers/hfpmodem/slc.c
+index 646befa..b9b687b 100644
+--- a/drivers/hfpmodem/slc.c
++++ b/drivers/hfpmodem/slc.c
+@@ -34,6 +34,7 @@
+ #include <ofono/log.h>
+ #include <ofono/modem.h>
+ #include <ofono/emulator.h>
++#include <ofono/handsfree-audio.h>
  =
 
- void ofono_handsfree_audio_ref(void);
- void ofono_handsfree_audio_unref(void);
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 3a7dcee..2cbdb57 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -462,6 +462,19 @@ void ofono_handsfree_card_remove(struct ofono_handsfre=
-e_card *card)
- 	g_free(card);
- }
+ #include <drivers/atmodem/atutil.h>
  =
 
-+int ofono_handsfree_get_codecs(unsigned char *buffer, int buffer_len)
-+{
-+	int len;
+@@ -305,9 +306,27 @@ static void brsf_cb(gboolean ok, GAtResult *result, gp=
+ointer user_data)
+ 	if (info->ag_features & HFP_AG_FEATURE_CODEC_NEGOTIATION &&
+ 			info->hf_features & HFP_HF_FEATURE_CODEC_NEGOTIATION) {
+ =
+
++		unsigned char codecs[8];
++		GString *str;
++		int i, len;
 +
-+	if (agent =3D=3D NULL)
-+		return -EIO;
++		len =3D ofono_handsfree_get_codecs(codecs, sizeof(codecs));
++		if (len < 0)
++			goto error;
 +
-+	len =3D MIN(buffer_len, agent->codecs_len);
-+	memcpy(buffer, agent->codecs, len);
++		str =3D g_string_new("AT+BAC=3D");
 +
-+	return len;
-+}
++		for (i =3D 0; i < (len - 1); i++)
++			g_string_append_printf(str, "%d,", codecs[i]);
 +
- static void agent_free(struct agent *agent)
- {
- 	if (agent->watch > 0)
++		g_string_append_printf(str, "%d", codecs[i]);
++
+ 		slc_establish_data_ref(sed);
+-		g_at_chat_send(info->chat, "AT+BAC=3D1", NULL, bac_cb, sed,
++		g_at_chat_send(info->chat, str->str, NULL, bac_cb, sed,
+ 						slc_establish_data_unref);
++
++		g_string_free(str, TRUE);
++
+ 		return;
+ 	}
+ =
+
 -- =
 
 1.7.11.7
 
 
---===============1063090005753287837==--
+--===============3151986960676583128==--
 
