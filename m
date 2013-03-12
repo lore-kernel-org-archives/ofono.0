@@ -1,61 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============4933960535893020405=="
+Content-Type: multipart/mixed; boundary="===============2317380105586329837=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Telit he910 ---- modem port got stuck
-Date: Tue, 12 Mar 2013 12:53:08 -0500
-Message-ID: <513F6B84.8030909@gmail.com>
-In-Reply-To: <513F30AB.6060806@southpole.se>
+Subject: Re: [PATCH] Add vendor quirk for SIMCOM
+Date: Tue, 12 Mar 2013 12:59:26 -0500
+Message-ID: <513F6CFE.7090902@gmail.com>
+In-Reply-To: <1363099212-13463-1-git-send-email-r.r.zaripov@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4933960535893020405==
+--===============2317380105586329837==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+Hi Renat,
 
-On 03/12/2013 08:42 AM, Jonas Bonn wrote:
-> On 03/12/2013 02:26 PM, Ming Li Wu wrote:
->> Hello,
->>
->> I am using Telit HE910 modem, the version of firmware is 12.00.03.
->>
->> Sometimes, the modem port got stuck after sending AT+CGDCONT=3D1.
->> (Such as AT+CGDCONT=3D1,"IP","internet.tele2.se").
->>
->>
->> The following was the situation when this problem happened
->> Aux: > AT+CRSM=3D192,28621\r
->> Modem: > AT+CGDCONT=3D1,"IP","internet.tele2.se"\r
->> Modem: < AT+CGDCONT=3D1,"IP","internet.tele2.se"\r
->> Aux: < \r\n+CME ERROR: 4\r\n
+On 03/12/2013 09:40 AM, r.r.zaripov(a)gmail.com wrote:
+> From: Renat Zaripov<r.r.zaripov@gmail.com>
 >
-> The problem, in short, is that the Telit HE910 does not support sending
-> any AT command on the Modem port while there is an outstanding command
-> on the Aux port (this should be true for all Telit modems). Does Ofono
+> ---
+>   drivers/atmodem/gprs-context.c |    6 +++++-
+>   1 file changed, 5 insertions(+), 1 deletion(-)
+>
+> diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-contex=
+t.c
+> index 3694c27..0fb63c4 100644
+> --- a/drivers/atmodem/gprs-context.c
+> +++ b/drivers/atmodem/gprs-context.c
+> @@ -208,7 +208,11 @@ static void at_cgdcont_cb(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+>   		return;
+>   	}
+>
+> -	sprintf(buf, "AT+CGDATA=3D\"PPP\",%u", gcd->active_context);
+> +	if (gcd->vendor =3D=3D OFONO_VENDOR_SIMCOM)
+> +		strcpy(buf, "ATD*99#\0");
 
-Many M2M setups use the modem from multiple applications (e.g. one app =
+The embedded null character is not necessary, strcpy will take care of =
 
-uses one port for SMS, another for data, another for GPRS).  So I'd be =
+that for you.
 
-surprised if the Telit firmware had such a limitation.  If that is the =
-
-case, then the Telit firmware is broken and should be fixed.
-
-> support synchronizing these two channels so that they effectively share
-> a common command queue? If yes, how?
-
-There is no such capability.  That would defeat the purpose of having =
-
-multiple channels in the first place.  About the only thing you can do =
-
-is drive everything off of the AUX serial port and only use the Modem =
-
-port for entering into PPP mode.
+> +	else
+> +		sprintf(buf, "AT+CGDATA=3D\"PPP\",%u", gcd->active_context);
+> +
+>   	if (g_at_chat_send(gcd->chat, buf, none_prefix,
+>   				at_cgdata_cb, gc, NULL)>  0)
+>   		return;
 
 Regards,
 -Denis
 
---===============4933960535893020405==--
+--===============2317380105586329837==--
 
