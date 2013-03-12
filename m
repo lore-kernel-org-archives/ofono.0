@@ -1,72 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============3151986960676583128=="
+Content-Type: multipart/mixed; boundary="===============0373658351602571529=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [RFC v0 10/20] hfpmodem: Send AT+BAC with the supported codecs
-Date: Tue, 12 Mar 2013 11:21:34 -0300
-Message-ID: <1363098104-16467-11-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [RFC v0 12/20] hfp_hf_bluez5: Register codec watcher
+Date: Tue, 12 Mar 2013 11:21:36 -0300
+Message-ID: <1363098104-16467-13-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1363098104-16467-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3151986960676583128==
+--===============0373658351602571529==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-
-Before, the AT+BAC command was being sent with fixed information,
-now we send the command (that inform the AG of the codecs supported by
-the HF) with the codecs supported by the registered Handsfree Audio
-Agent.
+This patch registers the codec watcher when the Handsfree Audio Card
+driver probe callback gets called.
 ---
- drivers/hfpmodem/slc.c | 21 ++++++++++++++++++++-
- 1 file changed, 20 insertions(+), 1 deletion(-)
+ plugins/hfp_hf_bluez5.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
-diff --git a/drivers/hfpmodem/slc.c b/drivers/hfpmodem/slc.c
-index 646befa..b9b687b 100644
---- a/drivers/hfpmodem/slc.c
-+++ b/drivers/hfpmodem/slc.c
-@@ -34,6 +34,7 @@
- #include <ofono/log.h>
- #include <ofono/modem.h>
- #include <ofono/emulator.h>
-+#include <ofono/handsfree-audio.h>
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index 6c55657..f20aff7 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -64,6 +64,7 @@ struct hfp {
+ 	struct hfp_slc_info info;
+ 	DBusMessage *msg;
+ 	struct ofono_handsfree_card *card;
++	guint codec_watch;
+ };
  =
 
- #include <drivers/atmodem/atutil.h>
+ static GDBusClient *bluez =3D NULL;
+@@ -75,6 +76,14 @@ static void hfp_debug(const char *str, void *user_data)
+ 	ofono_info("%s%s", prefix, str);
+ }
  =
 
-@@ -305,9 +306,27 @@ static void brsf_cb(gboolean ok, GAtResult *result, gp=
-ointer user_data)
- 	if (info->ag_features & HFP_AG_FEATURE_CODEC_NEGOTIATION &&
- 			info->hf_features & HFP_HF_FEATURE_CODEC_NEGOTIATION) {
++static void codec_watcher_cb(unsigned char codec, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct hfp *hfp =3D ofono_modem_get_data(modem);
++
++	DBG("Card: %p selected codec: %d", hfp->card, codec);
++}
++
+ static void slc_established(gpointer userdata)
+ {
+ 	struct ofono_modem *modem =3D userdata;
+@@ -312,6 +321,13 @@ static struct ofono_modem_driver hfp_driver =3D {
  =
 
-+		unsigned char codecs[8];
-+		GString *str;
-+		int i, len;
+ static int card_probe(struct ofono_handsfree_card *card, void *data)
+ {
++	struct ofono_modem *modem =3D data;
++	struct hfp *hfp =3D ofono_modem_get_data(modem);
++	struct hfp_slc_info *info =3D &hfp->info;
 +
-+		len =3D ofono_handsfree_get_codecs(codecs, sizeof(codecs));
-+		if (len < 0)
-+			goto error;
++	hfp->codec_watch =3D hfp_slc_codec_watch_register(info, codec_watcher_cb,
++									modem);
 +
-+		str =3D g_string_new("AT+BAC=3D");
-+
-+		for (i =3D 0; i < (len - 1); i++)
-+			g_string_append_printf(str, "%d,", codecs[i]);
-+
-+		g_string_append_printf(str, "%d", codecs[i]);
-+
- 		slc_establish_data_ref(sed);
--		g_at_chat_send(info->chat, "AT+BAC=3D1", NULL, bac_cb, sed,
-+		g_at_chat_send(info->chat, str->str, NULL, bac_cb, sed,
- 						slc_establish_data_unref);
-+
-+		g_string_free(str, TRUE);
-+
- 		return;
- 	}
+ 	return 0;
+ }
  =
 
 -- =
@@ -74,5 +69,5 @@ ointer user_data)
 1.7.11.7
 
 
---===============3151986960676583128==--
+--===============0373658351602571529==--
 
