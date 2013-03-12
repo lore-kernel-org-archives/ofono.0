@@ -1,66 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============6452508614355124632=="
+Content-Type: multipart/mixed; boundary="===============6607614126786096972=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: Re: [PATCH v0 13/15] handsfree-audio: Return InProgress on Connect
-Date: Tue, 12 Mar 2013 14:26:09 -0300
-Message-ID: <CAKT1EBcD_ajWvo23bQG2XnnyCwbfsoBKTdxuK+xLHpygh9F1SA@mail.gmail.com>
-In-Reply-To: <513F493E.9090104@linux.intel.com>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: Re: [RFC v0 10/20] hfpmodem: Send AT+BAC with the supported codecs
+Date: Tue, 12 Mar 2013 14:44:01 -0300
+Message-ID: <20130312174401.GA19904@echo>
+In-Reply-To: <1363098104-16467-11-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6452508614355124632==
+--===============6607614126786096972==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Frederic:
+Hi,
 
-On Tue, Mar 12, 2013 at 12:26 PM, Frederic Danis
-<frederic.danis@linux.intel.com> wrote:
-> Hello Claudio,
->
->
-> On 12/03/2013 13:42, Claudio Takahasi wrote:
->>
->> This patch returns "Operation already in progress" if there is a
->> pending Handsfree Audio Card "Connect" method call pending.
->> ---
->>   src/handsfree-audio.c | 3 +++
->>   1 file changed, 3 insertions(+)
->>
->> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
->> index 8950347..805f3b6 100644
->> --- a/src/handsfree-audio.c
->> +++ b/src/handsfree-audio.c
->> @@ -285,6 +285,9 @@ static DBusMessage *card_connect(DBusConnection *con=
-n,
->>         if (agent =3D=3D NULL)
->>                 return __ofono_error_not_available(msg);
->>
->> +       if (card->msg)
->> +               return __ofono_error_busy(msg);
->> +
->>         sk =3D driver->audio_connect(card->remote, card->local);
->>         if (sk < 0)
->>                 return __ofono_error_failed(msg);
->>
->
-> Shouldn't you also test if there is already a SCO connection (sco_watch) ?
-> I think that only one SCO link can be connected at a time for a Handsfree
-> Audio Card.
->
-> Regards
->
-> Fred
+On 11:21 Tue 12 Mar, Claudio Takahasi wrote:
+> From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+> =
 
-It is equivalent to check for card->sco_watch or card->msg.
+> Before, the AT+BAC command was being sent with fixed information,
+> now we send the command (that inform the AG of the codecs supported by
+> the HF) with the codecs supported by the registered Handsfree Audio
+> Agent.
+> ---
+>  drivers/hfpmodem/slc.c | 21 ++++++++++++++++++++-
+>  1 file changed, 20 insertions(+), 1 deletion(-)
+> =
 
-card->sco_watch monitors the SCO connection attempt only.
-At the moment, oFono  is not keeping the SCO socket reference after
-passing it to the Agent(P.A.).
+> diff --git a/drivers/hfpmodem/slc.c b/drivers/hfpmodem/slc.c
+> index 646befa..b9b687b 100644
+> --- a/drivers/hfpmodem/slc.c
+> +++ b/drivers/hfpmodem/slc.c
+> @@ -34,6 +34,7 @@
+>  #include <ofono/log.h>
+>  #include <ofono/modem.h>
+>  #include <ofono/emulator.h>
+> +#include <ofono/handsfree-audio.h>
+>  =
 
-Regards,
-Claudio
+>  #include <drivers/atmodem/atutil.h>
+>  =
 
---===============6452508614355124632==--
+> @@ -305,9 +306,27 @@ static void brsf_cb(gboolean ok, GAtResult *result, =
+gpointer user_data)
+>  	if (info->ag_features & HFP_AG_FEATURE_CODEC_NEGOTIATION &&
+>  			info->hf_features & HFP_HF_FEATURE_CODEC_NEGOTIATION) {
+>  =
+
+> +		unsigned char codecs[8];
+> +		GString *str;
+> +		int i, len;
+> +
+> +		len =3D ofono_handsfree_get_codecs(codecs, sizeof(codecs));
+> +		if (len < 0)
+
+This should read "if (len <=3D 0)". Will fix it in the next round.
+
+> +			goto error;
+> +
+> +		str =3D g_string_new("AT+BAC=3D");
+> +
+> +		for (i =3D 0; i < (len - 1); i++)
+> +			g_string_append_printf(str, "%d,", codecs[i]);
+> +
+> +		g_string_append_printf(str, "%d", codecs[i]);
+> +
+>  		slc_establish_data_ref(sed);
+> -		g_at_chat_send(info->chat, "AT+BAC=3D1", NULL, bac_cb, sed,
+> +		g_at_chat_send(info->chat, str->str, NULL, bac_cb, sed,
+>  						slc_establish_data_unref);
+> +
+> +		g_string_free(str, TRUE);
+> +
+>  		return;
+>  	}
+>  =
+
+> -- =
+
+> 1.7.11.7
+> =
+
+
+
+Cheers,
+-- =
+
+Vinicius
+
+--===============6607614126786096972==--
 
