@@ -1,40 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============5699562336986412368=="
+Content-Type: multipart/mixed; boundary="===============1584409116757541259=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [RFC v0 03/20] hfp_hf_bluez5: Pass modem as user data
-Date: Tue, 12 Mar 2013 11:21:27 -0300
-Message-ID: <1363098104-16467-4-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [RFC v0 04/20] handsfree-audio: Add user data to connect declaration
+Date: Tue, 12 Mar 2013 11:21:28 -0300
+Message-ID: <1363098104-16467-5-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1363098104-16467-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5699562336986412368==
+--===============1584409116757541259==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds the modem reference as user data when the Handsfree
-Audio Card is created, allowing to access the service level connection
-in the connect callback.
+This patch adds the user data in the Handsfree Audio driver connect
+callback declaration.
 ---
- plugins/hfp_hf_bluez5.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/handsfree-audio.h | 3 ++-
+ src/handsfree-audio.c     | 2 +-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 810107f..1d26a28 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -495,7 +495,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
-on *conn,
+diff --git a/include/handsfree-audio.h b/include/handsfree-audio.h
+index 1a059b3..c7a37dc 100644
+--- a/include/handsfree-audio.h
++++ b/include/handsfree-audio.h
+@@ -35,7 +35,8 @@ struct ofono_handsfree_card_driver {
+ 	uint16_t version;
+ 	int (*probe) (struct ofono_handsfree_card *card, void *data);
+ 	void (*remove) (struct ofono_handsfree_card *card);
+-	int (*audio_connect) (const char *remote, const char *local);
++	int (*audio_connect) (const char *remote, const char *local,
++							void *data);
+ };
  =
 
- 	hfp =3D ofono_modem_get_data(modem);
- 	hfp->msg =3D dbus_message_ref(msg);
--	hfp->card =3D ofono_handsfree_card_create(remote, local, version);
-+	hfp->card =3D ofono_handsfree_card_create(remote, local, version, modem);
+ int ofono_handsfree_card_driver_register(
+diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+index 52e1ede..c9fed48 100644
+--- a/src/handsfree-audio.c
++++ b/src/handsfree-audio.c
+@@ -290,7 +290,7 @@ static DBusMessage *card_connect(DBusConnection *conn,
+ 	if (card->msg)
+ 		return __ofono_error_busy(msg);
  =
 
- 	return NULL;
+-	sk =3D driver->audio_connect(card->remote, card->local);
++	sk =3D driver->audio_connect(card->remote, card->local, card->data);
+ 	if (sk < 0)
+ 		return __ofono_error_failed(msg);
  =
 
 -- =
@@ -42,5 +55,5 @@ on *conn,
 1.7.11.7
 
 
---===============5699562336986412368==--
+--===============1584409116757541259==--
 
