@@ -1,53 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============8820700388574239217=="
+Content-Type: multipart/mixed; boundary="===============2889491458865872109=="
 MIME-Version: 1.0
-From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: Re: [PATCH 00/13] Add support for BlueZ 5 Profile1 API to dundee
-Date: Mon, 11 Mar 2013 17:41:31 -0300
-Message-ID: <CAG7KCRGb7ne2q+h4id2noDKv_PSGiOsgH+qbCvUkPc7vmJHduQ@mail.gmail.com>
-In-Reply-To: <513E12FB.8070405@monom.org>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH 1/2] bluetooth: Rename DUN GW plugin
+Date: Tue, 12 Mar 2013 10:38:43 +0100
+Message-ID: <1363081124-5264-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8820700388574239217==
+--===============2889491458865872109==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Daniel,
+As BlueZ 5 introduced backwards incompatible API changes, and we want to
+keep support for BlueZ 4 based DUN GW plugin for some time, we need to
+separate DUN GW plugin which is based on BlueZ 4 from the one based on
+BlueZ 5.
 
-On Mon, Mar 11, 2013 at 2:23 PM, Daniel Wagner <wagi@monom.org> wrote:
+The dun_gw.c plugin is renamed to dun_gw_bluez4. This will make it easy
+to add a DUN GW plugin for BlueZ 5.
+---
+ Makefile.am                           |    4 ++--
+ plugins/{dun_gw.c =3D> dun_gw_bluez4.c} |    5 +++--
+ 2 files changed, 5 insertions(+), 4 deletions(-)
+ rename plugins/{dun_gw.c =3D> dun_gw_bluez4.c} (96%)
 
-> Hi Paulo,
->
-> Thanks for your patches. They look pretty good to me. Let's see if Denis
-> or Marcel have something to say.
->
-> cheer,
-> daniel
->
+diff --git a/Makefile.am b/Makefile.am
+index 3b998af..bf4806b 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -425,8 +425,8 @@ builtin_sources +=3D plugins/hfp_hf_bluez4.c plugins/bl=
+uez4.h
+ builtin_modules +=3D hfp_ag_bluez4
+ builtin_sources +=3D plugins/hfp_ag_bluez4.c plugins/bluez4.h
+ =
 
-Thank you for reviewing my patches! I'll fix the mentioned points and send
-a v2 soon.
+-builtin_modules +=3D dun_gw
+-builtin_sources +=3D plugins/dun_gw.c plugins/bluez4.h
++builtin_modules +=3D dun_gw_bluez4
++builtin_sources +=3D plugins/dun_gw_bluez4.c plugins/bluez4.h
+ =
 
-Paulo
+ builtin_modules +=3D connman
+ builtin_sources +=3D plugins/connman.c
+diff --git a/plugins/dun_gw.c b/plugins/dun_gw_bluez4.c
+similarity index 96%
+rename from plugins/dun_gw.c
+rename to plugins/dun_gw_bluez4.c
+index fc8bde4..a1de7a4 100644
+--- a/plugins/dun_gw.c
++++ b/plugins/dun_gw_bluez4.c
+@@ -167,5 +167,6 @@ static void dun_gw_exit(void)
+ 	}
+ }
+ =
 
---===============8820700388574239217==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+-OFONO_PLUGIN_DEFINE(dun_gw, "Dial-up Networking Profile Plugins", VERSION,
+-			OFONO_PLUGIN_PRIORITY_DEFAULT, dun_gw_init, dun_gw_exit)
++OFONO_PLUGIN_DEFINE(dun_gw_bluez4, "Dial-up Networking Profile Plugins",
++				VERSION, OFONO_PLUGIN_PRIORITY_DEFAULT,
++				dun_gw_init, dun_gw_exit)
+-- =
 
-SGkgRGFuaWVsLDxicj48YnI+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPk9uIE1vbiwgTWFyIDEx
-LCAyMDEzIGF0IDI6MjMgUE0sIERhbmllbCBXYWduZXIgPHNwYW4gZGlyPSJsdHIiPiZsdDs8YSBo
-cmVmPSJtYWlsdG86d2FnaUBtb25vbS5vcmciIHRhcmdldD0iX2JsYW5rIj53YWdpQG1vbm9tLm9y
-ZzwvYT4mZ3Q7PC9zcGFuPiB3cm90ZTo8YnI+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3Rl
-IiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFk
-ZGluZy1sZWZ0OjFleCI+CgpIaSBQYXVsbyw8ZGl2Pjxicj48L2Rpdj4KVGhhbmtzIGZvciB5b3Vy
-IHBhdGNoZXMuIFRoZXkgbG9vayBwcmV0dHkgZ29vZCB0byBtZS4gTGV0JiMzOTtzIHNlZSBpZiBE
-ZW5pcyBvciBNYXJjZWwgaGF2ZSBzb21ldGhpbmcgdG8gc2F5Ljxicj4KPGJyPgpjaGVlciw8YnI+
-CmRhbmllbDxicj4KPC9ibG9ja3F1b3RlPjwvZGl2Pjxicj48ZGl2PlRoYW5rIHlvdSBmb3IgcmV2
-aWV3aW5nIG15IHBhdGNoZXMhIEkmIzM5O2xsIGZpeCB0aGUgbWVudGlvbmVkIHBvaW50cyBhbmQg
-c2VuZCBhIHYyIHNvb24uPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5QYXVsbzwvZGl2Pgo=
+1.7.9.5
 
---===============8820700388574239217==--
+
+--===============2889491458865872109==--
 
