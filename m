@@ -1,40 +1,131 @@
-Content-Type: multipart/mixed; boundary="===============0563539212570539537=="
+Content-Type: multipart/mixed; boundary="===============7985390878479356126=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH v2 03/13] bluez5: Add DUN_UUID
-Date: Thu, 14 Mar 2013 10:32:44 -0300
-Message-ID: <1363267974-13518-4-git-send-email-paulo.borges@openbossa.org>
+Subject: [PATCH v2 04/13] dundee: Initial GDBusClient for BlueZ 5
+Date: Thu, 14 Mar 2013 10:32:45 -0300
+Message-ID: <1363267974-13518-5-git-send-email-paulo.borges@openbossa.org>
 In-Reply-To: <1363267974-13518-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0563539212570539537==
+--===============7985390878479356126==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This patch adds the callbacks to track additions and removals of
+BlueZ related interfaces and property changes in these interfaces.
 ---
- plugins/bluez5.h |    1 +
- 1 file changed, 1 insertion(+)
+ dundee/bluez5.c |   60 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ dundee/dundee.h |    2 ++
+ 2 files changed, 62 insertions(+)
 
-diff --git a/plugins/bluez5.h b/plugins/bluez5.h
-index 573a54c..898a010 100644
---- a/plugins/bluez5.h
-+++ b/plugins/bluez5.h
-@@ -25,6 +25,7 @@
- #define BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device1"
- #define BLUEZ_ERROR_INTERFACE		BLUEZ_SERVICE ".Error"
+diff --git a/dundee/bluez5.c b/dundee/bluez5.c
+index 6685b4c..1b2c8e1 100644
+--- a/dundee/bluez5.c
++++ b/dundee/bluez5.c
+@@ -22,16 +22,76 @@
+ #include <config.h>
+ #endif
  =
 
-+#define DUN_UUID	"00001103-0000-1000-8000-00805f9b34fb"
- #define HFP_HS_UUID	"0000111e-0000-1000-8000-00805f9b34fb"
- #define HFP_AG_UUID	"0000111f-0000-1000-8000-00805f9b34fb"
++#include <stdint.h>
++#include <sys/socket.h>
++#include <gdbus.h>
++
+ #include "dundee.h"
++#include "plugins/bluez5.h"
++
++#define DUN_DT_PROFILE_PATH   "/bluetooth/profile/dun_dt"
++
++static GDBusClient *bluez;
++
++static void proxy_added(GDBusProxy *proxy, void *user_data)
++{
++	const char *path =3D g_dbus_proxy_get_path(proxy);
++	const char *interface =3D g_dbus_proxy_get_interface(proxy);
++
++	if (!g_str_equal(BLUEZ_DEVICE_INTERFACE, interface))
++		return;
++
++	DBG("%s %s", path, interface);
++}
++
++static void proxy_removed(GDBusProxy *proxy, void *user_data)
++{
++	const char *path =3D g_dbus_proxy_get_path(proxy);
++	const char *interface =3D g_dbus_proxy_get_interface(proxy);
++
++	if (!g_str_equal(BLUEZ_DEVICE_INTERFACE, interface))
++		return;
++
++	DBG("%s %s", path, interface);
++}
++
++static void property_changed(GDBusProxy *proxy, const char *name,
++					DBusMessageIter *iter, void *user_data)
++{
++	const char *path =3D g_dbus_proxy_get_path(proxy);
++	const char *interface =3D g_dbus_proxy_get_interface(proxy);
++
++	if (!g_str_equal(BLUEZ_DEVICE_INTERFACE, interface))
++		return;
++
++	DBG("%s %s.%s", path, interface, name);
++}
++
++static void connect_handler(DBusConnection *conn, void *user_data)
++{
++	DBG("");
++
++	bt_register_profile_with_role(conn, DUN_UUID, DUN_VERSION_1_2,
++				"dun_dt", DUN_DT_PROFILE_PATH, "client");
++}
  =
 
+ int __dundee_bluetooth_init(void)
+ {
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++
+ 	DBG("");
+ =
+
++	bluez =3D g_dbus_client_new(conn, BLUEZ_SERVICE, BLUEZ_MANAGER_PATH);
++	g_dbus_client_set_connect_watch(bluez, connect_handler, NULL);
++	g_dbus_client_set_proxy_handlers(bluez, proxy_added, proxy_removed,
++						property_changed, NULL);
++
+ 	return 0;
+ }
+ =
+
+ void __dundee_bluetooth_cleanup(void)
+ {
+ 	DBG("");
++
++	g_dbus_client_unref(bluez);
+ }
+diff --git a/dundee/dundee.h b/dundee/dundee.h
+index db932b6..daf78a5 100644
+--- a/dundee/dundee.h
++++ b/dundee/dundee.h
+@@ -26,6 +26,8 @@
+ =
+
+ #include <ofono/types.h>
+ =
+
++#define DUN_VERSION_1_2 0x0102
++
+ void __dundee_exit(void);
+ =
+
+ enum dundee_error_type {
 -- =
 
 1.7.9.5
 
 
---===============0563539212570539537==--
+--===============7985390878479356126==--
 
