@@ -1,75 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============4533422671828166309=="
+Content-Type: multipart/mixed; boundary="===============6973150951720533695=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH v2 07/13] dundee: Listen to devices property changes
-Date: Thu, 14 Mar 2013 10:32:48 -0300
-Message-ID: <1363267974-13518-8-git-send-email-paulo.borges@openbossa.org>
+Subject: [PATCH v2 08/13] dundee: Add dundee device driver skeleton
+Date: Thu, 14 Mar 2013 10:32:49 -0300
+Message-ID: <1363267974-13518-9-git-send-email-paulo.borges@openbossa.org>
 In-Reply-To: <1363267974-13518-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4533422671828166309==
+--===============6973150951720533695==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When a bluetooth device property change and this property is Alias
-or UUIDs, we need to refresh our representation of this device.
+This patch adds the functions to be called when the dundee will
+connect or disconnect with a Bluetooth device.
 ---
- dundee/bluez5.c |   28 +++++++++++++++++++++++++++-
- 1 file changed, 27 insertions(+), 1 deletion(-)
+ dundee/bluez5.c |   18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
 
 diff --git a/dundee/bluez5.c b/dundee/bluez5.c
-index ca44656..d48aadf 100644
+index d48aadf..9568fde 100644
 --- a/dundee/bluez5.c
 +++ b/dundee/bluez5.c
-@@ -169,11 +169,37 @@ static void property_changed(GDBusProxy *proxy, const=
- char *name,
- {
- 	const char *path =3D g_dbus_proxy_get_path(proxy);
- 	const char *interface =3D g_dbus_proxy_get_interface(proxy);
-+	const char *alias;
-+	struct bluetooth_device *bt_device;
-+	gboolean uuid;
- =
-
- 	if (!g_str_equal(BLUEZ_DEVICE_INTERFACE, interface))
- 		return;
- =
-
--	DBG("%s %s.%s", path, interface, name);
-+	bt_device =3D g_hash_table_lookup(registered_devices, path);
-+
-+	if (g_str_equal(name, "Alias")) {
-+		if (bt_device =3D=3D NULL)
-+			return;
-+
-+		dbus_message_iter_get_basic(iter, &alias);
-+
-+		DBG("%s alias changed: %s", path, alias);
-+
-+		bt_device->name =3D g_strdup(alias);
-+	} else if (g_str_equal(name, "UUIDs")) {
-+		DBG("%s uuids changed", path);
-+
-+		uuid =3D has_dun_uuid(iter);
-+
-+		if (uuid) {
-+			if (bt_device =3D=3D NULL)
-+				bluetooth_device_register(proxy);
-+		} else {
-+			if (bt_device !=3D NULL)
-+				bluetooth_device_unregister(path);
-+		}
-+	}
+@@ -52,6 +52,24 @@ static void bluetooth_device_destroy(gpointer user_data)
+ 	g_free(bt_device);
  }
  =
 
- static void connect_handler(DBusConnection *conn, void *user_data)
++static void bluetooth_device_connect(struct dundee_device *device,
++			dundee_device_connect_cb_t cb, void *data)
++{
++	DBG("");
++}
++
++static void bluetooth_device_disconnect(struct dundee_device *device,
++				dundee_device_disconnect_cb_t cb, void *data)
++{
++	DBG("");
++}
++
++struct dundee_device_driver bluetooth_driver =3D {
++	.name =3D "bluetooth",
++	.connect =3D bluetooth_device_connect,
++	.disconnect =3D bluetooth_device_disconnect,
++};
++
+ static struct bluetooth_device *bluetooth_device_create(const char *path,
+ 					const char *address, const char *alias)
+ {
 -- =
 
 1.7.9.5
 
 
---===============4533422671828166309==--
+--===============6973150951720533695==--
 
