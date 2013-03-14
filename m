@@ -1,58 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============6973150951720533695=="
+Content-Type: multipart/mixed; boundary="===============7239651070562096119=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH v2 08/13] dundee: Add dundee device driver skeleton
-Date: Thu, 14 Mar 2013 10:32:49 -0300
-Message-ID: <1363267974-13518-9-git-send-email-paulo.borges@openbossa.org>
+Subject: [PATCH v2 09/13] dundee: Register/unregister dundee device
+Date: Thu, 14 Mar 2013 10:32:50 -0300
+Message-ID: <1363267974-13518-10-git-send-email-paulo.borges@openbossa.org>
 In-Reply-To: <1363267974-13518-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6973150951720533695==
+--===============7239651070562096119==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds the functions to be called when the dundee will
-connect or disconnect with a Bluetooth device.
+This patch adds the dundee device struct to the our Bluetooth
+device representation.
 ---
- dundee/bluez5.c |   18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
+ dundee/bluez5.c |   25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
 
 diff --git a/dundee/bluez5.c b/dundee/bluez5.c
-index d48aadf..9568fde 100644
+index 9568fde..b4f6918 100644
 --- a/dundee/bluez5.c
 +++ b/dundee/bluez5.c
-@@ -52,6 +52,24 @@ static void bluetooth_device_destroy(gpointer user_data)
- 	g_free(bt_device);
+@@ -35,6 +35,8 @@ static GDBusClient *bluez;
+ static GHashTable *registered_devices;
+ =
+
+ struct bluetooth_device {
++	struct dundee_device *device;
++
+ 	char *path;
+ 	char *address;
+ 	char *name;
+@@ -46,6 +48,9 @@ static void bluetooth_device_destroy(gpointer user_data)
+ =
+
+ 	DBG("%s", bt_device->path);
+ =
+
++	if (bt_device->device !=3D NULL)
++		dundee_device_unregister(bt_device->device);
++
+ 	g_free(bt_device->path);
+ 	g_free(bt_device->address);
+ 	g_free(bt_device->name);
+@@ -93,6 +98,7 @@ static void bluetooth_device_register(GDBusProxy *proxy)
+ 	const char *path =3D g_dbus_proxy_get_path(proxy);
+ 	const char *alias, *address;
+ 	struct bluetooth_device *bt_device;
++	struct dundee_device *device;
+ 	DBusMessageIter iter;
+ =
+
+ 	DBG("%s", path);
+@@ -116,7 +122,26 @@ static void bluetooth_device_register(GDBusProxy *prox=
+y)
+ 		return;
+ 	}
+ =
+
++	device =3D dundee_device_create(&bluetooth_driver);
++	if (device =3D=3D NULL)
++		goto free;
++
++	dundee_device_set_data(device, bt_device);
++	dundee_device_set_name(device, bt_device->name);
++
++	if (dundee_device_register(device) < 0) {
++		g_free(device);
++		goto free;
++	}
++
++	bt_device->device =3D device;
+ 	g_hash_table_insert(registered_devices, g_strdup(path), bt_device);
++
++	return;
++
++free:
++	bluetooth_device_destroy(bt_device);
++	return;
  }
  =
 
-+static void bluetooth_device_connect(struct dundee_device *device,
-+			dundee_device_connect_cb_t cb, void *data)
-+{
-+	DBG("");
-+}
-+
-+static void bluetooth_device_disconnect(struct dundee_device *device,
-+				dundee_device_disconnect_cb_t cb, void *data)
-+{
-+	DBG("");
-+}
-+
-+struct dundee_device_driver bluetooth_driver =3D {
-+	.name =3D "bluetooth",
-+	.connect =3D bluetooth_device_connect,
-+	.disconnect =3D bluetooth_device_disconnect,
-+};
-+
- static struct bluetooth_device *bluetooth_device_create(const char *path,
- 					const char *address, const char *alias)
- {
+ static void bluetooth_device_unregister(const char *path)
 -- =
 
 1.7.9.5
 
 
---===============6973150951720533695==--
+--===============7239651070562096119==--
 
