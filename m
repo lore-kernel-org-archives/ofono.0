@@ -1,89 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============0128732596582829335=="
+Content-Type: multipart/mixed; boundary="===============7806331465706181084=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: Re: [RFC v0 06/20] hfp_hf_bluez5: Add HFP 1.6 connect implementation
-Date: Thu, 14 Mar 2013 14:52:45 -0300
-Message-ID: <20130314175245.GA2649@samus>
-In-Reply-To: <1363098104-16467-7-git-send-email-claudio.takahasi@openbossa.org>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [PATCH v2 11/13] dundee: Add support for driver connect
+Date: Mon, 18 Mar 2013 09:38:47 +0100
+Message-ID: <5146D297.6020207@monom.org>
+In-Reply-To: <1363267974-13518-12-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0128732596582829335==
+--===============7806331465706181084==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Paulo,
 
-On 11:21 Tue 12 Mar, Claudio Takahasi wrote:
-> This patch implements the HF initiate SCO connection for devices
-> compliant with HFP 1.6. HF sends AT+BCC to inform the AG that audio
-> connection is required.
+The series breaks to compile at this patch.
+
+On 03/14/2013 02:32 PM, Paulo Borges wrote:
+> This patch glues together the dundee driver interface with the
+> D-Bus Profile1 interface.
+> =
+
+> When the dundee driver requests a connection, it will call the
+> Device1's ConnectProfile.
 > ---
->  plugins/hfp_hf_bluez5.c | 13 ++++++++++++-
->  1 file changed, 12 insertions(+), 1 deletion(-)
+>   dundee/bluez5.c |    7 ++++++-
+>   1 file changed, 6 insertions(+), 1 deletion(-)
 > =
 
-> diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-> index 0d5d5c7..6c55657 100644
-> --- a/plugins/hfp_hf_bluez5.c
-> +++ b/plugins/hfp_hf_bluez5.c
-> @@ -364,7 +364,18 @@ static struct ofono_handsfree_card_driver card_drive=
-r15 =3D {
->  static int card_audio_connect16(const char *remote, const char *local,
->  								void *data)
->  {
-> -	return 0;
-> +	struct ofono_modem *modem =3D data;
-> +	struct hfp *hfp =3D ofono_modem_get_data(modem);
-> +	struct hfp_slc_info *info =3D &hfp->info;
+> diff --git a/dundee/bluez5.c b/dundee/bluez5.c
+> index 82bb7aa..2d10e5a 100644
+> --- a/dundee/bluez5.c
+> +++ b/dundee/bluez5.c
+> @@ -114,7 +114,12 @@ static void bluetooth_device_destroy(gpointer user_d=
+ata)
+>   static void bluetooth_device_connect(struct dundee_device *device,
+>   			dundee_device_connect_cb_t cb, void *data)
+>   {
+> -	DBG("");
+> +	struct bluetooth_device *bt_device =3D dundee_device_get_data(device);
 > +
-> +	if (info->chat =3D=3D NULL)
-> +		return -ENOTCONN;
+> +	DBG("%s", bt_device->path);
 > +
-> +	info->chat =3D g_at_chat_ref(info->chat);
-> +	g_at_chat_send(info->chat, "AT+BCC", NULL, NULL, info->chat,
-> +					(GDestroyNotify) g_at_chat_unref);
+> +	bt_connect_profile(ofono_dbus_get_connection(), bt_device->path,
+> +						DUN_DT_UUID, NULL, NULL);
+>   }
+>   =
 
-Testing with the iPhone, if there's no audio related things happening on
-the phone, audio calls for example, the phone responds with an error.
-
-We need to handle this case, we could think of two alternatives:
-
-1. Adding a timeout when the driver returns -EINPROGRESS, if this timeout
-expires before the SCO is established we return an error to the caller of t=
-he
-Connect method;
-
-2. Adding another method to the handsfree-audio.h API, something like:
-"ofono_handsfree_audio_card_falied(card, err)" that would signify that the
-audio connection attempt failed before its time.
-
-The main advantage of (1) is that we are covered even in the case that
-"AT+BCC" succeeds and the remote device doesn't open an SCO channel.
-
-
-> +
-> +	return -EINPROGRESS;
->  }
->  =
-
->  static struct ofono_handsfree_card_driver card_driver16 =3D {
-> -- =
-
-> 1.7.11.7
+>   static void bluetooth_device_disconnect(struct dundee_device *device,
 > =
 
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
+
+HEAD is now at 1198ace dundee: Add support for driver connect
+make --no-print-directory all-am
+  CC       dundee/bluez5.o
+dundee/bluez5.c: In function =E2=80=98bluetooth_device_connect=E2=80=99:
+dundee/bluez5.c:122:7: error: =E2=80=98DUN_DT_UUID=E2=80=99 undeclared (fir=
+st use in this function)
+dundee/bluez5.c:122:7: note: each undeclared identifier is reported only on=
+ce for each function it appears in
+make[1]: *** [dundee/bluez5.o] Error 1
+make: *** [all] Error 2
+Broke on 1198aceb147e2839a86b5f5c1cf65556d3d8fa2d
 
 
-Cheers,
--- =
+Should that be DUN_UUID?
 
-Vinicius
 
---===============0128732596582829335==--
+cheers,
+daniel
+
+--===============7806331465706181084==--
 
