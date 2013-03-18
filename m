@@ -1,60 +1,104 @@
-Content-Type: multipart/mixed; boundary="===============7501999795957512728=="
+Content-Type: multipart/mixed; boundary="===============1611176701360369157=="
 MIME-Version: 1.0
-From: Viallard Anthony <viallard@syscom-instruments.com>
-Subject: Find a way to grab online status when use "hardware flight mode" on
- my board
-Date: Mon, 18 Mar 2013 16:23:43 +0100
-Message-ID: <5147317F.4050106@syscom-instruments.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v0 03/15] hfp_hf_bluez5: Add extracting version
+Date: Mon, 18 Mar 2013 13:55:41 -0500
+Message-ID: <5147632D.8040406@gmail.com>
+In-Reply-To: <1363092133-1092-4-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7501999795957512728==
+--===============1611176701360369157==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello there,
+Hi Claudio,
 
-I try to find a way to leave the hardware flight mode. What I mean with =
+On 03/12/2013 07:42 AM, Claudio Takahasi wrote:
+> This patch parses and reads the profile "Version" that comes in the fd
+> dictionary of the NewConnection method. "Version" is input for Audio Card
+> registration.
+> ---
+>   plugins/hfp_hf_bluez5.c | 37 +++++++++++++++++++++++++++++++++++++
+>   1 file changed, 37 insertions(+)
+>
+> diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+> index 2020e63..a8d8277 100644
+> --- a/plugins/hfp_hf_bluez5.c
+> +++ b/plugins/hfp_hf_bluez5.c
+> @@ -343,6 +343,37 @@ static ofono_bool_t device_path_compare(struct ofono=
+_modem *modem,
+>   	return g_str_equal(path, value);
+>   }
+>
+> +static int get_version(DBusMessageIter *iter, uint16_t *version)
+> +{
+> +	DBusMessageIter dict, entry, valiter;
+> +	const char *key;
+> +	uint16_t value;
+> +
+> +	dbus_message_iter_recurse(iter,&dict);
+> +
+> +	/* Dict entry key */
+> +	dbus_message_iter_recurse(&dict,&entry);
+> +	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_STRING)
+> +		return -EINVAL;
+> +
+> +	dbus_message_iter_get_basic(&entry,&key);
+> +	if (g_str_equal("Version", key) =3D=3D FALSE)
+> +		return -EINVAL;
+> +
+> +	/* Dict entry value */
+> +	dbus_message_iter_next(&entry);
+> +	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_VARIANT)
+> +		return -EINVAL;
+> +
+> +	dbus_message_iter_recurse(&entry,&valiter);
+> +	dbus_message_iter_get_basic(&valiter,&value);
+> +
+> +	if (version)
+> +		*version =3D value;
+> +
+> +	return 0;
+> +}
+> +
+>   static DBusMessage *profile_new_connection(DBusConnection *conn,
+>   					DBusMessage *msg, void *user_data)
+>   {
+> @@ -353,6 +384,7 @@ static DBusMessage *profile_new_connection(DBusConnec=
+tion *conn,
+>   	DBusMessageIter entry;
+>   	const char *device;
+>   	char local[18], remote[18];
+> +	uint16_t version;
+>   	int fd, err;
+>
+>   	DBG("Profile handler NewConnection");
+> @@ -373,6 +405,11 @@ static DBusMessage *profile_new_connection(DBusConne=
+ction *conn,
+>   	if (fd<  0)
+>   		goto invalid;
+>
+> +	dbus_message_iter_next(&entry);
+> +
 
-hardware flight mode that on my board, I can control the flight mode by =
+I would not mind extra sanity checking here, e.g. argument type checking
 
-software and also with hardware.
+> +	if (get_version(&entry,&version)<  0)
+> +		goto invalid;
+> +
 
-But, when we go to flight mode with hardware, ofono doesn't get it and =
+I don't like this.  The fd_properties is a dictionary, you cannot assume =
 
-so, doesn't update the "Online" status.
+that Version will be always the first one.
 
-The mainly problem my modem doesn't send messages when goes offline. =
-
-Sometimes, I see "+CSQ: 99,99", "+CREG: 0", "+CGREG: 0". But, It's not =
-
-the case all the times.
-
-So, I think a AT+CFUN? pooling is the best solution in my case. If I =
-
-detect the modem goes offline, I could put ofono up do date.
-
-Have you got a better alternative to my issue ? Where can I do this =
-
-pooling ? IMHO, I think to do this in the plugin driver but maybe there =
-
-are a better place.
-
-This behavior is just for me, I guess you don't want a pooling thing in =
-
-your code :)
+>   	modem =3D ofono_modem_find(device_path_compare, (void *) device);
+>   	if (modem =3D=3D NULL) {
+>   		close(fd);
 
 Regards,
-Anthony.
+-Denis
 
--- =
-
-.-------------------.-----------------------.-------------------.
-| Viallard Anthony  | Syscom Instruments SA | Embedded System   |
-| +41 024 455 24 82 | Rue de l'industrie 21 | Software Designer |
-| ~~~~~~~~~~~~~~~~~ | 1450 Sainte-Croix     | ~~~~~~~~~~~~~~~~~ |
-'-------------------^-----------------------^-------------------^
-
---===============7501999795957512728==--
+--===============1611176701360369157==--
 
