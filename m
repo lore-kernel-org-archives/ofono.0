@@ -1,41 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============2818233348051432673=="
+Content-Type: multipart/mixed; boundary="===============2913920528134002737=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: Re: [PATCH v2 00/13] Add support for BlueZ 5 Profile1 API to dundee
-Date: Tue, 19 Mar 2013 14:11:51 -0300
-Message-ID: <20130319171150.GA6190@samus>
-In-Reply-To: <5146E4A9.8060306@monom.org>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [PATCH v2 07/13] dundee: Listen to devices property changes
+Date: Tue, 19 Mar 2013 22:10:48 +0100
+Message-ID: <5148D458.5030403@monom.org>
+In-Reply-To: <1363267974-13518-8-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2818233348051432673==
+--===============2913920528134002737==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Daniel,
+Hi Paulo,
 
-On 10:55 Mon 18 Mar, Daniel Wagner wrote:
-> Hi Paulo,
-> =
+I talked to Denis and he pointed out that this property_changed() =
 
-> I have tested this version and it seems to work. I say 'seems' because I =
-was not able
-> keep open the connection. All phones I have tested open the connection an=
-d close
-> them right after. I am not sure if just my setup is broken. Testing again=
-st bluez4
-> gave the same behaviour. So I don't think your patches are causing this.
+function looks suspicious.
 
-Just for information, I did some field testing this weekend and I got it to=
- work
-fine with my N9.
+On 03/14/2013 02:32 PM, Paulo Borges wrote:
+> When a bluetooth device property change and this property is Alias
+> or UUIDs, we need to refresh our representation of this device.
+> ---
+>   dundee/bluez5.c |   28 +++++++++++++++++++++++++++-
+>   1 file changed, 27 insertions(+), 1 deletion(-)
+>
+> diff --git a/dundee/bluez5.c b/dundee/bluez5.c
+> index ca44656..d48aadf 100644
+> --- a/dundee/bluez5.c
+> +++ b/dundee/bluez5.c
+> @@ -169,11 +169,37 @@ static void property_changed(GDBusProxy *proxy, con=
+st char *name,
+>   {
+>   	const char *path =3D g_dbus_proxy_get_path(proxy);
+>   	const char *interface =3D g_dbus_proxy_get_interface(proxy);
+> +	const char *alias;
+> +	struct bluetooth_device *bt_device;
+> +	gboolean uuid;
+>
+>   	if (!g_str_equal(BLUEZ_DEVICE_INTERFACE, interface))
+>   		return;
+>
+> -	DBG("%s %s.%s", path, interface, name);
+> +	bt_device =3D g_hash_table_lookup(registered_devices, path);
+> +
+> +	if (g_str_equal(name, "Alias")) {
+> +		if (bt_device =3D=3D NULL)
+> +			return;
+> +
+> +		dbus_message_iter_get_basic(iter, &alias);
+> +
+> +		DBG("%s alias changed: %s", path, alias);
+> +
+> +		bt_device->name =3D g_strdup(alias);
+> +	} else if (g_str_equal(name, "UUIDs")) {
+> +		DBG("%s uuids changed", path);
+> +
+> +		uuid =3D has_dun_uuid(iter);
+> +
+> +		if (uuid) {
+> +			if (bt_device =3D=3D NULL)
+> +				bluetooth_device_register(proxy);
+> +		} else {
+> +			if (bt_device !=3D NULL)
+> +				bluetooth_device_unregister(path);
+> +		}
+> +	}
+
+So first thing, the nesting is should be avoided. Sorry, that's my bad.
+
+	if (uuid && bt_device =3D=3D NULL) register
+
+	if (!uuid && bt_device) unregister
+
+is what is an the ofono style.
+
+>   }
+>
+>   static void connect_handler(DBusConnection *conn, void *user_data)
+>
+
+The next thing is why don't you use g_dbus_proxy_set_property_watch() =
+
+for the property change. Then it might also be worth to split out the
+the property handling into individual function. So one for Alias change
+and one for UUID change.
+
+See how Alias is handled in plugins/hfp_hf_bluez5.c
+
+And there is the question came up, why it is necessary to handle UUID =
+
+changes. Is this because a phone can enable/disable tethering?
+
+cheers,
+daniel
 
 
-Cheers,
--- =
-
-Vinicius
-
---===============2818233348051432673==--
+--===============2913920528134002737==--
 
