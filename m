@@ -1,206 +1,153 @@
-Content-Type: multipart/mixed; boundary="===============6560163230215484393=="
+Content-Type: multipart/mixed; boundary="===============6027088180853086068=="
 MIME-Version: 1.0
-From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH v3 13/13] dundee: Handle Profile connect and disconnect
-Date: Wed, 20 Mar 2013 19:26:42 -0300
-Message-ID: <1363818402-17710-14-git-send-email-paulo.borges@openbossa.org>
-In-Reply-To: <1363818402-17710-1-git-send-email-paulo.borges@openbossa.org>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: [PATCH 1/4] handsfree-audio: Add support for initiating SCO
+ connections
+Date: Wed, 20 Mar 2013 20:03:01 -0300
+Message-ID: <1363820584-24513-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6560163230215484393==
+--===============6027088180853086068==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+When calling the card's .Connect() method, we should be able to
+establish a SCO connection.
+
+Right now, we only have support for establishing the SCO connection
+directly, this is what is expected from HFP 1.5 HF/AG devices.
 ---
- dundee/bluez5.c |  115 ++++++++++++++++++++++++++++++++++++++++++++++++++-=
-----
- 1 file changed, 105 insertions(+), 10 deletions(-)
+ src/handsfree-audio.c | 97 +++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 file changed, 96 insertions(+), 1 deletion(-)
 
-diff --git a/dundee/bluez5.c b/dundee/bluez5.c
-index c5a5ff0..eb7f005 100644
---- a/dundee/bluez5.c
-+++ b/dundee/bluez5.c
-@@ -41,16 +41,63 @@ struct bluetooth_device {
+diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+index c7fa2fb..1da2224 100644
+--- a/src/handsfree-audio.c
++++ b/src/handsfree-audio.c
+@@ -53,6 +53,8 @@ struct ofono_handsfree_card {
+ 	char *remote;
+ 	char *local;
  	char *path;
- 	char *address;
- 	char *name;
-+
-+	struct cb_data *connect_cbd;
-+
-+	int fd;
++	DBusMessage *msg;
++	guint sco_watch;
+ 	const struct ofono_handsfree_card_driver *driver;
+ 	void *driver_data;
  };
- =
-
- static DBusMessage *profile_new_connection(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
- {
--	DBG("");
-+	struct bluetooth_device *bt_device;
-+	dundee_device_connect_cb_t cb;
-+	DBusMessageIter iter;
-+	const char *path;
-+	int fd;
- =
-
--	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
--						".NotImplemented",
--						"Implementation not provided");
-+	if (!dbus_message_iter_init(msg, &iter))
-+		goto error;
-+
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_OBJECT_PATH)
-+		goto error;
-+
-+	dbus_message_iter_get_basic(&iter, &path);
-+
-+	bt_device =3D g_hash_table_lookup(registered_devices, path);
-+	if (bt_device =3D=3D NULL)
-+		goto error;
-+
-+	cb =3D bt_device->connect_cbd->cb;
-+
-+	dbus_message_iter_next(&iter);
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_UNIX_FD)
-+		goto call_failure;
-+
-+	dbus_message_iter_get_basic(&iter, &fd);
-+	if (fd < 0)
-+		goto call_failure;
-+
-+	DBG("%s %d", bt_device->path, fd);
-+
-+	bt_device->fd =3D fd;
-+
-+	CALLBACK_WITH_SUCCESS(cb, fd, bt_device->connect_cbd->data);
-+
-+	g_free(bt_device->connect_cbd);
-+	bt_device->connect_cbd =3D NULL;
-+
-+	return dbus_message_new_method_return(msg);
-+
-+call_failure:
-+	CALLBACK_WITH_FAILURE(cb, -1, bt_device->connect_cbd->data);
-+
-+	g_free(bt_device->connect_cbd);
-+	bt_device->connect_cbd =3D NULL;
-+
-+error:
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE ".Rejected",
-+					"Invalid arguments in method call");
+@@ -235,10 +237,103 @@ static DBusMessage *card_get_properties(DBusConnecti=
+on *conn,
+ 	return reply;
  }
  =
 
- static DBusMessage *profile_release(DBusConnection *conn,
-@@ -76,11 +123,31 @@ static DBusMessage *profile_cancel(DBusConnection *con=
-n,
- static DBusMessage *profile_disconnection(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
- {
--	DBG("");
-+	struct bluetooth_device *bt_device;
-+	DBusMessageIter iter;
-+	const char *path;
- =
-
--	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
--						".NotImplemented",
--						"Implementation not provided");
-+	if (!dbus_message_iter_init(msg, &iter))
-+		goto error;
-+
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_OBJECT_PATH)
-+		goto error;
-+
-+	dbus_message_iter_get_basic(&iter, &path);
-+
-+	bt_device =3D g_hash_table_lookup(registered_devices, path);
-+	if (bt_device =3D=3D NULL)
-+		goto error;
-+
-+	DBG("%s", bt_device->path);
-+
-+	CALLBACK_WITH_SUCCESS(dundee_device_disconnect, bt_device->device);
-+
-+	return dbus_message_new_method_return(msg);
-+
-+error:
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE ".Rejected",
-+					"Invalid arguments in method call");
- }
- =
-
- static const GDBusMethodTable profile_methods[] =3D {
-@@ -105,27 +172,55 @@ static void bluetooth_device_destroy(gpointer user_da=
-ta)
- 	if (bt_device->device !=3D NULL)
- 		dundee_device_unregister(bt_device->device);
- =
-
-+	if (bt_device->connect_cbd !=3D NULL)
-+		g_free(bt_device->connect_cbd);
-+
- 	g_free(bt_device->path);
- 	g_free(bt_device->address);
- 	g_free(bt_device->name);
- 	g_free(bt_device);
- }
- =
-
-+static void bluetooth_device_connect_callback(gboolean success,
-+							gpointer user_data)
++static int card_connect_sco(struct ofono_handsfree_card *card)
 +{
-+	struct bluetooth_device *bt_device =3D user_data;
++	struct sockaddr_sco addr;
++	int sk, ret;
 +
-+	if (success) {
-+		DBG("Success");
-+		return;
++	sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET | O_NONBLOCK | SOCK_CLOEXEC,
++								BTPROTO_SCO);
++	if (sk < 0)
++		return -1;
++
++	/* Bind to local address */
++	memset(&addr, 0, sizeof(addr));
++	addr.sco_family =3D AF_BLUETOOTH;
++	bt_str2ba(card->local, &addr.sco_bdaddr);
++
++	if (bind(sk, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
++		close(sk);
++		return -1;
 +	}
 +
-+	DBG("ConnectProfile() returned an error");
++	/* Connect to remote device */
++	memset(&addr, 0, sizeof(addr));
++	addr.sco_family =3D AF_BLUETOOTH;
++	bt_str2ba(card->remote, &addr.sco_bdaddr);
 +
-+	g_free(bt_device->connect_cbd);
-+	bt_device->connect_cbd =3D NULL;
++	ret =3D connect(sk, (struct sockaddr *) &addr, sizeof(addr));
++	if (ret < 0 && errno !=3D EINPROGRESS) {
++		close(sk);
++		return -1;
++	}
++
++	return sk;
 +}
 +
- static void bluetooth_device_connect(struct dundee_device *device,
- 			dundee_device_connect_cb_t cb, void *data)
- {
- 	struct bluetooth_device *bt_device =3D dundee_device_get_data(device);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
- =
-
- 	DBG("%s", bt_device->path);
- =
-
-+	cbd->user =3D bt_device;
-+	bt_device->connect_cbd =3D cbd;
++static gboolean sco_connect_cb(GIOChannel *io, GIOCondition cond,
++							gpointer user_data)
 +
- 	bt_connect_profile(ofono_dbus_get_connection(), bt_device->path,
--						DUN_UUID, NULL, NULL);
-+		DUN_UUID, bluetooth_device_connect_callback, bt_device);
++{
++	struct ofono_handsfree_card *card =3D user_data;
++	DBusMessage *reply;
++	int sk;
++
++	if (agent =3D=3D NULL)
++		return FALSE;
++
++	if (cond & (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
++		reply =3D __ofono_error_failed(card->msg);
++		goto done;
++	}
++
++	sk =3D g_io_channel_unix_get_fd(io);
++
++	close(sk);
++
++	reply =3D dbus_message_new_method_return(card->msg);
++
++done:
++	g_dbus_send_message(ofono_dbus_get_connection(), reply);
++
++	return FALSE;
++}
++
++static void sco_watch_destroy(gpointer user_data)
++{
++	struct ofono_handsfree_card *card =3D user_data;
++
++	card->sco_watch =3D 0;
++	dbus_message_unref(card->msg);
++}
++
+ static DBusMessage *card_connect(DBusConnection *conn,
+ 						DBusMessage *msg, void *data)
+ {
+-	return __ofono_error_not_implemented(msg);
++	struct ofono_handsfree_card *card =3D data;
++	GIOChannel *io;
++	int sk;
++
++	if (agent =3D=3D NULL)
++		return __ofono_error_not_available(msg);
++
++	if (card->sco_watch)
++		return __ofono_error_busy(msg);
++
++	sk =3D card_connect_sco(card);
++	if (sk < 0)
++		return __ofono_error_failed(msg);
++
++	io =3D g_io_channel_unix_new(sk);
++	card->sco_watch =3D g_io_add_watch_full(io, G_PRIORITY_DEFAULT,
++				G_IO_OUT | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
++				sco_connect_cb, card, sco_watch_destroy);
++
++	g_io_channel_unref(io);
++
++	card->msg =3D dbus_message_ref(msg);
++
++	return NULL;
  }
  =
 
- static void bluetooth_device_disconnect(struct dundee_device *device,
- 				dundee_device_disconnect_cb_t cb, void *data)
- {
--	DBG("");
-+	struct bluetooth_device *bt_device =3D dundee_device_get_data(device);
-+
-+	DBG("%s", bt_device->path);
-+
-+	shutdown(bt_device->fd, SHUT_RDWR);
-+	CALLBACK_WITH_SUCCESS(cb, data);
- }
- =
-
- struct dundee_device_driver bluetooth_driver =3D {
+ static const GDBusMethodTable card_methods[] =3D {
 -- =
 
-1.7.9.5
+1.8.1.5
 
 
---===============6560163230215484393==--
+--===============6027088180853086068==--
 
