@@ -1,47 +1,162 @@
-Content-Type: multipart/mixed; boundary="===============3329964611821112177=="
+Content-Type: multipart/mixed; boundary="===============3906774262000272979=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 4/4] doc: Add Handsfree Audio Card "Connect" errors
-Date: Wed, 20 Mar 2013 20:03:04 -0300
-Message-ID: <1363820584-24513-4-git-send-email-vinicius.gomes@openbossa.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/4] handsfree-audio: Add support for initiating SCO
+ connections
+Date: Thu, 21 Mar 2013 10:05:22 -0500
+Message-ID: <514B21B2.2060001@gmail.com>
 In-Reply-To: <1363820584-24513-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3329964611821112177==
+--===============3906774262000272979==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Hi Vinicius,
 
----
- doc/handsfree-audio-api.txt | 6 ++++++
- 1 file changed, 6 insertions(+)
+On 03/20/2013 06:03 PM, Vinicius Costa Gomes wrote:
+> When calling the card's .Connect() method, we should be able to
+> establish a SCO connection.
+>
+> Right now, we only have support for establishing the SCO connection
+> directly, this is what is expected from HFP 1.5 HF/AG devices.
+> ---
+>   src/handsfree-audio.c | 97 ++++++++++++++++++++++++++++++++++++++++++++=
+++++++-
+>   1 file changed, 96 insertions(+), 1 deletion(-)
+>
+> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+> index c7fa2fb..1da2224 100644
+> --- a/src/handsfree-audio.c
+> +++ b/src/handsfree-audio.c
+> @@ -53,6 +53,8 @@ struct ofono_handsfree_card {
+>   	char *remote;
+>   	char *local;
+>   	char *path;
+> +	DBusMessage *msg;
+> +	guint sco_watch;
+>   	const struct ofono_handsfree_card_driver *driver;
+>   	void *driver_data;
+>   };
+> @@ -235,10 +237,103 @@ static DBusMessage *card_get_properties(DBusConnec=
+tion *conn,
+>   	return reply;
+>   }
+>
+> +static int card_connect_sco(struct ofono_handsfree_card *card)
+> +{
+> +	struct sockaddr_sco addr;
+> +	int sk, ret;
+> +
+> +	sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET | O_NONBLOCK | SOCK_CLOEXEC,
+> +								BTPROTO_SCO);
+> +	if (sk<  0)
+> +		return -1;
+> +
+> +	/* Bind to local address */
+> +	memset(&addr, 0, sizeof(addr));
+> +	addr.sco_family =3D AF_BLUETOOTH;
+> +	bt_str2ba(card->local,&addr.sco_bdaddr);
+> +
+> +	if (bind(sk, (struct sockaddr *)&addr, sizeof(addr))<  0) {
+> +		close(sk);
+> +		return -1;
+> +	}
+> +
+> +	/* Connect to remote device */
+> +	memset(&addr, 0, sizeof(addr));
+> +	addr.sco_family =3D AF_BLUETOOTH;
+> +	bt_str2ba(card->remote,&addr.sco_bdaddr);
+> +
+> +	ret =3D connect(sk, (struct sockaddr *)&addr, sizeof(addr));
+> +	if (ret<  0&&  errno !=3D EINPROGRESS) {
+> +		close(sk);
+> +		return -1;
+> +	}
+> +
+> +	return sk;
+> +}
+> +
+> +static gboolean sco_connect_cb(GIOChannel *io, GIOCondition cond,
+> +							gpointer user_data)
+> +
+> +{
+> +	struct ofono_handsfree_card *card =3D user_data;
+> +	DBusMessage *reply;
+> +	int sk;
+> +
+> +	if (agent =3D=3D NULL)
+> +		return FALSE;
+> +
 
-diff --git a/doc/handsfree-audio-api.txt b/doc/handsfree-audio-api.txt
-index 6c3c8b5..89b5aab 100644
---- a/doc/handsfree-audio-api.txt
-+++ b/doc/handsfree-audio-api.txt
-@@ -70,6 +70,12 @@ Methods		dict GetProperties()
- 			the audio connection could not be established, this
- 			method will return an error.
- =
+This seems wrong.  We can't just return here.
 
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.Failed
-+					 [service].Error.NotAvailable
-+					 [service].Error.NotImplemented
-+					 [service].Error.NotAllowed
-+
- Signals		PropertyChanged(string name, variant value)
- =
+> +	if (cond&  (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
+> +		reply =3D __ofono_error_failed(card->msg);
+> +		goto done;
+> +	}
+> +
+> +	sk =3D g_io_channel_unix_get_fd(io);
+> +
+> +	close(sk);
+> +
+> +	reply =3D dbus_message_new_method_return(card->msg);
+> +
+> +done:
+> +	g_dbus_send_message(ofono_dbus_get_connection(), reply);
+> +
+> +	return FALSE;
+> +}
+> +
+> +static void sco_watch_destroy(gpointer user_data)
+> +{
+> +	struct ofono_handsfree_card *card =3D user_data;
+> +
+> +	card->sco_watch =3D 0;
+> +	dbus_message_unref(card->msg);
+> +}
+> +
 
- 			This signal indicates a changed value of the given
--- =
+I would get rid of sco_watch_destroy.  Once we go to AT+BCC, the =
 
-1.8.1.5
+sco_watch and card->msg will be unrelated.
 
+>   static DBusMessage *card_connect(DBusConnection *conn,
+>   						DBusMessage *msg, void *data)
+>   {
+> -	return __ofono_error_not_implemented(msg);
+> +	struct ofono_handsfree_card *card =3D data;
+> +	GIOChannel *io;
+> +	int sk;
+> +
+> +	if (agent =3D=3D NULL)
+> +		return __ofono_error_not_available(msg);
+> +
+> +	if (card->sco_watch)
+> +		return __ofono_error_busy(msg);
+> +
+> +	sk =3D card_connect_sco(card);
+> +	if (sk<  0)
+> +		return __ofono_error_failed(msg);
+> +
+> +	io =3D g_io_channel_unix_new(sk);
+> +	card->sco_watch =3D g_io_add_watch_full(io, G_PRIORITY_DEFAULT,
+> +				G_IO_OUT | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
+> +				sco_connect_cb, card, sco_watch_destroy);
+> +
+> +	g_io_channel_unref(io);
+> +
+> +	card->msg =3D dbus_message_ref(msg);
+> +
+> +	return NULL;
+>   }
+>
+>   static const GDBusMethodTable card_methods[] =3D {
 
---===============3329964611821112177==--
+Regards,
+-Denis
+
+--===============3906774262000272979==--
 
