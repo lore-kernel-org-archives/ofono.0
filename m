@@ -1,102 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============6742980727957077807=="
+Content-Type: multipart/mixed; boundary="===============4910242245085149696=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 4/5] hfp_hf_bluez5: Add a card driver for HFP 1.6
-Date: Mon, 25 Mar 2013 19:05:21 -0300
-Message-ID: <1364249122-18332-4-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH 5/5] handsfree-audio: Add .Connect using the card driver
+Date: Mon, 25 Mar 2013 19:05:22 -0300
+Message-ID: <1364249122-18332-5-git-send-email-vinicius.gomes@openbossa.org>
 In-Reply-To: <1364249122-18332-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6742980727957077807==
+--===============4910242245085149696==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This is just the skeleton of a Handsfree Audio Card for the HF side of
-HFP 1.6.
 ---
- plugins/hfp_hf_bluez5.c | 37 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 37 insertions(+)
+ src/handsfree-audio.c | 38 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index ff8afba..89b60c8 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -60,6 +60,8 @@
+diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+index f8df6d6..9d3d64e 100644
+--- a/src/handsfree-audio.c
++++ b/src/handsfree-audio.c
+@@ -307,6 +307,40 @@ done:
+ 	return FALSE;
+ }
  =
 
- #define HFP_EXT_PROFILE_PATH   "/bluetooth/profile/hfp_hf"
- =
-
-+#define HFP16_HF_DRIVER		"hfp16-hf-driver"
-+
- struct hfp {
- 	struct hfp_slc_info info;
- 	DBusMessage *msg;
-@@ -310,6 +312,31 @@ static struct ofono_modem_driver hfp_driver =3D {
- 	.post_sim	=3D hfp_post_sim,
- };
- =
-
-+static int hfp16_card_probe(struct ofono_handsfree_card *card,
-+					unsigned int vendor, void *data)
++static void card_connect_reply_cb(const struct ofono_error *error, void *d=
+ata)
 +{
-+	return 0;
++	struct ofono_handsfree_card *card =3D data;
++	DBusMessage *reply;
++
++	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
++		reply =3D dbus_message_new_method_return(card->msg);
++	else
++		reply =3D __ofono_error_failed(card->msg);
++
++	g_dbus_send_message(ofono_dbus_get_connection(), reply);
++
++	dbus_message_unref(card->msg);
++	card->msg =3D NULL;
 +}
 +
-+static void hfp16_card_remove(struct ofono_handsfree_card *card)
++static DBusMessage *card_connect_driver(struct ofono_handsfree_card *card,
++							DBusMessage *msg)
 +{
++	const struct ofono_handsfree_card_driver *driver =3D card->driver;
++	int err;
 +
-+}
-+
-+static int hfp16_card_connect(struct ofono_handsfree_card *card,
-+					ofono_handsfree_card_connect_cb_t cb,
-+					void *data)
-+{
-+	return -ENOSYS;
-+}
-+
-+static struct ofono_handsfree_card_driver hfp16_hf_driver =3D {
-+	.name		=3D HFP16_HF_DRIVER,
-+	.probe		=3D hfp16_card_probe,
-+	.remove		=3D hfp16_card_remove,
-+	.connect	=3D hfp16_card_connect,
-+};
-+
- static ofono_bool_t device_path_compare(struct ofono_modem *modem,
- 					void *userdata)
- {
-@@ -616,6 +643,13 @@ static int hfp_init(void)
- 		return -EIO;
- 	}
- =
-
-+	err =3D ofono_handsfree_card_driver_register(&hfp16_hf_driver);
-+	if (err < 0) {
-+		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
-+						BLUEZ_PROFILE_INTERFACE);
-+		return err;
++	err =3D driver->connect(card, card_connect_reply_cb, card);
++	if (err =3D=3D -EINPROGRESS) {
++		card->msg =3D dbus_message_ref(msg);
++		return NULL;
 +	}
 +
- 	err =3D ofono_modem_driver_register(&hfp_driver);
- 	if (err < 0) {
- 		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
-@@ -647,6 +681,9 @@ static void hfp_exit(void)
- 	bt_unregister_profile(conn, HFP_EXT_PROFILE_PATH);
- 	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
- 						BLUEZ_PROFILE_INTERFACE);
++	if (err < 0)
++		return __ofono_error_failed(msg);
 +
-+	ofono_handsfree_card_driver_unregister(&hfp16_hf_driver);
++	return dbus_message_new_method_return(msg);
++}
 +
- 	ofono_modem_driver_unregister(&hfp_driver);
- 	g_dbus_client_unref(bluez);
+ static DBusMessage *card_connect(DBusConnection *conn,
+ 						DBusMessage *msg, void *data)
+ {
+@@ -326,6 +360,10 @@ static DBusMessage *card_connect(DBusConnection *conn,
+ 	if (card->msg)
+ 		return __ofono_error_busy(msg);
  =
 
++	if (card->driver && card->driver->connect)
++		return card_connect_driver(card, msg);
++
++	/* There's no driver, fallback to direct SCO connection */
+ 	sk =3D card_connect_sco(card);
+ 	if (sk < 0)
+ 		return __ofono_error_failed(msg);
 -- =
 
 1.8.2
 
 
---===============6742980727957077807==--
+--===============4910242245085149696==--
 
