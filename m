@@ -1,45 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============5979459094665341370=="
+Content-Type: multipart/mixed; boundary="===============0937830527169984135=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 2/5] handsfree-audio: Add support for sending the SCO socket
-Date: Mon, 25 Mar 2013 19:05:19 -0300
-Message-ID: <1364249122-18332-2-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH 3/5] handsfree-audio: Reject .Connect() from other senders
+Date: Mon, 25 Mar 2013 19:05:20 -0300
+Message-ID: <1364249122-18332-3-git-send-email-vinicius.gomes@openbossa.org>
 In-Reply-To: <1364249122-18332-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5979459094665341370==
+--===============0937830527169984135==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Send the SCO socket to the agent associated with the card that
-just got connected.
+Only the agent should be able to call .Connect() on the card.
 ---
- src/handsfree-audio.c | 2 ++
- 1 file changed, 2 insertions(+)
+ src/handsfree-audio.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
 diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 795a68b..4232074 100644
+index 4232074..f8df6d6 100644
 --- a/src/handsfree-audio.c
 +++ b/src/handsfree-audio.c
-@@ -291,6 +291,8 @@ static gboolean sco_connect_cb(GIOChannel *io, GIOCondi=
-tion cond,
+@@ -312,11 +312,17 @@ static DBusMessage *card_connect(DBusConnection *conn,
+ {
+ 	struct ofono_handsfree_card *card =3D data;
+ 	GIOChannel *io;
++	const char *sender;
+ 	int sk;
  =
 
- 	sk =3D g_io_channel_unix_get_fd(io);
+ 	if (agent =3D=3D NULL)
+ 		return __ofono_error_not_available(msg);
  =
 
-+	send_new_connection(card->path, sk);
++	sender =3D dbus_message_get_sender(msg);
 +
- 	close(sk);
++	if (!g_str_equal(sender, agent->owner))
++		return __ofono_error_not_allowed(msg);
++
+ 	if (card->msg)
+ 		return __ofono_error_busy(msg);
  =
 
- 	reply =3D dbus_message_new_method_return(card->msg);
 -- =
 
 1.8.2
 
 
---===============5979459094665341370==--
+--===============0937830527169984135==--
 
