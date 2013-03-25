@@ -1,46 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============0937830527169984135=="
+Content-Type: multipart/mixed; boundary="===============6742980727957077807=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 3/5] handsfree-audio: Reject .Connect() from other senders
-Date: Mon, 25 Mar 2013 19:05:20 -0300
-Message-ID: <1364249122-18332-3-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH 4/5] hfp_hf_bluez5: Add a card driver for HFP 1.6
+Date: Mon, 25 Mar 2013 19:05:21 -0300
+Message-ID: <1364249122-18332-4-git-send-email-vinicius.gomes@openbossa.org>
 In-Reply-To: <1364249122-18332-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0937830527169984135==
+--===============6742980727957077807==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Only the agent should be able to call .Connect() on the card.
+This is just the skeleton of a Handsfree Audio Card for the HF side of
+HFP 1.6.
 ---
- src/handsfree-audio.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ plugins/hfp_hf_bluez5.c | 37 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
 
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 4232074..f8df6d6 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -312,11 +312,17 @@ static DBusMessage *card_connect(DBusConnection *conn,
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index ff8afba..89b60c8 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -60,6 +60,8 @@
+ =
+
+ #define HFP_EXT_PROFILE_PATH   "/bluetooth/profile/hfp_hf"
+ =
+
++#define HFP16_HF_DRIVER		"hfp16-hf-driver"
++
+ struct hfp {
+ 	struct hfp_slc_info info;
+ 	DBusMessage *msg;
+@@ -310,6 +312,31 @@ static struct ofono_modem_driver hfp_driver =3D {
+ 	.post_sim	=3D hfp_post_sim,
+ };
+ =
+
++static int hfp16_card_probe(struct ofono_handsfree_card *card,
++					unsigned int vendor, void *data)
++{
++	return 0;
++}
++
++static void hfp16_card_remove(struct ofono_handsfree_card *card)
++{
++
++}
++
++static int hfp16_card_connect(struct ofono_handsfree_card *card,
++					ofono_handsfree_card_connect_cb_t cb,
++					void *data)
++{
++	return -ENOSYS;
++}
++
++static struct ofono_handsfree_card_driver hfp16_hf_driver =3D {
++	.name		=3D HFP16_HF_DRIVER,
++	.probe		=3D hfp16_card_probe,
++	.remove		=3D hfp16_card_remove,
++	.connect	=3D hfp16_card_connect,
++};
++
+ static ofono_bool_t device_path_compare(struct ofono_modem *modem,
+ 					void *userdata)
  {
- 	struct ofono_handsfree_card *card =3D data;
- 	GIOChannel *io;
-+	const char *sender;
- 	int sk;
+@@ -616,6 +643,13 @@ static int hfp_init(void)
+ 		return -EIO;
+ 	}
  =
 
- 	if (agent =3D=3D NULL)
- 		return __ofono_error_not_available(msg);
- =
-
-+	sender =3D dbus_message_get_sender(msg);
++	err =3D ofono_handsfree_card_driver_register(&hfp16_hf_driver);
++	if (err < 0) {
++		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
++						BLUEZ_PROFILE_INTERFACE);
++		return err;
++	}
 +
-+	if (!g_str_equal(sender, agent->owner))
-+		return __ofono_error_not_allowed(msg);
+ 	err =3D ofono_modem_driver_register(&hfp_driver);
+ 	if (err < 0) {
+ 		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+@@ -647,6 +681,9 @@ static void hfp_exit(void)
+ 	bt_unregister_profile(conn, HFP_EXT_PROFILE_PATH);
+ 	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+ 						BLUEZ_PROFILE_INTERFACE);
 +
- 	if (card->msg)
- 		return __ofono_error_busy(msg);
++	ofono_handsfree_card_driver_unregister(&hfp16_hf_driver);
++
+ 	ofono_modem_driver_unregister(&hfp_driver);
+ 	g_dbus_client_unref(bluez);
  =
 
 -- =
@@ -48,5 +98,5 @@ index 4232074..f8df6d6 100644
 1.8.2
 
 
---===============0937830527169984135==--
+--===============6742980727957077807==--
 
