@@ -1,108 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============6475083077712196865=="
+Content-Type: multipart/mixed; boundary="===============7020791042344188341=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: Re: [PATCH 5/5] handsfree-audio: Add .Connect using the card driver
-Date: Tue, 26 Mar 2013 18:21:32 -0300
-Message-ID: <20130326212132.GA2715@samus>
-In-Reply-To: <1364249122-18332-5-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH] handsfree-audio: Add .Connect using the card driver
+Date: Tue, 26 Mar 2013 18:28:00 -0300
+Message-ID: <1364333280-21963-1-git-send-email-vinicius.gomes@openbossa.org>
+In-Reply-To: <20130326212132.GA2715@samus>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6475083077712196865==
+--===============7020791042344188341==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Now each handsfree implementation may be notified that a card wants
+its audio to be connected.
 
-On 19:05 Mon 25 Mar, Vinicius Costa Gomes wrote:
-> ---
->  src/handsfree-audio.c | 38 ++++++++++++++++++++++++++++++++++++++
->  1 file changed, 38 insertions(+)
-> =
+In case, that the cards wishes to fallback to the default SCO connection
+procedure, it just needs to return -ENOSYS.
+---
+ src/handsfree-audio.c | 34 +++++++++++++++++++++++++++++++++-
+ 1 file changed, 33 insertions(+), 1 deletion(-)
 
-> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-> index f8df6d6..9d3d64e 100644
-> --- a/src/handsfree-audio.c
-> +++ b/src/handsfree-audio.c
-> @@ -307,6 +307,40 @@ done:
->  	return FALSE;
->  }
->  =
+diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+index f8df6d6..ace3a4f 100644
+--- a/src/handsfree-audio.c
++++ b/src/handsfree-audio.c
+@@ -307,13 +307,30 @@ done:
+ 	return FALSE;
+ }
+ =
 
-> +static void card_connect_reply_cb(const struct ofono_error *error, void =
-*data)
-> +{
-> +	struct ofono_handsfree_card *card =3D data;
-> +	DBusMessage *reply;
-> +
-> +	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
-> +		reply =3D dbus_message_new_method_return(card->msg);
-> +	else
-> +		reply =3D __ofono_error_failed(card->msg);
-> +
-> +	g_dbus_send_message(ofono_dbus_get_connection(), reply);
-> +
-> +	dbus_message_unref(card->msg);
-> +	card->msg =3D NULL;
-> +}
-> +
-> +static DBusMessage *card_connect_driver(struct ofono_handsfree_card *car=
-d,
-> +							DBusMessage *msg)
-> +{
-> +	const struct ofono_handsfree_card_driver *driver =3D card->driver;
-> +	int err;
-> +
-> +	err =3D driver->connect(card, card_connect_reply_cb, card);
-> +	if (err =3D=3D -EINPROGRESS) {
-> +		card->msg =3D dbus_message_ref(msg);
-> +		return NULL;
-> +	}
-> +
-> +	if (err < 0)
-> +		return __ofono_error_failed(msg);
-> +
-> +	return dbus_message_new_method_return(msg);
-> +}
-> +
->  static DBusMessage *card_connect(DBusConnection *conn,
->  						DBusMessage *msg, void *data)
->  {
-> @@ -326,6 +360,10 @@ static DBusMessage *card_connect(DBusConnection *con=
-n,
->  	if (card->msg)
->  		return __ofono_error_busy(msg);
->  =
++static void card_connect_reply_cb(const struct ofono_error *error, void *d=
+ata)
++{
++	struct ofono_handsfree_card *card =3D data;
++	DBusMessage *reply;
++
++	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
++		reply =3D dbus_message_new_method_return(card->msg);
++	else
++		reply =3D __ofono_error_failed(card->msg);
++
++	g_dbus_send_message(ofono_dbus_get_connection(), reply);
++
++	dbus_message_unref(card->msg);
++	card->msg =3D NULL;
++}
++
+ static DBusMessage *card_connect(DBusConnection *conn,
+ 						DBusMessage *msg, void *data)
+ {
+ 	struct ofono_handsfree_card *card =3D data;
++	const struct ofono_handsfree_card_driver *driver =3D card->driver;
+ 	GIOChannel *io;
+ 	const char *sender;
+-	int sk;
++	int sk, err;
+ =
 
-> +	if (card->driver && card->driver->connect)
-> +		return card_connect_driver(card, msg);
+ 	if (agent =3D=3D NULL)
+ 		return __ofono_error_not_available(msg);
+@@ -326,6 +343,21 @@ static DBusMessage *card_connect(DBusConnection *conn,
+ 	if (card->msg)
+ 		return __ofono_error_busy(msg);
+ =
 
-In the case that both sides are HFP 1.6, but the Codec Negotiation feature =
-is not
-available on one of them, we should fallback to the direct codec connection
-procedure.
-
-I will send a version of this patch that makes it easier to handle this cas=
-e,
-without much repeated code.
-
-> +
-> +	/* There's no driver, fallback to direct SCO connection */
->  	sk =3D card_connect_sco(card);
->  	if (sk < 0)
->  		return __ofono_error_failed(msg);
-> -- =
-
-> 1.8.2
-> =
-
-
-
-Cheers,
++	if (!driver || !driver->connect)
++		goto fallback;
++
++	err =3D driver->connect(card, card_connect_reply_cb, card);
++	if (err =3D=3D -EINPROGRESS) {
++		card->msg =3D dbus_message_ref(msg);
++		return NULL;
++	}
++
++	/* ENOSYS means the driver doesn't want to connect itself */
++	if (err < 0 && err !=3D -ENOSYS)
++		return __ofono_error_failed(msg);
++
++fallback:
++	/* There's no driver, fallback to direct SCO connection */
+ 	sk =3D card_connect_sco(card);
+ 	if (sk < 0)
+ 		return __ofono_error_failed(msg);
 -- =
 
-Vinicius
+1.8.2
 
---===============6475083077712196865==--
+
+--===============7020791042344188341==--
 
