@@ -1,85 +1,95 @@
-Content-Type: multipart/mixed; boundary="===============4910242245085149696=="
+Content-Type: multipart/mixed; boundary="===============3310380915319162762=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 5/5] handsfree-audio: Add .Connect using the card driver
-Date: Mon, 25 Mar 2013 19:05:22 -0300
-Message-ID: <1364249122-18332-5-git-send-email-vinicius.gomes@openbossa.org>
-In-Reply-To: <1364249122-18332-1-git-send-email-vinicius.gomes@openbossa.org>
+From: Freedreamer <freedreamer@email.it>
+Subject: SAGEM HiloNC v2 Driver
+Date: Tue, 26 Mar 2013 10:07:16 +0100
+Message-ID: <CAAs3wMghwuHCe3WFDGUV4HnE6PjStC2a_EzU1L91TWzN41epvA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4910242245085149696==
+--===============3310380915319162762==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/handsfree-audio.c | 38 ++++++++++++++++++++++++++++++++++++++
- 1 file changed, 38 insertions(+)
+Hi Everybody,
 
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index f8df6d6..9d3d64e 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -307,6 +307,40 @@ done:
- 	return FALSE;
- }
- =
+I'm developing a driver for an embedded system which uses a sagem HiloNC v2
+and I really should need your help. It's my will to commit everything when
+shall be ready and working.
+First of all I will tell you what i did..I created a plugin sagem.c ,added
+a new Vendor ,  modified makefile & other stuff and seems to work properly.
+I started from calypso driver 'cause the modem is based on a Uart and I
+needed the MUX over that.
+With a very raw/dirty code I was able to use PPP/SMS/net service over
+virtual com.. Very good work dude! :)
 
-+static void card_connect_reply_cb(const struct ofono_error *error, void *d=
-ata)
-+{
-+	struct ofono_handsfree_card *card =3D data;
-+	DBusMessage *reply;
-+
-+	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
-+		reply =3D dbus_message_new_method_return(card->msg);
-+	else
-+		reply =3D __ofono_error_failed(card->msg);
-+
-+	g_dbus_send_message(ofono_dbus_get_connection(), reply);
-+
-+	dbus_message_unref(card->msg);
-+	card->msg =3D NULL;
-+}
-+
-+static DBusMessage *card_connect_driver(struct ofono_handsfree_card *card,
-+							DBusMessage *msg)
-+{
-+	const struct ofono_handsfree_card_driver *driver =3D card->driver;
-+	int err;
-+
-+	err =3D driver->connect(card, card_connect_reply_cb, card);
-+	if (err =3D=3D -EINPROGRESS) {
-+		card->msg =3D dbus_message_ref(msg);
-+		return NULL;
-+	}
-+
-+	if (err < 0)
-+		return __ofono_error_failed(msg);
-+
-+	return dbus_message_new_method_return(msg);
-+}
-+
- static DBusMessage *card_connect(DBusConnection *conn,
- 						DBusMessage *msg, void *data)
- {
-@@ -326,6 +360,10 @@ static DBusMessage *card_connect(DBusConnection *conn,
- 	if (card->msg)
- 		return __ofono_error_busy(msg);
- =
+Now I would like to clean up my code and get a better understanding of the
+stack. Unfortunately I saw that functions/modules are not always commented
+so I have to ask u a lot of questions (maybe also trivial):
 
-+	if (card->driver && card->driver->connect)
-+		return card_connect_driver(card, msg);
-+
-+	/* There's no driver, fallback to direct SCO connection */
- 	sk =3D card_connect_sco(card);
- 	if (sk < 0)
- 		return __ofono_error_failed(msg);
--- =
+1) AT cmds sent with "g_at_chat_send" are always async , is that right ? Is
+there any chance to get them sync ?
+2) in enable fnc the modem is powered but The sim is not ready so sometimes
+It hangs up...Do I have to to poll the sim status until is ready  , or the
+driver will do  that by itself ?
+3) could u explain me what should I really do in virtual fnc  set_online /
+post_online ? i tried to stub them but they have not never been called...
+4) unfortunately this modem has a SIM detection URC but it reset itself
+every time the status changes... so i should call the disable function and
+the enable again in order to have the MUX working... how can i do that?
+5) I created and started the MUX as the first thing in enable fnc but is
+that right ? sometimes seems that the modem hangs up if just powered up.
+Put a delay but don't like it very much as a solution...moreover when I
+power up the modem all the URC have been lost 'cause the MUX has not been
+created yet..
 
-1.8.2
+Any help will be appreciated :)
 
+thanks in advance
 
---===============4910242245085149696==--
+Marco
+
+--===============3310380915319162762==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+SGkgRXZlcnlib2R5LDxicj48YnI+SSYjMzk7bSBkZXZlbG9waW5nIGEgZHJpdmVyIGZvciBhbiBl
+bWJlZGRlZCBzeXN0ZW0gd2hpY2ggdXNlcyBhIHNhZ2VtIEhpbG9OQyB2MiBhbmQgSSByZWFsbHkg
+c2hvdWxkIG5lZWQgeW91ciBoZWxwLiBJdCYjMzk7cyBteSB3aWxsIHRvIGNvbW1pdCBldmVyeXRo
+aW5nIHdoZW4gc2hhbGwgYmUgcmVhZHkgYW5kIHdvcmtpbmcuPGJyPkZpcnN0IG9mIGFsbCBJIHdp
+bGwgdGVsbCB5b3Ugd2hhdCBpIGRpZC4uSSBjcmVhdGVkIGEgcGx1Z2luIHNhZ2VtLmMgLGFkZGVk
+IGEgbmV3IFZlbmRvciAsoCBtb2RpZmllZCBtYWtlZmlsZSAmYW1wOyBvdGhlciBzdHVmZiBhbmQg
+c2VlbXMgdG8gd29yayBwcm9wZXJseS4gSSBzdGFydGVkIGZyb20gY2FseXBzbyBkcml2ZXIgJiMz
+OTtjYXVzZSB0aGUgbW9kZW0gaXMgYmFzZWQgb24gYSBVYXJ0IGFuZCBJIG5lZWRlZCB0aGUgTVVY
+IG92ZXIgdGhhdC4gPGJyPgpXaXRoIGEgdmVyeSByYXcvZGlydHkgY29kZSBJIHdhcyBhYmxlIHRv
+IHVzZSBQUFAvU01TL25ldCBzZXJ2aWNlIG92ZXIgdmlydHVhbCBjb20uLiBWZXJ5IGdvb2Qgd29y
+ayBkdWRlISA6KTxicj48YnI+Tm93IEkgd291bGQgbGlrZSB0byBjbGVhbiB1cCBteSBjb2RlIGFu
+ZCBnZXQgYSBiZXR0ZXIgdW5kZXJzdGFuZGluZyBvZiB0aGUgc3RhY2suIFVuZm9ydHVuYXRlbHkg
+IEkgc2F3IHRoYXQgZnVuY3Rpb25zL21vZHVsZXMgYXJlIG5vdCBhbHdheXMgY29tbWVudGVkIHNv
+IEkgaGF2ZSB0byBhc2sgdSBhIGxvdCBvZiBxdWVzdGlvbnMgKG1heWJlIGFsc28gdHJpdmlhbCk6
+PGJyPgo8YnI+MSkgQVQgY21kcyBzZW50IHdpdGggJnF1b3Q7Z19hdF9jaGF0X3NlbmQmcXVvdDsg
+YXJlIGFsd2F5cyBhc3luYyAsIGlzIHRoYXQgcmlnaHQgPyBJcyB0aGVyZSBhbnkgY2hhbmNlIHRv
+IGdldCB0aGVtIHN5bmMgPzxicj4yKSAgaW4gZW5hYmxlIGZuYyB0aGUgbW9kZW0gaXMgcG93ZXJl
+ZCBidXQgVGhlIHNpbSBpcyBub3QgcmVhZHkgc28gc29tZXRpbWVzIEl0IGhhbmdzIHVwLi4uRG8g
+SSBoYXZlIHRvIHRvIHBvbGwgdGhlIHNpbSBzdGF0dXMgdW50aWwgaXMgcmVhZHmgICwgb3IgdGhl
+IGRyaXZlciB3aWxsIGRvoCB0aGF0IGJ5IGl0c2VsZiA/PGJyPgozKSBjb3VsZCB1IGV4cGxhaW4g
+bWUgd2hhdCBzaG91bGQgSSByZWFsbHkgZG8gaW4gdmlydHVhbCBmbmOgIHNldF9vbmxpbmUgLyBw
+b3N0X29ubGluZSA/IGkgdHJpZWQgdG8gc3R1YiB0aGVtIGJ1dCB0aGV5IGhhdmUgbm90IG5ldmVy
+IGJlZW4gY2FsbGVkLi4uPGJyPjQpIHVuZm9ydHVuYXRlbHkgdGhpcyBtb2RlbSBoYXMgYSBTSU0g
+ZGV0ZWN0aW9uIFVSQyBidXQgaXQgcmVzZXQgaXRzZWxmIGV2ZXJ5IHRpbWUgdGhlIHN0YXR1cyBj
+aGFuZ2VzLi4uIHNvIGkgc2hvdWxkIGNhbGwgdGhlIGRpc2FibGUgZnVuY3Rpb24gYW5kIHRoZSBl
+bmFibGUgYWdhaW4gaW4gb3JkZXIgdG8gaGF2ZSB0aGUgTVVYIHdvcmtpbmcuLi4gaG93IGNhbiBp
+IGRvIHRoYXQ/PGJyPgo1KSBJIGNyZWF0ZWQgYW5kIHN0YXJ0ZWQgdGhlIE1VWCBhcyB0aGUgZmly
+c3QgdGhpbmcgaW4gZW5hYmxlIGZuYyBidXQgaXMgdGhhdCByaWdodCA/IHNvbWV0aW1lcyBzZWVt
+cyB0aGF0IHRoZSBtb2RlbSBoYW5ncyB1cCBpZiBqdXN0IHBvd2VyZWQgdXAuIFB1dCBhIGRlbGF5
+IGJ1dCBkb24mIzM5O3QgbGlrZSBpdCB2ZXJ5IG11Y2ggYXMgYSBzb2x1dGlvbi4uLm1vcmVvdmVy
+IHdoZW4gSSBwb3dlciB1cCB0aGUgbW9kZW0gYWxsIHRoZSBVUkMgaGF2ZSBiZWVuIGxvc3QgJiMz
+OTtjYXVzZSB0aGUgTVVYIGhhcyBub3QgYmVlbiBjcmVhdGVkIHlldC4uIDxicj4KPGJyPkFueSBo
+ZWxwIHdpbGwgYmUgYXBwcmVjaWF0ZWQgOikgPGJyPjxicj50aGFua3MgaW4gYWR2YW5jZTxicj48
+YnI+TWFyY28gPGJyPjxicj4K
+
+--===============3310380915319162762==--
 
