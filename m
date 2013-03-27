@@ -1,120 +1,336 @@
-Content-Type: multipart/mixed; boundary="===============7511595345030949580=="
+Content-Type: multipart/mixed; boundary="===============8297595239149704960=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv3 3/3] hfpmodem: Add N9 quirk to run CLCC after
- callheld=<2 or 3>
-Date: Wed, 27 Mar 2013 00:13:22 -0500
-Message-ID: <51527FF2.8020804@gmail.com>
-In-Reply-To: <2ec1b7ac69aac4f0edbc6cef843c63684ee16995.1360663430.git.timo.mueller@bmw-carit.de>
+From: Freedreamer <freedreamer@email.it>
+Subject: Re: SAGEM HiloNC v2 Driver
+Date: Wed, 27 Mar 2013 07:29:18 +0100
+Message-ID: <CAAs3wMg0g-tjeO-3fohQFmvuvN4r=qnk78bGni1QeOEx8B3h5Q@mail.gmail.com>
+In-Reply-To: <CAAs3wMjcs_Y6-zFVUX2k8uO6_3tV0CLga2Pty0Cb2M9YOf7_xQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7511595345030949580==
+--===============8297595239149704960==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Timo,
+ Hi Denis,
+ first of all thanks 4 your reply.
 
-On 02/13/2013 02:36 AM, Timo Mueller wrote:
-> From: Timo Mueller<timo.mueller@bmw-carit.de>
 >
-> On the Nokia N9 with a call being active, placing a second call on the
-> AG device will lead to the active call being put on hold. During the
-> transition the phone does not update the list of current calls. This
-> leads to an +CLCC response that does not contain the new outgoing
-> call, even though an outgoing callsetup was reported.
+> 2013/3/26 Denis Kenzior <denkenz@gmail.com>
 >
-> The list will be updated once the active call was put on hold and
-> callheld=3D2 is reported. In this case the list has to be requested
-> again (AT+CLCC).
+>> Hi Marco,
+>>
+>>
+>> On 03/26/2013 04:07 AM, Freedreamer wrote:
+>>
+>>> Hi Everybody,
+>>>
+>>> I'm developing a driver for an embedded system which uses a sagem HiloNC
+>>> v2 and I really should need your help. It's my will to commit everything
+>>> when shall be ready and working.
+>>> First of all I will tell you what i did..I created a plugin sagem.c
+>>> ,added a new Vendor ,  modified makefile & other stuff and seems to work
+>>> properly. I started from calypso driver 'cause the modem is based on a
+>>> Uart and I needed the MUX over that.
+>>> With a very raw/dirty code I was able to use PPP/SMS/net service over
+>>> virtual com.. Very good work dude! :)
+>>>
+>>> Now I would like to clean up my code and get a better understanding of
+>>> the stack. Unfortunately I saw that functions/modules are not always
+>>> commented so I have to ask u a lot of questions (maybe also trivial):
+>>>
+>>> 1) AT cmds sent with "g_at_chat_send" are always async , is that right ?
+>>> Is there any chance to get them sync ?
+>>>
+>>
+>> There is not, we do not want to encourage any sort of blocking behavior
+>> in the daemon.  Remember there are potentially multiple modems being
+>> operated on and we do not use threads.
+>>
 >
-> AT sequence that exhibited the failure (AG device was a Nokia N9
-> having an active outgoing call and placing a second outgoing call)
->
-> <  \r\n+CIEV: 5,2\r\n
->> AT+CLCC\r
-> <  \r\n+CLCC: 1,0,0,0,0,"+49xxx1",145\r\n
-> <  \r\nOK\r\n
-> <  \r\n+CIEV: 6,2\r\n
-> <  \r\n+CIEV: 5,3\r\n
-> <  \r\n+CIEV: 6,1\r\n
->> AT+CLCC\r
-> <  \r\n+CIEV: 5,0\r\n
-> <  \r\n+CLCC: 1,0,1,0,0,"+49xxx1",145\r\n
-> <  \r\n+CLCC: 2,0,0,0,0,"+49xxx2",145\r\n
-> <  \r\nOK\r\n
-> ---
->   drivers/hfpmodem/vendor.h    |  3 ++-
->   drivers/hfpmodem/voicecall.c | 17 +++++++++++++++++
->   2 files changed, 19 insertions(+), 1 deletion(-)
->
-> diff --git a/drivers/hfpmodem/vendor.h b/drivers/hfpmodem/vendor.h
-> index fca847a..597ddee 100644
-> --- a/drivers/hfpmodem/vendor.h
-> +++ b/drivers/hfpmodem/vendor.h
-> @@ -21,5 +21,6 @@
->    */
->
->   enum ofono_vendor {
-> -	OFONO_VENDOR_GENERIC =3D 0
-> +	OFONO_VENDOR_GENERIC =3D 0,
-> +	OFONO_VENDOR_NOKIA_N9
->   };
-> diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-> index 7d2988e..af2aa75 100644
-> --- a/drivers/hfpmodem/voicecall.c
-> +++ b/drivers/hfpmodem/voicecall.c
-> @@ -1041,13 +1041,20 @@ out:
->   	vd->cind_val[HFP_INDICATOR_CALLSETUP] =3D value;
->   }
->
-> +static int needs_callheld_clcc_quirk(int vendor)
-> +{
-> +		return vendor =3D=3D OFONO_VENDOR_NOKIA_N9;
-> +}
-> +
+Ok get it, i thought there were pthreads somewhere.
 
-Please don't do this, a switch/case statement is just as effective and =
 
-easier to read.
-
->   static void ciev_callheld_notify(struct ofono_voicecall *vc,
->   					unsigned int value)
->   {
->   	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
->   	GSList *l;
-> +	GSList *dialing;
->   	struct ofono_call *call;
->   	unsigned int callheld =3D vd->cind_val[HFP_INDICATOR_CALLHELD];
-> +	unsigned int callsetup =3D vd->cind_val[HFP_INDICATOR_CALLSETUP];
+>> 2) in enable fnc the modem is powered but The sim is not ready so
+>>> sometimes It hangs up...Do I have to to poll the sim status until is
+>>> ready  , or the driver will do  that by itself ?
+>>>
+>>
+>> oFono never polls for anything.  It is the driver's responsibility to do
+>> that in the best possible way for the hardware.  Also, powering on the
+>> modem is separate from the sim being ready.  The general flow is this:
+>>
+>> -Enable modem
+>> -Wait for the modem to power on and use ofono_modem_set_powered when that
+>> happens successfully / fails.
+>> - Figure out if the SIM is inserted and signal using
+>> ofono_sim_inserted_notify.  Do this step only once the SIM is ready to be
+>> queried for its PIN status and perform any I/O on SIM files that are alw=
+ays
+>> accessible (e.g. ICCID)
+>>
 >
->   	switch (value) {
->   	case 0:
-> @@ -1083,6 +1090,16 @@ static void ciev_callheld_notify(struct ofono_voic=
-ecall *vc,
->   				call->status =3D CALL_STATUS_HELD;
->   				ofono_voicecall_notify(vc, call);
->   			}
-> +
-> +			if (needs_callheld_clcc_quirk(vd->vendor)) {
+ Ok. If Sim not "ready" , sending a signal prematurely could stuck anyhow
+the stack ? 'cause it should explain a lot of thing..
 
-Have you thought of a way to set / detect when a device requires this quirk?
 
-> +				if (callsetup =3D=3D 2 || callsetup =3D=3D 3) {
-> +					dialing =3D find_dialing(vd->calls);
-> +
-> +					if (dialing =3D=3D NULL)
-> +						g_at_chat_send(vd->chat, "AT+CLCC", clcc_prefix,
-> +								clcc_poll_cb, vc, NULL);
-> +				}
-> +			}
->   		} else if (callheld =3D=3D 1) {
->   			if (vd->clcc_source)
->   				g_source_remove(vd->clcc_source);
+>
+>>
+>> 3) could u explain me what should I really do in virtual fnc  set_online
+>>> / post_online ? i tried to stub them but they have not never been
+>>> called...
+>>>
+>>
+>> oFono has 3 basic states:
+>> - Off
+>> - Radio Off, Sim On
+>> - Radio On, Sim On
+>>
+>> set_online turns radio on / off
+>> post_online populates the atoms that are available in radio 'On' state.
+>>
+>>
+>>
+ This is what i thought but I do not understand why I don't see the trace
+log I put inside them...usually are called before pre_sim fn? are related
+to any signal i have to manage/post ?
+
+
+>
+>> 4) unfortunately this modem has a SIM detection URC but it reset itself
+>>> every time the status changes... so i should call the disable function
+>>> and the enable again in order to have the MUX working... how can i do
+>>> that?
+>>>
+>>
+>> I'm not following.  Care to elaborate?
+>>
+>>
+>>
+I've managing vendor URC for sim detection right now but i have
+problems.For instance if I remove it when ofonod is ready the Hilonc sends
+an URC to notify sim status changed but after that it reboots itself(2 sec
+later)... what i did is to notify the stack that the SIM has been removed
+and modem is powered off . I thought that after calling set_powered fnc the
+stack should have called my driver virtual disable function in order to
+properly close the MUX .. but it's not..
+
+
+>
+>
+>> 5) I created and started the MUX as the first thing in enable fnc but is
+>>> that right ? sometimes seems that the modem hangs up if just powered up.
+>>> Put a delay but don't like it very much as a solution...moreover when I
+>>> power up the modem all the URC have been lost 'cause the MUX has not
+>>> been created yet..
+>>>
+>>
+>> That is what we do for most devices with a MUX, put it into MUX state
+>> right away after basic initialization.  The devices we have can be queri=
+ed
+>> for their state in addition to URCs, so it works out very well.
+>>
+>>
+right now i've been using custom URC in the first power up phase to
+understand modem status. I manually set them but theoretically I should
+check the values saved on the modem every power cycle. What I was thinking
+was to test every time the values saved and enabling them if they were not
+.After that I should call an AT+cfun=3D1,1 in order to reset the modem and
+force it to send me again the needed URCs . What do u think ?
+
+Thanks again
+Marco
 
 Regards,
--Denis
+>> -Denis
+>
+>
 
---===============7511595345030949580==--
+--===============8297595239149704960==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPjxkaXY+oDxzcGFuIHN0eWxlPSJjb2xvcjpyZ2IoMzQs
+MzQsMzQpO2ZvbnQtZmFtaWx5OmFyaWFsLHNhbnMtc2VyaWY7Zm9udC1zaXplOjEzcHgiPkhpIERl
+bmlzLDwvc3Bhbj48L2Rpdj48ZGl2PqA8c3BhbiBzdHlsZT0iY29sb3I6cmdiKDM0LDM0LDM0KTtm
+b250LWZhbWlseTphcmlhbCxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxM3B4Ij5maXJzdCBvZiBhbGwg
+dGhhbmtzIDQgeW91ciByZXBseS48L3NwYW4+PC9kaXY+CjxibG9ja3F1b3RlIGNsYXNzPSJnbWFp
+bF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNv
+bGlkO3BhZGRpbmctbGVmdDoxZXgiPjxkaXYgc3R5bGU9ImNvbG9yOnJnYigzNCwzNCwzNCk7Zm9u
+dC1zaXplOjEzcHg7Zm9udC1mYW1pbHk6YXJpYWwsc2Fucy1zZXJpZiI+CjxkaXY+PGJyPjxkaXYg
+Y2xhc3M9ImdtYWlsX3F1b3RlIj48ZGl2IHN0eWxlPSJjb2xvcjpyZ2IoODAsMCw4MCkiPjIwMTMv
+My8yNiBEZW5pcyBLZW56aW9yoDxzcGFuIGRpcj0ibHRyIj4mbHQ7PGEgaHJlZj0ibWFpbHRvOmRl
+bmtlbnpAZ21haWwuY29tIiBzdHlsZT0iY29sb3I6cmdiKDE3LDg1LDIwNCkiIHRhcmdldD0iX2Js
+YW5rIj5kZW5rZW56QGdtYWlsLmNvbTwvYT4mZ3Q7PC9zcGFuPjxicj4KCjxibG9ja3F1b3RlIGNs
+YXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowcHggMHB4IDBweCAwLjhleDtib3JkZXIt
+bGVmdC13aWR0aDoxcHg7Ym9yZGVyLWxlZnQtY29sb3I6cmdiKDIwNCwyMDQsMjA0KTtib3JkZXIt
+bGVmdC1zdHlsZTpzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij5IaSBNYXJjbyw8ZGl2Pjxicj48YnI+
+T24gMDMvMjYvMjAxMyAwNDowNyBBTSwgRnJlZWRyZWFtZXIgd3JvdGU6PGJyPgoKPGJsb2NrcXVv
+dGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAwcHggMHB4IDAuOGV4O2Jv
+cmRlci1sZWZ0LXdpZHRoOjFweDtib3JkZXItbGVmdC1jb2xvcjpyZ2IoMjA0LDIwNCwyMDQpO2Jv
+cmRlci1sZWZ0LXN0eWxlOnNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPkhpIEV2ZXJ5Ym9keSw8YnI+
+PGJyPkkmIzM5O20gZGV2ZWxvcGluZyBhIGRyaXZlciBmb3IgYW4gZW1iZWRkZWQgc3lzdGVtIHdo
+aWNoIHVzZXMgYSBzYWdlbSBIaWxvTkM8YnI+Cgp2MiBhbmQgSSByZWFsbHkgc2hvdWxkIG5lZWQg
+eW91ciBoZWxwLiBJdCYjMzk7cyBteSB3aWxsIHRvIGNvbW1pdCBldmVyeXRoaW5nPGJyPndoZW4g
+c2hhbGwgYmUgcmVhZHkgYW5kIHdvcmtpbmcuPGJyPkZpcnN0IG9mIGFsbCBJIHdpbGwgdGVsbCB5
+b3Ugd2hhdCBpIGRpZC4uSSBjcmVhdGVkIGEgcGx1Z2luIHNhZ2VtLmM8YnI+LGFkZGVkIGEgbmV3
+IFZlbmRvciAsIKBtb2RpZmllZCBtYWtlZmlsZSAmYW1wOyBvdGhlciBzdHVmZiBhbmQgc2VlbXMg
+dG8gd29yazxicj4KCnByb3Blcmx5LiBJIHN0YXJ0ZWQgZnJvbSBjYWx5cHNvIGRyaXZlciAmIzM5
+O2NhdXNlIHRoZSBtb2RlbSBpcyBiYXNlZCBvbiBhPGJyPlVhcnQgYW5kIEkgbmVlZGVkIHRoZSBN
+VVggb3ZlciB0aGF0Ljxicj5XaXRoIGEgdmVyeSByYXcvZGlydHkgY29kZSBJIHdhcyBhYmxlIHRv
+IHVzZSBQUFAvU01TL25ldCBzZXJ2aWNlIG92ZXI8YnI+dmlydHVhbCBjb20uLiBWZXJ5IGdvb2Qg
+d29yayBkdWRlISA6KTxicj4KCjxicj5Ob3cgSSB3b3VsZCBsaWtlIHRvIGNsZWFuIHVwIG15IGNv
+ZGUgYW5kIGdldCBhIGJldHRlciB1bmRlcnN0YW5kaW5nIG9mPGJyPnRoZSBzdGFjay4gVW5mb3J0
+dW5hdGVseSBJIHNhdyB0aGF0IGZ1bmN0aW9ucy9tb2R1bGVzIGFyZSBub3QgYWx3YXlzPGJyPmNv
+bW1lbnRlZCBzbyBJIGhhdmUgdG8gYXNrIHUgYSBsb3Qgb2YgcXVlc3Rpb25zIChtYXliZSBhbHNv
+IHRyaXZpYWwpOjxicj4KCjxicj4xKSBBVCBjbWRzIHNlbnQgd2l0aCAmcXVvdDtnX2F0X2NoYXRf
+c2VuZCZxdW90OyBhcmUgYWx3YXlzIGFzeW5jICwgaXMgdGhhdCByaWdodCA/PGJyPklzIHRoZXJl
+IGFueSBjaGFuY2UgdG8gZ2V0IHRoZW0gc3luYyA/PGJyPjwvYmxvY2txdW90ZT48YnI+PC9kaXY+
+VGhlcmUgaXMgbm90LCB3ZSBkbyBub3Qgd2FudCB0byBlbmNvdXJhZ2UgYW55IHNvcnQgb2YgYmxv
+Y2tpbmcgYmVoYXZpb3IgaW4gdGhlIGRhZW1vbi4goFJlbWVtYmVyIHRoZXJlIGFyZSBwb3RlbnRp
+YWxseSBtdWx0aXBsZSBtb2RlbXMgYmVpbmcgb3BlcmF0ZWQgb24gYW5kIHdlIGRvIG5vdCB1c2Ug
+dGhyZWFkcy48ZGl2Pgo8c3BhbiBzdHlsZT0iY29sb3I6cmdiKDM0LDM0LDM0KSI+PC9zcGFuPjwv
+ZGl2PjwvYmxvY2txdW90ZT48L2Rpdj48L2Rpdj48L2Rpdj48L2Rpdj48L2Jsb2NrcXVvdGU+PGRp
+dj6gPC9kaXY+PGRpdj48c3BhbiBzdHlsZT0iY29sb3I6cmdiKDM0LDM0LDM0KTtmb250LWZhbWls
+eTphcmlhbCxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxM3B4Ij5PayBnZXQgaXQsIGkgdGhvdWdodCB0
+aGVyZSB3ZXJlIHB0aHJlYWRzIHNvbWV3aGVyZS48L3NwYW4+PC9kaXY+CjxkaXY+PHNwYW4gc3R5
+bGU9ImNvbG9yOnJnYigzNCwzNCwzNCk7Zm9udC1mYW1pbHk6YXJpYWwsc2Fucy1zZXJpZjtmb250
+LXNpemU6MTNweCI+PGJyPjwvc3Bhbj48L2Rpdj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVv
+dGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhleDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtw
+YWRkaW5nLWxlZnQ6MWV4Ij48ZGl2IHN0eWxlPSJjb2xvcjpyZ2IoMzQsMzQsMzQpO2ZvbnQtc2l6
+ZToxM3B4O2ZvbnQtZmFtaWx5OmFyaWFsLHNhbnMtc2VyaWYiPgo8ZGl2IGNsYXNzPSJnbWFpbF9x
+dW90ZSI+PGRpdiBzdHlsZT0iY29sb3I6cmdiKDgwLDAsODApIj48YmxvY2txdW90ZSBjbGFzcz0i
+Z21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MHB4IDBweCAwcHggMC44ZXg7Ym9yZGVyLWxlZnQt
+d2lkdGg6MXB4O2JvcmRlci1sZWZ0LWNvbG9yOnJnYigyMDQsMjA0LDIwNCk7Ym9yZGVyLWxlZnQt
+c3R5bGU6c29saWQ7cGFkZGluZy1sZWZ0OjFleCI+CjxkaXY+PGJyPjxibG9ja3F1b3RlIGNsYXNz
+PSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowcHggMHB4IDBweCAwLjhleDtib3JkZXItbGVm
+dC13aWR0aDoxcHg7Ym9yZGVyLWxlZnQtY29sb3I6cmdiKDIwNCwyMDQsMjA0KTtib3JkZXItbGVm
+dC1zdHlsZTpzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij4yKSBpbiBlbmFibGUgZm5jIHRoZSBtb2Rl
+bSBpcyBwb3dlcmVkIGJ1dCBUaGUgc2ltIGlzIG5vdCByZWFkeSBzbzxicj4KCnNvbWV0aW1lcyBJ
+dCBoYW5ncyB1cC4uLkRvIEkgaGF2ZSB0byB0byBwb2xsIHRoZSBzaW0gc3RhdHVzIHVudGlsIGlz
+PGJyPnJlYWR5IKAsIG9yIHRoZSBkcml2ZXIgd2lsbCBkbyCgdGhhdCBieSBpdHNlbGYgPzxicj48
+L2Jsb2NrcXVvdGU+PGJyPjwvZGl2Pm9Gb25vIG5ldmVyIHBvbGxzIGZvciBhbnl0aGluZy4goEl0
+IGlzIHRoZSBkcml2ZXImIzM5O3MgcmVzcG9uc2liaWxpdHkgdG8gZG8gdGhhdCBpbiB0aGUgYmVz
+dCBwb3NzaWJsZSB3YXkgZm9yIHRoZSBoYXJkd2FyZS4goEFsc28sIHBvd2VyaW5nIG9uIHRoZSBt
+b2RlbSBpcyBzZXBhcmF0ZSBmcm9tIHRoZSBzaW0gYmVpbmcgcmVhZHkuIKBUaGUgZ2VuZXJhbCBm
+bG93IGlzIHRoaXM6PGJyPgoKPGJyPi1FbmFibGUgbW9kZW08YnI+LVdhaXQgZm9yIHRoZSBtb2Rl
+bSB0byBwb3dlciBvbiBhbmQgdXNlIG9mb25vX21vZGVtX3NldF9wb3dlcmVkIHdoZW4gdGhhdCBo
+YXBwZW5zIHN1Y2Nlc3NmdWxseSAvIGZhaWxzLjxicj4tIEZpZ3VyZSBvdXQgaWYgdGhlIFNJTSBp
+cyBpbnNlcnRlZCBhbmQgc2lnbmFsIHVzaW5nIG9mb25vX3NpbV9pbnNlcnRlZF9ub3RpZnkuIKBE
+byB0aGlzIHN0ZXAgb25seSBvbmNlIHRoZSBTSU0gaXMgcmVhZHkgdG8gYmUgcXVlcmllZCBmb3Ig
+aXRzIFBJTiBzdGF0dXMgYW5kIHBlcmZvcm0gYW55IEkvTyBvbiBTSU0gZmlsZXMgdGhhdCBhcmUg
+YWx3YXlzIGFjY2Vzc2libGUgKGUuZy4gSUNDSUQpPGRpdj4KPHNwYW4gc3R5bGU9ImNvbG9yOnJn
+YigzNCwzNCwzNCkiPjwvc3Bhbj48L2Rpdj48L2Jsb2NrcXVvdGU+PC9kaXY+PC9kaXY+PC9kaXY+
+PC9ibG9ja3F1b3RlPjxkaXY+PGJyPjwvZGl2PjxkaXY+oDxzcGFuIHN0eWxlPSJjb2xvcjpyZ2Io
+MzQsMzQsMzQpO2ZvbnQtZmFtaWx5OmFyaWFsLHNhbnMtc2VyaWY7Zm9udC1zaXplOjEzcHgiPk9r
+LiBJZiBTaW0gbm90ICZxdW90O3JlYWR5JnF1b3Q7ICwgc2VuZGluZyBhIHNpZ25hbCBwcmVtYXR1
+cmVseSBjb3VsZCBzdHVjayBhbnlob3cgdGhlIHN0YWNrID8gJiMzOTtjYXVzZSBpdCBzaG91bGQg
+ZXhwbGFpbiBhIGxvdCBvZiB0aGluZy4uPC9zcGFuPjwvZGl2Pgo8ZGl2PjxzcGFuIHN0eWxlPSJj
+b2xvcjpyZ2IoODAsMCw4MCk7Zm9udC1mYW1pbHk6YXJpYWwsc2Fucy1zZXJpZjtmb250LXNpemU6
+MTNweCI+oDwvc3Bhbj48L2Rpdj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxl
+PSJtYXJnaW46MCAwIDAgLjhleDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxl
+ZnQ6MWV4Ij48ZGl2IHN0eWxlPSJjb2xvcjpyZ2IoMzQsMzQsMzQpO2ZvbnQtc2l6ZToxM3B4O2Zv
+bnQtZmFtaWx5OmFyaWFsLHNhbnMtc2VyaWYiPgo8ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+PGRp
+diBzdHlsZT0iY29sb3I6cmdiKDgwLDAsODApIj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVv
+dGUiIHN0eWxlPSJtYXJnaW46MHB4IDBweCAwcHggMC44ZXg7Ym9yZGVyLWxlZnQtd2lkdGg6MXB4
+O2JvcmRlci1sZWZ0LWNvbG9yOnJnYigyMDQsMjA0LDIwNCk7Ym9yZGVyLWxlZnQtc3R5bGU6c29s
+aWQ7cGFkZGluZy1sZWZ0OjFleCI+PGRpdj4KPGJyPjxicj48YmxvY2txdW90ZSBjbGFzcz0iZ21h
+aWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MHB4IDBweCAwcHggMC44ZXg7Ym9yZGVyLWxlZnQtd2lk
+dGg6MXB4O2JvcmRlci1sZWZ0LWNvbG9yOnJnYigyMDQsMjA0LDIwNCk7Ym9yZGVyLWxlZnQtc3R5
+bGU6c29saWQ7cGFkZGluZy1sZWZ0OjFleCI+CjMpIGNvdWxkIHUgZXhwbGFpbiBtZSB3aGF0IHNo
+b3VsZCBJIHJlYWxseSBkbyBpbiB2aXJ0dWFsIGZuYyCgc2V0X29ubGluZTxicj4vIHBvc3Rfb25s
+aW5lID8gaSB0cmllZCB0byBzdHViIHRoZW0gYnV0IHRoZXkgaGF2ZSBub3QgbmV2ZXIgYmVlbiBj
+YWxsZWQuLi48YnI+PC9ibG9ja3F1b3RlPjxicj48L2Rpdj5vRm9ubyBoYXMgMyBiYXNpYyBzdGF0
+ZXM6PGJyPi0gT2ZmPGJyPi0gUmFkaW8gT2ZmLCBTaW0gT248YnI+CgotIFJhZGlvIE9uLCBTaW0g
+T248YnI+PGJyPnNldF9vbmxpbmUgdHVybnMgcmFkaW8gb24gLyBvZmY8YnI+cG9zdF9vbmxpbmUg
+cG9wdWxhdGVzIHRoZSBhdG9tcyB0aGF0IGFyZSBhdmFpbGFibGUgaW4gcmFkaW8gJiMzOTtPbiYj
+Mzk7IHN0YXRlLjxkaXY+PGJyPjxicj48L2Rpdj48L2Jsb2NrcXVvdGU+PC9kaXY+PC9kaXY+PC9k
+aXY+PC9ibG9ja3F1b3RlPjxkaXY+oDwvZGl2PjxkaXY+CqA8c3BhbiBzdHlsZT0iY29sb3I6cmdi
+KDM0LDM0LDM0KTtmb250LWZhbWlseTphcmlhbCxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxM3B4Ij5U
+aGlzIGlzIHdoYXQgaSB0aG91Z2h0IGJ1dCBJIGRvIG5vdCB1bmRlcnN0YW5kIHdoeSBJIGRvbiYj
+Mzk7dCBzZWUgdGhlIHRyYWNlIGxvZyBJIHB1dCBpbnNpZGUgdGhlbS4uLnVzdWFsbHkgYXJlIGNh
+bGxlZCBiZWZvcmUgcHJlX3NpbSBmbj8gYXJlIHJlbGF0ZWQgdG8gYW55IHNpZ25hbCBpIGhhdmUg
+dG8gbWFuYWdlL3Bvc3QgPzwvc3Bhbj48L2Rpdj4KPGRpdj48c3BhbiBzdHlsZT0iY29sb3I6cmdi
+KDM0LDM0LDM0KTtmb250LWZhbWlseTphcmlhbCxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxM3B4Ij48
+YnI+PC9zcGFuPjwvZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1h
+cmdpbjowIDAgMCAuOGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDox
+ZXgiPjxkaXYgc3R5bGU9ImNvbG9yOnJnYigzNCwzNCwzNCk7Zm9udC1zaXplOjEzcHg7Zm9udC1m
+YW1pbHk6YXJpYWwsc2Fucy1zZXJpZiI+CjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj48ZGl2IHN0
+eWxlPSJjb2xvcjpyZ2IoODAsMCw4MCkiPjxkaXY+oDwvZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJn
+bWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowcHggMHB4IDBweCAwLjhleDtib3JkZXItbGVmdC13
+aWR0aDoxcHg7Ym9yZGVyLWxlZnQtY29sb3I6cmdiKDIwNCwyMDQsMjA0KTtib3JkZXItbGVmdC1z
+dHlsZTpzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij4KCjxkaXY+PGJsb2NrcXVvdGUgY2xhc3M9Imdt
+YWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAwcHggMHB4IDAuOGV4O2JvcmRlci1sZWZ0LXdp
+ZHRoOjFweDtib3JkZXItbGVmdC1jb2xvcjpyZ2IoMjA0LDIwNCwyMDQpO2JvcmRlci1sZWZ0LXN0
+eWxlOnNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPjQpIHVuZm9ydHVuYXRlbHkgdGhpcyBtb2RlbSBo
+YXMgYSBTSU0gZGV0ZWN0aW9uIFVSQyBidXQgaXQgcmVzZXQgaXRzZWxmPGJyPgoKZXZlcnkgdGlt
+ZSB0aGUgc3RhdHVzIGNoYW5nZXMuLi4gc28gaSBzaG91bGQgY2FsbCB0aGUgZGlzYWJsZSBmdW5j
+dGlvbjxicj5hbmQgdGhlIGVuYWJsZSBhZ2FpbiBpbiBvcmRlciB0byBoYXZlIHRoZSBNVVggd29y
+a2luZy4uLiBob3cgY2FuIGkgZG8gdGhhdD88YnI+PC9ibG9ja3F1b3RlPjxicj48L2Rpdj5JJiMz
+OTttIG5vdCBmb2xsb3dpbmcuIKBDYXJlIHRvIGVsYWJvcmF0ZT88ZGl2PgoKPGJyPjxicj48L2Rp
+dj48L2Jsb2NrcXVvdGU+PC9kaXY+PGRpdj48L2Rpdj48L2Rpdj48L2Rpdj48L2Jsb2NrcXVvdGU+
+PGRpdj6gPC9kaXY+PGRpdj48c3BhbiBzdHlsZT0iY29sb3I6cmdiKDM0LDM0LDM0KTtmb250LWZh
+bWlseTphcmlhbCxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxM3B4Ij5JJiMzOTt2ZSBtYW5hZ2luZyB2
+ZW5kb3IgVVJDIGZvciBzaW0gZGV0ZWN0aW9uIHJpZ2h0IG5vdyBidXQgaSBoYXZlIHByb2JsZW1z
+LkZvciBpbnN0YW5jZSBpZiBJIHJlbW92ZSBpdCB3aGVuIG9mb25vZCBpcyByZWFkeSB0aGUgSGls
+b25jIHNlbmRzIGFuIFVSQyB0byBub3RpZnkgc2ltIHN0YXR1cyBjaGFuZ2VkIGJ1dCBhZnRlciB0
+aGF0IGl0IHJlYm9vdHMgaXRzZWxmKDIgc2VjIGxhdGVyKS4uLiB3aGF0IGkgZGlkIGlzIHRvIG5v
+dGlmeSB0aGUgc3RhY2sgdGhhdCB0aGUgU0lNIGhhcyBiZWVuIHJlbW92ZWQgYW5kIG1vZGVtIGlz
+IHBvd2VyZWQgb2ZmIC4gSSB0aG91Z2h0IHRoYXQgYWZ0ZXIgY2FsbGluZyBzZXRfcG93ZXJlZCBm
+bmMgdGhlIHN0YWNrIHNob3VsZCBoYXZlIGNhbGxlZCBteSBkcml2ZXIgdmlydHVhbCBkaXNhYmxl
+IGZ1bmN0aW9uIGluIG9yZGVyIHRvIHByb3Blcmx5IGNsb3NlIHRoZSBNVVggLi4gYnV0IGl0JiMz
+OTtzIG5vdC4uPC9zcGFuPjwvZGl2Pgo8ZGl2PjxzcGFuIHN0eWxlPSJjb2xvcjpyZ2IoMzQsMzQs
+MzQpO2ZvbnQtZmFtaWx5OmFyaWFsLHNhbnMtc2VyaWY7Zm9udC1zaXplOjEzcHgiPjxicj48L3Nw
+YW4+PC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAg
+MCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+PGRp
+diBzdHlsZT0iY29sb3I6cmdiKDM0LDM0LDM0KTtmb250LXNpemU6MTNweDtmb250LWZhbWlseTph
+cmlhbCxzYW5zLXNlcmlmIj4KPGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPgo8ZGl2IHN0eWxlPSJj
+b2xvcjpyZ2IoODAsMCw4MCkiPjxkaXY+PGJyPjwvZGl2PjxkaXY+oDwvZGl2PjxibG9ja3F1b3Rl
+IGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowcHggMHB4IDBweCAwLjhleDtib3Jk
+ZXItbGVmdC13aWR0aDoxcHg7Ym9yZGVyLWxlZnQtY29sb3I6cmdiKDIwNCwyMDQsMjA0KTtib3Jk
+ZXItbGVmdC1zdHlsZTpzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij4KCjxkaXY+PGJsb2NrcXVvdGUg
+Y2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAwcHggMHB4IDAuOGV4O2JvcmRl
+ci1sZWZ0LXdpZHRoOjFweDtib3JkZXItbGVmdC1jb2xvcjpyZ2IoMjA0LDIwNCwyMDQpO2JvcmRl
+ci1sZWZ0LXN0eWxlOnNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPjUpIEkgY3JlYXRlZCBhbmQgc3Rh
+cnRlZCB0aGUgTVVYIGFzIHRoZSBmaXJzdCB0aGluZyBpbiBlbmFibGUgZm5jIGJ1dCBpczxicj4K
+CnRoYXQgcmlnaHQgPyBzb21ldGltZXMgc2VlbXMgdGhhdCB0aGUgbW9kZW0gaGFuZ3MgdXAgaWYg
+anVzdCBwb3dlcmVkIHVwLjxicj5QdXQgYSBkZWxheSBidXQgZG9uJiMzOTt0IGxpa2UgaXQgdmVy
+eSBtdWNoIGFzIGEgc29sdXRpb24uLi5tb3Jlb3ZlciB3aGVuIEk8YnI+cG93ZXIgdXAgdGhlIG1v
+ZGVtIGFsbCB0aGUgVVJDIGhhdmUgYmVlbiBsb3N0ICYjMzk7Y2F1c2UgdGhlIE1VWCBoYXMgbm90
+oDxicj4KCmJlZW4gY3JlYXRlZCB5ZXQuLjxicj48L2Jsb2NrcXVvdGU+PGJyPjwvZGl2PlRoYXQg
+aXMgd2hhdCB3ZSBkbyBmb3IgbW9zdCBkZXZpY2VzIHdpdGggYSBNVVgsIHB1dCBpdCBpbnRvIE1V
+WCBzdGF0ZSByaWdodCBhd2F5IGFmdGVyIGJhc2ljIGluaXRpYWxpemF0aW9uLiCgVGhlIGRldmlj
+ZXMgd2UgaGF2ZSBjYW4gYmUgcXVlcmllZCBmb3IgdGhlaXIgc3RhdGUgaW4gYWRkaXRpb24gdG8g
+VVJDcywgc28gaXQgd29ya3Mgb3V0IHZlcnkgd2VsbC48YnI+Cgo8YnI+PC9ibG9ja3F1b3RlPjxk
+aXY+PHNwYW4gc3R5bGU9ImNvbG9yOnJnYigzNCwzNCwzNCkiPjwvc3Bhbj48L2Rpdj48L2Rpdj48
+L2Rpdj48L2Rpdj48L2Jsb2NrcXVvdGU+PGRpdj6gPC9kaXY+PGRpdj48c3BhbiBzdHlsZT0iY29s
+b3I6cmdiKDM0LDM0LDM0KTtmb250LWZhbWlseTphcmlhbCxzYW5zLXNlcmlmO2ZvbnQtc2l6ZTox
+M3B4Ij5yaWdodCBub3cgaSYjMzk7dmUgYmVlbiB1c2luZyBjdXN0b20gVVJDIGluIHRoZSBmaXJz
+dCBwb3dlciB1cCBwaGFzZSB0byB1bmRlcnN0YW5kIG1vZGVtIHN0YXR1cy4gSSBtYW51YWxseSBz
+ZXQgdGhlbSBidXQgdGhlb3JldGljYWxseSBJIHNob3VsZCBjaGVjayB0aGUgdmFsdWVzIHNhdmVk
+IG9uIHRoZSBtb2RlbSBldmVyeSBwb3dlciBjeWNsZS4gV2hhdCBJIHdhcyB0aGlua2luZyB3YXMg
+dG8gdGVzdCBldmVyeSB0aW1lIHRoZSB2YWx1ZXMgc2F2ZWQgYW5kIGVuYWJsaW5nIHRoZW0gaWYg
+dGhleSB3ZXJlIG5vdCAuQWZ0ZXIgdGhhdCBJIHNob3VsZCBjYWxsIGFuIEFUK2NmdW49MSwxIGlu
+IG9yZGVyIHRvIHJlc2V0IHRoZSBtb2RlbSBhbmQgZm9yY2UgaXQgdG8gc2VuZCBtZSBhZ2FpbiB0
+aGUgbmVlZGVkIFVSQ3MgLiBXaGF0IGRvIHUgdGhpbmsgP6A8L3NwYW4+PC9kaXY+CjxkaXY+oDwv
+ZGl2PjxkaXY+PHNwYW4gc3R5bGU9ImNvbG9yOnJnYigzNCwzNCwzNCk7Zm9udC1mYW1pbHk6YXJp
+YWwsc2Fucy1zZXJpZjtmb250LXNpemU6MTNweCI+VGhhbmtzIGFnYWluPC9zcGFuPjwvZGl2Pjxk
+aXY+PHNwYW4gc3R5bGU9ImNvbG9yOnJnYigzNCwzNCwzNCk7Zm9udC1mYW1pbHk6YXJpYWwsc2Fu
+cy1zZXJpZjtmb250LXNpemU6MTNweCI+TWFyY288L3NwYW4+PHNwYW4gc3R5bGU9ImNvbG9yOnJn
+YigzNCwzNCwzNCk7Zm9udC1mYW1pbHk6YXJpYWwsc2Fucy1zZXJpZjtmb250LXNpemU6MTNweCI+
+oDwvc3Bhbj48L2Rpdj4KPGRpdj48c3BhbiBzdHlsZT0iY29sb3I6cmdiKDM0LDM0LDM0KTtmb250
+LWZhbWlseTphcmlhbCxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxM3B4Ij48YnI+PC9zcGFuPjwvZGl2
+PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4
+O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPjxkaXYgc3R5bGU9
+ImNvbG9yOnJnYigzNCwzNCwzNCk7Zm9udC1zaXplOjEzcHg7Zm9udC1mYW1pbHk6YXJpYWwsc2Fu
+cy1zZXJpZiI+CjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj48YmxvY2txdW90ZSBjbGFzcz0iZ21h
+aWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MHB4IDBweCAwcHggMC44ZXg7Ym9yZGVyLWxlZnQtd2lk
+dGg6MXB4O2JvcmRlci1sZWZ0LWNvbG9yOnJnYigyMDQsMjA0LDIwNCk7Ym9yZGVyLWxlZnQtc3R5
+bGU6c29saWQ7cGFkZGluZy1sZWZ0OjFleCI+ClJlZ2FyZHMsPGJyPi1EZW5pczwvYmxvY2txdW90
+ZT48L2Rpdj48L2Rpdj48L2Jsb2NrcXVvdGU+PC9kaXY+Cg==
+
+--===============8297595239149704960==--
 
