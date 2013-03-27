@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============6402688214132669653=="
+Content-Type: multipart/mixed; boundary="===============3906373598148491262=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/5] handsfree-audio: Add support for initiating SCO
- connections
-Date: Tue, 26 Mar 2013 23:41:47 -0500
-Message-ID: <5152788B.4010909@gmail.com>
-In-Reply-To: <1364249122-18332-1-git-send-email-vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH 2/5] handsfree-audio: Add support for sending the SCO
+ socket
+Date: Tue, 26 Mar 2013 23:42:05 -0500
+Message-ID: <5152789D.5080201@gmail.com>
+In-Reply-To: <1364249122-18332-2-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6402688214132669653==
+--===============3906373598148491262==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,16 +17,11 @@ Content-Transfer-Encoding: quoted-printable
 Hi Vinicius,
 
 On 03/25/2013 05:05 PM, Vinicius Costa Gomes wrote:
-> When calling the card's .Connect() method, we should be able to
-> establish a SCO connection.
->
-> Right now, we only have support for establishing the SCO connection
-> directly, this is what is expected from HFP 1.5 HF/AG devices.
+> Send the SCO socket to the agent associated with the card that
+> just got connected.
 > ---
->   src/handsfree-audio.c | 93 ++++++++++++++++++++++++++++++++++++++++++++=
-++++++-
->   1 file changed, 92 insertions(+), 1 deletion(-)
->
+>   src/handsfree-audio.c | 2 ++
+>   1 file changed, 2 insertions(+)
 
 Patch has been applied, thanks.
 
@@ -34,5 +29,5 @@ Regards,
 -Denis
 
 
---===============6402688214132669653==--
+--===============3906373598148491262==--
 
