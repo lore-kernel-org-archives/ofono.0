@@ -1,140 +1,100 @@
-Content-Type: multipart/mixed; boundary="===============0907496477393012984=="
+Content-Type: multipart/mixed; boundary="===============7632940448760784176=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: SAGEM HiloNC v2 Driver
-Date: Wed, 27 Mar 2013 09:36:11 -0500
-Message-ID: <515303DB.7020105@gmail.com>
-In-Reply-To: <CAAs3wMg0g-tjeO-3fohQFmvuvN4r=qnk78bGni1QeOEx8B3h5Q@mail.gmail.com>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH] handsfree-audio: Add .Connect using the card driver
+Date: Wed, 27 Mar 2013 11:45:17 -0300
+Message-ID: <20130327144517.GC2715@samus>
+In-Reply-To: <515302E7.7080100@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0907496477393012984==
+--===============7632940448760784176==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marco,
+Hi Denis,
 
-<snip>
+On 09:32 Wed 27 Mar, Denis Kenzior wrote:
 
->             2) in enable fnc the modem is powered but The sim is not
->             ready so
->             sometimes It hangs up...Do I have to to poll the sim status
->             until is
->             ready  , or the driver will do  that by itself ?
->
->
->         oFono never polls for anything.  It is the driver's
->         responsibility to do that in the best possible way for the
->         hardware.  Also, powering on the modem is separate from the sim
->         being ready.  The general flow is this:
->
->         -Enable modem
->         -Wait for the modem to power on and use ofono_modem_set_powered
->         when that happens successfully / fails.
->         - Figure out if the SIM is inserted and signal using
->         ofono_sim_inserted_notify.  Do this step only once the SIM is
->         ready to be queried for its PIN status and perform any I/O on
->         SIM files that are always accessible (e.g. ICCID)
->
->
-> Ok. If Sim not "ready" , sending a signal prematurely could stuck anyhow
-> the stack ? 'cause it should explain a lot of thing..
->
+> >
+> >Yes. This behaviour is even covered in one of the PTS tests: TP/ACC/BV-0=
+3-I
+> >(from the description of the test, "To verify the capability of the HF
+> >initiating a legacy audio connection with an AG that does not support the
+> >Codec Connection setup procedure. The HF should be able to correctly neg=
+otiate
+> >a working legacy audio connection to the AG.")
+> >
+> =
 
-If you tell oFono core that the sim is inserted, the first thing it does =
+> Okay, that makes things a little harder since we cannot determine
+> the driver to use until the SLC is established.
 
-is read some sim files that are always available.  e.g. ICCID, etc. =
 
-Then it proceeds to check the PIN.  If the PIN query fails due to a sim =
+Yeah.
 
-busy condition, then yes the init process will stall.  This is =
+> =
 
-considered a bug in the driver.
+> <snip>
+> =
 
->
->
->             3) could u explain me what should I really do in virtual fnc
->               set_online
->             / post_online ? i tried to stub them but they have not never
->             been called...
->
->
->         oFono has 3 basic states:
->         - Off
->         - Radio Off, Sim On
->         - Radio On, Sim On
->
->         set_online turns radio on / off
->         post_online populates the atoms that are available in radio 'On'
->         state.
->
->
-> This is what i thought but I do not understand why I don't see the trace
-> log I put inside them...usually are called before pre_sim fn? are
-> related to any signal i have to manage/post ?
+> >>>+	if (!driver || !driver->connect)
+> >>>+		goto fallback;
+> >>>+
+> >>>+	err =3D driver->connect(card, card_connect_reply_cb, card);
+> >>>+	if (err =3D=3D -EINPROGRESS) {
+> >>>+		card->msg =3D dbus_message_ref(msg);
+> >>>+		return NULL;
+> >>
+> >>As mentioned earlier, the driver should not return an int, however,
+> >>lets revisit this part.  I want to better understand the AT+BCC and
+> >>codec negotiation interactions.
+> >
+> >
+> >Of course.
+> >
+> >Another thing that may make sense to bring up now is the AG case: if we =
+want
+> >to have a HFP 1.6 capable AG, we may want to select the codec (send a +B=
+CS)
+> >before establishing the SCO connection. I was thinking of setting a spec=
+ific
+> >error code in the callback to signify that the core handsfree-audio may
+> >connect the SCO at that point.
+> >
+> =
 
-enable -> pre_sim, sim_inserted -> post_sim, set_online -> post_online. =
+> I thought of setting error codes in callbacks, but I'm not happy
+> with that solution.  Perhaps we should make SCO establishment a part
+> of the card utility API.  e.g. ofono_handsfree_card_connect_sco().
+> That way the AG can run the required +BCS transactions and call the
+> above function when it comes to making the SCO connection.
 
-  Generally you do not call set_online before hitting the post_sim state.
+Sounds good. This aproach may even make the case that "we" are the AG and we
+receive a AT+BCC easier to handle.
 
-<snip>
+> =
 
->
-> I've managing vendor URC for sim detection right now but i have
-> problems.For instance if I remove it when ofonod is ready the Hilonc
-> sends an URC to notify sim status changed but after that it reboots
-> itself(2 sec later)... what i did is to notify the stack that the SIM
-> has been removed and modem is powered off . I thought that after calling
-> set_powered fnc the stack should have called my driver virtual disable
-> function in order to properly close the MUX .. but it's not..
+> For HFP 1.6/1.5, we can either use +BCC or call
+> ofono_handsfree_card_connect_sco directly.
+> =
 
-No, if you call ofono_modem_set_powered(modem, FALSE) it assumes that =
+> Thoughts, other ideas?
 
-the modem powered off due to an internally generated event (e.g. not =
+Right now, I don't have any. I will give it a try and see how it ends up
+looking.
 
-oFono's doing).  The driver has to clean up properly in this case.  The =
+> =
 
-driver disable() method is only called on oFono initiated power down =
+> Regards,
+> -Denis
 
-requests.
 
->
->
->             5) I created and started the MUX as the first thing in
->             enable fnc but is
->             that right ? sometimes seems that the modem hangs up if just
->             powered up.
->             Put a delay but don't like it very much as a
->             solution...moreover when I
->             power up the modem all the URC have been lost 'cause the MUX
->             has not
->             been created yet..
->
->
->         That is what we do for most devices with a MUX, put it into MUX
->         state right away after basic initialization.  The devices we
->         have can be queried for their state in addition to URCs, so it
->         works out very well.
->
-> right now i've been using custom URC in the first power up phase to
-> understand modem status. I manually set them but theoretically I should
-> check the values saved on the modem every power cycle. What I was
-> thinking was to test every time the values saved and enabling them if
-> they were not .After that I should call an AT+cfun=3D1,1 in order to reset
-> the modem and force it to send me again the needed URCs . What do u think=
- ?
+Cheers,
+-- =
 
-I do not see anything wrong with that strategy.  Just keep in mind that =
+Vinicius
 
-querying things you will be resetting (potentially) anyway is likely a =
-
-waste of time.  Only query things that are required for the =
-
-initialization procedure.  For the rest, simply set the setting you want.
-
-Regards,
--Denis
-
---===============0907496477393012984==--
+--===============7632940448760784176==--
 
