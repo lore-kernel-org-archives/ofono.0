@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2253939524371575031=="
+Content-Type: multipart/mixed; boundary="===============7208962846229851264=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv3 1/3] hfpmodem: Retry AT+CLCC request after outgoing
- callsetup
-Date: Wed, 27 Mar 2013 00:05:53 -0500
-Message-ID: <51527E31.4090604@gmail.com>
-In-Reply-To: <da43e0125ebcdf570d287d3d84fbf139cc2bfa9e.1360663430.git.timo.mueller@bmw-carit.de>
+Subject: Re: [PATCHv3 2/3] hfp_hf: Add generic hfp modem vendor
+Date: Wed, 27 Mar 2013 00:09:28 -0500
+Message-ID: <51527F08.1090508@gmail.com>
+In-Reply-To: <d928220c40964749f7c79822563087cdf3af74a1.1360663430.git.timo.mueller@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2253939524371575031==
+--===============7208962846229851264==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,36 +18,24 @@ Hi Timo,
 On 02/13/2013 02:36 AM, Timo Mueller wrote:
 > From: Timo Mueller<timo.mueller@bmw-carit.de>
 >
-> Currently the list of current calls is requested right after an
-> outgoing callsetup has been reported by the AG device. If the AG
-> device updates the list after reporting the callsetup the +CLCC
-> response may not contain the new call and it is not registered
-> with oFono.
->
-> In this case AT+CLCC should be requested again once after a small
-> delay.
->
-> AT sequence that exhibited the failure (AG device was a Nokia N9
-> placing an outgoing call)
->
-> <  \r\n+CIEV: 5,2\r\n
->> AT+CLCC\r
-> <  \r\nOK\r\n
-> <  \r\n+VGS=3D7\r\n
-> <  \r\n+VGM=3D7\r\n
-> <  \r\n+CIEV: 5,3\r\n
-> <  \r\n+CIEV: 4,1\r\n
-> <  \r\n+CIEV: 5,0\r\n
 > ---
-> v3: Splitted clcc_poll_cb to avoid parsing of the clcc result twice
-> when a dialing call was found in the response.
+>   drivers/hfpmodem/vendor.h    | 25 +++++++++++++++++++++++++
+>   drivers/hfpmodem/voicecall.c |  3 +++
+>   plugins/hfp_hf_bluez4.c      |  4 +++-
+>   plugins/hfp_hf_bluez5.c      |  5 ++++-
+>   4 files changed, 35 insertions(+), 2 deletions(-)
+>   create mode 100644 drivers/hfpmodem/vendor.h
+>
 
-I'm fine with this version, however I still would prefer that we hid the =
+Please split up this patch in line with our patch submission guidelines. =
 
-poll-for-dialing logic behind the N9 vendor quirk.
+  Refer to HACKING, 'Submitting Patches' section.
 
-Regards,
--Denis
+I prefer this to be broken into four patches:
+- vendor.h changes
+- voicecall.c changes
+- hfp_hf_bluez4 changes
+- hfp_hf_bluez5 changes
 
---===============2253939524371575031==--
+--===============7208962846229851264==--
 
