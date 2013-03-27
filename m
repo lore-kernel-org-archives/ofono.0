@@ -1,104 +1,121 @@
-Content-Type: multipart/mixed; boundary="===============5839760595311118750=="
+Content-Type: multipart/mixed; boundary="===============2267149893945712164=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/5] hfp_hf_bluez5: Add a card driver for HFP 1.6
-Date: Tue, 26 Mar 2013 23:43:36 -0500
-Message-ID: <515278F8.2010807@gmail.com>
-In-Reply-To: <1364249122-18332-4-git-send-email-vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH] handsfree-audio: Add .Connect using the card driver
+Date: Tue, 26 Mar 2013 23:59:27 -0500
+Message-ID: <51527CAF.40802@gmail.com>
+In-Reply-To: <1364333280-21963-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5839760595311118750==
+--===============2267149893945712164==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Vinicius,
 
-On 03/25/2013 05:05 PM, Vinicius Costa Gomes wrote:
-> This is just the skeleton of a Handsfree Audio Card for the HF side of
-> HFP 1.6.
+On 03/26/2013 04:28 PM, Vinicius Costa Gomes wrote:
+> Now each handsfree implementation may be notified that a card wants
+> its audio to be connected.
+>
+> In case, that the cards wishes to fallback to the default SCO connection
+> procedure, it just needs to return -ENOSYS.
+
+Are you interpreting section 4.11.2:
+"For all HF initiated audio connection establishments for which both =
+
+sides support the Codec Negotiation feature, the HF shall trigger the AG =
+
+to establish a Codec Connection. This is necessary because only the AG =
+
+knows about the codec selection and settings of the network."
+
+... to mean that AT+BCC is only sent when both sides support codec =
+
+negotiation?  e.g. if one or the other side does not support codec =
+
+negotiation, then we are supposed to fall back to old SCO establishment =
+
+rules procedures?
+
 > ---
->   plugins/hfp_hf_bluez5.c | 37 +++++++++++++++++++++++++++++++++++++
->   1 file changed, 37 insertions(+)
+>   src/handsfree-audio.c | 34 +++++++++++++++++++++++++++++++++-
+>   1 file changed, 33 insertions(+), 1 deletion(-)
 >
-> diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-> index ff8afba..89b60c8 100644
-> --- a/plugins/hfp_hf_bluez5.c
-> +++ b/plugins/hfp_hf_bluez5.c
-> @@ -60,6 +60,8 @@
+> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+> index f8df6d6..ace3a4f 100644
+> --- a/src/handsfree-audio.c
+> +++ b/src/handsfree-audio.c
+> @@ -307,13 +307,30 @@ done:
+>   	return FALSE;
+>   }
 >
->   #define HFP_EXT_PROFILE_PATH   "/bluetooth/profile/hfp_hf"
->
-> +#define HFP16_HF_DRIVER		"hfp16-hf-driver"
-> +
->   struct hfp {
->   	struct hfp_slc_info info;
->   	DBusMessage *msg;
-> @@ -310,6 +312,31 @@ static struct ofono_modem_driver hfp_driver =3D {
->   	.post_sim	=3D hfp_post_sim,
->   };
->
-> +static int hfp16_card_probe(struct ofono_handsfree_card *card,
-> +					unsigned int vendor, void *data)
+> +static void card_connect_reply_cb(const struct ofono_error *error, void =
+*data)
 > +{
-> +	return 0;
-> +}
+> +	struct ofono_handsfree_card *card =3D data;
+> +	DBusMessage *reply;
 > +
-> +static void hfp16_card_remove(struct ofono_handsfree_card *card)
-> +{
+> +	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
+> +		reply =3D dbus_message_new_method_return(card->msg);
+> +	else
+> +		reply =3D __ofono_error_failed(card->msg);
 > +
-> +}
+> +	g_dbus_send_message(ofono_dbus_get_connection(), reply);
 > +
-> +static int hfp16_card_connect(struct ofono_handsfree_card *card,
-> +					ofono_handsfree_card_connect_cb_t cb,
-> +					void *data)
-> +{
-> +	return -ENOSYS;
+> +	dbus_message_unref(card->msg);
+> +	card->msg =3D NULL;
 
-This function should be declared to return void to be consistent with =
-
-everything else.  Whoops.  My fault.  I fixed it upstream.
+Please replace the above three lines with __ofono_dbus_pending_reply.
 
 > +}
 > +
-> +static struct ofono_handsfree_card_driver hfp16_hf_driver =3D {
-> +	.name		=3D HFP16_HF_DRIVER,
-> +	.probe		=3D hfp16_card_probe,
-> +	.remove		=3D hfp16_card_remove,
-> +	.connect	=3D hfp16_card_connect,
-> +};
-> +
->   static ofono_bool_t device_path_compare(struct ofono_modem *modem,
->   					void *userdata)
+>   static DBusMessage *card_connect(DBusConnection *conn,
+>   						DBusMessage *msg, void *data)
 >   {
-> @@ -616,6 +643,13 @@ static int hfp_init(void)
->   		return -EIO;
->   	}
+>   	struct ofono_handsfree_card *card =3D data;
+> +	const struct ofono_handsfree_card_driver *driver =3D card->driver;
+>   	GIOChannel *io;
+>   	const char *sender;
+> -	int sk;
+> +	int sk, err;
 >
-> +	err =3D ofono_handsfree_card_driver_register(&hfp16_hf_driver);
-> +	if (err<  0) {
-> +		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
-> +						BLUEZ_PROFILE_INTERFACE);
-> +		return err;
+>   	if (agent =3D=3D NULL)
+>   		return __ofono_error_not_available(msg);
+> @@ -326,6 +343,21 @@ static DBusMessage *card_connect(DBusConnection *con=
+n,
+>   	if (card->msg)
+>   		return __ofono_error_busy(msg);
+>
+> +	if (!driver || !driver->connect)
+> +		goto fallback;
+> +
+> +	err =3D driver->connect(card, card_connect_reply_cb, card);
+> +	if (err =3D=3D -EINPROGRESS) {
+> +		card->msg =3D dbus_message_ref(msg);
+> +		return NULL;
+
+As mentioned earlier, the driver should not return an int, however, lets =
+
+revisit this part.  I want to better understand the AT+BCC and codec =
+
+negotiation interactions.
+
 > +	}
 > +
->   	err =3D ofono_modem_driver_register(&hfp_driver);
->   	if (err<  0) {
->   		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
-> @@ -647,6 +681,9 @@ static void hfp_exit(void)
->   	bt_unregister_profile(conn, HFP_EXT_PROFILE_PATH);
->   	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
->   						BLUEZ_PROFILE_INTERFACE);
+> +	/* ENOSYS means the driver doesn't want to connect itself */
+> +	if (err<  0&&  err !=3D -ENOSYS)
+> +		return __ofono_error_failed(msg);
 > +
-> +	ofono_handsfree_card_driver_unregister(&hfp16_hf_driver);
-> +
->   	ofono_modem_driver_unregister(&hfp_driver);
->   	g_dbus_client_unref(bluez);
->
+> +fallback:
+> +	/* There's no driver, fallback to direct SCO connection */
+>   	sk =3D card_connect_sco(card);
+>   	if (sk<  0)
+>   		return __ofono_error_failed(msg);
 
 Regards,
 -Denis
 
---===============5839760595311118750==--
+--===============2267149893945712164==--
 
