@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4470045875694103109=="
+Content-Type: multipart/mixed; boundary="===============0029756753152559458=="
 MIME-Version: 1.0
 From: Forest Bond <forest@alittletooquiet.net>
-Subject: [RFC PATCH 1/3] modem: Allow setting boolean properties
-Date: Thu, 28 Mar 2013 10:22:20 -0400
-Message-ID: <20130328142220.GG29445@alittletooquiet.net>
+Subject: [RFC PATCH 2/3] modem: Support modem property "AlwaysOnline"
+Date: Thu, 28 Mar 2013 10:22:35 -0400
+Message-ID: <20130328142235.GH29445@alittletooquiet.net>
 In-Reply-To: <20130328142112.GF29445@alittletooquiet.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4470045875694103109==
+--===============0029756753152559458==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,29 +16,59 @@ Content-Transfer-Encoding: quoted-printable
 From: Forest Bond <forest.bond@rapidrollout.com>
 
 ---
- src/modem.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+ src/modem.c |   15 +++++++++++++--
+ 1 files changed, 13 insertions(+), 2 deletions(-)
 
 diff --git a/src/modem.c b/src/modem.c
-index 3c7c80a..0f12f5a 100644
+index 0f12f5a..6c6937a 100644
 --- a/src/modem.c
 +++ b/src/modem.c
-@@ -1659,7 +1659,8 @@ static int set_modem_property(struct ofono_modem *mod=
-em, const char *name,
- 	DBG("modem %p property %s", modem, name);
+@@ -595,6 +595,17 @@ static gboolean modem_has_sim(struct ofono_modem *mode=
+m)
+ 	return FALSE;
+ }
  =
 
- 	if (type !=3D PROPERTY_TYPE_STRING &&
--			type !=3D PROPERTY_TYPE_INTEGER)
-+			type !=3D PROPERTY_TYPE_INTEGER &&
-+			type !=3D PROPERTY_TYPE_BOOLEAN)
- 		return -EINVAL;
++static gboolean modem_is_always_online(struct ofono_modem *modem)
++{
++	if (modem->driver->set_online =3D=3D NULL)
++		return TRUE;
++
++	if (ofono_modem_get_boolean(modem, "AlwaysOnline") =3D=3D TRUE)
++		return TRUE;
++
++	return FALSE;
++}
++
+ static void common_online_cb(const struct ofono_error *error, void *data)
+ {
+ 	struct ofono_modem *modem =3D data;
+@@ -706,7 +717,7 @@ static void sim_state_watch(enum ofono_sim_state new_st=
+ate, void *user)
+ 		 * If we don't have the set_online method, also proceed
+ 		 * straight to the online state
+ 		 */
+-		if (modem->driver->set_online =3D=3D NULL)
++		if (modem_is_always_online(modem) =3D=3D TRUE)
+ 			set_online(modem, TRUE);
  =
 
- 	property =3D g_try_new0(struct modem_property, 1);
+ 		if (modem->online =3D=3D TRUE)
+@@ -745,7 +756,7 @@ static DBusMessage *set_property_online(struct ofono_mo=
+dem *modem,
+ 	if (ofono_modem_get_emergency_mode(modem) =3D=3D TRUE)
+ 		return __ofono_error_emergency_active(msg);
+ =
+
+-	if (driver->set_online =3D=3D NULL)
++	if (modem_is_always_online(modem) =3D=3D TRUE)
+ 		return __ofono_error_not_implemented(msg);
+ =
+
+ 	modem->pending =3D dbus_message_ref(msg);
 -- =
 
 1.7.0.4
 
---===============4470045875694103109==--
+--===============0029756753152559458==--
 
