@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0925641507312732465=="
+Content-Type: multipart/mixed; boundary="===============7475546121125137390=="
 MIME-Version: 1.0
 From: Timo Mueller <mail@timomueller.eu>
-Subject: [PATCHv4 2/8] hfpmodem: Add vendor header to makefile
-Date: Thu, 28 Mar 2013 14:36:56 +0100
-Message-ID: <9bde6a432e213f194801663767ac4d3aa6cfa45c.1364477353.git.timo.mueller@bmw-carit.de>
-In-Reply-To: <1d65943189c7e91e69bd00b20436479753e360d9.1364477353.git.timo.mueller@bmw-carit.de>
+Subject: [PATCHv4 4/8] hfp_hf_bluez4: Pass vendor on voicecall creation
+Date: Thu, 28 Mar 2013 14:36:58 +0100
+Message-ID: <d235f3b76015757fbad2495375dac005e48d2d62.1364477353.git.timo.mueller@bmw-carit.de>
+In-Reply-To: <9338a6467cc9ba42321bed2d1036275bc15dc790.1364477353.git.timo.mueller@bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0925641507312732465==
+--===============7475546121125137390==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,28 +16,44 @@ Content-Transfer-Encoding: quoted-printable
 From: Timo Mueller <timo.mueller@bmw-carit.de>
 
 ---
- Makefile.am | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ plugins/hfp_hf_bluez4.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 3524098..27bb7d7 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -310,7 +310,8 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/hfpmodem/network-registration.c \
- 			drivers/hfpmodem/call-volume.c \
- 			drivers/hfpmodem/devinfo.c \
--			drivers/hfpmodem/handsfree.c
-+			drivers/hfpmodem/handsfree.c \
-+			drivers/hfpmodem/vendor.h
+diff --git a/plugins/hfp_hf_bluez4.c b/plugins/hfp_hf_bluez4.c
+index 450c183..e90410c 100644
+--- a/plugins/hfp_hf_bluez4.c
++++ b/plugins/hfp_hf_bluez4.c
+@@ -46,6 +46,7 @@
+ #include <ofono/handsfree.h>
  =
 
- builtin_modules +=3D speedupmodem
- builtin_sources +=3D drivers/atmodem/atutil.h \
+ #include <drivers/hfpmodem/slc.h>
++#include <drivers/hfpmodem/vendor.h>
+ =
+
+ #include "bluez4.h"
+ =
+
+@@ -482,11 +483,12 @@ static int hfp_disable(struct ofono_modem *modem)
+ static void hfp_pre_sim(struct ofono_modem *modem)
+ {
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
++	enum ofono_vendor vendor =3D OFONO_VENDOR_GENERIC;
+ =
+
+ 	DBG("%p", modem);
+ =
+
+ 	ofono_devinfo_create(modem, 0, "hfpmodem", data->handsfree_address);
+-	ofono_voicecall_create(modem, 0, "hfpmodem", &data->info);
++	ofono_voicecall_create(modem, vendor, "hfpmodem", &data->info);
+ 	ofono_netreg_create(modem, 0, "hfpmodem", &data->info);
+ 	ofono_call_volume_create(modem, 0, "hfpmodem", &data->info);
+ 	ofono_handsfree_create(modem, 0, "hfpmodem", &data->info);
 -- =
 
 1.7.11.7
 
 
---===============0925641507312732465==--
+--===============7475546121125137390==--
 
