@@ -1,91 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============3004659181858714684=="
+Content-Type: multipart/mixed; boundary="===============1533122163464648393=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 5/5] handsfree-audio: Handle when .Connect() was already
- replied to
-Date: Wed, 27 Mar 2013 21:13:02 -0300
-Message-ID: <1364429582-12518-5-git-send-email-vinicius.gomes@openbossa.org>
-In-Reply-To: <1364429582-12518-1-git-send-email-vinicius.gomes@openbossa.org>
+From: Viallard Anthony <viallard@syscom-instruments.com>
+Subject: Re: Randomly SMS sent passes or fails
+Date: Thu, 28 Mar 2013 10:02:02 +0100
+Message-ID: <5154070A.9040108@syscom-instruments.com>
+In-Reply-To: <513658D4.8040508@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3004659181858714684==
+--===============1533122163464648393==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-In some cases, it is possible that when sco_connect_cb() is called
-the .Connect() message (stored in card->msg) is not valid anymore.
----
- src/handsfree-audio.c | 24 ++++++++++++++++--------
- 1 file changed, 16 insertions(+), 8 deletions(-)
+On 05. 03. 13 21:43, Denis Kenzior wrote:
+>>
+>> [...]
+>>
+>> Provisioning failed
+>> -------------------------------
+>
+> This should not affect anything, unless your operator requires SMS to be
+> sent over GPRS.
+>
 
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 3f24a2a..841cc3f 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -242,16 +242,19 @@ static gboolean sco_connect_cb(GIOChannel *io, GIOCon=
-dition cond,
- {
- 	struct ofono_handsfree_card *card =3D user_data;
- 	DBusMessage *reply;
--	int sk;
-+	int sk, err;
- =
+Hi,
 
- 	if (agent =3D=3D NULL) {
- 		/* There's no agent, so there's no one to reply to */
--		reply =3D NULL;
-+		if (card->msg)
-+			dbus_message_unref(card->msg);
-+
-+		card->msg =3D NULL;
- 		goto done;
- 	}
- =
+I try to find how i can fix the "provisioning failed" message.
 
- 	if (cond & (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
--		reply =3D __ofono_error_failed(card->msg);
-+		err =3D -EIO;
- 		goto done;
- 	}
- =
+Actually, I have always troubles with T-Mobile. I think I need to fix =
 
-@@ -261,14 +264,19 @@ static gboolean sco_connect_cb(GIOChannel *io, GIOCon=
-dition cond,
- =
+this provisioning issue. How can I do this ? I tried to see where this =
 
- 	close(sk);
- =
+provisioning in the source code but I was quickly lost.
 
--	reply =3D dbus_message_new_method_return(card->msg);
-+	err =3D 0;
- =
+Bellow, you could see some troubles I have.
 
- done:
--	if (reply)
--		g_dbus_send_message(ofono_dbus_get_connection(), reply);
-+	/* Or the msg was already replied to, or the agent exited */
-+	if (card->msg =3D=3D NULL)
-+		return FALSE;
- =
+scenario:
+  * enable modem power ;
+  * enter pin code ;
+  * set APN ;
+  * and tried to enable GPRS.
 
--	dbus_message_unref(card->msg);
--	card->msg =3D NULL;
-+	if (err < 0)
-+		reply =3D __ofono_error_failed(card->msg);
-+	else
-+		reply =3D dbus_message_new_method_return(card->msg);
-+
-+	__ofono_dbus_pending_reply(&card->msg, reply);
- =
+------------------------------------------------------------------
+[...]
+ofonod[14111]: Data: > AT+CREG?\r
+ofonod[14111]: Data: < \r\n+CREG: 2,1, 889D, 13EB0D\r\n\r\nOK\r\n
+ofonod[14111]: src/network.c:ofono_netreg_status_notify() /simcom_1 =
 
- 	return FALSE;
- }
--- =
+status 1 tech -1
+ofonod[14111]: src/cbs.c:cbs_location_changed() 1, -1, -1, -1, (null)(null)
+ofonod[14111]: src/gprs.c:netreg_status_changed() 1
+ofonod[14111]: Data: > AT+CGATT=3D0\r
+ofonod[14111]: Data: < \r\n+CGREG: 0\r\n\r\nOK\r\n
+ofonod[14111]: Data: < \r\n+CGEV: ME DETACH\r\n
+ofonod[14111]: src/gprs.c:ofono_gprs_status_notify() /simcom_1 status 0
+ofonod[14111]: src/gprs.c:gprs_attach_callback() /simcom_1 error =3D 0
+ofonod[14111]: src/gprs.c:ofono_gprs_detached_notify() /simcom_1
+ofonod[14111]: Data: > AT+COPS=3D3,2\r
+------------------------------------------------------------------
 
-1.8.2
+First, there are no answer from modem about "AT+COPS=3D3,2" command.
 
+And next, the "+CGEV: ME DETACH" disturb me. In the documentation of the =
 
---===============3004659181858714684==--
+SIMCOM module, I see :
+
+"The mobile equipment has forced a Packet Domain detach. This implies =
+
+that all active contexts have been deactivated. These are not reported =
+
+separately."
+
+I tried to re-attach with "Active" command but it fails :
+
+------------------------------------------------------------------
+# dbus-send --system --type=3Dmethod_call --print-reply --dest=3Dorg.ofono =
+
+/simcom_1/context1 org.ofono.ConnectionContext.SetProperty =
+
+string:"Active" variant:boolean:true
+Error org.ofono.Error.NotAttached: GPRS is not attached
+------------------------------------------------------------------
+
+In ConnectionManager, I see the "Attached" variable is "False".
+
+Can you help me ?
+
+Regards,
+Anthony.
+
+--===============1533122163464648393==--
 
