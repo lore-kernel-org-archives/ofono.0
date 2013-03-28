@@ -1,69 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============5394079194125440894=="
+Content-Type: multipart/mixed; boundary="===============9069810949355309772=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Randomly SMS sent passes or fails
-Date: Thu, 28 Mar 2013 13:05:47 -0500
-Message-ID: <5154867B.5000506@gmail.com>
-In-Reply-To: <51546FEA.7070501@syscom-instruments.com>
+Subject: Re: SAGEM HiloNC v2 Driver
+Date: Thu, 28 Mar 2013 14:41:35 -0500
+Message-ID: <51549CEF.3070906@gmail.com>
+In-Reply-To: <CAAs3wMjr-0xrGo_JML1ZtDLqd+Dt_=VYXTy8Ob3nK8RMWGEXeg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5394079194125440894==
+--===============9069810949355309772==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Anthony,
+Hi,
 
->
-> Errr, ok :P
->
-> How do you known this ? I looked on AT documentation for my modem, on
-> 3GPP TS 27.007 V3.13.0, I saw nothing...
-
-You really do not want to know.  But if you do, see 3GPP 51.011 or ETSI =
-
-102.221 for details.
-
->
-> I added some logs and each time ofono does AT+CRSM commands, there a
-> call to "sim_fs_op_error" function ...
->
-> I've got two kind of answers on AT+CRSM commands :
->
->
-> ofonod[12357]: Data: < \r\n+CRSM: 106,130,""\r\n\r\nOK\r\n
-
-I'm guessing you have a 3G sim.  Refer to 'Table 10.14: Status byte =
-
-coding - wrong parameters' in ETSI 102.221.  Literally 106 means '6A', =
-
-130 means '82' -> File Not Found.
-
->
-> or
->
-> ofonod[6859]: Data: < \r\n+CRSM: 144,0,""\r\n\r\nOK\r\n
->
-> It means all the CRSM commands fails ???
+> Hi ,
+> got new information. I start gdb and backtrace and i found where is the
+> seg fault. The function "decode_at_error"  doesn't check if *error or
+> *final are NULL... and in my case they are.
+> if  I put a check in the function it remains stuck waiting AT cmd reply..=
+..
 >
 
-Actually, this is peculiar, the CRSM command is not failing and the =
+The wakeup logic should only be used with the Freerunner.  Please =
 
-result is fine.  Just that it is empty.  Perhaps you need to quirk the =
-
-CRSM behavior in this case.  Does adding your modem to the list in =
-
-at_sim_read_info()
-
-                 /* Maximum possible length */
-                 len +=3D sprintf(buf + len, ",0,0,255");
-                 break;
-
-make it work properly?
+disable it unless you know what you're doing.  Something else is wrong.
 
 Regards,
 -Denis
 
---===============5394079194125440894==--
+--===============9069810949355309772==--
 
