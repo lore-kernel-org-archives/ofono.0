@@ -1,34 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============9069810949355309772=="
+Content-Type: multipart/mixed; boundary="===============7117096697778232756=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: SAGEM HiloNC v2 Driver
-Date: Thu, 28 Mar 2013 14:41:35 -0500
-Message-ID: <51549CEF.3070906@gmail.com>
-In-Reply-To: <CAAs3wMjr-0xrGo_JML1ZtDLqd+Dt_=VYXTy8Ob3nK8RMWGEXeg@mail.gmail.com>
+From: Forest Bond <forest@alittletooquiet.net>
+Subject: [PATCH 1/2] modem: Support modem property "AlwaysOnline"
+Date: Thu, 28 Mar 2013 17:00:32 -0400
+Message-ID: <20130328210032.GA31496@alittletooquiet.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9069810949355309772==
+--===============7117096697778232756==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+From: Forest Bond <forest.bond@rapidrollout.com>
 
-> Hi ,
-> got new information. I start gdb and backtrace and i found where is the
-> seg fault. The function "decode_at_error"  doesn't check if *error or
-> *final are NULL... and in my case they are.
-> if  I put a check in the function it remains stuck waiting AT cmd reply..=
-..
->
+This can be set by the modem driver to indicate that the device is
+always in the online state when it is enabled.  This is useful for
+modem drivers that handle both CDMA and GSM devices.
+---
+ src/modem.c |   20 ++++++++++++++------
+ 1 files changed, 14 insertions(+), 6 deletions(-)
 
-The wakeup logic should only be used with the Freerunner.  Please =
+diff --git a/src/modem.c b/src/modem.c
+index 0f12f5a..49913a9 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -595,6 +595,17 @@ static gboolean modem_has_sim(struct ofono_modem *mode=
+m)
+ 	return FALSE;
+ }
+ =
 
-disable it unless you know what you're doing.  Something else is wrong.
++static gboolean modem_is_always_online(struct ofono_modem *modem)
++{
++	if (modem->driver->set_online =3D=3D NULL)
++		return TRUE;
++
++	if (ofono_modem_get_boolean(modem, "AlwaysOnline") =3D=3D TRUE)
++		return TRUE;
++
++	return FALSE;
++}
++
+ static void common_online_cb(const struct ofono_error *error, void *data)
+ {
+ 	struct ofono_modem *modem =3D data;
+@@ -702,11 +713,8 @@ static void sim_state_watch(enum ofono_sim_state new_s=
+tate, void *user)
+ 	case OFONO_SIM_STATE_READY:
+ 		modem_change_state(modem, MODEM_STATE_OFFLINE);
+ =
 
-Regards,
--Denis
+-		/*
+-		 * If we don't have the set_online method, also proceed
+-		 * straight to the online state
+-		 */
+-		if (modem->driver->set_online =3D=3D NULL)
++		/* Modem is always online, proceed to online state. */
++		if (modem_is_always_online(modem) =3D=3D TRUE)
+ 			set_online(modem, TRUE);
+ =
 
---===============9069810949355309772==--
+ 		if (modem->online =3D=3D TRUE)
+@@ -745,7 +753,7 @@ static DBusMessage *set_property_online(struct ofono_mo=
+dem *modem,
+ 	if (ofono_modem_get_emergency_mode(modem) =3D=3D TRUE)
+ 		return __ofono_error_emergency_active(msg);
+ =
+
+-	if (driver->set_online =3D=3D NULL)
++	if (modem_is_always_online(modem) =3D=3D TRUE)
+ 		return __ofono_error_not_implemented(msg);
+ =
+
+ 	modem->pending =3D dbus_message_ref(msg);
+-- =
+
+1.7.0.4
+
+--===============7117096697778232756==--
 
