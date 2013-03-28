@@ -1,79 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============8861220794704027830=="
+Content-Type: multipart/mixed; boundary="===============3004659181858714684=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 4/5] handsfree-audio: Add .Connect using the card driver
-Date: Wed, 27 Mar 2013 21:13:01 -0300
-Message-ID: <1364429582-12518-4-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH 5/5] handsfree-audio: Handle when .Connect() was already
+ replied to
+Date: Wed, 27 Mar 2013 21:13:02 -0300
+Message-ID: <1364429582-12518-5-git-send-email-vinicius.gomes@openbossa.org>
 In-Reply-To: <1364429582-12518-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8861220794704027830==
+--===============3004659181858714684==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Now each handsfree implementation may be notified that a card wants
-its audio to be connected.
+In some cases, it is possible that when sco_connect_cb() is called
+the .Connect() message (stored in card->msg) is not valid anymore.
 ---
- src/handsfree-audio.c | 25 +++++++++++++++++++++++++
- 1 file changed, 25 insertions(+)
+ src/handsfree-audio.c | 24 ++++++++++++++++--------
+ 1 file changed, 16 insertions(+), 8 deletions(-)
 
 diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 571ed54..3f24a2a 100644
+index 3f24a2a..841cc3f 100644
 --- a/src/handsfree-audio.c
 +++ b/src/handsfree-audio.c
-@@ -273,10 +273,24 @@ done:
- 	return FALSE;
- }
+@@ -242,16 +242,19 @@ static gboolean sco_connect_cb(GIOChannel *io, GIOCon=
+dition cond,
+ {
+ 	struct ofono_handsfree_card *card =3D user_data;
+ 	DBusMessage *reply;
+-	int sk;
++	int sk, err;
  =
 
-+static void card_connect_reply_cb(const struct ofono_error *error, void *d=
-ata)
-+{
-+	struct ofono_handsfree_card *card =3D data;
-+	DBusMessage *reply;
+ 	if (agent =3D=3D NULL) {
+ 		/* There's no agent, so there's no one to reply to */
+-		reply =3D NULL;
++		if (card->msg)
++			dbus_message_unref(card->msg);
 +
-+	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
-+		reply =3D dbus_message_new_method_return(card->msg);
-+	else
++		card->msg =3D NULL;
+ 		goto done;
+ 	}
+ =
+
+ 	if (cond & (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
+-		reply =3D __ofono_error_failed(card->msg);
++		err =3D -EIO;
+ 		goto done;
+ 	}
+ =
+
+@@ -261,14 +264,19 @@ static gboolean sco_connect_cb(GIOChannel *io, GIOCon=
+dition cond,
+ =
+
+ 	close(sk);
+ =
+
+-	reply =3D dbus_message_new_method_return(card->msg);
++	err =3D 0;
+ =
+
+ done:
+-	if (reply)
+-		g_dbus_send_message(ofono_dbus_get_connection(), reply);
++	/* Or the msg was already replied to, or the agent exited */
++	if (card->msg =3D=3D NULL)
++		return FALSE;
+ =
+
+-	dbus_message_unref(card->msg);
+-	card->msg =3D NULL;
++	if (err < 0)
 +		reply =3D __ofono_error_failed(card->msg);
++	else
++		reply =3D dbus_message_new_method_return(card->msg);
 +
 +	__ofono_dbus_pending_reply(&card->msg, reply);
-+}
-+
- static DBusMessage *card_connect(DBusConnection *conn,
- 						DBusMessage *msg, void *data)
- {
- 	struct ofono_handsfree_card *card =3D data;
-+	const struct ofono_handsfree_card_driver *driver =3D card->driver;
- 	const char *sender;
- 	int err;
  =
 
-@@ -291,6 +305,17 @@ static DBusMessage *card_connect(DBusConnection *conn,
- 	if (card->msg)
- 		return __ofono_error_busy(msg);
- =
-
-+	if (!driver || !driver->connect)
-+		goto fallback;
-+
-+	card->msg =3D dbus_message_ref(msg);
-+
-+	driver->connect(card, card_connect_reply_cb, card);
-+
-+	return NULL;
-+
-+fallback:
-+	/* There's no driver, fallback to direct SCO connection */
- 	err =3D ofono_handsfree_card_connect_sco(card);
- 	if (err < 0)
- 		return __ofono_error_failed(msg);
+ 	return FALSE;
+ }
 -- =
 
 1.8.2
 
 
---===============8861220794704027830==--
+--===============3004659181858714684==--
 
