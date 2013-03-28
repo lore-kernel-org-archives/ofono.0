@@ -1,80 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============1217228705994540945=="
+Content-Type: multipart/mixed; boundary="===============5439277484113557898=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: SAGEM HiloNC v2 Driver
-Date: Wed, 27 Mar 2013 14:54:46 -0500
-Message-ID: <51534E86.1040101@gmail.com>
-In-Reply-To: <CAAs3wMjfWfeog=+ECLZZjYEMwNL6nh4fn=phARSwVs06dt9u5A@mail.gmail.com>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: [PATCH 1/5] hfp_hf_bluez5: Add a card driver for HFP 1.6
+Date: Wed, 27 Mar 2013 21:12:58 -0300
+Message-ID: <1364429582-12518-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1217228705994540945==
+--===============5439277484113557898==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marco,
+This is just the skeleton of a Handsfree Audio Card for the HF side of
+HFP 1.6.
+---
+ plugins/hfp_hf_bluez5.c | 37 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
 
->
->     enable -> pre_sim, sim_inserted -> post_sim, set_online ->
->     post_online.  Generally you do not call set_online before hitting
->     the post_sim state.
->
->
-> could I don't  implement set_online if I don't need it?
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index ff8afba..e2fa70c 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -60,6 +60,8 @@
+ =
 
-That would work, if the modem driver does not implement set_online, =
+ #define HFP_EXT_PROFILE_PATH   "/bluetooth/profile/hfp_hf"
+ =
 
-oFono core automatically transitions to Online after CPIN returns 'READY'.
++#define HFP16_HF_DRIVER		"hfp16-hf-driver"
++
+ struct hfp {
+ 	struct hfp_slc_info info;
+ 	DBusMessage *msg;
+@@ -310,6 +312,31 @@ static struct ofono_modem_driver hfp_driver =3D {
+ 	.post_sim	=3D hfp_post_sim,
+ };
+ =
 
->
->     <snip>
->
->
->
->         I've managing vendor URC for sim detection right now but i have
->         problems.For instance if I remove it when ofonod is ready the Hil=
-onc
->         sends an URC to notify sim status changed but after that it reboo=
-ts
->         itself(2 sec later)... what i did is to notify the stack that
->         the SIM
->         has been removed and modem is powered off . I thought that after
->         calling
->         set_powered fnc the stack should have called my driver virtual
->         disable
->         function in order to properly close the MUX .. but it's not..
->
->
->     No, if you call ofono_modem_set_powered(modem, FALSE) it assumes
->     that the modem powered off due to an internally generated event
->     (e.g. not oFono's doing).  The driver has to clean up properly in
->     this case.  The driver disable() method is only called on oFono
->     initiated power down requests.
->
->
-> mmh ok..so If the modem restarts it's my business to disable and enable
-> again all the driver' stuff , right?
->
++static int hfp16_card_probe(struct ofono_handsfree_card *card,
++					unsigned int vendor, void *data)
++{
++	return 0;
++}
++
++static void hfp16_card_remove(struct ofono_handsfree_card *card)
++{
++
++}
++
++static void hfp16_card_connect(struct ofono_handsfree_card *card,
++					ofono_handsfree_card_connect_cb_t cb,
++					void *data)
++{
++
++}
++
++static struct ofono_handsfree_card_driver hfp16_hf_driver =3D {
++	.name		=3D HFP16_HF_DRIVER,
++	.probe		=3D hfp16_card_probe,
++	.remove		=3D hfp16_card_remove,
++	.connect	=3D hfp16_card_connect,
++};
++
+ static ofono_bool_t device_path_compare(struct ofono_modem *modem,
+ 					void *userdata)
+ {
+@@ -616,6 +643,13 @@ static int hfp_init(void)
+ 		return -EIO;
+ 	}
+ =
 
-If the modem resets, then yes you need to call ofono_modem_set_powered =
++	err =3D ofono_handsfree_card_driver_register(&hfp16_hf_driver);
++	if (err < 0) {
++		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
++						BLUEZ_PROFILE_INTERFACE);
++		return err;
++	}
++
+ 	err =3D ofono_modem_driver_register(&hfp_driver);
+ 	if (err < 0) {
+ 		g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+@@ -647,6 +681,9 @@ static void hfp_exit(void)
+ 	bt_unregister_profile(conn, HFP_EXT_PROFILE_PATH);
+ 	g_dbus_unregister_interface(conn, HFP_EXT_PROFILE_PATH,
+ 						BLUEZ_PROFILE_INTERFACE);
++
++	ofono_handsfree_card_driver_unregister(&hfp16_hf_driver);
++
+ 	ofono_modem_driver_unregister(&hfp_driver);
+ 	g_dbus_client_unref(bluez);
+ =
 
-to FALSE.  Booting it back up should not be done in the driver, unless =
+-- =
 
-your modem supports so called silent resets.  This is where the modem =
+1.8.2
 
-stack crashes but silently resets itself back to the previous state. =
 
-(e.g. no PIN entry is required, initialization is very fast). In that =
-
-case use ofono_modem_reset.
-
-<snip>
-
-Glad I could help ;)
-
-Regards,
--Denis
-
---===============1217228705994540945==--
+--===============5439277484113557898==--
 
