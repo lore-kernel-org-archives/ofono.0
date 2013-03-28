@@ -1,60 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============5879082474367111778=="
+Content-Type: multipart/mixed; boundary="===============1601967572095130787=="
 MIME-Version: 1.0
-From: Forest Bond <forest@alittletooquiet.net>
-Subject: Re: [RFC PATCH 2/3] modem: Support modem property "AlwaysOnline"
-Date: Thu, 28 Mar 2013 11:36:35 -0400
-Message-ID: <20130328153635.GK29445@alittletooquiet.net>
-In-Reply-To: <515459DD.1070203@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: SAGEM HiloNC v2 Driver
+Date: Thu, 28 Mar 2013 11:04:30 -0500
+Message-ID: <51546A0E.6020005@gmail.com>
+In-Reply-To: <CAAs3wMijW_8Cm9Af673zHjLBvvg4ZshWLcBrLuiiVfxKyTyVMQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5879082474367111778==
+--===============1601967572095130787==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi,
 
-On Thu, Mar 28, 2013 at 09:55:25AM -0500, Denis Kenzior wrote:
-> Hi Forest,
-> =
+> Thanks for ppp issue I understand. I tried my code (that worked on x86)
+> on the embedded ARM  board but we have problem , here the logs:
+> ofonod[16939]: drivers/atmodem/sim.c:at_crsm_read_cb() crsm_read_cb: 90,
+> 00, 15
+> ofonod[16939]: src/simfs.c:sim_fs_op_read_block_cb() bufoff: 0, dataoff:
+> 0, tocopy: 15
+> ofonod[16939]: MUX: waking up writer
+> ofonod[16939]: MUX: creating source: 0x14a0390, channel: 0x148a6a0,
+> writer: 4, reader: 0
+> ofonod[16939]: MUX: can write data
+> ofonod[16939]: MUX: checking channel for write: 0x148ac50
+> ofonod[16939]: MUX: checking channel for write: 0x148a6a0
+> ofonod[16939]: MUX: dispatching write sources: 0x148a6a0
+> ofonod[16939]: MUX: checking source: 0x14a0390
+> ofonod[16939]: MUX: dispatching source: 0x14a0390
+> ofonod[16939]: Chat2: > AT+CRSM=3D192,28474\r
+> ofonod[16939]: MUX: removing source: 0x14a0390
+> ofonod[16939]: MUX: checking source: 0x149eb80
+> ofonod[16939]: MUX: checking channel for write: 0x1488ec0
+> ofonod[16939]: MUX: dispatching write sources: 0x1488ec0
+> ofonod[16939]: MUX: checking source: 0x148aaf0
+> ofonod[16939]: MUX: checking channel for write: 0x1490430
+> ofonod[16939]: MUX: dispatching write sources: 0x1490430
+> ofonod[16939]: MUX: checking source: 0x148ad60
+> ofonod[16939]: Chat1: Wakeup got no response
+> ofonod[16939]: Aborting (signal 11) [ofonod]
+> ofonod[16939]: ++++++++ backtrace ++++++++
+>
+> I suspect that should be a syncronization issue between the virtual
+> channel. Any idea?
+>
 
-> On 03/28/2013 09:22 AM, Forest Bond wrote:
-> >From: Forest Bond<forest.bond@rapidrollout.com>
-> >
-> >---
-> >  src/modem.c |   15 +++++++++++++--
-> >  1 files changed, 13 insertions(+), 2 deletions(-)
-> >
-> =
+Can you compile oFono with debug information on (export CFLAGS=3D-O0, =
 
-> I would actually be okay with this as an interim solution, but see
-> my comments to patch 3.
+--enable-debug) and see whether you get a better backtrace.  This is =
 
-Great, glad to hear it.
+pretty hard to debug with the information provided.
 
-Quick question:  Once this change is in place, set_online is not called for=
- CDMA
-devices.  Should I kill the CDMA-only code paths there?
+Regards,
+-Denis
 
-Thanks,
-Forest
--- =
 
-Forest Bond
-http://www.alittletooquiet.net
-http://www.rapidrollout.com
-
---===============5879082474367111778==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEuNC4xMCAoR05V
-L0xpbnV4KQoKaUVZRUFSRUNBQVlGQWxGVVk0TUFDZ2tRUk80ZlFRZHY1QXpPc1FDZ3JzMUdZMTgz
-SWp0VlBWTFdDdEt1MDF3UwpnVWtBb014dEpMSXJzVy9kTThtMWRxdWswQlM3MEFvWAo9YXFqcwot
-LS0tLUVORCBQR1AgU0lHTkFUVVJFLS0tLS0K
-
---===============5879082474367111778==--
+--===============1601967572095130787==--
 
