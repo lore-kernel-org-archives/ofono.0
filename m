@@ -1,44 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============7641862094089309694=="
+Content-Type: multipart/mixed; boundary="===============0267478216455920231=="
 MIME-Version: 1.0
-From: Forest Bond <forest@alittletooquiet.net>
-Subject: [RFC PATCH 3/3] huawei: Set property "AlwaysOnline" for CDMA modems
-Date: Thu, 28 Mar 2013 10:22:45 -0400
-Message-ID: <20130328142245.GI29445@alittletooquiet.net>
-In-Reply-To: <20130328142112.GF29445@alittletooquiet.net>
+From: Viallard Anthony <viallard@syscom-instruments.com>
+Subject: Re: Randomly SMS sent passes or fails
+Date: Thu, 28 Mar 2013 15:29:38 +0100
+Message-ID: <515453D2.9040404@syscom-instruments.com>
+In-Reply-To: <5154070A.9040108@syscom-instruments.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7641862094089309694==
+--===============0267478216455920231==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Forest Bond <forest.bond@rapidrollout.com>
+On 28. 03. 13 10:02, Viallard Anthony wrote:
+> On 05. 03. 13 21:43, Denis Kenzior wrote:
+>>>
+>>> [...]
+>>>
+>>> Provisioning failed
+>>> -------------------------------
+>>
+>> This should not affect anything, unless your operator requires SMS to be
+>> sent over GPRS.
+>>
+>
+> Hi,
+>
+> I try to find how i can fix the "provisioning failed" message.
+>
+> Actually, I have always troubles with T-Mobile. I think I need to fix
+> this provisioning issue. How can I do this ? I tried to see where this
+> provisioning in the source code but I was quickly lost.
+>
 
----
- plugins/huawei.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+I think I've found where the issue is. The MCC and MNC can't be =
 
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index 5d8875a..0621d5b 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -377,6 +377,9 @@ static void cfun_offline(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 		return;
- 	}
- =
+retrieve. And the cause is the mnc length can't be retrieve in this =
 
-+	if (data->have_gsm =3D=3D FALSE && data->have_cdma =3D=3D TRUE)
-+		ofono_modem_set_boolean(modem, "AlwaysOnline", TRUE);
-+
- 	ofono_modem_set_powered(modem, TRUE);
- }
- =
+callback:
 
--- =
+static void sim_ad_read_cb(int ok, int length, int record,
+				const unsigned char *data,
+				int record_length, void *userdata)
 
-1.7.0.4
+The call returns at the test "if (!ok)". So, mnt_length stay at 0 and =
 
---===============7641862094089309694==--
+next, on IMSI callback, as it doesn't know mnc_length, it doesn't =
+
+extract MCC and MNC.
+
+I don't know why ofono call the callback with ok=3D0. In the log, I see =
+
+the command was successful:
+
+---------------
+Mar 28 13:50:05 mr3000 ofonod[6859]: Data: > AT+CRSM=3D192,28589\r
+Mar 28 13:50:05 mr3000 ofonod[6859]: Data: < \r\n+CRSM: =
+
+144,0,""\r\n\r\nOK\r\n
+---------------
+
+Maybe a clue on my problem... Why ofono says the command failed ?
+
+Regards,
+Anthony.
+
+--===============0267478216455920231==--
 
