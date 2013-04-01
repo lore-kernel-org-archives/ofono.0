@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8279314707059119740=="
+Content-Type: multipart/mixed; boundary="===============6579485220381734016=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4 5/9] handsfree-audio: Implement alsa playback
-Date: Mon, 01 Apr 2013 11:19:38 -0500
-Message-ID: <5159B39A.1000708@gmail.com>
-In-Reply-To: <1364231795-13787-6-git-send-email-frederic.dalleau@linux.intel.com>
+Subject: Re: [PATCH v4 8/9] handsfree-audio: mSBC support
+Date: Mon, 01 Apr 2013 11:29:55 -0500
+Message-ID: <5159B603.1080009@gmail.com>
+In-Reply-To: <1364231795-13787-9-git-send-email-frederic.dalleau@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8279314707059119740==
+--===============6579485220381734016==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,633 +17,837 @@ Hi Fred,
 
 On 03/25/2013 12:16 PM, Fr=C3=A9d=C3=A9ric Dalleau wrote:
 > ---
->   tools/handsfree-audio.c |  472 ++++++++++++++++++++++++++++++++++++++++=
-+------
->   1 file changed, 417 insertions(+), 55 deletions(-)
+>   tools/handsfree-audio.c |  513 ++++++++++++++++++++++++++++++++++++----=
+-------
+>   1 file changed, 396 insertions(+), 117 deletions(-)
+
+You need to break this patch up some more and structure it a bit more =
+
+logically.  For example, I would start with the hfp_thread driver =
+
+changes and how they affect the read / write logic.  Then I would add =
+
+CVSD parts, mSBC parts, etc.
+
 >
 > diff --git a/tools/handsfree-audio.c b/tools/handsfree-audio.c
-> index 88310aa..9a4f85b 100644
+> index 9a4f85b..e8725b7 100644
 > --- a/tools/handsfree-audio.c
 > +++ b/tools/handsfree-audio.c
-> @@ -30,10 +30,17 @@
->   #include<stdlib.h>
->   #include<string.h>
->   #include<signal.h>
-> +#include<sys/time.h>
-> +#include<poll.h>
+> @@ -40,6 +40,7 @@
+>   #include<pthread.h>
+>   #include<bluetooth/bluetooth.h>
+>   #include<bluetooth/sco.h>
+> +#include<sbc/sbc.h>
 >
->   #include<gdbus.h>
->   #include<glib.h>
->
-> +#include<alsa/asoundlib.h>
-> +#include<pthread.h>
-> +#include<bluetooth/bluetooth.h>
-> +#include<bluetooth/sco.h>
-> +
 >   #define OFONO_SERVICE			"org.ofono"
 >   #define HFP_AUDIO_MANAGER_PATH		"/"
->   #define HFP_AUDIO_MANAGER_INTERFACE	OFONO_SERVICE ".HandsfreeAudioManag=
-er"
-> @@ -50,47 +57,257 @@
->   /* DBus related */
->   static GMainLoop *main_loop =3D NULL;
->   static DBusConnection *conn;
-> -static GSList *hcons =3D NULL;
-> +static GSList *threads =3D NULL;
+> @@ -65,11 +66,50 @@ static gboolean option_server =3D FALSE;
+>   static gboolean option_defer =3D FALSE;
+>   static gchar *option_client_addr =3D NULL;
 >
->   static gboolean option_nocvsd =3D FALSE;
->   static gboolean option_nomsbc =3D FALSE;
-> +static gboolean option_server =3D FALSE;
-> +static gboolean option_defer =3D FALSE;
-> +static gchar *option_client_addr =3D NULL;
->
-> -struct hfp_audio_conn {
-> +struct hfp_audio_thread {
->   	unsigned char codec;
-> -	int watch;
-> +	int fd;
-> +	int running;
-> +	pthread_t thread;
+> -struct hfp_audio_thread {
+> -	unsigned char codec;
+> +static const char sntable[4] =3D { 0x08, 0x38, 0xC8, 0xF8 };
+> +static const int audio_rates[3] =3D { 0, 8000, 16000 };
+> +
+> +struct msbc_parser {
+> +	int len;
+> +	uint8_t buffer[60];
+> +};
+> +
+> +struct msbc_codec {
+> +	sbc_t sbcenc; /* Coder data */
+> +	char *ebuffer; /* Codec transfer buffer */
+> +	size_t ebuffer_size; /* Size of the buffer */
+> +	size_t ebuffer_start; /* start of encoding data */
+> +	size_t ebuffer_end; /* end of encoding data */
+> +
+> +	struct msbc_parser parser; /* mSBC parser for concatenating frames */
+> +	sbc_t sbcdec; /* Decoder data */
+> +
+> +	size_t msbc_frame_size;
+> +	size_t decoded_frame_size;
+> +};
+> +
+> +struct hfp_thread {
+>   	int fd;
+>   	int running;
+>   	pthread_t thread;
+> +	GSList *outq;
+> +
+> +	int rate;
+> +	char *capture_buffer;
+> +	int capture_size;
+> +	int captured;
+> +	int mtu;
+> +	int (*init)(struct hfp_thread *);
+> +	int (*free)(struct hfp_thread *);
+> +	int (*encode)(struct hfp_thread *, char *data, int len);
+> +	int (*decode)(struct hfp_thread *, char *data, int len, char *out,
+> +								int outlen);
+> +	struct msbc_codec msbc;
+> +};
+> +
+> +struct hack_sco_options {
+> +	uint16_t mtu;
+> +	uint16_t voice_setting;
 >   };
 >
-> -static void hfp_audio_conn_free(struct hfp_audio_conn *hcon)
-> +static int btstr2ba(const char *str, bdaddr_t *ba)
-> +{
-> +	int i;
-> +
-> +	for (i =3D 5; i>=3D 0; i--, str +=3D 3)
-> +		ba->b[i] =3D strtol(str, NULL, 16);
-> +
-> +	return 0;
-> +}
-> +
-> +static snd_pcm_t *hfp_audio_pcm_init(snd_pcm_stream_t stream)
-> +{
-> +	snd_pcm_t *pcm;
-> +	DBG("Initializing pcm for %s", (stream =3D=3D SND_PCM_STREAM_CAPTURE) ?
-> +			"capture" : "playback");
-> +
-> +	if (snd_pcm_open(&pcm, "default", stream, SND_PCM_NONBLOCK)<  0) {
-> +		DBG("Failed to open pcm");
-> +		return NULL;
-> +	}
-> +
-> +	/* 8000 khz, 16 bits, 128000 bytes/s, 48 bytes/frame, 6000 fps */
-> +	if (snd_pcm_set_params(pcm, SND_PCM_FORMAT_S16_LE,
-> +					SND_PCM_ACCESS_RW_INTERLEAVED,
-> +					1, 8000, 1, 20000)<  0) {
-> +		DBG("Failed to set pcm params");
-> +		snd_pcm_close(pcm);
-> +		pcm =3D NULL;
-> +	}
-> +
-> +	return pcm;
-> +}
-> +
-> +static void hfp_audio_thread_free(struct hfp_audio_thread *hcon)
->   {
->   	DBG("Freeing audio connection %p", hcon);
-> +	if (!hcon)
-> +		return;
-> +
-> +	hcon->running =3D 0;
-> +	if (hcon->thread)
-> +		pthread_join(hcon->thread, NULL);
->
-> -	hcons =3D g_slist_remove(hcons, hcon);
-> -	g_source_remove(hcon->watch);
-> +	threads =3D g_slist_remove(threads, hcon);
->   	g_free(hcon);
-> +	DBG("freed %p", hcon);
+>   static int btstr2ba(const char *str, bdaddr_t *ba)
+> @@ -82,21 +122,232 @@ static int btstr2ba(const char *str, bdaddr_t *ba)
+>   	return 0;
 >   }
 >
-> -static gboolean hfp_audio_cb(GIOChannel *io, GIOCondition cond, gpointer=
- data)
-> +/* Returns the number of data on sco socket */
-> +static int hfp_audio_playback(int fd, snd_pcm_t *playback)
->   {
-> -	struct hfp_audio_conn *hcon =3D data;
-> -	gsize read;
-> -	gsize written;
-> -	char buf[60];
-> +	char buf[800];
-> +	snd_pcm_sframes_t frames;
-> +	int bytes;
-> +
-> +	bytes =3D read(fd, buf, sizeof(buf));
-> +	if (bytes<  0) {
-> +		DBG("Failed to read: bytes %d, errno %d", bytes, errno);
-> +		switch (errno) {
-> +		case ENOTCONN:
-> +			return -ENOTCONN;
-> +		case EAGAIN:
-> +			return 0;
-> +		default:
-> +			return -EINVAL;
-> +		}
-> +	}
->
-> -	if (cond&  (G_IO_HUP | G_IO_NVAL | G_IO_ERR))
-> -		goto fail;
-> +	frames =3D snd_pcm_writei(playback, buf, bytes / 2);
-> +	switch (frames) {
-> +	case -EPIPE:
-> +		DBG("Playback underrun");
-> +		snd_pcm_prepare(playback);
-> +		return bytes;
-> +	case -EAGAIN:
-> +		DBG("??? %d", bytes / 2);
-> +		return bytes;
-> +	case -EBADFD:
-> +	case -ESTRPIPE:
-> +		return -EINVAL;
-> +	}
->
-> -	if (g_io_channel_read_chars(io, buf, sizeof(buf),&read, NULL) !=3D
-> -			G_IO_STATUS_NORMAL)
-> -		goto fail;
-> +	if (frames<  bytes / 2)
-> +		DBG("played %d<  requested %d", (int)frames, bytes / 2);
->
-> -	g_io_channel_write_chars(io, buf+written, read,&written, NULL);
-> +	return bytes;
-> +}
->
-> -	return TRUE;
-> +/* Returns the number of data on sco socket */
-> +static int hfp_audio_capture(int fd, snd_pcm_t *capture, GList **outq, i=
-nt mtu)
+> -static snd_pcm_t *hfp_audio_pcm_init(snd_pcm_stream_t stream)
+> +static void msbc_parser_reset(struct msbc_parser *p)
 > +{
-> +	snd_pcm_sframes_t frames;
-> +	gchar *buf;
+> +	p->len =3D 0;
+> +}
 > +
-> +	buf =3D g_try_malloc(mtu);
-> +	if (!buf)
-> +		return -ENOMEM;
-> +
-> +	frames =3D snd_pcm_readi(capture, buf, mtu / 2);
-> +	switch (frames) {
-> +	case -EPIPE:
-> +		DBG("Capture overrun");
-> +		snd_pcm_prepare(capture);
-> +		g_free(buf);
+> +static int msbc_state_machine(struct msbc_parser *p, uint8_t byte)
+> +{
+> +	switch (p->len) {
+> +	case 0:
+> +		if (byte =3D=3D 0x01)
+> +			goto copy;
 > +		return 0;
-> +	case -EAGAIN:
-> +		DBG("No data to capture");
-> +		g_free(buf);
-> +		return 0;
-> +	case -EBADFD:
-> +	case -ESTRPIPE:
-> +		DBG("Other error");
-> +		g_free(buf);
-> +		return -EINVAL;
+> +	case 1:
+> +		if (byte =3D=3D 0x08 || byte =3D=3D 0x38 || byte =3D=3D 0xC8
+> +				|| byte =3D=3D 0xF8)
+> +			goto copy;
+> +		break;
+> +	case 2:
+> +		if (byte =3D=3D 0xAD)
+> +			goto copy;
+> +		break;
+> +	case 3:
+> +		if (byte =3D=3D 0x00)
+> +			goto copy;
+> +		break;
+> +	case 4:
+> +		if (byte =3D=3D 0x00)
+> +			goto copy;
+> +		break;
+> +	default:
+> +		goto copy;
 > +	}
 > +
-> +	if (frames<  mtu / 2)
-> +		DBG("Small frame: %d", (int) frames);
-> +
-> +	if (g_list_length(*outq)>  32)
-> +		DBG("Too many queued packets");
-> +
-> +	*outq =3D g_list_append(*outq, buf);
-> +
-> +	return frames * 2;
-> +}
-> +
-> +static void pop_outq(int fd, GList **outq, int mtu)
-> +{
-> +	GList *el;
-> +
-> +	el =3D g_list_first(*outq);
-> +	if (!el)
-> +		return;
-> +
-> +	*outq =3D g_list_remove_link(*outq, el);
->
-> +	if (write(fd, el->data, mtu)<  0)
-> +		DBG("Failed to write: %d", errno);
-> +
-> +	g_free(el->data);
-> +	g_list_free(el);
-> +}
-> +
-> +static void *thread_func(void *userdata)
-> +{
-> +	struct hfp_audio_thread *hcon =3D userdata;
-> +	snd_pcm_t *playback, *capture;
-> +	GList *outq =3D NULL;
-> +	struct sco_options  opts;
-> +	struct pollfd fds[8];
-> +
-> +	DBG("thread started");
-> +
-> +	capture =3D hfp_audio_pcm_init(SND_PCM_STREAM_CAPTURE);
-> +	if (!capture)
-> +		return NULL;
-> +
-> +	playback =3D hfp_audio_pcm_init(SND_PCM_STREAM_PLAYBACK);
-> +	if (!playback) {
-> +		snd_pcm_close(capture);
-> +		return NULL;
-> +	}
-> +
-> +	/* Force defered setup */
-> +	if (read(hcon->fd,&opts, sizeof(opts))<  0)
-> +		DBG("Defered setup failed: %d (%s)", errno, strerror(errno));
-> +
-> +	/* Add SCO options
-> +	len =3D sizeof(opts);
-> +	if (getsockopt(hcon->fd, SOL_SCO, SCO_OPTIONS,&opts,&len)<  0) {
-> +		DBG("getsockopt failed %d", errno);
-> +		return NULL;
-> +	}
-> +	*/
-> +	opts.mtu =3D 48;
-> +	DBG("mtu %d", opts.mtu);
-> +
-> +	while (hcon->running) {
-> +		/* Queue alsa captured data (snd_pcm_poll_descriptors failed) */
-> +		if (hfp_audio_capture(hcon->fd, capture,&outq, opts.mtu)<  0) {
-> +			DBG("Failed to capture");
-> +			break;
-> +		}
-> +
-> +		memset(fds, 0, sizeof(fds));
-> +		fds[0].fd =3D hcon->fd;
-> +		fds[0].events =3D POLLIN | POLLERR | POLLHUP | POLLNVAL;
-> +		if (poll(fds, 1, 200) =3D=3D 0)
-> +			continue;
-> +
-> +		if (fds[0].revents&  (POLLERR | POLLHUP | POLLNVAL)) {
-> +			DBG("POLLERR | POLLHUP | POLLNVAL triggered");
-> +			break;
-> +		}
-> +
-> +		if (!fds[0].revents&  POLLIN)
-> +			continue;
-> +
-> +		if (hfp_audio_playback(hcon->fd, playback)<  0) {
-> +			DBG("POLLIN triggered, but read error");
-> +			break;
-> +		}
-> +
-> +		/* Dequeue in sync with readings */
-> +		pop_outq(hcon->fd,&outq, opts.mtu);
-> +	}
-> +
-> +	DBG("thread terminating");
-> +	snd_pcm_close(playback);
-> +	snd_pcm_close(capture);
-> +	return NULL;
-> +}
-> +
-> +static int new_connection(int fd, int codec)
-> +{
-> +	struct hfp_audio_thread *hcon;
-> +	DBG("New connection: fd=3D%d codec=3D%d", fd, codec);
-> +	hcon =3D g_try_malloc0(sizeof(struct hfp_audio_thread));
-> +	if (hcon =3D=3D NULL)
-> +		return -ENOMEM;
-> +
-> +	hcon->fd =3D fd;
-> +	hcon->codec =3D codec;
-> +	hcon->running =3D 1;
-> +
-> +	if (pthread_create(&hcon->thread, NULL, thread_func, hcon)<  0)
-> +		goto fail;
-> +
-> +	/* FIXME thread is not detached until we quit */
-> +
-> +	threads =3D g_slist_prepend(threads, hcon);
+> +	p->len =3D 0;
 > +	return 0;
->   fail:
-> -	DBG("Disconnected");
-> -	hfp_audio_conn_free(hcon);
-> -	return FALSE;
-> +	hfp_audio_thread_free(hcon);
-> +	return -EINVAL;
+> +
+> +copy:
+> +	p->buffer[p->len] =3D byte;
+> +	p->len++;
+> +
+> +	return p->len;
+> +}
+> +
+> +static size_t msbc_parse(sbc_t *sbcdec, struct msbc_parser *p, char *dat=
+a,
+> +		int len, char *out, int outlen, int *bytes)
+> +{
+> +	size_t totalwritten =3D 0;
+> +	size_t written =3D 0;
+> +	int i;
+> +	*bytes =3D 0;
+> +
+> +	for (i =3D 0; i<  len; i++) {
+> +		if (msbc_state_machine(p, data[i]) =3D=3D 60) {
+> +			int decoded;
+> +			decoded =3D sbc_decode(sbcdec, p->buffer + 2,
+> +					p->len - 2 - 1, out, outlen,&written);
+> +			if (decoded>  0) {
+> +				totalwritten +=3D written;
+> +				*bytes +=3D decoded;
+> +			} else {
+> +				DBG("Error while decoding: %d", decoded);
+> +			}
+> +			msbc_parser_reset(p);
+> +		}
+> +	}
+> +	return totalwritten;
+> +}
+> +
+> +static int hfp_audio_cvsd_init(struct hfp_thread *thread)
+> +{
+> +	thread->rate =3D 8000;
+> +	thread->capture_size =3D 48;
+> +	return 0;
+> +}
+> +
+> +static int hfp_audio_cvsd_free(struct hfp_thread *thread)
+> +{
+> +	return 0;
+> +}
+> +
+> +static int hfp_audio_cvsd_encode(struct hfp_thread *thread, char *data,
+> +						int len)
+> +{
+> +	char *qbuf;
+> +
+> +	if (len>  thread->mtu) {
+> +		DBG("Mtu too small: len %d, mtu %d", len, thread->mtu);
+> +		return -EINVAL;
+> +	}
+> +
+> +	qbuf =3D g_try_malloc(thread->mtu);
+> +	if (!qbuf)
+> +		return -ENOMEM;
+> +
+> +	memcpy(qbuf, data, len);
+> +
+> +	thread->outq =3D g_slist_insert(thread->outq, qbuf, -1);
+> +
+> +	return len;
+> +}
+> +
+> +static int hfp_audio_cvsd_decode(struct hfp_thread *thread, char *data,
+> +						int len, char *out, int outlen)
+> +{
+> +	int size =3D (len<  outlen) ? len : outlen;
+> +	memcpy(out, data, size);
+> +	return size;
+> +}
+> +
+> +/* Run from IO thread */
+> +static int hfp_audio_msbc_init(struct hfp_thread *thread)
+> +{
+> +	struct msbc_codec *codec =3D&thread->msbc;
+> +	struct hack_sco_options opts;
+> +
+> +	thread->rate =3D 16000;
+> +	thread->capture_size =3D 240; /* decoded mSBC frame */
+> +
+> +	memset(&opts, 0, sizeof(opts));
+> +	opts.voice_setting =3D 0X0003;
+> +	if (setsockopt(thread->fd, SOL_SCO, SCO_OPTIONS,&opts, sizeof(opts))
+> +			<  0) {
+> +		DBG("Can't set transparent mode: %s (%d)",
+> +				strerror(errno), errno);
+> +		return -ENOTSUP;
+> +	}
+> +
+> +	sbc_init_msbc(&codec->sbcenc, 0);
+> +	sbc_init_msbc(&codec->sbcdec, 0);
+> +
+> +	codec->msbc_frame_size =3D 2 + sbc_get_frame_length(&codec->sbcenc) + 1;
+> +	codec->decoded_frame_size =3D sbc_get_codesize(&codec->sbcenc);
+> +	msbc_parser_reset(&codec->parser);
+> +
+> +	/* 5 * 48 =3D=3D 10 * 24 =3D=3D 4 * 60 */
+> +	codec->ebuffer_size =3D codec->msbc_frame_size * 4;
+> +	codec->ebuffer =3D g_try_malloc(codec->ebuffer_size);
+> +	codec->ebuffer_start =3D 0;
+> +	codec->ebuffer_end =3D 0;
+> +
+> +	DBG("codec->msbc_frame_size %d", (int) codec->msbc_frame_size);
+> +	DBG("codec->ebuffer_size %d", (int) codec->ebuffer_size);
+> +	DBG("codec->decoded_frame_size %d", (int) codec->decoded_frame_size);
+> +	return 0;
+> +}
+> +
+> +/* Run from IO thread */
+> +static int hfp_audio_msbc_free(struct hfp_thread *thread)
+> +{
+> +	struct msbc_codec *codec =3D&thread->msbc;
+> +
+> +	g_free(codec->ebuffer);
+> +	sbc_finish(&codec->sbcenc);
+> +	sbc_finish(&codec->sbcdec);
+> +
+> +	return 0;
+> +}
+> +
+> +/* Run from IO thread */
+> +static int hfp_audio_msbc_encode(struct hfp_thread *thread, char *data, =
+int len)
+> +{
+> +	struct msbc_codec *codec =3D&thread->msbc;
+> +	char *h2 =3D codec->ebuffer + codec->ebuffer_end;
+> +	static int sn =3D 0;
+> +	int written =3D 0;
+> +	char *qbuf;
+> +
+> +	h2[0] =3D 0x01;
+> +	h2[1] =3D sntable[sn];
+> +	h2[59] =3D 0xff;
+> +	sn =3D (sn + 1) % 4;
+> +
+> +	sbc_encode(&codec->sbcenc, data, len,
+> +			codec->ebuffer + codec->ebuffer_end + 2,
+> +			codec->ebuffer_size - codec->ebuffer_end - 2,
+> +			(ssize_t *)&written);
+> +
+> +	written +=3D 2 /* H2 */ + 1 /* 0xff */;
+> +	codec->ebuffer_end +=3D written;
+> +
+> +	/* Split into MTU sized chunks */
+> +	while (codec->ebuffer_start + thread->mtu<=3D codec->ebuffer_end) {
+> +		qbuf =3D g_try_malloc(thread->mtu);
+> +		if (!qbuf)
+> +			return -ENOMEM;
+> +
+> +		/* DBG("Enqueuing %d bytes", thread->mtu); */
+> +		memcpy(qbuf, codec->ebuffer + codec->ebuffer_start, thread->mtu);
+> +
+> +		thread->outq =3D g_slist_insert(thread->outq, qbuf, -1);
+> +
+> +		codec->ebuffer_start +=3D thread->mtu;
+> +		if (codec->ebuffer_start>=3D codec->ebuffer_end)
+> +			codec->ebuffer_start =3D codec->ebuffer_end =3D 0;
+> +	}
+> +
+> +	return 0;
+> +}
+> +
+> +/* Run from IO thread */
+> +static int hfp_audio_msbc_decode(struct hfp_thread *thread, char *data,
+> +						int len, char *out, int outlen)
+> +{
+> +	struct msbc_codec *codec =3D&thread->msbc;
+> +	int written, decoded;
+> +
+> +	written =3D msbc_parse(&codec->sbcdec,&codec->parser, data, len, out,
+> +			outlen,&decoded);
+> +
+> +	return written;
+> +}
+> +
+> +static snd_pcm_t *hfp_audio_pcm_init(snd_pcm_stream_t stream, int rate)
+>   {
+>   	snd_pcm_t *pcm;
+>   	DBG("Initializing pcm for %s", (stream =3D=3D SND_PCM_STREAM_CAPTURE) ?
+> -			"capture" : "playback");
+> +							"capture" : "playback");
+>
+>   	if (snd_pcm_open(&pcm, "default", stream, SND_PCM_NONBLOCK)<  0) {
+>   		DBG("Failed to open pcm");
+>   		return NULL;
+>   	}
+>
+> -	/* 8000 khz, 16 bits, 128000 bytes/s, 48 bytes/frame, 6000 fps */
+> +	/* 16 bits */
+>   	if (snd_pcm_set_params(pcm, SND_PCM_FORMAT_S16_LE,
+> -					SND_PCM_ACCESS_RW_INTERLEAVED,
+> -					1, 8000, 1, 20000)<  0) {
+> +			SND_PCM_ACCESS_RW_INTERLEAVED, 1, rate, 1, 120000)<  0) {
+>   		DBG("Failed to set pcm params");
+>   		snd_pcm_close(pcm);
+>   		pcm =3D NULL;
+> @@ -105,29 +356,35 @@ static snd_pcm_t *hfp_audio_pcm_init(snd_pcm_stream=
+_t stream)
+>   	return pcm;
+>   }
+>
+> -static void hfp_audio_thread_free(struct hfp_audio_thread *hcon)
+> +static void hfp_audio_thread_free(struct hfp_thread *thread)
+>   {
+> -	DBG("Freeing audio connection %p", hcon);
+> -	if (!hcon)
+> +	DBG("Freeing audio connection %p", thread);
+> +	if (!thread)
+>   		return;
+>
+> -	hcon->running =3D 0;
+> -	if (hcon->thread)
+> -		pthread_join(hcon->thread, NULL);
+> +	thread->running =3D 0;
+> +	if (thread->thread)
+> +		pthread_join(thread->thread, NULL);
+>
+> -	threads =3D g_slist_remove(threads, hcon);
+> -	g_free(hcon);
+> -	DBG("freed %p", hcon);
+> +	if (shutdown(thread->fd, SHUT_RDWR)<  0)
+> +			DBG("Failed to shutdown socket");
+> +	if (close(thread->fd)<  0)
+> +		DBG("Failed to close socket");
+> +
+> +	threads =3D g_slist_remove(threads, thread);
+> +	g_free(thread);
+> +	DBG("freed %p", thread);
+>   }
+>
+>   /* Returns the number of data on sco socket */
+> -static int hfp_audio_playback(int fd, snd_pcm_t *playback)
+> +static int hfp_audio_playback(struct hfp_thread *thread,
+> +		snd_pcm_t *playback)
+>   {
+> -	char buf[800];
+> +	char buf[512], out[512];
+> +	int bytes, outlen;
+>   	snd_pcm_sframes_t frames;
+> -	int bytes;
+>
+> -	bytes =3D read(fd, buf, sizeof(buf));
+> +	bytes =3D read(thread->fd, buf, sizeof(buf));
+>   	if (bytes<  0) {
+>   		DBG("Failed to read: bytes %d, errno %d", bytes, errno);
+>   		switch (errno) {
+> @@ -140,178 +397,201 @@ static int hfp_audio_playback(int fd, snd_pcm_t *=
+playback)
+>   		}
+>   	}
+>
+> -	frames =3D snd_pcm_writei(playback, buf, bytes / 2);
+> +	/* DBG("received %d bytes", bytes); */
+> +	outlen =3D thread->decode(thread, buf, bytes, out, sizeof(out));
+> +
+> +	frames =3D snd_pcm_writei(playback, out, outlen / 2);
+>   	switch (frames) {
+>   	case -EPIPE:
+> -		DBG("Playback underrun");
+>   		snd_pcm_prepare(playback);
+>   		return bytes;
+>   	case -EAGAIN:
+> -		DBG("??? %d", bytes / 2);
+>   		return bytes;
+>   	case -EBADFD:
+>   	case -ESTRPIPE:
+>   		return -EINVAL;
+>   	}
+>
+> -	if (frames<  bytes / 2)
+> -		DBG("played %d<  requested %d", (int)frames, bytes / 2);
+> +	if (frames<  outlen / 2)
+> +		DBG("played %d<  requested %d", (int)frames, outlen / 2);
+>
+>   	return bytes;
+>   }
+>
+>   /* Returns the number of data on sco socket */
+> -static int hfp_audio_capture(int fd, snd_pcm_t *capture, GList **outq, i=
+nt mtu)
+> +static int hfp_audio_capture(struct hfp_thread *thread, snd_pcm_t *captu=
+re)
+>   {
+>   	snd_pcm_sframes_t frames;
+> -	gchar *buf;
+> -
+> -	buf =3D g_try_malloc(mtu);
+> -	if (!buf)
+> -		return -ENOMEM;
+>
+> -	frames =3D snd_pcm_readi(capture, buf, mtu / 2);
+> +	frames =3D snd_pcm_readi(capture, thread->capture_buffer+thread->captur=
+ed,
+> +				(thread->capture_size - thread->captured) / 2);
+>   	switch (frames) {
+>   	case -EPIPE:
+> -		DBG("Capture overrun");
+>   		snd_pcm_prepare(capture);
+> -		g_free(buf);
+>   		return 0;
+>   	case -EAGAIN:
+> -		DBG("No data to capture");
+> -		g_free(buf);
+>   		return 0;
+>   	case -EBADFD:
+>   	case -ESTRPIPE:
+> -		DBG("Other error");
+> -		g_free(buf);
+> +		DBG("Other error %s (%d)", strerror(frames), (int) frames);
+>   		return -EINVAL;
+>   	}
+>
+> -	if (frames<  mtu / 2)
+> -		DBG("Small frame: %d", (int) frames);
+> +	thread->captured +=3D frames * 2;
+> +	if (thread->captured<  thread->capture_size)
+> +		return frames * 2;
+>
+> -	if (g_list_length(*outq)>  32)
+> -		DBG("Too many queued packets");
+> -
+> -	*outq =3D g_list_append(*outq, buf);
+> +	/* DBG("Encoding %d bytes", (int) thread->captured); */
+> +	thread->encode(thread, thread->capture_buffer, thread->captured);
+> +	thread->captured =3D 0;
+>
+>   	return frames * 2;
+>   }
+>
+> -static void pop_outq(int fd, GList **outq, int mtu)
+> +static void pop_outq(struct hfp_thread *thread)
+>   {
+> -	GList *el;
+> -
+> -	el =3D g_list_first(*outq);
+> -	if (!el)
+> -		return;
+> +	char *qbuf;
+>
+> -	*outq =3D g_list_remove_link(*outq, el);
+> +	while (thread->outq !=3D NULL) {
+> +		qbuf =3D thread->outq->data;
+> +		thread->outq =3D g_slist_remove(thread->outq, qbuf);
+>
+> -	if (write(fd, el->data, mtu)<  0)
+> -		DBG("Failed to write: %d", errno);
+> +		if (write(thread->fd, qbuf, thread->mtu)<  0)
+> +			DBG("Failed to write: %d", errno);
+>
+> -	g_free(el->data);
+> -	g_list_free(el);
+> +		g_free(qbuf);
+> +	}
+>   }
+>
+>   static void *thread_func(void *userdata)
+>   {
+> -	struct hfp_audio_thread *hcon =3D userdata;
+> +	struct hfp_thread *thread =3D userdata;
+>   	snd_pcm_t *playback, *capture;
+> -	GList *outq =3D NULL;
+> -	struct sco_options  opts;
+> +	struct sco_options opts;
+>   	struct pollfd fds[8];
+>
+> -	DBG("thread started");
+> +	DBG("thread started: rate %d", thread->rate);
+> +
+> +	if (thread->init(thread)<  0)
+> +		return NULL;
+>
+> -	capture =3D hfp_audio_pcm_init(SND_PCM_STREAM_CAPTURE);
+> +	capture =3D hfp_audio_pcm_init(SND_PCM_STREAM_CAPTURE, thread->rate);
+>   	if (!capture)
+>   		return NULL;
+>
+> -	playback =3D hfp_audio_pcm_init(SND_PCM_STREAM_PLAYBACK);
+> +	playback =3D hfp_audio_pcm_init(SND_PCM_STREAM_PLAYBACK, thread->rate);
+>   	if (!playback) {
+>   		snd_pcm_close(capture);
+>   		return NULL;
+>   	}
+>
+> +	thread->capture_buffer =3D g_try_malloc(thread->capture_size);
+> +	if (!thread->capture_buffer) {
+> +		snd_pcm_close(capture);
+> +		snd_pcm_close(playback);
+> +		return NULL;
+> +	}
+> +
+>   	/* Force defered setup */
+> -	if (read(hcon->fd,&opts, sizeof(opts))<  0)
+> +	if (recv(thread->fd, NULL, 0, 0)<  0)
+>   		DBG("Defered setup failed: %d (%s)", errno, strerror(errno));
+>
+>   	/* Add SCO options
+> -	len =3D sizeof(opts);
+> -	if (getsockopt(hcon->fd, SOL_SCO, SCO_OPTIONS,&opts,&len)<  0) {
+> -		DBG("getsockopt failed %d", errno);
+> -		return NULL;
+> -	}
+> -	*/
+> +	 len =3D sizeof(opts);
+> +	 if (getsockopt(thread->fd, SOL_SCO, SCO_OPTIONS,&opts,&len)<  0) {
+> +	 DBG("getsockopt failed %d", errno);
+> +	 return NULL;
+> +	 }
+> +	 */
+>   	opts.mtu =3D 48;
+> -	DBG("mtu %d", opts.mtu);
+> +	thread->mtu =3D opts.mtu;
+> +	DBG("thread->mtu %d", thread->mtu);
+>
+> -	while (hcon->running) {
+> +	while (thread->running) {
+>   		/* Queue alsa captured data (snd_pcm_poll_descriptors failed) */
+> -		if (hfp_audio_capture(hcon->fd, capture,&outq, opts.mtu)<  0) {
+> +		if (hfp_audio_capture(thread, capture)<  0) {
+>   			DBG("Failed to capture");
+>   			break;
+>   		}
+>
+>   		memset(fds, 0, sizeof(fds));
+> -		fds[0].fd =3D hcon->fd;
+> +		fds[0].fd =3D thread->fd;
+>   		fds[0].events =3D POLLIN | POLLERR | POLLHUP | POLLNVAL;
+>   		if (poll(fds, 1, 200) =3D=3D 0)
+>   			continue;
+>
+>   		if (fds[0].revents&  (POLLERR | POLLHUP | POLLNVAL)) {
+> -			DBG("POLLERR | POLLHUP | POLLNVAL triggered");
+> +			DBG("POLLERR | POLLHUP | POLLNVAL triggered (%d)",
+> +					fds[0].revents);
+>   			break;
+>   		}
+>
+>   		if (!fds[0].revents&  POLLIN)
+>   			continue;
+>
+> -		if (hfp_audio_playback(hcon->fd, playback)<  0) {
+> +		if (hfp_audio_playback(thread, playback)<  0) {
+>   			DBG("POLLIN triggered, but read error");
+>   			break;
+>   		}
+>
+> +		/* DBG("Received and send"); */
+> +
+>   		/* Dequeue in sync with readings */
+> -		pop_outq(hcon->fd,&outq, opts.mtu);
+> +		pop_outq(thread);
+>   	}
+>
+>   	DBG("thread terminating");
+> +	g_slist_free_full(thread->outq, g_free);
+> +	g_free(thread->capture_buffer);
+>   	snd_pcm_close(playback);
+>   	snd_pcm_close(capture);
+> +
+> +	thread->free(thread);
+> +
+>   	return NULL;
+>   }
+>
+>   static int new_connection(int fd, int codec)
+>   {
+> -	struct hfp_audio_thread *hcon;
+> +	struct hfp_thread *thread;
+> +
+>   	DBG("New connection: fd=3D%d codec=3D%d", fd, codec);
+> -	hcon =3D g_try_malloc0(sizeof(struct hfp_audio_thread));
+> -	if (hcon =3D=3D NULL)
+> +	thread =3D g_try_malloc0(sizeof(struct hfp_thread));
+> +	if (thread =3D=3D NULL)
+>   		return -ENOMEM;
+>
+> -	hcon->fd =3D fd;
+> -	hcon->codec =3D codec;
+> -	hcon->running =3D 1;
+> +	thread->fd =3D fd;
+> +	thread->running =3D 1;
+> +
+> +	switch (codec) {
+> +	case HFP_AUDIO_CVSD:
+> +		thread->init =3D hfp_audio_cvsd_init;
+> +		thread->free =3D hfp_audio_cvsd_free;
+> +		thread->decode =3D hfp_audio_cvsd_decode;
+> +		thread->encode =3D hfp_audio_cvsd_encode;
+> +		break;
+> +	case HFP_AUDIO_MSBC:
+> +		thread->rate =3D 16000;
+> +		thread->init =3D hfp_audio_msbc_init;
+> +		thread->free =3D hfp_audio_msbc_free;
+> +		thread->decode =3D hfp_audio_msbc_decode;
+> +		thread->encode =3D hfp_audio_msbc_encode;
+> +		break;
+> +	}
+>
+> -	if (pthread_create(&hcon->thread, NULL, thread_func, hcon)<  0)
+> -		goto fail;
+> +	if (pthread_create(&thread->thread, NULL, thread_func, thread)<  0) {
+> +		hfp_audio_thread_free(thread);
+> +		return -EINVAL;
+> +	}
+>
+>   	/* FIXME thread is not detached until we quit */
+>
+> -	threads =3D g_slist_prepend(threads, hcon);
+> +	threads =3D g_slist_prepend(threads, thread);
+>   	return 0;
+> -fail:
+> -	hfp_audio_thread_free(hcon);
+> -	return -EINVAL;
 >   }
 >
 >   static DBusMessage *agent_newconnection(DBusConnection *conn, DBusMessa=
 ge *msg,
-> @@ -99,8 +316,7 @@ static DBusMessage *agent_newconnection(DBusConnection=
- *conn, DBusMessage *msg,
+> -					void *data)
+> +								void *data)
+
+Why is this needed?
+
+>   {
 >   	const char *card;
 >   	int fd;
->   	unsigned char codec;
-> -	GIOChannel *io;
-> -	struct hfp_audio_conn *hcon;
-> +	DBusMessage *reply;
->
+> @@ -321,9 +601,8 @@ static DBusMessage *agent_newconnection(DBusConnectio=
+n *conn, DBusMessage *msg,
 >   	DBG("New connection");
 >
-> @@ -112,30 +328,34 @@ static DBusMessage *agent_newconnection(DBusConnect=
-ion *conn, DBusMessage *msg,
+>   	if (dbus_message_get_args(msg, NULL, DBUS_TYPE_OBJECT_PATH,&card,
+> -						DBUS_TYPE_UNIX_FD,&fd,
+> -						DBUS_TYPE_BYTE,&codec,
+> -						DBUS_TYPE_INVALID) =3D=3D FALSE)
+> +			DBUS_TYPE_UNIX_FD,&fd, DBUS_TYPE_BYTE,&codec,
+> +			DBUS_TYPE_INVALID) =3D=3D FALSE)
+
+Why is this needed?
+
+>   		return g_dbus_create_error(msg,
 >   				HFP_AUDIO_AGENT_INTERFACE ".InvalidArguments",
 >   				"Invalid arguments");
->
-> -	DBG("New connection: card=3D%s fd=3D%d codec=3D%d", card, fd, codec);
-> +	reply =3D dbus_message_new_method_return(msg);
-> +	if (!reply)
-> +		goto fail;
->
-> -	io =3D g_io_channel_unix_new(fd);
-> +	if (new_connection(fd, codec)>=3D 0)
-> +		return reply;
->
-> -	hcon =3D g_try_malloc0(sizeof(struct hfp_audio_conn));
-> -	if (hcon =3D=3D NULL)
-> -		return NULL;
-> +	dbus_message_unref(reply);
->
-> -	hcon->codec =3D codec;
-> -	hcon->watch =3D g_io_add_watch(io, G_IO_IN, hfp_audio_cb, hcon);
-> -	hcons =3D g_slist_prepend(hcons, hcon);
-> +fail:
-> +	close(fd);
->
-> -	return dbus_message_new_method_return(msg);
-> +	return g_dbus_create_error(msg,
-> +			HFP_AUDIO_AGENT_INTERFACE ".Failed", "Failed to start");
+> @@ -345,7 +624,7 @@ fail:
 >   }
 >
 >   static DBusMessage *agent_release(DBusConnection *conn, DBusMessage *ms=
 g,
->   					void *data)
+> -					void *data)
+> +		void *data)
 >   {
 >   	DBG("HFP audio agent released");
-> +	/* agent will be registered on next oFono startup */
->   	return dbus_message_new_method_return(msg);
->   }
+>   	/* agent will be registered on next oFono startup */
+> @@ -368,8 +647,8 @@ static void hfp_audio_agent_register_reply(DBusPendin=
+gCall *call, void *data)
+>   	dbus_error_init(&err);
 >
->   static const GDBusMethodTable agent_methods[] =3D {
-> -	{ GDBUS_METHOD("NewConnection", NULL, NULL, agent_newconnection) },
-> +	{ GDBUS_METHOD("NewConnection",
-> +		GDBUS_ARGS({ "path", "o" }, { "fd", "h" }, { "codec", "y" }),
-> +		NULL, agent_newconnection) },
->   	{ GDBUS_METHOD("Release", NULL, NULL, agent_release) },
->   	{ },
->   };
-> @@ -167,7 +387,7 @@ static void hfp_audio_agent_register(DBusConnection *=
+>   	if (dbus_set_error_from_message(&err, reply) =3D=3D TRUE) {
+> -		DBG("Failed to register audio agent (%s: %s)", err.name,
+> -								err.message);
+> +		DBG("Failed to register audio agent (%s: %s)",
+> +				err.name, err.message);
+
+Or this?
+
+>   		dbus_error_free(&err);
+>   	} else {
+>   		DBG("HFP audio agent registered");
+> @@ -390,9 +669,8 @@ static void hfp_audio_agent_register(DBusConnection *=
 conn)
->   	const unsigned char *pcodecs =3D codecs;
->   	int ncodecs =3D 0;
->
-> -	DBG("Registering audio agent");
-> +	DBG("Registering audio agent in oFono");
+>   	DBG("Registering audio agent in oFono");
 >
 >   	msg =3D dbus_message_new_method_call(OFONO_SERVICE,
->   						HFP_AUDIO_MANAGER_PATH,
-> @@ -196,20 +416,147 @@ static void hfp_audio_agent_register(DBusConnectio=
-n *conn)
+> -						HFP_AUDIO_MANAGER_PATH,
+> -						HFP_AUDIO_MANAGER_INTERFACE,
+> -						"Register");
+> +			HFP_AUDIO_MANAGER_PATH, HFP_AUDIO_MANAGER_INTERFACE,
+> +			"Register");
+
+Or this?
+
+>   	if (msg =3D=3D NULL) {
+>   		DBG("Not enough memory");
+>   		return;
+> @@ -405,8 +683,8 @@ static void hfp_audio_agent_register(DBusConnection *=
+conn)
+>   		codecs[ncodecs++] =3D HFP_AUDIO_MSBC;
+>
+>   	dbus_message_append_args(msg, DBUS_TYPE_OBJECT_PATH,&path,
+> -					DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE,
+> -					&pcodecs, ncodecs, DBUS_TYPE_INVALID);
+> +			DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE,&pcodecs, ncodecs,
+> +			DBUS_TYPE_INVALID);
+>
+>   	if (!dbus_connection_send_with_reply(conn, msg,&call, -1)) {
+>   		dbus_message_unref(msg);
+> @@ -416,8 +694,8 @@ static void hfp_audio_agent_register(DBusConnection *=
+conn)
 >
 >   	dbus_message_unref(msg);
 >
-> -	if (call =3D=3D NULL) {
-> -		DBG("Unable to register agent");
-> -		return;
-> -	}
-> -
->   	dbus_pending_call_set_notify(call, hfp_audio_agent_register_reply,
->   						NULL, NULL);
+> -	dbus_pending_call_set_notify(call, hfp_audio_agent_register_reply,
+> -						NULL, NULL);
+> +	dbus_pending_call_set_notify(call, hfp_audio_agent_register_reply, NULL,
+> +			NULL);
 >
 >   	dbus_pending_call_unref(call);
 >   }
+> @@ -483,30 +761,32 @@ static int sco_listen_watch()
 >
-> +static gboolean sco_accept_cb(GIOChannel *io, GIOCondition cond, gpointe=
-r data)
-> +{
-> +	struct sockaddr_sco addr;
-> +	socklen_t optlen;
-> +	int sk, nsk;
-> +
-> +	if (cond&  (G_IO_HUP | G_IO_NVAL | G_IO_ERR))
+>   	if (bind(sk, (struct sockaddr *)&saddr, sizeof(saddr))<  0) {
+>   		DBG("Can't bind socket: %s (%d)", strerror(errno), errno);
+> -		goto error;
 > +		goto fail;
-> +
-> +	DBG("Incoming connection");
-> +	sk =3D g_io_channel_unix_get_fd(io);
-> +	nsk =3D accept(sk, (struct sockaddr *)&addr,&optlen);
-> +
-> +	if (nsk>  0)
-> +		new_connection(nsk, HFP_AUDIO_CVSD);
-> +
-> +	return TRUE;
-> +
-> +fail:
-> +	DBG("Server disconnected");
-> +	return FALSE;
-> +}
-
-I'm lost, why do we need this part?
-
-> +
-> +static gboolean sco_connect_cb(GIOChannel *io, GIOCondition cond, gpoint=
-er data)
-> +{
-> +	int sk;
-> +
-> +	if (cond&  (G_IO_HUP | G_IO_NVAL | G_IO_ERR))
+>   	}
+>
+>   	/* Enable deferred setup */
+> -	if (option_defer&&  setsockopt(sk, SOL_BLUETOOTH, BT_DEFER_SETUP,
+> -				&option_defer, sizeof(option_defer))<  0) {
+> +	if (option_defer
+> +			&&  setsockopt(sk, SOL_BLUETOOTH, BT_DEFER_SETUP,
+> +					&option_defer, sizeof(option_defer))
+> +					<  0) {
+>   		DBG("Can't defer setup : %s (%d)", strerror(errno), errno);
+> -		goto error;
 > +		goto fail;
-> +
-> +	DBG("Connected");
-> +	sk =3D g_io_channel_unix_get_fd(io);
-> +	if (sk>  0)
-> +		new_connection(sk, HFP_AUDIO_CVSD);
-> +
-> +	return FALSE;
-> +
+>   	}
+>
+>   	/* Listen for connections */
+>   	if (listen(sk, 10)) {
+>   		DBG("Can not listen socket: %s (%d)", strerror(errno), errno);
+> -		goto error;
+> +		goto fail;
+>   	}
+>
+>   	DBG("Waiting for connection ...");
+>   	io =3D g_io_channel_unix_new(sk);
+>   	if (!io)
+> -		goto error;
+> +		goto fail;
+>
+>   	return g_io_add_watch(io, G_IO_IN, sco_accept_cb, NULL);
+>
+> -error:
 > +fail:
-> +	DBG("Connection failed");
-> +	return FALSE;
-> +}
+>   	close(sk);
+>   	return -1;
 
-Or this part?
+All of these should be merged into previous patches and not be part of =
 
-> +
-> +static int sco_listen_watch()
-> +{
-> +	struct sockaddr_sco saddr;
-> +	int sk;
-> +	GIOChannel *io;
-> +
-> +	/* Create socket */
-> +	sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET, BTPROTO_SCO);
-> +	if (sk<  0) {
-> +		DBG("Can't create socket: %s (%d)", strerror(errno), errno);
-> +		return -1;
-> +	}
-> +
-> +	/* Bind to local address */
-> +	memset(&saddr, 0, sizeof(saddr));
-> +	saddr.sco_family =3D AF_BLUETOOTH;
-> +
-> +	if (bind(sk, (struct sockaddr *)&saddr, sizeof(saddr))<  0) {
-> +		DBG("Can't bind socket: %s (%d)", strerror(errno), errno);
-> +		goto error;
-> +	}
-> +
-> +	/* Enable deferred setup */
-> +	if (option_defer&&  setsockopt(sk, SOL_BLUETOOTH, BT_DEFER_SETUP,
-> +				&option_defer, sizeof(option_defer))<  0) {
-> +		DBG("Can't defer setup : %s (%d)", strerror(errno), errno);
-> +		goto error;
-> +	}
-> +
-> +	/* Listen for connections */
-> +	if (listen(sk, 10)) {
-> +		DBG("Can not listen socket: %s (%d)", strerror(errno), errno);
-> +		goto error;
-> +	}
-> +
-> +	DBG("Waiting for connection ...");
-> +	io =3D g_io_channel_unix_new(sk);
-> +	if (!io)
-> +		goto error;
-> +
-> +	return g_io_add_watch(io, G_IO_IN, sco_accept_cb, NULL);
-> +
-> +error:
-> +	close(sk);
-> +	return -1;
-> +}
+this patch.
 
-Or this part?
-
-> +
-> +static int sco_connect_watch()
-> +{
-> +	struct sockaddr_sco saddr;
-> +	int sk;
-> +	GIOChannel *io;
-> +
-> +	/* Create socket */
-> +	sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET, BTPROTO_SCO);
-> +	if (sk<  0) {
-> +		DBG("Can't create socket: %s (%d)", strerror(errno), errno);
-> +		return -1;
-> +	}
-> +
-> +	/* Bind to local address */
-> +	memset(&saddr, 0, sizeof(saddr));
-> +	saddr.sco_family =3D AF_BLUETOOTH;
-> +
-> +	if (bind(sk, (struct sockaddr *)&saddr, sizeof(saddr))<  0) {
-> +		DBG("Can't bind socket: %s (%d)", strerror(errno), errno);
-> +		goto error;
-> +	}
-> +
-> +	/* Connect to remote address */
-> +	memset(&saddr, 0, sizeof(saddr));
-> +	saddr.sco_family =3D AF_BLUETOOTH;
-> +	btstr2ba(option_client_addr,&saddr.sco_bdaddr);
-> +	if (connect(sk, (struct sockaddr *)&saddr, sizeof(saddr))) {
-> +		DBG("Can not connect socket: %s (%d)", strerror(errno), errno);
-> +		goto error;
-> +	}
-> +
-> +	DBG("Connecting to %s...", option_client_addr);
-> +	io =3D g_io_channel_unix_new(sk);
-> +	if (!io)
-> +		goto error;
-> +
-> +	return g_io_add_watch(io, G_IO_IN|G_IO_OUT, sco_connect_cb, NULL);
-> +
-> +error:
-> +	close(sk);
-> +	return -1;
-> +}
-> +
-
-Or this?  Sounds like these belong in BlueZ, not oFono.
-
->   static void hfp_audio_agent_create(DBusConnection *conn)
->   {
-> -	DBG("Creating audio agent");
-> +	DBG("Registering audio agent on DBUS");
+>   }
+> @@ -530,7 +810,7 @@ static int sco_connect_watch()
+>
+>   	if (bind(sk, (struct sockaddr *)&saddr, sizeof(saddr))<  0) {
+>   		DBG("Can't bind socket: %s (%d)", strerror(errno), errno);
+> -		goto error;
+> +		goto fail;
+>   	}
+>
+>   	/* Connect to remote address */
+> @@ -539,17 +819,17 @@ static int sco_connect_watch()
+>   	btstr2ba(option_client_addr,&saddr.sco_bdaddr);
+>   	if (connect(sk, (struct sockaddr *)&saddr, sizeof(saddr))) {
+>   		DBG("Can not connect socket: %s (%d)", strerror(errno), errno);
+> -		goto error;
+> +		goto fail;
+>   	}
+>
+>   	DBG("Connecting to %s...", option_client_addr);
+>   	io =3D g_io_channel_unix_new(sk);
+>   	if (!io)
+> -		goto error;
+> +		goto fail;
+>
+> -	return g_io_add_watch(io, G_IO_IN|G_IO_OUT, sco_connect_cb, NULL);
+> +	return g_io_add_watch(io, G_IO_IN | G_IO_OUT, sco_connect_cb, NULL);
+>
+> -error:
+> +fail:
+>   	close(sk);
+>   	return -1;
+>   }
+> @@ -559,9 +839,8 @@ static void hfp_audio_agent_create(DBusConnection *co=
+nn)
+>   	DBG("Registering audio agent on DBUS");
 >
 >   	if (!g_dbus_register_interface(conn, HFP_AUDIO_AGENT_PATH,
->   					HFP_AUDIO_AGENT_INTERFACE,
-> @@ -222,7 +569,7 @@ static void hfp_audio_agent_create(DBusConnection *co=
-nn)
->
->   static void hfp_audio_agent_destroy(DBusConnection *conn)
->   {
-> -	DBG("Destroying audio agent");
-> +	DBG("Unregistering audio agent on DBUS");
+> -					HFP_AUDIO_AGENT_INTERFACE,
+> -					agent_methods, NULL, NULL,
+> -					NULL, NULL)) {
+> +			HFP_AUDIO_AGENT_INTERFACE, agent_methods, NULL, NULL,
+> +			NULL, NULL)) {
+>   		DBG("Unable to create local agent");
+>   		g_main_loop_quit(main_loop);
+>   	}
+> @@ -572,7 +851,7 @@ static void hfp_audio_agent_destroy(DBusConnection *c=
+onn)
+>   	DBG("Unregistering audio agent on DBUS");
 >
 >   	g_dbus_unregister_interface(conn, HFP_AUDIO_AGENT_PATH,
->   						HFP_AUDIO_AGENT_INTERFACE);
-> @@ -259,6 +606,12 @@ static GOptionEntry options[] =3D {
->   				"Disable CVSD support" },
->   	{ "nomsbc", 'm', 0, G_OPTION_ARG_NONE,&option_nomsbc,
->   				"Disable MSBC support" },
-> +	{ "defer", 'd', 0, G_OPTION_ARG_NONE,&option_defer,
-> +				"Defered socket support" },
-> +	{ "server", 'S', 0, G_OPTION_ARG_NONE,&option_server,
-> +				"Server" },
-> +	{ "client", 'C', 1, G_OPTION_ARG_STRING,&option_client_addr,
-> +				"Client addr" },
->   	{ NULL },
->   };
+> -						HFP_AUDIO_AGENT_INTERFACE);
+> +			HFP_AUDIO_AGENT_INTERFACE);
+>   }
 >
-> @@ -293,6 +646,11 @@ int main(int argc, char **argv)
->
->   	dbus_error_init(&err);
->
-> +	memset(&sa, 0, sizeof(sa));
-> +	sa.sa_handler =3D sig_term;
-> +	sigaction(SIGINT,&sa, NULL);
-> +	sigaction(SIGTERM,&sa, NULL);
-> +
->   	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, NULL,&err);
->   	if (conn =3D=3D NULL) {
->   		if (dbus_error_is_set(&err) =3D=3D TRUE) {
-> @@ -305,24 +663,28 @@ int main(int argc, char **argv)
->
->   	g_dbus_set_disconnect_function(conn, disconnect_callback, NULL, NULL);
->
-> -	memset(&sa, 0, sizeof(sa));
-> -	sa.sa_handler =3D sig_term;
-> -	sigaction(SIGINT,&sa, NULL);
-> -	sigaction(SIGTERM,&sa, NULL);
-> -
-> -	hfp_audio_agent_create(conn);
-> -
-> -	watch =3D g_dbus_add_service_watch(conn, OFONO_SERVICE,
-> +	if (option_server) {
-> +		watch =3D sco_listen_watch();
-> +	} else if (option_client_addr !=3D NULL) {
-> +		watch =3D sco_connect_watch();
-> +	} else {
-> +		hfp_audio_agent_create(conn);
-> +		watch =3D g_dbus_add_service_watch(conn, OFONO_SERVICE,
->   				ofono_connect, ofono_disconnect, NULL, NULL);
-> -
-> +	}
->   	g_main_loop_run(main_loop);
->
-> -	g_dbus_remove_watch(conn, watch);
-> -
-> -	while (hcons !=3D NULL)
-> -		hfp_audio_conn_free(hcons->data);
-> +	while (threads !=3D NULL)
-> +		hfp_audio_thread_free(threads->data);
->
-> -	hfp_audio_agent_destroy(conn);
-> +	if (option_server) {
-> +		g_source_remove(watch);
-> +	} else if (option_client_addr !=3D NULL) {
-> +		g_source_remove(watch);
-> +	} else {
-> +		g_dbus_remove_watch(conn, watch);
-> +		hfp_audio_agent_destroy(conn);
-> +	}
->
->   	dbus_connection_unref(conn);
->
+>   static void ofono_connect(DBusConnection *conn, void *user_data)
+
+Same as above.
 
 Regards,
 -Denis
 
---===============8279314707059119740==--
+--===============6579485220381734016==--
 
