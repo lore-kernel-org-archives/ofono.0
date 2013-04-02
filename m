@@ -1,79 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============7087328461514234664=="
+Content-Type: multipart/mixed; boundary="===============2978573088355253374=="
 MIME-Version: 1.0
-From: Viallard Anthony <viallard@syscom-instruments.com>
-Subject: Re: Randomly SMS sent passes or fails
-Date: Tue, 02 Apr 2013 17:25:42 +0200
-Message-ID: <515AF876.8010500@syscom-instruments.com>
-In-Reply-To: <515AF457.2000102@gmail.com>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH 5/5] handsfree-audio: Handle when .Connect() was already
+ replied to
+Date: Tue, 02 Apr 2013 18:11:55 -0300
+Message-ID: <20130402211155.GD2715@samus>
+In-Reply-To: <5154567D.9040308@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7087328461514234664==
+--===============2978573088355253374==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Denis,
 
-On 02. 04. 13 17:08, Denis Kenzior wrote:
->
-> I doubt provisioning has anything to do with this. That is only for
-> activating a context.
+Sorry for the delay.
 
-Indeed, I tried to remove duplicate entries, provisioning is good but =
+On 09:41 Thu 28 Mar, Denis Kenzior wrote:
+> Hi Vinicius,
+> =
 
-SMS fail with GPRS enabled.
+> On 03/27/2013 07:13 PM, Vinicius Costa Gomes wrote:
+> >In some cases, it is possible that when sco_connect_cb() is called
+> >the .Connect() message (stored in card->msg) is not valid anymore.
+> =
 
-I see stange behavior too. When I try to re-enabled a disabled GPRS =
+> Can you tell me what cases these are?
+> =
 
-context (Active true --> Active false --> Active true), I've got an error:
+> My thinking is that we will treat the connect callback specially.
+> =
 
-----------------------------
-ofonod[25358]: Modem: > AT+CGDATA=3D"PPP",1\r
-ofonod[25358]: Modem: < \r\nCONNECT 115200\r\n
-ofonod[25358]: drivers/atmodem/gprs-context.c:at_cgdata_cb() ok 1
-ofonod[25358]: drivers/atmodem/gprs-context.c:setup_ppp()
-ofonod[25358]: drivers/atmodem/gprs-context.c:ppp_connect()
-ofonod[25358]: IP: 10.47.176.26
-ofonod[25358]: DNS: 10.74.210.210, 10.74.210.211
-ofonod[25358]: src/gprs.c:pri_activate_callback() 0x101a58
-ofonod[25358]: plugins/udev.c:udev_event() subsystem net add
-ofonod[25358]: plugins/udev.c:udev_event() subsystem net finished
-ofonod[25358]: plugins/udevng.c:check_modem_list()
-ofonod[25358]: =
+> If the driver calls the callback function, then it is assumed that
+> no further action is necessary.  If the driver calls connect_sco(),
+> then we assume that the callback function will never be called.
 
-drivers/atmodem/gprs-context.c:at_gprs_deactivate_primary() cid 1
-ofonod[25358]: plugins/udevng.c:remove_device() =
+This is indeed the case (when the HFP 1.6 driver fallbacks to direct SCO
+connection). The way I was writing it I was calling connect_sco() and the
+callback inside the driver.
 
-/sys/devices/virtual/net/ppp0
-ofonod[25358]: plugins/udev.c:udev_event() subsystem net remove
-ofonod[25358]: plugins/udev.c:remove_modem() /devices/virtual/net/ppp0
-ofonod[25358]: plugins/udev.c:udev_event() subsystem net finished
-ofonod[25358]: drivers/atmodem/gprs-context.c:ppp_disconnect() Reason: 6
-ofonod[25358]: Modem: < \r\nNO CARRIER\r\n
-ofonod[25358]: Data: < \r\nNO CARRIER\r\n
-ofonod[25358]: drivers/atmodem/gprs-context.c:at_gprs_activate_primary() =
+If we consider that when you call connect_sco() you hand the connection
+responsability to the core, it even makes more sense. =
 
-cid 1
-ofonod[25358]: src/gprs.c:pri_activate_callback() 0x101a58
-ofonod[25358]: src/gprs.c:pri_activate_callback() Activating context =
 
-failed with error: Unknown error type
-----------------------------
+So, this patch can be ignored.
 
-But it works well on the first activation... I need to investiguate this =
 
-issue to see what happenning in the source code.
+Cheers,
+-- =
 
->
-> This is automatic provisioning. If there are multiple possibilities that
-> fit, then this requires user input. Obviously oFono does not support
-> user input, so a UI of some sort to finish provisioning is required.
->
+Vinicius
 
-Yes of course ! Sorry, I've chocolate instead of brain since few days.
-
-Regards,
-
---===============7087328461514234664==--
+--===============2978573088355253374==--
 
