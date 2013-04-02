@@ -1,36 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============3355021472962203871=="
+Content-Type: multipart/mixed; boundary="===============4388281738318000364=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] modem: Support modem property "AlwaysOnline"
-Date: Mon, 01 Apr 2013 21:43:24 -0500
-Message-ID: <515A45CC.5090901@gmail.com>
-In-Reply-To: <20130328210032.GA31496@alittletooquiet.net>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [PATCH v3 00/13] Add support for BlueZ 5 Profile1 API to dundee
+Date: Tue, 02 Apr 2013 15:12:23 +0200
+Message-ID: <515AD937.8000606@monom.org>
+In-Reply-To: <CAG7KCRHHKkd6jStROGh+-6R8ff-6-vsj+E8E8D0J4kLm++djKg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3355021472962203871==
+--===============4388281738318000364==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Forest,
+Hi Paulo,
 
-On 03/28/2013 04:00 PM, Forest Bond wrote:
-> From: Forest Bond<forest.bond@rapidrollout.com>
+[sorry for the late response, was on vacation]
+
+On 03/25/2013 03:43 PM, Paulo Borges wrote:
+> Hi Daniel,
 >
-> This can be set by the modem driver to indicate that the device is
-> always in the online state when it is enabled.  This is useful for
-> modem drivers that handle both CDMA and GSM devices.
-> ---
->   src/modem.c |   20 ++++++++++++++------
->   1 files changed, 14 insertions(+), 6 deletions(-)
+> On Sun, Mar 24, 2013 at 9:31 AM, Daniel Wagner <wagi@monom.org
+> <mailto:wagi@monom.org>> wrote:
 >
+>     Hi Paulo,
+>
+>     I have pushed all patches except patch #3. "dun_gw: Add BlueZ 5
+>     version" from Fr=C3=A9d=C3=A9ric just added recently the definition f=
+or
+>     DUN_GW_UUID. Obviously, I needed to update your patches to use
+>     DUN_GW_UUID instead of DUN_UUID. The bluez4.c file also uses
+>     DUN_GW_UUID as identifier.
+>
+>     Thanks a lot,
+>     daniel
+>
+>
+> Actually, DUN profile is "asymmetric": it doesn't have an UUID for each
+> role, they share the same UUID [1]. The only way to distinguish the
+> current role is to specify it when registering the profile with
+> bt_register_profile_with_role function.
+>
+> Specifying the role when registering a DUN profile is important because
+> only GW should expose a SDP record.
+>
+> [1]
+> https://www.bluetooth.org/Technical/AssignedNumbers/service_discovery.htm
 
-Patch has been applied, thanks.
+I see. The thing I wanted to avoid is to have twice a define for the =
 
-Regards,
--Denis
+same value. In the end the way how the define is used (as you have =
+
+described above) is essential.
+
+cheers,
+daniel
 
 
---===============3355021472962203871==--
+--===============4388281738318000364==--
 
