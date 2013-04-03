@@ -1,55 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============2434219320596042748=="
+Content-Type: multipart/mixed; boundary="===============5472381206173574412=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 3/5] hfp_hf_bluez5: Select the audio card driver based on
- version
-Date: Wed, 03 Apr 2013 20:24:39 -0300
-Message-ID: <1365031481-10467-3-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH 5/5] hfpmodem: Send AT+BAC with the supported codecs
+Date: Wed, 03 Apr 2013 20:24:41 -0300
+Message-ID: <1365031481-10467-5-git-send-email-vinicius.gomes@openbossa.org>
 In-Reply-To: <1365031481-10467-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2434219320596042748==
+--===============5472381206173574412==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Before, the AT+BAC command was being sent with fixed information,
+now we send the command (that inform the AG of the codecs supported by
+the HF) with the codecs supported by the registered Handsfree Audio
+Agent.
 ---
- plugins/hfp_hf_bluez5.c | 12 ++++++++++--
- 1 file changed, 10 insertions(+), 2 deletions(-)
+ drivers/hfpmodem/slc.c | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 4c8f412..41ea549 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -436,7 +436,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
-on *conn,
- 	struct sockaddr_rc saddr;
- 	socklen_t optlen;
- 	DBusMessageIter entry;
--	const char *device;
-+	const char *device, *driver;
- 	char local[18], remote[18];
- 	uint16_t version =3D HFP_VERSION_1_5;
- 	int fd, err;
-@@ -510,7 +510,15 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
+diff --git a/drivers/hfpmodem/slc.c b/drivers/hfpmodem/slc.c
+index 646befa..619a783 100644
+--- a/drivers/hfpmodem/slc.c
++++ b/drivers/hfpmodem/slc.c
+@@ -34,6 +34,7 @@
+ #include <ofono/log.h>
+ #include <ofono/modem.h>
+ #include <ofono/emulator.h>
++#include <ofono/handsfree-audio.h>
  =
 
- 	hfp =3D ofono_modem_get_data(modem);
- 	hfp->msg =3D dbus_message_ref(msg);
--	hfp->card =3D ofono_handsfree_card_create(0, NULL, NULL);
+ #include <drivers/atmodem/atutil.h>
+ =
+
+@@ -305,9 +306,27 @@ static void brsf_cb(gboolean ok, GAtResult *result, gp=
+ointer user_data)
+ 	if (info->ag_features & HFP_AG_FEATURE_CODEC_NEGOTIATION &&
+ 			info->hf_features & HFP_HF_FEATURE_CODEC_NEGOTIATION) {
+ =
+
++		unsigned char codecs[8];
++		GString *str;
++		int i, len;
 +
-+	driver =3D NULL;
++		len =3D ofono_handsfree_get_codecs(codecs, sizeof(codecs));
++		if (len <=3D 0)
++			goto error;
 +
-+	if (version >=3D HFP_VERSION_1_6)
-+		driver =3D HFP16_HF_DRIVER;
++		str =3D g_string_new("AT+BAC=3D");
 +
-+	hfp->card =3D ofono_handsfree_card_create(0, driver, hfp);
-+	ofono_handsfree_card_set_data(hfp->card, hfp);
++		for (i =3D 0; i < (len - 1); i++)
++			g_string_append_printf(str, "%d,", codecs[i]);
 +
- 	ofono_handsfree_card_set_local(hfp->card, local);
- 	ofono_handsfree_card_set_remote(hfp->card, remote);
++		g_string_append_printf(str, "%d", codecs[i]);
++
+ 		slc_establish_data_ref(sed);
+-		g_at_chat_send(info->chat, "AT+BAC=3D1", NULL, bac_cb, sed,
++		g_at_chat_send(info->chat, str->str, NULL, bac_cb, sed,
+ 						slc_establish_data_unref);
++
++		g_string_free(str, TRUE);
++
+ 		return;
+ 	}
  =
 
 -- =
@@ -57,5 +72,5 @@ ion *conn,
 1.8.2
 
 
---===============2434219320596042748==--
+--===============5472381206173574412==--
 
