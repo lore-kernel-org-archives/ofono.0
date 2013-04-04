@@ -1,79 +1,103 @@
-Content-Type: multipart/mixed; boundary="===============0227867012082294161=="
+Content-Type: multipart/mixed; boundary="===============5387374897246790723=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH 1/3] udevng: support telit modems using cdc-acm driver
-Date: Thu, 04 Apr 2013 10:20:50 +0200
-Message-ID: <1365063652-24286-2-git-send-email-jonas@southpole.se>
-In-Reply-To: <1365063652-24286-1-git-send-email-jonas@southpole.se>
+From: Freedreamer <freedreamer@email.it>
+Subject: Re: SAGEM HiloNC v2 Driver
+Date: Thu, 04 Apr 2013 14:08:42 +0200
+Message-ID: <CAAs3wMg72S76Ltr66so0WxE1kbEXmeEkniBT6C6KBzQdVofb6A@mail.gmail.com>
+In-Reply-To: <CAAs3wMiz-gTvWp4ZU3X1aJ25TLViKdirqQ3BQJiJC=hWoLN3tw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0227867012082294161==
+--===============5387374897246790723==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Christopher Vogl <christopher.vogl@hale.at>
+Hi,
 
-Add support for Telit modem using the cdc-acm driver, like the Telit
-HE910.
----
- plugins/udevng.c | 14 +++++++++++---
- 1 file changed, 11 insertions(+), 3 deletions(-)
+2013/3/29 Freedreamer <freedreamer@email.it>
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index afb02ca..e77e4d9 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -599,8 +599,8 @@ static gboolean setup_telit(struct modem_info *modem)
- 	for (list =3D modem->devices; list; list =3D list->next) {
- 		struct device_info *info =3D list->data;
- =
+> Hi,
+>
+>
+> 2013/3/28 Denis Kenzior <denkenz@gmail.com>
+>
+>> Hi,
+>>
+>>
+>>  Hi ,
+>>> got new information. I start gdb and backtrace and i found where is the
+>>> seg fault. The function "decode_at_error"  doesn't check if *error or
+>>> *final are NULL... and in my case they are.
+>>> if  I put a check in the function it remains stuck waiting AT cmd
+>>> reply....
+>>>
+>>>
+>> The wakeup logic should only be used with the Freerunner.  Please disable
+>> it unless you know what you're doing.  Something else is wrong.
+>>
+>> Regards,
+>> -Denis
+>>
+>
+> Denis u were right... removing wakeup cmd it seems it works again also on
+> the embedded board.Now i will work on ppp and connman integration.
+>
+> Thanks
+>
 
--		DBG("%s %s %s %s", info->devnode, info->interface,
--						info->number, info->label);
-+		DBG("%s %s %s %s %s", info->devnode, info->interface,
-+				info->number, info->label, info->sysattr);
- =
+I almost finished the driver..seems to work properly also on the embedded
+device (just for SMS & PPP ). If I would like to share the code .. how
+should I procede? would u like a patch posted here or a git  pull request ?
+or what else ?
 
- 		if (g_strcmp0(info->label, "aux") =3D=3D 0) {
- 			aux =3D info->devnode;
-@@ -619,6 +619,13 @@ static gboolean setup_telit(struct modem_info *modem)
- 				gps =3D info->devnode;
- 			else if (g_strcmp0(info->number, "03") =3D=3D 0)
- 				aux =3D info->devnode;
-+		} else if (g_strcmp0(info->interface, "2/2/1") =3D=3D 0) {
-+			if (g_strcmp0(info->number, "00") =3D=3D 0)
-+				mdm =3D info->devnode;
-+			else if (g_strcmp0(info->number, "02") =3D=3D 0)
-+				diag =3D info->devnode;
-+			else if (g_strcmp0(info->number, "06") =3D=3D 0)
-+				aux =3D info->devnode;
- 		}
- 	}
- =
+another issue  : anyone could explain what module should I see to properly
+set the ppp0 interface once  got a valid IP from the PPP ?
 
-@@ -777,7 +784,7 @@ static struct {
- 	{ "alcatel",	setup_alcatel	},
- 	{ "novatel",	setup_novatel	},
- 	{ "nokia",	setup_nokia	},
--	{ "telit",	setup_telit	},
-+	{ "telit",	setup_telit,	"device/interface"	},
- 	{ "simcom",	setup_simcom	},
- 	{ "zte",	setup_zte	},
- 	{ "icera",	setup_icera	},
-@@ -987,6 +994,7 @@ static struct {
- 	{ "zte",	"option",	"19d2"		},
- 	{ "simcom",	"option",	"05c6", "9000"	},
- 	{ "telit",	"usbserial",	"1bc7"		},
-+	{ "telit",	"cdc_acm",	"1bc7"		},
- 	{ "telit",	"option",	"1bc7"		},
- 	{ "nokia",	"option",	"0421", "060e"	},
- 	{ "nokia",	"option",	"0421", "0623"	},
--- =
+Best regards.
 
-1.8.1.2
+Marco
 
+--===============5387374897246790723==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
---===============0227867012082294161==--
+SGksPGJyPjxicj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+MjAxMy8zLzI5IEZyZWVkcmVhbWVy
+IDxzcGFuIGRpcj0ibHRyIj4mbHQ7PGEgaHJlZj0ibWFpbHRvOmZyZWVkcmVhbWVyQGVtYWlsLml0
+IiB0YXJnZXQ9Il9ibGFuayI+ZnJlZWRyZWFtZXJAZW1haWwuaXQ8L2E+Jmd0Ozwvc3Bhbj48YnI+
+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7
+Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+CkhpLDxkaXY+PGRp
+diBjbGFzcz0iaDUiPjxicj48YnI+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPjIwMTMvMy8yOCBE
+ZW5pcyBLZW56aW9yIDxzcGFuIGRpcj0ibHRyIj4mbHQ7PGEgaHJlZj0ibWFpbHRvOmRlbmtlbnpA
+Z21haWwuY29tIiB0YXJnZXQ9Il9ibGFuayI+ZGVua2VuekBnbWFpbC5jb208L2E+Jmd0Ozwvc3Bh
+bj48YnI+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAw
+IC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+CgpIaSw8
+ZGl2Pjxicj4KPGJyPgo8YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJn
+aW46MCAwIDAgLjhleDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4
+Ij4KSGkgLDxicj4KZ290IG5ldyBpbmZvcm1hdGlvbi4gSSBzdGFydCBnZGIgYW5kIGJhY2t0cmFj
+ZSBhbmQgaSBmb3VuZCB3aGVyZSBpcyB0aGU8YnI+CnNlZyBmYXVsdC4gVGhlIGZ1bmN0aW9uICZx
+dW90O2RlY29kZV9hdF9lcnJvciZxdW90OyCgZG9lc24mIzM5O3QgY2hlY2sgaWYgKmVycm9yIG9y
+PGJyPgoqZmluYWwgYXJlIE5VTEwuLi4gYW5kIGluIG15IGNhc2UgdGhleSBhcmUuPGJyPgppZiCg
+SSBwdXQgYSBjaGVjayBpbiB0aGUgZnVuY3Rpb24gaXQgcmVtYWlucyBzdHVjayB3YWl0aW5nIEFU
+IGNtZCByZXBseS4uLi48YnI+Cjxicj4KPC9ibG9ja3F1b3RlPgo8YnI+PC9kaXY+ClRoZSB3YWtl
+dXAgbG9naWMgc2hvdWxkIG9ubHkgYmUgdXNlZCB3aXRoIHRoZSBGcmVlcnVubmVyLiCgUGxlYXNl
+IGRpc2FibGUgaXQgdW5sZXNzIHlvdSBrbm93IHdoYXQgeW91JiMzOTtyZSBkb2luZy4goFNvbWV0
+aGluZyBlbHNlIGlzIHdyb25nLjxicj4KPGJyPgpSZWdhcmRzLDxicj4KLURlbmlzPGJyPgo8L2Js
+b2NrcXVvdGU+PC9kaXY+PGJyPjwvZGl2PjwvZGl2PkRlbmlzIHUgd2VyZSByaWdodC4uLiByZW1v
+dmluZyB3YWtldXAgY21kIGl0IHNlZW1zIGl0IHdvcmtzIGFnYWluIGFsc28gb24gdGhlIGVtYmVk
+ZGVkIGJvYXJkLk5vdyBpIHdpbGwgd29yayBvbiBwcHAgYW5kIGNvbm5tYW4gaW50ZWdyYXRpb24u
+IDxicj48YnI+VGhhbmtzIDxicj4KPC9ibG9ja3F1b3RlPjwvZGl2Pjxicj48ZGl2PkkgYWxtb3N0
+IGZpbmlzaGVkIHRoZSBkcml2ZXIuLnNlZW1zIHRvIHdvcmsgcHJvcGVybHkgYWxzbyBvbiB0aGUg
+ZW1iZWRkZWQgZGV2aWNlIChqdXN0IGZvciBTTVMgJmFtcDsgUFBQICkuIElmIEkgd291bGQgbGlr
+ZSB0byBzaGFyZSB0aGUgY29kZSAuLiBob3cgc2hvdWxkIEkgcHJvY2VkZT8gd291bGQgdSBsaWtl
+IGEgcGF0Y2ggcG9zdGVkIGhlcmUgb3IgYSBnaXQgoHB1bGwgcmVxdWVzdCA/IG9yIHdoYXQgZWxz
+ZSA/PC9kaXY+CjxkaXY+PGJyPjwvZGl2PjxkaXY+YW5vdGhlciBpc3N1ZSCgOiBhbnlvbmUgY291
+bGQgZXhwbGFpbiB3aGF0IG1vZHVsZSBzaG91bGQgSSBzZWUgdG8gcHJvcGVybHkgc2V0IHRoZSBw
+cHAwIGludGVyZmFjZSBvbmNlIKBnb3QgYSB2YWxpZCBJUCBmcm9tIHRoZSBQUFAgPzwvZGl2Pjxk
+aXY+PGJyPjwvZGl2PjxkaXY+QmVzdCByZWdhcmRzLjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+
+TWFyY288L2Rpdj4K
+
+--===============5387374897246790723==--
 
