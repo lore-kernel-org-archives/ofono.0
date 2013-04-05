@@ -1,78 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============4420448692966913166=="
+Content-Type: multipart/mixed; boundary="===============2445200436629597003=="
 MIME-Version: 1.0
-From: Freedreamer <freedreamer@email.it>
-Subject: Re: SAGEM HiloNC v2 Driver
-Date: Thu, 04 Apr 2013 19:18:03 +0200
-Message-ID: <CAAs3wMiFWxDLELBpOLjbQq-dTn4YduAxHwyAaCjSj9T3ND0_sg@mail.gmail.com>
-In-Reply-To: <515D81E7.2000102@gmail.com>
+From: Etienne Mabille <mabille.etienne@gmail.com>
+Subject: Re: [PATCH 0/3] Telit plugin rework for HE910
+Date: Fri, 05 Apr 2013 10:58:35 +0200
+Message-ID: <CAMtf1D9w2fT2X=3dxACJEtiJDN4Q6tx_0RhrE=Y=xbkMHEoXsw@mail.gmail.com>
+In-Reply-To: <1365063652-24286-1-git-send-email-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4420448692966913166==
+--===============2445200436629597003==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-2013/4/4 Denis Kenzior <denkenz@gmail.com>
+Thank you, I tested this series of patches on the HE910 yesterday and now
+it works just fine.
 
-> Hi Marco,
+Etienne Mabille
+
+
+
+2013/4/4 Jonas Bonn <jonas@southpole.se>
+
+> This series provides functional support for the Telit HE910 modem
+> by reworking the initialization sequence.  Though this series has
+> been tested only on an HE910 device, it seems that this control flow
+> should work fine for older devices as well given that they share the
+> same documentation and, presumably, use essentially the same firmware.
 >
+> Best regards,
+> Jonas Bonn
+> South Pole AB
 >
->  I almost finished the driver..seems to work properly also on the
->> embedded device (just for SMS & PPP ). If I would like to share the code
->> .. how should I procede? would u like a patch posted here or a git  pull
->> request ? or what else ?
->>
+> Christopher Vogl (1):
+>   udevng: support telit modems using cdc-acm driver
 >
-> Use git send-email and send the patches to the mailing list.  Please see
-> 'Submitting Patches' section in the HACKING document.
+> Jonas Bonn (2):
+>   telit: allow plugin to be compiled without BT support
+>   telit: rework for HE910
 >
+>  Makefile.am      |   9 ++--
+>  configure.ac     |   3 ++
+>  plugins/telit.c  | 156
+> ++++++++++++++++++++++++++++++++++++++++++++++---------
+>  plugins/udevng.c |  14 +++--
+>  4 files changed, 152 insertions(+), 30 deletions(-)
 >
+> --
+> 1.8.1.2
 >
->> another issue  : anyone could explain what module should I see to
->> properly set the ppp0 interface once  got a valid IP from the PPP ?
->>
->
-> See test/process-context-settings
->
-> Regards,
-> -Denis
 >
 
-perfect! i'll keep in touch :)
-
-tnx again!
-
---===============4420448692966913166==
+--===============2445200436629597003==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PGJyPkhpLDxicj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+MjAxMy80LzQgRGVuaXMgS2Vuemlv
-ciA8c3BhbiBkaXI9Imx0ciI+Jmx0OzxhIGhyZWY9Im1haWx0bzpkZW5rZW56QGdtYWlsLmNvbSIg
-dGFyZ2V0PSJfYmxhbmsiPmRlbmtlbnpAZ21haWwuY29tPC9hPiZndDs8L3NwYW4+PGJyPjxibG9j
-a3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRl
-ci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPgpIaSBNYXJjbyw8ZGl2IGNs
-YXNzPSJpbSI+PGJyPgo8YnI+CjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9
-Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVm
-dDoxZXgiPgpJIGFsbW9zdCBmaW5pc2hlZCB0aGUgZHJpdmVyLi5zZWVtcyB0byB3b3JrIHByb3Bl
-cmx5IGFsc28gb24gdGhlPGJyPgplbWJlZGRlZCBkZXZpY2UgKGp1c3QgZm9yIFNNUyAmYW1wOyBQ
-UFAgKS4gSWYgSSB3b3VsZCBsaWtlIHRvIHNoYXJlIHRoZSBjb2RlPGJyPgouLiBob3cgc2hvdWxk
-IEkgcHJvY2VkZT8gd291bGQgdSBsaWtlIGEgcGF0Y2ggcG9zdGVkIGhlcmUgb3IgYSBnaXQgoHB1
-bGw8YnI+CnJlcXVlc3QgPyBvciB3aGF0IGVsc2UgPzxicj4KPC9ibG9ja3F1b3RlPgo8YnI+PC9k
-aXY+ClVzZSBnaXQgc2VuZC1lbWFpbCBhbmQgc2VuZCB0aGUgcGF0Y2hlcyB0byB0aGUgbWFpbGlu
-ZyBsaXN0LiCgUGxlYXNlIHNlZSAmIzM5O1N1Ym1pdHRpbmcgUGF0Y2hlcyYjMzk7IHNlY3Rpb24g
-aW4gdGhlIEhBQ0tJTkcgZG9jdW1lbnQuPGRpdiBjbGFzcz0iaW0iPjxicj4KPGJyPgo8YmxvY2tx
-dW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhleDtib3JkZXIt
-bGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij4KPGJyPgphbm90aGVyIGlzc3Vl
-IKA6IGFueW9uZSBjb3VsZCBleHBsYWluIHdoYXQgbW9kdWxlIHNob3VsZCBJIHNlZSB0bzxicj4K
-cHJvcGVybHkgc2V0IHRoZSBwcHAwIGludGVyZmFjZSBvbmNlIKBnb3QgYSB2YWxpZCBJUCBmcm9t
-IHRoZSBQUFAgPzxicj4KPC9ibG9ja3F1b3RlPgo8YnI+PC9kaXY+ClNlZSB0ZXN0L3Byb2Nlc3Mt
-Y29udGV4dC1zZXR0aW5nczxicj4KPGJyPgpSZWdhcmRzLDxicj4KLURlbmlzPGJyPgo8L2Jsb2Nr
-cXVvdGU+PC9kaXY+PGJyPjxkaXY+cGVyZmVjdCEgaSYjMzk7bGwga2VlcCBpbiB0b3VjaCA6KTwv
-ZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+dG54IGFnYWluITwvZGl2Pgo=
+PGRpdiBkaXI9Imx0ciI+PGRpdj48ZGl2PjxkaXY+PGRpdj48ZGl2PjxkaXY+PC9kaXY+PC9kaXY+
+VGhhbmsgeW91LCBJIHRlc3RlZCB0aGlzIHNlcmllcyBvZiBwYXRjaGVzIG9uIHRoZSBIRTkxMCB5
+ZXN0ZXJkYXkgYW5kIG5vdyBpdCB3b3JrcyBqdXN0IGZpbmUuPGJyPgo8L2Rpdj48L2Rpdj48YnI+
+CjwvZGl2PkV0aWVubmUgTWFiaWxsZTxicj48L2Rpdj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21h
+aWxfZXh0cmEiPjxicj48YnI+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPjIwMTMvNC80IEpvbmFz
+IEJvbm4gPHNwYW4gZGlyPSJsdHIiPiZsdDs8YSBocmVmPSJtYWlsdG86am9uYXNAc291dGhwb2xl
+LnNlIiB0YXJnZXQ9Il9ibGFuayI+am9uYXNAc291dGhwb2xlLnNlPC9hPiZndDs8L3NwYW4+PGJy
+Pgo8YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhl
+eDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij5UaGlzIHNlcmll
+cyBwcm92aWRlcyBmdW5jdGlvbmFsIHN1cHBvcnQgZm9yIHRoZSBUZWxpdCBIRTkxMCBtb2RlbTxi
+cj4KYnkgcmV3b3JraW5nIHRoZSBpbml0aWFsaXphdGlvbiBzZXF1ZW5jZS4goFRob3VnaCB0aGlz
+IHNlcmllcyBoYXM8YnI+CmJlZW4gdGVzdGVkIG9ubHkgb24gYW4gSEU5MTAgZGV2aWNlLCBpdCBz
+ZWVtcyB0aGF0IHRoaXMgY29udHJvbCBmbG93PGJyPgpzaG91bGQgd29yayBmaW5lIGZvciBvbGRl
+ciBkZXZpY2VzIGFzIHdlbGwgZ2l2ZW4gdGhhdCB0aGV5IHNoYXJlIHRoZTxicj4Kc2FtZSBkb2N1
+bWVudGF0aW9uIGFuZCwgcHJlc3VtYWJseSwgdXNlIGVzc2VudGlhbGx5IHRoZSBzYW1lIGZpcm13
+YXJlLjxicj4KPGJyPgpCZXN0IHJlZ2FyZHMsPGJyPgpKb25hcyBCb25uPGJyPgpTb3V0aCBQb2xl
+IEFCPGJyPgo8YnI+CkNocmlzdG9waGVyIFZvZ2wgKDEpOjxicj4KoCB1ZGV2bmc6IHN1cHBvcnQg
+dGVsaXQgbW9kZW1zIHVzaW5nIGNkYy1hY20gZHJpdmVyPGJyPgo8YnI+CkpvbmFzIEJvbm4gKDIp
+Ojxicj4KoCB0ZWxpdDogYWxsb3cgcGx1Z2luIHRvIGJlIGNvbXBpbGVkIHdpdGhvdXQgQlQgc3Vw
+cG9ydDxicj4KoCB0ZWxpdDogcmV3b3JrIGZvciBIRTkxMDxicj4KPGJyPgqgTWFrZWZpbGUuYW0g
+oCCgIKB8IKAgOSArKy0tPGJyPgqgPGEgaHJlZj0iaHR0cDovL2NvbmZpZ3VyZS5hYyIgdGFyZ2V0
+PSJfYmxhbmsiPmNvbmZpZ3VyZS5hYzwvYT4goCCgIHwgoCAzICsrPGJyPgqgcGx1Z2lucy90ZWxp
+dC5jIKB8IDE1NiArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+LS0tLS0tLS0tPGJyPgqgcGx1Z2lucy91ZGV2bmcuYyB8IKAxNCArKystLTxicj4KoDQgZmlsZXMg
+Y2hhbmdlZCwgMTUyIGluc2VydGlvbnMoKyksIDMwIGRlbGV0aW9ucygtKTxicj4KPHNwYW4gY2xh
+c3M9IkhPRW5aYiI+PGZvbnQgY29sb3I9IiM4ODg4ODgiPjxicj4KLS08YnI+CjEuOC4xLjI8YnI+
+Cjxicj4KPC9mb250Pjwvc3Bhbj48L2Jsb2NrcXVvdGU+PC9kaXY+PGJyPjwvZGl2Pgo=
 
---===============4420448692966913166==--
+--===============2445200436629597003==--
 
