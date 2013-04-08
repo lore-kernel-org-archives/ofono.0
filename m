@@ -1,65 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7215111996268141556=="
+Content-Type: multipart/mixed; boundary="===============0207339482959427103=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: Re: [PATCH 4/5] handsfree-audio: Add function to get the codecs
-Date: Fri, 05 Apr 2013 19:00:22 -0300
-Message-ID: <20130405220022.GJ2715@samus>
-In-Reply-To: <515F44D7.5030404@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Setting up the Telit HE910 and Option GTM382
+Date: Mon, 08 Apr 2013 11:01:02 -0500
+Message-ID: <5162E9BE.9040601@gmail.com>
+In-Reply-To: <CAMtf1D-Ryk3EcxT9UfcnFHBje-5WM3gdR4C6jtAOgDxN_vpxiw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7215111996268141556==
+--===============0207339482959427103==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Etienne,
 
-On 16:40 Fri 05 Apr, Denis Kenzior wrote:
-> Hi Vinicius,
-> =
+> I also used gdbserver to find out where the problem is. Here is the
+> backtrace from where i think the failure is :
+>
+>     =E2=94=82230                     }
+>     =E2=94=82231             }
+>     =E2=94=82232
+>  >=E2=94=82233             fd =3D open(tty, O_RDWR | O_NOCTTY |
+> O_NONBLOCK);               /* the open function fails and returns -1 */
+>     =E2=94=82234             if (fd < 0)
+>     =E2=94=82235                     return -1;
+>     =E2=94=82236
+>     =E2=94=82237             tcflush(fd, TCIOFLUSH);
+>
 
-> On 04/05/2013 03:56 PM, Vinicius Costa Gomes wrote:
-> >Hi Denis,
-> >
-> >On 12:32 Fri 05 Apr, Denis Kenzior wrote:
-> >>>
-> >>>+int ofono_handsfree_get_codecs(unsigned char *buffer, int buffer_len)
-> >>>+{
-> >>>+	int len;
-> >>>+
-> >>>+	if (agent =3D=3D NULL)
-> >>>+		return -EIO;
-> >>>+
-> >>>+	len =3D MIN(buffer_len, agent->codecs_len);
-> >>>+	memcpy(buffer, agent->codecs, len);
-> >>>+
-> >>>+	return len;
-> >>>+}
-> >>>+
-> >>
-> >>Do we really want to memcpy here or return a const unsigned char
-> >>array?  Also, right now we explicitly only support CVSD and mSBC, so
-> >>this is overkill.
-> >
-> >As we can assume that we always support CVSD, one idea is to have someth=
-ing
-> >like ofono_handsfree_audio_has_msbc() instead of the get_codecs() functi=
-on.
-> >How does it sound?
-> =
+Can you trace and see what the errno is being set to?  I really have no =
 
-> I tend to like this better.  Perhaps we can name this function a
-> more generic 'has_wideband()' instead.  In case we want to provide
-> support for custom codecs in the future.
+idea what could be causing this.
 
-Sounds good.
+Regards,
+-Denis
 
-
-Cheers,
--- =
-
-Vinicius
-
---===============7215111996268141556==--
+--===============0207339482959427103==--
 
