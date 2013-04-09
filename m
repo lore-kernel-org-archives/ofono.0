@@ -1,63 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============3675389885264873438=="
+Content-Type: multipart/mixed; boundary="===============4126324044638353487=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 6/6] handsfree-audio: Remove unused 'codecs' field from agent
-Date: Mon, 08 Apr 2013 19:41:03 -0300
-Message-ID: <1365460863-14645-6-git-send-email-vinicius.gomes@openbossa.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/6] hfp_hf_bluez5: Add audio card .connect() for HFP 1.6
+Date: Tue, 09 Apr 2013 14:34:48 -0500
+Message-ID: <51646D58.2020008@gmail.com>
 In-Reply-To: <1365460863-14645-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3675389885264873438==
+--===============4126324044638353487==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Now that we only keep track whether we support wideband speech or not, we
-don't have to keep track of the list of codecs supported by the Agent.
----
- src/handsfree-audio.c | 5 -----
- 1 file changed, 5 deletions(-)
+Hi Vinicius,
 
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 69d033d..188deee 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -55,8 +55,6 @@ struct ofono_handsfree_card {
- struct agent {
- 	char *owner;
- 	char *path;
--	unsigned char *codecs;
--	int codecs_len;
- 	guint watch;
- };
- =
+On 04/08/2013 05:40 PM, Vinicius Costa Gomes wrote:
+> ---
+>   plugins/hfp_hf_bluez5.c | 30 +++++++++++++++++++++++++++++-
+>   1 file changed, 29 insertions(+), 1 deletion(-)
 
-@@ -548,7 +546,6 @@ static void agent_free(struct agent *agent)
- =
+Patch has been applied.
 
- 	g_free(agent->owner);
- 	g_free(agent->path);
--	g_free(agent->codecs);
- 	g_free(agent);
- }
- =
+> +	struct hfp *hfp =3D ofono_handsfree_card_get_data(card);
+> +	struct hfp_slc_info *info =3D&hfp->info;
+> +
+> +	if ((info->hf_features&  HFP_HF_FEATURE_CODEC_NEGOTIATION&&
+> +			info->ag_features&  HFP_AG_FEATURE_CODEC_NEGOTIATION)) {
 
-@@ -660,8 +657,6 @@ static DBusMessage *am_agent_register(DBusConnection *c=
-onn,
- 	agent =3D g_new0(struct agent, 1);
- 	agent->owner =3D g_strdup(sender);
- 	agent->path =3D g_strdup(path);
--	agent->codecs =3D g_memdup(codecs, length);
--	agent->codecs_len =3D length;
- 	agent->watch =3D g_dbus_add_disconnect_watch(conn, sender,
- 						agent_disconnect, NULL, NULL);
- =
+I removed the extra parentheses in a follow on commit.
 
--- =
+> +		struct cb_data *cbd =3D cb_data_new(cb, data);
+> +
+> +		g_at_chat_send(info->chat, "AT+BCC", NULL, bcc_cb, cbd, g_free);
+> +		return;
+> +	}
+> +
+> +	/*
+> +	 * If any side (remote or local) doesn't support codec negotiation,
+> +	 * fallback to direct SCO connection. Calling connect_sco()
+> +	 * hands the connection responsibility to the core, so no need
+> +	 * to call the callback
+> +	 */
+> +	ofono_handsfree_card_connect_sco(card);
+>   }
+>
+>   static struct ofono_handsfree_card_driver hfp16_hf_driver =3D {
 
-1.8.2
+Regards,
+-Denis
 
-
---===============3675389885264873438==--
+--===============4126324044638353487==--
 
