@@ -1,45 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============7325002188283887837=="
+Content-Type: multipart/mixed; boundary="===============3790358512526566076=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 5/8] hfp_hf_bluez5: Set the audio codec in the card
-Date: Tue, 09 Apr 2013 17:45:40 -0300
-Message-ID: <1365540343-8394-6-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH 6/8] handsfree-audio: Send the selected codec
+Date: Tue, 09 Apr 2013 17:45:41 -0300
+Message-ID: <1365540343-8394-7-git-send-email-vinicius.gomes@openbossa.org>
 In-Reply-To: <1365540343-8394-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7325002188283887837==
+--===============3790358512526566076==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
 
-This patch updates the handsfree audio card codec when the AG notifies
-the codec for the succeeding incoming SCO connection.
+This patch removes the hard-coded CVSD codec, and adds the selected
+codec in the NewConnection method call, notifying the agent the codec
+previously selected for the audio connection.
 ---
- plugins/hfp_hf_bluez5.c | 1 +
- 1 file changed, 1 insertion(+)
+ src/handsfree-audio.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 63af484..85b8de9 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -85,6 +85,7 @@ static void codec_watcher_cb(unsigned char codec, gpointe=
-r user_data)
- 	struct hfp *hfp =3D user_data;;
+diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+index 12d49db..c00697b 100644
+--- a/src/handsfree-audio.c
++++ b/src/handsfree-audio.c
+@@ -67,11 +67,10 @@ static guint sco_watch =3D 0;
+ static GSList *drivers =3D 0;
+ static ofono_bool_t has_wideband =3D FALSE;
  =
 
- 	DBG("Card: %p selected codec: %d", hfp->card, codec);
-+	ofono_handsfree_card_select_codec(hfp->card, codec);
- }
+-static void send_new_connection(const char *card, int fd)
++static void send_new_connection(const char *card, int fd, uint8_t codec)
+ {
+ 	DBusMessage *msg;
+ 	DBusMessageIter iter;
+-	uint8_t codec =3D HFP_CODEC_CVSD;
  =
 
- static void slc_established(gpointer userdata)
+ 	msg =3D dbus_message_new_method_call(agent->owner, agent->path,
+ 				HFP_AUDIO_AGENT_INTERFACE, "NewConnection");
+@@ -150,7 +149,7 @@ static gboolean sco_accept(GIOChannel *io, GIOCondition=
+ cond,
+ 		return TRUE;
+ 	}
+ =
+
+-	send_new_connection(card->path, nsk);
++	send_new_connection(card->path, nsk, card->selected_codec);
+ 	close(nsk);
+ =
+
+ 	return TRUE;
+@@ -252,7 +251,7 @@ static gboolean sco_connect_cb(GIOChannel *io, GIOCondi=
+tion cond,
+ =
+
+ 	sk =3D g_io_channel_unix_get_fd(io);
+ =
+
+-	send_new_connection(card->path, sk);
++	send_new_connection(card->path, sk, card->selected_codec);
+ =
+
+ 	close(sk);
+ =
+
 -- =
 
 1.8.2
 
 
---===============7325002188283887837==--
+--===============3790358512526566076==--
 
