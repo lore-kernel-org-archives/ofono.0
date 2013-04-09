@@ -1,59 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============5349445102672770291=="
+Content-Type: multipart/mixed; boundary="===============7325002188283887837=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 4/8] handsfree-audio: Implement
- ofono_handsfree_card_select_codec()
-Date: Tue, 09 Apr 2013 17:45:39 -0300
-Message-ID: <1365540343-8394-5-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH 5/8] hfp_hf_bluez5: Set the audio codec in the card
+Date: Tue, 09 Apr 2013 17:45:40 -0300
+Message-ID: <1365540343-8394-6-git-send-email-vinicius.gomes@openbossa.org>
 In-Reply-To: <1365540343-8394-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5349445102672770291==
+--===============7325002188283887837==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/handsfree-audio.c | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
 
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 50be691..12d49db 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -49,6 +49,7 @@ struct ofono_handsfree_card {
- 	char *local;
- 	char *path;
- 	DBusMessage *msg;
-+	unsigned char selected_codec;
- 	const struct ofono_handsfree_card_driver *driver;
- 	void *driver_data;
- };
-@@ -535,6 +536,17 @@ void ofono_handsfree_card_remove(struct ofono_handsfre=
-e_card *card)
- 	g_free(card);
+This patch updates the handsfree audio card codec when the AG notifies
+the codec for the succeeding incoming SCO connection.
+---
+ plugins/hfp_hf_bluez5.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index 63af484..85b8de9 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -85,6 +85,7 @@ static void codec_watcher_cb(unsigned char codec, gpointe=
+r user_data)
+ 	struct hfp *hfp =3D user_data;;
+ =
+
+ 	DBG("Card: %p selected codec: %d", hfp->card, codec);
++	ofono_handsfree_card_select_codec(hfp->card, codec);
  }
  =
 
-+int ofono_handsfree_card_select_codec(struct ofono_handsfree_card *card,
-+							unsigned char codec)
-+{
-+	if (card =3D=3D NULL)
-+		return -EINVAL;
-+
-+	card->selected_codec =3D codec;
-+
-+	return 0;
-+}
-+
- ofono_bool_t ofono_handsfree_audio_has_wideband(void)
- {
- 	return has_wideband;
+ static void slc_established(gpointer userdata)
 -- =
 
 1.8.2
 
 
---===============5349445102672770291==--
+--===============7325002188283887837==--
 
