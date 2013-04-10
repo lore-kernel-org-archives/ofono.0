@@ -1,111 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============2649156085967439455=="
+Content-Type: multipart/mixed; boundary="===============0305122750436448490=="
 MIME-Version: 1.0
-From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH 6/6] hfp_ag_bluez5: Remove emulator when disconnect
-Date: Wed, 10 Apr 2013 16:24:47 -0300
-Message-ID: <1365621887-16940-7-git-send-email-paulo.borges@openbossa.org>
-In-Reply-To: <1365621887-16940-1-git-send-email-paulo.borges@openbossa.org>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH 1/8] hfpmodem: Add codec watcher register
+Date: Wed, 10 Apr 2013 16:31:08 -0300
+Message-ID: <20130410193108.GA2098@samus>
+In-Reply-To: <5164C3FE.9070600@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2649156085967439455==
+--===============0305122750436448490==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/hfp_ag_bluez5.c |   43 +++++++++++++++++++++++++++++++++++++++----
- 1 file changed, 39 insertions(+), 4 deletions(-)
+Hi Denis,
 
-diff --git a/plugins/hfp_ag_bluez5.c b/plugins/hfp_ag_bluez5.c
-index 2046e7d..0301fdb 100644
---- a/plugins/hfp_ag_bluez5.c
-+++ b/plugins/hfp_ag_bluez5.c
-@@ -65,11 +65,21 @@ static gboolean emulator_remove(gpointer key, gpointer =
-value,
- 	return TRUE;
- }
- =
+[snip]
 
-+static void emulator_removed_cb(void *user_data)
-+{
-+	char *device =3D user_data;
-+
-+	DBG("%s", device);
-+
-+	g_hash_table_remove(emulator_hash, device);
-+}
-+
- static DBusMessage *profile_new_connection(DBusConnection *conn,
- 						DBusMessage *msg, void *data)
- {
- 	DBusMessageIter entry;
- 	const char *device;
-+	char *key;
- 	int fd;
- 	struct ofono_emulator *em;
- 	struct ofono_modem *modem;
-@@ -115,8 +125,11 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
- 						"Not enough resources");
- 	}
- =
+> >+guint hfp_slc_codec_watch_register(struct hfp_slc_info *info,
+> >+				hfp_slc_codec_watch_cb_t cb, void *user_data)
+> >+{
+> >+	struct codec_watch *watch =3D g_new0(struct codec_watch, 1);
+> >+
+> >+	watch->slc =3D info;
+> >+	watch->cb =3D cb;
+> >+	watch->user_data =3D user_data;
+> >+
+> >+	return g_at_chat_register(info->chat, "+BCS:", bcs_notify, FALSE,
+> >+								watch, g_free);
+> >+}
+> =
 
-+	key =3D g_strdup(device);
-+
- 	ofono_emulator_register(em, fd);
--	g_hash_table_insert(emulator_hash, g_strdup(device), em);
-+	ofono_emulator_set_removed_cb(em, emulator_removed_cb, key);
-+	g_hash_table_insert(emulator_hash, key, em);
- =
+> Why would you do this in the SLC ?  The SLC establishment only
+> requires HF to send a BAC after the BRSF has been exchanged.  We do
+> this successfully in brsf_cb.  I do not see why we can't monitor
+> +BCS inside plugins/hfp_hf_bluez5.c?
 
- 	return dbus_message_new_method_return(msg);
- =
+The only point was to avoid having any AT logic inside the hfp_hf_bluez5
+plugin. Will send an updated version with this logic inside hfp_hf_bluez5. =
+It
+does indeed make the code easier to follow.
 
-@@ -148,11 +161,33 @@ static DBusMessage *profile_cancel(DBusConnection *co=
-nn,
- static DBusMessage *profile_disconnection(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
- {
-+	DBusMessageIter iter;
-+	const char *device;
-+	struct ofono_emulator *em;
-+
- 	DBG("Profile handler RequestDisconnection");
- =
 
--	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
--					".NotImplemented",
--					"Implementation not provided");
-+	if (!dbus_message_iter_init(msg, &iter))
-+		goto invalid;
-+
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_OBJECT_PATH)
-+		goto invalid;
-+
-+	dbus_message_iter_get_basic(&iter, &device);
-+
-+	DBG("%s", device);
-+
-+	em =3D g_hash_table_lookup(emulator_hash, device);
-+	if (em =3D=3D NULL)
-+		goto invalid;
-+
-+	ofono_emulator_remove(em);
-+
-+	return dbus_message_new_method_return(msg);
-+
-+invalid:
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE ".Rejected",
-+					"Invalid arguments in method call");
- }
- =
-
- static const GDBusMethodTable profile_methods[] =3D {
+Cheers,
 -- =
 
-1.7.9.5
+Vinicius
 
-
---===============2649156085967439455==--
+--===============0305122750436448490==--
 
