@@ -1,51 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============0305122750436448490=="
+Content-Type: multipart/mixed; boundary="===============7060319777491741301=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: Re: [PATCH 1/8] hfpmodem: Add codec watcher register
-Date: Wed, 10 Apr 2013 16:31:08 -0300
-Message-ID: <20130410193108.GA2098@samus>
-In-Reply-To: <5164C3FE.9070600@gmail.com>
+Subject: [PATCH v2 2/7] include: ofono_handsfree_card_select_codec()
+Date: Wed, 10 Apr 2013 16:37:52 -0300
+Message-ID: <1365622677-4824-2-git-send-email-vinicius.gomes@openbossa.org>
+In-Reply-To: <1365622677-4824-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0305122750436448490==
+--===============7060319777491741301==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+This will be used by the drivers that a given codec was negotiated
+for a card.
+---
+ include/handsfree-audio.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-[snip]
+diff --git a/include/handsfree-audio.h b/include/handsfree-audio.h
+index 82d1312..2e58c43 100644
+--- a/include/handsfree-audio.h
++++ b/include/handsfree-audio.h
+@@ -48,6 +48,8 @@ struct ofono_handsfree_card *ofono_handsfree_card_create(=
+unsigned int vendor,
+ 							void *data);
+ int ofono_handsfree_card_register(struct ofono_handsfree_card *card);
+ void ofono_handsfree_card_remove(struct ofono_handsfree_card *card);
++void ofono_handsfree_card_select_codec(struct ofono_handsfree_card *card,
++							unsigned char codec);
+ =
 
-> >+guint hfp_slc_codec_watch_register(struct hfp_slc_info *info,
-> >+				hfp_slc_codec_watch_cb_t cb, void *user_data)
-> >+{
-> >+	struct codec_watch *watch =3D g_new0(struct codec_watch, 1);
-> >+
-> >+	watch->slc =3D info;
-> >+	watch->cb =3D cb;
-> >+	watch->user_data =3D user_data;
-> >+
-> >+	return g_at_chat_register(info->chat, "+BCS:", bcs_notify, FALSE,
-> >+								watch, g_free);
-> >+}
-> =
+ ofono_bool_t ofono_handsfree_audio_has_wideband(void);
+ =
 
-> Why would you do this in the SLC ?  The SLC establishment only
-> requires HF to send a BAC after the BRSF has been exchanged.  We do
-> this successfully in brsf_cb.  I do not see why we can't monitor
-> +BCS inside plugins/hfp_hf_bluez5.c?
-
-The only point was to avoid having any AT logic inside the hfp_hf_bluez5
-plugin. Will send an updated version with this logic inside hfp_hf_bluez5. =
-It
-does indeed make the code easier to follow.
-
-
-Cheers,
 -- =
 
-Vinicius
+1.8.2
 
---===============0305122750436448490==--
+
+--===============7060319777491741301==--
 
