@@ -1,76 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============2100551076553788233=="
+Content-Type: multipart/mixed; boundary="===============2390045553138574509=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH v2 5/7] handsfree-audio: Send the selected codec
-Date: Wed, 10 Apr 2013 16:37:55 -0300
-Message-ID: <1365622677-4824-5-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH v2 6/7] handsfree-audio: Set CVSD as default in the card
+Date: Wed, 10 Apr 2013 16:37:56 -0300
+Message-ID: <1365622677-4824-6-git-send-email-vinicius.gomes@openbossa.org>
 In-Reply-To: <1365622677-4824-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2100551076553788233==
+--===============2390045553138574509==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
 
-This patch removes the hard-coded CVSD codec, and adds the selected
-codec in the NewConnection method call, notifying the agent the codec
-previously selected for the audio connection.
+If the device doesn't support codec negotiation, the selected codec is
+not being initialized. For this case set CVSD as default.
 ---
- src/handsfree-audio.c | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ src/handsfree-audio.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
 diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 3d6804d..8fc6f93 100644
+index 8fc6f93..a332f68 100644
 --- a/src/handsfree-audio.c
 +++ b/src/handsfree-audio.c
-@@ -67,11 +67,10 @@ static guint sco_watch =3D 0;
- static GSList *drivers =3D 0;
- static ofono_bool_t has_wideband =3D FALSE;
+@@ -342,6 +342,8 @@ struct ofono_handsfree_card *ofono_handsfree_card_creat=
+e(unsigned int vendor,
  =
 
--static void send_new_connection(const char *card, int fd)
-+static void send_new_connection(const char *card, int fd, uint8_t codec)
- {
- 	DBusMessage *msg;
- 	DBusMessageIter iter;
--	uint8_t codec =3D HFP_CODEC_CVSD;
+ 	card =3D g_new0(struct ofono_handsfree_card, 1);
  =
 
- 	msg =3D dbus_message_new_method_call(agent->owner, agent->path,
- 				HFP_AUDIO_AGENT_INTERFACE, "NewConnection");
-@@ -150,7 +149,7 @@ static gboolean sco_accept(GIOChannel *io, GIOCondition=
- cond,
- 		return TRUE;
- 	}
++	card->selected_codec =3D HFP_CODEC_CVSD;
++
+ 	card_list =3D g_slist_prepend(card_list, card);
  =
 
--	send_new_connection(card->path, nsk);
-+	send_new_connection(card->path, nsk, card->selected_codec);
- 	close(nsk);
- =
-
- 	return TRUE;
-@@ -252,7 +251,7 @@ static gboolean sco_connect_cb(GIOChannel *io, GIOCondi=
-tion cond,
- =
-
- 	sk =3D g_io_channel_unix_get_fd(io);
- =
-
--	send_new_connection(card->path, sk);
-+	send_new_connection(card->path, sk, card->selected_codec);
- =
-
- 	close(sk);
- =
-
+ 	for (l =3D drivers; l; l =3D l->next) {
 -- =
 
 1.8.2
 
 
---===============2100551076553788233==--
+--===============2390045553138574509==--
 
