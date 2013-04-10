@@ -1,67 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============2483066662747035148=="
+Content-Type: multipart/mixed; boundary="===============3761220316757825088=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/8] handsfree-audio: Implement
- ofono_handsfree_card_select_codec()
-Date: Tue, 09 Apr 2013 20:49:28 -0500
-Message-ID: <5164C528.9050505@gmail.com>
-In-Reply-To: <1365540343-8394-5-git-send-email-vinicius.gomes@openbossa.org>
+From: Paulo Borges <paulo.borges@openbossa.org>
+Subject: [PATCH 0/6] Clear the ground for AG implementation
+Date: Wed, 10 Apr 2013 16:24:41 -0300
+Message-ID: <1365621887-16940-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2483066662747035148==
+--===============3761220316757825088==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vinicius,
+This patch series clear the ground for AG card implementation.
 
-On 04/09/2013 03:45 PM, Vinicius Costa Gomes wrote:
-> ---
->   src/handsfree-audio.c | 12 ++++++++++++
->   1 file changed, 12 insertions(+)
->
-> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-> index 50be691..12d49db 100644
-> --- a/src/handsfree-audio.c
-> +++ b/src/handsfree-audio.c
-> @@ -49,6 +49,7 @@ struct ofono_handsfree_card {
->   	char *local;
->   	char *path;
->   	DBusMessage *msg;
-> +	unsigned char selected_codec;
->   	const struct ofono_handsfree_card_driver *driver;
->   	void *driver_data;
->   };
-> @@ -535,6 +536,17 @@ void ofono_handsfree_card_remove(struct ofono_handsf=
-ree_card *card)
->   	g_free(card);
->   }
->
-> +int ofono_handsfree_card_select_codec(struct ofono_handsfree_card *card,
-> +							unsigned char codec)
-> +{
+[PATCH 1/6] and [PATCH 2/6]
+Implements a mechanism to notify when a emulator is removed and freed.
+This mechanism will be required in [PATCH 6/6].
 
-Actually make this return void.  If the driver is trying to operate on =
+[PATCH 3/6]
+HFP 1.6 adds a new feature Codec Negotiation. This commit changes HF
+feature check interval.
 
-an invalid object then the driver is bugged and I want it to crash =
+[PATCH 4/6], [PATCH 5/6] and [PATCH 6/6]
+Stores and removes emulators from a hash. This hash is important to
+recover the correct emulator and remove it in RequestDisconnection().
 
-early, not later.
+Paulo Borges (6):
+  include: Add ofono_emulator_set_removed_cb()
+  emulator: Add removed notification mechanism
+  emulator: Change feature check to attend HFP 1.6
+  hfp_ag_bluez5: Create a hash to store emulators
+  hfp_ag_bluez5: Store emulator when connect
+  hfp_ag_bluez5: Remove emulator when disconnect
 
-> +	if (card =3D=3D NULL)
-> +		return -EINVAL;
-> +
-> +	card->selected_codec =3D codec;
-> +
-> +	return 0;
-> +}
-> +
->   ofono_bool_t ofono_handsfree_audio_has_wideband(void)
->   {
->   	return has_wideband;
+ include/emulator.h      |    5 ++++
+ plugins/hfp_ag_bluez5.c |   61 +++++++++++++++++++++++++++++++++++++++++++=
++---
+ src/emulator.c          |   28 +++++++++++++++++++++-
+ 3 files changed, 90 insertions(+), 4 deletions(-)
 
-Regards,
--Denis
+-- =
 
---===============2483066662747035148==--
+1.7.9.5
+
+
+--===============3761220316757825088==--
 
