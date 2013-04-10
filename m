@@ -1,47 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============2390045553138574509=="
+Content-Type: multipart/mixed; boundary="===============3978367664806452887=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH v2 6/7] handsfree-audio: Set CVSD as default in the card
-Date: Wed, 10 Apr 2013 16:37:56 -0300
-Message-ID: <1365622677-4824-6-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH v2 7/7] handsfree-audio: Enable wideband speech if defer is
+ enabled
+Date: Wed, 10 Apr 2013 16:37:57 -0300
+Message-ID: <1365622677-4824-7-git-send-email-vinicius.gomes@openbossa.org>
 In-Reply-To: <1365622677-4824-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2390045553138574509==
+--===============3978367664806452887==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
 
-If the device doesn't support codec negotiation, the selected codec is
-not being initialized. For this case set CVSD as default.
+Only enable support for wideband speech codecs, at this point mSBC, if
+the kernel supports defer setup.
 ---
- src/handsfree-audio.c | 2 ++
- 1 file changed, 2 insertions(+)
+ src/handsfree-audio.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
 
 diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 8fc6f93..a332f68 100644
+index a332f68..da8e100 100644
 --- a/src/handsfree-audio.c
 +++ b/src/handsfree-audio.c
-@@ -342,6 +342,8 @@ struct ofono_handsfree_card *ofono_handsfree_card_creat=
-e(unsigned int vendor,
+@@ -66,6 +66,7 @@ static GSList *card_list =3D 0;
+ static guint sco_watch =3D 0;
+ static GSList *drivers =3D 0;
+ static ofono_bool_t has_wideband =3D FALSE;
++static int defer_setup =3D 1;
  =
 
- 	card =3D g_new0(struct ofono_handsfree_card, 1);
+ static void send_new_connection(const char *card, int fd, uint8_t codec)
+ {
+@@ -159,7 +160,7 @@ static int sco_init(void)
+ {
+ 	GIOChannel *sco_io;
+ 	struct sockaddr_sco saddr;
+-	int sk, defer_setup =3D 1;
++	int sk;
  =
 
-+	card->selected_codec =3D HFP_CODEC_CVSD;
+ 	sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET | O_NONBLOCK | SOCK_CLOEXEC,
+ 								BTPROTO_SCO);
+@@ -177,9 +178,11 @@ static int sco_init(void)
+ 	}
+ =
+
+ 	if (setsockopt(sk, SOL_BLUETOOTH, BT_DEFER_SETUP,
+-				&defer_setup, sizeof(defer_setup)) < 0)
++				&defer_setup, sizeof(defer_setup)) < 0) {
++		defer_setup =3D 0;
+ 		ofono_warn("Can't enable deferred setup: %s (%d)",
+ 						strerror(errno), errno);
++	}
+ =
+
+ 	if (listen(sk, 5) < 0) {
+ 		close(sk);
+@@ -656,6 +659,9 @@ static DBusMessage *am_agent_register(DBusConnection *c=
+onn,
+ 			has_cvsd =3D TRUE;
+ 		else if (codecs[i] !=3D HFP_CODEC_MSBC)
+ 			return __ofono_error_invalid_args(msg);
 +
- 	card_list =3D g_slist_prepend(card_list, card);
++		if (defer_setup)
++			has_wideband =3D TRUE;
+ 	}
  =
 
- 	for (l =3D drivers; l; l =3D l->next) {
+ 	if (has_cvsd =3D=3D FALSE) {
 -- =
 
 1.8.2
 
 
---===============2390045553138574509==--
+--===============3978367664806452887==--
 
