@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============7644587435704492738=="
+Content-Type: multipart/mixed; boundary="===============2483066662747035148=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/8] hfpmodem: Add codec watcher register
-Date: Tue, 09 Apr 2013 20:44:30 -0500
-Message-ID: <5164C3FE.9070600@gmail.com>
-In-Reply-To: <1365540343-8394-2-git-send-email-vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH 4/8] handsfree-audio: Implement
+ ofono_handsfree_card_select_codec()
+Date: Tue, 09 Apr 2013 20:49:28 -0500
+Message-ID: <5164C528.9050505@gmail.com>
+In-Reply-To: <1365540343-8394-5-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7644587435704492738==
+--===============2483066662747035148==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,125 +17,51 @@ Content-Transfer-Encoding: quoted-printable
 Hi Vinicius,
 
 On 04/09/2013 03:45 PM, Vinicius Costa Gomes wrote:
-> This patch adds a function to monitor when the AG sends a new codec
-> before establishing the SCO connection.
 > ---
->   drivers/hfpmodem/slc.c | 62 +++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   drivers/hfpmodem/slc.h |  4 ++++
->   2 files changed, 66 insertions(+)
+>   src/handsfree-audio.c | 12 ++++++++++++
+>   1 file changed, 12 insertions(+)
 >
-> diff --git a/drivers/hfpmodem/slc.c b/drivers/hfpmodem/slc.c
-> index 40b22a1..51c1373 100644
-> --- a/drivers/hfpmodem/slc.c
-> +++ b/drivers/hfpmodem/slc.c
-> @@ -54,6 +54,12 @@ struct slc_establish_data {
->   	gpointer userdata;
+> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+> index 50be691..12d49db 100644
+> --- a/src/handsfree-audio.c
+> +++ b/src/handsfree-audio.c
+> @@ -49,6 +49,7 @@ struct ofono_handsfree_card {
+>   	char *local;
+>   	char *path;
+>   	DBusMessage *msg;
+> +	unsigned char selected_codec;
+>   	const struct ofono_handsfree_card_driver *driver;
+>   	void *driver_data;
 >   };
->
-> +struct codec_watch {
-> +	struct hfp_slc_info *slc;
-> +	hfp_slc_codec_watch_cb_t cb;
-> +	gpointer user_data;
-> +};
-> +
->   void hfp_slc_info_init(struct hfp_slc_info *info, guint16 version)
->   {
->   	info->ag_features =3D 0;
-> @@ -347,3 +353,59 @@ void hfp_slc_establish(struct hfp_slc_info *info, hf=
-p_slc_cb_t connect_cb,
->   	g_at_chat_send(info->chat, buf, brsf_prefix,
->   				brsf_cb, sed, slc_establish_data_unref);
+> @@ -535,6 +536,17 @@ void ofono_handsfree_card_remove(struct ofono_handsf=
+ree_card *card)
+>   	g_free(card);
 >   }
-> +
-> +static void bcs_notify(GAtResult *result, gpointer user_data)
+>
+> +int ofono_handsfree_card_select_codec(struct ofono_handsfree_card *card,
+> +							unsigned char codec)
 > +{
-> +	struct codec_watch *watch =3D user_data;
-> +	struct hfp_slc_info *info =3D watch->slc;
-> +	GAtResultIter iter;
-> +	char str[32];
-> +	int value;
+
+Actually make this return void.  If the driver is trying to operate on =
+
+an invalid object then the driver is bugged and I want it to crash =
+
+early, not later.
+
+> +	if (card =3D=3D NULL)
+> +		return -EINVAL;
 > +
-> +	g_at_result_iter_init(&iter, result);
+> +	card->selected_codec =3D codec;
 > +
-> +	if (!g_at_result_iter_next(&iter, "+BCS:"))
-> +		return;
-> +
-> +	if (!g_at_result_iter_next_number(&iter,&value))
-> +		return;
-> +
-> +	memset(str, 0, sizeof(str));
-> +
-> +	switch (value) {
-> +	case HFP_CODEC_MSBC:
-> +		if (!ofono_handsfree_audio_has_wideband()) {
-> +			sprintf(str, "AT+BAC=3D%d", HFP_CODEC_CVSD);
-> +			break;
-> +		}
-> +
-> +		/* fallthrough */
-> +
-> +	case HFP_CODEC_CVSD:
-> +		sprintf(str, "AT+BCS=3D%d", value);
-> +		watch->cb(value, watch->user_data);
-> +		break;
-> +
-> +	default:
-> +		if (ofono_handsfree_audio_has_wideband())
-> +			sprintf(str, "AT+BAC=3D%d,%d", HFP_CODEC_CVSD,
-> +							HFP_CODEC_MSBC);
-> +		else
-> +			sprintf(str, "AT+BAC=3D%d", HFP_CODEC_CVSD);
-> +	}
-> +
-> +	g_at_chat_send(info->chat, str, NULL, NULL, NULL, NULL);
+> +	return 0;
 > +}
 > +
-> +guint hfp_slc_codec_watch_register(struct hfp_slc_info *info,
-> +				hfp_slc_codec_watch_cb_t cb, void *user_data)
-> +{
-> +	struct codec_watch *watch =3D g_new0(struct codec_watch, 1);
-> +
-> +	watch->slc =3D info;
-> +	watch->cb =3D cb;
-> +	watch->user_data =3D user_data;
-> +
-> +	return g_at_chat_register(info->chat, "+BCS:", bcs_notify, FALSE,
-> +								watch, g_free);
-> +}
-
-Why would you do this in the SLC ?  The SLC establishment only requires =
-
-HF to send a BAC after the BRSF has been exchanged.  We do this =
-
-successfully in brsf_cb.  I do not see why we can't monitor +BCS inside =
-
-plugins/hfp_hf_bluez5.c?
-
-> diff --git a/drivers/hfpmodem/slc.h b/drivers/hfpmodem/slc.h
-> index b71ffe9..95539c8 100644
-> --- a/drivers/hfpmodem/slc.h
-> +++ b/drivers/hfpmodem/slc.h
-> @@ -45,6 +45,7 @@ enum hfp_indicator {
->   };
->
->   typedef void (*hfp_slc_cb_t)(void *userdata);
-> +typedef void (*hfp_slc_codec_watch_cb_t)(unsigned char codec, void *user=
-data);
->
->   struct hfp_slc_info {
->   	GAtChat *chat;
-> @@ -60,3 +61,6 @@ void hfp_slc_info_free(struct hfp_slc_info *info);
->
->   void hfp_slc_establish(struct hfp_slc_info *info, hfp_slc_cb_t connect_=
-cb,
->   				hfp_slc_cb_t failed_cb, void *userdata);
-> +
-> +guint hfp_slc_codec_watch_register(struct hfp_slc_info *info,
-> +				hfp_slc_codec_watch_cb_t cb, void *user_data);
+>   ofono_bool_t ofono_handsfree_audio_has_wideband(void)
+>   {
+>   	return has_wideband;
 
 Regards,
 -Denis
 
---===============7644587435704492738==--
+--===============2483066662747035148==--
 
