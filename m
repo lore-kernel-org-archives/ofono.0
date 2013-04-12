@@ -1,82 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============1004903930510480373=="
+Content-Type: multipart/mixed; boundary="===============1924940119580878448=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH 1/7] emulator: Copy callback mechanism from atutil.h
-Date: Fri, 12 Apr 2013 17:40:59 -0300
-Message-ID: <1365799265-19946-2-git-send-email-paulo.borges@openbossa.org>
+Subject: [PATCH 3/7] emulator: Add removed notification mechanism
+Date: Fri, 12 Apr 2013 17:41:01 -0300
+Message-ID: <1365799265-19946-4-git-send-email-paulo.borges@openbossa.org>
 In-Reply-To: <1365799265-19946-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1004903930510480373==
+--===============1924940119580878448==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-atutil.h needs GAtChat and GAtResult definitions and we do not have
-these definitions inside emulator.c.
+This mechanism is used to notify when an emulator is about to be freed.
 ---
- src/emulator.c |   33 +++++++++++++++++++++++++++++++++
- 1 file changed, 33 insertions(+)
+ src/emulator.c |   17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
 
 diff --git a/src/emulator.c b/src/emulator.c
-index 0817b5d..6071615 100644
+index 6071615..890ea20 100644
 --- a/src/emulator.c
 +++ b/src/emulator.c
-@@ -37,6 +37,28 @@
- =
-
- #define RING_TIMEOUT 3
- =
-
-+#define CALLBACK_WITH_FAILURE(cb, args...)		\
-+	do {						\
-+		struct ofono_error cb_e;		\
-+		cb_e.type =3D OFONO_ERROR_TYPE_FAILURE;	\
-+		cb_e.error =3D 0;				\
-+							\
-+		cb(&cb_e, ##args);			\
-+	} while (0)					\
-+
-+#define CALLBACK_WITH_SUCCESS(cb, args...)		\
-+	do {						\
-+		struct ofono_error e;			\
-+		e.type =3D OFONO_ERROR_TYPE_NO_ERROR;	\
-+		e.error =3D 0;				\
-+		cb(&e, ##args);				\
-+	} while (0)
-+
-+struct cb_data {
-+	void *cb;
-+	void *data;
-+};
-+
- struct ofono_emulator {
- 	struct ofono_atom *atom;
- 	enum ofono_emulator_type type;
-@@ -65,6 +87,17 @@ struct indicator {
- 	gboolean mandatory;
+@@ -75,6 +75,7 @@ struct ofono_emulator {
+ 	gboolean clip;
+ 	gboolean ccwa;
+ 	int pns_id;
++	struct cb_data *removed_cb;
  };
  =
 
-+static inline struct cb_data *cb_data_new(void *cb, void *data)
+ struct indicator {
+@@ -985,6 +986,13 @@ static void emulator_remove(struct ofono_atom *atom)
+ =
+
+ 	DBG("atom: %p", atom);
+ =
+
++	if (em->removed_cb) {
++		ofono_emulator_removed_cb_t cb =3D em->removed_cb->cb;
++
++		cb(em->removed_cb->data);
++		g_free(em->removed_cb);
++	}
++
+ 	g_free(em);
+ }
+ =
+
+@@ -1028,6 +1036,15 @@ void ofono_emulator_remove(struct ofono_emulator *em)
+ 	__ofono_atom_free(em->atom);
+ }
+ =
+
++void ofono_emulator_set_removed_cb(struct ofono_emulator* em,
++				ofono_emulator_removed_cb_t cb, void *data)
 +{
-+	struct cb_data *ret;
++	if (em =3D=3D NULL)
++		return;
 +
-+	ret =3D g_new0(struct cb_data, 1);
-+	ret->cb =3D cb;
-+	ret->data =3D data;
-+
-+	return ret;
++	em->removed_cb =3D cb_data_new(cb, data);
 +}
 +
- static void emulator_debug(const char *str, void *data)
+ void ofono_emulator_send_final(struct ofono_emulator *em,
+ 				const struct ofono_error *final)
  {
- 	ofono_info("%s: %s\n", (char *)data, str);
 -- =
 
 1.7.9.5
 
 
---===============1004903930510480373==--
+--===============1924940119580878448==--
 
