@@ -1,80 +1,126 @@
-Content-Type: multipart/mixed; boundary="===============4886206060714719631=="
+Content-Type: multipart/mixed; boundary="===============8414020807530677092=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Jo=C3=A3o?= Paulo Rechi Vita <jprvita@openbossa.org>
-Subject: [PATCH] handsfree-audio: Log when agent (un)register
-Date: Fri, 12 Apr 2013 19:29:46 -0300
-Message-ID: <1365805786-11726-1-git-send-email-jprvita@openbossa.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 1/7] hfpmodem: Watch for changes in the selected codec
+Date: Fri, 12 Apr 2013 18:07:37 -0500
+Message-ID: <516893B9.6080000@gmail.com>
+In-Reply-To: <1365622677-4824-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4886206060714719631==
+--===============8414020807530677092==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This commit logs on debug level when a Handsfree Audio Agent registers
-or unregisters itself and the CODECs that are enabled.
----
- src/handsfree-audio.c | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+Hi Vinicius,
 
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 3b0814f..411632e 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -663,6 +663,7 @@ static DBusMessage *am_agent_register(DBusConnection *c=
-onn,
- 	DBusMessageIter iter, array;
- 	int length, i;
- 	gboolean has_cvsd =3D FALSE;
-+	gboolean has_msbc =3D FALSE;
- =
+On 04/10/2013 02:37 PM, Vinicius Costa Gomes wrote:
+> This patch adds a function to monitor when the AG sends a new codec
+> before establishing the SCO connection.
+> ---
+>   plugins/hfp_hf_bluez5.c | 51 ++++++++++++++++++++++++++++++++++++++++++=
++++++++
+>   1 file changed, 51 insertions(+)
+>
+> diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+> index c63b1a2..efbb209 100644
+> --- a/plugins/hfp_hf_bluez5.c
+> +++ b/plugins/hfp_hf_bluez5.c
+> @@ -314,9 +314,60 @@ static struct ofono_modem_driver hfp_driver =3D {
+>   	.post_sim	=3D hfp_post_sim,
+>   };
+>
+> +static void bcs_notify(GAtResult *result, gpointer user_data)
+> +{
+> +	struct hfp *hfp =3D user_data;
+> +	struct hfp_slc_info *info =3D&hfp->info;
+> +	GAtResultIter iter;
+> +	char str[32];
+> +	int value;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (!g_at_result_iter_next(&iter, "+BCS:"))
+> +		return;
+> +
+> +	if (!g_at_result_iter_next_number(&iter,&value))
+> +		return;
+> +
+> +	memset(str, 0, sizeof(str));
 
- 	if (agent)
- 		return __ofono_error_in_use(msg);
-@@ -688,6 +689,8 @@ static DBusMessage *am_agent_register(DBusConnection *c=
-onn,
- 		} else if (codecs[i] !=3D HFP_CODEC_MSBC)
- 			return __ofono_error_invalid_args(msg);
- =
+Why do you need this exactly?
 
-+		has_msbc =3D TRUE;
-+
- 		if (defer_setup)
- 			has_wideband =3D TRUE;
- 	}
-@@ -703,6 +706,12 @@ static DBusMessage *am_agent_register(DBusConnection *=
-conn,
- 	agent->watch =3D g_dbus_add_disconnect_watch(conn, sender,
- 						agent_disconnect, NULL, NULL);
- =
+> +
+> +	switch (value) {
+> +	case HFP_CODEC_MSBC:
+> +		if (!ofono_handsfree_audio_has_wideband()) {
+> +			/* No wideband speech support, so we only have CVSD */
+> +			sprintf(str, "AT+BAC=3D%d", HFP_CODEC_CVSD);
+> +			break;
+> +		}
+> +
+> +		/* fall through */
+> +
 
-+	DBG("Agent %s registered with the CODECs:%s%s", sender,
-+		has_cvsd ? " CVSD" : "", has_msbc ? " mSBC" : "");
-+
-+        if (has_msbc && !has_wideband)
-+		DBG("mSBC disabled due to lack of SCO defer setup support");
-+
- 	return dbus_message_new_method_return(msg);
- }
- =
+This fall through and the default statement make this code extremely =
 
-@@ -731,6 +740,8 @@ static DBusMessage *am_agent_unregister(DBusConnection =
-*conn,
- 	agent_free(agent);
- 	agent =3D NULL;
- =
+hard to read.  Why don't we move the codec selection logic into the core =
 
-+	DBG("Agent %s unregistered", sender);
-+
- 	return dbus_message_new_method_return(msg);
- }
- =
+instead?
 
--- =
+Then this becomes something like:
 
-1.7.11.7
+if (ofono_handsfree_audio_card_set_codec(card, value) =3D=3D FALSE) {
+	if (ofono_handsfree_audio_has_wideband())
+		...
+	else
+		...
+
+	goto done;
+}
+
+sprintf(str, "AT+BCS=3D%d", value);
+
+done:
+....
 
 
---===============4886206060714719631==--
+> +	case HFP_CODEC_CVSD:
+> +		/* Confirm the codec */
+> +		sprintf(str, "AT+BCS=3D%d", value);
+> +		break;
+> +
+> +	default:
+> +		/* Unsupported codec, re-send our codecs */
+> +		if (ofono_handsfree_audio_has_wideband())
+> +			sprintf(str, "AT+BAC=3D%d,%d", HFP_CODEC_CVSD,
+> +							HFP_CODEC_MSBC);
+> +		else
+> +			sprintf(str, "AT+BAC=3D%d", HFP_CODEC_CVSD);
+> +	}
+> +
+> +	g_at_chat_send(info->chat, str, NULL, NULL, NULL, NULL);
+> +}
+> +
+>   static int hfp16_card_probe(struct ofono_handsfree_card *card,
+>   					unsigned int vendor, void *data)
+>   {
+> +	struct hfp *hfp =3D data;
+> +	struct hfp_slc_info *info =3D&hfp->info;
+> +
+> +	g_at_chat_register(info->chat, "+BCS:", bcs_notify, FALSE,
+> +								hfp, NULL);
+> +
+
+You read my mind, I was going to suggest doing this exactly :)
+
+>   	return 0;
+>   }
+>
+
+Regards,
+-Denis
+
+--===============8414020807530677092==--
 
