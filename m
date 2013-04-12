@@ -1,55 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============6351439534153509621=="
+Content-Type: multipart/mixed; boundary="===============1004903930510480373=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH 0/7] Clear the ground for AG card implementation
-Date: Fri, 12 Apr 2013 17:40:58 -0300
-Message-ID: <1365799265-19946-1-git-send-email-paulo.borges@openbossa.org>
-In-Reply-To: <1365621887-16940-1-git-send-email-paulo.borges@openbossa.org>
+Subject: [PATCH 1/7] emulator: Copy callback mechanism from atutil.h
+Date: Fri, 12 Apr 2013 17:40:59 -0300
+Message-ID: <1365799265-19946-2-git-send-email-paulo.borges@openbossa.org>
+In-Reply-To: <1365799265-19946-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6351439534153509621==
+--===============1004903930510480373==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Changelog v2:
+atutil.h needs GAtChat and GAtResult definitions and we do not have
+these definitions inside emulator.c.
+---
+ src/emulator.c |   33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
 
-* Now uses cb_data mechanism from atutil.h
+diff --git a/src/emulator.c b/src/emulator.c
+index 0817b5d..6071615 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -37,6 +37,28 @@
+ =
 
---
+ #define RING_TIMEOUT 3
+ =
 
-[PATCH 2/7] and [PATCH 3/7]
-Implements a mechanism to notify when a emulator is removed and freed.
-This mechanism will be required in [PATCH 6/6].
++#define CALLBACK_WITH_FAILURE(cb, args...)		\
++	do {						\
++		struct ofono_error cb_e;		\
++		cb_e.type =3D OFONO_ERROR_TYPE_FAILURE;	\
++		cb_e.error =3D 0;				\
++							\
++		cb(&cb_e, ##args);			\
++	} while (0)					\
++
++#define CALLBACK_WITH_SUCCESS(cb, args...)		\
++	do {						\
++		struct ofono_error e;			\
++		e.type =3D OFONO_ERROR_TYPE_NO_ERROR;	\
++		e.error =3D 0;				\
++		cb(&e, ##args);				\
++	} while (0)
++
++struct cb_data {
++	void *cb;
++	void *data;
++};
++
+ struct ofono_emulator {
+ 	struct ofono_atom *atom;
+ 	enum ofono_emulator_type type;
+@@ -65,6 +87,17 @@ struct indicator {
+ 	gboolean mandatory;
+ };
+ =
 
-[PATCH 4/7]
-HFP 1.6 adds a new feature Codec Negotiation. This commit changes HF
-feature check interval.
-
-[PATCH 5/7], [PATCH 6/7] and [PATCH 7/7]
-Stores and removes emulators from the hash. This hash is important to
-recover the correct emulator and remove it in RequestDisconnection()
-
-Paulo Borges (7):
-  emulator: Copy callback mechanism from atutil.h
-  include: Add ofono_emulator_set_removed_cb()
-  emulator: Add removed notification mechanism
-  emulator: Change feature check to attend HFP 1.6
-  hfp_ag_bluez5: Create a hash to store emulators
-  hfp_ag_bluez5: Store emulator when connect
-  hfp_ag_bluez5: Remove emulator when disconnect
-
- include/emulator.h      |    5 ++++
- plugins/hfp_ag_bluez5.c |   61 +++++++++++++++++++++++++++++++++++++++++++=
-+---
- src/emulator.c          |   52 +++++++++++++++++++++++++++++++++++++++-
- 3 files changed, 114 insertions(+), 4 deletions(-)
-
++static inline struct cb_data *cb_data_new(void *cb, void *data)
++{
++	struct cb_data *ret;
++
++	ret =3D g_new0(struct cb_data, 1);
++	ret->cb =3D cb;
++	ret->data =3D data;
++
++	return ret;
++}
++
+ static void emulator_debug(const char *str, void *data)
+ {
+ 	ofono_info("%s: %s\n", (char *)data, str);
 -- =
 
 1.7.9.5
 
 
---===============6351439534153509621==--
+--===============1004903930510480373==--
 
