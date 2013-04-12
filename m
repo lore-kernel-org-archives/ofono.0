@@ -1,64 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============7290574714377648714=="
+Content-Type: multipart/mixed; boundary="===============6351439534153509621=="
 MIME-Version: 1.0
-From: Viallard Anthony <viallard@syscom-instruments.com>
-Subject: Re: Randomly SMS sent passes or fails
-Date: Fri, 12 Apr 2013 15:08:35 +0200
-Message-ID: <51680753.90109@syscom-instruments.com>
-In-Reply-To: <51545290.5000804@gmail.com>
+From: Paulo Borges <paulo.borges@openbossa.org>
+Subject: [PATCH 0/7] Clear the ground for AG card implementation
+Date: Fri, 12 Apr 2013 17:40:58 -0300
+Message-ID: <1365799265-19946-1-git-send-email-paulo.borges@openbossa.org>
+In-Reply-To: <1365621887-16940-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7290574714377648714==
+--===============6351439534153509621==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi denis and ofono guys,
+Changelog v2:
 
-On 28. 03. 13 15:24, Denis Kenzior wrote:
->
-> Is the modem auto-attaching to GPRS by default? You might want to turn
-> off that behavior if posible.
->
+* Now uses cb_data mechanism from atutil.h
 
-I'm still searching why I've issues on SMS with SIM5216 GSM module and =
+--
 
-T-Mobile.
+[PATCH 2/7] and [PATCH 3/7]
+Implements a mechanism to notify when a emulator is removed and freed.
+This mechanism will be required in [PATCH 6/6].
 
-What did you mean by auto-attaching to GPRS by default ?
+[PATCH 4/7]
+HFP 1.6 adds a new feature Codec Negotiation. This commit changes HF
+feature check interval.
 
-To bring GPRS up, I configure it and I call =
+[PATCH 5/7], [PATCH 6/7] and [PATCH 7/7]
+Stores and removes emulators from the hash. This hash is important to
+recover the correct emulator and remove it in RequestDisconnection()
 
-ConnectionContext.SetProperty with Active=3D1 and then, I've got GPRS.
+Paulo Borges (7):
+  emulator: Copy callback mechanism from atutil.h
+  include: Add ofono_emulator_set_removed_cb()
+  emulator: Add removed notification mechanism
+  emulator: Change feature check to attend HFP 1.6
+  hfp_ag_bluez5: Create a hash to store emulators
+  hfp_ag_bluez5: Store emulator when connect
+  hfp_ag_bluez5: Remove emulator when disconnect
 
-I dig out this old answer because I searched why in ConnectionManager =
+ include/emulator.h      |    5 ++++
+ plugins/hfp_ag_bluez5.c |   61 +++++++++++++++++++++++++++++++++++++++++++=
++---
+ src/emulator.c          |   52 +++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 114 insertions(+), 4 deletions(-)
 
-I've got Bearer: "none". Then, I've found a place (in gprs_initialized() =
+-- =
 
-function) where ofono try to get data bearer. By default, ofono uses =
+1.7.9.5
 
-"AT+CPSB=3D1" and a callback on "+CPSB:" reply.
 
-There haven't "AT+CPSB" command for SIM5216. I thought I needed to add a =
-
-quirk like Telit or Huawai. I searched on internet and found an old =
-
-message from this list ("[PATCH 6/8] gprs: data bearer for telit with =
-
-PSNT") where you, Denis, answer to Christopher Vogl about the data =
-
-bearer quirk which made for telit and wonder :
-
-"Do you really need to query this?  In theory if we are turning off
-auto-attach, we should never be in a state where the bearer should be
-queried."
-
-So, I don't know if I must add a quirk (there AT+CNSMOD command for =
-
-SIM5216). What does auto-attach mean ?
-
-Regards,
-Anthony Viallard.
-
---===============7290574714377648714==--
+--===============6351439534153509621==--
 
