@@ -1,120 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============3412455656631836128=="
+Content-Type: multipart/mixed; boundary="===============2557816379233309920=="
 MIME-Version: 1.0
-From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH 7/7] hfp_ag_bluez5: Remove emulator when disconnect
-Date: Fri, 12 Apr 2013 17:41:05 -0300
-Message-ID: <1365799265-19946-8-git-send-email-paulo.borges@openbossa.org>
-In-Reply-To: <1365799265-19946-1-git-send-email-paulo.borges@openbossa.org>
+From: =?unknown-8bit?q?Jo=C3=A3o?= Paulo Rechi Vita <jprvita@openbossa.org>
+Subject: [PATCH] handsfree-audio: Fix parsing of Register() CODECs
+Date: Fri, 12 Apr 2013 19:25:53 -0300
+Message-ID: <1365805553-11587-1-git-send-email-jprvita@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3412455656631836128==
+--===============2557816379233309920==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When a RequestDisconnect() is received, the emulator must be both
-disconnected and removed from the hash.
-
-But an emulator can also be disconnected and freed automatically if its
-GAtServer closes. In this case, the hash can hold an invalid pointer.
-
-So, after the emulator is registered, a function is set to be called
-when the emulator is about to be freed and this function removes the
-emulator from the hash.
+Without this patch the mSBC CODEC is always enabled, even when the
+CODECs array in the Register() message from the agent contains only
+entry for the CVSD (0x01) CODEC.
 ---
- plugins/hfp_ag_bluez5.c |   43 +++++++++++++++++++++++++++++++++++++++----
- 1 file changed, 39 insertions(+), 4 deletions(-)
+ src/handsfree-audio.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/hfp_ag_bluez5.c b/plugins/hfp_ag_bluez5.c
-index dbf053b..36c22f3 100644
---- a/plugins/hfp_ag_bluez5.c
-+++ b/plugins/hfp_ag_bluez5.c
-@@ -65,11 +65,21 @@ static gboolean emulator_remove(gpointer key, gpointer =
-value,
- 	return TRUE;
- }
+diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+index 1a1cbff..3b0814f 100644
+--- a/src/handsfree-audio.c
++++ b/src/handsfree-audio.c
+@@ -682,9 +682,10 @@ static DBusMessage *am_agent_register(DBusConnection *=
+conn,
+ 		return __ofono_error_invalid_args(msg);
  =
 
-+static void emulator_removed_cb(void *user_data)
-+{
-+	char *device =3D user_data;
-+
-+	DBG("%s", device);
-+
-+	g_hash_table_remove(emulator_hash, device);
-+}
-+
- static DBusMessage *profile_new_connection(DBusConnection *conn,
- 						DBusMessage *msg, void *data)
- {
- 	DBusMessageIter entry;
- 	const char *device;
-+	char *key;
- 	int fd;
- 	struct ofono_emulator *em;
- 	struct ofono_modem *modem;
-@@ -115,8 +125,11 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
- 						"Not enough resources");
- 	}
+ 	for (i =3D 0; i < length; i++) {
+-		if (codecs[i] =3D=3D HFP_CODEC_CVSD)
++		if (codecs[i] =3D=3D HFP_CODEC_CVSD) {
+ 			has_cvsd =3D TRUE;
+-		else if (codecs[i] !=3D HFP_CODEC_MSBC)
++			continue;
++		} else if (codecs[i] !=3D HFP_CODEC_MSBC)
+ 			return __ofono_error_invalid_args(msg);
  =
 
-+	key =3D g_strdup(device);
-+
- 	ofono_emulator_register(em, fd);
--	g_hash_table_insert(emulator_hash, g_strdup(device), em);
-+	ofono_emulator_set_removed_cb(em, emulator_removed_cb, key);
-+	g_hash_table_insert(emulator_hash, key, em);
- =
-
- 	return dbus_message_new_method_return(msg);
- =
-
-@@ -148,11 +161,33 @@ static DBusMessage *profile_cancel(DBusConnection *co=
-nn,
- static DBusMessage *profile_disconnection(DBusConnection *conn,
- 					DBusMessage *msg, void *user_data)
- {
-+	DBusMessageIter iter;
-+	const char *device;
-+	struct ofono_emulator *em;
-+
- 	DBG("Profile handler RequestDisconnection");
- =
-
--	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
--					".NotImplemented",
--					"Implementation not provided");
-+	if (!dbus_message_iter_init(msg, &iter))
-+		goto invalid;
-+
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_OBJECT_PATH)
-+		goto invalid;
-+
-+	dbus_message_iter_get_basic(&iter, &device);
-+
-+	DBG("%s", device);
-+
-+	em =3D g_hash_table_lookup(emulator_hash, device);
-+	if (em =3D=3D NULL)
-+		goto invalid;
-+
-+	ofono_emulator_remove(em);
-+
-+	return dbus_message_new_method_return(msg);
-+
-+invalid:
-+	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE ".Rejected",
-+					"Invalid arguments in method call");
- }
- =
-
- static const GDBusMethodTable profile_methods[] =3D {
+ 		if (defer_setup)
 -- =
 
-1.7.9.5
+1.7.11.7
 
 
---===============3412455656631836128==--
+--===============2557816379233309920==--
 
