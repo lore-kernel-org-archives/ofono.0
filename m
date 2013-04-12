@@ -1,53 +1,153 @@
-Content-Type: multipart/mixed; boundary="===============5888193222842605045=="
+Content-Type: multipart/mixed; boundary="===============4889597384600117996=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] handsfree-audio: Fix parsing of Register() CODECs
-Date: Fri, 12 Apr 2013 18:18:39 -0500
-Message-ID: <5168964F.5060705@gmail.com>
-In-Reply-To: <1365805553-11587-1-git-send-email-jprvita@openbossa.org>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH v2 1/7] hfpmodem: Watch for changes in the selected codec
+Date: Fri, 12 Apr 2013 20:20:09 -0300
+Message-ID: <20130412232009.GA24402@samus>
+In-Reply-To: <516893B9.6080000@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5888193222842605045==
+--===============4889597384600117996==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jo=C3=A3o Paulo,
+Hi Denis,
 
-On 04/12/2013 05:25 PM, Jo=C3=A3o Paulo Rechi Vita wrote:
-> Without this patch the mSBC CODEC is always enabled, even when the
-> CODECs array in the Register() message from the agent contains only
-> entry for the CVSD (0x01) CODEC.
-> ---
->   src/handsfree-audio.c | 5 +++--
->   1 file changed, 3 insertions(+), 2 deletions(-)
->
-> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-> index 1a1cbff..3b0814f 100644
-> --- a/src/handsfree-audio.c
-> +++ b/src/handsfree-audio.c
-> @@ -682,9 +682,10 @@ static DBusMessage *am_agent_register(DBusConnection=
- *conn,
->   		return __ofono_error_invalid_args(msg);
->
->   	for (i =3D 0; i<  length; i++) {
-> -		if (codecs[i] =3D=3D HFP_CODEC_CVSD)
-> +		if (codecs[i] =3D=3D HFP_CODEC_CVSD) {
->   			has_cvsd =3D TRUE;
-> -		else if (codecs[i] !=3D HFP_CODEC_MSBC)
-> +			continue;
-> +		} else if (codecs[i] !=3D HFP_CODEC_MSBC)
->   			return __ofono_error_invalid_args(msg);
->
->   		if (defer_setup)
+On 18:07 Fri 12 Apr, Denis Kenzior wrote:
+> Hi Vinicius,
+> =
 
-Good catch.  I'd prefer we fix Patch 7 in Vinicius' series instead of =
+> On 04/10/2013 02:37 PM, Vinicius Costa Gomes wrote:
+> >This patch adds a function to monitor when the AG sends a new codec
+> >before establishing the SCO connection.
+> >---
+> >  plugins/hfp_hf_bluez5.c | 51 +++++++++++++++++++++++++++++++++++++++++=
+++++++++
+> >  1 file changed, 51 insertions(+)
+> >
+> >diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+> >index c63b1a2..efbb209 100644
+> >--- a/plugins/hfp_hf_bluez5.c
+> >+++ b/plugins/hfp_hf_bluez5.c
+> >@@ -314,9 +314,60 @@ static struct ofono_modem_driver hfp_driver =3D {
+> >  	.post_sim	=3D hfp_post_sim,
+> >  };
+> >
+> >+static void bcs_notify(GAtResult *result, gpointer user_data)
+> >+{
+> >+	struct hfp *hfp =3D user_data;
+> >+	struct hfp_slc_info *info =3D&hfp->info;
+> >+	GAtResultIter iter;
+> >+	char str[32];
+> >+	int value;
+> >+
+> >+	g_at_result_iter_init(&iter, result);
+> >+
+> >+	if (!g_at_result_iter_next(&iter, "+BCS:"))
+> >+		return;
+> >+
+> >+	if (!g_at_result_iter_next_number(&iter,&value))
+> >+		return;
+> >+
+> >+	memset(str, 0, sizeof(str));
+> =
 
-applying this patch though.
+> Why do you need this exactly?
 
-Regards,
--Denis
+I don't. Will fix.
 
---===============5888193222842605045==--
+> =
+
+> >+
+> >+	switch (value) {
+> >+	case HFP_CODEC_MSBC:
+> >+		if (!ofono_handsfree_audio_has_wideband()) {
+> >+			/* No wideband speech support, so we only have CVSD */
+> >+			sprintf(str, "AT+BAC=3D%d", HFP_CODEC_CVSD);
+> >+			break;
+> >+		}
+> >+
+> >+		/* fall through */
+> >+
+> =
+
+> This fall through and the default statement make this code extremely
+> hard to read.  Why don't we move the codec selection logic into the
+> core instead?
+> =
+
+> Then this becomes something like:
+> =
+
+> if (ofono_handsfree_audio_card_set_codec(card, value) =3D=3D FALSE) {
+> 	if (ofono_handsfree_audio_has_wideband())
+> 		...
+> 	else
+> 		...
+> =
+
+> 	goto done;
+> }
+> =
+
+> sprintf(str, "AT+BCS=3D%d", value);
+> =
+
+> done:
+> ....
+
+Sounds good. Let's see how it ends up looking.
+
+> =
+
+> =
+
+> >+	case HFP_CODEC_CVSD:
+> >+		/* Confirm the codec */
+> >+		sprintf(str, "AT+BCS=3D%d", value);
+> >+		break;
+> >+
+> >+	default:
+> >+		/* Unsupported codec, re-send our codecs */
+> >+		if (ofono_handsfree_audio_has_wideband())
+> >+			sprintf(str, "AT+BAC=3D%d,%d", HFP_CODEC_CVSD,
+> >+							HFP_CODEC_MSBC);
+> >+		else
+> >+			sprintf(str, "AT+BAC=3D%d", HFP_CODEC_CVSD);
+> >+	}
+> >+
+> >+	g_at_chat_send(info->chat, str, NULL, NULL, NULL, NULL);
+> >+}
+> >+
+> >  static int hfp16_card_probe(struct ofono_handsfree_card *card,
+> >  					unsigned int vendor, void *data)
+> >  {
+> >+	struct hfp *hfp =3D data;
+> >+	struct hfp_slc_info *info =3D&hfp->info;
+> >+
+> >+	g_at_chat_register(info->chat, "+BCS:", bcs_notify, FALSE,
+> >+								hfp, NULL);
+> >+
+> =
+
+> You read my mind, I was going to suggest doing this exactly :)
+> =
+
+> >  	return 0;
+> >  }
+> >
+> =
+
+> Regards,
+> -Denis
+
+
+Cheers,
+-- =
+
+Vinicius
+
+--===============4889597384600117996==--
 
