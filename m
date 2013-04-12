@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6547882925738934833=="
+Content-Type: multipart/mixed; boundary="===============7408542854615872623=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 2/7] include: ofono_handsfree_card_select_codec()
-Date: Fri, 12 Apr 2013 18:12:25 -0500
-Message-ID: <516894D9.2090807@gmail.com>
-In-Reply-To: <1365622677-4824-2-git-send-email-vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH v2 6/7] handsfree-audio: Set CVSD as default in the card
+Date: Fri, 12 Apr 2013 18:14:02 -0500
+Message-ID: <5168953A.30200@gmail.com>
+In-Reply-To: <1365622677-4824-6-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6547882925738934833==
+--===============7408542854615872623==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,40 +16,33 @@ Content-Transfer-Encoding: quoted-printable
 Hi Vinicius,
 
 On 04/10/2013 02:37 PM, Vinicius Costa Gomes wrote:
-> This will be used by the drivers that a given codec was negotiated
-> for a card.
+> From: Claudio Takahasi<claudio.takahasi@openbossa.org>
+>
+> If the device doesn't support codec negotiation, the selected codec is
+> not being initialized. For this case set CVSD as default.
 > ---
->   include/handsfree-audio.h | 2 ++
+>   src/handsfree-audio.c | 2 ++
 >   1 file changed, 2 insertions(+)
 >
-> diff --git a/include/handsfree-audio.h b/include/handsfree-audio.h
-> index 82d1312..2e58c43 100644
-> --- a/include/handsfree-audio.h
-> +++ b/include/handsfree-audio.h
-> @@ -48,6 +48,8 @@ struct ofono_handsfree_card *ofono_handsfree_card_creat=
-e(unsigned int vendor,
->   							void *data);
->   int ofono_handsfree_card_register(struct ofono_handsfree_card *card);
->   void ofono_handsfree_card_remove(struct ofono_handsfree_card *card);
-> +void ofono_handsfree_card_select_codec(struct ofono_handsfree_card *card,
-> +							unsigned char codec);
-
-As mentioned before, lets make this return ofono_bool_t and name it =
-
-'set_codec'.
-
-Also, do we have some idea whether codec ids are limited to 8 bits or =
-
-they can be larger?  My reading of the spec would seem to indicate 8 =
-
-bits maximum.
-
+> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+> index 8fc6f93..a332f68 100644
+> --- a/src/handsfree-audio.c
+> +++ b/src/handsfree-audio.c
+> @@ -342,6 +342,8 @@ struct ofono_handsfree_card *ofono_handsfree_card_cre=
+ate(unsigned int vendor,
 >
->   ofono_bool_t ofono_handsfree_audio_has_wideband(void);
+>   	card =3D g_new0(struct ofono_handsfree_card, 1);
 >
+> +	card->selected_codec =3D HFP_CODEC_CVSD;
+> +
+>   	card_list =3D g_slist_prepend(card_list, card);
+>
+>   	for (l =3D drivers; l; l =3D l->next) {
+
+Please merge this patch with 'set_codec' implementation.
 
 Regards,
 -Denis
 
---===============6547882925738934833==--
+--===============7408542854615872623==--
 
