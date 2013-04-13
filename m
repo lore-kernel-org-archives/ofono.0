@@ -1,153 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============4889597384600117996=="
+Content-Type: multipart/mixed; boundary="===============4918131232998308566=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: Re: [PATCH v2 1/7] hfpmodem: Watch for changes in the selected codec
-Date: Fri, 12 Apr 2013 20:20:09 -0300
-Message-ID: <20130412232009.GA24402@samus>
-In-Reply-To: <516893B9.6080000@gmail.com>
+From: =?unknown-8bit?q?Jo=C3=A3o?= Paulo Rechi Vita <jprvita@gmail.com>
+Subject: Re: [PATCH] handsfree-audio: Fix parsing of Register() CODECs
+Date: Fri, 12 Apr 2013 21:06:34 -0300
+Message-ID: <CA+A7VXWKR1woyrX8jpP3WE0h6pBt1+iCztrjr4ADs9Y9z-mcoA@mail.gmail.com>
+In-Reply-To: <5168964F.5060705@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4889597384600117996==
+--===============4918131232998308566==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+On Apr 12, 2013 8:18 PM, "Denis Kenzior" <denkenz@gmail.com> wrote:
+>
+> Hi Jo=C3=A3o Paulo,
+>
+>
+> On 04/12/2013 05:25 PM, Jo=C3=A3o Paulo Rechi Vita wrote:
+>>
+>> Without this patch the mSBC CODEC is always enabled, even when the
+>> CODECs array in the Register() message from the agent contains only
+>> entry for the CVSD (0x01) CODEC.
+>> ---
+>>   src/handsfree-audio.c | 5 +++--
+>>   1 file changed, 3 insertions(+), 2 deletions(-)
+>>
+>> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+>> index 1a1cbff..3b0814f 100644
+>> --- a/src/handsfree-audio.c
+>> +++ b/src/handsfree-audio.c
+>> @@ -682,9 +682,10 @@ static DBusMessage
+*am_agent_register(DBusConnection *conn,
+>>                 return __ofono_error_invalid_args(msg);
+>>
+>>         for (i =3D 0; i<  length; i++) {
+>> -               if (codecs[i] =3D=3D HFP_CODEC_CVSD)
+>> +               if (codecs[i] =3D=3D HFP_CODEC_CVSD) {
+>>                         has_cvsd =3D TRUE;
+>> -               else if (codecs[i] !=3D HFP_CODEC_MSBC)
+>> +                       continue;
+>> +               } else if (codecs[i] !=3D HFP_CODEC_MSBC)
+>>                         return __ofono_error_invalid_args(msg);
+>>
+>>                 if (defer_setup)
+>
+>
+> Good catch.  I'd prefer we fix Patch 7 in Vinicius' series instead of
+applying this patch though.
+>
 
-On 18:07 Fri 12 Apr, Denis Kenzior wrote:
-> Hi Vinicius,
-> =
+The bug fixed by this patch is not related to what patch 7 of Vinicius'
+series does and it's present in the upstream master branch. I'm fine if you
+prefer it stashed with Vinicius' patch, I'm just bringing up that the
+patches do different things.
 
-> On 04/10/2013 02:37 PM, Vinicius Costa Gomes wrote:
-> >This patch adds a function to monitor when the AG sends a new codec
-> >before establishing the SCO connection.
-> >---
-> >  plugins/hfp_hf_bluez5.c | 51 +++++++++++++++++++++++++++++++++++++++++=
-++++++++
-> >  1 file changed, 51 insertions(+)
-> >
-> >diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-> >index c63b1a2..efbb209 100644
-> >--- a/plugins/hfp_hf_bluez5.c
-> >+++ b/plugins/hfp_hf_bluez5.c
-> >@@ -314,9 +314,60 @@ static struct ofono_modem_driver hfp_driver =3D {
-> >  	.post_sim	=3D hfp_post_sim,
-> >  };
-> >
-> >+static void bcs_notify(GAtResult *result, gpointer user_data)
-> >+{
-> >+	struct hfp *hfp =3D user_data;
-> >+	struct hfp_slc_info *info =3D&hfp->info;
-> >+	GAtResultIter iter;
-> >+	char str[32];
-> >+	int value;
-> >+
-> >+	g_at_result_iter_init(&iter, result);
-> >+
-> >+	if (!g_at_result_iter_next(&iter, "+BCS:"))
-> >+		return;
-> >+
-> >+	if (!g_at_result_iter_next_number(&iter,&value))
-> >+		return;
-> >+
-> >+	memset(str, 0, sizeof(str));
-> =
+--
+Jo=C3=A3o Paulo Rechi Vita
+http://about.me/jprvita
 
-> Why do you need this exactly?
+--===============4918131232998308566==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-I don't. Will fix.
+PHAgZGlyPSJsdHIiPjxicj4KT24gQXByIDEyLCAyMDEzIDg6MTggUE0sICZxdW90O0RlbmlzIEtl
+bnppb3ImcXVvdDsgJmx0OzxhIGhyZWY9Im1haWx0bzpkZW5rZW56QGdtYWlsLmNvbSI+ZGVua2Vu
+ekBnbWFpbC5jb208L2E+Jmd0OyB3cm90ZTo8YnI+CiZndDs8YnI+CiZndDsgSGkgSm/Do28gUGF1
+bG8sPGJyPgomZ3Q7PGJyPgomZ3Q7PGJyPgomZ3Q7IE9uIDA0LzEyLzIwMTMgMDU6MjUgUE0sIEpv
+w6NvIFBhdWxvIFJlY2hpIFZpdGEgd3JvdGU6PGJyPgomZ3Q7Jmd0Ozxicj4KJmd0OyZndDsgV2l0
+aG91dCB0aGlzIHBhdGNoIHRoZSBtU0JDIENPREVDIGlzIGFsd2F5cyBlbmFibGVkLCBldmVuIHdo
+ZW4gdGhlPGJyPgomZ3Q7Jmd0OyBDT0RFQ3MgYXJyYXkgaW4gdGhlIFJlZ2lzdGVyKCkgbWVzc2Fn
+ZSBmcm9tIHRoZSBhZ2VudCBjb250YWlucyBvbmx5PGJyPgomZ3Q7Jmd0OyBlbnRyeSBmb3IgdGhl
+IENWU0QgKDB4MDEpIENPREVDLjxicj4KJmd0OyZndDsgLS0tPGJyPgomZ3Q7Jmd0OyDCoCBzcmMv
+aGFuZHNmcmVlLWF1ZGlvLmMgfCA1ICsrKy0tPGJyPgomZ3Q7Jmd0OyDCoCAxIGZpbGUgY2hhbmdl
+ZCwgMyBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygtKTxicj4KJmd0OyZndDs8YnI+CiZndDsm
+Z3Q7IGRpZmYgLS1naXQgYS9zcmMvaGFuZHNmcmVlLWF1ZGlvLmMgYi9zcmMvaGFuZHNmcmVlLWF1
+ZGlvLmM8YnI+CiZndDsmZ3Q7IGluZGV4IDFhMWNiZmYuLjNiMDgxNGYgMTAwNjQ0PGJyPgomZ3Q7
+Jmd0OyAtLS0gYS9zcmMvaGFuZHNmcmVlLWF1ZGlvLmM8YnI+CiZndDsmZ3Q7ICsrKyBiL3NyYy9o
+YW5kc2ZyZWUtYXVkaW8uYzxicj4KJmd0OyZndDsgQEAgLTY4Miw5ICs2ODIsMTAgQEAgc3RhdGlj
+IERCdXNNZXNzYWdlICphbV9hZ2VudF9yZWdpc3RlcihEQnVzQ29ubmVjdGlvbiAqY29ubiw8YnI+
+CiZndDsmZ3Q7IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHJldHVybiBfX29mb25vX2Vycm9yX2lu
+dmFsaWRfYXJncyhtc2cpOzxicj4KJmd0OyZndDs8YnI+CiZndDsmZ3Q7IMKgIMKgIMKgIMKgIGZv
+ciAoaSA9IDA7IGkmbHQ7IMKgbGVuZ3RoOyBpKyspIHs8YnI+CiZndDsmZ3Q7IC0gwqAgwqAgwqAg
+wqAgwqAgwqAgwqAgaWYgKGNvZGVjc1tpXSA9PSBIRlBfQ09ERUNfQ1ZTRCk8YnI+CiZndDsmZ3Q7
+ICsgwqAgwqAgwqAgwqAgwqAgwqAgwqAgaWYgKGNvZGVjc1tpXSA9PSBIRlBfQ09ERUNfQ1ZTRCkg
+ezxicj4KJmd0OyZndDsgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgwqAgaGFzX2N2
+c2QgPSBUUlVFOzxicj4KJmd0OyZndDsgLSDCoCDCoCDCoCDCoCDCoCDCoCDCoCBlbHNlIGlmIChj
+b2RlY3NbaV0gIT0gSEZQX0NPREVDX01TQkMpPGJyPgomZ3Q7Jmd0OyArIMKgIMKgIMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIMKgIGNvbnRpbnVlOzxicj4KJmd0OyZndDsgKyDCoCDCoCDCoCDCoCDC
+oCDCoCDCoCB9IGVsc2UgaWYgKGNvZGVjc1tpXSAhPSBIRlBfQ09ERUNfTVNCQyk8YnI+CiZndDsm
+Z3Q7IMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIMKgIHJldHVybiBfX29mb25vX2Vy
+cm9yX2ludmFsaWRfYXJncyhtc2cpOzxicj4KJmd0OyZndDs8YnI+CiZndDsmZ3Q7IMKgIMKgIMKg
+IMKgIMKgIMKgIMKgIMKgIGlmIChkZWZlcl9zZXR1cCk8YnI+CiZndDs8YnI+CiZndDs8YnI+CiZn
+dDsgR29vZCBjYXRjaC4gwqBJJiMzOTtkIHByZWZlciB3ZSBmaXggUGF0Y2ggNyBpbiBWaW5pY2l1
+cyYjMzk7IHNlcmllcyBpbnN0ZWFkIG9mIGFwcGx5aW5nIHRoaXMgcGF0Y2ggdGhvdWdoLjxicj4K
+Jmd0OzwvcD4KPHAgZGlyPSJsdHIiPlRoZSBidWcgZml4ZWQgYnkgdGhpcyBwYXRjaCBpcyBub3Qg
+cmVsYXRlZCB0byB3aGF0IHBhdGNoIDcgb2YgVmluaWNpdXMmIzM5OyBzZXJpZXMgZG9lcyBhbmQg
+aXQmIzM5O3MgcHJlc2VudCBpbiB0aGUgdXBzdHJlYW0gbWFzdGVyIGJyYW5jaC4gSSYjMzk7bSBm
+aW5lIGlmIHlvdSBwcmVmZXIgaXQgc3Rhc2hlZCB3aXRoIFZpbmljaXVzJiMzOTsgcGF0Y2gsIEkm
+IzM5O20ganVzdCBicmluZ2luZyB1cCB0aGF0IHRoZSBwYXRjaGVzIGRvIGRpZmZlcmVudCB0aGlu
+Z3MuPC9wPgoKPHAgZGlyPSJsdHIiPi0tPGJyPgpKb8OjbyBQYXVsbyBSZWNoaSBWaXRhPGJyPgo8
+YSBocmVmPSJodHRwOi8vYWJvdXQubWUvanBydml0YSI+aHR0cDovL2Fib3V0Lm1lL2pwcnZpdGE8
+L2E+PGJyPgo8L3A+Cg==
 
-> =
-
-> >+
-> >+	switch (value) {
-> >+	case HFP_CODEC_MSBC:
-> >+		if (!ofono_handsfree_audio_has_wideband()) {
-> >+			/* No wideband speech support, so we only have CVSD */
-> >+			sprintf(str, "AT+BAC=3D%d", HFP_CODEC_CVSD);
-> >+			break;
-> >+		}
-> >+
-> >+		/* fall through */
-> >+
-> =
-
-> This fall through and the default statement make this code extremely
-> hard to read.  Why don't we move the codec selection logic into the
-> core instead?
-> =
-
-> Then this becomes something like:
-> =
-
-> if (ofono_handsfree_audio_card_set_codec(card, value) =3D=3D FALSE) {
-> 	if (ofono_handsfree_audio_has_wideband())
-> 		...
-> 	else
-> 		...
-> =
-
-> 	goto done;
-> }
-> =
-
-> sprintf(str, "AT+BCS=3D%d", value);
-> =
-
-> done:
-> ....
-
-Sounds good. Let's see how it ends up looking.
-
-> =
-
-> =
-
-> >+	case HFP_CODEC_CVSD:
-> >+		/* Confirm the codec */
-> >+		sprintf(str, "AT+BCS=3D%d", value);
-> >+		break;
-> >+
-> >+	default:
-> >+		/* Unsupported codec, re-send our codecs */
-> >+		if (ofono_handsfree_audio_has_wideband())
-> >+			sprintf(str, "AT+BAC=3D%d,%d", HFP_CODEC_CVSD,
-> >+							HFP_CODEC_MSBC);
-> >+		else
-> >+			sprintf(str, "AT+BAC=3D%d", HFP_CODEC_CVSD);
-> >+	}
-> >+
-> >+	g_at_chat_send(info->chat, str, NULL, NULL, NULL, NULL);
-> >+}
-> >+
-> >  static int hfp16_card_probe(struct ofono_handsfree_card *card,
-> >  					unsigned int vendor, void *data)
-> >  {
-> >+	struct hfp *hfp =3D data;
-> >+	struct hfp_slc_info *info =3D&hfp->info;
-> >+
-> >+	g_at_chat_register(info->chat, "+BCS:", bcs_notify, FALSE,
-> >+								hfp, NULL);
-> >+
-> =
-
-> You read my mind, I was going to suggest doing this exactly :)
-> =
-
-> >  	return 0;
-> >  }
-> >
-> =
-
-> Regards,
-> -Denis
-
-
-Cheers,
--- =
-
-Vinicius
-
---===============4889597384600117996==--
+--===============4918131232998308566==--
 
