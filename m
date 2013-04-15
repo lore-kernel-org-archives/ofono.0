@@ -1,36 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============1483326401322246961=="
+Content-Type: multipart/mixed; boundary="===============7384062104634744911=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3 1/6] include: Add ofono_handsfree_card_set_codec()
-Date: Mon, 15 Apr 2013 07:22:21 -0500
-Message-ID: <516BF0FD.5080800@gmail.com>
-In-Reply-To: <1366034093-24084-1-git-send-email-vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH 4/7] emulator: Change feature check to attend HFP 1.6
+Date: Mon, 15 Apr 2013 07:24:35 -0500
+Message-ID: <516BF183.2030104@gmail.com>
+In-Reply-To: <1365799265-19946-5-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1483326401322246961==
+--===============7384062104634744911==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vinicius,
+Hi Paulo,
 
-On 04/15/2013 08:54 AM, Vinicius Costa Gomes wrote:
-> This will be used by the drivers that a given codec was negotiated
-> for a card.
+On 04/12/2013 03:41 PM, Paulo Borges wrote:
+> HFP 1.6 adds a new feature called Codec Negotitation. For the HF Role,
+> this feature is stored in the eighty bit of the supported features
+> bitmap.
 >
-> It will return FALSE if the codec can't be used. For example, if the sele=
-cted
-> codec is mSBC and defer setup is not supported by the kernel.
+> This way, we need to change the range of valid HF feature bitmaps to
+> 2^8-1.
 > ---
->   include/handsfree-audio.h | 2 ++
->   1 file changed, 2 insertions(+)
+>   src/emulator.c |    2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+>
 
-All 6 patches in this series have been applied, thanks.
+Patch has been applied, but I reworded the commit description slightly.
 
 Regards,
 -Denis
 
-
---===============1483326401322246961==--
+--===============7384062104634744911==--
 
