@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7384062104634744911=="
+Content-Type: multipart/mixed; boundary="===============1508825059181281237=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/7] emulator: Change feature check to attend HFP 1.6
-Date: Mon, 15 Apr 2013 07:24:35 -0500
-Message-ID: <516BF183.2030104@gmail.com>
-In-Reply-To: <1365799265-19946-5-git-send-email-paulo.borges@openbossa.org>
+Subject: Re: [PATCH 7/7] hfp_ag_bluez5: Remove emulator when disconnect
+Date: Mon, 15 Apr 2013 07:30:47 -0500
+Message-ID: <516BF2F7.50508@gmail.com>
+In-Reply-To: <1365799265-19946-8-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7384062104634744911==
+--===============1508825059181281237==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,21 +16,28 @@ Content-Transfer-Encoding: quoted-printable
 Hi Paulo,
 
 On 04/12/2013 03:41 PM, Paulo Borges wrote:
-> HFP 1.6 adds a new feature called Codec Negotitation. For the HF Role,
-> this feature is stored in the eighty bit of the supported features
-> bitmap.
+> When a RequestDisconnect() is received, the emulator must be both
+> disconnected and removed from the hash.
 >
-> This way, we need to change the range of valid HF feature bitmaps to
-> 2^8-1.
+> But an emulator can also be disconnected and freed automatically if its
+> GAtServer closes. In this case, the hash can hold an invalid pointer.
+>
+> So, after the emulator is registered, a function is set to be called
+> when the emulator is about to be freed and this function removes the
+> emulator from the hash.
 > ---
->   src/emulator.c |    2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
->
+>   plugins/hfp_ag_bluez5.c |   43 +++++++++++++++++++++++++++++++++++++++-=
+---
+>   1 file changed, 39 insertions(+), 4 deletions(-)
 
-Patch has been applied, but I reworded the commit description slightly.
+Have you considered keeping track of the file descriptors instead?  e.g. =
+
+simply adding a hash table of fds obtained from NewConnection() and =
+
+g_io_add_watch()-ing on the 'HUP' condition?
 
 Regards,
 -Denis
 
---===============7384062104634744911==--
+--===============1508825059181281237==--
 
