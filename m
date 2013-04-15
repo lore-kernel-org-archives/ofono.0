@@ -1,76 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============5560164882279117035=="
+Content-Type: multipart/mixed; boundary="===============5512183273199467968=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH v3 4/6] handsfree-audio: Send the selected codec
-Date: Mon, 15 Apr 2013 10:54:51 -0300
-Message-ID: <1366034093-24084-4-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH v3 5/6] handsfree-audio: Keep track whether defer_setup is
+ enabled
+Date: Mon, 15 Apr 2013 10:54:52 -0300
+Message-ID: <1366034093-24084-5-git-send-email-vinicius.gomes@openbossa.org>
 In-Reply-To: <1366034093-24084-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5560164882279117035==
+--===============5512183273199467968==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+'defer_setup' will be one of the inputs when enabling or disabling
+support for wideband speech codecs, we will only enable wideband
+speech support if the kernel supports deferred setup.
 
-This patch removes the hard-coded CVSD codec, and adds the selected
-codec in the NewConnection method call, notifying the agent the codec
-previously selected for the audio connection.
+So, we have to have this information available, in this case it means
+a global variable.
 ---
- src/handsfree-audio.c | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ src/handsfree-audio.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index 8e8d460..7f5b33c 100644
+index 7f5b33c..fc3d15b 100644
 --- a/src/handsfree-audio.c
 +++ b/src/handsfree-audio.c
-@@ -67,11 +67,10 @@ static guint sco_watch =3D 0;
+@@ -66,6 +66,7 @@ static GSList *card_list =3D 0;
+ static guint sco_watch =3D 0;
  static GSList *drivers =3D 0;
  static ofono_bool_t has_wideband =3D FALSE;
++static int defer_setup =3D 1;
  =
 
--static void send_new_connection(const char *card, int fd)
-+static void send_new_connection(const char *card, int fd, uint8_t codec)
+ static void send_new_connection(const char *card, int fd, uint8_t codec)
  {
- 	DBusMessage *msg;
- 	DBusMessageIter iter;
--	uint8_t codec =3D HFP_CODEC_CVSD;
+@@ -159,7 +160,7 @@ static int sco_init(void)
+ {
+ 	GIOChannel *sco_io;
+ 	struct sockaddr_sco saddr;
+-	int sk, defer_setup =3D 1;
++	int sk;
  =
 
- 	msg =3D dbus_message_new_method_call(agent->owner, agent->path,
- 				HFP_AUDIO_AGENT_INTERFACE, "NewConnection");
-@@ -150,7 +149,7 @@ static gboolean sco_accept(GIOChannel *io, GIOCondition=
- cond,
- 		return TRUE;
+ 	sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET | O_NONBLOCK | SOCK_CLOEXEC,
+ 								BTPROTO_SCO);
+@@ -177,9 +178,11 @@ static int sco_init(void)
  	}
  =
 
--	send_new_connection(card->path, nsk);
-+	send_new_connection(card->path, nsk, card->selected_codec);
- 	close(nsk);
+ 	if (setsockopt(sk, SOL_BLUETOOTH, BT_DEFER_SETUP,
+-				&defer_setup, sizeof(defer_setup)) < 0)
++				&defer_setup, sizeof(defer_setup)) < 0) {
++		defer_setup =3D 0;
+ 		ofono_warn("Can't enable deferred setup: %s (%d)",
+ 						strerror(errno), errno);
++	}
  =
 
- 	return TRUE;
-@@ -252,7 +251,7 @@ static gboolean sco_connect_cb(GIOChannel *io, GIOCondi=
-tion cond,
- =
-
- 	sk =3D g_io_channel_unix_get_fd(io);
- =
-
--	send_new_connection(card->path, sk);
-+	send_new_connection(card->path, sk, card->selected_codec);
- =
-
- 	close(sk);
- =
-
+ 	if (listen(sk, 5) < 0) {
+ 		close(sk);
 -- =
 
 1.8.2
 
 
---===============5560164882279117035==--
+--===============5512183273199467968==--
 
