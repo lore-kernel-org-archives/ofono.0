@@ -1,77 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============5988184902747677588=="
+Content-Type: multipart/mixed; boundary="===============1622705692328204255=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [RFC 2/2] handsfree-audio: Add setting SCO air mode
-Date: Mon, 15 Apr 2013 16:03:51 -0300
-Message-ID: <1366052631-19705-3-git-send-email-vinicius.gomes@openbossa.org>
-In-Reply-To: <1366052631-19705-1-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [RFC 0/2] Setting the SCO air mode
+Date: Mon, 15 Apr 2013 16:03:49 -0300
+Message-ID: <1366052631-19705-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5988184902747677588==
+--===============1622705692328204255==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Hi,
 
----
+Sending this as an RFC as this depends on an socket API that is still
+being discussed[1]. If the current proposed API (SCO_SETTINGS) is
+approved, this series can be promoted to 'PATCH'.
+
+If we want to send mSBC data over SCO, we need to enable the
+transparent mode in the SCO link, the only way to inform that to the
+kernel is using the SCO_SETTINGS (or similar) socket option.
+
+
+Cheers,
+
+
+[1] http://thread.gmane.org/gmane.linux.bluez.kernel/34902
+
+Claudio Takahasi (2):
+  bluetooth: Add define for SCO voice settings
+  handsfree-audio: Add setting SCO air mode
+
+ src/bluetooth.h       | 11 +++++++++++
  src/handsfree-audio.c | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
-
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index c24e787..a7da523 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -68,6 +68,16 @@ static GSList *drivers =3D 0;
- static ofono_bool_t has_wideband =3D FALSE;
- static int defer_setup =3D 1;
- =
-
-+static uint16_t codec2setting(uint8_t codec)
-+{
-+	switch (codec) {
-+		case HFP_CODEC_CVSD:
-+			return SCO_SETTING_CVSD;
-+		default:
-+			return SCO_SETTING_TRANSPARENT;
-+	}
-+}
-+
- static void send_new_connection(const char *card, int fd, uint8_t codec)
- {
- 	DBusMessage *msg;
-@@ -107,6 +117,7 @@ static gboolean sco_accept(GIOChannel *io, GIOCondition=
- cond,
- {
- 	struct ofono_handsfree_card *card;
- 	struct sockaddr_sco saddr;
-+	struct sco_settings options;
- 	socklen_t alen;
- 	int sk, nsk;
- 	char local[18], remote[18];
-@@ -150,6 +161,14 @@ static gboolean sco_accept(GIOChannel *io, GIOConditio=
-n cond,
- 		return TRUE;
- 	}
- =
-
-+	memset(&options, 0, sizeof(options));
-+	options.settings =3D codec2setting(card->selected_codec);
-+
-+	if (setsockopt(nsk, SOL_SCO, SCO_SETTINGS, &options,
-+						sizeof(options)) < 0)
-+		ofono_error("Can't set SCO options: %s (%d)", strerror(errno),
-+									errno);
-+
- 	send_new_connection(card->path, nsk, card->selected_codec);
- 	close(nsk);
- =
+ 2 files changed, 30 insertions(+)
 
 -- =
 
 1.8.2.1
 
 
---===============5988184902747677588==--
+--===============1622705692328204255==--
 
