@@ -1,53 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============7327867597193138156=="
+Content-Type: multipart/mixed; boundary="===============8779165332699113824=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [RFC 1/2] bluetooth: Add define for SCO voice settings
-Date: Mon, 15 Apr 2013 16:03:50 -0300
-Message-ID: <1366052631-19705-2-git-send-email-vinicius.gomes@openbossa.org>
-In-Reply-To: <1366052631-19705-1-git-send-email-vinicius.gomes@openbossa.org>
+From: Paulo Borges <paulo.borges@openbossa.org>
+Subject: [PATCH v3 1/7] hfp_ag_bluez5: Create a hash to store connections
+Date: Mon, 15 Apr 2013 18:41:44 -0300
+Message-ID: <1366062110-28031-2-git-send-email-paulo.borges@openbossa.org>
+In-Reply-To: <1366062110-28031-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7327867597193138156==
+--===============8779165332699113824==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-
-Add defines for SCO voice setting (Air Coding). Air mode "Transparent
-Data" shall be supported if wide band speech is supported.
+We need to store active connections so we can disconnect them at
+RequestDisconnect().
 ---
- src/bluetooth.h | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+ plugins/hfp_ag_bluez5.c |   15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
 
-diff --git a/src/bluetooth.h b/src/bluetooth.h
-index af6f02c..4421b59 100644
---- a/src/bluetooth.h
-+++ b/src/bluetooth.h
-@@ -54,6 +54,17 @@ struct sockaddr_sco {
- 	bdaddr_t	sco_bdaddr;
- };
+diff --git a/plugins/hfp_ag_bluez5.c b/plugins/hfp_ag_bluez5.c
+index 64ea8ca..ba84d90 100644
+--- a/plugins/hfp_ag_bluez5.c
++++ b/plugins/hfp_ag_bluez5.c
+@@ -51,6 +51,16 @@
+ static guint modemwatch_id;
+ static GList *modems;
+ static GHashTable *sim_hash =3D NULL;
++static GHashTable *connection_hash;
++
++static void connection_removed_notify(gpointer data)
++{
++	int fd =3D GPOINTER_TO_INT(data);
++
++	DBG("%d", fd);
++
++	close(fd);
++}
  =
 
-+/* SCO socket settings */
-+#define SCO_SETTINGS	0x03
+ static DBusMessage *profile_new_connection(DBusConnection *conn,
+ 						DBusMessage *msg, void *data)
+@@ -254,6 +264,9 @@ static int hfp_ag_init(void)
+ 	modemwatch_id =3D __ofono_modemwatch_add(modem_watch, NULL, NULL);
+ 	__ofono_modem_foreach(call_modemwatch, NULL);
+ =
+
++	connection_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++					g_free, connection_removed_notify);
 +
-+struct sco_settings {
-+	uint16_t settings;
-+};
+ 	return 0;
+ }
+ =
+
+@@ -265,6 +278,8 @@ static void hfp_ag_exit(void)
+ 	g_dbus_unregister_interface(conn, HFP_AG_EXT_PROFILE_PATH,
+ 						BLUEZ_PROFILE_INTERFACE);
+ =
+
++	g_hash_table_destroy(connection_hash);
 +
-+/* From Core 4.0 spec, Volume 2, Part E. Section 6.12, page 685 */
-+#define SCO_SETTING_CVSD		0x0000
-+#define SCO_SETTING_TRANSPARENT		0x0003
-+
- static inline void bt_bacpy(bdaddr_t *dst, const bdaddr_t *src)
- {
- 	memcpy(dst, src, sizeof(bdaddr_t));
+ 	g_list_free(modems);
+ 	g_hash_table_foreach_remove(sim_hash, sim_watch_remove, NULL);
+ 	g_hash_table_destroy(sim_hash);
 -- =
 
-1.8.2.1
+1.7.9.5
 
 
---===============7327867597193138156==--
+--===============8779165332699113824==--
 
