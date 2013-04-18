@@ -1,33 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============6971261169551094221=="
+Content-Type: multipart/mixed; boundary="===============6624304576495212003=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] handsfree-audio: Log when agent (un)register
-Date: Tue, 16 Apr 2013 14:22:42 -0500
-Message-ID: <516DA502.4000902@gmail.com>
-In-Reply-To: <1366151541-30242-1-git-send-email-jprvita@openbossa.org>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: [PATCH] hfp_hf_bluez5: Fix not considering that UUIDs change after
+ creation
+Date: Thu, 18 Apr 2013 14:50:38 -0300
+Message-ID: <1366307438-19867-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6971261169551094221==
+--===============6624304576495212003==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jo=C3=A3o Paulo,
+For example, in the case of a incoming connection the device may be
+created without UUIDs and the property changed is emitted later.
+---
+ plugins/hfp_hf_bluez5.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-On 04/16/2013 05:32 PM, Jo=C3=A3o Paulo Rechi Vita wrote:
-> This commit logs on debug level when a Handsfree Audio Agent registers
-> or unregisters itself and the CODECs that are enabled.
-> ---
->   src/handsfree-audio.c | 10 +++++++++-
->   1 file changed, 9 insertions(+), 1 deletion(-)
->
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index 2c67a21..2b9275b 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -744,7 +744,8 @@ static void property_changed(GDBusProxy *proxy, const c=
+har *name,
+ 	if (g_str_equal(BLUEZ_DEVICE_INTERFACE, interface) =3D=3D FALSE)
+ 		return;
+ =
 
-Patch has been applied, thanks.
+-	if (g_str_equal("Paired", name) !=3D TRUE)
++	if (g_str_equal("Paired", name) !=3D TRUE &&
++					g_str_equal("UUIDs", name) !=3D TRUE)
+ 		return;
+ =
 
-Regards,
--Denis
+ 	modem_register_from_proxy(proxy, path);
+-- =
+
+1.8.2.1
 
 
---===============6971261169551094221==--
+--===============6624304576495212003==--
 
