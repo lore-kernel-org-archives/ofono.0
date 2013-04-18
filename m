@@ -1,27 +1,24 @@
-Content-Type: multipart/mixed; boundary="===============2124394605958911376=="
+Content-Type: multipart/mixed; boundary="===============7120442079540274339=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] hfp_hf_bluez5: Fix not considering that UUIDs change
- after creation
-Date: Thu, 18 Apr 2013 08:39:30 -0500
-Message-ID: <516FF792.1080805@gmail.com>
-In-Reply-To: <1366307438-19867-1-git-send-email-vinicius.gomes@openbossa.org>
+Subject: Re: [PATCH v3 4/7] phonesim: Include hfp.h
+Date: Thu, 18 Apr 2013 08:43:45 -0500
+Message-ID: <516FF891.9000006@gmail.com>
+In-Reply-To: <1366062110-28031-5-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2124394605958911376==
+--===============7120442079540274339==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vinicius,
+Hi Paulo,
 
-On 04/18/2013 12:50 PM, Vinicius Costa Gomes wrote:
-> For example, in the case of a incoming connection the device may be
-> created without UUIDs and the property changed is emitted later.
+On 04/15/2013 04:41 PM, Paulo Borges wrote:
 > ---
->   plugins/hfp_hf_bluez5.c | 3 ++-
->   1 file changed, 2 insertions(+), 1 deletion(-)
+>   plugins/phonesim.c |    1 +
+>   1 file changed, 1 insertion(+)
 >
 
 Patch has been applied, thanks.
@@ -30,5 +27,5 @@ Regards,
 -Denis
 
 
---===============2124394605958911376==--
+--===============7120442079540274339==--
 
