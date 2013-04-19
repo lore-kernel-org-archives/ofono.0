@@ -1,52 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============5492964010487401827=="
+Content-Type: multipart/mixed; boundary="===============7573209209442605790=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 1/7] doc: Add ECNR to Handsfree
-Date: Fri, 19 Apr 2013 14:34:38 -0300
-Message-ID: <1366392884-7116-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 3/7] core: Add ECNR in Handsfree GetProperty
+Date: Fri, 19 Apr 2013 14:34:40 -0300
+Message-ID: <1366392884-7116-3-git-send-email-claudio.takahasi@openbossa.org>
+In-Reply-To: <1366392884-7116-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5492964010487401827==
+--===============7573209209442605790==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds echo canceling and noise reduction property to Handsfree
-interface, allowing the handsfree unit to enable or disable this feature
-in the audio gateway.
-
-According to Bluetooth HFP 1.6 spec: By default, if the AG supports its
-own embedded echo canceling and/or noise reduction functions, it shall
-have them activated until the AT+NREC command is received.
 ---
- doc/handsfree-api.txt | 7 +++++++
- 1 file changed, 7 insertions(+)
+ src/handsfree.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/doc/handsfree-api.txt b/doc/handsfree-api.txt
-index 0b5d421..f877db0 100644
---- a/doc/handsfree-api.txt
-+++ b/doc/handsfree-api.txt
-@@ -56,6 +56,13 @@ Properties	array{string} Features [readonly]
- 			to activate or deactivate the function from the HF, or
- 			the AG could autonomously initiate it.
+diff --git a/src/handsfree.c b/src/handsfree.c
+index 6d7f263..041d3f2 100644
+--- a/src/handsfree.c
++++ b/src/handsfree.c
+@@ -45,6 +45,7 @@
+ static GSList *g_drivers =3D NULL;
  =
 
-+		boolean ECNR [readwrite]
-+
-+			Boolean representing whether echo canceling and noise
-+			reduction is enabled in the AG. This property may be
-+			written to activate or deactivate this feature from
-+			the HF unit.
-+
- 		byte BatteryChargeLevel [readonly]
+ struct ofono_handsfree {
++	ofono_bool_t ecnr;
+ 	ofono_bool_t inband_ringing;
+ 	ofono_bool_t voice_recognition;
+ 	ofono_bool_t voice_recognition_pending;
+@@ -175,6 +176,10 @@ static DBusMessage *handsfree_get_properties(DBusConne=
+ction *conn,
+ 	ofono_dbus_dict_append(&dict, "InbandRinging", DBUS_TYPE_BOOLEAN,
+ 				&inband_ringing);
  =
 
- 			The current charge level of the battery.  The value
++	if (hf->ag_features & HFP_AG_FEATURE_ECNR)
++		ofono_dbus_dict_append(&dict, "ECNR", DBUS_TYPE_BOOLEAN,
++								&hf->ecnr);
++
+ 	voice_recognition =3D hf->voice_recognition;
+ 	ofono_dbus_dict_append(&dict, "VoiceRecognition", DBUS_TYPE_BOOLEAN,
+ 				&voice_recognition);
 -- =
 
 1.7.11.7
 
 
---===============5492964010487401827==--
+--===============7573209209442605790==--
 
