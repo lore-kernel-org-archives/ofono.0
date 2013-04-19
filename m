@@ -1,52 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============7573209209442605790=="
+Content-Type: multipart/mixed; boundary="===============4701989456267689286=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 3/7] core: Add ECNR in Handsfree GetProperty
-Date: Fri, 19 Apr 2013 14:34:40 -0300
-Message-ID: <1366392884-7116-3-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 4/7] core: Set ECNR to TRUE by default
+Date: Fri, 19 Apr 2013 14:34:41 -0300
+Message-ID: <1366392884-7116-4-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1366392884-7116-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7573209209442605790==
+--===============4701989456267689286==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+According to Bluetooth HFP spec: By default, if the AG supports its
+own embedded echo canceling and/or noise reduction functions, it shall
+have them activated until the AT+NREC command is received. The
+configuration set by the HF shall by used by the AG while the Service
+Level Connection is active.
+
+Since there isn't a command to query the current value, it is being
+assumed that ECNR is enabled when the connection is established and
+the gateway supports ECNR feature.
 ---
- src/handsfree.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ src/handsfree.c | 1 +
+ 1 file changed, 1 insertion(+)
 
 diff --git a/src/handsfree.c b/src/handsfree.c
-index 6d7f263..041d3f2 100644
+index 041d3f2..31f2cea 100644
 --- a/src/handsfree.c
 +++ b/src/handsfree.c
-@@ -45,6 +45,7 @@
- static GSList *g_drivers =3D NULL;
+@@ -361,6 +361,7 @@ struct ofono_handsfree *ofono_handsfree_create(struct o=
+fono_modem *modem,
+ 	hf->atom =3D __ofono_modem_add_atom(modem,
+ 					OFONO_ATOM_TYPE_HANDSFREE,
+ 					handsfree_remove, hf);
++	hf->ecnr =3D TRUE;
  =
 
- struct ofono_handsfree {
-+	ofono_bool_t ecnr;
- 	ofono_bool_t inband_ringing;
- 	ofono_bool_t voice_recognition;
- 	ofono_bool_t voice_recognition_pending;
-@@ -175,6 +176,10 @@ static DBusMessage *handsfree_get_properties(DBusConne=
-ction *conn,
- 	ofono_dbus_dict_append(&dict, "InbandRinging", DBUS_TYPE_BOOLEAN,
- 				&inband_ringing);
- =
-
-+	if (hf->ag_features & HFP_AG_FEATURE_ECNR)
-+		ofono_dbus_dict_append(&dict, "ECNR", DBUS_TYPE_BOOLEAN,
-+								&hf->ecnr);
-+
- 	voice_recognition =3D hf->voice_recognition;
- 	ofono_dbus_dict_append(&dict, "VoiceRecognition", DBUS_TYPE_BOOLEAN,
- 				&voice_recognition);
+ 	for (l =3D g_drivers; l; l =3D l->next) {
+ 		const struct ofono_handsfree_driver *drv =3D l->data;
 -- =
 
 1.7.11.7
 
 
---===============7573209209442605790==--
+--===============4701989456267689286==--
 
