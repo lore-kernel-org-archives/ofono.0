@@ -1,49 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============4701989456267689286=="
+Content-Type: multipart/mixed; boundary="===============1598089425320862225=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v0 4/7] core: Set ECNR to TRUE by default
-Date: Fri, 19 Apr 2013 14:34:41 -0300
-Message-ID: <1366392884-7116-4-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v0 2/7] core: Add ECNR to Handsfree Features
+Date: Fri, 19 Apr 2013 14:34:39 -0300
+Message-ID: <1366392884-7116-2-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1366392884-7116-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4701989456267689286==
+--===============1598089425320862225==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-According to Bluetooth HFP spec: By default, if the AG supports its
-own embedded echo canceling and/or noise reduction functions, it shall
-have them activated until the AT+NREC command is received. The
-configuration set by the HF shall by used by the AG while the Service
-Level Connection is active.
-
-Since there isn't a command to query the current value, it is being
-assumed that ECNR is enabled when the connection is established and
-the gateway supports ECNR feature.
+This patch adds "echo-canceling-and-noise-reduction" to "Features"
+property of the Handsfree interface.
 ---
- src/handsfree.c | 1 +
- 1 file changed, 1 insertion(+)
+ src/handsfree.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
 diff --git a/src/handsfree.c b/src/handsfree.c
-index 041d3f2..31f2cea 100644
+index 8a0374d..6d7f263 100644
 --- a/src/handsfree.c
 +++ b/src/handsfree.c
-@@ -361,6 +361,7 @@ struct ofono_handsfree *ofono_handsfree_create(struct o=
-fono_modem *modem,
- 	hf->atom =3D __ofono_modem_add_atom(modem,
- 					OFONO_ATOM_TYPE_HANDSFREE,
- 					handsfree_remove, hf);
-+	hf->ecnr =3D TRUE;
+@@ -62,6 +62,9 @@ static const char **ag_features_list(unsigned int feature=
+s)
+ 	static const char *list[33];
+ 	unsigned int i =3D 0;
  =
 
- 	for (l =3D g_drivers; l; l =3D l->next) {
- 		const struct ofono_handsfree_driver *drv =3D l->data;
++	if (features & HFP_AG_FEATURE_ECNR)
++		list[i++] =3D "echo-canceling-and-noise-reduction";
++
+ 	if (features & HFP_AG_FEATURE_VOICE_RECOG)
+ 		list[i++] =3D "voice-recognition";
+ =
+
 -- =
 
 1.7.11.7
 
 
---===============4701989456267689286==--
+--===============1598089425320862225==--
 
