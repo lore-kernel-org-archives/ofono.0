@@ -1,70 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============6308686365949586007=="
+Content-Type: multipart/mixed; boundary="===============1108828517371857778=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: Re: [PATCH v0 1/7] doc: Add ECNR to Handsfree
-Date: Fri, 19 Apr 2013 18:17:56 -0300
-Message-ID: <CAKT1EBcTAEp_e=jNCfDEc2FwBwKr=7N3fB2BqvK=pkQp1R_9_Q@mail.gmail.com>
-In-Reply-To: <51716195.2040207@gmail.com>
+From: Paulo Borges <paulo.borges@openbossa.org>
+Subject: [PATCH v5 1/3] hfp_ag_bluez5: Create a hash to store connections
+Date: Fri, 19 Apr 2013 19:19:03 -0300
+Message-ID: <1366409945-31401-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6308686365949586007==
+--===============1108828517371857778==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis/Johan:
+We need to store active connections so we can disconnect them at
+RequestDisconnect().
 
-On Fri, Apr 19, 2013 at 12:24 PM, Denis Kenzior <denkenz@gmail.com> wrote:
-> Hi Claudio,
->
->
-> On 04/19/2013 12:34 PM, Claudio Takahasi wrote:
->>
->> This patch adds echo canceling and noise reduction property to Handsfree
->> interface, allowing the handsfree unit to enable or disable this feature
->> in the audio gateway.
->>
->> According to Bluetooth HFP 1.6 spec: By default, if the AG supports its
->> own embedded echo canceling and/or noise reduction functions, it shall
->> have them activated until the AT+NREC command is received.
->> ---
->>   doc/handsfree-api.txt | 7 +++++++
->>   1 file changed, 7 insertions(+)
->>
->> diff --git a/doc/handsfree-api.txt b/doc/handsfree-api.txt
->> index 0b5d421..f877db0 100644
->> --- a/doc/handsfree-api.txt
->> +++ b/doc/handsfree-api.txt
->> @@ -56,6 +56,13 @@ Properties   array{string} Features [readonly]
->>                         to activate or deactivate the function from the
->> HF, or
->>                         the AG could autonomously initiate it.
->>
->> +               boolean ECNR [readwrite]
->> +
->> +                       Boolean representing whether echo canceling and
->> noise
->> +                       reduction is enabled in the AG. This property may
->> be
->> +                       written to activate or deactivate this feature
->> from
->> +                       the HF unit.
->> +
->
->
-> I really prefer we used full words instead of an acronym.  You'll find we
-> have no acronyms in the oFono APIs.
+When we remove a connection from the hash, we also close it.
+---
+ plugins/hfp_ag_bluez5.c |   15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
 
-The feature's name doesn't help, which name do you prefer?
+diff --git a/plugins/hfp_ag_bluez5.c b/plugins/hfp_ag_bluez5.c
+index c171c87..bbced26 100644
+--- a/plugins/hfp_ag_bluez5.c
++++ b/plugins/hfp_ag_bluez5.c
+@@ -48,6 +48,16 @@
+ static guint modemwatch_id;
+ static GList *modems;
+ static GHashTable *sim_hash =3D NULL;
++static GHashTable *connection_hash;
++
++static void connection_destroy(gpointer data)
++{
++	int fd =3D GPOINTER_TO_INT(data);
++
++	DBG("fd %d", fd);
++
++	close(fd);
++}
+ =
 
-* EchoCancelingAndNoiseReduction
-* EchoNoise
+ static DBusMessage *profile_new_connection(DBusConnection *conn,
+ 						DBusMessage *msg, void *data)
+@@ -251,6 +261,9 @@ static int hfp_ag_init(void)
+ 	modemwatch_id =3D __ofono_modemwatch_add(modem_watch, NULL, NULL);
+ 	__ofono_modem_foreach(call_modemwatch, NULL);
+ =
 
-Any other suggestion?
++	connection_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++					g_free, connection_destroy);
++
+ 	return 0;
+ }
+ =
 
-Regards,
-Claudio
+@@ -262,6 +275,8 @@ static void hfp_ag_exit(void)
+ 	g_dbus_unregister_interface(conn, HFP_AG_EXT_PROFILE_PATH,
+ 						BLUEZ_PROFILE_INTERFACE);
+ =
 
---===============6308686365949586007==--
++	g_hash_table_destroy(connection_hash);
++
+ 	g_list_free(modems);
+ 	g_hash_table_foreach_remove(sim_hash, sim_watch_remove, NULL);
+ 	g_hash_table_destroy(sim_hash);
+-- =
+
+1.7.9.5
+
+
+--===============1108828517371857778==--
 
