@@ -1,58 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============5034837058230356410=="
+Content-Type: multipart/mixed; boundary="===============4375875751729258773=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v0 1/7] doc: Add ECNR to Handsfree
-Date: Fri, 19 Apr 2013 10:24:05 -0500
-Message-ID: <51716195.2040207@gmail.com>
-In-Reply-To: <1366392884-7116-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: Re: [PATCH v4 1/3] hfp_ag_bluez5: Create a hash to store connections
+Date: Fri, 19 Apr 2013 10:36:42 -0500
+Message-ID: <5171648A.8000109@gmail.com>
+In-Reply-To: <1366383661-26950-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5034837058230356410==
+--===============4375875751729258773==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Claudio,
+Hi Paulo,
 
-On 04/19/2013 12:34 PM, Claudio Takahasi wrote:
-> This patch adds echo canceling and noise reduction property to Handsfree
-> interface, allowing the handsfree unit to enable or disable this feature
-> in the audio gateway.
+On 04/19/2013 10:00 AM, Paulo Borges wrote:
+> We need to store active connections so we can disconnect them at
+> RequestDisconnect().
 >
-> According to Bluetooth HFP 1.6 spec: By default, if the AG supports its
-> own embedded echo canceling and/or noise reduction functions, it shall
-> have them activated until the AT+NREC command is received.
+> When we remove a connection from the hash, we also close it.
 > ---
->   doc/handsfree-api.txt | 7 +++++++
->   1 file changed, 7 insertions(+)
+>   plugins/hfp_ag_bluez5.c |   16 ++++++++++++++++
+>   1 file changed, 16 insertions(+)
 >
-> diff --git a/doc/handsfree-api.txt b/doc/handsfree-api.txt
-> index 0b5d421..f877db0 100644
-> --- a/doc/handsfree-api.txt
-> +++ b/doc/handsfree-api.txt
-> @@ -56,6 +56,13 @@ Properties	array{string} Features [readonly]
->   			to activate or deactivate the function from the HF, or
->   			the AG could autonomously initiate it.
->
-> +		boolean ECNR [readwrite]
+> diff --git a/plugins/hfp_ag_bluez5.c b/plugins/hfp_ag_bluez5.c
+> index c171c87..edc76e6 100644
+> --- a/plugins/hfp_ag_bluez5.c
+> +++ b/plugins/hfp_ag_bluez5.c
+> @@ -48,6 +48,17 @@
+>   static guint modemwatch_id;
+>   static GList *modems;
+>   static GHashTable *sim_hash =3D NULL;
+> +static GHashTable *connection_hash;
 > +
-> +			Boolean representing whether echo canceling and noise
-> +			reduction is enabled in the AG. This property may be
-> +			written to activate or deactivate this feature from
-> +			the HF unit.
+> +static void connection_removed_notify(gpointer data)
+> +{
+> +	int fd =3D GPOINTER_TO_INT(data);
 > +
+> +	DBG("%d", fd);
+> +
+> +	shutdown(fd, SHUT_RDWR);
+> +	close(fd);
+> +}
 
-I really prefer we used full words instead of an acronym.  You'll find =
+I will be a bit nit-picky here, but shutdown() does not belong here. =
 
-we have no acronyms in the oFono APIs.
+You only want to do this inside the RequestDisconnection() implementation.
 
->   		byte BatteryChargeLevel [readonly]
->
->   			The current charge level of the battery.  The value
+Also, please name this function connection_destroy().
 
 Regards,
 -Denis
 
---===============5034837058230356410==--
+--===============4375875751729258773==--
 
