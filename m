@@ -1,56 +1,133 @@
-Content-Type: multipart/mixed; boundary="===============0679790076096196064=="
+Content-Type: multipart/mixed; boundary="===============3877834091523524943=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 3/3] hfp_hf_bluez5: Register the SDP record with correct
- features
-Date: Mon, 22 Apr 2013 14:54:12 -0300
-Message-ID: <1366653252-19791-3-git-send-email-vinicius.gomes@openbossa.org>
-In-Reply-To: <1366653252-19791-1-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH 1/3] bluez5: Add bt_register_profile_full()
+Date: Mon, 22 Apr 2013 14:54:10 -0300
+Message-ID: <1366653252-19791-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0679790076096196064==
+--===============3877834091523524943==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This function makes it easy to set up optional information in the profile
+service record.
 ---
- plugins/hfp_hf_bluez5.c | 13 +++++++++++--
- 1 file changed, 11 insertions(+), 2 deletions(-)
+ plugins/bluez5.c | 40 +++++++++++++++++++++++++++++++++-------
+ plugins/bluez5.h | 10 ++++++++++
+ 2 files changed, 43 insertions(+), 7 deletions(-)
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 2b9275b..d975a42 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -636,10 +636,19 @@ static const GDBusMethodTable profile_methods[] =3D {
+diff --git a/plugins/bluez5.c b/plugins/bluez5.c
+index 0f997da..48d8bf2 100644
+--- a/plugins/bluez5.c
++++ b/plugins/bluez5.c
+@@ -90,9 +90,10 @@ done:
+ 	dbus_message_unref(reply);
+ }
  =
 
- static void connect_handler(DBusConnection *conn, void *user_data)
+-int bt_register_profile_with_role(DBusConnection *conn, const char *uuid,
+-					uint16_t version, const char *name,
+-					const char *object, const char *role)
++int bt_register_profile_full(DBusConnection *conn,
++					const char *uuid, uint16_t version,
++					const char *name, const char *object,
++					struct bt_profile_info *optional)
  {
+ 	DBusMessageIter iter, dict;
+ 	DBusPendingCall *c;
+@@ -111,9 +112,19 @@ int bt_register_profile_with_role(DBusConnection *conn=
+, const char *uuid,
+ 	ofono_dbus_dict_append(&dict, "Name", DBUS_TYPE_STRING, &name);
+ 	ofono_dbus_dict_append(&dict, "Version", DBUS_TYPE_UINT16, &version);
+ =
+
+-	if (role)
+-		ofono_dbus_dict_append(&dict, "Role", DBUS_TYPE_STRING, &role);
+ =
+
++	if (optional =3D=3D NULL)
++		goto done;
++
++	if (optional->role)
++		ofono_dbus_dict_append(&dict, "Role", DBUS_TYPE_STRING,
++							&optional->role);
++
++	if (optional->features)
++		ofono_dbus_dict_append(&dict, "Features", DBUS_TYPE_UINT16,
++							&optional->features);
++
++done:
+ 	dbus_message_iter_close_container(&iter, &dict);
+ =
+
+ 	if (!dbus_connection_send_with_reply(conn, msg, &c, -1)) {
+@@ -130,12 +141,27 @@ int bt_register_profile_with_role(DBusConnection *con=
+n, const char *uuid,
+ 	return 0;
+ }
+ =
+
++int bt_register_profile_with_role(DBusConnection *conn, const char *uuid,
++					uint16_t version, const char *name,
++					const char *object, const char *role)
++{
 +	struct bt_profile_info optional;
 +
 +	memset(&optional, 0, sizeof(optional));
 +
-+	optional.features =3D HFP_SDP_HF_FEATURE_3WAY |
-+				HFP_SDP_HF_FEATURE_CLIP |
-+				HFP_SDP_HF_FEATURE_REMOTE_VOLUME_CONTROL |
-+				HFP_SDP_HF_FEATURE_WIDEBAND_SPEECH;
++	optional.role =3D role;
 +
- 	DBG("Registering External Profile handler ...");
- =
-
--	bt_register_profile(conn, HFP_HS_UUID, HFP_VERSION_1_6, "hfp_hf",
--						HFP_EXT_PROFILE_PATH);
-+	bt_register_profile_full(conn, HFP_HS_UUID, HFP_VERSION_1_6, "hfp_hf",
-+					HFP_EXT_PROFILE_PATH, &optional);
++	return bt_register_profile_full(conn, uuid, version, name,
++							object, &optional);
++}
++
++
+ int bt_register_profile(DBusConnection *conn, const char *uuid,
+ 					uint16_t version, const char *name,
+ 							const char *object)
+ {
+-	return bt_register_profile_with_role(conn, uuid, version, name, object,
+-									NULL);
++	return bt_register_profile_full(conn, uuid, version, name,
++							object, NULL);
  }
  =
 
- static gboolean has_hfp_ag_uuid(DBusMessageIter *array)
+ void bt_unregister_profile(DBusConnection *conn, const char *object)
+diff --git a/plugins/bluez5.h b/plugins/bluez5.h
+index 5b8c1f5..8118f1f 100644
+--- a/plugins/bluez5.h
++++ b/plugins/bluez5.h
+@@ -29,10 +29,20 @@
+ #define HFP_HS_UUID	"0000111e-0000-1000-8000-00805f9b34fb"
+ #define HFP_AG_UUID	"0000111f-0000-1000-8000-00805f9b34fb"
+ =
+
++struct bt_profile_info {
++	const char *role;
++	uint16_t features;
++};
++
+ int bt_register_profile_with_role(DBusConnection *conn, const char *uuid,
+ 					uint16_t version, const char *name,
+ 					const char *object, const char *role);
+ =
+
++int bt_register_profile_full(DBusConnection *conn,
++					const char *uuid, uint16_t version,
++					const char *name, const char *object,
++					struct bt_profile_info *optional);
++
+ int bt_register_profile(DBusConnection *conn, const char *uuid,
+ 					uint16_t version, const char *name,
+ 					const char *object);
 -- =
 
 1.8.2.1
 
 
---===============0679790076096196064==--
+--===============3877834091523524943==--
 
