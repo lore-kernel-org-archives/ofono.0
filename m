@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0388332167845994214=="
+Content-Type: multipart/mixed; boundary="===============1618944031602084777=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v1 5/7] include: Add EchoCancelingNoiseReduction to
- handsfree driver
-Date: Mon, 22 Apr 2013 04:00:23 -0500
-Message-ID: <5174FC27.1010205@gmail.com>
-In-Reply-To: <1366635523-8272-5-git-send-email-claudio.takahasi@openbossa.org>
+Subject: Re: [PATCH v1 1/7] doc: Add EchoCancelingNoiseReduction to Handsfree
+Date: Mon, 22 Apr 2013 04:04:47 -0500
+Message-ID: <5174FD2F.30001@gmail.com>
+In-Reply-To: <1366635523-8272-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0388332167845994214==
+--===============1618944031602084777==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,39 +16,49 @@ Content-Transfer-Encoding: quoted-printable
 Hi Claudio,
 
 On 04/22/2013 07:58 AM, Claudio Takahasi wrote:
-> This patch extends the handsfree driver adding echo canceling and noise
-> reduction callback to allow enabling or disabling this feature in the
-> audio gateway.
+> This patch adds echo canceling and noise reduction property to Handsfree
+> interface, allowing the handsfree unit to enable or disable this feature
+> in the audio gateway.
+>
+> According to Bluetooth HFP 1.6 spec: By default, if the AG supports its
+> own embedded echo canceling and/or noise reduction functions, it shall
+> have them activated until the AT+NREC command is received.
 > ---
->   include/handsfree.h | 3 +++
->   1 file changed, 3 insertions(+)
+>   doc/handsfree-api.txt | 7 +++++++
+>   1 file changed, 7 insertions(+)
 >
-> diff --git a/include/handsfree.h b/include/handsfree.h
-> index b5e0d5f..dcc4d74 100644
-> --- a/include/handsfree.h
-> +++ b/include/handsfree.h
-> @@ -48,6 +48,9 @@ struct ofono_handsfree_driver {
->   	void (*voice_recognition)(struct ofono_handsfree *hf,
->   					ofono_bool_t enabled,
->   					ofono_handsfree_cb_t cb, void *data);
-> +	void (*echocanceling_noisereduction)(struct ofono_handsfree *hf,
-> +					ofono_bool_t enabled,
-> +					ofono_handsfree_cb_t cb, void *data);
-
-You can use nrec here.  We are only pedantic about no Acronyms in the =
-
-public D-Bus APIs.
-
-Also note that NREC can only be turned off, not on.  Hence the enabled =
-
-argument is likely not needed.
-
->   };
+> diff --git a/doc/handsfree-api.txt b/doc/handsfree-api.txt
+> index 0b5d421..6855d93 100644
+> --- a/doc/handsfree-api.txt
+> +++ b/doc/handsfree-api.txt
+> @@ -56,6 +56,13 @@ Properties	array{string} Features [readonly]
+>   			to activate or deactivate the function from the HF, or
+>   			the AG could autonomously initiate it.
 >
->   void ofono_handsfree_set_ag_features(struct ofono_handsfree *hf,
+> +		boolean EchoCancelingNoiseReduction [readwrite]
+> +
+> +			Boolean representing whether echo canceling and noise
+> +			reduction is enabled in the AG. This property may be
+> +			written to activate or deactivate this feature from
+> +			the HF unit.
+> +
+
+This feature can only be disabled, not enabled for a given SLC.  So =
+
+setting this to 'True' should return an error or do something way fancier.
+
+I suspect that to implement this properly we need to store the ECNR =
+
+setting on disk (e.g. /var/lib/ofono/<local bdaddr>/<remote =
+
+bdaddr>/handsfree or something) and manage it appropriately inside the core.
+
+>   		byte BatteryChargeLevel [readonly]
+>
+>   			The current charge level of the battery.  The value
 
 Regards,
 -Denis
 
---===============0388332167845994214==--
+--===============1618944031602084777==--
 
