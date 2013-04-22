@@ -1,54 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8115632621615225666=="
+Content-Type: multipart/mixed; boundary="===============5307446858161692513=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v1 3/7] core: Add EchoCancelingNoiseReduction to GetProperties
-Date: Mon, 22 Apr 2013 09:58:39 -0300
-Message-ID: <1366635523-8272-3-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1366635523-8272-1-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v1 1/7] doc: Add EchoCancelingNoiseReduction to Handsfree
+Date: Mon, 22 Apr 2013 09:58:37 -0300
+Message-ID: <1366635523-8272-1-git-send-email-claudio.takahasi@openbossa.org>
+In-Reply-To: <1366392884-7116-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8115632621615225666==
+--===============5307446858161692513==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds EchoCancelingNoiseReduction property to GetProperties
-method of Handsfree interface.
+This patch adds echo canceling and noise reduction property to Handsfree
+interface, allowing the handsfree unit to enable or disable this feature
+in the audio gateway.
+
+According to Bluetooth HFP 1.6 spec: By default, if the AG supports its
+own embedded echo canceling and/or noise reduction functions, it shall
+have them activated until the AT+NREC command is received.
 ---
- src/handsfree.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ doc/handsfree-api.txt | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/src/handsfree.c b/src/handsfree.c
-index 6d7f263..d60841b 100644
---- a/src/handsfree.c
-+++ b/src/handsfree.c
-@@ -45,6 +45,7 @@
- static GSList *g_drivers =3D NULL;
+diff --git a/doc/handsfree-api.txt b/doc/handsfree-api.txt
+index 0b5d421..6855d93 100644
+--- a/doc/handsfree-api.txt
++++ b/doc/handsfree-api.txt
+@@ -56,6 +56,13 @@ Properties	array{string} Features [readonly]
+ 			to activate or deactivate the function from the HF, or
+ 			the AG could autonomously initiate it.
  =
 
- struct ofono_handsfree {
-+	ofono_bool_t ecnr;
- 	ofono_bool_t inband_ringing;
- 	ofono_bool_t voice_recognition;
- 	ofono_bool_t voice_recognition_pending;
-@@ -175,6 +176,10 @@ static DBusMessage *handsfree_get_properties(DBusConne=
-ction *conn,
- 	ofono_dbus_dict_append(&dict, "InbandRinging", DBUS_TYPE_BOOLEAN,
- 				&inband_ringing);
- =
-
-+	if (hf->ag_features & HFP_AG_FEATURE_ECNR)
-+		ofono_dbus_dict_append(&dict, "EchoCancelingNoiseReduction",
-+						DBUS_TYPE_BOOLEAN, &hf->ecnr);
++		boolean EchoCancelingNoiseReduction [readwrite]
 +
- 	voice_recognition =3D hf->voice_recognition;
- 	ofono_dbus_dict_append(&dict, "VoiceRecognition", DBUS_TYPE_BOOLEAN,
- 				&voice_recognition);
++			Boolean representing whether echo canceling and noise
++			reduction is enabled in the AG. This property may be
++			written to activate or deactivate this feature from
++			the HF unit.
++
+ 		byte BatteryChargeLevel [readonly]
+ =
+
+ 			The current charge level of the battery.  The value
 -- =
 
 1.7.11.7
 
 
---===============8115632621615225666==--
+--===============5307446858161692513==--
 
