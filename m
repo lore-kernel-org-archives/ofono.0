@@ -1,133 +1,95 @@
-Content-Type: multipart/mixed; boundary="===============3877834091523524943=="
+Content-Type: multipart/mixed; boundary="===============0458848037447154048=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH 1/3] bluez5: Add bt_register_profile_full()
-Date: Mon, 22 Apr 2013 14:54:10 -0300
-Message-ID: <1366653252-19791-1-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH] hfp_hf_bluez5: Fix re-registering a modem for a device
+Date: Mon, 22 Apr 2013 19:53:44 -0300
+Message-ID: <1366671224-8777-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3877834091523524943==
+--===============0458848037447154048==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This function makes it easy to set up optional information in the profile
-service record.
+Even for outgoing pairing requests we may receive the UUIDs property
+changed after the device is paired and try to register it twice.
+
+The easiest way to reproduce this is when Extended Inquiry Response is
+supported.
+
+When the device is paired, we receive the "Paired" PropertyChanged,
+inside modem_register_from_proxy(), g_dbus_proxy_get_property() gets
+the UUIDs extracted from the EIR data.  Later, when the service
+discovery is finished, the UUIDs property is re-sent and both may
+contain the HFP AG UUID.
+
+Valgrind log:
+
+ofonod[8157]: src/modem.c:ofono_modem_create() name: hfp/org/bluez/hci0/dev=
+_40_98_4E_32_D7_39, type: hfp
+ofonod[8157]: src/modem.c:set_modem_property() modem 0x66a2db0 property Rem=
+ote
+ofonod[8157]: src/modem.c:set_modem_property() modem 0x66a2db0 property Dev=
+icePath
+ofonod[8157]: src/modem.c:ofono_modem_register() 0x66a2db0
+ofonod[8157]: plugins/hfp_hf_bluez5.c:hfp_probe() modem: 0x66a2db0
+ofonod[8157]: Modem register failed on path /hfp/org/bluez/hci0/dev_40_98_4=
+E_32_D7_39
+ofonod[8157]: plugins/hfp_hf_bluez5.c:hfp_remove() modem: 0x66a2db0
+ofonod[8157]: plugins/hfp_hf_bluez5.c:profile_new_connection() Profile hand=
+ler NewConnection
+ofonod[8157]: src/modem.c:get_modem_property() modem 0x66a2db0 property Dev=
+icePath
+=3D=3D8157=3D=3D Invalid write of size 4
+=3D=3D8157=3D=3D    at 0x4712A5: hfp_slc_info_init (slc.c:59)
+=3D=3D8157=3D=3D    by 0x486B00: profile_new_connection (hfp_hf_bluez5.c:16=
+8)
+=3D=3D8157=3D=3D    by 0x412C70: process_message.isra.4 (object.c:258)
+=3D=3D8157=3D=3D    by 0x5381984: _dbus_object_tree_dispatch_and_unlock (in=
+ /usr/lib64/libdbus-1.so.3.7.2)
+=3D=3D8157=3D=3D    by 0x5373C4F: dbus_connection_dispatch (in /usr/lib64/l=
+ibdbus-1.so.3.7.2)
+=3D=3D8157=3D=3D    by 0x4107B7: message_dispatch (mainloop.c:76)
+=3D=3D8157=3D=3D    by 0x5089BCA: g_timeout_dispatch (in /usr/lib64/libglib=
+-2.0.so.0.3400.2)
+=3D=3D8157=3D=3D    by 0x5089044: g_main_context_dispatch (in /usr/lib64/li=
+bglib-2.0.so.0.3400.2)
+=3D=3D8157=3D=3D    by 0x5089377: g_main_context_iterate.isra.24 (in /usr/l=
+ib64/libglib-2.0.so.0.3400.2)
+=3D=3D8157=3D=3D    by 0x5089771: g_main_loop_run (in /usr/lib64/libglib-2.=
+0.so.0.3400.2)
+=3D=3D8157=3D=3D    by 0x41042B: main (main.c:249)
+=3D=3D8157=3D=3D  Address 0x8 is not stack'd, malloc'd or (recently) free'd
+=3D=3D8157=3D=3D
 ---
- plugins/bluez5.c | 40 +++++++++++++++++++++++++++++++++-------
- plugins/bluez5.h | 10 ++++++++++
- 2 files changed, 43 insertions(+), 7 deletions(-)
+ plugins/hfp_hf_bluez5.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/plugins/bluez5.c b/plugins/bluez5.c
-index 0f997da..48d8bf2 100644
---- a/plugins/bluez5.c
-+++ b/plugins/bluez5.c
-@@ -90,9 +90,10 @@ done:
- 	dbus_message_unref(reply);
- }
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index 2b9275b..86d8c72 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -713,6 +713,12 @@ static void modem_register_from_proxy(GDBusProxy *prox=
+y, const char *path)
+ 	if (g_dbus_proxy_get_property(proxy, "Address", &iter) =3D=3D FALSE)
+ 		return;
  =
 
--int bt_register_profile_with_role(DBusConnection *conn, const char *uuid,
--					uint16_t version, const char *name,
--					const char *object, const char *role)
-+int bt_register_profile_full(DBusConnection *conn,
-+					const char *uuid, uint16_t version,
-+					const char *name, const char *object,
-+					struct bt_profile_info *optional)
- {
- 	DBusMessageIter iter, dict;
- 	DBusPendingCall *c;
-@@ -111,9 +112,19 @@ int bt_register_profile_with_role(DBusConnection *conn=
-, const char *uuid,
- 	ofono_dbus_dict_append(&dict, "Name", DBUS_TYPE_STRING, &name);
- 	ofono_dbus_dict_append(&dict, "Version", DBUS_TYPE_UINT16, &version);
++	modem =3D ofono_modem_find(device_path_compare, (void *) path);
++	if (modem) {
++		DBG("Modem for device %s already registered", path);
++		return;
++	}
++
+ 	dbus_message_iter_get_basic(&iter, &remote);
  =
 
--	if (role)
--		ofono_dbus_dict_append(&dict, "Role", DBUS_TYPE_STRING, &role);
- =
-
-+	if (optional =3D=3D NULL)
-+		goto done;
-+
-+	if (optional->role)
-+		ofono_dbus_dict_append(&dict, "Role", DBUS_TYPE_STRING,
-+							&optional->role);
-+
-+	if (optional->features)
-+		ofono_dbus_dict_append(&dict, "Features", DBUS_TYPE_UINT16,
-+							&optional->features);
-+
-+done:
- 	dbus_message_iter_close_container(&iter, &dict);
- =
-
- 	if (!dbus_connection_send_with_reply(conn, msg, &c, -1)) {
-@@ -130,12 +141,27 @@ int bt_register_profile_with_role(DBusConnection *con=
-n, const char *uuid,
- 	return 0;
- }
- =
-
-+int bt_register_profile_with_role(DBusConnection *conn, const char *uuid,
-+					uint16_t version, const char *name,
-+					const char *object, const char *role)
-+{
-+	struct bt_profile_info optional;
-+
-+	memset(&optional, 0, sizeof(optional));
-+
-+	optional.role =3D role;
-+
-+	return bt_register_profile_full(conn, uuid, version, name,
-+							object, &optional);
-+}
-+
-+
- int bt_register_profile(DBusConnection *conn, const char *uuid,
- 					uint16_t version, const char *name,
- 							const char *object)
- {
--	return bt_register_profile_with_role(conn, uuid, version, name, object,
--									NULL);
-+	return bt_register_profile_full(conn, uuid, version, name,
-+							object, NULL);
- }
- =
-
- void bt_unregister_profile(DBusConnection *conn, const char *object)
-diff --git a/plugins/bluez5.h b/plugins/bluez5.h
-index 5b8c1f5..8118f1f 100644
---- a/plugins/bluez5.h
-+++ b/plugins/bluez5.h
-@@ -29,10 +29,20 @@
- #define HFP_HS_UUID	"0000111e-0000-1000-8000-00805f9b34fb"
- #define HFP_AG_UUID	"0000111f-0000-1000-8000-00805f9b34fb"
- =
-
-+struct bt_profile_info {
-+	const char *role;
-+	uint16_t features;
-+};
-+
- int bt_register_profile_with_role(DBusConnection *conn, const char *uuid,
- 					uint16_t version, const char *name,
- 					const char *object, const char *role);
- =
-
-+int bt_register_profile_full(DBusConnection *conn,
-+					const char *uuid, uint16_t version,
-+					const char *name, const char *object,
-+					struct bt_profile_info *optional);
-+
- int bt_register_profile(DBusConnection *conn, const char *uuid,
- 					uint16_t version, const char *name,
- 					const char *object);
+ 	modem =3D modem_register(path, remote, alias);
 -- =
 
 1.8.2.1
 
 
---===============3877834091523524943==--
+--===============0458848037447154048==--
 
