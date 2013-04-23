@@ -1,43 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============3624969923365615675=="
+Content-Type: multipart/mixed; boundary="===============6838547246693319456=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3 1/7] doc: Add EchoCancelingNoiseReduction to Handsfree
-Date: Tue, 23 Apr 2013 10:30:45 -0500
-Message-ID: <5176A925.9000406@gmail.com>
-In-Reply-To: <1366737703-26883-1-git-send-email-claudio.takahasi@openbossa.org>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: [PATCH v2 2/3] hfp: Add defines for HFP SDP feature bits
+Date: Tue, 23 Apr 2013 18:21:51 -0300
+Message-ID: <1366752112-8007-2-git-send-email-vinicius.gomes@openbossa.org>
+In-Reply-To: <1366752112-8007-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3624969923365615675==
+--===============6838547246693319456==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Claudio,
+---
+ src/hfp.h | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
 
-On 04/23/2013 12:21 PM, Claudio Takahasi wrote:
-> This patch adds echo canceling and noise reduction property to Handsfree
-> interface, allowing the handsfree unit to disable this feature in the
-> audio gateway. The HFP spec defines the procedure to turn off echo
-> canceling and noise reduction only, it is not allowed to enable this
-> feature from the HF unit.
->
-> According to Bluetooth HFP 1.6 spec: By default, if the AG supports its
-> own embedded echo canceling and/or noise reduction functions, it shall
-> have them activated until the AT+NREC command is received from the HF
-> unit. From then on, and until the current Service Level Connection is
-> dropped for any reason, the AG shall disable these functions every time
-> an Audio Connection is established.
-> ---
->   doc/handsfree-api.txt | 8 ++++++++
->   1 file changed, 8 insertions(+)
->
+diff --git a/src/hfp.h b/src/hfp.h
+index b54de56..0d36ae5 100644
+--- a/src/hfp.h
++++ b/src/hfp.h
+@@ -45,6 +45,24 @@ enum hfp_hf_feature {
+ 	HFP_HF_FEATURE_CODEC_NEGOTIATION =3D	0x80,
+ };
+ =
 
-All patches in this series have been applied, thanks.
++enum hfp_sdp_hf_features {
++	HFP_SDP_HF_FEATURE_ECNR =3D			0x1,
++	HFP_SDP_HF_FEATURE_3WAY =3D			0x2,
++	HFP_SDP_HF_FEATURE_CLIP =3D			0x4,
++	HFP_SDP_HF_FEATURE_VOICE_RECOGNITION =3D		0x8,
++	HFP_SDP_HF_FEATURE_REMOTE_VOLUME_CONTROL =3D	0x10,
++	HFP_SDP_HF_FEATURE_WIDEBAND_SPEECH =3D		0x20,
++};
++
++enum hfp_sdp_ag_features {
++	HFP_SDP_AG_FEATURE_3WAY =3D			0x1,
++	HFP_SDP_AG_FEATURE_ECNR =3D			0x2,
++	HFP_SDP_AG_FEATURE_VOICE_RECOG =3D		0x4,
++	HFP_SDP_AG_FEATURE_IN_BAND_RING_TONE =3D		0x8,
++	HFP_SDP_AG_FEATURE_ATTACH_VOICE_TAG =3D		0x10,
++	HFP_SDP_AG_FEATURE_WIDEBAND_SPEECH =3D		0x20,
++};
++
+ /* Supported agent codecs */
+ enum hfp_codec {
+ 	HFP_CODEC_CVSD =3D 0x01,
+-- =
 
-Regards,
--Denis
+1.8.2.1
 
 
---===============3624969923365615675==--
+--===============6838547246693319456==--
 
