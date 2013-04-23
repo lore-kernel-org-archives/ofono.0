@@ -1,45 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============5969933017106882011=="
+Content-Type: multipart/mixed; boundary="===============1973507325602694411=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v3 2/7] core: Add "echo-canceling-and-noise-reduction"
-Date: Tue, 23 Apr 2013 14:21:38 -0300
-Message-ID: <1366737703-26883-2-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v3 4/7] core: Set EchoCancelingNoiseReduction to TRUE by
+ default
+Date: Tue, 23 Apr 2013 14:21:40 -0300
+Message-ID: <1366737703-26883-4-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1366737703-26883-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5969933017106882011==
+--===============1973507325602694411==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds "echo-canceling-and-noise-reduction" to "Features"
-property of the Handsfree interface.
+According to Bluetooth HFP spec: By default, if the AG supports its
+own embedded echo canceling and/or noise reduction functions, it shall
+have them activated until the AT+NREC command is received. The
+configuration set by the HF shall by used by the AG while the Service
+Level Connection is active.
+
+Since there isn't a command to query the current value, it is being
+assumed that Echo Canceling and Noise Reduction is enabled when the
+connection is established and the gateway supports this feature.
 ---
- src/handsfree.c | 3 +++
- 1 file changed, 3 insertions(+)
+ src/handsfree.c | 1 +
+ 1 file changed, 1 insertion(+)
 
 diff --git a/src/handsfree.c b/src/handsfree.c
-index 8a0374d..6d7f263 100644
+index 9e4fc6b..75751e8 100644
 --- a/src/handsfree.c
 +++ b/src/handsfree.c
-@@ -62,6 +62,9 @@ static const char **ag_features_list(unsigned int feature=
-s)
- 	static const char *list[33];
- 	unsigned int i =3D 0;
+@@ -361,6 +361,7 @@ struct ofono_handsfree *ofono_handsfree_create(struct o=
+fono_modem *modem,
+ 	hf->atom =3D __ofono_modem_add_atom(modem,
+ 					OFONO_ATOM_TYPE_HANDSFREE,
+ 					handsfree_remove, hf);
++	hf->nrec =3D TRUE;
  =
 
-+	if (features & HFP_AG_FEATURE_ECNR)
-+		list[i++] =3D "echo-canceling-and-noise-reduction";
-+
- 	if (features & HFP_AG_FEATURE_VOICE_RECOG)
- 		list[i++] =3D "voice-recognition";
- =
-
+ 	for (l =3D g_drivers; l; l =3D l->next) {
+ 		const struct ofono_handsfree_driver *drv =3D l->data;
 -- =
 
 1.7.11.7
 
 
---===============5969933017106882011==--
+--===============1973507325602694411==--
 
