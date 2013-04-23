@@ -1,66 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============9039264475675881606=="
+Content-Type: multipart/mixed; boundary="===============8163750192995397852=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v3 6/7] hfpmodem: Add EchoCancelingNoiseReduction
-Date: Tue, 23 Apr 2013 14:21:42 -0300
-Message-ID: <1366737703-26883-6-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1366737703-26883-1-git-send-email-claudio.takahasi@openbossa.org>
+From: Johan Hedberg <johan.hedberg@gmail.com>
+Subject: Re: [PATCH] hfp_hf_bluez5: Fix re-registering a modem for a device
+Date: Tue, 23 Apr 2013 20:28:59 +0300
+Message-ID: <20130423172859.GA30582@x220>
+In-Reply-To: <AA25931D-D497-4625-981A-982E88AD96F2@holtmann.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9039264475675881606==
+--===============8163750192995397852==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds echo canceling and noise reduction implementation to
-hfpmodem. It adds the implementation to send the command "AT+NREC=3D0"
-to the AG.
----
- drivers/hfpmodem/handsfree.c | 17 +++++++++++++++++
- 1 file changed, 17 insertions(+)
+Hi Marcel,
 
-diff --git a/drivers/hfpmodem/handsfree.c b/drivers/hfpmodem/handsfree.c
-index ce28de3..78ee801 100644
---- a/drivers/hfpmodem/handsfree.c
-+++ b/drivers/hfpmodem/handsfree.c
-@@ -260,12 +260,29 @@ static void hfp_voice_recognition(struct ofono_handsf=
-ree *hf,
- 	CALLBACK_WITH_FAILURE(cb, data);
- }
- =
+On Tue, Apr 23, 2013, Marcel Holtmann wrote:
+> > I don't completely understand the rationale of wanting to make BlueZ's
+> > clients so fragile. You could in theory get new services way after
+> > pairing if this is configurable on the remote side. You could also get
+> > the result of calling Device1.Connect() instead of Device1.Pair() in
+> > BlueZ.
+> > =
 
-+static void hfp_disable_nrec(struct ofono_handsfree *hf,
-+				ofono_handsfree_cb_t cb, void *data)
-+{
-+	struct hf_data *hd =3D ofono_handsfree_get_data(hf);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	const char *buf =3D "AT+NREC=3D0";
-+
-+	if (g_at_chat_send(hd->chat, buf, NULL, hf_generic_set_cb,
-+							cbd, g_free) > 0)
-+		return;
-+
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
- static struct ofono_handsfree_driver driver =3D {
- 	.name			=3D "hfpmodem",
- 	.probe			=3D hfp_handsfree_probe,
- 	.remove			=3D hfp_handsfree_remove,
- 	.request_phone_number	=3D hfp_request_phone_number,
- 	.voice_recognition	=3D hfp_voice_recognition,
-+	.disable_nrec		=3D hfp_disable_nrec,
- };
- =
+> > On the other hand, we do delay the response to Device1.Pair() until SDP
+> > is complete so delaying the Paired property would in a way be consistent
+> > with that. I'll look into how simple this would be. We already track the
+> > completion of SDP for each device internally with a svc_resolved boolean
+> > so probably a new flag to indicate that "Paired" still needs to be
+> > emitted should be all the extra context tracking we need.
+> =
 
- void hfp_handsfree_init(void)
--- =
+> the pairing procedure is special and we should try to avoid any
+> pointless round trips or wake ups for the clients here. We do know
+> that we are running SDP after pairing anyway. So lets just wait for it
+> to finish. Especially if we do that already anyway for Device1.Pair().
 
-1.7.11.7
+This ended up being quite simple to do, so I just pushed a mostly
+untested patch for this to bluez.git. It'd be good if someone could
+verify that it actually ends up helping the situation with oFono.
 
+Johan
 
---===============9039264475675881606==--
+--===============8163750192995397852==--
 
