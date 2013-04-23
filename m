@@ -1,143 +1,144 @@
-Content-Type: multipart/mixed; boundary="===============2818561176987019921=="
+Content-Type: multipart/mixed; boundary="===============1352002164127518689=="
 MIME-Version: 1.0
-From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v2 7/7] core: Add SetProperty for EchoCancelingNoiseReduction
-Date: Tue, 23 Apr 2013 09:44:45 -0300
-Message-ID: <1366721085-17837-7-git-send-email-claudio.takahasi@openbossa.org>
-In-Reply-To: <1366721085-17837-1-git-send-email-claudio.takahasi@openbossa.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/3] bluez5: Add bt_register_profile_full()
+Date: Tue, 23 Apr 2013 03:46:52 -0500
+Message-ID: <51764A7C.6050008@gmail.com>
+In-Reply-To: <1366653252-19791-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2818561176987019921==
+--===============1352002164127518689==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch extends SetProperty method of the Handsfree interface
-allowing to disable echo canceling and noise reduction feature in
-the audio gateway through a D-Bus method call. Once disabled, it
-is not allowed to enable it using this procedure.
----
- src/handsfree.c | 56 +++++++++++++++++++++++++++++++++++++++++++++++------=
----
- 1 file changed, 47 insertions(+), 9 deletions(-)
+Hi Vinicius,
 
-diff --git a/src/handsfree.c b/src/handsfree.c
-index 75751e8..9487aec 100644
---- a/src/handsfree.c
-+++ b/src/handsfree.c
-@@ -46,6 +46,7 @@ static GSList *g_drivers =3D NULL;
- =
+On 04/22/2013 12:54 PM, Vinicius Costa Gomes wrote:
+> This function makes it easy to set up optional information in the profile
+> service record.
+> ---
+>   plugins/bluez5.c | 40 +++++++++++++++++++++++++++++++++-------
+>   plugins/bluez5.h | 10 ++++++++++
+>   2 files changed, 43 insertions(+), 7 deletions(-)
+>
+> diff --git a/plugins/bluez5.c b/plugins/bluez5.c
+> index 0f997da..48d8bf2 100644
+> --- a/plugins/bluez5.c
+> +++ b/plugins/bluez5.c
+> @@ -90,9 +90,10 @@ done:
+>   	dbus_message_unref(reply);
+>   }
+>
+> -int bt_register_profile_with_role(DBusConnection *conn, const char *uuid,
+> -					uint16_t version, const char *name,
+> -					const char *object, const char *role)
+> +int bt_register_profile_full(DBusConnection *conn,
+> +					const char *uuid, uint16_t version,
+> +					const char *name, const char *object,
+> +					struct bt_profile_info *optional)
 
- struct ofono_handsfree {
- 	ofono_bool_t nrec;
-+	ofono_bool_t nrec_pending;
- 	ofono_bool_t inband_ringing;
- 	ofono_bool_t voice_recognition;
- 	ofono_bool_t voice_recognition_pending;
-@@ -220,11 +221,36 @@ static void voicerec_set_cb(const struct ofono_error =
-*error, void *data)
- 					&hf->voice_recognition);
- }
- =
+We are now getting too many variations.  We currently have 4 callers of =
 
-+static void nrec_set_cb(const struct ofono_error *error, void *data)
-+{
-+	struct ofono_handsfree *hf =3D data;
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path =3D __ofono_atom_get_path(hf->atom);
-+
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+		__ofono_dbus_pending_reply(&hf->pending,
-+					__ofono_error_failed(hf->pending));
-+		return;
-+	}
-+
-+	hf->nrec =3D hf->nrec_pending;
-+
-+	__ofono_dbus_pending_reply(&hf->pending,
-+				dbus_message_new_method_return(hf->pending));
-+
-+	ofono_dbus_signal_property_changed(conn, path,
-+					OFONO_HANDSFREE_INTERFACE,
-+					"EchoCancelingNoiseReduction",
-+					DBUS_TYPE_BOOLEAN,
-+					&hf->nrec);
-+}
-+
- static DBusMessage *handsfree_set_property(DBusConnection *conn,
- 						DBusMessage *msg, void *data)
- {
- 	struct ofono_handsfree *hf =3D data;
- 	DBusMessageIter iter, var;
-+	ofono_bool_t enabled;
- 	const char *name;
- =
+bt_register_profile (3 the simple function, 1 of _role).  Now we have 4 =
 
- 	if (hf->pending)
-@@ -244,28 +270,40 @@ static DBusMessage *handsfree_set_property(DBusConnec=
-tion *conn,
- =
+callers and 3 variations.  This is too much.  Lets just make =
 
- 	dbus_message_iter_recurse(&iter, &var);
- =
+bt_register_profile accept the full set of arguments and change everyone =
 
-+	if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
-+		return __ofono_error_invalid_args(msg);
-+
-+	dbus_message_iter_get_basic(&var, &enabled);
-+
- 	if (g_str_equal(name, "VoiceRecognition") =3D=3D TRUE) {
--		ofono_bool_t enabled;
- =
+over.
 
- 		if (!hf->driver->voice_recognition)
- 			return __ofono_error_not_implemented(msg);
- =
+Also, I don't like introducing a struct bt_profile_info for this.  Just =
 
--		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
--			return __ofono_error_invalid_args(msg);
--
--		dbus_message_iter_get_basic(&var, &enabled);
--
- 		if (hf->voice_recognition =3D=3D enabled)
- 			return dbus_message_new_method_return(msg);
- =
+add the extra arguments you need and accept NULL where needed.
 
- 		hf->voice_recognition_pending =3D enabled;
- 		hf->pending =3D dbus_message_ref(msg);
- 		hf->driver->voice_recognition(hf, enabled, voicerec_set_cb, hf);
-+	} else if (g_str_equal(name, "EchoCancelingNoiseReduction") =3D=3D TRUE) {
- =
+>   {
+>   	DBusMessageIter iter, dict;
+>   	DBusPendingCall *c;
+> @@ -111,9 +112,19 @@ int bt_register_profile_with_role(DBusConnection *co=
+nn, const char *uuid,
+>   	ofono_dbus_dict_append(&dict, "Name", DBUS_TYPE_STRING,&name);
+>   	ofono_dbus_dict_append(&dict, "Version", DBUS_TYPE_UINT16,&version);
+>
+> -	if (role)
+> -		ofono_dbus_dict_append(&dict, "Role", DBUS_TYPE_STRING,&role);
+>
+> +	if (optional =3D=3D NULL)
+> +		goto done;
+> +
+> +	if (optional->role)
+> +		ofono_dbus_dict_append(&dict, "Role", DBUS_TYPE_STRING,
+> +							&optional->role);
+> +
+> +	if (optional->features)
+> +		ofono_dbus_dict_append(&dict, "Features", DBUS_TYPE_UINT16,
+> +							&optional->features);
+> +
+> +done:
+>   	dbus_message_iter_close_container(&iter,&dict);
+>
+>   	if (!dbus_connection_send_with_reply(conn, msg,&c, -1)) {
+> @@ -130,12 +141,27 @@ int bt_register_profile_with_role(DBusConnection *c=
+onn, const char *uuid,
+>   	return 0;
+>   }
+>
+> +int bt_register_profile_with_role(DBusConnection *conn, const char *uuid,
+> +					uint16_t version, const char *name,
+> +					const char *object, const char *role)
+> +{
+> +	struct bt_profile_info optional;
+> +
+> +	memset(&optional, 0, sizeof(optional));
+> +
+> +	optional.role =3D role;
+> +
+> +	return bt_register_profile_full(conn, uuid, version, name,
+> +							object,&optional);
+> +}
+> +
+> +
+>   int bt_register_profile(DBusConnection *conn, const char *uuid,
+>   					uint16_t version, const char *name,
+>   							const char *object)
+>   {
+> -	return bt_register_profile_with_role(conn, uuid, version, name, object,
+> -									NULL);
+> +	return bt_register_profile_full(conn, uuid, version, name,
+> +							object, NULL);
+>   }
+>
+>   void bt_unregister_profile(DBusConnection *conn, const char *object)
+> diff --git a/plugins/bluez5.h b/plugins/bluez5.h
+> index 5b8c1f5..8118f1f 100644
+> --- a/plugins/bluez5.h
+> +++ b/plugins/bluez5.h
+> @@ -29,10 +29,20 @@
+>   #define HFP_HS_UUID	"0000111e-0000-1000-8000-00805f9b34fb"
+>   #define HFP_AG_UUID	"0000111f-0000-1000-8000-00805f9b34fb"
+>
+> +struct bt_profile_info {
+> +	const char *role;
+> +	uint16_t features;
+> +};
+> +
+>   int bt_register_profile_with_role(DBusConnection *conn, const char *uui=
+d,
+>   					uint16_t version, const char *name,
+>   					const char *object, const char *role);
+>
+> +int bt_register_profile_full(DBusConnection *conn,
+> +					const char *uuid, uint16_t version,
+> +					const char *name, const char *object,
+> +					struct bt_profile_info *optional);
+> +
+>   int bt_register_profile(DBusConnection *conn, const char *uuid,
+>   					uint16_t version, const char *name,
+>   					const char *object);
 
--		return NULL;
--	}
-+		if (!(hf->ag_features & HFP_AG_FEATURE_ECNR))
-+			return __ofono_error_not_supported(msg);
- =
+Regards,
+-Denis
 
--	return __ofono_error_invalid_args(msg);
-+		if (!hf->driver->nrec || enabled =3D=3D TRUE)
-+			return __ofono_error_not_implemented(msg);
-+
-+		if (hf->nrec =3D=3D enabled)
-+			return dbus_message_new_method_return(msg);
-+
-+		hf->pending =3D dbus_message_ref(msg);
-+		hf->nrec_pending =3D enabled;
-+		hf->driver->nrec(hf, enabled, nrec_set_cb, hf);
-+	} else
-+		return __ofono_error_invalid_args(msg);
-+
-+	return NULL;
- }
- =
-
- static void request_phone_number_cb(const struct ofono_error *error,
--- =
-
-1.7.11.7
-
-
---===============2818561176987019921==--
+--===============1352002164127518689==--
 
