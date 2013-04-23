@@ -1,44 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============1650775933742377188=="
+Content-Type: multipart/mixed; boundary="===============2818367479065026907=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v2 5/7] include: Add EchoCancelingNoiseReduction to handsfree
- driver
-Date: Tue, 23 Apr 2013 09:44:43 -0300
-Message-ID: <1366721085-17837-5-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v2 6/7] hfpmodem: Add EchoCancelingNoiseReduction
+Date: Tue, 23 Apr 2013 09:44:44 -0300
+Message-ID: <1366721085-17837-6-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1366721085-17837-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1650775933742377188==
+--===============2818367479065026907==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch extends the handsfree driver adding echo canceling and noise
-reduction callback to allow enabling or disabling this feature in the
-audio gateway.
+This patch adds echo canceling and noise reduction implementation to
+hfpmodem.
 ---
- include/handsfree.h | 2 ++
- 1 file changed, 2 insertions(+)
+ drivers/hfpmodem/handsfree.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
 
-diff --git a/include/handsfree.h b/include/handsfree.h
-index b5e0d5f..dcb55c5 100644
---- a/include/handsfree.h
-+++ b/include/handsfree.h
-@@ -48,6 +48,8 @@ struct ofono_handsfree_driver {
- 	void (*voice_recognition)(struct ofono_handsfree *hf,
- 					ofono_bool_t enabled,
- 					ofono_handsfree_cb_t cb, void *data);
-+	void (*nrec)(struct ofono_handsfree *hf, ofono_bool_t enabled,
-+					ofono_handsfree_cb_t cb, void *data);
+diff --git a/drivers/hfpmodem/handsfree.c b/drivers/hfpmodem/handsfree.c
+index ce28de3..d7561e7 100644
+--- a/drivers/hfpmodem/handsfree.c
++++ b/drivers/hfpmodem/handsfree.c
+@@ -260,12 +260,31 @@ static void hfp_voice_recognition(struct ofono_handsf=
+ree *hf,
+ 	CALLBACK_WITH_FAILURE(cb, data);
+ }
+ =
+
++static void hfp_nrec(struct ofono_handsfree *hf, ofono_bool_t enabled,
++				ofono_handsfree_cb_t cb, void *data)
++{
++	struct hf_data *hd =3D ofono_handsfree_get_data(hf);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[16];
++
++	snprintf(buf, sizeof(buf), "AT+NREC=3D%d", (int)(enabled));
++
++	if (g_at_chat_send(hd->chat, buf, NULL, hf_generic_set_cb,
++							cbd, g_free) > 0)
++		return;
++
++	g_free(cbd);
++
++	CALLBACK_WITH_FAILURE(cb, data);
++}
++
+ static struct ofono_handsfree_driver driver =3D {
+ 	.name			=3D "hfpmodem",
+ 	.probe			=3D hfp_handsfree_probe,
+ 	.remove			=3D hfp_handsfree_remove,
+ 	.request_phone_number	=3D hfp_request_phone_number,
+ 	.voice_recognition	=3D hfp_voice_recognition,
++	.nrec			=3D hfp_nrec,
  };
  =
 
- void ofono_handsfree_set_ag_features(struct ofono_handsfree *hf,
+ void hfp_handsfree_init(void)
 -- =
 
 1.7.11.7
 
 
---===============1650775933742377188==--
+--===============2818367479065026907==--
 
