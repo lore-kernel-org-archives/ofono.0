@@ -1,50 +1,132 @@
-Content-Type: multipart/mixed; boundary="===============1973507325602694411=="
+Content-Type: multipart/mixed; boundary="===============8076986273915374764=="
 MIME-Version: 1.0
 From: Claudio Takahasi <claudio.takahasi@openbossa.org>
-Subject: [PATCH v3 4/7] core: Set EchoCancelingNoiseReduction to TRUE by
- default
-Date: Tue, 23 Apr 2013 14:21:40 -0300
-Message-ID: <1366737703-26883-4-git-send-email-claudio.takahasi@openbossa.org>
+Subject: [PATCH v3 7/7] core: Add SetProperty for EchoCancelingNoiseReduction
+Date: Tue, 23 Apr 2013 14:21:43 -0300
+Message-ID: <1366737703-26883-7-git-send-email-claudio.takahasi@openbossa.org>
 In-Reply-To: <1366737703-26883-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1973507325602694411==
+--===============8076986273915374764==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-According to Bluetooth HFP spec: By default, if the AG supports its
-own embedded echo canceling and/or noise reduction functions, it shall
-have them activated until the AT+NREC command is received. The
-configuration set by the HF shall by used by the AG while the Service
-Level Connection is active.
-
-Since there isn't a command to query the current value, it is being
-assumed that Echo Canceling and Noise Reduction is enabled when the
-connection is established and the gateway supports this feature.
+This patch extends SetProperty method of the Handsfree interface
+allowing to disable echo canceling and noise reduction feature in
+the audio gateway through a D-Bus method call. Once disabled, it
+is not allowed to enable it using this procedure.
 ---
- src/handsfree.c | 1 +
- 1 file changed, 1 insertion(+)
+ src/handsfree.c | 54 +++++++++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 45 insertions(+), 9 deletions(-)
 
 diff --git a/src/handsfree.c b/src/handsfree.c
-index 9e4fc6b..75751e8 100644
+index 75751e8..2808df8 100644
 --- a/src/handsfree.c
 +++ b/src/handsfree.c
-@@ -361,6 +361,7 @@ struct ofono_handsfree *ofono_handsfree_create(struct o=
-fono_modem *modem,
- 	hf->atom =3D __ofono_modem_add_atom(modem,
- 					OFONO_ATOM_TYPE_HANDSFREE,
- 					handsfree_remove, hf);
-+	hf->nrec =3D TRUE;
+@@ -220,11 +220,36 @@ static void voicerec_set_cb(const struct ofono_error =
+*error, void *data)
+ 					&hf->voice_recognition);
+ }
  =
 
- 	for (l =3D g_drivers; l; l =3D l->next) {
- 		const struct ofono_handsfree_driver *drv =3D l->data;
++static void nrec_set_cb(const struct ofono_error *error, void *data)
++{
++	struct ofono_handsfree *hf =3D data;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(hf->atom);
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		__ofono_dbus_pending_reply(&hf->pending,
++					__ofono_error_failed(hf->pending));
++		return;
++	}
++
++	hf->nrec =3D FALSE;
++
++	__ofono_dbus_pending_reply(&hf->pending,
++				dbus_message_new_method_return(hf->pending));
++
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_HANDSFREE_INTERFACE,
++					"EchoCancelingNoiseReduction",
++					DBUS_TYPE_BOOLEAN,
++					&hf->nrec);
++}
++
+ static DBusMessage *handsfree_set_property(DBusConnection *conn,
+ 						DBusMessage *msg, void *data)
+ {
+ 	struct ofono_handsfree *hf =3D data;
+ 	DBusMessageIter iter, var;
++	ofono_bool_t enabled;
+ 	const char *name;
+ =
+
+ 	if (hf->pending)
+@@ -244,28 +269,39 @@ static DBusMessage *handsfree_set_property(DBusConnec=
+tion *conn,
+ =
+
+ 	dbus_message_iter_recurse(&iter, &var);
+ =
+
++	if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_get_basic(&var, &enabled);
++
+ 	if (g_str_equal(name, "VoiceRecognition") =3D=3D TRUE) {
+-		ofono_bool_t enabled;
+ =
+
+ 		if (!hf->driver->voice_recognition)
+ 			return __ofono_error_not_implemented(msg);
+ =
+
+-		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
+-			return __ofono_error_invalid_args(msg);
+-
+-		dbus_message_iter_get_basic(&var, &enabled);
+-
+ 		if (hf->voice_recognition =3D=3D enabled)
+ 			return dbus_message_new_method_return(msg);
+ =
+
+ 		hf->voice_recognition_pending =3D enabled;
+ 		hf->pending =3D dbus_message_ref(msg);
+ 		hf->driver->voice_recognition(hf, enabled, voicerec_set_cb, hf);
++	} else if (g_str_equal(name, "EchoCancelingNoiseReduction") =3D=3D TRUE) {
+ =
+
+-		return NULL;
+-	}
++		if (!(hf->ag_features & HFP_AG_FEATURE_ECNR))
++			return __ofono_error_not_supported(msg);
+ =
+
+-	return __ofono_error_invalid_args(msg);
++		if (!hf->driver->disable_nrec || enabled =3D=3D TRUE)
++			return __ofono_error_not_implemented(msg);
++
++		if (hf->nrec =3D=3D FALSE)
++			return dbus_message_new_method_return(msg);
++
++		hf->pending =3D dbus_message_ref(msg);
++		hf->driver->disable_nrec(hf, nrec_set_cb, hf);
++	} else
++		return __ofono_error_invalid_args(msg);
++
++	return NULL;
+ }
+ =
+
+ static void request_phone_number_cb(const struct ofono_error *error,
 -- =
 
 1.7.11.7
 
 
---===============1973507325602694411==--
+--===============8076986273915374764==--
 
