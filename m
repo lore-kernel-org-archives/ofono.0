@@ -1,56 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============6838547246693319456=="
+Content-Type: multipart/mixed; boundary="===============3424182271099834445=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: [PATCH v2 2/3] hfp: Add defines for HFP SDP feature bits
-Date: Tue, 23 Apr 2013 18:21:51 -0300
-Message-ID: <1366752112-8007-2-git-send-email-vinicius.gomes@openbossa.org>
+Subject: [PATCH v2 3/3] hfp_hf_bluez5: Register the SDP record with correct
+ features
+Date: Tue, 23 Apr 2013 18:21:52 -0300
+Message-ID: <1366752112-8007-3-git-send-email-vinicius.gomes@openbossa.org>
 In-Reply-To: <1366752112-8007-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6838547246693319456==
+--===============3424182271099834445==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/hfp.h | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
+ plugins/hfp_hf_bluez5.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/src/hfp.h b/src/hfp.h
-index b54de56..0d36ae5 100644
---- a/src/hfp.h
-+++ b/src/hfp.h
-@@ -45,6 +45,24 @@ enum hfp_hf_feature {
- 	HFP_HF_FEATURE_CODEC_NEGOTIATION =3D	0x80,
- };
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index 826796f..06b6fd3 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -636,10 +636,15 @@ static const GDBusMethodTable profile_methods[] =3D {
  =
 
-+enum hfp_sdp_hf_features {
-+	HFP_SDP_HF_FEATURE_ECNR =3D			0x1,
-+	HFP_SDP_HF_FEATURE_3WAY =3D			0x2,
-+	HFP_SDP_HF_FEATURE_CLIP =3D			0x4,
-+	HFP_SDP_HF_FEATURE_VOICE_RECOGNITION =3D		0x8,
-+	HFP_SDP_HF_FEATURE_REMOTE_VOLUME_CONTROL =3D	0x10,
-+	HFP_SDP_HF_FEATURE_WIDEBAND_SPEECH =3D		0x20,
-+};
+ static void connect_handler(DBusConnection *conn, void *user_data)
+ {
++	uint16_t features =3D HFP_SDP_HF_FEATURE_3WAY |
++				HFP_SDP_HF_FEATURE_CLIP |
++				HFP_SDP_HF_FEATURE_REMOTE_VOLUME_CONTROL |
++				HFP_SDP_HF_FEATURE_WIDEBAND_SPEECH;
 +
-+enum hfp_sdp_ag_features {
-+	HFP_SDP_AG_FEATURE_3WAY =3D			0x1,
-+	HFP_SDP_AG_FEATURE_ECNR =3D			0x2,
-+	HFP_SDP_AG_FEATURE_VOICE_RECOG =3D		0x4,
-+	HFP_SDP_AG_FEATURE_IN_BAND_RING_TONE =3D		0x8,
-+	HFP_SDP_AG_FEATURE_ATTACH_VOICE_TAG =3D		0x10,
-+	HFP_SDP_AG_FEATURE_WIDEBAND_SPEECH =3D		0x20,
-+};
-+
- /* Supported agent codecs */
- enum hfp_codec {
- 	HFP_CODEC_CVSD =3D 0x01,
+ 	DBG("Registering External Profile handler ...");
+ =
+
+ 	bt_register_profile(conn, HFP_HS_UUID, HFP_VERSION_1_6, "hfp_hf",
+-					HFP_EXT_PROFILE_PATH, NULL, 0);
++					HFP_EXT_PROFILE_PATH, NULL, features);
+ }
+ =
+
+ static gboolean has_hfp_ag_uuid(DBusMessageIter *array)
 -- =
 
 1.8.2.1
 
 
---===============6838547246693319456==--
+--===============3424182271099834445==--
 
