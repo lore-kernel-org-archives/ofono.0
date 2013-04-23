@@ -1,82 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============2627767051357115273=="
+Content-Type: multipart/mixed; boundary="===============4642763296751955848=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] hfp_hf_bluez5: Fix re-registering a modem for a device
-Date: Tue, 23 Apr 2013 09:27:50 -0700
-Message-ID: <AA25931D-D497-4625-981A-982E88AD96F2@holtmann.org>
-In-Reply-To: <20130423161536.GA27409@x220>
+From: Claudio Takahasi <claudio.takahasi@openbossa.org>
+Subject: [PATCH v3 1/7] doc: Add EchoCancelingNoiseReduction to Handsfree
+Date: Tue, 23 Apr 2013 14:21:37 -0300
+Message-ID: <1366737703-26883-1-git-send-email-claudio.takahasi@openbossa.org>
+In-Reply-To: <1366721085-17837-1-git-send-email-claudio.takahasi@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2627767051357115273==
+--===============4642763296751955848==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Johan,
+This patch adds echo canceling and noise reduction property to Handsfree
+interface, allowing the handsfree unit to disable this feature in the
+audio gateway. The HFP spec defines the procedure to turn off echo
+canceling and noise reduction only, it is not allowed to enable this
+feature from the HF unit.
 
->>>>> Even for outgoing pairing requests we may receive the UUIDs property
->>>>> changed after the device is paired and try to register it twice.
->>>>> =
+According to Bluetooth HFP 1.6 spec: By default, if the AG supports its
+own embedded echo canceling and/or noise reduction functions, it shall
+have them activated until the AT+NREC command is received from the HF
+unit. From then on, and until the current Service Level Connection is
+dropped for any reason, the AG shall disable these functions every time
+an Audio Connection is established.
+---
+ doc/handsfree-api.txt | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
->>>>> The easiest way to reproduce this is when Extended Inquiry Response is
->>>>> supported.
->>>>> =
+diff --git a/doc/handsfree-api.txt b/doc/handsfree-api.txt
+index 0b5d421..66c93e5 100644
+--- a/doc/handsfree-api.txt
++++ b/doc/handsfree-api.txt
+@@ -44,6 +44,7 @@ Properties	array{string} Features [readonly]
+ 			supported values are:
+ 				"voice-recognition"
+ 				"attach-voice-tag"
++				"echo-canceling-and-noise-reduction"
+ =
 
->>>>> When the device is paired, we receive the "Paired" PropertyChanged,
->>>>> inside modem_register_from_proxy(), g_dbus_proxy_get_property() gets
->>>>> the UUIDs extracted from the EIR data.  Later, when the service
->>>>> discovery is finished, the UUIDs property is re-sent and both may
->>>>> contain the HFP AG UUID.
->>>> =
+ 		boolean InbandRinging [readonly]
+ =
 
->>>> My sources indicated to me that BlueZ should perform the SDP query
->>>> first, and then signal Paired.  Is this something we can not count
->>>> on or is this an implementation issue inside BlueZ itself?
->>> =
+@@ -56,6 +57,13 @@ Properties	array{string} Features [readonly]
+ 			to activate or deactivate the function from the HF, or
+ 			the AG could autonomously initiate it.
+ =
 
->>> BlueZ has always done pairing first and only then SDP. This is because
->>> there are security mode 3 devices out there that do not permit any kind
->>> of connection before pairing has been completed (i.e. even if we wanted
->>> to do SDP first we can't with them). That said, we do at least delay the
->>> NewConnection() callback until SDP has been completed.
->> =
++		boolean EchoCancelingNoiseReduction [readwrite]
++
++			Non-persistent Boolean property representing whether
++			echo canceling and noise reduction is enabled in the
++			AG. This feature can only be disabled once from the
++			HF unit, and it is not allowed to activate it.
++
+ 		byte BatteryChargeLevel [readonly]
+ =
 
->> so when are we sending "Paired" property? We might have to delay that
->> property update until SDP finished.
-> =
+ 			The current charge level of the battery.  The value
+-- =
 
-> Right now it's directly bound to when the device is actually paired,
-> i.e. ignoring any other ongoing operations such as SDP.
-> =
-
->> We have to make sure that we finished SDP after the pairing before
->> updating any clients with property changes.
-> =
-
-> I don't completely understand the rationale of wanting to make BlueZ's
-> clients so fragile. You could in theory get new services way after
-> pairing if this is configurable on the remote side. You could also get
-> the result of calling Device1.Connect() instead of Device1.Pair() in
-> BlueZ.
-> =
-
-> On the other hand, we do delay the response to Device1.Pair() until SDP
-> is complete so delaying the Paired property would in a way be consistent
-> with that. I'll look into how simple this would be. We already track the
-> completion of SDP for each device internally with a svc_resolved boolean
-> so probably a new flag to indicate that "Paired" still needs to be
-> emitted should be all the extra context tracking we need.
-
-the pairing procedure is special and we should try to avoid any pointless r=
-ound trips or wake ups for the clients here. We do know that we are running=
- SDP after pairing anyway. So lets just wait for it to finish. Especially i=
-f we do that already anyway for Device1.Pair().
-
-Regards
-
-Marcel
+1.7.11.7
 
 
---===============2627767051357115273==--
+--===============4642763296751955848==--
 
