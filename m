@@ -1,118 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============4802235814058450757=="
+Content-Type: multipart/mixed; boundary="===============4249929133968296921=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH 5/6] emulator: Set local and remote address of card
-Date: Wed, 24 Apr 2013 14:13:50 -0300
-Message-ID: <1366823631-26262-6-git-send-email-paulo.borges@openbossa.org>
-In-Reply-To: <1366823631-26262-1-git-send-email-paulo.borges@openbossa.org>
+Subject: [PATCH 0/6] Add HandsfreeAudioCard to emulator
+Date: Wed, 24 Apr 2013 14:13:45 -0300
+Message-ID: <1366823631-26262-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4802235814058450757==
+--===============4249929133968296921==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This commit extracts local and remote address from the socket and
-stores them into the card.
----
- src/emulator.c |   46 +++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 45 insertions(+), 1 deletion(-)
+This patch series starts to implement HandsfreeAudioCard logic to Audio
+Gateway role from HFP version 1.6 profile:
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 4d5e835..6acf384 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -23,11 +23,15 @@
- #include <config.h>
- #endif
- =
+* Patches 01 to 03 implement a function to add a new
+HandsfreeAudioCard to an emulator and call it when a new connection
+arrives.
 
-+#include <stdlib.h>
- #include <stdio.h>
-+#include <stdint.h>
- #include <string.h>
- #include <unistd.h>
-+#include <errno.h>
- =
+* Patch 04 registers the card when the Service Level Connection is
+established.
 
- #include <glib.h>
-+#include <sys/socket.h>
- =
+* Patches 05 and 06 stores the remote and local address in the card.
 
- #define OFONO_API_SUBJECT_TO_CHANGE
- #include <ofono/handsfree-audio.h>
-@@ -37,6 +41,7 @@
- #include "hfp.h"
- #include "gatserver.h"
- #include "gatppp.h"
-+#include "bluetooth.h"
- =
+What is expected for upcoming series?
 
- #define RING_TIMEOUT 3
- =
+* Card driver for Audio Gateway version 1.6
+* Handle specific AT commands from HFP version 1.6 (AT+BAC, ...)
 
-@@ -1002,11 +1007,50 @@ struct ofono_emulator *ofono_emulator_create(struct=
- ofono_modem *modem,
- 	return em;
- }
- =
+Paulo Borges (6):
+  include: Add ofono_emulator_create_card()
+  emulator: Implement ofono_emulator_create_card()
+  hfp_ag_bluez5: Create card when connect
+  emulator: Register card when establish SLC
+  emulator: Set local and remote address of card
+  hfp_ag_bluez5: Send fd to card creation
 
-+static int card_set_local_remote(struct ofono_handsfree_card *card, int fd)
-+{
-+	struct sockaddr_rc saddr;
-+	socklen_t optlen;
-+	char local[18], remote[18];
-+	int err;
-+
-+	memset(&saddr, 0, sizeof(saddr));
-+	optlen =3D sizeof(saddr);
-+
-+	if (getsockname(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
-+		err =3D errno;
-+		ofono_error("RFCOMM getsockname: %s (%d)", strerror(err), err);
-+		return -err;
-+	}
-+
-+	bt_ba2str(&saddr.rc_bdaddr, local);
-+
-+	DBG("local %s", local);
-+
-+	memset(&saddr, 0, sizeof(saddr));
-+	optlen =3D sizeof(saddr);
-+
-+	if (getpeername(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
-+		err =3D errno;
-+		ofono_error("RFCOMM getpeername: %s (%d)", strerror(err), err);
-+		return -err;
-+	}
-+
-+	bt_ba2str(&saddr.rc_bdaddr, remote);
-+
-+	DBG("remote %s", remote);
-+
-+	ofono_handsfree_card_set_local(card, local);
-+	ofono_handsfree_card_set_remote(card, remote);
-+
-+	return 0;
-+}
-+
- int ofono_emulator_create_card(struct ofono_emulator *em, int fd, int vers=
-ion)
- {
- 	em->card =3D ofono_handsfree_card_create(0, NULL, NULL);
- =
+ include/emulator.h      |    2 ++
+ plugins/hfp_ag_bluez5.c |    8 ++++++
+ src/emulator.c          |   63 +++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 3 files changed, 73 insertions(+)
 
--	return 0;
-+	return card_set_local_remote(em->card, fd);
- }
- =
-
- void ofono_emulator_remove(struct ofono_emulator *em)
 -- =
 
 1.7.9.5
 
 
---===============4802235814058450757==--
+--===============4249929133968296921==--
 
