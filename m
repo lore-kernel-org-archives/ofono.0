@@ -1,70 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============4439410236512787781=="
+Content-Type: multipart/mixed; boundary="===============8565163260845411680=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] hfp_hf_bluez5: Fix re-registering a modem for a device
-Date: Thu, 25 Apr 2013 03:27:09 -0500
-Message-ID: <5178E8DD.2070107@gmail.com>
-In-Reply-To: <20130425093753.GA8845@x220.ger.corp.intel.com>
+Subject: Re: [PATCH 1/6] include: Add ofono_emulator_create_card()
+Date: Thu, 25 Apr 2013 03:35:44 -0500
+Message-ID: <5178EAE0.8060208@gmail.com>
+In-Reply-To: <1366823631-26262-2-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4439410236512787781==
+--===============8565163260845411680==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Johan, Vinicius,
+Hi Paulo,
 
-On 04/25/2013 04:37 AM, Johan Hedberg wrote:
-> Hi Mikel,
+On 04/24/2013 12:13 PM, Paulo Borges wrote:
+> ---
+>   include/emulator.h |    2 ++
+>   1 file changed, 2 insertions(+)
 >
-> On Thu, Apr 25, 2013, Mikel Astiz wrote:
->> On Tue, Apr 23, 2013 at 7:28 PM, Johan Hedberg<johan.hedberg@gmail.com=
->  wrote:
->>> Hi Marcel,
->>>
->>> On Tue, Apr 23, 2013, Marcel Holtmann wrote:
->>>>> I don't completely understand the rationale of wanting to make BlueZ's
->>>>> clients so fragile. You could in theory get new services way after
->>>>> pairing if this is configurable on the remote side. You could also get
->>>>> the result of calling Device1.Connect() instead of Device1.Pair() in
->>>>> BlueZ.
->>>>>
->>>>> On the other hand, we do delay the response to Device1.Pair() until S=
-DP
->>>>> is complete so delaying the Paired property would in a way be consist=
-ent
->>>>> with that. I'll look into how simple this would be. We already track =
-the
->>>>> completion of SDP for each device internally with a svc_resolved bool=
-ean
->>>>> so probably a new flag to indicate that "Paired" still needs to be
->>>>> emitted should be all the extra context tracking we need.
->>>>
->>>> the pairing procedure is special and we should try to avoid any
->>>> pointless round trips or wake ups for the clients here. We do know
->>>> that we are running SDP after pairing anyway. So lets just wait for it
->>>> to finish. Especially if we do that already anyway for Device1.Pair().
->>>
->>> This ended up being quite simple to do, so I just pushed a mostly
->>> untested patch for this to bluez.git. It'd be good if someone could
->>> verify that it actually ends up helping the situation with oFono.
->>>
->>
->> How do remotely-initiated connections fit into this?
->>
->> We've seen devices that try to connect profiles immediately after
->> pairing, I believe before the discovery is complete.
+> diff --git a/include/emulator.h b/include/emulator.h
+> index 5cd894b..49168a1 100644
+> --- a/include/emulator.h
+> +++ b/include/emulator.h
+> @@ -74,6 +74,8 @@ void ofono_emulator_register(struct ofono_emulator *em,=
+ int fd);
 >
-> Both the NewConnection() (including the authorization of the incoming
-> L2CAP/RFCOMM connect request) and the Paired property would even then be
-> delayed until our side has completed its full service discovery.
+>   void ofono_emulator_remove(struct ofono_emulator *em);
 >
+> +int ofono_emulator_create_card(struct ofono_emulator *em, int fd, int ve=
+rsion);
+> +
 
-So should we be reverting commit 456b8c9723b9b73c3ea4cadc8c6f84ca90675f9a?
+Why do you need the fd argument?  It can be obtained from the =
+
+g_at_server object.  e.g.
+GIOChannel *channel =3D g_at_server_get_channel(server);
+fd =3D g_io_channel_get_unix_fd(channel);
+
+Also, what is the purpose of the version parameter?
+
+>   void ofono_emulator_send_final(struct ofono_emulator *em,
+>   				const struct ofono_error *final);
+>   void ofono_emulator_send_unsolicited(struct ofono_emulator *em,
 
 Regards,
 -Denis
 
---===============4439410236512787781==--
+--===============8565163260845411680==--
 
