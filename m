@@ -1,35 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============0286235969963152087=="
+Content-Type: multipart/mixed; boundary="===============0583839579824960224=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] hfp_hf_bluez5: Fix re-registering a modem for a device
-Date: Thu, 25 Apr 2013 17:48:05 -0500
-Message-ID: <5179B2A5.3030001@gmail.com>
-In-Reply-To: <20130425174733.GB20988@samus>
+Subject: Re: [PATCH 1/3] include: Add ofono_handsfree_audio_has_defer_setup()
+Date: Thu, 25 Apr 2013 17:53:06 -0500
+Message-ID: <5179B3D2.9010307@gmail.com>
+In-Reply-To: <1366916717-30796-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0286235969963152087==
+--===============0583839579824960224==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Vinicius,
 
->>> Both the NewConnection() (including the authorization of the incoming
->>> L2CAP/RFCOMM connect request) and the Paired property would even then be
->>> delayed until our side has completed its full service discovery.
->>>
->>
->> So should we be reverting commit 456b8c9723b9b73c3ea4cadc8c6f84ca90675f9=
-a?
->
-> I guess so. Without that commit this problem doesn't exist.
+On 04/25/2013 02:05 PM, Vinicius Costa Gomes wrote:
+> ---
+>   include/handsfree-audio.h | 2 ++
+>   1 file changed, 2 insertions(+)
 >
 
-I went ahead and reverted this.
+All three patches have been applied, thanks.
 
 Regards,
 -Denis
 
---===============0286235969963152087==--
+
+--===============0583839579824960224==--
 
