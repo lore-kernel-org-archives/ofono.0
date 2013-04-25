@@ -1,52 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============8565163260845411680=="
+Content-Type: multipart/mixed; boundary="===============5912847227140289097=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/6] include: Add ofono_emulator_create_card()
-Date: Thu, 25 Apr 2013 03:35:44 -0500
-Message-ID: <5178EAE0.8060208@gmail.com>
-In-Reply-To: <1366823631-26262-2-git-send-email-paulo.borges@openbossa.org>
+Subject: Re: [PATCH v2 1/3] bluez5: Unify bt_register_profile_* into a single
+ function
+Date: Thu, 25 Apr 2013 03:39:52 -0500
+Message-ID: <5178EBD8.50900@gmail.com>
+In-Reply-To: <1366752112-8007-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8565163260845411680==
+--===============5912847227140289097==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Paulo,
+Hi Vinicius,
 
-On 04/24/2013 12:13 PM, Paulo Borges wrote:
+On 04/23/2013 04:21 PM, Vinicius Costa Gomes wrote:
+> It was a cause of confusion for little gain to have separate
+> functions for registering profiles with extra information, for
+> example "role" and "features". We remove those helper functions
+> in favor of a single one with more parameters, "role" and
+> "feature" when NULL, will be ignored.
 > ---
->   include/emulator.h |    2 ++
->   1 file changed, 2 insertions(+)
+>   dundee/bluez5.c         |  4 ++--
+>   plugins/bluez5.c        | 17 +++++++----------
+>   plugins/bluez5.h        |  7 ++-----
+>   plugins/dun_gw_bluez5.c |  2 +-
+>   plugins/hfp_ag_bluez5.c |  2 +-
+>   plugins/hfp_hf_bluez5.c |  2 +-
+>   6 files changed, 14 insertions(+), 20 deletions(-)
 >
-> diff --git a/include/emulator.h b/include/emulator.h
-> index 5cd894b..49168a1 100644
-> --- a/include/emulator.h
-> +++ b/include/emulator.h
-> @@ -74,6 +74,8 @@ void ofono_emulator_register(struct ofono_emulator *em,=
- int fd);
->
->   void ofono_emulator_remove(struct ofono_emulator *em);
->
-> +int ofono_emulator_create_card(struct ofono_emulator *em, int fd, int ve=
-rsion);
-> +
 
-Why do you need the fd argument?  It can be obtained from the =
-
-g_at_server object.  e.g.
-GIOChannel *channel =3D g_at_server_get_channel(server);
-fd =3D g_io_channel_get_unix_fd(channel);
-
-Also, what is the purpose of the version parameter?
-
->   void ofono_emulator_send_final(struct ofono_emulator *em,
->   				const struct ofono_error *final);
->   void ofono_emulator_send_unsolicited(struct ofono_emulator *em,
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============8565163260845411680==--
+
+--===============5912847227140289097==--
 
