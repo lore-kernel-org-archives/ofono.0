@@ -1,121 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============0823184310704456099=="
+Content-Type: multipart/mixed; boundary="===============6922112231277241091=="
 MIME-Version: 1.0
-From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH v2 11/12] hfp_ag_bluez5: Send HFP version to card creation
-Date: Thu, 25 Apr 2013 16:09:12 -0300
-Message-ID: <1366916953-12967-12-git-send-email-paulo.borges@openbossa.org>
-In-Reply-To: <1366916953-12967-1-git-send-email-paulo.borges@openbossa.org>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: [PATCH 1/3] include: Add ofono_handsfree_audio_has_defer_setup()
+Date: Thu, 25 Apr 2013 16:05:15 -0300
+Message-ID: <1366916717-30796-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0823184310704456099==
+--===============6922112231277241091==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Extract the version from the fd_properties dictionary, if present.
-Fallback to HFP version 1.5 if not present.
-
-After that, send it to the card creation.
 ---
- plugins/hfp_ag_bluez5.c |   47 +++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 file changed, 46 insertions(+), 1 deletion(-)
+ include/handsfree-audio.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/plugins/hfp_ag_bluez5.c b/plugins/hfp_ag_bluez5.c
-index 6451be4..4523165 100644
---- a/plugins/hfp_ag_bluez5.c
-+++ b/plugins/hfp_ag_bluez5.c
-@@ -70,6 +70,45 @@ static gboolean io_hup_cb(GIOChannel *io, GIOCondition c=
-ond, gpointer data)
- 	return FALSE;
- }
+diff --git a/include/handsfree-audio.h b/include/handsfree-audio.h
+index 53e8ab1..846a032 100644
+--- a/include/handsfree-audio.h
++++ b/include/handsfree-audio.h
+@@ -53,6 +53,8 @@ ofono_bool_t ofono_handsfree_card_set_codec(struct ofono_=
+handsfree_card *card,
  =
 
-+static int get_version(DBusMessageIter *iter, uint16_t *version)
-+{
-+	DBusMessageIter dict, entry, valiter;
-+	const char *key;
-+	uint16_t value =3D HFP_VERSION_1_5;
-+
-+	/* Points to dict */
-+	dbus_message_iter_recurse(iter, &dict);
-+
-+	/* For each entry in this dict */
-+	while (dbus_message_iter_get_arg_type(&dict) !=3D DBUS_TYPE_INVALID) {
-+		/* I want to access the entry's contents */
-+		dbus_message_iter_recurse(&dict, &entry);
-+
-+		if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_STRING)
-+			return -EINVAL;
-+
-+		/* If the current key isn't "Version", keep looking */
-+		dbus_message_iter_get_basic(&entry, &key);
-+		if (!g_str_equal("Version", key)) {
-+			dbus_message_iter_next(&dict);
-+			continue;
-+		}
-+
-+		dbus_message_iter_next(&entry);
-+		if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_VARIANT)
-+			return -EINVAL;
-+
-+		dbus_message_iter_recurse(&entry, &valiter);
-+		dbus_message_iter_get_basic(&valiter, &value);
-+		break;
-+	}
-+
-+	if (version)
-+		*version =3D value;
-+
-+	return 0;
-+}
-+
- static DBusMessage *profile_new_connection(DBusConnection *conn,
- 						DBusMessage *msg, void *data)
- {
-@@ -79,6 +118,7 @@ static DBusMessage *profile_new_connection(DBusConnectio=
-n *conn,
- 	int fd, fd_dup;
- 	struct ofono_emulator *em;
- 	struct ofono_modem *modem;
-+	uint16_t version;
+ ofono_bool_t ofono_handsfree_audio_has_wideband(void);
  =
 
- 	DBG("Profile handler NewConnection");
- =
-
-@@ -100,6 +140,11 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
- 	if (fd < 0)
- 		goto invalid;
- =
-
-+	if (get_version(&entry, &version) < 0) {
-+		close(fd);
-+		goto invalid;
-+	}
++ofono_bool_t ofono_handsfree_audio_has_defer_setup(void);
 +
- 	DBG("%s", device);
- =
-
- 	/* Pick the first voicecall capable modem */
-@@ -123,7 +168,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
-on *conn,
- =
-
- 	ofono_emulator_register(em, fd);
- =
-
--	if (ofono_emulator_create_card(em, 0) < 0) {
-+	if (ofono_emulator_create_card(em, version) < 0) {
- 		close(fd);
- 		ofono_emulator_remove(em);
- 		return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
+ void ofono_handsfree_card_set_data(struct ofono_handsfree_card *card,
+ 					void *data);
+ void *ofono_handsfree_card_get_data(struct ofono_handsfree_card *card);
 -- =
 
-1.7.9.5
+1.8.2.1
 
 
---===============0823184310704456099==--
+--===============6922112231277241091==--
 
