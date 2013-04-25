@@ -1,52 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============1148052133494403611=="
+Content-Type: multipart/mixed; boundary="===============4116707748698189753=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH v2 00/12] Add HandsfreeAudioCard to emulator
-Date: Thu, 25 Apr 2013 16:09:01 -0300
-Message-ID: <1366916953-12967-1-git-send-email-paulo.borges@openbossa.org>
+Subject: [PATCH v2 12/12] hfp_ag_bluez5: Register HFP AG version 1.6
+Date: Thu, 25 Apr 2013 16:09:13 -0300
+Message-ID: <1366916953-12967-13-git-send-email-paulo.borges@openbossa.org>
+In-Reply-To: <1366916953-12967-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1148052133494403611==
+--===============4116707748698189753==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch series starts to implement HandsfreeAudioCard logic to Audio
-Gateway role from HFP version 1.6 profile.
+---
+ plugins/hfp_ag_bluez5.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Changelog v2:
+diff --git a/plugins/hfp_ag_bluez5.c b/plugins/hfp_ag_bluez5.c
+index 4523165..58785d1 100644
+--- a/plugins/hfp_ag_bluez5.c
++++ b/plugins/hfp_ag_bluez5.c
+@@ -285,7 +285,7 @@ static void sim_state_watch(enum ofono_sim_state new_st=
+ate, void *data)
+ 	if (modems->next !=3D NULL)
+ 		return;
+ =
 
-* Extract fd from emulator's GAtServer
-* Add card driver for HFP 1.6 AG
-* Send HFP version to card creation
-
-Paulo Borges (12):
-  include: Add ofono_emulator_create_card()
-  emulator: Implement ofono_emulator_create_card()
-  hfp_ag_bluez5: Create card when connect
-  emulator: Register card when establish SLC
-  emulator: Set local and remote address of card
-  include: Add emulator init and cleanup functions
-  emulator: Implement init and cleanup functions
-  main: Call emulator init and cleanup functions
-  emulator: Add HFP 1.6 AG card driver
-  emulator: Set card driver
-  hfp_ag_bluez5: Send HFP version to card creation
-  hfp_ag_bluez5: Register HFP AG version 1.6
-
- include/emulator.h      |    2 +
- plugins/hfp_ag_bluez5.c |   55 ++++++++++++++++++++++-
- src/emulator.c          |  111 +++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/main.c              |    4 ++
- src/ofono.h             |    3 ++
- 5 files changed, 174 insertions(+), 1 deletion(-)
+-	bt_register_profile(conn, HFP_AG_UUID, HFP_VERSION_1_5, "hfp_ag",
++	bt_register_profile(conn, HFP_AG_UUID, HFP_VERSION_1_6, "hfp_ag",
+ 					HFP_AG_EXT_PROFILE_PATH, NULL, 0);
+ }
+ =
 
 -- =
 
 1.7.9.5
 
 
---===============1148052133494403611==--
+--===============4116707748698189753==--
 
