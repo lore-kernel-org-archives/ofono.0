@@ -1,85 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============1611831351735328969=="
+Content-Type: multipart/mixed; boundary="===============3280347133386655263=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
-Subject: Re: [PATCH v2 3/3] hfp_hf_bluez5: Register the SDP record with
- correct features
-Date: Thu, 25 Apr 2013 15:48:16 -0300
-Message-ID: <20130425184816.GC20988@samus>
-In-Reply-To: <5178EC20.7000306@gmail.com>
+From: Paulo Borges <paulo.borges@openbossa.org>
+Subject: [PATCH v2 01/12] include: Add ofono_emulator_create_card()
+Date: Thu, 25 Apr 2013 16:09:02 -0300
+Message-ID: <1366916953-12967-2-git-send-email-paulo.borges@openbossa.org>
+In-Reply-To: <1366916953-12967-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1611831351735328969==
+--===============3280347133386655263==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ include/emulator.h |    2 ++
+ 1 file changed, 2 insertions(+)
 
-On 03:41 Thu 25 Apr, Denis Kenzior wrote:
-> Hi Vinicius,
-> =
+diff --git a/include/emulator.h b/include/emulator.h
+index 5cd894b..f4e9115 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -74,6 +74,8 @@ void ofono_emulator_register(struct ofono_emulator *em, i=
+nt fd);
+ =
 
-> On 04/23/2013 04:21 PM, Vinicius Costa Gomes wrote:
-> >---
-> >  plugins/hfp_hf_bluez5.c | 7 ++++++-
-> >  1 file changed, 6 insertions(+), 1 deletion(-)
-> >
-> =
+ void ofono_emulator_remove(struct ofono_emulator *em);
+ =
 
-> Patch has been applied, thanks.
-> =
-
-> >diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-> >index 826796f..06b6fd3 100644
-> >--- a/plugins/hfp_hf_bluez5.c
-> >+++ b/plugins/hfp_hf_bluez5.c
-> >@@ -636,10 +636,15 @@ static const GDBusMethodTable profile_methods[] =
-=3D {
-> >
-> >  static void connect_handler(DBusConnection *conn, void *user_data)
-> >  {
-> >+	uint16_t features =3D HFP_SDP_HF_FEATURE_3WAY |
-> >+				HFP_SDP_HF_FEATURE_CLIP |
-> >+				HFP_SDP_HF_FEATURE_REMOTE_VOLUME_CONTROL |
-> >+				HFP_SDP_HF_FEATURE_WIDEBAND_SPEECH;
-> >+
-> =
-
-> Can we check whether the kernel supports wideband speech features
-> here and not set this flag if it does not?
-
-What we can do is exporting something like
-ofono_handsfree_audio_has_defer_setup() or something like it, and set the
-feature bit if it's available. I send the patches and let's see how it look=
-s.
-
-The other alternative would be only registering the profile after the Agent
-registers, that way we can be sure that wideband speech is supported. But it
-may bring little benefit, for example, the other side may cache the SDP sea=
-rch
-results.
-
-> =
-
-> >  	DBG("Registering External Profile handler ...");
-> >
-> >  	bt_register_profile(conn, HFP_HS_UUID, HFP_VERSION_1_6, "hfp_hf",
-> >-					HFP_EXT_PROFILE_PATH, NULL, 0);
-> >+					HFP_EXT_PROFILE_PATH, NULL, features);
-> >  }
-> >
-> >  static gboolean has_hfp_ag_uuid(DBusMessageIter *array)
-> =
-
-> Regards,
-> -Denis
-
-
-Cheers,
++int ofono_emulator_create_card(struct ofono_emulator *em, int version);
++
+ void ofono_emulator_send_final(struct ofono_emulator *em,
+ 				const struct ofono_error *final);
+ void ofono_emulator_send_unsolicited(struct ofono_emulator *em,
 -- =
 
-Vinicius
+1.7.9.5
 
---===============1611831351735328969==--
+
+--===============3280347133386655263==--
 
