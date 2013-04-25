@@ -1,123 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============7760682032908783046=="
+Content-Type: multipart/mixed; boundary="===============8177769954129371341=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH v2 05/12] emulator: Set local and remote address of card
-Date: Thu, 25 Apr 2013 16:09:06 -0300
-Message-ID: <1366916953-12967-6-git-send-email-paulo.borges@openbossa.org>
+Subject: [PATCH v2 06/12] include: Add emulator init and cleanup functions
+Date: Thu, 25 Apr 2013 16:09:07 -0300
+Message-ID: <1366916953-12967-7-git-send-email-paulo.borges@openbossa.org>
 In-Reply-To: <1366916953-12967-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7760682032908783046==
+--===============8177769954129371341==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This commit extract local and remote address from the socket and
-store them into the card.
 ---
- src/emulator.c |   52 +++++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 51 insertions(+), 1 deletion(-)
+ src/ofono.h |    3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/src/emulator.c b/src/emulator.c
-index b75d0bd..079a5b8 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -23,11 +23,15 @@
- #include <config.h>
- #endif
+diff --git a/src/ofono.h b/src/ofono.h
+index 8abaf1e..030e559 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -33,6 +33,9 @@ void __ofono_manager_cleanup(void);
+ int __ofono_handsfree_audio_manager_init(void);
+ void __ofono_handsfree_audio_manager_cleanup(void);
  =
 
-+#include <stdlib.h>
- #include <stdio.h>
-+#include <stdint.h>
- #include <string.h>
- #include <unistd.h>
-+#include <errno.h>
++int __ofono_emulator_init(void);
++void __ofono_emulator_cleanup(void);
++
+ void __ofono_modem_shutdown(void);
  =
 
- #include <glib.h>
-+#include <sys/socket.h>
- =
-
- #define OFONO_API_SUBJECT_TO_CHANGE
- #include <ofono/handsfree-audio.h>
-@@ -37,6 +41,7 @@
- #include "hfp.h"
- #include "gatserver.h"
- #include "gatppp.h"
-+#include "bluetooth.h"
- =
-
- #define RING_TIMEOUT 3
- =
-
-@@ -1002,11 +1007,56 @@ struct ofono_emulator *ofono_emulator_create(struct=
- ofono_modem *modem,
- 	return em;
- }
- =
-
-+static int card_set_local_remote(struct ofono_handsfree_card *card, int fd)
-+{
-+	struct sockaddr_rc saddr;
-+	socklen_t optlen;
-+	char local[18], remote[18];
-+	int err;
-+
-+	memset(&saddr, 0, sizeof(saddr));
-+	optlen =3D sizeof(saddr);
-+
-+	if (getsockname(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
-+		err =3D errno;
-+		ofono_error("RFCOMM getsockname: %s (%d)", strerror(err), err);
-+		return -err;
-+	}
-+
-+	bt_ba2str(&saddr.rc_bdaddr, local);
-+
-+	DBG("local %s", local);
-+
-+	memset(&saddr, 0, sizeof(saddr));
-+	optlen =3D sizeof(saddr);
-+
-+	if (getpeername(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
-+		err =3D errno;
-+		ofono_error("RFCOMM getpeername: %s (%d)", strerror(err), err);
-+		return -err;
-+	}
-+
-+	bt_ba2str(&saddr.rc_bdaddr, remote);
-+
-+	DBG("remote %s", remote);
-+
-+	ofono_handsfree_card_set_local(card, local);
-+	ofono_handsfree_card_set_remote(card, remote);
-+
-+	return 0;
-+}
-+
- int ofono_emulator_create_card(struct ofono_emulator *em, int version)
- {
-+	GIOChannel *io;
-+	int fd;
-+
- 	em->card =3D ofono_handsfree_card_create(0, NULL, NULL);
- =
-
--	return 0;
-+	io =3D g_at_server_get_channel(em->server);
-+	fd =3D g_io_channel_unix_get_fd(io);
-+
-+	return card_set_local_remote(em->card, fd);
- }
- =
-
- void ofono_emulator_remove(struct ofono_emulator *em)
+ #include <ofono/log.h>
 -- =
 
 1.7.9.5
 
 
---===============7760682032908783046==--
+--===============8177769954129371341==--
 
