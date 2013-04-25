@@ -1,44 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============5853086789199386785=="
+Content-Type: multipart/mixed; boundary="===============1148052133494403611=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [PATCH v2 07/12] emulator: Implement init and cleanup functions
-Date: Thu, 25 Apr 2013 16:09:08 -0300
-Message-ID: <1366916953-12967-8-git-send-email-paulo.borges@openbossa.org>
-In-Reply-To: <1366916953-12967-1-git-send-email-paulo.borges@openbossa.org>
+Subject: [PATCH v2 00/12] Add HandsfreeAudioCard to emulator
+Date: Thu, 25 Apr 2013 16:09:01 -0300
+Message-ID: <1366916953-12967-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5853086789199386785==
+--===============1148052133494403611==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/emulator.c |    9 +++++++++
- 1 file changed, 9 insertions(+)
+This patch series starts to implement HandsfreeAudioCard logic to Audio
+Gateway role from HFP version 1.6 profile.
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 079a5b8..8ac79d5 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -1335,3 +1335,12 @@ void __ofono_emulator_set_indicator_forced(struct of=
-ono_emulator *em,
- 			ind->deferred =3D TRUE;
- 	}
- }
-+
-+int __ofono_emulator_init(void)
-+{
-+	return 0;
-+}
-+
-+void __ofono_emulator_cleanup(void)
-+{
-+}
+Changelog v2:
+
+* Extract fd from emulator's GAtServer
+* Add card driver for HFP 1.6 AG
+* Send HFP version to card creation
+
+Paulo Borges (12):
+  include: Add ofono_emulator_create_card()
+  emulator: Implement ofono_emulator_create_card()
+  hfp_ag_bluez5: Create card when connect
+  emulator: Register card when establish SLC
+  emulator: Set local and remote address of card
+  include: Add emulator init and cleanup functions
+  emulator: Implement init and cleanup functions
+  main: Call emulator init and cleanup functions
+  emulator: Add HFP 1.6 AG card driver
+  emulator: Set card driver
+  hfp_ag_bluez5: Send HFP version to card creation
+  hfp_ag_bluez5: Register HFP AG version 1.6
+
+ include/emulator.h      |    2 +
+ plugins/hfp_ag_bluez5.c |   55 ++++++++++++++++++++++-
+ src/emulator.c          |  111 +++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/main.c              |    4 ++
+ src/ofono.h             |    3 ++
+ 5 files changed, 174 insertions(+), 1 deletion(-)
+
 -- =
 
 1.7.9.5
 
 
---===============5853086789199386785==--
+--===============1148052133494403611==--
 
