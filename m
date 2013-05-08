@@ -1,68 +1,113 @@
-Content-Type: multipart/mixed; boundary="===============2026745192922606563=="
+Content-Type: multipart/mixed; boundary="===============4805253847521789149=="
 MIME-Version: 1.0
-From: Timo =?unknown-8bit?q?M=C3=BCller?= <mail@timomueller.eu>
-Subject: Re: [PATCHv4 0/8] Nokia N9 specific quirks
-Date: Wed, 08 May 2013 10:30:14 +0200
-Message-ID: <518A0D16.5040207@timomueller.eu>
-In-Reply-To: <516C0A6B.6030409@timomueller.eu>
+From: Mikel Astiz <mikel.astiz.oss@gmail.com>
+Subject: Testing the iPhone 5
+Date: Wed, 08 May 2013 15:59:21 +0200
+Message-ID: <CANT-zCXWAX0JjjDnD5bwc7UuftV0d8vh=sABmTw0mDN6AJU6+g@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2026745192922606563==
+--===============4805253847521789149==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Timo M=C3=BCller wrote, On 15.04.2013 16:10:
-> Timo Mueller wrote, On 28.03.2013 14:36:
->> From: Timo Mueller <timo.mueller@bmw-carit.de>
->>
->> Hi,
->>
->> this is the same as v3 with the changes suggested by Denis.
->>
->> v4 changes:
->> * Retry CLCC request on outgoing callsetup is now a N9 specific quirk
->> * Third patch has been split up according to HACKING rules
->>
->> The idea of setting the vendor during runtime was to use the "Model"
->> string of the ofono_modem (analogous to what the wavecom modem
->> does). But as the Nokia N9 does not support the device ID profile and
->> the BT address has an OUI from Texas Instruments, I wasn't able to
->> determine that the hfpmodem is a Nokia N9. Maybe you have some
->> ideas on how this can be determined properly?
->>
->> As currently there's no functionality to detect the vendor of a
->> hfpmodem on runtime the clcc quirk can be enabled for all vendors by
->> patching the needs_callheld_clcc_quirk method.
->>
->> Regards,
->> Timo
->>
->> Timo Mueller (8):
->>    hfpmodem: Add modem vendor stub
->>    hfpmodem: Add vendor header to makefile
->>    hfpmodem: Add vendor information to voicecall data
->>    hfp_hf_bluez4: Pass vendor on voicecall creation
->>    hfp_hf_bluez5: Pass vendor on voicecall creation
->>    hfpmodem: Add method to query if CLCC quirks are needed
->>    hfpmodem: Add N9 quirk for outgoing callsetup
->>    hfpmodem: Add N9 quirk for callheld=3D<2 or 3>
->>
->>   Makefile.am                  |  3 +-
->>   drivers/hfpmodem/vendor.h    | 26 +++++++++++++++
->>   drivers/hfpmodem/voicecall.c | 77
->> +++++++++++++++++++++++++++++++++++++++++---
->>   plugins/hfp_hf_bluez4.c      |  4 ++-
->>   plugins/hfp_hf_bluez5.c      |  5 ++-
->>   5 files changed, 107 insertions(+), 8 deletions(-)
->>   create mode 100644 drivers/hfpmodem/vendor.h
->>
->
-> Ping
+Hi,
 
-Ping
+I promised Denis I'd send some traces after testing the iPhone 5 and
+observing some strange states such as two active calls (test 1) or
+active+dialing state (test 2).
+
+I currently don't have a phone to test with but let me reuse some
+previous logs. In the second log, the AT commands are not visible so
+I'm hoping to repeat the experiment fairly soon.
+
+The first test is probably a bug in oFono while the second one might
+be the phone's behavior, to be confirmed.
+
+Cheers,
+Mikel
+
+TEST 1:
+
+Steps: Two numbers dialer from the phone while 3-way calling not
+available in network
+Result: Two active calls in oFono (but phone shows only the first one)
+
+ofonod[14366]: < \r\n+CIEV: 3,2\r\n
+ofonod[14366]: > AT+CLCC\r
+ofonod[14366]: < \r\n+CLCC: 1,0,2,0,0,"<phone-number-1>",145\r\n
+ofonod[14366]: < \r\nOK\r\n
+ofonod[14366]: src/voicecall.c:ofono_voicecall_notify() Got a
+voicecall event, status: 2, id: 1, number: <phone-number-1>
+called_number: , called_name
+ofonod[14366]: src/voicecall.c:ofono_voicecall_notify() Did not find a
+call with id: 1
+ofonod[14366]: < \r\n+CIEV: 3,3\r\n
+ofonod[14366]: src/voicecall.c:ofono_voicecall_notify() Got a
+voicecall event, status: 3, id: 1, number: <phone-number-1>
+called_number: , called_name
+ofonod[14366]: src/voicecall.c:ofono_voicecall_notify() Found call with id:=
+ 1
+ofonod[14366]: < \r\n+CIEV: 5,5\r\n
+ofonod[14366]: src/network.c:ofono_netreg_strength_notify() strength 100
+ofonod[14366]: < \r\n+CIEV: 2,1\r\n
+ofonod[14366]: src/voicecall.c:ofono_voicecall_notify() Got a
+voicecall event, status: 0, id: 1, number: <phone-number-1>
+called_number: , called_name
+ofonod[14366]: src/voicecall.c:ofono_voicecall_notify() Found call with id:=
+ 1
+ofonod[14366]: < \r\n+CIEV: 3,0\r\n
+
+(At this point, a second call is dialed from the phone)
+
+ofonod[14366]: < \r\n+CIEV: 3,2\r\n
+ofonod[14366]: > AT+CLCC\r
+ofonod[14366]: < \r\n+CLCC: 1,0,0,0,0,"<phone-number-1>",145\r\n
+ofonod[14366]: < \r\n+CLCC: 2,0,2,0,0,"<phone-number-2>",129\r\n
+ofonod[14366]: < \r\nOK\r\n
+ofonod[14366]: src/voicecall.c:ofono_voicecall_notify() Got a
+voicecall event, status: 2, id: 2, number: <phone-number-2>
+called_number: , called_name
+ofonod[14366]: src/voicecall.c:ofono_voicecall_notify() Did not find a
+call with id: 2
+ofonod[14366]: < \r\n+CIEV: 3,0\r\n
+ofonod[14366]: src/voicecall.c:ofono_voicecall_notify() Got a
+voicecall event, status: 0, id: 2, number: <phone-number-2>
+called_number: , called_name
+ofonod[14366]: src/voicecall.c:ofono_voicecall_notify() Found call with id:=
+ 2
 
 
---===============2026745192922606563==--
+TEST 2:
+
+Steps: Two numbers dialer from the phone (3-way calling available)
+Result: oFono reports a active+dialing state until held+alerting is reached.
+
+ofonod[3281]: src/voicecall.c:ofono_voicecall_notify() Got a voicecall
+event, status: 2, id: 1, number: <phone-number-1> called_number: ,
+called_name
+ofonod[3281]: src/voicecall.c:ofono_voicecall_notify() Did not find a
+call with id: 1
+ofonod[3281]: src/voicecall.c:ofono_voicecall_notify() Got a voicecall
+event, status: 3, id: 1, number: <phone-number-1> called_number: ,
+called_name
+ofonod[3281]: src/voicecall.c:ofono_voicecall_notify() Found call with id: 1
+ofonod[3281]: src/network.c:ofono_netreg_strength_notify() strength 100
+ofonod[3281]: src/voicecall.c:ofono_voicecall_notify() Got a voicecall
+event, status: 0, id: 1, number: <phone-number-1> called_number: ,
+called_name
+ofonod[3281]: src/voicecall.c:ofono_voicecall_notify() Found call with id: 1
+ofonod[3281]: src/network.c:ofono_netreg_strength_notify() strength 80
+
+(At this point, a second call is dialed from the phone)
+
+ofonod[3281]: src/voicecall.c:ofono_voicecall_notify() Got a voicecall
+event, status: 2, id: 2, number: <phone-number-2> called_number: ,
+called_name
+ofonod[3281]: src/voicecall.c:ofono_voicecall_notify() Did not find a
+call with id: 2
+ofonod[3281]: src/modem.c:modem_change_state() old state: 3, new state: 0
+
+--===============4805253847521789149==--
 
