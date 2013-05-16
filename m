@@ -1,85 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============0596406515825752796=="
+Content-Type: multipart/mixed; boundary="===============9200856180697027113=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [RFC 02/22] emulator: Implement ofono_emulator_create_card()
-Date: Thu, 16 May 2013 14:16:22 -0300
-Message-ID: <1368724602-27781-3-git-send-email-paulo.borges@openbossa.org>
+Subject: [RFC 03/22] hfp_ag_bluez5: Create card when connect
+Date: Thu, 16 May 2013 14:16:23 -0300
+Message-ID: <1368724602-27781-4-git-send-email-paulo.borges@openbossa.org>
 In-Reply-To: <1368724602-27781-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0596406515825752796==
+--===============9200856180697027113==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch adds a Handsfree Audio Card to the emulator structure and a
-function to create it. When the emulator is about to be removed, its
-card is also removed.
+When the HFP AG plugin accepts an incoming connection it now creates a
+Handsfree Audio Card for the corresponding emulator.
 ---
- src/emulator.c |   16 ++++++++++++++++
- 1 file changed, 16 insertions(+)
+ plugins/hfp_ag_bluez5.c |    1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 70505b5..48998f5 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -29,6 +29,9 @@
+diff --git a/plugins/hfp_ag_bluez5.c b/plugins/hfp_ag_bluez5.c
+index 245de21..64a786c 100644
+--- a/plugins/hfp_ag_bluez5.c
++++ b/plugins/hfp_ag_bluez5.c
+@@ -122,6 +122,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
+on *conn,
+ 	}
  =
 
- #include <glib.h>
+ 	ofono_emulator_register(em, fd);
++	ofono_emulator_create_card(em, 0);
  =
 
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/handsfree-audio.h>
-+
- #include "ofono.h"
- #include "common.h"
- #include "hfp.h"
-@@ -53,6 +56,7 @@ struct ofono_emulator {
- 	gboolean clip;
- 	gboolean ccwa;
- 	int pns_id;
-+	struct ofono_handsfree_card *card;
- };
- =
-
- struct indicator {
-@@ -880,6 +884,11 @@ static void emulator_unregister(struct ofono_atom *ato=
-m)
- =
-
- 	g_at_server_unref(em->server);
- 	em->server =3D NULL;
-+
-+	if (em->card) {
-+		ofono_handsfree_card_remove(em->card);
-+		em->card =3D NULL;
-+	}
- }
- =
-
- void ofono_emulator_register(struct ofono_emulator *em, int fd)
-@@ -990,6 +999,13 @@ struct ofono_emulator *ofono_emulator_create(struct of=
-ono_modem *modem,
- 	return em;
- }
- =
-
-+int ofono_emulator_create_card(struct ofono_emulator *em, int version)
-+{
-+	em->card =3D ofono_handsfree_card_create(0, NULL, NULL);
-+
-+	return 0;
-+}
-+
- void ofono_emulator_remove(struct ofono_emulator *em)
- {
- 	__ofono_atom_free(em->atom);
+ 	fd_dup =3D dup(fd);
+ 	io =3D g_io_channel_unix_new(fd_dup);
 -- =
 
 1.7.9.5
 
 
---===============0596406515825752796==--
+--===============9200856180697027113==--
 
