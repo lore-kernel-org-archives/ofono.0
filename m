@@ -1,88 +1,114 @@
-Content-Type: multipart/mixed; boundary="===============8180864331714687791=="
+Content-Type: multipart/mixed; boundary="===============5960622715393876622=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [RFC 16/22] emulator: Setup codec connection
-Date: Thu, 16 May 2013 14:16:36 -0300
-Message-ID: <1368724602-27781-17-git-send-email-paulo.borges@openbossa.org>
+Subject: [RFC 17/22] emulator: Add AT+BCS support
+Date: Thu, 16 May 2013 14:16:37 -0300
+Message-ID: <1368724602-27781-18-git-send-email-paulo.borges@openbossa.org>
 In-Reply-To: <1368724602-27781-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8180864331714687791==
+--===============5960622715393876622==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This commit sends an unsolicited +BCS command with the selected codec
-when the AG receives with success a AT+BCC command.
+This commit verifies if the codec id sent by HF is the same as
+previous sent by AG.
 
-Currently the codec is hardcoded to CVSD.
+It also verifies if the emulator is expecting a AT+BCS command. If not,
+returns an ERROR.
+
+We also need to unset the bcs flag in AT+BAC handler because it is a
+valid +BCS response.
 ---
- src/emulator.c |   25 +++++++++++++++++++++++++
- 1 file changed, 25 insertions(+)
+ src/emulator.c |   40 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 40 insertions(+)
 
 diff --git a/src/emulator.c b/src/emulator.c
-index f358a0e..96e6ad1 100644
+index 96e6ad1..a228df4 100644
 --- a/src/emulator.c
 +++ b/src/emulator.c
-@@ -61,6 +61,7 @@ struct ofono_emulator {
- 	unsigned char cmee_mode;
- 	GSList *indicators;
- 	guint callsetup_source;
-+	guint audiosetup_source;
+@@ -64,6 +64,7 @@ struct ofono_emulator {
+ 	guint audiosetup_source;
  	gboolean clip;
  	gboolean ccwa;
++	gboolean bcs;
  	int pns_id;
-@@ -449,6 +450,21 @@ static gboolean notify_ring(void *user_data)
+ 	struct ofono_handsfree_card *card;
+ };
+@@ -450,6 +451,41 @@ static gboolean notify_ring(void *user_data)
  	return TRUE;
  }
  =
 
-+static gboolean setup_codec_connection(void *user_data)
++static void bcs_cb(GAtServer *server, GAtServerRequestType type,
++				GAtResult *result, gpointer user_data)
 +{
 +	struct ofono_emulator *em =3D user_data;
-+	char str[16];
++	GAtResultIter iter;
++	int codec;
 +
-+	DBG("");
++	if (!em->bcs)
++		goto fail;
 +
-+	sprintf(str, "+BCS: %d", HFP_CODEC_CVSD);
-+	g_at_server_send_unsolicited(em->server, str);
++	em->bcs =3D FALSE;
 +
-+	em->audiosetup_source =3D 0;
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "");
 +
-+	return FALSE;
++		if (g_at_result_iter_next_number(&iter, &codec) =3D=3D FALSE)
++			goto fail;
++
++		if (codec !=3D HFP_CODEC_CVSD)
++			goto fail;
++
++		ofono_handsfree_card_set_codec(em->card, codec);
++
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
++		break;
++
++	default:
++fail:
++		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
++		break;
++	}
 +}
 +
- static void brsf_cb(GAtServer *server, GAtServerRequestType type,
- 			GAtResult *result, gpointer user_data)
+ static gboolean setup_codec_connection(void *user_data)
  {
-@@ -886,6 +902,10 @@ static void bcc_cb(GAtServer *server, GAtServerRequest=
-Type type,
- 			goto fail;
+ 	struct ofono_emulator *em =3D user_data;
+@@ -460,6 +496,7 @@ static gboolean setup_codec_connection(void *user_data)
+ 	sprintf(str, "+BCS: %d", HFP_CODEC_CVSD);
+ 	g_at_server_send_unsolicited(em->server, str);
  =
 
- 		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-+
-+		em->audiosetup_source =3D g_timeout_add_seconds(0,
-+						setup_codec_connection, em);
-+
- 		break;
++	em->bcs =3D TRUE;
+ 	em->audiosetup_source =3D 0;
  =
 
- 	default:
-@@ -929,6 +949,11 @@ static void emulator_unregister(struct ofono_atom *ato=
-m)
- 		em->callsetup_source =3D 0;
+ 	return FALSE;
+@@ -505,6 +542,8 @@ static void bac_cb(GAtServer *server, GAtServerRequestT=
+ype type,
+ 	GAtResultIter iter;
+ 	int codec, codecs =3D 0;
+ =
+
++	em->bcs =3D FALSE;
++
+ 	switch (type) {
+ 	case G_AT_SERVER_REQUEST_TYPE_SET:
+ 		g_at_result_iter_init(&iter, result);
+@@ -1028,6 +1067,7 @@ void ofono_emulator_register(struct ofono_emulator *e=
+m, int fd)
+ 		g_at_server_register(em->server, "+CCWA", ccwa_cb, em, NULL);
+ 		g_at_server_register(em->server, "+CMEE", cmee_cb, em, NULL);
+ 		g_at_server_register(em->server, "+BIA", bia_cb, em, NULL);
++		g_at_server_register(em->server, "+BCS", bcs_cb, em, NULL);
+ 		g_at_server_register(em->server, "+BCC", bcc_cb, em, NULL);
  	}
- =
-
-+	if (em->audiosetup_source) {
-+		g_source_remove(em->audiosetup_source);
-+		em->audiosetup_source =3D 0;
-+	}
-+
- 	for (l =3D em->indicators; l; l =3D l->next) {
- 		struct indicator *ind =3D l->data;
  =
 
 -- =
@@ -90,5 +116,5 @@ m)
 1.7.9.5
 
 
---===============8180864331714687791==--
+--===============5960622715393876622==--
 
