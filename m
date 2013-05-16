@@ -1,76 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============9046049186643436162=="
+Content-Type: multipart/mixed; boundary="===============0996098996505973424=="
 MIME-Version: 1.0
 From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [RFC 20/22] emulator: Reuse last negotiated codec
-Date: Thu, 16 May 2013 14:16:40 -0300
-Message-ID: <1368724602-27781-21-git-send-email-paulo.borges@openbossa.org>
+Subject: [RFC 21/22] emulator: Copy callback mechanism from atutil.h
+Date: Thu, 16 May 2013 14:16:41 -0300
+Message-ID: <1368724602-27781-22-git-send-email-paulo.borges@openbossa.org>
 In-Reply-To: <1368724602-27781-1-git-send-email-paulo.borges@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9046049186643436162==
+--===============0996098996505973424==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If a synchronous connection will be established and the last used
-codec is still available, the AG will use it instead of negotiate.
+atutil.h needs GAtChat and GAtResult definitions and we do not have
+these definitions inside emulator.c.
 ---
- src/emulator.c |   13 ++++++++++---
- 1 file changed, 10 insertions(+), 3 deletions(-)
+ src/emulator.c |   33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
 
 diff --git a/src/emulator.c b/src/emulator.c
-index 84b07e6..2ce1542 100644
+index 2ce1542..c468452 100644
 --- a/src/emulator.c
 +++ b/src/emulator.c
-@@ -56,6 +56,7 @@ struct ofono_emulator {
- 	int l_features;
- 	int r_features;
- 	int r_codecs;
-+	int last_codec;
- 	int events_mode;
- 	gboolean events_ind;
- 	unsigned char cmee_mode;
-@@ -488,6 +489,7 @@ static void bcs_cb(GAtServer *server, GAtServerRequestT=
-ype type,
- 			goto fail;
+@@ -47,6 +47,28 @@
  =
 
- 		ofono_handsfree_card_set_codec(em->card, codec);
-+		em->last_codec =3D codec;
+ #define HFP_16_AG_DRIVER "hfp16-ag-driver"
  =
 
- 		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
- =
-
-@@ -510,10 +512,15 @@ static gboolean setup_codec_connection(void *user_dat=
-a)
- =
-
- 	DBG("");
- =
-
--	sprintf(str, "+BCS: %d", HFP_CODEC_CVSD);
--	g_at_server_send_unsolicited(em->server, str);
-+	if (em->r_codecs & em->last_codec) {
-+		setup_synchronous_connection(em);
-+	} else {
-+		sprintf(str, "+BCS: %d", HFP_CODEC_CVSD);
-+		g_at_server_send_unsolicited(em->server, str);
++#define CALLBACK_WITH_FAILURE(cb, args...)		\
++	do {						\
++		struct ofono_error cb_e;		\
++		cb_e.type =3D OFONO_ERROR_TYPE_FAILURE;	\
++		cb_e.error =3D 0;				\
++							\
++		cb(&cb_e, ##args);			\
++	} while (0)					\
 +
-+		em->bcs =3D TRUE;
-+	}
++#define CALLBACK_WITH_SUCCESS(cb, args...)		\
++	do {						\
++		struct ofono_error e;			\
++		e.type =3D OFONO_ERROR_TYPE_NO_ERROR;	\
++		e.error =3D 0;				\
++		cb(&e, ##args);				\
++	} while (0)
++
++struct cb_data {
++	void *cb;
++	void *data;
++};
++
+ struct ofono_emulator {
+ 	struct ofono_atom *atom;
+ 	enum ofono_emulator_type type;
+@@ -80,6 +102,17 @@ struct indicator {
+ 	gboolean mandatory;
+ };
  =
 
--	em->bcs =3D TRUE;
- 	em->audiosetup_source =3D 0;
- =
-
- 	return FALSE;
++static inline struct cb_data *cb_data_new(void *cb, void *data)
++{
++	struct cb_data *ret;
++
++	ret =3D g_new0(struct cb_data, 1);
++	ret->cb =3D cb;
++	ret->data =3D data;
++
++	return ret;
++}
++
+ static void emulator_debug(const char *str, void *data)
+ {
+ 	ofono_info("%s: %s\n", (char *)data, str);
 -- =
 
 1.7.9.5
 
 
---===============9046049186643436162==--
+--===============0996098996505973424==--
 
