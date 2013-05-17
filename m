@@ -1,58 +1,108 @@
-Content-Type: multipart/mixed; boundary="===============6041949905979311928=="
+Content-Type: multipart/mixed; boundary="===============8712468871185433561=="
 MIME-Version: 1.0
-From: Paulo Borges <paulo.borges@openbossa.org>
-Subject: [RFC 18/22] emulator: Resend +BCS after receive AT+BAC
-Date: Thu, 16 May 2013 14:16:38 -0300
-Message-ID: <1368724602-27781-19-git-send-email-paulo.borges@openbossa.org>
-In-Reply-To: <1368724602-27781-1-git-send-email-paulo.borges@openbossa.org>
+From: Viallard Anthony <viallard@syscom-instruments.com>
+Subject: Problem when disable GPRS context and try to re-enable it
+Date: Fri, 17 May 2013 12:33:02 +0200
+Message-ID: <5196075E.60309@syscom-instruments.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6041949905979311928==
+--===============8712468871185433561==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If the AG receives AT+BAC as a response to an unsolicited +BCS, it
-will resend +BCS based on new list of available codecs.
----
- src/emulator.c |    6 ++++++
- 1 file changed, 6 insertions(+)
+Hello,
 
-diff --git a/src/emulator.c b/src/emulator.c
-index a228df4..7f6604a 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -541,6 +541,7 @@ static void bac_cb(GAtServer *server, GAtServerRequestT=
-ype type,
- 	struct ofono_emulator *em =3D user_data;
- 	GAtResultIter iter;
- 	int codec, codecs =3D 0;
-+	gboolean bcs =3D em->bcs;
- =
+I start a new thread about a bad thing I seen. I can't re-enable a =
 
- 	em->bcs =3D FALSE;
- =
+previously disabled context.
 
-@@ -558,6 +559,11 @@ static void bac_cb(GAtServer *server, GAtServerRequest=
-Type type,
- 		em->r_codecs =3D codecs;
- =
+Here the command to reproduce the issue:
 
- 		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-+
-+		if (bcs)
-+			em->audiosetup_source =3D g_timeout_add_seconds(0,
-+						setup_codec_connection, em);
-+
- 		break;
- =
+---------------------------
+dbus-send --system --type=3Dmethod_call --print-reply --dest=3Dorg.ofono =
 
- 	default:
+/simcom_0/context1 org.ofono.ConnectionContext.SetProperty string:"Activ
+e" variant:boolean:true
+
+dbus-send --system --type=3Dmethod_call --print-reply --dest=3Dorg.ofono =
+
+/simcom_0/context1 org.ofono.ConnectionContext.SetProperty string:"Activ
+e" variant:boolean:false
+
+dbus-send --system --type=3Dmethod_call --print-reply --dest=3Dorg.ofono =
+
+/simcom_0/context1 org.ofono.ConnectionContext.SetProperty string:"Activ
+e" variant:boolean:true
+---------------------------
+
+and bellow, the log:
+
+---------------------------
+ofonod[10347]: Modem: > AT+CGDCONT=3D1,"IP","gprs.swisscom.ch"\r
+ofonod[10347]: Modem: < \r\nOK\r\n
+ofonod[10347]: drivers/atmodem/gprs-context.c:at_cgdcont_cb() ok 1
+ofonod[10347]: Modem: > AT+CGDATA=3D"PPP",1\r
+ofonod[10347]: Modem: < \r\nCONNECT 115200\r\n
+ofonod[10347]: drivers/atmodem/gprs-context.c:at_cgdata_cb() ok 1
+ofonod[10347]: drivers/atmodem/gprs-context.c:setup_ppp()
+ofonod[10347]: drivers/atmodem/gprs-context.c:ppp_connect()
+ofonod[10347]: IP: 10.146.60.102
+ofonod[10347]: DNS: 195.186.216.33, 195.186.152.33
+ofonod[10347]: src/gprs.c:pri_activate_callback() 0x108698
+ofonod[10347]: plugins/udev.c:udev_event() subsystem net add
+ofonod[10347]: plugins/udev.c:udev_event() subsystem net finished
+ofonod[10347]: plugins/udevng.c:check_modem_list()
+ofonod[10347]: =
+
+drivers/atmodem/gprs-context.c:at_gprs_deactivate_primary() cid 1
+ofonod[10347]: plugins/udevng.c:remove_device() =
+
+/sys/devices/virtual/net/ppp0
+ofonod[10347]: plugins/udev.c:udev_event() subsystem net remove
+ofonod[10347]: plugins/udev.c:remove_modem() /devices/virtual/net/ppp0
+ofonod[10347]: plugins/udev.c:udev_event() subsystem net finished
+ofonod[10347]: drivers/atmodem/gprs-context.c:ppp_disconnect() Reason: 6
+ofonod[10347]: Modem: < \r\nNO CARRIER\r\n
+
+
+ofonod[10347]: drivers/atmodem/gprs-context.c:at_gprs_activate_primary() =
+
+cid 1
+ofonod[10347]: src/gprs.c:pri_activate_callback() 0x108698
+ofonod[10347]: src/gprs.c:pri_activate_callback() Activating context =
+
+failed with error: Unknown error type
+---------------------------
+
+I read the code, added some logs and found the function =
+
+at_chat_send_common() doesn't do his job because chat->command_queue is =
+
+NULL.
+
+I guess chat->command_queue is free and set to NULL in =
+
+chat_cleanup(struct at_chat *chat) but I don't dig more why this =
+
+function is call...
+
+Any ideas ?
+
+Regards,
+Anthony Viallard.
+
 -- =
 
-1.7.9.5
+-----------------------------------------
+Viallard Anthony    (+41 024 455 24 82)
+[ Embedded System | Software Designer ]
+-----------------------------------------
+   Syscom Instruments SA
+   Rue de l'industrie 21
+   1450     Sainte-Croix
+-----------------------------------------
 
-
---===============6041949905979311928==--
+--===============8712468871185433561==--
 
