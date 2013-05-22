@@ -1,32 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============1088249094580286968=="
+Content-Type: multipart/mixed; boundary="===============4575874905143741900=="
 MIME-Version: 1.0
-From: Viallard Anthony <viallard@syscom-instruments.com>
-Subject: Re: Randomly SMS sent passes or fails
-Date: Tue, 21 May 2013 16:20:51 +0200
-Message-ID: <519B82C3.9050300@syscom-instruments.com>
-In-Reply-To: <5182B239.6000401@gmail.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH] common: Fix parsing SS control string
+Date: Wed, 22 May 2013 18:28:38 -0300
+Message-ID: <1369258118-6331-1-git-send-email-lucas.demarchi@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1088249094580286968==
+--===============4575874905143741900==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+It's not possible to be both greater than '9' and less than '0'. This
+would lead to accepting things like "#$33#" as activation and "*$33#" as
+deactivation, even though the string makes no sense.
+---
+ src/common.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-I think I found a solution about this issue !
+diff --git a/src/common.c b/src/common.c
+index 94d70dd..17d1d58 100644
+--- a/src/common.c
++++ b/src/common.c
+@@ -554,7 +554,7 @@ gboolean parse_ss_control_string(char *str, int *ss_typ=
+e,
+ =
 
-If I set the bearer for SMS at "cs-only", it works perfectly.
+ 	cur =3D 1;
+ =
 
-Therefore, I think there an problem in the firmware of my chip about the =
+-	if (str[1] !=3D '*' && str[1] !=3D '#' && str[1] > '9' && str[1] < '0')
++	if (str[1] !=3D '*' && str[1] !=3D '#' && (str[1] > '9' || str[1] < '0'))
+ 		goto out;
+ =
 
-"cs-prefered" mode.
+ 	if (str[0] =3D=3D '#' && str[1] =3D=3D '*')
+-- =
 
-I will see this with simcom and update my conclusion with their answer.
+1.8.2.3
 
-Regards,
-Anthony Viallard.
 
---===============1088249094580286968==--
+--===============4575874905143741900==--
 
