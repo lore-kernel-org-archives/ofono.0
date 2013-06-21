@@ -1,46 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============6979707095065613414=="
+Content-Type: multipart/mixed; boundary="===============6823621950813000036=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: CDMA voicecall driver
-Date: Fri, 21 Jun 2013 10:58:53 -0500
-Message-ID: <51C4783D.4030704@gmail.com>
-In-Reply-To: <CAHtt_w=VW5tDZrcsSo8ceq_zsGLteLwQphdcV_k1ESUfNztDwg@mail.gmail.com>
+Subject: Re: GSM patches for Sierra modem
+Date: Fri, 21 Jun 2013 11:03:41 -0500
+Message-ID: <51C4795D.2080107@gmail.com>
+In-Reply-To: <CAHtt_wmDHcACDkB9RuWteFcS6n1G4wffB2s2rYM-JsAmkZ7GyQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6979707095065613414==
+--===============6823621950813000036==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-On 06/19/2013 07:24 PM, TengChou Yang wrote:
+On 06/19/2013 07:11 PM, TengChou Yang wrote:
 > Hi all,
-> I am currently working on Sierra modem (MC5728V). Looks like CDMA is not
-> fully supported for the voicecall yet.
-> What I see from ofono master branch there are only probe, remove, dial,
-> hangup had been implemented. I am working
-> on other's method step by step. I am wondering is it worth it to change
-> the dbus service path from org.ofono.cdma.voicecallmanager
+> I had made some patches, Which can support Voicecall manager, for Sierra
+> modem. Please see attached file.
 
-Err, that is not a dbus service path.  The service path is always the =
+Please use git send-email to submit your patches.  Patches sent via =
 
-same, org.ofono.  What you're referring to is the dbus interface name.
-
-> to org.ofono.voicecallmanager? In this case, application doesn't need to
-> care about it's GSM modem or CDMA modem,
-> what they need to do is connecting to the same dbus path.
-
-No, the API has been specifically designed to separate CDMA and GSM =
-
-details.  There are too many differences in the two systems and their =
-
-respective capabilities to mash them together.
+attachment will not be reviewed.
 
 Regards,
 -Denis
 
 
---===============6979707095065613414==--
+--===============6823621950813000036==--
 
