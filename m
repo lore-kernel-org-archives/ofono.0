@@ -1,83 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============8155587559138214219=="
+Content-Type: multipart/mixed; boundary="===============4797896367790186416=="
 MIME-Version: 1.0
-From: Gustavo Padovan <gustavo@padovan.org>
-Subject: [PATCH 2/2] dundee: return error if there is a connection procedure
- ongoing
-Date: Mon, 24 Jun 2013 17:14:02 +0100
-Message-ID: <1372090442-15152-2-git-send-email-gustavo@padovan.org>
-In-Reply-To: <1372090442-15152-1-git-send-email-gustavo@padovan.org>
+From: Forest Bond <forest@alittletooquiet.net>
+Subject: Re: CDMA voicecall driver
+Date: Mon, 24 Jun 2013 22:11:16 -0400
+Message-ID: <20130625021116.GH18126@alittletooquiet.net>
+In-Reply-To: <CAHtt_w=VW5tDZrcsSo8ceq_zsGLteLwQphdcV_k1ESUfNztDwg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8155587559138214219==
+--===============4797896367790186416==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Gustavo Padovan <gustavo.padovan@collabora.co.uk>
+Hi,
 
----
- dundee/dbus.c   | 7 +++++++
- dundee/device.c | 3 +++
- dundee/dundee.h | 1 +
- 3 files changed, 11 insertions(+)
+On Wed, Jun 19, 2013 at 05:24:50PM -0700, TengChou Yang wrote:
+> Hi all,
+> I am currently working on Sierra modem (MC5728V). Looks like CDMA is not =
+fully
+> supported for the voicecall yet.
 
-diff --git a/dundee/dbus.c b/dundee/dbus.c
-index 90bd76b..a1fd2f9 100644
---- a/dundee/dbus.c
-+++ b/dundee/dbus.c
-@@ -44,6 +44,13 @@ DBusMessage *__dundee_error_failed(DBusMessage *msg)
- 					"Operation failed");
- }
- =
+I did not do anything with voicecall functionality, but you may want to loo=
+k at
+my (not accepted) Sierra Wireless CDMA patches from earlier this year.  I am
+also using the MC5728V.
 
-+DBusMessage *__dundee_error_in_progress(DBusMessage *msg)
-+{
-+	return g_dbus_create_error(msg, DUNDEE_ERROR_INTERFACE
-+					".InProgress",
-+					"Operation already in progress");
-+}
-+
- DBusMessage *__dundee_error_timed_out(DBusMessage *msg)
- {
- 	return g_dbus_create_error(msg, DUNDEE_ERROR_INTERFACE ".Timedout",
-diff --git a/dundee/device.c b/dundee/device.c
-index 76fb692..2f4ed56 100644
---- a/dundee/device.c
-+++ b/dundee/device.c
-@@ -460,6 +460,9 @@ static DBusMessage *set_property_active(struct dundee_d=
-evice *device,
- 	if (dbus_message_iter_get_arg_type(var) !=3D DBUS_TYPE_BOOLEAN)
- 		return __dundee_error_invalid_args(msg);
- =
+https://lists.ofono.org/pipermail/ofono/2012-December/013981.html
 
-+	if (device->pending)
-+		return __dundee_error_in_progress(msg);
-+
- 	dbus_message_iter_get_basic(var, &active);
- =
-
- 	device->pending =3D dbus_message_ref(msg);
-diff --git a/dundee/dundee.h b/dundee/dundee.h
-index 56c6913..4f4fa76 100644
---- a/dundee/dundee.h
-+++ b/dundee/dundee.h
-@@ -96,6 +96,7 @@ void __ofono_dbus_pending_reply(DBusMessage **msg, DBusMe=
-ssage *reply);
- =
-
- DBusMessage *__dundee_error_invalid_args(DBusMessage *msg);
- DBusMessage *__dundee_error_failed(DBusMessage *msg);
-+DBusMessage *__dundee_error_in_progress(DBusMessage *msg);
- DBusMessage *__dundee_error_timed_out(DBusMessage *msg);
- =
-
- =
-
+Thanks,
+Forest
 -- =
 
-1.8.1.4
+Forest Bond
+http://www.alittletooquiet.net
+http://www.rapidrollout.com
 
+--===============4797896367790186416==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
---===============8155587559138214219==--
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEuNC4xMCAoR05V
+L0xpbnV4KQoKaUVZRUFSRUNBQVlGQWxISS9FUUFDZ2tRUk80ZlFRZHY1QXd4TVFDZEZ2RXpSSFQ0
+T2xjRWFvOWpYaDI0Snp6cQptcmNBb0xubzFmdkVOSHRrVkJMekFOWUE4UTVYa0x0cQo9c24rdwot
+LS0tLUVORCBQR1AgU0lHTkFUVVJFLS0tLS0K
+
+--===============4797896367790186416==--
 
