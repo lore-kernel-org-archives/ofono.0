@@ -1,137 +1,121 @@
-Content-Type: multipart/mixed; boundary="===============8692679151828690713=="
+Content-Type: multipart/mixed; boundary="===============4652508140993826602=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH] build-sys: Use libgdbus-internal.la
-Date: Wed, 03 Jul 2013 09:49:36 -0300
-Message-ID: <1372855776-24235-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Nicolas Paccou <nicolas.paccou@linux.intel.com>
+Subject: Move oFono bugs from MeeGo Bugzilla to 01.org/JIRA
+Date: Thu, 04 Jul 2013 10:44:56 +0200
+Message-ID: <000001ce7892$c36fde90$4a4f9bb0$@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8692679151828690713==
+--===============4652508140993826602==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Lucas De Marchi <lucas.demarchi@intel.com>
+Hello all,
 
-With the current approach if we have different CFLAGS for each binary we wo=
-uld
-build gdbus several times for no reason.
-
-Instead of prepending $(gdbus_sources) to several _SOURCES variable, use
-a convenience library thas is used internally only, thus with a "-internal"
-suffix.
----
- Makefile.am | 29 +++++++++++++++++++----------
- 1 file changed, 19 insertions(+), 10 deletions(-)
-
-diff --git a/Makefile.am b/Makefile.am
-index cc763b8..d0823b0 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -1,6 +1,8 @@
  =
 
- AM_MAKEFLAGS =3D --no-print-directory
+
+As MeeGo Bugzilla will shut down soon, we have moved oFono project to JIRA
+at 01.org.
+
+All oFono (open and closed) bugs have been uploaded there too.
+
  =
 
-+noinst_LTLIBRARIES =3D
-+
- pkginclude_HEADERS =3D include/log.h include/plugin.h include/history.h \
- 			include/dbus.h include/modem.h include/types.h \
- 			include/call-barring.h include/call-forwarding.h \
-@@ -486,9 +488,14 @@ builtin_sources +=3D plugins/smart-messaging.c
- builtin_modules +=3D push_notification
- builtin_sources +=3D plugins/push-notification.c
+
+Starting from now, report any issue found on oFono only at
+https://01.org/jira/browse/OF please.
+
+You can setup an account at https://01.org/user/register.
+
  =
 
-+noinst_LTLIBRARIES +=3D gdbus/libgdbus-internal.la
-+gdbus_libgdbus_internal_la_SOURCES =3D $(gdbus_sources)
-+gdbus_libgdbus_internal_la_LDFLAGS =3D $(AM_LDFLAGS) @DBUS_LIBS@ @GLIB_LIB=
-S@
-+gdbus_libgdbus_internal_la_CFLAGS =3D $(AM_CFLAGS) @DBUS_CFLAGS@ @GLIB_CFL=
-AGS@
-+
- sbin_PROGRAMS =3D src/ofonod
+
+Best regards,
+
+Nicolas
+
  =
 
--src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sources) src/ofono.ver \
-+src_ofonod_SOURCES =3D $(builtin_sources) src/ofono.ver \
- 			src/main.c src/ofono.h src/log.c src/plugin.c \
- 			src/modem.c src/common.h src/common.c \
- 			src/manager.c src/dbus.c src/util.h src/util.c \
-@@ -515,7 +522,8 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
-es) src/ofono.ver \
- 			src/handsfree-audio.c src/bluetooth.h \
- 			src/hfp.h
+
  =
 
--src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ -ldl
-+src_ofonod_LDADD =3D gdbus/libgdbus-internal.la $(builtin_libadd) \
-+			@GLIB_LIBS@ @DBUS_LIBS@ -ldl
+
  =
 
- src_ofonod_LDFLAGS =3D -Wl,--export-dynamic \
- 				-Wl,--version-script=3D$(srcdir)/src/ofono.ver
-@@ -724,11 +732,11 @@ noinst_PROGRAMS +=3D tools/huawei-audio tools/auto-en=
-able \
- 			tools/get-location tools/lookup-apn \
- 			tools/lookup-provider-name tools/tty-redirector
- =
-
--tools_huawei_audio_SOURCES =3D $(gdbus_sources) tools/huawei-audio.c
--tools_huawei_audio_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
-+tools_huawei_audio_SOURCES =3D tools/huawei-audio.c
-+tools_huawei_audio_LDADD =3D gdbus/libgdbus-internal.la @GLIB_LIBS@ @DBUS_=
-LIBS@
- =
-
--tools_auto_enable_SOURCES =3D $(gdbus_sources) tools/auto-enable.c
--tools_auto_enable_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
-+tools_auto_enable_SOURCES =3D tools/auto-enable.c
-+tools_auto_enable_LDADD =3D gdbus/libgdbus-internal.la @GLIB_LIBS@ @DBUS_L=
-IBS@
- =
-
- tools_get_location_SOURCES =3D tools/get-location.c
- tools_get_location_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
-@@ -753,9 +761,9 @@ endif
- if MAINTAINER_MODE
- noinst_PROGRAMS +=3D tools/stktest
- =
-
--tools_stktest_SOURCES =3D $(gatchat_sources) $(gdbus_sources) tools/stktes=
-t.c \
-+tools_stktest_SOURCES =3D $(gatchat_sources) tools/stktest.c \
- 				unit/stk-test-data.h
--tools_stktest_LDADD =3D @GLIB_LIBS@ @DBUS_LIBS@
-+tools_stktest_LDADD =3D gdbus/libgdbus-internal.la @GLIB_LIBS@ @DBUS_LIBS@
- endif
- endif
- =
-
-@@ -763,11 +771,12 @@ if BLUETOOTH
- if DUNDEE
- sbin_PROGRAMS +=3D dundee/dundee
- =
-
--dundee_common_sources =3D $(gdbus_sources) $(gatchat_sources) \
-+dundee_common_sources =3D $(gatchat_sources) \
- 			src/log.c src/dbus.c dundee/dundee.h dundee/main.c \
- 			dundee/dbus.c dundee/manager.c dundee/device.c
- =
-
--dundee_dundee_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ -ldl
-+dundee_dundee_LDADD =3D $(builtin_libadd) gdbus/libgdbus-internal.la \
-+			@GLIB_LIBS@ @DBUS_LIBS@ -ldl
- =
-
- if DATAFILES
- dist_dbusconf_DATA +=3D dundee/dundee.conf
--- =
-
-1.8.3.2
 
 
---===============8692679151828690713==--
+--===============4652508140993826602==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29udGVu
+dD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj48bWV0YSBuYW1lPUdlbmVyYXRvciBjb250
+ZW50PSJNaWNyb3NvZnQgV29yZCAxNCAoZmlsdGVyZWQgbWVkaXVtKSI+PHN0eWxlPjwhLS0KLyog
+Rm9udCBEZWZpbml0aW9ucyAqLwpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBh
+bm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OlZl
+cmRhbmE7CglwYW5vc2UtMToyIDExIDYgNCAzIDUgNCA0IDIgNDt9CkBmb250LWZhY2UKCXtmb250
+LWZhbWlseTpUYWhvbWE7CglwYW5vc2UtMToyIDExIDYgNCAzIDUgNCA0IDIgNDt9Ci8qIFN0eWxl
+IERlZmluaXRpb25zICovCnAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwK
+CXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjEwLjBwdDsK
+CWZvbnQtZmFtaWx5OiJWZXJkYW5hIiwic2Fucy1zZXJpZiI7fQphOmxpbmssIHNwYW4uTXNvSHlw
+ZXJsaW5rCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6Ymx1ZTsKCXRleHQtZGVjb3Jh
+dGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlwZXJsaW5rRm9sbG93ZWQKCXtt
+c28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpwdXJwbGU7Cgl0ZXh0LWRlY29yYXRpb246dW5k
+ZXJsaW5lO30KcC5Nc29QbGFpblRleHQsIGxpLk1zb1BsYWluVGV4dCwgZGl2Lk1zb1BsYWluVGV4
+dAoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCW1zby1zdHlsZS1saW5rOiJQbGFpbiBUZXh0IENo
+YXIiOwoJbWFyZ2luOjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMC4w
+cHQ7Cglmb250LWZhbWlseToiVmVyZGFuYSIsInNhbnMtc2VyaWYiO30KcC5Nc29BY2V0YXRlLCBs
+aS5Nc29BY2V0YXRlLCBkaXYuTXNvQWNldGF0ZQoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCW1z
+by1zdHlsZS1saW5rOiJCYWxsb29uIFRleHQgQ2hhciI7CgltYXJnaW46MGNtOwoJbWFyZ2luLWJv
+dHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjguMHB0OwoJZm9udC1mYW1pbHk6IlRhaG9tYSIsInNh
+bnMtc2VyaWYiO30KcC5Nc29Ob1NwYWNpbmcsIGxpLk1zb05vU3BhY2luZywgZGl2Lk1zb05vU3Bh
+Y2luZwoJe21zby1zdHlsZS1wcmlvcml0eToxOwoJbWFyZ2luOjBjbTsKCW1hcmdpbi1ib3R0b206
+LjAwMDFwdDsKCWZvbnQtc2l6ZToxMC4wcHQ7Cglmb250LWZhbWlseToiVmVyZGFuYSIsInNhbnMt
+c2VyaWYiO30Kc3Bhbi5FbWFpbFN0eWxlMTgKCXttc28tc3R5bGUtdHlwZTpwZXJzb25hbC1jb21w
+b3NlOwoJZm9udC1mYW1pbHk6IlZlcmRhbmEiLCJzYW5zLXNlcmlmIjsKCWZvbnQtdmFyaWFudDpu
+b3JtYWwgIWltcG9ydGFudDsKCXRleHQtdHJhbnNmb3JtOm5vbmU7Cglwb3NpdGlvbjpyZWxhdGl2
+ZTsKCXRvcDowcHQ7Cgltc28tdGV4dC1yYWlzZTowcHQ7CglsZXR0ZXItc3BhY2luZzowcHQ7Cglt
+c28tY29udGV4dHVhbC1hbHRlcm5hdGVzOm5vOwoJdGV4dC1zaGFkb3c6bm9uZTsKCWZvbnQtd2Vp
+Z2h0Om5vcm1hbDsKCWZvbnQtc3R5bGU6bm9ybWFsOwoJdGV4dC1kZWNvcmF0aW9uOm5vbmUgbm9u
+ZTsKCXZlcnRpY2FsLWFsaWduOmJhc2VsaW5lO30Kc3Bhbi5CYWxsb29uVGV4dENoYXIKCXttc28t
+c3R5bGUtbmFtZToiQmFsbG9vbiBUZXh0IENoYXIiOwoJbXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJ
+bXNvLXN0eWxlLWxpbms6IkJhbGxvb24gVGV4dCI7Cglmb250LWZhbWlseToiVGFob21hIiwic2Fu
+cy1zZXJpZiI7fQpzcGFuLlBsYWluVGV4dENoYXIKCXttc28tc3R5bGUtbmFtZToiUGxhaW4gVGV4
+dCBDaGFyIjsKCW1zby1zdHlsZS1wcmlvcml0eTo5OTsKCW1zby1zdHlsZS1saW5rOiJQbGFpbiBU
+ZXh0IjsKCWZvbnQtZmFtaWx5OiJWZXJkYW5hIiwic2Fucy1zZXJpZiI7fQouTXNvQ2hwRGVmYXVs
+dAoJe21zby1zdHlsZS10eXBlOmV4cG9ydC1vbmx5OwoJZm9udC1zaXplOjEwLjBwdDt9CkBwYWdl
+IFdvcmRTZWN0aW9uMQoJe3NpemU6NjEyLjBwdCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBwdCA3Mi4w
+cHQgNzIuMHB0IDcyLjBwdDt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9
+Ci0tPjwvc3R5bGU+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CjxvOnNoYXBlZGVmYXVsdHMgdjpl
+eHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3Rl
+IG1zbyA5XT48eG1sPgo8bzpzaGFwZWxheW91dCB2OmV4dD0iZWRpdCI+CjxvOmlkbWFwIHY6ZXh0
+PSJlZGl0IiBkYXRhPSIxIiAvPgo8L286c2hhcGVsYXlvdXQ+PC94bWw+PCFbZW5kaWZdLS0+PC9o
+ZWFkPjxib2R5IGxhbmc9RU4tVVMgbGluaz1ibHVlIHZsaW5rPXB1cnBsZT48ZGl2IGNsYXNzPVdv
+cmRTZWN0aW9uMT48cCBjbGFzcz1Nc29QbGFpblRleHQ+SGVsbG8gYWxsLDxvOnA+PC9vOnA+PC9w
+PjxwIGNsYXNzPU1zb1BsYWluVGV4dD48bzpwPiZuYnNwOzwvbzpwPjwvcD48cCBjbGFzcz1Nc29Q
+bGFpblRleHQ+QXMgTWVlR28gQnVnemlsbGEgd2lsbCBzaHV0IGRvd24gc29vbiwgd2UgaGF2ZSBt
+b3ZlZCBvRm9ubyBwcm9qZWN0IHRvIEpJUkEgYXQgMDEub3JnLjxvOnA+PC9vOnA+PC9wPjxwIGNs
+YXNzPU1zb1BsYWluVGV4dD5BbGwgb0Zvbm8gKG9wZW4gYW5kIGNsb3NlZCkgYnVncyBoYXZlIGJl
+ZW4gdXBsb2FkZWQgdGhlcmUgdG9vLjxvOnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb1BsYWluVGV4
+dD48bzpwPiZuYnNwOzwvbzpwPjwvcD48cCBjbGFzcz1Nc29QbGFpblRleHQ+U3RhcnRpbmcgZnJv
+bSBub3csIHJlcG9ydCBhbnkgaXNzdWUgZm91bmQgb24gb0Zvbm8gb25seSBhdCA8YSBocmVmPSJo
+dHRwczovLzAxLm9yZy9qaXJhL2Jyb3dzZS9PRiI+aHR0cHM6Ly8wMS5vcmcvamlyYS9icm93c2Uv
+T0Y8L2E+IHBsZWFzZS48bzpwPjwvbzpwPjwvcD48cCBjbGFzcz1Nc29QbGFpblRleHQ+WW91IGNh
+biBzZXR1cCBhbiBhY2NvdW50IGF0IDxhIGhyZWY9Imh0dHBzOi8vMDEub3JnL3VzZXIvcmVnaXN0
+ZXIiPmh0dHBzOi8vMDEub3JnL3VzZXIvcmVnaXN0ZXI8L2E+LjxvOnA+PC9vOnA+PC9wPjxwIGNs
+YXNzPU1zb1BsYWluVGV4dD48bzpwPiZuYnNwOzwvbzpwPjwvcD48cCBjbGFzcz1Nc29QbGFpblRl
+eHQ+QmVzdCByZWdhcmRzLDxvOnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb1BsYWluVGV4dD5OaWNv
+bGFzPG86cD48L286cD48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9w
+PjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD48cCBjbGFzcz1Nc29Ob3Jt
+YWw+PG86cD4mbmJzcDs8L286cD48L3A+PC9kaXY+PC9ib2R5PjwvaHRtbD4=
+--===============4652508140993826602==--
 
