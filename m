@@ -1,106 +1,202 @@
-Content-Type: multipart/mixed; boundary="===============9150791817312178567=="
+Content-Type: multipart/mixed; boundary="===============0921637321748423674=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/3] atmodem: Add gprs-context quirk for SIM900
-Date: Wed, 17 Jul 2013 10:33:24 -0500
-Message-ID: <51E6B944.3060800@gmail.com>
-In-Reply-To: <1374045255-26600-3-git-send-email-jesper.larsen@ixonos.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [RFC] voicecall: Allow second stage string on Dial()
+Date: Wed, 17 Jul 2013 20:23:57 -0300
+Message-ID: <1374103437-21260-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9150791817312178567==
+--===============0921637321748423674==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jesper,
+From: Lucas De Marchi <lucas.demarchi@intel.com>
 
-On 07/17/2013 02:14 AM, Jesper Larsen wrote:
-> The SIM900 module from SIMCOM does have a AT+CGDATA command.
-> However, it is not possible to make a ppp connection when CGDATA
-> has been used to bring up the gprs context.
->
-> This patch ads a quirk that uses the alternative ATD*99***<cid>#
-> command instead.
-> ---
->   drivers/atmodem/gprs-context.c |    8 ++++++--
->   drivers/atmodem/vendor.h       |    1 +
+Use a pause to separate the number to dial from the second stage part,
+that is sent as tones. We wait until the call becomes ACTIVE and even
+the first pause is applied (we wait 3s before continuing with the
+second stage).
+---
 
-I'd like the vendor.h change in a separate commit
+A starting point to implement the dialtstring item in the TODO list.  I
+couldn't find a better way to propagate the second stage string until the c=
+all
+reaches the ACTIVE state.  So I've put it in ofono_voicecall, that "propaga=
+tes"
+the string until we reach that state.
 
->   plugins/sim900.c               |    2 +-
+Due to the fact that manager_dial_callback() can be called before or after =
+the
+voicecall is in ACTIVE state, we need some checks here and there in order n=
+ot
+to do the wrong thing.
 
-The changes to files in different directories should be separated =
+Let me know if there's an easier way to handle it.
 
-whenever possible.  See 'HACKING' document in the top level directory of =
 
-the source tree, particularly the 'Submitting Patches' section.
+Maybe we should export a property in the voicecall? And set it to an error
+if later the send-tones failed?  Thoughts?
 
-So your commits should be:
-vendor.h change
-gprs-context.c change
-sim900.c change
+Lucas De Marchi
 
->   3 files changed, 8 insertions(+), 3 deletions(-)
->
-> diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-contex=
-t.c
-> index 3694c27..f46d881 100644
-> --- a/drivers/atmodem/gprs-context.c
-> +++ b/drivers/atmodem/gprs-context.c
-> @@ -208,8 +208,12 @@ static void at_cgdcont_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
->   		return;
->   	}
->
-> -	sprintf(buf, "AT+CGDATA=3D\"PPP\",%u", gcd->active_context);
-> -	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-> +        if (gcd->vendor =3D=3D OFONO_VENDOR_SIMCOM_SIM900)
-> +		sprintf(buf, "ATD*99***%u#", gcd->active_context);
-> +	else
-> +		sprintf(buf, "AT+CGDATA=3D\"PPP\",%u", gcd->active_context);
-> +
-> +        if (g_at_chat_send(gcd->chat, buf, none_prefix,
+ src/voicecall.c | 47 +++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 45 insertions(+), 2 deletions(-)
 
-You're mixing tabs and spaces for indentation all over here.  We only =
+diff --git a/src/voicecall.c b/src/voicecall.c
+index ae76b91..f49942d 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -72,6 +72,7 @@ struct ofono_voicecall {
+ 	unsigned int hfp_watch;
+ 	GKeyFile *settings;
+ 	char *imsi;
++	char *pending_tones;
+ 	ofono_voicecall_cb_t release_queue_done_cb;
+ 	struct ofono_emulator *pending_em;
+ 	unsigned int pending_id;
+@@ -83,6 +84,7 @@ struct voicecall {
+ 	time_t start_time;
+ 	time_t detect_time;
+ 	char *message;
++	char *pending_tones;
+ 	uint8_t icon_id;
+ 	gboolean untracked;
+ 	gboolean dial_result_handled;
+@@ -394,7 +396,7 @@ static void tone_request_finish(struct ofono_voicecall =
+*vc,
+ {
+ 	g_queue_remove(vc->toneq, entry);
+ =
 
-use tabs.
+-	if (callback)
++	if (callback && entry->cb)
+ 		entry->cb(error, entry->user_data);
+ =
 
->   				at_cgdata_cb, gc, NULL) > 0)
->   		return;
->
-> diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
-> index 0532d10..2b1a567 100644
-> --- a/drivers/atmodem/vendor.h
-> +++ b/drivers/atmodem/vendor.h
-> @@ -39,6 +39,7 @@ enum ofono_vendor {
->   	OFONO_VENDOR_SPEEDUP,
->   	OFONO_VENDOR_SAMSUNG,
->   	OFONO_VENDOR_SIMCOM,
-> +        OFONO_VENDOR_SIMCOM_SIM900,
+ 	if (entry->destroy)
+@@ -707,6 +709,7 @@ static void voicecall_destroy(gpointer userdata)
+ =
 
-Again, tabs for indentation only please
+ 	g_free(voicecall->call);
+ 	g_free(voicecall->message);
++	g_free(voicecall->pending_tones);
+ =
 
->   	OFONO_VENDOR_ICERA,
->   	OFONO_VENDOR_WAVECOM_Q2XXX,
->   	OFONO_VENDOR_ALCATEL
-> diff --git a/plugins/sim900.c b/plugins/sim900.c
-> index 643de51..3b4fd84 100644
-> --- a/plugins/sim900.c
-> +++ b/plugins/sim900.c
-> @@ -361,7 +361,7 @@ static void sim900_post_sim(struct ofono_modem *modem)
->   	if (gprs =3D=3D NULL)
->   		return;
->
-> -	gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_SIMCOM,
-> +	gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_SIMCOM_SIM900,
->   					"atmodem", data->dlcs[GPRS_DLC]);
->   	if (gc)
->   		ofono_gprs_add_context(gprs, gc);
->
+ 	g_free(voicecall);
+ }
+@@ -750,6 +753,19 @@ static void voicecall_emit_multiparty(struct voicecall=
+ *call, gboolean mpty)
+ 						&val);
+ }
+ =
 
-Regards,
--Denis
++static void voicecall_handle_pending_tones(struct voicecall *call)
++{
++	if (call->call->status !=3D CALL_STATUS_ACTIVE)
++		return;
++
++	if (call->pending_tones =3D=3D NULL)
++		return;
++
++	tone_queue(call->vc, call->pending_tones, NULL, NULL, NULL);
++	g_free(call->pending_tones);
++	call->pending_tones =3D NULL;
++}
++
+ static void emulator_set_indicator_forced(struct ofono_voicecall *vc,
+ 						const char *name, int value)
+ {
+@@ -946,6 +962,13 @@ static void voicecall_set_call_status(struct voicecall=
+ *call, int status)
+ =
 
---===============9150791817312178567==--
+ 		if (call->vc->dial_req && call =3D=3D call->vc->dial_req->call)
+ 			dial_request_finish(call->vc);
++
++		if (call->vc->pending_tones !=3D NULL) {
++			call->pending_tones =3D call->vc->pending_tones;
++			call->vc->pending_tones =3D NULL;
++		}
++
++		voicecall_handle_pending_tones(call);
+ 	}
+ =
+
+ 	if (status =3D=3D CALL_STATUS_DISCONNECTED && call->vc->dial_req &&
+@@ -1459,6 +1482,10 @@ static struct voicecall *dial_handle_result(struct o=
+fono_voicecall *vc,
+ 	vc->call_list =3D g_slist_insert_sorted(vc->call_list, v,
+ 				call_compare);
+ =
+
++	v->pending_tones =3D vc->pending_tones;
++	vc->pending_tones =3D NULL;
++	voicecall_handle_pending_tones(v);
++
+ 	*need_to_emit =3D TRUE;
+ =
+
+ handled:
+@@ -1494,6 +1521,9 @@ static void manager_dial_callback(const struct ofono_=
+error *error, void *data)
+ 		if (is_emergency_number(vc, number) =3D=3D TRUE)
+ 			__ofono_modem_dec_emergency_mode(modem);
+ =
+
++		g_free(vc->pending_tones);
++		vc->pending_tones =3D NULL;
++
+ 		reply =3D __ofono_error_failed(vc->pending);
+ 	}
+ =
+
+@@ -1552,7 +1582,8 @@ static DBusMessage *manager_dial(DBusConnection *conn,
+ 					DBusMessage *msg, void *data)
+ {
+ 	struct ofono_voicecall *vc =3D data;
+-	const char *number;
++	char *number_nopause =3D NULL;
++	const char *number, *tones;
+ 	const char *clirstr;
+ 	enum ofono_clir_option clir;
+ 	int err;
+@@ -1570,12 +1601,24 @@ static DBusMessage *manager_dial(DBusConnection *co=
+nn,
+ =
+
+ 	vc->pending =3D dbus_message_ref(msg);
+ =
+
++	tones =3D strpbrk(number, "pP");
++
++	if (tones !=3D NULL) {
++		number_nopause =3D g_strndup(number, tones - number);
++		vc->pending_tones =3D g_ascii_strup(tones, -1);
++		number =3D number_nopause;
++	}
++
+ 	err =3D voicecall_dial(vc, number, clir, manager_dial_callback, vc);
++	g_free(number_nopause);
+ =
+
+ 	if (err >=3D 0)
+ 		return NULL;
+ =
+
+ 	vc->pending =3D NULL;
++	g_free(vc->pending_tones);
++	vc->pending_tones =3D NULL;
++
+ 	dbus_message_unref(msg);
+ =
+
+ 	switch (err) {
+-- =
+
+1.8.3.3
+
+
+--===============0921637321748423674==--
 
