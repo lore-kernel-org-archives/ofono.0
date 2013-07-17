@@ -1,121 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============4652508140993826602=="
+Content-Type: multipart/mixed; boundary="===============3358738422252023905=="
 MIME-Version: 1.0
-From: Nicolas Paccou <nicolas.paccou@linux.intel.com>
-Subject: Move oFono bugs from MeeGo Bugzilla to 01.org/JIRA
-Date: Thu, 04 Jul 2013 10:44:56 +0200
-Message-ID: <000001ce7892$c36fde90$4a4f9bb0$@linux.intel.com>
+From: Jesper Larsen <jesper.larsen@ixonos.com>
+Subject: [PATCH 0/3] SIM900 GPRS fixes
+Date: Wed, 17 Jul 2013 09:14:12 +0200
+Message-ID: <1374045255-26600-1-git-send-email-jesper.larsen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4652508140993826602==
+--===============3358738422252023905==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello all,
+I need patches 1 and 2 in order to have a functional ppp connection to the =
+SIM900 module.
+Renat Zaripov has on the mailing list also reported the need to use the ATD=
+*99# command.
 
- =
+The 3rd patch is just a fix for debug output.
 
+Jesper Larsen (3):
+  sim900: Enable serial receiver
+  atmodem: Add gprs-context quirk for SIM900
+  sim900: Fix order of dlc prefixes
 
-As MeeGo Bugzilla will shut down soon, we have moved oFono project to JIRA
-at 01.org.
+ drivers/atmodem/gprs-context.c |    8 ++++++--
+ drivers/atmodem/vendor.h       |    1 +
+ plugins/sim900.c               |   13 +++++++------
+ 3 files changed, 14 insertions(+), 8 deletions(-)
 
-All oFono (open and closed) bugs have been uploaded there too.
+-- =
 
- =
-
-
-Starting from now, report any issue found on oFono only at
-https://01.org/jira/browse/OF please.
-
-You can setup an account at https://01.org/user/register.
-
- =
-
-
-Best regards,
-
-Nicolas
-
- =
+1.7.10.4
 
 
- =
-
-
- =
-
-
-
---===============4652508140993826602==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29udGVu
-dD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj48bWV0YSBuYW1lPUdlbmVyYXRvciBjb250
-ZW50PSJNaWNyb3NvZnQgV29yZCAxNCAoZmlsdGVyZWQgbWVkaXVtKSI+PHN0eWxlPjwhLS0KLyog
-Rm9udCBEZWZpbml0aW9ucyAqLwpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBh
-bm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OlZl
-cmRhbmE7CglwYW5vc2UtMToyIDExIDYgNCAzIDUgNCA0IDIgNDt9CkBmb250LWZhY2UKCXtmb250
-LWZhbWlseTpUYWhvbWE7CglwYW5vc2UtMToyIDExIDYgNCAzIDUgNCA0IDIgNDt9Ci8qIFN0eWxl
-IERlZmluaXRpb25zICovCnAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwK
-CXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjEwLjBwdDsK
-CWZvbnQtZmFtaWx5OiJWZXJkYW5hIiwic2Fucy1zZXJpZiI7fQphOmxpbmssIHNwYW4uTXNvSHlw
-ZXJsaW5rCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6Ymx1ZTsKCXRleHQtZGVjb3Jh
-dGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlwZXJsaW5rRm9sbG93ZWQKCXtt
-c28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpwdXJwbGU7Cgl0ZXh0LWRlY29yYXRpb246dW5k
-ZXJsaW5lO30KcC5Nc29QbGFpblRleHQsIGxpLk1zb1BsYWluVGV4dCwgZGl2Lk1zb1BsYWluVGV4
-dAoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCW1zby1zdHlsZS1saW5rOiJQbGFpbiBUZXh0IENo
-YXIiOwoJbWFyZ2luOjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMC4w
-cHQ7Cglmb250LWZhbWlseToiVmVyZGFuYSIsInNhbnMtc2VyaWYiO30KcC5Nc29BY2V0YXRlLCBs
-aS5Nc29BY2V0YXRlLCBkaXYuTXNvQWNldGF0ZQoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCW1z
-by1zdHlsZS1saW5rOiJCYWxsb29uIFRleHQgQ2hhciI7CgltYXJnaW46MGNtOwoJbWFyZ2luLWJv
-dHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjguMHB0OwoJZm9udC1mYW1pbHk6IlRhaG9tYSIsInNh
-bnMtc2VyaWYiO30KcC5Nc29Ob1NwYWNpbmcsIGxpLk1zb05vU3BhY2luZywgZGl2Lk1zb05vU3Bh
-Y2luZwoJe21zby1zdHlsZS1wcmlvcml0eToxOwoJbWFyZ2luOjBjbTsKCW1hcmdpbi1ib3R0b206
-LjAwMDFwdDsKCWZvbnQtc2l6ZToxMC4wcHQ7Cglmb250LWZhbWlseToiVmVyZGFuYSIsInNhbnMt
-c2VyaWYiO30Kc3Bhbi5FbWFpbFN0eWxlMTgKCXttc28tc3R5bGUtdHlwZTpwZXJzb25hbC1jb21w
-b3NlOwoJZm9udC1mYW1pbHk6IlZlcmRhbmEiLCJzYW5zLXNlcmlmIjsKCWZvbnQtdmFyaWFudDpu
-b3JtYWwgIWltcG9ydGFudDsKCXRleHQtdHJhbnNmb3JtOm5vbmU7Cglwb3NpdGlvbjpyZWxhdGl2
-ZTsKCXRvcDowcHQ7Cgltc28tdGV4dC1yYWlzZTowcHQ7CglsZXR0ZXItc3BhY2luZzowcHQ7Cglt
-c28tY29udGV4dHVhbC1hbHRlcm5hdGVzOm5vOwoJdGV4dC1zaGFkb3c6bm9uZTsKCWZvbnQtd2Vp
-Z2h0Om5vcm1hbDsKCWZvbnQtc3R5bGU6bm9ybWFsOwoJdGV4dC1kZWNvcmF0aW9uOm5vbmUgbm9u
-ZTsKCXZlcnRpY2FsLWFsaWduOmJhc2VsaW5lO30Kc3Bhbi5CYWxsb29uVGV4dENoYXIKCXttc28t
-c3R5bGUtbmFtZToiQmFsbG9vbiBUZXh0IENoYXIiOwoJbXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJ
-bXNvLXN0eWxlLWxpbms6IkJhbGxvb24gVGV4dCI7Cglmb250LWZhbWlseToiVGFob21hIiwic2Fu
-cy1zZXJpZiI7fQpzcGFuLlBsYWluVGV4dENoYXIKCXttc28tc3R5bGUtbmFtZToiUGxhaW4gVGV4
-dCBDaGFyIjsKCW1zby1zdHlsZS1wcmlvcml0eTo5OTsKCW1zby1zdHlsZS1saW5rOiJQbGFpbiBU
-ZXh0IjsKCWZvbnQtZmFtaWx5OiJWZXJkYW5hIiwic2Fucy1zZXJpZiI7fQouTXNvQ2hwRGVmYXVs
-dAoJe21zby1zdHlsZS10eXBlOmV4cG9ydC1vbmx5OwoJZm9udC1zaXplOjEwLjBwdDt9CkBwYWdl
-IFdvcmRTZWN0aW9uMQoJe3NpemU6NjEyLjBwdCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBwdCA3Mi4w
-cHQgNzIuMHB0IDcyLjBwdDt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9
-Ci0tPjwvc3R5bGU+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CjxvOnNoYXBlZGVmYXVsdHMgdjpl
-eHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3Rl
-IG1zbyA5XT48eG1sPgo8bzpzaGFwZWxheW91dCB2OmV4dD0iZWRpdCI+CjxvOmlkbWFwIHY6ZXh0
-PSJlZGl0IiBkYXRhPSIxIiAvPgo8L286c2hhcGVsYXlvdXQ+PC94bWw+PCFbZW5kaWZdLS0+PC9o
-ZWFkPjxib2R5IGxhbmc9RU4tVVMgbGluaz1ibHVlIHZsaW5rPXB1cnBsZT48ZGl2IGNsYXNzPVdv
-cmRTZWN0aW9uMT48cCBjbGFzcz1Nc29QbGFpblRleHQ+SGVsbG8gYWxsLDxvOnA+PC9vOnA+PC9w
-PjxwIGNsYXNzPU1zb1BsYWluVGV4dD48bzpwPiZuYnNwOzwvbzpwPjwvcD48cCBjbGFzcz1Nc29Q
-bGFpblRleHQ+QXMgTWVlR28gQnVnemlsbGEgd2lsbCBzaHV0IGRvd24gc29vbiwgd2UgaGF2ZSBt
-b3ZlZCBvRm9ubyBwcm9qZWN0IHRvIEpJUkEgYXQgMDEub3JnLjxvOnA+PC9vOnA+PC9wPjxwIGNs
-YXNzPU1zb1BsYWluVGV4dD5BbGwgb0Zvbm8gKG9wZW4gYW5kIGNsb3NlZCkgYnVncyBoYXZlIGJl
-ZW4gdXBsb2FkZWQgdGhlcmUgdG9vLjxvOnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb1BsYWluVGV4
-dD48bzpwPiZuYnNwOzwvbzpwPjwvcD48cCBjbGFzcz1Nc29QbGFpblRleHQ+U3RhcnRpbmcgZnJv
-bSBub3csIHJlcG9ydCBhbnkgaXNzdWUgZm91bmQgb24gb0Zvbm8gb25seSBhdCA8YSBocmVmPSJo
-dHRwczovLzAxLm9yZy9qaXJhL2Jyb3dzZS9PRiI+aHR0cHM6Ly8wMS5vcmcvamlyYS9icm93c2Uv
-T0Y8L2E+IHBsZWFzZS48bzpwPjwvbzpwPjwvcD48cCBjbGFzcz1Nc29QbGFpblRleHQ+WW91IGNh
-biBzZXR1cCBhbiBhY2NvdW50IGF0IDxhIGhyZWY9Imh0dHBzOi8vMDEub3JnL3VzZXIvcmVnaXN0
-ZXIiPmh0dHBzOi8vMDEub3JnL3VzZXIvcmVnaXN0ZXI8L2E+LjxvOnA+PC9vOnA+PC9wPjxwIGNs
-YXNzPU1zb1BsYWluVGV4dD48bzpwPiZuYnNwOzwvbzpwPjwvcD48cCBjbGFzcz1Nc29QbGFpblRl
-eHQ+QmVzdCByZWdhcmRzLDxvOnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb1BsYWluVGV4dD5OaWNv
-bGFzPG86cD48L286cD48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9w
-PjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD48cCBjbGFzcz1Nc29Ob3Jt
-YWw+PG86cD4mbmJzcDs8L286cD48L3A+PC9kaXY+PC9ib2R5PjwvaHRtbD4=
---===============4652508140993826602==--
+--===============3358738422252023905==--
 
