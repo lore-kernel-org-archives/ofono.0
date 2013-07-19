@@ -1,115 +1,147 @@
-Content-Type: multipart/mixed; boundary="===============1731474891977193623=="
+Content-Type: multipart/mixed; boundary="===============1726853325724119642=="
 MIME-Version: 1.0
-From: Jesper Larsen <jesper.larsen@ixonos.com>
-Subject: Re: SIMCOM support
-Date: Fri, 19 Jul 2013 15:55:54 +0200
-Message-ID: <CAAZAA2FXw9+CAoS3Lo2rgqQ0Rg_LjvOU1eYJ9DPtmbecXSCNOg@mail.gmail.com>
-In-Reply-To: <51E94019.7060604@syscom-instruments.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC] voicecall: Allow second stage string on Dial()
+Date: Fri, 19 Jul 2013 08:57:37 -0500
+Message-ID: <51E945D1.3090603@gmail.com>
+In-Reply-To: <CAMOw1v6paRAonYJN-GgjxFMSB78Z+WJPiwvhyVxO2TxVL+TDGA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1731474891977193623==
+--===============1726853325724119642==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, Jul 19, 2013 at 3:33 PM, Viallard Anthony <
-viallard@syscom-instruments.com> wrote:
+Hi Lucas,
 
-> Hello folks,
+ > Humn...  I was guided by this comment in dial_handle_result():
 >
-> I cleaned my work on the SIMCOM plugin according to Denis' suggestions and
-> add some new quirks. The patches will follow this mail.
+> /*
+>   * Dial request may return before existing active call
+>   * is put on hold or after dialed call has got active
+>   */
 >
-> Moreover, I have two new questions:
+> So either I misunderstood what "after dialed call has got active" means o=
+r:
 >
->  - In my patches, I had to add a function in src/network.c to be able to
-> report a new network technology. I was surprised that the function didn't
-> exist. Maybe there are an other mecanism which I didn't see to change the
-> network technology and send the dbus signal ?
->  - I see in mail sent by Jesper Larsen a patch about configuration of the
-> serial port. The patch adds the option "Read" to "on". I didn't understand
-> the behaviour of this option. What do this option make ?
->
-
-It sets the CREAD flag in the termios structure applied to the tty (
-http://linux.die.net/man/3/termios). The man page merely says that what it
-does is "Enable receiver". Without it I didn't get any reply from the
-module to AT commands.
-
-
->
-> Have a good holidays,
->
-> Regards,
-> Anthony V.
->
-> --
-> ------------------------------**-----------
-> Viallard Anthony    (+41 024 455 24 82)
-> [ Embedded System | Software Designer ]
-> ------------------------------**-----------
->   Syscom Instruments SA
->   Rue de l'industrie 21
->   1450     Sainte-Croix
-> ------------------------------**-----------
-> ______________________________**_________________
-> ofono mailing list
-> ofono(a)ofono.org
-> https://lists.ofono.org/**mailman/listinfo/ofono<https://lists.ofono.org/=
-mailman/listinfo/ofono>
+> ATD...;
+> CALLSTATE: dialing
+> CALLSTATE: alerting
+> CALLSTATE: active
+> OK
 >
 
---===============1731474891977193623==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+I've not seen this behavior, in theory it is possible.  But mostly that =
 
-PGRpdiBkaXI9Imx0ciI+PGJyPjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+PGJyPjxkaXYg
-Y2xhc3M9ImdtYWlsX3F1b3RlIj5PbiBGcmksIEp1bCAxOSwgMjAxMyBhdCAzOjMzIFBNLCBWaWFs
-bGFyZCBBbnRob255IDxzcGFuIGRpcj0ibHRyIj4mbHQ7PGEgaHJlZj0ibWFpbHRvOnZpYWxsYXJk
-QHN5c2NvbS1pbnN0cnVtZW50cy5jb20iIHRhcmdldD0iX2JsYW5rIj52aWFsbGFyZEBzeXNjb20t
-aW5zdHJ1bWVudHMuY29tPC9hPiZndDs8L3NwYW4+IHdyb3RlOjxicj4KPGJsb2NrcXVvdGUgY2xh
-c3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAwcHggMHB4IDAuOGV4O2JvcmRlci1s
-ZWZ0LXdpZHRoOjFweDtib3JkZXItbGVmdC1jb2xvcjpyZ2IoMjA0LDIwNCwyMDQpO2JvcmRlci1s
-ZWZ0LXN0eWxlOnNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPkhlbGxvIGZvbGtzLDxicj4KPGJyPgpJ
-IGNsZWFuZWQgbXkgd29yayBvbiB0aGUgU0lNQ09NIHBsdWdpbiBhY2NvcmRpbmcgdG8gRGVuaXMm
-IzM5OyBzdWdnZXN0aW9ucyBhbmQgYWRkIHNvbWUgbmV3IHF1aXJrcy4gVGhlIHBhdGNoZXMgd2ls
-bCBmb2xsb3cgdGhpcyBtYWlsLjxicj4KPGJyPgpNb3Jlb3ZlciwgSSBoYXZlIHR3byBuZXcgcXVl
-c3Rpb25zOjxicj4KPGJyPgqgLSBJbiBteSBwYXRjaGVzLCBJIGhhZCB0byBhZGQgYSBmdW5jdGlv
-biBpbiBzcmMvbmV0d29yay5jIHRvIGJlIGFibGUgdG8gcmVwb3J0IGEgbmV3IG5ldHdvcmsgdGVj
-aG5vbG9neS4gSSB3YXMgc3VycHJpc2VkIHRoYXQgdGhlIGZ1bmN0aW9uIGRpZG4mIzM5O3QgZXhp
-c3QuIE1heWJlIHRoZXJlIGFyZSBhbiBvdGhlciBtZWNhbmlzbSB3aGljaCBJIGRpZG4mIzM5O3Qg
-c2VlIHRvIGNoYW5nZSB0aGUgbmV0d29yayB0ZWNobm9sb2d5IGFuZCBzZW5kIHRoZSBkYnVzIHNp
-Z25hbCA/PGJyPgoKoC0gSSBzZWUgaW4gbWFpbCBzZW50IGJ5IEplc3BlciBMYXJzZW4gYSBwYXRj
-aCBhYm91dCBjb25maWd1cmF0aW9uIG9mIHRoZSBzZXJpYWwgcG9ydC4gVGhlIHBhdGNoIGFkZHMg
-dGhlIG9wdGlvbiAmcXVvdDtSZWFkJnF1b3Q7IHRvICZxdW90O29uJnF1b3Q7LiBJIGRpZG4mIzM5
-O3QgdW5kZXJzdGFuZCB0aGUgYmVoYXZpb3VyIG9mIHRoaXMgb3B0aW9uLiBXaGF0IGRvIHRoaXMg
-b3B0aW9uIG1ha2UgPzxicj4KPC9ibG9ja3F1b3RlPjxkaXY+PGJyPjwvZGl2PjxkaXY+SXQgc2V0
-cyB0aGUgQ1JFQUQgZmxhZyBpbiB0aGUgdGVybWlvcyBzdHJ1Y3R1cmUgYXBwbGllZCB0byB0aGUg
-dHR5ICg8YSBocmVmPSJodHRwOi8vbGludXguZGllLm5ldC9tYW4vMy90ZXJtaW9zIj5odHRwOi8v
-bGludXguZGllLm5ldC9tYW4vMy90ZXJtaW9zPC9hPikuIFRoZSBtYW4gcGFnZSBtZXJlbHkgc2F5
-cyB0aGF0IHdoYXQgaXQgZG9lcyBpcyAmcXVvdDtFbmFibGUgcmVjZWl2ZXImcXVvdDsuIFdpdGhv
-dXQgaXQgSSBkaWRuJiMzOTt0IGdldCBhbnkgcmVwbHkgZnJvbSB0aGUgbW9kdWxlIHRvIEFUIGNv
-bW1hbmRzLjwvZGl2Pgo8ZGl2PqA8L2Rpdj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUi
-IHN0eWxlPSJtYXJnaW46MHB4IDBweCAwcHggMC44ZXg7Ym9yZGVyLWxlZnQtd2lkdGg6MXB4O2Jv
-cmRlci1sZWZ0LWNvbG9yOnJnYigyMDQsMjA0LDIwNCk7Ym9yZGVyLWxlZnQtc3R5bGU6c29saWQ7
-cGFkZGluZy1sZWZ0OjFleCI+Cjxicj4KSGF2ZSBhIGdvb2QgaG9saWRheXMsPGJyPgo8YnI+ClJl
-Z2FyZHMsPGJyPgpBbnRob255IFYuPGJyPgo8YnI+Ci0tIDxicj4KLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tPHU+PC91Pi0tLS0tLS0tLS0tPGJyPgpWaWFsbGFyZCBBbnRob255IKAgoDxh
-IGhyZWY9InRlbDolMjglMkI0MSUyMDAyNCUyMDQ1NSUyMDI0JTIwODIiIHZhbHVlPSIrNDEyNDQ1
-NTI0ODIiIHRhcmdldD0iX2JsYW5rIj4oKzQxIDAyNCA0NTUgMjQgODI8L2E+KTxicj4KWyBFbWJl
-ZGRlZCBTeXN0ZW0gfCBTb2Z0d2FyZSBEZXNpZ25lciBdPGJyPgotLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS08dT48L3U+LS0tLS0tLS0tLS08YnI+CqAgU3lzY29tIEluc3RydW1lbnRzIFNB
-PGJyPgqgIFJ1ZSBkZSBsJiMzOTtpbmR1c3RyaWUgMjE8YnI+CqAgMTQ1MCCgIKAgU2FpbnRlLUNy
-b2l4PGJyPgotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS08dT48L3U+LS0tLS0tLS0tLS08
-YnI+Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fXzx1PjwvdT5fX19fX19fX19fX19fX19f
-Xzxicj4Kb2Zvbm8gbWFpbGluZyBsaXN0PGJyPgo8YSBocmVmPSJtYWlsdG86b2Zvbm9Ab2Zvbm8u
-b3JnIiB0YXJnZXQ9Il9ibGFuayI+b2Zvbm9Ab2Zvbm8ub3JnPC9hPjxicj4KPGEgaHJlZj0iaHR0
-cHM6Ly9saXN0cy5vZm9uby5vcmcvbWFpbG1hbi9saXN0aW5mby9vZm9ubyIgdGFyZ2V0PSJfYmxh
-bmsiPmh0dHBzOi8vbGlzdHMub2Zvbm8ub3JnLzx1PjwvdT5tYWlsbWFuL2xpc3RpbmZvL29mb25v
-PC9hPjxicj4KPC9ibG9ja3F1b3RlPjwvZGl2Pjxicj48L2Rpdj48L2Rpdj4K
+comment is about the case of three way calls.  Even then, we can simply =
 
---===============1731474891977193623==--
+run the dial string from the ATD callback.
+
+>> The user can disconnect / switch the call to a Held state mid-way for
+>
+> mid-way while the tones are being sent, right?
+
+Correct.  Try it on an iPhone for example.  Your tone will never get sent.
+
+>
+>> example, in which case all the tones are lost.  I think that this is just
+>> fine, unless you have some nice way of presenting this fact to the user?
+>
+> I was thinking about a property SecondStageNumber that is set once we
+> start sending it and then if it errors out, we set it to "error" or
+> the like.
+> Or we can update the property like below:
+>
+> SecondStageNumber=3D1234567AB
+> ...
+> SecondStageNumber=3D4567AB
+> ...
+> SecondStageNumber=3DAB
+> SecondStageNumber=3D"failed"
+>
+> Just throwing away some ideas... We could do it with signals too:
+
+Throw these away ;)  I don't see the point in setting the error.  As I =
+
+said, do you have a user usecase for it?
+
+>
+> SendToneStarted(string complete_number)
+> SendToneUpdate(string partial_number)
+> SendToneEnd()
+>
+
+This is much more likely, however having three signals is way too much, =
+
+the TODO proposal is likely enough.
+
+> I think this would cover the other TODO item?
+>
+> "
+> - Provide feedback of sent DTMF tones. Emit SendingTones signal if modem =
+can
+>    provide approximate starting and stopping times for DTMF tones. Signal
+>    argument contains a string of DTMF tones to be sent, or empty string w=
+hen
+>    all tones has been sent."
+>
+> Or what the TODO item says.
+>
+
+AFAIK the original reason this was here was to have the Audio Framework =
+
+generate the DTMF tones locally.  It was not intended for user feedback.
+
+The question is how you want your UI to look like.  For example, do you =
+
+want to show the progress of the DTMF tones (e.g. text changing from =
+
+gray -> black) as they are being dialed?
+
+>>
+>> Another interesting case to consider is what should happen if we have a
+>> Three-Way call, start a DTMF queue and then swap calls.
+>
+> Right now we continue sending the tones, right? We could change
+> voicecall.c to associate a queue to the active call and throw it away
+> when this  call change state, setting the property to error as above.
+>
+
+The trouble is DTMFs can be applied to a dialing call as well, though =
+
+I'll need to do some digging to understand how/why.
+
+>
+>>
+>>
+
+<snip>
+
+>>> @@ -1570,12 +1601,24 @@ static DBusMessage *manager_dial(DBusConnection
+>>> *conn,
+>>>
+>>>          vc->pending =3D dbus_message_ref(msg);
+>>>
+>>> +       tones =3D strpbrk(number, "pP");
+>>> +
+>>
+>>
+>> Doing this is not safe, you might want to sanitize this input.
+>
+> How so? Searching for "pP" is as safe as calculating the length in
+> valid_number_format().
+
+The number being dialed is sanitized in voicecall_dial.  You do not =
+
+sanitize the tones at all.  tone_queue will reject invalid input, but =
+
+then you should not even accept an invalid dial string here in the first =
+
+place.
+
+Regards,
+-Denis
+
+--===============1726853325724119642==--
 
