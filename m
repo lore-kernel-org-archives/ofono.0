@@ -1,136 +1,115 @@
-Content-Type: multipart/mixed; boundary="===============8423763146750156149=="
+Content-Type: multipart/mixed; boundary="===============1731474891977193623=="
 MIME-Version: 1.0
-From: Anthony Viallard <viallard@syscom-instruments.com>
-Subject: [PATCH 6/6] SIMCOM: add a quirk to retrieve network technology used
-Date: Fri, 19 Jul 2013 15:35:40 +0200
-Message-ID: <1374240940-30892-6-git-send-email-viallard@syscom-instruments.com>
-In-Reply-To: <1374240940-30892-1-git-send-email-viallard@syscom-instruments.com>
+From: Jesper Larsen <jesper.larsen@ixonos.com>
+Subject: Re: SIMCOM support
+Date: Fri, 19 Jul 2013 15:55:54 +0200
+Message-ID: <CAAZAA2FXw9+CAoS3Lo2rgqQ0Rg_LjvOU1eYJ9DPtmbecXSCNOg@mail.gmail.com>
+In-Reply-To: <51E94019.7060604@syscom-instruments.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8423763146750156149==
+--===============1731474891977193623==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Use CNSMOD command to get network technology and monitor
-changes.
----
- drivers/atmodem/network-registration.c | 76 ++++++++++++++++++++++++++++++=
-++++
- 1 file changed, 76 insertions(+)
+On Fri, Jul 19, 2013 at 3:33 PM, Viallard Anthony <
+viallard@syscom-instruments.com> wrote:
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index 8cc04b7..d634dbb 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -239,6 +239,14 @@ static void at_registration_status(struct ofono_netreg=
- *netreg,
- 	cbd->user =3D nd;
- =
+> Hello folks,
+>
+> I cleaned my work on the SIMCOM plugin according to Denis' suggestions and
+> add some new quirks. The patches will follow this mail.
+>
+> Moreover, I have two new questions:
+>
+>  - In my patches, I had to add a function in src/network.c to be able to
+> report a new network technology. I was surprised that the function didn't
+> exist. Maybe there are an other mecanism which I didn't see to change the
+> network technology and send the dbus signal ?
+>  - I see in mail sent by Jesper Larsen a patch about configuration of the
+> serial port. The patch adds the option "Read" to "on". I didn't understand
+> the behaviour of this option. What do this option make ?
+>
 
- 	switch (nd->vendor) {
-+	case OFONO_VENDOR_SIMCOM:
-+		/*
-+		 * Send +CNSMOD? to find out the current tech, it will be
-+		 * intercepted in simcom_cnsmod_notify
-+		 */
-+		g_at_chat_send(nd->chat, "AT+CNSMOD?", none_prefix,
-+				NULL, NULL, NULL);
-+		break;
- 	case OFONO_VENDOR_MBM:
- 		/*
- 		 * Send *ERINFO to find out the current tech, it will be
-@@ -1329,6 +1337,66 @@ static int cnti_to_tech(const char *cnti)
- 	return -1;
- }
- =
-
-+static void simcom_cnsmod_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_netreg *netreg =3D user_data;
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+	GAtResultIter iter;
-+	int n1,
-+		n2,
-+		mode;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (g_at_result_iter_next(&iter, "+CNSMOD:") =3D=3D FALSE)
-+		return;
-+
-+	if (g_at_result_iter_next_number(&iter, &n1) =3D=3D FALSE)
-+		return;
-+
-+	if (g_at_result_iter_next_number(&iter, &n2) =3D=3D FALSE)
-+		n2 =3D -1;
-+
-+	if (n2 !=3D -1)
-+		mode =3D n2;
-+	else
-+		mode =3D n1;
-+
-+	switch (mode) {
-+	case 1:
-+	case 2:
-+		/* GSM, GPRS */
-+		nd->tech =3D ACCESS_TECHNOLOGY_GSM;
-+		break;
-+	case 3:
-+		/* EDGE */
-+		nd->tech =3D ACCESS_TECHNOLOGY_GSM_EGPRS;
-+		break;
-+	case 4:
-+		/* WCDMA */
-+		nd->tech =3D ACCESS_TECHNOLOGY_UTRAN;
-+		break;
-+	case 5:
-+		/* HSDPA */
-+		nd->tech =3D ACCESS_TECHNOLOGY_UTRAN_HSDPA;
-+		break;
-+	case 6:
-+		/* HSUPA */
-+		nd->tech =3D ACCESS_TECHNOLOGY_UTRAN_HSUPA;
-+		break;
-+	case 7:	/* HSUPA and HSDPA */
-+		nd->tech =3D ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA;
-+		break;
-+	default:
-+	case 0:
-+		/* no service */
-+		nd->tech =3D -1;
-+		break;
-+	}
-+
-+	ofono_netreg_tech_notify(netreg, nd->tech);
-+}
-+
- static void gobi_cnti_notify(GAtResult *result, gpointer user_data)
- {
- 	struct ofono_netreg *netreg =3D user_data;
-@@ -1760,6 +1828,14 @@ static void at_creg_set_cb(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- =
-
- 		g_at_chat_register(nd->chat, "+CSQ:",
- 				   csq_notify, FALSE, netreg, NULL);
-+
-+		/* Register for network technology change */
-+		g_at_chat_register(nd->chat, "+CNSMOD:",
-+				   simcom_cnsmod_notify, FALSE, netreg, NULL);
-+
-+		g_at_chat_send(nd->chat, "AT+CNSMOD=3D1", none_prefix,
-+			       NULL, NULL, NULL);
-+
- 		break;
- 	case OFONO_VENDOR_PHONESIM:
- 		g_at_chat_register(nd->chat, "+CSQ:",
--- =
-
-1.8.3.1
+It sets the CREAD flag in the termios structure applied to the tty (
+http://linux.die.net/man/3/termios). The man page merely says that what it
+does is "Enable receiver". Without it I didn't get any reply from the
+module to AT commands.
 
 
---===============8423763146750156149==--
+>
+> Have a good holidays,
+>
+> Regards,
+> Anthony V.
+>
+> --
+> ------------------------------**-----------
+> Viallard Anthony    (+41 024 455 24 82)
+> [ Embedded System | Software Designer ]
+> ------------------------------**-----------
+>   Syscom Instruments SA
+>   Rue de l'industrie 21
+>   1450     Sainte-Croix
+> ------------------------------**-----------
+> ______________________________**_________________
+> ofono mailing list
+> ofono(a)ofono.org
+> https://lists.ofono.org/**mailman/listinfo/ofono<https://lists.ofono.org/=
+mailman/listinfo/ofono>
+>
+
+--===============1731474891977193623==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+PGJyPjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+PGJyPjxkaXYg
+Y2xhc3M9ImdtYWlsX3F1b3RlIj5PbiBGcmksIEp1bCAxOSwgMjAxMyBhdCAzOjMzIFBNLCBWaWFs
+bGFyZCBBbnRob255IDxzcGFuIGRpcj0ibHRyIj4mbHQ7PGEgaHJlZj0ibWFpbHRvOnZpYWxsYXJk
+QHN5c2NvbS1pbnN0cnVtZW50cy5jb20iIHRhcmdldD0iX2JsYW5rIj52aWFsbGFyZEBzeXNjb20t
+aW5zdHJ1bWVudHMuY29tPC9hPiZndDs8L3NwYW4+IHdyb3RlOjxicj4KPGJsb2NrcXVvdGUgY2xh
+c3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAwcHggMHB4IDAuOGV4O2JvcmRlci1s
+ZWZ0LXdpZHRoOjFweDtib3JkZXItbGVmdC1jb2xvcjpyZ2IoMjA0LDIwNCwyMDQpO2JvcmRlci1s
+ZWZ0LXN0eWxlOnNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPkhlbGxvIGZvbGtzLDxicj4KPGJyPgpJ
+IGNsZWFuZWQgbXkgd29yayBvbiB0aGUgU0lNQ09NIHBsdWdpbiBhY2NvcmRpbmcgdG8gRGVuaXMm
+IzM5OyBzdWdnZXN0aW9ucyBhbmQgYWRkIHNvbWUgbmV3IHF1aXJrcy4gVGhlIHBhdGNoZXMgd2ls
+bCBmb2xsb3cgdGhpcyBtYWlsLjxicj4KPGJyPgpNb3Jlb3ZlciwgSSBoYXZlIHR3byBuZXcgcXVl
+c3Rpb25zOjxicj4KPGJyPgqgLSBJbiBteSBwYXRjaGVzLCBJIGhhZCB0byBhZGQgYSBmdW5jdGlv
+biBpbiBzcmMvbmV0d29yay5jIHRvIGJlIGFibGUgdG8gcmVwb3J0IGEgbmV3IG5ldHdvcmsgdGVj
+aG5vbG9neS4gSSB3YXMgc3VycHJpc2VkIHRoYXQgdGhlIGZ1bmN0aW9uIGRpZG4mIzM5O3QgZXhp
+c3QuIE1heWJlIHRoZXJlIGFyZSBhbiBvdGhlciBtZWNhbmlzbSB3aGljaCBJIGRpZG4mIzM5O3Qg
+c2VlIHRvIGNoYW5nZSB0aGUgbmV0d29yayB0ZWNobm9sb2d5IGFuZCBzZW5kIHRoZSBkYnVzIHNp
+Z25hbCA/PGJyPgoKoC0gSSBzZWUgaW4gbWFpbCBzZW50IGJ5IEplc3BlciBMYXJzZW4gYSBwYXRj
+aCBhYm91dCBjb25maWd1cmF0aW9uIG9mIHRoZSBzZXJpYWwgcG9ydC4gVGhlIHBhdGNoIGFkZHMg
+dGhlIG9wdGlvbiAmcXVvdDtSZWFkJnF1b3Q7IHRvICZxdW90O29uJnF1b3Q7LiBJIGRpZG4mIzM5
+O3QgdW5kZXJzdGFuZCB0aGUgYmVoYXZpb3VyIG9mIHRoaXMgb3B0aW9uLiBXaGF0IGRvIHRoaXMg
+b3B0aW9uIG1ha2UgPzxicj4KPC9ibG9ja3F1b3RlPjxkaXY+PGJyPjwvZGl2PjxkaXY+SXQgc2V0
+cyB0aGUgQ1JFQUQgZmxhZyBpbiB0aGUgdGVybWlvcyBzdHJ1Y3R1cmUgYXBwbGllZCB0byB0aGUg
+dHR5ICg8YSBocmVmPSJodHRwOi8vbGludXguZGllLm5ldC9tYW4vMy90ZXJtaW9zIj5odHRwOi8v
+bGludXguZGllLm5ldC9tYW4vMy90ZXJtaW9zPC9hPikuIFRoZSBtYW4gcGFnZSBtZXJlbHkgc2F5
+cyB0aGF0IHdoYXQgaXQgZG9lcyBpcyAmcXVvdDtFbmFibGUgcmVjZWl2ZXImcXVvdDsuIFdpdGhv
+dXQgaXQgSSBkaWRuJiMzOTt0IGdldCBhbnkgcmVwbHkgZnJvbSB0aGUgbW9kdWxlIHRvIEFUIGNv
+bW1hbmRzLjwvZGl2Pgo8ZGl2PqA8L2Rpdj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUi
+IHN0eWxlPSJtYXJnaW46MHB4IDBweCAwcHggMC44ZXg7Ym9yZGVyLWxlZnQtd2lkdGg6MXB4O2Jv
+cmRlci1sZWZ0LWNvbG9yOnJnYigyMDQsMjA0LDIwNCk7Ym9yZGVyLWxlZnQtc3R5bGU6c29saWQ7
+cGFkZGluZy1sZWZ0OjFleCI+Cjxicj4KSGF2ZSBhIGdvb2QgaG9saWRheXMsPGJyPgo8YnI+ClJl
+Z2FyZHMsPGJyPgpBbnRob255IFYuPGJyPgo8YnI+Ci0tIDxicj4KLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tPHU+PC91Pi0tLS0tLS0tLS0tPGJyPgpWaWFsbGFyZCBBbnRob255IKAgoDxh
+IGhyZWY9InRlbDolMjglMkI0MSUyMDAyNCUyMDQ1NSUyMDI0JTIwODIiIHZhbHVlPSIrNDEyNDQ1
+NTI0ODIiIHRhcmdldD0iX2JsYW5rIj4oKzQxIDAyNCA0NTUgMjQgODI8L2E+KTxicj4KWyBFbWJl
+ZGRlZCBTeXN0ZW0gfCBTb2Z0d2FyZSBEZXNpZ25lciBdPGJyPgotLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS08dT48L3U+LS0tLS0tLS0tLS08YnI+CqAgU3lzY29tIEluc3RydW1lbnRzIFNB
+PGJyPgqgIFJ1ZSBkZSBsJiMzOTtpbmR1c3RyaWUgMjE8YnI+CqAgMTQ1MCCgIKAgU2FpbnRlLUNy
+b2l4PGJyPgotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS08dT48L3U+LS0tLS0tLS0tLS08
+YnI+Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fXzx1PjwvdT5fX19fX19fX19fX19fX19f
+Xzxicj4Kb2Zvbm8gbWFpbGluZyBsaXN0PGJyPgo8YSBocmVmPSJtYWlsdG86b2Zvbm9Ab2Zvbm8u
+b3JnIiB0YXJnZXQ9Il9ibGFuayI+b2Zvbm9Ab2Zvbm8ub3JnPC9hPjxicj4KPGEgaHJlZj0iaHR0
+cHM6Ly9saXN0cy5vZm9uby5vcmcvbWFpbG1hbi9saXN0aW5mby9vZm9ubyIgdGFyZ2V0PSJfYmxh
+bmsiPmh0dHBzOi8vbGlzdHMub2Zvbm8ub3JnLzx1PjwvdT5tYWlsbWFuL2xpc3RpbmZvL29mb25v
+PC9hPjxicj4KPC9ibG9ja3F1b3RlPjwvZGl2Pjxicj48L2Rpdj48L2Rpdj4K
+
+--===============1731474891977193623==--
 
