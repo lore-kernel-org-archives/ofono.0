@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============3796984923477020830=="
+Content-Type: multipart/mixed; boundary="===============7426742349285956538=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 5/6] Add a function to be able to report network
- technology change
-Date: Mon, 22 Jul 2013 15:57:49 -0500
-Message-ID: <51ED9CCD.1020508@gmail.com>
-In-Reply-To: <1374240940-30892-5-git-send-email-viallard@syscom-instruments.com>
+Subject: Re: [PATCH 6/6] SIMCOM: add a quirk to retrieve network technology
+ used
+Date: Mon, 22 Jul 2013 16:08:53 -0500
+Message-ID: <51ED9F65.4010206@gmail.com>
+In-Reply-To: <1374240940-30892-6-git-send-email-viallard@syscom-instruments.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3796984923477020830==
+--===============7426742349285956538==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,51 +17,139 @@ Content-Transfer-Encoding: quoted-printable
 Hi Anthony,
 
 On 07/19/2013 08:35 AM, Anthony Viallard wrote:
-> When we detect a change of the network technology, ofono don't have
-> a function to report this change at higher level (dbus signal, ...)
+> Use CNSMOD command to get network technology and monitor
+> changes.
 > ---
->   include/netreg.h | 1 +
->   src/network.c    | 6 ++++++
->   2 files changed, 7 insertions(+)
+>   drivers/atmodem/network-registration.c | 76 +++++++++++++++++++++++++++=
++++++++
+>   1 file changed, 76 insertions(+)
 >
-> diff --git a/include/netreg.h b/include/netreg.h
-> index 4338c14..94c8e9f 100644
-> --- a/include/netreg.h
-> +++ b/include/netreg.h
-> @@ -91,6 +91,7 @@ struct ofono_netreg_driver {
->   void ofono_netreg_strength_notify(struct ofono_netreg *netreg, int stre=
-ngth);
->   void ofono_netreg_status_notify(struct ofono_netreg *netreg, int status,
->   					int lac, int ci, int tech);
-> +void ofono_netreg_tech_notify(struct ofono_netreg *netreg, int tech);
-
-Please don't do this, the tech is already covered by netreg_status_notify
-
->   void ofono_netreg_time_notify(struct ofono_netreg *netreg,
->   				struct ofono_network_time *info);
+> diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/net=
+work-registration.c
+> index 8cc04b7..d634dbb 100644
+> --- a/drivers/atmodem/network-registration.c
+> +++ b/drivers/atmodem/network-registration.c
+> @@ -239,6 +239,14 @@ static void at_registration_status(struct ofono_netr=
+eg *netreg,
+>   	cbd->user =3D nd;
 >
-> diff --git a/src/network.c b/src/network.c
-> index d1bfca6..b4cd62f 100644
-> --- a/src/network.c
-> +++ b/src/network.c
-> @@ -1393,6 +1393,12 @@ void ofono_netreg_status_notify(struct ofono_netre=
-g *netreg, int status,
->   	notify_status_watches(netreg);
+>   	switch (nd->vendor) {
+> +	case OFONO_VENDOR_SIMCOM:
+> +		/*
+> +		 * Send +CNSMOD? to find out the current tech, it will be
+> +		 * intercepted in simcom_cnsmod_notify
+> +		 */
+> +		g_at_chat_send(nd->chat, "AT+CNSMOD?", none_prefix,
+> +				NULL, NULL, NULL);
+> +		break;
+>   	case OFONO_VENDOR_MBM:
+>   		/*
+>   		 * Send *ERINFO to find out the current tech, it will be
+> @@ -1329,6 +1337,66 @@ static int cnti_to_tech(const char *cnti)
+>   	return -1;
 >   }
 >
-> +void ofono_netreg_tech_notify(struct ofono_netreg *netreg, int tech)
+> +static void simcom_cnsmod_notify(GAtResult *result, gpointer user_data)
 > +{
-> +	if (netreg->technology !=3D tech)
-> +		set_registration_technology(netreg, tech);
+> +	struct ofono_netreg *netreg =3D user_data;
+> +	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
+> +	GAtResultIter iter;
+> +	int n1,
+> +		n2,
+> +		mode;
+
+This is not according to our coding style ;)
+
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (g_at_result_iter_next(&iter, "+CNSMOD:") =3D=3D FALSE)
+> +		return;
+> +
+> +	if (g_at_result_iter_next_number(&iter, &n1) =3D=3D FALSE)
+> +		return;
+> +
+> +	if (g_at_result_iter_next_number(&iter, &n2) =3D=3D FALSE)
+> +		n2 =3D -1;
+> +
+> +	if (n2 !=3D -1)
+> +		mode =3D n2;
+> +	else
+> +		mode =3D n1;
+> +
+> +	switch (mode) {
+> +	case 1:
+> +	case 2:
+> +		/* GSM, GPRS */
+> +		nd->tech =3D ACCESS_TECHNOLOGY_GSM;
+> +		break;
+> +	case 3:
+> +		/* EDGE */
+> +		nd->tech =3D ACCESS_TECHNOLOGY_GSM_EGPRS;
+> +		break;
+> +	case 4:
+> +		/* WCDMA */
+> +		nd->tech =3D ACCESS_TECHNOLOGY_UTRAN;
+> +		break;
+> +	case 5:
+> +		/* HSDPA */
+> +		nd->tech =3D ACCESS_TECHNOLOGY_UTRAN_HSDPA;
+> +		break;
+> +	case 6:
+> +		/* HSUPA */
+> +		nd->tech =3D ACCESS_TECHNOLOGY_UTRAN_HSUPA;
+> +		break;
+> +	case 7:	/* HSUPA and HSDPA */
+> +		nd->tech =3D ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA;
+> +		break;
+> +	default:
+> +	case 0:
+> +		/* no service */
+> +		nd->tech =3D -1;
+> +		break;
+> +	}
+> +
+> +	ofono_netreg_tech_notify(netreg, nd->tech);
 > +}
 > +
->   void ofono_netreg_time_notify(struct ofono_netreg *netreg,
->   				struct ofono_network_time *info)
+>   static void gobi_cnti_notify(GAtResult *result, gpointer user_data)
 >   {
+>   	struct ofono_netreg *netreg =3D user_data;
+> @@ -1760,6 +1828,14 @@ static void at_creg_set_cb(gboolean ok, GAtResult =
+*result, gpointer user_data)
+>
+>   		g_at_chat_register(nd->chat, "+CSQ:",
+>   				   csq_notify, FALSE, netreg, NULL);
+> +
+> +		/* Register for network technology change */
+> +		g_at_chat_register(nd->chat, "+CNSMOD:",
+> +				   simcom_cnsmod_notify, FALSE, netreg, NULL);
+> +
+> +		g_at_chat_send(nd->chat, "AT+CNSMOD=3D1", none_prefix,
+> +			       NULL, NULL, NULL);
+> +
+
+Does CNSMOD refer to the current Bearer or the current supported =
+
+technology of the cell?  If it is the latter, then generally any change =
+
+in technology would also involve the change in the cell id as well. =
+
+Look at how we handle similar hardware behavior in creg_notify.
+
+Do you have any AT logs showing how +CNSMOD works?  e.g. do you see it =
+
+changing without a corresponding CREG change?  Does it matter whether =
+
+you have an active GPRS context or not?
+
+>   		break;
+>   	case OFONO_VENDOR_PHONESIM:
+>   		g_at_chat_register(nd->chat, "+CSQ:",
 >
 
 Regards,
 -Denis
 
---===============3796984923477020830==--
+--===============7426742349285956538==--
 
