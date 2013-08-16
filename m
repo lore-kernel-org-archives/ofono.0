@@ -1,60 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============3783275510247040819=="
+Content-Type: multipart/mixed; boundary="===============8795460851072787022=="
 MIME-Version: 1.0
 From: Vinicius Costa Gomes <vcgomes@gmail.com>
-Subject: [PATCH 0/6] hfp_hf_bluez5: Add support for Transparent SCO
-Date: Thu, 15 Aug 2013 23:26:03 -0300
-Message-ID: <1376619969-15080-1-git-send-email-vcgomes@gmail.com>
+Subject: [PATCH 1/6] bluetooth: Add define for SCO voice settings
+Date: Thu, 15 Aug 2013 23:26:04 -0300
+Message-ID: <1376619969-15080-2-git-send-email-vcgomes@gmail.com>
+In-Reply-To: <1376619969-15080-1-git-send-email-vcgomes@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3783275510247040819==
+--===============8795460851072787022==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Add defines for SCO voice setting (Air Coding). Air mode "Transparent
+Data" shall be supported if wide band speech is supported.
+---
+ src/bluetooth.h | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-Sorry for the delay.
+diff --git a/src/bluetooth.h b/src/bluetooth.h
+index af6f02c..825da3e 100644
+--- a/src/bluetooth.h
++++ b/src/bluetooth.h
+@@ -34,6 +34,15 @@
+ =
 
-This series adds support for using transparent SCO, necessary for
-wideband speech, the main feature is that it should do the right thing
-even if the kernel doesn't have code for this.
+ #define BT_DEFER_SETUP		7
+ =
 
-The last two patches add some missing method implementations to the
-Profile1 interface. One is more or less clear that there's nothing to
-do, the other is less clear.
-
-For .Cancel(): we only receive the .Cancel() message if the we will
-not receive the NewConnection() call, so there's nothing to cancel for
-the ofono side.
-
-For .Release(): right now, this is doing nothing. Perhaps it would be
-worth changing it to stop listening for SCO connections. Which would
-mean to only start listening when the profile is registered. Does this
-make sense?
-
-Cheers,
-Vinicius
-
-Vinicius Costa Gomes (6):
-  bluetooth: Add define for SCO voice settings
-  handsfree-audio: Add setting SCO air mode
-  handsfree-audio: Add support for detecting Transparent SCO support
-  handsfree-audio: Set the voice setting for outgoing connections
-  hfp_hf_bluez5: Handle org.bluez.Profile1.Cancel()
-  hfp_hf_bluez5: Handle org.bluez.Profile1.Release()
-
- include/handsfree-audio.h |  2 +-
- plugins/hfp_hf_bluez5.c   | 10 +++-------
- src/bluetooth.h           |  9 +++++++++
- src/handsfree-audio.c     | 49 +++++++++++++++++++++++++++++++++++++++++--=
-----
- 4 files changed, 56 insertions(+), 14 deletions(-)
-
++
++#define BT_VOICE		11
++struct bt_voice {
++	uint16_t setting;
++};
++
++#define BT_VOICE_TRANSPARENT			0x0003
++#define BT_VOICE_CVSD_16BIT			0x0060
++
+ /* BD Address */
+ typedef struct {
+ 	uint8_t b[6];
 -- =
 
 1.8.3.4
 
 
---===============3783275510247040819==--
+--===============8795460851072787022==--
 
