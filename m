@@ -1,46 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============6538705504862423341=="
+Content-Type: multipart/mixed; boundary="===============6013836979828768771=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vcgomes@gmail.com>
-Subject: [PATCH 6/6] hfp_hf_bluez5: Handle org.bluez.Profile1.Release()
-Date: Thu, 15 Aug 2013 23:26:09 -0300
-Message-ID: <1376619969-15080-7-git-send-email-vcgomes@gmail.com>
-In-Reply-To: <1376619969-15080-1-git-send-email-vcgomes@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: PPP negotiation failing
+Date: Fri, 16 Aug 2013 11:05:50 -0500
+Message-ID: <520E4DDE.4030900@gmail.com>
+In-Reply-To: <520CC8F0.2030802@dataprom.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6538705504862423341==
+--===============6013836979828768771==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-There's nothing we can do in this case, so we only reply with a
-success.
----
- plugins/hfp_hf_bluez5.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+Hi Fabio,
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 7e98a45..391a74e 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -564,9 +564,7 @@ static DBusMessage *profile_release(DBusConnection *con=
-n,
- {
- 	DBG("Profile handler Release");
- =
+On 08/15/2013 07:26 AM, Fabio S. Higa wrote:
+> Hello all,
+>
+> We are working with the modem Telit GE910-QUAD (GSM/GPRS) and trying to
+> make it work with Ofono 1.12.
+>
+> In our tests we successfuly make a connection using pppd, but using
+> Ofono occur an error during ppp negotiation (configuration rejected, RCR-=
+).
+>
+> Log follows below. Any help would be appreciated.
+>
 
--	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
--						".NotImplemented",
--						"Implementation not provided");
-+	return dbus_message_new_method_return(msg);
- }
- =
+The AT command log is not useful in this case.  You would need to run =
 
- static DBusMessage *profile_cancel(DBusConnection *conn,
--- =
+gatchat/gsmdial with the pppdump option and examine it with wireshark to =
 
-1.8.3.4
+understand what fails.
+
+Regards,
+-Denis
 
 
---===============6538705504862423341==--
+--===============6013836979828768771==--
 
