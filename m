@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3795349671215939375=="
+Content-Type: multipart/mixed; boundary="===============5271084194445409390=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/6] handsfree-audio: Set the voice setting for outgoing
- connections
-Date: Mon, 19 Aug 2013 12:56:23 -0500
-Message-ID: <52125C47.2080400@gmail.com>
-In-Reply-To: <1376619969-15080-5-git-send-email-vcgomes@gmail.com>
+Subject: Re: [PATCH 6/6] hfp_hf_bluez5: Handle org.bluez.Profile1.Release()
+Date: Mon, 19 Aug 2013 12:57:53 -0500
+Message-ID: <52125CA1.5020203@gmail.com>
+In-Reply-To: <1376619969-15080-7-git-send-email-vcgomes@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3795349671215939375==
+--===============5271084194445409390==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,55 +16,37 @@ Content-Transfer-Encoding: quoted-printable
 Hi Vinicius,
 
 On 08/15/2013 09:26 PM, Vinicius Costa Gomes wrote:
-> In the AG case, the voice setting needs to be set before we can
-> use Transparent SCO mode, which is necessary for Wideband speech
-> support.
+> There's nothing we can do in this case, so we only reply with a
+> success.
 > ---
->   src/handsfree-audio.c | 8 ++++++++
->   1 file changed, 8 insertions(+)
+>   plugins/hfp_hf_bluez5.c | 4 +---
+>   1 file changed, 1 insertion(+), 3 deletions(-)
 >
-> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-> index c83086f..d550e6e 100644
-> --- a/src/handsfree-audio.c
-> +++ b/src/handsfree-audio.c
-> @@ -442,6 +442,7 @@ int ofono_handsfree_card_connect_sco(struct ofono_han=
-dsfree_card *card)
+> diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+> index 7e98a45..391a74e 100644
+> --- a/plugins/hfp_hf_bluez5.c
+> +++ b/plugins/hfp_hf_bluez5.c
+> @@ -564,9 +564,7 @@ static DBusMessage *profile_release(DBusConnection *c=
+onn,
 >   {
->   	GIOChannel *io;
->   	struct sockaddr_sco addr;
-> +	struct bt_voice voice;
->   	int sk, ret;
+>   	DBG("Profile handler Release");
 >
->   	sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET | O_NONBLOCK | SOCK_CLOEXEC,
-> @@ -465,6 +466,13 @@ int ofono_handsfree_card_connect_sco(struct ofono_ha=
-ndsfree_card *card)
->   	addr.sco_family =3D AF_BLUETOOTH;
->   	bt_str2ba(card->remote, &addr.sco_bdaddr);
+> -	return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
+> -						".NotImplemented",
+> -						"Implementation not provided");
+> +	return dbus_message_new_method_return(msg);
+
+To me it seems like this method is not properly labeled as NOREPLY =
+
+inside the BlueZ API specification.  Sending a reply here seems pointless.
+
+>   }
 >
-> +	memset(&voice, 0, sizeof(voice));
-> +	voice.setting =3D codec2setting(card->selected_codec);
-> +
-> +	if (setsockopt(sk, SOL_BLUETOOTH, BT_VOICE, &voice, sizeof(voice)) < 0)
-> +		ofono_error("Can't set voice settings: %s (%d)",
-> +						strerror(errno), errno);
-> +
-
-Same comment here as for patch 2.
-
-- If we fail to set BT_VOICE and our kernel does not support it, then =
-
-printing an error is superfluous.
-- If we indeed try to set wideband codec and fail, then continuing with =
-
-the connection is kinda bad.
-
->   	ret =3D connect(sk, (struct sockaddr *) &addr, sizeof(addr));
->   	if (ret < 0 && errno !=3D EINPROGRESS) {
->   		close(sk);
+>   static DBusMessage *profile_cancel(DBusConnection *conn,
 >
 
 Regards,
 -Denis
 
---===============3795349671215939375==--
+--===============5271084194445409390==--
 
