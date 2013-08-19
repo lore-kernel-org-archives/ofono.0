@@ -1,34 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============7553495088355359422=="
+Content-Type: multipart/mixed; boundary="===============8934029286966660320=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: PPP negotiation failing
-Date: Mon, 19 Aug 2013 08:13:11 -0500
-Message-ID: <521219E7.5040304@gmail.com>
-In-Reply-To: <52121A10.70605@dataprom.com>
+Subject: Re: [PATCH 2/6] handsfree-audio: Add setting SCO air mode
+Date: Mon, 19 Aug 2013 12:49:44 -0500
+Message-ID: <52125AB8.4060506@gmail.com>
+In-Reply-To: <1376619969-15080-3-git-send-email-vcgomes@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7553495088355359422==
+--===============8934029286966660320==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fabio,
+Hi Vinicius,
 
-On 08/19/2013 08:13 AM, Fabio S. Higa wrote:
-> Em 16-08-2013 13:05, Denis Kenzior escreveu:
->> The AT command log is not useful in this case.  You would need to run
->> gatchat/gsmdial with the pppdump option and examine it with wireshark
->> to understand what fails.
->>
-> Thank you for your help Denis. It seems a problem with PAP/CHAP
-> authentication. Just to confirm, does Ofono support PAP authentication?
+On 08/15/2013 09:26 PM, Vinicius Costa Gomes wrote:
+> ---
+>   src/handsfree-audio.c | 18 ++++++++++++++++++
+>   1 file changed, 18 insertions(+)
+>
+> diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+> index 0bdeb99..0caa458 100644
+> --- a/src/handsfree-audio.c
+> +++ b/src/handsfree-audio.c
+> @@ -68,6 +68,16 @@ static GSList *drivers =3D 0;
+>   static ofono_bool_t has_wideband =3D FALSE;
+>   static int defer_setup =3D 1;
+>
+> +static uint16_t codec2setting(uint8_t codec)
+> +{
+> +	switch (codec) {
+> +		case HFP_CODEC_CVSD:
+> +			return BT_VOICE_CVSD_16BIT;
+> +		default:
+> +			return BT_VOICE_TRANSPARENT;
+> +	}
+> +}
+> +
+>   static void send_new_connection(const char *card, int fd, uint8_t codec)
+>   {
+>   	DBusMessage *msg;
+> @@ -107,6 +117,7 @@ static gboolean sco_accept(GIOChannel *io, GIOConditi=
+on cond,
+>   {
+>   	struct ofono_handsfree_card *card;
+>   	struct sockaddr_sco saddr;
+> +	struct bt_voice voice;
+>   	socklen_t alen;
+>   	int sk, nsk;
+>   	char local[18], remote[18];
+> @@ -150,6 +161,13 @@ static gboolean sco_accept(GIOChannel *io, GIOCondit=
+ion cond,
+>   		return TRUE;
+>   	}
+>
+> +	memset(&voice, 0, sizeof(voice));
+> +	voice.setting =3D codec2setting(card->selected_codec);
+> +
+> +	if (setsockopt(nsk, SOL_BLUETOOTH, BT_VOICE, &voice, sizeof(voice)) < 0)
+> +		ofono_error("Can't set voice settings: %s (%d)",
+> +						strerror(errno), errno);
+> +
 
-oFono's PPP stack only supports CHAP.  Patches are of course always welcome.
+So two things:
+- If we do not support BT_VOICE socket option, then printing an error is =
+
+not a good idea in the first place.
+- If setting BT_VOICE fails and we indeed are trying to set wideband =
+
+codec, then why are we still sending the (improperly configured) file =
+
+descriptor to the agent?
+
+>   	send_new_connection(card->path, nsk, card->selected_codec);
+>   	close(nsk);
+>
+>
 
 Regards,
 -Denis
 
-
---===============7553495088355359422==--
+--===============8934029286966660320==--
 
