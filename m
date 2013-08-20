@@ -1,156 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============8411344545353137157=="
+Content-Type: multipart/mixed; boundary="===============5142634865585267380=="
 MIME-Version: 1.0
-From: Vinicius Costa Gomes <vcgomes@gmail.com>
-Subject: Re: [PATCH 3/6] handsfree-audio: Add support for detecting
- Transparent SCO support
-Date: Mon, 19 Aug 2013 16:36:21 -0300
-Message-ID: <20130819193621.GC3075@molly.profusion.mobi>
-In-Reply-To: <52125BF4.8000200@gmail.com>
+From: Luiz Augusto von Dentz <luiz.dentz@gmail.com>
+Subject: Re: [PATCH 6/6] hfp_hf_bluez5: Handle org.bluez.Profile1.Release()
+Date: Tue, 20 Aug 2013 16:51:33 +0300
+Message-ID: <CABBYNZK4XhtKnM2nyZ7jFkjVQ1Bi_nVB=DxOeN7GMrq-CX9VSA@mail.gmail.com>
+In-Reply-To: <20130819184735.GB3075@molly.profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8411344545353137157==
+--===============5142634865585267380==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Vinicius,
 
-On 12:55 Mon 19 Aug, Denis Kenzior wrote:
-> Hi Vinicius,
-> =
+On Mon, Aug 19, 2013 at 9:47 PM, Vinicius Costa Gomes <vcgomes@gmail.com>=
+ wrote:
+> Hi Denis,
+>
+> On 12:57 Mon 19 Aug, Denis Kenzior wrote:
+>> Hi Vinicius,
+>>
+>> On 08/15/2013 09:26 PM, Vinicius Costa Gomes wrote:
+>> >There's nothing we can do in this case, so we only reply with a
+>> >success.
+>> >---
+>> >  plugins/hfp_hf_bluez5.c | 4 +---
+>> >  1 file changed, 1 insertion(+), 3 deletions(-)
+>> >
+>> >diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+>> >index 7e98a45..391a74e 100644
+>> >--- a/plugins/hfp_hf_bluez5.c
+>> >+++ b/plugins/hfp_hf_bluez5.c
+>> >@@ -564,9 +564,7 @@ static DBusMessage *profile_release(DBusConnection =
+*conn,
+>> >  {
+>> >     DBG("Profile handler Release");
+>> >
+>> >-    return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
+>> >-                                            ".NotImplemented",
+>> >-                                            "Implementation not provid=
+ed");
+>> >+    return dbus_message_new_method_return(msg);
+>>
+>> To me it seems like this method is not properly labeled as NOREPLY
+>> inside the BlueZ API specification.  Sending a reply here seems
+>> pointless.
+>
+> I agree. Going to fix, and send a patch to BlueZ to add that label.
 
-> On 08/15/2013 09:26 PM, Vinicius Costa Gomes wrote:
-> >---
-> >  include/handsfree-audio.h |  2 +-
-> >  plugins/hfp_hf_bluez5.c   |  2 +-
-> >  src/handsfree-audio.c     | 23 +++++++++++++++++------
-> >  3 files changed, 19 insertions(+), 8 deletions(-)
-> >
-> >diff --git a/include/handsfree-audio.h b/include/handsfree-audio.h
-> >index 846a032..03e3b38 100644
-> >--- a/include/handsfree-audio.h
-> >+++ b/include/handsfree-audio.h
-> >@@ -53,7 +53,7 @@ ofono_bool_t ofono_handsfree_card_set_codec(struct ofo=
-no_handsfree_card *card,
-> >
-> >  ofono_bool_t ofono_handsfree_audio_has_wideband(void);
-> >
-> >-ofono_bool_t ofono_handsfree_audio_has_defer_setup(void);
-> >+ofono_bool_t ofono_handsfree_audio_has_transparent_sco(void);
-> >
-> >  void ofono_handsfree_card_set_data(struct ofono_handsfree_card *card,
-> >  					void *data);
-> >diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-> >index 40d8ce0..f08bf53 100644
-> >--- a/plugins/hfp_hf_bluez5.c
-> >+++ b/plugins/hfp_hf_bluez5.c
-> >@@ -645,7 +645,7 @@ static void connect_handler(DBusConnection *conn, vo=
-id *user_data)
-> >  	 * Assuming that if defer_setup is supported, then SCO transparent
-> >  	 * mode is also supported
-> >  	*/
-> >-	if (ofono_handsfree_audio_has_defer_setup())
-> >+	if (ofono_handsfree_audio_has_transparent_sco())
-> >  		features |=3D HFP_SDP_HF_FEATURE_WIDEBAND_SPEECH;
-> =
+While at it you might consider actually handling the Release because
+right now oFono doesn't react to either org.bluez disappearing nor
+adapter proxy being removed so if one of those events happen without
+calling RequestDisconnection oFono will keep the connection.
 
-> This seems fine, however we should probably not be enabling the
-> plugin if defer_setup is missing.
-
-Makes sense. Will look into it.
-
-> =
-
-> >
-> >  	DBG("Registering External Profile handler ...");
-> >diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-> >index 0caa458..c83086f 100644
-> >--- a/src/handsfree-audio.c
-> >+++ b/src/handsfree-audio.c
-> >@@ -66,7 +66,7 @@ static GSList *card_list =3D 0;
-> >  static guint sco_watch =3D 0;
-> >  static GSList *drivers =3D 0;
-> >  static ofono_bool_t has_wideband =3D FALSE;
-> >-static int defer_setup =3D 1;
-> >+static ofono_bool_t transparent_sco =3D FALSE;
-> >
-> >  static uint16_t codec2setting(uint8_t codec)
-> >  {
-> >@@ -178,7 +178,9 @@ static int sco_init(void)
-> >  {
-> >  	GIOChannel *sco_io;
-> >  	struct sockaddr_sco saddr;
-> >-	int sk;
-> >+	struct bt_voice voice;
-> >+	int defer_setup, sk;
-> >+	socklen_t len;
-> >
-> >  	sk =3D socket(PF_BLUETOOTH, SOCK_SEQPACKET | O_NONBLOCK | SOCK_CLOEXE=
-C,
-> >  								BTPROTO_SCO);
-> >@@ -195,6 +197,8 @@ static int sco_init(void)
-> >  		return -errno;
-> >  	}
-> >
-> >+	defer_setup =3D 1;
-> >+
-> >  	if (setsockopt(sk, SOL_BLUETOOTH, BT_DEFER_SETUP,
-> >  				&defer_setup, sizeof(defer_setup)) < 0) {
-> >  		defer_setup =3D 0;
-> >@@ -202,6 +206,13 @@ static int sco_init(void)
-> >  						strerror(errno), errno);
-> >  	}
-> >
-> >+	memset(&voice, 0, sizeof(voice));
-> >+	len =3D sizeof(voice);
-> >+
-> >+	if (defer_setup && getsockopt(sk, SOL_BLUETOOTH, BT_VOICE,
-> >+						&voice, &len) =3D=3D 0)
-> >+		transparent_sco =3D TRUE;
-> >+
-> >  	if (listen(sk, 5) < 0) {
-> >  		close(sk);
-> >  		return -errno;
-> >@@ -585,9 +596,9 @@ ofono_bool_t ofono_handsfree_audio_has_wideband(void)
-> >  	return has_wideband;
-> >  }
-> >
-> >-ofono_bool_t ofono_handsfree_audio_has_defer_setup(void)
-> >+ofono_bool_t ofono_handsfree_audio_has_transparent_sco(void)
-> >  {
-> >-	return defer_setup =3D=3D 1;
-> >+	return transparent_sco;
-> >  }
-> >
-> >  static void agent_free(struct agent *agent)
-> >@@ -707,12 +718,12 @@ static DBusMessage *am_agent_register(DBusConnecti=
-on *conn,
-> >  	DBG("Agent %s registered with the CODECs:%s%s", sender,
-> >  		has_cvsd ? " CVSD" : "", has_msbc ? " mSBC" : "");
-> >
-> >-	if (has_msbc && defer_setup =3D=3D 1)
-> >+	if (has_msbc && transparent_sco)
-> >  		has_wideband =3D TRUE;
-> >  	else {
-> >  		has_wideband =3D FALSE;
-> >  		DBG("Wideband speech disabled: %s", has_msbc ?
-> >-			"no SCO defer setup support" : "no mSBC support");
-> >+			"no Transparent SCO support" : "no mSBC support");
-> >  	}
-> >
-> >  	if (has_cvsd =3D=3D FALSE) {
-> >
-> =
-
-> Regards,
-> -Denis
+Before anyone asks, there is another difference between Release and
+RequestDisconnection, the former should cause a forceful disconnect if
+connected while the latter should disconnect gracefully so bluetoothd
+will wait for the response so in theory Release can happen without
+RequestDisconnection being called before.
 
 
-Cheers,
 -- =
 
-Vinicius
+Luiz Augusto von Dentz
 
---===============8411344545353137157==--
+--===============5142634865585267380==--
 
