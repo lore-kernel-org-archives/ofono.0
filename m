@@ -1,116 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============5340442288358339119=="
+Content-Type: multipart/mixed; boundary="===============8637957495725242071=="
 MIME-Version: 1.0
-From: Luiz Augusto von Dentz <luiz.dentz@gmail.com>
-Subject: Re: [PATCH 6/6] hfp_hf_bluez5: Handle org.bluez.Profile1.Release()
-Date: Thu, 22 Aug 2013 17:41:41 +0300
-Message-ID: <CABBYNZ+4UTq2jtq3y6LhNTdgDq8dQ161QJu1XQuaNy4opiE-YQ@mail.gmail.com>
-In-Reply-To: <5214DB13.3070507@gmail.com>
+From: Markus Hubig <mhubig@imko.de>
+Subject: Recommendation for a good Modem
+Date: Mon, 26 Aug 2013 11:58:09 +0200
+Message-ID: <CAGws1TsTzbvvVpnTNyxeq-a8z2JBS_7MCd=UdqiXaovXXY1O7g@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5340442288358339119==
+--===============8637957495725242071==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi @all,
 
-On Wed, Aug 21, 2013 at 6:21 PM, Denis Kenzior <denkenz@gmail.com> wrote:
-> Hi Luiz,
->
->
-> On 08/21/2013 05:29 AM, Luiz Augusto von Dentz wrote:
->>
->> Hi Denis,
->>
->> On Tue, Aug 20, 2013 at 6:41 PM, Denis Kenzior <denkenz@gmail.com> wro=
-te:
->>>
->>> Hi Luiz,
->>>
->>>
->>>>> I agree. Going to fix, and send a patch to BlueZ to add that label.
->>>>
->>>>
->>>>
->>>> While at it you might consider actually handling the Release because
->>>> right now oFono doesn't react to either org.bluez disappearing nor
->>>> adapter proxy being removed so if one of those events happen without
->>>> calling RequestDisconnection oFono will keep the connection.
->>>>
->>>
->>> As long as BlueZ calls shutdown() on the socket, the resources will be
->>> cleaned up by the oFono HUP handler.
->>
->>
->> That works as long bluetoothd doesn't crash so it is probably a good
->> idea to at least check if the org.bluez has disappeared and cleanup if
->> any connection still exists. I also don't understand how the
->> enumeration is supposed to work in hfp_hf_bluez5, it doesn't seems to
->> be able to detect devices being removed as there is no proxy_removed
->> callback, Im missing something?
->
->
-> Correct me if I'm wrong, but BlueZ disappearing should be handled by free=
-ing
-> all the proxies associated with it when it goes away.  e.g. inside
-> gdbus/client.c message_filter().
->
-> oFono does not use proxy_removed, instead we use
-> g_dbus_proxy_set_removed_watch.  This lets us avoid an unnecessary hash
-> lookup.
+I'm looking for a GPRS/UMTS modem for a small embedded linux
+appliance I'm building. I want to use ofono to handle the modem.
 
-Well it looks like it is not working I just killed bluetoothd while
-connected and nothing happened in ofono side, probably a bug in
-GDBusClient code.
+First I thought about the Telit GC864, but unfortunately this seems
+to be not supported by ofono (at least not out of the box) ...
 
->
->>
->>>
->>>> Before anyone asks, there is another difference between Release and
->>>> RequestDisconnection, the former should cause a forceful disconnect if
->>>> connected while the latter should disconnect gracefully so bluetoothd
->>>> will wait for the response so in theory Release can happen without
->>>> RequestDisconnection being called before.
->>>>
->>>
->>> The only time BlueZ calls Release() today is when gracefully shutting
->>> down.
->>> It calls shutdown() then anyway.
->>>
->>> It might be argued that we should shut down the SCO server socket if
->>> BlueZ
->>> has called Release() on our profile.  Looking at the code, it looks like
->>> we
->>> only accept SCO connections when a given handsfree_audio_card matches a
->>> connection request.  So assuming the kernel has SCO defer setup handlin=
-g,
->>> we
->>> should be okay with the current behavior.  Comments?
->>
->>
->> That can create a situation where nobody else can listen on SCO even
->> before oFono register HFP, while this is mostly fine as platforms
->> should probably have a single solution for HFP it would probably be
->> safer to start listening to SCO only when registered so we give a nice
->> example how to implement external profiles properly.
->>
->>
->
-> The HFP plugin registers the profile with BlueZ on startup.  So who would
-> try to open a SCO socket in that small time window?
+Is there a good GPRS/UMTS modem you would recommend?
 
-Well we cannot really assume the order of startup is fixed, in fact a
-lot of things can be started in parallel nowadays with systemd, so yes
-it is unlikely but that doesn't mean we should just ignore it
-specially because I believe it is not that hard to implement a logic
-that waits the response to RegisterProfile to start listing in the SCO
-socket.
+My requirements are:
 
+- MUST: Out-of-the box supported by ofono
+- MUST: Connector / No BGA
+- MAY: SimCard holder integrated.
+- MAY: UMTS
+- MAY: GPS Option
+
+Markus
 
 -- =
 
-Luiz Augusto von Dentz
+_______________________________________________________
 
---===============5340442288358339119==--
+IMKO Micromodultechnik GmbH
+Markus Hubig
+Research & Development
+Im Stoeck 2
+D-76275 Ettlingen / GERMANY
+
+HR: HRB 360936 Amtsgericht Mannheim
+President: Dipl.-Ing. (FH) Kurt Koehler
+
+Tel: 0049-(0)7243-5921-26
+Fax: 0049-(0)7243-5921-40
+e-mail: mhubig(a)imko.de
+internet: www.imko.de
+_______________________________________________________
+
+--===============8637957495725242071==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+SGkgQGFsbCw8ZGl2Pjxicj48L2Rpdj48ZGl2PkkmIzM5O20gbG9va2lu
+ZyBmb3IgYSBHUFJTL1VNVFMgbW9kZW0gZm9yIGEgc21hbGwgZW1iZWRkZWQgbGludXg8L2Rpdj48
+ZGl2PmFwcGxpYW5jZSBJJiMzOTttIGJ1aWxkaW5nLiBJIHdhbnQgdG8gdXNlIG9mb25vIHRvIGhh
+bmRsZSB0aGUgbW9kZW0uPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5GaXJzdCBJoHRob3VnaHQg
+YWJvdXQgdGhlIFRlbGl0IEdDODY0LCBidXSgdW5mb3J0dW5hdGVseSB0aGlzIHNlZW1zPC9kaXY+
+CjxkaXY+dG8gYmUgbm90IHN1cHBvcnRlZCBieSBvZm9ubyAoYXQgbGVhc3Qgbm90IG91dCBvZiB0
+aGUgYm94KSAuLi48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PklzIHRoZXJlIGEgZ29vZCBHUFJT
+L1VNVFMgbW9kZW0geW91IHdvdWxkIHJlY29tbWVuZD88L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2
+Pk15oHJlcXVpcmVtZW50cyBhcmU6PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj4tIE1VU1Q6IE91
+dC1vZi10aGUgYm94IHN1cHBvcnRlZCBieSBvZm9ubzwvZGl2Pgo8ZGl2Pi0gTVVTVDogQ29ubmVj
+dG9yIC8gTm8gQkdBPC9kaXY+PGRpdj4tIE1BWTogU2ltQ2FyZCBob2xkZXIgaW50ZWdyYXRlZC48
+YnI+PC9kaXY+PGRpdj4tIE1BWTogVU1UUzwvZGl2PjxkaXY+LSBNQVk6IEdQUyBPcHRpb248L2Rp
+dj48ZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+TWFya3VzPC9kaXY+PGRpdj48YnI+PC9kaXY+LS0g
+PGJyPl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X188YnI+Cjxicj5JTUtPIE1pY3JvbW9kdWx0ZWNobmlrIEdtYkg8YnI+TWFya3VzIEh1YmlnPGJy
+PlJlc2VhcmNoICZhbXA7oERldmVsb3BtZW50PGJyPkltIFN0b2VjayAyPGJyPkQtNzYyNzUgRXR0
+bGluZ2VuIC8gR0VSTUFOWTxicj48YnI+SFI6IEhSQiAzNjA5MzYgQW10c2dlcmljaHQgTWFubmhl
+aW08YnI+UHJlc2lkZW50OiBEaXBsLi1JbmcuIChGSCkgS3VydCBLb2VobGVyPGJyPjxicj5UZWw6
+IDAwNDktKDApNzI0My01OTIxLTI2PGJyPgpGYXg6IDAwNDktKDApNzI0My01OTIxLTQwPGJyPmUt
+bWFpbDogPGEgaHJlZj0ibWFpbHRvOm1odWJpZ0BpbWtvLmRlIiB0YXJnZXQ9Il9ibGFuayI+bWh1
+YmlnQGlta28uZGU8L2E+PGJyPmludGVybmV0OiA8YSBocmVmPSJodHRwOi8vd3d3Lmlta28uZGUi
+IHRhcmdldD0iX2JsYW5rIj53d3cuaW1rby5kZTwvYT48YnI+X19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwo8L2Rpdj48L2Rpdj4K
+
+--===============8637957495725242071==--
 
