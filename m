@@ -1,49 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============2286376651707980087=="
+Content-Type: multipart/mixed; boundary="===============7269395116386418428=="
 MIME-Version: 1.0
 From: caiwen.zhang@intel.com
-Subject: [PATCH] Fix modem doesn't auto register to network issue
-Date: Thu, 12 Sep 2013 01:33:47 +0800
-Message-ID: <1378920827-6086-1-git-send-email-caiwen.zhang@intel.com>
+Subject: [PATCH] avoid stk atom is removed when sim pin is blocked
+Date: Thu, 12 Sep 2013 01:51:01 +0800
+Message-ID: <1378921861-6238-1-git-send-email-caiwen.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2286376651707980087==
+--===============7269395116386418428==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Caiwen Zhang <caiwen.zhang@intel.com>
 
-Some modem may return registration status whitch is out of the range
-(0-5). it will cause the modem don't auto register to network when
-network atom initializes.
+When sim pin is blocked after input wrong pin code three times,
+modem will change to pre-sim status, at this time, STK function
+should be available. stk atoms shouldn't be removed.
 ---
- src/network.c |    6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ src/modem.c |    7 ++++++-
+ src/stk.c   |    4 ++++
+ 2 files changed, 10 insertions(+), 1 deletion(-)
 
-diff --git a/src/network.c b/src/network.c
-index d1bfca6..a1e317d 100644
---- a/src/network.c
-+++ b/src/network.c
-@@ -1481,9 +1481,9 @@ static void init_registration_status(const struct ofo=
-no_error *error,
- 	}
+diff --git a/src/modem.c b/src/modem.c
+index 01b0e35..7124d53 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -196,7 +196,12 @@ struct ofono_atom *__ofono_modem_add_atom(struct ofono=
+_modem *modem,
+ 	atom =3D g_new0(struct ofono_atom, 1);
  =
 
- 	if (netreg->mode !=3D NETWORK_REGISTRATION_MODE_MANUAL &&
--		(status =3D=3D NETWORK_REGISTRATION_STATUS_NOT_REGISTERED ||
--			status =3D=3D NETWORK_REGISTRATION_STATUS_DENIED ||
--			status =3D=3D NETWORK_REGISTRATION_STATUS_UNKNOWN)) {
-+		(status !=3D NETWORK_REGISTRATION_STATUS_REGISTERED &&
-+			status !=3D NETWORK_REGISTRATION_STATUS_SEARCHING &&
-+			status !=3D NETWORK_REGISTRATION_STATUS_ROAMING)) {
- 		if (netreg->driver->register_auto !=3D NULL)
- 			netreg->driver->register_auto(netreg, init_register,
- 							netreg);
+ 	atom->type =3D type;
+-	atom->modem_state =3D modem->modem_state;
++	/* to avoid STK is removed when modem change to
++		MODEM_STATE_PRE_SIM status */
++	if (type =3D=3D OFONO_ATOM_TYPE_STK)
++		atom->modem_state =3D MODEM_STATE_PRE_SIM;
++	else
++		atom->modem_state =3D modem->modem_state;
+ 	atom->destruct =3D destruct;
+ 	atom->data =3D data;
+ 	atom->modem =3D modem;
+diff --git a/src/stk.c b/src/stk.c
+index 01c95b5..a00a425 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -3196,6 +3196,10 @@ struct ofono_stk *ofono_stk_create(struct ofono_mode=
+m *modem,
+ 	if (driver =3D=3D NULL)
+ 		return NULL;
+ =
+
++	/* STK may already exist, in the case that restore from pin blocked */
++	if (__ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_STK) !=3D NULL)
++		return NULL;
++
+ 	stk =3D g_try_new0(struct ofono_stk, 1);
+ =
+
+ 	if (stk =3D=3D NULL)
 -- =
 
 1.7.9.5
 
 
---===============2286376651707980087==--
+--===============7269395116386418428==--
 
