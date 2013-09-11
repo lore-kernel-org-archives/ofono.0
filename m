@@ -1,69 +1,147 @@
-Content-Type: multipart/mixed; boundary="===============7269395116386418428=="
+Content-Type: multipart/mixed; boundary="===============0800362905640671617=="
 MIME-Version: 1.0
 From: caiwen.zhang@intel.com
-Subject: [PATCH] avoid stk atom is removed when sim pin is blocked
-Date: Thu, 12 Sep 2013 01:51:01 +0800
-Message-ID: <1378921861-6238-1-git-send-email-caiwen.zhang@intel.com>
+Subject: [PATCH] Query locked pins after reset pin
+Date: Thu, 12 Sep 2013 03:13:57 +0800
+Message-ID: <1378926837-16531-1-git-send-email-caiwen.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7269395116386418428==
+--===============0800362905640671617==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Caiwen Zhang <caiwen.zhang@intel.com>
 
-When sim pin is blocked after input wrong pin code three times,
-modem will change to pre-sim status, at this time, STK function
-should be available. stk atoms shouldn't be removed.
 ---
- src/modem.c |    7 ++++++-
- src/stk.c   |    4 ++++
- 2 files changed, 10 insertions(+), 1 deletion(-)
+ src/sim.c |   77 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 file changed, 76 insertions(+), 1 deletion(-)
 
-diff --git a/src/modem.c b/src/modem.c
-index 01b0e35..7124d53 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -196,7 +196,12 @@ struct ofono_atom *__ofono_modem_add_atom(struct ofono=
-_modem *modem,
- 	atom =3D g_new0(struct ofono_atom, 1);
+diff --git a/src/sim.c b/src/sim.c
+index edae5eb..ef55b1c 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -123,6 +123,11 @@ struct msisdn_set_request {
+ 	DBusMessage *msg;
+ };
  =
 
- 	atom->type =3D type;
--	atom->modem_state =3D modem->modem_state;
-+	/* to avoid STK is removed when modem change to
-+		MODEM_STATE_PRE_SIM status */
-+	if (type =3D=3D OFONO_ATOM_TYPE_STK)
-+		atom->modem_state =3D MODEM_STATE_PRE_SIM;
-+	else
-+		atom->modem_state =3D modem->modem_state;
- 	atom->destruct =3D destruct;
- 	atom->data =3D data;
- 	atom->modem =3D modem;
-diff --git a/src/stk.c b/src/stk.c
-index 01c95b5..a00a425 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -3196,6 +3196,10 @@ struct ofono_stk *ofono_stk_create(struct ofono_mode=
-m *modem,
- 	if (driver =3D=3D NULL)
- 		return NULL;
- =
-
-+	/* STK may already exist, in the case that restore from pin blocked */
-+	if (__ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_STK) !=3D NULL)
-+		return NULL;
++struct sim_locked_query_request {
++	struct ofono_sim *sim;
++	enum ofono_sim_password_type type;
++};
 +
- 	stk =3D g_try_new0(struct ofono_stk, 1);
+ struct service_number {
+ 	char *id;
+ 	struct ofono_phone_number ph;
+@@ -610,6 +615,57 @@ error:
+ 	return __ofono_error_invalid_args(msg);
+ }
  =
 
- 	if (stk =3D=3D NULL)
++void sim_query_locked_cb(const struct ofono_error *error,
++			int locked, void *data)
++{
++	struct sim_locked_query_request *req =3D data;
++	struct ofono_sim *sim =3D req->sim;
++	char **locked_pins;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(sim->atom);
++
++	DBG("");
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		g_free(req);
++		return;
++	}
++
++	if (req->type >=3D OFONO_SIM_PASSWORD_SIM_PUK) {
++		g_free(req);
++		return;
++	}
++
++	sim->locked_pins[req->type] =3D locked;
++	DBG("sim_query_locked_cb pin_type: %d %d", req->type, locked);
++
++	locked_pins =3D get_locked_pins(sim);
++	ofono_dbus_signal_array_property_changed(conn, path,
++						OFONO_SIM_MANAGER_INTERFACE,
++						"LockedPins", DBUS_TYPE_STRING,
++						&locked_pins);
++	g_strfreev(locked_pins);
++	g_free(req);
++}
++
++static void __sim_query_locked(struct ofono_sim *sim,
++			enum ofono_sim_password_type type)
++{
++	struct sim_locked_query_request *req;
++
++	if (type =3D=3D OFONO_SIM_PASSWORD_NONE =
+
++		|| type > OFONO_SIM_PASSWORD_PHCORP_PIN)
++		return;
++
++	req =3D g_new0(struct sim_locked_query_request, 1);
++	req->sim =3D sim;
++	req->type =3D type;
++		=
+
++	if (sim->driver->query_locked)
++		sim->driver->query_locked(sim, type, sim_query_locked_cb, req);
++}
++
++
+ static void sim_locked_cb(struct ofono_sim *sim, gboolean locked)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+@@ -1039,6 +1095,25 @@ static DBusMessage *sim_get_icon(DBusConnection *con=
+n,
+ 	return NULL;
+ }
+ =
+
++static void sim_reset_pin_cb(const struct ofono_error *error, void *data)
++{
++	struct ofono_sim *sim =3D data;
++	DBusMessage *reply;
++	enum ofono_sim_password_type type;
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
++		reply =3D __ofono_error_failed(sim->pending);
++	else
++		reply =3D dbus_message_new_method_return(sim->pending);
++
++	__ofono_dbus_pending_reply(&sim->pending, reply);
++
++	__ofono_sim_recheck_pin(sim);
++
++	for (type =3D OFONO_SIM_PASSWORD_SIM_PIN; type < OFONO_SIM_PASSWORD_SIM_P=
+UK; type++)
++		__sim_query_locked(sim, type);
++}
++
+ static DBusMessage *sim_reset_pin(DBusConnection *conn, DBusMessage *msg,
+ 					void *data)
+ {
+@@ -1074,7 +1149,7 @@ static DBusMessage *sim_reset_pin(DBusConnection *con=
+n, DBusMessage *msg,
+ 		return __ofono_error_invalid_format(msg);
+ =
+
+ 	sim->pending =3D dbus_message_ref(msg);
+-	sim->driver->reset_passwd(sim, puk, pin, sim_enter_pin_cb, sim);
++	sim->driver->reset_passwd(sim, puk, pin, sim_reset_pin_cb, sim);
+ =
+
+ 	return NULL;
+ }
 -- =
 
 1.7.9.5
 
 
---===============7269395116386418428==--
+--===============0800362905640671617==--
 
