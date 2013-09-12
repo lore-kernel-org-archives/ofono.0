@@ -1,35 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============2207910191897187732=="
+Content-Type: multipart/mixed; boundary="===============2215305841455280589=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 7/7] hfp_hf_bluez5: Handle org.bluez.Profile1.Release()
-Date: Thu, 12 Sep 2013 13:21:50 -0500
-Message-ID: <5232063E.3080804@gmail.com>
-In-Reply-To: <1378858186-683-7-git-send-email-vcgomes@gmail.com>
+From: =?unknown-8bit?q?Vin=C3=ADcius?= Costa Gomes <vcgomes@gmail.com>
+Subject: Re: [PATCH 1/7] handsfree-audio: Add setting SCO air mode
+Date: Thu, 12 Sep 2013 17:09:53 -0300
+Message-ID: <CAM4ayVAZvQbAGUf-HCkw48LPLGXgQQn4eW3=bcQrrBEZcg4avA@mail.gmail.com>
+In-Reply-To: <523205B4.7000606@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2207910191897187732==
+--===============2215305841455280589==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vinicius,
+Hi Denis,
 
-On 09/10/2013 07:09 PM, Vinicius Costa Gomes wrote:
-> There's nothing we can do in this case, so we only reply with a
-> success.
-> ---
->   plugins/hfp_hf_bluez5.c | 4 +---
->   1 file changed, 1 insertion(+), 3 deletions(-)
+On Thu, Sep 12, 2013 at 3:19 PM, Denis Kenzior <denkenz@gmail.com> wrote:
 >
+> Hi Vinicius,
+>
+>
+> On 09/10/2013 07:09 PM, Vinicius Costa Gomes wrote:
+>>
+>> ---
+>>
+>> I did a few quick tests here, but it would be much appreciated if
+>> someone with access to more devices could test it.
+>>
+>> Sorry for the delay.
+>>
+>> Cheers,
+>>
+>>   src/handsfree-audio.c | 32 ++++++++++++++++++++++++++++++++
+>>   1 file changed, 32 insertions(+)
+>
+>
+> Patch has been applied, but I tweaked the logic a bit in follow on commit=
+ e574d44d00780f2c7010677a6c261ffba82ea83f.  Can you double check and see if=
+ you are okay with it?
 
-Since BlueZ now marks this method as noreply, I fixed it to be the same =
+Yeah, I am ok with it.
 
-in commit f2103a7ada1a4f5bfb7fee8e5d0ff261718ca759.
+>
+> Regards,
+> -Denis
 
-Regards,
--Denis
 
+Cheers,
+-- =
 
---===============2207910191897187732==--
+Vinicius
+
+--===============2215305841455280589==--
 
