@@ -1,47 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============0439830249470614669=="
+Content-Type: multipart/mixed; boundary="===============4210322777000293280=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] fix ofonod crash when pin is blocked
-Date: Thu, 12 Sep 2013 08:28:48 -0500
-Message-ID: <5231C190.4070302@gmail.com>
-In-Reply-To: <DA62CA5DDF4CA640AA25B1684E5D141101D85F2F@SHSMSX102.ccr.corp.intel.com>
+Subject: Re: [PATCH] avoid stk atom is removed when sim pin is blocked
+Date: Thu, 12 Sep 2013 08:32:15 -0500
+Message-ID: <5231C25F.3090508@gmail.com>
+In-Reply-To: <DA62CA5DDF4CA640AA25B1684E5D141101D85F53@SHSMSX102.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0439830249470614669==
+--===============4210322777000293280==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Caiwen,
 
- >>
->> What is the real reason why the watchlist is NULL at the point in time t=
-his
->> function is being called?
+On 09/11/2013 08:14 PM, Zhang, Caiwen wrote:
 >
-> Yes, you are right. The correct comment should be "If at that time, "spn_=
-watch" has been removed ofonod will crash due to
-> "sim->spn_watches" is NULL."
+> Hi Denis,
 >
-
-Then please fix the patch description
-
-> "spn_watch" is removed at "sim_free_main_state" function when SIM PIN is =
-blocked. This is done before gprs/network atom is removed.
+>>> When sim pin is blocked after input wrong pin code three times, modem
+>>> will change to pre-sim status, at this time, STK function should be
+>>> available. stk atoms shouldn't be removed.
+>>
+>> Can you please provide a reference to a 3GPP / ETSI document which states
+>> that this is the case?
 >
+> I don't see any spec states STK should be available or unavailable when S=
+IM PIN is blocked.
+> But all the modems of many different manufacturers I ever used keep STK a=
+vailable after SIM PIN is blocked.
+>
+> Here if we remove stk atom and recreate it after pin is reset, stk functi=
+on will be unusable.
 
-Then please fix the underlying issue itself.  Would signaling LOCKED_OUT =
+Again, please elaborate.  Much of Sim Toolkit depends on access to files =
 
-state first before freeing the main state do the trick?
+that can only be accessed with PIN entered.  So leaving STK atom in a =
 
+fully functional state is not the answer either.
 
-> About network registration status watch, the original comment is true.
+Why would stk be unusuable.  Is it that we cannot recover the Main Menu =
 
-Please elaborate.
+state after re-creating it?
 
 Regards,
 -Denis
 
---===============0439830249470614669==--
+--===============4210322777000293280==--
 
