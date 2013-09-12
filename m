@@ -1,51 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============4210322777000293280=="
+Content-Type: multipart/mixed; boundary="===============6556332542523995438=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] avoid stk atom is removed when sim pin is blocked
-Date: Thu, 12 Sep 2013 08:32:15 -0500
-Message-ID: <5231C25F.3090508@gmail.com>
-In-Reply-To: <DA62CA5DDF4CA640AA25B1684E5D141101D85F53@SHSMSX102.ccr.corp.intel.com>
+Subject: Re: [PATCH] Fix modem doesn't auto register to network issue
+Date: Thu, 12 Sep 2013 08:43:40 -0500
+Message-ID: <5231C50C.1070704@gmail.com>
+In-Reply-To: <DA62CA5DDF4CA640AA25B1684E5D141101D86039@SHSMSX102.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4210322777000293280==
+--===============6556332542523995438==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Caiwen,
 
-On 09/11/2013 08:14 PM, Zhang, Caiwen wrote:
->
+On 09/11/2013 09:48 PM, Zhang, Caiwen wrote:
 > Hi Denis,
 >
->>> When sim pin is blocked after input wrong pin code three times, modem
->>> will change to pre-sim status, at this time, STK function should be
->>> available. stk atoms shouldn't be removed.
+>>> Some modem may return registration status whitch is out of the range
+>>> (0-5). it will cause the modem don't auto register to network when
+>>> network atom initializes.
 >>
->> Can you please provide a reference to a 3GPP / ETSI document which states
->> that this is the case?
+>> oFono core will not validate values outside what is defined in 27.007.
+>> If your driver reports such values, then it is an obvious bug in the dri=
+ver.
+>>
+>> Please fix your modem driver.
+>>
 >
-> I don't see any spec states STK should be available or unavailable when S=
-IM PIN is blocked.
-> But all the modems of many different manufacturers I ever used keep STK a=
-vailable after SIM PIN is blocked.
+> (status =3D=3D NETWORK_REGISTRATION_STATUS_NOT_REGISTERED ||
+> 		status =3D=3D NETWORK_REGISTRATION_STATUS_DENIED ||
+> 		status =3D=3D NETWORK_REGISTRATION_STATUS_UNKNOWN)
 >
-> Here if we remove stk atom and recreate it after pin is reset, stk functi=
-on will be unusable.
+> Above checking tries to list the cases that should trigger auto network r=
+egistration but for the modems which
+> extend network registration status may miss some cases.
+>
+> With the new checking:
+> 		(status !=3D NETWORK_REGISTRATION_STATUS_REGISTERED &&
+> 			status !=3D NETWORK_REGISTRATION_STATUS_SEARCHING &&
+> 			status !=3D NETWORK_REGISTRATION_STATUS_ROAMING))
+> it tries to exclude the cases that not required to trigger auto network r=
+egistration. In this way, it can avoid
+> above issue.
 
-Again, please elaborate.  Much of Sim Toolkit depends on access to files =
+Since we do not know what the meaning of the extended value actually is, =
 
-that can only be accessed with PIN entered.  So leaving STK atom in a =
+we can be wrong in either situation.  The core only knows about values =
 
-fully functional state is not the answer either.
+defined in 27.007 or values it defines explicitly inside include/*.  If =
 
-Why would stk be unusuable.  Is it that we cannot recover the Main Menu =
+we start having the core deal with every single vendor extension then we =
 
-state after re-creating it?
+will quickly go insane and the core becomes unreadable.
+
+I have been and will continue to be quite adamant here.  Fix. Your. Driver.
+
+>
+> I am not sure whether other modem has the same issue. This way should be =
+more make sense.
+>
+> By the way, it should be better to change the status from "int" to " enum=
+ network_registration_status" to avoid modem driver pass
+> in value we don't expect.
+
+How does this help you?  If your modem reports issues outside the range, =
+
+you still need to sanitize the values you send to the core.  If your =
+
+modem is compliant, then converting them to an enum just leads to you =
+
+writing more code that does nothing useful.
+
+We've tried this already and abandoned it long ago.
 
 Regards,
 -Denis
 
---===============4210322777000293280==--
+--===============6556332542523995438==--
 
