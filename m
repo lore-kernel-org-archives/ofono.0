@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============6624055674592865080=="
+Content-Type: multipart/mixed; boundary="===============2256127740676590085=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/7] handsfree-audio: Add setting SCO air mode
-Date: Thu, 12 Sep 2013 13:19:32 -0500
-Message-ID: <523205B4.7000606@gmail.com>
-In-Reply-To: <1378858186-683-1-git-send-email-vcgomes@gmail.com>
+Subject: Re: [PATCH 2/7] handsfree-audio: Add support for detecting
+ Transparent SCO support
+Date: Thu, 12 Sep 2013 13:20:05 -0500
+Message-ID: <523205D5.6070208@gmail.com>
+In-Reply-To: <1378858186-683-2-git-send-email-vcgomes@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6624055674592865080==
+--===============2256127740676590085==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,25 +18,17 @@ Hi Vinicius,
 
 On 09/10/2013 07:09 PM, Vinicius Costa Gomes wrote:
 > ---
+>   include/handsfree-audio.h |  2 +-
+>   plugins/hfp_hf_bluez5.c   |  2 +-
+>   src/handsfree-audio.c     | 18 ++++++++++++++----
+>   3 files changed, 16 insertions(+), 6 deletions(-)
 >
-> I did a few quick tests here, but it would be much appreciated if
-> someone with access to more devices could test it.
->
-> Sorry for the delay.
->
-> Cheers,
->
->   src/handsfree-audio.c | 32 ++++++++++++++++++++++++++++++++
->   1 file changed, 32 insertions(+)
 
-Patch has been applied, but I tweaked the logic a bit in follow on =
-
-commit e574d44d00780f2c7010677a6c261ffba82ea83f.  Can you double check =
-
-and see if you are okay with it?
+Patches 2-5 have been applied with a tweak of the commit description.
 
 Regards,
 -Denis
 
---===============6624055674592865080==--
+
+--===============2256127740676590085==--
 
