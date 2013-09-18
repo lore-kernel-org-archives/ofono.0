@@ -1,55 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============1201997882517463472=="
+Content-Type: multipart/mixed; boundary="===============4637378477184495569=="
 MIME-Version: 1.0
-From: Zhang, Caiwen <caiwen.zhang@intel.com>
-Subject: RE: [PATCH] avoid stk atom is removed when sim pin is blocked
-Date: Mon, 16 Sep 2013 12:33:17 +0000
-Message-ID: <DA62CA5DDF4CA640AA25B1684E5D141101D8701D@SHSMSX102.ccr.corp.intel.com>
-In-Reply-To: <5231C25F.3090508@gmail.com>
+From: Fabio S. Higa <fabio.higa@dataprom.com>
+Subject: Re: PPP negotiation failing
+Date: Wed, 18 Sep 2013 08:05:16 -0300
+Message-ID: <523988EC.4030706@dataprom.com>
+In-Reply-To: <52121A10.70605@dataprom.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1201997882517463472==
+--===============4637378477184495569==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hello all,
 
-> >>> When sim pin is blocked after input wrong pin code three times,
-> >>> modem will change to pre-sim status, at this time, STK function
-> >>> should be available. stk atoms shouldn't be removed.
-> >>
-> >> Can you please provide a reference to a 3GPP / ETSI document which
-> >> states that this is the case?
-> >
-> > I don't see any spec states STK should be available or unavailable when=
- SIM
-> PIN is blocked.
-> > But all the modems of many different manufacturers I ever used keep STK
-> available after SIM PIN is blocked.
-> >
-> > Here if we remove stk atom and recreate it after pin is reset, stk func=
-tion will
-> be unusable.
-> =
+> oFono's PPP stack only supports CHAP. Patches are of course always =
 
-> Again, please elaborate.  Much of Sim Toolkit depends on access to files =
-that
-> can only be accessed with PIN entered.  So leaving STK atom in a fully
-> functional state is not the answer either.
-> =
+> welcome.
 
-> Why would stk be unusuable.  Is it that we cannot recover the Main Menu
-> state after re-creating it?
+I resolved this issue with the modem Telit GE910 sending the command =
 
-Yes. There is no way to retrieve the main menu again. It also may at that t=
-ime SAT isn't
-stay at the main menu.
+"AT#GAUTH=3D2" in order to set the authentication to CHAP.
 
-Regards,
-Caiwen
+I have added this command on function telit_post_sim(), before =
 
+ofono_gprs_create().
 
+--===============4637378477184495569==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
---===============1201997882517463472==--
+PGh0bWw+CiAgPGhlYWQ+CiAgICA8bWV0YSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9SVNP
+LTg4NTktMSIKICAgICAgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIj4KICA8L2hlYWQ+CiAgPGJv
+ZHkgYmdjb2xvcj0iI0ZGRkZGRiIgdGV4dD0iIzAwMDAwMCI+CiAgICBIZWxsbyBhbGwsPGJyPgog
+ICAgPGJyPgogICAgPGJsb2NrcXVvdGUgdHlwZT0iY2l0ZSI+b0Zvbm8ncyBQUFAgc3RhY2sgb25s
+eSBzdXBwb3J0cyBDSEFQLiZuYnNwOwogICAgICBQYXRjaGVzIGFyZSBvZiBjb3Vyc2UgYWx3YXlz
+IHdlbGNvbWUuPC9ibG9ja3F1b3RlPgogICAgPGJyPgogICAgSSByZXNvbHZlZCB0aGlzIGlzc3Vl
+IHdpdGggdGhlIG1vZGVtIFRlbGl0IEdFOTEwIHNlbmRpbmcgdGhlIGNvbW1hbmQKICAgICJBVCNH
+QVVUSD0yIiBpbiBvcmRlciB0byBzZXQgdGhlIGF1dGhlbnRpY2F0aW9uIHRvIENIQVAuPGJyPgog
+ICAgPGJyPgogICAgSSBoYXZlIGFkZGVkIHRoaXMgY29tbWFuZCBvbiBmdW5jdGlvbiB0ZWxpdF9w
+b3N0X3NpbSgpLCBiZWZvcmUKICAgIG9mb25vX2dwcnNfY3JlYXRlKCkuCiAgICA8bWV0YSBodHRw
+LWVxdWl2PSJjb250ZW50LXR5cGUiIGNvbnRlbnQ9InRleHQvaHRtbDsKICAgICAgY2hhcnNldD1J
+U08tODg1OS0xIj4KICA8L2JvZHk+CjwvaHRtbD4K
+
+--===============4637378477184495569==--
 
