@@ -1,35 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============1563797388657315775=="
+Content-Type: multipart/mixed; boundary="===============2350642952231574410=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] Fix gprs provisioning for some SIM (non-USIM) cards
-Date: Wed, 16 Oct 2013 13:19:57 +0200
-Message-ID: <525E765D.1050205@southpole.se>
+Date: Wed, 16 Oct 2013 10:37:37 -0500
+Message-ID: <525EB2C1.6090600@gmail.com>
 In-Reply-To: <1381920923-16439-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1563797388657315775==
+--===============2350642952231574410==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 10/16/2013 12:55 PM, Alfonso Sanchez-Beato wrote:
+Hi Alfonso,
+
+On 10/16/2013 05:55 AM, Alfonso Sanchez-Beato wrote:
 > In some cases the field MNC length in EFad is not present. MNC can
 > have either 2 or 3 digits depending on the MCC: we will try with
 > those 2 lengths when searching in the database for this corner case
 > (this situation can happen for SIMs (non-USIM), as MNC lenght field
 > is not mandatory for them - see 3gpp TS 51.011)
 
-We've been here before...
-
-http://comments.gmane.org/gmane.comp.handhelds.ofono/13552
-
-Something like this is definitely needed... SIM's from at least one =
-
-carrier in Sweden fail to provide the MNC length.
-
-/Jonas
-
+Where are you finding SIMs these days?  Are you raiding a museum? :)
 
 > ---
 >   include/sim.h |  1 +
@@ -38,6 +31,11 @@ carrier in Sweden fail to provide the MNC length.
 -------
 >   3 files changed, 65 insertions(+), 23 deletions(-)
 >
+
+On a serious note, please review the 'Submitting Patches' section in the =
+
+oFono HACKING document.
+
 > diff --git a/include/sim.h b/include/sim.h
 > index ed850f9..f63324a 100644
 > --- a/include/sim.h
@@ -47,6 +45,9 @@ carrier in Sweden fail to provide the MNC length.
 >   const char *ofono_sim_get_mcc(struct ofono_sim *sim);
 >   const char *ofono_sim_get_mnc(struct ofono_sim *sim);
 > +unsigned ofono_sim_get_mnc_length(struct ofono_sim *sim);
+
+This is a definite 'no way are we exposing this'
+
 >   const char *ofono_sim_get_spn(struct ofono_sim *sim);
 >   enum ofono_sim_phase ofono_sim_get_phase(struct ofono_sim *sim);
 >
@@ -109,6 +110,29 @@ r *dc, void *data)
 > +	} else {
 > +		provision_contexts(gprs, mcc, mnc, spn);
 > +	}
+
+This is a NAK.  You can't just try things randomly and see what sticks. =
+
+  It is not a good strategy in a critical subsystem.  If you cannot make =
+
+a good decision, it is far safer to let the user decide, which will =
+
+happen in the first place.
+
+The MNC can only be one value and that value can even change depending =
+
+on whether you're operating the same SIM in a 2G device or 3G device. =
+
+So trying length 3 when in reality it is 2 can and most likely will get =
+
+you into trouble.
+
+Moreover, the core cannot assume that SIM reading functionality has been =
+
+enabled in the driver, so you're just making assumptions that things =
+
+failed because you're running on a 2G SIM.
+
 >
 >   	ofono_sim_remove_spn_watch(sim, &gprs->spn_watch);
 >
@@ -179,6 +203,15 @@ im, const char *imsi)
 > +					OFONO_SIM_MANAGER_INTERFACE,
 > +					"MobileNetworkCode",
 > +					DBUS_TYPE_STRING, &str);
+
+Again, you cannot make the assumption that MNC length is not known =
+
+because EFad was on a 2G sim.  It may be that the driver just does not =
+
+implement SIM read operations, or the hardware does not allow them.
+
+So you're just making stuff up here.
+
 >
 >   	sim_set_ready(sim);
 >
@@ -196,6 +229,9 @@ im, const char *imsi)
 > +		ofono_info("EFad does not contain MNC length");
 >   		return;
 >   	}
+
+I'm fine with this chunk since in 2G sims the length is indeed only 3.
+
 >
 > @@ -2234,6 +2249,14 @@ const char *ofono_sim_get_mnc(struct ofono_sim *si=
 m)
@@ -215,5 +251,8 @@ m)
 >   	if (sim =3D=3D NULL)
 >
 
---===============1563797388657315775==--
+Regards,
+-Denis
+
+--===============2350642952231574410==--
 
