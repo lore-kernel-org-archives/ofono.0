@@ -1,90 +1,225 @@
-Content-Type: multipart/mixed; boundary="===============5787881663004001281=="
+Content-Type: multipart/mixed; boundary="===============9022406503832916132=="
 MIME-Version: 1.0
 From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
-Subject: Re: [PATCH] plugins,
- mbpi: make mbpi return only APNs of a given type. When provisioning
- for internect connection,
- only OFONO_GPRS_CONTEXT_TYPE_INTERNET APNs will be returned.
-Date: Mon, 14 Oct 2013 09:33:29 +0200
-Message-ID: <CACM4vuCfS2dkpTSO4HBHVRWL_o_zoj+P+TWcwkmAbvSQerJQxw@mail.gmail.com>
-In-Reply-To: <52582EB3.2040004@gmail.com>
+Subject: [PATCH] Fix gprs provisioning for some SIM (non-USIM) cards
+Date: Wed, 16 Oct 2013 12:55:23 +0200
+Message-ID: <1381920923-16439-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5787881663004001281==
+--===============9022406503832916132==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+In some cases the field MNC length in EFad is not present. MNC can
+have either 2 or 3 digits depending on the MCC: we will try with
+those 2 lengths when searching in the database for this corner case
+(this situation can happen for SIMs (non-USIM), as MNC lenght field
+is not mandatory for them - see 3gpp TS 51.011)
+---
+ include/sim.h |  1 +
+ src/gprs.c    | 26 +++++++++++++++++++++----
+ src/sim.c     | 61 ++++++++++++++++++++++++++++++++++++++++---------------=
+----
+ 3 files changed, 65 insertions(+), 23 deletions(-)
+
+diff --git a/include/sim.h b/include/sim.h
+index ed850f9..f63324a 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -191,6 +191,7 @@ void *ofono_sim_get_data(struct ofono_sim *sim);
+ const char *ofono_sim_get_imsi(struct ofono_sim *sim);
+ const char *ofono_sim_get_mcc(struct ofono_sim *sim);
+ const char *ofono_sim_get_mnc(struct ofono_sim *sim);
++unsigned ofono_sim_get_mnc_length(struct ofono_sim *sim);
+ const char *ofono_sim_get_spn(struct ofono_sim *sim);
+ enum ofono_sim_phase ofono_sim_get_phase(struct ofono_sim *sim);
+ =
+
+diff --git a/src/gprs.c b/src/gprs.c
+index e379f7b..0218696 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -2967,7 +2967,7 @@ static void provision_context(const struct ofono_gprs=
+_provision_data *ap,
+ 	gprs->contexts =3D g_slist_append(gprs->contexts, context);
+ }
+ =
+
+-static void provision_contexts(struct ofono_gprs *gprs, const char *mcc,
++static int provision_contexts(struct ofono_gprs *gprs, const char *mcc,
+ 				const char *mnc, const char *spn)
+ {
+ 	struct ofono_gprs_provision_data *settings;
+@@ -2977,13 +2977,15 @@ static void provision_contexts(struct ofono_gprs *g=
+prs, const char *mcc,
+ 	if (__ofono_gprs_provision_get_settings(mcc, mnc, spn,
+ 						&settings, &count) =3D=3D FALSE) {
+ 		ofono_warn("Provisioning failed");
+-		return;
++		return -EINVAL;
+ 	}
+ =
+
+ 	for (i =3D 0; i < count; i++)
+ 		provision_context(&settings[i], gprs);
+ =
+
+ 	__ofono_gprs_provision_free_settings(settings, count);
++
++	return 0;
+ }
+ =
+
+ static void ofono_gprs_finish_register(struct ofono_gprs *gprs)
+@@ -3021,9 +3023,25 @@ static void spn_read_cb(const char *spn, const char =
+*dc, void *data)
+ 	struct ofono_gprs *gprs	=3D data;
+ 	struct ofono_modem *modem =3D __ofono_atom_get_modem(gprs->atom);
+ 	struct ofono_sim *sim =3D __ofono_atom_find(OFONO_ATOM_TYPE_SIM, modem);
++	const char *mnc =3D ofono_sim_get_mnc(sim);
++	const char *mcc =3D ofono_sim_get_mcc(sim);
++
++	if (ofono_sim_get_mnc_length(sim) =3D=3D 0 && mnc !=3D NULL) {
++		/* MNC length not found in EFad: we try with length 3 and 2 */
++		char aux_mnc[OFONO_MAX_MNC_LENGTH + 1];
+ =
+
+-	provision_contexts(gprs, ofono_sim_get_mcc(sim),
+-					ofono_sim_get_mnc(sim), spn);
++		strncpy(aux_mnc, mnc, OFONO_MAX_MNC_LENGTH);
++		aux_mnc[OFONO_MAX_MNC_LENGTH] =3D '\0';
++
++		if (provision_contexts(gprs, mcc, aux_mnc, spn) !=3D 0) {
++			ofono_info("MNC length is not 3: trying length 2");
++			aux_mnc[OFONO_MAX_MNC_LENGTH - 1] =3D '\0';
++			provision_contexts(gprs, mcc, aux_mnc, spn);
++		}
++
++	} else {
++		provision_contexts(gprs, mcc, mnc, spn);
++	}
+ =
+
+ 	ofono_sim_remove_spn_watch(sim, &gprs->spn_watch);
+ =
+
+diff --git a/src/sim.c b/src/sim.c
+index edae5eb..3d31386 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -1427,6 +1427,8 @@ static void sim_imsi_obtained(struct ofono_sim *sim, =
+const char *imsi)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+ 	const char *path =3D __ofono_atom_get_path(sim->atom);
++	unsigned char aux_mnc_length;
++	const char *str;
+ =
+
+ 	sim->imsi =3D g_strdup(imsi);
+ =
+
+@@ -1435,27 +1437,36 @@ static void sim_imsi_obtained(struct ofono_sim *sim=
+, const char *imsi)
+ 						"SubscriberIdentity",
+ 						DBUS_TYPE_STRING, &sim->imsi);
+ =
+
+-	if (sim->mnc_length) {
+-		const char *str;
++	/*
++	 * sim->mnc_length =3D 0 means that EFad did not contain the MNC length
++	 * field. So we will copy 3 digits from the IMSI in the MNC. MNC can
++	 * have either 2 or 3 digits depending on the MCC: we will try with
++	 * those 2 lengths when searching in the database for this corner case
++	 * (this situation can happen for SIMs (non-USIM), as MNC lenght field
++	 * is not mandatory for them - see TS 51.011)
++	 */
++	if (sim->mnc_length)
++		aux_mnc_length =3D sim->mnc_length;
++	else
++		aux_mnc_length =3D OFONO_MAX_MNC_LENGTH;
+ =
+
+-		strncpy(sim->mcc, sim->imsi, OFONO_MAX_MCC_LENGTH);
+-		sim->mcc[OFONO_MAX_MCC_LENGTH] =3D '\0';
+-		strncpy(sim->mnc, sim->imsi + OFONO_MAX_MCC_LENGTH,
+-			sim->mnc_length);
+-		sim->mnc[sim->mnc_length] =3D '\0';
++	strncpy(sim->mcc, sim->imsi, OFONO_MAX_MCC_LENGTH);
++	sim->mcc[OFONO_MAX_MCC_LENGTH] =3D '\0';
++	strncpy(sim->mnc, sim->imsi + OFONO_MAX_MCC_LENGTH,
++		aux_mnc_length);
++	sim->mnc[aux_mnc_length] =3D '\0';
+ =
+
+-		str =3D sim->mcc;
+-		ofono_dbus_signal_property_changed(conn, path,
+-						OFONO_SIM_MANAGER_INTERFACE,
+-						"MobileCountryCode",
+-						DBUS_TYPE_STRING, &str);
++	str =3D sim->mcc;
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_SIM_MANAGER_INTERFACE,
++					"MobileCountryCode",
++					DBUS_TYPE_STRING, &str);
+ =
+
+-		str =3D sim->mnc;
+-		ofono_dbus_signal_property_changed(conn, path,
+-						OFONO_SIM_MANAGER_INTERFACE,
+-						"MobileNetworkCode",
+-						DBUS_TYPE_STRING, &str);
+-	}
++	str =3D sim->mnc;
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_SIM_MANAGER_INTERFACE,
++					"MobileNetworkCode",
++					DBUS_TYPE_STRING, &str);
+ =
+
+ 	sim_set_ready(sim);
+ =
+
+@@ -1772,8 +1783,12 @@ static void sim_ad_read_cb(int ok, int length, int r=
+ecord,
+ 	if (!ok)
+ 		return;
+ =
+
++	if (length < 3) {
++		ofono_error("EFad should contain at least three bytes");
++		return;
++	}
+ 	if (length < 4) {
+-		ofono_error("EFad should contain@least four bytes");
++		ofono_info("EFad does not contain MNC length");
+ 		return;
+ 	}
+ =
+
+@@ -2234,6 +2249,14 @@ const char *ofono_sim_get_mnc(struct ofono_sim *sim)
+ 	return sim->mnc;
+ }
+ =
+
++unsigned ofono_sim_get_mnc_length(struct ofono_sim *sim)
++{
++	if (sim =3D=3D NULL)
++		return 0;
++
++	return sim->mnc_length;
++}
++
+ const char *ofono_sim_get_spn(struct ofono_sim *sim)
+ {
+ 	if (sim =3D=3D NULL)
+-- =
+
+1.8.1.2
 
 
-The patch is related to the following bug:
->>
->> https://bugs.launchpad.net/**ubuntu/+source/ofono/+bug/**1222106<https:/=
-/bugs.launchpad.net/ubuntu/+source/ofono/+bug/1222106>
->>
->> So we were obtaining some times settings for the MMS APN instead of the
->> internet one. Maybe the change makes it work only for internet
->> connection, but not for MMS. Would that mean that get_settings() should
->> have a parameter specifying the context type so the user decides?
->>
->>
-> The mbpi parser will assign a context type to the provisioned context
-> based on the "type" attribute inside mobile-broadband-provider-**info.
->  So assuming the parser is working correctly, the context will be labeled
-> accordingly in oFono on the D-Bus API level.
->
-> The parser works by returning all contexts that match a particular mcc/mnc
-> if and only if no conflicts or multiple matches are found. Since you're
-> saying it picks the 'wrong' one, then I assume the issue is inside your
-> application, not oFono.
->
-
-After gathering some more information, I think that the problem comes from
-different behaviors of connman vs NetworkManager when handling the context.
-So we need to re-think this on our side.
-
-Thanks for your comments,
-Alfonso
-
---===============5787881663004001281==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGRpdiBkaXI9Imx0ciI+SGkgRGVuaXMsPGJyPjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+
-PGJyPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVv
-dGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhleDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtw
-YWRkaW5nLWxlZnQ6MWV4Ij48ZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5
-bGU9Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmct
-bGVmdDoxZXgiPgoKClRoZSBwYXRjaCBpcyByZWxhdGVkIHRvIHRoZSBmb2xsb3dpbmcgYnVnOjxi
-cj4KPGJyPgo8YSBocmVmPSJodHRwczovL2J1Z3MubGF1bmNocGFkLm5ldC91YnVudHUvK3NvdXJj
-ZS9vZm9uby8rYnVnLzEyMjIxMDYiIHRhcmdldD0iX2JsYW5rIj5odHRwczovL2J1Z3MubGF1bmNo
-cGFkLm5ldC88dT48L3U+dWJ1bnR1Lytzb3VyY2Uvb2Zvbm8vK2J1Zy88dT48L3U+MTIyMjEwNjwv
-YT48YnI+Cjxicj4KU28gd2Ugd2VyZSBvYnRhaW5pbmcgc29tZSB0aW1lcyBzZXR0aW5ncyBmb3Ig
-dGhlIE1NUyBBUE4gaW5zdGVhZCBvZiB0aGU8YnI+CmludGVybmV0IG9uZS4gTWF5YmUgdGhlIGNo
-YW5nZSBtYWtlcyBpdCB3b3JrIG9ubHkgZm9yIGludGVybmV0PGJyPgpjb25uZWN0aW9uLCBidXQg
-bm90IGZvciBNTVMuIFdvdWxkIHRoYXQgbWVhbiB0aGF0IGdldF9zZXR0aW5ncygpIHNob3VsZDxi
-cj4KaGF2ZSBhIHBhcmFtZXRlciBzcGVjaWZ5aW5nIHRoZSBjb250ZXh0IHR5cGUgc28gdGhlIHVz
-ZXIgZGVjaWRlcz88YnI+Cjxicj4KPC9ibG9ja3F1b3RlPgo8YnI+PC9kaXY+ClRoZSBtYnBpIHBh
-cnNlciB3aWxsIGFzc2lnbiBhIGNvbnRleHQgdHlwZSB0byB0aGUgcHJvdmlzaW9uZWQgY29udGV4
-dCBiYXNlZCBvbiB0aGUgJnF1b3Q7dHlwZSZxdW90OyBhdHRyaWJ1dGUgaW5zaWRlIG1vYmlsZS1i
-cm9hZGJhbmQtcHJvdmlkZXItPHU+PC91PmluZm8uIKBTbyBhc3N1bWluZyB0aGUgcGFyc2VyIGlz
-IHdvcmtpbmcgY29ycmVjdGx5LCB0aGUgY29udGV4dCB3aWxsIGJlIGxhYmVsZWQgYWNjb3JkaW5n
-bHkgaW4gb0Zvbm8gb24gdGhlIEQtQnVzIEFQSSBsZXZlbC48YnI+CgoKPGJyPgpUaGUgcGFyc2Vy
-IHdvcmtzIGJ5IHJldHVybmluZyBhbGwgY29udGV4dHMgdGhhdCBtYXRjaCBhIHBhcnRpY3VsYXIg
-bWNjL21uYyBpZiBhbmQgb25seSBpZiBubyBjb25mbGljdHMgb3IgbXVsdGlwbGUgbWF0Y2hlcyBh
-cmUgZm91bmQuIFNpbmNlIHlvdSYjMzk7cmUgc2F5aW5nIGl0IHBpY2tzIHRoZSAmIzM5O3dyb25n
-JiMzOTsgb25lLCB0aGVuIEkgYXNzdW1lIHRoZSBpc3N1ZSBpcyBpbnNpZGUgeW91ciBhcHBsaWNh
-dGlvbiwgbm90IG9Gb25vLjxicj4KCjwvYmxvY2txdW90ZT48ZGl2Pjxicj48L2Rpdj48ZGl2PkFm
-dGVyIGdhdGhlcmluZyBzb21lIG1vcmUgaW5mb3JtYXRpb24sIEkgdGhpbmsgdGhhdCB0aGUgcHJv
-YmxlbSBjb21lcyBmcm9tIGRpZmZlcmVudCBiZWhhdmlvcnMgb2YgY29ubm1hbiB2cyBOZXR3b3Jr
-TWFuYWdlciB3aGVuIGhhbmRsaW5nIHRoZSBjb250ZXh0LiBTbyB3ZSBuZWVkIHRvIHJlLXRoaW5r
-IHRoaXMgb24gb3VyIHNpZGUuPC9kaXY+CjxkaXY+PGJyPjwvZGl2PjxkaXY+VGhhbmtzIGZvciB5
-b3VyIGNvbW1lbnRzLDwvZGl2PjxkaXY+QWxmb25zbzwvZGl2PjwvZGl2Pjxicj48L2Rpdj48L2Rp
-dj4K
-
---===============5787881663004001281==--
+--===============9022406503832916132==--
 
