@@ -1,93 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============6847574801321889213=="
+Content-Type: multipart/mixed; boundary="===============6355551845718653937=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
 Subject: Re: [PATCH] Fix gprs provisioning for some SIM (non-USIM) cards
-Date: Wed, 16 Oct 2013 17:35:53 -0500
-Message-ID: <525F14C9.3020709@gmail.com>
-In-Reply-To: <CACM4vuAAmckEbnFWe_S47fsbmJ0iDsvhkvovkVyZZT066KS41A@mail.gmail.com>
+Date: Thu, 17 Oct 2013 18:20:01 +0200
+Message-ID: <CACM4vuAVG+Z3W7Peq1Qbv4BrGWz+_+vyjYOFuEqgKZ9jnRqwhQ@mail.gmail.com>
+In-Reply-To: <525F14C9.3020709@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6847574801321889213==
+--===============6355551845718653937==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alfonso,
-
- >> The MNC can only be one value and that value can even change =
-
-depending on whether you're
->> operating the same SIM in a 2G device or 3G device. So trying length 3 w=
-hen in reality it is 2
->> can and most likely will get you into trouble.
->
-> I do not think this can happen. For a given MCC, the length of the MNC
-> is always the same, or at least that is the recommendation of the ITU.
->
-
-The MNC in the IMSI remains the same, but the network operator MNC can =
-
-change.  For example, T-Mobile used to report its 2G network MCC/MNC as =
-
-310 26 even though its MNC is 260.  Then there are countries that run =
-
-mixed 2 and 3 length MNCs...
-
-Regardless, my main point here is that without properly coded EFad data =
-
-we cannot reliably tell what MNC length to use.
-
->> I might be convinced to default to MNC length 2 in that case
->>
->
->   I do not think this is a good idea. Taking a look the ITU database,
-> countries like USA, Canada, or Colombia have MNC length =3D=3D 3.
->
-
-I said I might be convinced.  If the phase is set and the EFad length is =
-
-3.  The SIMs from NA operators tend to omit EFad completely or populate =
-
-it properly.  Still, the safest approach is that we should not report =
-
-the MNC if the SIM doesn't tell us explicitly.
-
-> As the relationship between MCC and MNC is deterministic, when we know
-> the MCC we can directly find out the MNC length. I agree in that
-> trying first length 2, then 3 is not very elegant. But if we do not do
-> that I see two possible solutions:
-
-It really isn't that clear cut.  For example, check out MCC 405.
+Hi Denis,
 
 >
-> 1.- Store a table statically or in a file with the correspondence
-> between MCC and MNC length. I foresee maintenance problems with this
-> approach.
->
-> 2.- Add a function in the provision driver so we can ask for the MNC
-> length for a given MCC, which would be invoked when MNC length is not
-> found in EFad. The implementation would search in the provisioning DB:
-> it could return the length of the first MNC found for that MCC (it
-> must be the same for all networks for that MCC).
->
-> Opinions on this?
+> I think you're trying to solve a problem that doesn't need to be solved.
+> Its 2013, I've not seen 2G sims available for ages now.  3G sims mandate
+> EFad data to be properly populated.  I really fail to see the point,
+> especially breaking the core to do so.
 
-I think you're trying to solve a problem that doesn't need to be solved. =
+I can see that your opinion is that it is not an important issue
+because it is supposed not to affect too many people.
 
-  Its 2013, I've not seen 2G sims available for ages now.  3G sims =
+But the fact is that at least two operators, one from Sweden and
+another one from Pakistan provide (compliant) SIMs with non-fully
+populated EFad.
 
-mandate EFad data to be properly populated.  I really fail to see the =
+One new SIM from a MVNO that came to my hands a few weeks ago was SIM
+and not USIM (although EFad was fully populated). 3G phones do work
+with SIMs, and if the operator can buy slightly cheaper cards, it
+might use them. And there are many areas in the world where you just
+have 2G+EDGE coverage, so the operator does not really need to provide
+USIM. So they will provide SIMs, and some of them might no have full
+EFad.
 
-point, especially breaking the core to do so.
+So I see your point, but it is not backed by numbers, and I have the
+feeling that this *might* affect more users than expected, especially
+if we think of Asia or Africa.
 
-Fallback to manual user provisioning and give the user a list to choose =
+> Fallback to manual user provisioning and give the user a list to choose
+> from.
 
-from.
+I think we can make life easier for many users if we provide a
+fail-safe mechanism that will be triggered only for
+non-fully-populated EFad and that in that case will work in most, if
+not all, the cases. I do not say that the patch I sent first would be
+the solution, we can think a different way of solving this.
 
 Regards,
--Denis
+Alfonso
 
-
---===============6847574801321889213==--
+--===============6355551845718653937==--
 
