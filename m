@@ -1,52 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============0593719548143916051=="
+Content-Type: multipart/mixed; boundary="===============3417285553497873069=="
 MIME-Version: 1.0
-From: Chris Whittenburg <whittenburg@gmail.com>
-Subject: Telit HE910 not found?
-Date: Mon, 18 Nov 2013 17:26:38 -0600
-Message-ID: <CABcw_OnPJ3McjAujD4J=-h3jVHA3W7=zHyTaNvoM+k-KGa2PyA@mail.gmail.com>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: [PATCH] Load message_center and message_proxy from the provider info
+ file
+Date: Tue, 26 Nov 2013 00:00:41 +0200
+Message-ID: <81E79608-DDA3-4D2D-9797-73B34C08AF23@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0593719548143916051==
+--===============3417285553497873069==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-I'm using ofono 1.12 (srcrev=3D"51982e7b132bc4a203f87767861c392380367050")
-with patches for Telit HE910 from Jonas Bonn that were posted here back in
-April.
 
-I modified my udev rules, and ofono seems to find my modem to some extent,
-but it doesn't seem to issue any AT commands to it, and running list-modems
-doesn't return anything.
-
-Here is the debug output: http://pastebin.com/5udjNNaa
-
-Can anyone offer some advice as to what might be missing?
-
-Thanks,
-Chris
-
---===============0593719548143916051==
-Content-Type: text/html
+--===============3417285553497873069==
+Content-Type: application/octet-stream
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+Content-Disposition: attachment;
+ filename="0001-Load-message_center-and-message_proxy-from-the-provi.patch"
 
-PGRpdiBkaXI9Imx0ciI+PGJyPjxkaXYgc3R5bGU+SSYjMzk7bSB1c2luZyBvZm9ubyAxLjEyIChz
-cmNyZXY9JnF1b3Q7NTE5ODJlN2IxMzJiYzRhMjAzZjg3NzY3ODYxYzM5MjM4MDM2NzA1MCZxdW90
-Oykgd2l0aCBwYXRjaGVzIGZvciBUZWxpdCBIRTkxMCBmcm9tIEpvbmFzIEJvbm4gdGhhdCB3ZXJl
-IHBvc3RlZCBoZXJlIGJhY2sgaW4gQXByaWwuPC9kaXY+PGRpdiBzdHlsZT48YnI+PC9kaXY+Cjxk
-aXYgc3R5bGU+SSBtb2RpZmllZCBteSB1ZGV2IHJ1bGVzLCBhbmQgb2Zvbm8gc2VlbXMgdG8gZmlu
-ZCBteSBtb2RlbSB0byBzb21lIGV4dGVudCwgYnV0IGl0IGRvZXNuJiMzOTt0IHNlZW0gdG8gaXNz
-dWUgYW55IEFUIGNvbW1hbmRzIHRvIGl0LCBhbmQgcnVubmluZyBsaXN0LW1vZGVtcyBkb2VzbiYj
-Mzk7dCByZXR1cm4gYW55dGhpbmcuPC9kaXY+PGRpdiBzdHlsZT48YnI+PC9kaXY+CjxkaXYgc3R5
-bGU+SGVyZSBpcyB0aGUgZGVidWcgb3V0cHV0OqA8YSBocmVmPSJodHRwOi8vcGFzdGViaW4uY29t
-LzV1ZGpOTmFhIj5odHRwOi8vcGFzdGViaW4uY29tLzV1ZGpOTmFhPC9hPjwvZGl2PjxkaXYgc3R5
-bGU+PGJyPjwvZGl2PjxkaXYgc3R5bGU+Q2FuIGFueW9uZSBvZmZlciBzb21lIGFkdmljZSBhcyB0
-byB3aGF0IG1pZ2h0IGJlIG1pc3Npbmc/PC9kaXY+PGRpdiBzdHlsZT48YnI+CjwvZGl2PjxkaXYg
-c3R5bGU+VGhhbmtzLDwvZGl2PjxkaXYgc3R5bGU+Q2hyaXM8L2Rpdj48ZGl2IHN0eWxlPjxicj48
-L2Rpdj48L2Rpdj4K
+RnJvbSA1ZjlkZjM2YzJkYWVkODFhMmNkNTYzNzg4MDQwYjYzYzk4MDVjZjMyIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBTbGF2YSBNb25pY2ggPHNsYXZhLm1vbmljaEBqb2xsYS5jb20+
+CkRhdGU6IE1vbiwgMjUgTm92IDIwMTMgMjM6NTE6NTMgKzAyMDAKU3ViamVjdDogW1BBVENIXSBM
+b2FkIG1lc3NhZ2VfY2VudGVyIGFuZCBtZXNzYWdlX3Byb3h5IGZyb20gdGhlIHByb3ZpZGVyIGlu
+Zm8KIGZpbGUKCi0tLQogcGx1Z2lucy9tYnBpLmMgfCAgICA2ICsrKysrKwogMSBmaWxlIGNoYW5n
+ZWQsIDYgaW5zZXJ0aW9ucygrKQoKZGlmZiAtLWdpdCBhL3BsdWdpbnMvbWJwaS5jIGIvcGx1Z2lu
+cy9tYnBpLmMKaW5kZXggMzA5ZTFlZC4uMTdiYTRkOCAxMDA2NDQKLS0tIGEvcGx1Z2lucy9tYnBp
+LmMKKysrIGIvcGx1Z2lucy9tYnBpLmMKQEAgLTE3NCw2ICsxNzQsMTIgQEAgc3RhdGljIHZvaWQg
+YXBuX3N0YXJ0KEdNYXJrdXBQYXJzZUNvbnRleHQgKmNvbnRleHQsIGNvbnN0IGdjaGFyICplbGVt
+ZW50X25hbWUsCiAJZWxzZSBpZiAoZ19zdHJfZXF1YWwoZWxlbWVudF9uYW1lLCAicGFzc3dvcmQi
+KSkKIAkJZ19tYXJrdXBfcGFyc2VfY29udGV4dF9wdXNoKGNvbnRleHQsICZ0ZXh0X3BhcnNlciwK
+IAkJCQkJCSZhcG4tPnBhc3N3b3JkKTsKKwllbHNlIGlmIChnX3N0cl9lcXVhbChlbGVtZW50X25h
+bWUsICJtbXNjIikpCisJCWdfbWFya3VwX3BhcnNlX2NvbnRleHRfcHVzaChjb250ZXh0LCAmdGV4
+dF9wYXJzZXIsCisJCQkJCQkmYXBuLT5tZXNzYWdlX2NlbnRlcik7CisJZWxzZSBpZiAoZ19zdHJf
+ZXF1YWwoZWxlbWVudF9uYW1lLCAibW1zcHJveHkiKSkKKwkJZ19tYXJrdXBfcGFyc2VfY29udGV4
+dF9wdXNoKGNvbnRleHQsICZ0ZXh0X3BhcnNlciwKKwkJCQkJCSZhcG4tPm1lc3NhZ2VfcHJveHkp
+OwogCWVsc2UgaWYgKGdfc3RyX2VxdWFsKGVsZW1lbnRfbmFtZSwgInVzYWdlIikpCiAJCXVzYWdl
+X3N0YXJ0KGNvbnRleHQsIGF0dHJpYnV0ZV9uYW1lcywgYXR0cmlidXRlX3ZhbHVlcywKIAkJCQkm
+YXBuLT50eXBlLCBlcnJvcik7Ci0tIAoxLjcuOS41Cgo=
 
---===============0593719548143916051==--
+--===============3417285553497873069==--
 
