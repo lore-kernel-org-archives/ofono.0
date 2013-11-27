@@ -1,30 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============6179294439092455466=="
+Content-Type: multipart/mixed; boundary="===============2617464838439827077=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Slava Monich <slava.monich@jolla.com>
 Subject: Re: [PATCH] Load message_center and message_proxy from the provider
  info file
-Date: Tue, 26 Nov 2013 15:37:00 -0600
-Message-ID: <5295147C.3010101@gmail.com>
-In-Reply-To: <81E79608-DDA3-4D2D-9797-73B34C08AF23@jolla.com>
+Date: Wed, 27 Nov 2013 10:40:49 +0200
+Message-ID: <718A9266-D2C4-4A73-B1BF-39936F65C74E@jolla.com>
+In-Reply-To: <5295147C.3010101@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6179294439092455466==
+--===============2617464838439827077==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+OK, thanks!
 
-I went ahead and applied the patch.  Please note that this logic will =
+-Slava
 
-only work if Mobile Broadband Provider Info marks the context as usage=3Dmm=
-s.
 
-Also, in the future please use git send-email to submit patches.
+> Hi Slava,
+> =
 
-Thanks,
--Denis
+> I went ahead and applied the patch.  Please note that this logic will onl=
+y work if Mobile Broadband Provider Info marks the context as usage=3Dmms.
+> =
 
---===============6179294439092455466==--
+> Also, in the future please use git send-email to submit patches.
+> =
+
+> Thanks,
+> -Denis
+
+
+--===============2617464838439827077==--
 
