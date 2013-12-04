@@ -1,37 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============2617464838439827077=="
+Content-Type: multipart/mixed; boundary="===============0711726486896721147=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
-Subject: Re: [PATCH] Load message_center and message_proxy from the provider
- info file
-Date: Wed, 27 Nov 2013 10:40:49 +0200
-Message-ID: <718A9266-D2C4-4A73-B1BF-39936F65C74E@jolla.com>
-In-Reply-To: <5295147C.3010101@gmail.com>
+From: Andrew Earl <andrewx.earl@intel.com>
+Subject: [PATCH] hfp: Add Voice Recognition flag to BRSF for HF role
+Date: Wed, 04 Dec 2013 15:36:12 +0100
+Message-ID: <1386167773-6375-1-git-send-email-andrewx.earl@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2617464838439827077==
+--===============0711726486896721147==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-OK, thanks!
+Fix for PTS testing of BVRA command in Handsfree Role.
 
--Slava
+Andrew Earl (1):
+  hfp: Add Voice Recognition flag to BRSF for HF role
+
+ drivers/hfpmodem/slc.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+-- =
+
+1.7.11.7
+
+Intel GmbH
+Dornacher Strasse 1
+85622 Feldkirchen/Muenchen, Deutschland
+Sitz der Gesellschaft: Feldkirchen bei Muenchen
+Geschaeftsfuehrer: Christian Lamprechter, Hannes Schwaderer, Douglas Lusk
+Registergericht: Muenchen HRB 47456
+Ust.-IdNr./VAT Registration No.: DE129385895
+Citibank Frankfurt a.M. (BLZ 502 109 00) 600119052
 
 
-> Hi Slava,
-> =
-
-> I went ahead and applied the patch.  Please note that this logic will onl=
-y work if Mobile Broadband Provider Info marks the context as usage=3Dmms.
-> =
-
-> Also, in the future please use git send-email to submit patches.
-> =
-
-> Thanks,
-> -Denis
-
-
---===============2617464838439827077==--
+--===============0711726486896721147==--
 
