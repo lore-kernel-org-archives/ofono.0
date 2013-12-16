@@ -1,117 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============0851208648886760904=="
+Content-Type: multipart/mixed; boundary="===============0927343973442228714=="
 MIME-Version: 1.0
 From: KrzysztofX Wilk <krzysztofx.wilk@intel.com>
-Subject: [PATCH 3/8] include: Add Siri interface definition
-Date: Mon, 16 Dec 2013 17:52:39 +0000
-Message-ID: <1387216364-7138-4-git-send-email-krzysztofx.wilk@intel.com>
+Subject: [PATCH 1/8] doc: Add Siri API
+Date: Mon, 16 Dec 2013 17:52:37 +0000
+Message-ID: <1387216364-7138-2-git-send-email-krzysztofx.wilk@intel.com>
 In-Reply-To: <1387216364-7138-1-git-send-email-krzysztofx.wilk@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0851208648886760904==
+--===============0927343973442228714==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am    |  2 +-
- include/siri.h | 65 ++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 66 insertions(+), 1 deletion(-)
- create mode 100755 include/siri.h
+ Makefile.am      |  2 +-
+ doc/siri-api.txt | 43 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 44 insertions(+), 1 deletion(-)
+ mode change 100644 =3D> 100755 Makefile.am
+ create mode 100644 doc/siri-api.txt
 
 diff --git a/Makefile.am b/Makefile.am
-index b89352e..cd84c14 100755
+old mode 100644
+new mode 100755
+index 513ee14..b89352e
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -21,7 +21,7 @@ pkginclude_HEADERS =3D include/log.h include/plugin.h inc=
-lude/history.h \
- 			include/cdma-connman.h include/gnss.h \
- 			include/private-network.h include/cdma-netreg.h \
- 			include/cdma-provision.h include/handsfree.h \
--			include/handsfree-audio.h
-+			include/handsfree-audio.h include/siri.h
+@@ -566,7 +566,7 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt doc/=
+release-faq.txt \
+ 			doc/audio-settings-api.txt doc/text-telephony-api.txt \
+ 			doc/calypso-modem.txt doc/message-api.txt \
+ 			doc/location-reporting-api.txt \
+-			doc/certification.txt
++			doc/certification.txt doc/siri-api.txt
  =
 
- nodist_pkginclude_HEADERS =3D include/version.h
  =
 
-diff --git a/include/siri.h b/include/siri.h
-new file mode 100755
-index 0000000..4199da1
+ test_scripts =3D test/backtrace \
+diff --git a/doc/siri-api.txt b/doc/siri-api.txt
+new file mode 100644
+index 0000000..6c44231
 --- /dev/null
-+++ b/include/siri.h
-@@ -0,0 +1,65 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2013  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
++++ b/doc/siri-api.txt
+@@ -0,0 +1,43 @@
++Siri hierarchy [experimental]
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 +
-+#ifndef __OFONO_SIRI_H
-+#define __OFONO_SIRI_H
++Service		org.ofono
++Interface	org.ofono.Siri
++Object path	[variable prefix]/{modem0,modem1,...}
 +
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
++Methods		dict GetProperties()
 +
-+#include <ofono/types.h>
++			Returns all Siri properties. See the
++			properties section for available properties.
 +
-+struct ofono_siri;
++			Possible Errors: [service].Error.InProgress
++					 [service].Error.Failed
 +
-+typedef void (*ofono_siri_cb_t)(const struct ofono_error *error,
-+					struct ofono_siri *siri);
++		void SetProperty(string name, variant value)
 +
-+struct ofono_siri_driver {
-+	const char *name;
-+	int (*probe)(struct ofono_siri *siri, unsigned int vendor,
-+				void *data);
-+	void (*remove)(struct ofono_siri *siri);
-+	void (*set_eyes_free_mode) (struct ofono_siri *siri,
-+				ofono_siri_cb_t cb,
-+				unsigned int val);
-+};
++			Changes the value of the specified property. Only
++			properties that are listed as read-write are
++			changeable. On success a PropertyChanged signal
++			will be emitted.
 +
-+void ofono_siri_set_status(struct ofono_siri *siri, int value);
-+
-+int ofono_siri_driver_register(const struct ofono_siri_driver *driver);
-+void ofono_siri_driver_unregister(const struct ofono_siri_driver *driver);
-+
-+struct ofono_siri *ofono_siri_create(struct ofono_modem *modem,
-+			unsigned int vendor, const char *driver, void *data);
-+
-+void ofono_siri_register(struct ofono_siri *siri);
-+void ofono_siri_remove(struct ofono_siri *siri);
-+
-+void ofono_siri_set_data(struct ofono_siri *siri, void *data);
-+void *ofono_siri_get_data(struct ofono_siri *siri);
++			Possible Errors: [service].Error.InvalidArguments
++					 [service].Error.InProgress
++					 [service].Error.Failed
 +
 +
-+#ifdef __cplusplus
-+}
-+#endif
++Signals		PropertyChanged(string property, variant value)
 +
-+#endif /* __OFONO_SIRI_H */
++			This signal indicates a changed value of the given
++			property.
++
++
++Properties	boolean	Enabled [readonly]
++
++			This property indicates whether Siri is available on
++			the device.
++
++		string EyesFreeMode [readwrite]
++
++			This property indicates the state of Siri Eyes Free
++			Mode.  The current possible values are: "enabled"
++			and "disabled"
 -- =
 
 1.7.11.7
 
 
---===============0851208648886760904==--
+--===============0927343973442228714==--
 
