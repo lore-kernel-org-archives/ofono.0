@@ -1,32 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============5173689707007501459=="
+Content-Type: multipart/mixed; boundary="===============8951560968936817365=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: [PATCH] features: Describe Siri feature
-Date: Wed, 18 Dec 2013 15:40:33 -0600
-Message-ID: <52B21651.10909@gmail.com>
-In-Reply-To: <1387378982-22169-2-git-send-email-krzysztofx.wilk@intel.com>
+Date: Sat, 21 Dec 2013 11:29:08 -0800
+Message-ID: <39B88190-AA13-4E52-AFF9-2BFEE91C8A89@holtmann.org>
+In-Reply-To: <52B21651.10909@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5173689707007501459==
+--===============8951560968936817365==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Krzysztof,
+Hi,
 
-On 12/18/2013 09:03 AM, KrzysztofX Wilk wrote:
-> ---
->   doc/features.txt | 8 ++++++++
->   1 file changed, 8 insertions(+)
->   mode change 100644 =3D> 100755 doc/features.txt
->
+>> ---
+>>  doc/features.txt | 8 ++++++++
+>>  1 file changed, 8 insertions(+)
+>>  mode change 100644 =3D> 100755 doc/features.txt
+>> =
 
-Patch has been applied, thanks.
+> =
 
-Regards,
--Denis
+> Patch has been applied, thanks.
+
+can someone please STOP changing the mode on all files they touch. Seriousl=
+y, this is so not cool.
+
+Regards
+
+Marcel
 
 
---===============5173689707007501459==--
+--===============8951560968936817365==--
 
