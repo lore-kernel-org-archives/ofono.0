@@ -1,126 +1,180 @@
-Content-Type: multipart/mixed; boundary="===============3012384110346240220=="
+Content-Type: multipart/mixed; boundary="===============4236033157420352489=="
 MIME-Version: 1.0
-From: Dennis Lan (dlan) <dennis.yxun@gmail.com>
-Subject: How to set 3G card into data mode?
-Date: Wed, 08 Jan 2014 17:27:52 +0800
-Message-ID: <CAF1ZMEeUCkEFCH+MNh0caPbymZ5iX+BOF58bwgO1gtd7U9+rDw@mail.gmail.com>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: [PATCH] More const pointers
+Date: Sat, 11 Jan 2014 13:32:10 +0200
+Message-ID: <1389439930-5802-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3012384110346240220==
+--===============4236033157420352489==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all:
-  I'm using Huawei E173 3G card,  and have problem to set current operator.
-seems it set to GSM mode by default, COPS query command return "
-CHN-CUGSM, 460 01 2"
-  the commands I'm using here 1) list-modems 2) enable-modem
-3)online-modem 4) create-internet-context 5=EF=BC=89activate-context
-  reading the code, it seems possible to manually change operator,
-from drivers/atmodem/network-registration.c : at_register_manual()?
-  any idea? what should I do?
+---
+ include/dbus.h | 12 ++++++------
+ src/dbus.c     | 20 +++++++++++---------
+ 2 files changed, 17 insertions(+), 15 deletions(-)
 
-detail log:
+diff --git a/include/dbus.h b/include/dbus.h
+index e7ccb0b..3d39eff 100644
+--- a/include/dbus.h
++++ b/include/dbus.h
+@@ -77,29 +77,29 @@ extern "C" {
+ DBusConnection *ofono_dbus_get_connection(void);
+ =
 
-ofonod[14119]: PCUI: > AT+CSQ\r
-ofonod[14119]: PCUI: < \r\n+CSQ: 23,99\r\n\r\nOK\r\n
-ofonod[14119]: drivers/atmodem/network-registration.c:csq_cb() csq_cb: 23
-ofonod[14119]: PCUI: > AT+COPS=3D3,0\r
-ofonod[14119]: PCUI: < \r\nOK\r\n
-ofonod[14119]: PCUI: > AT+COPS?\r
-ofonod[14119]: PCUI: < \r\n+COPS: 1,0,"CHN-CUGSM",2\r\n\r\nOK\r\n
-ofonod[14119]: drivers/atmodem/network-registration.c:cops_cb()
-cops_cb: CHN-CUGSM, 460 01 2
-ofonod[14119]: src/network.c:current_operator_callback() 0x772a80, 0x769f50
-ofonod[14119]: PCUI: < \r\n+CREG: 1,"A80A","51AF"\r\n\r\n+CGREG:
-1,"A80A","51AF"\r\n
-ofonod[14119]: src/network.c:ofono_netreg_status_notify() /huawei_0
-status 1 tech 2
-ofonod[14119]: src/cbs.c:cbs_location_changed() 1, -1, -1, 2, 46001
-ofonod[14119]: src/gprs.c:netreg_status_changed() 1
-ofonod[14119]: src/gprs.c:ofono_gprs_status_notify() /huawei_0 status 1
-ofonod[14119]: PCUI: > AT+COPS=3D3,2\r
-ofonod[14119]: PCUI: < \r\nOK\r\n
-ofonod[14119]: PCUI: > AT+COPS?\r
-ofonod[14119]: PCUI: < \r\n+COPS: 1,2,"46001",2\r\n\r\nOK\r\n
-ofonod[14119]: drivers/atmodem/network-registration.c:cops_numeric_cb()
-Cops numeric got mcc: 460, mnc: 01
-ofonod[14119]: PCUI: > AT+CSQ\r
-ofonod[14119]: PCUI: < \r\n+CSQ: 23,99\r\n\r\nOK\r\n
-ofonod[14119]: drivers/atmodem/network-registration.c:csq_cb() csq_cb: 23
-ofonod[14119]: PCUI: > AT+COPS=3D3,0\r
-ofonod[14119]: PCUI: < \r\nOK\r\n
-ofonod[14119]: PCUI: > AT+COPS?\r
-ofonod[14119]: PCUI: < \r\n+COPS: 1,0,"CHN-CUGSM",2\r\n\r\nOK\r\n
-ofonod[14119]: drivers/atmodem/network-registration.c:cops_cb()
-cops_cb: CHN-CUGSM, 460 01 2
-ofonod[14119]: src/network.c:current_operator_callback() 0x772a80, 0x769f50
+ void ofono_dbus_dict_append(DBusMessageIter *dict, const char *key, int ty=
+pe,
+-				void *value);
++				const void *value);
+ =
 
-ofonod[14119]: PCUI: < \r\n+CREG: 1,"A80A","517E"\r\n\r\n+CGREG:
-1,"A80A","517E"\r\n
-ofonod[14119]: src/network.c:ofono_netreg_status_notify() /huawei_0
-status 1 tech 2
-ofonod[14119]: src/cbs.c:cbs_location_changed() 1, -1, -1, 2, 46001
-ofonod[14119]: src/gprs.c:netreg_status_changed() 1
-ofonod[14119]: src/gprs.c:ofono_gprs_status_notify() /huawei_0 status 1
-ofonod[14119]: PCUI: > AT+COPS=3D3,2\r
-ofonod[14119]: PCUI: < \r\nOK\r\n
-ofonod[14119]: PCUI: > AT+COPS?\r
-ofonod[14119]: PCUI: < \r\n+COPS: 1,2,"46001",2\r\n\r\nOK\r\n
-ofonod[14119]: drivers/atmodem/network-registration.c:cops_numeric_cb()
-Cops numeric got mcc: 460, mnc: 01
-ofonod[14119]: PCUI: > AT+CSQ\r
-ofonod[14119]: PCUI: < \r\n+CSQ: 23,99\r\n\r\nOK\r\n
-ofonod[14119]: drivers/atmodem/network-registration.c:csq_cb() csq_cb: 23
-ofonod[14119]: PCUI: > AT+COPS=3D3,0\r
-ofonod[14119]: PCUI: < \r\nOK\r\n
-ofonod[14119]: PCUI: > AT+COPS?\r
-ofonod[14119]: PCUI: < \r\n+COPS: 1,0,"CHN-CUGSM",2\r\n\r\nOK\r\n
-ofonod[14119]: drivers/atmodem/network-registration.c:cops_cb()
-cops_cb: CHN-CUGSM, 460 01 2
-ofonod[14119]: src/network.c:current_operator_callback() 0x772a80, 0x769f50
-ofonod[14119]: PCUI: < \r\n+CREG: 1,"A80A","51AF"\r\n\r\n+CGREG:
-1,"A80A","51AF"\r\n
-ofonod[14119]: src/network.c:ofono_netreg_status_notify() /huawei_0
-status 1 tech 2
-ofonod[14119]: src/cbs.c:cbs_location_changed() 1, -1, -1, 2, 46001
-ofonod[14119]: src/gprs.c:netreg_status_changed() 1
-ofonod[14119]: src/gprs.c:ofono_gprs_status_notify() /huawei_0 status 1
-ofonod[14119]: PCUI: > AT+COPS=3D3,2\r
-ofonod[14119]: PCUI: < \r\nOK\r\n
-ofonod[14119]: PCUI: > AT+COPS?\r
-ofonod[14119]: PCUI: < \r\n+COPS: 1,2,"46001",2\r\n\r\nOK\r\n
-ofonod[14119]: drivers/atmodem/network-registration.c:cops_numeric_cb()
-Cops numeric got mcc: 460, mnc: 01
-ofonod[14119]: PCUI: > AT+CSQ\r
-ofonod[14119]: PCUI: < \r\n+CSQ: 23,99\r\n\r\nOK\r\n
-ofonod[14119]: drivers/atmodem/network-registration.c:csq_cb() csq_cb: 23
-ofonod[14119]: PCUI: > AT+COPS=3D3,0\r
-ofonod[14119]: PCUI: < \r\nOK\r\n
-ofonod[14119]: PCUI: > AT+COPS?\r
-ofonod[14119]: PCUI: < \r\n+COPS: 1,0,"CHN-CUGSM",2\r\n\r\nOK\r\n
-ofonod[14119]: drivers/atmodem/network-registration.c:cops_cb()
-cops_cb: CHN-CUGSM, 460 01 2
-ofonod[14119]: src/network.c:current_operator_callback() 0x772a80, 0x769f50
-ofonod[14119]: PCUI: < \r\n^RSSI: 26\r\n
-ofonod[14119]: src/network.c:ofono_netreg_strength_notify() strength 83
+ void ofono_dbus_dict_append_array(DBusMessageIter *dict, const char *key,
+-					int type, void *val);
++					int type, const void *val);
+ =
+
+ void ofono_dbus_dict_append_dict(DBusMessageIter *dict, const char *key,
+-					int type, void *val);
++					int type, const void *val);
+ =
+
+ int ofono_dbus_signal_property_changed(DBusConnection *conn, const char *p=
+ath,
+ 					const char *interface, const char *name,
+-					int type, void *value);
++					int type, const void *value);
+ =
+
+ int ofono_dbus_signal_array_property_changed(DBusConnection *conn,
+ 						const char *path,
+ 						const char *interface,
+ 						const char *name, int type,
+-						void *value);
++						const void *value);
+ =
+
+ int ofono_dbus_signal_dict_property_changed(DBusConnection *conn,
+ 						const char *path,
+ 						const char *interface,
+ 						const char *name, int type,
+-						void *value);
++						const void *value);
+ =
+
+ #ifdef __cplusplus
+ }
+diff --git a/src/dbus.c b/src/dbus.c
+index 1558a51..45becc1 100644
+--- a/src/dbus.c
++++ b/src/dbus.c
+@@ -48,7 +48,7 @@ struct error_mapping_entry cme_errors_mapping[] =3D {
+ };
+ =
+
+ static void append_variant(DBusMessageIter *iter,
+-				int type, void *value)
++				int type, const void *value)
+ {
+ 	char sig[2];
+ 	DBusMessageIter valueiter;
+@@ -65,7 +65,7 @@ static void append_variant(DBusMessageIter *iter,
+ }
+ =
+
+ void ofono_dbus_dict_append(DBusMessageIter *dict,
+-			const char *key, int type, void *value)
++			const char *key, int type, const void *value)
+ {
+ 	DBusMessageIter keyiter;
+ =
+
+@@ -85,7 +85,8 @@ void ofono_dbus_dict_append(DBusMessageIter *dict,
+ 	dbus_message_iter_close_container(dict, &keyiter);
+ }
+ =
+
+-static void append_array_variant(DBusMessageIter *iter, int type, void *va=
+l)
++static void append_array_variant(DBusMessageIter *iter, int type,
++				const void *val)
+ {
+ 	DBusMessageIter variant, array;
+ 	char typesig[2];
+@@ -113,7 +114,7 @@ static void append_array_variant(DBusMessageIter *iter,=
+ int type, void *val)
+ }
+ =
+
+ void ofono_dbus_dict_append_array(DBusMessageIter *dict, const char *key,
+-				int type, void *val)
++				int type, const void *val)
+ {
+ 	DBusMessageIter entry;
+ =
+
+@@ -127,7 +128,8 @@ void ofono_dbus_dict_append_array(DBusMessageIter *dict=
+, const char *key,
+ 	dbus_message_iter_close_container(dict, &entry);
+ }
+ =
+
+-static void append_dict_variant(DBusMessageIter *iter, int type, void *val)
++static void append_dict_variant(DBusMessageIter *iter, int type,
++				const void *val)
+ {
+ 	DBusMessageIter variant, array, entry;
+ 	char typesig[5];
+@@ -182,7 +184,7 @@ static void append_dict_variant(DBusMessageIter *iter, =
+int type, void *val)
+ }
+ =
+
+ void ofono_dbus_dict_append_dict(DBusMessageIter *dict, const char *key,
+-				int type, void *val)
++				int type, const void *val)
+ {
+ 	DBusMessageIter entry;
+ =
+
+@@ -200,7 +202,7 @@ int ofono_dbus_signal_property_changed(DBusConnection *=
+conn,
+ 					const char *path,
+ 					const char *interface,
+ 					const char *name,
+-					int type, void *value)
++					int type, const void *value)
+ {
+ 	DBusMessage *signal;
+ 	DBusMessageIter iter;
+@@ -225,7 +227,7 @@ int ofono_dbus_signal_array_property_changed(DBusConnec=
+tion *conn,
+ 						const char *path,
+ 						const char *interface,
+ 						const char *name,
+-						int type, void *value)
++						int type, const void *value)
+ =
+
+ {
+ 	DBusMessage *signal;
+@@ -251,7 +253,7 @@ int ofono_dbus_signal_dict_property_changed(DBusConnect=
+ion *conn,
+ 						const char *path,
+ 						const char *interface,
+ 						const char *name,
+-						int type, void *value)
++						int type, const void *value)
+ =
+
+ {
+ 	DBusMessage *signal;
+-- =
+
+1.8.3.2
 
 
-
-ofonod[14119]: drivers/atmodem/gprs-context.c:at_gprs_activate_primary() ci=
-d 1
-ofonod[14119]: Modem: > AT+CGDCONT=3D1,"IP","3gnet"\r
-ofonod[14119]: Modem: < \r\nOK\r\n
-ofonod[14119]: drivers/atmodem/gprs-context.c:at_cgdcont_cb() ok 1
-ofonod[14119]: Modem: > AT+CGDATA=3D"PPP",1\r
-ofonod[14119]: Modem: < \r\n+CME ERROR: 50\r\n
-ofonod[14119]: drivers/atmodem/gprs-context.c:at_cgdata_cb() ok 0
-ofonod[14119]: Unable to enter data state
-ofonod[14119]: src/gprs.c:pri_activate_callback() 0x782e30
-ofonod[14119]: src/gprs.c:pri_activate_callback() Activating context
-failed with error: Incorrect parameters
-
---===============3012384110346240220==--
+--===============4236033157420352489==--
 
