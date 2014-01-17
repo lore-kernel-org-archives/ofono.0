@@ -1,92 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============7469715134587352049=="
+Content-Type: multipart/mixed; boundary="===============0335650773356874400=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] gprs: Use "internet" apn for auto-created context
-Date: Thu, 16 Jan 2014 22:52:17 +0200
-Message-ID: <52D84681.6000706@jolla.com>
-In-Reply-To: <52D81138.5080708@gmail.com>
+Date: Thu, 16 Jan 2014 21:43:39 -0600
+Message-ID: <52D8A6EB.90506@gmail.com>
+In-Reply-To: <52D84681.6000706@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7469715134587352049==
+--===============0335650773356874400==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Slava,
 
-Sorry to bother you, but I don't quite get the logic. There's something =
+A gentle reminder to please not top-post on this mailing list.
 
-that needs to be done in case if ALL provisioning plugins have run and =
+On 01/16/2014 02:52 PM, Slava Monich wrote:
+> Hi Denis,
+>
+> Sorry to bother you, but I don't quite get the logic. There's something
+> that needs to be done in case if ALL provisioning plugins have run and
+> failed. How could that be a part of a provisioning plugin? They all have
+> already run and failed by definition of the problem.
 
-failed. How could that be a part of a provisioning plugin? They all have =
+We do; we create an empty context to signify that provisioning has =
 
-already run and failed by definition of the problem.
+failed.  I do realize you mean well, but you're trying to wildly guess =
 
-And another thing. If context initialization belongs exclusively to the =
+(at least that is how I read the commit description) and breaking =
 
-provisioning plugins then what is this add_context() call doing there? =
+existing behavior.
 
-And why INTERNET context is created but, say, MMS is not? Isn't that a =
+>
+> And another thing. If context initialization belongs exclusively to the
+> provisioning plugins then what is this add_context() call doing there?
+> And why INTERNET context is created but, say, MMS is not? Isn't that a
+> wild guess too? If so then I have found exactly the right place for
+> another wild guess. Or am I missing something?
 
-wild guess too? If so then I have found exactly the right place for =
+You are :)  The special context is not meant to be used, and is by =
 
-another wild guess. Or am I missing something?
+design meant to always fail.
 
-I don't want to waste your time as well as mine by submitting patches =
+An empty APN is by definition invalid, so it is used as a 'special' flag =
 
-that get rejected but in order to do so I have to understand why patches =
+value.  The 'special' empty APN context is used by various oFono UIs to =
 
-get rejected.
+start a user-guided provisioning process.  If you mess with this =
+
+behavior, you will break those UIs.
+
+Why only an internet context is created is largely historical.  This =
+
+behavior probably predates MMS contexts.
+
+>
+> I don't want to waste your time as well as mine by submitting patches
+> that get rejected but in order to do so I have to understand why patches
+> get rejected.
+
+Completely understandable.  Please feel free to start a conversation on =
+
+the mailing list or the IRC channel whenever you feel you need more =
+
+information.
 
 Regards,
--Slava
+-Denis
 
-
-> Hi Slava,
->
-> On 01/16/2014 08:43 AM, Slava Monich wrote:
->> Such an access point has a pretty good chance to actually work.
->> ---
->>   src/gprs.c | 9 +++++++--
->>   1 file changed, 7 insertions(+), 2 deletions(-)
->>
->> diff --git a/src/gprs.c b/src/gprs.c
->> index e379f7b..01ff875 100644
->> --- a/src/gprs.c
->> +++ b/src/gprs.c
->> @@ -2992,8 +2992,13 @@ static void ofono_gprs_finish_register(struct =
-
->> ofono_gprs *gprs)
->>       struct ofono_modem *modem =3D __ofono_atom_get_modem(gprs->atom);
->>       const char *path =3D __ofono_atom_get_path(gprs->atom);
->>
->> -    if (gprs->contexts =3D=3D NULL) /* Automatic provisioning failed */
->> -        add_context(gprs, NULL, OFONO_GPRS_CONTEXT_TYPE_INTERNET);
->> +    if (gprs->contexts =3D=3D NULL) { /* Automatic provisioning failed =
-*/
->> +        struct pri_context *context =3D add_context(gprs, NULL,
->> +                    OFONO_GPRS_CONTEXT_TYPE_INTERNET);
->> +        if (context) {
->> +            strcpy(context->context.apn, "internet");
->> +        }
->> +    }
->
-> Nope.  This doesn't belong in the core.  If you want to guess wildly, =
-
-> please do so in a provisioning plugin.  That is what they're there =
-
-> for.  You can have multiple provisioning plugins by the way.
->
->>
->>       if (!g_dbus_register_interface(conn, path,
->>                       OFONO_CONNECTION_MANAGER_INTERFACE,
->>
->
-> Regards,
-> -Denis
->
-
-
---===============7469715134587352049==--
+--===============0335650773356874400==--
 
