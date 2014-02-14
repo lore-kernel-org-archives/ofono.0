@@ -1,56 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============8765467424178958119=="
+Content-Type: multipart/mixed; boundary="===============3587853351546975425=="
 MIME-Version: 1.0
-From: Arslan, Fahad <Fahad_Arslan@mentor.com>
-Subject: rfcomm kernel module isn't loaded with version >= 1.13
-Date: Fri, 14 Feb 2014 16:06:16 +0000
-Message-ID: <2B9C97B395470A40B9E9E5D469BCD9FA01568A09@EU-MBX-03.mgc.mentorg.com>
+From: Homam Dabis <hdabis@digisoft.tv>
+Subject: How does ofono work
+Date: Fri, 14 Feb 2014 17:16:24 +0000
+Message-ID: <CAK+sfov2mrkyta6aSn2nzu+p=EFMJWK4gC3ZmuR1JNgCmVOmKA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8765467424178958119==
+--===============3587853351546975425==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-I'm using bluez4_4.101 and ofono-1.13. If I start ofono first and then blue=
-tooth, rfcomm kernel module is not loaded. But if bluetooth is started firs=
-t things work perfectly.
+I have a problem in that my Huawei E303 is not being properly detected by
+ofono i.e GetModems returns an empty array.
 
-I tried using ofono-1.12 and it works fine irrespective of the execution se=
-quence. I think changes introduced in ofono-1.13 and/or above are causing t=
-his but not sure.
-Any idea or pointers?
+It is working well on Ubuntu (linux 3.2.0-58-generic) but not on my
+embedded SIgma platform (linux 2.6.35)
 
-Thanks,
-Fahad
+The option driver/usbserial driver seem to be correctly loaded. mode switch
+is also ok as the USB serial devices seem to be created ok.
 
+I am using ofono 1.14.
 
+Ofono detects that ttyUSB0,1,2 are available and calls add_modem.
 
+As my setup is not normal, I am now trying to debug the system myself.
 
+On the Sigma platform, it seems like the huawei plugin functions in
+huawei.c are not being called as on the ubuntu platform.
 
---===============8765467424178958119==
+So the question is how are those functions in huawei.c being called?
+
+Any explanation would be greatly appreciated.
+
+Homam
+
+--===============3587853351546975425==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PGh0bWwgZGlyPSJsdHIiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBj
-b250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9aXNvLTg4NTktMSI+CjxzdHlsZSBpZD0ib3dhUGFy
-YVN0eWxlIiB0eXBlPSJ0ZXh0L2NzcyI+UCB7bWFyZ2luLXRvcDowO21hcmdpbi1ib3R0b206MDt9
-PC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBvY3NpPSIwIiBmcHN0eWxlPSIxIj4KPGRpdiBzdHlsZT0i
-ZGlyZWN0aW9uOiBsdHI7Zm9udC1mYW1pbHk6IFRhaG9tYTtjb2xvcjogIzAwMDAwMDtmb250LXNp
-emU6IDEwcHQ7Ij48Zm9udCBzaXplPSIyIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwcHQ7Ij5I
-aSw8YnI+Cjxicj4KSSdtIHVzaW5nIGJsdWV6NF80LjEwMSBhbmQgb2Zvbm8tMS4xMy4gSWYgSSBz
-dGFydCBvZm9ubyBmaXJzdCBhbmQgdGhlbiBibHVldG9vdGgsIHJmY29tbSBrZXJuZWwgbW9kdWxl
-IGlzIG5vdCBsb2FkZWQuIEJ1dCBpZiBibHVldG9vdGggaXMgc3RhcnRlZCBmaXJzdCB0aGluZ3Mg
-d29yayBwZXJmZWN0bHkuCjxicj4KPGJyPgpJIHRyaWVkIHVzaW5nIG9mb25vLTEuMTIgYW5kIGl0
-IHdvcmtzIGZpbmUgaXJyZXNwZWN0aXZlIG9mIHRoZSBleGVjdXRpb24gc2VxdWVuY2UuIEkgdGhp
-bmsgY2hhbmdlcyBpbnRyb2R1Y2VkIGluIG9mb25vLTEuMTMgYW5kL29yIGFib3ZlIGFyZSBjYXVz
-aW5nIHRoaXMgYnV0IG5vdCBzdXJlLjxicj4KQW55IGlkZWEgb3IgcG9pbnRlcnM/PGJyPgo8YnI+
-ClRoYW5rcyw8YnI+CkZhaGFkPGJyPgo8YnI+Cjxicj4KPGJyPgo8YnI+Cjwvc3Bhbj48L2ZvbnQ+
-PC9kaXY+CjwvYm9keT4KPC9odG1sPgo=
+PGRpdiBkaXI9Imx0ciI+PGRpdj5IaSw8L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PkkgaGF2ZSBh
+IHByb2JsZW0gaW4gdGhhdCBteSBIdWF3ZWkgRTMwMyBpcyBub3QgYmVpbmcgcHJvcGVybHkgZGV0
+ZWN0ZWQgYnkgb2Zvbm8gaS5lIEdldE1vZGVtcyByZXR1cm5zIGFuIGVtcHR5IGFycmF5LjwvZGl2
+PjxkaXY+PGJyPjwvZGl2PjxkaXY+SXQgaXMgd29ya2luZyB3ZWxsIG9uIFVidW50dSAobGludXgg
+My4yLjAtNTgtZ2VuZXJpYykgYnV0IG5vdCBvbiBteSBlbWJlZGRlZCBTSWdtYSBwbGF0Zm9ybSAo
+bGludXggMi42LjM1KTxicj4KPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5UaGUgb3B0aW9uIGRy
+aXZlci91c2JzZXJpYWwgZHJpdmVyIHNlZW0gdG8gYmUgY29ycmVjdGx5IGxvYWRlZC4gbW9kZSBz
+d2l0Y2ggaXMgYWxzbyBvayBhcyB0aGUgVVNCIHNlcmlhbCBkZXZpY2VzIHNlZW0gdG8gYmUgY3Jl
+YXRlZCBvay48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PkkgYW0gdXNpbmcgb2Zvbm8gMS4xNC48
+L2Rpdj48ZGl2Pjxicj4KPC9kaXY+PGRpdj5PZm9ubyBkZXRlY3RzIHRoYXQgdHR5VVNCMCwxLDIg
+YXJlIGF2YWlsYWJsZSBhbmQgY2FsbHMgYWRkX21vZGVtLjwvZGl2PjxkaXY+PGJyPjwvZGl2Pjxk
+aXY+QXMgbXkgc2V0dXAgaXMgbm90IG5vcm1hbCwgSSBhbSBub3cgdHJ5aW5nIHRvIGRlYnVnIHRo
+ZSBzeXN0ZW0gbXlzZWxmLjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+T24gdGhlIFNpZ21hIHBs
+YXRmb3JtLCBpdCBzZWVtcyBsaWtlIHRoZSBodWF3ZWkgcGx1Z2luIGZ1bmN0aW9uc6BpbiBodWF3
+ZWkuYyBhcmUgbm90IGJlaW5nIGNhbGxlZCBhcyBvbiB0aGUgdWJ1bnR1IHBsYXRmb3JtLjwvZGl2
+Pgo8ZGl2Pjxicj48L2Rpdj48ZGl2PlNvIHRoZSBxdWVzdGlvbiBpcyBob3cgYXJlIHRob3NlIGZ1
+bmN0aW9ucyBpbiBodWF3ZWkuYyBiZWluZyBjYWxsZWQ/PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRp
+dj5BbnkgZXhwbGFuYXRpb24gd291bGQgYmUgZ3JlYXRseSBhcHByZWNpYXRlZC48L2Rpdj48ZGl2
+Pjxicj48L2Rpdj48ZGl2PkhvbWFtIKA8L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PqA8L2Rpdj4K
+PGRpdiBkaXI9Imx0ciI+PHNwYW4+PC9zcGFuPjxzcGFuPjwvc3Bhbj48YnI+PGRpdj48YnI+PC9k
+aXY+PC9kaXY+CjwvZGl2Pgo=
 
---===============8765467424178958119==--
+--===============3587853351546975425==--
 
