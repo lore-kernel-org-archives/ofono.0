@@ -1,41 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============1728803779752650817=="
+Content-Type: multipart/mixed; boundary="===============8765467424178958119=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: No D-Bus Reply to Activating Context
-Date: Tue, 11 Feb 2014 11:18:35 -0600
-Message-ID: <52FA5B6B.6020106@gmail.com>
-In-Reply-To: <056e01cf2725$54cc6bb0$fe654310$@gmail.com>
+From: Arslan, Fahad <Fahad_Arslan@mentor.com>
+Subject: rfcomm kernel module isn't loaded with version >= 1.13
+Date: Fri, 14 Feb 2014 16:06:16 +0000
+Message-ID: <2B9C97B395470A40B9E9E5D469BCD9FA01568A09@EU-MBX-03.mgc.mentorg.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1728803779752650817==
+--===============8765467424178958119==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Brian,
+Hi,
 
- > 09:20:42.611 gprs.c:863                  pri_activate_callback
-> Activating context failed with error: Unknown error type
->
+I'm using bluez4_4.101 and ofono-1.13. If I start ofono first and then blue=
+tooth, rfcomm kernel module is not loaded. But if bluetooth is started firs=
+t things work perfectly.
 
-Looking at that line, we are sending a reply right after printing the =
+I tried using ofono-1.12 and it works fine irrespective of the execution se=
+quence. I think changes introduced in ofono-1.13 and/or above are causing t=
+his but not sure.
+Any idea or pointers?
 
-message.  In case the message is NULL, you'd most likely crash inside =
-
-D-Bus or get an assertion of some kind.
-
-The pending variable is also not messed with anywhere else, so you =
-
-should be getting a reply.
-
-The only thing I can suggest is to try and simulate this behavior with =
-
-phonesim and see if you can duplicate / debug it.
-
-Regards,
--Denis
+Thanks,
+Fahad
 
 
---===============1728803779752650817==--
+
+
+
+--===============8765467424178958119==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgZGlyPSJsdHIiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBj
+b250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9aXNvLTg4NTktMSI+CjxzdHlsZSBpZD0ib3dhUGFy
+YVN0eWxlIiB0eXBlPSJ0ZXh0L2NzcyI+UCB7bWFyZ2luLXRvcDowO21hcmdpbi1ib3R0b206MDt9
+PC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBvY3NpPSIwIiBmcHN0eWxlPSIxIj4KPGRpdiBzdHlsZT0i
+ZGlyZWN0aW9uOiBsdHI7Zm9udC1mYW1pbHk6IFRhaG9tYTtjb2xvcjogIzAwMDAwMDtmb250LXNp
+emU6IDEwcHQ7Ij48Zm9udCBzaXplPSIyIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEwcHQ7Ij5I
+aSw8YnI+Cjxicj4KSSdtIHVzaW5nIGJsdWV6NF80LjEwMSBhbmQgb2Zvbm8tMS4xMy4gSWYgSSBz
+dGFydCBvZm9ubyBmaXJzdCBhbmQgdGhlbiBibHVldG9vdGgsIHJmY29tbSBrZXJuZWwgbW9kdWxl
+IGlzIG5vdCBsb2FkZWQuIEJ1dCBpZiBibHVldG9vdGggaXMgc3RhcnRlZCBmaXJzdCB0aGluZ3Mg
+d29yayBwZXJmZWN0bHkuCjxicj4KPGJyPgpJIHRyaWVkIHVzaW5nIG9mb25vLTEuMTIgYW5kIGl0
+IHdvcmtzIGZpbmUgaXJyZXNwZWN0aXZlIG9mIHRoZSBleGVjdXRpb24gc2VxdWVuY2UuIEkgdGhp
+bmsgY2hhbmdlcyBpbnRyb2R1Y2VkIGluIG9mb25vLTEuMTMgYW5kL29yIGFib3ZlIGFyZSBjYXVz
+aW5nIHRoaXMgYnV0IG5vdCBzdXJlLjxicj4KQW55IGlkZWEgb3IgcG9pbnRlcnM/PGJyPgo8YnI+
+ClRoYW5rcyw8YnI+CkZhaGFkPGJyPgo8YnI+Cjxicj4KPGJyPgo8YnI+Cjwvc3Bhbj48L2ZvbnQ+
+PC9kaXY+CjwvYm9keT4KPC9odG1sPgo=
+
+--===============8765467424178958119==--
 
