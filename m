@@ -1,42 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============2397990518235808940=="
+Content-Type: multipart/mixed; boundary="===============0703769354737668570=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: How does ofono work
-Date: Fri, 14 Feb 2014 13:20:13 -0600
-Message-ID: <52FE6C6D.2040306@gmail.com>
-In-Reply-To: <CAK+sfov2mrkyta6aSn2nzu+p=EFMJWK4gC3ZmuR1JNgCmVOmKA@mail.gmail.com>
+From: Brian Ruptash <bruptash@gmail.com>
+Subject: RE: No D-Bus Reply to Activating Context
+Date: Mon, 17 Feb 2014 09:40:25 +0100
+Message-ID: <009101cf2bbb$e7eb4cf0$b7c1e6d0$@gmail.com>
+In-Reply-To: <52FA5B6B.6020106@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2397990518235808940==
+--===============0703769354737668570==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Homam,
+> > 09:20:42.611 gprs.c:863    pri_activate_callback
+> > Activating context failed with error: Unknown error type
+> =
 
- > It is working well on Ubuntu (linux 3.2.0-58-generic) but not on my
-> embedded SIgma platform (linux 2.6.35)
+> Looking at that line, we are sending a reply right after printing the
+> message.  In case the message is NULL, you'd most likely crash inside
+> D-Bus or get an assertion of some kind.
+> =
 
-That kernel is over 3 years old.  The kernel driver setup may be =
+> The pending variable is also not messed with anywhere else, so you
+> should be getting a reply.
+> =
 
-completely different.
+> The only thing I can suggest is to try and simulate this behavior with
+> phonesim and see if you can duplicate / debug it.
 
-> On the Sigma platform, it seems like the huawei plugin functions in
-> huawei.c are not being called as on the ubuntu platform.
->
-> So the question is how are those functions in huawei.c being called?
+I traced the log and code and agree, which is why I can't understand why
+the D-Bus reply is either not sent or perhaps not received, though it
+only occurs in this particular sequence and is the only case a method
+return is ever "lost".  dbus has a bug in that dbus-monitor can't trace
+method returns, so I can't easily see what's happenning especially as
+it's quite sporadic.
 
-They are triggered by udev events inside plugins/udevng.c  You will need =
+So I punted... I upgraded from ofono 1.12 to 1.14 which has a significant
+overhaul to gdbus, though I can't find anything in the ofono mailing list
+that explains what or why.  And I'll see if the issue persists.
 
-to analyze what is happening on your platform.  Most likely the kernel =
+> Regards,
+> -Denis
 
-driver that is creating the tty nodes for the modem is not in the list =
+Thanks, Denis.
 
-of drivers udevng plugin recognizes for the hardware.
+-- Brian
 
-Regards,
--Denis
 
---===============2397990518235808940==--
+
+--===============0703769354737668570==--
 
