@@ -1,38 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============1658989003483796537=="
+Content-Type: multipart/mixed; boundary="===============6626151228639052022=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Unable to get list of cellular services using Huwaei E303 dongle
-Date: Mon, 24 Feb 2014 14:21:53 -0600
-Message-ID: <530BA9E1.7050205@gmail.com>
-In-Reply-To: <CAK+sfov2OD_Suq+c-Vnb-s5+-fHOoZGmVmxc4AhbQ4uYxdVcmQ@mail.gmail.com>
+Subject: Re: Unable to connect to service
+Date: Mon, 24 Feb 2014 14:25:11 -0600
+Message-ID: <530BAAA7.1080206@gmail.com>
+In-Reply-To: <CAK+sfouMnyyM-YaNveZE57=05fXDk=Wh68Do8LsUMnKm0p1wfA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1658989003483796537==
+--===============6626151228639052022==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Homam,
 
-On 02/24/2014 08:03 AM, Homam Dabis wrote:
-> Hi
->
-> I have an E303 Huawei 3G dongle. Using dbus commands (simulating the
-> Pythin test scripts), I am able to power on the modem and enable the
-> cellular technology. However, when I perform GetSerrvices I get the list
-> of services but not the cellular one.
->
-> The sim card is ok as it works on other platforms. Below is the log I
-> get. Any help appreciated.
->
+ > ofonod[1407]: Modem: > AT+CGDATA=3D"PPP",1\r
+> ofonod[1407]: Modem: < \r\n+CME ERROR: 50\r\n
+> ofonod[1407]:
+> /ofono/1.14-r0/ofono-1.14/drivers/atmodem/gprs-context.c:at_cgdata_cb() o=
+k 0
+> ofonod[1407]: Unable to enter data state
+> ofonod[1407]:
+> /ofono/1.14-r0/ofono-1.14/src/gprs.c:pri_activate_callback() 0x556ecea8
+> ofonod[1407]:
+> /ofono/1.14-r0/ofono-1.14/src/gprs.c:pri_activate_callback() Activating
+> context failed with error: Incorrect parameters
 
-There is no GetServices() API in oFono, so I'm not sure what you're =
+This was already discussed in the thread "Unable to connect Huawei =
 
-trying to do.
+HiLink E303" earlier this month.
 
 Regards,
 -Denis
 
---===============1658989003483796537==--
+
+--===============6626151228639052022==--
 
