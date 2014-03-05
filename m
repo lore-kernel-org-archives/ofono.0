@@ -1,44 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============0063740059692122333=="
+Content-Type: multipart/mixed; boundary="===============0532895881302209288=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
-Subject: Re: RFC: Ubuntu Touch, MMS, and Provisioning
-Date: Wed, 05 Mar 2014 11:39:13 +0200
-Message-ID: <5316F0C1.60501@jolla.com>
-In-Reply-To: <5316965A.5070902@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] idmap: use UL for bitshift literals
+Date: Wed, 05 Mar 2014 08:52:34 -0600
+Message-ID: <53173A32.4020109@gmail.com>
+In-Reply-To: <1393977694-18423-1-git-send-email-espy@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0063740059692122333==
+--===============0532895881302209288==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Tony,
 
->> 3. No way to associate additional APN properties with a gprs_context.
->>
->> apns-conf.xml has many additional APN attributes which don't map
->> directly to gprs_context properties ( eg. authtype, mvno_type, ... ).
->>
+On 03/04/2014 06:01 PM, Tony Espy wrote:
+> The current bitshift logic in idmap incorrectly uses
+> the literal 1 for the value to shift in idmap_alloc(),
+> idmap_take(), and idmap_alloc_next().  This causes the
+> resulting value to be an int instead of a long, which
+> results in the wrong bit being set once the number of
+> bits to shift operand exceeds sizeof(int).  Also
+> on some platforms, the behavior of the left bitshift
+> operator is undefined when this overflow occurs.
+> ---
+>   src/idmap.c | 8 ++++----
+>   1 file changed, 4 insertions(+), 4 deletions(-)
 >
-> If you have usecases in mind for some of these properties, feel free =
 
-> to suggest extensions to the oFono API.
->
-
-What do you think about extending org.ofono.ConnectionContext API with =
-
-Add/RemoveProperty calls and PropertyAdded/Removed signals to allow =
-
-platform/application specific properties of type string? Use cases =
-
-include marking connections as preferred/default or assigning priorities =
-
-to them, tracking the origin of the context (OTA, local provision or =
-
-manually edited) and who knows what else.
+Good catch.  Patch has been applied, thanks.
 
 Regards,
--Slava
+-Denis
 
---===============0063740059692122333==--
+
+--===============0532895881302209288==--
 
