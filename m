@@ -1,57 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============2595005509540099031=="
+Content-Type: multipart/mixed; boundary="===============4712859457252166959=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Slava Monich <slava.monich@jolla.com>
 Subject: Re: RFC: Ubuntu Touch, MMS, and Provisioning
-Date: Wed, 05 Mar 2014 10:32:23 -0600
-Message-ID: <53175197.4090304@gmail.com>
-In-Reply-To: <5316F0C1.60501@jolla.com>
+Date: Wed, 05 Mar 2014 19:37:51 +0200
+Message-ID: <531760EF.6040203@jolla.com>
+In-Reply-To: <53175197.4090304@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2595005509540099031==
+--===============4712859457252166959==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+Hi Denis,
 
-On 03/05/2014 03:39 AM, Slava Monich wrote:
->
->>> 3. No way to associate additional APN properties with a gprs_context.
->>>
->>> apns-conf.xml has many additional APN attributes which don't map
->>> directly to gprs_context properties ( eg. authtype, mvno_type, ... ).
->>>
->>
->> If you have usecases in mind for some of these properties, feel free
->> to suggest extensions to the oFono API.
+>> What do you think about extending org.ofono.ConnectionContext API with
+>> Add/RemoveProperty calls and PropertyAdded/Removed signals to allow
+>> platform/application specific properties of type string? Use cases
+>> include marking connections as preferred/default or assigning priorities
+>> to them, tracking the origin of the context (OTA, local provision or
+>> manually edited) and who knows what else.
 >>
 >
-> What do you think about extending org.ofono.ConnectionContext API with
-> Add/RemoveProperty calls and PropertyAdded/Removed signals to allow
-> platform/application specific properties of type string? Use cases
-> include marking connections as preferred/default or assigning priorities
-> to them, tracking the origin of the context (OTA, local provision or
-> manually edited) and who knows what else.
+> There are practical considerations that make this a bad idea, e.g. =
+
+> security concerns or the fact that our dbus bindings do not handle =
+
+> dynamic properties.  Putting that aside...
 >
+> Your suggestion would be completely against our three core design =
 
-There are practical considerations that make this a bad idea, e.g. =
+> values, e.g. "Minimal and Complete"; "Consistent" and "Easy to Use".
+>
+> I'm open to adding additional properties the "old way" if you can =
 
-security concerns or the fact that our dbus bindings do not handle =
+> argue good use cases for them.
 
-dynamic properties.  Putting that aside...
+A couple of examples.
 
-Your suggestion would be completely against our three core design =
+Suppose, we have a UI that allows the user to switch between "Automatic" =
 
-values, e.g. "Minimal and Complete"; "Consistent" and "Easy to Use".
+and "Custom" MMS or GPRS settings. One of the ways to implement that =
 
-I'm open to adding additional properties the "old way" if you can argue =
+would be to create a new context marked as "manual" and allow the user =
 
-good use cases for them.
+to edit it. The old context remains but it's marked as "automatic" or =
+
+whatever. Manual context has a precedence over the automatic one. =
+
+Switching back to automatic means destroying the "manual" context or =
+
+marking it as "disabled". All that stuff gets saved to the ofono =
+
+SIM-specific gprs file so that these context properties don't get lost =
+
+after swapping SIMs.
+
+Suppose, we have a different connection management system, which shows =
+
+the entire list of available access points to the user and allows to =
+
+choose which one to use. The selected context needs to be marked as =
+
+"default" or something. Again, this context property needs to survive =
+
+SIM swap. With a custom context property that's pretty easy to do.
+
+Every project may have requirements that are more or less unique, often =
+
+influenced by the UI design. There's no need to push support for unique =
+
+project specific requirements into the common code, there's nothing here =
+
+to argue about. It's a matter of whether you want to make ofono a bit =
+
+more usable as is or you are fine with it being cloned and heavily =
+
+modified for each particular project.
 
 Regards,
--Denis
+-Slava
 
-
---===============2595005509540099031==--
+--===============4712859457252166959==--
 
