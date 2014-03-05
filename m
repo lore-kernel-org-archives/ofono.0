@@ -1,37 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============6511030139297295038=="
+Content-Type: multipart/mixed; boundary="===============1704895113604022193=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] idmap: use UL for bitshift literals
-Date: Wed, 05 Mar 2014 15:44:06 -0600
-Message-ID: <53179AA6.1020608@gmail.com>
-In-Reply-To: <53179A9F.6070209@canonical.com>
+Subject: Re: RFC: Ubuntu Touch, MMS, and Provisioning
+Date: Wed, 05 Mar 2014 16:01:44 -0600
+Message-ID: <53179EC8.9090302@gmail.com>
+In-Reply-To: <531793F4.3030107@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6511030139297295038==
+--===============1704895113604022193==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tony,
+Hi Slava,
 
- >
-> Denis -
+ > not my job as a middleware developer to design the UI. But in the end
+> when it's decided which settings should be per-SIM and which are global,
+> I see ofono which I'm already using and which implements persistent
+> per-SIM storage, property change notifications and other niceties and
+> wish I could just add a few little properties there.
+
+The problem is, oFono _is_ in the business of dictating the UI.  The =
+
+entire project was built on that premise and with that philosophy in =
+
+mind.  It was also made to integrate nicely with sister projects =
+
+(ConnMan, BlueZ, mmsd).
+
 >
-> One of my co-workers recently sent a couple of patches that add Python3
-> support to the ofono test scripts, however he's not currently subscribed
-> to the mailing list so they emails appear to be in limbo...
->
-> Can someone clear these as a list moderator, or should I go ahead and
-> re-send them myself?
->
+> I thought I suggested a simple, flexible and perfectly backward
+> compatible solution which would allow to avoid both a) unnecessary
+> forking of ofono and b) public arguments about "horrible Android-like
+> crap", "you are doing it all wrong", "you don't really need that" and
+> such. And yet let people do what they think is right for their own
+> project. Doesn't that sound good?
 
-I'm too lazy to moderate the list as there's too much spam.  Easiest =
+You're free to do what you feel is good for your project, as we are free =
 
-would be for someone subscribed to re-send the patches.
+to do what we feel is good for ours.
 
-Thanks,
+Regards,
 -Denis
 
---===============6511030139297295038==--
+--===============1704895113604022193==--
 
