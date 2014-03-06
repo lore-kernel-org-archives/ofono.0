@@ -1,185 +1,161 @@
-Content-Type: multipart/mixed; boundary="===============0275758007555801488=="
+Content-Type: multipart/mixed; boundary="===============2922064683720058378=="
 MIME-Version: 1.0
 From: Tony Espy <espy@canonical.com>
 Subject: Re: RFC: Ubuntu Touch, MMS, and Provisioning
-Date: Wed, 05 Mar 2014 19:03:06 -0500
-Message-ID: <5317BB3A.5020808@canonical.com>
-In-Reply-To: <5316965A.5070902@gmail.com>
+Date: Wed, 05 Mar 2014 20:15:37 -0500
+Message-ID: <5317CC39.706@canonical.com>
+In-Reply-To: <02CB7E5D-B6EC-49EB-B47B-6307E1A86918@holtmann.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0275758007555801488==
+--===============2922064683720058378==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 03/04/2014 10:13 PM, Denis Kenzior wrote:
-> Hi Tony,
+On 03/05/2014 01:29 PM, Marcel Holtmann wrote:
+> Hi Slava,
 >
->  > Now perhaps I missed something and there is a way to represent a
->> combined usage APN ( maybe using TYPE_ANY? ), but I couldn't see how to
->> accomplish without changes to the core gprs code.
-
-Thanks for the reply Denis.
-
-> oFono is not designed to handle combined usage APNs.
-
-Understood...
-
-> If the APN for MMS
-> and Internet is the same, we would simply 'double-activate' the same APN
-> using multiple contexts. e.g. you would have an Internet context and an
-> MMS context with the same APN.  This of course requires your underlying
-> modem driver to be able to use multiple contexts simultaneously (e.g.
-> multiple gprs_context atoms present.)
-
-OK, applying this logic to the apns-conf db ( I'll get to Marcel's =
-
-second reply focused on this apns shortly ):
-
-1. The provision plugin would need to create separate contexts for each =
-
-type found in an apn's "type" attribute.  This would work when there are =
-
-exact matches between ofono and the apn types ( eg. default=3Dinternet, mms=
- ).
-
-2. Regarding multiple contexts supported in the rilmodem.  We're =
-
-planning on doing this anyways, as we need to support the case where a =
-
-MMS apn is stand-alone.
-
-3. For the shared case, the driver context code could be optimized to =
-
-recognize that a context being activated has the same apn as an already =
-
-activated context and just mark the new context activated, borrowing the =
-
-'Settings' from the first.
-
-So this seems do-able, however it does seem like a fair amount of =
-
-overhead, especially when you start to consider apns that are configured =
-
-for more than just "default" & "mms" ( "dun" and "supl" are other types =
-
-supported in apns-conf ).
-
-This precludes creation of apn types that don't match current ofono =
-
-types ( eg. "dun" & "supl" ).  Neither of these are all that important =
-
-to us currently, however if that changes, we'd have a problem supporting =
-
-them without adding new types.
-
-
-> If you want to go through the trouble of adding hybrid behavior, then
-> patches are welcome.
-
-Sure, although I have no doubts this will be easy given some of the =
-
-competing opinions.  ;)
-
-I think the most minimal implementation of shared contexts would be apns =
-
-that support just INET and MMS.  Unless I'm wrong, I think my changes =
-
-that make it allow-able for MessageCenter and MessageProxy to be set on =
-
-a either context type accomplish this.  None of my other changes are =
-
-required for this type of minimal sharing.
-
-I think the larger question of whether this should be more generic has =
-
-yet to be answered...
-
->> 2. No way to disable core ofono TYPE_MMS network config.
+>>>> What do you think about extending org.ofono.ConnectionContext API with
+>>>> Add/RemoveProperty calls and PropertyAdded/Removed signals to allow
+>>>> platform/application specific properties of type string? Use cases
+>>>> include marking connections as preferred/default or assigning prioriti=
+es
+>>>> to them, tracking the origin of the context (OTA, local provision or
+>>>> manually edited) and who knows what else.
+>>>>
+>>>
+>>> There are practical considerations that make this a bad idea, e.g. secu=
+rity concerns or the fact that our dbus bindings do not handle dynamic prop=
+erties.  Putting that aside...
+>>>
+>>> Your suggestion would be completely against our three core design value=
+s, e.g. "Minimal and Complete"; "Consistent" and "Easy to Use".
+>>>
+>>> I'm open to adding additional properties the "old way" if you can argue=
+ good use cases for them.
 >>
->> The core gprs_context code has special logic for TYPE_MMS contexts which
->> configures the HTTP proxy using networking ioctl requests.  We have an
->> external download manager that handles the actual download of content
->> from the message center.  As it has logic to handle HTTP proxies
->> already, if we use TYPE_MMS, we'd need a way to disable ofono's builtin
->> logic.
+>> A couple of examples.
 >>
->> Would it make sense to add a command-line option to control this
->> behavior?
+>> Suppose, we have a UI that allows the user to switch between "Automatic"=
+ and "Custom" MMS or GPRS settings. One of the ways to implement that would=
+ be to create a new context marked as "manual" and allow the user to edit i=
+t. The old context remains but it's marked as "automatic" or whatever. Manu=
+al context has a precedence over the automatic one. Switching back to autom=
+atic means destroying the "manual" context or marking it as "disabled". All=
+ that stuff gets saved to the ofono SIM-specific gprs file so that these co=
+ntext properties don't get lost after swapping SIMs.
+>>
+>> Suppose, we have a different connection management system, which shows t=
+he entire list of available access points to the user and allows to choose =
+which one to use. The selected context needs to be marked as "default" or s=
+omething. Again, this context property needs to survive SIM swap. With a cu=
+stom context property that's pretty easy to do.
 >
-> oFono only sets up a route and runs the equivalent of ifconfig.  It
-> doesn't do any proxying.
+> I am not even sure what=E2=80=99s your goal here? Are just trying to plai=
+n copy the horrible crap that Android puts in front of their users?
+> You do realize that their list of APNs just purely exists since they neve=
+r figured out on how to do the automatic provisioning properly and user fri=
+endly.
 
-Got it, I guess I got confused by the function gprs.c::pri_setproxy() =
+No, I didn't realize this.  I've generally had positive experiences with =
 
-which sets up a host route for the proxy if configured.  As per Marcel's =
+the Android phones ( mostly Nexus*, except for a G1 ) I've owned.
 
-first reply, a proxy is always used for MMS downloads so this will =
+That said, apns-conf has a lot more content than mbpi, especially with =
 
-always occur.
+regards to MMS support.  There are grand total of 16 MMS APNs defined in =
 
-> This logic is there because ConnMan explicitly
-> ignores contexts of type=3Dmms.  So someone must take care of bringing up
-> the interface, assigning IP, etc.
+the latest version of mbpi:
 
-Sure, makes sense.  In our case, we'd decided to have NetworkManager =
+https://git.gnome.org/browse/mobile-broadband-provider-info/
 
-handle this work for INET or MMS contexts, so again it would be nice if =
+> I have to second Denis here that time is better spent in creating a prope=
+r provision database instead of just copying what AOSP provides.
 
-this behavior were configurable.
+Sure, but how long has mbpi been around for, and why isn't it in better =
 
-> You might also want to check out the mmsd project since that already
-> works with oFono.
+shape?  Also, as explained earlier Android supports combined contexts, =
 
-We initially had planned to use mmsd, however decided to extend our =
+which is not compatible with mbpi's schema.
 
-exisitng Download Manager to support downloading MMS content.
+I'm not against improving mbpi or even working to help create a new =
 
->> 3. No way to associate additional APN properties with a gprs_context.
->>
->> apns-conf.xml has many additional APN attributes which don't map
->> directly to gprs_context properties ( eg. authtype, mvno_type, ... ).
->>
->
-> If you have usecases in mind for some of these properties, feel free to
-> suggest extensions to the oFono API.
+database.  For us right now, apns-conf is a viable alternative which =
 
-Other than "types" ( which has already been discussed ), the only two =
+gives us decent provisioning for both Internet and MMS, so we'd like to =
 
-that might make immediate sense are "authtype" ( ie. none, PAP, CHAP, =
+ensure we can support it.
 
-both ) and "roaming_protocol"?
+> For example many operators are using SPN or IMSI prefixes to clearly iden=
+tify their MNVO.
+> We made the provisioning a plugin design for exactly that reason so that =
+every product can provide its own database.
 
-I guess from my perspective it felt wrong to just throw away all of =
+This is exactly what we're trying to do, however as my original email =
 
-these extra attributes while provisioning, and thus the dictionary =
+said, we ran into a few stumbling blocks...
 
-property was an approach to preserve them without being too intrusive ( =
+> You might also think this through once more. What does default actually m=
+ean. Can every context have a default tag?
 
-although the settings code did complicate things a little ).
+As far as I understand it, "default" indicates support for Internet.
 
-Also precedence, as there's additional apn information from mbpi which =
+Also, please understand that the UI examples that Slava included apply =
 
-is ignored during provisioning ( <plan>, <usage>, <dns> ).
+to Sailfish's UI, not Ubuntu Touch.
 
->> "types" is especially important, as without it, we can't tell exactly
->> which services are supported by the APN ( as the plugin sets the type to
->> TYPE_INTERNET ).
->
-> As mentioned above, you'd simply create multiple contexts with the same
-> APN and different types if you wanted to accomplish this easily.
+> Which one do you pick then? Who is making this policy and who is ensuring=
+ what is active at what time.
 
-Understood, although the resulting number of contexts could result in =
+We give preference to the first context of type "default" ( for which we =
 
-overload to a user if exposed in a settings UI.
+create an INET context ), unless this has been overriden by the user =
+
+from a settings UI.  I'd considered making my new "ExtraData" propertly =
+
+write-able, so that the UI could add some tag/attribute to denote this.
+
+The other choice of course is to store this meta-data somewhere else... =
+
+which would impact Network Manager, as it's the process responsible for =
+
+activating/deactivating contexts for Touch.
+
+> oFono is happily
+> supporting multiple Internet contexts and have them all active. Our own m=
+odem hardware supports many contexts.
+> We have run this with 4 Internet contexts at the same time (different and=
+ same ones).
+
+Understood, as mentioned we need to support multiple contexts for the =
+
+case where a MMS APN is not shared with any other type.
+
+> And I have to note that oFono never establishes contexts by itself. The o=
+nly thing that oFono does is attach to the GPRS (packet switched) part of n=
+etwork.
+> The APN establishment is a policy enforced by ConnMan for Internet contex=
+ts and mmsd for MMS contexts.
+
+In our case it's NetworkManager responsible for both, with help from a =
+
+few other system components ( such as our Download Manager ).
+
+> The simplest approach we found with our devices is to only provide one In=
+ternet context from the user interface.
+
+Did you expose the MMS context anywhere in your user interface?
+
+> If it is wrong for whatever reason or provisioning can not identify it, t=
+hen the user gets asked once. If user wants to change it they can go throug=
+h the APN setup process once more. Worked smoothly for us and is super user=
+ friendly.
+
+Makes sense.
 
 Regards,
 /tony
 
-
-
-
-
---===============0275758007555801488==--
+--===============2922064683720058378==--
 
