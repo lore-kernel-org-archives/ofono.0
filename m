@@ -1,220 +1,195 @@
-Content-Type: multipart/mixed; boundary="===============6098902354417808348=="
+Content-Type: multipart/mixed; boundary="===============5381045926881871900=="
 MIME-Version: 1.0
 From: Tony Espy <espy@canonical.com>
 Subject: Re: RFC: Ubuntu Touch, MMS, and Provisioning
-Date: Fri, 07 Mar 2014 19:23:30 -0500
-Message-ID: <531A6302.7060008@canonical.com>
-In-Reply-To: <53195BBB.40808@gmail.com>
+Date: Fri, 07 Mar 2014 19:30:02 -0500
+Message-ID: <531A648A.3020108@canonical.com>
+In-Reply-To: <F9C0146E-49B5-41AA-9697-FB57B9846155@holtmann.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6098902354417808348==
+--===============5381045926881871900==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 03/07/2014 12:40 AM, Denis Kenzior wrote:
+On 03/05/2014 09:41 PM, Marcel Holtmann wrote:
 > Hi Tony,
 >
->  >  From the testing I've done, many ril implementations seem to also
->> optimize this case and just return the same interface/settings when a
->> data call is requested for an APN which already has an active call.
->
-> Then that will be something for you to solve then.  oFono actually
-> expects a different interface entirely for each active context.
-
-My solution was to use a shared context when appropriate and not try to =
-
-start a second data call.  ;)
-
->> I'd assumed that mmsd used 'MessageProxy' directly, but after
->> re-examination, I see that it's using "Settings.Proxy".
+>>>> We've been working on MMS support for Ubuntu Touch recently and have r=
+un into a couple of stumbling blocks, so I have a few questions about the c=
+urrent MMS logic in oFono ( we're still 1.12 based ), and in particular the=
+ provisioning/management of gprs-contexts.
+>>>>
+>>>> As part of this work, we're planning to switch from using the builtin =
+gprs 'provision' plugin, to the new android-provision/apndb plugin ( origin=
+ally written by Simon Busch ) which uses the file apns-conf.xml instead of =
+mbpi's serviceproviders.xml.
+>>>>
+>>>> There are a couple of issues we ran into...
+>>>>
+>>>> 1. How to represent APNs that support multiple usages types?
+>>>>
+>>>> The "type" attribute in apns-conf.xml is a list vs. the single type de=
+fined by a gprs_context.
+>>>>
+>>>> The android-apndb plugin uses TYPE_INTERNET for APNs which support mul=
+tiple types.  In order to properly support MMS, the core code needed to be =
+modified to allow the MMS properties to be additionally be set on a TYPE_IN=
+TERNET context.  Thus if an APN supports both Internet and MMS, our Downloa=
+dManager can grab the additional MMS properties from the context and handle=
+ MMS traffic.
+>>>>
+>>>> Now perhaps I missed something and there is a way to represent a combi=
+ned usage APN ( maybe using TYPE_ANY? ), but I couldn't see how to accompli=
+sh without changes to the core gprs code.
+>>>>
+>>>> 2. No way to disable core ofono TYPE_MMS network config.
+>>>>
+>>>> The core gprs_context code has special logic for TYPE_MMS contexts whi=
+ch configures the HTTP proxy using networking ioctl requests.  We have an e=
+xternal download manager that handles the actual download of content from t=
+he message center.  As it has logic to handle HTTP proxies already, if we u=
+se TYPE_MMS, we'd need a way to disable ofono's builtin logic.
+>>>
+>>> you do realize that these are not actually standard HTTP proxies. You a=
+re suppose to talk to the MMS Proxy to reach the MMSC. That is how this wor=
+ks. You always go through the MMS Proxy.
 >>
->> That said in our case if we'd like NetworkManager to handle the route
->> configuration, wouldn't it make sense to use 'MessageProxy' directly?  I
->> guess I'm not sure I understand the difference between 'Settings.Proxy'
->> and 'MessageProxy' as the former seems to be a copy of the latter.
->
-> It is due to historical / design reasons.  Using Settings.Proxy would
-> allow us to run a local proxy instead of relying on the remote Proxy.
-> This allows extra flexibility in the future.  Whether this is still
-> something we need can be discussed.
-
-OK, thanks for the explanation.
-
->> One last point, it looks like the ofono code presumes that a
->> 'MessageProxy' value is always in IPV4 number-and-dots notation. Some of
->> the proxies defined for APNs in apns-conf contain hostnames.  My guess
->> is that this would cause problems for a stand-alone MMS APN, but would
->> work with a combined context?
->
-> Since for MMS contexts the only route is via a proxy, DNS resolution is
-> impossible.  MessageProxy has to be an ipv4 address.
-
-That's what I assumed after looking at the code, but appreciate the =
-
-confirmation.  This might be a good addition to the API documentation ( =
-
-connman-api.txt ).
-
-> For combined contexts this might be relaxed.
-
-And that's certainly what looks to be the case in apns-conf ( ie. =
-
-mmsproxys specified with hostnames only appear for shared contexts, =
-
-although some still use ipv4 addresses. ).
-
->> Re: authtype specifically, we've seen at one least modem which chokes
->> with our default settings for this parameter.  That said, this may have
->> been an operator specific behavior...
+>> I haven't actually worked directly on the proxy support myself, and had =
+assumed this was a standard HTTP proxy.  I will make sure my co-worker hand=
+ling the support in our download manager realizes this, and point him at mm=
+sd/connman's GWeb code for reference.
 >>
->
-> 3GPP mandates that CHAP is always supported.  In fact the authentication
-> is not done against the modem, instead the modem simply takes the
-> challenge-response data and forwards it as a part of context activation
-> procedure.  Some operators were not following their own standards and
-> were not accepting CHAP data, hence the need for authtype.  Last I heard
-> this was no longer a problem.  If there are still hold outs, I'd be
-> interested in hearing about it.
-
-Again, I'm basing this on the contents of a recently shipping apns-conf =
-
-file.
-
-As I'm not able personally to test against these operators I can't =
-
-really offer much proof one way or another as to how compliant they are.
-
->> Looking at a fairly recent apns-conf, there are close to 500 APNs which
->> specify authtype, out of a db of ~2000.  As this is a parameter that our
->> rilmodem driver could use when setting up a data call, I would say this
->> is useful.
->
-> And I would ask that you find at least one example where a context
-> activation fails when using a non-default authtype.
-
-As mentioned, that's not possible for me to do directly.
-
->> Understood, however some of these attributes might be interesting to
->> other processes using ofono to access the contexts which have been
->> provisioned ( and persisted on-disk ).
->
-> Concrete examples?
-
-I think I've given enough concrete examples where this kind of =
-
-information in a provisioning db might be useful to an ofono driver =
-
-implementation such as rilmodem, a client of ofono, or both.
-
-That said, if I can't convince you, and it's something that we end up =
-
-requiring, we'll have to carry patches to implement this.
-
-For now I'm willing to forgo trying to convince you that extra data is a =
-
-worthwhile concept, as I'd really like to focus on hybrid MMS/INET support.
-
->> Again, this is the reason I went ahead and added support for an
->> ExtraData dictionary that captures all the extra attributes we can't map
->> directly to context properties.  This seemed like the least intrusive
->> approach to us.  Are all of these additioanl atrributes absoultely
->> critical to us right now?  Probably not, but why throw information away?
+>>> If you are mixing Internet proxies with MMS proxies, you end up in a re=
+ally awkward configuration later down the road.
 >>
->
-> Lots of reasons.  Here are the top two:
->
-> First, any code that gets accepted gets reviewed and maintained.  You
-> are asking us to maintain code that is of dubious value.  So right away
-> that is a non-starter.
->
-> Second, the API is frozen.  Things can be added, but not removed.  It is
-> much easier to add something when you need it than to remove it when you
-> realize your ideas were wrong in the first place.
-
-Well, then let's agree to politely disagree, and move on for now.
-
-Actually though, I do have one question about the API being frozen.  Are =
-
-there any plans to remove the OFONO_API_SUBJECT_TO_CHANGE pre-processor =
-
-logic in plugins.h?
-
->> Also, as Slava from Jolla pointed out, it also might be nice to use this
->> mechanism ( or something similar ) to add some additional private data
->> to a context, such as "user-selected", or maybe even a "last-connected".
+>> Sorry, no intentions of mixing them.
 >>
->
-> Yes it _might_ be nice to someone somewhere ;)  But you still need to
-> answer how this is of value to the oFono project?  Remember our core
-> design philosophy, Minimal and Complete.  And then ask yourself whether
-> adding a particular feature fulfills that philosophy.
-
-We value the ofono project because it provides a solid, flexible =
-
-framework for providing telephony services to Linux-based devices.
-
-In our case ( and Jolla's ), we felt that this feature helped fulfill =
-
-the mission of shipping Linux-based phones ( based on two very different =
-
-distributions I might add ).
-
-But again, my original email was meant as a RFC, and clearly this =
-
-feature isn't something you're willing to entertain, so I'm willing to =
-
-drop further discussion for the time being.
-
->> Sure, if we stick to just Internet/MMS, the number could be managable.
->> My point was if an operator defined 3-4 APNS, and each was a multi-usage
->> APN ( eg. "default,mms,supl" ), then you'd end up with nine contexts (
->> this assumes creation of a SUPL context type ).
->
-> We have a favorite phrase around here, "We don't deal with
-> hypotheticals".  Find me an operator that did that, and I will consider
-> this case.  Until then it doesn't exist :)
-
-I'm trying not to deal with hypotheticals either, I'm more focused on =
-
-making sure what we have solid product for OEMs to ship.
-
-As for operator examples, the apns-conf from a Galaxy Nexus (4.3?) =
-
-includes five different APNs for ATT in the US ( mcc/mnc: 310/410 ); =
-
-this includes one APN for the MVNO Straightalk.  I have another newer =
-
-version of apns-conf that has only two defined for the same operator.
-
-The current version of mbpi shipping in Ubuntu has three APNs for ATT/US.
-
-So clearly not hypothetical.
-
-That said, even though the SPN is passed to the provisioning plugin, it =
-
-doesn't appear to be used in the mbpi logic, nor the original version of =
-
-the android_apndb code.
-
-But again, I'd rather focus on whether hybrid INET/MMS contexts could be =
-
-made to work.
-
->> At the moment we're really focused on MMS support, and so at minimum we
->> want shared contexts to work for Internet and MMS together. This by
->> itself I still believe is a worthy goal, and I think it's do-able with
->> minor changes to the core.
+>>> As Denis mentioned we have been using this successfully within mmsd tha=
+t we wrote.
 >>
+>> I saw that, we originally did a bunch of work with mmsd, however we deci=
+ded instead to add MMS capability to our ubuntu-download-manager used in To=
+uch.
 >
-> Agreed ;)
+> feels weird if a download manager handles delivery receipts and read rece=
+ipts. Especially since there are so many MMS specific header in the HTTP re=
+quest.
 
-Great, we can claim some progress in our discussion then!
+>>> The current design of oFono works just fine by activating the
+>>> MMS context and then talking to the MMS proxy to reach the MMSC.
+>>
+>> Sure, although as I mentioned orginally, if we already have an active da=
+ta connection and the apn happens to also support MMS, it seems odd not bei=
+ng able to share.
+>
+> If you have an active data connection you can just compare the TYPE_MMS c=
+ontext details (APN, username, passed)
+> with the TYPE_INTERNET context ones and if they match, you choose not to =
+activate the MMS one and just use the
+> Internet one.
 
-Thanks,
+Sure, this is along the lines of what Denis suggested, however it does =
+
+seem like a lot of overhead, when in theory the addition of MMS =
+
+properties to a TYPE_INTERNET context would allow it be used for MMS.
+
+> As I said in the other emails, oFono is activating contexts only on reque=
+st.
+
+Ack
+
+> So either ConnMan requests theInternet context or mmsd requests the MMS c=
+ontext. oFono is not in the =
+
+business of
+> magically activating contexs. It only attaches to the GPRS part of the ne=
+twork.
+
+I'm not proposing any kind of auto-activation either.  In our case it's =
+
+NetworkManager that's responsible for activating one or more contexts =
+
+for Internet and MMS on-demand when needed.
+
+Again this is also dependent on our disabling ( probaly via a configure =
+
+option ) the ofono MMS IP addr/static route code.  I will discuss this =
+
+again with our NM maintainer though,
+
+> The only problem with the Internet context usage for MMS is that you now =
+also have to talk to ConnMan to figure out when the IP part of the context =
+is successfully configured.
+
+Well again, as we have Network Manager handling context activation, I =
+
+don't think is an issue for us.
+
+That said, in a default configuration where ConnMan is being used, =
+
+couldn't ofono still setup the static route to the mms proxy if the =
+
+context was combined, and let ConnMan do the rest?
+
+> And here is where this gets complicated. And active context does not mean=
+ it is actively in use. You might actually use your WiFi and have an activa=
+ted Internet context, but neither the IP or routing is set.
+> Or in same case you are just on WiFi and have no Internet context activat=
+ed.
+
+If the Internet context is not activated due to insufficient signal, or =
+
+mobile data is disabled, then all bets are off for MMS, and even we =
+
+tried to activate an independent context in this case, it would fail.
+
+If the Internet context is active, but WiFi was subsequently activated =
+
+and is set as the default route, the static route to the MMS proxy =
+
+should still be available for MMS messages.
+
+I will review again internally to ensure we've covered our bases here.
+
+> As you can see this can get extremely complex.
+
+No argument there.
+
+> We opted for just providing a MMS context type and an Internet context ty=
+pe. If the APN happens to be the same (not always the case btw.) then you j=
+ust double activate that context. Send or receive your MMS and deactivate i=
+t.
+> We have used this just fine. And in that case oFono does all the heavy li=
+fting for you. You just need to talk to the MMS Proxy address that has been=
+ configured. That is it.'
+
+As explained in a previous reply to Denis, double-activating the same =
+
+context may not result in a new interface when talking to a rild =
+
+implementation.
+
+If we were to stay with this default behavior ( which I still would like =
+
+to avoid by use of shared MMS/INET contexts ), we'd have to implement =
+
+logic discussed previously ( ie. check for an already active context =
+
+with the same APN/username/pw in the rilmodem ).
+
+Thanks again for your comments/feedback Marcel.
+
+Regards,
 /tony
 
 
---===============6098902354417808348==--
+
+
+
+
+
+--===============5381045926881871900==--
 
