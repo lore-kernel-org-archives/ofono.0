@@ -1,79 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============2937630959505139697=="
+Content-Type: multipart/mixed; boundary="===============2199598493715686136=="
 MIME-Version: 1.0
 From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
-Subject: [PATCH 1/2] simutil: Fix EF_PNN access
-Date: Fri, 14 Mar 2014 17:23:43 +0100
-Message-ID: <1394814224-30014-1-git-send-email-alfonso.sanchez-beato@canonical.com>
+Subject: [PATCH 2/2] unit: Fix test to use valid EF_PNN
+Date: Fri, 14 Mar 2014 17:23:44 +0100
+Message-ID: <1394814224-30014-2-git-send-email-alfonso.sanchez-beato@canonical.com>
+In-Reply-To: <1394814224-30014-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2937630959505139697==
+--===============2199598493715686136==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-EF_PNN was not being read properly (see TS 24.008, section 10.5.3.5a,
-for network names format), which affected the displayed PLMN name for
-some MVNOs. Some modems already read the file and return the right
-string: these do not show the problem.
+test-simutil was not using EF_PNN files with a valid format.
 ---
- src/simutil.c | 23 ++++++++++++++++-------
- 1 file changed, 16 insertions(+), 7 deletions(-)
+ unit/test-simutil.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
 
-diff --git a/src/simutil.c b/src/simutil.c
-index 90d7f8d..a7745ae 100644
---- a/src/simutil.c
-+++ b/src/simutil.c
-@@ -767,12 +767,14 @@ static char *sim_network_name_parse(const unsigned ch=
-ar *buffer, int length,
- 					gboolean *add_ci)
- {
- 	char *ret =3D NULL;
--	unsigned char *endp;
- 	unsigned char dcs;
- 	int i;
- 	gboolean ci =3D FALSE;
-+	unsigned char *unpacked_buf;
-+	long num_char, written;
-+	int spare_bits;
+diff --git a/unit/test-simutil.c b/unit/test-simutil.c
+index cf76a37..69dd81e 100644
+--- a/unit/test-simutil.c
++++ b/unit/test-simutil.c
+@@ -345,10 +345,12 @@ const unsigned char valid_efopl[] =3D {
+ };
  =
 
--	if (length < 1)
-+	if (length < 2)
- 		return NULL;
+ const unsigned char valid_efpnn[][28] =3D {
+-	{ 0x43, 0x0a, 0x00, 0x54, 0x75, 0x78, 0x20, 0x43, 0x6f, 0x6d,
+-	  0x6d, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, },
+-	{ 0x43, 0x05, 0x00, 0x4C, 0x6F, 0x6E, 0x67, 0x45, 0x06, 0x00,
+-	  0x53, 0x68, 0x6F, 0x72, 0x74, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, }
++	/* Solavei */
++	{ 0x43, 0x08, 0x87, 0xD3, 0x37, 0x3B, 0x6C, 0x2F, 0xA7, 0x01 },
++	/* T-Mobile / T-Mobile */
++	{ 0x43, 0x08, 0x80, 0xD4, 0x56, 0xF3, 0x2D, 0x4E, 0xB3, 0xCB,
++	  0x45, 0x08, 0x80, 0xD4, 0x56, 0xF3, 0x2D, 0x4E, 0xB3, 0xCB,
++	  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }
+ };
  =
 
- 	dcs =3D *buffer++;
-@@ -787,11 +789,18 @@ static char *sim_network_name_parse(const unsigned ch=
-ar *buffer, int length,
+ static void test_eons(void)
+@@ -376,7 +378,7 @@ static void test_eons(void)
+ 	op_info =3D sim_eons_lookup(eons_info, "246", "81");
+ 	g_assert(op_info);
  =
 
- 	switch (dcs & (7 << 4)) {
- 	case 0x00:
--		endp =3D memchr(buffer, 0xff, length);
--		if (endp)
--			length =3D endp - buffer;
--		ret =3D convert_gsm_to_utf8(buffer, length,
--				NULL, NULL, 0xff);
-+		spare_bits =3D dcs & 0x07;
-+		num_char =3D (length * 8 - spare_bits) / 7;
-+
-+		unpacked_buf =3D unpack_7bit(buffer, length, 0, FALSE,
-+						num_char, &written, 0);
-+		if (unpacked_buf =3D=3D NULL)
-+			break;
-+
-+		ret =3D convert_gsm_to_utf8(unpacked_buf, written, NULL, NULL, 0);
-+
-+		g_free(unpacked_buf);
-+
- 		break;
- 	case 0x10:
- 		if ((length % 2) =3D=3D 1) {
+-	g_assert(!strcmp(op_info->longname, "Tux Comm"));
++	g_assert(!strcmp(op_info->longname, "Solavei"));
+ 	g_assert(!op_info->shortname);
+ 	g_assert(!op_info->info);
+ =
+
 -- =
 
 1.8.3.2
 
 
---===============2937630959505139697==--
+--===============2199598493715686136==--
 
