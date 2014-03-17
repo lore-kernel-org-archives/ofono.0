@@ -1,36 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============6295804962877178739=="
+Content-Type: multipart/mixed; boundary="===============7700993836097511200=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] simutil: Fix EF_PNN access
-Date: Fri, 14 Mar 2014 13:30:39 -0500
-Message-ID: <53234ACF.80504@gmail.com>
-In-Reply-To: <1394814224-30014-1-git-send-email-alfonso.sanchez-beato@canonical.com>
+From: Krzysztof Wilk <krzysztofx.wilk@intel.com>
+Subject: [PATCH 3/5] include: Declaration function to set CHLD features
+Date: Mon, 17 Mar 2014 16:47:28 +0100
+Message-ID: <1395071250-19440-4-git-send-email-krzysztofx.wilk@intel.com>
+In-Reply-To: <1395071250-19440-1-git-send-email-krzysztofx.wilk@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6295804962877178739==
+--===============7700993836097511200==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alfonso,
+From: Krzysztof Wilk <Krzysztofx.Wilk@intel.com>
 
-On 03/14/2014 11:23 AM, Alfonso Sanchez-Beato wrote:
-> EF_PNN was not being read properly (see TS 24.008, section 10.5.3.5a,
-> for network names format), which affected the displayed PLMN name for
-> some MVNOs. Some modems already read the file and return the right
-> string: these do not show the problem.
-> ---
->   src/simutil.c | 23 ++++++++++++++++-------
->   1 file changed, 16 insertions(+), 7 deletions(-)
+---
+ include/handsfree.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-That was indeed a bug, nice catch.
+diff --git a/include/handsfree.h b/include/handsfree.h
+index dde7000..a419884 100644
+--- a/include/handsfree.h
++++ b/include/handsfree.h
+@@ -54,6 +54,8 @@ struct ofono_handsfree_driver {
+ =
 
-Both patches have been applied, thanks.
+ void ofono_handsfree_set_ag_features(struct ofono_handsfree *hf,
+ 					unsigned int ag_features);
++void ofono_handsfree_set_ag_chld_features(struct ofono_handsfree *hf,
++					unsigned int ag_mpty_features);
+ void ofono_handsfree_set_inband_ringing(struct ofono_handsfree *hf,
+ 						ofono_bool_t enabled);
+ void ofono_handsfree_voice_recognition_notify(struct ofono_handsfree *hf,
+-- =
 
-Regards,
--Denis
+1.7.11.7
+
+Intel GmbH
+Dornacher Strasse 1
+85622 Feldkirchen/Muenchen, Deutschland
+Sitz der Gesellschaft: Feldkirchen bei Muenchen
+Geschaeftsfuehrer: Christian Lamprechter, Hannes Schwaderer, Douglas Lusk
+Registergericht: Muenchen HRB 47456
+Ust.-IdNr./VAT Registration No.: DE129385895
+Citibank Frankfurt a.M. (BLZ 502 109 00) 600119052
 
 
---===============6295804962877178739==--
+--===============7700993836097511200==--
 
