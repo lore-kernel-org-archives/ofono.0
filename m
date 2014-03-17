@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7700993836097511200=="
+Content-Type: multipart/mixed; boundary="===============3745419648274100298=="
 MIME-Version: 1.0
 From: Krzysztof Wilk <krzysztofx.wilk@intel.com>
-Subject: [PATCH 3/5] include: Declaration function to set CHLD features
-Date: Mon, 17 Mar 2014 16:47:28 +0100
-Message-ID: <1395071250-19440-4-git-send-email-krzysztofx.wilk@intel.com>
+Subject: [PATCH 1/5] doc: Extend Features property
+Date: Mon, 17 Mar 2014 16:47:26 +0100
+Message-ID: <1395071250-19440-2-git-send-email-krzysztofx.wilk@intel.com>
 In-Reply-To: <1395071250-19440-1-git-send-email-krzysztofx.wilk@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7700993836097511200==
+--===============3745419648274100298==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,23 +16,28 @@ Content-Transfer-Encoding: quoted-printable
 From: Krzysztof Wilk <Krzysztofx.Wilk@intel.com>
 
 ---
- include/handsfree.h | 2 ++
- 1 file changed, 2 insertions(+)
+ doc/handsfree-api.txt | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/include/handsfree.h b/include/handsfree.h
-index dde7000..a419884 100644
---- a/include/handsfree.h
-+++ b/include/handsfree.h
-@@ -54,6 +54,8 @@ struct ofono_handsfree_driver {
+diff --git a/doc/handsfree-api.txt b/doc/handsfree-api.txt
+index d6ffca5..94e9a8f 100644
+--- a/doc/handsfree-api.txt
++++ b/doc/handsfree-api.txt
+@@ -45,6 +45,12 @@ Properties	array{string} Features [readonly]
+ 				"voice-recognition"
+ 				"attach-voice-tag"
+ 				"echo-canceling-and-noise-reduction"
++				"three-way-calling"
++				"release-all-held"
++				"release-specified-active-call"
++				"private-chat"
++				"create-multiparty"
++				"transfer"
  =
 
- void ofono_handsfree_set_ag_features(struct ofono_handsfree *hf,
- 					unsigned int ag_features);
-+void ofono_handsfree_set_ag_chld_features(struct ofono_handsfree *hf,
-+					unsigned int ag_mpty_features);
- void ofono_handsfree_set_inband_ringing(struct ofono_handsfree *hf,
- 						ofono_bool_t enabled);
- void ofono_handsfree_voice_recognition_notify(struct ofono_handsfree *hf,
+ 		boolean InbandRinging [readonly]
+ =
+
 -- =
 
 1.7.11.7
@@ -47,5 +52,5 @@ Ust.-IdNr./VAT Registration No.: DE129385895
 Citibank Frankfurt a.M. (BLZ 502 109 00) 600119052
 
 
---===============7700993836097511200==--
+--===============3745419648274100298==--
 
