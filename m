@@ -1,39 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============8515000674006289078=="
+Content-Type: multipart/mixed; boundary="===============6662867163548837303=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Allow override of phonesim conf
-Date: Wed, 26 Mar 2014 10:49:06 -0500
-Message-ID: <5332F6F2.5090507@gmail.com>
-In-Reply-To: <5332B979.1010604@canonical.com>
+From: jussi.pakkanen@canonical.com
+Subject: [PATCH] Allow configuration file override with environment variable.
+Date: Thu, 27 Mar 2014 15:08:56 +0200
+Message-ID: <1395925736-16223-1-git-send-email-jussi.pakkanen@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8515000674006289078==
+--===============6662867163548837303==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jussi,
+From: Jussi Pakkanen <jussi.pakkanen@canonical.com>
 
-On 03/26/2014 06:26 AM, Jussi Pakkanen wrote:
-> Hi
-> =
+---
+ plugins/phonesim.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-> Currently phonesim tries to open its conf file from the location
-> specified at configure time (/etc/ofono/phonesim.conf). For testing
-> purposes it would be nice to be able to override this. This patch allows
-> you to override the location with the environment variable
-> OFONO_PHONESIM_CONFIG.
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index 918d2eb..e84bbf6 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -1071,7 +1071,7 @@ done:
+ static int phonesim_init(void)
+ {
+ 	int err;
+-
++	char *conf_override =3D getenv("OFONO_PHONESIM_CONFIG");
+ 	err =3D ofono_modem_driver_register(&phonesim_driver);
+ 	if (err < 0)
+ 		return err;
+@@ -1081,7 +1081,10 @@ static int phonesim_init(void)
+ 	ofono_gprs_context_driver_register(&context_driver);
+ 	ofono_ctm_driver_register(&ctm_driver);
+ =
 
-Can you please use git send-email to submit patches.
+-	parse_config(CONFIGDIR "/phonesim.conf");
++	if (conf_override)
++		parse_config(conf_override);
++	else
++		parse_config(CONFIGDIR "/phonesim.conf");
+ =
 
-Also, the coding style in the patch is incorrect.  Please review
-doc/coding-style.txt and the kernel coding style guidelines.
-Specifically the use of {} in if/else statements.
+ 	return 0;
+ }
+-- =
 
-Regards,
--Denis
+1.9.1
 
 
---===============8515000674006289078==--
+--===============6662867163548837303==--
 
