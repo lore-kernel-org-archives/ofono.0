@@ -1,117 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============7808710660895397046=="
+Content-Type: multipart/mixed; boundary="===============1233693626392524300=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Jer=C3=B4nimo?= Lopes <lopesjeronimo@gmail.com>
-Subject: Particular APN and Ofono+Connman+BBB+Buildroot
-Date: Thu, 27 Mar 2014 16:09:28 -0300
-Message-ID: <CAM5ihG_u9EwcnSP+PyCyLUCevd06C3HfP3b0t4k=x3zG6NYx3w@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Particular APN and Ofono+Connman+BBB+Buildroot
+Date: Thu, 27 Mar 2014 14:48:22 -0500
+Message-ID: <53348086.7000905@gmail.com>
+In-Reply-To: <CAM5ihG_u9EwcnSP+PyCyLUCevd06C3HfP3b0t4k=x3zG6NYx3w@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7808710660895397046==
+--===============1233693626392524300==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Jer=C3=B4nimo,
 
-First of all, I just subscribe to the mailing list, and I'll warn that I'll
-probably be asking some silly or nonsense questions.
+> As fair as I understand, ofono gets the correct APN settings using
+> Gnome Service Provider Database.
 
-I'm trying to build a embedded Linux system for the Beaglebone Black (BBB)
-board, using Buildroot. That system must be able to connect to the internet
-through a 3g modem. Also must have the possibility of use 2 or more modems
-(each one with a different operator) and the ethernet port to get online,
-and manage witch is the preferred interface. The system must start
-everything needed and connect automatically with no user interface.
+Not necessarily.  Mobile Broadband Provider Info can be used, but the
+provisioning system is plugin based.  You can write your own if you
+wish.  See examples/provision.c in oFono git.
 
-After some research, I'm trying to use Connman+Ofono to achieve that. I'm
-using the latest version of Buildroot (2014.02), witch supports Connman
-1.19 and Ofono 1.13.
+> =
 
-Ok, I build the system. Buildroot creates a script to auto start connmand
-but not for ofonod (I don't knows if there is any reason for that). I
-manually start ofonod and then connmand, and I've sucessfully make one 3g
-modem connected, with connmancli.
+> My questions are:
+>  - How can I 'tell' ofono to use a specific APN settings?
 
-As fair as I understand, ofono gets the correct APN settings using
-Gnome Service Provider Database.
+One can edit context settings via the D-Bus interface, if that is what
+you mean.  See test/create-internet-context for an example.
 
-My questions are:
- - How can I 'tell' ofono to use a specific APN settings?
- - It seams that ofono only works if is started after usb-modeswitch
-detects the modem and create /dev/ttyUSBx devices. Is there anything to do
-to configure that to work properly?
+>  - It seams that ofono only works if is started after usb-modeswitch
+> detects the modem and create /dev/ttyUSBx devices. Is there anything to
+> do to configure that to work properly? =
 
-Thanks in advance for any tip.
+> =
 
-Best regards,
 
-Jer=C3=B4nimo Lopes
+As long as the modem is configured by usb-modeswitch properly and
+detected by udev, the order of events doesn't matter.  oFono will detect
+"hot-plugged" devices.
 
---===============7808710660895397046==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+Regards,
+-Denis
 
-PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGRpdiBjbGFzcz0iZ21h
-aWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+SGksPC9mb250
-PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3
-LCBtb25vc3BhY2UiPjxicj48L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+
-Cgo8Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5GaXJzdCBvZiBhbGwsIEkganVz
-dCBzdWJzY3JpYmUgdG8gdGhlIG1haWxpbmcgbGlzdCwgYW5kIEkmIzM5O2xsIHdhcm4gdGhhdCBJ
-JiMzOTtsbCBwcm9iYWJseSBiZSBhc2tpbmcgc29tZSBzaWxseSBvciBub25zZW5zZSBxdWVzdGlv
-bnMuPC9mb250PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNv
-dXJpZXIgbmV3LCBtb25vc3BhY2UiPjxicj4KCjwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFp
-bF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5JJiMzOTttIHRy
-eWluZyB0byBidWlsZCBhIGVtYmVkZGVkIExpbnV4IHN5c3RlbSBmb3IgdGhlIEJlYWdsZWJvbmUg
-QmxhY2sgKEJCQikgYm9hcmQsIHVzaW5nIEJ1aWxkcm9vdC4gVGhhdCBzeXN0ZW0gbXVzdCBiZSBh
-YmxlIHRvIGNvbm5lY3QgdG8gdGhlIGludGVybmV0IHRocm91Z2ggYSAzZyBtb2RlbS4gQWxzbyBt
-dXN0IGhhdmUgdGhlIHBvc3NpYmlsaXR5IG9mIHVzZSAyIG9yIG1vcmUgbW9kZW1zIChlYWNoIG9u
-ZSB3aXRoIGEgZGlmZmVyZW50IG9wZXJhdG9yKSBhbmQgdGhlIGV0aGVybmV0IHBvcnQgdG8gZ2V0
-IG9ubGluZSwgYW5kIG1hbmFnZSB3aXRjaCBpcyB0aGUgcHJlZmVycmVkIGludGVyZmFjZS4gVGhl
-IHN5c3RlbSBtdXN0IHN0YXJ0IGV2ZXJ5dGhpbmcgbmVlZGVkIGFuZCBjb25uZWN0IGF1dG9tYXRp
-Y2FsbHkgd2l0aCBubyB1c2VyIGludGVyZmFjZS6gPC9mb250PjwvZGl2PgoKPGRpdiBjbGFzcz0i
-Z21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+PGJyPjwv
-Zm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVy
-IG5ldywgbW9ub3NwYWNlIj5BZnRlciBzb21lIHJlc2VhcmNoLCBJJiMzOTttIHRyeWluZyB0byB1
-c2UgQ29ubm1hbitPZm9ubyB0byBhY2hpZXZlIHRoYXQuIEkmIzM5O20gdXNpbmcgdGhlIGxhdGVz
-dCB2ZXJzaW9uIG9mIEJ1aWxkcm9vdCAoMjAxNC4wMiksIHdpdGNoIHN1cHBvcnRzIENvbm5tYW4g
-MS4xOSBhbmQgT2Zvbm8gMS4xMy48L2ZvbnQ+PC9kaXY+Cgo8ZGl2IGNsYXNzPSJnbWFpbF9kZWZh
-dWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj48YnI+PC9mb250PjwvZGl2
-PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25v
-c3BhY2UiPk9rLCBJIGJ1aWxkIHRoZSBzeXN0ZW0uIEJ1aWxkcm9vdCBjcmVhdGVzIGEgc2NyaXB0
-IHRvIGF1dG8gc3RhcnQgY29ubm1hbmQgYnV0IG5vdCBmb3Igb2Zvbm9kIChJIGRvbiYjMzk7dCBr
-bm93cyBpZiB0aGVyZSBpcyBhbnkgcmVhc29uIGZvciB0aGF0KS4gSSBtYW51YWxseSBzdGFydCBv
-Zm9ub2QgYW5kIHRoZW4gY29ubm1hbmQsIGFuZCBJJiMzOTt2ZSBzdWNlc3NmdWxseSBtYWtlIG9u
-ZSAzZyBtb2RlbSBjb25uZWN0ZWQsIHdpdGggY29ubm1hbmNsaS48L2ZvbnQ+PC9kaXY+Cgo8ZGl2
-IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNl
-Ij48YnI+PC9mb250PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9
-ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPkFzIGZhaXIgYXMgSSB1bmRlcnN0YW5kLCBvZm9ubyBn
-ZXRzIHRoZSBjb3JyZWN0IEFQTiBzZXR0aW5ncyB1c2luZyBHbm9tZaBTZXJ2aWNlIFByb3ZpZGVy
-IERhdGFiYXNlLjwvZm9udD48L2Rpdj4KCjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250
-IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPjxicj48L2ZvbnQ+PC9kaXY+PGRpdiBjbGFz
-cz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+TXkg
-cXVlc3Rpb25zIGFyZTo8L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZv
-bnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+oC0gSG93IGNhbiBJICYjMzk7dGVsbCYj
-Mzk7IG9mb25vIHRvIHVzZSBhIHNwZWNpZmljIEFQTiBzZXR0aW5ncz88L2ZvbnQ+PC9kaXY+Cjxk
-aXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3Bh
-Y2UiPqAtIEl0IHNlYW1zIHRoYXQgb2Zvbm8gb25seSB3b3JrcyBpZiBpcyBzdGFydGVkIGFmdGVy
-IHVzYi1tb2Rlc3dpdGNoIGRldGVjdHMgdGhlIG1vZGVtIGFuZCBjcmVhdGUgL2Rldi90dHlVU0J4
-IGRldmljZXMuIElzIHRoZXJlIGFueXRoaW5nIHRvIGRvIHRvIGNvbmZpZ3VyZSB0aGF0IHRvIHdv
-cmsgcHJvcGVybHk/oDwvZm9udD48L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZv
-bnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+PGJyPjwvZm9udD48L2Rpdj48ZGl2IGNs
-YXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5U
-aGFua3MgaW4gYWR2YW5jZSBmb3IgYW55IHRpcC48L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21h
-aWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+PGJyPgo8L2Zv
-bnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBu
-ZXcsIG1vbm9zcGFjZSI+QmVzdCByZWdhcmRzLDwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFp
-bF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj48YnI+PC9mb250
-PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3
-LCBtb25vc3BhY2UiPkplcvRuaW1vIExvcGVzPC9mb250PjwvZGl2Pgo8ZGl2IGNsYXNzPSJnbWFp
-bF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj48YnI+PC9mb250
-PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxicj48L2Rpdj4KPC9kaXY+PC9kaXY+
-Cg==
 
---===============7808710660895397046==--
+--===============1233693626392524300==--
 
