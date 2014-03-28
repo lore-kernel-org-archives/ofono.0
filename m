@@ -1,85 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============6372962797377141959=="
+Content-Type: multipart/mixed; boundary="===============1944793195835921241=="
 MIME-Version: 1.0
 From: Eric BOUXIROT <eric.bouxirot@azimut-monitoring.com>
-Subject: Re: problem sim status
-Date: Thu, 27 Mar 2014 23:14:33 +0100
-Message-ID: <lh27sl$bdg$1@ger.gmane.org>
-In-Reply-To: <lh25hi$f72$1@ger.gmane.org>
+Subject: wwan0 interface without IP
+Date: Fri, 28 Mar 2014 12:41:23 +0100
+Message-ID: <lh3n4k$a8i$1@ger.gmane.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6372962797377141959==
+--===============1944793195835921241==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> for thoses interested, i will send my patch in next minutes. (let me make=
- it =
+hi !!
 
-> clean)
+i'm back with my project using ofono/connman/sierra 3G modem...
 
-this make an SL8083 Sierra modem to work with ofono. i mean that do not =
+now my modem work fine with ofono until connection. i can see IP =
 
-change anything for others modems.
+address with ofono in debug mode (response from !SCPADDR command)
+interface wwan0 is UP... but without IPV4 parameters.. (only MAC =
 
-diff -uprN a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
---- a/drivers/atmodem/sim.c	2013-11-08 08:37:52.000000000 +0100
-+++ b/drivers/atmodem/sim.c	2014-03-27 22:28:58.000000000 +0100
-@@ -1254,6 +1254,7 @@ static void at_pin_send_cb(gboolean ok,
- 	case OFONO_VENDOR_ALCATEL:
- 	case OFONO_VENDOR_HUAWEI:
- 	case OFONO_VENDOR_SIMCOM:
-+	case OFONO_VENDOR_SIERRA:
- 		/*
- 		 * On ZTE modems, after pin is entered, SIM state is checked
- 		 * by polling CPIN as their modem doesn't provide unsolicited
-diff -uprN a/plugins/sierra.c b/plugins/sierra.c
---- a/plugins/sierra.c	2013-11-08 08:37:52.000000000 +0100
-+++ b/plugins/sierra.c	2014-03-27 23:00:59.872241558 +0100
-@@ -48,6 +48,7 @@ static const char *none_prefix[] =3D { NUL
+address)
+i can't go to internet with this.
 
- struct sierra_data {
- 	GAtChat *modem;
-+	struct at_util_sim_state_query *sim_state_query;
- };
+i have try to put connman in debug mode too, and get an error because =
 
- static void sierra_debug(const char *str, void *user_data)
-@@ -119,6 +120,17 @@ static GAtChat *open_device(struct ofono
- 	return chat;
- }
+IPAddress is not set.
 
-+static void sim_state_cb(gboolean present, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct sierra_data *data =3D ofono_modem_get_data(modem);
-+
-+	at_util_sim_state_query_free(data->sim_state_query);
-+	data->sim_state_query =3D NULL;
-+
-+	ofono_modem_set_powered(modem, TRUE);
-+}
-+
- static void cfun_enable(gboolean ok, GAtResult *result, gpointer =
+at this time, if i start udhcpc -i wwan0... connection is made and work =
 
-user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
-@@ -129,9 +141,13 @@ static void cfun_enable(gboolean ok, GAt
- 	if (!ok) {
- 		g_at_chat_unref(data->modem);
- 		data->modem =3D NULL;
-+
-+		ofono_modem_set_powered(modem, FALSE);
- 	}
+fine....
 
--	ofono_modem_set_powered(modem, ok);
-+	data->sim_state_query =3D at_util_sim_state_query_new(data->modem,
-+						2, 20, sim_state_cb, modem,
-+						NULL);
- }
+few seconds only after a very short time, connman say idle timeout and =
 
- static int sierra_enable(struct ofono_modem *modem)
+ofono goes offline.
+
+i mean there is something wrong in ofono... (or connman ? don't know..)
+
+someone can help me ?
+
+thank you so much
 
 
---===============6372962797377141959==--
+--===============1944793195835921241==--
 
