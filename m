@@ -1,49 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============8021720617254197071=="
+Content-Type: multipart/mixed; boundary="===============7891384131658896490=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Problem reconnecting when 3G dongle is re-inserted
-Date: Fri, 28 Mar 2014 09:54:00 -0500
-Message-ID: <53358D08.4080908@gmail.com>
-In-Reply-To: <CAK+sfotnpxuhAOGyH-nD9H0fRzr85g+wnan5d190wPqpSbF7CA@mail.gmail.com>
+From: Eric BOUXIROT <eric.bouxirot@azimut-monitoring.com>
+Subject: Re: wwan0 interface without IP
+Date: Fri, 28 Mar 2014 16:35:49 +0100
+Message-ID: <lh44s7$s5$1@ger.gmane.org>
+In-Reply-To: <53358B76.9000505@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8021720617254197071==
+--===============7891384131658896490==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Homam,
+> oFono does not assign the IP parameters.  ConnMan does that or you need
+> to do this some other way.
 
-There is no top-posting on this mailing list.  Please do not top-post.
+i'm right with you but i don't know how ofono deal with connman to trig =
 
-On 03/28/2014 09:20 AM, Homam Dabis wrote:
-> The issue seems sepcific to the E303 HiLink H-2 model.
-> =
+DHCP.
+i know ofono send some parameters (or connman read it on ofono..) like =
 
-> If I do the same thing using the E303 HiLink S-1 model then all is fine.
-> =
+"method" "address" etc..
+i know when reading "address" the result is NULL and fail next step in =
 
-> Huawei seem to have updated their chipset with the H-2 revision and are
-> stopping production of the S-1 revision.
-> =
+connman du to NULL.
 
-> Cedric: Can you provide me with more details please. =
+i have made a test patch that put "0.0.0.0" in address in =
 
+swmodem/gprs_context.c after connect success, but it seem connman =
 
-There was a quirk in certain manufacturer's modems whereby they
-forcefully HUPed the modem port when the PPP link was disabled.  That
-meant that the port had to be closed and re-opened after every context
-activation / deactivation.
-
-This is normally turned off with AT&C0.  Re-opening the modem port is
-actually not trivial.  Search the archives / git, there have been
-previous attempts at doing this which were abandoned.  The easiest
-solution will be to figure out why AT&C0 doesn't work.
-
-Regards,
--Denis
+always read NULL..
 
 
---===============8021720617254197071==--
+then, i search more what's happend.
+I found a solution with connman's ofono plugin that need to be patched.
+
+Now that work great, but i mean there something wrong between =
+
+ofono/connman altought for this modem.
+
+
+--===============7891384131658896490==--
 
