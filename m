@@ -1,47 +1,172 @@
-Content-Type: multipart/mixed; boundary="===============1944793195835921241=="
+Content-Type: multipart/mixed; boundary="===============2741220837143694741=="
 MIME-Version: 1.0
-From: Eric BOUXIROT <eric.bouxirot@azimut-monitoring.com>
-Subject: wwan0 interface without IP
-Date: Fri, 28 Mar 2014 12:41:23 +0100
-Message-ID: <lh3n4k$a8i$1@ger.gmane.org>
+From: =?unknown-8bit?q?Jer=C3=B4nimo?= Lopes <lopesjeronimo@gmail.com>
+Subject: Re: Particular APN and Ofono+Connman+BBB+Buildroot
+Date: Fri, 28 Mar 2014 11:05:22 -0300
+Message-ID: <CAM5ihG_a-o9YpTw7A034oD9kJ9Y8D2A5Cfiii_JrjsHN==C+jQ@mail.gmail.com>
+In-Reply-To: <53348086.7000905@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1944793195835921241==
+--===============2741220837143694741==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-hi !!
+Hi Denis,
 
-i'm back with my project using ofono/connman/sierra 3G modem...
+I've checked those code files, it seams that both do exactly what I need.
 
-now my modem work fine with ofono until connection. i can see IP =
-
-address with ofono in debug mode (response from !SCPADDR command)
-interface wwan0 is UP... but without IPV4 parameters.. (only MAC =
-
-address)
-i can't go to internet with this.
-
-i have try to put connman in debug mode too, and get an error because =
-
-IPAddress is not set.
-
-at this time, if i start udhcpc -i wwan0... connection is made and work =
-
-fine....
-
-few seconds only after a very short time, connman say idle timeout and =
-
-ofono goes offline.
-
-i mean there is something wrong in ofono... (or connman ? don't know..)
-
-someone can help me ?
-
-thank you so much
+Just a few more questions...
 
 
---===============1944793195835921241==--
+2014-03-27 16:48 GMT-03:00 Denis Kenzior <denkenz@gmail.com>:
+
+> Hi Jer=C3=B4nimo,
+>
+> > As fair as I understand, ofono gets the correct APN settings using
+> > Gnome Service Provider Database.
+>
+> Not necessarily.
+> =
+
+> Mobile Broadband Provider Info can be used, but the
+> provisioning system is plugin based.  You can write your own if you
+> wish.  See examples/provision.c in oFono git.
+>
+>
+Ok, if I write my own how can I include it to my application? Do I need to
+include this source file in ofono compilation or is there another way?
+
+Another question, make both work at the same time? I mean, make ofono look
+first at 'my own provider', if doesn't have a specific APN, look at
+the Mobile Broadband Provider.
+
+>
+> > My questions are:
+> >  - How can I 'tell' ofono to use a specific APN settings?
+>
+> One can edit context settings via the D-Bus interface, if that is what
+> you mean.  See test/create-internet-context for an example.
+>
+
+That's nice, but I need Python to achieve that. I would like to keep the
+system (an embedded one) as simple as possible, and for now I don't have
+Python, I don't think it's a good idea to include it just for that.
+
+Can I do that with C?
+
+If so, what is the difference between first method and this one?
+
+
+> >  - It seams that ofono only works if is started after usb-modeswitch
+> > detects the modem and create /dev/ttyUSBx devices. Is there anything to
+> > do to configure that to work properly?
+> >
+>
+> As long as the modem is configured by usb-modeswitch properly and
+> detected by udev, the order of events doesn't matter.  oFono will detect
+> "hot-plugged" devices.
+>
+
+Ok, I'll recheck that.
+
+
+
+>
+> Regards,
+> -Denis
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> https://lists.ofono.org/mailman/listinfo/ofono
+>
+
+--===============2741220837143694741==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
+aWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPkhpIERlbmlzLDwvZGl2PjxkaXYg
+Y2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3
+JiMzOTssbW9ub3NwYWNlIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5
+bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPgpJJiMzOTt2
+ZSBjaGVja2VkIHRob3NlIGNvZGUgZmlsZXMsIGl0IHNlYW1zIHRoYXQgYm90aCBkbyBleGFjdGx5
+IHdoYXQgSSBuZWVkLjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+PC9kaXY+PGRp
+diBjbGFzcz0iZ21haWxfZXh0cmEiPjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJm
+b250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj4KSnVzdCBhIGZldyBt
+b3JlIHF1ZXN0aW9ucy4uLjwvZGl2Pjxicj48YnI+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPjIw
+MTQtMDMtMjcgMTY6NDggR01ULTAzOjAwIERlbmlzIEtlbnppb3IgPHNwYW4gZGlyPSJsdHIiPiZs
+dDs8YSBocmVmPSJtYWlsdG86ZGVua2VuekBnbWFpbC5jb20iIHRhcmdldD0iX2JsYW5rIj5kZW5r
+ZW56QGdtYWlsLmNvbTwvYT4mZ3Q7PC9zcGFuPjo8YnI+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWls
+X3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAwcHggMHB4IDAuOGV4O2JvcmRlci1sZWZ0LXdpZHRo
+OjFweDtib3JkZXItbGVmdC1jb2xvcjpyZ2IoMjA0LDIwNCwyMDQpO2JvcmRlci1sZWZ0LXN0eWxl
+OnNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPgpIaSBKZXL0bmltbyw8YnI+CjxkaXYgY2xhc3M9IiI+
+PGJyPgomZ3Q7IEFzIGZhaXIgYXMgSSB1bmRlcnN0YW5kLCBvZm9ubyBnZXRzIHRoZSBjb3JyZWN0
+IEFQTiBzZXR0aW5ncyB1c2luZzxicj4KJmd0OyBHbm9tZSBTZXJ2aWNlIFByb3ZpZGVyIERhdGFi
+YXNlLjxicj4KPGJyPgo8L2Rpdj5Ob3QgbmVjZXNzYXJpbHkuIKA8ZGl2IGNsYXNzPSJnbWFpbF9k
+ZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7LG1vbm9zcGFj
+ZTtkaXNwbGF5OmlubGluZSI+PC9kaXY+TW9iaWxlIEJyb2FkYmFuZCBQcm92aWRlciBJbmZvIGNh
+biBiZSB1c2VkLCBidXQgdGhlPGJyPgpwcm92aXNpb25pbmcgc3lzdGVtIGlzIHBsdWdpbiBiYXNl
+ZC4goFlvdSBjYW4gd3JpdGUgeW91ciBvd24gaWYgeW91PGJyPgp3aXNoLiCgU2VlIGV4YW1wbGVz
+L3Byb3Zpc2lvbi5jIGluIG9Gb25vIGdpdC48YnI+CjxkaXYgY2xhc3M9IiI+PGJyPjwvZGl2Pjwv
+YmxvY2txdW90ZT48ZGl2Pjxicj48L2Rpdj48ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQi
+IHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj5Paywg
+aWYgSSB3cml0ZSBteSBvd24gaG93IGNhbiBJIGluY2x1ZGUgaXQgdG8gbXkgYXBwbGljYXRpb24/
+IERvIEkgbmVlZCB0byBpbmNsdWRlIHRoaXMgc291cmNlIGZpbGUgaW4gb2Zvbm8gY29tcGlsYXRp
+b24gb3IgaXMgdGhlcmUgYW5vdGhlciB3YXk/PC9kaXY+Cjxicj48L2Rpdj48ZGl2IGNsYXNzPSJn
+bWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7LG1v
+bm9zcGFjZSI+QW5vdGhlciBxdWVzdGlvbiwgbWFrZSBib3RoIHdvcmsgYXQgdGhlIHNhbWUgdGlt
+ZT8gSSBtZWFuLCBtYWtlIG9mb25vIGxvb2sgZmlyc3QgYXQgJiMzOTtteSBvd24gcHJvdmlkZXIm
+IzM5OywgaWYgZG9lc24mIzM5O3QgaGF2ZSBhIHNwZWNpZmljIEFQTiwgbG9vayBhdCB0aGWgTW9i
+aWxlIEJyb2FkYmFuZCBQcm92aWRlci48L2Rpdj4KPGRpdj48YnI+PC9kaXY+PGJsb2NrcXVvdGUg
+Y2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAwcHggMHB4IDAuOGV4O2JvcmRl
+ci1sZWZ0LXdpZHRoOjFweDtib3JkZXItbGVmdC1jb2xvcjpyZ2IoMjA0LDIwNCwyMDQpO2JvcmRl
+ci1sZWZ0LXN0eWxlOnNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPjxkaXYgY2xhc3M9IiI+CiZndDs8
+YnI+CiZndDsgTXkgcXVlc3Rpb25zIGFyZTo8YnI+CiZndDsgoC0gSG93IGNhbiBJICYjMzk7dGVs
+bCYjMzk7IG9mb25vIHRvIHVzZSBhIHNwZWNpZmljIEFQTiBzZXR0aW5ncz88YnI+Cjxicj4KPC9k
+aXY+T25lIGNhbiBlZGl0IGNvbnRleHQgc2V0dGluZ3MgdmlhIHRoZSBELUJ1cyBpbnRlcmZhY2Us
+IGlmIHRoYXQgaXMgd2hhdDxicj4KeW91IG1lYW4uIKBTZWUgdGVzdC9jcmVhdGUtaW50ZXJuZXQt
+Y29udGV4dCBmb3IgYW4gZXhhbXBsZS48YnI+PC9ibG9ja3F1b3RlPjxkaXY+PGJyPjwvZGl2Pjxk
+aXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291
+cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPlRoYXQmIzM5O3MgbmljZSwgYnV0IEkgbmVlZCBQeXRo
+b26gdG8gYWNoaWV2ZSB0aGF0LiBJIHdvdWxkIGxpa2UgdG8ga2VlcCB0aGUgc3lzdGVtIChhbiBl
+bWJlZGRlZCBvbmUpIGFzIHNpbXBsZSBhcyBwb3NzaWJsZSwgYW5kIGZvciBub3cgSSBkb24mIzM5
+O3QgaGF2ZSBQeXRob24sIEkgZG9uJiMzOTt0IHRoaW5rIGl0JiMzOTtzIGEgZ29vZCBpZGVhIHRv
+IGluY2x1ZGUgaXQganVzdCBmb3IgdGhhdC48L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfZGVmYXVs
+dCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPjxi
+cj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMz
+OTtjb3VyaWVyIG5ldyYjMzk7LG1vbm9zcGFjZSI+Q2FuIEkgZG8gdGhhdCB3aXRoIEM/oDwvZGl2
+PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJp
+ZXIgbmV3JiMzOTssbW9ub3NwYWNlIj4KPGJyPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1
+bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj5J
+ZiBzbywgd2hhdCBpcyB0aGUgZGlmZmVyZW5jZSBiZXR3ZWVuIGZpcnN0IG1ldGhvZCBhbmQgdGhp
+cyBvbmU/PC9kaXY+PC9kaXY+PGRpdj48YnI+PC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWls
+X3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAwcHggMHB4IDAuOGV4O2JvcmRlci1sZWZ0LXdpZHRo
+OjFweDtib3JkZXItbGVmdC1jb2xvcjpyZ2IoMjA0LDIwNCwyMDQpO2JvcmRlci1sZWZ0LXN0eWxl
+OnNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPgoKPGRpdiBjbGFzcz0iIj48YnI+CiZndDsgoC0gSXQg
+c2VhbXMgdGhhdCBvZm9ubyBvbmx5IHdvcmtzIGlmIGlzIHN0YXJ0ZWQgYWZ0ZXIgdXNiLW1vZGVz
+d2l0Y2g8YnI+CiZndDsgZGV0ZWN0cyB0aGUgbW9kZW0gYW5kIGNyZWF0ZSAvZGV2L3R0eVVTQngg
+ZGV2aWNlcy4gSXMgdGhlcmUgYW55dGhpbmcgdG88YnI+CiZndDsgZG8gdG8gY29uZmlndXJlIHRo
+YXQgdG8gd29yayBwcm9wZXJseT88YnI+CiZndDs8YnI+Cjxicj4KPC9kaXY+QXMgbG9uZyBhcyB0
+aGUgbW9kZW0gaXMgY29uZmlndXJlZCBieSB1c2ItbW9kZXN3aXRjaCBwcm9wZXJseSBhbmQ8YnI+
+CmRldGVjdGVkIGJ5IHVkZXYsIHRoZSBvcmRlciBvZiBldmVudHMgZG9lc24mIzM5O3QgbWF0dGVy
+LiCgb0Zvbm8gd2lsbCBkZXRlY3Q8YnI+CiZxdW90O2hvdC1wbHVnZ2VkJnF1b3Q7IGRldmljZXMu
+PGJyPjwvYmxvY2txdW90ZT48ZGl2Pjxicj48L2Rpdj48ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2Rl
+ZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNl
+Ij5PaywgSSYjMzk7bGwgcmVjaGVjayB0aGF0LjwvZGl2Pjxicj48L2Rpdj48ZGl2PqA8L2Rpdj48
+YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MHB4IDBweCAwcHgg
+MC44ZXg7Ym9yZGVyLWxlZnQtd2lkdGg6MXB4O2JvcmRlci1sZWZ0LWNvbG9yOnJnYigyMDQsMjA0
+LDIwNCk7Ym9yZGVyLWxlZnQtc3R5bGU6c29saWQ7cGFkZGluZy1sZWZ0OjFleCI+Cgo8YnI+ClJl
+Z2FyZHMsPGJyPgotRGVuaXM8YnI+Cjxicj4KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX188YnI+Cm9mb25vIG1haWxpbmcgbGlzdDxicj4KPGEgaHJlZj0ibWFp
+bHRvOm9mb25vQG9mb25vLm9yZyI+b2Zvbm9Ab2Zvbm8ub3JnPC9hPjxicj4KPGEgaHJlZj0iaHR0
+cHM6Ly9saXN0cy5vZm9uby5vcmcvbWFpbG1hbi9saXN0aW5mby9vZm9ubyIgdGFyZ2V0PSJfYmxh
+bmsiPmh0dHBzOi8vbGlzdHMub2Zvbm8ub3JnL21haWxtYW4vbGlzdGluZm8vb2Zvbm88L2E+PGJy
+Pgo8L2Jsb2NrcXVvdGU+PC9kaXY+PGJyPjwvZGl2PjwvZGl2Pgo=
+
+--===============2741220837143694741==--
 
