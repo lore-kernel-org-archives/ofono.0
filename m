@@ -1,92 +1,275 @@
-Content-Type: multipart/mixed; boundary="===============3963677045293243456=="
+Content-Type: multipart/mixed; boundary="===============3204282876687730811=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Jer=C3=B4nimo?= Lopes <lopesjeronimo@gmail.com>
-Subject: Re: Ofono not "recognizing" some USB dongles
-Date: Tue, 01 Apr 2014 11:03:14 -0300
-Message-ID: <CAM5ihG9-F_m2pRQ6LwcKvp_QGBOZV1BVbdxFYRQ+DsrUq6e+aA@mail.gmail.com>
-In-Reply-To: <533ABFAB.5000306@monom.org>
+From: jussi.pakkanen@canonical.com
+Subject: [PATCH 1/2] Allow users to specify dbus name replacement behaviour.
+Date: Wed, 02 Apr 2014 16:56:20 +0300
+Message-ID: <1396446981-19749-1-git-send-email-jussi.pakkanen@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3963677045293243456==
+--===============3204282876687730811==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Ok, but I already have set CONFIG_TUN.
+From: Jussi Pakkanen <jussi.pakkanen@canonical.com>
 
-Another information, I don't know if it is relevan, I'm using Buildroot
-toolchain, with uClic.
+Hello
+
+In testing it is sometimes useful to be able to replace the system ofono da=
+emon
+instance with our own. This patch makes this possible using dbus' name repl=
+acement
+feature. This patch has the plumbing changes to make it possible to set the
+name replacement settings. The next patch allows you to set these parameters
+from the command line. The default behaviour does not change, i.e. the serv=
+ice
+name is not replaceable and the daemon will not try to replace an existing =
+ofono
+instance.
+
+---
+ dundee/main.c        |  2 +-
+ gdbus/gdbus.h        | 12 +++++++++---
+ gdbus/mainloop.c     | 22 ++++++++++++++--------
+ src/main.c           |  3 ++-
+ tools/auto-enable.c  |  2 +-
+ tools/huawei-audio.c |  2 +-
+ tools/stktest.c      |  2 +-
+ 7 files changed, 29 insertions(+), 16 deletions(-)
+
+diff --git a/dundee/main.c b/dundee/main.c
+index 791425b..2264d42 100644
+--- a/dundee/main.c
++++ b/dundee/main.c
+@@ -201,7 +201,7 @@ int main(int argc, char **argv)
+ =
+
+ 	dbus_error_init(&error);
+ =
+
+-	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, DUNDEE_SERVICE, &error);
++	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, DUNDEE_SERVICE, 0, &error);
+ 	if (conn =3D=3D NULL) {
+ 		if (dbus_error_is_set(&error) =3D=3D TRUE) {
+ 			ofono_error("Unable to hop onto D-Bus: %s",
+diff --git a/gdbus/gdbus.h b/gdbus/gdbus.h
+index 551c306..0eedd1e 100644
+--- a/gdbus/gdbus.h
++++ b/gdbus/gdbus.h
+@@ -35,6 +35,7 @@ typedef enum GDBusMethodFlags GDBusMethodFlags;
+ typedef enum GDBusSignalFlags GDBusSignalFlags;
+ typedef enum GDBusPropertyFlags GDBusPropertyFlags;
+ typedef enum GDBusSecurityFlags GDBusSecurityFlags;
++typedef enum GDBusNameBehaviourFlags GDBusNameBehaviourFlags;
+ =
+
+ typedef struct GDBusArgInfo GDBusArgInfo;
+ typedef struct GDBusMethodTable GDBusMethodTable;
+@@ -52,13 +53,13 @@ typedef gboolean (* GDBusSignalFunction) (DBusConnectio=
+n *connection,
+ 					DBusMessage *message, void *user_data);
+ =
+
+ DBusConnection *g_dbus_setup_bus(DBusBusType type, const char *name,
+-							DBusError *error);
++							GDBusNameBehaviourFlags name_flags, DBusError *error);
+ =
+
+ DBusConnection *g_dbus_setup_private(DBusBusType type, const char *name,
+-							DBusError *error);
++							GDBusNameBehaviourFlags name_flags, DBusError *error);
+ =
+
+ gboolean g_dbus_request_name(DBusConnection *connection, const char *name,
+-							DBusError *error);
++							GDBusNameBehaviourFlags name_flags, DBusError *error);
+ =
+
+ gboolean g_dbus_set_disconnect_function(DBusConnection *connection,
+ 				GDBusWatchFunction function,
+@@ -115,6 +116,11 @@ enum GDBusSecurityFlags {
+ 	G_DBUS_SECURITY_FLAG_ALLOW_INTERACTION =3D (1 << 2),
+ };
+ =
+
++enum GDBusNameBehaviourFlags {
++	G_DBUS_NAME_ALLOW_REPLACEMENT  =3D (1 << 0),
++	G_DBUS_NAME_TRY_REPLACEMENT    =3D (1 << 1),
++};
++
+ struct GDBusArgInfo {
+ 	const char *name;
+ 	const char *signature;
+diff --git a/gdbus/mainloop.c b/gdbus/mainloop.c
+index 435fb93..6417818 100644
+--- a/gdbus/mainloop.c
++++ b/gdbus/mainloop.c
+@@ -252,13 +252,13 @@ static inline void setup_dbus_with_main_loop(DBusConn=
+ection *conn)
+ }
+ =
+
+ static gboolean setup_bus(DBusConnection *conn, const char *name,
+-						DBusError *error)
++						GDBusNameBehaviourFlags name_flags, DBusError *error)
+ {
+ 	gboolean result;
+ 	DBusDispatchStatus status;
+ =
+
+ 	if (name !=3D NULL) {
+-		result =3D g_dbus_request_name(conn, name, error);
++		result =3D g_dbus_request_name(conn, name, name_flags, error);
+ =
+
+ 		if (error !=3D NULL) {
+ 			if (dbus_error_is_set(error) =3D=3D TRUE)
+@@ -278,7 +278,7 @@ static gboolean setup_bus(DBusConnection *conn, const c=
+har *name,
+ }
+ =
+
+ DBusConnection *g_dbus_setup_bus(DBusBusType type, const char *name,
+-							DBusError *error)
++							GDBusNameBehaviourFlags name_flags, DBusError *error)
+ {
+ 	DBusConnection *conn;
+ =
+
+@@ -292,7 +292,7 @@ DBusConnection *g_dbus_setup_bus(DBusBusType type, cons=
+t char *name,
+ 	if (conn =3D=3D NULL)
+ 		return NULL;
+ =
+
+-	if (setup_bus(conn, name, error) =3D=3D FALSE) {
++	if (setup_bus(conn, name, name_flags, error) =3D=3D FALSE) {
+ 		dbus_connection_unref(conn);
+ 		return NULL;
+ 	}
+@@ -301,7 +301,7 @@ DBusConnection *g_dbus_setup_bus(DBusBusType type, cons=
+t char *name,
+ }
+ =
+
+ DBusConnection *g_dbus_setup_private(DBusBusType type, const char *name,
+-							DBusError *error)
++							GDBusNameBehaviourFlags name_flags, DBusError *error)
+ {
+ 	DBusConnection *conn;
+ =
+
+@@ -315,7 +315,7 @@ DBusConnection *g_dbus_setup_private(DBusBusType type, =
+const char *name,
+ 	if (conn =3D=3D NULL)
+ 		return NULL;
+ =
+
+-	if (setup_bus(conn, name, error) =3D=3D FALSE) {
++	if (setup_bus(conn, name, name_flags, error) =3D=3D FALSE) {
+ 		dbus_connection_unref(conn);
+ 		return NULL;
+ 	}
+@@ -324,12 +324,18 @@ DBusConnection *g_dbus_setup_private(DBusBusType type=
+, const char *name,
+ }
+ =
+
+ gboolean g_dbus_request_name(DBusConnection *connection, const char *name,
+-							DBusError *error)
++							GDBusNameBehaviourFlags name_flags, DBusError *error)
+ {
+ 	int result;
++	unsigned int dbus_flags =3D DBUS_NAME_FLAG_DO_NOT_QUEUE;
++
++	if (name_flags & G_DBUS_NAME_TRY_REPLACEMENT)
++		dbus_flags |=3D DBUS_NAME_FLAG_REPLACE_EXISTING;
++	if (name_flags & G_DBUS_NAME_ALLOW_REPLACEMENT)
++		dbus_flags |=3D DBUS_NAME_FLAG_ALLOW_REPLACEMENT;
+ =
+
+ 	result =3D dbus_bus_request_name(connection, name,
+-					DBUS_NAME_FLAG_DO_NOT_QUEUE, error);
++					dbus_flags, error);
+ =
+
+ 	if (error !=3D NULL) {
+ 		if (dbus_error_is_set(error) =3D=3D TRUE)
+diff --git a/src/main.c b/src/main.c
+index d6349cb..d2042c5 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -168,6 +168,7 @@ int main(int argc, char **argv)
+ 	DBusConnection *conn;
+ 	DBusError error;
+ 	guint signal;
++	GDBusNameBehaviourFlags name_flags =3D 0;
+ =
+
+ #ifdef NEED_THREADS
+ 	if (g_thread_supported() =3D=3D FALSE)
+@@ -217,7 +218,7 @@ int main(int argc, char **argv)
+ =
+
+ 	dbus_error_init(&error);
+ =
+
+-	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, OFONO_SERVICE, &error);
++	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, OFONO_SERVICE, name_flags, &er=
+ror);
+ 	if (conn =3D=3D NULL) {
+ 		if (dbus_error_is_set(&error) =3D=3D TRUE) {
+ 			ofono_error("Unable to hop onto D-Bus: %s",
+diff --git a/tools/auto-enable.c b/tools/auto-enable.c
+index 87fb0a8..86c4b39 100644
+--- a/tools/auto-enable.c
++++ b/tools/auto-enable.c
+@@ -527,7 +527,7 @@ int main(int argc, char **argv)
+ =
+
+ 	dbus_error_init(&err);
+ =
+
+-	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, NULL, &err);
++	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, NULL, 0, &err);
+ 	if (conn =3D=3D NULL) {
+ 		if (dbus_error_is_set(&err) =3D=3D TRUE) {
+ 			fprintf(stderr, "%s\n", err.message);
+diff --git a/tools/huawei-audio.c b/tools/huawei-audio.c
+index 9997a58..8f95ade 100644
+--- a/tools/huawei-audio.c
++++ b/tools/huawei-audio.c
+@@ -810,7 +810,7 @@ int main(int argc, char **argv)
+ =
+
+ 	dbus_error_init(&err);
+ =
+
+-	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, NULL, &err);
++	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, NULL, 0, &err);
+ 	if (conn =3D=3D NULL) {
+ 		if (dbus_error_is_set(&err) =3D=3D TRUE) {
+ 			fprintf(stderr, "%s\n", err.message);
+diff --git a/tools/stktest.c b/tools/stktest.c
+index c015e09..4e7e645 100644
+--- a/tools/stktest.c
++++ b/tools/stktest.c
+@@ -4501,7 +4501,7 @@ int main(int argc, char **argv)
+ =
+
+ 	dbus_error_init(&err);
+ =
+
+-	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, NULL, &err);
++	conn =3D g_dbus_setup_bus(DBUS_BUS_SYSTEM, NULL, 0, &err);
+ 	if (conn =3D=3D NULL) {
+ 		if (dbus_error_is_set(&err) =3D=3D TRUE) {
+ 			fprintf(stderr, "%s\n", err.message);
+-- =
+
+1.9.1
 
 
-2014-04-01 10:31 GMT-03:00 Daniel Wagner <wagi@monom.org>:
-
-> On 03/31/2014 11:25 PM, Jer=C3=B4nimo Lopes wrote:
-> > Long story, I'm trying to setup a system using Buildroot, Beaglebone
-> > Black, Connman, Ofono, and 3G USB dongles to connect to the internet.
-> >
-> > I have 3 usb dongles (names showed at their plastic case):
-> >  - ZTE MF-190: not working
-> >  - Huawei E173: not working
-> >  - Huawei E160: working
-> >
-> > I'm attaching some log information of the dongles.
-> >
-> > Both not working ones, are working at a PC with Ubuntu 13.10. Also they
-> > are recognized as the same device on Beaglebone and PC.
-> >
-> > I'm aware that it's probably not a 'Ofono problem'. I'm using buildroot
-> > default kernel for the Beaglebone and set some options myself, like USB
-> > Serial Converter (not enabled by default), so there is a big probability
-> > that something is missing.
->
-> FWIW, didn't look at the logs, but one common problem I am aware of is
-> the missing support of CONFIG_TUN in the kernel.
->
-> HTH,
-> daniel
->
-
---===============3963677045293243456==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
-aWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPk9rLCBidXQgSSBhbHJlYWR5IGhh
-dmUgc2V0IENPTkZJR19UVU4uPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9
-ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPjxicj48L2Rpdj4K
-PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmll
-ciBuZXcmIzM5Oyxtb25vc3BhY2UiPkFub3RoZXIgaW5mb3JtYXRpb24sIEkgZG9uJiMzOTt0IGtu
-b3cgaWYgaXQgaXMgcmVsZXZhbiwgSSYjMzk7bSB1c2luZyBCdWlsZHJvb3QgdG9vbGNoYWluLCB3
-aXRoIHVDbGljLjwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+Cjxicj48
-ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+MjAxNC0wNC0wMSAxMDozMSBHTVQtMDM6MDAgRGFuaWVs
-IFdhZ25lciA8c3BhbiBkaXI9Imx0ciI+Jmx0OzxhIGhyZWY9Im1haWx0bzp3YWdpQG1vbm9tLm9y
-ZyIgdGFyZ2V0PSJfYmxhbmsiPndhZ2lAbW9ub20ub3JnPC9hPiZndDs8L3NwYW4+Ojxicj48Ymxv
-Y2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhleDtib3Jk
-ZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij4KPGRpdiBjbGFzcz0iSE9F
-blpiIj48ZGl2IGNsYXNzPSJoNSI+T24gMDMvMzEvMjAxNCAxMToyNSBQTSwgSmVy9G5pbW8gTG9w
-ZXMgd3JvdGU6PGJyPgomZ3Q7IExvbmcgc3RvcnksIEkmIzM5O20gdHJ5aW5nIHRvIHNldHVwIGEg
-c3lzdGVtIHVzaW5nIEJ1aWxkcm9vdCwgQmVhZ2xlYm9uZTxicj4KJmd0OyBCbGFjaywgQ29ubm1h
-biwgT2Zvbm8sIGFuZCAzRyBVU0IgZG9uZ2xlcyB0byBjb25uZWN0IHRvIHRoZSBpbnRlcm5ldC48
-YnI+CiZndDs8YnI+CiZndDsgSSBoYXZlIDMgdXNiIGRvbmdsZXMgKG5hbWVzIHNob3dlZCBhdCB0
-aGVpciBwbGFzdGljIGNhc2UpOjxicj4KJmd0OyCgLSBaVEUgTUYtMTkwOiBub3Qgd29ya2luZzxi
-cj4KJmd0OyCgLSBIdWF3ZWkgRTE3Mzogbm90IHdvcmtpbmc8YnI+CiZndDsgoC0gSHVhd2VpIEUx
-NjA6IHdvcmtpbmc8YnI+CiZndDs8YnI+CiZndDsgSSYjMzk7bSBhdHRhY2hpbmcgc29tZSBsb2cg
-aW5mb3JtYXRpb24gb2YgdGhlIGRvbmdsZXMuPGJyPgomZ3Q7PGJyPgomZ3Q7IEJvdGggbm90IHdv
-cmtpbmcgb25lcywgYXJlIHdvcmtpbmcgYXQgYSBQQyB3aXRoIFVidW50dSAxMy4xMC4gQWxzbyB0
-aGV5PGJyPgomZ3Q7IGFyZSByZWNvZ25pemVkIGFzIHRoZSBzYW1lIGRldmljZSBvbiBCZWFnbGVi
-b25lIGFuZCBQQy48YnI+CiZndDs8YnI+CiZndDsgSSYjMzk7bSBhd2FyZSB0aGF0IGl0JiMzOTtz
-IHByb2JhYmx5IG5vdCBhICYjMzk7T2Zvbm8gcHJvYmxlbSYjMzk7LiBJJiMzOTttIHVzaW5nIGJ1
-aWxkcm9vdDxicj4KJmd0OyBkZWZhdWx0IGtlcm5lbCBmb3IgdGhlIEJlYWdsZWJvbmUgYW5kIHNl
-dCBzb21lIG9wdGlvbnMgbXlzZWxmLCBsaWtlIFVTQjxicj4KJmd0OyBTZXJpYWwgQ29udmVydGVy
-IChub3QgZW5hYmxlZCBieSBkZWZhdWx0KSwgc28gdGhlcmUgaXMgYSBiaWcgcHJvYmFiaWxpdHk8
-YnI+CiZndDsgdGhhdCBzb21ldGhpbmcgaXMgbWlzc2luZy48YnI+Cjxicj4KPC9kaXY+PC9kaXY+
-RldJVywgZGlkbiYjMzk7dCBsb29rIGF0IHRoZSBsb2dzLCBidXQgb25lIGNvbW1vbiBwcm9ibGVt
-IEkgYW0gYXdhcmUgb2YgaXM8YnI+CnRoZSBtaXNzaW5nIHN1cHBvcnQgb2YgQ09ORklHX1RVTiBp
-biB0aGUga2VybmVsLjxicj4KPGJyPgpIVEgsPGJyPgpkYW5pZWw8YnI+CjwvYmxvY2txdW90ZT48
-L2Rpdj48YnI+PC9kaXY+Cg==
-
---===============3963677045293243456==--
+--===============3204282876687730811==--
 
