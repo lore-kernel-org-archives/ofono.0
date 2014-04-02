@@ -1,68 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============0053979174228615488=="
+Content-Type: multipart/mixed; boundary="===============0698345895523769839=="
 MIME-Version: 1.0
-From: jussi.pakkanen@canonical.com
-Subject: [PATCH 2/2] Can set name replacement with command line arguments.
-Date: Wed, 02 Apr 2014 16:56:21 +0300
-Message-ID: <1396446981-19749-2-git-send-email-jussi.pakkanen@canonical.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/2] Allow users to specify dbus name replacement
+ behaviour.
+Date: Wed, 02 Apr 2014 11:39:35 -0700
+Message-ID: <7247E8A2-DA61-4DB6-9995-7B127B7780EA@holtmann.org>
 In-Reply-To: <1396446981-19749-1-git-send-email-jussi.pakkanen@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0053979174228615488==
+--===============0698345895523769839==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Jussi Pakkanen <jussi.pakkanen@canonical.com>
+Hi Jussi,
 
----
- src/main.c | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+> In testing it is sometimes useful to be able to replace the system ofono =
+daemon
+> instance with our own. This patch makes this possible using dbus' name re=
+placement
+> feature. This patch has the plumbing changes to make it possible to set t=
+he
+> name replacement settings. The next patch allows you to set these paramet=
+ers
+> from the command line. The default behaviour does not change, i.e. the se=
+rvice
+> name is not replaceable and the daemon will not try to replace an existin=
+g ofono
+> instance.
 
-diff --git a/src/main.c b/src/main.c
-index d2042c5..489a9d8 100644
---- a/src/main.c
-+++ b/src/main.c
-@@ -133,6 +133,8 @@ static gchar *option_plugin =3D NULL;
- static gchar *option_noplugin =3D NULL;
- static gboolean option_detach =3D TRUE;
- static gboolean option_version =3D FALSE;
-+static gboolean option_try_replace =3D FALSE;
-+static gboolean option_allow_replace =3D FALSE;
- =
+what is this useful for. We have been running oFono for more than 4 years a=
+nd BlueZ with D-Bus for over 10 years and never had the need for doing this=
+. So I do not understand why we would support this.
 
- static gboolean parse_debug(const char *key, const char *value,
- 					gpointer user_data, GError **error)
-@@ -156,6 +158,10 @@ static GOptionEntry options[] =3D {
- 	{ "nodetach", 'n', G_OPTION_FLAG_REVERSE,
- 				G_OPTION_ARG_NONE, &option_detach,
- 				"Don't run as daemon in background" },
-+	{ "replace", 0, 0, G_OPTION_ARG_NONE, &option_try_replace,
-+				"Try to replace existing service", NULL },
-+	{ "allow-replace", 0, 0, G_OPTION_ARG_NONE, &option_allow_replace,
-+				"Allow dbus service name to be replaced", NULL },
- 	{ "version", 'v', 0, G_OPTION_ARG_NONE, &option_version,
- 				"Show version information and exit" },
- 	{ NULL },
-@@ -203,6 +209,12 @@ int main(int argc, char **argv)
- 		}
- 	}
- =
+> ---
+> dundee/main.c        |  2 +-
+> gdbus/gdbus.h        | 12 +++++++++---
+> gdbus/mainloop.c     | 22 ++++++++++++++=E2=80=94=E2=80=94=E2=80=94=E2=80=
+=94
 
-+	if (option_try_replace =3D=3D TRUE)
-+		name_flags |=3D G_DBUS_NAME_TRY_REPLACEMENT;
-+
-+	if (option_allow_replace =3D=3D TRUE)
-+		name_flags |=3D G_DBUS_NAME_ALLOW_REPLACEMENT;
-+
- 	event_loop =3D g_main_loop_new(NULL, FALSE);
- =
+And gdbus/ changes must always be in a separate patch. This code is used by=
+ ConnMan, oFono, BlueZ etc.
 
- #ifdef NEED_THREADS
--- =
+Regards
 
-1.9.1
+Marcel
 
 
---===============0053979174228615488==--
+--===============0698345895523769839==--
 
