@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============4917832970082577304=="
+Content-Type: multipart/mixed; boundary="===============7049555287452588238=="
 MIME-Version: 1.0
 From: Eric BOUXIROT <eric.bouxirot@azimut-monitoring.com>
 Subject: disconnecting USB modem
-Date: Thu, 03 Apr 2014 12:32:41 +0200
-Message-ID: <lhjdc9$6jl$1@ger.gmane.org>
+Date: Wed, 02 Apr 2014 18:41:22 +0200
+Message-ID: <lhhejj$k84$1@ger.gmane.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4917832970082577304==
+--===============7049555287452588238==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -33,5 +33,5 @@ is there any reason for this? or it is a bug somewhere in ofono/driver =
 thank you all !
 
 
---===============4917832970082577304==--
+--===============7049555287452588238==--
 
