@@ -1,135 +1,119 @@
-Content-Type: multipart/mixed; boundary="===============0125644461935261456=="
+Content-Type: multipart/mixed; boundary="===============8552845464966502291=="
 MIME-Version: 1.0
-From: Antti =?unknown-8bit?q?Kaijanm=C3=A4ki?= <antti.kaijanmaki@canonical.com>
-Subject: Re: [PATCH 1/2] Allow users to specify dbus name replacement
- behaviour.
-Date: Fri, 04 Apr 2014 04:16:43 +0300
-Message-ID: <533E07FB.9020900@canonical.com>
-In-Reply-To: <533DFBF9.9050906@gmail.com>
+From: Eric Nelson <eric.nelson@boundarydevices.com>
+Subject: Re: Setting 'legacy' property for GSM modem
+Date: Fri, 04 Apr 2014 16:09:19 -0700
+Message-ID: <533F3B9F.7090209@boundarydevices.com>
+In-Reply-To: <5330636B.1090008@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0125644461935261456==
+--===============8552845464966502291==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 04.04.2014 03:25, Denis Kenzior wrote:
->> The number of modems returned by org.ofono.Manager.GetModems() must
->> represent the total number of modems available to the system and thus we
->> need to have exactly two modems when testing dual-sim features etc.
+Thanks for the tip, Denis.
+
+On 03/24/2014 09:55 AM, Denis Kenzior wrote:
+> Hi Eric,
+>
+> On 03/21/2014 05:51 PM, Eric Nelson wrote:
+>> Hi all,
 >>
-> =
-
-> Sounds like your system is a bit inflexible, but okay.
-
-The system is not inflexible, but we need to be able to set up the
-environment for each test case according to the test plan.
-
-As an example, not actual test plans:
-
-
-=3D Test 1 =3D
-
-Prerequisites:
- - number of modems: 1
-   - modem 1
-     - ID: Personal
-
-Step 1:
-Incoming call comes in on modem 1.
-Verify:
- - notification of incoming call is shown
- - incoming call number is shown
- - the notification does not contain the ID of the modem
-   receiving the call.
-
-Step 2:
-Accept the incoming call through the notification
-Verify:
- - call interface shows up
- - call interface shows the incoming number
- - call interface does not show the modem ID
-
-Step 3:
-Hang up the call
-Verify:
- - call is terminated
- - call interface turns to dialer interface
- - dialer interface does not show the Modem ID
-
-
-=3D Test 1 =3D
-
-Prerequisites:
- - number of modems: 2
-   - modem 1
-     - ID: Personal
-   - modem 2
-     - ID: Work
-
-Step 1:
-Incoming call comes in on modem 2.
-Verify:
- - notification of incoming call is shown
- - incoming call number is shown
- - the notification contains the Modem ID "Work"
-
-Step 2:
-Accept the incoming call through the notification
-Verify:
- - call interface shows up
- - call interface shows the incoming number
- - call interface shows the Modem ID "Work"
-
-Step 3:
-Hang up the call
-Verify:
- - call is terminated
- - call interface turns to dialer interface
- - dialer interface allows to choose between two modems
-   with IDs "Personal" and "Work"
-
-Now, we have testing framework in place that we can do these tests in an
-automated manner, testing the whole stack down from ofono up to the
-final application that handles the phone calls, inspecting different
-components that are visible on the screen no matter where they come from
-(notifications from the notification system, applications, any shell
-component..)
-
-Now to run these tests in arbitrary order we need to be able to set up
-the testing environment for each test individually.
-
-For Test 1 we need oFono to expose a single modem for the duraction of
-the test and through that modem we emulate the phone call and also
-verify that the call gets terminated when the button in call interface
-is pushed.
-
-Test 2 is ran straight after Test 1 and for that we need to change the
-number of modems to two and have them individually configured with
-proper phonesim .xml files in between the two tests.
-
-
->> The need to change the number of modems during testing comes from the
->> fact that our test suite has the single and multimodem tests together
->> and runs them one after another and we need to be able to set up the
->> environment appropriately in between individual test cases.
+>> I'm an Ofono N00b trying to figure out how configuration
+>> should happen, and I'm a bit stuck.
 >>
-> =
+>> I'm trying to get a Novatel 3G modem configured, and seem
+>> to be quite close.
+>>
+>> Using the nice OFONO_AT_DEBUG=3D1 switch, I can see what appears
+>> to be proper traffic to the point of connection:
+>>
+>>      ofonod[1928]: Modem: > AT+CGDATA=3D"PPP",1\r
+>>      ofonod[1928]: Modem: < \r\nCONNECT HSDPA 3.6\r\n
+>>
+>> And using strace, I see a bunch of writes following this:
+>>
+>>          write(11, "~\377}#\300!}!}!} }$\321\265~", 17) =3D 17
+>>          write(11, "\377}#\300!}!}!} }$\321\265~", 16) =3D 16
+>>
+>> but no returned data.
+>>
+>> If I contrast this with the same card in my laptop running
+>> Network Manager, I see that the "ATD*99**1#\r" string is
+>> used to make the connection:
+>>
+>>      read(27, "\r\n+CGDCONT: 1,\"IP\",\"roam\",\"\",0,0"..., 1024) =3D 1=
+15
+>>      read(27, 0x130f623, 1024)               =3D -1 EAGAIN (Resource
+>> temporarily unavailable)
+>>      write(27, "A", 1)                       =3D 1
+>>      write(27, "T", 1)                       =3D 1
+>>      write(27, "D", 1)                       =3D 1
+>>      write(27, "*", 1)                       =3D 1
+>>      write(27, "9", 1)                       =3D 1
+>>      write(27, "9", 1)                       =3D 1
+>>      write(27, "*", 1)                       =3D 1
+>>      write(27, "*", 1)                       =3D 1
+>>      write(27, "*", 1)                       =3D 1
+>>      write(27, "1", 1)                       =3D 1
+>>      write(27, "#", 1)                       =3D 1
+>>      write(27, "\r", 1)                      =3D 1
+>>      read(27, "\r\nCONNECT HSDPA 3.6\r\n", 1024) =3D 21
+>>
+>> And data flows thereafter.
+>>
+>> Reading the code, it appears that this form of dialing string is
+>> supported in Ofono, by using the 'legacy' option:
+>>
+>> http://git.kernel.org/cgit/network/ofono/ofono.git/tree/gatchat/gsmdial.=
+c#n397
+>>
+>>
+>
+> gsmdial is just a developer / debug tool.  If you think that this model
+> will require using ATD*99 syntax, then you will need to set a vendor
+> quirk. The only vendor that currently requires using ATD*99 instead of
+> +CGDATA is SIMCOM.
+>
+> Try the following as a quick test, change plugins/novatel.c post_sim():
+> to do
+>          gc =3D ofono_gprs_context_create(modem,
+> OFONO_VENDOR_SIMCOM_SIM900, "atmodem", data->modem);
+>
+This didn't change things for me, and I actually found out that
+the command was being sent by atmodem/gprs-context.c, which
+doesn't support the legacy thing.
 
-> Why don't you simply write a plugin that handles all of this?  E.g.
-> canonical_tester that creates two modem instances.  If you must insist
-> on having exactly 1 or 2 modems, then just add a DBus interface to
-> switch between modes.
-> =
+> and see if that solves your problem.  We have tested several Novatel
+> modems and they seem to work just fine with +CGDATA, but you may have
+> one that we have not tested.
+>
 
-> Adding a control mechanism for controlling the number of phonesim
-> instances seems like total overkill.
+Changing the connect string by hacking gprs-context.c didn't make a
+difference for me (no surprise).
 
-Yes, agreed. The DBus interface is the way to go.
+I think I have some other N00b configuration issue.
+
+Setting OFONO_PPP_DEBUG shows this after the connect:
+
+ofonod[1934]: PPP: lcp: pppcp_generate_event: current state 0:INITIAL
+ofonod[1934]: PPP: event: 0 (Up), action: 2, new_state: 2 (CLOSED)
+ofonod[1934]: PPP: lcp: pppcp_generate_event: current state 2:CLOSED
+ofonod[1934]: PPP: event: 2 (Open), action: 1026, new_state: 6 (REQSENT)
+ofonod[1934]: PPP: lcp: pppcp_initialize_restart_count: current state =
+
+2:CLOSED
+ofonod[1934]: PPP: lcp: pppcp_send_configure_request: current state 2:CLOSED
+
+Oddly, shutting down connman and ofono allowed me to connect using
+pppd though.
+
+Regards,
 
 
+Eric
 
-
---===============0125644461935261456==--
+--===============8552845464966502291==--
 
