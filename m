@@ -1,54 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============9124636711671819478=="
+Content-Type: multipart/mixed; boundary="===============6799267935009777697=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Antti =?unknown-8bit?q?Kaijanm=C3=A4ki?= <antti.kaijanmaki@canonical.com>
 Subject: Re: [PATCH 1/2] Allow users to specify dbus name replacement
  behaviour.
-Date: Thu, 03 Apr 2014 19:25:29 -0500
-Message-ID: <533DFBF9.9050906@gmail.com>
-In-Reply-To: <533DFB3F.6080802@canonical.com>
+Date: Fri, 04 Apr 2014 03:50:17 +0300
+Message-ID: <533E01C9.9090101@canonical.com>
+In-Reply-To: <533DF89F.8030003@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9124636711671819478==
+--===============6799267935009777697==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antti,
-
-> What we are trying to do is a full stack system testing where the
-> individual components that are being tested don't have any modifications
-> or adaptations when they are run under test suite.
-
-Okay that sort of makes sense
-
+On 04.04.2014 03:11, Denis Kenzior wrote:
+> Hi Antti,
 > =
 
-> The number of modems returned by org.ofono.Manager.GetModems() must
-> represent the total number of modems available to the system and thus we
-> need to have exactly two modems when testing dual-sim features etc.
+>> Oh, didn't know that. That sounds great!
+>> We were under the impression that the phonesim instances have to be
+>> running before phonesim plugin loads and the modem .xml configurations
+>> can't be changed on the fly.
 > =
 
+> What modem .xml configurations?  I'm lost now.
 
-Sounds like your system is a bit inflexible, but okay.
+The XML files you pass to ofono-phonesim through command line parameter.
 
-> The need to change the number of modems during testing comes from the
-> fact that our test suite has the single and multimodem tests together
-> and runs them one after another and we need to be able to set up the
-> environment appropriately in between individual test cases.
+
+> You have phonesim plugin inside oFono that simply creates modem driver
+> instances that essentially know two things:
+>   - IP Address
+>   - Port number.
 > =
 
+> When you enable the modem on path /phonesimN, a TCP connection is
+> established.
+> When you disable the modem, a TCP connection is killed.
 
-Why don't you simply write a plugin that handles all of this?  E.g.
-canonical_tester that creates two modem instances.  If you must insist
-on having exactly 1 or 2 modems, then just add a DBus interface to
-switch between modes.
+Yes, got it now. If we want to change the modem configuration we simply
+have to power down the modem, kill the old phonesim instance, start a
+new one with another .xml and power the modem back on.
 
-Adding a control mechanism for controlling the number of phonesim
-instances seems like total overkill.
 
-Regards,
--Denis
+>> Now looking at stktest.c I see it opens a socket to communicate with an
+>> external process.
+>>
+> =
 
---===============9124636711671819478==--
+> If by external process you mean oFono... then yes.  The setup is exactly
+> the same as phonesim, just automated.  Think of stktest as a phonesim
+> instance with a very limited AT command set, but tells oFono when to
+> connect ;)
+
+skttest is a oFono plugin which connects to an external process stktool,
+yes, very much like phonesim plugin connects to a phonesim instance. But
+what I was first proposing actually makes phonsim plugin (oFono) to
+listen for connections from external processes.
+
+But as you pointed out in your another reply that a plugin can do what
+ever it wants then we don't need this custom listening socket, but we
+can implement a proper dbus-interface instead.
+
+
+
+
+--===============6799267935009777697==--
 
