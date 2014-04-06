@@ -1,119 +1,116 @@
-Content-Type: multipart/mixed; boundary="===============8552845464966502291=="
+Content-Type: multipart/mixed; boundary="===============2768207646032747644=="
 MIME-Version: 1.0
-From: Eric Nelson <eric.nelson@boundarydevices.com>
-Subject: Re: Setting 'legacy' property for GSM modem
-Date: Fri, 04 Apr 2014 16:09:19 -0700
-Message-ID: <533F3B9F.7090209@boundarydevices.com>
-In-Reply-To: <5330636B.1090008@gmail.com>
+From: =?unknown-8bit?q?Jer=C3=B4nimo?= Lopes <lopesjeronimo@gmail.com>
+Subject: Provisioning mechanism
+Date: Sun, 06 Apr 2014 16:37:39 -0300
+Message-ID: <CAM5ihG98uDdODn4_UXuB=FhwGwT=U0-0YeT3TNzAxPXvA0HdPA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8552845464966502291==
+--===============2768207646032747644==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Thanks for the tip, Denis.
+Hi,
 
-On 03/24/2014 09:55 AM, Denis Kenzior wrote:
-> Hi Eric,
->
-> On 03/21/2014 05:51 PM, Eric Nelson wrote:
->> Hi all,
->>
->> I'm an Ofono N00b trying to figure out how configuration
->> should happen, and I'm a bit stuck.
->>
->> I'm trying to get a Novatel 3G modem configured, and seem
->> to be quite close.
->>
->> Using the nice OFONO_AT_DEBUG=3D1 switch, I can see what appears
->> to be proper traffic to the point of connection:
->>
->>      ofonod[1928]: Modem: > AT+CGDATA=3D"PPP",1\r
->>      ofonod[1928]: Modem: < \r\nCONNECT HSDPA 3.6\r\n
->>
->> And using strace, I see a bunch of writes following this:
->>
->>          write(11, "~\377}#\300!}!}!} }$\321\265~", 17) =3D 17
->>          write(11, "\377}#\300!}!}!} }$\321\265~", 16) =3D 16
->>
->> but no returned data.
->>
->> If I contrast this with the same card in my laptop running
->> Network Manager, I see that the "ATD*99**1#\r" string is
->> used to make the connection:
->>
->>      read(27, "\r\n+CGDCONT: 1,\"IP\",\"roam\",\"\",0,0"..., 1024) =3D 1=
-15
->>      read(27, 0x130f623, 1024)               =3D -1 EAGAIN (Resource
->> temporarily unavailable)
->>      write(27, "A", 1)                       =3D 1
->>      write(27, "T", 1)                       =3D 1
->>      write(27, "D", 1)                       =3D 1
->>      write(27, "*", 1)                       =3D 1
->>      write(27, "9", 1)                       =3D 1
->>      write(27, "9", 1)                       =3D 1
->>      write(27, "*", 1)                       =3D 1
->>      write(27, "*", 1)                       =3D 1
->>      write(27, "*", 1)                       =3D 1
->>      write(27, "1", 1)                       =3D 1
->>      write(27, "#", 1)                       =3D 1
->>      write(27, "\r", 1)                      =3D 1
->>      read(27, "\r\nCONNECT HSDPA 3.6\r\n", 1024) =3D 21
->>
->> And data flows thereafter.
->>
->> Reading the code, it appears that this form of dialing string is
->> supported in Ofono, by using the 'legacy' option:
->>
->> http://git.kernel.org/cgit/network/ofono/ofono.git/tree/gatchat/gsmdial.=
-c#n397
->>
->>
->
-> gsmdial is just a developer / debug tool.  If you think that this model
-> will require using ATD*99 syntax, then you will need to set a vendor
-> quirk. The only vendor that currently requires using ATD*99 instead of
-> +CGDATA is SIMCOM.
->
-> Try the following as a quick test, change plugins/novatel.c post_sim():
-> to do
->          gc =3D ofono_gprs_context_create(modem,
-> OFONO_VENDOR_SIMCOM_SIM900, "atmodem", data->modem);
->
-This didn't change things for me, and I actually found out that
-the command was being sent by atmodem/gprs-context.c, which
-doesn't support the legacy thing.
+I'm trying to understand ofono build-in provisioning mechanism.
 
-> and see if that solves your problem.  We have tested several Novatel
-> modems and they seem to work just fine with +CGDATA, but you may have
-> one that we have not tested.
->
+As far as understand these are the steps:
 
-Changing the connect string by hacking gprs-context.c didn't make a
-difference for me (no surprise).
+1: get MCC and MNC
+2: check settings file for this network, if exists goto step 6
+3: try to read provisioning info from the sim card, if ok, goto step 5
+4: try to read provisioning from MBPI xml file
+5: write info to the settings file
+6: if it has a valid provisioning info, "export" (I don't know if this is
+the right term, so I'll use it) it to connman.
 
-I think I have some other N00b configuration issue.
+So my first question, is that correct?
 
-Setting OFONO_PPP_DEBUG shows this after the connect:
+The other question is why provisioning plugin can't get 2 or more apn
+settings for the same network and export more than one service to connman?
 
-ofonod[1934]: PPP: lcp: pppcp_generate_event: current state 0:INITIAL
-ofonod[1934]: PPP: event: 0 (Up), action: 2, new_state: 2 (CLOSED)
-ofonod[1934]: PPP: lcp: pppcp_generate_event: current state 2:CLOSED
-ofonod[1934]: PPP: event: 2 (Open), action: 1026, new_state: 6 (REQSENT)
-ofonod[1934]: PPP: lcp: pppcp_initialize_restart_count: current state =
+I've tried to change line 53 of plugins/provision.c, setting
+'allow_duplicates' parameter to 'TRUE':
+ apns =3D mbpi_lookup_apn(mcc, mnc, TRUE, &error);
 
-2:CLOSED
-ofonod[1934]: PPP: lcp: pppcp_send_configure_request: current state 2:CLOSED
+Everything seams to work, but only the first context is exported to
+connman. I've try to debug the code, but I could't realize where this is
+done.
+Is there a particular reason why this can't be done?
 
-Oddly, shutting down connman and ofono allowed me to connect using
-pppd though.
+Best regards,
 
-Regards,
+Jer=C3=B4nimo Lopes
 
+--===============2768207646032747644==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-Eric
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
+aWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPkhpLDwvZGl2PjxkaXYgY2xhc3M9
+ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTss
+bW9ub3NwYWNlIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZv
+bnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPgoKSSYjMzk7bSB0cnlp
+bmcgdG8gdW5kZXJzdGFuZCBvZm9ubyBidWlsZC1pbiBwcm92aXNpb25pbmcgbWVjaGFuaXNtLjwv
+ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2Nv
+dXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVm
+YXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2Ui
+PgpBcyBmYXIgYXMgdW5kZXJzdGFuZCB0aGVzZSBhcmUgdGhlIHN0ZXBzOjwvZGl2PjxkaXYgY2xh
+c3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMz
+OTssbW9ub3NwYWNlIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9
+ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPjE6IGdldCBNQ0Mg
+YW5kIE1OQzwvZGl2Pgo8ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1p
+bHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7LG1vbm9zcGFjZSI+MjogY2hlY2sgc2V0dGluZ3MgZmls
+ZSBmb3IgdGhpcyBuZXR3b3JrLCBpZiBleGlzdHMgZ290byBzdGVwIDY8L2Rpdj48ZGl2IGNsYXNz
+PSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7
+LG1vbm9zcGFjZSI+CjM6IHRyeSB0byByZWFkIHByb3Zpc2lvbmluZyBpbmZvIGZyb20gdGhlIHNp
+bSBjYXJkLCBpZiBvaywgZ290byBzdGVwIDU8L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0
+IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7LG1vbm9zcGFjZSI+NDog
+dHJ5IHRvIHJlYWQgcHJvdmlzaW9uaW5nIGZyb20gTUJQSSB4bWwgZmlsZTwvZGl2PjxkaXYgY2xh
+c3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMz
+OTssbW9ub3NwYWNlIj4KNTogd3JpdGUgaW5mbyB0byB0aGUgc2V0dGluZ3MgZmlsZaA8L2Rpdj48
+ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVy
+IG5ldyYjMzk7LG1vbm9zcGFjZSI+NjogaWYgaXQgaGFzIGEgdmFsaWQgcHJvdmlzaW9uaW5nIGlu
+Zm8sICZxdW90O2V4cG9ydCZxdW90OyAoSSBkb24mIzM5O3Qga25vdyBpZiB0aGlzIGlzIHRoZSBy
+aWdodCB0ZXJtLCBzbyBJJiMzOTtsbCB1c2UgaXQpIGl0IHRvIGNvbm5tYW4uPC9kaXY+CjxkaXYg
+Y2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3
+JiMzOTssbW9ub3NwYWNlIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5
+bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPlNvIG15IGZp
+cnN0IHF1ZXN0aW9uLCBpcyB0aGF0IGNvcnJlY3Q/PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVm
+YXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2Ui
+Pgo8YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5
+OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPlRoZSBvdGhlciBxdWVzdGlvbiBpcyB3
+aHkgcHJvdmlzaW9uaW5nIHBsdWdpbiBjYW4mIzM5O3QgZ2V0IDIgb3IgbW9yZSBhcG4gc2V0dGlu
+Z3MgZm9yIHRoZSBzYW1lIG5ldHdvcmsgYW5kIGV4cG9ydCBtb3JlIHRoYW4gb25lIHNlcnZpY2Ug
+dG8gY29ubm1hbj88L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQt
+ZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPjxicj48L2Rpdj48ZGl2IGNs
+YXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYj
+Mzk7LG1vbm9zcGFjZSI+SSYjMzk7dmUgdHJpZWQgdG8gY2hhbmdlIGxpbmUgNTMgb2YgcGx1Z2lu
+cy9wcm92aXNpb24uYywgc2V0dGluZyAmIzM5O2FsbG93X2R1cGxpY2F0ZXMmIzM5OyBwYXJhbWV0
+ZXIgdG8gJiMzOTtUUlVFJiMzOTs6PC9kaXY+CjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxm
+b250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPqBhcG5zID0gbWJwaV9sb29rdXBfYXBu
+KG1jYywgbW5jLCBUUlVFLCAmYW1wO2Vycm9yKTs8L2ZvbnQ+PGJyPjwvZGl2PjxkaXYgY2xhc3M9
+ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPjxicj48
+L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+Cjxmb250IGZhY2U9ImNvdXJp
+ZXIgbmV3LCBtb25vc3BhY2UiPkV2ZXJ5dGhpbmcgc2VhbXMgdG8gd29yaywgYnV0IG9ubHkgdGhl
+IGZpcnN0IGNvbnRleHQgaXMgZXhwb3J0ZWQgdG8gY29ubm1hbi4gSSYjMzk7dmUgdHJ5IHRvIGRl
+YnVnIHRoZSBjb2RlLCBidXQgSSBjb3VsZCYjMzk7dCByZWFsaXplIHdoZXJlIHRoaXMgaXMgZG9u
+ZS6gPC9mb250PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPgo8Zm9udCBmYWNlPSJj
+b3VyaWVyIG5ldywgbW9ub3NwYWNlIj5JcyB0aGVyZSBhIHBhcnRpY3VsYXIgcmVhc29uIHdoeSB0
+aGlzIGNhbiYjMzk7dCBiZSBkb25lPzwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZh
+dWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj48YnI+PC9mb250PjwvZGl2
+PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25v
+c3BhY2UiPkJlc3QgcmVnYXJkcyw8L2ZvbnQ+PC9kaXY+CjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1
+bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPjxicj48L2ZvbnQ+PC9kaXY+
+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9z
+cGFjZSI+SmVy9G5pbW8gTG9wZXM8L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVs
+dCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+PGJyPgo8L2ZvbnQ+PC9kaXY+
+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9z
+cGFjZSI+PGJyPjwvZm9udD48L2Rpdj48L2Rpdj4K
 
---===============8552845464966502291==--
+--===============2768207646032747644==--
 
