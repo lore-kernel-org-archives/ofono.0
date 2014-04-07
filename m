@@ -1,146 +1,194 @@
-Content-Type: multipart/mixed; boundary="===============7013072939191194099=="
+Content-Type: multipart/mixed; boundary="===============8407953423608670801=="
 MIME-Version: 1.0
 From: jussi.pakkanen@canonical.com
-Subject: [PATCH 1/2] Basic blocks for control channel.
-Date: Mon, 07 Apr 2014 14:55:47 +0300
-Message-ID: <1396871748-10062-1-git-send-email-jussi.pakkanen@canonical.com>
+Subject: [PATCH 2/2] Basic implementation of dbus methods.
+Date: Mon, 07 Apr 2014 14:55:48 +0300
+Message-ID: <1396871748-10062-2-git-send-email-jussi.pakkanen@canonical.com>
+In-Reply-To: <1396871748-10062-1-git-send-email-jussi.pakkanen@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7013072939191194099==
+--===============8407953423608670801==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello
-
-Here's a revised way of changing phonesim modem configurations at
-runtime. It works by adding a dbus interface via which you can add new
-modems, delete all existing modems or reset modem status to what it
-was at startup. This first patch adds the dbus bits and the second one
-calls the corresponding ofono functions.
-
-This patch set is not fully polished yet but should give an idea what
-we are aiming for. I'm not fully versed in phonesim's internals so I'm
-not sure if I'm poking all the right bits in the dbus functions, so
-please verify that with extra care.
-
-Thanks,
+From: Jussi Pakkanen <jussi.pakkanen@canonical.com>
 
 ---
- plugins/phonesim.c | 58 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 file changed, 58 insertions(+)
+ plugins/phonesim.c | 89 ++++++++++++++++++++++++++++++++++++++++++--------=
+----
+ 1 file changed, 70 insertions(+), 19 deletions(-)
 
 diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-index 5561a05..12cd591 100644
+index 12cd591..61f15c9 100644
 --- a/plugins/phonesim.c
 +++ b/plugins/phonesim.c
-@@ -35,6 +35,7 @@
- #include <glib.h>
- #include <gatmux.h>
- #include <gatchat.h>
-+#include <gdbus.h>
+@@ -1039,6 +1039,14 @@ static void parse_config(const char *filename)
+ 	char **modems;
+ 	int i;
  =
 
- #define OFONO_API_SUBJECT_TO_CHANGE
- #include <ofono/plugin.h>
-@@ -73,6 +74,8 @@ static const char *none_prefix[] =3D { NULL };
- static const char *ptty_prefix[] =3D { "+PTTY:", NULL };
- static const char *simstate_prefix[] =3D { "+SIMSTATE:", NULL };
- static int next_iface =3D 0;
-+static const char CONTROL_PATH[] =3D "/phonesim";
-+static const char CONTROL_INTERFACE[] =3D "org.ofono.phonesim.Control";
++	if (filename =3D=3D NULL) {
++		char *conf_override =3D getenv("OFONO_PHONESIM_CONFIG");
++		if (conf_override)
++			filename =3D conf_override;
++		else
++			filename =3D CONFIGDIR "/phonesim.conf";
++	}
++
+ 	DBG("filename %s", filename);
  =
 
- struct phonesim_data {
- 	GAtMux *mux;
-@@ -1068,6 +1071,55 @@ done:
+ 	keyfile =3D g_key_file_new();
+@@ -1071,33 +1079,87 @@ done:
  	g_key_file_free(keyfile);
  }
  =
 
-+static DBusMessage *control_add(DBusConnection *conn,
-+					DBusMessage *msg, void *data)
-+{
-+	return NULL;
++static void release_modems() {
++	GSList *list;
++
++	for (list =3D modem_list; list; list =3D list->next) {
++		struct ofono_modem *modem =3D list->data;
++
++		ofono_modem_remove(modem);
++	}
++
++	g_slist_free(modem_list);
++	modem_list =3D NULL;
 +}
 +
-+static DBusMessage *control_remove_all(DBusConnection *conn,
-+					DBusMessage *msg, void *data)
-+{
-+	return NULL;
-+}
-+
-+static DBusMessage *control_reset(DBusConnection *conn,
-+					DBusMessage *msg, void *data)
-+{
-+	return NULL;
-+}
-+
-+static const GDBusMethodTable control_methods[] =3D {
-+	{ GDBUS_METHOD("Add",
-+			NULL, GDBUS_ARGS({ "properties", "sss" }),
-+			control_add) },
-+	{ GDBUS_METHOD("RemoveAll",
-+			NULL, GDBUS_ARGS({ "properties", "" }),
-+			control_remove_all) },
-+	{ GDBUS_METHOD("Reset",
-+			NULL, GDBUS_ARGS({ "properties", "" }),
-+			control_reset) },
-+	{}
-+};
-+
-+static int setup_control_channel() {
-+	int err =3D 0;
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	void *user_data =3D NULL;
-+	g_dbus_register_interface(conn,
-+			CONTROL_PATH, CONTROL_INTERFACE,
-+			control_methods,
-+			NULL,
-+			NULL,
-+			user_data,
-+			NULL);
-+	return err;
-+}
-+
-+static void shutdown_control_channel() {
-+	g_dbus_unregister_interface(ofono_dbus_get_connection(), CONTROL_PATH, CO=
-NTROL_INTERFACE);
-+}
-+
- static int phonesim_init(void)
+ static DBusMessage *control_add(DBusConnection *conn,
+ 					DBusMessage *msg, void *data)
  {
- 	int err;
-@@ -1087,6 +1139,10 @@ static int phonesim_init(void)
- 	else
- 		parse_config(CONFIGDIR "/phonesim.conf");
- =
-
-+	err =3D setup_control_channel();
-+	if (err < 0)
-+		return err;
+-	return NULL;
++	const char *driver =3D "phonesim";
++	struct ofono_modem *modem;
++	DBusMessageIter iter;
++	char *name;
++	char *address;
++	char *port;
 +
- 	return 0;
++	if (!dbus_message_iter_init(msg, &iter))
++		return __ofono_error_invalid_args(msg);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_get_basic(&iter, &name);
++	dbus_message_iter_next(&iter);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_get_basic(&iter, &address);
++	dbus_message_iter_next(&iter);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_get_basic(&iter, &port);
++
++
++	modem =3D ofono_modem_create(name, driver);
++	if (modem =3D=3D NULL)
++		return NULL;
++
++	ofono_modem_set_string(modem, "Address", address);
++	ofono_modem_set_integer(modem, "Port", atoi(port));
++	modem_list =3D g_slist_prepend(modem_list, modem);
++
++	return dbus_message_new_method_return(msg);
  }
  =
 
-@@ -1094,6 +1150,8 @@ static void phonesim_exit(void)
+ static DBusMessage *control_remove_all(DBusConnection *conn,
+ 					DBusMessage *msg, void *data)
  {
- 	GSList *list;
- =
-
-+	shutdown_control_channel();
+-	return NULL;
++	release_modems();
 +
- 	for (list =3D modem_list; list; list =3D list->next) {
- 		struct ofono_modem *modem =3D list->data;
++	return dbus_message_new_method_return(msg);
+ }
  =
 
+ static DBusMessage *control_reset(DBusConnection *conn,
+ 					DBusMessage *msg, void *data)
+ {
+-	return NULL;
++	release_modems();
++	parse_config(NULL);
++
++	return dbus_message_new_method_return(msg);
+ }
+ =
+
+ static const GDBusMethodTable control_methods[] =3D {
+ 	{ GDBUS_METHOD("Add",
+-			NULL, GDBUS_ARGS({ "properties", "sss" }),
++			NULL, GDBUS_ARGS({ "name", "s" }, {"address", "s"}, {"port", "s"}),
+ 			control_add) },
+ 	{ GDBUS_METHOD("RemoveAll",
+-			NULL, GDBUS_ARGS({ "properties", "" }),
++			NULL, GDBUS_ARGS({ }),
+ 			control_remove_all) },
+ 	{ GDBUS_METHOD("Reset",
+-			NULL, GDBUS_ARGS({ "properties", "" }),
++			NULL, GDBUS_ARGS({ }),
+ 			control_reset) },
+ 	{}
+ };
+@@ -1123,7 +1185,6 @@ static void shutdown_control_channel() {
+ static int phonesim_init(void)
+ {
+ 	int err;
+-	char *conf_override =3D getenv("OFONO_PHONESIM_CONFIG");
+ =
+
+ 	err =3D ofono_modem_driver_register(&phonesim_driver);
+ 	if (err < 0)
+@@ -1134,10 +1195,7 @@ static int phonesim_init(void)
+ 	ofono_gprs_context_driver_register(&context_driver);
+ 	ofono_ctm_driver_register(&ctm_driver);
+ =
+
+-	if (conf_override)
+-		parse_config(conf_override);
+-	else
+-		parse_config(CONFIGDIR "/phonesim.conf");
++	parse_config(NULL);
+ =
+
+ 	err =3D setup_control_channel();
+ 	if (err < 0)
+@@ -1148,17 +1206,10 @@ static int phonesim_init(void)
+ =
+
+ static void phonesim_exit(void)
+ {
+-	GSList *list;
+-
+ 	shutdown_control_channel();
+ =
+
+-	for (list =3D modem_list; list; list =3D list->next) {
+-		struct ofono_modem *modem =3D list->data;
+-
+-		ofono_modem_remove(modem);
+-	}
++	release_modems();
+ =
+
+-	g_slist_free(modem_list);
+ 	modem_list =3D NULL;
+ =
+
+ 	ofono_ctm_driver_unregister(&ctm_driver);
 -- =
 
 1.9.1
 
 
---===============7013072939191194099==--
+--===============8407953423608670801==--
 
