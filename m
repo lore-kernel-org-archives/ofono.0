@@ -1,302 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============7267550135533548994=="
+Content-Type: multipart/mixed; boundary="===============0715108820802220968=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Jer=C3=B4nimo?= Lopes <lopesjeronimo@gmail.com>
-Subject: Re: Ofono not "recognizing" some USB dongles
-Date: Sun, 06 Apr 2014 17:45:20 -0300
-Message-ID: <CAM5ihG8GmDMNE+oJRtuaoi5Jg5KUKOSieUKdosq4SYQw9SstgQ@mail.gmail.com>
-In-Reply-To: <CAM5ihG8n58RUnuyjfBiLegDTWyhNf_DSys1rwAtajK8gV3+VDQ@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Provisioning mechanism
+Date: Sun, 06 Apr 2014 19:00:53 -0500
+Message-ID: <5341EAB5.7050105@gmail.com>
+In-Reply-To: <CAM5ihG98uDdODn4_UXuB=FhwGwT=U0-0YeT3TNzAxPXvA0HdPA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7267550135533548994==
+--===============0715108820802220968==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2014-03-31 18:25 GMT-03:00 Jer=C3=B4nimo Lopes <lopesjeronimo@gmail.com>:
+Hi Jer=C3=B4nimo,
 
-> Long story, I'm trying to setup a system using Buildroot, Beaglebone
-> Black, Connman, Ofono, and 3G USB dongles to connect to the internet.
->
-> I have 3 usb dongles (names showed at their plastic case):
->  - ZTE MF-190: not working
->  - Huawei E173: not working
->  - Huawei E160: working
->
-> I'm attaching some log information of the dongles.
->
-> Both not working ones, are working at a PC with Ubuntu 13.10. Also they
-> are recognized as the same device on Beaglebone and PC.
->
-> I'm aware that it's probably not a 'Ofono problem'. I'm using buildroot
-> default kernel for the Beaglebone and set some options myself, like USB
-> Serial Converter (not enabled by default), so there is a big probability
-> that something is missing.
->
-> Best regards.
->
+On 04/06/2014 02:37 PM, Jer=C3=B4nimo Lopes wrote:
+> Hi,
+> =
 
-I have some more information about this problem.
+> I'm trying to understand ofono build-in provisioning mechanism.
+> =
 
-The dongle is called ZTE MF-190. As said before, this dongle works nice in
-ubuntu 13.10, with NetworkManager.
+> As far as understand these are the steps:
+> =
 
-Kernel reconizes it as:
-ID 0685:7000 ZD Incorporated HSDPA Modem (before switch)
+> 1: get MCC and MNC
+> 2: check settings file for this network, if exists goto step 6
+> 3: try to read provisioning info from the sim card, if ok, goto step 5
+> 4: try to read provisioning from MBPI xml file
+> 5: write info to the settings file =
 
-Then Kernel itself (not usb-modeswitch) switches to:
-ID 12d1:1001 Huawei Technologies Co., Ltd. E169/E620/E800 HSDPA Modem
+> 6: if it has a valid provisioning info, "export" (I don't know if this
+> is the right term, so I'll use it) it to connman.
+> =
 
-And creates 4 tty devices:
-[   28.798238] usbcore: registered new interface driver option
-[   28.815415] usbserial: USB Serial support registered for GSM modem
-(1-port)
-[   28.832826] option 2-1.1.4:1.0: GSM modem (1-port) converter detected
-[   28.848742] usb 2-1.1.4: GSM modem (1-port) converter now attached to
-ttyUSB0
-[   28.857913] option 2-1.1.4:1.1: GSM modem (1-port) converter detected
-[   28.866902] usb 2-1.1.4: GSM modem (1-port) converter now attached to
-ttyUSB1
-[   28.875310] option 2-1.1.4:1.2: GSM modem (1-port) converter detected
-[   28.883900] usb 2-1.1.4: GSM modem (1-port) converter now attached to
-ttyUSB2
-[   28.891824] option 2-1.1.4:1.3: GSM modem (1-port) converter detected
-[   28.900624] usb 2-1.1.4: GSM modem (1-port) converter now attached to
-ttyUSB3
+> So my first question, is that correct?
 
-Then, if I start ofono, this is what I get in the end:
-ofonod[218]: src/modem.c:get_modem_property() modem 0x1011f0 property Modem
-ofonod[218]: plugins/huawei.c:open_device() Modem /dev/ttyUSB0
-ofonod[218]: src/modem.c:get_modem_property() modem 0x1011f0 property Pcui
-ofonod[218]: plugins/huawei.c:open_device() Pcui /dev/ttyUSB3
-ofonod[218]: Modem: > ATE0 +CMEE=3D1\r
-ofonod[218]: PCUI: > ATE0 +CMEE=3D1\r
-ofonod[218]: Modem: < \r\nOK\r\n
-ofonod[218]: src/modem.c:set_powered_timeout() modem: 0x1011f0
- =
+Nope, not really.
 
-Well, I've tried sending this AT commands manually on all tty devices, only
-ttyUSB0 and ttyUSB2 are responding, to any command.
+The process is roughly like this:
+- Load settings file.  Settings are stored according to IMSI of the SIM
+- If no settings file is found, wait until MCC, MNC and SPN are known
+- Run provisioning plugins (e.g. MBPI)
+- If provisioning fails, make up a 'sentinel' context telling external
+parties that no valid settings exist.
 
-After that, I've changed "setup_huawei" at plugins/udevng.c to force Pcui
-to point to ttyUSB2, but then I got stuck@the next AT commnad, 'ATI':
-ofonod[241]: src/modem.c:get_modem_property() modem 0x1909b0 property Modem
-ofonod[241]: plugins/huawei.c:open_device() Modem /dev/ttyUSB0
-ofonod[241]: src/modem.c:get_modem_property() modem 0x1909b0 property Pcui
-ofonod[241]: plugins/huawei.c:open_device() Pcui /dev/ttyUSB2
-ofonod[241]: Modem: > ATE0 +CMEE=3D1\r
-ofonod[241]: PCUI: > ATE0 +CMEE=3D1\r
-ofonod[241]: Modem: < \r\nOK\r\n
-ofonod[241]: PCUI: < \r\nOK\r\n
-ofonod[241]: PCUI: > ATI\r
+> =
 
-Again, if tried manually send ATI commnad, but then something really weird
-happens, in both ttyUSB0 and ttyUSB2:
- - I send "ATI" command, and get no response back, no matter how much time
-I wait.
- - I send 2 "AT" commands, and then I get "ATI" response, like that:
+> The other question is why provisioning plugin can't get 2 or more apn
+> settings for the same network and export more than one service to connman?
+> =
 
-ATI
-AT
-AT
+> I've tried to change line 53 of plugins/provision.c, setting
+> 'allow_duplicates' parameter to 'TRUE':
+>  apns =3D mbpi_lookup_apn(mcc, mnc, TRUE, &error);
+> =
 
-Manufacturer: huawei
-Model: E1750
-Revision: HSDPA_6281_V002
-OK
- 351753032849324
-+GCAP: +CGSM,+DS,+ES
+> Everything seams to work, but only the first context is exported to
+> connman. I've try to debug the code, but I could't realize where this is
+> done. =
 
-OK
+> Is there a particular reason why this can't be done?
 
-OK
+oFono can.  Connman only expects to manage a single Internet context, so
+having multiple will not work there.
 
+Regards,
+-Denis
 
-So, can anyone give me a clue of what to do next?
-
-Best Regards,
-
-Jer=C3=B4nimo Lopes
-
---===============7267550135533548994==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
-aWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPjxzcGFuIHN0eWxlPSJmb250LWZh
-bWlseTphcmlhbCI+MjAxNC0wMy0zMSAxODoyNSBHTVQtMDM6MDAgSmVy9G5pbW8gTG9wZXMgPC9z
-cGFuPjxzcGFuIGRpcj0ibHRyIiBzdHlsZT0iZm9udC1mYW1pbHk6YXJpYWwiPiZsdDs8YSBocmVm
-PSJtYWlsdG86bG9wZXNqZXJvbmltb0BnbWFpbC5jb20iIHRhcmdldD0iX2JsYW5rIj5sb3Blc2pl
-cm9uaW1vQGdtYWlsLmNvbTwvYT4mZ3Q7PC9zcGFuPjxzcGFuIHN0eWxlPSJmb250LWZhbWlseTph
-cmlhbCI+Ojwvc3Bhbj48YnI+Cgo8L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9leHRyYSI+PGRpdiBj
-bGFzcz0iZ21haWxfcXVvdGUiPjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9
-Im1hcmdpbjowcHggMHB4IDBweCAwLjhleDtib3JkZXItbGVmdC13aWR0aDoxcHg7Ym9yZGVyLWxl
-ZnQtY29sb3I6cmdiKDIwNCwyMDQsMjA0KTtib3JkZXItbGVmdC1zdHlsZTpzb2xpZDtwYWRkaW5n
-LWxlZnQ6MWV4Ij48ZGl2IGRpcj0ibHRyIj4KPGRpdj5Mb25nIHN0b3J5LCBJJiMzOTttIHRyeWlu
-ZyB0byBzZXR1cCBhIHN5c3RlbSB1c2luZyBCdWlsZHJvb3QsIEJlYWdsZWJvbmUgQmxhY2ssIENv
-bm5tYW4sIE9mb25vLCBhbmQgM0cgVVNCIGRvbmdsZXMgdG8gY29ubmVjdCB0byB0aGUgaW50ZXJu
-ZXQuPC9kaXY+CjxkaXY+PGJyPjwvZGl2Pgo8ZGl2PkkgaGF2ZSAzIHVzYiBkb25nbGVzIChuYW1l
-cyBzaG93ZWQgYXQgdGhlaXIgcGxhc3RpYyBjYXNlKTogoDwvZGl2PjxkaXY+oC2gWlRFIE1GLTE5
-MDogbm90IHdvcmtpbmc8L2Rpdj48ZGl2PqAtoEh1YXdlaSBFMTczOiBub3Qgd29ya2luZ6A8L2Rp
-dj48ZGl2PgqgLaBIdWF3ZWkgRTE2MDogd29ya2luZzwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+
-SSYjMzk7bSBhdHRhY2hpbmcgc29tZSBsb2cgaW5mb3JtYXRpb24gb2YgdGhlIGRvbmdsZXMuPC9k
-aXY+PGRpdj48YnI+PC9kaXY+PGRpdj5Cb3RoIG5vdCB3b3JraW5nIG9uZXMsIGFyZSB3b3JraW5n
-IGF0IGEgUEMgd2l0aCBVYnVudHUgMTMuMTAuIEFsc28gdGhleSBhcmUgcmVjb2duaXplZCBhcyB0
-aGUgc2FtZSBkZXZpY2Ugb24gQmVhZ2xlYm9uZSBhbmQgUEMuPC9kaXY+CgoKPGRpdj48YnI+PC9k
-aXY+PGRpdj5JJiMzOTttIGF3YXJlIHRoYXQgaXQmIzM5O3MgcHJvYmFibHkgbm90IGEgJiMzOTtP
-Zm9ubyBwcm9ibGVtJiMzOTsuIEkmIzM5O20gdXNpbmcgYnVpbGRyb290IGRlZmF1bHQga2VybmVs
-IGZvciB0aGUgQmVhZ2xlYm9uZSBhbmQgc2V0IHNvbWUgb3B0aW9ucyBteXNlbGYsIGxpa2UgVVNC
-IFNlcmlhbCBDb252ZXJ0ZXIgKG5vdCBlbmFibGVkIGJ5IGRlZmF1bHQpLCBzbyB0aGVyZSBpcyBh
-IGJpZyBwcm9iYWJpbGl0eSB0aGF0IHNvbWV0aGluZyBpcyBtaXNzaW5nLjwvZGl2PgoKCjxkaXY+
-PGJyPjwvZGl2PjxkaXY+QmVzdCByZWdhcmRzLjwvZGl2PjwvZGl2Pgo8L2Jsb2NrcXVvdGU+PC9k
-aXY+PGJyPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48ZGl2IGNsYXNzPSJnbWFpbF9k
-ZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7LG1vbm9zcGFj
-ZSI+SSBoYXZlIHNvbWUgbW9yZSBpbmZvcm1hdGlvbiBhYm91dCB0aGlzIHByb2JsZW0uoDwvZGl2
-PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJp
-ZXIgbmV3JiMzOTssbW9ub3NwYWNlIj4KPGJyPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1
-bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj5U
-aGUgZG9uZ2xlIGlzIGNhbGxlZCBaVEUgTUYtMTkwLiBBcyBzYWlkIGJlZm9yZSwgdGhpcyBkb25n
-bGUgd29ya3MgbmljZSBpbiB1YnVudHUgMTMuMTAsIHdpdGggTmV0d29ya01hbmFnZXIuPC9kaXY+
-PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmll
-ciBuZXcmIzM5Oyxtb25vc3BhY2UiPgo8YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVs
-dCI+PHNwYW4gc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3Bh
-Y2UiPktlcm5lbCByZWNvbml6ZXMgaXQgYXM6PC9zcGFuPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWls
-X2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPklEIDA2ODU6NzAw
-MCBaRCBJbmNvcnBvcmF0ZWQgSFNEUEEgTW9kZW0gKGJlZm9yZSBzd2l0Y2gpPC9mb250PjwvZGl2
-Pgo8ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9u
-b3NwYWNlIj48YnI+PC9mb250PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250
-IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPlRoZW4gS2VybmVsIGl0c2VsZiAobm90IHVz
-Yi1tb2Rlc3dpdGNoKSBzd2l0Y2hlcyB0bzqgPC9mb250PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWls
-X2RlZmF1bHQiPgo8Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5JRCAxMmQxOjEw
-MDEgSHVhd2VpIFRlY2hub2xvZ2llcyBDby4sIEx0ZC4gRTE2OS9FNjIwL0U4MDAgSFNEUEEgTW9k
-ZW08L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291
-cmllciBuZXcsIG1vbm9zcGFjZSI+PGJyPjwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9k
-ZWZhdWx0Ij4KPGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+QW5kIGNyZWF0ZXMg
-NCB0dHkgZGV2aWNlczo8L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZv
-bnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+WyCgIDI4Ljc5ODIzOF0gdXNiY29yZTog
-cmVnaXN0ZXJlZCBuZXcgaW50ZXJmYWNlIGRyaXZlciBvcHRpb248L2ZvbnQ+PC9kaXY+PGRpdiBj
-bGFzcz0iZ21haWxfZGVmYXVsdCI+Cjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2Ui
-PlsgoCAyOC44MTU0MTVdIHVzYnNlcmlhbDogVVNCIFNlcmlhbCBzdXBwb3J0IHJlZ2lzdGVyZWQg
-Zm9yIEdTTSBtb2RlbSAoMS1wb3J0KTwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZh
-dWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5bIKAgMjguODMyODI2XSBv
-cHRpb24gMi0xLjEuNDoxLjA6IEdTTSBtb2RlbSAoMS1wb3J0KSBjb252ZXJ0ZXIgZGV0ZWN0ZWQ8
-L2ZvbnQ+PC9kaXY+CjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJp
-ZXIgbmV3LCBtb25vc3BhY2UiPlsgoCAyOC44NDg3NDJdIHVzYiAyLTEuMS40OiBHU00gbW9kZW0g
-KDEtcG9ydCkgY29udmVydGVyIG5vdyBhdHRhY2hlZCB0byB0dHlVU0IwPC9mb250PjwvZGl2Pjxk
-aXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3Bh
-Y2UiPlsgoCAyOC44NTc5MTNdIG9wdGlvbiAyLTEuMS40OjEuMTogR1NNIG1vZGVtICgxLXBvcnQp
-IGNvbnZlcnRlciBkZXRlY3RlZDwvZm9udD48L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfZGVmYXVs
-dCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+WyCgIDI4Ljg2NjkwMl0gdXNi
-IDItMS4xLjQ6IEdTTSBtb2RlbSAoMS1wb3J0KSBjb252ZXJ0ZXIgbm93IGF0dGFjaGVkIHRvIHR0
-eVVTQjE8L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0i
-Y291cmllciBuZXcsIG1vbm9zcGFjZSI+WyCgIDI4Ljg3NTMxMF0gb3B0aW9uIDItMS4xLjQ6MS4y
-OiBHU00gbW9kZW0gKDEtcG9ydCkgY29udmVydGVyIGRldGVjdGVkPC9mb250PjwvZGl2Pgo8ZGl2
-IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNl
-Ij5bIKAgMjguODgzOTAwXSB1c2IgMi0xLjEuNDogR1NNIG1vZGVtICgxLXBvcnQpIGNvbnZlcnRl
-ciBub3cgYXR0YWNoZWQgdG8gdHR5VVNCMjwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9k
-ZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5bIKAgMjguODkxODI0
-XSBvcHRpb24gMi0xLjEuNDoxLjM6IEdTTSBtb2RlbSAoMS1wb3J0KSBjb252ZXJ0ZXIgZGV0ZWN0
-ZWQ8L2ZvbnQ+PC9kaXY+CjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNv
-dXJpZXIgbmV3LCBtb25vc3BhY2UiPlsgoCAyOC45MDA2MjRdIHVzYiAyLTEuMS40OiBHU00gbW9k
-ZW0gKDEtcG9ydCkgY29udmVydGVyIG5vdyBhdHRhY2hlZCB0byB0dHlVU0IzPC9mb250PjwvZGl2
-PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PHNwYW4gc3R5
-bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPlRoZW4sIGlm
-IEkgc3RhcnQgb2Zvbm8sIHRoaXMgaXMgd2hhdCBJIGdldCBpbiB0aGUgZW5kOqA8L3NwYW4+PC9k
-aXY+CjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBt
-b25vc3BhY2UiPm9mb25vZFsyMThdOiBzcmMvbW9kZW0uYzpnZXRfbW9kZW1fcHJvcGVydHkoKSBt
-b2RlbSAweDEwMTFmMCBwcm9wZXJ0eSBNb2RlbTwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFp
-bF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5vZm9ub2RbMjE4
-XTogcGx1Z2lucy9odWF3ZWkuYzpvcGVuX2RldmljZSgpIE1vZGVtIC9kZXYvdHR5VVNCMDwvZm9u
-dD48L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBu
-ZXcsIG1vbm9zcGFjZSI+b2Zvbm9kWzIxOF06IHNyYy9tb2RlbS5jOmdldF9tb2RlbV9wcm9wZXJ0
-eSgpIG1vZGVtIDB4MTAxMWYwIHByb3BlcnR5IFBjdWk8L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0i
-Z21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+b2Zvbm9k
-WzIxOF06IHBsdWdpbnMvaHVhd2VpLmM6b3Blbl9kZXZpY2UoKSBQY3VpIC9kZXYvdHR5VVNCMzwv
-Zm9udD48L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmll
-ciBuZXcsIG1vbm9zcGFjZSI+b2Zvbm9kWzIxOF06IE1vZGVtOiAmZ3Q7IEFURTAgK0NNRUU9MVxy
-PC9mb250PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJp
-ZXIgbmV3LCBtb25vc3BhY2UiPm9mb25vZFsyMThdOiBQQ1VJOiAmZ3Q7IEFURTAgK0NNRUU9MVxy
-PC9mb250PjwvZGl2Pgo8ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3Vy
-aWVyIG5ldywgbW9ub3NwYWNlIj5vZm9ub2RbMjE4XTogTW9kZW06ICZsdDsgXHJcbk9LXHJcbjwv
-Zm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVy
-IG5ldywgbW9ub3NwYWNlIj5vZm9ub2RbMjE4XTogc3JjL21vZGVtLmM6c2V0X3Bvd2VyZWRfdGlt
-ZW91dCgpIG1vZGVtOiAweDEwMTFmMDwvZm9udD48L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfZGVm
-YXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2Ui
-PqA8L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMz
-OTtjb3VyaWVyIG5ldyYjMzk7LG1vbm9zcGFjZSI+V2VsbCwgSSYjMzk7dmUgdHJpZWQgc2VuZGlu
-ZyB0aGlzIEFUIGNvbW1hbmRzIG1hbnVhbGx5IG9uIGFsbCB0dHkgZGV2aWNlcywgb25seSB0dHlV
-U0IwIGFuZCB0dHlVU0IyIGFyZSByZXNwb25kaW5nLCB0byBhbnkgY29tbWFuZC48L2Rpdj4KPGRp
-diBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBu
-ZXcmIzM5Oyxtb25vc3BhY2UiPjxicj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48
-c3BhbiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7LG1vbm9zcGFjZSI+
-QWZ0ZXIgdGhhdCwgSSYjMzk7dmUgY2hhbmdlZCAmcXVvdDtzZXR1cF9odWF3ZWkmcXVvdDsgYXQg
-cGx1Z2lucy91ZGV2bmcuYyB0byBmb3JjZSBQY3VpIHRvIHBvaW50IHRvIHR0eVVTQjIsIGJ1dCB0
-aGVuIEkgZ290IHN0dWNrIGF0IHRoZSBuZXh0IEFUIGNvbW1uYWQsICYjMzk7QVRJJiMzOTs6oDwv
-c3Bhbj48L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmll
-ciBuZXcsIG1vbm9zcGFjZSI+b2Zvbm9kWzI0MV06IHNyYy9tb2RlbS5jOmdldF9tb2RlbV9wcm9w
-ZXJ0eSgpIG1vZGVtIDB4MTkwOWIwIHByb3BlcnR5IE1vZGVtPC9mb250PjwvZGl2PjxkaXYgY2xh
-c3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPm9m
-b25vZFsyNDFdOiBwbHVnaW5zL2h1YXdlaS5jOm9wZW5fZGV2aWNlKCkgTW9kZW0gL2Rldi90dHlV
-U0IwPC9mb250PjwvZGl2Pgo8ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJj
-b3VyaWVyIG5ldywgbW9ub3NwYWNlIj5vZm9ub2RbMjQxXTogc3JjL21vZGVtLmM6Z2V0X21vZGVt
-X3Byb3BlcnR5KCkgbW9kZW0gMHgxOTA5YjAgcHJvcGVydHkgUGN1aTwvZm9udD48L2Rpdj48ZGl2
-IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNl
-Ij5vZm9ub2RbMjQxXTogcGx1Z2lucy9odWF3ZWkuYzpvcGVuX2RldmljZSgpIFBjdWkgL2Rldi90
-dHlVU0IyPC9mb250PjwvZGl2Pgo8ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNl
-PSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5vZm9ub2RbMjQxXTogTW9kZW06ICZndDsgQVRFMCAr
-Q01FRT0xXHI8L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFj
-ZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+b2Zvbm9kWzI0MV06IFBDVUk6ICZndDsgQVRFMCAr
-Q01FRT0xXHI8L2ZvbnQ+PC9kaXY+CjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZh
-Y2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPm9mb25vZFsyNDFdOiBNb2RlbTogJmx0OyBcclxu
-T0tcclxuPC9mb250PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9
-ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPm9mb25vZFsyNDFdOiBQQ1VJOiAmbHQ7IFxyXG5PS1xy
-XG48L2ZvbnQ+PC9kaXY+CjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNv
-dXJpZXIgbmV3LCBtb25vc3BhY2UiPm9mb25vZFsyNDFdOiBQQ1VJOiAmZ3Q7IEFUSVxyPC9mb250
-PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3
-LCBtb25vc3BhY2UiPjxicj48L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+
-PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+QWdhaW4sIGlmIHRyaWVkIG1hbnVh
-bGx5IHNlbmQgQVRJIGNvbW1uYWQsIGJ1dCB0aGVuIHNvbWV0aGluZyByZWFsbHkgd2VpcmQgaGFw
-cGVucywgaW4gYm90aCB0dHlVU0IwIGFuZCB0dHlVU0IyOjwvZm9udD48L2Rpdj4KPGRpdiBjbGFz
-cz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+oC0g
-SSBzZW5kICZxdW90O0FUSSZxdW90OyBjb21tYW5kLCBhbmQgZ2V0IG5vIHJlc3BvbnNlIGJhY2ss
-IG5vIG1hdHRlciBob3cgbXVjaCB0aW1lIEkgd2FpdC48L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0i
-Z21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+oC0gSSBz
-ZW5kIDIgJnF1b3Q7QVQmcXVvdDsgY29tbWFuZHMsIGFuZCB0aGVuIEkgZ2V0ICZxdW90O0FUSSZx
-dW90OyByZXNwb25zZSwgbGlrZSB0aGF0OqA8L2ZvbnQ+PC9kaXY+CjxkaXYgY2xhc3M9ImdtYWls
-X2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPjxicj48L2ZvbnQ+
-PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcs
-IG1vbm9zcGFjZSI+QVRJPC9mb250PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxm
-b250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPkFUPC9mb250PjwvZGl2Pgo8ZGl2IGNs
-YXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5B
-VDwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3Vy
-aWVyIG5ldywgbW9ub3NwYWNlIj48YnI+PC9mb250PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2Rl
-ZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPk1hbnVmYWN0dXJlcjog
-aHVhd2VpPC9mb250PjwvZGl2Pgo8ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNl
-PSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5Nb2RlbDogRTE3NTA8L2ZvbnQ+PC9kaXY+PGRpdiBj
-bGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+
-UmV2aXNpb246IEhTRFBBXzYyODFfVjAwMjwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9k
-ZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5PSzwvZm9udD48L2Rp
-dj4KPGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1v
-bm9zcGFjZSI+oDM1MTc1MzAzMjg0OTMyNDwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9k
-ZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj4rR0NBUDogK0NHU00s
-K0RTLCtFUzwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNl
-PSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj48YnI+CjwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJn
-bWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5PSzwvZm9u
-dD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5l
-dywgbW9ub3NwYWNlIj48YnI+PC9mb250PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQi
-Pjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPk9LPC9mb250PjwvZGl2Pgo8ZGl2
-Pjxicj48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHls
-ZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7LG1vbm9zcGFjZSI+U28sIGNhbiBh
-bnlvbmUgZ2l2ZSBtZSBhIGNsdWUgb2Ygd2hhdCB0byBkbyBuZXh0PzwvZGl2PjxkaXYgY2xhc3M9
-ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTss
-bW9ub3NwYWNlIj4KPGJyPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJm
-b250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj5CZXN0IFJlZ2FyZHMs
-PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7
-Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPjxicj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9k
-ZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7LG1vbm9zcGFj
-ZSI+CkplcvRuaW1vIExvcGVzPC9kaXY+PGJyPjwvZGl2Pjxicj48L2Rpdj48L2Rpdj4K
-
---===============7267550135533548994==--
+--===============0715108820802220968==--
 
