@@ -1,146 +1,140 @@
-Content-Type: multipart/mixed; boundary="===============8554157649874283869=="
+Content-Type: multipart/mixed; boundary="===============8610080809966309237=="
 MIME-Version: 1.0
-From: Andrew Earl <andrewx.earl@intel.com>
-Subject: [PATCH 4/4] hfp: Add CNUM query to handsfree interface for subscriber
- number
-Date: Tue, 08 Apr 2014 09:21:47 +0100
-Message-ID: <1396945307-12195-5-git-send-email-andrewx.earl@intel.com>
-In-Reply-To: <1396945307-12195-1-git-send-email-andrewx.earl@intel.com>
+From: Antti =?unknown-8bit?q?Kaijanm=C3=A4ki?= <antti.kaijanmaki@canonical.com>
+Subject: Re: [PATCH 1/2] Basic blocks for control channel.
+Date: Tue, 08 Apr 2014 15:24:51 +0300
+Message-ID: <5343EA93.9000408@canonical.com>
+In-Reply-To: <53431B57.4000809@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8554157649874283869==
+--===============8610080809966309237==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/hfpmodem/handsfree.c | 88 ++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 file changed, 88 insertions(+)
+OK, thank you Denis for the feedback.
+Let's consider the matter closed.
 
-diff --git a/drivers/hfpmodem/handsfree.c b/drivers/hfpmodem/handsfree.c
-index e62fa26..81baaa1 100644
---- a/drivers/hfpmodem/handsfree.c
-+++ b/drivers/hfpmodem/handsfree.c
-@@ -43,6 +43,8 @@
- #include "hfp.h"
- #include "slc.h"
- =
-
-+#define OFONO_HANDSFREE_CNUM_SERVICE_VOICE 4
-+
- static const char *binp_prefix[] =3D { "+BINP:", NULL };
- static const char *bvra_prefix[] =3D { "+BVRA:", NULL };
- =
-
-@@ -125,6 +127,91 @@ static void ciev_notify(GAtResult *result, gpointer us=
-er_data)
- 	ofono_handsfree_battchg_notify(hf, value);
- }
- =
-
-+static void cnum_query_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_handsfree_cnum_query_cb_t cb =3D cbd->cb;
-+	GAtResultIter iter;
-+	struct ofono_phone_number *list =3D NULL;
-+	int num =3D 0;
-+	struct ofono_error error;
-+
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	if (!ok)
-+		goto out;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	while (g_at_result_iter_next(&iter, "+CNUM:"))
-+		num++;
-+
-+	if (num =3D=3D 0)
-+		goto out;
-+
-+	list =3D g_new(struct ofono_phone_number, num);
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	for (num =3D 0; g_at_result_iter_next(&iter, "+CNUM:"); ) {
-+		const char *number;
-+		int len;
-+		int service;
-+		int type;
-+
-+		list[num].number[0] =3D '\0';
-+		list[num].type =3D 129;
-+
-+		if (!g_at_result_iter_skip_next(&iter))
-+			continue;
-+
-+		if (!g_at_result_iter_next_string(&iter, &number))
-+			continue;
-+
-+		if (!g_at_result_iter_next_number(&iter, &type))
-+			continue;
-+
-+		if (!g_at_result_iter_skip_next(&iter))
-+			continue;
-+
-+		if (!g_at_result_iter_next_number(&iter, &service))
-+			continue;
-+
-+		if (service =3D=3D OFONO_HANDSFREE_CNUM_SERVICE_VOICE) {
-+			len =3D strlen(number);
-+			if (len > OFONO_MAX_PHONE_NUMBER_LENGTH)
-+				len =3D OFONO_MAX_PHONE_NUMBER_LENGTH;
-+			strncpy(list[num].number, number, len);
-+			list[num].number[len] =3D '\0';
-+			list[num].type =3D type;
-+
-+			DBG("cnum_notify:%s", list[num].number);
-+			num++;
-+		}
-+	}
-+
-+out:
-+	cb(&error, num, list, cbd->data);
-+
-+	g_free(list);
-+
-+}
-+
-+static void at_cnum_query(struct ofono_handsfree *hf,
-+			ofono_handsfree_cnum_query_cb_t cb, void *data)
-+{
-+	struct hf_data *hd =3D ofono_handsfree_get_data(hf);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+
-+	if (g_at_chat_send(hd->chat, "AT+CNUM", NULL,
-+					cnum_query_cb, cbd, g_free) > 0)
-+		return;
-+
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, -1, NULL, data);
-+}
-+
- static gboolean hfp_handsfree_register(gpointer user_data)
- {
- 	struct ofono_handsfree *hf =3D user_data;
-@@ -283,6 +370,7 @@ static struct ofono_handsfree_driver driver =3D {
- 	.name			=3D "hfpmodem",
- 	.probe			=3D hfp_handsfree_probe,
- 	.remove			=3D hfp_handsfree_remove,
-+	.cnum_query		=3D at_cnum_query,
- 	.request_phone_number	=3D hfp_request_phone_number,
- 	.voice_recognition	=3D hfp_voice_recognition,
- 	.disable_nrec		=3D hfp_disable_nrec,
--- =
-
-1.7.11.7
+  -- Antti
 
 
---===============8554157649874283869==--
+On 08.04.2014 00:40, Denis Kenzior wrote:
+> Hi Antti,
+> =
+
+> <snip>
+> =
+
+>> There are clear real world use cases the proposed change.
+> =
+
+> Nope, these are not 'real world' use cases.  These are constraints for a
+> synthetic unit test framework you are trying to create.
+> =
+
+>> Both are usable with on their own and allow flexibility for testers to
+>> choose the testing strategy based on their needs (private system bus vs.
+>> actual system bus, multiple .conf files vs. dbus configuration on the
+>> fly). Unit testing API bindings or testing middleware can use the
+>> private system bus approach and system or user story testing of a
+>> complete software stack such as a mobile phone user interface would use
+>> the actual system bus.
+>>
+>> Having the dbus interface also allows automated test suite to set up
+>> number of ofono modems based on the environment specification of
+>> individual tests.
+> =
+
+> I don't buy any of these arguments.  You have a specific case you want
+> to test due to the constraints of how your system is designed.  Create a
+> plugin specific to your system; do not try to over-complicate the
+> phonesim plugin which is fine the way it is.
+> =
+
+>>
+>> Also not mentioned before, the dbus interface allows to test
+>> Manager::modemAdded() and Modem::modemRemoved() logic in the unit under
+>> test.
+> =
+
+> Then make up a plugin to test that specifically if you really care.
+> =
+
+>>
+>>
+>>> UI should be designed to ignore non-powered modems, and only look for
+>>> interfaces that it handles specifically.  So for a properly designed UI,
+>>> none of these changes are required.  If you want to handle DualSim
+>>> cleanly, then feel free to propose a mechanism / hint that makes
+>>> applications aware of the fact that two modems belong to a group.
+>>
+>> A system with two modems where one modem being powered off is still a
+>> system with two modems. One modem simply being powered off does not make
+>> the system a single-modem one.
+> =
+
+> Again, that is a constraint of your particular system design.  Relying
+> on one modem =3D=3D single SIM and two modems =3D=3D DualSIM is a bad ide=
+a.  As
+> I mentioned before, introduce proper handling of Dual SIM devices and
+> none of these issues are relevant.  Introducing features that are broken
+> by design will not fly.
+> =
+
+>>
+>> In my opinion the cleanest way to implement Multi-SIM is to have ofono
+>> reporting a correct number of modems.
+>>
+> =
+
+> And I disagree.  If I want to plug in 100 Dual-SIM modems, I should have
+> the ability to do so.  I do not want to rely on some magic conventions.
+> =
+
+>> UI should ignore non-powered modem only if the UI design for the
+>> particular component mandates so. The UI design could also mandate that
+>> if a modem is powered off, or has some other problem which makes it
+>> unusable, the modem should be shown as disabled. Or something else.
+>>
+> =
+
+> Again, that is your UI design constraint.  We have plenty of situations
+> where oFono creates multiple modems that are not physically there (e.g.
+> Bluetooth HFP for example).
+> =
+
+>>
+>> My point being:
+>>    A) Having to implement testing-only code paths to components makes
+>>       testing much more complicated and potentially erroneous as the
+>>       code paths being tested differ between testing and production.
+> =
+
+> You already have a testing-only code-path since you are using phonesim.
+>  Phonesim is only barely usable as an approximation of real hardware.
+> Introducing a plugin specific to your system setup is not going to
+> change anything here.
+> =
+
+>>    B) oFono should not impose arbitrary limits to UI/UX design.
+> =
+
+> This has been discussed many times before.  oFono is (and does) dictate
+> UI design to some extent.
+> =
+
+> Regards,
+> -Denis
+> =
+
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> https://lists.ofono.org/mailman/listinfo/ofono
+> =
+
+
+
+--===============8610080809966309237==--
 
