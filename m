@@ -1,35 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============1703141774774217510=="
+Content-Type: multipart/mixed; boundary="===============7661713932098344047=="
 MIME-Version: 1.0
 From: jussi.pakkanen@canonical.com
 Subject: [PATCH] Added support for PIN retry count.
-Date: Wed, 16 Apr 2014 17:26:50 +0300
-Message-ID: <1397658410-28951-1-git-send-email-jussi.pakkanen@canonical.com>
+Date: Wed, 16 Apr 2014 18:08:04 +0300
+Message-ID: <1397660884-29140-1-git-send-email-jussi.pakkanen@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1703141774774217510==
+--===============7661713932098344047==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi
 
-Here's a patch for ofono-phonesim. It adds the command AT+CPINR that returns
-the amount of PIN unlock attempts remaining. It also tracks the value prope=
-rly
-according to state changes. The output format is (roughly) as specified in =
-ETSI
-TS 127 007 v11.8.0.
-
-PS I'm hoping this is the correct place to send this patch, ofono-phonesim's
-README and HACKING files don't seem to contain patch submission guidelines.
+Sorry, had a bit of a Git mixup in the previous patch. Here's the correct o=
+ne,
+now comes with the =3D? query interface as well as standards conforming out=
+put.
 
 ---
- src/default.xml | 20 ++++++++++++++++++++
- 1 file changed, 20 insertions(+)
+ src/default.xml | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
 
 diff --git a/src/default.xml b/src/default.xml
-index 2868587..e195cfa 100644
+index 2868587..e0cafbb 100644
 --- a/src/default.xml
 +++ b/src/default.xml
 @@ -232,6 +232,9 @@
@@ -44,14 +39,20 @@ index 2868587..e195cfa 100644
      <set name=3D"SC" value=3D"0"/>
  =
 
-@@ -2280,6 +2283,13 @@
+@@ -2280,6 +2283,19 @@
  </chat>
  =
 
  <chat>
++    <!-- Do we support CPINR? -->
++    <command>AT+CPINR=3D?</command>
++    <response>OK\n</response>
++</chat>
++
++<chat>
 +    <!-- How many pin unlock attempts remain -->
 +    <command>AT+CPINR</command>
-+    <response>+CPINR: SIM PIN,${PINRETRYCOUNT},3\n</response>
++    <response>+CPINR: SIM PIN,${PINRETRYCOUNT},3\nOK\n</response>
 +</chat>
 +
 +
@@ -59,7 +60,7 @@ index 2868587..e195cfa 100644
      <!-- Check for which PIN is required -->
      <command>AT+CPIN?</command>
      <response delay=3D"2000">+CPIN: ${PINNAME}\n\nOK</response>
-@@ -2290,6 +2300,7 @@
+@@ -2290,6 +2306,7 @@
      <command>AT+CPIN=3D"${PINVALUE}"</command>
      <response>+CPIN: READY\n\nOK</response>
      <set name=3D"PINNAME" value=3D"READY"/>
@@ -68,7 +69,7 @@ index 2868587..e195cfa 100644
  =
 
  <chat>
-@@ -2305,6 +2316,7 @@
+@@ -2305,6 +2322,7 @@
      <response>+CPIN: READY\n\nOK</response>
      <set name=3D"PINVALUE" value=3D"${*}"/>
      <set name=3D"PINNAME" value=3D"READY"/>
@@ -77,7 +78,7 @@ index 2868587..e195cfa 100644
  =
 
  <chat>
-@@ -2320,6 +2332,7 @@
+@@ -2320,6 +2338,7 @@
      <command>AT+CPIN=3D"*","*"</command>
      <response>+CPIN: SIM PUK\n\nERROR</response>
      <set name=3D"PINNAME" value=3D"SIM PUK"/>
@@ -86,7 +87,7 @@ index 2868587..e195cfa 100644
  =
 
  <chat>
-@@ -2327,6 +2340,7 @@
+@@ -2327,6 +2346,7 @@
      <command>AT+CPIN=3D*</command>
      <response>+CPIN: SIM PIN\n\nERROR</response>
      <set name=3D"PINNAME" value=3D"SIM PIN"/>
@@ -95,7 +96,7 @@ index 2868587..e195cfa 100644
  </chat>
  =
 
-@@ -2337,6 +2351,7 @@
+@@ -2337,6 +2357,7 @@
          <command>AT+CPIN=3D"${PINVALUE}"</command>
          <response>+CPIN: READY\n\nOK</response>
          <set name=3D"PINNAME" value=3D"READY"/>
@@ -104,7 +105,7 @@ index 2868587..e195cfa 100644
      </chat>
  =
 
-@@ -2346,6 +2361,7 @@
+@@ -2346,6 +2367,7 @@
          <response>+CPIN: READY\n\nOK</response>
          <set name=3D"PINVALUE" value=3D"${*}"/>
          <set name=3D"PINNAME" value=3D"READY"/>
@@ -113,7 +114,7 @@ index 2868587..e195cfa 100644
      </chat>
  =
 
-@@ -2354,6 +2370,7 @@
+@@ -2354,6 +2376,7 @@
          <command>AT+CPIN=3D*</command>
          <response>+CPIN: SIM PIN\n\nERROR</response>
          <set name=3D"PINNAME" value=3D"SIM PIN"/>
@@ -122,7 +123,7 @@ index 2868587..e195cfa 100644
      </chat>
  =
 
-@@ -2366,6 +2383,7 @@
+@@ -2366,6 +2389,7 @@
          <command>AT+CPIN=3D"${PINVALUE}"</command>
          <response>+CPIN: READY\n\nOK</response>
          <set name=3D"PINNAME" value=3D"READY"/>
@@ -131,7 +132,7 @@ index 2868587..e195cfa 100644
      </chat>
  =
 
-@@ -2375,6 +2393,7 @@
+@@ -2375,6 +2399,7 @@
          <response>+CPIN: READY\n\nOK</response>
          <set name=3D"PINVALUE" value=3D"${*}"/>
          <set name=3D"PINNAME" value=3D"READY"/>
@@ -140,7 +141,7 @@ index 2868587..e195cfa 100644
      </chat>
  =
 
-@@ -2383,6 +2402,7 @@
+@@ -2383,6 +2408,7 @@
          <command>AT+CPIN=3D*</command>
          <response>+CPIN: SIM PUK\n\nERROR</response>
          <set name=3D"PINNAME" value=3D"SIM PUK"/>
@@ -154,5 +155,5 @@ index 2868587..e195cfa 100644
 1.9.1
 
 
---===============1703141774774217510==--
+--===============7661713932098344047==--
 
