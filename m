@@ -1,48 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============3265062237392294318=="
+Content-Type: multipart/mixed; boundary="===============0357824718120494828=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] mbpi: Parse gsm provider name
-Date: Fri, 18 Apr 2014 02:22:06 +0300
-Message-ID: <5350621E.4010508@jolla.com>
-In-Reply-To: <535051B4.6040301@gmail.com>
+Date: Thu, 17 Apr 2014 19:58:31 -0500
+Message-ID: <535078B7.9090402@gmail.com>
+In-Reply-To: <5350621E.4010508@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3265062237392294318==
+--===============0357824718120494828==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
->> If instead I changed the interface between mbpi and provisioning plugin
->> and kept the interface with the core intact, would that look acceptable
->> to you?
-> Perhaps, but I'm still failing to see why the service provider name as
-> entered in MBPI is useful to anyone.
+Hi Slava,
 
-Operators share mcc/mnc meaning that automatically finding the best AP =
+> Operators share mcc/mnc meaning that automatically finding the best AP
+> (the one most likely to work) from the database may involve some sort of
+> fuzzy logic (partial or case-insensitive name comparison or something
+> like this) implemented in a product-specific provisioning plugin. Making
+> things work out-the-box translates into fewer customer complaints,
+> better user experience and is generally the right thing to do.
+> =
 
-(the one most likely to work) from the database may involve some sort of =
+> I was trying to share a piece of code that doesn't involve any
+> product-specific logic and yet might be useful to others.
+> =
 
-fuzzy logic (partial or case-insensitive name comparison or something =
+> Please let me know if I should give it another try, otherwise I won't
+> waste anyone's time and this code will just remain in our branch of ofono.
 
-like this) implemented in a product-specific provisioning plugin. Making =
+So you're trying to parse and return provider name information from mbpi
+and return it back to the caller.  Then the caller will try to
+'fuzzy-logic' and match it against the SPN.  Right?  Why not make things
+easy on yourself and fix the database for the operators you need?  But I
+digress.
 
-things work out-the-box translates into fewer customer complaints, =
+Feel free to try.  If you can do this cleanly, then I have no problem
+with it in principle.
 
-better user experience and is generally the right thing to do.
+Regards,
+-Denis
 
-I was trying to share a piece of code that doesn't involve any =
-
-product-specific logic and yet might be useful to others.
-
-Please let me know if I should give it another try, otherwise I won't =
-
-waste anyone's time and this code will just remain in our branch of ofono.
-
-Thanks,
--Slava
-
-
---===============3265062237392294318==--
+--===============0357824718120494828==--
 
