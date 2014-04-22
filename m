@@ -1,161 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============6659357426783226411=="
+Content-Type: multipart/mixed; boundary="===============1401846179967515639=="
 MIME-Version: 1.0
-From: jussi.pakkanen@canonical.com
-Subject: [PATCH v3] phonesim: Support for querying SIM unlock retry count.
-Date: Tue, 22 Apr 2014 15:47:58 +0300
-Message-ID: <1398170878-5794-1-git-send-email-jussi.pakkanen@canonical.com>
+From: Andrew Earl <andrewx.earl@intel.com>
+Subject: [PATCH] Correct cnum changes
+Date: Tue, 22 Apr 2014 16:22:39 +0100
+Message-ID: <1398180160-14584-1-git-send-email-andrewx.earl@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6659357426783226411==
+--===============1401846179967515639==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi
+Hi Denis,
 
-Here's a patch for ofono-phonesim. It adds the command AT+CPINR that returns
-the amount of PIN unlock attempts remaining. It also tracks the value prope=
-rly
-according to state changes. The output format is (roughly) as specified in =
-ETSI
-TS 127 007 v11.8.0.
+With one of the corrections there is now a crash which occurs when formatti=
+ng
+the properties for the handsfree interface. I have reverted one of the
+changes in the attached patch so the problem is fixed. I have followed the
+same convention as other interface such as gprs.
 
----
- src/default.xml | 26 ++++++++++++++++++++++++++
- 1 file changed, 26 insertions(+)
+Thanks,
 
-diff --git a/src/default.xml b/src/default.xml
-index 2868587..e0cafbb 100644
---- a/src/default.xml
-+++ b/src/default.xml
-@@ -232,6 +232,9 @@
-     <!-- Value of the PIN that is required -->
-     <set name=3D"PINVALUE" value=3D"2468"/>
- =
+Andrew
 
-+    <!-- How many times can PIN unlocking be attempted -->
-+    <set name=3D"PINRETRYCOUNT" value=3D"3"/>
-+
-     <!-- pin protection status -->
-     <set name=3D"SC" value=3D"0"/>
- =
 
-@@ -2280,6 +2283,19 @@
- </chat>
- =
+Andrew Earl (1):
+  handsfree: correct crash on connect of hfp
 
- <chat>
-+    <!-- Do we support CPINR? -->
-+    <command>AT+CPINR=3D?</command>
-+    <response>OK\n</response>
-+</chat>
-+
-+<chat>
-+    <!-- How many pin unlock attempts remain -->
-+    <command>AT+CPINR</command>
-+    <response>+CPINR: SIM PIN,${PINRETRYCOUNT},3\nOK\n</response>
-+</chat>
-+
-+
-+<chat>
-     <!-- Check for which PIN is required -->
-     <command>AT+CPIN?</command>
-     <response delay=3D"2000">+CPIN: ${PINNAME}\n\nOK</response>
-@@ -2290,6 +2306,7 @@
-     <command>AT+CPIN=3D"${PINVALUE}"</command>
-     <response>+CPIN: READY\n\nOK</response>
-     <set name=3D"PINNAME" value=3D"READY"/>
-+    <set name=3D"PINRETRYCOUNT" value=3D"3"/>
- </chat>
- =
+ src/handsfree.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
- <chat>
-@@ -2305,6 +2322,7 @@
-     <response>+CPIN: READY\n\nOK</response>
-     <set name=3D"PINVALUE" value=3D"${*}"/>
-     <set name=3D"PINNAME" value=3D"READY"/>
-+    <set name=3D"PINRETRYCOUNT" value=3D"3"/>
- </chat>
- =
-
- <chat>
-@@ -2320,6 +2338,7 @@
-     <command>AT+CPIN=3D"*","*"</command>
-     <response>+CPIN: SIM PUK\n\nERROR</response>
-     <set name=3D"PINNAME" value=3D"SIM PUK"/>
-+    <set name=3D"PINRETRYCOUNT" value=3D"0"/>
- </chat>
- =
-
- <chat>
-@@ -2327,6 +2346,7 @@
-     <command>AT+CPIN=3D*</command>
-     <response>+CPIN: SIM PIN\n\nERROR</response>
-     <set name=3D"PINNAME" value=3D"SIM PIN"/>
-+    <set name=3D"PINRETRYCOUNT" value=3D"2"/>
-     <switch name=3D"pinretry1"/>
- </chat>
- =
-
-@@ -2337,6 +2357,7 @@
-         <command>AT+CPIN=3D"${PINVALUE}"</command>
-         <response>+CPIN: READY\n\nOK</response>
-         <set name=3D"PINNAME" value=3D"READY"/>
-+        <set name=3D"PINRETRYCOUNT" value=3D"3"/>
-         <switch name=3D"default"/>
-     </chat>
- =
-
-@@ -2346,6 +2367,7 @@
-         <response>+CPIN: READY\n\nOK</response>
-         <set name=3D"PINVALUE" value=3D"${*}"/>
-         <set name=3D"PINNAME" value=3D"READY"/>
-+        <set name=3D"PINRETRYCOUNT" value=3D"3"/>
-         <switch name=3D"default"/>
-     </chat>
- =
-
-@@ -2354,6 +2376,7 @@
-         <command>AT+CPIN=3D*</command>
-         <response>+CPIN: SIM PIN\n\nERROR</response>
-         <set name=3D"PINNAME" value=3D"SIM PIN"/>
-+        <set name=3D"PINRETRYCOUNT" value=3D"1"/>
-         <switch name=3D"pinretry2"/>
-     </chat>
- =
-
-@@ -2366,6 +2389,7 @@
-         <command>AT+CPIN=3D"${PINVALUE}"</command>
-         <response>+CPIN: READY\n\nOK</response>
-         <set name=3D"PINNAME" value=3D"READY"/>
-+        <set name=3D"PINRETRYCOUNT" value=3D"3"/>
-         <switch name=3D"default"/>
-     </chat>
- =
-
-@@ -2375,6 +2399,7 @@
-         <response>+CPIN: READY\n\nOK</response>
-         <set name=3D"PINVALUE" value=3D"${*}"/>
-         <set name=3D"PINNAME" value=3D"READY"/>
-+        <set name=3D"PINRETRYCOUNT" value=3D"3"/>
-         <switch name=3D"default"/>
-     </chat>
- =
-
-@@ -2383,6 +2408,7 @@
-         <command>AT+CPIN=3D*</command>
-         <response>+CPIN: SIM PUK\n\nERROR</response>
-         <set name=3D"PINNAME" value=3D"SIM PUK"/>
-+        <set name=3D"PINRETRYCOUNT" value=3D"0"/>
-     </chat>
- =
-
- </state>
 -- =
 
-1.9.1
+1.7.11.7
 
 
---===============6659357426783226411==--
+--===============1401846179967515639==--
 
