@@ -1,44 +1,109 @@
-Content-Type: multipart/mixed; boundary="===============2816585754745705587=="
+Content-Type: multipart/mixed; boundary="===============6619545833592211690=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3] phonesim: Support for querying SIM unlock retry count.
-Date: Tue, 22 Apr 2014 13:14:18 -0500
-Message-ID: <5356B17A.6020003@gmail.com>
-In-Reply-To: <1398170878-5794-1-git-send-email-jussi.pakkanen@canonical.com>
+From: =?unknown-8bit?q?Jer=C3=B4nimo?= Lopes <lopesjeronimo@gmail.com>
+Subject: Huawei E3131 (or maybe E398) not connecting
+Date: Wed, 23 Apr 2014 16:14:41 -0300
+Message-ID: <CAM5ihG_EX9By9OGWrz9OcGJkkkXCi0pqYpJ=uMi2A+F0-7f60Q@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2816585754745705587==
+--===============6619545833592211690==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jussi,
+Hi,
 
-On 04/22/2014 07:47 AM, jussi.pakkanen(a)canonical.com wrote:
-> Hi
-> =
+I'm trying to make different 3G dongles work with ofono and connman at a
+Beaglebone Black board.
 
-> Here's a patch for ofono-phonesim. It adds the command AT+CPINR that retu=
-rns
-> the amount of PIN unlock attempts remaining. It also tracks the value pro=
-perly
-> according to state changes. The output format is (roughly) as specified i=
-n ETSI
-> TS 127 007 v11.8.0.
-> =
+I have Huawei E3131 (label at the case of the dongle). Linux recognizes it
+as:
+ ID 12d1:1506 Huawei Technologies Co., Ltd. E398 LTE/UMTS/GSM
+Modem/Networkcard
 
-> ---
->  src/default.xml | 26 ++++++++++++++++++++++++++
->  1 file changed, 26 insertions(+)
-> =
+When I try to connect to connman service this is the result.
 
+ofonod[186]: drivers/atmodem/gprs-context.c:at_gprs_activate_primary() cid 1
+ofonod[186]: Modem: > AT+CGDCONT=3D1,"IP","zap.vivo.com.br"\r
+ofonod[186]: Modem: < \r\nOK\r\n
+ofonod[186]: drivers/atmodem/gprs-context.c:at_cgdcont_cb() ok 1
+ofonod[186]: Modem: > AT+CGDATA=3D"PPP",1\r
+ofonod[186]: Modem: < \r\n+CME ERROR: 50\r\n
+ofonod[186]: drivers/atmodem/gprs-context.c:at_cgdata_cb() ok 0
+ofonod[186]: Unable to enter data state
+ofonod[186]: src/gprs.c:pri_activate_callback() 0x188fe8
+ofonod[186]: src/gprs.c:pri_activate_callback() Activating context failed
+with error: Incorrect parameters
 
-Patch has been applied after tweaking the commit subject & description.
- Thanks.
+=E2=80=8BCan anyone give me an idea of what is causing this failure? =E2=80=
+=8B
 
-Regards,
--Denis
+=E2=80=8BBest Regards,
 
---===============2816585754745705587==--
+Jer=C3=B4nimo Lopes=E2=80=8B
+
+--===============6619545833592211690==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU+PGZvbnQgZmFj
+ZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+SGksPC9mb250PjwvZGl2PjxkaXYgY2xhc3M9Imdt
+YWlsX2RlZmF1bHQiIHN0eWxlPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPjxi
+cj48L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU+PGZvbnQgZmFj
+ZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+SSYjMzk7bSB0cnlpbmcgdG8gbWFrZSBkaWZmZXJl
+bnQgM0cgZG9uZ2xlcyB3b3JrIHdpdGggb2Zvbm8gYW5kIGNvbm5tYW4gYXQgYSBCZWFnbGVib25l
+IEJsYWNrIGJvYXJkLjwvZm9udD48L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5
+bGU+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+PGJyPjwvZm9udD48L2Rpdj48
+ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywg
+bW9ub3NwYWNlIj5JIGhhdmXCoEh1YXdlaSBFMzEzMSAobGFiZWzCoGF0IHRoZSBjYXNlIG9mIHRo
+ZSBkb25nbGUpLiBMaW51eMKgcmVjb2duaXplc8KgaXQgYXM6PC9mb250PjwvZGl2Pgo8ZGl2IGNs
+YXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3Nw
+YWNlIj7CoElEIDEyZDE6MTUwNiBIdWF3ZWkgVGVjaG5vbG9naWVzIENvLiwgTHRkLiBFMzk4IExU
+RS9VTVRTL0dTTSBNb2RlbS9OZXR3b3JrY2FyZDwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFp
+bF9kZWZhdWx0IiBzdHlsZT48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj48YnI+
+CjwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT48Zm9udCBmYWNl
+PSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5XaGVuIEkgdHJ5IHRvIGNvbm5lY3QgdG8gY29ubm1h
+biBzZXJ2aWNlIHRoaXMgaXMgdGhlIHJlc3VsdC7CoDwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJn
+bWFpbF9kZWZhdWx0IiBzdHlsZT48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj48
+YnI+CjwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT48Zm9udCBm
+YWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5vZm9ub2RbMTg2XTogZHJpdmVycy9hdG1vZGVt
+L2dwcnMtY29udGV4dC5jOmF0X2dwcnNfYWN0aXZhdGVfcHJpbWFyeSgpIGNpZCAxPC9mb250Pjwv
+ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPjxmb250IGZhY2U9ImNvdXJpZXIg
+bmV3LCBtb25vc3BhY2UiPm9mb25vZFsxODZdOiBNb2RlbTogJmd0OyBBVCtDR0RDT05UPTEsJnF1
+b3Q7SVAmcXVvdDssJnF1b3Q7PGEgaHJlZj0iaHR0cDovL3phcC52aXZvLmNvbS5iciI+emFwLnZp
+dm8uY29tLmJyPC9hPiZxdW90O1xyPC9mb250PjwvZGl2Pgo8ZGl2IGNsYXNzPSJnbWFpbF9kZWZh
+dWx0IiBzdHlsZT48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5vZm9ub2RbMTg2
+XTogTW9kZW06ICZsdDsgXHJcbk9LXHJcbjwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9k
+ZWZhdWx0IiBzdHlsZT48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5vZm9ub2Rb
+MTg2XTogZHJpdmVycy9hdG1vZGVtL2dwcnMtY29udGV4dC5jOmF0X2NnZGNvbnRfY2IoKSBvayAx
+PC9mb250PjwvZGl2Pgo8ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT48Zm9udCBmYWNl
+PSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5vZm9ub2RbMTg2XTogTW9kZW06ICZndDsgQVQrQ0dE
+QVRBPSZxdW90O1BQUCZxdW90OywxXHI8L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVm
+YXVsdCIgc3R5bGU+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+b2Zvbm9kWzE4
+Nl06IE1vZGVtOiAmbHQ7IFxyXG4rQ01FIEVSUk9SOiA1MFxyXG48L2ZvbnQ+PC9kaXY+CjxkaXYg
+Y2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25v
+c3BhY2UiPm9mb25vZFsxODZdOiBkcml2ZXJzL2F0bW9kZW0vZ3Bycy1jb250ZXh0LmM6YXRfY2dk
+YXRhX2NiKCkgb2sgMDwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHls
+ZT48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5vZm9ub2RbMTg2XTogVW5hYmxl
+IHRvIGVudGVyIGRhdGEgc3RhdGU8L2ZvbnQ+PC9kaXY+CjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1
+bHQiIHN0eWxlPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPm9mb25vZFsxODZd
+OiBzcmMvZ3Bycy5jOnByaV9hY3RpdmF0ZV9jYWxsYmFjaygpIDB4MTg4ZmU4PC9mb250PjwvZGl2
+PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3
+LCBtb25vc3BhY2UiPm9mb25vZFsxODZdOiBzcmMvZ3Bycy5jOnByaV9hY3RpdmF0ZV9jYWxsYmFj
+aygpIEFjdGl2YXRpbmcgY29udGV4dCBmYWlsZWQgd2l0aCBlcnJvcjogSW5jb3JyZWN0IHBhcmFt
+ZXRlcnM8L2ZvbnQ+PC9kaXY+CjxkaXY+PGJyPjwvZGl2PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxf
+ZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3Bh
+Y2UiPuKAi0NhbiBhbnlvbmUgZ2l2ZSBtZSBhbiBpZGVhIG9mIHdoYXQgaXMgY2F1c2luZyB0aGlz
+IGZhaWx1cmU/IOKAizwvZGl2Pjxicj48L2Rpdj48ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1
+bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj4K
+4oCLQmVzdCBSZWdhcmRzLDwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJm
+b250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj48YnI+PC9kaXY+PGRp
+diBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBu
+ZXcmIzM5Oyxtb25vc3BhY2UiPkplcsO0bmltbyBMb3Blc+KAizwvZGl2Pjxicj48L2Rpdj48L2Rp
+dj4K
+
+--===============6619545833592211690==--
 
