@@ -1,185 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============9145801267794779557=="
+Content-Type: multipart/mixed; boundary="===============7873080103704161382=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Jer=C3=B4nimo?= Lopes <lopesjeronimo@gmail.com>
-Subject: Re: Huawei E3131 (or maybe E398) not connecting
-Date: Fri, 25 Apr 2014 16:46:09 -0300
-Message-ID: <CAM5ihG82CYkZysGgMaETJoPi-n2YFqbmZrNY3xnWPgT-tRAmMQ@mail.gmail.com>
-In-Reply-To: <CAM5ihG_EX9By9OGWrz9OcGJkkkXCi0pqYpJ=uMi2A+F0-7f60Q@mail.gmail.com>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: [PATCH 1/1] he910: set modem unpowered after IO disconnect
+Date: Fri, 02 May 2014 16:15:39 +0200
+Message-ID: <1399040139-30253-1-git-send-email-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9145801267794779557==
+--===============7873080103704161382==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi again,
+This patch address an issue with SIM hotplug.  If the SIM card is removed
+while there is an active connection then the io_disconnect function
+of gatchat.c pulls the rug out from under us by cleaning up the modem
+chat that we hold a reference to.
 
-2014-04-23 16:14 GMT-03:00 Jer=C3=B4nimo Lopes <lopesjeronimo@gmail.com>:
+This patch addresses this by hooking into the notification from
+io_disconnect and setting the modem to 'unpowered' state in order to force
+a reinitialization when the SIM is reinserted.
 
-> Hi,
->
-> I'm trying to make different 3G dongles work with ofono and connman at a
-> Beaglebone Black board.
->
-> I have Huawei E3131 (label at the case of the dongle). Linux recognizes it
-> as:
->  ID 12d1:1506 Huawei Technologies Co., Ltd. E398 LTE/UMTS/GSM
-> Modem/Networkcard
->
-> When I try to connect to connman service this is the result.
->
-> ofonod[186]: drivers/atmodem/gprs-context.c:at_gprs_activate_primary() cid
-> 1
-> ofonod[186]: Modem: > AT+CGDCONT=3D1,"IP","zap.vivo.com.br"\r
-> ofonod[186]: Modem: < \r\nOK\r\n
-> ofonod[186]: drivers/atmodem/gprs-context.c:at_cgdcont_cb() ok 1
-> ofonod[186]: Modem: > AT+CGDATA=3D"PPP",1\r
-> ofonod[186]: Modem: < \r\n+CME ERROR: 50\r\n
-> ofonod[186]: drivers/atmodem/gprs-context.c:at_cgdata_cb() ok 0
-> ofonod[186]: Unable to enter data state
-> ofonod[186]: src/gprs.c:pri_activate_callback() 0x188fe8
-> ofonod[186]: src/gprs.c:pri_activate_callback() Activating context failed
-> with error: Incorrect parameters
->
-> =E2=80=8BCan anyone give me an idea of what is causing this failure? =E2=
-=80=8B
->
-> =E2=80=8BBest Regards,
->
-> Jer=C3=B4nimo Lopes=E2=80=8B
->
->
-I've made some tests and here's some things I've found.
+The modem is not actually powered off as that would turn off SIM detection
+as well.
 
-If i test CGDATA command this is the result
-> AT+CGDATA=3D?
-< +CGDATA: ("NULL")
+With this patch, SIM hotplug works reliably.
+---
+ plugins/he910.c | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
 
-So I manage two ways of make this work, simply change line
-214<http://git.kernel.org/cgit/network/ofono/ofono.git/tree/drivers/atmodem=
-/gprs-context.c#n214>
-of
-drivers/gprs-context.c file.
+diff --git a/plugins/he910.c b/plugins/he910.c
+index 38dbfac..999889f 100644
+--- a/plugins/he910.c
++++ b/plugins/he910.c
+@@ -76,6 +76,22 @@ static void he910_debug(const char *str, void *user_data)
+ 	ofono_info("%s%s", prefix, str);
+ }
+ =
 
-Removing the "PPP" string from the command, but this doesn't work on other
-Huawei (E160) modem that I have:
- sprintf(buf, "AT+CGDATA=3D,%u", gcd->active_context);
++static void he910_disconnected_cb(gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct he910_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("HE910 disconnected");
++
++	ofono_modem_set_powered(modem, FALSE);
++
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
++
++	g_at_chat_unref(data->modem);
++	data->modem =3D NULL;
++}
++
+ static GAtChat *open_device(struct ofono_modem *modem,
+ 				const char *key, char *debug)
+ {
+@@ -110,6 +126,8 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	if (chat =3D=3D NULL)
+ 		return NULL;
+ =
 
-Or simply using ATD*99***%u# command, the same way of SIMCOM vendor.
++	g_at_chat_set_disconnect_function(chat, he910_disconnected_cb, modem);
++
+ 	if (getenv("OFONO_AT_DEBUG"))
+ 		g_at_chat_set_debug(chat, he910_debug, debug);
+ =
 
-I have a really superficial knowledge about AT commands, and make a quick
-search about this two commands, and it seams to me that they both do the
-same thing. But I would like to know when use one or other.=E2=80=8B
+-- =
 
-Best Regards
+1.9.1
 
-Jer=C3=B4nimo Lopes
 
---===============9145801267794779557==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
-aWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPkhpIGFnYWluLDwvZGl2PjxkaXYg
-Y2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPjIwMTQtMDQt
-MjMgMTY6MTQgR01ULTAzOjAwIEplcsO0bmltbyBMb3BlcyA8c3BhbiBkaXI9Imx0ciI+Jmx0Ozxh
-IGhyZWY9Im1haWx0bzpsb3Blc2plcm9uaW1vQGdtYWlsLmNvbSIgdGFyZ2V0PSJfYmxhbmsiPmxv
-cGVzamVyb25pbW9AZ21haWwuY29tPC9hPiZndDs8L3NwYW4+Ojxicj4KPGJsb2NrcXVvdGUgY2xh
-c3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAwcHggMHB4IDAuOGV4O2JvcmRlci1s
-ZWZ0LXdpZHRoOjFweDtib3JkZXItbGVmdC1jb2xvcjpyZ2IoMjA0LDIwNCwyMDQpO2JvcmRlci1s
-ZWZ0LXN0eWxlOnNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPjxkaXYgZGlyPSJsdHIiPjxkaXY+PGZv
-bnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+SGksPC9mb250PjwvZGl2Pgo8ZGl2Pjxm
-b250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPjxicj48L2ZvbnQ+PC9kaXY+PGRpdj48
-Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5JJiMzOTttIHRyeWluZyB0byBtYWtl
-IGRpZmZlcmVudCAzRyBkb25nbGVzIHdvcmsgd2l0aCBvZm9ubyBhbmQgY29ubm1hbiBhdCBhIEJl
-YWdsZWJvbmUgQmxhY2sgYm9hcmQuPC9mb250PjwvZGl2Pgo8ZGl2Pjxmb250IGZhY2U9ImNvdXJp
-ZXIgbmV3LCBtb25vc3BhY2UiPjxicj48L2ZvbnQ+PC9kaXY+PGRpdj48Zm9udCBmYWNlPSJjb3Vy
-aWVyIG5ldywgbW9ub3NwYWNlIj5JIGhhdmXCoEh1YXdlaSBFMzEzMSAobGFiZWzCoGF0IHRoZSBj
-YXNlIG9mIHRoZSBkb25nbGUpLiBMaW51eMKgcmVjb2duaXplc8KgaXQgYXM6PC9mb250PjwvZGl2
-Pgo8ZGl2Pjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPsKgSUQgMTJkMToxNTA2
-IEh1YXdlaSBUZWNobm9sb2dpZXMgQ28uLCBMdGQuIEUzOTggTFRFL1VNVFMvR1NNIE1vZGVtL05l
-dHdvcmtjYXJkPC9mb250PjwvZGl2PjxkaXY+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9z
-cGFjZSI+PGJyPgo8L2ZvbnQ+PC9kaXY+PGRpdj48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9u
-b3NwYWNlIj5XaGVuIEkgdHJ5IHRvIGNvbm5lY3QgdG8gY29ubm1hbiBzZXJ2aWNlIHRoaXMgaXMg
-dGhlIHJlc3VsdC7CoDwvZm9udD48L2Rpdj48ZGl2Pjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBt
-b25vc3BhY2UiPjxicj4KPC9mb250PjwvZGl2PjxkaXY+PGZvbnQgZmFjZT0iY291cmllciBuZXcs
-IG1vbm9zcGFjZSI+b2Zvbm9kWzE4Nl06IGRyaXZlcnMvYXRtb2RlbS9ncHJzLWNvbnRleHQuYzph
-dF9ncHJzX2FjdGl2YXRlX3ByaW1hcnkoKSBjaWQgMTwvZm9udD48L2Rpdj48ZGl2Pjxmb250IGZh
-Y2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPm9mb25vZFsxODZdOiBNb2RlbTogJmd0OyBBVCtD
-R0RDT05UPTEsJnF1b3Q7SVAmcXVvdDssJnF1b3Q7PGEgaHJlZj0iaHR0cDovL3phcC52aXZvLmNv
-bS5iciIgdGFyZ2V0PSJfYmxhbmsiPnphcC52aXZvLmNvbS5icjwvYT4mcXVvdDtccjwvZm9udD48
-L2Rpdj4KCjxkaXY+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+b2Zvbm9kWzE4
-Nl06IE1vZGVtOiAmbHQ7IFxyXG5PS1xyXG48L2ZvbnQ+PC9kaXY+PGRpdj48Zm9udCBmYWNlPSJj
-b3VyaWVyIG5ldywgbW9ub3NwYWNlIj5vZm9ub2RbMTg2XTogZHJpdmVycy9hdG1vZGVtL2dwcnMt
-Y29udGV4dC5jOmF0X2NnZGNvbnRfY2IoKSBvayAxPC9mb250PjwvZGl2Pgo8ZGl2Pjxmb250IGZh
-Y2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPm9mb25vZFsxODZdOiBNb2RlbTogJmd0OyBBVCtD
-R0RBVEE9JnF1b3Q7UFBQJnF1b3Q7LDFccjwvZm9udD48L2Rpdj48ZGl2Pjxmb250IGZhY2U9ImNv
-dXJpZXIgbmV3LCBtb25vc3BhY2UiPm9mb25vZFsxODZdOiBNb2RlbTogJmx0OyBcclxuK0NNRSBF
-UlJPUjogNTBcclxuPC9mb250PjwvZGl2Pgo8ZGl2Pjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBt
-b25vc3BhY2UiPm9mb25vZFsxODZdOiBkcml2ZXJzL2F0bW9kZW0vZ3Bycy1jb250ZXh0LmM6YXRf
-Y2dkYXRhX2NiKCkgb2sgMDwvZm9udD48L2Rpdj48ZGl2Pjxmb250IGZhY2U9ImNvdXJpZXIgbmV3
-LCBtb25vc3BhY2UiPm9mb25vZFsxODZdOiBVbmFibGUgdG8gZW50ZXIgZGF0YSBzdGF0ZTwvZm9u
-dD48L2Rpdj4KPGRpdj48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj5vZm9ub2Rb
-MTg2XTogc3JjL2dwcnMuYzpwcmlfYWN0aXZhdGVfY2FsbGJhY2soKSAweDE4OGZlODwvZm9udD48
-L2Rpdj48ZGl2Pjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPm9mb25vZFsxODZd
-OiBzcmMvZ3Bycy5jOnByaV9hY3RpdmF0ZV9jYWxsYmFjaygpIEFjdGl2YXRpbmcgY29udGV4dCBm
-YWlsZWQgd2l0aCBlcnJvcjogSW5jb3JyZWN0IHBhcmFtZXRlcnM8L2ZvbnQ+PC9kaXY+Cgo8ZGl2
-Pjxicj48L2Rpdj48ZGl2PjxkaXYgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcm
-IzM5Oyxtb25vc3BhY2UiPuKAi0NhbiBhbnlvbmUgZ2l2ZSBtZSBhbiBpZGVhIG9mIHdoYXQgaXMg
-Y2F1c2luZyB0aGlzIGZhaWx1cmU/IOKAizwvZGl2Pjxicj48L2Rpdj48ZGl2PjxkaXYgc3R5bGU9
-ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPgrigItCZXN0IFJl
-Z2FyZHMsPC9kaXY+PGRpdiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7
-LG1vbm9zcGFjZSI+PGJyPjwvZGl2PjxkaXYgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmll
-ciBuZXcmIzM5Oyxtb25vc3BhY2UiPkplcsO0bmltbyBMb3Blc+KAizwvZGl2Pjxicj48L2Rpdj48
-L2Rpdj4KPC9ibG9ja3F1b3RlPjwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48
-ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVy
-IG5ldyYjMzk7LG1vbm9zcGFjZSI+PGJyPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQi
-IHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj5JJiMz
-OTt2ZSBtYWRlIHNvbWUgdGVzdHMgYW5kIGhlcmUmIzM5O3Mgc29tZSB0aGluZ3MgSSYjMzk7dmUg
-Zm91bmQuPC9kaXY+CjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxkaXYgY2xhc3M9ImdtYWls
-X2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPjxicj48L2ZvbnQ+
-PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcs
-IG1vbm9zcGFjZSI+SWYgaSB0ZXN0IENHREFUQSBjb21tYW5kIHRoaXMgaXMgdGhlIHJlc3VsdDwv
-Zm9udD48L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmll
-ciBuZXcsIG1vbm9zcGFjZSI+Jmd0OyBBVCtDR0RBVEE9P8KgPC9mb250PjwvZGl2PjxkaXYgY2xh
-c3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBtb25vc3BhY2UiPiZs
-dDsgK0NHREFUQTogKCZxdW90O05VTEwmcXVvdDspPC9mb250PjwvZGl2PjxkaXYgY2xhc3M9Imdt
-YWlsX2RlZmF1bHQiPgo8Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj48YnI+PC9m
-b250PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIg
-bmV3LCBtb25vc3BhY2UiPlNvIEkgbWFuYWdlIHR3byB3YXlzIG9mIG1ha2UgdGhpcyB3b3JrLCBz
-aW1wbHkgY2hhbmdlwqA8YSBocmVmPSJodHRwOi8vZ2l0Lmtlcm5lbC5vcmcvY2dpdC9uZXR3b3Jr
-L29mb25vL29mb25vLmdpdC90cmVlL2RyaXZlcnMvYXRtb2RlbS9ncHJzLWNvbnRleHQuYyNuMjE0
-Ij5saW5lIDIxNDwvYT7CoG9mIGRyaXZlcnMvZ3Bycy1jb250ZXh0LmMgZmlsZS48L2ZvbnQ+PC9k
-aXY+CjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3LCBt
-b25vc3BhY2UiPjxicj48L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZv
-bnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+UmVtb3ZpbmcgdGhlICZxdW90O1BQUCZx
-dW90OyBzdHJpbmcgZnJvbSB0aGUgY29tbWFuZCwgYnV0IHRoaXMgZG9lc24mIzM5O3Qgd29yayBv
-biBvdGhlciBIdWF3ZWkgKEUxNjApIG1vZGVtIHRoYXQgSSBoYXZlPC9mb250PjxzcGFuIHN0eWxl
-PSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj46PC9zcGFuPjwv
-ZGl2Pgo8ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywg
-bW9ub3NwYWNlIj7CoHNwcmludGYoYnVmLCAmcXVvdDtBVCtDR0RBVEE9LCV1JnF1b3Q7LCBnY2Qt
-Jmd0O2FjdGl2ZV9jb250ZXh0KTs8L2ZvbnQ+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVs
-dCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+PGJyPjwvZm9udD48L2Rpdj4K
-PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9z
-cGFjZSI+T3Igc2ltcGx5IHVzaW5nwqBBVEQqOTkqKioldSPCoGNvbW1hbmQsIHRoZSBzYW1lIHdh
-eSBvZiBTSU1DT00gdmVuZG9yLjwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0
-Ij48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj48YnI+PC9mb250PjwvZGl2Pgo8
-L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtj
-b3VyaWVyIG5ldyYjMzk7LG1vbm9zcGFjZSI+SSBoYXZlIGEgcmVhbGx5IHN1cGVyZmljaWFswqBr
-bm93bGVkZ2UgYWJvdXQgQVQgY29tbWFuZHMsIGFuZCBtYWtlIGEgcXVpY2sgc2VhcmNoIGFib3V0
-IHRoaXMgdHdvIGNvbW1hbmRzLCBhbmQgaXQgc2VhbXMgdG8gbWUgdGhhdCB0aGV5IGJvdGggZG8g
-dGhlIHNhbWUgdGhpbmcuIEJ1dCBJIHdvdWxkIGxpa2UgdG8ga25vdyB3aGVuIHVzZSBvbmUgb3Ig
-b3RoZXIu4oCLwqA8L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQt
-ZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPjxicj48L2Rpdj48ZGl2IGNs
-YXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYj
-Mzk7LG1vbm9zcGFjZSI+QmVzdCBSZWdhcmRzPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVs
-dCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPgo8
-YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYj
-Mzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPkplcsO0bmltbyBMb3BlczwvZGl2PjwvZGl2
-PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+PC9kaXY+PC9kaXY+Cg==
-
---===============9145801267794779557==--
+--===============7873080103704161382==--
 
