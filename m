@@ -1,90 +1,136 @@
-Content-Type: multipart/mixed; boundary="===============3533774187511982680=="
+Content-Type: multipart/mixed; boundary="===============3444853832926505853=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: [PATCH 1/1] he910: set modem unpowered after IO disconnect
-Date: Wed, 07 May 2014 08:29:41 +0200
-Message-ID: <5369D2D5.20705@southpole.se>
-In-Reply-To: <5368E5DC.1040409@gmail.com>
+From: Ranil Raveendran <ranillal.r@hcl.com>
+Subject: bluez5/ofono1.14/pulseaudio4.99 for bluetooth HFP implementation
+Date: Wed, 07 May 2014 09:16:33 +0000
+Message-ID: <91DCB1C9E1DD30478E4BBA849B2C2E6707F0C484@chn-hclt-mbs04.HCLT.CORP.HCL.IN>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3533774187511982680==
+--===============3444853832926505853==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
 
-On 05/06/2014 03:38 PM, Denis Kenzior wrote:
-> Hi Jonas,
-> =
+--===============3444853832926505853==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-> On 05/02/2014 09:15 AM, Jonas Bonn wrote:
->> This patch address an issue with SIM hotplug.  If the SIM card is removed
->> while there is an active connection then the io_disconnect function
->> of gatchat.c pulls the rug out from under us by cleaning up the modem
->> chat that we hold a reference to.
-> =
+PGh0bWwgZGlyPSJsdHIiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBj
+b250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9aXNvLTg4NTktMSI+CjxzdHlsZSBpZD0ib3dhUGFy
+YVN0eWxlIiB0eXBlPSJ0ZXh0L2NzcyI+UCB7bWFyZ2luLXRvcDowO21hcmdpbi1ib3R0b206MDt9
+PC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBvY3NpPSIwIiBmcHN0eWxlPSIxIj4KPGRpdiBzdHlsZT0i
+ZGlyZWN0aW9uOiBsdHI7Zm9udC1mYW1pbHk6IFRhaG9tYTtjb2xvcjogIzAwMDAwMDtmb250LXNp
+emU6IDEwcHQ7Ij5IaSBBbGwsPGJyPgo8YnI+CkkgYW0gdXNpbmcgdGhpcyBjb21iaW5hdGlvbiB0
+byB3b3JrIHdpdGggSEZQIHByb2ZpbGUuIEkgaGF2ZSBnb25lIHRocm91Z2ggbWFueSBkb2N1bWVu
+dHMgYW5kIHVuZGVyc3RhbmQgdGhhdCBCbHVlejUgcmVtb3ZlZCB0aGUgc3VwcG9ydCB0byBIRlAg
+cHJvZmlsZS4gSW5vcmRlciB0byB3b3JrIHdpdGggSEZQIHByb2ZpbGUgd2UgbmVlZCB0byBtYWtl
+IHVzZSBvZiBPZm9ubyBkZW1vbiB3aGljaCB3aWxsIHRha2UgY2FyZSBvZiByZWdpc3RlcmluZyB0
+aGUKIEhGUCBwcm9maWxlIHdpdGggYmx1ZXogZGVtb24gYW5kIFNDTyBjb25uZWN0aW9uLjxicj4K
+PGJyPgpXaGF0IG15IHByb2JsZW0gaXMgdmVyeSBzdHJhbmdlLjxicj4KPGJyPgpJIGFtIHVzaW5n
+IGJsdWV6NS4xNCZuYnNwOyBhbmQgb2Zvbm8xLjE0IGRlbW9uIHdoaWNoIGlzIHJ1bm5pbmcgaW4g
+bXkgdWJ1bnR1IG1lY2hpbmUuQmx1ZXRvb3RoIERvbmdsZSBpcyBjb25uZWN0ZWQgd2l0aCB1YnVu
+dHUgbWVjaGluZS4gU3RyYW5nZSB0aGluZyBpcyBkb25nbGUgYWRhcHRlciBwYXRoIGlzIG5vdCBs
+aXN0aW5nIGluIG9mb25vIGRlbW9uIGxvZy4mbmJzcDsgYmVsb3cgaXMgdGhlIGRlbW9uIGxvZy48
+YnI+Cjxicj4Kb2Zvbm9kWzYxNTJdOiBzcmMvbW9kZW0uYzpvZm9ub19tb2RlbV9kcml2ZXJfcmVn
+aXN0ZXIoKSBkcml2ZXI6IDB4ODE5NGFhMCwgbmFtZTogaXNpdXNiPGJyPgpvZm9ub2RbNjE1Ml06
+IHNyYy9tb2RlbS5jOm9mb25vX2RldmluZm9fZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDgx
+OTQ3OTAsIG5hbWU6IGlzaW1vZGVtPGJyPgpvZm9ub2RbNjE1Ml06IHNyYy9waG9uZWJvb2suYzpv
+Zm9ub19waG9uZWJvb2tfZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDgxOTQ3ODAsIG5hbWU6
+IGlzaW1vZGVtPGJyPgpvZm9ub2RbNjE1Ml06IHNyYy9uZXR3b3JrLmM6b2Zvbm9fbmV0cmVnX2Ry
+aXZlcl9yZWdpc3RlcigpIGRyaXZlcjogMHg4MTk0N2MwLCBuYW1lOiBpc2ltb2RlbTxicj4Kb2Zv
+bm9kWzYxNTJdOiBzcmMvdm9pY2VjYWxsLmM6b2Zvbm9fdm9pY2VjYWxsX2RyaXZlcl9yZWdpc3Rl
+cigpIGRyaXZlcjogMHg4MTk0ODAwLCBuYW1lOiBpc2ltb2RlbTxicj4Kb2Zvbm9kWzYxNTJdOiBz
+cmMvc21zLmM6b2Zvbm9fc21zX2RyaXZlcl9yZWdpc3RlcigpIGRyaXZlcjogMHg4MTk0ODYwLCBu
+YW1lOiBpc2ltb2RlbTxicj4Kb2Zvbm9kWzYxNTJdOiBzcmMvY2JzLmM6b2Zvbm9fY2JzX2RyaXZl
+cl9yZWdpc3RlcigpIGRyaXZlcjogMHg4MTk0ODgwLCBuYW1lOiBpc2ltb2RlbTxicj4Kb2Zvbm9k
+WzYxNTJdOiBzcmMvc2ltLmM6b2Zvbm9fc2ltX2RyaXZlcl9yZWdpc3RlcigpIGRyaXZlcjogMHg4
+MTk0OGEwLCBuYW1lOiBpc2ltb2RlbTxicj4Kb2Zvbm9kWzYxNTJdOiBzcmMvdXNzZC5jOm9mb25v
+X3Vzc2RfZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDgxOTQ4ZTgsIG5hbWU6IGlzaW1vZGVt
+PGJyPgpvZm9ub2RbNjE1Ml06IHNyYy9jYWxsLWZvcndhcmRpbmcuYzpvZm9ub19jYWxsX2Zvcndh
+cmRpbmdfZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDgxOTQ5MDAsIG5hbWU6IGlzaW1vZGVt
+PGJyPgpvZm9ub2RbNjE1Ml06IHNyYy9jYWxsLXNldHRpbmdzLmM6b2Zvbm9fY2FsbF9zZXR0aW5n
+c19kcml2ZXJfcmVnaXN0ZXIoKSBkcml2ZXI6IDB4ODE5NDkyMCwgbmFtZTogaXNpbW9kZW08YnI+
+Cm9mb25vZFs2MTUyXTogc3JjL2NhbGwtYmFycmluZy5jOm9mb25vX2NhbGxfYmFycmluZ19kcml2
+ZXJfcmVnaXN0ZXIoKSBkcml2ZXI6IDB4ODE5NDk1MCwgbmFtZTogaXNpbW9kZW08YnI+Cm9mb25v
+ZFs2MTUyXTogc3JjL2NhbGwtbWV0ZXIuYzpvZm9ub19jYWxsX21ldGVyX2RyaXZlcl9yZWdpc3Rl
+cigpIGRyaXZlcjogMHg4MTk0OTgwLCBuYW1lOiBpc2ltb2RlbTxicj4Kb2Zvbm9kWzYxNTJdOiBz
+cmMvcmFkaW8tc2V0dGluZ3MuYzpvZm9ub19yYWRpb19zZXR0aW5nc19kcml2ZXJfcmVnaXN0ZXIo
+KSBkcml2ZXI6IDB4ODE5NDljMCwgbmFtZTogaXNpbW9kZW08YnI+Cm9mb25vZFs2MTUyXTogc3Jj
+L2dwcnMuYzpvZm9ub19ncHJzX2RyaXZlcl9yZWdpc3RlcigpIGRyaXZlcjogMHg4MTk0OWU0LCBu
+YW1lOiBpc2ltb2RlbTxicj4Kb2Zvbm9kWzYxNTJdOiBzcmMvZ3Bycy5jOm9mb25vX2dwcnNfY29u
+dGV4dF9kcml2ZXJfcmVnaXN0ZXIoKSBkcml2ZXI6IDB4ODE5NDlmOCwgbmFtZTogaXNpbW9kZW08
+YnI+Cm9mb25vZFs2MTUyXTogc3JjL2F1ZGlvLXNldHRpbmdzLmM6b2Zvbm9fYXVkaW9fc2V0dGlu
+Z3NfZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDgxOTRhMTAsIG5hbWU6IGlzaW1vZGVtPGJy
+PgpvZm9ub2RbNjE1Ml06IHNyYy9zaW0uYzpvZm9ub19zaW1fZHJpdmVyX3JlZ2lzdGVyKCkgZHJp
+dmVyOiAweDgxOTRhMjAsIG5hbWU6IHdnbW9kZW0yLjU8YnI+Cm9mb25vZFs2MTUyXTogcGx1Z2lu
+cy91ZGV2bmcuYzp1ZGV2X3N0YXJ0KCkgPGJyPgpvZm9ub2RbNjE1Ml06IHBsdWdpbnMvdWRldm5n
+LmM6ZW51bWVyYXRlX2RldmljZXMoKSA8YnI+Cm9mb25vZFs2MTUyXTogcGx1Z2lucy91ZGV2bmcu
+YzpjaGVja191c2JfZGV2aWNlKCkgaHViIFsobnVsbCk6KG51bGwpXTxicj4Kb2Zvbm9kWzYxNTJd
+OiBwbHVnaW5zL3VkZXZuZy5jOmNoZWNrX3VzYl9kZXZpY2UoKSB1c2IgWzgwODc6MDAyNF08YnI+
+Cm9mb25vZFs2MTUyXTogcGx1Z2lucy91ZGV2bmcuYzpjaGVja191c2JfZGV2aWNlKCkgdXNiIFsw
+NGNhOjAwMjJdPGJyPgpvZm9ub2RbNjE1Ml06IHBsdWdpbnMvdWRldm5nLmM6Y2hlY2tfdXNiX2Rl
+dmljZSgpIHVzYmhpZCBbKG51bGwpOihudWxsKV08YnI+Cm9mb25vZFs2MTUyXTogcGx1Z2lucy91
+ZGV2bmcuYzpjaGVja191c2JfZGV2aWNlKCkgaHViIFsobnVsbCk6KG51bGwpXTxicj4Kb2Zvbm9k
+WzYxNTJdOiBwbHVnaW5zL3VkZXZuZy5jOmNoZWNrX3VzYl9kZXZpY2UoKSBodWIgWyhudWxsKToo
+bnVsbCldPGJyPgpvZm9ub2RbNjE1Ml06IHBsdWdpbnMvdWRldm5nLmM6Y2hlY2tfdXNiX2Rldmlj
+ZSgpIHVzYiBbODA4NzowMDI0XTxicj4Kb2Zvbm9kWzYxNTJdOiBwbHVnaW5zL3VkZXZuZy5jOmNo
+ZWNrX3VzYl9kZXZpY2UoKSB1c2IgWzBhMTI6MDAwMV08YnI+Cm9mb25vZFs2MTUyXTogcGx1Z2lu
+cy91ZGV2bmcuYzpjaGVja191c2JfZGV2aWNlKCkgYnR1c2IgWyhudWxsKToobnVsbCldPGJyPgpv
+Zm9ub2RbNjE1Ml06IHBsdWdpbnMvdWRldm5nLmM6Y2hlY2tfdXNiX2RldmljZSgpIGJ0dXNiIFso
+bnVsbCk6KG51bGwpXTxicj4Kb2Zvbm9kWzYxNTJdOiBwbHVnaW5zL3VkZXZuZy5jOmNoZWNrX3Vz
+Yl9kZXZpY2UoKSB1c2IgWyhudWxsKToobnVsbCldPGJyPgpvZm9ub2RbNjE1Ml06IHBsdWdpbnMv
+dWRldm5nLmM6Y2hlY2tfdXNiX2RldmljZSgpIHVzYiBbKG51bGwpOihudWxsKV08YnI+Cm9mb25v
+ZFs2MTUyXTogcGx1Z2lucy91ZGV2bmcuYzpjaGVja191c2JfZGV2aWNlKCkgaHViIFsobnVsbCk6
+KG51bGwpXTxicj4KaXQgaXMgd2FpdGluZyBhZnRlciB0aGlzLjxicj4KPGJyPgpJIGhhdmUgcGFp
+cmVkIG15IG1vYmlsZSBwaG9uZSB3aXRoIHVidW50dSBtZWNoaW5lLiBBbmQgcGFpcmluZyB3YXMg
+c3VjY2VzZnVsIGFuZCBibHVleiBkZW1vbiBsaXN0ZWQgdGhlIG5ldyBkZXZpY2UgbWFjIGluIGhp
+cyBsb2cuIEJ1dCB0aGVyZSBpcyBubyBjb21tdW5pY2F0aW9uIGhhcHBlbmluZyBiZXR3ZWVuIG9m
+b25vIGFuZCBibHVlejUgZGVtb24uIE5vdCBzdXJlIFdoeSB0aGlzIGlzIGhhcHBlbmluZyBpIGFt
+IG5vdCBzdXJlIGkgYW0gZG9pbmcKIGFueSB0aGluZyB3cm9uZy48YnI+Cjxicj4KQnV0IGkgYW0g
+bm90IHNlZWluZyBhbnkgY29tbXVuaWNhdGlvbiBiZXR3ZWVuIG9mb25vIGFuZCBibHVleiAsIEFz
+IGEgcmVzdWx0IG15IG1vYmlsZSBBRyBpcyBub3QgbGlzdGVkIGluIHRoZSBvZm9ubyBtb2RlbSBs
+aXN0Ljxicj4KPGJyPgpQbGVhc2UgaGVscCBvbiB0aGlzLi4uLi4uPGJyPgo8YnI+CkkgaGF2ZSBj
+b25maWd1cmVkIG9mb2ZubyBpbiAvdXNyLyZuYnNwOyZuYnNwOyAuLi4uIC4vY29uZmlndXJlIC0t
+ZW5hYmxlLXRlc3QgLi4uJm5ic3A7Jm5ic3A7Jm5ic3A7IHRoZW4gbWFrZSAuLi4ubWFrZSBpbnN0
+YWxsPGJyPgo8YnI+ClRoYW5rcyw8YnI+ClJhbmlsIFJhdmVlbmRyYW48L2Rpdj4KPHNwYW4gc3R5
+bGU9IkZPTlQtRkFNSUxZOiAnQXJpYWwnLCdzYW5zLXNlcmlmJzsgQ09MT1I6IGdyYXk7IEZPTlQt
+U0laRTogNy41cHQ7IG1zby1mYXJlYXN0LWZvbnQtZmFtaWx5OiAnVGltZXMgTmV3IFJvbWFuJyI+
+CjxQIHN0eWxlPSJNQVJHSU46IDBpbiAwaW4gMHB0IiBjbGFzcz1Nc29Ob3JtYWw+PGJyPjxicj48
+Zm9udCBzdHlsZT0iRk9OVC1GQU1JTFk6ICdBcmlhbCcsJ3NhbnMtc2VyaWYnOyBDT0xPUjogZ3Jh
+eTsgRk9OVC1TSVpFOiA5cHgiPjo6RElTQ0xBSU1FUjo6PGJyPi0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS08L2ZvbnQ+PC9QPgo8UCBzdHlsZT0iTUFSR0lOOiAwaW4gMGluIDBwdCIg
+Y2xhc3M9TXNvTm9ybWFsPjxmb250IHN0eWxlPSJGT05ULUZBTUlMWTogJ0FyaWFsJywnc2Fucy1z
+ZXJpZic7IENPTE9SOiBncmF5OyBGT05ULVNJWkU6IDExcHgiPlRoZSBjb250ZW50cyBvZiB0aGlz
+IGUtbWFpbCBhbmQgYW55IGF0dGFjaG1lbnQocykgYXJlIGNvbmZpZGVudGlhbCBhbmQgaW50ZW5k
+ZWQgZm9yIHRoZSBuYW1lZCByZWNpcGllbnQocykgb25seS48YnI+RS1tYWlsIHRyYW5zbWlzc2lv
+biBpcyBub3QgZ3VhcmFudGVlZCB0byBiZSBzZWN1cmUgb3IgZXJyb3ItZnJlZSBhcyBpbmZvcm1h
+dGlvbiBjb3VsZCBiZSBpbnRlcmNlcHRlZCwgY29ycnVwdGVkLCA8YnI+bG9zdCwgZGVzdHJveWVk
+LCBhcnJpdmUgbGF0ZSBvciBpbmNvbXBsZXRlLCBvciBtYXkgY29udGFpbiB2aXJ1c2VzIGluIHRy
+YW5zbWlzc2lvbi4gVGhlIGUgbWFpbCBhbmQgaXRzIGNvbnRlbnRzIDxicj4od2l0aCBvciB3aXRo
+b3V0IHJlZmVycmVkIGVycm9ycykgc2hhbGwgdGhlcmVmb3JlIG5vdCBhdHRhY2ggYW55IGxpYWJp
+bGl0eSBvbiB0aGUgb3JpZ2luYXRvciBvciBIQ0wgb3IgaXRzIGFmZmlsaWF0ZXMuIDxicj5WaWV3
+cyBvciBvcGluaW9ucywgaWYgYW55LCBwcmVzZW50ZWQgaW4gdGhpcyBlbWFpbCBhcmUgc29sZWx5
+IHRob3NlIG9mIHRoZSBhdXRob3IgYW5kIG1heSBub3QgbmVjZXNzYXJpbHkgcmVmbGVjdCB0aGUg
+PGJyPnZpZXdzIG9yIG9waW5pb25zIG9mIEhDTCBvciBpdHMgYWZmaWxpYXRlcy4gQW55IGZvcm0g
+b2YgcmVwcm9kdWN0aW9uLCBkaXNzZW1pbmF0aW9uLCBjb3B5aW5nLCBkaXNjbG9zdXJlLCBtb2Rp
+ZmljYXRpb24sIDxicj5kaXN0cmlidXRpb24gYW5kIC8gb3IgcHVibGljYXRpb24gb2YgdGhpcyBt
+ZXNzYWdlIHdpdGhvdXQgdGhlIHByaW9yIHdyaXR0ZW4gY29uc2VudCBvZiBhdXRob3JpemVkIHJl
+cHJlc2VudGF0aXZlIG9mIDxicj5IQ0wgaXMgc3RyaWN0bHkgcHJvaGliaXRlZC4gSWYgeW91IGhh
+dmUgcmVjZWl2ZWQgdGhpcyBlbWFpbCBpbiBlcnJvciBwbGVhc2UgZGVsZXRlIGl0IGFuZCBub3Rp
+ZnkgdGhlIHNlbmRlciBpbW1lZGlhdGVseS4gPGJyPkJlZm9yZSBvcGVuaW5nIGFueSBlbWFpbCBh
+bmQvb3IgYXR0YWNobWVudHMsIHBsZWFzZSBjaGVjayB0aGVtIGZvciB2aXJ1c2VzIGFuZCBvdGhl
+ciBkZWZlY3RzLjwvZm9udD48L1A+CjxQIHN0eWxlPSJNQVJHSU46IDBpbiAwaW4gMHB0IiBjbGFz
+cz1Nc29Ob3JtYWw+PGZvbnQgc3R5bGU9IkZPTlQtRkFNSUxZOiAnQXJpYWwnLCdzYW5zLXNlcmlm
+JzsgQ09MT1I6IGdyYXk7IEZPTlQtU0laRTogMTFweCI+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLTwvZm9udD48L3NwYW4+PC9QPjwvYm9keT4KPC9odG1sPgoK
 
-> So what actually happens when the SIM is pulled?  This seems to imply
-> that the modem port at least sends a HUP and is no longer usable.  Is
-> the control port also HUPed?
-
-The control port is still usable so it doesn't appear that it HUP's.
-
-> =
-
->>
->> This patch addresses this by hooking into the notification from
->> io_disconnect and setting the modem to 'unpowered' state in order to for=
-ce
->> a reinitialization when the SIM is reinserted.
->>
->> The modem is not actually powered off as that would turn off SIM detecti=
-on
->> as well.
-> =
-
-> Are you able to at least turn off radio circuits, e.g. via CFUN=3D4?
-
-As the control port is usable, I presume so.  Setting CFUN=3D4 kills power
-to the SIM, though, so we wouldn't be able to detect SIM reinsertion if
-we did this (though I don't think that's what you're asking for).
-
-> =
-
->>
->> With this patch, SIM hotplug works reliably.
-> =
-
-> When the modem is turned off, the application really has no idea why it
-> was turned off (whether due to an administrative action or due to SIM
-> being removed).   So the proposed patch is not a good implementation of
-> 'SIM hotplug'.  One should implement this via
-> ofono_sim_inserted_notify().  Any reason why this can't be done?
-
-I'm not sure that's sufficient...
-
-When the modem port HUP's, io_disconnect is called which results in
-modem->chat being cleaned up; not unref'd, either, but forcibly free'd.
- Somehow we need to be able to recreate this data structure, but since
-it's created in the modem's init function it won't be unless we "power
-down" the modem (or something along those lines).
-
-Suggestions for a better way forward welcome...
-
-/Jonas
-
-
-> =
-
-> Regards,
-> -Denis
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> https://lists.ofono.org/mailman/listinfo/ofono
->=20
-
---===============3533774187511982680==--
+--===============3444853832926505853==--
 
