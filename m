@@ -1,50 +1,90 @@
-Content-Type: multipart/mixed; boundary="===============4910637402548140371=="
+Content-Type: multipart/mixed; boundary="===============3533774187511982680=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim: Handle multiple invocations of sim_imsi_obtained
-Date: Tue, 06 May 2014 15:59:10 -0500
-Message-ID: <53694D1E.1000204@gmail.com>
-In-Reply-To: <5368F00F.5040609@jolla.com>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: Re: [PATCH 1/1] he910: set modem unpowered after IO disconnect
+Date: Wed, 07 May 2014 08:29:41 +0200
+Message-ID: <5369D2D5.20705@southpole.se>
+In-Reply-To: <5368E5DC.1040409@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4910637402548140371==
+--===============3533774187511982680==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+Hi Denis,
 
->>> +    if (sim->imsi && !strcmp(sim->imsi, imsi))
->>> +        return;
->> Calling this function a second time is an error.  So this condition
->> looks highly suspect.  What issue are you trying to address?
+On 05/06/2014 03:38 PM, Denis Kenzior wrote:
+> Hi Jonas,
 > =
 
-> sim_imsi_obtained() is invoked from two places: sim_imsi_cb() and
-> sim_efimsi_cb(). sim_imsi_cb() in turn is a completion for
+> On 05/02/2014 09:15 AM, Jonas Bonn wrote:
+>> This patch address an issue with SIM hotplug.  If the SIM card is removed
+>> while there is an active connection then the io_disconnect function
+>> of gatchat.c pulls the rug out from under us by cleaning up the modem
+>> chat that we hold a reference to.
+> =
 
-Only one of those functions is called, depending on how the driver
-implements obtaining of the IMSI.  Some drivers do not have the ability
-to read IMSI using the READ BINARY / READ RECORD SIM commands.
+> So what actually happens when the SIM is pulled?  This seems to imply
+> that the modem port at least sends a HUP and is no longer usable.  Is
+> the control port also HUPed?
 
-> sim_retrieve_imsi() which is invoked from 5 other asynchronous
-> callbacks, mostly triggered by a number of ofono_sim_read() calls. I
-> don't claim that I fully understand what's going on and I haven't
-> analyzed all the call sequences but it surely is invoked twice in our
-> setup. Any suggestions on where the problem might be?
+The control port is still usable so it doesn't appear that it HUP's.
 
-The code flow of the functions deals with Barred / Fixed Dialing Numbers
-and the variations between 2G and 3G sims.  The logic is set up in such
-a way that sim_retrieve_imsi is called only once.  Looking at the code,
-there doesn't seem to be any way for sim_retrieve_imsi to be called twice.
+> =
 
-If this is indeed happening, then please let me know under what
-circumstances this happens and I can help you track this issue down.
+>>
+>> This patch addresses this by hooking into the notification from
+>> io_disconnect and setting the modem to 'unpowered' state in order to for=
+ce
+>> a reinitialization when the SIM is reinserted.
+>>
+>> The modem is not actually powered off as that would turn off SIM detecti=
+on
+>> as well.
+> =
 
-Regards,
--Denis
+> Are you able to at least turn off radio circuits, e.g. via CFUN=3D4?
+
+As the control port is usable, I presume so.  Setting CFUN=3D4 kills power
+to the SIM, though, so we wouldn't be able to detect SIM reinsertion if
+we did this (though I don't think that's what you're asking for).
+
+> =
+
+>>
+>> With this patch, SIM hotplug works reliably.
+> =
+
+> When the modem is turned off, the application really has no idea why it
+> was turned off (whether due to an administrative action or due to SIM
+> being removed).   So the proposed patch is not a good implementation of
+> 'SIM hotplug'.  One should implement this via
+> ofono_sim_inserted_notify().  Any reason why this can't be done?
+
+I'm not sure that's sufficient...
+
+When the modem port HUP's, io_disconnect is called which results in
+modem->chat being cleaned up; not unref'd, either, but forcibly free'd.
+ Somehow we need to be able to recreate this data structure, but since
+it's created in the modem's init function it won't be unless we "power
+down" the modem (or something along those lines).
+
+Suggestions for a better way forward welcome...
+
+/Jonas
 
 
---===============4910637402548140371==--
+> =
+
+> Regards,
+> -Denis
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> https://lists.ofono.org/mailman/listinfo/ofono
+>=20
+
+--===============3533774187511982680==--
 
