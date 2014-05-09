@@ -1,63 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============8492916046768410629=="
+Content-Type: multipart/mixed; boundary="===============5974050510746375975=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 1/1] he910: reset modem after IO disconnect
-Date: Thu, 08 May 2014 09:06:29 -0500
-Message-ID: <536B8F65.7010903@gmail.com>
-In-Reply-To: <536B2709.7040200@southpole.se>
+From: Patrik Flykt <Patrik.Flykt@linux.intel.com>
+Subject: Re: Network preference gsm is only working when allowing roaming?
+Date: Fri, 09 May 2014 09:31:18 +0300
+Message-ID: <1399617078.4638.172.camel@pflykt-mobl1>
+In-Reply-To: <CAFtUo_bRBz8BmOz2ONKf3brcKRZe5V1qHdPwB2MzBQXA8YF1Xw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8492916046768410629==
+--===============5974050510746375975==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
 
->>
->>>  Somehow we need to be able to recreate this data structure, but since
->>> it's created in the modem's init function it won't be unless we "power
->>> down" the modem (or something along those lines).
->>
->> You would need to re-create the affected atoms.  In this case this would
->> be the gprs-context atom.
-> =
+	Hi,
 
-> The gprs-context is created in post_online... we require functioning
-> communication to the modem to get that far.
+On Thu, 2014-05-08 at 16:51 +0200, Niclas Karlsson wrote:
 
-So here's the thing, when you pull the SIM and call
-ofono_sim_inserted_notify(modem, FALSE) all post_sim and post_online
-atoms get destroyed.  So everything would be re-created anyway once you
-reach post_sim/post_online state again.  So in theory, the only thing
-you need to take care of is re-open the modem chat port and re-set the
-slave.
+>     [ org.ofono.NetworkRegistration ]
+>         Status =3D roaming
+>         Strength =3D 100
+>         Name =3D  - Telenor SE
+>         LocationAreaCode =3D 34301
+>         Mode =3D auto
+>         MobileCountryCode =3D 240
+>         CellId =3D 40251
+>         MobileNetworkCode =3D 24
 
-> =
+This, and...
 
-> When the modem or aux port HUP's, io_disconnect cleans up the at_chat
-> and chat structures associated with it.  This means that the
-> command_queue disappears and no more commands can be sent to the modem
-> via that chat (which we still reference).  We can hook into
-> user_disconenct to find out that the chat has been cleaned up and drop
-> our references, but we need to get the modem back on its feet again by
-> reopening the modem and aux ports and redoing the modem initialization.
-> =
+>     [ org.ofono.SimManager ]
+>         Retries =3D [pin =3D 3] [puk =3D 10]
+>         SubscriberIdentity =3D 24*************1
+>         FixedDialing =3D 0
+>         SubscriberNumbers =3D
+>         BarredDialing =3D 0
+>         LockedPins =3D
+>         MobileNetworkCode =3D 08
+>         MobileCountryCode =3D 240
+>         Present =3D 1
+>         PinRequired =3D none
+
+...this combined looks like your SIM says MobileNetworkCode 08 while the
+network attached to is 24. So ofono thinks your are roaming now. Is an
+update needed to some database? Is this in ofono or in some other sw?
+
+Let's ask ofono ml for an answer.
+
+Cheers,
+
+	Patrik
 
 
-So I'm confused, you said that the aux port is not HUPed.  If that is
-the case, then the AUX queue (which is used by every atom except
-gprs-context) is not cleared.  Essentially you need to issue an
-ofono_sim_inserted_notify(modem, FALSE) and re-create the modem chat.
-After that things should just work.
 
-> SIM hotswap is definitely supported by this hardware.
-
-Okay, cool.  That is good to know.
-
-Regards,
--Denis
-
---===============8492916046768410629==--
+--===============5974050510746375975==--
 
