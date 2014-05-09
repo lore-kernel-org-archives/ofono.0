@@ -1,58 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============5974050510746375975=="
+Content-Type: multipart/mixed; boundary="===============9028624322829267855=="
 MIME-Version: 1.0
-From: Patrik Flykt <Patrik.Flykt@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Network preference gsm is only working when allowing roaming?
-Date: Fri, 09 May 2014 09:31:18 +0300
-Message-ID: <1399617078.4638.172.camel@pflykt-mobl1>
-In-Reply-To: <CAFtUo_bRBz8BmOz2ONKf3brcKRZe5V1qHdPwB2MzBQXA8YF1Xw@mail.gmail.com>
+Date: Fri, 09 May 2014 13:48:40 -0500
+Message-ID: <536D2308.9080900@gmail.com>
+In-Reply-To: <1399617078.4638.172.camel@pflykt-mobl1>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5974050510746375975==
+--===============9028624322829267855==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Patrik,
 
-	Hi,
+On 05/09/2014 01:31 AM, Patrik Flykt wrote:
+> =
 
-On Thu, 2014-05-08 at 16:51 +0200, Niclas Karlsson wrote:
+> 	Hi,
+> =
 
->     [ org.ofono.NetworkRegistration ]
->         Status =3D roaming
->         Strength =3D 100
->         Name =3D  - Telenor SE
->         LocationAreaCode =3D 34301
->         Mode =3D auto
->         MobileCountryCode =3D 240
->         CellId =3D 40251
->         MobileNetworkCode =3D 24
+> On Thu, 2014-05-08 at 16:51 +0200, Niclas Karlsson wrote:
+> =
 
-This, and...
+>>     [ org.ofono.NetworkRegistration ]
+>>         Status =3D roaming
 
->     [ org.ofono.SimManager ]
->         Retries =3D [pin =3D 3] [puk =3D 10]
->         SubscriberIdentity =3D 24*************1
->         FixedDialing =3D 0
->         SubscriberNumbers =3D
->         BarredDialing =3D 0
->         LockedPins =3D
->         MobileNetworkCode =3D 08
->         MobileCountryCode =3D 240
->         Present =3D 1
->         PinRequired =3D none
+The modem tells us it is roaming.  Nothing can be done about that.
 
-...this combined looks like your SIM says MobileNetworkCode 08 while the
-network attached to is 24. So ofono thinks your are roaming now. Is an
-update needed to some database? Is this in ofono or in some other sw?
+<snip>
 
-Let's ask ofono ml for an answer.
+> =
 
-Cheers,
+> ...this combined looks like your SIM says MobileNetworkCode 08 while the
+> network attached to is 24. So ofono thinks your are roaming now. Is an
+> update needed to some database? Is this in ofono or in some other sw?
+> =
 
-	Patrik
+> Let's ask ofono ml for an answer.
+> =
 
 
+I'm not sure what the context of the question is, but RadioSettings API
+is completely independent of the current registration status.
 
---===============5974050510746375975==--
+Regards,
+-Denis
+
+--===============9028624322829267855==--
 
