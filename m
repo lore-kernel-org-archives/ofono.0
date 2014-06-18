@@ -1,485 +1,335 @@
-Content-Type: multipart/mixed; boundary="===============2097589197088553782=="
+Content-Type: multipart/mixed; boundary="===============1370821977968420312=="
 MIME-Version: 1.0
-From: Philip Paeps <philip@paeps.cx>
-Subject: [PATCH 1/3] gatchat: implement PAP authentication
-Date: Tue, 17 Jun 2014 23:57:57 +0200
-Message-ID: <1403042279-20598-2-git-send-email-philip@paeps.cx>
-In-Reply-To: <1403042279-20598-1-git-send-email-philip@paeps.cx>
+From: Frederik Lotter <frederik.lotter@mixtelematics.com>
+Subject: Contribution: Telit HE910 modem with single serial + CMUX
+ configuration
+Date: Wed, 18 Jun 2014 11:01:40 +0200
+Message-ID: <CAEM=xjg+4Q=684xc=Th-aHizAxdpASOg57D+k9a4hSS+BLnf6g@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2097589197088553782==
+--===============1370821977968420312==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Make the authentication method configurable, CHAP or PAP, defaulting to
-CHAP (i.e.: previous behaviour).
+Hi Guys,
 
-Implementation details:
+I have done some work to add support for a Telit HE910, but configured to
+use a single serial connection which will then enable additional ports
+using CMUX. I made the changes against v1.14 and rebased the commit against
+master.
 
- o If PAP is configured, we NAK the CHAP authentication protocol option
-   in LCP configuration requests and suggest PAP instead.  This works
-   around the amusing requirement of 3GPP TS 29.061 that modems must
-   send a forced positive acknowledgement of the authentication method
-   tried (i.e.: the modem will successfully accept any CHAP handshake,
-   but if the network only supports PAP, the modem will hang up when it
-   tries and fails to activate the PDP context)
+If this could be of use to the project please feel free to add it. I have
+successfully used the driver to establish an internet connection with
+Connman. Note however that SIM detection does not properly work as I need
+to remove and re-insert the SIM (but I experienced this even with the
+original HE910 driver).
 
- o The PAP Authenticate-Request is resent a hard-coded three times at
-   ten-second intervals.  This may be a bit too persistent.  Chances
-   are if it doesn't work the first time, it'll never work, but the
-   RFC insists that we MUST retry.
+Unfortunately we are moving to a new modem from uBLOX so I need to redo the
+work and I cannot spend more time on this right now. I hope to contribute
+the uBLOX code later on.
 
-Signed-off-by: Philip Paeps <philip@paeps.cx>
----
- gatchat/gatppp.c   |   50 ++++++++++++++++++-
- gatchat/gatppp.h   |    8 +++
- gatchat/ppp.h      |    9 ++++
- gatchat/ppp_auth.c |  139 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- gatchat/ppp_lcp.c  |   68 ++++++++++++++++++-------
- 5 files changed, 253 insertions(+), 21 deletions(-)
+Kind Regards,
+Frederik Lotter
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index f767f4a..c75d7f5 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -64,11 +64,13 @@ struct _GAtPPP {
- 	struct pppcp_data *ipcp;
- 	struct ppp_net *net;
- 	struct ppp_chap *chap;
-+	struct ppp_pap *pap;
- 	GAtHDLC *hdlc;
- 	gint mru;
- 	gint mtu;
- 	char username[256];
- 	char password[256];
-+	GAtPPPAuthMethod auth_method;
- 	GAtPPPConnectFunc connect_cb;
- 	gpointer connect_data;
- 	GAtPPPDisconnectFunc disconnect_cb;
-@@ -150,13 +152,15 @@ static inline gboolean ppp_drop_packet(GAtPPP *ppp, g=
-uint16 protocol)
- 			return TRUE;
- 		break;
- 	case PPP_PHASE_AUTHENTICATION:
--		if (protocol !=3D LCP_PROTOCOL && protocol !=3D CHAP_PROTOCOL)
-+		if (protocol !=3D LCP_PROTOCOL && protocol !=3D CHAP_PROTOCOL &&
-+					protocol !=3D PAP_PROTOCOL)
- 			return TRUE;
- 		break;
- 	case PPP_PHASE_DEAD:
- 		return TRUE;
- 	case PPP_PHASE_NETWORK:
- 		if (protocol !=3D LCP_PROTOCOL && protocol !=3D CHAP_PROTOCOL &&
-+					protocol !=3D PAP_PROTOCOL &&
- 					protocol !=3D IPCP_PROTO)
- 			return TRUE;
- 		break;
-@@ -222,6 +226,12 @@ static void ppp_receive(const unsigned char *buf, gsiz=
-e len, void *data)
- 	case IPCP_PROTO:
- 		pppcp_process_packet(ppp->ipcp, packet, len - offset);
- 		break;
-+	case PAP_PROTOCOL:
-+		if (ppp->pap)
-+			ppp_pap_process_packet(ppp->pap, packet, len - offset);
-+		else
-+			pppcp_send_protocol_reject(ppp->lcp, buf, len);
-+		break;
- 	case CHAP_PROTOCOL:
- 		if (ppp->chap) {
- 			ppp_chap_process_packet(ppp->chap, packet,
-@@ -359,6 +369,12 @@ void ppp_set_auth(GAtPPP *ppp, const guint8* auth_data)
- 	guint16 proto =3D get_host_short(auth_data);
- =
+MiX Telematics South Africa
 
- 	switch (proto) {
-+	case PAP_PROTOCOL:
-+		if (ppp->pap)
-+			ppp_pap_free(ppp->pap);
-+
-+		ppp->pap =3D ppp_pap_new(ppp);
-+		break;
- 	case CHAP_PROTOCOL:
- 		if (ppp->chap)
- 			ppp_chap_free(ppp->chap);
-@@ -437,10 +453,18 @@ void ppp_ipcp_finished_notify(GAtPPP *ppp)
- =
+--===============1370821977968420312==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
- void ppp_lcp_up_notify(GAtPPP *ppp)
- {
--	/* Wait for the peer to send us a challenge if we expect auth */
- 	if (ppp->chap !=3D NULL) {
-+		/* Wait for the peer to send us a challenge. */
- 		ppp_enter_phase(ppp, PPP_PHASE_AUTHENTICATION);
- 		return;
-+	} else if (ppp->pap !=3D NULL) {
-+		/* Try to send an Authenticate-Request and wait for reply. */
-+		if (ppp_pap_start(ppp->pap) =3D=3D TRUE)
-+			ppp_enter_phase(ppp, PPP_PHASE_AUTHENTICATION);
-+		else
-+			/* It'll never work out. */
-+			ppp_auth_notify(ppp, FALSE);
-+		return;
- 	}
- =
+PGRpdiBkaXI9Imx0ciI+SGkgR3V5cyw8ZGl2Pjxicj48L2Rpdj48ZGl2PkkgaGF2ZSBkb25lIHNv
+bWUgd29yayB0byBhZGQgc3VwcG9ydCBmb3IgYSBUZWxpdCBIRTkxMCwgYnV0IGNvbmZpZ3VyZWQg
+dG8gdXNlIGEgc2luZ2xlIHNlcmlhbCBjb25uZWN0aW9uIHdoaWNoIHdpbGwgdGhlbiBlbmFibGUg
+YWRkaXRpb25hbCBwb3J0cyB1c2luZyBDTVVYLiBJIG1hZGUgdGhlIGNoYW5nZXMgYWdhaW5zdCB2
+MS4xNCBhbmQgcmViYXNlZCB0aGUgY29tbWl0IGFnYWluc3QgbWFzdGVyLjwvZGl2Pgo8ZGl2Pjxi
+cj48L2Rpdj48ZGl2PklmIHRoaXMgY291bGQgYmUgb2YgdXNlIHRvIHRoZSBwcm9qZWN0IHBsZWFz
+ZSBmZWVsIGZyZWUgdG8gYWRkIGl0LiBJIGhhdmUgc3VjY2Vzc2Z1bGx5IHVzZWQgdGhlIGRyaXZl
+ciB0byBlc3RhYmxpc2ggYW4gaW50ZXJuZXQgY29ubmVjdGlvbiB3aXRoIENvbm5tYW4uIE5vdGUg
+aG93ZXZlciB0aGF0IFNJTSBkZXRlY3Rpb24gZG9lcyBub3QgcHJvcGVybHkgd29yayBhcyBJIG5l
+ZWQgdG8gcmVtb3ZlIGFuZCByZS1pbnNlcnQgdGhlIFNJTSAoYnV0IEkgZXhwZXJpZW5jZWQgdGhp
+cyBldmVuIHdpdGggdGhlIG9yaWdpbmFsIEhFOTEwIGRyaXZlcikuwqA8L2Rpdj4KPGRpdj48YnI+
+PC9kaXY+PGRpdj5VbmZvcnR1bmF0ZWx5IHdlIGFyZSBtb3ZpbmcgdG8gYSBuZXcgbW9kZW0gZnJv
+bSB1QkxPWCBzbyBJIG5lZWQgdG8gcmVkbyB0aGUgd29yayBhbmQgSSBjYW5ub3Qgc3BlbmQgbW9y
+ZSB0aW1lIG9uIHRoaXMgcmlnaHQgbm93LiBJIGhvcGUgdG8gY29udHJpYnV0ZSB0aGUgdUJMT1gg
+Y29kZSBsYXRlciBvbi48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PktpbmQgUmVnYXJkcyw8L2Rp
+dj4KPGRpdj5GcmVkZXJpayBMb3R0ZXI8L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2Pk1pWCBUZWxl
+bWF0aWNzIFNvdXRoIEFmcmljYTwvZGl2PjwvZGl2Pgo=
 
- 	/* Otherwise proceed as if auth succeeded */
-@@ -588,6 +612,22 @@ const char *g_at_ppp_get_password(GAtPPP *ppp)
- 	return ppp->password;
- }
- =
+--===============1370821977968420312==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="he910-serial-cmux.patch"
 
-+gboolean g_at_ppp_set_auth_method(GAtPPP *ppp, GAtPPPAuthMethod method)
-+{
-+	if (method !=3D G_AT_PPP_AUTH_METHOD_CHAP &&
-+	    method !=3D G_AT_PPP_AUTH_METHOD_PAP)
-+		return FALSE;
-+
-+	ppp->auth_method =3D method;
-+
-+	return TRUE;
-+}
-+
-+GAtPPPAuthMethod g_at_ppp_get_auth_method(GAtPPP *ppp)
-+{
-+	return ppp->auth_method;
-+}
-+
- void g_at_ppp_set_recording(GAtPPP *ppp, const char *filename)
- {
- 	if (ppp =3D=3D NULL)
-@@ -727,6 +767,9 @@ void g_at_ppp_unref(GAtPPP *ppp)
- 	else if (ppp->fd >=3D 0)
- 		close(ppp->fd);
- =
+ZGlmZiAtLWdpdCBhL01ha2VmaWxlLmFtIGIvTWFrZWZpbGUuYW0KaW5kZXggY2Q4M2VmNC4uMWNh
+ZjAwZCAxMDA2NDQKLS0tIGEvTWFrZWZpbGUuYW0KKysrIGIvTWFrZWZpbGUuYW0KQEAgLTQyMCw2
+ICs0MjAsOSBAQCBidWlsdGluX3NvdXJjZXMgKz0gcGx1Z2lucy9jb25ubWFuLmMKIGJ1aWx0aW5f
+bW9kdWxlcyArPSBoZTkxMAogYnVpbHRpbl9zb3VyY2VzICs9IHBsdWdpbnMvaGU5MTAuYwogCiti
+dWlsdGluX21vZHVsZXMgKz0gaGU5MTBfcnMyMzJtdXgKK2J1aWx0aW5fc291cmNlcyArPSBwbHVn
+aW5zL2hlOTEwX3JzMjMybXV4LmMKKwogaWYgQkxVRVRPT1RICiBpZiBCTFVFWjQKIGJ1aWx0aW5f
+bW9kdWxlcyArPSBibHVlejQKZGlmZiAtLWdpdCBhL3BsdWdpbnMvNjAtaGU5MTAtcnMyMzJtdXgu
+cnVsZXMgYi9wbHVnaW5zLzYwLWhlOTEwLXJzMjMybXV4LnJ1bGVzCm5ldyBmaWxlIG1vZGUgMTAw
+NjQ0CmluZGV4IDAwMDAwMDAuLmRjODhmZWYKLS0tIC9kZXYvbnVsbAorKysgYi9wbHVnaW5zLzYw
+LWhlOTEwLXJzMjMybXV4LnJ1bGVzCkBAIC0wLDAgKzEsMiBAQAorS0VSTkVMPT0idHR5VVNCMCIs
+IEVOVntPRk9OT19EUklWRVJ9PSJoZTkxMF9yczIzMm11eCIKKwpkaWZmIC0tZ2l0IGEvcGx1Z2lu
+cy9oZTkxMF9yczIzMm11eC5jIGIvcGx1Z2lucy9oZTkxMF9yczIzMm11eC5jCm5ldyBmaWxlIG1v
+ZGUgMTAwNjQ0CmluZGV4IDAwMDAwMDAuLjY4MGI2OWIKLS0tIC9kZXYvbnVsbAorKysgYi9wbHVn
+aW5zL2hlOTEwX3JzMjMybXV4LmMKQEAgLTAsMCArMSw1MjAgQEAKKy8qCisgKgorICogIG9Gb25v
+IC0gT3BlbiBTb3VyY2UgVGVsZXBob255CisgKgorICogIENvcHlyaWdodCAoQykgMjAwOC0yMDEx
+ICBJbnRlbCBDb3Jwb3JhdGlvbi4gQWxsIHJpZ2h0cyByZXNlcnZlZC4KKyAqCisgKiAgVGhpcyBw
+cm9ncmFtIGlzIGZyZWUgc29mdHdhcmU7IHlvdSBjYW4gcmVkaXN0cmlidXRlIGl0IGFuZC9vciBt
+b2RpZnkKKyAqICBpdCB1bmRlciB0aGUgdGVybXMgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBM
+aWNlbnNlIHZlcnNpb24gMiBhcworICogIHB1Ymxpc2hlZCBieSB0aGUgRnJlZSBTb2Z0d2FyZSBG
+b3VuZGF0aW9uLgorICoKKyAqICBUaGlzIHByb2dyYW0gaXMgZGlzdHJpYnV0ZWQgaW4gdGhlIGhv
+cGUgdGhhdCBpdCB3aWxsIGJlIHVzZWZ1bCwKKyAqICBidXQgV0lUSE9VVCBBTlkgV0FSUkFOVFk7
+IHdpdGhvdXQgZXZlbiB0aGUgaW1wbGllZCB3YXJyYW50eSBvZgorICogIE1FUkNIQU5UQUJJTElU
+WSBvciBGSVRORVNTIEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRS4gIFNlZSB0aGUKKyAqICBHTlUg
+R2VuZXJhbCBQdWJsaWMgTGljZW5zZSBmb3IgbW9yZSBkZXRhaWxzLgorICoKKyAqICBZb3Ugc2hv
+dWxkIGhhdmUgcmVjZWl2ZWQgYSBjb3B5IG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5z
+ZQorICogIGFsb25nIHdpdGggdGhpcyBwcm9ncmFtOyBpZiBub3QsIHdyaXRlIHRvIHRoZSBGcmVl
+IFNvZnR3YXJlCisgKiAgRm91bmRhdGlvbiwgSW5jLiwgNTEgRnJhbmtsaW4gU3QsIEZpZnRoIEZs
+b29yLCBCb3N0b24sIE1BICAwMjExMC0xMzAxICBVU0EKKyAqCisgKi8KKworI2lmZGVmIEhBVkVf
+Q09ORklHX0gKKyNpbmNsdWRlIDxjb25maWcuaD4KKyNlbmRpZgorCisjaW5jbHVkZSA8ZXJybm8u
+aD4KKyNpbmNsdWRlIDxzdGRsaWIuaD4KKyNpbmNsdWRlIDxzdGRpby5oPgorI2luY2x1ZGUgPHVu
+aXN0ZC5oPgorI2luY2x1ZGUgPGZjbnRsLmg+CisjaW5jbHVkZSA8dGVybWlvcy5oPgorI2luY2x1
+ZGUgPHN0cmluZy5oPgorI2luY2x1ZGUgPHN5cy9zb2NrZXQuaD4KKworI2luY2x1ZGUgPGdsaWIu
+aD4KKyNpbmNsdWRlIDxnYXRjaGF0Lmg+CisjaW5jbHVkZSA8Z2F0dHR5Lmg+CisjaW5jbHVkZSA8
+Z2F0bXV4Lmg+CisKKyNkZWZpbmUgT0ZPTk9fQVBJX1NVQkpFQ1RfVE9fQ0hBTkdFCisjaW5jbHVk
+ZSA8b2Zvbm8vcGx1Z2luLmg+CisjaW5jbHVkZSA8b2Zvbm8vbG9nLmg+CisjaW5jbHVkZSA8b2Zv
+bm8vbW9kZW0uaD4KKyNpbmNsdWRlIDxvZm9uby9jYWxsLWJhcnJpbmcuaD4KKyNpbmNsdWRlIDxv
+Zm9uby9jYWxsLWZvcndhcmRpbmcuaD4KKyNpbmNsdWRlIDxvZm9uby9jYWxsLW1ldGVyLmg+Cisj
+aW5jbHVkZSA8b2Zvbm8vY2FsbC1zZXR0aW5ncy5oPgorI2luY2x1ZGUgPG9mb25vL2RldmluZm8u
+aD4KKyNpbmNsdWRlIDxvZm9uby9tZXNzYWdlLXdhaXRpbmcuaD4KKyNpbmNsdWRlIDxvZm9uby9u
+ZXRyZWcuaD4KKyNpbmNsdWRlIDxvZm9uby9waG9uZWJvb2suaD4KKyNpbmNsdWRlIDxvZm9uby9z
+aW0uaD4KKyNpbmNsdWRlIDxvZm9uby9ncHJzLmg+CisjaW5jbHVkZSA8b2Zvbm8vZ3Bycy1jb250
+ZXh0Lmg+CisjaW5jbHVkZSA8b2Zvbm8vc21zLmg+CisjaW5jbHVkZSA8b2Zvbm8vdXNzZC5oPgor
+I2luY2x1ZGUgPG9mb25vL3ZvaWNlY2FsbC5oPgorCisjaW5jbHVkZSA8ZHJpdmVycy9hdG1vZGVt
+L2F0dXRpbC5oPgorI2luY2x1ZGUgPGRyaXZlcnMvYXRtb2RlbS92ZW5kb3IuaD4KKworLyoKKyAq
+IEhFOTEwIENNVVggc3VwcG9ydHMgb25seSAzIEFUIGVuZ2luZSBpbnN0YW5jZXMuIFdlIGluc3Rh
+bnRpYXRlIGFsbCBvZiB0aGVtLgorICovCisKKyNkZWZpbmUgTlVNX0RMQyAzCisKKyNkZWZpbmUg
+QVVYX0RMQyAgICAgMCAgICAgIC8qIEdQUlMgZGF0YSAqLworI2RlZmluZSBNT0RFTV9ETEMgICAx
+ICAgICAgLyogTU9ERU0gQVQgY2hhdCAqLworI2RlZmluZSBFWFRFUk5fRExDICAyICAgICAgLyog
+TU9ERU0gQVQgY2hhdCAqLworCisjZGVmaW5lIE1VWF9NVFUgICAgIDEyMQorCitzdGF0aWMgY2hh
+ciAqZGxjX3ByZWZpeGVzW05VTV9ETENdID0geyJNVVgtQXV4OiAiLCAiTVVYLU1vZGVtOiAiLCAi
+TVVYLUV4dGVybmFsOiAifTsKKworc3RhdGljIGNvbnN0IGNoYXIgKm5vbmVfcHJlZml4W10gPSB7
+IE5VTEwgfTsKKworc3RydWN0IGhlOTEwX2RhdGEgeworICAgR0lPQ2hhbm5lbCAqbXV4X2NoYW5u
+ZWw7CisJc3RydWN0IG9mb25vX3NpbSAqc2ltOworCW9mb25vX2Jvb2xfdCBoYXZlX3NpbTsKKwlv
+Zm9ub19ib29sX3Qgc21zX3Bob25lYm9va19hZGRlZDsKKwlHQXRNdXggKm11eDsKKyAgIEdBdENo
+YXQgKiBkbGNzW05VTV9ETENdOworICAgZ3VpbnQgZnJhbWVfc2l6ZTsKK307CisKK3N0YXRpYyB2
+b2lkIGhlOTEwX2RlYnVnKGNvbnN0IGNoYXIgKnN0ciwgdm9pZCAqdXNlcl9kYXRhKQoreworCWNv
+bnN0IGNoYXIgKnByZWZpeCA9IHVzZXJfZGF0YTsKKworCW9mb25vX2luZm8oIiVzJXMiLCBwcmVm
+aXgsIHN0cik7Cit9CisKKworc3RhdGljIHZvaWQgc3dpdGNoX3NpbV9zdGF0ZV9zdGF0dXMoc3Ry
+dWN0IG9mb25vX21vZGVtICptb2RlbSwgaW50IHN0YXR1cykKK3sKKwlzdHJ1Y3QgaGU5MTBfZGF0
+YSAqZGF0YSA9IG9mb25vX21vZGVtX2dldF9kYXRhKG1vZGVtKTsKKworCURCRygiJXAsIFNJTSBz
+dGF0dXM6ICVkIiwgbW9kZW0sIHN0YXR1cyk7CisKKwlzd2l0Y2ggKHN0YXR1cykgeworCWNhc2Ug
+MDoJLyogU0lNIG5vdCBpbnNlcnRlZCAqLworCQlpZiAoZGF0YS0+aGF2ZV9zaW0gPT0gVFJVRSkg
+eworCQkJb2Zvbm9fc2ltX2luc2VydGVkX25vdGlmeShkYXRhLT5zaW0sIEZBTFNFKTsKKwkJCWRh
+dGEtPmhhdmVfc2ltID0gRkFMU0U7CisJCQlkYXRhLT5zbXNfcGhvbmVib29rX2FkZGVkID0gRkFM
+U0U7CisJCX0KKwkJYnJlYWs7CisJY2FzZSAxOgkvKiBTSU0gaW5zZXJ0ZWQgKi8KKwljYXNlIDI6
+CS8qIFNJTSBpbnNlcnRlZCBhbmQgUElOIHVubG9ja2VkICovCisJCWlmIChkYXRhLT5oYXZlX3Np
+bSA9PSBGQUxTRSkgeworCQkJb2Zvbm9fc2ltX2luc2VydGVkX25vdGlmeShkYXRhLT5zaW0sIFRS
+VUUpOworCQkJZGF0YS0+aGF2ZV9zaW0gPSBUUlVFOworCQl9CisJCWJyZWFrOworCWNhc2UgMzoJ
+LyogU0lNIGluc2VydGVkLCBTTVMgYW5kIHBob25lYm9vayByZWFkeSAqLworCQlpZiAoZGF0YS0+
+c21zX3Bob25lYm9va19hZGRlZCA9PSBGQUxTRSkgeworCQkJb2Zvbm9fcGhvbmVib29rX2NyZWF0
+ZShtb2RlbSwgMCwgImF0bW9kZW0iLCBkYXRhLT5kbGNzW0FVWF9ETENdKTsKKwkJCW9mb25vX3Nt
+c19jcmVhdGUobW9kZW0sIDAsICJhdG1vZGVtIiwgZGF0YS0+ZGxjc1tBVVhfRExDXSk7CisJCQlk
+YXRhLT5zbXNfcGhvbmVib29rX2FkZGVkID0gVFJVRTsKKwkJfQorCQlicmVhazsKKwlkZWZhdWx0
+OgorCQlvZm9ub193YXJuKCJVbmtub3duIFNJTSBzdGF0ZSAlZCByZWNlaXZlZCIsIHN0YXR1cyk7
+CisJCWJyZWFrOworCX0KK30KKworc3RhdGljIHZvaWQgaGU5MTBfcXNzX25vdGlmeShHQXRSZXN1
+bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9kYXRhKQoreworCXN0cnVjdCBvZm9ub19tb2RlbSAq
+bW9kZW0gPSB1c2VyX2RhdGE7CisJaW50IHN0YXR1czsKKwlHQXRSZXN1bHRJdGVyIGl0ZXI7CisK
+KwlEQkcoIiVwIiwgbW9kZW0pOworCisJZ19hdF9yZXN1bHRfaXRlcl9pbml0KCZpdGVyLCByZXN1
+bHQpOworCisJaWYgKCFnX2F0X3Jlc3VsdF9pdGVyX25leHQoJml0ZXIsICIjUVNTOiIpKQorCQly
+ZXR1cm47CisKKwlnX2F0X3Jlc3VsdF9pdGVyX25leHRfbnVtYmVyKCZpdGVyLCAmc3RhdHVzKTsK
+KworCXN3aXRjaF9zaW1fc3RhdGVfc3RhdHVzKG1vZGVtLCBzdGF0dXMpOworfQorCitzdGF0aWMg
+R0F0Q2hhdCAqY3JlYXRlX2NoYXQoR0lPQ2hhbm5lbCAqY2hhbm5lbCwgc3RydWN0IG9mb25vX21v
+ZGVtICptb2RlbSwKKyAgICAgICAgICAgIGNoYXIgKmRlYnVnKQoreworICAgR0F0U3ludGF4ICpz
+eW50YXg7CisgICBHQXRDaGF0ICpjaGF0OworCisgICBpZiAoY2hhbm5lbCA9PSBOVUxMKQorICAg
+ICAgcmV0dXJuIE5VTEw7CisKKyAgIHN5bnRheCA9IGdfYXRfc3ludGF4X25ld19nc212MSgpOwor
+ICAgY2hhdCA9IGdfYXRfY2hhdF9uZXcoY2hhbm5lbCwgc3ludGF4KTsKKyAgIGdfYXRfc3ludGF4
+X3VucmVmKHN5bnRheCk7CisgICBnX2lvX2NoYW5uZWxfdW5yZWYoY2hhbm5lbCk7CisKKyAgIGlm
+IChjaGF0ID09IE5VTEwpCisgICAgICByZXR1cm4gTlVMTDsKKworICAgaWYgKGdldGVudigiT0ZP
+Tk9fQVRfREVCVUciKSkKKyAgICAgIGdfYXRfY2hhdF9zZXRfZGVidWcoY2hhdCwgaGU5MTBfZGVi
+dWcsIGRlYnVnKTsKKworICAgcmV0dXJuIGNoYXQ7Cit9CisKKworc3RhdGljIHZvaWQgcG93ZXJ1
+cChnYm9vbGVhbiBvaywgR0F0UmVzdWx0ICpyZXN1bHQsIGdwb2ludGVyIHVzZXJfZGF0YSkKK3sK
+KyAgIHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0gPSB1c2VyX2RhdGE7CisgICBvZm9ub19tb2Rl
+bV9zZXRfcG93ZXJlZChtb2RlbSwgVFJVRSk7Cit9CisKK3N0YXRpYyB2b2lkIHBvd2VyZG93bihn
+Ym9vbGVhbiBvaywgR0F0UmVzdWx0ICpyZXN1bHQsIGdwb2ludGVyIHVzZXJfZGF0YSkKK3sKKyAg
+IHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0gPSB1c2VyX2RhdGE7CisgICBvZm9ub19tb2RlbV9z
+ZXRfcG93ZXJlZChtb2RlbSwgRkFMU0UpOworfQorCitzdGF0aWMgdm9pZCBzaHV0ZG93bl9kZXZp
+Y2Uoc3RydWN0IGhlOTEwX2RhdGEgKmRhdGEpCit7CisgICBpbnQgaTsKKworICAgREJHKCIiKTsK
+KworICAgZm9yIChpID0gMDsgaSA8IE5VTV9ETEM7IGkrKykgeworICAgICAgaWYgKGRhdGEtPmRs
+Y3NbaV0gPT0gTlVMTCkKKyAgICAgICAgIGNvbnRpbnVlOworCisgICAgICBnX2F0X2NoYXRfdW5y
+ZWYoZGF0YS0+ZGxjc1tpXSk7CisgICAgICBkYXRhLT5kbGNzW2ldID0gTlVMTDsKKyAgIH0KKwor
+ICAgaWYgKGRhdGEtPm11eCkgeworICAgICAgZ19hdF9tdXhfc2h1dGRvd24oZGF0YS0+bXV4KTsK
+KyAgICAgIGdfYXRfbXV4X3VucmVmKGRhdGEtPm11eCk7CisgICAgICBkYXRhLT5tdXggPSBOVUxM
+OworICAgfQorCisgICBnX2lvX2NoYW5uZWxfdW5yZWYoZGF0YS0+bXV4X2NoYW5uZWwpOworICAg
+ZGF0YS0+bXV4X2NoYW5uZWwgPSBOVUxMOworfQorCitzdGF0aWMgdm9pZCBzZXR1cF9pbnRlcm5h
+bF9tdXgoc3RydWN0IG9mb25vX21vZGVtICptb2RlbSkKK3sKKyAgIHN0cnVjdCBoZTkxMF9kYXRh
+ICpkYXRhID0gb2Zvbm9fbW9kZW1fZ2V0X2RhdGEobW9kZW0pOworICAgaW50IGk7CisKKyAgIERC
+RygiIik7CisKKyAgIGRhdGEtPmZyYW1lX3NpemUgPSBNVVhfTVRVOworCisgICBkYXRhLT5tdXgg
+PSBnX2F0X211eF9uZXdfZ3NtMDcxMF9iYXNpYyhkYXRhLT5tdXhfY2hhbm5lbCwgZGF0YS0+ZnJh
+bWVfc2l6ZSk7CisKKyAgIGdfYXRfY2hhdF91bnJlZihkYXRhLT5tdXhfY2hhbm5lbCk7CisKKyAg
+IGlmIChkYXRhLT5tdXggPT0gTlVMTCkKKyAgICAgIGdvdG8gZXJyb3I7CisKKyAgIGlmIChnZXRl
+bnYoIk9GT05PX01VWF9ERUJVRyIpKQorICAgICAgZ19hdF9tdXhfc2V0X2RlYnVnKGRhdGEtPm11
+eCwgaGU5MTBfZGVidWcsICJNVVggKGludGVybmFscyk6ICIpOworCisgICBpZiAoIWdfYXRfbXV4
+X3N0YXJ0KGRhdGEtPm11eCkpIHsKKyAgICAgIGdfYXRfbXV4X3NodXRkb3duKGRhdGEtPm11eCk7
+CisgICAgICBnX2F0X211eF91bnJlZihkYXRhLT5tdXgpOworICAgICAgZ290byBlcnJvcjsKKyAg
+IH0KKworICAgZm9yIChpID0gMDsgaSA8IE5VTV9ETEM7IGkrKykgeworICAgICAgR0lPQ2hhbm5l
+bCAqY2hhbm5lbCA9IGdfYXRfbXV4X2NyZWF0ZV9jaGFubmVsKGRhdGEtPm11eCk7CisKKyAgICAg
+IGRhdGEtPmRsY3NbaV0gPSBjcmVhdGVfY2hhdChjaGFubmVsLCBtb2RlbSwgZGxjX3ByZWZpeGVz
+W2ldKTsKKyAgICAgIGlmIChkYXRhLT5kbGNzW2ldID09IE5VTEwpIHsKKyAgICAgICAgIG9mb25v
+X2Vycm9yKCJGYWlsZWQgdG8gY3JlYXRlIGNoYW5uZWwiKTsKKyAgICAgICAgIGdvdG8gZXJyb3I7
+CisgICAgICB9CisKKyAgICAgIC8vZ19hdF9jaGF0X3NldF93YWtldXBfY29tbWFuZChkYXRhLT5k
+bGNzW2ldLCAiQVRcciIsIDUwMCwgNTAwMCk7CisKKyAgICAgIGdfYXRfY2hhdF9zZW5kKGRhdGEt
+PmRsY3NbaV0sICJBVFxyIiwgbm9uZV9wcmVmaXgsIE5VTEwsIE5VTEwsIE5VTEwpOworICAgfQor
+CisgICByZXR1cm47CisKK2Vycm9yOgorICAgc2h1dGRvd25fZGV2aWNlKGRhdGEpOworICAgb2Zv
+bm9fbW9kZW1fc2V0X3Bvd2VyZWQobW9kZW0sIEZBTFNFKTsKK30KKworc3RhdGljIHZvaWQgbXV4
+X3NldHVwX2NiKGdib29sZWFuIG9rLCBHQXRSZXN1bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9k
+YXRhKQoreworICAgc3RydWN0IG9mb25vX21vZGVtICptb2RlbSA9IHVzZXJfZGF0YTsKKyAgIHN0
+cnVjdCBoZTkxMF9kYXRhICpkYXRhID0gb2Zvbm9fbW9kZW1fZ2V0X2RhdGEobW9kZW0pOworCisg
+ICBEQkcoIiIpOworCisgICBnX2F0X2NoYXRfdW5yZWYoZGF0YS0+ZGxjc1tBVVhfRExDXSk7Cisg
+ICBkYXRhLT5kbGNzW0FVWF9ETENdID0gTlVMTDsKKworICAgaWYgKCFvaykKKyAgICAgIGdvdG8g
+ZXJyb3I7CisKKyAgIHNldHVwX2ludGVybmFsX211eChtb2RlbSk7CisKKyAgIC8qIEZvbGxvdyBz
+aW0gc3RhdGUgKi8KKyAgICAgIGdfYXRfY2hhdF9yZWdpc3RlcihkYXRhLT5kbGNzW0FVWF9ETENd
+LCAiI1FTUzoiLCBoZTkxMF9xc3Nfbm90aWZ5LAorICAgICAgICAgICAgICAgRkFMU0UsIG1vZGVt
+LCBOVUxMKTsKKworICAgICAgLyogRW5hYmxlIHNpbSBzdGF0ZSBub3RpZmljYXRpb24gKi8KKyAg
+ICAgIGdfYXRfY2hhdF9zZW5kKGRhdGEtPmRsY3NbQVVYX0RMQ10sICJBVCNRU1M9MiIsIG5vbmVf
+cHJlZml4LCBOVUxMLCBOVUxMLCBOVUxMKTsKKworCisgICAgICBnX2F0X2NoYXRfc2VuZChkYXRh
+LT5kbGNzW0FVWF9ETENdLCAiQVQiLCBOVUxMLCBwb3dlcnVwLCBtb2RlbSwgTlVMTCk7CisKKyAg
+IHJldHVybjsKKworZXJyb3I6CisgICBzaHV0ZG93bl9kZXZpY2UoZGF0YSk7CisgICBvZm9ub19t
+b2RlbV9zZXRfcG93ZXJlZChtb2RlbSwgRkFMU0UpOworfQorCisKK3N0YXRpYyB2b2lkIGNmdW5f
+ZW5hYmxlX2NiKGdib29sZWFuIG9rLCBHQXRSZXN1bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9k
+YXRhKQoreworCXN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0gPSB1c2VyX2RhdGE7CisJc3RydWN0
+IGhlOTEwX2RhdGEgKmRhdGEgPSBvZm9ub19tb2RlbV9nZXRfZGF0YShtb2RlbSk7CisJY2hhciBh
+dGNtZFs0MF07CisKKwlEQkcoIiVwIiwgbW9kZW0pOworCisJaWYgKCFvaykgeworCQlnX2F0X2No
+YXRfdW5yZWYoZGF0YS0+ZGxjc1tBVVhfRExDXSk7CisJCWRhdGEtPmRsY3NbQVVYX0RMQ10gPSBO
+VUxMOworCisJCW9mb25vX21vZGVtX3NldF9wb3dlcmVkKG1vZGVtLCBGQUxTRSk7CisJCXJldHVy
+bjsKKwl9CisKKwkvKgorCSAqIFN3aXRjaCBkYXRhIGNhcnJpZXIgZGV0ZWN0IHNpZ25hbCBvZmYu
+CisJICogV2hlbiB0aGUgRENEIGlzIGRpc2FibGVkIHRoZSBtb2RlbSBkb2VzIG5vdCBoYW5ndXAg
+YW55bW9yZQorCSAqIGFmdGVyIHRoZSBkYXRhIGNvbm5lY3Rpb24uCisJICovCisJZ19hdF9jaGF0
+X3NlbmQoZGF0YS0+ZGxjc1tBVVhfRExDXSwgIkFUJkMwIiwgTlVMTCwgTlVMTCwgTlVMTCwgTlVM
+TCk7CisKKwlkYXRhLT5oYXZlX3NpbSA9IEZBTFNFOworCWRhdGEtPnNtc19waG9uZWJvb2tfYWRk
+ZWQgPSBGQUxTRTsKKworCS8qCisJICogVGVsbCB0aGUgbW9kZW0gbm90IHRvIGF1dG9tYXRpY2Fs
+bHkgaW5pdGlhdGUgYXV0by1hdHRhY2gKKwkgKiBwcm9jZWVkdXJlcyBvbiBpdHMgb3duLgorCSAq
+LworCWdfYXRfY2hhdF9zZW5kKGRhdGEtPmRsY3NbQVVYX0RMQ10sICJBVCNBVVRPQVRUPTAiLCBu
+b25lX3ByZWZpeCwKKwkJCQlOVUxMLCBOVUxMLCBOVUxMKTsKKworCS8qIFNldHVwIHRoZSBNVVgg
+c28gc3Vic2VxdWVudCBjaGF0IGlzIGZ1bm5lbGVkIG9uIE1VWCBjaGFubmVsIDEgKi8KKworCXNw
+cmludGYoYXRjbWQsIkFUK0NNVVg9MCwwLDUsJWQsMTAsMywzMCwxMCwyIixNVVhfTVRVKTsKKwln
+X2F0X2NoYXRfc2VuZChkYXRhLT5kbGNzW0FVWF9ETENdLCBhdGNtZCwgTlVMTCwgbXV4X3NldHVw
+X2NiLCBtb2RlbSwgTlVMTCk7CisKK30KKworc3RhdGljIGludCBoZTkxMF9lbmFibGUoc3RydWN0
+IG9mb25vX21vZGVtICptb2RlbSkKK3sKKwlzdHJ1Y3QgaGU5MTBfZGF0YSAqZGF0YSA9IG9mb25v
+X21vZGVtX2dldF9kYXRhKG1vZGVtKTsKKworCURCRygiJXAiLCBtb2RlbSk7CisKKwkvKiBXZSB3
+aWxsIGRvIHRoZSBpbml0aWFsIHNldHVwIG9uIFNlcmlhbDAgd2hpY2ggbWFwcyB0byBBVDAgKi8K
+KworCWNvbnN0IGNoYXIgKmRldmljZTsKKyAgIEdBdFN5bnRheCAqc3ludGF4OworICAgR0lPQ2hh
+bm5lbCAqY2hhbm5lbDsKKyAgIEdIYXNoVGFibGUgKm9wdGlvbnM7CisKKyAgIGRldmljZSA9IG9m
+b25vX21vZGVtX2dldF9zdHJpbmcobW9kZW0sICJEZXZpY2UiKTsKKyAgIGlmIChkZXZpY2UgPT0g
+TlVMTCkKKyAgICAgIHJldHVybiAtRUlOVkFMOworCisgICBEQkcoIkRldmljZSAlcyIsIGRldmlj
+ZSk7CisKKyAgIG9wdGlvbnMgPSBnX2hhc2hfdGFibGVfbmV3KGdfc3RyX2hhc2gsIGdfc3RyX2Vx
+dWFsKTsKKyAgIGlmIChvcHRpb25zID09IE5VTEwpCisgICAgICByZXR1cm4gLUVJTlZBTDsKKwor
+ICAgZ19oYXNoX3RhYmxlX2luc2VydChvcHRpb25zLCAiQmF1ZCIsICIxMTUyMDAiKTsKKyAgIGdf
+aGFzaF90YWJsZV9pbnNlcnQob3B0aW9ucywgIlBhcml0eSIsICJub25lIik7CisgICBnX2hhc2hf
+dGFibGVfaW5zZXJ0KG9wdGlvbnMsICJTdG9wQml0cyIsICIxIik7CisgICBnX2hhc2hfdGFibGVf
+aW5zZXJ0KG9wdGlvbnMsICJEYXRhQml0cyIsICI4Iik7CisgICBnX2hhc2hfdGFibGVfaW5zZXJ0
+KG9wdGlvbnMsICJYb25Yb2ZmIiwgIm9mZiIpOworICAgZ19oYXNoX3RhYmxlX2luc2VydChvcHRp
+b25zLCAiTG9jYWwiLCAib24iKTsKKyAgIGdfaGFzaF90YWJsZV9pbnNlcnQob3B0aW9ucywgIlJ0
+c0N0cyIsICJvbiIpOworCisgICBjaGFubmVsID0gZ19hdF90dHlfb3BlbihkZXZpY2UsIG9wdGlv
+bnMpOworICAgZ19oYXNoX3RhYmxlX2Rlc3Ryb3kob3B0aW9ucyk7CisKKyAgIGlmIChjaGFubmVs
+ID09IE5VTEwpCisgICAgICByZXR1cm4gLUVJTlZBTDsKKworICAgLyogVGhpcyBjaGFubmVsIGlz
+IGxhdGVyIHVzZWQgdG8gc2V0dXAgdGhlIE1VWCBvbiAqLworCisgICBkYXRhLT5tdXhfY2hhbm5l
+bCA9IGNoYW5uZWw7CisKKyAgIHN5bnRheCA9IGdfYXRfc3ludGF4X25ld19nc212MSgpOworICAg
+ZGF0YS0+ZGxjc1tBVVhfRExDXSA9IGdfYXRfY2hhdF9uZXcoY2hhbm5lbCwgc3ludGF4KTsKKyAg
+IGdfYXRfc3ludGF4X3VucmVmKHN5bnRheCk7CisgICBnX2lvX2NoYW5uZWxfdW5yZWYoY2hhbm5l
+bCk7CisKKyAgIGlmIChkYXRhLT5kbGNzW0FVWF9ETENdID09IE5VTEwpCisgICAgICByZXR1cm4g
+LUVJTlZBTDsKKworICAgaWYgKGdldGVudigiT0ZPTk9fQVRfREVCVUciKSkKKyAgICAgIGdfYXRf
+Y2hhdF9zZXRfZGVidWcoZGF0YS0+ZGxjc1tBVVhfRExDXSwgaGU5MTBfZGVidWcsICJEZXZpY2U6
+ICIpOworCisJLyoKKwkgKiBEaXNhYmxlIGNvbW1hbmQgZWNobyBhbmQKKwkgKiBlbmFibGUgdGhl
+IEV4dGVuZGVkIEVycm9yIFJlc3VsdCBDb2RlcworCSAqLworCWdfYXRfY2hhdF9zZW5kKGRhdGEt
+PmRsY3NbQVVYX0RMQ10sICJBVEUwICtDTUVFPTEiLCBub25lX3ByZWZpeCwKKwkJCQlOVUxMLCBO
+VUxMLCBOVUxMKTsKKworCS8qIFNldCBwaG9uZSBmdW5jdGlvbmFsaXR5ICovCisJZ19hdF9jaGF0
+X3NlbmQoZGF0YS0+ZGxjc1tBVVhfRExDXSwgIkFUK0NGVU49MSIsIG5vbmVfcHJlZml4LAorCQkJ
+CWNmdW5fZW5hYmxlX2NiLCBtb2RlbSwgTlVMTCk7CisKKwlyZXR1cm4gLUVJTlBST0dSRVNTOwor
+fQorCitzdGF0aWMgdm9pZCBjZnVuX2Rpc2FibGVfY2IoZ2Jvb2xlYW4gb2ssIEdBdFJlc3VsdCAq
+cmVzdWx0LCBncG9pbnRlciB1c2VyX2RhdGEpCit7CisJc3RydWN0IG9mb25vX21vZGVtICptb2Rl
+bSA9IHVzZXJfZGF0YTsKKwlzdHJ1Y3QgaGU5MTBfZGF0YSAqZGF0YSA9IG9mb25vX21vZGVtX2dl
+dF9kYXRhKG1vZGVtKTsKKworCURCRygiJXAiLCBtb2RlbSk7CisKKwlnX2F0X2NoYXRfdW5yZWYo
+ZGF0YS0+ZGxjc1tBVVhfRExDXSk7CisJZGF0YS0+ZGxjc1tBVVhfRExDXSA9IE5VTEw7CisKKwlp
+ZiAob2spCisJCW9mb25vX21vZGVtX3NldF9wb3dlcmVkKG1vZGVtLCBGQUxTRSk7Cit9CisKK3N0
+YXRpYyBpbnQgaGU5MTBfZGlzYWJsZShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQoreworCXN0
+cnVjdCBoZTkxMF9kYXRhICpkYXRhID0gb2Zvbm9fbW9kZW1fZ2V0X2RhdGEobW9kZW0pOworCisJ
+REJHKCIlcCIsIG1vZGVtKTsKKworCWdfYXRfY2hhdF9jYW5jZWxfYWxsKGRhdGEtPmRsY3NbTU9E
+RU1fRExDXSk7CisJZ19hdF9jaGF0X3VucmVnaXN0ZXJfYWxsKGRhdGEtPmRsY3NbTU9ERU1fRExD
+XSk7CisJZ19hdF9jaGF0X3VucmVmKGRhdGEtPmRsY3NbTU9ERU1fRExDXSk7CisJZGF0YS0+ZGxj
+c1tNT0RFTV9ETENdID0gTlVMTDsKKworCWdfYXRfY2hhdF9jYW5jZWxfYWxsKGRhdGEtPmRsY3Nb
+QVVYX0RMQ10pOworCWdfYXRfY2hhdF91bnJlZ2lzdGVyX2FsbChkYXRhLT5kbGNzW0FVWF9ETENd
+KTsKKworCS8qIFBvd2VyIGRvd24gbW9kZW0gKi8KKwlnX2F0X2NoYXRfc2VuZChkYXRhLT5kbGNz
+W0FVWF9ETENdLCAiQVQrQ0ZVTj00Iiwgbm9uZV9wcmVmaXgsCisJCQkJY2Z1bl9kaXNhYmxlX2Ni
+LCBtb2RlbSwgTlVMTCk7CisKKwlyZXR1cm4gLUVJTlBST0dSRVNTOworfQorCitzdGF0aWMgdm9p
+ZCBoZTkxMF9wcmVfc2ltKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pCit7CisJc3RydWN0IGhl
+OTEwX2RhdGEgKmRhdGEgPSBvZm9ub19tb2RlbV9nZXRfZGF0YShtb2RlbSk7CisKKwlEQkcoIiVw
+IiwgbW9kZW0pOworCisJb2Zvbm9fZGV2aW5mb19jcmVhdGUobW9kZW0sIDAsICJhdG1vZGVtIiwg
+ZGF0YS0+ZGxjc1tBVVhfRExDXSk7CisJZGF0YS0+c2ltID0gb2Zvbm9fc2ltX2NyZWF0ZShtb2Rl
+bSwgT0ZPTk9fVkVORE9SX1RFTElULCAiYXRtb2RlbSIsCisJCQkJCWRhdGEtPmRsY3NbQVVYX0RM
+Q10pOworfQorCitzdGF0aWMgdm9pZCBoZTkxMF9wb3N0X29ubGluZShzdHJ1Y3Qgb2Zvbm9fbW9k
+ZW0gKm1vZGVtKQoreworCXN0cnVjdCBoZTkxMF9kYXRhICpkYXRhID0gb2Zvbm9fbW9kZW1fZ2V0
+X2RhdGEobW9kZW0pOworCXN0cnVjdCBvZm9ub19tZXNzYWdlX3dhaXRpbmcgKm13OworCXN0cnVj
+dCBvZm9ub19ncHJzICpncHJzOworCXN0cnVjdCBvZm9ub19ncHJzX2NvbnRleHQgKmdjOworCisJ
+REJHKCIlcCIsIG1vZGVtKTsKKworCW9mb25vX3ZvaWNlY2FsbF9jcmVhdGUobW9kZW0sIDAsICJh
+dG1vZGVtIiwgZGF0YS0+ZGxjc1tBVVhfRExDXSk7CisJb2Zvbm9fbmV0cmVnX2NyZWF0ZShtb2Rl
+bSwgT0ZPTk9fVkVORE9SX1RFTElULCAiYXRtb2RlbSIsIGRhdGEtPmRsY3NbQVVYX0RMQ10pOwor
+CW9mb25vX3Vzc2RfY3JlYXRlKG1vZGVtLCAwLCAiYXRtb2RlbSIsIGRhdGEtPmRsY3NbQVVYX0RM
+Q10pOworCW9mb25vX2NhbGxfZm9yd2FyZGluZ19jcmVhdGUobW9kZW0sIDAsICJhdG1vZGVtIiwg
+ZGF0YS0+ZGxjc1tBVVhfRExDXSk7CisJb2Zvbm9fY2FsbF9zZXR0aW5nc19jcmVhdGUobW9kZW0s
+IDAsICJhdG1vZGVtIiwgZGF0YS0+ZGxjc1tBVVhfRExDXSk7CisJb2Zvbm9fY2FsbF9tZXRlcl9j
+cmVhdGUobW9kZW0sIDAsICJhdG1vZGVtIiwgZGF0YS0+ZGxjc1tBVVhfRExDXSk7CisJb2Zvbm9f
+Y2FsbF9iYXJyaW5nX2NyZWF0ZShtb2RlbSwgMCwgImF0bW9kZW0iLCBkYXRhLT5kbGNzW0FVWF9E
+TENdKTsKKworCW13ID0gb2Zvbm9fbWVzc2FnZV93YWl0aW5nX2NyZWF0ZShtb2RlbSk7CisJaWYg
+KG13KQorCQlvZm9ub19tZXNzYWdlX3dhaXRpbmdfcmVnaXN0ZXIobXcpOworCisJZ3BycyA9IG9m
+b25vX2dwcnNfY3JlYXRlKG1vZGVtLCBPRk9OT19WRU5ET1JfVEVMSVQsICJhdG1vZGVtIiwgZGF0
+YS0+ZGxjc1tBVVhfRExDXSk7CisJZ2MgPSBvZm9ub19ncHJzX2NvbnRleHRfY3JlYXRlKG1vZGVt
+LCAwLCAiYXRtb2RlbSIsIGRhdGEtPmRsY3NbTU9ERU1fRExDXSk7CisKKwlpZiAoZ3BycyAmJiBn
+YykKKwkJb2Zvbm9fZ3Byc19hZGRfY29udGV4dChncHJzLCBnYyk7Cit9CisKK3N0YXRpYyBpbnQg
+aGU5MTBfcHJvYmUoc3RydWN0IG9mb25vX21vZGVtICptb2RlbSkKK3sKKwlzdHJ1Y3QgaGU5MTBf
+ZGF0YSAqZGF0YTsKKworCURCRygiJXAiLCBtb2RlbSk7CisKKwlkYXRhID0gZ190cnlfbmV3MChz
+dHJ1Y3QgaGU5MTBfZGF0YSwgMSk7CisJaWYgKGRhdGEgPT0gTlVMTCkKKwkJcmV0dXJuIC1FTk9N
+RU07CisKKwlvZm9ub19tb2RlbV9zZXRfZGF0YShtb2RlbSwgZGF0YSk7CisKKwlyZXR1cm4gMDsK
+K30KKworc3RhdGljIHZvaWQgaGU5MTBfcmVtb3ZlKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0p
+Cit7CisJc3RydWN0IGhlOTEwX2RhdGEgKmRhdGEgPSBvZm9ub19tb2RlbV9nZXRfZGF0YShtb2Rl
+bSk7CisKKwlEQkcoIiVwIiwgbW9kZW0pOworCisJb2Zvbm9fbW9kZW1fc2V0X2RhdGEobW9kZW0s
+IE5VTEwpOworCisJLyogQ2xlYW51cCBhZnRlciBob3QtdW5wbHVnICovCisJZ19hdF9jaGF0X3Vu
+cmVmKGRhdGEtPmRsY3NbQVVYX0RMQ10pOworCWdfYXRfY2hhdF91bnJlZihkYXRhLT5kbGNzW01P
+REVNX0RMQ10pOworCisJZ19mcmVlKGRhdGEpOworfQorCitzdGF0aWMgc3RydWN0IG9mb25vX21v
+ZGVtX2RyaXZlciBoZTkxMF9kcml2ZXIgPSB7CisJLm5hbWUJCT0gImhlOTEwX3JzMjMybXV4IiwK
+KwkucHJvYmUJCT0gaGU5MTBfcHJvYmUsCisJLnJlbW92ZQkJPSBoZTkxMF9yZW1vdmUsCisJLmVu
+YWJsZQkJPSBoZTkxMF9lbmFibGUsCisJLmRpc2FibGUJPSBoZTkxMF9kaXNhYmxlLAorCS5wcmVf
+c2ltCT0gaGU5MTBfcHJlX3NpbSwKKwkucG9zdF9vbmxpbmUJPSBoZTkxMF9wb3N0X29ubGluZSwK
+K307CisKK3N0YXRpYyBpbnQgaGU5MTBfaW5pdCh2b2lkKQoreworCURCRygiIik7CisKKwlyZXR1
+cm4gb2Zvbm9fbW9kZW1fZHJpdmVyX3JlZ2lzdGVyKCZoZTkxMF9kcml2ZXIpOworfQorCitzdGF0
+aWMgdm9pZCBoZTkxMF9leGl0KHZvaWQpCit7CisJb2Zvbm9fbW9kZW1fZHJpdmVyX3VucmVnaXN0
+ZXIoJmhlOTEwX2RyaXZlcik7Cit9CisKK09GT05PX1BMVUdJTl9ERUZJTkUoaGU5MTBfcnMyMzJt
+dXgsICJUZWxpdCBIRTkxMCBzZXJpYWwgbXV4ZWQgZHJpdmVyIiwgVkVSU0lPTiwKKwkJT0ZPTk9f
+UExVR0lOX1BSSU9SSVRZX0RFRkFVTFQsIGhlOTEwX2luaXQsIGhlOTEwX2V4aXQpCmRpZmYgLS1n
+aXQgYS9wbHVnaW5zL3VkZXYuYyBiL3BsdWdpbnMvdWRldi5jCmluZGV4IGE3OGNkNDEuLjYzYWJh
+NGUgMTAwNjQ0Ci0tLSBhL3BsdWdpbnMvdWRldi5jCisrKyBiL3BsdWdpbnMvdWRldi5jCkBAIC0y
+MzEsNiArMjMxLDE5IEBAIHN0YXRpYyB2b2lkIGFkZF9zaW05MDAoc3RydWN0IG9mb25vX21vZGVt
+ICptb2RlbSwKIAlvZm9ub19tb2RlbV9yZWdpc3Rlcihtb2RlbSk7CiB9CiAKK3N0YXRpYyB2b2lk
+IGFkZF9oZTkxMF9yczIzMm11eChzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtLAorICAgICAgICAg
+ICAgICAgc3RydWN0IHVkZXZfZGV2aWNlICp1ZGV2X2RldmljZSkKK3sKKyAgIGNvbnN0IGNoYXIg
+KmRldm5vZGU7CisKKyAgIERCRygibW9kZW0gJXAiLCBtb2RlbSk7CisKKyAgIGRldm5vZGUgPSB1
+ZGV2X2RldmljZV9nZXRfZGV2bm9kZSh1ZGV2X2RldmljZSk7CisgICBvZm9ub19tb2RlbV9zZXRf
+c3RyaW5nKG1vZGVtLCAiRGV2aWNlIiwgZGV2bm9kZSk7CisKKyAgIG9mb25vX21vZGVtX3JlZ2lz
+dGVyKG1vZGVtKTsKK30KKwogc3RhdGljIHZvaWQgYWRkX21vZGVtKHN0cnVjdCB1ZGV2X2Rldmlj
+ZSAqdWRldl9kZXZpY2UpCiB7CiAJc3RydWN0IG9mb25vX21vZGVtICptb2RlbTsKQEAgLTMxMyw2
+ICszMjYsOCBAQCBkb25lOgogCQlhZGRfc2ltOTAwKG1vZGVtLCB1ZGV2X2RldmljZSk7CiAJZWxz
+ZSBpZiAoZ19zdHJjbXAwKGRyaXZlciwgIndhdmVjb20iKSA9PSAwKQogCQlhZGRfd2F2ZWNvbSht
+b2RlbSwgdWRldl9kZXZpY2UpOworICAgICAgICBlbHNlIGlmIChnX3N0cmNtcDAoZHJpdmVyLCAi
+aGU5MTBfcnMyMzJtdXgiKSA9PSAwKQorICAgICAgICAgICAgICAgIGFkZF9oZTkxMF9yczIzMm11
+eChtb2RlbSwgdWRldl9kZXZpY2UpOwogfQogCiBzdGF0aWMgZ2Jvb2xlYW4gZGV2cGF0aF9yZW1v
+dmUoZ3BvaW50ZXIga2V5LCBncG9pbnRlciB2YWx1ZSwgZ3BvaW50ZXIgdXNlcl9kYXRhKQo=
 
-+	if (ppp->pap)
-+		ppp_pap_free(ppp->pap);
-+
- 	if (ppp->chap)
- 		ppp_chap_free(ppp->chap);
- =
-
-@@ -794,6 +837,9 @@ static GAtPPP *ppp_init_common(gboolean is_server, guin=
-t32 ip)
- 	/* initialize IPCP state */
- 	ppp->ipcp =3D ipcp_new(ppp, is_server, ip);
- =
-
-+	/* chap authentication by default */
-+	ppp->auth_method =3D G_AT_PPP_AUTH_METHOD_CHAP;
-+
- 	return ppp;
- }
- =
-
-diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
-index b5a2234..dab75a8 100644
---- a/gatchat/gatppp.h
-+++ b/gatchat/gatppp.h
-@@ -74,6 +74,14 @@ gboolean g_at_ppp_set_credentials(GAtPPP *ppp, const cha=
-r *username,
- const char *g_at_ppp_get_username(GAtPPP *ppp);
- const char *g_at_ppp_get_password(GAtPPP *ppp);
- =
-
-+typedef enum _GAtPPPAuthMethod {
-+	G_AT_PPP_AUTH_METHOD_CHAP,
-+	G_AT_PPP_AUTH_METHOD_PAP,
-+} GAtPPPAuthMethod;
-+
-+gboolean g_at_ppp_set_auth_method(GAtPPP *ppp, GAtPPPAuthMethod method);
-+GAtPPPAuthMethod g_at_ppp_get_auth_method(GAtPPP *ppp);
-+
- void g_at_ppp_set_recording(GAtPPP *ppp, const char *filename);
- =
-
- void g_at_ppp_set_server_info(GAtPPP *ppp, const char *remote_ip,
-diff --git a/gatchat/ppp.h b/gatchat/ppp.h
-index 718575b..ac1a7ef 100644
---- a/gatchat/ppp.h
-+++ b/gatchat/ppp.h
-@@ -22,6 +22,7 @@
- #include "ppp_cp.h"
- =
-
- #define LCP_PROTOCOL	0xc021
-+#define PAP_PROTOCOL	0xc023
- #define CHAP_PROTOCOL	0xc223
- #define IPCP_PROTO	0x8021
- #define IPV6CP_PROTO	0x8057
-@@ -38,6 +39,7 @@
- =
-
- struct ppp_chap;
- struct ppp_net;
-+struct ppp_pap;
- =
-
- struct ppp_header {
- 	guint8 address;
-@@ -109,6 +111,13 @@ void ppp_chap_free(struct ppp_chap *chap);
- void ppp_chap_process_packet(struct ppp_chap *chap, const guint8 *new_pack=
-et,
- 				gsize len);
- =
-
-+/* PAP related functions */
-+struct ppp_pap *ppp_pap_new(GAtPPP *ppp);
-+void ppp_pap_free(struct ppp_pap *pap);
-+gboolean ppp_pap_start(struct ppp_pap *pap);
-+void ppp_pap_process_packet(struct ppp_pap *pap, const guint8 *new_packet,
-+				gsize len);
-+
- /* TUN / Network related functions */
- struct ppp_net *ppp_net_new(GAtPPP *ppp, int fd);
- const char *ppp_net_get_interface(struct ppp_net *net);
-diff --git a/gatchat/ppp_auth.c b/gatchat/ppp_auth.c
-index 1ddf762..46bbc65 100644
---- a/gatchat/ppp_auth.c
-+++ b/gatchat/ppp_auth.c
-@@ -54,6 +54,38 @@ enum chap_code {
- 	FAILURE
- };
- =
-
-+struct pap_header {
-+	guint8 code;
-+	guint8 identifier;
-+	guint16 length;
-+	guint8 data[0];
-+} __attribute__((packed));
-+
-+struct	ppp_pap {
-+	GAtPPP *ppp;
-+	struct ppp_header *authreq;
-+	guint16 authreq_len;
-+	guint retry_timer;
-+	guint retries;
-+};
-+
-+enum pap_code {
-+	PAP_REQUEST =3D 1,
-+	PAP_ACK,
-+	PAP_NAK
-+};
-+
-+/*
-+ * RFC 1334 2.1.1:
-+ *   The Authenticate-Request packet MUST be repeated until a valid
-+ *   reply packet is received, or an optional retry counter expires.
-+ *
-+ * If we don't get a reply after this many attempts, we can safely
-+ * assume we're never going to get one.
-+ */
-+#define PAP_MAX_RETRY	3  /* attempts */
-+#define PAP_TIMEOUT	10 /* seconds */
-+
- static void chap_process_challenge(struct ppp_chap *chap, const guint8 *pa=
-cket)
- {
- 	const struct chap_header *header =3D (const struct chap_header *) packet;
-@@ -166,3 +198,110 @@ struct ppp_chap *ppp_chap_new(GAtPPP *ppp, guint8 met=
-hod)
- =
-
- 	return chap;
- }
-+
-+void ppp_pap_process_packet(struct ppp_pap *pap, const guint8 *new_packet,
-+				gsize len)
-+{
-+	guint8 code;
-+
-+	if (len < sizeof(struct pap_header))
-+		return;
-+
-+	code =3D new_packet[0];
-+
-+	switch (code) {
-+	case PAP_ACK:
-+		g_source_remove(pap->retry_timer);
-+		pap->retry_timer =3D 0;
-+		ppp_auth_notify(pap->ppp, TRUE);
-+		break;
-+	case PAP_NAK:
-+		g_source_remove(pap->retry_timer);
-+		pap->retry_timer =3D 0;
-+		ppp_auth_notify(pap->ppp, FALSE);
-+		break;
-+	default:
-+		break;
-+	}
-+}
-+
-+static gboolean ppp_pap_timeout(gpointer user_data)
-+{
-+	struct ppp_pap *pap =3D (struct ppp_pap *)user_data;
-+	struct pap_header *authreq;
-+
-+	if (++pap->retries >=3D PAP_MAX_RETRY) {
-+		pap->retry_timer =3D 0;
-+		ppp_auth_notify(pap->ppp, FALSE);
-+		return FALSE;
-+	}
-+
-+	/*
-+	 * RFC 1334 2.2.1:
-+	 * The Identifier field MUST be changed each time an
-+	 * Authenticate-Request packet is issued.
-+	 */
-+	authreq =3D (struct pap_header *)&pap->authreq->info;
-+	authreq->identifier =3D g_random_int() % G_MAXUINT8;
-+
-+	ppp_transmit(pap->ppp, (guint8 *)pap->authreq, pap->authreq_len);
-+
-+	return TRUE;
-+}
-+
-+gboolean ppp_pap_start(struct ppp_pap *pap)
-+{
-+	struct pap_header *authreq;
-+	struct ppp_header *packet;
-+	const char *username =3D g_at_ppp_get_username(pap->ppp);
-+	const char *password =3D g_at_ppp_get_password(pap->ppp);
-+	guint16 length;
-+
-+	length =3D sizeof(*authreq) + strlen(username) + strlen(password) + 2;
-+	packet =3D ppp_packet_new(length, PAP_PROTOCOL);
-+	if (packet =3D=3D NULL)
-+		return FALSE;
-+	pap->authreq =3D packet;
-+	pap->authreq_len =3D length;
-+
-+	authreq =3D (struct pap_header *)&packet->info;
-+	authreq->code =3D PAP_REQUEST;
-+	authreq->identifier =3D g_random_int() % G_MAXUINT8;
-+	authreq->length =3D htons(length);
-+
-+	authreq->data[0] =3D (char)strlen(username);
-+	memcpy(authreq->data + 1, username, strlen(username));
-+	authreq->data[strlen(username) + 1] =3D (char)strlen(password);
-+	memcpy(authreq->data + 1 + strlen(username) + 1, password,
-+	    strlen(password));
-+
-+	/* Transmit the packet and schedule a retry. */
-+	ppp_transmit(pap->ppp, (guint8 *)packet, length);
-+	pap->retries =3D 0;
-+	pap->retry_timer =3D g_timeout_add_seconds(PAP_TIMEOUT,
-+	    ppp_pap_timeout, pap);
-+
-+	return TRUE;
-+}
-+
-+void ppp_pap_free(struct ppp_pap *pap)
-+{
-+	if (pap->retry_timer !=3D 0)
-+		g_source_remove(pap->retry_timer);
-+	if (pap->authreq !=3D NULL)
-+		g_free(pap->authreq);
-+	g_free(pap);
-+}
-+
-+struct ppp_pap *ppp_pap_new(GAtPPP *ppp)
-+{
-+	struct ppp_pap *pap;
-+
-+	pap =3D g_try_new0(struct ppp_pap, 1);
-+	if (pap =3D=3D NULL)
-+		return NULL;
-+
-+	pap->ppp =3D ppp;
-+
-+	return pap;
-+}
-diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
-index 4f420f1..1fdcb24 100644
---- a/gatchat/ppp_lcp.c
-+++ b/gatchat/ppp_lcp.c
-@@ -238,25 +238,55 @@ static enum rcr_result lcp_rcr(struct pppcp_data *ppp=
-cp,
- 			guint8 method =3D option_data[2];
- 			guint8 *option;
- =
-
--			if ((proto =3D=3D CHAP_PROTOCOL) && (method =3D=3D MD5))
--				break;
--
--			/*
--			 * try to suggest CHAP & MD5.  If we are out
--			 * of memory, just reject.
--			 */
--
--			option =3D g_try_malloc0(5);
--			if (option =3D=3D NULL)
--				return RCR_REJECT;
--
--			option[0] =3D AUTH_PROTO;
--			option[1] =3D 5;
--			put_network_short(&option[2], CHAP_PROTOCOL);
--			option[4] =3D MD5;
--			*new_options =3D option;
--			*new_len =3D 5;
--			return RCR_NAK;
-+			switch (g_at_ppp_get_auth_method(ppp)) {
-+			case G_AT_PPP_AUTH_METHOD_CHAP:
-+				if (proto =3D=3D CHAP_PROTOCOL && method =3D=3D MD5)
-+					break;
-+
-+				/*
-+				 * Try to suggest CHAP/MD5.
-+				 * Just reject if we run out of memory.
-+				 */
-+				option =3D g_try_malloc0(5);
-+				if (option =3D=3D NULL)
-+					return RCR_REJECT;
-+
-+				option[0] =3D AUTH_PROTO;
-+				option[1] =3D 5;
-+				put_network_short(&option[2], CHAP_PROTOCOL);
-+				option[4] =3D MD5;
-+				*new_options =3D option;
-+				*new_len =3D 5;
-+
-+				return RCR_NAK;
-+
-+			case G_AT_PPP_AUTH_METHOD_PAP:
-+				if (proto =3D=3D PAP_PROTOCOL)
-+					break;
-+
-+				/*
-+				 * Try to suggest PAP.
-+				 * Just reject if we run out of memory.
-+				 */
-+				option =3D g_try_malloc0(4);
-+				if (option =3D=3D NULL)
-+					return RCR_REJECT;
-+
-+				option[0] =3D AUTH_PROTO;
-+				option[1] =3D 4;
-+				put_network_short(&option[2], PAP_PROTOCOL);
-+				*new_options =3D option;
-+				*new_len =3D 4;
-+
-+				return RCR_NAK;
-+			default:
-+				/*
-+				 * We only support CHAP and PAP.
-+				 * Tough luck!
-+				 */
-+				return RCR_NAK;
-+			}
-+			break;
- 		}
- 		case ACCM:
- 		case PFC:
--- =
-
-1.7.10.4
-
-
---===============2097589197088553782==--
+--===============1370821977968420312==--
 
