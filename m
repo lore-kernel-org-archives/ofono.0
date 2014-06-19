@@ -1,141 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============0825479352726726870=="
+Content-Type: multipart/mixed; boundary="===============4693037751556928954=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] mbpi: add authentication methods to provisioning
-Date: Wed, 18 Jun 2014 17:33:57 -0500
-Message-ID: <53A213D5.1030308@gmail.com>
-In-Reply-To: <1403042279-20598-4-git-send-email-philip@paeps.cx>
+From: Philip Paeps <philip@paeps.cx>
+Subject: Re: [PATCH 1/3] gatchat: implement PAP authentication
+Date: Thu, 19 Jun 2014 10:29:53 +0200
+Message-ID: <20140619082953.GA33006@rincewind.trouble.is>
+In-Reply-To: <53A210C0.9020501@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0825479352726726870==
+--===============4693037751556928954==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philip,
+On 2014-06-18 17:20:48 (-0500), Denis Kenzior <denkenz@gmail.com> wrote:
+> Hi Philip,
 
-On 06/17/2014 04:57 PM, Philip Paeps wrote:
-> Signed-off-by: Philip Paeps <philip@paeps.cx>
-> ---
->  include/gprs-provision.h |    1 +
->  plugins/mbpi.c           |   32 ++++++++++++++++++++++++++++++++
->  plugins/provision.c      |    1 +
->  src/gprs.c               |    2 ++
+Thanks for your review Denis.  I'll send an updated patch in a bit.  I
+hadn't noticed the doc/coding-style.txt document and just tried to be
+consistent with the existing code.
 
-This patch needs to be split up as well.
-
->  4 files changed, 36 insertions(+)
+> On 06/17/2014 04:57 PM, Philip Paeps wrote:
+> >    This works around the amusing requirement of 3GPP TS 29.061 that
+> >    modems must send a forced positive acknowledgement of the
+> >    authentication method tried (i.e.: the modem will successfully
+> >    accept any CHAP handshake, but if the network only supports PAP,
+> >    the modem will hang up when it tries and fails to activate the
+> >    PDP context)
 > =
 
-> diff --git a/include/gprs-provision.h b/include/gprs-provision.h
-> index e9eec61..2dd792b 100644
-> --- a/include/gprs-provision.h
-> +++ b/include/gprs-provision.h
-> @@ -35,6 +35,7 @@ struct ofono_gprs_provision_data {
->  	char *apn;
->  	char *username;
->  	char *password;
-> +	enum ofono_gprs_auth_method auth_method;
->  	char *message_proxy;
->  	char *message_center;
->  };
-> diff --git a/plugins/mbpi.c b/plugins/mbpi.c
-> index dff8752..4468174 100644
-> --- a/plugins/mbpi.c
-> +++ b/plugins/mbpi.c
-> @@ -159,6 +159,35 @@ static void usage_start(GMarkupParseContext *context,
->  					"Unknown usage attribute: %s", text);
->  }
->  =
+> In theory this is because CHAP authentication should always be accepted
+> by the network operator, but it seems there are still a few out there
+> that do not do this properly.
 
-> +static void usage_authmethod(GMarkupParseContext *context,
-> +			const gchar **attribute_names,
-> +			const gchar **attribute_values,
-> +			enum ofono_gprs_auth_method *auth, GError **error)
-> +{
-> +	const char *text =3D NULL;
-> +	int i;
-> +
-> +	for (i =3D 0; attribute_names[i]; i++)
-> +		if (g_str_equal(attribute_names[i], "method") =3D=3D TRUE)
-> +			text =3D attribute_values[i];
-> +
-> +	if (text =3D=3D NULL) {
-> +		mbpi_g_set_error(context, error, G_MARKUP_ERROR,
-> +					G_MARKUP_ERROR_MISSING_ATTRIBUTE,
-> +					"Missing attribute: method");
-> +		return;
-> +	}
-> +
-> +	if (strcmp(text, "chap") =3D=3D 0)
-> +		*auth =3D OFONO_GPRS_AUTH_METHOD_CHAP;
-> +	else if (strcmp(text, "pap") =3D=3D 0)
-> +		*auth =3D OFONO_GPRS_AUTH_METHOD_PAP;
-> +	else
-> +		mbpi_g_set_error(context, error, G_MARKUP_ERROR,
-> +					G_MARKUP_ERROR_UNKNOWN_ATTRIBUTE,
-> +					"Unknown auth method: %s", text);
-> +}
-> +
->  static void apn_start(GMarkupParseContext *context, const gchar *element=
-_name,
->  			const gchar **attribute_names,
->  			const gchar **attribute_values,
-> @@ -174,6 +203,9 @@ static void apn_start(GMarkupParseContext *context, c=
-onst gchar *element_name,
->  	else if (g_str_equal(element_name, "password"))
->  		g_markup_parse_context_push(context, &text_parser,
->  						&apn->password);
-> +	else if (g_str_equal(element_name, "auth"))
-> +		usage_authmethod(context, attribute_names, attribute_values,
-> +						&apn->auth_method, error);
+My reading of TS 29.061 leaves me feeling there's a misalignment between
+the PPP side and the packet data side of modems and this is glossed over
+by requiring that modems must send a forced positive acknowledgement to
+any authentication method tried (even none).
 
-I don't see this element in the DTD definition in
-mobile-broadband-provider-info tree.  Has this been proposed / approved
-there yet?
+On the network side, it looks like the authentication method could in
+principle be anything you can convince RADIUS about, but there is no way
+for the modem to know which methods are supported (or required) before
+trying to set up the packet data context.
 
->  	else if (g_str_equal(element_name, "mmsc"))
->  		g_markup_parse_context_push(context, &text_parser,
->  						&apn->message_center);
-> diff --git a/plugins/provision.c b/plugins/provision.c
-> index 99c299e..32dfb6a 100644
-> --- a/plugins/provision.c
-> +++ b/plugins/provision.c
-> @@ -86,6 +86,7 @@ static int provision_get_settings(const char *mcc, cons=
-t char *mnc,
->  		DBG("Type: %s", mbpi_ap_type(ap->type));
->  		DBG("Username: '%s'", ap->username);
->  		DBG("Password: '%s'", ap->password);
-> +		DBG("Authentication method: '%s'", ap->auth_method ? "chap" : "pap");
+The modem is expected to copy the authentication parameters it gets
+through PPP into protocol configuration options when it sets up the
+packet data context on the network side and hang up PPP when it fails.
 
-What if auth_method element is omitted?  This seems wrong.
+I couldn't find a requirement for CHAP.  Only the requirement that it
+should be tried first, and the requirement that any method tried should
+get a forced positive acknowledgement.  I'm not intimately familiar with
+these standards though, and I've not read them all.
 
->  =
-
->  		memcpy(*settings + i, ap,
->  			sizeof(struct ofono_gprs_provision_data));
-> diff --git a/src/gprs.c b/src/gprs.c
-> index 3810267..39a8f2a 100644
-> --- a/src/gprs.c
-> +++ b/src/gprs.c
-> @@ -3024,6 +3024,8 @@ static void provision_context(const struct ofono_gp=
-rs_provision_data *ap,
->  	if (ap->password !=3D NULL)
->  		strcpy(context->context.password, ap->password);
->  =
-
-> +	context->context.auth_method =3D ap->auth_method;
-> +
->  	strcpy(context->context.apn, ap->apn);
->  	context->context.proto =3D ap->proto;
->  =
-
+> > +			default:
+> > +				/*
+> > +				 * We only support CHAP and PAP.
+> > +				 * Tough luck!
+> > +				 */
+> > +				return RCR_NAK;
 > =
 
+> Since this can never happen, we should probably not even include this
+> statement.
 
-Regards,
--Denis
+I originally had g_assert() here, but since it doesn't look like that's
+a popular construct for catching programmer forgetfulness in ofono, I
+turned it into a reject.  As coding-style.txt points out though, the
+compiler will complain if the enum changes, so I'll drop the default
+case in my updated patch.
 
---===============0825479352726726870==--
+Philip
+
+-- =
+
+Philip Paeps
+Senior Reality Engineer
+Ministry of Information
+
+--===============4693037751556928954==--
 
