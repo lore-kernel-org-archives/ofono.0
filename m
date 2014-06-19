@@ -1,33 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============7927436146357990993=="
+Content-Type: multipart/mixed; boundary="===============6134870511493825769=="
 MIME-Version: 1.0
 From: Philip Paeps <philip@paeps.cx>
-Subject: Re: [PATCH 3/3] mbpi: add authentication methods to provisioning
-Date: Thu, 19 Jun 2014 10:34:15 +0200
-Message-ID: <20140619083415.GB33006@rincewind.trouble.is>
-In-Reply-To: <53A213D5.1030308@gmail.com>
+Subject: Re: [PATCH 1/3] gatchat: implement PAP authentication
+Date: Thu, 19 Jun 2014 11:41:15 +0200
+Message-ID: <20140619094115.GC33006@rincewind.trouble.is>
+In-Reply-To: <53A210C0.9020501@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7927436146357990993==
+--===============6134870511493825769==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 2014-06-18 17:33:57 (-0500), Denis Kenzior <denkenz@gmail.com> wrote:
+On 2014-06-18 17:20:48 (-0500), Denis Kenzior <denkenz@gmail.com> wrote:
 > On 06/17/2014 04:57 PM, Philip Paeps wrote:
-> > +	else if (g_str_equal(element_name, "auth"))
-> > +		usage_authmethod(context, attribute_names, attribute_values,
-> > +						&apn->auth_method, error);
+> > +	/*
+> > +	 * RFC 1334 2.2.1:
+> > +	 * The Identifier field MUST be changed each time an
+> > +	 * Authenticate-Request packet is issued.
+> > +	 */
+> > +	authreq =3D (struct pap_header *)&pap->authreq->info;
+> > +	authreq->identifier =3D g_random_int() % G_MAXUINT8;
 > =
 
-> I don't see this element in the DTD definition in
-> mobile-broadband-provider-info tree.  Has this been proposed / approved
-> there yet?
+> Is this sufficient to fulfill the requirement stated in the comment?  It
+> would be highly unlikely, but the identifier might still be repeated,
+> no?  Would it be easier to simply use a counter?
 
-It has not and I've not discussed it there either.  I wasn't aware they
-are a different project.  I'll omit the provisioning code from my
-updated patchset and submit it separately if and when there is support
-for it in the mobile-broadband-provider-info tree.
+This should be sufficient.  The RFC says it must be changed each time we
+send a packet.  It doesn't say anything about never repeating values.
+On the other hand, both CMU pppd and BSD ppp use a counter.  I have
+changed this in my updated patch.
 
 Philip
 
@@ -37,5 +41,5 @@ Philip Paeps
 Senior Reality Engineer
 Ministry of Information
 
---===============7927436146357990993==--
+--===============6134870511493825769==--
 
