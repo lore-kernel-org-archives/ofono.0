@@ -1,38 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============0853917715252118550=="
+Content-Type: multipart/mixed; boundary="===============9022009870725064788=="
 MIME-Version: 1.0
 From: Philip Paeps <philip@paeps.cx>
-Subject: [PATCH 1/4] atmodem: add vendor Quectel
-Date: Tue, 24 Jun 2014 12:08:39 +0200
-Message-ID: <1403604522-22645-2-git-send-email-philip@paeps.cx>
-In-Reply-To: <1403604522-22645-1-git-send-email-philip@paeps.cx>
+Subject: Re: [PATCH 3/4] plugins: add a new driver for Quectel UC15 modules
+Date: Tue, 24 Jun 2014 12:15:49 +0200
+Message-ID: <20140624101549.GE33006@rincewind.trouble.is>
+In-Reply-To: <1403604522-22645-4-git-send-email-philip@paeps.cx>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0853917715252118550==
+--===============9022009870725064788==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/atmodem/vendor.h |    3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+On 2014-06-24 12:08:41 (+0200), Philip Paeps <philip@paeps.cx> wrote:
+> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
 
-diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
-index bf2b38a..05ec872 100644
---- a/drivers/atmodem/vendor.h
-+++ b/drivers/atmodem/vendor.h
-@@ -42,5 +42,6 @@ enum ofono_vendor {
- 	OFONO_VENDOR_SIMCOM_SIM900,
- 	OFONO_VENDOR_ICERA,
- 	OFONO_VENDOR_WAVECOM_Q2XXX,
--	OFONO_VENDOR_ALCATEL
-+	OFONO_VENDOR_ALCATEL,
-+	OFONO_VENDOR_QUECTEL
- };
+So focused on trying to make sure I didn't violate any local coding
+style rules, I forgot I copy/pasted the copyright header!  This should
+read "2014  Philip Paeps".
+
+Would you like me to submit an updated patchset?
+
+Philip
+
 -- =
 
-1.7.10.4
+Philip Paeps
+Senior Reality Engineer
+Ministry of Information
 
-
---===============0853917715252118550==--
+--===============9022009870725064788==--
 
