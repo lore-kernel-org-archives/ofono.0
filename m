@@ -1,61 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============8947246963586200965=="
+Content-Type: multipart/mixed; boundary="===============0005831822971683847=="
 MIME-Version: 1.0
 From: Philip Paeps <philip@paeps.cx>
-Subject: Re: [PATCH v2 0/5] Add support for PAP authentication
-Date: Sun, 22 Jun 2014 11:33:48 +0200
-Message-ID: <20140622093348.GQ33006@rincewind.trouble.is>
-In-Reply-To: <53A5BCAD.9090707@gmail.com>
+Subject: [PATCH 1/3] include: add auth method to the provisioning API
+Date: Tue, 24 Jun 2014 11:57:04 +0200
+Message-ID: <1403603826-17021-2-git-send-email-philip@paeps.cx>
+In-Reply-To: <1403603826-17021-1-git-send-email-philip@paeps.cx>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8947246963586200965==
+--===============0005831822971683847==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 2014-06-21 12:11:09 (-0500), Denis Kenzior <denkenz@gmail.com> wrote:
-> On 06/19/2014 05:07 AM, Philip Paeps wrote:
-> > Changes since v1:
-> > =
+---
+ include/gprs-provision.h |    1 +
+ 1 file changed, 1 insertion(+)
 
-> >  o Split patchset into a commit per directory
-> >  o Remove Signed-off-by: tags
-> >  o Fix coding style nits
-> >  o Use a counter instead of a random value for the
-> >    Authenticate-Request identifer
-> >  o Omit the provisioning code pending a discussion with
-> >    the mobile-broadband-provider-info maintainers
-> > =
-
-> > Philip Paeps (5):
-> >   gatchat: implement PAP authentication
-> >   include: add auth method to the gprs context API
-> >   atmodem: set the PPP authentication method to use
-> >   gprs: make PPP authentication method configurable
-> >   doc: describe the AuthenticationMethod property
-> =
-
-> All patches in this series have been applied, thanks!  I did fix up a
-> couple of very minor coding style issues; just being nitpicky.
-> =
-
-> It was refreshing to review something this well prepared :)
-
-Great!  Thanks Denis.
-
-I've got a bug open with the mobile-broadband-providers-info
-maintainers (https://bugzilla.gnome.org/show_bug.cgi?id=3D731907)
-regarding the provisioning part of the authentication method.
-When that gets resolved, I'll submit another patchset for that
-code.
-
-Philip
-
+diff --git a/include/gprs-provision.h b/include/gprs-provision.h
+index e9eec61..2dd792b 100644
+--- a/include/gprs-provision.h
++++ b/include/gprs-provision.h
+@@ -35,6 +35,7 @@ struct ofono_gprs_provision_data {
+ 	char *apn;
+ 	char *username;
+ 	char *password;
++	enum ofono_gprs_auth_method auth_method;
+ 	char *message_proxy;
+ 	char *message_center;
+ };
 -- =
 
-Philip Paeps
-Senior Reality Engineer
-Ministry of Information
+1.7.10.4
 
---===============8947246963586200965==--
+
+--===============0005831822971683847==--
 
