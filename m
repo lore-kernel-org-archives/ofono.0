@@ -1,46 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============4562839951262680602=="
+Content-Type: multipart/mixed; boundary="===============8670639276864880180=="
 MIME-Version: 1.0
 From: Philip Paeps <philip@paeps.cx>
-Subject: [PATCH 0/6] Add a driver for u-blox modems
-Date: Tue, 24 Jun 2014 19:10:07 +0200
-Message-ID: <1403629813-62204-1-git-send-email-philip@paeps.cx>
+Subject: [PATCH 2/6] udevng: add detection logic for u-blox modems
+Date: Tue, 24 Jun 2014 19:10:09 +0200
+Message-ID: <1403629813-62204-3-git-send-email-philip@paeps.cx>
+In-Reply-To: <1403629813-62204-1-git-send-email-philip@paeps.cx>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4562839951262680602==
+--===============8670639276864880180==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This set of patches adds basic support for u-blox modems.  It has only
-been tested with a u-blox SARA U270 modem but judging from the datasheet
-it should be fairly trivial to adapt to other variants of the SARA, LISA
-and LEON chips.
+---
+ plugins/udevng.c |   42 ++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
 
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index d41c6a8..42ee989 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -791,6 +791,46 @@ static gboolean setup_samsung(struct modem_info *modem)
+ 	return TRUE;
+ }
+ =
 
-Philip Paeps (6):
-  atmodem: add vendor u-blox
-  udevng: add detection logic for u-blox modems
-  plugins: new driver for u-blox SARA-U270 modems
-  sim: query u-blox PIN retries with AT+UPINCNT
-  gprs: add support for u-blox +UREG URCs
-  atmodem: set the auth method for u-blox modems
++static gboolean setup_ublox(struct modem_info *modem)
++{
++	const char *aux =3D NULL, *mdm =3D NULL;
++	GSList *list;
++
++	DBG("%s", modem->syspath);
++
++	for (list =3D modem->devices; list; list =3D list->next) {
++		struct device_info *info =3D list->data;
++
++		DBG("%s %s %s %s", info->devnode, info->interface,
++					info->number, info->label);
++
++		if (g_strcmp0(info->label, "aux") =3D=3D 0) {
++			aux =3D info->devnode;
++			if (mdm !=3D NULL)
++				break;
++		} else if (g_strcmp0(info->label, "modem") =3D=3D 0) {
++			mdm =3D info->devnode;
++			if (aux !=3D NULL)
++				break;
++		} else if (g_strcmp0(info->interface, "2/2/1") =3D=3D 0) {
++			if (g_strcmp0(info->number, "02") =3D=3D 0)
++				aux =3D info->devnode;
++			else if (g_strcmp0(info->number, "00") =3D=3D 0)
++				mdm =3D info->devnode;
++		}
++	}
++
++	if (aux =3D=3D NULL || mdm =3D=3D NULL)
++		return FALSE;
++
++	DBG("aux=3D%s modem=3D%s", aux, mdm);
++
++	ofono_modem_set_string(modem->modem, "Aux", aux);
++	ofono_modem_set_string(modem->modem, "Modem", mdm);
++
++	return TRUE;
++}
++
+ static struct {
+ 	const char *name;
+ 	gboolean (*setup)(struct modem_info *modem);
+@@ -815,6 +855,7 @@ static struct {
+ 	{ "zte",	setup_zte	},
+ 	{ "icera",	setup_icera	},
+ 	{ "samsung",	setup_samsung	},
++	{ "ublox",	setup_ublox	},
+ 	{ }
+ };
+ =
 
- Makefile.am                    |    3 +
- drivers/atmodem/gprs-context.c |   29 +++-
- drivers/atmodem/gprs.c         |   44 ++++++
- drivers/atmodem/sim.c          |   45 +++++++
- drivers/atmodem/vendor.h       |    3 +-
- plugins/ublox.c                |  289 ++++++++++++++++++++++++++++++++++++=
-++++
- plugins/udevng.c               |   42 ++++++
- 7 files changed, 452 insertions(+), 3 deletions(-)
- create mode 100644 plugins/ublox.c
+@@ -1026,6 +1067,7 @@ static struct {
+ 	{ "nokia",	"option",	"0421", "0623"	},
+ 	{ "samsung",	"option",	"04e8", "6889"	},
+ 	{ "samsung",	"kalmia"			},
++	{ "ublox",	"cdc_acm",	"1546", "1102"	},
+ 	{ }
+ };
+ =
 
 -- =
 
 1.7.10.4
 
 
---===============4562839951262680602==--
+--===============8670639276864880180==--
 
