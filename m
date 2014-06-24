@@ -1,91 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============2869006359898633745=="
+Content-Type: multipart/mixed; boundary="===============3901087175438536101=="
 MIME-Version: 1.0
 From: Philip Paeps <philip@paeps.cx>
-Subject: [PATCH 5/6] gprs: add support for u-blox +UREG URCs
-Date: Tue, 24 Jun 2014 19:10:12 +0200
-Message-ID: <1403629813-62204-6-git-send-email-philip@paeps.cx>
+Subject: [PATCH 6/6] atmodem: set the auth method for u-blox modems
+Date: Tue, 24 Jun 2014 19:10:13 +0200
+Message-ID: <1403629813-62204-7-git-send-email-philip@paeps.cx>
 In-Reply-To: <1403629813-62204-1-git-send-email-philip@paeps.cx>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2869006359898633745==
+--===============3901087175438536101==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/atmodem/gprs.c |   44 ++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 44 insertions(+)
+ drivers/atmodem/gprs-context.c |   29 +++++++++++++++++++++++++++--
+ 1 file changed, 27 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index 3005867..5551316 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -282,6 +282,44 @@ static void telit_mode_notify(GAtResult *result, gpoin=
-ter user_data)
- 	ofono_gprs_bearer_notify(gprs, bearer);
- }
+diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
+index be44443..ebb4960 100644
+--- a/drivers/atmodem/gprs-context.c
++++ b/drivers/atmodem/gprs-context.c
+@@ -282,9 +282,34 @@ static void at_gprs_activate_primary(struct ofono_gprs=
+_context *gc,
  =
 
-+static void ublox_ureg_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	GAtResultIter iter;
-+	gint state, bearer;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+UREG:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &state))
-+		return;
-+
-+	switch (state) {
-+	case 4:
-+		bearer =3D 5;
-+		break;
-+	case 5:
-+		bearer =3D 4;
-+		break;
-+	case 7:
-+		/* XXX: reserved - assume none. */
-+		bearer =3D 0;
-+		break;
-+	case 8:
-+		bearer =3D 1;
-+		break;
-+	case 9:
-+		bearer =3D 2;
-+		break;
-+	default:
-+		bearer =3D state;
+ 	len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
+ =
+
+-	if (ctx->apn)
+-		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
++	if (ctx->apn) {
++		switch (gcd->vendor) {
++		case OFONO_VENDOR_UBLOX:
++			/*
++			 * U-blox modems require a magic prefix to the APN to
++			 * specify the authentication method to use in the
++			 * network.  See UBX-13002752 - R21.
++			 *
++			 * As the response of the read command omits this magic
++			 * prefix, this is the least invasive place to set it.
++			 */
++			switch (ctx->auth_method) {
++			case OFONO_GPRS_AUTH_METHOD_CHAP:
++				snprintf(buf + len, sizeof(buf) - len - 3,
++				    ",\"CHAP:%s\"", ctx->apn);
++				break;
++			case OFONO_GPRS_AUTH_METHOD_PAP:
++				snprintf(buf + len, sizeof(buf) - len - 3,
++				    ",\"PAP:%s\"", ctx->apn);
++				break;
++			}
++			break;
++		default:
++			snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
+ 				ctx->apn);
++			break;
++		}
 +	}
-+
-+	ofono_gprs_bearer_notify(gprs, bearer);
-+}
-+
- static void cpsb_notify(GAtResult *result, gpointer user_data)
- {
- 	struct ofono_gprs *gprs =3D user_data;
-@@ -316,6 +354,12 @@ static void gprs_initialized(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- 		g_at_chat_register(gd->chat, "^MODE:", huawei_mode_notify,
- 						FALSE, gprs, NULL);
- 		break;
-+	case OFONO_VENDOR_UBLOX:
-+		g_at_chat_register(gd->chat, "+UREG:", ublox_ureg_notify,
-+						FALSE, gprs, NULL);
-+		g_at_chat_send(gd->chat, "AT+UREG=3D1", none_prefix,
-+						NULL, NULL, NULL);
-+		break;
- 	case OFONO_VENDOR_TELIT:
- 		g_at_chat_register(gd->chat, "#PSNT:", telit_mode_notify,
- 						FALSE, gprs, NULL);
+ =
+
+ 	if (g_at_chat_send(gcd->chat, buf, none_prefix,
+ 				at_cgdcont_cb, gc, NULL) > 0)
 -- =
 
 1.7.10.4
 
 
---===============2869006359898633745==--
+--===============3901087175438536101==--
 
