@@ -1,139 +1,175 @@
-Content-Type: multipart/mixed; boundary="===============4586130229134293547=="
+Content-Type: multipart/mixed; boundary="===============6213091591307717591=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/4] plugins: add a new driver for Quectel UC15 modules
-Date: Tue, 24 Jun 2014 13:44:04 -0500
-Message-ID: <53A9C6F4.9030308@gmail.com>
-In-Reply-To: <20140624183408.GK33006@rincewind.trouble.is>
+Subject: Re: [PATCH 3/6] plugins: new driver for u-blox SARA-U270 modems
+Date: Thu, 26 Jun 2014 09:29:51 -0500
+Message-ID: <53AC2E5F.4010100@gmail.com>
+In-Reply-To: <1403629813-62204-4-git-send-email-philip@paeps.cx>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4586130229134293547==
+--===============6213091591307717591==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Philip,
 
->
-> I don't think there's any reason this needs to be there specifically.  I
-> probably put it there when I was debugging a USB-related reset problem.
-> It can probably either go away (I've not done more than cursory testing
-> with the modem connected to a UART - many things may be broken) or move
-> to quectel_enable() (in which case the modem will behave a little bit
-> more like one expects a modem to behave when connected to a UART).
+> +static void ublox_remove(struct ofono_modem *modem)
+> +{
+> +	struct ublox_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("%p", modem);
+> +
+> +	ofono_modem_set_data(modem, NULL);
+> +	g_at_chat_unref(data->aux);
 
-Just wondering.  We usually send &C0 fairly early in the process.
+Any reason data->modem is not being unrefed? e.g in the case of hot-unplug?
 
-> =
+> +	g_free(data);
+> +}
+> +
+> +static GAtChat *open_device(struct ofono_modem *modem,
+> +				const char *key, char *debug)
+> +{
+> +	const char *device;
+> +	GAtSyntax *syntax;
+> +	GIOChannel *channel;
+> +	GAtChat *chat;
+> +
+> +	device =3D ofono_modem_get_string(modem, key);
+> +	if (device =3D=3D NULL)
+> +		return NULL;
+> +
+> +	DBG("%s %s", key, device);
+> +
+> +	channel =3D g_at_tty_open(device, NULL);
+> +	if (channel =3D=3D NULL)
+> +		return NULL;
+> +
+> +	syntax =3D g_at_syntax_new_gsm_permissive();
+> +	chat =3D g_at_chat_new(channel, syntax);
+> +	g_at_syntax_unref(syntax);
+> +
+> +	g_io_channel_unref(channel);
+> +
+> +	if (chat =3D=3D NULL)
+> +		return NULL;
+> +
+> +	if (getenv("OFONO_AT_DEBUG"))
+> +		g_at_chat_set_debug(chat, ublox_debug, debug);
+> +
+> +	return chat;
+> +}
+> +
+> +
 
->> Any reason for checking that CFUN succeeded?  If so, then it might be a
->> good idea to document that in comments / commit description.
-> =
+Please remove one whitespace.  Our coding style likes to use a single
+empty line to separate functions.
 
-> It turns out that AT+CFUN=3D0 -> AT+CFUN=3D1 transitions can return OK
-> before the SIM is completely out of reset (temperature related).  In
-> that case, AT+CPIN will return any number of bizarre error codes (from
-> SIM not inserted to memory failure).  Trying again a bit later just
-> works.
+> +static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct ublox_data * data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("ok %d", (int)ok);
 
-Should you be using at_util_sim_state_query_new for this?  Or does
-CFUN=3D1 needs to be sent again?
+No need to cast
 
-> =
+> +
+> +	if (!ok) {
+> +		g_at_chat_unref(data->aux);
+> +		data->aux =3D NULL;
+> +		g_at_chat_unref(data->modem);
+> +		data->modem =3D NULL;
+> +	}
+> +
+> +	ofono_modem_set_powered(modem, TRUE);
+> +
+> +	g_at_chat_send(data->modem, "AT&C0", NULL, NULL, NULL, NULL);
+> +	g_at_chat_send(data->aux, "AT&C0", NULL, NULL, NULL, NULL);
 
->> What if it failed?  Are you relying on the core timeout mechanisms?
-> =
+Might want to use prefixes here
 
-> It it doesn't behave as expected after retrying as often and waiting as
-> long as this, it's unlikely to ever work.  The core will timeout waiting
-> for the driver to indicate the modem is powered.  I would expect higher
-> layers to see this as a hint that something may be wrong with powering
-> up the modem.
-> =
+> +}
+> +
+> +static int ublox_enable(struct ofono_modem *modem)
+> +{
+> +	struct ublox_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("%p", modem);
+> +
+> +	data->modem =3D open_device(modem, "Modem", "Modem: ");
+> +	if (data->modem =3D=3D NULL)
+> +		return -EINVAL;
+> +
+> +	data->aux =3D open_device(modem, "Aux", "Aux: ");
+> +	if (data->aux =3D=3D NULL) {
+> +		g_at_chat_unref(data->modem);
+> +		data->modem =3D NULL;
+> +		return -EIO;
+> +	}
+> +	g_at_chat_set_slave(data->modem, data->aux);
+> +
+> +	g_at_chat_send(data->modem, "ATE0 +CMEE=3D1", NULL, NULL, NULL, NULL);
+> +	g_at_chat_send(data->aux, "ATE0 +CMEE=3D1", NULL, NULL, NULL, NULL);
+> +
+> +	g_at_chat_send(data->aux, "AT+CFUN=3D1", NULL, cfun_enable,
+> +					modem, NULL);
 
-> Can you suggest a better way to fail here?
+Prefix should probably be used.  Also, should this be CFUN=3D4 and not 1?
+ enable() callback should be putting the modem in the SIM powered, RX/TX
+off mode (e.g. Offline).
 
-I was thinking that the driver should notify the core as soon as it
-determines that the hardware is inoperable.  The core timeout handling
-is really just a failsafe.  But either way works...
+> +
+> +	return -EINPROGRESS;
+> +}
+> +
+> +static void cfun_disable(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct ublox_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("");
+> +
+> +	g_at_chat_unref(data->aux);
+> +	data->aux =3D NULL;
+> +
+> +	if (ok)
+> +		ofono_modem_set_powered(modem, FALSE);
+> +}
+> +
+> +static int ublox_disable(struct ofono_modem *modem)
+> +{
+> +	struct ublox_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("%p", modem);
+> +
+> +	g_at_chat_cancel_all(data->modem);
+> +	g_at_chat_unregister_all(data->modem);
+> +	g_at_chat_unref(data->modem);
+> +	data->modem =3D NULL;
+> +
+> +	g_at_chat_cancel_all(data->aux);
+> +	g_at_chat_unregister_all(data->aux);
+> +
+> +	g_at_chat_send(data->aux, "AT+CFUN=3D0", NULL,
+> +					cfun_disable, modem, NULL);
 
-> =
+This modem doesn't jump off the bus on CFUN=3D0, right?
 
->>> +	if (!ok) {
->>> +		if (data->enable_tries > MAX_RETRIES) {
->>> +			g_at_chat_unref(data->aux);
->>> +			data->aux =3D NULL;
->>> +			g_at_chat_unref(data->modem);
->>> +			data->modem =3D NULL;
->>> +			ofono_modem_set_powered(modem, FALSE);
->>> +			DBG("modem won't enable - giving up");
->>> +		}
->>> +		goto retry;
->>
->> Is the timer still running in case MAX_RETRIES is reached?  In general
->> we prefer using single-shot timers and re-starting them if the command
->> fails.  Certain commands might take several seconds to return on some
->> hardware.
-> =
+> +
+> +	return -EINPROGRESS;
+> +}
+> +
 
-> I am fairly confident it's safe: I ran into this failure case quite
-> often during development and testing.  I schedule quectel_start() in
-> quectel_enable() and quectel_start() keeps rescheduling cfun_enable()
-> until it succeeds or runs out of retries.  I carefully check if the
-> timer is still running everywhere I try to tear things down.
-
-The thing is that running out of retries does not stop the timer.  At
-least I don't see g_source_remove for it here.  Neither does the
-quectel_start() function check for max retries.
-
-> =
-
-> It's probably not too hard to rework this to use a single-shot timer.
-> =
-
-
-That might make things a bit more reliable and readable as well.
-
->>> +	/* Give the modem a bit more time to power up completely. */
->>> +	data->enable_tries =3D 0;
->>> +	data->enable_timer =3D g_timeout_add_seconds(RESET_DELAY,
->>> +					quectel_start, modem);
->>
->> Is this delay always necessary?  enable() is called in other situations
->> besides a hot-plugging...
-> =
-
-> I mainly tested this with hot-plugging and not-so-hot-plugging (keeping
-> the module powered but kicking its reset line) and it seems necessary in
-> both cases.  I haven't tested toggling enable in software much, but just
-> doing AT+CFUN=3D0 ; AT+CFUN=3D1 in a loop shows a fair amount of variance
-> even without touching power or reset.  May be a hardware issue, but I've
-> not talked to Quectel about it.
->  =
-
-
-Just wondering whether upping the max retries and sending this command
-right away might be 'better' for the non-hotplug case.
-
->>> +	g_at_chat_send(data->aux, "AT+CFUN=3D0", NULL,
->>> +					cfun_disable, modem, NULL);
->>
->> What behavior does this modem exhibit when using CFUN=3D0?  Many devices
->> jump off the USB bus when this is sent.  Hence why most drivers use CFUN=
-=3D4.
-> =
-
-> It stays on the bus but turns off the radio and goes into lower power
-> mode.  I have no strong feelings about using CFUN=3D4 instead, but
-> intuitively that feels more like "offline" than "disabled".  Am I
-> missing some other distinction between set_online and enable/disable?
-
-If the modem stays on the bus, using CFUN=3D0 is just fine.  As I said,
-most others jump off the bus, which makes using CFUN=3D0 not a good idea :)
+<snip>
 
 Regards,
 -Denis
 
---===============4586130229134293547==--
+
+--===============6213091591307717591==--
 
