@@ -1,105 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============3797241967770346671=="
+Content-Type: multipart/mixed; boundary="===============1810456098485012055=="
 MIME-Version: 1.0
 From: Philip Paeps <philip@paeps.cx>
-Subject: [PATCH 4/4] sim: query Quectel UC15 PIN retries with AT+QPINC?
-Date: Thu, 26 Jun 2014 19:08:14 +0200
-Message-ID: <1403802494-4542-5-git-send-email-philip@paeps.cx>
-In-Reply-To: <1403802494-4542-1-git-send-email-philip@paeps.cx>
+Subject: [PATCH 2/6] udevng: add detection logic for u-blox modems
+Date: Thu, 26 Jun 2014 20:28:14 +0200
+Message-ID: <1403807298-14588-3-git-send-email-philip@paeps.cx>
+In-Reply-To: <1403807298-14588-1-git-send-email-philip@paeps.cx>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3797241967770346671==
+--===============1810456098485012055==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/atmodem/sim.c |   49 +++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 file changed, 49 insertions(+)
+ plugins/udevng.c |   42 ++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index f8e0472..4a91798 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -67,6 +67,7 @@ static const char *epin_prefix[] =3D { "*EPIN:", NULL };
- static const char *spic_prefix[] =3D { "+SPIC:", NULL };
- static const char *pct_prefix[] =3D { "#PCT:", NULL };
- static const char *pnnm_prefix[] =3D { "+PNNM:", NULL };
-+static const char *qpinc_prefix[] =3D { "+QPINC:", NULL };
- static const char *none_prefix[] =3D { NULL };
- =
-
- static void at_crsm_info_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
-@@ -967,6 +968,49 @@ error:
- 	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index d41c6a8..42ee989 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -791,6 +791,46 @@ static gboolean setup_samsung(struct modem_info *modem)
+ 	return TRUE;
  }
  =
 
-+static void at_qpinc_cb(gboolean ok, GAtResult *result, gpointer user_data)
++static gboolean setup_ublox(struct modem_info *modem)
 +{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_sim_pin_retries_cb_t cb =3D cbd->cb;
-+	const char *final =3D g_at_result_final_response(result);
-+	GAtResultIter iter;
-+	struct ofono_error error;
-+	int retries[OFONO_SIM_PASSWORD_INVALID];
-+	size_t i;
++	const char *aux =3D NULL, *mdm =3D NULL;
++	GSList *list;
 +
-+	decode_at_error(&error, final);
++	DBG("%s", modem->syspath);
 +
-+	if (!ok) {
-+		cb(&error, NULL, cbd->data);
-+		return;
-+	}
++	for (list =3D modem->devices; list; list =3D list->next) {
++		struct device_info *info =3D list->data;
 +
-+	for (i =3D 0; i < OFONO_SIM_PASSWORD_INVALID; i++)
-+		retries[i] =3D -1;
++		DBG("%s %s %s %s", info->devnode, info->interface,
++					info->number, info->label);
 +
-+	g_at_result_iter_init(&iter, result);
-+	while (g_at_result_iter_next(&iter, "+QPINC:")) {
-+		const char *name;
-+		int pin, puk;
-+
-+		if (!g_at_result_iter_next_string(&iter, &name))
-+			continue;
-+		if (!g_at_result_iter_next_number(&iter, &pin))
-+			continue;
-+		if (!g_at_result_iter_next_number(&iter, &puk))
-+			continue;
-+
-+		if (!strcmp(name, "SC")) {
-+			retries[OFONO_SIM_PASSWORD_SIM_PIN] =3D pin;
-+			retries[OFONO_SIM_PASSWORD_SIM_PUK] =3D puk;
-+		} else if (!strcmp(name, "P2")) {
-+			retries[OFONO_SIM_PASSWORD_SIM_PIN2] =3D pin;
-+			retries[OFONO_SIM_PASSWORD_SIM_PUK2] =3D puk;
++		if (g_strcmp0(info->label, "aux") =3D=3D 0) {
++			aux =3D info->devnode;
++			if (mdm !=3D NULL)
++				break;
++		} else if (g_strcmp0(info->label, "modem") =3D=3D 0) {
++			mdm =3D info->devnode;
++			if (aux !=3D NULL)
++				break;
++		} else if (g_strcmp0(info->interface, "2/2/1") =3D=3D 0) {
++			if (g_strcmp0(info->number, "02") =3D=3D 0)
++				aux =3D info->devnode;
++			else if (g_strcmp0(info->number, "00") =3D=3D 0)
++				mdm =3D info->devnode;
 +		}
 +	}
-+	cb(&error, retries, cbd->data);
++
++	if (aux =3D=3D NULL || mdm =3D=3D NULL)
++		return FALSE;
++
++	DBG("aux=3D%s modem=3D%s", aux, mdm);
++
++	ofono_modem_set_string(modem->modem, "Aux", aux);
++	ofono_modem_set_string(modem->modem, "Modem", mdm);
++
++	return TRUE;
 +}
 +
- static void at_pin_retries_query(struct ofono_sim *sim,
- 					ofono_sim_pin_retries_cb_t cb,
- 					void *data)
-@@ -1028,6 +1072,11 @@ static void at_pin_retries_query(struct ofono_sim *s=
-im,
- 					at_pnnm_cb, cbd, g_free) > 0)
- 			return;
- 		break;
-+	case OFONO_VENDOR_QUECTEL:
-+		if (g_at_chat_send(sd->chat, "AT+QPINC?", qpinc_prefix,
-+					at_qpinc_cb, cbd, g_free) > 0)
-+			return;
-+		break;
- 	default:
- 		if (g_at_chat_send(sd->chat, "AT+CPINR", cpinr_prefixes,
- 					at_cpinr_cb, cbd, g_free) > 0)
+ static struct {
+ 	const char *name;
+ 	gboolean (*setup)(struct modem_info *modem);
+@@ -815,6 +855,7 @@ static struct {
+ 	{ "zte",	setup_zte	},
+ 	{ "icera",	setup_icera	},
+ 	{ "samsung",	setup_samsung	},
++	{ "ublox",	setup_ublox	},
+ 	{ }
+ };
+ =
+
+@@ -1026,6 +1067,7 @@ static struct {
+ 	{ "nokia",	"option",	"0421", "0623"	},
+ 	{ "samsung",	"option",	"04e8", "6889"	},
+ 	{ "samsung",	"kalmia"			},
++	{ "ublox",	"cdc_acm",	"1546", "1102"	},
+ 	{ }
+ };
+ =
+
 -- =
 
 1.7.10.4
 
 
---===============3797241967770346671==--
+--===============1810456098485012055==--
 
