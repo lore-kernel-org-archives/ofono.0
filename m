@@ -1,47 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============1644620175148602412=="
+Content-Type: multipart/mixed; boundary="===============3231436947474000667=="
 MIME-Version: 1.0
 From: Philip Paeps <philip@paeps.cx>
-Subject: [PATCH v2 0/4] Add a driver for Quectel UC15 modems
-Date: Thu, 26 Jun 2014 19:08:10 +0200
-Message-ID: <1403802494-4542-1-git-send-email-philip@paeps.cx>
+Subject: [PATCH 2/4] udevng: add detection logic for Quectel modems
+Date: Thu, 26 Jun 2014 19:08:12 +0200
+Message-ID: <1403802494-4542-3-git-send-email-philip@paeps.cx>
+In-Reply-To: <1403802494-4542-1-git-send-email-philip@paeps.cx>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1644620175148602412==
+--===============3231436947474000667==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Changes since v1:
+---
+ plugins/udevng.c |   42 ++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
 
- o Ammended udevng probing to also catch the modem when no
-   labels have been configured in udev rules.
- o Reworked the enable/retry mechanism to be a little bit less
-   hackish.  Commented the rationale in quectel_enable().
- o Use prefixes to help the AT parser match queries to replies.
- o Fixed style issues and unnecessary casts.
- o Make enable() end up in CFUN=3D4 (powered but radio off).
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index d41c6a8..2ee5a24 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -791,6 +791,46 @@ static gboolean setup_samsung(struct modem_info *modem)
+ 	return TRUE;
+ }
+ =
 
++static gboolean setup_quectel(struct modem_info *modem)
++{
++	const char *aux =3D NULL, *mdm =3D NULL;
++	GSList *list;
++
++	DBG("%s", modem->syspath);
++
++	for (list =3D modem->devices; list; list =3D list->next) {
++		struct device_info *info =3D list->data;
++
++		DBG("%s %s %s %s", info->devnode, info->interface,
++						info->number, info->label);
++
++		if (g_strcmp0(info->label, "aux") =3D=3D 0) {
++			aux =3D info->devnode;
++			if (mdm !=3D NULL)
++				break;
++		} else if (g_strcmp0(info->label, "modem") =3D=3D 0) {
++			mdm =3D info->devnode;
++			if (aux !=3D NULL)
++				break;
++		} else if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
++			if (g_strcmp0(info->number, "02") =3D=3D 0)
++				aux =3D info->devnode;
++			else if (g_strcmp0(info->number, "03") =3D=3D 0)
++				mdm =3D info->devnode;
++		}
++	}
++
++	if (aux =3D=3D NULL || mdm =3D=3D NULL)
++		return FALSE;
++
++	DBG("aux=3D%s modem=3D%s", aux, mdm);
++
++	ofono_modem_set_string(modem->modem, "Aux", aux);
++	ofono_modem_set_string(modem->modem, "Modem", mdm);
++
++	return TRUE;
++}
++
+ static struct {
+ 	const char *name;
+ 	gboolean (*setup)(struct modem_info *modem);
+@@ -815,6 +855,7 @@ static struct {
+ 	{ "zte",	setup_zte	},
+ 	{ "icera",	setup_icera	},
+ 	{ "samsung",	setup_samsung	},
++	{ "quectel",	setup_quectel	},
+ 	{ }
+ };
+ =
 
-Philip Paeps (4):
-  atmodem: add vendor Quectel
-  udevng: add detection logic for Quectel modems
-  plugins: add a new driver for Quectel UC15 modems
-  sim: query Quectel UC15 PIN retries with AT+QPINC?
-
- Makefile.am              |    3 +
- drivers/atmodem/sim.c    |   49 ++++++
- drivers/atmodem/vendor.h |    3 +-
- plugins/quectel.c        |  371 ++++++++++++++++++++++++++++++++++++++++++=
-++++
- plugins/udevng.c         |   42 ++++++
- 5 files changed, 467 insertions(+), 1 deletion(-)
- create mode 100644 plugins/quectel.c
+@@ -1026,6 +1067,7 @@ static struct {
+ 	{ "nokia",	"option",	"0421", "0623"	},
+ 	{ "samsung",	"option",	"04e8", "6889"	},
+ 	{ "samsung",	"kalmia"			},
++	{ "quectel",	"option",	"05c6", "9090"	},
+ 	{ }
+ };
+ =
 
 -- =
 
 1.7.10.4
 
 
---===============1644620175148602412==--
+--===============3231436947474000667==--
 
