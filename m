@@ -1,57 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============0817916907302621749=="
+Content-Type: multipart/mixed; boundary="===============1644620175148602412=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/6] plugins: new driver for u-blox SARA-U270 modems
-Date: Thu, 26 Jun 2014 10:35:11 -0500
-Message-ID: <53AC3DAF.304@gmail.com>
-In-Reply-To: <20140626144934.GT33006@rincewind.trouble.is>
+From: Philip Paeps <philip@paeps.cx>
+Subject: [PATCH v2 0/4] Add a driver for Quectel UC15 modems
+Date: Thu, 26 Jun 2014 19:08:10 +0200
+Message-ID: <1403802494-4542-1-git-send-email-philip@paeps.cx>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0817916907302621749==
+--===============1644620175148602412==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philip,
+Changes since v1:
 
-On 06/26/2014 09:49 AM, Philip Paeps wrote:
-> On 2014-06-26 09:29:51 (-0500), Denis Kenzior <denkenz@gmail.com> wrote:
->>> +static void ublox_remove(struct ofono_modem *modem)
->>> +{
->>> +	struct ublox_data *data =3D ofono_modem_get_data(modem);
->>> +
->>> +	DBG("%p", modem);
->>> +
->>> +	ofono_modem_set_data(modem, NULL);
->>> +	g_at_chat_unref(data->aux);
->>
->> Any reason data->modem is not being unrefed? e.g in the case of hot-unpl=
-ug?
-> =
-
-> As far as I can tell, disable is always called before remove.  In the
-> hot-unplug case, ofonod -d output goes:
-> =
-
-> ofonod[680]: src/gprs.c:gprs_remove() atom: 0x1443220
-> ofonod[680]: src/sim.c:sim_remove() atom: 0x1442fb0
-> ofonod[680]: src/modem.c:devinfo_remove() atom: 0x14425a0
-> ofonod[680]: plugins/ublox.c:ublox_disable() 0x143ba00
-> ofonod[680]: plugins/ublox.c:ublox_remove() 0x143ba00
-> ofonod[680]: src/modem.c:unregister_property() property 0x143bb00
-> ofonod[680]: src/modem.c:unregister_property() property 0x14448e0
-> =
-
-> Am I missing something?
-> =
+ o Ammended udevng probing to also catch the modem when no
+   labels have been configured in udev rules.
+ o Reworked the enable/retry mechanism to be a little bit less
+   hackish.  Commented the rationale in quectel_enable().
+ o Use prefixes to help the AT parser match queries to replies.
+ o Fixed style issues and unnecessary casts.
+ o Make enable() end up in CFUN=3D4 (powered but radio off).
 
 
-ofono_modem_remove calls disable() only if the modem is powered.  So in
-cases of e.g. modem still being powered up, disable() won't be called.
+Philip Paeps (4):
+  atmodem: add vendor Quectel
+  udevng: add detection logic for Quectel modems
+  plugins: add a new driver for Quectel UC15 modems
+  sim: query Quectel UC15 PIN retries with AT+QPINC?
 
-Regards,
--Denis
+ Makefile.am              |    3 +
+ drivers/atmodem/sim.c    |   49 ++++++
+ drivers/atmodem/vendor.h |    3 +-
+ plugins/quectel.c        |  371 ++++++++++++++++++++++++++++++++++++++++++=
+++++
+ plugins/udevng.c         |   42 ++++++
+ 5 files changed, 467 insertions(+), 1 deletion(-)
+ create mode 100644 plugins/quectel.c
 
---===============0817916907302621749==--
+-- =
+
+1.7.10.4
+
+
+--===============1644620175148602412==--
 
