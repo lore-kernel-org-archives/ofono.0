@@ -1,42 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============6860188020240103337=="
+Content-Type: multipart/mixed; boundary="===============5379770739490734638=="
 MIME-Version: 1.0
 From: Philip Paeps <philip@paeps.cx>
-Subject: [PATCH v3 0/4] Add a driver for u-blox modems
-Date: Thu, 03 Jul 2014 12:32:02 +0200
-Message-ID: <1404383526-12790-1-git-send-email-philip@paeps.cx>
+Subject: [PATCH 4/4] atmodem: set the auth method for u-blox modems
+Date: Thu, 03 Jul 2014 12:32:06 +0200
+Message-ID: <1404383526-12790-5-git-send-email-philip@paeps.cx>
+In-Reply-To: <1404383526-12790-1-git-send-email-philip@paeps.cx>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6860188020240103337==
+--===============5379770739490734638==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Changes since v2:
+---
+ drivers/atmodem/gprs-context.c |   31 ++++++++++++++++++++++++++++---
+ 1 file changed, 28 insertions(+), 3 deletions(-)
 
- o Rebased on master 6df64cd
- o Used none_prefix consistently
+diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
+index be44443..f6e6c2e 100644
+--- a/drivers/atmodem/gprs-context.c
++++ b/drivers/atmodem/gprs-context.c
+@@ -282,9 +282,34 @@ static void at_gprs_activate_primary(struct ofono_gprs=
+_context *gc,
+ =
 
+ 	len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
+ =
 
-Philip Paeps (4):
-  udevng: add detection logic for u-blox modems
-  plugins: new driver for u-blox SARA-U270 modems
-  sim: query u-blox PIN retries with AT+UPINCNT
-  atmodem: set the auth method for u-blox modems
+-	if (ctx->apn)
+-		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
+-				ctx->apn);
++	if (ctx->apn) {
++		switch (gcd->vendor) {
++		case OFONO_VENDOR_UBLOX:
++			/*
++			 * U-blox modems require a magic prefix to the APN to
++			 * specify the authentication method to use in the
++			 * network.  See UBX-13002752 - R21.
++			 *
++			 * As the response of the read command omits this magic
++			 * prefix, this is the least invasive place to set it.
++			 */
++			switch (ctx->auth_method) {
++			case OFONO_GPRS_AUTH_METHOD_CHAP:
++				snprintf(buf + len, sizeof(buf) - len - 3,
++						",\"CHAP:%s\"", ctx->apn);
++				break;
++			case OFONO_GPRS_AUTH_METHOD_PAP:
++				snprintf(buf + len, sizeof(buf) - len - 3,
++						",\"PAP:%s\"", ctx->apn);
++				break;
++			}
++			break;
++		default:
++			snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
++					ctx->apn);
++			break;
++		}
++	}
+ =
 
- Makefile.am                    |    3 +
- drivers/atmodem/gprs-context.c |   31 ++++-
- drivers/atmodem/sim.c          |   45 ++++++
- plugins/ublox.c                |  293 ++++++++++++++++++++++++++++++++++++=
-++++
- plugins/udevng.c               |   42 ++++++
- 5 files changed, 411 insertions(+), 3 deletions(-)
- create mode 100644 plugins/ublox.c
-
+ 	if (g_at_chat_send(gcd->chat, buf, none_prefix,
+ 				at_cgdcont_cb, gc, NULL) > 0)
 -- =
 
 1.7.10.4
 
 
---===============6860188020240103337==--
+--===============5379770739490734638==--
 
