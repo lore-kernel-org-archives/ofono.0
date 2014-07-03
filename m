@@ -1,65 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============9179607454271448565=="
+Content-Type: multipart/mixed; boundary="===============1331794332148996682=="
 MIME-Version: 1.0
 From: Philip Paeps <philip@paeps.cx>
-Subject: Re: [PATCH v2 0/6] Add a driver for u-blox modems
-Date: Wed, 02 Jul 2014 12:53:23 +0200
-Message-ID: <20140702105323.GX33006@rincewind.trouble.is>
-In-Reply-To: <53B1B61F.7070304@gmail.com>
+Subject: [PATCH 3/4] sim: query u-blox PIN retries with AT+UPINCNT
+Date: Thu, 03 Jul 2014 12:32:05 +0200
+Message-ID: <1404383526-12790-4-git-send-email-philip@paeps.cx>
+In-Reply-To: <1404383526-12790-1-git-send-email-philip@paeps.cx>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9179607454271448565==
+--===============1331794332148996682==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 2014-06-30 14:10:23 (-0500), Denis Kenzior <denkenz@gmail.com> wrote:
-> On 06/26/2014 01:28 PM, Philip Paeps wrote:
-> > Changes since v1:
-> > =
+---
+ drivers/atmodem/sim.c |   45 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 45 insertions(+)
 
-> >  o Fix coding style nits and useless casts
-> >  o Use prefixes
-> >  o Make enable go to CFUN=3D4 (powered but radio off)
-> > =
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index 1fcdabb..c128e33 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -68,6 +68,7 @@ static const char *spic_prefix[] =3D { "+SPIC:", NULL };
+ static const char *pct_prefix[] =3D { "#PCT:", NULL };
+ static const char *pnnm_prefix[] =3D { "+PNNM:", NULL };
+ static const char *qpinc_prefix[] =3D { "+QPINC:", NULL };
++static const char *upincnt_prefix[] =3D { "+UPINCNT:", NULL };
+ static const char *none_prefix[] =3D { NULL };
+ =
 
-> > =
+ static void at_crsm_info_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+@@ -1013,6 +1014,45 @@ static void at_qpinc_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+ 	cb(&error, retries, cbd->data);
+ }
+ =
 
-> > Philip Paeps (6):
-> >   atmodem: add vendor u-blox
-> >   udevng: add detection logic for u-blox modems
-> >   plugins: new driver for u-blox SARA-U270 modems
-> >   sim: query u-blox PIN retries with AT+UPINCNT
-> >   gprs: add support for u-blox +UREG URCs
-> >   atmodem: set the auth method for u-blox modems
-> > =
-
-> >  Makefile.am                    |    3 +
-> >  drivers/atmodem/gprs-context.c |   31 ++++-
-> >  drivers/atmodem/gprs.c         |   44 ++++++
-> >  drivers/atmodem/sim.c          |   45 +++++++
-> >  drivers/atmodem/vendor.h       |    3 +-
-> >  plugins/ublox.c                |  291 ++++++++++++++++++++++++++++++++=
-++++++++
-> >  plugins/udevng.c               |   42 ++++++
-> >  7 files changed, 455 insertions(+), 4 deletions(-)
-> >  create mode 100644 plugins/ublox.c
-> > =
-
-> =
-
-> Can you rebase the rest of the patches in this series, they no longer
-> apply cleanly and 3-way merge gets confused as well.
-
-Sure, I'll take care of this today.
-
-Philip
-
++static void upincnt_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_sim_pin_retries_cb_t cb =3D cbd->cb;
++	const char *final =3D g_at_result_final_response(result);
++	GAtResultIter iter;
++	struct ofono_error error;
++	int retries[OFONO_SIM_PASSWORD_INVALID];
++	size_t i;
++	static enum ofono_sim_password_type password_types[] =3D {
++		OFONO_SIM_PASSWORD_SIM_PIN,
++		OFONO_SIM_PASSWORD_SIM_PIN2,
++		OFONO_SIM_PASSWORD_SIM_PUK,
++		OFONO_SIM_PASSWORD_SIM_PUK2,
++	};
++
++	decode_at_error(&error, final);
++
++	if (!ok) {
++		cb(&error, NULL, cbd->data);
++		return;
++	}
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+UPINCNT:"))
++		goto error;
++
++	BUILD_PIN_RETRIES_ARRAY(password_types, ARRAY_SIZE(password_types),
++				retries);
++
++	cb(&error, retries, cbd->data);
++
++	return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
++}
++
+ static void at_pin_retries_query(struct ofono_sim *sim,
+ 					ofono_sim_pin_retries_cb_t cb,
+ 					void *data)
+@@ -1079,6 +1119,11 @@ static void at_pin_retries_query(struct ofono_sim *s=
+im,
+ 					at_qpinc_cb, cbd, g_free) > 0)
+ 			return;
+ 		break;
++	case OFONO_VENDOR_UBLOX:
++		if (g_at_chat_send(sd->chat, "AT+UPINCNT", upincnt_prefix,
++					upincnt_cb, cbd, g_free) > 0)
++			return;
++		break;
+ 	default:
+ 		if (g_at_chat_send(sd->chat, "AT+CPINR", cpinr_prefixes,
+ 					at_cpinr_cb, cbd, g_free) > 0)
 -- =
 
-Philip Paeps
-Senior Reality Engineer
-Ministry of Information
+1.7.10.4
 
---===============9179607454271448565==--
+
+--===============1331794332148996682==--
 
