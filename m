@@ -1,72 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============5379770739490734638=="
+Content-Type: multipart/mixed; boundary="===============4854118408240856868=="
 MIME-Version: 1.0
 From: Philip Paeps <philip@paeps.cx>
-Subject: [PATCH 4/4] atmodem: set the auth method for u-blox modems
-Date: Thu, 03 Jul 2014 12:32:06 +0200
-Message-ID: <1404383526-12790-5-git-send-email-philip@paeps.cx>
-In-Reply-To: <1404383526-12790-1-git-send-email-philip@paeps.cx>
+Subject: [PATCH v3] Add a driver for Quectel UC15 modems (rebased)
+Date: Mon, 07 Jul 2014 11:54:46 +0200
+Message-ID: <1404726887-35547-1-git-send-email-philip@paeps.cx>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5379770739490734638==
+--===============4854118408240856868==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/atmodem/gprs-context.c |   31 ++++++++++++++++++++++++++++---
- 1 file changed, 28 insertions(+), 3 deletions(-)
+Forgot to send this last patch out with the rest before the weekend, sorry.
 
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index be44443..f6e6c2e 100644
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -282,9 +282,34 @@ static void at_gprs_activate_primary(struct ofono_gprs=
-_context *gc,
- =
+Changes since v2:
+ o Rebased on master with ublox patch set applied
+   - Should be a trivial 3-way merge on Makefile.am if
+     the patches are applied out of order
+ o Reworked the reset/enable code patch based on
+   suggestions from Denis
+   - Register for +CPIN: rather than polling
+ o Used prefixes (even more) consistently
 
- 	len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
- =
 
--	if (ctx->apn)
--		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
--				ctx->apn);
-+	if (ctx->apn) {
-+		switch (gcd->vendor) {
-+		case OFONO_VENDOR_UBLOX:
-+			/*
-+			 * U-blox modems require a magic prefix to the APN to
-+			 * specify the authentication method to use in the
-+			 * network.  See UBX-13002752 - R21.
-+			 *
-+			 * As the response of the read command omits this magic
-+			 * prefix, this is the least invasive place to set it.
-+			 */
-+			switch (ctx->auth_method) {
-+			case OFONO_GPRS_AUTH_METHOD_CHAP:
-+				snprintf(buf + len, sizeof(buf) - len - 3,
-+						",\"CHAP:%s\"", ctx->apn);
-+				break;
-+			case OFONO_GPRS_AUTH_METHOD_PAP:
-+				snprintf(buf + len, sizeof(buf) - len - 3,
-+						",\"PAP:%s\"", ctx->apn);
-+				break;
-+			}
-+			break;
-+		default:
-+			snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
-+					ctx->apn);
-+			break;
-+		}
-+	}
- =
+Philip Paeps (1):
+  plugins: add a new driver for Quectel UC15 modems
 
- 	if (g_at_chat_send(gcd->chat, buf, none_prefix,
- 				at_cgdcont_cb, gc, NULL) > 0)
+ Makefile.am       |    3 +
+ plugins/quectel.c |  379 +++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 382 insertions(+)
+ create mode 100644 plugins/quectel.c
+
 -- =
 
 1.7.10.4
 
 
---===============5379770739490734638==--
+--===============4854118408240856868==--
 
