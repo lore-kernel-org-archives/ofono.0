@@ -1,113 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============2947602797032617193=="
+Content-Type: multipart/mixed; boundary="===============8135932635010357883=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Jer=C3=B4nimo?= Lopes <lopesjeronimo@gmail.com>
-Subject: Can't reconnect a Huawei E3131 modem
-Date: Fri, 11 Jul 2014 14:32:57 -0300
-Message-ID: <CAM5ihG-ZCkAaTC2jjxh-JG7hQyFb1y2v3oAyreV3AqeNEVe0_A@mail.gmail.com>
+From: CedrIc Jehasse <cedric.jehasse@gmail.com>
+Subject: Re: Can't reconnect a Huawei E3131 modem
+Date: Sat, 12 Jul 2014 13:28:54 +0200
+Message-ID: <8A0F2701-665E-4853-831D-80E4C477C5FB@gmail.com>
+In-Reply-To: <CAM5ihG-ZCkAaTC2jjxh-JG7hQyFb1y2v3oAyreV3AqeNEVe0_A@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2947602797032617193==
+--===============8135932635010357883==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-I'm trying to use ofono and a Huawei E3131 modem.
+On 11 Jul 2014, at 19:32, Jer=C3=B4nimo Lopes <lopesjeronimo@gmail.com> w=
+rote:
 
-First off all, I need to change AT+CGDATA=3D"PPP",%u to ATD*99***%u# to make
-it work. But that's ok.
+> Hi,
+> =
 
-The problem, is if disconnect, and try to connect again, it doesn't work.
+> I'm trying to use ofono and a Huawei E3131 modem.
+> =
 
-I debug those functions, and find that what's happening:
+> First off all, I need to change AT+CGDATA=3D"PPP",%u to ATD*99***%u# to m=
+ake it work. But that's ok.
+> =
 
-at_gprs_activate_primary (drivers/atmodem/gprs-context.c)
-g_at_chat_send (gatchat/gatchat.c)
-at_chat_send_common (gatchat/gatchat.c)
-...
-if (chat =3D=3D NULL || chat->command_queue =3D=3D NULL)
-return 0;
+> The problem, is if disconnect, and try to connect again, it doesn't work. =
 
-
-at this point 'chat->command_queue' is null.
+> =
 
 
-So far, I can only know that when I disconnect this context, someone is
-calling io_disconnect (gatchat.c), that makes chat->command_queue=3DNULL.
+I=E2=80=99ve seen the same behaviour with an Huawei E303. =
 
-I couldn't debug further.
+The problem with the E303 is oFono sends AT&C0 to the modem to avoid DCD dr=
+ops after the disconnect, but the modem drops it anyway. This causes a tty =
+hangup, and oFono can=E2=80=99t send commands to the modem port anymore.
 
-I've tested the same scenario, just with a different modem (Huawei E160)
-and it's working nice.
+The E3131 could have the same bug=E2=80=A6
 
-I'd be glad if anyone could give any hint on that.
+regards,
+Cedric
 
-Best regards
-
-Jer=C3=B4nimo Lopes
-
---===============2947602797032617193==
+--===============8135932635010357883==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
-aWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPkhpLDwvZGl2PjxkaXYgY2xhc3M9
-ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTss
-bW9ub3NwYWNlIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZv
-bnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPgpJJiMzOTttIHRyeWlu
-ZyB0byB1c2Ugb2Zvbm8gYW5kIGEgSHVhd2VpIEUzMTMxIG1vZGVtLjwvZGl2PjxkaXYgY2xhc3M9
-ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTss
-bW9ub3NwYWNlIj48YnI+Rmlyc3Qgb2ZmIGFsbCwgSSBuZWVkIHRvIGNoYW5nZcKgQVQrQ0dEQVRB
-PSZxdW90O1BQUCZxdW90OywldSB0b8KgQVREKjk5KioqJXUjIHRvIG1ha2UgaXQgd29yay4gQnV0
-IHRoYXQmIzM5O3Mgb2suPC9kaXY+CjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJm
-b250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj48YnI+PC9kaXY+PGRp
-diBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBu
-ZXcmIzM5Oyxtb25vc3BhY2UiPlRoZSBwcm9ibGVtLCBpcyBpZiBkaXNjb25uZWN0LCBhbmQgdHJ5
-IHRvIGNvbm5lY3QgYWdhaW4sIGl0IGRvZXNuJiMzOTt0IHdvcmsuwqA8L2Rpdj4KPGRpdiBjbGFz
-cz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5
-Oyxtb25vc3BhY2UiPjxicj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0i
-Zm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7LG1vbm9zcGFjZSI+SSBkZWJ1ZyB0aG9z
-ZSBmdW5jdGlvbnMsIGFuZCBmaW5kIHRoYXQgd2hhdCYjMzk7cyBoYXBwZW5pbmc6PC9kaXY+Cjxk
-aXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIg
-bmV3JiMzOTssbW9ub3NwYWNlIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIg
-c3R5bGU+PGZvbnQgZmFjZT0iY291cmllciBuZXcsIG1vbm9zcGFjZSI+YXRfZ3Byc19hY3RpdmF0
-ZV9wcmltYXJ5IChkcml2ZXJzL2F0bW9kZW0vZ3Bycy1jb250ZXh0LmMpPC9mb250PjwvZGl2Pgo8
-ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywg
-bW9ub3NwYWNlIj5nX2F0X2NoYXRfc2VuZCAoZ2F0Y2hhdC9nYXRjaGF0LmMpPC9mb250PjwvZGl2
-PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPjxmb250IGZhY2U9ImNvdXJpZXIgbmV3
-LCBtb25vc3BhY2UiPmF0X2NoYXRfc2VuZF9jb21tb27CoDwvZm9udD48c3BhbiBzdHlsZT0iZm9u
-dC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7LG1vbm9zcGFjZSI+KGdhdGNoYXQvZ2F0Y2hh
-dC5jKTwvc3Bhbj48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj48YnI+CjwvZm9u
-dD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT4uLi48L2Rpdj48ZGl2IGNs
-YXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3Nw
-YWNlIj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48c3BhbiBjbGFzcz0iIiBzdHlsZT0id2hp
-dGUtc3BhY2U6cHJlIj4JPC9zcGFuPmlmIChjaGF0ID09IE5VTEwgfHwgY2hhdC0mZ3Q7Y29tbWFu
-ZF9xdWV1ZSA9PSBOVUxMKTwvZGl2Pgo8ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48c3BhbiBj
-bGFzcz0iIiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlIj4JCTwvc3Bhbj5yZXR1cm4gMDs8L2Rpdj48
-ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVm
-YXVsdCI+PGJyPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPmF0IHRoaXMgcG9pbnQg
-JiMzOTtjaGF0LSZndDtjb21tYW5kX3F1ZXVlJiMzOTsgaXMgbnVsbC48L2Rpdj4KPGRpdiBjbGFz
-cz0iZ21haWxfZGVmYXVsdCI+PGJyPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxi
-cj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij5TbyBmYXIsIEkgY2FuIG9ubHkga25v
-dyB0aGF0IHdoZW4gSSBkaXNjb25uZWN0IHRoaXMgY29udGV4dCwgc29tZW9uZSBpcyBjYWxsaW5n
-wqBpb19kaXNjb25uZWN0IChnYXRjaGF0LmMpLCB0aGF0IG1ha2VzIGNoYXQtJmd0O2NvbW1hbmRf
-cXVldWU9TlVMTC48L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGJyPjwvZGl2Pjxk
-aXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPkkgY291bGRuJiMzOTt0IGRlYnVnIGZ1cnRoZXIuPC9k
-aXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGJyPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWls
-X2RlZmF1bHQiPkkmIzM5O3ZlIHRlc3RlZCB0aGUgc2FtZSBzY2VuYXJpbywganVzdCB3aXRoIGEg
-ZGlmZmVyZW50IG1vZGVtIChIdWF3ZWkgRTE2MCkgYW5kIGl0JiMzOTtzIHdvcmtpbmcgbmljZS48
-L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+PGJyPjwvZGl2PjxkaXYgY2xhc3M9Imdt
-YWlsX2RlZmF1bHQiPkkmIzM5O2QgYmUgZ2xhZCBpZiBhbnlvbmUgY291bGQgZ2l2ZSBhbnkgaGlu
-dCBvbiB0aGF0LjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPjxicj48L2Rpdj48ZGl2
-IGNsYXNzPSJnbWFpbF9kZWZhdWx0Ij5CZXN0IHJlZ2FyZHM8L2Rpdj48ZGl2IGNsYXNzPSJnbWFp
-bF9kZWZhdWx0Ij4KPGJyPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiPkplcsO0bmlt
-byBMb3BlczwvZGl2PjwvZm9udD48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHls
-ZT48Zm9udCBmYWNlPSJjb3VyaWVyIG5ldywgbW9ub3NwYWNlIj48YnI+PC9mb250PjwvZGl2Pjwv
-ZGl2Pgo=
-
---===============2947602797032617193==--
+PGh0bWw+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0
+L2h0bWwgY2hhcnNldD13aW5kb3dzLTEyNTIiPjwvaGVhZD48Ym9keSBzdHlsZT0id29yZC13cmFw
+OiBicmVhay13b3JkOyAtd2Via2l0LW5ic3AtbW9kZTogc3BhY2U7IC13ZWJraXQtbGluZS1icmVh
+azogYWZ0ZXItd2hpdGUtc3BhY2U7Ij5IaSw8ZGl2Pjxicj48ZGl2PjxkaXY+T24gMTEgSnVsIDIw
+MTQsIGF0IDE5OjMyLCBKZXL0bmltbyBMb3BlcyAmbHQ7PGEgaHJlZj0ibWFpbHRvOmxvcGVzamVy
+b25pbW9AZ21haWwuY29tIj5sb3Blc2plcm9uaW1vQGdtYWlsLmNvbTwvYT4mZ3Q7IHdyb3RlOjwv
+ZGl2PjxiciBjbGFzcz0iQXBwbGUtaW50ZXJjaGFuZ2UtbmV3bGluZSI+PGJsb2NrcXVvdGUgdHlw
+ZT0iY2l0ZSI+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9
+ImZvbnQtZmFtaWx5Oidjb3VyaWVyIG5ldycsbW9ub3NwYWNlIj5IaSw8L2Rpdj48ZGl2IGNsYXNz
+PSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6J2NvdXJpZXIgbmV3Jyxtb25vc3Bh
+Y2UiPjxicj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1p
+bHk6J2NvdXJpZXIgbmV3Jyxtb25vc3BhY2UiPgpJJ20gdHJ5aW5nIHRvIHVzZSBvZm9ubyBhbmQg
+YSBIdWF3ZWkgRTMxMzEgbW9kZW0uPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5
+bGU9ImZvbnQtZmFtaWx5Oidjb3VyaWVyIG5ldycsbW9ub3NwYWNlIj48YnI+Rmlyc3Qgb2ZmIGFs
+bCwgSSBuZWVkIHRvIGNoYW5nZSZuYnNwO0FUK0NHREFUQT0iUFBQIiwldSB0byZuYnNwO0FURCo5
+OSoqKiV1IyB0byBtYWtlIGl0IHdvcmsuIEJ1dCB0aGF0J3Mgb2suPC9kaXY+CjxkaXYgY2xhc3M9
+ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTonY291cmllciBuZXcnLG1vbm9zcGFj
+ZSI+PGJyPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWls
+eTonY291cmllciBuZXcnLG1vbm9zcGFjZSI+VGhlIHByb2JsZW0sIGlzIGlmIGRpc2Nvbm5lY3Qs
+IGFuZCB0cnkgdG8gY29ubmVjdCBhZ2FpbiwgaXQgZG9lc24ndCB3b3JrLiZuYnNwOzwvZGl2Pgo8
+ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6J2NvdXJpZXIgbmV3
+Jyxtb25vc3BhY2UiPjxicj48L2Rpdj48L2Rpdj48L2Jsb2NrcXVvdGU+PC9kaXY+PGJyPjwvZGl2
+PjxkaXY+SZJ2ZSBzZWVuIHRoZSBzYW1lIGJlaGF2aW91ciB3aXRoIGFuIEh1YXdlaSBFMzAzLiZu
+YnNwOzwvZGl2PjxkaXY+VGhlIHByb2JsZW0gd2l0aCB0aGUgRTMwMyBpcyBvRm9ubyBzZW5kcyBB
+VCZhbXA7QzAgdG8gdGhlIG1vZGVtIHRvIGF2b2lkIERDRCBkcm9wcyBhZnRlciB0aGUgZGlzY29u
+bmVjdCwgYnV0IHRoZSBtb2RlbSBkcm9wcyBpdCBhbnl3YXkuIFRoaXMgY2F1c2VzIGEgdHR5IGhh
+bmd1cCwgYW5kIG9Gb25vIGNhbpJ0IHNlbmQgY29tbWFuZHMgdG8gdGhlIG1vZGVtIHBvcnQgYW55
+bW9yZS48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PlRoZSBFMzEzMSBjb3VsZCBoYXZlIHRoZSBz
+YW1lIGJ1Z4U8L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PnJlZ2FyZHMsPC9kaXY+PGRpdj5DZWRy
+aWM8L2Rpdj48L2JvZHk+PC9odG1sPg==
+--===============8135932635010357883==--
 
