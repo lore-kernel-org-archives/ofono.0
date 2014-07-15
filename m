@@ -1,84 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============8135932635010357883=="
+Content-Type: multipart/mixed; boundary="===============7208385368326538911=="
 MIME-Version: 1.0
-From: CedrIc Jehasse <cedric.jehasse@gmail.com>
-Subject: Re: Can't reconnect a Huawei E3131 modem
-Date: Sat, 12 Jul 2014 13:28:54 +0200
-Message-ID: <8A0F2701-665E-4853-831D-80E4C477C5FB@gmail.com>
-In-Reply-To: <CAM5ihG-ZCkAaTC2jjxh-JG7hQyFb1y2v3oAyreV3AqeNEVe0_A@mail.gmail.com>
+From: Frederik Lotter <frederik.lotter@mixtelematics.com>
+Subject: Controlling GPRS connections through Ofono in the presence of Connman
+Date: Tue, 15 Jul 2014 09:03:05 +0200
+Message-ID: <CAEM=xjhG8cOzfYJMPPegFD+15kVXtH1uUxzApXocqFCsNrdKvQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8135932635010357883==
+--===============7208385368326538911==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-On 11 Jul 2014, at 19:32, Jer=C3=B4nimo Lopes <lopesjeronimo@gmail.com> w=
-rote:
+I am working on uBlox support in Ofono. My aim is further than the
+traditional desktop type use case, so I am extending Ofono with a custom
+APN provisioning service.
 
-> Hi,
-> =
+I want to get some tips on how I should proceed because I do not wish to go
+into an unintentional direction.
 
-> I'm trying to use ofono and a Huawei E3131 modem.
-> =
+We have 3rd party software that needs to finely control the GPRS session,
+constantly monitoring and switching APN's as the network changes.
 
-> First off all, I need to change AT+CGDATA=3D"PPP",%u to ATD*99***%u# to m=
-ake it work. But that's ok.
-> =
+I need a way for our software to know when the context has successfully
+been activated, for example a post_context_activate() in the driver would
+be great, so that I could add a DBUS message in our custom driver which
+send states to our software in order to know when a socket could be opened
+(not only the post_context_activate() but I also need the other states the
+driver will enter).
 
-> The problem, is if disconnect, and try to connect again, it doesn't work. =
+Is there a better approach than adding a callback for successful context
+activation in the driver, in Ofono? I feel like Connman is too distant and
+unaware of detailed Ofono states to manage this on the Connman side.
 
-> =
+Secondly, I have tested changing states on the Ofono side with the Python
+scripts (enable -> online ) and visa versa and connman seems OK with me
+doing this. I plan to do this from my 3rd party application to manage APNs
+and sockets. Is this an acceptable use case with Connman, it seems like it
+has been designed so that Connman always gets updates on Ofono state
+changes.
 
+Kind Regards,
+Frederik Lotter
 
-I=E2=80=99ve seen the same behaviour with an Huawei E303. =
-
-The problem with the E303 is oFono sends AT&C0 to the modem to avoid DCD dr=
-ops after the disconnect, but the modem drops it anyway. This causes a tty =
-hangup, and oFono can=E2=80=99t send commands to the modem port anymore.
-
-The E3131 could have the same bug=E2=80=A6
-
-regards,
-Cedric
-
---===============8135932635010357883==
+--===============7208385368326538911==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PGh0bWw+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0
-L2h0bWwgY2hhcnNldD13aW5kb3dzLTEyNTIiPjwvaGVhZD48Ym9keSBzdHlsZT0id29yZC13cmFw
-OiBicmVhay13b3JkOyAtd2Via2l0LW5ic3AtbW9kZTogc3BhY2U7IC13ZWJraXQtbGluZS1icmVh
-azogYWZ0ZXItd2hpdGUtc3BhY2U7Ij5IaSw8ZGl2Pjxicj48ZGl2PjxkaXY+T24gMTEgSnVsIDIw
-MTQsIGF0IDE5OjMyLCBKZXL0bmltbyBMb3BlcyAmbHQ7PGEgaHJlZj0ibWFpbHRvOmxvcGVzamVy
-b25pbW9AZ21haWwuY29tIj5sb3Blc2plcm9uaW1vQGdtYWlsLmNvbTwvYT4mZ3Q7IHdyb3RlOjwv
-ZGl2PjxiciBjbGFzcz0iQXBwbGUtaW50ZXJjaGFuZ2UtbmV3bGluZSI+PGJsb2NrcXVvdGUgdHlw
-ZT0iY2l0ZSI+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9
-ImZvbnQtZmFtaWx5Oidjb3VyaWVyIG5ldycsbW9ub3NwYWNlIj5IaSw8L2Rpdj48ZGl2IGNsYXNz
-PSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6J2NvdXJpZXIgbmV3Jyxtb25vc3Bh
-Y2UiPjxicj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1p
-bHk6J2NvdXJpZXIgbmV3Jyxtb25vc3BhY2UiPgpJJ20gdHJ5aW5nIHRvIHVzZSBvZm9ubyBhbmQg
-YSBIdWF3ZWkgRTMxMzEgbW9kZW0uPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5
-bGU9ImZvbnQtZmFtaWx5Oidjb3VyaWVyIG5ldycsbW9ub3NwYWNlIj48YnI+Rmlyc3Qgb2ZmIGFs
-bCwgSSBuZWVkIHRvIGNoYW5nZSZuYnNwO0FUK0NHREFUQT0iUFBQIiwldSB0byZuYnNwO0FURCo5
-OSoqKiV1IyB0byBtYWtlIGl0IHdvcmsuIEJ1dCB0aGF0J3Mgb2suPC9kaXY+CjxkaXYgY2xhc3M9
-ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTonY291cmllciBuZXcnLG1vbm9zcGFj
-ZSI+PGJyPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWls
-eTonY291cmllciBuZXcnLG1vbm9zcGFjZSI+VGhlIHByb2JsZW0sIGlzIGlmIGRpc2Nvbm5lY3Qs
-IGFuZCB0cnkgdG8gY29ubmVjdCBhZ2FpbiwgaXQgZG9lc24ndCB3b3JrLiZuYnNwOzwvZGl2Pgo8
-ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6J2NvdXJpZXIgbmV3
-Jyxtb25vc3BhY2UiPjxicj48L2Rpdj48L2Rpdj48L2Jsb2NrcXVvdGU+PC9kaXY+PGJyPjwvZGl2
-PjxkaXY+SZJ2ZSBzZWVuIHRoZSBzYW1lIGJlaGF2aW91ciB3aXRoIGFuIEh1YXdlaSBFMzAzLiZu
-YnNwOzwvZGl2PjxkaXY+VGhlIHByb2JsZW0gd2l0aCB0aGUgRTMwMyBpcyBvRm9ubyBzZW5kcyBB
-VCZhbXA7QzAgdG8gdGhlIG1vZGVtIHRvIGF2b2lkIERDRCBkcm9wcyBhZnRlciB0aGUgZGlzY29u
-bmVjdCwgYnV0IHRoZSBtb2RlbSBkcm9wcyBpdCBhbnl3YXkuIFRoaXMgY2F1c2VzIGEgdHR5IGhh
-bmd1cCwgYW5kIG9Gb25vIGNhbpJ0IHNlbmQgY29tbWFuZHMgdG8gdGhlIG1vZGVtIHBvcnQgYW55
-bW9yZS48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PlRoZSBFMzEzMSBjb3VsZCBoYXZlIHRoZSBz
-YW1lIGJ1Z4U8L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PnJlZ2FyZHMsPC9kaXY+PGRpdj5DZWRy
-aWM8L2Rpdj48L2JvZHk+PC9odG1sPg==
---===============8135932635010357883==--
+PGRpdiBkaXI9Imx0ciI+SGksPGRpdj48YnI+PC9kaXY+PGRpdj5JIGFtIHdvcmtpbmcgb24gdUJs
+b3ggc3VwcG9ydCBpbiBPZm9uby4gTXkgYWltIGlzIGZ1cnRoZXIgdGhhbiB0aGUgdHJhZGl0aW9u
+YWwgZGVza3RvcCB0eXBlIHVzZSBjYXNlLCBzbyBJIGFtIGV4dGVuZGluZyBPZm9ubyB3aXRoIGEg
+Y3VzdG9tIEFQTiBwcm92aXNpb25pbmcgc2VydmljZS48L2Rpdj48ZGl2Pjxicj48L2Rpdj4KPGRp
+dj5JIHdhbnQgdG8gZ2V0IHNvbWUgdGlwcyBvbiBob3cgSSBzaG91bGQgcHJvY2VlZCBiZWNhdXNl
+IEkgZG8gbm90IHdpc2ggdG8gZ28gaW50byBhbiB1bmludGVudGlvbmFsIGRpcmVjdGlvbi48L2Rp
+dj48ZGl2Pjxicj48L2Rpdj48ZGl2PldlIGhhdmUgM3JkIHBhcnR5IHNvZnR3YXJlIHRoYXQgbmVl
+ZHMgdG8gZmluZWx5IGNvbnRyb2wgdGhlIEdQUlMgc2Vzc2lvbiwgY29uc3RhbnRseSBtb25pdG9y
+aW5nIGFuZCBzd2l0Y2hpbmcgQVBOJiMzOTtzIGFzIHRoZSBuZXR3b3JrIGNoYW5nZXMuwqA8L2Rp
+dj4KPGRpdj48YnI+PC9kaXY+PGRpdj5JIG5lZWQgYSB3YXkgZm9yIG91ciBzb2Z0d2FyZSB0byBr
+bm93IHdoZW4gdGhlIGNvbnRleHQgaGFzIHN1Y2Nlc3NmdWxseSBiZWVuIGFjdGl2YXRlZCwgZm9y
+IGV4YW1wbGUgYSBwb3N0X2NvbnRleHRfYWN0aXZhdGUoKSBpbiB0aGUgZHJpdmVyIHdvdWxkIGJl
+IGdyZWF0LCBzbyB0aGF0IEkgY291bGQgYWRkIGEgREJVUyBtZXNzYWdlIGluIG91ciBjdXN0b20g
+ZHJpdmVyIHdoaWNoIHNlbmQgc3RhdGVzIHRvIG91ciBzb2Z0d2FyZSBpbiBvcmRlciB0byBrbm93
+IHdoZW4gYSBzb2NrZXQgY291bGQgYmUgb3BlbmVkIChub3Qgb25seSB0aGUgcG9zdF9jb250ZXh0
+X2FjdGl2YXRlKCkgYnV0IEkgYWxzbyBuZWVkIHRoZSBvdGhlciBzdGF0ZXMgdGhlIGRyaXZlciB3
+aWxsIGVudGVyKS7CoDwvZGl2Pgo8ZGl2Pjxicj48L2Rpdj48ZGl2PklzIHRoZXJlIGEgYmV0dGVy
+IGFwcHJvYWNoIHRoYW4gYWRkaW5nIGEgY2FsbGJhY2sgZm9yIHN1Y2Nlc3NmdWwgY29udGV4dCBh
+Y3RpdmF0aW9uIGluIHRoZSBkcml2ZXIsIGluIE9mb25vPyBJIGZlZWwgbGlrZSBDb25ubWFuIGlz
+IHRvbyBkaXN0YW50IGFuZCB1bmF3YXJlIG9mIGRldGFpbGVkIE9mb25vIHN0YXRlcyB0byBtYW5h
+Z2UgdGhpcyBvbiB0aGUgQ29ubm1hbiBzaWRlLsKgPC9kaXY+CjxkaXY+PGJyPjwvZGl2PjxkaXY+
+U2Vjb25kbHksIEkgaGF2ZSB0ZXN0ZWQgY2hhbmdpbmcgc3RhdGVzIG9uIHRoZSBPZm9ubyBzaWRl
+IHdpdGggdGhlIFB5dGhvbiBzY3JpcHRzIChlbmFibGUgLSZndDsgb25saW5lICkgYW5kIHZpc2Eg
+dmVyc2EgYW5kIGNvbm5tYW4gc2VlbXMgT0sgd2l0aCBtZSBkb2luZyB0aGlzLiBJIHBsYW4gdG8g
+ZG8gdGhpcyBmcm9tIG15IDNyZCBwYXJ0eSBhcHBsaWNhdGlvbiB0byBtYW5hZ2UgQVBOcyBhbmQg
+c29ja2V0cy4gSXMgdGhpcyBhbiBhY2NlcHRhYmxlIHVzZSBjYXNlIHdpdGggQ29ubm1hbiwgaXQg
+c2VlbXMgbGlrZSBpdCBoYXMgYmVlbiBkZXNpZ25lZCBzbyB0aGF0IENvbm5tYW4gYWx3YXlzIGdl
+dHMgdXBkYXRlcyBvbiBPZm9ubyBzdGF0ZSBjaGFuZ2VzLjwvZGl2Pgo8ZGl2Pjxicj48L2Rpdj48
+ZGl2PktpbmQgUmVnYXJkcyw8L2Rpdj48ZGl2PkZyZWRlcmlrIExvdHRlcjwvZGl2PjwvZGl2Pgo=
+
+--===============7208385368326538911==--
 
