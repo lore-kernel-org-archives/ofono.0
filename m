@@ -1,47 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============1834203632375031682=="
+Content-Type: multipart/mixed; boundary="===============0801089931128260106=="
 MIME-Version: 1.0
-From: Alban Crequy <alban.crequy@collabora.co.uk>
-Subject: [PATCH] g_dbus_add_service_watch: better match rule for
- NameOwnerChanged
-Date: Tue, 15 Jul 2014 11:29:41 +0100
-Message-ID: <1405420181-9375-1-git-send-email-alban.crequy@collabora.co.uk>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Controlling GPRS connections through Ofono in the presence of
+ Connman
+Date: Tue, 15 Jul 2014 08:27:43 -0500
+Message-ID: <53C52C4F.4010708@gmail.com>
+In-Reply-To: <CAEM=xjhG8cOzfYJMPPegFD+15kVXtH1uUxzApXocqFCsNrdKvQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1834203632375031682==
+--===============0801089931128260106==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When subscribing to the D-Bus signal NameOwnerChanged from the bus driver,
-specify the object path and the sender in the match rule. Otherwise, random
-connections on the bus could impersonate the bus driver.
+Hi Frederik,
 
-This patch applies to connman, ofono and pacrunner.
----
- gdbus/watch.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+On 07/15/2014 02:03 AM, Frederik Lotter wrote:
+> Hi,
+> =
 
-diff --git a/gdbus/watch.c b/gdbus/watch.c
-index 0f99f4f..415e7fa 100644
---- a/gdbus/watch.c
-+++ b/gdbus/watch.c
-@@ -699,7 +699,8 @@ guint g_dbus_add_service_watch(DBusConnection *connecti=
-on, const char *name,
- 	if (name =3D=3D NULL)
- 		return 0;
- =
+> I am working on uBlox support in Ofono. My aim is further than the
+> traditional desktop type use case, so I am extending Ofono with a custom
+> APN provisioning service.
+> =
 
--	data =3D filter_data_get(connection, service_filter, NULL, NULL,
-+	data =3D filter_data_get(connection, service_filter,
-+				DBUS_SERVICE_DBUS, DBUS_PATH_DBUS,
- 				DBUS_INTERFACE_DBUS, "NameOwnerChanged",
- 				name);
- 	if (data =3D=3D NULL)
--- =
+> I want to get some tips on how I should proceed because I do not wish to
+> go into an unintentional direction.
+> =
 
-1.8.5.3
+> We have 3rd party software that needs to finely control the GPRS
+> session, constantly monitoring and switching APN's as the network changes=
+. =
+
+> =
+
+> I need a way for our software to know when the context has successfully
+> been activated, for example a post_context_activate() in the driver
+
+The driver is already performing the "callback" into the core.  So what
+you're looking for is probably something.  Perhaps something similar to
+__ofono_netreg_add_status_watch.  Before you go there though...
+
+> would be great, so that I could add a DBUS message in our custom driver
+> which send states to our software in order to know when a socket could
+> be opened (not only the post_context_activate() but I also need the
+> other states the driver will enter). =
 
 
---===============1834203632375031682==--
+Since you are sending a D-Bus message anyway, is it not possible for the
+3rd party software to monitor the oFono context state directly?  E.g.
+the org.ofono.ConnectionContext.Active Property seems to do exactly what
+you need.  What other states do you require?
+
+> =
+
+> Is there a better approach than adding a callback for successful context
+> activation in the driver, in Ofono? I feel like Connman is too distant
+> and unaware of detailed Ofono states to manage this on the Connman side. =
+
+> =
+
+> Secondly, I have tested changing states on the Ofono side with the
+> Python scripts (enable -> online ) and visa versa and connman seems OK
+> with me doing this. I plan to do this from my 3rd party application to
+> manage APNs and sockets. Is this an acceptable use case with Connman, it
+> seems like it has been designed so that Connman always gets updates on
+> Ofono state changes.
+
+All clients of oFono are notified of state changes regardless of which
+client initiated a particular state change.  So ConnMan should be just
+fine with you manipulating the context states from other clients.  You
+might interfere with some auto-connect / reconnect behavior there, but
+sounds like you don't want that behavior active anyway.
+
+Regards,
+-Denis
+
+--===============0801089931128260106==--
 
