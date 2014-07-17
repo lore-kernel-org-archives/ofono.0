@@ -1,169 +1,127 @@
-Content-Type: multipart/mixed; boundary="===============1000520104016684144=="
+Content-Type: multipart/mixed; boundary="===============0743354504510190936=="
 MIME-Version: 1.0
-From: Frederik Lotter <frederik.lotter@mixtelematics.com>
-Subject: Re: Controlling GPRS connections through Ofono in the presence of
- Connman
-Date: Wed, 16 Jul 2014 16:37:39 +0200
-Message-ID: <CAEM=xjg0_ejkSPuOP+fNmaOFtD8w7y-JtYopJn8+abK_RM1GzA@mail.gmail.com>
-In-Reply-To: <53C52C4F.4010708@gmail.com>
+From: =?unknown-8bit?q?Jer=C3=B4nimo?= Lopes <lopesjeronimo@gmail.com>
+Subject: Re: Can't reconnect a Huawei E3131 modem
+Date: Thu, 17 Jul 2014 09:55:47 -0300
+Message-ID: <CAM5ihG88Qte8oc1JNTa2ci-uBT-Sc5jF9A_mqMTTFK8+qrdhcQ@mail.gmail.com>
+In-Reply-To: <8A0F2701-665E-4853-831D-80E4C477C5FB@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1000520104016684144==
+--===============0743354504510190936==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Cedric, tanks for your answer.
 
-Thank you very much for the reply.
+2014-07-12 8:28 GMT-03:00 CedrIc Jehasse <cedric.jehasse@gmail.com>:
 
-I have one question remaining, which comes back to detection when my ppp
-connection is up in the Linux network stack.
-
-Will the "ConnectionContext.Active" property not only indicate the Ofono
-side is done? I was under the understanding that Connman still has to
-assign the IP and modify the routing table before I can open a socket for
-comms? Is this something I need to check against a Connman property?
-
-Kind Regards,
-Fred
-
-
-On 15 July 2014 15:27, Denis Kenzior <denkenz@gmail.com> wrote:
-
-> Hi Frederik,
+> Hi,
 >
-> On 07/15/2014 02:03 AM, Frederik Lotter wrote:
-> > Hi,
-> >
-> > I am working on uBlox support in Ofono. My aim is further than the
-> > traditional desktop type use case, so I am extending Ofono with a custom
-> > APN provisioning service.
-> >
-> > I want to get some tips on how I should proceed because I do not wish to
-> > go into an unintentional direction.
-> >
-> > We have 3rd party software that needs to finely control the GPRS
-> > session, constantly monitoring and switching APN's as the network
-> changes.
-> >
-> > I need a way for our software to know when the context has successfully
-> > been activated, for example a post_context_activate() in the driver
+> On 11 Jul 2014, at 19:32, Jer=C3=B4nimo Lopes <lopesjeronimo@gmail.com>=
+ wrote:
 >
-> The driver is already performing the "callback" into the core.  So what
-> you're looking for is probably something.  Perhaps something similar to
-> __ofono_netreg_add_status_watch.  Before you go there though...
+> Hi,
 >
-> > would be great, so that I could add a DBUS message in our custom driver
-> > which send states to our software in order to know when a socket could
-> > be opened (not only the post_context_activate() but I also need the
-> > other states the driver will enter).
+> I'm trying to use ofono and a Huawei E3131 modem.
 >
-> Since you are sending a D-Bus message anyway, is it not possible for the
-> 3rd party software to monitor the oFono context state directly?  E.g.
-> the org.ofono.ConnectionContext.Active Property seems to do exactly what
-> you need.  What other states do you require?
+> First off all, I need to change AT+CGDATA=3D"PPP",%u to ATD*99***%u# to m=
+ake
+> it work. But that's ok.
 >
-> >
-> > Is there a better approach than adding a callback for successful context
-> > activation in the driver, in Ofono? I feel like Connman is too distant
-> > and unaware of detailed Ofono states to manage this on the Connman side.
-> >
-> > Secondly, I have tested changing states on the Ofono side with the
-> > Python scripts (enable -> online ) and visa versa and connman seems OK
-> > with me doing this. I plan to do this from my 3rd party application to
-> > manage APNs and sockets. Is this an acceptable use case with Connman, it
-> > seems like it has been designed so that Connman always gets updates on
-> > Ofono state changes.
+> The problem, is if disconnect, and try to connect again, it doesn't work.
 >
-> All clients of oFono are notified of state changes regardless of which
-> client initiated a particular state change.  So ConnMan should be just
-> fine with you manipulating the context states from other clients.  You
-> might interfere with some auto-connect / reconnect behavior there, but
-> sounds like you don't want that behavior active anyway.
 >
-> Regards,
-> -Denis
+> I=E2=80=99ve seen the same behaviour with an Huawei E303.
+> The problem with the E303 is oFono sends AT&C0 to the modem to avoid DCD
+> drops after the disconnect, but the modem drops it anyway. This causes a
+> tty hangup, and oFono can=E2=80=99t send commands to the modem port anymo=
+re.
+>
+> The E3131 could have the same bug=E2=80=A6
+>
+> regards,
+> Cedric
+> =E2=80=8B
 >
 
---===============1000520104016684144==
+Yes, I just got a E303 and it has the same problem.
+
+Is there any workaround for this? At least here in Brazil, this models,
+E3131 and E303 are really common.
+=E2=80=8B
+
+> =E2=80=8B
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> https://lists.ofono.org/mailman/listinfo/ofono
+>
+>
+
+--===============0743354504510190936==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PGRpdiBkaXI9Imx0ciI+SGkgRGVuaXMsPGRpdj48YnI+PC9kaXY+PGRpdj5UaGFuayB5b3UgdmVy
-eSBtdWNoIGZvciB0aGUgcmVwbHkuPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5JIGhhdmUgb25l
-IHF1ZXN0aW9uIHJlbWFpbmluZywgd2hpY2ggY29tZXMgYmFjayB0byBkZXRlY3Rpb24gd2hlbiBt
-eSBwcHAgY29ubmVjdGlvbiBpcyB1cCBpbiB0aGUgTGludXggbmV0d29yayBzdGFjay7CoDwvZGl2
-Pgo8ZGl2Pjxicj48c3BhbiBzdHlsZT0iZm9udC1mYW1pbHk6YXJpYWwsc2Fucy1zZXJpZjtmb250
-LXNpemU6MTNweCI+V2lsbCB0aGUgJnF1b3Q7Q29ubmVjdGlvbkNvbnRleHQuPC9zcGFuPjxzcGFu
-IHN0eWxlPSJmb250LWZhbWlseTphcmlhbCxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxM3B4Ij5BY3Rp
-dmUmcXVvdDsgcHJvcGVydHkgbm90IG9ubHkgaW5kaWNhdGUgdGhlIE9mb25vIHNpZGUgaXMgZG9u
-ZT8gSSB3YXMgdW5kZXIgdGhlIHVuZGVyc3RhbmRpbmcgdGhhdCBDb25ubWFuIHN0aWxsIGhhcyB0
-byBhc3NpZ24gdGhlIElQIGFuZCBtb2RpZnkgdGhlIHJvdXRpbmcgdGFibGUgYmVmb3JlIEkgY2Fu
-IG9wZW4gYSBzb2NrZXQgZm9yIGNvbW1zPyBJcyB0aGlzIHNvbWV0aGluZyBJIG5lZWQgdG8gY2hl
-Y2sgYWdhaW5zdCBhIENvbm5tYW4gcHJvcGVydHk/wqA8L3NwYW4+PGJyPgo8L2Rpdj48ZGl2Pjxz
-cGFuIHN0eWxlPSJmb250LWZhbWlseTphcmlhbCxzYW5zLXNlcmlmO2ZvbnQtc2l6ZToxM3B4Ij48
-YnI+PC9zcGFuPjwvZGl2PjxkaXY+PHNwYW4gc3R5bGU9ImZvbnQtZmFtaWx5OmFyaWFsLHNhbnMt
-c2VyaWY7Zm9udC1zaXplOjEzcHgiPktpbmQgUmVnYXJkcyw8L3NwYW4+PC9kaXY+PGRpdj48c3Bh
-biBzdHlsZT0iZm9udC1mYW1pbHk6YXJpYWwsc2Fucy1zZXJpZjtmb250LXNpemU6MTNweCI+RnJl
-ZDwvc3Bhbj48L2Rpdj4KPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPjxicj48YnI+PGRp
-diBjbGFzcz0iZ21haWxfcXVvdGUiPk9uIDE1IEp1bHkgMjAxNCAxNToyNywgRGVuaXMgS2Vuemlv
-ciA8c3BhbiBkaXI9Imx0ciI+Jmx0OzxhIGhyZWY9Im1haWx0bzpkZW5rZW56QGdtYWlsLmNvbSIg
-dGFyZ2V0PSJfYmxhbmsiPmRlbmtlbnpAZ21haWwuY29tPC9hPiZndDs8L3NwYW4+IHdyb3RlOjxi
-cj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhl
-eDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij4KSGkgRnJlZGVy
-aWssPGJyPgo8ZGl2IGNsYXNzPSIiPjxicj4KT24gMDcvMTUvMjAxNCAwMjowMyBBTSwgRnJlZGVy
-aWsgTG90dGVyIHdyb3RlOjxicj4KJmd0OyBIaSw8YnI+CiZndDs8YnI+CiZndDsgSSBhbSB3b3Jr
-aW5nIG9uIHVCbG94IHN1cHBvcnQgaW4gT2Zvbm8uIE15IGFpbSBpcyBmdXJ0aGVyIHRoYW4gdGhl
-PGJyPgomZ3Q7IHRyYWRpdGlvbmFsIGRlc2t0b3AgdHlwZSB1c2UgY2FzZSwgc28gSSBhbSBleHRl
-bmRpbmcgT2Zvbm8gd2l0aCBhIGN1c3RvbTxicj4KJmd0OyBBUE4gcHJvdmlzaW9uaW5nIHNlcnZp
-Y2UuPGJyPgomZ3Q7PGJyPgomZ3Q7IEkgd2FudCB0byBnZXQgc29tZSB0aXBzIG9uIGhvdyBJIHNo
-b3VsZCBwcm9jZWVkIGJlY2F1c2UgSSBkbyBub3Qgd2lzaCB0bzxicj4KJmd0OyBnbyBpbnRvIGFu
-IHVuaW50ZW50aW9uYWwgZGlyZWN0aW9uLjxicj4KJmd0Ozxicj4KJmd0OyBXZSBoYXZlIDNyZCBw
-YXJ0eSBzb2Z0d2FyZSB0aGF0IG5lZWRzIHRvIGZpbmVseSBjb250cm9sIHRoZSBHUFJTPGJyPgom
-Z3Q7IHNlc3Npb24sIGNvbnN0YW50bHkgbW9uaXRvcmluZyBhbmQgc3dpdGNoaW5nIEFQTiYjMzk7
-cyBhcyB0aGUgbmV0d29yayBjaGFuZ2VzLjxicj4KJmd0Ozxicj4KJmd0OyBJIG5lZWQgYSB3YXkg
-Zm9yIG91ciBzb2Z0d2FyZSB0byBrbm93IHdoZW4gdGhlIGNvbnRleHQgaGFzIHN1Y2Nlc3NmdWxs
-eTxicj4KJmd0OyBiZWVuIGFjdGl2YXRlZCwgZm9yIGV4YW1wbGUgYSBwb3N0X2NvbnRleHRfYWN0
-aXZhdGUoKSBpbiB0aGUgZHJpdmVyPGJyPgo8YnI+CjwvZGl2PlRoZSBkcml2ZXIgaXMgYWxyZWFk
-eSBwZXJmb3JtaW5nIHRoZSAmcXVvdDtjYWxsYmFjayZxdW90OyBpbnRvIHRoZSBjb3JlLiDCoFNv
-IHdoYXQ8YnI+CnlvdSYjMzk7cmUgbG9va2luZyBmb3IgaXMgcHJvYmFibHkgc29tZXRoaW5nLiDC
-oFBlcmhhcHMgc29tZXRoaW5nIHNpbWlsYXIgdG88YnI+Cl9fb2Zvbm9fbmV0cmVnX2FkZF9zdGF0
-dXNfd2F0Y2guIMKgQmVmb3JlIHlvdSBnbyB0aGVyZSB0aG91Z2guLi48YnI+CjxkaXYgY2xhc3M9
-IiI+PGJyPgomZ3Q7IHdvdWxkIGJlIGdyZWF0LCBzbyB0aGF0IEkgY291bGQgYWRkIGEgREJVUyBt
-ZXNzYWdlIGluIG91ciBjdXN0b20gZHJpdmVyPGJyPgomZ3Q7IHdoaWNoIHNlbmQgc3RhdGVzIHRv
-IG91ciBzb2Z0d2FyZSBpbiBvcmRlciB0byBrbm93IHdoZW4gYSBzb2NrZXQgY291bGQ8YnI+CiZn
-dDsgYmUgb3BlbmVkIChub3Qgb25seSB0aGUgcG9zdF9jb250ZXh0X2FjdGl2YXRlKCkgYnV0IEkg
-YWxzbyBuZWVkIHRoZTxicj4KJmd0OyBvdGhlciBzdGF0ZXMgdGhlIGRyaXZlciB3aWxsIGVudGVy
-KS48YnI+Cjxicj4KPC9kaXY+U2luY2UgeW91IGFyZSBzZW5kaW5nIGEgRC1CdXMgbWVzc2FnZSBh
-bnl3YXksIGlzIGl0IG5vdCBwb3NzaWJsZSBmb3IgdGhlPGJyPgozcmQgcGFydHkgc29mdHdhcmUg
-dG8gbW9uaXRvciB0aGUgb0Zvbm8gY29udGV4dCBzdGF0ZSBkaXJlY3RseT8gwqBFLmcuPGJyPgp0
-aGUgb3JnLm9mb25vLkNvbm5lY3Rpb25Db250ZXh0LkFjdGl2ZSBQcm9wZXJ0eSBzZWVtcyB0byBk
-byBleGFjdGx5IHdoYXQ8YnI+CnlvdSBuZWVkLiDCoFdoYXQgb3RoZXIgc3RhdGVzIGRvIHlvdSBy
-ZXF1aXJlPzxicj4KPGRpdiBjbGFzcz0iIj48YnI+CiZndDs8YnI+CiZndDsgSXMgdGhlcmUgYSBi
-ZXR0ZXIgYXBwcm9hY2ggdGhhbiBhZGRpbmcgYSBjYWxsYmFjayBmb3Igc3VjY2Vzc2Z1bCBjb250
-ZXh0PGJyPgomZ3Q7IGFjdGl2YXRpb24gaW4gdGhlIGRyaXZlciwgaW4gT2Zvbm8/IEkgZmVlbCBs
-aWtlIENvbm5tYW4gaXMgdG9vIGRpc3RhbnQ8YnI+CiZndDsgYW5kIHVuYXdhcmUgb2YgZGV0YWls
-ZWQgT2Zvbm8gc3RhdGVzIHRvIG1hbmFnZSB0aGlzIG9uIHRoZSBDb25ubWFuIHNpZGUuPGJyPgom
-Z3Q7PGJyPgomZ3Q7IFNlY29uZGx5LCBJIGhhdmUgdGVzdGVkIGNoYW5naW5nIHN0YXRlcyBvbiB0
-aGUgT2Zvbm8gc2lkZSB3aXRoIHRoZTxicj4KJmd0OyBQeXRob24gc2NyaXB0cyAoZW5hYmxlIC0m
-Z3Q7IG9ubGluZSApIGFuZCB2aXNhIHZlcnNhIGFuZCBjb25ubWFuIHNlZW1zIE9LPGJyPgomZ3Q7
-IHdpdGggbWUgZG9pbmcgdGhpcy4gSSBwbGFuIHRvIGRvIHRoaXMgZnJvbSBteSAzcmQgcGFydHkg
-YXBwbGljYXRpb24gdG88YnI+CiZndDsgbWFuYWdlIEFQTnMgYW5kIHNvY2tldHMuIElzIHRoaXMg
-YW4gYWNjZXB0YWJsZSB1c2UgY2FzZSB3aXRoIENvbm5tYW4sIGl0PGJyPgomZ3Q7IHNlZW1zIGxp
-a2UgaXQgaGFzIGJlZW4gZGVzaWduZWQgc28gdGhhdCBDb25ubWFuIGFsd2F5cyBnZXRzIHVwZGF0
-ZXMgb248YnI+CiZndDsgT2Zvbm8gc3RhdGUgY2hhbmdlcy48YnI+Cjxicj4KPC9kaXY+QWxsIGNs
-aWVudHMgb2Ygb0Zvbm8gYXJlIG5vdGlmaWVkIG9mIHN0YXRlIGNoYW5nZXMgcmVnYXJkbGVzcyBv
-ZiB3aGljaDxicj4KY2xpZW50IGluaXRpYXRlZCBhIHBhcnRpY3VsYXIgc3RhdGUgY2hhbmdlLiDC
-oFNvIENvbm5NYW4gc2hvdWxkIGJlIGp1c3Q8YnI+CmZpbmUgd2l0aCB5b3UgbWFuaXB1bGF0aW5n
-IHRoZSBjb250ZXh0IHN0YXRlcyBmcm9tIG90aGVyIGNsaWVudHMuIMKgWW91PGJyPgptaWdodCBp
-bnRlcmZlcmUgd2l0aCBzb21lIGF1dG8tY29ubmVjdCAvIHJlY29ubmVjdCBiZWhhdmlvciB0aGVy
-ZSwgYnV0PGJyPgpzb3VuZHMgbGlrZSB5b3UgZG9uJiMzOTt0IHdhbnQgdGhhdCBiZWhhdmlvciBh
-Y3RpdmUgYW55d2F5Ljxicj4KPGJyPgpSZWdhcmRzLDxicj4KLURlbmlzPGJyPgo8L2Jsb2NrcXVv
-dGU+PC9kaXY+PGJyPjwvZGl2Pgo=
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
+aWx5OmNvdXJpZXIgbmV3LG1vbm9zcGFjZSI+SGkgQ2VkcmljLCB0YW5rcyBmb3IgeW91ciBhbnN3
+ZXIuPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPjxicj48ZGl2IGNsYXNzPSJnbWFpbF9x
+dW90ZSI+MjAxNC0wNy0xMiA4OjI4IEdNVC0wMzowMCBDZWRySWMgSmVoYXNzZSA8c3BhbiBkaXI9
+Imx0ciI+Jmx0OzxhIGhyZWY9Im1haWx0bzpjZWRyaWMuamVoYXNzZUBnbWFpbC5jb20iIHRhcmdl
+dD0iX2JsYW5rIj5jZWRyaWMuamVoYXNzZUBnbWFpbC5jb208L2E+Jmd0Ozwvc3Bhbj46PGJyPgo8
+YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhleDti
+b3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij48ZGl2IHN0eWxlPSJ3
+b3JkLXdyYXA6YnJlYWstd29yZCI+SGksPGRpdiBjbGFzcz0iIj48ZGl2Pjxicj48ZGl2PjxkaXY+
+T24gMTEgSnVsIDIwMTQsIGF0IDE5OjMyLCBKZXLDtG5pbW8gTG9wZXMgJmx0OzxhIGhyZWY9Im1h
+aWx0bzpsb3Blc2plcm9uaW1vQGdtYWlsLmNvbSIgdGFyZ2V0PSJfYmxhbmsiPmxvcGVzamVyb25p
+bW9AZ21haWwuY29tPC9hPiZndDsgd3JvdGU6PC9kaXY+Cjxicj48YmxvY2txdW90ZSB0eXBlPSJj
+aXRlIj48ZGl2IGRpcj0ibHRyIj48ZGl2IHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIg
+bmV3JiMzOTssbW9ub3NwYWNlIj5IaSw8L2Rpdj48ZGl2IHN0eWxlPSJmb250LWZhbWlseTomIzM5
+O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj48YnI+PC9kaXY+PGRpdiBzdHlsZT0iZm9udC1m
+YW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7LG1vbm9zcGFjZSI+CgpJJiMzOTttIHRyeWluZyB0
+byB1c2Ugb2Zvbm8gYW5kIGEgSHVhd2VpIEUzMTMxIG1vZGVtLjwvZGl2PjxkaXYgc3R5bGU9ImZv
+bnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPjxicj5GaXJzdCBvZmYg
+YWxsLCBJIG5lZWQgdG8gY2hhbmdlwqBBVCtDR0RBVEE9JnF1b3Q7UFBQJnF1b3Q7LCV1IHRvwqBB
+VEQqOTkqKioldSMgdG8gbWFrZSBpdCB3b3JrLiBCdXQgdGhhdCYjMzk7cyBvay48L2Rpdj4KCjxk
+aXYgc3R5bGU9ImZvbnQtZmFtaWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPjxi
+cj48L2Rpdj48ZGl2IHN0eWxlPSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9u
+b3NwYWNlIj5UaGUgcHJvYmxlbSwgaXMgaWYgZGlzY29ubmVjdCwgYW5kIHRyeSB0byBjb25uZWN0
+IGFnYWluLCBpdCBkb2VzbiYjMzk7dCB3b3JrLsKgPC9kaXY+CjxkaXYgc3R5bGU9ImZvbnQtZmFt
+aWx5OiYjMzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2UiPjxicj48L2Rpdj48L2Rpdj48L2Js
+b2NrcXVvdGU+PC9kaXY+PGJyPjwvZGl2PjwvZGl2PjxkaXY+SeKAmXZlIHNlZW4gdGhlIHNhbWUg
+YmVoYXZpb3VyIHdpdGggYW4gSHVhd2VpIEUzMDMuwqA8L2Rpdj48ZGl2PlRoZSBwcm9ibGVtIHdp
+dGggdGhlIEUzMDMgaXMgb0Zvbm8gc2VuZHMgQVQmYW1wO0MwIHRvIHRoZSBtb2RlbSB0byBhdm9p
+ZCBEQ0QgZHJvcHMgYWZ0ZXIgdGhlIGRpc2Nvbm5lY3QsIGJ1dCB0aGUgbW9kZW0gZHJvcHMgaXQg
+YW55d2F5LiBUaGlzIGNhdXNlcyBhIHR0eSBoYW5ndXAsIGFuZCBvRm9ubyBjYW7igJl0IHNlbmQg
+Y29tbWFuZHMgdG8gdGhlIG1vZGVtIHBvcnQgYW55bW9yZS48L2Rpdj4KPGRpdj48YnI+PC9kaXY+
+PGRpdj5UaGUgRTMxMzEgY291bGQgaGF2ZSB0aGUgc2FtZSBidWfigKY8L2Rpdj48ZGl2Pjxicj48
+L2Rpdj48ZGl2PnJlZ2FyZHMsPC9kaXY+PGRpdj5DZWRyaWM8L2Rpdj48L2Rpdj48ZGl2IGNsYXNz
+PSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7
+LG1vbm9zcGFjZTtkaXNwbGF5OmlubGluZSI+4oCLPC9kaXY+PC9ibG9ja3F1b3RlPgo8ZGl2IGNs
+YXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYj
+Mzk7LG1vbm9zcGFjZSI+PGJyPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxl
+PSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj5ZZXMsIEkganVz
+dCBnb3QgYSBFMzAzIGFuZCBpdCBoYXMgdGhlIHNhbWUgcHJvYmxlbS7CoDwvZGl2Pgo8ZGl2IGNs
+YXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYj
+Mzk7LG1vbm9zcGFjZSI+PGJyPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxl
+PSJmb250LWZhbWlseTomIzM5O2NvdXJpZXIgbmV3JiMzOTssbW9ub3NwYWNlIj5JcyB0aGVyZSBh
+bnkgd29ya2Fyb3VuZCBmb3IgdGhpcz8gQXQgbGVhc3QgaGVyZSBpbiBCcmF6aWwsIHRoaXMgbW9k
+ZWxzLCBFMzEzMSBhbmQgRTMwMyBhcmUgcmVhbGx5IGNvbW1vbi7CoDwvZGl2Pgo8ZGl2IGNsYXNz
+PSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6JiMzOTtjb3VyaWVyIG5ldyYjMzk7
+LG1vbm9zcGFjZSI+4oCLPC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHls
+ZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1s
+ZWZ0OjFleCI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OiYj
+Mzk7Y291cmllciBuZXcmIzM5Oyxtb25vc3BhY2U7ZGlzcGxheTppbmxpbmUiPgrigIs8L2Rpdj48
+YnI+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX188YnI+Cm9m
+b25vIG1haWxpbmcgbGlzdDxicj4KPGEgaHJlZj0ibWFpbHRvOm9mb25vQG9mb25vLm9yZyI+b2Zv
+bm9Ab2Zvbm8ub3JnPC9hPjxicj4KPGEgaHJlZj0iaHR0cHM6Ly9saXN0cy5vZm9uby5vcmcvbWFp
+bG1hbi9saXN0aW5mby9vZm9ubyIgdGFyZ2V0PSJfYmxhbmsiPmh0dHBzOi8vbGlzdHMub2Zvbm8u
+b3JnL21haWxtYW4vbGlzdGluZm8vb2Zvbm88L2E+PGJyPgo8YnI+PC9ibG9ja3F1b3RlPjwvZGl2
+Pjxicj48L2Rpdj48L2Rpdj4K
 
---===============1000520104016684144==--
+--===============0743354504510190936==--
 
