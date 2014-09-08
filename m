@@ -1,29 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============1597443357954400577=="
+Content-Type: multipart/mixed; boundary="===============5492441698239225123=="
 MIME-Version: 1.0
-From: Georg Chini <georg@chini.tk>
-Subject: Problem with hangup of multiple calls
-Date: Sat, 16 Aug 2014 22:07:51 +0200
-Message-ID: <53EFBA17.2020705@chini.tk>
+From: Thangamanimaran, Radhakris (R.) <rthangam@visteon.com>
+Subject: ofono wiki
+Date: Mon, 08 Sep 2014 11:59:50 +0000
+Message-ID: <86513b8d800c4f7499edf6e8c49e26f7@DB3PR06MB092.eurprd06.prod.outlook.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1597443357954400577==
+--===============5492441698239225123==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi,
+The below links are broken in the ofono website.
+https://ofono.org/wiki/ofono-supported-modems
+https://ofono.org/wiki/how-enable-modem-ofono
 
-I am using ofono (compiled from git) and bluez 5.21 to access
-my old Nokia 6230i. I have a problem, when I call two parties.
-When one call is ended, I do not receive a dbus signal. As soon
-as I hangup the second call, I get "CallRemoved" messages for
-both calls, so the first signal is delayed until the second call is
-finished.
-Any idea why this happens or how to debug it further?
+Please provide the updated links. Thanks.
 
 Regards
-               Georg
+Manimaran
 
---===============1597443357954400577==--
+
+--===============5492441698239225123==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNv
+bnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxtZXRhIG5hbWU9IkdlbmVyYXRv
+ciIgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+
+PCEtLQovKiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseTpDYWxp
+YnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAyIDQ7fQovKiBTdHlsZSBEZWZpbml0aW9u
+cyAqLwpwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsCgl7bWFyZ2luOjBp
+bjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWls
+eToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe21z
+by1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJs
+aW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7bXNvLXN0eWxlLXBy
+aW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNw
+YW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQt
+ZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xvcjp3aW5kb3d0ZXh0O30KLk1zb0No
+cERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTt9CkBwYWdlIFdvcmRTZWN0aW9u
+MQoJe3NpemU6OC41aW4gMTEuMGluOwoJbWFyZ2luOjEuMGluIDEuMGluIDEuMGluIDEuMGluO30K
+ZGl2LldvcmRTZWN0aW9uMQoJe3BhZ2U6V29yZFNlY3Rpb24xO30KLS0+PC9zdHlsZT48IS0tW2lm
+IGd0ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVkZWZhdWx0cyB2OmV4dD0iZWRpdCIgc3BpZG1heD0i
+MTAyNiIgLz4KPC94bWw+PCFbZW5kaWZdLS0+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CjxvOnNo
+YXBlbGF5b3V0IHY6ZXh0PSJlZGl0Ij4KPG86aWRtYXAgdjpleHQ9ImVkaXQiIGRhdGE9IjEiIC8+
+CjwvbzpzaGFwZWxheW91dD48L3htbD48IVtlbmRpZl0tLT4KPC9oZWFkPgo8Ym9keSBsYW5nPSJF
+Ti1VUyIgbGluaz0iYmx1ZSIgdmxpbms9InB1cnBsZSI+CjxkaXYgY2xhc3M9IldvcmRTZWN0aW9u
+MSI+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPkhpLDxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNv
+Tm9ybWFsIj5UaGUgYmVsb3cgbGlua3MgYXJlIGJyb2tlbiBpbiB0aGUgb2Zvbm8gd2Vic2l0ZS48
+bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGEgaHJlZj0iaHR0cHM6Ly9vZm9u
+by5vcmcvd2lraS9vZm9uby1zdXBwb3J0ZWQtbW9kZW1zIj5odHRwczovL29mb25vLm9yZy93aWtp
+L29mb25vLXN1cHBvcnRlZC1tb2RlbXM8L2E+PG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29O
+b3JtYWwiPjxhIGhyZWY9Imh0dHBzOi8vb2Zvbm8ub3JnL3dpa2kvaG93LWVuYWJsZS1tb2RlbS1v
+Zm9ubyI+aHR0cHM6Ly9vZm9uby5vcmcvd2lraS9ob3ctZW5hYmxlLW1vZGVtLW9mb25vPC9hPjxv
+OnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvcD4K
+PHAgY2xhc3M9Ik1zb05vcm1hbCI+UGxlYXNlIHByb3ZpZGUgdGhlIHVwZGF0ZWQgbGlua3MuIFRo
+YW5rcy48bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86cD4mbmJzcDs8L286
+cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPlJlZ2FyZHM8bzpwPjwvbzpwPjwvcD4KPHAgY2xh
+c3M9Ik1zb05vcm1hbCI+TWFuaW1hcmFuPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3Jt
+YWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgo8L2Rpdj4KPC9ib2R5Pgo8L2h0bWw+Cg==
+
+--===============5492441698239225123==--
 
