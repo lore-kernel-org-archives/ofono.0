@@ -1,72 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============5492441698239225123=="
+Content-Type: multipart/mixed; boundary="===============0244040911731162588=="
 MIME-Version: 1.0
-From: Thangamanimaran, Radhakris (R.) <rthangam@visteon.com>
-Subject: ofono wiki
-Date: Mon, 08 Sep 2014 11:59:50 +0000
-Message-ID: <86513b8d800c4f7499edf6e8c49e26f7@DB3PR06MB092.eurprd06.prod.outlook.com>
+From: Thiago Farina <tfransosi@gmail.com>
+Subject: gsm modem
+Date: Mon, 15 Sep 2014 11:03:25 -0300
+Message-ID: <CACnwZYdTEjqP3bGzvzkY4zPGEbZ=1-TfopDfE=oAd6fRDy=B0w@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5492441698239225123==
+--===============0244040911731162588==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
-The below links are broken in the ofono website.
-https://ofono.org/wiki/ofono-supported-modems
-https://ofono.org/wiki/how-enable-modem-ofono
 
-Please provide the updated links. Thanks.
+This was probably answered many times before, so please forgive me if
+I'm asking it again.
 
-Regards
-Manimaran
+I'm want to buy a usb modem to test ofono. I want a cheap one if possible.
 
+Could anyone point me to one that I could buy (possibly giving me the
+url to a site I could buy it)?
 
---===============5492441698239225123==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+I want one that I could use to send sms mainly and make calls (if
+possible) but only sms is enough for me.
 
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNv
-bnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxtZXRhIG5hbWU9IkdlbmVyYXRv
-ciIgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+
-PCEtLQovKiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseTpDYWxp
-YnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAyIDQ7fQovKiBTdHlsZSBEZWZpbml0aW9u
-cyAqLwpwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsCgl7bWFyZ2luOjBp
-bjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWls
-eToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe21z
-by1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJs
-aW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7bXNvLXN0eWxlLXBy
-aW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNw
-YW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQt
-ZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xvcjp3aW5kb3d0ZXh0O30KLk1zb0No
-cERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTt9CkBwYWdlIFdvcmRTZWN0aW9u
-MQoJe3NpemU6OC41aW4gMTEuMGluOwoJbWFyZ2luOjEuMGluIDEuMGluIDEuMGluIDEuMGluO30K
-ZGl2LldvcmRTZWN0aW9uMQoJe3BhZ2U6V29yZFNlY3Rpb24xO30KLS0+PC9zdHlsZT48IS0tW2lm
-IGd0ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVkZWZhdWx0cyB2OmV4dD0iZWRpdCIgc3BpZG1heD0i
-MTAyNiIgLz4KPC94bWw+PCFbZW5kaWZdLS0+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CjxvOnNo
-YXBlbGF5b3V0IHY6ZXh0PSJlZGl0Ij4KPG86aWRtYXAgdjpleHQ9ImVkaXQiIGRhdGE9IjEiIC8+
-CjwvbzpzaGFwZWxheW91dD48L3htbD48IVtlbmRpZl0tLT4KPC9oZWFkPgo8Ym9keSBsYW5nPSJF
-Ti1VUyIgbGluaz0iYmx1ZSIgdmxpbms9InB1cnBsZSI+CjxkaXYgY2xhc3M9IldvcmRTZWN0aW9u
-MSI+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPkhpLDxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNv
-Tm9ybWFsIj5UaGUgYmVsb3cgbGlua3MgYXJlIGJyb2tlbiBpbiB0aGUgb2Zvbm8gd2Vic2l0ZS48
-bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGEgaHJlZj0iaHR0cHM6Ly9vZm9u
-by5vcmcvd2lraS9vZm9uby1zdXBwb3J0ZWQtbW9kZW1zIj5odHRwczovL29mb25vLm9yZy93aWtp
-L29mb25vLXN1cHBvcnRlZC1tb2RlbXM8L2E+PG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29O
-b3JtYWwiPjxhIGhyZWY9Imh0dHBzOi8vb2Zvbm8ub3JnL3dpa2kvaG93LWVuYWJsZS1tb2RlbS1v
-Zm9ubyI+aHR0cHM6Ly9vZm9uby5vcmcvd2lraS9ob3ctZW5hYmxlLW1vZGVtLW9mb25vPC9hPjxv
-OnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvcD4K
-PHAgY2xhc3M9Ik1zb05vcm1hbCI+UGxlYXNlIHByb3ZpZGUgdGhlIHVwZGF0ZWQgbGlua3MuIFRo
-YW5rcy48bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86cD4mbmJzcDs8L286
-cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPlJlZ2FyZHM8bzpwPjwvbzpwPjwvcD4KPHAgY2xh
-c3M9Ik1zb05vcm1hbCI+TWFuaW1hcmFuPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3Jt
-YWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgo8L2Rpdj4KPC9ib2R5Pgo8L2h0bWw+Cg==
+It needs to work with carriers from Brazil like Claro, Vivo, Tim, Oi, etc.
 
---===============5492441698239225123==--
+Thanks in advance.
+
+Best regards,
+
+-- =
+
+Thiago Farina
+
+--===============0244040911731162588==--
 
