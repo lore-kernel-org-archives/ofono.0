@@ -1,54 +1,137 @@
-Content-Type: multipart/mixed; boundary="===============4986307340340400458=="
+Content-Type: multipart/mixed; boundary="===============5344630130848614543=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Enrico Sau <enrico.sau@gmail.com>
 Subject: Re: Telit driver implementation
-Date: Tue, 16 Sep 2014 08:01:00 -0500
-Message-ID: <5418348C.3090602@gmail.com>
-In-Reply-To: <CAH4ZQwudt7S0twGZRyMXOOZhoPcNJSjUmLo-wmniY9DrDgL4KQ@mail.gmail.com>
+Date: Tue, 16 Sep 2014 15:34:34 +0200
+Message-ID: <CAH4ZQwvYq0SDPL-DEYhfv1gOCMSJ63DkgamUwhk6eaTjBwNsqA@mail.gmail.com>
+In-Reply-To: <5418348C.3090602@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4986307340340400458==
+--===============5344630130848614543==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Enrico,
+Hi Denis,
 
-Please do not top-post on this mailing list.
+2014-09-16 15:01 GMT+02:00 Denis Kenzior <denkenz@gmail.com>:=E2=80=8B
+>
+> Generally drivers/ directory contains atom drivers.  e.g. radio_settings,
+> gprs, netreg, etc.  plugins/ contains modem drivers. There are a few
+> additional special cases, but that is essentially the break down.
 
-On 09/16/2014 04:36 AM, Enrico Sau wrote:
-> Thanx for the quick answer,
-> what I don't really understand is the difference between drivers and
-> plugins in ofono.
 
-Generally drivers/ directory contains atom drivers.  e.g. =
+=E2=80=8BWhat do you mean with modem driver?
 
-radio_settings, gprs, netreg, etc.  plugins/ contains modem drivers. =
 
-There are a few additional special cases, but that is essentially the =
+> What methods do you need exactly?
+>
 
-break down.
+=E2=80=8BThere are more than one, and I'm still working on the requirements=
+, but,
+I'm pretty sure I will need to call the AT#TESTMODE command from my
+application for example. How should I handle it?=E2=80=8B
 
-> Let's take an example: I need radio-settings interface to get and set
-> the technology preference. This interface is not implemented in atmodem
-> driver.
-> Is it better to extend atmodem driver or to create a new driver? If I
-> can do it in plugin it would be fine, but how?
 
-In this case it would be better to write a new atom driver. e.g. =
 
-drivers/telitmodem/radio-settings.c.
+=E2=80=8BThere is one more thing: I tried to implement a new =E2=80=8Bdriver
+drivers/telitmodem/radio-settings.c
+=E2=80=8B, and I added the call in he910 plugin post_online method: =E2=80=
+=8B
 
-> Plus I will need to extend the dbus interfaces to have some more method.
-> Looking at the dbus code I see that it calls the driver implementations,
-> so I think I have to either extend the atmodem driver or to create a new
-> one.
+ofono_radio_settings_create(modem, 0, "telitmodem", data->chat
+=E2=80=8B);
 
-What methods do you need exactly?
+Everything
+=E2=80=8B seems fine (I got no errors), and I started daemon with
 
-Regards,
--Denis
+ofonod --plugin=3Dudevng,telitmodem,atmodem,he910 -nd
+=E2=80=8B
+ =E2=80=8B
 
---===============4986307340340400458==--
+Anyway my driver is never called. Do I need to add telitmodem name
+somewhere in order to be recognized from ofono?
+
+Thank you.
+Enrico
+
+--===============5344630130848614543==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
+aWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SGkgRGVuaXMsPGJyPjwvZGl2PjxkaXYgY2xhc3M9Imdt
+YWlsX2V4dHJhIj4KPGJyPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj4yMDE0LTA5LTE2IDE1OjAx
+IEdNVCswMjowMCBEZW5pcyBLZW56aW9yIDxzcGFuIGRpcj0ibHRyIj4mbHQ7PGEgaHJlZj0ibWFp
+bHRvOmRlbmtlbnpAZ21haWwuY29tIiB0YXJnZXQ9Il9ibGFuayI+ZGVua2VuekBnbWFpbC5jb208
+L2E+Jmd0Ozwvc3Bhbj46PHNwYW4gc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJp
+ZiI+4oCLPC9zcGFuPjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdp
+bjowcHggMHB4IDBweCAwLjhleDtib3JkZXItbGVmdC13aWR0aDoxcHg7Ym9yZGVyLWxlZnQtY29s
+b3I6cmdiKDIwNCwyMDQsMjA0KTtib3JkZXItbGVmdC1zdHlsZTpzb2xpZDtwYWRkaW5nLWxlZnQ6
+MWV4Ij4KR2VuZXJhbGx5IGRyaXZlcnMvIGRpcmVjdG9yeSBjb250YWlucyBhdG9tIGRyaXZlcnMu
+wqAgZS5nLiByYWRpb19zZXR0aW5ncywgZ3BycywgbmV0cmVnLCBldGMuwqAgcGx1Z2lucy8gY29u
+dGFpbnMgbW9kZW0gZHJpdmVycy4gVGhlcmUgYXJlIGEgZmV3IGFkZGl0aW9uYWwgc3BlY2lhbCBj
+YXNlcywgYnV0IHRoYXQgaXMgZXNzZW50aWFsbHkgdGhlIGJyZWFrIGRvd24uPC9ibG9ja3F1b3Rl
+PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZv
+bnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+4oCLV2hhdCBkbyB5b3UgbWVhbiB3aXRoIG1v
+ZGVtIGRyaXZlcj88L2Rpdj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0i
+Zm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj48YnI+PC9kaXY+PGJsb2NrcXVvdGUgY2xh
+c3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAwcHggMHB4IDAuOGV4O2JvcmRlci1s
+ZWZ0LXdpZHRoOjFweDtib3JkZXItbGVmdC1jb2xvcjpyZ2IoMjA0LDIwNCwyMDQpO2JvcmRlci1s
+ZWZ0LXN0eWxlOnNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPjxzcGFuPgo8YnI+PC9zcGFuPgpXaGF0
+IG1ldGhvZHMgZG8geW91IG5lZWQgZXhhY3RseT88YnI+PC9ibG9ja3F1b3RlPjxkaXY+PGJyPjwv
+ZGl2PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZl
+cmRhbmEsc2Fucy1zZXJpZjtkaXNwbGF5OmlubGluZSI+4oCLVGhlcmUgYXJlIG1vcmUgdGhhbiBv
+bmUsIGFuZCBJJiMzOTttIHN0aWxsIHdvcmtpbmcgb24gdGhlIHJlcXVpcmVtZW50cywgYnV0LCBJ
+JiMzOTttIHByZXR0eSBzdXJlIEkgd2lsbCBuZWVkIHRvIGNhbGwgdGhlIEFUI1RFU1RNT0RFIGNv
+bW1hbmQgZnJvbSBteSBhcHBsaWNhdGlvbiBmb3IgZXhhbXBsZS4gSG93IHNob3VsZCBJIGhhbmRs
+ZSBpdD/igIs8L2Rpdj7CoDwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+
+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fu
+cy1zZXJpZjtkaXNwbGF5OmlubGluZSI+4oCLVGhlcmUgaXMgb25lIG1vcmUgdGhpbmc6IEkgdHJp
+ZWQgdG8gaW1wbGVtZW50IGEgbmV3IOKAi2RyaXZlcsKgPC9kaXY+PHNwYW4gc3R5bGU9ImZvbnQt
+c2l6ZToxM3B4O2ZvbnQtZmFtaWx5OmFyaWFsLHNhbnMtc2VyaWYiPmRyaXZlcnMvdGVsaXRtb2Rl
+bS9yYWRpby08L3NwYW4+PHUgc3R5bGU9ImZvbnQtc2l6ZToxM3B4O2ZvbnQtZmFtaWx5OmFyaWFs
+LHNhbnMtc2VyaWYiPjwvdT48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEzcHg7Zm9udC1mYW1pbHk6
+YXJpYWwsc2Fucy1zZXJpZiI+c2V0dGk8L3NwYW4+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxM3B4
+O2ZvbnQtZmFtaWx5OmFyaWFsLHNhbnMtc2VyaWYiPm5ncy5jPGRpdiBjbGFzcz0iZ21haWxfZGVm
+YXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZjtkaXNwbGF5OmlubGlu
+ZSI+4oCLLCBhbmQgSSBhZGRlZCB0aGUgY2FsbCBpbiBoZTkxMCBwbHVnaW4gcG9zdF9vbmxpbmUg
+bWV0aG9kOiDigIs8L2Rpdj48L3NwYW4+PC9kaXY+PGRpdj48c3BhbiBzdHlsZT0iZm9udC1zaXpl
+OjEzcHg7Zm9udC1mYW1pbHk6YXJpYWwsc2Fucy1zZXJpZiI+PGRpdiBjbGFzcz0iZ21haWxfZGVm
+YXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZjtkaXNwbGF5OmlubGlu
+ZSI+PGJyPjwvZGl2Pjwvc3Bhbj48L2Rpdj48ZGl2Pjxmb250IGZhY2U9InZlcmRhbmEsIHNhbnMt
+c2VyaWYiPm9mb25vX3JhZGlvX3NldHRpbmdzX2NyZWF0ZShtb2RlbSwgMCwgJnF1b3Q7dGVsaXRt
+b2RlbSZxdW90OywgZGF0YS0mZ3Q7Y2hhdDxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxl
+PSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPuKAiyk7PC9k
+aXY+PC9mb250PjwvZGl2PjxkaXY+PGZvbnQgZmFjZT0idmVyZGFuYSwgc2Fucy1zZXJpZiI+PGRp
+diBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1z
+ZXJpZjtkaXNwbGF5OmlubGluZSI+PGJyPjwvZGl2PjwvZm9udD48L2Rpdj48ZGl2Pjxmb250IGZh
+Y2U9InZlcmRhbmEsIHNhbnMtc2VyaWYiPkV2ZXJ5dGhpbmc8ZGl2IGNsYXNzPSJnbWFpbF9kZWZh
+dWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5l
+Ij7igIsgc2VlbXMgZmluZSAoSSBnb3Qgbm8gZXJyb3JzKSwgYW5kIEkgc3RhcnRlZCBkYWVtb24g
+d2l0aMKgPC9kaXY+PC9mb250PjwvZGl2PjxkaXY+PGZvbnQgZmFjZT0idmVyZGFuYSwgc2Fucy1z
+ZXJpZiI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRh
+bmEsc2Fucy1zZXJpZjtkaXNwbGF5OmlubGluZSI+PGJyPjwvZGl2PjwvZm9udD48L2Rpdj48ZGl2
+Pjxmb250IGZhY2U9InZlcmRhbmEsIHNhbnMtc2VyaWYiPm9mb25vZCAtLXBsdWdpbj11ZGV2bmcs
+dGVsaXRtb2RlbSxhdG1vZGVtLGhlOTEwIC1uZDwvZm9udD48ZGl2IGNsYXNzPSJnbWFpbF9kZWZh
+dWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5l
+Ij7igIs8L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6
+dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5lIj7CoOKAizwvZGl2PjwvZGl2PjxkaXY+
+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fu
+cy1zZXJpZjtkaXNwbGF5OmlubGluZSI+PGJyPjwvZGl2PjwvZGl2PjxkaXY+PGRpdiBjbGFzcz0i
+Z21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZjtkaXNw
+bGF5OmlubGluZSI+QW55d2F5IG15IGRyaXZlciBpcyBuZXZlciBjYWxsZWQuIERvIEkgbmVlZCB0
+byBhZGQgdGVsaXRtb2RlbSBuYW1lIHNvbWV3aGVyZSBpbiBvcmRlciB0byBiZSByZWNvZ25pemVk
+IGZyb20gb2Zvbm8/PC9kaXY+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBz
+dHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5lIj48YnI+
+PC9kaXY+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1m
+YW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5lIj5UaGFuayB5b3UuPC9kaXY+
+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6
+dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5lIj5FbnJpY288L2Rpdj48L2Rpdj48L2Rp
+dj48L2Rpdj48L2Rpdj4K
+
+--===============5344630130848614543==--
 
