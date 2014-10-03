@@ -1,78 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============0576888725053550501=="
+Content-Type: multipart/mixed; boundary="===============4318061558337921528=="
 MIME-Version: 1.0
 From: Enrico Sau <enrico.sau@gmail.com>
 Subject: Re: Unable to get network interface working
-Date: Thu, 25 Sep 2014 17:20:44 +0200
-Message-ID: <CAH4ZQws4isW1sXwBPxmBhB+k_fCSYmz9VRcbpuQYc0xN90FOow@mail.gmail.com>
-In-Reply-To: <54242FA0.3000007@gmail.com>
+Date: Fri, 03 Oct 2014 14:40:31 +0200
+Message-ID: <CAH4ZQwtdtSyR_Fy8R_dEd-PgGpK+uF+7spUxssF_EcnrMh_fLQ@mail.gmail.com>
+In-Reply-To: <CAH4ZQws4isW1sXwBPxmBhB+k_fCSYmz9VRcbpuQYc0xN90FOow@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0576888725053550501==
+--===============4318061558337921528==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2014-09-25 17:07 GMT+02:00 Denis Kenzior <denkenz@gmail.com>:
+Hi Denis, hi all,
 
->
-> oFono side looks good to me.
->
->  NetworkManager[876]: <info> (/he910_0): IPv4 static configuration:
->> NetworkManager[876]: <info> (/he910_0): device state change: prepare ->
->> failed (reason 'ip-config-unavailable') [40 120 5]
->>
->
-> Figure out why this happens.  Are you running everything as root?
->
->
-=E2=80=8BYes, I suppose.
-I'm running ofono daemon as root =E2=80=8B. It is the only thing I'm runnin=
-g.
-=E2=80=8BI'll try to figure out the ip-config-unavailable.
+I finally got the network interface working by uninstalling the network
+manager and manually setting the ppp0 interface with parameters retrieved
+from the modem.
 
-Thanx=E2=80=8B
+I have another problem:
+I start the network interface with activate-context python script, and stop
+with deactivate-context script.
+Once I call deactivate-context, I'm no more able to activate it because ppp
+disconnect function calls io_disconnect method, which clears the at channel.
+The only way to resume the ppp connection is to disable and re-enable the
+modem in order fot the at channel structures to be filled in again.
 
-=E2=80=8BEnrico=E2=80=8B
+Is there any reason for that? Is deactivate-context the correct way to
+temporary stop the network?
 
---===============0576888725053550501==
+Thank you.
+
+
+Enrico
+
+--===============4318061558337921528==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
 PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
-aWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+PHNwYW4gc3R5bGU9ImZvbnQtZmFtaWx5OmFyaWFsIj4y
-MDE0LTA5LTI1IDE3OjA3IEdNVCswMjowMCBEZW5pcyBLZW56aW9yIDwvc3Bhbj48c3BhbiBkaXI9
-Imx0ciIgc3R5bGU9ImZvbnQtZmFtaWx5OmFyaWFsIj4mbHQ7PGEgaHJlZj0ibWFpbHRvOmRlbmtl
-bnpAZ21haWwuY29tIiB0YXJnZXQ9Il9ibGFuayI+ZGVua2VuekBnbWFpbC5jb208L2E+Jmd0Ozwv
-c3Bhbj48c3BhbiBzdHlsZT0iZm9udC1mYW1pbHk6YXJpYWwiPjo8L3NwYW4+PGJyPjwvZGl2Pjxk
-aXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+PGJsb2NrcXVv
-dGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxl
-ZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+PGRpdj48ZGl2IGNsYXNzPSJoNSI+
-Cjxicj48L2Rpdj48L2Rpdj4Kb0Zvbm8gc2lkZSBsb29rcyBnb29kIHRvIG1lLjxzcGFuIGNsYXNz
-PSIiPjxicj4KPGJyPgo8YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJn
-aW46MCAwIDAgLjhleDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4
-Ij4KTmV0d29ya01hbmFnZXJbODc2XTogJmx0O2luZm8mZ3Q7ICgvaGU5MTBfMCk6IElQdjQgc3Rh
-dGljIGNvbmZpZ3VyYXRpb246PGJyPgpOZXR3b3JrTWFuYWdlcls4NzZdOiAmbHQ7aW5mbyZndDsg
-KC9oZTkxMF8wKTogZGV2aWNlIHN0YXRlIGNoYW5nZTogcHJlcGFyZSAtJmd0Ozxicj4KZmFpbGVk
-IChyZWFzb24gJiMzOTtpcC1jb25maWctdW5hdmFpbGFibGUmIzM5OykgWzQwIDEyMCA1XTxicj4K
-PC9ibG9ja3F1b3RlPgo8YnI+PC9zcGFuPgpGaWd1cmUgb3V0IHdoeSB0aGlzIGhhcHBlbnMuwqAg
-QXJlIHlvdSBydW5uaW5nIGV2ZXJ5dGhpbmcgYXMgcm9vdD88ZGl2IGNsYXNzPSJIT0VuWmIiPjxk
-aXYgY2xhc3M9Img1Ij48YnI+PC9kaXY+PC9kaXY+PC9ibG9ja3F1b3RlPjxkaXY+PGJyPjwvZGl2
-PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRh
-bmEsc2Fucy1zZXJpZjtkaXNwbGF5OmlubGluZSI+4oCLWWVzLCBJIHN1cHBvc2UuPC9kaXY+PC9k
-aXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVy
-ZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5lIj5JJiMzOTttIHJ1bm5pbmcgb2Zvbm8gZGFl
-bW9uIGFzIHJvb3Qg4oCLLiBJdCBpcyB0aGUgb25seSB0aGluZyBJJiMzOTttIHJ1bm5pbmcuPC9k
-aXY+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1p
-bHk6dmVyZGFuYSxzYW5zLXNlcmlmIj7igItJJiMzOTtsbCB0cnkgdG8gZmlndXJlIG91dCB0aGUg
-aXAtY29uZmlnLXVuYXZhaWxhYmxlLjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0
-eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L2Rpdj48ZGl2IGNsYXNz
-PSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5U
-aGFueOKAizwvZGl2Pjxicj48L2Rpdj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBz
-dHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj7igItFbnJpY2/igIs8L2Rpdj48
-YnI+PC9kaXY+PC9kaXY+Cg==
+aWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SGkgRGVuaXMsIGhpIGFsbCw8L2Rpdj48ZGl2IGNsYXNz
+PSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj48
+YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZl
+cmRhbmEsc2Fucy1zZXJpZiI+SSBmaW5hbGx5IGdvdCB0aGUgbmV0d29yayBpbnRlcmZhY2Ugd29y
+a2luZyBieSB1bmluc3RhbGxpbmcgdGhlIG5ldHdvcmsgbWFuYWdlciBhbmQgbWFudWFsbHkgc2V0
+dGluZyB0aGUgcHBwMCBpbnRlcmZhY2Ugd2l0aCBwYXJhbWV0ZXJzIHJldHJpZXZlZCBmcm9tIHRo
+ZSBtb2RlbS48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1p
+bHk6dmVyZGFuYSxzYW5zLXNlcmlmIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVs
+dCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SSBoYXZlIGFub3RoZXIg
+cHJvYmxlbTo8L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1p
+bHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5JIHN0YXJ0IHRoZSBuZXR3b3JrIGludGVyZmFjZSB3aXRo
+IGFjdGl2YXRlLWNvbnRleHQgcHl0aG9uIHNjcmlwdCwgYW5kIHN0b3Agd2l0aCBkZWFjdGl2YXRl
+LWNvbnRleHQgc2NyaXB0LjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJm
+b250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPk9uY2UgSSBjYWxsIGRlYWN0aXZhdGUtY29u
+dGV4dCwgSSYjMzk7bSBubyBtb3JlIGFibGUgdG8gYWN0aXZhdGUgaXQgYmVjYXVzZSBwcHAgZGlz
+Y29ubmVjdCBmdW5jdGlvbiBjYWxsc8KgaW9fZGlzY29ubmVjdCBtZXRob2QsIHdoaWNoIGNsZWFy
+cyB0aGUgYXQgY2hhbm5lbC48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0i
+Zm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5UaGUgb25seSB3YXkgdG8gcmVzdW1lIHRo
+ZSBwcHAgY29ubmVjdGlvbiBpcyB0byBkaXNhYmxlIGFuZCByZS1lbmFibGUgdGhlIG1vZGVtIGlu
+IG9yZGVyIGZvdCB0aGUgYXQgY2hhbm5lbCBzdHJ1Y3R1cmVzIHRvIGJlIGZpbGxlZCBpbiBhZ2Fp
+bi48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVy
+ZGFuYSxzYW5zLXNlcmlmIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5
+bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SXMgdGhlcmUgYW55IHJlYXNvbiBm
+b3IgdGhhdD8gSXMgZGVhY3RpdmF0ZS1jb250ZXh0IHRoZSBjb3JyZWN0IHdheSB0byB0ZW1wb3Jh
+cnkgc3RvcCB0aGUgbmV0d29yaz88L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHls
+ZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0i
+Z21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+VGhh
+bmsgeW91LjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnIgY2xlYXI9ImFsbCI+PGRp
+dj48ZGl2Pjxicj48L2Rpdj48ZGl2PkVucmljbzwvZGl2PjwvZGl2Pjxicj48L2Rpdj48L2Rpdj4K
 
---===============0576888725053550501==--
+--===============4318061558337921528==--
 
