@@ -1,38 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============8072667238993992070=="
+Content-Type: multipart/mixed; boundary="===============2236579364624765568=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] atmodem: Restore multiparty call after reconnection
-Date: Wed, 08 Oct 2014 10:17:37 -0500
-Message-ID: <54355591.8090604@gmail.com>
-In-Reply-To: <1412762028-17784-1-git-send-email-sergio.checa@oss.bmw-carit.de>
+Subject: Re: Unable to get network interface working
+Date: Wed, 08 Oct 2014 10:18:17 -0500
+Message-ID: <543555B9.5030808@gmail.com>
+In-Reply-To: <CAH4ZQwsFW5nvNVi01MWZErz+EaJjvhGVej_ZNDQaUuL6kS=6_Q@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8072667238993992070==
+--===============2236579364624765568==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sergio,
+Hi Enrico,
 
-On 10/08/2014 04:53 AM, Sergio Checa Blanco wrote:
-> From: Sergio Checa Blanco <sergio.checa@bmw-carit.de>
+On 10/08/2014 09:50 AM, Enrico Sau wrote:
+>     oFono understands escape sequences, so #1 is sufficient.  On most
+>     hardware we can send AT&C0 to disable #2, but some hardware still
+>     ignores that.
 >
-> When the HFP profile is disconnected while a multiparty call is
-> ongoing, and it is reconnected again, oFono requests the list of
-> current calls to the device with AT+CLCC. In the case of a multiparty
-> call, the response to CLCC is being taken as multiple simple calls.
+> =E2=80=8B
+> Thank you so much,
+> I solved the problem changing the port from "chat" to "modem" for the
+> AT&C0 command in the he910 plugin.
+> It may be a fix for ofono.
 >
-> The attribute mpty parsed in function at_util_parse_clcc is never
-> used nor stored, so there is no way to recompose the information
-> about multi-party calls after a reconnection.
 
-Last I checked it does.  Is ofono_voicecall_mpty_hint() not doing what =
+Feel free to send a patch if you think that the port detection logic is =
 
-you need?
+incorrect.
 
 Regards,
 -Denis
 
---===============8072667238993992070==--
+
+--===============2236579364624765568==--
 
