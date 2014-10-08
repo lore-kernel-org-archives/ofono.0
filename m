@@ -1,88 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============5342277143503870693=="
+Content-Type: multipart/mixed; boundary="===============3733586023482998041=="
 MIME-Version: 1.0
-From: Sergio Checa Blanco <sergio.checa@oss.bmw-carit.de>
-Subject: [PATCH] atmodem: Restore multiparty call after reconnection
-Date: Wed, 08 Oct 2014 11:53:48 +0200
-Message-ID: <1412762028-17784-1-git-send-email-sergio.checa@oss.bmw-carit.de>
+From: Enrico Sau <enrico.sau@gmail.com>
+Subject: Re: Unable to get network interface working
+Date: Wed, 08 Oct 2014 16:50:10 +0200
+Message-ID: <CAH4ZQwsFW5nvNVi01MWZErz+EaJjvhGVej_ZNDQaUuL6kS=6_Q@mail.gmail.com>
+In-Reply-To: <542EB282.2060007@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5342277143503870693==
+--===============3733586023482998041==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Sergio Checa Blanco <sergio.checa@bmw-carit.de>
+>
+> oFono understands escape sequences, so #1 is sufficient.  On most hardware
+> we can send AT&C0 to disable #2, but some hardware still ignores that.
+>
+> =E2=80=8B
+Thank you so much,
+I solved the problem changing the port from "chat" to "modem" for the AT&C0
+command in the he910 plugin.
+It may be a fix for ofono.
 
-When the HFP profile is disconnected while a multiparty call is
-ongoing, and it is reconnected again, oFono requests the list of
-current calls to the device with AT+CLCC. In the case of a multiparty
-call, the response to CLCC is being taken as multiple simple calls.
+Regards
+Enrico Sau=E2=80=8B
 
-The attribute mpty parsed in function at_util_parse_clcc is never
-used nor stored, so there is no way to recompose the information
-about multi-party calls after a reconnection.
+--===============3733586023482998041==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-This patch stores this attribute coming in the +CLCC response to be
-checked later on when the CallAdded signal is broadcasted. By doing
-this the information about the multi-party character of a call is
-not lost on the way from the +CLCC response to the emitted D-Bus
-signal.
----
- drivers/atmodem/atutil.c | 1 +
- include/types.h          | 1 +
- src/voicecall.c          | 5 +++++
- 3 files changed, 7 insertions(+)
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPjxkaXYgY2xhc3M9ImdtYWls
+X3F1b3RlIj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MHB4
+IDBweCAwcHggMC44ZXg7Ym9yZGVyLWxlZnQtd2lkdGg6MXB4O2JvcmRlci1sZWZ0LWNvbG9yOnJn
+YigyMDQsMjA0LDIwNCk7Ym9yZGVyLWxlZnQtc3R5bGU6c29saWQ7cGFkZGluZy1sZWZ0OjFleCI+
+b0Zvbm8gdW5kZXJzdGFuZHMgZXNjYXBlIHNlcXVlbmNlcywgc28gIzEgaXMgc3VmZmljaWVudC7C
+oCBPbiBtb3N0IGhhcmR3YXJlIHdlIGNhbiBzZW5kIEFUJmFtcDtDMCB0byBkaXNhYmxlICMyLCBi
+dXQgc29tZSBoYXJkd2FyZSBzdGlsbCBpZ25vcmVzIHRoYXQuPGJyPgo8YnI+PC9ibG9ja3F1b3Rl
+PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRh
+bmEsc2Fucy1zZXJpZjtkaXNwbGF5OmlubGluZSI+4oCLPC9kaXY+PHNwYW4gc3R5bGU9ImZvbnQt
+ZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+VGhhbmsgeW91IHNvIG11Y2gswqA8L3NwYW4+PC9k
+aXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVy
+ZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5lIj5JIHNvbHZlZCB0aGUgcHJvYmxlbSBjaGFu
+Z2luZyB0aGUgcG9ydCBmcm9tICZxdW90O2NoYXQmcXVvdDsgdG8gJnF1b3Q7bW9kZW0mcXVvdDsg
+Zm9yIHRoZSBBVCZhbXA7QzAgY29tbWFuZCBpbiB0aGUgaGU5MTAgcGx1Z2luLjwvZGl2PjwvZGl2
+PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRh
+bmEsc2Fucy1zZXJpZjtkaXNwbGF5OmlubGluZSI+SXQgbWF5IGJlIGEgZml4IGZvciBvZm9uby48
+L2Rpdj48L2Rpdj48ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZh
+bWlseTp2ZXJkYW5hLHNhbnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPjxicj48L2Rpdj48L2Rpdj48
+ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5h
+LHNhbnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPlJlZ2FyZHM8L2Rpdj48L2Rpdj48ZGl2PjxkaXYg
+Y2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2Vy
+aWY7ZGlzcGxheTppbmxpbmUiPkVucmljbyBTYXXigIs8L2Rpdj7CoDwvZGl2PjwvZGl2PjwvZGl2
+PjwvZGl2Pgo=
 
-diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
-index 1487348..08626b1 100644
---- a/drivers/atmodem/atutil.c
-+++ b/drivers/atmodem/atutil.c
-@@ -164,6 +164,7 @@ GSList *at_util_parse_clcc(GAtResult *result, unsigned =
-int *ret_mpty_ids)
- 		call->direction =3D dir;
- 		call->status =3D status;
- 		call->type =3D type;
-+		call->multiparty =3D mpty;
- 		strncpy(call->phone_number.number, str,
- 				OFONO_MAX_PHONE_NUMBER_LENGTH);
- 		call->phone_number.type =3D number_type;
-diff --git a/include/types.h b/include/types.h
-index 9a7dfd9..16755ce 100644
---- a/include/types.h
-+++ b/include/types.h
-@@ -91,6 +91,7 @@ struct ofono_call {
- 	int type;
- 	int direction;
- 	int status;
-+	ofono_bool_t multiparty;
- 	struct ofono_phone_number phone_number;
- 	struct ofono_phone_number called_number;
- 	char name[OFONO_MAX_CALLER_NAME_LENGTH + 1];
-diff --git a/src/voicecall.c b/src/voicecall.c
-index d11a4cd..8bf0631 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -2343,6 +2343,11 @@ void ofono_voicecall_notify(struct ofono_voicecall *=
-vc,
- =
-
- 	vc->call_list =3D g_slist_insert_sorted(vc->call_list, v, call_compare);
- =
-
-+	if (call->multiparty) {
-+		vc->multiparty_list =3D g_slist_insert_sorted(
-+			vc->multiparty_list, v, call_compare);
-+	}
-+
- 	voicecalls_emit_call_added(vc, v);
- =
-
- 	return;
--- =
-
-2.1.1
-
-
---===============5342277143503870693==--
+--===============3733586023482998041==--
 
