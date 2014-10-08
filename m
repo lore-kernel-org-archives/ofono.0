@@ -1,70 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============6457740743371626870=="
+Content-Type: multipart/mixed; boundary="===============5342277143503870693=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Unable to get network interface working
-Date: Fri, 03 Oct 2014 09:28:18 -0500
-Message-ID: <542EB282.2060007@gmail.com>
-In-Reply-To: <CAH4ZQwtdtSyR_Fy8R_dEd-PgGpK+uF+7spUxssF_EcnrMh_fLQ@mail.gmail.com>
+From: Sergio Checa Blanco <sergio.checa@oss.bmw-carit.de>
+Subject: [PATCH] atmodem: Restore multiparty call after reconnection
+Date: Wed, 08 Oct 2014 11:53:48 +0200
+Message-ID: <1412762028-17784-1-git-send-email-sergio.checa@oss.bmw-carit.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6457740743371626870==
+--===============5342277143503870693==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Enrico,
+From: Sergio Checa Blanco <sergio.checa@bmw-carit.de>
 
-On 10/03/2014 07:40 AM, Enrico Sau wrote:
-> Hi Denis, hi all,
->
-> I finally got the network interface working by uninstalling the network
-> manager and manually setting the ppp0 interface with parameters
-> retrieved from the modem.
->
+When the HFP profile is disconnected while a multiparty call is
+ongoing, and it is reconnected again, oFono requests the list of
+current calls to the device with AT+CLCC. In the case of a multiparty
+call, the response to CLCC is being taken as multiple simple calls.
 
-good
+The attribute mpty parsed in function at_util_parse_clcc is never
+used nor stored, so there is no way to recompose the information
+about multi-party calls after a reconnection.
 
-> I have another problem:
-> I start the network interface with activate-context python script, and
-> stop with deactivate-context script.
-> Once I call deactivate-context, I'm no more able to activate it because
-> ppp disconnect function calls io_disconnect method, which clears the at
-> channel.
-> The only way to resume the ppp connection is to disable and re-enable
-> the modem in order fot the at channel structures to be filled in again.
->
+This patch stores this attribute coming in the +CLCC response to be
+checked later on when the CallAdded signal is broadcasted. By doing
+this the information about the multi-party character of a call is
+not lost on the way from the +CLCC response to the emitted D-Bus
+signal.
+---
+ drivers/atmodem/atutil.c | 1 +
+ include/types.h          | 1 +
+ src/voicecall.c          | 5 +++++
+ 3 files changed, 7 insertions(+)
 
-This is a known issue on some hardware, or may be an issue with the =
+diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
+index 1487348..08626b1 100644
+--- a/drivers/atmodem/atutil.c
++++ b/drivers/atmodem/atutil.c
+@@ -164,6 +164,7 @@ GSList *at_util_parse_clcc(GAtResult *result, unsigned =
+int *ret_mpty_ids)
+ 		call->direction =3D dir;
+ 		call->status =3D status;
+ 		call->type =3D type;
++		call->multiparty =3D mpty;
+ 		strncpy(call->phone_number.number, str,
+ 				OFONO_MAX_PHONE_NUMBER_LENGTH);
+ 		call->phone_number.type =3D number_type;
+diff --git a/include/types.h b/include/types.h
+index 9a7dfd9..16755ce 100644
+--- a/include/types.h
++++ b/include/types.h
+@@ -91,6 +91,7 @@ struct ofono_call {
+ 	int type;
+ 	int direction;
+ 	int status;
++	ofono_bool_t multiparty;
+ 	struct ofono_phone_number phone_number;
+ 	struct ofono_phone_number called_number;
+ 	char name[OFONO_MAX_CALLER_NAME_LENGTH + 1];
+diff --git a/src/voicecall.c b/src/voicecall.c
+index d11a4cd..8bf0631 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -2343,6 +2343,11 @@ void ofono_voicecall_notify(struct ofono_voicecall *=
+vc,
+ =
 
-modem driver for the hardware you are using.  First some background:
+ 	vc->call_list =3D g_slist_insert_sorted(vc->call_list, v, call_compare);
+ =
 
-Whenever PPP is disconnected, there are several ways to indicate a hangup:
-   1. Send an escape sequence to AT mode, followed by 'NO CARRIER'
-   2. Send a low level serial line hang-up
++	if (call->multiparty) {
++		vc->multiparty_list =3D g_slist_insert_sorted(
++			vc->multiparty_list, v, call_compare);
++	}
++
+ 	voicecalls_emit_call_added(vc, v);
+ =
 
-Many modems do both, which results in the tty port being 'closed'.  This =
+ 	return;
+-- =
 
-is why you see the ppp_disconnect being triggered.
+2.1.1
 
-oFono understands escape sequences, so #1 is sufficient.  On most =
 
-hardware we can send AT&C0 to disable #2, but some hardware still =
-
-ignores that.
-
-Hardware that uses a high-speed interface (most anything released in the =
-
-last few years) doesn't suffer from this issue.
-
-> Is there any reason for that? Is deactivate-context the correct way to
-> temporary stop the network?
->
-
-Yes, that is the correct way, assuming your hardware is well behaved.
-
-Regards,
--Denis
-
---===============6457740743371626870==--
+--===============5342277143503870693==--
 
