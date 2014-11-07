@@ -1,41 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============4702134460464891417=="
+Content-Type: multipart/mixed; boundary="===============7550333979739711513=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: ICCID not requested when PIN is locked
-Date: Sat, 01 Nov 2014 22:09:34 -0500
-Message-ID: <5455A06E.1020209@gmail.com>
-In-Reply-To: <CAH4ZQws3o=KqPhXeFiwzQB8Y+XY_AYUFR5sU5XvRZRno_oT8ng@mail.gmail.com>
+From: =?unknown-8bit?b?5ZGo55C85ZGo55C8?= <zhouqiong.zq@alibaba-inc.com>
+Subject: hello
+Date: Fri, 07 Nov 2014 15:00:00 +0800
+Message-ID: <001201cffa58$737e0b20$5a7a2160$@zq@alibaba-inc.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4702134460464891417==
+--===============7550333979739711513==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Enrico,
+Hi, Ofono org:
 
-On 10/29/2014 03:42 AM, Enrico Sau wrote:
->
->     You can also add code to try re-reading the ICCID when PIN is
->     entered. Patches are always welcome.
->
-> =E2=80=8BOk, this is what I would like to do, but code is quite complex i=
-n sim
-> interface, can you give me some hint?
->
+   I want to sync the ofono code for studying, but when I acess the link
+<http://git.kernel.org/?p=3Dnetwork/ofono/ofono.git%3Ba%3Dsummary> http://g=
+it.
+kernel.org/?p=3Dnetwork/ofono/ofono.git%3Ba%3Dsummary, there is a error =E2=
+=80=9C No
+repositories found=E2=80=9D. =
 
-You can always try to read ICCID again after the PIN has been retrieved =
 
-if the ICCID is missing.  e.g. something like:
+Would you please share me the correct ofono code link and detail repo sync
+command?
 
-if (sim->iccid =3D=3D NULL)
-	sim_iccid_changed(SIM_EF_ICCID_FILEID, sim);
+ =
 
-in sim_initialize_after_pin()
 
-Regards,
--Denis
+Thanks
 
---===============4702134460464891417==--
+Zhou qiong
+
+
+--===============7550333979739711513==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29u
+dGVudD0idGV4dC9odG1sOyBjaGFyc2V0PWdiMjMxMiI+CjxtZXRhIG5hbWU9R2VuZXJhdG9yIGNv
+bnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDEyIChmaWx0ZXJlZCBtZWRpdW0pIj4KPHN0eWxlPgo8IS0t
+CiAvKiBGb250IERlZmluaXRpb25zICovCiBAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6y87M5TsK
+CXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6
+IkNhbWJyaWEgTWF0aCI7CglwYW5vc2UtMToyIDQgNSAzIDUgNCA2IDMgMiA0O30KQGZvbnQtZmFj
+ZQoJe2ZvbnQtZmFtaWx5OkNhbGlicmk7CglwYW5vc2UtMToyIDE1IDUgMiAyIDIgNCAzIDIgNDt9
+CkBmb250LWZhY2UKCXtmb250LWZhbWlseToiXEDLzszlIjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAx
+IDEgMSAxIDE7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KIHAuTXNvTm9ybWFsLCBsaS5Nc29O
+b3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0
+OwoJdGV4dC1hbGlnbjpqdXN0aWZ5OwoJdGV4dC1qdXN0aWZ5OmludGVyLWlkZW9ncmFwaDsKCWZv
+bnQtc2l6ZToxMC41cHQ7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTps
+aW5rLCBzcGFuLk1zb0h5cGVybGluawoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJs
+dWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVy
+bGlua0ZvbGxvd2VkCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4
+dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNwYW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5
+cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7
+Cgljb2xvcjp3aW5kb3d0ZXh0O30KLk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBv
+cnQtb25seTt9CiAvKiBQYWdlIERlZmluaXRpb25zICovCiBAcGFnZSBTZWN0aW9uMQoJe3NpemU6
+NjEyLjBwdCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBwdCA5MC4wcHQgNzIuMHB0IDkwLjBwdDt9CmRp
+di5TZWN0aW9uMQoJe3BhZ2U6U2VjdGlvbjE7fQotLT4KPC9zdHlsZT4KPCEtLVtpZiBndGUgbXNv
+IDldPjx4bWw+CiA8bzpzaGFwZWRlZmF1bHRzIHY6ZXh0PSJlZGl0IiBzcGlkbWF4PSIxMDI2IiAv
+Pgo8L3htbD48IVtlbmRpZl0tLT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlbGF5
+b3V0IHY6ZXh0PSJlZGl0Ij4KICA8bzppZG1hcCB2OmV4dD0iZWRpdCIgZGF0YT0iMSIgLz4KIDwv
+bzpzaGFwZWxheW91dD48L3htbD48IVtlbmRpZl0tLT4KPC9oZWFkPgoKPGJvZHkgbGFuZz1aSC1D
+TiBsaW5rPWJsdWUgdmxpbms9cHVycGxlIHN0eWxlPSd0ZXh0LWp1c3RpZnktdHJpbTpwdW5jdHVh
+dGlvbic+Cgo8ZGl2IGNsYXNzPVNlY3Rpb24xPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxh
+bmc9RU4tVVM+SGksIE9mb25vIG9yZzo8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1N
+c29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz4mbmJzcDsmbmJzcDsgSSB3YW50IHRvIHN5bmMgdGhl
+IG9mb25vIGNvZGUKZm9yIHN0dWR5aW5nLCBidXQgd2hlbiBJIGFjZXNzIHRoZSBsaW5rIDxhCmhy
+ZWY9Imh0dHA6Ly9naXQua2VybmVsLm9yZy8/cD1uZXR3b3JrL29mb25vL29mb25vLmdpdCUzQmEl
+M0RzdW1tYXJ5Ij48c3BhbgpzdHlsZT0nZm9udC1zaXplOjkuMHB0O2ZvbnQtZmFtaWx5OiJBcmlh
+bCIsInNhbnMtc2VyaWYiO2NvbG9yOndpbmRvd3RleHQ7CmJhY2tncm91bmQ6d2hpdGU7dGV4dC1k
+ZWNvcmF0aW9uOm5vbmUnPmh0dHA6Ly9naXQua2VybmVsLm9yZy8/cD1uZXR3b3JrL29mb25vL29m
+b25vLmdpdCUzQmElM0RzdW1tYXJ5PC9zcGFuPjwvYT4sCnRoZXJlIGlzIGEgZXJyb3IgobAgPC9z
+cGFuPjxiPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFt
+aWx5OiJBcmlhbCIsInNhbnMtc2VyaWYiO2JhY2tncm91bmQ6d2hpdGUnPk5vIHJlcG9zaXRvcmll
+cyBmb3VuZKGxLiA8bzpwPjwvbzpwPjwvc3Bhbj48L2I+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFs
+IHN0eWxlPSd0ZXh0LWluZGVudDoxOS45cHQnPjxzcGFuIGxhbmc9RU4tVVMKc3R5bGU9J2ZvbnQt
+c2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6IkFyaWFsIiwic2Fucy1zZXJpZiI7YmFja2dyb3VuZDp3
+aGl0ZSc+V291bGQKeW91IHBsZWFzZSBzaGFyZSBtZSB0aGUgY29ycmVjdCBvZm9ubyBjb2RlIGxp
+bmsgYW5kIGRldGFpbCByZXBvIHN5bmMgY29tbWFuZD88bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8
+cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1zaXplOjEwLjBw
+dDtmb250LWZhbWlseToiQXJpYWwiLCJzYW5zLXNlcmlmIjsKYmFja2dyb3VuZDp3aGl0ZSc+PG86
+cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9
+RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6IkFyaWFsIiwic2Fucy1z
+ZXJpZiI7CmJhY2tncm91bmQ6d2hpdGUnPlRoYW5rczxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxw
+IGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6MTAuMHB0
+O2ZvbnQtZmFtaWx5OiJBcmlhbCIsInNhbnMtc2VyaWYiOwpiYWNrZ3JvdW5kOndoaXRlJz5aaG91
+IHFpb25nPC9zcGFuPjxzcGFuIGxhbmc9RU4tVVM+PG86cD48L286cD48L3NwYW4+PC9wPgoKPC9k
+aXY+Cgo8L2JvZHk+Cgo8L2h0bWw+Cg==
+
+--===============7550333979739711513==--
 
