@@ -1,120 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3820103240443462186=="
+Content-Type: multipart/mixed; boundary="===============0997814147495108436=="
 MIME-Version: 1.0
-From: ShiBuyun <shyboysby@hotmail.com>
-Subject: Re: hello
-Date: Fri, 07 Nov 2014 15:32:14 +0800
-Message-ID: <BAY407-EAS13300358DAD2C2576017A5EB1850@phx.gbl>
-In-Reply-To: <001201cffa58$737e0b20$5a7a2160$@zq@alibaba-inc.com>
+From: Georg Chini <georg@chini.tk>
+Subject: Re: Problem with hangup of multiple calls
+Date: Sun, 09 Nov 2014 15:09:35 +0100
+Message-ID: <545F759F.5010407@chini.tk>
+In-Reply-To: <53EFBA17.2020705@chini.tk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3820103240443462186==
+--===============0997814147495108436==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-=E5=91=A8=E5=A4=A7=E5=A7=90=EF=BC=8C
-=E6=88=91=E6=98=AF=E7=9F=B3=E6=AD=A5=E4=BA=91=EF=BC=8C=E5=93=88=E5=93=88=E3=
-=80=82
-Best regards
-Buyun
+On 16.08.2014 22:07, Georg Chini wrote:
+> Hello,
+>
+> I am using ofono (compiled from git) and bluez 5.21 to access
+> my old Nokia 6230i. I have a problem, when I call two parties.
+> When one call is ended, I do not receive a dbus signal. As soon
+> as I hangup the second call, I get "CallRemoved" messages for
+> both calls, so the first signal is delayed until the second call is
+> finished.
+> Any idea why this happens or how to debug it further?
+>
 
-> =E5=9C=A8 2014=E5=B9=B411=E6=9C=887=E6=97=A5=EF=BC=8C15:00=EF=BC=8C"=E5=
-=91=A8=E7=90=BC(=E5=91=A8=E7=90=BC)" <zhouqiong.zq@alibaba-inc.com> =E5=
-=86=99=E9=81=93=EF=BC=9A
-> =
+I asked the question above some time ago but never received
+any reply. So I am asking again ...
 
-> Hi, Ofono org:
->    I want to sync the ofono code for studying, but when I acess the link =
-http://git.kernel.org/?p=3Dnetwork/ofono/ofono.git%3Ba%3Dsummary, there is =
-a error =E2=80=9C No repositories found=E2=80=9D.
-> Would you please share me the correct ofono code link and detail repo syn=
-c command?
->  =
+Somewhat more detail: I tried to do some debugging and when
+one call is on hold and the active call is hung up, I do not even
+receive a CIEV in the HFP driver. So the signal must be dropped
+on a lower level. Any ideas?
 
-> Thanks
-> Zhou qiong
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> https://lists.ofono.org/mailman/listinfo/ofono
+Regards
+               Georg
 
-_______________________________________________
-ofono mailing list
-ofono(a)ofono.org
-https://lists.ofono.org/mailman/listinfo/ofono
-
---===============3820103240443462186==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWw+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj0iY29udGVudC10eXBlIiBjb250ZW50PSJ0ZXh0
-L2h0bWw7IGNoYXJzZXQ9dXRmLTgiPjwvaGVhZD48Ym9keSBkaXI9ImF1dG8iPjxkaXY+5ZGo5aSn
-5aeQ77yMPGJyPuaIkeaYr+efs+atpeS6ke+8jOWTiOWTiOOAgjxicj5CZXN0IHJlZ2FyZHM8ZGl2
-PkJ1eXVuPC9kaXY+PC9kaXY+PGRpdj48YnI+5ZyoIDIwMTTlubQxMeaciDfml6XvvIwxNTowMO+8
-jCLlkajnkLwo5ZGo55C8KSIgJmx0OzxhIGhyZWY9Im1haWx0bzp6aG91cWlvbmcuenFAYWxpYmFi
-YS1pbmMuY29tIj56aG91cWlvbmcuenFAYWxpYmFiYS1pbmMuY29tPC9hPiZndDsg5YaZ6YGT77ya
-PGJyPjxicj48L2Rpdj48YmxvY2txdW90ZSB0eXBlPSJjaXRlIj48ZGl2Pg0KDQoNCjxtZXRhIGh0
-dHAtZXF1aXY9IkNvbnRlbnQtVHlwZSIgY29udGVudD0idGV4dC9odG1sOyBjaGFyc2V0PWdiMjMx
-MiI+DQo8bWV0YSBuYW1lPSJHZW5lcmF0b3IiIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDEyIChm
-aWx0ZXJlZCBtZWRpdW0pIj4NCjxzdHlsZT4NCjwhLS0NCiAvKiBGb250IERlZmluaXRpb25zICov
-DQogQGZvbnQtZmFjZQ0KCXtmb250LWZhbWlseTrlrovkvZM7DQoJcGFub3NlLTE6MiAxIDYgMCAz
-IDEgMSAxIDEgMTt9DQpAZm9udC1mYWNlDQoJe2ZvbnQtZmFtaWx5OiJDYW1icmlhIE1hdGgiOw0K
-CXBhbm9zZS0xOjIgNCA1IDMgNSA0IDYgMyAyIDQ7fQ0KQGZvbnQtZmFjZQ0KCXtmb250LWZhbWls
-eTpDYWxpYnJpOw0KCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30NCkBmb250LWZhY2UN
-Cgl7Zm9udC1mYW1pbHk6IlxA5a6L5L2TIjsNCglwYW5vc2UtMToyIDEgNiAwIDMgMSAxIDEgMSAx
-O30NCiAvKiBTdHlsZSBEZWZpbml0aW9ucyAqLw0KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWws
-IGRpdi5Nc29Ob3JtYWwNCgl7bWFyZ2luOjBjbTsNCgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7DQoJ
-dGV4dC1hbGlnbjpqdXN0aWZ5Ow0KCXRleHQtanVzdGlmeTppbnRlci1pZGVvZ3JhcGg7DQoJZm9u
-dC1zaXplOjEwLjVwdDsNCglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30NCmE6
-bGluaywgc3Bhbi5Nc29IeXBlcmxpbmsNCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5Ow0KCWNvbG9y
-OmJsdWU7DQoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9DQphOnZpc2l0ZWQsIHNwYW4uTXNv
-SHlwZXJsaW5rRm9sbG93ZWQNCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5Ow0KCWNvbG9yOnB1cnBs
-ZTsNCgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30NCnNwYW4uRW1haWxTdHlsZTE3DQoJe21z
-by1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7DQoJZm9udC1mYW1pbHk6IkNhbGlicmkiLCJz
-YW5zLXNlcmlmIjsNCgljb2xvcjp3aW5kb3d0ZXh0O30NCi5Nc29DaHBEZWZhdWx0DQoJe21zby1z
-dHlsZS10eXBlOmV4cG9ydC1vbmx5O30NCiAvKiBQYWdlIERlZmluaXRpb25zICovDQogQHBhZ2Ug
-U2VjdGlvbjENCgl7c2l6ZTo2MTIuMHB0IDc5Mi4wcHQ7DQoJbWFyZ2luOjcyLjBwdCA5MC4wcHQg
-NzIuMHB0IDkwLjBwdDt9DQpkaXYuU2VjdGlvbjENCgl7cGFnZTpTZWN0aW9uMTt9DQotLT4NCjwv
-c3R5bGU+DQo8IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4NCiA8bzpzaGFwZWRlZmF1bHRzIHY6ZXh0
-PSJlZGl0IiBzcGlkbWF4PSIxMDI2IiAvPg0KPC94bWw+PCFbZW5kaWZdLS0+PCEtLVtpZiBndGUg
-bXNvIDldPjx4bWw+DQogPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPg0KICA8bzppZG1hcCB2
-OmV4dD0iZWRpdCIgZGF0YT0iMSIgLz4NCiA8L286c2hhcGVsYXlvdXQ+PC94bWw+PCFbZW5kaWZd
-LS0+DQoNCg0KDQoNCjxkaXYgY2xhc3M9IlNlY3Rpb24xIj4NCg0KPHAgY2xhc3M9Ik1zb05vcm1h
-bCI+PHNwYW4gbGFuZz0iRU4tVVMiPkhpLCBPZm9ubyBvcmc6PG86cD48L286cD48L3NwYW4+PC9w
-Pg0KDQo8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbiBsYW5nPSJFTi1VUyI+Jm5ic3A7Jm5ic3A7
-IEkgd2FudCB0byBzeW5jIHRoZSBvZm9ubyBjb2RlDQpmb3Igc3R1ZHlpbmcsIGJ1dCB3aGVuIEkg
-YWNlc3MgdGhlIGxpbmsgPGEgaHJlZj0iaHR0cDovL2dpdC5rZXJuZWwub3JnLz9wPW5ldHdvcmsv
-b2Zvbm8vb2Zvbm8uZ2l0JTNCYSUzRHN1bW1hcnkiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6OS4w
-cHQ7Zm9udC1mYW1pbHk6JnF1b3Q7QXJpYWwmcXVvdDssJnF1b3Q7c2Fucy1zZXJpZiZxdW90Oztj
-b2xvcjp3aW5kb3d0ZXh0Ow0KYmFja2dyb3VuZDp3aGl0ZTt0ZXh0LWRlY29yYXRpb246bm9uZSI+
-aHR0cDovL2dpdC5rZXJuZWwub3JnLz9wPW5ldHdvcmsvb2Zvbm8vb2Zvbm8uZ2l0JTNCYSUzRHN1
-bW1hcnk8L3NwYW4+PC9hPiwNCnRoZXJlIGlzIGEgZXJyb3Ig4oCcIDwvc3Bhbj48Yj48c3BhbiBs
-YW5nPSJFTi1VUyIgc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7DQpmb250LWZhbWlseTomcXVvdDtB
-cmlhbCZxdW90OywmcXVvdDtzYW5zLXNlcmlmJnF1b3Q7O2JhY2tncm91bmQ6d2hpdGUiPk5vIHJl
-cG9zaXRvcmllcyBmb3VuZOKAnS4gPG86cD48L286cD48L3NwYW4+PC9iPjwvcD4NCg0KPHAgY2xh
-c3M9Ik1zb05vcm1hbCIgc3R5bGU9InRleHQtaW5kZW50OjE5LjlwdCI+PHNwYW4gbGFuZz0iRU4t
-VVMiIHN0eWxlPSJmb250LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5OiZxdW90O0FyaWFsJnF1b3Q7
-LCZxdW90O3NhbnMtc2VyaWYmcXVvdDs7YmFja2dyb3VuZDp3aGl0ZSI+V291bGQNCnlvdSBwbGVh
-c2Ugc2hhcmUgbWUgdGhlIGNvcnJlY3Qgb2Zvbm8gY29kZSBsaW5rIGFuZCBkZXRhaWwgcmVwbyBz
-eW5jIGNvbW1hbmQ/PG86cD48L286cD48L3NwYW4+PC9wPg0KDQo8cCBjbGFzcz0iTXNvTm9ybWFs
-Ij48c3BhbiBsYW5nPSJFTi1VUyIgc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6
-JnF1b3Q7QXJpYWwmcXVvdDssJnF1b3Q7c2Fucy1zZXJpZiZxdW90OzsNCmJhY2tncm91bmQ6d2hp
-dGUiPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4NCg0KPHAgY2xhc3M9Ik1zb05vcm1hbCI+
-PHNwYW4gbGFuZz0iRU4tVVMiIHN0eWxlPSJmb250LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5OiZx
-dW90O0FyaWFsJnF1b3Q7LCZxdW90O3NhbnMtc2VyaWYmcXVvdDs7DQpiYWNrZ3JvdW5kOndoaXRl
-Ij5UaGFua3M8bzpwPjwvbzpwPjwvc3Bhbj48L3A+DQoNCjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxz
-cGFuIGxhbmc9IkVOLVVTIiBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDtmb250LWZhbWlseTomcXVv
-dDtBcmlhbCZxdW90OywmcXVvdDtzYW5zLXNlcmlmJnF1b3Q7Ow0KYmFja2dyb3VuZDp3aGl0ZSI+
-WmhvdSBxaW9uZzwvc3Bhbj48c3BhbiBsYW5nPSJFTi1VUyI+PG86cD48L286cD48L3NwYW4+PC9w
-Pg0KDQo8L2Rpdj4NCg0KDQoNCg0KPC9kaXY+PC9ibG9ja3F1b3RlPjxibG9ja3F1b3RlIHR5cGU9
-ImNpdGUiPjxkaXY+PHNwYW4+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX188L3NwYW4+PGJyPjxzcGFuPm9mb25vIG1haWxpbmcgbGlzdDwvc3Bhbj48YnI+PHNw
-YW4+PGEgaHJlZj0ibWFpbHRvOm9mb25vQG9mb25vLm9yZyI+b2Zvbm9Ab2Zvbm8ub3JnPC9hPjwv
-c3Bhbj48YnI+PHNwYW4+PGEgaHJlZj0iaHR0cHM6Ly9saXN0cy5vZm9uby5vcmcvbWFpbG1hbi9s
-aXN0aW5mby9vZm9ubyI+aHR0cHM6Ly9saXN0cy5vZm9uby5vcmcvbWFpbG1hbi9saXN0aW5mby9v
-Zm9ubzwvYT48L3NwYW4+PGJyPjwvZGl2PjwvYmxvY2txdW90ZT48L2JvZHk+PC9odG1sPg==
---===============3820103240443462186==--
+--===============0997814147495108436==--
 
