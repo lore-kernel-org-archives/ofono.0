@@ -1,44 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============1898603415979001843=="
+Content-Type: multipart/mixed; boundary="===============6450640301956196462=="
 MIME-Version: 1.0
-From: Georg Chini <georg@chini.tk>
-Subject: Re: Problem with hangup of multiple calls
-Date: Sun, 09 Nov 2014 18:15:22 +0100
-Message-ID: <545FA12A.4060407@chini.tk>
-In-Reply-To: <545F759F.5010407@chini.tk>
+From: Ernast Sevo <ersevs@gmail.com>
+Subject: disabling gprs
+Date: Mon, 17 Nov 2014 14:41:56 -0500
+Message-ID: <CAOD0pe=1bzK5UV7H1BjLoO_18=LdjT9sVmd-eXCJ-mQK=xVR5w@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1898603415979001843==
+--===============6450640301956196462==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 09.11.2014 15:09, Georg Chini wrote:
-> On 16.08.2014 22:07, Georg Chini wrote:
->> Hello,
->>
->> I am using ofono (compiled from git) and bluez 5.21 to access
->> my old Nokia 6230i. I have a problem, when I call two parties.
->> When one call is ended, I do not receive a dbus signal. As soon
->> as I hangup the second call, I get "CallRemoved" messages for
->> both calls, so the first signal is delayed until the second call is
->> finished.
->> Any idea why this happens or how to debug it further?
->>
->
-> I asked the question above some time ago but never received
-> any reply. So I am asking again ...
->
-> Somewhat more detail: I tried to do some debugging and when
-> one call is on hold and the active call is hung up, I do not even
-> receive a CIEV in the HFP driver. So the signal must be dropped
-> on a lower level. Any ideas?
->
-One more fact: It works for a (second) incoming call as long as the
-call is in "waiting" state.
+Hello all,
 
-Regards
-              Georg
+ At the moment I am attempting to disable gprs and I see a signal from
+ConnectionManager indicating that the powered value has become false but
+seconds later after I query ConnectionManager for its properties I see that
+the powered value is now true. Is this intended behaviour from ofono?
 
---===============1898603415979001843==--
+Thanks,
+
+ Ernast
+
+--===============6450640301956196462==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+PGRpdj48ZGl2PkhlbGxvIGFsbCw8YnI+PGJyPjwvZGl2PsKgQXQgdGhl
+IG1vbWVudCBJIGFtIGF0dGVtcHRpbmcgdG8gZGlzYWJsZSBncHJzIGFuZCBJIHNlZSBhIHNpZ25h
+bCBmcm9tIENvbm5lY3Rpb25NYW5hZ2VyIGluZGljYXRpbmcgdGhhdCB0aGUgcG93ZXJlZCB2YWx1
+ZSBoYXMgYmVjb21lIGZhbHNlIGJ1dCBzZWNvbmRzIGxhdGVyIGFmdGVyIEkgcXVlcnkgQ29ubmVj
+dGlvbk1hbmFnZXIgZm9yIGl0cyBwcm9wZXJ0aWVzIEkgc2VlIHRoYXQgdGhlIHBvd2VyZWQgdmFs
+dWUgaXMgbm93IHRydWUuIElzIHRoaXMgaW50ZW5kZWQgYmVoYXZpb3VyIGZyb20gb2Zvbm8/PGJy
+Pjxicj48L2Rpdj5UaGFua3MsPGJyPjxicj7CoEVybmFzdDxicj48L2Rpdj4K
+
+--===============6450640301956196462==--
 
