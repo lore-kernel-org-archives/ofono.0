@@ -1,58 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============2462713384370388087=="
+Content-Type: multipart/mixed; boundary="===============6866063409973879275=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] sms: Option HSO modem can't really do CNMA
-Date: Mon, 24 Nov 2014 12:29:03 -0600
-Message-ID: <547378EF.8050704@gmail.com>
-In-Reply-To: <87wq6pwbu2.fsf@ossau.homelinux.net>
+Subject: Re: [PATCH 2/2] receive-sms: Support printing received SMS with
+ non-ASCII characters
+Date: Mon, 24 Nov 2014 12:31:39 -0600
+Message-ID: <5473798B.4040306@gmail.com>
+In-Reply-To: <1416534506-19999-2-git-send-email-neil@ossau.homelinux.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2462713384370388087==
+--===============6866063409973879275==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Neil,
 
- >
-> oFono chooses 2 for the "mt" value, rather than 1, if it thinks that the
-> modem can do "CNMA", which I think means acknowledging each SMS after it
-> is transferred from the modem to the containing OS.  But:
-
-Yes, oFono prefers using +CMT indication instead of +CMTI.  That is =
-
-because we actually need 2 extra AT commands to process the incoming =
-
-message instead of just 1 with +CMT.
-
+On 11/20/2014 07:48 PM, Neil Jerram wrote:
+> Without this I get the following Python traceback, for an SMS that
+> contains the UK pound sign.
 >
-> - in practice the modem never generates the +CMT indications that are
->    supposed to go with this mode of operation
->
+> ERROR:dbus.connection:Exception in handler for D-Bus signal:
+> Traceback (most recent call last):
+>    File "/usr/lib/python2.7/dist-packages/dbus/connection.py", line 230, =
+in maybe_handle_message
+>      self._handler(*args, **kwargs)
+>    File "./receive-sms", line 9, in incoming_message
+>      print("%s" % (message))
+> UnicodeEncodeError: 'ascii' codec can't encode character u'\xa3' in posit=
+ion 51: ordinal not in range(128)
+> ---
+>   test/receive-sms | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
 
-Your modem is just weird then.
-
-> - there are other places in the source code nearby where CNMA acking is
->    skipped for OFONO_VENDOR_OPTION_HSO.
->
-
-Not really.  We only skip the generation of the ackpdu.  Acknowledging =
-
-via AT+CNMA still works with the 'safe' AT+CNMA=3D0 option.  This works on =
-
-every HSO device I have :)  Admittedly I never played with the GTA04.
-
-> It seems this adds up to an indication that the modem doesn't really do
-> CNMA, and the patch that I've submitted does the trick and allows
-> incoming SMSes to be received successfully.
-
-You might need to rework the hso driver to detect/handle the GTM601 =
-
-separately.  Adding another vendor quirk to do so.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============2462713384370388087==--
+
+--===============6866063409973879275==--
 
