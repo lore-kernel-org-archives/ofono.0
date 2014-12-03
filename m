@@ -1,126 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============2459071483946121278=="
+Content-Type: multipart/mixed; boundary="===============1521669851402474045=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim: change pin_retries array to unsigned char
-Date: Wed, 03 Dec 2014 17:38:12 -0600
-Message-ID: <547F9EE4.1040205@gmail.com>
-In-Reply-To: <1417185265-27410-1-git-send-email-cedric.jehasse@gmail.com>
+Subject: Re: [help] connect 2 APN at the same time (PPP and QMI)
+Date: Wed, 03 Dec 2014 17:48:01 -0600
+Message-ID: <547FA131.9000001@gmail.com>
+In-Reply-To: <556279298.28727836.1417601666074.JavaMail.root@openwide.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2459071483946121278==
+--===============1521669851402474045==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Cedric,
+Hi Mylene,
 
-On 11/28/2014 08:34 AM, Cedric Jehasse wrote:
-> From: Cedric Jehasse <cedric.jehasse@softathome.com>
->
-> Had a problem on mips, the Retries dict in org.ofono.SimManager was 0
-> for all pin-types.
-> The problem is int* are passed to dbus-functions, while the type is
-> DBUS_TYPE_BYTE. Changed the type of pin_retries throughout the code to
-> match the byte type.
-> ---
->   drivers/atmodem/sim.c         | 24 ++++++++++++------------
->   drivers/isimodem/uicc.c       |  2 +-
->   drivers/qmimodem/sim-legacy.c |  2 +-
->   drivers/qmimodem/sim.c        |  2 +-
->   include/sim.h                 |  2 +-
->   src/sim.c                     | 13 +++++++------
->   6 files changed, 23 insertions(+), 22 deletions(-)
+ >
+> My modem has two interfaces : one interface on which I can do a PPP conne=
+ction and another interface QMI to make wwan connection.
+> My SIM card has 2 APNs and I must connect to them simultaneously. So, I n=
+eed to be connected in PPP with APN1 and in qmi/wwan with APN2.
 >
 
-I really rather not modify every single driver for this issue.  Besides, =
+This sort of depends on whether your hardware actually supports multiple =
 
-the actual problem is actually in the core.  We were being quite evil =
+contexts being activated at once.
 
-with how we created our dictionary entries.
+> The two ways of being connected work. I have successfully configured "2 o=
+fonos" to make my modem works with "atmodem" for the PPP side and, by setti=
+ng ofono driver to gobi in udevng (such as Huawei does) for wwan side. To s=
+um up, Ofono works with PPP or with QMI. Now, I need to make it work with P=
+PP _and_ QMI at the same time.
+>
+> I tried to connect, on the same modem, in my plugin file, the interface "=
+Device" to "qmimodem" driver (so what "gobi" plugin does) and the "Applicat=
+ion" and "Modem" interfaces to "atmodem" driver but it failed because dbus =
+interfaces already exist (created by the first called).
+>
+> So I was wondering : what should be the best way to do it ? And is it pos=
+sible ?
+> Should I create one modem with 2 drivers (with my own driver using atmode=
+m and gobi driver) ?
+> Or should I create 2 modems with each one the driver needed (gobi/qmimode=
+m and my own driver/atmodem) ?
+>
 
-Please try the following patch (attached) and tell me if it fixes this =
+You could try modifying the gobi plugin and udevng to allocate 2 =
 
-bug on your platform.
+gprs-contexts.  One using the QMI driver and the other using PPP.
+
+e.g. something like:
+
+gc =3D ofono_gprs_context_create(modem, 0, "qmimodem", device);
+ofono_gprs_add_context(gprs, gc);
+
+gc =3D ofono_gprs_context_create(modem, 0, "atmodem", ppp_chat);
+ofono_gprs_add_context(gprs, gc);
+
+and see if that works.
 
 Regards,
 -Denis
 
---===============2459071483946121278==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-sim-Fix-pin-retries-bogus-values-on-some-arch-es.patch"
-
-PkZyb20gNzM1OWIwMzIyZDkzZjZhMzMyMDAwYzEwNjQyNThkMjk5YzUzM2JjMyBNb24gU2VwIDE3
-IDAwOjAwOjAwIDIwMDEKRnJvbTogRGVuaXMgS2VuemlvciA8ZGVua2VuekBnbWFpbC5jb20+CkRh
-dGU6IFdlZCwgMyBEZWMgMjAxNCAxNzozMTowOSAtMDYwMApTdWJqZWN0OiBbUEFUQ0hdIHNpbTog
-Rml4IHBpbiByZXRyaWVzIGJvZ3VzIHZhbHVlcyBvbiBzb21lIGFyY2gtZXMKCk9uIHNvbWUgYXJj
-aGl0ZWN0dXJlcyB0aGUgU2ltTWFuYWdlci5SZXRyaWVzIHByb3BlcnR5IHdhcyBnZXR0aW5nIGJv
-Z3VzCnZhbHVlcy4gIFRoaXMgaXMgYmVjYXVzZSB3ZSB3ZXJlIHNlbmRpbmcgYW4gYXJyYXkgd2hp
-Y2ggcG9pbnRlZCB0byBpbnQKdmFsdWVzIGluc3RlYWQgb2YgdGhlIGV4cGVjdGVkIHVuc2lnbmVk
-IGNoYXIgdmFsdWVzLgoKVGhpcyBmaXggYWxsb2NhdGVzIGEgdGVtcG9yYXJ5IGFycmF5IG9mIHVu
-c2lnbmVkIGNoYXJzIHRvIGhvbGQgdGhlCmFjdHVhbCBELUJ1cyB2YWx1ZXMgYmVpbmcgc2VudC4g
-IEFkZGl0aW9uYWxseSwgdGhlIGRpY3Rpb25hcnkgYXJyYXkgaXMKY2hhbmdlZCB0byBwb2ludCB0
-byB0aGUgdGVtcG9yYXJ5IHVuc2lnbmVkIGNoYXIgYmFzZWQgdmFsdWVzIGluc3RlYWQgb2YKdGhl
-IHJhdyAnaW50JyBiYXNlZCByZXRyeSB2YWx1ZXMuCi0tLQogc3JjL3NpbS5jIHwgNDAgKysrKysr
-KysrKysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0tLQogMSBmaWxlIGNoYW5nZWQsIDI1IGlu
-c2VydGlvbnMoKyksIDE1IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy9zaW0uYyBiL3Ny
-Yy9zaW0uYwppbmRleCBlZGFlNWViLi42ZTliYWE5IDEwMDY0NAotLS0gYS9zcmMvc2ltLmMKKysr
-IGIvc3JjL3NpbS5jCkBAIC0yNjcsMTAgKzI2NywxMiBAQCBzdGF0aWMgY2hhciAqKmdldF9sb2Nr
-ZWRfcGlucyhzdHJ1Y3Qgb2Zvbm9fc2ltICpzaW0pCiAJcmV0dXJuIHJldDsKIH0KIAotc3RhdGlj
-IHZvaWQgKipnZXRfcGluX3JldHJpZXMoc3RydWN0IG9mb25vX3NpbSAqc2ltKQorc3RhdGljIHZv
-aWQgZ2V0X3Bpbl9yZXRyaWVzKHN0cnVjdCBvZm9ub19zaW0gKnNpbSwgdm9pZCAqKipvdXRfZGlj
-dCwKKwkJCQl1bnNpZ25lZCBjaGFyICoqb3V0X3JldHJpZXMpCiB7CiAJaW50IGksIG5lbGVtOwot
-CXZvaWQgKipyZXQ7CisJdm9pZCAqKmRpY3Q7CisJdW5zaWduZWQgY2hhciAqcmV0cmllczsKIAog
-CWZvciAoaSA9IDEsIG5lbGVtID0gMDsgaSA8IE9GT05PX1NJTV9QQVNTV09SRF9JTlZBTElEOyBp
-KyspIHsKIAkJaWYgKHNpbS0+cGluX3JldHJpZXNbaV0gPT0gLTEpCkBAIC0yNzksMTcgKzI4MSwy
-MSBAQCBzdGF0aWMgdm9pZCAqKmdldF9waW5fcmV0cmllcyhzdHJ1Y3Qgb2Zvbm9fc2ltICpzaW0p
-CiAJCW5lbGVtICs9IDE7CiAJfQogCi0JcmV0ID0gZ19uZXcwKHZvaWQgKiwgbmVsZW0gKiAyICsg
-MSk7CisJZGljdCA9IGdfbmV3MCh2b2lkICosIG5lbGVtICogMiArIDEpOworCXJldHJpZXMgPSBn
-X25ldzAodW5zaWduZWQgY2hhciwgbmVsZW0pOwogCi0JZm9yIChpID0gMSwgbmVsZW0gPSAwOyBp
-IDwgT0ZPTk9fU0lNX1BBU1NXT1JEX0lOVkFMSUQ7IGkrKykgeworCWZvciAoaSA9IDEsIG5lbGVt
-ID0gMDsgaSA8IE9GT05PX1NJTV9QQVNTV09SRF9JTlZBTElEOyBpKyssIG5lbGVtKyspIHsKIAkJ
-aWYgKHNpbS0+cGluX3JldHJpZXNbaV0gPT0gLTEpCiAJCQljb250aW51ZTsKIAotCQlyZXRbbmVs
-ZW0rK10gPSAodm9pZCAqKSBzaW1fcGFzc3dkX25hbWUoaSk7Ci0JCXJldFtuZWxlbSsrXSA9ICZz
-aW0tPnBpbl9yZXRyaWVzW2ldOworCQlyZXRyaWVzW25lbGVtXSA9IHNpbS0+cGluX3JldHJpZXNb
-aV07CisKKwkJZGljdFtuZWxlbSAqIDJdID0gKHZvaWQgKikgc2ltX3Bhc3N3ZF9uYW1lKGkpOwor
-CQlkaWN0W25lbGVtICogMiArIDFdID0gJnJldHJpZXNbaV07CiAJfQogCi0JcmV0dXJuIHJldDsK
-Kwkqb3V0X2RpY3QgPSBkaWN0OworCSpvdXRfcmV0cmllcyA9IHJldHJpZXM7CiB9CiAKIHN0YXRp
-YyBjaGFyICoqZ2V0X3NlcnZpY2VfbnVtYmVycyhHU0xpc3QgKnNlcnZpY2VfbnVtYmVycykKQEAg
-LTM0NCw3ICszNTAsOCBAQCBzdGF0aWMgREJ1c01lc3NhZ2UgKnNpbV9nZXRfcHJvcGVydGllcyhE
-QnVzQ29ubmVjdGlvbiAqY29ubiwKIAljaGFyICoqc2VydmljZV9udW1iZXJzOwogCWNoYXIgKips
-b2NrZWRfcGluczsKIAljb25zdCBjaGFyICpwaW5fbmFtZTsKLQl2b2lkICoqcGluX3JldHJpZXM7
-CisJdm9pZCAqKnBpbl9yZXRyaWVzX2RpY3Q7CisJdW5zaWduZWQgY2hhciAqZGJ1c19yZXRyaWVz
-OwogCWRidXNfYm9vbF90IHByZXNlbnQgPSBzaW0tPnN0YXRlICE9IE9GT05PX1NJTV9TVEFURV9O
-T1RfUFJFU0VOVDsKIAlkYnVzX2Jvb2xfdCBmZG47CiAJZGJ1c19ib29sX3QgYmRuOwpAQCAtNDE5
-LDEwICs0MjYsMTEgQEAgc3RhdGljIERCdXNNZXNzYWdlICpzaW1fZ2V0X3Byb3BlcnRpZXMoREJ1
-c0Nvbm5lY3Rpb24gKmNvbm4sCiAJCQkJREJVU19UWVBFX1NUUklORywKIAkJCQkodm9pZCAqKSAm
-cGluX25hbWUpOwogCi0JcGluX3JldHJpZXMgPSBnZXRfcGluX3JldHJpZXMoc2ltKTsKKwlnZXRf
-cGluX3JldHJpZXMoc2ltLCAmcGluX3JldHJpZXNfZGljdCwgJmRidXNfcmV0cmllcyk7CiAJb2Zv
-bm9fZGJ1c19kaWN0X2FwcGVuZF9kaWN0KCZkaWN0LCAiUmV0cmllcyIsIERCVVNfVFlQRV9CWVRF
-LAotCQkJCQkJCQkmcGluX3JldHJpZXMpOwotCWdfZnJlZShwaW5fcmV0cmllcyk7CisJCQkJCQkJ
-JnBpbl9yZXRyaWVzX2RpY3QpOworCWdfZnJlZShwaW5fcmV0cmllc19kaWN0KTsKKwlnX2ZyZWUo
-ZGJ1c19yZXRyaWVzKTsKIAogZG9uZToKIAlkYnVzX21lc3NhZ2VfaXRlcl9jbG9zZV9jb250YWlu
-ZXIoJml0ZXIsICZkaWN0KTsKQEAgLTQzNyw3ICs0NDUsOCBAQCBzdGF0aWMgdm9pZCBzaW1fcGlu
-X3JldHJpZXNfcXVlcnlfY2IoY29uc3Qgc3RydWN0IG9mb25vX2Vycm9yICplcnJvciwKIAlzdHJ1
-Y3Qgb2Zvbm9fc2ltICpzaW0gPSBkYXRhOwogCURCdXNDb25uZWN0aW9uICpjb25uID0gb2Zvbm9f
-ZGJ1c19nZXRfY29ubmVjdGlvbigpOwogCWNvbnN0IGNoYXIgKnBhdGggPSBfX29mb25vX2F0b21f
-Z2V0X3BhdGgoc2ltLT5hdG9tKTsKLQl2b2lkICoqcGluX3JldHJpZXM7CisJdm9pZCAqKnBpbl9y
-ZXRyaWVzX2RpY3Q7CisJdW5zaWduZWQgY2hhciAqZGJ1c19yZXRyaWVzOwogCiAJaWYgKGVycm9y
-LT50eXBlICE9IE9GT05PX0VSUk9SX1RZUEVfTk9fRVJST1IpIHsKIAkJb2Zvbm9fZXJyb3IoIlF1
-ZXJ5aW5nIHJlbWFpbmluZyBwaW4gcmV0cmllcyBmYWlsZWQiKTsKQEAgLTQ0OSwxMSArNDU4LDEy
-IEBAIHN0YXRpYyB2b2lkIHNpbV9waW5fcmV0cmllc19xdWVyeV9jYihjb25zdCBzdHJ1Y3Qgb2Zv
-bm9fZXJyb3IgKmVycm9yLAogCiAJbWVtY3B5KHNpbS0+cGluX3JldHJpZXMsIHJldHJpZXMsIHNp
-emVvZihzaW0tPnBpbl9yZXRyaWVzKSk7CiAKLQlwaW5fcmV0cmllcyA9IGdldF9waW5fcmV0cmll
-cyhzaW0pOworCWdldF9waW5fcmV0cmllcyhzaW0sICZwaW5fcmV0cmllc19kaWN0LCAmZGJ1c19y
-ZXRyaWVzKTsKIAlvZm9ub19kYnVzX3NpZ25hbF9kaWN0X3Byb3BlcnR5X2NoYW5nZWQoY29ubiwg
-cGF0aCwKIAkJCQkJT0ZPTk9fU0lNX01BTkFHRVJfSU5URVJGQUNFLCAiUmV0cmllcyIsCi0JCQkJ
-CURCVVNfVFlQRV9CWVRFLAkmcGluX3JldHJpZXMpOwotCWdfZnJlZShwaW5fcmV0cmllcyk7CisJ
-CQkJCURCVVNfVFlQRV9CWVRFLAkmcGluX3JldHJpZXNfZGljdCk7CisJZ19mcmVlKHBpbl9yZXRy
-aWVzX2RpY3QpOworCWdfZnJlZShkYnVzX3JldHJpZXMpOwogfQogCiBzdGF0aWMgdm9pZCBzaW1f
-cGluX3JldHJpZXNfY2hlY2soc3RydWN0IG9mb25vX3NpbSAqc2ltKQotLSAKMi4wLjQKCg==
-
---===============2459071483946121278==--
+--===============1521669851402474045==--
 
