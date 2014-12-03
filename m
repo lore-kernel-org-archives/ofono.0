@@ -1,63 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============5319594936237935953=="
+Content-Type: multipart/mixed; boundary="===============1743568102609427820=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/1] add set_online interface to he910 modem
-Date: Tue, 02 Dec 2014 11:36:38 -0600
-Message-ID: <547DF8A6.7080405@gmail.com>
-In-Reply-To: <547C526D.3030901@gmail.com>
+From: Mylene Josserand <mylene.josserand@openwide.fr>
+Subject: [help] connect 2 APN at the same time (PPP and QMI)
+Date: Wed, 03 Dec 2014 11:14:26 +0100
+Message-ID: <556279298.28727836.1417601666074.JavaMail.root@openwide.fr>
+In-Reply-To: <1862208886.28721645.1417597240490.JavaMail.root@openwide.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5319594936237935953==
+--===============1743568102609427820==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alexey,
+Hi everyone,
 
-On 12/01/2014 05:35 AM, Alexey Mednyy wrote:
-> Had to add set_online interface to he910 modem connman now, working
-> properly if disable he910 cellular (was not implemented error before).
-> ---
->   plugins/he910.c | 25 +++++++++++++++++++++++++
->   1 file changed, 25 insertions(+)
->
 
-Please be aware that HE910s are shipped with no support for online mode. =
+I am new to Ofono and I need some advices.
 
-  It was a feature added by later firmware.  On earlier firmware, the =
+My modem has two interfaces : one interface on which I can do a PPP connect=
+ion and another interface QMI to make wwan connection.
+My SIM card has 2 APNs and I must connect to them simultaneously. So, I nee=
+d to be connected in PPP with APN1 and in qmi/wwan with APN2.
 
-HE910 would turn off the SIM when CFUN=3D4 is sent.  This is obviously not =
+The two ways of being connected work. I have successfully configured "2 ofo=
+nos" to make my modem works with "atmodem" for the PPP side and, by setting=
+ ofono driver to gobi in udevng (such as Huawei does) for wwan side. To sum=
+ up, Ofono works with PPP or with QMI. Now, I need to make it work with PPP=
+ _and_ QMI at the same time.
 
-what oFono expects.
+I tried to connect, on the same modem, in my plugin file, the interface "De=
+vice" to "qmimodem" driver (so what "gobi" plugin does) and the "Applicatio=
+n" and "Modem" interfaces to "atmodem" driver but it failed because dbus in=
+terfaces already exist (created by the first called). =
 
-By now this patch is probably okay to accept as the new firmware is more =
 
-widely available.  However, you might want to double check that your =
+So I was wondering : what should be the best way to do it ? And is it possi=
+ble ?
+Should I create one modem with 2 drivers (with my own driver using atmodem =
+and gobi driver) ? =
 
-firmware is recent enough and is working as expected.
+Or should I create 2 modems with each one the driver needed (gobi/qmimodem =
+and my own driver/atmodem) ?
+ =
 
-> diff --git a/plugins/he910.c b/plugins/he910.c
-> index 69362b8..add2243 100644
-> --- a/plugins/he910.c
-> +++ b/plugins/he910.c
-> @@ -322,6 +322,30 @@ static void he910_pre_sim(struct ofono_modem *modem)
->          ofono_location_reporting_create(modem, 0, "telitmodem", data->ch=
-at);
->   }
->
-> +
-> +static void set_online_cb(gboolean ok, GAtResult *result, gpointer
-> user_data)
 
-Please re-read our coding style guidelines in doc/coding-style.txt.  In =
+I am using Ofono v1.15. If you need more information, do not hesitate. =
 
-particular, pay attention to indentation rules and how to break up long =
 
-lines (over 80 characters).
+Thank you in advance for any advices or help
 
-Regards,
--Denis
 
---===============5319594936237935953==--
+Best regards,
+
+Myl=C3=A8ne
+
+--===============1743568102609427820==--
 
