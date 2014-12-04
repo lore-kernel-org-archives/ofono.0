@@ -1,66 +1,102 @@
-Content-Type: multipart/mixed; boundary="===============1521669851402474045=="
+Content-Type: multipart/mixed; boundary="===============9196708683369696359=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [help] connect 2 APN at the same time (PPP and QMI)
-Date: Wed, 03 Dec 2014 17:48:01 -0600
-Message-ID: <547FA131.9000001@gmail.com>
-In-Reply-To: <556279298.28727836.1417601666074.JavaMail.root@openwide.fr>
+From: Cedric Jehasse <cedric.jehasse@gmail.com>
+Subject: Re: [PATCH] sim: change pin_retries array to unsigned char
+Date: Thu, 04 Dec 2014 10:55:34 +0100
+Message-ID: <CABvLYuBVHpxNxWpWTg_fe1xLHesE3GVvRktk_rCcpk-wPgdfcg@mail.gmail.com>
+In-Reply-To: <547F9EE4.1040205@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1521669851402474045==
+--===============9196708683369696359==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mylene,
+Hi Denis,
 
- >
-> My modem has two interfaces : one interface on which I can do a PPP conne=
-ction and another interface QMI to make wwan connection.
-> My SIM card has 2 APNs and I must connect to them simultaneously. So, I n=
-eed to be connected in PPP with APN1 and in qmi/wwan with APN2.
->
+> Please try the following patch (attached) and tell me if it fixes this bug
+> on your platform.
+This patch caused a segfault. Please have a look at the reworked patch
+(attached).
 
-This sort of depends on whether your hardware actually supports multiple =
+Thanks,
+Cedric
 
-contexts being activated at once.
+--===============9196708683369696359==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-sim-Fix-pin-retries-bogus-values-on-some-arch-es.patch"
 
-> The two ways of being connected work. I have successfully configured "2 o=
-fonos" to make my modem works with "atmodem" for the PPP side and, by setti=
-ng ofono driver to gobi in udevng (such as Huawei does) for wwan side. To s=
-um up, Ofono works with PPP or with QMI. Now, I need to make it work with P=
-PP _and_ QMI at the same time.
->
-> I tried to connect, on the same modem, in my plugin file, the interface "=
-Device" to "qmimodem" driver (so what "gobi" plugin does) and the "Applicat=
-ion" and "Modem" interfaces to "atmodem" driver but it failed because dbus =
-interfaces already exist (created by the first called).
->
-> So I was wondering : what should be the best way to do it ? And is it pos=
-sible ?
-> Should I create one modem with 2 drivers (with my own driver using atmode=
-m and gobi driver) ?
-> Or should I create 2 modems with each one the driver needed (gobi/qmimode=
-m and my own driver/atmodem) ?
->
+RnJvbSBkNjliZjIyN2ZlNzM2MzkyYjUzMjk5MmQ1N2U1OGU3ZTZiYjA4ZjM2IE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBEZW5pcyBLZW56aW9yIDxkZW5rZW56QGdtYWlsLmNvbT4KRGF0
+ZTogV2VkLCAzIERlYyAyMDE0IDE3OjMxOjA5IC0wNjAwClN1YmplY3Q6IFtQQVRDSF0gc2ltOiBG
+aXggcGluIHJldHJpZXMgYm9ndXMgdmFsdWVzIG9uIHNvbWUgYXJjaC1lcwoKT24gc29tZSBhcmNo
+aXRlY3R1cmVzIHRoZSBTaW1NYW5hZ2VyLlJldHJpZXMgcHJvcGVydHkgd2FzIGdldHRpbmcgYm9n
+dXMKdmFsdWVzLiAgVGhpcyBpcyBiZWNhdXNlIHdlIHdlcmUgc2VuZGluZyBhbiBhcnJheSB3aGlj
+aCBwb2ludGVkIHRvIGludAp2YWx1ZXMgaW5zdGVhZCBvZiB0aGUgZXhwZWN0ZWQgdW5zaWduZWQg
+Y2hhciB2YWx1ZXMuCgpUaGlzIGZpeCBhbGxvY2F0ZXMgYSB0ZW1wb3JhcnkgYXJyYXkgb2YgdW5z
+aWduZWQgY2hhcnMgdG8gaG9sZCB0aGUKYWN0dWFsIEQtQnVzIHZhbHVlcyBiZWluZyBzZW50LiAg
+QWRkaXRpb25hbGx5LCB0aGUgZGljdGlvbmFyeSBhcnJheSBpcwpjaGFuZ2VkIHRvIHBvaW50IHRv
+IHRoZSB0ZW1wb3JhcnkgdW5zaWduZWQgY2hhciBiYXNlZCB2YWx1ZXMgaW5zdGVhZCBvZgp0aGUg
+cmF3ICdpbnQnIGJhc2VkIHJldHJ5IHZhbHVlcy4KLS0tCiBzcmMvc2ltLmMgfCAzOSArKysrKysr
+KysrKysrKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0KIDEgZmlsZSBjaGFuZ2VkLCAyNSBpbnNl
+cnRpb25zKCspLCAxNCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9zcmMvc2ltLmMgYi9zcmMv
+c2ltLmMKaW5kZXggZWRhZTVlYi4uODJmNzQwOSAxMDA2NDQKLS0tIGEvc3JjL3NpbS5jCisrKyBi
+L3NyYy9zaW0uYwpAQCAtMjY3LDEwICsyNjcsMTIgQEAgc3RhdGljIGNoYXIgKipnZXRfbG9ja2Vk
+X3BpbnMoc3RydWN0IG9mb25vX3NpbSAqc2ltKQogCXJldHVybiByZXQ7CiB9CiAKLXN0YXRpYyB2
+b2lkICoqZ2V0X3Bpbl9yZXRyaWVzKHN0cnVjdCBvZm9ub19zaW0gKnNpbSkKK3N0YXRpYyB2b2lk
+IGdldF9waW5fcmV0cmllcyhzdHJ1Y3Qgb2Zvbm9fc2ltICpzaW0sIHZvaWQgKioqb3V0X2RpY3Qs
+CisJCQkJdW5zaWduZWQgY2hhciAqKm91dF9yZXRyaWVzKQogewogCWludCBpLCBuZWxlbTsKLQl2
+b2lkICoqcmV0OworCXZvaWQgKipkaWN0OworCXVuc2lnbmVkIGNoYXIgKnJldHJpZXM7CiAKIAlm
+b3IgKGkgPSAxLCBuZWxlbSA9IDA7IGkgPCBPRk9OT19TSU1fUEFTU1dPUkRfSU5WQUxJRDsgaSsr
+KSB7CiAJCWlmIChzaW0tPnBpbl9yZXRyaWVzW2ldID09IC0xKQpAQCAtMjc5LDE3ICsyODEsMjIg
+QEAgc3RhdGljIHZvaWQgKipnZXRfcGluX3JldHJpZXMoc3RydWN0IG9mb25vX3NpbSAqc2ltKQog
+CQluZWxlbSArPSAxOwogCX0KIAotCXJldCA9IGdfbmV3MCh2b2lkICosIG5lbGVtICogMiArIDEp
+OworCWRpY3QgPSBnX25ldzAodm9pZCAqLCBuZWxlbSAqIDIgKyAxKTsKKwlyZXRyaWVzID0gZ19u
+ZXcwKHVuc2lnbmVkIGNoYXIsIG5lbGVtKTsKIAogCWZvciAoaSA9IDEsIG5lbGVtID0gMDsgaSA8
+IE9GT05PX1NJTV9QQVNTV09SRF9JTlZBTElEOyBpKyspIHsKIAkJaWYgKHNpbS0+cGluX3JldHJp
+ZXNbaV0gPT0gLTEpCiAJCQljb250aW51ZTsKIAotCQlyZXRbbmVsZW0rK10gPSAodm9pZCAqKSBz
+aW1fcGFzc3dkX25hbWUoaSk7Ci0JCXJldFtuZWxlbSsrXSA9ICZzaW0tPnBpbl9yZXRyaWVzW2ld
+OworCQlyZXRyaWVzW25lbGVtXSA9IHNpbS0+cGluX3JldHJpZXNbaV07CisKKwkJZGljdFtuZWxl
+bSAqIDJdID0gKHZvaWQgKikgc2ltX3Bhc3N3ZF9uYW1lKGkpOworCQlkaWN0W25lbGVtICogMiAr
+IDFdID0gJnJldHJpZXNbbmVsZW1dOworCQluZWxlbSsrOwogCX0KIAotCXJldHVybiByZXQ7CisJ
+Km91dF9kaWN0ID0gZGljdDsKKwkqb3V0X3JldHJpZXMgPSByZXRyaWVzOwogfQogCiBzdGF0aWMg
+Y2hhciAqKmdldF9zZXJ2aWNlX251bWJlcnMoR1NMaXN0ICpzZXJ2aWNlX251bWJlcnMpCkBAIC0z
+NDQsNyArMzUxLDggQEAgc3RhdGljIERCdXNNZXNzYWdlICpzaW1fZ2V0X3Byb3BlcnRpZXMoREJ1
+c0Nvbm5lY3Rpb24gKmNvbm4sCiAJY2hhciAqKnNlcnZpY2VfbnVtYmVyczsKIAljaGFyICoqbG9j
+a2VkX3BpbnM7CiAJY29uc3QgY2hhciAqcGluX25hbWU7Ci0Jdm9pZCAqKnBpbl9yZXRyaWVzOwor
+CXZvaWQgKipwaW5fcmV0cmllc19kaWN0OworCXVuc2lnbmVkIGNoYXIgKmRidXNfcmV0cmllczsK
+IAlkYnVzX2Jvb2xfdCBwcmVzZW50ID0gc2ltLT5zdGF0ZSAhPSBPRk9OT19TSU1fU1RBVEVfTk9U
+X1BSRVNFTlQ7CiAJZGJ1c19ib29sX3QgZmRuOwogCWRidXNfYm9vbF90IGJkbjsKQEAgLTQxOSwx
+MCArNDI3LDExIEBAIHN0YXRpYyBEQnVzTWVzc2FnZSAqc2ltX2dldF9wcm9wZXJ0aWVzKERCdXND
+b25uZWN0aW9uICpjb25uLAogCQkJCURCVVNfVFlQRV9TVFJJTkcsCiAJCQkJKHZvaWQgKikgJnBp
+bl9uYW1lKTsKIAotCXBpbl9yZXRyaWVzID0gZ2V0X3Bpbl9yZXRyaWVzKHNpbSk7CisJZ2V0X3Bp
+bl9yZXRyaWVzKHNpbSwgJnBpbl9yZXRyaWVzX2RpY3QsICZkYnVzX3JldHJpZXMpOwogCW9mb25v
+X2RidXNfZGljdF9hcHBlbmRfZGljdCgmZGljdCwgIlJldHJpZXMiLCBEQlVTX1RZUEVfQllURSwK
+LQkJCQkJCQkJJnBpbl9yZXRyaWVzKTsKLQlnX2ZyZWUocGluX3JldHJpZXMpOworCQkJCQkJCSZw
+aW5fcmV0cmllc19kaWN0KTsKKwlnX2ZyZWUocGluX3JldHJpZXNfZGljdCk7CisJZ19mcmVlKGRi
+dXNfcmV0cmllcyk7CiAKIGRvbmU6CiAJZGJ1c19tZXNzYWdlX2l0ZXJfY2xvc2VfY29udGFpbmVy
+KCZpdGVyLCAmZGljdCk7CkBAIC00MzcsNyArNDQ2LDggQEAgc3RhdGljIHZvaWQgc2ltX3Bpbl9y
+ZXRyaWVzX3F1ZXJ5X2NiKGNvbnN0IHN0cnVjdCBvZm9ub19lcnJvciAqZXJyb3IsCiAJc3RydWN0
+IG9mb25vX3NpbSAqc2ltID0gZGF0YTsKIAlEQnVzQ29ubmVjdGlvbiAqY29ubiA9IG9mb25vX2Ri
+dXNfZ2V0X2Nvbm5lY3Rpb24oKTsKIAljb25zdCBjaGFyICpwYXRoID0gX19vZm9ub19hdG9tX2dl
+dF9wYXRoKHNpbS0+YXRvbSk7Ci0Jdm9pZCAqKnBpbl9yZXRyaWVzOworCXZvaWQgKipwaW5fcmV0
+cmllc19kaWN0OworCXVuc2lnbmVkIGNoYXIgKmRidXNfcmV0cmllczsKIAogCWlmIChlcnJvci0+
+dHlwZSAhPSBPRk9OT19FUlJPUl9UWVBFX05PX0VSUk9SKSB7CiAJCW9mb25vX2Vycm9yKCJRdWVy
+eWluZyByZW1haW5pbmcgcGluIHJldHJpZXMgZmFpbGVkIik7CkBAIC00NDksMTEgKzQ1OSwxMiBA
+QCBzdGF0aWMgdm9pZCBzaW1fcGluX3JldHJpZXNfcXVlcnlfY2IoY29uc3Qgc3RydWN0IG9mb25v
+X2Vycm9yICplcnJvciwKIAogCW1lbWNweShzaW0tPnBpbl9yZXRyaWVzLCByZXRyaWVzLCBzaXpl
+b2Yoc2ltLT5waW5fcmV0cmllcykpOwogCi0JcGluX3JldHJpZXMgPSBnZXRfcGluX3JldHJpZXMo
+c2ltKTsKKwlnZXRfcGluX3JldHJpZXMoc2ltLCAmcGluX3JldHJpZXNfZGljdCwgJmRidXNfcmV0
+cmllcyk7CiAJb2Zvbm9fZGJ1c19zaWduYWxfZGljdF9wcm9wZXJ0eV9jaGFuZ2VkKGNvbm4sIHBh
+dGgsCiAJCQkJCU9GT05PX1NJTV9NQU5BR0VSX0lOVEVSRkFDRSwgIlJldHJpZXMiLAotCQkJCQlE
+QlVTX1RZUEVfQllURSwJJnBpbl9yZXRyaWVzKTsKLQlnX2ZyZWUocGluX3JldHJpZXMpOworCQkJ
+CQlEQlVTX1RZUEVfQllURSwJJnBpbl9yZXRyaWVzX2RpY3QpOworCWdfZnJlZShwaW5fcmV0cmll
+c19kaWN0KTsKKwlnX2ZyZWUoZGJ1c19yZXRyaWVzKTsKIH0KIAogc3RhdGljIHZvaWQgc2ltX3Bp
+bl9yZXRyaWVzX2NoZWNrKHN0cnVjdCBvZm9ub19zaW0gKnNpbSkKLS0gCjEuOS4yCgo=
 
-You could try modifying the gobi plugin and udevng to allocate 2 =
-
-gprs-contexts.  One using the QMI driver and the other using PPP.
-
-e.g. something like:
-
-gc =3D ofono_gprs_context_create(modem, 0, "qmimodem", device);
-ofono_gprs_add_context(gprs, gc);
-
-gc =3D ofono_gprs_context_create(modem, 0, "atmodem", ppp_chat);
-ofono_gprs_add_context(gprs, gc);
-
-and see if that works.
-
-Regards,
--Denis
-
---===============1521669851402474045==--
+--===============9196708683369696359==--
 
