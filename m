@@ -1,72 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============4452597678131453254=="
+Content-Type: multipart/mixed; boundary="===============7647766556314716431=="
 MIME-Version: 1.0
 From: Mylene Josserand <mylene.josserand@openwide.fr>
 Subject: Re: [help] connect 2 APN at the same time (PPP and QMI)
-Date: Thu, 04 Dec 2014 16:34:07 +0100
-Message-ID: <392376778.28854113.1417707247777.JavaMail.root@openwide.fr>
-In-Reply-To: <547FA131.9000001@gmail.com>
+Date: Thu, 04 Dec 2014 17:26:23 +0100
+Message-ID: <296413424.28859588.1417710383928.JavaMail.root@openwide.fr>
+In-Reply-To: <392376778.28854113.1417707247777.JavaMail.root@openwide.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4452597678131453254==
+--===============7647766556314716431==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi again,
 
 
-Thank you for your help. I really appreciate.
-
-
-> This sort of depends on whether your hardware actually supports
-> multiple
-> contexts being activated at once.
-
-
-For this, it is okay. My hardware can have 3 contexts activated at the same=
- time.
-
-
-
-> You could try modifying the gobi plugin and udevng to allocate 2
-> gprs-contexts.  One using the QMI driver and the other using PPP.
 > =
 
-> e.g. something like:
+> I have tried it but, with the dbus method GetContext, only one
+> context is shown (the QMI ones).
+> The "at_gprs_context_probe" is called but failed at
+> "g_at_chat_get_slave".
+> I checked the gcd->chat and it is not NULL so it seems to come to the
+> slave.
 > =
 
-> gc =3D ofono_gprs_context_create(modem, 0, "qmimodem", device);
-> ofono_gprs_add_context(gprs, gc);
+> What is it for ? What have I missed ?
 > =
 
-> gc =3D ofono_gprs_context_create(modem, 0, "atmodem", ppp_chat);
-> ofono_gprs_add_context(gprs, gc);
-> =
 
-> and see if that works.
- =
+I continued to look around and I succeed to make it work !
 
+I looked to other modem plugins. I think I understand what the slave is tha=
+nks to that. It is the other interfaces to send AT commands, only, whereas =
+the "main" GAtChat serves to create the PPP connection, is not it ? If I am=
+ wrong, do not hesitate to make me understand how it works.
 
-I have tried it but, with the dbus method GetContext, only one context is s=
-hown (the QMI ones). =
-
-The "at_gprs_context_probe" is called but failed at "g_at_chat_get_slave". =
-
-I checked the gcd->chat and it is not NULL so it seems to come to the slave=
-. =
+I set the slave (via "g_at_chat_set_slave") to my "Application" device and =
+I succeeded to get 2 contexts. I activate them and it creates the PPP and Q=
+MI connections ! I still have a problem : I did not get an IP address on on=
+e of the APN connection but this is another problem (connman ?) and I will =
+search alone for that before asking for help :)
 
 
-What is it for ? What have I missed ?
+Anyway, thank you for the help you gave me !
 
-
-Thank you in advance,
 
 Best regards,
 
-
 Myl=C3=A8ne
 
-
---===============4452597678131453254==--
+--===============7647766556314716431==--
 
