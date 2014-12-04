@@ -1,60 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============5724818547291400938=="
+Content-Type: multipart/mixed; boundary="===============5967002084196676940=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [help] connect 2 APN at the same time (PPP and QMI)
-Date: Thu, 04 Dec 2014 10:56:30 -0600
-Message-ID: <5480923E.6020006@gmail.com>
-In-Reply-To: <296413424.28859588.1417710383928.JavaMail.root@openwide.fr>
+From: nanxi <frechnx@gmail.com>
+Subject: Progress of GPRS IPv6
+Date: Thu, 04 Dec 2014 15:32:44 -0800
+Message-ID: <CAJsouXBBF_11wk-kf=MkwdVT-p8LDW7HDZpJ=51XU-Zp3iHBBA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5724818547291400938==
+--===============5967002084196676940==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mylene,
+Hi oFono team,
 
- >
-> I looked to other modem plugins. I think I understand what the slave is t=
-hanks to that. It is the other interfaces to send AT commands, only, wherea=
-s the "main" GAtChat serves to create the PPP connection, is not it ? If I =
-am wrong, do not hesitate to make me understand how it works.
->
+I noticed that the support of GPRS IPv6 is still in progress. Wonder if
+there is any estimate on the feature complete date of this feature?
 
-Pretty much.  When we pass the chat to the gprs_context driver we set =
+-- =
 
-the slave chat.  This is needed in order to monitor certain events which =
+Thanks,
 
-come in via AT commands when the PPP link is active.  In effect we =
+--===============5967002084196676940==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-require 2 AT command ports.
+PGRpdiBkaXI9Imx0ciI+SGkgb0Zvbm8gdGVhbSw8ZGl2Pjxicj48L2Rpdj48ZGl2Pkkgbm90aWNl
+ZCB0aGF0IHRoZSBzdXBwb3J0IG9mIEdQUlMgSVB2NiBpcyBzdGlsbCBpbiBwcm9ncmVzcy4gV29u
+ZGVyIGlmIHRoZXJlIGlzIGFueSBlc3RpbWF0ZSBvbiB0aGUgZmVhdHVyZSBjb21wbGV0ZSBkYXRl
+IG9mIHRoaXMgZmVhdHVyZT88YnIgY2xlYXI9ImFsbCI+PGRpdj48YnI+PC9kaXY+LS0gPGJyPjxk
+aXYgY2xhc3M9ImdtYWlsX3NpZ25hdHVyZSI+PGRpdiBkaXI9Imx0ciI+PGRpdiBkaXI9Imx0ciI+
+VGhhbmtzLDxicj48L2Rpdj48ZGl2Pjxicj48L2Rpdj48L2Rpdj48L2Rpdj4KPC9kaXY+PC9kaXY+
+Cg==
 
-On some hardware there was only a single functional PPP port, so the =
-
-driver might need to be modified to handle that case, but it sounds like =
-
-you don't have this issue.
-
-> I set the slave (via "g_at_chat_set_slave") to my "Application" device an=
-d I succeeded to get 2 contexts. I activate them and it creates the PPP and=
- QMI connections ! I still have a problem : I did not get an IP address on =
-one of the APN connection but this is another problem (connman ?) and I wil=
-l search alone for that before asking for help :)
->
-
-Cool, feel free to send a patch for this.
-
-IP settings are notified to oFono by the gprs_context driver.  If there =
-
-are IP settings given, then most likely they should be obtained via =
-
-DHCP.  Running test/list-contexts should tell you all the information =
-
-once both contexts are active.
-
-Regards,
--Denis
-
---===============5724818547291400938==--
+--===============5967002084196676940==--
 
