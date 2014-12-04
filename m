@@ -1,35 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============2971625426932451192=="
+Content-Type: multipart/mixed; boundary="===============4452597678131453254=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim: change pin_retries array to unsigned char
-Date: Thu, 04 Dec 2014 09:00:48 -0600
-Message-ID: <54807720.8020900@gmail.com>
-In-Reply-To: <CABvLYuBVHpxNxWpWTg_fe1xLHesE3GVvRktk_rCcpk-wPgdfcg@mail.gmail.com>
+From: Mylene Josserand <mylene.josserand@openwide.fr>
+Subject: Re: [help] connect 2 APN at the same time (PPP and QMI)
+Date: Thu, 04 Dec 2014 16:34:07 +0100
+Message-ID: <392376778.28854113.1417707247777.JavaMail.root@openwide.fr>
+In-Reply-To: <547FA131.9000001@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2971625426932451192==
+--===============4452597678131453254==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Cedric,
+Hi Denis,
 
-On 12/04/2014 03:55 AM, Cedric Jehasse wrote:
-> Hi Denis,
->
->> Please try the following patch (attached) and tell me if it fixes this b=
-ug
->> on your platform.
-> This patch caused a segfault. Please have a look at the reworked patch
-> (attached).
 
-Yes, of course.  Thanks for cleaning up after me.  The corrected fix has =
+Thank you for your help. I really appreciate.
 
-now been pushed upstream.
 
-Regards,
--Denis
+> This sort of depends on whether your hardware actually supports
+> multiple
+> contexts being activated at once.
 
---===============2971625426932451192==--
+
+For this, it is okay. My hardware can have 3 contexts activated at the same=
+ time.
+
+
+
+> You could try modifying the gobi plugin and udevng to allocate 2
+> gprs-contexts.  One using the QMI driver and the other using PPP.
+> =
+
+> e.g. something like:
+> =
+
+> gc =3D ofono_gprs_context_create(modem, 0, "qmimodem", device);
+> ofono_gprs_add_context(gprs, gc);
+> =
+
+> gc =3D ofono_gprs_context_create(modem, 0, "atmodem", ppp_chat);
+> ofono_gprs_add_context(gprs, gc);
+> =
+
+> and see if that works.
+ =
+
+
+I have tried it but, with the dbus method GetContext, only one context is s=
+hown (the QMI ones). =
+
+The "at_gprs_context_probe" is called but failed at "g_at_chat_get_slave". =
+
+I checked the gcd->chat and it is not NULL so it seems to come to the slave=
+. =
+
+
+What is it for ? What have I missed ?
+
+
+Thank you in advance,
+
+Best regards,
+
+
+Myl=C3=A8ne
+
+
+--===============4452597678131453254==--
 
