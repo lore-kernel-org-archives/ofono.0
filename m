@@ -1,39 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============5967002084196676940=="
+Content-Type: multipart/mixed; boundary="===============7748770979237212256=="
 MIME-Version: 1.0
-From: nanxi <frechnx@gmail.com>
-Subject: Progress of GPRS IPv6
-Date: Thu, 04 Dec 2014 15:32:44 -0800
-Message-ID: <CAJsouXBBF_11wk-kf=MkwdVT-p8LDW7HDZpJ=51XU-Zp3iHBBA@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Progress of GPRS IPv6
+Date: Thu, 04 Dec 2014 23:00:39 -0600
+Message-ID: <54813BF7.5050103@gmail.com>
+In-Reply-To: <CAJsouXBBF_11wk-kf=MkwdVT-p8LDW7HDZpJ=51XU-Zp3iHBBA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5967002084196676940==
+--===============7748770979237212256==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi oFono team,
+Hi,
 
-I noticed that the support of GPRS IPv6 is still in progress. Wonder if
-there is any estimate on the feature complete date of this feature?
+On 12/04/2014 05:32 PM, nanxi wrote:
+> Hi oFono team,
+>
+> I noticed that the support of GPRS IPv6 is still in progress. Wonder if
+> there is any estimate on the feature complete date of this feature?
+>
 
--- =
+Nobody is working on this at the moment.
 
-Thanks,
+What is actually missing?  The driver just needs to obtain and forward =
 
---===============5967002084196676940==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+IPv6 details accordingly.  E.g. using ofono_gprs_context_set_ipv6_address...
 
-PGRpdiBkaXI9Imx0ciI+SGkgb0Zvbm8gdGVhbSw8ZGl2Pjxicj48L2Rpdj48ZGl2Pkkgbm90aWNl
-ZCB0aGF0IHRoZSBzdXBwb3J0IG9mIEdQUlMgSVB2NiBpcyBzdGlsbCBpbiBwcm9ncmVzcy4gV29u
-ZGVyIGlmIHRoZXJlIGlzIGFueSBlc3RpbWF0ZSBvbiB0aGUgZmVhdHVyZSBjb21wbGV0ZSBkYXRl
-IG9mIHRoaXMgZmVhdHVyZT88YnIgY2xlYXI9ImFsbCI+PGRpdj48YnI+PC9kaXY+LS0gPGJyPjxk
-aXYgY2xhc3M9ImdtYWlsX3NpZ25hdHVyZSI+PGRpdiBkaXI9Imx0ciI+PGRpdiBkaXI9Imx0ciI+
-VGhhbmtzLDxicj48L2Rpdj48ZGl2Pjxicj48L2Rpdj48L2Rpdj48L2Rpdj4KPC9kaXY+PC9kaXY+
-Cg==
+Regards,
+-Denis
 
---===============5967002084196676940==--
+--===============7748770979237212256==--
 
