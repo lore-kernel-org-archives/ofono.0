@@ -1,35 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============5594712158340640063=="
+Content-Type: multipart/mixed; boundary="===============3974472435633628643=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] radio-settings: Show all available technologies
-Date: Fri, 12 Dec 2014 08:55:17 -0600
-Message-ID: <548B01D5.3060407@gmail.com>
-In-Reply-To: <1418383535-3458-1-git-send-email-alfonso.sanchez-beato@canonical.com>
+From: vicamo@gmail.com
+Subject: "IPv6.Settings" in interface "org.ofono.ConnectionContext" is not a
+ valid name
+Date: Tue, 16 Dec 2014 11:57:36 +0800
+Message-ID: <CAJ-KqdzPe=-phOwH4Eh52jWRWmT-CLrL5OV9RTF_N3nFt8nAQw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5594712158340640063==
+--===============3974472435633628643==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alfonso,
+Hi all,
 
-On 12/12/2014 05:25 AM, Alfonso Sanchez-Beato wrote:
-> Not all possible futures technologies were being showed on the DBus
-> interface.
-> ---
->   src/radio-settings.c | 4 ++--
->   1 file changed, 2 insertions(+), 2 deletions(-)
->
+I happen to find a strange property "IPv6.Settings" in ConnectionContext.
+According to DBus specification [1], dbus member names can only be
+consisted of character set "[A-Z][a-z][0-9]_" and may not begin with a
+digit. Any plan to get rid of it? Or is a patch to this welcomed? It will
+certainly break compatibility to existing programs.
 
-Good catch.
-
-Patch has been applied, thanks.
+[1]:
+http://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-na=
+mes
 
 Regards,
--Denis
+Vicamo
 
+--===============3974472435633628643==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
---===============5594712158340640063==--
+PGRpdiBkaXI9Imx0ciI+PGRpdj48ZGl2PjxkaXY+SGkgYWxsLDxicj48YnI+PC9kaXY+SSBoYXBw
+ZW4gdG8gZmluZCBhIHN0cmFuZ2UgcHJvcGVydHkgJnF1b3Q7SVB2Ni5TZXR0aW5ncyZxdW90OyBp
+biBDb25uZWN0aW9uQ29udGV4dC4gQWNjb3JkaW5nIHRvIERCdXMgc3BlY2lmaWNhdGlvbiBbMV0s
+IGRidXMgbWVtYmVyIG5hbWVzIGNhbiBvbmx5IGJlIGNvbnNpc3RlZCBvZiBjaGFyYWN0ZXIgc2V0
+ICZxdW90O1tBLVpdW2Etel1bMC05XV8mcXVvdDsgYW5kIG1heSBub3QgYmVnaW4gd2l0aCBhCiAg
+ICAgICAgICAgICAgICBkaWdpdC4gQW55IHBsYW4gdG8gZ2V0IHJpZCBvZiBpdD8gT3IgaXMgYSBw
+YXRjaCB0byB0aGlzIHdlbGNvbWVkPyBJdCB3aWxsIGNlcnRhaW5seSBicmVhayBjb21wYXRpYmls
+aXR5IHRvIGV4aXN0aW5nIHByb2dyYW1zLjxicj48YnI+WzFdOiA8YSBocmVmPSJodHRwOi8vZGJ1
+cy5mcmVlZGVza3RvcC5vcmcvZG9jL2RidXMtc3BlY2lmaWNhdGlvbi5odG1sI21lc3NhZ2UtcHJv
+dG9jb2wtbmFtZXMiPmh0dHA6Ly9kYnVzLmZyZWVkZXNrdG9wLm9yZy9kb2MvZGJ1cy1zcGVjaWZp
+Y2F0aW9uLmh0bWwjbWVzc2FnZS1wcm90b2NvbC1uYW1lczwvYT48YnI+PGJyPjwvZGl2PlJlZ2Fy
+ZHMsPGJyPjwvZGl2PlZpY2Ftbzxicj48L2Rpdj4K
+
+--===============3974472435633628643==--
 
