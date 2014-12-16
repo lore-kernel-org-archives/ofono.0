@@ -1,51 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============3974472435633628643=="
+Content-Type: multipart/mixed; boundary="===============2205969884799993498=="
 MIME-Version: 1.0
-From: vicamo@gmail.com
-Subject: "IPv6.Settings" in interface "org.ofono.ConnectionContext" is not a
- valid name
-Date: Tue, 16 Dec 2014 11:57:36 +0800
-Message-ID: <CAJ-KqdzPe=-phOwH4Eh52jWRWmT-CLrL5OV9RTF_N3nFt8nAQw@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: "IPv6.Settings" in interface "org.ofono.ConnectionContext" is not
+ a valid name
+Date: Mon, 15 Dec 2014 23:12:33 -0600
+Message-ID: <548FBF41.3030806@gmail.com>
+In-Reply-To: <CAJ-KqdzPe=-phOwH4Eh52jWRWmT-CLrL5OV9RTF_N3nFt8nAQw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3974472435633628643==
+--===============2205969884799993498==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+Hi,
 
-I happen to find a strange property "IPv6.Settings" in ConnectionContext.
-According to DBus specification [1], dbus member names can only be
-consisted of character set "[A-Z][a-z][0-9]_" and may not begin with a
-digit. Any plan to get rid of it? Or is a patch to this welcomed? It will
-certainly break compatibility to existing programs.
+On 12/15/2014 09:57 PM, vicamo(a)gmail.com wrote:
+> Hi all,
+>
+> I happen to find a strange property "IPv6.Settings" in
+> ConnectionContext. According to DBus specification [1], dbus member
+> names can only be consisted of character set "[A-Z][a-z][0-9]_" and may
+> not begin with a digit. Any plan to get rid of it? Or is a patch to this
+> welcomed? It will certainly break compatibility to existing programs.
+>
+> [1]:
+> http://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-=
+names
+>
 
-[1]:
-http://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-na=
-mes
+Properties are not member names, so the restrictions you mention do not =
+
+apply.  See the DBus Specification:
+
+"Strictly speaking, D-Bus property names are not required to follow the =
+
+same naming restrictions as member names, but D-Bus property names that =
+
+would not be valid member names (in particular, GObject-style =
+
+dash-separated property names) can cause interoperability problems and =
+
+should be avoided. "
+
+Since the oFono DBus API is currently frozen, there are no plans on =
+
+"fixing" this particular property.
 
 Regards,
-Vicamo
+-Denis
 
---===============3974472435633628643==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGRpdiBkaXI9Imx0ciI+PGRpdj48ZGl2PjxkaXY+SGkgYWxsLDxicj48YnI+PC9kaXY+SSBoYXBw
-ZW4gdG8gZmluZCBhIHN0cmFuZ2UgcHJvcGVydHkgJnF1b3Q7SVB2Ni5TZXR0aW5ncyZxdW90OyBp
-biBDb25uZWN0aW9uQ29udGV4dC4gQWNjb3JkaW5nIHRvIERCdXMgc3BlY2lmaWNhdGlvbiBbMV0s
-IGRidXMgbWVtYmVyIG5hbWVzIGNhbiBvbmx5IGJlIGNvbnNpc3RlZCBvZiBjaGFyYWN0ZXIgc2V0
-ICZxdW90O1tBLVpdW2Etel1bMC05XV8mcXVvdDsgYW5kIG1heSBub3QgYmVnaW4gd2l0aCBhCiAg
-ICAgICAgICAgICAgICBkaWdpdC4gQW55IHBsYW4gdG8gZ2V0IHJpZCBvZiBpdD8gT3IgaXMgYSBw
-YXRjaCB0byB0aGlzIHdlbGNvbWVkPyBJdCB3aWxsIGNlcnRhaW5seSBicmVhayBjb21wYXRpYmls
-aXR5IHRvIGV4aXN0aW5nIHByb2dyYW1zLjxicj48YnI+WzFdOiA8YSBocmVmPSJodHRwOi8vZGJ1
-cy5mcmVlZGVza3RvcC5vcmcvZG9jL2RidXMtc3BlY2lmaWNhdGlvbi5odG1sI21lc3NhZ2UtcHJv
-dG9jb2wtbmFtZXMiPmh0dHA6Ly9kYnVzLmZyZWVkZXNrdG9wLm9yZy9kb2MvZGJ1cy1zcGVjaWZp
-Y2F0aW9uLmh0bWwjbWVzc2FnZS1wcm90b2NvbC1uYW1lczwvYT48YnI+PGJyPjwvZGl2PlJlZ2Fy
-ZHMsPGJyPjwvZGl2PlZpY2Ftbzxicj48L2Rpdj4K
-
---===============3974472435633628643==--
+--===============2205969884799993498==--
 
