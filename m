@@ -1,64 +1,143 @@
-Content-Type: multipart/mixed; boundary="===============2200322099289907505=="
+Content-Type: multipart/mixed; boundary="===============1838208309757374038=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [help] automatic data reconnection in case of signal loss
-Date: Wed, 24 Dec 2014 12:38:13 -0600
-Message-ID: <549B0815.2030700@gmail.com>
-In-Reply-To: <549AD009.6@openwide.fr>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: [PATCH] network: Add NetworkRegistration.OperatorsChanged signal
+Date: Wed, 31 Dec 2014 16:24:16 +0300
+Message-ID: <1420032256-2616-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2200322099289907505==
+--===============1838208309757374038==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mylene,
+This signal gets emitted when operator list has changed.
+It contains the current list of operators.
+---
+ doc/network-api.txt |  5 +++++
+ src/network.c       | 44 +++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 48 insertions(+), 1 deletion(-)
 
-On 12/24/2014 08:39 AM, Mylene JOSSERAND wrote:
-> Hi everyone,
->
->
-> I am doing some tests with Ofono.
-> Currently, I am trying to see if Ofono can handle an automatic data
-> reconnection in case of signal loss.
->
-> I am doing the following test :
-> - Connect the modem to data connection via atmodem driver (so PPP link)
-> - Disconnect the antenna to lose signal
-> - Reconnect the antenna to get signal back
-> - Try to get data connection back
->
-> The atmodem driver is notified that the signal is lost so it disconnects
-> ppp with "gprs-context.c:ppp_disconnect() Reason: 6".
-> After re-connecting the antenna and that the network is back, in the
-> Ofono interfaces, it did not changed, I always have the
-> ConnectionManager interface. The difference is that the context is not
-> activated. So, I try to re-activate it but it failed with error :
->
-> gprs.c:pri_activate_callback() Activating context failed with error:
-> Unknown error type
->
-> I guess that someone should have test it before me. If it is the case,
-> is there something I am doing wrong ? I do not know how Ofono should
-> react in this case. Maybe it should remove some interfaces ? Go in
-> "offline" mode ?
-> If nobody tested it before, what should I look for ?
->
->
+diff --git a/doc/network-api.txt b/doc/network-api.txt
+index 83a2bc0..d635ba7 100644
+--- a/doc/network-api.txt
++++ b/doc/network-api.txt
+@@ -57,6 +57,11 @@ Signals		PropertyChanged(string property, variant value)
+ 			This signal indicates a changed value of the given
+ 			property.
+ =
 
-The modem is still in 'radio turned on' mode, e.g. online.  So as far as =
++		OperatorsChanged(array{object,dict})
++
++			Signal that gets emitted when operator list has
++			changed. It contains the current list of operators.
++
+ Properties	string Mode [readonly]
+ =
 
-oFono is concerned, nothing has changed.
+ 			The current registration mode. The default of this
+diff --git a/src/network.c b/src/network.c
+index d1bfca6..1b8b759 100644
+--- a/src/network.c
++++ b/src/network.c
+@@ -934,6 +934,40 @@ static void append_operator_struct_list(struct ofono_n=
+etreg *netreg,
+ 	dbus_free_string_array(children);
+ }
+ =
 
-As to why your context activation fails, who knows.  oFono simply sends =
++static void network_signal_operators_changed(struct ofono_netreg *netreg)
++{
++	const char *path =3D __ofono_atom_get_path(netreg->atom);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	DBusMessage *signal;
++	DBusMessageIter iter;
++	DBusMessageIter array;
++
++	signal =3D dbus_message_new_signal(path,
++		OFONO_NETWORK_REGISTRATION_INTERFACE, "OperatorsChanged");
++	if (signal =3D=3D NULL) {
++		ofono_error("Unable to allocate new "
++					OFONO_NETWORK_REGISTRATION_INTERFACE
++					".OperatorsChanged signal");
++		return;
++	}
++
++	dbus_message_iter_init_append(signal, &iter);
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
++					DBUS_STRUCT_BEGIN_CHAR_AS_STRING
++					DBUS_TYPE_OBJECT_PATH_AS_STRING
++					DBUS_TYPE_ARRAY_AS_STRING
++					DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
++					DBUS_TYPE_STRING_AS_STRING
++					DBUS_TYPE_VARIANT_AS_STRING
++					DBUS_DICT_ENTRY_END_CHAR_AS_STRING
++					DBUS_STRUCT_END_CHAR_AS_STRING,
++					&array);
++	append_operator_struct_list(netreg, &array);
++	dbus_message_iter_close_container(&iter, &array);
++
++	g_dbus_send_message(conn, signal);
++}
++
+ static void operator_list_callback(const struct ofono_error *error, int to=
+tal,
+ 				const struct ofono_network_operator *list,
+ 				void *data)
+@@ -942,6 +976,7 @@ static void operator_list_callback(const struct ofono_e=
+rror *error, int total,
+ 	DBusMessage *reply;
+ 	DBusMessageIter iter;
+ 	DBusMessageIter array;
++	gboolean changed;
+ =
 
-the command to the modem.  If the modem responds with an error, then you =
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+ 		DBG("Error occurred during operator list");
+@@ -950,7 +985,7 @@ static void operator_list_callback(const struct ofono_e=
+rror *error, int total,
+ 		return;
+ 	}
+ =
 
-need to figure out why that happens.
+-	update_operator_list(netreg, total, list);
++	changed =3D update_operator_list(netreg, total, list);
+ =
 
-Regards,
--Denis
+ 	reply =3D dbus_message_new_method_return(netreg->pending);
+ =
 
---===============2200322099289907505==--
+@@ -970,6 +1005,11 @@ static void operator_list_callback(const struct ofono=
+_error *error, int total,
+ 	dbus_message_iter_close_container(&iter, &array);
+ =
+
+ 	__ofono_dbus_pending_reply(&netreg->pending, reply);
++
++	DBG("operator list %schanged", changed ? "" : "not ");
++
++	if (changed)
++		network_signal_operators_changed(netreg);
+ }
+ =
+
+ static DBusMessage *network_scan(DBusConnection *conn,
+@@ -1041,6 +1081,8 @@ static const GDBusMethodTable network_registration_me=
+thods[] =3D {
+ static const GDBusSignalTable network_registration_signals[] =3D {
+ 	{ GDBUS_SIGNAL("PropertyChanged",
+ 			GDBUS_ARGS({ "name", "s" }, { "value", "v" })) },
++	{ GDBUS_SIGNAL("OperatorsChanged",
++			GDBUS_ARGS({ "operators", "a(oa{sv})"})) },
+ 	{ }
+ };
+ =
+
+-- =
+
+1.8.3.2
+
+
+--===============1838208309757374038==--
 
