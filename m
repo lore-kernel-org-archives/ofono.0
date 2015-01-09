@@ -1,143 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============2002105442809908574=="
+Content-Type: multipart/mixed; boundary="===============7776917056119861591=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] gprs: Setup route for mmsc if there's no mms proxy
-Date: Tue, 06 Jan 2015 08:19:34 -0800
-Message-ID: <E1FEF121-03BB-4ADB-91C6-88D98D77EA91@holtmann.org>
-In-Reply-To: <1420546359-7977-1-git-send-email-slava.monich@jolla.com>
+From: =?unknown-8bit?b?5ZGo55C85ZGo55C8?= <zhouqiong.zq@alibaba-inc.com>
+Subject: a problem about ofono dbus
+Date: Fri, 09 Jan 2015 17:19:11 +0800
+Message-ID: <007201d02bed$54806ad0$fd814070$@alibaba-inc.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2002105442809908574==
+--===============7776917056119861591==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+Hi, all:
 
-> And don't setup mms route at all if mmsc/proxy host name is not in
-> dotted IPv4 format.
-> ---
-> src/gprs.c | 25 ++++++++++++++++++++-----
-> 1 file changed, 20 insertions(+), 5 deletions(-)
-> =
+   I have a problem when accessing ofono dbus interface, after run my code,
+there is error =E2=80=9Cprocess 14234: type invalid 0 not a basic type D-Bu=
+s not
+built with -rdynamic so unable to print a backtrace Aborted=E2=80=9D.
 
-> diff --git a/src/gprs.c b/src/gprs.c
-> index 05ab499..9c643b9 100644
-> --- a/src/gprs.c
-> +++ b/src/gprs.c
-> @@ -585,13 +585,16 @@ static void pri_context_signal_settings(struct pri_=
-context *ctx,
-> 				context_settings_append_ipv6);
-> }
-> =
+   How to debug the issue? Would you please give some suggestion?
 
-> -static void pri_parse_proxy(struct pri_context *ctx, const char *proxy)
-> +static gboolean pri_parse_proxy(struct pri_context *ctx, const char *pro=
-xy)
-> {
-> 	char *scheme, *host, *port, *path;
-> =
-
-> +	if (proxy[0] =3D=3D 0)
-> +		return FALSE;
-> +
-> 	scheme =3D g_strdup(proxy);
-> 	if (scheme =3D=3D NULL)
-> -		return;
-> +		return FALSE;
-> =
-
-> 	host =3D strstr(scheme, "://");
-> 	if (host !=3D NULL) {
-> @@ -604,7 +607,7 @@ static void pri_parse_proxy(struct pri_context *ctx, =
-const char *proxy)
-> 			ctx->proxy_port =3D 80;
-> 		else {
-> 			g_free(scheme);
-> -			return;
-> +			return FALSE;
-> 		}
-> 	} else {
-> 		host =3D scheme;
-> @@ -626,10 +629,16 @@ static void pri_parse_proxy(struct pri_context *ctx=
-, const char *proxy)
-> 		}
-> 	}
-> =
-
-> +	if (host[0] =3D=3D 0) {
-> +		g_free(scheme);
-> +		return FALSE;
-> +	}
-> +
-> 	g_free(ctx->proxy_host);
-> 	ctx->proxy_host =3D g_strdup(host);
-> =
-
-> 	g_free(scheme);
-> +	return TRUE;
-> }
-
-There is a single call instance for pri_parse_proxy. Why are we not checkin=
-g right there if the ctx->message_proxy is something that is worth while pa=
-rsing.
-
-> static void pri_ifupdown(const char *interface, ofono_bool_t active)
-> @@ -715,11 +724,16 @@ static void pri_setproxy(const char *interface, con=
-st char *proxy)
-> {
-> 	struct rtentry rt;
-> 	struct sockaddr_in addr;
-> +	in_addr_t proxy_addr;
-> 	int sk;
-> =
-
-> 	if (interface =3D=3D NULL)
-> 		return;
-> =
-
-> +	proxy_addr =3D inet_addr(proxy);
-> +	if (proxy_addr =3D=3D INADDR_NONE)
-> +		return;
-> +
-> 	sk =3D socket(PF_INET, SOCK_DGRAM, 0);
-> 	if (sk < 0)
-> 		return;
-> @@ -730,7 +744,7 @@ static void pri_setproxy(const char *interface, const=
- char *proxy)
-> =
-
-> 	memset(&addr, 0, sizeof(addr));
-> 	addr.sin_family =3D AF_INET;
-> -	addr.sin_addr.s_addr =3D inet_addr(proxy);
-> +	addr.sin_addr.s_addr =3D proxy_addr;
-> 	memcpy(&rt.rt_dst, &addr, sizeof(rt.rt_dst));
-> =
-
-> 	memset(&addr, 0, sizeof(addr));
-
-This extra handling seems unneeded. We do not call pri_setproxy when ctx->p=
-roxy_host =3D=3D NULL. So what should happen is to ensure that ctx->proxy_h=
-ost is set to NULL. Then no change here is needed.
-
-> @@ -792,7 +806,8 @@ static void pri_update_mms_context_settings(struct pr=
-i_context *ctx)
-> 	if (ctx->message_proxy)
-> 		settings->ipv4->proxy =3D g_strdup(ctx->message_proxy);
-> =
-
-> -	pri_parse_proxy(ctx, ctx->message_proxy);
-> +	if (!pri_parse_proxy(ctx, ctx->message_proxy))
-> +		pri_parse_proxy(ctx, ctx->message_center);
-
-What is this change doing? Parsing the message center into ctx->proxy_host =
-makes no sense to me.
-
-Regards
-
-Marcel
+ =
 
 
---===============2002105442809908574==--
+Thanks
+
+Zhou qiong
+
+
+--===============7776917056119861591==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29udGVu
+dD0idGV4dC9odG1sOyBjaGFyc2V0PWdiMjMxMiI+PG1ldGEgbmFtZT1HZW5lcmF0b3IgY29udGVu
+dD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPjxzdHlsZT48IS0tCi8qIEZv
+bnQgRGVmaW5pdGlvbnMgKi8KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OsvOzOU7CglwYW5vc2Ut
+MToyIDEgNiAwIDMgMSAxIDEgMSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OsvOzOU7Cglw
+YW5vc2UtMToyIDEgNiAwIDMgMSAxIDEgMSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OkNh
+bGlicmk7CglwYW5vc2UtMToyIDE1IDUgMiAyIDIgNCAzIDIgNDt9CkBmb250LWZhY2UKCXtmb250
+LWZhbWlseToiXEDLzszlIjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQovKiBTdHls
+ZSBEZWZpbml0aW9ucyAqLwpwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFs
+Cgl7bWFyZ2luOjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCXRleHQtYWxpZ246anVzdGlm
+eTsKCXRleHQtanVzdGlmeTppbnRlci1pZGVvZ3JhcGg7Cglmb250LXNpemU6MTAuNXB0OwoJZm9u
+dC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjt9CmE6bGluaywgc3Bhbi5Nc29IeXBlcmxp
+bmsKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpibHVlOwoJdGV4dC1kZWNvcmF0aW9u
+OnVuZGVybGluZTt9CmE6dmlzaXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZAoJe21zby1z
+dHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOnB1cnBsZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxp
+bmU7fQpzcGFuLkVtYWlsU3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7
+Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiOwoJY29sb3I6d2luZG93dGV4dDt9
+Ci5Nc29DaHBEZWZhdWx0Cgl7bXNvLXN0eWxlLXR5cGU6ZXhwb3J0LW9ubHk7Cglmb250LWZhbWls
+eToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KLyogUGFnZSBEZWZpbml0aW9ucyAqLwpAcGFnZSBX
+b3JkU2VjdGlvbjEKCXtzaXplOjYxMi4wcHQgNzkyLjBwdDsKCW1hcmdpbjo3Mi4wcHQgOTAuMHB0
+IDcyLjBwdCA5MC4wcHQ7fQpkaXYuV29yZFNlY3Rpb24xCgl7cGFnZTpXb3JkU2VjdGlvbjE7fQot
+LT48L3N0eWxlPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPgo8bzpzaGFwZWRlZmF1bHRzIHY6ZXh0
+PSJlZGl0IiBzcGlkbWF4PSIxMDI2IiAvPgo8L3htbD48IVtlbmRpZl0tLT48IS0tW2lmIGd0ZSBt
+c28gOV0+PHhtbD4KPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgo8bzppZG1hcCB2OmV4dD0i
+ZWRpdCIgZGF0YT0iMSIgLz4KPC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlmXS0tPjwvaGVh
+ZD48Ym9keSBsYW5nPVpILUNOIGxpbms9Ymx1ZSB2bGluaz1wdXJwbGUgc3R5bGU9J3RleHQtanVz
+dGlmeS10cmltOnB1bmN0dWF0aW9uJz48ZGl2IGNsYXNzPVdvcmRTZWN0aW9uMT48cCBjbGFzcz1N
+c29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5IaSwgYWxsOjxvOnA+PC9vOnA+PC9zcGFuPjwvcD48
+cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz4mbmJzcDsmbmJzcDsgSSBoYXZlIGEg
+cHJvYmxlbSB3aGVuIGFjY2Vzc2luZyBvZm9ubyBkYnVzIGludGVyZmFjZSwgYWZ0ZXIgcnVuIG15
+IGNvZGUsIHRoZXJlIGlzIGVycm9yIKGwcHJvY2VzcyAxNDIzNDogdHlwZSBpbnZhbGlkIDAgbm90
+IGEgYmFzaWMgdHlwZSBELUJ1cyBub3QgYnVpbHQgd2l0aCAtcmR5bmFtaWMgc28gdW5hYmxlIHRv
+IHByaW50IGEgYmFja3RyYWNlIEFib3J0ZWShsS48bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xh
+c3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7Jm5ic3A7IEhvdyB0byBkZWJ1ZyB0
+aGUgaXNzdWU/IFdvdWxkIHlvdSBwbGVhc2UgZ2l2ZSBzb21lIHN1Z2dlc3Rpb24/PG86cD48L286
+cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPjxvOnA+Jm5i
+c3A7PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5U
+aGFua3M8bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9
+RU4tVVM+WmhvdSBxaW9uZzxvOnA+PC9vOnA+PC9zcGFuPjwvcD48L2Rpdj48L2JvZHk+PC9odG1s
+Pg==
+--===============7776917056119861591==--
 
