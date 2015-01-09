@@ -1,83 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============7776917056119861591=="
+Content-Type: multipart/mixed; boundary="===============6593878117332865923=="
 MIME-Version: 1.0
-From: =?unknown-8bit?b?5ZGo55C85ZGo55C8?= <zhouqiong.zq@alibaba-inc.com>
-Subject: a problem about ofono dbus
-Date: Fri, 09 Jan 2015 17:19:11 +0800
-Message-ID: <007201d02bed$54806ad0$fd814070$@alibaba-inc.com>
+From: Enrico Sau <enrico.sau@gmail.com>
+Subject: SMS and DTR
+Date: Fri, 09 Jan 2015 12:56:28 +0100
+Message-ID: <CAH4ZQwuL_jXXRP3G+VOh+n3LLpsBBv_jSVjrWioPQDLg+F3B6Q@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7776917056119861591==
+--===============6593878117332865923==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi, all:
+Dear all,
+I don't understand why, after every sent SMS PDU, the DTR signal is set
+down.
+This is a problem for me, since my modem does not answer anymore with DTR
+down.
+Can anyone please explain the reason and suggest how to avoid it?
 
-   I have a problem when accessing ofono dbus interface, after run my code,
-there is error =E2=80=9Cprocess 14234: type invalid 0 not a basic type D-Bu=
-s not
-built with -rdynamic so unable to print a backtrace Aborted=E2=80=9D.
+Thank you
 
-   How to debug the issue? Would you please give some suggestion?
+Enrico
 
- =
-
-
-Thanks
-
-Zhou qiong
-
-
---===============7776917056119861591==
+--===============6593878117332865923==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29udGVu
-dD0idGV4dC9odG1sOyBjaGFyc2V0PWdiMjMxMiI+PG1ldGEgbmFtZT1HZW5lcmF0b3IgY29udGVu
-dD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPjxzdHlsZT48IS0tCi8qIEZv
-bnQgRGVmaW5pdGlvbnMgKi8KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OsvOzOU7CglwYW5vc2Ut
-MToyIDEgNiAwIDMgMSAxIDEgMSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OsvOzOU7Cglw
-YW5vc2UtMToyIDEgNiAwIDMgMSAxIDEgMSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OkNh
-bGlicmk7CglwYW5vc2UtMToyIDE1IDUgMiAyIDIgNCAzIDIgNDt9CkBmb250LWZhY2UKCXtmb250
-LWZhbWlseToiXEDLzszlIjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQovKiBTdHls
-ZSBEZWZpbml0aW9ucyAqLwpwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFs
-Cgl7bWFyZ2luOjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCXRleHQtYWxpZ246anVzdGlm
-eTsKCXRleHQtanVzdGlmeTppbnRlci1pZGVvZ3JhcGg7Cglmb250LXNpemU6MTAuNXB0OwoJZm9u
-dC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjt9CmE6bGluaywgc3Bhbi5Nc29IeXBlcmxp
-bmsKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpibHVlOwoJdGV4dC1kZWNvcmF0aW9u
-OnVuZGVybGluZTt9CmE6dmlzaXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZAoJe21zby1z
-dHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOnB1cnBsZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxp
-bmU7fQpzcGFuLkVtYWlsU3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7
-Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiOwoJY29sb3I6d2luZG93dGV4dDt9
-Ci5Nc29DaHBEZWZhdWx0Cgl7bXNvLXN0eWxlLXR5cGU6ZXhwb3J0LW9ubHk7Cglmb250LWZhbWls
-eToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KLyogUGFnZSBEZWZpbml0aW9ucyAqLwpAcGFnZSBX
-b3JkU2VjdGlvbjEKCXtzaXplOjYxMi4wcHQgNzkyLjBwdDsKCW1hcmdpbjo3Mi4wcHQgOTAuMHB0
-IDcyLjBwdCA5MC4wcHQ7fQpkaXYuV29yZFNlY3Rpb24xCgl7cGFnZTpXb3JkU2VjdGlvbjE7fQot
-LT48L3N0eWxlPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPgo8bzpzaGFwZWRlZmF1bHRzIHY6ZXh0
-PSJlZGl0IiBzcGlkbWF4PSIxMDI2IiAvPgo8L3htbD48IVtlbmRpZl0tLT48IS0tW2lmIGd0ZSBt
-c28gOV0+PHhtbD4KPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgo8bzppZG1hcCB2OmV4dD0i
-ZWRpdCIgZGF0YT0iMSIgLz4KPC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlmXS0tPjwvaGVh
-ZD48Ym9keSBsYW5nPVpILUNOIGxpbms9Ymx1ZSB2bGluaz1wdXJwbGUgc3R5bGU9J3RleHQtanVz
-dGlmeS10cmltOnB1bmN0dWF0aW9uJz48ZGl2IGNsYXNzPVdvcmRTZWN0aW9uMT48cCBjbGFzcz1N
-c29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5IaSwgYWxsOjxvOnA+PC9vOnA+PC9zcGFuPjwvcD48
-cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz4mbmJzcDsmbmJzcDsgSSBoYXZlIGEg
-cHJvYmxlbSB3aGVuIGFjY2Vzc2luZyBvZm9ubyBkYnVzIGludGVyZmFjZSwgYWZ0ZXIgcnVuIG15
-IGNvZGUsIHRoZXJlIGlzIGVycm9yIKGwcHJvY2VzcyAxNDIzNDogdHlwZSBpbnZhbGlkIDAgbm90
-IGEgYmFzaWMgdHlwZSBELUJ1cyBub3QgYnVpbHQgd2l0aCAtcmR5bmFtaWMgc28gdW5hYmxlIHRv
-IHByaW50IGEgYmFja3RyYWNlIEFib3J0ZWShsS48bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xh
-c3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7Jm5ic3A7IEhvdyB0byBkZWJ1ZyB0
-aGUgaXNzdWU/IFdvdWxkIHlvdSBwbGVhc2UgZ2l2ZSBzb21lIHN1Z2dlc3Rpb24/PG86cD48L286
-cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPjxvOnA+Jm5i
-c3A7PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5U
-aGFua3M8bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9
-RU4tVVM+WmhvdSBxaW9uZzxvOnA+PC9vOnA+PC9zcGFuPjwvcD48L2Rpdj48L2JvZHk+PC9odG1s
-Pg==
---===============7776917056119861591==--
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
+aWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+RGVhciBhbGwsPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxf
+ZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SSBkb24mIzM5
+O3QgdW5kZXJzdGFuZCB3aHksIGFmdGVyIGV2ZXJ5IHNlbnQgU01TIFBEVSwgdGhlIERUUiBzaWdu
+YWwgaXMgc2V0IGRvd24uPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZv
+bnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+VGhpcyBpcyBhIHByb2JsZW0gZm9yIG1lLCBz
+aW5jZSBteSBtb2RlbSBkb2VzIG5vdCBhbnN3ZXIgYW55bW9yZSB3aXRoIERUUiBkb3duLjwvZGl2
+PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNh
+bnMtc2VyaWYiPkNhbiBhbnlvbmUgcGxlYXNlIGV4cGxhaW4gdGhlIHJlYXNvbiBhbmQgc3VnZ2Vz
+dCBob3cgdG8gYXZvaWQgaXQ/PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9
+ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+PGJyPjwvZGl2PjxkaXYgY2xhc3M9Imdt
+YWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPlRoYW5r
+IHlvdTwvZGl2PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxfc2lnbmF0dXJlIj48ZGl2Pjxicj48L2Rp
+dj48ZGl2PkVucmljbzwvZGl2PjxkaXY+PGJyPjwvZGl2PjwvZGl2PjwvZGl2Pgo8L2Rpdj4K
+
+--===============6593878117332865923==--
 
