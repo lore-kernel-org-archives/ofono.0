@@ -1,70 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============6936544741928198698=="
+Content-Type: multipart/mixed; boundary="===============5412765588969094190=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: SMS doubt
-Date: Thu, 15 Jan 2015 10:00:35 -0600
-Message-ID: <54B7E423.1040703@gmail.com>
-In-Reply-To: <CAH4ZQwvKJZTbANZ7i-AhaSy8fJM2Z01c0koVgvQM3Ej4sgJPag@mail.gmail.com>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: Re: [PATCH] gprs: Setup route for mmsc if there's no mms proxy
+Date: Thu, 22 Jan 2015 23:53:18 +0200
+Message-ID: <54C1714E.6070403@jolla.com>
+In-Reply-To: <1420546359-7977-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6936544741928198698==
+--===============5412765588969094190==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Enrico,
 
-On 01/15/2015 03:55 AM, Enrico Sau wrote:
-> Hi all,
-> I was wondering how should ofono behave on a SMS reception.
-> Should the message be saved somewhere by ofono, or another application
-> in needed for that?
+> And don't setup mms route at all if mmsc/proxy host name is not in
+> dotted IPv4 format.
+> ---
+>   src/gprs.c | 25 ++++++++++++++++++++-----
+>   1 file changed, 20 insertions(+), 5 deletions(-)
 
-oFono does not save anything.  One can write a history plugin to write =
+Sorry, somehow I missed the reply to this patch and just accidentally =
 
-this information to a database of your choice, or export this =
+found it (the reply) at mail-archive.com.
 
-information via DBus/other IPC in some way.  See examples/history.c for =
+This patch has to do the the case when no MessageProxy is provided for =
 
-a very basic example.  Search the mailing list archives for more complex =
+the MMS context. In that case ofono would set up host route for =
 
-examples of this.
+255.255.255.255 (INADDR_NONE returned by inet_addr for the empty string) =
 
-Alternatively, you can write a simple application that listens to the =
+for the MMS interface when it comes up.
 
-MessageManager.ImmediateMessage and MessageManager.IncomingMessage =
+With these changes the whole thing has a chance to work if MessageCenter =
 
-signals to store messages.  However, this is not quite as reliable as =
+URL contains IP address in the host part. In any case, configuring host =
 
-the history plugin approach since if your application is not running / =
-
-crashes, messages that are received during that time would be lost.
-
-> I'm asking because after some SMS receptions, the script list-messages
-> does not show anything.
->
-
-The Message objects exposed by GetMessages() method, MessageAdded() and =
-
-MessageRemoved() signals are for the outgoing path only.  If you notice, =
-
-the states are:
-
-"
-Properties      string State
-
-                         Contains the state of the message object.  Possible
-                         values are:
-                                 "pending",
-                                 "sent",
-                                 "failed"
-"
-
-Hope this helps.
+route for 255.255.255.255 doesn't make any sense.
 
 Regards,
--Denis
+-Slava
 
---===============6936544741928198698==--
+--===============5412765588969094190==--
 
