@@ -1,45 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============5412765588969094190=="
+Content-Type: multipart/mixed; boundary="===============6665778000207546078=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
-Subject: Re: [PATCH] gprs: Setup route for mmsc if there's no mms proxy
-Date: Thu, 22 Jan 2015 23:53:18 +0200
-Message-ID: <54C1714E.6070403@jolla.com>
-In-Reply-To: <1420546359-7977-1-git-send-email-slava.monich@jolla.com>
+From: Enrico Sau <enrico.sau@gmail.com>
+Subject: Serial modem and oFono
+Date: Tue, 27 Jan 2015 08:28:15 +0100
+Message-ID: <CAH4ZQwuFxBMfja6PMLBUG12Rnso8=DnRSV-S=Z8B9_dpfee8gw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5412765588969094190==
+--===============6665778000207546078==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi all,
+I'm now working with a serial device, which doesn't trigger udev events
+when connected. It simply works with ttyS0 device.
+First question is if there is any way for oFono to recognize this modem,
+but I believe that the answer will be: yes, if you trigger an udev event.
+Ok, so, second question, is there any way to add a modem to oFono without
+going through udev plugin?
 
-> And don't setup mms route at all if mmsc/proxy host name is not in
-> dotted IPv4 format.
-> ---
->   src/gprs.c | 25 ++++++++++++++++++++-----
->   1 file changed, 20 insertions(+), 5 deletions(-)
+Thank you.
 
-Sorry, somehow I missed the reply to this patch and just accidentally =
+Enrico
+=E2=80=8B=E2=80=8B
 
-found it (the reply) at mail-archive.com.
+--===============6665778000207546078==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-This patch has to do the the case when no MessageProxy is provided for =
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
+aWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SGkgYWxsLDwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2Rl
+ZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPkkmIzM5O20gbm93
+IHdvcmtpbmcgd2l0aCBhIHNlcmlhbCBkZXZpY2UsIHdoaWNoIGRvZXNuJiMzOTt0IHRyaWdnZXIg
+dWRldiBldmVudHMgd2hlbiBjb25uZWN0ZWQuIEl0IHNpbXBseSB3b3JrcyB3aXRoIHR0eVMwIGRl
+dmljZS48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6
+dmVyZGFuYSxzYW5zLXNlcmlmIj5GaXJzdCBxdWVzdGlvbiBpcyBpZiB0aGVyZSBpcyBhbnkgd2F5
+IGZvciBvRm9ubyB0byByZWNvZ25pemUgdGhpcyBtb2RlbSwgYnV0IEkgYmVsaWV2ZSB0aGF0IHRo
+ZSBhbnN3ZXIgd2lsbCBiZTogeWVzLCBpZiB5b3UgdHJpZ2dlciBhbiB1ZGV2IGV2ZW50LjwvZGl2
+PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNh
+bnMtc2VyaWYiPk9rLCBzbywgc2Vjb25kIHF1ZXN0aW9uLCBpcyB0aGVyZSBhbnkgd2F5IHRvIGFk
+ZCBhIG1vZGVtIHRvIG9Gb25vIHdpdGhvdXQgZ29pbmcgdGhyb3VnaCB1ZGV2IHBsdWdpbj88L2Rp
+dj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxz
+YW5zLXNlcmlmIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZv
+bnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+VGhhbmsgeW91LjwvZGl2PjxkaXY+PGRpdiBj
+bGFzcz0iZ21haWxfc2lnbmF0dXJlIj48ZGl2Pjxicj48L2Rpdj48ZGl2PkVucmljbzxkaXYgY2xh
+c3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWY7
+ZGlzcGxheTppbmxpbmUiPuKAi+KAizwvZGl2PjwvZGl2PjxkaXY+PGJyPjwvZGl2PjwvZGl2Pjwv
+ZGl2Pgo8L2Rpdj4K
 
-the MMS context. In that case ofono would set up host route for =
-
-255.255.255.255 (INADDR_NONE returned by inet_addr for the empty string) =
-
-for the MMS interface when it comes up.
-
-With these changes the whole thing has a chance to work if MessageCenter =
-
-URL contains IP address in the host part. In any case, configuring host =
-
-route for 255.255.255.255 doesn't make any sense.
-
-Regards,
--Slava
-
---===============5412765588969094190==--
+--===============6665778000207546078==--
 
