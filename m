@@ -1,40 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============4374204193064369451=="
+Content-Type: multipart/mixed; boundary="===============3455508391657327650=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Serial modem and oFono
-Date: Tue, 27 Jan 2015 10:03:33 -0600
-Message-ID: <54C7B6D5.1020705@gmail.com>
-In-Reply-To: <CAH4ZQwuFxBMfja6PMLBUG12Rnso8=DnRSV-S=Z8B9_dpfee8gw@mail.gmail.com>
+From: Cedric Jehasse <cedric.jehasse@gmail.com>
+Subject: [PATCH] sierra: add sim state polling after CFUN enable
+Date: Fri, 30 Jan 2015 11:34:32 +0100
+Message-ID: <1422614072-23635-1-git-send-email-cedric.jehasse@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4374204193064369451==
+--===============3455508391657327650==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Enrico,
+From: Cedric Jehasse <cedric.jehasse@softathome.com>
 
-On 01/27/2015 01:28 AM, Enrico Sau wrote:
-> Hi all,
-> I'm now working with a serial device, which doesn't trigger udev events
-> when connected. It simply works with ttyS0 device.
-> First question is if there is any way for oFono to recognize this modem,
-> but I believe that the answer will be: yes, if you trigger an udev event.
+When pin is queried shortly after a Siera dongle is plugged in, "AT+CPIN?"
+responds with "CME ERROR 14: SIM".
+Poll the sim, as already done by several other vendor plugins.
+---
+ plugins/sierra.c | 26 ++++++++++++++++++++++++--
+ 1 file changed, 24 insertions(+), 2 deletions(-)
 
-Sort of.  Just add a static udev rule to your system.  For an example, =
+diff --git a/plugins/sierra.c b/plugins/sierra.c
+index a458e38..458fec2 100644
+--- a/plugins/sierra.c
++++ b/plugins/sierra.c
+@@ -48,6 +48,8 @@ static const char *none_prefix[] =3D { NULL };
+ =
 
-see doc/sim900-modem.txt or doc/calypso-modem.txt
+ struct sierra_data {
+ 	GAtChat *modem;
++	gboolean have_sim;
++	struct at_util_sim_state_query *sim_state_query;
+ };
+ =
 
-> Ok, so, second question, is there any way to add a modem to oFono
-> without going through udev plugin?
+ static void sierra_debug(const char *str, void *user_data)
+@@ -80,6 +82,9 @@ static void sierra_remove(struct ofono_modem *modem)
+ =
 
-Sure, just make a plugin that adds the modem manually.  Won't be very =
+ 	ofono_modem_set_data(modem, NULL);
+ =
 
-useful to anyone else though.
++	/* Cleanup potential SIM state polling */
++	at_util_sim_state_query_free(data->sim_state_query);
++
+ 	/* Cleanup after hot-unplug */
+ 	g_at_chat_unref(data->modem);
+ =
 
-Regards,
--Denis
+@@ -119,6 +124,21 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	return chat;
+ }
+ =
 
---===============4374204193064369451==--
++static void sim_state_cb(gboolean present, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct sierra_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	at_util_sim_state_query_free(data->sim_state_query);
++	data->sim_state_query =3D NULL;
++
++	data->have_sim =3D present;
++	ofono_modem_set_powered(modem, TRUE);
++
++}
++
+ static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+@@ -131,7 +151,9 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 		data->modem =3D NULL;
+ 	}
+ =
+
+-	ofono_modem_set_powered(modem, ok);
++	data->sim_state_query =3D at_util_sim_state_query_new(data->modem,
++						2, 20, sim_state_cb, modem,
++						NULL);
+ }
+ =
+
+ static int sierra_enable(struct ofono_modem *modem)
+@@ -222,7 +244,7 @@ static void sierra_pre_sim(struct ofono_modem *modem)
+ 	sim =3D ofono_sim_create(modem, OFONO_VENDOR_SIERRA,
+ 					"atmodem", data->modem);
+ =
+
+-	if (sim)
++	if (sim && data->have_sim =3D=3D TRUE)
+ 		ofono_sim_inserted_notify(sim, TRUE);
+ }
+ =
+
+-- =
+
+1.9.2
+
+
+--===============3455508391657327650==--
 
