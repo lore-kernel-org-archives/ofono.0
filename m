@@ -1,106 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============3455508391657327650=="
+Content-Type: multipart/mixed; boundary="===============0073432121812047327=="
 MIME-Version: 1.0
-From: Cedric Jehasse <cedric.jehasse@gmail.com>
-Subject: [PATCH] sierra: add sim state polling after CFUN enable
-Date: Fri, 30 Jan 2015 11:34:32 +0100
-Message-ID: <1422614072-23635-1-git-send-email-cedric.jehasse@gmail.com>
+From: Norbert Huffschmid <norbert.huffschmid@long-exposure.net>
+Subject: ofonod crashes during enable-modem.py
+Date: Sat, 31 Jan 2015 17:04:44 +0100
+Message-ID: <5C9823BE-B7A7-4E4B-8229-25E10C7DDDA3@long-exposure.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3455508391657327650==
+--===============0073432121812047327==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Cedric Jehasse <cedric.jehasse@softathome.com>
+Hi there,
 
-When pin is queried shortly after a Siera dongle is plugged in, "AT+CPIN?"
-responds with "CME ERROR 14: SIM".
-Poll the sim, as already done by several other vendor plugins.
----
- plugins/sierra.c | 26 ++++++++++++++++++++++++--
- 1 file changed, 24 insertions(+), 2 deletions(-)
+I'm testing ofono in a bluetooth HFP setup. I have successfully paired  =
 
-diff --git a/plugins/sierra.c b/plugins/sierra.c
-index a458e38..458fec2 100644
---- a/plugins/sierra.c
-+++ b/plugins/sierra.c
-@@ -48,6 +48,8 @@ static const char *none_prefix[] =3D { NULL };
- =
+a smartphone and can see it via the list-modems.py script. When I try  =
 
- struct sierra_data {
- 	GAtChat *modem;
-+	gboolean have_sim;
-+	struct at_util_sim_state_query *sim_state_query;
- };
- =
+to enable the modem, ofonod crashes with segfault:
 
- static void sierra_debug(const char *str, void *user_data)
-@@ -80,6 +82,9 @@ static void sierra_remove(struct ofono_modem *modem)
- =
+Jan 31 16:27:40 raspberrypi ofonod[5296]: plugins/ =
 
- 	ofono_modem_set_data(modem, NULL);
- =
+hfp_hf.c:hfp_enable() 0x570e70
+Jan 31 16:27:45 raspberrypi ofonod[5296]: src/ =
 
-+	/* Cleanup potential SIM state polling */
-+	at_util_sim_state_query_free(data->sim_state_query);
-+
- 	/* Cleanup after hot-unplug */
- 	g_at_chat_unref(data->modem);
- =
+modem.c:modem_change_state() old state: 0, new state: 1
+Jan 31 16:27:45 raspberrypi ofonod[5296]: plugins/ =
 
-@@ -119,6 +124,21 @@ static GAtChat *open_device(struct ofono_modem *modem,
- 	return chat;
- }
- =
+hfp_hf.c:hfp_pre_sim() 0x570e70
+Jan 31 16:27:45 raspberrypi ofonod[5296]: drivers/hfpmodem/call- =
 
-+static void sim_state_cb(gboolean present, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct sierra_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	at_util_sim_state_query_free(data->sim_state_query);
-+	data->sim_state_query =3D NULL;
-+
-+	data->have_sim =3D present;
-+	ofono_modem_set_powered(modem, TRUE);
-+
-+}
-+
- static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
-@@ -131,7 +151,9 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
- gpointer user_data)
- 		data->modem =3D NULL;
- 	}
- =
+volume.c:hfp_call_volume_probe()
+Jan 31 16:27:45 raspberrypi ofonod[5296]: drivers/hfpmodem/ =
 
--	ofono_modem_set_powered(modem, ok);
-+	data->sim_state_query =3D at_util_sim_state_query_new(data->modem,
-+						2, 20, sim_state_cb, modem,
-+						NULL);
- }
- =
+handsfree.c:hfp_handsfree_probe()
+Jan 31 16:27:45 raspberrypi ofonod[5296]: src/ =
 
- static int sierra_enable(struct ofono_modem *modem)
-@@ -222,7 +244,7 @@ static void sierra_pre_sim(struct ofono_modem *modem)
- 	sim =3D ofono_sim_create(modem, OFONO_VENDOR_SIERRA,
- 					"atmodem", data->modem);
- =
+modem.c:modem_change_state() old state: 1, new state: 2
+Jan 31 16:27:45 raspberrypi ofonod[5296]: plugins/ =
 
--	if (sim)
-+	if (sim && data->have_sim =3D=3D TRUE)
- 		ofono_sim_inserted_notify(sim, TRUE);
- }
- =
+hfp_hf.c:hfp_post_sim() 0x570e70
+Jan 31 16:27:45 raspberrypi ofonod[5296]: src/ =
 
--- =
+modem.c:modem_change_state() old state: 2, new state: 3
+Jan 31 16:27:45 raspberrypi ofonod[5296]: Service level connection  =
 
-1.9.2
+established
+Jan 31 16:27:45 raspberrypi ofonod[5296]: src/ =
+
+network.c:ofono_netreg_status_notify() /hfp/001BDC0365E3_EC59E7D393ED  =
+
+status 1 tech -1
+Jan 31 16:27:45 raspberrypi ofonod[5296]: Aborting (signal 11) [/usr/ =
+
+sbin/ofonod]
+
+This happens with ofono 1.6-2 (Debian Wheezy) on a Raspberry Pi.
+
+Any ideas how to fix or work around this issue?
+
+Thanks,
+Norbert
 
 
---===============3455508391657327650==--
+--===============0073432121812047327==--
 
