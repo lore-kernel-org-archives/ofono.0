@@ -1,86 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============4055603448613478315=="
+Content-Type: multipart/mixed; boundary="===============5770056619117034198=="
 MIME-Version: 1.0
-From: Georg Chini <georg@chini.tk>
-Subject: Re: ofonod crashes during enable-modem.py
-Date: Mon, 02 Feb 2015 16:31:07 +0100
-Message-ID: <54CF983B.8070203@chini.tk>
-In-Reply-To: <54CF9371.2090002@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: bluetooth headset and ofono
+Date: Mon, 02 Feb 2015 09:19:37 -0600
+Message-ID: <54CF9589.70109@gmail.com>
+In-Reply-To: <54CF7CEA.9010106@chini.tk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4055603448613478315==
+--===============5770056619117034198==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Norbert,
+Hi Georg,
 
-you should be using pulseaudio from the current git. Pulseaudio version =
-
-5.0 and
-below do not support HFP in combination with Bluez5. I am running Bluez =
-
-5.23 from
-Debian unstable and a recent ofono and pulseaudio compiled from source. This
-works fine for my mobiles.
-
-Regards
-              Georg
-
-On 02.02.2015 16:10, Denis Kenzior wrote:
-> Hi Norbert,
+On 02/02/2015 07:34 AM, Georg Chini wrote:
+> Hello,
 >
-> Please don't top-post on this mailing list.  That's just our =
+> can someone help me with the problem below? Is ofono supposed
+> to expose an audio card when a headset is connected? If so, could
+> you explain how this happens?
+> I am not using SELinux and have ofono and pulse compiled from a
+> recent source. The rest of the system is Debian unstable witch ships
+> Bluez version 5.23.
 
-> convention here.  Anyway, see below:
->
-> On 02/01/2015 08:00 AM, Norbert Huffschmid wrote:
->> Hi Denis,
->>
->> now I have installed ofono from the debian jessie testing branch (which
->> has packaged ofono 1.15-2). Bluez is still version 4.99 and all the rest
->> is debian wheezy as before. Now the list-modems.py script does not show
->> any modem any more. Are there dependency issues?
->>
->
-> BlueZ4 requires --with-bluez4 when configuring oFono.
->
->> I already had tried a combination of ofono 1.15-2 and Bluez 5.23, which
->> was quite promising. I could successfully establish a phone call by
->> means of the dial-number.py script. But there was no voice connection
->> established between the endpoints. This was quite astonishing because
->> A2DP streaming from the smartphone to the Raspberry Pi worked like a
->> charm. And I don't think that it was a phone issue because a HFP
->> connection from the phone to a navigation device works well too.
->>
->
-> oFono and BlueZ are not the only ones at play.  The audio is handled =
+I have no idea what SELinux would have to do with anything...
 
-> by PulseAudio.  So I would check on the PulseAudio mailing list which =
+>
+> If this is not the right place to ask such questions please tell me, I
+> never received any response to my previous mails.
+>
+> Regards
+>               Georg
+>
+> On 02.02.2015 12:51, Tanu Kaskinen wrote:
+>> On Sun, 2015-02-01 at 16:26 +0100, Georg Chini wrote:
+>>> Hello,
+>>>
+>>> I am still fighting to get my bluetooth headset working properly
+>>> with the ofono backend. I cannot get HFP to work with pulse.
+>>>
+>>> When I run ofonod and phonesim and switch on my headset
+>>> it seems to connect fine. A card turns up in pulseaudio but the
 
-> version of PulseAudio you need.
->
->> I have read somewhere that Bluez5 does not support HFP at all, so I did
->> not further follow this approach.
->
-> Correct, sort of.
->
->>
->> Any proposal which combination of ofono and Bluez is most promising in
->> order to establish a HFP voice connection?
->>
->
-> As mentioned before, BlueZ and oFono are not the problem here. Check =
+What exactly are you trying to do? Phonesim can only simulate modem =
 
-> back with PulseAudio folks.
->
-> Regards,
-> -Denis
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> https://lists.ofono.org/mailman/listinfo/ofono
+signaling.  It will _not_ generate audio.  I should also point out that =
 
+oFono does not support audio for HFP AG role with BlueZ 5.
 
---===============4055603448613478315==--
+Only HFP Handsfree role with BlueZ5/PulseAudio is supported.
+
+>>> HFP profile is not available there. Trying to switch to the profile
+>>> leads to "not connected" messages in the log.
+>>> In phonesim I can simulate a call. If I do so, I get a ring in the
+>>> headset and can pick up the call. I am not sure if there is any
+>>> audio, I hear silence. If I am playing back with the a2dp_sink
+>>> profile at the same time, the a2dp audio is muted (but continues
+>>> playing).
+>>>
+>>> Looking at the code I wonder if the HFP profile of a headset can
+>>> ever get available. The ofono backend listens for "CardAdded" or
+>>> "CardRemoved" DBUS-messages, but it seems that the "CardAdded"
+>>> signal is never emitted by ofono when a headset connects.
+>>> There is only a call to the associated function when a phone
+>>> connects and nowhere else in the code.
+
+Yes, as I said previously, what you're trying to do is not supported.
+
+Regards,
+-Denis
+
+--===============5770056619117034198==--
 
