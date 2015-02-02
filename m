@@ -1,44 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============5219250393000423916=="
+Content-Type: multipart/mixed; boundary="===============1111843545286409131=="
 MIME-Version: 1.0
 From: Cedric Jehasse <cedric.jehasse@gmail.com>
-Subject: [PATCH 2/2] atmodem: fix retries reporting from AT+CPINR
-Date: Mon, 02 Feb 2015 10:32:45 +0100
-Message-ID: <1422869565-11746-2-git-send-email-cedric.jehasse@gmail.com>
-In-Reply-To: <1422869565-11746-1-git-send-email-cedric.jehasse@gmail.com>
+Subject: [PATCH 1/2] atmodem: add Sierra to be polled after entering pin
+Date: Mon, 02 Feb 2015 10:32:44 +0100
+Message-ID: <1422869565-11746-1-git-send-email-cedric.jehasse@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5219250393000423916==
+--===============1111843545286409131==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Cedric Jehasse <cedric.jehasse@softathome.com>
 
-The retries array was not correctly filled in.
+Sierra modem will return "CME ERROR: 14" when polled right after pin has
+been entered. Use the existing vendor quirk to handle this.
 ---
- drivers/atmodem/sim.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/atmodem/sim.c | 1 +
+ 1 file changed, 1 insertion(+)
 
 diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 054f548..d6a0dcf 100644
+index c128e33..054f548 100644
 --- a/drivers/atmodem/sim.c
 +++ b/drivers/atmodem/sim.c
-@@ -827,7 +827,7 @@ static void at_cpinr_cb(gboolean ok, GAtResult *result,=
- gpointer user_data)
- =
-
- 		for (i =3D 1; i < len; i++) {
- 			if (!strcmp(name, at_sim_name[i].name)) {
--				retries[i] =3D val;
-+				retries[at_sim_name[i].type] =3D val;
- 				break;
- 			}
- 		}
+@@ -1350,6 +1350,7 @@ static void at_pin_send_cb(gboolean ok, GAtResult *re=
+sult,
+ 	case OFONO_VENDOR_ALCATEL:
+ 	case OFONO_VENDOR_HUAWEI:
+ 	case OFONO_VENDOR_SIMCOM:
++	case OFONO_VENDOR_SIERRA:
+ 		/*
+ 		 * On ZTE modems, after pin is entered, SIM state is checked
+ 		 * by polling CPIN as their modem doesn't provide unsolicited
 -- =
 
 1.9.2
 
 
---===============5219250393000423916==--
+--===============1111843545286409131==--
 
