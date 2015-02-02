@@ -1,42 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============1111843545286409131=="
+Content-Type: multipart/mixed; boundary="===============1245986116029739594=="
 MIME-Version: 1.0
-From: Cedric Jehasse <cedric.jehasse@gmail.com>
-Subject: [PATCH 1/2] atmodem: add Sierra to be polled after entering pin
-Date: Mon, 02 Feb 2015 10:32:44 +0100
-Message-ID: <1422869565-11746-1-git-send-email-cedric.jehasse@gmail.com>
+From: Tommi Kenakkala <tommi.kenakkala@tieto.com>
+Subject: [PATCH 0/2] Init handsfree audio manager only for Bluez5
+Date: Mon, 02 Feb 2015 14:43:04 +0200
+Message-ID: <1422880986-11262-1-git-send-email-tommi.kenakkala@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1111843545286409131==
+--===============1245986116029739594==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Cedric Jehasse <cedric.jehasse@softathome.com>
+Ofono should initialise Bluetooth handsfree SCO audio socket only =
 
-Sierra modem will return "CME ERROR: 14" when polled right after pin has
-been entered. Use the existing vendor quirk to handle this.
----
- drivers/atmodem/sim.c | 1 +
- 1 file changed, 1 insertion(+)
+with Bluez5, not with Bluez4. =
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index c128e33..054f548 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -1350,6 +1350,7 @@ static void at_pin_send_cb(gboolean ok, GAtResult *re=
-sult,
- 	case OFONO_VENDOR_ALCATEL:
- 	case OFONO_VENDOR_HUAWEI:
- 	case OFONO_VENDOR_SIMCOM:
-+	case OFONO_VENDOR_SIERRA:
- 		/*
- 		 * On ZTE modems, after pin is entered, SIM state is checked
- 		 * by polling CPIN as their modem doesn't provide unsolicited
+Here's one approach to work around the problem. Feel free to improve.
+
+Tommi Kenakkala (2):
+  main: Remove handsfree audio manager init and cleanup
+  handsfree-audio: Init and cleanup audio manager on ref/unref calls
+
+ src/handsfree-audio.c |   16 ++++++++--------
+ src/main.c            |    4 ----
+ 2 files changed, 8 insertions(+), 12 deletions(-)
+
 -- =
 
-1.9.2
+1.7.9.5
 
 
---===============1111843545286409131==--
+--===============1245986116029739594==--
 
