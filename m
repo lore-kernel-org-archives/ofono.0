@@ -1,38 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============0448237789010171583=="
+Content-Type: multipart/mixed; boundary="===============8555434232936225283=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/2] Init handsfree audio manager only for Bluez5
-Date: Mon, 02 Feb 2015 09:30:20 -0600
-Message-ID: <54CF980C.80508@gmail.com>
-In-Reply-To: <1422880986-11262-1-git-send-email-tommi.kenakkala@tieto.com>
+From: Viallard Anthony <viallard@syscom-instruments.com>
+Subject: Questions about var/lib/ofono/ directories
+Date: Thu, 05 Feb 2015 18:28:03 +0100
+Message-ID: <54D3A823.8040403@syscom-instruments.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0448237789010171583==
+--===============8555434232936225283==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tommi,
+Hello ofono mailing list,
 
-On 02/02/2015 06:43 AM, Tommi Kenakkala wrote:
-> Ofono should initialise Bluetooth handsfree SCO audio socket only
-> with Bluez5, not with Bluez4.
-> Here's one approach to work around the problem. Feel free to improve.
->
-> Tommi Kenakkala (2):
->    main: Remove handsfree audio manager init and cleanup
->    handsfree-audio: Init and cleanup audio manager on ref/unref calls
->
->   src/handsfree-audio.c |   16 ++++++++--------
->   src/main.c            |    4 ----
->   2 files changed, 8 insertions(+), 12 deletions(-)
->
+I'm wondering what ofono puts in the directory "var/lib/ofono/".
 
-Looks good to me.  Applied after tweaking the commit messages.
+On my embedded device, I can see these directories:
+
+  - var/lib/ofono/228014420910471
+  - var/lib/ofono/228014420910471-3
+
+The number 228014420910471 is the IMSI of my simcard right ?
+
+In the first one (228014420910471), I can see 3 files called gprs, =
+
+netreg and sms. And there are some configuration in it. It's pretty simple.
+
+In the other directory, there are 4 files (4f20     6f46     6f49 =
+
+version). But I don't understand theirs purposes. Maybe these are SMS =
+
+files ? Why the directory is named <IMSI>-3 ? Other directories with =
+
+another number can be created ?
+
+I'm wondering this because I want to put this directory and files in a =
+
+separated partition of 1.3MB and put my root partition read only. So I'm =
+
+trying to figure out if it's enough, what kind of files ofono will write =
+
+in it, when and the frequency (it's a NOR flash partition and I would =
+
+like to known if it's a good idea). As I understand, ofono uses this =
+
+directory to store SMS also. But, what kind of SMS ? All the SMS I try =
+
+to send ? All the SMS I received ? I began to read the source code but =
+
+maybe you can tell me some hints.
 
 Regards,
--Denis
+Anthony.
 
---===============0448237789010171583==--
+-- =
+
+-----------------------------------------
+Viallard Anthony    (+41 024 455 24 82)
+[ Embedded System | Software Designer ]
+-----------------------------------------
+   Syscom Instruments SA
+   Rue de l'industrie 21
+   1450     Sainte-Croix
+-----------------------------------------
+
+--===============8555434232936225283==--
 
