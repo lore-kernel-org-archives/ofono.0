@@ -1,81 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============1967076000756995405=="
+Content-Type: multipart/mixed; boundary="===============1717760094917006761=="
 MIME-Version: 1.0
-From: Viallard Anthony <viallard@syscom-instruments.com>
-Subject: Re: Questions about var/lib/ofono/ directories
-Date: Tue, 10 Feb 2015 15:32:45 +0100
-Message-ID: <54DA168D.2000600@syscom-instruments.com>
-In-Reply-To: <54D99BFB.5040503@gmail.com>
+From: Tommi Kenakkala <tommi.kenakkala@tieto.com>
+Subject: [PATCH 1/2] sms: SMS-DELIVER TP-OA Alphanum decoding and encoding fix
+Date: Thu, 12 Feb 2015 17:09:59 +0200
+Message-ID: <1423753800-17543-2-git-send-email-tommi.kenakkala@tieto.com>
+In-Reply-To: <1423753800-17543-1-git-send-email-tommi.kenakkala@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1967076000756995405==
+--===============1717760094917006761==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 02/10/2015 06:49 AM, Denis Kenzior wrote:
-> Hi,
->
-> On 02/05/2015 11:28 AM, Viallard Anthony wrote:
->> Hello ofono mailing list,
->>
->> I'm wondering what ofono puts in the directory "var/lib/ofono/".
->>
->> On my embedded device, I can see these directories:
->>
->>   - var/lib/ofono/228014420910471
->>   - var/lib/ofono/228014420910471-3
->>
->> The number 228014420910471 is the IMSI of my simcard right ?
->
-> Yes
->
->>
->> In the first one (228014420910471), I can see 3 files called gprs,
->> netreg and sms. And there are some configuration in it. It's pretty
->> simple.
->>
->> In the other directory, there are 4 files (4f20     6f46     6f49
->> version). But I don't understand theirs purposes. Maybe these are SMS
->> files ? Why the directory is named <IMSI>-3 ? Other directories with
->> another number can be created ?
->
-> This is the oFono cache for SIM filesystem files.  Essentially files
-> that are not writable by the user on the SIM are cached on the
-> filesystem to speed up initialization time.  The suffix (e.g. -3) is the
-> SIM phase.  E.g. 3 is 3G/USIM, 2 is 2G/SIM.
->
->>
->> I'm wondering this because I want to put this directory and files in a
->> separated partition of 1.3MB and put my root partition read only. So I'm
->> trying to figure out if it's enough, what kind of files ofono will write
->> in it, when and the frequency (it's a NOR flash partition and I would
->> like to known if it's a good idea). As I understand, ofono uses this
->> directory to store SMS also. But, what kind of SMS ? All the SMS I try
->> to send ? All the SMS I received ? I began to read the source code but
->> maybe you can tell me some hints.
->
-> oFono caches both incoming and outgoing SMS here as well.  For
-> reception, the SMS store is used to cache reception of multi-part SMSes,
-> e.g. ones longer than could fit into one payload.  For outgoing, the SMS
-> is cached here until it has been sent / delivered.
+Ofono ignores receved SMS if they have a long alphanum address with
+extended ascii characters:
+1) sms_encode_address_field: TP-OA max length comparison before encoding
+is incorrect because TP-OA's 11 octets are 7-bit coded and thus transport
+twelve 8-bit chars. Change ofono to compare character count to character
+limit instead of octet limit.
+2) sms_decode_address_field: Decoding from 7-bit alphabet will output max.
+twelve 8-bit chars which converted to UTF-8 take 24 bytes.
+Increase oFono sms_address struct's array accordingly.
+---
+ src/smsutil.c |   12 +++++++++---
+ src/smsutil.h |    6 +++++-
+ 2 files changed, 14 insertions(+), 4 deletions(-)
 
-Ok ! thanks Denis for these information.
+diff --git a/src/smsutil.c b/src/smsutil.c
+index be60ee9..b2ff349 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -524,7 +524,8 @@ static gboolean encode_validity_period(const struct sms=
+_validity_period *vp,
+ gboolean sms_encode_address_field(const struct sms_address *in, gboolean s=
+c,
+ 					unsigned char *pdu, int *offset)
+ {
+-	size_t len =3D strlen(in->address);
++	const char *addr =3D (const char *)&in->address;
++	size_t len =3D strlen(addr);
+ 	unsigned char addr_len =3D 0;
+ 	unsigned char p[10];
+ =
 
-I patch a little bit ofono to do what I thought. I split the storage =
+@@ -546,7 +547,8 @@ gboolean sms_encode_address_field(const struct sms_addr=
+ess *in, gboolean sc,
+ 		unsigned char *gsm;
+ 		unsigned char *r;
+ =
 
-directory into two:
-  * one directory for SMS, SIM cache file symlinked to our SDCARD storage ;
-  * and one directory for settings (gprs, netreg, sms) symlinked to our =
+-		if (len > 11)
++		/* TP-OA's 11 octets may fit 12 7-bit packed characters */
++		if (g_utf8_strlen(addr, strlen(addr)) > 12)
+ 			return FALSE;
+ =
 
-special data partition.
+ 		gsm =3D convert_utf8_to_gsm(in->address, len, NULL, &written, 0);
+@@ -675,7 +677,11 @@ gboolean sms_decode_address_field(const unsigned char =
+*pdu, int len,
+ 		if (utf8 =3D=3D NULL)
+ 			return FALSE;
+ =
 
-Nice ! It works like a charm !
+-		if (strlen(utf8) > 20) {
++		/*
++		 * TP-OA's 11 7-bit octets may contain 12 8-bit chars,
++		 * which converted to unicode would take 24+1 bytes.
++		 */
++		if (strlen(utf8) > 24) {
+ 			g_free(utf8);
+ 			return FALSE;
+ 		}
+diff --git a/src/smsutil.h b/src/smsutil.h
+index b1001f8..e8266c8 100644
+--- a/src/smsutil.h
++++ b/src/smsutil.h
+@@ -220,7 +220,11 @@ enum cbs_geo_scope {
+ struct sms_address {
+ 	enum sms_number_type number_type;
+ 	enum sms_numbering_plan numbering_plan;
+-	char address[21]; /* Max 20 in semi-octet, 11 in alnum */
++	/*
++	 * An alphanum TP-OA is 11 7-bit octets. Those can contain max 12 8-bit
++	 * characters taking 24 bytes when converted to UTF-8.
++	 */
++	char address[25];
+ };
+ =
 
-Regards,
-Anthony.
+ struct sms_scts {
+-- =
+
+1.7.9.5
 
 
-
---===============1967076000756995405==--
+--===============1717760094917006761==--
 
