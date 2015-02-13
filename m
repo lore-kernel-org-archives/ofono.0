@@ -1,122 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============4891876301773966896=="
+Content-Type: multipart/mixed; boundary="===============7482134460676136731=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Tommi Kenakkala <tommi.kenakkala@tieto.com>
 Subject: Re: [PATCH 1/2] sms: SMS-DELIVER TP-OA Alphanum decoding and encoding
  fix
-Date: Thu, 12 Feb 2015 12:59:18 -0600
-Message-ID: <54DCF806.5060609@gmail.com>
-In-Reply-To: <1423753800-17543-2-git-send-email-tommi.kenakkala@tieto.com>
+Date: Fri, 13 Feb 2015 11:49:13 +0200
+Message-ID: <CAAVgdeH6qA7-AX-fHvvHOEBXswX_ZupB1O+LSib7ZCWoVHgT5g@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4891876301773966896==
+--===============7482134460676136731==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tommi,
-
-On 02/12/2015 09:09 AM, Tommi Kenakkala wrote:
-> Ofono ignores receved SMS if they have a long alphanum address with
-> extended ascii characters:
-> 1) sms_encode_address_field: TP-OA max length comparison before encoding
-> is incorrect because TP-OA's 11 octets are 7-bit coded and thus transport
-> twelve 8-bit chars. Change ofono to compare character count to character
-> limit instead of octet limit.
-
-How did you arrive at 11 octet figure? TP-OA is limited to 12 bytes.  So =
-
-12 - TON - LEN =3D 10 bytes payload.
-
-10 bytes with 7-bit packed characters -> 11 unpacked characters
-
-All characters in the GSM default alphabet can be described by a maximum =
-
-of 2 bytes in utf8.  Exception is the euro sign, which is an extended =
-
-character, but requires 3 utf8 bytes to encode.  So a buffer of 11 * 2 + =
-
-1 bytes should be sufficient to hold an alphanumeric address.
-
-> 2) sms_decode_address_field: Decoding from 7-bit alphabet will output max.
-> twelve 8-bit chars which converted to UTF-8 take 24 bytes.
-> Increase oFono sms_address struct's array accordingly.
-> ---
->   src/smsutil.c |   12 +++++++++---
->   src/smsutil.h |    6 +++++-
->   2 files changed, 14 insertions(+), 4 deletions(-)
 >
-> diff --git a/src/smsutil.c b/src/smsutil.c
-> index be60ee9..b2ff349 100644
-> --- a/src/smsutil.c
-> +++ b/src/smsutil.c
-> @@ -524,7 +524,8 @@ static gboolean encode_validity_period(const struct s=
-ms_validity_period *vp,
->   gboolean sms_encode_address_field(const struct sms_address *in, gboolea=
-n sc,
->   					unsigned char *pdu, int *offset)
->   {
-> -	size_t len =3D strlen(in->address);
-> +	const char *addr =3D (const char *)&in->address;
-> +	size_t len =3D strlen(addr);
->   	unsigned char addr_len =3D 0;
->   	unsigned char p[10];
+> Date: Thu, 12 Feb 2015 12:59:18 -0600
+> From: Denis Kenzior <denkenz@gmail.com>
+> To: ofono(a)ofono.org
+> Subject: Re: [PATCH 1/2] sms: SMS-DELIVER TP-OA Alphanum decoding and
+>         encoding fix
+> Message-ID: <54DCF806.5060609@gmail.com>
+> Content-Type: text/plain; charset=3DISO-8859-1; format=3Dflowed
 >
-> @@ -546,7 +547,8 @@ gboolean sms_encode_address_field(const struct sms_ad=
-dress *in, gboolean sc,
->   		unsigned char *gsm;
->   		unsigned char *r;
+> Hi Tommi,
 >
-> -		if (len > 11)
-> +		/* TP-OA's 11 octets may fit 12 7-bit packed characters */
-> +		if (g_utf8_strlen(addr, strlen(addr)) > 12)
-
-g_utf8_strlen() > 11 here
-
->   			return FALSE;
+> On 02/12/2015 09:09 AM, Tommi Kenakkala wrote:
+> > Ofono ignores receved SMS if they have a long alphanum address with
+> > extended ascii characters:
+> > 1) sms_encode_address_field: TP-OA max length comparison before encoding
+> > is incorrect because TP-OA's 11 octets are 7-bit coded and thus transpo=
+rt
+> > twelve 8-bit chars. Change ofono to compare character count to character
+> > limit instead of octet limit.
 >
->   		gsm =3D convert_utf8_to_gsm(in->address, len, NULL, &written, 0);
-> @@ -675,7 +677,11 @@ gboolean sms_decode_address_field(const unsigned cha=
-r *pdu, int len,
->   		if (utf8 =3D=3D NULL)
->   			return FALSE;
->
-> -		if (strlen(utf8) > 20) {
-> +		/*
-> +		 * TP-OA's 11 7-bit octets may contain 12 8-bit chars,
-> +		 * which converted to unicode would take 24+1 bytes.
-> +		 */
-> +		if (strlen(utf8) > 24) {
-
-and strlen(utf8) > 22 here...
-
->   			g_free(utf8);
->   			return FALSE;
->   		}
-> diff --git a/src/smsutil.h b/src/smsutil.h
-> index b1001f8..e8266c8 100644
-> --- a/src/smsutil.h
-> +++ b/src/smsutil.h
-> @@ -220,7 +220,11 @@ enum cbs_geo_scope {
->   struct sms_address {
->   	enum sms_number_type number_type;
->   	enum sms_numbering_plan numbering_plan;
-> -	char address[21]; /* Max 20 in semi-octet, 11 in alnum */
-> +	/*
-> +	 * An alphanum TP-OA is 11 7-bit octets. Those can contain max 12 8-bit
-> +	 * characters taking 24 bytes when converted to UTF-8.
-> +	 */
-> +	char address[25];
-
-And address should be 23, the comment is wrong
-
->   };
->
->   struct sms_scts {
+> How did you arrive at 11 octet figure? TP-OA is limited to 12 bytes.  So
+> 12 - TON - LEN =3D 10 bytes payload.
 >
 
-Regards,
--Denis
+Apologies, I did develop this using those values but apparently had a
+glitch in my thought-generator during patch creation. I'll re-submit a
+better patch.
+Thanks for the quick comments.
 
---===============4891876301773966896==--
+Br.
+-- =
+
+Tommi
+
+--===============7482134460676136731==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPjxkaXYgY2xhc3M9ImdtYWls
+X3F1b3RlIj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MCAw
+IDAgLjhleDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij5EYXRl
+OiBUaHUsIDEyIEZlYiAyMDE1IDEyOjU5OjE4IC0wNjAwPGJyPgpGcm9tOiBEZW5pcyBLZW56aW9y
+ICZsdDs8YSBocmVmPSJtYWlsdG86ZGVua2VuekBnbWFpbC5jb20iPmRlbmtlbnpAZ21haWwuY29t
+PC9hPiZndDs8YnI+ClRvOiA8YSBocmVmPSJtYWlsdG86b2Zvbm9Ab2Zvbm8ub3JnIj5vZm9ub0Bv
+Zm9uby5vcmc8L2E+PGJyPgpTdWJqZWN0OiBSZTogW1BBVENIIDEvMl0gc21zOiBTTVMtREVMSVZF
+UiBUUC1PQSBBbHBoYW51bSBkZWNvZGluZyBhbmQ8YnI+CsKgIMKgIMKgIMKgIGVuY29kaW5nIGZp
+eDxicj4KTWVzc2FnZS1JRDogJmx0OzxhIGhyZWY9Im1haWx0bzo1NERDRjgwNi41MDYwNjA5QGdt
+YWlsLmNvbSI+NTREQ0Y4MDYuNTA2MDYwOUBnbWFpbC5jb208L2E+Jmd0Ozxicj4KQ29udGVudC1U
+eXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PUlTTy04ODU5LTE7IGZvcm1hdD1mbG93ZWQ8YnI+Cjxi
+cj4KSGkgVG9tbWksPGJyPgo8YnI+Ck9uIDAyLzEyLzIwMTUgMDk6MDkgQU0sIFRvbW1pIEtlbmFr
+a2FsYSB3cm90ZTo8YnI+CiZndDsgT2Zvbm8gaWdub3JlcyByZWNldmVkIFNNUyBpZiB0aGV5IGhh
+dmUgYSBsb25nIGFscGhhbnVtIGFkZHJlc3Mgd2l0aDxicj4KJmd0OyBleHRlbmRlZCBhc2NpaSBj
+aGFyYWN0ZXJzOjxicj4KJmd0OyAxKSBzbXNfZW5jb2RlX2FkZHJlc3NfZmllbGQ6IFRQLU9BIG1h
+eCBsZW5ndGggY29tcGFyaXNvbiBiZWZvcmUgZW5jb2Rpbmc8YnI+CiZndDsgaXMgaW5jb3JyZWN0
+IGJlY2F1c2UgVFAtT0EmIzM5O3MgMTEgb2N0ZXRzIGFyZSA3LWJpdCBjb2RlZCBhbmQgdGh1cyB0
+cmFuc3BvcnQ8YnI+CiZndDsgdHdlbHZlIDgtYml0IGNoYXJzLiBDaGFuZ2Ugb2Zvbm8gdG8gY29t
+cGFyZSBjaGFyYWN0ZXIgY291bnQgdG8gY2hhcmFjdGVyPGJyPgomZ3Q7IGxpbWl0IGluc3RlYWQg
+b2Ygb2N0ZXQgbGltaXQuPGJyPgo8YnI+CkhvdyBkaWQgeW91IGFycml2ZSBhdCAxMSBvY3RldCBm
+aWd1cmU/IFRQLU9BIGlzIGxpbWl0ZWQgdG8gMTIgYnl0ZXMuwqAgU288YnI+CjEyIC0gVE9OIC0g
+TEVOID0gMTAgYnl0ZXMgcGF5bG9hZC48YnI+PC9ibG9ja3F1b3RlPjxkaXY+PGJyPjwvZGl2Pjxk
+aXY+QXBvbG9naWVzLCBJIGRpZCBkZXZlbG9wIHRoaXMgdXNpbmcgdGhvc2UgdmFsdWVzIGJ1dCBh
+cHBhcmVudGx5IGhhZCBhIGdsaXRjaCBpbiBteSB0aG91Z2h0LWdlbmVyYXRvciBkdXJpbmcgcGF0
+Y2ggY3JlYXRpb24uIEkmIzM5O2xsIHJlLXN1Ym1pdCBhIGJldHRlciBwYXRjaC7CoDwvZGl2Pjxk
+aXY+VGhhbmtzIGZvciB0aGUgcXVpY2sgY29tbWVudHMuPC9kaXY+PGRpdj48YnI+PC9kaXY+PC9k
+aXY+QnIuPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPi0twqA8L2Rpdj48ZGl2IGNsYXNz
+PSJnbWFpbF9leHRyYSI+VG9tbWk8L2Rpdj48L2Rpdj4K
+
+--===============7482134460676136731==--
 
