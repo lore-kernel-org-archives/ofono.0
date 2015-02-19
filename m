@@ -1,60 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============3841592931125720562=="
+Content-Type: multipart/mixed; boundary="===============8324242244125554297=="
 MIME-Version: 1.0
-From: Sanjay Mehta <sanjay@haskell.in>
-Subject: Re: Which desktop linux distribution uses ofono natively?
-Date: Tue, 17 Feb 2015 10:15:50 +0530
-Message-ID: <3DD39C20E4854DDFA57C04F00A24EC5D@haskell.in>
-In-Reply-To: <mailman.5.1424116801.14952.ofono@ofono.org>
+From: Tommi Kenakkala <tommi.kenakkala@tieto.com>
+Subject: [PATCH 2/2] doc: Document ResetProperties method
+Date: Thu, 19 Feb 2015 13:59:53 +0200
+Message-ID: <1424347193-6828-3-git-send-email-tommi.kenakkala@tieto.com>
+In-Reply-To: <1424347193-6828-1-git-send-email-tommi.kenakkala@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3841592931125720562==
+--===============8324242244125554297==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> From: Christian Gagneraud
+From: Slava Monich <slava.monich@jolla.com>
 
-> I use to use Ubuntu 13.04 and 13.10 with custom built ofono.
-> The problem when you experiment with ofono on your dev machine is that  =
+---
+ doc/connman-api.txt |    9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-> you will loose your internet connection in case ofono goes nuts. So I  =
+diff --git a/doc/connman-api.txt b/doc/connman-api.txt
+index 8f72087..3861c9a 100644
+--- a/doc/connman-api.txt
++++ b/doc/connman-api.txt
+@@ -155,6 +155,15 @@ Methods		dict GetProperties()
+ 					 [service].Error.AttachInProgress
+ 					 [service].Error.NotImplemented
+ =
 
++		void ResetProperties()
++			Resets all properties back to default.
++			Fails if there are no provisioning settings.
++			The context will be deactivated before any significant
++			property is updated.
++
++			Possible Errors: [service].Error.Failed
++					 [service].Error.NotAvailable
++
+ Signals		PropertyChanged(string property, variant value)
+ =
 
-I=E2=80=99ve brought up ofono and econnman on Ubuntu 14.04.01 LTS
-using the packages available via apt-get on a generic Intel laptop.
+ 			This signal indicates a changed value of the given
+-- =
 
-Haven=E2=80=99t tested Bluetooth, but it=E2=80=99s working with wifi and wi=
-red ethernet. I=E2=80=99m now
-trying to figure out how to add =E2=80=9Ccellular=E2=80=9D to the technolog=
-ies supported by ofono.
-
-After upgrading the linux kernel to 3.19, I can see wwan0 showing up
-in /sys/class/net so the device (a Huawei E3272 LTE dongle) is being
-detected by the kernel properly (and it works if I use sakis3g).
-
-I think there was a Huawei specific bug in the shipped version of the
-kernel that blocked me earlier.  =
-
-
-Short of reading the ofono code - which I can do later this week - any poin=
-ters
-on connecting cellular with ofono?
-
-> would say it's better to run ofono experiment on the embedded board.
-> Set up your dev computer with the cross toolchain, and mount (part of)  =
-
-> the board rootfs on your dev computer and build (or install) ofono there.
-
-
-My target board isn=E2=80=99t ready yet. I could try an experiment with an =
-old
-Raspberry Pi B.  =
+1.7.9.5
 
 
-thanks!
-
-Sanjay=20
-
---===============3841592931125720562==--
+--===============8324242244125554297==--
 
