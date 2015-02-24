@@ -1,109 +1,100 @@
-Content-Type: multipart/mixed; boundary="===============4011139141094157676=="
+Content-Type: multipart/mixed; boundary="===============3219965347851870853=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/2] Add ResetProperties method to ConnectionContext
- interface
-Date: Mon, 23 Feb 2015 09:47:40 -0600
-Message-ID: <54EB4B9C.3060505@gmail.com>
-In-Reply-To: <CAAVgdeFqOXKC+8=ce-g6Yg4gE+TuxhAOLkxxFqnfzPt6nV5bgA@mail.gmail.com>
+From: Viallard Anthony <viallard@syscom-instruments.com>
+Subject: Why doesn't ofono match all +CGEV notification ? How can I implement
+ a GPRS watchdog ?
+Date: Tue, 24 Feb 2015 15:26:56 +0100
+Message-ID: <54EC8A30.4070207@syscom-instruments.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4011139141094157676==
+--===============3219965347851870853==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tommi,
+Hello,
 
- >> Why don't you just remove the settings file and restart oFono?
-> oFono handles many other services so restarting would have undesirable ef=
-fects.
-> For a moment clients would think there is no telephony at all: no SIM,
-> no cellular signal strength, no voice/emergency calls, no SIM ATK etc.
->
+I'm looking for an issue with GPRS. I have the SIMCOM5216E module with =
 
-Which is probably OK given that you're resetting cellular settings. =
+ofono 1.12. The problem was see in France with SFR provider. I didn't =
 
-Unless you expect the user to know / have control over very fine-grained =
+reproduce this with another provider and in another country... But maybe =
 
-details.
+it's a question of uptime...
 
->>> Deactivation of the context is obviously mandatory. The reasoning for p=
-lacing
->>> this into ofono is handling client requests consistently and avoiding r=
-ace
->>> conditions. Using this approach ofono does not re-activate the context,=
- that's
->>> done by ConnMan or whatever connection manger the system uses.
->>>
->> I'm not so sure that this is a good idea.  A 'live' reset of the
->> settings just seems wrong to me.  Why would you ever want to do that
->> anyway?  If something is working, why bother resetting the settings?
-> Generally speaking I agree with the point of view. The main point was
-> not the 'live' part, but to allow running provisioning again, e.g. if
-> user has set wrong ones.
+During a good period of time, my device is well connected through the =
 
-Then this has to be done with Powered =3D False as a prerequisite.  And =
+GPRS connection. All work perfectly. In recent log, I can see the GPRS =
 
-you need some way to tell ConnMan what is happening and why.  Since =
+is reactivated several time along the weeks but the PPP is back online =
 
-someone still has to go in and activate the new contexts afterwards.
+soon after.
 
-> FYI a MMS context may be active using a correct APN but messages don't
-> flow due to a wrong proxy. In such a case context remains active for
-> some time.
+But, few days ago, I saw the GPRS connection was unusable for 10 days. I =
 
-I don't get it, if the proxy is wrong, it must have been provisioned =
+saw the problem began the 12th February. According to different logs, =
 
-that way.  How is re-provisioning going to help?  Either way, it sounds =
+the network connectivity have began to fail since the 2th February. =
 
-like you want the UI to reset a particular context's settings, not =
+Unfortunately, I couldn't get logs from ofono during the period of time =
 
-everything.
+(it's an embedded device, so the size of the log file is only 64k bytes. =
 
->
->> oFono supports arbitrary number of contexts, so your UI can always add
->> more.  So if you need to re-provision, let your UI handle this.  The UI
->> should be capable of reading the provisioning database anyway in order
->> to handle duplicates, etc.
-> When ofono already implements the initial provisioning logic it is not
-> tempting to duplicate it but instead trigger it again.
+But it will be a good idea for the future to increment it ...). However, =
 
-Not tempting, no.  Provisioning is there to handle simple cases.  E.g. =
+the device had others logs. I could see the log from our program that =
 
-user receives new device, turns it on and gets connected.  If you want =
+deals with ofono (it sends dbus commands and listen for dbus signals) =
 
-the user to mess with the settings, or if your database might contain =
+and I saw there is a blank period from the 2th to the 12th. It's like =
 
-ambiguous information, then you need to write a proper UI.  One that can =
+ofono or the module was dead.
 
-read the provisioning database as well and present choices to the user.
+So, I begin to read the code, especially the simcom driver, to see if I =
 
-> (A more suitable name for the new method could be  "ProvisiongContext"
-> or similar.)
-> If reverting provisioned settings is done by creating a new empty
-> context, one would still want to run ofono provisioning for that
-> (ofono restart not an option).
+miss something. And I see something weird.
 
-The problem is there's really no mapping between what the provisioning =
+According to the SIMCOM AT document, the +CGEV notification can be send =
 
-database returns and what the settings are right now.  You can sort of =
+with this list of event:
 
-kludge around by comparing the context type, but you might be =
+  REJECT
+  NW REACT
+  NW DEACT
+  ME DEACT
+  NW DETACH
+  ME DETACH
+  NW CLASS
+  ME CLASS
 
-over-writing the wrong context.
+But in gprs-context.c, I see we deal only with the "NW DETACH" event. =
 
-The better way is to wipe all existing settings and re-populate.  But =
+Maybe It's the point. Maybe the modem send to ofono an another event and =
 
-that would require quite a bit of ContextRemoved, ContextAdded signals =
+therefore ofono begins to be in incorrect state about the GPRS =
 
-to keep the clients consistent.
+connection... Is it possible ?
 
-Might be easier to just re-boot the gprs atom.
+Otherwise, I'm thinking about implement a GPRS watchdog. Does it exist =
+
+an AT command which could do that ? My idea is to send an AT command =
+
+each XX period of time and check the GPRS connection is really here.
 
 Regards,
--Denis
+Anthony Viallard.
 
---===============4011139141094157676==--
+-- =
+
+-----------------------------------------
+Viallard Anthony    (+41 024 455 24 82)
+[ Embedded System | Software Designer ]
+-----------------------------------------
+   Syscom Instruments SA
+   Rue de l'industrie 21
+   1450     Sainte-Croix
+-----------------------------------------
+
+--===============3219965347851870853==--
 
