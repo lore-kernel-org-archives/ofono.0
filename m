@@ -1,100 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============3219965347851870853=="
+Content-Type: multipart/mixed; boundary="===============6077753259565166689=="
 MIME-Version: 1.0
-From: Viallard Anthony <viallard@syscom-instruments.com>
-Subject: Why doesn't ofono match all +CGEV notification ? How can I implement
- a GPRS watchdog ?
-Date: Tue, 24 Feb 2015 15:26:56 +0100
-Message-ID: <54EC8A30.4070207@syscom-instruments.com>
+From: Frederik Lotter <frederik.lotter@mixtelematics.com>
+Subject: CMGS <CTRL-Z> appears with terminate IO stream in Ofono
+Date: Wed, 25 Feb 2015 15:48:35 +0200
+Message-ID: <CAEM=xjiOiVOeOD9biyuhfhpm260OJBMJ_LMO0baSRNbsJpBeEw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3219965347851870853==
+--===============6077753259565166689==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi Ofono experts,
 
-I'm looking for an issue with GPRS. I have the SIMCOM5216E module with =
+I am using a UBLOX U200 modem and I wrote the driver for it some months
+ago, and have since been using GPRS successfully.
 
-ofono 1.12. The problem was see in France with SFR provider. I didn't =
+I have now added the SMS feature and I am running into a problem:
 
-reproduce this with another provider and in another country... But maybe =
+It looks like once the SMS PDU byte block is sent (with CTRL-Z) the stream
+disconnects.
 
-it's a question of uptime...
+Aux: > 0011000A8170033962660000A7044679990C<CtrlZ>
 
-During a good period of time, my device is well connected through the =
+Any ideas? It looks like the g_io_channel_set_encoding() is called on both
+my tty channels to RAW mode, so I am not sure why the CTRL-Z (I guess) is
+causing this.
 
-GPRS connection. All work perfectly. In recent log, I can see the GPRS =
+Instrumented output below:
 
-is reactivated several time along the weeks but the PPP is back online =
+------------------------------------
 
-soon after.
+ofonod[1502]:
+/home/flotter/mix6000-angstrom/build/tmp-angstrom_v2014_06-eglibc/work/armv=
+7at2hf-vfp-angstrom-linux-gnueabi/ofono/1.14-r0/ofono-1.14/drivers/atmodem/=
+sms.c:at_cmgl_done()
+ofonod[1502]: Aux: > AT+CGSMS=3D3\r
+FRED[Write watcher destroyed...]
+ofonod[1502]: Aux: < \r\nOK\r\n
+FRED>>[
+OK
+] - 6 - 6 <<
+ofonod[1502]: Aux: > AT+CMGS=3D17\r
+FRED[Write watcher destroyed...]
+ofonod[1502]: RegisterProfile() replied an error:
+org.freedesktop.DBus.Error.UnknownMethod, Method "RegisterProfile" with
+signature "osa{sv}" on interface "org.bluez.ProfileManager1" doesn't exist
+ofonod[1502]: Aux: < \r\n>
+FRED>>[
+> ] - 4 - 4 <<
+ofonod[1502]: Aux: > 0011000A8170033962660000A7044679990C<CtrlZ>
+FRED[Write watcher destroyed...]
+FRED[Read watcher destroyed...]
+FRED[IO Disconnect]
 
-But, few days ago, I saw the GPRS connection was unusable for 10 days. I =
+--===============6077753259565166689==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-saw the problem began the 12th February. According to different logs, =
+PGRpdiBkaXI9Imx0ciI+SGkgT2Zvbm8gZXhwZXJ0cyw8ZGl2Pjxicj48L2Rpdj48ZGl2PkkgYW0g
+dXNpbmcgYSBVQkxPWCBVMjAwIG1vZGVtIGFuZCBJIHdyb3RlIHRoZSBkcml2ZXIgZm9yIGl0IHNv
+bWUgbW9udGhzIGFnbywgYW5kIGhhdmUgc2luY2UgYmVlbiB1c2luZyBHUFJTIHN1Y2Nlc3NmdWxs
+eS7CoDwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+SSBoYXZlIG5vdyBhZGRlZCB0aGUgU01TIGZl
+YXR1cmUgYW5kIEkgYW0gcnVubmluZyBpbnRvIGEgcHJvYmxlbTo8L2Rpdj48ZGl2Pjxicj48L2Rp
+dj48ZGl2Pkl0IGxvb2tzIGxpa2Ugb25jZSB0aGUgU01TIFBEVSBieXRlIGJsb2NrIGlzIHNlbnQg
+KHdpdGggQ1RSTC1aKSB0aGUgc3RyZWFtIGRpc2Nvbm5lY3RzLjwvZGl2PjxkaXY+PGJyPjwvZGl2
+PjxkaXY+QXV4OiAmZ3Q7IDAwMTEwMDBBODE3MDAzMzk2MjY2MDAwMEE3MDQ0Njc5OTkwQyZsdDtD
+dHJsWiZndDs8YnI+PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5BbnkgaWRlYXM/IEl0IGxvb2tz
+IGxpa2UgdGhlwqBnX2lvX2NoYW5uZWxfc2V0X2VuY29kaW5nKCkgaXMgY2FsbGVkIG9uIGJvdGgg
+bXkgdHR5IGNoYW5uZWxzIHRvIFJBVyBtb2RlLCBzbyBJIGFtIG5vdCBzdXJlIHdoeSB0aGUgQ1RS
+TC1aIChJIGd1ZXNzKSBpcyBjYXVzaW5nIHRoaXMuwqA8L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2
+Pkluc3RydW1lbnRlZCBvdXRwdXQgYmVsb3c6PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj4tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS08L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2
+PjxkaXY+b2Zvbm9kWzE1MDJdOiAvaG9tZS9mbG90dGVyL21peDYwMDAtYW5nc3Ryb20vYnVpbGQv
+dG1wLWFuZ3N0cm9tX3YyMDE0XzA2LWVnbGliYy93b3JrL2FybXY3YXQyaGYtdmZwLWFuZ3N0cm9t
+LWxpbnV4LWdudWVhYmkvb2Zvbm8vMS4xNC1yMC9vZm9uby0xLjE0L2RyaXZlcnMvYXRtb2RlbS9z
+bXMuYzphdF9jbWdsX2RvbmUoKcKgPC9kaXY+PGRpdj5vZm9ub2RbMTUwMl06IEF1eDogJmd0OyBB
+VCtDR1NNUz0zXHI8L2Rpdj48ZGl2PkZSRURbV3JpdGUgd2F0Y2hlciBkZXN0cm95ZWQuLi5dPC9k
+aXY+PGRpdj5vZm9ub2RbMTUwMl06IEF1eDogJmx0OyBcclxuT0tcclxuPC9kaXY+PGRpdj5GUkVE
+Jmd0OyZndDtbPC9kaXY+PGRpdj5PSzwvZGl2PjxkaXY+XSAtIDYgLSA2ICZsdDsmbHQ7PC9kaXY+
+PGRpdj5vZm9ub2RbMTUwMl06IEF1eDogJmd0OyBBVCtDTUdTPTE3XHI8L2Rpdj48ZGl2PkZSRURb
+V3JpdGUgd2F0Y2hlciBkZXN0cm95ZWQuLi5dPC9kaXY+PGRpdj5vZm9ub2RbMTUwMl06IFJlZ2lz
+dGVyUHJvZmlsZSgpIHJlcGxpZWQgYW4gZXJyb3I6IG9yZy5mcmVlZGVza3RvcC5EQnVzLkVycm9y
+LlVua25vd25NZXRob2QsIE1ldGhvZCAmcXVvdDtSZWdpc3RlclByb2ZpbGUmcXVvdDsgd2l0aCBz
+aWduYXR1cmUgJnF1b3Q7b3Nhe3N2fSZxdW90OyBvbiBpbnRlcmZhY2UgJnF1b3Q7b3JnLmJsdWV6
+LlByb2ZpbGVNYW5hZ2VyMSZxdW90OyBkb2VzbiYjMzk7dCBleGlzdDwvZGl2PjxkaXY+b2Zvbm9k
+WzE1MDJdOiBBdXg6ICZsdDsgXHJcbiZndDvCoDwvZGl2PjxkaXY+RlJFRCZndDsmZ3Q7WzwvZGl2
+PjxkaXY+Jmd0OyBdIC0gNCAtIDQgJmx0OyZsdDs8L2Rpdj48ZGl2Pm9mb25vZFsxNTAyXTogQXV4
+OiAmZ3Q7IDAwMTEwMDBBODE3MDAzMzk2MjY2MDAwMEE3MDQ0Njc5OTkwQyZsdDtDdHJsWiZndDs8
+L2Rpdj48ZGl2PkZSRURbV3JpdGUgd2F0Y2hlciBkZXN0cm95ZWQuLi5dPC9kaXY+PGRpdj5GUkVE
+W1JlYWQgd2F0Y2hlciBkZXN0cm95ZWQuLi5dPC9kaXY+PGRpdj5GUkVEW0lPIERpc2Nvbm5lY3Rd
+PC9kaXY+PC9kaXY+PC9kaXY+Cg==
 
-the network connectivity have began to fail since the 2th February. =
-
-Unfortunately, I couldn't get logs from ofono during the period of time =
-
-(it's an embedded device, so the size of the log file is only 64k bytes. =
-
-But it will be a good idea for the future to increment it ...). However, =
-
-the device had others logs. I could see the log from our program that =
-
-deals with ofono (it sends dbus commands and listen for dbus signals) =
-
-and I saw there is a blank period from the 2th to the 12th. It's like =
-
-ofono or the module was dead.
-
-So, I begin to read the code, especially the simcom driver, to see if I =
-
-miss something. And I see something weird.
-
-According to the SIMCOM AT document, the +CGEV notification can be send =
-
-with this list of event:
-
-  REJECT
-  NW REACT
-  NW DEACT
-  ME DEACT
-  NW DETACH
-  ME DETACH
-  NW CLASS
-  ME CLASS
-
-But in gprs-context.c, I see we deal only with the "NW DETACH" event. =
-
-Maybe It's the point. Maybe the modem send to ofono an another event and =
-
-therefore ofono begins to be in incorrect state about the GPRS =
-
-connection... Is it possible ?
-
-Otherwise, I'm thinking about implement a GPRS watchdog. Does it exist =
-
-an AT command which could do that ? My idea is to send an AT command =
-
-each XX period of time and check the GPRS connection is really here.
-
-Regards,
-Anthony Viallard.
-
--- =
-
------------------------------------------
-Viallard Anthony    (+41 024 455 24 82)
-[ Embedded System | Software Designer ]
------------------------------------------
-   Syscom Instruments SA
-   Rue de l'industrie 21
-   1450     Sainte-Croix
------------------------------------------
-
---===============3219965347851870853==--
+--===============6077753259565166689==--
 
