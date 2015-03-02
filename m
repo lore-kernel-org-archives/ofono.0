@@ -1,51 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============7713865786870152250=="
+Content-Type: multipart/mixed; boundary="===============7362690161201295960=="
 MIME-Version: 1.0
-From: Frederik Lotter <frederik.lotter@mixtelematics.com>
-Subject: Receiving raw SMS through Ofono "incoming-message" callback
-Date: Mon, 02 Mar 2015 13:45:32 +0200
-Message-ID: <CAEM=xjhdg0CV2FqurNzmrqSAaWjr4ui=na+tqmTtvGrDa8Q2Eg@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Receiving raw SMS through Ofono "incoming-message" callback
+Date: Mon, 02 Mar 2015 09:18:43 -0600
+Message-ID: <54F47F53.4090508@gmail.com>
+In-Reply-To: <CAEM=xjhdg0CV2FqurNzmrqSAaWjr4ui=na+tqmTtvGrDa8Q2Eg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7713865786870152250==
+--===============7362690161201295960==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Frederik,
 
-It looks like the SMS receive API attempts to represent the incoming SMS as
-an array of characters inside the callback function.
+On 03/02/2015 05:45 AM, Frederik Lotter wrote:
+> Hi,
+>
+> It looks like the SMS receive API attempts to represent the incoming SMS
+> as an array of characters inside the callback function.
+>
+> IncomingMessage(string message, dict info)
 
-IncomingMessage(string message, dict info)
+This API is for 'text' messages.  It will not handle non-utf8 formatted =
 
-I am expecting a raw payload of server data via SMS. I cannot see how this
-will work in the current implementation since the raw data may well be full
-of zeros which will act as a string terminator.
+strings and will ignore any IEs that are not pertinent to decoding text =
 
-Any ideas?
+messages.
 
-Kind Regards,
-Frederik Lotter
-MiX Telematics South Africa
+>
+> I am expecting a raw payload of server data via SMS. I cannot see how
+> this will work in the current implementation since the raw data may well
+> be full of zeros which will act as a string terminator.
+>
+> Any ideas?
+>
 
---===============7713865786870152250==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+You can write a plugin for this.  For example, see =
 
-PGRpdiBkaXI9Imx0ciI+SGksPGJyPjxicj5JdCBsb29rcyBsaWtlIHRoZSBTTVMgcmVjZWl2ZSBB
-UEkgYXR0ZW1wdHMgdG8gcmVwcmVzZW50IHRoZSBpbmNvbWluZyBTTVMgYXMgYW4gYXJyYXkgb2Yg
-Y2hhcmFjdGVycyBpbnNpZGUgdGhlIGNhbGxiYWNrIGZ1bmN0aW9uLjxicj48YnI+SW5jb21pbmdN
-ZXNzYWdlKHN0cmluZyBtZXNzYWdlLCBkaWN0IGluZm8pPGJyPjxicj5JIGFtIGV4cGVjdGluZyBh
-IHJhdyBwYXlsb2FkIG9mIHNlcnZlciBkYXRhIHZpYSBTTVMuIEkgY2Fubm90IHNlZSBob3cgdGhp
-cyB3aWxsIHdvcmsgaW4gdGhlIGN1cnJlbnQgaW1wbGVtZW50YXRpb24gc2luY2UgdGhlIHJhdyBk
-YXRhIG1heSB3ZWxsIGJlIGZ1bGwgb2YgemVyb3Mgd2hpY2ggd2lsbCBhY3QgYXMgYSBzdHJpbmcg
-dGVybWluYXRvci7CoDxkaXY+PGJyPjwvZGl2PjxkaXY+QW55IGlkZWFzPzwvZGl2PjxkaXY+PGJy
-PjwvZGl2PjxkaXY+S2luZCBSZWdhcmRzLDwvZGl2PjxkaXY+RnJlZGVyaWsgTG90dGVyPC9kaXY+
-PGRpdj5NaVggVGVsZW1hdGljcyBTb3V0aCBBZnJpY2E8YnI+PGRpdj48YnI+PC9kaXY+PGRpdj48
-YnI+PC9kaXY+PC9kaXY+PC9kaXY+Cg==
+plugins/smart-messaging.c and plugins/push-notification.c
 
---===============7713865786870152250==--
+Regards,
+-Denis
+
+--===============7362690161201295960==--
 
