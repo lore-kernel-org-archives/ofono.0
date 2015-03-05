@@ -1,176 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============5842693127931469131=="
+Content-Type: multipart/mixed; boundary="===============7782030252116202872=="
 MIME-Version: 1.0
-From: Enrico Sau <enrico.sau@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: telit he910 activate-context issue
-Date: Thu, 05 Mar 2015 13:09:15 +0100
-Message-ID: <CAH4ZQwucs3nSLTHtzfA1yXSu5UBbn7WWFH+5TkHWoVaYSRTOWQ@mail.gmail.com>
-In-Reply-To: <222E70FA67D72A4FB8EEDF5AF01724ACC997DF@BGSMSX102.gar.corp.intel.com>
+Date: Thu, 05 Mar 2015 10:02:51 -0600
+Message-ID: <54F87E2B.7030102@gmail.com>
+In-Reply-To: <CAH4ZQwucs3nSLTHtzfA1yXSu5UBbn7WWFH+5TkHWoVaYSRTOWQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5842693127931469131==
+--===============7782030252116202872==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-try to add the following line to he910 plugin:
+Hi Enrico,
 
-g_at_chat_send(data->modem, "AT&C0", NULL, NULL, NULL, NULL);
+Please do not top-post on this mailing list.
 
-Moreover change
+On 03/05/2015 06:09 AM, Enrico Sau wrote:
+> Hi,
+> try to add the following line to he910 plugin:
+>
+> g_at_chat_send(data->modem, "AT&C0", NULL, NULL, NULL, NULL);
 
-g_at_chat_send(data->chat, "AT#AUTOATT=3D0", none_prefix, NULL, NULL, NULL);
+Was this change required?  I didn't think Telit suffered from dropping =
 
-to
+carrier issue.  If so, feel free to send a patch.
 
-g_at_chat_send(data->chat, "AT#AUTOATT=3D1", none_prefix, NULL, NULL, NULL);
-
-and move it to he910_post_online function.
-
-I have a Telit HE910 with working connection.
-
-Enrico
-
-
-2015-03-05 12:56 GMT+01:00 Kallumari Nagaraja Rao, RammohanX <
-rammohanx.kallumari.nagaraja.rao@intel.com>:
-
->  I am currently trying to get the cellular connection up via
-> connman/ofono. We are using Telit HE910 device.
 >
+> Moreover change
 >
+> g_at_chat_send(data->chat, "AT#AUTOATT=3D0", none_prefix,NULL, NULL, NULL=
+);
 >
-> I am currently able to do the following ,
+> to
 >
-> 1.       Run daemon in background
->
-> 2.       Execute enable-modem app
->
-> 3.       List-contexts, set APN to required value
->
->
->
-> However, while executing =E2=80=98activate-context 0=E2=80=99 I am not ab=
-le to proceed
-> further.
->
-> I get the following error message,
->
-> =E2=80=9CDBusException: org.freedesktop.DBus.Error.NoReply: Did not recei=
-ve a reply.
->
-> Possible causes include: the remote application did not send a reply, the
->
-> message bus security policy blocked the reply, the reply timeout expired,=
- or
->
-> the network connection was broken.=E2=80=9D
->
->
->
-> We are using ofono version 1.16 now.
->
->
->
->
->
-> *Regards,*
->
-> *<Ram>*
->
->
->
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> https://lists.ofono.org/mailman/listinfo/ofono
->
+> g_at_chat_send(data->chat, "AT#AUTOATT=3D1", none_prefix,NULL, NULL, NULL=
+);
 >
 
---===============5842693127931469131==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+oFono expects auto-attach to be disabled.  So this change is actually =
 
-PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
-aWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SGksPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVs
-dCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+dHJ5IHRvIGFkZCB0aGUg
-Zm9sbG93aW5nIGxpbmUgdG8gaGU5MTAgcGx1Z2luOjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2Rl
-ZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L2Rpdj48
-ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0
-IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5nX2F0X2NoYXRfc2VuZChk
-YXRhLSZndDttb2RlbSwgJnF1b3Q7QVQmYW1wO0MwJnF1b3Q7LCBOVUxMLCBOVUxMLCBOVUxMLCBO
-VUxMKTs8L2Rpdj48ZGl2IHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxi
-cj48L2Rpdj48ZGl2IHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPk1vcmVv
-dmVyIGNoYW5nZSA8L2Rpdj48ZGl2IHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2Vy
-aWYiPjxicj48L2Rpdj48ZGl2IHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYi
-Pjxmb250IGZhY2U9InZlcmRhbmEsIHNhbnMtc2VyaWYiPmdfYXRfY2hhdF9zZW5kKGRhdGEtJmd0
-O2NoYXQsICZxdW90O0FUI0FVVE9BVFQ9MCZxdW90Oywgbm9uZV9wcmVmaXgsPHNwYW4gc3R5bGU9
-IndoaXRlLXNwYWNlOnByZSI+wqA8L3NwYW4+PC9mb250Pk5VTEwsIE5VTEwsIE5VTEwpOzwvZGl2
-PjxkaXYgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+PGJyPjwvZGl2Pjxk
-aXYgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+dG88L2Rpdj48ZGl2IHN0
-eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L2Rpdj48ZGl2IHN0eWxl
-PjxkaXYgc3R5bGU+PGZvbnQgZmFjZT0idmVyZGFuYSwgc2Fucy1zZXJpZiI+Z19hdF9jaGF0X3Nl
-bmQoZGF0YS0mZ3Q7Y2hhdCwgJnF1b3Q7QVQjQVVUT0FUVD0xJnF1b3Q7LCBub25lX3ByZWZpeCw8
-c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlIj7CoDwvc3Bhbj48L2ZvbnQ+PHNwYW4gc3R5bGU9
-ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+TlVMTCwgTlVMTCwgTlVMTCk7PC9zcGFu
-PjwvZGl2PjxkaXYgc3R5bGU+PHNwYW4gc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1z
-ZXJpZiI+PGJyPjwvc3Bhbj48L2Rpdj48ZGl2IHN0eWxlPjxzcGFuIHN0eWxlPSJmb250LWZhbWls
-eTp2ZXJkYW5hLHNhbnMtc2VyaWYiPmFuZCBtb3ZlIGl0IHRvIGhlOTEwX3Bvc3Rfb25saW5lIGZ1
-bmN0aW9uLjwvc3Bhbj48L2Rpdj48ZGl2IHN0eWxlPjxzcGFuIHN0eWxlPSJmb250LWZhbWlseTp2
-ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L3NwYW4+PC9kaXY+PC9kaXY+PGRpdiBzdHlsZT0iZm9u
-dC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5JIGhhdmUgYSBUZWxpdCBIRTkxMCB3aXRoIHdv
-cmtpbmcgY29ubmVjdGlvbi48L2Rpdj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9leHRyYSI+PGRp
-dj48ZGl2IGNsYXNzPSJnbWFpbF9zaWduYXR1cmUiPjxkaXY+PGJyPjwvZGl2PjxkaXY+RW5yaWNv
-PC9kaXY+PGRpdj48YnI+PC9kaXY+PC9kaXY+PC9kaXY+Cjxicj48ZGl2IGNsYXNzPSJnbWFpbF9x
-dW90ZSI+MjAxNS0wMy0wNSAxMjo1NiBHTVQrMDE6MDAgS2FsbHVtYXJpIE5hZ2FyYWphIFJhbywg
-UmFtbW9oYW5YIDxzcGFuIGRpcj0ibHRyIj4mbHQ7PGEgaHJlZj0ibWFpbHRvOnJhbW1vaGFueC5r
-YWxsdW1hcmkubmFnYXJhamEucmFvQGludGVsLmNvbSIgdGFyZ2V0PSJfYmxhbmsiPnJhbW1vaGFu
-eC5rYWxsdW1hcmkubmFnYXJhamEucmFvQGludGVsLmNvbTwvYT4mZ3Q7PC9zcGFuPjo8YnI+PGJs
-b2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9y
-ZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+CgoKCgoKPGRpdiBsYW5n
-PSJFTi1VUyIgbGluaz0iYmx1ZSIgdmxpbms9InB1cnBsZSI+CjxkaXY+CjxwIGNsYXNzPSJNc29O
-b3JtYWwiPkkgYW0gY3VycmVudGx5IHRyeWluZyB0byBnZXQgdGhlIGNlbGx1bGFyIGNvbm5lY3Rp
-b24gdXAgdmlhIGNvbm5tYW4vb2Zvbm8uIFdlIGFyZSB1c2luZyBUZWxpdCBIRTkxMCBkZXZpY2Uu
-PHU+PC91Pjx1PjwvdT48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjx1PjwvdT7CoDx1PjwvdT48
-L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPkkgYW0gY3VycmVudGx5IGFibGUgdG8gZG8gdGhlIGZv
-bGxvd2luZyAsPHU+PC91Pjx1PjwvdT48L3A+CjxwPjx1PjwvdT48c3Bhbj4xLjxzcGFuIHN0eWxl
-PSJmb250OjcuMHB0ICZxdW90O1RpbWVzIE5ldyBSb21hbiZxdW90OyI+wqDCoMKgwqDCoMKgCjwv
-c3Bhbj48L3NwYW4+PHU+PC91PlJ1biBkYWVtb24gaW4gYmFja2dyb3VuZDx1PjwvdT48dT48L3U+
-PC9wPgo8cD48dT48L3U+PHNwYW4+Mi48c3BhbiBzdHlsZT0iZm9udDo3LjBwdCAmcXVvdDtUaW1l
-cyBOZXcgUm9tYW4mcXVvdDsiPsKgwqDCoMKgwqDCoAo8L3NwYW4+PC9zcGFuPjx1PjwvdT5FeGVj
-dXRlIGVuYWJsZS1tb2RlbSBhcHA8dT48L3U+PHU+PC91PjwvcD4KPHA+PHU+PC91PjxzcGFuPjMu
-PHNwYW4gc3R5bGU9ImZvbnQ6Ny4wcHQgJnF1b3Q7VGltZXMgTmV3IFJvbWFuJnF1b3Q7Ij7CoMKg
-wqDCoMKgwqAKPC9zcGFuPjwvc3Bhbj48dT48L3U+TGlzdC1jb250ZXh0cywgc2V0IEFQTiB0byBy
-ZXF1aXJlZCB2YWx1ZTx1PjwvdT48dT48L3U+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48dT48
-L3U+wqA8dT48L3U+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj5Ib3dldmVyLCB3aGlsZSBleGVj
-dXRpbmcg4oCYYWN0aXZhdGUtY29udGV4dCAw4oCZIEkgYW0gbm90IGFibGUgdG8gcHJvY2VlZCBm
-dXJ0aGVyLjx1PjwvdT48dT48L3U+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj5JIGdldCB0aGUg
-Zm9sbG93aW5nIGVycm9yIG1lc3NhZ2UsPHU+PC91Pjx1PjwvdT48L3A+CjxwcmU+4oCcPHNwYW4g
-c3R5bGU9ImZvbnQtc2l6ZToxMi4wcHQ7Y29sb3I6YmxhY2siPkRCdXNFeGNlcHRpb246IG9yZy5m
-cmVlZGVza3RvcC5EQnVzLkVycm9yLk5vUmVwbHk6IERpZCBub3QgcmVjZWl2ZSBhIHJlcGx5LiA8
-dT48L3U+PHU+PC91Pjwvc3Bhbj48L3ByZT4KPHByZT48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEy
-LjBwdDtjb2xvcjpibGFjayI+UG9zc2libGUgY2F1c2VzIGluY2x1ZGU6IHRoZSByZW1vdGUgYXBw
-bGljYXRpb24gZGlkIG5vdCBzZW5kIGEgcmVwbHksIHRoZSA8dT48L3U+PHU+PC91Pjwvc3Bhbj48
-L3ByZT4KPHByZT48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEyLjBwdDtjb2xvcjpibGFjayI+bWVz
-c2FnZSBidXMgc2VjdXJpdHkgcG9saWN5IGJsb2NrZWQgdGhlIHJlcGx5LCB0aGUgcmVwbHkgdGlt
-ZW91dCBleHBpcmVkLCBvciA8dT48L3U+PHU+PC91Pjwvc3Bhbj48L3ByZT4KPHByZT48c3BhbiBz
-dHlsZT0iZm9udC1zaXplOjEyLjBwdDtjb2xvcjpibGFjayI+dGhlIG5ldHdvcmsgY29ubmVjdGlv
-biB3YXMgYnJva2VuLjwvc3Bhbj7igJ08dT48L3U+PHU+PC91PjwvcHJlPgo8cHJlPjx1PjwvdT7C
-oDx1PjwvdT48L3ByZT4KPHByZT5XZSBhcmUgdXNpbmcgb2Zvbm8gdmVyc2lvbiAxLjE2IG5vdy48
-dT48L3U+PHU+PC91PjwvcHJlPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48dT48L3U+wqA8dT48L3U+
-PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48dT48L3U+wqA8dT48L3U+PC9wPgo8cCBjbGFzcz0i
-TXNvTm9ybWFsIj48aT5SZWdhcmRzLDx1PjwvdT48dT48L3U+PC9pPjwvcD4KPHAgY2xhc3M9Ik1z
-b05vcm1hbCI+PGk+Jmx0O1JhbSZndDs8dT48L3U+PHU+PC91PjwvaT48L3A+CjxwIGNsYXNzPSJN
-c29Ob3JtYWwiPjx1PjwvdT7CoDx1PjwvdT48L3A+CjwvZGl2Pgo8L2Rpdj4KCjxicj5fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXzxicj4Kb2Zvbm8gbWFpbGlu
-ZyBsaXN0PGJyPgo8YSBocmVmPSJtYWlsdG86b2Zvbm9Ab2Zvbm8ub3JnIj5vZm9ub0BvZm9uby5v
-cmc8L2E+PGJyPgo8YSBocmVmPSJodHRwczovL2xpc3RzLm9mb25vLm9yZy9tYWlsbWFuL2xpc3Rp
-bmZvL29mb25vIiB0YXJnZXQ9Il9ibGFuayI+aHR0cHM6Ly9saXN0cy5vZm9uby5vcmcvbWFpbG1h
-bi9saXN0aW5mby9vZm9ubzwvYT48YnI+Cjxicj48L2Jsb2NrcXVvdGU+PC9kaXY+PGJyPjwvZGl2
-PjwvZGl2Pgo=
+incorrect.  What was going wrong that was fixed by this change?
 
---===============5842693127931469131==--
+Regards,
+-Denis
+
+--===============7782030252116202872==--
 
