@@ -1,80 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============6281774662703421279=="
+Content-Type: multipart/mixed; boundary="===============8882464648358989956=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: telit he910 activate-context issue
-Date: Fri, 06 Mar 2015 12:28:51 -0600
-Message-ID: <54F9F1E3.8070001@gmail.com>
-In-Reply-To: <222E70FA67D72A4FB8EEDF5AF01724ACC998A6@BGSMSX102.gar.corp.intel.com>
+From: Paul Wise <pabs3@bonedaddy.net>
+Subject: ofono & gitorious shutdown
+Date: Sun, 08 Mar 2015 12:39:13 +0800
+Message-ID: <1425789553.4998.49.camel@bonedaddy.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6281774662703421279==
+--===============8882464648358989956==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ram,
+Hi,
 
-Please do not top-post on this mailing list.
+The meego-cellular group on gitorious has repositories for Qt bindings
+for ofono as well as two test suites and other things but Gitorious is
+being shut down at the end of May. I would like to suggest suggest
+moving the ofono related things to the ofono section of the kernel.org
+git hosting so that the code does not get lost. I think probably all the
+meego-cellular repositories should move to kernel.org, except
+telepathy-ring which should move to freedesktop.org.
 
-On 03/06/2015 02:28 AM, Kallumari Nagaraja Rao, RammohanX wrote:
-> Denis,
->
-> PFA the logs with AT&C0 & without. With &C0 it is not even creating a con=
-text.
->
+https://about.gitlab.com/2015/03/03/gitlab-acquires-gitorious/
+https://gitorious.org/meego-cellular/
+https://git.kernel.org/cgit/network/ofono/
+http://lists.freedesktop.org/archives/telepathy/2015-March/006672.html
 
-I have just tried my HE910 with unmodified oFono 1.16 and I am able to =
+-- =
 
-successfully activate the context.
+bye,
+pabs
 
-My firmware version is 12.00.003, but 12.00.004 is recommended.
+http://bonedaddy.net/pabs3/
 
-What you should be seeing is something like this:
+--===============8882464648358989956==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
-ofonod[19130]: drivers/atmodem/gprs-context.c:at_gprs_activate_primary() =
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjIKCmlRSWNCQUFC
+Q2dBR0JRSlUrOUo1QUFvSkVERVd1bDZmK21talVRUVAvQTlxSWFLOStFSkJ5cm1mUzdlYk1EdlgK
+Y2ZYdDFwRkdOTk05YmlvTTlvaHNtejhOSFY3WkYwK0Jqd1RwcDg1akpBY1NtQVVmSldpc05Sdzd0
+OEllTUVVUApLcFg2RTBuTkozQ2w4eGFzQ1VURGJENlBQbGdOM1Qxb1BCajBkRUVRZk54d2w1Qm9F
+aHF2eTFmT1IrOEJLRWJJCnRhSGFzRThUOGY3cU9QbXFaR2NiUGhIdytMa2g2UExJWGxkVm5abG02
+Zm5zUm1GWFVZaE03UFkxMm44MWhjdVAKdkFrcnRkTkhhOWdBbW9nSUVBVHpuTE96VUt6anpFMDdi
+SDRsMVJMZVJMUzIwTWJ3WlRnK3dpZ0V5QTBVeklnWgoxekJEa2FLZzBsOU9Eam9qNy9TRU55c05Z
+UFc4a2lCWVNNeTlxZjNLc2VMb3FoeWF0cld4WTZzUzQyOWR4WlFGCjVjMGFmcE5yOXJJbzN4Rkk5
+YXhpVHR1bEdsbkV1ZE9zaWNPa2lodGh1SEJOR0hDcUY4YnBBR2hGWllsZDErd1IKbndqK1FaSzJO
+SUZOM1Z2Z0J3RXFhZk85YU1mTUZ5QXNZNDdUbXROcDVrdWhZVFEvWVN3bmMrNExtbkUyMkhrcgp3
+T3Izd1A4ZmRxMTI0UDJDSGpIU3lHVUN0VWhpYzcxQ3NaYWRkZ3loaENML2VuMXVrTFFocTJUd0lk
+emVlTEJTClBiaklOOUVudDVLekVBbWZRd3JmdmJWNUI5WGpqakRTU2dBTC9tWk9IcHVDakYyQXBQ
+eUFCa0tLYXM5QWV4aEsKVTE0cUdyYTkyd2YxOUxRR1J3VTRvcURGK3FWZTg5d1EzNVk2TXlPRkFk
+eW00TnlmRWdhQTVJL1JMQ2dScHo4RgpuWTBGb2t1ZUZPOEc3OG8zZitUcAo9clVscAotLS0tLUVO
+RCBQR1AgU0lHTkFUVVJFLS0tLS0K
 
-cid 1
-ofonod[19130]: Modem: > AT+CGDCONT=3D1,"IP",""\r
-ofonod[19130]: Modem: < AT+CGDCONT=3D1,"IP",""\r
-ofonod[19130]: Modem: < \r\nOK\r\n
-ofonod[19130]: drivers/atmodem/gprs-context.c:at_cgdcont_cb() ok 1
-ofonod[19130]: Modem: > AT+CGDATA=3D"PPP",1\r
-ofonod[19130]: Modem: < AT+CGDATA=3D"PPP",1\r
-ofonod[19130]: Modem: < \r\nCONNECT\r\n
-ofonod[19130]: drivers/atmodem/gprs-context.c:at_cgdata_cb() ok 1
-ofonod[19130]: drivers/atmodem/gprs-context.c:setup_ppp()
-ofonod[19130]: drivers/atmodem/gprs-context.c:ppp_connect()
-
-What you are seeing is this:
-
-ofonod[6586]: drivers/atmodem/gprs-context.c:at_gprs_activate_primary() =
-
-cid 1
-ofonod[6586]: Aux: < \r\n
-ofonod[6586]: Aux: < +CIEV: rssi,5\r\n
-ofonod[6586]: src/network.c:ofono_netreg_strength_notify() strength 100
-ofonod[6586]: Aux: < \r\n
-ofonod[6586]: Aux: < +CIEV: rssi,4\r\n
-ofonod[6586]: src/network.c:ofono_netreg_strength_notify() strength 80
-ofonod[6586]: Terminating
-
-That tells me that the port detected as the 'Modem' port is incorrect.
-
-ofonod[6586]: plugins/udevng.c:setup_he910() modem=3D/dev/ttyACM0 =
-
-aux=3D/dev/ttyACM3 gps=3D/dev/ttyACM5
-
-Please check that those TTYs are indeed live and can accept AT commands. =
-
-  If not, then you need to update firmware, set the appropriate PORTSEL =
-
-setting or update plugins/udevng.c logic for detecting your particular =
-
-variant of HE910.
-
-Regards,
--Denis
-
---===============6281774662703421279==--
+--===============8882464648358989956==--
 
