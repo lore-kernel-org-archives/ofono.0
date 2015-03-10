@@ -1,260 +1,141 @@
-Content-Type: multipart/mixed; boundary="===============6911467915408716092=="
+Content-Type: multipart/mixed; boundary="===============1788640713155977672=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Enrico Sau <enrico.sau@gmail.com>
 Subject: Re: [PATCH 1/2] Telit HE910 general fixes for gprs, sms and voicecall
-Date: Mon, 09 Mar 2015 20:59:35 -0500
-Message-ID: <54FE5007.3070205@gmail.com>
-In-Reply-To: <CAH4ZQwsN37v8_62vBf1vMNH3u+AdreTuONz38=_rC9ZREYTbew@mail.gmail.com>
+Date: Tue, 10 Mar 2015 08:11:56 +0100
+Message-ID: <CAH4ZQwuAG1nv7oUAMh1H7cg-bsvT0gnb88aFYkbqqVfYvd0q7A@mail.gmail.com>
+In-Reply-To: <54FE5007.3070205@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6911467915408716092==
+--===============1788640713155977672==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Enrico,
+=E2=80=8BHi Denis,=E2=80=8B
 
-On 03/06/2015 10:07 AM, Enrico Sau wrote:
-> diff --git a/plugins/he910.c b/plugins/he910.c
-> index 69362b8..304fd35 100644
 
-Could you submit patches using git send-email?  Otherwise I can't apply =
+>
+> I really think this part is not necessary.  oFono expects autoattach to be
+> disabled.
 
-them.
 
-Lets go through the changes one by one:
+=E2=80=8BAutoattach is the only part I'm not sure of.
+As I said, I didn't go too deep in this problem, but leaving autoattach to
+zero, made impossible to do more than one ppp session.
+In this way my modem is working fine I believe.=E2=80=8B
 
-> --- a/plugins/he910.c
-> +++ b/plugins/he910.c
-> @@ -59,6 +59,8 @@
->   #include <drivers/atmodem/atutil.h>
->   #include <drivers/atmodem/vendor.h>
->
-> +#define TELIT_CFUN_DELAY 3*1000*1000 /* uS */
-> +
->   static const char *none_prefix[] =3D { NULL };
->   static const char *qss_prefix[] =3D { "#QSS:", NULL };
->
-> @@ -141,7 +143,7 @@ static void switch_sim_state_status(struct
-> ofono_modem *modem, int status)
->          case 3: /* SIM inserted, SMS and phonebook ready */
->                  if (data->sms_phonebook_added =3D=3D FALSE) {
->                          ofono_phonebook_create(modem, 0, "atmodem",
-> data->chat);
-> -                       ofono_sms_create(modem, 0, "atmodem", data->chat);
-> +                       ofono_sms_create(modem, OFONO_VENDOR_TELIT,
-> "atmodem", data->chat);
->                          data->sms_phonebook_added =3D TRUE;
->                  }
->                  break;
-> @@ -217,6 +219,8 @@ static void cfun_enable_cb(gboolean ok, GAtResult
-> *result, gpointer user_data)
->           * When the DCD is disabled the modem does not hangup anymore
->           * after the data connection.
->           */
-> +       g_at_chat_send(data->modem, "AT&C0", NULL, NULL, NULL, NULL);
-> +
->          g_at_chat_send(data->chat, "AT&C0", NULL, NULL, NULL, NULL);
->
->          data->have_sim =3D FALSE;
-> @@ -224,24 +228,40 @@ static void cfun_enable_cb(gboolean ok, GAtResult
-> *result, gpointer user_data)
->          ofono_modem_set_powered(modem, TRUE);
->
-> -       /*
-> -        * Tell the modem not to automatically initiate auto-attach
-> -        * proceedures on its own.
-> -        */
-> -       g_at_chat_send(data->chat, "AT#AUTOATT=3D0", none_prefix,
-> -                               NULL, NULL, NULL);
-> -
 
-I really think this part is not necessary.  oFono expects autoattach to =
+>
+>
+> On older Telit firmware, CFUN=3D4 turns the SIM off.  If you have such
+> firmware, I suggest upgrading it.  Otherwise the modem will not work as
+> oFono expects it to.
+>
+> This change should not be required with latest firmware.
 
-be disabled.
 
->          /* Follow sim state */
->          g_at_chat_register(data->chat, "#QSS:", he910_qss_notify,
->                                  FALSE, modem, NULL);
->
-> -       /* Enable sim state notification */
-> -       g_at_chat_send(data->chat, "AT#QSS=3D2", none_prefix, NULL, NULL,
-> NULL);
-> -
->          g_at_chat_send(data->chat, "AT#QSS?", qss_prefix,
->                          qss_query_cb, modem, NULL);
->   }
->
-> +static void cfun_delay_cb(gboolean ok, GAtResult *result, gpointer
-> user_data)
-> +{
-> +       struct ofono_modem *modem =3D user_data;
-> +       struct he910_data *data =3D ofono_modem_get_data(modem);
-> +
-> +       DBG("%p", modem);
-> +
-> +       if (!ok) {
-> +               g_at_chat_unref(data->chat);
-> +               data->chat =3D NULL;
-> +
-> +               g_at_chat_unref(data->modem);
-> +               data->modem =3D NULL;
-> +
-> +               ofono_modem_set_powered(modem, FALSE);
-> +               return;
-> +       }
-> +
-> +       DBG("Wait for AT+CFUN=3D4 command completion");
-> +       usleep(TELIT_CFUN_DELAY);
-> +
-> +       /* Set phone functionality */
-> +       g_at_chat_send(data->chat, "AT+CFUN=3D1", none_prefix,
-> +                               cfun_enable_cb, modem, NULL);
-> +}
-> +
->   static int he910_enable(struct ofono_modem *modem)
->   {
->          struct he910_data *data =3D ofono_modem_get_data(modem);
-> @@ -268,9 +288,11 @@ static int he910_enable(struct ofono_modem *modem)
->          g_at_chat_send(data->chat, "ATE0 +CMEE=3D1", none_prefix,
->                                  NULL, NULL, NULL);
->
-> -       /* Set phone functionality */
-> -       g_at_chat_send(data->chat, "AT+CFUN=3D1", none_prefix,
-> -                               cfun_enable_cb, modem, NULL);
-> +       /* Set QSS notifications before restarting the SIM */
-> +       g_at_chat_send(data->chat, "AT#QSS=3D2", none_prefix,     NULL,
-> modem, NULL);
-> +
-> +       /* Power off module to get alla notifications on startup */
-> +       g_at_chat_send(data->chat, "AT+CFUN=3D4", none_prefix,
-> cfun_delay_cb, modem, NULL);
->
+=E2=80=8BCFUN=3D4 always turns SIM off, even in new firmware.
+The reason for this fix is because sometimes ofono is started when the
+modem is already attached to the system, or it is in an inconsistent state.
+This is a problem for ofono because lots of unsolicited messages are lost.
+Setting CFUN=3D4, and then CFUN=3D1, is like soft resetting the modem in or=
+der
+to get all the startup messages.
+I understand this may look as a workaround, but I cannot find a better way
+to do it!
+=E2=80=8B
 
-On older Telit firmware, CFUN=3D4 turns the SIM off.  If you have such =
 
-firmware, I suggest upgrading it.  Otherwise the modem will not work as =
+>
+> ICCid changes should be in a separate patch.  I'm not sure they are still
+> required with new firmware.
+>
+> =E2=80=8BI made this because when the ICCD is checked, the modem is not r=
+eady yet.
+So ICCD field is always empty.
+In this way, if the field is empty it is retrieved again.
+As before, I'm not fully inside ofono architecture, so, if you think this
+may be done in a better way, just discard it.
+I will send it in a separate patch anyway.=E2=80=8B
 
-oFono expects it to.
 
-This change should not be required with latest firmware.
+=E2=80=8BThank you.
+Enrico=E2=80=8B
 
->          return -EINPROGRESS;
->   }
-> @@ -333,7 +355,7 @@ static void he910_post_online(struct ofono_modem *mod=
-em)
->
->          ofono_voicecall_create(modem, 0, "atmodem", data->chat);
->          ofono_netreg_create(modem, OFONO_VENDOR_TELIT, "atmodem",
-> data->chat);
-> -       ofono_ussd_create(modem, 0, "atmodem", data->chat);
-> +       ofono_ussd_create(modem, OFONO_VENDOR_TELIT, "atmodem", data->cha=
-t);
->          ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
->          ofono_call_settings_create(modem, 0, "atmodem", data->chat);
->          ofono_call_meter_create(modem, 0, "atmodem", data->chat);
-> @@ -349,6 +371,8 @@ static void he910_post_online(struct ofono_modem *mod=
-em)
->
->          if (gprs && gc)
->                  ofono_gprs_add_context(gprs, gc);
-> +       g_at_chat_send(data->chat, "AT#AUTOATT=3D1", none_prefix,
-> +                               NULL, NULL, NULL);
->   }
->
->   static int he910_probe(struct ofono_modem *modem)
-> diff --git a/src/sim.c b/src/sim.c
-> index b5badf1..65e5c32 100644
-> --- a/src/sim.c
-> +++ b/src/sim.c
-> @@ -801,6 +801,29 @@ static DBusMessage *sim_change_pin(DBusConnection
-> *conn, DBusMessage *msg,
->          return NULL;
->   }
->
-> +static void sim_iccid_read_cb(int ok, int length, int record,
-> +                               const unsigned char *data,
-> +                               int record_length, void *userdata)
-> +{
-> +       struct ofono_sim *sim =3D userdata;
-> +       const char *path =3D __ofono_atom_get_path(sim->atom);
-> +       DBusConnection *conn =3D ofono_dbus_get_connection();
-> +       char iccid[21]; /* ICCID max length is 20 + 1 for NULL */
-> +
-> +       if (!ok || length < 10)
-> +               return;
-> +
-> +       extract_bcd_number(data, length, iccid);
-> +       iccid[20] =3D '\0';
-> +       sim->iccid =3D g_strdup(iccid);
-> +
-> +       ofono_dbus_signal_property_changed(conn, path,
-> +                                               OFONO_SIM_MANAGER_INTERFA=
-CE,
-> +                                               "CardIdentifier",
-> +                                               DBUS_TYPE_STRING,
-> +                                               &sim->iccid);
-> +}
-> +
->   static void sim_enter_pin_cb(const struct ofono_error *error, void *dat=
-a)
->   {
->          struct ofono_sim *sim =3D data;
-> @@ -813,6 +836,11 @@ static void sim_enter_pin_cb(const struct
-> ofono_error *error, void *data)
->
->          __ofono_dbus_pending_reply(&sim->pending, reply);
->
-> +       if (!sim->iccid)
-> +               ofono_sim_read(sim->early_context, SIM_EF_ICCID_FILEID,
-> +
->   OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
-> +                                          sim_iccid_read_cb, sim);
-> +
->          __ofono_sim_recheck_pin(sim);
->   }
->
-> @@ -2045,29 +2073,6 @@ skip_efpl:
->          sim->language_prefs_update =3D FALSE;
->   }
->
-> -static void sim_iccid_read_cb(int ok, int length, int record,
-> -                               const unsigned char *data,
-> -                               int record_length, void *userdata)
-> -{
-> -       struct ofono_sim *sim =3D userdata;
-> -       const char *path =3D __ofono_atom_get_path(sim->atom);
-> -       DBusConnection *conn =3D ofono_dbus_get_connection();
-> -       char iccid[21]; /* ICCID max length is 20 + 1 for NULL */
-> -
-> -       if (!ok || length < 10)
-> -               return;
-> -
-> -       extract_bcd_number(data, length, iccid);
-> -       iccid[20] =3D '\0';
-> -       sim->iccid =3D g_strdup(iccid);
-> -
-> -       ofono_dbus_signal_property_changed(conn, path,
-> -                                               OFONO_SIM_MANAGER_INTERFA=
-CE,
-> -                                               "CardIdentifier",
-> -                                               DBUS_TYPE_STRING,
-> -                                               &sim->iccid);
-> -}
-> -
->   static void sim_iccid_changed(int id, void *userdata)
->   {
->          struct ofono_sim *sim =3D userdata;
->
->
+--===============1788640713155977672==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-ICCid changes should be in a separate patch.  I'm not sure they are =
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPjxkaXYgY2xhc3M9ImdtYWls
+X3F1b3RlIj48ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWls
+eTp2ZXJkYW5hLHNhbnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPuKAi0hpIERlbmlzLOKAizwvZGl2
+PsKgPC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAg
+MCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+PGRp
+dj48ZGl2IGNsYXNzPSJoNSI+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0i
+bWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0
+OjFleCI+CjwvYmxvY2txdW90ZT4KPGJyPjwvZGl2PjwvZGl2PgpJIHJlYWxseSB0aGluayB0aGlz
+IHBhcnQgaXMgbm90IG5lY2Vzc2FyeS7CoCBvRm9ubyBleHBlY3RzIGF1dG9hdHRhY2ggdG8gYmUg
+ZGlzYWJsZWQuPC9ibG9ja3F1b3RlPjxkaXY+PGJyPjwvZGl2PjxkaXY+PGRpdiBjbGFzcz0iZ21h
+aWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZjtkaXNwbGF5
+OmlubGluZSI+4oCLQXV0b2F0dGFjaCBpcyB0aGUgb25seSBwYXJ0IEkmIzM5O20gbm90IHN1cmUg
+b2YuPC9kaXY+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9u
+dC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5lIj5BcyBJIHNhaWQsIEkg
+ZGlkbiYjMzk7dCBnbyB0b28gZGVlcCBpbiB0aGlzIHByb2JsZW0sIGJ1dCBsZWF2aW5nIGF1dG9h
+dHRhY2ggdG8gemVybywgbWFkZSBpbXBvc3NpYmxlIHRvIGRvIG1vcmUgdGhhbiBvbmUgcHBwIHNl
+c3Npb24uPC9kaXY+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0i
+Zm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5lIj5JbiB0aGlzIHdh
+eSBteSBtb2RlbSBpcyB3b3JraW5nIGZpbmUgSSBiZWxpZXZlLuKAizwvZGl2PsKgPC9kaXY+PGJs
+b2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9y
+ZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+PGRpdj48ZGl2IGNsYXNz
+PSJoNSI+PGJyPjxicj48L2Rpdj48L2Rpdj4KT24gb2xkZXIgVGVsaXQgZmlybXdhcmUsIENGVU49
+NCB0dXJucyB0aGUgU0lNIG9mZi7CoCBJZiB5b3UgaGF2ZSBzdWNoIGZpcm13YXJlLCBJIHN1Z2dl
+c3QgdXBncmFkaW5nIGl0LsKgIE90aGVyd2lzZSB0aGUgbW9kZW0gd2lsbCBub3Qgd29yayBhcyBv
+Rm9ubyBleHBlY3RzIGl0IHRvLjxicj4KPGJyPgpUaGlzIGNoYW5nZSBzaG91bGQgbm90IGJlIHJl
+cXVpcmVkIHdpdGggbGF0ZXN0IGZpcm13YXJlLjwvYmxvY2txdW90ZT48ZGl2Pjxicj48L2Rpdj48
+ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5h
+LHNhbnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPuKAi0NGVU49NCBhbHdheXMgdHVybnMgU0lNIG9m
+ZiwgZXZlbiBpbiBuZXcgZmlybXdhcmUuPC9kaXY+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFp
+bF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6
+aW5saW5lIj5UaGUgcmVhc29uIGZvciB0aGlzIGZpeCBpcyBiZWNhdXNlIHNvbWV0aW1lcyBvZm9u
+byBpcyBzdGFydGVkIHdoZW4gdGhlIG1vZGVtIGlzIGFscmVhZHkgYXR0YWNoZWQgdG8gdGhlIHN5
+c3RlbSwgb3IgaXQgaXMgaW4gYW4gaW5jb25zaXN0ZW50IHN0YXRlLjwvZGl2PjwvZGl2PjxkaXY+
+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fu
+cy1zZXJpZjtkaXNwbGF5OmlubGluZSI+VGhpcyBpcyBhIHByb2JsZW0gZm9yIG9mb25vIGJlY2F1
+c2UgbG90cyBvZiB1bnNvbGljaXRlZCBtZXNzYWdlcyBhcmUgbG9zdC48L2Rpdj48L2Rpdj48ZGl2
+PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNh
+bnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPlNldHRpbmcgQ0ZVTj00LCBhbmQgdGhlbiBDRlVOPTEs
+IGlzIGxpa2Ugc29mdCByZXNldHRpbmcgdGhlIG1vZGVtIGluIG9yZGVyIHRvIGdldCBhbGwgdGhl
+IHN0YXJ0dXAgbWVzc2FnZXMuPC9kaXY+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZh
+dWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5l
+Ij5JIHVuZGVyc3RhbmQgdGhpcyBtYXkgbG9vayBhcyBhIHdvcmthcm91bmQsIGJ1dCBJIGNhbm5v
+dCBmaW5kIGEgYmV0dGVyIHdheSB0byBkbyBpdCE8L2Rpdj48L2Rpdj48ZGl2PjxkaXYgY2xhc3M9
+ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWY7ZGlz
+cGxheTppbmxpbmUiPuKAizwvZGl2PsKgPC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1
+b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7
+cGFkZGluZy1sZWZ0OjFleCI+PGRpdj48ZGl2IGNsYXNzPSJoNSI+Cjxicj48L2Rpdj48L2Rpdj4K
+SUNDaWQgY2hhbmdlcyBzaG91bGQgYmUgaW4gYSBzZXBhcmF0ZSBwYXRjaC7CoCBJJiMzOTttIG5v
+dCBzdXJlIHRoZXkgYXJlIHN0aWxsIHJlcXVpcmVkIHdpdGggbmV3IGZpcm13YXJlLjxkaXYgY2xh
+c3M9IkhPRW5aYiI+PGRpdiBjbGFzcz0iaDUiPjxicj48L2Rpdj48L2Rpdj48L2Jsb2NrcXVvdGU+
+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFu
+YSxzYW5zLXNlcmlmIj7igItJIG1hZGUgdGhpcyBiZWNhdXNlIHdoZW4gdGhlIElDQ0QgaXMgY2hl
+Y2tlZCwgdGhlIG1vZGVtIGlzIG5vdCByZWFkeSB5ZXQuIFNvIElDQ0QgZmllbGQgaXMgYWx3YXlz
+IGVtcHR5LjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWls
+eTp2ZXJkYW5hLHNhbnMtc2VyaWYiPkluIHRoaXMgd2F5LCBpZiB0aGUgZmllbGQgaXMgZW1wdHkg
+aXQgaXMgcmV0cmlldmVkIGFnYWluLjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0
+eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPkFzIGJlZm9yZSwgSSYjMzk7bSBu
+b3QgZnVsbHkgaW5zaWRlIG9mb25vIGFyY2hpdGVjdHVyZSwgc28sIGlmIHlvdSB0aGluayB0aGlz
+IG1heSBiZSBkb25lIGluIGEgYmV0dGVyIHdheSwganVzdCBkaXNjYXJkIGl0LjwvZGl2PjxkaXYg
+Y2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2Vy
+aWYiPkkgd2lsbCBzZW5kIGl0IGluIGEgc2VwYXJhdGUgcGF0Y2ggYW55d2F5LuKAizwvZGl2Pjxi
+cj48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0
+eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPuKAi1Ro
+YW5rIHlvdS48L2Rpdj48L2Rpdj48ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxl
+PSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPkVucmljb+KA
+izwvZGl2PsKgPC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+Cg==
 
-still required with new firmware.
-
-Regards,
--Denis
-
---===============6911467915408716092==--
+--===============1788640713155977672==--
 
