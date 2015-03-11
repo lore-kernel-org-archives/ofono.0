@@ -1,141 +1,123 @@
-Content-Type: multipart/mixed; boundary="===============1788640713155977672=="
+Content-Type: multipart/mixed; boundary="===============4591028988510533741=="
 MIME-Version: 1.0
-From: Enrico Sau <enrico.sau@gmail.com>
-Subject: Re: [PATCH 1/2] Telit HE910 general fixes for gprs, sms and voicecall
-Date: Tue, 10 Mar 2015 08:11:56 +0100
-Message-ID: <CAH4ZQwuAG1nv7oUAMh1H7cg-bsvT0gnb88aFYkbqqVfYvd0q7A@mail.gmail.com>
-In-Reply-To: <54FE5007.3070205@gmail.com>
+From: Rajashekharaiah, Kiran KumarX <kiran.kumarx.rajashekharaiah@intel.com>
+Subject: RE: Using ofono for location service
+Date: Wed, 11 Mar 2015 13:06:34 +0000
+Message-ID: <50BCD3CCE3CFC54ABCADC6EDD7405570C5549E@BGSMSX104.gar.corp.intel.com>
+In-Reply-To: <54F9E7BE.4080409@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1788640713155977672==
+--===============4591028988510533741==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-=E2=80=8BHi Denis,=E2=80=8B
+Hi Denis,
 
+-----Original Message-----
+From: ofono [mailto:ofono-bounces(a)ofono.org] On Behalf Of Denis Kenzior
+Sent: Friday, March 06, 2015 11:16 PM
+To: ofono(a)ofono.org
+Subject: Re: Using ofono for location service
 
+Hi Kiran,
+
+On 03/06/2015 05:55 AM, Rajashekharaiah, Kiran KumarX wrote:
+> Hi,
 >
-> I really think this part is not necessary.  oFono expects autoattach to be
-> disabled.
+> I am trying to use ofono on a linux box with TELIT HE910. How can I =
 
+> enable stand-alone gps using ofono, so that I can get GPS data without =
 
-=E2=80=8BAutoattach is the only part I'm not sure of.
-As I said, I didn't go too deep in this problem, but leaving autoattach to
-zero, made impossible to do more than one ppp session.
-In this way my modem is working fine I believe.=E2=80=8B
-
-
+> cellular connection?
 >
+
+The location-reporting atom is enabled in pre-sim, so in theory you should =
+be able to use the modem as a GPS device without a SIM.
+
+ From what I remember, oFono HE910 GPS support requires fairly new firmware=
+ and a special setting to work correctly.  See doc/telit-modem.txt for more=
+ information.
+
+Kiran: I followed the doc/telit-modem.txt(I set AT#PORTCFG=3D8 and rebooted=
+ the modem)and the firmware version is 12.00.004. =
+
+After running the ofonod and test/enable-modem, I ran a script to get locat=
+ion info. It gets disabled immediately. =
+
+One more observation is, I get  "modem=3D/dev/ttyACM0 aux=3D/dev/ttyACM3 gp=
+s=3D/dev/ttyACM5" from ofonod logs, but /dev/ttyACM5 is
+not accepting AT commands when I try from minicom.
+
+Following are the logs:
+./test/gn3
+Connecting modem /he910_0...
+ofonod[2389]: drivers/telitmodem/location-reporting.c:telit_location_report=
+ing_enable() lr=3D0x82e09e0
+ofonod[2389]: drivers/telitmodem/location-reporting.c:telit_portcfg_check_c=
+b() lr=3D0x82e09e0 ok=3D1
+ofonod[2389]: drivers/telitmodem/location-reporting.c:telit_gps_enable_cb()=
+ lr=3D0x82e09e0 ok=3D1
+ofonod[2389]: drivers/telitmodem/location-reporting.c:telit_gps_ctl_cb() lr=
+=3D0x82e09e0 ok=3D1
+ofonod[2389]: src/modem.c:get_modem_property() modem 0x82e2ba0 property GPS
+ofonod[2389]: drivers/telitmodem/location-reporting.c:telit_location_report=
+ing_disable() lr=3D0x82e09e0
+ofonod[2389]: drivers/telitmodem/location-reporting.c:telit_gps_disable_cb(=
+) lr=3D0x82e09e0, ok=3D1
+
+The test script I am using is:
+
+import dbus
+import sys
+import glib
+
+bus =3D dbus.SystemBus()
+
+if len(sys.argv) =3D=3D 2:
+        path =3D sys.argv[1]
+else:
+        manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
+                        'org.ofono.Manager')
+        modems =3D manager.GetModems()
+        path =3D modems[0][0]
+
+print("Connecting modem %s..." % path)
+modem =3D dbus.Interface(bus.get_object('org.ofono', path),
+                                                'org.ofono.LocationReportin=
+g')
+
+fd =3D modem.Request()
+
+Regards,
+Kiran
+
+
+> Also when I tried running "test-gnss" for testing AGPS, I get the =
+
+> following error(with ofonod daemon running in background):
 >
-> On older Telit firmware, CFUN=3D4 turns the SIM off.  If you have such
-> firmware, I suggest upgrading it.  Otherwise the modem will not work as
-> oFono expects it to.
+> *NameError: name 'gnss' is not defined*
 >
-> This change should not be required with latest firmware.
 
+Yes, sounds like no modems with the
+org.ofono.AssistedSatelliteNavigation interface were found.
 
-=E2=80=8BCFUN=3D4 always turns SIM off, even in new firmware.
-The reason for this fix is because sometimes ofono is started when the
-modem is already attached to the system, or it is in an inconsistent state.
-This is a problem for ofono because lots of unsolicited messages are lost.
-Setting CFUN=3D4, and then CFUN=3D1, is like soft resetting the modem in or=
-der
-to get all the startup messages.
-I understand this may look as a workaround, but I cannot find a better way
-to do it!
-=E2=80=8B
-
-
+> **
 >
-> ICCid changes should be in a separate patch.  I'm not sure they are still
-> required with new firmware.
+> Does this mean AGPS is not enabled? If so how can I enable it?
 >
-> =E2=80=8BI made this because when the ICCD is checked, the modem is not r=
-eady yet.
-So ICCD field is always empty.
-In this way, if the field is empty it is retrieved again.
-As before, I'm not fully inside ofono architecture, so, if you think this
-may be done in a better way, just discard it.
-I will send it in a separate patch anyway.=E2=80=8B
+> **
 
+Have you powered up your telit HE 910 via enable-modem?
 
-=E2=80=8BThank you.
-Enrico=E2=80=8B
+Regards,
+-Denis
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+https://lists.ofono.org/mailman/listinfo/ofono
 
---===============1788640713155977672==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPjxkaXYgY2xhc3M9ImdtYWls
-X3F1b3RlIj48ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWls
-eTp2ZXJkYW5hLHNhbnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPuKAi0hpIERlbmlzLOKAizwvZGl2
-PsKgPC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAg
-MCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+PGRp
-dj48ZGl2IGNsYXNzPSJoNSI+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0i
-bWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0
-OjFleCI+CjwvYmxvY2txdW90ZT4KPGJyPjwvZGl2PjwvZGl2PgpJIHJlYWxseSB0aGluayB0aGlz
-IHBhcnQgaXMgbm90IG5lY2Vzc2FyeS7CoCBvRm9ubyBleHBlY3RzIGF1dG9hdHRhY2ggdG8gYmUg
-ZGlzYWJsZWQuPC9ibG9ja3F1b3RlPjxkaXY+PGJyPjwvZGl2PjxkaXY+PGRpdiBjbGFzcz0iZ21h
-aWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZjtkaXNwbGF5
-OmlubGluZSI+4oCLQXV0b2F0dGFjaCBpcyB0aGUgb25seSBwYXJ0IEkmIzM5O20gbm90IHN1cmUg
-b2YuPC9kaXY+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9u
-dC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5lIj5BcyBJIHNhaWQsIEkg
-ZGlkbiYjMzk7dCBnbyB0b28gZGVlcCBpbiB0aGlzIHByb2JsZW0sIGJ1dCBsZWF2aW5nIGF1dG9h
-dHRhY2ggdG8gemVybywgbWFkZSBpbXBvc3NpYmxlIHRvIGRvIG1vcmUgdGhhbiBvbmUgcHBwIHNl
-c3Npb24uPC9kaXY+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0i
-Zm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5lIj5JbiB0aGlzIHdh
-eSBteSBtb2RlbSBpcyB3b3JraW5nIGZpbmUgSSBiZWxpZXZlLuKAizwvZGl2PsKgPC9kaXY+PGJs
-b2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9y
-ZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+PGRpdj48ZGl2IGNsYXNz
-PSJoNSI+PGJyPjxicj48L2Rpdj48L2Rpdj4KT24gb2xkZXIgVGVsaXQgZmlybXdhcmUsIENGVU49
-NCB0dXJucyB0aGUgU0lNIG9mZi7CoCBJZiB5b3UgaGF2ZSBzdWNoIGZpcm13YXJlLCBJIHN1Z2dl
-c3QgdXBncmFkaW5nIGl0LsKgIE90aGVyd2lzZSB0aGUgbW9kZW0gd2lsbCBub3Qgd29yayBhcyBv
-Rm9ubyBleHBlY3RzIGl0IHRvLjxicj4KPGJyPgpUaGlzIGNoYW5nZSBzaG91bGQgbm90IGJlIHJl
-cXVpcmVkIHdpdGggbGF0ZXN0IGZpcm13YXJlLjwvYmxvY2txdW90ZT48ZGl2Pjxicj48L2Rpdj48
-ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5h
-LHNhbnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPuKAi0NGVU49NCBhbHdheXMgdHVybnMgU0lNIG9m
-ZiwgZXZlbiBpbiBuZXcgZmlybXdhcmUuPC9kaXY+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFp
-bF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6
-aW5saW5lIj5UaGUgcmVhc29uIGZvciB0aGlzIGZpeCBpcyBiZWNhdXNlIHNvbWV0aW1lcyBvZm9u
-byBpcyBzdGFydGVkIHdoZW4gdGhlIG1vZGVtIGlzIGFscmVhZHkgYXR0YWNoZWQgdG8gdGhlIHN5
-c3RlbSwgb3IgaXQgaXMgaW4gYW4gaW5jb25zaXN0ZW50IHN0YXRlLjwvZGl2PjwvZGl2PjxkaXY+
-PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fu
-cy1zZXJpZjtkaXNwbGF5OmlubGluZSI+VGhpcyBpcyBhIHByb2JsZW0gZm9yIG9mb25vIGJlY2F1
-c2UgbG90cyBvZiB1bnNvbGljaXRlZCBtZXNzYWdlcyBhcmUgbG9zdC48L2Rpdj48L2Rpdj48ZGl2
-PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNh
-bnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPlNldHRpbmcgQ0ZVTj00LCBhbmQgdGhlbiBDRlVOPTEs
-IGlzIGxpa2Ugc29mdCByZXNldHRpbmcgdGhlIG1vZGVtIGluIG9yZGVyIHRvIGdldCBhbGwgdGhl
-IHN0YXJ0dXAgbWVzc2FnZXMuPC9kaXY+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZh
-dWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmO2Rpc3BsYXk6aW5saW5l
-Ij5JIHVuZGVyc3RhbmQgdGhpcyBtYXkgbG9vayBhcyBhIHdvcmthcm91bmQsIGJ1dCBJIGNhbm5v
-dCBmaW5kIGEgYmV0dGVyIHdheSB0byBkbyBpdCE8L2Rpdj48L2Rpdj48ZGl2PjxkaXYgY2xhc3M9
-ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWY7ZGlz
-cGxheTppbmxpbmUiPuKAizwvZGl2PsKgPC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1
-b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7
-cGFkZGluZy1sZWZ0OjFleCI+PGRpdj48ZGl2IGNsYXNzPSJoNSI+Cjxicj48L2Rpdj48L2Rpdj4K
-SUNDaWQgY2hhbmdlcyBzaG91bGQgYmUgaW4gYSBzZXBhcmF0ZSBwYXRjaC7CoCBJJiMzOTttIG5v
-dCBzdXJlIHRoZXkgYXJlIHN0aWxsIHJlcXVpcmVkIHdpdGggbmV3IGZpcm13YXJlLjxkaXYgY2xh
-c3M9IkhPRW5aYiI+PGRpdiBjbGFzcz0iaDUiPjxicj48L2Rpdj48L2Rpdj48L2Jsb2NrcXVvdGU+
-PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFu
-YSxzYW5zLXNlcmlmIj7igItJIG1hZGUgdGhpcyBiZWNhdXNlIHdoZW4gdGhlIElDQ0QgaXMgY2hl
-Y2tlZCwgdGhlIG1vZGVtIGlzIG5vdCByZWFkeSB5ZXQuIFNvIElDQ0QgZmllbGQgaXMgYWx3YXlz
-IGVtcHR5LjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWls
-eTp2ZXJkYW5hLHNhbnMtc2VyaWYiPkluIHRoaXMgd2F5LCBpZiB0aGUgZmllbGQgaXMgZW1wdHkg
-aXQgaXMgcmV0cmlldmVkIGFnYWluLjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0
-eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPkFzIGJlZm9yZSwgSSYjMzk7bSBu
-b3QgZnVsbHkgaW5zaWRlIG9mb25vIGFyY2hpdGVjdHVyZSwgc28sIGlmIHlvdSB0aGluayB0aGlz
-IG1heSBiZSBkb25lIGluIGEgYmV0dGVyIHdheSwganVzdCBkaXNjYXJkIGl0LjwvZGl2PjxkaXYg
-Y2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2Vy
-aWYiPkkgd2lsbCBzZW5kIGl0IGluIGEgc2VwYXJhdGUgcGF0Y2ggYW55d2F5LuKAizwvZGl2Pjxi
-cj48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0
-eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPuKAi1Ro
-YW5rIHlvdS48L2Rpdj48L2Rpdj48ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxl
-PSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPkVucmljb+KA
-izwvZGl2PsKgPC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+Cg==
-
---===============1788640713155977672==--
+--===============4591028988510533741==--
 
