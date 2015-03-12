@@ -1,79 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============0621190471525369322=="
+Content-Type: multipart/mixed; boundary="===============4418453360823883573=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: ofono+connman he910
-Date: Thu, 12 Mar 2015 11:46:03 -0500
-Message-ID: <5501C2CB.6000601@gmail.com>
-In-Reply-To: <55015EF1.9070806@gmail.com>
+Subject: Re: [PATCH 1/2] Telit HE910 general fixes for gprs, sms and voicecall
+Date: Thu, 12 Mar 2015 11:56:42 -0500
+Message-ID: <5501C54A.8090108@gmail.com>
+In-Reply-To: <CAH4ZQwuAG1nv7oUAMh1H7cg-bsvT0gnb88aFYkbqqVfYvd0q7A@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0621190471525369322==
+--===============4418453360823883573==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alexey,
+Hi Enrico,
 
-On 03/12/2015 04:40 AM, Alexey Mednyy wrote:
-> Is anybody here successfully using connman+ofono with Telit he910 modem?
->
-> Seems like connman using .set_online interface in ofono_modem_driver,
-> I've added set_online_ to he910 plugin. And everything works fine.
-> Except after set offline/set online sequence I can't activate gprs
-> context anymore.
+ > =E2=80=8BCFUN=3D4 always turns SIM off, even in new firmware.
 
-Why? The earlier firmware HE910 did not have a concept of 'Online'. =
+I'm pretty sure we requested that they change this.  But its been a =
 
-CFUN=3D1 triggered full functionality, while CFUN=3D4 disabled the SIM.  So =
+while and I did not follow up whether this change made it into the =
 
-for oFono's purposes, CFUN=3D4 was a powered down modem.
+official firmware.
 
-If the plugin does not provide .set_online, then oFono core assumes the =
+> The reason for this fix is because sometimes ofono is started when the
+> modem is already attached to the system, or it is in an inconsistent stat=
+e.
 
-modem only supports Powered =3D False and { Powered =3D True, Online =3D Tr=
-ue =
+oFono powers down the modem when exiting.  So this should not be a =
 
-}.  { Powered =3D True, Online =3D False } mode is not possible to achieve.
-
-I have no idea if ConnMan supports this setup.
-
-I believe Telit made CFUN=3D4 only affect the TX/RX circuits in their =
-
-latest firmware, but my information might be a year or two out of date =
-
-and my memory may be faulty :)
-
-> Here is log:
-> Jan  9 14:32:51 yarus-ng daemon.info ofonod[138]: Modem: >
-> AT+CGDATA=3D"PPP",1\r
-> Jan  9 14:32:51 yarus-ng daemon.info ofonod[138]: Modem: <
-> AT+CGDATA=3D"PPP",1\r\r\nNO CARRIER\r\n
-> Jan  9 14:32:51 yarus-ng daemon.debug ofonod[138]:
-> drivers/atmodem/gprs-context.c:at_cgdata_cb() ok 0
-> Jan  9 14:32:51 yarus-ng daemon.info ofonod[138]: Unable to enter data st=
-ate
-> Jan  9 14:32:51 yarus-ng daemon.debug ofonod[138]:
-> src/gprs.c:pri_activate_callback() 0x149318
-> Jan  9 14:32:51 yarus-ng daemon.debug ofonod[138]:
-> src/gprs.c:pri_activate_callback() Activating context failed with error:
-> Unknown error type
-> Jan  9 14:32:51 yarus-ng daemon.debug connmand[135]:
-> plugins/ofono.c:set_property_reply() /he910_0 path /he910_0/context1
-> org.ofono.ConnectionContext.Active
-> Jan  9 14:32:51 yarus-ng daemon.err connmand[135]: Failed to change
-> property: /he910_0/context1 org.ofono.ConnectionContext.Active:
-> org.ofono.Error.Failed Operation failed
->
-> AT+CREG? and AT+CGREG? normal answers
-> so modem registered in network and gprs context attached AT+CGATT=3D1...
->
-> What causes NO CARRIER answer of modem?
-
-No idea.
+problem in normal circumstances.
 
 Regards,
 -Denis
 
---===============0621190471525369322==--
+
+--===============4418453360823883573==--
 
