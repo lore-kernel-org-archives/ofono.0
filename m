@@ -1,136 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============7791567384245015097=="
+Content-Type: multipart/mixed; boundary="===============5570334136519444293=="
 MIME-Version: 1.0
-From: Kallumari Nagaraja Rao, RammohanX <rammohanx.kallumari.nagaraja.rao@intel.com>
-Subject: Small query
-Date: Tue, 24 Mar 2015 10:44:27 +0000
-Message-ID: <222E70FA67D72A4FB8EEDF5AF01724ACCA1831@BGSMSX102.gar.corp.intel.com>
+From: Kuba Pawlak <kubax.t.pawlak@intel.com>
+Subject: [PATCH] hfp_ag_bluez5: use none prefix for AT+BCC.
+Date: Tue, 24 Mar 2015 15:20:40 +0100
+Message-ID: <1427206840-5297-1-git-send-email-kubax.t.pawlak@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7791567384245015097==
+--===============5570334136519444293==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+iPhone 5s with iOS8.2 sometimes failes to acknowledge AT+BCC
+with OK. This means +CIEV events get consumed by this command
+and call ended notification is not parsed.
 
-I am trying to update APN via my C code.
+Nov 30 00:00:19 ofonod[938]: > AT+BCC\r
+Nov 30 00:00:28 ofonod[938]: < \r\n+CIEV: 2,0\r\n
+---
+ plugins/hfp_hf_bluez5.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Procedure which I am following,
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index f5c572d..4136630 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -390,7 +390,7 @@ static void hfp16_card_connect(struct ofono_handsfree_c=
+ard *card,
+ 			info->ag_features & HFP_AG_FEATURE_CODEC_NEGOTIATION) {
+ 		struct cb_data *cbd =3D cb_data_new(cb, data);
+ =
 
-1.       Trying to de activate the context [ "Active" -> 0 ]
+-		g_at_chat_send(info->chat, "AT+BCC", NULL, bcc_cb, cbd, g_free);
++		g_at_chat_send(info->chat, "AT+BCC", none_prefix, bcc_cb, cbd, g_free);
+ 		return;
+ 	}
+ =
 
-2.       Set APN property
+-- =
 
-3.       Activate the context ["Active" -> 1 ]
+1.7.11.7
 
-I am able to get the modem, get the context.
-I am also able to set the APN via C code if the context is deactivated. Her=
-e context deactivation happened via python script under /test folder.
-Deactivation via c code is not happening, sometimes even if I am trying to =
-deactivate ofonod daemon is activating it.
-
-Let me know if you can pin point at any mistake. Thanks.
-
-Regards,
-<Ram>
+Intel GmbH
+Dornacher Strasse 1
+85622 Feldkirchen/Muenchen, Deutschland
+Sitz der Gesellschaft: Feldkirchen bei Muenchen
+Geschaeftsfuehrer: Christian Lamprechter, Hannes Schwaderer, Douglas Lusk
+Registergericht: Muenchen HRB 47456
+Ust.-IdNr./VAT Registration No.: DE129385895
+Citibank Frankfurt a.M. (BLZ 502 109 00) 600119052
 
 
---===============7791567384245015097==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNv
-bnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxtZXRhIG5hbWU9IkdlbmVyYXRv
-ciIgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+
-PCEtLQovKiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseTpDYWxp
-YnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAyIDQ7fQovKiBTdHlsZSBEZWZpbml0aW9u
-cyAqLwpwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsCgl7bWFyZ2luOjBp
-bjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWls
-eToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe21z
-by1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJs
-aW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7bXNvLXN0eWxlLXBy
-aW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnAu
-TXNvTGlzdFBhcmFncmFwaCwgbGkuTXNvTGlzdFBhcmFncmFwaCwgZGl2Lk1zb0xpc3RQYXJhZ3Jh
-cGgKCXttc28tc3R5bGUtcHJpb3JpdHk6MzQ7CgltYXJnaW4tdG9wOjBpbjsKCW1hcmdpbi1yaWdo
-dDowaW47CgltYXJnaW4tYm90dG9tOjBpbjsKCW1hcmdpbi1sZWZ0Oi41aW47CgltYXJnaW4tYm90
-dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTEuMHB0OwoJZm9udC1mYW1pbHk6IkNhbGlicmkiLCJz
-YW5zLXNlcmlmIjt9CnNwYW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwt
-Y29tcG9zZTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xvcjp3aW5k
-b3d0ZXh0O30KLk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTsKCWZv
-bnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7fQpAcGFnZSBXb3JkU2VjdGlvbjEKCXtz
-aXplOjguNWluIDExLjBpbjsKCW1hcmdpbjoxLjBpbiAxLjBpbiAxLjBpbiAxLjBpbjt9CmRpdi5X
-b3JkU2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9Ci8qIExpc3QgRGVmaW5pdGlvbnMgKi8K
-QGxpc3QgbDAKCXttc28tbGlzdC1pZDo0ODMwMDU5Nzc7Cgltc28tbGlzdC10eXBlOmh5YnJpZDsK
-CW1zby1saXN0LXRlbXBsYXRlLWlkczotMTY0MTQwMDY1NCA2NzY5ODcwMyA2NzY5ODcxMyA2NzY5
-ODcxNSA2NzY5ODcwMyA2NzY5ODcxMyA2NzY5ODcxNSA2NzY5ODcwMyA2NzY5ODcxMyA2NzY5ODcx
-NTt9CkBsaXN0IGwwOmxldmVsMQoJe21zby1sZXZlbC10YWItc3RvcDpub25lOwoJbXNvLWxldmVs
-LW51bWJlci1wb3NpdGlvbjpsZWZ0OwoJdGV4dC1pbmRlbnQ6LS4yNWluO30KQGxpc3QgbDA6bGV2
-ZWwyCgl7bXNvLWxldmVsLW51bWJlci1mb3JtYXQ6YWxwaGEtbG93ZXI7Cgltc28tbGV2ZWwtdGFi
-LXN0b3A6bm9uZTsKCW1zby1sZXZlbC1udW1iZXItcG9zaXRpb246bGVmdDsKCXRleHQtaW5kZW50
-Oi0uMjVpbjt9CkBsaXN0IGwwOmxldmVsMwoJe21zby1sZXZlbC1udW1iZXItZm9ybWF0OnJvbWFu
-LWxvd2VyOwoJbXNvLWxldmVsLXRhYi1zdG9wOm5vbmU7Cgltc28tbGV2ZWwtbnVtYmVyLXBvc2l0
-aW9uOnJpZ2h0OwoJdGV4dC1pbmRlbnQ6LTkuMHB0O30KQGxpc3QgbDA6bGV2ZWw0Cgl7bXNvLWxl
-dmVsLXRhYi1zdG9wOm5vbmU7Cgltc28tbGV2ZWwtbnVtYmVyLXBvc2l0aW9uOmxlZnQ7Cgl0ZXh0
-LWluZGVudDotLjI1aW47fQpAbGlzdCBsMDpsZXZlbDUKCXttc28tbGV2ZWwtbnVtYmVyLWZvcm1h
-dDphbHBoYS1sb3dlcjsKCW1zby1sZXZlbC10YWItc3RvcDpub25lOwoJbXNvLWxldmVsLW51bWJl
-ci1wb3NpdGlvbjpsZWZ0OwoJdGV4dC1pbmRlbnQ6LS4yNWluO30KQGxpc3QgbDA6bGV2ZWw2Cgl7
-bXNvLWxldmVsLW51bWJlci1mb3JtYXQ6cm9tYW4tbG93ZXI7Cgltc28tbGV2ZWwtdGFiLXN0b3A6
-bm9uZTsKCW1zby1sZXZlbC1udW1iZXItcG9zaXRpb246cmlnaHQ7Cgl0ZXh0LWluZGVudDotOS4w
-cHQ7fQpAbGlzdCBsMDpsZXZlbDcKCXttc28tbGV2ZWwtdGFiLXN0b3A6bm9uZTsKCW1zby1sZXZl
-bC1udW1iZXItcG9zaXRpb246bGVmdDsKCXRleHQtaW5kZW50Oi0uMjVpbjt9CkBsaXN0IGwwOmxl
-dmVsOAoJe21zby1sZXZlbC1udW1iZXItZm9ybWF0OmFscGhhLWxvd2VyOwoJbXNvLWxldmVsLXRh
-Yi1zdG9wOm5vbmU7Cgltc28tbGV2ZWwtbnVtYmVyLXBvc2l0aW9uOmxlZnQ7Cgl0ZXh0LWluZGVu
-dDotLjI1aW47fQpAbGlzdCBsMDpsZXZlbDkKCXttc28tbGV2ZWwtbnVtYmVyLWZvcm1hdDpyb21h
-bi1sb3dlcjsKCW1zby1sZXZlbC10YWItc3RvcDpub25lOwoJbXNvLWxldmVsLW51bWJlci1wb3Np
-dGlvbjpyaWdodDsKCXRleHQtaW5kZW50Oi05LjBwdDt9Cm9sCgl7bWFyZ2luLWJvdHRvbTowaW47
-fQp1bAoJe21hcmdpbi1ib3R0b206MGluO30KLS0+PC9zdHlsZT48IS0tW2lmIGd0ZSBtc28gOV0+
-PHhtbD4KPG86c2hhcGVkZWZhdWx0cyB2OmV4dD0iZWRpdCIgc3BpZG1heD0iMTAyNiIgLz4KPC94
-bWw+PCFbZW5kaWZdLS0+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CjxvOnNoYXBlbGF5b3V0IHY6
-ZXh0PSJlZGl0Ij4KPG86aWRtYXAgdjpleHQ9ImVkaXQiIGRhdGE9IjEiIC8+CjwvbzpzaGFwZWxh
-eW91dD48L3htbD48IVtlbmRpZl0tLT4KPC9oZWFkPgo8Ym9keSBsYW5nPSJFTi1VUyIgbGluaz0i
-Ymx1ZSIgdmxpbms9InB1cnBsZSI+CjxkaXYgY2xhc3M9IldvcmRTZWN0aW9uMSI+CjxwIGNsYXNz
-PSJNc29Ob3JtYWwiPkhpLDxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48bzpw
-PiZuYnNwOzwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+SSBhbSB0cnlpbmcgdG8gdXBk
-YXRlIEFQTiB2aWEgbXkgQyBjb2RlLjxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFs
-Ij48bzpwPiZuYnNwOzwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+UHJvY2VkdXJlIHdo
-aWNoIEkgYW0gZm9sbG93aW5nLDxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTGlzdFBhcmFn
-cmFwaCIgc3R5bGU9InRleHQtaW5kZW50Oi0uMjVpbjttc28tbGlzdDpsMCBsZXZlbDEgbGZvMSI+
-PCFbaWYgIXN1cHBvcnRMaXN0c10+PHNwYW4gc3R5bGU9Im1zby1saXN0Oklnbm9yZSI+MS48c3Bh
-biBzdHlsZT0iZm9udDo3LjBwdCAmcXVvdDtUaW1lcyBOZXcgUm9tYW4mcXVvdDsiPiZuYnNwOyZu
-YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOwo8L3NwYW4+PC9zcGFuPjwhW2VuZGlmXT5Ucnlp
-bmcgdG8gZGUgYWN0aXZhdGUgdGhlIGNvbnRleHQgWyAmIzgyMjA7QWN0aXZlJiM4MjIxOyAtJmd0
-OyAwIF08bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb0xpc3RQYXJhZ3JhcGgiIHN0eWxlPSJ0
-ZXh0LWluZGVudDotLjI1aW47bXNvLWxpc3Q6bDAgbGV2ZWwxIGxmbzEiPjwhW2lmICFzdXBwb3J0
-TGlzdHNdPjxzcGFuIHN0eWxlPSJtc28tbGlzdDpJZ25vcmUiPjIuPHNwYW4gc3R5bGU9ImZvbnQ6
-Ny4wcHQgJnF1b3Q7VGltZXMgTmV3IFJvbWFuJnF1b3Q7Ij4mbmJzcDsmbmJzcDsmbmJzcDsmbmJz
-cDsmbmJzcDsmbmJzcDsKPC9zcGFuPjwvc3Bhbj48IVtlbmRpZl0+U2V0IEFQTiBwcm9wZXJ0eTxv
-OnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTGlzdFBhcmFncmFwaCIgc3R5bGU9InRleHQtaW5k
-ZW50Oi0uMjVpbjttc28tbGlzdDpsMCBsZXZlbDEgbGZvMSI+PCFbaWYgIXN1cHBvcnRMaXN0c10+
-PHNwYW4gc3R5bGU9Im1zby1saXN0Oklnbm9yZSI+My48c3BhbiBzdHlsZT0iZm9udDo3LjBwdCAm
-cXVvdDtUaW1lcyBOZXcgUm9tYW4mcXVvdDsiPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
-OyZuYnNwOwo8L3NwYW4+PC9zcGFuPjwhW2VuZGlmXT5BY3RpdmF0ZSB0aGUgY29udGV4dCBbJiM4
-MjIwO0FjdGl2ZSYjODIyMTsgLSZndDsgMSBdPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29O
-b3JtYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj5JIGFtIGFi
-bGUgdG8gZ2V0IHRoZSBtb2RlbSwgZ2V0IHRoZSBjb250ZXh0LiA8bzpwPjwvbzpwPjwvcD4KPHAg
-Y2xhc3M9Ik1zb05vcm1hbCI+SSBhbSBhbHNvIGFibGUgdG8gc2V0IHRoZSBBUE4gdmlhIEMgY29k
-ZSBpZiB0aGUgY29udGV4dCBpcyBkZWFjdGl2YXRlZC4gSGVyZSBjb250ZXh0IGRlYWN0aXZhdGlv
-biBoYXBwZW5lZCB2aWEgcHl0aG9uIHNjcmlwdCB1bmRlciAvdGVzdCBmb2xkZXIuPG86cD48L286
-cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPkRlYWN0aXZhdGlvbiB2aWEgYyBjb2RlIGlzIG5v
-dCBoYXBwZW5pbmcsIHNvbWV0aW1lcyBldmVuIGlmIEkgYW0gdHJ5aW5nIHRvIGRlYWN0aXZhdGUg
-b2Zvbm9kIGRhZW1vbiBpcyBhY3RpdmF0aW5nIGl0LjxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0i
-TXNvTm9ybWFsIj48bzpwPiZuYnNwOzwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+TGV0
-IG1lIGtub3cgaWYgeW91IGNhbiBwaW4gcG9pbnQgYXQgYW55IG1pc3Rha2UuIFRoYW5rcy48bzpw
-PjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86cD4mbmJzcDs8L286cD48L3A+Cjxw
-IGNsYXNzPSJNc29Ob3JtYWwiPjxpPlJlZ2FyZHMsPG86cD48L286cD48L2k+PC9wPgo8cCBjbGFz
-cz0iTXNvTm9ybWFsIj48aT4mbHQ7UmFtJmd0OzxvOnA+PC9vOnA+PC9pPjwvcD4KPHAgY2xhc3M9
-Ik1zb05vcm1hbCI+PG86cD4mbmJzcDs8L286cD48L3A+CjwvZGl2Pgo8L2JvZHk+CjwvaHRtbD4K
-
---===============7791567384245015097==--
+--===============5570334136519444293==--
 
