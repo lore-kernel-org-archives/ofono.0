@@ -1,17 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============7420337551180257586=="
+Content-Type: multipart/mixed; boundary="===============6021554745144083098=="
 MIME-Version: 1.0
-From: Mylene JOSSERAND <mylene.josserand@openwide.fr>
-Subject: Re: Sierra using QMI with linux-3.18.5 and oFono-1.16 possible?
-Date: Fri, 10 Apr 2015 11:32:48 +0200
-Message-ID: <552798C0.5070707@openwide.fr>
-In-Reply-To: <7D96BC0695F191498AA0147D723146AF5691319D@Ulm2-Exc1-MB1.p3-group.com>
+From: Meul, Dirk <Dirk.Meul@p3-group.com>
+Subject: RE: Sierra using QMI with linux-3.18.5 and oFono-1.16 possible?
+Date: Fri, 10 Apr 2015 11:49:51 +0000
+Message-ID: <7D96BC0695F191498AA0147D723146AF569132CF@Ulm2-Exc1-MB1.p3-group.com>
+In-Reply-To: <552798C0.5070707@openwide.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7420337551180257586==
+--===============6021554745144083098==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
+
+Hi Myl=C3=A8ne,
+
+Thank you for your answer. I tested your modification, but still no success.
+
+Best regards,
+Dirk
+
+--
+
+Dirk Meul
+P3 communications
+
+Cell:          +49 151 571 33 167
+Phone:    +49 241 9437 230
+E-Mail:    Dirk.Meul(a)p3-group.com
+Web:       www.p3-group.com
+P3 communications GmbH
+legal disclaimer, mandatory information and the P3 office addresses can be =
+found at
+www.p3-group.com/communications/email-information
+
+
+-----Original Message-----
+From: Mylene JOSSERAND [mailto:mylene.josserand(a)openwide.fr]
+Sent: Friday, April 10, 2015 11:33 AM
+To: Meul, Dirk
+Cc: ofono(a)ofono.org
+Subject: Re: Sierra using QMI with linux-3.18.5 and oFono-1.16 possible?
 
 Hi Dirk,
 
@@ -67,5 +96,6 @@ Best regards,
 
 Myl=C3=A8ne JOSSERAND
 
---===============7420337551180257586==--
+
+--===============6021554745144083098==--
 
