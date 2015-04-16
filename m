@@ -1,58 +1,92 @@
-Content-Type: multipart/mixed; boundary="===============3476574112059301339=="
+Content-Type: multipart/mixed; boundary="===============7554472609176947664=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Port configuration for location services on Telit HE910
-Date: Fri, 10 Apr 2015 09:45:30 -0500
-Message-ID: <5527E20A.70703@gmail.com>
-In-Reply-To: <loom.20150410T151424-282@post.gmane.org>
+From: Kallumari Nagaraja Rao, RammohanX <rammohanx.kallumari.nagaraja.rao@intel.com>
+Subject: ofonod from init.d
+Date: Thu, 16 Apr 2015 11:23:23 +0000
+Message-ID: <222E70FA67D72A4FB8EEDF5AF01724ACCB422D@BGSMSX102.gar.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3476574112059301339==
+--===============7554472609176947664==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Izhar,
+Hi,
 
-On 04/10/2015 08:20 AM, Izhar Mahalalel wrote:
-> Hi,
->
-> I'm trying to enable the LocationReporting interface in ofono. If I
-> understood the documentation correctly, in order for this interface to sh=
-ow
-> up in Manager.GetModems, I need first to send an appropriate AT command to
-> the device, for it to change to port configuration #8, and then power cyc=
-le
-> the board for changes to take effect.
->
-> I have tried the following:
->
-> # systemctl stop ofono
-> # cat /dev/ttyACM3 &
-> # echo 'AT#PORTCFG=3D8\r' > /dev/ttyACM3
->
-> OK
->
-> # reboot
->
+I want to run the ofono daemon from the init.d scripts during the startup.
+Script is as attached.
 
-Reboot the modem, not the system.
-
-> But I still do not see the location reporting interface when running
-> Manager.GetModems:
->
-
-I would enable AT command debugging and follow the logic inside =
-
-drivers/telitmodem/location-reporting.c.  Maybe one of the AT commands =
-
-fails or the ports are setup differently on your particular version of =
-
-the hardware.
+Some issue, modem is not getting created. After logging I try to enable the
+Modem, it fails. However, without these scripts, it works and no issues.
 
 Regards,
--Denis
+<Ram>
 
---===============3476574112059301339==--
+
+--===============7554472609176947664==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNv
+bnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxtZXRhIG5hbWU9IkdlbmVyYXRv
+ciIgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+
+PCEtLQovKiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseTpDYWxp
+YnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAyIDQ7fQovKiBTdHlsZSBEZWZpbml0aW9u
+cyAqLwpwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsCgl7bWFyZ2luOjBp
+bjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWls
+eToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe21z
+by1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJs
+aW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7bXNvLXN0eWxlLXBy
+aW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNw
+YW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQt
+ZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xvcjp3aW5kb3d0ZXh0O30KLk1zb0No
+cERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTsKCWZvbnQtZmFtaWx5OiJDYWxp
+YnJpIiwic2Fucy1zZXJpZiI7fQpAcGFnZSBXb3JkU2VjdGlvbjEKCXtzaXplOjguNWluIDExLjBp
+bjsKCW1hcmdpbjoxLjBpbiAxLjBpbiAxLjBpbiAxLjBpbjt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtw
+YWdlOldvcmRTZWN0aW9uMTt9Ci0tPjwvc3R5bGU+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+Cjxv
+OnNoYXBlZGVmYXVsdHMgdjpleHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2Vu
+ZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPgo8bzpzaGFwZWxheW91dCB2OmV4dD0iZWRp
+dCI+CjxvOmlkbWFwIHY6ZXh0PSJlZGl0IiBkYXRhPSIxIiAvPgo8L286c2hhcGVsYXlvdXQ+PC94
+bWw+PCFbZW5kaWZdLS0+CjwvaGVhZD4KPGJvZHkgbGFuZz0iRU4tVVMiIGxpbms9ImJsdWUiIHZs
+aW5rPSJwdXJwbGUiPgo8ZGl2IGNsYXNzPSJXb3JkU2VjdGlvbjEiPgo8cCBjbGFzcz0iTXNvTm9y
+bWFsIj5IaSw8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86cD4mbmJzcDs8
+L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPkkgd2FudCB0byBydW4gdGhlIG9mb25vIGRh
+ZW1vbiBmcm9tIHRoZSBpbml0LmQgc2NyaXB0cyBkdXJpbmcgdGhlIHN0YXJ0dXAuPG86cD48L286
+cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPlNjcmlwdCBpcyBhcyBhdHRhY2hlZC48bzpwPjwv
+bzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86cD4mbmJzcDs8L286cD48L3A+CjxwIGNs
+YXNzPSJNc29Ob3JtYWwiPlNvbWUgaXNzdWUsIG1vZGVtIGlzIG5vdCBnZXR0aW5nIGNyZWF0ZWQu
+IEFmdGVyIGxvZ2dpbmcgSSB0cnkgdG8gZW5hYmxlIHRoZTxvOnA+PC9vOnA+PC9wPgo8cCBjbGFz
+cz0iTXNvTm9ybWFsIj5Nb2RlbSwgaXQgZmFpbHMuIEhvd2V2ZXIsIHdpdGhvdXQgdGhlc2Ugc2Ny
+aXB0cywgaXQgd29ya3MgYW5kIG5vIGlzc3Vlcy48bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1z
+b05vcm1hbCI+PG86cD4mbmJzcDs8L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxpPlJl
+Z2FyZHMsPG86cD48L286cD48L2k+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48aT4mbHQ7UmFt
+Jmd0OzxvOnA+PC9vOnA+PC9pPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86cD4mbmJzcDs8
+L286cD48L3A+CjwvZGl2Pgo8L2JvZHk+CjwvaHRtbD4K
+
+--===============7554472609176947664==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="ofono.obj"
+
+IyEvYmluL3NoCgpEQUVNT049L3Vzci9zYmluL29mb25vZApQSURGSUxFPS92YXIvcnVuL29mb25v
+ZC5waWQKREVTQz0iVGVsZXBob255IGRhZW1vbiIKCmlmIFsgLWYgL2V0Yy9kZWZhdWx0L29mb25v
+IF0gOyB0aGVuCgkuIC9ldGMvZGVmYXVsdC9vZm9ubwpmaQoKc2V0IC1lCgpkb19zdGFydCgpIHsK
+CSREQUVNT04gLW5kICYKCSNzdGFydC1zdG9wLWRhZW1vbiAtUyAtcSAtbSAtYiAtcCAvdmFyL3J1
+bi9vZm9ub2QucGlkIC0tZXhlYyAvdXNyL3NiaW4vb2Zvbm9kIC0tIC1uCn0KCmRvX3N0b3AoKSB7
+CglzdGFydC1zdG9wLWRhZW1vbiAtLXN0b3AgLS1uYW1lIG9mb25vZCAtLXF1aWV0Cn0KCmNhc2Ug
+IiQxIiBpbgogIHN0YXJ0KQoJZWNobyAiU3RhcnRpbmcgJERFU0MiCglkb19zdGFydAoJOzsKICBz
+dG9wKQoJZWNobyAiU3RvcHBpbmcgJERFU0MiCglkb19zdG9wCgk7OwogIHJlc3RhcnR8Zm9yY2Ut
+cmVsb2FkKQoJZWNobyAiUmVzdGFydGluZyAkREVTQyIKCWRvX3N0b3AKCXNsZWVwIDEKCWRvX3N0
+YXJ0Cgk7OwogICopCgllY2hvICJVc2FnZTogJDAge3N0YXJ0fHN0b3B8cmVzdGFydHxmb3JjZS1y
+ZWxvYWR9IiA+JjIKCWV4aXQgMQoJOzsKZXNhYwoKZXhpdCAwCg==
+
+--===============7554472609176947664==--
 
