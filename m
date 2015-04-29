@@ -1,33 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============8794392088775971508=="
+Content-Type: multipart/mixed; boundary="===============0186763734505551175=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Small query
-Date: Fri, 24 Apr 2015 10:15:50 -0500
-Message-ID: <553A5E26.3000803@gmail.com>
-In-Reply-To: <222E70FA67D72A4FB8EEDF5AF01724ACCB4942@BGSMSX102.gar.corp.intel.com>
+From: Alex J Lennon <ajlennon@dynamicdevices.co.uk>
+Subject: Cinterion EHS6 support
+Date: Wed, 29 Apr 2015 18:45:32 +0200
+Message-ID: <55410AAC.6090609@dynamicdevices.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8794392088775971508==
+--===============0186763734505551175==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ram,
+Hi,
 
- >
-> after the ofonod daemon starts running, the daemon is removing the wlan1
-> interface.
->
+I've created a patch which adds support for the Cinterion EHS6 to Ofono.
 
-That is not the case.  oFono simply prints some events it receives =
+This is based on the TC65 source code with some changes to address an
+issue with +CIND handling
 
-through udev (e.g. wlan1 was removed).  It does not actually trigger the =
+The patch is currently in a GitHub fork here
 
-removal.
+https://github.com/DynamicDevices/ofono/commit/06c374b94bef2b3b23c9531c2297=
+7976ab7f6e99.patch
 
-Regards,
--Denis
+This enables me to configure an "ehs6" rule in udev and bring up a GPRS
+connection successfully with Connman.
 
---===============8794392088775971508==--
+Would it be possible to contribute this to Ofono? If so could somebody
+let me know what, if anything, needs to be done to the patch?
+
+Many thanks,
+
+Alex
+
+
+--===============0186763734505551175==--
 
