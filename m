@@ -1,70 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============0258418418105548763=="
+Content-Type: multipart/mixed; boundary="===============6869878050661055848=="
 MIME-Version: 1.0
 From: Alex J Lennon <ajlennon@dynamicdevices.co.uk>
-Subject: Re: Cinterion EHS6 support
-Date: Wed, 29 Apr 2015 20:24:48 +0200
-Message-ID: <554121F0.4010907@dynamicdevices.co.uk>
-In-Reply-To: <55412050.7080504@gmail.com>
+Subject: [PATCH 1/3] ehs6: Add support for Cinterion EHS6 plugin
+Date: Wed, 29 Apr 2015 19:39:03 +0100
+Message-ID: <1430332745-15275-1-git-send-email-ajlennon@dynamicdevices.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0258418418105548763==
+--===============6869878050661055848==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ drivers/atmodem/network-registration.c | 1 +
+ drivers/atmodem/vendor.h               | 1 +
+ 2 files changed, 2 insertions(+)
 
-On 29/04/2015 20:17, Denis Kenzior wrote:
-> Hi Alex,
->
-> On 04/29/2015 11:45 AM, Alex J Lennon wrote:
->> Hi,
->>
->> I've created a patch which adds support for the Cinterion EHS6 to Ofono.
->>
->> This is based on the TC65 source code with some changes to address an
->> issue with +CIND handling
->>
->
-> Most likely TC65 has this issue as well.  Are there any other changes ?
->
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index a438726..6844860 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -1917,6 +1917,7 @@ static void at_creg_set_cb(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ 		break;
+ 	case OFONO_VENDOR_NOKIA:
+ 	case OFONO_VENDOR_SAMSUNG:
++	case OFONO_VENDOR_CINTERION:
+ 		/* Signal strength reporting via CIND is not supported */
+ 		break;
+ 	default:
+diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
+index c132e45..52071c8 100644
+--- a/drivers/atmodem/vendor.h
++++ b/drivers/atmodem/vendor.h
+@@ -45,4 +45,5 @@ enum ofono_vendor {
+ 	OFONO_VENDOR_ALCATEL,
+ 	OFONO_VENDOR_QUECTEL,
+ 	OFONO_VENDOR_UBLOX,
++	OFONO_VENDOR_CINTERION,
+ };
+-- =
 
-Yes it does. I started out with the TC65, couldn't get it going and had
-to apply that patch to it to get a connection up.
-
-I didn't include the change as am focussed on EHS6 hardware here and
-wasn't sure what the impact would be on TC65.
-I can provide the TC65 patch easily enough too if you think it useful.
-
->> The patch is currently in a GitHub fork here
->>
->> https://github.com/DynamicDevices/ofono/commit/06c374b94bef2b3b23c9531c2=
-2977976ab7f6e99.patch
->>
->>
->> This enables me to configure an "ehs6" rule in udev and bring up a GPRS
->> connection successfully with Connman.
->>
->> Would it be possible to contribute this to Ofono? If so could somebody
->> let me know what, if anything, needs to be done to the patch?
->>
->
-> Generally, just send patches to the mailing list using git send-email.
-> They will undergo the review process and will be applied to the
-> upstream tree when/if they're ready.
->
-> The general submission guidelines are described in git.
-> toplevel/HACKING, 'Submitting Patches' section. =
+1.9.1
 
 
-
-I'll get on with it then.
-
-Many thanks,
-
-Alex
-
-
---===============0258418418105548763==--
+--===============6869878050661055848==--
 
