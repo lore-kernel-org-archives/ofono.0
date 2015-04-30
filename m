@@ -1,71 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============3720520640477475431=="
+Content-Type: multipart/mixed; boundary="===============8466949200490397830=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Alex J Lennon <ajlennon@dynamicdevices.co.uk>
 Subject: Re: Cinterion EHS6 support
-Date: Wed, 29 Apr 2015 17:57:55 -0500
-Message-ID: <554161F3.40104@gmail.com>
-In-Reply-To: <55413AFD.40703@dynamicdevices.co.uk>
+Date: Thu, 30 Apr 2015 06:42:58 +0200
+Message-ID: <5541B2D2.6070606@dynamicdevices.co.uk>
+In-Reply-To: <554161F3.40104@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3720520640477475431==
+--===============8466949200490397830==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alex,
 
- >
-> It looks as though the issue is that the Cinterion parts don't support
-> signal strength via +CIND ?
 
-Yes, we look for "signal" indicator inside cind_support_cb.  If it isn't =
-
-found, then we raise an error.  This tells the hw integrator to address =
-
-the issue.  CIND logic is provided as a fallback / default since many =
-
-manufacturers support this indicator for HFP.
-
+On 30/04/2015 00:57, Denis Kenzior wrote:
+> Hi Alex,
 >
-> Yet in at_signal_strength() it looks to me as though if this is the case
-> the code will fall back happily to using +CSQ
-
-signal_strength (and hence +CSQ) is used to bootstrap the signal =
-
-strength value.  This driver method is only called at very specific =
-
-times.  The core does not poll signal_strength.  It is expected that the =
-
-driver will send signal strength value to the core periodically, by =
-
-whatever means is optimal for the hardware.  Most modems use a custom =
-
-unsolicited notification or CIND to provide information about signal =
-
-strength automatically.  I suspect Cinterion has a similar extension.
-
+> >
+>> It looks as though the issue is that the Cinterion parts don't support
+>> signal strength via +CIND ?
 >
-> That being the case I'm not sure why cind_support_cb() should be
-> reporting an error and removing the device when it should be able to
-> fallback and continue?
+> Yes, we look for "signal" indicator inside cind_support_cb.  If it
+> isn't found, then we raise an error.  This tells the hw integrator to
+> address the issue.  CIND logic is provided as a fallback / default
+> since many manufacturers support this indicator for HFP.
+>
+> signal_strength (and hence +CSQ) is used to bootstrap the signal
+> strength value.  This driver method is only called at very specific
+> times.  The core does not poll signal_strength.  It is expected that
+> the driver will send signal strength value to the core periodically,
+> by whatever means is optimal for the hardware.  Most modems use a
+> custom unsolicited notification or CIND to provide information about
+> signal strength automatically.  I suspect Cinterion has a similar
+> extension.
+>
+> The consequence of the above is that it can't.  If no vendor extension
+> is available for unsolicited notifications and signal strength is not
+> provided via CIND, then the netreg atom driver can either poll signal
+> strength manually or simply not provide any signal strength updates.
+> For the latter, it must enable such behavior explicitly.  Hence why
+> your patch providing OFONO_VENDOR_CINTERION logic makes this work
+> properly.
+>
+> Hope that made sense.
 
-The consequence of the above is that it can't.  If no vendor extension =
+OK thanks for explaining that Denis. Yes, I was wondering if this was
+related to the potential asynchronous nature of +CIND reporting versus
+polling via at_signal_strength()
 
-is available for unsolicited notifications and signal strength is not =
+So, to make sure I understand...
 
-provided via CIND, then the netreg atom driver can either poll signal =
+The error message flags up a problem for the integrator. In the case of
+OFONO_VENDOR_NOKIA, OFONO_VENDOR_SAMSUNG in at_creg_set_cb() we can
+assume this has been investigated, and no good alternative event
+reporting solution is available (or a choice was made not to implement)
+so this is disabled.
 
-strength manually or simply not provide any signal strength updates. =
+However there remains an exercise to go through for Cinterion to check
+whether non-CIND reporting mechanism is available and enable it? If so
+I'll have a look through the documentation.
 
-For the latter, it must enable such behavior explicitly.  Hence why your =
+On a separate but related note, can you tell me if ofono supports
+monitoring of signal strength whilst a data connection is up, e.g. via
+use of GSM 07.10  or with modems such as Cinterion that expose multiple
+virtual ports over USB?
 
-patch providing OFONO_VENDOR_CINTERION logic makes this work properly.
+Thanks, Alex
 
-Hope that made sense.
-
-Regards,
--Denis
-
---===============3720520640477475431==--
+--===============8466949200490397830==--
 
