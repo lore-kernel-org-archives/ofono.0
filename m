@@ -1,68 +1,139 @@
-Content-Type: multipart/mixed; boundary="===============3189259830989786542=="
+Content-Type: multipart/mixed; boundary="===============4583421919172863589=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Cinterion EHS6 support
-Date: Thu, 30 Apr 2015 12:19:21 -0500
-Message-ID: <55426419.9010801@gmail.com>
-In-Reply-To: <5541DBC3.4030003@dynamicdevices.co.uk>
+From: Alex J Lennon <ajlennon@dynamicdevices.co.uk>
+Subject: [PATCH 1/2] cinterion: Add cinterion vendor support
+Date: Thu, 30 Apr 2015 20:08:16 +0100
+Message-ID: <1430420897-31084-1-git-send-email-ajlennon@dynamicdevices.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3189259830989786542==
+--===============4583421919172863589==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alex,
+Implement OFONO_VENDOR_CINTERION specific support to register
+textual +CIEV indications for signal strength using vendor
+specific AT^SIND command
+---
+ drivers/atmodem/network-registration.c | 64 ++++++++++++++++++++++++++++++=
+++--
+ drivers/atmodem/vendor.h               |  1 +
+ 2 files changed, 62 insertions(+), 3 deletions(-)
 
- >> The error message flags up a problem for the integrator. In the case of
->> OFONO_VENDOR_NOKIA, OFONO_VENDOR_SAMSUNG in at_creg_set_cb() we can
->> assume this has been investigated, and no good alternative event
->> reporting solution is available (or a choice was made not to implement)
->> so this is disabled.
->>
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index a438726..c3507cc 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -838,6 +838,39 @@ static void telit_ciev_notify(GAtResult *result, gpoin=
+ter user_data)
+ 	ofono_netreg_strength_notify(netreg, strength);
+ }
+ =
 
-Essentially.  We either don't have the vendor specific commands for =
++static void cinterion_ciev_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_netreg *netreg =3D user_data;
++	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
++	const char *signal_identifier =3D "rssi";
++	const char *ind_str;
++	int strength;
++	GAtResultIter iter;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+CIEV:"))
++		return;
++
++	if (!g_at_result_iter_next_unquoted_string(&iter, &ind_str))
++		return;
++
++	if (!g_str_equal(signal_identifier, ind_str))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &strength))
++		return;
++
++	DBG("rssi %d", strength);
++
++	if (strength =3D=3D nd->signal_invalid)
++		strength =3D -1;
++	else
++		strength =3D (strength * 100) / (nd->signal_max - nd->signal_min);
++
++	ofono_netreg_strength_notify(netreg, strength);
++}
++
+ static void ctzv_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_netreg *netreg =3D user_data;
+@@ -1494,13 +1527,17 @@ static void at_cmer_set_cb(gboolean ok, GAtResult *=
+result, gpointer user_data)
+ 	}
+ =
 
-those modems or they simply don't exist.
+ 	/*
+-	 * Telit uses strings instead of numbers to identify indicators
+-	 * in a +CIEV URC.
+-	 * Handle them in a separate function to keep the code clean.
++	 * Telit/Cinterion uses strings instead of numbers to identify
++	 * indicators in a +CIEV URC.
++	 * Handle them in separate functions to keep the code clean.
+ 	 */
+ 	if (nd->vendor =3D=3D OFONO_VENDOR_TELIT)
+ 		g_at_chat_register(nd->chat, "+CIEV:",
+ 				telit_ciev_notify, FALSE, netreg, NULL);
++	else if (nd->vendor =3D=3D OFONO_VENDOR_CINTERION)
++	{
++	  /* +CIEV handling has been registered in at_creg_set_cb() */
++	}
+ 	else
+ 		g_at_chat_register(nd->chat, "+CIEV:",
+ 				ciev_notify, FALSE, netreg, NULL);
+@@ -1915,6 +1952,27 @@ static void at_creg_set_cb(gboolean ok, GAtResult *r=
+esult, gpointer user_data)
+ 		g_at_chat_send(nd->chat, "AT*TLTS=3D1", none_prefix,
+ 						NULL, NULL, NULL);
+ 		break;
++	case OFONO_VENDOR_CINTERION:
++		/*
++		 * We can't set rssi bounds from Cinterion responses
++		 * so set them up to specified values here
++		 *
++		 * Cinterion rssi signal strength specified as:
++		 * 0      <=3D -112dBm
++		 * 1 - 4  signal strengh in 15 dB steps
++		 * 5      >=3D -51 dBm
++		 * 99     not known or undetectable
++		 */
++		nd->signal_min =3D 0;
++		nd->signal_max =3D 5;
++		nd->signal_invalid =3D 99;
++
++		/* Register for specific signal strength reports */
++		g_at_chat_send(nd->chat, "AT^SIND=3D\"rssi\",1", none_prefix,
++				NULL, NULL, NULL);
++		g_at_chat_register(nd->chat, "+CIEV:",
++				cinterion_ciev_notify, FALSE, netreg, NULL);
++		break;
+ 	case OFONO_VENDOR_NOKIA:
+ 	case OFONO_VENDOR_SAMSUNG:
+ 		/* Signal strength reporting via CIND is not supported */
+diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
+index c132e45..52071c8 100644
+--- a/drivers/atmodem/vendor.h
++++ b/drivers/atmodem/vendor.h
+@@ -45,4 +45,5 @@ enum ofono_vendor {
+ 	OFONO_VENDOR_ALCATEL,
+ 	OFONO_VENDOR_QUECTEL,
+ 	OFONO_VENDOR_UBLOX,
++	OFONO_VENDOR_CINTERION,
+ };
+-- =
 
->> However there remains an exercise to go through for Cinterion to check
->> whether non-CIND reporting mechanism is available and enable it? If so
->> I'll have a look through the documentation.
->>
->> On a separate but related note, can you tell me if ofono supports
->> monitoring of signal strength whilst a data connection is up, e.g. via
->> use of GSM 07.10  or with modems such as Cinterion that expose multiple
->> virtual ports over USB?
+1.9.1
 
-Yes, of course.  Both ways are supported.
 
-> The EHS6 requires use of the AT^SIND command to enable signal strength
-> reporting, which are reported with textual indication descriptors (as
-> opposed to numerics) in the +CIEV indication, similar to the Telit.
->
-> The TC65 documentation doesn't show the "rssi" indicator as being
-> supported by AT^SIND (pp87), although it is documented as supported by
-> AT+CIND (pp81).
->
-> Additionally the TC65 documentation states that "All indicators provided
-> by AT+CIND can be handled with AT^SIND as well" so there's some
-> confusion there, and unfortunately without the TC65 hardware I can't test.
->
-> I have some code here which is correctly handling the "rssi" +CIEVs on
-> the EHS6 as a "cinterion" plugin as far as I can see.
->
-> If you are happy with the above I could provide a patch-set to replace
-> tc65 with a "cinterion" plugin using AT^SIND to setup signal strength
-> reporting for the Cinterion vendor?
->
-
-That sounds like a good start.  We can always split the driver into two. =
-
-  That is easy.  Merging two drivers into one is much harder.
-
-Regards,
--Denis
-
---===============3189259830989786542==--
+--===============4583421919172863589==--
 
