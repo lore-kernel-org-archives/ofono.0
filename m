@@ -1,116 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8930371818996282819=="
+Content-Type: multipart/mixed; boundary="===============3701549336787669706=="
 MIME-Version: 1.0
 From: Alex J Lennon <ajlennon@dynamicdevices.co.uk>
-Subject: [PATCH 2/4] atmodem: Add Cinterion quirk for signal strength
-Date: Tue, 12 May 2015 18:23:00 +0100
-Message-ID: <1431451382-7788-2-git-send-email-ajlennon@dynamicdevices.co.uk>
+Subject: [PATCH 3/4] cinterion: Register as OFONO_VENDOR_CINTERION
+Date: Tue, 12 May 2015 18:23:01 +0100
+Message-ID: <1431451382-7788-3-git-send-email-ajlennon@dynamicdevices.co.uk>
 In-Reply-To: <1431451382-7788-1-git-send-email-ajlennon@dynamicdevices.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8930371818996282819==
+--===============3701549336787669706==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Implement OFONO_VENDOR_CINTERION specific vendor support to register
-textual +CIEV indications for signal strength using AT^SIND command.
+This enables us to take advantage of vendor specific quirks
+(e.g. signal strength handling specifics for tc65)
 ---
- drivers/atmodem/network-registration.c | 54 ++++++++++++++++++++++++++++++=
-++++
- drivers/atmodem/vendor.h               |  1 +
- 2 files changed, 55 insertions(+)
+ plugins/cinterion.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index a438726..7cfd6b2 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -838,6 +838,39 @@ static void telit_ciev_notify(GAtResult *result, gpoin=
-ter user_data)
- 	ofono_netreg_strength_notify(netreg, strength);
- }
+diff --git a/plugins/cinterion.c b/plugins/cinterion.c
+index 7f14fa0..6d85189 100644
+--- a/plugins/cinterion.c
++++ b/plugins/cinterion.c
+@@ -52,6 +52,8 @@
+ #include <ofono/gprs.h>
+ #include <ofono/gprs-context.h>
  =
 
-+static void cinterion_ciev_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_netreg *netreg =3D user_data;
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+	const char *signal_identifier =3D "rssi";
-+	const char *ind_str;
-+	int strength;
-+	GAtResultIter iter;
++#include <drivers/atmodem/vendor.h>
 +
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CIEV:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_unquoted_string(&iter, &ind_str))
-+		return;
-+
-+	if (!g_str_equal(signal_identifier, ind_str))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &strength))
-+		return;
-+
-+	DBG("rssi %d", strength);
-+
-+	if (strength =3D=3D nd->signal_invalid)
-+		strength =3D -1;
-+	else
-+		strength =3D (strength * 100) / (nd->signal_max - nd->signal_min);
-+
-+	ofono_netreg_strength_notify(netreg, strength);
-+}
-+
- static void ctzv_notify(GAtResult *result, gpointer user_data)
+ static int cinterion_probe(struct ofono_modem *modem)
  {
- 	struct ofono_netreg *netreg =3D user_data;
-@@ -1915,6 +1948,27 @@ static void at_creg_set_cb(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- 		g_at_chat_send(nd->chat, "AT*TLTS=3D1", none_prefix,
- 						NULL, NULL, NULL);
- 		break;
-+	case OFONO_VENDOR_CINTERION:
-+		/*
-+		 * We can't set rssi bounds from Cinterion responses
-+		 * so set them up to specified values here
-+		 *
-+		 * Cinterion rssi signal strength specified as:
-+		 * 0      <=3D -112dBm
-+		 * 1 - 4  signal strengh in 15 dB steps
-+		 * 5      >=3D -51 dBm
-+		 * 99     not known or undetectable
-+		 */
-+		nd->signal_min =3D 0;
-+		nd->signal_max =3D 5;
-+		nd->signal_invalid =3D 99;
-+
-+		/* Register for specific signal strength reports */
-+		g_at_chat_send(nd->chat, "AT^SIND=3D\"rssi\",1", none_prefix,
-+				NULL, NULL, NULL);
-+		g_at_chat_register(nd->chat, "+CIEV:",
-+				cinterion_ciev_notify, FALSE, netreg, NULL);
-+		break;
- 	case OFONO_VENDOR_NOKIA:
- 	case OFONO_VENDOR_SAMSUNG:
- 		/* Signal strength reporting via CIND is not supported */
-diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
-index c132e45..52071c8 100644
---- a/drivers/atmodem/vendor.h
-+++ b/drivers/atmodem/vendor.h
-@@ -45,4 +45,5 @@ enum ofono_vendor {
- 	OFONO_VENDOR_ALCATEL,
- 	OFONO_VENDOR_QUECTEL,
- 	OFONO_VENDOR_UBLOX,
-+	OFONO_VENDOR_CINTERION,
- };
+ 	return 0;
+@@ -207,7 +209,7 @@ static void cinterion_post_online(struct ofono_modem *m=
+odem)
+ 	ofono_ussd_create(modem, 0, "atmodem", chat);
+ 	ofono_call_forwarding_create(modem, 0, "atmodem", chat);
+ 	ofono_call_settings_create(modem, 0, "atmodem", chat);
+-	ofono_netreg_create(modem, 0, "atmodem", chat);
++	ofono_netreg_create(modem, OFONO_VENDOR_CINTERION, "atmodem", chat);
+ 	ofono_call_meter_create(modem, 0, "atmodem", chat);
+ 	ofono_call_barring_create(modem, 0, "atmodem", chat);
+ =
+
 -- =
 
 1.9.1
 
 
---===============8930371818996282819==--
+--===============3701549336787669706==--
 
