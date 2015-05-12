@@ -1,53 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============3701549336787669706=="
+Content-Type: multipart/mixed; boundary="===============7301569773746554784=="
 MIME-Version: 1.0
 From: Alex J Lennon <ajlennon@dynamicdevices.co.uk>
-Subject: [PATCH 3/4] cinterion: Register as OFONO_VENDOR_CINTERION
-Date: Tue, 12 May 2015 18:23:01 +0100
-Message-ID: <1431451382-7788-3-git-send-email-ajlennon@dynamicdevices.co.uk>
+Subject: [PATCH 4/4] udev: Add support for ehs6 name
+Date: Tue, 12 May 2015 18:23:02 +0100
+Message-ID: <1431451382-7788-4-git-send-email-ajlennon@dynamicdevices.co.uk>
 In-Reply-To: <1431451382-7788-1-git-send-email-ajlennon@dynamicdevices.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3701549336787669706==
+--===============7301569773746554784==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This enables us to take advantage of vendor specific quirks
-(e.g. signal strength handling specifics for tc65)
+As with tc65, ehs6 makes use of cinterion plugin
 ---
- plugins/cinterion.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ plugins/udev.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/plugins/cinterion.c b/plugins/cinterion.c
-index 7f14fa0..6d85189 100644
---- a/plugins/cinterion.c
-+++ b/plugins/cinterion.c
-@@ -52,6 +52,8 @@
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
+diff --git a/plugins/udev.c b/plugins/udev.c
+index 6330228..3c90e40 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -245,6 +245,8 @@ static void add_modem(struct udev_device *udev_device)
  =
 
-+#include <drivers/atmodem/vendor.h>
-+
- static int cinterion_probe(struct ofono_modem *modem)
- {
- 	return 0;
-@@ -207,7 +209,7 @@ static void cinterion_post_online(struct ofono_modem *m=
-odem)
- 	ofono_ussd_create(modem, 0, "atmodem", chat);
- 	ofono_call_forwarding_create(modem, 0, "atmodem", chat);
- 	ofono_call_settings_create(modem, 0, "atmodem", chat);
--	ofono_netreg_create(modem, 0, "atmodem", chat);
-+	ofono_netreg_create(modem, OFONO_VENDOR_CINTERION, "atmodem", chat);
- 	ofono_call_meter_create(modem, 0, "atmodem", chat);
- 	ofono_call_barring_create(modem, 0, "atmodem", chat);
+ 		if(g_strcmp0(driver, "tc65") =3D=3D 0)
+ 			driver =3D "cinterion";
++		if(g_strcmp0(driver, "ehs6") =3D=3D 0)
++			driver =3D "cinterion";
  =
 
+ 		modem =3D ofono_modem_create(NULL, driver);
+ 		if (modem =3D=3D NULL)
 -- =
 
 1.9.1
 
 
---===============3701549336787669706==--
+--===============7301569773746554784==--
 
