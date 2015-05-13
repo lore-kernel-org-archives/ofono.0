@@ -1,53 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============3356377305747022052=="
+Content-Type: multipart/mixed; boundary="===============1389059744351426056=="
 MIME-Version: 1.0
-From: Philip Paeps <philip@trouble.is>
-Subject: Re: [PATCH 1/4] tc65: Replace tc65 plugin with cinterion plugin
-Date: Wed, 13 May 2015 17:18:21 +0200
-Message-ID: <20150513151821.GC28082@rincewind.trouble.is>
-In-Reply-To: <1431451382-7788-1-git-send-email-ajlennon@dynamicdevices.co.uk>
+From: Alex J Lennon <ajlennon@dynamicdevices.co.uk>
+Subject: [PATCH] cinterion: Correct use of freed structure
+Date: Wed, 13 May 2015 17:08:47 +0100
+Message-ID: <1431533327-8844-1-git-send-email-ajlennon@dynamicdevices.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3356377305747022052==
+--===============1389059744351426056==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+On error struct cb_data *cbd was used after in cinterion_set_online
+after already being freed.
+---
+ plugins/cinterion.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-On 2015-05-12 18:22:59 (+0100), Alex J Lennon <ajlennon@dynamicdevices.co=
-.uk> wrote:
-> [...]
+diff --git a/plugins/cinterion.c b/plugins/cinterion.c
+index 6d85189..a18b9fe 100644
+--- a/plugins/cinterion.c
++++ b/plugins/cinterion.c
+@@ -166,9 +166,9 @@ static void cinterion_set_online(struct ofono_modem *mo=
+dem, ofono_bool_t online,
+ 	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
+ 		return;
+ =
 
-Just paging through this driver this afternoon.  Sorry for not reviewing
-the earlier patches.  This caught my eye:
+-	g_free(cbd);
+-
+ 	CALLBACK_WITH_FAILURE(cb, cbd->data);
++
++	g_free(cbd);
+ }
+ =
 
-> +static void cinterion_set_online(struct ofono_modem *modem, ofono_bool_t=
- online,
-> +			ofono_modem_online_cb_t cb, void *user_data)
-> +{
-> +	GAtChat *chat =3D ofono_modem_get_data(modem);
-> +	struct cb_data *cbd =3D cb_data_new(cb, user_data);
-> +	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D7";
-> +
-> +	DBG("modem %p %s", modem, online ? "online" : "offline");
-> +
-> +	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
-> +		return;
-> +
-> +	g_free(cbd);
-> +
-> +	CALLBACK_WITH_FAILURE(cb, cbd->data);
-> +}
-
-Doesn't this expand into a use after free bug if g_at_chat_send() fails?
-
-Philip
-
+ static void cinterion_pre_sim(struct ofono_modem *modem)
 -- =
 
-Philip Paeps
-Senior Reality Engineer
-Ministry of Information
+1.9.1
 
---===============3356377305747022052==--
+
+--===============1389059744351426056==--
 
