@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7485475378057513188=="
+Content-Type: multipart/mixed; boundary="===============8537683701298356790=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] atmodem: Add Cinterion quirk for signal strength
-Date: Wed, 13 May 2015 09:58:47 -0500
-Message-ID: <555366A7.7010301@gmail.com>
-In-Reply-To: <1431451382-7788-2-git-send-email-ajlennon@dynamicdevices.co.uk>
+Subject: Re: [PATCH 3/4] cinterion: Register as OFONO_VENDOR_CINTERION
+Date: Wed, 13 May 2015 09:59:04 -0500
+Message-ID: <555366B8.2030502@gmail.com>
+In-Reply-To: <1431451382-7788-3-git-send-email-ajlennon@dynamicdevices.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7485475378057513188==
+--===============8537683701298356790==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,13 +16,11 @@ Content-Transfer-Encoding: quoted-printable
 Hi Alex,
 
 On 05/12/2015 12:23 PM, Alex J Lennon wrote:
-> Implement OFONO_VENDOR_CINTERION specific vendor support to register
-> textual +CIEV indications for signal strength using AT^SIND command.
+> This enables us to take advantage of vendor specific quirks
+> (e.g. signal strength handling specifics for tc65)
 > ---
->   drivers/atmodem/network-registration.c | 54 +++++++++++++++++++++++++++=
-+++++++
->   drivers/atmodem/vendor.h               |  1 +
->   2 files changed, 55 insertions(+)
+>   plugins/cinterion.c | 4 +++-
+>   1 file changed, 3 insertions(+), 1 deletion(-)
 >
 
 Patch has been applied, thanks.
@@ -31,5 +29,5 @@ Regards,
 -Denis
 
 
---===============7485475378057513188==--
+--===============8537683701298356790==--
 
