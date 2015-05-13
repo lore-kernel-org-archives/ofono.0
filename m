@@ -1,42 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============8953904901447183887=="
+Content-Type: multipart/mixed; boundary="===============5119272366419739045=="
 MIME-Version: 1.0
-From: Alex J Lennon <ajlennon@dynamicdevices.co.uk>
-Subject: Re: [PATCH 1/2] cinterion: Add cinterion vendor support
-Date: Tue, 12 May 2015 19:27:37 +0200
-Message-ID: <55523809.40209@dynamicdevices.co.uk>
-In-Reply-To: <55438774.9010904@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/4] tc65: Replace tc65 plugin with cinterion plugin
+Date: Wed, 13 May 2015 09:58:25 -0500
+Message-ID: <55536691.6060909@gmail.com>
+In-Reply-To: <1431451382-7788-1-git-send-email-ajlennon@dynamicdevices.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8953904901447183887==
+--===============5119272366419739045==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Alex,
 
-On 01/05/2015 16:02, Denis Kenzior wrote:
-> Hi Alex,
+On 05/12/2015 12:22 PM, Alex J Lennon wrote:
+> On the basis that tc6x and other Cinterion devices will likely
+> have similar firmware requirements, provide a generic Cinterion
+> plugin which is functionally identical to the replaced tc65 plugin.
 >
-> This part seems to be completely unnecessary?  At least by my reading
-> of the code flow, at_cmer_set_cb is never called in the case of
-> OFONO_VENDOR_CINTERION.
+> The udev implementation retains support for "tc65" name for
+> backwards compatibility, and adds support for the new "cinterion"
+> name.
+> ---
+>   Makefile.am         |   4 +-
+>   plugins/cinterion.c | 248 +++++++++++++++++++++++++++++++++++++++++++++=
++++++++
+>   plugins/tc65.c      | 245 ---------------------------------------------=
+------
+>   plugins/udev.c      |   9 +-
+>   4 files changed, 256 insertions(+), 250 deletions(-)
+>   create mode 100644 plugins/cinterion.c
+>   delete mode 100644 plugins/tc65.c
 >
-> This is not our coding style.  Please refer to doc/coding-style.txt
-> and the Linux Kernel coding style document here:
-> https://www.kernel.org/doc/Documentation/CodingStyle.
 
-I've removed the check to ensure that the callback is not re-registered
-accidentally and reformatted the patch-set, hopefully more in line with
-your suggestions as to flow...
+Patch has been applied, thanks.
 
-Thanks for the link to the ofono preferred coding style. I will make
-time in the near future to take a look at this.
+Regards,
+-Denis
 
-Best Regards,
-
-Alex
-
-
---===============8953904901447183887==--
+--===============5119272366419739045==--
 
