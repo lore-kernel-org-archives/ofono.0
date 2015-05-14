@@ -1,49 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8189052319008764077=="
+Content-Type: multipart/mixed; boundary="===============3178395781833213500=="
 MIME-Version: 1.0
 From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
-Subject: [PATCH 2/3] doc: Add description for ResetContexts method
-Date: Thu, 14 May 2015 18:39:09 +0200
-Message-ID: <1431621550-25131-3-git-send-email-alfonso.sanchez-beato@canonical.com>
+Subject: [PATCH 3/3] test: Add script for resetting contexts
+Date: Thu, 14 May 2015 18:39:10 +0200
+Message-ID: <1431621550-25131-4-git-send-email-alfonso.sanchez-beato@canonical.com>
 In-Reply-To: <1431621550-25131-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8189052319008764077==
+--===============3178395781833213500==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/connman-api.txt | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ test/reset-contexts | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+ create mode 100644 test/reset-contexts
 
-diff --git a/doc/connman-api.txt b/doc/connman-api.txt
-index 8f72087..1ce1d61 100644
---- a/doc/connman-api.txt
-+++ b/doc/connman-api.txt
-@@ -60,6 +60,16 @@ Methods		dict GetProperties()
- 					 [service].Error.NotFound
- 					 [service].Error.Failed
- =
-
-+		void ResetContexts()
+diff --git a/test/reset-contexts b/test/reset-contexts
+new file mode 100644
+index 0000000..1676636
+--- /dev/null
++++ b/test/reset-contexts
+@@ -0,0 +1,20 @@
++#!/usr/bin/python3
 +
-+			Removes all contexts and re-provisions from the APN
-+			database. Contexts must all be deactivated for this
-+			method to work, and the atom must not be powered.
++import dbus
++import sys
 +
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.NotAllowed
++bus =3D dbus.SystemBus()
 +
- Signals		PropertyChanged(string property, variant value)
- =
-
- 			This signal indicates a changed value of the given
++if len(sys.argv) =3D=3D 2:
++	path =3D sys.argv[1]
++else:
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++			'org.ofono.Manager')
++	modems =3D manager.GetModems()
++	path =3D modems[0][0]
++
++print("Resetting contexts for SIM on modem %s..." % path)
++cm =3D dbus.Interface(bus.get_object('org.ofono', path),
++		'org.ofono.ConnectionManager')
++
++cm.ResetContexts()
 -- =
 
 2.1.4
 
 
---===============8189052319008764077==--
+--===============3178395781833213500==--
 
