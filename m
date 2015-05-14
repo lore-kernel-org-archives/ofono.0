@@ -1,33 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============4625734586708480810=="
+Content-Type: multipart/mixed; boundary="===============1345655187047211034=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] cinterion: Correct use of freed structure
-Date: Wed, 13 May 2015 15:58:52 -0500
-Message-ID: <5553BB0C.5050203@gmail.com>
-In-Reply-To: <1431533327-8844-1-git-send-email-ajlennon@dynamicdevices.co.uk>
+From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
+Subject: [PATCH 0/3] Add method to force re-provisioning of contexts
+Date: Thu, 14 May 2015 18:39:07 +0200
+Message-ID: <1431621550-25131-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4625734586708480810==
+--===============1345655187047211034==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alex,
+This series of patches implement a way to force re-provisioning of the
+ConnectionManager contexts. Although the idea is similar to a previous =
 
-On 05/13/2015 11:08 AM, Alex J Lennon wrote:
-> On error struct cb_data *cbd was used after in cinterion_set_online
-> after already being freed.
-> ---
->   plugins/cinterion.c | 4 ++--
->   1 file changed, 2 insertions(+), 2 deletions(-)
->
+approach which was posted to the list, it is quite different as it
+wipes all existing contexts and then runs the provisioning code. The
+implemented method checks different conditions to make the reset safe
+for clients.
 
-Applied, thanks.
+Alfonso Sanchez-Beato (3):
+  gprs: Add DBus method to reset contexts
+  doc: Add description for ResetContexts method
+  test: Add script for resetting contexts
 
-Regards,
--Denis
+ doc/connman-api.txt |  10 ++++
+ src/gprs.c          | 144 +++++++++++++++++++++++++++++++++++++++++++-----=
+----
+ test/reset-contexts |  20 ++++++++
+ 3 files changed, 150 insertions(+), 24 deletions(-)
+ create mode 100644 test/reset-contexts
+
+-- =
+
+2.1.4
 
 
---===============4625734586708480810==--
+--===============1345655187047211034==--
 
