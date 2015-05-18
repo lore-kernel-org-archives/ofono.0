@@ -1,81 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============9159553346521816903=="
+Content-Type: multipart/mixed; boundary="===============8235494902138680189=="
 MIME-Version: 1.0
-From: Kuba Pawlak <kubax.t.pawlak@intel.com>
-Subject: [PATCH] Connecting a phone with mpty call does not trigger CLCC
- polling
-Date: Mon, 18 May 2015 12:38:44 +0200
-Message-ID: <1431945524-6781-1-git-send-email-kubax.t.pawlak@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Query on ppp0 interface for HE910 device
+Date: Mon, 18 May 2015 09:01:07 -0500
+Message-ID: <5559F0A3.8050509@gmail.com>
+In-Reply-To: <222E70FA67D72A4FB8EEDF5AF01724ACCBF2C9@BGSMSX102.gar.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9159553346521816903==
+--===============8235494902138680189==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If there is more then one active or held call, we are in mpty calls.
-We won't get indicator update if any of them is released by CHLD=3D1x.
-So we have to poll it.
----
- drivers/hfpmodem/voicecall.c | 20 ++++++++++++++++++++
- 1 file changed, 20 insertions(+)
+Hi Ram,
 
-diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index afeb35f..5d044a9 100644
---- a/drivers/hfpmodem/voicecall.c
-+++ b/drivers/hfpmodem/voicecall.c
-@@ -1134,6 +1134,10 @@ static void hfp_clcc_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
- 	struct ofono_voicecall *vc =3D user_data;
- 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
- 	unsigned int mpty_ids;
-+	GSList *n;
-+	struct ofono_call *nc;
-+	unsigned int num_active =3D 0;
-+	unsigned int num_held =3D 0;
- =
+On 05/18/2015 03:38 AM, Kallumari Nagaraja Rao, RammohanX wrote:
+> Dear Sir,
+>
+> We are using CONNMAN/OFONO for wireless communication and network
+> management.
+>
+> Whenever the connman daemon switches from cellular to wifi
+> automatically, ofonod removes the ppp0 interface.
+>
 
- 	if (!ok)
- 		return;
-@@ -1142,6 +1146,22 @@ static void hfp_clcc_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
- =
+oFono does not do anything of its own accord.  ConnMan must be asking =
 
- 	g_slist_foreach(vd->calls, voicecall_notify, vc);
- 	ofono_voicecall_mpty_hint(vc, mpty_ids);
-+
-+	n =3D vd->calls;
-+
-+	while (n) {
-+		nc =3D n ? n->data : NULL;
-+		if (nc && (nc->status =3D=3D CALL_STATUS_ACTIVE))
-+			num_active++;
-+
-+		if (nc && (nc->status =3D=3D CALL_STATUS_HELD))
-+			num_held++;
-+
-+		n =3D n->next;
-+	}
-+
-+	if ((num_active > 1 || num_held > 1) && !vd->clcc_source)
-+		vd->clcc_source =3D g_timeout_add(POLL_CLCC_INTERVAL, poll_clcc, vc);
- }
- =
+oFono to deactivate the context.  Is this the case?  Can you provide =
 
- static void hfp_voicecall_initialized(gboolean ok, GAtResult *result,
--- =
+debug logs of what is happening on ConnMan side and oFono side?
 
-1.7.11.7
+> On the oterhway round the ofono daemon is not doing the addition of the
+> ppp0 interface.
 
-Intel GmbH
-Dornacher Strasse 1
-85622 Feldkirchen/Muenchen, Deutschland
-Sitz der Gesellschaft: Feldkirchen bei Muenchen
-Geschaeftsfuehrer: Christian Lamprechter, Hannes Schwaderer, Douglas Lusk
-Registergericht: Muenchen HRB 47456
-Ust.-IdNr./VAT Registration No.: DE129385895
-Citibank Frankfurt a.M. (BLZ 502 109 00) 600119052
+Can you elaborate?
+
+>
+> I have been manually activating the context for get it right.
+>
+> I am using HE910 modem with ofono version 1.16.
+>
+
+I suspect this is a question for the connman folks.
+
+Regards,
+-Denis
 
 
---===============9159553346521816903==--
+--===============8235494902138680189==--
 
