@@ -1,85 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============6102491013217622396=="
+Content-Type: multipart/mixed; boundary="===============9159553346521816903=="
 MIME-Version: 1.0
-From: Kallumari Nagaraja Rao, RammohanX <rammohanx.kallumari.nagaraja.rao@intel.com>
-Subject: Query on ppp0 interface for HE910 device
-Date: Mon, 18 May 2015 08:38:31 +0000
-Message-ID: <222E70FA67D72A4FB8EEDF5AF01724ACCBF2C9@BGSMSX102.gar.corp.intel.com>
+From: Kuba Pawlak <kubax.t.pawlak@intel.com>
+Subject: [PATCH] Connecting a phone with mpty call does not trigger CLCC
+ polling
+Date: Mon, 18 May 2015 12:38:44 +0200
+Message-ID: <1431945524-6781-1-git-send-email-kubax.t.pawlak@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6102491013217622396==
+--===============9159553346521816903==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Dear Sir,
+If there is more then one active or held call, we are in mpty calls.
+We won't get indicator update if any of them is released by CHLD=3D1x.
+So we have to poll it.
+---
+ drivers/hfpmodem/voicecall.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
 
-We are using CONNMAN/OFONO for wireless communication and network managemen=
-t.
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index afeb35f..5d044a9 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -1134,6 +1134,10 @@ static void hfp_clcc_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+ 	struct ofono_voicecall *vc =3D user_data;
+ 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+ 	unsigned int mpty_ids;
++	GSList *n;
++	struct ofono_call *nc;
++	unsigned int num_active =3D 0;
++	unsigned int num_held =3D 0;
+ =
 
-Whenever the connman daemon switches from cellular to wifi automatically, o=
-fonod removes the ppp0 interface.
-On the oterhway round the ofono daemon is not doing the addition of the ppp=
-0 interface.
+ 	if (!ok)
+ 		return;
+@@ -1142,6 +1146,22 @@ static void hfp_clcc_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+ =
 
-I have been manually activating the context for get it right.
+ 	g_slist_foreach(vd->calls, voicecall_notify, vc);
+ 	ofono_voicecall_mpty_hint(vc, mpty_ids);
++
++	n =3D vd->calls;
++
++	while (n) {
++		nc =3D n ? n->data : NULL;
++		if (nc && (nc->status =3D=3D CALL_STATUS_ACTIVE))
++			num_active++;
++
++		if (nc && (nc->status =3D=3D CALL_STATUS_HELD))
++			num_held++;
++
++		n =3D n->next;
++	}
++
++	if ((num_active > 1 || num_held > 1) && !vd->clcc_source)
++		vd->clcc_source =3D g_timeout_add(POLL_CLCC_INTERVAL, poll_clcc, vc);
+ }
+ =
 
-I am using HE910 modem with ofono version 1.16.
+ static void hfp_voicecall_initialized(gboolean ok, GAtResult *result,
+-- =
 
-Regards,
-Ram
+1.7.11.7
+
+Intel GmbH
+Dornacher Strasse 1
+85622 Feldkirchen/Muenchen, Deutschland
+Sitz der Gesellschaft: Feldkirchen bei Muenchen
+Geschaeftsfuehrer: Christian Lamprechter, Hannes Schwaderer, Douglas Lusk
+Registergericht: Muenchen HRB 47456
+Ust.-IdNr./VAT Registration No.: DE129385895
+Citibank Frankfurt a.M. (BLZ 502 109 00) 600119052
 
 
---===============6102491013217622396==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNv
-bnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxtZXRhIG5hbWU9IkdlbmVyYXRv
-ciIgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+
-PCEtLQovKiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseTpDYWxp
-YnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAyIDQ7fQovKiBTdHlsZSBEZWZpbml0aW9u
-cyAqLwpwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsCgl7bWFyZ2luOjBp
-bjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWls
-eToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe21z
-by1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJs
-aW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7bXNvLXN0eWxlLXBy
-aW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNw
-YW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQt
-ZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xvcjp3aW5kb3d0ZXh0O30KLk1zb0No
-cERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTsKCWZvbnQtZmFtaWx5OiJDYWxp
-YnJpIiwic2Fucy1zZXJpZiI7fQpAcGFnZSBXb3JkU2VjdGlvbjEKCXtzaXplOjguNWluIDExLjBp
-bjsKCW1hcmdpbjoxLjBpbiAxLjBpbiAxLjBpbiAxLjBpbjt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtw
-YWdlOldvcmRTZWN0aW9uMTt9Ci0tPjwvc3R5bGU+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+Cjxv
-OnNoYXBlZGVmYXVsdHMgdjpleHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2Vu
-ZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPgo8bzpzaGFwZWxheW91dCB2OmV4dD0iZWRp
-dCI+CjxvOmlkbWFwIHY6ZXh0PSJlZGl0IiBkYXRhPSIxIiAvPgo8L286c2hhcGVsYXlvdXQ+PC94
-bWw+PCFbZW5kaWZdLS0+CjwvaGVhZD4KPGJvZHkgbGFuZz0iRU4tVVMiIGxpbms9ImJsdWUiIHZs
-aW5rPSJwdXJwbGUiPgo8ZGl2IGNsYXNzPSJXb3JkU2VjdGlvbjEiPgo8cCBjbGFzcz0iTXNvTm9y
-bWFsIj5EZWFyIFNpciw8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PG86cD4m
-bmJzcDs8L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPldlIGFyZSB1c2luZyBDT05OTUFO
-L09GT05PIGZvciB3aXJlbGVzcyBjb21tdW5pY2F0aW9uIGFuZCBuZXR3b3JrIG1hbmFnZW1lbnQu
-PG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9w
-Pgo8cCBjbGFzcz0iTXNvTm9ybWFsIj5XaGVuZXZlciB0aGUgY29ubm1hbiBkYWVtb24gc3dpdGNo
-ZXMgZnJvbSBjZWxsdWxhciB0byB3aWZpIGF1dG9tYXRpY2FsbHksIG9mb25vZCByZW1vdmVzIHRo
-ZSBwcHAwIGludGVyZmFjZS48bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+T24g
-dGhlIG90ZXJod2F5IHJvdW5kIHRoZSBvZm9ubyBkYWVtb24gaXMgbm90IGRvaW5nIHRoZSBhZGRp
-dGlvbiBvZiB0aGUgcHBwMCBpbnRlcmZhY2UuPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29O
-b3JtYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj5JIGhhdmUg
-YmVlbiBtYW51YWxseSBhY3RpdmF0aW5nIHRoZSBjb250ZXh0IGZvciBnZXQgaXQgcmlnaHQuPG86
-cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgo8
-cCBjbGFzcz0iTXNvTm9ybWFsIj5JIGFtIHVzaW5nIEhFOTEwIG1vZGVtIHdpdGggb2Zvbm8gdmVy
-c2lvbiAxLjE2LjxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48bzpwPiZuYnNw
-OzwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+PGk+UmVnYXJkcyw8bzpwPjwvbzpwPjwv
-aT48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxpPjx1PlJhbTxvOnA+PC9vOnA+PC91PjwvaT48
-L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgo8L2Rpdj4KPC9i
-b2R5Pgo8L2h0bWw+Cg==
-
---===============6102491013217622396==--
+--===============9159553346521816903==--
 
