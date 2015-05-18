@@ -1,34 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============8980162812698972427=="
+Content-Type: multipart/mixed; boundary="===============0212483891386159594=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/4] gprs: Add DBus method to reset contexts
-Date: Mon, 18 May 2015 09:09:52 -0500
-Message-ID: <5559F2B0.2050803@gmail.com>
-In-Reply-To: <1431931629-7771-1-git-send-email-alfonso.sanchez-beato@canonical.com>
+From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
+Subject: [PATCH] gprs: Add comment to gprs_reset_contexts
+Date: Mon, 18 May 2015 19:07:45 +0200
+Message-ID: <1431968865-21620-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8980162812698972427==
+--===============0212483891386159594==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alfonso,
+---
+ src/gprs.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-On 05/18/2015 01:47 AM, Alfonso Sanchez-Beato wrote:
-> Add DBus method that removes the current contexts and re-provisions
-> using the APN database.
-> ---
->   src/gprs.c | 142 ++++++++++++++++++++++++++++++++++++++++++++++++++----=
--------
->   1 file changed, 118 insertions(+), 24 deletions(-)
->
+diff --git a/src/gprs.c b/src/gprs.c
+index 9c15abf..f21fe6e 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -2318,6 +2318,11 @@ static DBusMessage *gprs_reset_contexts(DBusConnecti=
+on *conn,
+ 	if (gprs->pending)
+ 		return __ofono_error_busy(msg);
+ =
 
-All 4 patches in this series have been applied, thanks.
++	/*
++	 * We want __ofono_error_busy to take precedence over
++	 * __ofono_error_not_allowed errors, so we check it first.
++	 */
++
+ 	for (l =3D gprs->contexts; l; l =3D l->next) {
+ 		struct pri_context *ctx =3D l->data;
+ =
 
-Regards,
--Denis
+-- =
+
+2.1.4
 
 
---===============8980162812698972427==--
+--===============0212483891386159594==--
 
