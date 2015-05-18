@@ -1,52 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============8235494902138680189=="
+Content-Type: multipart/mixed; boundary="===============2739408754093762280=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Query on ppp0 interface for HE910 device
-Date: Mon, 18 May 2015 09:01:07 -0500
-Message-ID: <5559F0A3.8050509@gmail.com>
-In-Reply-To: <222E70FA67D72A4FB8EEDF5AF01724ACCBF2C9@BGSMSX102.gar.corp.intel.com>
+Subject: Re: [PATCH 1/3] gprs: Add DBus method to reset contexts
+Date: Mon, 18 May 2015 09:09:22 -0500
+Message-ID: <5559F292.4000604@gmail.com>
+In-Reply-To: <CACM4vuDtBm0T9fwftYino6RYz=+MAXEQSQJqg+JYnaNpoi5y=g@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8235494902138680189==
+--===============2739408754093762280==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ram,
-
-On 05/18/2015 03:38 AM, Kallumari Nagaraja Rao, RammohanX wrote:
-> Dear Sir,
->
-> We are using CONNMAN/OFONO for wireless communication and network
-> management.
->
-> Whenever the connman daemon switches from cellular to wifi
-> automatically, ofonod removes the ppp0 interface.
+On 05/18/2015 01:53 AM, Alfonso Sanchez-Beato wrote:
+> Hi Denis,
 >
 
-oFono does not do anything of its own accord.  ConnMan must be asking =
+<snip>
 
-oFono to deactivate the context.  Is this the case?  Can you provide =
-
-debug logs of what is happening on ConnMan side and oFono side?
-
-> On the oterhway round the ofono daemon is not doing the addition of the
-> ppp0 interface.
-
-Can you elaborate?
-
+>         +
+>         +       for (l =3D gprs->contexts; l; l =3D l->next) {
+>         +               struct pri_context *ctx =3D l->data;
+>         +
+>         +               if (ctx->pending)
+>         +                       return __ofono_error_busy(msg);
+>         +       }
+>         +
+>         +       if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_INVALID))
+>         +               return __ofono_error_invalid_args(msg);
+>         +
+>         +       if (gprs->powered)
+>         +               return __ofono_error_not_allowed(msg);
+>         +
+>         +       for (l =3D gprs->contexts; l; l =3D l->next) {
+>         +               struct pri_context *ctx =3D l->data;
+>         +
+>         +               if (ctx->active)
+>         +                       return __ofono_error_not_allowed(msg);
 >
-> I have been manually activating the context for get it right.
 >
-> I am using HE910 modem with ofono version 1.16.
+>     Is there a particular reason you're running through the list of
+>     contexts again here?  Why not check for ctx->active at the same time
+>     as ctx->pending?
+>
+>
+> I wanted to make sure that __ofono_error_busy was returned before
+> __ofono_error_not_allowed if one context was busy and another one was
+> active, for instance. Not that I feel is really important and I can
+> change this if the other way is preferred.
 >
 
-I suspect this is a question for the connman folks.
+Makes sense.  However, since this is not obvious, we probably should add =
+
+a comment as to why this is being done.  Want to submit a patch or do =
+
+you want me to do this?
 
 Regards,
 -Denis
 
-
---===============8235494902138680189==--
+--===============2739408754093762280==--
 
