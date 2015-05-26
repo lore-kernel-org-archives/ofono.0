@@ -1,92 +1,115 @@
-Content-Type: multipart/mixed; boundary="===============1906676903995436073=="
+Content-Type: multipart/mixed; boundary="===============6878335535053300033=="
 MIME-Version: 1.0
-From: Mike Williams <mike@mikebwilliams.com>
-Subject: bug reactivating primary context?
-Date: Tue, 26 May 2015 11:38:17 -0400
-Message-ID: <CANPyyuM9YBrrGuTM9FS9ZKgNqUJ6tXvS5RADYstUsoXCFW+ZyA@mail.gmail.com>
+From: Alex J Lennon <ajlennon@dynamicdevices.co.uk>
+Subject: Re: bug reactivating primary context?
+Date: Tue, 26 May 2015 18:20:57 +0200
+Message-ID: <55649D69.40904@dynamicdevices.co.uk>
+In-Reply-To: <CANPyyuM9YBrrGuTM9FS9ZKgNqUJ6tXvS5RADYstUsoXCFW+ZyA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1906676903995436073==
+--===============6878335535053300033==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-All,
+Hi Mike,
 
-Using connman/ofono to connect to a cellular network, the first time
-activating the GPRS context works. After deactivation, the next
-activation fails with an unknown error. I believe this is related to
-this issue:
-https://lists.01.org/pipermail/ofono/2015-May/015745.html
-
-Looking through the code, it looks like at_gprs_activate_primary() fails at:
-
-       if (g_at_chat_send(gcd->chat, buf, none_prefix,
-                               at_cgdcont_cb, gc, NULL) > 0)
-               return;
-
-g_at_chat_send() is returning NULL from at_chat_send_common() because
-the chat command_queue is NULL.
-
-See ofono debug trace below with OFONO_PPP_DEBUG and OFONO_AT_DEBUG enabled:
-
-ofonod[1366]: PPP: gatchat/gatppp.c:ppp_enter_phase() 4
-ofonod[1366]: drivers/atmodem/gprs-context.c:ppp_connect()
-ofonod[1366]: IP: 21.186.242.106
-ofonod[1366]: DNS: 10.177.0.34, 10.168.187.116
-ofonod[1366]: src/gprs.c:pri_activate_callback() 0xcd5b0
-ofonod[1366]: plugins/udev.c:udev_event() subsystem net add
-ofonod[1366]: plugins/udev.c:udev_event() subsystem net finished
-ofonod[1366]: PCUI: < \r\n^MODE: 5,7\r\n
-ofonod[1366]: plugins/udevng.c:check_modem_list()
-ofonod[1366]: PCUI: <
-\r\n^DSFLOWRPT:00000002,000000BB,00000041,0000000000000177,0000000000000082=
-,0010E000,001F4000\r\n
-ofonod[1366]: drivers/atmodem/gprs-context.c:at_gprs_deactivate_primary() c=
-id 1
-ofonod[1366]: PPP: lcp: pppcp_generate_event: current state 9:OPENED
-ofonod[1366]: PPP: event: 3 (Close), action: 8224, new_state: 4 (CLOSING)
-ofonod[1366]: PPP: lcp: pppcp_initialize_restart_count: current state 9:OPE=
+On 26/05/2015 17:38, Mike Williams wrote:
+> All,
+>
+> Using connman/ofono to connect to a cellular network, the first time
+> activating the GPRS context works. After deactivation, the next
+> activation fails with an unknown error. I believe this is related to
+> this issue:
+> https://lists.01.org/pipermail/ofono/2015-May/015745.html
+>
+> Looking through the code, it looks like at_gprs_activate_primary() fails =
+at:
+>
+>        if (g_at_chat_send(gcd->chat, buf, none_prefix,
+>                                at_cgdcont_cb, gc, NULL) > 0)
+>                return;
+>
+> g_at_chat_send() is returning NULL from at_chat_send_common() because
+> the chat command_queue is NULL.
+>
+> See ofono debug trace below with OFONO_PPP_DEBUG and OFONO_AT_DEBUG enabl=
+ed:
+>
+> ofonod[1366]: PPP: gatchat/gatppp.c:ppp_enter_phase() 4
+> ofonod[1366]: drivers/atmodem/gprs-context.c:ppp_connect()
+> ofonod[1366]: IP: 21.186.242.106
+> ofonod[1366]: DNS: 10.177.0.34, 10.168.187.116
+> ofonod[1366]: src/gprs.c:pri_activate_callback() 0xcd5b0
+> ofonod[1366]: plugins/udev.c:udev_event() subsystem net add
+> ofonod[1366]: plugins/udev.c:udev_event() subsystem net finished
+> ofonod[1366]: PCUI: < \r\n^MODE: 5,7\r\n
+> ofonod[1366]: plugins/udevng.c:check_modem_list()
+> ofonod[1366]: PCUI: <
+> \r\n^DSFLOWRPT:00000002,000000BB,00000041,0000000000000177,00000000000000=
+82,0010E000,001F4000\r\n
+> ofonod[1366]: drivers/atmodem/gprs-context.c:at_gprs_deactivate_primary()=
+ cid 1
+> ofonod[1366]: PPP: lcp: pppcp_generate_event: current state 9:OPENED
+> ofonod[1366]: PPP: event: 3 (Close), action: 8224, new_state: 4 (CLOSING)
+> ofonod[1366]: PPP: lcp: pppcp_initialize_restart_count: current state 9:O=
+PENED
+> ofonod[1366]: PPP: lcp: pppcp_send_terminate_request: current state 9:OPE=
 NED
-ofonod[1366]: PPP: lcp: pppcp_send_terminate_request: current state 9:OPENED
-ofonod[1366]: PPP: ipcp: pppcp_generate_event: current state 9:OPENED
-ofonod[1366]: PPP: event: 1 (Down), action: 201, new_state: 1 (STARTING)
-ofonod[1366]: PPP: gatchat/gatppp.c:ppp_enter_phase() 5
-ofonod[1366]: plugins/udevng.c:remove_device() /sys/devices/virtual/net/ppp0
-ofonod[1366]: plugins/udev.c:udev_event() subsystem net remove
-ofonod[1366]: plugins/udev.c:remove_modem() /devices/virtual/net/ppp0
-ofonod[1366]: plugins/udev.c:udev_event() subsystem net finished
-ofonod[1366]: PPP: lcp: pppcp_process_terminate_ack: current state 4:CLOSING
-ofonod[1366]: PPP: lcp: pppcp_generate_event: current state 4:CLOSING
-ofonod[1366]: PPP: event: 11 (RTA), action: 802, new_state: 2 (CLOSED)
-ofonod[1366]: PPP: lcp: pppcp_this_layer_finished: current state 2:CLOSED
-ofonod[1366]: PPP: gatchat/gatppp.c:ppp_enter_phase() 0
-ofonod[1366]: PCUI: < \r\n^MODE: 5,4\r\n
-ofonod[1366]: PPP: gatchat/gatppp.c:ppp_dead()
-ofonod[1366]: drivers/atmodem/gprs-context.c:ppp_disconnect() Reason: 6
-ofonod[1366]: drivers/atmodem/gprs-context.c:at_gprs_activate_primary() cid=
- 1
-ofonod[1366]: src/gprs.c:pri_activate_callback() 0xcd5b0
-ofonod[1366]: src/gprs.c:pri_activate_callback() Activating context
-failed with error: Unknown error type
-ofonod[1366]: PCUI: < \r\n^RSSI: 3\r\n
-ofonod[1366]: src/network.c:ofono_netreg_strength_notify() strength 9
+> ofonod[1366]: PPP: ipcp: pppcp_generate_event: current state 9:OPENED
+> ofonod[1366]: PPP: event: 1 (Down), action: 201, new_state: 1 (STARTING)
+> ofonod[1366]: PPP: gatchat/gatppp.c:ppp_enter_phase() 5
+> ofonod[1366]: plugins/udevng.c:remove_device() /sys/devices/virtual/net/p=
+pp0
+> ofonod[1366]: plugins/udev.c:udev_event() subsystem net remove
+> ofonod[1366]: plugins/udev.c:remove_modem() /devices/virtual/net/ppp0
+> ofonod[1366]: plugins/udev.c:udev_event() subsystem net finished
+> ofonod[1366]: PPP: lcp: pppcp_process_terminate_ack: current state 4:CLOS=
+ING
+> ofonod[1366]: PPP: lcp: pppcp_generate_event: current state 4:CLOSING
+> ofonod[1366]: PPP: event: 11 (RTA), action: 802, new_state: 2 (CLOSED)
+> ofonod[1366]: PPP: lcp: pppcp_this_layer_finished: current state 2:CLOSED
+> ofonod[1366]: PPP: gatchat/gatppp.c:ppp_enter_phase() 0
+> ofonod[1366]: PCUI: < \r\n^MODE: 5,4\r\n
+> ofonod[1366]: PPP: gatchat/gatppp.c:ppp_dead()
+> ofonod[1366]: drivers/atmodem/gprs-context.c:ppp_disconnect() Reason: 6
+> ofonod[1366]: drivers/atmodem/gprs-context.c:at_gprs_activate_primary() c=
+id 1
+> ofonod[1366]: src/gprs.c:pri_activate_callback() 0xcd5b0
+> ofonod[1366]: src/gprs.c:pri_activate_callback() Activating context
+> failed with error: Unknown error type
+> ofonod[1366]: PCUI: < \r\n^RSSI: 3\r\n
+> ofonod[1366]: src/network.c:ofono_netreg_strength_notify() strength 9
+>
+>
+> I have a test script that can reproduce this issue 100%. If necessary,
+> I can send it along.
+>
+> This is using ofono 1.16 and connman 1.29 on a custom embedded system
+> generated by buildroot. I have three small patches applied, one for
+> ofono I got from the mailing list to support the e173, another for
+> ofono to allow duplicate APNs, and a third for connman to allow
+> autoconnecting cellular modems by specifying 'cellular' in
+> DefaultAutoConnectTechnologies. Unfortunately, I need all three to
+> enable my setup so I cannot test a pure source release.
+
+I too am having to make use of a patch to allow duplicate APNs - such a
+thing would be useful in the source, as otherwise I can't auto-provision
+various SIMs using the vanilla serviceproviders.xml
+
+Would you mind sharing the auto connection patch for cellular as we have
+been wondering here why configuring autoconnection didn't seem to make
+any difference?
+
+Thanks / Best Regards, Alex
 
 
-I have a test script that can reproduce this issue 100%. If necessary,
-I can send it along.
 
-This is using ofono 1.16 and connman 1.29 on a custom embedded system
-generated by buildroot. I have three small patches applied, one for
-ofono I got from the mailing list to support the e173, another for
-ofono to allow duplicate APNs, and a third for connman to allow
-autoconnecting cellular modems by specifying 'cellular' in
-DefaultAutoConnectTechnologies. Unfortunately, I need all three to
-enable my setup so I cannot test a pure source release.
 
-Thanks,
-Mike
 
---===============1906676903995436073==--
+
+
+
+--===============6878335535053300033==--
 
