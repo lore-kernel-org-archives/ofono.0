@@ -1,81 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============5500637881066818831=="
+Content-Type: multipart/mixed; boundary="===============3618459446797467557=="
 MIME-Version: 1.0
-From: Kuba Pawlak <kubax.t.pawlak@intel.com>
-Subject: [PATCH v2] Connecting a phone with mpty call does not trigger CLCC
- polling
-Date: Wed, 03 Jun 2015 19:25:50 +0200
-Message-ID: <1433352350-10595-1-git-send-email-kubax.t.pawlak@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Problems provisioning APN from SIMs
+Date: Thu, 04 Jun 2015 14:52:08 -0500
+Message-ID: <5570AC68.5000208@gmail.com>
+In-Reply-To: <556EEDE9.3090904@dynamicdevices.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5500637881066818831==
+--===============3618459446797467557==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If there is more then one active or held call, we are in mpty calls.
-We won't get indicator update if any of them is released by CHLD=3D1x.
-So we have to poll it.
----
- drivers/hfpmodem/voicecall.c | 20 ++++++++++++++++++++
- 1 file changed, 20 insertions(+)
+Hi Alex,
 
-diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index afeb35f..e3e6e0f 100644
---- a/drivers/hfpmodem/voicecall.c
-+++ b/drivers/hfpmodem/voicecall.c
-@@ -1134,6 +1134,10 @@ static void hfp_clcc_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
- 	struct ofono_voicecall *vc =3D user_data;
- 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
- 	unsigned int mpty_ids;
-+	GSList *n;
-+	struct ofono_call *nc;
-+	unsigned int num_active =3D 0;
-+	unsigned int num_held =3D 0;
- =
+On 06/03/2015 07:07 AM, Alex J Lennon wrote:
+> Hi,
+>
+> A request for some advice.
+>
+> We're having trouble provisioning APNs for SIMs from certain Telcos, and
+> it seems to be because of the ordering of providers in serviceproviders.x=
+ml
+>
 
- 	if (!ok)
- 		return;
-@@ -1142,6 +1146,22 @@ static void hfp_clcc_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
- =
+Ordering should have nothing to do with it.
 
- 	g_slist_foreach(vd->calls, voicecall_notify, vc);
- 	ofono_voicecall_mpty_hint(vc, mpty_ids);
-+
-+	n =3D vd->calls;
-+
-+	while (n) {
-+		nc =3D n->data;
-+
-+		if (nc->status =3D=3D CALL_STATUS_ACTIVE)
-+			num_active++;
-+		else if (nc->status =3D=3D CALL_STATUS_HELD)
-+			num_held++;
-+
-+		n =3D n->next;
-+	}
-+
-+	if ((num_active > 1 || num_held > 1) && !vd->clcc_source)
-+		vd->clcc_source =3D g_timeout_add(POLL_CLCC_INTERVAL, poll_clcc, vc);
- }
- =
+> Vodafone and O2 are cases in point. SIMs from either of those two
+> telcos, used in the UK, will fail to default to the standard APNs upon
+> provisioning.
+>
+> In the case of Vodafone it is because an ASDA Mobile provider is present
+> before the Vodafone provider and both have the same MNC.
+>
+> It's similar with O2, excepting that in this case there's a Giffgaff
+> provider before the O2 provider which thus is used for the APN.
 
- static void hfp_voicecall_initialized(gboolean ok, GAtResult *result,
--- =
+oFono's provisioning logic is very conservative.  We do not allow =
 
-1.7.11.7
+duplicate contexts.  Thus if the database contains multiple matches for =
 
-Intel GmbH
-Dornacher Strasse 1
-85622 Feldkirchen/Muenchen, Deutschland
-Sitz der Gesellschaft: Feldkirchen bei Muenchen
-Geschaeftsfuehrer: Christian Lamprechter, Hannes Schwaderer, Douglas Lusk
-Registergericht: Muenchen HRB 47456
-Ust.-IdNr./VAT Registration No.: DE129385895
-Citibank Frankfurt a.M. (BLZ 502 109 00) 600119052
+a MCC/MNC pair, the provisioning will fail.  The way to to deal with =
+
+this is to extend the database with additional identifying information. =
+
+  E.g. SPN.  I believe we added the SPN field to =
+
+Mobile-Broadband-Provider-Info XML DTD.  But I haven't been paying much =
+
+attention whether the database has been properly populated with this =
+
+field since then.
+
+>
+> I suspect our use case is similar to many others. We have a headless
+> embedded Linux board and we want an installation technician to be able
+> to put a SIM in, power the unit, and have everything else automated.
+>
+> It looks like we may have to implement a custom serviceproviders.xml,
+> which would be a shame.
+>
+> I am wondering if there are any other algorithmic or configuration
+> alternatives we can look at, such as Ofono trying different contexts
+> until one works? Or some additional Ofono provisioning configuration?
+>
+
+oFono can use any information present on the SIM to try and figure out =
+
+the SIM provider.  We already provide MCC, MNC and SPN to the =
+
+provisioning plugin.
+
+However, this really depends on the underlying provisioning database to =
+
+contain this information and do so in such a way that duplicates are not =
+
+possible.
+
+Regards,
+-Denis
 
 
---===============5500637881066818831==--
+--===============3618459446797467557==--
 
