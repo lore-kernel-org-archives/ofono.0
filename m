@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2653154961520658128=="
+Content-Type: multipart/mixed; boundary="===============6764387796954921192=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: Problems provisioning APN from SIMs
-Date: Fri, 05 Jun 2015 00:30:43 +0200
-Message-ID: <06BB02E7-AFCD-4DEA-A99A-DC57B1283E35@holtmann.org>
+Date: Fri, 05 Jun 2015 00:50:09 +0200
+Message-ID: <28A32924-FC04-49AD-97CA-4AC835D0ED2E@holtmann.org>
 In-Reply-To: <5570CA31.6070002@dynamicdevices.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2653154961520658128==
+--===============6764387796954921192==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -99,22 +99,7 @@ Hi Alex,
 > might change without warning,
 > whereas there does seem to be a registry for MCC/MNC (e.g.
 > http://www.mcc-mnc.com/)
-
-actually the TS.25 database from GSMA is the authority. Seems to have over =
-1800 entries at the moment, but a lot of operators are listed more than onc=
-e. I think it is a combination of band + MCC + MNC.
-
-The SPN is indeed free form and can change at any time (even during a phone=
- call). They are however a really good indication when you want to differen=
-tiate MNVO. But it means you have to update your database. However that nee=
-ds to happen anyway since even MCC and MNC change all the time. I think tha=
-t TS.25 updates twice per month.
-
-So some operators are actually assigned parts of the IMSI to their MNVO. I =
-have seen operator documents clearly identifying which part of their ISMI p=
-ool is for MNVO a, b, c etc. However that is the exception and not the rule=
-. However one big operator could be easily and clearly identified if you ge=
-t their documents.
+> =
 
 > I am thinking it may be preferable to use the registered IIN number from
 > the ICCID - http://www.controlf.net/iccid/
@@ -124,34 +109,20 @@ t their documents.
 > me and presumably it's easy enough to read the ICCID out, if it's not
 > already being read out.
 
-As you saw by yourself, that is not going to help. The ICCID is pretty much=
- useless in this regard. It is listed in the TS.25 database, but I have no =
-idea how accurate that is. Some operators only list the first 2 digits and =
-some have no entry at all.
+and I stand corrected here. The TS.25 (formerly known as SE13) is just for =
+collection of operator and networks if the need arises by the equipment to =
+map them.
 
-Keep in mind that TS.25 does not list MNVO and with that I am thinking that=
- ICCID prefix is free to assign by the operator. Same as the decision to us=
-e parts of the IMSI to identify a MVNO. Some of them might really do not ca=
-re at all and just map this internally without visibility to the user equip=
-ment.
+The actual MCC and MNC assignments are ITU T E.212 and the (U)SIM Header of=
+ the ICCID is ITU T E.118 document.
 
-The reason why you can write your own provision plugin and create your own =
-database is exactly this. oFono does not want to be in this business. That =
-is up to the end product to put a proper database in place or write a smart=
-er plugin that can use extra information from the device or SIM card. It is=
- plugin based for that exact reason. And I am surely providing something be=
-tter than mobile-broadband-provider-info is easy and worth while doing. It =
-is just not an oFono objective.
-
-One thing we spent a lot of time on is to get the MNC length correct. Since=
- it can be 2 or 3 digits, we do make sure that whatever modem quirk it take=
-s, we read the right value from the SIM card. Without this you would be in =
-an even worse position.
+And as a side note, the (U)SIM Header is between 6 and 7 digits. The MNC is=
+ between 2 and 3 digits.
 
 Regards
 
 Marcel
 
 
---===============2653154961520658128==--
+--===============6764387796954921192==--
 
