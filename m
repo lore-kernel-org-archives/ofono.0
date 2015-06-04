@@ -1,82 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============7035896451605147926=="
+Content-Type: multipart/mixed; boundary="===============3979603517636023549=="
 MIME-Version: 1.0
-From: Alex J Lennon <ajlennon@dynamicdevices.co.uk>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Problems provisioning APN from SIMs
-Date: Fri, 05 Jun 2015 00:05:33 +0200
-Message-ID: <5570CBAD.4050406@dynamicdevices.co.uk>
+Date: Thu, 04 Jun 2015 17:16:14 -0500
+Message-ID: <5570CE2E.4020305@gmail.com>
 In-Reply-To: <5570CA31.6070002@dynamicdevices.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7035896451605147926==
+--===============3979603517636023549==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Alex,
 
-
-On 04/06/2015 23:59, Alex J Lennon wrote:
->
-> On 04/06/2015 23:03, Denis Kenzior wrote:
->> Hi Alex,
->>
->>>> Ordering should have nothing to do with it.
->>>>
->>> Yes, the ordering is relevant. We (like other ofono users I suspect)
->>> have to allow multiple APNs or the automatic provisioning process fails.
->>>
->>> Then, the first context found in serviceproviders.xml is what is used by
->>> default for the connection.
->>>
->>> An example of the problem is that if you use a major telco's SIM card in
->>> the UK - Vodafone, ofono will then default to using an ASDA mobile
->>> context because of the ordering, and this will fail.
->>>
->>> My feeling is that a larger provider like Vodafone or O2 should be the
->>> default, not ASDA mobile or GiffGaff, and this should thus come first
->>> (understanding that the Ofono project does not control this document)
->> It has been years since I wrote the provisioning plugin, but the
->> intent was to fail if looking up MCC/MNC combo resulted in multiple
->> matches. So this may be a bug, or you might be using some custom
->> behavior.  But in the end, ordering of the entries should not affect
->> the provisioning logic.
->>
->>> Allowing Duplicates - Not by default no, but you have a boolean
->>> parameter in there and logic to allow for duplicate contexts, which we
->>> have to enable (as do others I think from my Googling on this) or the
->>> provisioning support is unusable with the upstream serviceproviders.xml
->>> as far as I can see.
->> Then that's the problem.  The intent was never to allow duplicates.
->> That boolean was added for tools/lookup-apn only.
->>
->>> I'm not entirely sure how the RilModem fork relates to Ofono but you can
->>> see they had the same problem
->>>
->>> /*
->>>
->>>     * TODO: review with upstream. Default behavior was to
->>>
->>>     * disallow duplicate APN entries, which unfortunately exist
->>>
->>>     * in the mobile-broadband-provider-info db.
->>>
->>>     */
->>>
->>>
->>> ref:
->>> https://github.com/rilmodem/ofono/blob/master/plugins/provision.c#L55
->>>
->>> SPN - Thanks. This seems promising. I will investigate the SPN values
->>> further.
->> The real fix is to fix mobile-broadband-provider-info.
-> Yes I would agree with that.
->
-> As I come to investigate this, I find I am concerned about using the
+ > As I come to investigate this, I find I am concerned about using the
 > Service Provider Name as I can't see any registry for those names, it's
 > free text for display purposes, so I assume it is at least possible it
 > might change without warning,
 > whereas there does seem to be a registry for MCC/MNC (e.g.
 > http://www.mcc-mnc.com/)
+
+In theory MCC/MNC should be unique even for MVNOs.  But some have not =
+
+followed that properly.  SPN is free-form, but it probably doesn't =
+
+change all that often.  The provisioning database would have to be =
+
+updated frequently.
+
+If you know you will only need a subset of particular providers, it =
+
+might be easier to develop your own provisioning db.
+
 >
 > I am thinking it may be preferable to use the registered IIN number from
 > the ICCID - http://www.controlf.net/iccid/
@@ -84,185 +41,17 @@ On 04/06/2015 23:59, Alex J Lennon wrote:
 > This seems a more controlled way of providing the uniqueness needed to
 > me and presumably it's easy enough to read the ICCID out, if it's not
 > already being read out.
+>
 
-No that's not going to work. I see ICCID prefix is the same for e.g. O2
-and Tesco Mobile, being MCC and MNC
+I don't recall that any provisioning (proprietary or otherwise) database =
 
-UK
+used ICCID as an identifier.  Not saying it won't work, so feel free to =
 
-	=
-
-
-O2
-
-	=
-
-
-894411
-
-	=
-
-
-23410
-
-	=
-
-
-UK
-
-	=
-
-
-Tesco Mobile
-<http://autopuk.grg.com/>(MVNO <http://en.wikipedia.org/wiki/MVNO> of O2)
-
-	=
-
-
-894411
-
-	=
-
-
-23410
-
+investigate what is possible.
 
 Regards,
+-Denis
 
-Alex
 
-
---===============7035896451605147926==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWw+CiAgPGhlYWQ+CiAgICA8bWV0YSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9d2lu
-ZG93cy0xMjUyIgogICAgICBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiPgogIDwvaGVhZD4KICA8
-Ym9keSBiZ2NvbG9yPSIjRkZGRkZGIiB0ZXh0PSIjMDAwMDAwIj4KICAgIDxicj4KICAgIDxicj4K
-ICAgIDxkaXYgY2xhc3M9Im1vei1jaXRlLXByZWZpeCI+T24gMDQvMDYvMjAxNSAyMzo1OSwgQWxl
-eCBKIExlbm5vbgogICAgICB3cm90ZTo8YnI+CiAgICA8L2Rpdj4KICAgIDxibG9ja3F1b3RlIGNp
-dGU9Im1pZDo1NTcwQ0EzMS42MDcwMDAyQGR5bmFtaWNkZXZpY2VzLmNvLnVrIgogICAgICB0eXBl
-PSJjaXRlIj4KICAgICAgPHByZSB3cmFwPSIiPgoKT24gMDQvMDYvMjAxNSAyMzowMywgRGVuaXMg
-S2VuemlvciB3cm90ZToKPC9wcmU+CiAgICAgIDxibG9ja3F1b3RlIHR5cGU9ImNpdGUiPgogICAg
-ICAgIDxwcmUgd3JhcD0iIj5IaSBBbGV4LAoKPC9wcmU+CiAgICAgICAgPGJsb2NrcXVvdGUgdHlw
-ZT0iY2l0ZSI+CiAgICAgICAgICA8YmxvY2txdW90ZSB0eXBlPSJjaXRlIj4KICAgICAgICAgICAg
-PHByZSB3cmFwPSIiPk9yZGVyaW5nIHNob3VsZCBoYXZlIG5vdGhpbmcgdG8gZG8gd2l0aCBpdC4K
-CjwvcHJlPgogICAgICAgICAgPC9ibG9ja3F1b3RlPgogICAgICAgICAgPHByZSB3cmFwPSIiPgpZ
-ZXMsIHRoZSBvcmRlcmluZyBpcyByZWxldmFudC4gV2UgKGxpa2Ugb3RoZXIgb2Zvbm8gdXNlcnMg
-SSBzdXNwZWN0KQpoYXZlIHRvIGFsbG93IG11bHRpcGxlIEFQTnMgb3IgdGhlIGF1dG9tYXRpYyBw
-cm92aXNpb25pbmcgcHJvY2VzcyBmYWlscy4KClRoZW4sIHRoZSBmaXJzdCBjb250ZXh0IGZvdW5k
-IGluIHNlcnZpY2Vwcm92aWRlcnMueG1sIGlzIHdoYXQgaXMgdXNlZCBieQpkZWZhdWx0IGZvciB0
-aGUgY29ubmVjdGlvbi4KCkFuIGV4YW1wbGUgb2YgdGhlIHByb2JsZW0gaXMgdGhhdCBpZiB5b3Ug
-dXNlIGEgbWFqb3IgdGVsY28ncyBTSU0gY2FyZCBpbgp0aGUgVUsgLSBWb2RhZm9uZSwgb2Zvbm8g
-d2lsbCB0aGVuIGRlZmF1bHQgdG8gdXNpbmcgYW4gQVNEQSBtb2JpbGUKY29udGV4dCBiZWNhdXNl
-IG9mIHRoZSBvcmRlcmluZywgYW5kIHRoaXMgd2lsbCBmYWlsLgoKTXkgZmVlbGluZyBpcyB0aGF0
-IGEgbGFyZ2VyIHByb3ZpZGVyIGxpa2UgVm9kYWZvbmUgb3IgTzIgc2hvdWxkIGJlIHRoZQpkZWZh
-dWx0LCBub3QgQVNEQSBtb2JpbGUgb3IgR2lmZkdhZmYsIGFuZCB0aGlzIHNob3VsZCB0aHVzIGNv
-bWUgZmlyc3QKKHVuZGVyc3RhbmRpbmcgdGhhdCB0aGUgT2Zvbm8gcHJvamVjdCBkb2VzIG5vdCBj
-b250cm9sIHRoaXMgZG9jdW1lbnQpCjwvcHJlPgogICAgICAgIDwvYmxvY2txdW90ZT4KICAgICAg
-ICA8cHJlIHdyYXA9IiI+Ckl0IGhhcyBiZWVuIHllYXJzIHNpbmNlIEkgd3JvdGUgdGhlIHByb3Zp
-c2lvbmluZyBwbHVnaW4sIGJ1dCB0aGUKaW50ZW50IHdhcyB0byBmYWlsIGlmIGxvb2tpbmcgdXAg
-TUNDL01OQyBjb21ibyByZXN1bHRlZCBpbiBtdWx0aXBsZQptYXRjaGVzLiBTbyB0aGlzIG1heSBi
-ZSBhIGJ1Zywgb3IgeW91IG1pZ2h0IGJlIHVzaW5nIHNvbWUgY3VzdG9tCmJlaGF2aW9yLiAgQnV0
-IGluIHRoZSBlbmQsIG9yZGVyaW5nIG9mIHRoZSBlbnRyaWVzIHNob3VsZCBub3QgYWZmZWN0CnRo
-ZSBwcm92aXNpb25pbmcgbG9naWMuCgo8L3ByZT4KICAgICAgICA8YmxvY2txdW90ZSB0eXBlPSJj
-aXRlIj4KICAgICAgICAgIDxwcmUgd3JhcD0iIj5BbGxvd2luZyBEdXBsaWNhdGVzIC0gTm90IGJ5
-IGRlZmF1bHQgbm8sIGJ1dCB5b3UgaGF2ZSBhIGJvb2xlYW4KcGFyYW1ldGVyIGluIHRoZXJlIGFu
-ZCBsb2dpYyB0byBhbGxvdyBmb3IgZHVwbGljYXRlIGNvbnRleHRzLCB3aGljaCB3ZQpoYXZlIHRv
-IGVuYWJsZSAoYXMgZG8gb3RoZXJzIEkgdGhpbmsgZnJvbSBteSBHb29nbGluZyBvbiB0aGlzKSBv
-ciB0aGUKcHJvdmlzaW9uaW5nIHN1cHBvcnQgaXMgdW51c2FibGUgd2l0aCB0aGUgdXBzdHJlYW0g
-c2VydmljZXByb3ZpZGVycy54bWwKYXMgZmFyIGFzIEkgY2FuIHNlZS4KPC9wcmU+CiAgICAgICAg
-PC9ibG9ja3F1b3RlPgogICAgICAgIDxwcmUgd3JhcD0iIj4KVGhlbiB0aGF0J3MgdGhlIHByb2Js
-ZW0uICBUaGUgaW50ZW50IHdhcyBuZXZlciB0byBhbGxvdyBkdXBsaWNhdGVzLgpUaGF0IGJvb2xl
-YW4gd2FzIGFkZGVkIGZvciB0b29scy9sb29rdXAtYXBuIG9ubHkuCgo8L3ByZT4KICAgICAgICA8
-YmxvY2txdW90ZSB0eXBlPSJjaXRlIj4KICAgICAgICAgIDxwcmUgd3JhcD0iIj4KSSdtIG5vdCBl
-bnRpcmVseSBzdXJlIGhvdyB0aGUgUmlsTW9kZW0gZm9yayByZWxhdGVzIHRvIE9mb25vIGJ1dCB5
-b3UgY2FuCnNlZSB0aGV5IGhhZCB0aGUgc2FtZSBwcm9ibGVtCgovKgoKICAgICogVE9ETzogcmV2
-aWV3IHdpdGggdXBzdHJlYW0uIERlZmF1bHQgYmVoYXZpb3Igd2FzIHRvCgogICAgKiBkaXNhbGxv
-dyBkdXBsaWNhdGUgQVBOIGVudHJpZXMsIHdoaWNoIHVuZm9ydHVuYXRlbHkgZXhpc3QKCiAgICAq
-IGluIHRoZSBtb2JpbGUtYnJvYWRiYW5kLXByb3ZpZGVyLWluZm8gZGIuCgogICAgKi8KCgpyZWY6
-CjxhIGNsYXNzPSJtb3otdHh0LWxpbmstZnJlZXRleHQiIGhyZWY9Imh0dHBzOi8vZ2l0aHViLmNv
-bS9yaWxtb2RlbS9vZm9uby9ibG9iL21hc3Rlci9wbHVnaW5zL3Byb3Zpc2lvbi5jI0w1NSI+aHR0
-cHM6Ly9naXRodWIuY29tL3JpbG1vZGVtL29mb25vL2Jsb2IvbWFzdGVyL3BsdWdpbnMvcHJvdmlz
-aW9uLmMjTDU1PC9hPgoKU1BOIC0gVGhhbmtzLiBUaGlzIHNlZW1zIHByb21pc2luZy4gSSB3aWxs
-IGludmVzdGlnYXRlIHRoZSBTUE4gdmFsdWVzCmZ1cnRoZXIuCjwvcHJlPgogICAgICAgIDwvYmxv
-Y2txdW90ZT4KICAgICAgICA8cHJlIHdyYXA9IiI+ClRoZSByZWFsIGZpeCBpcyB0byBmaXggbW9i
-aWxlLWJyb2FkYmFuZC1wcm92aWRlci1pbmZvLgo8L3ByZT4KICAgICAgPC9ibG9ja3F1b3RlPgog
-ICAgICA8cHJlIHdyYXA9IiI+ClllcyBJIHdvdWxkIGFncmVlIHdpdGggdGhhdC4KCkFzIEkgY29t
-ZSB0byBpbnZlc3RpZ2F0ZSB0aGlzLCBJIGZpbmQgSSBhbSBjb25jZXJuZWQgYWJvdXQgdXNpbmcg
-dGhlClNlcnZpY2UgUHJvdmlkZXIgTmFtZSBhcyBJIGNhbid0IHNlZSBhbnkgcmVnaXN0cnkgZm9y
-IHRob3NlIG5hbWVzLCBpdCdzCmZyZWUgdGV4dCBmb3IgZGlzcGxheSBwdXJwb3Nlcywgc28gSSBh
-c3N1bWUgaXQgaXMgYXQgbGVhc3QgcG9zc2libGUgaXQKbWlnaHQgY2hhbmdlIHdpdGhvdXQgd2Fy
-bmluZywKd2hlcmVhcyB0aGVyZSBkb2VzIHNlZW0gdG8gYmUgYSByZWdpc3RyeSBmb3IgTUNDL01O
-QyAoZS5nLgo8YSBjbGFzcz0ibW96LXR4dC1saW5rLWZyZWV0ZXh0IiBocmVmPSJodHRwOi8vd3d3
-Lm1jYy1tbmMuY29tLyI+aHR0cDovL3d3dy5tY2MtbW5jLmNvbS88L2E+KQoKSSBhbSB0aGlua2lu
-ZyBpdCBtYXkgYmUgcHJlZmVyYWJsZSB0byB1c2UgdGhlIHJlZ2lzdGVyZWQgSUlOIG51bWJlciBm
-cm9tCnRoZSBJQ0NJRCAtIDxhIGNsYXNzPSJtb3otdHh0LWxpbmstZnJlZXRleHQiIGhyZWY9Imh0
-dHA6Ly93d3cuY29udHJvbGYubmV0L2ljY2lkLyI+aHR0cDovL3d3dy5jb250cm9sZi5uZXQvaWNj
-aWQvPC9hPgoKVGhpcyBzZWVtcyBhIG1vcmUgY29udHJvbGxlZCB3YXkgb2YgcHJvdmlkaW5nIHRo
-ZSB1bmlxdWVuZXNzIG5lZWRlZCB0bwptZSBhbmQgcHJlc3VtYWJseSBpdCdzIGVhc3kgZW5vdWdo
-IHRvIHJlYWQgdGhlIElDQ0lEIG91dCwgaWYgaXQncyBub3QKYWxyZWFkeSBiZWluZyByZWFkIG91
-dC4KPC9wcmU+CiAgICA8L2Jsb2NrcXVvdGU+CiAgICA8YnI+CiAgICBObyB0aGF0J3Mgbm90IGdv
-aW5nIHRvIHdvcmsuIEkgc2VlIElDQ0lEIHByZWZpeCBpcyB0aGUgc2FtZSBmb3IgZS5nLgogICAg
-TzIgYW5kIFRlc2NvIE1vYmlsZSwgYmVpbmcgTUNDIGFuZCBNTkM8YnI+CiAgICA8YnI+CiAgICA8
-dGFibGUgc3R5bGU9ImNvbG9yOiByZ2IoNjgsIDY4LCA2OCk7IGZvbnQtZmFtaWx5OiBBcmlhbCwg
-SGVsdmV0aWNhLAogICAgICBzYW5zLXNlcmlmOyBmb250LXNpemU6IDEyLjE1OTk5OTg0NzQxMjFw
-eDsgZm9udC1zdHlsZTogbm9ybWFsOwogICAgICBmb250LXZhcmlhbnQ6IG5vcm1hbDsgZm9udC13
-ZWlnaHQ6IG5vcm1hbDsgbGV0dGVyLXNwYWNpbmc6IG5vcm1hbDsKICAgICAgbGluZS1oZWlnaHQ6
-IG5vcm1hbDsgb3JwaGFuczogYXV0bzsgdGV4dC1hbGlnbjogc3RhcnQ7CiAgICAgIHRleHQtaW5k
-ZW50OiAwcHg7IHRleHQtdHJhbnNmb3JtOiBub25lOyB3aGl0ZS1zcGFjZTogbm9ybWFsOwogICAg
-ICB3aWRvd3M6IDE7IHdvcmQtc3BhY2luZzogMHB4OyAtd2Via2l0LXRleHQtc3Ryb2tlLXdpZHRo
-OiAwcHg7CiAgICAgIGJhY2tncm91bmQtY29sb3I6IHJnYigyNTUsIDI1NSwgMjU1KTsiIGJvcmRl
-cj0iMSIgY2VsbHBhZGRpbmc9IjAiCiAgICAgIGNlbGxzcGFjaW5nPSIwIj4KICAgICAgPHRib2R5
-PgogICAgICAgIDx0cj4KICAgICAgICAgIDx0ZCBzdHlsZT0ibWFyZ2luOiAwcHg7IHBhZGRpbmc6
-IDBweDsiIHZhbGlnbj0idG9wIgogICAgICAgICAgICB3aWR0aD0iMTU0Ij4KICAgICAgICAgICAg
-PHAgc3R5bGU9Im1hcmdpbjogMHB4IDBweCAxZW07IHBhZGRpbmc6IDBweDsgbGluZS1oZWlnaHQ6
-CiAgICAgICAgICAgICAgMS4zZW07IGZvbnQtc2l6ZTogMWVtOyIgYWxpZ249ImNlbnRlciI+VUs8
-L3A+CiAgICAgICAgICA8L3RkPgogICAgICAgICAgPHRkIHN0eWxlPSJtYXJnaW46IDBweDsgcGFk
-ZGluZzogMHB4OyIgdmFsaWduPSJ0b3AiCiAgICAgICAgICAgIHdpZHRoPSIxNTQiPgogICAgICAg
-ICAgICA8cCBzdHlsZT0ibWFyZ2luOiAwcHggMHB4IDFlbTsgcGFkZGluZzogMHB4OyBsaW5lLWhl
-aWdodDoKICAgICAgICAgICAgICAxLjNlbTsgZm9udC1zaXplOiAxZW07IiBhbGlnbj0iY2VudGVy
-Ij5PMjwvcD4KICAgICAgICAgIDwvdGQ+CiAgICAgICAgICA8dGQgc3R5bGU9Im1hcmdpbjogMHB4
-OyBwYWRkaW5nOiAwcHg7IiB2YWxpZ249InRvcCIKICAgICAgICAgICAgd2lkdGg9IjE1NCI+CiAg
-ICAgICAgICAgIDxwIHN0eWxlPSJtYXJnaW46IDBweCAwcHggMWVtOyBwYWRkaW5nOiAwcHg7IGxp
-bmUtaGVpZ2h0OgogICAgICAgICAgICAgIDEuM2VtOyBmb250LXNpemU6IDFlbTsiIGFsaWduPSJj
-ZW50ZXIiPjg5NDQxMTwvcD4KICAgICAgICAgIDwvdGQ+CiAgICAgICAgICA8dGQgc3R5bGU9Im1h
-cmdpbjogMHB4OyBwYWRkaW5nOiAwcHg7IiB2YWxpZ249InRvcCIKICAgICAgICAgICAgd2lkdGg9
-IjE1NCI+CiAgICAgICAgICAgIDxwIHN0eWxlPSJtYXJnaW46IDBweCAwcHggMWVtOyBwYWRkaW5n
-OiAwcHg7IGxpbmUtaGVpZ2h0OgogICAgICAgICAgICAgIDEuM2VtOyBmb250LXNpemU6IDFlbTsi
-IGFsaWduPSJjZW50ZXIiPjIzNDEwPC9wPgogICAgICAgICAgPC90ZD4KICAgICAgICAgIDx0ZCBz
-dHlsZT0ibWFyZ2luOiAwcHg7IHBhZGRpbmc6IDBweDsiIHZhbGlnbj0idG9wIgogICAgICAgICAg
-ICB3aWR0aD0iMTU0Ij48YnI+CiAgICAgICAgICA8L3RkPgogICAgICAgIDwvdHI+CiAgICAgICAg
-PHRyPgogICAgICAgICAgPHRkIHN0eWxlPSJtYXJnaW46IDBweDsgcGFkZGluZzogMHB4OyIgdmFs
-aWduPSJ0b3AiCiAgICAgICAgICAgIHdpZHRoPSIxNTQiPgogICAgICAgICAgICA8cCBzdHlsZT0i
-bWFyZ2luOiAwcHggMHB4IDFlbTsgcGFkZGluZzogMHB4OyBsaW5lLWhlaWdodDoKICAgICAgICAg
-ICAgICAxLjNlbTsgZm9udC1zaXplOiAxZW07IiBhbGlnbj0iY2VudGVyIj5VSzwvcD4KICAgICAg
-ICAgIDwvdGQ+CiAgICAgICAgICA8dGQgc3R5bGU9Im1hcmdpbjogMHB4OyBwYWRkaW5nOiAwcHg7
-IiB2YWxpZ249InRvcCIKICAgICAgICAgICAgd2lkdGg9IjE1NCI+CiAgICAgICAgICAgIDxwIHN0
-eWxlPSJtYXJnaW46IDBweCAwcHggMWVtOyBwYWRkaW5nOiAwcHg7IGxpbmUtaGVpZ2h0OgogICAg
-ICAgICAgICAgIDEuM2VtOyBmb250LXNpemU6IDFlbTsiIGFsaWduPSJjZW50ZXIiPlRlc2NvIE1v
-YmlsZTxhCiAgICAgICAgICAgICAgICB0aXRsZT0iVGVzY28gTW9iaWxlIG9ubGluZSBQVUsgcmV0
-cmlldmFsIgogICAgICAgICAgICAgICAgaHJlZj0iaHR0cDovL2F1dG9wdWsuZ3JnLmNvbS8iIHRh
-cmdldD0iX2JsYW5rIgogICAgICAgICAgICAgICAgc3R5bGU9InRleHQtZGVjb3JhdGlvbjogbm9u
-ZTsgY29sb3I6IHJnYigyNDAsIDEzOCwgNTIpOyI+PGJyPgogICAgICAgICAgICAgIDwvYT4oPGEg
-dGl0bGU9Ik1vYmlsZSBWaXJ0dWFsIE5ldHdvcmsgT3BlcmF0b3IiCiAgICAgICAgICAgICAgICBo
-cmVmPSJodHRwOi8vZW4ud2lraXBlZGlhLm9yZy93aWtpL01WTk8iIHRhcmdldD0iX2JsYW5rIgog
-ICAgICAgICAgICAgICAgc3R5bGU9InRleHQtZGVjb3JhdGlvbjogbm9uZTsgY29sb3I6IHJnYigy
-NDAsIDEzOCwgNTIpOyI+TVZOTzwvYT48c3BhbgogICAgICAgICAgICAgICAgY2xhc3M9IkFwcGxl
-LWNvbnZlcnRlZC1zcGFjZSI+oDwvc3Bhbj5vZiBPMik8L3A+CiAgICAgICAgICA8L3RkPgogICAg
-ICAgICAgPHRkIHN0eWxlPSJtYXJnaW46IDBweDsgcGFkZGluZzogMHB4OyIgdmFsaWduPSJ0b3Ai
-CiAgICAgICAgICAgIHdpZHRoPSIxNTQiPgogICAgICAgICAgICA8cCBzdHlsZT0ibWFyZ2luOiAw
-cHggMHB4IDFlbTsgcGFkZGluZzogMHB4OyBsaW5lLWhlaWdodDoKICAgICAgICAgICAgICAxLjNl
-bTsgZm9udC1zaXplOiAxZW07IiBhbGlnbj0iY2VudGVyIj44OTQ0MTE8L3A+CiAgICAgICAgICA8
-L3RkPgogICAgICAgICAgPHRkIHN0eWxlPSJtYXJnaW46IDBweDsgcGFkZGluZzogMHB4OyIgdmFs
-aWduPSJ0b3AiCiAgICAgICAgICAgIHdpZHRoPSIxNTQiPgogICAgICAgICAgICA8cCBzdHlsZT0i
-bWFyZ2luOiAwcHggMHB4IDFlbTsgcGFkZGluZzogMHB4OyBsaW5lLWhlaWdodDoKICAgICAgICAg
-ICAgICAxLjNlbTsgZm9udC1zaXplOiAxZW07IiBhbGlnbj0iY2VudGVyIj4yMzQxMDwvcD4KICAg
-ICAgICAgIDwvdGQ+CiAgICAgICAgPC90cj4KICAgICAgPC90Ym9keT4KICAgIDwvdGFibGU+CiAg
-ICA8YnI+CiAgICBSZWdhcmRzLDxicj4KICAgIDxicj4KICAgIEFsZXg8YnI+CiAgICA8YnI+CiAg
-PC9ib2R5Pgo8L2h0bWw+Cg==
-
---===============7035896451605147926==--
+--===============3979603517636023549==--
 
