@@ -1,108 +1,240 @@
-Content-Type: multipart/mixed; boundary="===============6869597506985088449=="
+Content-Type: multipart/mixed; boundary="===============4674255238944698956=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: SimManager properties and hotswap
-Date: Fri, 12 Jun 2015 11:01:42 -0500
-Message-ID: <557B0266.8010707@gmail.com>
-In-Reply-To: <CAAVgdeF_trBzArPR9zhKN-pSY1fdj0YRTKjmcfVENV3vKHjbYQ@mail.gmail.com>
+From: Tommi Kenakkala <tommi.kenakkala@tieto.com>
+Subject: Re: ofono Digest, Vol 74, Issue 5
+Date: Tue, 16 Jun 2015 11:28:38 +0300
+Message-ID: <557FDE36.3010000@tieto.com>
+In-Reply-To: <mailman.1.1434135602.29105.ofono@ofono.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6869597506985088449==
+--===============4674255238944698956==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tommi,
+On 12.06.2015 22:00, ofono-request(a)ofono.org wrote:
+> Date: Fri, 12 Jun 2015 11:01:42 -0500
+> From: Denis Kenzior<denkenz@gmail.com>
+> To:ofono(a)ofono.org
+> Subject: Re: SimManager properties and hotswap
+> Message-ID:<557B0266.8010707@gmail.com>
+> Content-Type: text/plain; charset=3DISO-8859-1; format=3Dflowed
 
-On 06/12/2015 08:05 AM, Tommi Kenakkala wrote:
-> Greetings
->
-> There's an issue for which I'd like to hear your opinion.
-> ofono_sim_inserted_notify signals org.ofono.SimManager Present property t=
-rue,
-> but PinRequired and LockedPins are known only after
-> __ofono_sim_recheck_pin asks them from driver.
+>> >Problem1
+>> >If a client, for example triggered by the Present property change
+>> >signal, asks GetProperties during the time window then PinRequired &
+>> >LockedPins values are not updated yet.
+>> >
+> Then the client should simply wait for the relevant signal to arrive.
+> Either SubscriberIdentity or PinRequired.
+Thanks for the comments. What about LockedPins? Do you consider emitting =
 
-In general, the client has to assume that SimManager is not initialized =
+it inappropriate?
 
-until SubscriberIdentity is present, or PinRequired is set.
+>> >Problem2
+>> >A client can't work around Problem1, it doesn't know when after a
+>> >hotswap PinRequired becomes available. sim_pin_query_cb checks
+>> >"sim->pin_type =3D pin_type" before emitting PinRequired changed signal.
+>> >Works for boot when pin_type is 0 but not for card hotswap because
+>> >sim->pin_type is not reset, instead the old value is preserved.
+> Sounds like a bug.  Are you hot-swapping two PIN-locked SIMs?  Can you
+> share a log of what's happening?
+Sure, please see [1] & [2].
 
-> Problem can arise at startup but I've met this especially during
-> hotswap i.e. when I remove and insert the same/different card.
-> If a driver completes query_passwd_state synchronously there's less
-> room for problems, but if driver has to find out the values
-> asynchronously the time window is longer.
-> I'm using an implementation of rilmodem, but even the default atmodem
-> driver asks password state asynchronously (AT+CPIN?).
+[2]:
+Do correct me if there's a mistake, but sequence is as follows and there =
 
-In general oFono tries to do two things to alleviate issues of =
+problem is
+async steps 2. and 3+4. complete independently.
+As a result to me it's not clear to which property or signalling clients =
 
-incomplete state:
+should rely on.
+1. ofono_sim_inserted_notify > emit "Present" > sim_initialize
+2. sim_iccid_read_cb > emit "CardIdentifier"
+3. sim_efpl_read_cb > __ofono_sim_recheck_pin
+4. sim_pin_query_cb
+      > "PinRequired" emitted at startup but not on pin-enabled hotswaps
+      > "LockedPins" never emitted
 
-- We only register DBus interfaces once the initial state has been queried.
-- We delay GetProperties() return until we queried the needed states and =
+Whether this produces problems depends on timing.
 
-cached them.  This is mostly used for interfaces which are unlikely to =
 
-be used by multiple clients (which would need to deal with Error.Busy)
+>> >One fix proposal to Problem2 is to reset pin_type to
+>> >OFONO_SIM_PASSWORD_INVALID in ofono_sim_inserted_notify when removed.
+>> >That requires skipping appending PinRequired in sim_get_properties()
+>> >if value is OFONO_SIM_PASSWORD_INVALID, otherwise
+>> >ofono_dbus_dict_append crashes because sim_passwd_name() didn't have a
+>> >value for OFONO_SIM_PASSWORD_INVALID.
+>> >(I would've put resetting to sim_free_main_state(), but that's called
+>> >when changing PIN fails due to wrong passwords and sim app switches
+>> >PUK lock (OFONO_SIM_STATE_LOCKED_OUT), it would reset the password
+>> >type already set as puk.)
+> Setting it to OFONO_SIM_PASSWORD_INVALID is definitely not the right way
+> to go.  But there might be other ways to take care of the problem.  Can
+> you share the logs of what is happening first?
+See [1] & [2].
+Ok, did you have alternatives already on your mind? =
 
-The above are not really a good fit for SimManager, so it has always =
+OFONO_SIM_PASSWORD_INVALID was used because at startup it's the initial =
 
-been 'special'.
+value before state is properly read from card. It seemed logical to =
 
->
-> Problem1
-> If a client, for example triggered by the Present property change
-> signal, asks GetProperties during the time window then PinRequired &
-> LockedPins values are not updated yet.
->
+"back up" into that state when card is removed and when looking at =
 
-Then the client should simply wait for the relevant signal to arrive. =
+sim_pin_query_cb .
 
-Either SubscriberIdentity or PinRequired.
+>> >Problem3
+>> >Similar for LockedPins, but there reason is sim_pin_query_cb() doesn't
+>> >emit property change all.
+>> >Fix proposal to Problem3 is to emit a change signal sim_pin_query_cb()
+>> >if "sim->locked_pins[pin_type]" wasn't already TRUE.
+>> >
+>> >Please let me know your comments and improvement ideas. I can submit
+>> >patches if you're interested.
+>> >
+> Regards,
+> -Denis
 
-> Problem2
-> A client can't work around Problem1, it doesn't know when after a
-> hotswap PinRequired becomes available. sim_pin_query_cb checks
-> "sim->pin_type =3D pin_type" before emitting PinRequired changed signal.
-> Works for boot when pin_type is 0 but not for card hotswap because
-> sim->pin_type is not reset, instead the old value is preserved.
 
-Sounds like a bug.  Are you hot-swapping two PIN-locked SIMs?  Can you =
+[1]:
+Logs about use-case: remove & insert a pin-required usim card.
+- Same results if same or different pin-enabled card is inserted back.
+- Driver implementation waits until password state is available and only =
 
-share a log of what's happening?
+then notifies ofono core via ofono_sim_inserted_notify.
+There's an additional __ofono_sim_recheck_pin call seen here after =
 
-> One fix proposal to Problem2 is to reset pin_type to
-> OFONO_SIM_PASSWORD_INVALID in ofono_sim_inserted_notify when removed.
-> That requires skipping appending PinRequired in sim_get_properties()
-> if value is OFONO_SIM_PASSWORD_INVALID, otherwise
-> ofono_dbus_dict_append crashes because sim_passwd_name() didn't have a
-> value for OFONO_SIM_PASSWORD_INVALID.
-> (I would've put resetting to sim_free_main_state(), but that's called
-> when changing PIN fails due to wrong passwords and sim app switches
-> PUK lock (OFONO_SIM_STATE_LOCKED_OUT), it would reset the password
-> type already set as puk.)
+ofono_sim_inserted_notify from driver to core trigger a password query.
+Now when I look at it I'm not sure if it's still needed, but =
 
-Setting it to OFONO_SIM_PASSWORD_INVALID is definitely not the right way =
+nevertheless even if it's removed monitor-ofono does not show =
 
-to go.  But there might be other ways to take care of the problem.  Can =
+"LockedPins" or "PinRequired" being emitted
+(logs and code analysis confirm that).
 
-you share the logs of what is happening first?
+- monitor-ofono output:
+{SimManager} [/ril_0] Present =3D False
+{VoiceCallManager} [/ril_0] EmergencyNumbers =3D 08 000 999 110 112 911 =
 
->
-> Problem3
-> Similar for LockedPins, but there reason is sim_pin_query_cb() doesn't
-> emit property change all.
-> Fix proposal to Problem3 is to emit a change signal sim_pin_query_cb()
-> if "sim->locked_pins[pin_type]" wasn't already TRUE.
->
-> Please let me know your comments and improvement ideas. I can submit
-> patches if you're interested.
->
+118 119
 
-Regards,
--Denis
+{SimManager} [/ril_0] Present =3D True
+{VoiceCallManager} [/ril_0] EmergencyNumbers =3D 110 08 112 999 911 000
+{SimManager} [/ril_0] CardIdentifier =3D <...>
+{SimManager} [/ril_0] PreferredLanguages =3D fi sv en
 
---===============6869597506985088449==--
+{SimManager} [/ril_0] Present =3D False
+{VoiceCallManager} [/ril_0] EmergencyNumbers =3D 08 000 999 110 112 911 =
+
+118 119
+
+{SimManager} [/ril_0] Present =3D True
+{VoiceCallManager} [/ril_0] EmergencyNumbers =3D 110 08 112 999 911 000
+{SimManager} [/ril_0] CardIdentifier =3D <...>
+{SimManager} [/ril_0] PreferredLanguages =3D fi sv en
+
+- Truncated ofono src/sim.c output, including some custom log prints:
+oFono version 1.16
+...
+src/modem.c:modem_change_state() old state: 0, new state: 1
+src/sim.c:ofono_sim_add_state_watch() 0xdae2a0
+src/sim.c:ofono_sim_add_state_watch() 0xdae2a0
+src/sim.c:ofono_sim_inserted_notify() inserted: 1, sim->state: 0
+src/sim.c:sim_initialize()
+src/sim.c:__ofono_sim_recheck_pin()
+src/sim.c:sim_pin_query_cb() sim->pin_type: 0, pin_type: 1
+src/sim.c:sim_pin_query_cb() Here could add emit  "LockedPins" changed
+src/sim.c:sim_pin_query_cb() Emitting PinRequired property changed
+src/sim.c:sim_pin_retries_check()
+src/sim.c:sim_pin_retries_query_cb()
+src/sim.c:sim_efpl_read_cb()
+src/sim.c:__ofono_sim_recheck_pin()
+src/sim.c:sim_pin_query_cb() sim->pin_type: 1, pin_type: 1
+src/sim.c:sim_pin_query_cb() Methinks pin_type didn't change, not =
+
+emitting PinRequired
+src/sim.c:sim_pin_retries_check()
+src/sim.c:sim_pin_retries_query_cb()
+src/sim.c:ofono_sim_add_state_watch() 0xdae2a0
+Requested file structure differs from SIM: 6fb7
+
+src/sim.c:ofono_sim_inserted_notify() inserted: 0, sim->state: 1
+src/modem.c:modem_change_state() old state: 1, new state: 1
+src/sim.c:ofono_sim_inserted_notify() Here one could reset sim->pin_type
+src/sim.c:sim_free_early_state()
+src/sim.c:sim_free_main_state()
+
+src/sim.c:ofono_sim_inserted_notify() inserted: 1, sim->state: 0
+src/sim.c:sim_initialize()
+src/sim.c:__ofono_sim_recheck_pin()
+src/sim.c:sim_pin_query_cb() sim->pin_type: 1, pin_type: 1
+src/sim.c:sim_pin_query_cb() Methinks pin_type didn't change so didn't =
+
+emit change
+src/sim.c:sim_pin_retries_check()
+src/sim.c:sim_pin_retries_query_cb()
+Requested file structure differs from SIM: 6fb7
+src/sim.c:ofono_sim_inserted_notify() inserted: 1, sim->state: 1
+src/sim.c:__ofono_sim_recheck_pin()
+src/sim.c:sim_pin_query_cb() sim->pin_type: 1, pin_type: 1
+src/sim.c:sim_pin_query_cb() Methinks pin_type didn't change so didn't =
+
+emit change
+src/sim.c:sim_pin_retries_check()
+src/sim.c:sim_pin_retries_query_cb()
+src/sim.c:sim_efpl_read_cb()
+src/sim.c:__ofono_sim_recheck_pin()
+src/sim.c:sim_pin_query_cb() sim->pin_type: 1, pin_type: 1
+src/sim.c:sim_pin_query_cb() Methinks pin_type didn't change so didn't =
+
+emit change
+src/sim.c:sim_pin_retries_check()
+src/sim.c:sim_pin_retries_query_cb()
+
+src/sim.c:ofono_sim_inserted_notify() inserted: 0, sim->state: 1
+src/modem.c:modem_change_state() old state: 1, new state: 1
+src/sim.c:ofono_sim_inserted_notify() Here one could reset sim->pin_type
+src/sim.c:sim_free_early_state()
+src/sim.c:sim_free_main_state()
+
+src/sim.c:ofono_sim_inserted_notify() inserted: 1, sim->state: 0
+src/sim.c:sim_initialize()
+src/sim.c:__ofono_sim_recheck_pin()
+src/sim.c:sim_pin_query_cb() sim->pin_type: 1, pin_type: 1
+src/sim.c:sim_pin_query_cb() Methinks pin_type didn't change so didn't =
+
+emit change
+src/sim.c:sim_pin_retries_check()
+  src/sim.c:sim_pin_retries_query_cb()
+Requested file structure differs from SIM: 6fb7
+src/sim.c:ofono_sim_inserted_notify() inserted: 1, sim->state: 1
+src/sim.c:__ofono_sim_recheck_pin()
+src/sim.c:sim_pin_query_cb() sim->pin_type: 1, pin_type: 1
+src/sim.c:sim_pin_query_cb() Methinks pin_type didn't change so didn't =
+
+emit change
+src/sim.c:sim_pin_retries_check()
+src/sim.c:sim_pin_retries_query_cb()
+src/sim.c:sim_efpl_read_cb()
+src/sim.c:__ofono_sim_recheck_pin()
+src/sim.c:sim_pin_query_cb() sim->pin_type: 1, pin_type: 1
+src/sim.c:sim_pin_query_cb() Methinks pin_type didn't change so didn't =
+
+emit change
+src/sim.c:sim_pin_retries_check()
+src/sim.c:sim_pin_retries_query_cb()
+
+
+Ps. What's the mailing list practise on attachments, in case there's a =
+
+need to provide longish logs?
+
+Thanks for the answers,
+Br.
+-- =
+
+Tommi
+
+--===============4674255238944698956==--
 
