@@ -1,45 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============2210405031542384563=="
+Content-Type: multipart/mixed; boundary="===============0011278640718469565=="
 MIME-Version: 1.0
-From: Sriram Sagar <sriramsagar.alluri@gmail.com>
-Subject: 3G Modem not enabled (Huawei+Vodafone sim)
-Date: Sun, 21 Jun 2015 16:26:48 +0530
-Message-ID: <CADLyyJER8JQp=mXru7MUi053M4CZGQE92DFjpySm5cD8PTYb4w@mail.gmail.com>
+From: Alex J Lennon <ajlennon@dynamicdevices.co.uk>
+Subject: Re: 3G Modem not enabled (Huawei+Vodafone sim)
+Date: Sun, 21 Jun 2015 15:12:36 +0200
+Message-ID: <5586B844.3080900@dynamicdevices.co.uk>
+In-Reply-To: <CADLyyJER8JQp=mXru7MUi053M4CZGQE92DFjpySm5cD8PTYb4w@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2210405031542384563==
+--===============0011278640718469565==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+
+
+On 21/06/2015 12:56, Sriram Sagar wrote:
+> Hi,
+>
+> I am having issue in connecting 3G modem on my arm platform.
+>
+> I am using connman(1.29) as my network manager and ofonod(1.14) and
+>  modem is not been detected.
+>
+> I have checked the logs =
+
+>
+> huawei_probe  function is been called and hung there.
+>
+> Any body can help on this one.
+>
+
 Hi,
 
-I am having issue in connecting 3G modem on my arm platform.
+Looking at the probe function I can't see any way it could be hanging?
 
-I am using connman(1.29) as my network manager and ofonod(1.14) and  modem
-is not been detected.
+https://github.com/intgr/ofono/blob/65a147eb17260f7fa46cb4e1286a6f338cd831a=
+4/plugins/huawei.c#L94
 
-I have checked the logs
+Have you -d debug logging turned on and OFONO_AT_DEBUG=3D1 ?
 
-huawei_probe  function is been called and hung there.
+Maybe add in some debug output to see if it is getting past the probe
+function?
 
-Any body can help on this one.
+Regards,
 
---===============2210405031542384563==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+Alex
 
-PGRpdiBkaXI9Imx0ciI+SGksPGRpdj48YnI+PC9kaXY+PGRpdj5JIGFtIGhhdmluZyBpc3N1ZSBp
-biBjb25uZWN0aW5nIDNHIG1vZGVtIG9uIG15IGFybSBwbGF0Zm9ybS48L2Rpdj48ZGl2Pjxicj48
-L2Rpdj48ZGl2PkkgYW0gdXNpbmcgY29ubm1hbigxLjI5KSBhcyBteSBuZXR3b3JrIG1hbmFnZXIg
-YW5kIG9mb25vZCgxLjE0KSBhbmQgwqBtb2RlbSBpcyBub3QgYmVlbiBkZXRlY3RlZC48L2Rpdj48
-ZGl2Pjxicj48L2Rpdj48ZGl2PkkgaGF2ZSBjaGVja2VkIHRoZSBsb2dzwqA8L2Rpdj48ZGl2Pjxi
-cj48L2Rpdj48ZGl2Pmh1YXdlaV9wcm9iZSDCoGZ1bmN0aW9uIGlzIGJlZW4gY2FsbGVkIGFuZCBo
-dW5nIHRoZXJlLjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+QW55IGJvZHkgY2FuIGhlbHAgb24g
-dGhpcyBvbmUuPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj48YnI+PC9k
-aXY+PC9kaXY+Cg==
-
---===============2210405031542384563==--
+--===============0011278640718469565==--
 
