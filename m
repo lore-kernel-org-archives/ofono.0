@@ -1,32 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============6371775974277407248=="
+Content-Type: multipart/mixed; boundary="===============2210405031542384563=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] [sim] Reset pin_type on card remove
-Date: Wed, 17 Jun 2015 23:09:44 -0500
-Message-ID: <55824488.90800@gmail.com>
-In-Reply-To: <1434628017-28441-3-git-send-email-tommi.kenakkala@tieto.com>
+From: Sriram Sagar <sriramsagar.alluri@gmail.com>
+Subject: 3G Modem not enabled (Huawei+Vodafone sim)
+Date: Sun, 21 Jun 2015 16:26:48 +0530
+Message-ID: <CADLyyJER8JQp=mXru7MUi053M4CZGQE92DFjpySm5cD8PTYb4w@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6371775974277407248==
+--===============2210405031542384563==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tommi,
+Hi,
 
-On 06/18/2015 06:46 AM, Tommi Kenakkala wrote:
-> Fixes PinRequired not being emitted when a card is inserted
-> ---
->   src/sim.c |    7 +++++--
->   1 file changed, 5 insertions(+), 2 deletions(-)
->
+I am having issue in connecting 3G modem on my arm platform.
 
-Applied, thanks.
+I am using connman(1.29) as my network manager and ofonod(1.14) and  modem
+is not been detected.
 
-Regards,
--Denis
+I have checked the logs
 
+huawei_probe  function is been called and hung there.
 
---===============6371775974277407248==--
+Any body can help on this one.
+
+--===============2210405031542384563==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+SGksPGRpdj48YnI+PC9kaXY+PGRpdj5JIGFtIGhhdmluZyBpc3N1ZSBp
+biBjb25uZWN0aW5nIDNHIG1vZGVtIG9uIG15IGFybSBwbGF0Zm9ybS48L2Rpdj48ZGl2Pjxicj48
+L2Rpdj48ZGl2PkkgYW0gdXNpbmcgY29ubm1hbigxLjI5KSBhcyBteSBuZXR3b3JrIG1hbmFnZXIg
+YW5kIG9mb25vZCgxLjE0KSBhbmQgwqBtb2RlbSBpcyBub3QgYmVlbiBkZXRlY3RlZC48L2Rpdj48
+ZGl2Pjxicj48L2Rpdj48ZGl2PkkgaGF2ZSBjaGVja2VkIHRoZSBsb2dzwqA8L2Rpdj48ZGl2Pjxi
+cj48L2Rpdj48ZGl2Pmh1YXdlaV9wcm9iZSDCoGZ1bmN0aW9uIGlzIGJlZW4gY2FsbGVkIGFuZCBo
+dW5nIHRoZXJlLjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+QW55IGJvZHkgY2FuIGhlbHAgb24g
+dGhpcyBvbmUuPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj48YnI+PC9k
+aXY+PC9kaXY+Cg==
+
+--===============2210405031542384563==--
 
