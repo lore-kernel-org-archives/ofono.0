@@ -1,75 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============6052766560541961092=="
+Content-Type: multipart/mixed; boundary="===============5005315558838893713=="
 MIME-Version: 1.0
 From: Tommi Kenakkala <tommi.kenakkala@tieto.com>
-Subject: [PATCH 2/2] [sim] Emit LockedPins after pin_type is queried
-Date: Mon, 22 Jun 2015 16:37:01 +0300
-Message-ID: <1434980221-15322-1-git-send-email-tommi.kenakkala@tieto.com>
-In-Reply-To: <55824419.5080703@gmail.com>
+Subject: Re: ofono Digest, Vol 74, Issue 7
+Date: Mon, 22 Jun 2015 16:50:24 +0300
+Message-ID: <558812A0.9010604@tieto.com>
+In-Reply-To: <mailman.1.1434654002.31324.ofono@ofono.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6052766560541961092==
+--===============5005315558838893713==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Fixes property change not being emited when hot-swapping a
-PIN-enabled card.
----
- src/sim.c |   22 +++++++++++++++++++++-
- 1 file changed, 21 insertions(+), 1 deletion(-)
+On 18.06.2015 22:00, ofono-request(a)ofono.org wrote:
+> Date: Wed, 17 Jun 2015 23:07:53 -0500
+ > From: Denis Kenzior
+> <denkenz@gmail.com> To: ofono(a)ofono.org Cc: tommi.kenakkala(a)tieto.c=
+om
+> Subject: Re: [PATCH 1/2] [sim] Emit LockedPins after pin_type is queried
+> Message-ID: <55824419.5080703@gmail.com> Content-Type: text/plain;
+> charset=3DISO-8859-1; format=3Dflowed
+...
+> There is a subtlety here.  OFONO_SIM_PASSWORD_NONE is never considered
+> when emitting LockedPins.  However, in this proposal you can trigger a
+> LockedPins emission even if there's no PIN set.
+>
+> To me it seems like emitting LockedPins with an empty value seems
+> unnecessary.  Thoughts?
+...
+ > Regards,
+ > -Denis
 
-diff --git a/src/sim.c b/src/sim.c
-index 715f3c0..8341af0 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -2740,6 +2740,10 @@ static void sim_pin_query_cb(const struct ofono_erro=
-r *error,
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
- 	const char *path =3D __ofono_atom_get_path(sim->atom);
- 	const char *pin_name;
-+	char **locked_pins;
-+	gboolean lock_changed;
-+
-+	DBG("sim->pin_type: %d, pin_type: %d", sim->pin_type, pin_type);
- =
+I agree. Initially there was a though but now I don't see any extra =
 
- 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
- 		ofono_error("Querying PIN authentication state failed");
-@@ -2754,9 +2758,25 @@ static void sim_pin_query_cb(const struct ofono_erro=
-r *error,
- 				password_is_pin(pin_type) =3D=3D FALSE)
- 			pin_type =3D puk2pin(pin_type);
- =
-
--		if (pin_type !=3D OFONO_SIM_PASSWORD_INVALID)
-+
-+		if (pin_type !=3D OFONO_SIM_PASSWORD_INVALID
-+				&& pin_type !=3D OFONO_SIM_PASSWORD_NONE) {
-+			lock_changed =3D !sim->locked_pins[pin_type];
-+
- 			sim->locked_pins[pin_type] =3D TRUE;
- =
-
-+			if (lock_changed) {
-+				locked_pins =3D get_locked_pins(sim);
-+
-+				ofono_dbus_signal_array_property_changed(conn,
-+						path,
-+						OFONO_SIM_MANAGER_INTERFACE,
-+						"LockedPins", DBUS_TYPE_STRING,
-+						&locked_pins);
-+
-+				g_strfreev(locked_pins);
-+			}
-+		}
- 		ofono_dbus_signal_property_changed(conn, path,
- 						OFONO_SIM_MANAGER_INTERFACE,
- 						"PinRequired", DBUS_TYPE_STRING,
+value on emitting it. Updated patch submitted.
+Thanks,
 -- =
 
-1.7.9.5
+Tommi
 
-
---===============6052766560541961092==--
+--===============5005315558838893713==--
 
