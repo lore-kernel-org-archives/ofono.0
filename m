@@ -1,64 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============2513483304154124589=="
+Content-Type: multipart/mixed; boundary="===============5256323354078641616=="
 MIME-Version: 1.0
-From: Marko Sulejic <marko.sulejic@hale.at>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: HE910 + ofono: "Activating context failed with error: Unknown
  error type"
-Date: Tue, 30 Jun 2015 13:31:05 +0200
-Message-ID: <55927DF9.6020006@hale.at>
-In-Reply-To: <55922F27.1020802@hale.at>
+Date: Fri, 26 Jun 2015 18:01:52 -0500
+Message-ID: <558DD9E0.3030100@gmail.com>
+In-Reply-To: <55927DF9.6020006@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2513483304154124589==
+--===============5256323354078641616==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Am 2015-06-30 um 07:54 schrieb Marko Sulejic:
-> Am 2015-06-26 um 04:20 schrieb Denis Kenzior:
->> Hi Marko,
->>
->> >
->>> _And the fail log _(on reconnect):
->>>
->>> Jun 29 15:19:34 mx31tt01 daemon.debug ofonod[657]:
->>> gprs-context.c(240):at_gprs_activate_primary() cid 1
->>> Jun 29 15:19:34 mx31tt01 daemon.info ofonod[657]: Modem: >
->>> AT+CGDCONT=3D1,"IP","web.one.at"\r
->>
->> Your modem is not responding to this AT command.  There's not much =
+Hi Marko,
 
->> that can be done on the oFono side.  You need to figure out why the =
+ >
+> At the end of a PPP connection, garbage was passed in to the AT command
+> parser on the modem chat.
 
->> modem is acting this way.
->>
->
-> Hi Denis,
->
-> thank you for the answer. If I can figure out the error,
-> and can solve the problem, I will let you know.
+Well, the modem should not be passing in garbage in the first place :)
+
+> This garbage contained a doublequote, which switched the AT syntax
+> parser into string mode.
+> However, because no second doublequote arrived, it stayed in this mode,
+> and kept returning UNSURE result.
 >
 
-Hi Denis,
+Do you have a trace/hexdump of what is passed on to the GAtChat object?
 
-we figured out the problem:
+> I think this is an major issue that should be fixed in oFono.
+> The syntax parser has to be extended to handle such cases.
+>
 
-At the end of a PPP connection, garbage was passed in to the AT command =
-
-parser on the modem chat.
-This garbage contained a doublequote, which switched the AT syntax =
-
-parser into string mode.
-However, because no second doublequote arrived, it stayed in this mode, =
-
-and kept returning UNSURE result.
-
-I think this is an major issue that should be fixed in oFono.
-The syntax parser has to be extended to handle such cases.
+Any suggestions on how oFono should detect this condition?
 
 Regards,
-Marko
+-Denis
 
-
---===============2513483304154124589==--
+--===============5256323354078641616==--
 
