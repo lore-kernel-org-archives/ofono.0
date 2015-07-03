@@ -1,75 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3345718588030495290=="
+Content-Type: multipart/mixed; boundary="===============4997658892944643898=="
 MIME-Version: 1.0
 From: Marko Sulejic <marko.sulejic@hale.at>
-Subject: [PATCH] Handle NW DETACH and ME DETACH
-Date: Fri, 03 Jul 2015 10:43:34 +0200
-Message-ID: <1435913014-22733-1-git-send-email-marko.sulejic@hale.at>
+Subject: [PATCH] configure.ac: Little typo.
+Date: Fri, 03 Jul 2015 11:51:50 +0200
+Message-ID: <1435917110-3213-1-git-send-email-marko.sulejic@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3345718588030495290==
+--===============4997658892944643898==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: August Mayer <august.mayer@hale.at>
-
- * According to the Telit AT reference, NW DETACH and ME DETACH
-   imply network deactivation.
- * Handle in drivers/atmodem/gprs-context.c, function cgev_notify.
 ---
- drivers/atmodem/gprs-context.c | 22 +++++++++++++---------
- 1 file changed, 13 insertions(+), 9 deletions(-)
+ configure.ac | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index 7e9a43c..db32b17 100644
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -360,20 +360,24 @@ static void cgev_notify(GAtResult *result, gpointer u=
-ser_data)
- 	if (!g_at_result_iter_next_unquoted_string(&iter, &event))
- 		return;
+diff --git a/configure.ac b/configure.ac
+index 8cfaf4e..450cac1 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -188,7 +188,7 @@ AC_ARG_WITH([provisiondb], AC_HELP_STRING([--with-provi=
+siondb=3DFILE],
+ 	[location of provision database]), [path_provisiondb=3D${withval}])
  =
 
--	if (g_str_has_prefix(event, "NW DEACT") =3D=3D FALSE &&
-+	if (g_str_has_prefix(event, "NW DETACH") =3D=3D FALSE &&
-+			g_str_has_prefix(event, "ME DETACH") =3D=3D FALSE) {
-+
-+		if (g_str_has_prefix(event, "NW DEACT") =3D=3D FALSE &&
- 				g_str_has_prefix(event, "ME DEACT") =3D=3D FALSE)
--		return;
-+			return;
- =
-
--	if (!g_at_result_iter_skip_next(&iter))
--		return;
-+		if (!g_at_result_iter_skip_next(&iter))
-+			return;
- =
-
--	if (!g_at_result_iter_next_number(&iter, &cid))
--		return;
-+		if (!g_at_result_iter_next_number(&iter, &cid))
-+			return;
- =
-
--	DBG("cid %d", cid);
-+		DBG("cid %d", cid);
- =
-
--	if ((unsigned int) cid !=3D gcd->active_context)
--		return;
-+		if ((unsigned int) cid !=3D gcd->active_context)
-+			return;
-+	}
- =
-
- 	if (gcd->state !=3D STATE_IDLE && gcd->ppp)
- 		g_at_ppp_shutdown(gcd->ppp);
+ AC_ARG_ENABLE(provision, AC_HELP_STRING([--disable-provision],
+-				[disable provisioning suport]),
++				[disable provisioning support]),
+ 					[enable_provision=3D${enableval}])
+ if (test "${enable_provision}" !=3D "no"); then
+ 	if (test -n "${path_provisiondb}"); then
 -- =
 
 2.1.0
 
 
---===============3345718588030495290==--
+--===============4997658892944643898==--
 
