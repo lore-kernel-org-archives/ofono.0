@@ -1,33 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============5318451895309387646=="
+Content-Type: multipart/mixed; boundary="===============7563556084219800453=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] make it build against musl
-Date: Wed, 01 Jul 2015 08:11:37 -0500
-Message-ID: <5593E709.2000401@gmail.com>
-In-Reply-To: <1432977236-31669-1-git-send-email-zl29ah@gmail.com>
+From: Sriram Sagar <sriramsagar.alluri@gmail.com>
+Subject: Support for Telt LE920 Modem in ofono
+Date: Fri, 03 Jul 2015 10:42:27 +0530
+Message-ID: <CADLyyJFfSB52ahkOTQ1TaZBjEVzNsPFKOKi_5bQjvrvTep_DJg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5318451895309387646==
+--===============7563556084219800453==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sergey,
+Hi,
 
-On 05/30/2015 04:13 AM, Sergey Alirzaev wrote:
-> ifdef away GNU libc extensions and use a POSIXly correct pointer type
-> ---
->   gatchat/ppp_net.c | 2 +-
->   src/log.c         | 8 ++++++++
->   2 files changed, 9 insertions(+), 1 deletion(-)
->
+Does ofono support support the Telit LE920 modem ??
 
-Applied, thanks.
+Do I need to change any configuration to enable the telitmodem driver
+support ??
 
-Regards,
--Denis
+--===============7563556084219800453==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
+PGRpdiBkaXI9Imx0ciI+SGksPGRpdj48YnI+PC9kaXY+PGRpdj5Eb2VzIG9mb25vIHN1cHBvcnQg
+c3VwcG9ydCB0aGUgVGVsaXQgTEU5MjAgbW9kZW0gPz88L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2
+PkRvIEkgbmVlZCB0byBjaGFuZ2UgYW55IGNvbmZpZ3VyYXRpb24gdG8gZW5hYmxlIHRoZSB0ZWxp
+dG1vZGVtIGRyaXZlciBzdXBwb3J0ID8/PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj48YnI+PC9k
+aXY+PGRpdj7CoDwvZGl2PjwvZGl2Pgo=
 
---===============5318451895309387646==--
+--===============7563556084219800453==--
 
