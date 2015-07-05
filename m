@@ -1,40 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============4997658892944643898=="
+Content-Type: multipart/mixed; boundary="===============8799507579851949183=="
 MIME-Version: 1.0
-From: Marko Sulejic <marko.sulejic@hale.at>
-Subject: [PATCH] configure.ac: Little typo.
-Date: Fri, 03 Jul 2015 11:51:50 +0200
-Message-ID: <1435917110-3213-1-git-send-email-marko.sulejic@hale.at>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Support for Telt LE920 Modem in ofono
+Date: Sun, 05 Jul 2015 05:42:42 -0500
+Message-ID: <55990A22.6040604@gmail.com>
+In-Reply-To: <CADLyyJFfSB52ahkOTQ1TaZBjEVzNsPFKOKi_5bQjvrvTep_DJg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4997658892944643898==
+--===============8799507579851949183==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- configure.ac | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Sriram,
 
-diff --git a/configure.ac b/configure.ac
-index 8cfaf4e..450cac1 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -188,7 +188,7 @@ AC_ARG_WITH([provisiondb], AC_HELP_STRING([--with-provi=
-siondb=3DFILE],
- 	[location of provision database]), [path_provisiondb=3D${withval}])
- =
+On 07/03/2015 12:12 AM, Sriram Sagar wrote:
+> Hi,
+>
+> Does ofono support support the Telit LE920 modem ??
+>
+> Do I need to change any configuration to enable the telitmodem driver
+> support ??
 
- AC_ARG_ENABLE(provision, AC_HELP_STRING([--disable-provision],
--				[disable provisioning suport]),
-+				[disable provisioning support]),
- 					[enable_provision=3D${enableval}])
- if (test "${enable_provision}" !=3D "no"); then
- 	if (test -n "${path_provisiondb}"); then
--- =
+Nobody on the oFono team has this hardware.  Perhaps you can try it and =
 
-2.1.0
+tell us?
 
+Regards,
+-Denis
 
---===============4997658892944643898==--
+--===============8799507579851949183==--
 
