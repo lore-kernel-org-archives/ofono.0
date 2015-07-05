@@ -1,60 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============3125052167475637408=="
+Content-Type: multipart/mixed; boundary="===============2068538883939924844=="
 MIME-Version: 1.0
-From: Vidhya Govindan <vidhya.govindan@vvdntech.in>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Support for Telt LE920 Modem in ofono
-Date: Mon, 06 Jul 2015 17:38:39 +0000
-Message-ID: <loom.20150706T193601-523@post.gmane.org>
-In-Reply-To: <55990A22.6040604@gmail.com>
+Date: Sun, 05 Jul 2015 07:16:45 -0500
+Message-ID: <5599202D.90509@gmail.com>
+In-Reply-To: <loom.20150706T193601-523@post.gmane.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3125052167475637408==
+--===============2068538883939924844==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Denis Kenzior <denkenz@...> writes:
+Hi Vidhya,
 
-> =
+ >
+> Hi Denis,
+>
+> We have Telit LE920 modem , and working on providing support for LE920 wi=
+th
+> ofono.It is currently not been recognized, after check_modem_list, it is
+> returning. Perhaps, we have to add LE920 modem specific details to ofono =
+driver.
+> Can you please let us know what modem specific details we need to enter a=
+nd
+> in which part of code/configuration files?
 
-> Hi Sriram,
-> =
+There are two modem detection plugins at the moment.
 
-> On 07/03/2015 12:12 AM, Sriram Sagar wrote:
-> > Hi,
-> >
-> > Does ofono support support the Telit LE920 modem ??
-> >
-> > Do I need to change any configuration to enable the telitmodem driver
-> > support ??
-> =
+If your modem is USB based, then plugins/udevng.c is what takes care of =
 
-> Nobody on the oFono team has this hardware.  Perhaps you can try it and =
+it.  Adding a new modem subtype is generally a matter of tweaking a few =
 
-> tell us?
-> =
+of the look up tables inside.  (e.g. vendor_list[], driver_list[], etc).
 
+If you modem is using a Serial interface, then plugins/udev.c is used =
 
-Hi Denis,
+along with a udev rule.  See doc/calypso-modem.txt for an example of this.
 
-We have Telit LE920 modem , and working on providing support for LE920 with
-ofono.It is currently not been recognized, after check_modem_list, it is
-returning. Perhaps, we have to add LE920 modem specific details to ofono dr=
-iver.
-Can you please let us know what modem specific details we need to enter and
-in which part of code/configuration files?
-
-Thanks in advance.
-Vidhya
-
-> Regards,
-> -Denis
-> =
+Regards,
+-Denis
 
 
-
-
-
-
---===============3125052167475637408==--
+--===============2068538883939924844==--
 
