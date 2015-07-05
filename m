@@ -1,34 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============8799507579851949183=="
+Content-Type: multipart/mixed; boundary="===============2444250328625962795=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Support for Telt LE920 Modem in ofono
-Date: Sun, 05 Jul 2015 05:42:42 -0500
-Message-ID: <55990A22.6040604@gmail.com>
-In-Reply-To: <CADLyyJFfSB52ahkOTQ1TaZBjEVzNsPFKOKi_5bQjvrvTep_DJg@mail.gmail.com>
+Subject: Re: [PATCH] configure.ac: Little typo.
+Date: Sun, 05 Jul 2015 05:45:08 -0500
+Message-ID: <55990AB4.10904@gmail.com>
+In-Reply-To: <1435917110-3213-1-git-send-email-marko.sulejic@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8799507579851949183==
+--===============2444250328625962795==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sriram,
+Hi Marko,
 
-On 07/03/2015 12:12 AM, Sriram Sagar wrote:
-> Hi,
+On 07/03/2015 04:51 AM, Marko Sulejic wrote:
+> ---
+>   configure.ac | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
 >
-> Does ofono support support the Telit LE920 modem ??
->
-> Do I need to change any configuration to enable the telitmodem driver
-> support ??
 
-Nobody on the oFono team has this hardware.  Perhaps you can try it and =
-
-tell us?
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============8799507579851949183==--
+--===============2444250328625962795==--
 
