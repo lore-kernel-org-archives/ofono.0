@@ -1,77 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============0725727489139565507=="
+Content-Type: multipart/mixed; boundary="===============3752738643379395810=="
 MIME-Version: 1.0
-From: BARDEN Christopher (MM) <christopher.barden@magnetimarelli.com>
-Subject: Bug in oFono 1.15+  Handsfree GetProperties()
-Date: Mon, 06 Jul 2015 18:38:44 +0200
-Message-ID: <E541850BD1A4194EB55388101C8C0DF37A5F8D76CB@MXCL03.fgremc.it>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] Handle NW DETACH and ME DETACH
+Date: Sun, 05 Jul 2015 05:53:09 -0500
+Message-ID: <55990C95.6040205@gmail.com>
+In-Reply-To: <1435913014-22733-1-git-send-email-marko.sulejic@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0725727489139565507==
+--===============3752738643379395810==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi Marko,
 
-Using the DBus API, I noticed that the first call to GetProperties() in the=
- Handsfree interface always fails with an "InProgress" error.  I have verif=
-ied that this behavior isn't there in 1.14, but does seem to be in both 1.1=
-5 and 1.16.  Any subsequent calls to GetProperties() are successful and ret=
-urn the properties of that interface successfully.  I couldn't find a bug t=
-racker to submit this to, so I thought this would be the most appropriate p=
-lace.  What is your recommendation for working around this issue?
+On 07/03/2015 03:43 AM, Marko Sulejic wrote:
+> From: August Mayer <august.mayer@hale.at>
+>
+>   * According to the Telit AT reference, NW DETACH and ME DETACH
+>     imply network deactivation.
 
-Sincerely,
-Chris Barden
+Can you please include some description of why this patch is needed? =
 
+E.g. what exceptional conditions is this supposed to be taking care of. =
 
---===============0725727489139565507==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+  If it is Telit specific, then it should be behind logic testing for =
 
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+PGhlYWQ+PE1FVEEgSFRUUC1FUVVJVj0iQ29udGVudC1UeXBlIiBDT05U
-RU5UPSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPjxtZXRhIG5hbWU9R2VuZXJhdG9yIGNv
-bnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDE0IChmaWx0ZXJlZCBtZWRpdW0pIj48c3R5bGU+PCEtLQov
-KiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseTpDYWxpYnJpOwoJ
-cGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAyIDQ7fQovKiBTdHlsZSBEZWZpbml0aW9ucyAqLwpw
-Lk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsCgl7bWFyZ2luOjBpbjsKCW1h
-cmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQ2Fs
-aWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe21zby1zdHls
-ZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30K
-YTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7bXNvLXN0eWxlLXByaW9yaXR5
-Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNwYW4uRW1h
-aWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5
-OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xvcjp3aW5kb3d0ZXh0O30KLk1zb0NocERlZmF1
-bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwi
-c2Fucy1zZXJpZiI7fQpAcGFnZSBXb3JkU2VjdGlvbjEKCXtzaXplOjguNWluIDExLjBpbjsKCW1h
-cmdpbjoxLjBpbiAxLjBpbiAxLjBpbiAxLjBpbjt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldv
-cmRTZWN0aW9uMTt9Ci0tPjwvc3R5bGU+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CjxvOnNoYXBl
-ZGVmYXVsdHMgdjpleHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0t
-PjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPgo8bzpzaGFwZWxheW91dCB2OmV4dD0iZWRpdCI+Cjxv
-OmlkbWFwIHY6ZXh0PSJlZGl0IiBkYXRhPSIxIiAvPgo8L286c2hhcGVsYXlvdXQ+PC94bWw+PCFb
-ZW5kaWZdLS0+PC9oZWFkPjxib2R5IGxhbmc9RU4tVVMgbGluaz1ibHVlIHZsaW5rPXB1cnBsZT48
-ZGl2IGNsYXNzPVdvcmRTZWN0aW9uMT48cCBjbGFzcz1Nc29Ob3JtYWw+SGVsbG8sPG86cD48L286
-cD48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPjxwIGNsYXNzPU1z
-b05vcm1hbD5Vc2luZyB0aGUgREJ1cyBBUEksIEkgbm90aWNlZCB0aGF0IHRoZSBmaXJzdCBjYWxs
-IHRvIEdldFByb3BlcnRpZXMoKSBpbiB0aGUgSGFuZHNmcmVlIGludGVyZmFjZSBhbHdheXMgZmFp
-bHMgd2l0aCBhbiAmIzgyMjA7SW5Qcm9ncmVzcyYjODIyMTsgZXJyb3IuJm5ic3A7IEkgaGF2ZSB2
-ZXJpZmllZCB0aGF0IHRoaXMgYmVoYXZpb3IgaXNuJiM4MjE3O3QgdGhlcmUgaW4gMS4xNCwgYnV0
-IGRvZXMgc2VlbSB0byBiZSBpbiBib3RoIDEuMTUgYW5kIDEuMTYuJm5ic3A7IEFueSBzdWJzZXF1
-ZW50IGNhbGxzIHRvIEdldFByb3BlcnRpZXMoKSBhcmUgc3VjY2Vzc2Z1bCBhbmQgcmV0dXJuIHRo
-ZSBwcm9wZXJ0aWVzIG9mIHRoYXQgaW50ZXJmYWNlIHN1Y2Nlc3NmdWxseS4mbmJzcDsgSSBjb3Vs
-ZG4mIzgyMTc7dCBmaW5kIGEgYnVnIHRyYWNrZXIgdG8gc3VibWl0IHRoaXMgdG8sIHNvIEkgdGhv
-dWdodCB0aGlzIHdvdWxkIGJlIHRoZSBtb3N0IGFwcHJvcHJpYXRlIHBsYWNlLiZuYnNwOyBXaGF0
-IGlzIHlvdXIgcmVjb21tZW5kYXRpb24gZm9yIHdvcmtpbmcgYXJvdW5kIHRoaXMgaXNzdWU/PG86
-cD48L286cD48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPjxwIGNs
-YXNzPU1zb05vcm1hbD5TaW5jZXJlbHksPG86cD48L286cD48L3A+PHAgY2xhc3M9TXNvTm9ybWFs
-PkNocmlzIEJhcmRlbjxvOnA+PC9vOnA+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNw
-OzwvbzpwPjwvcD48L2Rpdj48L2JvZHk+PC9odG1sPg==
---===============0725727489139565507==--
+the TELIT vendor quirk.
+
+Also, do realize that PPP session will be terminated by via LCP or by =
+
+using the NO CARRIER final result code.  This logic is (in theory at =
+
+least) redundant.
+
+Regards,
+-Denis
+
+--===============3752738643379395810==--
 
