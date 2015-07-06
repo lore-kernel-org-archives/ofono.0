@@ -1,47 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============2068538883939924844=="
+Content-Type: multipart/mixed; boundary="===============3089130504552597418=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Vidhya Govindan <vidhya.govindan@vvdntech.in>
 Subject: Re: Support for Telt LE920 Modem in ofono
-Date: Sun, 05 Jul 2015 07:16:45 -0500
-Message-ID: <5599202D.90509@gmail.com>
-In-Reply-To: <loom.20150706T193601-523@post.gmane.org>
+Date: Mon, 06 Jul 2015 18:20:10 +0000
+Message-ID: <loom.20150706T201914-941@post.gmane.org>
+In-Reply-To: <5599202D.90509@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2068538883939924844==
+--===============3089130504552597418==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vidhya,
+> > Hi Denis,
+> >
+> =
 
- >
-> Hi Denis,
->
-> We have Telit LE920 modem , and working on providing support for LE920 wi=
-th
-> ofono.It is currently not been recognized, after check_modem_list, it is
-> returning. Perhaps, we have to add LE920 modem specific details to ofono =
-driver.
-> Can you please let us know what modem specific details we need to enter a=
-nd
-> in which part of code/configuration files?
+> There are two modem detection plugins at the moment.
 
-There are two modem detection plugins at the moment.
+Ours is USB based. We think that LE920 is taken care by gobi driver? Can you
+please confirm?
+If that is true, can we update the vendor id and product id of LE920 against
+gobi driver structure?
 
-If your modem is USB based, then plugins/udevng.c is what takes care of =
+> =
 
-it.  Adding a new modem subtype is generally a matter of tweaking a few =
+> If your modem is USB based, then plugins/udevng.c is what takes care of =
 
-of the look up tables inside.  (e.g. vendor_list[], driver_list[], etc).
+> it.  Adding a new modem subtype is generally a matter of tweaking a few =
 
-If you modem is using a Serial interface, then plugins/udev.c is used =
+> of the look up tables inside.  (e.g. vendor_list[], driver_list[], etc).
+> =
 
-along with a udev rule.  See doc/calypso-modem.txt for an example of this.
+> If you modem is using a Serial interface, then plugins/udev.c is used =
 
-Regards,
--Denis
+> along with a udev rule.  See doc/calypso-modem.txt for an example of this.
+> =
+
+> Regards,
+> -Denis
+
+Thanks for your quick reply. Appreciate your help in getting ofono working
+with LE920.
+
+Thanks,
+Vidhya
 
 
---===============2068538883939924844==--
+
+
+
+--===============3089130504552597418==--
 
