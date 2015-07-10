@@ -1,60 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============2335543811391407563=="
+Content-Type: multipart/mixed; boundary="===============0178896993021224685=="
 MIME-Version: 1.0
-From: August Mayer <august.mayer@hale.at>
-Subject: Re: Ofono modem hardware support?
-Date: Fri, 10 Jul 2015 11:29:01 +0200
-Message-ID: <559F905D.2010308@hale.at>
-In-Reply-To: <559F8904.50509@dynamicdevices.co.uk>
+From: Kuba Pawlak <kubax.t.pawlak@intel.com>
+Subject: [PATCH] hfp_hf_bluez5: Fix crash on repairing a Device.
+Date: Fri, 10 Jul 2015 17:08:01 +0200
+Message-ID: <1436540881-20121-1-git-send-email-kubax.t.pawlak@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2335543811391407563==
+--===============0178896993021224685==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Alex,
+It may happen that a Device object is unpaired an paired again
+without being removed from DBus. This in turn triggers second
+modem object to be created, but not fully initialized.
+If this modem object is used, oFono will crash.
+---
+ plugins/hfp_hf_bluez5.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
 
-Am 10.07.2015 um 10:57 schrieb Alex J Lennon:
-> Hi August,
->
-> On 10/07/2015 09:44, August Mayer wrote:
->> Hello everybody,
->>
->> Which modems are supported well by ofono, in your experience?
-[...]
-> Cinterion EHS6 is working well for us with data. I can't speak to
-> voice/SMS at present but this is on my roadmap and I'd be interested in
-> putting any needed time in to prove this out. Historically we've found
-> the module itself pretty reliable and the support from Cinterion/Gemalto
-> excellent.
->
-> Regards,
->
-> Alex
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index 5ee70c5..713c789 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -738,8 +738,17 @@ static void modem_register_from_proxy(GDBusProxy *prox=
+y, const char *path)
+ 		return;
+ =
 
-Thanks for your first answer! I would like to add that we are currently =
+ 	dbus_message_iter_get_basic(&iter, &paired);
+-	if (paired =3D=3D FALSE)
++
++	if (paired =3D=3D FALSE) {
++		modem =3D ofono_modem_find(device_path_compare, (void *) path);
++
++		if (modem !=3D NULL) {
++			ofono_modem_remove(modem);
++			g_dbus_proxy_set_removed_watch(proxy, NULL, NULL);
++			g_dbus_proxy_set_property_watch(proxy, NULL, NULL);
++		}
+ 		return;
++	}
+ =
 
-using the Telit HE910 module with ofono, as you can see from the emails =
+ 	if (g_dbus_proxy_get_property(proxy, "UUIDs", &iter) =3D=3D FALSE)
+ 		return;
+-- =
 
-from my colleagues to this list, and we are basically happy with it; =
+1.7.11.7
 
-aside from some occasional minor glitches, it's working well for us, =
-
-especially with newer firmwares. We had the UC864 previously, but there =
-
-were problems mainly with the digital voice interface on our hardware.
-
-Of course, use in a car is kind of a hardcore use case, with constant =
-
-cell handovers, changing signal reception levels and connection =
-
-losses/reconnects, roaming and so on. But on the other hand, this is not =
-
-really different from use in a mobile phone.
-
-Many thanks & greetings     August
+Intel Deutschland GmbH
+Registered Address: Am Campeon 10-12, 85579 Neubiberg, Germany
+Tel: +49 89 99 8853-0, www.intel.de
+Managing Directors: Christin Eisenschmid, Prof. Dr. Hermann Eul
+Chairperson of the Supervisory Board: Tiffany Doon Silva
+Registered Office: Munich
+Commercial Register: Amtsgericht Muenchen HRB 186928
 
 
---===============2335543811391407563==--
+--===============0178896993021224685==--
 
