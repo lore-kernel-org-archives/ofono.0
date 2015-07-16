@@ -1,97 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============4520479388360528305=="
+Content-Type: multipart/mixed; boundary="===============5624962154927566037=="
 MIME-Version: 1.0
-From: Johannes Schauer <josch@debian.org>
-Subject: [PATCH] support for Ericsson N5321 gw
-Date: Thu, 16 Jul 2015 20:39:46 +0200
-Message-ID: <20150716183946.17294.70460@win7217.informatik.uni-wuerzburg.de>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] support for Ericsson N5321 gw
+Date: Thu, 16 Jul 2015 14:12:24 -0500
+Message-ID: <55A80218.3060503@gmail.com>
+In-Reply-To: <20150716183946.17294.70460@win7217.informatik.uni-wuerzburg.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4520479388360528305==
+--===============5624962154927566037==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Johannes,
 
-finally and with lots of help from denkenz in #ofono and jukkar in #connman=
-, I
-now have my Lenovo branded Ericsson N5321 gw modem (usb id 0bdb:193e) worki=
-ng
-with ofono and connman \o/
+On 07/16/2015 01:39 PM, Johannes Schauer wrote:
+> Hi,
+>
+> finally and with lots of help from denkenz in #ofono and jukkar in #connm=
+an, I
+> now have my Lenovo branded Ericsson N5321 gw modem (usb id 0bdb:193e) wor=
+king
+> with ofono and connman \o/
+>
+> Attached patch makes ofono work with the modem.
+>
+> It turns out that on my system (Thinkpad T450s, Debian Sid, amd64, Linux
+> 4.0.0), cdc_ncm was chosen as the driver for the ethernet interface inste=
+ad of
+> cdc_ether
+>
+> Also, udev reported:
+>
+>      ATTRS{interface}=3D=3D"Ericsson N5321 gw"
+>
+> for the modem which did not match the existing suffixes "Network Adapter"=
+ or
+> "NetworkAdapter".
+>
+> Thanks!
+>
+> cheers, josch
+>
 
-Attached patch makes ofono work with the modem.
+Applied, thanks.
 
-It turns out that on my system (Thinkpad T450s, Debian Sid, amd64, Linux
-4.0.0), cdc_ncm was chosen as the driver for the ethernet interface instead=
- of
-cdc_ether
+Regards,
+-Denis
 
-Also, udev reported:
 
-    ATTRS{interface}=3D=3D"Ericsson N5321 gw"
-
-for the modem which did not match the existing suffixes "Network Adapter" or
-"NetworkAdapter".
-
-Thanks!
-
-cheers, josch
-
---===============4520479388360528305==
-Content-Type: text/x-diff
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-add-support-for-Ericsson-N5321-gw.patch"
-
-RnJvbSA2OTJhMzQzMTM0Yjk1MGE1Nzg2Yzk0NjFiYjlmOWExNGMwOGQxNmFjIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBKb2hhbm5lcyAnam9zY2gnIFNjaGF1ZXIgPGpvc2NoQG1pc3Rl
-ci1tdWZmaW4uZGU+CkRhdGU6IFRodSwgMTYgSnVsIDIwMTUgMjA6MzI6MzEgKzAyMDAKU3ViamVj
-dDogW1BBVENIXSBhZGQgc3VwcG9ydCBmb3IgRXJpY3Nzb24gTjUzMjEgZ3cKCi0tLQogcGx1Z2lu
-cy91ZGV2bmcuYyB8IDcgKysrKysrKwogMSBmaWxlIGNoYW5nZWQsIDcgaW5zZXJ0aW9ucygrKQoK
-ZGlmZiAtLWdpdCBhL3BsdWdpbnMvdWRldm5nLmMgYi9wbHVnaW5zL3VkZXZuZy5jCmluZGV4IDA5
-NzQwYWUuLmU0M2QwNDUgMTAwNjQ0Ci0tLSBhL3BsdWdpbnMvdWRldm5nLmMKKysrIGIvcGx1Z2lu
-cy91ZGV2bmcuYwpAQCAtMTE4LDYgKzExOCw4IEBAIHN0YXRpYyBnYm9vbGVhbiBzZXR1cF9tYm0o
-c3RydWN0IG1vZGVtX2luZm8gKm1vZGVtKQogCQl9IGVsc2UgaWYgKGdfc3RyX2hhc19zdWZmaXgo
-aW5mby0+c3lzYXR0ciwKIAkJCQkJCSJOZXR3b3JrIEFkYXB0ZXIiKSA9PSBUUlVFIHx8CiAJCQkJ
-Z19zdHJfaGFzX3N1ZmZpeChpbmZvLT5zeXNhdHRyLAorCQkJCQkJImd3IikgPT0gVFJVRSB8fAor
-CQkJCWdfc3RyX2hhc19zdWZmaXgoaW5mby0+c3lzYXR0ciwKIAkJCQkJCSJOZXR3b3JrQWRhcHRl
-ciIpID09IFRSVUUpIHsKIAkJCW5ldHdvcmsgPSBpbmZvLT5kZXZub2RlOwogCQl9CkBAIC0xMDc4
-LDE0ICsxMDgwLDE5IEBAIHN0YXRpYyBzdHJ1Y3QgewogCXsgImljZXJhIiwJImNkY19ldGhlciIs
-CSIwNDIxIiwgIjA2MzMiCX0sCiAJeyAibWJtIiwJImNkY19hY20iLAkiMGJkYiIJCX0sCiAJeyAi
-bWJtIiwJImNkY19ldGhlciIsCSIwYmRiIgkJfSwKKwl7ICJtYm0iLAkiY2RjX25jbSIsCSIwYmRi
-IgkJfSwKIAl7ICJtYm0iLAkiY2RjX2FjbSIsCSIwZmNlIgkJfSwKIAl7ICJtYm0iLAkiY2RjX2V0
-aGVyIiwJIjBmY2UiCQl9LAorCXsgIm1ibSIsCSJjZGNfbmNtIiwJIjBmY2UiCQl9LAogCXsgIm1i
-bSIsCSJjZGNfYWNtIiwJIjQxM2MiCQl9LAogCXsgIm1ibSIsCSJjZGNfZXRoZXIiLAkiNDEzYyIJ
-CX0sCisJeyAibWJtIiwJImNkY19uY20iLAkiNDEzYyIJCX0sCiAJeyAibWJtIiwJImNkY19hY20i
-LAkiMDNmMCIJCX0sCiAJeyAibWJtIiwJImNkY19ldGhlciIsCSIwM2YwIgkJfSwKKwl7ICJtYm0i
-LAkiY2RjX25jbSIsCSIwM2YwIgkJfSwKIAl7ICJtYm0iLAkiY2RjX2FjbSIsCSIwOTMwIgkJfSwK
-IAl7ICJtYm0iLAkiY2RjX2V0aGVyIiwJIjA5MzAiCQl9LAorCXsgIm1ibSIsCSJjZGNfbmNtIiwJ
-IjA5MzAiCQl9LAogCXsgImhzbyIsCSJoc28iCQkJCX0sCiAJeyAiZ29iaSIsCSJxbWlfd3dhbiIJ
-CQl9LAogCXsgImdvYmkiLAkicWNzZXJpYWwiCQkJfSwKLS0gCjIuMS40Cgo=
-
---===============4520479388360528305==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjIKCmlRSWNCQUFC
-Q0FBR0JRSlZwL3B5QUFvSkVQTExwY2VQdllQaHhLMFFBTFo3eVUvNFpiUW5PYU9td0ZkVWdmRE4K
-alhlSHFvQ2xCZkpaSDFuTVVwa25DUjdJVi9YSDhCSXBORXo5eXNpQUhzYUZ5V3Q1ZjNSRjlaQzdU
-ckZmU3FVLwpRZ09pWkpWWVBqeFV0M3dvZ2g0UEx5dk9JZFF5M0ZKTXZtUFlZYm13MFNIZXIyL3Mr
-YlM4aWdpRTAwUlg2Tmh3CjJTVmNyOWs0TEFybUtYOVUvWk9JTStEVXU5bnU3TlpUU00wYjBqRUJP
-SC91MTBTZ1hrWWlnU0hobUZPbS9sMXIKcldjY214a2Y4VkNQMFRuQUx0WWRqVWoxZlNqZ0VyaGN0
-UWt0QlNDZkQvQ3BGcWIybXZPRlNseCtTNHhtUnFFUwovMUw0MnNkYUlFN0NlY25VemtSN3Z6Sm12
-dEpaZVJtdGc3NzNaYWs0aDdiSlBXS056bmxYSnE2MWFZK0lqOW5FCmgwM24vekpsejQ3R2RWZi9V
-M0RmOGdjM2c1SkdHQ0pSRWUwVEhyUDM0M3hiVjhZUkt5ZHdLanh3RS9qeTVvSnUKTkVVU3ArWmh0
-L2ppTDQ4cW5XU05KYS8xb3BLK0NsMGNCZzhqb3ozMzYvdCszeWVkVjFBVjF5UllVQmNaMmV6cQp1
-dTR3bjQrTGNBb1IzVE5yUnlZajhWMEFZaW04aG9rZFk1UXdyRWVGQndhSURjWk9GVzI0amlHdXRW
-akxESXd2Cm5mek00NUtMOGl0dnR0ZC9Ib001alpta0c2WkIzZ0pqVk9uL1FLL3BDc2lNdEdpVTRK
-YTVtUWJwSkVOeEoweGcKc3gxeVZENnAwNTRDR0NON0YzQXp0U2xRN1FIMmVybDZwZmVVbGQvQVZl
-a0VZRlptRWhSNHk5NUhXK1ZCbHpSSQpIb2dUL2prdFY0MC9LMVNjbzBlRAo9Z3IrMQotLS0tLUVO
-RCBQR1AgU0lHTkFUVVJFLS0tLS0K
-
---===============4520479388360528305==--
+--===============5624962154927566037==--
 
