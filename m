@@ -1,44 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============8323279396997788828=="
+Content-Type: multipart/mixed; boundary="===============3867232700822670995=="
 MIME-Version: 1.0
-From: Mylene JOSSERAND <mylene.josserand@openwide.fr>
-Subject: [info] modem data disconnection
-Date: Tue, 21 Jul 2015 13:31:42 +0200
-Message-ID: <55AE2D9E.6080106@openwide.fr>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: ofono supported modem list
+Date: Tue, 21 Jul 2015 09:53:37 -0500
+Message-ID: <55AE5CF1.70309@gmail.com>
+In-Reply-To: <AM3PR06MB515EE0E7D8FE363419C7C0CC3840@AM3PR06MB515.eurprd06.prod.outlook.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8323279396997788828==
+--===============3867232700822670995==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi everyone,
+Hi Manimaran,
 
+On 07/21/2015 12:29 AM, Thangamanimaran, Radhakris (R.) wrote:
+> Hi,
+>
+> Is there a consolidated list of ofono supported modems?
+>
+> I am looking for compatible list of 3g / 4G dongles for data support. Tha=
+nks
+>
 
-I have some questions about ofono and the data disconnection.
+I don't believe such a list was ever compiled.  Anything of the sort =
 
-With debug information, after that my modem is online (connected to network=
- via ppp0 interface), when I go back to offline (by setting online property=
- to false), I can see that the modem network connection is down with :
-ofonod[1039]: Modem: < ~\377}#\300!}%}#} }$\205r~
+would have to be crowd sourced as the oFono team only has access to a =
 
-and PPP interface is removed :
-ofonod[1039]: udevng.c:remove_device() /sys/devices/virtual/net/ppp0
+fraction of the devices out in the market.
 
-I searched how ofono stops the modem connection, with escape sequence for e=
-xample, but ofono does not seem to use it during offline sequence.
+Regards,
+-Denis
 
-How does ofono handles it ?
-How ofono (or gatppp, maybe ?) puts the modem network connection down (if i=
-t does) ?
-
-
-Thank you in advance,
-
-Best regards,
-
-Mylene
-
-
---===============8323279396997788828==--
+--===============3867232700822670995==--
 
