@@ -1,65 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============2218397146400732820=="
+Content-Type: multipart/mixed; boundary="===============8323279396997788828=="
 MIME-Version: 1.0
-From: Thangamanimaran, Radhakris (R.) <rthangam@visteon.com>
-Subject: ofono supported modem list
-Date: Tue, 21 Jul 2015 05:29:52 +0000
-Message-ID: <AM3PR06MB515EE0E7D8FE363419C7C0CC3840@AM3PR06MB515.eurprd06.prod.outlook.com>
+From: Mylene JOSSERAND <mylene.josserand@openwide.fr>
+Subject: [info] modem data disconnection
+Date: Tue, 21 Jul 2015 13:31:42 +0200
+Message-ID: <55AE2D9E.6080106@openwide.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2218397146400732820==
+--===============8323279396997788828==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-Is there a consolidated list of ofono supported modems?
-I am looking for compatible list of 3g / 4G dongles for data support. Thanks
-
-Regards
-Manimaran
+Hi everyone,
 
 
---===============2218397146400732820==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+I have some questions about ofono and the data disconnection.
 
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNv
-bnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxtZXRhIG5hbWU9IkdlbmVyYXRv
-ciIgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+
-PCEtLQovKiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseTpDYWxp
-YnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAyIDQ7fQovKiBTdHlsZSBEZWZpbml0aW9u
-cyAqLwpwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsCgl7bWFyZ2luOjBp
-bjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWls
-eToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe21z
-by1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJs
-aW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7bXNvLXN0eWxlLXBy
-aW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNw
-YW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQt
-ZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xvcjp3aW5kb3d0ZXh0O30KLk1zb0No
-cERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTsKCWZvbnQtZmFtaWx5OiJDYWxp
-YnJpIiwic2Fucy1zZXJpZiI7fQpAcGFnZSBXb3JkU2VjdGlvbjEKCXtzaXplOjguNWluIDExLjBp
-bjsKCW1hcmdpbjoxLjBpbiAxLjBpbiAxLjBpbiAxLjBpbjt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtw
-YWdlOldvcmRTZWN0aW9uMTt9Ci0tPjwvc3R5bGU+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+Cjxv
-OnNoYXBlZGVmYXVsdHMgdjpleHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2Vu
-ZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPgo8bzpzaGFwZWxheW91dCB2OmV4dD0iZWRp
-dCI+CjxvOmlkbWFwIHY6ZXh0PSJlZGl0IiBkYXRhPSIxIiAvPgo8L286c2hhcGVsYXlvdXQ+PC94
-bWw+PCFbZW5kaWZdLS0+CjwvaGVhZD4KPGJvZHkgbGFuZz0iRU4tVVMiIGxpbms9ImJsdWUiIHZs
-aW5rPSJwdXJwbGUiPgo8ZGl2IGNsYXNzPSJXb3JkU2VjdGlvbjEiPgo8cCBjbGFzcz0iTXNvTm9y
-bWFsIj5IaSw8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+SXMgdGhlcmUgYSBj
-b25zb2xpZGF0ZWQgbGlzdCBvZiBvZm9ubyBzdXBwb3J0ZWQgbW9kZW1zPzxvOnA+PC9vOnA+PC9w
-Pgo8cCBjbGFzcz0iTXNvTm9ybWFsIj5JIGFtIGxvb2tpbmcgZm9yIGNvbXBhdGlibGUgbGlzdCBv
-ZiAzZyAvIDRHIGRvbmdsZXMgZm9yIGRhdGEgc3VwcG9ydC4gVGhhbmtzPG86cD48L286cD48L3A+
-CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNv
-Tm9ybWFsIj5SZWdhcmRzPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPk1hbmlt
-YXJhbjxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48bzpwPiZuYnNwOzwvbzpw
-PjwvcD4KPC9kaXY+CjwvYm9keT4KPC9odG1sPgo=
+With debug information, after that my modem is online (connected to network=
+ via ppp0 interface), when I go back to offline (by setting online property=
+ to false), I can see that the modem network connection is down with :
+ofonod[1039]: Modem: < ~\377}#\300!}%}#} }$\205r~
 
---===============2218397146400732820==--
+and PPP interface is removed :
+ofonod[1039]: udevng.c:remove_device() /sys/devices/virtual/net/ppp0
+
+I searched how ofono stops the modem connection, with escape sequence for e=
+xample, but ofono does not seem to use it during offline sequence.
+
+How does ofono handles it ?
+How ofono (or gatppp, maybe ?) puts the modem network connection down (if i=
+t does) ?
+
+
+Thank you in advance,
+
+Best regards,
+
+Mylene
+
+
+--===============8323279396997788828==--
 
