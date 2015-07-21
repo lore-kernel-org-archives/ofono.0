@@ -1,36 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============0107185570815796484=="
+Content-Type: multipart/mixed; boundary="===============2218397146400732820=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Message waiting patches
-Date: Thu, 16 Jul 2015 20:23:40 -0500
-Message-ID: <55A8591C.4080206@gmail.com>
-In-Reply-To: <CACM4vuCBb19LLqmJwKPcVePY2=KvYtHG_YxWmFG1=3ddXxDCfQ@mail.gmail.com>
+From: Thangamanimaran, Radhakris (R.) <rthangam@visteon.com>
+Subject: ofono supported modem list
+Date: Tue, 21 Jul 2015 05:29:52 +0000
+Message-ID: <AM3PR06MB515EE0E7D8FE363419C7C0CC3840@AM3PR06MB515.eurprd06.prod.outlook.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0107185570815796484==
+--===============2218397146400732820==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alfonso,
+Hi,
+Is there a consolidated list of ofono supported modems?
+I am looking for compatible list of 3g / 4G dongles for data support. Thanks
 
-On 07/16/2015 08:08 AM, Alfonso Sanchez-Beato wrote:
-> Hi all,
->
-> I have just sent to the list a couple of fixes for the message-waiting
-> atom. In some cases the EF_MWIS was populated with bad data due to using
-> an uninitialized variable: one patch solves this. The other one is for
-> properly updating the atom structures when reading EF_MWIS, and it is
-> good to have although it was not really affecting anything.
->
-> Br,
-> Alfonso
+Regards
+Manimaran
 
-Both patches make sense to me.  Applied, thanks!
 
-Regards,
--Denis
+--===============2218397146400732820==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
---===============0107185570815796484==--
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNv
+bnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxtZXRhIG5hbWU9IkdlbmVyYXRv
+ciIgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTQgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+
+PCEtLQovKiBGb250IERlZmluaXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseTpDYWxp
+YnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAyIDQ7fQovKiBTdHlsZSBEZWZpbml0aW9u
+cyAqLwpwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsCgl7bWFyZ2luOjBp
+bjsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250LWZhbWls
+eToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe21z
+by1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJs
+aW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7bXNvLXN0eWxlLXBy
+aW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNw
+YW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQt
+ZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xvcjp3aW5kb3d0ZXh0O30KLk1zb0No
+cERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTsKCWZvbnQtZmFtaWx5OiJDYWxp
+YnJpIiwic2Fucy1zZXJpZiI7fQpAcGFnZSBXb3JkU2VjdGlvbjEKCXtzaXplOjguNWluIDExLjBp
+bjsKCW1hcmdpbjoxLjBpbiAxLjBpbiAxLjBpbiAxLjBpbjt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtw
+YWdlOldvcmRTZWN0aW9uMTt9Ci0tPjwvc3R5bGU+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+Cjxv
+OnNoYXBlZGVmYXVsdHMgdjpleHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2Vu
+ZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPgo8bzpzaGFwZWxheW91dCB2OmV4dD0iZWRp
+dCI+CjxvOmlkbWFwIHY6ZXh0PSJlZGl0IiBkYXRhPSIxIiAvPgo8L286c2hhcGVsYXlvdXQ+PC94
+bWw+PCFbZW5kaWZdLS0+CjwvaGVhZD4KPGJvZHkgbGFuZz0iRU4tVVMiIGxpbms9ImJsdWUiIHZs
+aW5rPSJwdXJwbGUiPgo8ZGl2IGNsYXNzPSJXb3JkU2VjdGlvbjEiPgo8cCBjbGFzcz0iTXNvTm9y
+bWFsIj5IaSw8bzpwPjwvbzpwPjwvcD4KPHAgY2xhc3M9Ik1zb05vcm1hbCI+SXMgdGhlcmUgYSBj
+b25zb2xpZGF0ZWQgbGlzdCBvZiBvZm9ubyBzdXBwb3J0ZWQgbW9kZW1zPzxvOnA+PC9vOnA+PC9w
+Pgo8cCBjbGFzcz0iTXNvTm9ybWFsIj5JIGFtIGxvb2tpbmcgZm9yIGNvbXBhdGlibGUgbGlzdCBv
+ZiAzZyAvIDRHIGRvbmdsZXMgZm9yIGRhdGEgc3VwcG9ydC4gVGhhbmtzPG86cD48L286cD48L3A+
+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNv
+Tm9ybWFsIj5SZWdhcmRzPG86cD48L286cD48L3A+CjxwIGNsYXNzPSJNc29Ob3JtYWwiPk1hbmlt
+YXJhbjxvOnA+PC9vOnA+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIj48bzpwPiZuYnNwOzwvbzpw
+PjwvcD4KPC9kaXY+CjwvYm9keT4KPC9odG1sPgo=
+
+--===============2218397146400732820==--
 
