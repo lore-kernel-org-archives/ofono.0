@@ -1,60 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7718174762224309692=="
+Content-Type: multipart/mixed; boundary="===============7982998440899348870=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: query
-Date: Wed, 29 Jul 2015 10:23:59 -0500
-Message-ID: <55B8F00F.5030703@gmail.com>
-In-Reply-To: <222E70FA67D72A4FB8EEDF5AF01724ACCF22F3@BGSMSX102.gar.corp.intel.com>
+Date: Wed, 29 Jul 2015 10:27:03 -0500
+Message-ID: <55B8F0C7.6020807@gmail.com>
+In-Reply-To: <222E70FA67D72A4FB8EEDF5AF01724ACCF24B7@BGSMSX102.gar.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7718174762224309692==
+--===============7982998440899348870==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Ram,
 
-On 07/28/2015 04:27 AM, Kallumari Nagaraja Rao, RammohanX wrote:
-> Hi All,
+On 07/29/2015 08:12 AM, Kallumari Nagaraja Rao, RammohanX wrote:
+> Hello All,
 >
-> I am trying to get ofono running on my Intel Edison board.
+> As said below, I am using the Intel Edison board with a Ublox on a
+> serial interface.
 >
-> We have Intel Arduino Board with Ublox Sara-G350 connected via ttyMFD1
-> device.
+> After doing some debugging got to know that the
+> =E2=80=9C/plugins/udevng.c:enumerate_devices()=E2=80=9D does get struck a=
+nd
 >
-> 1.Placed necessary configuration files at the needed places.
->
-> a.Ofono.conf
->
-> b.Tun.conf
->
-> c.Ofono.rules
->
-> 2.Updated ofono.rules with the following,
->
-> # Ublox SARA-G350
->
-> ATTRS{idVendor}=3D=3D"1546", ATTRS{idProduct}=3D=3D"1102", ENV{OFONO_DRIV=
-ER}=3D"ublox"
->
+> nothing happens after that.
 
-I don't know what this is doing, but in general ofono.rules is only used =
+Since you have debug output after enumerate_devices() is called, this is =
 
-for pure-serial devices.  ublox driver is only setup to work via USB. =
+highly unlikely.  Does your kernel support udev?  You need to get your =
 
-Is your modem hardware USB based?
-
-> 3.tun.conf into modules-load.d, but when I do lsmod I do not see module
-> tun being loaded !
->
-> 4.when I try running ofonod, I get struck at BT stuff as attached.
->
-> Please let me know if I am missing something.
->
+kernel and system sorted out first.
 
 Regards,
 -Denis
 
---===============7718174762224309692==--
+--===============7982998440899348870==--
 
