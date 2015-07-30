@@ -1,30 +1,26 @@
-Content-Type: multipart/mixed; boundary="===============3857821206127504795=="
+Content-Type: multipart/mixed; boundary="===============1702678716720655420=="
 MIME-Version: 1.0
 From: Kallumari Nagaraja Rao, RammohanX <rammohanx.kallumari.nagaraja.rao@intel.com>
 Subject: RE: query
-Date: Thu, 30 Jul 2015 04:03:44 +0000
-Message-ID: <222E70FA67D72A4FB8EEDF5AF01724ACCF259F@BGSMSX102.gar.corp.intel.com>
+Date: Thu, 30 Jul 2015 12:49:54 +0000
+Message-ID: <222E70FA67D72A4FB8EEDF5AF01724ACCF2637@BGSMSX102.gar.corp.intel.com>
 In-Reply-To: <55B8F00F.5030703@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3857821206127504795==
+--===============1702678716720655420==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
+Hi Denis,
 
-No our Ublox modem is serial based.
-But I remember seeing in web that following will be used in case of a seria=
-l modem,
-
-KERNEL=3D=3D"ttyMFD1", ENV{OFONO_DRIVER}=3D"ublox"
-
-ttyMFD1 is the device uart port & ublox ofono driver.
+Can't we use the existing ofono UBLOX driver to work with serial interfaces=
+ instead of USB interface ?
 
 Regards,
 Ram.
+
 
 -----Original Message-----
 From: ofono [mailto:ofono-bounces(a)ofono.org] On Behalf Of Denis Kenzior
@@ -80,5 +76,5 @@ ofono mailing list
 ofono(a)ofono.org
 https://lists.ofono.org/mailman/listinfo/ofono
 
---===============3857821206127504795==--
+--===============1702678716720655420==--
 
