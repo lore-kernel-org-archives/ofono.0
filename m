@@ -1,40 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============7982998440899348870=="
+Content-Type: multipart/mixed; boundary="===============3857821206127504795=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: query
-Date: Wed, 29 Jul 2015 10:27:03 -0500
-Message-ID: <55B8F0C7.6020807@gmail.com>
-In-Reply-To: <222E70FA67D72A4FB8EEDF5AF01724ACCF24B7@BGSMSX102.gar.corp.intel.com>
+From: Kallumari Nagaraja Rao, RammohanX <rammohanx.kallumari.nagaraja.rao@intel.com>
+Subject: RE: query
+Date: Thu, 30 Jul 2015 04:03:44 +0000
+Message-ID: <222E70FA67D72A4FB8EEDF5AF01724ACCF259F@BGSMSX102.gar.corp.intel.com>
+In-Reply-To: <55B8F00F.5030703@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7982998440899348870==
+--===============3857821206127504795==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hello Denis,
+
+No our Ublox modem is serial based.
+But I remember seeing in web that following will be used in case of a seria=
+l modem,
+
+KERNEL=3D=3D"ttyMFD1", ENV{OFONO_DRIVER}=3D"ublox"
+
+ttyMFD1 is the device uart port & ublox ofono driver.
+
+Regards,
+Ram.
+
+-----Original Message-----
+From: ofono [mailto:ofono-bounces(a)ofono.org] On Behalf Of Denis Kenzior
+Sent: Wednesday, July 29, 2015 8:54 PM
+To: ofono(a)ofono.org
+Subject: Re: query
+
 Hi Ram,
 
-On 07/29/2015 08:12 AM, Kallumari Nagaraja Rao, RammohanX wrote:
-> Hello All,
+On 07/28/2015 04:27 AM, Kallumari Nagaraja Rao, RammohanX wrote:
+> Hi All,
 >
-> As said below, I am using the Intel Edison board with a Ublox on a
-> serial interface.
+> I am trying to get ofono running on my Intel Edison board.
 >
-> After doing some debugging got to know that the
-> =E2=80=9C/plugins/udevng.c:enumerate_devices()=E2=80=9D does get struck a=
-nd
+> We have Intel Arduino Board with Ublox Sara-G350 connected via ttyMFD1 =
+
+> device.
 >
-> nothing happens after that.
+> 1.Placed necessary configuration files at the needed places.
+>
+> a.Ofono.conf
+>
+> b.Tun.conf
+>
+> c.Ofono.rules
+>
+> 2.Updated ofono.rules with the following,
+>
+> # Ublox SARA-G350
+>
+> ATTRS{idVendor}=3D=3D"1546", ATTRS{idProduct}=3D=3D"1102", ENV{OFONO_DRIV=
+ER}=3D"ublox"
+>
 
-Since you have debug output after enumerate_devices() is called, this is =
+I don't know what this is doing, but in general ofono.rules is only used fo=
+r pure-serial devices.  ublox driver is only setup to work via USB. =
 
-highly unlikely.  Does your kernel support udev?  You need to get your =
+Is your modem hardware USB based?
 
-kernel and system sorted out first.
+> 3.tun.conf into modules-load.d, but when I do lsmod I do not see =
+
+> module tun being loaded !
+>
+> 4.when I try running ofonod, I get struck at BT stuff as attached.
+>
+> Please let me know if I am missing something.
+>
 
 Regards,
 -Denis
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+https://lists.ofono.org/mailman/listinfo/ofono
 
---===============7982998440899348870==--
+--===============3857821206127504795==--
 
