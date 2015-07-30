@@ -1,80 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============1702678716720655420=="
+Content-Type: multipart/mixed; boundary="===============4189386651317342630=="
 MIME-Version: 1.0
-From: Kallumari Nagaraja Rao, RammohanX <rammohanx.kallumari.nagaraja.rao@intel.com>
-Subject: RE: query
-Date: Thu, 30 Jul 2015 12:49:54 +0000
-Message-ID: <222E70FA67D72A4FB8EEDF5AF01724ACCF2637@BGSMSX102.gar.corp.intel.com>
-In-Reply-To: <55B8F00F.5030703@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: query
+Date: Thu, 30 Jul 2015 16:21:21 -0500
+Message-ID: <55BA9551.6000900@gmail.com>
+In-Reply-To: <222E70FA67D72A4FB8EEDF5AF01724ACCF2637@BGSMSX102.gar.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1702678716720655420==
+--===============4189386651317342630==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
-
-Can't we use the existing ofono UBLOX driver to work with serial interfaces=
- instead of USB interface ?
-
-Regards,
-Ram.
-
-
------Original Message-----
-From: ofono [mailto:ofono-bounces(a)ofono.org] On Behalf Of Denis Kenzior
-Sent: Wednesday, July 29, 2015 8:54 PM
-To: ofono(a)ofono.org
-Subject: Re: query
-
 Hi Ram,
 
-On 07/28/2015 04:27 AM, Kallumari Nagaraja Rao, RammohanX wrote:
-> Hi All,
+On 07/30/2015 07:49 AM, Kallumari Nagaraja Rao, RammohanX wrote:
+> Hi Denis,
 >
-> I am trying to get ofono running on my Intel Edison board.
->
-> We have Intel Arduino Board with Ublox Sara-G350 connected via ttyMFD1 =
-
-> device.
->
-> 1.Placed necessary configuration files at the needed places.
->
-> a.Ofono.conf
->
-> b.Tun.conf
->
-> c.Ofono.rules
->
-> 2.Updated ofono.rules with the following,
->
-> # Ublox SARA-G350
->
-> ATTRS{idVendor}=3D=3D"1546", ATTRS{idProduct}=3D=3D"1102", ENV{OFONO_DRIV=
-ER}=3D"ublox"
+> Can't we use the existing ofono UBLOX driver to work with serial interfac=
+es instead of USB interface ?
 >
 
-I don't know what this is doing, but in general ofono.rules is only used fo=
-r pure-serial devices.  ublox driver is only setup to work via USB. =
+Not in its current form, no.
 
-Is your modem hardware USB based?
+USB devices generally come pre-multiplexed.  What this means is that =
 
-> 3.tun.conf into modules-load.d, but when I do lsmod I do not see =
+they expose multiple AT ports (e.g. ttyACM1, ttyACM2, etc).  oFono =
 
-> module tun being loaded !
->
-> 4.when I try running ofonod, I get struck at BT stuff as attached.
->
-> Please let me know if I am missing something.
->
+requires two if the modem uses PPP (which the ublox driver is currently =
+
+using).  This is necessary as a second control port is needed for =
+
+control while another is being occupied by PPP packets.
+
+Serial devices use a single serial port and will require some form of =
+
+multiplexing in order to enable properly.  Most support 07.10/27.010 =
+
+multiplexing via AT+CMUX.
+
+Your options are to write a new modem driver for your device, or extend =
+
+the ublox driver to handle serial devices.  Refer to plugins/ifx.c or =
+
+plugins/calypso.c for an example of a driver that uses multiplexing.
 
 Regards,
 -Denis
-_______________________________________________
-ofono mailing list
-ofono(a)ofono.org
-https://lists.ofono.org/mailman/listinfo/ofono
 
---===============1702678716720655420==--
+--===============4189386651317342630==--
 
