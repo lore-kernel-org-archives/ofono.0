@@ -1,53 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============4189386651317342630=="
+Content-Type: multipart/mixed; boundary="===============0688953616222635592=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: query
-Date: Thu, 30 Jul 2015 16:21:21 -0500
-Message-ID: <55BA9551.6000900@gmail.com>
-In-Reply-To: <222E70FA67D72A4FB8EEDF5AF01724ACCF2637@BGSMSX102.gar.corp.intel.com>
+From: Kuba Pawlak <kubax.t.pawlak@intel.com>
+Subject: [PATCH] Synchronize call status in case of Hangup error
+Date: Tue, 04 Aug 2015 18:00:16 +0200
+Message-ID: <1438704016-24150-1-git-send-email-kubax.t.pawlak@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4189386651317342630==
+--===============0688953616222635592==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ram,
+It is possible for the phone to accept Dial request
+but not actually dial. This leaves a voicecall object
+in state 'dialling' that cannot be removed.
+Proposed workaround is to trigger AT+CLCC when an error
+is returned for Hangup. As the call is not on the list,
+this would remove this hanging object and signal CallRemoved.
+---
+ drivers/hfpmodem/voicecall.c | 16 +++++++++++++---
+ 1 file changed, 13 insertions(+), 3 deletions(-)
 
-On 07/30/2015 07:49 AM, Kallumari Nagaraja Rao, RammohanX wrote:
-> Hi Denis,
->
-> Can't we use the existing ofono UBLOX driver to work with serial interfac=
-es instead of USB interface ?
->
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index e3e6e0f5eccbbd61972c4b823c8093dd227e4bb9..06ad216b91bcbe99f9632f3c129=
+a8f61756fd585 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -318,21 +318,31 @@ static void generic_cb(gboolean ok, GAtResult *result=
+, gpointer user_data)
+ 	struct change_state_req *req =3D user_data;
+ 	struct voicecall_data *vd =3D ofono_voicecall_get_data(req->vc);
+ 	struct ofono_error error;
++	unsigned int num_calls =3D 0;
+ =
 
-Not in its current form, no.
+ 	decode_at_error(&error, g_at_result_final_response(result));
+ =
 
-USB devices generally come pre-multiplexed.  What this means is that =
+-	if (ok && req->affected_types) {
++	if (req->affected_types) {
+ 		GSList *l;
+ 		struct ofono_call *call;
+ =
 
-they expose multiple AT ports (e.g. ttyACM1, ttyACM2, etc).  oFono =
+ 		for (l =3D vd->calls; l; l =3D l->next) {
+ 			call =3D l->data;
+ =
 
-requires two if the modem uses PPP (which the ublox driver is currently =
+-			if (req->affected_types & (1 << call->status))
+-				vd->local_release |=3D (1 << call->id);
++			if (req->affected_types & (1 << call->status)) {
++				if (ok)
++					vd->local_release |=3D (1 << call->id);
++				else
++					num_calls++;
++			}
+ 		}
+ 	}
+ =
 
-using).  This is necessary as a second control port is needed for =
++	/* AG returned an error, but some calls are present, resync*/
++	if (num_calls)
++		g_at_chat_send(vd->chat, "AT+CLCC", clcc_prefix,
++					clcc_poll_cb, req->vc, NULL);
++
+ 	req->cb(&error, req->data);
+ }
+ =
 
-control while another is being occupied by PPP packets.
+-- =
 
-Serial devices use a single serial port and will require some form of =
+1.7.11.7
 
-multiplexing in order to enable properly.  Most support 07.10/27.010 =
+Intel Deutschland GmbH
+Registered Address: Am Campeon 10-12, 85579 Neubiberg, Germany
+Tel: +49 89 99 8853-0, www.intel.de
+Managing Directors: Christin Eisenschmid, Prof. Dr. Hermann Eul
+Chairperson of the Supervisory Board: Tiffany Doon Silva
+Registered Office: Munich
+Commercial Register: Amtsgericht Muenchen HRB 186928
 
-multiplexing via AT+CMUX.
 
-Your options are to write a new modem driver for your device, or extend =
-
-the ublox driver to handle serial devices.  Refer to plugins/ifx.c or =
-
-plugins/calypso.c for an example of a driver that uses multiplexing.
-
-Regards,
--Denis
-
---===============4189386651317342630==--
+--===============0688953616222635592==--
 
