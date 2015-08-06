@@ -1,34 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============8270403278279531414=="
+Content-Type: multipart/mixed; boundary="===============2289615729515828502=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] Synchronize call status in case of Hangup error
-Date: Wed, 05 Aug 2015 11:16:20 -0500
-Message-ID: <55C236D4.40503@gmail.com>
-In-Reply-To: <1438778169-12297-1-git-send-email-kubax.t.pawlak@intel.com>
+From: Kuba Pawlak <kubax.t.pawlak@intel.com>
+Subject: [PATCH 0/3] Driver specific dial string validation
+Date: Thu, 06 Aug 2015 18:56:57 +0200
+Message-ID: <1438880221-23834-1-git-send-email-kubax.t.pawlak@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8270403278279531414==
+--===============2289615729515828502==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kuba,
+Dial() method is generic for all modems but hfpmodem may not support some d=
+ial
+strings. HFP 1.6 SPEC for ATD says: "Only voice calls are covered in this
+specification."
+Problem is with dialling USSD codes. Request is accepted and a call object
+is state dialling is created. USSD code is completed, result displays on
+the phone, but there are no events that would allow oFono to remove this fa=
+ke =
 
-On 08/05/2015 07:36 AM, Kuba Pawlak wrote:
-> It is possible for the phone to accept Dial request
-> but not actually dial. This leaves a voicecall object
-> in state 'dialling' that cannot be removed.
-> Proposed workaround is to trigger AT+CLCC when an error
-> is returned for Hangup. As the call is not on the list,
-> this would remove this hanging object and signal CallRemoved.
->
+call object. =
 
-Applied, thanks.
+We may end up in such situation (Samsung S3 4.3):
+ofonod[292]: > ATD*132#;\r
+ofonod[292]: < \r\nOK\r\n
+ofonod[292]: src/voicecall.c:dial_handle_result() Registering new call: 1
+ofonod[292]: > AT+CHUP\r
+ofonod[292]: < \r\nOK\r\n
+ofonod[292]: > AT+CHUP\r
+ofonod[292]: < \r\nOK\r\n
+ofonod[292]: > AT+CHUP\r
+ofonod[292]: < \r\nOK\r\n
 
-Regards,
--Denis
+This call cannot be ended and no more calls can be done as there can only be
+one call in state 'Dialling'.
+Proposed workaround is to have a validation string also in the driver, where
+a USSD request can be stopped.
+
+Kuba Pawlak (3):
+  voicecall.h: add dial string validation to driver
+  voicecall.c: call driver's dial string validation
+  hfp: define driver specific dial string validation
+
+ drivers/hfpmodem/voicecall.c | 37 ++++++++++++++++++++++++++++++++++++-
+ include/voicecall.h          |  6 ++++++
+ src/voicecall.c              |  7 ++++++-
+ 3 files changed, 48 insertions(+), 2 deletions(-)
+
+-- =
+
+1.7.11.7
+
+Intel Deutschland GmbH
+Registered Address: Am Campeon 10-12, 85579 Neubiberg, Germany
+Tel: +49 89 99 8853-0, www.intel.de
+Managing Directors: Christin Eisenschmid, Prof. Dr. Hermann Eul
+Chairperson of the Supervisory Board: Tiffany Doon Silva
+Registered Office: Munich
+Commercial Register: Amtsgericht Muenchen HRB 186928
 
 
---===============8270403278279531414==--
+--===============2289615729515828502==--
 
