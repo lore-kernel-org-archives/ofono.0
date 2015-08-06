@@ -1,41 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============0025813836493530762=="
+Content-Type: multipart/mixed; boundary="===============1956223349228434731=="
 MIME-Version: 1.0
 From: Kuba Pawlak <kubax.t.pawlak@intel.com>
-Subject: [PATCH 1/3] voicecall.h: add dial string validation to driver
-Date: Thu, 06 Aug 2015 18:56:59 +0200
-Message-ID: <1438880221-23834-3-git-send-email-kubax.t.pawlak@intel.com>
+Subject: [PATCH 0/3] Driver specific dial string validation
+Date: Thu, 06 Aug 2015 18:56:58 +0200
+Message-ID: <1438880221-23834-2-git-send-email-kubax.t.pawlak@intel.com>
 In-Reply-To: <1438880221-23834-1-git-send-email-kubax.t.pawlak@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0025813836493530762==
+--===============1956223349228434731==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- include/voicecall.h | 6 ++++++
- 1 file changed, 6 insertions(+)
+Dial() method is generic for all modems but hfpmodem may not support some d=
+ial
+strings. HFP 1.6 SPEC for ATD says: "Only voice calls are covered in this
+specification."
+Problem is with dialling USSD codes. Request is accepted and a call object
+is state dialling is created. USSD code is completed, result displays on
+the phone, but there are no events that would allow oFono to remove this fa=
+ke =
 
-diff --git a/include/voicecall.h b/include/voicecall.h
-index 4d0b3886b81f78839530f157cf717b633c2f45c3..a8af30090ccc1d97fe429a1cf6a=
-9f0beea96bf27 100644
---- a/include/voicecall.h
-+++ b/include/voicecall.h
-@@ -133,6 +133,12 @@ struct ofono_voicecall_driver {
- 			ofono_voicecall_cb_t cb, void *data);
- 	void (*send_tones)(struct ofono_voicecall *vc, const char *tones,
- 			ofono_voicecall_cb_t cb, void *data);
-+
-+	/*
-+	 * Check dial string using driver specific validation
-+	 */
-+	ofono_bool_t (*validate_dial)(const char *number);
-+
- };
- =
+call object. =
 
- void ofono_voicecall_en_list_notify(struct ofono_voicecall *vc,
+We may end up in such situation (Samsung S3 4.3):
+ofonod[292]: > ATD*132#;\r
+ofonod[292]: < \r\nOK\r\n
+ofonod[292]: src/voicecall.c:dial_handle_result() Registering new call: 1
+ofonod[292]: > AT+CHUP\r
+ofonod[292]: < \r\nOK\r\n
+ofonod[292]: > AT+CHUP\r
+ofonod[292]: < \r\nOK\r\n
+ofonod[292]: > AT+CHUP\r
+ofonod[292]: < \r\nOK\r\n
+
+This call cannot be ended and no more calls can be done as there can only be
+one call in state 'Dialling'.
+Proposed workaround is to have a validation string also in the driver, where
+a USSD request can be stopped.
+
+Kuba Pawlak (3):
+  voicecall.h: add dial string validation to driver
+  voicecall.c: call driver's dial string validation
+  hfp: define driver specific dial string validation
+
+ drivers/hfpmodem/voicecall.c | 37 ++++++++++++++++++++++++++++++++++++-
+ include/voicecall.h          |  6 ++++++
+ src/voicecall.c              |  7 ++++++-
+ 3 files changed, 48 insertions(+), 2 deletions(-)
+
 -- =
 
 1.7.11.7
@@ -49,5 +63,5 @@ Registered Office: Munich
 Commercial Register: Amtsgericht Muenchen HRB 186928
 
 
---===============0025813836493530762==--
+--===============1956223349228434731==--
 
