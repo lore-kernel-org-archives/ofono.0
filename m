@@ -1,44 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============1149927270281806457=="
+Content-Type: multipart/mixed; boundary="===============0853125831364730857=="
 MIME-Version: 1.0
 From: Kuba Pawlak <kubax.t.pawlak@intel.com>
-Subject: [PATCH 2/3] voicecall.c: call driver's dial string validation
-Date: Thu, 06 Aug 2015 18:57:00 +0200
-Message-ID: <1438880221-23834-4-git-send-email-kubax.t.pawlak@intel.com>
+Subject: [PATCH 3/3] hfp: define driver specific dial string validation
+Date: Thu, 06 Aug 2015 18:57:01 +0200
+Message-ID: <1438880221-23834-5-git-send-email-kubax.t.pawlak@intel.com>
 In-Reply-To: <1438880221-23834-1-git-send-email-kubax.t.pawlak@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1149927270281806457==
+--===============0853125831364730857==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+HFP spec only covers ATD behaviour for vocecalls.
+If a string starts with '8' or '#' this is a USSD code
+Reject a request like that.
 ---
- src/voicecall.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+ drivers/hfpmodem/voicecall.c | 37 ++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 36 insertions(+), 1 deletion(-)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 550b79b404f605b9570e771c7754b51c52cfbabb..e030027c6d5b94ebbc7e92ff96c=
-193d5a000e471 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -1513,7 +1513,12 @@ static int voicecall_dial(struct ofono_voicecall *vc=
-, const char *number,
- 	if (g_slist_length(vc->call_list) >=3D MAX_VOICE_CALLS)
- 		return -EPERM;
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index f1e9096940328f05415cf5a6f3bed9ceaf447fe3..1b34f76646fc78b835960959b04=
+7e4a2d3a739fd 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -695,6 +695,40 @@ error:
+ 	CALLBACK_WITH_FAILURE(cb, data);
+ }
  =
 
--	if (!valid_long_phone_number_format(number))
-+	if (vc->driver->validate_dial) {
-+		if (!vc->driver->validate_dial(number)) {
-+			return -EINVAL;
-+		}
++static ofono_bool_t hfp_valid_number_format(const char *number)
++{
++	int len =3D strlen(number);
++	int begin =3D 0;
++	int i;
++
++	if (!len)
++		return FALSE;
++
++	if (number[0] =3D=3D '+')
++		begin =3D 1;
++
++	if (number[0] =3D=3D '*' || number[0] =3D=3D '#')
++		return FALSE;
++
++	if (begin =3D=3D len)
++		return FALSE;
++
++	if ((len - begin) > OFONO_MAX_PHONE_NUMBER_LENGTH)
++		return FALSE;
++
++	for (i =3D begin; i < len; i++) {
++		if (number[i] >=3D '0' && number[i] <=3D '9')
++			continue;
++
++		if (number[i] =3D=3D '*' || number[i] =3D=3D '#')
++			continue;
++
++		return FALSE;
 +	}
-+	else if (!valid_long_phone_number_format(number))
- 		return -EINVAL;
++
++	return TRUE;
++}
++
+ static void no_carrier_notify(GAtResult *result, gpointer user_data)
+ {
+ 	DBG("");
+@@ -1252,7 +1286,8 @@ static struct ofono_voicecall_driver driver =3D {
+ 	.transfer		=3D hfp_transfer,
+ 	.deflect		=3D NULL,
+ 	.swap_without_accept	=3D NULL,
+-	.send_tones		=3D hfp_send_dtmf
++	.send_tones		=3D hfp_send_dtmf,
++	.validate_dial =3D hfp_valid_number_format
+ };
  =
 
- 	if (ofono_modem_get_online(modem) =3D=3D FALSE)
+ void hfp_voicecall_init(void)
 -- =
 
 1.7.11.7
@@ -52,5 +91,5 @@ Registered Office: Munich
 Commercial Register: Amtsgericht Muenchen HRB 186928
 
 
---===============1149927270281806457==--
+--===============0853125831364730857==--
 
