@@ -1,59 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============7638735801160896215=="
+Content-Type: multipart/mixed; boundary="===============4520892366073745836=="
 MIME-Version: 1.0
-From: Pawlak, KubaX T <kubax.t.pawlak@intel.com>
-Subject: RE: [PATCH 0/3] Driver specific dial string validation
-Date: Fri, 07 Aug 2015 14:27:26 +0000
-Message-ID: <088CC8BACB3382439E91D9919CE3502436519864@IRSMSX107.ger.corp.intel.com>
-In-Reply-To: <55C3E242.8040708@gmail.com>
+From: Kuba Pawlak <kubax.t.pawlak@intel.com>
+Subject: [PATCH] hfp: Handle extra CCWA event
+Date: Tue, 18 Aug 2015 19:53:28 +0200
+Message-ID: <1439920408-6936-1-git-send-email-kubax.t.pawlak@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7638735801160896215==
+--===============4520892366073745836==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+When a call is waitng, CCWA event is sent and call object
+in state WAITING is created. on ReleaseAndAnswer it is
+promoted to INCOMING and later to ACTIVE.
+iPhones send an extra CCWA event when active call is ended.
+This extra event is creating a second call object in state
+WAITING. It is not possible to have two WAITING calls, but
+previously waiting call was already promoted to INCOMING.
+For a brief time we have two calls from the same number,
+one INCOMING and one WAITING. Later WAITING one is removed.
+As we cannot have a waiting and incoming call at the same
+time, ignore CCWA when there is already an INCOMING call.
 
-> On 08/06/2015 11:56 AM, Kuba Pawlak wrote:
-> > Dial() method is generic for all modems but hfpmodem may not support
-> some dial
-> > strings. HFP 1.6 SPEC for ATD says: "Only voice calls are covered in th=
-is
-> > specification."
-> > Problem is with dialling USSD codes. Request is accepted and a call obj=
-ect
-> > is state dialling is created. USSD code is completed, result displays on
-> > the phone, but there are no events that would allow oFono to remove this
-> fake
-> > call object.
-> > We may end up in such situation (Samsung S3 4.3):
-> > ofonod[292]: > ATD*132#;\r
-> > ofonod[292]: < \r\nOK\r\n
-> =
+< \r\n+CIEV: 3,3\r\n
+< \r\n+CIEV: 2,1\r\n
+< \r\n+CIEV: 3,0\r\n
+< \r\n+CCWA: "01234567890",129,1,"Me"\r\n
+< \r\n+CIEV: 3,1\r\n
+> AT+CLCC\r
+< \r\n+CLCC: 1,0,0,0,0,"09876543210",129,"Me"\r\n
+< \r\n+CLCC: 2,1,5,0,0,"01234567890",129,"Me"\r\n
+< \r\nOK\r\n
+< \r\n+CIEV: 2,0\r\n
+< \r\n+CCWA: "01234567890",129,1,"Me"\r\n
+< \r\n+CIEV: 2,1\r\n
+< \r\n+CIEV: 3,0\r\n
+> AT+CLCC\r
+< \r\n+CLCC: 2,1,0,0,0,"01234567890",129,"Me"\r\n
+< \r\nOK\r\n
+---
+ drivers/hfpmodem/voicecall.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-> Funny that the HFP AG implementation accepts this, but okay.
-
-This is the only phone I have that does that. S3 mini, some HTC are returni=
-ng CME ERROR.
-
-> On a phone, the Dialer was instructed to call
-> SupplementaryServices.Initiate() first, before calling
-> VoiceCallManager.Dial().  See doc/mmi-codes.txt.
-> =
-
-> Since we have no SupplementaryServices / ussd atom, I guess it would
-> make sense to have the voicecall atom double check that the passed in
-> string is not a USSD string.
-> =
-
-> Try the attached patch.
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index 7542fe4bd41424774dc888e11a6afed4b159f546..b6e0886c8d62e667421b0f5d43a=
+c1565c94e0838 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -712,6 +712,16 @@ static void ccwa_notify(GAtResult *result, gpointer us=
+er_data)
+ 				at_util_call_compare_by_status))
+ 		return;
  =
 
-Looks good. Stops USSD commands from reaching the phone. And is shorter.
++	/* some phones may send extra CCWA after active call is ended
++	 * this would trigger creation of second call in state 'WAITING'
++	 * as our previous WAITING call has been promoted to INCOMING
++	 */
++	if (g_slist_find_custom(vd->calls,
++				GINT_TO_POINTER(CALL_STATUS_INCOMING),
++				at_util_call_compare_by_status))
++		return;
++
++
+ 	g_at_result_iter_init(&iter, result);
+ =
 
-Regards,
-Kuba
+ 	if (!g_at_result_iter_next(&iter, "+CCWA:"))
+-- =
+
+1.7.11.7
+
 Intel Deutschland GmbH
 Registered Address: Am Campeon 10-12, 85579 Neubiberg, Germany
 Tel: +49 89 99 8853-0, www.intel.de
@@ -63,5 +82,5 @@ Registered Office: Munich
 Commercial Register: Amtsgericht Muenchen HRB 186928
 
 
---===============7638735801160896215==--
+--===============4520892366073745836==--
 
