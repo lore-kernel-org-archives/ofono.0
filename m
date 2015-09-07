@@ -1,44 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============2045088042884290800=="
+Content-Type: multipart/mixed; boundary="===============5796627173675367752=="
 MIME-Version: 1.0
 From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
-Subject: [PATCH 2/3] smsutil: Do not check the origin port
-Date: Mon, 07 Sep 2015 11:58:16 +0200
-Message-ID: <1441619897-22899-3-git-send-email-alfonso.sanchez-beato@canonical.com>
+Subject: [PATCH 3/3] sms: Add trace when datagram is not delivered
+Date: Mon, 07 Sep 2015 11:58:17 +0200
+Message-ID: <1441619897-22899-4-git-send-email-alfonso.sanchez-beato@canonical.com>
 In-Reply-To: <1441619897-22899-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2045088042884290800==
+--===============5796627173675367752==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Do not check if the origin port is reserved, as some operators use that
-range of values.
 ---
- src/smsutil.c | 3 ---
- 1 file changed, 3 deletions(-)
+ src/sms.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index 9406a8a..19e2016 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -1946,9 +1946,6 @@ static gboolean extract_app_port_common(struct sms_ud=
-h_iter *iter, int *dst,
- 			if (((addr_hdr[0] << 8) | addr_hdr[1]) > 49151)
- 				break;
+diff --git a/src/sms.c b/src/sms.c
+index 0270029..72972b2 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -1184,6 +1184,7 @@ static void dispatch_app_datagram(struct ofono_sms *s=
+ms,
+ 	ofono_sms_datagram_notify_cb_t notify;
+ 	struct sms_handler *h;
+ 	GSList *l;
++	gboolean dispatched =3D FALSE;
  =
 
--			if (((addr_hdr[2] << 8) | addr_hdr[3]) > 49151)
--				break;
--
- 			dstport =3D (addr_hdr[0] << 8) | addr_hdr[1];
- 			srcport =3D (addr_hdr[2] << 8) | addr_hdr[3];
- 			is_addr_8bit =3D FALSE;
+ 	ts =3D sms_scts_to_time(scts, &remote);
+ 	localtime_r(&ts, &local);
+@@ -1195,9 +1196,15 @@ static void dispatch_app_datagram(struct ofono_sms *=
+sms,
+ 		if (!port_equal(dst, h->dst) || !port_equal(src, h->src))
+ 			continue;
+ =
+
++		dispatched =3D TRUE;
++
+ 		notify(sender, &remote, &local, dst, src, buf, len,
+ 			h->item.notify_data);
+ 	}
++
++	if (!dispatched)
++		ofono_info("Datagram with ports [%d,%d] not delivered",
++								dst, src);
+ }
+ =
+
+ static void dispatch_text_message(struct ofono_sms *sms,
 -- =
 
 2.1.4
 
 
---===============2045088042884290800==--
+--===============5796627173675367752==--
 
