@@ -1,40 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============3238299982072128248=="
+Content-Type: multipart/mixed; boundary="===============0193423473804712879=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/3] Accept WAP push notifications with any origin port
-Date: Tue, 08 Sep 2015 09:14:31 -0500
-Message-ID: <55EEED47.20109@gmail.com>
-In-Reply-To: <1441619897-22899-1-git-send-email-alfonso.sanchez-beato@canonical.com>
+From: Bo <bothebobo@gmail.com>
+Subject: Re: basic connection howto
+Date: Tue, 08 Sep 2015 16:57:56 +0000
+Message-ID: <loom.20150908T185235-696@post.gmane.org>
+In-Reply-To: <55E612A7.1040806@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3238299982072128248==
+--===============0193423473804712879==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alfonso,
+Hi Denis!
 
-On 09/07/2015 04:58 AM, Alfonso Sanchez-Beato wrote:
-> Accept WAP push notifications regardless of the origin port, as some
-> operators seem to use random ports. The destination port is enough to
-> route properly the message.
->
-> Alfonso Sanchez-Beato (3):
->    push-notification: Accept push from any origin
->    smsutil: Do not check the origin port
->    sms: Add trace when datagram is not delivered
->
->   plugins/push-notification.c | 25 +++++++------------------
->   src/sms.c                   |  7 +++++++
->   src/smsutil.c               |  3 ---
->   3 files changed, 14 insertions(+), 21 deletions(-)
->
+Thanks for responding.
+That helps a lot.
+I figured the man pages were seriously out of date, =
 
-All 3 patches have been applied.  Thanks!
+so hopefully one of the pro's will update it.
+I will try and add support for my device -- =
 
-Regards,
--Denis
+If I have success, I'll submit a pull request.
+Good to know it will just "work out of the box".
+Classic problem in embedded engineering is =
 
---===============3238299982072128248==--
+you rarely have hardware available to conduct a control experiment, =
+
+so I didn't know what behaviour to expect.
+
+Cheers,
+Bo
+
+
+--===============0193423473804712879==--
 
