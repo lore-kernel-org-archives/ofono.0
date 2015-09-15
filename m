@@ -1,39 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============5310332476044752605=="
+Content-Type: multipart/mixed; boundary="===============0303413635918077875=="
 MIME-Version: 1.0
-From: Bo <bothebobo@gmail.com>
-Subject: Re: basic connection howto
-Date: Tue, 08 Sep 2015 21:32:12 +0000
-Message-ID: <loom.20150908T220956-760@post.gmane.org>
-In-Reply-To: <55E612A7.1040806@gmail.com>
+From: Viallard Anthony <viallard@syscom-instruments.com>
+Subject: Waiting "PB DONE" message before create the phonebook
+Date: Tue, 15 Sep 2015 12:19:25 +0200
+Message-ID: <55F7F0AD.4000901@syscom-instruments.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5310332476044752605==
+--===============0303413635918077875==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi again,
-Now after poking around in the code I realize I might be in trouble.
-I'm using devtmpfs
+Hi,
 
-Looks like ofono needs udev for the init of the drivers.
+My module (SIMCOM5216) sends "PB DONE" when the phonebook is ready. So, =
 
-However, I'm going to hack ofono and hardcode my usb dev in ofono =
+I would like to wait for this message before instantiated the phonebook =
 
-if i can figure it out.
-Not quite sure where I should do that in the src code.
+interface in ofono.
 
-If that fails. I will rebuild my system to use eudev, =
+In the phonebook AT driver, there is a quirk for ifx vendor. So, I try =
 
-and maybe this is a good time to hear if you =
+to do the same thing, not with the "+PBREADY" message, but with "PB =
 
-guys support eudev, or if anyone has tried with that before.
+DONE" and it doesn't work.
 
-Thanks for any guidance,
-Bo
+I don't known where to put my quirk. Can you give me some hints ?
 
+Regards,
+Anthony Viallard.
 
 
---===============5310332476044752605==--
+--===============0303413635918077875==--
 
