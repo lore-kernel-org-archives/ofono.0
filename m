@@ -1,248 +1,358 @@
-Content-Type: multipart/mixed; boundary="===============4065107096313934066=="
+Content-Type: multipart/mixed; boundary="===============1000732614664064228=="
 MIME-Version: 1.0
-From: Jason Gauthier <jagauthier@gmail.com>
+From: Georg Chini <georg@chini.tk>
 Subject: Re: Hands Free/Pulse - not working well
-Date: Sun, 20 Sep 2015 14:27:50 -0400
-Message-ID: <CAHY_EhXkGhQ6DRJn5NEgv6cOwJiwpr0UKHigYq3QDyw=7Yf-0A@mail.gmail.com>
-In-Reply-To: <CAHY_EhVZPs5G9csjr8qEoqEDzO_T6DXr0KZa+6O_X6WABKMQQw@mail.gmail.com>
+Date: Sun, 20 Sep 2015 21:04:23 +0200
+Message-ID: <55FF0337.5060603@chini.tk>
+In-Reply-To: <CAHY_EhXkGhQ6DRJn5NEgv6cOwJiwpr0UKHigYq3QDyw=7Yf-0A@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4065107096313934066==
+--===============1000732614664064228==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Follow up:
+On 20.09.2015 20:27, Jason Gauthier wrote:
+> Follow up:
+>
+> I rebooted and I was able to make and hang up 5 calls in a row.   All =
 
-I rebooted and I was able to make and hang up 5 calls in a row.   All the
-audio was redirected correctly.
-I had some of the  "SCO packet" errors.
+> the audio was redirected correctly.
+> I had some of the  "SCO packet" errors.
 
-Then, moments after hanging up the last call I got a kernel crash.
-I changed my screen display to be able to show the whole crash, so now I am
-able to see if in completion.
-I've attached it here.  It's not very helpful.  However, "swapper" is the
-same task that my other crashes were claiming, but I was doing post-mortem
-analysis on that other system (using 'crash')
+What kind of bluetooth dongle are you using? I had completely unreliable
+behavior with a Belkin dongle while others (MSI, Gembird) work fine.
+
+Further down I read that you are trying this on a virtual machine. Maybe
+the virtualization layer is the reason for the kernel crashes. Did you also
+test it on a physical machine?
+
+>
+> Then, moments after hanging up the last call I got a kernel crash.
+> I changed my screen display to be able to show the whole crash, so now =
+
+> I am able to see if in completion.
+> I've attached it here.  It's not very helpful.  However, "swapper" is =
+
+> the same task that my other crashes were claiming, but I was doing =
+
+> post-mortem analysis on that other system (using 'crash')
+>
+>
+> Inline image 1
+>
+> On Sun, Sep 20, 2015 at 2:17 PM, Jason Gauthier <jagauthier@gmail.com =
+
+> <mailto:jagauthier@gmail.com>> wrote:
+>
+>     Georg,
+>
+>      Thanks for your response.  I've never heard of that option
+>     before, so I added it.  Up until this point, I've been just trying
+>     to figure it out.  I've not found any documentation on how to
+>     accomplish this.
+>
+>     So, I added that parameter. My results are similiar to results
+>     I've achieved before.  No crashing this time.  (But it's not 100%
+>     reliable either).
+>
+>     I placed one call, and everything worked (audio in out of the
+>     computer). I've been able to get this to happen once in a while.
+>     I disconnect the call from the phone.   I placed a second call,
+>     there wasn't any audio, and my logs scroll like this:
+>     [ 1052.809382] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 2
+>     [ 1052.809964] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 16384
+>     [ 1052.810563] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 48
+>     [ 1052.811371] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 1
+>     [ 1052.811982] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 256
+>     [ 1052.812581] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 1
+>     [ 1052.813378] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 1
+>     [ 1052.813968] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 1
+>     [ 1052.814712] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 1
+>     [ 1052.815681] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 1
+>     [ 1052.816536] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 1
+>     [ 1052.817712] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 1
+>     [ 1052.818544] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 1
+>     [ 1052.819508] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 1
+>     [ 1052.820332] Bluetooth: hci0 SCO packet for unknown connection
+>     handle 1
+>
+>     I disconnected that call. I placed a third call and all audio came
+>     out of the phone.
+>     In a few previous tests, when this happens I see that ofono still
+>     thinks I have a voicecall.
+>     So, I probed dbus to verify this:
+>     qdbus --system org.ofono
+>
+>     As soon as I did that, the VM shut off. (No kernel crash - just
+>     instant off - I've seen this a few times)
+>
+>
+>
+>     On Sat, Sep 19, 2015 at 9:59 AM, Georg Chini <georg@chini.tk
+>     <mailto:georg@chini.tk>> wrote:
+>
+>         On 18.09.2015 20:01, Jason Gauthier wrote:
+>
+>             Greetings,
+>
+>                   I've been working on getting a HFP working with
+>             bluez and pulseaudio.  I'm running into an assortment of
+>             issues- I don't even know where to begin!
+>
+>             To set the stage, I'm running the latest version of bluez
+>             (5.33) pulseaudio (6.0) and ofono
+>             (pulled out of git). I've compiled everything from source.
+>
+>             Using PA and Bluez, I have audio sink working.  So I've
+>             verified several components at this point.
+>             I can connect the HFP.  Once I start making calls, is when
+>             things start to fall apart.
+>
+>             (BTW, this happens with ofono 1.15, and 1.16 as well)
+>
+>             So, as I'm writing this, the last two times after booting
+>             (debian jessie), connecting, and dialing, the system
+>             reboots. I've tried looking at debugging the kernel crash,
+>             and I've just not got very far.
+>
+>             I realize no one can tell me clearly how to fix this, I
+>             would appreciate some suggestions, or ways I can continue
+>             to debug this.
+>
+>             Ultimately, my goal is to put this on a raspberry pi for a
+>             car stereo. At the moment, I am just trying to get a proof
+>             of concept working.
+>
+>             Thanks!
+>
+>         Hi Jason,
+>
+>         do you use headset=3Dofono as parameter to
+>         module-bluetooth-discover in default.pa <http://default.pa>?
+>         Otherwise things will go wrong, although I would not expect a
+>         reboot of the machine.
+>
+>         Regards
+>                      Georg
+>         _______________________________________________
+>         ofono mailing list
+>         ofono(a)ofono.org <mailto:ofono@ofono.org>
+>         https://lists.ofono.org/mailman/listinfo/ofono
+>
+>
+>
+>
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> https://lists.ofono.org/mailman/listinfo/ofono
 
 
-[image: Inline image 1]
-
-On Sun, Sep 20, 2015 at 2:17 PM, Jason Gauthier <jagauthier@gmail.com>
-wrote:
-
-> Georg,
->
->  Thanks for your response.  I've never heard of that option before, so I
-> added it.  Up until this point, I've been just trying to figure it out.
-> I've not found any documentation on how to accomplish this.
->
-> So, I added that parameter. My results are similiar to results I've
-> achieved before.  No crashing this time.  (But it's not 100% reliable
-> either).
->
-> I placed one call, and everything worked (audio in out of the computer).
-> I've been able to get this to happen once in a while.
-> I disconnect the call from the phone.   I placed a second call, there
-> wasn't any audio, and my logs scroll like this:
-> [ 1052.809382] Bluetooth: hci0 SCO packet for unknown connection handle 2
-> [ 1052.809964] Bluetooth: hci0 SCO packet for unknown connection handle
-> 16384
-> [ 1052.810563] Bluetooth: hci0 SCO packet for unknown connection handle 48
-> [ 1052.811371] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.811982] Bluetooth: hci0 SCO packet for unknown connection handle 2=
-56
-> [ 1052.812581] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.813378] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.813968] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.814712] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.815681] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.816536] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.817712] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.818544] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.819508] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.820332] Bluetooth: hci0 SCO packet for unknown connection handle 1
->
-> I disconnected that call. I placed a third call and all audio came out of
-> the phone.
-> In a few previous tests, when this happens I see that ofono still thinks I
-> have a voicecall.
-> So, I probed dbus to verify this:
-> qdbus --system org.ofono
->
-> As soon as I did that, the VM shut off. (No kernel crash - just instant
-> off - I've seen this a few times)
->
->
->
-> On Sat, Sep 19, 2015 at 9:59 AM, Georg Chini <georg@chini.tk> wrote:
->
->> On 18.09.2015 20:01, Jason Gauthier wrote:
->>
->>> Greetings,
->>>
->>>       I've been working on getting a HFP working with bluez and
->>> pulseaudio.  I'm running into an assortment of issues- I don't even know
->>> where to begin!
->>>
->>> To set the stage, I'm running the latest version of bluez (5.33)
->>> pulseaudio (6.0) and ofono
->>> (pulled out of git). I've compiled everything from source.
->>>
->>> Using PA and Bluez, I have audio sink working.  So I've verified several
->>> components at this point.
->>> I can connect the HFP.  Once I start making calls, is when things start
->>> to fall apart.
->>>
->>> (BTW, this happens with ofono 1.15, and 1.16 as well)
->>>
->>> So, as I'm writing this, the last two times after booting (debian
->>> jessie), connecting, and dialing, the system reboots. I've tried lookin=
-g at
->>> debugging the kernel crash, and I've just not got very far.
->>>
->>> I realize no one can tell me clearly how to fix this, I would appreciate
->>> some suggestions, or ways I can continue to debug this.
->>>
->>> Ultimately, my goal is to put this on a raspberry pi for a car stereo.
->>> At the moment, I am just trying to get a proof of concept working.
->>>
->>> Thanks!
->>>
->>> Hi Jason,
->>
->> do you use headset=3Dofono as parameter to module-bluetooth-discover in
->> default.pa?
->> Otherwise things will go wrong, although I would not expect a reboot of
->> the machine.
->>
->> Regards
->>              Georg
->> _______________________________________________
->> ofono mailing list
->> ofono(a)ofono.org
->> https://lists.ofono.org/mailman/listinfo/ofono
->>
->
->
-
---===============4065107096313934066==
+--===============1000732614664064228==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PGRpdiBkaXI9Imx0ciI+Rm9sbG93IHVwOjxkaXY+PGJyPjwvZGl2PjxkaXY+SSByZWJvb3RlZCBh
-bmQgSSB3YXMgYWJsZSB0byBtYWtlIGFuZCBoYW5nIHVwIDUgY2FsbHMgaW4gYSByb3cuIMKgIEFs
-bCB0aGUgYXVkaW8gd2FzIHJlZGlyZWN0ZWQgY29ycmVjdGx5LjwvZGl2PjxkaXY+SSBoYWQgc29t
-ZSBvZiB0aGUgwqAmcXVvdDtTQ08gcGFja2V0JnF1b3Q7IGVycm9ycy48L2Rpdj48ZGl2Pjxicj48
-L2Rpdj48ZGl2PlRoZW4sIG1vbWVudHMgYWZ0ZXIgaGFuZ2luZyB1cCB0aGUgbGFzdCBjYWxsIEkg
-Z290IGEga2VybmVsIGNyYXNoLjwvZGl2PjxkaXY+SSBjaGFuZ2VkIG15IHNjcmVlbiBkaXNwbGF5
-IHRvIGJlIGFibGUgdG8gc2hvdyB0aGUgd2hvbGUgY3Jhc2gsIHNvIG5vdyBJIGFtIGFibGUgdG8g
-c2VlIGlmIGluIGNvbXBsZXRpb24uPC9kaXY+PGRpdj5JJiMzOTt2ZSBhdHRhY2hlZCBpdCBoZXJl
-LsKgIEl0JiMzOTtzIG5vdCB2ZXJ5IGhlbHBmdWwuwqAgSG93ZXZlciwgJnF1b3Q7c3dhcHBlciZx
-dW90OyBpcyB0aGUgc2FtZSB0YXNrIHRoYXQgbXkgb3RoZXIgY3Jhc2hlcyB3ZXJlIGNsYWltaW5n
-LCBidXQgSSB3YXMgZG9pbmcgcG9zdC1tb3J0ZW0gYW5hbHlzaXMgb24gdGhhdCBvdGhlciBzeXN0
-ZW0gKHVzaW5nICYjMzk7Y3Jhc2gmIzM5Oyk8L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2Pjxicj48
-L2Rpdj48ZGl2PjxpbWcgc3JjPSJjaWQ6aWlfMTRmZWMwMjM1NjQ2YWU4MyIgYWx0PSJJbmxpbmUg
-aW1hZ2UgMSIgd2lkdGg9IjU2MiIgaGVpZ2h0PSIzODEiPjxicj48L2Rpdj48L2Rpdj48ZGl2IGNs
-YXNzPSJnbWFpbF9leHRyYSI+PGJyPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj5PbiBTdW4sIFNl
-cCAyMCwgMjAxNSBhdCAyOjE3IFBNLCBKYXNvbiBHYXV0aGllciA8c3BhbiBkaXI9Imx0ciI+Jmx0
-OzxhIGhyZWY9Im1haWx0bzpqYWdhdXRoaWVyQGdtYWlsLmNvbSIgdGFyZ2V0PSJfYmxhbmsiPmph
-Z2F1dGhpZXJAZ21haWwuY29tPC9hPiZndDs8L3NwYW4+IHdyb3RlOjxicj48YmxvY2txdW90ZSBj
-bGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MCAwIDAgLjhleDtib3JkZXItbGVmdDox
-cHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij48ZGl2IGRpcj0ibHRyIj5HZW9yZyw8ZGl2
-Pjxicj48L2Rpdj48ZGl2PsKgVGhhbmtzIGZvciB5b3VyIHJlc3BvbnNlLsKgIEkmIzM5O3ZlIG5l
-dmVyIGhlYXJkIG9mIHRoYXQgb3B0aW9uIGJlZm9yZSwgc28gSSBhZGRlZCBpdC7CoCBVcCB1bnRp
-bCB0aGlzIHBvaW50LCBJJiMzOTt2ZSBiZWVuIGp1c3QgdHJ5aW5nIHRvIGZpZ3VyZSBpdCBvdXQu
-wqAgSSYjMzk7dmUgbm90IGZvdW5kIGFueSBkb2N1bWVudGF0aW9uIG9uIGhvdyB0byBhY2NvbXBs
-aXNoIHRoaXMuPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5TbywgSSBhZGRlZCB0aGF0IHBhcmFt
-ZXRlci4gTXkgcmVzdWx0cyBhcmUgc2ltaWxpYXIgdG8gcmVzdWx0cyBJJiMzOTt2ZSBhY2hpZXZl
-ZCBiZWZvcmUuwqAgTm8gY3Jhc2hpbmcgdGhpcyB0aW1lLiDCoChCdXQgaXQmIzM5O3Mgbm90IDEw
-MCUgcmVsaWFibGUgZWl0aGVyKS48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PkkgcGxhY2VkIG9u
-ZSBjYWxsLCBhbmQgZXZlcnl0aGluZyB3b3JrZWQgKGF1ZGlvIGluIG91dCBvZiB0aGUgY29tcHV0
-ZXIpLiBJJiMzOTt2ZSBiZWVuIGFibGUgdG8gZ2V0IHRoaXMgdG8gaGFwcGVuIG9uY2UgaW4gYSB3
-aGlsZS48L2Rpdj48ZGl2PkkgZGlzY29ubmVjdCB0aGUgY2FsbCBmcm9tIHRoZSBwaG9uZS4gwqAg
-SSBwbGFjZWQgYSBzZWNvbmQgY2FsbCwgdGhlcmUgd2FzbiYjMzk7dCBhbnkgYXVkaW8sIGFuZCBt
-eSBsb2dzIHNjcm9sbCBsaWtlIHRoaXM6PC9kaXY+PGRpdj48ZGl2PlsgMTA1Mi44MDkzODJdIEJs
-dWV0b290aDogaGNpMCBTQ08gcGFja2V0IGZvciB1bmtub3duIGNvbm5lY3Rpb24gaGFuZGxlIDI8
-L2Rpdj48ZGl2PlsgMTA1Mi44MDk5NjRdIEJsdWV0b290aDogaGNpMCBTQ08gcGFja2V0IGZvciB1
-bmtub3duIGNvbm5lY3Rpb24gaGFuZGxlIDE2Mzg0PC9kaXY+PGRpdj5bIDEwNTIuODEwNTYzXSBC
-bHVldG9vdGg6IGhjaTAgU0NPIHBhY2tldCBmb3IgdW5rbm93biBjb25uZWN0aW9uIGhhbmRsZSA0
-ODwvZGl2PjxkaXY+WyAxMDUyLjgxMTM3MV0gQmx1ZXRvb3RoOiBoY2kwIFNDTyBwYWNrZXQgZm9y
-IHVua25vd24gY29ubmVjdGlvbiBoYW5kbGUgMTwvZGl2PjxkaXY+WyAxMDUyLjgxMTk4Ml0gQmx1
-ZXRvb3RoOiBoY2kwIFNDTyBwYWNrZXQgZm9yIHVua25vd24gY29ubmVjdGlvbiBoYW5kbGUgMjU2
-PC9kaXY+PGRpdj5bIDEwNTIuODEyNTgxXSBCbHVldG9vdGg6IGhjaTAgU0NPIHBhY2tldCBmb3Ig
-dW5rbm93biBjb25uZWN0aW9uIGhhbmRsZSAxPC9kaXY+PGRpdj5bIDEwNTIuODEzMzc4XSBCbHVl
-dG9vdGg6IGhjaTAgU0NPIHBhY2tldCBmb3IgdW5rbm93biBjb25uZWN0aW9uIGhhbmRsZSAxPC9k
-aXY+PGRpdj5bIDEwNTIuODEzOTY4XSBCbHVldG9vdGg6IGhjaTAgU0NPIHBhY2tldCBmb3IgdW5r
-bm93biBjb25uZWN0aW9uIGhhbmRsZSAxPC9kaXY+PGRpdj5bIDEwNTIuODE0NzEyXSBCbHVldG9v
-dGg6IGhjaTAgU0NPIHBhY2tldCBmb3IgdW5rbm93biBjb25uZWN0aW9uIGhhbmRsZSAxPC9kaXY+
-PGRpdj5bIDEwNTIuODE1NjgxXSBCbHVldG9vdGg6IGhjaTAgU0NPIHBhY2tldCBmb3IgdW5rbm93
-biBjb25uZWN0aW9uIGhhbmRsZSAxPC9kaXY+PGRpdj5bIDEwNTIuODE2NTM2XSBCbHVldG9vdGg6
-IGhjaTAgU0NPIHBhY2tldCBmb3IgdW5rbm93biBjb25uZWN0aW9uIGhhbmRsZSAxPC9kaXY+PGRp
-dj5bIDEwNTIuODE3NzEyXSBCbHVldG9vdGg6IGhjaTAgU0NPIHBhY2tldCBmb3IgdW5rbm93biBj
-b25uZWN0aW9uIGhhbmRsZSAxPC9kaXY+PGRpdj5bIDEwNTIuODE4NTQ0XSBCbHVldG9vdGg6IGhj
-aTAgU0NPIHBhY2tldCBmb3IgdW5rbm93biBjb25uZWN0aW9uIGhhbmRsZSAxPC9kaXY+PGRpdj5b
-IDEwNTIuODE5NTA4XSBCbHVldG9vdGg6IGhjaTAgU0NPIHBhY2tldCBmb3IgdW5rbm93biBjb25u
-ZWN0aW9uIGhhbmRsZSAxPC9kaXY+PGRpdj5bIDEwNTIuODIwMzMyXSBCbHVldG9vdGg6IGhjaTAg
-U0NPIHBhY2tldCBmb3IgdW5rbm93biBjb25uZWN0aW9uIGhhbmRsZSAxPC9kaXY+PC9kaXY+PGRp
-dj48YnI+PC9kaXY+PGRpdj5JIGRpc2Nvbm5lY3RlZCB0aGF0IGNhbGwuIEkgcGxhY2VkIGEgdGhp
-cmQgY2FsbCBhbmQgYWxsIGF1ZGlvIGNhbWUgb3V0IG9mIHRoZSBwaG9uZS48L2Rpdj48ZGl2Pklu
-IGEgZmV3IHByZXZpb3VzIHRlc3RzLCB3aGVuIHRoaXMgaGFwcGVucyBJIHNlZSB0aGF0IG9mb25v
-IHN0aWxsIHRoaW5rcyBJIGhhdmUgYSB2b2ljZWNhbGwuIMKgPC9kaXY+PGRpdj5TbywgSSBwcm9i
-ZWQgZGJ1cyB0byB2ZXJpZnkgdGhpczrCoDwvZGl2PjxkaXY+cWRidXMgLS1zeXN0ZW0gb3JnLm9m
-b25vPGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+QXMgc29vbiBhcyBJIGRpZCB0aGF0LCB0
-aGUgVk0gc2h1dCBvZmYuIChObyBrZXJuZWwgY3Jhc2ggLSBqdXN0IGluc3RhbnQgb2ZmIC0gSSYj
-Mzk7dmUgc2VlbiB0aGlzIGEgZmV3IHRpbWVzKTwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJy
-PjwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+PGRpdiBjbGFzcz0iZ21h
-aWxfcXVvdGUiPk9uIFNhdCwgU2VwIDE5LCAyMDE1IGF0IDk6NTkgQU0sIEdlb3JnIENoaW5pIDxz
-cGFuIGRpcj0ibHRyIj4mbHQ7PGEgaHJlZj0ibWFpbHRvOmdlb3JnQGNoaW5pLnRrIiB0YXJnZXQ9
-Il9ibGFuayI+Z2VvcmdAY2hpbmkudGs8L2E+Jmd0Ozwvc3Bhbj4gd3JvdGU6PGJyPjxibG9ja3F1
-b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRlci1s
-ZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPk9uIDE4LjA5LjIwMTUgMjA6MDEs
-IEphc29uIEdhdXRoaWVyIHdyb3RlOjxicj4KPGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3Rl
-IiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFk
-ZGluZy1sZWZ0OjFleCI+CkdyZWV0aW5ncyw8YnI+Cjxicj4KwqAgwqAgwqAgSSYjMzk7dmUgYmVl
-biB3b3JraW5nIG9uIGdldHRpbmcgYSBIRlAgd29ya2luZyB3aXRoIGJsdWV6IGFuZCBwdWxzZWF1
-ZGlvLsKgIEkmIzM5O20gcnVubmluZyBpbnRvIGFuIGFzc29ydG1lbnQgb2YgaXNzdWVzLSBJIGRv
-biYjMzk7dCBldmVuIGtub3cgd2hlcmUgdG8gYmVnaW4hPGJyPgo8YnI+ClRvIHNldCB0aGUgc3Rh
-Z2UsIEkmIzM5O20gcnVubmluZyB0aGUgbGF0ZXN0IHZlcnNpb24gb2YgYmx1ZXogKDUuMzMpIHB1
-bHNlYXVkaW8gKDYuMCkgYW5kIG9mb25vPGJyPgoocHVsbGVkIG91dCBvZiBnaXQpLiBJJiMzOTt2
-ZSBjb21waWxlZCBldmVyeXRoaW5nIGZyb20gc291cmNlLjxicj4KPGJyPgpVc2luZyBQQSBhbmQg
-Qmx1ZXosIEkgaGF2ZSBhdWRpbyBzaW5rIHdvcmtpbmcuwqAgU28gSSYjMzk7dmUgdmVyaWZpZWQg
-c2V2ZXJhbCBjb21wb25lbnRzIGF0IHRoaXMgcG9pbnQuPGJyPgpJIGNhbiBjb25uZWN0IHRoZSBI
-RlAuwqAgT25jZSBJIHN0YXJ0IG1ha2luZyBjYWxscywgaXMgd2hlbiB0aGluZ3Mgc3RhcnQgdG8g
-ZmFsbCBhcGFydC48YnI+Cjxicj4KKEJUVywgdGhpcyBoYXBwZW5zIHdpdGggb2Zvbm8gMS4xNSwg
-YW5kIDEuMTYgYXMgd2VsbCk8YnI+Cjxicj4KU28sIGFzIEkmIzM5O20gd3JpdGluZyB0aGlzLCB0
-aGUgbGFzdCB0d28gdGltZXMgYWZ0ZXIgYm9vdGluZyAoZGViaWFuIGplc3NpZSksIGNvbm5lY3Rp
-bmcsIGFuZCBkaWFsaW5nLCB0aGUgc3lzdGVtIHJlYm9vdHMuIEkmIzM5O3ZlIHRyaWVkIGxvb2tp
-bmcgYXQgZGVidWdnaW5nIHRoZSBrZXJuZWwgY3Jhc2gsIGFuZCBJJiMzOTt2ZSBqdXN0IG5vdCBn
-b3QgdmVyeSBmYXIuPGJyPgo8YnI+CkkgcmVhbGl6ZSBubyBvbmUgY2FuIHRlbGwgbWUgY2xlYXJs
-eSBob3cgdG8gZml4IHRoaXMsIEkgd291bGQgYXBwcmVjaWF0ZSBzb21lIHN1Z2dlc3Rpb25zLCBv
-ciB3YXlzIEkgY2FuIGNvbnRpbnVlIHRvIGRlYnVnIHRoaXMuPGJyPgo8YnI+ClVsdGltYXRlbHks
-IG15IGdvYWwgaXMgdG8gcHV0IHRoaXMgb24gYSByYXNwYmVycnkgcGkgZm9yIGEgY2FyIHN0ZXJl
-by4gQXQgdGhlIG1vbWVudCwgSSBhbSBqdXN0IHRyeWluZyB0byBnZXQgYSBwcm9vZiBvZiBjb25j
-ZXB0IHdvcmtpbmcuPGJyPgo8YnI+ClRoYW5rcyE8YnI+Cjxicj4KPC9ibG9ja3F1b3RlPgpIaSBK
-YXNvbiw8YnI+Cjxicj4KZG8geW91IHVzZSBoZWFkc2V0PW9mb25vIGFzIHBhcmFtZXRlciB0byBt
-b2R1bGUtYmx1ZXRvb3RoLWRpc2NvdmVyIGluIDxhIGhyZWY9Imh0dHA6Ly9kZWZhdWx0LnBhIiBy
-ZWw9Im5vcmVmZXJyZXIiIHRhcmdldD0iX2JsYW5rIj5kZWZhdWx0LnBhPC9hPj88YnI+Ck90aGVy
-d2lzZSB0aGluZ3Mgd2lsbCBnbyB3cm9uZywgYWx0aG91Z2ggSSB3b3VsZCBub3QgZXhwZWN0IGEg
-cmVib290IG9mIHRoZSBtYWNoaW5lLjxicj4KPGJyPgpSZWdhcmRzPGJyPgrCoCDCoCDCoCDCoCDC
-oCDCoCDCoEdlb3JnPGJyPgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fXzxicj4Kb2Zvbm8gbWFpbGluZyBsaXN0PGJyPgo8YSBocmVmPSJtYWlsdG86b2Zvbm9A
-b2Zvbm8ub3JnIiB0YXJnZXQ9Il9ibGFuayI+b2Zvbm9Ab2Zvbm8ub3JnPC9hPjxicj4KPGEgaHJl
-Zj0iaHR0cHM6Ly9saXN0cy5vZm9uby5vcmcvbWFpbG1hbi9saXN0aW5mby9vZm9ubyIgcmVsPSJu
-b3JlZmVycmVyIiB0YXJnZXQ9Il9ibGFuayI+aHR0cHM6Ly9saXN0cy5vZm9uby5vcmcvbWFpbG1h
-bi9saXN0aW5mby9vZm9ubzwvYT48YnI+CjwvYmxvY2txdW90ZT48L2Rpdj48YnI+PC9kaXY+Cjwv
-YmxvY2txdW90ZT48L2Rpdj48YnI+PC9kaXY+Cg==
+PGh0bWw+CiAgPGhlYWQ+CiAgICA8bWV0YSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9d2lu
+ZG93cy0xMjUyIgogICAgICBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiPgogIDwvaGVhZD4KICA8
+Ym9keSBiZ2NvbG9yPSIjRkZGRkZGIiB0ZXh0PSIjMDAwMDAwIj4KICAgIDxkaXYgY2xhc3M9Im1v
+ei1jaXRlLXByZWZpeCI+T24gMjAuMDkuMjAxNSAyMDoyNywgSmFzb24gR2F1dGhpZXIKICAgICAg
+d3JvdGU6PGJyPgogICAgPC9kaXY+CiAgICA8YmxvY2txdW90ZQpjaXRlPSJtaWQ6Q0FIWV9FaFhr
+R2hRNkRSSm41TkVndjZjT3dKaXdwcjBVS0hpZ1lxM1FEeXc9N1lmLTBBQG1haWwuZ21haWwuY29t
+IgogICAgICB0eXBlPSJjaXRlIj4KICAgICAgPGRpdiBkaXI9Imx0ciI+Rm9sbG93IHVwOgogICAg
+ICAgIDxkaXY+PGJyPgogICAgICAgIDwvZGl2PgogICAgICAgIDxkaXY+SSByZWJvb3RlZCBhbmQg
+SSB3YXMgYWJsZSB0byBtYWtlIGFuZCBoYW5nIHVwIDUgY2FsbHMgaW4gYQogICAgICAgICAgcm93
+LiCgIEFsbCB0aGUgYXVkaW8gd2FzIHJlZGlyZWN0ZWQgY29ycmVjdGx5LjwvZGl2PgogICAgICAg
+IDxkaXY+SSBoYWQgc29tZSBvZiB0aGUgoCJTQ08gcGFja2V0IiBlcnJvcnMuPC9kaXY+CiAgICAg
+IDwvZGl2PgogICAgPC9ibG9ja3F1b3RlPgogICAgPGJyPgogICAgV2hhdCBraW5kIG9mIGJsdWV0
+b290aCBkb25nbGUgYXJlIHlvdSB1c2luZz8gSSBoYWQgY29tcGxldGVseQogICAgdW5yZWxpYWJs
+ZTxicj4KICAgIGJlaGF2aW9yIHdpdGggYSBCZWxraW4gZG9uZ2xlIHdoaWxlIG90aGVycyAoTVNJ
+LCBHZW1iaXJkKSB3b3JrIGZpbmUuPGJyPgogICAgPGJyPgogICAgRnVydGhlciBkb3duIEkgcmVh
+ZCB0aGF0IHlvdSBhcmUgdHJ5aW5nIHRoaXMgb24gYSB2aXJ0dWFsIG1hY2hpbmUuCiAgICBNYXli
+ZTxicj4KICAgIHRoZSB2aXJ0dWFsaXphdGlvbiBsYXllciBpcyB0aGUgcmVhc29uIGZvciB0aGUg
+a2VybmVsIGNyYXNoZXMuIERpZAogICAgeW91IGFsc288YnI+CiAgICB0ZXN0IGl0IG9uIGEgcGh5
+c2ljYWwgbWFjaGluZT88YnI+CiAgICA8YnI+CiAgICA8YmxvY2txdW90ZQpjaXRlPSJtaWQ6Q0FI
+WV9FaFhrR2hRNkRSSm41TkVndjZjT3dKaXdwcjBVS0hpZ1lxM1FEeXc9N1lmLTBBQG1haWwuZ21h
+aWwuY29tIgogICAgICB0eXBlPSJjaXRlIj4KICAgICAgPGRpdiBkaXI9Imx0ciI+CiAgICAgICAg
+PGRpdj48YnI+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdj5UaGVuLCBtb21lbnRzIGFmdGVy
+IGhhbmdpbmcgdXAgdGhlIGxhc3QgY2FsbCBJIGdvdCBhIGtlcm5lbAogICAgICAgICAgY3Jhc2gu
+PC9kaXY+CiAgICAgICAgPGRpdj5JIGNoYW5nZWQgbXkgc2NyZWVuIGRpc3BsYXkgdG8gYmUgYWJs
+ZSB0byBzaG93IHRoZSB3aG9sZQogICAgICAgICAgY3Jhc2gsIHNvIG5vdyBJIGFtIGFibGUgdG8g
+c2VlIGlmIGluIGNvbXBsZXRpb24uPC9kaXY+CiAgICAgICAgPGRpdj5JJ3ZlIGF0dGFjaGVkIGl0
+IGhlcmUuoCBJdCdzIG5vdCB2ZXJ5IGhlbHBmdWwuoCBIb3dldmVyLAogICAgICAgICAgInN3YXBw
+ZXIiIGlzIHRoZSBzYW1lIHRhc2sgdGhhdCBteSBvdGhlciBjcmFzaGVzIHdlcmUKICAgICAgICAg
+IGNsYWltaW5nLCBidXQgSSB3YXMgZG9pbmcgcG9zdC1tb3J0ZW0gYW5hbHlzaXMgb24gdGhhdCBv
+dGhlcgogICAgICAgICAgc3lzdGVtICh1c2luZyAnY3Jhc2gnKTwvZGl2PgogICAgICAgIDxkaXY+
+PGJyPgogICAgICAgIDwvZGl2PgogICAgICAgIDxkaXY+PGJyPgogICAgICAgIDwvZGl2PgogICAg
+ICAgIDxkaXY+PGltZyBzcmM9ImNpZDpwYXJ0MS4wMzAzMDAwOC4wMDA2MDgwNUBjaGluaS50ayIg
+YWx0PSJJbmxpbmUKICAgICAgICAgICAgaW1hZ2UgMSIgaGVpZ2h0PSIzODEiIHdpZHRoPSI1NjIi
+Pjxicj4KICAgICAgICA8L2Rpdj4KICAgICAgPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImdtYWls
+X2V4dHJhIj48YnI+CiAgICAgICAgPGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPk9uIFN1biwgU2Vw
+IDIwLCAyMDE1IGF0IDI6MTcgUE0sIEphc29uCiAgICAgICAgICBHYXV0aGllciA8c3BhbiBkaXI9
+Imx0ciI+Jmx0OzxhIG1vei1kby1ub3Qtc2VuZD0idHJ1ZSIKICAgICAgICAgICAgICBocmVmPSJt
+YWlsdG86amFnYXV0aGllckBnbWFpbC5jb20iIHRhcmdldD0iX2JsYW5rIj5qYWdhdXRoaWVyQGdt
+YWlsLmNvbTwvYT4mZ3Q7PC9zcGFuPgogICAgICAgICAgd3JvdGU6PGJyPgogICAgICAgICAgPGJs
+b2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwCiAgICAgICAg
+ICAgIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+CiAg
+ICAgICAgICAgIDxkaXYgZGlyPSJsdHIiPkdlb3JnLAogICAgICAgICAgICAgIDxkaXY+PGJyPgog
+ICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgIDxkaXY+oFRoYW5rcyBmb3IgeW91ciBy
+ZXNwb25zZS6gIEkndmUgbmV2ZXIgaGVhcmQgb2YgdGhhdAogICAgICAgICAgICAgICAgb3B0aW9u
+IGJlZm9yZSwgc28gSSBhZGRlZCBpdC6gIFVwIHVudGlsIHRoaXMgcG9pbnQsIEkndmUKICAgICAg
+ICAgICAgICAgIGJlZW4ganVzdCB0cnlpbmcgdG8gZmlndXJlIGl0IG91dC6gIEkndmUgbm90IGZv
+dW5kIGFueQogICAgICAgICAgICAgICAgZG9jdW1lbnRhdGlvbiBvbiBob3cgdG8gYWNjb21wbGlz
+aCB0aGlzLjwvZGl2PgogICAgICAgICAgICAgIDxkaXY+PGJyPgogICAgICAgICAgICAgIDwvZGl2
+PgogICAgICAgICAgICAgIDxkaXY+U28sIEkgYWRkZWQgdGhhdCBwYXJhbWV0ZXIuIE15IHJlc3Vs
+dHMgYXJlIHNpbWlsaWFyCiAgICAgICAgICAgICAgICB0byByZXN1bHRzIEkndmUgYWNoaWV2ZWQg
+YmVmb3JlLqAgTm8gY3Jhc2hpbmcgdGhpcyB0aW1lLgogICAgICAgICAgICAgICAgoChCdXQgaXQn
+cyBub3QgMTAwJSByZWxpYWJsZSBlaXRoZXIpLjwvZGl2PgogICAgICAgICAgICAgIDxkaXY+PGJy
+PgogICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgIDxkaXY+SSBwbGFjZWQgb25lIGNh
+bGwsIGFuZCBldmVyeXRoaW5nIHdvcmtlZCAoYXVkaW8gaW4KICAgICAgICAgICAgICAgIG91dCBv
+ZiB0aGUgY29tcHV0ZXIpLiBJJ3ZlIGJlZW4gYWJsZSB0byBnZXQgdGhpcyB0bwogICAgICAgICAg
+ICAgICAgaGFwcGVuIG9uY2UgaW4gYSB3aGlsZS48L2Rpdj4KICAgICAgICAgICAgICA8ZGl2Pkkg
+ZGlzY29ubmVjdCB0aGUgY2FsbCBmcm9tIHRoZSBwaG9uZS4goCBJIHBsYWNlZCBhCiAgICAgICAg
+ICAgICAgICBzZWNvbmQgY2FsbCwgdGhlcmUgd2Fzbid0IGFueSBhdWRpbywgYW5kIG15IGxvZ3Mg
+c2Nyb2xsCiAgICAgICAgICAgICAgICBsaWtlIHRoaXM6PC9kaXY+CiAgICAgICAgICAgICAgPGRp
+dj4KICAgICAgICAgICAgICAgIDxkaXY+WyAxMDUyLjgwOTM4Ml0gQmx1ZXRvb3RoOiBoY2kwIFND
+TyBwYWNrZXQgZm9yCiAgICAgICAgICAgICAgICAgIHVua25vd24gY29ubmVjdGlvbiBoYW5kbGUg
+MjwvZGl2PgogICAgICAgICAgICAgICAgPGRpdj5bIDEwNTIuODA5OTY0XSBCbHVldG9vdGg6IGhj
+aTAgU0NPIHBhY2tldCBmb3IKICAgICAgICAgICAgICAgICAgdW5rbm93biBjb25uZWN0aW9uIGhh
+bmRsZSAxNjM4NDwvZGl2PgogICAgICAgICAgICAgICAgPGRpdj5bIDEwNTIuODEwNTYzXSBCbHVl
+dG9vdGg6IGhjaTAgU0NPIHBhY2tldCBmb3IKICAgICAgICAgICAgICAgICAgdW5rbm93biBjb25u
+ZWN0aW9uIGhhbmRsZSA0ODwvZGl2PgogICAgICAgICAgICAgICAgPGRpdj5bIDEwNTIuODExMzcx
+XSBCbHVldG9vdGg6IGhjaTAgU0NPIHBhY2tldCBmb3IKICAgICAgICAgICAgICAgICAgdW5rbm93
+biBjb25uZWN0aW9uIGhhbmRsZSAxPC9kaXY+CiAgICAgICAgICAgICAgICA8ZGl2PlsgMTA1Mi44
+MTE5ODJdIEJsdWV0b290aDogaGNpMCBTQ08gcGFja2V0IGZvcgogICAgICAgICAgICAgICAgICB1
+bmtub3duIGNvbm5lY3Rpb24gaGFuZGxlIDI1NjwvZGl2PgogICAgICAgICAgICAgICAgPGRpdj5b
+IDEwNTIuODEyNTgxXSBCbHVldG9vdGg6IGhjaTAgU0NPIHBhY2tldCBmb3IKICAgICAgICAgICAg
+ICAgICAgdW5rbm93biBjb25uZWN0aW9uIGhhbmRsZSAxPC9kaXY+CiAgICAgICAgICAgICAgICA8
+ZGl2PlsgMTA1Mi44MTMzNzhdIEJsdWV0b290aDogaGNpMCBTQ08gcGFja2V0IGZvcgogICAgICAg
+ICAgICAgICAgICB1bmtub3duIGNvbm5lY3Rpb24gaGFuZGxlIDE8L2Rpdj4KICAgICAgICAgICAg
+ICAgIDxkaXY+WyAxMDUyLjgxMzk2OF0gQmx1ZXRvb3RoOiBoY2kwIFNDTyBwYWNrZXQgZm9yCiAg
+ICAgICAgICAgICAgICAgIHVua25vd24gY29ubmVjdGlvbiBoYW5kbGUgMTwvZGl2PgogICAgICAg
+ICAgICAgICAgPGRpdj5bIDEwNTIuODE0NzEyXSBCbHVldG9vdGg6IGhjaTAgU0NPIHBhY2tldCBm
+b3IKICAgICAgICAgICAgICAgICAgdW5rbm93biBjb25uZWN0aW9uIGhhbmRsZSAxPC9kaXY+CiAg
+ICAgICAgICAgICAgICA8ZGl2PlsgMTA1Mi44MTU2ODFdIEJsdWV0b290aDogaGNpMCBTQ08gcGFj
+a2V0IGZvcgogICAgICAgICAgICAgICAgICB1bmtub3duIGNvbm5lY3Rpb24gaGFuZGxlIDE8L2Rp
+dj4KICAgICAgICAgICAgICAgIDxkaXY+WyAxMDUyLjgxNjUzNl0gQmx1ZXRvb3RoOiBoY2kwIFND
+TyBwYWNrZXQgZm9yCiAgICAgICAgICAgICAgICAgIHVua25vd24gY29ubmVjdGlvbiBoYW5kbGUg
+MTwvZGl2PgogICAgICAgICAgICAgICAgPGRpdj5bIDEwNTIuODE3NzEyXSBCbHVldG9vdGg6IGhj
+aTAgU0NPIHBhY2tldCBmb3IKICAgICAgICAgICAgICAgICAgdW5rbm93biBjb25uZWN0aW9uIGhh
+bmRsZSAxPC9kaXY+CiAgICAgICAgICAgICAgICA8ZGl2PlsgMTA1Mi44MTg1NDRdIEJsdWV0b290
+aDogaGNpMCBTQ08gcGFja2V0IGZvcgogICAgICAgICAgICAgICAgICB1bmtub3duIGNvbm5lY3Rp
+b24gaGFuZGxlIDE8L2Rpdj4KICAgICAgICAgICAgICAgIDxkaXY+WyAxMDUyLjgxOTUwOF0gQmx1
+ZXRvb3RoOiBoY2kwIFNDTyBwYWNrZXQgZm9yCiAgICAgICAgICAgICAgICAgIHVua25vd24gY29u
+bmVjdGlvbiBoYW5kbGUgMTwvZGl2PgogICAgICAgICAgICAgICAgPGRpdj5bIDEwNTIuODIwMzMy
+XSBCbHVldG9vdGg6IGhjaTAgU0NPIHBhY2tldCBmb3IKICAgICAgICAgICAgICAgICAgdW5rbm93
+biBjb25uZWN0aW9uIGhhbmRsZSAxPC9kaXY+CiAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAg
+ICAgICAgPGRpdj48YnI+CiAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgPGRpdj5J
+IGRpc2Nvbm5lY3RlZCB0aGF0IGNhbGwuIEkgcGxhY2VkIGEgdGhpcmQgY2FsbCBhbmQKICAgICAg
+ICAgICAgICAgIGFsbCBhdWRpbyBjYW1lIG91dCBvZiB0aGUgcGhvbmUuPC9kaXY+CiAgICAgICAg
+ICAgICAgPGRpdj5JbiBhIGZldyBwcmV2aW91cyB0ZXN0cywgd2hlbiB0aGlzIGhhcHBlbnMgSSBz
+ZWUgdGhhdAogICAgICAgICAgICAgICAgb2Zvbm8gc3RpbGwgdGhpbmtzIEkgaGF2ZSBhIHZvaWNl
+Y2FsbC4goDwvZGl2PgogICAgICAgICAgICAgIDxkaXY+U28sIEkgcHJvYmVkIGRidXMgdG8gdmVy
+aWZ5IHRoaXM6oDwvZGl2PgogICAgICAgICAgICAgIDxkaXY+cWRidXMgLS1zeXN0ZW0gb3JnLm9m
+b25vPGJyPgogICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgIDxkaXY+PGJyPgogICAg
+ICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgIDxkaXY+QXMgc29vbiBhcyBJIGRpZCB0aGF0
+LCB0aGUgVk0gc2h1dCBvZmYuIChObyBrZXJuZWwKICAgICAgICAgICAgICAgIGNyYXNoIC0ganVz
+dCBpbnN0YW50IG9mZiAtIEkndmUgc2VlbiB0aGlzIGEgZmV3IHRpbWVzKTwvZGl2PgogICAgICAg
+ICAgICAgIDxkaXY+PGJyPgogICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgIDxkaXY+
+PGJyPgogICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAg
+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPjxicj4KICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJn
+bWFpbF9xdW90ZSI+T24gU2F0LCBTZXAgMTksIDIwMTUgYXQgOTo1OSBBTSwKICAgICAgICAgICAg
+ICAgIEdlb3JnIENoaW5pIDxzcGFuIGRpcj0ibHRyIj4mbHQ7PGEKICAgICAgICAgICAgICAgICAg
+ICBtb3otZG8tbm90LXNlbmQ9InRydWUiIGhyZWY9Im1haWx0bzpnZW9yZ0BjaGluaS50ayIKICAg
+ICAgICAgICAgICAgICAgICB0YXJnZXQ9Il9ibGFuayI+Z2VvcmdAY2hpbmkudGs8L2E+Jmd0Ozwv
+c3Bhbj4gd3JvdGU6PGJyPgogICAgICAgICAgICAgICAgPGJsb2NrcXVvdGUgY2xhc3M9ImdtYWls
+X3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwCiAgICAgICAgICAgICAgICAgIC44ZXg7Ym9yZGVy
+LWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+T24KICAgICAgICAgICAgICAg
+ICAgMTguMDkuMjAxNSAyMDowMSwgSmFzb24gR2F1dGhpZXIgd3JvdGU6PGJyPgogICAgICAgICAg
+ICAgICAgICA8YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MCAw
+IDAKICAgICAgICAgICAgICAgICAgICAuOGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3Bh
+ZGRpbmctbGVmdDoxZXgiPgogICAgICAgICAgICAgICAgICAgIEdyZWV0aW5ncyw8YnI+CiAgICAg
+ICAgICAgICAgICAgICAgPGJyPgogICAgICAgICAgICAgICAgICAgIKAgoCCgIEkndmUgYmVlbiB3
+b3JraW5nIG9uIGdldHRpbmcgYSBIRlAgd29ya2luZwogICAgICAgICAgICAgICAgICAgIHdpdGgg
+Ymx1ZXogYW5kIHB1bHNlYXVkaW8uoCBJJ20gcnVubmluZyBpbnRvIGFuCiAgICAgICAgICAgICAg
+ICAgICAgYXNzb3J0bWVudCBvZiBpc3N1ZXMtIEkgZG9uJ3QgZXZlbiBrbm93IHdoZXJlIHRvCiAg
+ICAgICAgICAgICAgICAgICAgYmVnaW4hPGJyPgogICAgICAgICAgICAgICAgICAgIDxicj4KICAg
+ICAgICAgICAgICAgICAgICBUbyBzZXQgdGhlIHN0YWdlLCBJJ20gcnVubmluZyB0aGUgbGF0ZXN0
+IHZlcnNpb24gb2YKICAgICAgICAgICAgICAgICAgICBibHVleiAoNS4zMykgcHVsc2VhdWRpbyAo
+Ni4wKSBhbmQgb2Zvbm88YnI+CiAgICAgICAgICAgICAgICAgICAgKHB1bGxlZCBvdXQgb2YgZ2l0
+KS4gSSd2ZSBjb21waWxlZCBldmVyeXRoaW5nIGZyb20KICAgICAgICAgICAgICAgICAgICBzb3Vy
+Y2UuPGJyPgogICAgICAgICAgICAgICAgICAgIDxicj4KICAgICAgICAgICAgICAgICAgICBVc2lu
+ZyBQQSBhbmQgQmx1ZXosIEkgaGF2ZSBhdWRpbyBzaW5rIHdvcmtpbmcuoCBTbwogICAgICAgICAg
+ICAgICAgICAgIEkndmUgdmVyaWZpZWQgc2V2ZXJhbCBjb21wb25lbnRzIGF0IHRoaXMgcG9pbnQu
+PGJyPgogICAgICAgICAgICAgICAgICAgIEkgY2FuIGNvbm5lY3QgdGhlIEhGUC6gIE9uY2UgSSBz
+dGFydCBtYWtpbmcgY2FsbHMsCiAgICAgICAgICAgICAgICAgICAgaXMgd2hlbiB0aGluZ3Mgc3Rh
+cnQgdG8gZmFsbCBhcGFydC48YnI+CiAgICAgICAgICAgICAgICAgICAgPGJyPgogICAgICAgICAg
+ICAgICAgICAgIChCVFcsIHRoaXMgaGFwcGVucyB3aXRoIG9mb25vIDEuMTUsIGFuZCAxLjE2IGFz
+CiAgICAgICAgICAgICAgICAgICAgd2VsbCk8YnI+CiAgICAgICAgICAgICAgICAgICAgPGJyPgog
+ICAgICAgICAgICAgICAgICAgIFNvLCBhcyBJJ20gd3JpdGluZyB0aGlzLCB0aGUgbGFzdCB0d28g
+dGltZXMgYWZ0ZXIKICAgICAgICAgICAgICAgICAgICBib290aW5nIChkZWJpYW4gamVzc2llKSwg
+Y29ubmVjdGluZywgYW5kIGRpYWxpbmcsCiAgICAgICAgICAgICAgICAgICAgdGhlIHN5c3RlbSBy
+ZWJvb3RzLiBJJ3ZlIHRyaWVkIGxvb2tpbmcgYXQgZGVidWdnaW5nCiAgICAgICAgICAgICAgICAg
+ICAgdGhlIGtlcm5lbCBjcmFzaCwgYW5kIEkndmUganVzdCBub3QgZ290IHZlcnkgZmFyLjxicj4K
+ICAgICAgICAgICAgICAgICAgICA8YnI+CiAgICAgICAgICAgICAgICAgICAgSSByZWFsaXplIG5v
+IG9uZSBjYW4gdGVsbCBtZSBjbGVhcmx5IGhvdyB0byBmaXgKICAgICAgICAgICAgICAgICAgICB0
+aGlzLCBJIHdvdWxkIGFwcHJlY2lhdGUgc29tZSBzdWdnZXN0aW9ucywgb3Igd2F5cyBJCiAgICAg
+ICAgICAgICAgICAgICAgY2FuIGNvbnRpbnVlIHRvIGRlYnVnIHRoaXMuPGJyPgogICAgICAgICAg
+ICAgICAgICAgIDxicj4KICAgICAgICAgICAgICAgICAgICBVbHRpbWF0ZWx5LCBteSBnb2FsIGlz
+IHRvIHB1dCB0aGlzIG9uIGEgcmFzcGJlcnJ5IHBpCiAgICAgICAgICAgICAgICAgICAgZm9yIGEg
+Y2FyIHN0ZXJlby4gQXQgdGhlIG1vbWVudCwgSSBhbSBqdXN0IHRyeWluZyB0bwogICAgICAgICAg
+ICAgICAgICAgIGdldCBhIHByb29mIG9mIGNvbmNlcHQgd29ya2luZy48YnI+CiAgICAgICAgICAg
+ICAgICAgICAgPGJyPgogICAgICAgICAgICAgICAgICAgIFRoYW5rcyE8YnI+CiAgICAgICAgICAg
+ICAgICAgICAgPGJyPgogICAgICAgICAgICAgICAgICA8L2Jsb2NrcXVvdGU+CiAgICAgICAgICAg
+ICAgICAgIEhpIEphc29uLDxicj4KICAgICAgICAgICAgICAgICAgPGJyPgogICAgICAgICAgICAg
+ICAgICBkbyB5b3UgdXNlIGhlYWRzZXQ9b2Zvbm8gYXMgcGFyYW1ldGVyIHRvCiAgICAgICAgICAg
+ICAgICAgIG1vZHVsZS1ibHVldG9vdGgtZGlzY292ZXIgaW4gPGEKICAgICAgICAgICAgICAgICAg
+ICBtb3otZG8tbm90LXNlbmQ9InRydWUiIGhyZWY9Imh0dHA6Ly9kZWZhdWx0LnBhIgogICAgICAg
+ICAgICAgICAgICAgIHJlbD0ibm9yZWZlcnJlciIgdGFyZ2V0PSJfYmxhbmsiPmRlZmF1bHQucGE8
+L2E+Pzxicj4KICAgICAgICAgICAgICAgICAgT3RoZXJ3aXNlIHRoaW5ncyB3aWxsIGdvIHdyb25n
+LCBhbHRob3VnaCBJIHdvdWxkIG5vdAogICAgICAgICAgICAgICAgICBleHBlY3QgYSByZWJvb3Qg
+b2YgdGhlIG1hY2hpbmUuPGJyPgogICAgICAgICAgICAgICAgICA8YnI+CiAgICAgICAgICAgICAg
+ICAgIFJlZ2FyZHM8YnI+CiAgICAgICAgICAgICAgICAgIKAgoCCgIKAgoCCgIKBHZW9yZzxicj4K
+ICAgICAgICAgICAgICAgICAgX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX188YnI+CiAgICAgICAgICAgICAgICAgIG9mb25vIG1haWxpbmcgbGlzdDxicj4KICAg
+ICAgICAgICAgICAgICAgPGEgbW96LWRvLW5vdC1zZW5kPSJ0cnVlIgogICAgICAgICAgICAgICAg
+ICAgIGhyZWY9Im1haWx0bzpvZm9ub0BvZm9uby5vcmciIHRhcmdldD0iX2JsYW5rIj5vZm9ub0Bv
+Zm9uby5vcmc8L2E+PGJyPgogICAgICAgICAgICAgICAgICA8YSBtb3otZG8tbm90LXNlbmQ9InRy
+dWUiCiAgICAgICAgICAgICAgICAgICAgaHJlZj0iaHR0cHM6Ly9saXN0cy5vZm9uby5vcmcvbWFp
+bG1hbi9saXN0aW5mby9vZm9ubyIKICAgICAgICAgICAgICAgICAgICByZWw9Im5vcmVmZXJyZXIi
+IHRhcmdldD0iX2JsYW5rIj5odHRwczovL2xpc3RzLm9mb25vLm9yZy9tYWlsbWFuL2xpc3RpbmZv
+L29mb25vPC9hPjxicj4KICAgICAgICAgICAgICAgIDwvYmxvY2txdW90ZT4KICAgICAgICAgICAg
+ICA8L2Rpdj4KICAgICAgICAgICAgICA8YnI+CiAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAg
+PC9ibG9ja3F1b3RlPgogICAgICAgIDwvZGl2PgogICAgICAgIDxicj4KICAgICAgPC9kaXY+CiAg
+ICAgIDxicj4KICAgICAgPGZpZWxkc2V0IGNsYXNzPSJtaW1lQXR0YWNobWVudEhlYWRlciI+PC9m
+aWVsZHNldD4KICAgICAgPGJyPgogICAgICA8cHJlIHdyYXA9IiI+X19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX18Kb2Zvbm8gbWFpbGluZyBsaXN0CjxhIGNsYXNz
+PSJtb3otdHh0LWxpbmstYWJicmV2aWF0ZWQiIGhyZWY9Im1haWx0bzpvZm9ub0BvZm9uby5vcmci
+Pm9mb25vQG9mb25vLm9yZzwvYT4KPGEgY2xhc3M9Im1vei10eHQtbGluay1mcmVldGV4dCIgaHJl
+Zj0iaHR0cHM6Ly9saXN0cy5vZm9uby5vcmcvbWFpbG1hbi9saXN0aW5mby9vZm9ubyI+aHR0cHM6
+Ly9saXN0cy5vZm9uby5vcmcvbWFpbG1hbi9saXN0aW5mby9vZm9ubzwvYT4KPC9wcmU+CiAgICA8
+L2Jsb2NrcXVvdGU+CiAgICA8YnI+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==
 
---===============4065107096313934066==
+--===============1000732614664064228==
 Content-Type: image/png
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="image.png"
+Content-Disposition: attachment; filename="attachment.png"
 
 iVBORw0KGgoAAAANSUhEUgAABQEAAANlCAYAAADMzz8aAAAgAElEQVR4Aey9jXIkR5KkCYDsfqOT
 3Z1hk+zmTO/JzZ7IrJxIP+Q8393OzjQLuLQqUVJLy/wv3OMnMzVEQDe3HzXzLwJAIomqenl5efng
@@ -1979,5 +2089,5 @@ AhCAAAQgAAEIQAACMwi88DcBZ9DCFAIQgAAEIAABCEAAAhCAAAQgAAEIQAACFyTw8vLCB4NccN8o
 GQIQgAAEIAABCEAAAhCAAAQgAAEIQAACswh8+cc//jHp8PXr10k9SghAAAIQgAAEIAABCEAAAhCA
 AAQgAAEIQOC8BF5f+WCQ8+4OlUEAAhCAAAQgAAEIQAACEIAABCAAAQhAYAMCr99en/4/gkvhzney
 SlwAAAAASUVORK5CYII=
---===============4065107096313934066==--
+--===============1000732614664064228==--
 
