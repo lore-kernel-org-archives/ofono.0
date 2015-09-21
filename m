@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============1482457087658662635=="
+Content-Type: multipart/mixed; boundary="===============1314245818979951616=="
 MIME-Version: 1.0
 From: Pawlak, KubaX T <kubax.t.pawlak@intel.com>
 Subject: RE: Hands Free/Pulse - not working well
-Date: Mon, 21 Sep 2015 15:12:53 +0000
-Message-ID: <088CC8BACB3382439E91D9919CE350243655A218@IRSMSX107.ger.corp.intel.com>
+Date: Mon, 21 Sep 2015 15:18:34 +0000
+Message-ID: <088CC8BACB3382439E91D9919CE350243655A22C@IRSMSX107.ger.corp.intel.com>
 In-Reply-To: <CAHY_EhXkGhQ6DRJn5NEgv6cOwJiwpr0UKHigYq3QDyw=7Yf-0A@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1482457087658662635==
+--===============1314245818979951616==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -72,5 +72,5 @@ Chairperson of the Supervisory Board: Tiffany Doon Silva
 Registered Office: Munich
 Commercial Register: Amtsgericht Muenchen HRB 186928
 
---===============1482457087658662635==--
+--===============1314245818979951616==--
 
