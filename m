@@ -1,243 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============2827632703023918918=="
+Content-Type: multipart/mixed; boundary="===============8225046308690286778=="
 MIME-Version: 1.0
-From: Simon Fels <simon.fels@canonical.com>
-Subject: [PATCH 2/2 v2] hfp_ag_bluez5: register audio card
-Date: Mon, 05 Oct 2015 13:33:10 +0200
-Message-ID: <1444044790-17392-2-git-send-email-simon.fels@canonical.com>
-In-Reply-To: <1444044790-17392-1-git-send-email-simon.fels@canonical.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/2 v2] hfp_ag_bluez5: register audio card
+Date: Mon, 05 Oct 2015 11:45:55 -0500
+Message-ID: <5612A943.2000704@gmail.com>
+In-Reply-To: <1444044790-17392-2-git-send-email-simon.fels@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2827632703023918918==
+--===============8225046308690286778==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-To let others (PulseAudio) be notified when a handsfree device is
-connected with us and can be used for audio routing we need to
-expose this by registering a audio card with the correct type.
+Hi Simon,
 
-For now there is no need to provide a card driver and we just stick
-to what the core provides.
----
- plugins/hfp_ag_bluez5.c | 77 +++++++++++++++++++++++++++++++++++++++++++--=
-----
- 1 file changed, 68 insertions(+), 9 deletions(-)
+<snip>
 
-diff --git a/plugins/hfp_ag_bluez5.c b/plugins/hfp_ag_bluez5.c
-index 93de302..50238d8 100644
---- a/plugins/hfp_ag_bluez5.c
-+++ b/plugins/hfp_ag_bluez5.c
-@@ -22,6 +22,7 @@
- #include <config.h>
- #endif
- #include <stdio.h>
-+#include <stdlib.h>
- #include <string.h>
- #include <unistd.h>
- #include <errno.h>
-@@ -35,21 +36,30 @@
- #include <ofono/plugin.h>
- #include <ofono/log.h>
- #include <ofono/modem.h>
-+#include <ofono/handsfree.h>
-+#include <ofono/handsfree-audio.h>
- =
+> @@ -123,14 +168,24 @@ static DBusMessage *profile_new_connection(DBusConn=
+ection *conn,
+>
+>   	ofono_emulator_register(em, fd);
+>
+> -	fd_dup =3D dup(fd);
+> -	io =3D g_io_channel_unix_new(fd_dup);
+> +	io =3D g_io_channel_unix_new(fd);
 
- #include "hfp.h"
- #include "bluez5.h"
-+#include "bluetooth.h"
- =
+The comment in commit 9332299b indicates that a dup() was needed to =
 
- #ifndef DBUS_TYPE_UNIX_FD
- #define DBUS_TYPE_UNIX_FD -1
- #endif
- =
+properly detect HUP events.  Can you double check that this change is =
 
- #define HFP_AG_EXT_PROFILE_PATH   "/bluetooth/profile/hfp_ag"
-+#define BT_ADDR_SIZE 18
- =
+indeed correct?
 
- static guint modemwatch_id;
- static GList *modems;
- static GHashTable *sim_hash =3D NULL;
- static GHashTable *connection_hash;
- =
+>   	g_io_add_watch_full(io, G_PRIORITY_DEFAULT, G_IO_HUP, io_hup_cb,
+>   						g_strdup(device), g_free);
+>   	g_io_channel_unref(io);
+>
+> -	g_hash_table_insert(connection_hash, g_strdup(device),
+> -						GINT_TO_POINTER(fd_dup));
+> +	dev =3D g_new0(struct device_info, 1);
+> +	dev->fd =3D fd;
+> +
+> +	dev->card =3D ofono_handsfree_card_create(0,
+> +					OFONO_HANDSFREE_CARD_TYPE_GATEWAY,
+> +					NULL, NULL);
+> +
+> +	ofono_handsfree_card_set_local(dev->card, local);
+> +	ofono_handsfree_card_set_remote(dev->card, remote);
+> +
+> +	g_hash_table_insert(connection_hash, g_strdup(device), dev);
+> +
+> +	ofono_handsfree_card_register(dev->card);
+>
 
-+struct device_info {
-+	int fd;
-+	struct ofono_handsfree_card *card;
-+};
-+
- static void connection_destroy(gpointer data)
- {
- 	int fd =3D GPOINTER_TO_INT(data);
-@@ -76,9 +86,14 @@ static DBusMessage *profile_new_connection(DBusConnectio=
-n *conn,
- 	DBusMessageIter entry;
- 	const char *device;
- 	GIOChannel *io;
--	int fd, fd_dup;
-+	int fd;
-+	struct sockaddr_rc saddr;
-+	socklen_t optlen;
- 	struct ofono_emulator *em;
- 	struct ofono_modem *modem;
-+	struct device_info *dev;
-+	char local[BT_ADDR_SIZE], remote[BT_ADDR_SIZE];
-+	int err;
- =
+On HFP 1.6 and 1.7, the audio should not be triggered until SLC is =
 
- 	DBG("Profile handler NewConnection");
- =
+established.  Whats your plan to ensure that PulseAudio does not start =
 
-@@ -95,7 +110,10 @@ static DBusMessage *profile_new_connection(DBusConnecti=
-on *conn,
- 		goto invalid;
- =
+using the audio device until then?  FYI, the earlier attempt to add AG =
 
- 	dbus_message_iter_get_basic(&entry, &fd);
-+
- 	dbus_message_iter_next(&entry);
-+	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_ARRAY)
-+		goto invalid;
- =
+support had src/emulator.c make the ofono_handsfree_card_register() call =
 
- 	if (fd < 0)
- 		goto invalid;
-@@ -111,8 +129,35 @@ static DBusMessage *profile_new_connection(DBusConnect=
-ion *conn,
- 	}
- =
+at the appropriate time.
 
- 	modem =3D modems->data;
-+
- 	DBG("Picked modem %p for emulator", modem);
- =
+Regards,
+-Denis
 
-+	memset(&saddr, 0, sizeof(saddr));
-+	optlen =3D sizeof(saddr);
-+
-+	if (getsockname(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
-+		err =3D errno;
-+		ofono_error("RFCOMM getsockname(): %s (%d)", strerror(err),
-+									err);
-+		close(fd);
-+		goto invalid;
-+	}
-+
-+	bt_ba2str(&saddr.rc_bdaddr, local);
-+
-+	memset(&saddr, 0, sizeof(saddr));
-+	optlen =3D sizeof(saddr);
-+
-+	if (getpeername(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
-+		err =3D errno;
-+		ofono_error("RFCOMM getpeername(): %s (%d)", strerror(err),
-+									err);
-+		close(fd);
-+		goto invalid;
-+	}
-+
-+	bt_ba2str(&saddr.rc_bdaddr, remote);
-+
- 	em =3D ofono_emulator_create(modem, OFONO_EMULATOR_TYPE_HFP);
- 	if (em =3D=3D NULL) {
- 		close(fd);
-@@ -123,14 +168,24 @@ static DBusMessage *profile_new_connection(DBusConnec=
-tion *conn,
- =
-
- 	ofono_emulator_register(em, fd);
- =
-
--	fd_dup =3D dup(fd);
--	io =3D g_io_channel_unix_new(fd_dup);
-+	io =3D g_io_channel_unix_new(fd);
- 	g_io_add_watch_full(io, G_PRIORITY_DEFAULT, G_IO_HUP, io_hup_cb,
- 						g_strdup(device), g_free);
- 	g_io_channel_unref(io);
- =
-
--	g_hash_table_insert(connection_hash, g_strdup(device),
--						GINT_TO_POINTER(fd_dup));
-+	dev =3D g_new0(struct device_info, 1);
-+	dev->fd =3D fd;
-+
-+	dev->card =3D ofono_handsfree_card_create(0,
-+					OFONO_HANDSFREE_CARD_TYPE_GATEWAY,
-+					NULL, NULL);
-+
-+	ofono_handsfree_card_set_local(dev->card, local);
-+	ofono_handsfree_card_set_remote(dev->card, remote);
-+
-+	g_hash_table_insert(connection_hash, g_strdup(device), dev);
-+
-+	ofono_handsfree_card_register(dev->card);
- =
-
- 	return dbus_message_new_method_return(msg);
- =
-
-@@ -164,7 +219,7 @@ static DBusMessage *profile_disconnection(DBusConnectio=
-n *conn,
- {
- 	DBusMessageIter iter;
- 	const char *device;
--	gpointer fd;
-+	struct device_info *dev;
- =
-
- 	DBG("Profile handler RequestDisconnection");
- =
-
-@@ -178,11 +233,11 @@ static DBusMessage *profile_disconnection(DBusConnect=
-ion *conn,
- =
-
- 	DBG("%s", device);
- =
-
--	fd =3D g_hash_table_lookup(connection_hash, device);
--	if (fd =3D=3D NULL)
-+	dev =3D g_hash_table_lookup(connection_hash, device);
-+	if (dev =3D=3D NULL)
- 		goto invalid;
- =
-
--	shutdown(GPOINTER_TO_INT(fd), SHUT_RDWR);
-+	shutdown(dev->fd, SHUT_RDWR);
- =
-
- 	g_hash_table_remove(connection_hash, device);
- =
-
-@@ -346,6 +401,8 @@ static int hfp_ag_init(void)
- 	connection_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
- 					g_free, connection_destroy);
- =
-
-+	ofono_handsfree_audio_ref();
-+
- 	return 0;
- }
- =
-
-@@ -362,6 +419,8 @@ static void hfp_ag_exit(void)
- 	g_list_free(modems);
- 	g_hash_table_foreach_remove(sim_hash, sim_watch_remove, NULL);
- 	g_hash_table_destroy(sim_hash);
-+
-+	ofono_handsfree_audio_unref();
- }
- =
-
- OFONO_PLUGIN_DEFINE(hfp_ag_bluez5, "Hands-Free Audio Gateway Profile Plugi=
-ns",
--- =
-
-2.5.0
-
-
---===============2827632703023918918==--
+--===============8225046308690286778==--
 
