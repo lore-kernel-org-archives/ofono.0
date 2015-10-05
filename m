@@ -1,164 +1,244 @@
-Content-Type: multipart/mixed; boundary="===============1280452315505537408=="
+Content-Type: multipart/mixed; boundary="===============8683951785795166710=="
 MIME-Version: 1.0
 From: Simon Fels <simon.fels@canonical.com>
-Subject: [PATCH 1/2] handsfree-audio: add type for our audio cards
-Date: Mon, 05 Oct 2015 10:35:22 +0200
-Message-ID: <1444034123-2653-1-git-send-email-simon.fels@canonical.com>
+Subject: [PATCH 2/2] hfp_ag_bluez5: register audio card
+Date: Mon, 05 Oct 2015 10:35:23 +0200
+Message-ID: <1444034123-2653-2-git-send-email-simon.fels@canonical.com>
+In-Reply-To: <1444034123-2653-1-git-send-email-simon.fels@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1280452315505537408==
+--===============8683951785795166710==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When registering audio cards for the handsfree and gateway roles we
-need a way for our users to differentiate between both to decide which
-of them they start using for their purpose.
+To let others (PulseAudio) be notified when a handsfree device is
+connected with us and can be used for audio routing we need to
+expose this by registering a audio card with the correct type.
+
+For now there is no need to provide a card driver and we just stick
+to what the core provides.
 ---
- doc/handsfree-audio-api.txt |  4 ++++
- include/handsfree-audio.h   |  6 ++++++
- plugins/hfp_hf_bluez5.c     |  2 +-
- src/handsfree-audio.c       | 20 ++++++++++++++++++++
- 4 files changed, 31 insertions(+), 1 deletion(-)
+ plugins/hfp_ag_bluez5.c | 81 ++++++++++++++++++++++++++++++++++++++++++++-=
+----
+ 1 file changed, 74 insertions(+), 7 deletions(-)
 
-diff --git a/doc/handsfree-audio-api.txt b/doc/handsfree-audio-api.txt
-index 89b5aab..d82035c 100644
---- a/doc/handsfree-audio-api.txt
-+++ b/doc/handsfree-audio-api.txt
-@@ -89,6 +89,10 @@ Properties	string RemoteAddress [readonly]
+diff --git a/plugins/hfp_ag_bluez5.c b/plugins/hfp_ag_bluez5.c
+index 93de302..85ff442 100644
+--- a/plugins/hfp_ag_bluez5.c
++++ b/plugins/hfp_ag_bluez5.c
+@@ -22,6 +22,7 @@
+ #include <config.h>
+ #endif
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
+ #include <errno.h>
+@@ -35,9 +36,12 @@
+ #include <ofono/plugin.h>
+ #include <ofono/log.h>
+ #include <ofono/modem.h>
++#include <ofono/handsfree.h>
++#include <ofono/handsfree-audio.h>
  =
 
- 			Bluetooth address of the local adapter.
+ #include "hfp.h"
+ #include "bluez5.h"
++#include "bluetooth.h"
  =
 
-+		string Type [readonly]
-+
-+			Type of the card. Valid values are "gateway" or
-+			"handsfree".
+ #ifndef DBUS_TYPE_UNIX_FD
+ #define DBUS_TYPE_UNIX_FD -1
+@@ -50,6 +54,11 @@ static GList *modems;
+ static GHashTable *sim_hash =3D NULL;
+ static GHashTable *connection_hash;
  =
 
- Handsfree Audio Agent hierarchy [experimental]
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D
-diff --git a/include/handsfree-audio.h b/include/handsfree-audio.h
-index bfb8480..29c767d 100644
---- a/include/handsfree-audio.h
-+++ b/include/handsfree-audio.h
-@@ -30,6 +30,11 @@ extern "C" {
- =
-
- struct ofono_handsfree_card;
- =
-
-+enum ofono_handsfree_card_type {
-+	OFONO_HANDSFREE_CARD_TYPE_HANDSFREE,
-+	OFONO_HANDSFREE_CARD_TYPE_GATEWAY,
++struct device_info {
++	int fd;
++	struct ofono_handsfree_card *card;
 +};
 +
- typedef void (*ofono_handsfree_card_connect_cb_t)(
- 				const struct ofono_error *error, void *data);
+ static void connection_destroy(gpointer data)
+ {
+ 	int fd =3D GPOINTER_TO_INT(data);
+@@ -77,8 +86,13 @@ static DBusMessage *profile_new_connection(DBusConnectio=
+n *conn,
+ 	const char *device;
+ 	GIOChannel *io;
+ 	int fd, fd_dup;
++	struct sockaddr_rc saddr;
++	socklen_t optlen;
+ 	struct ofono_emulator *em;
+ 	struct ofono_modem *modem;
++	struct device_info *dev;
++	char local[18], remote[18];
++	int err;
  =
 
-@@ -45,6 +50,7 @@ struct ofono_handsfree_card_driver {
- };
+ 	DBG("Profile handler NewConnection");
  =
 
- struct ofono_handsfree_card *ofono_handsfree_card_create(unsigned int vend=
-or,
-+							enum ofono_handsfree_card_type type,
- 							const char *driver,
- 							void *data);
- int ofono_handsfree_card_register(struct ofono_handsfree_card *card);
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 713c789..2f01508 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -589,7 +589,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
+@@ -95,7 +109,10 @@ static DBusMessage *profile_new_connection(DBusConnecti=
 on *conn,
- 	if (version >=3D HFP_VERSION_1_6)
- 		driver =3D HFP16_HF_DRIVER;
+ 		goto invalid;
  =
 
--	hfp->card =3D ofono_handsfree_card_create(0, driver, hfp);
-+	hfp->card =3D ofono_handsfree_card_create(0, OFONO_HANDSFREE_CARD_TYPE_HA=
-NDSFREE, driver, hfp);
- 	ofono_handsfree_card_set_data(hfp->card, hfp);
+ 	dbus_message_iter_get_basic(&entry, &fd);
++
+ 	dbus_message_iter_next(&entry);
++	if (dbus_message_iter_get_arg_type(&entry) !=3D DBUS_TYPE_ARRAY)
++		goto invalid;
  =
 
- 	ofono_handsfree_card_set_local(hfp->card, local);
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index c990cc3..5bf3692 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -45,6 +45,7 @@
- #define HFP_AUDIO_CARD_INTERFACE	OFONO_SERVICE ".HandsfreeAudioCard"
+ 	if (fd < 0)
+ 		goto invalid;
+@@ -111,8 +128,35 @@ static DBusMessage *profile_new_connection(DBusConnect=
+ion *conn,
+ 	}
  =
 
- struct ofono_handsfree_card {
-+	enum ofono_handsfree_card_type type;
- 	char *remote;
- 	char *local;
- 	char *path;
-@@ -69,6 +70,17 @@ static ofono_bool_t has_wideband =3D FALSE;
- static int defer_setup =3D 1;
- static ofono_bool_t transparent_sco =3D FALSE;
+ 	modem =3D modems->data;
++
+ 	DBG("Picked modem %p for emulator", modem);
  =
 
-+static const char* card_type_to_string(enum ofono_handsfree_card_type type)
-+{
-+	switch (type) {
-+	case OFONO_HANDSFREE_CARD_TYPE_HANDSFREE:
-+		return "handsfree";
-+	case OFONO_HANDSFREE_CARD_TYPE_GATEWAY:
-+		return "gateway";
++	memset(&saddr, 0, sizeof(saddr));
++	optlen =3D sizeof(saddr);
++
++	if (getsockname(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
++		err =3D errno;
++		ofono_error("RFCOMM getsockname(): %s (%d)", strerror(err),
++									err);
++		close(fd);
++		goto invalid;
 +	}
-+	return "";
++
++	bt_ba2str(&saddr.rc_bdaddr, local);
++
++	memset(&saddr, 0, sizeof(saddr));
++	optlen =3D sizeof(saddr);
++
++	if (getpeername(fd, (struct sockaddr *) &saddr, &optlen) < 0) {
++		err =3D errno;
++		ofono_error("RFCOMM getpeername(): %s (%d)", strerror(err),
++									err);
++		close(fd);
++		goto invalid;
++	}
++
++	bt_ba2str(&saddr.rc_bdaddr, remote);
++
+ 	em =3D ofono_emulator_create(modem, OFONO_EMULATOR_TYPE_HFP);
+ 	if (em =3D=3D NULL) {
+ 		close(fd);
+@@ -129,8 +173,18 @@ static DBusMessage *profile_new_connection(DBusConnect=
+ion *conn,
+ 						g_strdup(device), g_free);
+ 	g_io_channel_unref(io);
+ =
+
+-	g_hash_table_insert(connection_hash, g_strdup(device),
+-						GINT_TO_POINTER(fd_dup));
++	dev =3D g_new0(struct device_info, 1);
++	dev->fd =3D fd_dup;
++
++	dev->card =3D ofono_handsfree_card_create(0, OFONO_HANDSFREE_CARD_TYPE_GA=
+TEWAY,
++											NULL, NULL);
++
++	ofono_handsfree_card_set_local(dev->card, local);
++	ofono_handsfree_card_set_remote(dev->card, remote);
++
++	g_hash_table_insert(connection_hash, g_strdup(device), dev);
++
++	ofono_handsfree_card_register(dev->card);
+ =
+
+ 	return dbus_message_new_method_return(msg);
+ =
+
+@@ -164,7 +218,7 @@ static DBusMessage *profile_disconnection(DBusConnectio=
+n *conn,
+ {
+ 	DBusMessageIter iter;
+ 	const char *device;
+-	gpointer fd;
++	struct device_info *dev;
+ =
+
+ 	DBG("Profile handler RequestDisconnection");
+ =
+
+@@ -178,11 +232,11 @@ static DBusMessage *profile_disconnection(DBusConnect=
+ion *conn,
+ =
+
+ 	DBG("%s", device);
+ =
+
+-	fd =3D g_hash_table_lookup(connection_hash, device);
+-	if (fd =3D=3D NULL)
++	dev =3D g_hash_table_lookup(connection_hash, device);
++	if (!dev)
+ 		goto invalid;
+ =
+
+-	shutdown(GPOINTER_TO_INT(fd), SHUT_RDWR);
++	shutdown(GPOINTER_TO_INT(dev->fd), SHUT_RDWR);
+ =
+
+ 	g_hash_table_remove(connection_hash, device);
+ =
+
+@@ -321,6 +375,15 @@ static void call_modemwatch(struct ofono_modem *modem,=
+ void *user)
+ 	modem_watch(modem, TRUE, user);
+ }
+ =
+
++static void free_device_info(void *user_data)
++{
++	struct device_info *dev =3D user_data;
++
++	ofono_handsfree_card_remove(dev->card);
++
++	g_free(dev);
 +}
 +
- static uint16_t codec2setting(uint8_t codec)
+ static int hfp_ag_init(void)
  {
- 	switch (codec) {
-@@ -255,6 +267,12 @@ static int sco_init(void)
- static void card_append_properties(struct ofono_handsfree_card *card,
- 					DBusMessageIter *dict)
- {
-+	const char *type;
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+@@ -344,7 +407,9 @@ static int hfp_ag_init(void)
+ 	__ofono_modem_foreach(call_modemwatch, NULL);
+ =
+
+ 	connection_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+-					g_free, connection_destroy);
++					free_device_info, connection_destroy);
 +
-+	type =3D card_type_to_string(card->type);
-+	ofono_dbus_dict_append(dict, "Type",
-+				DBUS_TYPE_STRING, &type);
++	ofono_handsfree_audio_ref();
+ =
+
+ 	return 0;
+ }
+@@ -362,6 +427,8 @@ static void hfp_ag_exit(void)
+ 	g_list_free(modems);
+ 	g_hash_table_foreach_remove(sim_hash, sim_watch_remove, NULL);
+ 	g_hash_table_destroy(sim_hash);
 +
- 	ofono_dbus_dict_append(dict, "RemoteAddress",
- 				DBUS_TYPE_STRING, &card->remote);
++	ofono_handsfree_audio_unref();
+ }
  =
 
-@@ -395,6 +413,7 @@ static const GDBusSignalTable card_signals[] =3D {
- };
- =
-
- struct ofono_handsfree_card *ofono_handsfree_card_create(unsigned int vend=
-or,
-+							enum ofono_handsfree_card_type type,
- 							const char *driver,
- 							void *data)
- {
-@@ -403,6 +422,7 @@ struct ofono_handsfree_card *ofono_handsfree_card_creat=
-e(unsigned int vendor,
- =
-
- 	card =3D g_new0(struct ofono_handsfree_card, 1);
- =
-
-+	card->type =3D type;
- 	card->selected_codec =3D HFP_CODEC_CVSD;
- =
-
- 	card_list =3D g_slist_prepend(card_list, card);
+ OFONO_PLUGIN_DEFINE(hfp_ag_bluez5, "Hands-Free Audio Gateway Profile Plugi=
+ns",
 -- =
 
 2.5.0
 
 
---===============1280452315505537408==--
+--===============8683951785795166710==--
 
