@@ -1,76 +1,164 @@
-Content-Type: multipart/mixed; boundary="===============1314245818979951616=="
+Content-Type: multipart/mixed; boundary="===============1280452315505537408=="
 MIME-Version: 1.0
-From: Pawlak, KubaX T <kubax.t.pawlak@intel.com>
-Subject: RE: Hands Free/Pulse - not working well
-Date: Mon, 21 Sep 2015 15:18:34 +0000
-Message-ID: <088CC8BACB3382439E91D9919CE350243655A22C@IRSMSX107.ger.corp.intel.com>
-In-Reply-To: <CAHY_EhXkGhQ6DRJn5NEgv6cOwJiwpr0UKHigYq3QDyw=7Yf-0A@mail.gmail.com>
+From: Simon Fels <simon.fels@canonical.com>
+Subject: [PATCH 1/2] handsfree-audio: add type for our audio cards
+Date: Mon, 05 Oct 2015 10:35:22 +0200
+Message-ID: <1444034123-2653-1-git-send-email-simon.fels@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1314245818979951616==
+--===============1280452315505537408==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jason,
+When registering audio cards for the handsfree and gateway roles we
+need a way for our users to differentiate between both to decide which
+of them they start using for their purpose.
+---
+ doc/handsfree-audio-api.txt |  4 ++++
+ include/handsfree-audio.h   |  6 ++++++
+ plugins/hfp_hf_bluez5.c     |  2 +-
+ src/handsfree-audio.c       | 20 ++++++++++++++++++++
+ 4 files changed, 31 insertions(+), 1 deletion(-)
 
-> I placed one call, and everything worked (audio in out of the computer). =
-I've been able to get this to happen once in a while.
-> I disconnect the call from the phone.   I placed a second call, there was=
-n't any audio, and my logs scroll like this:
-> [ 1052.809382] Bluetooth: hci0 SCO packet for unknown connection handle 2
-> [ 1052.809964] Bluetooth: hci0 SCO packet for unknown connection handle 1=
-6384
-> [ 1052.810563] Bluetooth: hci0 SCO packet for unknown connection handle 48
-> [ 1052.811371] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.811982] Bluetooth: hci0 SCO packet for unknown connection handle 2=
-56
-> [ 1052.812581] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.813378] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.813968] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.814712] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.815681] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.816536] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.817712] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.818544] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.819508] Bluetooth: hci0 SCO packet for unknown connection handle 1
-> [ 1052.820332] Bluetooth: hci0 SCO packet for unknown connection handle 1
+diff --git a/doc/handsfree-audio-api.txt b/doc/handsfree-audio-api.txt
+index 89b5aab..d82035c 100644
+--- a/doc/handsfree-audio-api.txt
++++ b/doc/handsfree-audio-api.txt
+@@ -89,6 +89,10 @@ Properties	string RemoteAddress [readonly]
+ =
 
-Messages "SCO packet for unknown connection handle" at SCO creation are pro=
-duced when there is an issue in packet reassembly. It basically means that =
-the driver failed to assemble USB packet into SCO packets and what is pushe=
-d up is not audio but garbage. When this is printed continuously on the con=
-sole, it means you are not going to have any audio, until it stops. Most co=
-mmon cause is that there is a fragment of SCO packet cached in the driver.
-Controller usually fragment packets into 3 parts, that the kernel needs to =
-put together and create one SCO packet that is forwarded to upper layers. O=
-n connection close a fragment may be left in the driver. When another call =
-is established, this fragment is going to be used, and further fragments ar=
-e going to be attached to it. You are using kernel 3.16, which has certain =
-guards removed (that are in older kernels), that would help the kernel to q=
-uickly recover from this issue. =
+ 			Bluetooth address of the local adapter.
+ =
+
++		string Type [readonly]
++
++			Type of the card. Valid values are "gateway" or
++			"handsfree".
+ =
+
+ Handsfree Audio Agent hierarchy [experimental]
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D
+diff --git a/include/handsfree-audio.h b/include/handsfree-audio.h
+index bfb8480..29c767d 100644
+--- a/include/handsfree-audio.h
++++ b/include/handsfree-audio.h
+@@ -30,6 +30,11 @@ extern "C" {
+ =
+
+ struct ofono_handsfree_card;
+ =
+
++enum ofono_handsfree_card_type {
++	OFONO_HANDSFREE_CARD_TYPE_HANDSFREE,
++	OFONO_HANDSFREE_CARD_TYPE_GATEWAY,
++};
++
+ typedef void (*ofono_handsfree_card_connect_cb_t)(
+ 				const struct ofono_error *error, void *data);
+ =
+
+@@ -45,6 +50,7 @@ struct ofono_handsfree_card_driver {
+ };
+ =
+
+ struct ofono_handsfree_card *ofono_handsfree_card_create(unsigned int vend=
+or,
++							enum ofono_handsfree_card_type type,
+ 							const char *driver,
+ 							void *data);
+ int ofono_handsfree_card_register(struct ofono_handsfree_card *card);
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index 713c789..2f01508 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -589,7 +589,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
+on *conn,
+ 	if (version >=3D HFP_VERSION_1_6)
+ 		driver =3D HFP16_HF_DRIVER;
+ =
+
+-	hfp->card =3D ofono_handsfree_card_create(0, driver, hfp);
++	hfp->card =3D ofono_handsfree_card_create(0, OFONO_HANDSFREE_CARD_TYPE_HA=
+NDSFREE, driver, hfp);
+ 	ofono_handsfree_card_set_data(hfp->card, hfp);
+ =
+
+ 	ofono_handsfree_card_set_local(hfp->card, local);
+diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
+index c990cc3..5bf3692 100644
+--- a/src/handsfree-audio.c
++++ b/src/handsfree-audio.c
+@@ -45,6 +45,7 @@
+ #define HFP_AUDIO_CARD_INTERFACE	OFONO_SERVICE ".HandsfreeAudioCard"
+ =
+
+ struct ofono_handsfree_card {
++	enum ofono_handsfree_card_type type;
+ 	char *remote;
+ 	char *local;
+ 	char *path;
+@@ -69,6 +70,17 @@ static ofono_bool_t has_wideband =3D FALSE;
+ static int defer_setup =3D 1;
+ static ofono_bool_t transparent_sco =3D FALSE;
+ =
+
++static const char* card_type_to_string(enum ofono_handsfree_card_type type)
++{
++	switch (type) {
++	case OFONO_HANDSFREE_CARD_TYPE_HANDSFREE:
++		return "handsfree";
++	case OFONO_HANDSFREE_CARD_TYPE_GATEWAY:
++		return "gateway";
++	}
++	return "";
++}
++
+ static uint16_t codec2setting(uint8_t codec)
+ {
+ 	switch (codec) {
+@@ -255,6 +267,12 @@ static int sco_init(void)
+ static void card_append_properties(struct ofono_handsfree_card *card,
+ 					DBusMessageIter *dict)
+ {
++	const char *type;
++
++	type =3D card_type_to_string(card->type);
++	ofono_dbus_dict_append(dict, "Type",
++				DBUS_TYPE_STRING, &type);
++
+ 	ofono_dbus_dict_append(dict, "RemoteAddress",
+ 				DBUS_TYPE_STRING, &card->remote);
+ =
+
+@@ -395,6 +413,7 @@ static const GDBusSignalTable card_signals[] =3D {
+ };
+ =
+
+ struct ofono_handsfree_card *ofono_handsfree_card_create(unsigned int vend=
+or,
++							enum ofono_handsfree_card_type type,
+ 							const char *driver,
+ 							void *data)
+ {
+@@ -403,6 +422,7 @@ struct ofono_handsfree_card *ofono_handsfree_card_creat=
+e(unsigned int vendor,
+ =
+
+ 	card =3D g_new0(struct ofono_handsfree_card, 1);
+ =
+
++	card->type =3D type;
+ 	card->selected_codec =3D HFP_CODEC_CVSD;
+ =
+
+ 	card_list =3D g_slist_prepend(card_list, card);
+-- =
+
+2.5.0
 
 
-I've made a patch for this issue. It's already in Bluetooth-next tree and w=
-as merged to linux-next. It is not yet in any official kernel. It removes a=
-ny leftover fragments that are there between SCO connections.
-
-If you are able to compile you own kernel then add this commit:
-http://git.kernel.org/cgit/linux/kernel/git/bluetooth/bluetooth-next.git/co=
-mmit/?id=3D8f9d02f470f48416444ac3a1eacecdd0f743f1a7
-
-Also note that SCO handling is a bit buggy in the kernel. I'm now pursuing =
-few crashes at SCO creation and disconnection.
-
-Kuba Pawlak
-Intel Deutschland GmbH
-Registered Address: Am Campeon 10-12, 85579 Neubiberg, Germany
-Tel: +49 89 99 8853-0, www.intel.de
-Managing Directors: Christin Eisenschmid, Prof. Dr. Hermann Eul
-Chairperson of the Supervisory Board: Tiffany Doon Silva
-Registered Office: Munich
-Commercial Register: Amtsgericht Muenchen HRB 186928
-
---===============1314245818979951616==--
+--===============1280452315505537408==--
 
