@@ -1,37 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============8367133164561695988=="
+Content-Type: multipart/mixed; boundary="===============3574357419810382655=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2 v2] handsfree-audio: add type for our audio cards
-Date: Mon, 05 Oct 2015 11:47:00 -0500
-Message-ID: <5612A984.3090304@gmail.com>
-In-Reply-To: <1444044790-17392-1-git-send-email-simon.fels@canonical.com>
+From: Simon Fels <simon.fels@canonical.com>
+Subject: HandsfreeAudioCard registration for HFP AG plugin
+Date: Tue, 06 Oct 2015 12:48:11 +0200
+Message-ID: <1444128494-31742-1-git-send-email-simon.fels@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8367133164561695988==
+--===============3574357419810382655==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Simon,
+Hey everybody,
 
-On 10/05/2015 06:33 AM, Simon Fels wrote:
-> When registering audio cards for the handsfree and gateway roles we
-> need a way for our users to differentiate between both to decide which
-> of them they start using for their purpose.
-> ---
->   doc/handsfree-audio-api.txt |  4 ++++
->   include/handsfree-audio.h   | 10 ++++++++--
->   plugins/hfp_hf_bluez5.c     |  4 +++-
->   src/handsfree-audio.c       | 24 ++++++++++++++++++++++--
->   4 files changed, 37 insertions(+), 5 deletions(-)
->
+after some more detailed discussion with Denis yesterday on IRC I've
+reworked the previously sent patches a bit and included two patches
+Denis worked on before but never submitted yet. With this the audio
+card is only registered if we have a service level connection
+successfully established.
 
-Applied, thanks.
+What is missing currently is codec negotiation between AG and HF but
+I already started to implement this and will send further patches
+with support for this soon.
 
-Regards,
--Denis
+regards,
+Simon
 
 
---===============8367133164561695988==--
+--===============3574357419810382655==--
 
