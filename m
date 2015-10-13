@@ -1,105 +1,149 @@
-Content-Type: multipart/mixed; boundary="===============1553268185402202804=="
+Content-Type: multipart/mixed; boundary="===============7916079659188464692=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] hfp_ag_bluez5: add codec negotiation support
-Date: Tue, 13 Oct 2015 09:36:15 -0500
-Message-ID: <561D16DF.90103@gmail.com>
-In-Reply-To: <561CD759.4090109@canonical.com>
+From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
+Subject: [PATCH 0/9] Rilmodem driver
+Date: Tue, 13 Oct 2015 18:07:49 +0200
+Message-ID: <1444752478-18198-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1553268185402202804==
+--===============7916079659188464692==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Simon,
+This patch series implements the rilmodem driver, which uses Android's
+radio interface layer (RIL, part of the Android HAL) to interact with
+the modem.
 
-On 10/13/2015 05:05 AM, Simon Fels wrote:
->> Do we really need this?  It might be simpler to just always support
->> codec negotiation if the AG emulator is created with version >=3D 1.6
->
-> We can do that but then have to pass the HFP version we're going to run
-> with ofono_emulator_create.
->
+The driver is almost feature-complete with some exceptions, being CBS
+and SAT the most prominent.
 
-We don't really need to do that.  Just always enable codec negotiation =
+Besides the driver, the patches include the following plugins:
+* ril.c: Plugin for Android modems
+* infineon.c: Plugin for infineon modems, which are a variant of the ril
+  modem
+* rildev: plugin that creates ril-type modems using environment
+  variables
 
-support.  We register the SDP Record with version 1.7 anyway.  That is =
+Finally, the patches contain some minor modifications of the core code
+to export a couple of enumerations used by the driver.
 
-static and not a per-connection setting.
+The driver is used by Ubuntu for Phones and Sailfish and is quite stable
+at the moment.
 
-If the HF doesn't send as a AT+BAC during the SLC setup, then we don't =
+Alfonso Sanchez-Beato (5):
+  include: Add definitions for phone number types
+  infineon: Definitions for infineon modem
+  infineon: Plugin for infineon modems
+  rildev: plugin that creates ril-type modems
+  build: Add rilmodem to the build
 
-do codec negotiation.
+Tony Espy (4):
+  src: make bearer/operator enums public
+  gril: Library to communicate with rild
+  rilmodem: driver for Android modems
+  ril: Plugin for Android modems
 
->> If you include drivers/atmodem/atutil.h you can skip this and...
->
-> I thought about this before but that also requires me to include
-> gatchat/gatresult.h and gatchat/gatchat.h ... Best would be we move
-> those defines to a common place like src/common.h or so.
->
+ Makefile.am                                |   44 +-
+ configure.ac                               |    5 +
+ drivers/infineonmodem/infineon_constants.h |   77 ++
+ drivers/rilmodem/call-barring.c            |  245 +++++
+ drivers/rilmodem/call-forwarding.c         |  327 +++++++
+ drivers/rilmodem/call-settings.c           |  286 ++++++
+ drivers/rilmodem/call-volume.c             |  182 ++++
+ drivers/rilmodem/devinfo.c                 |  218 +++++
+ drivers/rilmodem/gprs-context.c            |  585 +++++++++++
+ drivers/rilmodem/gprs.c                    |  487 ++++++++++
+ drivers/rilmodem/gprs.h                    |   46 +
+ drivers/rilmodem/network-registration.c    |  566 +++++++++++
+ drivers/rilmodem/phonebook.c               | 1055 ++++++++++++++++++++
+ drivers/rilmodem/radio-settings.c          |  300 ++++++
+ drivers/rilmodem/radio-settings.h          |   47 +
+ drivers/rilmodem/rilmodem.c                |   78 ++
+ drivers/rilmodem/rilmodem.h                |   71 ++
+ drivers/rilmodem/rilutil.c                 |  194 ++++
+ drivers/rilmodem/rilutil.h                 |  165 ++++
+ drivers/rilmodem/sim.c                     | 1200 +++++++++++++++++++++++
+ drivers/rilmodem/sms.c                     |  315 ++++++
+ drivers/rilmodem/ussd.c                    |  264 +++++
+ drivers/rilmodem/vendor.h                  |   32 +
+ drivers/rilmodem/voicecall.c               |  824 ++++++++++++++++
+ drivers/rilmodem/voicecall.h               |   71 ++
+ gril/gfunc.h                               |   42 +
+ gril/gril.c                                | 1295 +++++++++++++++++++++++++
+ gril/gril.h                                |  172 ++++
+ gril/grilio.c                              |  399 ++++++++
+ gril/grilio.h                              |   69 ++
+ gril/grilreply.c                           | 1450 ++++++++++++++++++++++++=
+++++
+ gril/grilreply.h                           |  185 ++++
+ gril/grilrequest.c                         | 1161 ++++++++++++++++++++++
+ gril/grilrequest.h                         |  293 ++++++
+ gril/grilunsol.c                           |  638 ++++++++++++
+ gril/grilunsol.h                           |   99 ++
+ gril/grilutil.c                            |  830 ++++++++++++++++
+ gril/grilutil.h                            |   63 ++
+ gril/parcel.c                              |  293 ++++++
+ gril/parcel.h                              |   53 +
+ gril/ril_constants.h                       |  429 ++++++++
+ include/types.h                            |    6 +
+ plugins/infineon.c                         |   77 ++
+ plugins/ril.c                              |  461 +++++++++
+ plugins/ril.h                              |   30 +
+ plugins/rildev.c                           |  133 +++
+ src/common.h                               |   20 +
+ src/gprs.c                                 |   12 -
+ src/network.c                              |    8 -
+ 49 files changed, 15881 insertions(+), 21 deletions(-)
+ create mode 100644 drivers/infineonmodem/infineon_constants.h
+ create mode 100644 drivers/rilmodem/call-barring.c
+ create mode 100644 drivers/rilmodem/call-forwarding.c
+ create mode 100644 drivers/rilmodem/call-settings.c
+ create mode 100644 drivers/rilmodem/call-volume.c
+ create mode 100644 drivers/rilmodem/devinfo.c
+ create mode 100644 drivers/rilmodem/gprs-context.c
+ create mode 100644 drivers/rilmodem/gprs.c
+ create mode 100644 drivers/rilmodem/gprs.h
+ create mode 100644 drivers/rilmodem/network-registration.c
+ create mode 100644 drivers/rilmodem/phonebook.c
+ create mode 100644 drivers/rilmodem/radio-settings.c
+ create mode 100644 drivers/rilmodem/radio-settings.h
+ create mode 100644 drivers/rilmodem/rilmodem.c
+ create mode 100644 drivers/rilmodem/rilmodem.h
+ create mode 100644 drivers/rilmodem/rilutil.c
+ create mode 100644 drivers/rilmodem/rilutil.h
+ create mode 100644 drivers/rilmodem/sim.c
+ create mode 100644 drivers/rilmodem/sms.c
+ create mode 100644 drivers/rilmodem/ussd.c
+ create mode 100644 drivers/rilmodem/vendor.h
+ create mode 100644 drivers/rilmodem/voicecall.c
+ create mode 100644 drivers/rilmodem/voicecall.h
+ create mode 100644 gril/gfunc.h
+ create mode 100644 gril/gril.c
+ create mode 100644 gril/gril.h
+ create mode 100644 gril/grilio.c
+ create mode 100644 gril/grilio.h
+ create mode 100644 gril/grilreply.c
+ create mode 100644 gril/grilreply.h
+ create mode 100644 gril/grilrequest.c
+ create mode 100644 gril/grilrequest.h
+ create mode 100644 gril/grilunsol.c
+ create mode 100644 gril/grilunsol.h
+ create mode 100644 gril/grilutil.c
+ create mode 100644 gril/grilutil.h
+ create mode 100644 gril/parcel.c
+ create mode 100644 gril/parcel.h
+ create mode 100644 gril/ril_constants.h
+ create mode 100644 plugins/infineon.c
+ create mode 100644 plugins/ril.c
+ create mode 100644 plugins/ril.h
+ create mode 100644 plugins/rildev.c
 
-Ah, forgot the AG plugin doesn't use GAtChat.  Nevermind then.
+-- =
 
->> Is calling this from inside g_idle_add really necessary?  card_connect
->> is using Non-Blocking connect anyway.
->
-> The idea was to ensure that the OK always goes out first before we open
-> the SCO connection. Will add a comment to make this a bit more visible.
->
-
-GAtServer uses non-blocking writes, so you're not really guaranteeing it =
-
-this way.  And the spec mentions no specific order either.
-
->
->> Any pending D-Bus requests might be never replied to here...  According
->> to the spec this situation is impossible, but still...
->
-> We already replied at this point! There are two cases where we end up in
-> bcs_cb.
->
-> 1. We trigger codec negotiation from hfp16_card_connect with a call to
-> ofono_emulator_start_codec_negotation. If that call succeeds we reply to
-> org.ofono.HandsfreeAudioCard.Connect and also when it fails we do. We
-> don't bind the success of the connect call here to the codec negotiation.
->
-
-Yes, you're right.  I just re-read the implementation again.  However, =
-
-I'm thinking that the D-Bus method should be replied to only after the =
-
-SCO link has been opened / failed.
-
-> 2. When the remote side sends us the AT+BCC command we start the codec
-> negotiation and the same as mentioned in 1. applies.
-
-In this case there's no D-Bus method.  The remote HF is asking for the =
-
-codec connection.  In case we hit this condition the process simply stalls.
-
->
-> However as I am thinking right now about this is not correct. The
-> documentation of the org.ofono.HandsfreeAudioCard.Connect method says:
->
->   Attempts to establish the SCO audio connection.
->   The Agent NewConnection() method will be called
->   whenever the SCO audio link has been established.  If
->   the audio connection could not be established, this
->   method will return an error.
->
-> So we have to wait for codec negotiation to finish before we can reply.
->
-
-Agreed.
-
-> Will fix that too.
->
-
-Regards,
--Denis
+2.1.4
 
 
---===============1553268185402202804==--
+--===============7916079659188464692==--
 
