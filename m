@@ -1,123 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============4628060903155106193=="
+Content-Type: multipart/mixed; boundary="===============6269420215423686252=="
 MIME-Version: 1.0
-From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
-Subject: [PATCH 9/9] build: Add rilmodem to the build
-Date: Tue, 13 Oct 2015 18:07:58 +0200
-Message-ID: <1444752478-18198-10-git-send-email-alfonso.sanchez-beato@canonical.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 0/9] Rilmodem driver
+Date: Wed, 14 Oct 2015 10:46:27 -0500
+Message-ID: <561E78D3.4000603@gmail.com>
 In-Reply-To: <1444752478-18198-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4628060903155106193==
+--===============6269420215423686252==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Build gril, the rilmodem and infineon drivers, and the corresponding
-plugins.
----
- Makefile.am  | 44 +++++++++++++++++++++++++++++++++++++++++++-
- configure.ac |  5 +++++
- 2 files changed, 48 insertions(+), 1 deletion(-)
+Hi Alfonso,
 
-diff --git a/Makefile.am b/Makefile.am
-index 113a2d5..3ad1302 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -95,6 +95,15 @@ gisi_sources =3D gisi/client.c gisi/client.h gisi/common=
-.h \
- 				gisi/server.c gisi/server.h \
- 				gisi/socket.c gisi/socket.h
- =
+On 10/13/2015 11:07 AM, Alfonso Sanchez-Beato wrote:
+> This patch series implements the rilmodem driver, which uses Android's
+> radio interface layer (RIL, part of the Android HAL) to interact with
+> the modem.
+>
+> The driver is almost feature-complete with some exceptions, being CBS
+> and SAT the most prominent.
+>
+> Besides the driver, the patches include the following plugins:
+> * ril.c: Plugin for Android modems
+> * infineon.c: Plugin for infineon modems, which are a variant of the ril
+>    modem
+> * rildev: plugin that creates ril-type modems using environment
+>    variables
+>
+> Finally, the patches contain some minor modifications of the core code
+> to export a couple of enumerations used by the driver.
+>
+> The driver is used by Ubuntu for Phones and Sailfish and is quite stable
+> at the moment.
+>
+> Alfonso Sanchez-Beato (5):
+>    include: Add definitions for phone number types
+>    infineon: Definitions for infineon modem
+>    infineon: Plugin for infineon modems
+>    rildev: plugin that creates ril-type modems
+>    build: Add rilmodem to the build
+>
+> Tony Espy (4):
+>    src: make bearer/operator enums public
+>    gril: Library to communicate with rild
+>    rilmodem: driver for Android modems
+>    ril: Plugin for Android modems
+>
 
-+gril_sources =3D gril/gril.h gril/gril.c gril/grilio.h \
-+				gril/grilio.c gril/grilutil.h \
-+				gril/grilutil.c gril/ringbuffer.h \
-+				gril/gfunc.h gril/ril.h \
-+				gril/parcel.c gril/parcel.h \
-+				gril/grilreply.c gril/grilreply.h \
-+				gril/grilrequest.c gril/grilrequest.h \
-+				gril/grilunsol.c gril/grilunsol.h
-+
- btio_sources =3D btio/btio.h btio/btio.c
- =
+All applied, now lets start cleaning it up :)
 
- if UDEV
-@@ -107,6 +116,39 @@ builtin_modules +=3D udevng
- builtin_sources +=3D plugins/udevng.c
- endif
- =
-
-+if RILMODEM
-+builtin_sources +=3D $(gril_sources)
-+
-+builtin_modules +=3D rildev
-+builtin_sources +=3D plugins/rildev.c
-+
-+builtin_modules +=3D ril
-+builtin_sources +=3D plugins/ril.c
-+
-+builtin_modules +=3D infineon
-+builtin_sources +=3D plugins/infineon.c
-+
-+builtin_modules +=3D rilmodem
-+builtin_sources +=3D drivers/rilmodem/rilmodem.h \
-+			drivers/rilmodem/vendor.h \
-+			drivers/rilmodem/rilmodem.c \
-+			drivers/rilmodem/devinfo.c \
-+			drivers/rilmodem/network-registration.c \
-+			drivers/rilmodem/voicecall.c \
-+			drivers/rilmodem/call-volume.c \
-+			drivers/rilmodem/gprs.c \
-+			drivers/rilmodem/gprs-context.c \
-+			drivers/rilmodem/sim.c \
-+			drivers/rilmodem/sms.c \
-+			drivers/rilmodem/rilutil.c \
-+			drivers/rilmodem/rilutil.h \
-+			drivers/rilmodem/ussd.c \
-+			drivers/rilmodem/call-settings.c \
-+			drivers/rilmodem/call-forwarding.c \
-+			drivers/rilmodem/radio-settings.c \
-+			drivers/rilmodem/call-barring.c
-+endif
-+
- if ISIMODEM
- builtin_modules +=3D isimodem
- builtin_sources +=3D $(gisi_sources) \
-@@ -563,7 +605,7 @@ AM_CFLAGS =3D @DBUS_CFLAGS@ @GLIB_CFLAGS@ $(builtin_cfl=
-ags) \
- =
-
- AM_CPPFLAGS =3D -I$(builddir)/include -I$(builddir)/src -I$(srcdir)/src \
- 			-I$(srcdir)/gdbus -I$(srcdir)/gisi -I$(srcdir)/gatchat \
--			-I$(srcdir)/btio
-+			-I$(srcdir)/btio -I$(srcdir)/gril
- =
-
- doc_files =3D doc/overview.txt doc/ofono-paper.txt doc/release-faq.txt \
- 		doc/manager-api.txt doc/modem-api.txt doc/network-api.txt \
-diff --git a/configure.ac b/configure.ac
-index 130e8cf..b8d42c8 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -161,6 +161,11 @@ AC_ARG_ENABLE(isimodem, AC_HELP_STRING([--disable-isim=
-odem],
- 					[enable_isimodem=3D${enableval}])
- AM_CONDITIONAL(ISIMODEM, test "${enable_isimodem}" !=3D "no")
- =
-
-+AC_ARG_ENABLE(rilmodem, AC_HELP_STRING([--disable-rilmodem],
-+				[disable RIL modem support]),
-+					[enable_rilmodem=3D${enableval}])
-+AM_CONDITIONAL(RILMODEM, test "${enable_rilmodem}" !=3D "no")
-+
- AC_ARG_ENABLE(qmimodem, AC_HELP_STRING([--disable-qmimodem],
- 				[disable Qualcomm QMI modem support]),
- 					[enable_qmimodem=3D${enableval}])
--- =
-
-2.1.4
+Regards,
+-Denis
 
 
---===============4628060903155106193==--
+--===============6269420215423686252==--
 
