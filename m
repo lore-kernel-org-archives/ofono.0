@@ -1,52 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============7416848150867927747=="
+Content-Type: multipart/mixed; boundary="===============1464040509692084745=="
 MIME-Version: 1.0
 From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
-Subject: [PATCH 07/10] ril: Remove asserts
-Date: Thu, 15 Oct 2015 18:47:00 +0200
-Message-ID: <1444927623-31141-8-git-send-email-alfonso.sanchez-beato@canonical.com>
+Subject: [PATCH 06/10] rilmodem: Remove asserts
+Date: Thu, 15 Oct 2015 18:46:59 +0200
+Message-ID: <1444927623-31141-7-git-send-email-alfonso.sanchez-beato@canonical.com>
 In-Reply-To: <1444927623-31141-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7416848150867927747==
+--===============1464040509692084745==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/ril.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ drivers/rilmodem/gprs-context.c | 3 ---
+ drivers/rilmodem/rilreply.c     | 1 -
+ 2 files changed, 4 deletions(-)
 
-diff --git a/plugins/ril.c b/plugins/ril.c
-index e31f24b..2edb0a9 100644
---- a/plugins/ril.c
-+++ b/plugins/ril.c
-@@ -144,7 +144,9 @@ static void ril_radio_state_changed(struct ril_msg *mes=
-sage, gpointer user_data)
- 			break;
- 		default:
- 			/* Malformed parcel; no radio state =3D=3D broken rild */
--			g_assert(FALSE);
-+			ofono_error("%s: Bad radio state (%d), exiting",
-+							__func__, radio_state);
-+			exit(1);
- 		}
+diff --git a/drivers/rilmodem/gprs-context.c b/drivers/rilmodem/gprs-contex=
+t.c
+index ad2499c..1c642e8 100644
+--- a/drivers/rilmodem/gprs-context.c
++++ b/drivers/rilmodem/gprs-context.c
+@@ -247,11 +247,8 @@ static void ril_gprs_context_activate_primary(struct o=
+fono_gprs_context *gc,
+ 	struct ofono_error error;
+ 	int ret =3D 0;
+ =
+
+-	g_assert(gprs_atom !=3D NULL);
+ 	gprs =3D __ofono_atom_get_data(gprs_atom);
+-	g_assert(gprs !=3D NULL);
+ 	gd =3D ofono_gprs_get_data(gprs);
+-	g_assert(gd !=3D NULL);
+ =
+
+ 	/*
+ 	 * 0: CDMA 1: GSM/UMTS, 2...
+diff --git a/drivers/rilmodem/rilreply.c b/drivers/rilmodem/rilreply.c
+index 9ac9ea6..471991c 100644
+--- a/drivers/rilmodem/rilreply.c
++++ b/drivers/rilmodem/rilreply.c
+@@ -1351,7 +1351,6 @@ int *g_ril_reply_parse_retries(GRil *gril, const stru=
+ct ril_msg *message,
+ 	case OFONO_RIL_VENDOR_INFINEON:
+ 		ofono_error("%s: infineon type should not arrive here",
+ 				__func__);
+-		g_assert(FALSE);
+ 		break;
  	}
- }
-@@ -213,7 +215,6 @@ void ril_pre_sim(struct ofono_modem *modem)
- 	sim_data.ril_state_watch =3D NULL;
  =
 
- 	rd->sim =3D ofono_sim_create(modem, rd->vendor, RILMODEM, &sim_data);
--	g_assert(rd->sim !=3D NULL);
- }
- =
-
- void ril_post_sim(struct ofono_modem *modem)
 -- =
 
 2.1.4
 
 
---===============7416848150867927747==--
+--===============1464040509692084745==--
 
