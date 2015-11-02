@@ -1,104 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============6584419918698194899=="
+Content-Type: multipart/mixed; boundary="===============3535810964080897734=="
 MIME-Version: 1.0
 From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
-Subject: [PATCH] gril: Fix access to notify callbacks
-Date: Mon, 02 Nov 2015 17:48:41 +0100
-Message-ID: <1446482921-16956-1-git-send-email-alfonso.sanchez-beato@canonical.com>
+Subject: [PATCH 0/5] Support multi-SIM for HFP in emulator
+Date: Mon, 02 Nov 2015 18:27:15 +0100
+Message-ID: <1446485240-22049-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6584419918698194899==
+--===============3535810964080897734==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Entries to the table of notification callbacks can be added by the
-callbacks while being called. This caused a glib error as gril was
-using an iterator to the hash table while the table was being modified.
-Fixed by avoiding the unnecesary loop.
----
- gril/gril.c | 36 ++++++++++++------------------------
- 1 file changed, 12 insertions(+), 24 deletions(-)
+This patch series handles the multi-SIM case for HFP in the emulator,
+for incoming calls. This means that calls can be accepted, rejected, and
+hung from a headset with HFP support regardless of the modem in which
+the call is received.
 
-diff --git a/gril/gril.c b/gril/gril.c
-index ead8206..d279c44 100644
---- a/gril/gril.c
-+++ b/gril/gril.c
-@@ -420,48 +420,36 @@ static gboolean node_check_destroyed(struct ril_notif=
-y_node *node,
- =
+In case a call is initiated from the headset, we use the first SIM in
+the list of modems with HFP atoms. In the future this should be handled
+via a system setting.
 
- static void handle_unsol_req(struct ril_s *p, struct ril_msg *message)
- {
--	GHashTableIter iter;
- 	struct ril_notify *notify;
--	int req_key;
--	gpointer key, value;
--	GList *list_item;
--	struct ril_notify_node *node;
--	gboolean found =3D FALSE;
- =
+The patches change the emulator interface to use the atom instead of the
+emulator instance as token to identify which modem is sending an event.
+The concept of preferred modem is introduced to route events between
+headset and modems: there is a default modem that is used unless an
+incoming call arrives in any modem, at that moment the modem with the
+active call is the preferred modem until the call is over.
 
- 	if (p->notify_list =3D=3D NULL)
- 		return;
- =
+Finally, the patches have still some rough edges but I think it is worth
+sharing to gather comments, regardless of whether this gets merged or
+not.
 
- 	p->in_notify =3D TRUE;
- =
+Alfonso Sanchez-Beato (5):
+  include: Support for multiple SIM in emulator
+  emulator: Add multi-sim support
+  plugins: Adapt to emulator changes
+  examples: Adapt to emulator changes
+  src: Adapt to emulator changes
 
--	g_hash_table_iter_init(&iter, p->notify_list);
-+	notify =3D g_hash_table_lookup(p->notify_list, &message->req);
-+	if (notify !=3D NULL) {
-+		GSList *list_item;
- =
+ examples/emulator.c     |  12 ++-
+ include/emulator.h      |  11 +-
+ plugins/dun_gw_bluez4.c |  12 ++-
+ plugins/dun_gw_bluez5.c |  12 ++-
+ plugins/hfp_ag_bluez4.c |  12 ++-
+ plugins/hfp_ag_bluez5.c |   8 +-
+ plugins/phonesim.c      |   3 +-
+ src/emulator.c          | 266 +++++++++++++++++++++++++++++++++++++++++++-=
+----
+ src/modem.c             |  10 +-
+ src/network.c           |  30 +++---
+ src/ofono.h             |   2 +-
+ src/sim.c               |  10 +-
+ src/voicecall.c         |  35 +++----
+ 13 files changed, 323 insertions(+), 100 deletions(-)
 
--	while (g_hash_table_iter_next(&iter, &key, &value)) {
--		req_key =3D *((int *)key);
--		notify =3D value;
--
--		if (req_key !=3D message->req)
--			continue;
-+		for (list_item =3D notify->nodes; list_item;
-+				list_item =3D g_slist_next(list_item)) {
-+			struct ril_notify_node *node =3D list_item->data;
- =
-
--		list_item =3D (GList *) notify->nodes;
--
--		while (list_item !=3D NULL) {
--			node =3D list_item->data;
-+			if (node->destroyed)
-+				continue;
- =
-
- 			node->callback(message, node->user_data);
--			found =3D TRUE;
--			list_item =3D (GList *) g_slist_next(list_item);
- 		}
--	}
--
--	/* Only log events not being listended for... */
--	if (!found)
-+	} else {
-+		/* Only log events not being listended for... */
- 		DBG("RIL Event slot %d: %s\n",
- 			p->slot, unsol_request_to_string(p, message->req));
-+	}
- =
-
- 	p->in_notify =3D FALSE;
- =
-
- 	/* Now destroy nodes possibly removed by callbacks */
--	if (found)
-+	if (notify !=3D NULL)
- 		ril_unregister_all(p, FALSE, node_check_destroyed,
- 					GUINT_TO_POINTER(TRUE));
- }
 -- =
 
 2.1.4
 
 
---===============6584419918698194899==--
+--===============3535810964080897734==--
 
