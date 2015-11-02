@@ -1,64 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============3535810964080897734=="
+Content-Type: multipart/mixed; boundary="===============3668691733371831815=="
 MIME-Version: 1.0
 From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
-Subject: [PATCH 0/5] Support multi-SIM for HFP in emulator
-Date: Mon, 02 Nov 2015 18:27:15 +0100
-Message-ID: <1446485240-22049-1-git-send-email-alfonso.sanchez-beato@canonical.com>
+Subject: [PATCH 1/5] include: Support for multiple SIM in emulator
+Date: Mon, 02 Nov 2015 18:27:16 +0100
+Message-ID: <1446485240-22049-2-git-send-email-alfonso.sanchez-beato@canonical.com>
+In-Reply-To: <1446485240-22049-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3535810964080897734==
+--===============3668691733371831815==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch series handles the multi-SIM case for HFP in the emulator,
-for incoming calls. This means that calls can be accepted, rejected, and
-hung from a headset with HFP support regardless of the modem in which
-the call is received.
+Change declarations for emulator so it is possible to handle multiple
+modems in the emulator.
+---
+ include/emulator.h | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
 
-In case a call is initiated from the headset, we use the first SIM in
-the list of modems with HFP atoms. In the future this should be handled
-via a system setting.
+diff --git a/include/emulator.h b/include/emulator.h
+index 4b2bc98..1bb80e6 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -51,6 +51,7 @@ extern "C" {
+ struct ofono_emulator;
+ struct ofono_emulator_request;
+ struct ofono_handsfree_card;
++struct ofono_atom;
+ =
 
-The patches change the emulator interface to use the atom instead of the
-emulator instance as token to identify which modem is sending an event.
-The concept of preferred modem is introduced to route events between
-headset and modems: there is a default modem that is used unless an
-incoming call arrives in any modem, at that moment the modem with the
-active call is the preferred modem until the call is over.
+ enum ofono_emulator_type {
+ 	OFONO_EMULATOR_TYPE_DUN,
+@@ -68,7 +69,7 @@ typedef void (*ofono_emulator_request_cb_t)(struct ofono_=
+emulator *em,
+ 					struct ofono_emulator_request *req,
+ 					void *data);
+ =
 
-Finally, the patches have still some rough edges but I think it is worth
-sharing to gather comments, regardless of whether this gets merged or
-not.
+-struct ofono_emulator *ofono_emulator_create(struct ofono_modem *modem,
++struct ofono_emulator *ofono_emulator_create(GList *modems,
+ 						enum ofono_emulator_type type);
+ =
 
-Alfonso Sanchez-Beato (5):
-  include: Support for multiple SIM in emulator
-  emulator: Add multi-sim support
-  plugins: Adapt to emulator changes
-  examples: Adapt to emulator changes
-  src: Adapt to emulator changes
+ void ofono_emulator_register(struct ofono_emulator *em, int fd);
+@@ -84,11 +85,11 @@ void ofono_emulator_send_intermediate(struct ofono_emul=
+ator *em,
+ void ofono_emulator_send_info(struct ofono_emulator *em, const char *line,
+ 				ofono_bool_t last);
+ =
 
- examples/emulator.c     |  12 ++-
- include/emulator.h      |  11 +-
- plugins/dun_gw_bluez4.c |  12 ++-
- plugins/dun_gw_bluez5.c |  12 ++-
- plugins/hfp_ag_bluez4.c |  12 ++-
- plugins/hfp_ag_bluez5.c |   8 +-
- plugins/phonesim.c      |   3 +-
- src/emulator.c          | 266 +++++++++++++++++++++++++++++++++++++++++++-=
-----
- src/modem.c             |  10 +-
- src/network.c           |  30 +++---
- src/ofono.h             |   2 +-
- src/sim.c               |  10 +-
- src/voicecall.c         |  35 +++----
- 13 files changed, 323 insertions(+), 100 deletions(-)
+-ofono_bool_t ofono_emulator_add_handler(struct ofono_emulator *em,
++ofono_bool_t ofono_emulator_add_handler(struct ofono_atom *atom,
+ 					const char *prefix,
+ 					ofono_emulator_request_cb_t cb,
+ 					void *data, ofono_destroy_func destroy);
+-ofono_bool_t ofono_emulator_remove_handler(struct ofono_emulator *em,
++ofono_bool_t ofono_emulator_remove_handler(struct ofono_atom *atom,
+ 						const char *prefix);
+ =
 
+ ofono_bool_t ofono_emulator_request_next_string(
+@@ -103,8 +104,8 @@ const char *ofono_emulator_request_get_raw(struct ofono=
+_emulator_request *req);
+ enum ofono_emulator_request_type ofono_emulator_request_get_type(
+ 					struct ofono_emulator_request *req);
+ =
+
+-void ofono_emulator_set_indicator(struct ofono_emulator *em,
+-					const char *name, int value);
++void ofono_emulator_set_indicator(struct ofono_atom *atom,
++						const char *name, int value);
+ void ofono_emulator_set_hf_indicator_active(struct ofono_emulator *em,
+ 						int indicator,
+ 						ofono_bool_t active);
 -- =
 
 2.1.4
 
 
---===============3535810964080897734==--
+--===============3668691733371831815==--
 
