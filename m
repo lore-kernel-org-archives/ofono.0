@@ -1,517 +1,233 @@
-Content-Type: multipart/mixed; boundary="===============7400226546190063938=="
+Content-Type: multipart/mixed; boundary="===============4348309654533111922=="
 MIME-Version: 1.0
 From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
-Subject: [PATCH 2/5] emulator: Add multi-sim support
-Date: Mon, 02 Nov 2015 18:27:17 +0100
-Message-ID: <1446485240-22049-3-git-send-email-alfonso.sanchez-beato@canonical.com>
+Subject: [PATCH 3/5] plugins: Adapt to emulator changes
+Date: Mon, 02 Nov 2015 18:27:18 +0100
+Message-ID: <1446485240-22049-4-git-send-email-alfonso.sanchez-beato@canonical.com>
 In-Reply-To: <1446485240-22049-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7400226546190063938==
+--===============4348309654533111922==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add multi-sim support in the emulator.
+Adapt to emulator changes for supporting multiple modems.
 ---
- src/emulator.c | 266 +++++++++++++++++++++++++++++++++++++++++++++++++++--=
-----
- 1 file changed, 241 insertions(+), 25 deletions(-)
+ plugins/dun_gw_bluez4.c | 12 +++++++++---
+ plugins/dun_gw_bluez5.c | 12 +++++++++---
+ plugins/hfp_ag_bluez4.c | 12 +++++++++---
+ plugins/hfp_ag_bluez5.c |  8 +-------
+ plugins/phonesim.c      |  3 +--
+ 5 files changed, 29 insertions(+), 18 deletions(-)
 
-diff --git a/src/emulator.c b/src/emulator.c
-index ccb26dc..d194aa5 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -50,8 +50,16 @@ struct hfp_codec_info {
- 	ofono_bool_t supported;
- };
+diff --git a/plugins/dun_gw_bluez4.c b/plugins/dun_gw_bluez4.c
+index a1de7a4..6034790 100644
+--- a/plugins/dun_gw_bluez4.c
++++ b/plugins/dun_gw_bluez4.c
+@@ -81,6 +81,7 @@ static void dun_gw_connect_cb(GIOChannel *io, GError *err=
+, gpointer user_data)
+ 	struct ofono_emulator *em =3D user_data;
+ 	struct ofono_modem *modem;
+ 	int fd;
++	GList *last;
  =
 
--struct ofono_emulator {
-+struct atom_callback {
- 	struct ofono_atom *atom;
-+	ofono_emulator_request_cb_t cb;
-+	void *data;
-+	ofono_destroy_func destroy;
-+};
-+
-+struct ofono_emulator {
-+	GSList *atoms;
-+	struct ofono_atom *active_atom;
- 	enum ofono_emulator_type type;
- 	GAtServer *server;
- 	GAtPPP *ppp;
-@@ -68,6 +76,8 @@ struct ofono_emulator {
- 	ofono_emulator_codec_negotiation_cb codec_negotiation_cb;
- 	void *codec_negotiation_data;
- 	ofono_bool_t bac_received;
-+	/* Table of atom_callback, using prefixes as key */
-+	GHashTable *prefixes;
- 	bool slc : 1;
- 	unsigned int events_mode : 2;
- 	bool events_ind : 1;
-@@ -355,9 +365,14 @@ static struct indicator *find_indicator(struct ofono_e=
-mulator *em,
- static struct ofono_call *find_call_with_status(struct ofono_emulator *em,
- 								int status)
- {
--	struct ofono_modem *modem =3D __ofono_atom_get_modem(em->atom);
-+	struct ofono_modem *modem;
- 	struct ofono_voicecall *vc;
+ 	DBG("");
  =
 
-+	if (em->active_atom =3D=3D NULL)
-+		return NULL;
-+
-+	modem =3D __ofono_atom_get_modem(em->active_atom);
-+
- 	vc =3D __ofono_atom_find(OFONO_ATOM_TYPE_VOICECALL, modem);
- 	if (vc =3D=3D NULL)
- 		return NULL;
-@@ -1148,12 +1163,35 @@ static void emulator_add_indicator(struct ofono_emu=
-lator *em, const char* name,
- 	em->indicators =3D g_slist_append(em->indicators, ind);
- }
- =
-
-+static void free_atom_callback(gpointer data)
-+{
-+	struct atom_callback *atom_cb =3D data;
-+
-+	if (atom_cb->destroy)
-+		atom_cb->destroy(atom_cb->data);
-+
-+	g_free(atom_cb);
-+}
-+
-+static void atom_cbs_destroy(gpointer key, gpointer value, gpointer user_d=
-ata)
-+{
-+	GSList *atom_cbs =3D value;
-+
-+	g_slist_free_full(atom_cbs, free_atom_callback);
-+}
-+
- static void emulator_unregister(struct ofono_atom *atom)
- {
- 	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
- 	GSList *l;
- =
-
--	DBG("%p", em);
-+	DBG("%p %p", em, atom);
-+
-+	/* Do the clean up when this is the last remaining atom */
-+	if (em->atoms !=3D NULL && em->atoms->next !=3D NULL)
-+		return;
-+
-+	DBG("Last atom unregistering");
- =
-
- 	if (em->callsetup_source) {
- 		g_source_remove(em->callsetup_source);
-@@ -1181,6 +1219,10 @@ static void emulator_unregister(struct ofono_atom *a=
-tom)
- 	g_at_server_unref(em->server);
- 	em->server =3D NULL;
- =
-
-+	g_hash_table_foreach(em->prefixes, atom_cbs_destroy, NULL);
-+	g_hash_table_destroy(em->prefixes);
-+	em->prefixes =3D NULL;
-+
- 	ofono_handsfree_card_remove(em->card);
- 	em->card =3D NULL;
- }
-@@ -1188,6 +1230,7 @@ static void emulator_unregister(struct ofono_atom *at=
-om)
- void ofono_emulator_register(struct ofono_emulator *em, int fd)
- {
- 	GIOChannel *io;
-+	GSList *l;
- =
-
- 	DBG("%p, %d", em, fd);
- =
-
-@@ -1240,7 +1283,11 @@ void ofono_emulator_register(struct ofono_emulator *=
-em, int fd)
- 		g_at_server_register(em->server, "+BCS", bcs_cb, em, NULL);
+@@ -90,11 +91,16 @@ static void dun_gw_connect_cb(GIOChannel *io, GError *e=
+rr, gpointer user_data)
+ 		return;
  	}
  =
 
--	__ofono_atom_register(em->atom, emulator_unregister);
-+	for (l =3D em->atoms; l; l =3D l->next) {
-+		struct ofono_atom *atom =3D l->data;
-+
-+		__ofono_atom_register(atom, emulator_unregister);
-+	}
+-	/* Pick the first powered modem */
+-	modem =3D modems->data;
++	/*
++	 * Pick the last one to avoid creating a new list with one modem just
++	 * for the call to ofono_emulator_create() (for this plugin we only
++	 * support registering one modem in the emulator)
++	 */
++	last =3D g_list_last(modems);
++	modem =3D last->data;
+ 	DBG("Picked modem %p for emulator", modem);
  =
 
- 	switch (em->type) {
- 	case OFONO_EMULATOR_TYPE_DUN:
-@@ -1260,18 +1307,23 @@ static void emulator_remove(struct ofono_atom *atom)
- {
- 	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
- =
-
--	DBG("atom: %p", atom);
-+	DBG("em: %p, atom: %p", em, atom);
-+
-+	em->atoms =3D g_slist_remove(em->atoms, atom);
- =
-
-+	if (em->atoms !=3D NULL)
-+		return;
-+
-+	DBG("Removing emulator");
- 	g_free(em);
- }
- =
-
--struct ofono_emulator *ofono_emulator_create(struct ofono_modem *modem,
-+struct ofono_emulator *ofono_emulator_create(GList *modems,
- 						enum ofono_emulator_type type)
- {
+-	em =3D ofono_emulator_create(modem, OFONO_EMULATOR_TYPE_DUN);
++	em =3D ofono_emulator_create(last, OFONO_EMULATOR_TYPE_DUN);
+ 	if (em =3D=3D NULL) {
+ 		g_io_channel_shutdown(io, TRUE, NULL);
+ 		return;
+diff --git a/plugins/dun_gw_bluez5.c b/plugins/dun_gw_bluez5.c
+index faea12b..6719b27 100644
+--- a/plugins/dun_gw_bluez5.c
++++ b/plugins/dun_gw_bluez5.c
+@@ -57,6 +57,7 @@ static DBusMessage *profile_new_connection(DBusConnection=
+ *conn,
+ 	int fd;
  	struct ofono_emulator *em;
- 	enum ofono_atom_type atom_t;
--
--	DBG("modem: %p, type: %d", modem, type);
-+	GList *l;
+ 	struct ofono_modem *modem;
++	GList *last;
  =
 
- 	if (type =3D=3D OFONO_EMULATOR_TYPE_DUN)
- 		atom_t =3D OFONO_ATOM_TYPE_EMULATOR_DUN;
-@@ -1296,15 +1348,39 @@ struct ofono_emulator *ofono_emulator_create(struct=
- ofono_modem *modem,
- 	em->events_mode =3D 3;	/* default mode is forwarding events */
- 	em->cmee_mode =3D 0;	/* CME ERROR disabled by default */
+ 	DBG("Profile handler NewConnection");
  =
 
--	em->atom =3D __ofono_modem_add_atom_offline(modem, atom_t,
-+	em->prefixes =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+								g_free, NULL);
-+
-+	for (l =3D modems; l; l =3D l->next) {
-+		struct ofono_atom *atom;
-+		struct ofono_modem *modem =3D l->data;
-+
-+		DBG("modem: %p, type: %d", modem, type);
-+
-+		atom =3D __ofono_modem_add_atom_offline(modem, atom_t,
- 							emulator_remove, em);
-+		em->atoms =3D g_slist_prepend(em->atoms, atom);
-+	}
+@@ -80,7 +81,6 @@ static DBusMessage *profile_new_connection(DBusConnection=
+ *conn,
  =
 
- 	return em;
- }
+ 	DBG("%s", device);
  =
 
-+static void free_atom(gpointer data)
-+{
-+	struct ofono_atom *atom =3D data;
-+
-+	__ofono_atom_free(atom);
-+}
-+
- void ofono_emulator_remove(struct ofono_emulator *em)
- {
--	__ofono_atom_free(em->atom);
+-	/* Pick the first powered modem */
+ 	if (modems =3D=3D NULL) {
+ 		close(fd);
+ 		return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
+@@ -88,10 +88,16 @@ static DBusMessage *profile_new_connection(DBusConnecti=
+on *conn,
+ 						"No GPRS capable modem");
+ 	}
+ =
+
+-	modem =3D modems->data;
 +	/*
-+	 * emulator_remove removes the atom from the list and eventually removes
-+	 * the emulator too, so we need to make this copy for a safe removal.
++	 * Pick the last one to avoid creating a new list with one modem just
++	 * for the call to ofono_emulator_create() (for this plugin we only
++	 * support registering one modem in the emulator)
 +	 */
-+	GSList *atoms =3D g_slist_copy(em->atoms);
-+
-+	g_slist_free_full(atoms, free_atom);
- }
++	last =3D g_list_last(modems);
++	modem =3D last->data;
+ 	DBG("Picked modem %p for emulator", modem);
  =
 
- void ofono_emulator_send_final(struct ofono_emulator *em,
-@@ -1371,10 +1447,37 @@ void ofono_emulator_send_info(struct ofono_emulator=
- *em, const char *line,
- 	g_at_server_send_info(em->server, line, last);
- }
- =
-
-+static struct ofono_atom *get_preferred_atom(struct ofono_emulator *em)
-+{
-+	if (em->active_atom)
-+		return em->active_atom;
-+
-+	/*
-+	 * TODO For the moment we just take the first on the list, we need to
-+	 * ask the modem and have something configurable from settings.
-+	 */
-+	return em->atoms->data;
-+}
-+
-+static struct atom_callback *find_atom_callback(GSList *prefix_cbs,
-+						const struct ofono_atom *atom)
-+{
-+	GSList *l;
-+
-+	for (l =3D prefix_cbs; l; l =3D prefix_cbs->next) {
-+		struct atom_callback *atom_cb =3D l->data;
-+
-+		if (atom_cb->atom !=3D atom)
-+			continue;
-+
-+		return atom_cb;
-+	}
-+
-+	return NULL;
-+}
-+
- struct handler {
--	ofono_emulator_request_cb_t cb;
--	void *data;
--	ofono_destroy_func destroy;
-+	char *prefix;
+-	em =3D ofono_emulator_create(modem, OFONO_EMULATOR_TYPE_DUN);
++	em =3D ofono_emulator_create(last, OFONO_EMULATOR_TYPE_DUN);
+ 	if (em =3D=3D NULL) {
+ 		close(fd);
+ 		return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
+diff --git a/plugins/hfp_ag_bluez4.c b/plugins/hfp_ag_bluez4.c
+index 039b665..69f6e7e 100644
+--- a/plugins/hfp_ag_bluez4.c
++++ b/plugins/hfp_ag_bluez4.c
+@@ -91,6 +91,7 @@ static void hfp_ag_connect_cb(GIOChannel *io, GError *err=
+, gpointer user_data)
+ 	struct ofono_modem *modem;
  	struct ofono_emulator *em;
- };
+ 	int fd;
++	GList *last;
  =
 
-@@ -1386,8 +1489,19 @@ struct ofono_emulator_request {
- static void handler_proxy(GAtServer *server, GAtServerRequestType type,
- 					GAtResult *result, gpointer userdata)
- {
-+	GSList *prefix_cbs;
-+	struct atom_callback *atom_cb;
- 	struct handler *h =3D userdata;
- 	struct ofono_emulator_request req;
-+	struct ofono_atom *atom;
-+
-+	atom =3D get_preferred_atom(h->em);
-+	prefix_cbs =3D g_hash_table_lookup(h->em->prefixes, h->prefix);
-+	atom_cb =3D find_atom_callback(prefix_cbs, atom);
-+	if (atom_cb =3D=3D NULL) {
-+		ofono_error("%s: No atom for prefix %s", __func__, h->prefix);
-+		return;
-+	}
+ 	DBG("");
  =
 
- 	switch (type) {
- 	case G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY:
-@@ -1406,7 +1520,7 @@ static void handler_proxy(GAtServer *server, GAtServe=
-rRequestType type,
- 	g_at_result_iter_init(&req.iter, result);
- 	g_at_result_iter_next(&req.iter, "");
+@@ -99,14 +100,19 @@ static void hfp_ag_connect_cb(GIOChannel *io, GError *=
+err, gpointer user_data)
+ 		return;
+ 	}
  =
 
--	h->cb(h->em, &req, h->data);
-+	atom_cb->cb(h->em, &req, atom_cb->data);
- }
+-	/* Pick the first voicecall capable modem */
+-	modem =3D modems->data;
++	/*
++	 * Pick the last one to avoid creating a new list with one modem just
++	 * for the call to ofono_emulator_create() (for this plugin we only
++	 * support registering one modem in the emulator)
++	 */
++	last =3D g_list_last(modems);
++	modem =3D last->data;
+ 	if (modem =3D=3D NULL)
+ 		return;
  =
 
- static void handler_proxy_need_slc(GAtServer *server,
-@@ -1440,24 +1554,52 @@ static void handler_destroy(gpointer userdata)
- {
- 	struct handler *h =3D userdata;
+ 	DBG("Picked modem %p for emulator", modem);
  =
 
--	if (h->destroy)
--		h->destroy(h->data);
+-	em =3D ofono_emulator_create(modem, OFONO_EMULATOR_TYPE_HFP);
++	em =3D ofono_emulator_create(last, OFONO_EMULATOR_TYPE_HFP);
+ 	if (em =3D=3D NULL)
+ 		return;
+ =
+
+diff --git a/plugins/hfp_ag_bluez5.c b/plugins/hfp_ag_bluez5.c
+index 22faeb7..f80d1d5 100644
+--- a/plugins/hfp_ag_bluez5.c
++++ b/plugins/hfp_ag_bluez5.c
+@@ -172,7 +172,6 @@ static DBusMessage *profile_new_connection(DBusConnecti=
+on *conn,
+ 	struct sockaddr_rc saddr;
+ 	socklen_t optlen;
+ 	struct ofono_emulator *em;
+-	struct ofono_modem *modem;
+ 	char local[BT_ADDR_SIZE], remote[BT_ADDR_SIZE];
+ 	struct ofono_handsfree_card *card;
+ 	int err;
+@@ -202,7 +201,6 @@ static DBusMessage *profile_new_connection(DBusConnecti=
+on *conn,
+ 		goto invalid;
+ 	}
+ =
+
+-	/* Pick the first voicecall capable modem */
+ 	if (modems =3D=3D NULL) {
+ 		close(fd);
+ 		return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
+@@ -210,10 +208,6 @@ static DBusMessage *profile_new_connection(DBusConnect=
+ion *conn,
+ 						"No voice call capable modem");
+ 	}
+ =
+
+-	modem =3D modems->data;
 -
-+	g_free(h->prefix);
- 	g_free(h);
- }
+-	DBG("Picked modem %p for emulator", modem);
+-
+ 	memset(&saddr, 0, sizeof(saddr));
+ 	optlen =3D sizeof(saddr);
  =
 
--ofono_bool_t ofono_emulator_add_handler(struct ofono_emulator *em,
-+ofono_bool_t ofono_emulator_add_handler(struct ofono_atom *atom,
- 					const char *prefix,
- 					ofono_emulator_request_cb_t cb,
- 					void *data, ofono_destroy_func destroy)
+@@ -240,7 +234,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
+on *conn,
+ =
+
+ 	bt_ba2str(&saddr.rc_bdaddr, remote);
+ =
+
+-	em =3D ofono_emulator_create(modem, OFONO_EMULATOR_TYPE_HFP);
++	em =3D ofono_emulator_create(modems, OFONO_EMULATOR_TYPE_HFP);
+ 	if (em =3D=3D NULL) {
+ 		close(fd);
+ 		return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index 16bccd5..4290d84 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -545,13 +545,12 @@ static void crst_notify(GAtResult *result, gpointer u=
+ser_data)
+ =
+
+ static void emulator_battery_cb(struct ofono_atom *atom, void *data)
  {
- 	struct handler *h;
-+	GSList *prefix_cbs;
-+	struct atom_callback *atom_cb;
- 	GAtServerNotifyFunc func =3D handler_proxy;
-+	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
-+	gboolean already_registered;
-+
-+	DBG("%p %s cb %p", atom, prefix, cb);
-+
-+	prefix_cbs =3D g_hash_table_lookup(em->prefixes, prefix);
-+	already_registered =3D prefix_cbs ? TRUE : FALSE;
-+
-+	if (find_atom_callback(prefix_cbs, atom)) {
-+		ofono_info("%s: Atom %p already registered for prefix %s",
-+							__func__, atom, prefix);
-+		return FALSE;
-+	}
-+
-+	atom_cb =3D g_malloc0(sizeof(*atom_cb));
-+	atom_cb->atom =3D atom;
-+	atom_cb->cb =3D cb;
-+	atom_cb->data =3D data;
-+	atom_cb->destroy =3D destroy;
-+
-+	/*
-+	 * Append to avoid modifying the head, which is the value in the hash
-+	 * table. We refresh it for the case of the first insertion though.
-+	 */
-+	prefix_cbs =3D g_slist_append(prefix_cbs, atom_cb);
-+
-+	if (already_registered)
-+		return TRUE;
-+
-+	g_hash_table_insert(em->prefixes, g_strdup(prefix), prefix_cbs);
+-	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
+ 	int val =3D 0;
  =
 
- 	h =3D g_new0(struct handler, 1);
--	h->cb =3D cb;
--	h->data =3D data;
--	h->destroy =3D destroy;
-+	h->prefix =3D g_strdup(prefix);
- 	h->em =3D em;
+ 	if (GPOINTER_TO_INT(data) > 0)
+ 		val =3D (GPOINTER_TO_INT(data) - 1) / 20 + 1;
  =
 
- 	if (em->type =3D=3D OFONO_EMULATOR_TYPE_HFP) {
-@@ -1476,9 +1618,31 @@ ofono_bool_t ofono_emulator_add_handler(struct ofono=
-_emulator *em,
- 	return FALSE;
+-	ofono_emulator_set_indicator(em, OFONO_EMULATOR_IND_BATTERY, val);
++	ofono_emulator_set_indicator(atom, OFONO_EMULATOR_IND_BATTERY, val);
  }
  =
 
--ofono_bool_t ofono_emulator_remove_handler(struct ofono_emulator *em,
-+ofono_bool_t ofono_emulator_remove_handler(struct ofono_atom *atom,
- 						const char *prefix)
- {
-+	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
-+	GSList *prefix_cbs;
-+	struct atom_callback *atom_cb;
-+
-+	prefix_cbs =3D g_hash_table_lookup(em->prefixes, prefix);
-+	atom_cb =3D find_atom_callback(prefix_cbs, atom);
-+
-+	if (atom_cb =3D=3D NULL)
-+		return FALSE;
-+
-+	prefix_cbs =3D g_slist_remove(prefix_cbs, atom_cb);
-+
-+	free_atom_callback(atom_cb);
-+
-+	if (prefix_cbs !=3D NULL) {
-+		g_hash_table_replace(em->prefixes,
-+						g_strdup(prefix), prefix_cbs);
-+		return TRUE;
-+	}
-+
-+	g_hash_table_remove(em->prefixes, prefix);
-+
- 	return g_at_server_unregister(em->server, prefix);
- }
- =
-
-@@ -1507,8 +1671,38 @@ enum ofono_emulator_request_type ofono_emulator_requ=
-est_get_type(
- 	return req->type;
- }
- =
-
--void ofono_emulator_set_indicator(struct ofono_emulator *em,
--					const char *name, int value)
-+static gboolean valid_indication(struct ofono_emulator *em,
-+				struct ofono_atom *atom, const char *name)
-+{
-+	struct ofono_atom *preferred;
-+
-+	if (g_strcmp0(name, OFONO_EMULATOR_IND_BATTERY) =3D=3D 0)
-+		return TRUE;
-+
-+	if (em->active_atom) {
-+		if (em->active_atom =3D=3D atom)
-+			return TRUE;
-+		else
-+			return FALSE;
-+	} else if (g_strcmp0(name, OFONO_EMULATOR_IND_CALL) =3D=3D 0
-+			|| g_strcmp0(name, OFONO_EMULATOR_IND_CALLSETUP) =3D=3D 0) {
-+		return TRUE;
-+	}
-+
-+	/* Return FALSE if the modem is not the preferred one */
-+	/*
-+	 * TODO For the moment we just take the first on the list, we need to
-+	 * ask the modem and have some configurable from settings.
-+	 */
-+	preferred =3D em->atoms->data;
-+	if (preferred =3D=3D atom)
-+		return TRUE;
-+	else
-+		return FALSE;
-+}
-+
-+void ofono_emulator_set_indicator(struct ofono_atom *atom,
-+						const char *name, int value)
- {
- 	int i;
- 	char buf[20];
-@@ -1518,6 +1712,12 @@ void ofono_emulator_set_indicator(struct ofono_emula=
-tor *em,
- 	gboolean call;
- 	gboolean callsetup;
- 	gboolean waiting;
-+	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
-+
-+	if (!valid_indication(em, atom, name))
-+		return;
-+
-+	DBG("%s\t%d", name, value);
- =
-
- 	ind =3D find_indicator(em, name, &i);
- =
-
-@@ -1533,6 +1733,18 @@ void ofono_emulator_set_indicator(struct ofono_emula=
-tor *em,
- 	call =3D ind =3D=3D call_ind;
- 	callsetup =3D ind =3D=3D cs_ind;
- =
-
-+	if (call || callsetup) {
-+		if (call_ind->value =3D=3D OFONO_EMULATOR_CALL_INACTIVE
-+				&& cs_ind->value =3D=3D
-+					OFONO_EMULATOR_CALLSETUP_INACTIVE) {
-+			DBG("Call finished for HFP atom %p", atom);
-+			em->active_atom =3D NULL;
-+		} else if (em->active_atom =3D=3D NULL) {
-+			DBG("New call from HFP atom %p", atom);
-+			em->active_atom =3D atom;
-+		}
-+	}
-+
- 	/*
- 	 * When callsetup indicator goes to Incoming and there is an active
- 	 * call a +CCWA should be sent before +CIEV
-@@ -1586,12 +1798,16 @@ start_ring:
- 							notify_ring, em);
- }
- =
-
--void __ofono_emulator_set_indicator_forced(struct ofono_emulator *em,
-+void __ofono_emulator_set_indicator_forced(struct ofono_atom *atom,
- 						const char *name, int value)
- {
- 	int i;
- 	struct indicator *ind;
- 	char buf[20];
-+	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
-+
-+	if (!valid_indication(em, atom, name))
-+		return;
- =
-
- 	ind =3D find_indicator(em, name, &i);
- =
-
+ static void cbc_notify(GAtResult *result, gpointer user_data)
 -- =
 
 2.1.4
 
 
---===============7400226546190063938==--
+--===============4348309654533111922==--
 
