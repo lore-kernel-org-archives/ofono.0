@@ -1,61 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============0342183135715198955=="
+Content-Type: multipart/mixed; boundary="===============5743868421185616438=="
 MIME-Version: 1.0
-From: Tony Espy <espy@canonical.com>
-Subject: [PATCH 2/2 v3] build: add support for rilmodem-cs test
-Date: Thu, 05 Nov 2015 15:38:12 -0500
-Message-ID: <1446755892-3370-2-git-send-email-espy@canonical.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2 v3] unit: add new test rilmodem-cs
+Date: Thu, 05 Nov 2015 14:51:05 -0600
+Message-ID: <563BC139.8030107@gmail.com>
 In-Reply-To: <1446755892-3370-1-git-send-email-espy@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0342183135715198955==
+--===============5743868421185616438==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+Hi Tony,
 
-diff --git a/Makefile.am b/Makefile.am
-index 3ad1302..c4eda2a 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -735,7 +735,8 @@ unit_objects =3D
- =
+On 11/05/2015 02:38 PM, Tony Espy wrote:
+> This commit adds a new style of build-time/unit test to
+> rilmodem.  These tests setup a dummy server socket and
+> attach a gril instance to it.  This allows rilmodem
+> call-settings atom functions to be tested directly,
+> validating request parcels received by the server-side,
+> and callbacks that happen in response to canned responses
+> sent by the server-side.
+> ---
+>   unit/test-rilmodem-cs.c | 694 +++++++++++++++++++++++++++++++++++++++++=
++++++++
+>   1 file changed, 694 insertions(+)
+>   create mode 100644 unit/test-rilmodem-cs.c
+>
 
- unit_tests =3D unit/test-common unit/test-util unit/test-idmap \
- 				unit/test-simutil unit/test-stkutil \
--				unit/test-sms unit/test-cdmasms
-+				unit/test-sms unit/test-cdmasms \
-+				unit/test-rilmodem-cs
- =
+Both applied, thanks.
 
- noinst_PROGRAMS =3D $(unit_tests) \
- 			unit/test-sms-root unit/test-mux unit/test-caif
-@@ -787,6 +788,14 @@ unit_test_caif_SOURCES =3D unit/test-caif.c $(gatchat_=
-sources) \
- unit_test_caif_LDADD =3D @GLIB_LIBS@
- unit_objects +=3D $(unit_test_caif_OBJECTS)
- =
-
-+unit_test_rilmodem_cs_SOURCES =3D unit/test-rilmodem-cs.c $(gril_sources) \
-+			src/log.c src/common.c src/util.c \
-+			drivers/rilmodem/call-settings.c \
-+			src/simutil.c gatchat/ringbuffer.c
-+unit_test_rilmodem_cs_LDADD =3D gdbus/libgdbus-internal.la $(builtin_libad=
-d) \
-+			@GLIB_LIBS@ @DBUS_LIBS@ -ldl
-+unit_objects +=3D $(unit_test_rilmodem_cs_OBJECTS)
-+
- TESTS =3D $(unit_tests)
- =
-
- if TOOLS
--- =
-
-2.1.4
+Regards,
+-Denis
 
 
---===============0342183135715198955==--
+--===============5743868421185616438==--
 
