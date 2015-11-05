@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============1981962624497171625=="
+Content-Type: multipart/mixed; boundary="===============5590134240062331586=="
 MIME-Version: 1.0
 From: Tony Espy <espy@canonical.com>
-Subject: [PATCH 1/2 v2] unit: add new test rilmodem-cs
-Date: Thu, 05 Nov 2015 14:50:22 -0500
-Message-ID: <1446753023-23385-1-git-send-email-espy@canonical.com>
+Subject: [PATCH 1/2 v3] unit: add new test rilmodem-cs
+Date: Thu, 05 Nov 2015 15:38:11 -0500
+Message-ID: <1446755892-3370-1-git-send-email-espy@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1981962624497171625==
+--===============5590134240062331586==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -20,17 +20,17 @@ validating request parcels received by the server-side,
 and callbacks that happen in response to canned responses
 sent by the server-side.
 ---
- unit/test-rilmodem-cs.c | 707 ++++++++++++++++++++++++++++++++++++++++++++=
+ unit/test-rilmodem-cs.c | 694 ++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 file changed, 707 insertions(+)
+ 1 file changed, 694 insertions(+)
  create mode 100644 unit/test-rilmodem-cs.c
 
 diff --git a/unit/test-rilmodem-cs.c b/unit/test-rilmodem-cs.c
 new file mode 100644
-index 0000000..959be4e
+index 0000000..6d16286
 --- /dev/null
 +++ b/unit/test-rilmodem-cs.c
-@@ -0,0 +1,707 @@
+@@ -0,0 +1,694 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -118,11 +118,103 @@ index 0000000..959be4e
 +	gint cb_int2;
 +};
 +
-+static gboolean trigger_clip_query(gpointer data);
-+static gboolean trigger_cw_query(gpointer data);
-+static gboolean trigger_cw_set(gpointer data);
-+static gboolean trigger_clir_query(gpointer data);
-+static gboolean trigger_clir_set(gpointer data);
++static void status_query_callback(const struct ofono_error *error, int sta=
+tus,
++								 gpointer data)
++{
++	struct rilmodemcs_data *rcsd =3D data;
++	const struct cs_data *csd =3D rcsd->test_data;
++
++	g_assert(error->type =3D=3D csd->error_type);
++
++	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
++		g_assert(status =3D=3D csd->cb_int1);
++
++	g_main_loop_quit(mainloop);
++}
++
++static void clir_query_callback(const struct ofono_error *error, int overr=
+ide,
++						int network, gpointer data)
++{
++	struct rilmodemcs_data *rcsd =3D data;
++	const struct cs_data *csd =3D rcsd->test_data;
++
++	g_assert(error->type =3D=3D csd->error_type);
++
++	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		g_assert(override =3D=3D csd->cb_int1);
++		g_assert(network =3D=3D csd->cb_int2);
++	}
++
++	g_main_loop_quit(mainloop);
++}
++
++static void set_callback(const struct ofono_error *error, gpointer data)
++{
++	struct rilmodemcs_data *rcsd =3D data;
++	const struct cs_data *csd =3D rcsd->test_data;
++
++	g_assert(error->type =3D=3D csd->error_type);
++
++	g_main_loop_quit(mainloop);
++}
++
++static gboolean trigger_clip_query(gpointer data)
++{
++	struct rilmodemcs_data *rcsd =3D data;
++
++	g_assert(csdriver->clip_query !=3D NULL);
++	csdriver->clip_query(rcsd->cs, status_query_callback, rcsd);
++
++	return FALSE;
++}
++
++static gboolean trigger_cw_query(gpointer data)
++{
++	struct rilmodemcs_data *rcsd =3D data;
++
++	g_assert(csdriver->cw_query !=3D NULL);
++
++	/* cls is explicitly ignored by rilmodem; just use 0 */
++	csdriver->cw_query(rcsd->cs, 0, status_query_callback, rcsd);
++
++	return FALSE;
++}
++
++static gboolean trigger_cw_set(gpointer data)
++{
++	struct rilmodemcs_data *rcsd =3D data;
++	const struct cs_data *csd =3D rcsd->test_data;
++
++	g_assert(csdriver->cw_set !=3D NULL);
++
++	csdriver->cw_set(rcsd->cs, csd->param_int1, csd->param_int2,
++						set_callback, rcsd);
++
++	return FALSE;
++}
++
++static gboolean trigger_clir_query(gpointer data)
++{
++	struct rilmodemcs_data *rcsd =3D data;
++
++	g_assert(csdriver->clir_query !=3D NULL);
++	csdriver->clir_query(rcsd->cs, clir_query_callback, rcsd);
++
++	return FALSE;
++}
++
++static gboolean trigger_clir_set(gpointer data)
++{
++	struct rilmodemcs_data *rcsd =3D data;
++	const struct cs_data *csd =3D rcsd->test_data;
++
++	g_assert(csdriver->clir_set !=3D NULL);
++	csdriver->clir_set(rcsd->cs, csd->param_int1, set_callback, rcsd);
++
++	return FALSE;
++}
 +
 +/* RIL_REQUEST_QUERY_CLIP */
 +static const guchar req_clip_query_parcel_1[] =3D {
@@ -324,20 +416,12 @@ index 0000000..959be4e
 +};
 +
 +/* Declarations && Re-implementations of core functions. */
-+void __ofono_exit(void);
 +void ril_call_settings_exit(void);
 +void ril_call_settings_init(void);
 +
 +struct ofono_call_settings {
 +	void *driver_data;
 +};
-+
-+/* Needed by: src/modem.c */
-+void __ofono_exit(void)
-+{
-+	g_main_loop_quit(mainloop);
-+
-+}
 +
 +struct ofono_call_settings *ofono_call_settings_create(struct ofono_modem =
 *modem,
@@ -393,104 +477,6 @@ s_driver *d)
 + * failures when run on PowerPC.
 + */
 +#if BYTE_ORDER =3D=3D LITTLE_ENDIAN
-+
-+static void status_query_callback(const struct ofono_error *error, int sta=
-tus,
-+								 gpointer data)
-+{
-+	struct rilmodemcs_data *rcsd =3D data;
-+	const struct cs_data *csd =3D rcsd->test_data;
-+
-+	g_assert(error->type =3D=3D csd->error_type);
-+
-+	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
-+		g_assert(status =3D=3D csd->cb_int1);
-+
-+	g_main_loop_quit(mainloop);
-+}
-+
-+static void clir_query_callback(const struct ofono_error *error, int overr=
-ide,
-+						int network, gpointer data)
-+{
-+	struct rilmodemcs_data *rcsd =3D data;
-+	const struct cs_data *csd =3D rcsd->test_data;
-+
-+	g_assert(error->type =3D=3D csd->error_type);
-+
-+	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+		g_assert(override =3D=3D csd->cb_int1);
-+		g_assert(network =3D=3D csd->cb_int2);
-+	}
-+
-+	g_main_loop_quit(mainloop);
-+}
-+
-+static void set_callback(const struct ofono_error *error, gpointer data)
-+{
-+	struct rilmodemcs_data *rcsd =3D data;
-+	const struct cs_data *csd =3D rcsd->test_data;
-+
-+	g_assert(error->type =3D=3D csd->error_type);
-+
-+	g_main_loop_quit(mainloop);
-+}
-+
-+static gboolean trigger_clip_query(gpointer data)
-+{
-+	struct rilmodemcs_data *rcsd =3D data;
-+
-+	g_assert(csdriver->clip_query !=3D NULL);
-+	csdriver->clip_query(rcsd->cs, status_query_callback, rcsd);
-+
-+	return FALSE;
-+}
-+
-+static gboolean trigger_cw_query(gpointer data)
-+{
-+	struct rilmodemcs_data *rcsd =3D data;
-+
-+	g_assert(csdriver->cw_query !=3D NULL);
-+
-+	/* cls is explicitly ignored by rilmodem; just use 0 */
-+	csdriver->cw_query(rcsd->cs, 0, status_query_callback, rcsd);
-+
-+	return FALSE;
-+}
-+
-+static gboolean trigger_cw_set(gpointer data)
-+{
-+	struct rilmodemcs_data *rcsd =3D data;
-+	const struct cs_data *csd =3D rcsd->test_data;
-+
-+	g_assert(csdriver->cw_set !=3D NULL);
-+
-+	csdriver->cw_set(rcsd->cs, csd->param_int1, csd->param_int2,
-+						set_callback, rcsd);
-+
-+	return FALSE;
-+}
-+
-+static gboolean trigger_clir_query(gpointer data)
-+{
-+	struct rilmodemcs_data *rcsd =3D data;
-+
-+	g_assert(csdriver->clir_query !=3D NULL);
-+	csdriver->clir_query(rcsd->cs, clir_query_callback, rcsd);
-+
-+	return FALSE;
-+}
-+
-+static gboolean trigger_clir_set(gpointer data)
-+{
-+	struct rilmodemcs_data *rcsd =3D data;
-+	const struct cs_data *csd =3D rcsd->test_data;
-+
-+	g_assert(csdriver->clir_set !=3D NULL);
-+	csdriver->clir_set(rcsd->cs, csd->param_int1, set_callback, rcsd);
-+
-+	return FALSE;
-+}
 +
 +static gboolean read_server(gpointer data)
 +{
@@ -606,8 +592,8 @@ ide,
 +	return FALSE;
 +}
 +
-+static void create_server_socket(const char *sock_path, struct rilmodemcs_=
-data *rcsd)
++static void create_server_socket(const char *sock_path,
++					struct rilmodemcs_data *rcsd)
 +{
 +	GIOChannel *io;
 +	struct sockaddr_un addr;
@@ -751,5 +737,5 @@ data *rcsd)
 2.1.4
 
 
---===============1981962624497171625==--
+--===============5590134240062331586==--
 
