@@ -1,40 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============5743868421185616438=="
+Content-Type: multipart/mixed; boundary="===============3121537531478888905=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2 v3] unit: add new test rilmodem-cs
-Date: Thu, 05 Nov 2015 14:51:05 -0600
-Message-ID: <563BC139.8030107@gmail.com>
-In-Reply-To: <1446755892-3370-1-git-send-email-espy@canonical.com>
+From: Petr Vorel <petr.vorel@gmail.com>
+Subject: [PATCH 1/2] configure.ac: rewrite support for backtrace detection
+Date: Fri, 06 Nov 2015 18:34:16 +0100
+Message-ID: <1446831257-26136-1-git-send-email-petr.vorel@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5743868421185616438==
+--===============3121537531478888905==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tony,
+Signed-off-by: Petr Vorel <petr.vorel@gmail.com>
+---
+ configure.ac | 4 ++++
+ src/log.c    | 8 ++++----
+ 2 files changed, 8 insertions(+), 4 deletions(-)
 
-On 11/05/2015 02:38 PM, Tony Espy wrote:
-> This commit adds a new style of build-time/unit test to
-> rilmodem.  These tests setup a dummy server socket and
-> attach a gril instance to it.  This allows rilmodem
-> call-settings atom functions to be tested directly,
-> validating request parcels received by the server-side,
-> and callbacks that happen in response to canned responses
-> sent by the server-side.
-> ---
->   unit/test-rilmodem-cs.c | 694 +++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   1 file changed, 694 insertions(+)
->   create mode 100644 unit/test-rilmodem-cs.c
->
+diff --git a/configure.ac b/configure.ac
+index b8d42c8..b6183a1 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -245,3 +245,7 @@ AC_DEFINE_UNQUOTED(CONFIGDIR, "${configdir}",
+ =
 
-Both applied, thanks.
+ AC_OUTPUT(Makefile include/version.h src/ofono.service ofono.pc \
+ 		dundee/dundee.service)
++
++dnl Check for backtrace() support
++AC_CHECK_HEADERS(execinfo.h)
++AC_CHECK_FUNCS(backtrace)
+diff --git a/src/log.c b/src/log.c
+index 6331b0d..0d55d6e 100644
+--- a/src/log.c
++++ b/src/log.c
+@@ -30,7 +30,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <syslog.h>
+-#ifdef __GLIBC__
++#ifdef HAVE_EXECINFO_H
+ #include <execinfo.h>
+ #endif
+ #include <dlfcn.h>
+@@ -115,7 +115,7 @@ void ofono_debug(const char *format, ...)
+ 	va_end(ap);
+ }
+ =
 
-Regards,
--Denis
+-#ifdef __GLIBC__
++#ifdef HAVE_BACKTRACE
+ static void print_backtrace(unsigned int offset)
+ {
+ 	void *frames[99];
+@@ -309,7 +309,7 @@ int __ofono_log_init(const char *program, const char *d=
+ebug,
+ 	if (detach =3D=3D FALSE)
+ 		option |=3D LOG_PERROR;
+ =
+
+-#ifdef __GLIBC__
++#ifdef HAVE_BACKTRACE
+ 	signal_setup(signal_handler);
+ #endif
+ =
+
+@@ -326,7 +326,7 @@ void __ofono_log_cleanup(void)
+ =
+
+ 	closelog();
+ =
+
+-#ifdef __GLIBC__
++#ifdef HAVE_BACKTRACE
+ 	signal_setup(SIG_DFL);
+ #endif
+ =
+
+-- =
+
+2.6.2
 
 
---===============5743868421185616438==--
+--===============3121537531478888905==--
 
