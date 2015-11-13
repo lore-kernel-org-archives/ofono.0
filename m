@@ -1,41 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============2164034823005833504=="
+Content-Type: multipart/mixed; boundary="===============2806387709278355417=="
 MIME-Version: 1.0
 From: Petr Vorel <petr.vorel@gmail.com>
-Subject: [PATCH] gobi: Add missing _GNU_SOURCE
-Date: Sat, 14 Nov 2015 00:00:48 +0100
-Message-ID: <1447455648-5917-1-git-send-email-petr.vorel@gmail.com>
+Subject: Re: [PATCH 2/2] don't redefine GNU_SOURCE
+Date: Sat, 14 Nov 2015 00:05:02 +0100
+Message-ID: <20151113230501.GA5853@t61>
+In-Reply-To: <508E3E53-7866-4BCA-B1B5-92AB37417DFE@holtmann.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2164034823005833504==
+--===============2806387709278355417==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-as we're using O_CLOEXEC
+Hi Marcel,
 
-Signed-off-by: Petr Vorel <petr.vorel@gmail.com>
----
- plugins/gobi.c | 1 +
- 1 file changed, 1 insertion(+)
+> lets not do that. Either we have #define _GNU_SOURCE in the files that ne=
+ed it or we let config.h set it unconditionally. However we are not #ifdef =
+around it ever.
+sorry for wrong post. I was wrong (_GNU_SOURCE is redefined due buildroot c=
+onfig). I
+posted other patch, which adds missing _GNU_SOURCE.
 
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 4daa459..061ee04 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -23,6 +23,7 @@
- #include <config.h>
- #endif
- =
+Kind regards,
+Petr
 
-+#define _GNU_SOURCE
- #include <errno.h>
- #include <fcntl.h>
- #include <unistd.h>
--- =
-
-1.8.0
-
-
---===============2164034823005833504==--
+--===============2806387709278355417==--
 
