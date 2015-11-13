@@ -1,31 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============8822393589805355745=="
+Content-Type: multipart/mixed; boundary="===============2164034823005833504=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/7] gitignore: Ignore rilmodem-cs test binary
-Date: Fri, 13 Nov 2015 10:06:36 -0600
-Message-ID: <56460A8C.7080209@gmail.com>
-In-Reply-To: <1447417510-9368-2-git-send-email-alfonso.sanchez-beato@canonical.com>
+From: Petr Vorel <petr.vorel@gmail.com>
+Subject: [PATCH] gobi: Add missing _GNU_SOURCE
+Date: Sat, 14 Nov 2015 00:00:48 +0100
+Message-ID: <1447455648-5917-1-git-send-email-petr.vorel@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8822393589805355745==
+--===============2164034823005833504==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alfonso,
+as we're using O_CLOEXEC
 
-On 11/13/2015 06:25 AM, Alfonso Sanchez-Beato wrote:
-> ---
->   .gitignore | 1 +
->   1 file changed, 1 insertion(+)
->
+Signed-off-by: Petr Vorel <petr.vorel@gmail.com>
+---
+ plugins/gobi.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-Applied, thanks.
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index 4daa459..061ee04 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -23,6 +23,7 @@
+ #include <config.h>
+ #endif
+ =
 
-Regards,
--Denis
++#define _GNU_SOURCE
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <unistd.h>
+-- =
+
+1.8.0
 
 
---===============8822393589805355745==--
+--===============2164034823005833504==--
 
