@@ -1,59 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============5279594264847811570=="
+Content-Type: multipart/mixed; boundary="===============6205180107790289316=="
 MIME-Version: 1.0
-From: John Ernberg <john.ernberg@actia.se>
-Subject: Udevng plugin seems to fail sometimes?
-Date: Thu, 12 Nov 2015 09:39:13 +0000
-Message-ID: <56445E49.4030607@actia.se>
+From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
+Subject: [PATCH 0/7] Support for mtk modems
+Date: Fri, 13 Nov 2015 13:25:03 +0100
+Message-ID: <1447417510-9368-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5279594264847811570==
+--===============6205180107790289316==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+This patch series add support for MediaTek modems. The mtkmodem driver
+is heavily based on rilmodem.
 
-I am using oFono in an embedded environment, and I seem to have =
+Alfonso Sanchez-Beato (7):
+  gitignore: Ignore rilmodem-cs test binary
+  include: Add flag for drivers that watch SIM state
+  modem: Add flag for drivers that watch SIM state
+  rilmodem: Export functions needed by mtkmodem
+  mtkmodem: Add mtkmodem driver
+  mtk: Plugin for mtkmodems
+  build: Add mtkmodem driver and mtk plugin
 
-encountered a problem with the udevng plugin. It seems that the =
+ .gitignore                        |    1 +
+ Makefile.am                       |   19 +
+ drivers/mtkmodem/gprs.c           |  188 ++++
+ drivers/mtkmodem/mtk_constants.h  |   84 ++
+ drivers/mtkmodem/mtkmodem.c       |   58 ++
+ drivers/mtkmodem/mtkmodem.h       |   32 +
+ drivers/mtkmodem/mtkreply.c       |   98 +++
+ drivers/mtkmodem/mtkreply.h       |   43 +
+ drivers/mtkmodem/mtkrequest.c     |  163 ++++
+ drivers/mtkmodem/mtkrequest.h     |  143 ++++
+ drivers/mtkmodem/mtksettings.c    |  261 ++++++
+ drivers/mtkmodem/mtksettings.h    |   43 +
+ drivers/mtkmodem/mtkunsol.c       |  199 +++++
+ drivers/mtkmodem/mtkunsol.h       |   59 ++
+ drivers/mtkmodem/mtkutil.c        |  143 ++++
+ drivers/mtkmodem/mtkutil.h        |   47 +
+ drivers/mtkmodem/radio-settings.c |  193 +++++
+ drivers/mtkmodem/voicecall.c      |  155 ++++
+ drivers/rilmodem/radio-settings.c |   21 +-
+ drivers/rilmodem/radio-settings.h |   46 +
+ drivers/rilmodem/voicecall.c      |   18 +-
+ drivers/rilmodem/voicecall.h      |    4 +
+ include/modem.h                   |    4 +
+ plugins/mtk.c                     | 1704 +++++++++++++++++++++++++++++++++=
+++++
+ src/modem.c                       |   38 +-
+ 25 files changed, 3735 insertions(+), 29 deletions(-)
+ create mode 100644 drivers/mtkmodem/gprs.c
+ create mode 100644 drivers/mtkmodem/mtk_constants.h
+ create mode 100644 drivers/mtkmodem/mtkmodem.c
+ create mode 100644 drivers/mtkmodem/mtkmodem.h
+ create mode 100644 drivers/mtkmodem/mtkreply.c
+ create mode 100644 drivers/mtkmodem/mtkreply.h
+ create mode 100644 drivers/mtkmodem/mtkrequest.c
+ create mode 100644 drivers/mtkmodem/mtkrequest.h
+ create mode 100644 drivers/mtkmodem/mtksettings.c
+ create mode 100644 drivers/mtkmodem/mtksettings.h
+ create mode 100644 drivers/mtkmodem/mtkunsol.c
+ create mode 100644 drivers/mtkmodem/mtkunsol.h
+ create mode 100644 drivers/mtkmodem/mtkutil.c
+ create mode 100644 drivers/mtkmodem/mtkutil.h
+ create mode 100644 drivers/mtkmodem/radio-settings.c
+ create mode 100644 drivers/mtkmodem/voicecall.c
+ create mode 100644 drivers/rilmodem/radio-settings.h
+ create mode 100644 plugins/mtk.c
 
-udev_monitor sometimes fails to init, so when the modem in the =
+-- =
 
-environment has started, oFono cannot find it. I can see the modem with =
+2.5.0
 
-'lsusb' if I log in to the embedded system, but when I list the modems =
 
-in oFono I get an empty list.
-
-I have verified that when this happens udev is running in the system, =
-
-and that a sane file descriptor is received when creating the IOChannel =
-
-used for the monitor. Yet, the channel is closed almost immediately. My =
-
-best guess is that udev sends some sort of HUP.
-
-oFono is started automatically by systemd, but in a much later target =
-
-than udev.
-
-The issue appears too sporadically to be able to debug this properly, so =
-
-I am wondering if anyone else has seen this issue?
-
-While trying to understand myself exactly what is going on I haven't =
-
-managed to come across anything on google, or in other programs' source =
-
-code, suggesting that the setup code for the monitor is doing something =
-
-wrong. So, I also wonder if anyone has any suggestions on what kind of =
-
-traces I shall try to print to gain an understanding of what is happening?
-
-Thank you in advance for any assistance.
-
-Best regards // John Ernberg
---===============5279594264847811570==--
+--===============6205180107790289316==--
 
