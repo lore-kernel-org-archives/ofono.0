@@ -1,29 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============2806387709278355417=="
+Content-Type: multipart/mixed; boundary="===============3966901475428674290=="
 MIME-Version: 1.0
-From: Petr Vorel <petr.vorel@gmail.com>
-Subject: Re: [PATCH 2/2] don't redefine GNU_SOURCE
-Date: Sat, 14 Nov 2015 00:05:02 +0100
-Message-ID: <20151113230501.GA5853@t61>
-In-Reply-To: <508E3E53-7866-4BCA-B1B5-92AB37417DFE@holtmann.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] gobi: Add missing _GNU_SOURCE
+Date: Mon, 16 Nov 2015 09:32:54 -0600
+Message-ID: <5649F726.40501@gmail.com>
+In-Reply-To: <1447455648-5917-1-git-send-email-petr.vorel@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2806387709278355417==
+--===============3966901475428674290==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Petr,
 
-> lets not do that. Either we have #define _GNU_SOURCE in the files that ne=
-ed it or we let config.h set it unconditionally. However we are not #ifdef =
-around it ever.
-sorry for wrong post. I was wrong (_GNU_SOURCE is redefined due buildroot c=
-onfig). I
-posted other patch, which adds missing _GNU_SOURCE.
+On 11/13/2015 05:00 PM, Petr Vorel wrote:
+> as we're using O_CLOEXEC
+>
+> Signed-off-by: Petr Vorel <petr.vorel@gmail.com>
 
-Kind regards,
-Petr
+We don't use Signed-off-by here.  So I took this out.
 
---===============2806387709278355417==--
+> ---
+>   plugins/gobi.c | 1 +
+>   1 file changed, 1 insertion(+)
+>
+
+Applied, thanks.
+
+Regards,
+-Denis
+
+
+--===============3966901475428674290==--
 
