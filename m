@@ -1,37 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============3966901475428674290=="
+Content-Type: multipart/mixed; boundary="===============0563343835851085811=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gobi: Add missing _GNU_SOURCE
-Date: Mon, 16 Nov 2015 09:32:54 -0600
-Message-ID: <5649F726.40501@gmail.com>
-In-Reply-To: <1447455648-5917-1-git-send-email-petr.vorel@gmail.com>
+From: Simon Fels <simon.fels@canonical.com>
+Subject: [PATCH] emulator: fail when SCO connection setup fails
+Date: Tue, 17 Nov 2015 17:05:22 +0100
+Message-ID: <1447776322-9535-1-git-send-email-simon.fels@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3966901475428674290==
+--===============0563343835851085811==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Petr,
+---
+ src/emulator.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-On 11/13/2015 05:00 PM, Petr Vorel wrote:
-> as we're using O_CLOEXEC
->
-> Signed-off-by: Petr Vorel <petr.vorel@gmail.com>
+diff --git a/src/emulator.c b/src/emulator.c
+index 4c81a39..0a5c67e 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -1683,6 +1683,7 @@ int ofono_emulator_start_codec_negotiation(struct ofo=
+no_emulator *em,
+ {
+ 	char buf[64];
+ 	unsigned char codec;
++	int err;
+ =
 
-We don't use Signed-off-by here.  So I took this out.
+ 	if (em =3D=3D NULL)
+ 		return -EINVAL;
+@@ -1707,7 +1708,11 @@ int ofono_emulator_start_codec_negotiation(struct of=
+ono_emulator *em,
+ 		 * already have a negotiated codec we can proceed here
+ 		 * without doing any negotiation again.
+ 		 */
+-		ofono_handsfree_card_connect_sco(em->card);
++		err =3D ofono_handsfree_card_connect_sco(em->card);
++		if (err < 0) {
++			ofono_error("SCO connection failed");
++			return err;
++		}
+ =
 
-> ---
->   plugins/gobi.c | 1 +
->   1 file changed, 1 insertion(+)
->
+ 		return 0;
+ 	}
+-- =
 
-Applied, thanks.
-
-Regards,
--Denis
+2.5.0
 
 
---===============3966901475428674290==--
+--===============0563343835851085811==--
 
