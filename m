@@ -1,57 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============1216326405552773071=="
+Content-Type: multipart/mixed; boundary="===============8822092841099116358=="
 MIME-Version: 1.0
 From: Tony Espy <espy@canonical.com>
-Subject: [PATCH v2] plugins: rm unneeded exits/sleeps from ril plugin
-Date: Thu, 19 Nov 2015 17:16:30 -0500
-Message-ID: <1447971390-22545-1-git-send-email-espy@canonical.com>
+Subject: [PATCH 0/4 v2] New rilmodem sms test
+Date: Thu, 19 Nov 2015 17:21:27 -0500
+Message-ID: <1447971691-22662-1-git-send-email-espy@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1216326405552773071==
+--===============8822092841099116358==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/ril.c | 10 +++-------
- 1 file changed, 3 insertions(+), 7 deletions(-)
+This patch series adds a second rilmodem test for SMS.
+The common server test functions have been extracted
+for use by future rilmodem tests, and test-rilmodem-cs
+has been re-factored to use the common server code.
 
-diff --git a/plugins/ril.c b/plugins/ril.c
-index 8ccf01a..9bf86c5 100644
---- a/plugins/ril.c
-+++ b/plugins/ril.c
-@@ -142,13 +142,9 @@ static void ril_radio_state_changed(struct ril_msg *me=
-ssage, gpointer user_data)
- 			 * too fast re-spawns, then exit with error to make
- 			 * upstart re-start ofono.
- 			 */
--			if (rd->ofono_online) {
-+			if (rd->ofono_online)
- 				ofono_error("%s: radio self-powered off!",
- 						__func__);
--				sleep(5);
--				exit(1);
--			}
--			break;
- 		}
- 	}
- }
-@@ -398,8 +394,8 @@ static gboolean connect_rild(gpointer user_data)
- 		if (create_gril(modem) < 0)
- 			return TRUE;
- 	} else {
--		ofono_error("Exiting, can't connect to rild.");
--		exit(0);
-+		ofono_error("Failed to connect to rild.");
-+		return TRUE;
- 	}
- =
+Tony Espy (4):
+  unit: add new test-rilmodem-sms
+  build: add support for test-rilmodem-sms
+  unit: re-factor test-rilmodem-cs server logic
+  build: update for test-rilmodem-cs changes
 
- 	return FALSE;
+ Makefile.am                 |  26 ++-
+ unit/rilmodem-test-server.c | 196 +++++++++++++++++++++++
+ unit/rilmodem-test-server.h |  40 +++++
+ unit/test-rilmodem-cs.c     | 379 ++++++++++++++--------------------------=
+----
+ unit/test-rilmodem-sms.c    | 261 ++++++++++++++++++++++++++++++
+ 5 files changed, 639 insertions(+), 263 deletions(-)
+ create mode 100644 unit/rilmodem-test-server.c
+ create mode 100644 unit/rilmodem-test-server.h
+ create mode 100644 unit/test-rilmodem-sms.c
+
 -- =
 
 2.1.4
 
 
---===============1216326405552773071==--
+--===============8822092841099116358==--
 
