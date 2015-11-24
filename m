@@ -1,66 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============7729093087087934417=="
+Content-Type: multipart/mixed; boundary="===============2966320103147087961=="
 MIME-Version: 1.0
-From: Simon Fels <simon.fels@canonical.com>
-Subject: [PATCH] voicecall: don't dereference a supplied null value
-Date: Fri, 20 Nov 2015 09:36:54 +0100
-Message-ID: <1448008614-26007-1-git-send-email-simon.fels@canonical.com>
+From: Fabio <fabio.tosetti@gmail.com>
+Subject: U-Blox modem sends unprintable chars before "AT+CGMS=<seq>" reply:
+ ofono (1.16) close the serial port ?
+Date: Tue, 24 Nov 2015 10:45:21 +0100
+Message-ID: <CAJvjxsz6pieOW_eqy+B+vHdgSxmPxnkBpF1dyM1M8Fi7VoA48g@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7729093087087934417==
+--===============2966320103147087961==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When the voicecall atom is unregistered we remove all HFP support as
-well but were supplying a zero as value to the emulator status
-callbacks which caused the process to crash as we were dereferencing
-the supplied value always and not respecting a zero as indicator to
-reset.
----
- src/voicecall.c | 15 ++++++++++++---
- 1 file changed, 12 insertions(+), 3 deletions(-)
+Hello,
+I'm using ofono 1.16 with some patch to add sms manager to the Ublox driver.
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index a4eef0e..31d845e 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -2660,16 +2660,25 @@ static void emulator_hfp_unregister(struct ofono_at=
-om *atom)
- 	struct ofono_voicecall *vc =3D __ofono_atom_get_data(atom);
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
- =
+Someone could confirm that ofono close the serial port when it receives
+some unexpected/unprintable character before the "AT+CGMS=3D<seq>" reply fr=
+om
+the modem?
 
-+	struct emulator_status data;
-+	data.vc =3D vc;
-+
-+	data.status =3D OFONO_EMULATOR_CALL_INACTIVE;
- 	__ofono_modem_foreach_registered_atom(modem,
- 						OFONO_ATOM_TYPE_EMULATOR_HFP,
--						emulator_call_status_cb, 0);
-+						emulator_call_status_cb, &data);
-+
-+	data.status =3D OFONO_EMULATOR_CALLSETUP_INACTIVE;
- 	__ofono_modem_foreach_registered_atom(modem,
- 						OFONO_ATOM_TYPE_EMULATOR_HFP,
- 						emulator_callsetup_status_cb,
--						0);
-+						&data);
-+
-+	data.status =3D OFONO_EMULATOR_CALLHELD_NONE;
- 	__ofono_modem_foreach_registered_atom(modem,
- 						OFONO_ATOM_TYPE_EMULATOR_HFP,
--						emulator_callheld_status_cb, 0);
-+						emulator_callheld_status_cb,
-+						&data);
- =
+If yes, is possible to discard these characters instead of hanging-up the
+serial port? Could I have some info about the source I have to patch ?
 
- 	__ofono_modem_foreach_registered_atom(modem,
- 						OFONO_ATOM_TYPE_EMULATOR_HFP,
+Thanks in advance,
+FabioT
+
+
 -- =
 
-2.5.0
+***************************************************************************=
+*************************************************
 
+"Solo due cose sono infinite: l'universo e la stupidit=C3=A0 umana. Ma della
+prima non sono sicuro". [Albert Einstein]
+***************************************************************************=
+*************************************************
 
---===============7729093087087934417==--
+--===============2966320103147087961==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+SGVsbG8sPGRpdj5JJiMzOTttIHVzaW5nIG9mb25vIDEuMTYgd2l0aCBz
+b21lIHBhdGNoIHRvIGFkZCBzbXMgbWFuYWdlciB0byB0aGUgVWJsb3ggZHJpdmVyLjwvZGl2Pjxk
+aXY+PGJyPjxkaXY+U29tZW9uZSBjb3VsZCBjb25maXJtIHRoYXQgb2Zvbm8gY2xvc2UgdGhlIHNl
+cmlhbCBwb3J0IHdoZW4gaXQgcmVjZWl2ZXMgc29tZSB1bmV4cGVjdGVkL3VucHJpbnRhYmxlIGNo
+YXJhY3RlciBiZWZvcmUgdGhlwqAmcXVvdDtBVCtDR01TPSZsdDtzZXEmZ3Q7JnF1b3Q7IHJlcGx5
+IGZyb20gdGhlIG1vZGVtPzwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+SWYgeWVzLCBpcyBwb3Nz
+aWJsZSB0byBkaXNjYXJkIHRoZXNlIGNoYXJhY3RlcnMgaW5zdGVhZCBvZiBoYW5naW5nLXVwIHRo
+ZSBzZXJpYWwgcG9ydD8gQ291bGQgSSBoYXZlIHNvbWUgaW5mbyBhYm91dCB0aGUgc291cmNlIEkg
+aGF2ZSB0byBwYXRjaCA/PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5UaGFua3MgaW4gYWR2YW5j
+ZSw8L2Rpdj48ZGl2PkZhYmlvVDwvZGl2PjxkaXY+PGJyIGNsZWFyPSJhbGwiPjxkaXY+PGJyPjwv
+ZGl2Pi0tIDxicj48ZGl2IGNsYXNzPSJnbWFpbF9zaWduYXR1cmUiPioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiogPGJyPiZx
+dW90O1NvbG8gZHVlIGNvc2Ugc29ubyBpbmZpbml0ZTogbCYjMzk7dW5pdmVyc28gZSBsYSBzdHVw
+aWRpdMOgIHVtYW5hLiBNYSBkZWxsYSBwcmltYSBub24gc29ubyBzaWN1cm8mcXVvdDsuIFtBbGJl
+cnQgRWluc3RlaW5dPGJyPioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKio8L2Rpdj4KPC9kaXY+PC9kaXY+PC9kaXY+Cg==
+
+--===============2966320103147087961==--
 
