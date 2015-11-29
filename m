@@ -1,59 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============5764645875355403882=="
+Content-Type: multipart/mixed; boundary="===============7741236402020654513=="
 MIME-Version: 1.0
-From: Tony Espy <espy@canonical.com>
-Subject: [PATCH] rilmodem: fix set_call_barring reply trace (mako)
-Date: Tue, 24 Nov 2015 19:18:42 -0500
-Message-ID: <1448410722-30592-1-git-send-email-espy@canonical.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: U-Blox modem sends unprintable chars before "AT+CGMS=<seq>"
+ reply: ofono (1.16) close the serial port ?
+Date: Sun, 29 Nov 2015 15:47:25 -0600
+Message-ID: <565B726D.4080506@gmail.com>
+In-Reply-To: <CAJvjxsz6pieOW_eqy+B+vHdgSxmPxnkBpF1dyM1M8Fi7VoA48g@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5764645875355403882==
+--===============7741236402020654513==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This change restores the trace output for a reply to a
-REQUEST_SET_FACILITY_LOCK used by the set function.
----
- drivers/rilmodem/call-barring.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+Hi Fabio,
 
-diff --git a/drivers/rilmodem/call-barring.c b/drivers/rilmodem/call-barrin=
-g.c
-index 70b0b56..719bbe1 100644
---- a/drivers/rilmodem/call-barring.c
-+++ b/drivers/rilmodem/call-barring.c
-@@ -119,7 +119,7 @@ static void ril_call_barring_set_cb(struct ril_msg *mes=
-sage, gpointer user_data)
- 	ofono_call_barring_set_cb_t cb =3D cbd->cb;
- 	struct barring_data *bd =3D cbd->user;
- 	struct parcel rilp;
--	int retries;
-+	int retries =3D -1;
- =
+On 11/24/2015 03:45 AM, Fabio wrote:
+> Hello,
+> I'm using ofono 1.16 with some patch to add sms manager to the Ublox driv=
+er.
+>
+> Someone could confirm that ofono close the serial port when it receives
+> some unexpected/unprintable character before the "AT+CGMS=3D<seq>" reply
+> from the modem?
 
- 	if (message->error !=3D RIL_E_SUCCESS)
- 		goto error;
-@@ -138,10 +138,10 @@ static void ril_call_barring_set_cb(struct ril_msg *m=
-essage, gpointer user_data)
- 	if (rilp.malformed)
- 		goto error;
- =
+No, oFono does not close serial ports because of garbage.  The syntax =
 
-+done:
- 	g_ril_append_print_buf(bd->ril, "{%d}", retries);
- 	g_ril_print_response(bd->ril, message);
- =
+will generally discard / ignore AT commands that are not properly formatted.
 
--done:
- 	CALLBACK_WITH_SUCCESS(cb, cbd->data);
- 	return;
- =
+>
+> If yes, is possible to discard these characters instead of hanging-up
+> the serial port? Could I have some info about the source I have to patch ?
+>
 
--- =
+Feel free to provide AT command logs to help us better understand what =
 
-2.1.4
+is happening.
+
+Regards,
+-Denis
 
 
---===============5764645875355403882==--
+--===============7741236402020654513==--
 
