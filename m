@@ -1,50 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============7392026968069015736=="
+Content-Type: multipart/mixed; boundary="===============6112103737473746048=="
 MIME-Version: 1.0
-From: Tony Espy <espy@canonical.com>
-Subject: [PATCH 2/2] unit: update test-rilmodem-sms set_sca test case
-Date: Fri, 04 Dec 2015 16:16:58 -0500
-Message-ID: <1449263818-14263-3-git-send-email-espy@canonical.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 0/2] Fix rilmodem SMSC quoting
+Date: Fri, 04 Dec 2015 16:25:44 -0600
+Message-ID: <566212E8.8060204@gmail.com>
 In-Reply-To: <1449263818-14263-1-git-send-email-espy@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7392026968069015736==
+--===============6112103737473746048==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Update test-rilmodem-sms set_sca test case to take
-into account additional quotes used for sending
-a SET_SMSC_ADDRESS request.
----
- unit/test-rilmodem-sms.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+Hi Tony,
 
-diff --git a/unit/test-rilmodem-sms.c b/unit/test-rilmodem-sms.c
-index ae3b1b3..1ed1b51 100644
---- a/unit/test-rilmodem-sms.c
-+++ b/unit/test-rilmodem-sms.c
-@@ -237,10 +237,10 @@ static const struct sms_data testdata_sca_query_inval=
-id_3 =3D {
-  * {number=3D"+34607003110"}
-  */
- static const guchar req_set_smsc_address_parcel_1[] =3D {
--	0x00, 0x00, 0x00, 0x28, 0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
--	0x0c, 0x00, 0x00, 0x00, 0x2b, 0x00, 0x33, 0x00, 0x34, 0x00, 0x36, 0x00,
--	0x30, 0x00, 0x37, 0x00, 0x30, 0x00, 0x30, 0x00, 0x33, 0x00, 0x31, 0x00,
--	0x31, 0x00, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00
-+	0x00, 0x00, 0x00, 0x2c, 0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-+	0x0e, 0x00, 0x00, 0x00, 0x22, 0x00, 0x2b, 0x00, 0x33, 0x00, 0x34, 0x00,
-+	0x36, 0x00, 0x30, 0x00, 0x37, 0x00, 0x30, 0x00, 0x30, 0x00, 0x33, 0x00,
-+	0x31, 0x00, 0x31, 0x00, 0x30, 0x00, 0x22, 0x00, 0x00, 0x00, 0x00, 0x00
- };
- =
+On 12/04/2015 03:16 PM, Tony Espy wrote:
+> This changeset fixes the string formatting of the
+> RIL_REQUEST_SET_SMSC_ADDRESS request, which requires
+> the string to bracketed by quotation marks.
+>
+> Tony Espy (2):
+>    rilmodem: restore SET_SMSC_ADDRESS number format
+>    unit: update test-rilmodem-sms set_sca test case
+>
+>   drivers/rilmodem/sms.c   | 4 +++-
+>   unit/test-rilmodem-sms.c | 8 ++++----
+>   2 files changed, 7 insertions(+), 5 deletions(-)
+>
 
- static const struct sms_data testdata_sca_set_valid_1 =3D {
--- =
+Both applied, thanks.
 
-2.1.4
+Regards,
+-Denis
 
-
---===============7392026968069015736==--
+--===============6112103737473746048==--
 
