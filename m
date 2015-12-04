@@ -1,38 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============6112103737473746048=="
+Content-Type: multipart/mixed; boundary="===============2311224276443925051=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/2] Fix rilmodem SMSC quoting
-Date: Fri, 04 Dec 2015 16:25:44 -0600
-Message-ID: <566212E8.8060204@gmail.com>
-In-Reply-To: <1449263818-14263-1-git-send-email-espy@canonical.com>
+Subject: Re: [PATCH] rilmodem: fix sim_status_cb debug logging
+Date: Fri, 04 Dec 2015 16:27:15 -0600
+Message-ID: <56621343.4070000@gmail.com>
+In-Reply-To: <1449263703-14123-1-git-send-email-espy@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6112103737473746048==
+--===============2311224276443925051==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Tony,
 
-On 12/04/2015 03:16 PM, Tony Espy wrote:
-> This changeset fixes the string formatting of the
-> RIL_REQUEST_SET_SMSC_ADDRESS request, which requires
-> the string to bracketed by quotation marks.
->
-> Tony Espy (2):
->    rilmodem: restore SET_SMSC_ADDRESS number format
->    unit: update test-rilmodem-sms set_sca test case
->
->   drivers/rilmodem/sms.c   | 4 +++-
->   unit/test-rilmodem-sms.c | 8 ++++----
->   2 files changed, 7 insertions(+), 5 deletions(-)
+On 12/04/2015 03:15 PM, Tony Espy wrote:
+> During the re-factoring of rilmodem's sim atom
+> messaging code, the sim_status_cb function's
+> RIL tracing code was converted to DBG calls.
+> This change adds the same prefix to DBG/trace
+> calls when a single message's parameters span
+> more than one DBG call. This makes it easier
+> to filter out trace messages when looking at a
+> log file.
+> ---
+>   drivers/rilmodem/sim.c | 7 +++++--
+>   1 file changed, 5 insertions(+), 2 deletions(-)
 >
 
-Both applied, thanks.
+Applied, thanks.
 
 Regards,
 -Denis
 
---===============6112103737473746048==--
+
+--===============2311224276443925051==--
 
