@@ -1,550 +1,638 @@
-Content-Type: multipart/mixed; boundary="===============4722183671989258752=="
+Content-Type: multipart/mixed; boundary="===============8607021855290023220=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] plugins: add upower battery monitor for bluetooth
-Date: Mon, 14 Dec 2015 12:22:21 -0600
-Message-ID: <566F08DD.4040509@gmail.com>
-In-Reply-To: <1449263754-14192-1-git-send-email-espy@canonical.com>
+From: Tony Espy <espy@canonical.com>
+Subject: [PATCH 1/3] unit: add new test-rilmodem-cb
+Date: Tue, 15 Dec 2015 11:34:33 -0500
+Message-ID: <1450197275-5463-1-git-send-email-espy@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4722183671989258752==
+--===============8607021855290023220==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tony,
+---
+ unit/test-rilmodem-cb.c | 598 ++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 file changed, 598 insertions(+)
+ create mode 100644 unit/test-rilmodem-cb.c
 
-On 12/04/2015 03:15 PM, Tony Espy wrote:
-> ---
->   plugins/upower.c | 476 ++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   1 file changed, 476 insertions(+)
->   create mode 100644 plugins/upower.c
+diff --git a/unit/test-rilmodem-cb.c b/unit/test-rilmodem-cb.c
+new file mode 100644
+index 0000000..d5b1d07
+--- /dev/null
++++ b/unit/test-rilmodem-cb.c
+@@ -0,0 +1,598 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2015 Canonical Ltd.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#define _GNU_SOURCE
++#include <assert.h>
++#include <errno.h>
++#include <glib.h>
++#include <stdio.h>
++#include <netinet/in.h>
++#include <sys/socket.h>
++#include <sys/un.h>
++#include <unistd.h>
++
++#include <ofono/modem.h>
++#include <ofono/types.h>
++#include <ofono/call-barring.h>
++#include <gril.h>
++
++#include "common.h"
++#include "ril_constants.h"
++#include "rilmodem-test-server.h"
++
++static GMainLoop *mainloop;
++
++static const struct ofono_call_barring_driver *cbdriver;
++
++struct rilmodem_cb_data {
++	GRil *ril;
++	struct ofono_modem *modem;
++	gconstpointer test_data;
++	struct ofono_call_barring *cb;
++	struct server_data *serverd;
++};
++
++typedef gboolean (*StartFunc)(gpointer data);
++
++struct cb_data {
++	StartFunc start_func;
++
++	const char *lock;
++	int enable;
++	const char *passwd;
++	const char *new_passwd;
++	int cls;
++
++	struct rilmodem_test_data rtd;
++	enum ofono_error_type error_type;
++
++	int status;
++};
++
++static void query_callback(const struct ofono_error *error, int status,
++								gpointer data)
++{
++	struct rilmodem_cb_data *rsd =3D data;
++	const struct cb_data *cbd =3D rsd->test_data;
++
++	g_assert(error->type =3D=3D cbd->error_type);
++
++	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
++		g_assert(status =3D=3D cbd->status);
++
++	g_main_loop_quit(mainloop);
++}
++
++static gboolean trigger_query(gpointer data)
++{
++	struct rilmodem_cb_data *rsd =3D data;
++	const struct cb_data *cbd =3D rsd->test_data;
++
++	g_assert(cbdriver->query !=3D NULL);
++	cbdriver->query(rsd->cb, cbd->lock, cbd->cls, query_callback, rsd);
++
++	return FALSE;
++}
++
++static void set_callback(const struct ofono_error *error, gpointer data)
++{
++	struct rilmodem_cb_data *rsd =3D data;
++	const struct cb_data *cbd =3D rsd->test_data;
++
++	g_assert(error->type =3D=3D cbd->error_type);
++
++	g_main_loop_quit(mainloop);
++}
++
++static gboolean trigger_set(gpointer data)
++{
++	struct rilmodem_cb_data *rsd =3D data;
++	const struct cb_data *cbd =3D rsd->test_data;
++
++	g_assert(cbdriver->set !=3D NULL);
++	cbdriver->set(rsd->cb, cbd->lock, cbd->enable, cbd->passwd, cbd->cls,
++							set_callback, rsd);
++
++	return FALSE;
++}
++
++static void set_passwd_callback(const struct ofono_error *error, gpointer =
+data)
++{
++	struct rilmodem_cb_data *rsd =3D data;
++	const struct cb_data *cbd =3D rsd->test_data;
++
++	g_assert(error->type =3D=3D cbd->error_type);
++
++	g_main_loop_quit(mainloop);
++}
++
++static gboolean trigger_set_passwd(gpointer data)
++{
++	struct rilmodem_cb_data *rsd =3D data;
++	const struct cb_data *cbd =3D rsd->test_data;
++
++	g_assert(cbdriver->set_passwd !=3D NULL);
++	cbdriver->set_passwd(rsd->cb, cbd->lock, cbd->passwd, cbd->new_passwd,
++						set_passwd_callback, rsd);
++
++	return FALSE;
++}
++
++/* RIL_REQUEST_GET_FACILITY_LOCK witht the following parameters:
++ *
++ * facility=3D"OI" (outgoing international calls)
++ * service class=3D1 ( VOICE )
++ */
++static const guchar req_get_facility_lock_parcel_1[] =3D {
++	0x00, 0x00, 0x00, 0x2c, 0x2a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
++	0x04, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x4f, 0x00, 0x49, 0x00,
++	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
++	0x01, 0x00, 0x00, 0x00, 0x31, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff
++};
++
++/*
++ * The following structure contains test data for a valid
++ * RIL_REQUEST_GET_FACILITY_LOCK reply with parameter {1}
++ * which indicates that call-barring is activated for the
++ * previously specified facility for the VOICE class.
++ */
++static const guchar reply_get_facility_lock_data_valid_1[] =3D {
++	0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00
++};
++
++static const struct cb_data testdata_query_valid_1 =3D {
++	.start_func =3D trigger_query,
++	.lock =3D "OI",
++	.cls =3D BEARER_CLASS_VOICE,
++	.rtd =3D {
++		.req_data =3D req_get_facility_lock_parcel_1,
++		.req_size =3D sizeof(req_get_facility_lock_parcel_1),
++		.rsp_data =3D reply_get_facility_lock_data_valid_1,
++		.rsp_size =3D sizeof(reply_get_facility_lock_data_valid_1),
++	},
++	.status =3D BEARER_CLASS_VOICE,
++};
++
++/* GENERIC_FAILURE returned in RIL reply */
++static const struct cb_data testdata_query_invalid_1 =3D {
++	.start_func =3D trigger_query,
++	.lock =3D "OI",
++	.cls =3D BEARER_CLASS_VOICE,
++	.rtd =3D {
++		.req_data =3D req_get_facility_lock_parcel_1,
++		.req_size =3D sizeof(req_get_facility_lock_parcel_1),
++		.rsp_data =3D reply_get_facility_lock_data_valid_1,
++		.rsp_size =3D sizeof(reply_get_facility_lock_data_valid_1),
++		.rsp_error =3D RIL_E_GENERIC_FAILURE,
++	},
++	.error_type =3D OFONO_ERROR_TYPE_FAILURE,
++};
++
++/*
++ * The following structure contains test data for a valid
++ * RIL_REQUEST_GET_FACILITY_LOCK reply with invalid number
++ * of parameters {0} specified.
++ */
++static const guchar reply_get_facility_lock_data_invalid_2[] =3D {
++	0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00
++};
++
++static const struct cb_data testdata_query_invalid_2 =3D {
++	.start_func =3D trigger_query,
++	.lock =3D "OI",
++	.cls =3D BEARER_CLASS_VOICE,
++	.rtd =3D {
++		.req_data =3D req_get_facility_lock_parcel_1,
++		.req_size =3D sizeof(req_get_facility_lock_parcel_1),
++		.rsp_data =3D reply_get_facility_lock_data_invalid_2,
++		.rsp_size =3D sizeof(reply_get_facility_lock_data_invalid_2),
++	},
++	.error_type =3D OFONO_ERROR_TYPE_FAILURE,
++};
++
++/*
++ * The following structure contains test data for an invalid
++ * RIL_REQUEST_GET_FACILITY_LOCK reply with an invalid class
++ * mask (-255).
++ */
++static const guchar reply_get_facility_lock_data_invalid_3[] =3D {
++	0x01, 0x00, 0x00, 0x00, 0x01, 0xff, 0xff, 0xff
++};
++
++static const struct cb_data testdata_query_invalid_3 =3D {
++	.start_func =3D trigger_query,
++	.lock =3D "OI",
++	.cls =3D BEARER_CLASS_VOICE,
++	.rtd =3D {
++		.req_data =3D req_get_facility_lock_parcel_1,
++		.req_size =3D sizeof(req_get_facility_lock_parcel_1),
++		.rsp_data =3D reply_get_facility_lock_data_invalid_3,
++		.rsp_size =3D sizeof(reply_get_facility_lock_data_invalid_3),
++	},
++	.error_type =3D OFONO_ERROR_TYPE_FAILURE,
++};
++
++/*
++ * The following structure contains test data for a
++ * RIL_REQUEST_GET_FACILITY_LOCK reply with an incomplete
++ * integer parameter, which will trigger a malformed parcel
++ * error.
++ */
++static const guchar reply_get_facility_lock_data_invalid_4[] =3D {
++	0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00
++};
++
++static const struct cb_data testdata_query_invalid_4 =3D {
++	.start_func =3D trigger_query,
++	.lock =3D "OI",
++	.cls =3D BEARER_CLASS_VOICE,
++	.rtd =3D {
++		.req_data =3D req_get_facility_lock_parcel_1,
++		.req_size =3D sizeof(req_get_facility_lock_parcel_1),
++		.rsp_data =3D reply_get_facility_lock_data_invalid_4,
++		.rsp_size =3D sizeof(reply_get_facility_lock_data_invalid_4),
++	},
++	.error_type =3D OFONO_ERROR_TYPE_FAILURE,
++};
++
++/* RIL_REQUEST_SET_FACILITY_LOCK witht the following parameters:
++ *
++ * facility=3D"OI" (outgoing international calls)
++ * unlock (0)
++ * passwd=3D"0000"
++ * service class=3D1 ( VOICE )
++ */
++static const guchar req_set_facility_lock_parcel_1[] =3D {
++	0x00, 0x00, 0x00, 0x3c, 0x2b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
++	0x05, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x4f, 0x00, 0x49, 0x00,
++	0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00,
++	0x04, 0x00, 0x00, 0x00, 0x30, 0x00, 0x30, 0x00, 0x30, 0x00, 0x30, 0x00,
++	0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x31, 0x00, 0x00, 0x00,
++	0xff, 0xff, 0xff, 0xff
++};
++
++/*
++ * This test doesn't specify any data for RIL_REQUEST_SET_FACILITY_LOCK re=
+ply
++ * to simulate a reply generated by mako.
++ */
++static const struct cb_data testdata_set_valid_1 =3D {
++	.start_func =3D trigger_set,
++	.lock =3D "OI",
++	.passwd =3D "0000",
++	.cls =3D BEARER_CLASS_VOICE,
++	.rtd =3D {
++		.req_data =3D req_set_facility_lock_parcel_1,
++		.req_size =3D sizeof(req_set_facility_lock_parcel_1),
++	},
++};
++
++/* RIL_REQUEST_SET_FACILITY_LOCK witht the following parameters:
++ *
++ * facility=3D"OI" (outgoing international calls)
++ * unlock (1)
++ * passwd=3D"0000"
++ * service class=3D0 ( NONE )
++ */
++static const guchar req_set_facility_lock_parcel_2[] =3D {
++	0x00, 0x00, 0x00, 0x3c, 0x2b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
++	0x05, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x4f, 0x00, 0x49, 0x00,
++	0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x31, 0x00, 0x00, 0x00,
++	0x04, 0x00, 0x00, 0x00, 0x30, 0x00, 0x30, 0x00, 0x30, 0x00, 0x30, 0x00,
++	0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00,
++	0xff, 0xff, 0xff, 0xff
++};
++
++/*
++ * The following structure contains test data for a valid
++ * RIL_REQUEST_SET_FACILITY_LOCK reply with parameter {1}
++ */
++static const guchar reply_set_facility_lock_data_valid_2[] =3D {
++	0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00
++};
++
++static const struct cb_data testdata_set_valid_2 =3D {
++	.start_func =3D trigger_set,
++	.lock =3D "OI",
++	.enable =3D 1,
++	.passwd =3D "0000",
++	.cls =3D BEARER_CLASS_DEFAULT,  /* updated to NONE in outgoing parcel */
++	.rtd =3D {
++		.req_data =3D req_set_facility_lock_parcel_2,
++		.req_size =3D sizeof(req_set_facility_lock_parcel_2),
++		.rsp_data =3D reply_set_facility_lock_data_valid_2,
++		.rsp_size =3D sizeof(reply_set_facility_lock_data_valid_2),
++	},
++};
++
++/* GENERIC_FAILURE returned in RIL reply */
++static const struct cb_data testdata_set_invalid_1 =3D {
++	.start_func =3D trigger_set,
++	.lock =3D "OI",
++	.enable =3D 1,
++	.passwd =3D "0000",
++	.cls =3D BEARER_CLASS_DEFAULT,
++	.rtd =3D {
++		.req_data =3D req_set_facility_lock_parcel_2,
++		.req_size =3D sizeof(req_set_facility_lock_parcel_2),
++		.rsp_error =3D RIL_E_GENERIC_FAILURE,
++	},
++	.error_type =3D OFONO_ERROR_TYPE_FAILURE,
++};
++
++
++/*
++ * The following structure contains test data for a
++ * RIL_REQUEST_SET_FACILITY_LOCK reply with an invalid
++ * number of parameters {2}
++ */
++static const guchar reply_set_facility_lock_data_invalid_2[] =3D {
++	0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00
++};
++
++static const struct cb_data testdata_set_invalid_2 =3D {
++	.start_func =3D trigger_set,
++	.lock =3D "OI",
++	.enable =3D 1,
++	.passwd =3D "0000",
++	.cls =3D BEARER_CLASS_DEFAULT,
++	.rtd =3D {
++		.req_data =3D req_set_facility_lock_parcel_2,
++		.req_size =3D sizeof(req_set_facility_lock_parcel_2),
++		.rsp_data =3D reply_set_facility_lock_data_invalid_2,
++		.rsp_size =3D sizeof(reply_set_facility_lock_data_invalid_2),
++	},
++	.error_type =3D OFONO_ERROR_TYPE_FAILURE,
++};
++
++/*
++ * The following structure contains test data for a
++ * RIL_REQUEST_SET_FACILITY_LOCK reply with an incomplete
++ * integer parameter, which will trigger a malformed parcel
++ * error.
++ */
++static const guchar reply_set_facility_lock_data_invalid_3[] =3D {
++	0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00
++};
++
++static const struct cb_data testdata_set_invalid_3 =3D {
++	.start_func =3D trigger_set,
++	.lock =3D "OI",
++	.enable =3D 1,
++	.passwd =3D "0000",
++	.cls =3D BEARER_CLASS_DEFAULT,
++	.rtd =3D {
++		.req_data =3D req_set_facility_lock_parcel_2,
++		.req_size =3D sizeof(req_set_facility_lock_parcel_2),
++		.rsp_data =3D reply_set_facility_lock_data_invalid_3,
++		.rsp_size =3D sizeof(reply_set_facility_lock_data_invalid_3),
++	},
++	.error_type =3D OFONO_ERROR_TYPE_FAILURE,
++};
++
++/* RIL_REQUEST_CHANGE_BARRING_PASSWORD with the following parameters:
++ *
++ * facility=3D"OI" (outgoing international calls)
++ * old passwd=3D"1111"
++ * new_passwd=3D"0000"
++ */
++static const guchar req_change_barring_passwd_parcel_1[] =3D {
++	0x00, 0x00, 0x00, 0x38, 0x2c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
++	0x03, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x4f, 0x00, 0x49, 0x00,
++	0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x31, 0x00, 0x31, 0x00,
++	0x31, 0x00, 0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00,
++	0x30, 0x00, 0x30, 0x00,	0x30, 0x00, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00
++};
++
++/*
++ * This test doesn't specify any data for RIL_REQUEST_SET_FACILITY_LOCK re=
+ply
++ * to simulate a reply generated by mako.
++ */
++static const struct cb_data testdata_set_passwd_valid_1 =3D {
++	.start_func =3D trigger_set_passwd,
++	.lock =3D "OI",
++	.passwd =3D "1111",
++	.new_passwd =3D "0000",
++	.rtd =3D {
++		.req_data =3D req_change_barring_passwd_parcel_1,
++		.req_size =3D sizeof(req_change_barring_passwd_parcel_1),
++	},
++};
++
++/* GENERIC_FAILURE returned in RIL reply */
++static const struct cb_data testdata_set_passwd_invalid_1 =3D {
++	.start_func =3D trigger_set_passwd,
++	.lock =3D "OI",
++	.passwd =3D "1111",
++	.new_passwd =3D "0000",
++	.rtd =3D {
++		.req_data =3D req_change_barring_passwd_parcel_1,
++		.req_size =3D sizeof(req_change_barring_passwd_parcel_1),
++		.rsp_error =3D RIL_E_GENERIC_FAILURE,
++	},
++	.error_type =3D OFONO_ERROR_TYPE_FAILURE,
++};
++
++/* Declarations && Re-implementations of core functions. */
++void ril_call_barring_exit(void);
++void ril_call_barring_init(void);
++
++struct ofono_call_barring {
++	void *driver_data;
++	const struct cb_data *cbd;
++};
++
++struct ofono_call_barring *ofono_call_barring_create(struct ofono_modem *m=
+odem,
++							unsigned int vendor,
++							const char *driver,
++							void *data)
++{
++	struct rilmodem_cb_data *rsd =3D data;
++	struct ofono_call_barring *cb =3D g_new0(struct ofono_call_barring, 1);
++	int retval;
++
++	retval =3D cbdriver->probe(cb, OFONO_RIL_VENDOR_AOSP, rsd->ril);
++	g_assert(retval =3D=3D 0);
++
++	return cb;
++}
++
++int ofono_call_barring_driver_register(const struct ofono_call_barring_dri=
+ver *d)
++{
++	if (cbdriver =3D=3D NULL)
++		cbdriver =3D d;
++
++	return 0;
++}
++
++void ofono_call_barring_set_data(struct ofono_call_barring *cb, void *data)
++{
++	cb->driver_data =3D data;
++}
++
++void *ofono_call_barring_get_data(struct ofono_call_barring *cb)
++{
++	return cb->driver_data;
++}
++
++void ofono_call_barring_register(struct ofono_call_barring *cb)
++{
++}
++
++void ofono_call_barring_driver_unregister(const struct ofono_call_barring_=
+driver *d)
++{
++}
++
++static void server_connect_cb(gpointer data)
++{
++	struct rilmodem_cb_data *rsd =3D data;
++	const struct cb_data *cbd =3D rsd->test_data;
++
++	/* This causes local impl of _create() to call driver's probe func. */
++	rsd->cb =3D ofono_call_barring_create(NULL, OFONO_RIL_VENDOR_AOSP,
++							"rilmodem", rsd);
++	rsd->cb->cbd =3D cbd;
++
++	/* add_idle doesn't work, read blocks main loop!!! */
++
++	if (cbd->rtd.unsol_test)
++		g_idle_add(cbd->start_func, (void *) rsd);
++	else
++		g_assert(cbd->start_func(rsd) =3D=3D FALSE);
++}
++
++#if BYTE_ORDER =3D=3D LITTLE_ENDIAN
++
++/*
++ * This unit test:
++ *  - does some test data setup
++ *  - configures a dummy server socket
++ *  - creates a new gril client instance
++ *    - triggers a connect to the dummy
++ *      server socket
++ *  - starts a mainloop
++ */
++static void test_call_barring_func(gconstpointer data)
++{
++	const struct cb_data *sd =3D data;
++	struct rilmodem_cb_data *rsd;
++
++	ril_call_barring_init();
++
++	rsd =3D g_new0(struct rilmodem_cb_data, 1);
++
++	rsd->test_data =3D sd;
++
++	rsd->serverd =3D rilmodem_test_server_create(&server_connect_cb,
++								&sd->rtd, rsd);
++
++	rsd->ril =3D g_ril_new(RIL_SERVER_SOCK_PATH, OFONO_RIL_VENDOR_AOSP);
++	g_assert(rsd->ril !=3D NULL);
++
++	mainloop =3D g_main_loop_new(NULL, FALSE);
++
++	g_main_loop_run(mainloop);
++	g_main_loop_unref(mainloop);
++
++	cbdriver->remove(rsd->cb);
++	g_ril_unref(rsd->ril);
++	g_free(rsd);
++
++	rilmodem_test_server_close(rsd->serverd);
++
++	ril_call_barring_exit();
++}
++
++#endif
++
++int main(int argc, char **argv)
++{
++	g_test_init(&argc, &argv, NULL);
++
++/*
++ * As all our architectures are little-endian except for
++ * PowerPC, and the Binder wire-format differs slightly
++ * depending on endian-ness, the following guards against test
++ * failures when run on PowerPC.
++ */
++#if BYTE_ORDER =3D=3D LITTLE_ENDIAN
++	g_test_add_data_func("/testrilmodemcallbarring/query/valid/1",
++					&testdata_query_valid_1,
++					test_call_barring_func);
++	g_test_add_data_func("/testrilmodemcallbarring/query/invalid/1",
++					&testdata_query_invalid_1,
++					test_call_barring_func);
++	g_test_add_data_func("/testrilmodemcallbarring/query/invalid/2",
++					&testdata_query_invalid_2,
++					test_call_barring_func);
++	g_test_add_data_func("/testrilmodemcallbarring/query/invalid/3",
++					&testdata_query_invalid_3,
++					test_call_barring_func);
++	g_test_add_data_func("/testrilmodemcallbarring/query/invalid/4",
++					&testdata_query_invalid_3,
++					test_call_barring_func);
++	g_test_add_data_func("/testrilmodemcallbarring/set/valid/4",
++					&testdata_set_valid_1,
++					test_call_barring_func);
++	g_test_add_data_func("/testrilmodemcallbarring/set/valid/2",
++					&testdata_set_valid_2,
++					test_call_barring_func);
++	g_test_add_data_func("/testrilmodemcallbarring/set/invalid/1",
++					&testdata_set_invalid_1,
++					test_call_barring_func);
++	g_test_add_data_func("/testrilmodemcallbarring/set/invalid/2",
++					&testdata_set_invalid_2,
++					test_call_barring_func);
++	g_test_add_data_func("/testrilmodemcallbarring/set/invalid/3",
++					&testdata_set_invalid_3,
++					test_call_barring_func);
++	g_test_add_data_func("/testrilmodemcallbarring/set_passwd/valid/1",
++					&testdata_set_passwd_valid_1,
++					test_call_barring_func);
++	g_test_add_data_func("/testrilmodemcallbarring/set_passwd/invalid/1",
++					&testdata_set_passwd_invalid_1,
++					test_call_barring_func);
++#endif
++	return g_test_run();
++}
+-- =
 
-Makefile.am changes?
+2.1.4
 
->
-> diff --git a/plugins/upower.c b/plugins/upower.c
-> new file mode 100644
-> index 0000000..8babc2a
-> --- /dev/null
-> +++ b/plugins/upower.c
-> @@ -0,0 +1,476 @@
-> +/*
-> + *
-> + *  oFono - Open Source Telephony
-> + *
-> + *  Copyright (C) 2015 Canonical Ltd.
-> + *
-> + *  This program is free software; you can redistribute it and/or modify
-> + *  it under the terms of the GNU General Public License version 2 as
-> + *  published by the Free Software Foundation.
-> + *
-> + *  This program is distributed in the hope that it will be useful,
-> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + *  GNU General Public License for more details.
-> + *
-> + *  You should have received a copy of the GNU General Public License
-> + *  along with this program; if not, write to the Free Software
-> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
-1  USA
-> + *
-> + */
-> +
-> +#ifdef HAVE_CONFIG_H
-> +#include <config.h>
-> +#endif
-> +
-> +#include <glib.h>
-> +#include <gdbus.h>
-> +#include <ofono.h>
-> +
-> +#define OFONO_API_SUBJECT_TO_CHANGE
-> +#include <ofono/plugin.h>
-> +#include <ofono/modem.h>
-> +#include <ofono/log.h>
-> +#include <ofono/emulator.h>
-> +
-> +#define DBUS_PROPERTIES_INTERFACE     "org.freedesktop.DBus.Properties"
-> +#define UPOWER_SERVICE                "org.freedesktop.UPower"
-> +#define UPOWER_PATH                   "/org/freedesktop/UPower"
-> +#define UPOWER_INTERFACE              UPOWER_SERVICE
-> +#define UPOWER_DEVICE_INTERFACE       UPOWER_SERVICE ".Device"
-> +
-> +static guint modem_watch;
-> +static guint upower_battery_watch;
-> +static guint upower_daemon_watch;
-> +static DBusConnection *connection;
-> +static GHashTable *modem_hfp_watches;
-> +static GList *modems;
-> +static int last_battery_level;
-> +static char *battery_device_path;
-> +
-> +static void emulator_battery_cb(struct ofono_atom *atom, void *data)
-> +{
-> +	struct ofono_emulator *em =3D __ofono_atom_get_data(atom);
-> +	int val =3D GPOINTER_TO_INT(data);
-> +
-> +	DBG("calling set_indicator: %d", val);
-> +	ofono_emulator_set_indicator(em, OFONO_EMULATOR_IND_BATTERY, (int) val);
-> +}
-> +
-> +static void update_battery_level(double percentage_val)
-> +{
-> +	GList *list;
-> +	int battery_level;
-> +
-> +	if (percentage_val <=3D 1.00) {
-> +		battery_level =3D 0;
-> +	} else if (percentage_val > 1.00 && percentage_val <=3D 100.00) {
-> +		battery_level =3D ((int) percentage_val - 1) / 20 + 1;
-> +	} else {
-> +		ofono_error("%s: Invalid value for battery level: %f",
-> +								__func__,
-> +								percentage_val);
-> +		goto done;
-> +	}
-> +
-> +	DBG("last_battery_level: %d battery_level: %d", last_battery_level,
-> +							battery_level);
-> +
-> +	if (last_battery_level =3D=3D battery_level)
-> +		goto done;
-> +
-> +	last_battery_level =3D battery_level;
-> +
-> +	for (list =3D modems; list; list =3D list->next) {
-> +		struct ofono_modem *modem =3D list->data;
-> +
-> +		__ofono_modem_foreach_registered_atom(modem,
-> +					OFONO_ATOM_TYPE_EMULATOR_HFP,
-> +					emulator_battery_cb,
-> +					GINT_TO_POINTER(battery_level));
-> +	}
-> +done:
-> +	;
 
-This is not our style.  If a label is not useful, then simply use 'return'.
-
-> +}
-> +
-> +static gboolean battery_props_changed(DBusConnection *conn, DBusMessage =
-*msg,
-> +				void *user_data)
-> +
-> +{
-> +	const char *iface;
-> +	DBusMessageIter iter, dict;
-> +	double percentage_val;
-> +	gboolean percentage_found =3D FALSE;
-> +	gboolean retval =3D FALSE;
-> +
-> +	DBG("");
-> +
-> +	dbus_message_iter_init(msg, &iter);
-> +
-> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING) {
-> +		ofono_error("%s: iface !=3D TYPE_STRING!", __func__);
-> +		goto done;
-> +	}
-> +
-> +	dbus_message_iter_get_basic(&iter, &iface);
-> +
-> +	if (g_str_equal(iface, UPOWER_DEVICE_INTERFACE) !=3D TRUE) {
-> +		ofono_error("%s: wrong iface: %s!", __func__, iface);
-> +		goto done;
-> +	}
-> +
-> +	if (!dbus_message_iter_next(&iter)) {
-> +		ofono_error("%s: advance iter failed!", __func__);
-> +		goto done;
-> +	}
-> +
-> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_ARRAY) {
-> +		ofono_error("%s: type !=3D ARRAY!", __func__);
-> +		goto done;
-> +	}
-> +
-> +	dbus_message_iter_recurse(&iter, &dict);
-> +
-> +	while (dbus_message_iter_get_arg_type(&dict) =3D=3D DBUS_TYPE_DICT_ENTR=
-Y) {
-> +		DBusMessageIter entry, val;
-> +		const char *key;
-> +
-> +		dbus_message_iter_recurse(&dict, &entry);
-> +
-> +		if (dbus_message_iter_get_arg_type(&entry) !=3D
-> +				DBUS_TYPE_STRING) {
-> +			ofono_error("%s: key type !=3D STRING!", __func__);
-> +			goto done;
-> +		}
-> +
-> +		dbus_message_iter_get_basic(&entry, &key);
-> +
-> +		if (g_str_equal(key, "Percentage") !=3D TRUE) {
-> +			dbus_message_iter_next(&dict);
-> +			continue;
-> +		}
-> +
-> +		dbus_message_iter_next(&entry);
-> +		if (dbus_message_iter_get_arg_type(&entry) !=3D
-> +				DBUS_TYPE_VARIANT) {
-> +			ofono_error("%s: 'Percentage' val !=3D VARIANT",
-> +								__func__);
-> +			goto done;
-> +		}
-> +
-> +		dbus_message_iter_recurse(&entry, &val);
-> +
-> +		if (dbus_message_iter_get_arg_type(&val) !=3D DBUS_TYPE_DOUBLE) {
-> +			ofono_error("%s: 'Percentage' val !=3D DOUBLE", __func__);
-> +			goto done;
-> +		}
-> +
-> +		dbus_message_iter_get_basic(&val, &percentage_val);
-> +		percentage_found =3D TRUE;
-> +		break;
-> +	}
-> +
-> +	/* No errors found during parsing, so don't trigger cb removal */
-> +	retval =3D TRUE;
-> +
-> +	if (percentage_found =3D=3D FALSE)
-> +		goto done;
-> +
-> +	update_battery_level(percentage_val);
-> +
-> +done:
-> +	return retval;
-> +}
-> +
-> +static void get_property_reply(DBusPendingCall *call, void *user_data)
-> +{
-> +	double percentage_val;
-> +	DBusMessageIter iter, val;
-> +	DBusMessage *reply;
-> +
-> +	DBG("");
-> +
-> +	reply =3D dbus_pending_call_steal_reply(call);
-> +	if (reply =3D=3D NULL) {
-> +		ofono_error("%s: dbus_message_new_method failed", __func__);
-> +		goto done;
-> +	}
-> +
-> +	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR) {
-> +		ofono_error("%s: ERROR reply to Get('Percentage')", __func__);
-> +		goto done;
-> +	}
-> +
-> +	if (dbus_message_iter_init(reply, &iter) =3D=3D FALSE) {
-> +		ofono_error("%s: error initializing array iter", __func__);
-> +		goto done;
-> +	}
-> +
-> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT) {
-> +		ofono_error("%s: type !=3D VARIANT!", __func__);
-> +		goto done;
-> +	}
-> +
-> +	dbus_message_iter_recurse(&iter, &val);
-> +
-> +	if (dbus_message_iter_get_arg_type(&val) !=3D DBUS_TYPE_DOUBLE) {
-> +		ofono_error("%s: type !=3D DOUBLE!", __func__);
-> +		goto done;
-> +	}
-> +
-> +	dbus_message_iter_get_basic(&val, &percentage_val);
-> +
-> +	update_battery_level(percentage_val);
-> +
-> +done:
-> +	if (reply)
-> +		dbus_message_unref(reply);
-> +
-> +	dbus_pending_call_unref(call);
-> +}
-> +
-> +static void emulator_hfp_watch(struct ofono_atom *atom,
-> +				enum ofono_atom_watch_condition cond,
-> +				void *data)
-> +{
-> +	struct ofono_modem *modem =3D data;
-> +	DBusMessageIter iter;
-> +	DBusPendingCall *call;
-> +	DBusMessage *msg;
-> +	const char *iface =3D UPOWER_DEVICE_INTERFACE;
-> +	const char *property =3D "Percentage";
-> +
-> +	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-> +		DBG("UNREGISTERED");
-> +
-> +		modems =3D g_list_remove(modems, modem);
-> +		if (modems !=3D NULL)
-> +			return;
-> +
-> +		if (upower_battery_watch) {
-> +			g_dbus_remove_watch(connection, upower_battery_watch);
-> +			upower_battery_watch =3D 0;
-> +		}
-> +
-> +		return;
-> +	}
-> +
-> +	DBG("REGISTERED");
-> +
-> +	/* TODO: handle removable batteries */
-> +
-> +	modems =3D g_list_append(modems, modem);
-> +
-> +	if (modems->next !=3D NULL)
-> +		return;
-> +
-> +	upower_battery_watch =3D g_dbus_add_signal_watch(connection,
-> +						UPOWER_SERVICE,
-> +						battery_device_path,
-> +						DBUS_INTERFACE_PROPERTIES,
-> +						"PropertiesChanged",
-> +						battery_props_changed,
-> +						NULL, NULL);
-> +
-> +	/* Query current battery value */
-> +	msg =3D dbus_message_new_method_call(UPOWER_SERVICE, battery_device_pat=
-h,
-> +						DBUS_PROPERTIES_INTERFACE,
-> +						"Get");
-> +	if (msg =3D=3D NULL) {
-> +		ofono_error("%s: dbus_message_new_method failed", __func__);
-> +		return;
-> +	}
-> +
-> +	dbus_message_iter_init_append(msg, &iter);
-> +	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &iface);
-> +	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &property);
-> +
-> +	if (!dbus_connection_send_with_reply(connection, msg, &call, -1)) {
-> +		ofono_error("%s: Sending EnumerateDevices failed", __func__);
-> +		goto done;
-> +	}
-> +
-> +	dbus_pending_call_set_notify(call, get_property_reply, NULL, NULL);
-> +done:
-> +	dbus_message_unref(msg);
-
-So you are looking for HFP Emulators, and once one is registered, you =
-
-create a signal watch for the property, and then also query the current =
-
-battery value.  And when the last HFP emulator goes away, you remove the =
-
-signal watch.  I'm guessing to optimize wakeups?
-
-Just be aware, that this creates a race condition.  When the SLC =
-
-connection is established, the HFP device queries the state of all =
-
-indicators.  And when the emulator is registered, the battery value is =
-
-set to something bogus.  So you have a race between your D-Bus request =
-
-and the HF indicator query.
-
-Do we want to avoid this and always listen to battery events?  Would =
-
-probably also simplify the logic quite a bit, since you won't need to =
-
-manage so many data structures.
-
-> +}
-> +
-> +static void modemwatch(struct ofono_modem *modem, gboolean added, void *=
-user)
-> +{
-> +
-> +	const char *path =3D ofono_modem_get_path(modem);
-> +
-> +	DBG("modem: %s, added: %d", path, added);
-> +
-> +	if (added) {
-> +		guint watch_id;
-> +
-> +		watch_id =3D __ofono_modem_add_atom_watch(modem,
-> +					OFONO_ATOM_TYPE_EMULATOR_HFP,
-> +					emulator_hfp_watch, modem, NULL);
-> +
-> +		g_hash_table_insert(modem_hfp_watches, g_strdup(path),
-> +						GINT_TO_POINTER(watch_id));
-> +
-> +	} else {
-> +		guint *watch_id =3D g_hash_table_lookup(modem_hfp_watches, path);
-> +
-> +		if (watch_id !=3D NULL) {
-> +			__ofono_modem_remove_atom_watch(modem, *watch_id);
-> +			g_hash_table_remove(modem_hfp_watches, path);
-> +		}
-> +	}
-> +}
-> +
-> +static void call_modemwatch(struct ofono_modem *modem, void *user)
-> +{
-> +	modemwatch(modem, TRUE, user);
-> +}
-> +
-> +static gboolean parse_devices_reply(DBusMessage *reply)
-> +{
-> +	DBusMessageIter array, iter;
-> +	const char *path;
-> +
-> +	DBG("");
-> +
-> +	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR) {
-> +		ofono_error("%s: ERROR reply to EnumerateDevices", __func__);
-> +		return FALSE;
-> +	}
-> +
-> +	if (dbus_message_iter_init(reply, &array) =3D=3D FALSE) {
-> +		ofono_error("%s: error initializing array iter", __func__);
-> +		return FALSE;
-> +	}
-> +
-> +	if (dbus_message_iter_get_arg_type(&array) !=3D DBUS_TYPE_ARRAY) {
-> +		ofono_error("%s: type !=3D ARRAY!", __func__);
-> +		return FALSE;
-> +	}
-> +
-> +	dbus_message_iter_recurse(&array, &iter);
-> +
-> +	while (dbus_message_iter_get_arg_type(&iter) =3D=3D DBUS_TYPE_OBJECT_PA=
-TH) {
-> +
-> +		dbus_message_iter_get_basic(&iter, &path);
-> +
-> +		if (g_strrstr(path, "/battery_")) {
-> +			ofono_info("%s: found 1st battery device: %s", __func__,
-> +									path);
-> +			battery_device_path =3D g_strdup(path);
-> +			break;
-> +		}
-> +
-> +		if (!dbus_message_iter_next(&iter))
-> +			break;
-> +	}
-> +
-> +	return TRUE;
-> +}
-> +
-> +static void enum_devices_reply(DBusPendingCall *call, void *user_data)
-> +{
-> +	DBusMessage *reply;
-> +
-> +	DBG("");
-> +
-> +	reply =3D dbus_pending_call_steal_reply(call);
-> +	if (reply =3D=3D NULL) {
-> +		ofono_error("%s: dbus_message_new_method failed", __func__);
-> +		goto done;
-> +	}
-> +
-> +	if (parse_devices_reply(reply) =3D=3D FALSE)
-> +		goto done;
-> +
-> +	DBG("parse_devices_reply OK");
-> +
-> +	if (battery_device_path =3D=3D NULL) {
-> +		ofono_error("%s: no battery detected", __func__);
-> +		goto done;
-> +	}
-> +
-> +	modem_watch =3D __ofono_modemwatch_add(modemwatch, NULL, NULL);
-> +	__ofono_modem_foreach(call_modemwatch, NULL);
-> +done:
-> +	if (reply)
-> +		dbus_message_unref(reply);
-> +
-> +	dbus_pending_call_unref(call);
-> +}
-> +
-> +static void upower_connect(DBusConnection *conn, void *user_data)
-> +{
-> +	DBusPendingCall *call;
-> +	DBusMessage *msg;
-> +
-> +	DBG("upower connect");
-> +
-> +	msg =3D dbus_message_new_method_call(UPOWER_SERVICE,
-> +						UPOWER_PATH,
-> +						UPOWER_INTERFACE,
-> +						"EnumerateDevices");
-> +	if (msg =3D=3D NULL) {
-> +		ofono_error("%s: dbus_message_new_method failed", __func__);
-> +		return;
-> +	}
-> +
-> +	if (!dbus_connection_send_with_reply(conn, msg, &call, -1)) {
-> +		ofono_error("%s: Sending EnumerateDevices failed", __func__);
-> +		goto done;
-> +	}
-> +
-> +	dbus_pending_call_set_notify(call, enum_devices_reply, NULL, NULL);
-> +done:
-> +	dbus_message_unref(msg);
-> +}
-> +
-> +static void upower_disconnect(DBusConnection *conn, void *user_data)
-> +{
-> +	DBG("upower disconnect");
-> +
-> +	if (modem_watch) {
-> +		__ofono_modemwatch_remove(modem_watch);
-> +		modem_watch =3D 0;
-> +	}
-> +
-> +	if (battery_device_path) {
-> +		g_free(battery_device_path);
-> +		battery_device_path =3D NULL;
-> +	}
-> +}
-> +
-> +static int upower_init(void)
-> +{
-> +	DBG("upower init");
-> +
-> +	connection =3D ofono_dbus_get_connection();
-> +	upower_daemon_watch =3D g_dbus_add_service_watch(connection,
-> +							UPOWER_SERVICE,
-> +							upower_connect,
-> +							upower_disconnect,
-> +							NULL, NULL);
-> +
-> +	modem_hfp_watches =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-> +				g_free, NULL);
-> +
-> +	return 0;
-> +}
-> +
-> +static void upower_exit(void)
-> +{
-> +	if (upower_daemon_watch)
-> +		g_dbus_remove_watch(connection, upower_daemon_watch);
-> +
-> +	if (modem_watch)
-> +		__ofono_modemwatch_remove(modem_watch);
-> +
-> +	if (battery_device_path)
-> +		g_free(battery_device_path);
-> +
-> +	g_hash_table_destroy(modem_hfp_watches);
-> +}
-> +
-> +OFONO_PLUGIN_DEFINE(upower, "upower battery monitor", VERSION,
-> +		OFONO_PLUGIN_PRIORITY_DEFAULT, upower_init, upower_exit)
->
-
-Regards,
--Denis
-
---===============4722183671989258752==--
+--===============8607021855290023220==--
 
