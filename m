@@ -1,90 +1,129 @@
-Content-Type: multipart/mixed; boundary="===============4561404786868194571=="
+Content-Type: multipart/mixed; boundary="===============8183845551368408075=="
 MIME-Version: 1.0
-From: Tony Espy <espy@canonical.com>
-Subject: [PATCH v2] build: untangle ATMODEM and BLUETOOTH conditionals
-Date: Wed, 16 Dec 2015 20:11:20 -0500
-Message-ID: <1450314680-19347-1-git-send-email-espy@canonical.com>
+From: Xavier Claessens <xclaesse@gmail.com>
+Subject: Add/Remove phonesim on the fly
+Date: Thu, 17 Dec 2015 12:24:07 -0500
+Message-ID: <1450373047.2408.1.camel@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4561404786868194571==
+--===============8183845551368408075==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am | 30 +++++++++++++++++-------------
- 1 file changed, 17 insertions(+), 13 deletions(-)
+Ubuntu's ofono has a useful DBus interface to add/remove modems. Would
+make sense to upstream that patch.
 
-diff --git a/Makefile.am b/Makefile.am
-index b22c04b..8bbe25c 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -478,9 +478,6 @@ builtin_sources +=3D plugins/ublox.c
- =
+Regards,
+Xavier Claessens.
 
- if BLUETOOTH
- if BLUEZ4
--builtin_modules +=3D bluez4
--builtin_sources +=3D plugins/bluez4.c plugins/bluez4.h
--
- builtin_modules +=3D telit
- builtin_sources +=3D plugins/telit.c plugins/bluez4.h
- =
+--===============8183845551368408075==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Added-dbus-control-channel-to-phonesim-plugin.patch"
 
-@@ -490,11 +487,25 @@ builtin_sources +=3D plugins/sap.c plugins/bluez4.h
- builtin_modules +=3D hfp_bluez4
- builtin_sources +=3D plugins/hfp_hf_bluez4.c plugins/bluez4.h
- =
+RnJvbSA1ZTVlYzcxYTM3ODBkNGFkNWI0YmUyNmU2NDdkNDEwYzQ5NDkzNDVkIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBKdXNzaSBQYWtrYW5lbiA8anVzc2kucGFra2FuZW5AY2Fub25p
+Y2FsLmNvbT4KRGF0ZTogVHVlLCA4IEFwciAyMDE0IDEwOjU3OjQxICswMzAwClN1YmplY3Q6IFtQ
+QVRDSF0gQWRkZWQgZGJ1cyBjb250cm9sIGNoYW5uZWwgdG8gcGhvbmVzaW0gcGx1Z2luLgoKLS0t
+CiBkb2MvcGhvbmVzaW0tY29udHJvbC1hcGkudHh0IHwgIDM0ICsrKysrKysrKysrKwogcGx1Z2lu
+cy9waG9uZXNpbS5jICAgICAgICAgICB8IDEyOSArKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKysrLS0tCiAyIGZpbGVzIGNoYW5nZWQsIDE1NiBpbnNlcnRpb25zKCspLCA3IGRl
+bGV0aW9ucygtKQogY3JlYXRlIG1vZGUgMTAwNjQ0IGRvYy9waG9uZXNpbS1jb250cm9sLWFwaS50
+eHQKCmRpZmYgLS1naXQgYS9kb2MvcGhvbmVzaW0tY29udHJvbC1hcGkudHh0IGIvZG9jL3Bob25l
+c2ltLWNvbnRyb2wtYXBpLnR4dApuZXcgZmlsZSBtb2RlIDEwMDY0NAppbmRleCAwMDAwMDAwLi4z
+OWQ3MDM2Ci0tLSAvZGV2L251bGwKKysrIGIvZG9jL3Bob25lc2ltLWNvbnRyb2wtYXBpLnR4dApA
+QCAtMCwwICsxLDM0IEBACitQaG9uZXNpbSBjb250cm9sIGhpZXJhcmNoeQorCis9PT09PT09PT09
+PT09PT09PT09PT09PT09PQorCitTZXJ2aWNlCQlvcmcub2Zvbm8KK0ludGVyZmFjZQlvcmcub2Zv
+bm8ucGhvbmVzaW0uTWFuYWdlcgorT2JqZWN0IHBhdGgJLworCitNZXRob2RzCQlBZGQoc3RyaW5n
+IG5hbWUsIHN0cmluZyBhZGRyZXNzLCBzdHJpbmcgcG9ydCkKKworCQkJSW5zdGFudGlhdGVzIGEg
+bmV3IG1vZGVtIGluIHBob25lc2ltIHdpdGggdGhlIGdpdmVuCisJCQlzcGVjaWZpY2F0aW9ucy4K
+KworCQkJUmVtb3ZlQWxsKCkKKworCQkJUmVtb3ZlcyBhbGwgbW9kZW1zIGZyb20gcGhvbmVzaW0u
+CisKKwkJCVJlc2V0KCkKKwkJCQorCQkJUmVtb3ZlcyBhbGwgbW9kZW1zIGFuZCBpbnN0YW50aWF0
+ZXMgYWxsIHRob3NlIG1vZGVtcyBsaXN0ZWQKKwkJCWluIHRoZSBjb25maWd1cmF0aW9uIGZpbGUu
+IEVxdWl2YWxlbnQgdG8gc3RvcHBpbmcgYW5kCisJCQlyZXN0YXJ0aW5nIHRoZSBkYWVtb24uCisK
+K0V4YW1wbGVzCisKK1RvIGFkZCBhIG5ldyBwaG9uZXNpbSBtb2RlbSBvbiB0aGUgZmx5IGRvIHRo
+ZSBmb2xsb3dpbmc6CisKKy0gU3RhcnQgbmV3IHBob25lc2ltIGluc3RhbmNlCisgICogLi9waG9u
+ZXNpbSAtcCAxMjM0NiB5b3VyX3Zlcnlfb3duLnhtbAorLSBDYWxsIHRoZSBbaW50ZXJmYWNlXS5B
+ZGQoIm15bmFtZSIsICIxMjcuMC4wLjEiLCAiMTIzNDYiKQorICAqIGRidXMtc2VuZCAtLXN5c3Rl
+bSAtLXByaW50LXJlcGx5IC0tZGVzdD1vcmcub2Zvbm8gLyBcCisgICAgb3JnLm9mb25vLnBob25l
+c2ltLk1hbmFnZXIuQWRkIHN0cmluZzpteW5hbWUgc3RyaW5nOjEyNy4wLjAuMSBzdHJpbmc6MTIz
+NDYKKyAgKiBkYnVzLXNlbmQgLS1zeXN0ZW0gLS1wcmludC1yZXBseSAtLWRlc3Q9b3JnLm9mb25v
+IFwKKyAgICAvbXluYW1lIG9yZy5vZm9uby5Nb2RlbS5TZXRQcm9wZXJ0eSBzdHJpbmc6UG93ZXJl
+ZCB2YXJpYW50OmJvb2xlYW46dHJ1ZQpkaWZmIC0tZ2l0IGEvcGx1Z2lucy9waG9uZXNpbS5jIGIv
+cGx1Z2lucy9waG9uZXNpbS5jCmluZGV4IDE2YmNjZDUuLjhhMTI0YzUgMTAwNjQ0Ci0tLSBhL3Bs
+dWdpbnMvcGhvbmVzaW0uYworKysgYi9wbHVnaW5zL3Bob25lc2ltLmMKQEAgLTM1LDYgKzM1LDcg
+QEAKICNpbmNsdWRlIDxnbGliLmg+CiAjaW5jbHVkZSA8Z2F0bXV4Lmg+CiAjaW5jbHVkZSA8Z2F0
+Y2hhdC5oPgorI2luY2x1ZGUgPGdkYnVzLmg+CiAKICNkZWZpbmUgT0ZPTk9fQVBJX1NVQkpFQ1Rf
+VE9fQ0hBTkdFCiAjaW5jbHVkZSA8b2Zvbm8vcGx1Z2luLmg+CkBAIC03Myw2ICs3NCw4IEBAIHN0
+YXRpYyBjb25zdCBjaGFyICpub25lX3ByZWZpeFtdID0geyBOVUxMIH07CiBzdGF0aWMgY29uc3Qg
+Y2hhciAqcHR0eV9wcmVmaXhbXSA9IHsgIitQVFRZOiIsIE5VTEwgfTsKIHN0YXRpYyBjb25zdCBj
+aGFyICpzaW1zdGF0ZV9wcmVmaXhbXSA9IHsgIitTSU1TVEFURToiLCBOVUxMIH07CiBzdGF0aWMg
+aW50IG5leHRfaWZhY2UgPSAwOworc3RhdGljIGNvbnN0IGNoYXIgQ09OVFJPTF9QQVRIW10gPSAi
+LyI7CitzdGF0aWMgY29uc3QgY2hhciBDT05UUk9MX0lOVEVSRkFDRVtdID0gIm9yZy5vZm9uby5w
+aG9uZXNpbS5NYW5hZ2VyIjsKIAogc3RydWN0IHBob25lc2ltX2RhdGEgewogCUdBdE11eCAqbXV4
+OwpAQCAtMTEzNyw2ICsxMTQwLDExOSBAQCBkb25lOgogCWdfa2V5X2ZpbGVfZnJlZShrZXlmaWxl
+KTsKIH0KIAorc3RhdGljIHZvaWQgcmVsZWFzZV9tb2RlbXModm9pZCkKK3sKKwlHU0xpc3QgKmxp
+c3Q7CisKKwlmb3IgKGxpc3QgPSBtb2RlbV9saXN0OyBsaXN0OyBsaXN0ID0gbGlzdC0+bmV4dCkg
+eworCQlzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtID0gbGlzdC0+ZGF0YTsKKworCQlvZm9ub19t
+b2RlbV9yZW1vdmUobW9kZW0pOworCX0KKworCWdfc2xpc3RfZnJlZShtb2RlbV9saXN0KTsKKwlt
+b2RlbV9saXN0ID0gTlVMTDsKK30KKworc3RhdGljIERCdXNNZXNzYWdlICpjb250cm9sX2FkZChE
+QnVzQ29ubmVjdGlvbiAqY29ubiwKKwkJCQkJREJ1c01lc3NhZ2UgKm1zZywgdm9pZCAqZGF0YSkK
+K3sKKwljb25zdCBjaGFyICpkcml2ZXIgPSAicGhvbmVzaW0iOworCXN0cnVjdCBvZm9ub19tb2Rl
+bSAqbW9kZW07CisJREJ1c01lc3NhZ2VJdGVyIGl0ZXI7CisJY2hhciAqbmFtZTsKKwljaGFyICph
+ZGRyZXNzOworCWNoYXIgKnBvcnQ7CisKKwlpZiAoIWRidXNfbWVzc2FnZV9pdGVyX2luaXQobXNn
+LCAmaXRlcikpCisJCXJldHVybiBfX29mb25vX2Vycm9yX2ludmFsaWRfYXJncyhtc2cpOworCisJ
+aWYgKGRidXNfbWVzc2FnZV9pdGVyX2dldF9hcmdfdHlwZSgmaXRlcikgIT0gREJVU19UWVBFX1NU
+UklORykKKwkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9hcmdzKG1zZyk7CisKKwlkYnVz
+X21lc3NhZ2VfaXRlcl9nZXRfYmFzaWMoJml0ZXIsICZuYW1lKTsKKwlkYnVzX21lc3NhZ2VfaXRl
+cl9uZXh0KCZpdGVyKTsKKworCWlmIChkYnVzX21lc3NhZ2VfaXRlcl9nZXRfYXJnX3R5cGUoJml0
+ZXIpICE9IERCVVNfVFlQRV9TVFJJTkcpCisJCXJldHVybiBfX29mb25vX2Vycm9yX2ludmFsaWRf
+YXJncyhtc2cpOworCisJZGJ1c19tZXNzYWdlX2l0ZXJfZ2V0X2Jhc2ljKCZpdGVyLCAmYWRkcmVz
+cyk7CisJZGJ1c19tZXNzYWdlX2l0ZXJfbmV4dCgmaXRlcik7CisKKwlpZiAoZGJ1c19tZXNzYWdl
+X2l0ZXJfZ2V0X2FyZ190eXBlKCZpdGVyKSAhPSBEQlVTX1RZUEVfU1RSSU5HKQorCQlyZXR1cm4g
+X19vZm9ub19lcnJvcl9pbnZhbGlkX2FyZ3MobXNnKTsKKworCWRidXNfbWVzc2FnZV9pdGVyX2dl
+dF9iYXNpYygmaXRlciwgJnBvcnQpOworCisJbW9kZW0gPSBvZm9ub19tb2RlbV9jcmVhdGUobmFt
+ZSwgZHJpdmVyKTsKKwlpZiAobW9kZW0gPT0gTlVMTCkKKwkJcmV0dXJuIE5VTEw7CisKKwlvZm9u
+b19tb2RlbV9zZXRfc3RyaW5nKG1vZGVtLCAiQWRkcmVzcyIsIGFkZHJlc3MpOworCW9mb25vX21v
+ZGVtX3NldF9pbnRlZ2VyKG1vZGVtLCAiUG9ydCIsIGF0b2kocG9ydCkpOworCWlmIChvZm9ub19t
+b2RlbV9yZWdpc3Rlcihtb2RlbSkgIT0gMCkgeworCQlvZm9ub19tb2RlbV9yZW1vdmUobW9kZW0p
+OworCQlyZXR1cm4gX19vZm9ub19lcnJvcl9pbnZhbGlkX2FyZ3MobXNnKTsKKwl9CisJbW9kZW1f
+bGlzdCA9IGdfc2xpc3RfcHJlcGVuZChtb2RlbV9saXN0LCBtb2RlbSk7CisKKwlyZXR1cm4gZGJ1
+c19tZXNzYWdlX25ld19tZXRob2RfcmV0dXJuKG1zZyk7Cit9CisKK3N0YXRpYyBEQnVzTWVzc2Fn
+ZSAqY29udHJvbF9yZW1vdmVfYWxsKERCdXNDb25uZWN0aW9uICpjb25uLAorCQkJCQlEQnVzTWVz
+c2FnZSAqbXNnLCB2b2lkICpkYXRhKQoreworCXJlbGVhc2VfbW9kZW1zKCk7CisKKwlyZXR1cm4g
+ZGJ1c19tZXNzYWdlX25ld19tZXRob2RfcmV0dXJuKG1zZyk7Cit9CisKK3N0YXRpYyBEQnVzTWVz
+c2FnZSAqY29udHJvbF9yZXNldChEQnVzQ29ubmVjdGlvbiAqY29ubiwKKwkJCQkJREJ1c01lc3Nh
+Z2UgKm1zZywgdm9pZCAqZGF0YSkKK3sKKwlyZWxlYXNlX21vZGVtcygpOworCXBhcnNlX2NvbmZp
+ZygpOworCisJcmV0dXJuIGRidXNfbWVzc2FnZV9uZXdfbWV0aG9kX3JldHVybihtc2cpOworfQor
+CitzdGF0aWMgY29uc3QgR0RCdXNNZXRob2RUYWJsZSBjb250cm9sX21ldGhvZHNbXSA9IHsKKwl7
+IEdEQlVTX01FVEhPRCgiQWRkIiwKKwkJR0RCVVNfQVJHUyh7ICJuYW1lIiwgInMiIH0sIHsiYWRk
+cmVzcyIsICJzIn0sIHsicG9ydCIsICJzIn0pLAorCQlOVUxMLAorCQljb250cm9sX2FkZCkgfSwK
+Kwl7IEdEQlVTX01FVEhPRCgiUmVtb3ZlQWxsIiwKKwkJR0RCVVNfQVJHUyh7IH0pLAorCQlOVUxM
+LAorCQljb250cm9sX3JlbW92ZV9hbGwpIH0sCisJeyBHREJVU19NRVRIT0QoIlJlc2V0IiwKKwkJ
+R0RCVVNfQVJHUyh7IH0pLAorCQlOVUxMLAorCQljb250cm9sX3Jlc2V0KSB9LAorCXt9Cit9Owor
+CitzdGF0aWMgaW50IHNldHVwX2NvbnRyb2xfY2hhbm5lbCh2b2lkKQoreworCWludCBlcnIgPSAw
+OworCURCdXNDb25uZWN0aW9uICpjb25uID0gb2Zvbm9fZGJ1c19nZXRfY29ubmVjdGlvbigpOwor
+CXZvaWQgKnVzZXJfZGF0YSA9IE5VTEw7CisJZ19kYnVzX3JlZ2lzdGVyX2ludGVyZmFjZShjb25u
+LAorCQkJQ09OVFJPTF9QQVRILCBDT05UUk9MX0lOVEVSRkFDRSwKKwkJCWNvbnRyb2xfbWV0aG9k
+cywKKwkJCU5VTEwsCisJCQlOVUxMLAorCQkJdXNlcl9kYXRhLAorCQkJTlVMTCk7CisJcmV0dXJu
+IGVycjsKK30KKworc3RhdGljIHZvaWQgc2h1dGRvd25fY29udHJvbF9jaGFubmVsKHZvaWQpCit7
+CisJZ19kYnVzX3VucmVnaXN0ZXJfaW50ZXJmYWNlKG9mb25vX2RidXNfZ2V0X2Nvbm5lY3Rpb24o
+KSwKKwkJCUNPTlRST0xfUEFUSCwgQ09OVFJPTF9JTlRFUkZBQ0UpOworfQorCiBzdGF0aWMgaW50
+IHBob25lc2ltX2luaXQodm9pZCkKIHsKIAlpbnQgZXJyOwpAQCAtMTE1NywyMCArMTI3MywxOSBA
+QCBzdGF0aWMgaW50IHBob25lc2ltX2luaXQodm9pZCkKIAllbHNlCiAJCXBhcnNlX2NvbmZpZyhD
+T05GSUdESVIgIi9waG9uZXNpbS5jb25mIik7CiAKKwllcnIgPSBzZXR1cF9jb250cm9sX2NoYW5u
+ZWwoKTsKKwlpZiAoZXJyIDwgMCkKKwkJcmV0dXJuIGVycjsKKwogCXJldHVybiAwOwogfQogCiBz
+dGF0aWMgdm9pZCBwaG9uZXNpbV9leGl0KHZvaWQpCiB7Ci0JR1NMaXN0ICpsaXN0OworCXNodXRk
+b3duX2NvbnRyb2xfY2hhbm5lbCgpOwogCi0JZm9yIChsaXN0ID0gbW9kZW1fbGlzdDsgbGlzdDsg
+bGlzdCA9IGxpc3QtPm5leHQpIHsKLQkJc3RydWN0IG9mb25vX21vZGVtICptb2RlbSA9IGxpc3Qt
+PmRhdGE7CisJcmVsZWFzZV9tb2RlbXMoKTsKIAotCQlvZm9ub19tb2RlbV9yZW1vdmUobW9kZW0p
+OwotCX0KLQotCWdfc2xpc3RfZnJlZShtb2RlbV9saXN0KTsKIAltb2RlbV9saXN0ID0gTlVMTDsK
+IAogCW9mb25vX3JhZGlvX3NldHRpbmdzX2RyaXZlcl91bnJlZ2lzdGVyKCZyYWRpb19zZXR0aW5n
+c19kcml2ZXIpOwotLSAKMi41LjAKCg==
 
--builtin_modules +=3D hfp_ag_bluez4
--builtin_sources +=3D plugins/hfp_ag_bluez4.c plugins/bluez4.h
--
- builtin_modules +=3D dun_gw_bluez4
- builtin_sources +=3D plugins/dun_gw_bluez4.c plugins/bluez4.h
-+else
-+builtin_modules +=3D hfp_bluez5
-+builtin_sources +=3D plugins/hfp_hf_bluez5.c plugins/bluez5.h
-+
-+builtin_modules +=3D dun_gw_bluez5
-+builtin_sources +=3D plugins/dun_gw_bluez5.c plugins/bluez5.h
-+endif
-+endif
-+endif
-+
-+if BLUETOOTH
-+if BLUEZ4
-+builtin_modules +=3D bluez4
-+builtin_sources +=3D plugins/bluez4.c plugins/bluez4.h
-+
-+builtin_modules +=3D hfp_ag_bluez4
-+builtin_sources +=3D plugins/hfp_ag_bluez4.c plugins/bluez4.h
- =
-
- builtin_sources +=3D $(btio_sources)
- builtin_cflags +=3D @BLUEZ_CFLAGS@
-@@ -503,15 +514,8 @@ else
- builtin_modules +=3D bluez5
- builtin_sources +=3D plugins/bluez5.c plugins/bluez5.h
- =
-
--builtin_modules +=3D hfp_bluez5
--builtin_sources +=3D plugins/hfp_hf_bluez5.c plugins/bluez5.h
--
- builtin_modules +=3D hfp_ag_bluez5
- builtin_sources +=3D plugins/hfp_ag_bluez5.c plugins/bluez5.h
--
--builtin_modules +=3D dun_gw_bluez5
--builtin_sources +=3D plugins/dun_gw_bluez5.c plugins/bluez5.h
--endif
- endif
- endif
- =
-
--- =
-
-2.1.4
-
-
---===============4561404786868194571==--
+--===============8183845551368408075==--
 
