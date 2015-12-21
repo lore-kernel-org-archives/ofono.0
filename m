@@ -1,41 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============6681004531656036302=="
+Content-Type: multipart/mixed; boundary="===============5561988279432167826=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gprs: Make the ContextAdded return a variant.
-Date: Mon, 21 Dec 2015 14:03:16 -0600
-Message-ID: <56785B04.1060802@gmail.com>
-In-Reply-To: <1450692676-30962-1-git-send-email-john.ernberg@actia.se>
+Subject: Re: [PATCH] cbs: Resolve a use-after-free that could occur with rapid
+ location changes.
+Date: Mon, 21 Dec 2015 17:55:48 -0600
+Message-ID: <56789184.8060705@gmail.com>
+In-Reply-To: <1450692250-29422-1-git-send-email-john.ernberg@actia.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6681004531656036302==
+--===============5561988279432167826==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi John,
 
-On 12/21/2015 04:10 AM, John Ernberg wrote:
+On 12/21/2015 04:03 AM, John Ernberg wrote:
 > From: John Ernberg <john.ernberg@actia.se>
 >
-> This matches the behavior described by the documentation and the signal
-> value described in the introspection. This was causing a headache when
-> using stricter D-Bus wrappers like dbus-c++.
+> What happens is that the timeout leaks and then the cbs struct with
+> the callback is cleaned up, resulting in a SIGSEGV when the callback
+> occurs from the glib loop.
 > ---
->   src/gprs.c | 20 +++++++++++++++++---
->   1 file changed, 17 insertions(+), 3 deletions(-)
+>   src/cbs.c | 5 ++++-
+>   1 file changed, 4 insertions(+), 1 deletion(-)
 >
 
-Hmm, this appears to be a bug in the introspection data.  The signature =
-
-should be:
-
-"ContextAdded", GDBUS_ARGS({ "path", "o" }, { "properties", "a{sv}" })
-
-similar to how MessageManager.MessageAdded is done.
+Applied, thanks.
 
 Regards,
 -Denis
 
---===============6681004531656036302==--
+
+--===============5561988279432167826==--
 
