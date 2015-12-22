@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============5561988279432167826=="
+Content-Type: multipart/mixed; boundary="===============7494010627027113017=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] cbs: Resolve a use-after-free that could occur with rapid
- location changes.
-Date: Mon, 21 Dec 2015 17:55:48 -0600
-Message-ID: <56789184.8060705@gmail.com>
-In-Reply-To: <1450692250-29422-1-git-send-email-john.ernberg@actia.se>
+Subject: Re: [PATCH] network: Fix use-after-free caused by Scan() in poor
+ reception.
+Date: Mon, 21 Dec 2015 18:10:59 -0600
+Message-ID: <56789513.70207@gmail.com>
+In-Reply-To: <1450692223-29284-1-git-send-email-john.ernberg@actia.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5561988279432167826==
+--===============7494010627027113017==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,19 +19,49 @@ Hi John,
 On 12/21/2015 04:03 AM, John Ernberg wrote:
 > From: John Ernberg <john.ernberg@actia.se>
 >
-> What happens is that the timeout leaks and then the cbs struct with
-> the callback is cleaned up, resulting in a SIGSEGV when the callback
-> occurs from the glib loop.
+> When issuing a Scan() in poor reception while attached to an operator it's
+> fully possible to get no results, which causes the attached operator to be
+> cleaned up. In certain scenarios this would cause a use-after-free.
+> Make sure to clean up all the references to the operator when it's destro=
+yed.
 > ---
->   src/cbs.c | 5 ++++-
->   1 file changed, 4 insertions(+), 1 deletion(-)
+>   src/network.c | 3 +++
+>   1 file changed, 3 insertions(+)
 >
+> diff --git a/src/network.c b/src/network.c
+> index 1dddcac..5329c28 100644
+> --- a/src/network.c
+> +++ b/src/network.c
+> @@ -257,6 +257,9 @@ static void network_operator_destroy(gpointer user_da=
+ta)
+>   {
+>   	struct network_operator_data *op =3D user_data;
+>
+> +	if (op->netreg->current_operator =3D=3D op)
+> +		op->netreg->current_operator =3D NULL;
+> +
 
-Applied, thanks.
+I'm not sure this is the right fix.  This will result in subsequent API =
+
+calls to return inconsistent information related to the network =
+
+operator.  For example, NetworkRegistration.Name, =
+
+NetworkRegistration.MobileNetworkCode, =
+
+NetworkRegistration.MobileCountryCode will be omitted.
+
+Can we make sure that the current operator is not destroyed / =
+
+unregistered in this particular situation?
+
+>   	g_free(op);
+>   }
+>
+>
 
 Regards,
 -Denis
 
-
---===============5561988279432167826==--
+--===============7494010627027113017==--
 
