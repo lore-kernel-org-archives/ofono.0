@@ -1,79 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============7398966216803169401=="
+Content-Type: multipart/mixed; boundary="===============4516438153773603425=="
 MIME-Version: 1.0
 From: John Ernberg <john.ernberg@actia.se>
-Subject: Re: [PATCH] network: Fix use-after-free caused by Scan() in poor
- reception.
-Date: Tue, 22 Dec 2015 07:09:14 +0000
-Message-ID: <5678F735.9000002@actia.se>
-In-Reply-To: <56789513.70207@gmail.com>
+Subject: Re: [PATCH] gprs: Make the ContextAdded return a variant.
+Date: Tue, 22 Dec 2015 07:11:41 +0000
+Message-ID: <5678F7C8.6020900@actia.se>
+In-Reply-To: <56785B04.1060802@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7398966216803169401==
+--===============4516438153773603425==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Dennis,
 
-On 12/22/2015 01:10 AM, Denis Kenzior wrote:
+On 12/21/2015 09:03 PM, Denis Kenzior wrote:
 > Hi John,
 >
-> On 12/21/2015 04:03 AM, John Ernberg wrote:
+> On 12/21/2015 04:10 AM, John Ernberg wrote:
 >> From: John Ernberg <john.ernberg@actia.se>
 >>
->> When issuing a Scan() in poor reception while attached to an operator =
-
->> it's
->> fully possible to get no results, which causes the attached operator =
-
->> to be
->> cleaned up. In certain scenarios this would cause a use-after-free.
->> Make sure to clean up all the references to the operator when it's =
-
->> destroyed.
+>> This matches the behavior described by the documentation and the signal
+>> value described in the introspection. This was causing a headache when
+>> using stricter D-Bus wrappers like dbus-c++.
 >> ---
->>   src/network.c | 3 +++
->>   1 file changed, 3 insertions(+)
+>>   src/gprs.c | 20 +++++++++++++++++---
+>>   1 file changed, 17 insertions(+), 3 deletions(-)
 >>
->> diff --git a/src/network.c b/src/network.c
->> index 1dddcac..5329c28 100644
->> --- a/src/network.c
->> +++ b/src/network.c
->> @@ -257,6 +257,9 @@ static void network_operator_destroy(gpointer =
-
->> user_data)
->>   {
->>       struct network_operator_data *op =3D user_data;
->>
->> +    if (op->netreg->current_operator =3D=3D op)
->> +        op->netreg->current_operator =3D NULL;
->> +
 >
-> I'm not sure this is the right fix.  This will result in subsequent =
+> Hmm, this appears to be a bug in the introspection data.  The =
 
-> API calls to return inconsistent information related to the network =
-
-> operator.  For example, NetworkRegistration.Name, =
-
-> NetworkRegistration.MobileNetworkCode, =
-
-> NetworkRegistration.MobileCountryCode will be omitted.
+> signature should be:
 >
-> Can we make sure that the current operator is not destroyed / =
-
-> unregistered in this particular situation?
-It may be possible but I could not figure out a way to do that. So I did =
-
-it like this to at least prevent the resulting SIGSEGV.
+> "ContextAdded", GDBUS_ARGS({ "path", "o" }, { "properties", "a{sv}" })
 >
->>       g_free(op);
->>   }
->>
->>
+> similar to how MessageManager.MessageAdded is done.
 >
 > Regards,
 > -Denis
+Alright. I will re-create the patch to change the introspection data =
+
+instead.
+
 Best regards // John Ernberg
---===============7398966216803169401==--
+--===============4516438153773603425==--
 
