@@ -1,48 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============4516438153773603425=="
+Content-Type: multipart/mixed; boundary="===============0539797026197161446=="
 MIME-Version: 1.0
 From: John Ernberg <john.ernberg@actia.se>
-Subject: Re: [PATCH] gprs: Make the ContextAdded return a variant.
-Date: Tue, 22 Dec 2015 07:11:41 +0000
-Message-ID: <5678F7C8.6020900@actia.se>
-In-Reply-To: <56785B04.1060802@gmail.com>
+Subject: [PATCH] gprs: Fix the ContextAdded() signal Introspection
+Date: Tue, 22 Dec 2015 08:15:29 +0000
+Message-ID: <1450772147-30239-1-git-send-email-john.ernberg@actia.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4516438153773603425==
+--===============0539797026197161446==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dennis,
+From: John Ernberg <john.ernberg@actia.se>
 
-On 12/21/2015 09:03 PM, Denis Kenzior wrote:
-> Hi John,
->
-> On 12/21/2015 04:10 AM, John Ernberg wrote:
->> From: John Ernberg <john.ernberg@actia.se>
->>
->> This matches the behavior described by the documentation and the signal
->> value described in the introspection. This was causing a headache when
->> using stricter D-Bus wrappers like dbus-c++.
->> ---
->>   src/gprs.c | 20 +++++++++++++++++---
->>   1 file changed, 17 insertions(+), 3 deletions(-)
->>
->
-> Hmm, this appears to be a bug in the introspection data.  The =
+This matches the behavior described by the documentation the signal
+value returned by the code. This was causing a headache when using
+stricter D-Bus wrappers like dbus-c++.
+---
+ src/gprs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-> signature should be:
->
-> "ContextAdded", GDBUS_ARGS({ "path", "o" }, { "properties", "a{sv}" })
->
-> similar to how MessageManager.MessageAdded is done.
->
-> Regards,
-> -Denis
-Alright. I will re-create the patch to change the introspection data =
+diff --git a/src/gprs.c b/src/gprs.c
+index ba797dd..9192e68 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -2385,7 +2385,7 @@ static const GDBusSignalTable manager_signals[] =3D {
+ 	{ GDBUS_SIGNAL("PropertyChanged",
+ 			GDBUS_ARGS({ "name", "s" }, { "value", "v" })) },
+ 	{ GDBUS_SIGNAL("ContextAdded",
+-			GDBUS_ARGS({ "path", "o" }, { "properties", "v" })) },
++			GDBUS_ARGS({ "path", "o" }, { "properties", "a{sv}" })) },
+ 	{ GDBUS_SIGNAL("ContextRemoved", GDBUS_ARGS({ "path", "o" })) },
+ 	{ }
+ };
+-- =
 
-instead.
+1.9.1
 
-Best regards // John Ernberg
---===============4516438153773603425==--
+--===============0539797026197161446==--
 
