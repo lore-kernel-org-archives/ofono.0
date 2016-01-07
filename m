@@ -1,60 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============0479293543778168992=="
+Content-Type: multipart/mixed; boundary="===============3722650198691680765=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gdbus: Drop message replies if the sender requested no
- reply
-Date: Mon, 04 Jan 2016 23:36:41 -0600
-Message-ID: <568B5669.3000505@gmail.com>
-In-Reply-To: <1449071047.4523.18.camel@tecnocode.co.uk>
+From: John Ernberg <john.ernberg@actia.se>
+Subject: [PATCH v2] network: Fix use-after-free caused by Scan() in poor
+ reception.
+Date: Thu, 07 Jan 2016 10:46:21 +0000
+Message-ID: <1452163577-23146-1-git-send-email-john.ernberg@actia.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0479293543778168992==
+--===============3722650198691680765==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philip,
+From: John Ernberg <john.ernberg@actia.se>
 
-On 12/02/2015 09:44 AM, Philip Withnall wrote:
-> If the sender flags a D-Bus message as not expecting a reply, it is
-> against system bus policy to send a reply =E2=80=94 sending one will resu=
-lt in
-> errors being sent to us by dbus-daemon.
->
-> Magically drop all replies to messages which request no reply.
->
-> This is not a complete fix. In an ideal world, the existing check for
-> G_DBUS_METHOD_FLAG_NOREPLY would be dropped, as the server should be
-> prepared to return a reply to every method, if the client requests and
-> expects one =E2=80=94 otherwise the client will time out. However, that=
-=E2=80=99s a
-> much
-> bigger change with a much bigger risk of breaking things, so I=E2=80=99ll=
- stick
-> with this for now.
->
-> Signed-off-by: Philip Withnall <philip.withnall@collabora.co.uk>
-> Reviewed-by: Simon McVittie <simon.mcvittie@collabora.co.uk>
+The area where I could test this behavior has gotten better reception now s=
+o I
+cannot test this patch as thoroughly as I'd like but it seems to work.
+Please be extra strict during the review to minimize the risk of something
+being by this.
 
-No Signed-off-by or Reviewed-by lines please.
+John Ernberg (1):
+  network: Fix use-after-free caused by Scan() in poor reception.
 
-> ---
->   gdbus/object.c | 3 ++-
->   1 file changed, 2 insertions(+), 1 deletion(-)
->
+ src/network.c | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
 
-Doesn't apply:
+-- =
 
-Applying: gdbus: Drop message replies if the sender requested no reply
-fatal: corrupt patch at line 10
-Patch failed at 0001 gdbus: Drop message replies if the sender requested =
+1.9.1
 
-no reply
-The copy of the patch that failed is found in:
-
-Regards,
--Denis
-
---===============0479293543778168992==--
+--===============3722650198691680765==--
 
