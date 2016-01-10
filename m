@@ -1,45 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============5308553347555531412=="
+Content-Type: multipart/mixed; boundary="===============6786748253975328970=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] network: Fix use-after-free caused by Scan() in poor
- reception.
-Date: Thu, 07 Jan 2016 10:32:43 -0600
-Message-ID: <568E932B.7000203@gmail.com>
-In-Reply-To: <1452163577-23146-2-git-send-email-john.ernberg@actia.se>
+From: Andrea Furin <andrea.furin@slacky.it>
+Subject: Re: ERROR:Reject SCO: Agent not registered. HSP vs A2DP in Debian8
+Date: Sun, 10 Jan 2016 15:22:38 +0000
+Message-ID: <loom.20160110T162103-945@post.gmane.org>
+In-Reply-To: <55DC2B87.7020901@chini.tk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5308553347555531412==
+--===============6786748253975328970==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi John,
+I've found a way to use pc like an headset with Android phone (for making
+callings).
+!!! I've use pulseaudio from jessie-backports: I don't know how much this
+takes risks ;-) !!!
 
-On 01/07/2016 04:46 AM, John Ernberg wrote:
-> From: John Ernberg <john.ernberg@actia.se>
->
-> When issuing a Scan() in poor reception while attached to an operator it's
-> fully possible to get no results, which causes the attached operator to be
-> cleaned up. In certain scenarios this would cause a use-after-free as the=
-re
-> are still references to this operator.
-> Transfer the attached operator to the new list regardless of removal caus=
-ed
-> by the Scan() results.
-> ---
->   src/network.c | 16 ++++++++++++++--
->   1 file changed, 14 insertions(+), 2 deletions(-)
->
+In /etc/apt/sources.list add:
 
-Looks good to me.  I tweaked the commit header slightly and applied the =
+deb http://ftp.jp.debian.org/debian/ jessie-backports main contrib non-free
+deb-src http://ftp.jp.debian.org/debian/ jessie-backports main contrib non-=
+free
 
-patch.
+$ sudo apt-get update
+$ sudo apt-get install pulseaudio=3D7.1-2~bpo8+1 pulseaudio-utils=3D7.1-2~b=
+po8+1 \
+    pulseaudio-module-x11=3D7.1-2~bpo8+1
+pulseaudio-module-bluetooth=3D7.1-2~bpo8+1 \
+    libpulse-mainloop-glib0=3D7.1-2~bpo8+1 libpulsedsp=3D7.1-2~bpo8+1
+libpulse0=3D7.1-2~bpo8+1 \
+    libpulse0:i386=3D7.1-2~bpo8+1
 
-Thanks!
+create a file (with same ownership of /var/lib/gdm3) (create directories if
+necessary)
+/var/lib/gdm3/.config/pulse/client.conf
 
-Regards,
--Denis
+autospawn =3D no
+daemon-binary =3D /bin/true
 
---===============5308553347555531412==--
+[http://www.gem.mydns.jp/daitei/linux/jessie/bt-headset/]
+
+
+Install "ofono"
+
+in /etc/pulse/default.pa =
+
+modify the line:
+load-module module-bluetooth-discover
+in:
+load-module module-bluetooth-discover headset=3Dofono
+
+Restart pulseaudio:
+killall -9 pulseaudio
+(is not necessary "pulseaudio --start" because from pulseaudio 6 it will
+restart automatically)
+
+For now it seems that:
+- if in /etc/pulse/default.pa you have add "headset=3Dofono" you will have =
+the
+headset;
+- if not you will have a2dp (restart pulseaudio every time).
+
+Good luck
+
+
+--===============6786748253975328970==--
 
