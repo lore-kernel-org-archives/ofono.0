@@ -1,91 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============6260150397115373160=="
+Content-Type: multipart/mixed; boundary="===============8567932583540403238=="
 MIME-Version: 1.0
-From: Kuba Pawlak <kubax.t.pawlak@intel.com>
-Subject: [PATCH v2] hfpmodem: Handle repeated held call indicator
-Date: Tue, 12 Jan 2016 16:03:29 +0100
-Message-ID: <1452611009-15781-1-git-send-email-kubax.t.pawlak@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Huawei 3131 with idVendor=12d1, idProduct=14fe
+Date: Tue, 12 Jan 2016 10:30:03 -0600
+Message-ID: <56952A0B.9060203@gmail.com>
+In-Reply-To: <CADnUhn2f+==CS=5E1Bm07z7ChDch_tF=Vw78onqg+vPQ7b1fNQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6260150397115373160==
+--===============8567932583540403238==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-An issue with iPhone 5C iOS 9.2 triggers desynchronization in call
-states. When an active call is put on hold and another call arrives,
-it is in WAITING state. It should be possible to answer it by issuing
-AT+CHLD=3D2 but the phone changes its state to INCOMING so ATA should be
-used. This change is advertised by sending callheld:2 event, but it is
-not handled. This event can be used to trigger CLCC poll to synchronize
-call states.
+Hi Matti,
 
-+CIEV: 3,1   <- first call arrives
-AT+CLCC
-+CLCC: 1,1,4,0,0,"01234567890",129
-OK
-RING
-+CLIP: "01234567890",129
-ATA
-OK
-+CIEV: 2,1
-+CIEV: 3,0.
-AT+CHLD=3D2.$  <- first call is put on hold
-OK
-+CIEV: 7,2   <- notification confirming that call #1 is on hold
-+CCWA: "09876543210",129,1     <- second call arrives
-+CIEV: 7,2
-+CIEV: 3,1
-AT+CLCC
-+CLCC: 1,1,1,0,0,"01234567890",129
-+CLCC: 2,1,5,0,0,"09876543210",129 <- new call is still in WAITING state
-OK
-+CIEV: 7,2 <- phone iternally promotes WAITING call to INCOMING
-AT+CHLD=3D2  <- there is no WAITING call anymore, ATA should be used
-+CME ERROR:3
----
- drivers/hfpmodem/voicecall.c | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+ > test/online-modem
+> =3D>
+> - lots of traffic in ofono log
+> - modem switches from blinking green to blinking blue
+> - connmanctl monitor reports cellular interface (Powered=3DTrue + other
+> status)
+>
 
-diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index d0e9353796c335a1fc876779345eedeb6556345d..782fae867ebe0280eaf7b039e60=
-e901bd8812669 100644
---- a/drivers/hfpmodem/voicecall.c
-+++ b/drivers/hfpmodem/voicecall.c
-@@ -1110,7 +1110,19 @@ static void ciev_callheld_notify(struct ofono_voicec=
-all *vc,
- 			 */
- 			vd->clcc_source =3D g_timeout_add(POLL_CLCC_DELAY,
- 							poll_clcc, vc);
-+		} else {
-+			if (vd->clcc_source)
-+				g_source_remove(vd->clcc_source);
-+
-+			/*
-+			 * We got a notification that there is a held call
-+			 * and no active call but we already are in such state.
-+			 * Let's schedule a poll to see what happened.
-+			 */
-+			vd->clcc_source =3D g_timeout_add(POLL_CLCC_DELAY,
-+							poll_clcc, vc);
- 		}
-+
- 	}
- =
+So modem goes online...
 
- 	vd->cind_val[HFP_INDICATOR_CALLHELD] =3D value;
--- =
+>
+> activate-context
+> =3D>
+> Error activating /huawei_0/context1: org.ofono.Error.NotImplemented:
+> Implementation not provided
 
-1.9.3
+There is no gprs context driver provided or it failed to setup.  Do you =
 
-Intel Deutschland GmbH
-Registered Address: Am Campeon 10-12, 85579 Neubiberg, Germany
-Tel: +49 89 99 8853-0, www.intel.de
-Managing Directors: Christin Eisenschmid, Christian Lamprechter
-Chairperson of the Supervisory Board: Nicole Lau
-Registered Office: Munich
-Commercial Register: Amtsgericht Muenchen HRB 186928
+have TUN/TAP in the kernel or kernel module?
 
+Please note, that there are two different versions of the Huawei cards =
 
---===============6260150397115373160==--
+supported by oFono.  One uses the "gobi" driver (these are Qualcomm =
+
+chips).  While the more traditional one uses PPP & the "huawei" driver.
+
+Regards,
+-Denis
+
+--===============8567932583540403238==--
 
