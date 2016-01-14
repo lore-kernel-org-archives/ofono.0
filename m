@@ -1,31 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============1744693202282745483=="
+Content-Type: multipart/mixed; boundary="===============7520410211003626007=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Huawei 3131 with idVendor=12d1, idProduct=14fe
-Date: Thu, 14 Jan 2016 09:55:03 -0600
-Message-ID: <5697C4D7.7090809@gmail.com>
-In-Reply-To: <CADnUhn1eDqxzZ2j1CuvnD8hQ5UYGYuwjYa8gR+oZ=yf4NjHCMQ@mail.gmail.com>
+From: Tony Espy <espy@canonical.com>
+Subject: Re: [PATCH] rilmodem: Fix GPRS feature inavailable issue
+Date: Thu, 14 Jan 2016 13:52:31 -0500
+Message-ID: <5697EE6F.9030908@canonical.com>
+In-Reply-To: <DA62CA5DDF4CA640AA25B1684E5D141102069F97@shsmsx102.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1744693202282745483==
+--===============7520410211003626007==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Matti,
-
-On 01/14/2016 09:53 AM, matti kaasinen wrote:
-> Denis,
-> I'll try it tomorrow. I suppose you are present about at the same time
-> if I have something more to comment about?
+On 01/14/2016 01:14 AM, Zhang, Caiwen wrote:
+> Hi tony,
 >
+> Thanks for your reply.
+>
+> In fact I have ever considered the way you mentioned. But l found in most=
+ plugins, atoms (gprs, gprs_context, sms,
+> call_forwarding ...) are created at post_sim phrase. It seems post_online=
+ phrase is more reasonable. There should
+> be some reason that the atom creation is brought forward. Does anyone kno=
+w the reason?
 
-Sure, or catch us on IRC.  #ofono on freenode.
+Two other potential solutions...
+
+1) Fix the modem/fw and/or rild implementation to allow querying of =
+
+max_cids even when the radio is off.
+
+2) It's doubtful that the number of cids available actually changes over =
+
+time, so it might be acceptable to add a vendor quirk and just hard-code =
+
+the value for this modem as is done with MTK modems.  A slightly more =
+
+conservative approach would be to do this in the query_cids callback if =
+
+the operation fails.
 
 Regards,
--Denis
+/tony
 
 
---===============1744693202282745483==--
+
+
+
+--===============7520410211003626007==--
 
