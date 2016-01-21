@@ -1,139 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============4309423934862174511=="
+Content-Type: multipart/mixed; boundary="===============1203529432576788859=="
 MIME-Version: 1.0
 From: matti kaasinen <matti.kaasinen@gmail.com>
 Subject: Re: Huawei 3131 with idVendor=12d1, idProduct=14fe
-Date: Wed, 20 Jan 2016 19:20:36 +0200
-Message-ID: <CADnUhn0dGRuwjF59+SWHbW-zm5ttb+7BZp7jNWrgC+4GfOE1Qg@mail.gmail.com>
-In-Reply-To: <87oacgff3b.fsf@nemi.mork.no>
+Date: Thu, 21 Jan 2016 10:05:09 +0200
+Message-ID: <CADnUhn1Ts0rWpLknGnibnzt7iWU4B0e1pgHesVZ==yrLUSNZ1Q@mail.gmail.com>
+In-Reply-To: <CADnUhn0dGRuwjF59+SWHbW-zm5ttb+7BZp7jNWrgC+4GfOE1Qg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4309423934862174511==
+--===============1203529432576788859==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bj=C3=B8rn!
+Hi Bj=C3=B8rn,
+2016-01-20 19:20 GMT+02:00 matti kaasinen <matti.kaasinen@gmail.com>:
 
-2016-01-20 17:25 GMT+02:00 Bj=C3=B8rn Mork <bjorn@mork.no>:
-
-> > Bj=C3=B8rn, is there something missing in initialization?
->
 > I don't think so. It all looks OK to me.  It's just the AT^DHCP?
-> response which is a bit unexpected.  IIUC, the modem LEDs indicate a
-> connection?  What about "AT^NDISDUP?" ?
+>> response which is a bit unexpected.  IIUC, the modem LEDs indicate a
+>> connection?  What about "AT^NDISDUP?" ?
+>>
+> Initial LED led operation was "blinking green". It changed to "slow
+> blinking blue"  after online-modem command. There was no change after
+> activate-context (that produced "AT^NDISUP..."). I did not try manual
+> "AT^NDISDUP?" command, though. I'll try it tomorrow.
 >
-Initial LED led operation was "blinking green". It changed to "slow
-blinking blue"  after online-modem command. There was no change after
-activate-context (that produced "AT^NDISUP..."). I did not try manual
-"AT^NDISDUP?" command, though. I'll try it tomorrow.
+  "AT^NDISDUP?" after connect-modem and activate-context returns pure OK
 
 >
-> Did you try a DHCP client?  Maybe this firmware doesn't implement the
-> AT^DHCP command but has a DHCP server?
+>> Did you try a DHCP client?  Maybe this firmware doesn't implement the
+>> AT^DHCP command but has a DHCP server?
+>>
+> I did not try. I'll try it tomorrow.
 >
-I did not try. I'll try it tomorrow.
+Executing ifconfig wwan0 up;dhclient wwan0 can't get lease from wwan0
+interface.
 
->
-> > Is there something wrong with firmware?
->
-> That would depend on the definition of "right" :)
->
-> Huawei can do pretty much what they want since the functions are vendor
-> specific.  They are probably happy as long as the firmware matches the
-> Windows driver+application.  But usually they are pretty good at making
-> consistent interfaces across different firmware code bases, so the
-> unusual AT^DHCP? response is unexpected and might be considered a bug.
->
-> > Is there any chance switching modem to HiLink mode (=3D using cdc_ether)
-> like
-> > the older versions did?
-> > Would it be possible by downgrading firmware or by usb_modeswitch?
->
-> I am guessing the answers are "yes" to all those questions.  But I don't
-> know how...
->
-I guess, it's not a good idea, but I could try removing huawei_cdc_ncm
-set-up from udevng.c. Anyhow, just inserting udev rule for using cdc_acm
-with this particular e3131 did not work.
+-Matti
 
->
-> > If all the answers are no, I suppose I need to switch to for instance to
-> > ModemManager or ppp without any managers.
->
-> If MM can connect, then oFono should be able to as well.  I see that you
-> didn't find any AT^NDISDUP command in the MM log.  Did it by any chance
-> use PPP?  Or was there something else going on?
-
-I don't think there bacome any PPP interfaces in ifconfig listing if I
-recall it correctly.
-
-Thanks,
-Matti
-
---===============4309423934862174511==
+--===============1203529432576788859==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPkhpIEJqw7hybiE8YnI+PGJy
-PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+
-MjAxNi0wMS0yMCAxNzoyNSBHTVQrMDI6MDAgQmrDuHJuIE1vcmsgPHNwYW4gZGlyPSJsdHIiPiZs
-dDs8YSBocmVmPSJtYWlsdG86Ympvcm5AbW9yay5ubyIgdGFyZ2V0PSJfYmxhbmsiPmJqb3JuQG1v
-cmsubm88L2E+Jmd0Ozwvc3Bhbj46PGJyPjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIg
-c3R5bGU9Im1hcmdpbjowcHggMHB4IDBweCAwLjhleDtib3JkZXItbGVmdDoxcHggc29saWQgcmdi
-KDIwNCwyMDQsMjA0KTtwYWRkaW5nLWxlZnQ6MWV4Ij48c3BhbiBjbGFzcz0iIj4mZ3Q7IEJqw7hy
-biwgaXMgdGhlcmUgc29tZXRoaW5nIG1pc3NpbmcgaW4gaW5pdGlhbGl6YXRpb24/PGJyPgo8YnI+
-Cjwvc3Bhbj5JIGRvbiYjMzk7dCB0aGluayBzby4gSXQgYWxsIGxvb2tzIE9LIHRvIG1lLsKgIEl0
-JiMzOTtzIGp1c3QgdGhlIEFUXkRIQ1A/PGJyPgpyZXNwb25zZSB3aGljaCBpcyBhIGJpdCB1bmV4
-cGVjdGVkLsKgIElJVUMsIHRoZSBtb2RlbSBMRURzIGluZGljYXRlIGE8YnI+CmNvbm5lY3Rpb24/
-wqAgV2hhdCBhYm91dCAmcXVvdDtBVF5ORElTRFVQPyZxdW90OyA/PGJyPjwvYmxvY2txdW90ZT48
-ZGl2PkluaXRpYWwgTEVEIGxlZCBvcGVyYXRpb24gd2FzICZxdW90O2JsaW5raW5nIGdyZWVuJnF1
-b3Q7LiBJdCBjaGFuZ2VkIHRvICZxdW90O3Nsb3cgYmxpbmtpbmcgYmx1ZSZxdW90O8KgIGFmdGVy
-IG9ubGluZS1tb2RlbSBjb21tYW5kLiBUaGVyZSB3YXMgbm8gY2hhbmdlIGFmdGVyIGFjdGl2YXRl
-LWNvbnRleHQgKHRoYXQgcHJvZHVjZWQgJnF1b3Q7QVReTkRJU1VQLi4uJnF1b3Q7KS4gSSBkaWQg
-bm90IHRyeSBtYW51YWwgJnF1b3Q7QVReTkRJU0RVUD8mcXVvdDsgY29tbWFuZCwgdGhvdWdoLiBJ
-JiMzOTtsbCB0cnkgaXQgdG9tb3Jyb3cuIDwvZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9x
-dW90ZSIgc3R5bGU9Im1hcmdpbjowcHggMHB4IDBweCAwLjhleDtib3JkZXItbGVmdDoxcHggc29s
-aWQgcmdiKDIwNCwyMDQsMjA0KTtwYWRkaW5nLWxlZnQ6MWV4Ij4KPGJyPgpEaWQgeW91IHRyeSBh
-IERIQ1AgY2xpZW50P8KgIE1heWJlIHRoaXMgZmlybXdhcmUgZG9lc24mIzM5O3QgaW1wbGVtZW50
-IHRoZTxicj4KQVReREhDUCBjb21tYW5kIGJ1dCBoYXMgYSBESENQIHNlcnZlcj88YnI+PC9ibG9j
-a3F1b3RlPjxkaXY+SSBkaWQgbm90IHRyeS4gSSYjMzk7bGwgdHJ5IGl0IHRvbW9ycm93LiA8YnI+
-PC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAw
-cHggMHB4IDAuOGV4O2JvcmRlci1sZWZ0OjFweCBzb2xpZCByZ2IoMjA0LDIwNCwyMDQpO3BhZGRp
-bmctbGVmdDoxZXgiPgo8c3BhbiBjbGFzcz0iIj48YnI+CiZndDsgSXMgdGhlcmUgc29tZXRoaW5n
-IHdyb25nIHdpdGggZmlybXdhcmU/PGJyPgo8YnI+Cjwvc3Bhbj5UaGF0IHdvdWxkIGRlcGVuZCBv
-biB0aGUgZGVmaW5pdGlvbiBvZiAmcXVvdDtyaWdodCZxdW90OyA6KTxicj4KPGJyPgpIdWF3ZWkg
-Y2FuIGRvIHByZXR0eSBtdWNoIHdoYXQgdGhleSB3YW50IHNpbmNlIHRoZSBmdW5jdGlvbnMgYXJl
-IHZlbmRvcjxicj4Kc3BlY2lmaWMuwqAgVGhleSBhcmUgcHJvYmFibHkgaGFwcHkgYXMgbG9uZyBh
-cyB0aGUgZmlybXdhcmUgbWF0Y2hlcyB0aGU8YnI+CldpbmRvd3MgZHJpdmVyK2FwcGxpY2F0aW9u
-LsKgIEJ1dCB1c3VhbGx5IHRoZXkgYXJlIHByZXR0eSBnb29kIGF0IG1ha2luZzxicj4KY29uc2lz
-dGVudCBpbnRlcmZhY2VzIGFjcm9zcyBkaWZmZXJlbnQgZmlybXdhcmUgY29kZSBiYXNlcywgc28g
-dGhlPGJyPgp1bnVzdWFsIEFUXkRIQ1A/IHJlc3BvbnNlIGlzIHVuZXhwZWN0ZWQgYW5kIG1pZ2h0
-IGJlIGNvbnNpZGVyZWQgYSBidWcuPGJyPgo8c3BhbiBjbGFzcz0iIj48YnI+CiZndDsgSXMgdGhl
-cmUgYW55IGNoYW5jZSBzd2l0Y2hpbmcgbW9kZW0gdG8gSGlMaW5rIG1vZGUgKD0gdXNpbmcgY2Rj
-X2V0aGVyKSBsaWtlPGJyPgomZ3Q7IHRoZSBvbGRlciB2ZXJzaW9ucyBkaWQ/PGJyPgomZ3Q7IFdv
-dWxkIGl0IGJlIHBvc3NpYmxlIGJ5IGRvd25ncmFkaW5nIGZpcm13YXJlIG9yIGJ5IHVzYl9tb2Rl
-c3dpdGNoPzxicj4KPGJyPgo8L3NwYW4+SSBhbSBndWVzc2luZyB0aGUgYW5zd2VycyBhcmUgJnF1
-b3Q7eWVzJnF1b3Q7IHRvIGFsbCB0aG9zZSBxdWVzdGlvbnMuwqAgQnV0IEkgZG9uJiMzOTt0PGJy
-Pgprbm93IGhvdy4uLjxicj48L2Jsb2NrcXVvdGU+PGRpdj5JIGd1ZXNzLCBpdCYjMzk7cyBub3Qg
-YSBnb29kIGlkZWEsIGJ1dCBJIGNvdWxkIHRyeSByZW1vdmluZyBodWF3ZWlfY2RjX25jbSBzZXQt
-dXAgZnJvbSB1ZGV2bmcuYy4gQW55aG93LCBqdXN0IGluc2VydGluZyB1ZGV2IHJ1bGUgZm9yIHVz
-aW5nIGNkY19hY20gd2l0aCB0aGlzIHBhcnRpY3VsYXIgZTMxMzEgZGlkIG5vdCB3b3JrLsKgIDxi
-cj48L2Rpdj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MHB4
-IDBweCAwcHggMC44ZXg7Ym9yZGVyLWxlZnQ6MXB4IHNvbGlkIHJnYigyMDQsMjA0LDIwNCk7cGFk
-ZGluZy1sZWZ0OjFleCI+CjxzcGFuIGNsYXNzPSIiPjxicj4KJmd0OyBJZiBhbGwgdGhlIGFuc3dl
-cnMgYXJlIG5vLCBJIHN1cHBvc2UgSSBuZWVkIHRvIHN3aXRjaCB0byBmb3IgaW5zdGFuY2UgdG88
-YnI+CiZndDsgTW9kZW1NYW5hZ2VyIG9yIHBwcCB3aXRob3V0IGFueSBtYW5hZ2Vycy48YnI+Cjxi
-cj4KPC9zcGFuPklmIE1NIGNhbiBjb25uZWN0LCB0aGVuIG9Gb25vIHNob3VsZCBiZSBhYmxlIHRv
-IGFzIHdlbGwuwqAgSSBzZWUgdGhhdCB5b3U8YnI+CmRpZG4mIzM5O3QgZmluZCBhbnkgQVReTkRJ
-U0RVUCBjb21tYW5kIGluIHRoZSBNTSBsb2cuwqAgRGlkIGl0IGJ5IGFueSBjaGFuY2U8YnI+CnVz
-ZSBQUFA/wqAgT3Igd2FzIHRoZXJlIHNvbWV0aGluZyBlbHNlIGdvaW5nIG9uPzwvYmxvY2txdW90
-ZT48ZGl2PkkgZG9uJiMzOTt0IHRoaW5rIHRoZXJlIGJhY29tZSBhbnkgUFBQIGludGVyZmFjZXMg
-aW4gaWZjb25maWcgbGlzdGluZyBpZiBJIHJlY2FsbCBpdCBjb3JyZWN0bHkuPGJyPjxicj48L2Rp
-dj48ZGl2PlRoYW5rcyw8YnI+PC9kaXY+PGRpdj5NYXR0aSA8YnI+PC9kaXY+PC9kaXY+PGJyPjxi
-cj48L2Rpdj48L2Rpdj4K
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPkhpIEJqw7hybiw8YnI+PC9k
+aXY+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj4yMDE2
+LTAxLTIwIDE5OjIwIEdNVCswMjowMCBtYXR0aSBrYWFzaW5lbiA8c3BhbiBkaXI9Imx0ciI+Jmx0
+OzxhIGhyZWY9Im1haWx0bzptYXR0aS5rYWFzaW5lbkBnbWFpbC5jb20iIHRhcmdldD0iX2JsYW5r
+Ij5tYXR0aS5rYWFzaW5lbkBnbWFpbC5jb208L2E+Jmd0Ozwvc3Bhbj46PGJyPjxibG9ja3F1b3Rl
+IGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowcHggMHB4IDBweCAwLjhleDtib3Jk
+ZXItbGVmdDoxcHggc29saWQgcmdiKDIwNCwyMDQsMjA0KTtwYWRkaW5nLWxlZnQ6MWV4Ij48c3Bh
+biBjbGFzcz0iIj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46
+MHB4IDBweCAwcHggMC44ZXg7Ym9yZGVyLWxlZnQ6MXB4IHNvbGlkIHJnYigyMDQsMjA0LDIwNCk7
+cGFkZGluZy1sZWZ0OjFleCI+SSBkb24mIzM5O3QgdGhpbmsgc28uIEl0IGFsbCBsb29rcyBPSyB0
+byBtZS7CoCBJdCYjMzk7cyBqdXN0IHRoZSBBVF5ESENQPzxicj4KcmVzcG9uc2Ugd2hpY2ggaXMg
+YSBiaXQgdW5leHBlY3RlZC7CoCBJSVVDLCB0aGUgbW9kZW0gTEVEcyBpbmRpY2F0ZSBhPGJyPgpj
+b25uZWN0aW9uP8KgIFdoYXQgYWJvdXQgJnF1b3Q7QVReTkRJU0RVUD8mcXVvdDsgPzxicj48L2Js
+b2NrcXVvdGU+PC9zcGFuPjxkaXY+SW5pdGlhbCBMRUQgbGVkIG9wZXJhdGlvbiB3YXMgJnF1b3Q7
+YmxpbmtpbmcgZ3JlZW4mcXVvdDsuIEl0IGNoYW5nZWQgdG8gJnF1b3Q7c2xvdyBibGlua2luZyBi
+bHVlJnF1b3Q7wqAgYWZ0ZXIgb25saW5lLW1vZGVtIGNvbW1hbmQuIFRoZXJlIHdhcyBubyBjaGFu
+Z2UgYWZ0ZXIgYWN0aXZhdGUtY29udGV4dCAodGhhdCBwcm9kdWNlZCAmcXVvdDtBVF5ORElTVVAu
+Li4mcXVvdDspLiBJIGRpZCBub3QgdHJ5IG1hbnVhbCAmcXVvdDtBVF5ORElTRFVQPyZxdW90OyBj
+b21tYW5kLCB0aG91Z2guIEkmIzM5O2xsIHRyeSBpdCB0b21vcnJvdy4gPC9kaXY+PC9ibG9ja3F1
+b3RlPjxkaXY+wqA8c3BhbiBjbGFzcz0iIj4gJnF1b3Q7QVReTkRJU0RVUD8mcXVvdDsgYWZ0ZXIg
+Y29ubmVjdC1tb2RlbSBhbmQgYWN0aXZhdGUtY29udGV4dCByZXR1cm5zIHB1cmUgT0s8YnI+PC9z
+cGFuPjwvZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjow
+cHggMHB4IDBweCAwLjhleDtib3JkZXItbGVmdDoxcHggc29saWQgcmdiKDIwNCwyMDQsMjA0KTtw
+YWRkaW5nLWxlZnQ6MWV4Ij48c3BhbiBjbGFzcz0iIj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxf
+cXVvdGUiIHN0eWxlPSJtYXJnaW46MHB4IDBweCAwcHggMC44ZXg7Ym9yZGVyLWxlZnQ6MXB4IHNv
+bGlkIHJnYigyMDQsMjA0LDIwNCk7cGFkZGluZy1sZWZ0OjFleCI+Cjxicj4KRGlkIHlvdSB0cnkg
+YSBESENQIGNsaWVudD/CoCBNYXliZSB0aGlzIGZpcm13YXJlIGRvZXNuJiMzOTt0IGltcGxlbWVu
+dCB0aGU8YnI+CkFUXkRIQ1AgY29tbWFuZCBidXQgaGFzIGEgREhDUCBzZXJ2ZXI/PGJyPjwvYmxv
+Y2txdW90ZT48L3NwYW4+PGRpdj5JIGRpZCBub3QgdHJ5LiBJJiMzOTtsbCB0cnkgaXQgdG9tb3Jy
+b3cuIDxicj48L2Rpdj48L2Jsb2NrcXVvdGU+PGRpdj5FeGVjdXRpbmcgaWZjb25maWcgd3dhbjAg
+dXA7ZGhjbGllbnQgd3dhbjAgY2FuJiMzOTt0IGdldCBsZWFzZSBmcm9tIHd3YW4wIGludGVyZmFj
+ZS48YnI+PGJyPjwvZGl2PjxkaXY+LU1hdHRpPGJyPjwvZGl2PjwvZGl2Pjxicj48YnI+PC9kaXY+
+PC9kaXY+Cg==
 
---===============4309423934862174511==--
+--===============1203529432576788859==--
 
