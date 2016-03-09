@@ -1,30 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============3373467032063670841=="
+Content-Type: multipart/mixed; boundary="===============7555389906620324797=="
 MIME-Version: 1.0
-From: David Ashley <dashxdr@gmail.com>
-Subject: Re: ofono with sim5320 module
-Date: Tue, 08 Mar 2016 12:30:26 -0600
-Message-ID: <CABkE59AjrNxZFeGdCzstM8UAka75EbptwjMR3pV5VtWsrjQ_RQ@mail.gmail.com>
-In-Reply-To: <CABkE59DVsbx1igJvM1zTtu4t2Fken=RiDQQchLwyJhXG9BzT+w@mail.gmail.com>
+From: Dragos Tatulea <dragos@endocode.com>
+Subject: [PATCH 00/19] Support for U-Blox Toby L2 modems
+Date: Wed, 09 Mar 2016 16:44:41 +0100
+Message-ID: <1457538300-7183-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3373467032063670841==
+--===============7555389906620324797==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Well this project seems to be dead. Anyway for what it's worth, the
-problem turned out to be some difference between the AT+CMUX behavior
-betwene the sim900 and the sim5320 module. When I tore out all the MUX
-related code the 3G / internet / ppp aspects all just start working.
+This patchset adds support for Toby L2 modems in high throughput
+mode.
 
--Dave
+Besides basic support, the following things are supported:
+* bridged AND routed modes.
+* LTE default bearers.
+* Multiple primary PDP contexts.
 
-On 3/7/16, David Ashley <dashxdr@gmail.com> wrote:
-> Hello, I'm at my wits' end trying to get ofono working with the
-> sim5320 module. I'm using the plugins/sim900.c module as a starting
-> point. I think the issue has something to do with the difference
-> between the MUX functionality between the 900 and the 5320.
 
---===============3373467032063670841==--
+Dongsu Park (4):
+  plugins/udevng: support the U-Blox TOBY-L2 series
+  plugins/udevng: support different interface strings to detect TOBY
+    series
+  plugins/ublox: read network mode
+  ubloxmodem: add routed mode support
+
+Dragos Tatulea (15):
+  plugins/udevng: ublox: set model string
+  include: vendor.h: add vendor for ublox toby
+  plugins/ublox: allow enabling of TOBY L2 modems
+  plugins/ublox: use vendor from structure instead of fixed
+  atmodem: ublox: EPS now supported by newer ublox
+  atmodem: add support for U-Blox TOBY L2 modems
+  atmodem: work around CGREG issues in UBlox Toby L2
+  ubloxmodem: add Toby L2 gprs context driver
+  gprs-context.h: add function for setting APN
+  gprs: allow APN updates from gprs-context driver
+  ubloxmodem: push back APN into gprs context
+  plugins/ublox: give names to model ids
+  plugins/ublox: enable ubloxmodem driver when possible
+  plugins/ublox: support more internet contexts
+  ubloxmodem: support authentication
+
+ Makefile.am                            |   7 +
+ drivers/atmodem/gprs-context.c         |   2 +
+ drivers/atmodem/gprs.c                 |  27 +-
+ drivers/atmodem/network-registration.c |  12 +-
+ drivers/atmodem/sim.c                  |   1 +
+ drivers/atmodem/vendor.h               |   1 +
+ drivers/ubloxmodem/gprs-context.c      | 714 +++++++++++++++++++++++++++++=
+++++
+ drivers/ubloxmodem/ubloxmodem.c        |  49 +++
+ drivers/ubloxmodem/ubloxmodem.h        |  25 ++
+ include/gprs-context.h                 |   3 +
+ plugins/ublox.c                        | 129 +++++-
+ plugins/udevng.c                       |  25 +-
+ src/gprs.c                             |  25 +-
+ 13 files changed, 987 insertions(+), 33 deletions(-)
+ create mode 100644 drivers/ubloxmodem/gprs-context.c
+ create mode 100644 drivers/ubloxmodem/ubloxmodem.c
+ create mode 100644 drivers/ubloxmodem/ubloxmodem.h
+
+-- =
+
+2.5.0
+
+
+--===============7555389906620324797==--
 
