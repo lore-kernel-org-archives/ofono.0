@@ -1,100 +1,131 @@
-Content-Type: multipart/mixed; boundary="===============3174679699055370407=="
+Content-Type: multipart/mixed; boundary="===============8727876207544994062=="
 MIME-Version: 1.0
 From: dragos@endocode.com
-Subject: [PATCH 02/19] plugins/udevng: support different interface strings to
- detect TOBY series
-Date: Wed, 09 Mar 2016 17:05:49 +0100
-Message-ID: <1457539549-8977-1-git-send-email-dragos@endocode.com>
+Subject: [PATCH 18/19] plugins/ublox: read network mode
+Date: Wed, 09 Mar 2016 17:06:14 +0100
+Message-ID: <1457539574-9051-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3174679699055370407==
+--===============8727876207544994062==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Dongsu Park <dongsu@endocode.com>
 
-Each modem expresses their interfaces with its own interface string,
-which is composed of 3 different USB attributes:
-"bInterfaceClass/bInterfaceSubClass/bInterfaceProtocol".
-While the old models like LISA support only "2/2/1" for modem
-interfaces, TOBY-L2 also supports an unique string for NetworkInterface
-for each profile.
-
-* low-medium throughput profile : 2/6/0
-* fairly backward-compatible profile : 10/0/0
-* high throughput profile : 224/1/3
-
-Besides the condition for checking NULL for mdm/aux/net should be relaxed
-a little bit.
+Read network mode into modem string. This will let the gprs-context
+drive know what to do.
 ---
- plugins/udevng.c | 22 +++++++++++++++++++---
- 1 file changed, 19 insertions(+), 3 deletions(-)
+ plugins/ublox.c | 47 ++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 42 insertions(+), 5 deletions(-)
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 52b667e..2170c90 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -838,7 +838,7 @@ static gboolean setup_quectel(struct modem_info *modem)
+diff --git a/plugins/ublox.c b/plugins/ublox.c
+index 76f7fcf..9cfba33 100644
+--- a/plugins/ublox.c
++++ b/plugins/ublox.c
+@@ -42,6 +42,7 @@
+ #include <drivers/atmodem/atutil.h>
+ #include <drivers/atmodem/vendor.h>
  =
 
- static gboolean setup_ublox(struct modem_info *modem)
++static const char *ubmconf_prefix[] =3D { "+UBMCONF:", NULL };
+ static const char *none_prefix[] =3D { NULL };
+ =
+
+ enum supported_models {
+@@ -52,11 +53,17 @@ enum supported_models {
+ 	TOBYL2_HIGH_THROUGHPUT_MODE 	=3D 1146,
+ };
+ =
+
++enum ublox_net_mode {
++	UBLOX_TOBYL2_NET_MODE_ROUTER =3D 1,
++	UBLOX_TOBYL2_NET_MODE_BRIDGE =3D 2,
++};
++
+ struct ublox_data {
+ 	GAtChat *modem;
+ 	GAtChat *aux;
+ 	int model_id;
+ 	enum ofono_vendor vendor_family;
++	enum ublox_net_mode net_mode;
+ };
+ =
+
+ static void ublox_debug(const char *str, void *user_data)
+@@ -93,6 +100,39 @@ static void ublox_remove(struct ofono_modem *modem)
+ 	g_free(data);
+ }
+ =
+
++static void read_ubmconf_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
++{
++	struct ofono_modem *modem =3D (struct ofono_modem *) user_data;
++	struct ublox_data *data =3D ofono_modem_get_data(modem);
++	int mode =3D 0;
++	GAtResultIter iter;
++
++	g_at_result_iter_init(&iter, result);
++
++	while (!g_at_result_iter_next(&iter, "+UBMCONF:"))
++		;	/* skip every other line that is not UBMCONF */
++
++	g_at_result_iter_next_number(&iter, &mode);
++
++	data->net_mode =3D mode;
++	DBG("mode=3D%d", mode);
++	if (mode =3D=3D 1)
++		ofono_modem_set_string(modem, "NetworkMode", "routed");
++	else if (mode =3D=3D 2)
++		ofono_modem_set_string(modem, "NetworkMode", "bridged");
++}
++
++static void read_net_mode(struct ofono_modem *modem)
++{
++	struct ublox_data *data =3D ofono_modem_get_data(modem);
++
++	if (!data->aux)
++		return;
++
++	g_at_chat_send(data->aux, "AT+UBMCONF?",
++			ubmconf_prefix, read_ubmconf_cb, modem, NULL);
++}
++
+ static GAtChat *open_device(struct ofono_modem *modem,
+ 				const char *key, char *debug)
  {
--	const char *aux =3D NULL, *mdm =3D NULL;
-+	const char *aux =3D NULL, *mdm =3D NULL, *net =3D NULL;
- 	GSList *list;
- =
-
- 	DBG("%s", modem->syspath);
-@@ -857,21 +857,37 @@ static gboolean setup_ublox(struct modem_info *modem)
- 			mdm =3D info->devnode;
- 			if (aux !=3D NULL)
- 				break;
-+		/*
-+		 * "2/2/1"
-+		 *  - a common modem interface both for older models like LISA,
-+		 *    and for newer models like TOBY.
-+		 * For TOBY-L2, NetworkInterface can be detected for each profile:
-+		 *  - low-medium throughput profile : 2/6/0
-+		 *  - fairly backward-compatible profile : 10/0/0
-+		 *  - high throughput profile : 224/1/3
-+		 * */
- 		} else if (g_strcmp0(info->interface, "2/2/1") =3D=3D 0) {
- 			if (g_strcmp0(info->number, "02") =3D=3D 0)
- 				aux =3D info->devnode;
- 			else if (g_strcmp0(info->number, "00") =3D=3D 0)
- 				mdm =3D info->devnode;
-+		} else if (g_strcmp0(info->interface, "2/6/0") =3D=3D 0 ||
-+			   g_strcmp0(info->interface, "10/0/0") =3D=3D 0 ||
-+			   g_strcmp0(info->interface, "224/1/3") =3D=3D 0) {
-+			net =3D info->devnode;
- 		}
+@@ -142,11 +182,6 @@ static void cfun_enable(gboolean ok, GAtResult *result=
+, gpointer user_data)
+ 		return;
  	}
  =
 
--	if (aux =3D=3D NULL || mdm =3D=3D NULL)
-+	/* Abort only if both interfaces are NULL, as it's highly possible that
-+	 * only one of 2 interfaces is available for U-blox modem. */
-+	if (aux =3D=3D NULL && mdm =3D=3D NULL)
- 		return FALSE;
- =
-
--	DBG("aux=3D%s modem=3D%s", aux, mdm);
-+	DBG("aux=3D%s modem=3D%s net=3D%s", aux, mdm, net);
- =
-
- 	ofono_modem_set_string(modem->modem, "Aux", aux);
- 	ofono_modem_set_string(modem->modem, "Modem", mdm);
-+	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
- =
-
- 	return TRUE;
+-	if (data->model_id =3D=3D TOBYL2_HIGH_THROUGHPUT_MODE)
+-		/* use bridged mode until routed mode support is added */
+-		g_at_chat_send(data->aux, "AT+UBMCONF=3D2", none_prefix,
+-						NULL, NULL, NULL);
+-
+ 	ofono_modem_set_powered(modem, TRUE);
  }
+ =
+
+@@ -207,6 +242,8 @@ static int ublox_enable(struct ofono_modem *modem)
+ 	g_at_chat_send(data->aux, "ATE0 +CMEE=3D1", none_prefix,
+ 					NULL, NULL, NULL);
+ =
+
++	read_net_mode(modem);
++
+ 	g_at_chat_send(data->aux, "AT+CFUN=3D4", none_prefix,
+ 					cfun_enable, modem, NULL);
+ =
+
 -- =
 
 2.5.0
 
 
---===============3174679699055370407==--
+--===============8727876207544994062==--
 
