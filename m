@@ -1,126 +1,126 @@
-Content-Type: multipart/mixed; boundary="===============8898269109483145659=="
+Content-Type: multipart/mixed; boundary="===============8123029246715295738=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 17/19] ubloxmodem: support authentication
-Date: Wed, 09 Mar 2016 16:44:58 +0100
-Message-ID: <1457538300-7183-18-git-send-email-dragos@endocode.com>
+Subject: [PATCH 18/19] plugins/ublox: read network mode
+Date: Wed, 09 Mar 2016 16:44:59 +0100
+Message-ID: <1457538300-7183-19-git-send-email-dragos@endocode.com>
 In-Reply-To: <1457538300-7183-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8898269109483145659==
+--===============8123029246715295738==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If username and password specified, issue an UAUTHREQ
-command with the configured authentication method, selected cid
-and credentials.
+From: Dongsu Park <dongsu@endocode.com>
+
+Read network mode into modem string. This will let the gprs-context
+drive know what to do.
 ---
- drivers/ubloxmodem/gprs-context.c | 61 +++++++++++++++++++++++++++++++++++=
-++--
- 1 file changed, 59 insertions(+), 2 deletions(-)
+ plugins/ublox.c | 47 ++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 42 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/ubloxmodem/gprs-context.c b/drivers/ubloxmodem/gprs-co=
-ntext.c
-index b6eaa5e..bc100d6 100644
---- a/drivers/ubloxmodem/gprs-context.c
-+++ b/drivers/ubloxmodem/gprs-context.c
-@@ -49,6 +49,9 @@ struct gprs_context_data {
- 	unsigned int active_context;
- 	unsigned int gprs_cid;
- 	char apn[OFONO_GPRS_MAX_APN_LENGTH + 1];
-+	char username[OFONO_GPRS_MAX_USERNAME_LENGTH + 1];
-+	char password[OFONO_GPRS_MAX_PASSWORD_LENGTH + 1];
-+	enum ofono_gprs_auth_method auth_method;
- 	ofono_gprs_context_cb_t cb;
- 	void *cb_data;
+diff --git a/plugins/ublox.c b/plugins/ublox.c
+index 76f7fcf..9cfba33 100644
+--- a/plugins/ublox.c
++++ b/plugins/ublox.c
+@@ -42,6 +42,7 @@
+ #include <drivers/atmodem/atutil.h>
+ #include <drivers/atmodem/vendor.h>
+ =
+
++static const char *ubmconf_prefix[] =3D { "+UBMCONF:", NULL };
+ static const char *none_prefix[] =3D { NULL };
+ =
+
+ enum supported_models {
+@@ -52,11 +53,17 @@ enum supported_models {
+ 	TOBYL2_HIGH_THROUGHPUT_MODE 	=3D 1146,
  };
-@@ -326,9 +329,58 @@ static void ublox_activate_ctx(struct ofono_gprs_conte=
-xt *gc)
- 	CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
+ =
+
++enum ublox_net_mode {
++	UBLOX_TOBYL2_NET_MODE_ROUTER =3D 1,
++	UBLOX_TOBYL2_NET_MODE_BRIDGE =3D 2,
++};
++
+ struct ublox_data {
+ 	GAtChat *modem;
+ 	GAtChat *aux;
+ 	int model_id;
+ 	enum ofono_vendor vendor_family;
++	enum ublox_net_mode net_mode;
+ };
+ =
+
+ static void ublox_debug(const char *str, void *user_data)
+@@ -93,6 +100,39 @@ static void ublox_remove(struct ofono_modem *modem)
+ 	g_free(data);
  }
  =
 
-+static void uauthreq_cb(gboolean ok, GAtResult *result, gpointer user_data)
++static void read_ubmconf_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
 +{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct ofono_modem *modem =3D (struct ofono_modem *) user_data;
++	struct ublox_data *data =3D ofono_modem_get_data(modem);
++	int mode =3D 0;
++	GAtResultIter iter;
 +
-+	DBG("ok %d", ok);
++	g_at_result_iter_init(&iter, result);
 +
-+	if (!ok) {
-+		ofono_error("can't authenticate");
-+		release_context_id(gcd->active_context);
-+		callback_with_error(gcd, result);
++	while (!g_at_result_iter_next(&iter, "+UBMCONF:"))
++		;	/* skip every other line that is not UBMCONF */
 +
-+		return;
-+	}
++	g_at_result_iter_next_number(&iter, &mode);
 +
-+	ublox_activate_ctx(gc);
++	data->net_mode =3D mode;
++	DBG("mode=3D%d", mode);
++	if (mode =3D=3D 1)
++		ofono_modem_set_string(modem, "NetworkMode", "routed");
++	else if (mode =3D=3D 2)
++		ofono_modem_set_string(modem, "NetworkMode", "bridged");
 +}
 +
- #define UBLOX_MAX_USER_LEN 50
- #define UBLOX_MAX_PASS_LEN 50
- =
-
-+static void ublox_authenticate(struct ofono_gprs_context *gc)
++static void read_net_mode(struct ofono_modem *modem)
 +{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	char buf[UBLOX_MAX_USER_LEN + UBLOX_MAX_PASS_LEN + 32];
-+	unsigned auth_method;
++	struct ublox_data *data =3D ofono_modem_get_data(modem);
 +
-+	switch (gcd->auth_method) {
-+	case OFONO_GPRS_AUTH_METHOD_PAP:
-+		auth_method =3D 1;
-+		break;
-+	case OFONO_GPRS_AUTH_METHOD_CHAP:
-+		auth_method =3D 2;
-+		break;
-+	default:
-+		ofono_error("Unsupported auth type %u", gcd->auth_method);
-+		goto error;
-+	}
-+
-+	snprintf(buf, sizeof(buf), "AT+UAUTHREQ=3D%u,%u,\"%s\",\"%s\"",
-+			gcd->active_context, auth_method,
-+			gcd->username, gcd->password);
-+
-+	/* If this failed, we will see it during context activation. */
-+	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-+				uauthreq_cb, gc, NULL) > 0)
++	if (!data->aux)
 +		return;
 +
-+error:
-+	CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
++	g_at_chat_send(data->aux, "AT+UBMCONF?",
++			ubmconf_prefix, read_ubmconf_cb, modem, NULL);
 +}
 +
- static void ublox_gprs_activate_primary(struct ofono_gprs_context *gc,
- 				const struct ofono_gprs_primary_context *ctx,
- 				ofono_gprs_context_cb_t cb, void *data)
-@@ -352,13 +404,18 @@ static void ublox_gprs_activate_primary(struct ofono_=
-gprs_context *gc,
+ static GAtChat *open_device(struct ofono_modem *modem,
+ 				const char *key, char *debug)
+ {
+@@ -142,11 +182,6 @@ static void cfun_enable(gboolean ok, GAtResult *result=
+, gpointer user_data)
+ 		return;
+ 	}
  =
 
- 	gcd->cb =3D cb;
- 	gcd->cb_data =3D data;
-+	gcd->auth_method =3D ctx->auth_method;
- 	gcd->gprs_cid =3D ctx->cid;
- 	memcpy(gcd->apn, ctx->apn, sizeof(ctx->apn));
- =
-
--	if (gcd->active_context =3D=3D ublox_data.default_context_id)
-+	if (gcd->active_context =3D=3D ublox_data.default_context_id) {
- 		/* Default context already active, only read details. */
- 		ublox_post_activation(gc);
--	else
-+	} else if (strlen(ctx->username) && strlen(ctx->password)) {
-+		memcpy(gcd->username, ctx->username, sizeof(ctx->username));
-+		memcpy(gcd->password, ctx->password, sizeof(ctx->password));
-+		ublox_authenticate(gc);
-+	} else
- 		ublox_activate_ctx(gc);
+-	if (data->model_id =3D=3D TOBYL2_HIGH_THROUGHPUT_MODE)
+-		/* use bridged mode until routed mode support is added */
+-		g_at_chat_send(data->aux, "AT+UBMCONF=3D2", none_prefix,
+-						NULL, NULL, NULL);
+-
+ 	ofono_modem_set_powered(modem, TRUE);
  }
+ =
+
+@@ -207,6 +242,8 @@ static int ublox_enable(struct ofono_modem *modem)
+ 	g_at_chat_send(data->aux, "ATE0 +CMEE=3D1", none_prefix,
+ 					NULL, NULL, NULL);
+ =
+
++	read_net_mode(modem);
++
+ 	g_at_chat_send(data->aux, "AT+CFUN=3D4", none_prefix,
+ 					cfun_enable, modem, NULL);
  =
 
 -- =
@@ -128,5 +128,5 @@ gprs_context *gc,
 2.5.0
 
 
---===============8898269109483145659==--
+--===============8123029246715295738==--
 
