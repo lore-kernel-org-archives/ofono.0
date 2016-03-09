@@ -1,91 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============7580680806309638686=="
+Content-Type: multipart/mixed; boundary="===============1155853219427146132=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 14/19] plugins/ublox: give names to model ids
-Date: Wed, 09 Mar 2016 16:44:55 +0100
-Message-ID: <1457538300-7183-15-git-send-email-dragos@endocode.com>
+Subject: [PATCH 15/19] plugins/ublox: enable ubloxmodem driver when possible
+Date: Wed, 09 Mar 2016 16:44:56 +0100
+Message-ID: <1457538300-7183-16-git-send-email-dragos@endocode.com>
 In-Reply-To: <1457538300-7183-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7580680806309638686==
+--===============1155853219427146132==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-To make it easier to understand the code.
+Where possible means Toby L2 in high speed mode.
+
+The bridge mode is set before enabling the modem because the
+driver requires this.
 ---
- plugins/ublox.c | 24 ++++++++++++++++--------
- 1 file changed, 16 insertions(+), 8 deletions(-)
+ plugins/ublox.c | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
 
 diff --git a/plugins/ublox.c b/plugins/ublox.c
-index 0965ad1..bdc0fa1 100644
+index bdc0fa1..032a3c4 100644
 --- a/plugins/ublox.c
 +++ b/plugins/ublox.c
-@@ -44,9 +44,18 @@
- =
-
- static const char *none_prefix[] =3D { NULL };
- =
-
-+enum supported_models {
-+	UNKNOWN				=3D 0,
-+	SARA_G270			=3D 1102,
-+	TOBYL2_COMPATIBLE_MODE 		=3D 1141,
-+	TOBYL2_MEDIUM_THROUGHPUT_MODE 	=3D 1143,
-+	TOBYL2_HIGH_THROUGHPUT_MODE 	=3D 1146,
-+};
-+
- struct ublox_data {
- 	GAtChat *modem;
- 	GAtChat *aux;
-+	int model_id;
- 	enum ofono_vendor vendor_family;
- };
- =
-
-@@ -140,7 +149,6 @@ static int ublox_enable(struct ofono_modem *modem)
- {
- 	struct ublox_data *data =3D ofono_modem_get_data(modem);
- 	const char *model_str =3D NULL;
--	int model_id;
- =
-
- 	DBG("%p", modem);
- =
-
-@@ -152,19 +160,19 @@ static int ublox_enable(struct ofono_modem *modem)
- 	 * Toby L2 devices are more complex and special than previously
- 	 * supported U-Blox devices. So they need a vendor of their own.
- 	 */
--	model_id =3D atoi(model_str);
--	switch (model_id) {
--		case 1102:
-+	data->model_id =3D atoi(model_str);
-+	switch (data->model_id) {
-+		case SARA_G270:
- 			data->vendor_family =3D OFONO_VENDOR_UBLOX;
- 			break;
--		case 1141:
--		case 1146:
-+		case TOBYL2_COMPATIBLE_MODE:
-+		case TOBYL2_HIGH_THROUGHPUT_MODE:
- 			data->vendor_family =3D OFONO_VENDOR_UBLOX_TOBY_L2;
- 			break;
--		case 1143:
-+		case TOBYL2_MEDIUM_THROUGHPUT_MODE:
- 			DBG("low/medium throughtput profile unsupported");
- 		default:
--			DBG("unknown ublox model id %d", model_id);
-+			DBG("unknown ublox model id %d", data->model_id);
- 			return -EINVAL;
+@@ -142,6 +142,11 @@ static void cfun_enable(gboolean ok, GAtResult *result=
+, gpointer user_data)
+ 		return;
  	}
  =
 
++	if (data->model_id =3D=3D TOBYL2_HIGH_THROUGHPUT_MODE)
++		/* use bridged mode until routed mode support is added */
++		g_at_chat_send(data->aux, "AT+UBMCONF=3D2", none_prefix,
++						NULL, NULL, NULL);
++
+ 	ofono_modem_set_powered(modem, TRUE);
+ }
+ =
+
+@@ -295,8 +300,15 @@ static void ublox_post_sim(struct ofono_modem *modem)
+ =
+
+ 	gprs =3D ofono_gprs_create(modem, data->vendor_family, "atmodem",
+ 					data->aux);
+-	gc =3D ofono_gprs_context_create(modem, data->vendor_family, "atmodem",
+-					data->modem ? data->modem : data->aux);
++	if (data->model_id =3D=3D TOBYL2_HIGH_THROUGHPUT_MODE)
++		gc =3D ofono_gprs_context_create(modem, data->vendor_family,
++						"ubloxmodem",
++						data->modem ? data->modem : data->aux);
++
++	else
++		gc =3D ofono_gprs_context_create(modem, data->vendor_family,
++						"atmodem",
++						data->modem ? data->modem : data->aux);
+ =
+
+ 	if (gprs && gc)
+ 		ofono_gprs_add_context(gprs, gc);
 -- =
 
 2.5.0
 
 
---===============7580680806309638686==--
+--===============1155853219427146132==--
 
