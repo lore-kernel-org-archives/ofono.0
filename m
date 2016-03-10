@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3138358505960874515=="
+Content-Type: multipart/mixed; boundary="===============1998476820056239643=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 03/19] plugins/udevng: ublox: set model string
-Date: Thu, 10 Mar 2016 08:04:08 -0600
-Message-ID: <56E17ED8.4050400@gmail.com>
-In-Reply-To: <1457538300-7183-4-git-send-email-dragos@endocode.com>
+Subject: Re: [PATCH 04/19] include: vendor.h: add vendor for ublox toby
+Date: Thu, 10 Mar 2016 08:05:22 -0600
+Message-ID: <56E17F22.9080404@gmail.com>
+In-Reply-To: <1457538300-7183-5-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3138358505960874515==
+--===============1998476820056239643==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,9 +16,10 @@ Content-Transfer-Encoding: quoted-printable
 Hi Dragos,
 
 On 03/09/2016 09:44 AM, Dragos Tatulea wrote:
-> Necessary for supporting the ublox TOBY L2 modem.
+> Required to differentiate between the old LISA family
+> of supported devices and future TOBY L2 devices.
 > ---
->   plugins/udevng.c | 1 +
+>   drivers/atmodem/vendor.h | 1 +
 >   1 file changed, 1 insertion(+)
 >
 
@@ -28,5 +29,5 @@ Regards,
 -Denis
 
 
---===============3138358505960874515==--
+--===============1998476820056239643==--
 
