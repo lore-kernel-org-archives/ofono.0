@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6096810157707022470=="
+Content-Type: multipart/mixed; boundary="===============8271654356480173742=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 09/19] atmodem: work around CGREG issues in UBlox Toby L2
-Date: Thu, 10 Mar 2016 08:40:22 -0600
-Message-ID: <56E18756.6090904@gmail.com>
-In-Reply-To: <1457538300-7183-10-git-send-email-dragos@endocode.com>
+Subject: Re: [PATCH 07/19] atmodem: ublox: EPS now supported by newer ublox
+Date: Thu, 10 Mar 2016 08:43:50 -0600
+Message-ID: <56E18826.5070504@gmail.com>
+In-Reply-To: <1457538300-7183-8-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6096810157707022470==
+--===============8271654356480173742==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,76 +16,17 @@ Content-Transfer-Encoding: quoted-printable
 Hi Dragos,
 
 On 03/09/2016 09:44 AM, Dragos Tatulea wrote:
-> Don't use CGREG for network notifications. It will return
-> 4 both when registered in LTE and in unknown state.
->
-> For the CGREG? query, interpret 4 as registered.
+> Based on UBX-13002752 R33
 > ---
->   drivers/atmodem/gprs.c | 24 +++++++++++++++++++++---
->   1 file changed, 21 insertions(+), 3 deletions(-)
+>   drivers/atmodem/gprs.c | 4 ----
+>   1 file changed, 4 deletions(-)
 >
-> diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-> index 4505477..0b4bce8 100644
-> --- a/drivers/atmodem/gprs.c
-> +++ b/drivers/atmodem/gprs.c
-> @@ -101,6 +101,17 @@ static void at_cgreg_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
->   		return;
->   	}
->
-> +	if (gd->vendor =3D=3D OFONO_VENDOR_UBLOX_TOBY_L2 && status =3D=3D 4) {
-> +		/*
-> +		 * UBX-13002752-R33 says:
-> +		 * If the module is registered to E-UTRAN the <stat> parameter is 4.
-> +		 * So this means we are actually registered.
-> +		 * It could also mean that state is unknown, but if we are
-> +		 * here we know we already registered.
-> +		 */
-> +		 status =3D 1;
-> +	}
-> +
 
-Does ublox support AT+UREG? ?  Perhaps that would be easier than making =
-
-this hack.  The core polls gprs_driver->attached_status in various =
-
-cases, so assuming that 4=3D=3D1 here seems unsafe.
-
->   	cb(&error, status, cbd->data);
->   }
->
-> @@ -342,16 +353,23 @@ static void gprs_initialized(gboolean ok, GAtResult=
- *result, gpointer user_data)
->   	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
->
->   	g_at_chat_register(gd->chat, "+CGEV:", cgev_notify, FALSE, gprs, NULL);
-> -	g_at_chat_register(gd->chat, "+CGREG:", cgreg_notify,
-> -						FALSE, gprs, NULL);
-> +
-> +	/*
-> +	 * You really don't want to get CGREG notifications on Toby l2.
-> +	 * It sends 4 when BOTH for unknown state and for registered in LTE.
-> +	 * +UREG usage is recommended by them.
-> +	 */
-> +	if (gd->vendor !=3D OFONO_VENDOR_UBLOX_TOBY_L2)
-> +		g_at_chat_register(gd->chat, "+CGREG:", cgreg_notify,
-> +							FALSE, gprs, NULL);
->
->   	switch (gd->vendor) {
->   	case OFONO_VENDOR_HUAWEI:
->   		g_at_chat_register(gd->chat, "^MODE:", huawei_mode_notify,
->   						FALSE, gprs, NULL);
->   		break;
-> -	case OFONO_VENDOR_UBLOX:
->   	case OFONO_VENDOR_UBLOX_TOBY_L2:
-> +	case OFONO_VENDOR_UBLOX:
->   		g_at_chat_register(gd->chat, "+UREG:", ublox_ureg_notify,
->   						FALSE, gprs, NULL);
->   		g_at_chat_send(gd->chat, "AT+UREG=3D1", none_prefix,
->
+Ignore my previous message, this was applied now.
 
 Regards,
 -Denis
 
---===============6096810157707022470==--
+
+--===============8271654356480173742==--
 
