@@ -1,109 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============6186814735711180354=="
+Content-Type: multipart/mixed; boundary="===============4803746106406089574=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Holger Freyther <holger@freyther.de>
 Subject: Re: Timeout/Reliability issue with my plugin
-Date: Sat, 12 Mar 2016 11:23:50 -0600
-Message-ID: <56E450A6.90600@gmail.com>
-In-Reply-To: <loom.20160312T175732-718@post.gmane.org>
+Date: Sat, 12 Mar 2016 19:20:57 +0000
+Message-ID: <loom.20160312T201452-815@post.gmane.org>
+In-Reply-To: <56E450A6.90600@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6186814735711180354==
+--===============4803746106406089574==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Holger,
+Denis Kenzior <denkenz@...> writes:
 
- >> However, the modem driver is still responsible for cleaning up after
->> itself, since the core has no visibility into what resources are being
->> used by the modem driver.
->
-> How would it do it? Should it start it's own glib timer next to the AT+CF=
-UN?
-> I have added an abort in the code. As you have guessed it is a standard AT
-> modem. What happens is that somehow the _enable times out, on disable
-> the _disable will not be called (as the modem was probably never powered
-> up) and then on the next _enable we create a second GAtChat.
+> =
 
-You could do a timer, or forcefully unref the g_at_chat object if the =
+> Hi Holger,
 
-GAtChat already exists when set_powered() is being called.  However, its =
-
-best to drive a modem in such a way that the firmware doesn't reset and =
-
-keeps responding to AT commands properly.
-
-Sometimes this is easier said than done :)
-
->
->
-> test/enable-modem test/disable-modem in a loop
->
-> Connecting modem /wavecom_15...
-> Traceback (most recent call last):
->    File "./test/enable-modem", line 20, in <module>
->      modem.SetProperty("Powered", dbus.Boolean(1), timeout =3D 120)
->    File "/usr/lib/python3/dist-packages/dbus/proxies.py", line 70, in __c=
-all__
->      return self._proxy_method(*args, **keywords)
->    File "/usr/lib/python3/dist-packages/dbus/proxies.py", line 145, in __=
-call__
->      **keywords)
->    File "/usr/lib/python3/dist-packages/dbus/connection.py", line 651, in
->      call_blocking message, timeout)
-> dbus.exceptions.DBusException: org.ofono.Error.Timedout: Operation failur=
-e due
-> to timeout
-> Disconnecting modem /wavecom_15...
-> Connecting modem /wavecom_15...
->
->
-> printf + at commands
->
-> ofonod[18642]: 0x7955f0: wavecom_enable
-> ofonod[18642]: 0x78f300 0x7955f0 reset res 2
-> ofonod[18642]: > AT+WIND=3D32767\r
-> ofonod[18642]: < \r\nOK\r\n
-> ofonod[18642]: wind_set
-> ofonod[18642]: > AT+CFUN=3D1,1\r
-
-Doesn't this second ,1 parameter cause a reset?
-
-> ofonod[18642]: 0x7955f0: wavecom_enable
-> ofonod[18642]: 0x7955f0 the chat is still there!!!!
->
-> so _enable is called twice without a _disable inbetween. The _enable rout=
-ine
-> returns -EINPROGRESS and the AT+CFUN=3D1,1 probably too much time then
-> or failed somehow differently. In this specific case the GAtChat will not=
- be
-> unrefed which means the fd will be leaked.
-
-Try using CFUN=3D1, and CFUN=3D4.
-
->
-> So how can the plugin figure out that the core has decided not to move fo=
-rward?
->
-
-The set_powered() method should succeed in a second or two, maybe 5.  I =
-
-think the core uses a 20 second timer, so if you're hitting that, then =
-
-there's something fundamentally wrong.
-
-Fundamentally the driver needs to ensure that the core callback is =
-
-called within a decent time frame.  The timeout handling in the core is =
-
-just a failsafe for the applications to be notified that the hardware is =
-
-not available.
-
-Regards,
--Denis
+Denis!
 
 
---===============6186814735711180354==--
+> You could do a timer, or forcefully unref the g_at_chat object if the =
+
+> GAtChat already exists when set_powered() is being called.  However, its =
+
+> best to drive a modem in such a way that the firmware doesn't reset and =
+
+> keeps responding to AT commands properly.
+> =
+
+> Sometimes this is easier said than done :)
+
+yes, please keep in mind that this is in an infinite loop to enable/disable=
+ the
+modem. I have opted for unrefing the atchat. In terms from a driver model
+the "tiemout" could be communicated to the plugin? E.g. a _reset?
+
+
+
+> =
+
+> Doesn't this second ,1 parameter cause a reset?
+
+Yes, it does. I think AT+CFUN=3D1,0 didn't always work. I will retry it. Sa=
+dly
+I have to go to AT+CFUN=3D1 and only then can switch to CFUN=3D4
+
+
+
+> The set_powered() method should succeed in a second or two, maybe 5.  I =
+
+> think the core uses a 20 second timer, so if you're hitting that, then =
+
+> there's something fundamentally wrong.
+> =
+
+> Fundamentally the driver needs to ensure that the core callback is =
+
+> called within a decent time frame.  The timeout handling in the core is =
+
+> just a failsafe for the applications to be notified that the hardware is =
+
+> not available.
+
+It is a "load" test right now. The modem might do intensive wear leveling
+of the flash. In general it is a lot closer to the 5s seconds (it would be =
+cool
+if OFONO_DEBUG_AT would print timing and 'modem or at least the atchat).
+
+Okay, so I am sticking with checking if the atchat is present, cancel every=
+thing
+and then unref it.
+
+thank you for the quick responses!
+
+  holger
+
+
+--===============4803746106406089574==--
 
