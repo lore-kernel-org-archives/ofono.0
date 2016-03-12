@@ -1,44 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============5662086826364490821=="
+Content-Type: multipart/mixed; boundary="===============6407552998619696183=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [RFC v0 0/3] use GEREG for when in LTE networks
-Date: Sat, 12 Mar 2016 15:51:29 +0100
-Message-ID: <1457794292-21184-1-git-send-email-dragos@endocode.com>
+Subject: [PATCH 1/3] gprs.h: add api for reading access technology
+Date: Sat, 12 Mar 2016 15:51:30 +0100
+Message-ID: <1457794292-21184-2-git-send-email-dragos@endocode.com>
+In-Reply-To: <1457794292-21184-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5662086826364490821==
+--===============6407552998619696183==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ include/gprs.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-Here the first alternative to reading registration status on a LTE network
-correctly. This is an aswer to the review request for the U-Blox Toby L2
-support patches.
+diff --git a/include/gprs.h b/include/gprs.h
+index 8d2a260..ab2c5f8 100644
+--- a/include/gprs.h
++++ b/include/gprs.h
+@@ -75,6 +75,8 @@ void ofono_gprs_remove(struct ofono_gprs *gprs);
+ void ofono_gprs_set_data(struct ofono_gprs *gprs, void *data);
+ void *ofono_gprs_get_data(struct ofono_gprs *gprs);
+ =
 
-The other proposed alternative was to change how the gprs core handles
-the attach status in LTE. But that needs a more thorough thinking. Until
-then this would be a decent interim solution.
-
-Thanks,
-Dragos
-
-Dragos Tatulea (3):
-  gprs.h: add api for reading access technology
-  gprs: add api for reading access technology
-  atmodem: gprs: do CEREG instead of CGREG for LTE
-
- drivers/atmodem/gprs.c | 42 ++++++++++++++++++++++++++++++++++++++++--
- include/gprs.h         |  2 ++
- src/gprs.c             |  5 +++++
- 3 files changed, 47 insertions(+), 2 deletions(-)
-
++int ofono_gprs_get_technology(struct ofono_gprs *gprs);
++
+ void ofono_gprs_set_cid_range(struct ofono_gprs *gprs,
+ 				unsigned int min, unsigned int max);
+ void ofono_gprs_add_context(struct ofono_gprs *gprs,
 -- =
 
 2.5.0
 
 
---===============5662086826364490821==--
+--===============6407552998619696183==--
 
