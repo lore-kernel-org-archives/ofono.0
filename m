@@ -1,96 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============7347782790978729606=="
+Content-Type: multipart/mixed; boundary="===============5662086826364490821=="
 MIME-Version: 1.0
-From: Holger Freyther <holger@freyther.de>
-Subject: ofono plugin and state transmissions
-Date: Sat, 12 Mar 2016 13:57:22 +0000
-Message-ID: <loom.20160312T144416-707@post.gmane.org>
+From: Dragos Tatulea <dragos@endocode.com>
+Subject: [RFC v0 0/3] use GEREG for when in LTE networks
+Date: Sat, 12 Mar 2016 15:51:29 +0100
+Message-ID: <1457794292-21184-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7347782790978729606==
+--===============5662086826364490821==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,                                                                        =
-     =
+Hi,
 
-                                                                           =
-     =
+Here the first alternative to reading registration status on a LTE network
+correctly. This is an aswer to the review request for the U-Blox Toby L2
+support patches.
 
-at sysmocom we are building a BTS (OsmoBTS, OpenBSC) test setup and        =
-     =
+The other proposed alternative was to change how the gprs core handles
+the attach status in LTE. But that needs a more thorough thinking. Until
+then this would be a decent interim solution.
 
-use ofono to build our testcases. We are using Sierra Wireless (former     =
-     =
+Thanks,
+Dragos
 
-Wavecom) modules and have some stability issues.                           =
-     =
+Dragos Tatulea (3):
+  gprs.h: add api for reading access technology
+  gprs: add api for reading access technology
+  atmodem: gprs: do CEREG instead of CGREG for LTE
 
-                                                                           =
-     =
+ drivers/atmodem/gprs.c | 42 ++++++++++++++++++++++++++++++++++++++++--
+ include/gprs.h         |  2 ++
+ src/gprs.c             |  5 +++++
+ 3 files changed, 47 insertions(+), 2 deletions(-)
 
-I have two issues that I don't understand and they are related to the plugi=
-n    =
+-- =
 
-model and after looking at others I don't find the answer.                 =
-     =
-
-                                                                           =
-     =
-
-In the beginning we used the +WIND indication and created objects. E.g.    =
-     =
-
-we created the netreg after it starts to search for networks.. but if the  =
-     =
-
-+WIND indication fro the SIM ready came either during the registration     =
-     =
-
-or before.. we would see crashes. We now mostly ignore +WIND and guess     =
-     =
-
-about it. Not all plugins create all objects and they are created at differ=
-ent  =
-
-points. So what is the best way to do it?                                  =
-     =
-
-                                                                           =
-     =
-
-One other problem is that post_sim doesn't seem to be called. After looking=
-     =
-
-at the src/modem.c file I see that it is only called for certain states. E.=
-g.   =
-
-it looks like it is only called if the modem is still in the offline state =
-and  =
-
-appears to be never called for us. Is there a way to debug it? E.g. when sh=
-ould =
-
-the modem be powered up? when the SIM has been read? When the AT command   =
-     =
-
-interpreter is ready?                                                      =
-     =
-
-                                                                           =
-     =
-
-                                                                           =
-     =
-
-kind regards                                                               =
-     =
-
-  holger                                                                   =
-     =
+2.5.0
 
 
-
---===============7347782790978729606==--
+--===============5662086826364490821==--
 
