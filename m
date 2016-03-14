@@ -1,83 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============4803746106406089574=="
+Content-Type: multipart/mixed; boundary="===============7074578561309480669=="
 MIME-Version: 1.0
-From: Holger Freyther <holger@freyther.de>
-Subject: Re: Timeout/Reliability issue with my plugin
-Date: Sat, 12 Mar 2016 19:20:57 +0000
-Message-ID: <loom.20160312T201452-815@post.gmane.org>
-In-Reply-To: <56E450A6.90600@gmail.com>
+From: Dragos Tatulea <dragos@endocode.com>
+Subject: [PATCH v1 00/11] Support for U-Blox Toby L2 modems
+Date: Mon, 14 Mar 2016 16:50:53 +0100
+Message-ID: <1457970664-20782-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4803746106406089574==
+--===============7074578561309480669==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Denis Kenzior <denkenz@...> writes:
+This patchset adds support for Toby L2 modems in high throughput
+mode.
 
-> =
+Besides basic support, the following things are supported:
+* 2/3G bearers
+* bridged AND routed modes.
+* Multiple primary PDP contexts.
 
-> Hi Holger,
+This version of the patches removes LTE specific hacks which will be
+subsequently committed in their own patch sets:
+* CREG status is no longer patched for ublox =
 
-Denis!
+* The ublox-specific way of making LTE default bearers work has been
+removed. This functionality needs to be supported by the core.
 
+Dongsu Park (3):
+  plugins/udevng: support different interface strings to detect TOBY
+    series
+  plugins/ublox: read network mode
+  ubloxmodem: add routed mode support
 
-> You could do a timer, or forcefully unref the g_at_chat object if the =
+Dragos Tatulea (8):
+  plugins/ublox: allow enabling of TOBY L2 modems
+  plugins/ublox: use vendor from structure instead of fixed
+  atmodem: add support for U-Blox TOBY L2 modems
+  plugins/ublox: give names to model ids
+  ubloxmodem: add Toby L2 gprs context driver
+  plugins/ublox: enable ubloxmodem driver when possible
+  plugins/ublox: support more internet contexts
+  ubloxmodem: support authentication
 
-> GAtChat already exists when set_powered() is being called.  However, its =
+ Makefile.am                            |   7 +
+ drivers/atmodem/gprs.c                 |   1 +
+ drivers/atmodem/network-registration.c |  21 +-
+ drivers/atmodem/sim.c                  |   1 +
+ drivers/ubloxmodem/gprs-context.c      | 614 +++++++++++++++++++++++++++++=
+++++
+ drivers/ubloxmodem/ubloxmodem.c        |  49 +++
+ drivers/ubloxmodem/ubloxmodem.h        |  25 ++
+ plugins/ublox.c                        | 128 ++++++-
+ plugins/udevng.c                       |  24 +-
+ 9 files changed, 845 insertions(+), 25 deletions(-)
+ create mode 100644 drivers/ubloxmodem/gprs-context.c
+ create mode 100644 drivers/ubloxmodem/ubloxmodem.c
+ create mode 100644 drivers/ubloxmodem/ubloxmodem.h
 
-> best to drive a modem in such a way that the firmware doesn't reset and =
+-- =
 
-> keeps responding to AT commands properly.
-> =
-
-> Sometimes this is easier said than done :)
-
-yes, please keep in mind that this is in an infinite loop to enable/disable=
- the
-modem. I have opted for unrefing the atchat. In terms from a driver model
-the "tiemout" could be communicated to the plugin? E.g. a _reset?
-
-
-
-> =
-
-> Doesn't this second ,1 parameter cause a reset?
-
-Yes, it does. I think AT+CFUN=3D1,0 didn't always work. I will retry it. Sa=
-dly
-I have to go to AT+CFUN=3D1 and only then can switch to CFUN=3D4
-
-
-
-> The set_powered() method should succeed in a second or two, maybe 5.  I =
-
-> think the core uses a 20 second timer, so if you're hitting that, then =
-
-> there's something fundamentally wrong.
-> =
-
-> Fundamentally the driver needs to ensure that the core callback is =
-
-> called within a decent time frame.  The timeout handling in the core is =
-
-> just a failsafe for the applications to be notified that the hardware is =
-
-> not available.
-
-It is a "load" test right now. The modem might do intensive wear leveling
-of the flash. In general it is a lot closer to the 5s seconds (it would be =
-cool
-if OFONO_DEBUG_AT would print timing and 'modem or at least the atchat).
-
-Okay, so I am sticking with checking if the atchat is present, cancel every=
-thing
-and then unref it.
-
-thank you for the quick responses!
-
-  holger
+2.5.0
 
 
---===============4803746106406089574==--
+--===============7074578561309480669==--
 
