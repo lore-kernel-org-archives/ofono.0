@@ -1,218 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============6291010775453338197=="
+Content-Type: multipart/mixed; boundary="===============3867523546625285879=="
 MIME-Version: 1.0
-From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 11/11] ubloxmodem: add routed mode support
-Date: Mon, 14 Mar 2016 16:51:04 +0100
-Message-ID: <1457970664-20782-12-git-send-email-dragos@endocode.com>
-In-Reply-To: <1457970664-20782-1-git-send-email-dragos@endocode.com>
+From: Samrat Guha Niyogi <samrat.guha.niyogi@intel.com>
+Subject: [PATCH] ril_sofia3gr: add ussd functionality invocation
+Date: Wed, 16 Mar 2016 20:05:05 +0530
+Message-ID: <1458138905-13614-1-git-send-email-samrat.guha.niyogi@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6291010775453338197==
+--===============3867523546625285879==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Dongsu Park <dongsu@endocode.com>
-
-Routed mode needs a different treatment than bridged mode:
-
-* UIPCONF needs to be used for reading the interface ip configuratuion.
-The spec says that DHCP should work on that interface but it doesn't. So
-we read the first ip in the dhcp range and use that.
-
-* CGCONTRDP: only APN and DNS configuration is read
 ---
- drivers/ubloxmodem/gprs-context.c | 142 ++++++++++++++++++++++++++++++++++=
-+++-
- 1 file changed, 141 insertions(+), 1 deletion(-)
+ plugins/ril_sofia3gr.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/drivers/ubloxmodem/gprs-context.c b/drivers/ubloxmodem/gprs-co=
-ntext.c
-index 1a410b0..40f02f0 100644
---- a/drivers/ubloxmodem/gprs-context.c
-+++ b/drivers/ubloxmodem/gprs-context.c
-@@ -43,6 +43,7 @@
+diff --git a/plugins/ril_sofia3gr.c b/plugins/ril_sofia3gr.c
+index 3f81fe9..eb27927 100644
+--- a/plugins/ril_sofia3gr.c
++++ b/plugins/ril_sofia3gr.c
+@@ -169,6 +169,7 @@ static void ril_post_online(struct ofono_modem *modem)
  =
 
- static const char *none_prefix[] =3D { NULL };
- static const char *cgcontrdp_prefix[] =3D { "+CGCONTRDP:", NULL };
-+static const char *uipconf_prefix[] =3D { "+UIPCONF:", NULL };
- =
-
- struct gprs_context_data {
- 	GAtChat *chat;
-@@ -183,6 +184,56 @@ static void cgcontrdp_bridge_cb(gboolean ok, GAtResult=
- *result,
- 	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
+ 	ofono_netreg_create(modem, 0, "rilmodem", rd->ril);
+ 	ofono_radio_settings_create(modem, 0, "rilmodem", rd->ril);
++	ofono_ussd_create(modem, 0, "rilmodem", rd->ril);
  }
  =
 
-+static void cgcontrdp_router_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	GAtResultIter iter;
-+
-+	const char *dns[2+1] =3D { NULL, NULL, NULL };
-+	const char *apn =3D NULL;
-+
-+	DBG("ok %d", ok);
-+
-+	if (!ok) {
-+		callback_with_error(gcd, result);
-+
-+		return;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	while (g_at_result_iter_next(&iter, "+CGCONTRDP:")) {
-+		/* skip cid, bearer_id */
-+		g_at_result_iter_skip_next(&iter);
-+		g_at_result_iter_skip_next(&iter);
-+
-+		/* read apn */
-+		if (!g_at_result_iter_next_string(&iter, &apn))
-+			break;
-+
-+		/* skip laddrnetmask, gw */
-+		g_at_result_iter_skip_next(&iter);
-+		g_at_result_iter_skip_next(&iter);
-+
-+		/* read dns servers */
-+		if (!g_at_result_iter_next_string(&iter, &dns[0]))
-+			break;
-+
-+		if (!g_at_result_iter_next_string(&iter, &dns[1]))
-+			break;
-+	}
-+
-+	set_gprs_context_interface(gc);
-+
-+	if (dns[0])
-+		ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
-+
-+	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
-+	return;
-+}
-+
- static int ublox_read_ip_config_bridge(struct ofono_gprs_context *gc)
- {
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-@@ -195,11 +246,100 @@ static int ublox_read_ip_config_bridge(struct ofono_=
-gprs_context *gc)
- =
-
- }
- =
-
-+static void read_uipconf_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	GAtResultIter iter;
-+	const char *gw, *netmask, *ipaddr, *dhcp_range_start, *dhcp_range_end;
-+	gboolean found =3D FALSE;
-+	char buf[64];
-+
-+	DBG("ok %d", ok);
-+
-+	if (!ok) {
-+		gcd->active_context =3D 0;
-+		callback_with_error(gcd, result);
-+
-+		return;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	/* for example, +UIPCONF: entry looks like:
-+	 * +UIPCONF: "192.168.1.1","255.255.255.0","192.168.1.100",
-+	 *           "192.168.1.100","fe80::48a5:b2ff:fe6f:5f86/64"
-+	 */
-+	while (g_at_result_iter_next(&iter, "+UIPCONF:")) {
-+		if (!g_at_result_iter_next_string(&iter, &gw))
-+			continue;
-+
-+		if (!g_at_result_iter_next_string(&iter, &netmask))
-+			continue;
-+
-+		if (!g_at_result_iter_next_string(&iter, &dhcp_range_start))
-+			continue;
-+
-+		if (!g_at_result_iter_next_string(&iter, &dhcp_range_end))
-+			continue;
-+
-+		/* skip other entries like IPv6 networks */
-+		found =3D TRUE;
-+		break;
-+	}
-+
-+	if (!found)
-+		goto error;
-+
-+	if (dhcp_range_start && dhcp_range_end) {
-+		ipaddr =3D dhcp_range_start;
-+		ofono_gprs_context_set_ipv4_address(gc, ipaddr, 1);
-+	}
-+
-+	if (netmask)
-+		ofono_gprs_context_set_ipv4_netmask(gc, netmask);
-+
-+	if (gw)
-+		ofono_gprs_context_set_ipv4_gateway(gc, gw);
-+
-+	/* read ip configuration info */
-+	snprintf(buf, sizeof(buf), "AT+CGCONTRDP");
-+	if (g_at_chat_send(gcd->chat, buf, cgcontrdp_prefix,
-+				cgcontrdp_router_cb, gc, NULL) > 0)
-+		return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
-+}
-+
-+static int ublox_read_ip_config_router(struct ofono_gprs_context *gc)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	char buf[64];
-+
-+	/* read ip configuration info */
-+	snprintf(buf, sizeof(buf), "AT+UIPCONF?");
-+	return g_at_chat_send(gcd->chat, buf, uipconf_prefix,
-+				read_uipconf_cb, gc, NULL);
-+
-+}
-+
- static void ublox_post_activation(struct ofono_gprs_context *gc)
- {
-+	struct ofono_modem *modem;
-+	const char *network_mode;
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	int ret =3D 0;
-+
-+	modem =3D ofono_gprs_context_get_modem(gc);
-+	network_mode =3D ofono_modem_get_string(modem, "NetworkMode");
-+
-+	if (g_str_equal(network_mode, "routed"))
-+		ret =3D ublox_read_ip_config_router(gc);
-+	else
-+		ret =3D ublox_read_ip_config_bridge(gc);
- =
-
--	if (ublox_read_ip_config_bridge(gc) < 0)
-+	if (ret <=3D 0)
- 		CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
- }
- =
-
+ static void ril_set_online_cb(struct ril_msg *message, gpointer user_data)
 -- =
 
-2.5.0
+1.9.1
 
 
---===============6291010775453338197==--
+--===============3867523546625285879==--
 
