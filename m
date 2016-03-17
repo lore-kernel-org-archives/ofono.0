@@ -1,138 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============0619182925900650245=="
+Content-Type: multipart/mixed; boundary="===============5348782306268759839=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] ubloxmodem: support authentication
-Date: Thu, 17 Mar 2016 11:25:20 -0500
-Message-ID: <56EADA70.1060402@gmail.com>
-In-Reply-To: <1458229430-31435-3-git-send-email-dragos@endocode.com>
+From: Dragos Tatulea <dragos@endocode.com>
+Subject: [PATCH 0/9] allow automatic context activation
+Date: Thu, 17 Mar 2016 18:02:11 +0100
+Message-ID: <1458234140-7936-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0619182925900650245==
+--===============5348782306268759839==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dragos,
+LTE uses default bearer activation. Once register to the network is
+received of which context has been activated.
 
-On 03/17/2016 10:43 AM, Dragos Tatulea wrote:
-> If username and password specified, issue an UAUTHREQ
-> command with the configured authentication method, selected cid
-> and credentials.
-> ---
->   drivers/ubloxmodem/gprs-context.c | 62 ++++++++++++++++++++++++++++++++=
-++++---
->   1 file changed, 58 insertions(+), 4 deletions(-)
->
+This patchset takes action in the atmodem gprs driver when receiving
+the activation event. It reads the cid and apn and sends it to the
+gprs core. From there a matching (my apn) pri_context is
+found/created and a gprs-context driver is assigned.
 
-Applied, but...
+A read_settings operation has been added to the gprs-context driver
+to read context ip configuration without activating the context.
 
-> diff --git a/drivers/ubloxmodem/gprs-context.c b/drivers/ubloxmodem/gprs-=
-context.c
-> index a3d9743..ec09a53 100644
-> --- a/drivers/ubloxmodem/gprs-context.c
-> +++ b/drivers/ubloxmodem/gprs-context.c
-> @@ -230,10 +230,44 @@ static void cgdcont_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
->   	CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
->   }
->
-> -static void ublox_send_cgdcont(struct ofono_gprs_context *gc, const char=
- *apn)
-> +#define UBLOX_MAX_USER_LEN 50
-> +#define UBLOX_MAX_PASS_LEN 50
-> +
-> +static void ublox_send_uauthreq(struct ofono_gprs_context *gc,
-> +				const char *username, const char *password,
-> +				enum ofono_gprs_auth_method auth_method)
-> +
-> +{
-> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> +	char buf[UBLOX_MAX_USER_LEN + UBLOX_MAX_PASS_LEN + 32];
-> +	unsigned auth;
-> +
-> +	switch (auth_method) {
-> +	case OFONO_GPRS_AUTH_METHOD_PAP:
-> +		auth =3D 1;
-> +		break;
-> +	case OFONO_GPRS_AUTH_METHOD_CHAP:
-> +		auth =3D 2;
-> +		break;
-> +	default:
-> +		ofono_error("Unsupported auth type %u", auth_method);
-> +		return;
-> +	}
-> +
-> +	snprintf(buf, sizeof(buf), "AT+UAUTHREQ=3D%u,%u,\"%s\",\"%s\"",
-> +			gcd->active_context, auth, username, password);
-> +
-> +	/* If this failed, we will see it during context activation. */
-> +	g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-> +}
-> +
-> +static void ublox_send_cgdcont(struct ofono_gprs_context *gc, const char=
- *apn,
-> +				const char *username, const char *password,
-> +				enum ofono_gprs_auth_method auth_method)
->   {
->   	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
->   	char buf[OFONO_GPRS_MAX_APN_LENGTH + 128];
-> +	size_t u_len, p_len;
->   	int len;
->
->   	len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"",
-> @@ -243,10 +277,29 @@ static void ublox_send_cgdcont(struct ofono_gprs_co=
-ntext *gc, const char *apn)
->   		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"", apn);
->
->   	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-> -				cgdcont_cb, gc, NULL) > 0)
-> -		return;
-> +				cgdcont_cb, gc, NULL) =3D=3D 0)
-> +		goto error;
-> +
-> +	u_len =3D strlen(username);
-> +	p_len =3D strlen(password);
-> +
-> +	if (u_len && p_len) {
-> +		if (u_len >=3D UBLOX_MAX_USER_LEN ||
-> +			p_len >=3D UBLOX_MAX_PASS_LEN) {
-> +			ofono_error("Toby L2: user or password length too big");
-> +
-> +			goto error;
-> +		}
->
-> +		ublox_send_uauthreq(gc, username, password, auth_method);
-> +	}
-> +
-> +	return;
-> +
-> +error:
->   	CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
-> +
-> +	return;
+The last patch in the patchset adds this support to the U-Blox
+Toby L2 modem.
 
-I silently squished this spurious return.
+Implementation based mostly on ideas from Denis Kenzior.
 
->   }
->
->   static void ublox_gprs_activate_primary(struct ofono_gprs_context *gc,
-> @@ -274,7 +327,8 @@ static void ublox_gprs_activate_primary(struct ofono_=
-gprs_context *gc,
->   	gcd->cb =3D cb;
->   	gcd->cb_data =3D data;
->
-> -	ublox_send_cgdcont(gc, ctx->apn);
-> +	ublox_send_cgdcont(gc, ctx->apn, ctx->username, ctx->password,
-> +				ctx->auth_method);
->   }
->
->   static void cgact_disable_cb(gboolean ok, GAtResult *result, gpointer u=
-ser_data)
->
+Dragos Tatulea (9):
+  idmap: add api for finding a certain id in map
+  gprs-context.h: add op for reading context config
+  gprs.h: automatic context configuration notifier
+  gprs: pri_activate_callback: optional msg reply
+  gprs: pri_set_apn: make reply msg optional
+  gprs: custom cid for assign_context
+  gprs: implement ofono_gprs_cid_activated
+  atmodem: gprs: handle automatic context activation
+  ubloxmodem: support automatic ctx activation
 
-Regards,
--Denis
+ drivers/atmodem/gprs.c            | 53 ++++++++++++++++++++++
+ drivers/ubloxmodem/gprs-context.c | 39 ++++++++++++-----
+ include/gprs-context.h            |  3 ++
+ include/gprs.h                    |  3 ++
+ src/gprs.c                        | 92 +++++++++++++++++++++++++++++++++++=
++---
+ src/idmap.c                       | 13 ++++++
+ src/idmap.h                       |  1 +
+ 7 files changed, 188 insertions(+), 16 deletions(-)
 
---===============0619182925900650245==--
+-- =
+
+2.5.0
+
+
+--===============5348782306268759839==--
 
