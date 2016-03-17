@@ -1,71 +1,150 @@
-Content-Type: multipart/mixed; boundary="===============8956939727375697488=="
+Content-Type: multipart/mixed; boundary="===============7164654141011814126=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/9] idmap: add api for finding a certain id in map
-Date: Thu, 17 Mar 2016 12:42:02 -0500
-Message-ID: <56EAEC6A.5010209@gmail.com>
-In-Reply-To: <1458234140-7936-2-git-send-email-dragos@endocode.com>
+Subject: Re: [PATCH 7/9] gprs: implement ofono_gprs_cid_activated
+Date: Thu, 17 Mar 2016 12:48:21 -0500
+Message-ID: <56EAEDE5.1010200@gmail.com>
+In-Reply-To: <1458234140-7936-8-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8956939727375697488==
+--===============7164654141011814126==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dragos,
-
 On 03/17/2016 12:02 PM, Dragos Tatulea wrote:
-> ---
->   src/idmap.c | 13 +++++++++++++
->   src/idmap.h |  1 +
->   2 files changed, 14 insertions(+)
+> It works by looking for a context with the same APN and tries to use
+> that. Otherwise it will create it's own.
 >
-> diff --git a/src/idmap.c b/src/idmap.c
-> index c097eb4..3b72830 100644
-> --- a/src/idmap.c
-> +++ b/src/idmap.c
-> @@ -166,6 +166,19 @@ void idmap_take(struct idmap *idmap, unsigned int id)
->   	idmap->bits[offset] |=3D 1UL << (bit % BITS_PER_LONG);
+> Then it assigns a gprs context driver and calls it's read_settings if
+> it exists.
+> ---
+>   src/gprs.c | 69 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++++++
+>   1 file changed, 69 insertions(+)
+>
+> diff --git a/src/gprs.c b/src/gprs.c
+> index e5e7abc..74e9104 100644
+> --- a/src/gprs.c
+> +++ b/src/gprs.c
+> @@ -293,6 +293,11 @@ static void gprs_cid_release(struct ofono_gprs *gprs=
+, unsigned int id)
+>   	idmap_put(gprs->cid_map, id);
 >   }
 >
-> +int idmap_find(struct idmap *idmap, unsigned int id)
+> +static gboolean gprs_cid_taken(struct ofono_gprs *gprs, unsigned int id)
 > +{
-> +	unsigned int bit =3D id - idmap->min;
-> +	unsigned int offset;
+> +	return idmap_find(gprs->cid_map, id) !=3D 0;
+> +}
 > +
-> +	if (bit >=3D idmap->size)
-> +		return 0;
+>   static gboolean assign_context(struct pri_context *ctx, int use_cid)
+>   {
+>   	struct idmap *cidmap =3D ctx->gprs->cid_map;
+> @@ -1842,6 +1847,25 @@ static void write_context_settings(struct ofono_gp=
+rs *gprs,
+>   	}
+>   }
+>
+> +static struct pri_context *find_context_by_apn(struct ofono_gprs *gprs,
+> +					const char *apn)
+> +{
+> +	GSList *l;
 > +
-> +	offset =3D bit / BITS_PER_LONG;
-> +	return (idmap->bits[offset] & (1UL << (bit % BITS_PER_LONG))) !=3D 0;
+> +	for (l =3D gprs->contexts; l; l =3D l->next) {
+> +		struct pri_context *pri_ctx =3D l->data;
+> +
+> +		/* Looking only at prefix for the LTE case when a user APN is
+> +		 * web.provider.com but it apepars as
+> +		 * web.provider.com.mncX.mccY.gprs .
+> +		 */
+> +		if (g_str_has_prefix(apn, pri_ctx->context.apn))
+> +			return pri_ctx;
+> +	}
+> +
+> +	return NULL;
+> +}
+> +
+>   static struct pri_context *add_context(struct ofono_gprs *gprs,
+>   					const char *name,
+>   					enum ofono_gprs_context_type type)
+> @@ -1885,6 +1909,51 @@ static struct pri_context *add_context(struct ofon=
+o_gprs *gprs,
+>   	return context;
+>   }
+>
+> +void ofono_gprs_cid_activated(struct ofono_gprs  *gprs, unsigned int cid,
+> +				const char *apn)
+> +{
+> +	struct pri_context *pri_ctx;
+> +	struct ofono_gprs_context *gc;
+> +
+> +	DBG("");
+> +
+> +	if (gprs_cid_taken(gprs, cid)) {
+> +		DBG("cid %u already activated", cid);
+> +		return;
+> +	}
+> +
+> +	pri_ctx =3D find_context_by_apn(gprs, apn);
+
+Also, check the special case of settings provisioning failed.  It is =
+
+signified by an a list with exactly 1 context.  The APN of that context =
+
+will be NULL.  This is done in a couple of places by doing the following:
+
+if (gprs->contexts =3D=3D NULL) /* Automatic provisioning failed */
+	add_context(gprs, NULL, OFONO_GPRS_CONTEXT_TYPE_INTERNET);
+
+So lets high-jack that special context in this case.
+
+> +
+> +	if (!pri_ctx) {
+> +		pri_ctx =3D add_context(gprs, "auto",
+shouldn't 'auto' be the APN?
+> +					OFONO_GPRS_CONTEXT_TYPE_INTERNET);
+> +		if (!pri_ctx) {
+> +			ofono_error("Can't find/create automatic context %d "
+> +					"with APN %s.", cid, apn);
+> +			return;
+> +		}
+> +	} else {
+> +		DBusConnection *conn =3D ofono_dbus_get_connection();
+> +		pri_set_apn(pri_ctx, conn, NULL, apn);
+> +	}
+> +
+> +	if (assign_context(pri_ctx, cid) =3D=3D FALSE) {
+> +		ofono_warn("Can't assign context to driver for APN.");
+> +		release_context(pri_ctx);
+> +		return;
+> +	}
+> +
+> +	gc =3D pri_ctx->context_driver;
+> +
+> +	if (gc->driver->read_settings)
+> +		gc->driver->read_settings(gc, &pri_ctx->context,
+> +					     pri_activate_callback, pri_ctx);
+> +	else
+> +		ofono_warn("Context activated for driver that doesn't support "
+> +				"automatic context activation.");
+
+Lets check this part right away and not assign contexts or do anything =
+
+if the read_settings method is not implemented
+
 > +
 
 And another spurious whitespace :)
-
 > +}
 > +
->   /*
->    * Allocate the next bit skipping the ids up to and including last.  If=
- there
->    * is no free ids until the max id is encountered, the counter is wrapp=
-ed back
-> diff --git a/src/idmap.h b/src/idmap.h
-> index ebda177..97a6f04 100644
-> --- a/src/idmap.h
-> +++ b/src/idmap.h
-> @@ -25,6 +25,7 @@ struct idmap *idmap_new(unsigned int size);
->   void idmap_free(struct idmap *idmap);
->   void idmap_put(struct idmap *idmap, unsigned int id);
->   void idmap_take(struct idmap *idmap, unsigned int id);
-> +int idmap_find(struct idmap *idmap, unsigned int id);
->   unsigned int idmap_alloc(struct idmap *idmap);
->   unsigned int idmap_alloc_next(struct idmap *idmap, unsigned int last);
->   struct idmap *idmap_new_from_range(unsigned int min, unsigned int max);
+>   static void send_context_added_signal(struct ofono_gprs *gprs,
+>   					struct pri_context *context,
+>   					DBusConnection *conn)
 >
 
 Regards,
 -Denis
 
---===============8956939727375697488==--
+--===============7164654141011814126==--
 
