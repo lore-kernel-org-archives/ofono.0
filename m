@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2540623450134943725=="
+Content-Type: multipart/mixed; boundary="===============0806927266253466796=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/9] gprs.h: automatic context configuration notifier
-Date: Thu, 17 Mar 2016 12:33:47 -0500
-Message-ID: <56EAEA7B.9060609@gmail.com>
-In-Reply-To: <1458234140-7936-4-git-send-email-dragos@endocode.com>
+Subject: Re: [PATCH 5/9] gprs: pri_set_apn: make reply msg optional
+Date: Thu, 17 Mar 2016 12:39:52 -0500
+Message-ID: <56EAEBE8.4080409@gmail.com>
+In-Reply-To: <1458234140-7936-6-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2540623450134943725==
+--===============0806927266253466796==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,13 +16,11 @@ Content-Transfer-Encoding: quoted-printable
 Hi Dragos,
 
 On 03/17/2016 12:02 PM, Dragos Tatulea wrote:
-> Useful for LTE automatic bearer activation.
->
-> This is called from the gprs driver to let the gprs atom know that
-> a new context has been activated.
+> Automatic context activation will set the apn by itself. No
+> dbus message to reply to.
 > ---
->   include/gprs.h | 3 +++
->   1 file changed, 3 insertions(+)
+>   src/gprs.c | 3 ++-
+>   1 file changed, 2 insertions(+), 1 deletion(-)
 >
 
 Applied, thanks.
@@ -31,5 +29,5 @@ Regards,
 -Denis
 
 
---===============2540623450134943725==--
+--===============0806927266253466796==--
 
