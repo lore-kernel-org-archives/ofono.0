@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6940826793819056180=="
+Content-Type: multipart/mixed; boundary="===============5602811504100148446=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/7] plugins/ublox: give names to model ids
-Date: Thu, 17 Mar 2016 09:41:20 -0500
-Message-ID: <56EAC210.6030101@gmail.com>
-In-Reply-To: <1458218313-26966-2-git-send-email-dragos@endocode.com>
+Subject: Re: [PATCH 3/7] plugins/ublox: enable ubloxmodem driver when possible
+Date: Thu, 17 Mar 2016 09:53:05 -0500
+Message-ID: <56EAC4D1.5040704@gmail.com>
+In-Reply-To: <1458218313-26966-4-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6940826793819056180==
+--===============5602811504100148446==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,10 +16,13 @@ Content-Transfer-Encoding: quoted-printable
 Hi Dragos,
 
 On 03/17/2016 07:38 AM, Dragos Tatulea wrote:
-> To make it easier to understand the code.
+> Where possible means Toby L2 in high speed mode.
+>
+> The bridge mode is set before enabling the modem because the
+> driver requires this.
 > ---
->   plugins/ublox.c | 24 ++++++++++++++++--------
->   1 file changed, 16 insertions(+), 8 deletions(-)
+>   plugins/ublox.c | 15 +++++++++++++--
+>   1 file changed, 13 insertions(+), 2 deletions(-)
 >
 
 Applied, thanks.
@@ -28,5 +31,5 @@ Regards,
 -Denis
 
 
---===============6940826793819056180==--
+--===============5602811504100148446==--
 
