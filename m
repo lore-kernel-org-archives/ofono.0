@@ -1,58 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============5348782306268759839=="
+Content-Type: multipart/mixed; boundary="===============7862555130175156075=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 0/9] allow automatic context activation
-Date: Thu, 17 Mar 2016 18:02:11 +0100
-Message-ID: <1458234140-7936-1-git-send-email-dragos@endocode.com>
+Subject: [PATCH 1/9] idmap: add api for finding a certain id in map
+Date: Thu, 17 Mar 2016 18:02:12 +0100
+Message-ID: <1458234140-7936-2-git-send-email-dragos@endocode.com>
+In-Reply-To: <1458234140-7936-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5348782306268759839==
+--===============7862555130175156075==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-LTE uses default bearer activation. Once register to the network is
-received of which context has been activated.
+---
+ src/idmap.c | 13 +++++++++++++
+ src/idmap.h |  1 +
+ 2 files changed, 14 insertions(+)
 
-This patchset takes action in the atmodem gprs driver when receiving
-the activation event. It reads the cid and apn and sends it to the
-gprs core. From there a matching (my apn) pri_context is
-found/created and a gprs-context driver is assigned.
+diff --git a/src/idmap.c b/src/idmap.c
+index c097eb4..3b72830 100644
+--- a/src/idmap.c
++++ b/src/idmap.c
+@@ -166,6 +166,19 @@ void idmap_take(struct idmap *idmap, unsigned int id)
+ 	idmap->bits[offset] |=3D 1UL << (bit % BITS_PER_LONG);
+ }
+ =
 
-A read_settings operation has been added to the gprs-context driver
-to read context ip configuration without activating the context.
-
-The last patch in the patchset adds this support to the U-Blox
-Toby L2 modem.
-
-Implementation based mostly on ideas from Denis Kenzior.
-
-Dragos Tatulea (9):
-  idmap: add api for finding a certain id in map
-  gprs-context.h: add op for reading context config
-  gprs.h: automatic context configuration notifier
-  gprs: pri_activate_callback: optional msg reply
-  gprs: pri_set_apn: make reply msg optional
-  gprs: custom cid for assign_context
-  gprs: implement ofono_gprs_cid_activated
-  atmodem: gprs: handle automatic context activation
-  ubloxmodem: support automatic ctx activation
-
- drivers/atmodem/gprs.c            | 53 ++++++++++++++++++++++
- drivers/ubloxmodem/gprs-context.c | 39 ++++++++++++-----
- include/gprs-context.h            |  3 ++
- include/gprs.h                    |  3 ++
- src/gprs.c                        | 92 +++++++++++++++++++++++++++++++++++=
-+---
- src/idmap.c                       | 13 ++++++
- src/idmap.h                       |  1 +
- 7 files changed, 188 insertions(+), 16 deletions(-)
-
++int idmap_find(struct idmap *idmap, unsigned int id)
++{
++	unsigned int bit =3D id - idmap->min;
++	unsigned int offset;
++
++	if (bit >=3D idmap->size)
++		return 0;
++
++	offset =3D bit / BITS_PER_LONG;
++	return (idmap->bits[offset] & (1UL << (bit % BITS_PER_LONG))) !=3D 0;
++
++}
++
+ /*
+  * Allocate the next bit skipping the ids up to and including last.  If th=
+ere
+  * is no free ids until the max id is encountered, the counter is wrapped =
+back
+diff --git a/src/idmap.h b/src/idmap.h
+index ebda177..97a6f04 100644
+--- a/src/idmap.h
++++ b/src/idmap.h
+@@ -25,6 +25,7 @@ struct idmap *idmap_new(unsigned int size);
+ void idmap_free(struct idmap *idmap);
+ void idmap_put(struct idmap *idmap, unsigned int id);
+ void idmap_take(struct idmap *idmap, unsigned int id);
++int idmap_find(struct idmap *idmap, unsigned int id);
+ unsigned int idmap_alloc(struct idmap *idmap);
+ unsigned int idmap_alloc_next(struct idmap *idmap, unsigned int last);
+ struct idmap *idmap_new_from_range(unsigned int min, unsigned int max);
 -- =
 
 2.5.0
 
 
---===============5348782306268759839==--
+--===============7862555130175156075==--
 
