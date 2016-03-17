@@ -1,58 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============7837096140633311730=="
+Content-Type: multipart/mixed; boundary="===============7664999469234783103=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH v2 0/7] Support for U-Blox Toby L2 modems
-Date: Thu, 17 Mar 2016 13:38:26 +0100
-Message-ID: <1458218313-26966-1-git-send-email-dragos@endocode.com>
+Subject: [PATCH 1/7] plugins/ublox: give names to model ids
+Date: Thu, 17 Mar 2016 13:38:27 +0100
+Message-ID: <1458218313-26966-2-git-send-email-dragos@endocode.com>
+In-Reply-To: <1458218313-26966-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7837096140633311730==
+--===============7664999469234783103==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patchset adds support for Toby L2 modems in high throughput
-mode.
+To make it easier to understand the code.
+---
+ plugins/ublox.c | 24 ++++++++++++++++--------
+ 1 file changed, 16 insertions(+), 8 deletions(-)
 
-Besides basic support, the following things are supported:
-* 2/3G bearers
-* bridged AND routed modes.
-* Multiple primary PDP contexts.
+diff --git a/plugins/ublox.c b/plugins/ublox.c
+index 5e442a1..938777c 100644
+--- a/plugins/ublox.c
++++ b/plugins/ublox.c
+@@ -44,9 +44,17 @@
+ =
 
-Uptated in this patchset:
-* Fixes based on review comments.
-* More AT command based function names.
-* Authentication: ofono supports larger usernames/passwords than
-  Toby L2 does. Check against the Toby L2 upper limit.
-* Routed mode: Merged cgcontrdp functions for routed and brieded.
+ static const char *none_prefix[] =3D { NULL };
+ =
 
-Dongsu Park (2):
-  plugins/ublox: read network mode
-  ubloxmodem: add routed mode support
++enum supported_models {
++	SARA_G270			=3D 1102,
++	TOBYL2_COMPATIBLE_MODE 		=3D 1141,
++	TOBYL2_MEDIUM_THROUGHPUT_MODE 	=3D 1143,
++	TOBYL2_HIGH_THROUGHPUT_MODE 	=3D 1146,
++};
++
+ struct ublox_data {
+ 	GAtChat *modem;
+ 	GAtChat *aux;
++	int model_id;
+ 	enum ofono_vendor vendor_family;
+ };
+ =
 
-Dragos Tatulea (5):
-  plugins/ublox: give names to model ids
-  ubloxmodem: add Toby L2 gprs context driver
-  plugins/ublox: enable ubloxmodem driver when possible
-  plugins/ublox: support more internet contexts
-  ubloxmodem: support authentication
+@@ -140,7 +148,6 @@ static int ublox_enable(struct ofono_modem *modem)
+ {
+ 	struct ublox_data *data =3D ofono_modem_get_data(modem);
+ 	const char *model_str =3D NULL;
+-	int model_id;
+ =
 
- Makefile.am                       |   7 +
- drivers/ubloxmodem/gprs-context.c | 569 ++++++++++++++++++++++++++++++++++=
-++++
- drivers/ubloxmodem/ubloxmodem.c   |  49 ++++
- drivers/ubloxmodem/ubloxmodem.h   |  25 ++
- plugins/ublox.c                   |  84 +++++-
- 5 files changed, 722 insertions(+), 12 deletions(-)
- create mode 100644 drivers/ubloxmodem/gprs-context.c
- create mode 100644 drivers/ubloxmodem/ubloxmodem.c
- create mode 100644 drivers/ubloxmodem/ubloxmodem.h
+ 	DBG("%p", modem);
+ =
+
+@@ -152,19 +159,20 @@ static int ublox_enable(struct ofono_modem *modem)
+ 	 * Toby L2 devices are more complex and special than previously
+ 	 * supported U-Blox devices. So they need a vendor of their own.
+ 	 */
+-	model_id =3D atoi(model_str);
+-	switch (model_id) {
+-	case 1102:
++	data->model_id =3D atoi(model_str);
++
++	switch (data->model_id) {
++	case SARA_G270:
+ 		data->vendor_family =3D OFONO_VENDOR_UBLOX;
+ 		break;
+-	case 1141:
+-	case 1146:
++	case TOBYL2_COMPATIBLE_MODE:
++	case TOBYL2_HIGH_THROUGHPUT_MODE:
+ 		data->vendor_family =3D OFONO_VENDOR_UBLOX_TOBY_L2;
+ 		break;
+-	case 1143:
++	case TOBYL2_MEDIUM_THROUGHPUT_MODE:
+ 		DBG("low/medium throughtput profile unsupported");
+ 	default:
+-		DBG("unknown ublox model id %d", model_id);
++		DBG("unknown ublox model id %d", data->model_id);
+ 		return -EINVAL;
+ 	}
+ =
 
 -- =
 
 2.5.0
 
 
---===============7837096140633311730==--
+--===============7664999469234783103==--
 
