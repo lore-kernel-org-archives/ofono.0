@@ -1,126 +1,187 @@
-Content-Type: multipart/mixed; boundary="===============7639554184250151056=="
+Content-Type: multipart/mixed; boundary="===============8654762322864678440=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 6/7] plugins/ublox: read network mode
-Date: Thu, 17 Mar 2016 13:38:32 +0100
-Message-ID: <1458218313-26966-7-git-send-email-dragos@endocode.com>
+Subject: [PATCH 7/7] ubloxmodem: add routed mode support
+Date: Thu, 17 Mar 2016 13:38:33 +0100
+Message-ID: <1458218313-26966-8-git-send-email-dragos@endocode.com>
 In-Reply-To: <1458218313-26966-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7639554184250151056==
+--===============8654762322864678440==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Dongsu Park <dongsu@endocode.com>
 
-Read network mode into modem string. This will let the gprs-context
-drive know what to do.
+Routed mode needs a different treatment than bridged mode:
+
+* UIPCONF needs to be used for reading the interface ip configuratuion.
+The spec says that DHCP should work on that interface but it doesn't. So
+we read the first ip in the dhcp range and use that.
+
+* CGCONTRDP: only DNS configuration is read
 ---
- plugins/ublox.c | 47 ++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 42 insertions(+), 5 deletions(-)
+ drivers/ubloxmodem/gprs-context.c | 104 ++++++++++++++++++++++++++++++++++=
++---
+ 1 file changed, 97 insertions(+), 7 deletions(-)
 
-diff --git a/plugins/ublox.c b/plugins/ublox.c
-index 092ba64..d3361a3 100644
---- a/plugins/ublox.c
-+++ b/plugins/ublox.c
-@@ -42,6 +42,7 @@
- #include <drivers/atmodem/atutil.h>
- #include <drivers/atmodem/vendor.h>
+diff --git a/drivers/ubloxmodem/gprs-context.c b/drivers/ubloxmodem/gprs-co=
+ntext.c
+index 778ff85..77a85c4 100644
+--- a/drivers/ubloxmodem/gprs-context.c
++++ b/drivers/ubloxmodem/gprs-context.c
+@@ -43,6 +43,7 @@
  =
 
-+static const char *ubmconf_prefix[] =3D { "+UBMCONF:", NULL };
  static const char *none_prefix[] =3D { NULL };
+ static const char *cgcontrdp_prefix[] =3D { "+CGCONTRDP:", NULL };
++static const char *uipconf_prefix[] =3D { "+UIPCONF:", NULL };
  =
 
- enum supported_models {
-@@ -51,11 +52,17 @@ enum supported_models {
- 	TOBYL2_HIGH_THROUGHPUT_MODE 	=3D 1146,
- };
- =
-
-+enum ublox_net_mode {
-+	UBLOX_TOBYL2_NET_MODE_ROUTER =3D 1,
-+	UBLOX_TOBYL2_NET_MODE_BRIDGE =3D 2,
-+};
-+
- struct ublox_data {
- 	GAtChat *modem;
- 	GAtChat *aux;
- 	int model_id;
- 	enum ofono_vendor vendor_family;
-+	enum ublox_net_mode net_mode;
- };
- =
-
- static void ublox_debug(const char *str, void *user_data)
-@@ -92,6 +99,39 @@ static void ublox_remove(struct ofono_modem *modem)
- 	g_free(data);
+ struct gprs_context_data {
+ 	GAtChat *chat;
+@@ -107,6 +108,15 @@ static void set_gprs_context_interface(struct ofono_gp=
+rs_context *gc)
+ 	ofono_gprs_context_set_interface(gc, interface);
  }
  =
 
-+static void read_ubmconf_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
++static const char *ublox_network_mode(struct ofono_gprs_context *gc)
 +{
-+	struct ofono_modem *modem =3D (struct ofono_modem *) user_data;
-+	struct ublox_data *data =3D ofono_modem_get_data(modem);
-+	int mode =3D 0;
++	struct ofono_modem *modem;
++
++	modem =3D ofono_gprs_context_get_modem(gc);
++	return ofono_modem_get_string(modem, "NetworkMode");
++
++}
++
+ static void cgcontrdp_cb(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
+ {
+ 	struct ofono_gprs_context *gc =3D user_data;
+@@ -151,13 +161,16 @@ static void cgcontrdp_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+ =
+
+ 	set_gprs_context_interface(gc);
+ =
+
+-	if (!laddrnetmask || set_address_and_netmask(gc, laddrnetmask) < 0) {
+-		CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
+-		return;
+-	}
++	if (g_str_equal(ublox_network_mode(gc), "bridged")) {
++		if (!laddrnetmask ||
++			set_address_and_netmask(gc, laddrnetmask) < 0) {
++			CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
++			return;
++		}
+ =
+
+-	if (gw)
+-		ofono_gprs_context_set_ipv4_gateway(gc, gw);
++		if (gw)
++			ofono_gprs_context_set_ipv4_gateway(gc, gw);
++	}
+ =
+
+ 	if (dns[0])
+ 		ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
+@@ -177,11 +190,88 @@ static int ublox_send_cgcontrdp(struct ofono_gprs_con=
+text *gc)
+ =
+
+ }
+ =
+
++static void uipconf_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_gprs_context *gc =3D user_data;
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
 +	GAtResultIter iter;
++	const char *gw, *netmask, *ipaddr, *dhcp_range_start, *dhcp_range_end;
++	gboolean found =3D FALSE;
++
++	DBG("ok %d", ok);
++
++	if (!ok) {
++		struct ofono_error error;
++
++		decode_at_error(&error, g_at_result_final_response(result));
++		gcd->cb(&error, gcd->cb_data);
++
++		return;
++	}
 +
 +	g_at_result_iter_init(&iter, result);
 +
-+	while (!g_at_result_iter_next(&iter, "+UBMCONF:"))
-+		;	/* skip every other line that is not UBMCONF */
++	/* for example, +UIPCONF: entry looks like:
++	 * +UIPCONF: "192.168.1.1","255.255.255.0","192.168.1.100",
++	 *           "192.168.1.100","fe80::48a5:b2ff:fe6f:5f86/64"
++	 */
++	while (g_at_result_iter_next(&iter, "+UIPCONF:")) {
++		if (!g_at_result_iter_next_string(&iter, &gw))
++			continue;
 +
-+	g_at_result_iter_next_number(&iter, &mode);
++		if (!g_at_result_iter_next_string(&iter, &netmask))
++			continue;
 +
-+	data->net_mode =3D mode;
-+	DBG("mode=3D%d", mode);
-+	if (mode =3D=3D 1)
-+		ofono_modem_set_string(modem, "NetworkMode", "routed");
-+	else if (mode =3D=3D 2)
-+		ofono_modem_set_string(modem, "NetworkMode", "bridged");
-+}
++		if (!g_at_result_iter_next_string(&iter, &dhcp_range_start))
++			continue;
 +
-+static void read_net_mode(struct ofono_modem *modem)
-+{
-+	struct ublox_data *data =3D ofono_modem_get_data(modem);
++		if (!g_at_result_iter_next_string(&iter, &dhcp_range_end))
++			continue;
 +
-+	if (!data->aux)
++		/* skip other entries like IPv6 networks */
++		found =3D TRUE;
++		break;
++	}
++
++	if (!found)
++		goto error;
++
++	if (dhcp_range_start && dhcp_range_end) {
++		/* dhcp doesn't seem to work properly, so take
++		 * first address in range.
++		 */
++		ipaddr =3D dhcp_range_start;
++		ofono_gprs_context_set_ipv4_address(gc, ipaddr, 1);
++	}
++
++	if (netmask)
++		ofono_gprs_context_set_ipv4_netmask(gc, netmask);
++
++	if (gw)
++		ofono_gprs_context_set_ipv4_gateway(gc, gw);
++
++	/* read dns */
++	if (ublox_send_cgcontrdp(gc) > 0)
 +		return;
 +
-+	g_at_chat_send(data->aux, "AT+UBMCONF?",
-+			ubmconf_prefix, read_ubmconf_cb, modem, NULL);
++error:
++	CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
 +}
 +
- static GAtChat *open_device(struct ofono_modem *modem,
- 				const char *key, char *debug)
+ static void ublox_read_settings(struct ofono_gprs_context *gc)
  {
-@@ -141,11 +181,6 @@ static void cfun_enable(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 		return;
- 	}
- =
-
--	if (data->model_id =3D=3D TOBYL2_HIGH_THROUGHPUT_MODE)
--		/* use bridged mode until routed mode support is added */
--		g_at_chat_send(data->aux, "AT+UBMCONF=3D2", none_prefix,
--						NULL, NULL, NULL);
--
- 	ofono_modem_set_powered(modem, TRUE);
- }
- =
-
-@@ -205,6 +240,8 @@ static int ublox_enable(struct ofono_modem *modem)
- 	g_at_chat_send(data->aux, "ATE0 +CMEE=3D1", none_prefix,
- 					NULL, NULL, NULL);
- =
-
-+	read_net_mode(modem);
+ 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	int ret =3D 0;
++	char buf[64];
 +
- 	g_at_chat_send(data->aux, "AT+CFUN=3D4", none_prefix,
- 					cfun_enable, modem, NULL);
++	if (g_str_equal(ublox_network_mode(gc), "routed")) {
++		snprintf(buf, sizeof(buf), "AT+UIPCONF?");
++		ret =3D g_at_chat_send(gcd->chat, buf, uipconf_prefix,
++					uipconf_cb, gc, NULL);
++	} else
++		ret =3D ublox_send_cgcontrdp(gc);
+ =
+
+-	if (ublox_send_cgcontrdp(gc) < 0)
++	if (ret <=3D 0)
+ 		CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
+ }
  =
 
 -- =
@@ -128,5 +189,5 @@ data)
 2.5.0
 
 
---===============7639554184250151056==--
+--===============8654762322864678440==--
 
