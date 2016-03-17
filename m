@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============9000275588226538012=="
+Content-Type: multipart/mixed; boundary="===============8756967864970211227=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 6/9] gprs: custom cid for assign_context
-Date: Thu, 17 Mar 2016 12:27:56 -0500
-Message-ID: <56EAE91C.3050002@gmail.com>
-In-Reply-To: <1458234140-7936-7-git-send-email-dragos@endocode.com>
+Subject: Re: [PATCH 2/9] gprs-context.h: add op for reading context config
+Date: Thu, 17 Mar 2016 12:29:38 -0500
+Message-ID: <56EAE982.5000605@gmail.com>
+In-Reply-To: <1458234140-7936-3-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9000275588226538012==
+--===============8756967864970211227==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,18 +16,36 @@ Content-Transfer-Encoding: quoted-printable
 Hi Dragos,
 
 On 03/17/2016 12:02 PM, Dragos Tatulea wrote:
-> It's optional though. If 0 a cid is picked up automatically from the
-> allowed range.
+> This will be implemented by a gprs-context driver to support
+> automatic context activation. The gprs atom will call the driver
+> to read the ip configuration without activating the context.
 > ---
->   src/gprs.c | 16 +++++++++++++---
->   1 file changed, 13 insertions(+), 3 deletions(-)
+>   include/gprs-context.h | 3 +++
+>   1 file changed, 3 insertions(+)
 >
+> diff --git a/include/gprs-context.h b/include/gprs-context.h
+> index 0090cc4..b792fc6 100644
+> --- a/include/gprs-context.h
+> +++ b/include/gprs-context.h
+> @@ -79,6 +79,9 @@ struct ofono_gprs_context_driver {
+>   					ofono_gprs_context_cb_t cb, void *data);
+>   	void (*detach_shutdown)(struct ofono_gprs_context *gc,
+>   					unsigned int id);
+> +	void (*read_settings)(struct ofono_gprs_context *gc,
+> +				const struct ofono_gprs_primary_context *ctx,
+> +				ofono_gprs_context_cb_t cb, void *data);
 
-Applied, thanks.
+Why does it take ofono_gprs_primary_context as input.  Wouldn't the cid =
+
+be enough?
+
+>   };
+>
+>   void ofono_gprs_context_deactivated(struct ofono_gprs_context *gc,
+>
 
 Regards,
 -Denis
 
-
---===============9000275588226538012==--
+--===============8756967864970211227==--
 
