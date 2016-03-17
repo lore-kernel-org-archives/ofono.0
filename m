@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4199507953334727608=="
+Content-Type: multipart/mixed; boundary="===============8956939727375697488=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/9] gprs: pri_activate_callback: optional msg reply
-Date: Thu, 17 Mar 2016 12:41:04 -0500
-Message-ID: <56EAEC30.4010701@gmail.com>
-In-Reply-To: <1458234140-7936-5-git-send-email-dragos@endocode.com>
+Subject: Re: [PATCH 1/9] idmap: add api for finding a certain id in map
+Date: Thu, 17 Mar 2016 12:42:02 -0500
+Message-ID: <56EAEC6A.5010209@gmail.com>
+In-Reply-To: <1458234140-7936-2-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4199507953334727608==
+--===============8956939727375697488==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,43 +16,56 @@ Content-Transfer-Encoding: quoted-printable
 Hi Dragos,
 
 On 03/17/2016 12:02 PM, Dragos Tatulea wrote:
-> For automatic context activation there's no initial message to send a
-> reply to.
 > ---
->   src/gprs.c | 6 ++++--
->   1 file changed, 4 insertions(+), 2 deletions(-)
+>   src/idmap.c | 13 +++++++++++++
+>   src/idmap.h |  1 +
+>   2 files changed, 14 insertions(+)
 >
-> diff --git a/src/gprs.c b/src/gprs.c
-> index 9192e68..233ab1a 100644
-> --- a/src/gprs.c
-> +++ b/src/gprs.c
-> @@ -887,8 +887,10 @@ static void pri_activate_callback(const struct ofono=
-_error *error, void *data)
->   	}
+> diff --git a/src/idmap.c b/src/idmap.c
+> index c097eb4..3b72830 100644
+> --- a/src/idmap.c
+> +++ b/src/idmap.c
+> @@ -166,6 +166,19 @@ void idmap_take(struct idmap *idmap, unsigned int id)
+>   	idmap->bits[offset] |=3D 1UL << (bit % BITS_PER_LONG);
+>   }
 >
->   	ctx->active =3D TRUE;
-> -	__ofono_dbus_pending_reply(&ctx->pending,
-> -				dbus_message_new_method_return(ctx->pending));
+> +int idmap_find(struct idmap *idmap, unsigned int id)
+> +{
+> +	unsigned int bit =3D id - idmap->min;
+> +	unsigned int offset;
 > +
-> +	if (ctx->pending)
-> +		__ofono_dbus_pending_reply(&ctx->pending,
-> +				bus_message_new_method_return(ctx->pending));
+> +	if (bit >=3D idmap->size)
+> +		return 0;
+> +
+> +	offset =3D bit / BITS_PER_LONG;
+> +	return (idmap->bits[offset] & (1UL << (bit % BITS_PER_LONG))) !=3D 0;
+> +
 
-So this is a bit tricky.  While this is strictly okay to do right now, =
+And another spurious whitespace :)
 
-since pending is only used for Activate/Deactivate, I'd prefer that we =
-
-make a separate callback for the read_settings case.  Even if it does =
-
-mean a bit of code duplication.
-
->
->   	if (gc->settings->interface !=3D NULL) {
->   		pri_ifupdown(gc->settings->interface, TRUE);
+> +}
+> +
+>   /*
+>    * Allocate the next bit skipping the ids up to and including last.  If=
+ there
+>    * is no free ids until the max id is encountered, the counter is wrapp=
+ed back
+> diff --git a/src/idmap.h b/src/idmap.h
+> index ebda177..97a6f04 100644
+> --- a/src/idmap.h
+> +++ b/src/idmap.h
+> @@ -25,6 +25,7 @@ struct idmap *idmap_new(unsigned int size);
+>   void idmap_free(struct idmap *idmap);
+>   void idmap_put(struct idmap *idmap, unsigned int id);
+>   void idmap_take(struct idmap *idmap, unsigned int id);
+> +int idmap_find(struct idmap *idmap, unsigned int id);
+>   unsigned int idmap_alloc(struct idmap *idmap);
+>   unsigned int idmap_alloc_next(struct idmap *idmap, unsigned int last);
+>   struct idmap *idmap_new_from_range(unsigned int min, unsigned int max);
 >
 
 Regards,
 -Denis
 
---===============4199507953334727608==--
+--===============8956939727375697488==--
 
