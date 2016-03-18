@@ -1,22 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============8553005624620726558=="
+Content-Type: multipart/mixed; boundary="===============8951813219492264025=="
 MIME-Version: 1.0
-From: Dragos Tatulea <dragos@endocode.com>
-Subject: Re: [PATCH v3 0/9] allow automatic context activation
-Date: Fri, 18 Mar 2016 13:03:01 +0100
-Message-ID: <56EBEE75.9050404@endocode.com>
-In-Reply-To: <1458301994-5567-1-git-send-email-dragos@endocode.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/5] idmap: add api for finding a certain id in map
+Date: Fri, 18 Mar 2016 10:03:44 -0500
+Message-ID: <56EC18D0.2040308@gmail.com>
+In-Reply-To: <1458302334-6149-2-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8553005624620726558==
+--===============8951813219492264025==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Please ignore. See v4.
+Hi Dragos,
 
-Thanks,
-Dragos
+On 03/18/2016 06:58 AM, Dragos Tatulea wrote:
+> ---
+>   src/idmap.c | 12 ++++++++++++
+>   src/idmap.h |  1 +
+>   2 files changed, 13 insertions(+)
+>
 
---===============8553005624620726558==--
+Applied, thanks.
+
+Regards,
+-Denis
+
+
+--===============8951813219492264025==--
 
