@@ -1,45 +1,119 @@
-Content-Type: multipart/mixed; boundary="===============2828081072334228759=="
+Content-Type: multipart/mixed; boundary="===============5201400354552152712=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 3/9] gprs.h: automatic context configuration notifier
-Date: Fri, 18 Mar 2016 11:47:06 +0100
-Message-ID: <1458298030-30455-5-git-send-email-dragos@endocode.com>
+Subject: [PATCH 4/5] atmodem: gprs: handle automatic context activation
+Date: Fri, 18 Mar 2016 11:47:07 +0100
+Message-ID: <1458298030-30455-6-git-send-email-dragos@endocode.com>
 In-Reply-To: <1458298030-30455-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2828081072334228759==
+--===============5201400354552152712==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Useful for LTE automatic bearer activation.
-
-This is called from the gprs driver to let the gprs atom know that
-a new context has been activated.
+When the event comes, trigger CGCONT? to read the APN for the
+activated cid and then call ogono_gprs_cid_activated to handle
+the event.
 ---
- include/gprs.h | 3 +++
- 1 file changed, 3 insertions(+)
+ drivers/atmodem/gprs.c | 50 ++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 file changed, 50 insertions(+)
 
-diff --git a/include/gprs.h b/include/gprs.h
-index 8d2a260..988d610 100644
---- a/include/gprs.h
-+++ b/include/gprs.h
-@@ -80,6 +80,9 @@ void ofono_gprs_set_cid_range(struct ofono_gprs *gprs,
- void ofono_gprs_add_context(struct ofono_gprs *gprs,
- 				struct ofono_gprs_context *gc);
+diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
+index 4505477..bc3c633 100644
+--- a/drivers/atmodem/gprs.c
++++ b/drivers/atmodem/gprs.c
+@@ -49,6 +49,7 @@ static const char *none_prefix[] =3D { NULL };
+ struct gprs_data {
+ 	GAtChat *chat;
+ 	unsigned int vendor;
++	unsigned int last_auto_context_id;
+ };
  =
 
-+void ofono_gprs_cid_activated(struct ofono_gprs  *gprs, unsigned int cid,
-+				const char *apn);
-+
- #ifdef __cplusplus
+ static void at_cgatt_cb(gboolean ok, GAtResult *result, gpointer user_data)
+@@ -141,6 +142,49 @@ static void at_gprs_registration_status(struct ofono_g=
+prs *gprs,
+ 	CALLBACK_WITH_FAILURE(cb, -1, data);
  }
- #endif
+ =
+
++static void at_cgdcont_read_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	struct ofono_gprs *gprs =3D user_data;
++	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
++	int activated_cid =3D gd->last_auto_context_id;
++	const char *apn =3D NULL;
++	GAtResultIter iter;
++
++	DBG("ok %d", ok);
++
++	if (!ok) {
++		ofono_warn("Can't read CGDCONT contexts.");
++		return;
++	}
++
++	g_at_result_iter_init(&iter, result);
++
++	while (g_at_result_iter_next(&iter, "+CGDCONT:")) {
++		int read_cid;
++
++		if (!g_at_result_iter_next_number(&iter, &read_cid))
++			break;
++
++		if (read_cid !=3D activated_cid)
++			continue;
++
++		/* ignore protocol */
++		g_at_result_iter_skip_next(&iter);
++
++		g_at_result_iter_next_string(&iter, &apn);
++
++		break;
++	}
++
++	if (apn)
++		ofono_gprs_cid_activated(gprs, activated_cid, apn);
++	else
++		ofono_warn("cid %u: Received activated but no apn present",
++				activated_cid);
++}
++
++
+ static void cgreg_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_gprs *gprs =3D user_data;
+@@ -157,6 +201,7 @@ static void cgreg_notify(GAtResult *result, gpointer us=
+er_data)
+ static void cgev_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_gprs *gprs =3D user_data;
++	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
+ 	GAtResultIter iter;
+ 	const char *event;
+ =
+
+@@ -172,6 +217,11 @@ static void cgev_notify(GAtResult *result, gpointer us=
+er_data)
+ 			g_str_equal(event, "ME DETACH")) {
+ 		ofono_gprs_detached_notify(gprs);
+ 		return;
++	} else if (g_str_has_prefix(event, "ME PDN ACT")) {
++		sscanf(event, "%*s %*s %*s %u", &gd->last_auto_context_id);
++
++		g_at_chat_send(gd->chat, "AT+CGDCONT?", cgdcont_prefix,
++				at_cgdcont_read_cb, gprs, NULL);
+ 	}
+ }
+ =
+
 -- =
 
 2.5.0
 
 
---===============2828081072334228759==--
+--===============5201400354552152712==--
 
