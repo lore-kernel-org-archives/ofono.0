@@ -1,48 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============4161195923111648663=="
+Content-Type: multipart/mixed; boundary="===============2858838239574343866=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 4/9] gprs: pri_activate_callback: optional msg reply
-Date: Fri, 18 Mar 2016 11:47:08 +0100
-Message-ID: <1458298030-30455-7-git-send-email-dragos@endocode.com>
+Subject: [PATCH 5/9] gprs: pri_set_apn: make reply msg optional
+Date: Fri, 18 Mar 2016 11:47:09 +0100
+Message-ID: <1458298030-30455-8-git-send-email-dragos@endocode.com>
 In-Reply-To: <1458298030-30455-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4161195923111648663==
+--===============2858838239574343866==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-For automatic context activation there's no initial message to send a
-reply to.
+Automatic context activation will set the apn by itself. No
+dbus message to reply to.
 ---
- src/gprs.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ src/gprs.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/src/gprs.c b/src/gprs.c
-index 9192e68..233ab1a 100644
+index 233ab1a..664c377 100644
 --- a/src/gprs.c
 +++ b/src/gprs.c
-@@ -887,8 +887,10 @@ static void pri_activate_callback(const struct ofono_e=
-rror *error, void *data)
+@@ -957,7 +957,8 @@ static DBusMessage *pri_set_apn(struct pri_context *ctx=
+, DBusConnection *conn,
+ 		storage_sync(ctx->gprs->imsi, SETTINGS_STORE, settings);
  	}
  =
 
- 	ctx->active =3D TRUE;
--	__ofono_dbus_pending_reply(&ctx->pending,
--				dbus_message_new_method_return(ctx->pending));
-+
-+	if (ctx->pending)
-+		__ofono_dbus_pending_reply(&ctx->pending,
-+				bus_message_new_method_return(ctx->pending));
+-	g_dbus_send_reply(conn, msg, DBUS_TYPE_INVALID);
++	if (msg)
++		g_dbus_send_reply(conn, msg, DBUS_TYPE_INVALID);
  =
 
- 	if (gc->settings->interface !=3D NULL) {
- 		pri_ifupdown(gc->settings->interface, TRUE);
+ 	ofono_dbus_signal_property_changed(conn, ctx->path,
+ 					OFONO_CONNECTION_CONTEXT_INTERFACE,
 -- =
 
 2.5.0
 
 
---===============4161195923111648663==--
+--===============2858838239574343866==--
 
