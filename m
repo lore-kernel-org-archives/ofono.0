@@ -1,65 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============6424209706036963483=="
+Content-Type: multipart/mixed; boundary="===============2336776556053036800=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 1/5] idmap: add api for finding a certain id in map
-Date: Fri, 18 Mar 2016 11:47:03 +0100
-Message-ID: <1458298030-30455-2-git-send-email-dragos@endocode.com>
+Subject: [PATCH 2/5] gprs-context.h: add op for reading context config
+Date: Fri, 18 Mar 2016 11:47:04 +0100
+Message-ID: <1458298030-30455-3-git-send-email-dragos@endocode.com>
 In-Reply-To: <1458298030-30455-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6424209706036963483==
+--===============2336776556053036800==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This will be implemented by a gprs-context driver to support
+automatic context activation. The gprs atom will call the driver
+to read the ip configuration without activating the context.
 ---
- src/idmap.c | 12 ++++++++++++
- src/idmap.h |  1 +
- 2 files changed, 13 insertions(+)
+ include/gprs-context.h | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/src/idmap.c b/src/idmap.c
-index c097eb4..da32d96 100644
---- a/src/idmap.c
-+++ b/src/idmap.c
-@@ -166,6 +166,18 @@ void idmap_take(struct idmap *idmap, unsigned int id)
- 	idmap->bits[offset] |=3D 1UL << (bit % BITS_PER_LONG);
- }
+diff --git a/include/gprs-context.h b/include/gprs-context.h
+index 0090cc4..c4910f2 100644
+--- a/include/gprs-context.h
++++ b/include/gprs-context.h
+@@ -79,6 +79,9 @@ struct ofono_gprs_context_driver {
+ 					ofono_gprs_context_cb_t cb, void *data);
+ 	void (*detach_shutdown)(struct ofono_gprs_context *gc,
+ 					unsigned int id);
++	void (*read_settings)(struct ofono_gprs_context *gc,
++				unsigned int cid,
++				ofono_gprs_context_cb_t cb, void *data);
+ };
  =
 
-+int idmap_find(struct idmap *idmap, unsigned int id)
-+{
-+	unsigned int bit =3D id - idmap->min;
-+	unsigned int offset;
-+
-+	if (bit >=3D idmap->size)
-+		return 0;
-+
-+	offset =3D bit / BITS_PER_LONG;
-+	return (idmap->bits[offset] & (1UL << (bit % BITS_PER_LONG))) !=3D 0;
-+}
-+
- /*
-  * Allocate the next bit skipping the ids up to and including last.  If th=
-ere
-  * is no free ids until the max id is encountered, the counter is wrapped =
-back
-diff --git a/src/idmap.h b/src/idmap.h
-index ebda177..97a6f04 100644
---- a/src/idmap.h
-+++ b/src/idmap.h
-@@ -25,6 +25,7 @@ struct idmap *idmap_new(unsigned int size);
- void idmap_free(struct idmap *idmap);
- void idmap_put(struct idmap *idmap, unsigned int id);
- void idmap_take(struct idmap *idmap, unsigned int id);
-+int idmap_find(struct idmap *idmap, unsigned int id);
- unsigned int idmap_alloc(struct idmap *idmap);
- unsigned int idmap_alloc_next(struct idmap *idmap, unsigned int last);
- struct idmap *idmap_new_from_range(unsigned int min, unsigned int max);
+ void ofono_gprs_context_deactivated(struct ofono_gprs_context *gc,
 -- =
 
 2.5.0
 
 
---===============6424209706036963483==--
+--===============2336776556053036800==--
 
