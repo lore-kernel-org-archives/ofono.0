@@ -1,100 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============8680553651634449165=="
+Content-Type: multipart/mixed; boundary="===============7355555350585942976=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 5/5] ubloxmodem: support automatic ctx activation
-Date: Fri, 18 Mar 2016 12:53:14 +0100
-Message-ID: <1458301994-5567-9-git-send-email-dragos@endocode.com>
-In-Reply-To: <1458301994-5567-1-git-send-email-dragos@endocode.com>
+Subject: [PATCH v4 0/5] allow automatic context activation
+Date: Fri, 18 Mar 2016 12:58:49 +0100
+Message-ID: <1458302334-6149-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8680553651634449165==
+--===============7355555350585942976==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-... by imlementing read_settings.
----
- drivers/ubloxmodem/gprs-context.c | 32 ++++++++++++++++++++++----------
- 1 file changed, 22 insertions(+), 10 deletions(-)
+LTE uses default bearer activation. Once register to the network is
+received of which context has been activated.
 
-diff --git a/drivers/ubloxmodem/gprs-context.c b/drivers/ubloxmodem/gprs-co=
-ntext.c
-index 63f6ac2..23c27aa 100644
---- a/drivers/ubloxmodem/gprs-context.c
-+++ b/drivers/ubloxmodem/gprs-context.c
-@@ -35,6 +35,7 @@
- #include <ofono/log.h>
- #include <ofono/modem.h>
- #include <ofono/gprs-context.h>
-+#include <ofono/gprs.h>
- =
+This patchset takes action in the atmodem gprs driver when receiving
+the activation event. It reads the cid and apn and sends it to the
+gprs core. From there a matching (my apn) pri_context is
+found/created and a gprs-context driver is assigned.
 
- #include "gatchat.h"
- #include "gatresult.h"
-@@ -181,6 +182,21 @@ static void ublox_read_settings(struct ofono_gprs_cont=
-ext *gc)
- 		CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
- }
- =
+A read_settings operation has been added to the gprs-context driver
+to read context ip configuration without activating the context.
 
-+static void ublox_gprs_read_settings(struct ofono_gprs_context *gc,
-+					unsigned int cid,
-+					ofono_gprs_context_cb_t cb, void *data)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+
-+	DBG("cid %u", cid);
-+
-+	gcd->active_context =3D cid;
-+	gcd->cb =3D cb;
-+	gcd->cb_data =3D data;
-+
-+	ublox_read_settings(gc);
-+}
-+
- static void cgact_enable_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
- {
- 	struct ofono_gprs_context *gc =3D user_data;
-@@ -379,16 +395,11 @@ static void cgev_notify(GAtResult *result, gpointer u=
-ser_data)
- 	if (!g_at_result_iter_next_unquoted_string(&iter, &event))
- 		return;
- =
+The last patch in the patchset adds this support to the U-Blox
+Toby L2 modem.
 
--	if (g_str_has_prefix(event, "NW PDN DEACT")) {
--		if (!g_at_result_iter_skip_next(&iter))
--			return;
--	} else if (g_str_has_prefix(event, "NW DEACT") =3D=3D FALSE)
--		return;
--
--	if (!g_at_result_iter_skip_next(&iter))
--		return;
--
--	if (!g_at_result_iter_next_number(&iter, &cid))
-+	if (g_str_has_prefix(event, "NW PDN DEACT"))
-+		sscanf(event, "%*s %*s %*s %u", &cid);
-+	else if (g_str_has_prefix(event, "NW DEACT"))
-+		sscanf(event, "%*s %*s %u", &cid);
-+	else
- 		return;
- =
+Implementation based mostly on ideas from Denis Kenzior.
 
- 	DBG("cid %d", cid);
-@@ -440,6 +451,7 @@ static struct ofono_gprs_context_driver driver =3D {
- 	.remove			=3D ublox_gprs_context_remove,
- 	.activate_primary	=3D ublox_gprs_activate_primary,
- 	.deactivate_primary	=3D ublox_gprs_deactivate_primary,
-+	.read_settings		=3D ublox_gprs_read_settings,
- };
- =
+Changes in patchset v4:
+* Patchset v3 was borked.
 
- void ublox_gprs_context_init(void)
+Changes in patchset v3:
+* Fixed apn string length check.
+
+Changes in patchset v2:
+* Removed reliance on pri_activate_callback
+* Context recycling: Use failed provision node if no apn match.
+* Assign APN to pri_context if apn field is NULL.
+* Fixed all suggestions from v1 review.
+
+Dragos Tatulea (5):
+  idmap: add api for finding a certain id in map
+  gprs-context.h: add op for reading context config
+  gprs: implement ofono_gprs_cid_activated
+  atmodem: gprs: handle automatic context activation
+  ubloxmodem: support automatic ctx activation
+
+ drivers/atmodem/gprs.c            |  50 +++++++++++++++++
+ drivers/ubloxmodem/gprs-context.c |  32 +++++++----
+ include/gprs-context.h            |   3 +
+ src/gprs.c                        | 114 ++++++++++++++++++++++++++++++++++=
+++++
+ src/idmap.c                       |  12 ++++
+ src/idmap.h                       |   1 +
+ 6 files changed, 202 insertions(+), 10 deletions(-)
+
 -- =
 
 2.5.0
 
 
---===============8680553651634449165==--
+--===============7355555350585942976==--
 
