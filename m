@@ -1,128 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============2872280502688358595=="
+Content-Type: multipart/mixed; boundary="===============1203375844156189625=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 8/9] atmodem: gprs: handle automatic context activation
-Date: Thu, 17 Mar 2016 12:56:33 -0500
-Message-ID: <56EAEFD1.4080304@gmail.com>
-In-Reply-To: <1458234140-7936-9-git-send-email-dragos@endocode.com>
+From: Dragos Tatulea <dragos@endocode.com>
+Subject: [PATCH v2 0/9] allow automatic context activation
+Date: Fri, 18 Mar 2016 11:47:02 +0100
+Message-ID: <1458298030-30455-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2872280502688358595==
+--===============1203375844156189625==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dragos,
+LTE uses default bearer activation. Once register to the network is
+received of which context has been activated.
 
-On 03/17/2016 12:02 PM, Dragos Tatulea wrote:
-> When the event comes, trigger CGCONT? to read the APN for the
-> activated cid and then call ogono_gprs_cid_activated to handle
-> the event.
-> ---
->   drivers/atmodem/gprs.c | 53 +++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   1 file changed, 53 insertions(+)
->
-> diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-> index 4505477..e85bbfb 100644
-> --- a/drivers/atmodem/gprs.c
-> +++ b/drivers/atmodem/gprs.c
-> @@ -49,6 +49,7 @@ static const char *none_prefix[] =3D { NULL };
->   struct gprs_data {
->   	GAtChat *chat;
->   	unsigned int vendor;
-> +	unsigned int last_auto_context_id;
->   };
->
->   static void at_cgatt_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-> @@ -141,6 +142,49 @@ static void at_gprs_registration_status(struct ofono=
-_gprs *gprs,
->   	CALLBACK_WITH_FAILURE(cb, -1, data);
->   }
->
-> +static void at_cgdcont_read_cb(gboolean ok, GAtResult *result,
-> +				gpointer user_data)
-> +{
-> +	struct ofono_gprs *gprs =3D user_data;
-> +	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
-> +	int activated_cid =3D gd->last_auto_context_id;
-> +	const char *apn =3D NULL;
-> +	GAtResultIter iter;
-> +
-> +	DBG("ok %d", ok);
-> +
-> +	if (!ok) {
-> +		ofono_warn("Can't read CGDCONT contexts.");
-> +		return;
-> +	}
-> +
-> +	g_at_result_iter_init(&iter, result);
-> +
-> +	while (g_at_result_iter_next(&iter, "+CGDCONT:")) {
-> +		int read_cid;
-> +
-> +		if (!g_at_result_iter_next_number(&iter, &read_cid))
-> +			break;
-> +
-> +		if (read_cid !=3D activated_cid)
-> +			continue;
-> +
-> +		/* ignore protocol */
-> +		g_at_result_iter_skip_next(&iter);
-> +
-> +		g_at_result_iter_next_string(&iter, &apn);
-> +
-> +		break;
-> +	}
-> +
-> +	if (apn)
-> +		ofono_gprs_cid_activated(gprs, activated_cid, apn);
-> +	else
-> +		ofono_warn("cid %u: Received activated but no apn present",
-> +				activated_cid);
-> +}
-> +
-> +
->   static void cgreg_notify(GAtResult *result, gpointer user_data)
->   {
->   	struct ofono_gprs *gprs =3D user_data;
-> @@ -157,6 +201,7 @@ static void cgreg_notify(GAtResult *result, gpointer =
-user_data)
->   static void cgev_notify(GAtResult *result, gpointer user_data)
->   {
->   	struct ofono_gprs *gprs =3D user_data;
-> +	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
->   	GAtResultIter iter;
->   	const char *event;
->
-> @@ -172,6 +217,14 @@ static void cgev_notify(GAtResult *result, gpointer =
-user_data)
->   			g_str_equal(event, "ME DETACH")) {
->   		ofono_gprs_detached_notify(gprs);
->   		return;
-> +	} else if (g_str_has_prefix(event, "ME PDN ACT")) {
-> +		char tmp[16] =3D {0};
+This patchset takes action in the atmodem gprs driver when receiving
+the activation event. It reads the cid and apn and sends it to the
+gprs core. From there a matching (my apn) pri_context is
+found/created and a gprs-context driver is assigned.
 
-This is not our initialization style.
+A read_settings operation has been added to the gprs-context driver
+to read context ip configuration without activating the context.
 
-> +
-> +		sscanf(event, "%s %s %s %u",
+The last patch in the patchset adds this support to the U-Blox
+Toby L2 modem.
 
-man sscanf.  You can use %*s to skip assignment to tmp completely.
+Implementation based mostly on ideas from Denis Kenzior.
 
-> +				tmp, tmp, tmp, &gd->last_auto_context_id);
-> +
-> +		g_at_chat_send(gd->chat, "AT+CGDCONT?", cgdcont_prefix,
-> +				at_cgdcont_read_cb, gprs, NULL);
->   	}
->   }
->
->
+Changes in patchset v2:
+* Removed reliance on pri_activate_callback
+* Context recycling: Use failed provision node if no apn match.
+* Assign APN to pri_context if apn field is NULL.
+* Fixed all suggestions from v1 review.
 
-Regards,
--Denis
+Dragos Tatulea (5):
+  idmap: add api for finding a certain id in map
+  gprs-context.h: add op for reading context config
+  gprs: implement ofono_gprs_cid_activated
+  atmodem: gprs: handle automatic context activation
+  ubloxmodem: support automatic ctx activation
 
---===============2872280502688358595==--
+ drivers/atmodem/gprs.c            |  50 +++++++++++++++++
+ drivers/ubloxmodem/gprs-context.c |  32 +++++++----
+ include/gprs-context.h            |   3 +
+ src/gprs.c                        | 114 ++++++++++++++++++++++++++++++++++=
+++++
+ src/idmap.c                       |  12 ++++
+ src/idmap.h                       |   1 +
+ 6 files changed, 202 insertions(+), 10 deletions(-)
+
+-- =
+
+2.5.0
+
+
+--===============1203375844156189625==--
 
