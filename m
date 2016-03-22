@@ -1,109 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============1800248804266396863=="
+Content-Type: multipart/mixed; boundary="===============6424399585205259964=="
 MIME-Version: 1.0
-From: Samrat Guha Niyogi <samrat.guha.niyogi@intel.com>
-Subject: [PATCH] test: Add sms bearer set and SMSC set scripts
-Date: Tue, 22 Mar 2016 16:19:35 +0530
-Message-ID: <1458643775-18338-1-git-send-email-samrat.guha.niyogi@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] rilmodem: Add sms bearer set and bearer query func
+Date: Tue, 22 Mar 2016 10:33:08 -0500
+Message-ID: <56F165B4.7080600@gmail.com>
+In-Reply-To: <1458643676-18248-1-git-send-email-samrat.guha.niyogi@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1800248804266396863==
+--===============6424399585205259964==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Anirudh Gargi <anirudh.gargi@intel.com>
+Hi Anirudh,
 
----
- test/set-sms-bearer | 31 +++++++++++++++++++++++++++++++
- test/set-sms-smsc   | 31 +++++++++++++++++++++++++++++++
- 2 files changed, 62 insertions(+)
- create mode 100755 test/set-sms-bearer
- create mode 100755 test/set-sms-smsc
+On 03/22/2016 05:47 AM, Samrat Guha Niyogi wrote:
+> From: Anirudh Gargi <anirudh.gargi@intel.com>
+>
+> ---
+>   drivers/rilmodem/sms.c    | 148 +++++++++++++++++++++++++++++++++++++++=
++++++--
+>   drivers/rilmodem/vendor.h |   3 +-
+>   2 files changed, 144 insertions(+), 7 deletions(-)
+>
 
-diff --git a/test/set-sms-bearer b/test/set-sms-bearer
-new file mode 100755
-index 0000000..33e64e3
---- /dev/null
-+++ b/test/set-sms-bearer
-@@ -0,0 +1,31 @@
-+#!/usr/bin/python3
-+import sys
-+import dbus
-+
-+if len(sys.argv) < 2:
-+        print("Usage: %s <bearer> Bearer types: <cs-only> <ps-only> <cs-pr=
-eferred> <ps-preferred>" %\
-+                                        (sys.argv[0]))
-+        sys.exit(1)
-+
-+def message_bearer(sms, value):
-+	try:
-+            sms.SetProperty("Bearer", dbus.String(value))
-+	except dbus.DBusException as e:
-+            print("Unable to set Bearer[%s] - FAIL" % (value))
-+            exit(1)
-+
-+bus =3D dbus.SystemBus()
-+manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),'org.ofono.Man=
-ager')
-+modems =3D manager.GetModems()
-+value  =3D sys.argv[1]
-+
-+for path, properties in modems:
-+	print("Setting bearer for [ %s ]" % (path))
-+
-+	if "org.ofono.MessageManager" not in properties["Interfaces"]:
-+		continue
-+
-+        sms =3D dbus.Interface(bus.get_object('org.ofono', path), 'org.ofo=
-no.MessageManager')
-+
-+        message_bearer(sms, value)
-+        print("SMS Bearer updated for [ %s ]" % (path))
-diff --git a/test/set-sms-smsc b/test/set-sms-smsc
-new file mode 100755
-index 0000000..7fc9e4d
---- /dev/null
-+++ b/test/set-sms-smsc
-@@ -0,0 +1,31 @@
-+#!/usr/bin/python3
-+import sys
-+import dbus
-+
-+if len(sys.argv) < 2:
-+        print("Usage: %s <SMSC address>" % (sys.argv[0]))
-+        sys.exit(1)
-+
-+def message_service_center_address(sms, value):
-+        try:
-+            sms.SetProperty("ServiceCenterAddress", dbus.String(value))
-+        except dbus.DBusException as e:
-+            print("Unable to set correct Service Center Address - FAIL")
-+	    exit(1)
-+
-+bus =3D dbus.SystemBus()
-+manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),'org.ofono.Man=
-ager')
-+modems =3D manager.GetModems()
-+value  =3D sys.argv[1]
-+
-+for path, properties in modems:
-+	print("Setting SMSC for [ %s ]" % (path))
-+
-+	if "org.ofono.MessageManager" not in properties["Interfaces"]:
-+		continue
-+
-+	sms =3D dbus.Interface(bus.get_object('org.ofono', path),
-+					'org.ofono.MessageManager')
-+        =
+Applied, thanks.
 
-+        message_service_center_address(sms, value)
-+        print("SMSC address Updated for [ %s ]" % (path))
--- =
-
-1.9.1
+Regards,
+-Denis
 
 
---===============1800248804266396863==--
+--===============6424399585205259964==--
 
