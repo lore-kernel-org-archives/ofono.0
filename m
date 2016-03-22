@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============8466970041475944553=="
+Content-Type: multipart/mixed; boundary="===============1800248804266396863=="
 MIME-Version: 1.0
 From: Samrat Guha Niyogi <samrat.guha.niyogi@intel.com>
-Subject: [PATCH] sofia3gr: Enable vendor type in SMS driver
-Date: Tue, 22 Mar 2016 16:18:52 +0530
-Message-ID: <1458643732-18296-1-git-send-email-samrat.guha.niyogi@intel.com>
+Subject: [PATCH] test: Add sms bearer set and SMSC set scripts
+Date: Tue, 22 Mar 2016 16:19:35 +0530
+Message-ID: <1458643775-18338-1-git-send-email-samrat.guha.niyogi@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8466970041475944553==
+--===============1800248804266396863==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -15,29 +15,95 @@ Content-Transfer-Encoding: quoted-printable
 From: Anirudh Gargi <anirudh.gargi@intel.com>
 
 ---
- plugins/ril_sofia3gr.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ test/set-sms-bearer | 31 +++++++++++++++++++++++++++++++
+ test/set-sms-smsc   | 31 +++++++++++++++++++++++++++++++
+ 2 files changed, 62 insertions(+)
+ create mode 100755 test/set-sms-bearer
+ create mode 100755 test/set-sms-smsc
 
-diff --git a/plugins/ril_sofia3gr.c b/plugins/ril_sofia3gr.c
-index 0d4a204..ac60f7f 100644
---- a/plugins/ril_sofia3gr.c
-+++ b/plugins/ril_sofia3gr.c
-@@ -152,7 +152,7 @@ static void ril_post_sim(struct ofono_modem *modem)
- 	struct ofono_gprs *gprs;
- 	struct ofono_gprs_context *gc;
- =
+diff --git a/test/set-sms-bearer b/test/set-sms-bearer
+new file mode 100755
+index 0000000..33e64e3
+--- /dev/null
++++ b/test/set-sms-bearer
+@@ -0,0 +1,31 @@
++#!/usr/bin/python3
++import sys
++import dbus
++
++if len(sys.argv) < 2:
++        print("Usage: %s <bearer> Bearer types: <cs-only> <ps-only> <cs-pr=
+eferred> <ps-preferred>" %\
++                                        (sys.argv[0]))
++        sys.exit(1)
++
++def message_bearer(sms, value):
++	try:
++            sms.SetProperty("Bearer", dbus.String(value))
++	except dbus.DBusException as e:
++            print("Unable to set Bearer[%s] - FAIL" % (value))
++            exit(1)
++
++bus =3D dbus.SystemBus()
++manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),'org.ofono.Man=
+ager')
++modems =3D manager.GetModems()
++value  =3D sys.argv[1]
++
++for path, properties in modems:
++	print("Setting bearer for [ %s ]" % (path))
++
++	if "org.ofono.MessageManager" not in properties["Interfaces"]:
++		continue
++
++        sms =3D dbus.Interface(bus.get_object('org.ofono', path), 'org.ofo=
+no.MessageManager')
++
++        message_bearer(sms, value)
++        print("SMS Bearer updated for [ %s ]" % (path))
+diff --git a/test/set-sms-smsc b/test/set-sms-smsc
+new file mode 100755
+index 0000000..7fc9e4d
+--- /dev/null
++++ b/test/set-sms-smsc
+@@ -0,0 +1,31 @@
++#!/usr/bin/python3
++import sys
++import dbus
++
++if len(sys.argv) < 2:
++        print("Usage: %s <SMSC address>" % (sys.argv[0]))
++        sys.exit(1)
++
++def message_service_center_address(sms, value):
++        try:
++            sms.SetProperty("ServiceCenterAddress", dbus.String(value))
++        except dbus.DBusException as e:
++            print("Unable to set correct Service Center Address - FAIL")
++	    exit(1)
++
++bus =3D dbus.SystemBus()
++manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),'org.ofono.Man=
+ager')
++modems =3D manager.GetModems()
++value  =3D sys.argv[1]
++
++for path, properties in modems:
++	print("Setting SMSC for [ %s ]" % (path))
++
++	if "org.ofono.MessageManager" not in properties["Interfaces"]:
++		continue
++
++	sms =3D dbus.Interface(bus.get_object('org.ofono', path),
++					'org.ofono.MessageManager')
++        =
 
--	ofono_sms_create(modem, 0, "rilmodem", rd->ril);
-+	ofono_sms_create(modem, OFONO_RIL_VENDOR_IMC_SOFIA3GR, "rilmodem", rd->ri=
-l);
- =
-
- 	gprs =3D ofono_gprs_create(modem, 0, "rilmodem", rd->ril);
- 	gc =3D ofono_gprs_context_create(modem, 0, "rilmodem", rd->ril);
++        message_service_center_address(sms, value)
++        print("SMSC address Updated for [ %s ]" % (path))
 -- =
 
 1.9.1
 
 
---===============8466970041475944553==--
+--===============1800248804266396863==--
 
