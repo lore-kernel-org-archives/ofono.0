@@ -1,35 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============7885553700066723293=="
+Content-Type: multipart/mixed; boundary="===============2628672143948341864=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] test: Add sms bearer set and SMSC set scripts
-Date: Tue, 22 Mar 2016 10:34:03 -0500
-Message-ID: <56F165EB.6040902@gmail.com>
-In-Reply-To: <1458643775-18338-1-git-send-email-samrat.guha.niyogi@intel.com>
+From: Alfonso Sanchez-Beato <alfonso.sanchez-beato@canonical.com>
+Subject: [PATCH] gril: Really use given uid/gid to open ril socket
+Date: Wed, 23 Mar 2016 10:58:13 +0100
+Message-ID: <1458727093-13826-1-git-send-email-alfonso.sanchez-beato@canonical.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7885553700066723293==
+--===============2628672143948341864==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Anirudh,
+---
+ gril/gril.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
 
-On 03/22/2016 05:49 AM, Samrat Guha Niyogi wrote:
-> From: Anirudh Gargi <anirudh.gargi@intel.com>
->
-> ---
->   test/set-sms-bearer | 31 +++++++++++++++++++++++++++++++
->   test/set-sms-smsc   | 31 +++++++++++++++++++++++++++++++
->   2 files changed, 62 insertions(+)
->   create mode 100755 test/set-sms-bearer
->   create mode 100755 test/set-sms-smsc
+diff --git a/gril/gril.c b/gril/gril.c
+index fa1a780..297a772 100644
+--- a/gril/gril.c
++++ b/gril/gril.c
+@@ -824,14 +824,15 @@ static struct ril_s *create_ril(const char *sock_path=
+, unsigned int uid,
+ 	addr.sun_family =3D AF_UNIX;
+ 	strncpy(addr.sun_path, sock_path, sizeof(addr.sun_path) - 1);
+ =
 
-Applied, thanks.
+-	if (uid !=3D 0 && seteuid(uid) < 0)
+-		ofono_error("%s: seteuid(%d) failed: %s (%d)",
+-				__func__, uid, strerror(errno), errno);
+-
++	/* Drop root user last, otherwise we won't be able to change egid */
+ 	if (gid !=3D 0 && setegid(gid) < 0)
+ 		ofono_error("%s: setegid(%d) failed: %s (%d)",
+ 				__func__, gid, strerror(errno), errno);
+ =
 
-Regards,
--Denis
++	if (uid !=3D 0 && seteuid(uid) < 0)
++		ofono_error("%s: seteuid(%d) failed: %s (%d)",
++				__func__, uid, strerror(errno), errno);
++
+ 	r =3D connect(sk, (struct sockaddr *) &addr, sizeof(addr));
+ =
+
+ 	/* Switch back to root as needed */
+@@ -1053,7 +1054,7 @@ GRil *g_ril_new_with_ucred(const char *sock_path, enu=
+m ofono_ril_vendor vendor,
+ 	if (ril =3D=3D NULL)
+ 		return NULL;
+ =
+
+-	ril->parent =3D create_ril(sock_path, 0, 0);
++	ril->parent =3D create_ril(sock_path, uid, gid);
+ 	if (ril->parent =3D=3D NULL) {
+ 		g_free(ril);
+ 		return NULL;
+-- =
+
+2.5.0
 
 
---===============7885553700066723293==--
+--===============2628672143948341864==--
 
