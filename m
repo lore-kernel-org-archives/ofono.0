@@ -1,42 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============6340475649754636057=="
+Content-Type: multipart/mixed; boundary="===============3333796040353575323=="
 MIME-Version: 1.0
-From: Samrat Guha Niyogi <samrat.guha.niyogi@intel.com>
-Subject: [PATCH] devinfo: Add support of IMEISV
-Date: Thu, 31 Mar 2016 13:17:53 +0530
-Message-ID: <1459410473-2115-1-git-send-email-samrat.guha.niyogi@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/6] include: Add netmon changes
+Date: Thu, 31 Mar 2016 10:03:44 -0500
+Message-ID: <56FD3C50.6090504@gmail.com>
+In-Reply-To: <1459398102-5757-1-git-send-email-nishanth.v@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6340475649754636057==
+--===============3333796040353575323==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- test/test-modem | 3 +++
- 1 file changed, 3 insertions(+)
+Hi Nishanth,
 
-diff --git a/test/test-modem b/test/test-modem
-index aa38b1f..59e9163 100755
---- a/test/test-modem
-+++ b/test/test-modem
-@@ -39,6 +39,9 @@ if __name__ =3D=3D "__main__":
- 	if 'Serial' in properties:
- 		print("Serial: %s" % (properties['Serial']))
- =
+On 03/30/2016 11:21 PM, Nishanth V wrote:
+> ---
+>   include/dbus.h   |  1 +
+>   include/netmon.h | 14 ++++++++++++++
+>   2 files changed, 15 insertions(+)
+>
 
-+	if 'SoftwareVersionNumber' in properties:
-+		print("SoftwareVersionNumber: %s" % (properties['SoftwareVersionNumber']=
-))
-+
- 	if 'Powered' in properties:
- 		print("Powered: %s" % (properties['Powered']))
- =
+Patches 1-5 have been applied.  I did have to fix some minor style =
 
--- =
+issues afterward.
 
-1.9.1
+Regards,
+-Denis
 
-
---===============6340475649754636057==--
+--===============3333796040353575323==--
 
