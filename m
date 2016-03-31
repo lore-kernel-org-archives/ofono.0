@@ -1,31 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============1464592066096519833=="
+Content-Type: multipart/mixed; boundary="===============4342215426975362529=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gril: Really use given uid/gid to open ril socket
-Date: Thu, 24 Mar 2016 09:29:35 -0500
-Message-ID: <56F3F9CF.5050200@gmail.com>
-In-Reply-To: <1458727093-13826-1-git-send-email-alfonso.sanchez-beato@canonical.com>
+From: Nishanth V <nishanth.v@intel.com>
+Subject: [PATCH 1/6] include: Add netmon changes
+Date: Thu, 31 Mar 2016 09:51:42 +0530
+Message-ID: <1459398102-5757-1-git-send-email-nishanth.v@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1464592066096519833==
+--===============4342215426975362529==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alfonso,
+---
+ include/dbus.h   |  1 +
+ include/netmon.h | 14 ++++++++++++++
+ 2 files changed, 15 insertions(+)
 
-On 03/23/2016 04:58 AM, Alfonso Sanchez-Beato wrote:
-> ---
->   gril/gril.c | 11 ++++++-----
->   1 file changed, 6 insertions(+), 5 deletions(-)
->
+diff --git a/include/dbus.h b/include/dbus.h
+index 3d39eff..99d45d6 100644
+--- a/include/dbus.h
++++ b/include/dbus.h
+@@ -60,6 +60,7 @@ extern "C" {
+ #define OFONO_GNSS_POSR_AGENT_INTERFACE "org.ofono.PositioningRequestAgent"
+ #define OFONO_HANDSFREE_INTERFACE OFONO_SERVICE ".Handsfree"
+ #define OFONO_SIRI_INTERFACE OFONO_SERVICE ".Siri"
++#define OFONO_NETMON_INTERFACE OFONO_SERVICE ".NetworkMonitor"
+ =
 
-Applied, thanks.
+ /* CDMA Interfaces */
+ #define OFONO_CDMA_VOICECALL_MANAGER_INTERFACE "org.ofono.cdma.VoiceCallMa=
+nager"
+diff --git a/include/netmon.h b/include/netmon.h
+index 324d2f7..a8390c4 100644
+--- a/include/netmon.h
++++ b/include/netmon.h
+@@ -77,6 +77,20 @@ void ofono_netmon_serving_cell_notify(struct ofono_netmo=
+n *netmon,
+ 					enum ofono_netmon_cell_type type,
+ 					int info_type, ...);
+ =
 
-Regards,
--Denis
++int ofono_netmon_driver_register(const struct ofono_netmon_driver *d);
++
++void ofono_netmon_driver_unregister(const struct ofono_netmon_driver *d);
++
++struct ofono_netmon *ofono_netmon_create(struct ofono_modem *modem,
++    unsigned int vendor, const char *driver, void *data);
++
++void ofono_netmon_register(struct ofono_netmon *netmon);
++
++void ofono_netmon_remove(struct ofono_netmon *netmon);
++
++void ofono_netmon_set_data(struct ofono_netmon *netmon, void *data);
++
++void *ofono_netmon_get_data(struct ofono_netmon *netmon);
+ =
+
+ #ifdef __cplusplus
+ }
+-- =
+
+1.9.1
 
 
---===============1464592066096519833==--
+--===============4342215426975362529==--
 
