@@ -1,35 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============6050799893966078755=="
+Content-Type: multipart/mixed; boundary="===============7766118178890460216=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gprs: Deactivate old contexts on attach
-Date: Mon, 04 Apr 2016 14:48:21 -0500
-Message-ID: <5702C505.3040200@gmail.com>
-In-Reply-To: <1459786308-11511-1-git-send-email-alfonso.sanchez-beato@canonical.com>
+From: Holger Hans Peter Freyther <holger@freyther.de>
+Subject: [PATCH] src/log.c: Don't crash when addr2line output contains no
+ newline
+Date: Tue, 05 Apr 2016 21:22:54 +0200
+Message-ID: <1459884174-66474-1-git-send-email-holger@freyther.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6050799893966078755==
+--===============7766118178890460216==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alfonso,
+From: Harald Welte <hwelte@sysmocom.de>
 
-On 04/04/2016 11:11 AM, Alfonso Sanchez-Beato wrote:
-> In some cases it is possible that a context is opened after a detach
-> event has been received, and right before an attach, depending on the
-> modem. We make sure that those contexts are removed to keep
-> consistency.
-> ---
->   src/gprs.c | 6 ++++++
->   1 file changed, 6 insertions(+)
->
+Signed-off-by: Holger Hans Peter Freyther <hfreyther@sysmocom.de>
+---
+ src/log.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-Applied, thanks.
+diff --git a/src/log.c b/src/log.c
+index 6331b0d..42a2ec1 100644
+--- a/src/log.c
++++ b/src/log.c
+@@ -192,6 +192,8 @@ static void print_backtrace(unsigned int offset)
+ 		buf[len] =3D '\0';
+ =
 
-Regards,
--Denis
+ 		pos =3D strchr(buf, '\n');
++		if (!pos)
++			break;
+ 		*pos++ =3D '\0';
+ =
+
+ 		if (strcmp(buf, "??") =3D=3D 0) {
+-- =
+
+2.6.3
 
 
---===============6050799893966078755==--
+--===============7766118178890460216==--
 
