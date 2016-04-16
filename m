@@ -1,33 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============7264632137095119840=="
+Content-Type: multipart/mixed; boundary="===============7626604131107016269=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] radio-settings: Add RAT mode to ofono storage
-Date: Thu, 07 Apr 2016 09:20:36 -0500
-Message-ID: <57066CB4.2020009@gmail.com>
-In-Reply-To: <1460006966-7104-1-git-send-email-samrat.guha.niyogi@intel.com>
+From: Holger Hans Peter Freyther <holger@freyther.de>
+Subject: [PATCH] src/log.c: Don't crash when addr2line output contains no
+ newline
+Date: Sat, 16 Apr 2016 11:28:22 -0400
+Message-ID: <1460820502-37815-1-git-send-email-holger@freyther.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7264632137095119840==
+--===============7626604131107016269==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Anirudh,
+From: Harald Welte <hwelte@sysmocom.de>
 
-On 04/07/2016 12:29 AM, Samrat Guha Niyogi wrote:
-> From: Anirudh Gargi <anirudh.gargi@intel.com>
->
-> ---
->   src/radio-settings.c | 108 ++++++++++++++++++++++++++++++++++++++++++++=
-++++++-
->   1 file changed, 106 insertions(+), 2 deletions(-)
->
+---
+ src/log.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-Applied, thanks.
+diff --git a/src/log.c b/src/log.c
+index 6331b0d..42a2ec1 100644
+--- a/src/log.c
++++ b/src/log.c
+@@ -192,6 +192,8 @@ static void print_backtrace(unsigned int offset)
+ 		buf[len] =3D '\0';
+ =
 
-Regards,
--Denis
+ 		pos =3D strchr(buf, '\n');
++		if (!pos)
++			break;
+ 		*pos++ =3D '\0';
+ =
 
---===============7264632137095119840==--
+ 		if (strcmp(buf, "??") =3D=3D 0) {
+-- =
+
+2.6.3
+
+
+--===============7626604131107016269==--
 
