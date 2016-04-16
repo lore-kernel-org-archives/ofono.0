@@ -1,43 +1,400 @@
-Content-Type: multipart/mixed; boundary="===============7626604131107016269=="
+Content-Type: multipart/mixed; boundary="===============0277440134168164970=="
 MIME-Version: 1.0
 From: Holger Hans Peter Freyther <holger@freyther.de>
-Subject: [PATCH] src/log.c: Don't crash when addr2line output contains no
- newline
-Date: Sat, 16 Apr 2016 11:28:22 -0400
-Message-ID: <1460820502-37815-1-git-send-email-holger@freyther.de>
+Subject: [PATCH] wavecom: Re-work modem handling to improve stability
+Date: Sat, 16 Apr 2016 11:36:46 -0400
+Message-ID: <1460821006-37985-1-git-send-email-holger@freyther.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7626604131107016269==
+--===============0277440134168164970==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Harald Welte <hwelte@sysmocom.de>
+From: Holger Hans Peter Freyther <holger@moiji-mobile.com>
 
+This is the result of heavily looking at other plugins to
+decide when and which objects to create.
+
+* Use +WIND to get to know when the modem is ready
+* Enable AT+CFUN=3D1/AT+CFUN=3D4 for online/offline handling
+* Deal with GAtChat surviving a disable/enable cycle
 ---
- src/log.c | 2 ++
- 1 file changed, 2 insertions(+)
+ plugins/wavecom.c | 248 +++++++++++++++++++++++++++++++++++++++++++++-----=
+----
+ 1 file changed, 209 insertions(+), 39 deletions(-)
 
-diff --git a/src/log.c b/src/log.c
-index 6331b0d..42a2ec1 100644
---- a/src/log.c
-+++ b/src/log.c
-@@ -192,6 +192,8 @@ static void print_backtrace(unsigned int offset)
- 		buf[len] =3D '\0';
+diff --git a/plugins/wavecom.c b/plugins/wavecom.c
+index 7f24eae..cda5da0 100644
+--- a/plugins/wavecom.c
++++ b/plugins/wavecom.c
+@@ -47,35 +47,148 @@
+ #include <ofono/sms.h>
+ #include <ofono/ussd.h>
+ #include <ofono/voicecall.h>
++#include <ofono.h>
  =
 
- 		pos =3D strchr(buf, '\n');
-+		if (!pos)
-+			break;
- 		*pos++ =3D '\0';
++#include <drivers/atmodem/atutil.h>
+ #include <drivers/atmodem/vendor.h>
  =
 
- 		if (strcmp(buf, "??") =3D=3D 0) {
++static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
++static const char *wind_prefix[] =3D { "+WIND:", NULL };
++static const char *none_prefix[] =3D { NULL };
++
++struct wavecom_data {
++	GAtChat *chat;
++	int have_enabled;
++	gboolean have_sim;
++	gboolean have_sms;
++};
++
++static enum ofono_vendor vendor(struct ofono_modem *modem)
++{
++	const char *model;
++
++	model =3D ofono_modem_get_string(modem, "Model");
++
++	if (model && strcmp(model, "Q2XXX") =3D=3D 0)
++		return OFONO_VENDOR_WAVECOM_Q2XXX;
++
++	return 0;
++}
++
++static void wavecom_debug(const char *str, void *user_data)
++{
++	const char *prefix =3D user_data;
++
++	DBG("%s%s", prefix, str);
++}
+ =
+
+ static int wavecom_probe(struct ofono_modem *modem)
+ {
++	struct wavecom_data *data;
++
++	DBG("%p: %s", modem, __func__);
++
++	data =3D g_try_new0(struct wavecom_data, 1);
++
++	if (data =3D=3D NULL)
++		return -ENOMEM;
++
++	ofono_modem_set_data(modem, data);
++
+ 	return 0;
+ }
+ =
+
+ static void wavecom_remove(struct ofono_modem *modem)
+ {
++	struct wavecom_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p: %s", modem, __func__);
++
++	ofono_modem_set_data(modem, NULL);
++	g_at_chat_unref(data->chat);
++	g_free(data);
++}
++
++static void rf_off_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++
++	ofono_modem_set_powered(modem, TRUE);
+ }
+ =
+
+-static void wavecom_debug(const char *str, void *user_data)
++static void wind_notify(GAtResult *result, gpointer user_data)
+ {
+-	const char *prefix =3D user_data;
++	struct ofono_modem *modem =3D user_data;
++	struct wavecom_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_sim *sim =3D __ofono_atom_find(OFONO_ATOM_TYPE_SIM, modem);
++	GAtResultIter iter;
++	int val;
++
++	DBG("%p: %s", modem, __func__);
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+WIND:"))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &val))
++		return;
++
++	switch (val) {
++	case 3: /* ready to process AT commands */
++		if (!data->have_enabled) {
++			data->have_enabled =3D TRUE;
++			g_at_chat_send(data->chat, "AT+CFUN=3D4", none_prefix,
++					rf_off_cb, modem, NULL);
++		}
++		break;
++	case 0: /* sim removed */
++		data->have_sim =3D FALSE;
++		if (sim)
++			ofono_sim_inserted_notify(sim, FALSE);
++		break;
++	case 1: /* sim inserted */
++		data->have_sim =3D TRUE;
++		break;
++	case 16: /* SMS and SMS-CB services initialized */
++		if (sim)
++			ofono_sim_inserted_notify(sim, TRUE);
++		break;
++	case 7: /* service available for emergency call */
++		break;
++	case 8: /* network is lost */
++	case 10: /* reload status of SIM phonebook */
++		break;
++	case 11: /* checksum of SIM phoenbook */
++	case 13: /* rack has been detected closed */
++		break;
++	}
++}
+ =
+
+-	ofono_info("%s%s", prefix, str);
++static void wind_set(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	DBG("%s", __func__);
+ }
+ =
+
+ static int wavecom_enable(struct ofono_modem *modem)
+ {
++	struct wavecom_data *data;
+ 	GAtChat *chat;
+ 	GIOChannel *channel;
+ 	GAtSyntax *syntax;
+ 	const char *device;
+ 	GHashTable *options;
+ =
+
+-	DBG("%p", modem);
++	DBG("%p: %s", modem, __func__);
++
++	data =3D ofono_modem_get_data(modem);
++
++	if (data->chat) {
++		g_at_chat_cancel_all(data->chat);
++		g_at_chat_unregister_all(data->chat);
++		g_at_chat_unref(data->chat);
++		data->chat =3D NULL;
++	}
+ =
+
+ 	device =3D ofono_modem_get_string(modem, "Device");
+ 	if (device =3D=3D NULL)
+@@ -111,75 +224,130 @@ static int wavecom_enable(struct ofono_modem *modem)
+ 	if (chat =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
++	g_at_chat_register(chat, "+WIND", wind_notify,
++				FALSE, modem, NULL);
++
+ 	g_at_chat_add_terminator(chat, "+CPIN:", 6, TRUE);
+ =
+
+ 	if (getenv("OFONO_AT_DEBUG"))
+ 		g_at_chat_set_debug(chat, wavecom_debug, "");
+ =
+
+-	ofono_modem_set_data(modem, chat);
++	data->chat =3D chat;
+ =
+
+-	return 0;
++	g_at_chat_send(chat, "AT+WIND=3D32767", wind_prefix,
++			wind_set, modem, NULL);
++
++	/* restart and wait for the +WIND */
++	data->have_enabled =3D FALSE;
++	data->have_sim =3D FALSE;
++	g_at_chat_send(chat, "AT+CFUN=3D1,1", none_prefix,
++			NULL, modem, NULL);
++	return -EINPROGRESS;
++}
++
++static void cfun_disable(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct wavecom_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p: %s", modem, __func__);
++
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
++
++	if (ok)
++		ofono_modem_set_powered(modem, FALSE);
++	else
++		ofono_error("%p power down has failed!", modem);
+ }
+ =
+
+ static int wavecom_disable(struct ofono_modem *modem)
+ {
+-	GAtChat *chat =3D ofono_modem_get_data(modem);
++	struct wavecom_data *data =3D ofono_modem_get_data(modem);
+ =
+
+-	DBG("%p", modem);
++	DBG("%p: %s", modem, __func__);
+ =
+
+-	ofono_modem_set_data(modem, NULL);
++	g_at_chat_cancel_all(data->chat);
++	g_at_chat_unregister_all(data->chat);
+ =
+
+-	g_at_chat_unref(chat);
++	g_at_chat_send(data->chat, "AT+CFUN=3D0", cfun_prefix,
++					cfun_disable, modem, NULL);
+ =
+
+-	return 0;
++	return -EINPROGRESS;
++}
++
++static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_modem_online_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++	cb(&error, cbd->data);
++}
++
++static void wavecom_set_online(struct ofono_modem *modem, ofono_bool_t onl=
+ine,
++				ofono_modem_online_cb_t cb, void *user_data)
++{
++	struct wavecom_data *data =3D ofono_modem_get_data(modem);
++	struct cb_data *cbd =3D cb_data_new(cb, user_data);
++	char const *command =3D online ? "AT+CFUN=3D1,0" : "AT+CFUN=3D4";
++
++	DBG("%p: %s %d", modem, __func__, online);
++
++	if (g_at_chat_send(data->chat, command, cfun_prefix, set_online_cb,
++					cbd, g_free) > 0)
++		return;
++
++	CALLBACK_WITH_FAILURE(cb, cbd->data);
++
++	g_free(cbd);
+ }
+ =
+
+ static void wavecom_pre_sim(struct ofono_modem *modem)
+ {
+-	GAtChat *chat =3D ofono_modem_get_data(modem);
+-	const char *model;
+-	enum ofono_vendor vendor =3D 0;
++	struct wavecom_data *data =3D ofono_modem_get_data(modem);
+ 	struct ofono_sim *sim;
+ =
+
+-	DBG("%p", modem);
+-
+-	model =3D ofono_modem_get_string(modem, "Model");
+-	if (model && strcmp(model, "Q2XXX") =3D=3D 0)
+-		vendor =3D OFONO_VENDOR_WAVECOM_Q2XXX;
++	DBG("%p: %s", modem, __func__);
+ =
+
+-	ofono_devinfo_create(modem, 0, "atmodem", chat);
+-	sim =3D ofono_sim_create(modem, vendor, "atmodem", chat);
+-	ofono_voicecall_create(modem, 0, "atmodem", chat);
++	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
++	sim =3D ofono_sim_create(modem, vendor(modem), "atmodem", data->chat);
++	ofono_voicecall_create(modem, 0, "atmodem", data->chat);
+ =
+
+-	if (vendor =3D=3D OFONO_VENDOR_WAVECOM_Q2XXX)
++	if (sim && data->have_sim =3D=3D TRUE) {
++		data->have_sim =3D FALSE;
+ 		ofono_sim_inserted_notify(sim, TRUE);
++	}
+ }
+ =
+
+ static void wavecom_post_sim(struct ofono_modem *modem)
+ {
+-	GAtChat *chat =3D ofono_modem_get_data(modem);
+-	struct ofono_message_waiting *mw;
+-	const char *model;
+-	enum ofono_vendor vendor =3D 0;
++	DBG("%p: %s", modem, __func__);
+ =
+
+-	DBG("%p", modem);
++	/* TODO: Initialize GPRS support if we have an aux line */
++}
+ =
+
+-	model =3D ofono_modem_get_string(modem, "Model");
+-	if (model && strcmp(model, "Q2XXX") =3D=3D 0)
+-		vendor =3D OFONO_VENDOR_WAVECOM_Q2XXX;
++static void wavecom_post_online(struct ofono_modem *modem)
++{
++	struct ofono_message_waiting *mw;
++	struct wavecom_data *data =3D ofono_modem_get_data(modem);
+ =
+
+-	ofono_ussd_create(modem, 0, "atmodem", chat);
+-	ofono_call_forwarding_create(modem, 0, "atmodem", chat);
+-	ofono_call_settings_create(modem, 0, "atmodem", chat);
+-	ofono_netreg_create(modem, 0, "atmodem", chat);
+-	ofono_call_meter_create(modem, 0, "atmodem", chat);
+-	ofono_call_barring_create(modem, 0, "atmodem", chat);
+-	ofono_sms_create(modem, vendor, "atmodem", chat);
+-	ofono_phonebook_create(modem, 0, "atmodem", chat);
++	DBG("%p: %s", modem, __func__);
++	ofono_ussd_create(modem, 0, "atmodem", data->chat);
++	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
++	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
++	ofono_netreg_create(modem, 0, "atmodem", data->chat);
++	ofono_call_meter_create(modem, 0, "atmodem", data->chat);
++	ofono_call_barring_create(modem, 0, "atmodem", data->chat);
+ =
+
+ 	mw =3D ofono_message_waiting_create(modem);
++
+ 	if (mw)
+ 		ofono_message_waiting_register(mw);
++
++	ofono_phonebook_create(modem, 0, "atmodem", data->chat);
++	ofono_sms_create(modem, vendor(modem), "atmodem", data->chat);
+ }
+ =
+
+ static struct ofono_modem_driver wavecom_driver =3D {
+@@ -188,8 +356,10 @@ static struct ofono_modem_driver wavecom_driver =3D {
+ 	.remove		=3D wavecom_remove,
+ 	.enable		=3D wavecom_enable,
+ 	.disable	=3D wavecom_disable,
++	.set_online	=3D wavecom_set_online,
+ 	.pre_sim	=3D wavecom_pre_sim,
+ 	.post_sim	=3D wavecom_post_sim,
++	.post_online	=3D wavecom_post_online,
+ };
+ =
+
+ static int wavecom_init(void)
 -- =
 
 2.6.3
 
 
---===============7626604131107016269==--
+--===============0277440134168164970==--
 
