@@ -1,34 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============4820334728460830139=="
+Content-Type: multipart/mixed; boundary="===============1526078205439173795=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] drivers/isimodem: fix GCC 6.0 errors
-Date: Mon, 18 Apr 2016 10:00:11 -0500
-Message-ID: <5714F67B.9000500@gmail.com>
-In-Reply-To: <1460979936-18296-1-git-send-email-kubax.t.pawlak@intel.com>
+Subject: Re: [PATCH] src/log.c: Don't crash when addr2line output contains no
+ newline
+Date: Mon, 18 Apr 2016 10:02:55 -0500
+Message-ID: <5714F71F.7060307@gmail.com>
+In-Reply-To: <1460820502-37815-1-git-send-email-holger@freyther.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4820334728460830139==
+--===============1526078205439173795==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kuba,
+Hi Harald,
 
-On 04/18/2016 06:45 AM, Kuba Pawlak wrote:
-> From: Kuba Pawlak <kuba.t.pawlak@gmail.com>
+On 04/16/2016 10:28 AM, Holger Hans Peter Freyther wrote:
+> From: Harald Welte <hwelte@sysmocom.de>
 >
-> -Werror=3Dmisleading-indentation
 > ---
->   drivers/isimodem/voicecall.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
->
+>   src/log.c | 2 ++
+>   1 file changed, 2 insertions(+)
 
-All three applied, thanks.
+Applied, thanks.
 
 Regards,
 -Denis
 
 
---===============4820334728460830139==--
+--===============1526078205439173795==--
 
