@@ -1,41 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============6562379455893300261=="
+Content-Type: multipart/mixed; boundary="===============2588854650813956170=="
 MIME-Version: 1.0
 From: Kuba Pawlak <kubax.t.pawlak@intel.com>
-Subject: [PATCH 1/3] drivers/isimodem: fix GCC 6.0 errors
-Date: Mon, 18 Apr 2016 13:45:34 +0200
-Message-ID: <1460979936-18296-1-git-send-email-kubax.t.pawlak@intel.com>
+Subject: [PATCH 2/3] plugins/nokia-gpio: fix glibc 2.23.9+ issues
+Date: Mon, 18 Apr 2016 13:45:35 +0200
+Message-ID: <1460979936-18296-2-git-send-email-kubax.t.pawlak@intel.com>
+In-Reply-To: <1460979936-18296-1-git-send-email-kubax.t.pawlak@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6562379455893300261==
+--===============2588854650813956170==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Kuba Pawlak <kuba.t.pawlak@gmail.com>
 
--Werror=3Dmisleading-indentation
+readdir_r=E2=80=99 is deprecated [-Werror=3Ddeprecated-declarations]
 ---
- drivers/isimodem/voicecall.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ plugins/nokia-gpio.c | 9 ++-------
+ 1 file changed, 2 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
-index 460e34e519a2c8bf5930f421b14e1c974cd49d63..d6d4ea37d66a646be305f8aefa6=
-879b4cd8f0bab 100644
---- a/drivers/isimodem/voicecall.c
-+++ b/drivers/isimodem/voicecall.c
-@@ -1715,7 +1715,7 @@ static void isi_release_specific(struct ofono_voiceca=
-ll *ovc, int id,
+diff --git a/plugins/nokia-gpio.c b/plugins/nokia-gpio.c
+index 57aad8d0962a41c1e1b41579d046f3a0e4d28096..7a93106c02c2435d5a1920cbfbc=
+9a862ebd192e3 100644
+--- a/plugins/nokia-gpio.c
++++ b/plugins/nokia-gpio.c
+@@ -635,7 +635,7 @@ static int gpio_probe_links(void)
+ 	char const *gpiodir =3D "/sys/class/gpio";
+ 	char const *cmtdir =3D "/dev/cmt";
+ 	DIR *gpio;
+-	struct dirent *d, entry[1];
++	struct dirent *d;
  =
 
- 		if ((status->mode_info & CALL_MODE_ORIGINATOR))
- 			cause =3D CALL_CAUSE_BUSY_USER_REQUEST;
--			break;
-+		break;
+ 	if (file_exists(cmtdir)) {
+ 		DBG("Using %s", cmtdir);
+@@ -657,16 +657,11 @@ static int gpio_probe_links(void)
+ 		return -(errno =3D ENODEV);
  	}
  =
 
- 	isi_call_release_req(ovc, id, CALL_CAUSE_TYPE_CLIENT, cause, cb, data);
+-	while (readdir_r(gpio, entry, &d) =3D=3D 0) {
++	while ((d =3D readdir(gpio)) !=3D NULL) {
+ 		char nn[PATH_MAX], name[PATH_MAX], from[PATH_MAX], to[PATH_MAX];
+ 		FILE *nf;
+ 		size_t len;
+ =
+
+-		if (d =3D=3D NULL) {
+-			(void) closedir(gpio);
+-			return 0;
+-		}
+-
+ 		snprintf(nn, sizeof nn, "%s/%s/name", gpiodir, d->d_name);
+ =
+
+ 		nf =3D fopen(nn, "rb");
 -- =
 
 1.9.3
@@ -48,6 +68,5 @@ Chairperson of the Supervisory Board: Nicole Lau
 Registered Office: Munich
 Commercial Register: Amtsgericht Muenchen HRB 186928
 
-
---===============6562379455893300261==--
+--===============2588854650813956170==--
 
