@@ -1,49 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============8204118322108333144=="
+Content-Type: multipart/mixed; boundary="===============1626987606195550273=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Ublox Toby Modem
-Date: Wed, 20 Apr 2016 10:02:17 -0500
-Message-ID: <571799F9.3090802@gmail.com>
-In-Reply-To: <57179117.5000007@gmx.net>
+Subject: Re: [PATCH] plugins: Add allowed APN list
+Date: Wed, 20 Apr 2016 10:07:24 -0500
+Message-ID: <57179B2C.7060608@gmail.com>
+In-Reply-To: <1461122890-7163-1-git-send-email-nishanth.v@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8204118322108333144==
+--===============1626987606195550273==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yorn,
+Hi Nishanth,
 
-Please don't top-post on this mailing list.
-
-On 04/20/2016 09:24 AM, Yorn wrote:
-> Hi Dragos,
+On 04/19/2016 10:28 PM, Nishanth V wrote:
+> ---
+>   Makefile.am                     |   9 +-
+>   doc/allowed-apns-api.txt        |  17 +++
+>   plugins/allowed-apns.c          | 272 +++++++++++++++++++++++++++++++++=
++++++++
+>   src/simutil.c                   |   1 +
+>   test/list-allowed-access-points |  25 ++++
+>   5 files changed, 322 insertions(+), 2 deletions(-)
+>   create mode 100644 doc/allowed-apns-api.txt
+>   create mode 100644 plugins/allowed-apns.c
+>   create mode 100755 test/list-allowed-access-points
 >
-> it is still active=3D0 :(
->
-> root(a)colibri-vf:~/test# ./list-contexts
-> [ /ublox_0 ]
->      [ /ublox_0/context1 ]
->          Username =3D
->          AuthenticationMethod =3D chap
->          Protocol =3D ip
->          Name =3D Internet
->          Settings =3D { }
->          IPv6.Settings =3D { }
->          Active =3D 0
->          AccessPointName =3D
 
-ConnMan won't activate this context without a properly setup APN.  So =
+Looks good, but please submit this as a series.  Remember our patch =
 
-you need to provision this somehow.
+submission guidelines can be found in HACKING 'Submitting patches' section.
 
->          Password =3D
->          Type =3D internet
->
+So:
+- one patch for doc/allowed-apns-api.txt + makefile specific changes
+- one patch for simutil.c changes
+- one patch for the plugin + required makefile changes
+- one patch for test script + required makefile makefile
 
 Regards,
 -Denis
 
---===============8204118322108333144==--
+--===============1626987606195550273==--
 
