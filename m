@@ -1,74 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============8672216712844993513=="
+Content-Type: multipart/mixed; boundary="===============6158187979970136774=="
 MIME-Version: 1.0
-From: Nishanth V <nishanth.v@intel.com>
-Subject: [PATCH 4/4] test: Add list allowed access points script
-Date: Thu, 21 Apr 2016 09:21:18 +0530
-Message-ID: <1461210678-11374-1-git-send-email-nishanth.v@intel.com>
+From: Alexandre Da Costa <alexandre.dacosta1@gmail.com>
+Subject: HFP support
+Date: Thu, 21 Apr 2016 08:54:56 +0200
+Message-ID: <CAFN7RgDrDCtvRfuBSNWvwfPaSuT9tzH8rukz_i4gqjH2gsBNMw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8672216712844993513==
+--===============6158187979970136774==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am                     |  3 ++-
- test/list-allowed-access-points | 25 +++++++++++++++++++++++++
- 2 files changed, 27 insertions(+), 1 deletion(-)
- create mode 100755 test/list-allowed-access-points
+Hi all,
 
-diff --git a/Makefile.am b/Makefile.am
-index c788149..5215b2e 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -749,7 +749,8 @@ test_scripts =3D test/backtrace \
- 		test/register-operator \
- 		test/set-sms-smsc \
- 		test/set-sms-bearer \
--		test/get-serving-cell-info
-+		test/get-serving-cell-info \
-+		test/list-allowed-access-points
- =
+I've been using bluez, ofono and pulseaudio for bluetooth audio tests for a
+few months. While everything worked fine with bluez 4, I've the need to
+include BLE tests which require bluez 5.
 
- if TEST
- testdir =3D $(pkglibdir)/test
-diff --git a/test/list-allowed-access-points b/test/list-allowed-access-poi=
-nts
-new file mode 100755
-index 0000000..c7bb50c
---- /dev/null
-+++ b/test/list-allowed-access-points
-@@ -0,0 +1,25 @@
-+#!/usr/bin/python3
-+
-+import dbus
-+
-+bus =3D dbus.SystemBus()
-+
-+manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
-+
-+modems =3D manager.GetModems()
-+
-+for path, properties in modems:
-+	if "org.ofono.AllowedAccessPoints" not in properties["Interfaces"]:
-+		continue
-+
-+	allowedAccessPoints =3D dbus.Interface(bus.get_object('org.ofono',
-+					path), 'org.ofono.AllowedAccessPoints')
-+
-+	apns =3D allowedAccessPoints.GetAllowedAccessPoints()
-+
-+	print("Allowed Access Points for [ %s ]" % (path))
-+	for apn in apns:
-+		print("    [ %s]" % (apn))
-+
-+print("")
--- =
+This leads to quite some changes regarding HSP and HFP. My main requirement
+is to test a bluetooth headset. Using pulseaudio with its native HSP
+support I can have audio both ways from and to my headset. As I would like
+to include the telephony features, I'm trying to move to ofono and HFP.
 
-1.9.1
+I've not found the current status of ofono and its HFP support. What use
+cases are currently supported (audio gateway and/or headset) ? I tried to
+configure pulseaudio to use ofono as HFP agent but I keep receiving the
+following message when switch from A2DH to HFP : "Refused to switch profile
+to headset_head_unit: Not connected"
 
+Is there any limitation or am I missing something ?
 
---===============8672216712844993513==--
+Thanks
+
+--===============6158187979970136774==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+PGRpdj48ZGl2PkhpIGFsbCw8YnI+PGJyPjwvZGl2PkkmIzM5O3ZlIGJl
+ZW4gdXNpbmcgYmx1ZXosIDxzcGFuIGNsYXNzPSIiPm9mb25vPC9zcGFuPgogYW5kIHB1bHNlYXVk
+aW8gZm9yIGJsdWV0b290aCBhdWRpbyB0ZXN0cyBmb3IgYSBmZXcgbW9udGhzLiBXaGlsZSAKZXZl
+cnl0aGluZyB3b3JrZWQgZmluZSB3aXRoIGJsdWV6IDQsIEkmIzM5O3ZlIHRoZSBuZWVkIHRvIGlu
+Y2x1ZGUgQkxFIHRlc3RzIAp3aGljaCByZXF1aXJlIGJsdWV6IDUuPGJyPjxicj48L2Rpdj48ZGl2
+PlRoaXMgbGVhZHMgdG8gcXVpdGUgc29tZSAKY2hhbmdlcyByZWdhcmRpbmcgSFNQIGFuZCBIRlAu
+IE15IG1haW4gcmVxdWlyZW1lbnQgaXMgdG8gdGVzdCBhIApibHVldG9vdGggaGVhZHNldC4gVXNp
+bmcgcHVsc2VhdWRpbyB3aXRoIGl0cyBuYXRpdmUgSFNQIHN1cHBvcnQgSSBjYW4gCmhhdmUgYXVk
+aW8gYm90aCB3YXlzIGZyb20gYW5kIHRvIG15IGhlYWRzZXQuIEFzIEkgd291bGQgbGlrZSB0byBp
+bmNsdWRlIAp0aGUgdGVsZXBob255IGZlYXR1cmVzLCBJJiMzOTttIHRyeWluZyB0byBtb3ZlIHRv
+IDxzcGFuIGNsYXNzPSIiPm9mb25vPC9zcGFuPiBhbmQgSEZQLjxicj48YnI+PC9kaXY+PGRpdj5J
+JiMzOTt2ZSBub3QgZm91bmQgdGhlIGN1cnJlbnQgc3RhdHVzIG9mIDxzcGFuIGNsYXNzPSIiPm9m
+b25vPC9zcGFuPgogYW5kIGl0cyBIRlAgc3VwcG9ydC4gV2hhdCB1c2UgY2FzZXMgYXJlIGN1cnJl
+bnRseSBzdXBwb3J0ZWQgKGF1ZGlvIApnYXRld2F5IGFuZC9vciBoZWFkc2V0KSA/IEkgdHJpZWQg
+dG8gY29uZmlndXJlIHB1bHNlYXVkaW8gdG8gdXNlIDxzcGFuIGNsYXNzPSIiPm9mb25vPC9zcGFu
+PgogYXMgSEZQIGFnZW50IGJ1dCBJIGtlZXAgcmVjZWl2aW5nIHRoZSBmb2xsb3dpbmcgbWVzc2Fn
+ZSB3aGVuIHN3aXRjaCAKZnJvbSBBMkRIIHRvIEhGUCA6ICZxdW90O1JlZnVzZWQgdG8gc3dpdGNo
+IHByb2ZpbGUgdG8gaGVhZHNldF9oZWFkX3VuaXQ6IE5vdCAKY29ubmVjdGVkJnF1b3Q7PGJyPjwv
+ZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+SXMgdGhlcmUgYW55IGxpbWl0YXRpb24gb3IgYW0gSSBt
+aXNzaW5nIHNvbWV0aGluZyA/PGJyPjxicj48L2Rpdj5UaGFua3M8L2Rpdj4K
+
+--===============6158187979970136774==--
 
