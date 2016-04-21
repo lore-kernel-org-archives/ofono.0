@@ -1,102 +1,118 @@
-Content-Type: multipart/mixed; boundary="===============3392582837959143533=="
+Content-Type: multipart/mixed; boundary="===============6986270751012332905=="
 MIME-Version: 1.0
-From: caiwen.zhang@intel.com
-Subject: [PATCH] plugins/ril: Move GPRS atom creating to 'post_online' state
-Date: Thu, 21 Apr 2016 16:15:34 +0800
-Message-ID: <1461226534-1788-1-git-send-email-caiwen.zhang@intel.com>
+From: Dragos Tatulea <dragos@endocode.com>
+Subject: Re: Ublox Toby Modem
+Date: Thu, 21 Apr 2016 11:03:55 +0200
+Message-ID: <5718977B.7030909@endocode.com>
+In-Reply-To: <5717C244.3080302@gmx.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3392582837959143533==
+--===============6986270751012332905==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Caiwen Zhang <caiwen.zhang@intel.com>
+Hi Yarn,
 
-At gprs atom 'probe' state, max cid query may fail due to rild
-status isn't RADIO_STATUS_ON. It causes gprs atom is removed, gprs
-feature is inavailable. Move gprs atom creating to 'post_online'
-state to make sure rild status is RADIO_STATUS_ON when query max
-cid.
----
- plugins/ril.c | 36 +++++++++++++++++-------------------
- 1 file changed, 17 insertions(+), 19 deletions(-)
+On 04/20/2016 07:54 PM, Yorn wrote:
+> Hi Dragos,
+> =
 
-diff --git a/plugins/ril.c b/plugins/ril.c
-index ea50d76..b66664a 100644
---- a/plugins/ril.c
-+++ b/plugins/ril.c
-@@ -215,8 +215,6 @@ void ril_pre_sim(struct ofono_modem *modem)
- void ril_post_sim(struct ofono_modem *modem)
- {
- 	struct ril_data *rd =3D ofono_modem_get_data(modem);
--	struct ofono_gprs *gprs;
--	struct ofono_gprs_context *gc;
- 	struct ofono_message_waiting *mw;
- =
+> logs + comments inline
+> =
 
- 	/* TODO: this function should setup:
-@@ -226,23 +224,6 @@ void ril_post_sim(struct ofono_modem *modem)
- 	 */
- 	ofono_sms_create(modem, rd->vendor, RILMODEM, rd->ril);
- =
+> Am 20.04.2016 um 17:01 schrieb Dragos Tatulea:
+>> Hi Yorn,
+>>
+>> On 04/20/2016 04:24 PM, Yorn wrote:
+>>> Hi Dragos,
+>>>
+>>> it is still active=3D0 :(
+>>>
+>>> root(a)colibri-vf:~/test# ./list-contexts
+>>> [ /ublox_0 ]
+>>>      [ /ublox_0/context1 ]
+>>>          Username =3D
+>>>          AuthenticationMethod =3D chap
+>>>          Protocol =3D ip
+>>>          Name =3D Internet
+>>>          Settings =3D { }
+>>>          IPv6.Settings =3D { }
+>>>          Active =3D 0
+>>>          AccessPointName =3D
+>>>          Password =3D
+>>>          Type =3D internet
+>>>
+>> Can you run only oFono (no connman) with OFONO_AT_DEBUG env variable set
+>> and run the following scripts:
+>>
+>> enable-modem
+>> online-modem
+>> activate-context
+>>
+>> Then send the logs.
+> Here they are [1]
+> =
 
--	gprs =3D ofono_gprs_create(modem, rd->vendor, RILMODEM, rd->ril);
--	gc =3D ofono_gprs_context_create(modem, rd->vendor, RILMODEM, rd->ril);
--
--	if (gc) {
--		ofono_gprs_context_set_type(gc,
--					OFONO_GPRS_CONTEXT_TYPE_INTERNET);
--		ofono_gprs_add_context(gprs, gc);
--	}
--
--	gc =3D ofono_gprs_context_create(modem, rd->vendor, RILMODEM, rd->ril);
--
--	if (gc) {
--		ofono_gprs_context_set_type(gc,
--					OFONO_GPRS_CONTEXT_TYPE_MMS);
--		ofono_gprs_add_context(gprs, gc);
--	}
--
- 	mw =3D ofono_message_waiting_create(modem);
- 	if (mw)
- 		ofono_message_waiting_register(mw);
-@@ -255,11 +236,28 @@ void ril_post_sim(struct ofono_modem *modem)
- void ril_post_online(struct ofono_modem *modem)
- {
- 	struct ril_data *rd =3D ofono_modem_get_data(modem);
-+	struct ofono_gprs *gprs;
-+	struct ofono_gprs_context *gc;
- =
+> I set the context information now as follows:
+> root(a)colibri-vf:~/test# ./list-contexts
+> [ /ublox_0 ]
+>     [ /ublox_0/context1 ]
+>         Username =3D eplus
+>         AuthenticationMethod =3D chap
+>         Protocol =3D ip
+>         Name =3D Internet
+>         Settings =3D { }
+>         IPv6.Settings =3D { }
+>         Active =3D 0
+>         AccessPointName =3D m2m.tele2.com
+>         Password =3D
+>         Type =3D internet
+> =
 
- 	ofono_netreg_create(modem, rd->vendor, RILMODEM, rd->ril);
- 	ofono_ussd_create(modem, rd->vendor, RILMODEM, rd->ril);
- 	ofono_call_settings_create(modem, rd->vendor, RILMODEM, rd->ril);
- 	ofono_call_barring_create(modem, rd->vendor, RILMODEM, rd->ril);
-+	gprs =3D ofono_gprs_create(modem, rd->vendor, RILMODEM, rd->ril);
-+	gc =3D ofono_gprs_context_create(modem, rd->vendor, RILMODEM, rd->ril);
-+
-+	if (gc) {
-+		ofono_gprs_context_set_type(gc,
-+					OFONO_GPRS_CONTEXT_TYPE_INTERNET);
-+		ofono_gprs_add_context(gprs, gc);
-+	}
-+
-+	gc =3D ofono_gprs_context_create(modem, rd->vendor, RILMODEM, rd->ril);
-+
-+	if (gc) {
-+		ofono_gprs_context_set_type(gc, OFONO_GPRS_CONTEXT_TYPE_MMS);
-+		ofono_gprs_add_context(gprs, gc);
-+	}
- }
- =
+> =
 
- static void ril_set_online_cb(struct ril_msg *message, gpointer user_data)
+Okay. That's good for the next step.
+
+> I would expect AT Commands like this, however, I am not a modem AT comman=
+d expert, so this is more or less taken from a tutorial (which set up my ma=
+nual environment successfully)
+> =
+
+> AT+COPS?
+> AT+CGDCONT=3D1,"IP","m2m.tele2.com"
+> ATD*99***1#
+> AT+CGACT=3D1,1
+It never gets to do a context activation because the modem is not gprs
+attached (see Attached state). The reason for that seems to be the
+RoamingAllowed property not being set to true/1. Try to set  it to true
+(set-roaming-allowed) and try again.
+
+> AT+CGDATA=3D"PPP",1
+> CONNECT ""
+> =
+
+
+Also, Toby doesn't use PPP in high throughput mode. It uses an ndis
+interface (you should see a usbX interface popping up when inserting
+the powered up modem on usb).
+
+Thanks
 -- =
 
-1.9.1
+Dragos Tatulea
+Software Developer @ Endocode AG
+dragos(a)endocode.com
 
+Endocode AG, Br=C3=BCckenstra=C3=9Fe 5A, 10179 Berlin
++49 30 1206 4472 | info(a)endocode.com | www.endocode.com
 
---===============3392582837959143533==--
+Vorstandsvorsitzender: Mirko Boehm
+Vorst=C3=A4nde: Dr. Thomas Fricke, Sebastian Sucker
+Aufsichtsratsvorsitzende: Alexandra Boehm
+
+Registergericht: Amtsgericht Charlottenburg - HRB 150748 B
+
+--===============6986270751012332905==--
 
