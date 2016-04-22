@@ -1,42 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============4418820138696204118=="
+Content-Type: multipart/mixed; boundary="===============4198560523239818020=="
 MIME-Version: 1.0
 From: John Ernberg <john.ernberg@actia.se>
-Subject: [PATCH] voicecall: limit g_drivers variable exposure
-Date: Fri, 22 Apr 2016 13:06:11 +0000
-Message-ID: <1461330367-19383-2-git-send-email-john.ernberg@actia.se>
-In-Reply-To: <1461330367-19383-1-git-send-email-john.ernberg@actia.se>
+Subject: [PATCH 0/5] Clean up atoms on modem_unregister
+Date: Fri, 22 Apr 2016 13:07:15 +0000
+Message-ID: <1461330431-20206-1-git-send-email-john.ernberg@actia.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4418820138696204118==
+--===============4198560523239818020==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: John Ernberg <john.ernberg@actia.se>
 
----
- src/voicecall.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+When using e.g. a USB modem and it's unplugged oFono may crash with a
+SIGSEGV or SIGFPE due to atoms not getting cleaned up properly.
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index c9b1b43..2d15d12 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -47,7 +47,7 @@
- #define SETTINGS_STORE "voicecall"
- #define SETTINGS_GROUP "Settings"
- =
+John Ernberg (5):
+  modem: clean up atoms on modem_unregister
+  bluez4: track and clean up atom watches
+  bluez5: track and clean up atom watches
+  push notification: track and clean up atom watches
+  smart messaging: track and clean up atom watches
 
--GSList *g_drivers =3D NULL;
-+static GSList *g_drivers =3D NULL;
- =
+ plugins/dun_gw_bluez4.c     | 24 ++++++++++++++++++++++--
+ plugins/dun_gw_bluez5.c     | 24 ++++++++++++++++++++++--
+ plugins/hfp_ag_bluez4.c     | 25 ++++++++++++++++++++++---
+ plugins/hfp_ag_bluez5.c     | 36 +++++++++++++++++++++++++++++++-----
+ plugins/push-notification.c | 26 +++++++++++++++++++++++---
+ plugins/smart-messaging.c   | 26 +++++++++++++++++++++++---
+ src/modem.c                 |  3 +++
+ 7 files changed, 146 insertions(+), 18 deletions(-)
 
- struct ofono_voicecall {
- 	GSList *call_list;
 -- =
 
 1.9.1
 
---===============4418820138696204118==--
+--===============4198560523239818020==--
 
