@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============7572860678771165450=="
+Content-Type: multipart/mixed; boundary="===============0983871848913637433=="
 MIME-Version: 1.0
 From: John Ernberg <john.ernberg@actia.se>
-Subject: [PATCH 17/24] simutil: don't rely on undefined behavior when casting
+Subject: [PATCH 18/24] sms: don't rely on undefined behavior when casting
  function pointers
 Date: Fri, 22 Apr 2016 13:10:07 +0000
-Message-ID: <1461330601-21333-18-git-send-email-john.ernberg@actia.se>
-In-Reply-To: <1461330601-21333-17-git-send-email-john.ernberg@actia.se>
+Message-ID: <1461330601-21333-19-git-send-email-john.ernberg@actia.se>
+In-Reply-To: <1461330601-21333-18-git-send-email-john.ernberg@actia.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7572860678771165450==
+--===============0983871848913637433==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,41 +17,55 @@ Content-Transfer-Encoding: quoted-printable
 From: John Ernberg <john.ernberg@actia.se>
 
 ---
- src/simutil.c | 6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+ src/sms.c | 9 +++------
+ 1 file changed, 3 insertions(+), 6 deletions(-)
 
-diff --git a/src/simutil.c b/src/simutil.c
-index 5f8c8b8..4731d3b 100644
---- a/src/simutil.c
-+++ b/src/simutil.c
-@@ -980,8 +980,7 @@ void sim_spdi_free(struct sim_spdi *spdi)
- 	if (spdi =3D=3D NULL)
+diff --git a/src/sms.c b/src/sms.c
+index 72972b2..17c5a9c 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -988,8 +988,7 @@ static DBusMessage *sms_send_message(DBusConnection *co=
+nn, DBusMessage *msg,
+ 	err =3D __ofono_sms_txq_submit(sms, msg_list, flags, &uuid,
+ 					message_queued, msg);
+ =
+
+-	g_slist_foreach(msg_list, (GFunc) g_free, NULL);
+-	g_slist_free(msg_list);
++	g_slist_free_full(msg_list, g_free);
+ =
+
+ 	if (err < 0)
+ 		return __ofono_error_failed(msg);
+@@ -1425,8 +1424,7 @@ static void handle_deliver(struct ofono_sms *sms, con=
+st struct sms *incoming)
+ 			return;
+ =
+
+ 		sms_dispatch(sms, sms_list);
+-		g_slist_foreach(sms_list, (GFunc) g_free, NULL);
+-		g_slist_free(sms_list);
++		g_slist_free_full(sms_list, g_free);
+ =
+
  		return;
+ 	}
+@@ -1946,8 +1944,7 @@ static void sms_restore_tx_queue(struct ofono_sms *sm=
+s)
+ 		g_queue_push_tail(sms->txq, txq_entry);
  =
 
--	g_slist_foreach(spdi->operators, (GFunc)g_free, NULL);
--	g_slist_free(spdi->operators);
-+	g_slist_free_full(spdi->operators, g_free);
- 	g_free(spdi);
- }
+ loop_out:
+-		g_slist_foreach(backup_entry->msg_list, (GFunc)g_free, NULL);
+-		g_slist_free(backup_entry->msg_list);
++		g_slist_free_full(backup_entry->msg_list, g_free);
+ 		g_free(backup_entry);
+ 	}
  =
 
-@@ -1088,8 +1087,7 @@ void sim_eons_free(struct sim_eons *eons)
- =
-
- 	g_free(eons->pnn_list);
- =
-
--	g_slist_foreach(eons->opl_list, (GFunc)g_free, NULL);
--	g_slist_free(eons->opl_list);
-+	g_slist_free_full(eons->opl_list, g_free);
- =
-
- 	g_free(eons);
- }
 -- =
 
 1.9.1
 
---===============7572860678771165450==--
+--===============0983871848913637433==--
 
