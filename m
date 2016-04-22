@@ -1,25 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============4772185676200542160=="
+Content-Type: multipart/mixed; boundary="===============6012846633621784018=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] rilmodem: Add IPv6 support in gprs-context
-Date: Fri, 22 Apr 2016 14:17:20 -0500
-Message-ID: <571A78C0.5040800@gmail.com>
-In-Reply-To: <1461295548-21423-1-git-send-email-nishanth.v@intel.com>
+Subject: Re: [PATCH] voicecall: fix CreateMultiparty method introspection
+Date: Fri, 22 Apr 2016 14:18:46 -0500
+Message-ID: <571A7916.1060201@gmail.com>
+In-Reply-To: <1461330367-19383-1-git-send-email-john.ernberg@actia.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4772185676200542160==
+--===============6012846633621784018==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nishanth,
+Hi John,
 
-On 04/21/2016 10:25 PM, Nishanth V wrote:
+On 04/22/2016 08:06 AM, John Ernberg wrote:
+> From: John Ernberg <john.ernberg@actia.se>
+>
+> This caused problems with stricter dbus wrappers such as dbus-c++.
+>
 > ---
->   drivers/rilmodem/gprs-context.c | 251 +++++++++++++++++++++++++++++++++=
-++-----
->   1 file changed, 225 insertions(+), 26 deletions(-)
+>   src/voicecall.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
 >
 
 Applied, thanks.
@@ -28,5 +31,5 @@ Regards,
 -Denis
 
 
---===============4772185676200542160==--
+--===============6012846633621784018==--
 
