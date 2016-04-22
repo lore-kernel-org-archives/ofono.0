@@ -1,26 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============4974728538238857153=="
+Content-Type: multipart/mixed; boundary="===============7008680547836638868=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] voicecall: limit g_drivers variable exposure
-Date: Fri, 22 Apr 2016 14:19:28 -0500
-Message-ID: <571A7940.5010707@gmail.com>
-In-Reply-To: <1461330367-19383-2-git-send-email-john.ernberg@actia.se>
+Subject: Re: [PATCH] plugins/ril: Move GPRS atom creating to 'post_online'
+ state
+Date: Fri, 22 Apr 2016 14:20:17 -0500
+Message-ID: <571A7971.8030906@gmail.com>
+In-Reply-To: <1461226534-1788-1-git-send-email-caiwen.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4974728538238857153==
+--===============7008680547836638868==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi John,
+Hi Caiwen,
 
-On 04/22/2016 08:06 AM, John Ernberg wrote:
-> From: John Ernberg <john.ernberg@actia.se>
+On 04/21/2016 03:15 AM, caiwen.zhang(a)intel.com wrote:
+> From: Caiwen Zhang <caiwen.zhang@intel.com>
 >
+> At gprs atom 'probe' state, max cid query may fail due to rild
+> status isn't RADIO_STATUS_ON. It causes gprs atom is removed, gprs
+> feature is inavailable. Move gprs atom creating to 'post_online'
+> state to make sure rild status is RADIO_STATUS_ON when query max
+> cid.
 > ---
->   src/voicecall.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
+>   plugins/ril.c | 36 +++++++++++++++++-------------------
+>   1 file changed, 17 insertions(+), 19 deletions(-)
 >
 
 Applied, thanks.
@@ -29,5 +35,5 @@ Regards,
 -Denis
 
 
---===============4974728538238857153==--
+--===============7008680547836638868==--
 
