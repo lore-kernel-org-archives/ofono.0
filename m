@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============0796572632413320134=="
+Content-Type: multipart/mixed; boundary="===============0207673665710242163=="
 MIME-Version: 1.0
 From: John Ernberg <john.ernberg@actia.se>
-Subject: [PATCH 14/24] phonebook: don't rely on undefined behavior when
- casting function pointers
+Subject: [PATCH 15/24] sim: don't rely on undefined behavior when casting
+ function pointers
 Date: Fri, 22 Apr 2016 13:10:07 +0000
-Message-ID: <1461330601-21333-15-git-send-email-john.ernberg@actia.se>
-In-Reply-To: <1461330601-21333-14-git-send-email-john.ernberg@actia.se>
+Message-ID: <1461330601-21333-16-git-send-email-john.ernberg@actia.se>
+In-Reply-To: <1461330601-21333-15-git-send-email-john.ernberg@actia.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0796572632413320134==
+--===============0207673665710242163==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,94 +17,120 @@ Content-Transfer-Encoding: quoted-printable
 From: John Ernberg <john.ernberg@actia.se>
 
 ---
- src/phonebook.c | 24 ++++++++++++++----------
- 1 file changed, 14 insertions(+), 10 deletions(-)
+ src/sim.c | 29 ++++++++++-------------------
+ 1 file changed, 10 insertions(+), 19 deletions(-)
 
-diff --git a/src/phonebook.c b/src/phonebook.c
-index 531b5a6..07bfcae 100644
---- a/src/phonebook.c
-+++ b/src/phonebook.c
-@@ -233,23 +233,28 @@ static void vcard_printf_end(GString *vcards)
- 	vcard_printf(vcards, "");
+diff --git a/src/sim.c b/src/sim.c
+index bcf5afd..94d8840 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -321,8 +321,9 @@ static char **get_service_numbers(GSList *service_numbe=
+rs)
+ 	return ret;
  }
  =
 
--static void print_number(struct phonebook_number *pn, GString *vcards)
-+static void print_number(gpointer pointer, gpointer user_data)
+-static void service_number_free(struct service_number *num)
++static void service_number_free(gpointer pointer)
  {
-+	struct phonebook_number *pn =3D pointer;
-+	GString *vcards =3D user_data;
- 	vcard_printf_number(vcards, pn->number, pn->type, pn->category);
++	struct service_number *num =3D pointer;
+ 	g_free(num->id);
+ 	g_free(num);
  }
+@@ -615,8 +616,7 @@ static DBusMessage *sim_set_property(DBusConnection *co=
+nn, DBusMessage *msg,
+ 		set_ok =3D set_own_numbers(sim, own_numbers, msg);
  =
 
--static void destroy_number(struct phonebook_number *pn)
-+static void destroy_number(gpointer pointer)
- {
-+	struct phonebook_number *pn =3D pointer;
- 	g_free(pn->number);
- 	g_free(pn);
- }
+ error:
+-		g_slist_foreach(own_numbers, (GFunc) g_free, 0);
+-		g_slist_free(own_numbers);
++		g_slist_free_full(own_numbers, g_free);
  =
 
--static void print_merged_entry(struct phonebook_person *person, GString *v=
-cards)
-+static void print_merged_entry(gpointer pointer, gpointer user_data)
- {
-+	struct phonebook_person *person =3D pointer;
-+	GString *vcards =3D user_data;
- 	vcard_printf_begin(vcards);
- 	vcard_printf_text(vcards, person->text);
+ 		if (set_ok)
+ 			return NULL;
+@@ -1195,8 +1195,7 @@ check:
+ 		char **own_numbers;
+ 		DBusConnection *conn =3D ofono_dbus_get_connection();
  =
 
--	g_slist_foreach(person->number_list, (GFunc) print_number, vcards);
-+	g_slist_foreach(person->number_list, print_number, vcards);
+-		g_slist_foreach(sim->own_numbers, (GFunc) g_free, NULL);
+-		g_slist_free(sim->own_numbers);
++		g_slist_free_full(sim->own_numbers, g_free);
+ 		sim->own_numbers =3D sim->new_numbers;
  =
 
- 	vcard_printf_group(vcards, person->group);
- 	vcard_printf_email(vcards, person->email);
-@@ -257,15 +262,15 @@ static void print_merged_entry(struct phonebook_perso=
-n *person, GString *vcards)
- 	vcard_printf_end(vcards);
- }
+ 		own_numbers =3D get_own_numbers(sim->own_numbers);
+@@ -1208,8 +1207,7 @@ check:
  =
 
--static void destroy_merged_entry(struct phonebook_person *person)
-+static void destroy_merged_entry(gpointer pointer)
- {
-+	struct phonebook_person *person =3D pointer;
- 	g_free(person->text);
- 	g_free(person->group);
- 	g_free(person->email);
- 	g_free(person->sip_uri);
+ 		g_strfreev(own_numbers);
+ 	} else {
+-		g_slist_foreach(sim->new_numbers, (GFunc) g_free, NULL);
+-		g_slist_free(sim->new_numbers);
++		g_slist_free_full(sim->new_numbers, g_free);
+ 	}
  =
 
--	g_slist_foreach(person->number_list, (GFunc) destroy_number, NULL);
--	g_slist_free(person->number_list);
-+	g_slist_free_full(person->number_list, destroy_number);
+ 	sim->new_numbers =3D NULL;
+@@ -1302,9 +1300,7 @@ static void sim_service_numbers_changed(int id, void =
+*userdata)
+ 	struct ofono_sim *sim =3D userdata;
  =
 
- 	g_free(person);
- }
-@@ -419,10 +424,9 @@ static void export_phonebook_cb(const struct ofono_err=
-or *error, void *data)
+ 	if (sim->service_numbers) {
+-		g_slist_foreach(sim->service_numbers,
+-				(GFunc)service_number_free, NULL);
+-		g_slist_free(sim->service_numbers);
++		g_slist_free_full(sim->service_numbers, service_number_free);
+ 		sim->service_numbers =3D NULL;
+ 	}
  =
 
- 	/* convert the collected entries that are already merged to vcard */
- 	phonebook->merge_list =3D g_slist_reverse(phonebook->merge_list);
--	g_slist_foreach(phonebook->merge_list, (GFunc) print_merged_entry,
-+	g_slist_foreach(phonebook->merge_list, print_merged_entry,
- 				phonebook->vcards);
--	g_slist_foreach(phonebook->merge_list, (GFunc) destroy_merged_entry,
--				NULL);
-+	g_slist_free_full(phonebook->merge_list, destroy_merged_entry);
- 	g_slist_free(phonebook->merge_list);
- 	phonebook->merge_list =3D NULL;
+@@ -2025,13 +2021,11 @@ skip_efpl:
+ 	}
  =
 
+ 	if (efli) {
+-		g_slist_foreach(efli, (GFunc)g_free, NULL);
+-		g_slist_free(efli);
++		g_slist_free_full(efli, g_free);
+ 	}
+ =
+
+ 	if (efpl) {
+-		g_slist_foreach(efpl, (GFunc)g_free, NULL);
+-		g_slist_free(efpl);
++		g_slist_free_full(efpl, g_free);
+ 	}
+ =
+
+ 	if (sim->language_prefs !=3D NULL)
+@@ -2394,15 +2388,12 @@ static void sim_free_main_state(struct ofono_sim *s=
+im)
+ 	sim->mnc[0] =3D '\0';
+ =
+
+ 	if (sim->own_numbers) {
+-		g_slist_foreach(sim->own_numbers, (GFunc)g_free, NULL);
+-		g_slist_free(sim->own_numbers);
++		g_slist_free_full(sim->own_numbers, g_free);
+ 		sim->own_numbers =3D NULL;
+ 	}
+ =
+
+ 	if (sim->service_numbers) {
+-		g_slist_foreach(sim->service_numbers,
+-				(GFunc)service_number_free, NULL);
+-		g_slist_free(sim->service_numbers);
++		g_slist_free_full(sim->service_numbers, service_number_free);
+ 		sim->service_numbers =3D NULL;
+ 		sim->sdn_ready =3D FALSE;
+ 	}
 -- =
 
 1.9.1
 
---===============0796572632413320134==--
+--===============0207673665710242163==--
 
