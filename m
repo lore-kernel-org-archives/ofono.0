@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============7951778772762949797=="
+Content-Type: multipart/mixed; boundary="===============6322100339116361627=="
 MIME-Version: 1.0
 From: John Ernberg <john.ernberg@actia.se>
-Subject: [PATCH 07/24] bluez4: don't rely on undefined behavior when casting
+Subject: [PATCH 05/24] stemodem: don't rely on undefined behavior when casting
  function pointers
 Date: Fri, 22 Apr 2016 13:10:06 +0000
-Message-ID: <1461330601-21333-8-git-send-email-john.ernberg@actia.se>
-In-Reply-To: <1461330601-21333-7-git-send-email-john.ernberg@actia.se>
+Message-ID: <1461330601-21333-6-git-send-email-john.ernberg@actia.se>
+In-Reply-To: <1461330601-21333-5-git-send-email-john.ernberg@actia.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7951778772762949797==
+--===============6322100339116361627==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,55 +17,30 @@ Content-Transfer-Encoding: quoted-printable
 From: John Ernberg <john.ernberg@actia.se>
 
 ---
- plugins/bluez4.c | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ drivers/stemodem/voicecall.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/plugins/bluez4.c b/plugins/bluez4.c
-index 6a29d9f..0558da3 100644
---- a/plugins/bluez4.c
-+++ b/plugins/bluez4.c
-@@ -225,8 +225,7 @@ void bluetooth_parse_properties(DBusMessage *reply, con=
-st char *property, ...)
- 	}
+diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+index 1cbf51a..356ab7c 100644
+--- a/drivers/stemodem/voicecall.c
++++ b/drivers/stemodem/voicecall.c
+@@ -574,8 +574,7 @@ static void ste_voicecall_remove(struct ofono_voicecall=
+ *vc)
+ {
+ 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
  =
 
- done:
--	g_slist_foreach(prop_handlers, (GFunc) g_free, NULL);
--	g_slist_free(prop_handlers);
-+	g_slist_free_full(prop_handlers, g_free);
- }
+-	g_slist_foreach(vd->calls, (GFunc) g_free, NULL);
+-	g_slist_free(vd->calls);
++	g_slist_free_full(vd->calls, g_free);
  =
 
- static void parse_uuids(DBusMessageIter *array, gpointer user_data)
-@@ -692,7 +691,7 @@ static void find_adapter_cb(DBusPendingCall *call, gpoi=
-nter user_data)
+ 	ofono_voicecall_set_data(vc, NULL);
  =
 
- 	adapter_any_path =3D g_strdup(path);
- =
-
--	g_slist_foreach(server_list, (GFunc) add_record, NULL);
-+	g_slist_foreach(server_list, add_record, NULL);
- =
-
- done:
- 	dbus_message_unref(reply);
-@@ -820,7 +819,7 @@ static void bluetooth_disconnect(DBusConnection *conn, =
-void *user_data)
- =
-
- 	g_hash_table_foreach(uuid_hash, bluetooth_remove, NULL);
- =
-
--	g_slist_foreach(server_list, (GFunc) remove_service_handle, NULL);
-+	g_slist_foreach(server_list, remove_service_handle, NULL);
- }
- =
-
- static guint bluetooth_watch;
 -- =
 
 1.9.1
 
---===============7951778772762949797==--
+--===============6322100339116361627==--
 
