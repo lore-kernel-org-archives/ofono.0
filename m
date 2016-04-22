@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============7860355428344880683=="
+Content-Type: multipart/mixed; boundary="===============4115936953583326422=="
 MIME-Version: 1.0
 From: John Ernberg <john.ernberg@actia.se>
-Subject: [PATCH 12/24] modem: don't rely on undefined behavior when casting
+Subject: [PATCH 13/24] network: don't rely on undefined behavior when casting
  function pointers
 Date: Fri, 22 Apr 2016 13:10:07 +0000
-Message-ID: <1461330601-21333-13-git-send-email-john.ernberg@actia.se>
-In-Reply-To: <1461330601-21333-12-git-send-email-john.ernberg@actia.se>
+Message-ID: <1461330601-21333-14-git-send-email-john.ernberg@actia.se>
+In-Reply-To: <1461330601-21333-13-git-send-email-john.ernberg@actia.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7860355428344880683==
+--===============4115936953583326422==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,35 +17,29 @@ Content-Transfer-Encoding: quoted-printable
 From: John Ernberg <john.ernberg@actia.se>
 
 ---
- src/modem.c | 6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+ src/network.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/src/modem.c b/src/modem.c
-index a89fa48..b1e8d3e 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -2083,12 +2083,10 @@ static void modem_unregister(struct ofono_modem *mo=
-dem)
- 	modem->sim_watch =3D 0;
- 	modem->sim_ready_watch =3D 0;
+diff --git a/src/network.c b/src/network.c
+index 8ad11d3..a3d41a7 100644
+--- a/src/network.c
++++ b/src/network.c
+@@ -746,8 +746,7 @@ static gboolean update_operator_list(struct ofono_netre=
+g *netreg, int total,
+ 		}
+ 	}
  =
 
--	g_slist_foreach(modem->interface_list, (GFunc) g_free, NULL);
--	g_slist_free(modem->interface_list);
-+	g_slist_free_full(modem->interface_list, g_free);
- 	modem->interface_list =3D NULL;
+-	g_slist_foreach(compressed, (GFunc)g_free, NULL);
+-	g_slist_free(compressed);
++	g_slist_free_full(compressed, g_free);
  =
 
--	g_slist_foreach(modem->feature_list, (GFunc) g_free, NULL);
--	g_slist_free(modem->feature_list);
-+	g_slist_free_full(modem->feature_list, g_free);
- 	modem->feature_list =3D NULL;
- =
-
- 	if (modem->timeout) {
+ 	if (n)
+ 		n =3D g_slist_reverse(n);
 -- =
 
 1.9.1
 
---===============7860355428344880683==--
+--===============4115936953583326422==--
 
