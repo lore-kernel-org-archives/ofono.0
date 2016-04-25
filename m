@@ -1,84 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============1430987290172938362=="
+Content-Type: multipart/mixed; boundary="===============2376393146452951883=="
 MIME-Version: 1.0
 From: John Ernberg <john.ernberg@actia.se>
-Subject: Re: [PATCH 20/24] stk: don't rely on undefined behavior when casting
- function pointers
-Date: Mon, 25 Apr 2016 06:38:42 +0000
-Message-ID: <571DBB6D.8010207@actia.se>
-In-Reply-To: <571A8D27.6060006@gmail.com>
+Subject: Re: [PATCH 1/5] modem: clean up atoms on modem_unregister
+Date: Mon, 25 Apr 2016 06:55:07 +0000
+Message-ID: <571DBF4C.5040501@actia.se>
+In-Reply-To: <571A7A9B.3010806@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1430987290172938362==
+--===============2376393146452951883==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dennis,
+Hi Denis,
 
-On 04/22/2016 10:44 PM, Denis Kenzior wrote:
+On 04/22/2016 09:25 PM, Denis Kenzior wrote:
 > Hi John,
 >
-> On 04/22/2016 08:10 AM, John Ernberg wrote:
+> On 04/22/2016 08:07 AM, John Ernberg wrote:
 >> From: John Ernberg <john.ernberg@actia.se>
 >>
+>> This resolves a crash that can happen when a e.g. usb modem is removed.
 >> ---
->>   src/stk.c | 10 +++++++---
->>   1 file changed, 7 insertions(+), 3 deletions(-)
+>>   src/modem.c | 3 +++
+>>   1 file changed, 3 insertions(+)
 >>
->> diff --git a/src/stk.c b/src/stk.c
->> index 01c95b5..16c7152 100644
->> --- a/src/stk.c
->> +++ b/src/stk.c
->> @@ -2315,8 +2315,7 @@ static gboolean handle_command_refresh(const =
+>> diff --git a/src/modem.c b/src/modem.c
+>> index a89fa48..4968839 100644
+>> --- a/src/modem.c
+>> +++ b/src/modem.c
+>> @@ -2071,6 +2071,9 @@ static void modem_unregister(struct ofono_modem =
 
->> struct stk_command *cmd,
->>               break;
->>           }
+>> *modem)
+>>       if (modem->powered =3D=3D TRUE)
+>>           set_powered(modem, FALSE);
 >>
->> -        g_slist_foreach(file_list, (GFunc) g_free, NULL);
->> -        g_slist_free(file_list);
->> +        g_slist_free_full(file_list, g_free);
->>
->>           return FALSE;
->>       }
->> @@ -3131,6 +3130,11 @@ void ofono_stk_driver_unregister(const struct =
-
->> ofono_stk_driver *d)
->>       g_drivers =3D g_slist_remove(g_drivers, (void *) d);
->>   }
->>
->> +static void free_envelope_item(gpointer pointer, gpointer user_data)
->> +{
->> +    g_free(pointer);
->> +}
+>
+> So in theory, set_powered calls flush_atoms...
+>
+>> +    if (modem->atoms)
+>> +        flush_atoms(modem, MODEM_STATE_POWER_OFF);
 >> +
->>   static void stk_unregister(struct ofono_atom *atom)
->>   {
->>       struct ofono_stk *stk =3D __ofono_atom_get_data(atom);
->> @@ -3163,7 +3167,7 @@ static void stk_unregister(struct ofono_atom =
-
->> *atom)
->>           stk->main_menu =3D NULL;
->>       }
->>
->> -    g_queue_foreach(stk->envelope_q, (GFunc) g_free, NULL);
->> +    g_queue_foreach(stk->envelope_q, free_envelope_item, NULL);
 >
-> Why not g_queue_free_full?
-It would require a glib required version bump from 2.28 to 2.32, the =
-
-solution in the patch is 2.28 friendly. If it's ok to bump glib, I will =
-
-redo the patch to use g_queue_free_full instead.
+> So why is this needed?
 >
->>       g_queue_free(stk->envelope_q);
+> Do you have a stack trace handy?
+>
+>> __ofono_watchlist_free(modem->atom_watches);
+>>       modem->atom_watches =3D NULL;
 >>
->>       ofono_modem_remove_interface(modem, OFONO_STK_INTERFACE);
 >>
 >
 > Regards,
 > -Denis
+I cannot reproduce this one where the atoms remained anymore and I don't =
+
+seem to have any saved stack traces.
+So let's drop this part of the series and assume PEBKAC for now.
+
 Best regards // John Ernberg
---===============1430987290172938362==--
+--===============2376393146452951883==--
 
