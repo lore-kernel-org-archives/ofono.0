@@ -1,31 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============1174576654856842941=="
+Content-Type: multipart/mixed; boundary="===============7870032398956352579=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: [PATCH v2 1/2] configure: Bump glib dependecy to 2.32
-Date: Tue, 26 Apr 2016 09:39:30 +0200
-Message-ID: <1444edf3-d876-9dd1-0cd2-0a84ed8760a2@monom.org>
-In-Reply-To: <1461651574-31530-2-git-send-email-john.ernberg@actia.se>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 0/2] [RFC] Clean up undefined function pointer casts
+Date: Tue, 26 Apr 2016 08:06:08 -0500
+Message-ID: <571F67C0.2050400@gmail.com>
+In-Reply-To: <1461651574-31530-1-git-send-email-john.ernberg@actia.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1174576654856842941==
+--===============7870032398956352579==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 04/26/2016 08:19 AM, John Ernberg wrote:
+Hi John,
 
-> -PKG_CHECK_MODULES(GLIB, glib-2.0 >=3D 2.28, dummy=3Dyes,
-> -				AC_MSG_ERROR(GLib >=3D 2.28 is required))
-> +PKG_CHECK_MODULES(GLIB, glib-2.0 >=3D 2.32, dummy=3Dyes,
-> +				AC_MSG_ERROR(GLib >=3D 2.32 is required))
+On 04/26/2016 01:19 AM, John Ernberg wrote:
+> From: John Ernberg <john.ernberg@actia.se>
+>
+> v2: Bump glib requirement to version 2.32 to gain access to g_queue_free_=
+full,
+> this saves using a wrapper function to clean up the queue in the stk.
+>
+> John Ernberg (2):
+>    configure: Bump glib dependecy to 2.32
+>    stk: clean up undefined function pointer casts
+>
+>   configure.ac | 4 ++--
+>   src/stk.c    | 6 ++----
+>   2 files changed, 4 insertions(+), 6 deletions(-)
+>
 
-Some time ago we had a discussion on the ConnMan mailing list doing the
-same thing. IIRC, 2.32 has a larger memory footprint compared to 2.28.
-That was an issue back than. Don't know if that is still relevant.
+Both applied, thanks.
 
-cheers,
-daniel
+Regards,
+-Denis
 
---===============1174576654856842941==--
+--===============7870032398956352579==--
 
