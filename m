@@ -1,34 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============1795397506183245183=="
+Content-Type: multipart/mixed; boundary="===============2181368020753767691=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim: Add support for query facility lock
-Date: Wed, 27 Apr 2016 10:32:12 -0500
-Message-ID: <5720DB7C.8050506@gmail.com>
-In-Reply-To: <1461770532-2676-1-git-send-email-samrat.guha.niyogi@intel.com>
+From: Samrat Guha Niyogi <samrat.guha.niyogi@intel.com>
+Subject: [PATCH] sim: include changes for query facility lock
+Date: Wed, 27 Apr 2016 21:03:04 +0530
+Message-ID: <1461771184-24640-1-git-send-email-samrat.guha.niyogi@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1795397506183245183==
+--===============2181368020753767691==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Samrat,
+---
+ include/sim.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-On 04/27/2016 10:22 AM, Samrat Guha Niyogi wrote:
-> ---
->   include/sim.h |  6 ++++++
->   src/sim.c     | 62 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   2 files changed, 68 insertions(+)
->
+diff --git a/include/sim.h b/include/sim.h
+index ed850f9..9470d4d 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -121,6 +121,9 @@ typedef void (*ofono_sim_lock_unlock_cb_t)(const struct=
+ ofono_error *error,
+ typedef void (*ofono_sim_locked_cb_t)(const struct ofono_error *error,
+ 					int locked, void *data);
+ =
 
-Please split this up into two.  One for include/sim.h and the other =
++typedef void (*ofono_query_facility_lock_cb_t)(const struct ofono_error *e=
+rror,
++					ofono_bool_t status, void *data);
++
+ struct ofono_sim_driver {
+ 	const char *name;
+ 	int (*probe)(struct ofono_sim *sim, unsigned int vendor, void *data);
+@@ -173,6 +176,9 @@ struct ofono_sim_driver {
+ 	void (*query_locked)(struct ofono_sim *sim,
+ 			enum ofono_sim_password_type type,
+ 			ofono_sim_locked_cb_t cb, void *data);
++	void (*query_facility_lock)(struct ofono_sim *sim,
++			enum ofono_sim_password_type lock,
++			ofono_query_facility_lock_cb_t cb, void *data);
+ };
+ =
 
-src/sim.c
+ int ofono_sim_driver_register(const struct ofono_sim_driver *d);
+-- =
 
-Regards,
--Denis
+1.9.1
 
---===============1795397506183245183==--
+
+--===============2181368020753767691==--
 
