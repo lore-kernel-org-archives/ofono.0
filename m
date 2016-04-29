@@ -1,457 +1,197 @@
-Content-Type: multipart/mixed; boundary="===============2978703599039203184=="
+Content-Type: multipart/mixed; boundary="===============7773008621979056424=="
 MIME-Version: 1.0
-From: Martin Chaplet <m.chaplet@kerlink.fr>
-Subject: Add Support for Sierra MC73xx
-Date: Fri, 29 Apr 2016 15:08:53 +0200
-Message-ID: <57235CE5.7070300@kerlink.fr>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Add Support for Sierra MC73xx
+Date: Fri, 29 Apr 2016 10:13:07 -0500
+Message-ID: <57237A03.6000807@gmail.com>
+In-Reply-To: <57235CE5.7070300@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2978703599039203184==
+--===============7773008621979056424==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi everybody,
+Hi Martin,
 
+On 04/29/2016 08:08 AM, Martin Chaplet wrote:
+> Hi everybody,
+>
+>
+> I'm trying to use MC7304 chip with ofono (yes, exactly like Dirk Meul
+> few months ago).
+>
+> It's a QMI-interfaced GSM.
+> I've used Bj=C3=B8rn Mork's patches and with a little hack in setup_sierra
+> (forcing qmi device name), the modem is "detected" and initialized.
+> ... But the "gprs" feature is not detected !
+>
+> I'm a newbie on ofono project ... Can anyone can explain me how the
+> features detection is done please ?
+>
+> FYI, Please find below ofono debug log :
+>
+>
+> ofonod[1110]: src/modem.c:ofono_modem_create() name: (null), type: sierra
+> ofonod[1110]: plugins/udevng.c:setup_sierra()
+> /sys/devices/soc0/soc.0/2100000.aips-bus/2184000.usb/ci_hdrc.0/usb1/1-1
+> ofonod[1110]: plugins/udevng.c:setup_sierra() /dev/ttyUSB0 255/255/255
+> 00 (null)
+> ofonod[1110]: plugins/udevng.c:setup_sierra() /dev/ttyUSB1 255/0/0 02 (nu=
+ll)
+> ofonod[1110]: plugins/udevng.c:setup_sierra() /dev/ttyUSB2 255/0/0 03 (nu=
+ll)
+> ofonod[1110]: plugins/udevng.c:setup_sierra() wwan0 255/255/255 08 (null)
+> ofonod[1110]: plugins/udevng.c:setup_sierra() wwan1 255/255/255 0a (null)
+> ofonod[1110]: plugins/udevng.c:setup_sierra() wwan2 255/255/255 0b (null)
 
-I'm trying to use MC7304 chip with ofono (yes, exactly like Dirk Meul
-few months ago).
+If this is a QMI card, then setup_sierra isn't the right place for this =
 
-It's a QMI-interfaced GSM.
-I've used Bj=C3=B8rn Mork's patches and with a little hack in setup_sierra
-(forcing qmi device name), the modem is "detected" and initialized.
-... But the "gprs" feature is not detected !
+detection.  It should likely be setup_gobi.
 
-I'm a newbie on ofono project ... Can anyone can explain me how the
-features detection is done please ?
+> ofonod[1110]: src/modem.c:ofono_modem_set_driver() type: gobi
+> ofonod[1110]: plugins/udevng.c:setup_sierra() modem=3D/dev/ttyUSB2
+> app=3D(null) net=3Dwwan0 diag=3D/dev/ttyUSB0 qmi=3D/dev/cdc-wdm1
+> ofonod[1110]: src/modem.c:set_modem_property() modem 0x20d4d28 property
+> Device
+> ofonod[1110]: src/modem.c:set_modem_property() modem 0x20d4d28 property
+> Modem
+> ofonod[1110]: src/modem.c:set_modem_property() modem 0x20d4d28 property A=
+pp
+> ofonod[1110]: src/modem.c:set_modem_property() modem 0x20d4d28 property D=
+iag
+> ofonod[1110]: src/modem.c:set_modem_property() modem 0x20d4d28 property
+> NetworkInterface
+> ofonod[1110]: src/modem.c:ofono_modem_register() 0x20d4d28
+> ofonod[1110]: plugins/gobi.c:gobi_probe() 0x20d4d28
+> ofonod[1110]: src/modem.c:emit_modem_added() 0x20d4d28
+> ofonod[1110]: src/modem.c:call_modemwatches() 0x20d4d28 added:1
+> ofonod[1110]: plugins/smart-messaging.c:modem_watch() modem: 0x20d4d28,
+> added: 1
+> ofonod[1110]: plugins/push-notification.c:modem_watch() modem:
+> 0x20d4d28, added: 1
+> ofonod[1110]: plugins/gobi.c:gobi_enable() 0x20d4d28
+> ofonod[1110]: src/modem.c:get_modem_property() modem 0x20d4d28 property
+> Device
+> ofonod[1110]: plugins/gobi.c:discover_cb()
+> ofonod[1110]: plugins/gobi.c:discover_cb() WDS 1.36
+> ofonod[1110]: plugins/gobi.c:discover_cb() DMS 1.14
+> ofonod[1110]: plugins/gobi.c:discover_cb() NAS 1.25
+> ofonod[1110]: plugins/gobi.c:discover_cb() QOS 1.3
+> ofonod[1110]: plugins/gobi.c:discover_cb() WMS 1.10
+> ofonod[1110]: plugins/gobi.c:discover_cb() PDS 1.0
+> ofonod[1110]: plugins/gobi.c:discover_cb() AUTH 1.2
+> ofonod[1110]: plugins/gobi.c:discover_cb() AT 1.2
+> ofonod[1110]: plugins/gobi.c:discover_cb() VOICE 2.1
+> ofonod[1110]: plugins/gobi.c:discover_cb() CAT 2.16
+> ofonod[1110]: plugins/gobi.c:discover_cb() UIM 1.25
+> ofonod[1110]: plugins/gobi.c:discover_cb() PBM 1.4
+> ofonod[1110]: plugins/gobi.c:discover_cb() SAR 1.0
+> ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
+> ofonod[1110]: plugins/gobi.c:discover_cb() TS 1.0
+> ofonod[1110]: plugins/gobi.c:discover_cb() TMS 1.0
+> ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.10
+> ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
+> ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
+> ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
+> ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
+> ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
+> ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
+> ofonod[1110]: plugins/gobi.c:create_dms_cb()
+> ofonod[1110]: plugins/gobi.c:get_caps_cb()
+> ofonod[1110]: plugins/gobi.c:get_caps_cb() service capabilities 4
+> ofonod[1110]: plugins/gobi.c:get_caps_cb() sim supported 2
+> ofonod[1110]: plugins/gobi.c:get_caps_cb() radio =3D 4
+> ofonod[1110]: plugins/gobi.c:get_caps_cb() radio =3D 5
+> ofonod[1110]: plugins/gobi.c:get_caps_cb() radio =3D 8
+> ofonod[1110]: plugins/gobi.c:get_oper_mode_cb()
+> ofonod[1110]: src/modem.c:modem_change_state() old state: 0, new state: 1
+> ofonod[1110]: plugins/gobi.c:gobi_pre_sim() 0x20d4d28
+> ofonod[1110]: drivers/qmimodem/devinfo.c:qmi_devinfo_probe()
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_sim_probe()
+> ofonod[1110]: drivers/qmimodem/voicecall.c:qmi_voicecall_probe()
+> ofonod[1110]:
+> drivers/qmimodem/location-reporting.c:qmi_location_reporting_probe()
+> ofonod[1110]: drivers/qmimodem/devinfo.c:create_dms_cb()
+> ofonod[1110]: drivers/qmimodem/devinfo.c:qmi_query_manufacturer()
+> ofonod[1110]: drivers/qmimodem/voicecall.c:create_voice_cb()
+> ofonod[1110]: drivers/qmimodem/sim.c:create_uim_cb()
+> ofonod[1110]: drivers/qmimodem/location-reporting.c:create_pds_cb()
+> ofonod[1110]: drivers/qmimodem/devinfo.c:string_cb()
+> ofonod[1110]: drivers/qmimodem/devinfo.c:qmi_query_model()
+> ofonod[1110]: drivers/qmimodem/sim.c:event_registration_cb()
+> ofonod[1110]: drivers/qmimodem/sim.c:event_registration_cb() event mask
+> 0x0003
+> ofonod[1110]: drivers/qmimodem/location-reporting.c:set_event_cb()
+> ofonod[1110]: drivers/qmimodem/devinfo.c:string_cb()
+> ofonod[1110]: drivers/qmimodem/devinfo.c:qmi_query_revision()
+> ofonod[1110]: drivers/qmimodem/sim.c:get_card_status_cb()
+> ofonod[1110]: src/sim.c:ofono_sim_add_state_watch() 0x20d9aa0
+> ofonod[1110]: src/sim.c:ofono_sim_add_state_watch() 0x20d9aa0
+> ofonod[1110]: src/sim.c:ofono_sim_add_state_watch() 0x20d9aa0
+> ofonod[1110]: drivers/qmimodem/sim.c:get_card_status_cb()
+> ofono_sim_register OK
+> ofonod[1110]: drivers/qmimodem/sim.c:get_card_status_cb() exit func
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
+> 0x6fb7 path len 0
+> ofonod[1110]: drivers/qmimodem/devinfo.c:string_cb()
+> ofonod[1110]: drivers/qmimodem/devinfo.c:qmi_query_serial()
+> ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
+> ofonod[1110]: src/voicecall.c:ecc_g2_read_cb() 0
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
+> 0x6fb7 path len 0
+> ofonod[1110]: drivers/qmimodem/devinfo.c:get_ids_cb()
+> ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
+> ofonod[1110]: src/voicecall.c:ecc_g3_read_cb() 0
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
+> 0x2fe2 path len 0
+> ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_transparent() file id
+> 0x2fe2 path len 0
+> ofonod[1110]: drivers/qmimodem/sim.c:read_generic_cb()
+> ofonod[1110]: src/simfs.c:sim_fs_op_read_block_cb() bufoff: 0, dataoff:
+> 0, tocopy: 10
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
+> 0x6f05 path len 0
+> ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
+> 0x2f05 path len 0
+> ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_transparent() file id
+> 0x2f05 path len 0
+> ofonod[1110]: drivers/qmimodem/sim.c:read_generic_cb()
+> ofonod[1110]: src/simfs.c:sim_fs_op_read_block_cb() bufoff: 0, dataoff:
+> 0, tocopy: 10
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_query_passwd_state() passwd stat=
+e 0
+> ofonod[1110]: src/sim.c:sim_pin_query_cb() sim->pin_type: 0, pin_type: 0
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_query_pin_retries() passwd state=
+ 0
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
+> 0x6fae path len 0
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
+> 0x6fad path len 0
+> ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
+> 0x6f16 path len 0
+> ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
+> 0x6f38 path len 0
+> ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
+> ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_transparent() file id
+> 0x6f07 path len 0
+> ofonod[1110]: drivers/qmimodem/sim.c:read_generic_cb()
+> ofonod[1110]: Unable to read IMSI, emergency calls only
 
-FYI, Please find below ofono debug log :
+Your modem doesn't seem to want to read anything from the SIM.  So that =
 
+is why your gprs isn't showing up.
 
-ofonod[1110]: src/modem.c:ofono_modem_create() name: (null), type: sierra
-ofonod[1110]: plugins/udevng.c:setup_sierra()
-/sys/devices/soc0/soc.0/2100000.aips-bus/2184000.usb/ci_hdrc.0/usb1/1-1
-ofonod[1110]: plugins/udevng.c:setup_sierra() /dev/ttyUSB0 255/255/255
-00 (null)
-ofonod[1110]: plugins/udevng.c:setup_sierra() /dev/ttyUSB1 255/0/0 02 (null)
-ofonod[1110]: plugins/udevng.c:setup_sierra() /dev/ttyUSB2 255/0/0 03 (null)
-ofonod[1110]: plugins/udevng.c:setup_sierra() wwan0 255/255/255 08 (null)
-ofonod[1110]: plugins/udevng.c:setup_sierra() wwan1 255/255/255 0a (null)
-ofonod[1110]: plugins/udevng.c:setup_sierra() wwan2 255/255/255 0b (null)
-ofonod[1110]: src/modem.c:ofono_modem_set_driver() type: gobi
-ofonod[1110]: plugins/udevng.c:setup_sierra() modem=3D/dev/ttyUSB2
-app=3D(null) net=3Dwwan0 diag=3D/dev/ttyUSB0 qmi=3D/dev/cdc-wdm1
-ofonod[1110]: src/modem.c:set_modem_property() modem 0x20d4d28 property
-Device
-ofonod[1110]: src/modem.c:set_modem_property() modem 0x20d4d28 property
-Modem
-ofonod[1110]: src/modem.c:set_modem_property() modem 0x20d4d28 property App
-ofonod[1110]: src/modem.c:set_modem_property() modem 0x20d4d28 property Diag
-ofonod[1110]: src/modem.c:set_modem_property() modem 0x20d4d28 property
-NetworkInterface
-ofonod[1110]: src/modem.c:ofono_modem_register() 0x20d4d28
-ofonod[1110]: plugins/gobi.c:gobi_probe() 0x20d4d28
-ofonod[1110]: src/modem.c:emit_modem_added() 0x20d4d28
-ofonod[1110]: src/modem.c:call_modemwatches() 0x20d4d28 added:1
-ofonod[1110]: plugins/smart-messaging.c:modem_watch() modem: 0x20d4d28,
-added: 1
-ofonod[1110]: plugins/push-notification.c:modem_watch() modem:
-0x20d4d28, added: 1
-ofonod[1110]: plugins/gobi.c:gobi_enable() 0x20d4d28
-ofonod[1110]: src/modem.c:get_modem_property() modem 0x20d4d28 property
-Device
-ofonod[1110]: plugins/gobi.c:discover_cb()
-ofonod[1110]: plugins/gobi.c:discover_cb() WDS 1.36
-ofonod[1110]: plugins/gobi.c:discover_cb() DMS 1.14
-ofonod[1110]: plugins/gobi.c:discover_cb() NAS 1.25
-ofonod[1110]: plugins/gobi.c:discover_cb() QOS 1.3
-ofonod[1110]: plugins/gobi.c:discover_cb() WMS 1.10
-ofonod[1110]: plugins/gobi.c:discover_cb() PDS 1.0
-ofonod[1110]: plugins/gobi.c:discover_cb() AUTH 1.2
-ofonod[1110]: plugins/gobi.c:discover_cb() AT 1.2
-ofonod[1110]: plugins/gobi.c:discover_cb() VOICE 2.1
-ofonod[1110]: plugins/gobi.c:discover_cb() CAT 2.16
-ofonod[1110]: plugins/gobi.c:discover_cb() UIM 1.25
-ofonod[1110]: plugins/gobi.c:discover_cb() PBM 1.4
-ofonod[1110]: plugins/gobi.c:discover_cb() SAR 1.0
-ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
-ofonod[1110]: plugins/gobi.c:discover_cb() TS 1.0
-ofonod[1110]: plugins/gobi.c:discover_cb() TMS 1.0
-ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.10
-ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
-ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
-ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
-ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
-ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
-ofonod[1110]: plugins/gobi.c:discover_cb() (null) 1.0
-ofonod[1110]: plugins/gobi.c:create_dms_cb()
-ofonod[1110]: plugins/gobi.c:get_caps_cb()
-ofonod[1110]: plugins/gobi.c:get_caps_cb() service capabilities 4
-ofonod[1110]: plugins/gobi.c:get_caps_cb() sim supported 2
-ofonod[1110]: plugins/gobi.c:get_caps_cb() radio =3D 4
-ofonod[1110]: plugins/gobi.c:get_caps_cb() radio =3D 5
-ofonod[1110]: plugins/gobi.c:get_caps_cb() radio =3D 8
-ofonod[1110]: plugins/gobi.c:get_oper_mode_cb()
-ofonod[1110]: src/modem.c:modem_change_state() old state: 0, new state: 1
-ofonod[1110]: plugins/gobi.c:gobi_pre_sim() 0x20d4d28
-ofonod[1110]: drivers/qmimodem/devinfo.c:qmi_devinfo_probe()
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_sim_probe()
-ofonod[1110]: drivers/qmimodem/voicecall.c:qmi_voicecall_probe()
-ofonod[1110]:
-drivers/qmimodem/location-reporting.c:qmi_location_reporting_probe()
-ofonod[1110]: drivers/qmimodem/devinfo.c:create_dms_cb()
-ofonod[1110]: drivers/qmimodem/devinfo.c:qmi_query_manufacturer()
-ofonod[1110]: drivers/qmimodem/voicecall.c:create_voice_cb()
-ofonod[1110]: drivers/qmimodem/sim.c:create_uim_cb()
-ofonod[1110]: drivers/qmimodem/location-reporting.c:create_pds_cb()
-ofonod[1110]: drivers/qmimodem/devinfo.c:string_cb()
-ofonod[1110]: drivers/qmimodem/devinfo.c:qmi_query_model()
-ofonod[1110]: drivers/qmimodem/sim.c:event_registration_cb()
-ofonod[1110]: drivers/qmimodem/sim.c:event_registration_cb() event mask
-0x0003
-ofonod[1110]: drivers/qmimodem/location-reporting.c:set_event_cb()
-ofonod[1110]: drivers/qmimodem/devinfo.c:string_cb()
-ofonod[1110]: drivers/qmimodem/devinfo.c:qmi_query_revision()
-ofonod[1110]: drivers/qmimodem/sim.c:get_card_status_cb()
-ofonod[1110]: src/sim.c:ofono_sim_add_state_watch() 0x20d9aa0
-ofonod[1110]: src/sim.c:ofono_sim_add_state_watch() 0x20d9aa0
-ofonod[1110]: src/sim.c:ofono_sim_add_state_watch() 0x20d9aa0
-ofonod[1110]: drivers/qmimodem/sim.c:get_card_status_cb()
-ofono_sim_register OK
-ofonod[1110]: drivers/qmimodem/sim.c:get_card_status_cb() exit func
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
-0x6fb7 path len 0
-ofonod[1110]: drivers/qmimodem/devinfo.c:string_cb()
-ofonod[1110]: drivers/qmimodem/devinfo.c:qmi_query_serial()
-ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
-ofonod[1110]: src/voicecall.c:ecc_g2_read_cb() 0
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
-0x6fb7 path len 0
-ofonod[1110]: drivers/qmimodem/devinfo.c:get_ids_cb()
-ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
-ofonod[1110]: src/voicecall.c:ecc_g3_read_cb() 0
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
-0x2fe2 path len 0
-ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_transparent() file id
-0x2fe2 path len 0
-ofonod[1110]: drivers/qmimodem/sim.c:read_generic_cb()
-ofonod[1110]: src/simfs.c:sim_fs_op_read_block_cb() bufoff: 0, dataoff:
-0, tocopy: 10
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
-0x6f05 path len 0
-ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
-0x2f05 path len 0
-ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_transparent() file id
-0x2f05 path len 0
-ofonod[1110]: drivers/qmimodem/sim.c:read_generic_cb()
-ofonod[1110]: src/simfs.c:sim_fs_op_read_block_cb() bufoff: 0, dataoff:
-0, tocopy: 10
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_query_passwd_state() passwd state 0
-ofonod[1110]: src/sim.c:sim_pin_query_cb() sim->pin_type: 0, pin_type: 0
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_query_pin_retries() passwd state 0
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
-0x6fae path len 0
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
-0x6fad path len 0
-ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
-0x6f16 path len 0
-ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_attributes() file id
-0x6f38 path len 0
-ofonod[1110]: drivers/qmimodem/sim.c:get_file_attributes_cb()
-ofonod[1110]: drivers/qmimodem/sim.c:qmi_read_transparent() file id
-0x6f07 path len 0
-ofonod[1110]: drivers/qmimodem/sim.c:read_generic_cb()
-ofonod[1110]: Unable to read IMSI, emergency calls only
+Do you have a SIM in there or a PIN set?
 
-and the result of list-modem test script :
+Regards,
+-Denis
 
-/usr/lib/ofono/test # ./list-modems
-[ /sierra_1 ]
-    Features =3D sim gps
-    Emergency =3D 0
-    Powered =3D 1
-    Lockdown =3D 0
-    Interfaces =3D org.ofono.SimManager org.ofono.LocationReporting
-org.ofono.VoiceCallManager
-    Online =3D 0
-    Model =3D MC7304
-    Revision =3D SWI9X15C_05.05.58.00 r27038 carmd-fwbuild1 2015/03/04
-21:30:23
-    Type =3D hardware
-    Serial =3D 0
-    Manufacturer =3D Sierra Wireless, Incorporated
-    [ org.ofono.SimManager ]
-        Retries =3D [pin2 =3D 2] [puk2 =3D 10] [pin =3D 3] [puk =3D 10]
-        FixedDialing =3D 0
-        SubscriberNumbers =3D
-        PreferredLanguages =3D fr en de es it
-        BarredDialing =3D 0
-        CardIdentifier =3D 89331037150919602451
-        LockedPins =3D
-        PinRequired =3D none
-        Present =3D 1
-    [ org.ofono.LocationReporting ]
-        Type =3D nmea
-        Enabled =3D 0
-    [ org.ofono.VoiceCallManager ]
-        EmergencyNumbers =3D 08 000 999 110 112 911 118 119
-
-
-
-
-
-Thanks for your help,
-
--- =
-
-*Martin*
-
---===============2978703599039203184==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWw+CiAgPGhlYWQ+CgogICAgPG1ldGEgaHR0cC1lcXVpdj0iY29udGVudC10eXBlIiBjb250
-ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXRmLTgiPgogIDwvaGVhZD4KICA8Ym9keSBiZ2NvbG9y
-PSIjRkZGRkZGIiB0ZXh0PSIjMTA2ZjljIj4KICAgIDxmb250IGZhY2U9IkNhbGlicmkiPkhpIGV2
-ZXJ5Ym9keSw8YnI+CiAgICAgIDxicj4KICAgICAgPGJyPgogICAgICBJJ20gdHJ5aW5nIHRvIHVz
-ZSBNQzczMDQgY2hpcCB3aXRoIG9mb25vICh5ZXMsIGV4YWN0bHkgbGlrZSBEaXJrCiAgICAgIE1l
-dWwgZmV3IG1vbnRocyBhZ28pLjxicj4KICAgICAgPGJyPgogICAgICBJdCdzIGEgUU1JLWludGVy
-ZmFjZWQgR1NNLjxicj4KICAgICAgSSd2ZSB1c2VkIDwvZm9udD48Zm9udCBmYWNlPSJDYWxpYnJp
-Ij4KICAgICAgPG1ldGEgaHR0cC1lcXVpdj0iY29udGVudC10eXBlIiBjb250ZW50PSJ0ZXh0L2h0
-bWw7IGNoYXJzZXQ9dXRmLTgiPgogICAgICBCasO4cm4gTW9yaydzIHBhdGNoZXMgYW5kIHdpdGgg
-YSBsaXR0bGUgaGFjayBpbiBzZXR1cF9zaWVycmEKICAgICAgKGZvcmNpbmcgcW1pIGRldmljZSBu
-YW1lKSwgdGhlIG1vZGVtIGlzICJkZXRlY3RlZCIgYW5kCiAgICAgIGluaXRpYWxpemVkLjxicj4K
-ICAgICAgLi4uIEJ1dCB0aGUgImdwcnMiIGZlYXR1cmUgaXMgbm90IGRldGVjdGVkICE8YnI+CiAg
-ICAgIDxicj4KICAgICAgSSdtIGEgbmV3YmllIG9uIG9mb25vIHByb2plY3QgLi4uIENhbiBhbnlv
-bmUgY2FuIGV4cGxhaW4gbWUgaG93CiAgICAgIHRoZSBmZWF0dXJlcyBkZXRlY3Rpb24gaXMgZG9u
-ZSBwbGVhc2UgPzxicj4KICAgICAgPGJyPgogICAgICBGWUksIFBsZWFzZSBmaW5kIGJlbG93IG9m
-b25vIGRlYnVnIGxvZyA6PGJyPgogICAgICA8YnI+CiAgICA8L2ZvbnQ+PGJyPgogICAgPGZvbnQg
-ZmFjZT0iQ2FsaWJyaSI+CiAgICAgIDxtZXRhIGh0dHAtZXF1aXY9ImNvbnRlbnQtdHlwZSIgY29u
-dGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXV0Zi04Ij4KICAgICAgPGZvbnQgZmFjZT0iQ291cmll
-ciBOZXcsIENvdXJpZXIsIG1vbm9zcGFjZSI+b2Zvbm9kWzExMTBdOgogICAgICAgIHNyYy9tb2Rl
-bS5jOm9mb25vX21vZGVtX2NyZWF0ZSgpIG5hbWU6IChudWxsKSwgdHlwZTogc2llcnJhPGJyPgog
-ICAgICAgIG9mb25vZFsxMTEwXTogcGx1Z2lucy91ZGV2bmcuYzpzZXR1cF9zaWVycmEoKQogICAg
-ICAgIC9zeXMvZGV2aWNlcy9zb2MwL3NvYy4wLzIxMDAwMDAuYWlwcy1idXMvMjE4NDAwMC51c2Iv
-Y2lfaGRyYy4wL3VzYjEvMS0xPGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogcGx1Z2lucy91ZGV2
-bmcuYzpzZXR1cF9zaWVycmEoKSAvZGV2L3R0eVVTQjAKICAgICAgICAyNTUvMjU1LzI1NSAwMCAo
-bnVsbCk8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBwbHVnaW5zL3VkZXZuZy5jOnNldHVwX3Np
-ZXJyYSgpIC9kZXYvdHR5VVNCMQogICAgICAgIDI1NS8wLzAgMDIgKG51bGwpPGJyPgogICAgICAg
-IG9mb25vZFsxMTEwXTogcGx1Z2lucy91ZGV2bmcuYzpzZXR1cF9zaWVycmEoKSAvZGV2L3R0eVVT
-QjIKICAgICAgICAyNTUvMC8wIDAzIChudWxsKTxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHBs
-dWdpbnMvdWRldm5nLmM6c2V0dXBfc2llcnJhKCkgd3dhbjAgMjU1LzI1NS8yNTUKICAgICAgICAw
-OCAobnVsbCk8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBwbHVnaW5zL3VkZXZuZy5jOnNldHVw
-X3NpZXJyYSgpIHd3YW4xIDI1NS8yNTUvMjU1CiAgICAgICAgMGEgKG51bGwpPGJyPgogICAgICAg
-IG9mb25vZFsxMTEwXTogcGx1Z2lucy91ZGV2bmcuYzpzZXR1cF9zaWVycmEoKSB3d2FuMiAyNTUv
-MjU1LzI1NQogICAgICAgIDBiIChudWxsKTxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHNyYy9t
-b2RlbS5jOm9mb25vX21vZGVtX3NldF9kcml2ZXIoKSB0eXBlOiBnb2JpPGJyPgogICAgICAgIG9m
-b25vZFsxMTEwXTogcGx1Z2lucy91ZGV2bmcuYzpzZXR1cF9zaWVycmEoKSBtb2RlbT0vZGV2L3R0
-eVVTQjIKICAgICAgICBhcHA9KG51bGwpIG5ldD13d2FuMCBkaWFnPS9kZXYvdHR5VVNCMCBxbWk9
-L2Rldi9jZGMtd2RtMTxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHNyYy9tb2RlbS5jOnNldF9t
-b2RlbV9wcm9wZXJ0eSgpIG1vZGVtIDB4MjBkNGQyOAogICAgICAgIHByb3BlcnR5IERldmljZTxi
-cj4KICAgICAgICBvZm9ub2RbMTExMF06IHNyYy9tb2RlbS5jOnNldF9tb2RlbV9wcm9wZXJ0eSgp
-IG1vZGVtIDB4MjBkNGQyOAogICAgICAgIHByb3BlcnR5IE1vZGVtPGJyPgogICAgICAgIG9mb25v
-ZFsxMTEwXTogc3JjL21vZGVtLmM6c2V0X21vZGVtX3Byb3BlcnR5KCkgbW9kZW0gMHgyMGQ0ZDI4
-CiAgICAgICAgcHJvcGVydHkgQXBwPGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogc3JjL21vZGVt
-LmM6c2V0X21vZGVtX3Byb3BlcnR5KCkgbW9kZW0gMHgyMGQ0ZDI4CiAgICAgICAgcHJvcGVydHkg
-RGlhZzxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHNyYy9tb2RlbS5jOnNldF9tb2RlbV9wcm9w
-ZXJ0eSgpIG1vZGVtIDB4MjBkNGQyOAogICAgICAgIHByb3BlcnR5IE5ldHdvcmtJbnRlcmZhY2U8
-YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBzcmMvbW9kZW0uYzpvZm9ub19tb2RlbV9yZWdpc3Rl
-cigpIDB4MjBkNGQyODxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHBsdWdpbnMvZ29iaS5jOmdv
-YmlfcHJvYmUoKSAweDIwZDRkMjg8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBzcmMvbW9kZW0u
-YzplbWl0X21vZGVtX2FkZGVkKCkgMHgyMGQ0ZDI4PGJyPgogICAgICAgIG9mb25vZFsxMTEwXTog
-c3JjL21vZGVtLmM6Y2FsbF9tb2RlbXdhdGNoZXMoKSAweDIwZDRkMjggYWRkZWQ6MTxicj4KICAg
-ICAgICBvZm9ub2RbMTExMF06IHBsdWdpbnMvc21hcnQtbWVzc2FnaW5nLmM6bW9kZW1fd2F0Y2go
-KSBtb2RlbToKICAgICAgICAweDIwZDRkMjgsIGFkZGVkOiAxPGJyPgogICAgICAgIG9mb25vZFsx
-MTEwXTogcGx1Z2lucy9wdXNoLW5vdGlmaWNhdGlvbi5jOm1vZGVtX3dhdGNoKCkgbW9kZW06CiAg
-ICAgICAgMHgyMGQ0ZDI4LCBhZGRlZDogMTxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHBsdWdp
-bnMvZ29iaS5jOmdvYmlfZW5hYmxlKCkgMHgyMGQ0ZDI4PGJyPgogICAgICAgIG9mb25vZFsxMTEw
-XTogc3JjL21vZGVtLmM6Z2V0X21vZGVtX3Byb3BlcnR5KCkgbW9kZW0gMHgyMGQ0ZDI4CiAgICAg
-ICAgcHJvcGVydHkgRGV2aWNlPGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogcGx1Z2lucy9nb2Jp
-LmM6ZGlzY292ZXJfY2IoKSA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBwbHVnaW5zL2dvYmku
-YzpkaXNjb3Zlcl9jYigpIFdEUyAxLjM2PGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogcGx1Z2lu
-cy9nb2JpLmM6ZGlzY292ZXJfY2IoKSBETVMgMS4xNDxicj4KICAgICAgICBvZm9ub2RbMTExMF06
-IHBsdWdpbnMvZ29iaS5jOmRpc2NvdmVyX2NiKCkgTkFTIDEuMjU8YnI+CiAgICAgICAgb2Zvbm9k
-WzExMTBdOiBwbHVnaW5zL2dvYmkuYzpkaXNjb3Zlcl9jYigpIFFPUyAxLjM8YnI+CiAgICAgICAg
-b2Zvbm9kWzExMTBdOiBwbHVnaW5zL2dvYmkuYzpkaXNjb3Zlcl9jYigpIFdNUyAxLjEwPGJyPgog
-ICAgICAgIG9mb25vZFsxMTEwXTogcGx1Z2lucy9nb2JpLmM6ZGlzY292ZXJfY2IoKSBQRFMgMS4w
-PGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogcGx1Z2lucy9nb2JpLmM6ZGlzY292ZXJfY2IoKSBB
-VVRIIDEuMjxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHBsdWdpbnMvZ29iaS5jOmRpc2NvdmVy
-X2NiKCkgQVQgMS4yPGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogcGx1Z2lucy9nb2JpLmM6ZGlz
-Y292ZXJfY2IoKSBWT0lDRSAyLjE8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBwbHVnaW5zL2dv
-YmkuYzpkaXNjb3Zlcl9jYigpIENBVCAyLjE2PGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogcGx1
-Z2lucy9nb2JpLmM6ZGlzY292ZXJfY2IoKSBVSU0gMS4yNTxicj4KICAgICAgICBvZm9ub2RbMTEx
-MF06IHBsdWdpbnMvZ29iaS5jOmRpc2NvdmVyX2NiKCkgUEJNIDEuNDxicj4KICAgICAgICBvZm9u
-b2RbMTExMF06IHBsdWdpbnMvZ29iaS5jOmRpc2NvdmVyX2NiKCkgU0FSIDEuMDxicj4KICAgICAg
-ICBvZm9ub2RbMTExMF06IHBsdWdpbnMvZ29iaS5jOmRpc2NvdmVyX2NiKCkgKG51bGwpIDEuMDxi
-cj4KICAgICAgICBvZm9ub2RbMTExMF06IHBsdWdpbnMvZ29iaS5jOmRpc2NvdmVyX2NiKCkgVFMg
-MS4wPGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogcGx1Z2lucy9nb2JpLmM6ZGlzY292ZXJfY2Io
-KSBUTVMgMS4wPGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogcGx1Z2lucy9nb2JpLmM6ZGlzY292
-ZXJfY2IoKSAobnVsbCkgMS4xMDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHBsdWdpbnMvZ29i
-aS5jOmRpc2NvdmVyX2NiKCkgKG51bGwpIDEuMDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHBs
-dWdpbnMvZ29iaS5jOmRpc2NvdmVyX2NiKCkgKG51bGwpIDEuMDxicj4KICAgICAgICBvZm9ub2Rb
-MTExMF06IHBsdWdpbnMvZ29iaS5jOmRpc2NvdmVyX2NiKCkgKG51bGwpIDEuMDxicj4KICAgICAg
-ICBvZm9ub2RbMTExMF06IHBsdWdpbnMvZ29iaS5jOmRpc2NvdmVyX2NiKCkgKG51bGwpIDEuMDxi
-cj4KICAgICAgICBvZm9ub2RbMTExMF06IHBsdWdpbnMvZ29iaS5jOmRpc2NvdmVyX2NiKCkgKG51
-bGwpIDEuMDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHBsdWdpbnMvZ29iaS5jOmRpc2NvdmVy
-X2NiKCkgKG51bGwpIDEuMDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHBsdWdpbnMvZ29iaS5j
-OmNyZWF0ZV9kbXNfY2IoKSA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBwbHVnaW5zL2dvYmku
-YzpnZXRfY2Fwc19jYigpIDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHBsdWdpbnMvZ29iaS5j
-OmdldF9jYXBzX2NiKCkgc2VydmljZSBjYXBhYmlsaXRpZXMKICAgICAgICA0PGJyPgogICAgICAg
-IG9mb25vZFsxMTEwXTogcGx1Z2lucy9nb2JpLmM6Z2V0X2NhcHNfY2IoKSBzaW0gc3VwcG9ydGVk
-IDI8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBwbHVnaW5zL2dvYmkuYzpnZXRfY2Fwc19jYigp
-IHJhZGlvID0gNDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHBsdWdpbnMvZ29iaS5jOmdldF9j
-YXBzX2NiKCkgcmFkaW8gPSA1PGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogcGx1Z2lucy9nb2Jp
-LmM6Z2V0X2NhcHNfY2IoKSByYWRpbyA9IDg8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBwbHVn
-aW5zL2dvYmkuYzpnZXRfb3Blcl9tb2RlX2NiKCkgPGJyPgogICAgICAgIG9mb25vZFsxMTEwXTog
-c3JjL21vZGVtLmM6bW9kZW1fY2hhbmdlX3N0YXRlKCkgb2xkIHN0YXRlOiAwLCBuZXcKICAgICAg
-ICBzdGF0ZTogMTxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHBsdWdpbnMvZ29iaS5jOmdvYmlf
-cHJlX3NpbSgpIDB4MjBkNGQyODxicj4KICAgICAgICBvZm9ub2RbMTExMF06IGRyaXZlcnMvcW1p
-bW9kZW0vZGV2aW5mby5jOnFtaV9kZXZpbmZvX3Byb2JlKCkgPGJyPgogICAgICAgIG9mb25vZFsx
-MTEwXTogZHJpdmVycy9xbWltb2RlbS9zaW0uYzpxbWlfc2ltX3Byb2JlKCkgPGJyPgogICAgICAg
-IG9mb25vZFsxMTEwXTogZHJpdmVycy9xbWltb2RlbS92b2ljZWNhbGwuYzpxbWlfdm9pY2VjYWxs
-X3Byb2JlKCkKICAgICAgICA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOgogICAgICAgIGRyaXZl
-cnMvcW1pbW9kZW0vbG9jYXRpb24tcmVwb3J0aW5nLmM6cW1pX2xvY2F0aW9uX3JlcG9ydGluZ19w
-cm9iZSgpCiAgICAgICAgPGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogZHJpdmVycy9xbWltb2Rl
-bS9kZXZpbmZvLmM6Y3JlYXRlX2Rtc19jYigpIDxicj4KICAgICAgICBvZm9ub2RbMTExMF06CiAg
-ICAgICAgZHJpdmVycy9xbWltb2RlbS9kZXZpbmZvLmM6cW1pX3F1ZXJ5X21hbnVmYWN0dXJlcigp
-IDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IGRyaXZlcnMvcW1pbW9kZW0vdm9pY2VjYWxsLmM6
-Y3JlYXRlX3ZvaWNlX2NiKCkgPGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogZHJpdmVycy9xbWlt
-b2RlbS9zaW0uYzpjcmVhdGVfdWltX2NiKCkgPGJyPgogICAgICAgIG9mb25vZFsxMTEwXToKICAg
-ICAgICBkcml2ZXJzL3FtaW1vZGVtL2xvY2F0aW9uLXJlcG9ydGluZy5jOmNyZWF0ZV9wZHNfY2Io
-KSA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBkcml2ZXJzL3FtaW1vZGVtL2RldmluZm8uYzpz
-dHJpbmdfY2IoKSA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBkcml2ZXJzL3FtaW1vZGVtL2Rl
-dmluZm8uYzpxbWlfcXVlcnlfbW9kZWwoKSA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBkcml2
-ZXJzL3FtaW1vZGVtL3NpbS5jOmV2ZW50X3JlZ2lzdHJhdGlvbl9jYigpIDxicj4KICAgICAgICBv
-Zm9ub2RbMTExMF06IGRyaXZlcnMvcW1pbW9kZW0vc2ltLmM6ZXZlbnRfcmVnaXN0cmF0aW9uX2Ni
-KCkKICAgICAgICBldmVudCBtYXNrIDB4MDAwMzxicj4KICAgICAgICBvZm9ub2RbMTExMF06CiAg
-ICAgICAgZHJpdmVycy9xbWltb2RlbS9sb2NhdGlvbi1yZXBvcnRpbmcuYzpzZXRfZXZlbnRfY2Io
-KSA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBkcml2ZXJzL3FtaW1vZGVtL2RldmluZm8uYzpz
-dHJpbmdfY2IoKSA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBkcml2ZXJzL3FtaW1vZGVtL2Rl
-dmluZm8uYzpxbWlfcXVlcnlfcmV2aXNpb24oKSA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBk
-cml2ZXJzL3FtaW1vZGVtL3NpbS5jOmdldF9jYXJkX3N0YXR1c19jYigpIDxicj4KICAgICAgICBv
-Zm9ub2RbMTExMF06IHNyYy9zaW0uYzpvZm9ub19zaW1fYWRkX3N0YXRlX3dhdGNoKCkgMHgyMGQ5
-YWEwPGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogc3JjL3NpbS5jOm9mb25vX3NpbV9hZGRfc3Rh
-dGVfd2F0Y2goKSAweDIwZDlhYTA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBzcmMvc2ltLmM6
-b2Zvbm9fc2ltX2FkZF9zdGF0ZV93YXRjaCgpIDB4MjBkOWFhMDxicj4KICAgICAgICBvZm9ub2Rb
-MTExMF06IGRyaXZlcnMvcW1pbW9kZW0vc2ltLmM6Z2V0X2NhcmRfc3RhdHVzX2NiKCkKICAgICAg
-ICBvZm9ub19zaW1fcmVnaXN0ZXIgT0s8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBkcml2ZXJz
-L3FtaW1vZGVtL3NpbS5jOmdldF9jYXJkX3N0YXR1c19jYigpIGV4aXQKICAgICAgICBmdW5jPGJy
-PgogICAgICAgIG9mb25vZFsxMTEwXTogZHJpdmVycy9xbWltb2RlbS9zaW0uYzpxbWlfcmVhZF9h
-dHRyaWJ1dGVzKCkgZmlsZQogICAgICAgIGlkIDB4NmZiNyBwYXRoIGxlbiAwPGJyPgogICAgICAg
-IG9mb25vZFsxMTEwXTogZHJpdmVycy9xbWltb2RlbS9kZXZpbmZvLmM6c3RyaW5nX2NiKCkgPGJy
-PgogICAgICAgIG9mb25vZFsxMTEwXTogZHJpdmVycy9xbWltb2RlbS9kZXZpbmZvLmM6cW1pX3F1
-ZXJ5X3NlcmlhbCgpIDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IGRyaXZlcnMvcW1pbW9kZW0v
-c2ltLmM6Z2V0X2ZpbGVfYXR0cmlidXRlc19jYigpIDxicj4KICAgICAgICBvZm9ub2RbMTExMF06
-IHNyYy92b2ljZWNhbGwuYzplY2NfZzJfcmVhZF9jYigpIDA8YnI+CiAgICAgICAgb2Zvbm9kWzEx
-MTBdOiBkcml2ZXJzL3FtaW1vZGVtL3NpbS5jOnFtaV9yZWFkX2F0dHJpYnV0ZXMoKSBmaWxlCiAg
-ICAgICAgaWQgMHg2ZmI3IHBhdGggbGVuIDA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBkcml2
-ZXJzL3FtaW1vZGVtL2RldmluZm8uYzpnZXRfaWRzX2NiKCkgPGJyPgogICAgICAgIG9mb25vZFsx
-MTEwXTogZHJpdmVycy9xbWltb2RlbS9zaW0uYzpnZXRfZmlsZV9hdHRyaWJ1dGVzX2NiKCkgPGJy
-PgogICAgICAgIG9mb25vZFsxMTEwXTogc3JjL3ZvaWNlY2FsbC5jOmVjY19nM19yZWFkX2NiKCkg
-MDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IGRyaXZlcnMvcW1pbW9kZW0vc2ltLmM6cW1pX3Jl
-YWRfYXR0cmlidXRlcygpIGZpbGUKICAgICAgICBpZCAweDJmZTIgcGF0aCBsZW4gMDxicj4KICAg
-ICAgICBvZm9ub2RbMTExMF06IGRyaXZlcnMvcW1pbW9kZW0vc2ltLmM6Z2V0X2ZpbGVfYXR0cmli
-dXRlc19jYigpIDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IGRyaXZlcnMvcW1pbW9kZW0vc2lt
-LmM6cW1pX3JlYWRfdHJhbnNwYXJlbnQoKSBmaWxlCiAgICAgICAgaWQgMHgyZmUyIHBhdGggbGVu
-IDA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBkcml2ZXJzL3FtaW1vZGVtL3NpbS5jOnJlYWRf
-Z2VuZXJpY19jYigpIDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHNyYy9zaW1mcy5jOnNpbV9m
-c19vcF9yZWFkX2Jsb2NrX2NiKCkgYnVmb2ZmOiAwLAogICAgICAgIGRhdGFvZmY6IDAsIHRvY29w
-eTogMTA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBkcml2ZXJzL3FtaW1vZGVtL3NpbS5jOnFt
-aV9yZWFkX2F0dHJpYnV0ZXMoKSBmaWxlCiAgICAgICAgaWQgMHg2ZjA1IHBhdGggbGVuIDA8YnI+
-CiAgICAgICAgb2Zvbm9kWzExMTBdOiBkcml2ZXJzL3FtaW1vZGVtL3NpbS5jOmdldF9maWxlX2F0
-dHJpYnV0ZXNfY2IoKSA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBkcml2ZXJzL3FtaW1vZGVt
-L3NpbS5jOnFtaV9yZWFkX2F0dHJpYnV0ZXMoKSBmaWxlCiAgICAgICAgaWQgMHgyZjA1IHBhdGgg
-bGVuIDA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBkcml2ZXJzL3FtaW1vZGVtL3NpbS5jOmdl
-dF9maWxlX2F0dHJpYnV0ZXNfY2IoKSA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBkcml2ZXJz
-L3FtaW1vZGVtL3NpbS5jOnFtaV9yZWFkX3RyYW5zcGFyZW50KCkgZmlsZQogICAgICAgIGlkIDB4
-MmYwNSBwYXRoIGxlbiAwPGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogZHJpdmVycy9xbWltb2Rl
-bS9zaW0uYzpyZWFkX2dlbmVyaWNfY2IoKSA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBdOiBzcmMv
-c2ltZnMuYzpzaW1fZnNfb3BfcmVhZF9ibG9ja19jYigpIGJ1Zm9mZjogMCwKICAgICAgICBkYXRh
-b2ZmOiAwLCB0b2NvcHk6IDEwPGJyPgogICAgICAgIG9mb25vZFsxMTEwXTogZHJpdmVycy9xbWlt
-b2RlbS9zaW0uYzpxbWlfcXVlcnlfcGFzc3dkX3N0YXRlKCkKICAgICAgICBwYXNzd2Qgc3RhdGUg
-MDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IHNyYy9zaW0uYzpzaW1fcGluX3F1ZXJ5X2NiKCkg
-c2ltLSZndDtwaW5fdHlwZTogMCwKICAgICAgICBwaW5fdHlwZTogMDxicj4KICAgICAgICBvZm9u
-b2RbMTExMF06IGRyaXZlcnMvcW1pbW9kZW0vc2ltLmM6cW1pX3F1ZXJ5X3Bpbl9yZXRyaWVzKCkK
-ICAgICAgICBwYXNzd2Qgc3RhdGUgMDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IGRyaXZlcnMv
-cW1pbW9kZW0vc2ltLmM6cW1pX3JlYWRfYXR0cmlidXRlcygpIGZpbGUKICAgICAgICBpZCAweDZm
-YWUgcGF0aCBsZW4gMDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IGRyaXZlcnMvcW1pbW9kZW0v
-c2ltLmM6cW1pX3JlYWRfYXR0cmlidXRlcygpIGZpbGUKICAgICAgICBpZCAweDZmYWQgcGF0aCBs
-ZW4gMDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IGRyaXZlcnMvcW1pbW9kZW0vc2ltLmM6Z2V0
-X2ZpbGVfYXR0cmlidXRlc19jYigpIDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IGRyaXZlcnMv
-cW1pbW9kZW0vc2ltLmM6cW1pX3JlYWRfYXR0cmlidXRlcygpIGZpbGUKICAgICAgICBpZCAweDZm
-MTYgcGF0aCBsZW4gMDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IGRyaXZlcnMvcW1pbW9kZW0v
-c2ltLmM6Z2V0X2ZpbGVfYXR0cmlidXRlc19jYigpIDxicj4KICAgICAgICBvZm9ub2RbMTExMF06
-IGRyaXZlcnMvcW1pbW9kZW0vc2ltLmM6cW1pX3JlYWRfYXR0cmlidXRlcygpIGZpbGUKICAgICAg
-ICBpZCAweDZmMzggcGF0aCBsZW4gMDxicj4KICAgICAgICBvZm9ub2RbMTExMF06IGRyaXZlcnMv
-cW1pbW9kZW0vc2ltLmM6Z2V0X2ZpbGVfYXR0cmlidXRlc19jYigpIDxicj4KICAgICAgICBvZm9u
-b2RbMTExMF06IGRyaXZlcnMvcW1pbW9kZW0vc2ltLmM6cW1pX3JlYWRfdHJhbnNwYXJlbnQoKSBm
-aWxlCiAgICAgICAgaWQgMHg2ZjA3IHBhdGggbGVuIDA8YnI+CiAgICAgICAgb2Zvbm9kWzExMTBd
-OiBkcml2ZXJzL3FtaW1vZGVtL3NpbS5jOnJlYWRfZ2VuZXJpY19jYigpIDxicj4KICAgICAgICBv
-Zm9ub2RbMTExMF06IFVuYWJsZSB0byByZWFkIElNU0ksIGVtZXJnZW5jeSBjYWxscyBvbmx5PGJy
-PgogICAgICA8L2ZvbnQ+PGJyPgogICAgICBhbmQgdGhlIHJlc3VsdCBvZiBsaXN0LW1vZGVtIHRl
-c3Qgc2NyaXB0IDo8YnI+CiAgICAgIDxicj4KICAgICAgPGZvbnQgZmFjZT0iQ291cmllciBOZXcs
-IENvdXJpZXIsIG1vbm9zcGFjZSI+L3Vzci9saWIvb2Zvbm8vdGVzdCAjCiAgICAgICAgLi9saXN0
-LW1vZGVtcyA8YnI+CiAgICAgICAgWyAvc2llcnJhXzEgXTxicj4KICAgICAgICDCoMKgwqAgRmVh
-dHVyZXMgPSBzaW0gZ3BzIDxicj4KICAgICAgICDCoMKgwqAgRW1lcmdlbmN5ID0gMDxicj4KICAg
-ICAgICDCoMKgwqAgUG93ZXJlZCA9IDE8YnI+CiAgICAgICAgwqDCoMKgIExvY2tkb3duID0gMDxi
-cj4KICAgICAgICDCoMKgwqAgSW50ZXJmYWNlcyA9IG9yZy5vZm9uby5TaW1NYW5hZ2VyCiAgICAg
-ICAgb3JnLm9mb25vLkxvY2F0aW9uUmVwb3J0aW5nIG9yZy5vZm9uby5Wb2ljZUNhbGxNYW5hZ2Vy
-IDxicj4KICAgICAgICDCoMKgwqAgT25saW5lID0gMDxicj4KICAgICAgICDCoMKgwqAgTW9kZWwg
-PSBNQzczMDQ8YnI+CiAgICAgICAgwqDCoMKgIFJldmlzaW9uID0gU1dJOVgxNUNfMDUuMDUuNTgu
-MDAgcjI3MDM4IGNhcm1kLWZ3YnVpbGQxCiAgICAgICAgMjAxNS8wMy8wNCAyMTozMDoyMzxicj4K
-ICAgICAgICDCoMKgwqAgVHlwZSA9IGhhcmR3YXJlPGJyPgogICAgICAgIMKgwqDCoCBTZXJpYWwg
-PSAwPGJyPgogICAgICAgIMKgwqDCoCBNYW51ZmFjdHVyZXIgPSBTaWVycmEgV2lyZWxlc3MsIElu
-Y29ycG9yYXRlZDxicj4KICAgICAgICDCoMKgwqAgWyBvcmcub2Zvbm8uU2ltTWFuYWdlciBdPGJy
-PgogICAgICAgIMKgwqDCoMKgwqDCoMKgIFJldHJpZXMgPSBbcGluMiA9IDJdIFtwdWsyID0gMTBd
-IFtwaW4gPSAzXSBbcHVrID0gMTBdIDxicj4KICAgICAgICDCoMKgwqDCoMKgwqDCoCBGaXhlZERp
-YWxpbmcgPSAwPGJyPgogICAgICAgIMKgwqDCoMKgwqDCoMKgIFN1YnNjcmliZXJOdW1iZXJzID0g
-PGJyPgogICAgICAgIMKgwqDCoMKgwqDCoMKgIFByZWZlcnJlZExhbmd1YWdlcyA9IGZyIGVuIGRl
-IGVzIGl0IDxicj4KICAgICAgICDCoMKgwqDCoMKgwqDCoCBCYXJyZWREaWFsaW5nID0gMDxicj4K
-ICAgICAgICDCoMKgwqDCoMKgwqDCoCBDYXJkSWRlbnRpZmllciA9IDg5MzMxMDM3MTUwOTE5NjAy
-NDUxPGJyPgogICAgICAgIMKgwqDCoMKgwqDCoMKgIExvY2tlZFBpbnMgPSA8YnI+CiAgICAgICAg
-wqDCoMKgwqDCoMKgwqAgUGluUmVxdWlyZWQgPSBub25lPGJyPgogICAgICAgIMKgwqDCoMKgwqDC
-oMKgIFByZXNlbnQgPSAxPGJyPgogICAgICAgIMKgwqDCoCBbIG9yZy5vZm9uby5Mb2NhdGlvblJl
-cG9ydGluZyBdPGJyPgogICAgICAgIMKgwqDCoMKgwqDCoMKgIFR5cGUgPSBubWVhPGJyPgogICAg
-ICAgIMKgwqDCoMKgwqDCoMKgIEVuYWJsZWQgPSAwPGJyPgogICAgICAgIMKgwqDCoCBbIG9yZy5v
-Zm9uby5Wb2ljZUNhbGxNYW5hZ2VyIF08YnI+CiAgICAgICAgwqDCoMKgwqDCoMKgwqAgRW1lcmdl
-bmN5TnVtYmVycyA9IDA4IDAwMCA5OTkgMTEwIDExMiA5MTEgMTE4IDExOSA8YnI+CiAgICAgIDwv
-Zm9udD48YnI+CiAgICAgIDxicj4KICAgICAgPGJyPgogICAgICA8YnI+CiAgICAgIDxicj4KICAg
-ICAgVGhhbmtzIGZvciB5b3VyIGhlbHAsPGJyPgogICAgICA8YnI+CiAgICA8L2ZvbnQ+PGZvbnQg
-ZmFjZT0iQ2FsaWJyaSI+PC9mb250PgogICAgPGRpdiBjbGFzcz0ibW96LXNpZ25hdHVyZSI+LS0g
-PGJyPgogICAgICA8bWV0YSBodHRwLWVxdWl2PSJjb250ZW50LXR5cGUiIGNvbnRlbnQ9InRleHQv
-aHRtbDsgY2hhcnNldD11dGYtOCI+CiAgICAgIDxmb250IGZhY2U9IkNhbGlicmkiIGNvbG9yPSIj
-MTA2ZjljIj4gPC9mb250Pjxmb250IGZhY2U9IkNhbGlicmkiPjxiPk1hcnRpbjwvYj48L2ZvbnQ+
-PGJyPgogICAgPC9kaXY+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==
-
---===============2978703599039203184==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjIuMC4yMiAoR05V
-L0xpbnV4KQoKaVFJY0JBRUJBZ0FHQlFKWEkxenBBQW9KRU1KT2oxZU15ZGkvV1FjUC8wb3B6Ym1S
-WVlLYmpGdzZ6NGlRMlRSWAo2amltZU4vYnI5eFBqSXh4cHRIYTFPRkhQaDh4KzNNZXcwbDJLL3Fa
-ZzRXVnhqV0lvbkdvUXFRc3hUcGhkRmZqCkFZeE84S0ZKRGU3SDU1d1ZXSVBHemplZ3hhK25kWFBY
-RElqVUVYc0cwbWwvMmI2NDJVbzMzajl4SWhTKzh5cWgKNUNDbkE4Y2xHNXdLc2Z1cGxOWk55S0JK
-VG5hR2hUMkFiZlN6L212SzV2MzhCNDFXZkRFUkpZUXhvSUdWd1VBagprdHI0REFvbS9KdVpJbUR4
-ZjJvOWZXV0Z1eDNJSUd4MEdCYW9mK25pZTVFUUtLTVdHMW1rUll4d0NNMW4wcmxCCm1FTThxZVJD
-SFZ3V0hqeGlQOTByQmVyVUpQeWw3N25YUkZjTElBS2dVNTRNQVQxNnhLbkl4dklEL3EzQ0lwbVEK
-QzBQNGdKaVRPZDBuSTV2a1lxYkRRYzV1aWJIY2pnUjF0QzhHUnBkcTUxVUxNNEZkRjkxWWJKNUtp
-N2l6d1QyMwphWHVuVTF3QzNNQ0dTdGovaGozczVFOTMydE1FOEk3THpKWWlQVElMd0Q1czg1S3Bm
-WG56REJZQnBuem1RZzhJClBtYnAwY0VDMUJ0TDFQYkFEZWtvaTdQMVE2TFcyRGw2K21lT1BUQ3hE
-YlJiM2NNbW5BT0c2dTVWSUdoVm9pWWsKQlZYYnA0eGtObG1XRlFERUcvN1lGaWFrK05YZDZjNGMz
-dlpJT05LVVBoSURVMEJjYk85UGU3ZVdwSXlheENEbQp3dWh4QTNBQ2JPNTdHL1N2dnR1MHlxVHZt
-S2toNm5GMjMxODhHdU9wU29BeU1RQ1d3djBnOGdMamFyWVF1OUJSCjliRmYxbG1UL0Z3ZWNwS1VX
-VnVFCj0va2hHCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQo=
-
---===============2978703599039203184==--
+--===============7773008621979056424==--
 
