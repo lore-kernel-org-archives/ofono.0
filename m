@@ -1,111 +1,326 @@
-Content-Type: multipart/mixed; boundary="===============6349779659547145357=="
+Content-Type: multipart/mixed; boundary="===============3640036034516468571=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/3] Udevng: Improve modem properties detection
-Date: Mon, 02 May 2016 22:23:19 -0500
-Message-ID: <572819A7.5030407@gmail.com>
-In-Reply-To: <1462206794-14322-2-git-send-email-m.chaplet@kerlink.fr>
+From: caiwen.zhang@intel.com
+Subject: [PATCH 1/2] rilmodem/stk: add STK support for rilmodem
+Date: Tue, 03 May 2016 11:38:59 +0800
+Message-ID: <1462246740-5881-1-git-send-email-caiwen.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6349779659547145357==
+--===============3640036034516468571==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+From: Caiwen Zhang <caiwen.zhang@intel.com>
 
-On 05/02/2016 11:33 AM, Martin Chaplet wrote:
->   * Add driver's subsystem information (net, usb, tty, ...)
->   * Improve interface number extraction by scanning also device and
->   parent attributes
->
-> Signed-off-by: Martin Chaplet <m.chaplet@kerlink.fr>
+---
+ Makefile.am                 |   1 +
+ drivers/rilmodem/rilmodem.c |   2 +
+ drivers/rilmodem/rilmodem.h |   3 +
+ drivers/rilmodem/stk.c      | 238 ++++++++++++++++++++++++++++++++++++++++=
+++++
+ 4 files changed, 244 insertions(+)
+ create mode 100644 drivers/rilmodem/stk.c
 
-No signed-off-by please.  See HACKING, 'Submitting Patches' section.
+diff --git a/Makefile.am b/Makefile.am
+index 5215b2e..8ab9851 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -151,6 +151,7 @@ builtin_sources +=3D drivers/rilmodem/rilmodem.h \
+ 			drivers/rilmodem/radio-settings.c \
+ 			drivers/rilmodem/call-barring.c \
+ 			drivers/rilmodem/netmon.c \
++			drivers/rilmodem/stk.c \
+ 			drivers/infineonmodem/infineon_constants.h
+ endif
+ =
 
-> ---
->   plugins/udevng.c | 18 +++++++++++++++++-
->   1 file changed, 17 insertions(+), 1 deletion(-)
->
-> diff --git a/plugins/udevng.c b/plugins/udevng.c
-> index 9643b0a..8ca4471 100644
-> --- a/plugins/udevng.c
-> +++ b/plugins/udevng.c
-> @@ -55,6 +55,7 @@ struct device_info {
->   	char *number;
->   	char *label;
->   	char *sysattr;
-> +	char *subsystem;
->   };
->
->   static gboolean setup_isi(struct modem_info *modem)
-> @@ -939,6 +940,7 @@ static void destroy_modem(gpointer data)
->   		g_free(info->number);
->   		g_free(info->label);
->   		g_free(info->sysattr);
-> +		g_free(info->subsystem);
->   		g_free(info);
->
->   		list->data =3D NULL;
-> @@ -997,9 +999,10 @@ static void add_device(const char *syspath, const ch=
-ar *devname,
->   			const char *model, struct udev_device *device)
->   {
->   	struct udev_device *intf;
-> -	const char *devpath, *devnode, *interface, *number, *label, *sysattr;
-> +	const char *devpath, *devnode, *interface, *number, *label, *sysattr, *=
-subsystem;
->   	struct modem_info *modem;
->   	struct device_info *info;
-> +	struct udev_device *parent;
->
->   	devpath =3D udev_device_get_syspath(device);
->   	if (devpath =3D=3D NULL)
-> @@ -1037,7 +1040,19 @@ static void add_device(const char *syspath, const =
-char *devname,
->   	interface =3D udev_device_get_property_value(intf, "INTERFACE");
->   	number =3D udev_device_get_property_value(device, "ID_USB_INTERFACE_NU=
-M");
->
-> +	/* If environment variable is not set, get value from attributes (or pa=
-rent's ones) */
-> +	if(number =3D=3D NULL)
-> +	{
+diff --git a/drivers/rilmodem/rilmodem.c b/drivers/rilmodem/rilmodem.c
+index e4de3c2..9a063a2 100644
+--- a/drivers/rilmodem/rilmodem.c
++++ b/drivers/rilmodem/rilmodem.c
+@@ -52,6 +52,7 @@ static int rilmodem_init(void)
+ 	ril_radio_settings_init();
+ 	ril_call_barring_init();
+ 	ril_netmon_init();
++	ril_stk_init();
+ =
 
-Not our style.  oFono uses the Linux Kernel coding style, so the '{' =
+ 	return 0;
+ }
+@@ -74,6 +75,7 @@ static void rilmodem_exit(void)
+ 	ril_radio_settings_exit();
+ 	ril_call_barring_exit();
+ 	ril_netmon_exit();
++	ril_stk_exit();
+ }
+ =
 
-should be on the same line as the if.
+ OFONO_PLUGIN_DEFINE(rilmodem, "RIL modem driver", VERSION,
+diff --git a/drivers/rilmodem/rilmodem.h b/drivers/rilmodem/rilmodem.h
+index f838b6b..7e47573 100644
+--- a/drivers/rilmodem/rilmodem.h
++++ b/drivers/rilmodem/rilmodem.h
+@@ -72,3 +72,6 @@ extern void ril_phonebook_exit(void);
+ =
 
-> +		number =3D udev_device_get_sysattr_value(device, "bInterfaceNumber");
-> +		if(number =3D=3D NULL)
-> +		{
+ extern void ril_netmon_init(void);
+ extern void ril_netmon_exit(void);
++
++extern void ril_stk_init(void);
++extern void ril_stk_exit(void);
+diff --git a/drivers/rilmodem/stk.c b/drivers/rilmodem/stk.c
+new file mode 100644
+index 0000000..c57c382
+--- /dev/null
++++ b/drivers/rilmodem/stk.c
+@@ -0,0 +1,238 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2016  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#define _GNU_SOURCE
++#include <string.h>
++#include <stdio.h>
++
++#include <glib.h>
++
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/stk.h>
++#include "util.h"
++
++#include <gril.h>
++#include <parcel.h>
++
++#include "rilmodem.h"
++#include "vendor.h"
++
++struct stk_data {
++	GRil *ril;
++	unsigned int vendor;
++};
++
++static void ril_stk_terminal_response_cb(struct ril_msg *message,
++				gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_stk_generic_cb_t cb =3D cbd->cb;
++	struct stk_data *sd =3D cbd->user;
++
++	g_ril_print_response(sd->ril, message);
++
++	if (message->error =3D=3D RIL_E_SUCCESS) {
++		CALLBACK_WITH_SUCCESS(cb, cbd->data);
++	} else {
++		ofono_error("%s RILD reply failure: %s",
++			g_ril_request_id_to_string(sd->ril, message->req),
++			ril_error_to_string(message->error));
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
++	}
++}
++
++static void ril_stk_terminal_response(struct ofono_stk *stk, int len,
++				const unsigned char *data,
++				ofono_stk_generic_cb_t cb, void *user_data)
++{
++	struct stk_data *sd =3D ofono_stk_get_data(stk);
++	struct cb_data *cbd =3D cb_data_new(cb, user_data, sd);
++	struct parcel rilp;
++	char *buf =3D alloca(len * 2 + 1);
++	int size =3D 0;
++
++	for (; len; len--)
++		size +=3D sprintf(buf + size, "%02hhX", *data++);
++
++	parcel_init(&rilp);
++	parcel_w_string(&rilp, buf);
++
++	if (g_ril_send(sd->ril, RIL_REQUEST_STK_SEND_TERMINAL_RESPONSE, &rilp,
++			ril_stk_terminal_response_cb, cbd, g_free) > 0)
++		return;
++
++	g_free(cbd);
++	CALLBACK_WITH_FAILURE(cb, user_data);
++}
++
++static void ril_stk_envelope_cb(struct ril_msg *message, gpointer user_dat=
+a)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_stk_envelope_cb_t cb =3D cbd->cb;
++	struct stk_data *sd =3D cbd->user;
++	struct parcel rilp;
++	unsigned char *response =3D NULL;
++	long len =3D 0;
++	char *pdu;
++
++	g_ril_print_response(sd->ril, message);
++
++	if (message->error =3D=3D RIL_E_SUCCESS) {
++		g_ril_init_parcel(message, &rilp);
++		pdu =3D parcel_r_string(&rilp);
++
++		if (pdu)
++			response =3D decode_hex(pdu, -1, &len, -1);
++
++		CALLBACK_WITH_SUCCESS(cb, response, len, cbd->data);
++		g_free(response);
++	} else {
++		ofono_error("%s RILD reply failure: %s",
++			g_ril_request_id_to_string(sd->ril, message->req),
++			ril_error_to_string(message->error));
++		CALLBACK_WITH_FAILURE(cb, NULL, 0, cbd->data);
++	}
++}
++
++static void ril_stk_envelope(struct ofono_stk *stk, int len,
++				const unsigned char *cmd,
++				ofono_stk_envelope_cb_t cb, void *user_data)
++{
++	struct stk_data *sd =3D ofono_stk_get_data(stk);
++	struct cb_data *cbd =3D cb_data_new(cb, user_data, sd);
++	struct parcel rilp;
++	char *buf =3D alloca(len * 2 + 1);
++	int size =3D 0;
++
++	for (; len; len--)
++		size +=3D sprintf(buf + size, "%02hhX", *cmd++);
++
++	parcel_init(&rilp);
++	parcel_w_string(&rilp, buf);
++
++	if (g_ril_send(sd->ril, RIL_REQUEST_STK_SEND_ENVELOPE_COMMAND, &rilp,
++			ril_stk_envelope_cb, cbd, g_free) > 0)
++		return;
++
++	g_free(cbd);
++	CALLBACK_WITH_FAILURE(cb, NULL, 0, user_data);
++}
++
++static void ril_stk_proactive_cmd_notify(struct ril_msg *message,
++				gpointer user_data)
++{
++	struct ofono_stk *stk =3D user_data;
++	struct parcel rilp;
++	long pdulen;
++	unsigned char *pdu;
++
++	DBG("");
++
++	g_ril_init_parcel(message, &rilp);
++	pdu =3D decode_hex(parcel_r_string(&rilp), -1, &pdulen, -1);
++
++	ofono_stk_proactive_command_notify(stk, pdulen, pdu);
++	g_free(pdu);
++}
++
++static void ril_stk_event_notify(struct ril_msg *message, gpointer user_da=
+ta)
++{
++	struct ofono_stk *stk =3D user_data;
++	struct parcel rilp;
++	long pdulen;
++	unsigned char *pdu;
++
++	DBG("");
++
++	g_ril_init_parcel(message, &rilp);
++	pdu =3D decode_hex(parcel_r_string(&rilp), -1, &pdulen, -1);
++
++	ofono_stk_proactive_command_handled_notify(stk, pdulen, pdu);
++	g_free(pdu);
++}
++
++static void ril_stk_session_end_notify(struct ril_msg *message,
++				gpointer user_data)
++{
++	struct ofono_stk *stk =3D user_data;
++
++	DBG("");
++	ofono_stk_proactive_session_end_notify(stk);
++}
++
++static int ril_stk_probe(struct ofono_stk *stk, unsigned int vendor,
++				void *user)
++{
++	GRil *ril =3D user;
++	struct stk_data *data;
++
++	data =3D g_new0(struct stk_data, 1);
++	data->ril =3D g_ril_clone(ril);
++	data->vendor =3D vendor;
++
++	ofono_stk_set_data(stk, data);
++
++	g_ril_register(ril, RIL_UNSOL_STK_PROACTIVE_COMMAND,
++					ril_stk_proactive_cmd_notify, stk);
++
++	g_ril_register(ril, RIL_UNSOL_STK_SESSION_END,
++					ril_stk_session_end_notify, stk);
++
++	g_ril_register(ril, RIL_UNSOL_STK_EVENT_NOTIFY,
++					ril_stk_event_notify, stk);
++
++	ofono_stk_register(stk);
++
++	return 0;
++}
++
++static void ril_stk_remove(struct ofono_stk *stk)
++{
++	struct stk_data *data =3D ofono_stk_get_data(stk);
++
++	ofono_stk_set_data(stk, NULL);
++
++	g_ril_unref(data->ril);
++	g_free(data);
++}
++
++static struct ofono_stk_driver driver =3D {
++	.name =3D RILMODEM,
++	.probe =3D ril_stk_probe,
++	.remove =3D ril_stk_remove,
++	.envelope =3D ril_stk_envelope,
++	.terminal_response =3D ril_stk_terminal_response,
++};
++
++void ril_stk_init(void)
++{
++	ofono_stk_driver_register(&driver);
++}
++
++void ril_stk_exit(void)
++{
++	ofono_stk_driver_unregister(&driver);
++}
+-- =
 
-as above
+1.9.1
 
-> +			parent =3D udev_device_get_parent(device);
-> +			number =3D udev_device_get_sysattr_value(parent, "bInterfaceNumber");
-> +		}
-> +	}
-> +
->   	label =3D udev_device_get_property_value(device, "OFONO_LABEL");
-> +	subsystem =3D udev_device_get_subsystem(device);
->
->   	if (modem->sysattr !=3D NULL)
->   		sysattr =3D udev_device_get_sysattr_value(device, modem->sysattr);
-> @@ -1059,6 +1074,7 @@ static void add_device(const char *syspath, const c=
-har *devname,
->   	info->number =3D g_strdup(number);
->   	info->label =3D g_strdup(label);
->   	info->sysattr =3D g_strdup(sysattr);
-> +	info->subsystem =3D g_strdup(subsystem);
->
->   	modem->devices =3D g_slist_insert_sorted(modem->devices, info,
->   							compare_device);
->
 
-Regards,
--Denis
-
---===============6349779659547145357==--
+--===============3640036034516468571==--
 
