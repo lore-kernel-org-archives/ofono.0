@@ -1,57 +1,138 @@
-Content-Type: multipart/mixed; boundary="===============5810406011315349106=="
+Content-Type: multipart/mixed; boundary="===============8800228095577547508=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Enrico Sau <enrico.sau@gmail.com>
 Subject: Re: AT channel problem
-Date: Thu, 05 May 2016 09:04:54 -0500
-Message-ID: <572B5306.2000004@gmail.com>
-In-Reply-To: <CAH4ZQwurmsdm9_Tw-hGz8zY=im62R=zu7da-0DUZ3dkQbY2_4Q@mail.gmail.com>
+Date: Thu, 05 May 2016 16:51:09 +0200
+Message-ID: <CAH4ZQwv2U6yYnNmE8+DseJyPf2KFuj1AXBA1NCqoptk5GN_iNA@mail.gmail.com>
+In-Reply-To: <572B5306.2000004@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5810406011315349106==
+--===============8800228095577547508==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Enrico,
-
-On 05/05/2016 03:42 AM, Enrico Sau wrote:
-> Hi all,
->
-> I'm running into a problem with AT command read process and I need some
-> help because I don't fully understand the code in this case.
->
-> Ofono freezes in one particular systematic case when I receive
-> "\r\nOK\r\n" from the modem port (without quotes).
->
-> As I understood the method gatchat/gatchat.c::new_bytes() is called when
-> something was read from gatchat/gatio.c::received_data(), and the
-> function p->syntax->feed returns a result based on the syntax structure.
->
-> I made some debug and I found out that, in the failing case,
-> syntax->state is 2, it means that it is trying to read a line, but the
-> process fails because it doesn't find the ' " ' character.
->
-
-What syntax is being used?
-
-> I don't understand where the variable sysntax->state was set to 2. It
-> doesn't make sense to me.
-> I tried to search the code for all possible points where the variable is
-> set but I couldn't find the correct one.
->
-
-How does the rest of the log look like?
-
-> Does anyone have a suggestion about where should I look?
->
-> Thank you all.
->
-> Enrico
-
-Regards,
--Denis
+=E2=80=8BHi Denis,
+=E2=80=8B
 
 
---===============5810406011315349106==--
+> What syntax is being used?
+
+
+=E2=80=8BI'm using permissive syntax.=E2=80=8B
+
+
+
+> How does the rest of the log look like?
+>
+
+=E2=80=8BThe rest of the log look fine to me, I=E2=80=8B had to add prints =
+to understand
+why it was blocking.
+
+Anyway, I managed to solve the problem with a simple yet potentially
+dangerous fix: I deleted the if statement in the
+GSM_PERMISSIVE_STATE_RESPONSE_STRING case, so, it changed from:
+
+=E2=80=8Bgatchat/gatsyntax.c (row 309 more or less)=E2=80=8B
+case GSM_PERMISSIVE_STATE_RESPONSE_STRING:
+    if (byte =3D=3D '"')
+  syntax->state =3D GSM_PERMISSIVE_STATE_RESPONSE;
+  break;=E2=80=8B
+
+=E2=80=8BTo:
+
+=E2=80=8Bcase GSM_PERMISSIVE_STATE_RESPONSE_STRING:
+syntax->state =3D GSM_PERMISSIVE_STATE_RESPONSE;
+  break;=E2=80=8B
+
+=E2=80=8BWith this fix everything seem to work in my case.
+Do you think it is dangerous in any way?=E2=80=8B
+
+=E2=80=8BI still don't understand where the "syntax->state =3D
+GSM_PERMISSIVE_STATE_RESPONSE_STRING"
+comes from since the state seems to be managed only in this function. I'm
+thinking about some memory corruption but I'm not able to find why.
+
+=E2=80=8BThank you,
+Enrico=E2=80=8B
+
+--===============8800228095577547508==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPjxkaXYgY2xhc3M9ImdtYWls
+X3F1b3RlIj48ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWls
+eTp2ZXJkYW5hLHNhbnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPuKAi0hpIERlbmlzLDwvZGl2Pjwv
+ZGl2PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZl
+cmRhbmEsc2Fucy1zZXJpZjtkaXNwbGF5OmlubGluZSI+4oCLPC9kaXY+wqA8L2Rpdj48YmxvY2tx
+dW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MHB4IDBweCAwcHggMC44ZXg7
+Ym9yZGVyLWxlZnQtd2lkdGg6MXB4O2JvcmRlci1sZWZ0LXN0eWxlOnNvbGlkO2JvcmRlci1sZWZ0
+LWNvbG9yOnJnYigyMDQsMjA0LDIwNCk7cGFkZGluZy1sZWZ0OjFleCI+PHNwYW4gY2xhc3M9IiI+
+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAwcHggMHB4
+IDAuOGV4O2JvcmRlci1sZWZ0LXdpZHRoOjFweDtib3JkZXItbGVmdC1zdHlsZTpzb2xpZDtib3Jk
+ZXItbGVmdC1jb2xvcjpyZ2IoMjA0LDIwNCwyMDQpO3BhZGRpbmctbGVmdDoxZXgiPjwvYmxvY2tx
+dW90ZT48L3NwYW4+CldoYXQgc3ludGF4IGlzIGJlaW5nIHVzZWQ/PC9ibG9ja3F1b3RlPjxkaXY+
+PGJyPjwvZGl2PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
+aWx5OnZlcmRhbmEsc2Fucy1zZXJpZjtkaXNwbGF5OmlubGluZSI+4oCLSSYjMzk7bSB1c2luZyBw
+ZXJtaXNzaXZlIHN5bnRheC7igIs8L2Rpdj7CoDwvZGl2PjxkaXY+wqA8L2Rpdj48YmxvY2txdW90
+ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46MHB4IDBweCAwcHggMC44ZXg7Ym9y
+ZGVyLWxlZnQtd2lkdGg6MXB4O2JvcmRlci1sZWZ0LXN0eWxlOnNvbGlkO2JvcmRlci1sZWZ0LWNv
+bG9yOnJnYigyMDQsMjA0LDIwNCk7cGFkZGluZy1sZWZ0OjFleCI+CkhvdyBkb2VzIHRoZSByZXN0
+IG9mIHRoZSBsb2cgbG9vayBsaWtlPzxzcGFuIGNsYXNzPSIiPjxicj48L3NwYW4+PC9ibG9ja3F1
+b3RlPjwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+PC9kaXY+PGRpdiBj
+bGFzcz0iZ21haWxfZXh0cmEiPjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250
+LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPuKAi1RoZSByZXN0IG9mIHRoZSBsb2cgbG9vayBm
+aW5lIHRvIG1lLCBJ4oCLIGhhZCB0byBhZGQgcHJpbnRzIHRvIHVuZGVyc3RhbmQgd2h5IGl0IHdh
+cyBibG9ja2luZy48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1m
+YW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVm
+YXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+QW55d2F5LCBJIG1h
+bmFnZWQgdG8gc29sdmUgdGhlIHByb2JsZW0gd2l0aCBhIHNpbXBsZSB5ZXQgcG90ZW50aWFsbHkg
+ZGFuZ2Vyb3VzIGZpeDogSSBkZWxldGVkIHRoZSBpZiBzdGF0ZW1lbnQgaW4gdGhlIEdTTV9QRVJN
+SVNTSVZFX1NUQVRFX1JFU1BPTlNFX1NUUklORyBjYXNlLCBzbywgaXQgY2hhbmdlZCBmcm9tOjwv
+ZGl2PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0i
+Z21haWxfZXh0cmEiPjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWls
+eTp2ZXJkYW5hLHNhbnMtc2VyaWYiPuKAi2dhdGNoYXQvZ2F0c3ludGF4LmMgKHJvdyAzMDkgbW9y
+ZSBvciBsZXNzKeKAizwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48ZGl2IGNs
+YXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlm
+Ij5jYXNlIEdTTV9QRVJNSVNTSVZFX1NUQVRFX1JFU1BPTlNFX1NUUklORzo8L2Rpdj48ZGl2IGNs
+YXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlm
+Ij7CoCDCoCBpZiAoYnl0ZSA9PSAmIzM5OyZxdW90OyYjMzk7KTwvZGl2PjxkaXYgY2xhc3M9Imdt
+YWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxzcGFu
+IHN0eWxlPSJ3aGl0ZS1zcGFjZTpwcmUiPsKgICAgICAgIDwvc3Bhbj5zeW50YXgtJmd0O3N0YXRl
+ID0gR1NNX1BFUk1JU1NJVkVfU1RBVEVfUkVTUE9OU0U7PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxf
+ZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+PHNwYW4gc3R5
+bGU9IndoaXRlLXNwYWNlOnByZSI+wqAgICA8L3NwYW4+YnJlYWs74oCLPC9kaXY+PGJyPjwvZGl2
+PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHls
+ZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj7igItUbzo8L2Rpdj48ZGl2IGNsYXNz
+PSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj48
+YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZl
+cmRhbmEsc2Fucy1zZXJpZiI+4oCLY2FzZSBHU01fUEVSTUlTU0lWRV9TVEFURV9SRVNQT05TRV9T
+VFJJTkc6PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5
+OnZlcmRhbmEsc2Fucy1zZXJpZiI+PHNwYW4gc3R5bGU9IndoaXRlLXNwYWNlOnByZSI+ICAgIDwv
+c3Bhbj5zeW50YXgtJmd0O3N0YXRlID0gR1NNX1BFUk1JU1NJVkVfU1RBVEVfUkVTUE9OU0U7PGJy
+PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJk
+YW5hLHNhbnMtc2VyaWYiPjxzcGFuIHN0eWxlPSJ3aGl0ZS1zcGFjZTpwcmUiPsKgICAgPC9zcGFu
+PmJyZWFrO+KAizwvZGl2Pjxicj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9leHRyYSI+PGRpdiBj
+bGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJp
+ZiI+4oCLV2l0aCB0aGlzIGZpeCBldmVyeXRoaW5nIHNlZW0gdG8gd29yayBpbiBteSBjYXNlLjwv
+ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5h
+LHNhbnMtc2VyaWYiPkRvIHlvdSB0aGluayBpdCBpcyBkYW5nZXJvdXMgaW4gYW55IHdheT/igIs8
+L2Rpdj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZXh0cmEiPjxkaXYgY2xhc3M9ImdtYWls
+X2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPuKAi0kgc3Rp
+bGwgZG9uJiMzOTt0IHVuZGVyc3RhbmQgd2hlcmUgdGhlICZxdW90O3N5bnRheC0mZ3Q7c3RhdGUg
+PTxzcGFuIHN0eWxlPSJ3aGl0ZS1zcGFjZTpwcmUiPsKgPC9zcGFuPkdTTV9QRVJNSVNTSVZFX1NU
+QVRFX1JFU1BPTlNFX1NUUklORyZxdW90OyBjb21lcyBmcm9tIHNpbmNlIHRoZSBzdGF0ZSBzZWVt
+cyB0byBiZSBtYW5hZ2VkIG9ubHkgaW4gdGhpcyBmdW5jdGlvbi4gSSYjMzk7bSB0aGlua2luZyBh
+Ym91dCBzb21lIG1lbW9yeSBjb3JydXB0aW9uIGJ1dCBJJiMzOTttIG5vdCBhYmxlIHRvIGZpbmQg
+d2h5LjwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+PC9kaXY+PGRpdiBj
+bGFzcz0iZ21haWxfZXh0cmEiPjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250
+LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPuKAi1RoYW5rIHlvdSw8L2Rpdj48ZGl2IGNsYXNz
+PSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5F
+bnJpY2/igIs8L2Rpdj48YnI+PC9kaXY+PC9kaXY+Cg==
+
+--===============8800228095577547508==--
 
