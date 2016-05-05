@@ -1,93 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============7899056012531935023=="
+Content-Type: multipart/mixed; boundary="===============5810406011315349106=="
 MIME-Version: 1.0
-From: Enrico Sau <enrico.sau@gmail.com>
-Subject: AT channel problem
-Date: Thu, 05 May 2016 10:42:35 +0200
-Message-ID: <CAH4ZQwurmsdm9_Tw-hGz8zY=im62R=zu7da-0DUZ3dkQbY2_4Q@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: AT channel problem
+Date: Thu, 05 May 2016 09:04:54 -0500
+Message-ID: <572B5306.2000004@gmail.com>
+In-Reply-To: <CAH4ZQwurmsdm9_Tw-hGz8zY=im62R=zu7da-0DUZ3dkQbY2_4Q@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7899056012531935023==
+--===============5810406011315349106==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+Hi Enrico,
 
-I'm running into a problem with AT command read process and I need some
-help because I don't fully understand the code in this case.
+On 05/05/2016 03:42 AM, Enrico Sau wrote:
+> Hi all,
+>
+> I'm running into a problem with AT command read process and I need some
+> help because I don't fully understand the code in this case.
+>
+> Ofono freezes in one particular systematic case when I receive
+> "\r\nOK\r\n" from the modem port (without quotes).
+>
+> As I understood the method gatchat/gatchat.c::new_bytes() is called when
+> something was read from gatchat/gatio.c::received_data(), and the
+> function p->syntax->feed returns a result based on the syntax structure.
+>
+> I made some debug and I found out that, in the failing case,
+> syntax->state is 2, it means that it is trying to read a line, but the
+> process fails because it doesn't find the ' " ' character.
+>
 
-Ofono freezes in one particular systematic case when I receive "\r\nOK\r\n"
-from the modem port (without quotes).
+What syntax is being used?
 
-As I understood the method gatchat/gatchat.c::new_bytes() is called when
-something was read from gatchat/gatio.c::received_data(), and the
-function p->syntax->feed returns a result based on the syntax structure.
+> I don't understand where the variable sysntax->state was set to 2. It
+> doesn't make sense to me.
+> I tried to search the code for all possible points where the variable is
+> set but I couldn't find the correct one.
+>
 
-I made some debug and I found out that, in the failing case, syntax->state
-is 2, it means that it is trying to read a line, but the process fails
-because it doesn't find the ' " ' character.
+How does the rest of the log look like?
 
-I don't understand where the variable sysntax->state was set to 2. It
-doesn't make sense to me.
-I tried to search the code for all possible points where the variable is
-set but I couldn't find the correct one.
+> Does anyone have a suggestion about where should I look?
+>
+> Thank you all.
+>
+> Enrico
 
-Does anyone have a suggestion about where should I look?
+Regards,
+-Denis
 
-Thank you all.
 
-Enrico
-
---===============7899056012531935023==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
-aWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SGkgYWxsLDwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2Rl
-ZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L2Rpdj48
-ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5z
-LXNlcmlmIj5JJiMzOTttIHJ1bm5pbmcgaW50byBhIHByb2JsZW0gd2l0aCBBVCBjb21tYW5kIHJl
-YWQgcHJvY2VzcyBhbmQgSSBuZWVkIHNvbWUgaGVscCBiZWNhdXNlIEkgZG9uJiMzOTt0IGZ1bGx5
-IHVuZGVyc3RhbmQgdGhlIGNvZGUgaW4gdGhpcyBjYXNlLjwvZGl2PjxkaXYgY2xhc3M9ImdtYWls
-X2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L2Rp
-dj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxz
-YW5zLXNlcmlmIj5PZm9ubyBmcmVlemVzIGluIG9uZSBwYXJ0aWN1bGFyIHN5c3RlbWF0aWMgY2Fz
-ZSB3aGVuIEkgcmVjZWl2ZSAmcXVvdDtcclxuT0tcclxuJnF1b3Q7IGZyb20gdGhlIG1vZGVtIHBv
-cnQgKHdpdGhvdXQgcXVvdGVzKS48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHls
-ZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0i
-Z21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+QXMg
-SSB1bmRlcnN0b29kIHRoZSBtZXRob2TCoGdhdGNoYXQvZ2F0Y2hhdC5jOjpuZXdfYnl0ZXMoKSBp
-cyBjYWxsZWQgd2hlbiBzb21ldGhpbmcgd2FzIHJlYWQgZnJvbcKgZ2F0Y2hhdC9nYXRpby5jOjpy
-ZWNlaXZlZF9kYXRhKCksIGFuZCB0aGUgZnVuY3Rpb27CoHAtJmd0O3N5bnRheC0mZ3Q7ZmVlZCBy
-ZXR1cm5zIGEgcmVzdWx0IGJhc2VkIG9uIHRoZSBzeW50YXggc3RydWN0dXJlLjwvZGl2PjxkaXYg
-Y2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2Vy
-aWYiPjxicj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1p
-bHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5JIG1hZGUgc29tZSBkZWJ1ZyBhbmQgSSBmb3VuZCBvdXQg
-dGhhdCwgaW4gdGhlIGZhaWxpbmcgY2FzZSwgc3ludGF4LSZndDtzdGF0ZSBpcyAyLCBpdCBtZWFu
-cyB0aGF0IGl0IGlzIHRyeWluZyB0byByZWFkIGEgbGluZSwgYnV0IHRoZSBwcm9jZXNzIGZhaWxz
-IGJlY2F1c2UgaXQgZG9lc24mIzM5O3QgZmluZCB0aGUgJiMzOTsgJnF1b3Q7ICYjMzk7IGNoYXJh
-Y3Rlci48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6
-dmVyZGFuYSxzYW5zLXNlcmlmIj48YnI+PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIg
-c3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SSBkb24mIzM5O3QgdW5kZXJz
-dGFuZCB3aGVyZSB0aGUgdmFyaWFibGUgc3lzbnRheC0mZ3Q7c3RhdGUgd2FzIHNldCB0byAyLiBJ
-dCBkb2VzbiYjMzk7dCBtYWtlIHNlbnNlIHRvIG1lLjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2Rl
-ZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPkkgdHJpZWQgdG8g
-c2VhcmNoIHRoZSBjb2RlIGZvciBhbGwgcG9zc2libGUgcG9pbnRzIHdoZXJlIHRoZSB2YXJpYWJs
-ZSBpcyBzZXQgYnV0IEkgY291bGRuJiMzOTt0IGZpbmQgdGhlIGNvcnJlY3Qgb25lLjwvZGl2Pjxk
-aXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMt
-c2VyaWYiPjxicj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1m
-YW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5Eb2VzIGFueW9uZSBoYXZlIGEgc3VnZ2VzdGlvbiBh
-Ym91dCB3aGVyZSBzaG91bGQgSSBsb29rPzwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQi
-IHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L2Rpdj48ZGl2IGNs
-YXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlm
-Ij5UaGFuayB5b3UgYWxsLjwvZGl2PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxfc2lnbmF0dXJlIj48
-ZGl2IGRpcj0ibHRyIj48ZGl2PjxkaXYgZGlyPSJsdHIiPjxkaXY+PGRpdj48c3BhbiBzdHlsZT0i
-Zm9udC1zaXplOjEyLjhweCI+PGJyPjwvc3Bhbj48L2Rpdj48ZGl2PjxzcGFuIHN0eWxlPSJmb250
-LXNpemU6MTIuOHB4Ij5FbnJpY288L3NwYW4+PC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+
-PC9kaXY+PC9kaXY+CjwvZGl2Pgo=
-
---===============7899056012531935023==--
+--===============5810406011315349106==--
 
