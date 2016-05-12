@@ -1,69 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============7740004009250930138=="
+Content-Type: multipart/mixed; boundary="===============4402865275263375774=="
 MIME-Version: 1.0
-From: caiwen.zhang@intel.com
-Subject: [PATCH] plugins/ril: complete modem power off process
-Date: Thu, 12 May 2016 13:51:03 +0800
-Message-ID: <1463032263-6366-1-git-send-email-caiwen.zhang@intel.com>
+From: Marco Trapanese <marcotrapanese@gmail.com>
+Subject: Method "Register" with signature "oay" doesn't exist
+Date: Thu, 12 May 2016 12:37:58 +0200
+Message-ID: <57345D06.7020303@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7740004009250930138==
+--===============4402865275263375774==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: caiwen Zhang <caiwen.zhang@intel.com>
 
----
- plugins/ril.c | 19 +++++++++++++++++--
- 1 file changed, 17 insertions(+), 2 deletions(-)
+Hello,
+when I start pulseaudio I get this error:
 
-diff --git a/plugins/ril.c b/plugins/ril.c
-index 2298bb6..2ea3fb5 100644
---- a/plugins/ril.c
-+++ b/plugins/ril.c
-@@ -409,15 +409,30 @@ int ril_enable(struct ofono_modem *modem)
- 	return -EINPROGRESS;
- }
- =
+> org.freedesktop.DBus.Error.UnknownMethod: Method "Register" with =
 
-+static void power_off_cb(struct ril_msg *message, gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	struct ril_data *rd =3D cbd->user;
-+	struct ofono_modem *modem =3D cbd->data;
-+
-+	if (rd) {
-+		g_ril_unref(rd->ril);
-+		rd->ril =3D NULL;
-+	}
-+
-+	ofono_modem_set_powered(modem, FALSE);
-+}
-+
- int ril_disable(struct ofono_modem *modem)
- {
- 	struct ril_data *rd =3D ofono_modem_get_data(modem);
-+	struct cb_data *cbd =3D cb_data_new(NULL, modem, rd);
- =
+> signature "oay" on interface "org.ofono.HandsfreeAudioManager" doesn't =
 
- 	DBG("%p", modem);
- =
+> exist
 
--	ril_send_power(rd, FALSE, NULL, NULL);
-+	ril_send_power(rd, FALSE, power_off_cb, cbd);
- =
+I'm running ofono 1.17 and pulseaudio 8.0.
+Please, would you help me to understand if the problem is related to the =
 
--	return 0;
-+	return -EINPROGRESS;
- }
- =
+compilation of ofono or to the dbus policies?
 
- static struct ofono_modem_driver ril_driver =3D {
--- =
+I attach the dbus conf files.
 
-2.7.4
+My system is a custom buildroot environment on RPi3 with kernel 4.4.8-v7
+Thanks!
+Marco
 
 
---===============7740004009250930138==--
+--===============4402865275263375774==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="ofono.conf"
+
+PCEtLSBUaGlzIGNvbmZpZ3VyYXRpb24gZmlsZSBzcGVjaWZpZXMgdGhlIHJlcXVpcmVkIHNlY3Vy
+aXR5IHBvbGljaWVzCiAgICAgZm9yIG9Gb25vIGNvcmUgZGFlbW9uIHRvIHdvcmsuIC0tPgoKPCFE
+T0NUWVBFIGJ1c2NvbmZpZyBQVUJMSUMgIi0vL2ZyZWVkZXNrdG9wLy9EVEQgRC1CVVMgQnVzIENv
+bmZpZ3VyYXRpb24gMS4wLy9FTiIKICJodHRwOi8vd3d3LmZyZWVkZXNrdG9wLm9yZy9zdGFuZGFy
+ZHMvZGJ1cy8xLjAvYnVzY29uZmlnLmR0ZCI+CjxidXNjb25maWc+CgogIDwhLS0gLi4vc3lzdGVt
+LmNvbmYgaGF2ZSBkZW5pZWQgZXZlcnl0aGluZywgc28gd2UganVzdCBwdW5jaCBzb21lIGhvbGVz
+IC0tPgoKICA8cG9saWN5IHVzZXI9InJvb3QiPgogICAgPGFsbG93IG93bj0ib3JnLm9mb25vIi8+
+CiAgICA8YWxsb3cgc2VuZF9kZXN0aW5hdGlvbj0ib3JnLm9mb25vIi8+CiAgICA8YWxsb3cgc2Vu
+ZF9pbnRlcmZhY2U9Im9yZy5vZm9uby5TaW1Ub29sa2l0QWdlbnQiLz4KICAgIDxhbGxvdyBzZW5k
+X2ludGVyZmFjZT0ib3JnLm9mb25vLlB1c2hOb3RpZmljYXRpb25BZ2VudCIvPgogICAgPGFsbG93
+IHNlbmRfaW50ZXJmYWNlPSJvcmcub2Zvbm8uU21hcnRNZXNzYWdpbmdBZ2VudCIvPgogICAgPGFs
+bG93IHNlbmRfaW50ZXJmYWNlPSJvcmcub2Zvbm8uUG9zaXRpb25pbmdSZXF1ZXN0QWdlbnQiLz4K
+ICAgIDxhbGxvdyBzZW5kX2ludGVyZmFjZT0ib3JnLm9mb25vLkhhbmRzZnJlZUF1ZGlvTWFuYWdl
+ciIvPgogICAgPGFsbG93IHNlbmRfaW50ZXJmYWNlPSJvcmcub2Zvbm8uSGFuZHNmcmVlIi8+CiAg
+PC9wb2xpY3k+CgogIDxwb2xpY3kgYXRfY29uc29sZT0idHJ1ZSI+CiAgICA8YWxsb3cgc2VuZF9k
+ZXN0aW5hdGlvbj0ib3JnLm9mb25vIi8+CiAgPC9wb2xpY3k+CgogIDxwb2xpY3kgY29udGV4dD0i
+ZGVmYXVsdCI+CiAgICA8YWxsb3cgc2VuZF9kZXN0aW5hdGlvbj0ib3JnLm9mb25vIi8+CiAgPC9w
+b2xpY3k+Cgo8L2J1c2NvbmZpZz4K
+
+--===============4402865275263375774==
+Content-Type: text/xml
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="pulseaudio-system.conf"
+
+PD94bWwgdmVyc2lvbj0iMS4wIj8+PCEtLSotbnhtbC0qLS0+CjwhRE9DVFlQRSBidXNjb25maWcg
+UFVCTElDICItLy9mcmVlZGVza3RvcC8vRFREIEQtQlVTIEJ1cyBDb25maWd1cmF0aW9uIDEuMC8v
+RU4iCiAiaHR0cDovL3d3dy5mcmVlZGVza3RvcC5vcmcvc3RhbmRhcmRzL2RidXMvMS4wL2J1c2Nv
+bmZpZy5kdGQiPgoKPCEtLQpUaGlzIGZpbGUgaXMgcGFydCBvZiBQdWxzZUF1ZGlvLgoKUHVsc2VB
+dWRpbyBpcyBmcmVlIHNvZnR3YXJlOyB5b3UgY2FuIHJlZGlzdHJpYnV0ZSBpdCBhbmQvb3IgbW9k
+aWZ5IGl0CnVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIExlc3NlciBHZW5lcmFsIFB1YmxpYyBM
+aWNlbnNlIGFzCnB1Ymxpc2hlZCBieSB0aGUgRnJlZSBTb2Z0d2FyZSBGb3VuZGF0aW9uOyBlaXRo
+ZXIgdmVyc2lvbiAyLjEgb2YgdGhlCkxpY2Vuc2UsIG9yIChhdCB5b3VyIG9wdGlvbikgYW55IGxh
+dGVyIHZlcnNpb24uCgpQdWxzZUF1ZGlvIGlzIGRpc3RyaWJ1dGVkIGluIHRoZSBob3BlIHRoYXQg
+aXQgd2lsbCBiZSB1c2VmdWwsIGJ1dCBXSVRIT1VUCkFOWSBXQVJSQU5UWTsgd2l0aG91dCBldmVu
+IHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9mIE1FUkNIQU5UQUJJTElUWQpvciBGSVRORVNTIEZPUiBB
+IFBBUlRJQ1VMQVIgUFVSUE9TRS4gU2VlIHRoZSBHTlUgTGVzc2VyIEdlbmVyYWwKUHVibGljIExp
+Y2Vuc2UgZm9yIG1vcmUgZGV0YWlscy4KCllvdSBzaG91bGQgaGF2ZSByZWNlaXZlZCBhIGNvcHkg
+b2YgdGhlIEdOVSBMZXNzZXIgR2VuZXJhbCBQdWJsaWMKTGljZW5zZSBhbG9uZyB3aXRoIFB1bHNl
+QXVkaW87IGlmIG5vdCwgc2VlIDxodHRwOi8vd3d3LmdudS5vcmcvbGljZW5zZXMvPi4KLS0+Cgo8
+YnVzY29uZmlnPgoKICA8IS0tIFN5c3RlbS13aWRlIFB1bHNlQXVkaW8gcnVucyBhcyAncHVsc2Un
+IHVzZXIuIFRoaXMgZnJhZ21lbnQgaXMKICAgICAgIG5vdCBuZWNlc3NhcnkgZm9yIHVzZXIgUHVs
+c2VBdWRpbyBpbnN0YW5jZXMuIC0tPgoKICA8cG9saWN5IHVzZXI9InB1bHNlIj4KICAgIDxhbGxv
+dyBvd249Im9yZy5wdWxzZWF1ZGlvLlNlcnZlciIvPgogICAgPGFsbG93IHNlbmRfZGVzdGluYXRp
+b249Im9yZy5ibHVleiIvPgogICAgPGFsbG93IHNlbmRfZGVzdGluYXRpb249Im9yZy5vZm9ubyIv
+PgogIDwvcG9saWN5PgoKPC9idXNjb25maWc+Cg==
+
+--===============4402865275263375774==--
 
