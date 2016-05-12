@@ -1,91 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============4402865275263375774=="
+Content-Type: multipart/mixed; boundary="===============6146394982696374071=="
 MIME-Version: 1.0
-From: Marco Trapanese <marcotrapanese@gmail.com>
-Subject: Method "Register" with signature "oay" doesn't exist
-Date: Thu, 12 May 2016 12:37:58 +0200
-Message-ID: <57345D06.7020303@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Method "Register" with signature "oay" doesn't exist
+Date: Thu, 12 May 2016 09:09:49 -0500
+Message-ID: <57348EAD.4030606@gmail.com>
+In-Reply-To: <57345D06.7020303@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4402865275263375774==
+--===============6146394982696374071==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Marco,
 
-Hello,
-when I start pulseaudio I get this error:
+On 05/12/2016 05:37 AM, Marco Trapanese wrote:
+>
+> Hello,
+> when I start pulseaudio I get this error:
+>
+>> org.freedesktop.DBus.Error.UnknownMethod: Method "Register" with
+>> signature "oay" on interface "org.ofono.HandsfreeAudioManager" doesn't
+>> exist
+>
 
-> org.freedesktop.DBus.Error.UnknownMethod: Method "Register" with =
+Are you running BlueZ 5 on your system?  This interface is only =
 
-> signature "oay" on interface "org.ofono.HandsfreeAudioManager" doesn't =
+available if BlueZ5 support has been enabled.  E.g. =
 
-> exist
+plugins/hfp_ag_bluez5.c or plugins/hfp_hf_bluez5.c
 
-I'm running ofono 1.17 and pulseaudio 8.0.
-Please, would you help me to understand if the problem is related to the =
+> I'm running ofono 1.17 and pulseaudio 8.0.
+> Please, would you help me to understand if the problem is related to the
+> compilation of ofono or to the dbus policies?
 
-compilation of ofono or to the dbus policies?
+If you installed the ofono.conf from ofono.git/src/ofono.conf in the =
 
-I attach the dbus conf files.
+right place, then it shouldn't be a D-Bus policy issue.
 
-My system is a custom buildroot environment on RPi3 with kernel 4.4.8-v7
-Thanks!
-Marco
+Regards,
+-Denis
 
-
---===============4402865275263375774==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="ofono.conf"
-
-PCEtLSBUaGlzIGNvbmZpZ3VyYXRpb24gZmlsZSBzcGVjaWZpZXMgdGhlIHJlcXVpcmVkIHNlY3Vy
-aXR5IHBvbGljaWVzCiAgICAgZm9yIG9Gb25vIGNvcmUgZGFlbW9uIHRvIHdvcmsuIC0tPgoKPCFE
-T0NUWVBFIGJ1c2NvbmZpZyBQVUJMSUMgIi0vL2ZyZWVkZXNrdG9wLy9EVEQgRC1CVVMgQnVzIENv
-bmZpZ3VyYXRpb24gMS4wLy9FTiIKICJodHRwOi8vd3d3LmZyZWVkZXNrdG9wLm9yZy9zdGFuZGFy
-ZHMvZGJ1cy8xLjAvYnVzY29uZmlnLmR0ZCI+CjxidXNjb25maWc+CgogIDwhLS0gLi4vc3lzdGVt
-LmNvbmYgaGF2ZSBkZW5pZWQgZXZlcnl0aGluZywgc28gd2UganVzdCBwdW5jaCBzb21lIGhvbGVz
-IC0tPgoKICA8cG9saWN5IHVzZXI9InJvb3QiPgogICAgPGFsbG93IG93bj0ib3JnLm9mb25vIi8+
-CiAgICA8YWxsb3cgc2VuZF9kZXN0aW5hdGlvbj0ib3JnLm9mb25vIi8+CiAgICA8YWxsb3cgc2Vu
-ZF9pbnRlcmZhY2U9Im9yZy5vZm9uby5TaW1Ub29sa2l0QWdlbnQiLz4KICAgIDxhbGxvdyBzZW5k
-X2ludGVyZmFjZT0ib3JnLm9mb25vLlB1c2hOb3RpZmljYXRpb25BZ2VudCIvPgogICAgPGFsbG93
-IHNlbmRfaW50ZXJmYWNlPSJvcmcub2Zvbm8uU21hcnRNZXNzYWdpbmdBZ2VudCIvPgogICAgPGFs
-bG93IHNlbmRfaW50ZXJmYWNlPSJvcmcub2Zvbm8uUG9zaXRpb25pbmdSZXF1ZXN0QWdlbnQiLz4K
-ICAgIDxhbGxvdyBzZW5kX2ludGVyZmFjZT0ib3JnLm9mb25vLkhhbmRzZnJlZUF1ZGlvTWFuYWdl
-ciIvPgogICAgPGFsbG93IHNlbmRfaW50ZXJmYWNlPSJvcmcub2Zvbm8uSGFuZHNmcmVlIi8+CiAg
-PC9wb2xpY3k+CgogIDxwb2xpY3kgYXRfY29uc29sZT0idHJ1ZSI+CiAgICA8YWxsb3cgc2VuZF9k
-ZXN0aW5hdGlvbj0ib3JnLm9mb25vIi8+CiAgPC9wb2xpY3k+CgogIDxwb2xpY3kgY29udGV4dD0i
-ZGVmYXVsdCI+CiAgICA8YWxsb3cgc2VuZF9kZXN0aW5hdGlvbj0ib3JnLm9mb25vIi8+CiAgPC9w
-b2xpY3k+Cgo8L2J1c2NvbmZpZz4K
-
---===============4402865275263375774==
-Content-Type: text/xml
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="pulseaudio-system.conf"
-
-PD94bWwgdmVyc2lvbj0iMS4wIj8+PCEtLSotbnhtbC0qLS0+CjwhRE9DVFlQRSBidXNjb25maWcg
-UFVCTElDICItLy9mcmVlZGVza3RvcC8vRFREIEQtQlVTIEJ1cyBDb25maWd1cmF0aW9uIDEuMC8v
-RU4iCiAiaHR0cDovL3d3dy5mcmVlZGVza3RvcC5vcmcvc3RhbmRhcmRzL2RidXMvMS4wL2J1c2Nv
-bmZpZy5kdGQiPgoKPCEtLQpUaGlzIGZpbGUgaXMgcGFydCBvZiBQdWxzZUF1ZGlvLgoKUHVsc2VB
-dWRpbyBpcyBmcmVlIHNvZnR3YXJlOyB5b3UgY2FuIHJlZGlzdHJpYnV0ZSBpdCBhbmQvb3IgbW9k
-aWZ5IGl0CnVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIExlc3NlciBHZW5lcmFsIFB1YmxpYyBM
-aWNlbnNlIGFzCnB1Ymxpc2hlZCBieSB0aGUgRnJlZSBTb2Z0d2FyZSBGb3VuZGF0aW9uOyBlaXRo
-ZXIgdmVyc2lvbiAyLjEgb2YgdGhlCkxpY2Vuc2UsIG9yIChhdCB5b3VyIG9wdGlvbikgYW55IGxh
-dGVyIHZlcnNpb24uCgpQdWxzZUF1ZGlvIGlzIGRpc3RyaWJ1dGVkIGluIHRoZSBob3BlIHRoYXQg
-aXQgd2lsbCBiZSB1c2VmdWwsIGJ1dCBXSVRIT1VUCkFOWSBXQVJSQU5UWTsgd2l0aG91dCBldmVu
-IHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9mIE1FUkNIQU5UQUJJTElUWQpvciBGSVRORVNTIEZPUiBB
-IFBBUlRJQ1VMQVIgUFVSUE9TRS4gU2VlIHRoZSBHTlUgTGVzc2VyIEdlbmVyYWwKUHVibGljIExp
-Y2Vuc2UgZm9yIG1vcmUgZGV0YWlscy4KCllvdSBzaG91bGQgaGF2ZSByZWNlaXZlZCBhIGNvcHkg
-b2YgdGhlIEdOVSBMZXNzZXIgR2VuZXJhbCBQdWJsaWMKTGljZW5zZSBhbG9uZyB3aXRoIFB1bHNl
-QXVkaW87IGlmIG5vdCwgc2VlIDxodHRwOi8vd3d3LmdudS5vcmcvbGljZW5zZXMvPi4KLS0+Cgo8
-YnVzY29uZmlnPgoKICA8IS0tIFN5c3RlbS13aWRlIFB1bHNlQXVkaW8gcnVucyBhcyAncHVsc2Un
-IHVzZXIuIFRoaXMgZnJhZ21lbnQgaXMKICAgICAgIG5vdCBuZWNlc3NhcnkgZm9yIHVzZXIgUHVs
-c2VBdWRpbyBpbnN0YW5jZXMuIC0tPgoKICA8cG9saWN5IHVzZXI9InB1bHNlIj4KICAgIDxhbGxv
-dyBvd249Im9yZy5wdWxzZWF1ZGlvLlNlcnZlciIvPgogICAgPGFsbG93IHNlbmRfZGVzdGluYXRp
-b249Im9yZy5ibHVleiIvPgogICAgPGFsbG93IHNlbmRfZGVzdGluYXRpb249Im9yZy5vZm9ubyIv
-PgogIDwvcG9saWN5PgoKPC9idXNjb25maWc+Cg==
-
---===============4402865275263375774==--
+--===============6146394982696374071==--
 
