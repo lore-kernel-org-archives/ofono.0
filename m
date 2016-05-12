@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0430076942730957182=="
+Content-Type: multipart/mixed; boundary="===============3062000911839394361=="
 MIME-Version: 1.0
 From: Marco Trapanese <marcotrapanese@gmail.com>
 Subject: Re: Method "Register" with signature "oay" doesn't exist
-Date: Thu, 12 May 2016 18:31:59 +0200
-Message-ID: <5734AFFF.2@gmail.com>
+Date: Thu, 12 May 2016 18:32:19 +0200
+Message-ID: <5734B013.4000706@gmail.com>
 In-Reply-To: <5734AB45.8050109@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0430076942730957182==
+--===============3062000911839394361==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -66,7 +66,7 @@ Marco
 
 
 
---===============0430076942730957182==
+--===============3062000911839394361==
 Content-Type: text/plain
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
@@ -922,5 +922,5 @@ IGZvciBzdHJlYW0gc291cmNlLW91dHB1dC1ieS1tZWRpYS1yb2xlOmFic3RyYWN0LgpJOiBbcHVs
 c2VhdWRpb10gbW9kdWxlLXN0cmVhbS1yZXN0b3JlLmM6IFN5bmNlZC4KSTogW3B1bHNlYXVkaW9d
 IG1vZHVsZS1kZXZpY2UtcmVzdG9yZS5jOiBTeW5jZWQuCg==
 
---===============0430076942730957182==--
+--===============3062000911839394361==--
 
