@@ -1,68 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============7323823983459733723=="
+Content-Type: multipart/mixed; boundary="===============8310728081700933431=="
 MIME-Version: 1.0
-From: Georg Chini <georg@chini.tk>
+From: Marco Trapanese <marcotrapanese@gmail.com>
 Subject: Re: Method "Register" with signature "oay" doesn't exist
-Date: Sun, 15 May 2016 13:43:51 +0200
-Message-ID: <573860F7.2040104@chini.tk>
-In-Reply-To: <57385D0C.60001@gmail.com>
+Date: Sun, 15 May 2016 14:09:45 +0200
+Message-ID: <57386709.4020505@gmail.com>
+In-Reply-To: <573860F7.2040104@chini.tk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7323823983459733723==
+--===============8310728081700933431==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 15.05.2016 13:27, Marco Trapanese wrote:
-> Il 15/05/2016 13:15, Georg Chini ha scritto:
->> One thing I have seen on first inspection:
->>
->> It looks like a line
->>
->> <allow send_interface=3D"org.ofono.HandsfreeAudioAgent"/>
->>
->> is missing in your ofono.conf.
->> There are messages indicating that in your dbus-log:
->>
->> error time=3D1463309285.724282 sender=3Dorg.freedesktop.DBus -> =
+Il 15/05/2016 13:43, Georg Chini ha scritto:
+> Did you try to run pulseaudio as normal user? You should avoid system =
 
->> destination=3D:1.13 error_name=3Dorg.freedesktop.DBus.Error.AccessDenied =
+> mode if possible.
+> It still looks like there is something wrong with your dbus access =
 
->> reply_serial=3D69
->> ...
->> method call time=3D1463309305.723208 sender=3D:1.13 -> destination=3D:1.=
-14 =
+> rights, this time the reply
+> from pulseaudio is denied.
 
->> serial=3D70 path=3D/HandsfreeAudioAgent; =
+Someone else suggested to run pulseaudio in system mode on an embedded =
 
->> interface=3Dorg.ofono.HandsfreeAudioAgent; member=3DNewConnection
->>
->>
->> Could you add the line and retry?
+system.
+
+> Maybe you could try and add something like
 >
+>   <policy user=3D"pulse">
+>     <allow send_destination=3D"org.ofono"/>
+>   </policy>
 >
-> Of course!
-> I added the linne, rebooted and followed again the procedure. It seems =
+> to your ofono.conf, but that is just a wild guess. I am not too =
 
-> the errors are still there.
->
-Did you try to run pulseaudio as normal user? You should avoid system =
+> familiar with dbus.
 
-mode if possible.
-It still looks like there is something wrong with your dbus access =
 
-rights, this time the reply
-from pulseaudio is denied.
+Before doing the test, I'm quite confused about users and permissions.
+If pulseaudio will run as "normal" (do you mean user 'pulse' or the =
 
-Maybe you could try and add something like
+actual user?), what about the other daemons? ofono and bluetooth should =
 
-   <policy user=3D"pulse">
-     <allow send_destination=3D"org.ofono"/>
-   </policy>
+also run as user?
 
-to your ofono.conf, but that is just a wild guess. I am not too familiar =
 
-with dbus.
 
---===============7323823983459733723==--
+--===============8310728081700933431==--
 
