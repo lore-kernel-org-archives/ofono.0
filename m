@@ -1,87 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============1860233702274250593=="
+Content-Type: multipart/mixed; boundary="===============7142224976021336696=="
 MIME-Version: 1.0
-From: Georg Chini <georg@chini.tk>
+From: Marco Trapanese <marcotrapanese@gmail.com>
 Subject: Re: Method "Register" with signature "oay" doesn't exist
-Date: Sun, 15 May 2016 15:24:25 +0200
-Message-ID: <57387889.4040204@chini.tk>
-In-Reply-To: <573874C3.4010001@gmail.com>
+Date: Sun, 15 May 2016 19:38:17 +0200
+Message-ID: <5738B409.6030604@gmail.com>
+In-Reply-To: <57387889.4040204@chini.tk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1860233702274250593==
+--===============7142224976021336696==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 15.05.2016 15:08, Marco Trapanese wrote:
-> Il 15/05/2016 15:01, Georg Chini ha scritto:
->> To me it still looks like this is an issue with your dbus access =
-
->> rights. Everything else
->> looks fine - even the loopback modules are loaded but don't receive / =
-
->> send any audio.
+Il 15/05/2016 15:24, Georg Chini ha scritto:
 >
-> I would try to run all services as normal user, but it is different =
+> Might be missing dependencies, see above, then it is not only =
 
-> than your experience.
-> Your dbus policies are different than mine?
+> configuration.
 
-No, they are not different. But as I said, I have not used/tested it for =
 
-quite a while.
+I understand.
+I hope there is a document that clearly states which are the =
 
->
->> Something else I noticed: It looks like you can't get high priority =
+dependencies required to run these applications.
+I can't imagine everybody has to 'guess' what is missing :)
+Indeed I will review my whole environment if I would know what I have to =
 
->> and also no timer based
->> scheduling for pulseaudio. This means that your audio quality will =
+check.
 
->> probably be really bad.
->
-> It is. I've already asked to the pulseaudio guys how to improve the =
+Please, don't misunderstanding, I'm not angry at all! I thank you all =
 
-> audio quality, but currently I'm still here.
+very much for the support! I'm just trying to learn something new, but I =
 
-It looks like something is missing on your system.
+find too few information to go ahead by myself.
 
->
->
->> Also there are lots of other errors in the PA log. It seems that =
+Best regards!
+Marco
 
->> there is still something
->> broken in your build. Or is that due to the embedded system?
->
-> PA itself works fine with paplay and parecord. The problems rise only =
 
-> when I try to use bluetooth audio.
-> For example the a2dp "works" (apart the poor quality) but every time =
 
-> the stream is suspended the bluez source is released and I need to =
-
-> disconnect and reconnect again the phone to hear the audio another time.
->
-> This isn't the expected behavior, but nobody knows why this happens!
-
-Well, this is expected behavior (at least partly). The source goes away, =
-
-when the bluetooth connection
-ends, which is usually the case after playing something. But the source =
-
-should re-appear automatically
-when the connection is re-established.
-
->
->
-> I'm fighting against these problems for over 10 days... I need to find =
-
-> a solution!
-> Because Buildroot compiles all packets from the sources it MUST be =
-
-> just a matter of configuration.
->
->
-Might be missing dependencies, see above, then it is not only configuration.
-
---===============1860233702274250593==--
+--===============7142224976021336696==--
 
