@@ -1,61 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============0982978132466655938=="
+Content-Type: multipart/mixed; boundary="===============6403626320274100453=="
 MIME-Version: 1.0
-From: Georg Chini <georg@chini.tk>
+From: Marco Trapanese <marcotrapanese@gmail.com>
 Subject: Re: Method "Register" with signature "oay" doesn't exist
-Date: Sun, 15 May 2016 15:01:42 +0200
-Message-ID: <57387336.5070809@chini.tk>
-In-Reply-To: <57386BDF.50702@gmail.com>
+Date: Sun, 15 May 2016 15:08:19 +0200
+Message-ID: <573874C3.4010001@gmail.com>
+In-Reply-To: <57387336.5070809@chini.tk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0982978132466655938==
+--===============6403626320274100453==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 15.05.2016 14:30, Marco Trapanese wrote:
-> Il 15/05/2016 14:15, Georg Chini ha scritto:
->> Not sure if the other daemons must be run as root, but at least it =
+Il 15/05/2016 15:01, Georg Chini ha scritto:
+> To me it still looks like this is an issue with your dbus access =
 
->> works for me to start
->> ofono and bluetooth during system startup and run pulseaudio as a =
+> rights. Everything else
+> looks fine - even the loopback modules are loaded but don't receive / =
 
->> normal user (not
->> as user pulse)
->
->
-> I'm afraid about all these variables!
-> Anyway, I did the following:
->
-> - added the dbus policies for both user "pulse" and "user" (the actual =
+> send any audio.
 
-> one)
-> - started bluetooth and ofono as system service (as root)
-> - started pulseaudio as normal user
-> - followed the usual test procedure
->
-> The behavior is exactly the same: connected, enabled and call made but =
+I would try to run all services as normal user, but it is different than =
 
-> no audio.
-> Thank for the patience!
->
-To me it still looks like this is an issue with your dbus access rights. =
+your experience.
+Your dbus policies are different than mine?
 
-Everything else
-looks fine - even the loopback modules are loaded but don't receive / =
+> Something else I noticed: It looks like you can't get high priority =
 
-send any audio.
+> and also no timer based
+> scheduling for pulseaudio. This means that your audio quality will =
 
-Something else I noticed: It looks like you can't get high priority and =
+> probably be really bad.
 
-also no timer based
-scheduling for pulseaudio. This means that your audio quality will =
+It is. I've already asked to the pulseaudio guys how to improve the =
 
-probably be really bad.
-Also there are lots of other errors in the PA log. It seems that there =
+audio quality, but currently I'm still here.
 
-is still something
-broken in your build. Or is that due to the embedded system?
+> Also there are lots of other errors in the PA log. It seems that there =
 
---===============0982978132466655938==--
+> is still something
+> broken in your build. Or is that due to the embedded system?
+
+PA itself works fine with paplay and parecord. The problems rise only =
+
+when I try to use bluetooth audio.
+For example the a2dp "works" (apart the poor quality) but every time the =
+
+stream is suspended the bluez source is released and I need to =
+
+disconnect and reconnect again the phone to hear the audio another time.
+
+This isn't the expected behavior, but nobody knows why this happens!
+
+I'm fighting against these problems for over 10 days... I need to find a =
+
+solution!
+Because Buildroot compiles all packets from the sources it MUST be just =
+
+a matter of configuration.
+
+
+
+--===============6403626320274100453==--
 
