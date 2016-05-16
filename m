@@ -1,62 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============4777507926119198092=="
+Content-Type: multipart/mixed; boundary="===============3944069916013836071=="
 MIME-Version: 1.0
-From: Jason Gauthier <jagauthier@gmail.com>
-Subject: No audio with USB device
-Date: Sun, 15 May 2016 15:42:40 -0400
-Message-ID: <CAHY_EhU4Bu9YHUKSqZCCjiJGUJirZvs+Y+7ezWOyLkevTGmUmA@mail.gmail.com>
+From: Zhang, Caiwen <caiwen.zhang@intel.com>
+Subject: RE: [PATCH] plugins/ril: complete modem power off process
+Date: Mon, 16 May 2016 06:41:05 +0000
+Message-ID: <DA62CA5DDF4CA640AA25B1684E5D1411020B3AF5@shsmsx102.ccr.corp.intel.com>
+In-Reply-To: <5736861F.6000504@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4777507926119198092==
+--===============3944069916013836071==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Greetings,
 
-  I'm picking up a project I put down for a few months.  I am trying to
-make a raspberry pi function as a handsfree unit.  I've had some success in
-the past, but it seems I've taken a step back.
+Hi Denis,
 
-Firstly, I am running the latest (compiled) versions of bluez, pulseaudio,
-and ofono (1.18).
+> > ---
+> >   plugins/ril.c | 19 +++++++++++++++++--
+> >   1 file changed, 17 insertions(+), 2 deletions(-)
+> >
+> =
 
-I'm not having any trouble with the audio sink when listening to music or
-other other phone audio.  But, when I connect a call, it's dead silent.
+> I went ahead and applied this patch, however, see below:
+> =
 
-My USB device is a Roland UA-1EX.    I've added "headset=3Dofono" to my PA
-default.pa config file on the bluetooth discovery module.  Running
-everything in debug (all three above) doesn't reveal any technical errors,
-or indication of there being a problem..
+> > diff --git a/plugins/ril.c b/plugins/ril.c index 2298bb6..2ea3fb5
+> > 100644
+> > --- a/plugins/ril.c
+> > +++ b/plugins/ril.c
+> > @@ -409,15 +409,30 @@ int ril_enable(struct ofono_modem *modem)
+> >   	return -EINPROGRESS;
+> >   }
+> >
+> > +static void power_off_cb(struct ril_msg *message, gpointer user_data)
+> > +{
+> > +	struct cb_data *cbd =3D user_data;
+> > +	struct ril_data *rd =3D cbd->user;
+> > +	struct ofono_modem *modem =3D cbd->data;
+> > +
+> > +	if (rd) {
+> > +		g_ril_unref(rd->ril);
+> =
 
-Any suggestions on what else I can try?
+> It seems GRil doesn't gracefully handle g_ril_unrefs from within a result
+> callback.  Have you tried running this with valgrind?
+> =
 
-Thanks!
+> We might need to come up with a fix for GRil...
+> =
 
---===============4777507926119198092==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
 
-PGRpdiBkaXI9Imx0ciI+R3JlZXRpbmdzLDxkaXY+PGJyPjwvZGl2PjxkaXY+wqAgSSYjMzk7bSBw
-aWNraW5nIHVwIGEgcHJvamVjdCBJIHB1dCBkb3duIGZvciBhIGZldyBtb250aHMuwqAgSSBhbSB0
-cnlpbmcgdG8gbWFrZSBhIHJhc3BiZXJyeSBwaSBmdW5jdGlvbiBhcyBhIGhhbmRzZnJlZSB1bml0
-LsKgIEkmIzM5O3ZlIGhhZCBzb21lIHN1Y2Nlc3MgaW4gdGhlIHBhc3QsIGJ1dCBpdCBzZWVtcyBJ
-JiMzOTt2ZSB0YWtlbiBhIHN0ZXAgYmFjay48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PkZpcnN0
-bHksIEkgYW0gcnVubmluZyB0aGUgbGF0ZXN0IChjb21waWxlZCkgdmVyc2lvbnMgb2YgYmx1ZXos
-IHB1bHNlYXVkaW8sIGFuZCBvZm9ubyAoMS4xOCkuPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5J
-JiMzOTttIG5vdCBoYXZpbmcgYW55IHRyb3VibGUgd2l0aCB0aGUgYXVkaW8gc2luayB3aGVuIGxp
-c3RlbmluZyB0byBtdXNpYyBvciBvdGhlciBvdGhlciBwaG9uZSBhdWRpby7CoCBCdXQsIHdoZW4g
-SSBjb25uZWN0IGEgY2FsbCwgaXQmIzM5O3MgZGVhZCBzaWxlbnQuPC9kaXY+PGRpdj48YnI+PC9k
-aXY+PGRpdj5NeSBVU0IgZGV2aWNlIGlzIGEgUm9sYW5kwqBVQS0xRVguIMKgIMKgSSYjMzk7dmUg
-YWRkZWQgJnF1b3Q7aGVhZHNldD1vZm9ubyZxdW90OyB0byBteSBQQSA8YSBocmVmPSJodHRwOi8v
-ZGVmYXVsdC5wYSI+ZGVmYXVsdC5wYTwvYT4gY29uZmlnIGZpbGUgb24gdGhlIGJsdWV0b290aCBk
-aXNjb3ZlcnkgbW9kdWxlLsKgIFJ1bm5pbmcgZXZlcnl0aGluZyBpbiBkZWJ1ZyAoYWxsIHRocmVl
-IGFib3ZlKSBkb2VzbiYjMzk7dCByZXZlYWwgYW55IHRlY2huaWNhbCBlcnJvcnMsIG9yIGluZGlj
-YXRpb24gb2YgdGhlcmUgYmVpbmcgYSBwcm9ibGVtLi48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2
-PkFueSBzdWdnZXN0aW9ucyBvbiB3aGF0IGVsc2UgSSBjYW4gdHJ5PzwvZGl2PjxkaXY+PGJyPjwv
-ZGl2PjxkaXY+VGhhbmtzITwvZGl2PjxkaXY+PGJyPjwvZGl2PjwvZGl2Pgo=
+The g_ril_unref should be fine. There are two glib runtime warning messages=
+, it is because:
+In handle_response/gril.c: handle_response, after " req->callback" is calle=
+d, "gril" has been cleaned up,
+both 'out_queue' and 'command_queue' are NULL.
 
---===============4777507926119198092==--
+It seems it's harmless. I will submit a patch to avoid the warnings.
+
+
+> > +		rd->ril =3D NULL;
+> > +	}
+> > +
+> > +	ofono_modem_set_powered(modem, FALSE); }
+> > +
+> >   int ril_disable(struct ofono_modem *modem)
+> >   {
+> >   	struct ril_data *rd =3D ofono_modem_get_data(modem);
+> > +	struct cb_data *cbd =3D cb_data_new(NULL, modem, rd);
+> >
+> >   	DBG("%p", modem);
+> >
+> > -	ril_send_power(rd, FALSE, NULL, NULL);
+> > +	ril_send_power(rd, FALSE, power_off_cb, cbd);
+
+Regards,
+Caiwen
+
+--===============3944069916013836071==--
 
