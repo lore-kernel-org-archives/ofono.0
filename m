@@ -1,33 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============3510813221712175737=="
+Content-Type: multipart/mixed; boundary="===============4991319097601603393=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] plugins/ril: enable cbs
-Date: Thu, 19 May 2016 10:30:40 -0500
-Message-ID: <573DDC20.2020502@gmail.com>
-In-Reply-To: <1463539619-29272-1-git-send-email-caiwen.zhang@intel.com>
+From: Nishanth V <nishanth.v@intel.com>
+Subject: [PATCH] radio-settings: fix WCDMA only in query rat mode
+Date: Fri, 20 May 2016 11:20:17 +0530
+Message-ID: <1463723417-8415-1-git-send-email-nishanth.v@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3510813221712175737==
+--===============4991319097601603393==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Caiwen,
+---
+ drivers/rilmodem/radio-settings.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-On 05/17/2016 09:46 PM, caiwen.zhang(a)intel.com wrote:
-> From: Caiwen Zhang <caiwen.zhang@intel.com>
->
-> ---
->   plugins/ril.c | 1 +
->   1 file changed, 1 insertion(+)
->
+diff --git a/drivers/rilmodem/radio-settings.c b/drivers/rilmodem/radio-set=
+tings.c
+index 7317950..d6d0ad9 100644
+--- a/drivers/rilmodem/radio-settings.c
++++ b/drivers/rilmodem/radio-settings.c
+@@ -198,6 +198,7 @@ static void ril_rat_mode_cb(struct ril_msg *message, gp=
+ointer user_data)
+ 	 * capabilities, so it is sort of the default for MTK modems.
+ 	 */
+ 	switch (net_type) {
++	case PREF_NET_TYPE_WCDMA:
+ 	case PREF_NET_TYPE_GSM_WCDMA:
+ 	case PREF_NET_TYPE_GSM_WCDMA_AUTO:
+ 		mode =3D OFONO_RADIO_ACCESS_MODE_UMTS;
+-- =
 
-Applied, thanks.
-
-Regards,
--Denis
+1.9.1
 
 
---===============3510813221712175737==--
+--===============4991319097601603393==--
 
