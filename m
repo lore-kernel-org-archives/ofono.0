@@ -1,69 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============4105645192873160295=="
+Content-Type: multipart/mixed; boundary="===============7802591449407744486=="
 MIME-Version: 1.0
-From: Aravindan, RajagopalX <rajagopalx.aravindan@intel.com>
-Subject: RE: [PATCH 1/3] ril_sofia3gr: Modem throttling changes
-Date: Thu, 26 May 2016 06:30:35 +0000
-Message-ID: <558A060E088946499A190EEB775EEEC4F72B50@BGSMSX103.gar.corp.intel.com>
-In-Reply-To: <57447BA5.4090406@gmail.com>
+From: Nishanth V <nishanth.v@intel.com>
+Subject: [PATCH] plugins: Fix allowed apn plugin exit
+Date: Thu, 26 May 2016 14:39:48 +0530
+Message-ID: <1464253788-30332-1-git-send-email-nishanth.v@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4105645192873160295==
+--===============7802591449407744486==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Denis,
+---
+ plugins/allowed-apns.c | 15 +++++++++------
+ 1 file changed, 9 insertions(+), 6 deletions(-)
 
-Appreciate adding my name to the list of authors :) !
+diff --git a/plugins/allowed-apns.c b/plugins/allowed-apns.c
+index 77ede86..fd68e35 100644
+--- a/plugins/allowed-apns.c
++++ b/plugins/allowed-apns.c
+@@ -32,7 +32,6 @@
+ =
 
-Thanks & Regards,
-Rajagopal
-________________________________________
-From: ofono [ofono-bounces(a)ofono.org] on behalf of Denis Kenzior [denkenz=
-(a)gmail.com]
-Sent: Tuesday, May 24, 2016 9:34 PM
-To: ofono(a)ofono.org
-Cc: Muralidharan, Nagarajan; Guha Niyogi, Samrat
-Subject: Re: [PATCH 1/3] ril_sofia3gr: Modem throttling changes
+ #define OFONO_API_SUBJECT_TO_CHANGE
+ #include <ofono/plugin.h>
+-#include <ofono/log.h>
+ #include <ofono/modem.h>
+ #include <ofono/sim.h>
+ #include <ofono/dbus.h>
+@@ -43,6 +42,7 @@
+ #define ALLOWED_ACCESS_POINTS_INTERFACE "org.ofono.AllowedAccessPoints"
+ =
 
-Hi Rajagopal,
+ guint modemwatch_id;
++GSList *context_list;
+ =
 
-On 05/24/2016 03:44 AM, Rajagopal Aravindan wrote:
-> Added 'sofia3gr.ThermalManagement' interface to sofia3gr plugin and
-> floated 'TransmitPowerThrottling' as an ofono property under that,
-> to support modem throttling.
->
-> 'sofia3gr.ThermalManagement'
->      1.Will be available ONLY if modem throttling is supported in RIL.
->        This is determined by sending a RIL request during ofono start,
->        to get current throttling state. If it succeeds, interface is
->        published otherwise not.
->
-> 'TransmitPowerThrottling'
->      1.GetProperties will be allowed both when modem is ON & OFF.
->      2.GetProperties will be serviced by looking it up from state
->        information maintained inside ofono. No RIL call will be made.
->      3.SetProperty will be allowed ONLY when modem is ON.
->      4.SetProperty request will be forwarded to RIL ONLY if
->        new state !=3D current state. If RIL request succeeds, state
->        information will be updated and also, a property change signal
->        will be emitted.
-> ---
->   plugins/ril_sofia3gr.c | 292 ++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   1 file changed, 292 insertions(+)
->
+ struct allowed_apns_ctx {
+ 	guint simwatch_id;
+@@ -54,8 +54,6 @@ struct allowed_apns_ctx {
+ 	DBusMessage *reply;
+ };
+ =
 
-All three applied, thanks.
+-GSList *context_list;
+-
+ static void context_destroy(gpointer data)
+ {
+ 	struct allowed_apns_ctx *ctx =3D data;
+@@ -71,8 +69,6 @@ static void context_destroy(gpointer data)
+ 	if (ctx->sim_context)
+ 		ofono_sim_context_free(ctx->sim_context);
+ =
 
-Regards,
--Denis
+-	context_list =3D g_slist_remove(context_list, ctx);
+-
+ 	g_free(ctx);
+ }
+ =
 
-_______________________________________________
-ofono mailing list
-ofono(a)ofono.org
-https://lists.ofono.org/mailman/listinfo/ofono
+@@ -191,8 +187,15 @@ static void sim_watch(struct ofono_atom *atom,
+ 	struct allowed_apns_ctx *ctx =3D data;
+ =
 
---===============4105645192873160295==--
+ 	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
+-		if (ctx->sim_context)
++		if (ctx->simwatch_id) {
++			ofono_sim_remove_state_watch(ctx->sim, ctx->simwatch_id);
++			ctx->simwatch_id =3D 0;
++		}
++
++		if (ctx->sim_context) {
+ 			ofono_sim_context_free(ctx->sim_context);
++			ctx->sim_context =3D NULL;
++		}
+ =
+
+ 		return;
+ 	}
+-- =
+
+1.9.1
+
+
+--===============7802591449407744486==--
 
