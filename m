@@ -1,113 +1,103 @@
-Content-Type: multipart/mixed; boundary="===============4246116445505389069=="
+Content-Type: multipart/mixed; boundary="===============5439405976563130473=="
 MIME-Version: 1.0
-From: Georg Chini <georg@chini.tk>
+From: Jason Gauthier <jagauthier@gmail.com>
 Subject: Re: read phonebook
-Date: Sat, 11 Jun 2016 20:08:09 +0200
-Message-ID: <0dd61091-47b6-f58a-09ca-914a964d1ae9@chini.tk>
-In-Reply-To: <36b89c6c-4bb7-80fe-c09a-40680a8a863d@gmail.com>
+Date: Sat, 11 Jun 2016 17:54:30 -0400
+Message-ID: <CAHY_EhUdmjzj+1LPpA7yGwL7sNb9JmB5a7u=y3gGUO7Nvhqtyg@mail.gmail.com>
+In-Reply-To: <0dd61091-47b6-f58a-09ca-914a964d1ae9@chini.tk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4246116445505389069==
+--===============5439405976563130473==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 11.06.2016 18:41, Marco Trapanese wrote:
-> Hello,
-> I have this setup:
+I've done some work with this. Here are a few points I've learned
+about dealing with PBAP.
+Yes, it definitely requires obexd.   Obexd uses dbus, in session mode.
+This implies that the user that runs obex must access the data in the
+same session. If you want to run obexd in one shell, and access the
+information from another shell, or application, you'll want to use the
+system bus like so:
+
+export DBUS_SESSION_BUS_ADDRESS=3D"unix:path=3D/var/run/dbus/system_bus_soc=
+ket"
+You can validate that with "qdbus --system" in another session. If you
+see orf.bluez.obex that you've connected it to the system dbus.
+
+You'll also need to add dbus permissions to access via dbus, or a
+non-root user won't even be able to start it.
+
+to /etc/dbus-1/system.d/bluetooth.conf
+add:
+ <policy user=3D"user">
+       <allow own=3D"org.bluez.obex"/>
+       <allow send_destination=3D"org.bluez.obex"/>
+ </policy>
+
+
+oh, also, the files downloaded are in vcard format. I would highly
+recommend python's vobject module, or similar for ease of managing the
+data.
+
+The device needs to be paired and trusted, but it does not have to be
+connected to pull PBAP information. I don't think this is important,
+but I always found it interesting. All of my code written depends on
+the device currently being connected though.
+
+This isn't ofono specific stuff, so if you have any questions you can
+email me off list. I also have a git repo out there with some pbap
+handling.
+
+I'd like to do more with MAP, and other obex based protocols, but time
+is limited.
+
+Jason
+
+On Sat, Jun 11, 2016 at 2:08 PM, Georg Chini <georg@chini.tk> wrote:
+> On 11.06.2016 18:41, Marco Trapanese wrote:
+>>
+>> Hello,
+>> I have this setup:
+>>
+>> - RPi3
+>> - Raspbian Jessie Lite
+>> - bluez 5.40
+>> - ofono 1.18
+>>
+>> in /etc/bluetooth/main.conf I set this class: 0x640408.
+>> Using bluetoothctl I connected my phone to the SBC and I can make a call
+>> using the ofono tests.
+>>
+>> I wonder how to read the contacts. I launched test-phonebook but I got
+>> this error:
+>>
+>>> Method "Import" with signature "" on interface "org.ofono.Phonebook"
+>>> doesn't exist
+>>
+>>
+>> Do I need to enable something other before?
+>> Thanks
+>> Marco
 >
-> - RPi3
-> - Raspbian Jessie Lite
-> - bluez 5.40
-> - ofono 1.18
 >
-> in /etc/bluetooth/main.conf I set this class: 0x640408.
-> Using bluetoothctl I connected my phone to the SBC and I can make a =
-
-> call using the ofono tests.
+> Hi Marco,
 >
-> I wonder how to read the contacts. I launched test-phonebook but I got =
-
-> this error:
+> see attached python script for how to get the phone book from a bluetooth
+> device.
+> I think you need obexd for this, although I am not quite sure because I
+> programmed
+> it long ago.
 >
->> Method "Import" with signature "" on interface "org.ofono.Phonebook" =
-
->> doesn't exist
+> Regards
+>               Georg
 >
-> Do I need to enable something other before?
-> Thanks
-> Marco
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> https://lists.ofono.org/mailman/listinfo/ofono
+>
 
-Hi Marco,
-
-see attached python script for how to get the phone book from a =
-
-bluetooth device.
-I think you need obexd for this, although I am not quite sure because I =
-
-programmed
-it long ago.
-
-Regards
-               Georg
-
---===============4246116445505389069==
-Content-Type: text/x-python
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="phonebook_phone.py"
-
-IyEvdXNyL2Jpbi9weXRob24KIyAtKi0gY29kaW5nOiB1dGYtOCAtKi0KCmltcG9ydCBndGssIGdv
-YmplY3QsIG9zLCBkYnVzLCBkYnVzLnNlcnZpY2UsIGxvZ2dpbmcKCmNsYXNzIFBob25lYm9va19Q
-aG9uZToKCiAgIGJ1cyA9IE5vbmUKICAgc2Vzc2lvbl9wID0gTm9uZQogICBzZXNzaW9uID0gTm9u
-ZQogICBwYmFwX29iamVjdCA9IE5vbmUKICAgdHJhbnNmZXJfcGF0aCA9IE5vbmUKICAgdHJhbnNm
-ZXJfZmlsZSA9IE5vbmUKICAgcGhvbmVfYm9vayA9IFtdCiAgIGNiX2RvbmUgPSBOb25lCgogICBk
-ZWYgX19pbml0X18oc2VsZiwgcGhvbmUsIGRvbmVfY2IpOgogICAgICBzZWxmLmNiX2RvbmUgPSBk
-b25lX2NiCiAgICAgIHNlbGYuYnVzID0gZGJ1cy5TZXNzaW9uQnVzKCkKICAgICAgY2xpZW50ID0g
-ZGJ1cy5JbnRlcmZhY2Uoc2VsZi5idXMuZ2V0X29iamVjdCgib3JnLmJsdWV6Lm9iZXgiLCAiL29y
-Zy9ibHVlei9vYmV4IiksICJvcmcuYmx1ZXoub2JleC5DbGllbnQxIikKICAgICAgc2VsZi5zZXNz
-aW9uX3AgPSBjbGllbnQuQ3JlYXRlU2Vzc2lvbihwaG9uZSwgeyAiVGFyZ2V0IjogIlBCQVAiIH0p
-CiAgICAgIG9iaiA9IHNlbGYuYnVzLmdldF9vYmplY3QoIm9yZy5ibHVlei5vYmV4Iiwgc2VsZi5z
-ZXNzaW9uX3ApCiAgICAgIHNlbGYuc2Vzc2lvbiA9IGRidXMuSW50ZXJmYWNlKG9iaiwgIm9yZy5i
-bHVlei5vYmV4LlNlc3Npb24xIikKICAgICAgc2VsZi5wYmFwX29iamVjdCA9IGRidXMuSW50ZXJm
-YWNlKG9iaiwgIm9yZy5ibHVlei5vYmV4LlBob25lYm9va0FjY2VzczEiKQogICAgICBzZWxmLmJ1
-cy5hZGRfc2lnbmFsX3JlY2VpdmVyKHNlbGYucHJvcGVydGllc19jaGFuZ2VkLAogICAgICAgICAg
-ICAgICBkYnVzX2ludGVyZmFjZT0ib3JnLmZyZWVkZXNrdG9wLkRCdXMuUHJvcGVydGllcyIsCiAg
-ICAgICAgICAgICAgIHNpZ25hbF9uYW1lPSJQcm9wZXJ0aWVzQ2hhbmdlZCIsCiAgICAgICAgICAg
-ICAgIHBhdGhfa2V5d29yZD0icGF0aCIpCiAgICAgIHNlbGYucGJhcF9vYmplY3QuU2VsZWN0KCJp
-bnQiLCAiUEIiKQogICAgICBzZWxmLmdldF9ib29rKCkKCiAgIGRlZiBwcm9wZXJ0aWVzX2NoYW5n
-ZWQoc2VsZiwgaW50ZXJmYWNlLCBwcm9wZXJ0aWVzLCBpbnZhbGlkYXRlZCwgcGF0aCk6CiAgICAg
-IGlmIHNlbGYudHJhbnNmZXJfZmlsZSA9PSBOb25lOgogICAgICAgICByZXR1cm4KICAgICAgaWYg
-IlRyYW5zZmVycmVkIiBpbiBwcm9wZXJ0aWVzOgogICAgICAgICByZXR1cm4KICAgICAgaWYgcHJv
-cGVydGllc1snU3RhdHVzJ10gPT0gJ2NvbXBsZXRlJzoKICAgICAgICAgc2VsZi50cmFuc2Zlcl9j
-b21wbGV0ZShwYXRoKQogICAgICAgICByZXR1cm4KICAgICAgaWYgcHJvcGVydGllc1snU3RhdHVz
-J10gPT0gJ2Vycm9yJzoKICAgICAgICAgc2VsZi5lcnJvcihwYXRoKQogICAgICAgICByZXR1cm4K
-CiAgIGRlZiBnZXRfYm9vayhzZWxmKToKICAgICAgcGFyYW1zID0gZGJ1cy5EaWN0aW9uYXJ5KHsg
-IkZvcm1hdCIgOiAidmNhcmQzMCIsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAiRmll
-bGRzIiA6IFsiUEhPVE8iXSB9KQogICAgICBzZWxmLnBiYXBfb2JqZWN0LlB1bGxBbGwoIiIsIHBh
-cmFtcywKICAgICAgICAgICAgICByZXBseV9oYW5kbGVyPXNlbGYucmVnaXN0ZXIsCiAgICAgICAg
-ICAgICAgZXJyb3JfaGFuZGxlcj1zZWxmLmVycm9yKQoKICAgZGVmIHJlZ2lzdGVyKHNlbGYsIHBh
-dGgsIHByb3BlcnRpZXMpOgogICAgICBzZWxmLnRyYW5zZmVyX3BhdGggPSBwYXRoCiAgICAgIHNl
-bGYudHJhbnNmZXJfZmlsZSA9IHByb3BlcnRpZXNbIkZpbGVuYW1lIl0KCiAgIGRlZiBlcnJvcihz
-ZWxmLCBlcnIpOgogICAgICAgbG9nZ2luZy5lcnJvcigiRXJyb3Igd2hpbGUgcmV0cmlldmluZyB0
-aGUgUGhvbmVib29rOiAlcyIsIGVycikKCiAgIGRlZiB0cmFuc2Zlcl9jb21wbGV0ZShzZWxmLCBw
-YXRoKToKICAgICAgIGlmIHNlbGYudHJhbnNmZXJfZmlsZSA9PSBOb25lOgogICAgICAgICAgcmV0
-dXJuCiAgICAgICB0cnk6CiAgICAgICAgICBmID0gb3BlbihzZWxmLnRyYW5zZmVyX2ZpbGUsICJy
-IikKICAgICAgICAgIGxpbmVzID0gZi5yZWFkbGluZXMoKQogICAgICAgICAgZi5jbG9zZSgpCiAg
-ICAgICAgICBvcy5yZW1vdmUoc2VsZi50cmFuc2Zlcl9maWxlKQogICAgICAgICAgc2VsZi5yZXN1
-bHRfY2IobGluZXMpCiAgICAgICBleGNlcHQ6CiAgICAgICAgICBwYXNzCiAKICAgZGVmIHJlc3Vs
-dF9jYihzZWxmLCBsaW5lcyk6CiAgICAgICBmb3IgbGluZSBpbiBsaW5lczoKICAgICAgICAgICBs
-aW5lID0gbGluZS5zdHJpcCgpCiAgICAgICAgICAgaWYgbGluZVs6M10gPT0gIkZOOiI6CiAgICAg
-ICAgICAgICAgbXlfbmFtZSA9IGxpbmVbMzpdCiAgICAgICAgICAgICAgbXlfbnVtYmVycyA9IFtd
-CiAgICAgICAgICAgZWxpZiBsaW5lWzo0XSA9PSAiVEVMOyI6CiAgICAgICAgICAgICAgbXlfbnVt
-YmVycy5hcHBlbmQobGluZVtsaW5lLmZpbmQoIjoiKSArIDE6XSkKICAgICAgICAgICBlbGlmIGxp
-bmUgPT0gIkVORDpWQ0FSRCIgYW5kIGxlbihteV9udW1iZXJzKSAhPSAwOgogICAgICAgICAgICAg
-IGZvciBpIGluIHJhbmdlKDAsIGxlbihteV9udW1iZXJzKSk6CiAgICAgICAgICAgICAgICAgbXlf
-bmFtZV8xID0gbXlfbmFtZQogICAgICAgICAgICAgICAgIGlmIGkgIT0gMDoKICAgICAgICAgICAg
-ICAgICAgICBteV9uYW1lXzEgPSBteV9uYW1lXzEgKyAiICIgKyBzdHIoaSkKICAgICAgICAgICAg
-ICAgICBzZWxmLnBob25lX2Jvb2suYXBwZW5kKFtteV9uYW1lXzEsIG15X251bWJlcnNbaV1dKQog
-ICAgICAgaWYgc2VsZi5jYl9kb25lOgogICAgICAgICAgc2VsZi5jYl9kb25lKCkKCg==
-
---===============4246116445505389069==--
+--===============5439405976563130473==--
 
