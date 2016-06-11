@@ -1,40 +1,113 @@
-Content-Type: multipart/mixed; boundary="===============4328592734883118564=="
+Content-Type: multipart/mixed; boundary="===============4246116445505389069=="
 MIME-Version: 1.0
-From: Marco Trapanese <marcotrapanese@gmail.com>
-Subject: read phonebook
-Date: Sat, 11 Jun 2016 18:41:23 +0200
-Message-ID: <36b89c6c-4bb7-80fe-c09a-40680a8a863d@gmail.com>
+From: Georg Chini <georg@chini.tk>
+Subject: Re: read phonebook
+Date: Sat, 11 Jun 2016 20:08:09 +0200
+Message-ID: <0dd61091-47b6-f58a-09ca-914a964d1ae9@chini.tk>
+In-Reply-To: <36b89c6c-4bb7-80fe-c09a-40680a8a863d@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4328592734883118564==
+--===============4246116445505389069==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
-I have this setup:
+On 11.06.2016 18:41, Marco Trapanese wrote:
+> Hello,
+> I have this setup:
+>
+> - RPi3
+> - Raspbian Jessie Lite
+> - bluez 5.40
+> - ofono 1.18
+>
+> in /etc/bluetooth/main.conf I set this class: 0x640408.
+> Using bluetoothctl I connected my phone to the SBC and I can make a =
 
-- RPi3
-- Raspbian Jessie Lite
-- bluez 5.40
-- ofono 1.18
+> call using the ofono tests.
+>
+> I wonder how to read the contacts. I launched test-phonebook but I got =
 
-in /etc/bluetooth/main.conf I set this class: 0x640408.
-Using bluetoothctl I connected my phone to the SBC and I can make a call =
+> this error:
+>
+>> Method "Import" with signature "" on interface "org.ofono.Phonebook" =
 
-using the ofono tests.
+>> doesn't exist
+>
+> Do I need to enable something other before?
+> Thanks
+> Marco
 
-I wonder how to read the contacts. I launched test-phonebook but I got =
+Hi Marco,
 
-this error:
+see attached python script for how to get the phone book from a =
 
-> Method "Import" with signature "" on interface "org.ofono.Phonebook" does=
-n't exist
+bluetooth device.
+I think you need obexd for this, although I am not quite sure because I =
 
-Do I need to enable something other before?
-Thanks
-Marco
+programmed
+it long ago.
 
---===============4328592734883118564==--
+Regards
+               Georg
+
+--===============4246116445505389069==
+Content-Type: text/x-python
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="phonebook_phone.py"
+
+IyEvdXNyL2Jpbi9weXRob24KIyAtKi0gY29kaW5nOiB1dGYtOCAtKi0KCmltcG9ydCBndGssIGdv
+YmplY3QsIG9zLCBkYnVzLCBkYnVzLnNlcnZpY2UsIGxvZ2dpbmcKCmNsYXNzIFBob25lYm9va19Q
+aG9uZToKCiAgIGJ1cyA9IE5vbmUKICAgc2Vzc2lvbl9wID0gTm9uZQogICBzZXNzaW9uID0gTm9u
+ZQogICBwYmFwX29iamVjdCA9IE5vbmUKICAgdHJhbnNmZXJfcGF0aCA9IE5vbmUKICAgdHJhbnNm
+ZXJfZmlsZSA9IE5vbmUKICAgcGhvbmVfYm9vayA9IFtdCiAgIGNiX2RvbmUgPSBOb25lCgogICBk
+ZWYgX19pbml0X18oc2VsZiwgcGhvbmUsIGRvbmVfY2IpOgogICAgICBzZWxmLmNiX2RvbmUgPSBk
+b25lX2NiCiAgICAgIHNlbGYuYnVzID0gZGJ1cy5TZXNzaW9uQnVzKCkKICAgICAgY2xpZW50ID0g
+ZGJ1cy5JbnRlcmZhY2Uoc2VsZi5idXMuZ2V0X29iamVjdCgib3JnLmJsdWV6Lm9iZXgiLCAiL29y
+Zy9ibHVlei9vYmV4IiksICJvcmcuYmx1ZXoub2JleC5DbGllbnQxIikKICAgICAgc2VsZi5zZXNz
+aW9uX3AgPSBjbGllbnQuQ3JlYXRlU2Vzc2lvbihwaG9uZSwgeyAiVGFyZ2V0IjogIlBCQVAiIH0p
+CiAgICAgIG9iaiA9IHNlbGYuYnVzLmdldF9vYmplY3QoIm9yZy5ibHVlei5vYmV4Iiwgc2VsZi5z
+ZXNzaW9uX3ApCiAgICAgIHNlbGYuc2Vzc2lvbiA9IGRidXMuSW50ZXJmYWNlKG9iaiwgIm9yZy5i
+bHVlei5vYmV4LlNlc3Npb24xIikKICAgICAgc2VsZi5wYmFwX29iamVjdCA9IGRidXMuSW50ZXJm
+YWNlKG9iaiwgIm9yZy5ibHVlei5vYmV4LlBob25lYm9va0FjY2VzczEiKQogICAgICBzZWxmLmJ1
+cy5hZGRfc2lnbmFsX3JlY2VpdmVyKHNlbGYucHJvcGVydGllc19jaGFuZ2VkLAogICAgICAgICAg
+ICAgICBkYnVzX2ludGVyZmFjZT0ib3JnLmZyZWVkZXNrdG9wLkRCdXMuUHJvcGVydGllcyIsCiAg
+ICAgICAgICAgICAgIHNpZ25hbF9uYW1lPSJQcm9wZXJ0aWVzQ2hhbmdlZCIsCiAgICAgICAgICAg
+ICAgIHBhdGhfa2V5d29yZD0icGF0aCIpCiAgICAgIHNlbGYucGJhcF9vYmplY3QuU2VsZWN0KCJp
+bnQiLCAiUEIiKQogICAgICBzZWxmLmdldF9ib29rKCkKCiAgIGRlZiBwcm9wZXJ0aWVzX2NoYW5n
+ZWQoc2VsZiwgaW50ZXJmYWNlLCBwcm9wZXJ0aWVzLCBpbnZhbGlkYXRlZCwgcGF0aCk6CiAgICAg
+IGlmIHNlbGYudHJhbnNmZXJfZmlsZSA9PSBOb25lOgogICAgICAgICByZXR1cm4KICAgICAgaWYg
+IlRyYW5zZmVycmVkIiBpbiBwcm9wZXJ0aWVzOgogICAgICAgICByZXR1cm4KICAgICAgaWYgcHJv
+cGVydGllc1snU3RhdHVzJ10gPT0gJ2NvbXBsZXRlJzoKICAgICAgICAgc2VsZi50cmFuc2Zlcl9j
+b21wbGV0ZShwYXRoKQogICAgICAgICByZXR1cm4KICAgICAgaWYgcHJvcGVydGllc1snU3RhdHVz
+J10gPT0gJ2Vycm9yJzoKICAgICAgICAgc2VsZi5lcnJvcihwYXRoKQogICAgICAgICByZXR1cm4K
+CiAgIGRlZiBnZXRfYm9vayhzZWxmKToKICAgICAgcGFyYW1zID0gZGJ1cy5EaWN0aW9uYXJ5KHsg
+IkZvcm1hdCIgOiAidmNhcmQzMCIsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAiRmll
+bGRzIiA6IFsiUEhPVE8iXSB9KQogICAgICBzZWxmLnBiYXBfb2JqZWN0LlB1bGxBbGwoIiIsIHBh
+cmFtcywKICAgICAgICAgICAgICByZXBseV9oYW5kbGVyPXNlbGYucmVnaXN0ZXIsCiAgICAgICAg
+ICAgICAgZXJyb3JfaGFuZGxlcj1zZWxmLmVycm9yKQoKICAgZGVmIHJlZ2lzdGVyKHNlbGYsIHBh
+dGgsIHByb3BlcnRpZXMpOgogICAgICBzZWxmLnRyYW5zZmVyX3BhdGggPSBwYXRoCiAgICAgIHNl
+bGYudHJhbnNmZXJfZmlsZSA9IHByb3BlcnRpZXNbIkZpbGVuYW1lIl0KCiAgIGRlZiBlcnJvcihz
+ZWxmLCBlcnIpOgogICAgICAgbG9nZ2luZy5lcnJvcigiRXJyb3Igd2hpbGUgcmV0cmlldmluZyB0
+aGUgUGhvbmVib29rOiAlcyIsIGVycikKCiAgIGRlZiB0cmFuc2Zlcl9jb21wbGV0ZShzZWxmLCBw
+YXRoKToKICAgICAgIGlmIHNlbGYudHJhbnNmZXJfZmlsZSA9PSBOb25lOgogICAgICAgICAgcmV0
+dXJuCiAgICAgICB0cnk6CiAgICAgICAgICBmID0gb3BlbihzZWxmLnRyYW5zZmVyX2ZpbGUsICJy
+IikKICAgICAgICAgIGxpbmVzID0gZi5yZWFkbGluZXMoKQogICAgICAgICAgZi5jbG9zZSgpCiAg
+ICAgICAgICBvcy5yZW1vdmUoc2VsZi50cmFuc2Zlcl9maWxlKQogICAgICAgICAgc2VsZi5yZXN1
+bHRfY2IobGluZXMpCiAgICAgICBleGNlcHQ6CiAgICAgICAgICBwYXNzCiAKICAgZGVmIHJlc3Vs
+dF9jYihzZWxmLCBsaW5lcyk6CiAgICAgICBmb3IgbGluZSBpbiBsaW5lczoKICAgICAgICAgICBs
+aW5lID0gbGluZS5zdHJpcCgpCiAgICAgICAgICAgaWYgbGluZVs6M10gPT0gIkZOOiI6CiAgICAg
+ICAgICAgICAgbXlfbmFtZSA9IGxpbmVbMzpdCiAgICAgICAgICAgICAgbXlfbnVtYmVycyA9IFtd
+CiAgICAgICAgICAgZWxpZiBsaW5lWzo0XSA9PSAiVEVMOyI6CiAgICAgICAgICAgICAgbXlfbnVt
+YmVycy5hcHBlbmQobGluZVtsaW5lLmZpbmQoIjoiKSArIDE6XSkKICAgICAgICAgICBlbGlmIGxp
+bmUgPT0gIkVORDpWQ0FSRCIgYW5kIGxlbihteV9udW1iZXJzKSAhPSAwOgogICAgICAgICAgICAg
+IGZvciBpIGluIHJhbmdlKDAsIGxlbihteV9udW1iZXJzKSk6CiAgICAgICAgICAgICAgICAgbXlf
+bmFtZV8xID0gbXlfbmFtZQogICAgICAgICAgICAgICAgIGlmIGkgIT0gMDoKICAgICAgICAgICAg
+ICAgICAgICBteV9uYW1lXzEgPSBteV9uYW1lXzEgKyAiICIgKyBzdHIoaSkKICAgICAgICAgICAg
+ICAgICBzZWxmLnBob25lX2Jvb2suYXBwZW5kKFtteV9uYW1lXzEsIG15X251bWJlcnNbaV1dKQog
+ICAgICAgaWYgc2VsZi5jYl9kb25lOgogICAgICAgICAgc2VsZi5jYl9kb25lKCkKCg==
+
+--===============4246116445505389069==--
 
