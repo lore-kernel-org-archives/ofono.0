@@ -1,45 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============6296952419737424248=="
+Content-Type: multipart/mixed; boundary="===============5976604080249472947=="
 MIME-Version: 1.0
-From: Alexander Smirnov <asmirnov@ilbers.de>
-Subject: oFono chat
-Date: Mon, 11 Jul 2016 13:00:21 +0300
-Message-ID: <57836E35.1090701@ilbers.de>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: oFono chat
+Date: Mon, 11 Jul 2016 11:29:10 -0500
+Message-ID: <5783C956.4090806@gmail.com>
+In-Reply-To: <57836E35.1090701@ilbers.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6296952419737424248==
+--===============5976604080249472947==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Dear oFono community,
+Hi Alexander,
 
-I'm a little bit confused, but is there any way to send oFono custom AT =
+On 07/11/2016 05:00 AM, Alexander Smirnov wrote:
+> Dear oFono community,
+>
+> I'm a little bit confused, but is there any way to send oFono custom AT
+> commands?
 
-commands?
+The driver can send any AT commands it wishes.  If you want to send AT =
 
-In my case, I have chip with integrated GPS module, so I want to have =
+commands through D-Bus, then no, there's no such functionality =
 
-possibility to manage its settings in runtime according to some =
+available, nor is it desired.
 
-environment settings.
+>
+> In my case, I have chip with integrated GPS module, so I want to have
+> possibility to manage its settings in runtime according to some
+> environment settings.
 
-Reading oFono API documentation, I wondered, why there is no chat =
+There are plenty of examples on how to enable a modem with a GPS.  See
+drivers/telitmodem/location-reporting.c
+drivers/mbmmodem/location-reporting.c
+drivers/qmimodem/location-reporting.c
 
-interface? Are there any restrictions?
+etc
 
--- =
+>
+> Reading oFono API documentation, I wondered, why there is no chat
+> interface? Are there any restrictions?
+>
 
-With best regards,
-Alexander Smirnov
+Regards,
+-Denis
 
-ilbers GmbH
-Baierbrunner Str. 28c
-D-81379 M=C3=BCnchen
-+49 (89) 122 67 24-0
-http://ilbers.de/
-Commercial register Munich, HRB 214197
-General manager: Baurzhan Ismagulov
-
---===============6296952419737424248==--
+--===============5976604080249472947==--
 
