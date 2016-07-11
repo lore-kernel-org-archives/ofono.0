@@ -1,52 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============5998650478190525840=="
+Content-Type: multipart/mixed; boundary="===============6296952419737424248=="
 MIME-Version: 1.0
-From: Patrik Flykt <Patrik.Flykt@linux.intel.com>
-Subject: Re: cellular reconnect
-Date: Mon, 11 Jul 2016 10:13:19 +0300
-Message-ID: <1468221199.2976.16.camel@linux.intel.com>
-In-Reply-To: <5775366B.7020700@ilbers.de>
+From: Alexander Smirnov <asmirnov@ilbers.de>
+Subject: oFono chat
+Date: Mon, 11 Jul 2016 13:00:21 +0300
+Message-ID: <57836E35.1090701@ilbers.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5998650478190525840==
+--===============6296952419737424248==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2016-06-30 at 18:10 +0300, Alexander Smirnov wrote:
-> Dear all,
-> =
+Dear oFono community,
 
-> could you also please help me with another issue, I've observed.
-> =
+I'm a little bit confused, but is there any way to send oFono custom AT =
 
-> What I did:
-> =
+commands?
 
-> =C2=A0 - Connect cellular service in connmanctl (ppp0 appears in ifconfig)
-> =C2=A0 - Disconnect physical GSM antenna (ppp0 disappears)
-> =C2=A0 - Connect physical GSM antenna
-> =
+In my case, I have chip with integrated GPS module, so I want to have =
 
-> After these steps I don't see cellular service (connmanctl services
-> is empty) till I reset the modem.
-> =
+possibility to manage its settings in runtime according to some =
 
-> How should I handle network strength events to automatically
-> reconnect the cellular? Why I don't see cellular in connman services
-> anymore?
+environment settings.
 
-This needs a bit more oFono debugging, as ConnMan will present all
-networks provided by oFono as separate services. So if a cellular
-connection does not show up in ConnMan, check what oFono is sending or
-if oFono needs further setup in the case of a reconnected antenna. It
-is also important to know which cellular driver is being used here.
+Reading oFono API documentation, I wondered, why there is no chat =
 
-Adding oFono mailing list to catch a wider audience.
+interface? Are there any restrictions?
 
-Cheers,
+-- =
 
-	Patrik
+With best regards,
+Alexander Smirnov
 
---===============5998650478190525840==--
+ilbers GmbH
+Baierbrunner Str. 28c
+D-81379 M=C3=BCnchen
++49 (89) 122 67 24-0
+http://ilbers.de/
+Commercial register Munich, HRB 214197
+General manager: Baurzhan Ismagulov
+
+--===============6296952419737424248==--
 
