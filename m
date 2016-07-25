@@ -1,71 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============4914204661487798341=="
+Content-Type: multipart/mixed; boundary="===============2464608822352987818=="
 MIME-Version: 1.0
-From: Ashida <ashidawa@gmail.com>
-Subject: How to port Telit LE910V2 module
-Date: Mon, 25 Jul 2016 06:57:36 +0000
-Message-ID: <loom.20160725T082756-821@post.gmane.org>
+From: Enrico Sau <enrico.sau@gmail.com>
+Subject: Re: How to port Telit LE910V2 module
+Date: Mon, 25 Jul 2016 10:19:21 +0200
+Message-ID: <CAH4ZQwvUj46bP66u7LL5c_pctsF8wHUu_fiKAu9N999YhYLD+w@mail.gmail.com>
+In-Reply-To: <loom.20160725T082756-821@post.gmane.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4914204661487798341==
+--===============2464608822352987818==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Experts
+Hi Ashida,
 
-How do I to extend oFono to support Telit LE910V2 module which is Intel
-solution and use AT+CGDATA=3D"M-RAW_IP"...?
+are you using ofono internal ppp management?
+in this case, as far as I know, it should work with standard commands:
 
-First, I modified plugins/udevng.c by adding driver_list[], vendor_list[]
-and other related sub function. Second, I copied the gprs_context.c from
-ifxmodem to telitmodem folder and also modified codes for LE910V2. However,
-oFono goes to GLib-CRITICAL issue after establishing data call.
+sprintf(buf, "AT+CGDATA=3D\"PPP\",%u", gcd->active_context);
 
-Can anyone help me?
+You may have some problems in using the correct context number, but this is
+a later problem.
 
-Here comes my log:
-ofonod[1571]: src/gprs.c:ofono_gprs_status_notify() /le910v2_0 status 1
-ofonod[1571]:
-drivers/telitmodem/gprs-context.c:telit_gprs_activate_primary() cid 1
-ofonod[1571]: plugins/le910v2.c:le910v2_debug() Modem: >
-AT+CGDCONT=3D1,"IP","internet"\r
-ofonod[1571]: plugins/le910v2.c:le910v2_debug() Modem: < \r\nOK\r\n
-ofonod[1571]: drivers/telitmodem/gprs-context.c:setup_cb() ok 1
-ofonod[1571]: plugins/le910v2.c:le910v2_debug() Modem: > AT#NCM=3D1,1\r
-ofonod[1571]: plugins/le910v2.c:le910v2_debug() Modem: < \r\nOK\r\n
-ofonod[1571]: plugins/le910v2.c:le910v2_debug() Modem: > AT+CGACT=3D1,1\r
-ofonod[1571]: plugins/le910v2.c:le910v2_debug() Modem: < \r\nOK\r\n
-ofonod[1571]: drivers/telitmodem/gprs-context.c:activate_cb() ok 1
-ofonod[1571]: plugins/le910v2.c:le910v2_debug() Modem: > AT+CGPADDR=3D1\r
-ofonod[1571]: plugins/le910v2.c:le910v2_debug() Modem: < \r\n+CGPADDR:
-1,"10.113.62.162"\r\n\r\nOK\r\n
-ofonod[1571]: drivers/telitmodem/gprs-context.c:address_cb() ok 1
-ofonod[1571]: plugins/le910v2.c:le910v2_debug() Modem: > AT#NWDNS=3D1\r
-ofonod[1571]: plugins/le910v2.c:le910v2_debug() Modem: < \r\n#NWDNS:
-1,"0.0.0.0","0.0.0.0"\r\n\r\nOK\r\n
-ofonod[1571]: drivers/telitmodem/gprs-context.c:dns_cb() ok 1
-ofonod[1571]: IP: 10.113.62.162
-ofonod[1571]: DNS: 0.0.0.0, 0.0.0.0
-ofonod[1571]: plugins/le910v2.c:le910v2_debug() Modem: >
-AT+CGDATA=3D"M-RAW_IP",1\r
-ofonod[1571]: plugins/le910v2.c:le910v2_debug() Modem: < \r\nCONNECT
-ofonod[1571]: plugins/le910v2.c:le910v2_debug() Modem: < \r\n\r\nOK\r\n
-ofonod[1571]: drivers/telitmodem/gprs-context.c:session_cb() ok 1
-ofonod[1571]: drivers/telitmodem/gprs-context.c:setup_rawip() =
+Enrico
 
-ofonod[1571]: src/gprs.c:pri_activate_callback() 0x89d47f0
+--===============2464608822352987818==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-(ofonod:1571): GLib-CRITICAL **: g_io_channel_write_chars: assertion
-'channel !=3D NULL' failed
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
+aWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SGkgQXNoaWRhLDwvZGl2PjxkaXYgY2xhc3M9ImdtYWls
+X2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L2Rp
+dj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxz
+YW5zLXNlcmlmIj5hcmUgeW91IHVzaW5nIG9mb25vIGludGVybmFsIHBwcCBtYW5hZ2VtZW50Pzwv
+ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5h
+LHNhbnMtc2VyaWYiPmluIHRoaXMgY2FzZSwgYXMgZmFyIGFzIEkga25vdywgaXQgc2hvdWxkIHdv
+cmsgd2l0aCBzdGFuZGFyZCBjb21tYW5kczo8L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0
+IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj48YnI+PC9kaXY+PGRpdiBj
+bGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJp
+ZiI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+c3ByaW50ZihidWYsICZxdW90O0FUK0NHREFU
+QT1cJnF1b3Q7UFBQXCZxdW90OywldSZxdW90OywgZ2NkLSZndDthY3RpdmVfY29udGV4dCk7PC9k
+aXY+PGRpdj48YnI+PC9kaXY+PGRpdj5Zb3UgbWF5IGhhdmUgc29tZSBwcm9ibGVtcyBpbiB1c2lu
+ZyB0aGUgY29ycmVjdCBjb250ZXh0IG51bWJlciwgYnV0IHRoaXMgaXMgYSBsYXRlciBwcm9ibGVt
+LjwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWls
+eTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0
+IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5FbnJpY288L2Rpdj48L2Rp
+dj4K
 
-(ofonod:1571): GLib-CRITICAL **: g_source_remove: assertion 'tag > 0' failed
-
-(ofonod:1571): GLib-CRITICAL **: g_io_channel_write_chars: assertion
-'channel !=3D NULL' failed
-
-(ofonod:1571): GLib-CRITICAL **: g_source_remove: assertion 'tag > 0' failed
-
-
---===============4914204661487798341==--
+--===============2464608822352987818==--
 
