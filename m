@@ -1,54 +1,121 @@
-Content-Type: multipart/mixed; boundary="===============2464608822352987818=="
+Content-Type: multipart/mixed; boundary="===============4731288320704445208=="
 MIME-Version: 1.0
-From: Enrico Sau <enrico.sau@gmail.com>
-Subject: Re: How to port Telit LE910V2 module
-Date: Mon, 25 Jul 2016 10:19:21 +0200
-Message-ID: <CAH4ZQwvUj46bP66u7LL5c_pctsF8wHUu_fiKAu9N999YhYLD+w@mail.gmail.com>
-In-Reply-To: <loom.20160725T082756-821@post.gmane.org>
+From: Samrat Guha Niyogi <samrat.guha.niyogi@intel.com>
+Subject: [PATCH] sim: query facility during initialization in chain manner
+Date: Sat, 06 Aug 2016 09:53:46 +0530
+Message-ID: <1470457426-10949-1-git-send-email-samrat.guha.niyogi@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2464608822352987818==
+--===============4731288320704445208==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ashida,
+query facility during initialization is modified from back
+to back invocation to chain manner to keep it inline with
+RIL design. All vendor RIL does not support back to back
+handling since RIL telephony framework sends the request
+synchronously.
+---
+ src/sim.c | 42 ++++++++++++++++++++++++++----------------
+ 1 file changed, 26 insertions(+), 16 deletions(-)
 
-are you using ofono internal ppp management?
-in this case, as far as I know, it should work with standard commands:
+diff --git a/src/sim.c b/src/sim.c
+index 6d9ed5d..0bbd1ef 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -2468,31 +2468,48 @@ static void sim_set_locked_pin(struct ofono_sim *si=
+m,
+ 	g_strfreev(locked_pins);
+ }
+ =
 
-sprintf(buf, "AT+CGDATA=3D\"PPP\",%u", gcd->active_context);
+-static void sim_query_fac_imsilock_cb(const struct ofono_error *error,
++static void sim_query_fac_pinlock_cb(const struct ofono_error *error,
+ 				ofono_bool_t status, void *data)
+ {
++	struct ofono_sim *sim =3D data;
++
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
+-		return;
++		goto done;
+ =
 
-You may have some problems in using the correct context number, but this is
-a later problem.
+-	sim_set_locked_pin(data, OFONO_SIM_PASSWORD_PHSIM_PIN, status);
++	sim_set_locked_pin(data, OFONO_SIM_PASSWORD_SIM_PIN, status);
++
++done:
++	sim_initialize(sim);
+ }
+ =
 
-Enrico
+ static void sim_query_fac_networklock_cb(const struct ofono_error *error,
+ 				ofono_bool_t status, void *data)
+ {
++	struct ofono_sim *sim =3D data;
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
+-		return;
++		goto done;
+ =
 
---===============2464608822352987818==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+ 	sim_set_locked_pin(data, OFONO_SIM_PASSWORD_PHNET_PIN, status);
++
++done:
++	sim->driver->query_facility_lock(sim,
++					OFONO_SIM_PASSWORD_SIM_PIN,
++					sim_query_fac_pinlock_cb, sim);
+ }
+ =
 
-PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
-aWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SGkgQXNoaWRhLDwvZGl2PjxkaXYgY2xhc3M9ImdtYWls
-X2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L2Rp
-dj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxz
-YW5zLXNlcmlmIj5hcmUgeW91IHVzaW5nIG9mb25vIGludGVybmFsIHBwcCBtYW5hZ2VtZW50Pzwv
-ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5h
-LHNhbnMtc2VyaWYiPmluIHRoaXMgY2FzZSwgYXMgZmFyIGFzIEkga25vdywgaXQgc2hvdWxkIHdv
-cmsgd2l0aCBzdGFuZGFyZCBjb21tYW5kczo8L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0
-IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj48YnI+PC9kaXY+PGRpdiBj
-bGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJp
-ZiI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+c3ByaW50ZihidWYsICZxdW90O0FUK0NHREFU
-QT1cJnF1b3Q7UFBQXCZxdW90OywldSZxdW90OywgZ2NkLSZndDthY3RpdmVfY29udGV4dCk7PC9k
-aXY+PGRpdj48YnI+PC9kaXY+PGRpdj5Zb3UgbWF5IGhhdmUgc29tZSBwcm9ibGVtcyBpbiB1c2lu
-ZyB0aGUgY29ycmVjdCBjb250ZXh0IG51bWJlciwgYnV0IHRoaXMgaXMgYSBsYXRlciBwcm9ibGVt
-LjwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWls
-eTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0
-IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5FbnJpY288L2Rpdj48L2Rp
-dj4K
+-static void sim_query_fac_pinlock_cb(const struct ofono_error *error,
++static void sim_query_fac_imsilock_cb(const struct ofono_error *error,
+ 				ofono_bool_t status, void *data)
+ {
++	struct ofono_sim *sim =3D data;
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
+-		return;
++		goto done;
+ =
 
---===============2464608822352987818==--
+-	sim_set_locked_pin(data, OFONO_SIM_PASSWORD_SIM_PIN, status);
++	sim_set_locked_pin(data, OFONO_SIM_PASSWORD_PHSIM_PIN, status);
++
++done:
++	sim->driver->query_facility_lock(sim,
++					OFONO_SIM_PASSWORD_PHNET_PIN,
++					sim_query_fac_networklock_cb, sim);
+ }
+ =
+
+ void ofono_sim_inserted_notify(struct ofono_sim *sim, ofono_bool_t inserte=
+d)
+@@ -2526,16 +2543,9 @@ void ofono_sim_inserted_notify(struct ofono_sim *sim=
+, ofono_bool_t inserted)
+ 					OFONO_SIM_PASSWORD_PHSIM_PIN,
+ 					sim_query_fac_imsilock_cb, sim);
+ =
+
+-			sim->driver->query_facility_lock(sim,
+-					OFONO_SIM_PASSWORD_PHNET_PIN,
+-					sim_query_fac_networklock_cb, sim);
+-
+-			sim->driver->query_facility_lock(sim,
+-					OFONO_SIM_PASSWORD_SIM_PIN,
+-					sim_query_fac_pinlock_cb, sim);
++		} else {
++			sim_initialize(sim);
+ 		}
+-
+-		sim_initialize(sim);
+ 	} else {
+ 		sim->pin_type =3D OFONO_SIM_PASSWORD_NONE;
+ =
+
+-- =
+
+1.9.1
+
+
+--===============4731288320704445208==--
 
