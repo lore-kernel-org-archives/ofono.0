@@ -1,31 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============6870440747380252894=="
+Content-Type: multipart/mixed; boundary="===============4012566930858152187=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim: remove locked_pin reset from sim_free_main_state
-Date: Mon, 08 Aug 2016 21:17:48 -0500
-Message-ID: <57A93D4C.80103@gmail.com>
-In-Reply-To: <1470706870-28558-1-git-send-email-samrat.guha.niyogi@intel.com>
+From: Santtu Lakkala <santtu.lakkala@link-motion.com>
+Subject: [PATCH] huaweimodem: Fix DHCP parsing on 32-bit platforms
+Date: Wed, 10 Aug 2016 13:04:07 +0300
+Message-ID: <1470823447-24819-1-git-send-email-santtu.lakkala@link-motion.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6870440747380252894==
+--===============4012566930858152187==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Samrat,
+strtol clamps returned value between INT_MIN and INT_MAX, causing
+invalid value (255.255.255.127) being reported for any address
+if last octet > 127 when sizeof(long) =3D=3D 4.
+---
+ drivers/huaweimodem/gprs-context.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-On 08/08/2016 08:41 PM, Samrat Guha Niyogi wrote:
-> ---
->   src/sim.c | 26 ++++++++++++++++++--------
->   1 file changed, 18 insertions(+), 8 deletions(-)
->
+diff --git a/drivers/huaweimodem/gprs-context.c b/drivers/huaweimodem/gprs-=
+context.c
+index 3acd90c..dda5e32 100644
+--- a/drivers/huaweimodem/gprs-context.c
++++ b/drivers/huaweimodem/gprs-context.c
+@@ -80,7 +80,7 @@ static gboolean get_next_addr(GAtResultIter *iter, char *=
+*addr)
+ 	if (g_at_result_iter_next_unquoted_string(iter, &str) =3D=3D FALSE)
+ 		return FALSE;
+ =
 
-Applied, thanks.
+-	val =3D strtol(str, NULL, 16);
++	val =3D strtoul(str, NULL, 16);
+ =
 
-Regards,
--Denis
+ 	if (addr)
+ 		*addr =3D g_strdup_printf("%u.%u.%u.%u",
+-- =
+
+2.5.0
 
 
---===============6870440747380252894==--
+--===============4012566930858152187==--
 
