@@ -1,45 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============4012566930858152187=="
+Content-Type: multipart/mixed; boundary="===============0832820997402832813=="
 MIME-Version: 1.0
-From: Santtu Lakkala <santtu.lakkala@link-motion.com>
-Subject: [PATCH] huaweimodem: Fix DHCP parsing on 32-bit platforms
-Date: Wed, 10 Aug 2016 13:04:07 +0300
-Message-ID: <1470823447-24819-1-git-send-email-santtu.lakkala@link-motion.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] huaweimodem: Fix DHCP parsing on 32-bit platforms
+Date: Wed, 10 Aug 2016 11:22:34 -0500
+Message-ID: <57AB54CA.90901@gmail.com>
+In-Reply-To: <1470823447-24819-1-git-send-email-santtu.lakkala@link-motion.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4012566930858152187==
+--===============0832820997402832813==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-strtol clamps returned value between INT_MIN and INT_MAX, causing
-invalid value (255.255.255.127) being reported for any address
-if last octet > 127 when sizeof(long) =3D=3D 4.
----
- drivers/huaweimodem/gprs-context.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Santtu,
 
-diff --git a/drivers/huaweimodem/gprs-context.c b/drivers/huaweimodem/gprs-=
-context.c
-index 3acd90c..dda5e32 100644
---- a/drivers/huaweimodem/gprs-context.c
-+++ b/drivers/huaweimodem/gprs-context.c
-@@ -80,7 +80,7 @@ static gboolean get_next_addr(GAtResultIter *iter, char *=
-*addr)
- 	if (g_at_result_iter_next_unquoted_string(iter, &str) =3D=3D FALSE)
- 		return FALSE;
- =
+On 08/10/2016 05:04 AM, Santtu Lakkala wrote:
+> strtol clamps returned value between INT_MIN and INT_MAX, causing
+> invalid value (255.255.255.127) being reported for any address
+> if last octet > 127 when sizeof(long) =3D=3D 4.
+> ---
+>   drivers/huaweimodem/gprs-context.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+>
 
--	val =3D strtol(str, NULL, 16);
-+	val =3D strtoul(str, NULL, 16);
- =
+Applied, thanks.
 
- 	if (addr)
- 		*addr =3D g_strdup_printf("%u.%u.%u.%u",
--- =
-
-2.5.0
+Regards,
+-Denis
 
 
---===============4012566930858152187==--
+--===============0832820997402832813==--
 
