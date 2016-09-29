@@ -1,45 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============6032138904245788442=="
+Content-Type: multipart/mixed; boundary="===============8925358566552621970=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: IPV6 question
-Date: Wed, 28 Sep 2016 10:22:54 -0500
-Message-ID: <57EBE04E.9080205@gmail.com>
-In-Reply-To: <CAH4ZQwuSW=LhjY9zNKCJSyde+s_kivvdtJawE+-xJMG43joa1g@mail.gmail.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@collabora.co.uk>
+Subject: [PATCH 0/2] Detect huawei E3372
+Date: Thu, 29 Sep 2016 09:52:56 +0200
+Message-ID: <1475135578-26864-1-git-send-email-frederic.dalleau@collabora.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6032138904245788442==
+--===============8925358566552621970==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Enrico,
+I have these two patches after spending some time with E3372 (reflashed with
+a so called 21 firmware). I have mixed feeling about those, but just send t=
+hem
+here in case.
+
+Fr=C3=A9d=C3=A9ric Dalleau (2):
+  udevng: Detect huawei E3372 pcui
+  udevng: Detect huawei E3372 modem and pcui
+
+ plugins/udevng.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+-- =
+
+2.7.4
 
 
-On 09/27/2016 01:54 AM, Enrico Sau wrote:
-> Hi all,
->
-> As far as I understand, ofono doen't support IPV6 over ppp due to the
-> fact that IPV6 compression protocol implementation is missing.
-> Is that right?
->
-
-GAtChat has support for IPV6 control protocol, so IPV6 over PPP should =
-
-be possible.  I think it is simply not enabled in the driver since we =
-
-have never found hardware that supports it.
-
-We do not support IPV4 or IPV6 compression.  It is an optional feature =
-
-and I doubt you'd want to use it anyway.  We're not operating on a =
-
-constrained bandwidth link, so enabling it would only increase CPU =
-
-utilization and decrease throughput.  Lose/lose situation.
-
-Regards,
--Denis
-
---===============6032138904245788442==--
+--===============8925358566552621970==--
 
