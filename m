@@ -1,51 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============6941971913621275970=="
+Content-Type: multipart/mixed; boundary="===============8294667344582001892=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@collabora.co.uk>
-Subject: [PATCH 2/2] udevng: Detect huawei E3372 modem and pcui
-Date: Thu, 29 Sep 2016 09:52:58 +0200
-Message-ID: <1475135578-26864-3-git-send-email-frederic.dalleau@collabora.co.uk>
-In-Reply-To: <1475135578-26864-1-git-send-email-frederic.dalleau@collabora.co.uk>
+From: Enrico Sau <enrico.sau@gmail.com>
+Subject: Re: IPV6 question
+Date: Thu, 29 Sep 2016 12:10:09 +0200
+Message-ID: <CAH4ZQwvVb2ZZbgsts-qEaBOLSjcsps8kEBoq=NV=t+otj9fJnA@mail.gmail.com>
+In-Reply-To: <57EBE04E.9080205@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6941971913621275970==
+--===============8294667344582001892==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When the modes are modified with AT^SETPORT=3D"FF;12,1,16", this modem
-and pcui will appear using different ids. Update the interfaces
-identifier accordingly.
+Hi Denis,
 
-Signed-off-by: Fr=C3=A9d=C3=A9ric Dalleau <frederic.dalleau@collabora.co.=
-uk>
----
- plugins/udevng.c | 2 ++
- 1 file changed, 2 insertions(+)
+Thank you for you answer.
+I will make some tests.
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 1a85246..933bf4f 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -325,12 +325,14 @@ static gboolean setup_huawei(struct modem_info *modem)
- 		if (g_strcmp0(info->label, "modem") =3D=3D 0 ||
- 				g_strcmp0(info->interface, "255/1/1") =3D=3D 0 ||
- 				g_strcmp0(info->interface, "255/2/1") =3D=3D 0 ||
-+				g_strcmp0(info->interface, "255/3/1") =3D=3D 0 ||
- 				g_strcmp0(info->interface, "255/1/49") =3D=3D 0) {
- 			mdm =3D info->devnode;
- 		} else if (g_strcmp0(info->label, "pcui") =3D=3D 0 ||
- 				g_strcmp0(info->interface, "255/1/2") =3D=3D 0 ||
- 				g_strcmp0(info->interface, "255/2/2") =3D=3D 0 ||
- 				g_strcmp0(info->interface, "255/2/18") =3D=3D 0 ||
-+				g_strcmp0(info->interface, "255/3/18") =3D=3D 0 ||
- 				g_strcmp0(info->interface, "255/1/50") =3D=3D 0) {
- 			pcui =3D info->devnode;
- 		} else if (g_strcmp0(info->label, "diag") =3D=3D 0 ||
--- =
+Regards,
+Enrico
 
-2.7.4
+--===============8294667344582001892==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
+aWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SGkgRGVuaXMsPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxf
+ZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+PGJyPjwvZGl2
+PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNh
+bnMtc2VyaWYiPlRoYW5rIHlvdSBmb3IgeW91IGFuc3dlci48L2Rpdj48ZGl2IGNsYXNzPSJnbWFp
+bF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5JIHdpbGwg
+bWFrZSBzb21lIHRlc3RzLjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJm
+b250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFp
+bF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5SZWdhcmRz
+LDwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX3Np
+Z25hdHVyZSIgZGF0YS1zbWFydG1haWw9ImdtYWlsX3NpZ25hdHVyZSI+PGRpdiBkaXI9Imx0ciI+
+PGRpdj48ZGl2IGRpcj0ibHRyIj48ZGl2PjxkaXY+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMi44
+cHgiPkVucmljbzwvc3Bhbj48L2Rpdj48L2Rpdj48L2Rpdj48L2Rpdj48L2Rpdj48L2Rpdj48L2Rp
+dj48L2Rpdj48L2Rpdj4K
 
---===============6941971913621275970==--
+--===============8294667344582001892==--
 
