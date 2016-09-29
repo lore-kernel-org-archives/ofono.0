@@ -1,36 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============6947477411403190565=="
+Content-Type: multipart/mixed; boundary="===============4193626624166139041=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: IPV6 question
-Date: Thu, 29 Sep 2016 17:36:06 +0200
-Message-ID: <FEACA38D-368C-47B4-8344-E72B0A46E61B@holtmann.org>
-In-Reply-To: <6C3C91E4-F4C0-41B8-B6F0-B4A9484BBF90@gnumonks.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/2] udevng: Detect huawei E3372 modem and pcui
+Date: Thu, 29 Sep 2016 11:01:00 -0500
+Message-ID: <57ED3ABC.3020300@gmail.com>
+In-Reply-To: <1475135578-26864-3-git-send-email-frederic.dalleau@collabora.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6947477411403190565==
+--===============4193626624166139041==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Harald,
+Hi Fr=C3=A9d=C3=A9ric,
 
-> This might be off topic, but AFAIR there are PPP type PDP contexts where =
-not raw IP, but actual PPP frames are transmitted over GPRS inside SNDCP/LL=
-C. Not sure if any operators use that, but its perfectly valid.
-> =
+On 09/29/2016 02:52 AM, Fr=C3=A9d=C3=A9ric Dalleau wrote:
+> When the modes are modified with AT^SETPORT=3D"FF;12,1,16", this modem
+> and pcui will appear using different ids. Update the interfaces
+> identifier accordingly.
+>
+> Signed-off-by: Fr=C3=A9d=C3=A9ric Dalleau <frederic.dalleau@collabora.c=
+o.uk>
 
-> In this case PPP doesn't terminate in the modem, so "hardware" support sh=
-ould be irrelevant.
+oFono doesn't use Signed-off-by.  I took Signed-off-by out manually and =
 
-I have heard about these PPP type PDT contexts, but I have not seen any of =
-these deployed. They might do exists, but they seem like such an odd duck t=
-hat it makes no sense to worry too much about it.
+applied both patches.
 
-Regards
+Thanks!
 
-Marcel
+Regards,
+-Denis
 
-
---===============6947477411403190565==--
+--===============4193626624166139041==--
 
