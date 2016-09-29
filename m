@@ -1,30 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============7674226307602453442=="
+Content-Type: multipart/mixed; boundary="===============6947477411403190565=="
 MIME-Version: 1.0
-From: Harald Welte <laforge@gnumonks.org>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: IPV6 question
-Date: Thu, 29 Sep 2016 17:01:06 +0200
-Message-ID: <6C3C91E4-F4C0-41B8-B6F0-B4A9484BBF90@gnumonks.org>
-In-Reply-To: <57EBE04E.9080205@gmail.com>
+Date: Thu, 29 Sep 2016 17:36:06 +0200
+Message-ID: <FEACA38D-368C-47B4-8344-E72B0A46E61B@holtmann.org>
+In-Reply-To: <6C3C91E4-F4C0-41B8-B6F0-B4A9484BBF90@gnumonks.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7674226307602453442==
+--===============6947477411403190565==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This might be off topic, but AFAIR there are PPP type PDP contexts where no=
-t raw IP, but actual PPP frames are transmitted over GPRS inside SNDCP/LLC.=
- Not sure if any operators use that, but its perfectly valid.
+Hi Harald,
 
-In this case PPP doesn't terminate in the modem, so "hardware" support shou=
-ld be irrelevant.
+> This might be off topic, but AFAIR there are PPP type PDP contexts where =
+not raw IP, but actual PPP frames are transmitted over GPRS inside SNDCP/LL=
+C. Not sure if any operators use that, but its perfectly valid.
+> =
 
-Regards,
-Harald
--- =
+> In this case PPP doesn't terminate in the modem, so "hardware" support sh=
+ould be irrelevant.
 
-Sent from a mobile device. Please excuse my brevity.
+I have heard about these PPP type PDT contexts, but I have not seen any of =
+these deployed. They might do exists, but they seem like such an odd duck t=
+hat it makes no sense to worry too much about it.
 
---===============7674226307602453442==--
+Regards
+
+Marcel
+
+
+--===============6947477411403190565==--
 
