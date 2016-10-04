@@ -1,50 +1,112 @@
-Content-Type: multipart/mixed; boundary="===============4598636137695472992=="
+Content-Type: multipart/mixed; boundary="===============3487906726676633963=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: IPV6 question
-Date: Thu, 29 Sep 2016 11:07:28 -0500
-Message-ID: <57ED3C40.5020705@gmail.com>
-In-Reply-To: <6C3C91E4-F4C0-41B8-B6F0-B4A9484BBF90@gnumonks.org>
+From: Antoine Aubert <a.aubert@overkiz.com>
+Subject: [PATCH] gatmux: fix channel remove on error.
+Date: Tue, 04 Oct 2016 09:42:11 +0200
+Message-ID: <413c78b0-58b5-42cc-0d2f-ec0615a83688@overkiz.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4598636137695472992==
+--===============3487906726676633963==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Harald,
+In case of invalid IO, read_watch is not reset. Fix crash on destroy
+gatmux.
 
-On 09/29/2016 10:01 AM, Harald Welte wrote:
-> This might be off topic, but AFAIR there are PPP type PDP contexts where =
-not raw IP, but actual PPP frames are transmitted over GPRS inside SNDCP/LL=
-C. Not sure if any operators use that, but its perfectly valid.
->
+Signed-off-by: Antoine Aubert <a.aubert@overkiz.com>
+---
+ gatchat/gatmux.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
 
-Yes, I think this was introduced in Release 7.  However, it would =
+diff --git a/gatchat/gatmux.c b/gatchat/gatmux.c
+index 9beeece..896ddff 100644
+--- a/gatchat/gatmux.c
++++ b/gatchat/gatmux.c
+@@ -186,8 +186,10 @@ static gboolean received_data(GIOChannel *channel, GIO=
+Condition cond,
+ 	GIOStatus status;
+ 	gsize bytes_read;
+ =
 
-require the use of "PPP" pdp type in CGDCONT, not "IP".  Also, for EPS =
+-	if (cond & G_IO_NVAL)
++	if (cond & G_IO_NVAL) {
++		mux->read_watch =3D 0;
+ 		return FALSE;
++	}
+ =
 
-contexts I don't believe that "PPP" type is possible (nor wanted, as =
+ 	debug(mux, "received data");
+ =
 
-you'd fry your CPU keeping up with the high-bandwidth connection). =
+@@ -223,14 +225,20 @@ static gboolean received_data(GIOChannel *channel, GI=
+OCondition cond,
+ 		}
+ 	}
+ =
 
-Probably a legacy feature that might still be used in very narrow =
+-	if (cond & (G_IO_HUP | G_IO_ERR))
++	if (cond & (G_IO_HUP | G_IO_ERR)) {
++		mux->read_watch =3D 0;
+ 		return FALSE;
++	}
+ =
 
-circumstances.  I've certainly never seen it used in practice.
+-	if (status !=3D G_IO_STATUS_NORMAL && status !=3D G_IO_STATUS_AGAIN)
++	if (status !=3D G_IO_STATUS_NORMAL && status !=3D G_IO_STATUS_AGAIN) {
++		mux->read_watch =3D 0;
+ 		return FALSE;
++	}
+ =
 
-> In this case PPP doesn't terminate in the modem, so "hardware" support sh=
-ould be irrelevant.
->
+-	if (mux->buf_used =3D=3D sizeof(mux->buf))
++	if (mux->buf_used =3D=3D sizeof(mux->buf)) {
++		mux->read_watch =3D 0;
+ 		return FALSE;
++	}
+ =
 
-True.  But I'm probably missing your point.  PPP packet compression is =
+ 	return TRUE;
+ }
+-- =
 
-still an optional protocol feature, so it should not preclude =
+2.7.4
 
-interoperability.
 
-Regards,
--Denis
+--===============3487906726676633963==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
---===============4598636137695472992==--
+PGh0bWw+CiAgPGhlYWQ+CgogICAgPG1ldGEgaHR0cC1lcXVpdj0iY29udGVudC10eXBlIiBjb250
+ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXRmLTgiPgogIDwvaGVhZD4KICA8Ym9keSBiZ2NvbG9y
+PSIjRkZGRkZGIiB0ZXh0PSIjMDAwMDAwIj4KICAgIDxwcmU+SW4gY2FzZSBvZiBpbnZhbGlkIElP
+LCByZWFkX3dhdGNoIGlzIG5vdCByZXNldC4gRml4IGNyYXNoIG9uIGRlc3Ryb3kKZ2F0bXV4LgoK
+U2lnbmVkLW9mZi1ieTogQW50b2luZSBBdWJlcnQgPGEgY2xhc3M9Im1vei10eHQtbGluay1yZmMy
+Mzk2RSIgaHJlZj0ibWFpbHRvOmEuYXViZXJ0QG92ZXJraXouY29tIj4mbHQ7YS5hdWJlcnRAb3Zl
+cmtpei5jb20mZ3Q7PC9hPgotLS0KIGdhdGNoYXQvZ2F0bXV4LmMgfCAxNiArKysrKysrKysrKyst
+LS0tCiAxIGZpbGUgY2hhbmdlZCwgMTIgaW5zZXJ0aW9ucygrKSwgNCBkZWxldGlvbnMoLSkKCmRp
+ZmYgLS1naXQgYS9nYXRjaGF0L2dhdG11eC5jIGIvZ2F0Y2hhdC9nYXRtdXguYwppbmRleCA5YmVl
+ZWNlLi44OTZkZGZmIDEwMDY0NAotLS0gYS9nYXRjaGF0L2dhdG11eC5jCisrKyBiL2dhdGNoYXQv
+Z2F0bXV4LmMKQEAgLTE4Niw4ICsxODYsMTAgQEAgc3RhdGljIGdib29sZWFuIHJlY2VpdmVkX2Rh
+dGEoR0lPQ2hhbm5lbCAqY2hhbm5lbCwgR0lPQ29uZGl0aW9uIGNvbmQsCiAJR0lPU3RhdHVzIHN0
+YXR1czsKIAlnc2l6ZSBieXRlc19yZWFkOwogCi0JaWYgKGNvbmQgJmFtcDsgR19JT19OVkFMKQor
+CWlmIChjb25kICZhbXA7IEdfSU9fTlZBTCkgeworCQltdXgtJmd0O3JlYWRfd2F0Y2ggPSAwOwog
+CQlyZXR1cm4gRkFMU0U7CisJfQogCiAJZGVidWcobXV4LCAicmVjZWl2ZWQgZGF0YSIpOwogCkBA
+IC0yMjMsMTQgKzIyNSwyMCBAQCBzdGF0aWMgZ2Jvb2xlYW4gcmVjZWl2ZWRfZGF0YShHSU9DaGFu
+bmVsICpjaGFubmVsLCBHSU9Db25kaXRpb24gY29uZCwKIAkJfQogCX0KIAotCWlmIChjb25kICZh
+bXA7IChHX0lPX0hVUCB8IEdfSU9fRVJSKSkKKwlpZiAoY29uZCAmYW1wOyAoR19JT19IVVAgfCBH
+X0lPX0VSUikpIHsKKwkJbXV4LSZndDtyZWFkX3dhdGNoID0gMDsKIAkJcmV0dXJuIEZBTFNFOwor
+CX0KIAotCWlmIChzdGF0dXMgIT0gR19JT19TVEFUVVNfTk9STUFMICZhbXA7JmFtcDsgc3RhdHVz
+ICE9IEdfSU9fU1RBVFVTX0FHQUlOKQorCWlmIChzdGF0dXMgIT0gR19JT19TVEFUVVNfTk9STUFM
+ICZhbXA7JmFtcDsgc3RhdHVzICE9IEdfSU9fU1RBVFVTX0FHQUlOKSB7CisJCW11eC0mZ3Q7cmVh
+ZF93YXRjaCA9IDA7CiAJCXJldHVybiBGQUxTRTsKKwl9CiAKLQlpZiAobXV4LSZndDtidWZfdXNl
+ZCA9PSBzaXplb2YobXV4LSZndDtidWYpKQorCWlmIChtdXgtJmd0O2J1Zl91c2VkID09IHNpemVv
+ZihtdXgtJmd0O2J1ZikpIHsKKwkJbXV4LSZndDtyZWFkX3dhdGNoID0gMDsKIAkJcmV0dXJuIEZB
+TFNFOworCX0KIAogCXJldHVybiBUUlVFOwogfQotLSAKMi43LjQKPC9wcmU+CiAgPC9ib2R5Pgo8
+L2h0bWw+Cg==
+
+--===============3487906726676633963==--
 
