@@ -1,123 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============3364636614440688905=="
+Content-Type: multipart/mixed; boundary="===============8191676213102703402=="
 MIME-Version: 1.0
-From: Antoine Aubert <a.aubert@overkiz.com>
-Subject: [PATCH] gatmux: add telit specific mux implementation.
-Date: Wed, 05 Oct 2016 08:51:41 +0200
-Message-ID: <1475650301-22115-1-git-send-email-a.aubert@overkiz.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: IPV6 question
+Date: Wed, 05 Oct 2016 13:01:03 -0500
+Message-ID: <57F53FDF.4020501@gmail.com>
+In-Reply-To: <CAH4ZQwtH8U2kftiLgq1DXsvtkQa6sHVDH4vUbooB5itft-_bvg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3364636614440688905==
+--===============8191676213102703402==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-quote from telit: Initiator is the station that take the initiative to init=
-ialize the multiplexer (i.e. sends the
-SABM command at DLCI 0 ) and the responder is the station that accepts the =
-initialization
-of the multiplexer (i.e. sends the UA response at DLCI 0)
-In Telit implementation module is NEVER an initiator since it is up to cont=
-roller to send the
-SABM command to DLCI 0
----
- gatchat/gatmux.c | 24 ++++++++++++++++++++++++
- gatchat/gatmux.h |  2 ++
- 2 files changed, 26 insertions(+)
+Hi Enrico,
 
-diff --git a/gatchat/gatmux.c b/gatchat/gatmux.c
-index 9beeece..5785822 100644
---- a/gatchat/gatmux.c
-+++ b/gatchat/gatmux.c
-@@ -35,6 +35,7 @@
- #include "ringbuffer.h"
- #include "gatmux.h"
- #include "gsm0710.h"
-+#include "drivers/atmodem/vendor.h"
- =
+On 10/05/2016 01:50 AM, Enrico Sau wrote:
+> Hi all,
+>
+> I'm still trying to make IPV6 work.
+> First, I ensured that my modem and network support IPV6 making a
+> successful IPV6 connection with linux pppd.
 
- static const char *cmux_prefix[] =3D { "+CMUX:", NULL };
- static const char *none_prefix[] =3D { NULL };
-@@ -87,6 +88,7 @@ struct _GAtMux {
- 	char buf[MUX_BUFFER_SIZE];		/* Buffer on the main mux */
- 	int buf_used;				/* Bytes of buf being used */
- 	gboolean shutdown;
-+	unsigned int vendor;			/* Specific vendor */
- };
- =
+Which modem are you using, if its no secret?
 
- struct mux_setup_data {
-@@ -566,6 +568,8 @@ GAtMux *g_at_mux_new(GIOChannel *channel, const GAtMuxD=
-river *driver)
- 	mux->channel =3D channel;
- 	g_io_channel_ref(channel);
- =
+>
+> Then I set the ofono context protocol to "dual", removed the check on
+> the protocol in at_gprs_activate_primary(), and set +CGDCONT with
+> "IPV4V6" which works for my modem.
+>
+> Result is that the modem successfuly get an IPV6 address because I can
+> query it from another AT channel, but ofono does not retrieve any IPV6
+> parameters:
+>
+> [ /le910na1_0/context1 ]
+>          Username =3D
+>          AccessPointName =3D
+>          Settings =3D {
+>                      Interface =3D ppp0
+>                      Method =3D static
+>                      DomainNameServers =3D 172.22.1.201,  0.0.0.0,
+>                      Address =3D 172.22.1.101
+>                      Netmask =3D 255.255.255.255 }
+>          AuthenticationMethod =3D chap
+>          Password =3D
+>          Protocol =3D dual
+>          Type =3D internet
+>          Active =3D 1
+>          IPv6.Settings =3D {
+>                      Interface =3D ppp0 }
+>          Name =3D Internet
+> The consequence is that the ppp0 interface only has an IPV4 address.
+> I also tried with IPV6 only but same result.
+> Any hints?
+>
 
-+	mux->vendor =3D OFONO_VENDOR_GENERIC;
-+
- 	g_io_channel_set_close_on_unref(channel, TRUE);
- =
+It looks like IPV6CP was never properly integrated into GAtPPP logic. =
 
- 	return mux;
-@@ -669,6 +673,16 @@ gboolean g_at_mux_set_debug(GAtMux *mux, GAtDebugFunc =
-func, gpointer user_data)
- 	return TRUE;
- }
- =
+At least I don't see ipv6cp_new() inside gatchat/gatppp.c anywhere.  You =
 
-+gboolean g_at_mux_set_vendor(GAtMux *mux, unsigned int vendor)
-+{
-+	if (mux =3D=3D NULL)
-+		return FALSE;
-+
-+	mux->vendor =3D vendor;
-+
-+	return TRUE;
-+}
-+
- GIOChannel *g_at_mux_create_channel(GAtMux *mux)
- {
- 	GAtMuxChannel *mux_channel;
-@@ -951,6 +965,16 @@ static gboolean gsm0710_packet(GAtMux *mux, int dlc, g=
-uint8 control,
- 		resp[1] =3D ((len << 1) | 0x01);
- 		memcpy(resp + 2, data, len);
- 		write_frame(mux, 0, GSM0710_DATA, resp, len + 2);
-+
-+		/* In Telit implementation module is NEVER an initiator
-+		 * since it is up to controller to send the SABM command to DLCI 0
-+		 */
-+		if (mux->vendor =3D=3D OFONO_VENDOR_TELIT) {
-+			resp[0] =3D GSM0710_STATUS_SET;
-+			resp[3] =3D 0x0D;
-+			write_frame(mux, 0, GSM0710_DATA, resp, len + 2);
-+		}
-+
- 	}
- =
+might have to extend gatppp.c to manage IPV6CP as well.
 
- 	return TRUE;
-diff --git a/gatchat/gatmux.h b/gatchat/gatmux.h
-index 4d77c72..ab1962c 100644
---- a/gatchat/gatmux.h
-+++ b/gatchat/gatmux.h
-@@ -69,6 +69,8 @@ gboolean g_at_mux_set_disconnect_function(GAtMux *mux,
- =
-
- gboolean g_at_mux_set_debug(GAtMux *mux, GAtDebugFunc func, gpointer user_=
-data);
- =
-
-+gboolean g_at_mux_set_vendor(GAtMux *mux, unsigned int vendor);
-+
- GIOChannel *g_at_mux_create_channel(GAtMux *mux);
- =
-
- /*!
--- =
-
-2.7.4
+Regards,
+-Denis
 
 
---===============3364636614440688905==--
+--===============8191676213102703402==--
 
