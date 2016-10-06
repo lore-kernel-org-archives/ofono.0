@@ -1,133 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============5757248463819509717=="
+Content-Type: multipart/mixed; boundary="===============7728342344971755898=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gatmux: add telit specific mux implementation.
-Date: Wed, 05 Oct 2016 14:54:58 -0500
-Message-ID: <57F55A92.3020102@gmail.com>
-In-Reply-To: <1475650301-22115-1-git-send-email-a.aubert@overkiz.com>
+From: Enrico Sau <enrico.sau@gmail.com>
+Subject: Re: IPV6 question
+Date: Thu, 06 Oct 2016 09:13:25 +0200
+Message-ID: <CAH4ZQwvMbA+quNT5QmdQUM1f5CdjwgVL2k4k45Lo-ZSJC_z72g@mail.gmail.com>
+In-Reply-To: <57F53FDF.4020501@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5757248463819509717==
+--===============7728342344971755898==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antoine,
+Hi Denis,
 
-On 10/05/2016 01:51 AM, Antoine Aubert wrote:
-> quote from telit: Initiator is the station that take the initiative to in=
-itialize the multiplexer (i.e. sends the
-> SABM command at DLCI 0 ) and the responder is the station that accepts th=
-e initialization
-> of the multiplexer (i.e. sends the UA response at DLCI 0)
-> In Telit implementation module is NEVER an initiator since it is up to co=
-ntroller to send the
-> SABM command to DLCI 0
-> ---
->   gatchat/gatmux.c | 24 ++++++++++++++++++++++++
->   gatchat/gatmux.h |  2 ++
->   2 files changed, 26 insertions(+)
->
-> diff --git a/gatchat/gatmux.c b/gatchat/gatmux.c
-> index 9beeece..5785822 100644
-> --- a/gatchat/gatmux.c
-> +++ b/gatchat/gatmux.c
-> @@ -35,6 +35,7 @@
->   #include "ringbuffer.h"
->   #include "gatmux.h"
->   #include "gsm0710.h"
-> +#include "drivers/atmodem/vendor.h"
-
-So we can't do this.  gatchat is a separate library and cannot depend on =
-
-non-system headers.  E.g. anything outside of standard #includes or =
-
-gatchat/*.h.
-
->
->   static const char *cmux_prefix[] =3D { "+CMUX:", NULL };
->   static const char *none_prefix[] =3D { NULL };
-> @@ -87,6 +88,7 @@ struct _GAtMux {
->   	char buf[MUX_BUFFER_SIZE];		/* Buffer on the main mux */
->   	int buf_used;				/* Bytes of buf being used */
->   	gboolean shutdown;
-> +	unsigned int vendor;			/* Specific vendor */
->   };
->
->   struct mux_setup_data {
-> @@ -566,6 +568,8 @@ GAtMux *g_at_mux_new(GIOChannel *channel, const GAtMu=
-xDriver *driver)
->   	mux->channel =3D channel;
->   	g_io_channel_ref(channel);
->
-> +	mux->vendor =3D OFONO_VENDOR_GENERIC;
-> +
->   	g_io_channel_set_close_on_unref(channel, TRUE);
->
->   	return mux;
-> @@ -669,6 +673,16 @@ gboolean g_at_mux_set_debug(GAtMux *mux, GAtDebugFun=
-c func, gpointer user_data)
->   	return TRUE;
->   }
->
-> +gboolean g_at_mux_set_vendor(GAtMux *mux, unsigned int vendor)
-> +{
-> +	if (mux =3D=3D NULL)
-> +		return FALSE;
-> +
-> +	mux->vendor =3D vendor;
-> +
-> +	return TRUE;
-> +}
-> +
->   GIOChannel *g_at_mux_create_channel(GAtMux *mux)
->   {
->   	GAtMuxChannel *mux_channel;
-> @@ -951,6 +965,16 @@ static gboolean gsm0710_packet(GAtMux *mux, int dlc,=
- guint8 control,
->   		resp[1] =3D ((len << 1) | 0x01);
->   		memcpy(resp + 2, data, len);
->   		write_frame(mux, 0, GSM0710_DATA, resp, len + 2);
-> +
-> +		/* In Telit implementation module is NEVER an initiator
-> +		 * since it is up to controller to send the SABM command to DLCI 0
-> +		 */
-
-Aren't we already sending the SABM command by virtue of using =
-
-GSM0710_OPEN_CHANNEL inside *_open_dlc?
-
-> +		if (mux->vendor =3D=3D OFONO_VENDOR_TELIT) {
-> +			resp[0] =3D GSM0710_STATUS_SET;
-> +			resp[3] =3D 0x0D;
-> +			write_frame(mux, 0, GSM0710_DATA, resp, len + 2);
-> +		}
-> +
-
-This looks completely unrelated to SABM.  Are you setting RTC/RTR bits?
-
->   	}
->
->   	return TRUE;
-> diff --git a/gatchat/gatmux.h b/gatchat/gatmux.h
-> index 4d77c72..ab1962c 100644
-> --- a/gatchat/gatmux.h
-> +++ b/gatchat/gatmux.h
-> @@ -69,6 +69,8 @@ gboolean g_at_mux_set_disconnect_function(GAtMux *mux,
->
->   gboolean g_at_mux_set_debug(GAtMux *mux, GAtDebugFunc func, gpointer us=
-er_data);
->
-> +gboolean g_at_mux_set_vendor(GAtMux *mux, unsigned int vendor);
-> +
->   GIOChannel *g_at_mux_create_channel(GAtMux *mux);
->
->   /*!
+Which modem are you using, if its no secret?
 >
 
-Regards,
--Denis
+=E2=80=8BNo secrets, I'm using this:
+http://www.telit.com/cellular/4g-modules/xe910-family/
+The V2 series.
 
---===============5757248463819509717==--
+It looks like IPV6CP was never properly integrated into GAtPPP logic. At
+> least I don't see ipv6cp_new() inside gatchat/gatppp.c anywhere.  You mig=
+ht
+> have to extend gatppp.c to manage IPV6CP as well.
+
+
+=E2=80=8BI will look into it.
+Do you think is a difficult task?=E2=80=8B
+
+=E2=80=8B=E2=80=8B
+
+=E2=80=8BI extended several ofono interfaces fot telit modems.
+I will find the time to submit some changes sooner or later=E2=80=8B.
+
+=E2=80=8BRegards,
+Enrico=E2=80=8B
+
+--===============7728342344971755898==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
+aWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SGkgRGVuaXMsPC9kaXY+PGRpdiBjbGFzcz0iZ21haWxf
+ZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+PGJyPjwvZGl2
+PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+PGJsb2Nr
+cXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjBweCAwcHggMHB4IDAuOGV4
+O2JvcmRlci1sZWZ0OjFweCBzb2xpZCByZ2IoMjA0LDIwNCwyMDQpO3BhZGRpbmctbGVmdDoxZXgi
+PgpXaGljaCBtb2RlbSBhcmUgeW91IHVzaW5nLCBpZiBpdHMgbm8gc2VjcmV0Pzxicj48L2Jsb2Nr
+cXVvdGU+PGRpdj48YnI+PC9kaXY+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHls
+ZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj7igItObyBzZWNyZXRzLCBJJiMzOTtt
+IHVzaW5nIHRoaXM6IDxhIGhyZWY9Imh0dHA6Ly93d3cudGVsaXQuY29tL2NlbGx1bGFyLzRnLW1v
+ZHVsZXMveGU5MTAtZmFtaWx5LyI+aHR0cDovL3d3dy50ZWxpdC5jb20vY2VsbHVsYXIvNGctbW9k
+dWxlcy94ZTkxMC1mYW1pbHkvPC9hPjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0
+eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPlRoZSBWMiBzZXJpZXMuPC9kaXY+
+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fu
+cy1zZXJpZiI+PGJyPjwvZGl2PjwvZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIg
+c3R5bGU9Im1hcmdpbjowcHggMHB4IDBweCAwLjhleDtib3JkZXItbGVmdDoxcHggc29saWQgcmdi
+KDIwNCwyMDQsMjA0KTtwYWRkaW5nLWxlZnQ6MWV4Ij5JdCBsb29rcyBsaWtlIElQVjZDUCB3YXMg
+bmV2ZXIgcHJvcGVybHkgaW50ZWdyYXRlZCBpbnRvIEdBdFBQUCBsb2dpYy4gQXQgbGVhc3QgSSBk
+b24mIzM5O3Qgc2VlIGlwdjZjcF9uZXcoKSBpbnNpZGUgZ2F0Y2hhdC9nYXRwcHAuYyBhbnl3aGVy
+ZS7CoCBZb3UgbWlnaHQgaGF2ZSB0byBleHRlbmQgZ2F0cHBwLmMgdG8gbWFuYWdlIElQVjZDUCBh
+cyB3ZWxsLjwvYmxvY2txdW90ZT48ZGl2Pjxicj48L2Rpdj48ZGl2PjxkaXYgY2xhc3M9ImdtYWls
+X2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWY7ZGlzcGxheTpp
+bmxpbmUiPuKAi0kgd2lsbCBsb29rIGludG8gaXQuPC9kaXY+PC9kaXY+PGRpdj48ZGl2IGNsYXNz
+PSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmO2Rp
+c3BsYXk6aW5saW5lIj5EbyB5b3UgdGhpbmsgaXMgYSBkaWZmaWN1bHQgdGFzaz/igIs8L2Rpdj7C
+oDxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNh
+bnMtc2VyaWY7ZGlzcGxheTppbmxpbmUiPuKAi+KAizwvZGl2PjwvZGl2PjxkaXY+PGJyPjwvZGl2
+PjxkaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRh
+bmEsc2Fucy1zZXJpZiI+4oCLSSBleHRlbmRlZCBzZXZlcmFsIG9mb25vIGludGVyZmFjZXMgZm90
+IHRlbGl0IG1vZGVtcy48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9u
+dC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5JIHdpbGwgZmluZCB0aGUgdGltZSB0byBzdWJt
+aXQgc29tZSBjaGFuZ2VzIHNvb25lciBvciBsYXRlcuKAiy48YnI+PC9kaXY+PGJyPjwvZGl2Pjxk
+aXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEs
+c2Fucy1zZXJpZiI+4oCLUmVnYXJkcyw8L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBz
+dHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj5FbnJpY2/igIs8L2Rpdj48YnI+
+PC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+Cg==
+
+--===============7728342344971755898==--
 
