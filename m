@@ -1,59 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============4149480789546073309=="
+Content-Type: multipart/mixed; boundary="===============5986152021411530495=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: IPV6 question
-Date: Thu, 06 Oct 2016 12:29:42 -0500
-Message-ID: <57F68A06.80607@gmail.com>
-In-Reply-To: <CAH4ZQwvMbA+quNT5QmdQUM1f5CdjwgVL2k4k45Lo-ZSJC_z72g@mail.gmail.com>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: [PATCH] gprs-context: Remove unused field from struct
+ ofono_gprs_primary_context
+Date: Tue, 11 Oct 2016 00:07:27 +0300
+Message-ID: <1476133647-18681-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4149480789546073309==
+--===============5986152021411530495==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Enrico,
+---
+ include/gprs-context.h | 1 -
+ 1 file changed, 1 deletion(-)
 
-On 10/06/2016 02:13 AM, Enrico Sau wrote:
-> Hi Denis,
->
->     Which modem are you using, if its no secret?
->
->
-> =E2=80=8BNo secrets, I'm using this:
-> http://www.telit.com/cellular/4g-modules/xe910-family/
-> The V2 series.
+diff --git a/include/gprs-context.h b/include/gprs-context.h
+index c4910f2..ab67326 100644
+--- a/include/gprs-context.h
++++ b/include/gprs-context.h
+@@ -55,7 +55,6 @@ enum ofono_gprs_auth_method {
+ =
 
-Okay, I should have one around somewhere.  Not sure I have a provider =
+ struct ofono_gprs_primary_context {
+ 	unsigned int cid;
+-	int direction;
+ 	char apn[OFONO_GPRS_MAX_APN_LENGTH + 1];
+ 	char username[OFONO_GPRS_MAX_USERNAME_LENGTH + 1];
+ 	char password[OFONO_GPRS_MAX_PASSWORD_LENGTH + 1];
+-- =
 
-that allows dual stack contexts though.
+1.9.1
 
->
->     It looks like IPV6CP was never properly integrated into GAtPPP
->     logic. At least I don't see ipv6cp_new() inside gatchat/gatppp.c
->     anywhere.  You might have to extend gatppp.c to manage IPV6CP as well.
->
->
-> =E2=80=8BI will look into it.
-> Do you think is a difficult task?=E2=80=8B
 
-Shouldn't be particularly difficult assuming IPV6CP itself was done =
-
-properly.  You might need to tweak GAtPPPConnectFunc to relay the ipv6 =
-
-address and tell GAtPPP which protocols to run.  E.g. ipv6cp, ipcp, or both.
-
-> =E2=80=8B=E2=80=8B
->
-> =E2=80=8BI extended several ofono interfaces fot telit modems.
-> I will find the time to submit some changes sooner or later=E2=80=8B.
->
-
-Cool.
-
-Regards,
--Denis
-
---===============4149480789546073309==--
+--===============5986152021411530495==--
 
