@@ -1,39 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============5986152021411530495=="
+Content-Type: multipart/mixed; boundary="===============5578150952731018333=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
-Subject: [PATCH] gprs-context: Remove unused field from struct
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] gprs-context: Remove unused field from struct
  ofono_gprs_primary_context
-Date: Tue, 11 Oct 2016 00:07:27 +0300
-Message-ID: <1476133647-18681-1-git-send-email-slava.monich@jolla.com>
+Date: Mon, 10 Oct 2016 17:10:10 -0500
+Message-ID: <57FC11C2.3070603@gmail.com>
+In-Reply-To: <1476133647-18681-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5986152021411530495==
+--===============5578150952731018333==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- include/gprs-context.h | 1 -
- 1 file changed, 1 deletion(-)
+Hi Slava,
 
-diff --git a/include/gprs-context.h b/include/gprs-context.h
-index c4910f2..ab67326 100644
---- a/include/gprs-context.h
-+++ b/include/gprs-context.h
-@@ -55,7 +55,6 @@ enum ofono_gprs_auth_method {
- =
+On 10/10/2016 04:07 PM, Slava Monich wrote:
+> ---
+>   include/gprs-context.h | 1 -
+>   1 file changed, 1 deletion(-)
+>
 
- struct ofono_gprs_primary_context {
- 	unsigned int cid;
--	int direction;
- 	char apn[OFONO_GPRS_MAX_APN_LENGTH + 1];
- 	char username[OFONO_GPRS_MAX_USERNAME_LENGTH + 1];
- 	char password[OFONO_GPRS_MAX_PASSWORD_LENGTH + 1];
--- =
+Applied, thanks.
 
-1.9.1
+Regards,
+-Denis
 
 
---===============5986152021411530495==--
+--===============5578150952731018333==--
 
