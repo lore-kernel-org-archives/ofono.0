@@ -1,38 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============0714368782336563589=="
+Content-Type: multipart/mixed; boundary="===============2733638484397100713=="
 MIME-Version: 1.0
-From: Alfonso =?unknown-8bit?q?S=C3=A1nchez-Beato?= <alfonso.sanchez-beato@canonical.com>
-Subject: [PATCH 4/4] gitignore: unit/test-rilmodem-gprs binary
-Date: Mon, 24 Oct 2016 12:57:07 +0200
-Message-ID: <20161024105707.7731-4-alfonsosanchezbeato@yahoo.es>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/4] unit: add rilmodem test engine
+Date: Tue, 25 Oct 2016 11:52:37 -0500
+Message-ID: <580F8DD5.6080903@gmail.com>
 In-Reply-To: <20161024105707.7731-1-alfonsosanchezbeato@yahoo.es>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0714368782336563589==
+--===============2733638484397100713==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- .gitignore | 1 +
- 1 file changed, 1 insertion(+)
+Hi Alfonso,
 
-diff --git a/.gitignore b/.gitignore
-index 6120189..8787587 100644
---- a/.gitignore
-+++ b/.gitignore
-@@ -46,6 +46,7 @@ unit/test-stkutil
- unit/test-cdmasms
- unit/test-rilmodem-cb
- unit/test-rilmodem-cs
-+unit/test-rilmodem-gprs
- unit/test-rilmodem-sms
- unit/test-*.log
- unit/test-*.trs
--- =
+On 10/24/2016 05:57 AM, Alfonso S=C3=A1nchez-Beato wrote:
+> Add rilmodem test engine. This engine is an improvement on the rilmodem
+> test server that allows us to test generic interactions with the
+> rilmodem driver. Instead of just be able to check content of received/
+> sent bytes on the rild socket, we can now specify a set of steps for a
+> test that include interactions with the atom. The step types are
+>
+> - TST_ACTION_SEND: The harness sends a parcel
+> - TST_ACTION_CALL: The harness calls a driver function
+> - TST_EVENT_RECEIVE: The driver sends a parcel
+> - TST_EVENT_CALL: The driver calls a harness (atom) function
+> ---
+>   unit/rilmodem-test-engine.c | 280 +++++++++++++++++++++++++++++++++++++=
++++++++
+>   unit/rilmodem-test-engine.h |  74 ++++++++++++
+>   2 files changed, 354 insertions(+)
+>   create mode 100644 unit/rilmodem-test-engine.c
+>   create mode 100644 unit/rilmodem-test-engine.h
+>
 
-2.9.3
+All 4 applied, thanks.
+
+Regards,
+-Denis
 
 
---===============0714368782336563589==--
+--===============2733638484397100713==--
 
