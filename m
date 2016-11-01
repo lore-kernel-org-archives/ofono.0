@@ -1,33 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============6709392542970509039=="
+Content-Type: multipart/mixed; boundary="===============0976135519483728748=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] netmon: Make sure we don't pass NULL message to
- g_dbus_send_message
-Date: Tue, 25 Oct 2016 14:42:45 -0500
-Message-ID: <580FB5B5.3020209@gmail.com>
-In-Reply-To: <1476462725-24137-1-git-send-email-slava.monich@jolla.com>
+From: caiwen.zhang@intel.com
+Subject: [PATCH] gprs: avoid remove context when context operation is in
+ progress
+Date: Tue, 01 Nov 2016 13:51:24 +0800
+Message-ID: <1477979484-18146-1-git-send-email-caiwen.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6709392542970509039==
+--===============0976135519483728748==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+From: Caiwen Zhang <caiwen.zhang@intel.com>
 
-On 10/14/2016 11:32 AM, Slava Monich wrote:
-> Also that we don't lose the reply message.
-> ---
->   src/netmon.c | 17 ++++++++++++++++-
->   1 file changed, 16 insertions(+), 1 deletion(-)
->
+If remove the context before context activation / deactivation is
+completed, it may cause crash.
+---
+ src/gprs.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-Applied, thanks.
+diff --git a/src/gprs.c b/src/gprs.c
+index 3a4a819..4aa00f9 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -2154,13 +2154,13 @@ static DBusMessage *gprs_remove_context(DBusConnect=
+ion *conn,
+ 	if (ctx =3D=3D NULL)
+ 		return __ofono_error_not_found(msg);
+ =
 
-Regards,
--Denis
++	/* This context is already being messed with */
++	if (ctx->pending)
++		return __ofono_error_busy(msg);
++
+ 	if (ctx->active) {
+ 		struct ofono_gprs_context *gc =3D ctx->context_driver;
+ =
+
+-		/* This context is already being messed with */
+-		if (ctx->pending)
+-			return __ofono_error_busy(msg);
+-
+ 		gprs->pending =3D dbus_message_ref(msg);
+ 		gc->driver->deactivate_primary(gc, ctx->context.cid,
+ 					gprs_deactivate_for_remove, ctx);
+-- =
+
+1.9.1
 
 
---===============6709392542970509039==--
+--===============0976135519483728748==--
 
