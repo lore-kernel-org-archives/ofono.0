@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0976135519483728748=="
+Content-Type: multipart/mixed; boundary="===============7981352849625197001=="
 MIME-Version: 1.0
 From: caiwen.zhang@intel.com
 Subject: [PATCH] gprs: avoid remove context when context operation is in
  progress
-Date: Tue, 01 Nov 2016 13:51:24 +0800
-Message-ID: <1477979484-18146-1-git-send-email-caiwen.zhang@intel.com>
+Date: Tue, 01 Nov 2016 14:19:11 +0800
+Message-ID: <1477981151-28551-1-git-send-email-caiwen.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0976135519483728748==
+--===============7981352849625197001==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -51,5 +51,5 @@ ion *conn,
 1.9.1
 
 
---===============0976135519483728748==--
+--===============7981352849625197001==--
 
