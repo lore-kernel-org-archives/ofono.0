@@ -1,43 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============7943952506101072732=="
+Content-Type: multipart/mixed; boundary="===============0479600640831959292=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gprs: Check GPRS_FLAG_ATTACHED_UPDATE in
- pri_deactivate_callback
-Date: Thu, 03 Nov 2016 14:25:25 -0500
-Message-ID: <581B8F25.40804@gmail.com>
-In-Reply-To: <1478200322-5886-1-git-send-email-slava.monich@jolla.com>
+From: Dragos Tatulea <dragos@endocode.com>
+Subject: [PATCH 0/9] RFC: add LTE atom
+Date: Wed, 09 Nov 2016 18:43:13 +0100
+Message-ID: <1478713402-30780-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7943952506101072732==
+--===============0479600640831959292==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+This patchset adds a simple LTE atom. It can only set the default
+APN. But it's meant to be easily extensible in the future.
 
-On 11/03/2016 02:12 PM, Slava Monich wrote:
-> This prevents attached state from getting stuck at 0 like this:
->
-> 1. Context deactivation is initiated over D-Bus, ctx->pending is set
-> 2. Attached becomes FALSE, context is still marked as active
-> 3. Attached becomes TRUE, gprs_attached_update sets GPRS_FLAG_ATTACHED_UP=
-DATE
-> 4. Deactivation completes, attached is 0, driver_attached is 1
->
-> Futher network status updates don't call gprs_attached_update because
-> driver_attached is still 1, so attached is staying 0 until we lose the
-> data registration again which may not happen for quite a long time.
-> ---
->   src/gprs.c | 11 +++++++++++
->   1 file changed, 11 insertions(+)
->
+The atom exposes a per modem D-Bus interface. It also uses the
+oFono persistent configuration store.
 
-Applied, thanks.
+The patchset contains:
+* lte atom implementation
+* U-Blox Toby L2 lte driver implementation
+* script for setting the lte properties
 
-Regards,
--Denis
+The last patches contain the implementation of the TobyL2 driver.
+They might sit better in a different patchset maybe.
+
+What is not here:
+* Atom is always shown, regardles of technology. This should be
+  filtered out.
+* No provisioning support yet.
+
+Dragos Tatulea (9):
+  include: add header file for lte atom
+  src: ofono.h: add LTE atom define
+  lte: add implementation for LTE atom
+  build: add lte atom support
+  test: add script for setting lte atom properties
+  doc: add lte atom documentation
+  ubloxmodem: add lte atom driver
+  build: add support for ublox lte atom driver
+  plugins: ublox: enable lte driver for tobyl2
+
+ Makefile.am                     |   8 +-
+ doc/lte-api.txt                 |  35 +++++
+ drivers/ubloxmodem/lte.c        | 125 +++++++++++++++
+ drivers/ubloxmodem/ubloxmodem.c |   3 +
+ drivers/ubloxmodem/ubloxmodem.h |   5 +
+ include/lte.h                   |  69 ++++++++
+ plugins/ublox.c                 |   3 +
+ src/lte.c                       | 341 ++++++++++++++++++++++++++++++++++++=
+++++
+ src/ofono.h                     |   1 +
+ test/set-lte-property           |  25 +++
+ 10 files changed, 612 insertions(+), 3 deletions(-)
+ create mode 100644 doc/lte-api.txt
+ create mode 100644 drivers/ubloxmodem/lte.c
+ create mode 100644 include/lte.h
+ create mode 100644 src/lte.c
+ create mode 100755 test/set-lte-property
+
+-- =
+
+2.7.4
 
 
---===============7943952506101072732==--
+--===============0479600640831959292==--
 
