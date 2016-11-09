@@ -1,43 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============0954750665164685466=="
+Content-Type: multipart/mixed; boundary="===============1799696325310433053=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 8/9] build: add support for ublox lte atom driver
-Date: Wed, 09 Nov 2016 18:43:21 +0100
-Message-ID: <1478713402-30780-9-git-send-email-dragos@endocode.com>
+Subject: [PATCH 9/9] plugins: ublox: enable lte driver for tobyl2
+Date: Wed, 09 Nov 2016 18:43:22 +0100
+Message-ID: <1478713402-30780-10-git-send-email-dragos@endocode.com>
 In-Reply-To: <1478713402-30780-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0954750665164685466==
+--===============1799696325310433053==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ plugins/ublox.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/Makefile.am b/Makefile.am
-index 9d22365..08c7395 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -382,7 +382,9 @@ builtin_modules +=3D ubloxmodem
- builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/ubloxmodem/ubloxmodem.h \
- 			drivers/ubloxmodem/ubloxmodem.c \
--			drivers/ubloxmodem/gprs-context.c
-+			drivers/ubloxmodem/gprs-context.c \
-+			drivers/ubloxmodem/lte.c
+diff --git a/plugins/ublox.c b/plugins/ublox.c
+index 092ba64..6d77df8 100644
+--- a/plugins/ublox.c
++++ b/plugins/ublox.c
+@@ -38,6 +38,7 @@
+ #include <ofono/sim.h>
+ #include <ofono/gprs.h>
+ #include <ofono/gprs-context.h>
++#include <ofono/lte.h>
+ =
+
+ #include <drivers/atmodem/atutil.h>
+ #include <drivers/atmodem/vendor.h>
+@@ -313,6 +314,8 @@ static void ublox_post_sim(struct ofono_modem *modem)
+ =
+
+ 		--ncontexts;
+ 	}
 +
++	ofono_lte_create(modem, "ubloxmodem", data->aux);
+ }
  =
 
- =
-
- if PHONESIM
+ static void ublox_post_online(struct ofono_modem *modem)
 -- =
 
 2.7.4
 
 
---===============0954750665164685466==--
+--===============1799696325310433053==--
 
