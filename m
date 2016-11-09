@@ -1,58 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============9151704605928377572=="
+Content-Type: multipart/mixed; boundary="===============8695073174819657752=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 5/9] test: add script for setting lte atom properties
-Date: Wed, 09 Nov 2016 18:43:18 +0100
-Message-ID: <1478713402-30780-6-git-send-email-dragos@endocode.com>
+Subject: [PATCH 6/9] doc: add lte atom documentation
+Date: Wed, 09 Nov 2016 18:43:19 +0100
+Message-ID: <1478713402-30780-7-git-send-email-dragos@endocode.com>
 In-Reply-To: <1478713402-30780-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9151704605928377572==
+--===============8695073174819657752==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/set-lte-property | 25 +++++++++++++++++++++++++
- 1 file changed, 25 insertions(+)
- create mode 100755 test/set-lte-property
+ doc/lte-api.txt | 35 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+ create mode 100644 doc/lte-api.txt
 
-diff --git a/test/set-lte-property b/test/set-lte-property
-new file mode 100755
-index 0000000..aaf726e
+diff --git a/doc/lte-api.txt b/doc/lte-api.txt
+new file mode 100644
+index 0000000..dfefaf4
 --- /dev/null
-+++ b/test/set-lte-property
-@@ -0,0 +1,25 @@
-+#!/usr/bin/python3
++++ b/doc/lte-api.txt
+@@ -0,0 +1,35 @@
++LTE Hierarchy
 +
-+import dbus
-+import sys
++Service		org.ofono
++Interface	org.ofono.LTE
++Object path	[variable prefix]/{modem0,modem1,...}
 +
-+bus =3D dbus.SystemBus()
 +
-+if len(sys.argv) =3D=3D 4:
-+	path =3D sys.argv[1]
-+	name =3D sys.argv[2]
-+	value =3D sys.argv[3]
-+elif len(sys.argv) =3D=3D 3:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+					'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+	name =3D sys.argv[1]
-+	value =3D sys.argv[2]
-+else:
-+	print("%s [PATH] name value" % (sys.argv[0]))
-+	sys.exit(0)
++Methods		dict GetProperties()
 +
-+print("Setting {} as {} for modem {}..." .format(name, value, path))
-+lte =3D dbus.Interface(bus.get_object('org.ofono', path), 'org.ofono.LTE')
-+lte.SetProperty(name, value)
++			Returns all LTE configuration properties.
++
++		void SetProperty(string property, variant value)
++
++			Changes the value of the specified property. Only
++			properties that are listed as readwrite are
++			changeable. On success a PropertyChanged signal
++			will be emitted.
++
++			Possible Errors: [service].Error.InProgress
++					 [service].Error.InvalidArguments
++					 [service].Error.Failed
++
++Signals		PropertyChanged(string property, variant value)
++
++			This signal indicates a changed value of the given
++			property.
++
++Properties	string DefaultAPN [readwrite]
++
++			On LTE, contexts activate automatically. This property
++			allows selection of an APN to be used on next
++			automatic activation.
++
++			Setting this property to an empty string clears the
++			default APN from the modem.
 -- =
 
 2.7.4
 
 
---===============9151704605928377572==--
+--===============8695073174819657752==--
 
