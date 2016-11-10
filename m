@@ -1,56 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============7841757390145795298=="
+Content-Type: multipart/mixed; boundary="===============2820556496050005476=="
 MIME-Version: 1.0
-From: Kuba Pawlak <kubax.t.pawlak@intel.com>
-Subject: [PATCH 2/2] bluez5: fix crash on DBus transport disconnection
-Date: Thu, 10 Nov 2016 10:22:45 +0100
-Message-ID: <1478769765-9839-2-git-send-email-kubax.t.pawlak@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] gatchat: Fix parsing fields with odd number of
+ quotation marks
+Date: Thu, 10 Nov 2016 10:18:54 -0600
+Message-ID: <58249DEE.6040004@gmail.com>
 In-Reply-To: <1478769765-9839-1-git-send-email-kubax.t.pawlak@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7841757390145795298==
+--===============2820556496050005476==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Do not register dbus notification if message failed to be sent out
-because transport was already disconnected
----
- plugins/bluez5.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+Hi Kuba,
 
-diff --git a/plugins/bluez5.c b/plugins/bluez5.c
-index 979076e..e72e352 100644
---- a/plugins/bluez5.c
-+++ b/plugins/bluez5.c
-@@ -155,8 +155,10 @@ void bt_unregister_profile(DBusConnection *conn, const=
- char *object)
- 		return;
- 	}
- =
+On 11/10/2016 03:22 AM, Kuba Pawlak wrote:
+> Events like +CLCC and +CCWA can have contact name attached to the
+> end of line. If this field contains odd number of quotation marks,
+> parser will eventually reject such message as malformatted.
+> ---
+>   gatchat/gatsyntax.c | 6 ++++++
+>   1 file changed, 6 insertions(+)
+>
 
--	dbus_pending_call_set_notify(c, unregister_profile_cb, NULL, NULL);
--	dbus_pending_call_unref(c);
-+	if (c) {
-+		dbus_pending_call_set_notify(c, unregister_profile_cb, NULL, NULL);
-+		dbus_pending_call_unref(c);
-+	}
- =
+Both applied, thanks.
 
- 	dbus_message_unref(msg);
- }
--- =
-
-2.5.5
-
-Intel Deutschland GmbH
-Registered Address: Am Campeon 10-12, 85579 Neubiberg, Germany
-Tel: +49 89 99 8853-0, www.intel.de
-Managing Directors: Christin Eisenschmid, Christian Lamprechter
-Chairperson of the Supervisory Board: Nicole Lau
-Registered Office: Munich
-Commercial Register: Amtsgericht Muenchen HRB 186928
+Regards,
+-Denis
 
 
---===============7841757390145795298==--
+--===============2820556496050005476==--
 
