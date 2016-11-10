@@ -1,30 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============0566090687026451844=="
+Content-Type: multipart/mixed; boundary="===============1512454428091835444=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 2/9] include: add header file for lte atom
-Date: Thu, 10 Nov 2016 17:55:49 +0100
-Message-ID: <1478796956-22500-3-git-send-email-dragos@endocode.com>
+Subject: [PATCH 3/9] lte: add implementation for LTE atom
+Date: Thu, 10 Nov 2016 17:55:50 +0100
+Message-ID: <1478796956-22500-4-git-send-email-dragos@endocode.com>
 In-Reply-To: <1478796956-22500-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0566090687026451844==
+--===============1512454428091835444==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This implementation can only get/set the default APN setting. But
+anything expected for this atom is there:
+* D-Bus interface
+* sync-ing settings to/from file
+* interaction with driver
 ---
- include/lte.h | 68 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ src/lte.c | 369 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 file changed, 68 insertions(+)
- create mode 100644 include/lte.h
+ 1 file changed, 369 insertions(+)
+ create mode 100644 src/lte.c
 
-diff --git a/include/lte.h b/include/lte.h
+diff --git a/src/lte.c b/src/lte.c
 new file mode 100644
-index 0000000..f437798
+index 0000000..ba22dc2
 --- /dev/null
-+++ b/include/lte.h
-@@ -0,0 +1,68 @@
++++ b/src/lte.c
+@@ -0,0 +1,369 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -47,58 +52,359 @@ index 0000000..f437798
 + *
 + */
 +
-+#ifndef __OFONO_LTE_H
-+#define __OFONO_LTE_H
-+
-+#ifdef __cplusplus
-+extern "C" {
++#ifdef HAVE_CONFIG_H
++#include <config.h>
 +#endif
 +
-+#include <ofono/types.h>
++#include <string.h>
++#include <errno.h>
 +
-+struct ofono_lte;
++#include <glib.h>
++#include <gdbus.h>
 +
-+struct ofono_lte_default_attach_info {
-+	char apn[OFONO_GPRS_MAX_APN_LENGTH + 1];
++#include "ofono.h"
++
++#include "common.h"
++#include "log.h"
++#include "gprs-context.h"
++#include "storage.h"
++
++#include "lte.h"
++
++#define SETTINGS_STORE "lte"
++#define SETTINGS_GROUP "Settings"
++#define DEFAULT_APN_KEY "DefaultAccessPointName"
++
++struct ofono_lte {
++	const struct ofono_lte_driver *driver;
++	void *driver_data;
++	struct ofono_atom *atom;
++	char *imsi;
++	GKeyFile *settings;
++	DBusMessage *pending;
++	char old_apn[OFONO_GPRS_MAX_APN_LENGTH+1];
++	struct ofono_lte_default_attach_info info;
 +};
 +
-+typedef void (*ofono_lte_cb_t)(const struct ofono_error *error, void *data=
-);
++static GSList *g_drivers =3D NULL;
 +
-+struct ofono_lte_driver {
-+	const char *name;
-+	int (*probe)(struct ofono_lte *lte, void *data);
-+	void (*remove)(struct ofono_lte *lte);
-+	int (*set_default_attach_info)(const struct ofono_lte *lte,
-+			struct ofono_lte_default_attach_info *info,
-+			ofono_lte_cb_t cb, void *data);
++static void lte_load_settings(struct ofono_lte *lte)
++{
++	char *apn;
 +
++	if (lte->imsi =3D=3D NULL)
++		return;
++
++	lte->settings =3D storage_open(lte->imsi, SETTINGS_STORE);
++
++	if (lte->settings =3D=3D NULL) {
++		ofono_error("LTE: Can't open settings file, "
++				"changes won't be persistent");
++		return;
++	}
++
++	apn =3D g_key_file_get_string(lte->settings, SETTINGS_GROUP ,
++					DEFAULT_APN_KEY, NULL);
++	if (apn)
++		strcpy(lte->info.apn, apn);
++}
++
++static DBusMessage *lte_get_properties(DBusConnection *conn,
++					DBusMessage *msg, void *data)
++{
++	struct ofono_lte *lte =3D data;
++	const char *apn =3D lte->info.apn;
++	DBusMessage *reply;
++	DBusMessageIter iter;
++	DBusMessageIter dict;
++
++	reply =3D dbus_message_new_method_return(msg);
++	if (reply =3D=3D NULL)
++		return NULL;
++
++	dbus_message_iter_init_append(reply, &iter);
++
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
++					OFONO_PROPERTIES_ARRAY_SIGNATURE,
++					&dict);
++	ofono_dbus_dict_append(&dict, DEFAULT_APN_KEY, DBUS_TYPE_STRING, &apn);
++	dbus_message_iter_close_container(&iter, &dict);
++
++	return reply;
++}
++
++static void lte_set_default_attach_info_cb(const struct ofono_error *error,
++						void *data)
++{
++	struct ofono_lte *lte =3D data;
++	const char *path =3D __ofono_atom_get_path(lte->atom);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	DBusMessage *reply;
++	const char *apn =3D lte->info.apn;
++
++	DBG("%s error %d", path, error->type);
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		g_strlcpy(lte->info.apn, lte->old_apn,
++				OFONO_GPRS_MAX_APN_LENGTH+1);
++
++		__ofono_dbus_pending_reply(&lte->pending,
++				__ofono_error_failed(lte->pending));
++		return;
++	}
++
++	if (lte->pending =3D=3D NULL)
++		/* This can happen on first register: it's not a reply to
++		 * anything.
++		 */
++		return;
++
++	if (lte->settings) {
++		if (strlen(lte->info.apn) =3D=3D 0)
++			/* Clear entry on empty APN. */
++			g_key_file_remove_key(lte->settings, SETTINGS_GROUP,
++						DEFAULT_APN_KEY, NULL);
++		else
++			g_key_file_set_string(lte->settings, SETTINGS_GROUP,
++						DEFAULT_APN_KEY, lte->info.apn);
++
++		storage_sync(lte->imsi, SETTINGS_STORE, lte->settings);
++	}
++
++	reply =3D dbus_message_new_method_return(lte->pending);
++	__ofono_dbus_pending_reply(&lte->pending, reply);
++	lte->pending =3D NULL;
++
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_CONNECTION_CONTEXT_INTERFACE,
++					DEFAULT_APN_KEY,
++					DBUS_TYPE_STRING, &apn);
++}
++
++static DBusMessage *lte_set_default_apn(struct ofono_lte *lte,
++				DBusConnection *conn, DBusMessage *msg,
++				const char *apn)
++{
++	if (strlen(apn) > OFONO_GPRS_MAX_APN_LENGTH)
++		return __ofono_error_invalid_format(msg);
++
++	if (g_str_equal(apn, lte->info.apn))
++		return dbus_message_new_method_return(msg);
++
++	/* We do care about empty value: it can be used for reset. */
++	if (is_valid_apn(apn) =3D=3D FALSE && apn[0] !=3D '\0')
++		return __ofono_error_invalid_format(msg);
++
++	if (lte->pending) {
++		/* Can happen on fast succession of calls. */
++		dbus_message_unref(lte->pending);
++		lte->pending =3D NULL;
++	}
++
++	lte->pending =3D dbus_message_ref(msg);
++
++	g_strlcpy(lte->old_apn, lte->info.apn, OFONO_GPRS_MAX_APN_LENGTH+1);
++	g_strlcpy(lte->info.apn, apn, OFONO_GPRS_MAX_APN_LENGTH+1);
++
++	lte->driver->set_default_attach_info(lte, &lte->info,
++				lte_set_default_attach_info_cb, lte);
++
++	return NULL;
++}
++
++static DBusMessage *lte_set_property(DBusConnection *conn,
++					DBusMessage *msg, void *data)
++{
++	struct ofono_lte *lte =3D data;
++	DBusMessageIter iter;
++	DBusMessageIter var;
++	const char *property;
++	const char *str;
++
++	if (!dbus_message_iter_init(msg, &iter))
++		return __ofono_error_invalid_args(msg);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_get_basic(&iter, &property);
++	dbus_message_iter_next(&iter);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_recurse(&iter, &var);
++
++
++	if (!strcmp(property, DEFAULT_APN_KEY)) {
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_STRING)
++			return __ofono_error_invalid_args(msg);
++
++		dbus_message_iter_get_basic(&var, &str);
++
++		return lte_set_default_apn(lte, conn, msg, str);
++	}
++
++	return __ofono_error_invalid_args(msg);
++}
++
++static const GDBusMethodTable lte_methods[] =3D {
++	{ GDBUS_METHOD("GetProperties",
++			NULL, GDBUS_ARGS({ "properties", "a{sv}" }),
++			lte_get_properties) },
++	{ GDBUS_ASYNC_METHOD("SetProperty",
++			GDBUS_ARGS({ "property", "s" }, { "value", "v" }),
++			NULL, lte_set_property) },
++	{ }
 +};
 +
-+int ofono_lte_driver_register(const struct ofono_lte_driver *d);
++static const GDBusSignalTable lte_signals[] =3D {
++	{ GDBUS_SIGNAL("PropertyChanged",
++			GDBUS_ARGS({ "name", "s" }, { "value", "v" })) },
++	{ }
++};
 +
-+void ofono_lte_driver_unregister(const struct ofono_lte_driver *d);
++static void lte_atom_remove(struct ofono_atom *atom)
++{
++	struct ofono_lte *lte =3D __ofono_atom_get_data(atom);
++
++	DBG("atom: %p", atom);
++
++	if (lte =3D=3D NULL)
++		return;
++
++	if (lte->settings) {
++		storage_close(lte->imsi, SETTINGS_STORE, lte->settings, TRUE);
++
++		g_free(lte->imsi);
++		lte->imsi =3D NULL;
++		lte->settings =3D NULL;
++	}
++
++	if (lte->driver && lte->driver->remove)
++		lte->driver->remove(lte);
++
++	g_free(lte);
++}
++
 +
 +struct ofono_lte *ofono_lte_create(struct ofono_modem *modem,
-+					const char *driver, void *data);
++					const char *driver, void *data)
++{
++	struct ofono_lte *lte;
++	GSList *l;
 +
-+void ofono_lte_register(struct ofono_lte *lte);
++	if (driver =3D=3D NULL)
++		return NULL;
 +
-+void ofono_lte_remove(struct ofono_lte *lte);
++	lte =3D g_try_new0(struct ofono_lte, 1);
 +
-+void ofono_lte_set_data(struct ofono_lte *lte, void *data);
++	if (lte =3D=3D NULL)
++		return NULL;
 +
-+void *ofono_lte_get_data(const struct ofono_lte *lte);
++	lte->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_LTE,
++						lte_atom_remove, lte);
 +
-+#ifdef __cplusplus
++	for (l =3D g_drivers; l; l =3D l->next) {
++		const struct ofono_lte_driver *drv =3D l->data;
++
++		if (g_strcmp0(drv->name, driver))
++			continue;
++
++		if (drv->probe(lte, data) < 0)
++			continue;
++
++		lte->driver =3D drv;
++		break;
++	}
++
++	DBG("LTE atom created");
++
++	return lte;
 +}
-+#endif
 +
-+#endif
++int ofono_lte_driver_register(const struct ofono_lte_driver *d)
++{
++	DBG("driver: %p, name: %s", d, d->name);
++
++	if (d->probe =3D=3D NULL)
++		return -EINVAL;
++
++	g_drivers =3D g_slist_prepend(g_drivers, (void *) d);
++
++	return 0;
++}
++
++void ofono_lte_driver_unregister(const struct ofono_lte_driver *d)
++{
++	DBG("driver: %p, name: %s", d, d->name);
++
++	g_drivers =3D g_slist_remove(g_drivers, (void *) d);
++}
++
++static void lte_atom_unregister(struct ofono_atom *atom)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
++	const char *path =3D __ofono_atom_get_path(atom);
++
++	ofono_modem_remove_interface(modem, OFONO_LTE_INTERFACE);
++	g_dbus_unregister_interface(conn, path, OFONO_LTE_INTERFACE);
++}
++
++void ofono_lte_register(struct ofono_lte *lte)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(lte->atom);
++	const char *path =3D __ofono_atom_get_path(lte->atom);
++	struct ofono_sim *sim =3D __ofono_atom_find(OFONO_ATOM_TYPE_SIM, modem);
++	const char *imsi =3D ofono_sim_get_imsi(sim);
++
++	if (imsi =3D=3D NULL) {
++		ofono_error("No sim atom required for registering LTE atom.");	=
+
++		return;
++	}
++
++	lte->imsi =3D g_strdup(imsi);
++
++	lte_load_settings(lte);
++
++	if (!g_dbus_register_interface(conn, path,
++				OFONO_LTE_INTERFACE,
++				lte_methods, lte_signals, NULL,
++				lte, NULL)) {
++		ofono_error("Could not create %s interface",
++				OFONO_LTE_INTERFACE);
++		return;
++	}
++
++	ofono_modem_add_interface(modem, OFONO_LTE_INTERFACE);
++
++	__ofono_atom_register(lte->atom, lte_atom_unregister);
++
++	lte->driver->set_default_attach_info(lte, &lte->info,
++					lte_set_default_attach_info_cb, lte);
++}
++
++void ofono_lte_remove(struct ofono_lte *lte)
++{
++	__ofono_atom_free(lte->atom);
++}
++
++void ofono_lte_set_data(struct ofono_lte *lte, void *data)
++{
++	lte->driver_data =3D data;
++}
++
++void *ofono_lte_get_data(const struct ofono_lte *lte)
++{
++	return lte->driver_data;
++}
 -- =
 
 2.7.4
 
 
---===============0566090687026451844==--
+--===============1512454428091835444==--
 
