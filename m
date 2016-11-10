@@ -1,44 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============4484670643314240309=="
+Content-Type: multipart/mixed; boundary="===============7841757390145795298=="
 MIME-Version: 1.0
 From: Kuba Pawlak <kubax.t.pawlak@intel.com>
-Subject: [PATCH 1/2] gatchat: Fix parsing fields with odd number of quotation
- marks
-Date: Thu, 10 Nov 2016 10:22:44 +0100
-Message-ID: <1478769765-9839-1-git-send-email-kubax.t.pawlak@intel.com>
+Subject: [PATCH 2/2] bluez5: fix crash on DBus transport disconnection
+Date: Thu, 10 Nov 2016 10:22:45 +0100
+Message-ID: <1478769765-9839-2-git-send-email-kubax.t.pawlak@intel.com>
+In-Reply-To: <1478769765-9839-1-git-send-email-kubax.t.pawlak@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4484670643314240309==
+--===============7841757390145795298==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Events like +CLCC and +CCWA can have contact name attached to the
-end of line. If this field contains odd number of quotation marks,
-parser will eventually reject such message as malformatted.
+Do not register dbus notification if message failed to be sent out
+because transport was already disconnected
 ---
- gatchat/gatsyntax.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ plugins/bluez5.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/gatchat/gatsyntax.c b/gatchat/gatsyntax.c
-index 800e35f..4d01ed7 100644
---- a/gatchat/gatsyntax.c
-+++ b/gatchat/gatsyntax.c
-@@ -309,6 +309,12 @@ static GAtSyntaxResult gsm_permissive_feed(GAtSyntax *=
-syntax,
- 		case GSM_PERMISSIVE_STATE_RESPONSE_STRING:
- 			if (byte =3D=3D '"')
- 				syntax->state =3D GSM_PERMISSIVE_STATE_RESPONSE;
-+			else if (byte =3D=3D '\r') {
-+				syntax->state =3D GSM_PERMISSIVE_STATE_IDLE;
-+				i +=3D 1;
-+				res =3D G_AT_SYNTAX_RESULT_LINE;
-+				goto out;
-+			}
- 			break;
+diff --git a/plugins/bluez5.c b/plugins/bluez5.c
+index 979076e..e72e352 100644
+--- a/plugins/bluez5.c
++++ b/plugins/bluez5.c
+@@ -155,8 +155,10 @@ void bt_unregister_profile(DBusConnection *conn, const=
+ char *object)
+ 		return;
+ 	}
  =
 
- 		case GSM_PERMISSIVE_STATE_GUESS_PDU:
+-	dbus_pending_call_set_notify(c, unregister_profile_cb, NULL, NULL);
+-	dbus_pending_call_unref(c);
++	if (c) {
++		dbus_pending_call_set_notify(c, unregister_profile_cb, NULL, NULL);
++		dbus_pending_call_unref(c);
++	}
+ =
+
+ 	dbus_message_unref(msg);
+ }
 -- =
 
 2.5.5
@@ -52,5 +52,5 @@ Registered Office: Munich
 Commercial Register: Amtsgericht Muenchen HRB 186928
 
 
---===============4484670643314240309==--
+--===============7841757390145795298==--
 
