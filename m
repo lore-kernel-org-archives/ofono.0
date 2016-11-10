@@ -1,40 +1,104 @@
-Content-Type: multipart/mixed; boundary="===============6734400143056816135=="
+Content-Type: multipart/mixed; boundary="===============0566090687026451844=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 1/9] include: add LTE dbus service define
-Date: Thu, 10 Nov 2016 17:55:48 +0100
-Message-ID: <1478796956-22500-2-git-send-email-dragos@endocode.com>
+Subject: [PATCH 2/9] include: add header file for lte atom
+Date: Thu, 10 Nov 2016 17:55:49 +0100
+Message-ID: <1478796956-22500-3-git-send-email-dragos@endocode.com>
 In-Reply-To: <1478796956-22500-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6734400143056816135==
+--===============0566090687026451844==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/dbus.h | 1 +
- 1 file changed, 1 insertion(+)
+ include/lte.h | 68 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 file changed, 68 insertions(+)
+ create mode 100644 include/lte.h
 
-diff --git a/include/dbus.h b/include/dbus.h
-index 99d45d6..cf68ae5 100644
---- a/include/dbus.h
-+++ b/include/dbus.h
-@@ -61,6 +61,7 @@ extern "C" {
- #define OFONO_HANDSFREE_INTERFACE OFONO_SERVICE ".Handsfree"
- #define OFONO_SIRI_INTERFACE OFONO_SERVICE ".Siri"
- #define OFONO_NETMON_INTERFACE OFONO_SERVICE ".NetworkMonitor"
-+#define OFONO_LTE_INTERFACE OFONO_SERVICE ".LongTermEvolution"
- =
-
- /* CDMA Interfaces */
- #define OFONO_CDMA_VOICECALL_MANAGER_INTERFACE "org.ofono.cdma.VoiceCallMa=
-nager"
+diff --git a/include/lte.h b/include/lte.h
+new file mode 100644
+index 0000000..f437798
+--- /dev/null
++++ b/include/lte.h
+@@ -0,0 +1,68 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2016  Endocode AG. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifndef __OFONO_LTE_H
++#define __OFONO_LTE_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include <ofono/types.h>
++
++struct ofono_lte;
++
++struct ofono_lte_default_attach_info {
++	char apn[OFONO_GPRS_MAX_APN_LENGTH + 1];
++};
++
++typedef void (*ofono_lte_cb_t)(const struct ofono_error *error, void *data=
+);
++
++struct ofono_lte_driver {
++	const char *name;
++	int (*probe)(struct ofono_lte *lte, void *data);
++	void (*remove)(struct ofono_lte *lte);
++	int (*set_default_attach_info)(const struct ofono_lte *lte,
++			struct ofono_lte_default_attach_info *info,
++			ofono_lte_cb_t cb, void *data);
++
++};
++
++int ofono_lte_driver_register(const struct ofono_lte_driver *d);
++
++void ofono_lte_driver_unregister(const struct ofono_lte_driver *d);
++
++struct ofono_lte *ofono_lte_create(struct ofono_modem *modem,
++					const char *driver, void *data);
++
++void ofono_lte_register(struct ofono_lte *lte);
++
++void ofono_lte_remove(struct ofono_lte *lte);
++
++void ofono_lte_set_data(struct ofono_lte *lte, void *data);
++
++void *ofono_lte_get_data(const struct ofono_lte *lte);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
 -- =
 
 2.7.4
 
 
---===============6734400143056816135==--
+--===============0566090687026451844==--
 
