@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3431831775976874984=="
+Content-Type: multipart/mixed; boundary="===============2208924145064721340=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 5/9] test: add script for setting lte atom properties
-Date: Fri, 11 Nov 2016 10:46:42 -0600
-Message-ID: <5825F5F2.7090304@gmail.com>
-In-Reply-To: <1478796956-22500-6-git-send-email-dragos@endocode.com>
+Subject: Re: [PATCH 6/9] doc: add lte atom documentation
+Date: Fri, 11 Nov 2016 10:50:01 -0600
+Message-ID: <5825F6B9.9000002@gmail.com>
+In-Reply-To: <1478796956-22500-7-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3431831775976874984==
+--===============2208924145064721340==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,9 +17,9 @@ Hi Dragos,
 
 On 11/10/2016 10:55 AM, Dragos Tatulea wrote:
 > ---
->   test/set-lte-property | 26 ++++++++++++++++++++++++++
->   1 file changed, 26 insertions(+)
->   create mode 100755 test/set-lte-property
+>   doc/lte-api.txt | 35 +++++++++++++++++++++++++++++++++++
+>   1 file changed, 35 insertions(+)
+>   create mode 100644 doc/lte-api.txt
 >
 
 Applied, thanks.
@@ -28,5 +28,5 @@ Regards,
 -Denis
 
 
---===============3431831775976874984==--
+--===============2208924145064721340==--
 
