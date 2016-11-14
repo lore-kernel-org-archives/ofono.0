@@ -1,31 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============1081796135874826880=="
+Content-Type: multipart/mixed; boundary="===============5002782029662123245=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/9] include: add LTE dbus service define
-Date: Fri, 11 Nov 2016 11:00:26 -0600
-Message-ID: <5825F92A.2000205@gmail.com>
-In-Reply-To: <1478796956-22500-2-git-send-email-dragos@endocode.com>
+From: Dragos Tatulea <dragos@endocode.com>
+Subject: [PATCH v3 0/9] add LTE atom
+Date: Mon, 14 Nov 2016 15:27:01 +0100
+Message-ID: <1479133626-8903-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1081796135874826880==
+--===============5002782029662123245==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dragos,
+Changes since v3:
+* Fixes based on v2 review.
+* Fixed memory leak in lte atom when reading apn from file.
+* Added a pending_info struct to forward settings to the driver. On success=
+ful
+callback, copy the info into the actual info structure. This is better than
+the old design of writing the apn to info directly and on error rolling it
+back.
 
-On 11/10/2016 10:55 AM, Dragos Tatulea wrote:
-> ---
->   include/dbus.h | 1 +
->   1 file changed, 1 insertion(+)
->
+Dragos Tatulea (5):
+  lte: add implementation for LTE atom
+  build: add lte atom support
+  ubloxmodem: add lte atom driver
+  build: add support for ublox lte atom driver
+  plugins: ublox: enable lte driver for tobyl2
 
-Applied, thanks.  I did push some minor fixes afterwards.
+ Makefile.am                     |   8 +-
+ drivers/ubloxmodem/lte.c        | 145 ++++++++++++++++
+ drivers/ubloxmodem/ubloxmodem.c |   3 +
+ drivers/ubloxmodem/ubloxmodem.h |   5 +
+ plugins/ublox.c                 |   3 +
+ src/lte.c                       | 372 ++++++++++++++++++++++++++++++++++++=
+++++
+ src/ofono.h                     |   1 +
+ 7 files changed, 534 insertions(+), 3 deletions(-)
+ create mode 100644 drivers/ubloxmodem/lte.c
+ create mode 100644 src/lte.c
 
-Regards,
--Denis
+-- =
+
+2.7.4
 
 
---===============1081796135874826880==--
+--===============5002782029662123245==--
 
