@@ -1,50 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============0598753276285445571=="
+Content-Type: multipart/mixed; boundary="===============2021175591802430572=="
 MIME-Version: 1.0
 From: Dragos Tatulea <dragos@endocode.com>
-Subject: [PATCH 5/5] plugins: ublox: enable lte driver for tobyl2
-Date: Mon, 14 Nov 2016 15:27:06 +0100
-Message-ID: <1479133626-8903-6-git-send-email-dragos@endocode.com>
-In-Reply-To: <1479133626-8903-1-git-send-email-dragos@endocode.com>
+Subject: [PATCH] driver: ublox: fix memory leak in release
+Date: Mon, 14 Nov 2016 16:24:34 +0100
+Message-ID: <1479137074-7587-1-git-send-email-dragos@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0598753276285445571==
+--===============2021175591802430572==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/ublox.c | 3 +++
- 1 file changed, 3 insertions(+)
+ drivers/ubloxmodem/gprs-context.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/plugins/ublox.c b/plugins/ublox.c
-index 092ba64..6d77df8 100644
---- a/plugins/ublox.c
-+++ b/plugins/ublox.c
-@@ -38,6 +38,7 @@
- #include <ofono/sim.h>
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
-+#include <ofono/lte.h>
+diff --git a/drivers/ubloxmodem/gprs-context.c b/drivers/ubloxmodem/gprs-co=
+ntext.c
+index 7ef05b7..3069e88 100644
+--- a/drivers/ubloxmodem/gprs-context.c
++++ b/drivers/ubloxmodem/gprs-context.c
+@@ -442,6 +442,7 @@ static void ublox_gprs_context_remove(struct ofono_gprs=
+_context *gc)
+ 	g_at_chat_unref(gcd->chat);
  =
 
- #include <drivers/atmodem/atutil.h>
- #include <drivers/atmodem/vendor.h>
-@@ -313,6 +314,8 @@ static void ublox_post_sim(struct ofono_modem *modem)
- =
-
- 		--ncontexts;
- 	}
-+
-+	ofono_lte_create(modem, "ubloxmodem", data->aux);
+ 	memset(gcd, 0, sizeof(*gcd));
++	g_free(gcd);
  }
  =
 
- static void ublox_post_online(struct ofono_modem *modem)
+ static struct ofono_gprs_context_driver driver =3D {
 -- =
 
 2.7.4
 
 
---===============0598753276285445571==--
+--===============2021175591802430572==--
 
