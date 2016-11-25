@@ -1,93 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============3023072096391913685=="
+Content-Type: multipart/mixed; boundary="===============3682019141347705847=="
 MIME-Version: 1.0
 From: djalal@endocode.com
-Subject: [PATCH 4/5] ubloxmodem: intialize and register the netmon driver
-Date: Fri, 25 Nov 2016 15:00:14 +0100
-Message-ID: <1480082415-30822-5-git-send-email-djalal@endocode.com>
+Subject: [PATCH 5/5] test: support
+ OFONO_NETMON_INFO_{RSCP|ECN0|RSRQ|RSRP|OPERATOR}
+Date: Fri, 25 Nov 2016 15:00:15 +0100
+Message-ID: <1480082415-30822-6-git-send-email-djalal@endocode.com>
 In-Reply-To: <1480082415-30822-1-git-send-email-djalal@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3023072096391913685==
+--===============3682019141347705847==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Djalal Harouni <djalal@endocode.com>
 
-This patch allows to intialize and register the ublox netmon driver.
+Display the following fields if they are returned.
+
+RXLEV:  Received Signal Strength
+RSCP:   Received Signal Code Power
+ECN0:   Received Energy Ratio
+RSRQ:   Reference Signal Received Quality
+RSRP:   Reference Signal Received Power
+OPERATOR: The operator
 ---
- drivers/ubloxmodem/ubloxmodem.c | 2 ++
- drivers/ubloxmodem/ubloxmodem.h | 3 +++
- plugins/ublox.c                 | 3 +++
- 3 files changed, 8 insertions(+)
+ test/get-serving-cell-info | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
 
-diff --git a/drivers/ubloxmodem/ubloxmodem.c b/drivers/ubloxmodem/ubloxmode=
-m.c
-index 93cb928..a325b1f 100644
---- a/drivers/ubloxmodem/ubloxmodem.c
-+++ b/drivers/ubloxmodem/ubloxmodem.c
-@@ -36,6 +36,7 @@
- static int ubloxmodem_init(void)
- {
- 	ublox_gprs_context_init();
-+	ublox_netmon_init();
- 	ublox_lte_init();
+diff --git a/test/get-serving-cell-info b/test/get-serving-cell-info
+index 05dc9fe..e4c9efb 100755
+--- a/test/get-serving-cell-info
++++ b/test/get-serving-cell-info
+@@ -26,6 +26,12 @@ cid =3D 'CellId'
+ psc =3D 'PrimaryScramblingCode'
+ rssi =3D 'Strength'
+ ber =3D 'BitErrorRate'
++rxlev =3D 'ReceivedSignalStrength'
++rscp =3D 'ReceivedSignalCodePower'
++ecn0 =3D 'ReceivedEnergyRatio'
++rsrq =3D 'ReferenceSignalReceivedQuality'
++rsrp =3D 'ReferenceSignalReceivedPower'
++op =3D 'Operator'
  =
 
- 	return 0;
-@@ -44,6 +45,7 @@ static int ubloxmodem_init(void)
- static void ubloxmodem_exit(void)
- {
- 	ublox_gprs_context_exit();
-+	ublox_netmon_exit();
- 	ublox_lte_exit();
- }
+ print("Current serving cell information:")
  =
 
-diff --git a/drivers/ubloxmodem/ubloxmodem.h b/drivers/ubloxmodem/ubloxmode=
-m.h
-index cf66412..bfb0106 100644
---- a/drivers/ubloxmodem/ubloxmodem.h
-+++ b/drivers/ubloxmodem/ubloxmodem.h
-@@ -26,5 +26,8 @@
- extern void ublox_gprs_context_init(void);
- extern void ublox_gprs_context_exit(void);
+@@ -50,7 +56,25 @@ if psc in servingcell:
+ if rssi in servingcell:
+ 	print("    [ Signal Strength =3D %d]" % (servingcell[rssi]))
  =
 
-+extern void ublox_netmon_init(void);
-+extern void ublox_netmon_exit(void);
++if rxlev in servingcell:
++	print("    [ Received Signal Strength =3D %d]" % (servingcell[rxlev]))
 +
- extern void ublox_lte_init(void);
- extern void ublox_lte_exit(void);
-diff --git a/plugins/ublox.c b/plugins/ublox.c
-index 6d77df8..cc44de4 100644
---- a/plugins/ublox.c
-+++ b/plugins/ublox.c
-@@ -38,6 +38,7 @@
- #include <ofono/sim.h>
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
-+#include <ofono/netmon.h>
- #include <ofono/lte.h>
+ if ber in servingcell:
+ 	print("    [ Bit Error Rate =3D %d]" % (servingcell[ber]))
  =
 
- #include <drivers/atmodem/atutil.h>
-@@ -323,6 +324,8 @@ static void ublox_post_online(struct ofono_modem *modem)
- 	struct ublox_data *data =3D ofono_modem_get_data(modem);
- =
-
- 	ofono_netreg_create(modem, data->vendor_family, "atmodem", data->aux);
++if rscp in servingcell:
++	print("    [ Received Signal Code Power =3D %d]" % (servingcell[rscp]))
 +
-+	ofono_netmon_create(modem, data->vendor_family, "ubloxmodem", data);
- }
- =
-
- static struct ofono_modem_driver ublox_driver =3D {
++if ecn0 in servingcell:
++	print("    [ Received Energy Ratio =3D %d]" % (servingcell[ecn0]))
++
++if rsrq in servingcell:
++	print("    [ Reference Signal Received Quality =3D %d]" % (servingcell[rs=
+rq]))
++
++if rsrp in servingcell:
++	print("    [ Reference Signal Received Power =3D %d]" % (servingcell[rsrp=
+]))
++
++if op in servingcell:
++	print("    [ Operator =3D %s ]" % (servingcell[op]))
++
+ print('')
 -- =
 
 2.5.5
 
 
---===============3023072096391913685==--
+--===============3682019141347705847==--
 
