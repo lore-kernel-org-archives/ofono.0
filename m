@@ -1,86 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============3682019141347705847=="
+Content-Type: multipart/mixed; boundary="===============1320841693983944677=="
 MIME-Version: 1.0
-From: djalal@endocode.com
-Subject: [PATCH 5/5] test: support
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/5] netmon: add
  OFONO_NETMON_INFO_{RSCP|ECN0|RSRQ|RSRP|OPERATOR}
-Date: Fri, 25 Nov 2016 15:00:15 +0100
-Message-ID: <1480082415-30822-6-git-send-email-djalal@endocode.com>
-In-Reply-To: <1480082415-30822-1-git-send-email-djalal@endocode.com>
+Date: Tue, 29 Nov 2016 10:43:02 -0600
+Message-ID: <583DB016.1050603@gmail.com>
+In-Reply-To: <1480082415-30822-2-git-send-email-djalal@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3682019141347705847==
+--===============1320841693983944677==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Djalal Harouni <djalal@endocode.com>
+Hi Djalal,
 
-Display the following fields if they are returned.
+On 11/25/2016 08:00 AM, djalal(a)endocode.com wrote:
+> From: Djalal Harouni <djalal@endocode.com>
+>
+> Add more ofono netmon info types that will be served through the netmon
+> interface. The main user of this now will be the ublox modem.
+>
+> RSCP: Received Signal Code Power
+> ECN0: Received Energy Ratio
+> RSRQ: Reference Signal Received Quality
+> RSRP: Reference Signal Received Power
+> OPERATOR: the operator
+>
+> Patches using these types to follow.
+> ---
+>   include/netmon.h | 5 +++++
+>   1 file changed, 5 insertions(+)
+>
+> diff --git a/include/netmon.h b/include/netmon.h
+> index ec8a2e1..abde225 100644
+> --- a/include/netmon.h
+> +++ b/include/netmon.h
+> @@ -59,6 +59,11 @@ enum ofono_netmon_info {
+>   	OFONO_NETMON_INFO_RSSI, /* int */
+>   	OFONO_NETMON_INFO_TIMING_ADVANCE, /* int */
+>   	OFONO_NETMON_INFO_PSC, /* int */
+> +	OFONO_NETMON_INFO_RSCP, /* int */
+> +	OFONO_NETMON_INFO_ECN0, /* int */
+> +	OFONO_NETMON_INFO_RSRQ, /* int */
+> +	OFONO_NETMON_INFO_RSRP, /* int */
+> +	OFONO_NETMON_INFO_OPERATOR, /* char *, up to 24 digits */
 
-RXLEV:  Received Signal Strength
-RSCP:   Received Signal Code Power
-ECN0:   Received Energy Ratio
-RSRQ:   Reference Signal Received Quality
-RSRP:   Reference Signal Received Power
-OPERATOR: The operator
----
- test/get-serving-cell-info | 24 ++++++++++++++++++++++++
- 1 file changed, 24 insertions(+)
+MCC & MNC are not enough?  This API is intended for various location =
 
-diff --git a/test/get-serving-cell-info b/test/get-serving-cell-info
-index 05dc9fe..e4c9efb 100755
---- a/test/get-serving-cell-info
-+++ b/test/get-serving-cell-info
-@@ -26,6 +26,12 @@ cid =3D 'CellId'
- psc =3D 'PrimaryScramblingCode'
- rssi =3D 'Strength'
- ber =3D 'BitErrorRate'
-+rxlev =3D 'ReceivedSignalStrength'
-+rscp =3D 'ReceivedSignalCodePower'
-+ecn0 =3D 'ReceivedEnergyRatio'
-+rsrq =3D 'ReferenceSignalReceivedQuality'
-+rsrp =3D 'ReferenceSignalReceivedPower'
-+op =3D 'Operator'
- =
+services which hardly care about the text representation of the =
 
- print("Current serving cell information:")
- =
+operator.  They'd rather know the lac & ci, and possibly the mcc & mnc.
 
-@@ -50,7 +56,25 @@ if psc in servingcell:
- if rssi in servingcell:
- 	print("    [ Signal Strength =3D %d]" % (servingcell[rssi]))
- =
+I'm not sure if its worth including this as it is likely just coming =
 
-+if rxlev in servingcell:
-+	print("    [ Received Signal Strength =3D %d]" % (servingcell[rxlev]))
-+
- if ber in servingcell:
- 	print("    [ Bit Error Rate =3D %d]" % (servingcell[ber]))
- =
+from an MCCMNC database in the modem and this info is available via =
 
-+if rscp in servingcell:
-+	print("    [ Received Signal Code Power =3D %d]" % (servingcell[rscp]))
-+
-+if ecn0 in servingcell:
-+	print("    [ Received Energy Ratio =3D %d]" % (servingcell[ecn0]))
-+
-+if rsrq in servingcell:
-+	print("    [ Reference Signal Received Quality =3D %d]" % (servingcell[rs=
-rq]))
-+
-+if rsrp in servingcell:
-+	print("    [ Reference Signal Received Power =3D %d]" % (servingcell[rsrp=
-]))
-+
-+if op in servingcell:
-+	print("    [ Operator =3D %s ]" % (servingcell[op]))
-+
- print('')
--- =
+NetworkRegistration anyway.
 
-2.5.5
+>   	OFONO_NETMON_INFO_INVALID,
+>   };
+>
+>
 
+Regards,
+-Denis
 
---===============3682019141347705847==--
+--===============1320841693983944677==--
 
