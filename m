@@ -1,50 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7933414964328360261=="
+Content-Type: multipart/mixed; boundary="===============2312606384547916714=="
 MIME-Version: 1.0
 From: Djalal Harouni <djalal@endocode.com>
-Subject: [PATCH 5/7] ubloxmodem: register and initialize the netmon driver
-Date: Wed, 30 Nov 2016 13:13:20 +0100
-Message-ID: <1480508002-15830-6-git-send-email-djalal@endocode.com>
+Subject: [PATCH 6/7] build: build the ublox netmon driver
+Date: Wed, 30 Nov 2016 13:13:21 +0100
+Message-ID: <1480508002-15830-7-git-send-email-djalal@endocode.com>
 In-Reply-To: <1480508002-15830-1-git-send-email-djalal@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7933414964328360261==
+--===============2312606384547916714==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/ublox.c | 3 +++
- 1 file changed, 3 insertions(+)
+ Makefile.am | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/plugins/ublox.c b/plugins/ublox.c
-index 6d77df8..2ced577 100644
---- a/plugins/ublox.c
-+++ b/plugins/ublox.c
-@@ -38,6 +38,7 @@
- #include <ofono/sim.h>
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
-+#include <ofono/netmon.h>
- #include <ofono/lte.h>
+diff --git a/Makefile.am b/Makefile.am
+index 3d7774b..07adeab 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -383,6 +383,7 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
+ 			drivers/ubloxmodem/ubloxmodem.h \
+ 			drivers/ubloxmodem/ubloxmodem.c \
+ 			drivers/ubloxmodem/gprs-context.c \
++			drivers/ubloxmodem/netmon.c \
+ 			drivers/ubloxmodem/lte.c
  =
 
- #include <drivers/atmodem/atutil.h>
-@@ -323,6 +324,8 @@ static void ublox_post_online(struct ofono_modem *modem)
- 	struct ublox_data *data =3D ofono_modem_get_data(modem);
  =
 
- 	ofono_netreg_create(modem, data->vendor_family, "atmodem", data->aux);
-+
-+	ofono_netmon_create(modem, data->vendor_family, "ubloxmodem", data->aux);
- }
- =
-
- static struct ofono_modem_driver ublox_driver =3D {
 -- =
 
 2.5.5
 
 
---===============7933414964328360261==--
+--===============2312606384547916714==--
 
