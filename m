@@ -1,41 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============3680053000930214985=="
+Content-Type: multipart/mixed; boundary="===============7438520714295453283=="
 MIME-Version: 1.0
-From: Ankit Navik <ankit.p.navik@intel.com>
-Subject: [PATCH 2/2] rilmodem: set LTE preferred in rat mode
-Date: Wed, 07 Dec 2016 08:41:26 +0530
-Message-ID: <1481080286-21222-1-git-send-email-ankit.p.navik@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] rilmodem: Add lte atom driver
+Date: Wed, 07 Dec 2016 10:23:47 -0600
+Message-ID: <58483793.40105@gmail.com>
+In-Reply-To: <1481080237-21112-1-git-send-email-ankit.p.navik@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3680053000930214985==
+--===============7438520714295453283==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/rilmodem/radio-settings.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Ankit,
 
-diff --git a/drivers/rilmodem/radio-settings.c b/drivers/rilmodem/radio-set=
-tings.c
-index d6d0ad9..36befca 100644
---- a/drivers/rilmodem/radio-settings.c
-+++ b/drivers/rilmodem/radio-settings.c
-@@ -111,7 +111,7 @@ static void ril_set_rat_mode(struct ofono_radio_setting=
-s *rs,
- 	struct radio_data *rd =3D ofono_radio_settings_get_data(rs);
- 	struct cb_data *cbd =3D cb_data_new(cb, data, rs);
- 	struct parcel rilp;
--	int pref =3D PREF_NET_TYPE_GSM_WCDMA;
-+	int pref =3D PREF_NET_TYPE_LTE_GSM_WCDMA;
- =
+On 12/06/2016 09:10 PM, Ankit Navik wrote:
+> Adds rilmodem driver for setting the default APN command.
+> The default APN is manage by config storage.
+> ---
+>   Makefile.am                 |   3 +-
+>   drivers/rilmodem/lte.c      | 158 +++++++++++++++++++++++++++++++++++++=
++++++++
+>   drivers/rilmodem/rilmodem.c |   2 +
+>   drivers/rilmodem/rilmodem.h |   3 +
+>   4 files changed, 165 insertions(+), 1 deletion(-)
+>   create mode 100644 drivers/rilmodem/lte.c
+>
 
- 	switch (mode) {
- 	case OFONO_RADIO_ACCESS_MODE_ANY:
--- =
+Both applied, thanks.
 
-1.9.1
+Regards,
+-Denis
 
 
---===============3680053000930214985==--
+--===============7438520714295453283==--
 
