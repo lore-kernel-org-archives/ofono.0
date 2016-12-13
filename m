@@ -1,57 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============9022823221070690642=="
+Content-Type: multipart/mixed; boundary="===============8005318369582256884=="
 MIME-Version: 1.0
 From: Djalal Harouni <djalal@endocode.com>
-Subject: [PATCH 2/5] doc: document netmon EARFCN, EBand and CQI properties
-Date: Tue, 13 Dec 2016 12:05:25 +0100
-Message-ID: <1481627128-20233-3-git-send-email-djalal@endocode.com>
+Subject: [PATCH 3/5] netmon: handle OFONO_NETMON_INFO_{EARFCN|EBAND|CQI}
+Date: Tue, 13 Dec 2016 12:05:26 +0100
+Message-ID: <1481627128-20233-4-git-send-email-djalal@endocode.com>
 In-Reply-To: <1481627128-20233-1-git-send-email-djalal@endocode.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9022823221070690642==
+--===============8005318369582256884==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Documentation for:
-EARFCN: E-UTRA Absolute Radio Frequency Channel Number.
-EBand: E-UTRA operating Band.
-CQI: Channel Quality Indicator.
 ---
- doc/networkmonitor-api.txt | 17 +++++++++++++++++
- 1 file changed, 17 insertions(+)
+ src/netmon.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
 
-diff --git a/doc/networkmonitor-api.txt b/doc/networkmonitor-api.txt
-index 0d2fe3f..ddace7e 100644
---- a/doc/networkmonitor-api.txt
-+++ b/doc/networkmonitor-api.txt
-@@ -103,3 +103,20 @@ byte ReferenceSignalReceivedPower [optional, lte]
+diff --git a/src/netmon.c b/src/netmon.c
+index bb39586..6476783 100644
+--- a/src/netmon.c
++++ b/src/netmon.c
+@@ -211,6 +211,27 @@ void ofono_netmon_serving_cell_notify(struct ofono_net=
+mon *netmon,
+ 					intval, uint8_t, DBUS_TYPE_BYTE);
+ 			break;
  =
 
-         Contains the Reference Signal Received Power.  Valid range of valu=
-es
-         is 0-97. Refer to <rsrp> in 27.007, Section 8.69 for more details.
++		case OFONO_NETMON_INFO_EARFCN:
++			intval =3D va_arg(arglist, int);
 +
-+uint16 EARFCN [optional, lte]
++			CELL_INFO_DICT_APPEND(&dict, "EARFCN",
++					intval, uint16_t, DBUS_TYPE_UINT16);
++			break;
 +
-+	Contains E-UTRA Absolute Radio Frequency Channel Number.  Valid
-+	range of values is 0-65535. Refer to Carrier frequency and
-+	EARFCN in 36.101, Section 5.7.3 for more details.
++		case OFONO_NETMON_INFO_EBAND:
++			intval =3D va_arg(arglist, int);
 +
-+byte EBand [optional, lte]
++			CELL_INFO_DICT_APPEND(&dict, "EBand",
++					intval, uint8_t, DBUS_TYPE_BYTE);
++			break;
 +
-+	Contains E-UTRA operating Band.  Valid range of values is 1-43.
-+	Refer to Operating bands in 36.101, Section 5.5 for more
-+	details.
++		case OFONO_NETMON_INFO_CQI:
++			intval =3D va_arg(arglist, int);
 +
-+byte ChannelQualityIndicator [optional, lte]
++			CELL_INFO_DICT_APPEND(&dict, "ChannelQualityIndicator",
++					intval, uint8_t, DBUS_TYPE_BYTE);
++			break;
 +
-+	Contains Channel Quality Indicator.  Refer to Channel Quality
-+	Indicator definition in 36.213, Section 7.2.3 for more details.
+ 		case OFONO_NETMON_INFO_INVALID:
+ 			break;
+ 		}
 -- =
 
 2.5.5
 
 
---===============9022823221070690642==--
+--===============8005318369582256884==--
 
