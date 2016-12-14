@@ -1,31 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============6910279427576239415=="
+Content-Type: multipart/mixed; boundary="===============1314009280535525993=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/5] ubloxmodem support +UCGED mode 2
-Date: Tue, 13 Dec 2016 11:39:17 -0600
-Message-ID: <8a810323-92b6-1a96-497f-bcf6cbe47d88@gmail.com>
-In-Reply-To: <1481627128-20233-1-git-send-email-djalal@endocode.com>
+From: marko.sulejic@hale.at
+Subject: [PATCH] sms.c: fix typo
+Date: Wed, 14 Dec 2016 10:39:51 +0100
+Message-ID: <1481708391-7560-1-git-send-email-marko.sulejic@hale.at>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6910279427576239415==
+--===============1314009280535525993==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Djalal,
+From: Marko =C5=A0uleji=C4=87 <marko.sulejic@hale.at>
 
-> Djalal Harouni (5):
->   netmon: add NETMON_INFO_{EARFCN|EBAND|CQI}
->   doc: document netmon EARFCN, EBand and CQI properties
->   netmon: handle OFONO_NETMON_INFO_{EARFCN|EBAND|CQI}
->   test:netmon: support EARFCN, Eband and CQI in testing
+---
+ drivers/atmodem/sms.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Patches 1-4 applied, thanks.
+diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
+index f93dd23..b6876b0 100644
+--- a/drivers/atmodem/sms.c
++++ b/drivers/atmodem/sms.c
+@@ -742,7 +742,7 @@ static void at_sms_initialized(struct ofono_sms *sms)
+ =
 
-Regards,
--Denis
+ static void at_sms_not_supported(struct ofono_sms *sms)
+ {
+-	ofono_error("SMS not supported by this modem.  If this is in error"
++	ofono_error("SMS not supported by this modem.  If this is an error"
+ 			" please submit patches to support this hardware");
+ =
+
+ 	ofono_sms_remove(sms);
+-- =
+
+2.7.4
 
 
---===============6910279427576239415==--
+--===============1314009280535525993==--
 
