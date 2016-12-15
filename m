@@ -1,31 +1,26 @@
-Content-Type: multipart/mixed; boundary="===============7095291033094199417=="
+Content-Type: multipart/mixed; boundary="===============1939587776203642319=="
 MIME-Version: 1.0
 From: Enrico Sau <enrico.sau@gmail.com>
-Subject: Modem auto enable
-Date: Thu, 15 Dec 2016 13:11:34 +0100
-Message-ID: <CAH4ZQwsJAa248LO0TrS0HiNdGhEcS6fUUh9bGbtnfUxEZNmg1g@mail.gmail.com>
+Subject: Re: Modem auto enable
+Date: Thu, 15 Dec 2016 16:29:38 +0100
+Message-ID: <CAH4ZQwsASfZY=Za+V8UYmjrau=Gzj1OFv-sA-ooQEHA1pQgF7Q@mail.gmail.com>
+In-Reply-To: <CAH4ZQwsJAa248LO0TrS0HiNdGhEcS6fUUh9bGbtnfUxEZNmg1g@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7095291033094199417==
+--===============1939587776203642319==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi all,
-
-I'm working with a Telit modem and I noticed that in some computers ofono
-performs an "auto enable" setting. In some other cases I have to set the
-"Powered" property manually.
-
-Does anyone know why?
-How can I always have the auto enable feature?
-
-Thank you,
+I got a suggestion from a friend.
+It seems like the Ubuntu network manager sets the Powered property to TRUE
+immediately after the "modem added" signal is sent.
 
 Enrico
 
---===============7095291033094199417==
+--===============1939587776203642319==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
@@ -33,25 +28,16 @@ Content-Disposition: attachment; filename="attachment.html"
 
 PGRpdiBkaXI9Imx0ciI+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFt
 aWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+SGkgYWxsLDwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2Rl
-ZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L2Rpdj48
-ZGl2IGNsYXNzPSJnbWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5z
-LXNlcmlmIj5JJiMzOTttIHdvcmtpbmcgd2l0aCBhIFRlbGl0IG1vZGVtIGFuZCBJIG5vdGljZWQg
-dGhhdCBpbiBzb21lIGNvbXB1dGVycyBvZm9ubyBwZXJmb3JtcyBhbiAmcXVvdDthdXRvIGVuYWJs
-ZSZxdW90OyBzZXR0aW5nLiBJbiBzb21lIG90aGVyIGNhc2VzIEkgaGF2ZSB0byBzZXQgdGhlICZx
-dW90O1Bvd2VyZWQmcXVvdDsgcHJvcGVydHkgbWFudWFsbHkuPC9kaXY+PGRpdiBjbGFzcz0iZ21h
-aWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRhbmEsc2Fucy1zZXJpZiI+PGJyPjwv
-ZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5h
-LHNhbnMtc2VyaWYiPkRvZXMgYW55b25lIGtub3cgd2h5PzwvZGl2PjxkaXYgY2xhc3M9ImdtYWls
-X2RlZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPkhvdyBjYW4g
-SSBhbHdheXMgaGF2ZSB0aGUgYXV0byBlbmFibGUgZmVhdHVyZT88L2Rpdj48ZGl2IGNsYXNzPSJn
-bWFpbF9kZWZhdWx0IiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlmIj48YnI+
-PC9kaXY+PGRpdiBjbGFzcz0iZ21haWxfZGVmYXVsdCIgc3R5bGU9ImZvbnQtZmFtaWx5OnZlcmRh
-bmEsc2Fucy1zZXJpZiI+VGhhbmsgeW91LDwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQi
-IHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPjxicj48L2Rpdj48ZGl2Pjxk
-aXYgY2xhc3M9ImdtYWlsX3NpZ25hdHVyZSIgZGF0YS1zbWFydG1haWw9ImdtYWlsX3NpZ25hdHVy
-ZSI+PGRpdiBkaXI9Imx0ciI+PGRpdj48ZGl2IGRpcj0ibHRyIj48ZGl2PjxkaXY+PHNwYW4gc3R5
-bGU9ImZvbnQtc2l6ZToxMi44cHgiPkVucmljbzwvc3Bhbj48L2Rpdj48L2Rpdj48L2Rpdj48L2Rp
-dj48L2Rpdj48L2Rpdj48L2Rpdj4KPC9kaXY+Cg==
+ZmF1bHQiIHN0eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPkkgZ290IGEgc3Vn
+Z2VzdGlvbiBmcm9tIGEgZnJpZW5kLjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2RlZmF1bHQiIHN0
+eWxlPSJmb250LWZhbWlseTp2ZXJkYW5hLHNhbnMtc2VyaWYiPkl0IHNlZW1zIGxpa2UgdGhlIFVi
+dW50dSBuZXR3b3JrIG1hbmFnZXIgc2V0cyB0aGUgUG93ZXJlZCBwcm9wZXJ0eSB0byBUUlVFIGlt
+bWVkaWF0ZWx5IGFmdGVyIHRoZSAmcXVvdDttb2RlbSBhZGRlZCZxdW90OyBzaWduYWwgaXMgc2Vu
+dC48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9leHRyYSI+PGJyIGNsZWFyPSJhbGwiPjxkaXY+PGRp
+diBjbGFzcz0iZ21haWxfc2lnbmF0dXJlIiBkYXRhLXNtYXJ0bWFpbD0iZ21haWxfc2lnbmF0dXJl
+Ij48ZGl2IGRpcj0ibHRyIj48ZGl2PjxkaXYgZGlyPSJsdHIiPjxkaXY+PGRpdj48c3BhbiBzdHls
+ZT0iZm9udC1zaXplOjEyLjhweCI+RW5yaWNvPC9zcGFuPjwvZGl2PjwvZGl2PjwvZGl2PjwvZGl2
+PjwvZGl2PjwvZGl2PjwvZGl2PjwvZGl2PjwvZGl2Pgo=
 
---===============7095291033094199417==--
+--===============1939587776203642319==--
 
