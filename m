@@ -1,77 +1,205 @@
-Content-Type: multipart/mixed; boundary="===============4112333453200425389=="
+Content-Type: multipart/mixed; boundary="===============1064322642213313470=="
 MIME-Version: 1.0
 From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCH 1/4] MC7430: use qmimodem sim driver
-Date: Wed, 28 Dec 2016 16:03:59 +0100
-Message-ID: <20161228150402.15660-2-c.ronco@kerlink.fr>
+Subject: [PATCH 2/4] MC7430: add read_imsi feature to qmimodem sim driver
+Date: Wed, 28 Dec 2016 16:04:00 +0100
+Message-ID: <20161228150402.15660-3-c.ronco@kerlink.fr>
 In-Reply-To: <20161228150402.15660-1-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4112333453200425389==
+--===============1064322642213313470==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-QMI modem sim-legacy driver uses a command not supported by MC7430 (QMI_DMS=
-_GET_PIN_STATUS)
-
-plugins/udevng.c
- QMI Sierra modems use sim driver.
 drivers/qmimodem/sim.c
- In get_card_status_cb, call ofono_sim_register after ofono_sim_inserted_no=
-tify (as it is done in sim_legacy).
- Otherwise process crash (sim->driver->query_facility_lock called and not d=
-efined in this driver) with  MC7430 modem using this driver.
+ Add read_imsi feature to this driver. This is based on DMS service.
+ This is mandatory to be able to use this driver for GPRS connection
+plugins/gobi.c
+ DMS feature is needed for SIM driver (to be able to read IMSI)
 ---
- drivers/qmimodem/sim.c | 3 +--
- plugins/udevng.c       | 2 --
- 2 files changed, 1 insertion(+), 4 deletions(-)
+ drivers/qmimodem/sim.c | 83 ++++++++++++++++++++++++++++++++++++++++++++++=
++---
+ plugins/gobi.c         |  2 +-
+ 2 files changed, 79 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/qmimodem/sim.c b/drivers/qmimodem/sim.c
-index 197da509..fa7bef58 100644
+index fa7bef58..f61466d5 100644
 --- a/drivers/qmimodem/sim.c
 +++ b/drivers/qmimodem/sim.c
-@@ -403,8 +403,6 @@ static void get_card_status_cb(struct qmi_result *resul=
-t, void *user_data)
- 	}
+@@ -30,6 +30,7 @@
+ #include <ofono/sim.h>
  =
 
- done:
--	ofono_sim_register(sim);
--
- 	switch (data->card_state) {
- 	case 0x00:	/* Absent */
- 	case 0x02:	/* Error */
-@@ -413,6 +411,7 @@ done:
- 		ofono_sim_inserted_notify(sim, TRUE);
- 		break;
- 	}
-+	ofono_sim_register(sim);
+ #include "qmi.h"
++#include "dms.h"
+ #include "uim.h"
+ =
+
+ #include "qmimodem.h"
+@@ -39,6 +40,8 @@
+ #define EF_STATUS_VALID 1
+ =
+
+ struct sim_data {
++	struct qmi_device *qmi_dev;
++	struct qmi_service *dms;
+ 	struct qmi_service *uim;
+ 	uint32_t event_mask;
+ 	uint8_t card_state;
+@@ -295,6 +298,47 @@ error:
+ 	g_free(cbd);
  }
  =
 
- static void event_registration_cb(struct qmi_result *result, void *user_da=
-ta)
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 933bf4fa..a2866b64 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -252,8 +252,6 @@ static gboolean setup_sierra(struct modem_info *modem)
++static void get_imsi_cb(struct qmi_result *result, void *user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_sim_imsi_cb_t cb =3D cbd->cb;
++	char *str;
++
++	DBG("");
++
++	if (qmi_result_set_error(result, NULL)) {
++		CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
++		return;
++	}
++
++	str =3D qmi_result_get_string(result, QMI_DMS_RESULT_IMSI);
++	if (!str) {
++		CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
++		return;
++	}
++
++	CALLBACK_WITH_SUCCESS(cb, str, cbd->data);
++
++	qmi_free(str);
++}
++
++static void qmi_read_imsi(struct ofono_sim *sim,
++				ofono_sim_imsi_cb_t cb, void *user_data)
++{
++	struct sim_data *data =3D ofono_sim_get_data(sim);
++	struct cb_data *cbd =3D cb_data_new(cb, user_data);
++
++	DBG("");
++
++	if (qmi_service_send(data->dms, QMI_DMS_GET_IMSI, NULL,
++					get_imsi_cb, cbd, g_free) > 0)
++		return;
++
++	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
++
++	g_free(cbd);
++}
++
+ static void qmi_query_passwd_state(struct ofono_sim *sim,
+ 				ofono_sim_passwd_cb_t cb, void *user_data)
+ {
+@@ -464,11 +508,30 @@ static void create_uim_cb(struct qmi_service *service=
+, void *user_data)
+ 		return;
  =
 
- 	if (qmi !=3D NULL && net !=3D NULL) {
- 		ofono_modem_set_driver(modem->modem, "gobi");
--		/* Fixup SIM interface for Sierra QMI devices */
--		ofono_modem_set_boolean(modem->modem, "ForceSimLegacy", TRUE);
- 		goto done;
- 	}
+ error:
+-	qmi_service_unref(data->uim);
++	qmi_service_unref(data->dms);
  =
 
+ 	ofono_sim_remove(sim);
+ }
+ =
+
++static void create_dms_cb(struct qmi_service *service, void *user_data)
++{
++	struct ofono_sim *sim =3D user_data;
++	struct sim_data *data =3D ofono_sim_get_data(sim);
++	struct qmi_param *param;
++
++	DBG("");
++
++	if (!service) {
++		ofono_error("Failed to request DMS service");
++		ofono_sim_remove(sim);
++		return;
++	}
++
++	data->dms =3D qmi_service_ref(service);
++
++	qmi_service_create(data->qmi_dev, QMI_SERVICE_UIM, create_uim_cb, sim, NU=
+LL);
++}
++
+ static int qmi_sim_probe(struct ofono_sim *sim,
+ 				unsigned int vendor, void *user_data)
+ {
+@@ -485,9 +548,12 @@ static int qmi_sim_probe(struct ofono_sim *sim,
+ 	for (i =3D 0; i < OFONO_SIM_PASSWORD_INVALID; i++)
+ 		data->retries[i] =3D -1;
+ =
+
++	data->qmi_dev =3D device;
++
+ 	ofono_sim_set_data(sim, data);
+ =
+
+-	qmi_service_create(device, QMI_SERVICE_UIM, create_uim_cb, sim, NULL);
++	qmi_service_create_shared(device, QMI_SERVICE_DMS,
++						create_dms_cb, sim, NULL);
+ =
+
+ 	return 0;
+ }
+@@ -500,9 +566,15 @@ static void qmi_sim_remove(struct ofono_sim *sim)
+ =
+
+ 	ofono_sim_set_data(sim, NULL);
+ =
+
+-	qmi_service_unregister_all(data->uim);
+-
+-	qmi_service_unref(data->uim);
++	if (data->uim) {
++		qmi_service_unregister_all(data->uim);
++		qmi_service_unref(data->uim);
++		data->uim =3D NULL;
++	}
++	if (data->dms) {
++		qmi_service_unregister_all(data->dms);
++		qmi_service_unref(data->dms);
++	}
+ =
+
+ 	g_free(data);
+ }
+@@ -515,6 +587,7 @@ static struct ofono_sim_driver driver =3D {
+ 	.read_file_transparent	=3D qmi_read_transparent,
+ 	.read_file_linear	=3D qmi_read_record,
+ 	.read_file_cyclic	=3D qmi_read_record,
++	.read_imsi		=3D qmi_read_imsi,
+ 	.query_passwd_state	=3D qmi_query_passwd_state,
+ 	.query_pin_retries	=3D qmi_query_pin_retries,
+ };
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index 6a789411..84a98279 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -420,7 +420,7 @@ static void gobi_pre_sim(struct ofono_modem *modem)
+ =
+
+ 	ofono_devinfo_create(modem, 0, "qmimodem", data->device);
+ =
+
+-	if (data->features & GOBI_UIM)
++	if ((data->features & GOBI_UIM) && (data->features & GOBI_DMS))
+ 		sim_driver =3D "qmimodem";
+ 	else if (data->features & GOBI_DMS)
+ 		sim_driver =3D "qmimodem-legacy";
 -- =
 
 2.11.0
 
 
---===============4112333453200425389==--
+--===============1064322642213313470==--
 
