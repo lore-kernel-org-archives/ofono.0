@@ -1,57 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============4372510499411882589=="
+Content-Type: multipart/mixed; boundary="===============4605824713402437864=="
 MIME-Version: 1.0
 From: Slava Monich <slava.monich@jolla.com>
-Subject: [PATCH] smsutil: Prevent out of bounds reads in cbs_decode_text
-Date: Sun, 01 Jan 2017 20:48:02 +0300
-Message-ID: <1483292882-18897-1-git-send-email-slava.monich@jolla.com>
+Subject: [PATCH] test-sms: Fixed memory leaks in the unit test
+Date: Mon, 02 Jan 2017 14:15:08 +0300
+Message-ID: <1483355708-27054-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4372510499411882589==
+--===============4605824713402437864==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Valgrind was complaining about it like this:
-
-=3D=3D18099=3D=3D Conditional jump or move depends on uninitialised value(s)
-=3D=3D18099=3D=3D    at 0x4C32281: strspn
-=3D=3D18099=3D=3D    by 0x41286B: cbs_decode_text (smsutil.c:4140)
-=3D=3D18099=3D=3D    by 0x40675C: test_cbs_encode_decode (test-sms.c:1417)
 ---
- src/smsutil.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+ unit/test-sms.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index 2212994..24dcfaa 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -4135,12 +4135,13 @@ char *cbs_decode_text(GSList *cbs_list, char *iso63=
-9_lang)
- 			 */
- 			for (; i < written; i++, bufsize++) {
- 				if (unpacked[i] =3D=3D '\r') {
--					int t;
-+					int j;
+diff --git a/unit/test-sms.c b/unit/test-sms.c
+index 3d0f016..618d139 100644
+--- a/unit/test-sms.c
++++ b/unit/test-sms.c
+@@ -1145,6 +1145,8 @@ static void test_assembly(void)
  =
 
--					t =3D strspn((const char *) unpacked + i,
--							"\r");
-+					for (j =3D i + 1; j < written; j++)
-+						if (unpacked[j] !=3D '\r')
-+							break;
+ 	reencoded =3D sms_decode_text(l);
  =
 
--					if (t + i =3D=3D written)
-+					if (j =3D=3D written)
- 						break;
- 				}
++	g_slist_free_full(l, g_free);
++
+ 	if (g_test_verbose())
+ 		g_printf("ReEncoded:\n%s\n", reencoded);
  =
 
+@@ -1304,6 +1306,8 @@ static void test_prepare_concat(gconstpointer data)
+ 	g_assert(decoded_str);
+ 	g_assert(strcmp(decoded_str, test->str) =3D=3D 0);
+ 	g_free(decoded_str);
++	g_slist_free_full(pdus, g_free);
++	g_slist_free_full(r, g_free);
+ 	sms_assembly_free(assembly);
+ }
+ =
+
+@@ -1334,6 +1338,7 @@ static void test_limit(gunichar uni, int target_size,=
+ gboolean use_16bit)
+ 	g_assert(g_utf8_strlen(decoded, -1) =3D=3D target_size);
+ =
+
+ 	g_free(decoded);
++	g_slist_free_full(l, g_free);
+ =
+
+ 	memcpy(utf8 + i, utf8_char, stride);
+ 	utf8[i+stride] =3D '\0';
 -- =
 
 1.9.1
 
 
---===============4372510499411882589==--
+--===============4605824713402437864==--
 
