@@ -1,73 +1,347 @@
-Content-Type: multipart/mixed; boundary="===============5488395809692260728=="
+Content-Type: multipart/mixed; boundary="===============2232876464060143539=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
-Subject: [PATCH] sim: Stop imsi/lock query sequence when SIM is removed
-Date: Thu, 05 Jan 2017 15:28:56 +0300
-Message-ID: <1483619336-26053-1-git-send-email-slava.monich@jolla.com>
+From: Christophe Ronco <c.ronco@kerlink.fr>
+Subject: Re: [PATCH 2/4] MC7430: add read_imsi feature to qmimodem sim driver
+Date: Fri, 06 Jan 2017 09:16:31 +0100
+Message-ID: <74dbf201-e332-3ab1-3a6f-9faa73547309@kerlink.fr>
+In-Reply-To: <9d42e024-c2d4-0a8d-4926-fa9a7f040c5b@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5488395809692260728==
+--===============2232876464060143539==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-SIM card can be removed while the query is in progress. There's
-still a remote possibility that SIM card is removed and inserted
-back while the query is pending, that would start the second query
-sequence and end up invoking sim_initialize() twice. But at least
-these checks reduce the probability of something like that happening.
----
- src/sim.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+Hello Denis,
+
+Thanks for reading my patches. I resend this mail (previous was sent =
+
+with a wrong from address so it did not go to the list).
+
+On 12/31/2016 01:34 AM, Denis Kenzior wrote:
+> Hi Christophe,
+>
+> On 12/28/2016 09:04 AM, Christophe Ronco wrote:
+>> drivers/qmimodem/sim.c
+>>  Add read_imsi feature to this driver. This is based on DMS service.
+>>  This is mandatory to be able to use this driver for GPRS connection
+>> plugins/gobi.c
+>>  DMS feature is needed for SIM driver (to be able to read IMSI)
+>
+> Its been a while since I looked into QMI.  Marcel did most of the =
+
+> work, but I remember the basics.  So correct me if some of my =
+
+> understanding is incorrect.
+>
+> My understanding was that the legacy driver was used for modems that =
+
+> didn't support the UIM service.  Since UIM doesn't have a dedicated =
+
+> IMSI getter, we added support to read EFimsi directly via low-level =
+
+> SIM reads.  See commit bc38ef91cd35935dc7a0d6eec31d9880e39a6bd5
+>
+> This worked on a bunch of QMI based devices, so I have to assume that =
+
+> this fails on Sierra?  If so, then this probably should be quirked to =
+
+> be Sierra-specific behavior.  E.g. via a mechanism similar to =
+
+> drivers/atmodem/vendor.h
+IMSI reading on my MC7430 modem do fail without this patch.
+I have the following traces in this case:
+Jan  5 11:08:41 klk-lpbs_040070 daemon.debug ofonod[869]: =
+
+../ofono-1.19/drivers/qmimodem/sim.c:qmi_read_transparent() file id =
+
+0x6f07 path len 0
+Jan  5 11:08:41 klk-lpbs_040070 daemon.debug ofonod[869]: =
+
+../ofono-1.19/drivers/qmimodem/sim.c:read_generic_cb()
+Jan  5 11:08:41 klk-lpbs_040070 daemon.err ofonod[869]: Unable to read =
+
+IMSI, emergency calls only
+
+So read_file_transparent is asked by sim_retrieve_imsi and it seems to =
+
+fail. I don't know why.
+
+After a quick look at the code:
+All QMI modems supported by Ofono support DMS feature. There are all =
+
+created by GOBI plugin and in this plugin, DMS feature is mandatory =
+
+(discover_cb will shutdown device if DMS feature is not said to be =
+
+supported).
+So I assume that most of the QMI modems will support QMI_DMS_GET_IMSI.
+
+What I would like to do for QMI modem is to always try QMI_DMS_GET_IMSI =
+
+(not only for Sierra modems) and if it fails, try to obtain IMSI via EF =
+
+reads.
+
+I have done a patch to do that (see diff above). Let me know if you =
+
+think that's a good idea. In this case, I will send two patches:
+  - backup read_imsi by IMSI via EF read
+  - add read_imsi to qmimodem sim driver
 
 diff --git a/src/sim.c b/src/sim.c
-index edd7c76..63c7b3c 100644
+index edd7c763..66794305 100644
 --- a/src/sim.c
 +++ b/src/sim.c
-@@ -2466,6 +2466,9 @@ static void sim_query_fac_pinlock_cb(const struct ofo=
-no_error *error,
- {
- 	struct ofono_sim *sim =3D data;
- =
+@@ -1472,19 +1472,6 @@ static void sim_imsi_obtained(struct ofono_sim =
 
-+	if (sim->state =3D=3D OFONO_SIM_STATE_NOT_PRESENT)
-+		return;
+*sim, const char *imsi)
+
+  }
+
+-static void sim_imsi_cb(const struct ofono_error *error, const char *imsi,
+-                       void *data)
+-{
+-       struct ofono_sim *sim =3D data;
+-
+-       if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-               ofono_error("Unable to read IMSI, emergency calls only");
+-               return;
+-       }
+-
+-       sim_imsi_obtained(sim, imsi);
+-}
+-
+  static void sim_efimsi_cb(const struct ofono_error *error,
+                                 const unsigned char *data, int len, =
+
+void *user)
+  {
+@@ -1524,6 +1511,26 @@ error:
+         ofono_error("Unable to read IMSI, emergency calls only");
+  }
+
++static void sim_imsi_cb(const struct ofono_error *error, const char *imsi,
++                       void *data)
++{
++       struct ofono_sim *sim =3D data;
 +
- 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
- 		goto done;
- =
-
-@@ -2480,6 +2483,9 @@ static void sim_query_fac_networklock_cb(const struct=
- ofono_error *error,
- {
- 	struct ofono_sim *sim =3D data;
- =
-
-+	if (sim->state =3D=3D OFONO_SIM_STATE_NOT_PRESENT)
-+		return;
++       if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR) {
++               sim_imsi_obtained(sim, imsi);
++               return;
++       }
 +
- 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
- 		goto done;
- =
-
-@@ -2496,6 +2502,9 @@ static void sim_query_fac_imsilock_cb(const struct of=
-ono_error *error,
- {
- 	struct ofono_sim *sim =3D data;
- =
-
-+	if (sim->state =3D=3D OFONO_SIM_STATE_NOT_PRESENT)
-+		return;
++       /* Driver function failed, try via EF reads if possible */
++       if (sim->driver->read_file_transparent =3D=3D NULL) {
++               ofono_error("Unable to read IMSI, emergency calls only");
++               return;
++       }
 +
- 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
- 		goto done;
- =
++       sim->driver->read_file_transparent(sim, SIM_EFIMSI_FILEID, 0, 9,
++                                               NULL, 0, sim_efimsi_cb, =
 
--- =
+sim);
++}
++
+  static void sim_retrieve_imsi(struct ofono_sim *sim)
+  {
+         if (sim->driver->read_imsi) {
 
-1.9.1
 
 
---===============5488395809692260728==--
+>
+>> ---
+>>  drivers/qmimodem/sim.c | 83 =
+
+>> +++++++++++++++++++++++++++++++++++++++++++++++---
+>>  plugins/gobi.c         |  2 +-
+>>  2 files changed, 79 insertions(+), 6 deletions(-)
+>>
+>> diff --git a/drivers/qmimodem/sim.c b/drivers/qmimodem/sim.c
+>> index fa7bef58..f61466d5 100644
+>> --- a/drivers/qmimodem/sim.c
+>> +++ b/drivers/qmimodem/sim.c
+>> @@ -30,6 +30,7 @@
+>>  #include <ofono/sim.h>
+>>
+>>  #include "qmi.h"
+>> +#include "dms.h"
+>>  #include "uim.h"
+>>
+>>  #include "qmimodem.h"
+>> @@ -39,6 +40,8 @@
+>>  #define EF_STATUS_VALID 1
+>>
+>>  struct sim_data {
+>> +    struct qmi_device *qmi_dev;
+>> +    struct qmi_service *dms;
+>>      struct qmi_service *uim;
+>>      uint32_t event_mask;
+>>      uint8_t card_state;
+>> @@ -295,6 +298,47 @@ error:
+>>      g_free(cbd);
+>>  }
+>>
+>> +static void get_imsi_cb(struct qmi_result *result, void *user_data)
+>> +{
+>> +    struct cb_data *cbd =3D user_data;
+>> +    ofono_sim_imsi_cb_t cb =3D cbd->cb;
+>> +    char *str;
+>> +
+>> +    DBG("");
+>> +
+>> +    if (qmi_result_set_error(result, NULL)) {
+>> +        CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
+>> +        return;
+>> +    }
+>> +
+>> +    str =3D qmi_result_get_string(result, QMI_DMS_RESULT_IMSI);
+>> +    if (!str) {
+>> +        CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
+>> +        return;
+>> +    }
+>> +
+>> +    CALLBACK_WITH_SUCCESS(cb, str, cbd->data);
+>> +
+>> +    qmi_free(str);
+>> +}
+>> +
+>> +static void qmi_read_imsi(struct ofono_sim *sim,
+>> +                ofono_sim_imsi_cb_t cb, void *user_data)
+>> +{
+>> +    struct sim_data *data =3D ofono_sim_get_data(sim);
+>> +    struct cb_data *cbd =3D cb_data_new(cb, user_data);
+>> +
+>> +    DBG("");
+>> +
+>> +    if (qmi_service_send(data->dms, QMI_DMS_GET_IMSI, NULL,
+>> +                    get_imsi_cb, cbd, g_free) > 0)
+>> +        return;
+>> +
+>> +    CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
+>> +
+>> +    g_free(cbd);
+>> +}
+>> +
+>>  static void qmi_query_passwd_state(struct ofono_sim *sim,
+>>                  ofono_sim_passwd_cb_t cb, void *user_data)
+>>  {
+>> @@ -464,11 +508,30 @@ static void create_uim_cb(struct qmi_service =
+
+>> *service, void *user_data)
+>>          return;
+>>
+>>  error:
+>> -    qmi_service_unref(data->uim);
+>> +    qmi_service_unref(data->dms);
+>>
+>>      ofono_sim_remove(sim);
+>
+> ofono_sim_remove will call .remove method.  So this is likely to cause =
+
+> a crash since uim and dms have already been unref-ed.
+OK, I have not tested this error case. The =
+
+"qmi_service_unref(data->uim)" that's here in this function without the =
+
+patch should cause the same crash.
+>
+>>  }
+>>
+>> +static void create_dms_cb(struct qmi_service *service, void *user_data)
+>> +{
+>> +    struct ofono_sim *sim =3D user_data;
+>> +    struct sim_data *data =3D ofono_sim_get_data(sim);
+>> +    struct qmi_param *param;
+>> +
+>> +    DBG("");
+>> +
+>> +    if (!service) {
+>> +        ofono_error("Failed to request DMS service");
+>> +        ofono_sim_remove(sim);
+>> +        return;
+>> +    }
+>> +
+>> +    data->dms =3D qmi_service_ref(service);
+>> +
+>> +    qmi_service_create(data->qmi_dev, QMI_SERVICE_UIM, =
+
+>> create_uim_cb, sim, NULL);
+>> +}
+>> +
+>>  static int qmi_sim_probe(struct ofono_sim *sim,
+>>                  unsigned int vendor, void *user_data)
+>>  {
+>> @@ -485,9 +548,12 @@ static int qmi_sim_probe(struct ofono_sim *sim,
+>>      for (i =3D 0; i < OFONO_SIM_PASSWORD_INVALID; i++)
+>>          data->retries[i] =3D -1;
+>>
+>> +    data->qmi_dev =3D device;
+>> +
+>>      ofono_sim_set_data(sim, data);
+>>
+>> -    qmi_service_create(device, QMI_SERVICE_UIM, create_uim_cb, sim, =
+
+>> NULL);
+>> +    qmi_service_create_shared(device, QMI_SERVICE_DMS,
+>> +                        create_dms_cb, sim, NULL);
+>>
+>>      return 0;
+>>  }
+>> @@ -500,9 +566,15 @@ static void qmi_sim_remove(struct ofono_sim *sim)
+>>
+>>      ofono_sim_set_data(sim, NULL);
+>>
+>> -    qmi_service_unregister_all(data->uim);
+>> -
+>> -    qmi_service_unref(data->uim);
+>> +    if (data->uim) {
+>> +        qmi_service_unregister_all(data->uim);
+>> +        qmi_service_unref(data->uim);
+>> +        data->uim =3D NULL;
+>> +    }
+>> +    if (data->dms) {
+>> +        qmi_service_unregister_all(data->dms);
+>> +        qmi_service_unref(data->dms);
+>> +    }
+>>
+>>      g_free(data);
+>>  }
+>> @@ -515,6 +587,7 @@ static struct ofono_sim_driver driver =3D {
+>>      .read_file_transparent    =3D qmi_read_transparent,
+>>      .read_file_linear    =3D qmi_read_record,
+>>      .read_file_cyclic    =3D qmi_read_record,
+>> +    .read_imsi        =3D qmi_read_imsi,
+>>      .query_passwd_state    =3D qmi_query_passwd_state,
+>>      .query_pin_retries    =3D qmi_query_pin_retries,
+>>  };
+>> diff --git a/plugins/gobi.c b/plugins/gobi.c
+>> index 6a789411..84a98279 100644
+>> --- a/plugins/gobi.c
+>> +++ b/plugins/gobi.c
+>
+> This should be in a separate patch, see HACKING, 'Submitting patches' =
+
+> section
+OK.
+
+>
+>> @@ -420,7 +420,7 @@ static void gobi_pre_sim(struct ofono_modem *modem)
+>>
+>>      ofono_devinfo_create(modem, 0, "qmimodem", data->device);
+>>
+>> -    if (data->features & GOBI_UIM)
+>> +    if ((data->features & GOBI_UIM) && (data->features & GOBI_DMS))
+>>          sim_driver =3D "qmimodem";
+>>      else if (data->features & GOBI_DMS)
+>>          sim_driver =3D "qmimodem-legacy";
+>>
+>
+> Regards,
+> -Denis
+>
+
+
+--===============2232876464060143539==--
 
