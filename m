@@ -1,56 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============4075290049034435132=="
+Content-Type: multipart/mixed; boundary="===============4250291936543195253=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] MC7430: add read_imsi feature to qmimodem sim driver
-Date: Fri, 06 Jan 2017 10:50:24 -0600
-Message-ID: <6924828f-c0e0-f079-868f-e4c45f029c2d@gmail.com>
-In-Reply-To: <74dbf201-e332-3ab1-3a6f-9faa73547309@kerlink.fr>
+Subject: Re: [PATCH] sim: Stop imsi/lock query sequence when SIM is removed
+Date: Fri, 06 Jan 2017 12:26:48 -0600
+Message-ID: <a0a86c75-aeed-a748-439d-ac56b80ca87a@gmail.com>
+In-Reply-To: <1483619336-26053-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4075290049034435132==
+--===============4250291936543195253==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+Hi Slava,
 
+On 01/05/2017 06:28 AM, Slava Monich wrote:
+> SIM card can be removed while the query is in progress. There's
+> still a remote possibility that SIM card is removed and inserted
+> back while the query is pending, that would start the second query
+> sequence and end up invoking sim_initialize() twice. But at least
+> these checks reduce the probability of something like that happening.
+> ---
+>  src/sim.c | 9 +++++++++
+>  1 file changed, 9 insertions(+)
 >
-> What I would like to do for QMI modem is to always try QMI_DMS_GET_IMSI
-> (not only for Sierra modems) and if it fails, try to obtain IMSI via EF
-> reads.
 
-So you want the core to try both read_imsi and read_transparent in =
-
-sequence to obtain the IMSI.  This isn't really ideal, as the driver =
-
-should really implement one method or the other.
-
-Do we know whether the Sierra devices actually support raw SIM reads? =
-
-Maybe the QMI commands need to be formatted specifically for Sierra =
-
-devices?  Ideal situation would be to get read_transparent to work for =
-
-obtaining the IMSI.
-
-If the above can't be made to work, then we should probably just add =
-
-another QMI based sim driver for these devices.  E.g. one that supports =
-
-read_imsi via DMS and PIN operations via UIM.
-
->
-> I have done a patch to do that (see diff above). Let me know if you
-> think that's a good idea. In this case, I will send two patches:
->  - backup read_imsi by IMSI via EF read
-
-Can you send this patch properly via git send-email.  I might be =
-
-convinced to apply it.
+Applied, thanks.
 
 Regards,
 -Denis
 
---===============4075290049034435132==--
+
+--===============4250291936543195253==--
 
