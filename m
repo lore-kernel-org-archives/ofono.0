@@ -1,36 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============4250291936543195253=="
+Content-Type: multipart/mixed; boundary="===============0564138216010231028=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim: Stop imsi/lock query sequence when SIM is removed
-Date: Fri, 06 Jan 2017 12:26:48 -0600
-Message-ID: <a0a86c75-aeed-a748-439d-ac56b80ca87a@gmail.com>
-In-Reply-To: <1483619336-26053-1-git-send-email-slava.monich@jolla.com>
+From: Christophe Ronco <c.ronco@kerlink.fr>
+Subject: [PATCH 0/2] Fix Read Imsi feature for MC7430 modem
+Date: Mon, 09 Jan 2017 09:34:05 +0100
+Message-ID: <20170109083407.3980-1-c.ronco@kerlink.fr>
+In-Reply-To: <6924828f-c0e0-f079-868f-e4c45f029c2d@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4250291936543195253==
+--===============0564138216010231028==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+Done in 2 patches:
+ - Backup read imsi modem driver funtion by IMSI via EF read (what is done
+now when read_insi is not defined in modem driver)
+ - Implement read_imsi in qmimodem sim driver
 
-On 01/05/2017 06:28 AM, Slava Monich wrote:
-> SIM card can be removed while the query is in progress. There's
-> still a remote possibility that SIM card is removed and inserted
-> back while the query is pending, that would start the second query
-> sequence and end up invoking sim_initialize() twice. But at least
-> these checks reduce the probability of something like that happening.
-> ---
->  src/sim.c | 9 +++++++++
->  1 file changed, 9 insertions(+)
->
+Christophe Ronco (2):
+  sim: backup driver read_imsi by IMSI via EF read
+  qmimodem: Add read_imsi to qmimodem sim driver
 
-Applied, thanks.
+ drivers/qmimodem/sim.c | 83 ++++++++++++++++++++++++++++++++++++++++++++++=
+----
+ src/sim.c              | 33 ++++++++++++--------
+ 2 files changed, 97 insertions(+), 19 deletions(-)
 
-Regards,
--Denis
+-- =
+
+2.11.0
 
 
---===============4250291936543195253==--
+--===============0564138216010231028==--
 
