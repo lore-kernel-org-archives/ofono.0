@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5546411801792934194=="
+Content-Type: multipart/mixed; boundary="===============3430782201411640386=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] qmimodem: add pin_send feature
-Date: Tue, 10 Jan 2017 11:21:54 -0600
-Message-ID: <5f86be68-974b-3c98-1169-d419a523b0db@gmail.com>
-In-Reply-To: <20170110083847.28309-3-c.ronco@kerlink.fr>
+Subject: Re: [PATCH 4/4] udevng: Sierra modems use SIM driver
+Date: Tue, 10 Jan 2017 11:26:45 -0600
+Message-ID: <5ce31449-e6c4-eed0-4460-ccbe6d35ed38@gmail.com>
+In-Reply-To: <20170110083847.28309-5-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5546411801792934194==
+--===============3430782201411640386==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,17 +16,16 @@ Content-Transfer-Encoding: quoted-printable
 Hi Christophe,
 
 On 01/10/2017 02:38 AM, Christophe Ronco wrote:
-> Add ability to send PIN to a QMI modem using QMI_UIM_VERIFY_PIN command.
-> This has been tested on MC7304 and MC7430 modems.
 > ---
->  drivers/qmimodem/sim.c | 65 ++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  drivers/qmimodem/uim.h | 11 +++++++++
->  2 files changed, 76 insertions(+)
+>  plugins/udevng.c | 2 --
+>  1 file changed, 2 deletions(-)
 >
 
-Looks fine to me.
+Applied, thanks.
+
+Regards,
+-Denis
 
 
---===============5546411801792934194==--
+--===============3430782201411640386==--
 
