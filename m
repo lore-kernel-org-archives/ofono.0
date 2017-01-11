@@ -1,31 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============3430782201411640386=="
+Content-Type: multipart/mixed; boundary="===============8300550435699786665=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/4] udevng: Sierra modems use SIM driver
-Date: Tue, 10 Jan 2017 11:26:45 -0600
-Message-ID: <5ce31449-e6c4-eed0-4460-ccbe6d35ed38@gmail.com>
-In-Reply-To: <20170110083847.28309-5-c.ronco@kerlink.fr>
+From: Christophe Ronco <c.ronco@kerlink.fr>
+Subject: [PATCH 0/1] Correction of previous patch
+Date: Wed, 11 Jan 2017 11:06:47 +0100
+Message-ID: <20170111100648.25936-1-c.ronco@kerlink.fr>
+In-Reply-To: <43856c43-f49b-9bb7-4106-4f62d30b291c@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3430782201411640386==
+--===============8300550435699786665==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+Hello Denis,
 
-On 01/10/2017 02:38 AM, Christophe Ronco wrote:
-> ---
->  plugins/udevng.c | 2 --
->  1 file changed, 2 deletions(-)
->
+Thanks again for code review. Here is another (I hope better) version
+of the patch.
+I changed gboolean for bool, because it is used more often than
+gboolean in repository code.
 
-Applied, thanks.
+Christophe
 
-Regards,
--Denis
+Christophe Ronco (1):
+  qmimodem: get password state from modem
+
+ drivers/qmimodem/sim.c | 178 +++++++++++++++++++++++++++++++++------------=
+----
+ 1 file changed, 119 insertions(+), 59 deletions(-)
+
+-- =
+
+2.11.0
 
 
---===============3430782201411640386==--
+--===============8300550435699786665==--
 
