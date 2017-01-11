@@ -1,69 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============2891013912292086541=="
+Content-Type: multipart/mixed; boundary="===============3558291898006649796=="
 MIME-Version: 1.0
-From: Naveen Kumar Danturi <naveendanturi@gmail.com>
-Subject: Regarding multiple APN support in ofono/connman
-Date: Wed, 11 Jan 2017 13:39:16 -0600
-Message-ID: <CAN3FBZa__Ki3eCsedpFr9zQucKmVUs=pB3jPeNJPMmmnV==EbQ@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Regarding multiple APN support in ofono/connman
+Date: Wed, 11 Jan 2017 17:26:16 -0600
+Message-ID: <733ce497-2a7f-d345-0263-e7f33187dfd8@gmail.com>
+In-Reply-To: <CAN3FBZa__Ki3eCsedpFr9zQucKmVUs=pB3jPeNJPMmmnV==EbQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2891013912292086541==
+--===============3558291898006649796==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ofono team,
-Is there a support in ofono for multiple PDN connections in parallel ? If
-so what interfaces/API's it exposes to connman to manage multiple APN's ?
-If so, I have these 2 questions :
+Hi Naveen,
 
-a)  How ofono/connman able to construct / destruct routing tables on data
-connections for multiple APNs and makes sure that IP traffic goes to the
-right IP interface/APN ?
+On 01/11/2017 01:39 PM, Naveen Kumar Danturi wrote:
+> Hi Ofono team,
+> Is there a support in ofono for multiple PDN connections in parallel ?
+> If so what interfaces/API's it exposes to connman to manage multiple
+> APN's ? If so, I have these 2 questions :
 
-b)How ofono/connman ensures that domain name searches are performed via
-right IP interface/APN to the right name server. Provide mechanism to keep
-track of name servers associated with each APN ? I believe Linux only
-provides a mechanism for a single APN via /etc/resolv.con
+Yes, oFono can activate multiple active contexts, assuming the hardware =
 
-c) Is it configurable from upper layers to ensure that if IPV6 is available
-then IPV6 routing and name discovery is used ?
+& driver supports this.  See doc/connman-api.txt.  This is the same =
 
-Probably some of these Questions may come under connman context adding here
-just in case if anyone has experience with it?
+interface ConnMan is using currently.  However, ConnMan only manages a =
 
+single context of type=3D"internet".  I think there were some patches for =
 
+ConnMan to support multiple active internet contexts, but I'm not sure =
 
-Thanks,
-Naveen
+if they ever were accepted upstream.
 
---===============2891013912292086541==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+>
+> a)  How ofono/connman able to construct / destruct routing tables on
+> data connections for multiple APNs and makes sure that IP traffic goes
+> to the right IP interface/APN ?
 
-PGRpdiBkaXI9Imx0ciI+SGkgT2Zvbm8gdGVhbSw8ZGl2PklzIHRoZXJlIGEgc3VwcG9ydCBpbiBv
-Zm9ubyBmb3IgbXVsdGlwbGUgUEROIGNvbm5lY3Rpb25zIGluIHBhcmFsbGVsID8gSWYgc28gd2hh
-dCBpbnRlcmZhY2VzL0FQSSYjMzk7cyBpdCBleHBvc2VzIHRvIGNvbm5tYW4gdG8gbWFuYWdlIG11
-bHRpcGxlIEFQTiYjMzk7cyA/IElmIHNvLCBJIGhhdmUgdGhlc2UgMiBxdWVzdGlvbnMgOjwvZGl2
-PjxkaXY+PGJyPjwvZGl2PjxkaXY+YSkgwqBIb3cgb2Zvbm8vY29ubm1hbiBhYmxlIHRvIGNvbnN0
-cnVjdCAvIGRlc3RydWN0IHJvdXRpbmcgdGFibGVzIG9uIGRhdGEgY29ubmVjdGlvbnMgZm9yIG11
-bHRpcGxlIEFQTnMgYW5kIG1ha2VzIHN1cmUgdGhhdCBJUCB0cmFmZmljIGdvZXMgdG8gdGhlIHJp
-Z2h0IElQIGludGVyZmFjZS9BUE4gPzwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+YilIb3cgb2Zv
-bm8vY29ubm1hbiBlbnN1cmVzIHRoYXQgZG9tYWluIG5hbWUgc2VhcmNoZXMgYXJlIHBlcmZvcm1l
-ZCB2aWEgcmlnaHQgSVAgaW50ZXJmYWNlL0FQTiB0byB0aGUgcmlnaHQgbmFtZSBzZXJ2ZXIuIFBy
-b3ZpZGUgbWVjaGFuaXNtIHRvIGtlZXAgdHJhY2sgb2YgbmFtZSBzZXJ2ZXJzIGFzc29jaWF0ZWQg
-d2l0aCBlYWNoIEFQTiA/IEkgYmVsaWV2ZSBMaW51eCBvbmx5IHByb3ZpZGVzIGEgbWVjaGFuaXNt
-IGZvciBhIHNpbmdsZSBBUE4gdmlhIC9ldGMvcmVzb2x2LmNvbjwvZGl2PjxkaXY+PGJyPjwvZGl2
-PjxkaXY+YykgSXMgaXQgY29uZmlndXJhYmxlIGZyb20gdXBwZXIgbGF5ZXJzIHRvIGVuc3VyZSB0
-aGF0IGlmIElQVjYgaXMgYXZhaWxhYmxlIHRoZW4gSVBWNiByb3V0aW5nIGFuZCBuYW1lIGRpc2Nv
-dmVyeSBpcyB1c2VkID88L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PlByb2JhYmx5IHNvbWUgb2Yg
-dGhlc2UgUXVlc3Rpb25zIG1heSBjb21lIHVuZGVyIGNvbm5tYW4gY29udGV4dCBhZGRpbmcgaGVy
-ZSBqdXN0IGluIGNhc2UgaWYgYW55b25lIGhhcyBleHBlcmllbmNlIHdpdGggaXQ/PC9kaXY+PGRp
-dj48YnI+PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5UaGFua3MsPC9k
-aXY+PGRpdj5OYXZlZW48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2Pjxi
-cj48L2Rpdj48L2Rpdj4K
+All routing table management is outside of oFono's area of =
 
---===============2891013912292086541==--
+responsibility.  Typically an application would use direct interface =
+
+binding to use contexts that are not managed by ConnMan.
+
+>
+> b)How ofono/connman ensures that domain name searches are performed via
+> right IP interface/APN to the right name server. Provide mechanism to
+> keep track of name servers associated with each APN ? I believe Linux
+> only provides a mechanism for a single APN via /etc/resolv.con
+
+Again, this is outside of oFono's area of responsibility.  We only =
+
+provide the DNS information for each context.
+
+>
+> c) Is it configurable from upper layers to ensure that if IPV6 is
+> available then IPV6 routing and name discovery is used ?
+
+Not oFono's responsibility either.
+
+Regards,
+-Denis
+
+--===============3558291898006649796==--
 
