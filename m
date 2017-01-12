@@ -1,46 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8990779657869732660=="
+Content-Type: multipart/mixed; boundary="===============5535887023506802565=="
 MIME-Version: 1.0
-From: Vincent Cesson <cesson.vincent@gmail.com>
-Subject: [RFC 1/1] atmodem: Fix CGDCONT result parsing.
-Date: Thu, 12 Jan 2017 18:09:30 +0100
-Message-ID: <1484240970-3406-2-git-send-email-vincent.cesson@smile.fr>
-In-Reply-To: <1484240970-3406-1-git-send-email-vincent.cesson@smile.fr>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC 1/1] atmodem: Fix CGDCONT result parsing.
+Date: Thu, 12 Jan 2017 10:45:37 -0600
+Message-ID: <968f5e44-fce5-bfb0-1560-e9626f62f5a5@gmail.com>
+In-Reply-To: <1484240970-3406-2-git-send-email-vincent.cesson@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8990779657869732660==
+--===============5535887023506802565==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: vcesson <vincent.cesson@smile.fr>
+Hi Vincent,
 
-CGDCONT result parsing fails if first list contains several ranges.
-Solution: read first range and jump to second list.
----
- drivers/atmodem/gprs.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+On 01/12/2017 11:09 AM, Vincent Cesson wrote:
+> From: vcesson <vincent.cesson@smile.fr>
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index 5ee757a..5724f86 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -522,7 +522,7 @@ static void at_cgdcont_test_cb(gboolean ok, GAtResult *=
-result,
- 		if (g_at_result_iter_next_range(&iter, &min, &max) =3D=3D FALSE)
- 			continue;
- =
+Can you please fix up your Author information, we need proper names so =
 
--		if (!g_at_result_iter_close_list(&iter))
-+		if (!g_at_result_iter_skip_next(&iter))
- 			continue;
- =
+that the patches can be applied.
 
- 		if (g_at_result_iter_open_list(&iter))
--- =
+>
+> CGDCONT result parsing fails if first list contains several ranges.
+> Solution: read first range and jump to second list.
 
-1.9.1
+Could you also include the offending +CGDCONT output in your commit =
+
+description?
+
+> ---
+>  drivers/atmodem/gprs.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+
+Regards,
+-Denis
 
 
---===============8990779657869732660==--
+--===============5535887023506802565==--
 
