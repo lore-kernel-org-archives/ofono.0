@@ -1,38 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============4191336259419034035=="
+Content-Type: multipart/mixed; boundary="===============8990779657869732660=="
 MIME-Version: 1.0
 From: Vincent Cesson <cesson.vincent@gmail.com>
-Subject: [RFC 0/1] Fix CGDCONT result parsing in atmodem
-Date: Thu, 12 Jan 2017 18:09:29 +0100
-Message-ID: <1484240970-3406-1-git-send-email-vincent.cesson@smile.fr>
+Subject: [RFC 1/1] atmodem: Fix CGDCONT result parsing.
+Date: Thu, 12 Jan 2017 18:09:30 +0100
+Message-ID: <1484240970-3406-2-git-send-email-vincent.cesson@smile.fr>
+In-Reply-To: <1484240970-3406-1-git-send-email-vincent.cesson@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4191336259419034035==
+--===============8990779657869732660==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The AT command CGDCONT=3D? may give several ranges of supported context ide=
-ntifier.
-For example with Cinterion PHS8:
+From: vcesson <vincent.cesson@smile.fr>
 
- AT+CGDCONT=3D?
- +CGDCONT: (1-17,101-116),"IP",,,(0),(0-4)
-
-The callback in atmodem driver fails because it expects a unique range in f=
-irst list.
-I propose to skip to next list instead of trying to close the brackets.
-
-vcesson (1):
-  atmodem: Fix CGDCONT result parsing.
-
+CGDCONT result parsing fails if first list contains several ranges.
+Solution: read first range and jump to second list.
+---
  drivers/atmodem/gprs.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
+diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
+index 5ee757a..5724f86 100644
+--- a/drivers/atmodem/gprs.c
++++ b/drivers/atmodem/gprs.c
+@@ -522,7 +522,7 @@ static void at_cgdcont_test_cb(gboolean ok, GAtResult *=
+result,
+ 		if (g_at_result_iter_next_range(&iter, &min, &max) =3D=3D FALSE)
+ 			continue;
+ =
+
+-		if (!g_at_result_iter_close_list(&iter))
++		if (!g_at_result_iter_skip_next(&iter))
+ 			continue;
+ =
+
+ 		if (g_at_result_iter_open_list(&iter))
 -- =
 
 1.9.1
 
 
---===============4191336259419034035==--
+--===============8990779657869732660==--
 
