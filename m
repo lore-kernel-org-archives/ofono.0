@@ -1,70 +1,127 @@
-Content-Type: multipart/mixed; boundary="===============4654533783409643715=="
+Content-Type: multipart/mixed; boundary="===============5619611605628590520=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/1] qmimodem: query_passwd_state can be retried
-Date: Fri, 13 Jan 2017 16:25:02 -0600
-Message-ID: <9c2461b9-0b37-9b8d-ce56-833f4fb2e1fc@gmail.com>
-In-Reply-To: <20170112140918.28845-2-c.ronco@kerlink.fr>
+Subject: Re: [RFC 1/3] plugins: Add Gemalto plugin for Cinterion P-family
+Date: Fri, 13 Jan 2017 16:30:36 -0600
+Message-ID: <ccbe1a5e-d8bf-e3bf-a89c-8531338b1398@gmail.com>
+In-Reply-To: <1484240812-3327-2-git-send-email-vincent.cesson@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4654533783409643715==
+--===============5619611605628590520==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+Hi Vincent,
 
-All of the patch looks fine, except:
+On 01/12/2017 11:06 AM, Vincent Cesson wrote:
+> From: vcesson <vincent.cesson@smile.fr>
 
-> @@ -436,16 +458,36 @@ static void query_passwd_state_cb(struct qmi_result=
- *result,
->  {
->  	struct cb_data *cbd =3D user_data;
->  	ofono_sim_passwd_cb_t cb =3D cbd->cb;
-> +	struct ofono_sim *sim =3D cbd->user;
-> +	struct sim_data *data =3D ofono_sim_get_data(sim);
->  	struct sim_status sim_stat;
-> -
-> -	DBG("");
-> -
-> -	if (!handle_get_card_status_result(result, &sim_stat)) {
-> +	enum get_card_status_result res;
+Please update your Author info.
+
+>
+> Actual cinterion plugin is not compliant with newer Gemalto modems.
+> Gemalto plugin is based on cinterion with a custom struct to handle the
+> interfaces Application and Modem.
+
+The old cinterion plugin is used for Serial based devices.  So sure, =
+
+this makes sense.
+
+> ---
+>  plugins/gemalto.c | 265 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 file changed, 265 insertions(+)
+>  create mode 100644 plugins/gemalto.c
+>
+> diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+> new file mode 100644
+> index 0000000..4758f62
+> --- /dev/null
+> +++ b/plugins/gemalto.c
+> @@ -0,0 +1,265 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+
+You might want to update the copyright years and add your own to the =
+
+above.  Really up to you though :)
+
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
 > +
-> +	res =3D handle_get_card_status_result(result, &sim_stat);
-> +	switch (res) {
-> +	case GET_CARD_STATUS_RESULT_OK:
-> +		DBG("passwd state %d", sim_stat.passwd_state);
-> +		data->retry_count =3D 0;
-> +		CALLBACK_WITH_SUCCESS(cb, sim_stat.passwd_state, cbd->data);
-> +		break;
-> +	case GET_CARD_STATUS_RESULT_TEMP_ERROR:
-> +		data->retry_count++;
-> +		if (data->retry_count > MAX_RETRY_COUNT) {
-> +			DBG("Failed after %d attempts", data->retry_count);
-> +			data->retry_count =3D 0;
-> +			CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-> +		} else {
-> +			usleep(20000);
+> +#ifdef HAVE_CONFIG_H
+> +#include <config.h>
+> +#endif
+> +
+> +#include <errno.h>
+> +#include <stdlib.h>
+> +
+> +#include <glib.h>
+> +#include <gatchat.h>
+> +#include <gattty.h>
+> +
+> +#define OFONO_API_SUBJECT_TO_CHANGE
+> +#include <ofono/plugin.h>
+> +#include <ofono/log.h>
+> +#include <ofono/modem.h>
+> +#include <ofono/call-barring.h>
+> +#include <ofono/call-forwarding.h>
+> +#include <ofono/call-meter.h>
+> +#include <ofono/call-settings.h>
+> +#include <ofono/devinfo.h>
+> +#include <ofono/message-waiting.h>
+> +#include <ofono/netreg.h>
+> +#include <ofono/phonebook.h>
+> +#include <ofono/sim.h>
+> +#include <ofono/sms.h>
+> +#include <ofono/ussd.h>
+> +#include <ofono/voicecall.h>
+> +
+> +#include <drivers/atmodem/atutil.h>
+> +
+> +#include <ofono/gprs.h>
+> +#include <ofono/gprs-context.h>
+> +
+> +#include <drivers/atmodem/vendor.h>
+> +
+> +struct gemalto_data {
+> +	GAtChat *app;
+> +	GAtChat *mdm;
+> +	struct ofono_private_config *config;
 
-You cannot use usleep here.  usleep blocks, so the rest of the daemon is =
+What's this?  There's no such structure defined, and you should not be =
 
-unable to process anything else.  So for example, if you have multiple =
+hijacking the ofono_ prefix for something that is local to a particular =
 
-modems, usleep would block oFono from receiving / sending any events to =
+driver.
 
-these, D-Bus API would be blocked, etc.
+> +};
+> +
 
-For an example of how to get around this using GLib timers, see =
-
-drivers/atmodem/atutil.c.
-
-The at_util_sim_state_query (at_util_sim_state_query_new()) is doing =
-
-something extremely similar to what you're trying to do here.
+The rest looks just fine to me.
 
 Regards,
 -Denis
 
---===============4654533783409643715==--
+
+--===============5619611605628590520==--
 
