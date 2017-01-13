@@ -1,50 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============0492115420533280567=="
+Content-Type: multipart/mixed; boundary="===============2769659401795457486=="
 MIME-Version: 1.0
-From: Vincent Cesson <vincent.cesson@smile.fr>
-Subject: [PATCH 1/1] atmodem: Fix CGDCONT result parsing.
-Date: Fri, 13 Jan 2017 14:27:53 +0100
-Message-ID: <1484314073-4009-1-git-send-email-vincent.cesson@smile.fr>
-In-Reply-To: <968f5e44-fce5-bfb0-1560-e9626f62f5a5@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/1] atmodem: Fix CGDCONT result parsing.
+Date: Fri, 13 Jan 2017 09:39:45 -0600
+Message-ID: <24611947-392e-8cd2-4eef-884b06c5be70@gmail.com>
+In-Reply-To: <1484314073-4009-1-git-send-email-vincent.cesson@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0492115420533280567==
+--===============2769659401795457486==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-CGDCONT result parsing fails if first list contains several ranges. For
-example with modem Cinterion PHS8:
+Hi Vincent,
 
- AT+CGDCONT=3D?
- +CGDCONT: (1-17,101-116),"IP",,,(0),(0-4)
+On 01/13/2017 07:27 AM, Vincent Cesson wrote:
+> CGDCONT result parsing fails if first list contains several ranges. For
+> example with modem Cinterion PHS8:
+>
+>  AT+CGDCONT=3D?
+>  +CGDCONT: (1-17,101-116),"IP",,,(0),(0-4)
+>
+> Solution: read first range and jump to second list instead of trying to
+> close the brackets.
+> ---
+>  drivers/atmodem/gprs.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
 
-Solution: read first range and jump to second list instead of trying to
-close the brackets.
----
- drivers/atmodem/gprs.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Applied, thanks.
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index 5ee757a..5724f86 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -522,7 +522,7 @@ static void at_cgdcont_test_cb(gboolean ok, GAtResult *=
-result,
- 		if (g_at_result_iter_next_range(&iter, &min, &max) =3D=3D FALSE)
- 			continue;
- =
-
--		if (!g_at_result_iter_close_list(&iter))
-+		if (!g_at_result_iter_skip_next(&iter))
- 			continue;
- =
-
- 		if (g_at_result_iter_open_list(&iter))
--- =
-
-1.9.1
+Regards,
+-Denis
 
 
---===============0492115420533280567==--
+--===============2769659401795457486==--
 
