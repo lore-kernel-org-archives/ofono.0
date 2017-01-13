@@ -1,39 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============4807861426677794240=="
+Content-Type: multipart/mixed; boundary="===============2950067249132800722=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC 2/3] udevng: Add Gemalto P-family detection
-Date: Fri, 13 Jan 2017 16:31:34 -0600
-Message-ID: <890ad773-025c-4412-360b-042ce9b8fe67@gmail.com>
-In-Reply-To: <1484240812-3327-3-git-send-email-vincent.cesson@smile.fr>
+Subject: Re: [RFC 3/3] build: Add Gemalto plugin in Makefile
+Date: Fri, 13 Jan 2017 16:32:48 -0600
+Message-ID: <c78b174f-13ea-b76f-c224-69e880b4d5b3@gmail.com>
+In-Reply-To: <1484240812-3327-4-git-send-email-vincent.cesson@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4807861426677794240==
+--===============2950067249132800722==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Vincent,
+
 On 01/12/2017 11:06 AM, Vincent Cesson wrote:
 > From: vcesson <vincent.cesson@smile.fr>
-
-Please update your Author info.
-
 >
-> Add a new function setup, based on telit, to handle Gemalto P-family
-> discovery. The setup look for USB interfaces:
-> application=3D/dev/ttyUSB2
-> gps=3D/dev/ttyUSB1
-> modem=3D/dev/ttyUSB3
 > ---
->  plugins/udevng.c | 38 ++++++++++++++++++++++++++++++++++++++
->  1 file changed, 38 insertions(+)
->
+>  Makefile.am | 3 +++
+>  1 file changed, 3 insertions(+)
 
-Looks fine to me.
+Please squash this patch into patch 1/3.  Since that patch adds the a =
+
+new .c file to plugins/ it should also add it to the build system.
 
 Regards,
 -Denis
 
-
---===============4807861426677794240==--
+--===============2950067249132800722==--
 
