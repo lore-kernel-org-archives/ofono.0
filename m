@@ -1,371 +1,321 @@
-Content-Type: multipart/mixed; boundary="===============6275206889475315378=="
+Content-Type: multipart/mixed; boundary="===============2017321491485422573=="
 MIME-Version: 1.0
-From: Djalal Harouni <djalal@endocode.com>
-Subject: Re: [PATCH] ublox:netmon: support +UCGED and get EARFCN, EBAND and CQI
-Date: Mon, 16 Jan 2017 09:41:18 +0100
-Message-ID: <CAH562ETQSh5_Q2ZWxBU+KktXMWB0XPw1__viJ4TOJvs7L-TvWA@mail.gmail.com>
-In-Reply-To: <a8312ec8-9828-6abf-dd2d-32c68d6a6f8a@gmail.com>
+From: Vincent Cesson <vincent.cesson@smile.fr>
+Subject: [PATCH 1/2] plugins: Add Gemalto plugin for Cinterion P-family
+Date: Mon, 16 Jan 2017 10:07:52 +0100
+Message-ID: <1484557673-15666-1-git-send-email-vincent.cesson@smile.fr>
+In-Reply-To: <ccbe1a5e-d8bf-e3bf-a89c-8531338b1398@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6275206889475315378==
+--===============2017321491485422573==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis, list,
+Actual cinterion plugin is not compliant with newer Gemalto modems.
+Gemalto plugin is based on cinterion with a custom struct to handle the
+interfaces Application and Modem.
+---
+ Makefile.am       |   3 +
+ plugins/gemalto.c | 264 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 267 insertions(+)
+ create mode 100644 plugins/gemalto.c
 
-Sorry for my late response, was traveling. I'll address all the
-comments and fix the delayed register this week. Thanks again.
+diff --git a/Makefile.am b/Makefile.am
+index a817565..a87c892 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -452,6 +452,9 @@ builtin_sources +=3D plugins/caif.c
+ builtin_modules +=3D cinterion
+ builtin_sources +=3D plugins/cinterion.c
+ =
 
-On 19 December 2016 at 17:59, Denis Kenzior <denkenz@gmail.com> wrote:
-> Hi Djalal,
->
-> On 12/16/2016 04:05 AM, Djalal Harouni wrote:
->>
->> This adds support for +UCGED mode 2 and for now we collect only
->> EARFCN, EBAND and CQI. Later we will follow up with +UCGED mode 3.
->>
->> Some ublox modems supports +UCGED mode 2 and others only +UCGED mode 3
->> depending on the firmware.
->> ---
->>  drivers/ubloxmodem/netmon.c | 210
->> +++++++++++++++++++++++++++++++++++++++++++-
->>  1 file changed, 206 insertions(+), 4 deletions(-)
->>
->
-> This looks good.  Just a couple of small nitpicks:
->
->> diff --git a/drivers/ubloxmodem/netmon.c b/drivers/ubloxmodem/netmon.c
->> index 0749078..6fc3bad 100644
->> --- a/drivers/ubloxmodem/netmon.c
->> +++ b/drivers/ubloxmodem/netmon.c
->> @@ -46,6 +46,20 @@
->>
->>  static const char *cops_prefix[] =3D { "+COPS:", NULL };
->>  static const char *cesq_prefix[] =3D { "+CESQ:", NULL };
->> +static const char *ucged_prefix[] =3D { "+UCGED:", NULL };
->> +
->> +/*
->> + * Generic function that should point to number or hexstring result
->> + * parsers. Result should be returned as an int.
->> + */
->> +typedef gboolean (*ucged_g_at_result_iter_next)(GAtResultIter *iter,
->> +                                               int *result);
->> +
->
->
-> Maybe ucged_parse_field_t?  However, I'm not sure about the function
-> signature here.  g_at_result_iter_next_hexstring returns a guint8 * and
-> gsize value.
->
->> +/* Field from +UCGED response */
->> +typedef struct ublox_ucged_value {
->> +       int offset;     /* Offset at response */
->> +       ucged_g_at_result_iter_next ucged_g_at_result_iter_next_field;
->
->
-> The name is unnecessarily long.  Maybe parse_field?
->
->
->> +} ublox_ucged_value;
->>
->>  struct netmon_driver_data {
->>         GAtChat *chat;
->> @@ -67,6 +81,10 @@ struct req_cb_data {
->>         int rsrp;       /* CESQ: Reference Signal Received Power */
->>         int ecn0;       /* CESQ: Received Energy Ratio */
->>         int rsrq;       /* CESQ: Reference Signal Received Quality */
->> +
->> +       int earfcn;     /* UCGED: E-UTRA ARFCN */
->> +       int eband;      /* UCGED: E-UTRA Band */
->> +       int cqi;        /* UCGED: Channel Quality Indicator */
->>  };
->>
->>  /*
->> @@ -102,6 +120,7 @@ static inline struct req_cb_data
->> *req_cb_data_new0(void *cb, void *data,
->>         ret->cb =3D cb;
->>         ret->data =3D data;
->>         ret->netmon =3D user;
->> +
->>         ret->rxlev =3D -1;
->>         ret->ber =3D -1;
->>         ret->rscp =3D -1;
->> @@ -109,6 +128,10 @@ static inline struct req_cb_data
->> *req_cb_data_new0(void *cb, void *data,
->>         ret->ecn0 =3D -1;
->>         ret->rsrq =3D -1;
->>
->> +       ret->earfcn =3D -1;
->> +       ret->eband =3D -1;
->> +       ret->cqi =3D -1;
->> +
->>         return ret;
->>  }
->>
->> @@ -157,11 +180,165 @@ static void ublox_netmon_finish_success(struct
->> req_cb_data *cbd)
->>                                         OFONO_NETMON_INFO_ECN0, cbd->ecn=
-0,
->>                                         OFONO_NETMON_INFO_RSRQ, cbd->rsr=
-q,
->>                                         OFONO_NETMON_INFO_RSRP, cbd->rsr=
-p,
->> +                                       OFONO_NETMON_INFO_EARFCN,
->> cbd->earfcn,
->> +                                       OFONO_NETMON_INFO_EBAND,
->> cbd->eband,
->> +                                       OFONO_NETMON_INFO_CQI, cbd->cqi,
->>                                         OFONO_NETMON_INFO_INVALID);
->>
->>         CALLBACK_WITH_SUCCESS(cbd->cb, cbd->data);
->>  }
->>
->> +static void ucged_parse_4g(struct req_cb_data *cbd, GAtResultIter *iter)
->> +{
->> +       /* Offset of values in returned response */
->> +       enum ucged_mode2_rat4_offsets {
->> +               UCGED_EARFCN            =3D 0,
->> +               UCGED_EBAND             =3D 1,
->> +               UCGED_CQI               =3D 15,
->> +       };
->> +
->> +       ublox_ucged_value ucged_values[] =3D {
->> +               { UCGED_EARFCN, g_at_result_iter_next_number },
->> +               { UCGED_EBAND,  g_at_result_iter_next_number },
->> +               { UCGED_CQI,    g_at_result_iter_next_number },
->> +               { -1,           NULL }, /* End of Array */
->> +       };
->> +
->> +       gboolean ok;
->> +       unsigned i;
->> +       ublox_ucged_value *cur;
->> +
->> +       /* Skip to next */
->> +       ok =3D g_at_result_iter_next(iter, NULL);
->> +       if (!ok) {
->> +               DBG(" UCGED:response: failed to go to next line ");
->> +               return;
->> +       }
->> +
->> +       i =3D 0;
->> +       cur =3D &ucged_values[0];
->> +       while (cur->offset >=3D 0) {
->> +               int number;
->> +
->
->
-> If you declare number as unsigned int you won't need the ugly cast below.
->
->
->> +               /* Skip values that we do not want */
->> +               while (i !=3D (unsigned) cur->offset) {
->> +                       ok =3D g_at_result_iter_skip_next(iter);
->> +                       if (!ok) {
->> +                               DBG(" UCGED: error skip idx: %d ", i);
->> +                               return;
->> +                       }
->> +                       i++;
->> +               }
->> +
->> +               ok =3D cur->ucged_g_at_result_iter_next_field(iter,
->> &number);
->> +               if (!ok) {
->> +                       DBG(" UCGED: error parsing at idx: %d ", i);
->> +                       return;
->> +               }
->> +
->> +               switch (i) {
->> +               case UCGED_EARFCN:
->> +                       cbd->earfcn =3D number !=3D 65535 ? number :
->> cbd->earfcn;
->> +                       break;
->> +               case UCGED_EBAND:
->> +                       cbd->eband =3D number !=3D 255 ? number : cbd->e=
-band;
->> +                       break;
->> +               case UCGED_CQI:
->> +                       cbd->cqi =3D number !=3D 255 ? number : cbd->cqi;
->> +                       break;
->> +               }
->> +
->> +               i++;
->> +               cur++;
->> +       }
->> +
->> +       /*
->> +        * Sample output for +UCGED MODE 2 will be:
->> +        *
->> +        *      UCGED: MODE 2 RAT =3D 4G  EARFCN =3D 1300
->> +        *      UCGED: MODE 2 RAT =3D 4G  EBAND =3D 3
->> +        *      UCGED: MODE 2 RAT =3D 4G  CQI =3D -1
->
->
-> When I asked for sample output, I meant from the modem, not from this
-> function
->
->
->> +        *
->> +        * Check the networkmonitor-api documentation and the related
->> +        * references for mode details.
->> +        */
->> +       DBG(" UCGED: MODE 2 RAT =3D 4G    EARFCN =3D %d ", cbd->earfcn);
->> +       DBG(" UCGED: MODE 2 RAT =3D 4G    EBAND =3D %d ", cbd->eband);
->> +       DBG(" UCGED: MODE 2 RAT =3D 4G    CQI =3D %d ", cbd->cqi);
->> +}
->> +
->> +static void ucged_collect_mode2_data(struct req_cb_data *cbd,
->> +                                       GAtResultIter *iter)
->> +{
->> +       int rat;
->> +       gboolean ok;
->> +
->> +       ok =3D g_at_result_iter_next(iter, NULL);
->> +       if (!ok) {
->> +               DBG(" UCGED:response: failed to go to next line ");
->> +               return;
->> +       }
->> +
->> +       ok =3D g_at_result_iter_next_number(iter, &rat);
->> +       if (!ok) {
->> +               DBG(" UCGED: error parsing 'RAT' ");
->> +               return;
->> +       }
->> +
->> +       /* For now we support only RAT 4 */
->> +       if (rat !=3D 4) {
->> +               DBG(" UCGED: 'RAT' is %d, nothing to do. ", rat);
->> +               return;
->> +       }
->> +
->> +       DBG(" UCGED: 'RAT' is %d ", rat);
->> +       ucged_parse_4g(cbd, iter);
->> +}
->> +
->> +static void ucged_query_mode2_cb(gboolean ok, GAtResult *result,
->> +                                       gpointer user_data)
->> +{
->> +       struct req_cb_data *cbd =3D user_data;
->> +       struct ofono_error error;
->> +       GAtResultIter iter;
->> +       int mode;
->> +
->> +       DBG("ok %d", ok);
->> +
->> +       decode_at_error(&error, g_at_result_final_response(result));
->> +
->> +       if (!ok) {
->> +               DBG(" UCGED: failed ");
->> +               goto out;
->> +       }
->> +
->> +       g_at_result_iter_init(&iter, result);
->> +
->> +       if (!g_at_result_iter_next(&iter, "+UCGED:")) {
->> +               DBG(" UCGED: no result ");
->> +               goto out;
->> +       }
->> +
->> +       ok =3D g_at_result_iter_next_number(&iter, &mode);
->> +       if (!ok) {
->> +               DBG(" UCGED: error parsing 'mode' ");
->> +               goto out;
->> +       }
->> +
->> +       DBG(" UCGED:  report mode is %d ", mode);
->> +
->> +       /* mode 2 collect +UCGED data */
->> +       if (mode =3D=3D 2)
->> +               ucged_collect_mode2_data(cbd, &iter);
->> +
->> +       /*
->> +        * We never fail at this point we always send what we collected =
-so
->> +        * far
->> +        */
->> +out:
->> +       ublox_netmon_finish_success(cbd);
->> +}
->> +
->>  static void cesq_cb(gboolean ok, GAtResult *result, gpointer user_data)
->>  {
->>         enum cesq_ofono_netmon_info {
->> @@ -175,6 +352,8 @@ static void cesq_cb(gboolean ok, GAtResult *result,
->> gpointer user_data)
->>         };
->>
->>         struct req_cb_data *cbd =3D user_data;
->> +       struct ofono_netmon *nm =3D cbd->netmon;
->> +       struct netmon_driver_data *nmd =3D ofono_netmon_get_data(nm);
->>         struct ofono_error error;
->>         GAtResultIter iter;
->>         int idx, number;
->> @@ -233,10 +412,17 @@ static void cesq_cb(gboolean ok, GAtResult *result,
->> gpointer user_data)
->>         DBG(" RSRQ      %d ", cbd->rsrq);
->>         DBG(" RSRP      %d ", cbd->rsrp);
->>
->> -       /*
->> -        * We never fail at this point we always send what we collected =
-so
->> -        * far
->> -        */
->> +       cbd =3D req_cb_data_ref(cbd);
->> +       if (g_at_chat_send(nmd->chat, "AT+UCGED?", NULL,
->> +                       ucged_query_mode2_cb, cbd, req_cb_data_unref) =
-=3D=3D
->> 0) {
->> +               /* We never fail, we always send what we collected so far
->> */
->> +               ofono_error("%s: send +UCGED failed", __func__);
->> +               req_cb_data_unref(cbd);
->> +               goto out;
->> +       }
->> +
->> +       return;
->> +
->>  out:
->>         ublox_netmon_finish_success(cbd);
->>  }
->> @@ -320,6 +506,22 @@ static int ublox_netmon_probe(struct ofono_netmon
->> *netmon,
->>
->>         g_idle_add(ublox_delayed_register, netmon);
->>
->
-> I still think we should remove ublox_delayed_register and move the
-> ofono_netmon_register call into the UCGED=3D2 callback below.
->
->> +       /*
->> +        * We set +UCGED=3D2 mode as early as possible so we are able to
->> handle
->> +        * the following:
->> +        * 1) In case the modem supports only +UCGED mode 2 then we have
->> +        *    already set the appropriate mode and we can query the
->> information
->> +        *    later.
->> +        * 2) In case the modem supports only +UCGED mode 3, then to set
->> mode 3
->> +        *    the modem has to be first in +UCGED mode 2. Setting the mo=
-de
->> here
->> +        *    allows later to query the information and on errors we
->> fallback
->> +        *    to mode 3.
->> +        *
->> +        * This should handle current firmware versions of ublox modems.
->> +        */
->> +       g_at_chat_send(nmd->chat, "AT+UCGED=3D2", ucged_prefix,
->> +                       NULL, NULL, NULL);
->> +
->>         return 0;
->>  }
->>
->>
->
-> Regards,
-> -Denis
++builtin_modules +=3D gemalto
++builtin_sources +=3D plugins/gemalto.c
++
+ builtin_modules +=3D nokia
+ builtin_sources +=3D plugins/nokia.c
+ =
 
---===============6275206889475315378==--
+diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+new file mode 100644
+index 0000000..286d52c
+--- /dev/null
++++ b/plugins/gemalto.c
+@@ -0,0 +1,264 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2017 Vincent Cesson. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <errno.h>
++#include <stdlib.h>
++
++#include <glib.h>
++#include <gatchat.h>
++#include <gattty.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/call-barring.h>
++#include <ofono/call-forwarding.h>
++#include <ofono/call-meter.h>
++#include <ofono/call-settings.h>
++#include <ofono/devinfo.h>
++#include <ofono/message-waiting.h>
++#include <ofono/netreg.h>
++#include <ofono/phonebook.h>
++#include <ofono/sim.h>
++#include <ofono/sms.h>
++#include <ofono/ussd.h>
++#include <ofono/voicecall.h>
++
++#include <drivers/atmodem/atutil.h>
++
++#include <ofono/gprs.h>
++#include <ofono/gprs-context.h>
++
++#include <drivers/atmodem/vendor.h>
++
++struct gemalto_data {
++	GAtChat *app;
++	GAtChat *mdm;
++};
++
++static int gemalto_probe(struct ofono_modem *modem)
++{
++	struct gemalto_data *data;
++
++	data =3D g_try_new0(struct gemalto_data, 1);
++	if (data =3D=3D NULL)
++		return -ENOMEM;
++
++	ofono_modem_set_data(modem, data);
++
++	return 0;
++}
++
++static void gemalto_remove(struct ofono_modem *modem)
++{
++	struct gemalto_data *data =3D ofono_modem_get_data(modem);
++
++	ofono_modem_set_data(modem, NULL);
++	g_free(data);
++}
++
++static void gemalto_debug(const char *str, void *user_data)
++{
++	const char *prefix =3D user_data;
++
++	ofono_info("%s%s", prefix, str);
++}
++
++static GAtChat *open_device(const char *device)
++{
++	GAtSyntax *syntax;
++	GIOChannel *channel;
++	GAtChat *chat;
++
++	DBG("Opening device %s", device);
++
++	channel =3D g_at_tty_open(device, NULL);
++	if (channel =3D=3D NULL)
++		return NULL;
++
++	syntax =3D g_at_syntax_new_gsm_permissive();
++	chat =3D g_at_chat_new(channel, syntax);
++	g_at_syntax_unref(syntax);
++	g_io_channel_unref(channel);
++
++	if (chat =3D=3D NULL)
++		return NULL;
++
++	return chat;
++}
++
++static int gemalto_enable(struct ofono_modem *modem)
++{
++	struct gemalto_data *data =3D ofono_modem_get_data(modem);
++	const char *app, *mdm;
++
++	DBG("%p", modem);
++
++	app =3D ofono_modem_get_string(modem, "Application");
++	mdm =3D ofono_modem_get_string(modem, "Modem");
++
++	if (app =3D=3D NULL || mdm =3D=3D NULL)
++		return -EINVAL;
++
++	/* Open devices */
++	data->app =3D open_device(app);
++	if (data->app =3D=3D NULL)
++		return -EINVAL;
++
++	data->mdm =3D open_device(mdm);
++	if (data->mdm =3D=3D NULL) {
++		g_at_chat_unref(data->app);
++		data->app =3D NULL;
++		return -EINVAL;
++	}
++
++	if (getenv("OFONO_AT_DEBUG")) {
++		g_at_chat_set_debug(data->app, gemalto_debug, "App");
++		g_at_chat_set_debug(data->mdm, gemalto_debug, "Mdm");
++	}
++
++	return 0;
++}
++
++static int gemalto_disable(struct ofono_modem *modem)
++{
++	struct gemalto_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_at_chat_send(data->app, "AT^SMSO", NULL, NULL, NULL, NULL);
++
++	ofono_modem_set_data(modem, NULL);
++
++	return 0;
++}
++
++static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_modem_online_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	cb(&error, cbd->data);
++}
++
++static void gemalto_set_online(struct ofono_modem *modem, ofono_bool_t onl=
+ine,
++		ofono_modem_online_cb_t cb, void *user_data)
++{
++	struct gemalto_data *data =3D ofono_modem_get_data(modem);
++	struct cb_data *cbd =3D cb_data_new(cb, user_data);
++	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D0";
++
++	DBG("modem %p %s", modem, online ? "online" : "offline");
++
++	if (g_at_chat_send(data->app, command, NULL, set_online_cb, cbd, g_free))
++		return;
++
++	CALLBACK_WITH_FAILURE(cb, cbd->data);
++
++	g_free(cbd);
++}
++
++static void gemalto_pre_sim(struct ofono_modem *modem)
++{
++	struct gemalto_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_sim *sim;
++
++	DBG("%p", modem);
++
++	ofono_devinfo_create(modem, 0, "atmodem", data->app);
++	sim =3D ofono_sim_create(modem, 0, "atmodem", data->app);
++	ofono_voicecall_create(modem, 0, "atmodem", data->app);
++	ofono_location_reporting_create(modem, 0, "gemaltomodem", data->app);
++
++	if (sim)
++		ofono_sim_inserted_notify(sim, TRUE);
++}
++
++static void gemalto_post_sim(struct ofono_modem *modem)
++{
++	struct gemalto_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	ofono_phonebook_create(modem, 0, "atmodem", data->app);
++
++	ofono_sms_create(modem, 0, "atmodem", data->app);
++}
++
++static void gemalto_post_online(struct ofono_modem *modem)
++{
++	struct gemalto_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_message_waiting *mw;
++	struct ofono_gprs *gprs;
++	struct ofono_gprs_context *gc;
++
++	DBG("%p", modem);
++
++	ofono_ussd_create(modem, 0, "atmodem", data->app);
++	ofono_call_forwarding_create(modem, 0, "atmodem", data->app);
++	ofono_call_settings_create(modem, 0, "atmodem", data->app);
++	ofono_netreg_create(modem, OFONO_VENDOR_CINTERION, "atmodem", data->app);
++	ofono_call_meter_create(modem, 0, "atmodem", data->app);
++	ofono_call_barring_create(modem, 0, "atmodem", data->app);
++
++	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->app);
++	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->mdm);
++
++	if (gprs && gc)
++		ofono_gprs_add_context(gprs, gc);
++
++	mw =3D ofono_message_waiting_create(modem);
++	if (mw)
++		ofono_message_waiting_register(mw);
++}
++
++static struct ofono_modem_driver gemalto_driver =3D {
++	.name		=3D "gemalto",
++	.probe		=3D gemalto_probe,
++	.remove		=3D gemalto_remove,
++	.enable		=3D gemalto_enable,
++	.disable	=3D gemalto_disable,
++	.set_online	=3D gemalto_set_online,
++	.pre_sim	=3D gemalto_pre_sim,
++	.post_sim	=3D gemalto_post_sim,
++	.post_online	=3D gemalto_post_online,
++};
++
++static int gemalto_init(void)
++{
++	return ofono_modem_driver_register(&gemalto_driver);
++}
++
++static void gemalto_exit(void)
++{
++	ofono_modem_driver_unregister(&gemalto_driver);
++}
++
++OFONO_PLUGIN_DEFINE(gemalto, "Gemalto modem plugin", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, gemalto_init, gemalto_exit)
+-- =
+
+1.9.1
+
+
+--===============2017321491485422573==--
 
