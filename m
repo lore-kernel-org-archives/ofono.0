@@ -1,97 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============1274007885673510914=="
+Content-Type: multipart/mixed; boundary="===============4923171896238372223=="
 MIME-Version: 1.0
-From: Vincent Cesson <vincent.cesson@smile.fr>
-Subject: [PATCH 2/2] udevng: Add Gemalto P-family detection
-Date: Mon, 16 Jan 2017 10:07:53 +0100
-Message-ID: <1484557673-15666-2-git-send-email-vincent.cesson@smile.fr>
-In-Reply-To: <1484557673-15666-1-git-send-email-vincent.cesson@smile.fr>
+From: Christophe Ronco <c.ronco@kerlink.fr>
+Subject: [PATCH 0/1] use g_timeout_add instead of usleep
+Date: Tue, 17 Jan 2017 11:29:03 +0100
+Message-ID: <20170117102904.970-1-c.ronco@kerlink.fr>
+In-Reply-To: <9c2461b9-0b37-9b8d-ce56-833f4fb2e1fc@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1274007885673510914==
+--===============4923171896238372223==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add a new function setup, based on telit, to handle Gemalto P-family
-discovery. The setup looks for USB interfaces:
-application=3D/dev/ttyUSB2
-gps=3D/dev/ttyUSB1
-modem=3D/dev/ttyUSB3
----
- plugins/udevng.c | 38 ++++++++++++++++++++++++++++++++++++++
- 1 file changed, 38 insertions(+)
+Here is another version of the patch using g_timeout_add.
+Compare to what is done in at_util_sim_state_query, I choose to wait
+only 20ms between attempts (2s in at_util_sim_state_query).
+On my modem, I manage to recover from temporary error after 7 to 10
+tries (less than 2 seconds).
+Let me know if you prefer a bigger wait before retry.
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index a2866b6..f86f467 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -913,6 +913,42 @@ static gboolean setup_ublox(struct modem_info *modem)
- 	return TRUE;
- }
- =
+Christophe Ronco (1):
+  qmimodem: query_passwd_state can be retried
 
-+static gboolean setup_gemalto(struct modem_info* modem)
-+{
-+	const char *app =3D NULL, *gps =3D NULL, *mdm =3D NULL;
-+
-+	GSList *list;
-+
-+	DBG("%s", modem->syspath);
-+
-+	for (list =3D modem->devices; list; list =3D list->next) {
-+		struct device_info *info =3D list->data;
-+
-+		DBG("%s %s %s %s %s", info->devnode, info->interface,
-+						info->number, info->label, info->subsystem);
-+
-+		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
-+			if (g_strcmp0(info->number, "01") =3D=3D 0)
-+				gps =3D info->devnode;
-+			else if (g_strcmp0(info->number, "02") =3D=3D 0)
-+				app =3D info->devnode;
-+			else if (g_strcmp0(info->number, "03") =3D=3D 0)
-+				mdm =3D info->devnode;
-+		}
-+	}
-+
-+	DBG("application=3D%s gps=3D%s modem=3D%s", app, gps, mdm);
-+
-+	if (app =3D=3D NULL || mdm =3D=3D NULL)
-+		return FALSE;
-+
-+	ofono_modem_set_string(modem->modem, "Application", app);
-+	ofono_modem_set_string(modem->modem, "GPS", gps);
-+	ofono_modem_set_string(modem->modem, "Modem", mdm);
-+
-+	return TRUE;
-+}
-+
- static struct {
- 	const char *name;
- 	gboolean (*setup)(struct modem_info *modem);
-@@ -939,6 +975,7 @@ static struct {
- 	{ "samsung",	setup_samsung	},
- 	{ "quectel",	setup_quectel	},
- 	{ "ublox",	setup_ublox	},
-+	{ "gemalto",	setup_gemalto	},
- 	{ }
- };
- =
-
-@@ -1178,6 +1215,7 @@ static struct {
- 	{ "ublox",	"cdc_acm",	"1546", "1102"	},
- 	{ "ublox",	"rndis_host",	"1546", "1146"	},
- 	{ "ublox",	"cdc_acm",	"1546", "1146"	},
-+	{ "gemalto",	"option",	"1e2d",	"0053"	},
- 	{ }
- };
- =
+ drivers/qmimodem/sim.c | 95 ++++++++++++++++++++++++++++++++++++++++++----=
+----
+ 1 file changed, 81 insertions(+), 14 deletions(-)
 
 -- =
 
-1.9.1
+2.11.0
 
 
---===============1274007885673510914==--
+--===============4923171896238372223==--
 
