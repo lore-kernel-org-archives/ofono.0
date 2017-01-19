@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7108945387062487716=="
+Content-Type: multipart/mixed; boundary="===============1027482306945162649=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] qmimodem: get/set kernel device driver data format
-Date: Thu, 19 Jan 2017 14:12:24 -0600
-Message-ID: <e7395eef-3712-f79b-37de-4405aff26a87@gmail.com>
-In-Reply-To: <20170119081518.16765-2-c.ronco@kerlink.fr>
+Subject: Re: [PATCH 2/2] qmimodem: change kernel driver data format if needed
+Date: Thu, 19 Jan 2017 14:20:25 -0600
+Message-ID: <fedb3b69-5ed7-cf35-41cb-ce29ad03cd59@gmail.com>
+In-Reply-To: <20170119081518.16765-3-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7108945387062487716==
+--===============1027482306945162649==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,338 +16,29 @@ Content-Transfer-Encoding: quoted-printable
 Hi Christophe,
 
 On 01/19/2017 02:15 AM, Christophe Ronco wrote:
-> Add a way to get and set data format expected by kernel device driver.
-> This is inspired by what is done in qmicli (package libqmi).
-> It does not use QMI protocol but a sysfs exported by kernel driver.
-> To use this feature, kernel version must be equal or more than 4.5.
+> During gprs-context driver probe function, check kernel device driver
+> data format and modem low level data format.
+> If they are different, align kernel device driver data format on
+> modem low level data format.
+> If an error occurs during this process, continue probing without error.
+> This is inspired by what is done in qmicli and qmi-network (package
+> libqmi).
 > ---
->  drivers/qmimodem/qmi.c | 200 +++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  drivers/qmimodem/qmi.h |  10 +++
->  2 files changed, 210 insertions(+)
+>  drivers/qmimodem/gprs-context.c | 79 +++++++++++++++++++++++++++++++++++=
+++++--
+>  drivers/qmimodem/qmi.h          |  1 +
+>  drivers/qmimodem/wda.h          | 25 +++++++++++++
+>  3 files changed, 102 insertions(+), 3 deletions(-)
+>  create mode 100644 drivers/qmimodem/wda.h
 >
-> diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-> index 0080f250..bf3c7407 100644
-> --- a/drivers/qmimodem/qmi.c
-> +++ b/drivers/qmimodem/qmi.c
-> @@ -26,6 +26,8 @@
->  #define _GNU_SOURCE
->  #include <stdio.h>
->  #include <ctype.h>
-> +#include <dirent.h>
-> +#include <errno.h>
->  #include <fcntl.h>
->  #include <unistd.h>
->  #include <stdlib.h>
-> @@ -33,6 +35,8 @@
->
->  #include <glib.h>
->
-> +#include <ofono/log.h>
-> +
->  #include "qmi.h"
->  #include "ctl.h"
->
-> @@ -1234,6 +1238,202 @@ bool qmi_device_shutdown(struct qmi_device *devic=
-e, qmi_shutdown_func_t func,
->  	return true;
->  }
->
-> +static bool get_device_file_name(struct qmi_device *device,
-> +					char *file_name, int size)
-> +{
-> +	pid_t pid;
-> +	char temp[100];
-> +	ssize_t result;
-> +
-> +	if (size <=3D 0)
-> +		return false;
-> +
-> +	pid =3D getpid();
-> +
-> +	snprintf(temp, 100, "/proc/%d/fd/%d", (int) pid, device->fd);
-> +	temp[99] =3D 0;
-> +
-> +	result =3D readlink(temp, file_name, size - 1);
-> +
-> +	if ((result =3D=3D -1) || (result >=3D size - 1)) {
 
-Due to operator precedence, both sets of inner parens are not really =
+This looks fine to me.  You do need to add wda.h to the build in =
 
-necessary.
-
-
-> +		DBG("Error %d in readlink", errno);
-> +		return false;
-> +	}
-> +
-> +	file_name[result] =3D 0;
-> +
-> +	return true;
-> +}
-> +
-> +static char *get_first_dir_in_directory(char *dir_path)
-> +{
-> +	DIR *dir;
-> +	struct dirent *dir_entry;
-> +	char *dir_name =3D NULL;
-> +
-> +	dir =3D opendir(dir_path);
-> +
-> +	if (!dir)
-> +		return NULL;
-> +
-> +	dir_entry =3D readdir(dir);
-> +
-> +	while ((dir_entry !=3D NULL)) {
-> +		if ((dir_entry->d_type =3D=3D DT_DIR) &&
-> +				(strcmp(dir_entry->d_name, ".") !=3D 0) &&
-> +				(strcmp(dir_entry->d_name, "..") !=3D 0)) {
-
-inner parens should not be necessary here either.
-
-> +			dir_name =3D strdup(dir_entry->d_name);
-
-Might as well use g_strdup here for consistency
-
-> +			break;
-> +		}
-> +
-> +		dir_entry =3D readdir(dir);
-> +	}
-> +
-> +	closedir(dir);
-> +	return dir_name;
-> +}
-> +
-> +static char *get_device_iface_name(struct qmi_device *device)
-
-Can we name this get_device_interface?
-
-> +{
-> +	gchar * driver_names[] =3D { "usbmisc", "usb" };
-> +	guint i;
-
-use char & unsigned int here.  We try to avoid GLib types whenever possible.
-
-> +	char file_path[100];
-
-Any reason this isn't PATH_MAX?  What's the file_path expected to be?
-
-> +	char *file_name;
-> +	char *int_name =3D NULL;
-> +
-> +	if (!get_device_file_name(device, file_path, 100))
-
-100 -> sizeof(file_path)?
-
-> +		return NULL;
-> +
-> +	file_name =3D basename(file_path);
-> +
-> +	for (i =3D 0; i < G_N_ELEMENTS(driver_names) && !int_name; i++) {
-> +		gchar *sysfs_path;
-> +
-> +		sysfs_path =3D g_strdup_printf("/sys/class/%s/%s/device/net/",
-> +						driver_names[i], file_name);
-> +		int_name =3D get_first_dir_in_directory(sysfs_path);
-> +		g_free(sysfs_path);
-> +	}
-> +
-> +	return int_name;
-> +}
-> +
-> +enum qmi_device_expected_data_format qmi_device_get_expected_data_format(
-> +						struct qmi_device *device)
-> +{
-> +	gchar *sysfs_path =3D NULL;
-
-char *
-
-> +	char *int_name =3D NULL;
-> +	FILE *f =3D NULL;
-
-We don't use FILE operations and prefer to use the low-level versions =
-
-(open/close/read/write)
-
-> +	gchar value;
-
-char
-
-> +	enum qmi_device_expected_data_format expected =3D
-> +					QMI_DEVICE_EXPECTED_DATA_FORMAT_UNKNOWN;
-> +
-> +	if (!device)
-> +		goto done;
-> +
-> +	int_name =3D get_device_iface_name(device);
-
-How about a better name here.  E.g. interface =3D get_device_interface(devi=
-ce)
-
-> +
-> +	if (!int_name) {
-> +		DBG("Error while getting interface name");
-> +		goto done;
-> +	}
-> +
-> +	/* Build sysfs file path and open it */
-> +	sysfs_path =3D g_strdup_printf("/sys/class/net/%s/qmi/raw_ip", int_name=
-);
-> +
-> +	f =3D fopen(sysfs_path, "r");
-> +	if (f =3D=3D NULL) {
-> +		/* maybe not supported by kernel */
-> +		DBG("Error %d in fopen(%s)", errno, sysfs_path);
-> +		goto done;
-> +	}
-> +
-> +	if (fread(&value, 1, 1, f) !=3D 1) {
-> +		DBG("Error %d in fread(%s)", errno, sysfs_path);
-> +		goto done;
-> +	}
-
-Can we replace fopen/fread by open/read?
-
-> +
-> +	if (value =3D=3D 'Y')
-> +		expected =3D QMI_DEVICE_EXPECTED_DATA_FORMAT_RAW_IP;
-> +	else if (value =3D=3D 'N')
-> +		expected =3D QMI_DEVICE_EXPECTED_DATA_FORMAT_802_3;
-> +	else
-> +		DBG("Unexpected sysfs file contents");
-> +
-> +done:
-> +	if (f)
-> +		fclose(f);
-> +
-> +	if (sysfs_path)
-> +		g_free(sysfs_path);
-> +
-> +	if (int_name)
-> +		free(int_name);
-
-g_free if you use g_strdup.
-
-> +
-> +	return expected;
-> +}
-> +
-> +bool qmi_device_set_expected_data_format(struct qmi_device *device,
-> +			enum qmi_device_expected_data_format format)
-> +{
-> +	bool res =3D false;
-> +	gchar *sysfs_path =3D NULL;
-
-char
-
-> +	char *int_name =3D NULL;
-
-char *interface
-
-> +	FILE *f =3D NULL;
-> +	gchar value;
-
-char
-
-> +
-> +	if (!device)
-> +		goto done;
-> +
-> +	switch (format) {
-> +	case QMI_DEVICE_EXPECTED_DATA_FORMAT_802_3:
-> +		value =3D 'N';
-> +		break;
-> +	case QMI_DEVICE_EXPECTED_DATA_FORMAT_RAW_IP:
-> +		value =3D 'Y';
-> +		break;
-> +	default:
-> +		DBG("Unhandled firmat: %d", (int) format);
-> +		goto done;
-> +	}
-> +
-> +	int_name =3D get_device_iface_name(device);
-
-interface =3D ?
-
-> +
-> +	if (!int_name) {
-> +		DBG("Error while getting interface name");
-> +		goto done;
-> +	}
-> +
-> +	/* Build sysfs file path and open it */
-> +	sysfs_path =3D g_strdup_printf("/sys/class/net/%s/qmi/raw_ip", int_name=
-);
-> +
-> +	f =3D fopen(sysfs_path, "w");
-> +	if (f =3D=3D NULL) {
-> +		/* maybe not supported by kernel */
-> +		DBG("Error %d in fopen(%s)", errno, sysfs_path);
-> +		goto done;
-> +	}
-> +
-> +	if (fwrite(&value, 1, 1, f) !=3D 1) {
-> +		DBG("Error %d in fwrite(%s)", errno, sysfs_path);
-> +		goto done;
-> +	}
-
-fopen, fwrite, fclose -> open/write/close
-
-> +
-> +	res =3D true;
-> +
-> +done:
-> +	if (f)
-> +		fclose(f);
-> +
-> +	if (sysfs_path)
-> +		g_free(sysfs_path);
-> +
-> +	if (int_name)
-> +		free(int_name);
-> +
-> +	return res;
-> +}
-> +
->  struct qmi_param *qmi_param_new(void)
->  {
->  	struct qmi_param *param;
-> diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
-> index dca115c4..ac19fe01 100644
-> --- a/drivers/qmimodem/qmi.h
-> +++ b/drivers/qmimodem/qmi.h
-> @@ -47,6 +47,12 @@
->  #define QMI_SERVICE_RMS		225	/* Remote management service */
->  #define QMI_SERVICE_OMA		226	/* OMA device management service */
->
-> +enum qmi_device_expected_data_format {
-> +	QMI_DEVICE_EXPECTED_DATA_FORMAT_UNKNOWN,
-> +	QMI_DEVICE_EXPECTED_DATA_FORMAT_802_3,
-> +	QMI_DEVICE_EXPECTED_DATA_FORMAT_RAW_IP,
-> +};
-> +
->  struct qmi_version {
->  	uint8_t type;
->  	uint16_t major;
-> @@ -82,6 +88,10 @@ bool qmi_device_discover(struct qmi_device *device, qm=
-i_discover_func_t func,
->  bool qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t =
-func,
->  				void *user_data, qmi_destroy_func_t destroy);
->
-> +enum qmi_device_expected_data_format qmi_device_get_expected_data_format(
-> +						struct qmi_device *device);
-> +bool qmi_device_set_expected_data_format(struct qmi_device *device,
-> +			enum qmi_device_expected_data_format format);
->
->  struct qmi_param;
->
->
+Makefile.am and also update the Copyright in that file accordingly.
 
 Regards,
 -Denis
 
---===============7108945387062487716==--
+
+--===============1027482306945162649==--
 
