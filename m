@@ -1,296 +1,214 @@
-Content-Type: multipart/mixed; boundary="===============2162322593986407140=="
+Content-Type: multipart/mixed; boundary="===============9175896823181186865=="
 MIME-Version: 1.0
 From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCH 1/2] qmimodem: get/set kernel device driver data format
-Date: Thu, 19 Jan 2017 09:15:17 +0100
-Message-ID: <20170119081518.16765-2-c.ronco@kerlink.fr>
+Subject: [PATCH 2/2] qmimodem: change kernel driver data format if needed
+Date: Thu, 19 Jan 2017 09:15:18 +0100
+Message-ID: <20170119081518.16765-3-c.ronco@kerlink.fr>
 In-Reply-To: <20170119081518.16765-1-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2162322593986407140==
+--===============9175896823181186865==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add a way to get and set data format expected by kernel device driver.
-This is inspired by what is done in qmicli (package libqmi).
-It does not use QMI protocol but a sysfs exported by kernel driver.
-To use this feature, kernel version must be equal or more than 4.5.
+During gprs-context driver probe function, check kernel device driver
+data format and modem low level data format.
+If they are different, align kernel device driver data format on
+modem low level data format.
+If an error occurs during this process, continue probing without error.
+This is inspired by what is done in qmicli and qmi-network (package
+libqmi).
 ---
- drivers/qmimodem/qmi.c | 200 +++++++++++++++++++++++++++++++++++++++++++++=
-++++
- drivers/qmimodem/qmi.h |  10 +++
- 2 files changed, 210 insertions(+)
+ drivers/qmimodem/gprs-context.c | 79 +++++++++++++++++++++++++++++++++++++=
+++--
+ drivers/qmimodem/qmi.h          |  1 +
+ drivers/qmimodem/wda.h          | 25 +++++++++++++
+ 3 files changed, 102 insertions(+), 3 deletions(-)
+ create mode 100644 drivers/qmimodem/wda.h
 
-diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 0080f250..bf3c7407 100644
---- a/drivers/qmimodem/qmi.c
-+++ b/drivers/qmimodem/qmi.c
-@@ -26,6 +26,8 @@
- #define _GNU_SOURCE
- #include <stdio.h>
- #include <ctype.h>
-+#include <dirent.h>
-+#include <errno.h>
- #include <fcntl.h>
- #include <unistd.h>
- #include <stdlib.h>
-@@ -33,6 +35,8 @@
+diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-contex=
+t.c
+index a39db5e8..83c6b21a 100644
+--- a/drivers/qmimodem/gprs-context.c
++++ b/drivers/qmimodem/gprs-context.c
+@@ -30,12 +30,15 @@
+ #include <ofono/gprs-context.h>
  =
 
- #include <glib.h>
- =
-
-+#include <ofono/log.h>
-+
  #include "qmi.h"
- #include "ctl.h"
++#include "wda.h"
+ #include "wds.h"
  =
 
-@@ -1234,6 +1238,202 @@ bool qmi_device_shutdown(struct qmi_device *device,=
- qmi_shutdown_func_t func,
- 	return true;
+ #include "qmimodem.h"
+ =
+
+ struct gprs_context_data {
+ 	struct qmi_service *wds;
++	struct qmi_service *wda;
++	struct qmi_device *dev;
+ 	unsigned int active_context;
+ 	uint32_t pkt_handle;
+ };
+@@ -263,6 +266,69 @@ static void create_wds_cb(struct qmi_service *service,=
+ void *user_data)
+ 					pkt_status_notify, gc, NULL);
  }
  =
 
-+static bool get_device_file_name(struct qmi_device *device,
-+					char *file_name, int size)
++static void get_data_format_cb(struct qmi_result *result, void *user_data)
 +{
-+	pid_t pid;
-+	char temp[100];
-+	ssize_t result;
++	struct ofono_gprs_context *gc =3D user_data;
++	struct gprs_context_data *data =3D ofono_gprs_context_get_data(gc);
++	uint32_t llproto;
++	enum qmi_device_expected_data_format expected_llproto;
 +
-+	if (size <=3D 0)
-+		return false;
++	DBG("");
 +
-+	pid =3D getpid();
-+
-+	snprintf(temp, 100, "/proc/%d/fd/%d", (int) pid, device->fd);
-+	temp[99] =3D 0;
-+
-+	result =3D readlink(temp, file_name, size - 1);
-+
-+	if ((result =3D=3D -1) || (result >=3D size - 1)) {
-+		DBG("Error %d in readlink", errno);
-+		return false;
-+	}
-+
-+	file_name[result] =3D 0;
-+
-+	return true;
-+}
-+
-+static char *get_first_dir_in_directory(char *dir_path)
-+{
-+	DIR *dir;
-+	struct dirent *dir_entry;
-+	char *dir_name =3D NULL;
-+
-+	dir =3D opendir(dir_path);
-+
-+	if (!dir)
-+		return NULL;
-+
-+	dir_entry =3D readdir(dir);
-+
-+	while ((dir_entry !=3D NULL)) {
-+		if ((dir_entry->d_type =3D=3D DT_DIR) &&
-+				(strcmp(dir_entry->d_name, ".") !=3D 0) &&
-+				(strcmp(dir_entry->d_name, "..") !=3D 0)) {
-+			dir_name =3D strdup(dir_entry->d_name);
-+			break;
-+		}
-+
-+		dir_entry =3D readdir(dir);
-+	}
-+
-+	closedir(dir);
-+	return dir_name;
-+}
-+
-+static char *get_device_iface_name(struct qmi_device *device)
-+{
-+	gchar * driver_names[] =3D { "usbmisc", "usb" };
-+	guint i;
-+	char file_path[100];
-+	char *file_name;
-+	char *int_name =3D NULL;
-+
-+	if (!get_device_file_name(device, file_path, 100))
-+		return NULL;
-+
-+	file_name =3D basename(file_path);
-+
-+	for (i =3D 0; i < G_N_ELEMENTS(driver_names) && !int_name; i++) {
-+		gchar *sysfs_path;
-+
-+		sysfs_path =3D g_strdup_printf("/sys/class/%s/%s/device/net/",
-+						driver_names[i], file_name);
-+		int_name =3D get_first_dir_in_directory(sysfs_path);
-+		g_free(sysfs_path);
-+	}
-+
-+	return int_name;
-+}
-+
-+enum qmi_device_expected_data_format qmi_device_get_expected_data_format(
-+						struct qmi_device *device)
-+{
-+	gchar *sysfs_path =3D NULL;
-+	char *int_name =3D NULL;
-+	FILE *f =3D NULL;
-+	gchar value;
-+	enum qmi_device_expected_data_format expected =3D
-+					QMI_DEVICE_EXPECTED_DATA_FORMAT_UNKNOWN;
-+
-+	if (!device)
++	if (qmi_result_set_error(result, NULL))
 +		goto done;
 +
-+	int_name =3D get_device_iface_name(device);
-+
-+	if (!int_name) {
-+		DBG("Error while getting interface name");
++	if (!qmi_result_get_uint32(result, QMI_WDA_LL_PROTOCOL, &llproto))
 +		goto done;
++
++	expected_llproto =3D qmi_device_get_expected_data_format(data->dev);
++
++	if ((llproto =3D=3D QMI_WDA_DATA_LINK_PROTOCOL_802_3) &&
++			(expected_llproto =3D=3D
++				QMI_DEVICE_EXPECTED_DATA_FORMAT_RAW_IP)) {
++		if (!qmi_device_set_expected_data_format(data->dev,
++					QMI_DEVICE_EXPECTED_DATA_FORMAT_802_3))
++			DBG("Fail to set expected data to 802.3");
++		else
++			DBG("expected data set to 802.3");
++	} else if ((llproto =3D=3D QMI_WDA_DATA_LINK_PROTOCOL_RAW_IP) &&
++			(expected_llproto =3D=3D
++				QMI_DEVICE_EXPECTED_DATA_FORMAT_802_3)) {
++		if (!qmi_device_set_expected_data_format(data->dev,
++					QMI_DEVICE_EXPECTED_DATA_FORMAT_RAW_IP))
++			DBG("Fail to set expected data to raw-ip");
++		else
++			DBG("expected data set to raw-ip");
 +	}
-+
-+	/* Build sysfs file path and open it */
-+	sysfs_path =3D g_strdup_printf("/sys/class/net/%s/qmi/raw_ip", int_name);
-+
-+	f =3D fopen(sysfs_path, "r");
-+	if (f =3D=3D NULL) {
-+		/* maybe not supported by kernel */
-+		DBG("Error %d in fopen(%s)", errno, sysfs_path);
-+		goto done;
-+	}
-+
-+	if (fread(&value, 1, 1, f) !=3D 1) {
-+		DBG("Error %d in fread(%s)", errno, sysfs_path);
-+		goto done;
-+	}
-+
-+	if (value =3D=3D 'Y')
-+		expected =3D QMI_DEVICE_EXPECTED_DATA_FORMAT_RAW_IP;
-+	else if (value =3D=3D 'N')
-+		expected =3D QMI_DEVICE_EXPECTED_DATA_FORMAT_802_3;
-+	else
-+		DBG("Unexpected sysfs file contents");
 +
 +done:
-+	if (f)
-+		fclose(f);
-+
-+	if (sysfs_path)
-+		g_free(sysfs_path);
-+
-+	if (int_name)
-+		free(int_name);
-+
-+	return expected;
++	qmi_service_create(data->dev, QMI_SERVICE_WDS, create_wds_cb, gc,
++									NULL);
 +}
 +
-+bool qmi_device_set_expected_data_format(struct qmi_device *device,
-+			enum qmi_device_expected_data_format format)
++static void create_wda_cb(struct qmi_service *service, void *user_data)
 +{
-+	bool res =3D false;
-+	gchar *sysfs_path =3D NULL;
-+	char *int_name =3D NULL;
-+	FILE *f =3D NULL;
-+	gchar value;
++	struct ofono_gprs_context *gc =3D user_data;
++	struct gprs_context_data *data =3D ofono_gprs_context_get_data(gc);
 +
-+	if (!device)
-+		goto done;
++	DBG("");
 +
-+	switch (format) {
-+	case QMI_DEVICE_EXPECTED_DATA_FORMAT_802_3:
-+		value =3D 'N';
-+		break;
-+	case QMI_DEVICE_EXPECTED_DATA_FORMAT_RAW_IP:
-+		value =3D 'Y';
-+		break;
-+	default:
-+		DBG("Unhandled firmat: %d", (int) format);
-+		goto done;
++	if (!service) {
++		DBG("Failed to request WDA service, continue initialization");
++		goto error;
 +	}
 +
-+	int_name =3D get_device_iface_name(device);
++	data->wda =3D qmi_service_ref(service);
 +
-+	if (!int_name) {
-+		DBG("Error while getting interface name");
-+		goto done;
-+	}
++	if (qmi_service_send(data->wda, QMI_WDA_GET_DATA_FORMAT, NULL,
++					get_data_format_cb, gc, NULL) > 0)
++		return;
 +
-+	/* Build sysfs file path and open it */
-+	sysfs_path =3D g_strdup_printf("/sys/class/net/%s/qmi/raw_ip", int_name);
-+
-+	f =3D fopen(sysfs_path, "w");
-+	if (f =3D=3D NULL) {
-+		/* maybe not supported by kernel */
-+		DBG("Error %d in fopen(%s)", errno, sysfs_path);
-+		goto done;
-+	}
-+
-+	if (fwrite(&value, 1, 1, f) !=3D 1) {
-+		DBG("Error %d in fwrite(%s)", errno, sysfs_path);
-+		goto done;
-+	}
-+
-+	res =3D true;
-+
-+done:
-+	if (f)
-+		fclose(f);
-+
-+	if (sysfs_path)
-+		g_free(sysfs_path);
-+
-+	if (int_name)
-+		free(int_name);
-+
-+	return res;
++error:
++	qmi_service_create(data->dev, QMI_SERVICE_WDS, create_wds_cb, gc,
++									NULL);
 +}
 +
- struct qmi_param *qmi_param_new(void)
+ static int qmi_gprs_context_probe(struct ofono_gprs_context *gc,
+ 					unsigned int vendor, void *user_data)
  {
- 	struct qmi_param *param;
+@@ -274,8 +340,9 @@ static int qmi_gprs_context_probe(struct ofono_gprs_con=
+text *gc,
+ 	data =3D g_new0(struct gprs_context_data, 1);
+ =
+
+ 	ofono_gprs_context_set_data(gc, data);
++	data->dev =3D device;
+ =
+
+-	qmi_service_create(device, QMI_SERVICE_WDS, create_wds_cb, gc, NULL);
++	qmi_service_create(device, QMI_SERVICE_WDA, create_wda_cb, gc, NULL);
+ =
+
+ 	return 0;
+ }
+@@ -288,9 +355,15 @@ static void qmi_gprs_context_remove(struct ofono_gprs_=
+context *gc)
+ =
+
+ 	ofono_gprs_context_set_data(gc, NULL);
+ =
+
+-	qmi_service_unregister_all(data->wds);
++	if (data->wds) {
++		qmi_service_unregister_all(data->wds);
++		qmi_service_unref(data->wds);
++	}
+ =
+
+-	qmi_service_unref(data->wds);
++	if (data->wda) {
++		qmi_service_unregister_all(data->wda);
++		qmi_service_unref(data->wda);
++	}
+ =
+
+ 	g_free(data);
+ }
 diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
-index dca115c4..ac19fe01 100644
+index ac19fe01..2233cdb0 100644
 --- a/drivers/qmimodem/qmi.h
 +++ b/drivers/qmimodem/qmi.h
-@@ -47,6 +47,12 @@
+@@ -42,6 +42,7 @@
+ #define QMI_SERVICE_EFS		21	/* Embedded file system service */
+ #define QMI_SERVICE_TS		23	/* Thermal sensors service */
+ #define QMI_SERVICE_TMD		24	/* Thermal mitigation device service */
++#define QMI_SERVICE_WDA		26	/* Wireless data administrative service */
+ #define QMI_SERVICE_PDC		36	/* Persistent device configuration service */
+ #define QMI_SERVICE_CAT_OLD	224	/* Card application toolkit service */
  #define QMI_SERVICE_RMS		225	/* Remote management service */
- #define QMI_SERVICE_OMA		226	/* OMA device management service */
- =
-
-+enum qmi_device_expected_data_format {
-+	QMI_DEVICE_EXPECTED_DATA_FORMAT_UNKNOWN,
-+	QMI_DEVICE_EXPECTED_DATA_FORMAT_802_3,
-+	QMI_DEVICE_EXPECTED_DATA_FORMAT_RAW_IP,
-+};
+diff --git a/drivers/qmimodem/wda.h b/drivers/qmimodem/wda.h
+new file mode 100644
+index 00000000..dadd9a29
+--- /dev/null
++++ b/drivers/qmimodem/wda.h
+@@ -0,0 +1,25 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2011-2012  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ */
 +
- struct qmi_version {
- 	uint8_t type;
- 	uint16_t major;
-@@ -82,6 +88,10 @@ bool qmi_device_discover(struct qmi_device *device, qmi_=
-discover_func_t func,
- bool qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t fu=
-nc,
- 				void *user_data, qmi_destroy_func_t destroy);
- =
-
-+enum qmi_device_expected_data_format qmi_device_get_expected_data_format(
-+						struct qmi_device *device);
-+bool qmi_device_set_expected_data_format(struct qmi_device *device,
-+			enum qmi_device_expected_data_format format);
- =
-
- struct qmi_param;
- =
-
++#define QMI_WDA_SET_DATA_FORMAT	32	/* Set data format */
++#define QMI_WDA_GET_DATA_FORMAT	33	/* Get data format */
++
++/* Get and set data format interface */
++#define QMI_WDA_LL_PROTOCOL	0x11	/* uint32_t */
++#define QMI_WDA_DATA_LINK_PROTOCOL_UNKNOWN	0
++#define QMI_WDA_DATA_LINK_PROTOCOL_802_3	1
++#define QMI_WDA_DATA_LINK_PROTOCOL_RAW_IP	2
 -- =
 
 2.11.0
 
 
---===============2162322593986407140==--
+--===============9175896823181186865==--
 
