@@ -1,36 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============8636070244542227695=="
+Content-Type: multipart/mixed; boundary="===============5081617970817534202=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] udevng: complete gemalto setup
-Date: Wed, 18 Jan 2017 20:20:23 -0600
-Message-ID: <d4daade2-9a95-5537-f629-12424a2829ed@gmail.com>
-In-Reply-To: <1484747122-11035-1-git-send-email-vincent.cesson@smile.fr>
+From: Christophe Ronco <c.ronco@kerlink.fr>
+Subject: [PATCH 0/2] qmimodem: set data format when needed (and possible)
+Date: Thu, 19 Jan 2017 09:15:16 +0100
+Message-ID: <20170119081518.16765-1-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8636070244542227695==
+--===============5081617970817534202==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vincent,
+MC7430 is a raw-ip only modem. If accessed through 802.3 network interface,
+no packets can be received (IP layer headers missing).
 
-On 01/18/2017 07:45 AM, Vincent Cesson wrote:
-> Complete the Gemalto setup with cdc_wdm and qmi,
-> so all enumerated devices are associated with gemalto.
-> ---
-> Change in v2:
->  - Fix codingstyle
->
->  plugins/udevng.c | 14 ++++++++++++--
->  1 file changed, 12 insertions(+), 2 deletions(-)
->
+To be able to start a data connection with this modem, we must tell driver
+(qmi_wwan.c) to mount a raw-ip network interface instead of a 802.3 interfa=
+ce.
 
-Applied, thanks.
+This has been implemented in libqmi package. The idea is:
+ - ask modem what data format it wants (raw-ip or 802.3)
+ - ask driver what data format it expects (raw-ip or 802.3)
+ - change driver data format if values do not match
 
-Regards,
--Denis
+Patch has been split in two.
+In first part, we just add the code needed to get/set driver expected data
+format but nobody ever call these functions.
+In second part, logic explained above is implemented.
+If anything fail (can't get expected data format, can't get modem data form=
+at,
+...), we just don't set anything and continue.
+
+To be able to use this, a kernel 4.5 or more recent is needed.
+
+Christophe Ronco (2):
+  qmimodem: get/set kernel device driver data format
+  qmimodem: change kernel driver data format if needed
+
+ drivers/qmimodem/gprs-context.c |  79 +++++++++++++++-
+ drivers/qmimodem/qmi.c          | 200 ++++++++++++++++++++++++++++++++++++=
+++++
+ drivers/qmimodem/qmi.h          |  11 +++
+ drivers/qmimodem/wda.h          |  25 +++++
+ 4 files changed, 312 insertions(+), 3 deletions(-)
+ create mode 100644 drivers/qmimodem/wda.h
+
+-- =
+
+2.11.0
 
 
---===============8636070244542227695==--
+--===============5081617970817534202==--
 
