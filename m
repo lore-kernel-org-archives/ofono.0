@@ -1,88 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============1459862970210527487=="
+Content-Type: multipart/mixed; boundary="===============8603266425311388344=="
 MIME-Version: 1.0
 From: Piotr Haber <gluedig@gmail.com>
-Subject: [PATCH 4/4] udevng: setup of Telit LE910V2
-Date: Wed, 25 Jan 2017 11:41:28 +0100
-Message-ID: <20170125104128.5254-5-gluedig@gmail.com>
-In-Reply-To: <20170125104128.5254-1-gluedig@gmail.com>
+Subject: [PATCH] qmimodem: send authentication credentials
+Date: Wed, 25 Jan 2017 12:19:47 +0100
+Message-ID: <20170125111947.12403-1-gluedig@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1459862970210527487==
+--===============8603266425311388344==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Setup LE910V2 in default USB composition
-with 6 CDC-ACM serial ports and 1 CDC-NCM network adapter.
+Pass authentication method, user and password
+to QMI WDS service.
 ---
- plugins/udevng.c | 38 ++++++++++++++++++++++++++++++++++++++
- 1 file changed, 38 insertions(+)
+ drivers/qmimodem/gprs-context.c | 24 ++++++++++++++++++++++++
+ drivers/qmimodem/wds.h          |  7 +++++++
+ 2 files changed, 31 insertions(+)
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 50089129..90ddeeab 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -957,6 +957,41 @@ static gboolean setup_gemalto(struct modem_info* modem)
- 	return TRUE;
- }
+diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-contex=
+t.c
+index a39db5e8..2250eef9 100644
+--- a/drivers/qmimodem/gprs-context.c
++++ b/drivers/qmimodem/gprs-context.c
+@@ -151,6 +151,7 @@ static void qmi_activate_primary(struct ofono_gprs_cont=
+ext *gc,
+ 	struct cb_data *cbd =3D cb_data_new(cb, user_data);
+ 	struct qmi_param *param;
+ 	uint8_t ip_family;
++	uint8_t auth;
  =
 
-+static gboolean setup_le910v2(struct modem_info *modem)
-+{
-+	const char *aux =3D NULL, *mdm =3D NULL, *network =3D NULL;
-+	GSList *list;
-+
-+	DBG("%s", modem->syspath);
-+
-+	for (list =3D modem->devices; list; list =3D list->next) {
-+		struct device_info *info =3D list->data;
-+
-+		DBG("%s %s %s %s %s", info->devnode, info->interface,
-+					info->number, info->label, info->sysattr);
-+
-+		if (g_strcmp0(info->interface, "2/2/1") =3D=3D 0) {
-+			if (g_strcmp0(info->number, "00") =3D=3D 0)
-+				aux =3D info->devnode;
-+			else if (g_strcmp0(info->number, "06") =3D=3D 0)
-+				mdm =3D info->devnode;
-+		} else if (info->sysattr && (g_str_has_suffix(info->sysattr,
-+						"CDC NCM") =3D=3D TRUE)) {
-+			network =3D info->devnode;
-+		}
+ 	DBG("cid %u", ctx->cid);
+ =
+
+@@ -178,6 +179,29 @@ static void qmi_activate_primary(struct ofono_gprs_con=
+text *gc,
+ =
+
+ 	qmi_param_append_uint8(param, QMI_WDS_PARAM_IP_FAMILY, ip_family);
+ =
+
++	switch (ctx->auth_method) {
++	case OFONO_GPRS_AUTH_METHOD_CHAP:
++		auth =3D QMI_WDS_AUTHENTICATION_CHAP;
++		break;
++	case OFONO_GPRS_AUTH_METHOD_PAP:
++		auth =3D QMI_WDS_AUTHENTICATION_PAP;
++		break;
++	default:
++		auth =3D QMI_WDS_AUTHENTICATION_NONE;
++		break;
 +	}
-+	DBG("aux=3D%s modem=3D%s network=3D%s", aux, mdm, network);
++	qmi_param_append_uint8(param, QMI_WDS_PARAM_AUTHENTICATION_PREFERENCE,
++					auth);
 +
-+	if (aux =3D=3D NULL || mdm =3D=3D NULL || network =3D=3D NULL)
-+		return FALSE;
++	if (ctx->username && strlen(ctx->username)) {
++		qmi_param_append(param, QMI_WDS_PARAM_USERNAME,
++					strlen(ctx->username), ctx->username);
++        }
 +
-+	ofono_modem_set_string(modem->modem, "Aux", aux);
-+	ofono_modem_set_string(modem->modem, "Modem", mdm);
-+	ofono_modem_set_string(modem->modem, "NetworkInterface", network);
++	if (ctx->password && strlen(ctx->password))
++		qmi_param_append(param, QMI_WDS_PARAM_PASSWORD,
++					strlen(ctx->password), ctx->password);
 +
-+	return TRUE;
-+}
+ 	if (qmi_service_send(data->wds, QMI_WDS_START_NET, param,
+ 					start_net_cb, cbd, NULL) > 0)
+ 		return;
+diff --git a/drivers/qmimodem/wds.h b/drivers/qmimodem/wds.h
+index 0da34ab9..4843f925 100644
+--- a/drivers/qmimodem/wds.h
++++ b/drivers/qmimodem/wds.h
+@@ -30,6 +30,13 @@
+ /* Start WDS network interface */
+ #define QMI_WDS_PARAM_APN			0x14	/* string */
+ #define QMI_WDS_PARAM_IP_FAMILY			0x19	/* uint8 */
++#define QMI_WDS_PARAM_USERNAME			0x17	/* string */
++#define QMI_WDS_PARAM_PASSWORD			0x18	/* string */
++#define QMI_WDS_PARAM_AUTHENTICATION_PREFERENCE	0x16	/* uint8 */
 +
- static struct {
- 	const char *name;
- 	gboolean (*setup)(struct modem_info *modem);
-@@ -984,6 +1019,7 @@ static struct {
- 	{ "quectel",	setup_quectel	},
- 	{ "ublox",	setup_ublox	},
- 	{ "gemalto",	setup_gemalto	},
-+	{ "le910v2",	setup_le910v2,	"device/interface"	},
- 	{ }
- };
++#define QMI_WDS_AUTHENTICATION_NONE		0x0
++#define QMI_WDS_AUTHENTICATION_PAP		0x1
++#define QMI_WDS_AUTHENTICATION_CHAP		0x2
  =
 
-@@ -1226,6 +1262,8 @@ static struct {
- 	{ "gemalto",	"option",	"1e2d",	"0053"	},
- 	{ "gemalto",	"cdc_wdm",	"1e2d",	"0053"	},
- 	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
-+	{ "le910v2",	"cdc_ncm",	"1bc7", "0036"	},
-+	{ "le910v2",	"cdc_acm",	"1bc7", "0036"	},
- 	{ }
- };
+ #define QMI_WDS_RESULT_PKT_HANDLE		0x01	/* uint32 */
  =
 
 -- =
@@ -90,5 +93,5 @@ index 50089129..90ddeeab 100644
 2.11.0
 
 
---===============1459862970210527487==--
+--===============8603266425311388344==--
 
