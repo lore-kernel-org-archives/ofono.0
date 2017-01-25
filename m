@@ -1,64 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============4470850876828756983=="
+Content-Type: multipart/mixed; boundary="===============1459862970210527487=="
 MIME-Version: 1.0
 From: Piotr Haber <gluedig@gmail.com>
-Subject: [PATCH 3/4] doc: description of Telit LE910V2 network setup
-Date: Wed, 25 Jan 2017 11:41:27 +0100
-Message-ID: <20170125104128.5254-4-gluedig@gmail.com>
+Subject: [PATCH 4/4] udevng: setup of Telit LE910V2
+Date: Wed, 25 Jan 2017 11:41:28 +0100
+Message-ID: <20170125104128.5254-5-gluedig@gmail.com>
 In-Reply-To: <20170125104128.5254-1-gluedig@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4470850876828756983==
+--===============1459862970210527487==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-NCM network interface on LE910V2 modem needs to be
-configured in a specific way after connection is established.
+Setup LE910V2 in default USB composition
+with 6 CDC-ACM serial ports and 1 CDC-NCM network adapter.
 ---
- doc/telit-modem.txt | 27 +++++++++++++++++++++++++++
- 1 file changed, 27 insertions(+)
+ plugins/udevng.c | 38 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
 
-diff --git a/doc/telit-modem.txt b/doc/telit-modem.txt
-index 1627fb4c..d4d367d7 100644
---- a/doc/telit-modem.txt
-+++ b/doc/telit-modem.txt
-@@ -17,3 +17,30 @@ GPS:
-   After setting the configuration, a power cycle is required.
-   Port Configiuration #8 is available since firmware 12.00.004. Firmware v=
-ersion
-   can be checked using 'AT+CGMR'.
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 50089129..90ddeeab 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -957,6 +957,41 @@ static gboolean setup_gemalto(struct modem_info* modem)
+ 	return TRUE;
+ }
+ =
+
++static gboolean setup_le910v2(struct modem_info *modem)
++{
++	const char *aux =3D NULL, *mdm =3D NULL, *network =3D NULL;
++	GSList *list;
 +
-+LE910 V2
-+=3D=3D=3D=3D=3D=3D=3D=3D
++	DBG("%s", modem->syspath);
 +
-+Default USB composition of LE910V2 uses PID 0x36 (AT#PORTCFG=3D0)
-+and consists of 6 serial ports (CDC-ACM standard, /dev/ttyACMx)
-+and 1 network adapter using CDC-NCM standard (wwanx or usbx).
++	for (list =3D modem->devices; list; list =3D list->next) {
++		struct device_info *info =3D list->data;
 +
-+NCM interface configuration follows Telit documentation
-+(both documents available on Telit Download Zone - registration required)
-+"GE/HE/UE910, UL865, LE910 V2 Linux USB Driver - User Guide r0"
-+(document 1VV0301255 Rev.0 - 2016-01-22)
-+and "Telit LE910-V2 NCM SETUP r3"
-+(document 1VV0301246 Rev.3 - 2016-11-29).
++		DBG("%s %s %s %s %s", info->devnode, info->interface,
++					info->number, info->label, info->sysattr);
 +
-+After context is setup, NCM mode activated and PDP context activated
-+connection configuration can be read using
-+AT+CGPADDR=3Dcontext_id and AT+CGCONTRDP=3Dcontext_id commands.
-+This is done automatically and results available via
-+org.ofono.ConnectionContext.GetProperties DBus method.
++		if (g_strcmp0(info->interface, "2/2/1") =3D=3D 0) {
++			if (g_strcmp0(info->number, "00") =3D=3D 0)
++				aux =3D info->devnode;
++			else if (g_strcmp0(info->number, "06") =3D=3D 0)
++				mdm =3D info->devnode;
++		} else if (info->sysattr && (g_str_has_suffix(info->sysattr,
++						"CDC NCM") =3D=3D TRUE)) {
++			network =3D info->devnode;
++		}
++	}
++	DBG("aux=3D%s modem=3D%s network=3D%s", aux, mdm, network);
 +
-+Then Linux network interface needs to be configured:
-+    ifconfig <Interface> <Address> netmask <Netmask> up
-+    route add default gw <Gateway>
-+    arp -s <Gateway> 11:22:33:44:55:66
++	if (aux =3D=3D NULL || mdm =3D=3D NULL || network =3D=3D NULL)
++		return FALSE;
 +
-+Only after these steps network interface is usable.
++	ofono_modem_set_string(modem->modem, "Aux", aux);
++	ofono_modem_set_string(modem->modem, "Modem", mdm);
++	ofono_modem_set_string(modem->modem, "NetworkInterface", network);
++
++	return TRUE;
++}
++
+ static struct {
+ 	const char *name;
+ 	gboolean (*setup)(struct modem_info *modem);
+@@ -984,6 +1019,7 @@ static struct {
+ 	{ "quectel",	setup_quectel	},
+ 	{ "ublox",	setup_ublox	},
+ 	{ "gemalto",	setup_gemalto	},
++	{ "le910v2",	setup_le910v2,	"device/interface"	},
+ 	{ }
+ };
+ =
+
+@@ -1226,6 +1262,8 @@ static struct {
+ 	{ "gemalto",	"option",	"1e2d",	"0053"	},
+ 	{ "gemalto",	"cdc_wdm",	"1e2d",	"0053"	},
+ 	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
++	{ "le910v2",	"cdc_ncm",	"1bc7", "0036"	},
++	{ "le910v2",	"cdc_acm",	"1bc7", "0036"	},
+ 	{ }
+ };
+ =
+
 -- =
 
 2.11.0
 
 
---===============4470850876828756983==--
+--===============1459862970210527487==--
 
