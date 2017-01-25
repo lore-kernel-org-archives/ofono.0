@@ -1,53 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============7554752119540262704=="
+Content-Type: multipart/mixed; boundary="===============3630861079403626825=="
 MIME-Version: 1.0
 From: Piotr Haber <gluedig@gmail.com>
-Subject: [PATCH 1/4] telitmodem: support for CDC-NCM network adapter
-Date: Wed, 25 Jan 2017 11:41:25 +0100
-Message-ID: <20170125104128.5254-2-gluedig@gmail.com>
+Subject: [PATCH 2/4] plugins: support for Telit LE910 V2 modem
+Date: Wed, 25 Jan 2017 11:41:26 +0100
+Message-ID: <20170125104128.5254-3-gluedig@gmail.com>
 In-Reply-To: <20170125104128.5254-1-gluedig@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7554752119540262704==
+--===============3630861079403626825==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Network Control Model is a new Communication Device Class
-protocol for exchanging Ethernet frames over USB.
-NCM is intended to be used with high-speed network
-attachments such as HSDPA and LTE data services.
+LE910 V2 is next generation Telit LTE modem.
+It supports 3GPP Rel. 9 LTE Cat. 4 over multiple bands.
+Default USB composition uses PID 0x36 and
+consists of 6 CDC-ACM serial ports and 1 CDC-NCM network adapter.
 ---
- Makefile.am                           |   3 +-
- drivers/telitmodem/gprs-context-ncm.c | 497 ++++++++++++++++++++++++++++++=
+ Makefile.am       |   3 +
+ plugins/le910v2.c | 400 ++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- drivers/telitmodem/telitmodem.c       |   2 +
- drivers/telitmodem/telitmodem.h       |   2 +
- 4 files changed, 503 insertions(+), 1 deletion(-)
- create mode 100644 drivers/telitmodem/gprs-context-ncm.c
+ 2 files changed, 403 insertions(+)
+ create mode 100644 plugins/le910v2.c
 
 diff --git a/Makefile.am b/Makefile.am
-index f76971ec..2f49027c 100644
+index 2f49027c..72c4fcfc 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -321,7 +321,8 @@ builtin_modules +=3D telitmodem
- builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/telitmodem/telitmodem.h \
- 			drivers/telitmodem/telitmodem.c \
--			drivers/telitmodem/location-reporting.c
-+			drivers/telitmodem/location-reporting.c \
-+			drivers/telitmodem/gprs-context-ncm.c
+@@ -501,6 +501,9 @@ builtin_sources +=3D plugins/quectel.c
+ builtin_modules +=3D ublox
+ builtin_sources +=3D plugins/ublox.c
  =
 
- builtin_modules +=3D hsomodem
- builtin_sources +=3D drivers/atmodem/atutil.h \
-diff --git a/drivers/telitmodem/gprs-context-ncm.c b/drivers/telitmodem/gpr=
-s-context-ncm.c
++builtin_modules +=3D le910v2
++builtin_sources +=3D plugins/le910v2.c
++
+ if BLUETOOTH
+ if BLUEZ4
+ builtin_modules +=3D telit
+diff --git a/plugins/le910v2.c b/plugins/le910v2.c
 new file mode 100644
-index 00000000..25f93632
+index 00000000..e758971d
 --- /dev/null
-+++ b/drivers/telitmodem/gprs-context-ncm.c
-@@ -0,0 +1,497 @@
++++ b/plugins/le910v2.c
+@@ -0,0 +1,400 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -74,520 +71,389 @@ index 00000000..25f93632
 +#include <config.h>
 +#endif
 +
-+#define _GNU_SOURCE
-+#include <string.h>
++#include <errno.h>
 +#include <stdlib.h>
 +#include <stdio.h>
-+#include <errno.h>
-+#include <sys/stat.h>
++#include <unistd.h>
++#include <fcntl.h>
++#include <termios.h>
++#include <string.h>
++#include <sys/socket.h>
 +
 +#include <glib.h>
++#include <gatchat.h>
++#include <gattty.h>
 +
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
 +#include <ofono/log.h>
 +#include <ofono/modem.h>
++#include <ofono/call-barring.h>
++#include <ofono/call-forwarding.h>
++#include <ofono/call-meter.h>
++#include <ofono/call-settings.h>
++#include <ofono/devinfo.h>
++#include <ofono/message-waiting.h>
++#include <ofono/location-reporting.h>
++#include <ofono/netreg.h>
++#include <ofono/phonebook.h>
++#include <ofono/sim.h>
++#include <ofono/gprs.h>
 +#include <ofono/gprs-context.h>
++#include <ofono/sms.h>
++#include <ofono/ussd.h>
++#include <ofono/voicecall.h>
 +
-+#include "gatchat.h"
-+#include "gatresult.h"
-+#include "gatrawip.h"
-+
-+#include "telitmodem.h"
++#include <drivers/atmodem/atutil.h>
++#include <drivers/atmodem/vendor.h>
 +
 +static const char *none_prefix[] =3D { NULL };
-+static const char *cgpaddr_prefix[] =3D { "+CGPADDR:", NULL };
-+static const char *cgcontrdp_prefix[] =3D { "+CGCONTRDP:", NULL };
++static const char *qss_prefix[] =3D { "#QSS:", NULL };
 +
-+enum state {
-+	STATE_IDLE,
-+	STATE_ENABLING,
-+	STATE_DISABLING,
-+	STATE_ACTIVE,
++struct le910v2_data {
++	GAtChat *chat;		/* AT chat */
++	GAtChat *modem;		/* Data port */
++	struct ofono_sim *sim;
++	ofono_bool_t have_sim;
++	ofono_bool_t sms_phonebook_added;
 +};
 +
-+enum auth_method {
-+    AUTH_METHOD_NONE,
-+    AUTH_METHOD_PAP,
-+    AUTH_METHOD_CHAP,
-+};
++static void le910v2_debug(const char *str, void *user_data)
++{
++	const char *prefix =3D user_data;
 +
-+struct gprs_context_data {
++	ofono_info("%s%s", prefix, str);
++}
++
++static GAtChat *open_device(struct ofono_modem *modem,
++				const char *key, char *debug)
++{
++	const char *device;
++	GAtSyntax *syntax;
++	GIOChannel *channel;
 +	GAtChat *chat;
-+	unsigned int active_context;
-+	char username[OFONO_GPRS_MAX_USERNAME_LENGTH + 1];
-+	char password[OFONO_GPRS_MAX_PASSWORD_LENGTH + 1];
-+	enum auth_method auth_method;
-+	enum state state;
-+	enum ofono_gprs_proto proto;
-+	char address[64];
-+	char netmask[64];
-+	char gateway[64];
-+	char dns1[64];
-+	char dns2[64];
-+	ofono_gprs_context_cb_t cb;
-+	void *cb_data;                                  /* Callback data */
-+};
++	GHashTable *options;
 +
-+static void failed_setup(struct ofono_gprs_context *gc,
-+				GAtResult *result, gboolean deactivate)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct ofono_error error;
-+	char buf[64];
++	device =3D ofono_modem_get_string(modem, key);
++	if (device =3D=3D NULL)
++		return NULL;
 +
-+	DBG("deactivate %d", deactivate);
++	DBG("%s %s", key, device);
 +
-+	if (deactivate =3D=3D TRUE) {
-+		sprintf(buf, "AT+CGACT=3D0,%u", gcd->active_context);
-+		g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-+	}
++	options =3D g_hash_table_new(g_str_hash, g_str_equal);
++	if (options =3D=3D NULL)
++		return NULL;
 +
-+	gcd->active_context =3D 0;
-+	gcd->state =3D STATE_IDLE;
++	g_hash_table_insert(options, "Baud", "115200");
++	channel =3D g_at_tty_open(device, options);
++	g_hash_table_destroy(options);
 +
-+	if (result =3D=3D NULL) {
-+		CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
-+		return;
-+	}
++	if (channel =3D=3D NULL)
++		return NULL;
 +
-+	decode_at_error(&error, g_at_result_final_response(result));
-+	gcd->cb(&error, gcd->cb_data);
++	syntax =3D g_at_syntax_new_gsm_permissive();
++	chat =3D g_at_chat_new(channel, syntax);
++	g_at_syntax_unref(syntax);
++	g_io_channel_unref(channel);
++
++	if (chat =3D=3D NULL)
++		return NULL;
++
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(chat, le910v2_debug, debug);
++
++	return chat;
 +}
 +
-+static void session_cb(gboolean ok, GAtResult *result, gpointer user_data)
++static void switch_sim_state_status(struct ofono_modem *modem, int status)
 +{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct ofono_modem *modem;
-+	const char *interface;
-+	const char *dns[3];
++	struct le910v2_data *data =3D ofono_modem_get_data(modem);
 +
-+	DBG("ok %d", ok);
++	DBG("%p, SIM status: %d", modem, status);
 +
-+	if (!ok) {
-+		ofono_error("Failed to establish session");
-+		failed_setup(gc, result, TRUE);
-+		return;
-+	}
-+
-+	gcd->state =3D STATE_ACTIVE;
-+
-+	dns[0] =3D gcd->dns1;
-+	dns[1] =3D gcd->dns2;
-+	dns[2] =3D 0;
-+
-+	modem =3D ofono_gprs_context_get_modem(gc);
-+	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
-+
-+	ofono_gprs_context_set_interface(gc, interface);
-+	ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
-+	ofono_gprs_context_set_ipv4_netmask(gc, gcd->netmask);
-+	ofono_gprs_context_set_ipv4_gateway(gc, gcd->gateway);
-+	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
-+
-+	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
-+	gcd->cb =3D NULL;
-+	gcd->cb_data =3D NULL;
-+}
-+
-+static void contrdp_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	char buf[64];
-+	int cid, bearer_id;
-+	const char *apn, *ip_mask, *gw;
-+	const char *dns1, *dns2;
-+	GAtResultIter iter;
-+	gboolean found =3D FALSE;
-+
-+	DBG("ok %d", ok);
-+
-+	if (!ok) {
-+		ofono_error("Unable to get context dynamic paramerers");
-+		failed_setup(gc, result, TRUE);
-+		return;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	while (g_at_result_iter_next(&iter, "+CGCONTRDP:")) {
-+		if (!g_at_result_iter_next_number(&iter, &cid))
-+			goto error;
-+		if (!g_at_result_iter_next_number(&iter, &bearer_id))
-+			goto error;
-+		if (!g_at_result_iter_next_string(&iter, &apn))
-+			goto error;
-+		if (!g_at_result_iter_next_string(&iter, &ip_mask))
-+			goto error;
-+		if (!g_at_result_iter_next_string(&iter, &gw))
-+			goto error;
-+		if (!g_at_result_iter_next_string(&iter, &dns1))
-+			goto error;
-+		if (!g_at_result_iter_next_string(&iter, &dns2))
-+			goto error;
-+
-+		if ((unsigned int) cid =3D=3D gcd->active_context) {
-+			found =3D TRUE;
-+			if (gcd->address && strcmp(gcd->address, "") !=3D 0) {
-+			    strncpy(gcd->netmask,
-+				    &ip_mask[strlen(gcd->address)+1],
-+				    sizeof(gcd->netmask));
-+			}
-+			strncpy(gcd->gateway, gw, sizeof(gcd->gateway));
-+			strncpy(gcd->dns1, dns1, sizeof(gcd->dns1));
-+			strncpy(gcd->dns2, dns2, sizeof(gcd->dns2));
++	switch (status) {
++	case 0:	/* SIM not inserted */
++		if (data->have_sim =3D=3D TRUE) {
++			ofono_sim_inserted_notify(data->sim, FALSE);
++			data->have_sim =3D FALSE;
++			data->sms_phonebook_added =3D FALSE;
 +		}
-+	}
-+
-+	if (found =3D=3D FALSE)
-+		goto error;
-+
-+	ofono_info("IP: %s", gcd->address);
-+	ofono_info("MASK: %s", gcd->netmask);
-+	ofono_info("GW: %s", gcd->gateway);
-+	ofono_info("DNS: %s, %s", gcd->dns1, gcd->dns2);
-+
-+	sprintf(buf, "AT+CGDATA=3D\"M-RAW_IP\",%d", gcd->active_context);
-+	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-+					session_cb, gc, NULL) > 0)
-+		return;
-+
-+error:
-+	failed_setup(gc, NULL, TRUE);
-+}
-+
-+static void address_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	int cid;
-+	const char *address;
-+	char buf[64];
-+	GAtResultIter iter;
-+
-+	DBG("ok %d", ok);
-+
-+	if (!ok) {
-+		ofono_error("Unable to get context address");
-+		failed_setup(gc, result, TRUE);
-+		return;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CGPADDR:"))
-+		goto error;
-+
-+	if (!g_at_result_iter_next_number(&iter, &cid))
-+		goto error;
-+
-+	if ((unsigned int) cid !=3D gcd->active_context)
-+		goto error;
-+
-+	if (!g_at_result_iter_next_string(&iter, &address))
-+		goto error;
-+
-+	strncpy(gcd->address, address, sizeof(gcd->address));
-+
-+	sprintf(buf, "AT+CGCONTRDP=3D%d", gcd->active_context);
-+	if (g_at_chat_send(gcd->chat, buf, cgcontrdp_prefix,
-+					contrdp_cb, gc, NULL) > 0)
-+		return;
-+
-+error:
-+	failed_setup(gc, NULL, TRUE);
-+}
-+
-+static void activate_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	char buf[64];
-+
-+	DBG("ok %d", ok);
-+
-+	if (!ok) {
-+		ofono_error("Unable to activate context");
-+		failed_setup(gc, result, FALSE);
-+		return;
-+	}
-+
-+	sprintf(buf, "AT+CGPADDR=3D%u", gcd->active_context);
-+	if (g_at_chat_send(gcd->chat, buf, cgpaddr_prefix,
-+					address_cb, gc, NULL) > 0)
-+		return;
-+
-+	failed_setup(gc, NULL, TRUE);
-+}
-+
-+static void setup_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	char buf[128];
-+
-+	DBG("ok %d", ok);
-+
-+	if (!ok) {
-+		ofono_error("Failed to setup context");
-+		failed_setup(gc, result, FALSE);
-+		return;
-+	}
-+
-+	if (gcd->username[0] && gcd->password[0])
-+		sprintf(buf, "AT#PDPAUTH=3D%u,%u,\"%s\",\"%s\"",
-+			gcd->active_context, gcd->auth_method,
-+			gcd->username, gcd->password);
-+	else
-+		sprintf(buf, "AT#PDPAUTH=3D%u,0", gcd->active_context);
-+
-+	if (g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL) =3D=3D =
-0)
-+		goto error;
-+
-+	sprintf(buf, "AT#NCM=3D1,%u", gcd->active_context);
-+
-+	if (g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL) =3D=3D =
-0)
-+		goto error;
-+
-+	sprintf(buf, "AT+CGACT=3D1,%u", gcd->active_context);
-+
-+	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-+				activate_cb, gc, NULL) > 0)
-+		return;
-+
-+error:
-+	failed_setup(gc, NULL, FALSE);
-+}
-+
-+static void telitncm_gprs_activate_primary(struct ofono_gprs_context *gc,
-+				const struct ofono_gprs_primary_context *ctx,
-+				ofono_gprs_context_cb_t cb, void *data)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	char buf[OFONO_GPRS_MAX_APN_LENGTH + 128];
-+	int len =3D 0;
-+
-+	DBG("cid %u", ctx->cid);
-+
-+	gcd->active_context =3D ctx->cid;
-+	gcd->cb =3D cb;
-+	gcd->cb_data =3D data;
-+	memcpy(gcd->username, ctx->username, sizeof(ctx->username));
-+	memcpy(gcd->password, ctx->password, sizeof(ctx->password));
-+	gcd->state =3D STATE_ENABLING;
-+	gcd->proto =3D ctx->proto;
-+
-+	/* We only support CHAP and PAP */
-+	switch (ctx->auth_method) {
-+	case OFONO_GPRS_AUTH_METHOD_CHAP:
-+		gcd->auth_method =3D AUTH_METHOD_CHAP;
 +		break;
-+	case OFONO_GPRS_AUTH_METHOD_PAP:
-+		gcd->auth_method =3D AUTH_METHOD_PAP;
++	case 1:	/* SIM inserted */
++	case 2:	/* SIM inserted and PIN unlocked */
++		if (data->have_sim =3D=3D FALSE) {
++			ofono_sim_inserted_notify(data->sim, TRUE);
++			data->have_sim =3D TRUE;
++		}
++		break;
++	case 3:	/* SIM inserted, SMS and phonebook ready */
++		if (data->have_sim =3D=3D FALSE) {
++			ofono_sim_inserted_notify(data->sim, TRUE);
++			data->have_sim =3D TRUE;
++		}
++		if (data->sms_phonebook_added =3D=3D FALSE) {
++			ofono_phonebook_create(modem, 0, "atmodem", data->chat);
++			ofono_sms_create(modem, 0, "atmodem", data->chat);
++			data->sms_phonebook_added =3D TRUE;
++		}
 +		break;
 +	default:
-+		gcd->auth_method =3D AUTH_METHOD_NONE;
++		ofono_warn("Unknown SIM state %d received", status);
 +		break;
 +	}
-+
-+	g_at_chat_send(gcd->chat, "AT+CGATT=3D0", none_prefix, NULL, NULL, NULL);
-+
-+	switch (ctx->proto) {
-+	case OFONO_GPRS_PROTO_IP:
-+		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"",
-+								ctx->cid);
-+		break;
-+	case OFONO_GPRS_PROTO_IPV6:
-+		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IPV6\"",
-+								ctx->cid);
-+		break;
-+	case OFONO_GPRS_PROTO_IPV4V6:
-+		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IPV4V6\"",
-+								ctx->cid);
-+		break;
-+	}
-+
-+	if (ctx->apn)
-+		snprintf(buf + len, sizeof(buf) - len - 3,
-+					",\"%s\"", ctx->apn);
-+
-+	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-+				setup_cb, gc, NULL) > 0)
-+		return;
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
 +}
 +
-+static void deactivate_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
++static void le910v2_qss_notify(GAtResult *result, gpointer user_data)
 +{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+
-+	DBG("ok %d", ok);
-+
-+	gcd->active_context =3D 0;
-+	gcd->state =3D STATE_IDLE;
-+
-+	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
-+	gcd->cb =3D NULL;
-+	gcd->cb_data =3D NULL;
-+}
-+
-+static void telitncm_gprs_deactivate_primary(struct ofono_gprs_context *gc,
-+					unsigned int cid,
-+					ofono_gprs_context_cb_t cb, void *data)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	char buf[64];
-+
-+	DBG("cid %u", cid);
-+
-+	gcd->state =3D STATE_DISABLING;
-+	gcd->cb =3D cb;
-+	gcd->cb_data =3D data;
-+
-+	sprintf(buf, "AT+CGACT=3D0,%u", gcd->active_context);
-+	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-+				deactivate_cb, gc, NULL) > 0)
-+		return;
-+
-+	CALLBACK_WITH_SUCCESS(cb, data);
-+	gcd->cb =3D NULL;
-+	gcd->cb_data =3D NULL;
-+}
-+
-+static void cgev_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	const char *event;
-+	int cid;
++	struct ofono_modem *modem =3D user_data;
++	int status;
 +	GAtResultIter iter;
++
++	DBG("%p", modem);
 +
 +	g_at_result_iter_init(&iter, result);
 +
-+	if (!g_at_result_iter_next(&iter, "+CGEV:"))
++	if (!g_at_result_iter_next(&iter, "#QSS:"))
 +		return;
 +
-+	if (!g_at_result_iter_next_unquoted_string(&iter, &event))
-+		return;
++	g_at_result_iter_next_number(&iter, &status);
 +
-+	if (g_str_has_prefix(event, "NW DEACT") =3D=3D FALSE)
-+		return;
-+
-+	if (!g_at_result_iter_skip_next(&iter))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &cid))
-+		return;
-+
-+	DBG("cid %d", cid);
-+
-+	if ((unsigned int) cid !=3D gcd->active_context)
-+		return;
-+
-+
-+	ofono_gprs_context_deactivated(gc, gcd->active_context);
-+
-+	gcd->active_context =3D 0;
-+	gcd->state =3D STATE_IDLE;
-+
++	switch_sim_state_status(modem, status);
 +}
 +
-+static int telitncm_gprs_context_probe(struct ofono_gprs_context *gc,
-+					unsigned int vendor, void *data)
++static void qss_query_cb(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
 +{
-+	GAtChat *chat =3D data;
-+	struct gprs_context_data *gcd;
++	struct ofono_modem *modem =3D user_data;
++	int status, mode;
++	GAtResultIter iter;
 +
-+	DBG("");
++	DBG("%p", modem);
 +
-+	gcd =3D g_try_new0(struct gprs_context_data, 1);
-+	if (gcd =3D=3D NULL)
++	if (!ok)
++		return;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "#QSS:"))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &mode))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &status))
++		return;
++
++	switch_sim_state_status(modem, status);
++}
++
++static void cfun_enable_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct le910v2_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	if (!ok) {
++		g_at_chat_unref(data->chat);
++		data->chat =3D NULL;
++
++		g_at_chat_unref(data->modem);
++		data->modem =3D NULL;
++
++		ofono_modem_set_powered(modem, FALSE);
++		return;
++	}
++
++	/*
++	 * Switch data carrier detect signal off.
++	 * When the DCD is disabled the modem does not hangup anymore
++	 * after the data connection.
++	 */
++	g_at_chat_send(data->chat, "AT&C0", NULL, NULL, NULL, NULL);
++
++	data->have_sim =3D FALSE;
++	data->sms_phonebook_added =3D FALSE;
++
++	ofono_modem_set_powered(modem, TRUE);
++
++	/*
++	 * Tell the modem not to automatically initiate auto-attach
++	 * proceedures on its own.
++	 */
++	g_at_chat_send(data->chat, "AT#AUTOATT=3D0", none_prefix,
++				NULL, NULL, NULL);
++
++	/* Follow sim state */
++	g_at_chat_register(data->chat, "#QSS:", le910v2_qss_notify,
++				FALSE, modem, NULL);
++
++	/* Enable sim state notification */
++	g_at_chat_send(data->chat, "AT#QSS=3D2", none_prefix, NULL, NULL, NULL);
++
++	g_at_chat_send(data->chat, "AT#QSS?", qss_prefix,
++			qss_query_cb, modem, NULL);
++}
++
++static int le910v2_enable(struct ofono_modem *modem)
++{
++	struct le910v2_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	data->modem =3D open_device(modem, "Modem", "Modem: ");
++	if (data->modem =3D=3D NULL)
++		return -EINVAL;
++
++	data->chat =3D open_device(modem, "Aux", "Aux: ");
++	if (data->chat =3D=3D NULL) {
++		g_at_chat_unref(data->modem);
++		data->modem =3D NULL;
++		return -EIO;
++	}
++
++	/*
++	 * Disable command echo and
++	 * enable the Extended Error Result Codes
++	 */
++	g_at_chat_send(data->chat, "ATE0 +CMEE=3D1", none_prefix,
++				NULL, NULL, NULL);
++
++	g_at_chat_send(data->modem, "ATE0", none_prefix,
++				NULL, NULL, NULL);
++
++	/* Set phone functionality */
++	g_at_chat_send(data->chat, "AT+CFUN=3D1", none_prefix,
++				cfun_enable_cb, modem, NULL);
++
++	return -EINPROGRESS;
++}
++
++static void cfun_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct le910v2_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
++
++	if (ok)
++		ofono_modem_set_powered(modem, FALSE);
++}
++
++static int le910v2_disable(struct ofono_modem *modem)
++{
++	struct le910v2_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_at_chat_cancel_all(data->modem);
++	g_at_chat_unregister_all(data->modem);
++	g_at_chat_unref(data->modem);
++	data->modem =3D NULL;
++
++	g_at_chat_cancel_all(data->chat);
++	g_at_chat_unregister_all(data->chat);
++
++	/* Power down modem */
++	g_at_chat_send(data->chat, "AT+CFUN=3D4", none_prefix,
++				cfun_disable_cb, modem, NULL);
++
++	return -EINPROGRESS;
++}
++
++static void le910v2_pre_sim(struct ofono_modem *modem)
++{
++	struct le910v2_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
++	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_TELIT, "atmodem",
++					data->chat);
++}
++
++static void le910v2_post_online(struct ofono_modem *modem)
++{
++	struct le910v2_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_gprs *gprs;
++	struct ofono_gprs_context *gc;
++
++	DBG("%p", modem);
++
++	ofono_netreg_create(modem, OFONO_VENDOR_TELIT, "atmodem", data->chat);
++	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_TELIT, "atmodem",
++					data->chat);
++	gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_TELIT, "telitncmmode=
+m",
++					data->modem);
++
++	if (gprs && gc)
++		ofono_gprs_add_context(gprs, gc);
++}
++
++static int le910v2_probe(struct ofono_modem *modem)
++{
++	struct le910v2_data *data;
++
++	DBG("%p", modem);
++
++	data =3D g_try_new0(struct le910v2_data, 1);
++	if (data =3D=3D NULL)
 +		return -ENOMEM;
 +
-+	gcd->chat =3D g_at_chat_clone(chat);
-+
-+	ofono_gprs_context_set_data(gc, gcd);
-+
-+	chat =3D g_at_chat_get_slave(gcd->chat);
-+
-+	g_at_chat_register(chat, "+CGEV:", cgev_notify, FALSE, gc, NULL);
++	ofono_modem_set_data(modem, data);
 +
 +	return 0;
 +}
 +
-+static void telitncm_gprs_context_remove(struct ofono_gprs_context *gc)
++static void le910v2_remove(struct ofono_modem *modem)
 +{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct le910v2_data *data =3D ofono_modem_get_data(modem);
 +
-+	DBG("");
++	DBG("%p", modem);
 +
-+	ofono_gprs_context_set_data(gc, NULL);
++	ofono_modem_set_data(modem, NULL);
 +
-+	g_at_chat_unref(gcd->chat);
-+	g_free(gcd);
++	/* Cleanup after hot-unplug */
++	g_at_chat_unref(data->chat);
++	g_at_chat_unref(data->modem);
++
++	g_free(data);
 +}
 +
-+static struct ofono_gprs_context_driver driver =3D {
-+	.name			=3D "telitncmmodem",
-+	.probe			=3D telitncm_gprs_context_probe,
-+	.remove			=3D telitncm_gprs_context_remove,
-+	.activate_primary	=3D telitncm_gprs_activate_primary,
-+	.deactivate_primary	=3D telitncm_gprs_deactivate_primary,
++static struct ofono_modem_driver le910v2_driver =3D {
++	.name		=3D "le910v2",
++	.probe		=3D le910v2_probe,
++	.remove		=3D le910v2_remove,
++	.enable		=3D le910v2_enable,
++	.disable	=3D le910v2_disable,
++	.pre_sim	=3D le910v2_pre_sim,
++	.post_online	=3D le910v2_post_online,
 +};
 +
-+void telitncm_gprs_context_init(void)
++static int le910v2_init(void)
 +{
-+	ofono_gprs_context_driver_register(&driver);
++	DBG("");
++
++	return ofono_modem_driver_register(&le910v2_driver);
 +}
 +
-+void telitncm_gprs_context_exit(void)
++static void le910v2_exit(void)
 +{
-+	ofono_gprs_context_driver_unregister(&driver);
++	ofono_modem_driver_unregister(&le910v2_driver);
 +}
-diff --git a/drivers/telitmodem/telitmodem.c b/drivers/telitmodem/telitmode=
-m.c
-index ecb84efb..4aa2c444 100644
---- a/drivers/telitmodem/telitmodem.c
-+++ b/drivers/telitmodem/telitmodem.c
-@@ -35,6 +35,7 @@
- static int telitmodem_init(void)
- {
- 	telit_location_reporting_init();
-+	telitncm_gprs_context_init();
- =
-
- 	return 0;
- }
-@@ -42,6 +43,7 @@ static int telitmodem_init(void)
- static void telitmodem_exit(void)
- {
- 	telit_location_reporting_exit();
-+	telitncm_gprs_context_exit();
- }
- =
-
- OFONO_PLUGIN_DEFINE(telitmodem, "Telit modem driver", VERSION,
-diff --git a/drivers/telitmodem/telitmodem.h b/drivers/telitmodem/telitmode=
-m.h
-index 2db41787..8a14595a 100644
---- a/drivers/telitmodem/telitmodem.h
-+++ b/drivers/telitmodem/telitmodem.h
-@@ -23,3 +23,5 @@
- =
-
- extern void telit_location_reporting_init();
- extern void telit_location_reporting_exit();
-+extern void telitncm_gprs_context_init();
-+extern void telitncm_gprs_context_exit();
++
++OFONO_PLUGIN_DEFINE(le910v2, "Telit LE910 V2 driver", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, le910v2_init, le910v2_exit)
 -- =
 
 2.11.0
 
 
---===============7554752119540262704==--
+--===============3630861079403626825==--
 
