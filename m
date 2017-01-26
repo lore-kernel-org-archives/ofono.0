@@ -1,98 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============0188901024968161283=="
+Content-Type: multipart/mixed; boundary="===============7462933948288727679=="
 MIME-Version: 1.0
-From: Piotr Haber <gluedig@gmail.com>
-Subject: [PATCH v2] qmimodem: send authentication credentials
-Date: Thu, 26 Jan 2017 08:57:41 +0100
-Message-ID: <20170126075741.25481-1-gluedig@gmail.com>
-In-Reply-To: <84af9113-4e2c-7b1a-557f-340749cffe2e@gmail.com>
+From: gluedig@gmail.com
+Subject: Re: [PATCH 2/4] plugins: support for Telit LE910 V2 modem
+Date: Thu, 26 Jan 2017 10:09:18 +0100
+Message-ID: <3026e500-7392-f3e8-3ee1-0e0817e5b392@gmail.com>
+In-Reply-To: <9d8917de-c2ec-70e5-32fb-64ccc5897de2@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0188901024968161283==
+--===============7462933948288727679==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Pass authentication method, user and password
-to QMI WDS service.
----
- drivers/qmimodem/gprs-context.c | 24 ++++++++++++++++++++++++
- drivers/qmimodem/wds.h          |  7 +++++++
- 2 files changed, 31 insertions(+)
+On 01/25/2017 05:37 PM, Denis Kenzior wrote:
+> On 01/25/2017 04:41 AM, Piotr Haber wrote:
+>> LE910 V2 is next generation Telit LTE modem.
+>> It supports 3GPP Rel. 9 LTE Cat. 4 over multiple bands.
+>> Default USB composition uses PID 0x36 and
+>> consists of 6 CDC-ACM serial ports and 1 CDC-NCM network adapter.
+>> ---
+>>  Makefile.am       |   3 +
+>>  plugins/le910v2.c | 400
+>> ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>>  2 files changed, 403 insertions(+)
+>>  create mode 100644 plugins/le910v2.c
+>>
+> =
 
-diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-contex=
-t.c
-index a39db5e8..b7f29b60 100644
---- a/drivers/qmimodem/gprs-context.c
-+++ b/drivers/qmimodem/gprs-context.c
-@@ -151,6 +151,7 @@ static void qmi_activate_primary(struct ofono_gprs_cont=
-ext *gc,
- 	struct cb_data *cbd =3D cb_data_new(cb, user_data);
- 	struct qmi_param *param;
- 	uint8_t ip_family;
-+	uint8_t auth;
- =
+> Can you add the LE910 changes into the HE910 driver?  The two are 99%
+> the same except for HE910 supporting voice calls and LE910 using a
+> different gprs_context driver.
+> =
 
- 	DBG("cid %u", ctx->cid);
- =
+> There's no sense in maintaining a 400 line driver that is virtually
+> identical to what we already have.
+> =
 
-@@ -178,6 +179,29 @@ static void qmi_activate_primary(struct ofono_gprs_con=
-text *gc,
- =
-
- 	qmi_param_append_uint8(param, QMI_WDS_PARAM_IP_FAMILY, ip_family);
- =
-
-+	switch (ctx->auth_method) {
-+	case OFONO_GPRS_AUTH_METHOD_CHAP:
-+		auth =3D QMI_WDS_AUTHENTICATION_CHAP;
-+		break;
-+	case OFONO_GPRS_AUTH_METHOD_PAP:
-+		auth =3D QMI_WDS_AUTHENTICATION_PAP;
-+		break;
-+	default:
-+		auth =3D QMI_WDS_AUTHENTICATION_NONE;
-+		break;
-+	}
-+
-+	qmi_param_append_uint8(param, QMI_WDS_PARAM_AUTHENTICATION_PREFERENCE,
-+					auth);
-+
-+	if (ctx->username[0] !=3D '\0')
-+		qmi_param_append(param, QMI_WDS_PARAM_USERNAME,
-+					strlen(ctx->username), ctx->username);
-+
-+	if (ctx->password[0] !=3D '\0')
-+		qmi_param_append(param, QMI_WDS_PARAM_PASSWORD,
-+					strlen(ctx->password), ctx->password);
-+
- 	if (qmi_service_send(data->wds, QMI_WDS_START_NET, param,
- 					start_net_cb, cbd, NULL) > 0)
- 		return;
-diff --git a/drivers/qmimodem/wds.h b/drivers/qmimodem/wds.h
-index 0da34ab9..4843f925 100644
---- a/drivers/qmimodem/wds.h
-+++ b/drivers/qmimodem/wds.h
-@@ -30,6 +30,13 @@
- /* Start WDS network interface */
- #define QMI_WDS_PARAM_APN			0x14	/* string */
- #define QMI_WDS_PARAM_IP_FAMILY			0x19	/* uint8 */
-+#define QMI_WDS_PARAM_USERNAME			0x17	/* string */
-+#define QMI_WDS_PARAM_PASSWORD			0x18	/* string */
-+#define QMI_WDS_PARAM_AUTHENTICATION_PREFERENCE	0x16	/* uint8 */
-+
-+#define QMI_WDS_AUTHENTICATION_NONE		0x0
-+#define QMI_WDS_AUTHENTICATION_PAP		0x1
-+#define QMI_WDS_AUTHENTICATION_CHAP		0x2
- =
-
- #define QMI_WDS_RESULT_PKT_HANDLE		0x01	/* uint32 */
- =
-
--- =
-
-2.11.0
+> Regards,
+> -Denis
+> =
 
 
---===============0188901024968161283==--
+Hi,
+of course you are right.
+
+I would prepare a series of patches that renames he910 plugin to xe910 -
+this is how Telit calls the whole family that consists of lots of models
+form 2g (GE910) through 3/3.5g (HE910, DE910, UE910, HE910V2) to
+4g(LE910, LE910V2)
+
+Then I'll add support for LE910V2 to xe910 plugin.
+How does it sound?
+
+Piotr
+
+--===============7462933948288727679==--
 
