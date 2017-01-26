@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4929108574261593590=="
+Content-Type: multipart/mixed; boundary="===============0188901024968161283=="
 MIME-Version: 1.0
 From: Piotr Haber <gluedig@gmail.com>
-Subject: [PATCH] qmimodem: send authentication credentials
-Date: Thu, 26 Jan 2017 08:49:05 +0100
-Message-ID: <20170126074905.24644-1-gluedig@gmail.com>
+Subject: [PATCH v2] qmimodem: send authentication credentials
+Date: Thu, 26 Jan 2017 08:57:41 +0100
+Message-ID: <20170126075741.25481-1-gluedig@gmail.com>
 In-Reply-To: <84af9113-4e2c-7b1a-557f-340749cffe2e@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4929108574261593590==
+--===============0188901024968161283==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -22,7 +22,7 @@ to QMI WDS service.
 
 diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-contex=
 t.c
-index a39db5e8..2250eef9 100644
+index a39db5e8..b7f29b60 100644
 --- a/drivers/qmimodem/gprs-context.c
 +++ b/drivers/qmimodem/gprs-context.c
 @@ -151,6 +151,7 @@ static void qmi_activate_primary(struct ofono_gprs_cont=
@@ -54,15 +54,15 @@ text *gc,
 +		auth =3D QMI_WDS_AUTHENTICATION_NONE;
 +		break;
 +	}
++
 +	qmi_param_append_uint8(param, QMI_WDS_PARAM_AUTHENTICATION_PREFERENCE,
 +					auth);
 +
-+	if (ctx->username && strlen(ctx->username)) {
++	if (ctx->username[0] !=3D '\0')
 +		qmi_param_append(param, QMI_WDS_PARAM_USERNAME,
 +					strlen(ctx->username), ctx->username);
-+        }
 +
-+	if (ctx->password && strlen(ctx->password))
++	if (ctx->password[0] !=3D '\0')
 +		qmi_param_append(param, QMI_WDS_PARAM_PASSWORD,
 +					strlen(ctx->password), ctx->password);
 +
@@ -94,5 +94,5 @@ index 0da34ab9..4843f925 100644
 2.11.0
 
 
---===============4929108574261593590==--
+--===============0188901024968161283==--
 
