@@ -1,323 +1,272 @@
-Content-Type: multipart/mixed; boundary="===============3153396507187894581=="
+Content-Type: multipart/mixed; boundary="===============1841621028811671107=="
 MIME-Version: 1.0
 From: Piotr Haber <gluedig@gmail.com>
-Subject: [PATCH 1/2] plugins: rename he910 to xe910
-Date: Thu, 26 Jan 2017 17:22:52 +0100
-Message-ID: <20170126162253.25442-2-gluedig@gmail.com>
+Subject: [PATCH 2/2] plugins: Handle HE910 and UE910 variants
+Date: Thu, 26 Jan 2017 17:22:53 +0100
+Message-ID: <20170126162253.25442-3-gluedig@gmail.com>
 In-Reply-To: <20170126162253.25442-1-gluedig@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3153396507187894581==
+--===============1841621028811671107==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-In preparation for more generic support
-of Telit xE910 family.
+Telit modems HE910 and UE910 share the same USB
+vendor and device IDs (1bc7:0021) but they are
+different devices.
+HE910 is HSPA Class 14/6 and UE910 is Class 8/6.
+Both come in voice-enabled variants.
+HE910 also comes in variants with built-in GPS.
 ---
- Makefile.am                  |  4 +--
- plugins/udevng.c             |  6 ++--
- plugins/{he910.c =3D> xe910.c} | 70 ++++++++++++++++++++++----------------=
-------
- 3 files changed, 40 insertions(+), 40 deletions(-)
- rename plugins/{he910.c =3D> xe910.c} (83%)
+ plugins/xe910.c | 167 ++++++++++++++++++++++++++++++++++++++++++++++++----=
+----
+ 1 file changed, 143 insertions(+), 24 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index f76971ec..6d134739 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -491,8 +491,8 @@ builtin_sources +=3D plugins/sim900.c
- builtin_modules +=3D connman
- builtin_sources +=3D plugins/connman.c
- =
-
--builtin_modules +=3D he910
--builtin_sources +=3D plugins/he910.c
-+builtin_modules +=3D xe910
-+builtin_sources +=3D plugins/xe910.c
- =
-
- builtin_modules +=3D quectel
- builtin_sources +=3D plugins/quectel.c
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 50089129..2f1da62b 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -654,7 +654,7 @@ static gboolean setup_telit(struct modem_info *modem)
- 	return TRUE;
- }
- =
-
--static gboolean setup_he910(struct modem_info *modem)
-+static gboolean setup_xe910(struct modem_info *modem)
- {
- 	const char *mdm =3D NULL, *aux =3D NULL, *gps =3D NULL;
- 	GSList *list;
-@@ -976,7 +976,7 @@ static struct {
- 	{ "novatel",	setup_novatel	},
- 	{ "nokia",	setup_nokia	},
- 	{ "telit",	setup_telit	},
--	{ "he910",	setup_he910	},
-+	{ "xe910",	setup_xe910	},
- 	{ "simcom",	setup_simcom	},
- 	{ "zte",	setup_zte	},
- 	{ "icera",	setup_icera	},
-@@ -1214,7 +1214,7 @@ static struct {
- 	{ "simcom",	"option",	"05c6", "9000"	},
- 	{ "telit",	"usbserial",	"1bc7"		},
- 	{ "telit",	"option",	"1bc7"		},
--	{ "he910",	"cdc_acm",	"1bc7", "0021"	},
-+	{ "xe910",	"cdc_acm",	"1bc7", "0021"	},
- 	{ "nokia",	"option",	"0421", "060e"	},
- 	{ "nokia",	"option",	"0421", "0623"	},
- 	{ "samsung",	"option",	"04e8", "6889"	},
-diff --git a/plugins/he910.c b/plugins/xe910.c
-similarity index 83%
-rename from plugins/he910.c
-rename to plugins/xe910.c
-index 69362b87..24fe1ade 100644
---- a/plugins/he910.c
+diff --git a/plugins/xe910.c b/plugins/xe910.c
+index 24fe1ade..9925879a 100644
+--- a/plugins/xe910.c
 +++ b/plugins/xe910.c
-@@ -62,7 +62,7 @@
+@@ -62,12 +62,40 @@
  static const char *none_prefix[] =3D { NULL };
  static const char *qss_prefix[] =3D { "#QSS:", NULL };
  =
 
--struct he910_data {
-+struct xe910_data {
++enum modem_model {
++    HE910 =3D 1,
++    UE910
++};
++
++static struct {
++	enum modem_model model;
++	const char *variant;
++	gboolean has_voice;
++	gboolean has_gps;
++} variants_list[] =3D {
++    { HE910,	NULL,	FALSE,	FALSE },
++    { HE910,	"G",	TRUE,	TRUE },
++    { HE910,	"GL",	TRUE,	FALSE },
++    { HE910,	"EUR",	TRUE,	FALSE },
++    { HE910,	"NAR",	TRUE,	FALSE },
++    { HE910,	"DG",	FALSE,	TRUE },
++    { HE910,	"EUG",	FALSE,	TRUE },
++    { HE910,	"NAG",	FALSE,	TRUE },
++    { UE910,	NULL,	FALSE,	FALSE },
++    { UE910,	"EUR",	TRUE,	FALSE },
++    { UE910,	"NAR",	TRUE,	FALSE },
++    { }
++};
++
+ struct xe910_data {
  	GAtChat *chat;		/* AT chat */
  	GAtChat *modem;		/* Data port */
  	struct ofono_sim *sim;
-@@ -70,7 +70,7 @@ struct he910_data {
+ 	ofono_bool_t have_sim;
  	ofono_bool_t sms_phonebook_added;
++	enum modem_model model;
++	gboolean has_voice;
++	gboolean has_gps;
  };
  =
 
--static void he910_debug(const char *str, void *user_data)
-+static void xe910_debug(const char *str, void *user_data)
- {
- 	const char *prefix =3D user_data;
- =
-
-@@ -112,14 +112,14 @@ static GAtChat *open_device(struct ofono_modem *modem,
- 		return NULL;
- =
-
- 	if (getenv("OFONO_AT_DEBUG"))
--		g_at_chat_set_debug(chat, he910_debug, debug);
-+		g_at_chat_set_debug(chat, xe910_debug, debug);
- =
-
- 	return chat;
- }
- =
-
- static void switch_sim_state_status(struct ofono_modem *modem, int status)
- {
--	struct he910_data *data =3D ofono_modem_get_data(modem);
-+	struct xe910_data *data =3D ofono_modem_get_data(modem);
- =
-
- 	DBG("%p, SIM status: %d", modem, status);
- =
-
-@@ -151,7 +151,7 @@ static void switch_sim_state_status(struct ofono_modem =
-*modem, int status)
- 	}
- }
- =
-
--static void he910_qss_notify(GAtResult *result, gpointer user_data)
-+static void xe910_qss_notify(GAtResult *result, gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
- 	int status;
-@@ -197,7 +197,7 @@ static void qss_query_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- static void cfun_enable_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
- {
- 	struct ofono_modem *modem =3D user_data;
--	struct he910_data *data =3D ofono_modem_get_data(modem);
-+	struct xe910_data *data =3D ofono_modem_get_data(modem);
+ static void xe910_debug(const char *str, void *user_data)
+@@ -201,16 +229,8 @@ static void cfun_enable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
  =
 
  	DBG("%p", modem);
  =
 
-@@ -232,7 +232,7 @@ static void cfun_enable_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
- 				NULL, NULL, NULL);
+-	if (!ok) {
+-		g_at_chat_unref(data->chat);
+-		data->chat =3D NULL;
+-
+-		g_at_chat_unref(data->modem);
+-		data->modem =3D NULL;
+-
+-		ofono_modem_set_powered(modem, FALSE);
+-		return;
+-	}
++	if (!ok)
++	    return;
  =
 
- 	/* Follow sim state */
--	g_at_chat_register(data->chat, "#QSS:", he910_qss_notify,
-+	g_at_chat_register(data->chat, "#QSS:", xe910_qss_notify,
- 				FALSE, modem, NULL);
- =
-
- 	/* Enable sim state notification */
-@@ -242,9 +242,9 @@ static void cfun_enable_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
+ 	/*
+ 	 * Switch data carrier detect signal off.
+@@ -242,6 +262,97 @@ static void cfun_enable_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
  			qss_query_cb, modem, NULL);
  }
  =
 
--static int he910_enable(struct ofono_modem *modem)
-+static int xe910_enable(struct ofono_modem *modem)
- {
--	struct he910_data *data =3D ofono_modem_get_data(modem);
++static gboolean find_model_variant(struct ofono_modem *modem, const char *=
+ model_variant)
++{
++    struct xe910_data *data =3D ofono_modem_get_data(modem);
++    char model[32];
++    char variant[32];
++    gchar ** tokens;
++    int i;
++
++    if(!model_variant || model_variant[0] =3D=3D '\0')
++	return FALSE;
++
++    DBG("%s", model_variant);
++
++    tokens =3D g_strsplit(model_variant, "-", 2);
++
++    if(!tokens || !tokens[0] || !tokens[1])
++	return FALSE;
++
++    g_strlcpy(model, tokens[0], sizeof(model));
++    g_strlcpy(variant, tokens[1], sizeof(variant));
++    g_strfreev(tokens);
++
++    if (g_str_equal(model, "HE910"))
++	data->model =3D HE910;
++    else if (g_str_equal(model, "UE910"))
++	data->model =3D UE910;
++    else
++	return FALSE;
++
++    DBG("Model: %s", model);
++
++    for (i=3D0; variants_list[i].model; i++) {
++
++	if (variants_list[i].model !=3D data->model)
++	    continue;
++
++	/* Set model defaults */
++	if (variants_list[i].variant =3D=3D NULL) {
++	    data->has_voice =3D variants_list[i].has_voice;
++	    data->has_gps =3D variants_list[i].has_gps;
++	    continue;
++	}
++
++	/* Specific variant match */
++	if (g_str_equal(variant, variants_list[i].variant)) {
++	    DBG("Variant: %s", variant);
++	    data->has_voice =3D variants_list[i].has_voice;
++	    data->has_gps =3D variants_list[i].has_gps;
++	}
++    }
++
++    return TRUE;
++}
++
++static void cfun_gmm_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
 +	struct xe910_data *data =3D ofono_modem_get_data(modem);
- =
-
- 	DBG("%p", modem);
- =
-
-@@ -278,7 +278,7 @@ static int he910_enable(struct ofono_modem *modem)
- static void cfun_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
++	const char * model_variant;
++
++	DBG("%p", modem);
++
++	if (!ok)
++	    goto error;
++
++	/* Get +GMM response */
++	if(!at_util_parse_attr(result, "", &model_variant))
++	    goto error;
++
++	/* Try to find modem model and variant */
++	if(!find_model_variant(modem, model_variant)) {
++	    ofono_info("Unknown xE910 model/variant %s", model_variant);
++	    goto error;
++	}
++
++	/* Set phone functionality */
++	if (g_at_chat_send(data->chat, "AT+CFUN=3D1", none_prefix,
++				cfun_enable_cb, modem, NULL) > 0)
++	    return;
++
++error:
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
++
++	g_at_chat_unref(data->modem);
++	data->modem =3D NULL;
++
++	ofono_modem_set_powered(modem, FALSE);
++	return;
++}
++
+ static int xe910_enable(struct ofono_modem *modem)
  {
- 	struct ofono_modem *modem =3D user_data;
--	struct he910_data *data =3D ofono_modem_get_data(modem);
-+	struct xe910_data *data =3D ofono_modem_get_data(modem);
+ 	struct xe910_data *data =3D ofono_modem_get_data(modem);
+@@ -268,9 +379,11 @@ static int xe910_enable(struct ofono_modem *modem)
+ 	g_at_chat_send(data->chat, "ATE0 +CMEE=3D1", none_prefix,
+ 				NULL, NULL, NULL);
  =
 
- 	DBG("%p", modem);
+-	/* Set phone functionality */
+-	g_at_chat_send(data->chat, "AT+CFUN=3D1", none_prefix,
+-				cfun_enable_cb, modem, NULL);
++
++	/* Get modem model and variant */
++	g_at_chat_send(data->chat, "AT+GMM", NULL,
++				cfun_gmm_cb, modem, NULL);
++
  =
 
-@@ -289,9 +289,9 @@ static void cfun_disable_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
- 		ofono_modem_set_powered(modem, FALSE);
- }
- =
-
--static int he910_disable(struct ofono_modem *modem)
-+static int xe910_disable(struct ofono_modem *modem)
- {
--	struct he910_data *data =3D ofono_modem_get_data(modem);
-+	struct xe910_data *data =3D ofono_modem_get_data(modem);
- =
-
- 	DBG("%p", modem);
- =
-
-@@ -310,9 +310,9 @@ static int he910_disable(struct ofono_modem *modem)
  	return -EINPROGRESS;
  }
- =
-
--static void he910_pre_sim(struct ofono_modem *modem)
-+static void xe910_pre_sim(struct ofono_modem *modem)
- {
--	struct he910_data *data =3D ofono_modem_get_data(modem);
-+	struct xe910_data *data =3D ofono_modem_get_data(modem);
- =
-
- 	DBG("%p", modem);
- =
-
-@@ -322,9 +322,9 @@ static void he910_pre_sim(struct ofono_modem *modem)
- 	ofono_location_reporting_create(modem, 0, "telitmodem", data->chat);
+@@ -319,29 +432,35 @@ static void xe910_pre_sim(struct ofono_modem *modem)
+ 	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
+ 	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_TELIT, "atmodem",
+ 					data->chat);
+-	ofono_location_reporting_create(modem, 0, "telitmodem", data->chat);
++
++	if (data->has_gps)
++	    ofono_location_reporting_create(modem, 0, "telitmodem", data->chat);
  }
  =
 
--static void he910_post_online(struct ofono_modem *modem)
-+static void xe910_post_online(struct ofono_modem *modem)
+ static void xe910_post_online(struct ofono_modem *modem)
  {
--	struct he910_data *data =3D ofono_modem_get_data(modem);
-+	struct xe910_data *data =3D ofono_modem_get_data(modem);
- 	struct ofono_message_waiting *mw;
+ 	struct xe910_data *data =3D ofono_modem_get_data(modem);
+-	struct ofono_message_waiting *mw;
  	struct ofono_gprs *gprs;
  	struct ofono_gprs_context *gc;
-@@ -351,13 +351,13 @@ static void he910_post_online(struct ofono_modem *mod=
-em)
- 		ofono_gprs_add_context(gprs, gc);
- }
- =
-
--static int he910_probe(struct ofono_modem *modem)
-+static int xe910_probe(struct ofono_modem *modem)
- {
--	struct he910_data *data;
-+	struct xe910_data *data;
  =
 
  	DBG("%p", modem);
  =
 
--	data =3D g_try_new0(struct he910_data, 1);
-+	data =3D g_try_new0(struct xe910_data, 1);
- 	if (data =3D=3D NULL)
- 		return -ENOMEM;
+-	ofono_voicecall_create(modem, 0, "atmodem", data->chat);
+ 	ofono_netreg_create(modem, OFONO_VENDOR_TELIT, "atmodem", data->chat);
+-	ofono_ussd_create(modem, 0, "atmodem", data->chat);
+-	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
+-	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
+-	ofono_call_meter_create(modem, 0, "atmodem", data->chat);
+-	ofono_call_barring_create(modem, 0, "atmodem", data->chat);
+-
+-	mw =3D ofono_message_waiting_create(modem);
+-	if (mw)
++
++	if(data->has_voice) {
++	    struct ofono_message_waiting *mw;
++
++	    ofono_voicecall_create(modem, 0, "atmodem", data->chat);
++	    ofono_ussd_create(modem, 0, "atmodem", data->chat);
++	    ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
++	    ofono_call_settings_create(modem, 0, "atmodem", data->chat);
++	    ofono_call_meter_create(modem, 0, "atmodem", data->chat);
++	    ofono_call_barring_create(modem, 0, "atmodem", data->chat);
++
++	    mw =3D ofono_message_waiting_create(modem);
++	    if (mw)
+ 		ofono_message_waiting_register(mw);
++	}
  =
 
-@@ -366,9 +366,9 @@ static int he910_probe(struct ofono_modem *modem)
- 	return 0;
- }
- =
-
--static void he910_remove(struct ofono_modem *modem)
-+static void xe910_remove(struct ofono_modem *modem)
- {
--	struct he910_data *data =3D ofono_modem_get_data(modem);
-+	struct xe910_data *data =3D ofono_modem_get_data(modem);
- =
-
- 	DBG("%p", modem);
- =
-
-@@ -381,27 +381,27 @@ static void he910_remove(struct ofono_modem *modem)
- 	g_free(data);
- }
- =
-
--static struct ofono_modem_driver he910_driver =3D {
--	.name		=3D "he910",
--	.probe		=3D he910_probe,
--	.remove		=3D he910_remove,
--	.enable		=3D he910_enable,
--	.disable	=3D he910_disable,
--	.pre_sim	=3D he910_pre_sim,
--	.post_online	=3D he910_post_online,
-+static struct ofono_modem_driver xe910_driver =3D {
-+	.name		=3D "xe910",
-+	.probe		=3D xe910_probe,
-+	.remove		=3D xe910_remove,
-+	.enable		=3D xe910_enable,
-+	.disable	=3D xe910_disable,
-+	.pre_sim	=3D xe910_pre_sim,
-+	.post_online	=3D xe910_post_online,
- };
- =
-
--static int he910_init(void)
-+static int xe910_init(void)
- {
- 	DBG("");
- =
-
--	return ofono_modem_driver_register(&he910_driver);
-+	return ofono_modem_driver_register(&xe910_driver);
- }
- =
-
--static void he910_exit(void)
-+static void xe910_exit(void)
- {
--	ofono_modem_driver_unregister(&he910_driver);
-+	ofono_modem_driver_unregister(&xe910_driver);
- }
- =
-
--OFONO_PLUGIN_DEFINE(he910, "Telit HE910 driver", VERSION,
--		OFONO_PLUGIN_PRIORITY_DEFAULT, he910_init, he910_exit)
-+OFONO_PLUGIN_DEFINE(xe910, "Telit HE910 driver", VERSION,
-+		OFONO_PLUGIN_PRIORITY_DEFAULT, xe910_init, xe910_exit)
+ 	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_TELIT, "atmodem",
+ 					data->chat);
 -- =
 
 2.11.0
 
 
---===============3153396507187894581==--
+--===============1841621028811671107==--
 
