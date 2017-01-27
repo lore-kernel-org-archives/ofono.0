@@ -1,93 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============7601693093240695400=="
+Content-Type: multipart/mixed; boundary="===============1016206137465302741=="
 MIME-Version: 1.0
 From: Piotr Haber <gluedig@gmail.com>
-Subject: [PATCH 2/3] udevng: setup of Telit LE910V2
-Date: Fri, 27 Jan 2017 10:54:23 +0100
-Message-ID: <20170127095424.19685-3-gluedig@gmail.com>
+Subject: [PATCH 3/3] xe910: support for Telit LE910V2 modem
+Date: Fri, 27 Jan 2017 10:54:24 +0100
+Message-ID: <20170127095424.19685-4-gluedig@gmail.com>
 In-Reply-To: <20170127095424.19685-1-gluedig@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7601693093240695400==
+--===============1016206137465302741==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Setup LE910V2 in default USB composition (1bc7:0036)
-with 6 CDC-ACM serial ports and 1 CDC-NCM network adapter.
+LE910V2 is next generation Telit LTE modem.
+It supports 3GPP Rel. 9 LTE Cat. 4 over multiple bands.
 ---
- plugins/udevng.c | 14 +++++++++++---
- 1 file changed, 11 insertions(+), 3 deletions(-)
+ plugins/xe910.c | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 2f1da62b..098e0651 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -656,7 +656,7 @@ static gboolean setup_telit(struct modem_info *modem)
+diff --git a/plugins/xe910.c b/plugins/xe910.c
+index 170a6b08..bf40a3de 100644
+--- a/plugins/xe910.c
++++ b/plugins/xe910.c
+@@ -64,7 +64,8 @@ static const char *qss_prefix[] =3D { "#QSS:", NULL };
  =
 
- static gboolean setup_xe910(struct modem_info *modem)
- {
--	const char *mdm =3D NULL, *aux =3D NULL, *gps =3D NULL;
-+	const char *mdm =3D NULL, *aux =3D NULL, *gps =3D NULL, *net =3D NULL;
- 	GSList *list;
+ enum modem_model {
+ 	HE910 =3D 1,
+-	UE910
++	UE910,
++	LE910
+ };
  =
 
- 	DBG("%s", modem->syspath);
-@@ -674,18 +674,24 @@ static gboolean setup_xe910(struct modem_info *modem)
- 				aux =3D info->devnode;
- 			else if (g_strcmp0(info->number, "0a") =3D=3D 0)
- 				gps =3D info->devnode;
-+		} else if (info->sysattr && (g_str_has_suffix(info->sysattr,
-+						"CDC NCM") =3D=3D TRUE)) {
-+			net =3D info->devnode;
- 		}
- 	}
- =
-
- 	if (aux =3D=3D NULL || mdm =3D=3D NULL)
- 		return FALSE;
- =
-
--	DBG("modem=3D%s aux=3D%s gps=3D%s", mdm, aux, gps);
-+	DBG("modem=3D%s aux=3D%s gps=3D%s net=3D%s", mdm, aux, gps, net);
- =
-
- 	ofono_modem_set_string(modem->modem, "Modem", mdm);
- 	ofono_modem_set_string(modem->modem, "Aux", aux);
- 	ofono_modem_set_string(modem->modem, "GPS", gps);
- =
-
-+	if (net !=3D NULL)
-+		ofono_modem_set_string(modem->modem, "NetworkInterface", net);
-+
- 	return TRUE;
- }
- =
-
-@@ -976,7 +982,7 @@ static struct {
- 	{ "novatel",	setup_novatel	},
- 	{ "nokia",	setup_nokia	},
- 	{ "telit",	setup_telit	},
--	{ "xe910",	setup_xe910	},
-+	{ "xe910",	setup_xe910,	"device/interface"	},
- 	{ "simcom",	setup_simcom	},
- 	{ "zte",	setup_zte	},
- 	{ "icera",	setup_icera	},
-@@ -1226,6 +1232,8 @@ static struct {
- 	{ "gemalto",	"option",	"1e2d",	"0053"	},
- 	{ "gemalto",	"cdc_wdm",	"1e2d",	"0053"	},
- 	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
-+	{ "xe910",	"cdc_ncm",	"1bc7", "0036"	},
-+	{ "xe910",	"cdc_acm",	"1bc7", "0036"	},
+ static struct {
+@@ -84,6 +85,7 @@ static struct {
+ 	{ UE910,	NULL,	FALSE,	FALSE },
+ 	{ UE910,	"EUR",	TRUE,	FALSE },
+ 	{ UE910,	"NAR",	TRUE,	FALSE },
++	{ LE910,	NULL,	FALSE,	FALSE },
  	{ }
  };
  =
 
+@@ -297,6 +299,8 @@ static gboolean find_model_variant(struct ofono_modem *=
+modem,
+ 		data->model =3D HE910;
+ 	else if (g_str_equal(model, "UE910"))
+ 		data->model =3D UE910;
++	else if (g_str_equal(model, "LE910"))
++		data->model =3D LE910;
+ 	else
+ 		return FALSE;
+ =
+
+@@ -385,6 +389,8 @@ static int xe910_enable(struct ofono_modem *modem)
+ 	 */
+ 	g_at_chat_send(data->chat, "ATE0 +CMEE=3D1", none_prefix,
+ 				NULL, NULL, NULL);
++	g_at_chat_send(data->modem, "ATE0", none_prefix,
++				NULL, NULL, NULL);
+ =
+
+ =
+
+ 	/* Get modem model and variant */
+@@ -472,7 +478,13 @@ static void xe910_post_online(struct ofono_modem *mode=
+m)
+ =
+
+ 	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_TELIT, "atmodem",
+ 					data->chat);
+-	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
++
++	if (data->model =3D=3D LE910)
++		gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_TELIT,
++						"telitncmmodem", data->modem);
++	else
++		gc =3D ofono_gprs_context_create(modem, 0, "atmodem",
++						data->modem);
+ =
+
+ 	if (gprs && gc)
+ 		ofono_gprs_add_context(gprs, gc);
 -- =
 
 2.11.0
 
 
---===============7601693093240695400==--
+--===============1016206137465302741==--
 
