@@ -1,32 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============0038796188840255097=="
+Content-Type: multipart/mixed; boundary="===============8170373850788900891=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] xe910: support for Telit LE910V2 modem
-Date: Fri, 27 Jan 2017 20:37:36 -0600
-Message-ID: <ef9cc440-e0aa-fc1d-1e43-8468672b55b9@gmail.com>
-In-Reply-To: <20170127095424.19685-4-gluedig@gmail.com>
+From: Piotr Haber <gluedig@gmail.com>
+Subject: Telit modem plugins.
+Date: Mon, 30 Jan 2017 14:02:44 +0100
+Message-ID: <a64abdef-9c38-440b-5932-7cee53b67560@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0038796188840255097==
+--===============8170373850788900891==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Piotr,
+Hi.
+Seems my rename of he910 plugin to xe910 was a little bit optimistic.
+Looks like not only xE910 family modems use 1bc7:0021 USB IDs.
 
-On 01/27/2017 03:54 AM, Piotr Haber wrote:
-> LE910V2 is next generation Telit LTE modem.
-> It supports 3GPP Rel. 9 LTE Cat. 4 over multiple bands.
-> ---
->  plugins/xe910.c | 16 ++++++++++++++--
->  1 file changed, 14 insertions(+), 2 deletions(-)
->
+I got my hands on UE866 and it has the same default composition.
+So this is another family, designed for embedded M2M/IoT applications
+with different module form-factor, but having similar members (GE866 2G,
+UE866 3.5G, LE866 4G)
+And according to documentation UL865 should share the same USB IDs.
+And as UL865 is an UMTS enabled, pin-compatible upgrade to GL865-DUAl V3
+I would expect the latter will also have the same composition.
+I could not find a definitive source of information on this.
 
-Applied, thanks.
+So it seems the plugin needs a different name, again.
+There is already "telit" plugin but this one supports modems based on
+"option" serial ports and USB PIDs starting from 0x1003, this includes
+CE/DE/LE910 (LE910 V1 that is, using QMI, which is end-of-life),
+HE/LE920 and LE922/LE940A6.
 
-Regards,
--Denis
+Do you have any suggestions on the new name for this plugin?
+I would go for something like "telit-acm" (cause it uses CDC-ACM serial
+ports).
 
---===============0038796188840255097==--
+Best
+Piotr
+
+--===============8170373850788900891==--
 
