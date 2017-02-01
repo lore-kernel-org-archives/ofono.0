@@ -1,76 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============4327565865644187971=="
+Content-Type: multipart/mixed; boundary="===============0099144282974831911=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Telit modem plugins.
-Date: Mon, 30 Jan 2017 23:33:13 -0600
-Message-ID: <080dd8a5-3a4d-8f28-9a0e-05eff9c2bb41@gmail.com>
-In-Reply-To: <a64abdef-9c38-440b-5932-7cee53b67560@gmail.com>
+From: Christophe Ronco <c.ronco@kerlink.fr>
+Subject: [PATCH 0/2] V2 qmimodem: set data format when needed (and possible)
+Date: Wed, 01 Feb 2017 11:32:46 +0100
+Message-ID: <20170201103248.26822-1-c.ronco@kerlink.fr>
+In-Reply-To: <20170119081518.16765-1-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4327565865644187971==
+--===============0099144282974831911==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Piotr,
+Remarks from Denis integrated.
 
-On 01/30/2017 07:02 AM, Piotr Haber wrote:
-> Hi.
-> Seems my rename of he910 plugin to xe910 was a little bit optimistic.
-> Looks like not only xE910 family modems use 1bc7:0021 USB IDs.
->
-> I got my hands on UE866 and it has the same default composition.
-> So this is another family, designed for embedded M2M/IoT applications
-> with different module form-factor, but having similar members (GE866 2G,
-> UE866 3.5G, LE866 4G)
-> And according to documentation UL865 should share the same USB IDs.
-> And as UL865 is an UMTS enabled, pin-compatible upgrade to GL865-DUAl V3
-> I would expect the latter will also have the same composition.
-> I could not find a definitive source of information on this.
->
+MC7430 is a raw-ip only modem. If accessed through 802.3 network interface,
+no packets can be received (IP layer headers missing).
 
-Don't think I ever played with the UL865 line.  The original telit =
+To be able to start a data connection with this modem, we must tell driver
+(qmi_wwan.c) to mount a raw-ip network interface instead of a 802.3 interfa=
+ce.
 
-plugin was written for the UC864 housed on the EVK2 board.  That is why =
+This has been implemented in libqmi package. The idea is:
+ - ask modem what data format it wants (raw-ip or 802.3)
+ - ask driver what data format it expects (raw-ip or 802.3)
+ - change driver data format if values do not match
 
-that particular plugin is using usbserial driver.  At some point someone =
+Patch has been split in two.
+In first part, we just add the code needed to get/set driver expected data
+format but nobody ever call these functions.
+In second part, logic explained above is implemented.
+If anything fail (can't get expected data format, can't get modem data form=
+at,
+...), we just don't set anything and continue.
 
-added additional driver/usbid combinations.
+To be able to use this, a kernel 4.5 or more recent is needed.
 
-Telit maintains a similar command set across all of their devices, so =
+Christophe Ronco (2):
+  qmimodem: get/set kernel device driver data format
+  qmimodem: change kernel driver data format if needed
 
-things must have just worked.  At some point they switched to Intel =
+ Makefile.am                     |   3 +-
+ drivers/qmimodem/gprs-context.c |  79 +++++++++++++++-
+ drivers/qmimodem/qmi.c          | 200 ++++++++++++++++++++++++++++++++++++=
+++++
+ drivers/qmimodem/qmi.h          |  11 +++
+ drivers/qmimodem/wda.h          |  25 +++++
+ 5 files changed, 314 insertions(+), 4 deletions(-)
+ create mode 100644 drivers/qmimodem/wda.h
 
-chips (HE910 and LE910 must be anyway).
+-- =
 
-> So it seems the plugin needs a different name, again.
-> There is already "telit" plugin but this one supports modems based on
-> "option" serial ports and USB PIDs starting from 0x1003, this includes
-> CE/DE/LE910 (LE910 V1 that is, using QMI, which is end-of-life),
-> HE/LE920 and LE922/LE940A6.
-
-Can we unify xe910 and telit.c?  Don't think there's a huge difference =
-
-between them either.  telit.c has some Bluetooth SAP support stuff in =
-
-it, but honestly I don't see anyone using it, so it won't be a big loss =
-
-if that code was dropped on the floor.
-
->
-> Do you have any suggestions on the new name for this plugin?
-> I would go for something like "telit-acm" (cause it uses CDC-ACM serial
-> ports).
->
-
-If the two can't be unified, perhaps rename telit -> telit_sap and xe910 =
-
--> telit?
-
-Regards,
--Denis
+2.11.0
 
 
---===============4327565865644187971==--
+--===============0099144282974831911==--
 
