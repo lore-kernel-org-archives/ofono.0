@@ -1,65 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============4140005306763363828=="
+Content-Type: multipart/mixed; boundary="===============0207178441309542417=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/2] V2 qmimodem: set data format when needed (and
- possible)
-Date: Thu, 02 Feb 2017 11:49:18 -0600
-Message-ID: <6af98b49-2fc8-3738-7c44-6c7e8c3c0fb0@gmail.com>
-In-Reply-To: <20170201103248.26822-1-c.ronco@kerlink.fr>
+Subject: Re: [PATCH 0/2] unify telit and xe910 plugins
+Date: Thu, 02 Feb 2017 11:57:29 -0600
+Message-ID: <c8d2a6a9-7d7e-0789-7e15-a15ed545c840@gmail.com>
+In-Reply-To: <20170202140927.8152-1-gluedig@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4140005306763363828==
+--===============0207178441309542417==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+Hi Piotr,
 
-On 02/01/2017 04:32 AM, Christophe Ronco wrote:
-> Remarks from Denis integrated.
+On 02/02/2017 08:09 AM, Piotr Haber wrote:
+> Expect of Bluetooth SAP related funcionality
+> most of the code in telit and xe910 plugins is the same.
+> Also unify udevng initialization code.
 >
-> MC7430 is a raw-ip only modem. If accessed through 802.3 network interfac=
-e,
-> no packets can be received (IP layer headers missing).
+> Piotr Haber (2):
+>   plugins: rename xe910 to telit
+>   udevng: unify telit and xe910
 >
-> To be able to start a data connection with this modem, we must tell driver
-> (qmi_wwan.c) to mount a raw-ip network interface instead of a 802.3 inter=
-face.
->
-> This has been implemented in libqmi package. The idea is:
->  - ask modem what data format it wants (raw-ip or 802.3)
->  - ask driver what data format it expects (raw-ip or 802.3)
->  - change driver data format if values do not match
->
-> Patch has been split in two.
-> In first part, we just add the code needed to get/set driver expected data
-> format but nobody ever call these functions.
-> In second part, logic explained above is implemented.
-> If anything fail (can't get expected data format, can't get modem data fo=
-rmat,
-> ...), we just don't set anything and continue.
->
-> To be able to use this, a kernel 4.5 or more recent is needed.
->
-> Christophe Ronco (2):
->   qmimodem: get/set kernel device driver data format
->   qmimodem: change kernel driver data format if needed
->
->  Makefile.am                     |   3 +-
->  drivers/qmimodem/gprs-context.c |  79 +++++++++++++++-
->  drivers/qmimodem/qmi.c          | 200 ++++++++++++++++++++++++++++++++++=
-++++++
->  drivers/qmimodem/qmi.h          |  11 +++
->  drivers/qmimodem/wda.h          |  25 +++++
->  5 files changed, 314 insertions(+), 4 deletions(-)
->  create mode 100644 drivers/qmimodem/wda.h
+>  Makefile.am      |   7 +-
+>  plugins/telit.c  | 550 +++++++++++++++++++++----------------------------=
+------
+>  plugins/udevng.c |  44 +----
+>  plugins/xe910.c  | 546 -------------------------------------------------=
+-----
+>  4 files changed, 213 insertions(+), 934 deletions(-)
+>  delete mode 100644 plugins/xe910.c
 >
 
-All applied, thanks.
+Both applied, thanks.
 
 Regards,
 -Denis
 
---===============4140005306763363828==--
+--===============0207178441309542417==--
 
