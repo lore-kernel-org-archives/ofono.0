@@ -1,19 +1,24 @@
-Content-Type: multipart/mixed; boundary="===============6674991803345647028=="
+Content-Type: multipart/mixed; boundary="===============7448196955988540932=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Andr=C3=A9?= Draszik <git@andred.net>
-Subject: [PATCH] plugins: telit: send AT&C0 on both channels
-Date: Tue, 07 Feb 2017 08:57:57 +0000
-Message-ID: <20170207085757.4712-1-git@andred.net>
+Subject: [PATCH v2] plugins: telit: send AT&C0 on both channels
+Date: Tue, 07 Feb 2017 11:26:50 +0000
+Message-ID: <20170207112650.10222-1-git@andred.net>
+In-Reply-To: <20170207085757.4712-1-git@andred.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6674991803345647028==
+--===============7448196955988540932==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 At least firmware version 12.00.405 on the UE910-EUR otherwise
-closes the modem channel, and we'd be left in a funny state.
+closes the AT command port whenever the PPP connection is
+dropped, and we'd be left in a funny state.
+
+---
+Changes in v2: Commit message updated
 ---
  plugins/telit.c | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)
@@ -41,5 +46,5 @@ ult, gpointer user_data)
 2.11.0
 
 
---===============6674991803345647028==--
+--===============7448196955988540932==--
 
