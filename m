@@ -1,28 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============7703576536766794544=="
+Content-Type: multipart/mixed; boundary="===============4247942552001052751=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] stk: changes for sim toolkit initialization in rilmodem
-Date: Tue, 07 Feb 2017 10:57:31 -0600
-Message-ID: <b5d13aec-56b9-5b94-0acd-ce87634d0a8e@gmail.com>
-In-Reply-To: <1486448229-17649-1-git-send-email-antara.borwankar@intel.com>
+Subject: Re: [PATCH v2] plugins: telit: send AT&C0 on both channels
+Date: Tue, 07 Feb 2017 11:08:28 -0600
+Message-ID: <f7b5ef78-5f0e-ed15-f0d4-50bbfb112eeb@gmail.com>
+In-Reply-To: <20170207112650.10222-1-git@andred.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7703576536766794544==
+--===============4247942552001052751==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antara,
+Hi Andr=C3=A9,
 
-On 02/07/2017 12:17 AM, ANTARA BORWANKAR wrote:
-> sending RIL_REQUEST_REPORT_STK_SERVICE_IS_RUNNING after
-> stk atom is created so that modem will inititialize
-> sim toolkit by sending terminal profile to sim.
+On 02/07/2017 05:26 AM, Andr=C3=A9 Draszik wrote:
+> At least firmware version 12.00.405 on the UE910-EUR otherwise
+> closes the AT command port whenever the PPP connection is
+> dropped, and we'd be left in a funny state.
+>
 > ---
->  drivers/rilmodem/stk.c | 23 ++++++++++++++++++++++-
->  plugins/ril_intel.c    |  2 ++
->  2 files changed, 24 insertions(+), 1 deletion(-)
+> Changes in v2: Commit message updated
+> ---
+>  plugins/telit.c | 3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
 >
 
 Applied, thanks.
@@ -31,5 +33,5 @@ Regards,
 -Denis
 
 
---===============7703576536766794544==--
+--===============4247942552001052751==--
 
