@@ -1,61 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============4969819375691682316=="
+Content-Type: multipart/mixed; boundary="===============5178274868686426497=="
 MIME-Version: 1.0
-From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: provisioning APN using mbpi plugin
-Date: Wed, 08 Feb 2017 13:24:42 +0100
-Message-ID: <1fdc62d3-5bb4-baec-39f6-ea0345f010ff@kerlink.fr>
-In-Reply-To: <d9dfde3c-2b28-197f-f257-a7451d9871ed@kerlink.fr>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: provisioning APN using mbpi plugin
+Date: Wed, 08 Feb 2017 10:54:18 -0600
+Message-ID: <96d52c22-bfde-7618-4ffc-1477a80686b3@gmail.com>
+In-Reply-To: <1fdc62d3-5bb4-baec-39f6-ea0345f010ff@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4969819375691682316==
+--===============5178274868686426497==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi Christophe,
 
-I used to set APN manually (using DBUS interface) on my modems.
+> With this change, provisionning using plugins provision.c and mbpi.c
+> works. It creates 9 contexts for my SIM, 4 of them are internet type
+> contexts.
+> In connman (I use connman above ofono), I see 4 services and I am able
+> to connect at least 2 of them. So I wonder why duplicate context is
+> considered an error by these plugins. Does anybody know ?
 
-I am now trying to provision APNs using default values (depending on =
+This is done on purpose.  oFono & ConnMan are designed with the =
 
-operator).
-I have installed mobile-broadband-provider-info package and tried to use =
+assumption that the user will see what is being exposed by the D-Bus =
 
-ofono mbpi plugin.
-This fail on my current operator:
-Feb 8 10:42:16 klk-lpbs-040070 daemon.err ofonod[3750]: =
+API.  The UI is just a thin client which simply renders the state of =
 
-/usr/share/mobile-broadband-provider-info/serviceproviders.xml:4614 =
+ConnMan / oFono.  Think of the D-Bus API as being user-visible.  Thus it =
 
-Duplicate context detected
-Feb 8 10:42:16 klk-lpbs-040070 daemon.warn ofonod[3750]: Provisioning =
+makes no sense for us to expose services that the user cannot use.
 
-failed
+There are a couple of ways to get around this:
 
-Indeed, my operator (Orange, in France) has several APN of type =
+- Use a more up-to-date database
+- Have a provisioning UI that detects that provisioning has failed, and =
 
-"internet" declared in mobile-broadband-provider-info database. This is =
+guides the user through picking the right combination of operator / plan =
 
-why it fails. And looking at the database, this is quite common.
-Allowing duplicates or not is just a parameter in function =
+/ etc and configures the context settings accordingly
 
-mbpi_lookup_apn. So I changed that in provision_get_settings function =
+There really should only be a single internet context configured for a =
 
-(plugins/provision.c).
+given SIM for the vast majority of users in the world.
 
-With this change, provisionning using plugins provision.c and mbpi.c =
+Regards,
+-Denis
 
-works. It creates 9 contexts for my SIM, 4 of them are internet type =
-
-contexts.
-In connman (I use connman above ofono), I see 4 services and I am able =
-
-to connect at least 2 of them. So I wonder why duplicate context is =
-
-considered an error by these plugins. Does anybody know ?
-
-Christophe
-
---===============4969819375691682316==--
+--===============5178274868686426497==--
 
