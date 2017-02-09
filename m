@@ -1,58 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============6793726685339236158=="
+Content-Type: multipart/mixed; boundary="===============4424400236992111304=="
 MIME-Version: 1.0
-From: Philip Paeps <philip@trouble.is>
-Subject: Re: oFono + Quectel EC25 module: connecting to network,
- ppp0 interface help
-Date: Thu, 09 Feb 2017 10:26:40 +0100
-Message-ID: <20170209092640.GK57399@rincewind.trouble.is>
-In-Reply-To: <CAOZ0rctdUO7HcZmq2zH+6+i=YX=b2QibvsTE51UDbP9CmF1PJQ@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: telit modem NW DETACH
+Date: Thu, 09 Feb 2017 10:04:17 -0600
+Message-ID: <ed71ccd8-488a-9353-0a31-96220c5d9351@gmail.com>
+In-Reply-To: <1486631706.12234.7.camel@andred.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6793726685339236158==
+--===============4424400236992111304==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 2017-02-08 14:15:05 (-0500), Demetrius Pampouktsis <demech11@gmail.com=
-> wrote:
-> I'm trying to set up oFono with the Quectel EC25 module. I see that
-> support for the U15 has been added so I am sort of piggy backing of
-> that.
+Hi Andr=C3=A9,
 
-I think I perpetrated that one.
+>
+> No... Are you saying it could (in theory) actually be the network itself
+> indeed (i.e. not the modem (firmware))?
 
-> After that I made some progress. Using the oFono/test scripts I can
-> enable-modem, online-modem, and scan-for-operators. What I can't seem
-> to do is connect/setup a network, and ppp interface.
+Yes, this is a possibility.
 
-Have you managed to get the modem connected using pppd and chat?  oFono
-might not be your problem.
+Regards,
+-Denis
 
-> * Side note I am using connman to manage my networks. I can see the
-> cellular technology, and can enable it but there is never a cellular
-> service, or ppp0 interface.
-
-There are a lot of moving parts in the connman/dbus/oFono path.  For
-developing the drivers, I found just running oFono in the foreground
-with OFONO_AT_DEBUG and OFONO_PPP_DEBUG a lot more helpful than using
-connman or dbus.
-
-> Any help moving forward to set up the network and interface would be
-> helpful.
-
-Have you verified that the modem itself can actually connect etc?  My
-customer ran into some very interesting hardware/firmware issues with
-the U15.  I would not be surprised if the EC25 exhibited similar quirks
-(see the comment in quectel.c:cfun_query() for instance).
-
-Philip
-
--- =
-
-Philip Paeps
-Senior Reality Engineer
-Ministry of Information
-
---===============6793726685339236158==--
+--===============4424400236992111304==--
 
