@@ -1,57 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============3367645323683143306=="
+Content-Type: multipart/mixed; boundary="===============6793726685339236158=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Andr=C3=A9?= Draszik <git@andred.net>
-Subject: Re: telit modem NW DETACH
-Date: Thu, 09 Feb 2017 09:15:06 +0000
-Message-ID: <1486631706.12234.7.camel@andred.net>
-In-Reply-To: <9252452d-2ee5-5450-3b72-fa918291381c@gmail.com>
+From: Philip Paeps <philip@trouble.is>
+Subject: Re: oFono + Quectel EC25 module: connecting to network,
+ ppp0 interface help
+Date: Thu, 09 Feb 2017 10:26:40 +0100
+Message-ID: <20170209092640.GK57399@rincewind.trouble.is>
+In-Reply-To: <CAOZ0rctdUO7HcZmq2zH+6+i=YX=b2QibvsTE51UDbP9CmF1PJQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3367645323683143306==
+--===============6793726685339236158==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Thanks Denis for your advise,
+On 2017-02-08 14:15:05 (-0500), Demetrius Pampouktsis <demech11@gmail.com=
+> wrote:
+> I'm trying to set up oFono with the Quectel EC25 module. I see that
+> support for the U15 has been added so I am sort of piggy backing of
+> that.
 
-On Tue, 2017-02-07 at 11:22 -0600, Denis Kenzior wrote:
-> =
+I think I perpetrated that one.
 
-> [...]
-> =
+> After that I made some progress. Using the oFono/test scripts I can
+> enable-modem, online-modem, and scan-for-operators. What I can't seem
+> to do is connect/setup a network, and ppp interface.
 
-> Generally the network shouldn't just detach you if you deactivated a=C2=
-=A0
-> context, so my first guess would be that the modem firmware is doing=C2=
-=A0
-> something silly.=C2=A0=C2=A0Do you have another modem to test by any chan=
-ce?
+Have you managed to get the modem connected using pppd and chat?  oFono
+might not be your problem.
 
-No... Are you saying it could (in theory) actually be the network itself
-indeed (i.e. not the modem (firmware))?
+> * Side note I am using connman to manage my networks. I can see the
+> cellular technology, and can enable it but there is never a cellular
+> service, or ppp0 interface.
 
-> > I can get around that by disabling/re-enabling the modem, but I would
-> > like
-> > to avoid that...
-> > =
+There are a lot of moving parts in the connman/dbus/oFono path.  For
+developing the drivers, I found just running oFono in the foreground
+with OFONO_AT_DEBUG and OFONO_PPP_DEBUG a lot more helpful than using
+connman or dbus.
 
-> > As a further point, whenever the modem reports that it has been
-> > disconnected
-> > but then the CellID changes, it magically reconnects, so I believe I
-> > should
-> =
+> Any help moving forward to set up the network and interface would be
+> helpful.
 
-> Even more evidence that seems to indicate a firmware issue.=C2=A0=C2=A0Bu=
-t who
-> knows.
+Have you verified that the modem itself can actually connect etc?  My
+customer ran into some very interesting hardware/firmware issues with
+the U15.  I would not be surprised if the EC25 exhibited similar quirks
+(see the comment in quectel.c:cfun_query() for instance).
 
-I got my hands on a more recent firmware version, once I get a chance to
-update my modem I will report back.
+Philip
 
-Cheers,
-Andre'
+-- =
 
+Philip Paeps
+Senior Reality Engineer
+Ministry of Information
 
---===============3367645323683143306==--
+--===============6793726685339236158==--
 
