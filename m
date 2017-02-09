@@ -1,37 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============7261298735964456014=="
+Content-Type: multipart/mixed; boundary="===============3367645323683143306=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: oFono + Quectel EC25 module: connecting to network,
- ppp0 interface help
-Date: Wed, 08 Feb 2017 15:10:16 -0600
-Message-ID: <87a76a55-a2d5-4572-30c9-6e975315b8ea@gmail.com>
-In-Reply-To: <CAOZ0rctdUO7HcZmq2zH+6+i=YX=b2QibvsTE51UDbP9CmF1PJQ@mail.gmail.com>
+From: =?unknown-8bit?q?Andr=C3=A9?= Draszik <git@andred.net>
+Subject: Re: telit modem NW DETACH
+Date: Thu, 09 Feb 2017 09:15:06 +0000
+Message-ID: <1486631706.12234.7.camel@andred.net>
+In-Reply-To: <9252452d-2ee5-5450-3b72-fa918291381c@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7261298735964456014==
+--===============3367645323683143306==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Demetrius,
+Thanks Denis for your advise,
 
->
-> I've included the log of oFono debug. The output is form me: plugging
-> in modem -> enable-modem -> online-modem -> scan-for-operators ->
-> test-network-registration
+On Tue, 2017-02-07 at 11:22 -0600, Denis Kenzior wrote:
+> =
 
-Your log contains:
-"GPRS not supported on this device"
+> [...]
+> =
 
-which would imply that gprs atom driver has failed to initialize =
+> Generally the network shouldn't just detach you if you deactivated a=C2=
+=A0
+> context, so my first guess would be that the modem firmware is doing=C2=
+=A0
+> something silly.=C2=A0=C2=A0Do you have another modem to test by any chan=
+ce?
 
-properly.  See HACKING for how to enable AT command tracing (e.g. =
+No... Are you saying it could (in theory) actually be the network itself
+indeed (i.e. not the modem (firmware))?
 
-exporting OFONO_AT_DEBUG) and figure out why this fails.
+> > I can get around that by disabling/re-enabling the modem, but I would
+> > like
+> > to avoid that...
+> > =
 
-Regards,
--Denis
+> > As a further point, whenever the modem reports that it has been
+> > disconnected
+> > but then the CellID changes, it magically reconnects, so I believe I
+> > should
+> =
 
---===============7261298735964456014==--
+> Even more evidence that seems to indicate a firmware issue.=C2=A0=C2=A0Bu=
+t who
+> knows.
+
+I got my hands on a more recent firmware version, once I get a chance to
+update my modem I will report back.
+
+Cheers,
+Andre'
+
+
+--===============3367645323683143306==--
 
