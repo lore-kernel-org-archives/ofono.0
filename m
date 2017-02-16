@@ -1,130 +1,145 @@
-Content-Type: multipart/mixed; boundary="===============5993358280057086558=="
+Content-Type: multipart/mixed; boundary="===============7650918061905406705=="
 MIME-Version: 1.0
 From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCH v2] atmodem: use ATD99 to enter data state when needed
-Date: Thu, 16 Feb 2017 09:40:00 +0100
-Message-ID: <20170216084000.2758-1-c.ronco@kerlink.fr>
-In-Reply-To: <c13527c5-8e6c-a88c-75d6-9adc8c3bbc7b@gmail.com>
+Subject: huawei: modem channel gets closed after PPP disconnection
+Date: Thu, 16 Feb 2017 10:26:23 +0100
+Message-ID: <559a763d-d55c-cef6-2832-234196d01099@kerlink.fr>
+In-Reply-To: <4307800f-44ab-84a8-f0d9-39e3e5c81a40@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5993358280057086558==
+--===============7650918061905406705==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Some modems do not support AT+CGDATA=3D"PPP",X to enter data state.
-Use AT+CGDATA=3D? to detect these modems and for them use ATD*99***X#
-to enter data state.
----
- drivers/atmodem/gprs-context.c | 50 ++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 file changed, 49 insertions(+), 1 deletion(-)
+Hi,
 
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index f6e6c2ef..9b9679e8 100644
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -47,6 +47,7 @@
- =
+I use a huawei E3372 modem. It connects to GPRS using PPP. I am able to =
 
- #define STATIC_IP_NETMASK "255.255.255.255"
- =
+activate context and then deactivate it. After that, I am not able to =
 
-+static const char *cgdata_prefix[] =3D { "+CGDATA:", NULL };
- static const char *none_prefix[] =3D { NULL };
- =
+reactivate the context.
+During deactivation, the AT channel used by PPP gets closed and nobody =
 
- enum state {
-@@ -67,6 +68,7 @@ struct gprs_context_data {
- 	ofono_gprs_context_cb_t cb;
- 	void *cb_data;                                  /* Callback data */
- 	unsigned int vendor;
-+	gboolean use_atd99;
- };
- =
+reopens it. During reactivation, the first AT command (AT+CGDCONT) fails.
+Channel shutting down occurs just after NO CARRIER is received on modem =
 
- static void ppp_debug(const char *str, void *data)
-@@ -210,7 +212,7 @@ static void at_cgdcont_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- 		return;
- 	}
- =
+channel (channel is back to AT state) along with a bunch of wrong data. =
 
--	if (gcd->vendor =3D=3D OFONO_VENDOR_SIMCOM_SIM900)
-+	if (gcd->use_atd99)
- 		sprintf(buf, "ATD*99***%u#", gcd->active_context);
- 	else
- 		sprintf(buf, "AT+CGDATA=3D\"PPP\",%u", gcd->active_context);
-@@ -378,6 +380,43 @@ static void cgev_notify(GAtResult *result, gpointer us=
-er_data)
- 		g_at_ppp_shutdown(gcd->ppp);
- }
- =
+Here is the log:
+Modem: < \r\nNO CARRIER\r\n~\377}#\200!}%}"} }$\210*~
+Shutting down is detected in function received_data (gatio.c). Flags =
 
-+static void at_cgdata_test_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	GAtResultIter iter;
-+	const char *data_type;
-+	gboolean found =3D FALSE;
-+
-+	gcd->use_atd99 =3D TRUE;
-+
-+	if (!ok) {
-+		DBG("not ok");
-+		goto error;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+	if (!g_at_result_iter_next(&iter, "+CGDATA:")) {
-+		DBG("no +CGDATA line");
-+		goto error;
-+	}
-+
-+	if (!g_at_result_iter_open_list(&iter)) {
-+		DBG("no list found");
-+		goto error;
-+	}
-+
-+	while (!found && g_at_result_iter_next_string(&iter, &data_type)) {
-+		if (g_str_equal(data_type, "PPP")) {
-+			found =3D TRUE;
-+			gcd->use_atd99 =3D FALSE;
-+		}
-+	}
-+error:
-+	DBG("use_atd99:%d", gcd->use_atd99);
-+}
-+
- static int at_gprs_context_probe(struct ofono_gprs_context *gc,
- 					unsigned int vendor, void *data)
- {
-@@ -405,6 +444,15 @@ static int at_gprs_context_probe(struct ofono_gprs_con=
-text *gc,
- 	if (chat =3D=3D NULL)
- 		return 0;
- =
+G_IO_HUP and G_IO_ERR are received.
 
-+	switch (vendor) {
-+	case OFONO_VENDOR_SIMCOM_SIM900:
-+		gcd->use_atd99 =3D FALSE;
-+		break;
-+	default:
-+		g_at_chat_send(chat, "AT+CGDATA=3D?", cgdata_prefix,
-+						at_cgdata_test_cb, gc, NULL);
-+	}
-+
- 	g_at_chat_register(chat, "+CGEV:", cgev_notify, FALSE, gc, NULL);
- =
+I have done a patch in huawei plugin that correct the problem@least =
 
- 	return 0;
--- =
+with my modem. The idea is for plugin to get notified when modem AT =
 
-2.11.0
+channel gets closed and when this happens to remove gprs-context, reopen =
 
+modem AT channel and restart gprs-context driver. This is possible =
 
---===============5993358280057086558==--
+because all other drivers (sim, gprs, ...) use PCUI AT channel and not =
+
+modem AT channel.
+But I am not sure this is:
+- the right place to do it (in plugin or in gprs-context driver). I =
+
+choose plugin because there are some AT commands to send just after =
+
+channel opening and this is a plugin job.
+  - the right way to do it (removing the whole gprs-context driver might =
+
+be too much).
+Please find attached my current patch. It might not apply exactly on =
+
+HEAD of master. At this stage, this is more to have comment on my fix =
+
+than to really send a patch proposal.
+
+If you need more info on this problem, I should be able to send traces =
+
+with AT debug. It does not help a lot and I had to add traces in gatchat =
+
+module to investigate.
+
+Best Regards,
+
+Christophe
+
+--===============7650918061905406705==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0004-huawei-reopen-modem-channel-if-it-disconnects.patch"
+
+PkZyb20gZjg0MGRhNDMwNzYzNGM5OGQ2ZjFhMTAwZjAwMTJkMjExNTIxZWQyYSBNb24gU2VwIDE3
+IDAwOjAwOjAwIDIwMDEKRnJvbTogQ2hyaXN0b3BoZSBSb25jbyA8Yy5yb25jb0BrZXJsaW5rLmZy
+PgpEYXRlOiBXZWQsIDE1IEZlYiAyMDE3IDEyOjExOjEzICswMTAwClN1YmplY3Q6IFtQQVRDSF0g
+aHVhd2VpOiByZW9wZW4gbW9kZW0gY2hhbm5lbCBpZiBpdCBkaXNjb25uZWN0cwoKT24gRTMzNzIg
+YWZ0ZXIgYSBHUFJTIGRpc2Nvbm5lY3Rpb24sIG1vZGVtIEFUIGNoYW5uZWwgKHVzZWQgYnkgUFBQ
+KSBnZXRzCmRpc2Nvbm5lY3RlZCAoR19JT19IVVAgYW5kIEdfSU9fRVJSIGlzIGRldGVjdGVkIGlu
+IHJlY2VpdmVkX2RhdGEgaW4gZ2F0aW8uYykuCkFmdGVyIHRoYXQgYWxsIGNvbm5lY3Rpb24gYXR0
+ZW1wdHMgZmFpbCBiZWNhdXNlIHdlIGFyZSBub3QgYWJsZSB0byBzZW5kCmFueSBBVCBjb21tYW5k
+cyBvbiBtb2RlbSBjaGFubmVsIChpdCBpcyBjbG9zZWQpLgoKV2l0aCB0aGlzIHBhdGNoLCB3aGVu
+IHRoaXMgYmVoYXZpb3IgaXMgZGV0ZWN0ZWQsIHdlIGNsb3NlIGdwcnMgY29udGV4dApkcml2ZXIs
+IHJlb3BlbiBBVCBjaGFubmVsIGFuZCBncHJzIGNvbnRleHQgZHJpdmVyLgotLS0KIHBsdWdpbnMv
+aHVhd2VpLmMgfCA1NCArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKy0tLS0tLS0KIDEgZmlsZSBjaGFuZ2VkLCA0NyBpbnNlcnRpb25zKCspLCA3IGRlbGV0aW9u
+cygtKQoKZGlmZiAtLWdpdCBhL3BsdWdpbnMvaHVhd2VpLmMgYi9wbHVnaW5zL2h1YXdlaS5jCmlu
+ZGV4IDVkYzliYzNiLi40ZjliMzk1NiAxMDA2NDQKLS0tIGEvcGx1Z2lucy9odWF3ZWkuYworKysg
+Yi9wbHVnaW5zL2h1YXdlaS5jCkBAIC03OCw2ICs3OCw4IEBAIGVudW0gewogc3RydWN0IGh1YXdl
+aV9kYXRhIHsKIAlHQXRDaGF0ICptb2RlbTsKIAlHQXRDaGF0ICpwY3VpOworCXN0cnVjdCBvZm9u
+b19ncHJzICpncHJzOworCXN0cnVjdCBvZm9ub19ncHJzX2NvbnRleHQgKmdjOwogCWdib29sZWFu
+IGhhdmVfc2ltOwogCWludCBzaW1fc3RhdGU7CiAJZ3VpbnQgc3lzaW5mb19wb2xsX3NvdXJjZTsK
+QEAgLTU4NCw2ICs1ODYsNDUgQEAgc3RhdGljIEdBdENoYXQgKm9wZW5fZGV2aWNlKHN0cnVjdCBv
+Zm9ub19tb2RlbSAqbW9kZW0sCiAJcmV0dXJuIGNoYXQ7CiB9CiAKK3N0YXRpYyB2b2lkIG1vZGVt
+X2Rpc2Nvbm5lY3QoZ3BvaW50ZXIgdXNlcl9kYXRhKQoreworCXN0cnVjdCBvZm9ub19tb2RlbSAq
+bW9kZW0gPSB1c2VyX2RhdGE7CisJc3RydWN0IGh1YXdlaV9kYXRhICpkYXRhID0gb2Zvbm9fbW9k
+ZW1fZ2V0X2RhdGEobW9kZW0pOworCisJREJHKCIiKTsKKworCW9mb25vX3dhcm4oIm1vZGVtIGNo
+YW5uZWwgZGlzY29ubmVjdGVkIik7CisKKwkvKiBjbGVhbiBhbmQgY2xvc2UgbW9kZW0gZGV2aWNl
+ICovCisJZ19hdF9jaGF0X2NhbmNlbF9hbGwoZGF0YS0+bW9kZW0pOworCWdfYXRfY2hhdF91bnJl
+Z2lzdGVyX2FsbChkYXRhLT5tb2RlbSk7CisJZ19hdF9jaGF0X3VucmVmKGRhdGEtPm1vZGVtKTsK
+KwlkYXRhLT5tb2RlbSA9IE5VTEw7CisKKwkvKiBjbG9zZSBncHJzIGNvbnRleHQgZHJpdmVyICov
+CisJb2Zvbm9fZ3Byc19jb250ZXh0X3JlbW92ZShkYXRhLT5nYyk7CisKKwkvKiByZW9wZW4gbW9k
+ZW0gY2hhbm5lbCAqLworCWRhdGEtPm1vZGVtID0gb3Blbl9kZXZpY2UobW9kZW0sICJNb2RlbSIs
+ICJNb2RlbTogIik7CisKKwlpZiAoZGF0YS0+bW9kZW0gPT0gTlVMTCkgeworCQlEQkcoIkNhbid0
+IHJlb3BlbiBkZXZpY2UiKTsKKwkJcmV0dXJuOworCX0KKworCS8qIGNvbmZpZ3VyZSBtb2RlbSBj
+aGFubmVsICovCisJZ19hdF9jaGF0X3NldF9kaXNjb25uZWN0X2Z1bmN0aW9uKGRhdGEtPm1vZGVt
+LCBtb2RlbV9kaXNjb25uZWN0LCBtb2RlbSk7CisJZ19hdF9jaGF0X3NldF9zbGF2ZShkYXRhLT5t
+b2RlbSwgZGF0YS0+cGN1aSk7CisJZ19hdF9jaGF0X3NlbmQoZGF0YS0+bW9kZW0sICJBVEUwICtD
+TUVFPTEiLCBOVUxMLCBOVUxMLCBOVUxMLCBOVUxMKTsKKworCS8qIHJlb3BlbiBncHJzIGNvbnRl
+eHQgZHJpdmVyICovCisJZGF0YS0+Z2MgPSBvZm9ub19ncHJzX2NvbnRleHRfY3JlYXRlKG1vZGVt
+LCBPRk9OT19WRU5ET1JfSFVBV0VJLAorCQkJCQkJImF0bW9kZW0iLCBkYXRhLT5tb2RlbSk7CisK
+KwlpZiAoZGF0YS0+Z3BycyAmJiBkYXRhLT5nYykKKwkJb2Zvbm9fZ3Byc19hZGRfY29udGV4dChk
+YXRhLT5ncHJzLCBkYXRhLT5nYyk7Cit9CisKIHN0YXRpYyBpbnQgaHVhd2VpX2VuYWJsZShzdHJ1
+Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQogewogCXN0cnVjdCBodWF3ZWlfZGF0YSAqZGF0YSA9IG9m
+b25vX21vZGVtX2dldF9kYXRhKG1vZGVtKTsKQEAgLTU5NCw2ICs2MzUsOCBAQCBzdGF0aWMgaW50
+IGh1YXdlaV9lbmFibGUoc3RydWN0IG9mb25vX21vZGVtICptb2RlbSkKIAlpZiAoZGF0YS0+bW9k
+ZW0gPT0gTlVMTCkKIAkJcmV0dXJuIC1FSU5WQUw7CiAKKwlnX2F0X2NoYXRfc2V0X2Rpc2Nvbm5l
+Y3RfZnVuY3Rpb24oZGF0YS0+bW9kZW0sIG1vZGVtX2Rpc2Nvbm5lY3QsIG1vZGVtKTsKKwogCWRh
+dGEtPnBjdWkgPSBvcGVuX2RldmljZShtb2RlbSwgIlBjdWkiLCAiUENVSTogIik7CiAJaWYgKGRh
+dGEtPnBjdWkgPT0gTlVMTCkgewogCQlnX2F0X2NoYXRfdW5yZWYoZGF0YS0+bW9kZW0pOwpAQCAt
+ODIwLDkgKzg2Myw2IEBAIHN0YXRpYyB2b2lkIGh1YXdlaV9wb3N0X3NpbShzdHJ1Y3Qgb2Zvbm9f
+bW9kZW0gKm1vZGVtKQogCX0KIAogCWlmIChkYXRhLT5oYXZlX2dzbSA9PSBUUlVFKSB7Ci0JCXN0
+cnVjdCBvZm9ub19ncHJzICpncHJzOwotCQlzdHJ1Y3Qgb2Zvbm9fZ3Byc19jb250ZXh0ICpnYzsK
+LQogCQlvZm9ub19waG9uZWJvb2tfY3JlYXRlKG1vZGVtLCAwLCAiYXRtb2RlbSIsIGRhdGEtPnBj
+dWkpOwogCQlvZm9ub19yYWRpb19zZXR0aW5nc19jcmVhdGUobW9kZW0sIDAsCiAJCQkJCQkiaHVh
+d2VpbW9kZW0iLCBkYXRhLT5wY3VpKTsKQEAgLTgzMCwxMyArODcwLDEzIEBAIHN0YXRpYyB2b2lk
+IGh1YXdlaV9wb3N0X3NpbShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQogCQlvZm9ub19zbXNf
+Y3JlYXRlKG1vZGVtLCBPRk9OT19WRU5ET1JfSFVBV0VJLAogCQkJCQkJImF0bW9kZW0iLCBkYXRh
+LT5wY3VpKTsKIAotCQlncHJzID0gb2Zvbm9fZ3Byc19jcmVhdGUobW9kZW0sIE9GT05PX1ZFTkRP
+Ul9IVUFXRUksCisJCWRhdGEtPmdwcnMgPSBvZm9ub19ncHJzX2NyZWF0ZShtb2RlbSwgT0ZPTk9f
+VkVORE9SX0hVQVdFSSwKIAkJCQkJCSJhdG1vZGVtIiwgZGF0YS0+cGN1aSk7Ci0JCWdjID0gb2Zv
+bm9fZ3Byc19jb250ZXh0X2NyZWF0ZShtb2RlbSwgT0ZPTk9fVkVORE9SX0hVQVdFSSwKKwkJZGF0
+YS0+Z2MgPSBvZm9ub19ncHJzX2NvbnRleHRfY3JlYXRlKG1vZGVtLCBPRk9OT19WRU5ET1JfSFVB
+V0VJLAogCQkJCQkJImF0bW9kZW0iLCBkYXRhLT5tb2RlbSk7CiAKLQkJaWYgKGdwcnMgJiYgZ2Mp
+Ci0JCQlvZm9ub19ncHJzX2FkZF9jb250ZXh0KGdwcnMsIGdjKTsKKwkJaWYgKGRhdGEtPmdwcnMg
+JiYgZGF0YS0+Z2MpCisJCQlvZm9ub19ncHJzX2FkZF9jb250ZXh0KGRhdGEtPmdwcnMsIGRhdGEt
+PmdjKTsKIAl9CiB9CiAKLS0gCjIuMTEuMAoKCg==
+
+--===============7650918061905406705==--
 
