@@ -1,220 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============1528925084616200158=="
+Content-Type: multipart/mixed; boundary="===============0341843213751296692=="
 MIME-Version: 1.0
-From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: Re: provisioning APN using mbpi plugin
-Date: Thu, 16 Feb 2017 17:46:28 +0100
-Message-ID: <b435fea5-d7f4-dfcb-e53d-f33ff9fe9f92@kerlink.fr>
-In-Reply-To: <96d52c22-bfde-7618-4ffc-1477a80686b3@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: huawei: modem channel gets closed after PPP disconnection
+Date: Thu, 16 Feb 2017 11:51:45 -0600
+Message-ID: <522eefa1-acf2-9477-758d-7f4cc73fe92a@gmail.com>
+In-Reply-To: <559a763d-d55c-cef6-2832-234196d01099@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1528925084616200158==
+--===============0341843213751296692==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
-On 02/08/2017 05:54 PM, Denis Kenzior wrote:
-> Hi Christophe,
+Hi Christophe,
+
+On 02/16/2017 03:26 AM, Christophe Ronco wrote:
+> Hi,
 >
->> With this change, provisionning using plugins provision.c and mbpi.c
->> works. It creates 9 contexts for my SIM, 4 of them are internet type
->> contexts.
->> In connman (I use connman above ofono), I see 4 services and I am able
->> to connect at least 2 of them. So I wonder why duplicate context is
->> considered an error by these plugins. Does anybody know ?
+> I use a huawei E3372 modem. It connects to GPRS using PPP. I am able to
+> activate context and then deactivate it. After that, I am not able to
+> reactivate the context.
+> During deactivation, the AT channel used by PPP gets closed and nobody
+> reopens it. During reactivation, the first AT command (AT+CGDCONT) fails.
+> Channel shutting down occurs just after NO CARRIER is received on modem
+> channel (channel is back to AT state) along with a bunch of wrong data.
+> Here is the log:
+> Modem: < \r\nNO CARRIER\r\n~\377}#\200!}%}"} }$\210*~
+> Shutting down is detected in function received_data (gatio.c). Flags
+> G_IO_HUP and G_IO_ERR are received.
+
+This is a common problem with these devices, a hold-over from olden =
+
+serial days.  Basically the modem signals a hangup and in addition to =
+
+sending a NO CARRIER, it also twiddles with some serial status bits. =
+
+This causes the socket to receive a 'shutdown' event.  I think that on =
+
+some devices the serial port is also physically removed for a short =
+
+time, so even opening the port again is likely to fail at least some of =
+
+the time.
+
+We use AT&C0 to turn off this behavior, but it sounds like your firmware =
+
+is ignoring this.
+
 >
-> This is done on purpose.  oFono & ConnMan are designed with the =
+> I have done a patch in huawei plugin that correct the problem at least
+> with my modem. The idea is for plugin to get notified when modem AT
+> channel gets closed and when this happens to remove gprs-context, reopen
+> modem AT channel and restart gprs-context driver. This is possible
+> because all other drivers (sim, gprs, ...) use PCUI AT channel and not
+> modem AT channel.
 
-> assumption that the user will see what is being exposed by the D-Bus =
+Doing it in the modem driver (e.g. plugins/huawei.c) is the right place. =
 
-> API.  The UI is just a thin client which simply renders the state of =
+  The fix you have come up with looks okayish.  However, you might want =
 
-> ConnMan / oFono.  Think of the D-Bus API as being user-visible.  Thus =
+to strace/ptrace ofonod to see what the kernel is actually sending you =
 
-> it makes no sense for us to expose services that the user cannot use.
->
-> There are a couple of ways to get around this:
->
-> - Use a more up-to-date database
-> - Have a provisioning UI that detects that provisioning has failed, =
+to trigger this.  Also, a udev event monitor might help to tell if the =
 
-> and guides the user through picking the right combination of operator =
+tty is being physically removed / reinserted.
 
-> / plan / etc and configures the context settings accordingly
->
-> There really should only be a single internet context configured for a =
+We have had a similar fix in the past and it simply didn't work due to =
 
-> given SIM for the vast majority of users in the world.
->
-I am using private APNs. They should never be in mbpi database. And if =
+the race conditions outlined.
 
-they were, for sure, there would be more than one APN for this operator =
+Regards,
+-Denis
 
-in database. So mbpi database is not something I can use on my board.
-My board does not have a UI, not even a user. It should leave factory =
-
-configured to work with SIM(s) from this or that operator (with a =
-
-private APN).
-I can handle that with a configuration file, a daemon waiting for ofono =
-
-DBUS interface to show up and reading file when it sees a context with =
-
-an empty APN. But that's far more complicated than a plugin with a =
-
-configuration file inside ofono.
-
-So I have developed another provisioning plugin based on a configuration =
-
-file. Patches are attached to this mail and plugin details are explained =
-
-in commit message. Let me know if you think this can be useful for =
-
-ofono. I'll rework patches in this case (plugin name maybe, =
-
-documentation needed maybe, can I use storage.c functions in a =
-
-plugin?....) and send them cleanly using git send-email.
-
-Best Regards,
-
-Christophe
-
-
-
---===============1528925084616200158==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0005-provision-add-plugin-to-provision-from-config-file.patch"
-
-PkZyb20gMTY3YWI0OWUxNDU2NmJjZDYzYjRjZWI3MzdiMGY1ZjEyYTZmMzUxNiBNb24gU2VwIDE3
-IDAwOjAwOjAwIDIwMDEKRnJvbTogQ2hyaXN0b3BoZSBSb25jbyA8Yy5yb25jb0BrZXJsaW5rLmZy
-PgpEYXRlOiBUaHUsIDE2IEZlYiAyMDE3IDE2OjQxOjMwICswMTAwClN1YmplY3Q6IFtQQVRDSCAx
-LzJdIHByb3Zpc2lvbjogYWRkIHBsdWdpbiB0byBwcm92aXNpb24gZnJvbSBjb25maWcgZmlsZQoK
-VGhpcyBwbHVnaW4gYWxsb3dzIHRvIHByb3Zpc2lvbiBncHJzLWNvbnRleHQgZGF0YSBiYXNlZCBv
-biBNQ0MgYW5kIE1OQy4KVGhpcyBpcyB1c2VmdWwgd2hlbiBwcm92aXNpb25pbmcgdXNpbmcgbWJw
-aSBmYWlscyAoZWl0aGVyIGJlY2F1c2UgeW91CmFyZSB1c2luZyBhIHByaXZhdGUgQVBOIG9yIGJl
-Y2F1c2UgdGhlcmUgYXJlIG11bHRpcGxlIGludGVybmV0IHR5cGUgY29udGV4dApmb3IgeW91ciBv
-cGVyYXRvciBpbiBtYnBpIGRhdGFiYXNlKS4KQ29uZmlnIGZpbGUgaXMgU1RPUkFHRURJUi9wcm92
-aXNpb25pbmcuCkNvbmZpZyBmaWxlIHNob3VsZCBsb29rIGxpa2UgdGhhdDoKW01DQzEsTU5DMV0K
-aW50ZXJuZXQuQWNjZXNzUG9pbnROYW1lPWFwbjEKaW50ZXJuZXQuVXNlcm5hbWU9bXlVc2VybmFt
-ZQppbnRlcm5ldC5QYXNzd29yZD1teVBhc3N3b3JkCmludGVybmV0LkF1dGhlbnRpY2F0aW9uTWV0
-aG9kPXBhcAppbnRlcm5ldC5Qcm90b2NvbD1pcHY2CltNQ0MyLE1OQzJdCmludGVybmV0LkFjY2Vz
-c1BvaW50TmFtZT1hcG4yCgpUaGUgb25seSBtYW5kYXRvcnkgcGFyYW1ldGVyIGZvciBlYWNoIG9w
-ZXJhdG9yIGlzIGludGVybmV0LkFjY2Vzc1BvaW50TmFtZS4KClBhcmFtZXRlciBkZXNjcmlwdGlv
-bjoKaW50ZXJuZXQuQWNjZXNzUG9pbnROYW1lOiBBUE4KaW50ZXJuZXQuVXNlcm5hbWU6IFVzZXJu
-YW1lCmludGVybmV0LlBhc3N3b3JkOiBQYXNzd29yZAppbnRlcm5ldC5BdXRoZW50aWNhdGlvbk1l
-dGhvZDogYXV0aGVudGljYXRpb24gbWV0aG9kLgogUG9zc2libGUgdmFsdWVzIGFyZToKICAtIHBh
-cAogIC0gY2hhcAogRGVmYXVsdCBpcyBjaGFwIGlmIHVuc2V0LgppbnRlcm5ldC5Qcm90b2NvbDog
-cHJvdG9jb2wKIFBvc3NpYmxlIHZhbHVlcyBhcmU6CiAgLSBpcDogaXB2NAogIC0gaXB2NgogIC0g
-ZHVhbAogRGVmYXVsdCBpcyBpcCBpZiBub3Qgc2V0LgoKQWxsIHBhcmFtZXRlcnMgYXJlIHByZWZp
-eGVkIHdpdGggaW50ZXJuZXQgdG8gYmUgYWJsZSB0byBleHRlbmQgdGhpcyBwbHVnaW4KdG8gb3Ro
-ZXIgdHlwZSBvZiBjb250ZXh0cyAoTU1TLCAuLi4pLgotLS0KIHBsdWdpbnMvZmlsZS1wcm92aXNp
-b24uYyB8IDE3MCArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KwogMSBmaWxlIGNoYW5nZWQsIDE3MCBpbnNlcnRpb25zKCspCiBjcmVhdGUgbW9kZSAxMDA2NDQg
-cGx1Z2lucy9maWxlLXByb3Zpc2lvbi5jCgpkaWZmIC0tZ2l0IGEvcGx1Z2lucy9maWxlLXByb3Zp
-c2lvbi5jIGIvcGx1Z2lucy9maWxlLXByb3Zpc2lvbi5jCm5ldyBmaWxlIG1vZGUgMTAwNjQ0Cmlu
-ZGV4IDAwMDAwMDAwLi4wZmM1YWNiOQotLS0gL2Rldi9udWxsCisrKyBiL3BsdWdpbnMvZmlsZS1w
-cm92aXNpb24uYwpAQCAtMCwwICsxLDE3MCBAQAorLyoKKyAqCisgKiAgb0Zvbm8gLSBPcGVuIFNv
-dXJjZSBUZWxlcGhvbnkKKyAqCisgKiAgQ29weXJpZ2h0IChDKSAyMDE3ICBLZXJsaW5rIFNBLgor
-ICoKKyAqICBUaGlzIHByb2dyYW0gaXMgZnJlZSBzb2Z0d2FyZTsgeW91IGNhbiByZWRpc3RyaWJ1
-dGUgaXQgYW5kL29yIG1vZGlmeQorICogIGl0IHVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIEdl
-bmVyYWwgUHVibGljIExpY2Vuc2UgdmVyc2lvbiAyIGFzCisgKiAgcHVibGlzaGVkIGJ5IHRoZSBG
-cmVlIFNvZnR3YXJlIEZvdW5kYXRpb24uCisgKgorICogIFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmli
-dXRlZCBpbiB0aGUgaG9wZSB0aGF0IGl0IHdpbGwgYmUgdXNlZnVsLAorICogIGJ1dCBXSVRIT1VU
-IEFOWSBXQVJSQU5UWTsgd2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9mCisgKiAg
-TUVSQ0hBTlRBQklMSVRZIG9yIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFLiAgU2Vl
-IHRoZQorICogIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGZvciBtb3JlIGRldGFpbHMuCisg
-KgorICovCisKKyNpZmRlZiBIQVZFX0NPTkZJR19ICisjaW5jbHVkZSA8Y29uZmlnLmg+CisjZW5k
-aWYKKworI2luY2x1ZGUgPGVycm5vLmg+CisjaW5jbHVkZSA8c3RkaW8uaD4KKyNpbmNsdWRlIDxz
-dHJpbmcuaD4KKworI2luY2x1ZGUgPGdsaWIuaD4KKworI2RlZmluZSBPRk9OT19BUElfU1VCSkVD
-VF9UT19DSEFOR0UKKyNpbmNsdWRlIDxzdG9yYWdlLmg+CisjaW5jbHVkZSA8b2Zvbm8vbW9kZW0u
-aD4KKyNpbmNsdWRlIDxvZm9uby9ncHJzLXByb3Zpc2lvbi5oPgorI2luY2x1ZGUgPG9mb25vL2xv
-Zy5oPgorI2luY2x1ZGUgPG9mb25vL3BsdWdpbi5oPgorCisjZGVmaW5lIFNFVFRJTkdTX1NUT1JF
-ICJwcm92aXNpb25pbmciCisKK3N0YXRpYyBpbnQgY29uZmlnX2ZpbGVfcHJvdmlzaW9uX2dldF9z
-ZXR0aW5ncyhjb25zdCBjaGFyICptY2MsCisJCQkJY29uc3QgY2hhciAqbW5jLCBjb25zdCBjaGFy
-ICpzcG4sCisJCQkJc3RydWN0IG9mb25vX2dwcnNfcHJvdmlzaW9uX2RhdGEgKipzZXR0aW5ncywK
-KwkJCQlpbnQgKmNvdW50KQoreworCWludCByZXN1bHQgPSAwOworCUdLZXlGaWxlICprZXlfZmls
-ZSA9IE5VTEw7CisJY2hhciAqc2V0dGluZ19ncm91cCA9IE5VTEw7CisJY2hhciAqdmFsdWU7CisK
-KwlEQkcoIkZpbmRpbmcgc2V0dGluZ3MgZm9yIE1DQyAlcywgTU5DICVzLCBTUE4gJyVzJyIsIG1j
-YywgbW5jLCBzcG4pOworCisJKmNvdW50ID0gMDsKKwkqc2V0dGluZ3MgPSBOVUxMOworCisJa2V5
-X2ZpbGUgPSBzdG9yYWdlX29wZW4oTlVMTCwgU0VUVElOR1NfU1RPUkUpOworCisJaWYgKGtleV9m
-aWxlID09IE5VTEwpIHsKKwkJcmVzdWx0ID0gLUVOT0VOVDsKKwkJZ290byBlcnJvcjsKKwl9CisK
-KwlzZXR0aW5nX2dyb3VwID0gZ190cnlfbWFsbG9jKHN0cmxlbihtY2MpICsgc3RybGVuKG1uYykg
-KyAyKTsKKwlpZiAoc2V0dGluZ19ncm91cCA9PSBOVUxMKSB7CisJCXJlc3VsdCA9IC1FTk9NRU07
-CisJCWdvdG8gZXJyb3I7CisJfQorCisJc3ByaW50ZihzZXR0aW5nX2dyb3VwLCAiJXMsJXMiLCBt
-Y2MsIG1uYyk7CisKKwl2YWx1ZSA9IGdfa2V5X2ZpbGVfZ2V0X3N0cmluZyhrZXlfZmlsZSwgc2V0
-dGluZ19ncm91cCwKKwkJCQkJImludGVybmV0LkFjY2Vzc1BvaW50TmFtZSIsIE5VTEwpOworCisJ
-aWYgKHZhbHVlID09IE5VTEwpCisJCWdvdG8gZXJyb3I7CisKKwkqc2V0dGluZ3MgPSBnX3RyeV9u
-ZXcwKHN0cnVjdCBvZm9ub19ncHJzX3Byb3Zpc2lvbl9kYXRhLCAxKTsKKwlpZiAoKnNldHRpbmdz
-ID09IE5VTEwpIHsKKwkJcmVzdWx0ID0gLUVOT01FTTsKKwkJZ290byBlcnJvcjsKKwl9CisKKwkq
-Y291bnQgPSAxOworCisJKCpzZXR0aW5ncylbMF0udHlwZSA9IE9GT05PX0dQUlNfQ09OVEVYVF9U
-WVBFX0lOVEVSTkVUOworCSgqc2V0dGluZ3MpWzBdLmFwbiA9IHZhbHVlOworCisJdmFsdWUgPSBn
-X2tleV9maWxlX2dldF9zdHJpbmcoa2V5X2ZpbGUsIHNldHRpbmdfZ3JvdXAsCisJCQkJCSJpbnRl
-cm5ldC5Vc2VybmFtZSIsIE5VTEwpOworCisJaWYgKHZhbHVlICE9IE5VTEwpCisJCSgqc2V0dGlu
-Z3MpWzBdLnVzZXJuYW1lID0gdmFsdWU7CisKKwl2YWx1ZSA9IGdfa2V5X2ZpbGVfZ2V0X3N0cmlu
-ZyhrZXlfZmlsZSwgc2V0dGluZ19ncm91cCwKKwkJCQkJImludGVybmV0LlBhc3N3b3JkIiwgTlVM
-TCk7CisKKwlpZiAodmFsdWUgIT0gTlVMTCkKKwkJKCpzZXR0aW5ncylbMF0ucGFzc3dvcmQgPSB2
-YWx1ZTsKKworCSgqc2V0dGluZ3MpWzBdLmF1dGhfbWV0aG9kID0gT0ZPTk9fR1BSU19BVVRIX01F
-VEhPRF9DSEFQOworCXZhbHVlID0gZ19rZXlfZmlsZV9nZXRfc3RyaW5nKGtleV9maWxlLCBzZXR0
-aW5nX2dyb3VwLAorCQkJCQkiaW50ZXJuZXQuQXV0aGVudGljYXRpb25NZXRob2QiLCBOVUxMKTsK
-KworCWlmICh2YWx1ZSAhPSBOVUxMKSB7CisJCWlmIChnX3N0cmNtcDAodmFsdWUsICJjaGFwIikg
-PT0gMCkKKwkJCSgqc2V0dGluZ3MpWzBdLmF1dGhfbWV0aG9kID0KKwkJCQkJCU9GT05PX0dQUlNf
-QVVUSF9NRVRIT0RfQ0hBUDsKKwkJZWxzZSBpZiAoZ19zdHJjbXAwKHZhbHVlLCAicGFwIikgPT0g
-MCkKKwkJCSgqc2V0dGluZ3MpWzBdLmF1dGhfbWV0aG9kID0KKwkJCQkJCU9GT05PX0dQUlNfQVVU
-SF9NRVRIT0RfUEFQOworCQllbHNlCisJCQlEQkcoIlVua25vd24gYXV0aCBtZXRob2Q6ICVzIiwg
-dmFsdWUpOworCisJCWdfZnJlZSh2YWx1ZSk7CisJfQorCisJKCpzZXR0aW5ncylbMF0ucHJvdG8g
-PSBPRk9OT19HUFJTX1BST1RPX0lQOworCXZhbHVlID0gZ19rZXlfZmlsZV9nZXRfc3RyaW5nKGtl
-eV9maWxlLCBzZXR0aW5nX2dyb3VwLAorCQkJCQkiaW50ZXJuZXQuUHJvdG9jb2wiLCBOVUxMKTsK
-KworCWlmICh2YWx1ZSAhPSBOVUxMKSB7CisJCURCRygiQ1JPIHZhbHVlOiVzIiwgdmFsdWUpOwor
-CQlpZiAoZ19zdHJjbXAwKHZhbHVlLCAiaXAiKSA9PSAwKSB7CisJCQlEQkcoIkNSTyB2YWx1ZT1p
-cCIpOworCQkJKCpzZXR0aW5ncylbMF0ucHJvdG8gPSBPRk9OT19HUFJTX1BST1RPX0lQOworCQl9
-IGVsc2UgaWYgKGdfc3RyY21wMCh2YWx1ZSwgImlwdjYiKSA9PSAwKSB7CisJCQlEQkcoIkNSTyB2
-YWx1ZT1pcHY2Iik7CisJCQkoKnNldHRpbmdzKVswXS5wcm90byA9IE9GT05PX0dQUlNfUFJPVE9f
-SVBWNjsKKwkJfSBlbHNlIGlmIChnX3N0cmNtcDAodmFsdWUsICJkdWFsIikgPT0gMCkKKwkJCSgq
-c2V0dGluZ3MpWzBdLnByb3RvID0gT0ZPTk9fR1BSU19QUk9UT19JUFY0VjY7CisJCWVsc2UKKwkJ
-CURCRygiVW5rbm93biBwcm90b2NvbDogJXMiLCB2YWx1ZSk7CisKKwkJZ19mcmVlKHZhbHVlKTsK
-Kwl9CisKK2Vycm9yOgorCWlmIChrZXlfZmlsZSAhPSBOVUxMKQorCQlzdG9yYWdlX2Nsb3NlKE5V
-TEwsIFNFVFRJTkdTX1NUT1JFLCBrZXlfZmlsZSwgRkFMU0UpOworCisJaWYgKHNldHRpbmdfZ3Jv
-dXAgIT0gTlVMTCkKKwkJZ19mcmVlKHNldHRpbmdfZ3JvdXApOworCisJaWYgKHJlc3VsdCA9PSAw
-ICYmICpjb3VudCA+IDApCisJCURCRygiRm91bmQuIEFQTjolcywgcHJvdG86JWQsIGF1dGhfbWV0
-aG9kOiVkIiwKKwkJCQkoKnNldHRpbmdzKVswXS5hcG4sICgqc2V0dGluZ3MpWzBdLnByb3RvLAor
-CQkJCSgqc2V0dGluZ3MpWzBdLmF1dGhfbWV0aG9kKTsKKwllbHNlCisJCURCRygiTm90IGZvdW5k
-LiBSZXN1bHQ6JWQiLCByZXN1bHQpOworCisJcmV0dXJuIHJlc3VsdDsKK30KKworc3RhdGljIHN0
-cnVjdCBvZm9ub19ncHJzX3Byb3Zpc2lvbl9kcml2ZXIgY29uZmlnX2ZpbGVfcHJvdmlzaW9uX2Ry
-aXZlciA9IHsKKwkubmFtZQkJPSAiR1BSUyBjb250ZXh0IHByb3Zpc2lvbmluZyIsCisJLmdldF9z
-ZXR0aW5ncwk9IGNvbmZpZ19maWxlX3Byb3Zpc2lvbl9nZXRfc2V0dGluZ3MsCit9OworCitzdGF0
-aWMgaW50IGNvbmZpZ19maWxlX3Byb3Zpc2lvbl9pbml0KHZvaWQpCit7CisJcmV0dXJuIG9mb25v
-X2dwcnNfcHJvdmlzaW9uX2RyaXZlcl9yZWdpc3RlcigKKwkJCQkJCSZjb25maWdfZmlsZV9wcm92
-aXNpb25fZHJpdmVyKTsKK30KKworc3RhdGljIHZvaWQgY29uZmlnX2ZpbGVfcHJvdmlzaW9uX2V4
-aXQodm9pZCkKK3sKKwlvZm9ub19ncHJzX3Byb3Zpc2lvbl9kcml2ZXJfdW5yZWdpc3RlcigKKwkJ
-CQkJCSZjb25maWdfZmlsZV9wcm92aXNpb25fZHJpdmVyKTsKK30KKworT0ZPTk9fUExVR0lOX0RF
-RklORShmaWxlX3Byb3Zpc2lvbiwgIkdwcnMgUHJvdmlzaW9uaW5nIFBsdWdpbiIsCisJCQlWRVJT
-SU9OLCBPRk9OT19QTFVHSU5fUFJJT1JJVFlfSElHSCwKKwkJCWNvbmZpZ19maWxlX3Byb3Zpc2lv
-bl9pbml0LAorCQkJY29uZmlnX2ZpbGVfcHJvdmlzaW9uX2V4aXQpCi0tIAoyLjExLjAKCg==
-
---===============1528925084616200158==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0006-plugins-support-for-provisioning-from-config-file.patch"
-
-PkZyb20gMzk0OWYxOWZiYTRjNDYxNWZmNDI4NTNkYWU1YjA4NThiOGFkZDY3NSBNb24gU2VwIDE3
-IDAwOjAwOjAwIDIwMDEKRnJvbTogQ2hyaXN0b3BoZSBSb25jbyA8Yy5yb25jb0BrZXJsaW5rLmZy
-PgpEYXRlOiBUaHUsIDE2IEZlYiAyMDE3IDE2OjQzOjQ4ICswMTAwClN1YmplY3Q6IFtQQVRDSCAy
-LzJdIHBsdWdpbnM6IHN1cHBvcnQgZm9yIHByb3Zpc2lvbmluZyBmcm9tIGNvbmZpZyBmaWxlCgot
-LS0KIE1ha2VmaWxlLmFtIHwgNCArKysrCiAxIGZpbGUgY2hhbmdlZCwgNCBpbnNlcnRpb25zKCsp
-CgpkaWZmIC0tZ2l0IGEvTWFrZWZpbGUuYW0gYi9NYWtlZmlsZS5hbQppbmRleCBlMTU3OTc0NS4u
-ZDlmOWIwODYgMTAwNjQ0Ci0tLSBhL01ha2VmaWxlLmFtCisrKyBiL01ha2VmaWxlLmFtCkBAIC01
-NTUsNiArNTU1LDEwIEBAIGJ1aWx0aW5fc291cmNlcyArPSBwbHVnaW5zL3Byb3Zpc2lvbi5jCiAK
-IGJ1aWx0aW5fbW9kdWxlcyArPSBjZG1hX3Byb3Zpc2lvbgogYnVpbHRpbl9zb3VyY2VzICs9IHBs
-dWdpbnMvY2RtYS1wcm92aXNpb24uYworCitidWlsdGluX21vZHVsZXMgKz0gZmlsZV9wcm92aXNp
-b24KK2J1aWx0aW5fc291cmNlcyArPSBwbHVnaW5zL2ZpbGUtcHJvdmlzaW9uLmMKKwogZW5kaWYK
-IAogaWYgTUFJTlRBSU5FUl9NT0RFCi0tIAoyLjExLjAKCg==
-
---===============1528925084616200158==--
+--===============0341843213751296692==--
 
