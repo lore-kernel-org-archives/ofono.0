@@ -1,86 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============2618916292742454433=="
+Content-Type: multipart/mixed; boundary="===============3392161183427931687=="
 MIME-Version: 1.0
 From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCH 1/1] qmimodem: fix sim file reading on MC7304
-Date: Fri, 17 Feb 2017 16:06:12 +0100
-Message-ID: <20170217150612.24137-2-c.ronco@kerlink.fr>
-In-Reply-To: <20170217150612.24137-1-c.ronco@kerlink.fr>
+Subject: Re: huawei: modem channel gets closed after PPP disconnection
+Date: Fri, 17 Feb 2017 17:37:02 +0100
+Message-ID: <d8e1f630-a974-f369-ab7d-168295c10806@kerlink.fr>
+In-Reply-To: <522eefa1-acf2-9477-758d-7f4cc73fe92a@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2618916292742454433==
+--===============3392161183427931687==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Command read_file_info on MC7304 always fails.
-Using qmicli or AT command, I am able to read file info.
-Qmicli command is:
-qmicli -d /dev/cdc-wdm0 --uim-get-file-attributes=3D0x3f00,0x7fff,0x6fad
-[(null)] Successfully got file '/dev/cdc-wdm0' attributes from the UIM:
-Card result:
-        SW1: '0x90'
-        SW2: '0x00'
-File attributes:
-        File size: 4
-        File ID: 28589
-        File type: transparent
-        Record size: 0
-        Record count: 0
-        Read security attributes: (always) (null)
-        Write security attributes: (single) adm
-        Increase security attributes: (always) (null)
-        Deactivate security attributes: (single) adm
-        Activate security attributes: (single) adm
-        Raw:    62:17:82:02:41:21:83:02:6F:AD:8A:01:05:8B:...
+Hello Denis,
 
-After a check of parameters sent by qmimodem driver and qmicli,
-the only difference is on parameter "Session Information".
-Session type sent by qmimodem driver is 'Card on slot 1'.
-Session type sent by qmicli command is 'primary-gw-provisioning'.
-Changing session type in qmimodem driver fixed problem (on this modem).
+On 02/16/2017 06:51 PM, Denis Kenzior wrote:
+>
+> Doing it in the modem driver (e.g. plugins/huawei.c) is the right =
 
-Comparing with what is done by qmili command
----
- drivers/qmimodem/sim.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+> place.  The fix you have come up with looks okayish.  However, you =
 
-diff --git a/drivers/qmimodem/sim.c b/drivers/qmimodem/sim.c
-index 602e5296..8d400288 100644
---- a/drivers/qmimodem/sim.c
-+++ b/drivers/qmimodem/sim.c
-@@ -168,7 +168,7 @@ static void qmi_read_attributes(struct ofono_sim *sim, =
-int fileid,
- {
- 	struct sim_data *data =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, user_data);
--	unsigned char aid_data[2] =3D { 0x06, 0x00 };
-+	unsigned char aid_data[2] =3D { 0x00, 0x00 };
- 	unsigned char fileid_data[9];
- 	int fileid_len;
- 	struct qmi_param *param;
-@@ -233,7 +233,7 @@ static void qmi_read_transparent(struct ofono_sim *sim,
- {
- 	struct sim_data *data =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, user_data);
--	unsigned char aid_data[2] =3D { 0x06, 0x00 };
-+	unsigned char aid_data[2] =3D { 0x00, 0x00 };
- 	unsigned char read_data[4];
- 	unsigned char fileid_data[9];
- 	int fileid_len;
-@@ -279,7 +279,7 @@ static void qmi_read_record(struct ofono_sim *sim,
- {
- 	struct sim_data *data =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, user_data);
--	unsigned char aid_data[2] =3D { 0x06, 0x00 };
-+	unsigned char aid_data[2] =3D { 0x00, 0x00 };
- 	unsigned char read_data[4];
- 	unsigned char fileid_data[9];
- 	int fileid_len;
--- =
+> might want to strace/ptrace ofonod to see what the kernel is actually =
 
-2.11.0
+> sending you to trigger this.  Also, a udev event monitor might help to =
+
+> tell if the tty is being physically removed / reinserted.
+>
+I've done the connect/disconnect operation with strace and a udev event =
+
+monitor. The PPP modem channel is /dev/ttyUSB1. Here is the result of =
+
+the udev event monitor:
+root(a)klk-lpbs-040070:~ # udevadm monitor
+monitor will print the received events for:
+UDEV - the event which udev sends out after rule processing
+KERNEL - the kernel uevent
+
+KERNEL[15443.637223] add      /devices/virtual/net/ppp0 (net)
+KERNEL[15443.637377] add      /devices/virtual/net/ppp0/queues/rx-0 (queues)
+KERNEL[15443.637464] add      /devices/virtual/net/ppp0/queues/tx-0 (queues)
+UDEV  [15443.735949] add      /devices/virtual/net/ppp0 (net)
+UDEV  [15443.742095] add      /devices/virtual/net/ppp0/queues/rx-0 (queues)
+UDEV  [15443.754166] add      /devices/virtual/net/ppp0/queues/tx-0 (queues)
+KERNEL[15449.168724] remove   /devices/virtual/net/ppp0/queues/rx-0 (queues)
+KERNEL[15449.172883] remove   /devices/virtual/net/ppp0/queues/tx-0 (queues)
+KERNEL[15449.176000] remove   /devices/virtual/net/ppp0 (net)
+UDEV  [15449.183343] remove   /devices/virtual/net/ppp0/queues/tx-0 (queues)
+UDEV  [15449.184839] remove   /devices/virtual/net/ppp0/queues/rx-0 (queues)
+UDEV  [15449.275684] remove   /devices/virtual/net/ppp0 (net)
+
+So only network interface appears (connection) and vanishes (disconnection).
+The strace result is too big to be sent on the list, you can see it here:
+
+https://framabin.org/?7e392864cc149771#8gyA/NLLDVVpnwxUV0FpR0wH5U6rwlogzy7S=
+8yXmSMk=3D
+
+What I learnt from it:
+
+line 5839: open("/dev/ttyUSB1", O_RDWR|O_NOCTTY|O_NONBLOCK) =3D 10 =3D> open
+line 9041: read(10, "\r\nNO CARRIER\r\n~\377}#\200!}%}\"} }$\210*~", =
+
+8192) =3D 31 =3D> last data read
+line 9049: poll([{fd=3D3, events=3DPOLLIN}, {fd=3D4, events=3DPOLLIN}, {fd=
+=3D6, =
+
+events=3DPOLLIN}, {fd=3D7, events=3DPOLLIN}, {fd=3D8, events=3DPOLLIN}, {fd=
+=3D9, =
+
+events=3DPOLLIN}, {fd=3D10, events=3DPOLLIN}, {fd=3D11, events=3DPOLLIN}], =
+8, -1) =
+
+=3D 1 ([{fd=3D10, revents=3DPOLLIN|POLLERR|POLLHUP}]) =3D> poll error
+
+So nothing more than a POLLERR|POLLHUP event on modem channel.
+
+After that, /dev/ttyUSB1 is reopened (line 9068, before close, that's =
+
+strange). This is because I 've done the trace with my patch. It does =
+
+not give more information on why error happens, but we do know that =
+
+/dev/ttyUSB1 does not disappear.
+
+If you are OK, I'll send patch next week.
+
+Best regards,
+
+Christophe
 
 
---===============2618916292742454433==--
+--===============3392161183427931687==--
 
