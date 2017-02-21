@@ -1,137 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============1583985221793952202=="
+Content-Type: multipart/mixed; boundary="===============3141720608039721397=="
 MIME-Version: 1.0
-From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCH] huawei: reopen modem channel if it disconnects
-Date: Mon, 20 Feb 2017 17:33:44 +0100
-Message-ID: <20170220163344.16670-1-c.ronco@kerlink.fr>
-In-Reply-To: <4a8ffc3a-6f2c-9a04-43ff-a2017fb01f8d@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Confusion about ublox toby-L2 IP configuration
+Date: Mon, 20 Feb 2017 19:40:53 -0600
+Message-ID: <cde247d3-3e63-a29c-be92-4067d96e69e9@gmail.com>
+In-Reply-To: <CADB9fJGeP9CZn2Bt_t0zjEunxZKXvjzT9vaNK6fQop0xAenALw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1583985221793952202==
+--===============3141720608039721397==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On E3372 after a GPRS disconnection, modem AT channel (used by PPP) gets
-disconnected (G_IO_HUP and G_IO_ERR are detected in received_data
-in gatio.c).
-After that all connection attempts fail because we are not able to send
-any AT commands on modem channel (it is closed).
+Hi Eric,
 
-With this patch, when this behavior is detected, we close gprs context
-driver, reopen AT channel and gprs context driver.
----
- plugins/huawei.c | 54 +++++++++++++++++++++++++++++++++++++++++++++++-----=
---
- 1 file changed, 47 insertions(+), 7 deletions(-)
+On 02/20/2017 09:26 AM, Eric Grunt wrote:
+> I originally posted this to the connman list
+> and I was asked to take over the topic to ofono list.
+> https://lists.01.org/pipermail/connman/2017-January/021440.html
+>
+> In interaction with ofono 1.18, connman 1.33 configures IPs for ublox
+> toby-L2 like this:
 
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index 59995b30..fcec7994 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -78,6 +78,8 @@ enum {
- struct huawei_data {
- 	GAtChat *modem;
- 	GAtChat *pcui;
-+	struct ofono_gprs *gprs;
-+	struct ofono_gprs_context *gc;
- 	gboolean have_sim;
- 	int sim_state;
- 	guint sysinfo_poll_source;
-@@ -584,6 +586,45 @@ static GAtChat *open_device(struct ofono_modem *modem,
- 	return chat;
- }
- =
+Dragos was the one who contributed most of the ublox support.  He might =
 
-+static void modem_disconnect(gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct huawei_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("");
-+
-+	ofono_warn("modem channel disconnected");
-+
-+	/* clean and close modem device */
-+	g_at_chat_cancel_all(data->modem);
-+	g_at_chat_unregister_all(data->modem);
-+	g_at_chat_unref(data->modem);
-+	data->modem =3D NULL;
-+
-+	/* close gprs context driver */
-+	ofono_gprs_context_remove(data->gc);
-+
-+	/* reopen modem channel */
-+	data->modem =3D open_device(modem, "Modem", "Modem: ");
-+
-+	if (data->modem =3D=3D NULL) {
-+		DBG("Can't reopen device");
-+		return;
-+	}
-+
-+	/* configure modem channel */
-+	g_at_chat_set_disconnect_function(data->modem, modem_disconnect, modem);
-+	g_at_chat_set_slave(data->modem, data->pcui);
-+	g_at_chat_send(data->modem, "ATE0 +CMEE=3D1", NULL, NULL, NULL, NULL);
-+
-+	/* reopen gprs context driver */
-+	data->gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_HUAWEI,
-+						"atmodem", data->modem);
-+
-+	if (data->gprs && data->gc)
-+		ofono_gprs_add_context(data->gprs, data->gc);
-+}
-+
- static int huawei_enable(struct ofono_modem *modem)
- {
- 	struct huawei_data *data =3D ofono_modem_get_data(modem);
-@@ -594,6 +635,8 @@ static int huawei_enable(struct ofono_modem *modem)
- 	if (data->modem =3D=3D NULL)
- 		return -EINVAL;
- =
+be able to help.  I don't have a ublox device to diagnose this problem.
 
-+	g_at_chat_set_disconnect_function(data->modem, modem_disconnect, modem);
-+
- 	data->pcui =3D open_device(modem, "Pcui", "PCUI: ");
- 	if (data->pcui =3D=3D NULL) {
- 		g_at_chat_unref(data->modem);
-@@ -820,9 +863,6 @@ static void huawei_post_sim(struct ofono_modem *modem)
- 	}
- =
+>
+> /*
+>  +UIPADDR: 1,"usb0:0","10.230.77.23","255.255.255.255","",""
+>  +CGCONTRDP: 1,0,"event.vodafone.de
+> ","10.230.77.232.255.255.255.255","10.230.77.232","139.7.30.125","139.7.3=
+0.126","0.0.0.0","0.0.0.0",0
+> */
+>
 
- 	if (data->have_gsm =3D=3D TRUE) {
--		struct ofono_gprs *gprs;
--		struct ofono_gprs_context *gc;
--
- 		ofono_phonebook_create(modem, 0, "atmodem", data->pcui);
- 		ofono_radio_settings_create(modem, 0,
- 						"huaweimodem", data->pcui);
-@@ -830,13 +870,13 @@ static void huawei_post_sim(struct ofono_modem *modem)
- 		ofono_sms_create(modem, OFONO_VENDOR_HUAWEI,
- 						"atmodem", data->pcui);
- =
+drivers/ubloxmodem/gprs-context.c uses CGCONTRDP parameters, and then =
 
--		gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_HUAWEI,
-+		data->gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_HUAWEI,
- 						"atmodem", data->pcui);
--		gc =3D ofono_gprs_context_create(modem, 0,
-+		data->gc =3D ofono_gprs_context_create(modem, 0,
- 						"atmodem", data->modem);
- =
+runs a +UIPADDR afterwards.  Have you traced the logic in that file to =
 
--		if (gprs && gc)
--			ofono_gprs_add_context(gprs, gc);
-+		if (data->gprs && data->gc)
-+			ofono_gprs_add_context(data->gprs, data->gc);
- 	}
- }
- =
+see what is happening?  It explicitly mentions Toby L2 & various =
 
--- =
+behaviors on different firmware.
 
-2.11.0
+Have you tried newer firmware?
 
+> wwan0     Link encap:Ethernet  HWaddr b6:90:aa:61:a0:79
+>           inet addr:10.230.77.232  Bcast:10.230.77.232  Mask:255.255.255.=
+255
+>           UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+>           RX packets:6 errors:0 dropped:0 overruns:0 frame:0
+>           TX packets:10 errors:0 dropped:0 overruns:0 carrier:0
+>           collisions:0 txqueuelen:1000
+>           RX bytes:384 (384.0 B)  TX bytes:908 (908.0 B)
+>
+> Kernel IP routing table
+> Destination     Gateway         Genmask         Flags Metric Ref    Use
+> Iface
+> 0.0.0.0         10.230.77.232   0.0.0.0         UG    0      0        0
+> wwan0
+> 10.230.77.232   0.0.0.0         255.255.255.255 UH    0      0        0
+> wwan0
+> 139.7.30.125    10.230.77.232   255.255.255.255 UGH   0      0        0
+> wwan0
+> 139.7.30.126    10.230.77.232   255.255.255.255 UGH   0      0        0
+> wwan0
+>
+> So it basically configures itself as gateway for everything
+> and also writes 139.7.30.125 and 139.7.30.126 to the routing table,
+> alltough those are supposed to be used for dns resolution.
+> With the configuration above, neither pinging the ublox router
+> (192.168.1.1)  nor the outside internet (8.8.8.8) is working (100% packet
+> loss)
 
---===============1583985221793952202==--
+Routing table info is being handled by connman.  Can you tell me the =
+
+output of test/monitor-ofono when you activate the context?  E.g. what =
+
+are the contents of the ConnectionContext.Settings ?
+
+Also, an AT command trace would be helpful.  See HACKING, 'OFONO_AT_DEBUG'.
+
+Regards,
+-Denis
+
+--===============3141720608039721397==--
 
