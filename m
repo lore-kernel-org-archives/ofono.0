@@ -1,30 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============8488870821731504212=="
+Content-Type: multipart/mixed; boundary="===============1481204709609229560=="
 MIME-Version: 1.0
 From: Lukasz Nowak <lnowak.tyco@gmail.com>
 Subject: Re: Telit LE910V1 - LTE only modem
-Date: Thu, 16 Mar 2017 12:57:44 +0000
-Message-ID: <66b613b4-f5f0-43dc-f512-9dfb6c542944@gmail.com>
+Date: Mon, 20 Mar 2017 13:19:25 +0000
+Message-ID: <18b346e6-dee3-a7bd-058b-a4b9586a94d6@gmail.com>
 In-Reply-To: <20170316093204.25275-1-gluedig@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8488870821731504212==
+--===============1481204709609229560==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Piotr,
+Hi Piotr, Denis,
 
-Thanks for the QMI patch. I will try it out, and if I manage to get it to w=
-ork with the SVG modem, maybe it can be submitted to the main ofono code ba=
-se.
-I think vid/pid can be added to the list of devices in udevng.c to force th=
-e qmimodem driver to load.
+With the qmimodem patch I was able to bring the LE910-SVG modem on-line.
+But I had to do two things:
 
-btw I am being told that at least the SVG variant (Verizon) hardware is not=
- EOLed by Telit currently.
+1. The gprs driver was never getting attached.
+a) This statement in src/gprs.c, gprs_netreg_update()
+	if (ofono_netreg_get_technology(gprs->netreg) =3D=3D
+			ACCESS_TECHNOLOGY_EUTRAN)
+		/*
+		 * For LTE we set attached status only on successful
+		 * context activation.
+		 */
+                return;
+means that the gprs->driver_attached is never set to true.
+If I remove this piece of code, the gprs->driver->set_attached() gets calle=
+d, and that
+gets everything attached and working.
+
+b) I can see, that another path to it would be:
+qmimodem/gprs.c create_nas_cb() calls qmi_service_register(QMI_NAS_SS_INFO_=
+IND, ss_info_notify)
+But then, ss_info_notify() is never called. I think that the modem is quick=
+ enough to register
+to the network before qmi_service_register(QMI_NAS_SS_INFO_IND) is called.
+
+c) Denis, you mentioned that I need to call ofono_gprs_cid_activated()
+Which piece of code should do that? qmimodem/network-registration.c or plug=
+ins/gobi.c?
+
+
+2. qmimodem/network-registration.c:extract_ss_info() seems to be getting a =
+corrupted =
+
+operator name:
+plmn->desc_len =3D 3
+plmn->desc[] =3D { 0x56, 0xfd, 0x15 }
+The first byte seems correct ('V' for Verizon), but the other two are wrong=
+ (later on, dbus
+aborts the entire ofono process, saying this is not a valid utf-8 string).
+plmn->mcc and plmn->mnc are correct (311:480 - US:Verizon)
+
+Have you ever seen anything like that?
+If I replace the invalid characters, everything works ok. But I imagine thi=
+s is not
+the right way to handle this.
+
+
+Thanks for all your help with this.
 
 Lukasz
+
 
 
 On 16/03/17 09:32, Piotr Haber wrote:
@@ -46,5 +86,5 @@ rrect driver
 
 >=20
 
---===============8488870821731504212==--
+--===============1481204709609229560==--
 
