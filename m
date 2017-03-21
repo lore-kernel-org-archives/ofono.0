@@ -1,83 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============5995173127734101842=="
+Content-Type: multipart/mixed; boundary="===============2778762254436330912=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Telit LE910V1 - LTE only modem
-Date: Mon, 20 Mar 2017 18:39:55 -0500
-Message-ID: <9039a556-efd6-4c8c-a6ad-d7a4291325b9@gmail.com>
-In-Reply-To: <a9342863-3841-ee82-b423-4bdb32d26798@gmail.com>
+From: Daryl Nebrich <darylnebrich@gmail.com>
+Subject: Telit LE920A4 - aux/modem channels and events
+Date: Tue, 21 Mar 2017 10:49:52 -0400
+Message-ID: <CANmGHYvpwsYS-4a1VeFu8Z-mYPj5hOOsA9QLGZH8-fsE4OFhCQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5995173127734101842==
+--===============2778762254436330912==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lukasz,
+Hi,
 
->> Strictly speaking this statement is correct.  In LTE there's really no c=
-oncept of 'attached'.  We're attached by the virtue of getting onto the LTE=
- network (the default bearer is always available).  So there should be no n=
-eed to explicitly issue a set_attached method.
->
-> The current qmimodem code, calls ofono_gprs_status_notify(NETWORK_REGISTR=
-ATION_STATUS_REGISTERED) when it receives a notification from the modem tha=
-t it is fully connected. Is that the correct path to make the gprs context =
-marked as "attached"?
-> If that does not happen, all the dbus context APIs just return an error, =
-and as a result, e.g. connman does not enable the cellular service.
->
+I'm using the latest of ofono and connman.  I'm having an issue with a
+PPP connection and async events.  With the latest ofono code, I added
+LE920A4 to plugins/telit.c.  So it's using atmodem driver for gprs and
+gprs-context.  The modem is running in mode 0x1201, so below is the
+mapping of aux and modem.
 
-So as it is today, oFono for LTE expects the following:
-ofono_gprs_status_notify(with registered / roaming)
-and ofono_gprs_cid_activated() for the default bearer.
+/dev/ttyUSB0 (telit) 255/255/255 [00] =3D=3D> (null) (null)
+/dev/cdc-wdm0 (gobi) 255/255/255 [02] =3D=3D> (null) (null)
+/dev/ttyUSB1 (telit) 255/0/0 [03] =3D=3D> (null) (null)
+/dev/ttyUSB2 (telit) 255/0/0 [04] =3D=3D> (null) (null) -- for mode
+0x1201, used for creating PPP connection
+/dev/ttyUSB3 (telit) 255/0/0 [05] =3D=3D> (null) (null) -- for mode
+0x1201, used as chat for AT commands
+/dev/ttyUSB4 (telit) 255/0/0 [06] =3D=3D> (null) (null)
 
-The gprs-context driver must then implement read_settings method.  LTE =
+Initially after the PPP session is established, everything is fine.  I
+can ping using the ppp0 interface.  But as soon as I get an async
+event (+CREG, +CIEV, etc), ping stops working.  If I leave ping
+running, I'll eventually get a ppp_disconnect with Reason 5 and state
+3.  The events are logged on the aux channel, but I'm not sure if
+they're coming on modem channel also.
 
-is weird since the contexts can be network activated.  The default =
+This can happen without any associated NWDETACH (sometimes I'll just
+see a +CREG after PPP is connected).  In this case ppp_disconnect
+calls ofono_gprs_context_deactivated followed by g_at_chat_resume.  It
+looks like at_chat_resume ends up calling io_disconnect because of the
+below code.
 
-bearer is 'activated' by the modem firmware itself by virtue of =
+    if (g_at_io_get_channel(chat->io) =3D=3D NULL) {
+        io_disconnect(chat);
+        return;
+    }
 
-obtaining the LTE network registration.  The logic is quite different =
+Is it expected that chat->io goes away because of the ppp_disconnect?
+When this happens the connman ofono plugin still thinks there's a
+network so it will repeatedly try to attach.  But the attach fails as
+it can't send AT commands anymore.
 
-compared to 2G/3G.
+I've tried changing how events are handling while a PPP session is
+active by changing settings similar to below -
 
-If you know your AT commands, see how the ubloxmodem driver does this. =
+    g_at_chat_send(gcd->chat, "AT+CMER=3D1,0,0,0", none_prefix, NULL, NULL,=
+ NULL);
+    g_at_chat_send(gcd->chat, "AT+CGEREP=3D2,1", none_prefix, NULL, NULL, N=
+ULL);
+    g_at_chat_send(gcd->chat, "AT+CAOC=3D1", none_prefix, NULL, NULL, NULL);
 
-Pay attention to drivers/atmodem/gprs.c cgev_notify() and =
+The above changes are in gprs-context.c/at_cgdcont_cb right before
+sending AT+CGDATA so I would expect them to suppress events on the
+modem channel.  But I still sometimes get a +CREG update which appears
+to disrupt the PPP session.  Any ideas?
 
-drivers/ubloxmodem/gprs-context.c.
+BTW, I've trying using QMI on /dev/cdc-wdm0 using qmicli and
+qmi-network without any luck.  It just times out.
 
-We also now have an lte atom.  See doc/lte-api.txt for details.
+Thanks,
+Daryl
 
-If the above isn't possible for QMI, then we might need to tweak the =
-
-core logic (e.g. src/gprs.c) accordingly.
-
-Please note that qmimodem driver was developed when we didn't have lte =
-
-support, so the logic in there is probably incorrect / inadequate.
-
-> I can add a change to qmimodem, which will explicitly ask the modem firmw=
-are if it is connected, from qmi_gprs_probe() rather than waiting on a stat=
-e change notification, which never arrives.
-> Does that make sense?
->
-> How do you usually test such changes for regressions? I do not have any o=
-ther QMI modems, to verify if I have broken anything in them or not. I thin=
-k the change should be safe, but I cannot be 100% certain.
->
-
-We try to catch most regressions during the patch review process.  In =
-
-the past we had some QA resources performing manual tests, but these =
-
-resources are no longer available.  Easiest might be to order a few qmi =
-
-modems and check if your patches break them :)
-
-Regards,
--Denis
-
---===============5995173127734101842==--
+--===============2778762254436330912==--
 
