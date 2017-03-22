@@ -1,44 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============1059542037854955282=="
+Content-Type: multipart/mixed; boundary="===============6814288243715327792=="
 MIME-Version: 1.0
 From: Lukasz Nowak <lnowak.tyco@gmail.com>
-Subject: [PATCH v2 0/5] Telit LE910 V1 QMI support
-Date: Wed, 22 Mar 2017 18:14:48 +0000
-Message-ID: <1490206493-17454-1-git-send-email-lnowak.tyco@gmail.com>
+Subject: [PATCH v2 1/5] qmimodem: telit LE910 V1 - fix ESN string
+Date: Wed, 22 Mar 2017 18:14:49 +0000
+Message-ID: <1490206493-17454-2-git-send-email-lnowak.tyco@gmail.com>
+In-Reply-To: <1490206493-17454-1-git-send-email-lnowak.tyco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1059542037854955282==
+--===============6814288243715327792==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Lukasz Nowak <lnowak@tycoint.com>
 
-Changes from V1:
-- split into multiple smaller commits
-- added comments in code, documenting issues with the Telit QMI firmware
-- disabled non-working low-power operating modes in additional cases
-- use mccmnc string instead of truncating an invalid operator name
+Telit QMI modems report "0", rather than a NULL string,
+if ESN is not available.
+---
+ drivers/qmimodem/devinfo.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-Lukasz Nowak (5):
-  qmimodem: telit LE910 V1 - fix ESN string
-  qmimodem: read ss_info at probe time
-  qmimodem: detect utf-8 string as operator name
-  gobi: Do not use low-power modes for some modems
-  udevng: add Telit LE910 V1 support
+diff --git a/drivers/qmimodem/devinfo.c b/drivers/qmimodem/devinfo.c
+index 34aec94..77c6874 100644
+--- a/drivers/qmimodem/devinfo.c
++++ b/drivers/qmimodem/devinfo.c
+@@ -125,7 +125,8 @@ static void get_ids_cb(struct qmi_result *result, void =
+*user_data)
+ 	}
+ =
 
- drivers/qmimodem/devinfo.c              |  3 ++-
- drivers/qmimodem/gprs.c                 |  7 ++++++
- drivers/qmimodem/network-registration.c | 19 ++++++++++++---
- plugins/gobi.c                          | 41 ++++++++++++++++++++++++++---=
-----
- plugins/udevng.c                        | 24 +++++++++++++++----
- 5 files changed, 78 insertions(+), 16 deletions(-)
-
+ 	str =3D qmi_result_get_string(result, QMI_DMS_RESULT_ESN);
+-	if (!str) {
++	/* Telit qmi modems return a "0" string when ESN is not available. */
++	if (!str || strcmp(str, "0") =3D=3D 0) {
+ 		str =3D qmi_result_get_string(result, QMI_DMS_RESULT_IMEI);
+ 		if (!str) {
+ 			CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
 -- =
 
 2.7.4
 
 
---===============1059542037854955282==--
+--===============6814288243715327792==--
 
