@@ -1,57 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============0899432150871587778=="
+Content-Type: multipart/mixed; boundary="===============7184722028544598051=="
 MIME-Version: 1.0
 From: Lukasz Nowak <lnowak.tyco@gmail.com>
-Subject: [PATCH v2 2/5] qmimodem: read ss_info at probe time
-Date: Wed, 22 Mar 2017 18:14:50 +0000
-Message-ID: <1490206493-17454-3-git-send-email-lnowak.tyco@gmail.com>
+Subject: [PATCH v2 3/5] qmimodem: detect utf-8 string as operator name
+Date: Wed, 22 Mar 2017 18:14:51 +0000
+Message-ID: <1490206493-17454-4-git-send-email-lnowak.tyco@gmail.com>
 In-Reply-To: <1490206493-17454-1-git-send-email-lnowak.tyco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0899432150871587778==
+--===============7184722028544598051==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Lukasz Nowak <lnowak@tycoint.com>
 
-LTE modems (observed with Telit LE910 V1) can power on
-already registered to a network. In that case, the SS_INFO
-change notification will never arrive, and the gprs driver
-will never be marked as attached.
-
-To avoid this situation, read SS_INFO at probe time, and if
-registered, mark the gprs driver as attached.
+Telit QMI modems can return non-utf-8 characters in plmn-desc.
+Observed with LE910-SVG and Verizon. When that happens, libdbus
+will abort ofono.
+If non-utf-8 characters are detected, use mccmnc string.
 ---
- drivers/qmimodem/gprs.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+ drivers/qmimodem/network-registration.c | 19 ++++++++++++++++---
+ 1 file changed, 16 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/qmimodem/gprs.c b/drivers/qmimodem/gprs.c
-index 5e27b0e..983223e 100644
---- a/drivers/qmimodem/gprs.c
-+++ b/drivers/qmimodem/gprs.c
-@@ -174,6 +174,13 @@ static void create_nas_cb(struct qmi_service *service,=
- void *user_data)
+diff --git a/drivers/qmimodem/network-registration.c b/drivers/qmimodem/net=
+work-registration.c
+index 7389ca5..a3f9cf9 100644
+--- a/drivers/qmimodem/network-registration.c
++++ b/drivers/qmimodem/network-registration.c
+@@ -64,7 +64,7 @@ static bool extract_ss_info(struct qmi_result *result, in=
+t *status,
+ 	const struct qmi_nas_serving_system *ss;
+ 	const struct qmi_nas_current_plmn *plmn;
+ 	uint8_t i, roaming;
+-	uint16_t value16, len;
++	uint16_t value16, len, opname_len;
+ 	uint32_t value32;
  =
 
- 	data->nas =3D qmi_service_ref(service);
- =
-
-+	/*
-+	 * First get the SS info - the modem may already be connected,
-+	 * and the state-change notification may never arrive
-+	 */
-+	qmi_service_send(data->nas, QMI_NAS_GET_SS_INFO, NULL,
-+					ss_info_notify, gprs, NULL);
+ 	DBG("");
+@@ -100,8 +100,21 @@ static bool extract_ss_info(struct qmi_result *result,=
+ int *status,
+ 						GUINT16_FROM_LE(plmn->mcc));
+ 		snprintf(operator->mnc, OFONO_MAX_MNC_LENGTH + 1, "%02d",
+ 						GUINT16_FROM_LE(plmn->mnc));
+-		strncpy(operator->name, plmn->desc, plmn->desc_len);
+-		operator->name[plmn->desc_len] =3D '\0';
++		opname_len =3D plmn->desc_len;
++		if (opname_len > OFONO_MAX_OPERATOR_NAME_LENGTH)
++			opname_len =3D OFONO_MAX_OPERATOR_NAME_LENGTH;
 +
- 	qmi_service_register(data->nas, QMI_NAS_SS_INFO_IND,
- 					ss_info_notify, gprs, NULL);
++		/*
++		 * Telit QMI modems can return non-utf-8 characters in
++		 * plmn-desc. When that happens, libdbus will abort ofono.
++		 * If non-utf-8 characters are detected, use mccmnc string.
++		 */
++		if (g_utf8_validate(plmn->desc, opname_len, NULL)) {
++			strncpy(operator->name, plmn->desc, opname_len);
++			operator->name[opname_len] =3D '\0';
++		} else
++			snprintf(operator->name, OFONO_MAX_OPERATOR_NAME_LENGTH,
++					"%s%s",	operator->mcc, operator->mnc);
  =
 
+ 		DBG("%s (%s:%s)", operator->name, operator->mcc, operator->mnc);
+ 	}
 -- =
 
 2.7.4
 
 
---===============0899432150871587778==--
+--===============7184722028544598051==--
 
