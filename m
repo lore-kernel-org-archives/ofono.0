@@ -1,112 +1,100 @@
-Content-Type: multipart/mixed; boundary="===============0563571517666204310=="
+Content-Type: multipart/mixed; boundary="===============8039433574203886295=="
 MIME-Version: 1.0
 From: Lukasz Nowak <lnowak.tyco@gmail.com>
-Subject: [PATCH v2 4/5] gobi: Do not use low-power modes for some modems
-Date: Wed, 22 Mar 2017 18:14:52 +0000
-Message-ID: <1490206493-17454-5-git-send-email-lnowak.tyco@gmail.com>
+Subject: [PATCH v2 5/5] udevng: add Telit LE910 V1 support
+Date: Wed, 22 Mar 2017 18:14:53 +0000
+Message-ID: <1490206493-17454-6-git-send-email-lnowak.tyco@gmail.com>
 In-Reply-To: <1490206493-17454-1-git-send-email-lnowak.tyco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0563571517666204310==
+--===============8039433574203886295==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Lukasz Nowak <lnowak@tycoint.com>
 
-Telit QMI modems have a problem with the low-power operating modes.
-After entering and leaving such a state, UIM service does not return.
-The sim card is still marked as powered-down. The QMI interface does
-not have a way to power it back on.
-
-To avoid this, keep modems with the "AlwaysOnline" flag online
-in the disable-modem and offline-modem procedures.
+Tested with LE910-SVG and Verizon.
 ---
- plugins/gobi.c | 41 +++++++++++++++++++++++++++++++++--------
- 1 file changed, 33 insertions(+), 8 deletions(-)
+ plugins/udevng.c | 24 ++++++++++++++++++++----
+ 1 file changed, 20 insertions(+), 4 deletions(-)
 
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 6a78941..d944b39 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -168,7 +168,14 @@ static void get_oper_mode_cb(struct qmi_result *result=
-, void *user_data)
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 2279bbe..3b15064 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -182,14 +182,15 @@ static gboolean setup_gobi(struct modem_info *modem)
+ 	const char *qmi =3D NULL, *mdm =3D NULL, *net =3D NULL;
+ 	const char *gps =3D NULL, *diag =3D NULL;
+ 	GSList *list;
++	gboolean telit =3D FALSE;
  =
 
- 	data->oper_mode =3D mode;
+ 	DBG("%s", modem->syspath);
  =
 
--	switch (data->oper_mode) {
-+	/*
-+	 * Telit QMI modem must remain online. If powered down, it also
-+	 * powers down the sim card, and QMI interface has no way to bring
-+	 * it back alive.
-+	 */
-+	if (ofono_modem_get_boolean(modem, "AlwaysOnline"))
-+		ofono_modem_set_powered(modem, TRUE);
-+	else switch (data->oper_mode) {
- 	case QMI_DMS_OPER_MODE_ONLINE:
- 		param =3D qmi_param_new_uint8(QMI_DMS_PARAM_OPER_MODE,
- 					QMI_DMS_OPER_MODE_PERSIST_LOW_POWER);
-@@ -353,14 +360,21 @@ static int gobi_disable(struct ofono_modem *modem)
- 	qmi_service_cancel_all(data->dms);
- 	qmi_service_unregister_all(data->dms);
+ 	for (list =3D modem->devices; list; list =3D list->next) {
+ 		struct device_info *info =3D list->data;
  =
 
--	param =3D qmi_param_new_uint8(QMI_DMS_PARAM_OPER_MODE,
--					QMI_DMS_OPER_MODE_PERSIST_LOW_POWER);
--	if (!param)
--		return -ENOMEM;
-+	/*
-+	 * Telit QMI modem must remain online. If powered down, it also
-+	 * powers down the sim card, and QMI interface has no way to bring
-+	 * it back alive.
-+	 */
-+	if (!ofono_modem_get_boolean(modem, "AlwaysOnline")) {
-+		param =3D qmi_param_new_uint8(QMI_DMS_PARAM_OPER_MODE,
-+						QMI_DMS_OPER_MODE_PERSIST_LOW_POWER);
-+		if (!param)
-+			return -ENOMEM;
+-		DBG("%s %s %s %s", info->devnode, info->interface,
+-						info->number, info->label);
++		DBG("%s %s %s %s %s", info->devnode, info->interface,
++					info->number, info->label, info->subsystem);
  =
 
--	if (qmi_service_send(data->dms, QMI_DMS_SET_OPER_MODE, param,
--					power_disable_cb, modem, NULL) > 0)
--		return -EINPROGRESS;
-+		if (qmi_service_send(data->dms, QMI_DMS_SET_OPER_MODE, param,
-+						power_disable_cb, modem, NULL) > 0)
-+			return -EINPROGRESS;
-+	}
+ 		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
+ 			if (info->number =3D=3D NULL)
+@@ -199,10 +200,18 @@ static gboolean setup_gobi(struct modem_info *modem)
+ 			else if (g_strcmp0(info->number, "01") =3D=3D 0)
+ 				diag =3D info->devnode;
+ 			else if (g_strcmp0(info->number, "02") =3D=3D 0)
+-				mdm =3D info->devnode;
++				if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
++					net =3D info->devnode;
++				else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0) {
++					telit =3D TRUE;
++					qmi =3D info->devnode;
++				} else
++					mdm =3D info->devnode;
+ 			else if (g_strcmp0(info->number, "03") =3D=3D 0)
+ 				gps =3D info->devnode;
+-		}
++		} else if (g_strcmp0(info->interface, "255/0/0") =3D=3D 0)
++			if (g_strcmp0(info->number, "04") =3D=3D 0)
++				mdm =3D info->devnode;
+ 	}
  =
 
- 	shutdown_device(modem);
+ 	if (qmi =3D=3D NULL || mdm =3D=3D NULL || net =3D=3D NULL)
+@@ -215,6 +224,12 @@ static gboolean setup_gobi(struct modem_info *modem)
+ 	ofono_modem_set_string(modem->modem, "Diag", diag);
+ 	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
  =
 
-@@ -390,6 +404,17 @@ static void gobi_set_online(struct ofono_modem *modem,=
- ofono_bool_t online,
- =
-
- 	DBG("%p %s", modem, online ? "online" : "offline");
- =
-
-+	/*
-+	 * Telit QMI modem must remain online. If powered down, it also
-+	 * powers down the sim card, and QMI interface has no way to bring
-+	 * it back alive.
-+	 */
-+	if (ofono_modem_get_boolean(modem, "AlwaysOnline")) {
-+		CALLBACK_WITH_FAILURE(cb, cbd->data);
-+		g_free(cbd);
-+		return;
++	if (telit) {
++		/* Telit LE910 V1 modems */
++		ofono_modem_set_boolean(modem->modem, "ForceSimLegacy", TRUE);
++		ofono_modem_set_boolean(modem->modem, "AlwaysOnline", TRUE);
 +	}
 +
- 	if (online)
- 		mode =3D QMI_DMS_OPER_MODE_ONLINE;
- 	else
+ 	return TRUE;
+ }
+ =
+
+@@ -1168,6 +1183,7 @@ static struct {
+ 	{ "mbm",	"cdc_ether",	"0930"		},
+ 	{ "mbm",	"cdc_ncm",	"0930"		},
+ 	{ "hso",	"hso"				},
++	{ "gobi",	"option",	"1bc7", "1201"	},
+ 	{ "gobi",	"qmi_wwan"			},
+ 	{ "gobi",	"qcserial"			},
+ 	{ "sierra",	"qmi_wwan",	"1199"		},
 -- =
 
 2.7.4
 
 
---===============0563571517666204310==--
+--===============8039433574203886295==--
 
