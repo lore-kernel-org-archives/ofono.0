@@ -1,74 +1,112 @@
-Content-Type: multipart/mixed; boundary="===============7184722028544598051=="
+Content-Type: multipart/mixed; boundary="===============0563571517666204310=="
 MIME-Version: 1.0
 From: Lukasz Nowak <lnowak.tyco@gmail.com>
-Subject: [PATCH v2 3/5] qmimodem: detect utf-8 string as operator name
-Date: Wed, 22 Mar 2017 18:14:51 +0000
-Message-ID: <1490206493-17454-4-git-send-email-lnowak.tyco@gmail.com>
+Subject: [PATCH v2 4/5] gobi: Do not use low-power modes for some modems
+Date: Wed, 22 Mar 2017 18:14:52 +0000
+Message-ID: <1490206493-17454-5-git-send-email-lnowak.tyco@gmail.com>
 In-Reply-To: <1490206493-17454-1-git-send-email-lnowak.tyco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7184722028544598051==
+--===============0563571517666204310==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Lukasz Nowak <lnowak@tycoint.com>
 
-Telit QMI modems can return non-utf-8 characters in plmn-desc.
-Observed with LE910-SVG and Verizon. When that happens, libdbus
-will abort ofono.
-If non-utf-8 characters are detected, use mccmnc string.
+Telit QMI modems have a problem with the low-power operating modes.
+After entering and leaving such a state, UIM service does not return.
+The sim card is still marked as powered-down. The QMI interface does
+not have a way to power it back on.
+
+To avoid this, keep modems with the "AlwaysOnline" flag online
+in the disable-modem and offline-modem procedures.
 ---
- drivers/qmimodem/network-registration.c | 19 ++++++++++++++++---
- 1 file changed, 16 insertions(+), 3 deletions(-)
+ plugins/gobi.c | 41 +++++++++++++++++++++++++++++++++--------
+ 1 file changed, 33 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/qmimodem/network-registration.c b/drivers/qmimodem/net=
-work-registration.c
-index 7389ca5..a3f9cf9 100644
---- a/drivers/qmimodem/network-registration.c
-+++ b/drivers/qmimodem/network-registration.c
-@@ -64,7 +64,7 @@ static bool extract_ss_info(struct qmi_result *result, in=
-t *status,
- 	const struct qmi_nas_serving_system *ss;
- 	const struct qmi_nas_current_plmn *plmn;
- 	uint8_t i, roaming;
--	uint16_t value16, len;
-+	uint16_t value16, len, opname_len;
- 	uint32_t value32;
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index 6a78941..d944b39 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -168,7 +168,14 @@ static void get_oper_mode_cb(struct qmi_result *result=
+, void *user_data)
  =
 
- 	DBG("");
-@@ -100,8 +100,21 @@ static bool extract_ss_info(struct qmi_result *result,=
- int *status,
- 						GUINT16_FROM_LE(plmn->mcc));
- 		snprintf(operator->mnc, OFONO_MAX_MNC_LENGTH + 1, "%02d",
- 						GUINT16_FROM_LE(plmn->mnc));
--		strncpy(operator->name, plmn->desc, plmn->desc_len);
--		operator->name[plmn->desc_len] =3D '\0';
-+		opname_len =3D plmn->desc_len;
-+		if (opname_len > OFONO_MAX_OPERATOR_NAME_LENGTH)
-+			opname_len =3D OFONO_MAX_OPERATOR_NAME_LENGTH;
+ 	data->oper_mode =3D mode;
+ =
+
+-	switch (data->oper_mode) {
++	/*
++	 * Telit QMI modem must remain online. If powered down, it also
++	 * powers down the sim card, and QMI interface has no way to bring
++	 * it back alive.
++	 */
++	if (ofono_modem_get_boolean(modem, "AlwaysOnline"))
++		ofono_modem_set_powered(modem, TRUE);
++	else switch (data->oper_mode) {
+ 	case QMI_DMS_OPER_MODE_ONLINE:
+ 		param =3D qmi_param_new_uint8(QMI_DMS_PARAM_OPER_MODE,
+ 					QMI_DMS_OPER_MODE_PERSIST_LOW_POWER);
+@@ -353,14 +360,21 @@ static int gobi_disable(struct ofono_modem *modem)
+ 	qmi_service_cancel_all(data->dms);
+ 	qmi_service_unregister_all(data->dms);
+ =
+
+-	param =3D qmi_param_new_uint8(QMI_DMS_PARAM_OPER_MODE,
+-					QMI_DMS_OPER_MODE_PERSIST_LOW_POWER);
+-	if (!param)
+-		return -ENOMEM;
++	/*
++	 * Telit QMI modem must remain online. If powered down, it also
++	 * powers down the sim card, and QMI interface has no way to bring
++	 * it back alive.
++	 */
++	if (!ofono_modem_get_boolean(modem, "AlwaysOnline")) {
++		param =3D qmi_param_new_uint8(QMI_DMS_PARAM_OPER_MODE,
++						QMI_DMS_OPER_MODE_PERSIST_LOW_POWER);
++		if (!param)
++			return -ENOMEM;
+ =
+
+-	if (qmi_service_send(data->dms, QMI_DMS_SET_OPER_MODE, param,
+-					power_disable_cb, modem, NULL) > 0)
+-		return -EINPROGRESS;
++		if (qmi_service_send(data->dms, QMI_DMS_SET_OPER_MODE, param,
++						power_disable_cb, modem, NULL) > 0)
++			return -EINPROGRESS;
++	}
+ =
+
+ 	shutdown_device(modem);
+ =
+
+@@ -390,6 +404,17 @@ static void gobi_set_online(struct ofono_modem *modem,=
+ ofono_bool_t online,
+ =
+
+ 	DBG("%p %s", modem, online ? "online" : "offline");
+ =
+
++	/*
++	 * Telit QMI modem must remain online. If powered down, it also
++	 * powers down the sim card, and QMI interface has no way to bring
++	 * it back alive.
++	 */
++	if (ofono_modem_get_boolean(modem, "AlwaysOnline")) {
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
++		g_free(cbd);
++		return;
++	}
 +
-+		/*
-+		 * Telit QMI modems can return non-utf-8 characters in
-+		 * plmn-desc. When that happens, libdbus will abort ofono.
-+		 * If non-utf-8 characters are detected, use mccmnc string.
-+		 */
-+		if (g_utf8_validate(plmn->desc, opname_len, NULL)) {
-+			strncpy(operator->name, plmn->desc, opname_len);
-+			operator->name[opname_len] =3D '\0';
-+		} else
-+			snprintf(operator->name, OFONO_MAX_OPERATOR_NAME_LENGTH,
-+					"%s%s",	operator->mcc, operator->mnc);
- =
-
- 		DBG("%s (%s:%s)", operator->name, operator->mcc, operator->mnc);
- 	}
+ 	if (online)
+ 		mode =3D QMI_DMS_OPER_MODE_ONLINE;
+ 	else
 -- =
 
 2.7.4
 
 
---===============7184722028544598051==--
+--===============0563571517666204310==--
 
