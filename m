@@ -1,46 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============6814288243715327792=="
+Content-Type: multipart/mixed; boundary="===============0899432150871587778=="
 MIME-Version: 1.0
 From: Lukasz Nowak <lnowak.tyco@gmail.com>
-Subject: [PATCH v2 1/5] qmimodem: telit LE910 V1 - fix ESN string
-Date: Wed, 22 Mar 2017 18:14:49 +0000
-Message-ID: <1490206493-17454-2-git-send-email-lnowak.tyco@gmail.com>
+Subject: [PATCH v2 2/5] qmimodem: read ss_info at probe time
+Date: Wed, 22 Mar 2017 18:14:50 +0000
+Message-ID: <1490206493-17454-3-git-send-email-lnowak.tyco@gmail.com>
 In-Reply-To: <1490206493-17454-1-git-send-email-lnowak.tyco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6814288243715327792==
+--===============0899432150871587778==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Lukasz Nowak <lnowak@tycoint.com>
 
-Telit QMI modems report "0", rather than a NULL string,
-if ESN is not available.
----
- drivers/qmimodem/devinfo.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+LTE modems (observed with Telit LE910 V1) can power on
+already registered to a network. In that case, the SS_INFO
+change notification will never arrive, and the gprs driver
+will never be marked as attached.
 
-diff --git a/drivers/qmimodem/devinfo.c b/drivers/qmimodem/devinfo.c
-index 34aec94..77c6874 100644
---- a/drivers/qmimodem/devinfo.c
-+++ b/drivers/qmimodem/devinfo.c
-@@ -125,7 +125,8 @@ static void get_ids_cb(struct qmi_result *result, void =
-*user_data)
- 	}
+To avoid this situation, read SS_INFO at probe time, and if
+registered, mark the gprs driver as attached.
+---
+ drivers/qmimodem/gprs.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drivers/qmimodem/gprs.c b/drivers/qmimodem/gprs.c
+index 5e27b0e..983223e 100644
+--- a/drivers/qmimodem/gprs.c
++++ b/drivers/qmimodem/gprs.c
+@@ -174,6 +174,13 @@ static void create_nas_cb(struct qmi_service *service,=
+ void *user_data)
  =
 
- 	str =3D qmi_result_get_string(result, QMI_DMS_RESULT_ESN);
--	if (!str) {
-+	/* Telit qmi modems return a "0" string when ESN is not available. */
-+	if (!str || strcmp(str, "0") =3D=3D 0) {
- 		str =3D qmi_result_get_string(result, QMI_DMS_RESULT_IMEI);
- 		if (!str) {
- 			CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
+ 	data->nas =3D qmi_service_ref(service);
+ =
+
++	/*
++	 * First get the SS info - the modem may already be connected,
++	 * and the state-change notification may never arrive
++	 */
++	qmi_service_send(data->nas, QMI_NAS_GET_SS_INFO, NULL,
++					ss_info_notify, gprs, NULL);
++
+ 	qmi_service_register(data->nas, QMI_NAS_SS_INFO_IND,
+ 					ss_info_notify, gprs, NULL);
+ =
+
 -- =
 
 2.7.4
 
 
---===============6814288243715327792==--
+--===============0899432150871587778==--
 
