@@ -1,100 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7324190834742980307=="
+Content-Type: multipart/mixed; boundary="===============5111837652996519891=="
 MIME-Version: 1.0
-From: Lukasz Nowak <lnowak.tyco@gmail.com>
-Subject: [PATCH v3 2/2] udevng: add Telit LE910 V1 support
-Date: Fri, 24 Mar 2017 14:51:46 +0000
-Message-ID: <1490367106-8401-3-git-send-email-lnowak.tyco@gmail.com>
-In-Reply-To: <1490367106-8401-1-git-send-email-lnowak.tyco@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v3 1/2] gobi: Do not use low-power modes for some modems
+Date: Fri, 24 Mar 2017 10:08:40 -0500
+Message-ID: <f4714a58-1ceb-d221-9dbc-642832ce6397@gmail.com>
+In-Reply-To: <1490367106-8401-2-git-send-email-lnowak.tyco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7324190834742980307==
+--===============5111837652996519891==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Lukasz Nowak <lnowak@tycoint.com>
+Hi Lukasz,
 
-Tested with LE910-SVG and Verizon.
----
- plugins/udevng.c | 24 ++++++++++++++++++++----
- 1 file changed, 20 insertions(+), 4 deletions(-)
+On 03/24/2017 09:51 AM, Lukasz Nowak wrote:
+> From: Lukasz Nowak <lnowak@tycoint.com>
+>
+> Telit QMI modems have a problem with the low-power operating modes.
+> After entering and leaving such a state, UIM service does not return.
+> The sim card is still marked as powered-down. The QMI interface does
+> not have a way to power it back on.
+>
+> To avoid this, keep modems with the "AlwaysOnline" flag online
+> in the disable-modem and offline-modem procedures.
+> ---
+>  plugins/gobi.c | 19 +++++++++++++++++++
+>  1 file changed, 19 insertions(+)
+>
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 2279bbe..3b15064 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -182,14 +182,15 @@ static gboolean setup_gobi(struct modem_info *modem)
- 	const char *qmi =3D NULL, *mdm =3D NULL, *net =3D NULL;
- 	const char *gps =3D NULL, *diag =3D NULL;
- 	GSList *list;
-+	gboolean telit =3D FALSE;
- =
+Applied, thanks.
 
- 	DBG("%s", modem->syspath);
- =
-
- 	for (list =3D modem->devices; list; list =3D list->next) {
- 		struct device_info *info =3D list->data;
- =
-
--		DBG("%s %s %s %s", info->devnode, info->interface,
--						info->number, info->label);
-+		DBG("%s %s %s %s %s", info->devnode, info->interface,
-+					info->number, info->label, info->subsystem);
- =
-
- 		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
- 			if (info->number =3D=3D NULL)
-@@ -199,10 +200,18 @@ static gboolean setup_gobi(struct modem_info *modem)
- 			else if (g_strcmp0(info->number, "01") =3D=3D 0)
- 				diag =3D info->devnode;
- 			else if (g_strcmp0(info->number, "02") =3D=3D 0)
--				mdm =3D info->devnode;
-+				if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
-+					net =3D info->devnode;
-+				else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0) {
-+					telit =3D TRUE;
-+					qmi =3D info->devnode;
-+				} else
-+					mdm =3D info->devnode;
- 			else if (g_strcmp0(info->number, "03") =3D=3D 0)
- 				gps =3D info->devnode;
--		}
-+		} else if (g_strcmp0(info->interface, "255/0/0") =3D=3D 0)
-+			if (g_strcmp0(info->number, "04") =3D=3D 0)
-+				mdm =3D info->devnode;
- 	}
- =
-
- 	if (qmi =3D=3D NULL || mdm =3D=3D NULL || net =3D=3D NULL)
-@@ -215,6 +224,12 @@ static gboolean setup_gobi(struct modem_info *modem)
- 	ofono_modem_set_string(modem->modem, "Diag", diag);
- 	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
- =
-
-+	if (telit) {
-+		/* Telit LE910 V1 modems */
-+		ofono_modem_set_boolean(modem->modem, "ForceSimLegacy", TRUE);
-+		ofono_modem_set_boolean(modem->modem, "AlwaysOnline", TRUE);
-+	}
-+
- 	return TRUE;
- }
- =
-
-@@ -1168,6 +1183,7 @@ static struct {
- 	{ "mbm",	"cdc_ether",	"0930"		},
- 	{ "mbm",	"cdc_ncm",	"0930"		},
- 	{ "hso",	"hso"				},
-+	{ "gobi",	"option",	"1bc7", "1201"	},
- 	{ "gobi",	"qmi_wwan"			},
- 	{ "gobi",	"qcserial"			},
- 	{ "sierra",	"qmi_wwan",	"1199"		},
--- =
-
-2.7.4
+Regards,
+-Denis
 
 
---===============7324190834742980307==--
+--===============5111837652996519891==--
 
