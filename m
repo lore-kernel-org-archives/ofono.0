@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5111837652996519891=="
+Content-Type: multipart/mixed; boundary="===============4509984504442672885=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3 1/2] gobi: Do not use low-power modes for some modems
-Date: Fri, 24 Mar 2017 10:08:40 -0500
-Message-ID: <f4714a58-1ceb-d221-9dbc-642832ce6397@gmail.com>
-In-Reply-To: <1490367106-8401-2-git-send-email-lnowak.tyco@gmail.com>
+Subject: Re: [PATCH v3 0/2] Telit LE910 V1 QMI support
+Date: Fri, 24 Mar 2017 10:11:34 -0500
+Message-ID: <f7077051-c018-ceaa-5b84-b6154fd3ac04@gmail.com>
+In-Reply-To: <1490367106-8401-1-git-send-email-lnowak.tyco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5111837652996519891==
+--===============4509984504442672885==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -18,23 +18,23 @@ Hi Lukasz,
 On 03/24/2017 09:51 AM, Lukasz Nowak wrote:
 > From: Lukasz Nowak <lnowak@tycoint.com>
 >
-> Telit QMI modems have a problem with the low-power operating modes.
-> After entering and leaving such a state, UIM service does not return.
-> The sim card is still marked as powered-down. The QMI interface does
-> not have a way to power it back on.
->
-> To avoid this, keep modems with the "AlwaysOnline" flag online
-> in the disable-modem and offline-modem procedures.
-> ---
->  plugins/gobi.c | 19 +++++++++++++++++++
->  1 file changed, 19 insertions(+)
+> Changes from V2:
+> - made AlwaysOnline flow cleaner in gobi.c
+> - it turns out that AlwaysOnline is already a part of core logic
+>   in src/modem.c which have the same effect as if the driver had
+>   no set_online() function at all. Hence removed changes to
+>   gobi_set_online() as it is never called.
 >
 
-Applied, thanks.
+Ah yes, I completely forgot that someone added the AlwaysOnline override =
+
+so you didn't need to implement a brand new driver without .set_online =
+
+implemented.  Good that you discovered that, sorry for the confusion.
 
 Regards,
 -Denis
 
 
---===============5111837652996519891==--
+--===============4509984504442672885==--
 
