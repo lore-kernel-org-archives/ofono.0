@@ -1,72 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============8573891199553691975=="
+Content-Type: multipart/mixed; boundary="===============2487889155258969009=="
 MIME-Version: 1.0
 From: Lukasz Nowak <lnowak.tyco@gmail.com>
-Subject: [PATCH v4 2/3] udevng: find vendor and product id for child devices
-Date: Fri, 24 Mar 2017 21:46:36 +0000
-Message-ID: <1490391997-27077-3-git-send-email-lnowak.tyco@gmail.com>
+Subject: [PATCH v4 3/3] udevng: add Telit LE910 V1 support
+Date: Fri, 24 Mar 2017 21:46:37 +0000
+Message-ID: <1490391997-27077-4-git-send-email-lnowak.tyco@gmail.com>
 In-Reply-To: <1490391997-27077-1-git-send-email-lnowak.tyco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8573891199553691975==
+--===============2487889155258969009==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Lukasz Nowak <lnowak@tycoint.com>
 
-Some of the udev devices will not have vendor and product id
-of their own, if they are children of real usb devices
-(e.g. cdc-wdm0 which is a usbmisc subsystem of qmi_wwan).
-
-If a device does not have its own vendor id, go up through
-the parent tree to try to find one.
+Tested with LE910-SVG and Verizon.
 ---
- plugins/udevng.c | 14 ++++++++++++--
- 1 file changed, 12 insertions(+), 2 deletions(-)
+ plugins/udevng.c | 44 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 44 insertions(+)
 
 diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 2279bbe..75e0126 100644
+index 75e0126..ac200a8 100644
 --- a/plugins/udevng.c
 +++ b/plugins/udevng.c
-@@ -1229,6 +1229,7 @@ static void check_usb_device(struct udev_device *devi=
-ce)
- 	if (driver =3D=3D NULL) {
- 		const char *drv, *vid, *pid;
- 		unsigned int i;
-+		struct udev_device *vendor_device;
+@@ -665,6 +665,47 @@ static gboolean setup_telit(struct modem_info *modem)
+ 	return TRUE;
+ }
  =
 
- 		drv =3D udev_device_get_property_value(device, "ID_USB_DRIVER");
- 		if (drv =3D=3D NULL) {
-@@ -1246,8 +1247,17 @@ static void check_usb_device(struct udev_device *dev=
-ice)
- 			}
- 		}
- =
-
--		vid =3D udev_device_get_property_value(device, "ID_VENDOR_ID");
--		pid =3D udev_device_get_property_value(device, "ID_MODEL_ID");
-+		vendor_device =3D device;
-+		vid =3D NULL;
-+		while (vendor_device !=3D NULL) {
-+			vid =3D udev_device_get_property_value(
-+					vendor_device, "ID_VENDOR_ID");
-+			pid =3D udev_device_get_property_value(
-+					vendor_device, "ID_MODEL_ID");
-+			if (vid !=3D NULL)
-+				break;
-+			vendor_device =3D udev_device_get_parent(vendor_device);
-+		}
- =
-
- 		DBG("%s [%s:%s]", drv, vid, pid);
- =
-
++static gboolean setup_telitqmi(struct modem_info *modem)
++{
++	const char *qmi =3D NULL, *mdm =3D NULL, *net =3D NULL;
++	GSList *list;
++	gboolean telit =3D FALSE;
++
++	DBG("%s", modem->syspath);
++
++	for (list =3D modem->devices; list; list =3D list->next) {
++		struct device_info *info =3D list->data;
++
++		DBG("%s %s %s %s %s", info->devnode, info->interface,
++				info->number, info->label, info->subsystem);
++
++		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0 &&
++				g_strcmp0(info->number, "02") =3D=3D 0) {
++			if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
++				net =3D info->devnode;
++			else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0)
++				qmi =3D info->devnode;
++		} else if (g_strcmp0(info->interface, "255/0/0") =3D=3D 0)
++			if (g_strcmp0(info->number, "04") =3D=3D 0)
++				mdm =3D info->devnode;
++	}
++
++	if (qmi =3D=3D NULL || mdm =3D=3D NULL || net =3D=3D NULL)
++		return FALSE;
++
++	DBG("qmi=3D%s net=3D%s mdm=3D%s", qmi, net, mdm);
++
++	ofono_modem_set_string(modem->modem, "Device", qmi);
++	ofono_modem_set_string(modem->modem, "Modem", mdm);
++	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
++
++	ofono_modem_set_boolean(modem->modem, "ForceSimLegacy", TRUE);
++	ofono_modem_set_boolean(modem->modem, "AlwaysOnline", TRUE);
++	ofono_modem_set_driver(modem->modem, "gobi");
++
++	return TRUE;
++}
++
+ static gboolean setup_simcom(struct modem_info *modem)
+ {
+ 	const char *mdm =3D NULL, *aux =3D NULL, *gps =3D NULL, *diag =3D NULL;
+@@ -952,6 +993,7 @@ static struct {
+ 	{ "novatel",	setup_novatel	},
+ 	{ "nokia",	setup_nokia	},
+ 	{ "telit",	setup_telit,	"device/interface"	},
++	{ "telitqmi",	setup_telitqmi	},
+ 	{ "simcom",	setup_simcom	},
+ 	{ "zte",	setup_zte	},
+ 	{ "icera",	setup_icera	},
+@@ -1190,6 +1232,8 @@ static struct {
+ 	{ "telit",	"usbserial",	"1bc7"		},
+ 	{ "telit",	"option",	"1bc7"		},
+ 	{ "telit",	"cdc_acm",	"1bc7", "0021"	},
++	{ "telitqmi",	"qmi_wwan",	"1bc7", "1201"	},
++	{ "telitqmi",	"option",	"1bc7", "1201"	},
+ 	{ "nokia",	"option",	"0421", "060e"	},
+ 	{ "nokia",	"option",	"0421", "0623"	},
+ 	{ "samsung",	"option",	"04e8", "6889"	},
 -- =
 
 2.7.4
 
 
---===============8573891199553691975==--
+--===============2487889155258969009==--
 
