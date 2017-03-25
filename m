@@ -1,70 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============8838936117001839728=="
+Content-Type: multipart/mixed; boundary="===============1590867201694658920=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH udev 09/15] udev: simplify wavecom modem registration
-Date: Sat, 25 Mar 2017 17:57:59 +0100
-Message-ID: <20170325165805.28166-10-jonas@southpole.se>
+Subject: [PATCH udev 10/15] udev: remove extraneous subsystem check
+Date: Sat, 25 Mar 2017 17:58:00 +0100
+Message-ID: <20170325165805.28166-11-jonas@southpole.se>
 In-Reply-To: <20170325165805.28166-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8838936117001839728==
+--===============1590867201694658920==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+The enumeration construct is already set up with matches for these
+subsystems.
 ---
- plugins/udev.c | 26 ++++++--------------------
- 1 file changed, 6 insertions(+), 20 deletions(-)
+ plugins/udev.c | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
 
 diff --git a/plugins/udev.c b/plugins/udev.c
-index 687aa66..13cef32 100644
+index 13cef32..02cc67a 100644
 --- a/plugins/udev.c
 +++ b/plugins/udev.c
-@@ -155,29 +155,15 @@ static void add_isi(struct ofono_modem *modem,
- 	ofono_modem_register(modem);
- }
+@@ -292,14 +292,7 @@ static void enumerate_devices(struct udev *context)
  =
 
--static void add_wavecom(struct ofono_modem *modem,
--					struct udev_device *udev_device)
-+static void add_wavecom(struct ofono_modem *modem, struct udev_device *dev)
- {
--	const char *devnode;
--	struct udev_list_entry *entry;
+ 		device =3D udev_device_new_from_syspath(context, syspath);
+ 		if (device !=3D NULL) {
+-			const char *subsystem;
 -
--	DBG("modem %p", modem);
+-			subsystem =3D udev_device_get_subsystem(device);
 -
--	devnode =3D udev_device_get_devnode(udev_device);
--	ofono_modem_set_string(modem, "Device", devnode);
--
--	entry =3D udev_device_get_properties_list_entry(udev_device);
--	while (entry) {
--		const char *name =3D udev_list_entry_get_name(entry);
--		const char *value =3D udev_list_entry_get_value(entry);
--
--		if (g_str_equal(name, "OFONO_WAVECOM_MODEL") =3D=3D TRUE)
--			ofono_modem_set_string(modem, "Model", value);
-+	const char *value;
+-			if (g_strcmp0(subsystem, "tty") =3D=3D 0 ||
+-					g_strcmp0(subsystem, "net") =3D=3D 0 ||
+-					g_strcmp0(subsystem, "hsi") =3D=3D 0)
+-				add_modem(device);
++			add_modem(device);
  =
 
--		entry =3D udev_list_entry_get_next(entry);
--	}
-+	value =3D udev_device_get_property_value(dev, "OFONO_WAVECOM_MODEL");
-+	if (value)
-+		ofono_modem_set_string(modem, "Model", value);
- =
-
--	ofono_modem_register(modem);
-+	__add_common(modem, dev);
- }
- =
-
- static void add_modem(struct udev_device *udev_device)
+ 			udev_device_unref(device);
+ 		}
 -- =
 
 2.9.3
 
 
---===============8838936117001839728==--
+--===============1590867201694658920==--
 
