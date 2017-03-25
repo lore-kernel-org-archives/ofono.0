@@ -1,41 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============0994829285146397169=="
+Content-Type: multipart/mixed; boundary="===============6442327225217554751=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH qmi 0/5] QMI patches
-Date: Sat, 25 Mar 2017 17:57:50 +0100
-Message-ID: <20170325165755.28114-1-jonas@southpole.se>
+Subject: [PATCH qmi 3/5] gobi: query presence of WDA service
+Date: Sat, 25 Mar 2017 17:57:53 +0100
+Message-ID: <20170325165755.28114-4-jonas@southpole.se>
+In-Reply-To: <20170325165755.28114-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0994829285146397169==
+--===============6442327225217554751==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This is a series of cleanups related to QMI modems.
+---
+ plugins/gobi.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-You might want to consider patch 5 as an object for review more than
-submission.  It's what I'm currently using with my UC21.
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index 06f906d..df35f94 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -48,6 +48,7 @@
+ =
 
-Jonas Bonn (5):
-  qmimodem: fix typo
-  qmimodem: add WDA service string
-  gobi: query presence of WDA service
-  gobi: take LLP-matching code from qmimodem
-  udevng: add qmiwwan modem driver
+ #include <drivers/qmimodem/qmi.h>
+ #include <drivers/qmimodem/dms.h>
++#include <drivers/qmimodem/wda.h>
+ #include <drivers/qmimodem/util.h>
+ =
 
- drivers/qmimodem/gprs-context.c | 74 +------------------------------------=
---
- drivers/qmimodem/qmi.c          |  4 ++-
- plugins/gobi.c                  | 77 +++++++++++++++++++++++++++++++++++++=
-++++
- plugins/udevng.c                | 41 ++++++++++++++++++++++
- 4 files changed, 122 insertions(+), 74 deletions(-)
+ #define GOBI_DMS	(1 << 0)
+@@ -60,6 +61,7 @@
+ #define GOBI_CAT	(1 << 7)
+ #define GOBI_CAT_OLD	(1 << 8)
+ #define GOBI_VOICE	(1 << 9)
++#define GOBI_WDA	(1 << 10)
+ =
 
+ struct gobi_data {
+ 	struct qmi_device *device;
+@@ -275,6 +277,9 @@ static void discover_cb(uint8_t count, const struct qmi=
+_version *list,
+ 		case QMI_SERVICE_WDS:
+ 			data->features |=3D GOBI_WDS;
+ 			break;
++		case QMI_SERVICE_WDA:
++			data->features |=3D GOBI_WDA;
++			break;
+ 		case QMI_SERVICE_PDS:
+ 			data->features |=3D GOBI_PDS;
+ 			break;
 -- =
 
 2.9.3
 
 
---===============0994829285146397169==--
+--===============6442327225217554751==--
 
