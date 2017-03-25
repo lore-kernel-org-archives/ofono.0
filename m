@@ -1,51 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============2850788973681404489=="
+Content-Type: multipart/mixed; boundary="===============6229169627427160445=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH udev 12/15] udevng: match on the hsi subsystem for legacy
- devices
-Date: Sat, 25 Mar 2017 17:58:02 +0100
-Message-ID: <20170325165805.28166-13-jonas@southpole.se>
+Subject: [PATCH udev 13/15] udevng: hook up legacy devices
+Date: Sat, 25 Mar 2017 17:58:03 +0100
+Message-ID: <20170325165805.28166-14-jonas@southpole.se>
 In-Reply-To: <20170325165805.28166-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2850788973681404489==
+--===============6229169627427160445==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+...and disable old udev code by shorting it out in it's init() function.
 ---
+ plugins/udev.c   | 2 ++
  plugins/udevng.c | 2 ++
- 1 file changed, 2 insertions(+)
+ 2 files changed, 4 insertions(+)
 
+diff --git a/plugins/udev.c b/plugins/udev.c
+index 02cc67a..38ddeea 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -366,6 +366,8 @@ static void udev_start(void)
+ =
+
+ static int udev_init(void)
+ {
++	return 0;
++
+ 	devpath_list =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+ 						g_free, g_free);
+ 	if (devpath_list =3D=3D NULL) {
 diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 4e464c2..640a221 100644
+index 640a221..8721447 100644
 --- a/plugins/udevng.c
 +++ b/plugins/udevng.c
-@@ -1595,6 +1595,7 @@ static void enumerate_devices(struct udev *context)
- 	udev_enumerate_add_match_subsystem(enumerate, "usb");
- 	udev_enumerate_add_match_subsystem(enumerate, "usbmisc");
- 	udev_enumerate_add_match_subsystem(enumerate, "net");
-+	udev_enumerate_add_match_subsystem(enumerate, "hsi");
+@@ -1607,6 +1607,7 @@ static void enumerate_devices(struct udev *context)
+ 		device =3D udev_device_new_from_syspath(context, syspath);
+ 		if (device !=3D NULL) {
+ 			check_device(device);
++			add_legacy_device(device);
+ 			udev_device_unref(device);
+ 		}
  =
 
- 	udev_enumerate_scan_devices(enumerate);
+@@ -1659,6 +1660,7 @@ static gboolean udev_event(GIOChannel *channel, GIOCo=
+ndition cond,
+ 			g_source_remove(udev_delay);
  =
 
-@@ -1719,6 +1720,7 @@ static int detect_init(void)
- 	udev_monitor_filter_add_match_subsystem_devtype(udev_mon,
- 							"usbmisc", NULL);
- 	udev_monitor_filter_add_match_subsystem_devtype(udev_mon, "net", NULL);
-+	udev_monitor_filter_add_match_subsystem_devtype(udev_mon, "hsi", NULL);
+ 		check_device(device);
++		add_legacy_device(device);
  =
 
- 	udev_monitor_filter_update(udev_mon);
- =
-
+ 		udev_delay =3D g_timeout_add_seconds(1, check_modem_list, NULL);
+ 	} else if (g_str_equal(action, "remove") =3D=3D TRUE)
 -- =
 
 2.9.3
 
 
---===============2850788973681404489==--
+--===============6229169627427160445==--
 
