@@ -1,64 +1,113 @@
-Content-Type: multipart/mixed; boundary="===============6512850119985899253=="
+Content-Type: multipart/mixed; boundary="===============5212440555270411236=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH udev 00/15] Device handling cleanup series
-Date: Sat, 25 Mar 2017 17:57:50 +0100
-Message-ID: <20170325165805.28166-1-jonas@southpole.se>
+Subject: [PATCH udev 01/15] udevng: simplify logic in check_usb_device
+Date: Sat, 25 Mar 2017 17:57:51 +0100
+Message-ID: <20170325165805.28166-2-jonas@southpole.se>
+In-Reply-To: <20170325165805.28166-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6512850119985899253==
+--===============5212440555270411236==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This is a series of incremental cleanups to the libudev device handling
-code.
+This patch simplifies and cleans up the check_usb_device function a bit
+by doing the two following (slightly intertwined) things:
 
-- the early patches in the series are all good cleanups that can be
-  taken irregardless of whether the last patches are desired
-- the last patches are more intrusive as they attempt to move the
-  functionality of udev.c into udevng.c
+1)  The parent "usb_device" is searched for early in this function and this
+device will always have the ID_VENDOR_ID and ID_MODEL_ID properties.
+As such, we can get them from this device and thereby be certain that
+we _always_ have them available.
 
-Somebody with access to old hardware really needs to take a look at
-this series to see if the migration to udevng works properly.  I do
-not have any such hardware, myself.  I suspect that there's not many
-such devices in circulation; my hope is that this legacy code works
-for now and can be ripped out in time.
+2)  The logic of iterating the vendor_list table is cleaned up.  It's
+easier to follow and won't be any less efficient.
+---
+ plugins/udevng.c | 37 ++++++++++++-------------------------
+ 1 file changed, 12 insertions(+), 25 deletions(-)
 
-In any case, if someone has such old hardware, hopefully these changes
-are sufficiently correct that the last bugs can shake themselves out
-easily... we'll see.
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 2279bbe..ce2bc28 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1225,9 +1225,12 @@ static void check_usb_device(struct udev_device *dev=
+ice)
+ 	if (devname =3D=3D NULL)
+ 		return;
+ =
 
-Jonas Bonn (15):
-  udevng: simplify logic in check_usb_device
-  ofono.rules: remove 'change' action
-  udev: remove extraneous subsystem check
-  udev: get udev property via lib function
-  udev: remove unused modem property
-  udev: simplify add_modem
-  udev: add common modem registration code
-  udev: simplify ifx modem registration
-  udev: simplify wavecom modem registration
-  udev: remove extraneous subsystem check
-  udevng: add legacy device handling functions
-  udevng: match on the hsi subsystem for legacy devices
-  udevng: hook up legacy devices
-  udevng: get properties from interface
-  plugins: remove udev module
++	vendor =3D udev_device_get_property_value(usb_device, "ID_VENDOR_ID");
++	model =3D udev_device_get_property_value(usb_device, "ID_MODEL_ID");
++
+ 	driver =3D udev_device_get_property_value(usb_device, "OFONO_DRIVER");
+ 	if (driver =3D=3D NULL) {
+-		const char *drv, *vid, *pid;
++		const char *drv;
+ 		unsigned int i;
+ =
 
- Makefile.am         |   2 -
- plugins/ofono.rules |   2 +-
- plugins/udev.c      | 545 ------------------------------------------------=
-----
- plugins/udevng.c    | 307 ++++++++++++++++++++++++++---
- 4 files changed, 283 insertions(+), 573 deletions(-)
- delete mode 100644 plugins/udev.c
+ 		drv =3D udev_device_get_property_value(device, "ID_USB_DRIVER");
+@@ -1246,40 +1249,24 @@ static void check_usb_device(struct udev_device *de=
+vice)
+ 			}
+ 		}
+ =
 
+-		vid =3D udev_device_get_property_value(device, "ID_VENDOR_ID");
+-		pid =3D udev_device_get_property_value(device, "ID_MODEL_ID");
+ =
+
+-		DBG("%s [%s:%s]", drv, vid, pid);
++		DBG("%s [%s:%s]", drv, vendor, model);
+ =
+
+ 		for (i =3D 0; vendor_list[i].driver; i++) {
+ 			if (g_str_equal(vendor_list[i].drv, drv) =3D=3D FALSE)
+ 				continue;
+ =
+
+-			if (vendor_list[i].vid =3D=3D NULL) {
+-				driver =3D vendor_list[i].driver;
+-				vendor =3D vid;
+-				model =3D pid;
+-				continue;
++			if (vendor_list[i].vid) {
++				if (!g_str_equal(vendor_list[i].vid, vendor))
++					continue;
+ 			}
+ =
+
+-			if (vid =3D=3D NULL || pid =3D=3D NULL)
+-				continue;
+-
+-			if (g_str_equal(vendor_list[i].vid, vid) =3D=3D TRUE) {
+-				if (vendor_list[i].pid =3D=3D NULL) {
+-					driver =3D vendor_list[i].driver;
+-					vendor =3D vid;
+-					model =3D pid;
++			if (vendor_list[i].pid) {
++				if (!g_str_equal(vendor_list[i].pid, model))
+ 					continue;
+-				}
+-
+-				if (g_strcmp0(vendor_list[i].pid, pid) =3D=3D 0) {
+-					driver =3D vendor_list[i].driver;
+-					vendor =3D vid;
+-					model =3D pid;
+-					break;
+-				}
+ 			}
++
++			driver =3D vendor_list[i].driver;
+ 		}
+ =
+
+ 		if (driver =3D=3D NULL)
 -- =
 
 2.9.3
 
 
---===============6512850119985899253==--
+--===============5212440555270411236==--
 
