@@ -1,96 +1,121 @@
-Content-Type: multipart/mixed; boundary="===============5470887969785695492=="
+Content-Type: multipart/mixed; boundary="===============2178172834463275957=="
 MIME-Version: 1.0
 From: Lukasz Nowak <lnowak.tyco@gmail.com>
-Subject: [PATCH v5 2/2] udevng: add Telit LE910 V1 support
-Date: Mon, 27 Mar 2017 09:56:18 +0100
-Message-ID: <1490604978-10639-3-git-send-email-lnowak.tyco@gmail.com>
-In-Reply-To: <1490604978-10639-1-git-send-email-lnowak.tyco@gmail.com>
+Subject: Re: [PATCH udev 01/15] udevng: simplify logic in check_usb_device
+Date: Mon, 27 Mar 2017 10:00:24 +0100
+Message-ID: <0dc9a746-3586-11bc-6bde-932b5e563451@gmail.com>
+In-Reply-To: <20170325165805.28166-2-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5470887969785695492==
+--===============2178172834463275957==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Lukasz Nowak <lnowak@tycoint.com>
+This works fine for me. I have dropped my parent based patch and rebased th=
+e setup_telitqmi changes on top of this.
 
-Tested with LE910-SVG and Verizon.
----
- plugins/udevng.c | 41 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 41 insertions(+)
-
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index ce2bc28..5eb7da8 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -665,6 +665,44 @@ static gboolean setup_telit(struct modem_info *modem)
- 	return TRUE;
- }
- =
-
-+static gboolean setup_telitqmi(struct modem_info *modem)
-+{
-+	const char *qmi =3D NULL, *net =3D NULL;
-+	GSList *list;
-+	gboolean telit =3D FALSE;
-+
-+	DBG("%s", modem->syspath);
-+
-+	for (list =3D modem->devices; list; list =3D list->next) {
-+		struct device_info *info =3D list->data;
-+
-+		DBG("%s %s %s %s %s", info->devnode, info->interface,
-+				info->number, info->label, info->subsystem);
-+
-+		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0 &&
-+				g_strcmp0(info->number, "02") =3D=3D 0) {
-+			if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
-+				net =3D info->devnode;
-+			else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0)
-+				qmi =3D info->devnode;
-+		}
-+	}
-+
-+	if (qmi =3D=3D NULL || net =3D=3D NULL)
-+		return FALSE;
-+
-+	DBG("qmi=3D%s net=3D%s", qmi, net);
-+
-+	ofono_modem_set_string(modem->modem, "Device", qmi);
-+	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
-+
-+	ofono_modem_set_boolean(modem->modem, "ForceSimLegacy", TRUE);
-+	ofono_modem_set_boolean(modem->modem, "AlwaysOnline", TRUE);
-+	ofono_modem_set_driver(modem->modem, "gobi");
-+
-+	return TRUE;
-+}
-+
- static gboolean setup_simcom(struct modem_info *modem)
- {
- 	const char *mdm =3D NULL, *aux =3D NULL, *gps =3D NULL, *diag =3D NULL;
-@@ -952,6 +990,7 @@ static struct {
- 	{ "novatel",	setup_novatel	},
- 	{ "nokia",	setup_nokia	},
- 	{ "telit",	setup_telit,	"device/interface"	},
-+	{ "telitqmi",	setup_telitqmi	},
- 	{ "simcom",	setup_simcom	},
- 	{ "zte",	setup_zte	},
- 	{ "icera",	setup_icera	},
-@@ -1190,6 +1229,8 @@ static struct {
- 	{ "telit",	"usbserial",	"1bc7"		},
- 	{ "telit",	"option",	"1bc7"		},
- 	{ "telit",	"cdc_acm",	"1bc7", "0021"	},
-+	{ "telitqmi",	"qmi_wwan",	"1bc7", "1201"	},
-+	{ "telitqmi",	"option",	"1bc7", "1201"	},
- 	{ "nokia",	"option",	"0421", "060e"	},
- 	{ "nokia",	"option",	"0421", "0623"	},
- 	{ "samsung",	"option",	"04e8", "6889"	},
--- =
-
-2.7.4
+Lukasz
 
 
---===============5470887969785695492==--
+On 25/03/17 16:57, Jonas Bonn wrote:
+> This patch simplifies and cleans up the check_usb_device function a bit
+> by doing the two following (slightly intertwined) things:
+> =
+
+> 1)  The parent "usb_device" is searched for early in this function and th=
+is
+> device will always have the ID_VENDOR_ID and ID_MODEL_ID properties.
+> As such, we can get them from this device and thereby be certain that
+> we _always_ have them available.
+> =
+
+> 2)  The logic of iterating the vendor_list table is cleaned up.  It's
+> easier to follow and won't be any less efficient.
+> ---
+>  plugins/udevng.c | 37 ++++++++++++-------------------------
+>  1 file changed, 12 insertions(+), 25 deletions(-)
+> =
+
+> diff --git a/plugins/udevng.c b/plugins/udevng.c
+> index 2279bbe..ce2bc28 100644
+> --- a/plugins/udevng.c
+> +++ b/plugins/udevng.c
+> @@ -1225,9 +1225,12 @@ static void check_usb_device(struct udev_device *d=
+evice)
+>  	if (devname =3D=3D NULL)
+>  		return;
+>  =
+
+> +	vendor =3D udev_device_get_property_value(usb_device, "ID_VENDOR_ID");
+> +	model =3D udev_device_get_property_value(usb_device, "ID_MODEL_ID");
+> +
+>  	driver =3D udev_device_get_property_value(usb_device, "OFONO_DRIVER");
+>  	if (driver =3D=3D NULL) {
+> -		const char *drv, *vid, *pid;
+> +		const char *drv;
+>  		unsigned int i;
+>  =
+
+>  		drv =3D udev_device_get_property_value(device, "ID_USB_DRIVER");
+> @@ -1246,40 +1249,24 @@ static void check_usb_device(struct udev_device *=
+device)
+>  			}
+>  		}
+>  =
+
+> -		vid =3D udev_device_get_property_value(device, "ID_VENDOR_ID");
+> -		pid =3D udev_device_get_property_value(device, "ID_MODEL_ID");
+>  =
+
+> -		DBG("%s [%s:%s]", drv, vid, pid);
+> +		DBG("%s [%s:%s]", drv, vendor, model);
+>  =
+
+>  		for (i =3D 0; vendor_list[i].driver; i++) {
+>  			if (g_str_equal(vendor_list[i].drv, drv) =3D=3D FALSE)
+>  				continue;
+>  =
+
+> -			if (vendor_list[i].vid =3D=3D NULL) {
+> -				driver =3D vendor_list[i].driver;
+> -				vendor =3D vid;
+> -				model =3D pid;
+> -				continue;
+> +			if (vendor_list[i].vid) {
+> +				if (!g_str_equal(vendor_list[i].vid, vendor))
+> +					continue;
+>  			}
+>  =
+
+> -			if (vid =3D=3D NULL || pid =3D=3D NULL)
+> -				continue;
+> -
+> -			if (g_str_equal(vendor_list[i].vid, vid) =3D=3D TRUE) {
+> -				if (vendor_list[i].pid =3D=3D NULL) {
+> -					driver =3D vendor_list[i].driver;
+> -					vendor =3D vid;
+> -					model =3D pid;
+> +			if (vendor_list[i].pid) {
+> +				if (!g_str_equal(vendor_list[i].pid, model))
+>  					continue;
+> -				}
+> -
+> -				if (g_strcmp0(vendor_list[i].pid, pid) =3D=3D 0) {
+> -					driver =3D vendor_list[i].driver;
+> -					vendor =3D vid;
+> -					model =3D pid;
+> -					break;
+> -				}
+>  			}
+> +
+> +			driver =3D vendor_list[i].driver;
+>  		}
+>  =
+
+>  		if (driver =3D=3D NULL)
+>=20
+
+--===============2178172834463275957==--
 
