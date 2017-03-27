@@ -1,94 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============9021034400188081457=="
+Content-Type: multipart/mixed; boundary="===============4009818796158975668=="
 MIME-Version: 1.0
-From: Lukasz Nowak <lnowak.tyco@gmail.com>
-Subject: [PATCH] atmodem: telit - re-attach gprs automatically
-Date: Mon, 27 Mar 2017 18:18:11 +0100
-Message-ID: <1490635091-28928-1-git-send-email-lnowak.tyco@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH udev 01/15] udevng: simplify logic in check_usb_device
+Date: Sun, 26 Mar 2017 20:46:34 -0500
+Message-ID: <6f542a3b-37c4-d7ce-56e4-a528910fc280@gmail.com>
+In-Reply-To: <20170325165805.28166-2-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9021034400188081457==
+--===============4009818796158975668==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Lukasz Nowak <lnowak@tycoint.com>
+Hi Jonas,
 
-Telit AT modem firmware (tested with UE910-EUR) generates
-+CGREG: 0\r\n\r\n+CGEV: NW DETACH
-after a context is de-activated and ppp connection closed.
-Then, after a random amount of time (observed from a few seconds
-to a few hours), an unsolicited +CGREG: 1 arrives.
-Attempt to fix the problem, by sending AT+CGATT=3D1 once.
-This does not re-activate the context, but if a network connection
-is still correct, will generate an immediate +CGREG: 1.
----
- drivers/atmodem/gprs.c | 27 +++++++++++++++++++++++++++
- 1 file changed, 27 insertions(+)
+On 03/25/2017 11:57 AM, Jonas Bonn wrote:
+> This patch simplifies and cleans up the check_usb_device function a bit
+> by doing the two following (slightly intertwined) things:
+>
+> 1)  The parent "usb_device" is searched for early in this function and th=
+is
+> device will always have the ID_VENDOR_ID and ID_MODEL_ID properties.
+> As such, we can get them from this device and thereby be certain that
+> we _always_ have them available.
+>
+> 2)  The logic of iterating the vendor_list table is cleaned up.  It's
+> easier to follow and won't be any less efficient.
+> ---
+>  plugins/udevng.c | 37 ++++++++++++-------------------------
+>  1 file changed, 12 insertions(+), 25 deletions(-)
+>
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index 7ea9f00..ba8646c 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -50,6 +50,7 @@ struct gprs_data {
- 	GAtChat *chat;
- 	unsigned int vendor;
- 	unsigned int last_auto_context_id;
-+	gboolean network_detach_retry;
- };
- =
+Applied, thanks.
 
- static void at_cgatt_cb(gboolean ok, GAtResult *result, gpointer user_data)
-@@ -194,6 +195,28 @@ static void cgreg_notify(GAtResult *result, gpointer u=
-ser_data)
- 				NULL, NULL, NULL, gd->vendor) =3D=3D FALSE)
- 		return;
- =
-
-+	DBG("status=3D%d vendor=3D%d retry=3D%d", status, gd->vendor, gd->network=
-_detach_retry);
-+
-+	/*
-+	 * Telit AT modem firmware (tested with UE910-EUR) generates
-+	 * +CGREG: 0\r\n\r\n+CGEV: NW DETACH
-+	 * after a context is de-activated and ppp connection closed.
-+	 * Then, after a random amount of time (observed from a few seconds
-+	 * to a few hours), an unsolicited +CGREG: 1 arrives.
-+	 * Attempt to fix the problem, by sending AT+CGATT=3D1 once.
-+	 * This does not re-activate the context, but if a network connection
-+	 * is still correct, will generate an immediate +CGREG: 1.
-+	 */
-+	if (gd->vendor =3D=3D OFONO_VENDOR_TELIT &&
-+		!status && !gd->network_detach_retry) {
-+		DBG("Trying to re-attach gprs network");
-+		gd->network_detach_retry =3D TRUE;
-+		g_at_chat_send(gd->chat, "AT+CGATT=3D1", none_prefix,
-+				NULL, NULL, NULL);
-+		return;
-+	}
-+	gd->network_detach_retry =3D FALSE;
-+
- 	ofono_gprs_status_notify(gprs, status);
- }
- =
-
-@@ -214,6 +237,10 @@ static void cgev_notify(GAtResult *result, gpointer us=
-er_data)
- =
-
- 	if (g_str_equal(event, "NW DETACH") ||
- 			g_str_equal(event, "ME DETACH")) {
-+
-+		if (gd->vendor =3D=3D OFONO_VENDOR_TELIT &&
-+				gd->network_detach_retry)
-+			return;
- 		ofono_gprs_detached_notify(gprs);
- 		return;
- 	} else if (g_str_has_prefix(event, "ME PDN ACT")) {
--- =
-
-2.7.4
+Regards,
+-Denis
 
 
---===============9021034400188081457==--
+--===============4009818796158975668==--
 
