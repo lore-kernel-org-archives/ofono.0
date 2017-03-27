@@ -1,121 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============2178172834463275957=="
+Content-Type: multipart/mixed; boundary="===============9021034400188081457=="
 MIME-Version: 1.0
 From: Lukasz Nowak <lnowak.tyco@gmail.com>
-Subject: Re: [PATCH udev 01/15] udevng: simplify logic in check_usb_device
-Date: Mon, 27 Mar 2017 10:00:24 +0100
-Message-ID: <0dc9a746-3586-11bc-6bde-932b5e563451@gmail.com>
-In-Reply-To: <20170325165805.28166-2-jonas@southpole.se>
+Subject: [PATCH] atmodem: telit - re-attach gprs automatically
+Date: Mon, 27 Mar 2017 18:18:11 +0100
+Message-ID: <1490635091-28928-1-git-send-email-lnowak.tyco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2178172834463275957==
+--===============9021034400188081457==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This works fine for me. I have dropped my parent based patch and rebased th=
-e setup_telitqmi changes on top of this.
+From: Lukasz Nowak <lnowak@tycoint.com>
 
-Lukasz
+Telit AT modem firmware (tested with UE910-EUR) generates
++CGREG: 0\r\n\r\n+CGEV: NW DETACH
+after a context is de-activated and ppp connection closed.
+Then, after a random amount of time (observed from a few seconds
+to a few hours), an unsolicited +CGREG: 1 arrives.
+Attempt to fix the problem, by sending AT+CGATT=3D1 once.
+This does not re-activate the context, but if a network connection
+is still correct, will generate an immediate +CGREG: 1.
+---
+ drivers/atmodem/gprs.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
+index 7ea9f00..ba8646c 100644
+--- a/drivers/atmodem/gprs.c
++++ b/drivers/atmodem/gprs.c
+@@ -50,6 +50,7 @@ struct gprs_data {
+ 	GAtChat *chat;
+ 	unsigned int vendor;
+ 	unsigned int last_auto_context_id;
++	gboolean network_detach_retry;
+ };
+ =
+
+ static void at_cgatt_cb(gboolean ok, GAtResult *result, gpointer user_data)
+@@ -194,6 +195,28 @@ static void cgreg_notify(GAtResult *result, gpointer u=
+ser_data)
+ 				NULL, NULL, NULL, gd->vendor) =3D=3D FALSE)
+ 		return;
+ =
+
++	DBG("status=3D%d vendor=3D%d retry=3D%d", status, gd->vendor, gd->network=
+_detach_retry);
++
++	/*
++	 * Telit AT modem firmware (tested with UE910-EUR) generates
++	 * +CGREG: 0\r\n\r\n+CGEV: NW DETACH
++	 * after a context is de-activated and ppp connection closed.
++	 * Then, after a random amount of time (observed from a few seconds
++	 * to a few hours), an unsolicited +CGREG: 1 arrives.
++	 * Attempt to fix the problem, by sending AT+CGATT=3D1 once.
++	 * This does not re-activate the context, but if a network connection
++	 * is still correct, will generate an immediate +CGREG: 1.
++	 */
++	if (gd->vendor =3D=3D OFONO_VENDOR_TELIT &&
++		!status && !gd->network_detach_retry) {
++		DBG("Trying to re-attach gprs network");
++		gd->network_detach_retry =3D TRUE;
++		g_at_chat_send(gd->chat, "AT+CGATT=3D1", none_prefix,
++				NULL, NULL, NULL);
++		return;
++	}
++	gd->network_detach_retry =3D FALSE;
++
+ 	ofono_gprs_status_notify(gprs, status);
+ }
+ =
+
+@@ -214,6 +237,10 @@ static void cgev_notify(GAtResult *result, gpointer us=
+er_data)
+ =
+
+ 	if (g_str_equal(event, "NW DETACH") ||
+ 			g_str_equal(event, "ME DETACH")) {
++
++		if (gd->vendor =3D=3D OFONO_VENDOR_TELIT &&
++				gd->network_detach_retry)
++			return;
+ 		ofono_gprs_detached_notify(gprs);
+ 		return;
+ 	} else if (g_str_has_prefix(event, "ME PDN ACT")) {
+-- =
+
+2.7.4
 
 
-On 25/03/17 16:57, Jonas Bonn wrote:
-> This patch simplifies and cleans up the check_usb_device function a bit
-> by doing the two following (slightly intertwined) things:
-> =
-
-> 1)  The parent "usb_device" is searched for early in this function and th=
-is
-> device will always have the ID_VENDOR_ID and ID_MODEL_ID properties.
-> As such, we can get them from this device and thereby be certain that
-> we _always_ have them available.
-> =
-
-> 2)  The logic of iterating the vendor_list table is cleaned up.  It's
-> easier to follow and won't be any less efficient.
-> ---
->  plugins/udevng.c | 37 ++++++++++++-------------------------
->  1 file changed, 12 insertions(+), 25 deletions(-)
-> =
-
-> diff --git a/plugins/udevng.c b/plugins/udevng.c
-> index 2279bbe..ce2bc28 100644
-> --- a/plugins/udevng.c
-> +++ b/plugins/udevng.c
-> @@ -1225,9 +1225,12 @@ static void check_usb_device(struct udev_device *d=
-evice)
->  	if (devname =3D=3D NULL)
->  		return;
->  =
-
-> +	vendor =3D udev_device_get_property_value(usb_device, "ID_VENDOR_ID");
-> +	model =3D udev_device_get_property_value(usb_device, "ID_MODEL_ID");
-> +
->  	driver =3D udev_device_get_property_value(usb_device, "OFONO_DRIVER");
->  	if (driver =3D=3D NULL) {
-> -		const char *drv, *vid, *pid;
-> +		const char *drv;
->  		unsigned int i;
->  =
-
->  		drv =3D udev_device_get_property_value(device, "ID_USB_DRIVER");
-> @@ -1246,40 +1249,24 @@ static void check_usb_device(struct udev_device *=
-device)
->  			}
->  		}
->  =
-
-> -		vid =3D udev_device_get_property_value(device, "ID_VENDOR_ID");
-> -		pid =3D udev_device_get_property_value(device, "ID_MODEL_ID");
->  =
-
-> -		DBG("%s [%s:%s]", drv, vid, pid);
-> +		DBG("%s [%s:%s]", drv, vendor, model);
->  =
-
->  		for (i =3D 0; vendor_list[i].driver; i++) {
->  			if (g_str_equal(vendor_list[i].drv, drv) =3D=3D FALSE)
->  				continue;
->  =
-
-> -			if (vendor_list[i].vid =3D=3D NULL) {
-> -				driver =3D vendor_list[i].driver;
-> -				vendor =3D vid;
-> -				model =3D pid;
-> -				continue;
-> +			if (vendor_list[i].vid) {
-> +				if (!g_str_equal(vendor_list[i].vid, vendor))
-> +					continue;
->  			}
->  =
-
-> -			if (vid =3D=3D NULL || pid =3D=3D NULL)
-> -				continue;
-> -
-> -			if (g_str_equal(vendor_list[i].vid, vid) =3D=3D TRUE) {
-> -				if (vendor_list[i].pid =3D=3D NULL) {
-> -					driver =3D vendor_list[i].driver;
-> -					vendor =3D vid;
-> -					model =3D pid;
-> +			if (vendor_list[i].pid) {
-> +				if (!g_str_equal(vendor_list[i].pid, model))
->  					continue;
-> -				}
-> -
-> -				if (g_strcmp0(vendor_list[i].pid, pid) =3D=3D 0) {
-> -					driver =3D vendor_list[i].driver;
-> -					vendor =3D vid;
-> -					model =3D pid;
-> -					break;
-> -				}
->  			}
-> +
-> +			driver =3D vendor_list[i].driver;
->  		}
->  =
-
->  		if (driver =3D=3D NULL)
->=20
-
---===============2178172834463275957==--
+--===============9021034400188081457==--
 
