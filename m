@@ -1,80 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8404790147910813865=="
+Content-Type: multipart/mixed; boundary="===============7588055444044931187=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH udev 14/15] udevng: get properties from interface
-Date: Sun, 26 Mar 2017 22:27:09 -0500
-Message-ID: <727d2933-10aa-b886-3724-bae3ac2481de@gmail.com>
-In-Reply-To: <20170325165805.28166-15-jonas@southpole.se>
+Subject: Re: [PATCH v5 1/2] qmimodem: add protection against modem_unregister
+Date: Sun, 26 Mar 2017 22:39:04 -0500
+Message-ID: <763e48fc-6a6a-9619-3397-ba6ea8107a2d@gmail.com>
+In-Reply-To: <1490604978-10639-2-git-send-email-lnowak.tyco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8404790147910813865==
+--===============7588055444044931187==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+Hi Lukasz,
 
-On 03/25/2017 11:58 AM, Jonas Bonn wrote:
-> Device properties are generally on the device, on the USB interface
-> descriptor, or the on the USB device descriptor.
-> ---
->  plugins/udevng.c | 11 +++++++++++
->  1 file changed, 11 insertions(+)
+On 03/27/2017 03:56 AM, Lukasz Nowak wrote:
+> From: Lukasz Nowak <lnowak@tycoint.com>
 >
-> diff --git a/plugins/udevng.c b/plugins/udevng.c
-> index 8721447..98b4f98 100644
-> --- a/plugins/udevng.c
-> +++ b/plugins/udevng.c
-> @@ -1365,6 +1365,9 @@ static void add_device(const char *syspath, const c=
-har *devname,
->  	}
+> The qmimodem driver sets up numerous timeouts, passing internal
+> data structures to them as user_data. If a physical modem device
+> is removed, udev will call modem_unregister, which in turn will
+> call gobi_remove(). That function calls qmi_device_unref() which
+> frees all internal data structure memory inside qmidriver.
 >
->  	label =3D udev_device_get_property_value(device, "OFONO_LABEL");
-> +	if (!label) {
-> +		label =3D udev_device_get_property_value(intf, "OFONO_LABEL");
-> +	}
-
-Okay, but not really our style.  See doc/coding-style.txt item M1
-
->  	subsystem =3D udev_device_get_subsystem(device);
+> If a timeout is in progress while the usb device is removed,
+> the callback function will operate on already freed memory,
+> causing unpredicatble results. In some cases nothing bad will
+> happen, in others - segfault.
 >
->  	if (modem->sysattr !=3D NULL)
-> @@ -1464,6 +1467,7 @@ static struct {
->  static void check_usb_device(struct udev_device *device)
->  {
->  	struct udev_device *usb_device;
-> +	struct udev_device *intf;
+> In order to solve this problem, add calls to qmi_device_ref
+> before setting up each timeout. Then inside callbacks, check
+> if this is the last reference (i.e. gobi_remove() has been called).
+> If that happens, do not operate on memory, just clean-up and exit.
 
-This is better declared inside the if statement below.  Also intf is a =
+No, this is not the right way of doing this.  The proper way to do this =
 
-horrible name.  Just name it usb_device or usb_parent or something.
+is to store the glib gsource identifier for every timeout and remove =
 
->  	const char *syspath, *devname, *driver;
->  	const char *vendor =3D NULL, *model =3D NULL;
->
-> @@ -1484,6 +1488,13 @@ static void check_usb_device(struct udev_device *d=
-evice)
->  	model =3D udev_device_get_property_value(usb_device, "ID_MODEL_ID");
->
->  	driver =3D udev_device_get_property_value(usb_device, "OFONO_DRIVER");
-> +	if (!driver) {
-> +		intf =3D udev_device_get_parent_with_subsystem_devtype(device,
-> +						"usb", "usb_interface");
-> +		if (intf)
-> +			driver =3D udev_device_get_property_value(
-> +							intf, "OFONO_DRIVER");
-> +	}
+that timeout in the appropriate place / time.
 
-doc/coding-style.txt item M1
+I only see about 5 g_timeout_add calls inside qmi.c where the return =
 
->  	if (driver =3D=3D NULL) {
->  		const char *drv;
->  		unsigned int i;
->
+value isn't saved off.  So you probably need to go through these and =
+
+save the gsource id in the appropriate data structure.
 
 Regards,
 -Denis
 
---===============8404790147910813865==--
+--===============7588055444044931187==--
 
