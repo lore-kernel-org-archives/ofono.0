@@ -1,36 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============3783143623838976476=="
+Content-Type: multipart/mixed; boundary="===============7422491729566906794=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH qmi 0/5] QMI patches
-Date: Sat, 25 Mar 2017 16:11:57 -0500
-Message-ID: <25596c40-4650-8abc-1c8d-cabc418da6ee@gmail.com>
-In-Reply-To: <20170325165755.28114-1-jonas@southpole.se>
+From: Lukasz Nowak <lnowak.tyco@gmail.com>
+Subject: [PATCH v5 0/2] Telit LE910 V1 QMI support
+Date: Mon, 27 Mar 2017 09:56:16 +0100
+Message-ID: <1490604978-10639-1-git-send-email-lnowak.tyco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3783143623838976476==
+--===============7422491729566906794==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+From: Lukasz Nowak <lnowak@tycoint.com>
 
-On 03/25/2017 11:57 AM, Jonas Bonn wrote:
-> This is a series of cleanups related to QMI modems.
->
-> You might want to consider patch 5 as an object for review more than
-> submission.  It's what I'm currently using with my UC21.
->
-> Jonas Bonn (5):
->   qmimodem: fix typo
->   qmimodem: add WDA service string
->   gobi: query presence of WDA service
+Changes from V3:
+- dropped patch:
+	[PATCH v4 2/3] udevng: find vendor and product id for child devices =
 
-I went ahead and applied the first three.
+  instead, this patch set now depends on one from Jonas:
+	[PATCH udev 01/15] udevng: simplify logic in check_usb_device
+- removed unused "Modem" string from telitqmi
 
-Regards,
--Denis
+Changes from V3:
+- fixed a major synchronization problem in core qmimodem code
+  It was not doing anything bad by pure chance. With some of the
+  other changes, memory layout has moved around, and the code
+  was reliably segfaulting during modem physical power cycle
+- added feature to udevng to discover usb vendor:product id
+  for child devices, which previously were reporting null:null
+- with the vendor:product id available for all devices,
+  separated setup function from setup_gobi into setup_telitqmi
 
 
---===============3783143623838976476==--
+Changes from V2:
+- made AlwaysOnline flow cleaner in gobi.c
+- it turns out that AlwaysOnline is already a part of core logic
+  in src/modem.c which have the same effect as if the driver had
+  no set_online() function at all. Hence removed changes to
+  gobi_set_online() as it is never called.
+
+
+Changes from V1:
+- split into multiple smaller commits
+- added comments in code, documenting issues with the Telit QMI firmware
+- disabled non-working low-power operating modes in additional cases
+- use mccmnc string instead of truncating an invalid operator name
+
+Lukasz Nowak (2):
+  qmimodem: add protection against modem_unregister
+  udevng: add Telit LE910 V1 support
+
+ drivers/qmimodem/qmi.c | 39 +++++++++++++++++++++++++++++++++------
+ drivers/qmimodem/qmi.h |  2 +-
+ plugins/udevng.c       | 41 +++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 75 insertions(+), 7 deletions(-)
+
+-- =
+
+2.7.4
+
+
+--===============7422491729566906794==--
 
