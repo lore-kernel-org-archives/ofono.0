@@ -1,68 +1,487 @@
-Content-Type: multipart/mixed; boundary="===============6345629604427358544=="
+Content-Type: multipart/mixed; boundary="===============1240392380229875742=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH udev v3 0/5] Device handling cleanups
-Date: Tue, 28 Mar 2017 23:54:16 +0200
-Message-ID: <20170328215416.20119-7-jonas@southpole.se>
+Subject: [PATCH udev v3 5/5] plugins: remove udev module
+Date: Tue, 28 Mar 2017 23:54:15 +0200
+Message-ID: <20170328215416.20119-6-jonas@southpole.se>
 In-Reply-To: <20170328215416.20119-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6345629604427358544==
+--===============1240392380229875742==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This is version 3 of the udev handling cleanups.
-
-Changes since v2:
-
-* Addressed comments from Denis
-
-Changes since v1:
-
-* Reworked patch 1/5 (was 11/15) to handle 'legacy' devices in a simpler
-  manner.
-* Addressed comments from Denis
-
-Original blurb follows:
-
-This is a series of incremental cleanups to the libudev device handling
-code.
-
-- the early patches in the series are all good cleanups that can be
-  taken irregardless of whether the last patches are desired
-- the last patches are more intrusive as they attempt to move the
-  functionality of udev.c into udevng.c
-
-Somebody with access to old hardware really needs to take a look at
-this series to see if the migration to udevng works properly.  I do
-not have any such hardware, myself.  I suspect that there's not many
-such devices in circulation; my hope is that this legacy code works
-for now and can be ripped out in time.
-
-In any case, if someone has such old hardware, hopefully these changes
-are sufficiently correct that the last bugs can shake themselves out
-easily... we'll see.
-
-Jonas Bonn (5):
-  udevng: add serial device handling functions
-  udevng: match on the hsi subsystem for legacy devices
-  udevng: hook up legacy devices
-  udevng: get properties from interface
-  plugins: remove udev module
-
- Makefile.am      |   2 -
- plugins/udev.c   | 431 ---------------------------------------------------=
+This functionality has been moved into the udevng module and was
+already disabled in an earlier patch.
+---
+ Makefile.am    |   2 -
+ plugins/udev.c | 433 -----------------------------------------------------=
 ----
- plugins/udevng.c | 292 ++++++++++++++++++++++++++++++++++---
- 3 files changed, 272 insertions(+), 453 deletions(-)
+ 2 files changed, 435 deletions(-)
  delete mode 100644 plugins/udev.c
 
+diff --git a/Makefile.am b/Makefile.am
+index d9f9b08..b232f97 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -106,8 +106,6 @@ gril_sources =3D gril/gril.h gril/gril.c \
+ btio_sources =3D btio/btio.h btio/btio.c
+ =
+
+ if UDEV
+-builtin_modules +=3D udev
+-builtin_sources +=3D plugins/udev.c
+ builtin_cflags +=3D @UDEV_CFLAGS@
+ builtin_libadd +=3D @UDEV_LIBS@
+ =
+
+diff --git a/plugins/udev.c b/plugins/udev.c
+deleted file mode 100644
+index 564ede9..0000000
+--- a/plugins/udev.c
++++ /dev/null
+@@ -1,433 +0,0 @@
+-/*
+- *
+- *  oFono - Open Source Telephony
+- *
+- *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+- *
+- *  This program is free software; you can redistribute it and/or modify
+- *  it under the terms of the GNU General Public License version 2 as
+- *  published by the Free Software Foundation.
+- *
+- *  This program is distributed in the hope that it will be useful,
+- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- *  GNU General Public License for more details.
+- *
+- *  You should have received a copy of the GNU General Public License
+- *  along with this program; if not, write to the Free Software
+- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
+- *
+- */
+-
+-#ifdef HAVE_CONFIG_H
+-#include <config.h>
+-#endif
+-
+-#include <errno.h>
+-#include <ctype.h>
+-#include <stdlib.h>
+-
+-#include <libudev.h>
+-
+-#include <glib.h>
+-#include <string.h>
+-
+-#define OFONO_API_SUBJECT_TO_CHANGE
+-#include <ofono/plugin.h>
+-#include <ofono/modem.h>
+-#include <ofono/log.h>
+-
+-static GSList *modem_list =3D NULL;
+-static GHashTable *devpath_list =3D NULL;
+-
+-static struct ofono_modem *find_modem(const char *devpath)
+-{
+-	GSList *list;
+-
+-	for (list =3D modem_list; list; list =3D list->next) {
+-		struct ofono_modem *modem =3D list->data;
+-		const char *path =3D ofono_modem_get_string(modem, "Path");
+-
+-		if (g_strcmp0(devpath, path) =3D=3D 0)
+-			return modem;
+-	}
+-
+-	return NULL;
+-}
+-
+-/*
+- * Here we try to find the "modem device".
+- *
+- * In this variant we identify the "modem device" as simply the device
+- * that has the OFONO_DRIVER property.  If the device node doesn't
+- * have this property itself, then we do a brute force search for it
+- * through the device hierarchy.
+- *
+- */
+-static struct udev_device* get_modem_device(struct udev_device *dev)
+-{
+-	const char* driver;
+-
+-	while (dev) {
+-		driver =3D udev_device_get_property_value(dev, "OFONO_DRIVER");
+-		if (driver)
+-			return dev;
+-		dev =3D udev_device_get_parent(dev);
+-	}
+-
+-	return NULL;
+-}
+-
+-static const char *get_serial(struct udev_device *udev_device)
+-{
+-	const char *serial;
+-
+-	serial =3D udev_device_get_property_value(udev_device, "ID_SERIAL_SHORT");
+-
+-	if (serial !=3D NULL) {
+-		unsigned int i, len =3D strlen(serial);
+-
+-		for (i =3D 0; i < len; i++) {
+-			if (!g_ascii_isalnum(serial[i]))
+-				return NULL;
+-		}
+-	}
+-
+-	return serial;
+-}
+-
+-static void __add_common(struct ofono_modem *modem,
+-					struct udev_device *udev_device)
+-{
+-	const char *devnode;
+-
+-	DBG("modem %p", modem);
+-
+-	devnode =3D udev_device_get_devnode(udev_device);
+-	ofono_modem_set_string(modem, "Device", devnode);
+-
+-	ofono_modem_register(modem);
+-}
+-
+-static void add_ifx(struct ofono_modem *modem, struct udev_device *dev)
+-{
+-	const char *value;
+-
+-	value =3D udev_device_get_property_value(dev, "OFONO_IFX_LDISC");
+-	if (value)
+-		ofono_modem_set_string(modem, "LineDiscipline", value);
+-	value =3D udev_device_get_property_value(dev, "OFONO_IFX_AUDIO");
+-	if (value)
+-		ofono_modem_set_string(modem, "AudioSetting", value);
+-	value =3D udev_device_get_property_value(dev, "OFONO_IFX_LOOPBACK");
+-	if (value)
+-		ofono_modem_set_string(modem, "AudioLoopback", value);
+-
+-	__add_common(modem, dev);
+-}
+-
+-static void add_isi(struct ofono_modem *modem,
+-					struct udev_device *udev_device)
+-{
+-	const char *ifname, *type, *addr;
+-
+-	DBG("modem %p", modem);
+-
+-	if (ofono_modem_get_string(modem, "Interface"))
+-		return;
+-
+-	addr =3D udev_device_get_property_value(udev_device, "OFONO_ISI_ADDRESS");
+-	if (addr !=3D NULL)
+-		ofono_modem_set_integer(modem, "Address", atoi(addr));
+-
+-	if (g_strcmp0(udev_device_get_subsystem(udev_device), "net") !=3D 0)
+-		return;
+-
+-	type =3D udev_device_get_sysattr_value(udev_device, "type");
+-	if (g_strcmp0(type, "820") !=3D 0)
+-		return;
+-
+-	ifname =3D udev_device_get_sysname(udev_device);
+-	ofono_modem_set_string(modem, "Interface", ifname);
+-
+-	DBG("interface %s", ifname);
+-
+-	ofono_modem_register(modem);
+-}
+-
+-static void add_wavecom(struct ofono_modem *modem, struct udev_device *dev)
+-{
+-	const char *value;
+-
+-	value =3D udev_device_get_property_value(dev, "OFONO_WAVECOM_MODEL");
+-	if (value)
+-		ofono_modem_set_string(modem, "Model", value);
+-
+-	__add_common(modem, dev);
+-}
+-
+-static void add_modem(struct udev_device *udev_device)
+-{
+-	struct ofono_modem *modem;
+-	const char *devpath, *curpath, *driver;
+-	struct udev_device *mdev;
+-
+-	mdev =3D get_modem_device(udev_device);
+-	if (!mdev) {
+-		DBG("Device has no OFONO_DRIVER property");
+-		return;
+-	}
+-
+-	driver =3D udev_device_get_property_value(mdev, "OFONO_DRIVER");
+-
+-	if(g_strcmp0(driver, "tc65") =3D=3D 0)
+-		driver =3D "cinterion";
+-	if(g_strcmp0(driver, "ehs6") =3D=3D 0)
+-		driver =3D "cinterion";
+-
+-	devpath =3D udev_device_get_devpath(mdev);
+-	if (devpath =3D=3D NULL)
+-		return;
+-
+-	modem =3D find_modem(devpath);
+-	if (modem =3D=3D NULL) {
+-		const char *serial =3D get_serial(mdev);
+-
+-		modem =3D ofono_modem_create(serial, driver);
+-		if (modem =3D=3D NULL)
+-			return;
+-
+-		ofono_modem_set_string(modem, "Path", devpath);
+-
+-		modem_list =3D g_slist_prepend(modem_list, modem);
+-	}
+-
+-	curpath =3D udev_device_get_devpath(udev_device);
+-	if (curpath =3D=3D NULL)
+-		return;
+-
+-	DBG("%s (%s)", curpath, driver);
+-
+-	g_hash_table_insert(devpath_list, g_strdup(curpath), g_strdup(devpath));
+-
+-	if (g_strcmp0(driver, "ifx") =3D=3D 0)
+-		add_ifx(modem, udev_device);
+-	else if (g_strcmp0(driver, "u8500") =3D=3D 0)
+-		add_isi(modem, udev_device);
+-	else if (g_strcmp0(driver, "n900") =3D=3D 0)
+-		add_isi(modem, udev_device);
+-	else if (g_strcmp0(driver, "calypso") =3D=3D 0)
+-		__add_common(modem, udev_device);
+-	else if (g_strcmp0(driver, "cinterion") =3D=3D 0)
+-		__add_common(modem, udev_device);
+-	else if (g_strcmp0(driver, "nokiacdma") =3D=3D 0)
+-		__add_common(modem, udev_device);
+-	else if (g_strcmp0(driver, "sim900") =3D=3D 0)
+-		__add_common(modem, udev_device);
+-	else if (g_strcmp0(driver, "wavecom") =3D=3D 0)
+-		add_wavecom(modem, udev_device);
+-}
+-
+-static gboolean devpath_remove(gpointer key, gpointer value, gpointer user=
+_data)
+-{
+-	const char *path =3D value;
+-	const char *devpath =3D user_data;
+-
+-	DBG("%s -> %s", path, devpath);
+-
+-	return g_str_equal(path, devpath);
+-}
+-
+-static void remove_modem(struct udev_device *udev_device)
+-{
+-	struct ofono_modem *modem;
+-	const char *curpath =3D udev_device_get_devpath(udev_device);
+-	char *devpath, *remove;
+-
+-	if (curpath =3D=3D NULL)
+-		return;
+-
+-	DBG("%s", curpath);
+-
+-	devpath =3D g_hash_table_lookup(devpath_list, curpath);
+-	if (devpath =3D=3D NULL)
+-		return;
+-
+-	modem =3D find_modem(devpath);
+-	if (modem =3D=3D NULL)
+-		return;
+-
+-	modem_list =3D g_slist_remove(modem_list, modem);
+-
+-	ofono_modem_remove(modem);
+-
+-	DBG("%s", devpath);
+-
+-	remove =3D g_strdup(devpath);
+-
+-	g_hash_table_foreach_remove(devpath_list, devpath_remove, remove);
+-
+-	g_free(remove);
+-}
+-
+-static void enumerate_devices(struct udev *context)
+-{
+-	struct udev_enumerate *enumerate;
+-	struct udev_list_entry *entry;
+-
+-	enumerate =3D udev_enumerate_new(context);
+-	if (enumerate =3D=3D NULL)
+-		return;
+-
+-	udev_enumerate_add_match_subsystem(enumerate, "tty");
+-	udev_enumerate_add_match_subsystem(enumerate, "net");
+-	udev_enumerate_add_match_subsystem(enumerate, "hsi");
+-
+-	udev_enumerate_scan_devices(enumerate);
+-
+-	entry =3D udev_enumerate_get_list_entry(enumerate);
+-	while (entry) {
+-		const char *syspath =3D udev_list_entry_get_name(entry);
+-		struct udev_device *device;
+-
+-		device =3D udev_device_new_from_syspath(context, syspath);
+-		if (device !=3D NULL) {
+-			add_modem(device);
+-
+-			udev_device_unref(device);
+-		}
+-
+-		entry =3D udev_list_entry_get_next(entry);
+-	}
+-
+-	udev_enumerate_unref(enumerate);
+-}
+-
+-static struct udev *udev_ctx;
+-static struct udev_monitor *udev_mon;
+-static guint udev_watch =3D 0;
+-
+-static gboolean udev_event(GIOChannel *channel, GIOCondition cond,
+-							gpointer user_data)
+-{
+-	struct udev_device *device;
+-	const char *action;
+-
+-	if (cond & (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
+-		ofono_warn("Error with udev monitor channel");
+-		udev_watch =3D 0;
+-		return FALSE;
+-	}
+-
+-	device =3D udev_monitor_receive_device(udev_mon);
+-	if (device =3D=3D NULL)
+-		return TRUE;
+-
+-	action =3D udev_device_get_action(device);
+-	if (action =3D=3D NULL)
+-		goto done;
+-
+-	if (g_str_equal(action, "add") =3D=3D TRUE)
+-		add_modem(device);
+-	else if (g_str_equal(action, "remove") =3D=3D TRUE)
+-		remove_modem(device);
+-
+-done:
+-	udev_device_unref(device);
+-
+-	return TRUE;
+-}
+-
+-static void udev_start(void)
+-{
+-	GIOChannel *channel;
+-	int fd;
+-
+-	if (udev_monitor_enable_receiving(udev_mon) < 0) {
+-		ofono_error("Failed to enable udev monitor");
+-		return;
+-	}
+-
+-	enumerate_devices(udev_ctx);
+-
+-	fd =3D udev_monitor_get_fd(udev_mon);
+-
+-	channel =3D g_io_channel_unix_new(fd);
+-	if (channel =3D=3D NULL)
+-		return;
+-
+-	udev_watch =3D g_io_add_watch(channel,
+-				G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
+-							udev_event, NULL);
+-
+-	g_io_channel_unref(channel);
+-}
+-
+-static int udev_init(void)
+-{
+-	return 0;
+-
+-	devpath_list =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+-						g_free, g_free);
+-	if (devpath_list =3D=3D NULL) {
+-		ofono_error("Failed to create udev path list");
+-		return -ENOMEM;
+-	}
+-
+-	udev_ctx =3D udev_new();
+-	if (udev_ctx =3D=3D NULL) {
+-		ofono_error("Failed to create udev context");
+-		g_hash_table_destroy(devpath_list);
+-		return -EIO;
+-	}
+-
+-	udev_mon =3D udev_monitor_new_from_netlink(udev_ctx, "udev");
+-	if (udev_mon =3D=3D NULL) {
+-		ofono_error("Failed to create udev monitor");
+-		g_hash_table_destroy(devpath_list);
+-		udev_unref(udev_ctx);
+-		udev_ctx =3D NULL;
+-		return -EIO;
+-	}
+-
+-	udev_monitor_filter_add_match_subsystem_devtype(udev_mon, "tty", NULL);
+-	udev_monitor_filter_add_match_subsystem_devtype(udev_mon, "net", NULL);
+-	udev_monitor_filter_add_match_subsystem_devtype(udev_mon, "hsi", NULL);
+-
+-	udev_monitor_filter_update(udev_mon);
+-
+-	udev_start();
+-
+-	return 0;
+-}
+-
+-static void udev_exit(void)
+-{
+-	GSList *list;
+-
+-	if (udev_watch > 0)
+-		g_source_remove(udev_watch);
+-
+-	for (list =3D modem_list; list; list =3D list->next) {
+-		struct ofono_modem *modem =3D list->data;
+-
+-		ofono_modem_remove(modem);
+-	}
+-
+-	g_slist_free(modem_list);
+-	modem_list =3D NULL;
+-
+-	g_hash_table_destroy(devpath_list);
+-	devpath_list =3D NULL;
+-
+-	if (udev_ctx =3D=3D NULL)
+-		return;
+-
+-	udev_monitor_filter_remove(udev_mon);
+-
+-	udev_monitor_unref(udev_mon);
+-	udev_unref(udev_ctx);
+-}
+-
+-OFONO_PLUGIN_DEFINE(udev, "udev hardware detection", VERSION,
+-			OFONO_PLUGIN_PRIORITY_DEFAULT, udev_init, udev_exit)
 -- =
 
 2.9.3
 
 
---===============6345629604427358544==--
+--===============1240392380229875742==--
 
