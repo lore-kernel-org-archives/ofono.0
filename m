@@ -1,110 +1,128 @@
-Content-Type: multipart/mixed; boundary="===============7004476472268085997=="
+Content-Type: multipart/mixed; boundary="===============4618386476763646634=="
 MIME-Version: 1.0
-From: Lukasz Nowak <lnowak.tyco@gmail.com>
-Subject: [PATCH v2] atmodem: telit - re-attach gprs automatically
-Date: Tue, 28 Mar 2017 12:42:41 +0100
-Message-ID: <1490701361-14182-1-git-send-email-lnowak.tyco@gmail.com>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: Re: [PATCH udev 11/15] udevng: add legacy device handling functions
+Date: Tue, 28 Mar 2017 14:58:37 +0200
+Message-ID: <de8da67c-06a2-030f-abd0-8d88d05178c7@southpole.se>
+In-Reply-To: <51961e21-7d40-2cec-970b-2d44e218a4a9@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7004476472268085997==
+--===============4618386476763646634==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Lukasz Nowak <lnowak@tycoint.com>
+Hi Denis,
 
-Telit AT modem firmware (tested with UE910-EUR) generates
-+CGREG: 0\r\n\r\n+CGEV: NW DETACH
-after a context is de-activated and ppp connection closed.
-Then, after a random amount of time (observed from a few seconds
-to a few hours), an unsolicited +CGREG: 1 arrives.
-Attempt to fix the problem, by sending AT+CGATT=3D1 once.
-This does not re-activate the context, but if a network connection
-is still correct, will generate an immediate +CGREG: 1.
----
- drivers/atmodem/gprs.c | 32 +++++++++++++++++++++++++++++++-
- 1 file changed, 31 insertions(+), 1 deletion(-)
+On 03/27/2017 05:24 AM, Denis Kenzior wrote:
+> Hi Jonas,
+>
+> On 03/25/2017 11:58 AM, Jonas Bonn wrote:
+>> This adds, but does not hook up, functionality to handle devices
+>> that are currently handled by the 'legacy' udev.c module.
+>>
+>> - legacy device is added by calling the add_legacy_device() function.
+>> - the function sets up a modem_info and device_info structure for
+>>   the legacy device
+>> - the device driver is set to "legacy" and the real driver type is
+>>   saved in the device_info structure
+>> - the extra udev information from the add_*() functions of the old
+>>   udev.c module is added to unused fields of the device_info structure
+>> - the "legacy" driver is set-up to use setup_legacy
+>> - setup_legacy extracts the device_info information and applies it
+>>   to the modem in the same way that the add_*() funtions did
+>> - the modem driver is switched to the real driver
+>>
+>> ...and off we go!
+>> ---
+>> +
+>> +    driver =3D udev_device_get_property_value(mdev, "OFONO_DRIVER");
+>> +    /* Check that this really is a legacy driver */
+>> +    if (!g_strcmp0(driver, "ifx")) goto start;
+>> +    if (!g_strcmp0(driver, "u8500")) goto start;
+>> +    if (!g_strcmp0(driver, "n900")) goto start;
+>> +    if (!g_strcmp0(driver, "calypso")) goto start;
+>> +    if (!g_strcmp0(driver, "cinterion")) goto start;
+>> +    if (!g_strcmp0(driver, "nokiacdma")) goto start;
+>> +    if (!g_strcmp0(driver, "sim900")) goto start;
+>> +    if (!g_strcmp0(driver, "wavecom")) goto start;
+>
+> This might look better as a table
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index 7ea9f00..3a6364e 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -50,6 +50,8 @@ struct gprs_data {
- 	GAtChat *chat;
- 	unsigned int vendor;
- 	unsigned int last_auto_context_id;
-+	gboolean telit_try_reattach;
-+	int attached;
- };
- =
+Agreed, but this will disappear when I rework things again.
+>> +    /* Maybe this is a USB device... in that case we can grab the
+>> +     * vendor and model information
+>> +     */
+>> +    usb_device =3D udev_device_get_parent_with_subsystem_devtype(mdev,
+>> +                            "usb", "usb_device");
+>> +    if (usb_device) {
+>> +        vendor =3D udev_device_get_property_value(usb_device,
+>> +                            "ID_VENDOR_ID");
+>> +        model =3D udev_device_get_property_value(usb_device,
+>> +                            "ID_MODEL_ID");
+>
+> Are you sure about this? I don't think there were any usb devices that =
 
- static void at_cgatt_cb(gboolean ok, GAtResult *result, gpointer user_data)
-@@ -73,8 +75,10 @@ static void at_gprs_set_attached(struct ofono_gprs *gprs=
-, int attached,
- 	snprintf(buf, sizeof(buf), "AT+CGATT=3D%i", attached ? 1 : 0);
- =
+> udev still handled.  Maybe with the exception of some weird CDMA =
 
- 	if (g_at_chat_send(gd->chat, buf, none_prefix,
--				at_cgatt_cb, cbd, g_free) > 0)
-+				at_cgatt_cb, cbd, g_free) > 0) {
-+		gd->attached =3D attached;
- 		return;
-+	}
- =
+> stuff, but that doesn't really work and should be handled via normal =
 
- 	g_free(cbd);
- =
+> udevng mechanisms.
 
-@@ -194,6 +198,28 @@ static void cgreg_notify(GAtResult *result, gpointer u=
-ser_data)
- 				NULL, NULL, NULL, gd->vendor) =3D=3D FALSE)
- 		return;
- =
+This was a bit unclear to me.  Nothing in the code gives any clue about =
 
-+	/*
-+	 * Telit AT modem firmware (tested with UE910-EUR) generates
-+	 * +CGREG: 0\r\n\r\n+CGEV: NW DETACH
-+	 * after a context is de-activated and ppp connection closed.
-+	 * Then, after a random amount of time (observed from a few seconds
-+	 * to a few hours), an unsolicited +CGREG: 1 arrives.
-+	 * Attempt to fix the problem, by sending AT+CGATT=3D1 once.
-+	 * This does not re-activate the context, but if a network connection
-+	 * is still correct, will generate an immediate +CGREG: 1.
-+	 */
-+	if (gd->vendor =3D=3D OFONO_VENDOR_TELIT) {
-+		if (gd->attached && !status && !gd->telit_try_reattach) {
-+			DBG("Trying to re-attach gprs network");
-+			gd->telit_try_reattach =3D TRUE;
-+			g_at_chat_send(gd->chat, "AT+CGATT=3D1", none_prefix,
-+					NULL, NULL, NULL);
-+			return;
-+		}
-+
-+		gd->telit_try_reattach =3D FALSE;
-+	}
-+
- 	ofono_gprs_status_notify(gprs, status);
- }
- =
+what bus these 'legacy' devices sit on.  If they are all devices with a =
 
-@@ -214,6 +240,10 @@ static void cgev_notify(GAtResult *result, gpointer us=
-er_data)
- =
+"serial interface", that makes things a bit simpler. I intend to rework =
 
- 	if (g_str_equal(event, "NW DETACH") ||
- 			g_str_equal(event, "ME DETACH")) {
-+		if (gd->vendor =3D=3D OFONO_VENDOR_TELIT &&
-+				gd->telit_try_reattach)
-+			return;
-+
- 		ofono_gprs_detached_notify(gprs);
- 		return;
- 	} else if (g_str_has_prefix(event, "ME PDN ACT")) {
--- =
+this patch based on that assumption.
+>> +    /* Here we begin the abuse... we want to switch the modem driver
+>> +     * from 'legacy' to it's real driver in the setup function, so
+>> +     * we store the driver name here in the otherwise unused sysattr
+>> +     * field
+>> +     */
+>> +    info->sysattr =3D g_strdup(driver);
+>
+> The hi-jacking of device_info attributes is not going to fly.  Why =
 
-2.7.4
+> don't we simply get rid of sysattr, and invent a brand new structure =
+
+> to hold the info for 'legacy' (or really true serial port) devices.  =
+
+> The ideal situation would be for us to continue using =
+
+> ofono_modem_set_property for all the driver specific stuff.
+>
+> Is there a reason why we can't create the modem object here?  The =
+
+> current logic enumerates all the devices and runs create_modem =
+
+> afterwards, but I see no reason why we can't suppress that logic for =
+
+> serial-only devices.
+>
+
+Your suggestion to add a new structure for 'legacy'/serial devices was a =
+
+good one.  Reworking things this wasy makes things much simpler and =
+
+serial devices can be handled pretty much exactly as USB devices... the =
+
+symmetry is nice.
+
+We can certainly run create_modem early for the serial devices.   I will =
+
+look into that, but in order to keep things symmetric for a all device =
+
+types it's easier to just use the same delay everywhere. I'll make a =
+
+note to look into that as well.
+
+Thanks for the review.  I'll post a follow-up shortly.
+
+/Jonas
 
 
---===============7004476472268085997==--
+--===============4618386476763646634==--
 
