@@ -1,71 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============6107338544420557176=="
+Content-Type: multipart/mixed; boundary="===============7300812535358233247=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH udev 14/15] udevng: get properties from interface
-Date: Tue, 28 Mar 2017 10:20:42 -0500
-Message-ID: <12077890-869d-a7bd-26ba-ea05341df5f3@gmail.com>
-In-Reply-To: <63054479-a800-b0b9-0f11-4855b28f59d6@southpole.se>
+Subject: Re: Missing udev rules
+Date: Tue, 28 Mar 2017 10:27:26 -0500
+Message-ID: <44dbc650-8bc2-acf3-4544-6389e38c0a5e@gmail.com>
+In-Reply-To: <422ed278-1d3e-73d6-8d73-4321a2deb0df@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6107338544420557176==
+--===============7300812535358233247==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jonas,
 
->>>      label =3D udev_device_get_property_value(device, "OFONO_LABEL");
->>> +    if (!label) {
->>> +        label =3D udev_device_get_property_value(intf, "OFONO_LABEL");
->>> +    }
->>
->> Okay, but not really our style.  See doc/coding-style.txt item M1
+On 03/28/2017 08:31 AM, Jonas Bonn wrote:
+> Hi,
 >
-> Hmmm.... I would say that this is essentially the 'variable allocation'
-> clause of M1.  Set a value; if fail, then do something about it.  Agree?
+> I've been poking at the udevng/udev modules a bit recently.  There are
+> many places where references are made to settings that come from udev
+> but for which are there are no corresponding udev rules anywhere in the
+> source code tree.
+>
+> i)  Almost all the setup_*() functions reference device node labels but
+> there are almost no rules that set these labels anywhere.
+> ii)  There are references to some environment variables from udev that
+> aren't set in ofono rules.
+
+These are highly platform specific.  Some we have attempted to document =
+
+inside doc/ (e.g. see calypso-modem.txt, sim900-modem.txt, etc)  while =
+
+for others you just need to look at how the modem driver works (e.g. ifx.c).
+
+>
+> Not knowing whether these rules actually exist in the wild means that
+> it's difficult to just clean this up.  Unfortunately,
+> I suspect that most of the device labelling rules are non-existant and
+> that the code looks like it does because these functions get
+> cut-and-pasted everytime support for a new device is added.
 >
 
-Yes, but the subsystem assignment on the next line still needs to be =
+No, that's not really true.  However, nobody has touched udev plugin for =
 
-separated by an empty line.  Also the {} around the if are not needed.
+quite some time.  One reason is that there's simply never been any need =
 
+to do so.  Its only used for serial devices and to pass platform =
 
->>>
->>>      driver =3D udev_device_get_property_value(usb_device,
->>> "OFONO_DRIVER");
->>> +    if (!driver) {
->>> +        intf =3D udev_device_get_parent_with_subsystem_devtype(device,
->>> +                        "usb", "usb_interface");
->>> +        if (intf)
->>> +            driver =3D udev_device_get_property_value(
->>> +                            intf, "OFONO_DRIVER");
->>> +    }
->>
->> doc/coding-style.txt item M1
+specific settings on to the modem driver.
+
+> I think, as a general matter of policy, that any reference to a setting
+> from udev needs to be accompanied by a rule that makes the setting.  If
+> there's no rule, we can assume it's unused and make the according cleanup=
+s.
 >
-> My comment above applies... allocate and handle failure to allocate.
 
-If you declare & assign a variable, we prefer an empty line.  e.g.
+I agree with the sentiment, but the reality is different.  It is best if =
 
-if () {
-	foo *bar =3D baz;
-
-	if (bar)
-		// do something
-}
-
-Also, the original comment was about the two if statements not being =
-
-separated out.  So you have:
-
-if (!driver) {
-	...
-}
-if (driver =3D=3D NULL)
+we documented these in doc/foo-modem.txt as much as possible.
 
 Regards,
 -Denis
 
---===============6107338544420557176==--
+
+--===============7300812535358233247==--
 
