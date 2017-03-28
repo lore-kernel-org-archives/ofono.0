@@ -1,51 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============7225144899592024227=="
+Content-Type: multipart/mixed; boundary="===============6392556225140203852=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH udev v3 2/5] udevng: match on the hsi subsystem for legacy
- devices
-Date: Tue, 28 Mar 2017 23:54:12 +0200
-Message-ID: <20170328215416.20119-3-jonas@southpole.se>
+Subject: [PATCH udev v3 3/5] udevng: hook up legacy devices
+Date: Tue, 28 Mar 2017 23:54:13 +0200
+Message-ID: <20170328215416.20119-4-jonas@southpole.se>
 In-Reply-To: <20170328215416.20119-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7225144899592024227==
+--===============6392556225140203852==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/udevng.c | 2 ++
- 1 file changed, 2 insertions(+)
+...and disable old udev code by shorting it out in it's init() function.
 
+The check_device function is augmented to differentiate between USB
+and serial devices:
+
+- if the device sits on a USB bus, the device is handled as before
+- if not, an attempt is made to handle the device as a serial device
+---
+ plugins/udev.c   | 2 ++
+ plugins/udevng.c | 3 +++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/plugins/udev.c b/plugins/udev.c
+index 92451d2..564ede9 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -365,6 +365,8 @@ static void udev_start(void)
+ =
+
+ static int udev_init(void)
+ {
++	return 0;
++
+ 	devpath_list =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+ 						g_free, g_free);
+ 	if (devpath_list =3D=3D NULL) {
 diff --git a/plugins/udevng.c b/plugins/udevng.c
-index d33c5f1..46b185a 100644
+index 46b185a..4faa365 100644
 --- a/plugins/udevng.c
 +++ b/plugins/udevng.c
-@@ -1613,6 +1613,7 @@ static void enumerate_devices(struct udev *context)
- 	udev_enumerate_add_match_subsystem(enumerate, "usb");
- 	udev_enumerate_add_match_subsystem(enumerate, "usbmisc");
- 	udev_enumerate_add_match_subsystem(enumerate, "net");
-+	udev_enumerate_add_match_subsystem(enumerate, "hsi");
+@@ -1563,6 +1563,9 @@ static void check_device(struct udev_device *device)
+ 	if ((g_str_equal(bus, "usb") =3D=3D TRUE) ||
+ 			(g_str_equal(bus, "usbmisc") =3D=3D TRUE))
+ 		check_usb_device(device);
++	else
++		add_serial_device(device);
++
+ }
  =
 
- 	udev_enumerate_scan_devices(enumerate);
- =
-
-@@ -1737,6 +1738,7 @@ static int detect_init(void)
- 	udev_monitor_filter_add_match_subsystem_devtype(udev_mon,
- 							"usbmisc", NULL);
- 	udev_monitor_filter_add_match_subsystem_devtype(udev_mon, "net", NULL);
-+	udev_monitor_filter_add_match_subsystem_devtype(udev_mon, "hsi", NULL);
- =
-
- 	udev_monitor_filter_update(udev_mon);
- =
-
+ static gboolean create_modem(gpointer key, gpointer value, gpointer user_d=
+ata)
 -- =
 
 2.9.3
 
 
---===============7225144899592024227==--
+--===============6392556225140203852==--
 
