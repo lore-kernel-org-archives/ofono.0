@@ -1,64 +1,103 @@
-Content-Type: multipart/mixed; boundary="===============6392556225140203852=="
+Content-Type: multipart/mixed; boundary="===============2858771258123194307=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH udev v3 3/5] udevng: hook up legacy devices
-Date: Tue, 28 Mar 2017 23:54:13 +0200
-Message-ID: <20170328215416.20119-4-jonas@southpole.se>
+Subject: [PATCH udev v3 4/5] udevng: get properties from interface
+Date: Tue, 28 Mar 2017 23:54:14 +0200
+Message-ID: <20170328215416.20119-5-jonas@southpole.se>
 In-Reply-To: <20170328215416.20119-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6392556225140203852==
+--===============2858771258123194307==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-...and disable old udev code by shorting it out in it's init() function.
-
-The check_device function is augmented to differentiate between USB
-and serial devices:
-
-- if the device sits on a USB bus, the device is handled as before
-- if not, an attempt is made to handle the device as a serial device
+Device properties are generally on the device, on the USB interface
+descriptor, or the on the USB device descriptor.
 ---
- plugins/udev.c   | 2 ++
- plugins/udevng.c | 3 +++
- 2 files changed, 5 insertions(+)
+ plugins/udevng.c | 22 ++++++++++++++++++----
+ 1 file changed, 18 insertions(+), 4 deletions(-)
 
-diff --git a/plugins/udev.c b/plugins/udev.c
-index 92451d2..564ede9 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -365,6 +365,8 @@ static void udev_start(void)
- =
-
- static int udev_init(void)
- {
-+	return 0;
-+
- 	devpath_list =3D g_hash_table_new_full(g_str_hash, g_str_equal,
- 						g_free, g_free);
- 	if (devpath_list =3D=3D NULL) {
 diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 46b185a..4faa365 100644
+index 4faa365..7c5016a 100644
 --- a/plugins/udevng.c
 +++ b/plugins/udevng.c
-@@ -1563,6 +1563,9 @@ static void check_device(struct udev_device *device)
- 	if ((g_str_equal(bus, "usb") =3D=3D TRUE) ||
- 			(g_str_equal(bus, "usbmisc") =3D=3D TRUE))
- 		check_usb_device(device);
-+	else
-+		add_serial_device(device);
-+
- }
+@@ -1324,7 +1324,7 @@ static void add_device(const char *syspath, const cha=
+r *devname,
+ 			const char *driver, const char *vendor,
+ 			const char *model, struct udev_device *device)
+ {
+-	struct udev_device *intf;
++	struct udev_device *usb_interface;
+ 	const char *devpath, *devnode, *interface, *number;
+ 	const char *label, *sysattr, *subsystem;
+ 	struct modem_info *modem;
+@@ -1342,9 +1342,9 @@ static void add_device(const char *syspath, const cha=
+r *devname,
+ 			return;
+ 	}
  =
 
- static gboolean create_modem(gpointer key, gpointer value, gpointer user_d=
-ata)
+-	intf =3D udev_device_get_parent_with_subsystem_devtype(device,
++	usb_interface =3D udev_device_get_parent_with_subsystem_devtype(device,
+ 						"usb", "usb_interface");
+-	if (intf =3D=3D NULL)
++	if (usb_interface =3D=3D NULL)
+ 		return;
+ =
+
+ 	modem =3D g_hash_table_lookup(modem_list, syspath);
+@@ -1365,7 +1365,7 @@ static void add_device(const char *syspath, const cha=
+r *devname,
+ 		g_hash_table_replace(modem_list, modem->syspath, modem);
+ 	}
+ =
+
+-	interface =3D udev_device_get_property_value(intf, "INTERFACE");
++	interface =3D udev_device_get_property_value(usb_interface, "INTERFACE");
+ 	number =3D udev_device_get_property_value(device, "ID_USB_INTERFACE_NUM");
+ =
+
+ 	/* If environment variable is not set, get value from attributes (or pare=
+nt's ones) */
+@@ -1381,6 +1381,10 @@ static void add_device(const char *syspath, const ch=
+ar *devname,
+ 	}
+ =
+
+ 	label =3D udev_device_get_property_value(device, "OFONO_LABEL");
++	if (!label)
++		label =3D udev_device_get_property_value(usb_interface,
++							"OFONO_LABEL");
++
+ 	subsystem =3D udev_device_get_subsystem(device);
+ =
+
+ 	if (modem->sysattr !=3D NULL)
+@@ -1502,6 +1506,16 @@ static void check_usb_device(struct udev_device *dev=
+ice)
+ 	model =3D udev_device_get_property_value(usb_device, "ID_MODEL_ID");
+ =
+
+ 	driver =3D udev_device_get_property_value(usb_device, "OFONO_DRIVER");
++	if (!driver) {
++		struct udev_device *usb_interface =3D
++			udev_device_get_parent_with_subsystem_devtype(
++				device, "usb", "usb_interface");
++
++		if (usb_interface)
++			driver =3D udev_device_get_property_value(
++					usb_interface, "OFONO_DRIVER");
++	}
++
+ 	if (driver =3D=3D NULL) {
+ 		const char *drv;
+ 		unsigned int i;
 -- =
 
 2.9.3
 
 
---===============6392556225140203852==--
+--===============2858771258123194307==--
 
