@@ -1,78 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============1450804309313001705=="
+Content-Type: multipart/mixed; boundary="===============1759674176551014858=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH udev v3 0/5] Device handling cleanups
-Date: Wed, 29 Mar 2017 10:01:17 -0500
-Message-ID: <8c014f35-3b94-bc26-9be6-649a8809a4e3@gmail.com>
-In-Reply-To: <20170328215416.20119-1-jonas@southpole.se>
+Subject: Re: [PATCH v3] atmodem: telit - re-attach gprs automatically
+Date: Wed, 29 Mar 2017 10:02:16 -0500
+Message-ID: <183cc971-f700-5713-fbc5-2a8120fc41a7@gmail.com>
+In-Reply-To: <1490786101-5054-1-git-send-email-lnowak.tyco@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1450804309313001705==
+--===============1759674176551014858==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+Hi Lukasz,
 
-On 03/28/2017 04:54 PM, Jonas Bonn wrote:
-> This is version 3 of the udev handling cleanups.
+On 03/29/2017 06:15 AM, Lukasz Nowak wrote:
+> From: Lukasz Nowak <lnowak@tycoint.com>
 >
-> Changes since v2:
->
-> * Addressed comments from Denis
->
-> Changes since v1:
->
-> * Reworked patch 1/5 (was 11/15) to handle 'legacy' devices in a simpler
->   manner.
-> * Addressed comments from Denis
->
-> Original blurb follows:
->
-> This is a series of incremental cleanups to the libudev device handling
-> code.
->
-> - the early patches in the series are all good cleanups that can be
->   taken irregardless of whether the last patches are desired
-> - the last patches are more intrusive as they attempt to move the
->   functionality of udev.c into udevng.c
->
-> Somebody with access to old hardware really needs to take a look at
-> this series to see if the migration to udevng works properly.  I do
-> not have any such hardware, myself.  I suspect that there's not many
-> such devices in circulation; my hope is that this legacy code works
-> for now and can be ripped out in time.
->
-> In any case, if someone has such old hardware, hopefully these changes
-> are sufficiently correct that the last bugs can shake themselves out
-> easily... we'll see.
->
-> Jonas Bonn (5):
->   udevng: add serial device handling functions
->   udevng: match on the hsi subsystem for legacy devices
->   udevng: hook up legacy devices
->   udevng: get properties from interface
->   plugins: remove udev module
->
->  Makefile.am      |   2 -
->  plugins/udev.c   | 431 -------------------------------------------------=
-------
->  plugins/udevng.c | 292 ++++++++++++++++++++++++++++++++++---
->  3 files changed, 272 insertions(+), 453 deletions(-)
->  delete mode 100644 plugins/udev.c
+> Telit AT modem firmware (tested with UE910-EUR) generates
+> +CGREG: 0\r\n\r\n+CGEV: NW DETACH
+> after a context is de-activated and ppp connection closed.
+> Then, after a random amount of time (observed from a few seconds
+> to a few hours), an unsolicited +CGREG: 1 arrives.
+> Attempt to fix the problem, by sending AT+CGATT=3D1 once.
+> This does not re-activate the context, but if a network connection
+> is still correct, will generate an immediate +CGREG: 1.
+> ---
+>  drivers/atmodem/gprs.c | 33 ++++++++++++++++++++++++++++++++-
+>  1 file changed, 32 insertions(+), 1 deletion(-)
 >
 
-This version looked good, so I went ahead and applied all 5 of these.  I =
-
-tweaked patch 1 slightly to modify the enum type.  We generally don't =
-
-use typedefs for enums.
-
-Thanks!
+Applied, thanks.
 
 Regards,
 -Denis
 
---===============1450804309313001705==--
+
+--===============1759674176551014858==--
 
