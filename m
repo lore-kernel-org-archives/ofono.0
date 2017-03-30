@@ -1,83 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============2720648157400599274=="
+Content-Type: multipart/mixed; boundary="===============6361235942854334863=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [RFC hwdb v1 03/28] novatel: label interfaces via hwdb
-Date: Thu, 30 Mar 2017 22:52:44 +0200
-Message-ID: <20170330205309.25850-4-jonas@southpole.se>
-In-Reply-To: <20170330205309.25850-1-jonas@southpole.se>
+Subject: [RFC hwdb v1 00/28] USB interface labelling via udev
+Date: Thu, 30 Mar 2017 22:52:41 +0200
+Message-ID: <20170330205309.25850-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2720648157400599274==
+--===============6361235942854334863==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/ofono.hwdb | 10 ++++++++++
- plugins/udevng.c   | 15 ++-------------
- 2 files changed, 12 insertions(+), 13 deletions(-)
+This series moves the labelling of USB modem interfaces to udev proper.
+For most modems we are able to use the udev hwdb to do the labelling, and
+for a few special cases we need to add udev rules.
 
-diff --git a/plugins/ofono.hwdb b/plugins/ofono.hwdb
-index 75e553b..881497d 100644
---- a/plugins/ofono.hwdb
-+++ b/plugins/ofono.hwdb
-@@ -1,3 +1,13 @@
-+# Novatel
-+usb:v1410*icFFiscFFipFF*
-+ OFONO_DRIVER=3Dnovatel
-+
-+usb:v1410*icFFiscFFipFFin00
-+ OFONO_LABEL=3Daux
-+
-+usb:v1410*icFFiscFFipFFin01
-+ OFONO_LABEL=3Dmodem
-+
- # ZTE
- usb:v19D2*icFFiscFFipFF*
-  OFONO_DRIVER=3Dzte
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index d95f71f..3662370 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -558,20 +558,10 @@ static gboolean setup_novatel(struct modem_info *mode=
-m)
- 		DBG("%s %s %s %s", info->devnode, info->interface,
- 						info->number, info->label);
- =
+Importantly, the OFONO_DRIVER and OFONO_LABEL properties are set on all
+known interfaces.  This saves the ofono udev handler from having to figure
+these out from parsing udev device properties and doing table lookups.
 
--		if (g_strcmp0(info->label, "aux") =3D=3D 0) {
-+		if (g_strcmp0(info->label, "aux") =3D=3D 0)
- 			aux =3D info->devnode;
--			if (mdm !=3D NULL)
--				break;
--		} else if (g_strcmp0(info->label, "modem") =3D=3D 0) {
-+		else if (g_strcmp0(info->label, "modem") =3D=3D 0)
- 			mdm =3D info->devnode;
--			if (aux !=3D NULL)
--				break;
--		} else if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
--			if (g_strcmp0(info->number, "00") =3D=3D 0)
--				aux =3D info->devnode;
--			else if (g_strcmp0(info->number, "01") =3D=3D 0)
--				mdm =3D info->devnode;
--		}
- 	}
- =
+The reason for doing this is:
+i)   ofono is currenly re-creating a lot of udev functionality when trying
+     figure out the driver and label to apply to interfaces
+ii)  the udev hwdb is an optimized path for setting device properties
+iii) labelling interfaces via udev means it can be done for new devices
+     without code changes (and thus without rebuilding ofono)
+iv)  the udev implementation gets smaller and simpler; hopefully this
+     can be made so generic that every new modem won't require changes
+     to this module
 
- 	if (aux =3D=3D NULL || mdm =3D=3D NULL)
-@@ -1438,7 +1428,6 @@ static struct {
- 	{ "speedup",	"option",	"1c9e"		},
- 	{ "speedup",	"option",	"2020"		},
- 	{ "alcatel",	"option",	"1bbb", "0017"	},
--	{ "novatel",	"option",	"1410"		},
- 	{ "simcom",	"option",	"05c6", "9000"	},
- 	{ "telit",	"usbserial",	"1bc7"		},
- 	{ "telit",	"option",	"1bc7"		},
+This is an RFC because I'm not quite done with the conversion yet.  There
+are still some sysattr details to work out for the mbm and telit modems;
+and the qmi modems still need to be put into their final form.  A follow-up
+series will be sent to this one but I wanted to get this sent out now for
+some review.
+
+Thanks,
+Jonas
+
+Jonas Bonn (28):
+  zte: remove unused qcdm property
+  zte: label interfaces via hwdb
+  novatel: label interfaces via hwdb
+  alcatel: label interfaces via hwdb
+  huawei: label interfaces via hwdb
+  simcom: label interfaces via hwdb
+  ublox: label interfaces via hwdb
+  gemalto: label interfaces via hwdb
+  speedup: label interfaces via hwdb
+  linktop: label interfaces via hwdb
+  udevng (hso): remove impossible condition
+  hso: label interfaces via udev rules
+  isiusb: label interfaces via udev rules
+  gobi: label interfaces via udev rules
+  option: label interfaces via hwdb
+  nokia: label interfaces via hwdb
+  samsung: label interfaces via udev rules and hwdb
+  sierra: label interfaces via udev rules
+  telitqmi: label interfaces via udev rules
+  telitqmi: drop unused device rule
+  telit: label interfaces via hwdb
+  icera: label interfaces via hwdb
+  quectel: label interfaces via hwdb
+  udevng: drop unused headers
+  mbm: use standard atom names
+  udevng: remove 'option' driver setup
+  udevng: push device existence check into drivers
+  udevng: consolidate setup functions for several USB devices
+
+ drivers/mbmmodem/location-reporting.c |   2 +-
+ plugins/alcatel.c                     |   9 +
+ plugins/gobi.c                        |   9 +
+ plugins/hso.c                         |   9 +
+ plugins/huawei.c                      |   9 +
+ plugins/icera.c                       |   9 +
+ plugins/linktop.c                     |   9 +
+ plugins/mbm.c                         |  15 +-
+ plugins/nokia.c                       |   9 +
+ plugins/novatel.c                     |   9 +
+ plugins/ofono-speedup.rules           |  27 --
+ plugins/ofono.hwdb                    | 307 +++++++++++++++
+ plugins/ofono.rules                   |  51 +++
+ plugins/quectel.c                     |   9 +
+ plugins/speedup.c                     |   9 +
+ plugins/telit.c                       |   9 +
+ plugins/udevng.c                      | 687 +++++-------------------------=
+----
+ plugins/zte.c                         |   9 +
+ 18 files changed, 577 insertions(+), 620 deletions(-)
+ delete mode 100644 plugins/ofono-speedup.rules
+ create mode 100644 plugins/ofono.hwdb
+
 -- =
 
 2.9.3
 
 
---===============2720648157400599274==--
+--===============6361235942854334863==--
 
