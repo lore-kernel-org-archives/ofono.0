@@ -1,117 +1,152 @@
-Content-Type: multipart/mixed; boundary="===============6609333779925066907=="
+Content-Type: multipart/mixed; boundary="===============8879713850767051762=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [RFC hwdb v1 02/28] zte: label interfaces via hwdb
-Date: Thu, 30 Mar 2017 22:52:43 +0200
-Message-ID: <20170330205309.25850-3-jonas@southpole.se>
+Subject: [RFC hwdb v1 05/28] huawei: label interfaces via hwdb
+Date: Thu, 30 Mar 2017 22:52:46 +0200
+Message-ID: <20170330205309.25850-6-jonas@southpole.se>
 In-Reply-To: <20170330205309.25850-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6609333779925066907==
+--===============8879713850767051762==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/ofono.hwdb | 16 ++++++++++++++++
- plugins/udevng.c   | 25 +++----------------------
- 2 files changed, 19 insertions(+), 22 deletions(-)
- create mode 100644 plugins/ofono.hwdb
+ plugins/ofono.hwdb | 51 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ plugins/udevng.c   | 41 +++++------------------------------------
+ 2 files changed, 56 insertions(+), 36 deletions(-)
 
 diff --git a/plugins/ofono.hwdb b/plugins/ofono.hwdb
-new file mode 100644
-index 0000000..75e553b
---- /dev/null
+index 1097b8c..66cc0a1 100644
+--- a/plugins/ofono.hwdb
 +++ b/plugins/ofono.hwdb
-@@ -0,0 +1,16 @@
-+# ZTE
-+usb:v19D2*icFFiscFFipFF*
-+ OFONO_DRIVER=3Dzte
+@@ -1,3 +1,54 @@
++# Huawei
++usb:v201E*
++usb:v12D1*
++ OFONO_DRIVER=3Dhuawei
 +
-+usb:v19D2*icFFiscFFipFFin01
-+ OFONO_LABEL=3Daux
-+
-+usb:v19D2*icFFiscFFipFFin03
-+usb:v19D2p0016*icFFiscFFipFFin02
-+usb:v19D2p0017*icFFiscFFipFFin02
++usb:v201E*icFFisc01ip01*
++usb:v201E*icFFisc02ip01*
++usb:v201E*icFFisc03ip01*
++usb:v201E*icFFisc01ip31*
++usb:v201E*icFFiscFFipFFin00
++usb:v12D1*icFFisc01ip01*
++usb:v12D1*icFFisc02ip01*
++usb:v12D1*icFFisc03ip01*
++usb:v12D1*icFFisc01ip31*
++usb:v12D1*icFFiscFFipFFin00
 + OFONO_LABEL=3Dmodem
 +
-+usb:v19D2p0016*icFFiscFFipFFin03
-+usb:v19D2p0017*icFFiscFFipFFin03
-+ OFONO_LABEL=3Dnone
++usb:v201E*icFFisc01ip02*
++usb:v201E*icFFisc02ip02*
++usb:v201E*icFFisc02ip12*
++usb:v201E*icFFisc03ip12*
++usb:v201E*icFFisc01ip32*
++usb:v201E*icFFiscFFipFFin0[1234]
++usb:v12D1*icFFisc01ip02*
++usb:v12D1*icFFisc02ip02*
++usb:v12D1*icFFisc02ip12*
++usb:v12D1*icFFisc03ip12*
++usb:v12D1*icFFisc01ip32*
++usb:v12D1*icFFiscFFipFFin0[1234]
++ OFONO_LABEL=3Dpcui
 +
++usb:v201E*icFFisc01ip03*
++usb:v201E*icFFisc02ip03*
++usb:v201E*icFFisc01ip33*
++usb:v12D1*icFFisc01ip03*
++usb:v12D1*icFFisc02ip03*
++usb:v12D1*icFFisc01ip33*
++ OFONO_LABEL=3Ddiag
++
++usb:v201E*icFFisc01ip08*
++usb:v201E*icFFisc01ip38*
++usb:v12D1*icFFisc01ip08*
++usb:v12D1*icFFisc01ip38*
++ OFONO_LABEL=3Dnet
++
++usb:v201E*icFFisc01ip09*
++usb:v201E*icFFisc01ip39*
++usb:v12D1*icFFisc01ip09*
++usb:v12D1*icFFisc01ip39*
++ OFONO_LABEL=3Dqmi
++
+ # Novatel
+ usb:v1410*icFFiscFFipFF*
+  OFONO_DRIVER=3Dnovatel
 diff --git a/plugins/udevng.c b/plugins/udevng.c
-index d9153b3..d95f71f 100644
+index ff14869..d8f077a 100644
 --- a/plugins/udevng.c
 +++ b/plugins/udevng.c
-@@ -766,44 +766,26 @@ static gboolean setup_simcom(struct modem_info *modem)
- static gboolean setup_zte(struct modem_info *modem)
- {
- 	const char *aux =3D NULL, *mdm =3D NULL;
--	const char *modem_intf;
- 	GSList *list;
- =
-
- 	DBG("%s", modem->syspath);
- =
-
--	if (g_strcmp0(modem->model, "0016") =3D=3D 0 ||
--				g_strcmp0(modem->model, "0017") =3D=3D 0 ||
--				g_strcmp0(modem->model, "0117") =3D=3D 0)
--		modem_intf =3D "02";
--	else
--		modem_intf =3D "03";
--
- 	for (list =3D modem->devices; list; list =3D list->next) {
- 		struct device_info *info =3D list->data;
- =
-
+@@ -336,42 +336,16 @@ static gboolean setup_huawei(struct modem_info *modem)
  		DBG("%s %s %s %s", info->devnode, info->interface,
  						info->number, info->label);
  =
 
--		if (g_strcmp0(info->label, "aux") =3D=3D 0) {
-+		if (g_strcmp0(info->label, "aux") =3D=3D 0)
- 			aux =3D info->devnode;
--			if (mdm !=3D NULL)
--				break;
--		} else if (g_strcmp0(info->label, "modem") =3D=3D 0) {
-+		else if (g_strcmp0(info->label, "modem") =3D=3D 0)
+-		if (g_strcmp0(info->label, "modem") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/1/1") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/2/1") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/3/1") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/1/49") =3D=3D 0) {
++		if (g_strcmp0(info->label, "modem") =3D=3D 0)
  			mdm =3D info->devnode;
--			if (aux !=3D NULL)
--				break;
+-		} else if (g_strcmp0(info->label, "pcui") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/1/2") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/2/2") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/2/18") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/3/18") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/1/50") =3D=3D 0) {
++		else if (g_strcmp0(info->label, "pcui") =3D=3D 0)
+ 			pcui =3D info->devnode;
+-		} else if (g_strcmp0(info->label, "diag") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/1/3") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/2/3") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/1/51") =3D=3D 0) {
++		else if (g_strcmp0(info->label, "diag") =3D=3D 0)
+ 			diag =3D info->devnode;
+-		} else if (g_strcmp0(info->interface, "255/1/8") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/1/56") =3D=3D 0) {
++		else if (g_strcmp0(info->label, "net") =3D=3D 0)
+ 			net =3D info->devnode;
+-		} else if (g_strcmp0(info->interface, "255/1/9") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/1/57") =3D=3D 0) {
++		else if (g_strcmp0(info->label, "qmi") =3D=3D 0)
+ 			qmi =3D info->devnode;
 -		} else if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
--			if (g_strcmp0(info->number, "01") =3D=3D 0)
--				aux =3D info->devnode;
--			else if (g_strcmp0(info->number, modem_intf) =3D=3D 0)
+-			if (g_strcmp0(info->number, "00") =3D=3D 0)
 -				mdm =3D info->devnode;
+-			else if (g_strcmp0(info->number, "01") =3D=3D 0)
+-				pcui =3D info->devnode;
+-			else if (g_strcmp0(info->number, "02") =3D=3D 0)
+-				pcui =3D info->devnode;
+-			else if (g_strcmp0(info->number, "03") =3D=3D 0)
+-				pcui =3D info->devnode;
+-			else if (g_strcmp0(info->number, "04") =3D=3D 0)
+-				pcui =3D info->devnode;
 -		}
  	}
  =
 
- 	if (aux =3D=3D NULL || mdm =3D=3D NULL)
- 		return FALSE;
- =
-
--	DBG("aux=3D%s modem=3D%s qcdm=3D%s", aux, mdm, qcdm);
-+	DBG("aux=3D%s modem=3D%s", aux, mdm);
- =
-
- 	ofono_modem_set_string(modem->modem, "Aux", aux);
- 	ofono_modem_set_string(modem->modem, "Modem", mdm);
-@@ -1457,7 +1439,6 @@ static struct {
+ 	if (qmi !=3D NULL && net !=3D NULL) {
+@@ -1410,11 +1384,6 @@ static struct {
+ 	{ "sierra",	"sierra"			},
+ 	{ "sierra",	"sierra_net"			},
+ 	{ "option",	"option",	"0af0"		},
+-	{ "huawei",	"option",	"201e"		},
+-	{ "huawei",	"cdc_wdm",	"12d1"		},
+-	{ "huawei",	"cdc_ether",	"12d1"		},
+-	{ "huawei",	"qmi_wwan",	"12d1"		},
+-	{ "huawei",	"option",	"12d1"		},
+ 	{ "speedupcdma","option",	"1c9e", "9e00"	},
+ 	{ "speedup",	"option",	"1c9e"		},
  	{ "speedup",	"option",	"2020"		},
- 	{ "alcatel",	"option",	"1bbb", "0017"	},
- 	{ "novatel",	"option",	"1410"		},
--	{ "zte",	"option",	"19d2"		},
- 	{ "simcom",	"option",	"05c6", "9000"	},
- 	{ "telit",	"usbserial",	"1bc7"		},
- 	{ "telit",	"option",	"1bc7"		},
 -- =
 
 2.9.3
 
 
---===============6609333779925066907==--
+--===============8879713850767051762==--
 
