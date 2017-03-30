@@ -1,101 +1,117 @@
-Content-Type: multipart/mixed; boundary="===============6361235942854334863=="
+Content-Type: multipart/mixed; boundary="===============6609333779925066907=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [RFC hwdb v1 00/28] USB interface labelling via udev
-Date: Thu, 30 Mar 2017 22:52:41 +0200
-Message-ID: <20170330205309.25850-1-jonas@southpole.se>
+Subject: [RFC hwdb v1 02/28] zte: label interfaces via hwdb
+Date: Thu, 30 Mar 2017 22:52:43 +0200
+Message-ID: <20170330205309.25850-3-jonas@southpole.se>
+In-Reply-To: <20170330205309.25850-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6361235942854334863==
+--===============6609333779925066907==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This series moves the labelling of USB modem interfaces to udev proper.
-For most modems we are able to use the udev hwdb to do the labelling, and
-for a few special cases we need to add udev rules.
-
-Importantly, the OFONO_DRIVER and OFONO_LABEL properties are set on all
-known interfaces.  This saves the ofono udev handler from having to figure
-these out from parsing udev device properties and doing table lookups.
-
-The reason for doing this is:
-i)   ofono is currenly re-creating a lot of udev functionality when trying
-     figure out the driver and label to apply to interfaces
-ii)  the udev hwdb is an optimized path for setting device properties
-iii) labelling interfaces via udev means it can be done for new devices
-     without code changes (and thus without rebuilding ofono)
-iv)  the udev implementation gets smaller and simpler; hopefully this
-     can be made so generic that every new modem won't require changes
-     to this module
-
-This is an RFC because I'm not quite done with the conversion yet.  There
-are still some sysattr details to work out for the mbm and telit modems;
-and the qmi modems still need to be put into their final form.  A follow-up
-series will be sent to this one but I wanted to get this sent out now for
-some review.
-
-Thanks,
-Jonas
-
-Jonas Bonn (28):
-  zte: remove unused qcdm property
-  zte: label interfaces via hwdb
-  novatel: label interfaces via hwdb
-  alcatel: label interfaces via hwdb
-  huawei: label interfaces via hwdb
-  simcom: label interfaces via hwdb
-  ublox: label interfaces via hwdb
-  gemalto: label interfaces via hwdb
-  speedup: label interfaces via hwdb
-  linktop: label interfaces via hwdb
-  udevng (hso): remove impossible condition
-  hso: label interfaces via udev rules
-  isiusb: label interfaces via udev rules
-  gobi: label interfaces via udev rules
-  option: label interfaces via hwdb
-  nokia: label interfaces via hwdb
-  samsung: label interfaces via udev rules and hwdb
-  sierra: label interfaces via udev rules
-  telitqmi: label interfaces via udev rules
-  telitqmi: drop unused device rule
-  telit: label interfaces via hwdb
-  icera: label interfaces via hwdb
-  quectel: label interfaces via hwdb
-  udevng: drop unused headers
-  mbm: use standard atom names
-  udevng: remove 'option' driver setup
-  udevng: push device existence check into drivers
-  udevng: consolidate setup functions for several USB devices
-
- drivers/mbmmodem/location-reporting.c |   2 +-
- plugins/alcatel.c                     |   9 +
- plugins/gobi.c                        |   9 +
- plugins/hso.c                         |   9 +
- plugins/huawei.c                      |   9 +
- plugins/icera.c                       |   9 +
- plugins/linktop.c                     |   9 +
- plugins/mbm.c                         |  15 +-
- plugins/nokia.c                       |   9 +
- plugins/novatel.c                     |   9 +
- plugins/ofono-speedup.rules           |  27 --
- plugins/ofono.hwdb                    | 307 +++++++++++++++
- plugins/ofono.rules                   |  51 +++
- plugins/quectel.c                     |   9 +
- plugins/speedup.c                     |   9 +
- plugins/telit.c                       |   9 +
- plugins/udevng.c                      | 687 +++++-------------------------=
-----
- plugins/zte.c                         |   9 +
- 18 files changed, 577 insertions(+), 620 deletions(-)
- delete mode 100644 plugins/ofono-speedup.rules
+---
+ plugins/ofono.hwdb | 16 ++++++++++++++++
+ plugins/udevng.c   | 25 +++----------------------
+ 2 files changed, 19 insertions(+), 22 deletions(-)
  create mode 100644 plugins/ofono.hwdb
 
+diff --git a/plugins/ofono.hwdb b/plugins/ofono.hwdb
+new file mode 100644
+index 0000000..75e553b
+--- /dev/null
++++ b/plugins/ofono.hwdb
+@@ -0,0 +1,16 @@
++# ZTE
++usb:v19D2*icFFiscFFipFF*
++ OFONO_DRIVER=3Dzte
++
++usb:v19D2*icFFiscFFipFFin01
++ OFONO_LABEL=3Daux
++
++usb:v19D2*icFFiscFFipFFin03
++usb:v19D2p0016*icFFiscFFipFFin02
++usb:v19D2p0017*icFFiscFFipFFin02
++ OFONO_LABEL=3Dmodem
++
++usb:v19D2p0016*icFFiscFFipFFin03
++usb:v19D2p0017*icFFiscFFipFFin03
++ OFONO_LABEL=3Dnone
++
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index d9153b3..d95f71f 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -766,44 +766,26 @@ static gboolean setup_simcom(struct modem_info *modem)
+ static gboolean setup_zte(struct modem_info *modem)
+ {
+ 	const char *aux =3D NULL, *mdm =3D NULL;
+-	const char *modem_intf;
+ 	GSList *list;
+ =
+
+ 	DBG("%s", modem->syspath);
+ =
+
+-	if (g_strcmp0(modem->model, "0016") =3D=3D 0 ||
+-				g_strcmp0(modem->model, "0017") =3D=3D 0 ||
+-				g_strcmp0(modem->model, "0117") =3D=3D 0)
+-		modem_intf =3D "02";
+-	else
+-		modem_intf =3D "03";
+-
+ 	for (list =3D modem->devices; list; list =3D list->next) {
+ 		struct device_info *info =3D list->data;
+ =
+
+ 		DBG("%s %s %s %s", info->devnode, info->interface,
+ 						info->number, info->label);
+ =
+
+-		if (g_strcmp0(info->label, "aux") =3D=3D 0) {
++		if (g_strcmp0(info->label, "aux") =3D=3D 0)
+ 			aux =3D info->devnode;
+-			if (mdm !=3D NULL)
+-				break;
+-		} else if (g_strcmp0(info->label, "modem") =3D=3D 0) {
++		else if (g_strcmp0(info->label, "modem") =3D=3D 0)
+ 			mdm =3D info->devnode;
+-			if (aux !=3D NULL)
+-				break;
+-		} else if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
+-			if (g_strcmp0(info->number, "01") =3D=3D 0)
+-				aux =3D info->devnode;
+-			else if (g_strcmp0(info->number, modem_intf) =3D=3D 0)
+-				mdm =3D info->devnode;
+-		}
+ 	}
+ =
+
+ 	if (aux =3D=3D NULL || mdm =3D=3D NULL)
+ 		return FALSE;
+ =
+
+-	DBG("aux=3D%s modem=3D%s qcdm=3D%s", aux, mdm, qcdm);
++	DBG("aux=3D%s modem=3D%s", aux, mdm);
+ =
+
+ 	ofono_modem_set_string(modem->modem, "Aux", aux);
+ 	ofono_modem_set_string(modem->modem, "Modem", mdm);
+@@ -1457,7 +1439,6 @@ static struct {
+ 	{ "speedup",	"option",	"2020"		},
+ 	{ "alcatel",	"option",	"1bbb", "0017"	},
+ 	{ "novatel",	"option",	"1410"		},
+-	{ "zte",	"option",	"19d2"		},
+ 	{ "simcom",	"option",	"05c6", "9000"	},
+ 	{ "telit",	"usbserial",	"1bc7"		},
+ 	{ "telit",	"option",	"1bc7"		},
 -- =
 
 2.9.3
 
 
---===============6361235942854334863==--
+--===============6609333779925066907==--
 
