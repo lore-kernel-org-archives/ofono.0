@@ -1,52 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============7511900448152785120=="
+Content-Type: multipart/mixed; boundary="===============1579443279131595850=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC hwdb v1 11/28] udevng (hso): remove impossible condition
-Date: Fri, 31 Mar 2017 17:51:16 -0500
-Message-ID: <d1b7ccc0-f47b-4452-cae6-02d268901a6d@gmail.com>
-In-Reply-To: <20170330205309.25850-12-jonas@southpole.se>
+Subject: Re: [RFC hwdb v1 25/28] mbm: use standard atom names
+Date: Fri, 31 Mar 2017 17:54:02 -0500
+Message-ID: <f6da62f8-65b1-d49f-49a4-003f75f11711@gmail.com>
+In-Reply-To: <20170330205309.25850-26-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7511900448152785120==
+--===============1579443279131595850==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jonas,
 
-On 03/30/2017 03:52 PM, Jonas Bonn wrote:
-> The hso driver setup function tests for the devnode beginning with "hso"
-> in order to detect the network interface.  Since the devnode will always
-> begin with "/dev", this condition will never be fulfilled.
-
-That's definitely incorrect.  setup_hso will receive both ttys and =
-
-network devices.  ttys will start with /dev/, but network devices are =
-
-not.  This change would break all option devices with a high speed =
-
-interface.
-
->
-> Given that the 'net' variable never gets set, we could just remove it.
-> However, leaving it there for now might be reminder to someone to figure
-> out how to set it in case it's actually needed.  That said, this test
-> has been in the code since 2011 and, presumably, nobody's noticied so
-> this modem might not be something that anybody actually uses anymore.
-
-'net' definitely gets set.  I just tested it on an Option 452 and it =
-
-works just fine.
-
+On 03/30/2017 03:53 PM, Jonas Bonn wrote:
 > ---
->  plugins/udevng.c | 3 ---
->  1 file changed, 3 deletions(-)
+>  drivers/mbmmodem/location-reporting.c |  2 +-
+>  plugins/mbm.c                         |  6 +++---
+>  plugins/udevng.c                      | 12 ++++++------
+>  3 files changed, 10 insertions(+), 10 deletions(-)
 >
 
-Regards,
--Denis
+make --no-print-directory all-am
+   CC       plugins/udevng.o
+plugins/udevng.c: In function =E2=80=98setup_mbm=E2=80=99:
+plugins/udevng.c:145:21: error: =E2=80=98app=E2=80=99 undeclared (first use=
+ in this =
+
+function)
+   if (mdm =3D=3D NULL || app =3D=3D NULL)
+                      ^
+plugins/udevng.c:145:21: note: each undeclared identifier is reported =
+
+only once for each function it appears in
 
 
---===============7511900448152785120==--
+
+--===============1579443279131595850==--
 
