@@ -1,172 +1,286 @@
-Content-Type: multipart/mixed; boundary="===============6153187510106639386=="
+Content-Type: multipart/mixed; boundary="===============0846122358861981479=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC qmi 1/1] qmi: retrieve GPRS context parameters
-Date: Mon, 03 Apr 2017 09:32:19 -0500
-Message-ID: <e6cd3333-d111-f885-6d11-c0efdfe94095@gmail.com>
-In-Reply-To: <20170403123804.13011-1-jonas@southpole.se>
+Subject: [PATCH] qmi: Optimize structure allocations
+Date: Mon, 03 Apr 2017 13:13:59 -0500
+Message-ID: <20170403181359.23143-1-denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6153187510106639386==
+--===============0846122358861981479==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+struct discovery was allocated for every discovery procedure that was
+kicked off, which itself allocated a structure.  This patch uses a
+class/subclass concept to only allocate a single structure per discovery
+procedure.
+---
+ drivers/qmimodem/qmi.c | 64 ++++++++++++++++------------------------------=
+----
+ 1 file changed, 20 insertions(+), 44 deletions(-)
 
-On 04/03/2017 07:38 AM, Jonas Bonn wrote:
-> ---
->
-> This is an RFC because I want some guidance here.  Once the GPRS context
-> has been activated, we can get the connection parameters via a QMI call.
-> The question is, what am I supposed to do with these?
->
-> i)  Am I responsible for configuring the network interface?  Do I need
-> to implement all the netlink calls to do so?
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index a0d79e1..cda7f32 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -44,7 +44,6 @@ typedef void (*qmi_message_func_t)(uint16_t message, uint=
+16_t length,
+ 					const void *buffer, void *user_data);
+ =
 
-No.  oFono brings up the interface and after that it is up to the =
+ struct discovery {
+-	void *discover_data;
+ 	qmi_destroy_func_t destroy;
+ };
+ =
 
-connection manager (e.g. ConnMan) to assign addresses, etc.
+@@ -224,17 +223,7 @@ static void __discovery_free(gpointer data, gpointer u=
+ser_data)
+ 	struct discovery *d =3D data;
+ 	qmi_destroy_func_t destroy =3D d->destroy;
+ =
 
->
-> ii)  Or does a connection manager like connman set up the network interfa=
-ce
-> for me based on the context parameters it retrieves via DBUS?
+-	destroy(d->discover_data);
+-}
+-
+-static gint __discovery_compare(gconstpointer a, gconstpointer b)
+-{
+-	const struct discovery *d =3D a;
+-
+-	if (d->discover_data =3D=3D b)
+-		return 0;
+-
+-	return 1;
++	destroy(d);
+ }
+ =
 
-yes
+ static void __notify_free(gpointer data, gpointer user_data)
+@@ -883,32 +872,17 @@ static void read_watch_destroy(gpointer user_data)
+ }
+ =
 
->
-> iii)  What about routing?  Presumably I should not just force the default
-> route onto the new network interface as that's the connection manager's j=
-ob,
-> right?
-
-ConnMan does that.  Routing/DNS/IP assignment is out of scope for oFono.
-
->
-> A bit of guidance on how to proceed here would be appreciated.
->
-> Thanks in advance,
-> Jonas
->
->
->  drivers/qmimodem/gprs-context.c | 37 +++++++++++++++++++++++++++++++++++=
-++
->  drivers/qmimodem/wds.h          |  1 +
->  2 files changed, 38 insertions(+)
->
-> diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-cont=
-ext.c
-> index da2be24..7f424a8 100644
-> --- a/drivers/qmimodem/gprs-context.c
-> +++ b/drivers/qmimodem/gprs-context.c
-> @@ -24,6 +24,7 @@
->  #endif
->
->  #include <string.h>
-> +#include <arpa/inet.h>
->
->  #include <ofono/log.h>
->  #include <ofono/modem.h>
-> @@ -75,21 +76,55 @@ static void get_settings_cb(struct qmi_result *result=
-, void *user_data)
->  	struct cb_data *cbd =3D user_data;
->  	ofono_gprs_context_cb_t cb =3D cbd->cb;
->  	struct ofono_gprs_context *gc =3D cbd->user;
-> +	struct gprs_context_data *data =3D ofono_gprs_context_get_data(gc);
->  	struct ofono_modem *modem;
->  	const char *interface;
->  	uint8_t pdp_type, ip_family;
-> +	uint32_t ip_addr;
-> +	struct in_addr addr;
-> +	char* straddr;
-> +	char* apn;
->
->  	DBG("");
->
->  	if (qmi_result_set_error(result, NULL))
->  		goto done;
->
-> +	apn =3D qmi_result_get_string(result, QMI_WDS_RESULT_APN);
-> +	if (apn) {
-> +		DBG("APN: %s", apn);
-> +	}
-
-Item M1 :)
-
->  	if (qmi_result_get_uint8(result, QMI_WDS_RESULT_PDP_TYPE, &pdp_type))
->  		DBG("PDP type %d", pdp_type);
->
->  	if (qmi_result_get_uint8(result, QMI_WDS_RESULT_IP_FAMILY, &ip_family))
->  		DBG("IP family %d", ip_family);
->
-> +	if (qmi_result_get_uint32(result,QMI_WDS_RESULT_IP_ADDRESS, &ip_addr)) {
-> +
-
-No empty line here please
-
-> +		addr.s_addr =3D htonl(ip_addr);
-> +		straddr =3D inet_ntoa(addr);
-> +		DBG("IP addr: %s", straddr);
-> +		ofono_gprs_context_set_ipv4_address(gc, straddr, 1);
-> +	}
-
-item M1
-
-> +	if (qmi_result_get_uint32(result,QMI_WDS_RESULT_GATEWAY, &ip_addr)) {
-> +
-> +		addr.s_addr =3D htonl(ip_addr);
-> +		straddr =3D inet_ntoa(addr);
-> +		DBG("Gateway: %s", straddr);
-> +		ofono_gprs_context_set_ipv4_gateway(gc, straddr);
-> +	}
-> +	if (qmi_result_get_uint32(result,QMI_WDS_RESULT_PRIMARY_DNS, &ip_addr))=
+ static void __qmi_device_discovery_started(struct qmi_device *device,
+-						void *discover_data,
+-						qmi_destroy_func_t destroy)
++						struct discovery *d)
  {
-> +
-> +		addr.s_addr =3D htonl(ip_addr);
-> +		DBG("Primary DNS: %s", inet_ntoa(addr));
-> +	}
-> +	if (qmi_result_get_uint32(result,QMI_WDS_RESULT_SECONDARY_DNS, &ip_addr=
-)) {
-> +
-> +		addr.s_addr =3D htonl(ip_addr);
-> +		DBG("Secondary DNS: %s", inet_ntoa(addr));
+-	struct discovery *d;
+-
+-	d =3D g_new0(struct discovery, 1);
+-	d->discover_data =3D discover_data;
+-	d->destroy =3D destroy;
+-
+ 	g_queue_push_tail(device->discovery_queue, d);
+ }
+ =
 
-The primary / secondary DNS can be assigned via =
+ static void __qmi_device_discovery_complete(struct qmi_device *device,
+-						void *discover_data)
++						struct discovery *d)
+ {
+-	GList *list;
+-	struct discovery *d;
+-
+-	list =3D g_queue_find_custom(device->discovery_queue,
+-				discover_data, __discovery_compare);
+-	if (!list)
++	if (g_queue_remove(device->discovery_queue, d) !=3D TRUE)
+ 		return;
+ =
 
-ofono_gprs_context_set_ipv4_dns_servers or set_ipv6_dns_servers
+-	d =3D list->data;
+-	g_queue_delete_link(device->discovery_queue, list);
+-
+ 	__discovery_free(d, NULL);
+ }
+ =
 
-> +	}
-> +
->  done:
->  	modem =3D ofono_gprs_context_get_modem(gc);
->  	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
-> @@ -98,6 +133,8 @@ done:
->
->  	CALLBACK_WITH_SUCCESS(cb, cbd->data);
->
-> +	g_free(apn);
-> +
->  	g_free(cbd);
->  }
->
-> diff --git a/drivers/qmimodem/wds.h b/drivers/qmimodem/wds.h
-> index 4843f92..e113743 100644
-> --- a/drivers/qmimodem/wds.h
-> +++ b/drivers/qmimodem/wds.h
-> @@ -58,6 +58,7 @@ struct qmi_wds_notify_conn_status {
->
->  /* Get the runtime data session settings */
->  #define QMI_WDS_RESULT_PDP_TYPE			0x11	/* uint8 */
-> +#define QMI_WDS_RESULT_APN			0x14	/* string */
->  #define QMI_WDS_RESULT_PRIMARY_DNS		0x15	/* uint32 IPv4 */
->  #define QMI_WDS_RESULT_SECONDARY_DNS		0x16	/* uint32 IPv4 */
->  #define QMI_WDS_RESULT_IP_ADDRESS		0x1e	/* uint32 IPv4 */
->
+@@ -1065,6 +1039,7 @@ static const void *tlv_get(const void *data, uint16_t=
+ size,
+ }
+ =
 
-Regards,
--Denis
+ struct discover_data {
++	struct discovery super;
+ 	struct qmi_device *device;
+ 	qmi_discover_func_t func;
+ 	void *user_data;
+@@ -1170,7 +1145,7 @@ done:
+ 	if (data->func)
+ 		data->func(count, list, data->user_data);
+ =
 
---===============6153187510106639386==--
+-	__qmi_device_discovery_complete(data->device, data);
++	__qmi_device_discovery_complete(data->device, &data->super);
+ }
+ =
+
+ static gboolean discover_reply(gpointer user_data)
+@@ -1184,7 +1159,7 @@ static gboolean discover_reply(gpointer user_data)
+ 		data->func(device->version_count,
+ 				device->version_list, data->user_data);
+ =
+
+-	__qmi_device_discovery_complete(data->device, data);
++	__qmi_device_discovery_complete(data->device, &data->super);
+ =
+
+ 	return FALSE;
+ }
+@@ -1205,6 +1180,7 @@ bool qmi_device_discover(struct qmi_device *device, q=
+mi_discover_func_t func,
+ 	if (!data)
+ 		return false;
+ =
+
++	data->super.destroy =3D discover_data_free;
+ 	data->device =3D device;
+ 	data->func =3D func;
+ 	data->user_data =3D user_data;
+@@ -1212,8 +1188,7 @@ bool qmi_device_discover(struct qmi_device *device, q=
+mi_discover_func_t func,
+ =
+
+ 	if (device->version_list) {
+ 		data->timeout =3D g_timeout_add_seconds(0, discover_reply, data);
+-		__qmi_device_discovery_started(device, data,
+-							discover_data_free);
++		__qmi_device_discovery_started(device, &data->super);
+ 		return true;
+ 	}
+ =
+
+@@ -1234,7 +1209,7 @@ bool qmi_device_discover(struct qmi_device *device, q=
+mi_discover_func_t func,
+ 	__request_submit(device, req, hdr->transaction);
+ =
+
+ 	data->timeout =3D g_timeout_add_seconds(5, discover_reply, data);
+-	__qmi_device_discovery_started(device, data, discover_data_free);
++	__qmi_device_discovery_started(device, &data->super);
+ =
+
+ 	return true;
+ }
+@@ -1785,6 +1760,7 @@ bool qmi_result_get_uint64(struct qmi_result *result,=
+ uint8_t type,
+ }
+ =
+
+ struct service_create_data {
++	struct discovery super;
+ 	struct qmi_device *device;
+ 	bool shared;
+ 	uint8_t type;
+@@ -1818,7 +1794,7 @@ static gboolean service_create_reply(gpointer user_da=
+ta)
+ 	data->timeout =3D 0;
+ 	data->func(NULL, data->user_data);
+ =
+
+-	__qmi_device_discovery_complete(data->device, data);
++	__qmi_device_discovery_complete(data->device, &data->super);
+ =
+
+ 	return FALSE;
+ }
+@@ -1877,7 +1853,7 @@ done:
+ 	data->func(service, data->user_data);
+ 	qmi_service_unref(service);
+ =
+
+-	__qmi_device_discovery_complete(data->device, data);
++	__qmi_device_discovery_complete(data->device, &data->super);
+ }
+ =
+
+ static void service_create_discover(uint8_t count,
+@@ -1910,8 +1886,7 @@ static void service_create_discover(uint8_t count,
+ =
+
+ 		data->timeout =3D g_timeout_add_seconds(0,
+ 						service_create_reply, data);
+-		__qmi_device_discovery_started(device, data,
+-						service_create_data_free);
++		__qmi_device_discovery_started(device, &data->super);
+ 		return;
+ 	}
+ =
+
+@@ -1934,6 +1909,7 @@ static bool service_create(struct qmi_device *device,=
+ bool shared,
+ 	if (!data)
+ 		return false;
+ =
+
++	data->super.destroy =3D service_create_data_free;
+ 	data->device =3D device;
+ 	data->shared =3D shared;
+ 	data->type =3D type;
+@@ -1956,8 +1932,7 @@ static bool service_create(struct qmi_device *device,=
+ bool shared,
+ =
+
+ done:
+ 	data->timeout =3D g_timeout_add_seconds(8, service_create_reply, data);
+-	__qmi_device_discovery_started(device, data,
+-						service_create_data_free);
++	__qmi_device_discovery_started(device, &data->super);
+ =
+
+ 	return true;
+ }
+@@ -1976,6 +1951,7 @@ bool qmi_service_create(struct qmi_device *device,
+ }
+ =
+
+ struct service_create_shared_data {
++	struct discovery super;
+ 	struct qmi_service *service;
+ 	struct qmi_device *device;
+ 	qmi_create_func_t func;
+@@ -2008,7 +1984,7 @@ static gboolean service_create_shared_reply(gpointer =
+user_data)
+ 	data->timeout =3D 0;
+ 	data->func(data->service, data->user_data);
+ =
+
+-	__qmi_device_discovery_complete(data->device, data);
++	__qmi_device_discovery_complete(data->device, &data->super);
+ =
+
+ 	return FALSE;
+ }
+@@ -2035,6 +2011,7 @@ bool qmi_service_create_shared(struct qmi_device *dev=
+ice,
+ 		if (!data)
+ 			return false;
+ =
+
++		data->super.destroy =3D service_create_shared_data_free;
+ 		data->service =3D qmi_service_ref(service);
+ 		data->device =3D device;
+ 		data->func =3D func;
+@@ -2043,8 +2020,7 @@ bool qmi_service_create_shared(struct qmi_device *dev=
+ice,
+ =
+
+ 		data->timeout =3D g_timeout_add(0,
+ 					service_create_shared_reply, data);
+-		__qmi_device_discovery_started(device, data,
+-					service_create_shared_data_free);
++		__qmi_device_discovery_started(device, &data->super);
+ =
+
+ 		return 0;
+ 	}
+-- =
+
+2.10.2
+
+
+--===============0846122358861981479==--
 
