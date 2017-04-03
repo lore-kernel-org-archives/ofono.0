@@ -1,32 +1,172 @@
-Content-Type: multipart/mixed; boundary="===============2871599292031643025=="
+Content-Type: multipart/mixed; boundary="===============6153187510106639386=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] qmi: add service ID's
-Date: Mon, 03 Apr 2017 09:22:42 -0500
-Message-ID: <4e4b6d75-e82e-1c2f-2524-491020cd5c20@gmail.com>
-In-Reply-To: <20170403122734.12638-1-jonas@southpole.se>
+Subject: Re: [RFC qmi 1/1] qmi: retrieve GPRS context parameters
+Date: Mon, 03 Apr 2017 09:32:19 -0500
+Message-ID: <e6cd3333-d111-f885-6d11-c0efdfe94095@gmail.com>
+In-Reply-To: <20170403123804.13011-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2871599292031643025==
+--===============6153187510106639386==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jonas,
 
-On 04/03/2017 07:27 AM, Jonas Bonn wrote:
+On 04/03/2017 07:38 AM, Jonas Bonn wrote:
 > ---
->  drivers/qmimodem/qmi.c | 14 ++++++++++++++
->  drivers/qmimodem/qmi.h |  7 +++++++
->  2 files changed, 21 insertions(+)
 >
+> This is an RFC because I want some guidance here.  Once the GPRS context
+> has been activated, we can get the connection parameters via a QMI call.
+> The question is, what am I supposed to do with these?
+>
+> i)  Am I responsible for configuring the network interface?  Do I need
+> to implement all the netlink calls to do so?
 
-All three applied, thanks.
+No.  oFono brings up the interface and after that it is up to the =
+
+connection manager (e.g. ConnMan) to assign addresses, etc.
+
+>
+> ii)  Or does a connection manager like connman set up the network interfa=
+ce
+> for me based on the context parameters it retrieves via DBUS?
+
+yes
+
+>
+> iii)  What about routing?  Presumably I should not just force the default
+> route onto the new network interface as that's the connection manager's j=
+ob,
+> right?
+
+ConnMan does that.  Routing/DNS/IP assignment is out of scope for oFono.
+
+>
+> A bit of guidance on how to proceed here would be appreciated.
+>
+> Thanks in advance,
+> Jonas
+>
+>
+>  drivers/qmimodem/gprs-context.c | 37 +++++++++++++++++++++++++++++++++++=
+++
+>  drivers/qmimodem/wds.h          |  1 +
+>  2 files changed, 38 insertions(+)
+>
+> diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-cont=
+ext.c
+> index da2be24..7f424a8 100644
+> --- a/drivers/qmimodem/gprs-context.c
+> +++ b/drivers/qmimodem/gprs-context.c
+> @@ -24,6 +24,7 @@
+>  #endif
+>
+>  #include <string.h>
+> +#include <arpa/inet.h>
+>
+>  #include <ofono/log.h>
+>  #include <ofono/modem.h>
+> @@ -75,21 +76,55 @@ static void get_settings_cb(struct qmi_result *result=
+, void *user_data)
+>  	struct cb_data *cbd =3D user_data;
+>  	ofono_gprs_context_cb_t cb =3D cbd->cb;
+>  	struct ofono_gprs_context *gc =3D cbd->user;
+> +	struct gprs_context_data *data =3D ofono_gprs_context_get_data(gc);
+>  	struct ofono_modem *modem;
+>  	const char *interface;
+>  	uint8_t pdp_type, ip_family;
+> +	uint32_t ip_addr;
+> +	struct in_addr addr;
+> +	char* straddr;
+> +	char* apn;
+>
+>  	DBG("");
+>
+>  	if (qmi_result_set_error(result, NULL))
+>  		goto done;
+>
+> +	apn =3D qmi_result_get_string(result, QMI_WDS_RESULT_APN);
+> +	if (apn) {
+> +		DBG("APN: %s", apn);
+> +	}
+
+Item M1 :)
+
+>  	if (qmi_result_get_uint8(result, QMI_WDS_RESULT_PDP_TYPE, &pdp_type))
+>  		DBG("PDP type %d", pdp_type);
+>
+>  	if (qmi_result_get_uint8(result, QMI_WDS_RESULT_IP_FAMILY, &ip_family))
+>  		DBG("IP family %d", ip_family);
+>
+> +	if (qmi_result_get_uint32(result,QMI_WDS_RESULT_IP_ADDRESS, &ip_addr)) {
+> +
+
+No empty line here please
+
+> +		addr.s_addr =3D htonl(ip_addr);
+> +		straddr =3D inet_ntoa(addr);
+> +		DBG("IP addr: %s", straddr);
+> +		ofono_gprs_context_set_ipv4_address(gc, straddr, 1);
+> +	}
+
+item M1
+
+> +	if (qmi_result_get_uint32(result,QMI_WDS_RESULT_GATEWAY, &ip_addr)) {
+> +
+> +		addr.s_addr =3D htonl(ip_addr);
+> +		straddr =3D inet_ntoa(addr);
+> +		DBG("Gateway: %s", straddr);
+> +		ofono_gprs_context_set_ipv4_gateway(gc, straddr);
+> +	}
+> +	if (qmi_result_get_uint32(result,QMI_WDS_RESULT_PRIMARY_DNS, &ip_addr))=
+ {
+> +
+> +		addr.s_addr =3D htonl(ip_addr);
+> +		DBG("Primary DNS: %s", inet_ntoa(addr));
+> +	}
+> +	if (qmi_result_get_uint32(result,QMI_WDS_RESULT_SECONDARY_DNS, &ip_addr=
+)) {
+> +
+> +		addr.s_addr =3D htonl(ip_addr);
+> +		DBG("Secondary DNS: %s", inet_ntoa(addr));
+
+The primary / secondary DNS can be assigned via =
+
+ofono_gprs_context_set_ipv4_dns_servers or set_ipv6_dns_servers
+
+> +	}
+> +
+>  done:
+>  	modem =3D ofono_gprs_context_get_modem(gc);
+>  	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
+> @@ -98,6 +133,8 @@ done:
+>
+>  	CALLBACK_WITH_SUCCESS(cb, cbd->data);
+>
+> +	g_free(apn);
+> +
+>  	g_free(cbd);
+>  }
+>
+> diff --git a/drivers/qmimodem/wds.h b/drivers/qmimodem/wds.h
+> index 4843f92..e113743 100644
+> --- a/drivers/qmimodem/wds.h
+> +++ b/drivers/qmimodem/wds.h
+> @@ -58,6 +58,7 @@ struct qmi_wds_notify_conn_status {
+>
+>  /* Get the runtime data session settings */
+>  #define QMI_WDS_RESULT_PDP_TYPE			0x11	/* uint8 */
+> +#define QMI_WDS_RESULT_APN			0x14	/* string */
+>  #define QMI_WDS_RESULT_PRIMARY_DNS		0x15	/* uint32 IPv4 */
+>  #define QMI_WDS_RESULT_SECONDARY_DNS		0x16	/* uint32 IPv4 */
+>  #define QMI_WDS_RESULT_IP_ADDRESS		0x1e	/* uint32 IPv4 */
+>
 
 Regards,
 -Denis
 
-
---===============2871599292031643025==--
+--===============6153187510106639386==--
 
