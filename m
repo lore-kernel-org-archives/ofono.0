@@ -1,87 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============4225280069867277647=="
+Content-Type: multipart/mixed; boundary="===============2979775071787102500=="
 MIME-Version: 1.0
-From: Lukasz Nowak <lnowak.tyco@gmail.com>
-Subject: Re: [PATCH] qmi: Optimize structure allocations
-Date: Tue, 04 Apr 2017 21:10:26 +0100
-Message-ID: <af80c14f-fcfc-bee6-c2e2-40fbe796c54c@gmail.com>
-In-Reply-To: <44fd1c14-0d00-e7e7-751a-65f3df685e2d@gmail.com>
+From: Rohit Agrawal <agrawal.rohit1@gmail.com>
+Subject: How to test ofono for MediaTek Modem and Qualcomm Modem
+Date: Sat, 08 Apr 2017 01:46:25 +0530
+Message-ID: <CAOLU1cRL7pYDMbi-QOFM4D3_Lw-SV8Z75uYR2jgfBc7vEYPy1g@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4225280069867277647==
+--===============2979775071787102500==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Folks,
 
-On 04/04/17 16:37, Denis Kenzior wrote:
-> Hi Lukasz,
-> =
+I am new to ofono. Can you please list down the steps to test ofono on
+MediaTek and Qualcomm Modem.
+I have got MediaTek and Qualcomm boards with me. What are the necessary
+arrangements I need to do in order
+to test ofono on these boards. MediaTek board comes with vendor-ril.so and
+as per ofono documentation it talks to RILD
+over unix socket interface.  How exactly the flow happens. Can any one
+explain to me ?
 
-> On 04/04/2017 02:53 AM, Lukasz Nowak wrote:
->> Hi Denis,
->>
->> On 03/04/17 19:13, Denis Kenzior wrote:
->>> struct discovery was allocated for every discovery procedure that was
->>> kicked off, which itself allocated a structure.  This patch uses a
->>> class/subclass concept to only allocate a single structure per discovery
->>> procedure.
->>
->> The primary problem with this is that it still does not cover the shutdo=
-wn
-> =
+How about Qualcomm modem ? Ofono talks through qmi, is this through
+qmi_wwan driver ? If yes so can someone
+please throw the light on the flow for Qualcomm modem too ?
 
-> Yes I know.  But as I mentioned before, I don't think the shutdown logic =
-should be lumped together with the various discovery procedures. Besides, t=
-he shutdown code was bizarre and not thought through properly.
-> =
+-Best Regards,
+Rohit Agrawal
 
-> I have now pushed this patch out as well as another commit that should fi=
-x the shutdown case.
+--===============2979775071787102500==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-Thanks. The patch works fine.
+PGRpdiBkaXI9Imx0ciI+PGRpdj48ZGl2PjxkaXY+PGRpdj48ZGl2PkhpIEZvbGtzLDxicj48YnI+
+PC9kaXY+SSBhbSBuZXcgdG8gb2Zvbm8uIENhbiB5b3UgcGxlYXNlIGxpc3QgZG93biB0aGUgc3Rl
+cHMgdG8gdGVzdCBvZm9ubyBvbiBNZWRpYVRlayBhbmQgUXVhbGNvbW0gTW9kZW0uPGJyPjwvZGl2
+PkkgaGF2ZSBnb3QgTWVkaWFUZWsgYW5kIFF1YWxjb21tIGJvYXJkcyB3aXRoIG1lLiBXaGF0IGFy
+ZSB0aGUgbmVjZXNzYXJ5IGFycmFuZ2VtZW50cyBJIG5lZWQgdG8gZG8gaW4gb3JkZXI8YnI+PC9k
+aXY+dG8gdGVzdCBvZm9ubyBvbiB0aGVzZSBib2FyZHMuIE1lZGlhVGVrIGJvYXJkIGNvbWVzIHdp
+dGggdmVuZG9yLXJpbC5zbyBhbmQgYXMgcGVyIG9mb25vIGRvY3VtZW50YXRpb24gaXQgdGFsa3Mg
+dG8gUklMRDxicj48L2Rpdj5vdmVyIHVuaXggc29ja2V0IGludGVyZmFjZS7CoCBIb3cgZXhhY3Rs
+eSB0aGUgZmxvdyBoYXBwZW5zLiBDYW4gYW55IG9uZSBleHBsYWluIHRvIG1lID88YnI+PGJyPjwv
+ZGl2PjxkaXY+SG93IGFib3V0IFF1YWxjb21tIG1vZGVtID8gT2Zvbm8gdGFsa3MgdGhyb3VnaCBx
+bWksIGlzIHRoaXMgdGhyb3VnaCBxbWlfd3dhbiBkcml2ZXIgPyBJZiB5ZXMgc28gY2FuIHNvbWVv
+bmUgPGJyPjwvZGl2PjxkaXY+cGxlYXNlIHRocm93IHRoZSBsaWdodCBvbiB0aGUgZmxvdyBmb3Ig
+UXVhbGNvbW0gbW9kZW0gdG9vID88YnI+PGJyPjwvZGl2PjxkaXY+LUJlc3QgUmVnYXJkcyw8YnI+
+PC9kaXY+PGRpdj5Sb2hpdCBBZ3Jhd2FsPGJyPjwvZGl2PjwvZGl2Pgo=
 
-> =
-
->> callback, which is 100% segfaulting for me.
->> I am pretty sure that shutdown_reply() and gobi.c:shutdown_cb() is curre=
-ntly
->> guaranteed to arrive after gobi_remove() calls g_free(data).
-> =
-
-> I actually don't see how.  We should only be calling qmi_device_shutdown =
-if the modem is being turned off cleanly (e.g. via Powered=3DFalse).  In th=
-e case of a hot-unplug, we'd be going directly to the .remove method. Is yo=
-ur device jumping off the USB bus when .disable is being called by any chan=
-ce?
-
-gobi_disable() is always called right before gobi_remove(). The path for th=
-is is:
-
-src/modem.c:modem_unregister()
-src/modem.c:set_powered(FALSE)
-driver->disable()
-
-and then:
-src/modem.c:devinfo_remove()
-driver->remove()
-
-As the disable() comes first, gobi does not know that the modem has been re=
-moved, and schedules a qmi shutdown timeout(0). Callback would arrive after=
- remove().
-
-Anyway, this is just for reference, as the latest version cancels the callb=
-ack correctly.
-
-> =
-
-> If so, then you should consider fixing your driver or tell the manufactur=
-er to fix their firmware ;)
-> =
-
-> Regards,
-> -Denis
-
---===============4225280069867277647==--
+--===============2979775071787102500==--
 
