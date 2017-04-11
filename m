@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============1359961474798494978=="
+Content-Type: multipart/mixed; boundary="===============1459203261345998505=="
 MIME-Version: 1.0
 From: Vincent Cesson <vincent.cesson@smile.fr>
-Subject: [PATCH 1/1] gemalto: Improve init process
-Date: Tue, 11 Apr 2017 11:04:11 +0200
-Message-ID: <1491901451-25109-2-git-send-email-vincent.cesson@smile.fr>
-In-Reply-To: <1491901451-25109-1-git-send-email-vincent.cesson@smile.fr>
+Subject: [PATCH v2 1/1] gemalto: Improve init process
+Date: Tue, 11 Apr 2017 14:30:02 +0200
+Message-ID: <1491913802-5600-1-git-send-email-vincent.cesson@smile.fr>
+In-Reply-To: <1491901451-25109-2-git-send-email-vincent.cesson@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1359961474798494978==
+--===============1459203261345998505==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,12 +19,15 @@ Create interfaces only if SIM card is detected.
 Listen to URC for SIM status (improve SIM detection robustness).
 Add some init commands.
 ---
- plugins/gemalto.c | 467 +++++++++++++++++++++++++++++++++++++++++++++++++-=
+Change in v2:
+ - Add case in CFUN parsing
+
+ plugins/gemalto.c | 470 +++++++++++++++++++++++++++++++++++++++++++++++++-=
 ----
- 1 file changed, 431 insertions(+), 36 deletions(-)
+ 1 file changed, 434 insertions(+), 36 deletions(-)
 
 diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-index ffe6814..03caaa8 100644
+index ffe6814..014bb4c 100644
 --- a/plugins/gemalto.c
 +++ b/plugins/gemalto.c
 @@ -42,6 +42,7 @@
@@ -79,7 +82,7 @@ index ffe6814..03caaa8 100644
  =
 
  	return 0;
-@@ -110,6 +132,125 @@ static GAtChat *open_device(const char *device)
+@@ -110,6 +132,128 @@ static GAtChat *open_device(const char *device)
  	return chat;
  }
  =
@@ -125,17 +128,20 @@ index ffe6814..03caaa8 100644
 +		DBG("online =3D %d", init_online_state);
 +		switch (init_online_state) {
 +		case 0:
-+			/* Put the modem offline */
++			/* Keep modem offline but connect USIM */
 +			g_at_chat_send(data->app, "AT+CFUN=3D4", NULL,
 +					gemalto_cfun_enable_cb, modem, NULL);
 +			break;
 +		case 1:
-+			/* Set modem to online and powered */
 +			/* Wait for 300msec otherwise the sim manager has not finished
 +			   and it is used in the NetworkManager.
 +			   Otherwise, get a seg fault */
 +			g_timeout_add(300, (GSourceFunc)gemalto_modem_set_to_online,
 +					modem);
++			break;
++		case 4:
++			/* Set modem to powered */
++			ofono_modem_set_powered(modem, TRUE);
 +			break;
 +		default:
 +			break;
@@ -207,7 +213,7 @@ data)
  static int gemalto_enable(struct ofono_modem *modem)
  {
  	struct gemalto_data *data =3D ofono_modem_get_data(modem);
-@@ -140,7 +281,24 @@ static int gemalto_enable(struct ofono_modem *modem)
+@@ -140,7 +284,24 @@ static int gemalto_enable(struct ofono_modem *modem)
  		g_at_chat_set_debug(data->mdm, gemalto_debug, "Mdm");
  	}
  =
@@ -235,7 +241,7 @@ data)
  =
 
  static int gemalto_disable(struct ofono_modem *modem)
-@@ -149,55 +307,272 @@ static int gemalto_disable(struct ofono_modem *modem)
+@@ -149,55 +310,272 @@ static int gemalto_disable(struct ofono_modem *modem)
  =
 
  	DBG("%p", modem);
@@ -548,7 +554,7 @@ _data)
  =
 
  static void gemalto_post_sim(struct ofono_modem *modem)
-@@ -207,35 +582,55 @@ static void gemalto_post_sim(struct ofono_modem *mode=
+@@ -207,35 +585,55 @@ static void gemalto_post_sim(struct ofono_modem *mode=
 m)
  	DBG("%p", modem);
  =
@@ -637,5 +643,5 @@ a)
 1.9.1
 
 
---===============1359961474798494978==--
+--===============1459203261345998505==--
 
