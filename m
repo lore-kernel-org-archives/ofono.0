@@ -1,79 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============5100498175582490047=="
+Content-Type: multipart/mixed; boundary="===============5133474522111287501=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: How to test ofono for MediaTek Modem and Qualcomm Modem
-Date: Tue, 11 Apr 2017 12:45:03 -0500
-Message-ID: <2c4fdfc6-01c3-a51c-afce-9a23899d6649@gmail.com>
-In-Reply-To: <CAOLU1cTd4Mj=E0n4svet=HgyFV_MA7AjUzeRRoCCU2uHgeD2QA@mail.gmail.com>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: Re: [PATCH 5/8] lte: activate default bearer on network registration
+Date: Tue, 11 Apr 2017 22:48:29 +0200
+Message-ID: <03d7a73f-be7d-6c2f-8016-d5a8478f0e56@southpole.se>
+In-Reply-To: <855e3bd4-b0c4-d61d-c17d-13b82814357d@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5100498175582490047==
+--===============5133474522111287501==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rohit,
+Hi Denis,
 
-Please do not top-post on this mailing list.
-
-> Isn't the master branch at
-> https://git.kernel.org/pub/scm/network/ofono/ofono.git/ supposed to
-> support Android RILD based modems ? My understanding says even MediaTek
-> modems should be covered under this. The code at location
-
-oFono upstream has support for ril based modems yes.  It has only been =
-
-tested with Intel SoFiA devices.  There are no guarantees that other =
-
-modems work.
-
-> https://github.com/rilmodem/ofono <https://github.com/rilmodem/ofono> is
-> based on ofono version 1.12 while the latest ofono code version is 1.19.
-
-Canonical (and Jolla, and maybe other companies) maintain their own =
-
-forks of oFono for use with their distribution / devices / modems / =
-
-firmware combinations.  However, the bulk of the rilmodem driver should =
-
-be the same, with differences mostly attributed to various =
-
-firmware/manufacturer specific behavior.
-
-> I don't want to work on multiple versions of ofono. Could you elaborate
-> on why such a difference ? Not sure what special support is present at
-> location
-> https://github.com/rilmodem/ofono <https://github.com/rilmodem/ofono>
-> which is not present on master branch of ofono (Official). It would be
-> great if you could put some light onto this.
+On 04/11/2017 07:07 PM, Denis Kenzior wrote:
+> On 04/11/2017 03:18 AM, Jonas Bonn wrote:
+>> The LTE atom should watch the network status and automatically activate
+>> the default bearer when the modem becomes registered to the LTE network.
+>>
+>> This patch adds a device callback, activate_default_bearer(), to allow
+>> the device to start networking.
 >
+> Nope, we're not doing it this way.  Once we're attached to LTE there's =
 
-Unfortunately, even with RIL defining 'some sort of standard', the =
+> no need to activate a default bearer.  It is already active.  The =
 
-behavior varies widely between firmware/manufacturer.  Many operations =
+> modem should tell us that this is the case.
+>
+> Another issue is that the network is free to ignore our default bearer =
 
-are accomplished via manufacturer specific RIL extensions, or even by =
+> setting, so you might be activating (or trying to) yet another context.
+>
+> Doesn't QMI provide an equivalent of +CGEV?
 
-hacking the Android telephony services that sit above rild.  Canonical =
+I haven't found an equivalent.  Right now it looks to me as though the =
 
-guys (e.g. Alfonso) might have some experience with MediaTek devices. =
+only way to set up a PDP context is to call the "Start Networking" =
 
-So be nice to them ;), but there are no guarantees that their modem / =
+method.  If I don't start networking, the packet status callback never =
 
-firmware / vendor-ril is the same as yours.
+gives me a "connected" status.  It's not enough to just power on the =
 
-The mtk/mtk2 driver that Alfonso mentioned is not in the official =
+modem... although that does get me registered to the network.
 
-upstream branch, nor likely to ever be.  You will need to perform your =
+Furthermore, it doesn't matter what APN I use, I always get a usable =
 
-own due diligence to understand the implications for your particular =
+data-connection.  "Get Settings" never returns an APN string, either, =
 
-project.
+which makes me that the network is ignoring my setting altogether and =
 
-Regards,
--Denis
+just giving me a default bearer...???
 
+If anyone knows how this is supposed to work, I'd appreciate some guidance!
 
---===============5100498175582490047==--
+/Jonas
+
+--===============5133474522111287501==--
 
