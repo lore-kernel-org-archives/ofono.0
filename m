@@ -1,157 +1,665 @@
-Content-Type: multipart/mixed; boundary="===============7650042509599704733=="
+Content-Type: multipart/mixed; boundary="===============0903499806718135243=="
 MIME-Version: 1.0
-From: Rohit Agrawal <agrawal.rohit1@gmail.com>
-Subject: Re: How to test ofono for MediaTek Modem and Qualcomm Modem
-Date: Tue, 11 Apr 2017 22:41:53 +0530
-Message-ID: <CAOLU1cTd4Mj=E0n4svet=HgyFV_MA7AjUzeRRoCCU2uHgeD2QA@mail.gmail.com>
-In-Reply-To: <CACM4vuA-Zb9ph-20wQVKCvuc63FGdkHvtbXh0inGTmu0LhHZaA@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 1/1] gemalto: Improve init process
+Date: Tue, 11 Apr 2017 12:25:52 -0500
+Message-ID: <7eef3738-fff5-2447-67c5-72958938f5ed@gmail.com>
+In-Reply-To: <1491913802-5600-1-git-send-email-vincent.cesson@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7650042509599704733==
+--===============0903499806718135243==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alfonso,
+Hi Vincent,
 
-Isn't the master branch at
-https://git.kernel.org/pub/scm/network/ofono/ofono.git/ supposed to support
-Android RILD based modems ? My understanding says even MediaTek modems
-should be covered under this. The code at location
-https://github.com/rilmodem/ofono is based on ofono version 1.12 while the
-latest ofono code version is 1.19. I don't want to work on multiple
-versions of ofono. Could you elaborate on why such a difference ? Not sure
-what special support is present at location
-https://github.com/rilmodem/ofono which is not present on master branch of
-ofono (Official). It would be great if you could put some light onto this.
+On 04/11/2017 07:30 AM, Vincent Cesson wrote:
+> Change Airplane mode: keep SIM connected (CFUN=3D4).
+> Fix enable/disable return value.
+> Create interfaces only if SIM card is detected.
+> Listen to URC for SIM status (improve SIM detection robustness).
+> Add some init commands.
+> ---
+> Change in v2:
+>  - Add case in CFUN parsing
+>
+>  plugins/gemalto.c | 470 ++++++++++++++++++++++++++++++++++++++++++++++++=
++-----
+>  1 file changed, 434 insertions(+), 36 deletions(-)
 
--Rohit
+Please consider splitting this into multiple commits.  Structured =
 
-On Mon, Apr 10, 2017 at 3:27 PM, Alfonso Sanchez-Beato <
-alfonso.sanchez-beato@canonical.com> wrote:
+logically.  It will make things much easier to review and get your =
 
-> Hi Rohit,
+changes upstream faster.
+
+Also, please review our coding style guidelines.  doc/coding-style.txt. =
+
+There are many style issues in this submission.
+
 >
-> On Fri, Apr 7, 2017 at 10:16 PM, Rohit Agrawal <agrawal.rohit1@gmail.co=
-m>
-> wrote:
+> diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+> index ffe6814..014bb4c 100644
+> --- a/plugins/gemalto.c
+> +++ b/plugins/gemalto.c
+> @@ -42,6 +42,7 @@
+>  #include <ofono/message-waiting.h>
+>  #include <ofono/netreg.h>
+>  #include <ofono/phonebook.h>
+> +#include <ofono/cbs.h>
+>  #include <ofono/sim.h>
+>  #include <ofono/sms.h>
+>  #include <ofono/ussd.h>
+> @@ -53,10 +54,27 @@
+>  #include <drivers/atmodem/atutil.h>
+>  #include <drivers/atmodem/vendor.h>
 >
->> Hi Folks,
->>
->> I am new to ofono. Can you please list down the steps to test ofono on
->> MediaTek and Qualcomm Modem.
->> I have got MediaTek and Qualcomm boards with me. What are the necessary
->> arrangements I need to do in order
->> to test ofono on these boards. MediaTek board comes with vendor-ril.so
->> and as per ofono documentation it talks to RILD
->> over unix socket interface.  How exactly the flow happens. Can any one
->> explain to me ?
->>
+> +static void at_cpin_query_cb(gboolean ok, GAtResult *result,
+> +		gpointer user_data);
+> +
+> +static const char *sind_prefix[] =3D { "^SIND:", NULL };
+> +static const char *creg_prefix[] =3D { "+CREG:", NULL };
+> +static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
+> +static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
+> +static const char *sdport_prefix[] =3D { "^SDPORT:", NULL };
+> +static const char *gcap_prefix[] =3D { "+GCAP:", NULL };
+> +
+> +static gboolean sim_iface_created =3D FALSE;
+
+Nope.  You can't do that.  This is a global variable and we might =
+
+potentially have multiple instances of this modem at the same time.
 >
-> For RIL-based mediatek modems, I recommend you take a look at our ofono
-> branch:
+>  struct gemalto_data {
+>  	GAtChat *app;
+>  	GAtChat *mdm;
+> +	struct ofono_sim *sim;
+> +	gboolean pin_required;
+> +	gboolean need_reboot;
+> +	struct ofono_gprs *gprs;
+> +	struct ofono_gprs_context *gc;
+> +	gboolean have_gsm;
+>  };
 >
-> https://github.com/rilmodem/ofono
+>  static int gemalto_probe(struct ofono_modem *modem)
+> @@ -67,6 +85,10 @@ static int gemalto_probe(struct ofono_modem *modem)
+>  	if (data =3D=3D NULL)
+>  		return -ENOMEM;
 >
-> There are two plugins you can try:
+> +	sim_iface_created =3D FALSE;
+> +	data->sim =3D NULL;
+> +	data->have_gsm =3D FALSE;
+> +
+>  	ofono_modem_set_data(modem, data);
 >
-> https://github.com/rilmodem/ofono/blob/master/plugins/mtk.c
-> https://github.com/rilmodem/ofono/blob/master/plugins/mtk2.c
+>  	return 0;
+> @@ -110,6 +132,128 @@ static GAtChat *open_device(const char *device)
+>  	return chat;
+>  }
 >
+> +static void gemalto_cfun_enable_cb(gboolean ok, GAtResult *result,
+> +		gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +
+> +	DBG("");
+> +
+> +	/* Power on the modem */
+> +	ofono_modem_set_powered(modem, ok);
+> +}
+> +
+> +gboolean gemalto_modem_set_to_online(struct ofono_modem *modem)
+> +{
+> +	DBG("");
+> +	ofono_modem_set_powered(modem, TRUE);
+> +
+> +	/* Must return FALSE to stop the g_timeout loop */
+> +	return FALSE;
+> +}
+> +
+> +static void gemalto_cfun_query_cb(gboolean ok, GAtResult *result,
+> +		gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GAtResultIter iter;
+> +	gint init_online_state =3D 0;
+> +
+> +	DBG("");
+> +
+> +	if (!ok) {
+> +		/* In case of errors, the mode is not powered */
+> +		ofono_modem_set_powered(modem, FALSE);
+> +	} else {
+> +		g_at_result_iter_init(&iter, result);
+> +		g_at_result_iter_next(&iter, "+CFUN:");
+> +		g_at_result_iter_next_number(&iter, &init_online_state);
+> +
+> +		DBG("online =3D %d", init_online_state);
+> +		switch (init_online_state) {
+> +		case 0:
+> +			/* Keep modem offline but connect USIM */
+> +			g_at_chat_send(data->app, "AT+CFUN=3D4", NULL,
+> +					gemalto_cfun_enable_cb, modem, NULL);
+> +			break;
+> +		case 1:
+> +			/* Wait for 300msec otherwise the sim manager has not finished
+> +			   and it is used in the NetworkManager.
+> +			   Otherwise, get a seg fault */
+> +			g_timeout_add(300, (GSourceFunc)gemalto_modem_set_to_online,
+> +					modem);
+> +			break;
+> +		case 4:
+> +			/* Set modem to powered */
+> +			ofono_modem_set_powered(modem, TRUE);
+> +			break;
+> +		default:
+> +			break;
+> +		}
+> +	}
+> +}
+> +
+> +static void gemalto_sdport_query_cb(gboolean ok, GAtResult *result,
+> +		gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GAtResultIter iter;
+> +	gint sdport_mode =3D -1;
+> +
+> +	DBG("");
+> +
+> +	if (!ok)
+> +		return;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +	g_at_result_iter_next(&iter, "^SDPORT:");
+> +	g_at_result_iter_next_number(&iter, &sdport_mode);
+> +
+> +	/* Already correct mode. */
+> +	if (sdport_mode =3D=3D 3) {
+> +		/* Check the modem mode (online/offline) */
+> +		g_at_chat_send(data->app, "AT+CFUN?", cfun_prefix,
+> +				gemalto_cfun_query_cb, modem, NULL);
+> +	}
+> +}
+> +
+> +static void gemalto_smso_cb(gboolean ok, GAtResult *result, gpointer use=
+r_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("");
+> +
+> +	/* Try hard shutdown */
+> +	if (!ok) {
+> +		DBG("Error");
+> +		return;
+> +	}
+> +
+> +	g_at_chat_cancel_all(data->app);
+> +	g_at_chat_unregister_all(data->app);
+> +
+> +	g_at_chat_unref(data->mdm);
+> +	data->mdm =3D NULL;
+> +	g_at_chat_unref(data->app);
+> +	data->app =3D NULL;
+> +
+> +	ofono_modem_set_powered(modem, FALSE);
+> +}
+> +
+> +void gemalto_shutdown(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("");
+> +
+> +	/* Shutdown the modem */
+> +	g_at_chat_send(data->app, "AT^SMSO", NULL, gemalto_smso_cb,
+> +			modem, NULL);
+> +}
+> +
+>  static int gemalto_enable(struct ofono_modem *modem)
+>  {
+>  	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> @@ -140,7 +284,24 @@ static int gemalto_enable(struct ofono_modem *modem)
+>  		g_at_chat_set_debug(data->mdm, gemalto_debug, "Mdm");
+>  	}
 >
->>
->> How about Qualcomm modem ? Ofono talks through qmi, is this through
->> qmi_wwan driver ? If yes so can someone
->> please throw the light on the flow for Qualcomm modem too ?
->>
->> -Best Regards,
->> Rohit Agrawal
->>
+> -	return 0;
+> +	g_at_chat_send(data->app, "ATE0 +CMEE=3D1", NULL, NULL, NULL, NULL);
+> +
+> +	g_at_chat_send(data->app, "AT^SQPORT?", NULL, NULL, NULL, NULL);
+> +
+> +	/* TEMPORARY : Add this command to get data reconnection working */
+> +	g_at_chat_send(data->mdm, "AT&C0", NULL, NULL, NULL, NULL);
+> +
+> +	/* Configure the modem to be in profil 1 */
+> +	g_at_chat_send(data->app, "AT^SCFG=3D\"Radio/Mtpl\",1,1",
+> +			NULL, NULL, NULL, NULL);
+> +
+> +	g_at_chat_send(data->app, "AT^SDPORT?", sdport_prefix,
+> +			gemalto_sdport_query_cb, modem, NULL);
+> +
+> +	/* Add the Time Zone URC */
+> +	g_at_chat_send(data->app, "AT+CTZU=3D1", NULL, NULL, NULL, NULL);
+
+This belongs in the netreg driver.
+
+> +
+> +	return -EINPROGRESS;
+>  }
 >
-> Br,
-> Alfonso
+>  static int gemalto_disable(struct ofono_modem *modem)
+> @@ -149,55 +310,272 @@ static int gemalto_disable(struct ofono_modem *mod=
+em)
 >
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> https://lists.ofono.org/mailman/listinfo/ofono
+>  	DBG("%p", modem);
 >
+> -	g_at_chat_send(data->app, "AT^SMSO", NULL, NULL, NULL, NULL);
+> +	if (data->app =3D=3D NULL)
+> +		return 0;
+>
+> -	ofono_modem_set_data(modem, NULL);
+> +	gemalto_shutdown(modem);
+>
+> -	return 0;
+> +	return -EINPROGRESS;
+>  }
+>
+> -static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+> +static void gemalto_cfun_cb(gboolean ok, GAtResult *result, gpointer use=
+r_data)
+>  {
+>  	struct cb_data *cbd =3D user_data;
+>  	ofono_modem_online_cb_t cb =3D cbd->cb;
+> -	struct ofono_error error;
+> -
+> -	decode_at_error(&error, g_at_result_final_response(result));
+>
+> -	cb(&error, cbd->data);
+> +	if (ok)
+> +		CALLBACK_WITH_SUCCESS(cb, cbd->data);
+> +	else
+> +		CALLBACK_WITH_FAILURE(cb, cbd->data);
+>  }
+>
+> -static void gemalto_set_online(struct ofono_modem *modem, ofono_bool_t o=
+nline,
+> +static void gemalto_set_online(struct ofono_modem *modem, gboolean onlin=
+e,
+>  		ofono_modem_online_cb_t cb, void *user_data)
+>  {
+>  	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+>  	struct cb_data *cbd =3D cb_data_new(cb, user_data);
+> -	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D0";
+> +	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
+>
+>  	DBG("modem %p %s", modem, online ? "online" : "offline");
+>
+> -	if (g_at_chat_send(data->app, command, NULL, set_online_cb, cbd, g_free=
+))
+> +	if (data->app =3D=3D NULL) {
+> +		CALLBACK_WITH_FAILURE(cb, cbd->data);
+> +		g_free(cbd);
+> +	}
+> +
+> +	g_at_chat_send(data->app, command, cfun_prefix, gemalto_cfun_cb, cbd,
+> +			g_free);
+> +}
+> +
+> +static void gemalto_create_sim(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("");
+> +
+> +	if (!sim_iface_created) {
+> +		sim_iface_created =3D TRUE;
+> +		/* Create the sim */
+> +		data->sim =3D ofono_sim_create(modem, 0, "atmodem",
+> +				data->app);
+> +		if (data->sim)
+> +			ofono_sim_inserted_notify(data->sim, TRUE);
+> +	}
+> +}
+> +
+> +static void gemalto_set_network(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("");
+> +
+> +	ofono_devinfo_create(modem, 0, "atmodem", data->app);
+> +
+> +	if (data->have_gsm =3D=3D TRUE) {
+> +		ofono_sms_create(modem, 0, "atmodem", data->app);
+> +
+> +		ofono_cbs_create(modem, 0, "atmodem", data->app);
+> +
+> +		data->gprs =3D ofono_gprs_create(modem, 0,
+> +				"atmodem", data->app);
+> +
+> +		data->gc =3D ofono_gprs_context_create(modem, 0,
+> +				"atmodem", data->mdm);
+> +
+> +		if (data->gprs && data->gc)
+> +			ofono_gprs_add_context(data->gprs, data->gc);
+> +	}
+> +}
+> +
+> +static void gemalto_sind_cb(gboolean ok, GAtResult *result,
+> +		gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GAtResultIter iter;
+> +	int value =3D 0;
+> +
+> +	DBG("");
+> +
+> +	if (ok) {
+> +		g_at_result_iter_init(&iter, result);
+> +		if (!g_at_result_iter_next(&iter, "^SIND:"))
+> +			return;
+> +		if (!g_at_result_iter_skip_next(&iter))
+> +			return;
+> +		if (!g_at_result_iter_skip_next(&iter))
+> +			return;
+> +		if (!g_at_result_iter_next_number(&iter, &value))
+> +			return;
+> +
+> +		if (value =3D=3D 5) { /* SIM data ready */
+> +			/* If no pin required, we create the SIM interface */
+> +			if (!data->pin_required) {
+> +				/* Deactivate the SIND URC*/
+> +				g_at_chat_send(data->app, "AT^SIND=3D\"simstatus\",0",
+> +						sind_prefix, NULL, NULL, NULL);
+> +				gemalto_create_sim(modem);
+> +			}
+> +		}
+> +
+> +		g_at_result_iter_close_list(&iter);
+> +	}
+> +}
+> +
+> +static void gemalto_sind_notify(GAtResult *result, gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GAtResultIter iter;
+> +	char *signal_identifier =3D "simstatus";
+> +	const char *str;
+> +	int value =3D 0;
+> +
+> +	DBG("");
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +	if (!g_at_result_iter_next(&iter, "+CIEV:"))
+> +		return;
+> +	if (!g_at_result_iter_next_unquoted_string(&iter, &str))
+> +		return;
+> +	if (g_str_equal(signal_identifier, str) =3D=3D FALSE)
+>  		return;
+> +	if (!g_at_result_iter_next_number(&iter, &value))
+> +		return;
+> +	if (value =3D=3D 5) { /* SIM data ready */
+> +		/* If no pin required, we create the SIM interface */
+> +		if (!data->pin_required)
+> +			gemalto_create_sim(modem);
+> +	}
+> +	g_at_result_iter_close_list(&iter);
+
+Lots of style violations for doc/coding-style.txt item M1
+
+> +}
+> +
+> +static void gemalto_creg_query_cb(gboolean ok, GAtResult *result,
+> +		gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GAtResultIter iter;
+> +	int value =3D 0;
+> +
+> +	DBG("");
+> +
+> +	if (ok) {
+> +		g_at_result_iter_init(&iter, result);
+> +		if (!g_at_result_iter_next(&iter, "+CREG:"))
+> +			return;
+> +		/* Skip the URC mode */
+> +		if (!g_at_result_iter_skip_next(&iter))
+> +			return;
+> +		if (!g_at_result_iter_next_number(&iter, &value))
+> +			return;
+> +		if (value =3D=3D 5) {
+> +			/* Deactivate the CREG URC */
+> +			g_at_chat_send(data->app, "AT+CREG=3D0", NULL, NULL, NULL, NULL);
+> +
+> +			gemalto_set_network(modem);
+> +		}
+> +		g_at_result_iter_close_list(&iter);
+
+item M1
+
+Why are you dealing with network registration inside the modem driver? =
+
+Atoms are created based whether the radio is on or off and not whether =
+
+you're registered/roaming
+
+> +	}
+> +}
+>
+> -	CALLBACK_WITH_FAILURE(cb, cbd->data);
+> +static void gemalto_creg_notify(GAtResult *result, gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GAtResultIter iter;
+> +	int value =3D 0;
+> +
+> +	DBG("");
+>
+> -	g_free(cbd);
+> +	g_at_result_iter_init(&iter, result);
+> +	if (!g_at_result_iter_next(&iter, "+CREG:"))
+> +		return;
+> +	if (!g_at_result_iter_next_number(&iter, &value))
+> +		return;
+> +
+> +	if (value =3D=3D 5 && !data->have_gsm) {
+> +		data->have_gsm =3D TRUE;
+> +		gemalto_set_network(modem);
+> +	}
+> +	g_at_result_iter_close_list(&iter);
+> +}
+> +
+> +static gboolean at_pin_query(struct ofono_modem *modem)
+> +{
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	/* Invert FALSE =3D stop, TRUE =3D re-do to be used in g_timeout_add_se=
+conds */
+> +	gboolean ret =3D FALSE;
+> +
+> +	if (g_at_chat_send(data->mdm, "AT+CPIN?", cpin_prefix,
+> +				at_cpin_query_cb, modem, NULL) <=3D 0) {
+> +		DBG("Error while querying the PIN.");
+> +		ret =3D TRUE;
+> +	}
+> +	return ret;
+> +}
+> +
+> +static void at_cpin_query_cb(gboolean ok, GAtResult *result, gpointer us=
+er_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GAtResultIter iter;
+> +	struct ofono_error error;
+> +	const char *pin_type_str;
+> +
+> +	if (ok) {
+> +		g_at_result_iter_init(&iter, result);
+> +
+> +		if (g_at_result_iter_next(&iter, "+CPIN:")) {
+> +			g_at_result_iter_next_unquoted_string(&iter, &pin_type_str);
+> +			/* No PIN required or there is an error */
+> +			if (g_strcmp0(pin_type_str, "READY") =3D=3D 0) {
+> +				data->pin_required =3D FALSE;
+> +			} else { /* PIN is required */
+> +				data->pin_required =3D TRUE;
+> +				/* Create the SIM manager to enter PIN */
+> +				gemalto_create_sim(modem);
+> +			}
+> +		}
+> +	} else {
+> +		decode_at_error(&error, g_at_result_final_response(result));
+> +		/* If the error is CME busy */
+> +		if (error.type =3D=3D OFONO_ERROR_TYPE_CME && error.error =3D=3D 14) {
+> +			DBG("Invalid password =3D> retry the command");
+> +			/* We re-try the command */
+> +			g_timeout_add_seconds(1, (GSourceFunc)at_pin_query, modem);
+> +			/* If the SIM is not inserted */
+> +		} else if (error.type =3D=3D OFONO_ERROR_TYPE_CME && error.error =3D=
+=3D 11) {
+> +
+> +			DBG("PIN not entered, please enter PIN");
+> +			g_timeout_add_seconds(1, (GSourceFunc)at_pin_query, modem);
+> +
+> +		}
+> +	}
+
+What are you trying to do here?  If this is one of those modems without =
+
+a proper sim inserted notification, then you might want to use =
+
+at_util_sim_state_query_new instead of re-inventing the wheel.
+
+>  }
+>
+>  static void gemalto_pre_sim(struct ofono_modem *modem)
+>  {
+>  	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> -	struct ofono_sim *sim;
+>
+>  	DBG("%p", modem);
+>
+>  	ofono_devinfo_create(modem, 0, "atmodem", data->app);
+> -	sim =3D ofono_sim_create(modem, 0, "atmodem", data->app);
+> -	ofono_voicecall_create(modem, 0, "atmodem", data->app);
+>  	ofono_location_reporting_create(modem, 0, "gemaltomodem", data->app);
+>
+> -	if (sim)
+> -		ofono_sim_inserted_notify(sim, TRUE);
+> +	/* Listen to simstatus SIND URC */
+> +	g_at_chat_register(data->app, "+CIEV:",
+> +			gemalto_sind_notify, FALSE, modem, NULL);
+> +	/* Listen to CREG URC */
+> +	g_at_chat_register(data->app, "+CREG:",
+> +			gemalto_creg_notify, FALSE, modem, NULL);
+> +
+> +	/* Check the SIM status and enable simstatus SIND URC */
+> +	g_at_chat_send(data->mdm, "AT^SIND=3D\"simstatus\",1", sind_prefix,
+> +			gemalto_sind_cb, modem, NULL);
+> +
+> +	/* Query the PIN command to create SIM Manager (or not) */
+> +	at_pin_query(modem);
+
+No AT commands inside pre_sim, post_sim or post_online please.  That is =
+
+not what they're meant for.
+
+>  }
+>
+>  static void gemalto_post_sim(struct ofono_modem *modem)
+> @@ -207,35 +585,55 @@ static void gemalto_post_sim(struct ofono_modem *mo=
+dem)
+>  	DBG("%p", modem);
+>
+>  	ofono_phonebook_create(modem, 0, "atmodem", data->app);
+> +}
+> +
+> +static void gcap_support(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> +	GAtResultIter iter;
+> +	const char *gcap;
+> +
+> +	if (!ok)
+> +		return;
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (!g_at_result_iter_next(&iter, "+GCAP:"))
+> +		return;
+>
+> -	ofono_sms_create(modem, 0, "atmodem", data->app);
+> +	while (g_at_result_iter_next_unquoted_string(&iter, &gcap)) {
+> +		if (*gcap =3D=3D '\0')
+> +			break;
+> +
+> +		if (!g_strcmp0(gcap, "+CGSM"))
+> +			data->have_gsm =3D TRUE;
+> +	}
+> +
+> +	if (data->have_gsm)
+> +		gemalto_set_network(modem);
+>  }
+>
+>  static void gemalto_post_online(struct ofono_modem *modem)
+>  {
+>  	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+> -	struct ofono_message_waiting *mw;
+> -	struct ofono_gprs *gprs;
+> -	struct ofono_gprs_context *gc;
+>
+>  	DBG("%p", modem);
+>
+> -	ofono_ussd_create(modem, 0, "atmodem", data->app);
+> -	ofono_call_forwarding_create(modem, 0, "atmodem", data->app);
+> -	ofono_call_settings_create(modem, 0, "atmodem", data->app);
+> -	ofono_netreg_create(modem, OFONO_VENDOR_CINTERION, "atmodem", data->app=
+);
+> -	ofono_call_meter_create(modem, 0, "atmodem", data->app);
+> -	ofono_call_barring_create(modem, 0, "atmodem", data->app);
+> +	/* Enable CREG URC and check CREG status */
+> +	g_at_chat_send(data->app, "AT+CREG=3D1", creg_prefix, NULL, modem, NULL=
+);
+> +	g_at_chat_send(data->app, "AT+CREG?", creg_prefix,
+> +			gemalto_creg_query_cb, modem, NULL);
+>
+> -	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->app);
+> -	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->mdm);
+> +	ofono_voicecall_create(modem, 0, "atmodem", data->app);
+> +	ofono_netreg_create(modem, OFONO_VENDOR_CINTERION, "atmodem", data->app=
+);
+>
+> -	if (gprs && gc)
+> -		ofono_gprs_add_context(gprs, gc);
+> +	g_at_chat_send(data->mdm, "AT&C0", NULL, NULL, NULL, NULL);
+> +	g_at_chat_send(data->mdm, "AT&D2", NULL, NULL, NULL, NULL);
+>
+> -	mw =3D ofono_message_waiting_create(modem);
+> -	if (mw)
+> -		ofono_message_waiting_register(mw);
+> +	/* Check for GSM capabilities */
+> +	g_at_chat_send(data->app, "AT+GCAP", gcap_prefix, gcap_support, modem,
+> +			NULL);
+>  }
+>
+>  static struct ofono_modem_driver gemalto_driver =3D {
 >
 
---===============7650042509599704733==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+Regards,
+-Denis
 
-PGRpdiBkaXI9Imx0ciI+PGRpdj48ZGl2PkhpIEFsZm9uc28sPGJyPjxicj48L2Rpdj5Jc24mIzM5
-O3QgdGhlIG1hc3RlciBicmFuY2ggYXQgPGEgaHJlZj0iaHR0cHM6Ly9naXQua2VybmVsLm9yZy9w
-dWIvc2NtL25ldHdvcmsvb2Zvbm8vb2Zvbm8uZ2l0LyI+aHR0cHM6Ly9naXQua2VybmVsLm9yZy9w
-dWIvc2NtL25ldHdvcmsvb2Zvbm8vb2Zvbm8uZ2l0LzwvYT4gc3VwcG9zZWQgdG8gc3VwcG9ydCBB
-bmRyb2lkIFJJTEQgYmFzZWQgbW9kZW1zID8gTXkgdW5kZXJzdGFuZGluZyBzYXlzIGV2ZW4gTWVk
-aWFUZWsgbW9kZW1zIHNob3VsZCBiZSBjb3ZlcmVkIHVuZGVyIHRoaXMuIFRoZSBjb2RlIGF0IGxv
-Y2F0aW9uIDxhIGhyZWY9Imh0dHBzOi8vZ2l0aHViLmNvbS9yaWxtb2RlbS9vZm9ubyIgdGFyZ2V0
-PSJfYmxhbmsiPmh0dHBzOi8vZ2l0aHViLmNvbS9yaWxtb2RlbS88d2JyPm9mb25vPC9hPiBpcyBi
-YXNlZCBvbiBvZm9ubyB2ZXJzaW9uIDEuMTIgd2hpbGUgdGhlIGxhdGVzdCBvZm9ubyBjb2RlIHZl
-cnNpb24gaXMgMS4xOS4gSSBkb24mIzM5O3Qgd2FudCB0byB3b3JrIG9uIG11bHRpcGxlIHZlcnNp
-b25zIG9mIG9mb25vLiBDb3VsZCB5b3UgZWxhYm9yYXRlIG9uIHdoeSBzdWNoIGEgZGlmZmVyZW5j
-ZSA/IE5vdCBzdXJlIHdoYXQgc3BlY2lhbCBzdXBwb3J0IGlzIHByZXNlbnQgYXQgbG9jYXRpb248
-YnI+PGEgaHJlZj0iaHR0cHM6Ly9naXRodWIuY29tL3JpbG1vZGVtL29mb25vIiB0YXJnZXQ9Il9i
-bGFuayI+aHR0cHM6Ly9naXRodWIuY29tL3JpbG1vZGVtLzx3YnI+b2Zvbm88L2E+IHdoaWNoIGlz
-IG5vdCBwcmVzZW50IG9uIG1hc3RlciBicmFuY2ggb2Ygb2Zvbm8gKE9mZmljaWFsKS4gSXQgd291
-bGQgYmUgZ3JlYXQgaWYgeW91IGNvdWxkIHB1dCBzb21lIGxpZ2h0IG9udG8gdGhpcy48YnI+PGJy
-PjwvZGl2Pi1Sb2hpdDxicj48L2Rpdj48ZGl2IGNsYXNzPSJnbWFpbF9leHRyYSI+PGJyPjxkaXYg
-Y2xhc3M9ImdtYWlsX3F1b3RlIj5PbiBNb24sIEFwciAxMCwgMjAxNyBhdCAzOjI3IFBNLCBBbGZv
-bnNvIFNhbmNoZXotQmVhdG8gPHNwYW4gZGlyPSJsdHIiPiZsdDs8YSBocmVmPSJtYWlsdG86YWxm
-b25zby5zYW5jaGV6LWJlYXRvQGNhbm9uaWNhbC5jb20iIHRhcmdldD0iX2JsYW5rIj5hbGZvbnNv
-LnNhbmNoZXotYmVhdG9AY2Fub25pY2FsLmNvbTwvYT4mZ3Q7PC9zcGFuPiB3cm90ZTo8YnI+PGJs
-b2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9y
-ZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleCI+PGRpdiBkaXI9Imx0ciI+
-SGkgUm9oaXQsPGJyPjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnI+PGRpdiBjbGFzcz0iZ21h
-aWxfcXVvdGUiPjxzcGFuIGNsYXNzPSIiPk9uIEZyaSwgQXByIDcsIDIwMTcgYXQgMTA6MTYgUE0s
-IFJvaGl0IEFncmF3YWwgPHNwYW4gZGlyPSJsdHIiPiZsdDs8YSBocmVmPSJtYWlsdG86YWdyYXdh
-bC5yb2hpdDFAZ21haWwuY29tIiB0YXJnZXQ9Il9ibGFuayI+YWdyYXdhbC5yb2hpdDFAZ21haWwu
-Y29tPC9hPiZndDs8L3NwYW4+IHdyb3RlOjxicj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVv
-dGUiIHN0eWxlPSJtYXJnaW46MHB4IDBweCAwcHggMC44ZXg7Ym9yZGVyLWxlZnQ6MXB4IHNvbGlk
-IHJnYigyMDQsMjA0LDIwNCk7cGFkZGluZy1sZWZ0OjFleCI+PGRpdiBkaXI9Imx0ciI+PGRpdj48
-ZGl2PjxkaXY+PGRpdj48ZGl2PkhpIEZvbGtzLDxicj48YnI+PC9kaXY+SSBhbSBuZXcgdG8gb2Zv
-bm8uIENhbiB5b3UgcGxlYXNlIGxpc3QgZG93biB0aGUgc3RlcHMgdG8gdGVzdCBvZm9ubyBvbiBN
-ZWRpYVRlayBhbmQgUXVhbGNvbW0gTW9kZW0uPGJyPjwvZGl2PkkgaGF2ZSBnb3QgTWVkaWFUZWsg
-YW5kIFF1YWxjb21tIGJvYXJkcyB3aXRoIG1lLiBXaGF0IGFyZSB0aGUgbmVjZXNzYXJ5IGFycmFu
-Z2VtZW50cyBJIG5lZWQgdG8gZG8gaW4gb3JkZXI8YnI+PC9kaXY+dG8gdGVzdCBvZm9ubyBvbiB0
-aGVzZSBib2FyZHMuIE1lZGlhVGVrIGJvYXJkIGNvbWVzIHdpdGggdmVuZG9yLXJpbC5zbyBhbmQg
-YXMgcGVyIG9mb25vIGRvY3VtZW50YXRpb24gaXQgdGFsa3MgdG8gUklMRDxicj48L2Rpdj5vdmVy
-IHVuaXggc29ja2V0IGludGVyZmFjZS7CoCBIb3cgZXhhY3RseSB0aGUgZmxvdyBoYXBwZW5zLiBD
-YW4gYW55IG9uZSBleHBsYWluIHRvIG1lID88YnI+PC9kaXY+PC9kaXY+PC9ibG9ja3F1b3RlPjxk
-aXY+PGJyPjwvZGl2Pjwvc3Bhbj48ZGl2PkZvciBSSUwtYmFzZWQgbWVkaWF0ZWsgbW9kZW1zLCBJ
-IHJlY29tbWVuZCB5b3UgdGFrZSBhIGxvb2sgYXQgb3VyIG9mb25vIGJyYW5jaDo8L2Rpdj48ZGl2
-Pjxicj48L2Rpdj48ZGl2PjxhIGhyZWY9Imh0dHBzOi8vZ2l0aHViLmNvbS9yaWxtb2RlbS9vZm9u
-byIgdGFyZ2V0PSJfYmxhbmsiPmh0dHBzOi8vZ2l0aHViLmNvbS9yaWxtb2RlbS88d2JyPm9mb25v
-PC9hPjxicj48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PlRoZXJlIGFyZSB0d28gcGx1Z2lucyB5
-b3UgY2FuIHRyeTo8L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PjxhIGhyZWY9Imh0dHBzOi8vZ2l0
-aHViLmNvbS9yaWxtb2RlbS9vZm9uby9ibG9iL21hc3Rlci9wbHVnaW5zL210ay5jIiB0YXJnZXQ9
-Il9ibGFuayI+aHR0cHM6Ly9naXRodWIuY29tL3JpbG1vZGVtLzx3YnI+b2Zvbm8vYmxvYi9tYXN0
-ZXIvcGx1Z2lucy9tdGsuPHdicj5jPC9hPjxicj48L2Rpdj48ZGl2PjxhIGhyZWY9Imh0dHBzOi8v
-Z2l0aHViLmNvbS9yaWxtb2RlbS9vZm9uby9ibG9iL21hc3Rlci9wbHVnaW5zL210azIuYyIgdGFy
-Z2V0PSJfYmxhbmsiPmh0dHBzOi8vZ2l0aHViLmNvbS9yaWxtb2RlbS88d2JyPm9mb25vL2Jsb2Iv
-bWFzdGVyL3BsdWdpbnMvPHdicj5tdGsyLmM8L2E+PGJyPjwvZGl2PjxzcGFuIGNsYXNzPSIiPjxk
-aXY+wqA8L2Rpdj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46
-MHB4IDBweCAwcHggMC44ZXg7Ym9yZGVyLWxlZnQ6MXB4IHNvbGlkIHJnYigyMDQsMjA0LDIwNCk7
-cGFkZGluZy1sZWZ0OjFleCI+PGRpdiBkaXI9Imx0ciI+PGRpdj48YnI+PC9kaXY+PGRpdj5Ib3cg
-YWJvdXQgUXVhbGNvbW0gbW9kZW0gPyBPZm9ubyB0YWxrcyB0aHJvdWdoIHFtaSwgaXMgdGhpcyB0
-aHJvdWdoIHFtaV93d2FuIGRyaXZlciA/IElmIHllcyBzbyBjYW4gc29tZW9uZSA8YnI+PC9kaXY+
-PGRpdj5wbGVhc2UgdGhyb3cgdGhlIGxpZ2h0IG9uIHRoZSBmbG93IGZvciBRdWFsY29tbSBtb2Rl
-bSB0b28gPzxicj48YnI+PC9kaXY+PGRpdj4tQmVzdCBSZWdhcmRzLDxicj48L2Rpdj48ZGl2PlJv
-aGl0IEFncmF3YWw8YnI+PC9kaXY+PC9kaXY+CjwvYmxvY2txdW90ZT48L3NwYW4+PC9kaXY+PGJy
-PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj5Cciw8L2Rpdj48ZGl2IGNsYXNzPSJnbWFp
-bF9leHRyYSI+QWxmb25zbzwvZGl2PjwvZGl2Pgo8YnI+X19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fPHdicj5fX19fX19fX19fX19fX19fXzxicj4Kb2Zvbm8gbWFpbGluZyBsaXN0PGJyPgo8
-YSBocmVmPSJtYWlsdG86b2Zvbm9Ab2Zvbm8ub3JnIj5vZm9ub0BvZm9uby5vcmc8L2E+PGJyPgo8
-YSBocmVmPSJodHRwczovL2xpc3RzLm9mb25vLm9yZy9tYWlsbWFuL2xpc3RpbmZvL29mb25vIiBy
-ZWw9Im5vcmVmZXJyZXIiIHRhcmdldD0iX2JsYW5rIj5odHRwczovL2xpc3RzLm9mb25vLm9yZy88
-d2JyPm1haWxtYW4vbGlzdGluZm8vb2Zvbm88L2E+PGJyPgo8YnI+PC9ibG9ja3F1b3RlPjwvZGl2
-Pjxicj48L2Rpdj4K
-
---===============7650042509599704733==--
+--===============0903499806718135243==--
 
