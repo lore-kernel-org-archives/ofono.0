@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3852999538456405993=="
+Content-Type: multipart/mixed; boundary="===============0754486136082459684=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3 1/3] gemalto: Clean post init functions
-Date: Thu, 13 Apr 2017 11:56:06 -0500
-Message-ID: <331054c2-9daa-015a-ae81-865704a54f4c@gmail.com>
-In-Reply-To: <1492070747-7252-2-git-send-email-vincent.cesson@smile.fr>
+Subject: Re: [PATCH v3 2/3] gemalto: Change offline mode, keep USIM available
+Date: Thu, 13 Apr 2017 11:56:56 -0500
+Message-ID: <7bb3509f-e746-78f5-8d27-825b402c2f64@gmail.com>
+In-Reply-To: <1492070747-7252-3-git-send-email-vincent.cesson@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3852999538456405993==
+--===============0754486136082459684==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,11 +16,12 @@ Content-Transfer-Encoding: quoted-printable
 Hi Vincent,
 
 On 04/13/2017 03:05 AM, Vincent Cesson wrote:
-> Remove inappropriate interfaces.
-> Move GPRS init from post_online to post_sim.
+> Gemalto has two airplane mode:
+> CFUN=3D0 disables USIM
+> CFUN=3D4 keeps USIM connected
 > ---
->  plugins/gemalto.c | 34 ++++++++--------------------------
->  1 file changed, 8 insertions(+), 26 deletions(-)
+>  plugins/gemalto.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 >
 
 Applied, thanks.
@@ -29,5 +30,5 @@ Regards,
 -Denis
 
 
---===============3852999538456405993==--
+--===============0754486136082459684==--
 
