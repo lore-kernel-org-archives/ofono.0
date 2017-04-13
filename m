@@ -1,35 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============7591614082298226527=="
+Content-Type: multipart/mixed; boundary="===============3852999538456405993=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Problem setting up ofono
-Date: Thu, 13 Apr 2017 11:53:08 -0500
-Message-ID: <b7f6d69a-9f32-0340-ead5-65478821c6cb@gmail.com>
-In-Reply-To: <VI1PR1001MB07835B467F7C0E0A51AD4C27C9020@VI1PR1001MB0783.EURPRD10.PROD.OUTLOOK.COM>
+Subject: Re: [PATCH v3 1/3] gemalto: Clean post init functions
+Date: Thu, 13 Apr 2017 11:56:06 -0500
+Message-ID: <331054c2-9daa-015a-ae81-865704a54f4c@gmail.com>
+In-Reply-To: <1492070747-7252-2-git-send-email-vincent.cesson@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7591614082298226527==
+--===============3852999538456405993==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Davide,
+Hi Vincent,
 
-> I've tried running ofonod with the -d flag to get some debug
-> information, but I didn't see anything that could help me, since it
-> stops printing out anything after the connection succeeds, here's the
-> full log: https://pastebin.com/gz2tFK4n
+On 04/13/2017 03:05 AM, Vincent Cesson wrote:
+> Remove inappropriate interfaces.
+> Move GPRS init from post_online to post_sim.
+> ---
+>  plugins/gemalto.c | 34 ++++++++--------------------------
+>  1 file changed, 8 insertions(+), 26 deletions(-)
+>
 
-Run ofonod with OFONO_AT_DEBUG=3D1 environment variable set.
-
-e.g.
-export OFONO_AT_DEBUG=3D1
-ofonod -nd
-
-What version of BlueZ are you using?
+Applied, thanks.
 
 Regards,
 -Denis
 
---===============7591614082298226527==--
+
+--===============3852999538456405993==--
 
