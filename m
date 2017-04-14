@@ -1,141 +1,141 @@
-Content-Type: multipart/mixed; boundary="===============3480984166146901164=="
+Content-Type: multipart/mixed; boundary="===============5743693906854745310=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH QMI LTE v2 12/13] qmi: rely on destroy callback
-Date: Fri, 14 Apr 2017 23:36:45 +0200
-Message-ID: <20170414213646.32066-13-jonas@southpole.se>
+Subject: [PATCH QMI LTE v2 13/13] qmi: consolidate ss_info handling functions
+Date: Fri, 14 Apr 2017 23:36:46 +0200
+Message-ID: <20170414213646.32066-14-jonas@southpole.se>
 In-Reply-To: <20170414213646.32066-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3480984166146901164==
+--===============5743693906854745310==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-...and move creation of cb_data structures closer to their usage point
-in order to prevent them from leaking when earlier code fails.
 ---
- drivers/qmimodem/network-registration.c | 22 ++++++++--------------
- 1 file changed, 8 insertions(+), 14 deletions(-)
+ drivers/qmimodem/network-registration.c | 51 ++++++++++++++---------------=
+----
+ 1 file changed, 22 insertions(+), 29 deletions(-)
 
 diff --git a/drivers/qmimodem/network-registration.c b/drivers/qmimodem/net=
 work-registration.c
-index a3f9cf9..d0f4853 100644
+index d0f4853..9bd88df 100644
 --- a/drivers/qmimodem/network-registration.c
 +++ b/drivers/qmimodem/network-registration.c
-@@ -188,8 +188,6 @@ static void qmi_registration_status(struct ofono_netreg=
- *netreg,
+@@ -135,42 +135,32 @@ static bool extract_ss_info(struct qmi_result *result=
+, int *status,
+ 	return true;
+ }
+ =
+
+-static void ss_info_notify(struct qmi_result *result, void *user_data)
++static void handle_ss_info(struct qmi_result *result, void *user_data)
+ {
+-	struct ofono_netreg *netreg =3D user_data;
++	struct cb_data *cbd =3D user_data;
++	struct ofono_netreg *netreg =3D cbd->user;
+ 	struct netreg_data *data =3D ofono_netreg_get_data(netreg);
++	ofono_netreg_status_cb_t cb =3D cbd->cb;
+ 	int status, lac, cellid, tech;
+ =
+
+ 	DBG("");
+ =
+
+-	if (!extract_ss_info(result, &status, &lac, &cellid, &tech,
+-							&data->operator))
+-		return;
+-
+-	ofono_netreg_status_notify(netreg, status, lac, cellid, tech);
+-}
+-
+-static void get_ss_info_cb(struct qmi_result *result, void *user_data)
+-{
+-	struct cb_data *cbd =3D user_data;
+-	ofono_netreg_status_cb_t cb =3D cbd->cb;
+-	struct netreg_data *data =3D cbd->user;
+-	int status, lac, cellid, tech;
++	if (cb && qmi_result_set_error(result, NULL))
++		goto error;
+ =
+
+-	DBG("");
++	if (!extract_ss_info(result, &status, &lac,
++				&cellid, &tech, &data->operator))
++		goto error;
+ =
+
+-	if (qmi_result_set_error(result, NULL)) {
+-		CALLBACK_WITH_FAILURE(cb, -1, -1, -1, -1, cbd->data);
+-		return;
+-	}
++	if (cb)
++		CALLBACK_WITH_SUCCESS(cb, status,
++					lac, cellid, tech, cbd->data);
++	else
++		ofono_netreg_status_notify(netreg, status, lac, cellid, tech);
+ =
+
+-	if (!extract_ss_info(result, &status, &lac, &cellid, &tech,
+-							&data->operator)) {
++error:
++	if (cb)
+ 		CALLBACK_WITH_FAILURE(cb, -1, -1, -1, -1, cbd->data);
+-		return;
+-	}
+-
+-	CALLBACK_WITH_SUCCESS(cb, status, lac, cellid, tech, cbd->data);
+ }
+ =
+
+ static void qmi_registration_status(struct ofono_netreg *netreg,
+@@ -181,10 +171,10 @@ static void qmi_registration_status(struct ofono_netr=
+eg *netreg,
+ =
+
+ 	DBG("");
+ =
+
+-	cbd->user =3D data;
++	cbd->user =3D netreg;
+ =
+
+ 	if (qmi_service_send(data->nas, QMI_NAS_GET_SS_INFO, NULL,
+-					get_ss_info_cb, cbd, g_free) > 0)
++					handle_ss_info, cbd, g_free) > 0)
  		return;
  =
 
  	CALLBACK_WITH_FAILURE(cb, -1, -1, -1, -1, cbd->data);
--
--	g_free(cbd);
- }
- =
-
- static void qmi_current_operator(struct ofono_netreg *netreg,
-@@ -300,8 +298,6 @@ static void qmi_list_operators(struct ofono_netreg *net=
-reg,
- 		return;
- =
-
- 	CALLBACK_WITH_FAILURE(cb, 0, NULL, cbd->data);
--
--	g_free(cbd);
- }
- =
-
- static void register_net_cb(struct qmi_result *result, void *user_data)
-@@ -330,7 +326,7 @@ static void qmi_register_auto(struct ofono_netreg *netr=
-eg,
- 				ofono_netreg_register_cb_t cb, void *user_data)
- {
+@@ -492,6 +482,7 @@ static void create_nas_cb(struct qmi_service *service, =
+void *user_data)
+ 	struct ofono_netreg *netreg =3D user_data;
  	struct netreg_data *data =3D ofono_netreg_get_data(netreg);
--	struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+	struct cb_data *cbd;
  	struct qmi_param *param;
++	struct cb_data *cbd;
+ 	struct qmi_nas_param_event_signal_strength ss =3D { .report =3D 0x01,
+ 				.count =3D 5, .dbm[0] =3D -55, .dbm[1] =3D -65,
+ 				.dbm[2] =3D -75, .dbm[3] =3D -85, .dbm[4] =3D -95 };
+@@ -509,8 +500,10 @@ static void create_nas_cb(struct qmi_service *service,=
+ void *user_data)
+ 	qmi_service_register(data->nas, QMI_NAS_EVENT,
+ 					event_notify, netreg, NULL);
  =
 
- 	DBG("");
-@@ -340,6 +336,8 @@ static void qmi_register_auto(struct ofono_netreg *netr=
-eg,
++	cbd =3D cb_data_new(NULL, NULL);
++	cbd->user =3D netreg;
+ 	qmi_service_register(data->nas, QMI_NAS_SS_INFO_IND,
+-					ss_info_notify, netreg, NULL);
++					handle_ss_info, cbd, g_free);
+ =
+
+ 	param =3D qmi_param_new();
  	if (!param)
- 		goto error;
- =
-
-+	cbd =3D cb_data_new(cb, user_data);
-+
- 	if (qmi_service_send(data->nas, QMI_NAS_REGISTER_NET, param,
- 					register_net_cb, cbd, g_free) > 0)
- 		return;
-@@ -347,9 +345,7 @@ static void qmi_register_auto(struct ofono_netreg *netr=
-eg,
- 	qmi_param_free(param);
- =
-
- error:
--	CALLBACK_WITH_FAILURE(cb, cbd->data);
--
--	g_free(cbd);
-+	CALLBACK_WITH_FAILURE(cb, user_data);
- }
- =
-
- static void qmi_register_manual(struct ofono_netreg *netreg,
-@@ -357,7 +353,7 @@ static void qmi_register_manual(struct ofono_netreg *ne=
-treg,
- 				ofono_netreg_register_cb_t cb, void *user_data)
- {
- 	struct netreg_data *data =3D ofono_netreg_get_data(netreg);
--	struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+	struct cb_data *cbd;
- 	struct qmi_nas_param_register_manual_info info;
- 	struct qmi_param *param;
- =
-
-@@ -375,6 +371,8 @@ static void qmi_register_manual(struct ofono_netreg *ne=
-treg,
- 	qmi_param_append(param, QMI_NAS_PARAM_REGISTER_MANUAL_INFO,
- 						sizeof(info), &info);
- =
-
-+	cbd =3D cb_data_new(cb, user_data);
-+
- 	if (qmi_service_send(data->nas, QMI_NAS_REGISTER_NET, param,
- 					register_net_cb, cbd, g_free) > 0)
- 		return;
-@@ -382,9 +380,7 @@ static void qmi_register_manual(struct ofono_netreg *ne=
-treg,
- 	qmi_param_free(param);
- =
-
- error:
--	CALLBACK_WITH_FAILURE(cb, cbd->data);
--
--	g_free(cbd);
-+	CALLBACK_WITH_FAILURE(cb, user_data);
- }
- =
-
- static int dbm_to_strength(int8_t dbm)
-@@ -446,8 +442,6 @@ static void qmi_signal_strength(struct ofono_netreg *ne=
-treg,
- 		return;
- =
-
- 	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
--
--	g_free(cbd);
- }
- =
-
- static void event_notify(struct qmi_result *result, void *user_data)
 -- =
 
 2.9.3
 
 
---===============3480984166146901164==--
+--===============5743693906854745310==--
 
