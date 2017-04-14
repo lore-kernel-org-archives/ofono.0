@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============0379615508782422062=="
+Content-Type: multipart/mixed; boundary="===============2756360051375763050=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH QMI LTE v2 07/13] qmi: read_settings needs to call start
- network
-Date: Fri, 14 Apr 2017 17:57:10 -0500
-Message-ID: <8f8058a9-8e63-c7b8-7141-25a413268699@gmail.com>
-In-Reply-To: <20170414213646.32066-8-jonas@southpole.se>
+Subject: Re: [PATCH QMI LTE v2 08/13] qmi: don't leak cbd and rely on destroy
+ function
+Date: Fri, 14 Apr 2017 18:00:47 -0500
+Message-ID: <19cbcb16-3abc-ff2b-aa5b-086ce5d7193e@gmail.com>
+In-Reply-To: <20170414213646.32066-9-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0379615508782422062==
+--===============2756360051375763050==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,29 +17,56 @@ Content-Transfer-Encoding: quoted-printable
 Hi Jonas,
 
 On 04/14/2017 04:36 PM, Jonas Bonn wrote:
-> For LTE networks, a default bearer is automatically activated when
-> the modem registers to the network.  QMI modems, however, do not
-> automatically enable the network interface just because the bearer
-> exists; a call to "start network" needs to be made in order to
-> get the packet handle before get_settings will return any data and
-> the network interface can be configured.
->
-> This patch makes read_settings call "start network" in order to
-> enable the interface for the default bearer.  No new bearer will
-> be created with this call and the settings for the bearer will come
-> from the default profile, irregardless of what parameters are passed
-> to the "start network" method.
 > ---
->  drivers/qmimodem/gprs-context.c | 58 ++++++++++++++++++++++-------------=
-------
->  1 file changed, 31 insertions(+), 27 deletions(-)
+>  drivers/qmimodem/gprs.c | 5 ++---
+>  1 file changed, 2 insertions(+), 3 deletions(-)
+>
+> diff --git a/drivers/qmimodem/gprs.c b/drivers/qmimodem/gprs.c
+> index 05ad4bd..404c975 100644
+> --- a/drivers/qmimodem/gprs.c
+> +++ b/drivers/qmimodem/gprs.c
+> @@ -94,7 +94,7 @@ static void qmi_set_attached(struct ofono_gprs *gprs, i=
+nt attached,
+>  					ofono_gprs_cb_t cb, void *user_data)
+>  {
+>  	struct gprs_data *data =3D ofono_gprs_get_data(gprs);
+> -	struct cb_data *cbd =3D cb_data_new(cb, user_data);
+> +	struct cb_data *cbd;
+>  	struct qmi_param *param;
+>  	uint8_t action;
+>
+> @@ -109,6 +109,7 @@ static void qmi_set_attached(struct ofono_gprs *gprs,=
+ int attached,
+>  	if (!param)
+>  		goto error;
+>
+> +	cbd =3D cb_data_new(cb, user_data);
+>  	if (qmi_service_send(data->nas, QMI_NAS_ATTACH_DETACH, param,
+>  					attach_detach_cb, cbd, g_free) > 0)
+>  		return;
+
+So cbd is not freed if qmi_service_send fails.  So you are introducing a =
+
+leak on the fail path.
+
+> @@ -117,8 +118,6 @@ static void qmi_set_attached(struct ofono_gprs *gprs,=
+ int attached,
+>
+>  error:
+>  	CALLBACK_WITH_FAILURE(cb, cbd->data);
+> -
+> -	g_free(cbd);
+>  }
+>
+>  static void get_ss_info_cb(struct qmi_result *result, void *user_data)
 >
 
-Applied, thanks.
+This entire patch seems unnecessary?  The code looks fine as is.  Or am =
+
+I missing something?
 
 Regards,
 -Denis
 
-
---===============0379615508782422062==--
+--===============2756360051375763050==--
 
