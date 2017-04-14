@@ -1,85 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============4607132514118986107=="
+Content-Type: multipart/mixed; boundary="===============0852594606372619089=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: [PATCH 5/8] lte: activate default bearer on network registration
-Date: Fri, 14 Apr 2017 23:53:13 +0200
-Message-ID: <3d6e046c-0b3b-5755-9d14-1755fe99338b@southpole.se>
-In-Reply-To: <1a742fa1-e303-3810-60ae-18a5c1bf1770@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH QMI LTE v2 03/13] gprs: release active contexts completely
+Date: Fri, 14 Apr 2017 17:13:17 -0500
+Message-ID: <b01e87db-02bb-cd2a-88cd-0b8e5f4122cd@gmail.com>
+In-Reply-To: <20170414213646.32066-4-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4607132514118986107==
+--===============0852594606372619089==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Jonas,
 
-On 04/13/2017 05:14 PM, Denis Kenzior wrote:
-> I haven't tested this, but I suspect that calling "Start network" for
->>> the same profile again will fail...??? A profile number corresponds
->>> to a Context ID...???  Maybe...
->>
+On 04/14/2017 04:36 PM, Jonas Bonn wrote:
+> The release_active_contexts method ask the driver to deactive all
+> the active contexts it knows about; however, after doing so, the
+> context state needs to be released, as well, so that the contexts
+> do not continue to appear to be active.
+> ---
+>  src/gprs.c | 3 +++
+>  1 file changed, 3 insertions(+)
 >
-> I would imagine that a profile has the same meaning as the 27.007 =
-
-> equivalent of +CGDCONT <cid>
-
-Yes, it does.  Others have tested modifying context parameters with AT =
-
-commands and the changes are visible in the corresponding QMI profile.  =
-
-However, this could theoretically be firmware dependent as it's not =
-
-actually specified anywhere that it must be so.
-
+> diff --git a/src/gprs.c b/src/gprs.c
+> index 6ed1c89..b6e11e8 100644
+> --- a/src/gprs.c
+> +++ b/src/gprs.c
+> @@ -1614,6 +1614,9 @@ static void release_active_contexts(struct ofono_gp=
+rs *gprs)
 >
->> I tested this and "start network" fails when attempting to connect a
->> profile a second time.
->>
+>  		if (gc->driver->detach_shutdown !=3D NULL)
+>  			gc->driver->detach_shutdown(gc, ctx->context.cid);
+> +
+> +		pri_reset_context_settings(ctx);
+> +		release_context(ctx);
+
+Hmm, this seems wrong.  The original commit (according to git blame, git =
+
+show 05b8fe47) was aimed at PPP contexts.  The gprs_context driver will =
+
+call g_at_ppp_shutdown which in turn will result in eventual =
+
+ppp_disconnect.  The context driver will then call =
+
+ofono_gprs_cid_deactivated.
+
+For the other context drivers, it was assumed that the modem will be =
+
+sane enough to issue a +CGEV with a context deactivation.
+
+I'm assuming you need this for QMI as well, so you might want to use =
+
+similar semantics.  E.g. have detach_shutdown call STOP_NET and then =
+
+call ofono_gprs_cid_deactivated.
+
+>  	}
+>  }
 >
-> Makes sense.  Do note that the same APN can be (in theory) double, =
-
-> triple, etc activated.  But this requires a separate cid for each =
-
-> instance.
-
-Yes, exactly.  Multiple profiles with identical parameters can be =
-
-activated, as far as I can tell.
->>> Given all of the above, for QMI this means:
->>>
->>> i)  When the netreg atom detects registration to an LTE network then
->>> we can call "Start network" immediately.
 >
-> gprs atom driver needs to tell ofono core that a context is active. =
 
-> This means gprs driver should call ofono_gprs_cid_activated
->
->>> ii)  Start network will give us the packet-handle for the default
->>> bearer.  This can be held by the netreg atom.
->
-> why netreg atom?  This should be managed by gprs-context.
+Regards,
+-Denis
 
-Yes, you're right.  I also came to this insight after writing this email! :)
-
-I originally implemented this as described above but have now posted a =
-
-new series that works as you described.  It really hasn't been easy to =
-
-understand how this all was supposed to work but what I've got now seems =
-
-reasonable and functions well.
-
-One question:  ofono_gprs_notify_bearer()... why do we need this when =
-
-netreg already provides the technology to the GPRS atom?
-
-Thanks for taking the time to help me work through all of this! Much =
-
-appreciated.
-
-/Jonas
-
---===============4607132514118986107==--
+--===============0852594606372619089==--
 
