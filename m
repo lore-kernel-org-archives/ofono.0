@@ -1,40 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============6435008436830751743=="
+Content-Type: multipart/mixed; boundary="===============3136700853461304325=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH QMI LTE v2 02/13] qmi: fix typo
-Date: Fri, 14 Apr 2017 23:36:35 +0200
-Message-ID: <20170414213646.32066-3-jonas@southpole.se>
+Subject: [PATCH QMI LTE v2 03/13] gprs: release active contexts completely
+Date: Fri, 14 Apr 2017 23:36:36 +0200
+Message-ID: <20170414213646.32066-4-jonas@southpole.se>
 In-Reply-To: <20170414213646.32066-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6435008436830751743==
+--===============3136700853461304325==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+The release_active_contexts method ask the driver to deactive all
+the active contexts it knows about; however, after doing so, the
+context state needs to be released, as well, so that the contexts
+do not continue to appear to be active.
 ---
- drivers/qmimodem/nas.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ src/gprs.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/drivers/qmimodem/nas.h b/drivers/qmimodem/nas.h
-index 9bb9a9a..b39b425 100644
---- a/drivers/qmimodem/nas.h
-+++ b/drivers/qmimodem/nas.h
-@@ -142,7 +142,7 @@ struct qmi_nas_current_plmn {
+diff --git a/src/gprs.c b/src/gprs.c
+index 6ed1c89..b6e11e8 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -1614,6 +1614,9 @@ static void release_active_contexts(struct ofono_gprs=
+ *gprs)
  =
 
- /* qmi_nas_serving_system.status */
- #define QMI_NAS_REGISTRATION_STATE_NOT_REGISTERED	0x00
--#define QMI_NAS_REGISTRATION_STATE_REGISTEREID		0x01
-+#define QMI_NAS_REGISTRATION_STATE_REGISTERED		0x01
- #define QMI_NAS_REGISTRATION_STATE_SEARCHING		0x02
- #define QMI_NAS_REGISTRATION_STATE_DENIED		0x03
- #define QMI_NAS_REGISTRATION_STATE_UNKNOWN		0x04
+ 		if (gc->driver->detach_shutdown !=3D NULL)
+ 			gc->driver->detach_shutdown(gc, ctx->context.cid);
++
++		pri_reset_context_settings(ctx);
++		release_context(ctx);
+ 	}
+ }
+ =
+
 -- =
 
 2.9.3
 
 
---===============6435008436830751743==--
+--===============3136700853461304325==--
 
