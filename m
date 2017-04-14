@@ -1,79 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============9177487051025890352=="
+Content-Type: multipart/mixed; boundary="===============3428399340219767643=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH QMI LTE v2 10/13] qmi: use destroy callback for
- activate_primary
-Date: Fri, 14 Apr 2017 23:36:43 +0200
-Message-ID: <20170414213646.32066-11-jonas@southpole.se>
+Subject: [PATCH QMI LTE v2 11/13] qmi: stop listening to packet service
+ notifications
+Date: Fri, 14 Apr 2017 23:36:44 +0200
+Message-ID: <20170414213646.32066-12-jonas@southpole.se>
 In-Reply-To: <20170414213646.32066-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9177487051025890352==
+--===============3428399340219767643==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+The packet service status notification tells whether there is _any_
+active and enabled context.  Using this to decide whether to
+release any given context makes no sense.
+
+It might make sense to monitor this status in the GPRS atom, but
+not here in the gprs-context atom.
 ---
- drivers/qmimodem/gprs-context.c | 11 +++++------
- 1 file changed, 5 insertions(+), 6 deletions(-)
+ drivers/qmimodem/gprs-context.c | 30 ------------------------------
+ 1 file changed, 30 deletions(-)
 
 diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-contex=
 t.c
-index 1708ce0..02b0671 100644
+index 02b0671..b4c2823 100644
 --- a/drivers/qmimodem/gprs-context.c
 +++ b/drivers/qmimodem/gprs-context.c
-@@ -230,15 +230,13 @@ static void qmi_activate_primary(struct ofono_gprs_co=
-ntext *gc,
- 				ofono_gprs_context_cb_t cb, void *user_data)
+@@ -44,33 +44,6 @@ struct gprs_context_data {
+ 	uint32_t pkt_handle;
+ };
+ =
+
+-static void pkt_status_notify(struct qmi_result *result, void *user_data)
+-{
+-	struct ofono_gprs_context *gc =3D user_data;
+-	struct gprs_context_data *data =3D ofono_gprs_context_get_data(gc);
+-	const struct qmi_wds_notify_conn_status *status;
+-	uint16_t len;
+-	uint8_t ip_family;
+-
+-	DBG("");
+-
+-	status =3D qmi_result_get(result, QMI_WDS_NOTIFY_CONN_STATUS, &len);
+-	if (!status)
+-		return;
+-
+-	DBG("conn status %d", status->status);
+-
+-	if (qmi_result_get_uint8(result, QMI_WDS_NOTIFY_IP_FAMILY, &ip_family))
+-		DBG("ip family %d", ip_family);
+-
+-	switch (status->status) {
+-	case QMI_WDS_CONN_STATUS_DISCONNECTED:
+-		ofono_gprs_context_deactivated(gc, data->active_context);
+-		data->active_context =3D 0;
+-		break;
+-	}
+-}
+-
+ static void get_settings_cb(struct qmi_result *result, void *user_data)
  {
- 	struct gprs_context_data *data =3D ofono_gprs_context_get_data(gc);
--	struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+	struct cb_data *cbd;
- 	struct qmi_param *param;
- 	uint8_t ip_family;
- 	uint8_t auth;
+ 	struct cb_data *cbd =3D user_data;
+@@ -370,9 +343,6 @@ static void create_wds_cb(struct qmi_service *service, =
+void *user_data)
+ 	}
  =
 
- 	DBG("cid %u", ctx->cid);
- =
-
--	cbd->user =3D gc;
+ 	data->wds =3D qmi_service_ref(service);
 -
- 	data->active_context =3D ctx->cid;
- =
-
- 	switch (ctx->proto) {
-@@ -284,6 +282,9 @@ static void qmi_activate_primary(struct ofono_gprs_cont=
-ext *gc,
- 		qmi_param_append(param, QMI_WDS_PARAM_PASSWORD,
- 					strlen(ctx->password), ctx->password);
- =
-
-+	cbd =3D cb_data_new(cb, user_data);
-+	cbd->user =3D gc;
-+
- 	if (qmi_service_send(data->wds, QMI_WDS_START_NET, param,
- 					start_net_cb, cbd, g_free) > 0)
- 		return;
-@@ -293,9 +294,7 @@ static void qmi_activate_primary(struct ofono_gprs_cont=
-ext *gc,
- error:
- 	data->active_context =3D 0;
- =
-
--	CALLBACK_WITH_FAILURE(cb, cbd->data);
--
--	g_free(cbd);
-+	CALLBACK_WITH_FAILURE(cb, user_data);
+-	qmi_service_register(data->wds, QMI_WDS_PKT_STATUS_IND,
+-					pkt_status_notify, gc, NULL);
  }
  =
 
- static void stop_net_cb(struct qmi_result *result, void *user_data)
+ static void get_data_format_cb(struct qmi_result *result, void *user_data)
 -- =
 
 2.9.3
 
 
---===============9177487051025890352==--
+--===============3428399340219767643==--
 
