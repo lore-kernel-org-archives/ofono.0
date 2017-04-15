@@ -1,65 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============1064558203451148812=="
+Content-Type: multipart/mixed; boundary="===============5432699810761713337=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH qmi lte v3 1/6] qmi: free cb_data on error
-Date: Sat, 15 Apr 2017 17:34:41 +0200
-Message-ID: <20170415153446.31803-3-jonas@southpole.se>
-In-Reply-To: <20170415153446.31803-1-jonas@southpole.se>
+Subject: [PATCH qmi lte v3 0/6] QMI LTE series
+Date: Sat, 15 Apr 2017 17:34:39 +0200
+Message-ID: <20170415153446.31803-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1064558203451148812==
+--===============5432699810761713337==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-...and move allocation of structure up to variable declarations to
-match the pattern used elsewhere in the code.
----
- drivers/qmimodem/gprs-context.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+Changes since v2:
+* Revert callback data setup changes; the original model was fine so
+  this amounted mostly to churn and, unfortunately, ended up introducing
+  memory leaks
+* Use ofono_gprs_context_deactivated in the detach_shutdown path instead
+  of modifying release_active_contexts()
+* Add support for roaming registration state
 
-diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-contex=
-t.c
-index c9caf64..3743bb2 100644
---- a/drivers/qmimodem/gprs-context.c
-+++ b/drivers/qmimodem/gprs-context.c
-@@ -207,13 +207,12 @@ static void qmi_gprs_read_settings(struct ofono_gprs_=
-context* gc,
- 					void *user_data)
- {
- 	struct gprs_context_data *data =3D ofono_gprs_context_get_data(gc);
--	struct cb_data *cbd;
-+	struct cb_data *cbd =3D cb_data_new(cb, user_data);
- =
+Original cover letter follows:
 
- 	DBG("cid %u", cid);
- =
+LTE is different from other 'GPRS' technologies in that a default bearer
+always gets set up when the modem registers to the network.  Ofono has
+some support for this and this series tries to set this up for QMI
+modems.
 
- 	data->active_context =3D cid;
- =
+The key to understanding this series is to understand that QMI modems
+do not automatically enable the network interface when connecting to
+an LTE network, even though the default bearer is already set up.  A
+call to "start network" needs to be made in order to allow packets to
+flow.  So the jist of this series is:
 
--	cbd  =3D cb_data_new(cb, user_data);
- 	cbd->user =3D gc;
- =
+i) detect network registration to LTE network
+ii) call ofono_gprs_cid_activated
+iii) in read_settings, start by calling "start network"
 
- 	if (qmi_service_send(data->wds, QMI_WDS_START_NET, NULL,
-@@ -223,6 +222,8 @@ static void qmi_gprs_read_settings(struct ofono_gprs_co=
-ntext* gc,
- 	data->active_context =3D 0;
- =
+...and then there are some other adjustments in the series to make
+this all work.
 
- 	CALLBACK_WITH_FAILURE(cb, cbd->data);
-+
-+	g_free(cbd);
- }
- =
+I've tested this with my EC21, both on LTE and UMTS networks.  It
+all seems to work, including moving out of network connectivity and
+bringing the modem repeatedly online/offline.
 
- static void qmi_activate_primary(struct ofono_gprs_context *gc,
+One open question at this point:
+
+* What happens if the connection manager calls deactivate_context
+on the default bearer context?  I don't see that any other drivers
+guard against this, and the QMI driver will happily stop the network
+interface even though the default bearer is still up in the background.
+
+Jonas Bonn (6):
+  qmi: free cb_data on error
+  qmi: implement detach_shutdown method
+  qmi: activate default bearer context for LTE networks
+  qim: use named status value
+  qmi: stop listening to packet service notifications
+  qmi: consolidate ss_info handling functions
+
+ drivers/qmimodem/gprs-context.c         |  58 ++++++--------
+ drivers/qmimodem/gprs.c                 | 135 ++++++++++++++++++++++++----=
+----
+ drivers/qmimodem/network-registration.c |  53 ++++++-------
+ 3 files changed, 146 insertions(+), 100 deletions(-)
+
 -- =
 
 2.9.3
 
 
---===============1064558203451148812==--
+--===============5432699810761713337==--
 
