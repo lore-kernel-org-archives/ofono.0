@@ -1,74 +1,103 @@
-Content-Type: multipart/mixed; boundary="===============5432699810761713337=="
+Content-Type: multipart/mixed; boundary="===============1624930095016624344=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH qmi lte v3 0/6] QMI LTE series
-Date: Sat, 15 Apr 2017 17:34:39 +0200
-Message-ID: <20170415153446.31803-1-jonas@southpole.se>
+Subject: [PATCH qmi lte v3 2/6] qmi: implement detach_shutdown method
+Date: Sat, 15 Apr 2017 17:34:42 +0200
+Message-ID: <20170415153446.31803-4-jonas@southpole.se>
+In-Reply-To: <20170415153446.31803-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5432699810761713337==
+--===============1624930095016624344==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Changes since v2:
-* Revert callback data setup changes; the original model was fine so
-  this amounted mostly to churn and, unfortunately, ended up introducing
-  memory leaks
-* Use ofono_gprs_context_deactivated in the detach_shutdown path instead
-  of modifying release_active_contexts()
-* Add support for roaming registration state
+The detach_shutdown method is invoked to unconditionally release
+an active context.  For QMI, this is equivalent to a call to
+deactivate_primary.
 
-Original cover letter follows:
+This patch makes the callback to deactivate_primary optional and
+implements detach_shutdown to simply call it.  When there is no
+callback, the stop_net callback notifies ofono about the context
+release via an asynchronous ofono_gprs_context_deactivated() call.
+---
+ drivers/qmimodem/gprs-context.c | 23 +++++++++++++++++++----
+ 1 file changed, 19 insertions(+), 4 deletions(-)
 
-LTE is different from other 'GPRS' technologies in that a default bearer
-always gets set up when the modem registers to the network.  Ofono has
-some support for this and this series tries to set this up for QMI
-modems.
+diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-contex=
+t.c
+index 3743bb2..2085898 100644
+--- a/drivers/qmimodem/gprs-context.c
++++ b/drivers/qmimodem/gprs-context.c
+@@ -309,14 +309,19 @@ static void stop_net_cb(struct qmi_result *result, vo=
+id *user_data)
+ 	DBG("");
+ =
 
-The key to understanding this series is to understand that QMI modems
-do not automatically enable the network interface when connecting to
-an LTE network, even though the default bearer is already set up.  A
-call to "start network" needs to be made in order to allow packets to
-flow.  So the jist of this series is:
+ 	if (qmi_result_set_error(result, NULL)) {
+-		CALLBACK_WITH_FAILURE(cb, cbd->data);
++		if (cb)
++			CALLBACK_WITH_FAILURE(cb, cbd->data);
+ 		return;
+ 	}
+ =
 
-i) detect network registration to LTE network
-ii) call ofono_gprs_cid_activated
-iii) in read_settings, start by calling "start network"
+-	data->active_context =3D 0;
+ 	data->pkt_handle =3D 0;
+ =
 
-...and then there are some other adjustments in the series to make
-this all work.
+-	CALLBACK_WITH_SUCCESS(cb, cbd->data);
++	if (cb)
++		CALLBACK_WITH_SUCCESS(cb, cbd->data);
++	else
++		ofono_gprs_context_deactivated(gc, data->active_context); =
 
-I've tested this with my EC21, both on LTE and UMTS networks.  It
-all seems to work, including moving out of network connectivity and
-bringing the modem repeatedly online/offline.
++
++	data->active_context =3D 0;
+ }
+ =
 
-One open question at this point:
+ static void qmi_deactivate_primary(struct ofono_gprs_context *gc,
+@@ -343,11 +348,20 @@ static void qmi_deactivate_primary(struct ofono_gprs_=
+context *gc,
+ 	qmi_param_free(param);
+ =
 
-* What happens if the connection manager calls deactivate_context
-on the default bearer context?  I don't see that any other drivers
-guard against this, and the QMI driver will happily stop the network
-interface even though the default bearer is still up in the background.
+ error:
+-	CALLBACK_WITH_FAILURE(cb, cbd->data);
++	if (cb)
++		CALLBACK_WITH_FAILURE(cb, user_data);
+ =
 
-Jonas Bonn (6):
-  qmi: free cb_data on error
-  qmi: implement detach_shutdown method
-  qmi: activate default bearer context for LTE networks
-  qim: use named status value
-  qmi: stop listening to packet service notifications
-  qmi: consolidate ss_info handling functions
+ 	g_free(cbd);
+ }
+ =
 
- drivers/qmimodem/gprs-context.c         |  58 ++++++--------
- drivers/qmimodem/gprs.c                 | 135 ++++++++++++++++++++++++----=
-----
- drivers/qmimodem/network-registration.c |  53 ++++++-------
- 3 files changed, 146 insertions(+), 100 deletions(-)
++static void qmi_gprs_context_detach_shutdown(struct ofono_gprs_context *gc,
++						unsigned int cid)
++{
++	DBG("");
++
++	qmi_deactivate_primary(gc, cid, NULL, NULL);
++}
++
+ static void create_wds_cb(struct qmi_service *service, void *user_data)
+ {
+ 	struct ofono_gprs_context *gc =3D user_data;
+@@ -476,6 +490,7 @@ static struct ofono_gprs_context_driver driver =3D {
+ 	.activate_primary	=3D qmi_activate_primary,
+ 	.deactivate_primary	=3D qmi_deactivate_primary,
+ 	.read_settings		=3D qmi_gprs_read_settings,
++	.detach_shutdown	=3D qmi_gprs_context_detach_shutdown,
+ };
+ =
 
+ void qmi_gprs_context_init(void)
 -- =
 
 2.9.3
 
 
---===============5432699810761713337==--
+--===============1624930095016624344==--
 
