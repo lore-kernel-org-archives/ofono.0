@@ -1,60 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============3728895371306016069=="
+Content-Type: multipart/mixed; boundary="===============1064558203451148812=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 5/8] lte: activate default bearer on network registration
-Date: Fri, 14 Apr 2017 18:18:57 -0500
-Message-ID: <722bf53b-1a97-afcc-ff82-e0323102c0e7@gmail.com>
-In-Reply-To: <3d6e046c-0b3b-5755-9d14-1755fe99338b@southpole.se>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: [PATCH qmi lte v3 1/6] qmi: free cb_data on error
+Date: Sat, 15 Apr 2017 17:34:41 +0200
+Message-ID: <20170415153446.31803-3-jonas@southpole.se>
+In-Reply-To: <20170415153446.31803-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3728895371306016069==
+--===============1064558203451148812==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+...and move allocation of structure up to variable declarations to
+match the pattern used elsewhere in the code.
+---
+ drivers/qmimodem/gprs-context.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
->
-> I originally implemented this as described above but have now posted a
-> new series that works as you described.  It really hasn't been easy to
-> understand how this all was supposed to work but what I've got now seems
-> reasonable and functions well.
+diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-contex=
+t.c
+index c9caf64..3743bb2 100644
+--- a/drivers/qmimodem/gprs-context.c
++++ b/drivers/qmimodem/gprs-context.c
+@@ -207,13 +207,12 @@ static void qmi_gprs_read_settings(struct ofono_gprs_=
+context* gc,
+ 					void *user_data)
+ {
+ 	struct gprs_context_data *data =3D ofono_gprs_context_get_data(gc);
+-	struct cb_data *cbd;
++	struct cb_data *cbd =3D cb_data_new(cb, user_data);
+ =
 
-This is one of the most complex pieces of the stack.  It makes my brain =
+ 	DBG("cid %u", cid);
+ =
 
-hurt every time I look at it as well.
+ 	data->active_context =3D cid;
+ =
 
->
-> One question:  ofono_gprs_notify_bearer()... why do we need this when
-> netreg already provides the technology to the GPRS atom?
+-	cbd  =3D cb_data_new(cb, user_data);
+ 	cbd->user =3D gc;
+ =
 
-Many devices send out +CREG/CGREG which only reports status as 'umts'. =
+ 	if (qmi_service_send(data->wds, QMI_WDS_START_NET, NULL,
+@@ -223,6 +222,8 @@ static void qmi_gprs_read_settings(struct ofono_gprs_co=
+ntext* gc,
+ 	data->active_context =3D 0;
+ =
 
-It never elaborates whether the connection is utilizing  plain UMTS, =
+ 	CALLBACK_WITH_FAILURE(cb, cbd->data);
++
++	g_free(cbd);
+ }
+ =
 
-HSUPA, HSDPA or combined HSUPA/HSDPA.  Since many carriers made a big =
+ static void qmi_activate_primary(struct ofono_gprs_context *gc,
+-- =
 
-deal (and special icons) for notifying the user that they're on a 'fast' =
-
-network, we needed a convenient way of grabbing that info.
-
-Manufacturers came up with a bunch of proprietary indications for this =
-
-and eventually 3GPP standardized this inside 27.007 with +CPSB command. =
-
-If you look at drivers/atmodem/gprs.c you can see some of the variants.
-
->
-> Thanks for taking the time to help me work through all of this! Much
-> appreciated.
->
-
-Sure, thanks for doing all the work :)
-
-Regards,
--Denis
+2.9.3
 
 
---===============3728895371306016069==--
+--===============1064558203451148812==--
 
