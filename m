@@ -1,99 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============5636639667332581063=="
+Content-Type: multipart/mixed; boundary="===============4634876849643658185=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: [PATCH qmi lte v3 5/6] qmi: stop listening to packet service
- notifications
-Date: Mon, 17 Apr 2017 22:05:52 +0200
-Message-ID: <f4908787-b44f-7fdf-50ab-d6fb56807a2a@southpole.se>
-In-Reply-To: <edd39a3a-e80c-aa1b-5f83-e7c60fb53d4e@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH qmi lte v3 3/6] qmi: activate default bearer context for
+ LTE networks
+Date: Mon, 17 Apr 2017 15:12:07 -0500
+Message-ID: <bc978dc2-886d-a8d8-f8d5-0d73a52621ad@gmail.com>
+In-Reply-To: <35560cf1-ac0a-6be8-785f-a173c0f7dc26@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5636639667332581063==
+--===============4634876849643658185==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 04/17/2017 09:51 PM, Denis Kenzior wrote:
-> Hi Jonas,
+Hi Jonas,
+
+>> No, please don't do this, the notification callback and the query
+>> callback should be different functions.  If you need to perform some
+>> common operations, then just extract those into a common function and
+>> call it from both.
 >
-> On 04/17/2017 02:45 PM, Jonas Bonn wrote:
->> On 04/17/2017 07:19 PM, Denis Kenzior wrote:
->>> Hi Jonas,
->>>
->>> On 04/15/2017 10:34 AM, Jonas Bonn wrote:
->>>> The packet service status notification tells whether there is _any_
->>>> active and enabled context.  Using this to decide whether to
->>>> release any given context makes no sense.
->>>
->>> The gobi driver only supports a single context and afaik only a single
->>> network interface is available.  Do you have hardware with support for
->>> multiple active contexts?
->>
->> On an LTE network you can start a "dedicated" bearer.  As far as I
->> understand it, the way this is done is to call "start network"
->> specifying a profile ID other than the default.  In the ofono context, I
->> presume this would be done by creating a new context and activating it:
->> it just needs the same APN as the default bearer, and normally one would
->> specify other QoS settings.  Given that, then yes, I presume my hardware
->> support multiple active contexts; if the Gobi driver only supports one
->> context it's presumably because it doesn't support LTE.
->
-> Okay, so now you're opening a whole new can of worms.  Dedicated =
+> drivers/rilmodem/gprs-context.c, as one example, uses this pattern.
+> Personally, I find it rather elegant!
 
-> bearers are similar to secondary PDP contexts in 2G/3G.  Their =
+I don't see an example of such in there, but I didn't look hard enough. =
 
-> handling is even more special than primary PDP contexts / default =
+Do you mean the use of ril_gprs_context_deactivate_primary inside =
 
-> bearers.
->
-> I wouldn't presume that your hardware supports this.  You need to =
+ril_gprs_context_deactivate_primary?
 
-> check.  How many physical network interfaces are exposed?  If its just =
+Regardless, we really prefer unsolicited notification and command =
 
-> one like the gobi has, then you have your answer.
+execution result callbacks to be different.  Generally because the =
 
-Don't all LTE modems that support voice support dedicated bearers?
+callback data is different and there's no nice way to hide the =
 
-I think I was assuming you'd just get another IP address to set on the =
+differences besides a bunch of if statements.  We prefer the code to be =
 
-network interface... packets from that source would be handled with a =
+easier to read, even if longer.  Lots of if-else statements make the =
 
-different QoS setting.  Poking around the libqmi archive it seems that =
+code harder to read.
 
-there is some activity around dedicated bearers, but all the modems in =
+Regards,
+-Denis
 
-question only one have network interface.  But I really don't know =
-
-enough about this... :(
-
-My hardware has only network interface in any case.
-
->>
->>>
->>> Otherwise I think it would be safe to assume that in a single-context
->>> case, this code is doing the right thing.
->>
->> I think, for LTE, that the netreg atom gives you everything you need and
->> that this notification is superflous.  I'm thinking now that for non-LTE
->> this code might be relevant:  can the context detach spontaneously
->> without unregistering from the network?  If yes, then we probably need
->> this, still.
->>
->
-> A context can be forcefully deactivated by the network operator at any =
-
-> time.  So yes, this is actually needed.
-
-OK, this patch is then plainly wrong.  I'll drop it.
-
-/Jonas
-
->
-> Regards,
-> -Denis
->
-
-
---===============5636639667332581063==--
+--===============4634876849643658185==--
 
