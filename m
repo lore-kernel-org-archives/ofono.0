@@ -1,43 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============0518091914250314040=="
+Content-Type: multipart/mixed; boundary="===============8218964760063691804=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3 3/3] gemalto: Use sim_state_query for sim detection
-Date: Tue, 18 Apr 2017 10:09:34 -0500
-Message-ID: <3c560e32-616d-8432-29e7-bdaf953d9a5d@gmail.com>
-In-Reply-To: <1219d5cf2e72c5e742409833bae7238a@smile.fr>
+Subject: Re: Problem setting up ofono
+Date: Tue, 18 Apr 2017 10:16:05 -0500
+Message-ID: <3b9dbbbd-d4b7-3b25-9f07-744aaa6d4a8b@gmail.com>
+In-Reply-To: <VI1PR1001MB0783E352F14C3DFA19836B77C9190@VI1PR1001MB0783.EURPRD10.PROD.OUTLOOK.COM>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0518091914250314040==
+--===============8218964760063691804==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vincent,
+Hi Davide,
 
->> what does this do?  Also, shouldn't you be issuing some sort of CFUN
->> as well here?  There's no guarantee that .set_online will be called
->> first.
+On 04/18/2017 03:22 AM, Davide Tuccilli wrote:
+> Hi Denis,
 >
-> AT^SMSO shuts down the modem. I want a real power off, not just offline.
-> Is ".disable" the good place to handle power state? I noticed other plugi=
-ns
-> just send CFUN=3DX in ".disable", but in this case how would you handle t=
-he
-> "SMSO" command to really power off the modem?
+> Thank you for your response. I'm using BlueZ 5.28 and I've ran a test
+> with OFONO_AT_DEBUG=3D1 as you suggested. From this test, it would look
+> like the bluetooth communication is working, since I'm getting messages
+> printed out by ofono when I try to call, although I'm not sure how to
+> interpret them. I will link full log in case you want to take a look:
+> https://pastebin.com/1SQwBDZ5 <https://pastebin.com/1SQwBDZ5>. I've
+> tried calling 3 times in the latter part of the log.
 >
 
-For some reason I asssumed SMSO had something to do with SMS :)
+The log looks fine to me.  However, I don't see any call attempts in the =
 
-If SMSO shuts down the device, then this is fine to put in .disable. =
+log.  no ATD, no +CRING, nothing.  Are you sure you're actually making a =
 
-I've never seen any device use a custom command for this, it has =
-
-generally been CFUN=3D0.  You can disregard my earlier comment.
+call?
 
 Regards,
 -Denis
 
 
---===============0518091914250314040==--
+--===============8218964760063691804==--
 
