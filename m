@@ -1,364 +1,102 @@
-Content-Type: multipart/mixed; boundary="===============4510908804636919324=="
+Content-Type: multipart/mixed; boundary="===============4582782483174301801=="
 MIME-Version: 1.0
-From: Vincent CESSON <vincent.cesson@smile.fr>
-Subject: Re: [PATCH v3 3/3] gemalto: Use sim_state_query for sim detection
-Date: Tue, 18 Apr 2017 10:38:35 +0200
-Message-ID: <1219d5cf2e72c5e742409833bae7238a@smile.fr>
-In-Reply-To: <de7469df-d844-762c-3f44-a626e39c023f@gmail.com>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: [PATCH 1/1] Add support for Quectel EC21/25 modems
+Date: Tue, 18 Apr 2017 14:56:29 +0200
+Message-ID: <20170418125629.852-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4510908804636919324==
+--===============4582782483174301801==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
-
-Le 2017-04-13 19:07, Denis Kenzior a =C3=A9crit=C2=A0:
-> Hi Vincent,
-> =
-
-> On 04/13/2017 03:05 AM, Vincent Cesson wrote:
->> Populate gemalto_data structure.
->> Add sim_state callbacks.
->> Fix enable/disable return value.
->> ---
->>  plugins/gemalto.c | 89 =
-
->> +++++++++++++++++++++++++++++++++++++++++++++++++------
->>  1 file changed, 80 insertions(+), 9 deletions(-)
->> =
-
->> diff --git a/plugins/gemalto.c b/plugins/gemalto.c
->> index ab0da8f..5473d2f 100644
->> --- a/plugins/gemalto.c
->> +++ b/plugins/gemalto.c
->> @@ -46,10 +46,14 @@
->>  #include <drivers/atmodem/atutil.h>
->>  #include <drivers/atmodem/vendor.h>
->> =
-
->> +static const char *none_prefix[] =3D { NULL };
->> =
-
->>  struct gemalto_data {
->>  	GAtChat *app;
->>  	GAtChat *mdm;
->> +	struct ofono_sim *sim;
->> +	gboolean have_sim;
->> +	struct at_util_sim_state_query *sim_state_query;
->>  };
->> =
-
->>  static int gemalto_probe(struct ofono_modem *modem)
->> @@ -57,9 +61,12 @@ static int gemalto_probe(struct ofono_modem =
-
->> *modem)
->>  	struct gemalto_data *data;
->> =
-
->>  	data =3D g_try_new0(struct gemalto_data, 1);
->> +
-> =
-
-> Strictly speaking you don't need an empty line here.
-> doc/coding-style.txt item M1 mentions an exception at the end of the
-> relevant section text.
-> =
-
-> I don't care what style variation you use, but please don't mix style
-> fixes with code additions in the same patch.
-> =
-
->>  	if (data =3D=3D NULL)
->>  		return -ENOMEM;
->> =
-
->> +	data->sim =3D NULL;
->> +
-> =
-
-> This isn't needed, g_try_new0 already memsets the allocated structure =
-
-> to 0.
-> =
-
->>  	ofono_modem_set_data(modem, data);
->> =
-
->>  	return 0;
->> @@ -69,6 +76,8 @@ static void gemalto_remove(struct ofono_modem =
-
->> *modem)
->>  {
->>  	struct gemalto_data *data =3D ofono_modem_get_data(modem);
->> =
-
->> +	/* Cleanup potential SIM state polling */
->> +	at_util_sim_state_query_free(data->sim_state_query);
->>  	ofono_modem_set_data(modem, NULL);
->>  	g_free(data);
->>  }
->> @@ -89,6 +98,7 @@ static GAtChat *open_device(const char *device)
->>  	DBG("Opening device %s", device);
->> =
-
->>  	channel =3D g_at_tty_open(device, NULL);
->> +
-> =
-
-> Again, style fix and not relevant to this commit
-> =
-
->>  	if (channel =3D=3D NULL)
->>  		return NULL;
->> =
-
->> @@ -103,6 +113,39 @@ static GAtChat *open_device(const char *device)
->>  	return chat;
->>  }
->> =
-
->> +static void sim_state_cb(gboolean present, gpointer user_data)
->> +{
->> +	struct ofono_modem *modem =3D user_data;
->> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
->> +
->> +	at_util_sim_state_query_free(data->sim_state_query);
->> +	data->sim_state_query =3D NULL;
->> +
->> +	data->have_sim =3D present;
->> +	ofono_modem_set_powered(modem, TRUE);
->> +}
->> +
->> +static void cfun_enable(gboolean ok, GAtResult *result, gpointer =
-
->> user_data)
->> +{
->> +	struct ofono_modem *modem =3D user_data;
->> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
->> +
->> +	if (!ok) {
->> +		g_at_chat_unref(data->app);
->> +		data->app =3D NULL;
->> +
->> +		g_at_chat_unref(data->mdm);
->> +		data->mdm =3D NULL;
->> +
->> +		ofono_modem_set_powered(modem, FALSE);
->> +		return;
->> +	}
->> +
->> +	data->sim_state_query =3D at_util_sim_state_query_new(data->app,
->> +						2, 20, sim_state_cb, modem,
->> +						NULL);
->> +}
->> +
->>  static int gemalto_enable(struct ofono_modem *modem)
->>  {
->>  	struct gemalto_data *data =3D ofono_modem_get_data(modem);
->> @@ -118,10 +161,12 @@ static int gemalto_enable(struct ofono_modem =
-
->> *modem)
->> =
-
->>  	/* Open devices */
->>  	data->app =3D open_device(app);
->> +
-> =
-
-> See comments about style fixes
-> =
-
->>  	if (data->app =3D=3D NULL)
->>  		return -EINVAL;
->> =
-
->>  	data->mdm =3D open_device(mdm);
->> +
-> =
-
-> See comments about style fixes
-> =
-
->>  	if (data->mdm =3D=3D NULL) {
->>  		g_at_chat_unref(data->app);
->>  		data->app =3D NULL;
->> @@ -133,7 +178,32 @@ static int gemalto_enable(struct ofono_modem =
-
->> *modem)
->>  		g_at_chat_set_debug(data->mdm, gemalto_debug, "Mdm");
->>  	}
->> =
-
->> -	return 0;
->> +	g_at_chat_send(data->mdm, "ATE0", none_prefix, NULL, NULL, NULL);
->> +	g_at_chat_send(data->app, "ATE0 +CMEE=3D1", none_prefix,
->> +			NULL, NULL, NULL);
->> +	g_at_chat_send(data->mdm, "AT&C0", none_prefix, NULL, NULL, NULL);
->> +	g_at_chat_send(data->app, "AT&C0", none_prefix, NULL, NULL, NULL);
->> +
->> +	g_at_chat_send(data->app, "AT+CFUN=3D4", none_prefix,
->> +			cfun_enable, modem, NULL);
->> +
->> +	return -EINPROGRESS;
->> +}
->> +
->> +static void gemalto_smso_cb(gboolean ok, GAtResult *result, gpointer =
-
->> user_data)
->> +{
->> +	struct ofono_modem *modem =3D user_data;
->> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
->> +
->> +	DBG("");
->> +
->> +	g_at_chat_unref(data->mdm);
->> +	data->mdm =3D NULL;
->> +	g_at_chat_unref(data->app);
->> +	data->app =3D NULL;
->> +
->> +	if (ok)
->> +		ofono_modem_set_powered(modem, FALSE);
-> =
-
-> and if not ok?
-
-I mimic the cfun_disable callback of other plugins. See comments about =
-
-AT^SMSO below.
-
-> =
-
->>  }
->> =
-
->>  static int gemalto_disable(struct ofono_modem *modem)
->> @@ -142,11 +212,14 @@ static int gemalto_disable(struct ofono_modem =
-
->> *modem)
->> =
-
->>  	DBG("%p", modem);
->> =
-
->> -	g_at_chat_send(data->app, "AT^SMSO", NULL, NULL, NULL, NULL);
->> +	g_at_chat_cancel_all(data->app);
->> +	g_at_chat_unregister_all(data->app);
->> =
-
->> -	ofono_modem_set_data(modem, NULL);
->> +	/* Shutdown the modem */
->> +	g_at_chat_send(data->app, "AT^SMSO", none_prefix, gemalto_smso_cb,
->> +			modem, NULL);
-> =
-
-> what does this do?  Also, shouldn't you be issuing some sort of CFUN
-> as well here?  There's no guarantee that .set_online will be called
-> first.
-
-AT^SMSO shuts down the modem. I want a real power off, not just =
-
-offline.
-Is ".disable" the good place to handle power state? I noticed other =
-
-plugins
-just send CFUN=3DX in ".disable", but in this case how would you handle =
-
-the
-"SMSO" command to really power off the modem?
-
-> =
-
->> =
-
->> -	return 0;
->> +	return -EINPROGRESS;
->>  }
->> =
-
->>  static void set_online_cb(gboolean ok, GAtResult *result, gpointer =
-
->> user_data)
->> @@ -156,11 +229,10 @@ static void set_online_cb(gboolean ok, =
-
->> GAtResult *result, gpointer user_data)
->>  	struct ofono_error error;
->> =
-
->>  	decode_at_error(&error, g_at_result_final_response(result));
->> -
-> =
-
-> See comments about style fixes
-> =
-
->>  	cb(&error, cbd->data);
->>  }
->> =
-
->> -static void gemalto_set_online(struct ofono_modem *modem, =
-
->> ofono_bool_t online,
->> +static void gemalto_set_online(struct ofono_modem *modem, gboolean =
-
->> online,
-> =
-
-> no, the signature should be ofono_bool_t.  There are no glib types
-> used by the oFono driver API (e.g. stuff in include/*)
-> =
-
->>  		ofono_modem_online_cb_t cb, void *user_data)
->>  {
->>  	struct gemalto_data *data =3D ofono_modem_get_data(modem);
->> @@ -173,7 +245,6 @@ static void gemalto_set_online(struct ofono_modem =
-
->> *modem, ofono_bool_t online,
->>  		return;
->> =
-
->>  	CALLBACK_WITH_FAILURE(cb, cbd->data);
->> -
-> =
-
-> See comments about style fixes
-> =
-
->>  	g_free(cbd);
->>  }
->> =
-
->> @@ -185,10 +256,10 @@ static void gemalto_pre_sim(struct ofono_modem =
-
->> *modem)
->>  	DBG("%p", modem);
->> =
-
->>  	ofono_devinfo_create(modem, 0, "atmodem", data->app);
->> -	sim =3D ofono_sim_create(modem, 0, "atmodem", data->app);
->>  	ofono_location_reporting_create(modem, 0, "gemaltomodem", =
-
->> data->app);
->> +	sim =3D ofono_sim_create(modem, 0, "atmodem", data->app);
->> =
-
->> -	if (sim)
->> +	if (sim && data->have_sim =3D=3D TRUE)
->>  		ofono_sim_inserted_notify(sim, TRUE);
->>  }
->> =
-
->> =
-
-> =
-
-> Regards,
-> -Denis
-
-Regards,
--Vincent
-
---===============4510908804636919324==--
+This follows the same pattern as the Telit QMI modems, routing the
+setup through a QMI driver.  I think this can be cleaned up somehow,
+but for now this at least provides support for these two modem models
+so that others can aid in testing.
+---
+ plugins/udevng.c | 47 +++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 47 insertions(+)
+
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 3cca6b1..21f60de 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -847,6 +847,48 @@ static gboolean setup_quectel(struct modem_info *modem)
+ 	return TRUE;
+ }
+ =
+
++static gboolean setup_quectelqmi(struct modem_info *modem)
++{
++	const char *qmi =3D NULL, *net =3D NULL, *gps =3D NULL;
++	GSList *list;
++
++	DBG("%s", modem->syspath);
++
++	for (list =3D modem->devices; list; list =3D g_slist_next(list)) {
++		struct device_info *info =3D list->data;
++
++		DBG("%s %s %s %s %s", info->devnode, info->interface,
++				info->number, info->label, info->subsystem);
++
++		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0 &&
++				g_strcmp0(info->number, "04") =3D=3D 0) {
++			if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
++				net =3D info->devnode;
++			else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0)
++				qmi =3D info->devnode;
++		} else if (g_strcmp0(info->interface, "255/0/0") =3D=3D 0 &&
++				g_strcmp0(info->number, "02") =3D=3D 0) {
++			gps =3D info->devnode;
++		}
++	}
++
++	DBG("qmi=3D%s net=3D%s", qmi, net);
++
++	if (qmi =3D=3D NULL || net =3D=3D NULL)
++		return FALSE;
++
++	DBG("qmi=3D%s net=3D%s", qmi, net);
++
++	ofono_modem_set_string(modem->modem, "Device", qmi);
++	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
++	if (gps)
++		ofono_modem_set_string(modem->modem, "GPS", gps);
++
++	ofono_modem_set_driver(modem->modem, "gobi");
++
++	return TRUE;
++}
++
+ static gboolean setup_serial_modem(struct modem_info* modem)
+ {
+ 	struct serial_device_info* info;
+@@ -1068,6 +1110,7 @@ static struct {
+ 	{ "icera",	setup_icera	},
+ 	{ "samsung",	setup_samsung	},
+ 	{ "quectel",	setup_quectel	},
++	{ "quectelqmi",	setup_quectelqmi},
+ 	{ "ublox",	setup_ublox	},
+ 	{ "gemalto",	setup_gemalto	},
+ 	/* Following are non-USB modems */
+@@ -1434,6 +1477,10 @@ static struct {
+ 	{ "samsung",	"option",	"04e8", "6889"	},
+ 	{ "samsung",	"kalmia"			},
+ 	{ "quectel",	"option",	"05c6", "9090"	},
++	{ "quectelqmi",	"qmi_wwan",	"2c7c", "0121"	},
++	{ "quectelqmi",	"qcserial",	"2c7c", "0121"	},
++	{ "quectelqmi",	"qmi_wwan",	"2c7c", "0125"	},
++	{ "quectelqmi",	"qcserial",	"2c7c", "0125"	},
+ 	{ "ublox",	"cdc_acm",	"1546", "1102"	},
+ 	{ "ublox",	"rndis_host",	"1546", "1146"	},
+ 	{ "ublox",	"cdc_acm",	"1546", "1146"	},
+-- =
+
+2.9.3
+
+
+--===============4582782483174301801==--
 
