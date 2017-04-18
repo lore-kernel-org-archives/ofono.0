@@ -1,102 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============4582782483174301801=="
+Content-Type: multipart/mixed; boundary="===============0518091914250314040=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH 1/1] Add support for Quectel EC21/25 modems
-Date: Tue, 18 Apr 2017 14:56:29 +0200
-Message-ID: <20170418125629.852-1-jonas@southpole.se>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v3 3/3] gemalto: Use sim_state_query for sim detection
+Date: Tue, 18 Apr 2017 10:09:34 -0500
+Message-ID: <3c560e32-616d-8432-29e7-bdaf953d9a5d@gmail.com>
+In-Reply-To: <1219d5cf2e72c5e742409833bae7238a@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4582782483174301801==
+--===============0518091914250314040==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This follows the same pattern as the Telit QMI modems, routing the
-setup through a QMI driver.  I think this can be cleaned up somehow,
-but for now this at least provides support for these two modem models
-so that others can aid in testing.
----
- plugins/udevng.c | 47 +++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 47 insertions(+)
+Hi Vincent,
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 3cca6b1..21f60de 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -847,6 +847,48 @@ static gboolean setup_quectel(struct modem_info *modem)
- 	return TRUE;
- }
- =
+>> what does this do?  Also, shouldn't you be issuing some sort of CFUN
+>> as well here?  There's no guarantee that .set_online will be called
+>> first.
+>
+> AT^SMSO shuts down the modem. I want a real power off, not just offline.
+> Is ".disable" the good place to handle power state? I noticed other plugi=
+ns
+> just send CFUN=3DX in ".disable", but in this case how would you handle t=
+he
+> "SMSO" command to really power off the modem?
+>
 
-+static gboolean setup_quectelqmi(struct modem_info *modem)
-+{
-+	const char *qmi =3D NULL, *net =3D NULL, *gps =3D NULL;
-+	GSList *list;
-+
-+	DBG("%s", modem->syspath);
-+
-+	for (list =3D modem->devices; list; list =3D g_slist_next(list)) {
-+		struct device_info *info =3D list->data;
-+
-+		DBG("%s %s %s %s %s", info->devnode, info->interface,
-+				info->number, info->label, info->subsystem);
-+
-+		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0 &&
-+				g_strcmp0(info->number, "04") =3D=3D 0) {
-+			if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
-+				net =3D info->devnode;
-+			else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0)
-+				qmi =3D info->devnode;
-+		} else if (g_strcmp0(info->interface, "255/0/0") =3D=3D 0 &&
-+				g_strcmp0(info->number, "02") =3D=3D 0) {
-+			gps =3D info->devnode;
-+		}
-+	}
-+
-+	DBG("qmi=3D%s net=3D%s", qmi, net);
-+
-+	if (qmi =3D=3D NULL || net =3D=3D NULL)
-+		return FALSE;
-+
-+	DBG("qmi=3D%s net=3D%s", qmi, net);
-+
-+	ofono_modem_set_string(modem->modem, "Device", qmi);
-+	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
-+	if (gps)
-+		ofono_modem_set_string(modem->modem, "GPS", gps);
-+
-+	ofono_modem_set_driver(modem->modem, "gobi");
-+
-+	return TRUE;
-+}
-+
- static gboolean setup_serial_modem(struct modem_info* modem)
- {
- 	struct serial_device_info* info;
-@@ -1068,6 +1110,7 @@ static struct {
- 	{ "icera",	setup_icera	},
- 	{ "samsung",	setup_samsung	},
- 	{ "quectel",	setup_quectel	},
-+	{ "quectelqmi",	setup_quectelqmi},
- 	{ "ublox",	setup_ublox	},
- 	{ "gemalto",	setup_gemalto	},
- 	/* Following are non-USB modems */
-@@ -1434,6 +1477,10 @@ static struct {
- 	{ "samsung",	"option",	"04e8", "6889"	},
- 	{ "samsung",	"kalmia"			},
- 	{ "quectel",	"option",	"05c6", "9090"	},
-+	{ "quectelqmi",	"qmi_wwan",	"2c7c", "0121"	},
-+	{ "quectelqmi",	"qcserial",	"2c7c", "0121"	},
-+	{ "quectelqmi",	"qmi_wwan",	"2c7c", "0125"	},
-+	{ "quectelqmi",	"qcserial",	"2c7c", "0125"	},
- 	{ "ublox",	"cdc_acm",	"1546", "1102"	},
- 	{ "ublox",	"rndis_host",	"1546", "1146"	},
- 	{ "ublox",	"cdc_acm",	"1546", "1146"	},
--- =
+For some reason I asssumed SMSO had something to do with SMS :)
 
-2.9.3
+If SMSO shuts down the device, then this is fine to put in .disable. =
+
+I've never seen any device use a custom command for this, it has =
+
+generally been CFUN=3D0.  You can disregard my earlier comment.
+
+Regards,
+-Denis
 
 
---===============4582782483174301801==--
+--===============0518091914250314040==--
 
