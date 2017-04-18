@@ -1,95 +1,364 @@
-Content-Type: multipart/mixed; boundary="===============0230986053392171941=="
+Content-Type: multipart/mixed; boundary="===============4510908804636919324=="
 MIME-Version: 1.0
-From: Davide Tuccilli <tuccio89@hotmail.com>
-Subject: Re: Problem setting up ofono
-Date: Tue, 18 Apr 2017 08:22:59 +0000
-Message-ID: <VI1PR1001MB0783E352F14C3DFA19836B77C9190@VI1PR1001MB0783.EURPRD10.PROD.OUTLOOK.COM>
-In-Reply-To: <b7f6d69a-9f32-0340-ead5-65478821c6cb@gmail.com>
+From: Vincent CESSON <vincent.cesson@smile.fr>
+Subject: Re: [PATCH v3 3/3] gemalto: Use sim_state_query for sim detection
+Date: Tue, 18 Apr 2017 10:38:35 +0200
+Message-ID: <1219d5cf2e72c5e742409833bae7238a@smile.fr>
+In-Reply-To: <de7469df-d844-762c-3f44-a626e39c023f@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0230986053392171941==
+--===============4510908804636919324==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-Thank you for your response. I'm using BlueZ 5.28 and I've ran a test with =
-OFONO_AT_DEBUG=3D1 as you suggested. From this test, it would look like the=
- bluetooth communication is working, since I'm getting messages printed out=
- by ofono when I try to call, although I'm not sure how to interpret them. =
-I will link full log in case you want to take a look: https://pastebin.com/=
-1SQwBDZ5 . I've tried calling 3 times in the latter part of the log.
+Le 2017-04-13 19:07, Denis Kenzior a =C3=A9crit=C2=A0:
+> Hi Vincent,
+> =
 
+> On 04/13/2017 03:05 AM, Vincent Cesson wrote:
+>> Populate gemalto_data structure.
+>> Add sim_state callbacks.
+>> Fix enable/disable return value.
+>> ---
+>>  plugins/gemalto.c | 89 =
 
-________________________________
-Da: Denis Kenzior <denkenz@gmail.com>
-Inviato: gioved=C3=AC 13 aprile 2017 18.53
-A: ofono(a)ofono.org; tuccio89(a)hotmail.com
-Oggetto: Re: Problem setting up ofono
+>> +++++++++++++++++++++++++++++++++++++++++++++++++------
+>>  1 file changed, 80 insertions(+), 9 deletions(-)
+>> =
 
-Hi Davide,
+>> diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+>> index ab0da8f..5473d2f 100644
+>> --- a/plugins/gemalto.c
+>> +++ b/plugins/gemalto.c
+>> @@ -46,10 +46,14 @@
+>>  #include <drivers/atmodem/atutil.h>
+>>  #include <drivers/atmodem/vendor.h>
+>> =
 
-> I've tried running ofonod with the -d flag to get some debug
-> information, but I didn't see anything that could help me, since it
-> stops printing out anything after the connection succeeds, here's the
-> full log: https://pastebin.com/gz2tFK4n
+>> +static const char *none_prefix[] =3D { NULL };
+>> =
 
-Run ofonod with OFONO_AT_DEBUG=3D1 environment variable set.
+>>  struct gemalto_data {
+>>  	GAtChat *app;
+>>  	GAtChat *mdm;
+>> +	struct ofono_sim *sim;
+>> +	gboolean have_sim;
+>> +	struct at_util_sim_state_query *sim_state_query;
+>>  };
+>> =
 
-e.g.
-export OFONO_AT_DEBUG=3D1
-ofonod -nd
+>>  static int gemalto_probe(struct ofono_modem *modem)
+>> @@ -57,9 +61,12 @@ static int gemalto_probe(struct ofono_modem =
 
-What version of BlueZ are you using?
+>> *modem)
+>>  	struct gemalto_data *data;
+>> =
+
+>>  	data =3D g_try_new0(struct gemalto_data, 1);
+>> +
+> =
+
+> Strictly speaking you don't need an empty line here.
+> doc/coding-style.txt item M1 mentions an exception at the end of the
+> relevant section text.
+> =
+
+> I don't care what style variation you use, but please don't mix style
+> fixes with code additions in the same patch.
+> =
+
+>>  	if (data =3D=3D NULL)
+>>  		return -ENOMEM;
+>> =
+
+>> +	data->sim =3D NULL;
+>> +
+> =
+
+> This isn't needed, g_try_new0 already memsets the allocated structure =
+
+> to 0.
+> =
+
+>>  	ofono_modem_set_data(modem, data);
+>> =
+
+>>  	return 0;
+>> @@ -69,6 +76,8 @@ static void gemalto_remove(struct ofono_modem =
+
+>> *modem)
+>>  {
+>>  	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+>> =
+
+>> +	/* Cleanup potential SIM state polling */
+>> +	at_util_sim_state_query_free(data->sim_state_query);
+>>  	ofono_modem_set_data(modem, NULL);
+>>  	g_free(data);
+>>  }
+>> @@ -89,6 +98,7 @@ static GAtChat *open_device(const char *device)
+>>  	DBG("Opening device %s", device);
+>> =
+
+>>  	channel =3D g_at_tty_open(device, NULL);
+>> +
+> =
+
+> Again, style fix and not relevant to this commit
+> =
+
+>>  	if (channel =3D=3D NULL)
+>>  		return NULL;
+>> =
+
+>> @@ -103,6 +113,39 @@ static GAtChat *open_device(const char *device)
+>>  	return chat;
+>>  }
+>> =
+
+>> +static void sim_state_cb(gboolean present, gpointer user_data)
+>> +{
+>> +	struct ofono_modem *modem =3D user_data;
+>> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+>> +
+>> +	at_util_sim_state_query_free(data->sim_state_query);
+>> +	data->sim_state_query =3D NULL;
+>> +
+>> +	data->have_sim =3D present;
+>> +	ofono_modem_set_powered(modem, TRUE);
+>> +}
+>> +
+>> +static void cfun_enable(gboolean ok, GAtResult *result, gpointer =
+
+>> user_data)
+>> +{
+>> +	struct ofono_modem *modem =3D user_data;
+>> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+>> +
+>> +	if (!ok) {
+>> +		g_at_chat_unref(data->app);
+>> +		data->app =3D NULL;
+>> +
+>> +		g_at_chat_unref(data->mdm);
+>> +		data->mdm =3D NULL;
+>> +
+>> +		ofono_modem_set_powered(modem, FALSE);
+>> +		return;
+>> +	}
+>> +
+>> +	data->sim_state_query =3D at_util_sim_state_query_new(data->app,
+>> +						2, 20, sim_state_cb, modem,
+>> +						NULL);
+>> +}
+>> +
+>>  static int gemalto_enable(struct ofono_modem *modem)
+>>  {
+>>  	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+>> @@ -118,10 +161,12 @@ static int gemalto_enable(struct ofono_modem =
+
+>> *modem)
+>> =
+
+>>  	/* Open devices */
+>>  	data->app =3D open_device(app);
+>> +
+> =
+
+> See comments about style fixes
+> =
+
+>>  	if (data->app =3D=3D NULL)
+>>  		return -EINVAL;
+>> =
+
+>>  	data->mdm =3D open_device(mdm);
+>> +
+> =
+
+> See comments about style fixes
+> =
+
+>>  	if (data->mdm =3D=3D NULL) {
+>>  		g_at_chat_unref(data->app);
+>>  		data->app =3D NULL;
+>> @@ -133,7 +178,32 @@ static int gemalto_enable(struct ofono_modem =
+
+>> *modem)
+>>  		g_at_chat_set_debug(data->mdm, gemalto_debug, "Mdm");
+>>  	}
+>> =
+
+>> -	return 0;
+>> +	g_at_chat_send(data->mdm, "ATE0", none_prefix, NULL, NULL, NULL);
+>> +	g_at_chat_send(data->app, "ATE0 +CMEE=3D1", none_prefix,
+>> +			NULL, NULL, NULL);
+>> +	g_at_chat_send(data->mdm, "AT&C0", none_prefix, NULL, NULL, NULL);
+>> +	g_at_chat_send(data->app, "AT&C0", none_prefix, NULL, NULL, NULL);
+>> +
+>> +	g_at_chat_send(data->app, "AT+CFUN=3D4", none_prefix,
+>> +			cfun_enable, modem, NULL);
+>> +
+>> +	return -EINPROGRESS;
+>> +}
+>> +
+>> +static void gemalto_smso_cb(gboolean ok, GAtResult *result, gpointer =
+
+>> user_data)
+>> +{
+>> +	struct ofono_modem *modem =3D user_data;
+>> +	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+>> +
+>> +	DBG("");
+>> +
+>> +	g_at_chat_unref(data->mdm);
+>> +	data->mdm =3D NULL;
+>> +	g_at_chat_unref(data->app);
+>> +	data->app =3D NULL;
+>> +
+>> +	if (ok)
+>> +		ofono_modem_set_powered(modem, FALSE);
+> =
+
+> and if not ok?
+
+I mimic the cfun_disable callback of other plugins. See comments about =
+
+AT^SMSO below.
+
+> =
+
+>>  }
+>> =
+
+>>  static int gemalto_disable(struct ofono_modem *modem)
+>> @@ -142,11 +212,14 @@ static int gemalto_disable(struct ofono_modem =
+
+>> *modem)
+>> =
+
+>>  	DBG("%p", modem);
+>> =
+
+>> -	g_at_chat_send(data->app, "AT^SMSO", NULL, NULL, NULL, NULL);
+>> +	g_at_chat_cancel_all(data->app);
+>> +	g_at_chat_unregister_all(data->app);
+>> =
+
+>> -	ofono_modem_set_data(modem, NULL);
+>> +	/* Shutdown the modem */
+>> +	g_at_chat_send(data->app, "AT^SMSO", none_prefix, gemalto_smso_cb,
+>> +			modem, NULL);
+> =
+
+> what does this do?  Also, shouldn't you be issuing some sort of CFUN
+> as well here?  There's no guarantee that .set_online will be called
+> first.
+
+AT^SMSO shuts down the modem. I want a real power off, not just =
+
+offline.
+Is ".disable" the good place to handle power state? I noticed other =
+
+plugins
+just send CFUN=3DX in ".disable", but in this case how would you handle =
+
+the
+"SMSO" command to really power off the modem?
+
+> =
+
+>> =
+
+>> -	return 0;
+>> +	return -EINPROGRESS;
+>>  }
+>> =
+
+>>  static void set_online_cb(gboolean ok, GAtResult *result, gpointer =
+
+>> user_data)
+>> @@ -156,11 +229,10 @@ static void set_online_cb(gboolean ok, =
+
+>> GAtResult *result, gpointer user_data)
+>>  	struct ofono_error error;
+>> =
+
+>>  	decode_at_error(&error, g_at_result_final_response(result));
+>> -
+> =
+
+> See comments about style fixes
+> =
+
+>>  	cb(&error, cbd->data);
+>>  }
+>> =
+
+>> -static void gemalto_set_online(struct ofono_modem *modem, =
+
+>> ofono_bool_t online,
+>> +static void gemalto_set_online(struct ofono_modem *modem, gboolean =
+
+>> online,
+> =
+
+> no, the signature should be ofono_bool_t.  There are no glib types
+> used by the oFono driver API (e.g. stuff in include/*)
+> =
+
+>>  		ofono_modem_online_cb_t cb, void *user_data)
+>>  {
+>>  	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+>> @@ -173,7 +245,6 @@ static void gemalto_set_online(struct ofono_modem =
+
+>> *modem, ofono_bool_t online,
+>>  		return;
+>> =
+
+>>  	CALLBACK_WITH_FAILURE(cb, cbd->data);
+>> -
+> =
+
+> See comments about style fixes
+> =
+
+>>  	g_free(cbd);
+>>  }
+>> =
+
+>> @@ -185,10 +256,10 @@ static void gemalto_pre_sim(struct ofono_modem =
+
+>> *modem)
+>>  	DBG("%p", modem);
+>> =
+
+>>  	ofono_devinfo_create(modem, 0, "atmodem", data->app);
+>> -	sim =3D ofono_sim_create(modem, 0, "atmodem", data->app);
+>>  	ofono_location_reporting_create(modem, 0, "gemaltomodem", =
+
+>> data->app);
+>> +	sim =3D ofono_sim_create(modem, 0, "atmodem", data->app);
+>> =
+
+>> -	if (sim)
+>> +	if (sim && data->have_sim =3D=3D TRUE)
+>>  		ofono_sim_inserted_notify(sim, TRUE);
+>>  }
+>> =
+
+>> =
+
+> =
+
+> Regards,
+> -Denis
 
 Regards,
--Denis
+-Vincent
 
---===============0230986053392171941==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWw+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNvbnRlbnQ9InRl
-eHQvaHRtbDsgY2hhcnNldD1pc28tODg1OS0xIj4KPHN0eWxlIHR5cGU9InRleHQvY3NzIiBzdHls
-ZT0iZGlzcGxheTpub25lOyI+PCEtLSBQIHttYXJnaW4tdG9wOjA7bWFyZ2luLWJvdHRvbTowO30g
-LS0+PC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBkaXI9Imx0ciI+CjxkaXYgaWQ9ImRpdnRhZ2RlZmF1
-bHR3cmFwcGVyIiBzdHlsZT0iZm9udC1zaXplOjEycHQ7Y29sb3I6IzAwMDAwMDtmb250LWZhbWls
-eTpDYWxpYnJpLEFyaWFsLEhlbHZldGljYSxzYW5zLXNlcmlmOyIgZGlyPSJsdHIiPgo8ZGl2Pgo8
-cD5IaSBEZW5pcyw8L3A+ClRoYW5rIHlvdSBmb3IgeW91ciByZXNwb25zZS4gSSdtIHVzaW5nIEJs
-dWVaIDUuMjggYW5kIEkndmUgcmFuIGEgdGVzdCB3aXRoIE9GT05PX0FUX0RFQlVHPTEgYXMgeW91
-IHN1Z2dlc3RlZC4gRnJvbSB0aGlzIHRlc3QsIGl0IHdvdWxkIGxvb2sgbGlrZSB0aGUgYmx1ZXRv
-b3RoIGNvbW11bmljYXRpb24gaXMgd29ya2luZywgc2luY2UgSSdtIGdldHRpbmcgbWVzc2FnZXMg
-cHJpbnRlZCBvdXQgYnkgb2Zvbm8gd2hlbiBJIHRyeSB0byBjYWxsLCBhbHRob3VnaAogSSdtIG5v
-dCBzdXJlIGhvdyB0byBpbnRlcnByZXQgdGhlbS4gSSB3aWxsIGxpbmsgZnVsbCBsb2cgaW4gY2Fz
-ZSB5b3Ugd2FudCB0byB0YWtlIGEgbG9vazoKPGEgaHJlZj0iaHR0cHM6Ly9wYXN0ZWJpbi5jb20v
-MVNRd0JEWjUiIGNsYXNzPSJPV0FBdXRvTGluayIgaWQ9IkxQbG5rODIzMTg0IiBwcmV2aWV3cmVt
-b3ZlZD0idHJ1ZSI+Cmh0dHBzOi8vcGFzdGViaW4uY29tLzFTUXdCRFo1IDwvYT4uIEkndmUgdHJp
-ZWQgY2FsbGluZyAzIHRpbWVzIGluIHRoZSBsYXR0ZXIgcGFydCBvZiB0aGUgbG9nLjwvZGl2Pgo8
-YnI+Cjxicj4KPGRpdiBzdHlsZT0iY29sb3I6IHJnYigwLCAwLCAwKTsiPgo8ZGl2Pgo8aHIgdGFi
-aW5kZXg9Ii0xIiBzdHlsZT0iZGlzcGxheTppbmxpbmUtYmxvY2s7IHdpZHRoOjk4JSI+CjxkaXYg
-aWQ9InhfZGl2UnBseUZ3ZE1zZyIgZGlyPSJsdHIiPjxmb250IHN0eWxlPSJmb250LXNpemU6MTFw
-dCIgY29sb3I9IiMwMDAwMDAiIGZhY2U9IkNhbGlicmksIHNhbnMtc2VyaWYiPjxiPkRhOjwvYj4g
-RGVuaXMgS2VuemlvciAmbHQ7ZGVua2VuekBnbWFpbC5jb20mZ3Q7PGJyPgo8Yj5JbnZpYXRvOjwv
-Yj4gZ2lvdmVk7CAxMyBhcHJpbGUgMjAxNyAxOC41Mzxicj4KPGI+QTo8L2I+IG9mb25vQG9mb25v
-Lm9yZzsgdHVjY2lvODlAaG90bWFpbC5jb208YnI+CjxiPk9nZ2V0dG86PC9iPiBSZTogUHJvYmxl
-bSBzZXR0aW5nIHVwIG9mb25vPC9mb250Pgo8ZGl2PiZuYnNwOzwvZGl2Pgo8L2Rpdj4KPC9kaXY+
-Cjxmb250IHNpemU9IjIiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTBwdDsiPgo8ZGl2IGNsYXNz
-PSJQbGFpblRleHQiPkhpIERhdmlkZSw8YnI+Cjxicj4KJmd0OyBJJ3ZlIHRyaWVkIHJ1bm5pbmcg
-b2Zvbm9kIHdpdGggdGhlIC1kIGZsYWcgdG8gZ2V0IHNvbWUgZGVidWc8YnI+CiZndDsgaW5mb3Jt
-YXRpb24sIGJ1dCBJIGRpZG4ndCBzZWUgYW55dGhpbmcgdGhhdCBjb3VsZCBoZWxwIG1lLCBzaW5j
-ZSBpdDxicj4KJmd0OyBzdG9wcyBwcmludGluZyBvdXQgYW55dGhpbmcgYWZ0ZXIgdGhlIGNvbm5l
-Y3Rpb24gc3VjY2VlZHMsIGhlcmUncyB0aGU8YnI+CiZndDsgZnVsbCBsb2c6IDxhIGhyZWY9Imh0
-dHBzOi8vcGFzdGViaW4uY29tL2d6MnRGSzRuIiBpZD0iTFBsbms5MjkzNDQiIHByZXZpZXdyZW1v
-dmVkPSJ0cnVlIj4KaHR0cHM6Ly9wYXN0ZWJpbi5jb20vZ3oydEZLNG48L2E+PGJyPgo8YnI+ClJ1
-biBvZm9ub2Qgd2l0aCBPRk9OT19BVF9ERUJVRz0xIGVudmlyb25tZW50IHZhcmlhYmxlIHNldC48
-YnI+Cjxicj4KZS5nLjxicj4KZXhwb3J0IE9GT05PX0FUX0RFQlVHPTE8YnI+Cm9mb25vZCAtbmQ8
-YnI+Cjxicj4KV2hhdCB2ZXJzaW9uIG9mIEJsdWVaIGFyZSB5b3UgdXNpbmc/PGJyPgo8YnI+ClJl
-Z2FyZHMsPGJyPgotRGVuaXM8YnI+CjwvZGl2Pgo8L3NwYW4+PC9mb250PjwvZGl2Pgo8L2Rpdj4K
-PC9ib2R5Pgo8L2h0bWw+Cg==
-
---===============0230986053392171941==--
+--===============4510908804636919324==--
 
