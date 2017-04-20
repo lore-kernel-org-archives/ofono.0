@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============7825004825673954866=="
+Content-Type: multipart/mixed; boundary="===============0340881053536873149=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH qmi lte v4 5/6] qmi: add LTE atom driver
-Date: Thu, 20 Apr 2017 12:03:03 -0500
-Message-ID: <7e28374d-0e0f-76fc-5140-4f246fd837be@gmail.com>
-In-Reply-To: <20170418075052.23980-5-jonas@southpole.se>
+Subject: Re: [PATCH qmi lte v4 4/6] qmi: activate default bearer context for
+ LTE networks
+Date: Thu, 20 Apr 2017 12:40:53 -0500
+Message-ID: <65227ac1-de25-0490-be82-68ba4260e641@gmail.com>
+In-Reply-To: <20170418075052.23980-4-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7825004825673954866==
+--===============0340881053536873149==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,197 +17,268 @@ Content-Transfer-Encoding: quoted-printable
 Hi Jonas,
 
 On 04/18/2017 02:50 AM, Jonas Bonn wrote:
-> This patch adds the boilerplate for an LTE atom for QMI modems.
+> When the modem attaches to an LTE network, a default bearer is
+> automatically negotiated using the "defalt profile" settings.  The
+> QMI modem, however, does not given any explicit indication that
+> the bearer exists; instead, we must assume its existence based on
+> the network registration state.
 >
-> This atom is supposed to set the APN that the default bearer uses
-> to connect to the network.  The part that is missing currently is
-> actually writing the APN into the modem's default profile.
+> This patch extends the GPRS atom to signal the presence of a
+> default bearer when it detects network connectivity on an LTE
+> network.
 >
-> In many cases, however, the network does not actually require a
-> correct APN in order to connect to the network so it's moot whether
-> or not this atom actually completes its task!  For now, thus, this
-> atom just emits a warning so that this can be fully implemented
-> when there's a network that cares about the APN to test against.
->
-> For completeness, what is supposed to happen is that this atom
-> is supposed to call "Modify Profile" on the "default" profile,
-> setting the APN.  The default profile should probably be queried
-> because it can be set to something other than profile number one (1).
-> Once configured, the default profile settings are used when the
-> modem connects to the network; for this reason, the LTE atom needs
-> to be instantiated in post_sim, before the modem is set online.
+> The GPRS atom gets a new 'attached' property based on whether it has
+> been manually attached or automatically "attached" by virtue of
+> connecting to an LTE network.  Here we abuse the word "attach"
+> since attach'ing isn't really an LTE concept, but it fits with
+> the model that Ofono wants.
 > ---
->  Makefile.am                 |   1 +
->  drivers/qmimodem/lte.c      | 143 ++++++++++++++++++++++++++++++++++++++=
-++++++
->  drivers/qmimodem/qmimodem.c |   2 +
->  drivers/qmimodem/qmimodem.h |   3 +
->  4 files changed, 149 insertions(+)
->  create mode 100644 drivers/qmimodem/lte.c
+>  drivers/qmimodem/gprs.c | 102 +++++++++++++++++++++++++++++++++++++++---=
+------
+>  1 file changed, 83 insertions(+), 19 deletions(-)
 >
-> diff --git a/Makefile.am b/Makefile.am
-> index c894496..60c205a 100644
-> --- a/Makefile.am
-> +++ b/Makefile.am
-> @@ -232,6 +232,7 @@ builtin_sources +=3D $(qmi_sources) \
->  			drivers/qmimodem/ussd.c \
->  			drivers/qmimodem/gprs.c \
->  			drivers/qmimodem/gprs-context.c \
-> +			drivers/qmimodem/lte.c \
->  			drivers/qmimodem/radio-settings.c \
->  			drivers/qmimodem/location-reporting.c
+> diff --git a/drivers/qmimodem/gprs.c b/drivers/qmimodem/gprs.c
+> index 05ad4bd..c5bdf5e 100644
+> --- a/drivers/qmimodem/gprs.c
+> +++ b/drivers/qmimodem/gprs.c
+> @@ -23,6 +23,8 @@
+>  #include <config.h>
+>  #endif
 >
-> diff --git a/drivers/qmimodem/lte.c b/drivers/qmimodem/lte.c
-> new file mode 100644
-> index 0000000..e131b47
-> --- /dev/null
-> +++ b/drivers/qmimodem/lte.c
-> @@ -0,0 +1,143 @@
-> +/*
-> + *
-> + *  oFono - Open Source Telephony
-> + *
-> + *  Copyright (C) 2017  Jonas Bonn. All rights reserved.
-> + *  Copyright (C) 2017  South Pole Consulting AB. All rights reserved.
-> + *
-> + *  This program is free software; you can redistribute it and/or modify
-> + *  it under the terms of the GNU General Public License version 2 as
-> + *  published by the Free Software Foundation.
-> + *
-> + *  This program is distributed in the hope that it will be useful,
-> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + *  GNU General Public License for more details.
-> + *
-> + *  You should have received a copy of the GNU General Public License
-> + *  along with this program; if not, write to the Free Software
-> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
-1  USA
-> + *
-> + */
-> +#ifdef HAVE_CONFIG_H
-> +#include <config.h>
-> +#endif
+> +#include <glib.h>	/* this include belongs in common.h */
 > +
-> +#define _GNU_SOURCE
-> +#include <stdlib.h>
-> +#include <stdio.h>
-> +#include <string.h>
-> +#include <errno.h>
-> +
-> +#include <glib.h>
-> +
-> +#include <ofono/modem.h>
-> +#include <ofono/gprs-context.h>
-> +#include <ofono/log.h>
-> +#include <ofono/lte.h>
-> +
-> +#include "qmi.h"
-> +#include "wds.h"
-> +
-> +#include "qmimodem.h"
-> +
-> +struct lte_data {
-> +	struct qmi_service *wds;
-> +	char* apn;
-> +};
-> +
-> +static void qmimodem_lte_set_default_attach_info(const struct ofono_lte =
-*lte,
-> +			const struct ofono_lte_default_attach_info *info,
-> +			ofono_lte_cb_t cb, void *data)
-> +{
-> +	struct lte_data *ldd =3D ofono_lte_get_data(lte);
-> +
-> +	DBG("LTE config with APN: %s", info->apn);
-> +
-> +	g_free(ldd->apn);
-> +
-> +	if (strlen(info->apn) > 0)
-> +		ldd->apn =3D g_strdup(info->apn);
-> +	else
-> +		ldd->apn =3D NULL;
-> +
+>  #include <ofono/log.h>
+>  #include <ofono/modem.h>
+>  #include <ofono/gprs.h>
+> @@ -30,16 +32,20 @@
+>  #include "qmi.h"
+>  #include "nas.h"
+>
+> +#include "src/common.h"
+>  #include "qmimodem.h"
+>
+>  struct gprs_data {
+>  	struct qmi_service *nas;
+> +	int attached;
+>  };
+>
+> -static bool extract_ss_info(struct qmi_result *result, int *status)
+> +static bool extract_ss_info(struct qmi_result *result, int *status, int =
+*tech)
+>  {
+>  	const struct qmi_nas_serving_system *ss;
+> +	uint8_t roaming;
+>  	uint16_t len;
+> +	int i;
+>
+>  	DBG("");
+>
+> @@ -47,25 +53,71 @@ static bool extract_ss_info(struct qmi_result *result=
+, int *status)
+>  	if (!ss)
+>  		return false;
+>
+> -	if (ss->ps_state =3D=3D QMI_NAS_ATTACH_STATE_ATTACHED)
+> -		*status =3D 0x01;
+> -	else
+> -		*status =3D 0x00;
 
-Why do you want to store the APN inside the driver data?
+Hmm.  So QMI reports attached_status and network registration status =
 
-> +	/*
-> +	 * FIXME: The above is not sufficient.  The APN needs to be set
-> +	 * to the 'default' profile so that the modem uses it when
-> +	 * connecting the default bearer.
-> +	 */
-> +	ofono_warn("LTE APN needs to be written to default profile");
+separately.  oFono wants the network registration status (which is =
+
+usually voice related for 2G/3G) on the netreg atom and the PS (packet =
+
+service) attach status on the gprs atom.  We follow 27.007 whenever =
+
+possible, so the gprs status can have the same enumeration as the netreg =
+
+status, e.g.:
+
+not registered, registered, roaming, searching, etc.
+
+However, in practice not registered and registered are the only required =
+
+values.  QMI & ISI report PS attached status at on/off.  But one can =
+
+generate the 3GPP +CGREG equivalent knowing the network registration =
+
+status and the PS attach status.  I hope that made sense.
+
+> +	*status =3D ss->status;
+
+So here, you really want to use the ps_state, at least for 2G/3G.
+
 > +
-> +	CALLBACK_WITH_SUCCESS(cb, data);
-> +}
+> +	*tech =3D -1;
+> +	for (i =3D 0; i < ss->radio_if_count; i++) {
+> +		DBG("radio in use %d", ss->radio_if[i]);
 > +
-> +static void create_wds_cb(struct qmi_service *service, void *user_data)
-> +{
-> +	struct ofono_lte *lte =3D user_data;
-> +	struct lte_data *data =3D ofono_lte_get_data(lte);
-> +
-> +	DBG("");
-> +
-> +	if (!service) {
-> +		ofono_error("Failed to request WDS service");
-> +		ofono_lte_remove(lte);
-> +		return;
+> +		*tech =3D qmi_nas_rat_to_tech(ss->radio_if[i]);
 > +	}
 > +
-> +	data->wds =3D qmi_service_ref(service);
+> +	if (qmi_result_get_uint8(result, QMI_NAS_RESULT_ROAMING_STATUS,
+> +								&roaming)) {
+> +		if (ss->status =3D=3D 1 && roaming =3D=3D 0)
+> +			*status =3D NETWORK_REGISTRATION_STATUS_ROAMING;
+
+This should really be ss->ps_status =3D=3D 1 && ss->status && roaming =3D=
+=3D 0. =
+
+However, as mentioned earlier, reporting roaming status to gprs is not =
+
+strictly necessary.  As long as netreg reports roaming status correctly, =
+
+the RoamingAllowed logic should still work.
+
+> +	}
+>
+>  	return true;
+>  }
+>
+> -static void ss_info_notify(struct qmi_result *result, void *user_data)
+> +static int handle_ss_info(struct qmi_result* result, struct ofono_gprs* =
+gprs)
+
+Can you put the '*' in its original place please?
+
+>  {
+> -	struct ofono_gprs *gprs =3D user_data;
+> +	struct gprs_data *data =3D ofono_gprs_get_data(gprs);
+>  	int status;
+> +	int tech;
+>
+>  	DBG("");
+>
+> -	if (!extract_ss_info(result, &status))
+> -		return;
+> +	if (!extract_ss_info(result, &status, &tech))
+> +		return -1;
 > +
-> +	ofono_lte_register(lte);
+> +	switch (status) {
+> +	case NETWORK_REGISTRATION_STATUS_REGISTERED:
+> +	case NETWORK_REGISTRATION_STATUS_ROAMING:
+> +		if (tech =3D=3D ACCESS_TECHNOLOGY_EUTRAN && !data->attached) {
+> +			/* On LTE we are effectively always attached; and
+> +			 * the default bearer is established as soon as the
+> +			 * network is joined.
+> +			 */
+> +			data->attached =3D 1;
+> +			/* FIXME: query default profile number and APN
+> +			 * instead of assuming profile 1
+> +			 */
+> +			ofono_gprs_cid_activated(gprs, 1, "");
+> +		}
+> +		break;
+> +	default:
+> +		break;
+> +	}
+>
+> -	ofono_gprs_status_notify(gprs, status);
+> +	if (!data->attached)
+> +		status =3D NETWORK_REGISTRATION_STATUS_NOT_REGISTERED;
+
+I don't know what you're doing here?  You really need to tell the core =
+
+what is the actual status straight from the firmware..
+
+> +
+> +	return status;
 > +}
 > +
-> +static int qmimodem_lte_probe(struct ofono_lte *lte, void *data)
+> +static void ss_info_notify(struct qmi_result* result, void *user_data)
 > +{
-> +	struct qmi_device *device =3D data;
-> +	struct lte_data *ldd;
-> +
-> +	DBG("qmimodem lte probe");
-> +
-> +	ldd =3D g_try_new0(struct lte_data, 1);
-> +	if (!ldd)
-> +		return -ENOMEM;
-> +
-> +	ofono_lte_set_data(lte, ldd);
-> +
-> +	qmi_service_create(device, QMI_SERVICE_WDS,
-> +					create_wds_cb, lte, NULL);
-> +
-
-So I talked to Marcel about this and it seems a QMI service cannot be =
-
-created multiple times for the same device.  So I think this should fail =
-
-and you should be using qmi_service_create_shared instead.
-
-> +	return 0;
-> +}
-> +
-> +static void qmimodem_lte_remove(struct ofono_lte *lte)
-> +{
-> +	struct lte_data *ldd =3D ofono_lte_get_data(lte);
+> +	struct ofono_gprs* gprs =3D user_data;
+> +	int status;
 > +
 > +	DBG("");
 > +
-> +	ofono_lte_set_data(lte, NULL);
+> +	status =3D handle_ss_info(result, gprs);
 > +
-> +	qmi_service_unregister_all(ldd->wds);
-> +
-> +	qmi_service_unref(ldd->wds);
-> +
-> +	g_free(ldd->apn);
-> +
-> +	g_free(ldd);
-> +}
+> +	if (status >=3D 0)
+> +		ofono_gprs_status_notify(gprs, status);
+>  }
+>
+>  static void attach_detach_cb(struct qmi_result *result, void *user_data)
+> @@ -100,6 +152,8 @@ static void qmi_set_attached(struct ofono_gprs *gprs,=
+ int attached,
+>
+>  	DBG("attached %d", attached);
+>
+> +	data->attached =3D attached;
 > +
 
-The rest looks fine.
+So it seems you're using attached to try and trigger the initial attach =
+
+logic.  However, I'm not sure it works if you register to LTE, lose =
+
+network coverage and then come back to LTE coverage?
+
+>  	if (attached)
+>  		action =3D QMI_NAS_ATTACH_ACTION_ATTACH;
+>  	else
+> @@ -121,25 +175,29 @@ error:
+>  	g_free(cbd);
+>  }
+>
+> -static void get_ss_info_cb(struct qmi_result *result, void *user_data)
+> +static void get_ss_info_cb(struct qmi_result* result, void *user_data)
+>  {
+>  	struct cb_data *cbd =3D user_data;
+> +	struct ofono_gprs* gprs =3D cbd->user;
+>  	ofono_gprs_status_cb_t cb =3D cbd->cb;
+>  	int status;
+>
+>  	DBG("");
+>
+> -	if (qmi_result_set_error(result, NULL)) {
+> -		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
+> -		return;
+> -	}
+> +	if (qmi_result_set_error(result, NULL))
+> +		goto error;
+>
+> -	if (!extract_ss_info(result, &status)) {
+> -		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
+> -		return;
+> -	}
+> +	status =3D handle_ss_info(result, gprs);
+> +
+> +	if (status < 0)
+> +		goto error;
+>
+>  	CALLBACK_WITH_SUCCESS(cb, status, cbd->data);
+> +
+> +	return;
+> +
+> +error:
+> +	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
+>  }
+>
+>  static void qmi_attached_status(struct ofono_gprs *gprs,
+> @@ -150,6 +208,12 @@ static void qmi_attached_status(struct ofono_gprs *g=
+prs,
+>
+>  	DBG("");
+>
+> +	if (!data->attached) {
+> +		CALLBACK_WITH_SUCCESS(cb,
+> +			NETWORK_REGISTRATION_STATUS_NOT_REGISTERED, user_data);
+> +	}
+> +
+
+This seems questionable to me.  Why not query the attached status like =
+
+the core wants you to?
+
+> +	cbd->user =3D gprs;
+>  	if (qmi_service_send(data->nas, QMI_NAS_GET_SS_INFO, NULL,
+>  					get_ss_info_cb, cbd, g_free) > 0)
+>  		return;
+>
 
 Regards,
 -Denis
 
-
---===============7825004825673954866==--
+--===============0340881053536873149==--
 
