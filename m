@@ -1,102 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============5412738285930751252=="
+Content-Type: multipart/mixed; boundary="===============9115374126690993871=="
 MIME-Version: 1.0
-From: Luiz Augusto von Dentz <luiz.dentz@gmail.com>
-Subject: [PATCH 2/2] handsfree-audio: Add Acquire method
-Date: Thu, 27 Apr 2017 15:55:07 +0300
-Message-ID: <20170427125507.19335-2-luiz.dentz@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] hfp_hf: Fix not creating modem during NewConnection
+Date: Thu, 27 Apr 2017 13:28:14 -0500
+Message-ID: <5a661f21-e36c-695f-ffdc-78ba98af49d1@gmail.com>
 In-Reply-To: <20170427125507.19335-1-luiz.dentz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5412738285930751252==
+--===============9115374126690993871==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+Hi Luiz,
 
-This adds Acquire method which can be used by agents that require
-pulling the fd directly instead of waiting a NewConnection.
+On 04/27/2017 07:55 AM, Luiz Augusto von Dentz wrote:
+> From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+>
+> In case the UUIDs are not updated, or are still being resolved, when
+> Paired property changes a modem will never be registered.
 
-Note: sounds servers like PulseAudio do auto suspend stream when idle
-for a certain amount of time and once anything happens it will resume
-the stream, though this all happens in the so called IO thread in a
-blocking fashion making it impossible to receive the fd via NewConnetion
-causing the stream to fail to resume. There are other forms to work
-around but this seems to be most convenient as we do want the auto
-suspend feature to work properly and letting the stream to fail to
-resume may create unexpected artifacts while the NewConnection is
-handled in PA main thread.
----
- doc/handsfree-audio-api.txt | 16 ++++++++++++++++
- src/handsfree-audio.c       |  9 +++++++++
- 2 files changed, 25 insertions(+)
+I can sort of see the 'still being resolved' issue.  But what is the =
 
-diff --git a/doc/handsfree-audio-api.txt b/doc/handsfree-audio-api.txt
-index d82035c..87d51cf 100644
---- a/doc/handsfree-audio-api.txt
-+++ b/doc/handsfree-audio-api.txt
-@@ -76,6 +76,22 @@ Methods		dict GetProperties()
- 					 [service].Error.NotImplemented
- 					 [service].Error.NotAllowed
- =
+'not updated' part?
 
-+		fd, byte Acquire()
-+
-+			Attempts to establish the SCO audio connection
-+			returning the filedescriptor of the connection and the
-+			codec in use.
-+
-+			Note: Contrary to Connect this does not call
-+			NewConnection so it can be called in a blocking
-+			manner.
-+
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.Failed
-+					 [service].Error.NotAvailable
-+					 [service].Error.NotImplemented
-+					 [service].Error.NotAllowed
-+
- Signals		PropertyChanged(string name, variant value)
- =
+>
+> In order to fix this problem allow modems to be registered directly
+> during NewConnection.
 
- 			This signal indicates a changed value of the given
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index dab16da..f2c323d 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -326,6 +326,12 @@ static gboolean sco_connect_cb(GIOChannel *io, GIOCond=
-ition cond,
- =
+Wouldn't it be better to track the UUIDs property changes as well and =
 
- 	sk =3D g_io_channel_unix_get_fd(io);
- =
+register the modem when this changes?  Otherwise the AG side might be =
 
-+	if (card->msg && dbus_message_has_member(card->msg, "Acquire")) {
-+		reply =3D g_dbus_create_reply(card->msg, DBUS_TYPE_UNIX_FD, &sk,
-+					DBUS_TYPE_BYTE, &card->selected_codec);
-+		goto done;
-+	}
-+
- 	send_new_connection(card->path, sk, card->selected_codec);
- =
+able to trigger a connection, but not vice-versa.
 
- 	close(sk);
-@@ -403,6 +409,9 @@ static const GDBusMethodTable card_methods[] =3D {
- 			NULL, GDBUS_ARGS({ "properties", "a{sv}" }),
- 			card_get_properties) },
- 	{ GDBUS_ASYNC_METHOD("Connect", NULL, NULL, card_connect) },
-+	{ GDBUS_ASYNC_METHOD("Acquire", NULL,
-+			GDBUS_ARGS({"sco", "h"}, {"codec", "y"}),
-+			card_connect) },
- 	{ }
- };
- =
+> ---
+>  plugins/hfp_hf_bluez5.c | 193 +++++++++++++++++++++++++-----------------=
+------
+>  1 file changed, 102 insertions(+), 91 deletions(-)
+>
 
--- =
-
-2.9.3
+Regards,
+-Denis
 
 
---===============5412738285930751252==--
+--===============9115374126690993871==--
 
