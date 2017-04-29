@@ -1,80 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============2251214879927338286=="
+Content-Type: multipart/mixed; boundary="===============6817738605654706809=="
 MIME-Version: 1.0
-From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCH] qmi: no more WDS packet status notification
-Date: Fri, 28 Apr 2017 16:39:24 +0200
-Message-ID: <20170428143924.2808-1-c.ronco@kerlink.fr>
-In-Reply-To: <acc564b8-0170-aeed-da59-397de3f49a68@kerlink.fr>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: [PATCH qmi lte v5 1/4] qmi: watch packet status for spontaneous
+ disconnection only
+Date: Sat, 29 Apr 2017 14:46:40 +0200
+Message-ID: <20170429124643.21080-2-jonas@southpole.se>
+In-Reply-To: <20170429124643.21080-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2251214879927338286==
+--===============6817738605654706809==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-detach_shutdown is now called when GPRS detach notification is received
+There are three principal ways for a context to become disconnected:
+
+i)  deactivate_primary() is called
+ii)  the network registration is lost and the context is cleaned up
+via _detach_shutdown() (via release_all_contexts())
+iii) the network decides to disconnect the context
+
+We need to watch the packet status in order to detect case iii).  For
+case i) and ii), stop_net will be called, the pkt_handle will be
+cleared, and subsequent packet status notifications be ignored.
+
+This patch makes it so that the packet status "disconnected" event
+is only propagated when the pkt_handle has not been cleared, indicating
+an unrequested disconnection.
+
+This should fix a race reported by Christophe Ronco whereby the packet
+status disconnect notification is called between activate_primary
+(start_net) and it's callback (start_net_cb).
 ---
- drivers/qmimodem/gprs-context.c | 30 ------------------------------
- 1 file changed, 30 deletions(-)
+ drivers/qmimodem/gprs-context.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-contex=
 t.c
-index af1ce16d..e9a9ac0f 100644
+index af1ce16..80cba76 100644
 --- a/drivers/qmimodem/gprs-context.c
 +++ b/drivers/qmimodem/gprs-context.c
-@@ -44,33 +44,6 @@ struct gprs_context_data {
- 	uint32_t pkt_handle;
- };
+@@ -65,8 +65,12 @@ static void pkt_status_notify(struct qmi_result *result,=
+ void *user_data)
  =
 
--static void pkt_status_notify(struct qmi_result *result, void *user_data)
--{
--	struct ofono_gprs_context *gc =3D user_data;
--	struct gprs_context_data *data =3D ofono_gprs_context_get_data(gc);
--	const struct qmi_wds_notify_conn_status *status;
--	uint16_t len;
--	uint8_t ip_family;
--
--	DBG("");
--
--	status =3D qmi_result_get(result, QMI_WDS_NOTIFY_CONN_STATUS, &len);
--	if (!status)
--		return;
--
--	DBG("conn status %d", status->status);
--
--	if (qmi_result_get_uint8(result, QMI_WDS_NOTIFY_IP_FAMILY, &ip_family))
--		DBG("ip family %d", ip_family);
--
--	switch (status->status) {
--	case QMI_WDS_CONN_STATUS_DISCONNECTED:
+ 	switch (status->status) {
+ 	case QMI_WDS_CONN_STATUS_DISCONNECTED:
 -		ofono_gprs_context_deactivated(gc, data->active_context);
 -		data->active_context =3D 0;
--		break;
--	}
--}
--
- static void get_settings_cb(struct qmi_result *result, void *user_data)
- {
- 	struct cb_data *cbd =3D user_data;
-@@ -376,9 +349,6 @@ static void create_wds_cb(struct qmi_service *service, =
-void *user_data)
++		if (data->pkt_handle) {
++			/* The context has been disconnected by the network */ =
+
++			ofono_gprs_context_deactivated(gc, data->active_context);
++			data->pkt_handle =3D 0;
++			data->active_context =3D 0;
++		}
+ 		break;
  	}
- =
-
- 	data->wds =3D qmi_service_ref(service);
--
--	qmi_service_register(data->wds, QMI_WDS_PKT_STATUS_IND,
--					pkt_status_notify, gc, NULL);
  }
- =
-
- static void get_data_format_cb(struct qmi_result *result, void *user_data)
 -- =
 
-2.11.0
+2.9.3
 
 
---===============2251214879927338286==--
+--===============6817738605654706809==--
 
