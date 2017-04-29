@@ -1,68 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============6817738605654706809=="
+Content-Type: multipart/mixed; boundary="===============1338131522785352013=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH qmi lte v5 1/4] qmi: watch packet status for spontaneous
- disconnection only
-Date: Sat, 29 Apr 2017 14:46:40 +0200
-Message-ID: <20170429124643.21080-2-jonas@southpole.se>
-In-Reply-To: <20170429124643.21080-1-jonas@southpole.se>
+Subject: [PATCH qmi lte v5 0/4] QMI LTE series
+Date: Sat, 29 Apr 2017 14:46:39 +0200
+Message-ID: <20170429124643.21080-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6817738605654706809==
+--===============1338131522785352013==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-There are three principal ways for a context to become disconnected:
+Changes since v4:
 
-i)  deactivate_primary() is called
-ii)  the network registration is lost and the context is cleaned up
-via _detach_shutdown() (via release_all_contexts())
-iii) the network decides to disconnect the context
+* Address feedback from Denis
+* Lots of testing; this is robust against loss of network connectivity
+and transitions across technologies.
+* Dropped LTE atom for now since it's not doing anything interesting
+currently... I'll resend it separately.
 
-We need to watch the packet status in order to detect case iii).  For
-case i) and ii), stop_net will be called, the pkt_handle will be
-cleared, and subsequent packet status notifications be ignored.
+Original cover letter follows:
 
-This patch makes it so that the packet status "disconnected" event
-is only propagated when the pkt_handle has not been cleared, indicating
-an unrequested disconnection.
+LTE is different from other 'GPRS' technologies in that a default bearer
+always gets set up when the modem registers to the network.  Ofono has
+some support for this and this series tries to set this up for QMI
+modems.
 
-This should fix a race reported by Christophe Ronco whereby the packet
-status disconnect notification is called between activate_primary
-(start_net) and it's callback (start_net_cb).
----
- drivers/qmimodem/gprs-context.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+The key to understanding this series is to understand that QMI modems
+do not automatically enable the network interface when connecting to
+an LTE network, even though the default bearer is already set up.  A
+call to "start network" needs to be made in order to allow packets to
+flow.  So the jist of this series is:
 
-diff --git a/drivers/qmimodem/gprs-context.c b/drivers/qmimodem/gprs-contex=
-t.c
-index af1ce16..80cba76 100644
---- a/drivers/qmimodem/gprs-context.c
-+++ b/drivers/qmimodem/gprs-context.c
-@@ -65,8 +65,12 @@ static void pkt_status_notify(struct qmi_result *result,=
- void *user_data)
- =
+i) detect network registration to LTE network
+ii) call ofono_gprs_cid_activated
+iii) in read_settings, start by calling "start network"
 
- 	switch (status->status) {
- 	case QMI_WDS_CONN_STATUS_DISCONNECTED:
--		ofono_gprs_context_deactivated(gc, data->active_context);
--		data->active_context =3D 0;
-+		if (data->pkt_handle) {
-+			/* The context has been disconnected by the network */ =
+...and then there are some other adjustments in the series to make
+this all work.
 
-+			ofono_gprs_context_deactivated(gc, data->active_context);
-+			data->pkt_handle =3D 0;
-+			data->active_context =3D 0;
-+		}
- 		break;
- 	}
- }
+I've tested this with my EC21, both on LTE and UMTS networks.  It
+all seems to work, including moving out of network connectivity and
+bringing the modem repeatedly online/offline.
+
+One open question at this point:
+
+* What happens if the connection manager calls deactivate_context
+on the default bearer context?  I don't see that any other drivers
+guard against this, and the QMI driver will happily stop the network
+interface even though the default bearer is still up in the background.
+
+Jonas Bonn (4):
+  qmi: watch packet status for spontaneous disconnection only
+  qmi: use shared services
+  qmi: use named status values
+  qmi: activate default bearer context for LTE networks
+
+ drivers/qmimodem/gprs-context.c         | 12 ++++--
+ drivers/qmimodem/gprs.c                 | 72 +++++++++++++++++++++++++----=
+----
+ drivers/qmimodem/network-registration.c |  2 +-
+ drivers/qmimodem/radio-settings.c       |  2 +-
+ 4 files changed, 66 insertions(+), 22 deletions(-)
+
 -- =
 
 2.9.3
 
 
---===============6817738605654706809==--
+--===============1338131522785352013==--
 
