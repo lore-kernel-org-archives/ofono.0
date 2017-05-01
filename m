@@ -1,61 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============4062997655113087008=="
+Content-Type: multipart/mixed; boundary="===============1332086430289235770=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: qmimodem: GPRS context stay Active when GPRS attach is lost
-Date: Sat, 29 Apr 2017 14:51:36 +0200
-Message-ID: <140c89fb-6172-9dd3-0db6-400e118b2704@southpole.se>
-In-Reply-To: <acc564b8-0170-aeed-da59-397de3f49a68@kerlink.fr>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v3 2/3] hfp_hf: Handle ServicesResolved signal
+Date: Mon, 01 May 2017 10:57:45 -0500
+Message-ID: <f7a51461-d668-a412-f186-f6410394a300@gmail.com>
+In-Reply-To: <20170428093108.29461-2-luiz.dentz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4062997655113087008==
+--===============1332086430289235770==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+Hi Luiz,
 
-On 04/28/2017 04:28 PM, Christophe Ronco wrote:
+On 04/28/2017 04:31 AM, Luiz Augusto von Dentz wrote:
+> From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
 >
-> Hello,
+> This adds handling for ServicesResolved signal which tells when BlueZ
+> is done resolving the device services so the code will no longer ignore
+> devices that got its services resolved after Paired signal.
+> ---
+>  plugins/hfp_hf_bluez5.c | 10 +++++++---
+>  1 file changed, 7 insertions(+), 3 deletions(-)
 >
-> Even with detach_shutdown method implemented in qmimodem (patch done =
-
-> by Jonas Bonn two or three weeks ago), I still sometimes have problems =
-
-> when I have a lot of GPRS deconnections.
+> diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+> index fb7cc3f..f7d2450 100644
+> --- a/plugins/hfp_hf_bluez5.c
+> +++ b/plugins/hfp_hf_bluez5.c
+> @@ -555,9 +555,9 @@ static struct ofono_modem *modem_register_from_proxy(=
+GDBusProxy *proxy,
 >
-> I use a MC7304 modem and to simulate short GPRS network losses, I =
-
-> simply unplug and replug modem antenna.
+>  	dbus_message_iter_get_basic(&iter, &paired);
 >
+> -	if (paired =3D=3D FALSE) {
+> -		modem =3D ofono_modem_find(device_path_compare, (void *) path);
+> +	modem =3D ofono_modem_find(device_path_compare, (void *) path);
 >
-> I've done a patch that seems to correct the problem for me. I simply =
-
-> do not handle anymore QMI_WDS_PKT_STATUS_IND notifications. I assume =
-
-> it is not needed anymore (after Jonas Bonn patch implementing =
-
-> detach_shutdown method in qmimodem driver). But I might be wrong...
+> +	if (paired =3D=3D FALSE) {
+>  		if (modem !=3D NULL) {
+>  			ofono_modem_remove(modem);
+>  			g_dbus_proxy_set_removed_watch(proxy, NULL, NULL);
+> @@ -566,6 +566,9 @@ static struct ofono_modem *modem_register_from_proxy(=
+GDBusProxy *proxy,
+>  		return NULL;
+>  	}
 >
-> I'll send the patch after this message.
->
+> +	if (modem)
+> +		return modem;
+> +
 
-I'm pretty sure that handling the notification is necessary because the =
+Why would you return a non-NULL value here?  I thought your intended =
 
-network can still disconnect the context spontaneously and the =
+semantics (from patch 1) were to return the modem that was actually =
 
-indication is the only way of detecting that.
+newly registered?
 
-I just pushed a short series for QMI LTE support.  Patch 1/4 in that =
+The new_connection code path is really quite special, so it really begs =
 
-series, I hope, addresses the issue you reported.  It would be great if =
+a comment.  I also wonder if modem_register_from_proxy should be =
 
-you could give that a try and see if it works for you...
+separated into two functions.  One to handle the actual registration =
 
-Best regards,
-Jonas
+path, and one to handle the device removal.
 
+>  	if (g_dbus_proxy_get_property(proxy, "UUIDs", &iter) =3D=3D FALSE)
+>  		return NULL;
 
---===============4062997655113087008==--
+Can UUIDs change from having HFP AG to not having HFP AG btw?  We might =
+
+be missing an additional remove path in that case.
+
+Regards,
+-Denis
+
+--===============1332086430289235770==--
 
