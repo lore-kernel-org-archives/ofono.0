@@ -1,48 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============8373510431751844465=="
+Content-Type: multipart/mixed; boundary="===============6088332975250717636=="
 MIME-Version: 1.0
 From: Luiz Augusto von Dentz <luiz.dentz@gmail.com>
-Subject: [PATCH v4 3/5] hfp_hf_bluez5: Handle ServicesResolved signal
-Date: Wed, 03 May 2017 16:10:53 +0300
-Message-ID: <20170503131055.9652-3-luiz.dentz@gmail.com>
+Subject: [PATCH v4 4/5] doc/handsfree-audio-api: Add Acquire method
+Date: Wed, 03 May 2017 16:10:54 +0300
+Message-ID: <20170503131055.9652-4-luiz.dentz@gmail.com>
 In-Reply-To: <20170503131055.9652-1-luiz.dentz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8373510431751844465==
+--===============6088332975250717636==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
 
-This adds handling for ServicesResolved signal which tells when BlueZ
-is done resolving the device services so the code will no longer ignore
-devices that got its services resolved after Paired signal.
+This adds Acquire method which can be used by agents that require
+pulling the fd directly instead of waiting a NewConnection.
+
+Note: sounds servers like PulseAudio do auto suspend streams when idle
+for a certain amount of time and once anything happens it will resume
+the stream, though this all happens in the so called IO thread in a
+blocking fashion making it impossible to receive the fd via NewConnetion
+causing the stream to fail to resume. There are other forms to work
+around but this seems to be most convenient as we do want the auto
+suspend feature to work properly but letting the stream to fail to
+resume may create unexpected artifacts while the NewConnection is
+handled in main thread.
 ---
- plugins/hfp_hf_bluez5.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ doc/handsfree-audio-api.txt | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 6e4e499..c04d740 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -815,7 +815,8 @@ static void property_changed(GDBusProxy *proxy, const c=
-har *name,
- 	if (g_str_equal(BLUEZ_DEVICE_INTERFACE, interface) =3D=3D FALSE)
- 		return;
+diff --git a/doc/handsfree-audio-api.txt b/doc/handsfree-audio-api.txt
+index d82035c..87d51cf 100644
+--- a/doc/handsfree-audio-api.txt
++++ b/doc/handsfree-audio-api.txt
+@@ -76,6 +76,22 @@ Methods		dict GetProperties()
+ 					 [service].Error.NotImplemented
+ 					 [service].Error.NotAllowed
  =
 
--	if (g_str_equal("Paired", name) !=3D TRUE)
-+	if (g_str_equal("Paired", name) !=3D TRUE &&
-+			g_str_equal("ServicesResolved", name) !=3D TRUE)
- 		return;
++		fd, byte Acquire()
++
++			Attempts to establish the SCO audio connection
++			returning the filedescriptor of the connection and the
++			codec in use.
++
++			Note: Contrary to Connect this does not call
++			NewConnection so it can be called in a blocking
++			manner.
++
++			Possible Errors: [service].Error.InProgress
++					 [service].Error.Failed
++					 [service].Error.NotAvailable
++					 [service].Error.NotImplemented
++					 [service].Error.NotAllowed
++
+ Signals		PropertyChanged(string name, variant value)
  =
 
- 	device_changed(proxy, path);
+ 			This signal indicates a changed value of the given
 -- =
 
 2.9.3
 
 
---===============8373510431751844465==--
+--===============6088332975250717636==--
 
