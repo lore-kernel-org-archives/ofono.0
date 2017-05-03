@@ -1,62 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============7219034572886388044=="
+Content-Type: multipart/mixed; boundary="===============4813212379800070349=="
 MIME-Version: 1.0
 From: Luiz Augusto von Dentz <luiz.dentz@gmail.com>
-Subject: [PATCH v5 2/5] hfp_hf_bluez5: Fix not creating modem during
- NewConnection
-Date: Wed, 03 May 2017 16:19:46 +0300
-Message-ID: <20170503131949.11322-2-luiz.dentz@gmail.com>
+Subject: [PATCH v5 3/5] hfp_hf_bluez5: Handle ServicesResolved signal
+Date: Wed, 03 May 2017 16:19:47 +0300
+Message-ID: <20170503131949.11322-3-luiz.dentz@gmail.com>
 In-Reply-To: <20170503131949.11322-1-luiz.dentz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7219034572886388044==
+--===============4813212379800070349==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
 
-In case the UUIDs are not updated, as they are still being resolved, when
-Paired property changes a modem will never be registered.
-
-In order to fix this problem allow modems to be registered directly
-during NewConnection.
+This adds handling for ServicesResolved signal which tells when BlueZ
+is done resolving the device services so the code will no longer ignore
+devices that got its services resolved after Paired signal.
 ---
- plugins/hfp_hf_bluez5.c | 12 ++++++++++--
- 1 file changed, 10 insertions(+), 2 deletions(-)
+ plugins/hfp_hf_bluez5.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index 5f23b7f..6e4e499 100644
+index 6e4e499..c04d740 100644
 --- a/plugins/hfp_hf_bluez5.c
 +++ b/plugins/hfp_hf_bluez5.c
-@@ -598,10 +598,18 @@ static DBusMessage *profile_new_connection(DBusConnec=
-tion *conn,
+@@ -815,7 +815,8 @@ static void property_changed(GDBusProxy *proxy, const c=
+har *name,
+ 	if (g_str_equal(BLUEZ_DEVICE_INTERFACE, interface) =3D=3D FALSE)
+ 		return;
  =
 
- 	modem =3D ofono_modem_find(device_path_compare, (void *) device);
- 	if (modem =3D=3D NULL) {
--		close(fd);
--		return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
-+		GDBusProxy *proxy;
-+
-+		proxy =3D g_dbus_proxy_new(bluez, device, BLUEZ_DEVICE_INTERFACE);
-+		modem =3D modem_register(device, proxy);
-+		g_dbus_proxy_unref(proxy);
-+
-+		if (!modem) {
-+			close(fd);
-+			return g_dbus_create_error(msg, BLUEZ_ERROR_INTERFACE
- 						".Rejected",
- 						"Unknown Bluetooth device");
-+		}
- 	}
+-	if (g_str_equal("Paired", name) !=3D TRUE)
++	if (g_str_equal("Paired", name) !=3D TRUE &&
++			g_str_equal("ServicesResolved", name) !=3D TRUE)
+ 		return;
  =
 
- 	err =3D service_level_connection(modem, fd, version);
+ 	device_changed(proxy, path);
 -- =
 
 2.9.3
 
 
---===============7219034572886388044==--
+--===============4813212379800070349==--
 
