@@ -1,236 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============6225907459176146259=="
+Content-Type: multipart/mixed; boundary="===============0678196212817908413=="
 MIME-Version: 1.0
 From: Luiz Augusto von Dentz <luiz.dentz@gmail.com>
-Subject: [PATCH v6 1/3] hfp_hf_bluez5: Rework code handling device changes
-Date: Thu, 04 May 2017 11:22:34 +0300
-Message-ID: <20170504082236.9977-1-luiz.dentz@gmail.com>
+Subject: [PATCH v6 2/3] doc/handsfree-audio-api: Add Acquire method
+Date: Thu, 04 May 2017 11:22:35 +0300
+Message-ID: <20170504082236.9977-2-luiz.dentz@gmail.com>
+In-Reply-To: <20170504082236.9977-1-luiz.dentz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6225907459176146259==
+--===============0678196212817908413==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
 
-This splits the handling of device changes and modem registration so
-they can be uses separately.
+This adds Acquire method which can be used by agents that require
+pulling the fd directly instead of waiting a NewConnection.
+
+Note: sounds servers like PulseAudio do auto suspend streams when idle
+for a certain amount of time and once anything happens it will resume
+the stream, though this all happens in the so called IO thread in a
+blocking fashion making it impossible to receive the fd via NewConnetion
+causing the stream to fail to resume. There are other forms to work
+around but this seems to be most convenient as we do want the auto
+suspend feature to work properly but letting the stream to fail to
+resume may create unexpected artifacts while the NewConnection is
+handled in main thread.
 ---
-v6: Now properly rebased
+ doc/handsfree-audio-api.txt | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
- plugins/hfp_hf_bluez5.c | 104 +++++++++++++++++++++++++-------------------=
-----
- 1 file changed, 55 insertions(+), 49 deletions(-)
-
-diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
-index f7d2450..bdeb3ca 100644
---- a/plugins/hfp_hf_bluez5.c
-+++ b/plugins/hfp_hf_bluez5.c
-@@ -176,11 +176,42 @@ static int service_level_connection(struct ofono_mode=
-m *modem,
- 	return -EINPROGRESS;
- }
+diff --git a/doc/handsfree-audio-api.txt b/doc/handsfree-audio-api.txt
+index d82035c..87d51cf 100644
+--- a/doc/handsfree-audio-api.txt
++++ b/doc/handsfree-audio-api.txt
+@@ -76,6 +76,22 @@ Methods		dict GetProperties()
+ 					 [service].Error.NotImplemented
+ 					 [service].Error.NotAllowed
  =
 
--static struct ofono_modem *modem_register(const char *device,
--				const char *device_address, const char *alias)
-+static void modem_removed(GDBusProxy *proxy, void *user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
++		fd, byte Acquire()
 +
-+	ofono_modem_remove(modem);
-+}
++			Attempts to establish the SCO audio connection
++			returning the filedescriptor of the connection and the
++			codec in use.
 +
-+static void alias_changed(GDBusProxy *proxy, const char *name,
-+					DBusMessageIter *iter, void *user_data)
-+{
-+	const char *alias;
-+	struct ofono_modem *modem =3D user_data;
++			Note: Contrary to Connect this does not call
++			NewConnection so it can be called in a blocking
++			manner.
 +
-+	if (g_str_equal("Alias", name) =3D=3D FALSE)
-+		return;
++			Possible Errors: [service].Error.InProgress
++					 [service].Error.Failed
++					 [service].Error.NotAvailable
++					 [service].Error.NotImplemented
++					 [service].Error.NotAllowed
 +
-+	dbus_message_iter_get_basic(iter, &alias);
-+	ofono_modem_set_name(modem, alias);
-+}
-+
-+static struct ofono_modem *modem_register(const char *device, GDBusProxy *=
-proxy)
- {
- 	struct ofono_modem *modem;
- 	char *path;
-+	DBusMessageIter iter;
-+	const char *alias, *remote;
-+
-+	if (g_dbus_proxy_get_property(proxy, "Alias", &iter) =3D=3D FALSE)
-+		return NULL;
-+
-+	dbus_message_iter_get_basic(&iter, &alias);
-+
-+	if (g_dbus_proxy_get_property(proxy, "Address", &iter) =3D=3D FALSE)
-+		return NULL;
-+
-+	dbus_message_iter_get_basic(&iter, &remote);
+ Signals		PropertyChanged(string name, variant value)
  =
 
- 	path =3D g_strconcat("hfp", device, NULL);
- =
-
-@@ -191,12 +222,15 @@ static struct ofono_modem *modem_register(const char =
-*device,
- 	if (modem =3D=3D NULL)
- 		return NULL;
- =
-
--	ofono_modem_set_string(modem, "Remote", device_address);
-+	ofono_modem_set_string(modem, "Remote", remote);
- 	ofono_modem_set_string(modem, "DevicePath", device);
- =
-
- 	ofono_modem_set_name(modem, alias);
- 	ofono_modem_register(modem);
- =
-
-+	g_dbus_proxy_set_property_watch(proxy, alias_changed, modem);
-+	g_dbus_proxy_set_removed_watch(proxy, modem_removed, modem);
-+
- 	return modem;
- }
- =
-
-@@ -522,30 +556,15 @@ static gboolean has_hfp_ag_uuid(DBusMessageIter *arra=
-y)
- 	return FALSE;
- }
- =
-
--static void modem_removed(GDBusProxy *proxy, void *user_data)
-+static void modem_unregister(struct ofono_modem *modem, GDBusProxy *proxy)
- {
--	struct ofono_modem *modem =3D user_data;
--
- 	ofono_modem_remove(modem);
-+	g_dbus_proxy_set_removed_watch(proxy, NULL, NULL);
-+	g_dbus_proxy_set_property_watch(proxy, NULL, NULL);
- }
- =
-
--static void alias_changed(GDBusProxy *proxy, const char *name,
--					DBusMessageIter *iter, void *user_data)
--{
--	const char *alias;
--	struct ofono_modem *modem =3D user_data;
--
--	if (g_str_equal("Alias", name) =3D=3D FALSE)
--		return;
--
--	dbus_message_iter_get_basic(iter, &alias);
--	ofono_modem_set_name(modem, alias);
--}
--
--static struct ofono_modem *modem_register_from_proxy(GDBusProxy *proxy,
--							const char *path)
-+static void *device_changed(GDBusProxy *proxy, const char *path)
- {
--	const char *alias, *remote;
- 	DBusMessageIter iter;
- 	dbus_bool_t paired;
- 	struct ofono_modem *modem;
-@@ -558,36 +577,23 @@ static struct ofono_modem *modem_register_from_proxy(=
-GDBusProxy *proxy,
- 	modem =3D ofono_modem_find(device_path_compare, (void *) path);
- =
-
- 	if (paired =3D=3D FALSE) {
--		if (modem !=3D NULL) {
--			ofono_modem_remove(modem);
--			g_dbus_proxy_set_removed_watch(proxy, NULL, NULL);
--			g_dbus_proxy_set_property_watch(proxy, NULL, NULL);
--		}
-+		if (modem !=3D NULL)
-+			modem_unregister(modem, proxy);
- 		return NULL;
- 	}
- =
-
--	if (modem)
--		return modem;
--
--	if (g_dbus_proxy_get_property(proxy, "UUIDs", &iter) =3D=3D FALSE)
--		return NULL;
--
--	if (has_hfp_ag_uuid(&iter) =3D=3D FALSE)
--		return NULL;
--
--	if (g_dbus_proxy_get_property(proxy, "Alias", &iter) =3D=3D FALSE)
--		return NULL;
--
--	dbus_message_iter_get_basic(&iter, &alias);
--
--	if (g_dbus_proxy_get_property(proxy, "Address", &iter) =3D=3D FALSE)
-+	if (g_dbus_proxy_get_property(proxy, "UUIDs", &iter) =3D=3D FALSE ||
-+					has_hfp_ag_uuid(&iter) =3D=3D FALSE) {
-+		if (modem !=3D NULL)
-+			modem_unregister(modem, proxy);
- 		return NULL;
-+	}
- =
-
--	dbus_message_iter_get_basic(&iter, &remote);
-+	/* Skip if modem already registered */
-+	if (modem)
-+		return modem;
- =
-
--	modem =3D modem_register(path, remote, alias);
--	g_dbus_proxy_set_property_watch(proxy, alias_changed, modem);
--	g_dbus_proxy_set_removed_watch(proxy, modem_removed, modem);
-+	modem =3D modem_register(path, proxy);
- =
-
- 	return modem;
- }
-@@ -637,7 +643,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
-on *conn,
- 		GDBusProxy *proxy;
- =
-
- 		proxy =3D g_dbus_proxy_new(bluez, device, BLUEZ_DEVICE_INTERFACE);
--		modem =3D modem_register_from_proxy(proxy, device);
-+		modem =3D modem_register(device, proxy);
- 		g_dbus_proxy_unref(proxy);
- =
-
- 		if (!modem) {
-@@ -797,7 +803,7 @@ static void proxy_added(GDBusProxy *proxy, void *user_d=
-ata)
- 	if (g_str_equal(BLUEZ_DEVICE_INTERFACE, interface) =3D=3D FALSE)
- 		return;
- =
-
--	modem_register_from_proxy(proxy, path);
-+	device_changed(proxy, path);
- }
- =
-
- static void property_changed(GDBusProxy *proxy, const char *name,
-@@ -815,7 +821,7 @@ static void property_changed(GDBusProxy *proxy, const c=
-har *name,
- 			g_str_equal("ServicesResolved", name) !=3D TRUE)
- 		return;
- =
-
--	modem_register_from_proxy(proxy, path);
-+	device_changed(proxy, path);
- }
- =
-
- static int hfp_init(void)
+ 			This signal indicates a changed value of the given
 -- =
 
 2.9.3
 
 
---===============6225907459176146259==--
+--===============0678196212817908413==--
 
