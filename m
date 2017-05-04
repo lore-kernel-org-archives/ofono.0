@@ -1,63 +1,236 @@
-Content-Type: multipart/mixed; boundary="===============5183277237839821084=="
+Content-Type: multipart/mixed; boundary="===============6225907459176146259=="
 MIME-Version: 1.0
 From: Luiz Augusto von Dentz <luiz.dentz@gmail.com>
-Subject: [PATCH v5 5/5] handsfree-audio: Add Acquire implementation
-Date: Wed, 03 May 2017 16:19:49 +0300
-Message-ID: <20170503131949.11322-5-luiz.dentz@gmail.com>
-In-Reply-To: <20170503131949.11322-1-luiz.dentz@gmail.com>
+Subject: [PATCH v6 1/3] hfp_hf_bluez5: Rework code handling device changes
+Date: Thu, 04 May 2017 11:22:34 +0300
+Message-ID: <20170504082236.9977-1-luiz.dentz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5183277237839821084==
+--===============6225907459176146259==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
 
-This adds Acquire method which can be used by agents that require
-pulling the fd directly instead of waiting a NewConnection.
+This splits the handling of device changes and modem registration so
+they can be uses separately.
 ---
- src/handsfree-audio.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+v6: Now properly rebased
 
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index dab16da..5ca8702 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -326,6 +326,13 @@ static gboolean sco_connect_cb(GIOChannel *io, GIOCond=
-ition cond,
+ plugins/hfp_hf_bluez5.c | 104 +++++++++++++++++++++++++-------------------=
+----
+ 1 file changed, 55 insertions(+), 49 deletions(-)
+
+diff --git a/plugins/hfp_hf_bluez5.c b/plugins/hfp_hf_bluez5.c
+index f7d2450..bdeb3ca 100644
+--- a/plugins/hfp_hf_bluez5.c
++++ b/plugins/hfp_hf_bluez5.c
+@@ -176,11 +176,42 @@ static int service_level_connection(struct ofono_mode=
+m *modem,
+ 	return -EINPROGRESS;
+ }
  =
 
- 	sk =3D g_io_channel_unix_get_fd(io);
- =
-
-+	if (card->msg && dbus_message_has_member(card->msg, "Acquire")) {
-+		reply =3D g_dbus_create_reply(card->msg, DBUS_TYPE_UNIX_FD, &sk,
-+					DBUS_TYPE_BYTE, &card->selected_codec,
-+					DBUS_TYPE_INVALID);
-+		goto done;
-+	}
+-static struct ofono_modem *modem_register(const char *device,
+-				const char *device_address, const char *alias)
++static void modem_removed(GDBusProxy *proxy, void *user_data)
++{
++	struct ofono_modem *modem =3D user_data;
 +
- 	send_new_connection(card->path, sk, card->selected_codec);
++	ofono_modem_remove(modem);
++}
++
++static void alias_changed(GDBusProxy *proxy, const char *name,
++					DBusMessageIter *iter, void *user_data)
++{
++	const char *alias;
++	struct ofono_modem *modem =3D user_data;
++
++	if (g_str_equal("Alias", name) =3D=3D FALSE)
++		return;
++
++	dbus_message_iter_get_basic(iter, &alias);
++	ofono_modem_set_name(modem, alias);
++}
++
++static struct ofono_modem *modem_register(const char *device, GDBusProxy *=
+proxy)
+ {
+ 	struct ofono_modem *modem;
+ 	char *path;
++	DBusMessageIter iter;
++	const char *alias, *remote;
++
++	if (g_dbus_proxy_get_property(proxy, "Alias", &iter) =3D=3D FALSE)
++		return NULL;
++
++	dbus_message_iter_get_basic(&iter, &alias);
++
++	if (g_dbus_proxy_get_property(proxy, "Address", &iter) =3D=3D FALSE)
++		return NULL;
++
++	dbus_message_iter_get_basic(&iter, &remote);
  =
 
- 	close(sk);
-@@ -403,6 +410,9 @@ static const GDBusMethodTable card_methods[] =3D {
- 			NULL, GDBUS_ARGS({ "properties", "a{sv}" }),
- 			card_get_properties) },
- 	{ GDBUS_ASYNC_METHOD("Connect", NULL, NULL, card_connect) },
-+	{ GDBUS_ASYNC_METHOD("Acquire", NULL,
-+			GDBUS_ARGS({"sco", "h"}, {"codec", "y"}),
-+			card_connect) },
- 	{ }
- };
+ 	path =3D g_strconcat("hfp", device, NULL);
  =
 
+@@ -191,12 +222,15 @@ static struct ofono_modem *modem_register(const char =
+*device,
+ 	if (modem =3D=3D NULL)
+ 		return NULL;
+ =
+
+-	ofono_modem_set_string(modem, "Remote", device_address);
++	ofono_modem_set_string(modem, "Remote", remote);
+ 	ofono_modem_set_string(modem, "DevicePath", device);
+ =
+
+ 	ofono_modem_set_name(modem, alias);
+ 	ofono_modem_register(modem);
+ =
+
++	g_dbus_proxy_set_property_watch(proxy, alias_changed, modem);
++	g_dbus_proxy_set_removed_watch(proxy, modem_removed, modem);
++
+ 	return modem;
+ }
+ =
+
+@@ -522,30 +556,15 @@ static gboolean has_hfp_ag_uuid(DBusMessageIter *arra=
+y)
+ 	return FALSE;
+ }
+ =
+
+-static void modem_removed(GDBusProxy *proxy, void *user_data)
++static void modem_unregister(struct ofono_modem *modem, GDBusProxy *proxy)
+ {
+-	struct ofono_modem *modem =3D user_data;
+-
+ 	ofono_modem_remove(modem);
++	g_dbus_proxy_set_removed_watch(proxy, NULL, NULL);
++	g_dbus_proxy_set_property_watch(proxy, NULL, NULL);
+ }
+ =
+
+-static void alias_changed(GDBusProxy *proxy, const char *name,
+-					DBusMessageIter *iter, void *user_data)
+-{
+-	const char *alias;
+-	struct ofono_modem *modem =3D user_data;
+-
+-	if (g_str_equal("Alias", name) =3D=3D FALSE)
+-		return;
+-
+-	dbus_message_iter_get_basic(iter, &alias);
+-	ofono_modem_set_name(modem, alias);
+-}
+-
+-static struct ofono_modem *modem_register_from_proxy(GDBusProxy *proxy,
+-							const char *path)
++static void *device_changed(GDBusProxy *proxy, const char *path)
+ {
+-	const char *alias, *remote;
+ 	DBusMessageIter iter;
+ 	dbus_bool_t paired;
+ 	struct ofono_modem *modem;
+@@ -558,36 +577,23 @@ static struct ofono_modem *modem_register_from_proxy(=
+GDBusProxy *proxy,
+ 	modem =3D ofono_modem_find(device_path_compare, (void *) path);
+ =
+
+ 	if (paired =3D=3D FALSE) {
+-		if (modem !=3D NULL) {
+-			ofono_modem_remove(modem);
+-			g_dbus_proxy_set_removed_watch(proxy, NULL, NULL);
+-			g_dbus_proxy_set_property_watch(proxy, NULL, NULL);
+-		}
++		if (modem !=3D NULL)
++			modem_unregister(modem, proxy);
+ 		return NULL;
+ 	}
+ =
+
+-	if (modem)
+-		return modem;
+-
+-	if (g_dbus_proxy_get_property(proxy, "UUIDs", &iter) =3D=3D FALSE)
+-		return NULL;
+-
+-	if (has_hfp_ag_uuid(&iter) =3D=3D FALSE)
+-		return NULL;
+-
+-	if (g_dbus_proxy_get_property(proxy, "Alias", &iter) =3D=3D FALSE)
+-		return NULL;
+-
+-	dbus_message_iter_get_basic(&iter, &alias);
+-
+-	if (g_dbus_proxy_get_property(proxy, "Address", &iter) =3D=3D FALSE)
++	if (g_dbus_proxy_get_property(proxy, "UUIDs", &iter) =3D=3D FALSE ||
++					has_hfp_ag_uuid(&iter) =3D=3D FALSE) {
++		if (modem !=3D NULL)
++			modem_unregister(modem, proxy);
+ 		return NULL;
++	}
+ =
+
+-	dbus_message_iter_get_basic(&iter, &remote);
++	/* Skip if modem already registered */
++	if (modem)
++		return modem;
+ =
+
+-	modem =3D modem_register(path, remote, alias);
+-	g_dbus_proxy_set_property_watch(proxy, alias_changed, modem);
+-	g_dbus_proxy_set_removed_watch(proxy, modem_removed, modem);
++	modem =3D modem_register(path, proxy);
+ =
+
+ 	return modem;
+ }
+@@ -637,7 +643,7 @@ static DBusMessage *profile_new_connection(DBusConnecti=
+on *conn,
+ 		GDBusProxy *proxy;
+ =
+
+ 		proxy =3D g_dbus_proxy_new(bluez, device, BLUEZ_DEVICE_INTERFACE);
+-		modem =3D modem_register_from_proxy(proxy, device);
++		modem =3D modem_register(device, proxy);
+ 		g_dbus_proxy_unref(proxy);
+ =
+
+ 		if (!modem) {
+@@ -797,7 +803,7 @@ static void proxy_added(GDBusProxy *proxy, void *user_d=
+ata)
+ 	if (g_str_equal(BLUEZ_DEVICE_INTERFACE, interface) =3D=3D FALSE)
+ 		return;
+ =
+
+-	modem_register_from_proxy(proxy, path);
++	device_changed(proxy, path);
+ }
+ =
+
+ static void property_changed(GDBusProxy *proxy, const char *name,
+@@ -815,7 +821,7 @@ static void property_changed(GDBusProxy *proxy, const c=
+har *name,
+ 			g_str_equal("ServicesResolved", name) !=3D TRUE)
+ 		return;
+ =
+
+-	modem_register_from_proxy(proxy, path);
++	device_changed(proxy, path);
+ }
+ =
+
+ static int hfp_init(void)
 -- =
 
 2.9.3
 
 
---===============5183277237839821084==--
+--===============6225907459176146259==--
 
