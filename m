@@ -1,37 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============8077668163345312577=="
+Content-Type: multipart/mixed; boundary="===============2765414617429673284=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] qmimodem: set APN for LTE default bearer
-Date: Thu, 04 May 2017 11:00:58 -0500
-Message-ID: <9d773152-3ec7-852d-2e4d-5e26b2b5f850@gmail.com>
-In-Reply-To: <20170504132430.28813-2-jonas@southpole.se>
+Subject: Re: [PATCH v6 1/3] hfp_hf_bluez5: Rework code handling device changes
+Date: Thu, 04 May 2017 12:35:22 -0500
+Message-ID: <7338e499-e0bb-2e7d-e017-1afb03eb5d70@gmail.com>
+In-Reply-To: <20170504082236.9977-1-luiz.dentz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8077668163345312577==
+--===============2765414617429673284==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+Hi Luiz,
 
-On 05/04/2017 08:24 AM, Jonas Bonn wrote:
-> Apparently, an empty APN in an ofono context means that that the context
-> cannot be activated.  connman definitely interprets it this way.
+On 05/04/2017 03:22 AM, Luiz Augusto von Dentz wrote:
+> From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
 >
-> This patch sets a default name of "automatic" for the default bearer if
-> no other LTE APN is supplied (which is currently the case as the LTE
-> atom is not in place yet).  Without this, connman happily ignores the
-> context, even though it has been activated by ofono.
+> This splits the handling of device changes and modem registration so
+> they can be uses separately.
 > ---
->  drivers/qmimodem/gprs.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+> v6: Now properly rebased
+>
+>  plugins/hfp_hf_bluez5.c | 104 +++++++++++++++++++++++++-----------------=
+------
+>  1 file changed, 55 insertions(+), 49 deletions(-)
+>
 
-Applied, thanks.
+All applied, thanks.
 
 Regards,
 -Denis
 
 
---===============8077668163345312577==--
+--===============2765414617429673284==--
 
