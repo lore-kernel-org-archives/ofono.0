@@ -1,63 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============6331780137325882810=="
+Content-Type: multipart/mixed; boundary="===============8752553495691691671=="
 MIME-Version: 1.0
-From: Luiz Augusto von Dentz <luiz.dentz@gmail.com>
-Subject: [PATCH v6 3/3] handsfree-audio: Add Acquire implementation
-Date: Thu, 04 May 2017 11:22:36 +0300
-Message-ID: <20170504082236.9977-3-luiz.dentz@gmail.com>
-In-Reply-To: <20170504082236.9977-1-luiz.dentz@gmail.com>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: [PATCH 2/2] qmimodem: set APN for LTE default bearer
+Date: Thu, 04 May 2017 15:24:30 +0200
+Message-ID: <20170504132430.28813-2-jonas@southpole.se>
+In-Reply-To: <20170504132430.28813-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6331780137325882810==
+--===============8752553495691691671==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+Apparently, an empty APN in an ofono context means that that the context
+cannot be activated.  connman definitely interprets it this way.
 
-This adds Acquire method which can be used by agents that require
-pulling the fd directly instead of waiting a NewConnection.
+This patch sets a default name of "automatic" for the default bearer if
+no other LTE APN is supplied (which is currently the case as the LTE
+atom is not in place yet).  Without this, connman happily ignores the
+context, even though it has been activated by ofono.
 ---
- src/handsfree-audio.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ drivers/qmimodem/gprs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/handsfree-audio.c b/src/handsfree-audio.c
-index dab16da..5ca8702 100644
---- a/src/handsfree-audio.c
-+++ b/src/handsfree-audio.c
-@@ -326,6 +326,13 @@ static gboolean sco_connect_cb(GIOChannel *io, GIOCond=
-ition cond,
+diff --git a/drivers/qmimodem/gprs.c b/drivers/qmimodem/gprs.c
+index ac52b19..a80d55f 100644
+--- a/drivers/qmimodem/gprs.c
++++ b/drivers/qmimodem/gprs.c
+@@ -83,7 +83,7 @@ static int handle_ss_info(struct qmi_result *result, stru=
+ct ofono_gprs *gprs)
+ 			/* FIXME: query default profile number and APN
+ 			 * instead of assuming profile 1 and ""
+ 			 */
+-			ofono_gprs_cid_activated(gprs, 1 , "");
++			ofono_gprs_cid_activated(gprs, 1 , "automatic");
+ 		}
  =
 
- 	sk =3D g_io_channel_unix_get_fd(io);
- =
-
-+	if (card->msg && dbus_message_has_member(card->msg, "Acquire")) {
-+		reply =3D g_dbus_create_reply(card->msg, DBUS_TYPE_UNIX_FD, &sk,
-+					DBUS_TYPE_BYTE, &card->selected_codec,
-+					DBUS_TYPE_INVALID);
-+		goto done;
-+	}
-+
- 	send_new_connection(card->path, sk, card->selected_codec);
- =
-
- 	close(sk);
-@@ -403,6 +410,9 @@ static const GDBusMethodTable card_methods[] =3D {
- 			NULL, GDBUS_ARGS({ "properties", "a{sv}" }),
- 			card_get_properties) },
- 	{ GDBUS_ASYNC_METHOD("Connect", NULL, NULL, card_connect) },
-+	{ GDBUS_ASYNC_METHOD("Acquire", NULL,
-+			GDBUS_ARGS({"sco", "h"}, {"codec", "y"}),
-+			card_connect) },
- 	{ }
- };
- =
-
+ 	return status;
 -- =
 
 2.9.3
 
 
---===============6331780137325882810==--
+--===============8752553495691691671==--
 
