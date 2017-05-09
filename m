@@ -1,28 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============1305261361377213527=="
+Content-Type: multipart/mixed; boundary="===============4023447392533318152=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] gprs: pri_set_apn not exclusively a DBus method
-Date: Tue, 09 May 2017 20:08:34 +0200
-Message-ID: <78465767-1557-5ae1-feaa-8c7651bbd1ad@southpole.se>
-In-Reply-To: <4efbb019-1b6e-c69b-37d9-c1ee9e9fe8ce@gmail.com>
+Date: Tue, 09 May 2017 13:34:39 -0500
+Message-ID: <b3bf1249-ea83-2b40-bbb6-96669ad66fbd@gmail.com>
+In-Reply-To: <78465767-1557-5ae1-feaa-8c7651bbd1ad@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1305261361377213527==
+--===============4023447392533318152==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 05/09/2017 06:37 PM, Denis Kenzior wrote:
-> Anyway, I have now fixed this in =
+Hi Jonas,
 
-> d9cb969dcff649d33f97ceddac57163dfc9602db.  Let me know if I broke =
+On 05/09/2017 01:08 PM, Jonas Bonn wrote:
+> On 05/09/2017 06:37 PM, Denis Kenzior wrote:
+>> Anyway, I have now fixed this in
+>> d9cb969dcff649d33f97ceddac57163dfc9602db.  Let me know if I broke
+>> something.
+>
+> Did you forget to push that?  ;)
+>
 
-> something.
+Yes I did.  Sorry about that.  Pushed out now.
 
-Did you forget to push that?  ;)
+Regards,
+-Denis
 
-/Jonas
 
---===============1305261361377213527==--
+--===============4023447392533318152==--
 
