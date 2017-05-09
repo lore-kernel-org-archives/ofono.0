@@ -1,72 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============3783672237739770113=="
+Content-Type: multipart/mixed; boundary="===============4815135899211082618=="
 MIME-Version: 1.0
-From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCH] gprs: pri_set_apn not exclusively a DBus method
-Date: Tue, 09 May 2017 16:52:37 +0200
-Message-ID: <1494341557-3118-2-git-send-email-c.ronco@kerlink.fr>
-In-Reply-To: <1494341557-3118-1-git-send-email-c.ronco@kerlink.fr>
+From: Vincent CESSON <vincent.cesson@smile.fr>
+Subject: Atoms for hardware monitoring
+Date: Tue, 09 May 2017 17:45:42 +0200
+Message-ID: <fdd120b37a09f9414b227ba8083ecc10@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3783672237739770113==
+--===============4815135899211082618==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-pri_set_apn is called by ofono_gprs_cid_activated() when attached
-using LTE technology.
-This patch avoid calling DBUS functions in this case. Without
-this patch we have a crash in ofono process in this case.
+Hi,
 
-diff --git a/src/gprs.c b/src/gprs.c
-index c5e7709..9c6d282 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -1027,14 +1027,28 @@ static DBusMessage *pri_set_apn(struct pri_context =
-*ctx, DBusConnection *conn,
- {
- 	GKeyFile *settings =3D ctx->gprs->settings;
- =
+I am currently working with Gemalto modem Cinterion PHS8. This modem =
 
--	if (strlen(apn) > OFONO_GPRS_MAX_APN_LENGTH)
--		return __ofono_error_invalid_format(msg);
-+	if (strlen(apn) > OFONO_GPRS_MAX_APN_LENGTH) {
-+		if (msg)
-+			return __ofono_error_invalid_format(msg);
- =
+has hardware related commands to check voltage and temperature. For =
 
--	if (g_str_equal(apn, ctx->context.apn))
--		return dbus_message_new_method_return(msg);
-+		DBG("APN %s too long", apn);
-+		return NULL;
-+	}
- =
+example read the temperature (enable temperature output and read it):
 
--	if (is_valid_apn(apn) =3D=3D FALSE)
--		return __ofono_error_invalid_format(msg);
-+	if (g_str_equal(apn, ctx->context.apn)) {
-+		if (msg)
-+			return dbus_message_new_method_return(msg);
-+
-+		return NULL;
-+	}
-+
-+	if (is_valid_apn(apn) =3D=3D FALSE) {
-+		if (msg)
-+			return __ofono_error_invalid_format(msg);
-+
-+		DBG("APN %s invalid", apn);
-+		return NULL;
-+	}
- =
+AT^SCTM=3D0,1
+OK
+AT^SCTM?
+^SCTM: 0,0,32
 
- 	strcpy(ctx->context.apn, apn);
- =
+I would like to read these parameters with Ofono but I didn't find in =
 
--- =
+documentation any existing interface that can handle hardware =
 
-2.7.4
+monitoring. Maybe I could hack Ofono to add custom properties to an =
+
+existing interface for instance, or create my own interface. But if more =
+
+modems propose the same kind of features it could be interesting to find =
+
+a generic API.
+
+I don't know how to process because I am not totally aware of Ofono =
+
+structure and I know a single modem. Should I add a new atom? Is there a =
+
+developer guide for this?
+
+Thanks for your help.
+
+Regards,
+Vincent
 
 
---===============3783672237739770113==--
+
+
+--===============4815135899211082618==--
 
