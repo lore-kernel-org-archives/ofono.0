@@ -1,59 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============6751135883668044312=="
+Content-Type: multipart/mixed; boundary="===============8132881052611097149=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Atoms for hardware monitoring
-Date: Tue, 09 May 2017 11:12:14 -0500
-Message-ID: <67b55154-0c22-22dd-2d75-fc5241447f00@gmail.com>
-In-Reply-To: <fdd120b37a09f9414b227ba8083ecc10@smile.fr>
+Subject: Re: [PATCH] gprs: pri_set_apn not exclusively a DBus method
+Date: Tue, 09 May 2017 11:37:35 -0500
+Message-ID: <4efbb019-1b6e-c69b-37d9-c1ee9e9fe8ce@gmail.com>
+In-Reply-To: <1494341557-3118-2-git-send-email-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6751135883668044312==
+--===============8132881052611097149==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vincent,
+Hi Christophe,
 
-On 05/09/2017 10:45 AM, Vincent CESSON wrote:
-> Hi,
+On 05/09/2017 09:52 AM, Christophe Ronco wrote:
+> pri_set_apn is called by ofono_gprs_cid_activated() when attached
+> using LTE technology.
+> This patch avoid calling DBUS functions in this case. Without
+> this patch we have a crash in ofono process in this case.
 >
-> I am currently working with Gemalto modem Cinterion PHS8. This modem has
-> hardware related commands to check voltage and temperature. For example
-> read the temperature (enable temperature output and read it):
+> diff --git a/src/gprs.c b/src/gprs.c
+> index c5e7709..9c6d282 100644
+> --- a/src/gprs.c
+> +++ b/src/gprs.c
+> @@ -1027,14 +1027,28 @@ static DBusMessage *pri_set_apn(struct pri_contex=
+t *ctx, DBusConnection *conn,
+>  {
+>  	GKeyFile *settings =3D ctx->gprs->settings;
 >
-> AT^SCTM=3D0,1
-> OK
-> AT^SCTM?
-> ^SCTM: 0,0,32
+> -	if (strlen(apn) > OFONO_GPRS_MAX_APN_LENGTH)
+> -		return __ofono_error_invalid_format(msg);
+> +	if (strlen(apn) > OFONO_GPRS_MAX_APN_LENGTH) {
+> +		if (msg)
+> +			return __ofono_error_invalid_format(msg);
 >
-> I would like to read these parameters with Ofono but I didn't find in
-> documentation any existing interface that can handle hardware
-> monitoring. Maybe I could hack Ofono to add custom properties to an
-> existing interface for instance, or create my own interface. But if more
-> modems propose the same kind of features it could be interesting to find
-> a generic API.
+> -	if (g_str_equal(apn, ctx->context.apn))
+> -		return dbus_message_new_method_return(msg);
+> +		DBG("APN %s too long", apn);
+> +		return NULL;
+> +	}
+>
+> -	if (is_valid_apn(apn) =3D=3D FALSE)
+> -		return __ofono_error_invalid_format(msg);
+> +	if (g_str_equal(apn, ctx->context.apn)) {
+> +		if (msg)
+> +			return dbus_message_new_method_return(msg);
+> +
+> +		return NULL;
 
-The rule of thumb is that if a feature is supported by most vendors, =
+Returning NULL on a success path doesn't really make any sense.
 
-then we can consider adding a dedicated atom for it.  Generally these =
+> +	}
+> +
+> +	if (is_valid_apn(apn) =3D=3D FALSE) {
+> +		if (msg)
+> +			return __ofono_error_invalid_format(msg);
+> +
+> +		DBG("APN %s invalid", apn);
+> +		return NULL;
+> +	}
+>
+>  	strcpy(ctx->context.apn, apn);
+>
+>
 
-features have a very specific behavior and finding a unified API is =
+Anyway, I have now fixed this in =
 
-straightforward.
-
-For features that are more manufacturer specific we like to use plugin =
-
-specific interfaces.
-
-I do not recall any other manufacturers exposing such information, so =
-
-this may be a good fit for a plugin specific interface.  There's an =
-
-example inside ril_intel.c which adds THERMAL_MANAGEMENT_INTERFACE.
+d9cb969dcff649d33f97ceddac57163dfc9602db.  Let me know if I broke something.
 
 Regards,
 -Denis
 
---===============6751135883668044312==--
+--===============8132881052611097149==--
 
