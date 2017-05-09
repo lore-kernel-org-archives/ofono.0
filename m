@@ -1,34 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============2120591034828214256=="
+Content-Type: multipart/mixed; boundary="===============3783672237739770113=="
 MIME-Version: 1.0
 From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCH] Fix crash in pri_set_apn when using an LTE SIM
-Date: Tue, 09 May 2017 16:52:36 +0200
-Message-ID: <1494341557-3118-1-git-send-email-c.ronco@kerlink.fr>
-In-Reply-To: <880e6dc7-7ab9-2aec-b52a-26c6c45903ec@gmail.com>
+Subject: [PATCH] gprs: pri_set_apn not exclusively a DBus method
+Date: Tue, 09 May 2017 16:52:37 +0200
+Message-ID: <1494341557-3118-2-git-send-email-c.ronco@kerlink.fr>
+In-Reply-To: <1494341557-3118-1-git-send-email-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2120591034828214256==
+--===============3783672237739770113==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-I use a MC7304 modem.
-As Jonas said, ofonod crashes when using an LTE SIM.
-I didn't duplicate pri_set_apn code as Denis proposed,
-I made it support a NULL msg parameter.
+pri_set_apn is called by ofono_gprs_cid_activated() when attached
+using LTE technology.
+This patch avoid calling DBUS functions in this case. Without
+this patch we have a crash in ofono process in this case.
 
+diff --git a/src/gprs.c b/src/gprs.c
+index c5e7709..9c6d282 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -1027,14 +1027,28 @@ static DBusMessage *pri_set_apn(struct pri_context =
+*ctx, DBusConnection *conn,
+ {
+ 	GKeyFile *settings =3D ctx->gprs->settings;
+ =
 
-Christophe Ronco (1):
-  gprs: pri_set_apn not exclusively a DBus method
+-	if (strlen(apn) > OFONO_GPRS_MAX_APN_LENGTH)
+-		return __ofono_error_invalid_format(msg);
++	if (strlen(apn) > OFONO_GPRS_MAX_APN_LENGTH) {
++		if (msg)
++			return __ofono_error_invalid_format(msg);
+ =
 
- src/gprs.c | 26 ++++++++++++++++++++------
- 1 file changed, 20 insertions(+), 6 deletions(-)
+-	if (g_str_equal(apn, ctx->context.apn))
+-		return dbus_message_new_method_return(msg);
++		DBG("APN %s too long", apn);
++		return NULL;
++	}
+ =
+
+-	if (is_valid_apn(apn) =3D=3D FALSE)
+-		return __ofono_error_invalid_format(msg);
++	if (g_str_equal(apn, ctx->context.apn)) {
++		if (msg)
++			return dbus_message_new_method_return(msg);
++
++		return NULL;
++	}
++
++	if (is_valid_apn(apn) =3D=3D FALSE) {
++		if (msg)
++			return __ofono_error_invalid_format(msg);
++
++		DBG("APN %s invalid", apn);
++		return NULL;
++	}
+ =
+
+ 	strcpy(ctx->context.apn, apn);
+ =
 
 -- =
 
 2.7.4
 
 
---===============2120591034828214256==--
+--===============3783672237739770113==--
 
