@@ -1,179 +1,119 @@
-Content-Type: multipart/mixed; boundary="===============4993849935135821303=="
+Content-Type: multipart/mixed; boundary="===============9023740369623313375=="
 MIME-Version: 1.0
-From: Vincent Cesson <vincent.cesson@smile.fr>
-Subject: [RFC 2/2] gemalto: Implement HardwareMonitor methods
-Date: Thu, 11 May 2017 16:48:13 +0200
-Message-ID: <1494514093-28167-3-git-send-email-vincent.cesson@smile.fr>
-In-Reply-To: <1494514093-28167-1-git-send-email-vincent.cesson@smile.fr>
+From: Pau Espin Pedrol <pespin@sysmocom.de>
+Subject: [PATCH] gobi/qmi: Fix invalid memory access
+Date: Thu, 11 May 2017 18:50:06 +0200
+Message-ID: <20170511165006.24333-1-pespin@sysmocom.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4993849935135821303==
+--===============9023740369623313375==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Use Gemalto commands ^SCTM and ^SBV to monitor temperature and voltage.
-DBus reply is formed in AT callbacks.
+Fixes following issue announced by valgrind:
+
+ofonod[2870]: plugins/gobi.c:shutdown_cb()
+ofonod[2870]: src/modem.c:modem_change_state() old state: 0, new state: 0
+=3D=3D2870=3D=3D Invalid read of size 8
+=3D=3D2870=3D=3D    at 0x453ADE: shutdown_destroy (qmi.c:1254)
+=3D=3D2870=3D=3D    by 0x508A717: ??? (in /lib/x86_64-linux-gnu/libglib-2.0=
+.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x508DB8B: g_main_context_dispatch (in /lib/x86_64-l=
+inux-gnu/libglib-2.0.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x508DF47: ??? (in /lib/x86_64-linux-gnu/libglib-2.0=
+.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x508E271: g_main_loop_run (in /lib/x86_64-linux-gnu=
+/libglib-2.0.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x4C680B: main (main.c:256)
+=3D=3D2870=3D=3D  Address 0x6a07518 is 152 bytes inside a block of size 168=
+ free'd
+=3D=3D2870=3D=3D    at 0x4C29E90: free (vg_replace_malloc.c:473)
+=3D=3D2870=3D=3D    by 0x4532FF: qmi_device_unref (qmi.c:1003)
+=3D=3D2870=3D=3D    by 0x45E09B: shutdown_cb (gobi.c:120)
+=3D=3D2870=3D=3D    by 0x453B68: shutdown_callback (qmi.c:1268)
+=3D=3D2870=3D=3D    by 0x508E612: ??? (in /lib/x86_64-linux-gnu/libglib-2.0=
+.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x508DB6C: g_main_context_dispatch (in /lib/x86_64-l=
+inux-gnu/libglib-2.0.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x508DF47: ??? (in /lib/x86_64-linux-gnu/libglib-2.0=
+.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x508E271: g_main_loop_run (in /lib/x86_64-linux-gnu=
+/libglib-2.0.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x4C680B: main (main.c:256)
+=3D=3D2870=3D=3D
+=3D=3D2870=3D=3D Invalid write of size 4
+=3D=3D2870=3D=3D    at 0x453B09: shutdown_destroy (qmi.c:1257)
+=3D=3D2870=3D=3D    by 0x508A717: ??? (in /lib/x86_64-linux-gnu/libglib-2.0=
+.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x508DB8B: g_main_context_dispatch (in /lib/x86_64-l=
+inux-gnu/libglib-2.0.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x508DF47: ??? (in /lib/x86_64-linux-gnu/libglib-2.0=
+.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x508E271: g_main_loop_run (in /lib/x86_64-linux-gnu=
+/libglib-2.0.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x4C680B: main (main.c:256)
+=3D=3D2870=3D=3D  Address 0x6a07520 is 160 bytes inside a block of size 168=
+ free'd
+=3D=3D2870=3D=3D    at 0x4C29E90: free (vg_replace_malloc.c:473)
+=3D=3D2870=3D=3D    by 0x4532FF: qmi_device_unref (qmi.c:1003)
+=3D=3D2870=3D=3D    by 0x45E09B: shutdown_cb (gobi.c:120)
+=3D=3D2870=3D=3D    by 0x453B68: shutdown_callback (qmi.c:1268)
+=3D=3D2870=3D=3D    by 0x508E612: ??? (in /lib/x86_64-linux-gnu/libglib-2.0=
+.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x508DB6C: g_main_context_dispatch (in /lib/x86_64-l=
+inux-gnu/libglib-2.0.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x508DF47: ??? (in /lib/x86_64-linux-gnu/libglib-2.0=
+.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x508E271: g_main_loop_run (in /lib/x86_64-linux-gnu=
+/libglib-2.0.so.0.4200.1)
+=3D=3D2870=3D=3D    by 0x4C680B: main (main.c:256)
+=3D=3D2870=3D=3D
 ---
- plugins/gemalto.c | 108 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 file changed, 106 insertions(+), 2 deletions(-)
+ drivers/qmimodem/qmi.c | 3 ++-
+ plugins/gobi.c         | 2 +-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-index 985dfd8..edfaa5c 100644
---- a/plugins/gemalto.c
-+++ b/plugins/gemalto.c
-@@ -53,6 +53,8 @@
- #define HARDWARE_MONITOR_INTERFACE OFONO_SERVICE ".HardwareMonitor"
- =
-
- static const char *none_prefix[] =3D { NULL };
-+static const char *sctm_prefix[] =3D { "^SCTM:", NULL };
-+static const char *sbv_prefix[] =3D { "^SBV:", NULL };
- =
-
- struct gemalto_hardware_monitor {
- 	DBusMessage *msg;
-@@ -156,22 +158,124 @@ static void cfun_enable(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
- 						NULL);
- }
- =
-
-+static void gemalto_sctm_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct gemalto_data *data =3D user_data;
-+	GAtResultIter iter;
-+	DBusMessageIter dbus_iter;
-+	DBusMessageIter dbus_dict;
-+
-+	if (!ok)
-+		goto error;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "^SCTM:"))
-+		goto error;
-+
-+	if (!g_at_result_iter_skip_next(&iter))
-+		goto error;
-+
-+	if (!g_at_result_iter_skip_next(&iter))
-+		goto error;
-+
-+	if (!g_at_result_iter_next_number(&iter, &(data->hm->temperature)))
-+		goto error;
-+
-+	dbus_message_iter_init_append(data->hm->msg, &dbus_iter);
-+
-+	dbus_message_iter_open_container(&dbus_iter, DBUS_TYPE_ARRAY,
-+					OFONO_PROPERTIES_ARRAY_SIGNATURE,
-+					&dbus_dict);
-+
-+	ofono_dbus_dict_append(&dbus_dict, "Temperature", DBUS_TYPE_INT32,
-+				&(data->hm->temperature));
-+
-+	dbus_message_iter_close_container(&dbus_iter, &dbus_dict);
-+
-+	g_dbus_send_reply(conn, data->hm->msg, DBUS_TYPE_INT32,
-+			&data->hm->temperature, DBUS_TYPE_INVALID);
-+
-+	return;
-+
-+error:
-+	g_dbus_send_error(conn, data->hm->msg, DBUS_ERROR_FAILED,
-+			"Unable to read temperature");
-+}
-+
- static DBusMessage *hardware_monitor_get_temperature(DBusConnection *conn,
- 							DBusMessage *msg,
- 							void *user_data)
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index 80c6adef..07daee9b 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -1251,10 +1251,11 @@ static void shutdown_destroy(gpointer user_data)
  {
-+	struct gemalto_data *data =3D user_data;
-+
- 	DBG("");
+ 	struct qmi_device *device =3D user_data;
  =
 
--	return __ofono_error_not_implemented(msg);
-+	if (!g_at_chat_send(data->app, "AT^SCTM?", sctm_prefix, gemalto_sctm_cb,
-+			data, NULL))
-+		return __ofono_error_failed(msg);
++	device->shutdown_source =3D 0;
 +
-+	data->hm->msg =3D dbus_message_ref(msg);
-+
-+	return NULL;
-+}
-+
-+static void gemalto_sbv_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct gemalto_data *data =3D user_data;
-+	GAtResultIter iter;
-+	DBusMessageIter dbus_iter;
-+	DBusMessageIter dbus_dict;
-+
-+	if (!ok)
-+		goto error;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "^SBV:"))
-+		goto error;
-+
-+	if (!g_at_result_iter_next_number(&iter, &(data->hm->voltage)))
-+		goto error;
-+
-+	dbus_message_iter_init_append(data->hm->msg, &dbus_iter);
-+
-+	dbus_message_iter_open_container(&dbus_iter, DBUS_TYPE_ARRAY,
-+					OFONO_PROPERTIES_ARRAY_SIGNATURE,
-+					&dbus_dict);
-+
-+	ofono_dbus_dict_append(&dbus_dict, "Voltage", DBUS_TYPE_INT32,
-+				&(data->hm->voltage));
-+
-+	dbus_message_iter_close_container(&dbus_iter, &dbus_dict);
-+
-+	g_dbus_send_reply(conn, data->hm->msg, DBUS_TYPE_INT32,
-+			&data->hm->voltage, DBUS_TYPE_INVALID);
-+
-+	return;
-+
-+error:
-+	g_dbus_send_error(conn, data->hm->msg, DBUS_ERROR_FAILED,
-+			"Unable to read voltage");
+ 	if (device->shutdown_destroy)
+ 		device->shutdown_destroy(device->shutdown_user_data);
+ =
+
+-	device->shutdown_source =3D 0;
  }
  =
 
- static DBusMessage *hardware_monitor_get_voltage(DBusConnection *conn,
- 							DBusMessage *msg,
- 							void *user_data)
- {
-+	struct gemalto_data *data =3D user_data;
-+
- 	DBG("");
+ static gboolean shutdown_callback(gpointer user_data)
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index a4985990..44c9c3ec 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -132,7 +132,7 @@ static void shutdown_device(struct ofono_modem *modem)
+ 	qmi_service_unref(data->dms);
+ 	data->dms =3D NULL;
  =
 
--	return __ofono_error_not_implemented(msg);
-+	if (!g_at_chat_send(data->app, "AT^SBV", sbv_prefix, gemalto_sbv_cb,
-+			data, NULL))
-+		return __ofono_error_failed(msg);
-+
-+	data->hm->msg =3D dbus_message_ref(msg);
-+
-+	return NULL;
+-	qmi_device_shutdown(data->device, shutdown_cb, modem, NULL);
++	qmi_device_shutdown(data->device, NULL, modem, shutdown_cb);
  }
  =
 
- static const GDBusMethodTable hardware_monitor_methods[] =3D {
+ static void power_reset_cb(struct qmi_result *result, void *user_data)
 -- =
 
-1.9.1
+2.12.2
 
 
---===============4993849935135821303==--
+--===============9023740369623313375==--
 
