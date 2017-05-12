@@ -1,66 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============2951321564616067314=="
+Content-Type: multipart/mixed; boundary="===============8050583836907280382=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC 1/2] gemalto: Prepare new interface for hardware monitoring
-Date: Fri, 12 May 2017 09:13:56 -0500
-Message-ID: <f206c6b1-6f89-988c-893c-652d6bb40e81@gmail.com>
-In-Reply-To: <995e23bd92751c1266fc0498c9a39478@smile.fr>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: [PATCH] simfs: Prevent a crash in sim_fs_notify_file_watches
+Date: Fri, 12 May 2017 18:40:16 +0300
+Message-ID: <1494603616-19298-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2951321564616067314==
+--===============8050583836907280382==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vincent,
+If no file watchers have ever been added, context->file_watches
+is NULL and sim_fs_notify_file_watches() should take that into
+account.
+---
+ src/simfs.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
->>
->> So the applications would need to poll these values.  Does the modem
->> enable some sort of unsolicited notifications of these?
->>
->
-> No unsolicited notifications for voltage.
-> There are notifications for over/under temperature warning,
-> but exact value must be polled.
+diff --git a/src/simfs.c b/src/simfs.c
+index 595dbad..37a232a 100644
+--- a/src/simfs.c
++++ b/src/simfs.c
+@@ -226,6 +226,9 @@ void sim_fs_notify_file_watches(struct sim_fs *fs, int =
+id)
+ 		struct ofono_sim_context *context =3D l->data;
+ 		GSList *k;
+ =
 
-Okay.  In that case a method call is probably the best way to do this. =
++		if (context->file_watches =3D=3D NULL)
++			continue;
++
+ 		for (k =3D context->file_watches->items; k; k =3D k->next) {
+ 			struct file_watch *w =3D k->data;
+ 			ofono_sim_file_changed_cb_t notify =3D w->item.notify;
+-- =
 
-I would combine the two method calls into one.  e.g. GetStatistics() =
+1.9.1
 
-that would return a dictionary of values.  Something like:
 
-a{sv} GetStatistics()
-
-where s is the key:
-	"Voltage" - uint32 (I assume this can't be negative)
-	"Temperature" - int32
-
-This keeps your round-trips to a minimum.  It takes ages to go over =
-
-D-Bus, so it should be considerably faster to have oFono query both =
-
-values at once.  Especially if you can combine the query into a single =
-
-AT commmand.
-
-Might want to mention the units as well.  F vs C, etc.
-
->
-> How would you implement the notification? With a property and a signal
-> PropertyChanged? Is it ok to keep the methods as I propose, and add
-> the notification later?
->
-
-If it is just a plain notification that e.g. a temperature exceeds the =
-
-threshold, then I would model it as a signal.  Something like:
-	TemperatureThresholdExceeded()
-
-Is there a way to set the threshold?
-
-Regards,
--Denis
-
---===============2951321564616067314==--
+--===============8050583836907280382==--
 
