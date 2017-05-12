@@ -1,48 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============2937486255812382196=="
+Content-Type: multipart/mixed; boundary="===============2951321564616067314=="
 MIME-Version: 1.0
-From: Pau Espin Pedrol <pespin@sysmocom.de>
-Subject: Re: [PATCH] gobi/qmi: Fix invalid memory access
-Date: Fri, 12 May 2017 15:16:34 +0200
-Message-ID: <c0c1d641-d90e-386f-0f22-d23206376e63@sysmocom.de>
-In-Reply-To: <61d4226a-d9f1-8c38-f599-dceb73b17131@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC 1/2] gemalto: Prepare new interface for hardware monitoring
+Date: Fri, 12 May 2017 09:13:56 -0500
+Message-ID: <f206c6b1-6f89-988c-893c-652d6bb40e81@gmail.com>
+In-Reply-To: <995e23bd92751c1266fc0498c9a39478@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2937486255812382196==
+--===============2951321564616067314==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Vincent,
 
-On 11/05/17 21:45, Denis Kenzior wrote:
-> =
+>>
+>> So the applications would need to poll these values.  Does the modem
+>> enable some sort of unsolicited notifications of these?
+>>
+>
+> No unsolicited notifications for voltage.
+> There are notifications for over/under temperature warning,
+> but exact value must be polled.
 
-> Please try the attached patch.
-> =
+Okay.  In that case a method call is probably the best way to do this. =
 
-> Regards,
-> -Denis
+I would combine the two method calls into one.  e.g. GetStatistics() =
 
-I tested it and it looks good, I was unable to trigger the valgrind =
+that would return a dictionary of values.  Something like:
 
-issue anymore. This issue was causing ofono to crash from time to time btw.
+a{sv} GetStatistics()
 
-Thanks for providing correct fix for the issue.
+where s is the key:
+	"Voltage" - uint32 (I assume this can't be negative)
+	"Temperature" - int32
+
+This keeps your round-trips to a minimum.  It takes ages to go over =
+
+D-Bus, so it should be considerably faster to have oFono query both =
+
+values at once.  Especially if you can combine the query into a single =
+
+AT commmand.
+
+Might want to mention the units as well.  F vs C, etc.
+
+>
+> How would you implement the notification? With a property and a signal
+> PropertyChanged? Is it ok to keep the methods as I propose, and add
+> the notification later?
+>
+
+If it is just a plain notification that e.g. a temperature exceeds the =
+
+threshold, then I would model it as a signal.  Something like:
+	TemperatureThresholdExceeded()
+
+Is there a way to set the threshold?
 
 Regards,
-Pau
+-Denis
 
--- =
-
-- Pau Espin Pedrol <pespin@sysmocom.de>         http://www.sysmocom.de/
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-* sysmocom - systems for mobile communications GmbH
-* Alt-Moabit 93
-* 10559 Berlin, Germany
-* Sitz / Registered office: Berlin, HRB 134158 B
-* Geschaeftsfuehrer / Managing Director: Harald Welte
-
---===============2937486255812382196==--
+--===============2951321564616067314==--
 
