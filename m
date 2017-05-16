@@ -1,55 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============8251552910003201684=="
+Content-Type: multipart/mixed; boundary="===============1958091926739315906=="
 MIME-Version: 1.0
-From: Vincent Cesson <vincent.cesson@smile.fr>
-Subject: [RFC v2 3/3] doc: gemalto: add documentation about interface
- cinterion.HardwareMonitor.
-Date: Tue, 16 May 2017 10:38:42 +0200
-Message-ID: <1494923922-8874-3-git-send-email-vincent.cesson@smile.fr>
-In-Reply-To: <1494923922-8874-1-git-send-email-vincent.cesson@smile.fr>
+From: Alexander Couzens <lynxis@fe80.eu>
+Subject: [PATCH] qmimodem: add debug helper qmi_result_tlv_walk
+Date: Tue, 16 May 2017 15:38:07 +0200
+Message-ID: <20170516133807.32368-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8251552910003201684==
+--===============1958091926739315906==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This interface exposes a single method to access temperature and supply
-voltage of the modem.
+qmi_result_tlv_walk prints the type and length field
+of a result to DBG()
 ---
- doc/cinterion-hardware-monitor-api.txt | 17 +++++++++++++++++
- 1 file changed, 17 insertions(+)
- create mode 100644 doc/cinterion-hardware-monitor-api.txt
+ drivers/qmimodem/qmi.c | 17 +++++++++++++++++
+ drivers/qmimodem/qmi.h |  2 +-
+ 2 files changed, 18 insertions(+), 1 deletion(-)
 
-diff --git a/doc/cinterion-hardware-monitor-api.txt b/doc/cinterion-hardwar=
-e-monitor-api.txt
-new file mode 100644
-index 0000000..50adca3
---- /dev/null
-+++ b/doc/cinterion-hardware-monitor-api.txt
-@@ -0,0 +1,17 @@
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index 30123723..cdeaddaa 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -1026,6 +1026,23 @@ void qmi_device_set_close_on_unref(struct qmi_device=
+ *device, bool do_close)
+ 	device->close_on_unref =3D do_close;
+ }
+ =
+
++void qmi_result_tlv_walk(struct qmi_result *result)
++{
++	const void *ptr =3D result->data;
++	uint16_t len =3D result->length;
 +
-+HardwareMonitor hierarchy
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D
++	while (len > QMI_TLV_HDR_SIZE) {
++		const struct qmi_tlv_hdr *tlv =3D ptr;
++		uint16_t tlv_length =3D GUINT16_FROM_LE(tlv->length);
 +
-+Service		org.ofono.cinterion
-+Interface	org.ofono.cinterion.HardwareMonitor
-+Object path	/{device0,device1,...}
++		DBG("tlv: 0x%02x len 0x%04x", tlv->type, tlv->length);
 +
-+Methods		array{string,variant} GetStatistics
++		ptr +=3D QMI_TLV_HDR_SIZE + tlv_length;
++		len -=3D QMI_TLV_HDR_SIZE + tlv_length;
++	}
++}
 +
-+			Returns an array of dict entries representing the
-+			current temperature and supply voltage of the modem.
 +
-+			Units:
-+			Temperature: Celsius
-+			Voltage: mV
-+
+ static const void *tlv_get(const void *data, uint16_t size,
+ 					uint8_t type, uint16_t *length)
+ {
+diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+index 0cd8f7c9..ec4a479c 100644
+--- a/drivers/qmimodem/qmi.h
++++ b/drivers/qmimodem/qmi.h
+@@ -136,7 +136,7 @@ bool qmi_result_get_uint32(struct qmi_result *result, u=
+int8_t type,
+ 							uint32_t *value);
+ bool qmi_result_get_uint64(struct qmi_result *result, uint8_t type,
+ 							uint64_t *value);
+-
++void qmi_result_tlv_walk(struct qmi_result *result);
+ =
+
+ struct qmi_service;
+ =
+
 -- =
 
-1.9.1
+2.13.0
 
 
---===============8251552910003201684==--
+--===============1958091926739315906==--
 
