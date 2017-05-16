@@ -1,41 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============5279511549424066482=="
+Content-Type: multipart/mixed; boundary="===============7754809972443012854=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] qmimodem: add debug helper qmi_result_tlv_walk
-Date: Tue, 16 May 2017 13:09:52 -0500
-Message-ID: <107d77aa-0854-2005-3f4d-91089a56772b@gmail.com>
-In-Reply-To: <20170516133807.32368-1-lynxis@fe80.eu>
+Subject: Re: [RFC v2 1/3] gemalto: Prepare new interface for hardware
+ monitoring
+Date: Tue, 16 May 2017 13:14:18 -0500
+Message-ID: <00576b94-ce9d-7930-a8d4-2418083a8b8e@gmail.com>
+In-Reply-To: <1494923922-8874-1-git-send-email-vincent.cesson@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5279511549424066482==
+--===============7754809972443012854==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alexander,
+Hi Vincent,
 
-On 05/16/2017 08:38 AM, Alexander Couzens wrote:
-> qmi_result_tlv_walk prints the type and length field
-> of a result to DBG()
+On 05/16/2017 03:38 AM, Vincent Cesson wrote:
+> Gemalto modems have hardware related commands, allowing to monitor voltage
+> and temperature. These parameters will be accessible on DBus interface:
+> org.ofono.HardwareMonitor.
+>
+>  - Create the DBus method table with one entry: GetStatistics. This method
+> would return temperature and voltage values.
+>  - Create a dedicated structure to handle the DBus methods.
+>  - Create enable/disable functions to handle DBus interface registration.
 > ---
->  drivers/qmimodem/qmi.c | 17 +++++++++++++++++
->  drivers/qmimodem/qmi.h |  2 +-
->  2 files changed, 18 insertions(+), 1 deletion(-)
+>  plugins/gemalto.c | 75 +++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 file changed, 75 insertions(+)
 >
 
-<snip>
-
-> -
-> +void qmi_result_tlv_walk(struct qmi_result *result);
->
-
-Can we name this a bit more descriptively?  qmi_result_dump, or =
-
-qmi_result_print_tlvs, qmi_result_print, etc.
+Applied, thanks.
 
 Regards,
 -Denis
 
---===============5279511549424066482==--
+
+--===============7754809972443012854==--
 
