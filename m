@@ -1,104 +1,178 @@
-Content-Type: multipart/mixed; boundary="===============0884562314593324536=="
+Content-Type: multipart/mixed; boundary="===============4472503450641027567=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC 1/2] gemalto: Prepare new interface for hardware monitoring
-Date: Mon, 15 May 2017 11:47:27 -0500
-Message-ID: <a8e4b2e1-9ffe-d6ba-2a7c-28dc1fd1e445@gmail.com>
-In-Reply-To: <578699111450176e4882a6d5e3473417@smile.fr>
+From: Vincent Cesson <vincent.cesson@smile.fr>
+Subject: [RFC v2 1/3] gemalto: Prepare new interface for hardware monitoring
+Date: Tue, 16 May 2017 10:38:40 +0200
+Message-ID: <1494923922-8874-1-git-send-email-vincent.cesson@smile.fr>
+In-Reply-To: <a8e4b2e1-9ffe-d6ba-2a7c-28dc1fd1e445@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0884562314593324536==
+--===============4472503450641027567==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vincent,
+Gemalto modems have hardware related commands, allowing to monitor voltage
+and temperature. These parameters will be accessible on DBus interface:
+org.ofono.HardwareMonitor.
 
-On 05/15/2017 10:53 AM, Vincent CESSON wrote:
-> Hi Denis,
->
->
-> Le 2017-05-12 16:13, Denis Kenzior a =C3=A9crit :
->> Hi Vincent,
->>
->>>>
->>>> So the applications would need to poll these values.  Does the modem
->>>> enable some sort of unsolicited notifications of these?
->>>>
->>>
->>> No unsolicited notifications for voltage.
->>> There are notifications for over/under temperature warning,
->>> but exact value must be polled.
->>
->> Okay.  In that case a method call is probably the best way to do
->> this. I would combine the two method calls into one.  e.g.
->> GetStatistics() that would return a dictionary of values.  Something
->> like:
->>
->> a{sv} GetStatistics()
->>
->> where s is the key:
->> "Voltage" - uint32 (I assume this can't be negative)
->> "Temperature" - int32
->>
->> This keeps your round-trips to a minimum.  It takes ages to go over
->> D-Bus, so it should be considerably faster to have oFono query both
->> values at once.  Especially if you can combine the query into a single
->> AT commmand.
->>
->> Might want to mention the units as well.  F vs C, etc.
->>
->
-> Ok to squash the methods. Why GetStatistics? I suggest simply
-> GetProperties instead.
+ - Create the DBus method table with one entry: GetStatistics. This method
+would return temperature and voltage values.
+ - Create a dedicated structure to handle the DBus methods.
+ - Create enable/disable functions to handle DBus interface registration.
+---
+ plugins/gemalto.c | 75 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 file changed, 75 insertions(+)
 
-If you use GetProperties then it would be expected that you implement =
+diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+index 2870ce8..3798e09 100644
+--- a/plugins/gemalto.c
++++ b/plugins/gemalto.c
+@@ -29,8 +29,12 @@
+ #include <glib.h>
+ #include <gatchat.h>
+ #include <gattty.h>
++#include <gdbus.h>
++
++#include "ofono.h"
+ =
 
-PropertyChanged signal as well, and maybe SetProperty().  Don't think it =
+ #define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/dbus.h>
+ #include <ofono/plugin.h>
+ #include <ofono/log.h>
+ #include <ofono/modem.h>
+@@ -46,14 +50,23 @@
+ #include <drivers/atmodem/atutil.h>
+ #include <drivers/atmodem/vendor.h>
+ =
 
-makes sense to have a signal if the caller is responsible for polling =
++#define HARDWARE_MONITOR_INTERFACE OFONO_SERVICE ".cinterion.HardwareMonit=
+or"
++
+ static const char *none_prefix[] =3D { NULL };
+ =
 
-the values.  Hence a separate method call.
++struct gemalto_hardware_monitor {
++	DBusMessage *msg;
++	int32_t temperature;
++	int32_t voltage;
++};
++
+ struct gemalto_data {
+ 	GAtChat *app;
+ 	GAtChat *mdm;
+ 	struct ofono_sim *sim;
+ 	gboolean have_sim;
+ 	struct at_util_sim_state_query *sim_state_query;
++	struct gemalto_hardware_monitor *hm;
+ };
+ =
 
-> How would you mention the units? In the key name? "Temperature (C)" and
-> "Voltage (mV)"?
-> Or in a new entry?
-> It's details but I prefer to have your opinion.
+ static int gemalto_probe(struct ofono_modem *modem)
+@@ -142,6 +155,59 @@ static void cfun_enable(gboolean ok, GAtResult *result=
+, gpointer user_data)
+ 						NULL);
+ }
+ =
 
-I assume you would provide a doc file for this.  E.g. =
++static DBusMessage *hardware_monitor_get_statistics(DBusConnection *conn,
++							DBusMessage *msg,
++							void *user_data)
++{
++	DBG("");
++
++	return __ofono_error_not_implemented(msg);
++}
++
++static const GDBusMethodTable hardware_monitor_methods[] =3D {
++	{ GDBUS_ASYNC_METHOD("GetStatistics",
++			NULL, GDBUS_ARGS({ "Statistics", "a{sv}" }),
++			hardware_monitor_get_statistics) },
++	{}
++};
++
++static void hardware_monitor_cleanup(void *user_data)
++{
++	struct gemalto_data *data =3D user_data;
++	struct gemalto_hardware_monitor *hm =3D data->hm;
++
++	g_free(hm);
++}
++
++static int gemalto_hardware_monitor_enable(struct ofono_modem *modem)
++{
++	struct gemalto_data *data =3D ofono_modem_get_data(modem);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D ofono_modem_get_path(modem);
++
++	DBG("");
++
++	/* Enable temperature output */
++	g_at_chat_send(data->app, "AT^SCTM=3D0,1", none_prefix, NULL, NULL, NULL);
++
++	/* Create Hardware Monitor DBus interface */
++	data->hm =3D g_try_new0(struct gemalto_hardware_monitor, 1);
++	if (data->hm =3D=3D NULL)
++		return -EIO;
++
++	if (!g_dbus_register_interface(conn, path, HARDWARE_MONITOR_INTERFACE,
++					hardware_monitor_methods, NULL, NULL,
++					data, hardware_monitor_cleanup)) {
++		ofono_error("Could not register %s interface under %s",
++					HARDWARE_MONITOR_INTERFACE, path);
++		g_free(data->hm);
++		return -EIO;
++	}
++
++	ofono_modem_add_interface(modem, HARDWARE_MONITOR_INTERFACE);
++	return 0;
++}
++
+ static int gemalto_enable(struct ofono_modem *modem)
+ {
+ 	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+@@ -181,6 +247,8 @@ static int gemalto_enable(struct ofono_modem *modem)
+ 	g_at_chat_send(data->app, "AT+CFUN=3D4", none_prefix,
+ 			cfun_enable, modem, NULL);
+ =
 
-doc/cinterion-hardware-monitor-api.txt  The API description would be the =
++	gemalto_hardware_monitor_enable(modem);
++
+ 	return -EINPROGRESS;
+ }
+ =
 
-place to mention the units, ranges, etc.
+@@ -203,12 +271,19 @@ static void gemalto_smso_cb(gboolean ok, GAtResult *r=
+esult, gpointer user_data)
+ static int gemalto_disable(struct ofono_modem *modem)
+ {
+ 	struct gemalto_data *data =3D ofono_modem_get_data(modem);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D ofono_modem_get_path(modem);
+ =
 
->
->>>
->>> How would you implement the notification? With a property and a signal
->>> PropertyChanged? Is it ok to keep the methods as I propose, and add
->>> the notification later?
->>>
->>
->> If it is just a plain notification that e.g. a temperature exceeds
->> the threshold, then I would model it as a signal.  Something like:
->> TemperatureThresholdExceeded()
->>
->> Is there a way to set the threshold?
->
-> There is no way to set the thresholds. In fact there are 5 levels:
->
-> Below lowest temperature limit (causes switch-off after 5 s time).
-> Below low temperature alert limit.
-> Normal operating temperature.
-> Above upper temperature alert limit.
-> Above uppermost temperature limit (causes switch-off after 5 s time).
->
+ 	DBG("%p", modem);
+ =
 
-Okay, this probably should be described in the doc file as well.
+ 	g_at_chat_cancel_all(data->app);
+ 	g_at_chat_unregister_all(data->app);
+ =
 
-Regards,
--Denis
++	if (g_dbus_unregister_interface(conn, path,
++				HARDWARE_MONITOR_INTERFACE))
++		ofono_modem_remove_interface(modem,
++				HARDWARE_MONITOR_INTERFACE);
++
+ 	/* Shutdown the modem */
+ 	g_at_chat_send(data->app, "AT^SMSO", none_prefix, gemalto_smso_cb,
+ 			modem, NULL);
+-- =
+
+1.9.1
 
 
---===============0884562314593324536==--
+--===============4472503450641027567==--
 
