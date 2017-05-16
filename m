@@ -1,52 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============7004296854062649525=="
+Content-Type: multipart/mixed; boundary="===============2120672352856223674=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC v2 3/3] doc: gemalto: add documentation about interface
- cinterion.HardwareMonitor.
-Date: Tue, 16 May 2017 13:25:10 -0500
-Message-ID: <eb33ed6f-11ec-1c4f-9680-b20d9306aeb2@gmail.com>
-In-Reply-To: <1494923922-8874-3-git-send-email-vincent.cesson@smile.fr>
+Subject: Re: use libqmi or .json definition for qmi calls
+Date: Tue, 16 May 2017 13:33:56 -0500
+Message-ID: <c1064a32-f957-e01b-58bf-542b90895118@gmail.com>
+In-Reply-To: <20170516152328.775cfd0d@lazus.yip>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7004296854062649525==
+--===============2120672352856223674==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vincent,
+Hi Alexander,
 
-On 05/16/2017 03:38 AM, Vincent Cesson wrote:
-> This interface exposes a single method to access temperature and supply
-> voltage of the modem.
-> ---
->  doc/cinterion-hardware-monitor-api.txt | 17 +++++++++++++++++
->  1 file changed, 17 insertions(+)
->  create mode 100644 doc/cinterion-hardware-monitor-api.txt
+On 05/16/2017 11:14 AM, Alexander Couzens wrote:
+> Hi,
+>
+> as it get's quite exhausting to create over and over qmi messages by
+> hand, I'm wondered why ofono isn't using a library for it.
+> Is there a reason why ofono isn't using libqmi [1] or the .json [2] to
+> generate code like other projects does [3]?
 >
 
-I reworded the commit slightly..
+libqmi is quite large, depends on weird glib features and is really not =
 
-> diff --git a/doc/cinterion-hardware-monitor-api.txt b/doc/cinterion-hardw=
-are-monitor-api.txt
-> new file mode 100644
-> index 0000000..50adca3
-> --- /dev/null
-> +++ b/doc/cinterion-hardware-monitor-api.txt
-> @@ -0,0 +1,17 @@
-> +
-> +HardwareMonitor hierarchy
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D
-> +
-> +Service		org.ofono.cinterion
+an option for us.  Furthermore, we will eventually be migrating away =
 
-You're still running inside the org.ofono service.  Only the interface =
+from glib, so introducing additional dependencies or libraries that =
 
-has a different prefix.  So I fixed this as well and applied the patch.
+depend on glib will just make our life harder in the future.
+
+When we started our QMI driver, libqmi was still in its early stages. =
+
+Much of the work understanding the protocol still had to be done by =
+
+hand.  Back then we decided that auto-generating the code wasn't =
+
+worthwhile.  It is almost certain that there will not be multiple QMI =
+
+based drivers.  So by the time you wrote the JSON definition or =
+
+equivalent, you could have implemented the driver method that used it.
 
 Regards,
 -Denis
 
---===============7004296854062649525==--
+--===============2120672352856223674==--
 
