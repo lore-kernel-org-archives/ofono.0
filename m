@@ -1,102 +1,155 @@
-Content-Type: multipart/mixed; boundary="===============4631298130377238775=="
+Content-Type: multipart/mixed; boundary="===============9034929756011712348=="
 MIME-Version: 1.0
-From: Alexander Couzens <lynxis@fe80.eu>
-Subject: Re: [PATCH 1/2] smsutil: sms_decode() allow to pass sms with unknown
- TPDU size
-Date: Wed, 17 May 2017 01:01:18 +0200
-Message-ID: <20170517010118.4157374e@lazus.yip>
-In-Reply-To: <42f4d13e-d2c2-bbdd-b268-f9cbbe09c245@gmail.com>
+From: Vincent Cesson <vincent.cesson@smile.fr>
+Subject: [PATCH v3] gemalto: Implement HardwareMonitor method
+Date: Wed, 17 May 2017 11:12:59 +0200
+Message-ID: <1495012379-32261-1-git-send-email-vincent.cesson@smile.fr>
+In-Reply-To: <3bd5451f-22f9-b7ed-3503-946fdcf87bcd@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4631298130377238775==
+--===============9034929756011712348==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Use Gemalto commands ^SCTM and ^SBV to monitor temperature and voltage.
+Use a single method GetStatistics to read and return both values.
+---
+ plugins/gemalto.c | 93 +++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 file changed, 92 insertions(+), 1 deletion(-)
 
-> Hi Alexander,
-> =
+diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+index 3798e09..011713e 100644
+--- a/plugins/gemalto.c
++++ b/plugins/gemalto.c
+@@ -53,6 +53,8 @@
+ #define HARDWARE_MONITOR_INTERFACE OFONO_SERVICE ".cinterion.HardwareMonit=
+or"
+ =
 
-> On 05/16/2017 10:49 AM, Alexander Couzens wrote:
-> > Certain modems (QMI based) only return a PDU length, but without
-> > the length of the TPDU.  =
+ static const char *none_prefix[] =3D { NULL };
++static const char *sctm_prefix[] =3D { "^SCTM:", NULL };
++static const char *sbv_prefix[] =3D { "^SBV:", NULL };
+ =
 
-> =
+ struct gemalto_hardware_monitor {
+ 	DBusMessage *msg;
+@@ -155,13 +157,102 @@ static void cfun_enable(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+ 						NULL);
+ }
+ =
 
-> It looks like the current QMI_WMS_RESULT_NEW_MSG_NOTIFY assumes that
-> the message doesn't have an SMSC preceeding it.  Or is it that we are
-> not parsing some other parameters?
++static void gemalto_sctm_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
++{
++	struct gemalto_data *data =3D user_data;
++	DBusMessage *reply;
++	GAtResultIter iter;
++	DBusMessageIter dbus_iter;
++	DBusMessageIter dbus_dict;
++
++	if (data->hm->msg =3D=3D NULL)
++		return;
++
++	if (!ok)
++		goto error;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "^SCTM:"))
++		goto error;
++
++	if (!g_at_result_iter_skip_next(&iter))
++		goto error;
++
++	if (!g_at_result_iter_skip_next(&iter))
++		goto error;
++
++	if (!g_at_result_iter_next_number(&iter, &data->hm->temperature))
++		goto error;
++
++	reply =3D dbus_message_new_method_return(data->hm->msg);
++
++	dbus_message_iter_init_append(reply, &dbus_iter);
++
++	dbus_message_iter_open_container(&dbus_iter, DBUS_TYPE_ARRAY,
++			OFONO_PROPERTIES_ARRAY_SIGNATURE,
++			&dbus_dict);
++
++	ofono_dbus_dict_append(&dbus_dict, "Temperature",
++			DBUS_TYPE_INT32, &data->hm->temperature);
++
++	ofono_dbus_dict_append(&dbus_dict, "Voltage",
++			DBUS_TYPE_UINT32, &data->hm->voltage);
++
++	dbus_message_iter_close_container(&dbus_iter, &dbus_dict);
++
++	__ofono_dbus_pending_reply(&data->hm->msg, reply);
++
++	return;
++
++error:
++	__ofono_dbus_pending_reply(&data->hm->msg,
++			__ofono_error_failed(data->hm->msg));
++}
++
++static void gemalto_sbv_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct gemalto_data *data =3D user_data;
++	GAtResultIter iter;
++
++	if (!ok)
++		goto error;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "^SBV:"))
++		goto error;
++
++	if (!g_at_result_iter_next_number(&iter, &data->hm->voltage))
++		goto error;
++
++	if (g_at_chat_send(data->app, "AT^SCTM?", sctm_prefix, gemalto_sctm_cb,
++				data, NULL) > 0)
++		return;
++
++error:
++	__ofono_dbus_pending_reply(&data->hm->msg,
++			__ofono_error_failed(data->hm->msg));
++}
++
+ static DBusMessage *hardware_monitor_get_statistics(DBusConnection *conn,
+ 							DBusMessage *msg,
+ 							void *user_data)
+ {
++	struct gemalto_data *data =3D user_data;
++
+ 	DBG("");
+ =
 
-The nice thing here is:
-When receiving a SMS PDU over the notify callback, it doesn't contain a
-SC address, but when reading it from NV it does.
+-	return __ofono_error_not_implemented(msg);
++	if (data->hm->msg !=3D NULL)
++		return __ofono_error_busy(msg);
++
++	if (!g_at_chat_send(data->app, "AT^SBV", sbv_prefix, gemalto_sbv_cb,
++			data, NULL))
++		return __ofono_error_failed(msg);
++
++	data->hm->msg =3D dbus_message_ref(msg);
++
++	return NULL;
+ }
+ =
 
-> > Without passing this information over ofono_sms_deliver_notify()
-> > down to sms_decode(), sms_decode() will fail, as it try to
-> > interpret the SC header as PDU header.  =
-
-> =
-
-> How do we know when a PDU contains the SC address and when it doesn't?
-I don't know. Sorry, I didn't read (yet) the whole spec. =
-
-
-Originally I though it would be possible and a good idea to detect SC,
-but sms_decode_address_field() can exit early with success and
-sms_decode() fail later when decoding. A second pass is then required.
-I dropped that idea and use fixed expectation, hopefully QMI behave the
-same way on different devices.
-
-> [..]
-
-> > b) export sms_decode_address_field() which is part of smsutil.h
-> > would mean using this function only to get the length of TPDU and
-> > throw away the result (address), which is later called a second
-> > time.  =
-
-> =
-
-> In-tree drivers can freely utilize core utilities such as smsutil and =
-
-> stkutil.  So this isn't really a problem.  Since the QMI API is quite =
-
-> dumb, then parsing the SC address field twice is probably the least
-> evil way to do this.
-
-Ok. Will do it that way.
-
+ static const GDBusMethodTable hardware_monitor_methods[] =3D {
 -- =
 
-Alexander Couzens
+1.9.1
 
-mail: lynxis(a)fe80.eu
-jabber: lynxis(a)fe80.eu
-mobile: +4915123277221
-gpg: 390D CF78 8BF9 AA50 4F8F  F1E2 C29E 9DA6 A0DF 8604
 
---===============4631298130377238775==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.sig"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KCmlRSXpCQUVCQ2dBZEZpRUVPUTNQZUl2NXFs
-QlBqL0hpd3A2ZHBxRGZoZ1FGQWxrYmhMNEFDZ2tRd3A2ZHBxRGYKaGdRckdBLy9hZEFmeHBwTzVw
-RTI4RitYNFFIQURvcE56UFUwYnByUzNzZ0ljMjc0Q1VYa1dVYWxRc0FTbjZjcApPUFdOQmErbHlE
-MjAyd1FwbC9HWXdMdWFlRkNOQWtWRWU2WnZ6c0E1ZEV2eVBkV29TTlRXZkVINWVLb0kwUk8rCit0
-RXBaWU1JeTIxTStIeExNUWVOVmwxQzYzT0JnYVFQaW1WdjBpM2s2Z21jNmRiZHZmaWN1YjBKQmJG
-UnZKTC8KelRFRGlqM3RBY3FsYnl0MkZhWjlUUm4xVkVBVTFPY0dhQXdiUkdxOFVWUFNRY21qZy93
-V1BpZFVpV3FyTFpQZQpSTmhSWm1aenpFZFFwTUNtV0tUVmovSXFOYXBTaEZkWHJZRVlOaFNGM1Rm
-VW1RZDkzbm9NUkpZSlcyZ1Jzd0ZxCkNQN3kvTGhsTC9vNmYrWmN5clgyWmRpT0tkODFlM1RrNWsr
-SlhQdU1GY0NnZGlZVS8yQU9EcTRyZVg2eXgraW4KeGxYNllBdW8wY0NZakl0WUNXbnhWalJwUm9m
-bitMRm9WWlV5ZlAxUGdzSXhqcmprNkRkcGZHNGZzNUYwV0l6MQpUV0lWMUxHVDBoYVBwZWdZaEpC
-V2tndklpNys1QnRMRVo3a0xIZWZqWkljeVVwT3dBckJJM3VCUUljYlA2R04zCnRwZU1IUFhPbGpT
-L3RpS1laUjZIaUtzdVI5SmFuUk44bVRzYmRCTExaTlRnN0lVc0c4dFczQXlSWTlUeVc2YjkKU2Ex
-ZnRDNHFHOWwyOTcxK1YwOEl0WW0wSzJJeUhNZXVnSFZQNDAra3M5aDJqUUhBN1A4RWpaOFhLTE9o
-dmZYNgo4THdvbFFQM1RDWFMxOHVidkN0YWJHUXZpY3lpZ21zMUxhSFNDVTR4azJRUnM1VXZaSFk9
-Cj1TcjFWCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQo=
-
---===============4631298130377238775==--
+--===============9034929756011712348==--
 
