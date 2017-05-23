@@ -1,193 +1,125 @@
-Content-Type: multipart/mixed; boundary="===============0796968351733730071=="
+Content-Type: multipart/mixed; boundary="===============8515271755409728955=="
 MIME-Version: 1.0
-From: Harald Welte <laforge@gnumonks.org>
-Subject: Re: use libqmi or .json definition for qmi calls
-Date: Tue, 23 May 2017 14:26:08 +0200
-Message-ID: <20170523122607.vc2mwptes7zpybjd@nataraja>
-In-Reply-To: <E01D60E0-B3AC-417D-83A3-6CD4E23EC8AD@gmail.com>
+From: cantabile <cantabile.desu@gmail.com>
+Subject: Crash in sim_query_fac_pinlock_cb
+Date: Tue, 23 May 2017 19:39:03 +0300
+Message-ID: <8b6a22c9-ceb2-46ba-dcb7-ad853de424bc@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0796968351733730071==
+--===============8515271755409728955==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hello.
 
-On Mon, May 22, 2017 at 04:03:16PM -0500, Denis Kenzior wrote:
-> I=E2=80=99m confused.  Are you talking about voice capable modems in gene=
-ral
-> or the QMI ones?  =
+Ofono crashes as soon as I plug in my Nokia 5230 in "OVI Suite" mode. =
 
+Ofono is the latest from git. Here is the backtrace:
 
-Both.  I may have misinterpreted your statement in general towards
-modems.
+(gdb) bt full
+#0  0x0000000000526a5f in sim_query_fac_pinlock_cb =
 
-> I=E2=80=99m of course aware of various Huawei, etc modems that support vo=
-ice
-> via AT commands, RIL, ISI, etc.  =
+(error=3D0x7fffffffdfd0, status=3D8799424, data=3D0x2) at src/sim.c:2476
+         sim =3D 0x2
+#1  0x000000000044faa0 in check_sec_response (msg=3D0x7fffffffe120, =
 
+opaque=3D0x80c370, success=3D2 '\002', failure=3D3 '\003') at =
 
-Ok, sorry.
+drivers/isimodem/sim.c:468
+         e =3D {type =3D OFONO_ERROR_TYPE_NO_ERROR, error =3D 0}
+         __ofono_debug_desc =3D {name =3D 0x0, file =3D 0x58f389 =
 
-> I=E2=80=99m not aware of any QMI based devices.  QMI protocol does support
-> voice, so I=E2=80=99m sure they exist.  Just not aware of any.  That is w=
-hy we
-> never bothered to write the voicecall atom driver for QMI.  If you
-> want to contribute that, I=E2=80=99m happy to take it.
+"drivers/isimodem/sim.c", flags =3D 0}
+         __ofono_debug_desc =3D {name =3D 0x0, file =3D 0x58f389 =
 
-On the one hand, I believe virtually any Qualcomm(Android?) based
-smartphone is using QMI to control voice.  It might be hidden from the
-normal user behind rild, an it might be that virtuall nobody is using
-ofono on those devices.
+"drivers/isimodem/sim.c", flags =3D 0}
+         __ofono_debug_desc =3D {name =3D 0x0, file =3D 0x58f389 =
 
-But then, as I iterated in my previous mail, there are plenty of modems
-in solder type (LGA), mPCIe and M.2/NGFF form-factor that expose voice
-capabilities via QMI.  There's a bunch of Sierra Wireless ones (like
-MC7304 & co) as well as EC-20 and EC-25 from Quectel.  I also have some
-Hauwei branded here that do QMI for voice.
+"drivers/isimodem/sim.c", flags =3D 0}
+         __ofono_debug_desc =3D {name =3D 0x0, file =3D 0x58f389 =
 
-And yes, we will in some way or another interface QMI for voice on at
-least a subset of those modems.  The question is whether we spend time
-on hand-crafting messages [error prone] or use the existing JSON
-description and generated parser/encoders.  I'm not sure which way is
-faster/easier.  If you are fundamentally against code genreation (which
-you are not, AFAICT), we would skip that option.  But if you're open to
-it within the constraints regarding glib and external dependencies, it
-might be an idea to try.
+"drivers/isimodem/sim.c", flags =3D 0}
+         cbd =3D 0x80c370
+         cb =3D 0x526a40 <sim_query_fac_pinlock_cb>
+         sim =3D 0x8644c0
+         id =3D 2 '\002'
+         cause =3D 0 '\000'
+#2  0x000000000044fc57 in sec_code_state_resp_cb (msg=3D0x7fffffffe120, =
 
-Having spent close to a decade of my life implementing GSM protocols
-from hand vs. implementing some using code generation, I am very much in
-favor of the latter, whenever possible.
+opaque=3D0x80c370) at drivers/isimodem/sim.c:649
+No locals.
+#3  0x0000000000436ae6 in pending_remove_and_dispatch (op=3D0x80c590, =
 
-> Yes, but at least the gobi cards I=E2=80=99ve seen only expose a single
-> network interface.  So multiple contexts are not possible.
+msg=3D0x7fffffffe120) at gisi/modem.c:171
+         modem =3D 0x8de2b0
+#4  0x0000000000437e04 in service_dispatch (mux=3D0x830a50, =
 
-I think this has all slightly changed a bit in the last 3+ years when
-the Qualcomm LE stack is used on modern MDM chips.  There you have a
-Linux kernel (and adb, but real glibc and no android userland) inside a
-Cortex-A5 on the modem itself.  In those devices, you can at runtime
-change the configuration/coposition of the USB interface and expose many
-more things that are otherwise not exposed.
+msg=3D0x7fffffffe120, is_indication=3D0) at gisi/modem.c:218
+         next =3D 0x0
+         pend =3D 0x80c590
+         msgid =3D 2 '\002'
+         utid =3D 3 '\003'
+         l =3D 0x8a8400 =3D {0x80baa0}
+#5  0x00000000004358e6 in isi_callback (channel=3D0x8df790, cond=3DG_IO_IN, =
 
-Basically, on those modern Qualcomm modems, the USB device you're
-talking to from the ofono side is not the baseband processor, but it is
-a composite android Linux kernel USB gadget.  See the 33C3 talk Holger
-and I gave, as well as the information collected on
-http://osmocom.org/projects/quectel-modems/wiki
+data=3D0x8de2b0) at gisi/modem.c:334
+         msg =3D {addr =3D 0x7fffffffe160, version =3D 0x830a60, error =3D =
+0, =
 
-We are not there yet, but after voice, USSD and all the classic features
-we'll definitely look into multiple PDP contexts / EPS bearers.
+data =3D 0x7fffffffe0f0, len =3D 4, private =3D 0x7ffff7b39670 <g_thread_se=
+lf+16>}
+         key =3D 8
+         buf =3D 0x7fffffffe0f0
+         addr =3D {spn_family =3D 35, spn_obj =3D 46 '.', spn_dev =3D 0 '\0=
+00', =
 
-Also, some modern Qualcomm chipsets also seem to have an "IPA" (Internet
-Packet Accelerator) which can filter the packets in hardware.  I haven't
-fully analyzed it yet (hard without documentation) but it might be that
-this can be used to filter devices from one "USB network interface" into
-multiple queues / bearers / contexts on the baseband side.  Still
-subject to further study.  The Qualcomm kernel patches are only 2
-million lines of code, AFAIR ;)
+spn_resource =3D 8 '\b', __pad =3D "\000\000\000\000\000\000\000\000\000\00=
+0"}
+         mux =3D 0x830a50
+         modem =3D 0x8de2b0
+         len =3D 4
+         fd =3D 11
+#6  0x00007ffff7b1145a in g_main_context_dispatch () from =
 
-> No such documentation exists.  We had to pick and choose our battles
-> and thus never had the resources for something like that.  I=E2=80=99m ha=
-ppy
-> to host such a matrix in case someone is interested in contributing
-> it.
+/usr/lib/libglib-2.0.so.0
+No symbol table info available.
+#7  0x00007ffff7b11810 in ?? () from /usr/lib/libglib-2.0.so.0
+No symbol table info available.
+#8  0x00007ffff7b11b32 in g_main_loop_run () from /usr/lib/libglib-2.0.so.0
+No symbol table info available.
+#9  0x00000000004eebee in main (argc=3D1, argv=3D0x7fffffffe428) at =
 
-Well, hosting/maintaining the document (which could just be in git) is
-the easy part.  The more difficult part is collecting information of who
-has actually successfully used which feature on which modem using which
-modem firmware version and which ofono version.
+src/main.c:256
+         context =3D 0x803df0
+         err =3D 0x0
+         conn =3D 0x80a440
+         error =3D {name =3D 0x0, message =3D 0x0, dummy1 =3D 1, dummy2 =3D=
+ 0, =
 
-In the best case, we are able to provide such information based on the
-osmo-gsm-tester in the future.  Our main use case is to test a fixed
-and trusted combination of (ofono + modem + modem firmware) against our
-changing GSM/GPRS/UTMS cellular network stack.  But the same setup (or a
-copy of it) could of course also be used to have a fixed version of the
-GSM/GPRS/UMTS network and test a given [new] ofono version/commit
-against one or multiple modems as part of continuous automation.
-
-So I think there's something for both projects to benefit from.
-
-But before we can do any of the above, we first have to establish a
-reliably working base line configuration.
-
-> Regardless, this isn=E2=80=99t really important.  If you=E2=80=99re set o=
-n QMI, then
-> its not my place to discourage you. =
+dummy3 =3D 1, dummy4 =3D 1, dummy5 =3D 0, padding1 =3D 0x720000007b}
+         signal =3D 1
+(gdb)
 
 
-Well, I hear you. But for now we will continue down the QMI path for
-stated reasons.  The question is probably more whether we can get it to
-work inside ofono the way we want/need, or whether we have to consider
-alternatives like using libqmi or uqmi directly.  I don't like the
-latter part, because eventually we will want to talk to non-QMI /
-non-Qualcomm modems, and then we need our own abstraction across those
-different modems - which is the same purpose as ofono has, at least from
-my point of view.
+You'll notice that the function pointer cb being called in =
 
-> Agreed.  But then I=E2=80=99m a bit confused on what you=E2=80=99re tryin=
-g to
-> accomplish?  =
+check_sec_response (frame #1) is of type
 
+typedef void (*ofono_sim_lock_unlock_cb_t)(const struct ofono_error =
 
-We want to test our GSM/GPRS/UMTS network side protocol stack and
-network elements, preferably with as many different modems as
-possible, but starting with Qualcomm modems with QMI and DIAG as that
-gives us additional insight into what's happening inside the modem-side
-protocol stack.
+*error, void *data);
 
-> If you want to enable more QMI features in oFono, then
-> I=E2=80=99m all for you doing that.  Contributions are always welcome.
+It takes two parameters. The value of the function pointer is =
 
-We have already started to contribute (see some smaller patches by
-Alexander Couzens and Pau Espin), and there will almost certainly be
-more.  But before we attempt to create some new QMI driver based on
-generated code, it was worth to discuss whether or not there is any
-chance for that to be merged at all.
+sim_query_fac_pinlock_cb, which takes three parameters.
 
-So we want to (and will!) contribute, in terms of bug reports, patches
-as well as testing.
+I don't know if the wrong function is being called, or if the right =
 
-Trying to use ofono in this context with several different modems for
-more than a year now (on and off) it just seems quite a lot harder than
-I would have ever anticipated.  In order to enable quicker adoption, I
-strongly suggest to create a list of tested/supported modems (+ modem fw
-versions) that people can start with, if they want to get the best
-out-of-the-box experience.
+function is being called using the wrong function pointer type. I hope =
 
-That list doesn't have to include 100 modems.  So even if it's two
-models only on that list, this is more useful than outdated documents
-indicating what devices (no longer available today) worked 10 years ago.
+someone here can figure it out.
 
-It is of course your own discretion to do as you please in ofono.
-Please don't treat this as a complaint, but just a kind suggestion from
-a friend.  I would argue that if somebody with my combined telecom +
-Linux / FOSS background and knowledge has serious issues to get things
-to work, then many other people with less knowledge in either or both of
-the fields must have given up over time.
-
-Let me re-iterate that question: Which modem should I buy today for the
-most feature-complete + reliable ofono support?  Please specify an exact
-model number and preferably firmware version.  Then we can buy one of
-these and compare the results of that "known good" vs. whatever we're
-trying on other modems.  That also helps to differentiate while
-debugging between what might be a modem/driver specific issue and a more
-general ofono issue.
-
-Regards,
-	Harald
-
--- =
-
-- Harald Welte <laforge@gnumonks.org>           http://laforge.gnumonks.o=
-rg/
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D
-"Privacy in residential applications is a desirable marketing option."
-                                                  (ETSI EN 300 175-7 Ch. A6)
-
---===============0796968351733730071==--
+--===============8515271755409728955==--
 
