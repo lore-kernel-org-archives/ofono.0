@@ -1,125 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============8515271755409728955=="
+Content-Type: multipart/mixed; boundary="===============6320968752457656801=="
 MIME-Version: 1.0
-From: cantabile <cantabile.desu@gmail.com>
-Subject: Crash in sim_query_fac_pinlock_cb
-Date: Tue, 23 May 2017 19:39:03 +0300
-Message-ID: <8b6a22c9-ceb2-46ba-dcb7-ad853de424bc@gmail.com>
+From: Rohit Agrawal <agrawal.rohit1@gmail.com>
+Subject: Does Ofono pass error codes up to applications over DBus
+Date: Wed, 24 May 2017 21:57:03 +0530
+Message-ID: <CAOLU1cT=T81vS3=deCzp=yfvVFRJ2-d5rs+ZB8z7gdo2-xNzvQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8515271755409728955==
+--===============6320968752457656801==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello.
+Hi All,
 
-Ofono crashes as soon as I plug in my Nokia 5230 in "OVI Suite" mode. =
+I have a general query regarding error code value being passed up by ofono
+to applications over Dbus.
 
-Ofono is the latest from git. Here is the backtrace:
-
-(gdb) bt full
-#0  0x0000000000526a5f in sim_query_fac_pinlock_cb =
-
-(error=3D0x7fffffffdfd0, status=3D8799424, data=3D0x2) at src/sim.c:2476
-         sim =3D 0x2
-#1  0x000000000044faa0 in check_sec_response (msg=3D0x7fffffffe120, =
-
-opaque=3D0x80c370, success=3D2 '\002', failure=3D3 '\003') at =
-
-drivers/isimodem/sim.c:468
-         e =3D {type =3D OFONO_ERROR_TYPE_NO_ERROR, error =3D 0}
-         __ofono_debug_desc =3D {name =3D 0x0, file =3D 0x58f389 =
-
-"drivers/isimodem/sim.c", flags =3D 0}
-         __ofono_debug_desc =3D {name =3D 0x0, file =3D 0x58f389 =
-
-"drivers/isimodem/sim.c", flags =3D 0}
-         __ofono_debug_desc =3D {name =3D 0x0, file =3D 0x58f389 =
-
-"drivers/isimodem/sim.c", flags =3D 0}
-         __ofono_debug_desc =3D {name =3D 0x0, file =3D 0x58f389 =
-
-"drivers/isimodem/sim.c", flags =3D 0}
-         cbd =3D 0x80c370
-         cb =3D 0x526a40 <sim_query_fac_pinlock_cb>
-         sim =3D 0x8644c0
-         id =3D 2 '\002'
-         cause =3D 0 '\000'
-#2  0x000000000044fc57 in sec_code_state_resp_cb (msg=3D0x7fffffffe120, =
-
-opaque=3D0x80c370) at drivers/isimodem/sim.c:649
-No locals.
-#3  0x0000000000436ae6 in pending_remove_and_dispatch (op=3D0x80c590, =
-
-msg=3D0x7fffffffe120) at gisi/modem.c:171
-         modem =3D 0x8de2b0
-#4  0x0000000000437e04 in service_dispatch (mux=3D0x830a50, =
-
-msg=3D0x7fffffffe120, is_indication=3D0) at gisi/modem.c:218
-         next =3D 0x0
-         pend =3D 0x80c590
-         msgid =3D 2 '\002'
-         utid =3D 3 '\003'
-         l =3D 0x8a8400 =3D {0x80baa0}
-#5  0x00000000004358e6 in isi_callback (channel=3D0x8df790, cond=3DG_IO_IN, =
-
-data=3D0x8de2b0) at gisi/modem.c:334
-         msg =3D {addr =3D 0x7fffffffe160, version =3D 0x830a60, error =3D =
-0, =
-
-data =3D 0x7fffffffe0f0, len =3D 4, private =3D 0x7ffff7b39670 <g_thread_se=
-lf+16>}
-         key =3D 8
-         buf =3D 0x7fffffffe0f0
-         addr =3D {spn_family =3D 35, spn_obj =3D 46 '.', spn_dev =3D 0 '\0=
-00', =
-
-spn_resource =3D 8 '\b', __pad =3D "\000\000\000\000\000\000\000\000\000\00=
-0"}
-         mux =3D 0x830a50
-         modem =3D 0x8de2b0
-         len =3D 4
-         fd =3D 11
-#6  0x00007ffff7b1145a in g_main_context_dispatch () from =
-
-/usr/lib/libglib-2.0.so.0
-No symbol table info available.
-#7  0x00007ffff7b11810 in ?? () from /usr/lib/libglib-2.0.so.0
-No symbol table info available.
-#8  0x00007ffff7b11b32 in g_main_loop_run () from /usr/lib/libglib-2.0.so.0
-No symbol table info available.
-#9  0x00000000004eebee in main (argc=3D1, argv=3D0x7fffffffe428) at =
-
-src/main.c:256
-         context =3D 0x803df0
-         err =3D 0x0
-         conn =3D 0x80a440
-         error =3D {name =3D 0x0, message =3D 0x0, dummy1 =3D 1, dummy2 =3D=
- 0, =
-
-dummy3 =3D 1, dummy4 =3D 1, dummy5 =3D 0, padding1 =3D 0x720000007b}
-         signal =3D 1
-(gdb)
+Assume Ofono talks to Modem through RILD. Does Ofono passes error code or
+error value when Voice-Call or Data-Call or Send-SMS fails so that
+application can do something on receiving such error codes ?
 
 
-You'll notice that the function pointer cb being called in =
+Also SMS Delivery Report is given to application through which Signal
+(Immediate Message or Incoming Message) ?
 
-check_sec_response (frame #1) is of type
+-Thanks,
+Rohit Agrawal
 
-typedef void (*ofono_sim_lock_unlock_cb_t)(const struct ofono_error =
+--===============6320968752457656801==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-*error, void *data);
+PGRpdiBkaXI9Imx0ciI+PGRpdj48ZGl2PjxkaXY+PGRpdj48ZGl2PkhpIEFsbCw8YnI+PGJyPjwv
+ZGl2PkkgaGF2ZSBhIGdlbmVyYWwgcXVlcnkgcmVnYXJkaW5nIGVycm9yIGNvZGUgdmFsdWUgYmVp
+bmcgcGFzc2VkIHVwIGJ5IG9mb25vIHRvIGFwcGxpY2F0aW9ucyBvdmVyIERidXMuPGJyPjxicj48
+L2Rpdj5Bc3N1bWUgT2Zvbm8gdGFsa3MgdG8gTW9kZW0gdGhyb3VnaCBSSUxELiBEb2VzIE9mb25v
+IHBhc3NlcyBlcnJvciBjb2RlIG9yIGVycm9yIHZhbHVlIHdoZW4gVm9pY2UtQ2FsbCBvciBEYXRh
+LUNhbGwgb3IgU2VuZC1TTVMgZmFpbHMgc28gdGhhdCBhcHBsaWNhdGlvbiBjYW4gZG8gc29tZXRo
+aW5nIG9uIHJlY2VpdmluZyBzdWNoIGVycm9yIGNvZGVzID88YnI+PGJyPjxicj48L2Rpdj5BbHNv
+IFNNUyBEZWxpdmVyeSBSZXBvcnQgaXMgZ2l2ZW4gdG8gYXBwbGljYXRpb24gdGhyb3VnaCB3aGlj
+aCBTaWduYWwgKEltbWVkaWF0ZSBNZXNzYWdlIG9yIEluY29taW5nIE1lc3NhZ2UpID88YnI+PGJy
+PjwvZGl2Pi1UaGFua3MsPGJyPjwvZGl2PlJvaGl0IEFncmF3YWw8YnI+PGRpdj48ZGl2PjxkaXY+
+PGJyPjxicj48YnI+PGJyPjwvZGl2PjwvZGl2PjwvZGl2PjwvZGl2Pgo=
 
-It takes two parameters. The value of the function pointer is =
-
-sim_query_fac_pinlock_cb, which takes three parameters.
-
-I don't know if the wrong function is being called, or if the right =
-
-function is being called using the wrong function pointer type. I hope =
-
-someone here can figure it out.
-
---===============8515271755409728955==--
+--===============6320968752457656801==--
 
