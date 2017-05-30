@@ -1,49 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============2946601368719590846=="
+Content-Type: multipart/mixed; boundary="===============1324149090569550316=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Does Ofono pass error codes up to applications over DBus
-Date: Tue, 30 May 2017 17:28:02 -0500
-Message-ID: <9a0ad062-0f42-7bdb-7ffd-cc0788feee44@gmail.com>
-In-Reply-To: <CAOLU1cT=T81vS3=deCzp=yfvVFRJ2-d5rs+ZB8z7gdo2-xNzvQ@mail.gmail.com>
+Subject: Re: [PATCH][v2] qmimodem: add debug helper qmi_result_print_tlvs
+Date: Tue, 30 May 2017 17:29:39 -0500
+Message-ID: <7f72b2c8-25b2-962c-2315-dbf65f366744@gmail.com>
+In-Reply-To: <20170523114719.20683-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2946601368719590846==
+--===============1324149090569550316==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rohit,
+Hi Alexander,
 
-Hi Rohit,
-
-On 05/24/2017 11:27 AM, Rohit Agrawal wrote:
-> Hi All,
->
-> I have a general query regarding error code value being passed up by
-> ofono to applications over Dbus.
->
-> Assume Ofono talks to Modem through RILD. Does Ofono passes error code
-> or error value when Voice-Call or Data-Call or Send-SMS fails so that
-> application can do something on receiving such error codes ?
+On 05/23/2017 06:47 AM, Alexander Couzens wrote:
+> qmi_result_print_tlvs prints the type and length field
+> of a result to DBG()
+> ---
+>  drivers/qmimodem/qmi.c | 17 +++++++++++++++++
+>  drivers/qmimodem/qmi.h |  2 +-
+>  2 files changed, 18 insertions(+), 1 deletion(-)
 >
 
-Not really.  We try to decode the error into something more generic if =
-
-the driver provides us such information, but the raw error value is not =
-
-returned to the application.  See src/dbus.c, __ofono_error_from_error()
-
->
-> Also SMS Delivery Report is given to application through which Signal
-> (Immediate Message or Incoming Message) ?
-
-Delivery reports are handled through the history plugin.  They are not =
-
-exposed over the D-Bus API.  See include/history.h and examples/history.c
+Applied, thanks.
 
 Regards,
 -Denis
 
---===============2946601368719590846==--
+
+--===============1324149090569550316==--
 
