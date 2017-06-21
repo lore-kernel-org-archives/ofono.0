@@ -1,45 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============9114765175200853962=="
+Content-Type: multipart/mixed; boundary="===============3445270879000289337=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] radio-settings: Fix memory leaks in radio_load_settings
-Date: Fri, 02 Jun 2017 10:43:44 -0500
-Message-ID: <a343cd8c-41f4-fdf7-c64b-3118a593e0ef@gmail.com>
-In-Reply-To: <1496418064-7713-1-git-send-email-slava.monich@jolla.com>
+From: Vincent CESSON <vincent.cesson@smile.fr>
+Subject: gemalto: AGPS functionality
+Date: Wed, 21 Jun 2017 13:45:25 +0200
+Message-ID: <666978a8d452d99f673b8a28a5332e75@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9114765175200853962==
+--===============3445270879000289337==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+Hi,
 
-On 06/02/2017 10:41 AM, Slava Monich wrote:
-> Errors returned by g_key_file_get_integer have to be deallocated
-> by the caller to avoid leaks like these:
->
-> =3D=3D13330=3D=3D 104 (24 direct, 80 indirect) bytes in 2 blocks are defi=
-nitely lost
-> =3D=3D13330=3D=3D    at 0x483F3EC: malloc (vg_replace_malloc.c)
-> =3D=3D13330=3D=3D    by 0x4B020DF: g_malloc (gmem.c)
-> =3D=3D13330=3D=3D    by 0x4B17F51: g_slice_alloc (gslice.c)
-> =3D=3D13330=3D=3D    by 0x4AE80B9: g_error_new_valist (gerror.c)
-> =3D=3D13330=3D=3D    by 0x4AE830B: g_set_error (gerror.c)
-> =3D=3D13330=3D=3D    by 0x4AF5681: g_key_file_get_value (gkeyfile.c)
-> =3D=3D13330=3D=3D    by 0x4AF6817: g_key_file_get_integer (gkeyfile.c)
-> =3D=3D13330=3D=3D    by 0x10CFE3: radio_load_settings (radio-settings.c)
-> =3D=3D13330=3D=3D    by 0x10D2E3: ofono_radio_settings_register (radio-se=
-ttings.c)
-> ---
->  src/radio-settings.c | 17 +++++++++++++++--
->  1 file changed, 15 insertions(+), 2 deletions(-)
->
+I am trying to add AGPS functionality to Gemalto modems. I took a look =
 
-Applied, thanks.
+at interface AssistedSatelliteNavigation and implementation in =
+
+drivers/atmodem/gnss.c. Unfortunately, Gemalto does not support AT+CPOS =
+
+command but it uses a custom command: AT^SBNW. Moreover, the positioning =
+
+file expected is not XML but binary format.
+
+The process of loading the binary is:
+  - Download binary file from Gemalto server to local memory
+  - Initiate binary write command: AT^SBNW=3D"agps",<binary_file_length>
+  - Copy binary file from local memory to modem over its application (or =
+
+modem) interface
+
+AT^SBNW immediately returns "CONNECT". Then "AGPS READY: SEND FILE..."
+After the modem receives the exact amount of bytes specified in the =
+
+command, it verifies the data and returns one of the following: "AGPS =
+
+END OK", "TIME INFO ERROR", "BAD CRC" or "OK".
+
+So I am facing several issues:
+  - How to send binary data from local memory to oFono? DBus message =
+
+with array of bytes?
+  - How to send binary data from oFono to modem interface? Does gatchat =
+
+only support strings?
+  - How to handle custom result codes? I already tried some hacks, and I =
+
+had to blacklist the response "CONNECT" for instance.
+
+Or maybe it isn't worth the effort implementing it in oFono?
 
 Regards,
--Denis
+Vincent
 
---===============9114765175200853962==--
+--===============3445270879000289337==--
 
