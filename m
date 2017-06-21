@@ -1,58 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============3445270879000289337=="
+Content-Type: multipart/mixed; boundary="===============7542600584955370998=="
 MIME-Version: 1.0
-From: Vincent CESSON <vincent.cesson@smile.fr>
-Subject: gemalto: AGPS functionality
-Date: Wed, 21 Jun 2017 13:45:25 +0200
-Message-ID: <666978a8d452d99f673b8a28a5332e75@smile.fr>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: [PATCH] ussd: Switch the state from USER_ACTION to IDLE
+Date: Wed, 21 Jun 2017 14:54:48 +0300
+Message-ID: <1498046088-545-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3445270879000289337==
+--===============7542600584955370998==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+... when a USSD notification is received. Some networks
+send 0 (no further user action required) after the response
+timeout expires. That should result in the user input form
+getting removed from the ME screen.
+---
+ src/ussd.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
 
-I am trying to add AGPS functionality to Gemalto modems. I took a look =
+diff --git a/src/ussd.c b/src/ussd.c
+index 99fa753..84f64c6 100644
+--- a/src/ussd.c
++++ b/src/ussd.c
+@@ -512,6 +512,20 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int st=
+atus, int dcs,
+ =
 
-at interface AssistedSatelliteNavigation and implementation in =
+ 		ussd_change_state(ussd, new_state);
+ 		goto free;
++	} else if (ussd->state =3D=3D USSD_STATE_USER_ACTION &&
++				status !=3D OFONO_USSD_STATUS_ACTION_REQUIRED) {
++		ussd_change_state(ussd, USSD_STATE_IDLE);
++
++		if (status =3D=3D OFONO_USSD_STATUS_NOTIFY && str && str[0]) {
++			const char *path =3D __ofono_atom_get_path(ussd->atom);
++
++			g_dbus_emit_signal(conn, path,
++				OFONO_SUPPLEMENTARY_SERVICES_INTERFACE,
++				"NotificationReceived", DBUS_TYPE_STRING,
++				&str, DBUS_TYPE_INVALID);
++		}
++
++		goto free;
+ 	} else {
+ 		ofono_error("Received an unsolicited USSD but can't handle.");
+ 		DBG("USSD is: status: %d, %s", status, str);
+-- =
 
-drivers/atmodem/gnss.c. Unfortunately, Gemalto does not support AT+CPOS =
+1.9.1
 
-command but it uses a custom command: AT^SBNW. Moreover, the positioning =
 
-file expected is not XML but binary format.
-
-The process of loading the binary is:
-  - Download binary file from Gemalto server to local memory
-  - Initiate binary write command: AT^SBNW=3D"agps",<binary_file_length>
-  - Copy binary file from local memory to modem over its application (or =
-
-modem) interface
-
-AT^SBNW immediately returns "CONNECT". Then "AGPS READY: SEND FILE..."
-After the modem receives the exact amount of bytes specified in the =
-
-command, it verifies the data and returns one of the following: "AGPS =
-
-END OK", "TIME INFO ERROR", "BAD CRC" or "OK".
-
-So I am facing several issues:
-  - How to send binary data from local memory to oFono? DBus message =
-
-with array of bytes?
-  - How to send binary data from oFono to modem interface? Does gatchat =
-
-only support strings?
-  - How to handle custom result codes? I already tried some hacks, and I =
-
-had to blacklist the response "CONNECT" for instance.
-
-Or maybe it isn't worth the effort implementing it in oFono?
-
-Regards,
-Vincent
-
---===============3445270879000289337==--
+--===============7542600584955370998==--
 
