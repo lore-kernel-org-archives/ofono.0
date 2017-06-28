@@ -1,56 +1,146 @@
-Content-Type: multipart/mixed; boundary="===============7542600584955370998=="
+Content-Type: multipart/mixed; boundary="===============6393481307430614960=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
-Subject: [PATCH] ussd: Switch the state from USER_ACTION to IDLE
-Date: Wed, 21 Jun 2017 14:54:48 +0300
-Message-ID: <1498046088-545-1-git-send-email-slava.monich@jolla.com>
+From: Christophe Ronco <c.ronco@kerlink.fr>
+Subject: [PATCH] sim: fix crash in case of invalid sim password type
+Date: Wed, 28 Jun 2017 09:46:42 +0200
+Message-ID: <1498636003-24999-1-git-send-email-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7542600584955370998==
+--===============6393481307430614960==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-... when a USSD notification is received. Some networks
-send 0 (no further user action required) after the response
-timeout expires. That should result in the user input form
-getting removed from the ME screen.
----
- src/ussd.c | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
+Hi,
 
-diff --git a/src/ussd.c b/src/ussd.c
-index 99fa753..84f64c6 100644
---- a/src/ussd.c
-+++ b/src/ussd.c
-@@ -512,6 +512,20 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int st=
-atus, int dcs,
- =
+I have an old  Swedish SIM card here that I tried to put in my MC7304 modem.
+My ofono version is 1.20 (with some additional patches).
+It sometimes return an invalid SIM password type.
+After that, ofono crashes. Here is an extract of debug traces when this hap=
+pens.
+Ofono is just starting, modem was here before ofono starts.
 
- 		ussd_change_state(ussd, new_state);
- 		goto free;
-+	} else if (ussd->state =3D=3D USSD_STATE_USER_ACTION &&
-+				status !=3D OFONO_USSD_STATUS_ACTION_REQUIRED) {
-+		ussd_change_state(ussd, USSD_STATE_IDLE);
-+
-+		if (status =3D=3D OFONO_USSD_STATUS_NOTIFY && str && str[0]) {
-+			const char *path =3D __ofono_atom_get_path(ussd->atom);
-+
-+			g_dbus_emit_signal(conn, path,
-+				OFONO_SUPPLEMENTARY_SERVICES_INTERFACE,
-+				"NotificationReceived", DBUS_TYPE_STRING,
-+				&str, DBUS_TYPE_INVALID);
-+		}
-+
-+		goto free;
- 	} else {
- 		ofono_error("Received an unsolicited USSD but can't handle.");
- 		DBG("USSD is: status: %d, %s", status, str);
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_read_attributes() file id 0x6fb7 path len 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/devinfo.c:string_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/devinfo.c:qmi_query_serial() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:get_file_attributes_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.err ofonod[1120]: Requested file str=
+ucture differs from SIM: 6fb7
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/src/voice=
+call.c:ecc_g2_read_cb() 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_read_attributes() file id 0x6fb7 path len 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/devinfo.c:get_ids_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:get_file_attributes_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_read_record() file id 0x6fb7 path len 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:read_generic_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/src/voice=
+call.c:ecc_g3_read_cb() 1
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_read_record() file id 0x6fb7 path len 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:read_generic_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/src/voice=
+call.c:ecc_g3_read_cb() 1
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_read_record() file id 0x6fb7 path len 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:read_generic_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/src/voice=
+call.c:ecc_g3_read_cb() 1
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_read_record() file id 0x6fb7 path len 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:read_generic_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/src/voice=
+call.c:ecc_g3_read_cb() 1
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_read_record() file id 0x6fb7 path len 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:read_generic_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/src/voice=
+call.c:ecc_g3_read_cb() 1
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_read_attributes() file id 0x2fe2 path len 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:get_file_attributes_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_read_transparent() file id 0x2fe2 path len 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:read_generic_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/src/simfs=
+.c:sim_fs_op_read_block_cb() bufoff: 0, dataoff: 0, tocopy: 10
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_read_attributes() file id 0x6f05 path len 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:get_file_attributes_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_read_transparent() file id 0x6f05 path len 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:read_generic_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/src/simfs=
+.c:sim_fs_op_read_block_cb() bufoff: 0, dataoff: 0, tocopy: 6
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_read_attributes() file id 0x2f05 path len 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:get_file_attributes_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_read_transparent() file id 0x2f05 path len 0
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:read_generic_cb() =
+
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/src/simfs=
+.c:sim_fs_op_read_block_cb() bufoff: 0, dataoff: 0, tocopy: 6
+Jun 27 15:28:41 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:qmi_query_passwd_state() =
+
+Jun 27 15:28:42 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:get_card_status() info1->app_state:0x6: OFONO_SIM_PASSWORD_IN=
+VALID
+Jun 27 15:28:42 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/drivers/q=
+mimodem/sim.c:query_passwd_state_cb() passwd state 16
+Jun 27 15:28:42 klk-lpbs-0504B4 daemon.debug ofonod[1120]: ../git/src/sim.c=
+:sim_pin_query_cb() sim->pin_type: 0, pin_type: 16
+Jun 27 15:28:42 klk-lpbs-0504B4 daemon.err ofonod[1120]: Aborting (signal 1=
+1) [/usr/sbin/ofonod]
+
+Problem is just that we don't have a string corresponding to this password =
+type.
+
+Christophe Ronco (1):
+  sim: fix crash in case of invalid sim password type
+
+ src/sim.c | 1 +
+ 1 file changed, 1 insertion(+)
+
 -- =
 
-1.9.1
+2.7.4
 
 
---===============7542600584955370998==--
+--===============6393481307430614960==--
 
