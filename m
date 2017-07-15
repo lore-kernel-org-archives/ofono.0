@@ -1,55 +1,126 @@
-Content-Type: multipart/mixed; boundary="===============0154417602642675861=="
+Content-Type: multipart/mixed; boundary="===============7565023526828292607=="
 MIME-Version: 1.0
-From: Pau Espin Pedrol <pespin@sysmocom.de>
-Subject: ofono 1.20 issues found with valgrind
-Date: Tue, 04 Jul 2017 11:17:40 +0200
-Message-ID: <0896852b-f519-1932-88a5-bc43e8311447@sysmocom.de>
+From: Matthijs Kooijman <matthijs@stdin.nl>
+Subject: [PATCH] at/cdma/ifxmodem: Use /dev/net/tun to check for TUN support
+Date: Sat, 15 Jul 2017 14:09:15 +0200
+Message-ID: <20170715120915.19301-1-matthijs@stdin.nl>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0154417602642675861==
+--===============7565023526828292607==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Previously, these drivers would check /sys/devices/virtual/misc/tun to
+see if TUN is supported, and bail out otherwise. However, the tun module
+can sometimes be autoloaded by opening the /dev/net/tun file. In this
+case the /dev file already exists, but the /sys file only gets created
+after the modul is loaded.
 
-When we started using ofono 1.20 for osmo-gsm-tester a few month ago me =
+Additionally, the ppp code does not use the /sys file, but only the
+/dev file, so checking for the existence of the latter seems a better
+indicator of expected success.
 
-noticed it often crashed due to some memory corruption, so I started =
+---
+This patch was only tested with the atmodem driver, but the other two
+seem similar enough that it should work there as well.
+---
+ drivers/atmodem/gprs-context.c  | 4 ++--
+ drivers/cdmamodem/connman.c     | 4 ++--
+ drivers/ifxmodem/gprs-context.c | 4 ++--
+ 3 files changed, 6 insertions(+), 6 deletions(-)
 
-running ofono for a while with valgrind to see if I could see potential =
+diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
+index 9b9679e8..42ec556d 100644
+--- a/drivers/atmodem/gprs-context.c
++++ b/drivers/atmodem/gprs-context.c
+@@ -43,7 +43,7 @@
+ #include "atmodem.h"
+ #include "vendor.h"
+ =
 
-issues. It indeed helped us solve the issue (fixed in =
+-#define TUN_SYSFS_DIR "/sys/devices/virtual/misc/tun"
++#define TUN_DEV "/dev/net/tun"
+ =
 
-2d6c4f9d02152a3a3907ddb93e2a5d2791a15710). Since then, ofono seems to be =
+ #define STATIC_IP_NETMASK "255.255.255.255"
+ =
 
-more stable and crashing only on occasional times.
+@@ -426,7 +426,7 @@ static int at_gprs_context_probe(struct ofono_gprs_cont=
+ext *gc,
+ =
 
-While fixing the above issue, I run into a lot of other valgrind issues =
+ 	DBG("");
+ =
 
-which I recorded in [1]. I don't think we are going to solve them soon =
+-	if (stat(TUN_SYSFS_DIR, &st) < 0) {
++	if (stat(TUN_DEV, &st) < 0) {
+ 		ofono_error("Missing support for TUN/TAP devices");
+ 		return -ENODEV;
+ 	}
+diff --git a/drivers/cdmamodem/connman.c b/drivers/cdmamodem/connman.c
+index 8c3265a1..7f0f54b6 100644
+--- a/drivers/cdmamodem/connman.c
++++ b/drivers/cdmamodem/connman.c
+@@ -43,7 +43,7 @@
+ #include "cdmamodem.h"
+ #include "drivers/atmodem/vendor.h"
+ =
 
-because they are not critical to us unless they prevent us to run ofono. =
+-#define TUN_SYSFS_DIR "/sys/devices/virtual/misc/tun"
++#define TUN_DEV "/dev/net/tun"
+ =
 
-However, if someone with good knowledge on the code is willing to have a =
+ #define STATIC_IP_NETMASK "255.255.255.255"
+ =
 
-look and fix them, please feel free to do it.
+@@ -285,7 +285,7 @@ static int cdma_connman_probe(struct ofono_cdma_connman=
+ *cm,
+ =
 
-[1] https://osmocom.org/issues/2236
+ 	DBG("");
+ =
 
+-	if (stat(TUN_SYSFS_DIR, &st) < 0) {
++	if (stat(TUN_DEV, &st) < 0) {
+ 		ofono_error("Missing support for TUN/TAP devices");
+ 		return -ENODEV;
+ 	}
+diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
+t.c
+index b7b102b9..52a3672c 100644
+--- a/drivers/ifxmodem/gprs-context.c
++++ b/drivers/ifxmodem/gprs-context.c
+@@ -42,7 +42,7 @@
+ =
 
+ #include "ifxmodem.h"
+ =
+
+-#define TUN_SYSFS_DIR "/sys/devices/virtual/misc/tun"
++#define TUN_DEV "/dev/net/tun"
+ =
+
+ #define STATIC_IP_NETMASK "255.255.255.255"
+ =
+
+@@ -470,7 +470,7 @@ static int ifx_gprs_context_probe(struct ofono_gprs_con=
+text *gc,
+ =
+
+ 	DBG("");
+ =
+
+-	if (stat(TUN_SYSFS_DIR, &st) < 0) {
++	if (stat(TUN_DEV, &st) < 0) {
+ 		ofono_error("Missing support for TUN/TAP devices");
+ 		return -ENODEV;
+ 	}
 -- =
 
-- Pau Espin Pedrol <pespin@sysmocom.de>         http://www.sysmocom.de/
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-* sysmocom - systems for mobile communications GmbH
-* Alt-Moabit 93
-* 10559 Berlin, Germany
-* Sitz / Registered office: Berlin, HRB 134158 B
-* Geschaeftsfuehrer / Managing Director: Harald Welte
+2.11.0
 
---===============0154417602642675861==--
+
+--===============7565023526828292607==--
 
