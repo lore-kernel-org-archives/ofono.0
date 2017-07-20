@@ -1,40 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============4575499086697976963=="
+Content-Type: multipart/mixed; boundary="===============4584222951052553130=="
 MIME-Version: 1.0
-From: John Ernberg <john.ernberg@actia.se>
-Subject: [PATCH] radio-settings: Fix typo in radio_band_umts_from_string
-Date: Mon, 17 Jul 2017 09:20:36 +0000
-Message-ID: <1500283227-5074-1-git-send-email-john.ernberg@actia.se>
+From: baloo@gandi.net
+Subject: [PATCH] udevng/huawei: Add support for Huawei ME906s-158
+Date: Thu, 20 Jul 2017 08:19:48 +0000
+Message-ID: <20170720081948.6453-1-baloo@gandi.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4575499086697976963==
+--===============4584222951052553130==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: John Ernberg <john.ernberg@actia.se>
+From: Arthur Gautier <baloo@gandi.net>
 
 ---
- src/radio-settings.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ plugins/udevng.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/src/radio-settings.c b/src/radio-settings.c
-index b988e3e..c551b04 100644
---- a/src/radio-settings.c
-+++ b/src/radio-settings.c
-@@ -167,7 +167,7 @@ static gboolean radio_band_umts_from_string(const char =
-*str,
- 					enum ofono_radio_band_umts *band)
- {
- 	if (g_str_equal(str, "any")) {
--		*band =3D OFONO_RADIO_BAND_GSM_ANY;
-+		*band =3D OFONO_RADIO_BAND_UMTS_ANY;
- 		return TRUE;
- 	} else if (g_str_equal(str, "850")) {
- 		*band =3D OFONO_RADIO_BAND_UMTS_850;
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index aa28bcb8911ec..4fb0dd016f17e 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -315,6 +315,7 @@ static gboolean setup_huawei(struct modem_info *modem)
+ 				g_strcmp0(info->interface, "255/1/1") =3D=3D 0 ||
+ 				g_strcmp0(info->interface, "255/2/1") =3D=3D 0 ||
+ 				g_strcmp0(info->interface, "255/3/1") =3D=3D 0 ||
++				g_strcmp0(info->interface, "255/6/16") =3D=3D 0 ||
+ 				g_strcmp0(info->interface, "255/1/49") =3D=3D 0) {
+ 			mdm =3D info->devnode;
+ 		} else if (g_strcmp0(info->label, "pcui") =3D=3D 0 ||
+@@ -322,6 +323,7 @@ static gboolean setup_huawei(struct modem_info *modem)
+ 				g_strcmp0(info->interface, "255/2/2") =3D=3D 0 ||
+ 				g_strcmp0(info->interface, "255/2/18") =3D=3D 0 ||
+ 				g_strcmp0(info->interface, "255/3/18") =3D=3D 0 ||
++				g_strcmp0(info->interface, "255/6/18") =3D=3D 0 ||
+ 				g_strcmp0(info->interface, "255/1/50") =3D=3D 0) {
+ 			pcui =3D info->devnode;
+ 		} else if (g_strcmp0(info->label, "diag") =3D=3D 0 ||
+@@ -330,7 +332,8 @@ static gboolean setup_huawei(struct modem_info *modem)
+ 				g_strcmp0(info->interface, "255/1/51") =3D=3D 0) {
+ 			diag =3D info->devnode;
+ 		} else if (g_strcmp0(info->interface, "255/1/8") =3D=3D 0 ||
+-				g_strcmp0(info->interface, "255/1/56") =3D=3D 0) {
++				g_strcmp0(info->interface, "255/1/56") =3D=3D 0 ||
++				g_strcmp0(info->interface, "255/6/22") =3D=3D 0) {
+ 			net =3D info->devnode;
+ 		} else if (g_strcmp0(info->interface, "255/1/9") =3D=3D 0 ||
+ 				g_strcmp0(info->interface, "255/1/57") =3D=3D 0) {
 -- =
 
-2.7.4
+2.13.3
 
---===============4575499086697976963==--
+
+--===============4584222951052553130==--
 
