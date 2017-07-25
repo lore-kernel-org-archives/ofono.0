@@ -1,47 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============0628142954831776146=="
+Content-Type: multipart/mixed; boundary="===============2100744381819910024=="
 MIME-Version: 1.0
 From: Alexander Couzens <lynxis@fe80.eu>
-Subject: [PATCH 3/5] voicecall: use ofono_call_status_name in DBG messages
-Date: Tue, 25 Jul 2017 15:26:22 +0200
-Message-ID: <20170725132624.32293-3-lynxis@fe80.eu>
+Subject: [PATCH 4/5] voicecall.h: declare struct ofono_modem
+Date: Tue, 25 Jul 2017 15:26:23 +0200
+Message-ID: <20170725132624.32293-4-lynxis@fe80.eu>
 In-Reply-To: <20170725132624.32293-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0628142954831776146==
+--===============2100744381819910024==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Fix a warning when only voicecall.h is included:
+'struct ofono_modem declared' inside parameter list will not be visible
+outside of this definition or declaration struct ofono_voicecall
+*ofono_voicecall_create(struct ofono_modem *modem,...
 ---
- src/voicecall.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+ include/voicecall.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index c99f11fa..e3ae80cf 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -2250,9 +2250,10 @@ void ofono_voicecall_notify(struct ofono_voicecall *=
-vc,
- 	struct voicecall *v =3D NULL;
- 	struct ofono_call *newcall;
+diff --git a/include/voicecall.h b/include/voicecall.h
+index 4d0b3886..eb897e5e 100644
+--- a/include/voicecall.h
++++ b/include/voicecall.h
+@@ -28,6 +28,7 @@ extern "C" {
  =
 
--	DBG("Got a voicecall event, status: %d, id: %u, number: %s"
--			" called_number: %s, called_name %s", call->status,
--			call->id, call->phone_number.number,
-+	DBG("Got a voicecall event, status: %s (%d), id: %u, number: %s"
-+			" called_number: %s, called_name %s",
-+			ofono_call_status_to_string(call->status),
-+			call->status, call->id, call->phone_number.number,
- 			call->called_number.number, call->name);
+ #include <ofono/types.h>
  =
 
- 	l =3D g_slist_find_custom(vc->call_list, GUINT_TO_POINTER(call->id),
++struct ofono_modem;
+ struct ofono_voicecall;
+ =
+
+ typedef void (*ofono_voicecall_cb_t)(const struct ofono_error *error,
 -- =
 
 2.13.3
 
 
---===============0628142954831776146==--
+--===============2100744381819910024==--
 
