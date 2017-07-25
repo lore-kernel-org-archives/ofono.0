@@ -1,62 +1,254 @@
-Content-Type: multipart/mixed; boundary="===============6167335967249072597=="
+Content-Type: multipart/mixed; boundary="===============0164656962883429574=="
 MIME-Version: 1.0
 From: Alexander Couzens <lynxis@fe80.eu>
-Subject: [PATCH] drivers/qmimodem: don't change the RAT when registering to an
- operator
-Date: Tue, 25 Jul 2017 15:17:49 +0200
-Message-ID: <20170725131749.17831-1-lynxis@fe80.eu>
+Subject: [PATCH 1/5] common: create GList helper ofono_call_compare
+Date: Tue, 25 Jul 2017 15:26:20 +0200
+Message-ID: <20170725132624.32293-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6167335967249072597==
+--===============0164656962883429574==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When registering to an operator ofono uses the old RAT.
-In the case the modem is not connected to any network, this would use
-QMI_NAS_NETWORK_RAT_NONE which results in the error OP_DEVICE_UNSUPPORTED.
-
-Use QMI_NAS_NETWORK_RAT_NO_CHANGE instead to not define any preference.
+replaces at_util_call_compare (atmodem) and
+call_compare (rild).
 ---
- drivers/qmimodem/nas.h                  | 1 +
- drivers/qmimodem/network-registration.c | 2 +-
- 2 files changed, 2 insertions(+), 1 deletion(-)
+ drivers/atmodem/atutil.c        | 17 ++---------------
+ drivers/atmodem/atutil.h        |  1 -
+ drivers/atmodem/voicecall.c     |  2 +-
+ drivers/hfpmodem/voicecall.c    |  2 +-
+ drivers/huaweimodem/voicecall.c |  2 +-
+ drivers/ifxmodem/voicecall.c    |  2 +-
+ drivers/rilmodem/voicecall.c    | 16 +---------------
+ drivers/stemodem/voicecall.c    |  2 +-
+ src/common.c                    | 14 ++++++++++++++
+ src/common.h                    |  2 ++
+ 10 files changed, 24 insertions(+), 36 deletions(-)
 
-diff --git a/drivers/qmimodem/nas.h b/drivers/qmimodem/nas.h
-index 09807f83..d2feb464 100644
---- a/drivers/qmimodem/nas.h
-+++ b/drivers/qmimodem/nas.h
-@@ -97,6 +97,7 @@ struct qmi_nas_network_rat {
- 	} __attribute__((__packed__)) info[0];
- } __attribute__((__packed__));
+diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
+index 14873483..1a48b606 100644
+--- a/drivers/atmodem/atutil.c
++++ b/drivers/atmodem/atutil.c
+@@ -31,6 +31,7 @@
+ #define OFONO_API_SUBJECT_TO_CHANGE
+ #include <ofono/log.h>
+ #include <ofono/types.h>
++#include "../src/common.h"
  =
 
-+#define QMI_NAS_NETWORK_RAT_NONE		0x00
- #define QMI_NAS_NETWORK_RAT_GSM			0x04
- #define QMI_NAS_NETWORK_RAT_UMTS		0x05
- #define QMI_NAS_NETWORK_RAT_LTE			0x08
-diff --git a/drivers/qmimodem/network-registration.c b/drivers/qmimodem/net=
-work-registration.c
-index 52ad69a6..04de5a5b 100644
---- a/drivers/qmimodem/network-registration.c
-+++ b/drivers/qmimodem/network-registration.c
-@@ -356,7 +356,7 @@ static void qmi_register_manual(struct ofono_netreg *ne=
-treg,
+ #include "atutil.h"
+ #include "vendor.h"
+@@ -101,20 +102,6 @@ gint at_util_call_compare_by_id(gconstpointer a, gcons=
+tpointer b)
+ 	return 0;
+ }
  =
 
- 	info.mcc =3D atoi(mcc);
- 	info.mnc =3D atoi(mnc);
--	info.rat =3D data->current_rat;
-+	info.rat =3D QMI_NAS_NETWORK_RAT_NO_CHANGE;
+-gint at_util_call_compare(gconstpointer a, gconstpointer b)
+-{
+-	const struct ofono_call *ca =3D a;
+-	const struct ofono_call *cb =3D b;
+-
+-	if (ca->id < cb->id)
+-		return -1;
+-
+-	if (ca->id > cb->id)
+-		return 1;
+-
+-	return 0;
+-}
+-
+ GSList *at_util_parse_clcc(GAtResult *result, unsigned int *ret_mpty_ids)
+ {
+ 	GAtResultIter iter;
+@@ -173,7 +160,7 @@ GSList *at_util_parse_clcc(GAtResult *result, unsigned =
+int *ret_mpty_ids)
+ 		else
+ 			call->clip_validity =3D 2;
  =
 
- 	qmi_param_append(param, QMI_NAS_PARAM_REGISTER_MANUAL_INFO,
- 						sizeof(info), &info);
+-		l =3D g_slist_insert_sorted(l, call, at_util_call_compare);
++		l =3D g_slist_insert_sorted(l, call, ofono_call_compare);
+ =
+
+ 		if (mpty)
+ 			mpty_ids |=3D 1 << id;
+diff --git a/drivers/atmodem/atutil.h b/drivers/atmodem/atutil.h
+index 5cb88b78..95e09900 100644
+--- a/drivers/atmodem/atutil.h
++++ b/drivers/atmodem/atutil.h
+@@ -54,7 +54,6 @@ void decode_at_error(struct ofono_error *error, const cha=
+r *final);
+ gint at_util_call_compare_by_status(gconstpointer a, gconstpointer b);
+ gint at_util_call_compare_by_phone_number(gconstpointer a, gconstpointer b=
+);
+ gint at_util_call_compare_by_id(gconstpointer a, gconstpointer b);
+-gint at_util_call_compare(gconstpointer a, gconstpointer b);
+ GSList *at_util_parse_clcc(GAtResult *result, unsigned int *mpty_ids);
+ gboolean at_util_parse_reg(GAtResult *result, const char *prefix,
+ 				int *mode, int *status,
+diff --git a/drivers/atmodem/voicecall.c b/drivers/atmodem/voicecall.c
+index e4c59c26..6fee39bc 100644
+--- a/drivers/atmodem/voicecall.c
++++ b/drivers/atmodem/voicecall.c
+@@ -132,7 +132,7 @@ static struct ofono_call *create_call(struct ofono_voic=
+ecall *vc, int type,
+ 	call->clip_validity =3D clip;
+ 	call->cnap_validity =3D CNAP_VALIDITY_NOT_AVAILABLE;
+ =
+
+-	d->calls =3D g_slist_insert_sorted(d->calls, call, at_util_call_compare);
++	d->calls =3D g_slist_insert_sorted(d->calls, call, ofono_call_compare);
+ =
+
+ 	return call;
+ }
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index ffdf4b7b..1a282903 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -128,7 +128,7 @@ static struct ofono_call *create_call(struct ofono_voic=
+ecall *vc, int type,
+ 		call->phone_number.type =3D num_type;
+ 	}
+ =
+
+-	d->calls =3D g_slist_insert_sorted(d->calls, call, at_util_call_compare);
++	d->calls =3D g_slist_insert_sorted(d->calls, call, ofono_call_compare);
+ =
+
+ 	call->clip_validity =3D clip;
+ =
+
+diff --git a/drivers/huaweimodem/voicecall.c b/drivers/huaweimodem/voicecal=
+l.c
+index f55568d3..0887f652 100644
+--- a/drivers/huaweimodem/voicecall.c
++++ b/drivers/huaweimodem/voicecall.c
+@@ -76,7 +76,7 @@ static struct ofono_call *create_call(struct ofono_voicec=
+all *vc, int type,
+ =
+
+ 	call->clip_validity =3D clip;
+ =
+
+-	d->calls =3D g_slist_insert_sorted(d->calls, call, at_util_call_compare);
++	d->calls =3D g_slist_insert_sorted(d->calls, call, ofono_call_compare);
+ =
+
+ 	return call;
+ }
+diff --git a/drivers/ifxmodem/voicecall.c b/drivers/ifxmodem/voicecall.c
+index 45b5ca42..581a7906 100644
+--- a/drivers/ifxmodem/voicecall.c
++++ b/drivers/ifxmodem/voicecall.c
+@@ -107,7 +107,7 @@ static struct ofono_call *create_call(struct ofono_voic=
+ecall *vc, int type,
+ =
+
+ 	call->clip_validity =3D clip;
+ =
+
+-	d->calls =3D g_slist_insert_sorted(d->calls, call, at_util_call_compare);
++	d->calls =3D g_slist_insert_sorted(d->calls, call, ofono_call_compare);
+ =
+
+ 	return call;
+ }
+diff --git a/drivers/rilmodem/voicecall.c b/drivers/rilmodem/voicecall.c
+index b7180b90..f248d871 100644
+--- a/drivers/rilmodem/voicecall.c
++++ b/drivers/rilmodem/voicecall.c
+@@ -117,20 +117,6 @@ done:
+ 	ofono_voicecall_disconnected(vc, reqdata->id, reason, NULL);
+ }
+ =
+
+-static int call_compare(gconstpointer a, gconstpointer b)
+-{
+-	const struct ofono_call *ca =3D a;
+-	const struct ofono_call *cb =3D b;
+-
+-	if (ca->id < cb->id)
+-		return -1;
+-
+-	if (ca->id > cb->id)
+-		return 1;
+-
+-	return 0;
+-}
+-
+ static void clcc_poll_cb(struct ril_msg *message, gpointer user_data)
+ {
+ 	struct ofono_voicecall *vc =3D user_data;
+@@ -209,7 +195,7 @@ static void clcc_poll_cb(struct ril_msg *message, gpoin=
+ter user_data)
+ 			call->id, call->status, call->type,
+ 			call->phone_number.number, call->name);
+ =
+
+-		calls =3D g_slist_insert_sorted(calls, call, call_compare);
++		calls =3D g_slist_insert_sorted(calls, call, ofono_call_compare);
+ 	}
+ =
+
+ no_calls:
+diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+index 356ab7c6..19276111 100644
+--- a/drivers/stemodem/voicecall.c
++++ b/drivers/stemodem/voicecall.c
+@@ -128,7 +128,7 @@ static struct ofono_call *create_call(struct ofono_voic=
+ecall *vc, int type,
+ =
+
+ 	call->clip_validity =3D clip;
+ =
+
+-	d->calls =3D g_slist_insert_sorted(d->calls, call, at_util_call_compare);
++	d->calls =3D g_slist_insert_sorted(d->calls, call, ofono_call_compare);
+ =
+
+ 	return call;
+ }
+diff --git a/src/common.c b/src/common.c
+index 17d1d58a..75bb94dc 100644
+--- a/src/common.c
++++ b/src/common.c
+@@ -736,3 +736,17 @@ void ofono_call_init(struct ofono_call *call)
+ 	call->cnap_validity =3D CNAP_VALIDITY_NOT_AVAILABLE;
+ 	call->clip_validity =3D CLIP_VALIDITY_NOT_AVAILABLE;
+ }
++
++gint ofono_call_compare(gconstpointer a, gconstpointer b)
++{
++	const struct ofono_call *ca =3D a;
++	const struct ofono_call *cb =3D b;
++
++	if (ca->id < cb->id)
++		return -1;
++
++	if (ca->id > cb->id)
++		return 1;
++
++	return 0;
++}
+diff --git a/src/common.h b/src/common.h
+index 05f2a851..46bae577 100644
+--- a/src/common.h
++++ b/src/common.h
+@@ -184,3 +184,5 @@ const char *registration_tech_to_string(int tech);
+ const char *packet_bearer_to_string(int bearer);
+ =
+
+ gboolean is_valid_apn(const char *apn);
++
++gint ofono_call_compare(gconstpointer a, gconstpointer b);
 -- =
 
 2.13.3
 
 
---===============6167335967249072597==--
+--===============0164656962883429574==--
 
