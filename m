@@ -1,45 +1,470 @@
-Content-Type: multipart/mixed; boundary="===============2100744381819910024=="
+Content-Type: multipart/mixed; boundary="===============1273298892885324753=="
 MIME-Version: 1.0
 From: Alexander Couzens <lynxis@fe80.eu>
-Subject: [PATCH 4/5] voicecall.h: declare struct ofono_modem
-Date: Tue, 25 Jul 2017 15:26:23 +0200
-Message-ID: <20170725132624.32293-4-lynxis@fe80.eu>
+Subject: [PATCH 5/5] add call-list helper to manage voice call lists
+Date: Tue, 25 Jul 2017 15:26:24 +0200
+Message-ID: <20170725132624.32293-5-lynxis@fe80.eu>
 In-Reply-To: <20170725132624.32293-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2100744381819910024==
+--===============1273298892885324753==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Fix a warning when only voicecall.h is included:
-'struct ofono_modem declared' inside parameter list will not be visible
-outside of this definition or declaration struct ofono_voicecall
-*ofono_voicecall_create(struct ofono_modem *modem,...
+Many drivers asks the modem for a complete call list of current calls.
+These list of calls can be feeded into call-list which parse the
+list and notify ofono for new calls.
 ---
- include/voicecall.h | 1 +
- 1 file changed, 1 insertion(+)
+ Makefile.am           |  13 ++-
+ include/call-list.h   |  38 +++++++++
+ src/call-list.c       | 100 ++++++++++++++++++++++
+ unit/test-call-list.c | 225 ++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 4 files changed, 373 insertions(+), 3 deletions(-)
+ create mode 100644 include/call-list.h
+ create mode 100644 src/call-list.c
+ create mode 100644 unit/test-call-list.c
 
-diff --git a/include/voicecall.h b/include/voicecall.h
-index 4d0b3886..eb897e5e 100644
---- a/include/voicecall.h
-+++ b/include/voicecall.h
-@@ -28,6 +28,7 @@ extern "C" {
+diff --git a/Makefile.am b/Makefile.am
+index 078e3f13..727410aa 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -22,7 +22,7 @@ pkginclude_HEADERS =3D include/log.h include/plugin.h inc=
+lude/history.h \
+ 			include/private-network.h include/cdma-netreg.h \
+ 			include/cdma-provision.h include/handsfree.h \
+ 			include/handsfree-audio.h include/siri.h \
+-			include/netmon.h include/lte.h
++			include/netmon.h include/lte.h include/call-list.h
  =
 
- #include <ofono/types.h>
+ nodist_pkginclude_HEADERS =3D include/version.h
  =
 
-+struct ofono_modem;
- struct ofono_voicecall;
+@@ -620,7 +620,7 @@ src_ofonod_SOURCES =3D $(builtin_sources) $(gatchat_sou=
+rces) src/ofono.ver \
+ 			src/cdma-provision.c src/handsfree.c \
+ 			src/handsfree-audio.c src/bluetooth.h \
+ 			src/hfp.h src/siri.c \
+-			src/netmon.c src/lte.c
++			src/netmon.c src/lte.c src/call-list.c
  =
 
- typedef void (*ofono_voicecall_cb_t)(const struct ofono_error *error,
+ src_ofonod_LDADD =3D gdbus/libgdbus-internal.la $(builtin_libadd) \
+ 			@GLIB_LIBS@ @DBUS_LIBS@ -ldl
+@@ -794,7 +794,8 @@ unit_tests =3D unit/test-common unit/test-util unit/tes=
+t-idmap \
+ 				unit/test-rilmodem-cs \
+ 				unit/test-rilmodem-sms \
+ 				unit/test-rilmodem-cb \
+-				unit/test-rilmodem-gprs
++				unit/test-rilmodem-gprs \
++				unit/test-call-list
+ =
+
+ noinst_PROGRAMS =3D $(unit_tests) \
+ 			unit/test-sms-root unit/test-mux unit/test-caif
+@@ -836,6 +837,12 @@ unit_test_sms_root_SOURCES =3D unit/test-sms-root.c \
+ unit_test_sms_root_LDADD =3D @GLIB_LIBS@
+ unit_objects +=3D $(unit_test_sms_root_OBJECTS)
+ =
+
++unit_test_call_list_SOURCES =3D \
++				     src/common.c src/util.c \
++				     src/call-list.c unit/test-call-list.c
++unit_test_call_list_LDADD =3D @GLIB_LIBS@ -ldl
++unit_objects +=3D $(unit_test_call_list_OBJECTS)
++
+ unit_test_mux_SOURCES =3D unit/test-mux.c $(gatchat_sources)
+ unit_test_mux_LDADD =3D @GLIB_LIBS@
+ unit_objects +=3D $(unit_test_mux_OBJECTS)
+diff --git a/include/call-list.h b/include/call-list.h
+new file mode 100644
+index 00000000..dbd6ddd6
+--- /dev/null
++++ b/include/call-list.h
+@@ -0,0 +1,38 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2017 Alexander Couzens <lynxis@fe80.eu>
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ */
++
++#include <glib.h>
++
++struct ofono_voicecall;
++struct ofono_phone_number;
++
++/*
++ * Can be called by the driver in the dialing callback,
++ * when the new call id already known
++ */
++void ofono_call_list_dial_callback(struct ofono_voicecall *vc,
++				   GSList **call_list,
++				   const struct ofono_phone_number *ph,
++				   int call_id);
++
++/*
++ * Called with a list of known calls e.g. clcc.
++ * Call list will take ownership of all ofono call within the calls.
++ */
++void ofono_call_list_notify(struct ofono_voicecall *vc,
++			    GSList **call_list,
++			    GSList *calls);
+diff --git a/src/call-list.c b/src/call-list.c
+new file mode 100644
+index 00000000..fd39719a
+--- /dev/null
++++ b/src/call-list.c
+@@ -0,0 +1,100 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2017 Alexander Couzens <lynxis@fe80.eu>
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ */
++
++#include <glib.h>
++
++#include "common.h"
++
++#include <ofono/types.h>
++#include <ofono/log.h>
++#include <ofono/voicecall.h>
++#include <ofono/call-list.h>
++
++#include <string.h>
++
++void ofono_call_list_dial_callback(struct ofono_voicecall *vc,
++				   GSList **call_list,
++				   const struct ofono_phone_number *ph,
++				   int call_id)
++{
++	struct ofono_call *call;
++
++	call =3D g_new0(struct ofono_call, 1);
++	call->id =3D call_id;
++
++	memcpy(&call->called_number, ph, sizeof(*ph));
++	call->direction =3D CALL_DIRECTION_MOBILE_ORIGINATED;
++	call->status =3D CALL_STATUS_DIALING;
++	call->type =3D 0; /* voice */
++
++	*call_list =3D g_slist_insert_sorted(*call_list,
++					    call,
++					    ofono_call_compare);
++	ofono_voicecall_notify(vc, call);
++}
++
++void ofono_call_list_notify(struct ofono_voicecall *vc,
++			    GSList **call_list,
++			    GSList *calls)
++{
++	GSList *old_calls =3D *call_list;
++	GSList *new_calls =3D calls;
++	struct ofono_call *new_call, *old_call;
++
++	while (old_calls || new_calls) {
++		old_call =3D old_calls ? old_calls->data : NULL;
++		new_call =3D new_calls ? new_calls->data : NULL;
++
++		/* we drop disconnected calls and treat them as not existent */
++		if (new_call && new_call->status =3D=3D CALL_STATUS_DISCONNECTED) {
++			new_calls =3D new_calls->next;
++			calls =3D g_slist_remove(calls, new_call);
++			g_free(new_call);
++			continue;
++		}
++
++		if (old_call &&
++				(new_call =3D=3D NULL ||
++				(new_call->id > old_call->id))) {
++			ofono_voicecall_disconnected(
++						vc,
++						old_call->id,
++						OFONO_DISCONNECT_REASON_UNKNOWN,
++						NULL);
++			old_calls =3D old_calls->next;
++		} else if (new_call &&
++			   (old_call =3D=3D NULL ||
++			   (new_call->id < old_call->id))) {
++
++			/* new call, signal it */
++			if (new_call->type =3D=3D 0)
++				ofono_voicecall_notify(vc, new_call);
++
++			new_calls =3D new_calls->next;
++		} else {
++			if (memcmp(new_call, old_call, sizeof(*new_call))
++					&& new_call->type =3D=3D 0)
++				ofono_voicecall_notify(vc, new_call);
++
++			new_calls =3D new_calls->next;
++			old_calls =3D old_calls->next;
++		}
++	}
++
++	g_slist_free_full(*call_list, g_free);
++	*call_list =3D calls;
++}
+diff --git a/unit/test-call-list.c b/unit/test-call-list.c
+new file mode 100644
+index 00000000..980038ab
+--- /dev/null
++++ b/unit/test-call-list.c
+@@ -0,0 +1,225 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2017 Alexander Couzens <lynxis@fe80.eu>
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ */
++
++
++#include <glib.h>
++#include <string.h>
++
++
++#include "../src/common.h"
++#include <ofono/types.h>
++#include <ofono/call-list.h>
++
++struct voicecall {
++};
++
++struct notified {
++	unsigned int id;
++	enum call_status status;
++};
++
++static struct notified notified_list[32];
++static int notified_idx;
++static int notified_check;
++
++void reset_notified(void)
++{
++	notified_idx =3D 0;
++	notified_check =3D 0;
++	memset(&notified_list, 0, sizeof(notified_list));
++}
++
++void ofono_voicecall_notify(struct ofono_voicecall *vc,
++				struct ofono_call *call)
++{
++	notified_list[notified_idx].id =3D call->id;
++	notified_list[notified_idx].status =3D call->status;
++	notified_idx++;
++}
++
++void ofono_voicecall_disconnected(struct ofono_voicecall *vc, int id,
++				enum ofono_disconnect_reason reason,
++				const struct ofono_error *error)
++{
++	notified_list[notified_idx].id =3D id;
++	notified_list[notified_idx].status =3D CALL_STATUS_DISCONNECTED;
++	notified_idx++;
++}
++
++static GSList *create_call(
++		GSList *calls,
++		unsigned int id,
++		enum call_status status,
++		enum call_direction direction)
++{
++	struct ofono_call *call =3D g_new0(struct ofono_call, 1);
++
++	call->id =3D id;
++	call->status =3D status;
++	call->direction =3D direction;
++
++	calls =3D g_slist_insert_sorted(calls, call, ofono_call_compare);
++
++	return calls;
++}
++
++static void assert_notified(unsigned int call_id, int call_status)
++{
++	g_assert(notified_idx >=3D notified_check);
++	g_assert(notified_list[notified_check].id =3D=3D call_id);
++	g_assert(notified_list[notified_check].status =3D=3D call_status);
++
++	notified_check++;
++}
++
++static void test_notify_disconnected(void)
++{
++	struct ofono_voicecall *vc =3D NULL;
++	struct ofono_phone_number ph;
++	GSList *call_list;
++	GSList *calls;
++
++	strcpy(ph.number, "004888123456");
++	ph.type =3D 0;
++
++	/* reset test */
++	reset_notified();
++	call_list =3D NULL;
++
++	/* fill disconnected call*/
++	calls =3D create_call(NULL, 1, CALL_STATUS_DISCONNECTED,
++			    CALL_DIRECTION_MOBILE_TERMINATED);
++	ofono_call_list_notify(vc, &call_list, calls);
++
++	/* incoming call */
++	calls =3D create_call(NULL, 1, CALL_STATUS_DISCONNECTED,
++			    CALL_DIRECTION_MOBILE_TERMINATED);
++	calls =3D create_call(calls, 1, CALL_STATUS_ALERTING,
++			   CALL_DIRECTION_MOBILE_TERMINATED);
++	ofono_call_list_notify(vc, &call_list, calls);
++
++	/* answer call */
++	calls =3D create_call(NULL, 1, CALL_STATUS_ACTIVE,
++			   CALL_DIRECTION_MOBILE_TERMINATED);
++	calls =3D create_call(calls, 1, CALL_STATUS_DISCONNECTED,
++			    CALL_DIRECTION_MOBILE_TERMINATED);
++	ofono_call_list_notify(vc, &call_list, calls);
++
++	/* another call waiting */
++	calls =3D create_call(NULL, 1, CALL_STATUS_DISCONNECTED,
++			    CALL_DIRECTION_MOBILE_TERMINATED);
++	calls =3D create_call(calls, 1, CALL_STATUS_ACTIVE,
++			   CALL_DIRECTION_MOBILE_TERMINATED);
++	calls =3D create_call(calls, 2, CALL_STATUS_DISCONNECTED,
++			    CALL_DIRECTION_MOBILE_TERMINATED);
++	calls =3D create_call(calls, 2, CALL_STATUS_WAITING,
++				   CALL_DIRECTION_MOBILE_TERMINATED);
++	calls =3D create_call(calls, 2, CALL_STATUS_DISCONNECTED,
++			    CALL_DIRECTION_MOBILE_TERMINATED);
++	ofono_call_list_notify(vc, &call_list, calls);
++
++	/* end all calls */
++	ofono_call_list_notify(vc, &call_list, NULL);
++
++	/* verify call history */
++	assert_notified(1, CALL_STATUS_ALERTING);
++	assert_notified(1, CALL_STATUS_ACTIVE);
++	assert_notified(2, CALL_STATUS_WAITING);
++	assert_notified(1, CALL_STATUS_DISCONNECTED);
++	assert_notified(2, CALL_STATUS_DISCONNECTED);
++
++	g_assert(notified_check =3D=3D notified_idx);
++	g_slist_free_full(call_list, g_free);
++}
++
++static void test_notify(void)
++{
++	struct ofono_voicecall *vc =3D NULL;
++	struct ofono_phone_number ph;
++	GSList *call_list;
++	GSList *calls;
++
++	strcpy(ph.number, "004888123456");
++	ph.type =3D 0;
++
++	/* reset test */
++	reset_notified();
++	call_list =3D NULL;
++
++	/* incoming call */
++	calls =3D create_call(NULL, 1, CALL_STATUS_ALERTING,
++			   CALL_DIRECTION_MOBILE_TERMINATED);
++	ofono_call_list_notify(vc, &call_list, calls);
++
++	/* answer call */
++	calls =3D create_call(NULL, 1, CALL_STATUS_ACTIVE,
++			   CALL_DIRECTION_MOBILE_TERMINATED);
++	ofono_call_list_notify(vc, &call_list, calls);
++
++	/* another call waiting */
++	calls =3D create_call(NULL, 1, CALL_STATUS_ACTIVE,
++			   CALL_DIRECTION_MOBILE_TERMINATED);
++	calls =3D create_call(calls, 2, CALL_STATUS_WAITING,
++				   CALL_DIRECTION_MOBILE_TERMINATED);
++	ofono_call_list_notify(vc, &call_list, calls);
++
++	/* end all calls */
++	ofono_call_list_notify(vc, &call_list, NULL);
++
++	/* verify call history */
++	assert_notified(1, CALL_STATUS_ALERTING);
++	assert_notified(1, CALL_STATUS_ACTIVE);
++	assert_notified(2, CALL_STATUS_WAITING);
++	assert_notified(1, CALL_STATUS_DISCONNECTED);
++	assert_notified(2, CALL_STATUS_DISCONNECTED);
++
++	g_assert(notified_check =3D=3D notified_idx);
++	g_slist_free_full(call_list, g_free);
++}
++
++static void test_dial_callback(void)
++{
++	struct ofono_voicecall *vc =3D NULL;
++	struct ofono_phone_number ph;
++	struct ofono_call *call;
++	GSList *call_list;
++
++	/* reset test */
++	reset_notified();
++	call_list =3D NULL;
++
++	strcpy(ph.number, "0099301234567890");
++	ph.type =3D 0;
++
++	ofono_call_list_dial_callback(vc, &call_list, &ph, 33);
++
++	call =3D call_list->data;
++
++	g_assert(strcmp(call->called_number.number, ph.number) =3D=3D 0);
++	g_slist_free_full(call_list, g_free);
++}
++
++int main(int argc, char **argv)
++{
++	g_test_init(&argc, &argv, NULL);
++
++	g_test_add_func("/test-call-list/dial_callback", test_dial_callback);
++	g_test_add_func("/test-call-list/test_notify", test_notify);
++	g_test_add_func("/test-call-list/test_notify_disconnected",
++			test_notify_disconnected);
++	return g_test_run();
++}
 -- =
 
 2.13.3
 
 
---===============2100744381819910024==--
+--===============1273298892885324753==--
 
