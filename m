@@ -1,45 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============1032708301698351772=="
+Content-Type: multipart/mixed; boundary="===============2482788113378746864=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim: fix crash in case of invalid sim password type
-Date: Mon, 07 Aug 2017 14:19:30 -0500
-Message-ID: <ecbf6c15-96a2-adf9-97c0-2c83b6e2a842@gmail.com>
-In-Reply-To: <1498636003-24999-2-git-send-email-c.ronco@kerlink.fr>
+Subject: Re: [PATCH] ussd: Switch the state from USER_ACTION to IDLE
+Date: Mon, 07 Aug 2017 14:51:22 -0500
+Message-ID: <c3264968-c5c4-a863-bfce-e96f6778048e@gmail.com>
+In-Reply-To: <1498046088-545-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1032708301698351772==
+--===============2482788113378746864==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+Hi Slava,
 
-On 06/28/2017 02:46 AM, Christophe Ronco wrote:
-> Crash seen in sim_pin_query_cb if pin type is OFONO_SIM_PASSWORD_INVALID
+On 06/21/2017 06:54 AM, Slava Monich wrote:
+> ... when a USSD notification is received. Some networks
+> send 0 (no further user action required) after the response
+> timeout expires. That should result in the user input form
+> getting removed from the ME screen.
 > ---
->  src/sim.c | 1 +
->  1 file changed, 1 insertion(+)
+>  src/ussd.c | 14 ++++++++++++++
+>  1 file changed, 14 insertions(+)
 >
-> diff --git a/src/sim.c b/src/sim.c
-> index ac5b6fd..aa4190f 100644
-> --- a/src/sim.c
-> +++ b/src/sim.c
-> @@ -145,6 +145,7 @@ static const char *const passwd_name[] =3D {
->  	[OFONO_SIM_PASSWORD_PHSP_PUK] =3D "servicepuk",
->  	[OFONO_SIM_PASSWORD_PHCORP_PIN] =3D "corp",
->  	[OFONO_SIM_PASSWORD_PHCORP_PUK] =3D "corppuk",
-> +	[OFONO_SIM_PASSWORD_INVALID] =3D "invalid",
 
-This seems wrong, the driver should not be reporting an invalid PIN type.
-
->  };
->
->  static void sim_own_numbers_update(struct ofono_sim *sim);
->
+Applied, thanks.
 
 Regards,
 -Denis
 
---===============1032708301698351772==--
+
+--===============2482788113378746864==--
 
