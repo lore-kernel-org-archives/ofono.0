@@ -1,26 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============7788846163792429945=="
+Content-Type: multipart/mixed; boundary="===============3671022901245791684=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] radio-settings: Fix typo in radio_band_umts_from_string
-Date: Mon, 07 Aug 2017 17:09:58 +0000
-Message-ID: <6f6fec14-e071-2a66-2c5f-d95f7d7bda51@gmail.com>
-In-Reply-To: <1500283227-5074-1-git-send-email-john.ernberg@actia.se>
+Subject: Re: [PATCH 4/5] voicecall.h: declare struct ofono_modem
+Date: Mon, 07 Aug 2017 12:34:26 -0500
+Message-ID: <ecc41f12-8fc5-8609-29b1-9e3d98395ffd@gmail.com>
+In-Reply-To: <20170725132624.32293-4-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7788846163792429945==
+--===============3671022901245791684==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi John,
+Hi Alexander,
 
-On 07/17/2017 04:20 AM, John Ernberg wrote:
-> From: John Ernberg <john.ernberg@actia.se>
->
+On 07/25/2017 08:26 AM, Alexander Couzens wrote:
+> Fix a warning when only voicecall.h is included:
+> 'struct ofono_modem declared' inside parameter list will not be visible
+> outside of this definition or declaration struct ofono_voicecall
+> *ofono_voicecall_create(struct ofono_modem *modem,...
 > ---
->  src/radio-settings.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  include/voicecall.h | 1 +
+>  1 file changed, 1 insertion(+)
 >
 
 Applied, thanks.
@@ -29,5 +31,5 @@ Regards,
 -Denis
 
 
---===============7788846163792429945==--
+--===============3671022901245791684==--
 
