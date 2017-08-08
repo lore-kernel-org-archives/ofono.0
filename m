@@ -1,63 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============8000391396269231094=="
+Content-Type: multipart/mixed; boundary="===============9217186814791490987=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] add call-list helper to manage voice call lists
-Date: Tue, 08 Aug 2017 08:33:09 -0500
-Message-ID: <f83c9485-825d-f21e-9dde-395ddbb8d743@gmail.com>
-In-Reply-To: <20170808142328.14bb9337@lazus.yip>
+From: Alexander Couzens <lynxis@fe80.eu>
+Subject: [PATCH 1/2] gprs-context: set apn length to 100 bytes
+Date: Tue, 08 Aug 2017 15:53:44 +0200
+Message-ID: <20170808135345.10755-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8000391396269231094==
+--===============9217186814791490987==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alexander,
+According to ETSI TS 123 003 version 9.15.0 Chapter 9.1
+---
+ include/gprs-context.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
->> We are not exposing glib into the oFono plugin API.  So the use of
->> GSList, etc data structures across driver <-> core boundary is not
->> possible.  The reasons are somewhat historic, but essentially
->> non-GLib based plugins must be possible.  Also, oFono's use of GLib
->> will be replaced by ell [1] in the future.
-> Interesting. Do you have any plans when and how the migratation will
-> be done?
-> =
+diff --git a/include/gprs-context.h b/include/gprs-context.h
+index ab673265..7e163cc9 100644
+--- a/include/gprs-context.h
++++ b/include/gprs-context.h
+@@ -30,7 +30,7 @@ extern "C" {
+ =
+
+ struct ofono_gprs_context;
+ =
+
+-#define OFONO_GPRS_MAX_APN_LENGTH 127
++#define OFONO_GPRS_MAX_APN_LENGTH 100
+ #define OFONO_GPRS_MAX_USERNAME_LENGTH 63
+ #define OFONO_GPRS_MAX_PASSWORD_LENGTH 255
+ =
+
+-- =
+
+2.13.4
 
 
-No concrete timelines, but most likely we will simply introduce a =
-
-dependency on ell at some point and start converting code over until all =
-
-traces of GLib are eradicated.
-
->> I'm still not quite sure what you're trying to solve with these
->> changes? A bit more info on the motivation of the patches in the
->> commit description would be helpful...
-> =
-
-> My motivation is to get rid of the generic part in the
-> modem drivers. E.g. look at the rild and atmodem, they have a lot
-> similiar code when parsing the call list.
-> =
-
-> So it would be nice to replace those. On the other side I've written a
-> voicecall driver for qmi which is using the call list, but I'm still
-> testing it.
->
-
-Okay, I see now.  In the ideal world the call state notification =
-
-mechanism provides all the information needed so that a driver internal =
-
-call list is not needed.  See calypsomodem/voicecall.c for example.
-
-For drivers that do use a call list, maybe we can put the common code =
-
-into drivers/common/*.[ch] or so.
-
-Regards,
--Denis
-
---===============8000391396269231094==--
+--===============9217186814791490987==--
 
