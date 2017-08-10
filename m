@@ -1,35 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============7671296283719163831=="
+Content-Type: multipart/mixed; boundary="===============1610836299216297842=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: Re: AW: AW: connmand[186]: Online check failed but running dhclient
- manually fixes this issue
-Date: Wed, 09 Aug 2017 17:36:45 +0200
-Message-ID: <03c78aa2-1016-e200-b933-ef25627b5f27@monom.org>
-In-Reply-To: <c01ba3df-7c71-3d6b-d1ba-598592614f75@kerlink.fr>
+Subject: Re: AW: AW: AW: connmand[186]: Online check failed but running
+ dhclient manually fixes this issue
+Date: Thu, 10 Aug 2017 11:05:40 +0200
+Message-ID: <e2eea629-eb75-420e-1e43-900fccaa21b4@monom.org>
+In-Reply-To: <59ea6e9c46df41b3ba756f153c92fb57@FE-MBX1014.de.bosch.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7671296283719163831==
+--===============1610836299216297842==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe and Eswaran,
+Hi Vinothkumar,
 
-I just discussed this problem with Denis on IRC. Denis is quite sure the =
+[sorry for the last mails where I got your last name mixed up...]
 
-modem is broken. To fix this, we need to add a quirk to the device =
+On 08/10/2017 07:03 AM, Eswaran Vinothkumar (BEG/PJ-IOT-EL) wrote:
+> Could you send me the exact modem description you are using? So that we c=
+an write quirk?
+> =
 
-driver in oFono code base which disables the IP configuration reporting. =
+> Hi,
+> =
 
-With this ConnMan will use DHCP in those cases.
+> I am using TELIT 910 EUG Modem.
 
-Could you send me the exact modem description you are using? So that we =
+Okay, maybe that is already enough. I saw that in drivers/telit.c there =
 
-can write quirk?
+is already some code to handle variants of the modem. The matching is =
+
+done on these strings.
+
+Are there any vid/pid available fot his modem?
 
 Thanks,
 Daniel
 
---===============7671296283719163831==--
+--===============1610836299216297842==--
 
