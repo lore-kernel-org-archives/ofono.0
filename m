@@ -1,81 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============1139335817345608939=="
+Content-Type: multipart/mixed; boundary="===============0932945512651641088=="
 MIME-Version: 1.0
-From: Joey Hewitt <joey@joeyhewitt.com>
-Subject: SIM not starting up reliably on rilmodem
-Date: Thu, 10 Aug 2017 16:58:24 -0600
-Message-ID: <70053b34-a661-1922-8e1c-7ff62072d515@joeyhewitt.com>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: [PATCH] sms: Pass const pointer to dispatch_app_datagram
+Date: Sat, 19 Aug 2017 12:26:16 +0300
+Message-ID: <1503134776-24068-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1139335817345608939==
+--===============0932945512651641088==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-I'm running oFono with the rilmodem driver on an MSM8930AB-based phone =
+---
+ src/sms.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-(Samsung GS4 Mini GT-I9195). I'm having issues getting it to come online =
+diff --git a/src/sms.c b/src/sms.c
+index 17c5a9c..b86158e 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -1171,7 +1171,8 @@ static gboolean compute_incoming_msgid(GSList *sms_li=
+st,
+ static void dispatch_app_datagram(struct ofono_sms *sms,
+ 					const struct ofono_uuid *uuid,
+ 					int dst, int src,
+-					unsigned char *buf, unsigned len,
++					const unsigned char *buf,
++					unsigned int len,
+ 					const struct sms_address *addr,
+ 					const struct sms_scts *scts)
+ {
+-- =
 
-reliably. oFono can always connect to rild and get device identifiers =
+1.9.1
 
-etc., but often when I set the modem property Online to true, it doesn't =
 
-come all the way up. It will report being Online, and rild sends some =
-
-things like signal strength updates, but most of the interfaces and =
-
-properties oFono offers aren't available in this state (e.g., SimManager =
-
-reports SIM not Present.) When it happens I kill ofonod and try again =
-
-until it works. It's pretty easy to spot, because a successful =
-
-connection causes a flurry of SIM I/O calls. I haven't used it =
-
-extensively yet, but network state, SMS, and calls are working in my tests.
-
-Here are a couple of snippets from logs at different times:
-
-E/RILD    (30928): radioState(0) so did not update simState
-
-E/RILD    ( 3655): SetSimOperator: invalid operator
-E/RILD    ( 3655): OnRadioStateChanged: sim operator not ready wait for read
-
-ofonod[19106]: [0,0014]< RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE failed =
-
-RADIO_NOT_AVAILABLE
-E/RILD    (19068): Blocked preferred net type(1) due to sim state(0)
-
-It's almost as if there is a circular dependency between the SIM and the =
-
-radio state, that resolves itself if the timing comes out right. I can =
-
-give more detailed logs if something specific would be helpful.
-
- From comparing some logs and making some guesses, I arrived at a hack =
-
-of sending RIL_REQUEST_SCREEN_STATE =3D TRUE as part of the rild =
-
-connection initialization, and sending TRUE again later in =
-
-ril_radio_settings_probe(). This makes the startup more likely to =
-
-succeed, but still not perfect (it changed from taking 10-20 tries to =
-
-something like five.) I don't know if one of these changes is more =
-
-effective than the other, but it's good enough for now.
-
-So, has anyone else seen this kind of thing, or have ideas on how to =
-
-make it more reliable? Also, what is the state of the rilmodem fork@=
-
-https://github.com/rilmodem/ofono ? I'm using the mainline oFono code =
-
-right now.
-
-Thanks,
-Joey Hewitt
-
---===============1139335817345608939==--
+--===============0932945512651641088==--
 
