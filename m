@@ -1,130 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============0825153217195356682=="
+Content-Type: multipart/mixed; boundary="===============0393872933941042898=="
 MIME-Version: 1.0
-From: Matthijs Kooijman <matthijs@stdin.nl>
-Subject: [PATCH] at/cdma/ifxmodem: Use /dev/net/tun to check for TUN support
-Date: Tue, 22 Aug 2017 18:16:29 +0200
-Message-ID: <20170822161629.GB10106@login.tika.stderr.nl>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] at/cdma/ifxmodem: Use /dev/net/tun to check for TUN
+ support
+Date: Tue, 22 Aug 2017 23:26:52 -0500
+Message-ID: <08ad4db1-6f2f-7856-455e-53f262018c21@gmail.com>
+In-Reply-To: <20170822161629.GB10106@login.tika.stderr.nl>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0825153217195356682==
+--===============0393872933941042898==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Previously, these drivers would check /sys/devices/virtual/misc/tun to
-see if TUN is supported, and bail out otherwise. However, the tun module
-can sometimes be autoloaded by opening the /dev/net/tun file. In this
-case the /dev file already exists, but the /sys file only gets created
-after the modul is loaded.
+Hi Matthijs,
 
-Additionally, the ppp code does not use the /sys file, but only the
-/dev file, so checking for the existence of the latter seems a better
-indicator of expected success.
+On 08/22/2017 11:16 AM, Matthijs Kooijman wrote:
+> Previously, these drivers would check /sys/devices/virtual/misc/tun to
+> see if TUN is supported, and bail out otherwise. However, the tun module
+> can sometimes be autoloaded by opening the /dev/net/tun file. In this
+> case the /dev file already exists, but the /sys file only gets created
+> after the modul is loaded.
+> =
 
----
-This patch was only tested with the atmodem driver, but the other two
-seem similar enough that it should work there as well.
+> Additionally, the ppp code does not use the /sys file, but only the
+> /dev file, so checking for the existence of the latter seems a better
+> indicator of expected success.
+> =
 
-This is a verbatim resend of this patch, orginally sent on 15th of July,
-as requested by Denis Kenzior.
----
- drivers/atmodem/gprs-context.c  | 4 ++--
- drivers/cdmamodem/connman.c     | 4 ++--
- drivers/ifxmodem/gprs-context.c | 4 ++--
- 3 files changed, 6 insertions(+), 6 deletions(-)
+> ---
+> This patch was only tested with the atmodem driver, but the other two
+> seem similar enough that it should work there as well.
+> =
 
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index 9b9679e8..42ec556d 100644
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -43,7 +43,7 @@
- #include "atmodem.h"
- #include "vendor.h"
- =
+> This is a verbatim resend of this patch, orginally sent on 15th of July,
+> as requested by Denis Kenzior.
 
--#define TUN_SYSFS_DIR "/sys/devices/virtual/misc/tun"
-+#define TUN_DEV "/dev/net/tun"
- =
+Applied, thanks.
 
- #define STATIC_IP_NETMASK "255.255.255.255"
- =
-
-@@ -426,7 +426,7 @@ static int at_gprs_context_probe(struct ofono_gprs_cont=
-ext *gc,
- =
-
- 	DBG("");
- =
-
--	if (stat(TUN_SYSFS_DIR, &st) < 0) {
-+	if (stat(TUN_DEV, &st) < 0) {
- 		ofono_error("Missing support for TUN/TAP devices");
- 		return -ENODEV;
- 	}
-diff --git a/drivers/cdmamodem/connman.c b/drivers/cdmamodem/connman.c
-index 8c3265a1..7f0f54b6 100644
---- a/drivers/cdmamodem/connman.c
-+++ b/drivers/cdmamodem/connman.c
-@@ -43,7 +43,7 @@
- #include "cdmamodem.h"
- #include "drivers/atmodem/vendor.h"
- =
-
--#define TUN_SYSFS_DIR "/sys/devices/virtual/misc/tun"
-+#define TUN_DEV "/dev/net/tun"
- =
-
- #define STATIC_IP_NETMASK "255.255.255.255"
- =
-
-@@ -285,7 +285,7 @@ static int cdma_connman_probe(struct ofono_cdma_connman=
- *cm,
- =
-
- 	DBG("");
- =
-
--	if (stat(TUN_SYSFS_DIR, &st) < 0) {
-+	if (stat(TUN_DEV, &st) < 0) {
- 		ofono_error("Missing support for TUN/TAP devices");
- 		return -ENODEV;
- 	}
-diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
-t.c
-index b7b102b9..52a3672c 100644
---- a/drivers/ifxmodem/gprs-context.c
-+++ b/drivers/ifxmodem/gprs-context.c
-@@ -42,7 +42,7 @@
- =
-
- #include "ifxmodem.h"
- =
-
--#define TUN_SYSFS_DIR "/sys/devices/virtual/misc/tun"
-+#define TUN_DEV "/dev/net/tun"
- =
-
- #define STATIC_IP_NETMASK "255.255.255.255"
- =
-
-@@ -470,7 +470,7 @@ static int ifx_gprs_context_probe(struct ofono_gprs_con=
-text *gc,
- =
-
- 	DBG("");
- =
-
--	if (stat(TUN_SYSFS_DIR, &st) < 0) {
-+	if (stat(TUN_DEV, &st) < 0) {
- 		ofono_error("Missing support for TUN/TAP devices");
- 		return -ENODEV;
- 	}
--- =
-
-2.11.0
+Regards,
+-Denis
 
 
-
---===============0825153217195356682==--
+--===============0393872933941042898==--
 
