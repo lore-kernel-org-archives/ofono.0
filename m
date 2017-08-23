@@ -1,47 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============0393872933941042898=="
+Content-Type: multipart/mixed; boundary="===============5278579612410651351=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] at/cdma/ifxmodem: Use /dev/net/tun to check for TUN
- support
-Date: Tue, 22 Aug 2017 23:26:52 -0500
-Message-ID: <08ad4db1-6f2f-7856-455e-53f262018c21@gmail.com>
-In-Reply-To: <20170822161629.GB10106@login.tika.stderr.nl>
+From: James Prestwood <james.prestwood@linux.intel.com>
+Subject: Proposal: New SimAuth interface
+Date: Wed, 23 Aug 2017 15:40:21 -0700
+Message-ID: <eca28f35-c527-b86c-b641-96f96d640cfd@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0393872933941042898==
+--===============5278579612410651351==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Matthijs,
+Hello,
 
-On 08/22/2017 11:16 AM, Matthijs Kooijman wrote:
-> Previously, these drivers would check /sys/devices/virtual/misc/tun to
-> see if TUN is supported, and bail out otherwise. However, the tun module
-> can sometimes be autoloaded by opening the /dev/net/tun file. In this
-> case the /dev file already exists, but the /sys file only gets created
-> after the modul is loaded.
-> =
+     The IWD project now has a need for SIM card access in order to =
 
-> Additionally, the ppp code does not use the /sys file, but only the
-> /dev file, so checking for the existence of the latter seems a better
-> indicator of expected success.
-> =
+authenticate to EAP-SIM/AKA WiFi networks, and will be using ofono for =
 
-> ---
-> This patch was only tested with the atmodem driver, but the other two
-> seem similar enough that it should work there as well.
-> =
+this functionality. In order to do this, the GSM/3G "authenticate" =
 
-> This is a verbatim resend of this patch, orginally sent on 15th of July,
-> as requested by Denis Kenzior.
+algorithm needs to be run on the (U)SIM. For this I am proposing a new =
 
-Applied, thanks.
+interface: "org.ofono.SimAuth". I do have a few questions about what =
 
-Regards,
--Denis
+method(s)/interfaces would be preferred. Since 2G/3G take different =
+
+inputs/outputs there are few possibilities:
+
+1. Two different methods on org.ofono.SimAuth:
+
+     AuthenticateSim()
+
+         Input: "ay" RAND
+
+         Output: "ay" SRES, "ay" KC
+
+     AuthenticateUSim()
+
+         Input: "ay" RAND, "ay" AUTN
+
+         Output: "ay" RES, "ay" IK, "ay" CK, "ay" AUTS
+
+2. One method on org.ofono.SimAuth, with more complex arguments e.g.
+
+     Authenticate()
+
+         Input: "s" type, a{ay} args
+
+         Output: a{ay}
+
+     This would return take in and return the correct arguments for =
+
+2G/3G based on the "type" argument.
+
+3. Separate interfaces for SIM/USIM (e.g. org.ofono.SimAuth and =
+
+org.ofono.USimAuth). This would also allow the client to see if either =
+
+SIM or USIM are supported before making any method calls.
+
+If anyone has input on what would option would be preferred, or maybe a =
+
+different way of doing it, that would be great!
+
+Thanks,
+
+James
 
 
---===============0393872933941042898==--
+--===============5278579612410651351==--
 
