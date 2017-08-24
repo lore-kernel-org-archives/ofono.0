@@ -1,73 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============5278579612410651351=="
+Content-Type: multipart/mixed; boundary="===============6468362145804790201=="
 MIME-Version: 1.0
-From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: Proposal: New SimAuth interface
-Date: Wed, 23 Aug 2017 15:40:21 -0700
-Message-ID: <eca28f35-c527-b86c-b641-96f96d640cfd@linux.intel.com>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: [PATCH] unit: Avoid use of uninitialised data in test-simutil
+Date: Fri, 25 Aug 2017 01:17:31 +0300
+Message-ID: <1503613051-17235-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5278579612410651351==
+--===============6468362145804790201==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+GTest: run: /testsimutil/ber tlv encode EFpnn
+=3D=3D16777=3D=3D Conditional jump or move depends on uninitialised value(s)
+=3D=3D16777=3D=3D    at 0x4068CB: ber_tlv_iter_next (simutil.c:369)
+=3D=3D16777=3D=3D    by 0x406C39: ber_tlv_find_by_tag (simutil.c:483)
+=3D=3D16777=3D=3D    by 0x407E1D: sim_eons_add_pnn_record (simutil.c:1027)
+=3D=3D16777=3D=3D    by 0x402C39: test_ber_tlv_builder_efpnn (test-simutil.=
+c:181)
+=3D=3D16777=3D=3D    by 0x4EA3A80: g_test_run_suite_internal
+=3D=3D16777=3D=3D    by 0x4EA3F9A: g_test_run_suite
+=3D=3D16777=3D=3D    by 0x4EA3FD0: g_test_run
+=3D=3D16777=3D=3D    by 0x4042FA: main (test-simutil.c:518)
+---
+ unit/test-simutil.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-     The IWD project now has a need for SIM card access in order to =
+diff --git a/unit/test-simutil.c b/unit/test-simutil.c
+index 69dd81e..490e288 100644
+--- a/unit/test-simutil.c
++++ b/unit/test-simutil.c
+@@ -178,12 +178,12 @@ static void test_ber_tlv_builder_efpnn(void)
+ 	ber_tlv_builder_optimize(&builder, NULL, NULL);
+ =
 
-authenticate to EAP-SIM/AKA WiFi networks, and will be using ofono for =
+ 	eons_info =3D sim_eons_new(1);
+-	sim_eons_add_pnn_record(eons_info, 1, efpnn0, sizeof(efpnn0));
++	sim_eons_add_pnn_record(eons_info, 1, efpnn0, 8 + 10);
+ 	g_assert(!sim_eons_pnn_is_empty(eons_info));
+ 	sim_eons_free(eons_info);
+ =
 
-this functionality. In order to do this, the GSM/3G "authenticate" =
+ 	eons_info =3D sim_eons_new(1);
+-	sim_eons_add_pnn_record(eons_info, 1, efpnn1, sizeof(efpnn1));
++	sim_eons_add_pnn_record(eons_info, 1, efpnn1, 8 + 6);
+ 	g_assert(!sim_eons_pnn_is_empty(eons_info));
+ 	sim_eons_free(eons_info);
+ }
+-- =
 
-algorithm needs to be run on the (U)SIM. For this I am proposing a new =
-
-interface: "org.ofono.SimAuth". I do have a few questions about what =
-
-method(s)/interfaces would be preferred. Since 2G/3G take different =
-
-inputs/outputs there are few possibilities:
-
-1. Two different methods on org.ofono.SimAuth:
-
-     AuthenticateSim()
-
-         Input: "ay" RAND
-
-         Output: "ay" SRES, "ay" KC
-
-     AuthenticateUSim()
-
-         Input: "ay" RAND, "ay" AUTN
-
-         Output: "ay" RES, "ay" IK, "ay" CK, "ay" AUTS
-
-2. One method on org.ofono.SimAuth, with more complex arguments e.g.
-
-     Authenticate()
-
-         Input: "s" type, a{ay} args
-
-         Output: a{ay}
-
-     This would return take in and return the correct arguments for =
-
-2G/3G based on the "type" argument.
-
-3. Separate interfaces for SIM/USIM (e.g. org.ofono.SimAuth and =
-
-org.ofono.USimAuth). This would also allow the client to see if either =
-
-SIM or USIM are supported before making any method calls.
-
-If anyone has input on what would option would be preferred, or maybe a =
-
-different way of doing it, that would be great!
-
-Thanks,
-
-James
+1.9.1
 
 
---===============5278579612410651351==--
+--===============6468362145804790201==--
 
