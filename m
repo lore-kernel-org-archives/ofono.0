@@ -1,44 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============0952222600150727077=="
+Content-Type: multipart/mixed; boundary="===============0303059159514036010=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] unit: Avoid use of uninitialised data in test-simutil
-Date: Thu, 24 Aug 2017 17:28:33 -0500
-Message-ID: <3b166e53-12d0-cb7b-6d95-787e4b58b903@gmail.com>
-In-Reply-To: <1503613051-17235-1-git-send-email-slava.monich@jolla.com>
+From: Christophe Ronco <c.ronco@kerlink.fr>
+Subject: [PATCHV2] fix crash in case of invalid sim password type
+Date: Tue, 29 Aug 2017 14:29:00 +0200
+Message-ID: <1504009741-3040-1-git-send-email-c.ronco@kerlink.fr>
+In-Reply-To: <ecbf6c15-96a2-adf9-97c0-2c83b6e2a842@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0952222600150727077==
+--===============0303059159514036010==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+Hi Denis,
 
-On 08/24/2017 05:17 PM, Slava Monich wrote:
-> GTest: run: /testsimutil/ber tlv encode EFpnn
-> =3D=3D16777=3D=3D Conditional jump or move depends on uninitialised value=
-(s)
-> =3D=3D16777=3D=3D    at 0x4068CB: ber_tlv_iter_next (simutil.c:369)
-> =3D=3D16777=3D=3D    by 0x406C39: ber_tlv_find_by_tag (simutil.c:483)
-> =3D=3D16777=3D=3D    by 0x407E1D: sim_eons_add_pnn_record (simutil.c:1027)
-> =3D=3D16777=3D=3D    by 0x402C39: test_ber_tlv_builder_efpnn (test-simuti=
-l.c:181)
-> =3D=3D16777=3D=3D    by 0x4EA3A80: g_test_run_suite_internal
-> =3D=3D16777=3D=3D    by 0x4EA3F9A: g_test_run_suite
-> =3D=3D16777=3D=3D    by 0x4EA3FD0: g_test_run
-> =3D=3D16777=3D=3D    by 0x4042FA: main (test-simutil.c:518)
-> ---
->   unit/test-simutil.c | 4 ++--
->   1 file changed, 2 insertions(+), 2 deletions(-)
-> =
+I fixed qmimodem driver instead of src/sim.c.
+It will now report a failure to get SIM pin type instead of SIM pin type
+OFONO_SIM_PASSWORD_INVALID.
+
+I 've tested drivers/qmimodem/sim.c but not drivers/qmimodem/sim-legacy.c.
+
+With my old Swedish SIM card, I now see following trace (which is OK I thin=
+k):
+ofonod[974]: Querying PIN authentication state failed
+
+SimManager properties tells me that "PinRequired" property is "none".
+I don't know if that's what we want to see in this case.
+
+Best Regards and sorry for the delay,
+
+Christophe Ronco
+
+Christophe Ronco (1):
+  qmimodem: report failure in case of invalid pin type
+
+ drivers/qmimodem/sim-legacy.c | 5 ++++-
+ drivers/qmimodem/sim.c        | 6 +++++-
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+-- =
+
+2.7.4
 
 
-Applied, thanks.
-
-Regards,
--Denis
-
-
---===============0952222600150727077==--
+--===============0303059159514036010==--
 
