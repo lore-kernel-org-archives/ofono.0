@@ -1,268 +1,120 @@
-Content-Type: multipart/mixed; boundary="===============8200175042183040418=="
+Content-Type: multipart/mixed; boundary="===============9046590365928279002=="
 MIME-Version: 1.0
 From: Sebastian Arnd <sebastian.arnd@gemalto.com>
-Subject: [PATCH v2 1/3] gemalto: add PLS8 support
-Date: Wed, 30 Aug 2017 18:30:03 +0200
-Message-ID: <1504110605-22509-1-git-send-email-sebastian.arnd@gemalto.com>
+Subject: [PATCH v2 3/3] gemalto: add PLS8 support
+Date: Wed, 30 Aug 2017 18:30:05 +0200
+Message-ID: <1504110605-22509-3-git-send-email-sebastian.arnd@gemalto.com>
+In-Reply-To: <1504110605-22509-1-git-send-email-sebastian.arnd@gemalto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8200175042183040418==
+--===============9046590365928279002==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-index 011713e..dcd8f14 100644
---- a/plugins/gemalto.c
-+++ b/plugins/gemalto.c
-@@ -67,6 +67,7 @@ struct gemalto_data {
- 	GAtChat *mdm;
- 	struct ofono_sim *sim;
- 	gboolean have_sim;
-+	gboolean have_net;
- 	struct at_util_sim_state_query *sim_state_query;
- 	struct gemalto_hardware_monitor *hm;
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index 7c33c22..17d0be9 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -64,7 +64,7 @@ static const char *pinnum_prefix[] =3D { "%PINNUM:", NULL=
  };
-@@ -101,18 +102,31 @@ static void gemalto_debug(const char *str, void *user=
-_data)
- 	ofono_info("%s%s", prefix, str);
+ static const char *oercn_prefix[] =3D { "_OERCN:", NULL };
+ static const char *cpinr_prefixes[] =3D { "+CPINR:", "+CPINRE:", NULL };
+ static const char *epin_prefix[] =3D { "*EPIN:", NULL };
+-static const char *spic_prefix[] =3D { "+SPIC:", NULL };
++static const char *spic_prefix[] =3D { "+SPIC:", "^SPIC:", NULL };
+ static const char *pct_prefix[] =3D { "#PCT:", NULL };
+ static const char *pnnm_prefix[] =3D { "+PNNM:", NULL };
+ static const char *qpinc_prefix[] =3D { "+QPINC:", NULL };
+@@ -875,6 +875,62 @@ error:
+ 	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
  }
  =
 
--static GAtChat *open_device(const char *device)
-+static GAtChat *open_device(const char *device, char *device_debug_name)
- {
- 	GAtSyntax *syntax;
- 	GIOChannel *channel;
- 	GAtChat *chat;
-+	GHashTable *options;
- =
-
- 	DBG("Opening device %s", device);
- =
-
--	channel =3D g_at_tty_open(device, NULL);
-+	options =3D g_hash_table_new(g_str_hash, g_str_equal);
-+	if (options =3D=3D NULL)
-+		return NULL;
-+	/*
-+	 * The modem does not answer when the "Baud" attibute is missing
-+	 * The supplied value is not making any change. But the "Baud"
-+	 * paramenter is needed.
-+	 */
-+	g_hash_table_insert(options, "Baud", "115200");
++static void at_spic_gemalto_cb(gboolean ok, GAtResult *result,
++							gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_sim_pin_retries_cb_t cb =3D cbd->cb;
++	const char *final =3D g_at_result_final_response(result);
++	GAtResultIter iter;
++	struct ofono_error error;
++	int retries[OFONO_SIM_PASSWORD_INVALID];
++	size_t i;
++	static enum ofono_sim_password_type password_types[] =3D {
++		OFONO_SIM_PASSWORD_SIM_PIN,
++		OFONO_SIM_PASSWORD_SIM_PUK,
++		OFONO_SIM_PASSWORD_PHSIM_PIN,
++		OFONO_SIM_PASSWORD_PHFSIM_PUK,
++		OFONO_SIM_PASSWORD_SIM_PIN2,
++		OFONO_SIM_PASSWORD_SIM_PUK2,
++		OFONO_SIM_PASSWORD_PHNET_PIN,
++		OFONO_SIM_PASSWORD_PHNET_PUK,
++	};
 +
-+	channel =3D g_at_tty_open(device, options);
-+	g_hash_table_destroy(options);
- 	if (channel =3D=3D NULL)
- 		return NULL;
- =
-
++	decode_at_error(&error, final);
 +
- 	syntax =3D g_at_syntax_new_gsm_permissive();
- 	chat =3D g_at_chat_new(channel, syntax);
- 	g_at_syntax_unref(syntax);
-@@ -121,6 +135,9 @@ static GAtChat *open_device(const char *device)
- 	if (chat =3D=3D NULL)
- 		return NULL;
- =
-
-+	if (getenv("OFONO_AT_DEBUG"))
-+		g_at_chat_set_debug(chat, gemalto_debug, device_debug_name);
++	if (!ok) {
++		cb(&error, NULL, cbd->data);
++		return;
++	}
 +
- 	return chat;
- }
- =
-
-@@ -299,47 +316,54 @@ static int gemalto_hardware_monitor_enable(struct ofo=
-no_modem *modem)
- 	return 0;
- }
- =
-
++	g_at_result_iter_init(&iter, result);
 +
- static int gemalto_enable(struct ofono_modem *modem)
- {
- 	struct gemalto_data *data =3D ofono_modem_get_data(modem);
--	const char *app, *mdm;
-+	const char *app, *mdm, *net;
- =
-
- 	DBG("%p", modem);
- =
-
- 	app =3D ofono_modem_get_string(modem, "Application");
- 	mdm =3D ofono_modem_get_string(modem, "Modem");
-+	net =3D ofono_modem_get_string(modem, "NetworkInterface");
- =
-
--	if (app =3D=3D NULL || mdm =3D=3D NULL)
-+	if (net !=3D NULL)
-+		data->have_net =3D TRUE;
-+	else
-+		data->have_net =3D FALSE;
++	for (i =3D 0; i < OFONO_SIM_PASSWORD_INVALID; i++)
++		retries[i] =3D -1;
 +
-+	if (app =3D=3D NULL || (mdm =3D=3D NULL && !data->have_net))
- 		return -EINVAL;
- =
-
- 	/* Open devices */
--	data->app =3D open_device(app);
-+	data->app =3D open_device(app, "App");
- 	if (data->app =3D=3D NULL)
- 		return -EINVAL;
- =
-
--	data->mdm =3D open_device(mdm);
--	if (data->mdm =3D=3D NULL) {
--		g_at_chat_unref(data->app);
--		data->app =3D NULL;
--		return -EINVAL;
--	}
--
--	if (getenv("OFONO_AT_DEBUG")) {
--		g_at_chat_set_debug(data->app, gemalto_debug, "App");
--		g_at_chat_set_debug(data->mdm, gemalto_debug, "Mdm");
-+	/* Mdm device is only requiered when there is no net interface */
-+	if (!data->have_net) {
-+		data->mdm =3D open_device(mdm, "Mdm");
-+		if (data->mdm =3D=3D NULL) {
-+			g_at_chat_unref(data->app);
-+			data->app =3D NULL;
-+			return -EINVAL;
-+		}
-+		g_at_chat_send(data->mdm, "ATE0", none_prefix,
-+						NULL, NULL, NULL);
-+		g_at_chat_send(data->mdm, "AT&C0", none_prefix,
-+						NULL, NULL, NULL);
- 	}
- =
-
--	g_at_chat_send(data->mdm, "ATE0", none_prefix, NULL, NULL, NULL);
--	g_at_chat_send(data->app, "ATE0 +CMEE=3D1", none_prefix,
--			NULL, NULL, NULL);
--	g_at_chat_send(data->mdm, "AT&C0", none_prefix, NULL, NULL, NULL);
-+	g_at_chat_send(data->app, "ATE0", none_prefix, NULL, NULL, NULL);
-+	g_at_chat_send(data->app, "AT+CMEE=3D1", none_prefix, NULL, NULL, NULL);
- 	g_at_chat_send(data->app, "AT&C0", none_prefix, NULL, NULL, NULL);
--
- 	g_at_chat_send(data->app, "AT+CFUN=3D4", none_prefix,
--			cfun_enable, modem, NULL);
-+						cfun_enable, modem, NULL);
- =
-
- 	gemalto_hardware_monitor_enable(modem);
- =
-
++	for (i =3D 0; i <  ARRAY_SIZE(password_types); i++) {
++		int val;
 +
- 	return -EINPROGRESS;
- }
- =
-
-@@ -402,7 +426,8 @@ static void gemalto_set_online(struct ofono_modem *mode=
-m, ofono_bool_t online,
- =
-
- 	DBG("modem %p %s", modem, online ? "online" : "offline");
- =
-
--	if (g_at_chat_send(data->app, command, NULL, set_online_cb, cbd, g_free))
-+	if (g_at_chat_send(data->app, command, NULL,
-+					set_online_cb, cbd, g_free))
- 		return;
- =
-
- 	CALLBACK_WITH_FAILURE(cb, cbd->data);
-@@ -419,7 +444,8 @@ static void gemalto_pre_sim(struct ofono_modem *modem)
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", data->app);
- 	ofono_location_reporting_create(modem, 0, "gemaltomodem", data->app);
--	sim =3D ofono_sim_create(modem, 0, "atmodem", data->app);
-+	sim =3D ofono_sim_create(modem, OFONO_VENDOR_CINTERION,
-+							"atmodem", data->app);
- =
-
- 	if (sim && data->have_sim =3D=3D TRUE)
- 		ofono_sim_inserted_notify(sim, TRUE);
-@@ -438,7 +464,12 @@ static void gemalto_post_sim(struct ofono_modem *modem)
- 	ofono_sms_create(modem, OFONO_VENDOR_CINTERION, "atmodem", data->app);
- =
-
- 	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->app);
--	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->mdm);
++		if (!g_at_result_iter_next(&iter, "^SPIC:"))
++			goto error;
 +
-+	if (data->have_net)
-+		gc =3D ofono_gprs_context_create(modem, 0,
-+						"gemaltowwanmodem", data->app);
-+	else
-+		gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->mdm);
- =
-
- 	if (gprs && gc)
- 		ofono_gprs_add_context(gprs, gc);
-@@ -450,7 +481,8 @@ static void gemalto_post_online(struct ofono_modem *mod=
-em)
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_netreg_create(modem, OFONO_VENDOR_CINTERION, "atmodem", data->app);
-+	ofono_netreg_create(modem, OFONO_VENDOR_CINTERION,
-+							"atmodem", data->app);
- }
- =
-
- static struct ofono_modem_driver gemalto_driver =3D {
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index aa28bcb..68c8386 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -1080,13 +1080,24 @@ static gboolean setup_gemalto(struct modem_info* mo=
-dem)
- 				net =3D info->devnode;
- 			else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0)
- 				qmi =3D info->devnode;
-+		} else if (g_strcmp0(info->interface, "2/2/1") =3D=3D 0) {
-+			if (g_strcmp0(info->number, "00") =3D=3D 0)
-+				mdm =3D info->devnode;
-+			else if (g_strcmp0(info->number, "02") =3D=3D 0)
-+				app =3D info->devnode;
-+			else if (g_strcmp0(info->number, "04") =3D=3D 0)
-+				gps =3D info->devnode;
-+		} else if (g_strcmp0(info->interface, "2/6/0") =3D=3D 0 &&
-+			  g_strcmp0(info->number, "0a") =3D=3D 0) {
-+				net =3D info->devnode;
- 		}
++		if (!g_at_result_iter_next_number(&iter, &val))
++			goto error;
 +
- 	}
- =
-
- 	DBG("application=3D%s gps=3D%s modem=3D%s network=3D%s qmi=3D%s",
- 			app, gps, mdm, net, qmi);
- =
-
--	if (app =3D=3D NULL || mdm =3D=3D NULL)
-+	if (app =3D=3D NULL || (mdm =3D=3D NULL && net =3D=3D NULL))
- 		return FALSE;
- =
-
- 	ofono_modem_set_string(modem->modem, "Application", app);
-@@ -1499,6 +1510,8 @@ static struct {
- 	{ "gemalto",	"option",	"1e2d",	"0053"	},
- 	{ "gemalto",	"cdc_wdm",	"1e2d",	"0053"	},
- 	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
-+	{ "gemalto",	"cdc_acm",	"1e2d",	"0061"	},
-+	{ "gemalto",	"cdc_ether",	"1e2d",	"0061"	},
- 	{ "telit",	"cdc_ncm",	"1bc7", "0036"	},
- 	{ "telit",	"cdc_acm",	"1bc7", "0036"	},
- 	{ }
++		retries[password_types[i]] =3D val;
++
++		DBG("retry counter id=3D%d, val=3D%d", password_types[i],
++						retries[password_types[i]]);
++	}
++
++	cb(&error, retries, cbd->data);
++
++	return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
++}
++
+ #define AT_PCT_SET_RETRIES(retries, pin_type, value) \
+ 	retries[pin_type] =3D value; \
+ 	DBG("retry counter id=3D%d, val=3D%d", pin_type, value);
+@@ -1104,6 +1160,18 @@ static void at_pin_retries_query(struct ofono_sim *s=
+im,
+ 					at_spic_cb, cbd, g_free) > 0)
+ 			return;
+ 		break;
++	case OFONO_VENDOR_CINTERION:
++		if (g_at_chat_send(sd->chat, "AT^SPIC=3D\"SC\",0;"
++					 " ^SPIC=3D\"SC\",1;"
++					 " ^SPIC=3D\"PS\",0;"
++					 " ^SPIC=3D\"PS\",1;"
++					 " ^SPIC=3D\"P2\",0;"
++					 " ^SPIC=3D\"P2\",1;"
++					 " ^SPIC=3D\"PN\",0;"
++					 " ^SPIC=3D\"PN\",1",
++			     spic_prefix, at_spic_gemalto_cb, cbd, g_free) > 0)
++			return;
++		break;
+ 	case OFONO_VENDOR_TELIT:
+ 		if (g_at_chat_send(sd->chat, "AT#PCT", pct_prefix,
+ 					at_pct_cb, cbd, g_free) > 0)
 -- =
 
 2.1.4
 
 
---===============8200175042183040418==--
+--===============9046590365928279002==--
 
