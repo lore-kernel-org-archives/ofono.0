@@ -1,556 +1,231 @@
-Content-Type: multipart/mixed; boundary="===============7306806120398768397=="
+Content-Type: multipart/mixed; boundary="===============4271698433449448863=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 2/3] gemalto: add PLS8 support
-Date: Wed, 30 Aug 2017 14:22:47 -0500
-Message-ID: <2ff68a0c-9322-eca5-e592-dd615bc0af6c@gmail.com>
-In-Reply-To: <1504110605-22509-2-git-send-email-sebastian.arnd@gemalto.com>
+From: Ankit Navik <ankit.p.navik@intel.com>
+Subject: [PATCH 1/6] atmodem: Add lte atom driver
+Date: Fri, 01 Sep 2017 11:23:00 +0530
+Message-ID: <1504245182-17949-1-git-send-email-ankit.p.navik@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7306806120398768397==
+--===============4271698433449448863==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sebastian,
+Adds atmodem driver for setting the default APN command.
+The default APN is manage by config storage.
+---
+ Makefile.am               |   3 +-
+ drivers/atmodem/atmodem.c |   2 +
+ drivers/atmodem/atmodem.h |   3 +
+ drivers/atmodem/lte.c     | 142 ++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 4 files changed, 149 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/atmodem/lte.c
 
-On 08/30/2017 11:30 AM, Sebastian Arnd wrote:
-> diff --git a/drivers/gemaltomodem/gemaltomodem.c b/drivers/gemaltomodem/g=
-emaltomodem.c
-> index 91cf238..01bdb43 100644
-> --- a/drivers/gemaltomodem/gemaltomodem.c
-> +++ b/drivers/gemaltomodem/gemaltomodem.c
-> @@ -35,6 +35,7 @@
->   static int gemaltomodem_init(void)
->   {
->   	gemalto_location_reporting_init();
-> +	gemaltowwan_gprs_context_init();
->   =
+diff --git a/Makefile.am b/Makefile.am
+index 078e3f1..18a806b 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -264,7 +264,8 @@ builtin_sources +=3D 	drivers/atmodem/atmodem.h \
+ 			drivers/atmodem/gprs.c \
+ 			drivers/atmodem/gprs-context.c \
+ 			drivers/atmodem/sim-auth.c \
+-			drivers/atmodem/gnss.c
++			drivers/atmodem/gnss.c \
++			drivers/atmodem/lte.c
+ =
 
->   	return 0;
->   }
-> @@ -42,6 +43,8 @@ static int gemaltomodem_init(void)
->   static void gemaltomodem_exit(void)
->   {
->   	gemalto_location_reporting_exit();
-> +	gemaltowwan_gprs_context_exit();
-> +
+ builtin_modules +=3D nwmodem
+ builtin_sources +=3D drivers/atmodem/atutil.h \
+diff --git a/drivers/atmodem/atmodem.c b/drivers/atmodem/atmodem.c
+index 3a55ac2..684b228 100644
+--- a/drivers/atmodem/atmodem.c
++++ b/drivers/atmodem/atmodem.c
+@@ -52,6 +52,7 @@ static int atmodem_init(void)
+ 	at_gprs_context_init();
+ 	at_sim_auth_init();
+ 	at_gnss_init();
++	at_lte_init();
+ =
 
-No need for this extra empty line
+ 	return 0;
+ }
+@@ -76,6 +77,7 @@ static void atmodem_exit(void)
+ 	at_gprs_exit();
+ 	at_gprs_context_exit();
+ 	at_gnss_exit();
++	at_lte_exit();
+ }
+ =
 
->   }
->   =
+ OFONO_PLUGIN_DEFINE(atmodem, "AT modem driver", VERSION,
+diff --git a/drivers/atmodem/atmodem.h b/drivers/atmodem/atmodem.h
+index 6be1fe5..b737066 100644
+--- a/drivers/atmodem/atmodem.h
++++ b/drivers/atmodem/atmodem.h
+@@ -74,3 +74,6 @@ extern void at_sim_auth_exit(void);
+ =
 
->   OFONO_PLUGIN_DEFINE(gemaltomodem, "Gemalto modem driver", VERSION,
-> diff --git a/drivers/gemaltomodem/gemaltomodem.h b/drivers/gemaltomodem/g=
-emaltomodem.h
-> index 7ea1e8f..3ec2380 100644
-> --- a/drivers/gemaltomodem/gemaltomodem.h
-> +++ b/drivers/gemaltomodem/gemaltomodem.h
-> @@ -21,5 +21,8 @@
->   =
+ extern void at_gnss_init(void);
+ extern void at_gnss_exit(void);
++
++extern void at_lte_init(void);
++extern void at_lte_exit(void);
+diff --git a/drivers/atmodem/lte.c b/drivers/atmodem/lte.c
+new file mode 100644
+index 0000000..61a4cd2
+--- /dev/null
++++ b/drivers/atmodem/lte.c
+@@ -0,0 +1,142 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2017  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#define _GNU_SOURCE
++#include <stdlib.h>
++#include <stdio.h>
++#include <string.h>
++#include <errno.h>
++
++#include <glib.h>
++
++#include <ofono/modem.h>
++#include <ofono/gprs-context.h>
++#include <ofono/log.h>
++#include <ofono/lte.h>
++
++#include "gatchat.h"
++#include "gatresult.h"
++
++#include "atmodem.h"
++
++struct lte_driver_data {
++	GAtChat *chat;
++};
++
++static void at_lte_set_default_attach_info_cb(gboolean ok, GAtResult *resu=
+lt,
++							gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_lte_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	DBG("ok %d", ok);
++
++	decode_at_error(&error, g_at_result_final_response(result));
++	cb(&error, cbd->data);
++}
++
++static void at_lte_set_default_attach_info(const struct ofono_lte *lte,
++			const struct ofono_lte_default_attach_info *info,
++			ofono_lte_cb_t cb, void *data)
++{
++	struct lte_driver_data *ldd =3D ofono_lte_get_data(lte);
++	char buf[32 + OFONO_GPRS_MAX_APN_LENGTH + 1];
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++
++	DBG("LTE config with APN: %s", info->apn);
++
++	if (strlen(info->apn) > 0)
++		snprintf(buf, sizeof(buf), "AT+CGDCONT=3D0,\"IP\",\"%s\"",
++				info->apn);
++	else
++		snprintf(buf, sizeof(buf), "AT+CGDCONT=3D0,\"IP\"");
++
++	/* We can't do much in case of failure so don't check response. */
++	if (g_at_chat_send(ldd->chat, buf, NULL,
++			at_lte_set_default_attach_info_cb, cbd, g_free) > 0)
++		return;
++
++	CALLBACK_WITH_FAILURE(cb, data);
++}
++
++static gboolean lte_delayed_register(gpointer user_data)
++{
++	struct ofono_lte *lte =3D user_data;
++
++	ofono_lte_register(lte);
++
++	return FALSE;
++}
++
++static int at_lte_probe(struct ofono_lte *lte, void *data)
++{
++	GAtChat *chat =3D data;
++	struct lte_driver_data *ldd;
++
++	DBG("at lte probe");
++
++	ldd =3D g_try_new0(struct lte_driver_data, 1);
++	if (!ldd)
++		return -ENOMEM;
++
++	ldd->chat =3D g_at_chat_clone(chat);
++
++	ofono_lte_set_data(lte, ldd);
++
++	g_idle_add(lte_delayed_register, lte);
++
++	return 0;
++}
++
++static void at_lte_remove(struct ofono_lte *lte)
++{
++	struct lte_driver_data *ldd =3D ofono_lte_get_data(lte);
++
++	DBG("at lte remove");
++
++	g_at_chat_unref(ldd->chat);
++
++	ofono_lte_set_data(lte, NULL);
++
++	g_free(ldd);
++}
++
++static struct ofono_lte_driver driver =3D {
++	.name				=3D "atmodem",
++	.probe				=3D at_lte_probe,
++	.remove				=3D at_lte_remove,
++	.set_default_attach_info	=3D at_lte_set_default_attach_info,
++};
++
++void at_lte_init(void)
++{
++	ofono_lte_driver_register(&driver);
++}
++
++void at_lte_exit(void)
++{
++	ofono_lte_driver_unregister(&driver);
++}
+-- =
 
->   #include <drivers/atmodem/atutil.h>
->   =
-
-> -extern void gemalto_location_reporting_init();
-> -extern void gemalto_location_reporting_exit();
-> +extern void gemalto_location_reporting_init(void);
-> +extern void gemalto_location_reporting_exit(void);
-> +extern void gemaltowwan_gprs_context_init(void);
-> +extern void gemaltowwan_gprs_context_exit(void);
-> +
-
-Extra empty line here as well
-
-> diff --git a/drivers/gemaltomodem/gprs-context-wwan.c b/drivers/gemaltomo=
-dem/gprs-context-wwan.c
-> new file mode 100644
-> index 0000000..d87e12f
-> --- /dev/null
-> +++ b/drivers/gemaltomodem/gprs-context-wwan.c
-> @@ -0,0 +1,436 @@
-> +/*
-> + *
-> + *  oFono - Open Source Telephony
-> + *
-> + *  Copyright (C) 2017 Piotr Haber, Sebastian Arnd. All rights reserved.
-> + *
-> + *  This program is free software; you can redistribute it and/or modify
-> + *  it under the terms of the GNU General Public License version 2 as
-> + *  published by the Free Software Foundation.
-> + *
-> + *  This program is distributed in the hope that it will be useful,
-> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + *  GNU General Public License for more details.
-> + *
-> + */
-> +
-> +#ifdef HAVE_CONFIG_H
-> +#include <config.h>
-> +#endif
-> +
-> +#define _GNU_SOURCE
-> +#include <string.h>
-> +#include <stdlib.h>
-> +#include <stdio.h>
-> +#include <errno.h>
-> +#include <sys/stat.h>
-> +
-> +#include <glib.h>
-> +
-> +#include <ofono/log.h>
-> +#include <ofono/modem.h>
-> +#include <ofono/gprs-context.h>
-> +
-> +#include "gatchat.h"
-> +#include "gatresult.h"
-> +
-> +#include "gemaltomodem.h"
-> +
-> +static const char *none_prefix[] =3D { NULL };
-> +static const char *cgpaddr_prefix[] =3D { "+CGPADDR:", NULL };
-> +static const char *cgcontrdp_prefix[] =3D { "+CGCONTRDP:", NULL };
-> +
-> +enum state {
-> +	STATE_IDLE,
-> +	STATE_ENABLING,
-> +	STATE_DISABLING,
-> +	STATE_ACTIVE,
-> +};
-> +
-> +enum auth_method {
-> +	AUTH_METHOD_NONE,
-> +	AUTH_METHOD_PAP,
-> +	AUTH_METHOD_CHAP,
-> +};
-> +
-> +struct gprs_context_data {
-> +	GAtChat *chat;
-> +	unsigned int active_context;
-> +	char username[OFONO_GPRS_MAX_USERNAME_LENGTH + 1];
-> +	char password[OFONO_GPRS_MAX_PASSWORD_LENGTH + 1];
-> +	enum auth_method auth_method;
-> +	enum state state;
-> +	enum ofono_gprs_proto proto;
-> +	char address[64];
-> +	char netmask[64];
-> +	char gateway[64];
-> +	char dns1[64];
-> +	char dns2[64];
-> +	ofono_gprs_context_cb_t cb;
-> +	void *cb_data;
-> +};
-> +
-> +static void failed_setup(struct ofono_gprs_context *gc,
-> +				GAtResult *result, gboolean deactivate)
-> +{
-> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> +	struct ofono_error error;
-> +	char buf[64];
-> +
-> +	DBG("deactivate %d", deactivate);
-> +
-> +	if (deactivate =3D=3D TRUE) {
-> +		sprintf(buf, "AT^SWWAN=3D0,%u", gcd->active_context);
-> +		g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL);
-> +	}
-> +
-> +	gcd->active_context =3D 0;
-> +	gcd->state =3D STATE_IDLE;
-> +
-> +	if (result =3D=3D NULL) {
-> +		CALLBACK_WITH_FAILURE(gcd->cb, gcd->cb_data);
-> +		return;
-> +	}
-> +
-> +	decode_at_error(&error, g_at_result_final_response(result));
-> +	gcd->cb(&error, gcd->cb_data);
-> +}
-> +
-> +static void contrdp_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-> +{
-> +	struct ofono_gprs_context *gc =3D user_data;
-> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> +	struct ofono_modem *modem;
-> +	int cid;
-> +	const char *interface;
-> +	GAtResultIter iter;
-> +	gboolean found =3D FALSE;
-> +
-> +	DBG("ok %d", ok);
-> +
-> +	if (!ok) {
-> +		ofono_error("Unable to get context dynamic paramerers");
-> +		failed_setup(gc, result, TRUE);
-> +		return;
-> +	}
-> +
-> +	/*
-> +	 * We're not getting any parameters here as all configuration is done
-> +	 * via dhcp.
-> +	 */
-
-If you want ConnMan to obtain DNS, Netmask, Gateway, etc via DHCP, then =
-
-ofono_gprs_context_set_ipv4_address should not be used.  This forces =
-
-'IPv4.Method' to be 'dhcp' instead of 'static'.
-
-Relying on DHCP is fine, but you pay a bit of extra latency.  So if your =
-
-modem provides this info via +CGCONTRDP, I would use that.
-
-If you do decide to use DHCP only, is calling +CGPADDR & +CGCONTRDP even =
-
-necessary?
-
-> +
-> +	g_at_result_iter_init(&iter, result);
-> +
-> +	while (g_at_result_iter_next(&iter, "+CGCONTRDP:")) {
-> +		if (!g_at_result_iter_next_number(&iter, &cid))
-> +			goto error;
-> +
-> +		if ((unsigned int) cid =3D=3D gcd->active_context)
-> +			found =3D TRUE;
-> +	}
-> +
-> +	if (found =3D=3D FALSE)
-> +		goto error;
-> +
-> +	gcd->state =3D STATE_ACTIVE;
-> +
-> +	modem =3D ofono_gprs_context_get_modem(gc);
-> +	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
-> +
-> +	ofono_gprs_context_set_interface(gc, interface);
-> +	ofono_gprs_context_set_ipv4_address(gc, gcd->address, FALSE);
-> +
-> +	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
-> +	return;
-> +
-> +error:
-> +	failed_setup(gc, NULL, TRUE);
-> +}
-> +
-> +static void address_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-> +{
-> +	struct ofono_gprs_context *gc =3D user_data;
-> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> +	int cid;
-> +	const char *address;
-> +	char buf[64];
-> +	GAtResultIter iter;
-> +
-> +	DBG("ok %d", ok);
-> +
-> +	if (!ok) {
-> +		ofono_error("Unable to get context address");
-> +		failed_setup(gc, result, TRUE);
-> +		return;
-> +	}
-> +
-> +	g_at_result_iter_init(&iter, result);
-> +
-> +	if (!g_at_result_iter_next(&iter, "+CGPADDR:"))
-> +		goto error;
-> +
-> +	if (!g_at_result_iter_next_number(&iter, &cid))
-> +		goto error;
-> +
-> +	if ((unsigned int) cid !=3D gcd->active_context)
-> +		goto error;
-> +
-> +	if (!g_at_result_iter_next_string(&iter, &address))
-> +		goto error;
-> +
-> +	strncpy(gcd->address, address, sizeof(gcd->address));
-> +	sprintf(buf, "AT+CGCONTRDP=3D%d", gcd->active_context);
-> +
-> +	if (g_at_chat_send(gcd->chat, buf, cgcontrdp_prefix,
-> +					contrdp_cb, gc, NULL) > 0)
-> +		return;
-> +
-> +error:
-> +	failed_setup(gc, NULL, TRUE);
-> +}
-> +
-> +static void activate_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-> +{
-> +	struct ofono_gprs_context *gc =3D user_data;
-> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> +	char buf[64];
-> +
-> +	DBG("ok %d", ok);
-> +
-> +	if (!ok) {
-> +		ofono_error("Unable to activate context");
-> +		failed_setup(gc, result, FALSE);
-> +		return;
-> +	}
-> +
-> +	sprintf(buf, "AT+CGPADDR=3D%u", gcd->active_context);
-> +	if (g_at_chat_send(gcd->chat, buf, cgpaddr_prefix,
-> +					address_cb, gc, NULL) > 0)
-> +		return;
-> +
-> +	failed_setup(gc, NULL, TRUE);
-> +}
-> +
-> +static void setup_cb(gboolean ok, GAtResult *result, gpointer user_data)
-> +{
-> +	struct ofono_gprs_context *gc =3D user_data;
-> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> +	char buf[384];
-> +
-> +	DBG("ok %d", ok);
-> +
-> +	if (!ok) {
-> +		ofono_error("Failed to setup context");
-> +		failed_setup(gc, result, FALSE);
-> +		return;
-> +	}
-> +
-> +	if (gcd->username[0] && gcd->password[0])
-> +		sprintf(buf, "AT^SGAUTH=3D%u,%u,\"%s\",\"%s\"",
-> +			gcd->active_context, gcd->auth_method,
-> +			gcd->username, gcd->password);
-> +	else
-> +		sprintf(buf, "AT^SGAUTH=3D%u,0", gcd->active_context);
-> +
-> +	if (g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL) =3D=
-=3D 0)
-> +		goto error;
-> +
-> +	sprintf(buf, "AT^SWWAN=3D1,%u", gcd->active_context);
-> +
-> +	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-> +						activate_cb, gc, NULL) > 0)
-> +		return;
-> +
-> +
-
-No double empty lines please
-
-> +error:
-> +	failed_setup(gc, NULL, FALSE);
-> +}
-> +
-> +static void gemaltowwan_gprs_activate_primary(struct ofono_gprs_context =
-*gc,
-> +				const struct ofono_gprs_primary_context *ctx,
-> +				ofono_gprs_context_cb_t cb, void *data)
-> +{
-> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> +	char buf[OFONO_GPRS_MAX_APN_LENGTH + 128];
-> +	int len =3D 0;
-> +
-> +	DBG("cid %u", ctx->cid);
-> +
-> +	gcd->active_context =3D ctx->cid;
-> +	gcd->cb =3D cb;
-> +	gcd->cb_data =3D data;
-> +	memcpy(gcd->username, ctx->username, sizeof(ctx->username));
-> +	memcpy(gcd->password, ctx->password, sizeof(ctx->password));
-> +	gcd->state =3D STATE_ENABLING;
-> +	gcd->proto =3D ctx->proto;
-> +
-> +	/* We only support CHAP and PAP */
-> +	switch (ctx->auth_method) {
-> +	case OFONO_GPRS_AUTH_METHOD_CHAP:
-> +		gcd->auth_method =3D AUTH_METHOD_CHAP;
-> +		break;
-> +	case OFONO_GPRS_AUTH_METHOD_PAP:
-> +		gcd->auth_method =3D AUTH_METHOD_PAP;
-> +		break;
-> +	default:
-> +		goto error;
-> +	}
-> +
-> +	switch (ctx->proto) {
-> +	case OFONO_GPRS_PROTO_IP:
-> +		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"",
-> +								ctx->cid);
-> +		break;
-> +	case OFONO_GPRS_PROTO_IPV6:
-> +		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IPV6\"",
-> +								ctx->cid);
-> +		break;
-> +	case OFONO_GPRS_PROTO_IPV4V6:
-> +		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IPV4V6\"",
-> +								ctx->cid);
-> +		break;
-
-You don't actually handle IPv6 or dual-stack contexts up above, e.g. you =
-
-only ever set the IPv4 address...
-
-> +	}
-> +
-> +	if (ctx->apn)
-> +		snprintf(buf + len, sizeof(buf) - len - 3,
-> +					",\"%s\"", ctx->apn);
-> +
-> +	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-> +				setup_cb, gc, NULL) > 0)
-> +		return;
-> +
-> +error:
-> +	CALLBACK_WITH_FAILURE(cb, data);
-> +}
-> +
-> +static void deactivate_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
-> +{
-> +	struct ofono_gprs_context *gc =3D user_data;
-> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> +
-> +	DBG("ok %d", ok);
-> +
-> +	gcd->active_context =3D 0;
-> +	gcd->state =3D STATE_IDLE;
-> +
-> +	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
-> +}
-> +
-> +static void gemaltowwan_gprs_deactivate_primary(struct ofono_gprs_contex=
-t *gc,
-> +					unsigned int cid,
-> +					ofono_gprs_context_cb_t cb, void *data)
-> +{
-> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> +	char buf[64];
-> +
-> +	DBG("cid %u", cid);
-> +
-> +	gcd->state =3D STATE_DISABLING;
-> +	gcd->cb =3D cb;
-> +	gcd->cb_data =3D data;
-> +
-> +	sprintf(buf, "AT^SWWAN=3D0,%u", gcd->active_context);
-> +
-> +	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-> +				deactivate_cb, gc, NULL) > 0)
-> +		return;
-> +
-> +	CALLBACK_WITH_SUCCESS(cb, data);
-> +}
-> +
-> +static void cgev_notify(GAtResult *result, gpointer user_data)
-> +{
-> +	struct ofono_gprs_context *gc =3D user_data;
-> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> +	const char *event;
-> +	int cid;
-> +	GAtResultIter iter;
-> +
-> +	g_at_result_iter_init(&iter, result);
-> +
-> +	if (!g_at_result_iter_next(&iter, "+CGEV:"))
-> +		return;
-> +
-> +	if (!g_at_result_iter_next_unquoted_string(&iter, &event))
-> +		return;
-> +
-> +	if (!g_str_has_prefix(event, "NW DEACT") &&
-> +			!g_str_has_prefix(event, "ME DEACT") &&
-> +			!g_str_has_prefix(event, "PDN DEACT"))
-> +		return;
-> +
-> +	if (!g_at_result_iter_skip_next(&iter))
-> +		return;
-> +
-> +	if (!g_at_result_iter_next_number(&iter, &cid))
-> +		return;
-> +
-> +	DBG("cid %d", cid);
-> +
-> +	if ((unsigned int) cid !=3D gcd->active_context)
-> +		return;
-> +
-> +	ofono_gprs_context_deactivated(gc, gcd->active_context);
-> +
-> +	gcd->active_context =3D 0;
-> +	gcd->state =3D STATE_IDLE;
-> +}
-> +
-> +static int gemaltowwan_gprs_context_probe(struct ofono_gprs_context *gc,
-> +					unsigned int vendor, void *data)
-> +{
-> +	GAtChat *chat =3D data;
-> +	struct gprs_context_data *gcd;
-> +
-> +	DBG("");
-> +
-> +	gcd =3D g_try_new0(struct gprs_context_data, 1);
-> +	if (gcd =3D=3D NULL)
-> +		return -ENOMEM;
-> +
-> +	gcd->chat =3D g_at_chat_clone(chat);
-> +
-> +	ofono_gprs_context_set_data(gc, gcd);
-> +
-> +	g_at_chat_register(chat, "+CGEV:", cgev_notify, FALSE, gc, NULL);
-> +
-> +	return 0;
-> +}
-> +
-> +static void gemaltowwan_gprs_context_remove(struct ofono_gprs_context *g=
-c)
-> +{
-> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> +
-> +	DBG("");
-> +
-> +	ofono_gprs_context_set_data(gc, NULL);
-> +
-> +	g_at_chat_unref(gcd->chat);
-> +	g_free(gcd);
-> +}
-> +
-> +static void gemaltowwan_gprs_detach_shutdown(struct ofono_gprs_context *=
-gc,
-> +					unsigned int cid)
-> +{
-> +	ofono_gprs_context_deactivated(gc, cid);
-> +}
-> +
-> +static struct ofono_gprs_context_driver driver =3D {
-> +	.name			=3D "gemaltowwanmodem",
-> +	.probe			=3D gemaltowwan_gprs_context_probe,
-> +	.remove			=3D gemaltowwan_gprs_context_remove,
-> +	.activate_primary	=3D gemaltowwan_gprs_activate_primary,
-> +	.deactivate_primary	=3D gemaltowwan_gprs_deactivate_primary,
-> +	.detach_shutdown	=3D gemaltowwan_gprs_detach_shutdown,
-
-PLS8 seems to be an LTE device.  Do you handle network initiated bearers =
-
-or default attach bearers?  If so, .read_settings should probably be =
-
-implemented.
-
-> +};
-> +
-> +void gemaltowwan_gprs_context_init(void)
-> +{
-> +	ofono_gprs_context_driver_register(&driver);
-> +}
-> +
-> +void gemaltowwan_gprs_context_exit(void)
-> +{
-> +	ofono_gprs_context_driver_unregister(&driver);
-> +}
-> =
+1.9.1
 
 
-Regards,
--Denis
-
---===============7306806120398768397==--
+--===============4271698433449448863==--
 
