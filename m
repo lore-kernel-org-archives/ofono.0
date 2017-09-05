@@ -1,51 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============7903011481432469344=="
+Content-Type: multipart/mixed; boundary="===============1219908232112441455=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH][v2] common.c: move strlen(apn) check into is_valid_apn()
-Date: Tue, 05 Sep 2017 10:42:18 -0500
-Message-ID: <a6f10c3f-42a4-1462-f500-77dd77cbbe89@gmail.com>
-In-Reply-To: <20170905142721.28780-1-lynxis@fe80.eu>
+Subject: Re: [PATCH 1/6] atmodem: Add lte atom driver
+Date: Tue, 05 Sep 2017 10:44:56 -0500
+Message-ID: <8d115127-94c4-9458-e886-28759ac9a7b4@gmail.com>
+In-Reply-To: <1504245182-17949-1-git-send-email-ankit.p.navik@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7903011481432469344==
+--===============1219908232112441455==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alexander,
+Hi Ankit,
 
-On 09/05/2017 09:27 AM, Alexander Couzens wrote:
+On 09/01/2017 12:53 AM, Ankit Navik wrote:
+> Adds atmodem driver for setting the default APN command.
+> The default APN is manage by config storage.
 > ---
->   src/common.c | 8 ++++++++
->   src/gprs.c   | 9 ---------
->   src/lte.c    | 3 ---
->   3 files changed, 8 insertions(+), 12 deletions(-)
+>   Makefile.am               |   3 +-
+>   drivers/atmodem/atmodem.c |   2 +
+>   drivers/atmodem/atmodem.h |   3 +
+>   drivers/atmodem/lte.c     | 142 +++++++++++++++++++++++++++++++++++++++=
++++++++
+>   4 files changed, 149 insertions(+), 1 deletion(-)
+>   create mode 100644 drivers/atmodem/lte.c
 > =
 
-> diff --git a/src/common.c b/src/common.c
-> index 17d1d58a0be3..46b59223272e 100644
-> --- a/src/common.c
-> +++ b/src/common.c
-> @@ -31,8 +31,10 @@
->   =
 
->   #include <ofono/types.h>
->   #include "common.h"
-> +#include "gprs-context.h"
->   #include "util.h"
->   =
-
-> +
->   struct error_entry {
->   	int error;
->   	const char *str;
-
-I squashed the above spurious empty line and applied this patch.  Thanks.
+Applied, thanks.
 
 Regards,
 -Denis
 
 
---===============7903011481432469344==--
+--===============1219908232112441455==--
 
