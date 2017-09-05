@@ -1,122 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============7894098789739004669=="
+Content-Type: multipart/mixed; boundary="===============3220252485440331457=="
 MIME-Version: 1.0
 From: Alexander Couzens <lynxis@fe80.eu>
-Subject: [PATCH][v2] common.c: move strlen(apn) check into is_valid_apn()
-Date: Tue, 05 Sep 2017 16:27:21 +0200
-Message-ID: <20170905142721.28780-1-lynxis@fe80.eu>
-In-Reply-To: <ac056f5c-db05-b3be-c52b-a58098304470@gmail.com>
+Subject: Re: connmand[186]: Online check failed but running dhclient manually
+ fixes this issue
+Date: Tue, 05 Sep 2017 16:46:24 +0200
+Message-ID: <20170905164624.290cc274@lazus.yip>
+In-Reply-To: <11ad24fd-f5f9-fa4c-6be5-90ac6a9ff74f@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7894098789739004669==
+--===============3220252485440331457==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/common.c | 8 ++++++++
- src/gprs.c   | 9 ---------
- src/lte.c    | 3 ---
- 3 files changed, 8 insertions(+), 12 deletions(-)
+On Thu, 10 Aug 2017 12:47:28 +0200
+Daniel Wagner <wagi@monom.org> wrote:
 
-diff --git a/src/common.c b/src/common.c
-index 17d1d58a0be3..46b59223272e 100644
---- a/src/common.c
-+++ b/src/common.c
-@@ -31,8 +31,10 @@
- =
+> >    Bus 001 Device 003: ID 1bc7:1201 Telit Wireless Solutions  =
 
- #include <ofono/types.h>
- #include "common.h"
-+#include "gprs-context.h"
- #include "util.h"
- =
+> =
 
-+
- struct error_entry {
- 	int error;
- 	const char *str;
-@@ -702,9 +704,15 @@ gboolean is_valid_apn(const char *apn)
- 	int i;
- 	int last_period =3D 0;
- =
+> Here is a compile tested 'fix'. I don't know if this works and\
+> obviously it doesn't follow the coding guide lines for this
+> project. If you could test this and report back the outcome
+> that would be really helpful. Then I can create a proper
+> patch for Denis.
 
-+	if (apn =3D=3D NULL)
-+		return FALSE;
-+
- 	if (apn[0] =3D=3D '.' || apn[0] =3D=3D '\0')
- 		return FALSE;
- =
+I can confirm this bug with an quectel ec20 using the firmware
+EC20EQAR02A13E2G  1  [Jul  5 2017 10:49:17].
 
-+	if (strlen(apn) > OFONO_GPRS_MAX_APN_LENGTH)
-+		return FALSE;
-+
- 	for (i =3D 0; apn[i] !=3D '\0'; i++) {
- 		if (g_ascii_isalnum(apn[i]))
- 			continue;
-diff --git a/src/gprs.c b/src/gprs.c
-index 098ba3d49155..a4132cc06760 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -1027,9 +1027,6 @@ static DBusMessage *pri_set_apn(struct pri_context *c=
-tx, DBusConnection *conn,
- {
- 	GKeyFile *settings =3D ctx->gprs->settings;
- =
+To reproduce using ofono w/o connman. linux 4.12.8
+- call ofono "../context1 Active true"
+- set the ip by hand. No ping response.
+- using dhcpcd. Ping responses.
 
--	if (strlen(apn) > OFONO_GPRS_MAX_APN_LENGTH)
--		return __ofono_error_invalid_format(msg);
--
- 	if (g_str_equal(apn, ctx->context.apn))
- 		return dbus_message_new_method_return(msg);
- =
+The `ip addr show` looks the same, except the interface has now an ipv6
+link local address. Is this is problem of modern LTE cards?
+Could be raw-ip or 802.3 encapsulations the problem?
 
-@@ -2376,9 +2373,6 @@ static void provision_context(const struct ofono_gprs=
-_provision_data *ap,
- 	if (ap->name && strlen(ap->name) > MAX_CONTEXT_NAME_LENGTH)
- 		return;
- =
+Regards,
+lynxis
 
--	if (ap->apn =3D=3D NULL || strlen(ap->apn) > OFONO_GPRS_MAX_APN_LENGTH)
--		return;
--
- 	if (is_valid_apn(ap->apn) =3D=3D FALSE)
- 		return;
- =
+--===============3220252485440331457==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.sig"
 
-@@ -3228,9 +3222,6 @@ static gboolean load_context(struct ofono_gprs *gprs,=
- const char *group)
- 	if (apn =3D=3D NULL)
- 		goto error;
- =
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KCmlRSXpCQUVCQ2dBZEZpRUVPUTNQZUl2NXFs
+QlBqL0hpd3A2ZHBxRGZoZ1FGQWxtdXVNQUFDZ2tRd3A2ZHBxRGYKaGdTWlpRLy9TbEp0WDJGWmg4
+OVVxTmlxeEFvMW5URG9yRk9CKytMUENqR0tVaGlvZWl4TU5SSUt3b2RwVGxEWQozYjVjK2IwbEVF
+a3N2Z0doRzR5T2g2YkFtU0hERlJQaEpZOGdKMWFwbXd1YytoWDZBc2M5azNUaUtvQnlUZlRaCm5r
+S3hpRjJpNUFzVmEwMGNmSHBLMWhPdkRGZWRPNGNIakM0bzFWM0ZaNm1Ga2I5VzAyNjBYOWM5bENh
+a09FTXIKM2plQVFFYkNBMUs1M211Y09YOU0zNlZEWFc2TDlhU2tDN2VWcDV6aVpFVnNtbWRiWm1t
+NGc2cHNuQ08vdmJ6TAp2bytiWDlFbXBnL1llU0xCaW4yOVVVNmxBVTliTTJaM29tM2V4b2h5c3pZ
+V0RvSU5jaDRrUkpkbEJ6OHhCckE2CmwvMUNQRlJZUmpDL3UvZjlPeXNtQmYvaThrSC9rdVN0Nk52
+RFZsK2Z6eDFNdTZuMGNTR2xqaSs2VlRvaGhNdngKaE9rUFk1SE1LaTFJbUJPOHJOaVlTcEsrRith
+ait3bDZleEFJQnhwUHdRL0xKczhZaEtLK2xrc2R3NE9zTHZrMgpjcnlJWEtMZ3VKcW9KMVNodEh2
+UEdyaGxKUmZQZEViRnZhQkZHSHZTVUFXZlVyVmdiNFRINTVXL1BQL0NTZGlHCjRaNnBKeU1FQlk4
+aXBsYkpOK21GNnVYazdiMGdQSUVodHJKdmd5eXNDZ1N3K0lIc3I3Z0JLeDZ5QU8vYTN4SUsKdU1B
+ajJLbE1RT1M0djlyS0FWQ1JPb01uOGJMeHN4OW9qd0MwcWVLQ201Ui9ZSE80WE9rZVJqNVIxM0wr
+a1p2cQorcStUM0FaREVTWjRTSktJZVo4RXVXR0NrbXlONWxwZ0szMTdXZFM4YlZJNUtSVU8yczQ9
+Cj1OajczCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQo=
 
--	if (strlen(apn) > OFONO_GPRS_MAX_APN_LENGTH)
--		goto error;
--
- 	if (type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS) {
- 		msgproxy =3D g_key_file_get_string(gprs->settings, group,
- 						"MessageProxy", NULL);
-diff --git a/src/lte.c b/src/lte.c
-index 70e0c18a0027..9b20749c6f9a 100644
---- a/src/lte.c
-+++ b/src/lte.c
-@@ -152,9 +152,6 @@ static DBusMessage *lte_set_default_apn(struct ofono_lt=
-e *lte,
- 	if (lte->pending)
- 		return __ofono_error_busy(msg);
- =
-
--	if (strlen(apn) > OFONO_GPRS_MAX_APN_LENGTH)
--		return __ofono_error_invalid_format(msg);
--
- 	if (g_str_equal(apn, lte->info.apn))
- 		return dbus_message_new_method_return(msg);
- =
-
--- =
-
-2.14.1
-
-
---===============7894098789739004669==--
+--===============3220252485440331457==--
 
