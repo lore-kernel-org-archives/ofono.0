@@ -1,69 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============7868544096170330022=="
+Content-Type: multipart/mixed; boundary="===============8496431837793838649=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: connmand[186]: Online check failed but running dhclient manually
- fixes this issue
-Date: Wed, 06 Sep 2017 17:17:43 +0200
-Message-ID: <87k21bg8ko.fsf@helium.monom.org>
-In-Reply-To: <fb4d8953-043f-5844-5590-509f9a4ea973@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] qmimodem: report failure in case of invalid pin type
+Date: Wed, 06 Sep 2017 10:35:27 -0500
+Message-ID: <87588c10-871a-661a-4ecd-9974ad5e4631@gmail.com>
+In-Reply-To: <7c7b8ac1-7d43-81a9-9634-e894815e0d9f@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7868544096170330022==
+--===============8496431837793838649==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Christophe,
 
-Denis Kenzior <denkenz@gmail.com> writes:
-> On 09/05/2017 09:46 AM, Alexander Couzens wrote:
->> On Thu, 10 Aug 2017 12:47:28 +0200
->> Daniel Wagner <wagi@monom.org> wrote:
->>
->>>>     Bus 001 Device 003: ID 1bc7:1201 Telit Wireless Solutions
->>>
->>> Here is a compile tested 'fix'. I don't know if this works and\
->>> obviously it doesn't follow the coding guide lines for this
->>> project. If you could test this and report back the outcome
->>> that would be really helpful. Then I can create a proper
->>> patch for Denis.
->>
->> I can confirm this bug with an quectel ec20 using the firmware
->> EC20EQAR02A13E2G  1  [Jul  5 2017 10:49:17].
->>
->> To reproduce using ofono w/o connman. linux 4.12.8
->> - call ofono "../context1 Active true"
->> - set the ip by hand. No ping response.
->> - using dhcpcd. Ping responses.
->>
->> The `ip addr show` looks the same, except the interface has now an ipv6
->> link local address. Is this is problem of modern LTE cards?
->> Could be raw-ip or 802.3 encapsulations the problem?
->>
->
-> Here's something Reinhard said in a different thread that might be
-> applicable here:
->
-> "Unfortunately the PLS8 seems to need DHCP to be used as a trigger to
-> pass IPv4 traffic over the network interface even if the parameters
-> could be obtained from AT commands.
->
-> This restriction also holds for some other Qualcomm firmwares when the
-> QMI network interface is used in Ethernet mode instead of Raw IP mode."
->
-> If this is true, then falling back to DHCP would seem to be required
-> for many Qualcomm based devices.  This seems to be a recently
-> introduced 'bug' as older QMI devices did not need this workaround.
+On 09/06/2017 03:31 AM, Christophe Ronco wrote:
+> Hi Denis,
+> =
 
-Do you think we should try to figure out which Qualcomm device is
-misbehaving or should the feature just be reverted?
+> I wasn't able to reproduce yesterday.
+>  From traces I kept, with problematic SIM card, I had this trace when =
 
-The other option is to add some fallback mechanism in ConnMan and print
-a fat warning into the log. But I don't this idea.
+> problem appeared:
+> ../git/drivers/qmimodem/sim.c:get_card_status() info1->app_state:0x6: =
 
-Thanks,
-Daniel
+> OFONO_SIM_PASSWORD_INVALID
+> =
 
---===============7868544096170330022==--
+> I had a look at QMI lib and app_state to 0x6 means =
+
+> QMI_UIM_CARD_APPLICATION_STATE_ILLEGAL. Other unhandled states are :
+
+This would probably mean that the SIM card is not inserted properly. =
+
+One way to handle this would be to mark the SIM as not inserted...
+
+>   - QMI_UIM_CARD_APPLICATION_STATE_UNKNOWN
+
+No idea what we can do here, same as above?
+
+>   - QMI_UIM_CARD_APPLICATION_STATE_DETECTED
+
+Sounds like a transient state and we should retry
+
+>   - QMI_UIM_CARD_APPLICATION_STATE_PIN1_BLOCKED
+
+Doesn't this mean PUK1 entry is required?
+
+> =
+
+> With current driver code, all these states will lead to =
+
+> OFONO_SIM_PASSWORD_INVALID. I don't know if a retry will help if we have =
+
+> any of these states. It would be easy to make a retry for these states =
+
+> as this is already implemented for =
+
+> QMI_UIM_CARD_APPLICATION_STATE_CHECK_PERSONALIZATION_STATE state.
+
+We do have a query_facility_lock sim atom driver method.  Perhaps this =
+
+needs to be implemented for QMI?  If the driver doesn't handle this, =
+
+then there's no sense in even trying devices which might be locked...
+
+> =
+
+> Do you want me to change the patch to implement that?
+> =
+
+
+Sure, patches are always welcome
+
+> On my side, my concern is more: what "PinRequired" property (in =
+
+> SimManager properties) should be if we fail to get PIN state (in QMI =
+
+> driver or any other driver (with AT+CPIN? replying ERROR for example))? =
+
+> I think that with current code it will be "none" and I would prefer =
+
+> something like "unknown", "error" or "invalid" to distinguish a SIM with =
+
+> entered or disabled PIN from a SIM where driver is not able to get PIN =
+
+> state. What do you think?
+
+AT modem drivers that use at_util_sim_state_query* set the SIM as =
+
+inserted only if the CPIN query succeeds.  Otherwise the SIM is marked =
+
+as not present and PinRequired property isn't even used.
+
+> =
+
+> Best Regards,
+> =
+
+> Christophe Ronco
+> =
+
+
+Regards,
+-Denis
+
+--===============8496431837793838649==--
 
