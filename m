@@ -1,133 +1,130 @@
-Content-Type: multipart/mixed; boundary="===============7148830655446968933=="
+Content-Type: multipart/mixed; boundary="===============6431364263103227137=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/6] atutil: Add logic for cgcontrdp to get address and
- netmask
-Date: Tue, 05 Sep 2017 11:11:57 -0500
-Message-ID: <4ac9fd14-a4d4-753e-f7b0-b64218d2e394@gmail.com>
-In-Reply-To: <1504245182-17949-3-git-send-email-ankit.p.navik@intel.com>
+From: Christophe Ronco <c.ronco@kerlink.fr>
+Subject: Re: [PATCH] qmimodem: report failure in case of invalid pin type
+Date: Wed, 06 Sep 2017 10:31:45 +0200
+Message-ID: <7c7b8ac1-7d43-81a9-9634-e894815e0d9f@kerlink.fr>
+In-Reply-To: <06e68a31-785e-fac2-4c1a-8ff1417cc9fb@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7148830655446968933==
+--===============6431364263103227137==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ankit,
+Hi Denis,
 
-On 09/01/2017 12:53 AM, Ankit Navik wrote:
-> ---
->   drivers/atmodem/atutil.c | 44 +++++++++++++++++++++++++++++++++++++++++=
-+++
->   drivers/atmodem/atutil.h |  3 +++
->   2 files changed, 47 insertions(+)
-> =
+I wasn't able to reproduce yesterday.
+ From traces I kept, with problematic SIM card, I had this trace when =
 
-> diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
-> index 1487348..1067f20 100644
-> --- a/drivers/atmodem/atutil.c
-> +++ b/drivers/atmodem/atutil.c
-> @@ -27,6 +27,7 @@
->   #include <gatchat.h>
->   #include <string.h>
->   #include <stdlib.h>
-> +#include <errno.h>
->   =
+problem appeared:
+../git/drivers/qmimodem/sim.c:get_card_status() info1->app_state:0x6: =
 
->   #define OFONO_API_SUBJECT_TO_CHANGE
->   #include <ofono/log.h>
-> @@ -614,3 +615,46 @@ void at_util_sim_state_query_free(struct at_util_sim=
-_state_query *req)
->   =
+OFONO_SIM_PASSWORD_INVALID
 
->   	g_free(req);
->   }
-> +
-> +/*
-> + * CGCONTRDP returns addr + netmask in the same string in the form
-> + * of "a.b.c.d.m.m.m.m" for IPv4.
-> + * TODO: Add logic for IPv6.
-> + */
-Put a comment here stating that address/netmask must be able to hold
-255.255.255.255 + null =3D 16 characters
+I had a look at QMI lib and app_state to 0x6 means =
 
-> +int at_util_set_address_and_netmask(const char *addrnetmask, char *addre=
-ss,
-> +					char *netmask)
+QMI_UIM_CARD_APPLICATION_STATE_ILLEGAL. Other unhandled states are :
+  - QMI_UIM_CARD_APPLICATION_STATE_UNKNOWN
+  - QMI_UIM_CARD_APPLICATION_STATE_DETECTED
+  - QMI_UIM_CARD_APPLICATION_STATE_PIN1_BLOCKED
 
-Lets call this at_util_get_ipv4_address_and_netmask
+With current driver code, all these states will lead to =
 
-> +{
-> +	char *dup =3D strdup(addrnetmask);
+OFONO_SIM_PASSWORD_INVALID. I don't know if a retry will help if we have =
 
-You could avoid a strdup entirely by marking the position of the 4th dot =
+any of these states. It would be easy to make a retry for these states =
 
-and doing some pointer math...
+as this is already implemented for =
 
-> +	char *s =3D dup;
-> +
-> +	const char *addr =3D s;
-> +	const char *net =3D NULL;
-> +
-> +	int ret =3D -EINVAL;
-> +	int i;
-> +
-> +	/* Count 7 dots for ipv4, less or more means error. */
-> +	for (i =3D 0; i < 8; i++, s++) {
+QMI_UIM_CARD_APPLICATION_STATE_CHECK_PERSONALIZATION_STATE state.
 
-This doesn't actually check that the number of dots > 7 ...
+Do you want me to change the patch to implement that?
 
-> +		s =3D strchr(s, '.');
-> +
-> +		if (!s)
-> +			break;
-> +
-> +		if (i =3D=3D 3) {
-> +			/* set netmask ptr and break the string */
-> +			net =3D s + 1;
-> +			s[0] =3D 0;
-> +		}
-> +	}
-> +
-> +	if (i =3D=3D 7) {
-> +		strncpy(address, addr, strlen(addr));
-> +		strncpy(netmask, net, strlen(net));
+On my side, my concern is more: what "PinRequired" property (in =
 
-This would appear not to copy the null terminator.  Not sure this is =
+SimManager properties) should be if we fail to get PIN state (in QMI =
 
-intended?
+driver or any other driver (with AT+CPIN? replying ERROR for example))? =
 
-> +
-> +		ret =3D 0;
-> +	}
-> +
-> +	free(dup);
-> +
-> +	return ret;
-> +}
-> diff --git a/drivers/atmodem/atutil.h b/drivers/atmodem/atutil.h
-> index 5cb88b7..cc8fc52 100644
-> --- a/drivers/atmodem/atutil.h
-> +++ b/drivers/atmodem/atutil.h
-> @@ -83,6 +83,9 @@ struct at_util_sim_state_query *at_util_sim_state_query=
-_new(GAtChat *chat,
->   						GDestroyNotify destroy);
->   void at_util_sim_state_query_free(struct at_util_sim_state_query *req);
->   =
+I think that with current code it will be "none" and I would prefer =
 
-> +int at_util_set_address_and_netmask(const char *addrnetmask, char *addre=
-ss,
-> +						char *netmask);
-> +
->   struct cb_data {
->   	void *cb;
->   	void *data;
-> =
+something like "unknown", "error" or "invalid" to distinguish a SIM with =
+
+entered or disabled PIN from a SIM where driver is not able to get PIN =
+
+state. What do you think?
+
+Best Regards,
+
+Christophe Ronco
 
 
-Regards,
--Denis
+On 08/30/2017 08:29 PM, Denis Kenzior wrote:
+> Hi Christophe,
+>
+> On 08/29/2017 07:29 AM, Christophe Ronco wrote:
+>> This will avoid a crash seen in sim_pin_query_cb (src/sim.c) if pin type
+>> is OFONO_SIM_PASSWORD_INVALID.
+>> ---
+>>   drivers/qmimodem/sim-legacy.c | 5 ++++-
+>>   drivers/qmimodem/sim.c        | 6 +++++-
+>>   2 files changed, 9 insertions(+), 2 deletions(-)
+>>
+>> diff --git a/drivers/qmimodem/sim-legacy.c =
 
---===============7148830655446968933==--
+>> b/drivers/qmimodem/sim-legacy.c
+>> index 318b1ae..d16b2eb 100644
+>> --- a/drivers/qmimodem/sim-legacy.c
+>> +++ b/drivers/qmimodem/sim-legacy.c
+>> @@ -211,7 +211,10 @@ static void get_pin_status_cb(struct qmi_result =
+
+>> *result, void *user_data)
+>>       data->retries[OFONO_SIM_PASSWORD_SIM_PUK2] =3D pin->unblock_retrie=
+s;
+>>     done:
+>> -    CALLBACK_WITH_SUCCESS(cb, pin_type, cbd->data);
+>> +    if (pin_type =3D=3D OFONO_SIM_PASSWORD_INVALID)
+>> +        CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
+>> +    else
+>> +        CALLBACK_WITH_SUCCESS(cb, pin_type, cbd->data);
+>>   }
+>>     static void qmi_query_passwd_state(struct ofono_sim *sim,
+>> diff --git a/drivers/qmimodem/sim.c b/drivers/qmimodem/sim.c
+>> index 8d40028..7425d5e 100644
+>> --- a/drivers/qmimodem/sim.c
+>> +++ b/drivers/qmimodem/sim.c
+>> @@ -483,7 +483,11 @@ static void query_passwd_state_cb(struct =
+
+>> qmi_result *result,
+>>       case GET_CARD_STATUS_RESULT_OK:
+>>           DBG("passwd state %d", sim_stat.passwd_state);
+>>           data->retry_count =3D 0;
+>> -        CALLBACK_WITH_SUCCESS(cb, sim_stat.passwd_state, cbd->data);
+>> +        if (sim_stat.passwd_state =3D=3D OFONO_SIM_PASSWORD_INVALID)
+>> +            CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
+>> +        else
+>> +            CALLBACK_WITH_SUCCESS(cb, sim_stat.passwd_state,
+>> +                                cbd->data);
+>
+> So we get back a CARD_STATUS_RESULT_OK, yet the password state is not =
+
+> valid.  It would seem there's a more serious issue here?  Is is that =
+
+> we need to keep retrying to get the password state? Is this related to =
+
+> Personalization state?
+>
+>>           break;
+>>       case GET_CARD_STATUS_RESULT_TEMP_ERROR:
+>>           data->retry_count++;
+>>
+>
+> Regards,
+> -Denis
+>
+
+
+--===============6431364263103227137==--
 
