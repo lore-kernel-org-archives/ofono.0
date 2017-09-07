@@ -1,66 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============5949874469954719693=="
+Content-Type: multipart/mixed; boundary="===============8559784902462678173=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH 3/5] qmi: provide AvailableTechnologies in radio-settings
-Date: Thu, 07 Sep 2017 14:11:34 +0200
-Message-ID: <20170907121136.13520-3-jonas@southpole.se>
+Subject: [PATCH 4/5] qmi: add helper to get int16_t result
+Date: Thu, 07 Sep 2017 14:11:35 +0200
+Message-ID: <20170907121136.13520-4-jonas@southpole.se>
 In-Reply-To: <20170907121136.13520-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5949874469954719693==
+--===============8559784902462678173==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This provides the list of available technologies in the radio-settings
-atom.  Note that this list is hard-coded and includes LTE unconditionally
-which is probably not correct for all QMI devices.
 ---
- drivers/qmimodem/radio-settings.c | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
+ drivers/qmimodem/qmi.c | 21 +++++++++++++++++++++
+ drivers/qmimodem/qmi.h |  2 ++
+ 2 files changed, 23 insertions(+)
 
-diff --git a/drivers/qmimodem/radio-settings.c b/drivers/qmimodem/radio-set=
-tings.c
-index ed578f8..fecde82 100644
---- a/drivers/qmimodem/radio-settings.c
-+++ b/drivers/qmimodem/radio-settings.c
-@@ -155,6 +155,19 @@ static void qmi_set_rat_mode(struct ofono_radio_settin=
-gs *rs,
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index 17c6a6f..c538cb9 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -1720,6 +1720,27 @@ bool qmi_result_get_uint8(struct qmi_result *result,=
+ uint8_t type,
+ 	return true;
  }
  =
 
- =
-
-+static void qmi_query_available_rats(struct ofono_radio_settings *rs,
-+			ofono_radio_settings_available_rats_query_cb_t cb,
-+			void *data)
++bool qmi_result_get_int16(struct qmi_result *result, uint8_t type,
++							int16_t *value)
 +{
-+	unsigned int available_rats;
++	const unsigned char *ptr;
++	uint16_t len, tmp;
 +
-+	available_rats =3D OFONO_RADIO_ACCESS_MODE_GSM
-+				| OFONO_RADIO_ACCESS_MODE_UMTS
-+				| OFONO_RADIO_ACCESS_MODE_LTE;
++	if (!result || !type)
++		return false;
 +
-+	CALLBACK_WITH_SUCCESS(cb, available_rats, data);
++	ptr =3D tlv_get(result->data, result->length, type, &len);
++	if (!ptr)
++		return false;
++
++	memcpy(&tmp, ptr, 2);
++
++	if (value)
++		*value =3D GINT16_FROM_LE(tmp);
++
++	return true;
 +}
 +
- static void create_nas_cb(struct qmi_service *service, void *user_data)
+ bool qmi_result_get_uint16(struct qmi_result *result, uint8_t type,
+ 							uint16_t *value)
  {
- 	struct ofono_radio_settings *rs =3D user_data;
-@@ -219,6 +232,7 @@ static struct ofono_radio_settings_driver driver =3D {
- 	.remove		=3D qmi_radio_settings_remove,
- 	.set_rat_mode	=3D qmi_set_rat_mode,
- 	.query_rat_mode =3D qmi_query_rat_mode,
-+	.query_available_rats =3D qmi_query_available_rats,
- };
- =
-
- void qmi_radio_settings_init(void)
+diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+index bfe8e6b..b4955b4 100644
+--- a/drivers/qmimodem/qmi.h
++++ b/drivers/qmimodem/qmi.h
+@@ -130,6 +130,8 @@ const void *qmi_result_get(struct qmi_result *result, u=
+int8_t type,
+ char *qmi_result_get_string(struct qmi_result *result, uint8_t type);
+ bool qmi_result_get_uint8(struct qmi_result *result, uint8_t type,
+ 							uint8_t *value);
++bool qmi_result_get_int16(struct qmi_result *result, uint8_t type,
++							int16_t *value);
+ bool qmi_result_get_uint16(struct qmi_result *result, uint8_t type,
+ 							uint16_t *value);
+ bool qmi_result_get_uint32(struct qmi_result *result, uint8_t type,
 -- =
 
 2.9.3
 
 
---===============5949874469954719693==--
+--===============8559784902462678173==--
 
