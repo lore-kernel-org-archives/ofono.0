@@ -1,48 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============8958232806804316060=="
+Content-Type: multipart/mixed; boundary="===============3734731810647944087=="
 MIME-Version: 1.0
 From: Alexander Couzens <lynxis@fe80.eu>
-Subject: [PATCH 2/6] voicecall: use ofono_call_status_name in DBG messages
-Date: Thu, 07 Sep 2017 22:22:56 +0200
-Message-ID: <20170907202300.23952-2-lynxis@fe80.eu>
+Subject: [PATCH 3/6] qmimodem: add strength (in %) to the debug output
+Date: Thu, 07 Sep 2017 22:22:57 +0200
+Message-ID: <20170907202300.23952-3-lynxis@fe80.eu>
 In-Reply-To: <20170907202300.23952-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8958232806804316060==
+--===============3734731810647944087==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-status names are more readable then integer values.
 ---
- src/voicecall.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+ drivers/qmimodem/network-registration.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index c99f11fabc01..e3ae80cfd914 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -2250,9 +2250,10 @@ void ofono_voicecall_notify(struct ofono_voicecall *=
-vc,
- 	struct voicecall *v =3D NULL;
- 	struct ofono_call *newcall;
+diff --git a/drivers/qmimodem/network-registration.c b/drivers/qmimodem/net=
+work-registration.c
+index 04de5a5b87f9..41caa414477b 100644
+--- a/drivers/qmimodem/network-registration.c
++++ b/drivers/qmimodem/network-registration.c
+@@ -450,10 +450,11 @@ static void event_notify(struct qmi_result *result, v=
+oid *user_data)
+         if (ss) {
+ 		int strength;
  =
 
--	DBG("Got a voicecall event, status: %d, id: %u, number: %s"
--			" called_number: %s, called_name %s", call->status,
--			call->id, call->phone_number.number,
-+	DBG("Got a voicecall event, status: %s (%d), id: %u, number: %s"
-+			" called_number: %s, called_name %s",
-+			ofono_call_status_to_string(call->status),
-+			call->status, call->id, call->phone_number.number,
- 			call->called_number.number, call->name);
+-		DBG("signal with %d dBm on %d", ss->dbm, ss->rat);
+-
+ 		strength =3D dbm_to_strength(ss->dbm);
  =
 
- 	l =3D g_slist_find_custom(vc->call_list, GUINT_TO_POINTER(call->id),
++		DBG("signal with %d%%(%d dBm) on %d",
++				strength, ss->dbm, ss->rat);
++
+ 		ofono_netreg_strength_notify(netreg, strength);
+ 	}
+ =
+
 -- =
 
 2.14.1
 
 
---===============8958232806804316060==--
+--===============3734731810647944087==--
 
