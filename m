@@ -1,215 +1,152 @@
-Content-Type: multipart/mixed; boundary="===============7885587809332908251=="
+Content-Type: multipart/mixed; boundary="===============1615074219184171864=="
 MIME-Version: 1.0
 From: Nishanth V <nishanth.v@intel.com>
-Subject: [PATCH 6/7] rilmodem: driver changes for netmon agent
-Date: Thu, 07 Sep 2017 09:53:19 +0530
-Message-ID: <1504758200-18624-6-git-send-email-nishanth.v@intel.com>
+Subject: [PATCH 7/7] test: added script to test serving cell agent
+Date: Thu, 07 Sep 2017 09:53:20 +0530
+Message-ID: <1504758200-18624-7-git-send-email-nishanth.v@intel.com>
 In-Reply-To: <1504758200-18624-1-git-send-email-nishanth.v@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7885587809332908251==
+--===============1615074219184171864==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Rilmodem driver updated to handle enabling
-and disabling periodic serving cell updates
 ---
- drivers/rilmodem/netmon.c | 98 +++++++++++++++++++++++++++++++++++++++++--=
-----
- 1 file changed, 87 insertions(+), 11 deletions(-)
+ Makefile.am                 |  4 +-
+ test/test-serving-cell-info | 98 +++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 101 insertions(+), 1 deletion(-)
+ create mode 100644 test/test-serving-cell-info
 
-diff --git a/drivers/rilmodem/netmon.c b/drivers/rilmodem/netmon.c
-index f7f7c28..a1e5f6c 100644
---- a/drivers/rilmodem/netmon.c
-+++ b/drivers/rilmodem/netmon.c
-@@ -61,6 +61,9 @@
- /* size of RIL_CellInfoTdscdma */
- #define NETMON_RIL_CELLINFO_SIZE_TDSCDMA	24
+diff --git a/Makefile.am b/Makefile.am
+index fbc4d6d..c46e85a 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -780,7 +780,9 @@ test_scripts =3D test/backtrace \
+ 		test/list-allowed-access-points \
+ 		test/enable-throttling \
+ 		test/disable-throttling \
+-		test/set-lte-property
++		test/set-lte-property \
++		test/test-serving-cell-info
++
  =
 
-+#define MSECS_RATE_INVALID	(0x7fffffff)
-+#define SECS_TO_MSECS(x)	((x) * 1000)
+ if TEST
+ testdir =3D $(pkglibdir)/test
+diff --git a/test/test-serving-cell-info b/test/test-serving-cell-info
+new file mode 100644
+index 0000000..de9cb7b
+--- /dev/null
++++ b/test/test-serving-cell-info
+@@ -0,0 +1,98 @@
++#!/usr/bin/python3
 +
- struct netmon_data {
- 	GRil *ril;
- };
-@@ -96,11 +99,9 @@ static int ril_cell_type_to_size(int cell_type)
- 	return 0;
- }
- =
++from gi.repository import GLib
++
++import sys
++import dbus
++import dbus.service
++import dbus.mainloop.glib
++
++NETMON_INTERFACE =3D "org.ofono.NetworkMonitor"
++AGENT_INTERFACE =3D "org.ofono.NetworkMonitorAgent"
++
++class NetworkMonitorAgent(dbus.service.Object):
++	@dbus.service.method(AGENT_INTERFACE,
++				in_signature=3D"", out_signature=3D"")
++	def Release(self):
++		print("Agent Released")
++		mainloop.quit()
++
++	@dbus.service.method(AGENT_INTERFACE,
++				in_signature=3D"a{sv}", out_signature=3D"")
++	def ServingCellInformationChanged(self, servingcell):
++		print("ServingCellInformationChanged notification recieved")
++
++		tech =3D 'Technology'
++		mcc =3D 'MobileCountryCode'
++		mnc =3D 'MobileNetworkCode'
++		lac =3D 'LocationAreaCode'
++		cid =3D 'CellId'
++		psc =3D 'PrimaryScramblingCode'
++		rssi =3D 'Strength'
++		ber =3D 'BitErrorRate'
++
++		if tech in servingcell:
++			print("    [ Radio Access Technology =3D %s]" \
++				% (servingcell[tech]))
++
++		if mcc in servingcell:
++			print("    [ Mobile Country Code =3D %s]" \
++				% (servingcell[mcc]))
++
++		if mnc in servingcell:
++			print("    [ Mobile Network Code =3D %s]" \
++				% (servingcell[mnc]))
++
++		if lac in servingcell:
++			print("    [ Location Area Code =3D %d]" \
++				% (servingcell[lac]))
++
++		if cid in servingcell:
++			print("    [ Cell Identity =3D %d]" \
++				% (servingcell[cid]))
++
++		if psc in servingcell:
++			print("    [ Primary Scrambling Code =3D %d]" \
++				% (servingcell[psc]))
++
++		if rssi in servingcell:
++			print("    [ Signal Strength =3D %d]" \
++				% (servingcell[rssi]))
++
++		if ber in servingcell:
++			print("    [ Bit Error Rate =3D %d]" \
++				% (servingcell[ber]))
++
++		print('')
++	=
 
--static void ril_netmon_update_cb(struct ril_msg *message, gpointer user_da=
-ta)
-+static int process_cellinfo_list(struct ril_msg *message,
-+					struct ofono_netmon *netmon)
- {
--	struct cb_data *cbd =3D user_data;
--	ofono_netmon_cb_t cb =3D cbd->cb;
--	struct ofono_netmon *netmon =3D cbd->data;
- 	struct parcel rilp;
- 	int skip_len;
- 	int cell_info_cnt;
-@@ -114,7 +115,7 @@ static void ril_netmon_update_cb(struct ril_msg *messag=
-e, gpointer user_data)
- 	int i, j;
- =
++if __name__ =3D=3D '__main__':
++	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
++
++	if len(sys.argv) < 2:
++		print("Usage: %s <update_period_in_seconds>" %\
++				(sys.argv[0]))
++		sys.exit(1)
++
++	bus =3D dbus.SystemBus()
++	manager =3D dbus.Interface(bus.get_object("org.ofono", "/"),
++							"org.ofono.Manager")
++
++	modems =3D manager.GetModems()
++	path =3D modems[0][0]
++	nm =3D dbus.Interface(bus.get_object('org.ofono', path),
++					NETMON_INTERFACE)
++	=
 
- 	if (message->error !=3D RIL_E_SUCCESS)
--		goto error;
-+		return OFONO_ERROR_TYPE_FAILURE;
- =
++	path =3D "/test/netmonagent"
++	agent =3D NetworkMonitorAgent(bus, path)
++
++	try:
++		period =3D int(sys.argv[1])
++	except:
++		print("Error: Invalid argument %s" % (sys.argv[1]))
++		sys.exit(1)
++
++	nm.RegisterAgent(path, period)
++	print("Agent registered")
++	mainloop =3D GLib.MainLoop()
++	mainloop.run()
++	=
 
- 	g_ril_init_parcel(message, &rilp);
- =
-
-@@ -146,7 +147,7 @@ static void ril_netmon_update_cb(struct ril_msg *messag=
-e, gpointer user_data)
- 	}
- =
-
- 	if (!registered)
--		goto error;
-+		return OFONO_ERROR_TYPE_FAILURE;
- =
-
- 	if (cell_type =3D=3D NETMON_RIL_CELLINFO_TYPE_GSM) {
- 		mcc =3D parcel_r_int32(&rilp);
-@@ -216,17 +217,53 @@ static void ril_netmon_update_cb(struct ril_msg *mess=
-age, gpointer user_data)
- 				OFONO_NETMON_INFO_BER, ber,
- 				OFONO_NETMON_INFO_INVALID);
- =
-
--	} else {
--		goto error;
- 	}
- =
-
--	CALLBACK_WITH_SUCCESS(cb, cbd->data);
--	return;
-+	return OFONO_ERROR_TYPE_NO_ERROR;
-+}
-+
-+static void ril_netmon_update_cb(struct ril_msg *message, gpointer user_da=
-ta)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_netmon_cb_t cb =3D cbd->cb;
-+	struct ofono_netmon *netmon =3D cbd->data;
-+
-+	if (process_cellinfo_list(message, netmon) =3D=3D
-+			OFONO_ERROR_TYPE_NO_ERROR) {
-+		CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+		return;
-+	}
- =
-
--error:
- 	CALLBACK_WITH_FAILURE(cb, cbd->data);
- }
- =
-
-+static void ril_cellinfo_notify(struct ril_msg *message, gpointer user_dat=
-a)
-+{
-+	struct ofono_netmon *netmon =3D user_data;
-+
-+	process_cellinfo_list(message, netmon);
-+}
-+
-+static void setup_cell_info_notify(struct ofono_netmon *netmon)
-+{
-+	struct netmon_data *nmd =3D ofono_netmon_get_data(netmon);
-+	struct parcel rilp;
-+
-+	parcel_init(&rilp);
-+
-+	parcel_w_int32(&rilp, 1);	/* Number of elements */
-+
-+	parcel_w_int32(&rilp, MSECS_RATE_INVALID);
-+
-+	if (g_ril_send(nmd->ril, RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE,
-+			&rilp, NULL, NULL, NULL) =3D=3D 0)
-+		ofono_error("%s: setup failed\n", __func__);
-+
-+	if (g_ril_register(nmd->ril, RIL_UNSOL_CELL_INFO_LIST,
-+				ril_cellinfo_notify, netmon) =3D=3D 0)
-+		ofono_error("%s: setup failed\n", __func__);
-+}
-+
- static int ril_netmon_probe(struct ofono_netmon *netmon,
- 		unsigned int vendor, void *user)
- {
-@@ -237,6 +274,8 @@ static int ril_netmon_probe(struct ofono_netmon *netmon,
- =
-
- 	ofono_netmon_set_data(netmon, ud);
- =
-
-+	setup_cell_info_notify(netmon);
-+
- 	g_idle_add(ril_delayed_register, netmon);
- =
-
- 	return 0;
-@@ -264,11 +303,48 @@ static void ril_netmon_request_update(struct ofono_ne=
-tmon *netmon,
- 	CALLBACK_WITH_FAILURE(cb, data);
- }
- =
-
-+static void periodic_update_cb(struct ril_msg *message, gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_netmon_cb_t cb =3D cbd->cb;
-+
-+	if (message->error !=3D RIL_E_SUCCESS)
-+		CALLBACK_WITH_FAILURE(cb, cbd->data);
-+
-+	CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+}
-+
-+static void ril_netmon_periodic_update(struct ofono_netmon *netmon,
-+			unsigned int enable, unsigned int period,
-+			ofono_netmon_cb_t cb, void *data)
-+{
-+	struct netmon_data *nmd =3D ofono_netmon_get_data(netmon);
-+	struct cb_data *cbd =3D cb_data_new(cb, data, nmd);
-+	struct parcel rilp;
-+
-+	parcel_init(&rilp);
-+
-+	parcel_w_int32(&rilp, 1);	/* Number of elements */
-+
-+	if (enable)
-+		parcel_w_int32(&rilp, SECS_TO_MSECS(period));
-+	else
-+		parcel_w_int32(&rilp, MSECS_RATE_INVALID);
-+
-+	if (g_ril_send(nmd->ril, RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE,
-+			&rilp, periodic_update_cb, cbd, g_free) > 0)
-+		return;
-+
-+	g_free(cbd);
-+	CALLBACK_WITH_FAILURE(cb, cbd->data);
-+}
-+
- static struct ofono_netmon_driver driver =3D {
- 	.name			=3D RILMODEM,
- 	.probe			=3D ril_netmon_probe,
- 	.remove			=3D ril_netmon_remove,
- 	.request_update		=3D ril_netmon_request_update,
-+	.enable_periodic_update	=3D ril_netmon_periodic_update,
- };
- =
-
- void ril_netmon_init(void)
 -- =
 
 1.9.1
 
 
---===============7885587809332908251==--
+--===============1615074219184171864==--
 
