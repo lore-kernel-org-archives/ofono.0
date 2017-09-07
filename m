@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8730953808400327759=="
+Content-Type: multipart/mixed; boundary="===============2903244977113403552=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/5] qmi: add helper to get int16_t result
-Date: Thu, 07 Sep 2017 11:58:05 -0500
-Message-ID: <2745676c-164c-802a-e226-706d7963d36e@gmail.com>
-In-Reply-To: <20170907121136.13520-4-jonas@southpole.se>
+Subject: Re: [PATCH 3/5] qmi: provide AvailableTechnologies in radio-settings
+Date: Thu, 07 Sep 2017 11:59:30 -0500
+Message-ID: <f1edd04b-c4a9-2c6f-7842-d5735e4532ab@gmail.com>
+In-Reply-To: <20170907121136.13520-3-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8730953808400327759==
+--===============2903244977113403552==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,18 +16,24 @@ Content-Transfer-Encoding: quoted-printable
 Hi Jonas,
 
 On 09/07/2017 07:11 AM, Jonas Bonn wrote:
+> This provides the list of available technologies in the radio-settings
+> atom.  Note that this list is hard-coded and includes LTE unconditionally
+> which is probably not correct for all QMI devices.
+
+I don't like this idea.  There has to be a way to figure out the =
+
+capability, either from udev or QMI protocol.  Does the command =
+
+Christophe mentioned work for this?
+
 > ---
->   drivers/qmimodem/qmi.c | 21 +++++++++++++++++++++
->   drivers/qmimodem/qmi.h |  2 ++
->   2 files changed, 23 insertions(+)
+>   drivers/qmimodem/radio-settings.c | 14 ++++++++++++++
+>   1 file changed, 14 insertions(+)
 > =
 
-
-Applied, thanks.
 
 Regards,
 -Denis
 
-
---===============8730953808400327759==--
+--===============2903244977113403552==--
 
