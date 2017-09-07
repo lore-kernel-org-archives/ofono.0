@@ -1,152 +1,142 @@
-Content-Type: multipart/mixed; boundary="===============1615074219184171864=="
+Content-Type: multipart/mixed; boundary="===============8509223083698413546=="
 MIME-Version: 1.0
-From: Nishanth V <nishanth.v@intel.com>
-Subject: [PATCH 7/7] test: added script to test serving cell agent
-Date: Thu, 07 Sep 2017 09:53:20 +0530
-Message-ID: <1504758200-18624-7-git-send-email-nishanth.v@intel.com>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: Re: [PATCH 1/7] netmon: modified api.txt for network monitor agent
+Date: Thu, 07 Sep 2017 11:47:22 +0200
+Message-ID: <4b22d49e-81f5-4068-ec75-e5646e9bec03@southpole.se>
 In-Reply-To: <1504758200-18624-1-git-send-email-nishanth.v@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1615074219184171864==
+--===============8509223083698413546==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am                 |  4 +-
- test/test-serving-cell-info | 98 +++++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 101 insertions(+), 1 deletion(-)
- create mode 100644 test/test-serving-cell-info
+On 09/07/2017 06:23 AM, Nishanth V wrote:
+> added new DBUS methods RegisterAgent and UnregisterAgent to
+> Networkmonitor interface so that any client of ofono can register for
+> serving cell updates. Added new agent interface NetworkMonitorAgent
+> with two methods, ServingCellInformationChanged and Release.
 
-diff --git a/Makefile.am b/Makefile.am
-index fbc4d6d..c46e85a 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -780,7 +780,9 @@ test_scripts =3D test/backtrace \
- 		test/list-allowed-access-points \
- 		test/enable-throttling \
- 		test/disable-throttling \
--		test/set-lte-property
-+		test/set-lte-property \
-+		test/test-serving-cell-info
-+
- =
+My spontaneous reaction to this is that it feels like the wrong =
 
- if TEST
- testdir =3D $(pkglibdir)/test
-diff --git a/test/test-serving-cell-info b/test/test-serving-cell-info
-new file mode 100644
-index 0000000..de9cb7b
---- /dev/null
-+++ b/test/test-serving-cell-info
-@@ -0,0 +1,98 @@
-+#!/usr/bin/python3
-+
-+from gi.repository import GLib
-+
-+import sys
-+import dbus
-+import dbus.service
-+import dbus.mainloop.glib
-+
-+NETMON_INTERFACE =3D "org.ofono.NetworkMonitor"
-+AGENT_INTERFACE =3D "org.ofono.NetworkMonitorAgent"
-+
-+class NetworkMonitorAgent(dbus.service.Object):
-+	@dbus.service.method(AGENT_INTERFACE,
-+				in_signature=3D"", out_signature=3D"")
-+	def Release(self):
-+		print("Agent Released")
-+		mainloop.quit()
-+
-+	@dbus.service.method(AGENT_INTERFACE,
-+				in_signature=3D"a{sv}", out_signature=3D"")
-+	def ServingCellInformationChanged(self, servingcell):
-+		print("ServingCellInformationChanged notification recieved")
-+
-+		tech =3D 'Technology'
-+		mcc =3D 'MobileCountryCode'
-+		mnc =3D 'MobileNetworkCode'
-+		lac =3D 'LocationAreaCode'
-+		cid =3D 'CellId'
-+		psc =3D 'PrimaryScramblingCode'
-+		rssi =3D 'Strength'
-+		ber =3D 'BitErrorRate'
-+
-+		if tech in servingcell:
-+			print("    [ Radio Access Technology =3D %s]" \
-+				% (servingcell[tech]))
-+
-+		if mcc in servingcell:
-+			print("    [ Mobile Country Code =3D %s]" \
-+				% (servingcell[mcc]))
-+
-+		if mnc in servingcell:
-+			print("    [ Mobile Network Code =3D %s]" \
-+				% (servingcell[mnc]))
-+
-+		if lac in servingcell:
-+			print("    [ Location Area Code =3D %d]" \
-+				% (servingcell[lac]))
-+
-+		if cid in servingcell:
-+			print("    [ Cell Identity =3D %d]" \
-+				% (servingcell[cid]))
-+
-+		if psc in servingcell:
-+			print("    [ Primary Scrambling Code =3D %d]" \
-+				% (servingcell[psc]))
-+
-+		if rssi in servingcell:
-+			print("    [ Signal Strength =3D %d]" \
-+				% (servingcell[rssi]))
-+
-+		if ber in servingcell:
-+			print("    [ Bit Error Rate =3D %d]" \
-+				% (servingcell[ber]))
-+
-+		print('')
-+	=
+approach.  Why not make the properties actual DBus properties and =
 
-+if __name__ =3D=3D '__main__':
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+
-+	if len(sys.argv) < 2:
-+		print("Usage: %s <update_period_in_seconds>" %\
-+				(sys.argv[0]))
-+		sys.exit(1)
-+
-+	bus =3D dbus.SystemBus()
-+	manager =3D dbus.Interface(bus.get_object("org.ofono", "/"),
-+							"org.ofono.Manager")
-+
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+	nm =3D dbus.Interface(bus.get_object('org.ofono', path),
-+					NETMON_INTERFACE)
-+	=
+provide PropertiesChanged events for them?  That begets you the same =
 
-+	path =3D "/test/netmonagent"
-+	agent =3D NetworkMonitorAgent(bus, path)
-+
-+	try:
-+		period =3D int(sys.argv[1])
-+	except:
-+		print("Error: Invalid argument %s" % (sys.argv[1]))
-+		sys.exit(1)
-+
-+	nm.RegisterAgent(path, period)
-+	print("Agent registered")
-+	mainloop =3D GLib.MainLoop()
-+	mainloop.run()
-+	=
+functionality for "free".
 
--- =
+It's interesting that you posted this now because I've spent the last =
 
-1.9.1
+week grumbling over this API myself as I'm putting support for the =
+
+NetworkMonitor interface into the QMI modem class.  My thoughts:
+
+i)  There's duplicate information all over the place.  MNC, LAC, etc. =
+
+are provided in three different interefaces: NetworkRegistration, =
+
+NetworkMonitor, and NetworkOperator.
+ii)  The NetworkOperator interface caught me off guard as it appeared =
+
+out of nowhere!  There is no documentation for the interface and the =
+
+implementation seems to be missing from most device classes.
+iii)  The polled nature of the NetworkMonitor object surprised me. This =
+
+seems like a natural case for notifications and the patch series in this =
+
+email thread underscores this fact.
+iv)  For QMI, at least, the NetworkRegistration atom is monitoring =
+
+asynchronous events that contain essentially all the information needed =
+
+by the NetworkMonitor atom.  The NetworkRegistration atom could just =
+
+save these values and provide the NetworkMonitor interface in the same =
+
+module instead of having an additional netmon module, but:
+
+a)  We end up monitoring unnecessary state in case nobody is actually =
+
+listening to the NetworkMonitor updates.  This seems to have a =
+
+negligible impact on performance so it probably does not matter.
+
+b)  ofono does not use this approach anywhere else that I can see... =
+
+every atom/interface is provided in it's own module.
+
+v)  Point iv) applies to the NetworkOperator interface, as well, if we =
+
+decide to implement it... should we?
+
+vi)  I suspect that other device classes (AT, etc.) provide asynchronous =
+
+network quality updates, as well; if they do not, however, then it seems =
+
+natural to move the polling of this state into the device class driver.
+
+Sorry for hijacking this for a bit of QMI implementation discussion but =
+
+it seems relevant in trying to understand what it is that the =
+
+NetworkMonitor interface is supposed to be.
+
+Thoughts?
+
+/Jonas
+
+> ---
+>   doc/networkmonitor-api.txt | 28 ++++++++++++++++++++++++++++
+>   1 file changed, 28 insertions(+)
+>
+> diff --git a/doc/networkmonitor-api.txt b/doc/networkmonitor-api.txt
+> index ddace7e..0855329 100644
+> --- a/doc/networkmonitor-api.txt
+> +++ b/doc/networkmonitor-api.txt
+> @@ -22,6 +22,34 @@ Methods		a{sv} GetServingCellInformation()
+>   			are available, their valid value ranges and
+>   			applicability to different cell types.
+>   =
+
+> +		void RegisterAgent(object path)
+> +
+> +			Registers an agent which will be called whenever the
+> +			modem registers to or moves to a new cell.
+> +
+> +		void UnregisterAgent(object path)
+> +
+> +			Unregisters an agent.
+> +
+> +NetworkMonitorAgent Hierarchy [experimental]
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D
+> +
+> +Service		unique name
+> +Interface	org.ofono.NetworkMonitorAgent
+> +Object path	freely definable
+> +
+> +Methods		void ServingCellInformationChanged(a{sv})
+> +
+> +			This method is called whenever the serving cell
+> +			information has been updated.
+> +
+> +			Possible Errors: None
+> +
+> +		void Release() [noreply]
+> +
+> +			Agent is being released, possibly because of oFono
+> +			terminating, NetworkMonitor interface is being torn
+> +			down or modem off.  No UnregisterAgent call is needed.
+>   =
+
+>   Network Monitor Property Types
+>   =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D
 
 
---===============1615074219184171864==--
+
+--===============8509223083698413546==--
 
