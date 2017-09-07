@@ -1,66 +1,172 @@
-Content-Type: multipart/mixed; boundary="===============1444030430510428957=="
+Content-Type: multipart/mixed; boundary="===============8467230807024748052=="
 MIME-Version: 1.0
 From: Alexander Couzens <lynxis@fe80.eu>
-Subject: [PATCH 2/3] qmi/discovery: include control service into service list
-Date: Thu, 07 Sep 2017 21:23:05 +0200
-Message-ID: <20170907192306.18117-2-lynxis@fe80.eu>
+Subject: [PATCH 3/3] qmi/discovery: sync the qmi state with the modem
+Date: Thu, 07 Sep 2017 21:23:06 +0200
+Message-ID: <20170907192306.18117-3-lynxis@fe80.eu>
 In-Reply-To: <20170907192306.18117-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1444030430510428957==
+--===============8467230807024748052==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-There is no need to exclude it. It helps debugging because
-the service is now logged.
+The qmi sync call release all previous resources.
+Only call sync when the CTL service is >=3D 1.5
 ---
- drivers/qmimodem/qmi.c | 13 ++++++-------
- 1 file changed, 6 insertions(+), 7 deletions(-)
+ drivers/qmimodem/qmi.c | 47 +++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/qmimodem/qmi.h |  5 ++++-
+ plugins/gobi.c         | 24 ++++++++++++++++++++++--
+ 3 files changed, 73 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 1af86aaccb08..7ea22992f8f0 100644
+index 7ea22992f8f0..fedfb9666c08 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -1136,15 +1136,12 @@ static void discover_callback(uint16_t message, uin=
-t16_t length,
- 		if (type =3D=3D QMI_SERVICE_CONTROL) {
- 			device->control_major =3D major;
- 			device->control_minor =3D minor;
--			continue;
- 		}
+@@ -1317,6 +1317,53 @@ bool qmi_device_shutdown(struct qmi_device *device, =
+qmi_shutdown_func_t func,
+ 	return true;
+ }
  =
 
--		list[count].type =3D type;
--		list[count].major =3D major;
--		list[count].minor =3D minor;
--		list[count].name =3D name;
++struct sync_data {
++	qmi_sync_func_t func;
++	void *user_data;
++};
++
++static void qmi_device_sync_callback(uint16_t message, uint16_t length,
++				     const void *buffer, void *user_data)
++{
++	struct sync_data *data =3D user_data;
++
++	if (data->func)
++		data->func(data->user_data);
++
++	g_free(data);
++}
++
++/* sync will release all previous clients */
++bool qmi_device_sync(struct qmi_device *device,
++		     qmi_sync_func_t func, void *user_data)
++{
++	struct qmi_request *req;
++	struct qmi_control_hdr *hdr;
++	struct sync_data *func_data;
++
++	if (!device)
++		return false;
++
++	func_data =3D g_new0(struct sync_data, 1);
++	func_data->func =3D func;
++	func_data->user_data =3D user_data;
++
++	req =3D __request_alloc(QMI_SERVICE_CONTROL, 0x00,
++			QMI_CTL_SYNC, QMI_CONTROL_HDR_SIZE,
++			NULL, 0,
++			qmi_device_sync_callback, func_data, (void **) &hdr);
++
++	if (device->next_control_tid < 1)
++		device->next_control_tid =3D 1;
++
++	hdr->type =3D 0x00;
++	hdr->transaction =3D device->next_control_tid++;
++
++	__request_submit(device, req, hdr->transaction);
++
++	return true;
++}
++
+ static bool get_device_file_name(struct qmi_device *device,
+ 					char *file_name, int size)
+ {
+diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+index b4955b40b1fb..8a348876edb9 100644
+--- a/drivers/qmimodem/qmi.h
++++ b/drivers/qmimodem/qmi.h
+@@ -76,7 +76,7 @@ typedef void (*qmi_destroy_func_t)(void *user_data);
+ struct qmi_device;
+ =
+
+ typedef void (*qmi_debug_func_t)(const char *str, void *user_data);
 -
--		count++;
-+		list[i].type =3D type;
-+		list[i].major =3D major;
-+		list[i].minor =3D minor;
-+		list[i].name =3D name;
++typedef void (*qmi_sync_func_t)(void *user_data);
+ typedef void (*qmi_shutdown_func_t)(void *user_data);
+ typedef void (*qmi_discover_func_t)(uint8_t count,
+ 			const struct qmi_version *list, void *user_data);
+@@ -96,6 +96,9 @@ bool qmi_device_discover(struct qmi_device *device, qmi_d=
+iscover_func_t func,
+ bool qmi_device_shutdown(struct qmi_device *device, qmi_shutdown_func_t fu=
+nc,
+ 				void *user_data, qmi_destroy_func_t destroy);
  =
 
- 		if (name)
- 			__debug_device(device, "found service [%s %d.%d]",
-@@ -1154,6 +1151,8 @@ static void discover_callback(uint16_t message, uint1=
-6_t length,
- 							type, major, minor);
++bool qmi_device_sync(struct qmi_device *device,
++		     qmi_sync_func_t func, void *user_data);
++
+ enum qmi_device_expected_data_format qmi_device_get_expected_data_format(
+ 						struct qmi_device *device);
+ bool qmi_device_set_expected_data_format(struct qmi_device *device,
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index a49859901f2f..40eefdfc867b 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -252,6 +252,15 @@ error:
+ 	shutdown_device(modem);
+ }
+ =
+
++static void create_shared_dms(void *user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct gobi_data *data =3D ofono_modem_get_data(modem);
++
++	qmi_service_create_shared(data->device, QMI_SERVICE_DMS,
++				  create_dms_cb, modem, NULL);
++}
++
+ static void discover_cb(uint8_t count, const struct qmi_version *list,
+ 							void *user_data)
+ {
+@@ -266,6 +275,15 @@ static void discover_cb(uint8_t count, const struct qm=
+i_version *list,
+ 				list[i].type);
+ =
+
+ 		switch (list[i].type) {
++		case QMI_SERVICE_CONTROL:
++			/* sync command resets the QMI state */
++			if (list[i].major > 1 ||
++					(list[i].major =3D=3D 1 &&
++					 list[i].minor >=3D 5))
++				ofono_modem_set_boolean(modem,
++							"SupportQMISync",
++							TRUE);
++			break;
+ 		case QMI_SERVICE_DMS:
+ 			data->features |=3D GOBI_DMS;
+ 			break;
+@@ -314,8 +332,10 @@ static void discover_cb(uint8_t count, const struct qm=
+i_version *list,
+ 		return;
  	}
  =
 
-+	count =3D service_list->count;
-+
- 	ptr =3D tlv_get(buffer, length, 0x10, &len);
- 	if (!ptr)
- 		goto done;
+-	qmi_service_create_shared(data->device, QMI_SERVICE_DMS,
+-						create_dms_cb, modem, NULL);
++	if (ofono_modem_get_boolean(modem, "SupportQMISync") =3D=3D TRUE)
++		qmi_device_sync(data->device, create_shared_dms, modem);
++	else
++		create_shared_dms(modem);
+ }
+ =
+
+ static int gobi_enable(struct ofono_modem *modem)
 -- =
 
 2.14.1
 
 
---===============1444030430510428957==--
+--===============8467230807024748052==--
 
