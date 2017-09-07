@@ -1,78 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============7543000469346367351=="
+Content-Type: multipart/mixed; boundary="===============4809192644825452056=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 1/7] netmon: modified api.txt for network monitor agent
-Date: Thu, 07 Sep 2017 20:11:13 +0300
-Message-ID: <989359f1-9639-27ec-b2b2-7cbee320402f@jolla.com>
-In-Reply-To: <2771ab58-48c9-60ab-d492-f37977d67f24@gmail.com>
+Date: Thu, 07 Sep 2017 12:30:03 -0500
+Message-ID: <da52a7d8-959d-483b-f309-be71a3e34ef2@gmail.com>
+In-Reply-To: <989359f1-9639-27ec-b2b2-7cbee320402f@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7543000469346367351==
+--===============4809192644825452056==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 07/09/17 19:05, Denis Kenzior wrote:
-> Hi Slava,
->
-> On 09/07/2017 08:06 AM, Slava Monich wrote:
->> On 07/09/17 12:47, Jonas Bonn wrote:
->>> On 09/07/2017 06:23 AM, Nishanth V wrote:
->>>> added new DBUS methods RegisterAgent and UnregisterAgent to
->>>> Networkmonitor interface so that any client of ofono can register for
->>>> serving cell updates. Added new agent interface NetworkMonitorAgent
->>>> with two methods, ServingCellInformationChanged and Release.
->>>
->>> My spontaneous reaction to this is that it feels like the wrong =
+Hi Slava,
+> =
 
->>> approach.  Why not make the properties actual DBus properties and =
+> In the Sailfish OS case, one is the positioning helper, and there's the =
 
->>> provide PropertiesChanged events for them? That begets you the same =
+> factory test app. That makes it at least two. The factory test app often =
 
->>> functionality for "free".
->>
->> The implementation also seems to limit the number of clients =
+> plays the role of the second client since it's touching pretty much all =
 
->> receiving those cell change notifications to just one. Why? In real =
+> the important interfaces in the system. And there are 3rd party apps =
 
->> life more than one process may need those.
->>
->
-> You keep saying that, but never provide concrete scenarios how this =
+> which we don't control.
 
-> could be 'useful'?  I am tempted to simply ignore such feedback in the =
+See? This wasn't that hard ;)
 
-> future.
->
+How does the factory test app use this info?  Does it need actual =
 
-In the Sailfish OS case, one is the positioning helper, and there's the =
+periodic updates or can it simply obtain this via the method call?
 
-factory test app. That makes it at least two. The factory test app often =
+I'm open to the idea of supporting multiple agents.  We do have to =
 
-plays the role of the second client since it's touching pretty much all =
+figure out who dictates the periodic update interval.  One approach =
 
-the important interfaces in the system. And there are 3rd party apps =
+might be to have a single master agent and multiple observer agents. =
 
-which we don't control.
+Feel free to propose something.
 
-> For now I don't see why we would want to have multiple agents =
+Regards,
+-Denis
 
-> registered and to keep the implementation simple we will only support =
-
-> one.
->
-
-That's fine, we are using a different interface for getting cell =
-
-information anyway. Go ahead and ignore the feedback.
-
-Cheers,
--Slava
-
-> Regards,
-> -Denis
-
-
---===============7543000469346367351==--
+--===============4809192644825452056==--
 
