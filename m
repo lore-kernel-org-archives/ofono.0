@@ -1,45 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============1045510512884209543=="
+Content-Type: multipart/mixed; boundary="===============6599375310689564725=="
 MIME-Version: 1.0
 From: Nishanth V <nishanth.v@intel.com>
-Subject: [PATCH 2/7] include: added enable_periodic_update in netmon driver
-Date: Thu, 07 Sep 2017 09:53:15 +0530
-Message-ID: <1504758200-18624-2-git-send-email-nishanth.v@intel.com>
+Subject: [PATCH 3/7] include: added NetworkMonitorAgent interface
+Date: Thu, 07 Sep 2017 09:53:16 +0530
+Message-ID: <1504758200-18624-3-git-send-email-nishanth.v@intel.com>
 In-Reply-To: <1504758200-18624-1-git-send-email-nishanth.v@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1045510512884209543==
+--===============6599375310689564725==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Defining new method in ofono_netmon_driver,
-enable_periodic_update useful to get periodic update
-on serving cell information.
 ---
- include/netmon.h | 4 ++++
- 1 file changed, 4 insertions(+)
+ include/dbus.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/include/netmon.h b/include/netmon.h
-index 72090c3..c8fcafa 100644
---- a/include/netmon.h
-+++ b/include/netmon.h
-@@ -39,6 +39,10 @@ struct ofono_netmon_driver {
- 	void (*remove)(struct ofono_netmon *netmon);
- 	void (*request_update)(struct ofono_netmon *netmon,
- 					ofono_netmon_cb_t cb, void *data);
-+	void (*enable_periodic_update)(struct ofono_netmon *netmon,
-+					unsigned int enable,
-+					unsigned int period,
-+					ofono_netmon_cb_t cb, void *data);
- };
+diff --git a/include/dbus.h b/include/dbus.h
+index cf68ae5..a6519c7 100644
+--- a/include/dbus.h
++++ b/include/dbus.h
+@@ -61,6 +61,7 @@ extern "C" {
+ #define OFONO_HANDSFREE_INTERFACE OFONO_SERVICE ".Handsfree"
+ #define OFONO_SIRI_INTERFACE OFONO_SERVICE ".Siri"
+ #define OFONO_NETMON_INTERFACE OFONO_SERVICE ".NetworkMonitor"
++#define OFONO_NETMON_AGENT_INTERFACE OFONO_SERVICE ".NetworkMonitorAgent"
+ #define OFONO_LTE_INTERFACE OFONO_SERVICE ".LongTermEvolution"
  =
 
- enum ofono_netmon_cell_type {
+ /* CDMA Interfaces */
 -- =
 
 1.9.1
 
 
---===============1045510512884209543==--
+--===============6599375310689564725==--
 
