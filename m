@@ -1,34 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============6977768972876015580=="
+Content-Type: multipart/mixed; boundary="===============2046565345809442712=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 6/7] udev: fix quectelqmi gps interface
-Date: Fri, 08 Sep 2017 11:06:05 -0500
-Message-ID: <04a13315-4bc6-3941-e2c1-8ec7567fe656@gmail.com>
-In-Reply-To: <20170908024040.31418-6-jonas@southpole.se>
+From: Clayton Craft <clayton@craftyguy.net>
+Subject: [PATCH 1/1] Fix compilation on armhf/Musl
+Date: Fri, 08 Sep 2017 09:18:20 -0700
+Message-ID: <20170908161820.GA3@computer.craftyguy.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6977768972876015580==
+--===============2046565345809442712==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
-
-On 09/07/2017 09:40 PM, Jonas Bonn wrote:
-> Using location-reporting requires both the 'aux' and 'gps' interfaces;
-> the GPS interface is interface 1, not 2.
-> ---
->   plugins/udevng.c | 11 +++++++++--
->   1 file changed, 9 insertions(+), 2 deletions(-)
-> =
+The following patch is needed to successfully build ofono on armhf with
+musl (in place of libc)
 
 
-Applied, thanks.
+diff --git a/gril/parcel.h b/gril/parcel.h
+index e5592ae1..46887890 100644
+--- a/gril/parcel.h
++++ b/gril/parcel.h
+@@ -23,6 +23,7 @@
+ #define __PARCEL_H
 
-Regards,
--Denis
+ #include <stdlib.h>
++#include <stdint.h>
+
+ struct parcel {
+        char *data;
+diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+index 011713e6..45ec0cf9 100644
+--- a/plugins/gemalto.c
++++ b/plugins/gemalto.c
+@@ -25,6 +25,7 @@
+
+ #include <errno.h>
+ #include <stdlib.h>
++#include <stdint.h>
+
+ #include <glib.h>
+ #include <gatchat.h>
 
 
---===============6977768972876015580==--
+--===============2046565345809442712==--
 
