@@ -1,46 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============2046565345809442712=="
+Content-Type: multipart/mixed; boundary="===============7973673747457846313=="
 MIME-Version: 1.0
-From: Clayton Craft <clayton@craftyguy.net>
-Subject: [PATCH 1/1] Fix compilation on armhf/Musl
-Date: Fri, 08 Sep 2017 09:18:20 -0700
-Message-ID: <20170908161820.GA3@computer.craftyguy.net>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/1] Fix compilation on armhf/Musl
+Date: Fri, 08 Sep 2017 12:11:52 -0500
+Message-ID: <ed4776f4-1cb8-b908-67b0-c96cacd80cdc@gmail.com>
+In-Reply-To: <20170908161820.GA3@computer.craftyguy.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2046565345809442712==
+--===============7973673747457846313==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The following patch is needed to successfully build ofono on armhf with
-musl (in place of libc)
+Hi Clayton,
+
+On 09/08/2017 11:18 AM, Clayton Craft wrote:
+> The following patch is needed to successfully build ofono on armhf with
+> musl (in place of libc)
+> =
+
+> =
 
 
-diff --git a/gril/parcel.h b/gril/parcel.h
-index e5592ae1..46887890 100644
---- a/gril/parcel.h
-+++ b/gril/parcel.h
-@@ -23,6 +23,7 @@
- #define __PARCEL_H
+Applied.  Please note that I had to hand-apply this patch since it =
 
- #include <stdlib.h>
-+#include <stdint.h>
+didn't apply cleanly.  Are you using the latest git?
 
- struct parcel {
-        char *data;
-diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-index 011713e6..45ec0cf9 100644
---- a/plugins/gemalto.c
-+++ b/plugins/gemalto.c
-@@ -25,6 +25,7 @@
+Also, I split this into two commits per our Patch submission guidelines. =
 
- #include <errno.h>
- #include <stdlib.h>
-+#include <stdint.h>
+  See 'HACKING' document in git.
 
- #include <glib.h>
- #include <gatchat.h>
+Regards,
+-Denis
 
-
---===============2046565345809442712==--
+--===============7973673747457846313==--
 
