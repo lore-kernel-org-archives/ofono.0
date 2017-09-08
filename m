@@ -1,38 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============8971857649947704542=="
+Content-Type: multipart/mixed; boundary="===============6166826912117425217=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH][v2 1/2] voicecall,
- common: move call_status_to_string() to common
-Date: Thu, 07 Sep 2017 17:30:09 -0500
-Message-ID: <c4f24919-ae19-3cfc-fd8d-f94293e3fb64@gmail.com>
-In-Reply-To: <20170907222733.26345-1-lynxis@fe80.eu>
+From: Clayton Craft <clayton@craftyguy.net>
+Subject: nokia-modem (N900) not detected after migration to udevng
+Date: Thu, 07 Sep 2017 17:51:37 -0700
+Message-ID: <20170908005137.GB3@computer.craftyguy.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8971857649947704542==
+--===============6166826912117425217==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alexander,
+Hi,
+I've been debugging why the n900 modem is not recognized by ofono
+for a few days now, and have determined that the cause is because the
+calls in udevng to udev_device_get_devnode return NULL. It seems that
+the nokia-modem driver does not create any device nodes under /dev.
 
-On 09/07/2017 05:27 PM, Alexander Couzens wrote:
-> call_status_to_string() is useful for debug output.
-> Change signature to contain enum call_status
-> Replace default case to get compiler warning when new enums added
-> ---
->   src/common.c    | 22 ++++++++++++++++++++++
->   src/common.h    |  1 +
->   src/voicecall.c | 20 --------------------
->   3 files changed, 23 insertions(+), 20 deletions(-)
-> =
+This seems to be a regression in functionality since the move to
+udevng as previous versions of ofono seem to detect the n900 modem
+correctly (right before this commit 3ac449e25fc8cb9880c48b8f309189c6a644f20=
+0)
+This issue occurs from this commit onwards, including the latest commit
+as of this mail.
+
+https://git.kernel.org/pub/scm/network/ofono/ofono.git/tree/plugins/udevng.=
+c#n1316
+
+-Clayton
 
 
-Both applied, thanks.
-
-Regards,
--Denis
-
-
---===============8971857649947704542==--
+--===============6166826912117425217==--
 
