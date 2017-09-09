@@ -1,105 +1,127 @@
-Content-Type: multipart/mixed; boundary="===============8287542417507003059=="
+Content-Type: multipart/mixed; boundary="===============0019871596577260448=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
+From: Jonas Bonn <jonas@southpole.se>
 Subject: Re: [PATCH 1/7] netmon: modified api.txt for network monitor agent
-Date: Sat, 09 Sep 2017 12:30:42 +0300
-Message-ID: <d788f3ec-c02d-1237-c3ae-2e6a1d3270b4@jolla.com>
-In-Reply-To: <da52a7d8-959d-483b-f309-be71a3e34ef2@gmail.com>
+Date: Sat, 09 Sep 2017 11:47:34 +0200
+Message-ID: <563aa13d-dcb1-0993-8bc7-81328fb89103@southpole.se>
+In-Reply-To: <d788f3ec-c02d-1237-c3ae-2e6a1d3270b4@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8287542417507003059==
+--===============0019871596577260448==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+On 09/09/2017 11:30 AM, Slava Monich wrote:
+> Hi Denis,
+>
+>> Hi Slava,
+>>>
+>>> In the Sailfish OS case, one is the positioning helper, and there's =
 
-> Hi Slava,
+>>> the factory test app. That makes it at least two. The factory test =
+
+>>> app often plays the role of the second client since it's touching =
+
+>>> pretty much all the important interfaces in the system. And there =
+
+>>> are 3rd party apps which we don't control.
 >>
->> In the Sailfish OS case, one is the positioning helper, and there's =
+>> See? This wasn't that hard ;)
+>>
+>> How does the factory test app use this info?  Does it need actual =
 
->> the factory test app. That makes it at least two. The factory test =
-
->> app often plays the role of the second client since it's touching =
-
->> pretty much all the important interfaces in the system. And there are =
-
->> 3rd party apps which we don't control.
+>> periodic updates or can it simply obtain this via the method call?
+>>
 >
-> See? This wasn't that hard ;)
+> Our RIL plugin decides on the update rate internally, based on the =
+
+> device state (limiting the rate when the screen turns off).
 >
-> How does the factory test app use this info?  Does it need actual =
+> Different clients have different needs - some need updates only when =
 
-> periodic updates or can it simply obtain this via the method call?
+> the screen is on (if they are just displaying something on the screen) =
+
+> and some may always need updates (a background task collecting some =
+
+> data or whatever). The optimal solution may be quite specific to the =
+
+> environment where ofono is used.
 >
+>> I'm open to the idea of supporting multiple agents.  We do have to =
 
-Our RIL plugin decides on the update rate internally, based on the =
+>> figure out who dictates the periodic update interval.  One approach =
 
-device state (limiting the rate when the screen turns off).
+>> might be to have a single master agent and multiple observer agents. =
 
-Different clients have different needs - some need updates only when the =
+>> Feel free to propose something.
+>
+> You (correctly) said that the agent approach saves some system =
 
-screen is on (if they are just displaying something on the screen) and =
+> resources by not sending unnecessary signals if no one is interested =
 
-some may always need updates (a background task collecting some data or =
+> in this information. However, in all other cases the agent (method =
 
-whatever). The optimal solution may be quite specific to the environment =
+> call) approach is less efficient than signals.
+>
+> ofono calls dbus-daemon, the daemon calls the agent, each call has a =
 
-where ofono is used.
+> reply, so the total number of D-Bus packets per notification comes to =
 
-> I'm open to the idea of supporting multiple agents.  We do have to =
+> 4*n where n is the number of agents (or 2*n if the caller sets =
 
-> figure out who dictates the periodic update interval.  One approach =
+> NO_REPLY_EXPECTED flag).
+>
+> If you are using signals, the number of packets involved is n+1 (one =
 
-> might be to have a single master agent and multiple observer agents. =
+> packet from ofono to the daemon and then one to each interested =
 
-> Feel free to propose something.
+> client). Obviously, (n+1) > 2*n (let alone 4*n) if and only if n =3D 0. =
 
-You (correctly) said that the agent approach saves some system resources =
+> Not to mention that signals are significantly easier to use than =
 
-by not sending unnecessary signals if no one is interested in this =
+> (especially, multiple) agents.
+>
+> That said, this NetworkMonitor thing is what it is and you decide how =
 
-information. However, in all other cases the agent (method call) =
+> it works. If it doesn't suit our needs (and it doesn't) I just =
 
-approach is less efficient than signals.
+> implement my own (and I did). I'm not in the mood to argue whose =
 
-ofono calls dbus-daemon, the daemon calls the agent, each call has a =
+> implementation is better. Everything can be done in so many different =
 
-reply, so the total number of D-Bus packets per notification comes to =
+> ways, so let a hundred flowers bloom.
 
-4*n where n is the number of agents (or 2*n if the caller sets =
+That last paragraph is a masterpiece!  Well said!
 
-NO_REPLY_EXPECTED flag).
+Why not create a second interface .AsynchNetworkMonitor that sends =
 
-If you are using signals, the number of packets involved is n+1 (one =
+PropertyChanged signals.  This interface can be disabled by default, but =
 
-packet from ofono to the daemon and then one to each interested client). =
+can be requested by setting to =
 
-Obviously, (n+1) > 2*n (let alone 4*n) if and only if n =3D 0. Not to =
+org.ofono.Modem.AsynchronousNetworkMonitorEnabled to 'true', at which =
 
-mention that signals are significantly easier to use than (especially, =
+point the interface is created on the modem object...?
 
-multiple) agents.
-
-That said, this NetworkMonitor thing is what it is and you decide how it =
-
-works. If it doesn't suit our needs (and it doesn't) I just implement my =
-
-own (and I did). I'm not in the mood to argue whose implementation is =
-
-better. Everything can be done in so many different ways, so let a =
-
-hundred flowers bloom.
-
-Cheers,
--Slava
+/Jonas
 
 >
-> Regards,
-> -Denis
+> Cheers,
+> -Slava
 >
+>>
+>> Regards,
+>> -Denis
+>>
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> https://lists.ofono.org/mailman/listinfo/ofono
 
 
---===============8287542417507003059==--
+
+--===============0019871596577260448==--
 
