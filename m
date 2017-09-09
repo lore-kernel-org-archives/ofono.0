@@ -1,94 +1,210 @@
-Content-Type: multipart/mixed; boundary="===============3154640993086373151=="
+Content-Type: multipart/mixed; boundary="===============1053215478451793143=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] qmimodem: enable message waiting atom
-Date: Sat, 09 Sep 2017 10:18:26 -0500
-Message-ID: <82c346f5-ac9c-3260-fb42-b751e63ce8dd@gmail.com>
-In-Reply-To: <20170909021949.1FCD060F2C@rivendell.scintill.net>
+Subject: Re: [PATCH 1/7] netmon: modified api.txt for network monitor agent
+Date: Sat, 09 Sep 2017 11:11:21 -0500
+Message-ID: <c16f733e-1b4b-7f4e-00be-fbe867330ecd@gmail.com>
+In-Reply-To: <d788f3ec-c02d-1237-c3ae-2e6a1d3270b4@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3154640993086373151==
+--===============1053215478451793143==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Joey,
+Hi Slava,
 
-On 09/08/2017 08:26 PM, Joey Hewitt wrote:
-> Conditional on one of UIM (SIM), DMS (legacy SIM), or WMS (SMS).
-> ---
+On 09/09/2017 04:30 AM, Slava Monich wrote:
+> Hi Denis,
 > =
 
-> Tested on my Android phone. It correctly reported
-> VoicemailMailboxNumber, and VoicemailWaiting property when a voicemail
-> was sent. I got an error "Queuing a EF-MWI write to SIM failed", though
-> -- I'm not sure if that's a bug somewhere in the stack, or if that's
-> just how my SIM is.
+>> Hi Slava,
+>>>
+>>> In the Sailfish OS case, one is the positioning helper, and there's =
 
-Neither QMI SIM driver supports SIM writes (e.g. write_file_transparent, =
+>>> the factory test app. That makes it at least two. The factory test =
 
-write_file_linear, write_file_cyclic).  Without those, the =
+>>> app often plays the role of the second client since it's touching =
 
-message-waiting atom is only half functional...
+>>> pretty much all the important interfaces in the system. And there are =
+
+>>> 3rd party apps which we don't control.
+>>
+>> See? This wasn't that hard ;)
+>>
+>> How does the factory test app use this info?  Does it need actual =
+
+>> periodic updates or can it simply obtain this via the method call?
+>>
+> =
+
+> Our RIL plugin decides on the update rate internally, based on the =
+
+> device state (limiting the rate when the screen turns off).
+
+And hopefully you understand why hard-coding the behavior in a plugin is =
+
+not a solution for upstream?  Our solution must be generic enough where =
+
+any behavior can be implemented, perhaps with a bit more pain on the =
+
+integrator side.  But the advantage is that it works for every piece of =
+
+hardware that has support for a particular feature.
+
+You have the advantage that you have control or can assume how stuff =
+
+works on your platform.  Hence you can implement such simplistic =
+
+behavior of turning serving cell updates to every minute with screen off =
+
+/ every 1 second with screen on.  Unfortunately upstream cannot make =
+
+such assumptions, cannot rely on hacks and has to implement proper =
+
+solutions.
 
 > =
 
->   plugins/gobi.c | 7 +++++++
->   1 file changed, 7 insertions(+)
+> Different clients have different needs - some need updates only when the =
+
+> screen is on (if they are just displaying something on the screen) and =
+
+> some may always need updates (a background task collecting some data or =
+
+> whatever). The optimal solution may be quite specific to the environment =
+
+> where ofono is used.
+
+Agreed.  Upstream will try to provide APIs to enable you to do that.  If =
+
+some API doesn't cover your needs, then feel free to contribute and make =
+
+things better.  Complaining and then taking your ball and going home is =
+
+not conducive to upstream paying attention to your needs.  Only through =
+
+active contribution can you influence things.  Just saying...
+
 > =
 
-> diff --git a/plugins/gobi.c b/plugins/gobi.c
-> index a498599..0bc134f 100644
-> --- a/plugins/gobi.c
-> +++ b/plugins/gobi.c
-> @@ -490,6 +490,7 @@ static void gobi_post_online(struct ofono_modem *mode=
-m)
->   	struct gobi_data *data =3D ofono_modem_get_data(modem);
->   	struct ofono_gprs *gprs;
->   	struct ofono_gprs_context *gc;
-> +	struct ofono_message_waiting *mw;
+>> I'm open to the idea of supporting multiple agents.  We do have to =
 
-Variable declaration can be moved into the if statement.
+>> figure out who dictates the periodic update interval.  One approach =
 
->   =
+>> might be to have a single master agent and multiple observer agents. =
 
->   	DBG("%p", modem);
->   =
-
-> @@ -499,6 +500,12 @@ static void gobi_post_online(struct ofono_modem *mod=
-em)
->   	if (data->features & GOBI_VOICE)
->   		ofono_ussd_create(modem, 0, "qmimodem", data->device);
->   =
-
-> +	if (data->features & (GOBI_UIM | GOBI_DMS | GOBI_WMS)) {
-
-And strictly speaking the check should be for
-(data->features & (GOBI_UIM | GOBI_DMS)) && (data->features & GOBI_WMS))
-
-However, since we got to post_sim/post_online somehow (e.g. presence of =
-
-one of these services is implied), I'd just simply use
-
-if (data->features & GOBI_WMS)
-
-> +		mw =3D ofono_message_waiting_create(modem);
-> +		if (mw)
-> +			ofono_message_waiting_register(mw);
-> +	}
-> +
-
-This should really go into post_sim
-
->   	if (data->features & GOBI_WDS) {
->   		gprs =3D ofono_gprs_create(modem, 0, "qmimodem", data->device);
->   		gc =3D ofono_gprs_context_create(modem, 0, "qmimodem",
+>> Feel free to propose something.
 > =
 
+> You (correctly) said that the agent approach saves some system resources =
+
+> by not sending unnecessary signals if no one is interested in this =
+
+> information. However, in all other cases the agent (method call) =
+
+> approach is less efficient than signals.
+> =
+
+> ofono calls dbus-daemon, the daemon calls the agent, each call has a =
+
+> reply, so the total number of D-Bus packets per notification comes to =
+
+> 4*n where n is the number of agents (or 2*n if the caller sets =
+
+> NO_REPLY_EXPECTED flag).
+> =
+
+
+Which we do by the way.  The ServingCellInformationChanged method call =
+
+is already sent as noreply.  It was not marked thus in the =
+
+documentation.  It was an oversight that has been now fixed.
+
+> If you are using signals, the number of packets involved is n+1 (one =
+
+> packet from ofono to the daemon and then one to each interested client). =
+
+> Obviously, (n+1) > 2*n (let alone 4*n) if and only if n =3D 0. Not to =
+
+> mention that signals are significantly easier to use than (especially, =
+
+> multiple) agents.
+
+I don't know what you're arguing here.  Yes in an idealized world having =
+
+n agents is less efficient than having a signal with n observers. =
+
+Multicast is more efficient.  No ****.
+
+But do realize things are never so simple.  You do have to pay a cost =
+
+for this, through complex signal matching data structures, having to set =
+
+up proper Match rules with dbus-daemon, and unsubscribing from such =
+
+signals is sometimes not possible.  Some clients simply don't do this =
+
+properly, and a signal ends up being blasted out to way more clients =
+
+than your idealized model.  But I digress as this isn't what was being =
+
+argued.
+
+Jonas wanted all these to be actual properties.  So a PropertyChanged =
+
+signal would be emitted for each and every one.  Given that we have 20 =
+
+odd properties defined, sending a signal for each one vs a single method =
+
+call out to the agent is more efficient.  Yes we can perform comparisons =
+
+and only emit properties that changed.  But most of these are signal =
+
+related, and so are extremely variable.  The chance that they don't =
+
+change between updates is tiny.
+
+Which by the way is what your vaunted 'own' implementation does.  So its =
+
+not sending 1 signal per update either, is it?  You might want to fix =
+
+that as it doesn't fit your ideal world view ;)
+
+So regardless of how you look at it, the agent approach is more =
+
+efficient than having everything as a property.  That was my original point.
+
+And by the way, the agent approach lets us figure out when a client has =
+
+died and updates are no longer needed.  So we can intelligently turn off =
+
+communication with the modem and not waste resources.  We can also more =
+
+easily control access permissions (as in which application can enable =
+
+updates in the first place) via the security framework.  Those are huge =
+
+design advantages in our view.
+
+> =
+
+> That said, this NetworkMonitor thing is what it is and you decide how it =
+
+> works. If it doesn't suit our needs (and it doesn't) I just implement my =
+
+> own (and I did). I'm not in the mood to argue whose implementation is =
+
+> better. Everything can be done in so many different ways, so let a =
+
+> hundred flowers bloom.
+
+And again I see you taking your ball and going home ;)
 
 Regards,
 -Denis
 
---===============3154640993086373151==--
+--===============1053215478451793143==--
 
