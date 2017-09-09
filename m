@@ -1,36 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============2266628832510756996=="
+Content-Type: multipart/mixed; boundary="===============1424182495691641520=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/7] netmon: modified api.txt for network monitor agent
-Date: Fri, 08 Sep 2017 15:11:27 -0500
-Message-ID: <2ba394b4-98b0-1539-067f-da614d7d3000@gmail.com>
-In-Reply-To: <1504758200-18624-1-git-send-email-nishanth.v@intel.com>
+From: Joey Hewitt <joey@joeyhewitt.com>
+Subject: [PATCH] qmimodem: enable message waiting atom
+Date: Fri, 08 Sep 2017 18:26:03 -0700
+Message-ID: <20170909021949.1FCD060F2C@rivendell.scintill.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2266628832510756996==
+--===============1424182495691641520==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nishanth,
+Conditional on one of UIM (SIM), DMS (legacy SIM), or WMS (SMS).
+---
 
-On 09/06/2017 11:23 PM, Nishanth V wrote:
-> added new DBUS methods RegisterAgent and UnregisterAgent to
-> Networkmonitor interface so that any client of ofono can register for
-> serving cell updates. Added new agent interface NetworkMonitorAgent
-> with two methods, ServingCellInformationChanged and Release.
-> ---
->   doc/networkmonitor-api.txt | 28 ++++++++++++++++++++++++++++
->   1 file changed, 28 insertions(+)
-> =
+Tested on my Android phone. It correctly reported
+VoicemailMailboxNumber, and VoicemailWaiting property when a voicemail
+was sent. I got an error "Queuing a EF-MWI write to SIM failed", though
+-- I'm not sure if that's a bug somewhere in the stack, or if that's
+just how my SIM is.
+
+ plugins/gobi.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index a498599..0bc134f 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -490,6 +490,7 @@ static void gobi_post_online(struct ofono_modem *modem)
+ 	struct gobi_data *data =3D ofono_modem_get_data(modem);
+ 	struct ofono_gprs *gprs;
+ 	struct ofono_gprs_context *gc;
++	struct ofono_message_waiting *mw;
+ =
+
+ 	DBG("%p", modem);
+ =
+
+@@ -499,6 +500,12 @@ static void gobi_post_online(struct ofono_modem *modem)
+ 	if (data->features & GOBI_VOICE)
+ 		ofono_ussd_create(modem, 0, "qmimodem", data->device);
+ =
+
++	if (data->features & (GOBI_UIM | GOBI_DMS | GOBI_WMS)) {
++		mw =3D ofono_message_waiting_create(modem);
++		if (mw)
++			ofono_message_waiting_register(mw);
++	}
++
+ 	if (data->features & GOBI_WDS) {
+ 		gprs =3D ofono_gprs_create(modem, 0, "qmimodem", data->device);
+ 		gc =3D ofono_gprs_context_create(modem, 0, "qmimodem",
+-- =
+
+2.7.4
 
 
-All patches in this series have been applied, thanks.
-
-Regards,
--Denis
-
-
---===============2266628832510756996==--
+--===============1424182495691641520==--
 
