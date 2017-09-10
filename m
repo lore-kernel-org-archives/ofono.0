@@ -1,81 +1,179 @@
-Content-Type: multipart/mixed; boundary="===============8072455818214529591=="
+Content-Type: multipart/mixed; boundary="===============4421371997435856339=="
 MIME-Version: 1.0
 From: Joey Hewitt <joey@joeyhewitt.com>
-Subject: [PATCH v2] gobi: enable message waiting atom
-Date: Sat, 09 Sep 2017 23:16:03 -0700
-Message-ID: <20170910063614.E819A642AA@rivendell.scintill.net>
-In-Reply-To: <82c346f5-ac9c-3260-fb42-b751e63ce8dd@gmail.com>
+Subject: [PATCH] qmimodem: implement SIM write_file_linear
+Date: Sat, 09 Sep 2017 22:48:53 -0700
+Message-ID: <20170910065410.966C9642AA@rivendell.scintill.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8072455818214529591==
+--===============4421371997435856339==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+cyclic and transparent not enabled, because I haven't tested them.
 ---
 
-On 09/09/2017 08:18 AM, Denis Kenzior wrote:
-> Hi Joey,
-> =
+I wonder what to do with sw1 and sw2. I've seen in the case of a read,
+that a file-not-found is converted into a QMI error in addition to the
+SW values being returned. I'm checking for QMI error before sw1/2. I
+don't know if all SIM errors are returned with QMI error. Should sw1/2
+error take precedence over a QMI error so that the callback can get those
+values?
 
-> Neither QMI SIM driver supports SIM writes (e.g. write_file_transparent, =
+The QMI read_generic_cb() isn't checking the SW values, although I
+believe they're available there as well. Thoughts on what's best?
 
-> write_file_linear, write_file_cyclic).  Without those, the =
+ drivers/qmimodem/sim.c | 117 +++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 file changed, 117 insertions(+)
 
-> message-waiting atom is only half functional...
-> =
-
-
-Ah, I thought I had checked the SIM support was there, but I missed
-that! I'm sending another patch to add that for qmimodem.
-
-> And strictly speaking the check should be for
-> (data->features & (GOBI_UIM | GOBI_DMS)) && (data->features & GOBI_WMS))
-> =
-
-> However, since we got to post_sim/post_online somehow (e.g. presence of =
-
-> one of these services is implied), I'd just simply use
-> =
-
-> if (data->features & GOBI_WMS)
-
-My logic was that any of the 3 features alone could provide some level
-of message-waiting functionality, but I suppose both SIM and SMS are
-needed to really be useful.
-
-Now that I understand more that the legacy SIM will probably never be
-able to write SIM files, should the message waiting atom be
-"half-functional" if it's legacy, or not enabled at all?
-
- plugins/gobi.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
-
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index a498599..3205307 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -481,8 +481,12 @@ static void gobi_post_sim(struct ofono_modem *modem)
- 	if (data->features & GOBI_NAS)
- 		ofono_radio_settings_create(modem, 0, "qmimodem", data->device);
- =
-
--	if (data->features & GOBI_WMS)
-+	if (data->features & GOBI_WMS) {
- 		ofono_sms_create(modem, 0, "qmimodem", data->device);
-+		struct ofono_message_waiting *mw =3D ofono_message_waiting_create(modem);
-+		if (mw)
-+			ofono_message_waiting_register(mw);
-+	}
+diff --git a/drivers/qmimodem/sim.c b/drivers/qmimodem/sim.c
+index 8d40028..ce2261a 100644
+--- a/drivers/qmimodem/sim.c
++++ b/drivers/qmimodem/sim.c
+@@ -317,6 +317,121 @@ error:
+ 	g_free(cbd);
  }
  =
 
- static void gobi_post_online(struct ofono_modem *modem)
++static void write_generic_cb(struct qmi_result *result, void *user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_sim_write_cb_t cb =3D cbd->cb;
++	const unsigned char *card_result;
++	uint16_t len;
++
++	DBG("");
++
++	if (qmi_result_set_error(result, NULL)) {
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
++		return;
++	}
++
++	card_result =3D qmi_result_get(result, 0x10, &len);
++	if (!card_result || len !=3D 2) {
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
++		return;
++	}
++
++	const uint8_t sw1 =3D card_result[0], sw2 =3D card_result[1];
++
++	if ((sw1 !=3D 0x90 && sw1 !=3D 0x91 && sw1 !=3D 0x92 && sw1 !=3D 0x9f) ||
++			(sw1 =3D=3D 0x90 && sw2 !=3D 0x00)) {
++		struct ofono_error error;
++
++		ofono_error("%s: error sw1 %02x sw2 %02x", __func__, sw1, sw2);
++
++		error.type =3D OFONO_ERROR_TYPE_SIM;
++		error.error =3D (sw1 << 8) | sw2;
++
++		cb(&error, cbd->data);
++		return;
++	}
++
++	CALLBACK_WITH_SUCCESS(cb, cbd->data);
++}
++
++void write_generic(struct ofono_sim *sim,
++			uint16_t qmi_message, int fileid, int start_or_recordnum, int length,
++			const unsigned char *value, const unsigned char *path, unsigned int pat=
+h_len,
++			ofono_sim_write_cb_t cb, void *user_data)
++{
++	struct sim_data *data =3D ofono_sim_get_data(sim);
++	struct cb_data *cbd =3D cb_data_new(cb, user_data);
++	unsigned char aid_data[2] =3D { 0x00, 0x00 };
++	unsigned char *write_data;
++	unsigned char fileid_data[9];
++	int fileid_len;
++	struct qmi_param *param;
++
++	DBG("file id 0x%04x path len %d", fileid, path_len);
++
++	fileid_len =3D create_fileid_data(data->app_type, fileid, path, path_len,=
+ fileid_data);
++	if (fileid_len < 0)
++		goto error;
++
++	write_data =3D alloca(4 + length);
++	write_data[0] =3D start_or_recordnum & 0xff;
++	write_data[1] =3D (start_or_recordnum & 0xff00) >> 8;
++	write_data[2] =3D length & 0xff;
++	write_data[3] =3D (length & 0xff00) >> 8;
++	memcpy(&write_data[4], value, length);
++
++	param =3D qmi_param_new();
++	if (!param)
++		goto error;
++
++	qmi_param_append(param, 0x01, sizeof(aid_data), aid_data);
++	qmi_param_append(param, 0x02, fileid_len, fileid_data);
++	qmi_param_append(param, 0x03, 4 + length, write_data);
++
++	if (qmi_service_send(data->uim, qmi_message, param,
++						write_generic_cb, cbd, g_free) > 0)
++		return;
++
++	qmi_param_free(param);
++
++error:
++	CALLBACK_WITH_FAILURE(cb, user_data);
++
++	g_free(cbd);
++}
++
++
++static void qmi_write_transparent(struct ofono_sim *sim,
++				int fileid, int start, int length,
++				const unsigned char *value,
++				const unsigned char *path,
++				unsigned int path_len,
++				ofono_sim_write_cb_t cb, void *user_data)
++{
++	write_generic(sim, QMI_UIM_WRITE_TRANSPARENT, fileid, start, length, valu=
+e, path, path_len, cb, user_data);
++}
++
++static void qmi_write_linear(struct ofono_sim *sim,
++				int fileid, int record, int length,
++				const unsigned char *value,
++				const unsigned char *path,
++				unsigned int path_len,
++				ofono_sim_write_cb_t cb, void *user_data)
++{
++	write_generic(sim, QMI_UIM_WRITE_RECORD, fileid, record, length, value, p=
+ath, path_len, cb, user_data);
++}
++
++static void qmi_write_cyclic(struct ofono_sim *sim,
++				int fileid, int length,
++				const unsigned char *value,
++				const unsigned char *path,
++				unsigned int path_len,
++				ofono_sim_write_cb_t cb, void *user_data)
++{
++	write_generic(sim, QMI_UIM_WRITE_RECORD, fileid, 0, length, value, path, =
+path_len, cb, user_data);
++}
++
+ static void get_imsi_cb(struct qmi_result *result, void *user_data)
+ {
+ 	struct cb_data *cbd =3D user_data;
+@@ -777,6 +892,8 @@ static struct ofono_sim_driver driver =3D {
+ 	.read_file_transparent	=3D qmi_read_transparent,
+ 	.read_file_linear	=3D qmi_read_record,
+ 	.read_file_cyclic	=3D qmi_read_record,
++	.write_file_linear	=3D qmi_write_linear,
++	// transparent and cyclic not exposed, because they haven't been tested
+ 	.read_imsi		=3D qmi_read_imsi,
+ 	.query_passwd_state	=3D qmi_query_passwd_state,
+ 	.query_pin_retries	=3D qmi_query_pin_retries,
 -- =
 
 2.7.4
 
 
---===============8072455818214529591==--
+--===============4421371997435856339==--
 
