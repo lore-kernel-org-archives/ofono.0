@@ -1,82 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============8339503752146512413=="
+Content-Type: multipart/mixed; boundary="===============9042759327588540208=="
 MIME-Version: 1.0
-From: Clayton Craft <clayton@craftyguy.net>
-Subject: Re: nokia-modem (N900) not detected after migration to udevng
-Date: Mon, 11 Sep 2017 12:54:53 -0700
-Message-ID: <20170911195453.GA3@computer.craftyguy.net>
-In-Reply-To: <c2bc61b2-3f54-91db-3efd-ae3d0959a176@gmail.com>
+From: Joey Hewitt <joey@joeyhewitt.com>
+Subject: [PATCH v3] gobi: enable message waiting atom
+Date: Sat, 09 Sep 2017 23:16:03 -0700
+Message-ID: <20170912055650.CF06460F2C@rivendell.scintill.net>
+In-Reply-To: <2dcbb720-fb26-d32d-f2c7-79c1a9dac91b@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8339503752146512413==
+--===============9042759327588540208==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, Sep 11, 2017 at 01:49:05PM -0500, Denis Kenzior wrote:
->If Jonas or you want to combine these into a single proper patch, =
+---
 
->I'll take it up.
+On 09/10/2017 10:59 AM, Denis Kenzior wrote:
+> Does DMS provide support to twiddle the EFmwis/EFmwi/EFmbdn by some =
 
+> other means?  From what I remember it doesn't, but may be I'm not =
 
-Challenge accepted! Combined patch below.
+> remembering correctly.
+> =
 
--Clayton
+> If not, then we shouldn't enable message-waiting in that case.
 
+I'm not an expert, but from looking Gobi API, maybe the PBM service can
+update MBDN (eQMIPBMPhonebookTypes_MailBoxDialingNumber) and WMS could
+update MWI (WMSSetWaitingMessage). I don't see docs or examples of how
+they work though, and I haven't tried. I also don't know if it makes
+sense for oFono's target devices that don't have/use the UIM service.
 
+Since the legacy SIM atom doesn't have that now, I've made the feature
+check for the UIM service, as well as not "ForceSimLegacy" flag.
 
- plugins/udevng.c | 8 +++-----
- 1 file changed, 3 insertions(+), 5 deletions(-)
+ plugins/gobi.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 518eda8e..a4b99aa4 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -1013,8 +1013,6 @@ static gboolean setup_isi_serial(struct modem_info* m=
-odem)
- 	if (value)
- 		ofono_modem_set_integer(modem->modem, "Address", atoi(value));
+diff --git a/plugins/gobi.c b/plugins/gobi.c
+index a498599..59416f2 100644
+--- a/plugins/gobi.c
++++ b/plugins/gobi.c
+@@ -45,6 +45,7 @@
+ #include <ofono/radio-settings.h>
+ #include <ofono/location-reporting.h>
+ #include <ofono/log.h>
++#include <ofono/message-waiting.h>
  =
 
--	ofono_modem_set_string(modem->modem, "Device", info->devnode);
--
- 	return TRUE;
+ #include <drivers/qmimodem/qmi.h>
+ #include <drivers/qmimodem/dms.h>
+@@ -483,6 +484,15 @@ static void gobi_post_sim(struct ofono_modem *modem)
+ =
+
+ 	if (data->features & GOBI_WMS)
+ 		ofono_sms_create(modem, 0, "qmimodem", data->device);
++
++	if ((data->features & GOBI_WMS) && (data->features & GOBI_UIM) &&
++			!ofono_modem_get_boolean(modem, "ForceSimLegacy")) {
++		struct ofono_message_waiting *mw =3D
++					ofono_message_waiting_create(modem);
++
++		if (mw)
++			ofono_message_waiting_register(mw);
++	}
  }
  =
 
-@@ -1325,7 +1323,7 @@ static void add_serial_device(struct udev_device *dev)
- =
+ static void gobi_post_online(struct ofono_modem *modem)
+-- =
 
- 	devnode =3D udev_device_get_devnode(dev);
- =
+2.7.4
 
--	if (!syspath || !devname || !devpath || !devnode)
-+	if (!syspath || !devpath)
- 		return;
- =
 
- 	modem =3D g_hash_table_lookup(modem_list, syspath);
-@@ -1337,7 +1335,7 @@ static void add_serial_device(struct udev_device *dev)
- 		modem->type =3D MODEM_TYPE_SERIAL;
- 		modem->syspath =3D g_strdup(syspath);
- 		modem->devname =3D g_strdup(devname);
--		modem->driver =3D g_strdup("legacy");
-+		modem->driver =3D g_strdup(driver);
- =
-
- 		g_hash_table_replace(modem_list, modem->syspath, modem);
- 	}
-@@ -1357,7 +1355,7 @@ static void add_serial_device(struct udev_device *dev)
- 	info->subsystem =3D g_strdup(subsystem);
- 	info->dev =3D udev_device_ref(dev);
- =
-
--	modem->devices =3D g_slist_append(modem->devices, info);
-+	modem->serial =3D info;
- }
- =
-
- static void add_device(const char *syspath, const char *devname,
-
---===============8339503752146512413==--
+--===============9042759327588540208==--
 
