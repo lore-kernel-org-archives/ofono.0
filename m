@@ -1,179 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============4421371997435856339=="
+Content-Type: multipart/mixed; boundary="===============3602454739695307879=="
 MIME-Version: 1.0
-From: Joey Hewitt <joey@joeyhewitt.com>
-Subject: [PATCH] qmimodem: implement SIM write_file_linear
-Date: Sat, 09 Sep 2017 22:48:53 -0700
-Message-ID: <20170910065410.966C9642AA@rivendell.scintill.net>
+From: Clayton Craft <clayton@craftyguy.net>
+Subject: [PATCH 1/1] isimodem: Use correct callback for pin status
+Date: Sun, 10 Sep 2017 09:41:28 -0700
+Message-ID: <20170910164128.GA3@computer.craftyguy.net>
+In-Reply-To: <20170909203404.GG3@computer.craftyguy.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4421371997435856339==
+--===============3602454739695307879==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-cyclic and transparent not enabled, because I haven't tested them.
----
+This fixes the segfault I experienced on enabling the modem by using
+the correct callback for pin status response.
 
-I wonder what to do with sw1 and sw2. I've seen in the case of a read,
-that a file-not-found is converted into a QMI error in addition to the
-SW values being returned. I'm checking for QMI error before sw1/2. I
-don't know if all SIM errors are returned with QMI error. Should sw1/2
-error take precedence over a QMI error so that the callback can get those
-values?
 
-The QMI read_generic_cb() isn't checking the SW values, although I
-believe they're available there as well. Thoughts on what's best?
+ drivers/isimodem/sim.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
- drivers/qmimodem/sim.c | 117 +++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 file changed, 117 insertions(+)
-
-diff --git a/drivers/qmimodem/sim.c b/drivers/qmimodem/sim.c
-index 8d40028..ce2261a 100644
---- a/drivers/qmimodem/sim.c
-+++ b/drivers/qmimodem/sim.c
-@@ -317,6 +317,121 @@ error:
- 	g_free(cbd);
- }
- =
-
-+static void write_generic_cb(struct qmi_result *result, void *user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_sim_write_cb_t cb =3D cbd->cb;
-+	const unsigned char *card_result;
-+	uint16_t len;
-+
-+	DBG("");
-+
-+	if (qmi_result_set_error(result, NULL)) {
-+		CALLBACK_WITH_FAILURE(cb, cbd->data);
-+		return;
-+	}
-+
-+	card_result =3D qmi_result_get(result, 0x10, &len);
-+	if (!card_result || len !=3D 2) {
-+		CALLBACK_WITH_FAILURE(cb, cbd->data);
-+		return;
-+	}
-+
-+	const uint8_t sw1 =3D card_result[0], sw2 =3D card_result[1];
-+
-+	if ((sw1 !=3D 0x90 && sw1 !=3D 0x91 && sw1 !=3D 0x92 && sw1 !=3D 0x9f) ||
-+			(sw1 =3D=3D 0x90 && sw2 !=3D 0x00)) {
-+		struct ofono_error error;
-+
-+		ofono_error("%s: error sw1 %02x sw2 %02x", __func__, sw1, sw2);
-+
-+		error.type =3D OFONO_ERROR_TYPE_SIM;
-+		error.error =3D (sw1 << 8) | sw2;
-+
-+		cb(&error, cbd->data);
-+		return;
-+	}
-+
-+	CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+}
-+
-+void write_generic(struct ofono_sim *sim,
-+			uint16_t qmi_message, int fileid, int start_or_recordnum, int length,
-+			const unsigned char *value, const unsigned char *path, unsigned int pat=
-h_len,
-+			ofono_sim_write_cb_t cb, void *user_data)
-+{
-+	struct sim_data *data =3D ofono_sim_get_data(sim);
-+	struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+	unsigned char aid_data[2] =3D { 0x00, 0x00 };
-+	unsigned char *write_data;
-+	unsigned char fileid_data[9];
-+	int fileid_len;
-+	struct qmi_param *param;
-+
-+	DBG("file id 0x%04x path len %d", fileid, path_len);
-+
-+	fileid_len =3D create_fileid_data(data->app_type, fileid, path, path_len,=
- fileid_data);
-+	if (fileid_len < 0)
-+		goto error;
-+
-+	write_data =3D alloca(4 + length);
-+	write_data[0] =3D start_or_recordnum & 0xff;
-+	write_data[1] =3D (start_or_recordnum & 0xff00) >> 8;
-+	write_data[2] =3D length & 0xff;
-+	write_data[3] =3D (length & 0xff00) >> 8;
-+	memcpy(&write_data[4], value, length);
-+
-+	param =3D qmi_param_new();
-+	if (!param)
-+		goto error;
-+
-+	qmi_param_append(param, 0x01, sizeof(aid_data), aid_data);
-+	qmi_param_append(param, 0x02, fileid_len, fileid_data);
-+	qmi_param_append(param, 0x03, 4 + length, write_data);
-+
-+	if (qmi_service_send(data->uim, qmi_message, param,
-+						write_generic_cb, cbd, g_free) > 0)
-+		return;
-+
-+	qmi_param_free(param);
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, user_data);
-+
-+	g_free(cbd);
-+}
-+
-+
-+static void qmi_write_transparent(struct ofono_sim *sim,
-+				int fileid, int start, int length,
-+				const unsigned char *value,
-+				const unsigned char *path,
-+				unsigned int path_len,
-+				ofono_sim_write_cb_t cb, void *user_data)
-+{
-+	write_generic(sim, QMI_UIM_WRITE_TRANSPARENT, fileid, start, length, valu=
-e, path, path_len, cb, user_data);
-+}
-+
-+static void qmi_write_linear(struct ofono_sim *sim,
-+				int fileid, int record, int length,
-+				const unsigned char *value,
-+				const unsigned char *path,
-+				unsigned int path_len,
-+				ofono_sim_write_cb_t cb, void *user_data)
-+{
-+	write_generic(sim, QMI_UIM_WRITE_RECORD, fileid, record, length, value, p=
-ath, path_len, cb, user_data);
-+}
-+
-+static void qmi_write_cyclic(struct ofono_sim *sim,
-+				int fileid, int length,
-+				const unsigned char *value,
-+				const unsigned char *path,
-+				unsigned int path_len,
-+				ofono_sim_write_cb_t cb, void *user_data)
-+{
-+	write_generic(sim, QMI_UIM_WRITE_RECORD, fileid, 0, length, value, path, =
-path_len, cb, user_data);
-+}
-+
- static void get_imsi_cb(struct qmi_result *result, void *user_data)
+diff --git a/drivers/isimodem/sim.c b/drivers/isimodem/sim.c
+index 4379a159..cea50972 100644
+--- a/drivers/isimodem/sim.c
++++ b/drivers/isimodem/sim.c
+@@ -450,7 +450,7 @@ static void check_sec_response(const GIsiMessage *msg, =
+void *opaque,
+ 					uint8_t success, uint8_t failure)
  {
- 	struct cb_data *cbd =3D user_data;
-@@ -777,6 +892,8 @@ static struct ofono_sim_driver driver =3D {
- 	.read_file_transparent	=3D qmi_read_transparent,
- 	.read_file_linear	=3D qmi_read_record,
- 	.read_file_cyclic	=3D qmi_read_record,
-+	.write_file_linear	=3D qmi_write_linear,
-+	// transparent and cyclic not exposed, because they haven't been tested
- 	.read_imsi		=3D qmi_read_imsi,
- 	.query_passwd_state	=3D qmi_query_passwd_state,
- 	.query_pin_retries	=3D qmi_query_pin_retries,
--- =
+ 	struct isi_cb_data *cbd =3D opaque;
+-	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
++	ofono_query_facility_lock_cb_t cb =3D cbd->cb;
+ 	struct ofono_sim *sim =3D cbd->user;
+ 	uint8_t id;
+ 	uint8_t cause;
+@@ -465,7 +465,7 @@ static void check_sec_response(const GIsiMessage *msg, =
+void *opaque,
+ 	if (id =3D=3D success) {
+ 		DBG("%s", sec_message_id_name(id));
+ 		sim_set_passwd_state(sim, OFONO_SIM_PASSWORD_NONE);
+-		CALLBACK_WITH_SUCCESS(cb, cbd->data);
++		CALLBACK_WITH_SUCCESS(cb, OFONO_SIM_PASSWORD_NONE, sim);
+ 		return;
+ 	}
 
-2.7.4
+@@ -478,7 +478,7 @@ static void check_sec_response(const GIsiMessage *msg, =
+void *opaque,
+ 		DBG("Error msg: %s", sec_message_id_name(id));
+
+ failure:
+-	CALLBACK_WITH_FAILURE(cb, cbd->data);
++	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
+ }
+
+ static void sec_code_verify_resp(const GIsiMessage *msg, void *opaque)
 
 
---===============4421371997435856339==--
+--===============3602454739695307879==--
 
