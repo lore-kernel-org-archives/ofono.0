@@ -1,41 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============8337360030489985632=="
+Content-Type: multipart/mixed; boundary="===============5494730484277482240=="
 MIME-Version: 1.0
-From: Nishanth V <nishanth.v@intel.com>
-Subject: [PATCH] rilmodem: netmon fix missing notify for g_ril_send
-Date: Mon, 11 Sep 2017 11:45:10 +0530
-Message-ID: <1505110510-25293-1-git-send-email-nishanth.v@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/1] isimodem: Use correct callback for pin status
+Date: Mon, 11 Sep 2017 10:37:36 -0500
+Message-ID: <a738a940-a275-1a19-254f-cc82d2ff046e@gmail.com>
+In-Reply-To: <20170910184104.GC3@computer.craftyguy.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8337360030489985632==
+--===============5494730484277482240==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/rilmodem/netmon.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Clayton,
 
-diff --git a/drivers/rilmodem/netmon.c b/drivers/rilmodem/netmon.c
-index a1e5f6c..709997c 100644
---- a/drivers/rilmodem/netmon.c
-+++ b/drivers/rilmodem/netmon.c
-@@ -296,7 +296,7 @@ static void ril_netmon_request_update(struct ofono_netm=
-on *netmon,
- 	struct cb_data *cbd =3D cb_data_new(cb, data, nmd);
- =
+On 09/10/2017 01:41 PM, Clayton Craft wrote:
+> Hi Denis,
+> Ah, ok, I think see what you mean. Sorry for the misunderstanding, and =
 
- 	if (g_ril_send(nmd->ril, RIL_REQUEST_GET_CELL_INFO_LIST, NULL,
--			ril_netmon_update_cb, cbd, NULL) > 0)
-+			ril_netmon_update_cb, cbd, g_free) > 0)
- 		return;
- =
+> thank
+> you for your patience. I have now implemented a proper query method
+> based on the 2010 patch you referenced. I don't have a PIN set on my
+> SIM, but it seems to allow the 'enabling' to proceed successfully and
+> based on my understanding of what the 2010 patch is doing, allow for
+> signaling if a SIM is locked as well.
+> =
 
- 	g_free(cbd);
--- =
+> -Clayton
+> =
 
-1.9.1
+> drivers/isimodem/sim.c | 27 +++++++++++++++++++++++++--
+> 1 file changed, 25 insertions(+), 2 deletions(-)
+> =
 
 
---===============8337360030489985632==--
+
+I went ahead and applied this patch.  Thanks!
+
+Regards,
+-Denis
+
+--===============5494730484277482240==--
 
