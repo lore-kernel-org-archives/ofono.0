@@ -1,24 +1,26 @@
-Content-Type: multipart/mixed; boundary="===============3732191274762776290=="
+Content-Type: multipart/mixed; boundary="===============2426735082071714030=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] rilmodem: netmon fix missing notify for g_ril_send
-Date: Mon, 11 Sep 2017 10:38:18 -0500
-Message-ID: <8238e687-58c6-c793-3143-9ac1c9c9364d@gmail.com>
-In-Reply-To: <1505110510-25293-1-git-send-email-nishanth.v@intel.com>
+Subject: Re: [PATCH 1/2] network.c: notify_status_watches: check for NULL
+Date: Mon, 11 Sep 2017 10:39:34 -0500
+Message-ID: <4644de46-efed-8260-11b7-9509b9a970e2@gmail.com>
+In-Reply-To: <20170911002543.31030-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3732191274762776290==
+--===============2426735082071714030==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nishanth,
+Hi Alexander,
 
-On 09/11/2017 01:15 AM, Nishanth V wrote:
+On 09/10/2017 07:25 PM, Alexander Couzens wrote:
+> In rare cases when ofono_netreg_status_notify() is called before
+> ofono_netreg_register() netreg->status_watches is NULL.
 > ---
->   drivers/rilmodem/netmon.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
+>   src/network.c | 3 +++
+>   1 file changed, 3 insertions(+)
 > =
 
 
@@ -28,5 +30,5 @@ Regards,
 -Denis
 
 
---===============3732191274762776290==--
+--===============2426735082071714030==--
 
