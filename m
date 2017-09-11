@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============2426735082071714030=="
+Content-Type: multipart/mixed; boundary="===============3310887741961706435=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] network.c: notify_status_watches: check for NULL
-Date: Mon, 11 Sep 2017 10:39:34 -0500
-Message-ID: <4644de46-efed-8260-11b7-9509b9a970e2@gmail.com>
-In-Reply-To: <20170911002543.31030-1-lynxis@fe80.eu>
+Subject: Re: [PATCH 2/2] qmimodem/network-registration: register callbacks
+ after ofono_netreg_register()
+Date: Mon, 11 Sep 2017 10:41:53 -0500
+Message-ID: <4db1e202-723c-eb2a-5885-e65f796dbb74@gmail.com>
+In-Reply-To: <20170911002543.31030-2-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2426735082071714030==
+--===============3310887741961706435==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,13 +17,12 @@ Content-Transfer-Encoding: quoted-printable
 Hi Alexander,
 
 On 09/10/2017 07:25 PM, Alexander Couzens wrote:
-> In rare cases when ofono_netreg_status_notify() is called before
-> ofono_netreg_register() netreg->status_watches is NULL.
+> When registering callbacks before ofono_netreg_register(), callbacks
+> will use the netreg api which might lead into undefined behaviour,
+> because certain fields aren't yet initilized.
 > ---
->   src/network.c | 3 +++
->   1 file changed, 3 insertions(+)
-> =
-
+>   drivers/qmimodem/network-registration.c | 13 +++++++------
+>   1 file changed, 7 insertions(+), 6 deletions(-)
 
 Applied, thanks.
 
@@ -30,5 +30,5 @@ Regards,
 -Denis
 
 
---===============2426735082071714030==--
+--===============3310887741961706435==--
 
