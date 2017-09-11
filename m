@@ -1,40 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============7615883676775845066=="
+Content-Type: multipart/mixed; boundary="===============8339503752146512413=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Clayton Craft <clayton@craftyguy.net>
 Subject: Re: nokia-modem (N900) not detected after migration to udevng
-Date: Mon, 11 Sep 2017 13:49:05 -0500
-Message-ID: <c2bc61b2-3f54-91db-3efd-ae3d0959a176@gmail.com>
-In-Reply-To: <20170911154405.GB3@computer.craftyguy.net>
+Date: Mon, 11 Sep 2017 12:54:53 -0700
+Message-ID: <20170911195453.GA3@computer.craftyguy.net>
+In-Reply-To: <c2bc61b2-3f54-91db-3efd-ae3d0959a176@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7615883676775845066==
+--===============8339503752146512413==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Clayton,
+On Mon, Sep 11, 2017 at 01:49:05PM -0500, Denis Kenzior wrote:
+>If Jonas or you want to combine these into a single proper patch, =
 
-On 09/11/2017 10:44 AM, Clayton Craft wrote:
-> Hi Denis,
-> The following patches are also necessary to help bring up the isimodem
-> device, I don't think they were accepted/merged.
-> If you need anything else to help get these in, please let me know!
-> https://lists.ofono.org/pipermail/ofono/2017-September/017463.html
-> https://lists.ofono.org/pipermail/ofono/2017-September/017465.html
-> https://lists.ofono.org/pipermail/ofono/2017-September/017483.html
-> =
-
-> -Clayton
-> =
+>I'll take it up.
 
 
-If Jonas or you want to combine these into a single proper patch, I'll =
+Challenge accepted! Combined patch below.
 
-take it up.
+-Clayton
 
-Regards,
--Denis
 
---===============7615883676775845066==--
+
+ plugins/udevng.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 518eda8e..a4b99aa4 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1013,8 +1013,6 @@ static gboolean setup_isi_serial(struct modem_info* m=
+odem)
+ 	if (value)
+ 		ofono_modem_set_integer(modem->modem, "Address", atoi(value));
+ =
+
+-	ofono_modem_set_string(modem->modem, "Device", info->devnode);
+-
+ 	return TRUE;
+ }
+ =
+
+@@ -1325,7 +1323,7 @@ static void add_serial_device(struct udev_device *dev)
+ =
+
+ 	devnode =3D udev_device_get_devnode(dev);
+ =
+
+-	if (!syspath || !devname || !devpath || !devnode)
++	if (!syspath || !devpath)
+ 		return;
+ =
+
+ 	modem =3D g_hash_table_lookup(modem_list, syspath);
+@@ -1337,7 +1335,7 @@ static void add_serial_device(struct udev_device *dev)
+ 		modem->type =3D MODEM_TYPE_SERIAL;
+ 		modem->syspath =3D g_strdup(syspath);
+ 		modem->devname =3D g_strdup(devname);
+-		modem->driver =3D g_strdup("legacy");
++		modem->driver =3D g_strdup(driver);
+ =
+
+ 		g_hash_table_replace(modem_list, modem->syspath, modem);
+ 	}
+@@ -1357,7 +1355,7 @@ static void add_serial_device(struct udev_device *dev)
+ 	info->subsystem =3D g_strdup(subsystem);
+ 	info->dev =3D udev_device_ref(dev);
+ =
+
+-	modem->devices =3D g_slist_append(modem->devices, info);
++	modem->serial =3D info;
+ }
+ =
+
+ static void add_device(const char *syspath, const char *devname,
+
+--===============8339503752146512413==--
 
