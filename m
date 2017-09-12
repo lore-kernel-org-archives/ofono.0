@@ -1,32 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============7988676558883668744=="
+Content-Type: multipart/mixed; boundary="===============1010809608762531950=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] netmonagent: fix unnecessary function declaration
-Date: Tue, 12 Sep 2017 12:29:40 -0500
-Message-ID: <71ab2082-ca30-1b08-cbd0-117b76fe52ba@gmail.com>
-In-Reply-To: <1505206879-4279-1-git-send-email-nishanth.v@intel.com>
+Subject: Re: Support for samsung-ipc
+Date: Tue, 12 Sep 2017 12:36:05 -0500
+Message-ID: <c8e6ce81-51d0-abc7-0b2a-dd831cab7eff@gmail.com>
+In-Reply-To: <hvo95rko2b2mf8cob5tie025.1505222496968@email.android.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7988676558883668744==
+--===============1010809608762531950==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nishanth,
+Hi Tomas,
 
-On 09/12/2017 04:01 AM, Nishanth V wrote:
-> ---
->   src/netmonagent.h | 2 --
->   1 file changed, 2 deletions(-)
+On 09/12/2017 08:24 AM, Tom=C3=A1=C5=A1 =C5=A0afa=C5=99=C3=ADk wrote:
+> Hello,
 > =
 
+> I would like to ask about support for Samsung devices that use IPC like =
 
-Applied, thanks.
+> i9100 (galaxys2). I would like to get it work for postmarketOS project - =
+
+> http:/wiki.postmarketos.org <http://wiki.postmarketos.org>/
+> =
+
+> I found this old post =
+
+> https://lists.ofono.org/pipermail/ofono/2012-September/013766.html that =
+
+> send patchset for support via libsamsung-ipc. But I do not see any =
+
+> samsung driver in current repository.
+> =
+
+> Does please anyone have any info about this topic ( is it supported, was =
+
+> the patchset included, etc. )?
+
+ From what I remember there was an initial RFC submission but the =
+
+licenses were incompatible there was no follow up after that.
+
+Maybe Simon (the original author, CCed) can tell you more..
 
 Regards,
 -Denis
 
-
---===============7988676558883668744==--
+--===============1010809608762531950==--
 
