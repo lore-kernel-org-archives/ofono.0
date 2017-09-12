@@ -1,44 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============1895421353755721170=="
+Content-Type: multipart/mixed; boundary="===============3117761599879219781=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH 2/2] udev: isi modems do not use 'Device' property
-Date: Tue, 12 Sep 2017 10:11:20 +0200
-Message-ID: <20170912081120.29364-2-jonas@southpole.se>
-In-Reply-To: <20170912081120.29364-1-jonas@southpole.se>
+From: Nishanth V <nishanth.v@intel.com>
+Subject: [PATCH] netmonagent: fix unnecessary function declaration
+Date: Tue, 12 Sep 2017 14:31:19 +0530
+Message-ID: <1505206879-4279-1-git-send-email-nishanth.v@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1895421353755721170==
+--===============3117761599879219781==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Neither the n900 nor u8500 drivers use this property so there's currently
-no need to set it in the setup function.
 ---
- plugins/udevng.c | 2 --
+ src/netmonagent.h | 2 --
  1 file changed, 2 deletions(-)
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 9d00bb8..a4b99aa 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -1013,8 +1013,6 @@ static gboolean setup_isi_serial(struct modem_info* m=
-odem)
- 	if (value)
- 		ofono_modem_set_integer(modem->modem, "Address", atoi(value));
+diff --git a/src/netmonagent.h b/src/netmonagent.h
+index f64a503..5178901 100644
+--- a/src/netmonagent.h
++++ b/src/netmonagent.h
+@@ -19,5 +19,3 @@ DBusMessage *netmon_agent_new_method_call(struct netmon_a=
+gent *netmon,
  =
 
--	ofono_modem_set_string(modem->modem, "Device", info->devnode);
+ void netmon_agent_send_no_reply(struct netmon_agent *agent,
+ 				DBusMessage *message);
 -
- 	return TRUE;
- }
- =
-
+-void netmon_agent_test(struct netmon_agent *agent);
 -- =
 
-2.9.3
+1.9.1
 
 
---===============1895421353755721170==--
+--===============3117761599879219781==--
 
