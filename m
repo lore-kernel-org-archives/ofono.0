@@ -1,55 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============6805526100886490891=="
+Content-Type: multipart/mixed; boundary="===============8229060430440485830=="
 MIME-Version: 1.0
-From: =?unknown-8bit?b?VG9tw6HFoSDFoGFmYcWZw61r?= <safarik@server.cz>
-Subject: Support for samsung-ipc
-Date: Tue, 12 Sep 2017 15:24:27 +0200
-Message-ID: <hvo95rko2b2mf8cob5tie025.1505222496968@email.android.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] udev: fixes for detection of non-USB modems
+Date: Tue, 12 Sep 2017 12:28:59 -0500
+Message-ID: <bf5623a6-fdd7-a5e7-2f75-47db6eddaacb@gmail.com>
+In-Reply-To: <20170912081120.29364-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6805526100886490891==
+--===============8229060430440485830==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi Jonas,
 
-I would like to ask about support for Samsung devices that use IPC like i91=
-00 (galaxys2). I would like to get it work for postmarketOS project - http:=
-/wiki.postmarketos.org/
+On 09/12/2017 03:11 AM, Jonas Bonn wrote:
+> This patch fixes up some fallout from the merging of the udev and udevng
+> modules.
+> =
 
-I found this old post  https://lists.ofono.org/pipermail/ofono/2012-Septemb=
-er/013766.html that send patchset for support via libsamsung-ipc. But I do =
-not see any samsung driver in current repository.
+> i)  The 'serial' modems in question are not necessarily serial modems at
+> all; for example, the N900 ISI modems appear as network devices and don't
+> have a devnode.  This patch relaxes the requirement that a devnode exist.
+> =
 
-Does please anyone have any info about this topic ( is it supported, was th=
-e patchset included, etc. )?
+> ii)  The modem driver was being set to 'legacy', which is a remnant of
+> an earlier approach to merging these modules.  The driver needs to be
+> properly set to the value of the OFONO_DRIVER property in order for the
+> setup function to be found.
+> =
 
-Thanks,
+> iii)  The serial modem's private data was being added to the modem
+> structure incorrectly...
+> =
 
---
-Tomas Safarik
+> In particular point iii) above shows that there is essentially nobody
+> using these devices which makes modifications in this area tricky.
+> ---
+>   plugins/udevng.c | 6 +++---
+>   1 file changed, 3 insertions(+), 3 deletions(-)
+> =
 
---===============6805526100886490891==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
 
-PHAgZGlyPSJsdHIiPkhlbGxvLDwvcD4KPHAgZGlyPSJsdHIiPkkgd291bGQgbGlrZSB0byBhc2sg
-YWJvdXQgc3VwcG9ydCBmb3IgU2Ftc3VuZyBkZXZpY2VzIHRoYXQgdXNlIElQQyBsaWtlIGk5MTAw
-IChnYWxheHlzMikuIEkgd291bGQgbGlrZSB0byBnZXQgaXQgd29yayBmb3IgcG9zdG1hcmtldE9T
-IHByb2plY3QgLSBodHRwOi88YSBocmVmPSJodHRwOi8vd2lraS5wb3N0bWFya2V0b3Mub3JnIj53
-aWtpLnBvc3RtYXJrZXRvcy5vcmc8L2E+LzwvcD4KPHAgZGlyPSJsdHIiPkkgZm91bmQgdGhpcyBv
-bGQgcG9zdCZuYnNwOyA8YSBocmVmPSJodHRwczovL2xpc3RzLm9mb25vLm9yZy9waXBlcm1haWwv
-b2Zvbm8vMjAxMi1TZXB0ZW1iZXIvMDEzNzY2Lmh0bWwiPmh0dHBzOi8vbGlzdHMub2Zvbm8ub3Jn
-L3BpcGVybWFpbC9vZm9uby8yMDEyLVNlcHRlbWJlci8wMTM3NjYuaHRtbDwvYT4gdGhhdCBzZW5k
-IHBhdGNoc2V0IGZvciBzdXBwb3J0IHZpYSBsaWJzYW1zdW5nLWlwYy4gQnV0IEkgZG8gbm90IHNl
-ZSBhbnkgc2Ftc3VuZyBkcml2ZXIgaW4gY3VycmVudCByZXBvc2l0b3J5LjwvcD4KPHAgZGlyPSJs
-dHIiPkRvZXMgcGxlYXNlIGFueW9uZSBoYXZlIGFueSBpbmZvIGFib3V0IHRoaXMgdG9waWMgKCBp
-cyBpdCBzdXBwb3J0ZWQsIHdhcyB0aGUgcGF0Y2hzZXQgaW5jbHVkZWQsIGV0Yy4gKT88L3A+Cjxw
-IGRpcj0ibHRyIj5UaGFua3MsPC9wPgo8cCBkaXI9Imx0ciI+LS08YnI+ClRvbWFzIFNhZmFyaWs8
-L3A+Cg==
+Both applied, thanks.
 
---===============6805526100886490891==--
+Regards,
+-Denis
+
+
+--===============8229060430440485830==--
 
