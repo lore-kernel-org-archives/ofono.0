@@ -1,37 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============3117761599879219781=="
+Content-Type: multipart/mixed; boundary="===============7789437736377959152=="
 MIME-Version: 1.0
-From: Nishanth V <nishanth.v@intel.com>
-Subject: [PATCH] netmonagent: fix unnecessary function declaration
-Date: Tue, 12 Sep 2017 14:31:19 +0530
-Message-ID: <1505206879-4279-1-git-send-email-nishanth.v@intel.com>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: [PATCH v2 0/3] QMI NetworkMonitor
+Date: Tue, 12 Sep 2017 12:52:34 +0200
+Message-ID: <20170912105237.21750-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3117761599879219781==
+--===============7789437736377959152==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/netmonagent.h | 2 --
- 1 file changed, 2 deletions(-)
+This is a resubmission of the network-monitor series for QMI modems.
 
-diff --git a/src/netmonagent.h b/src/netmonagent.h
-index f64a503..5178901 100644
---- a/src/netmonagent.h
-+++ b/src/netmonagent.h
-@@ -19,5 +19,3 @@ DBusMessage *netmon_agent_new_method_call(struct netmon_a=
-gent *netmon,
- =
+Changes in v2:
 
- void netmon_agent_send_no_reply(struct netmon_agent *agent,
- 				DBusMessage *message);
--
--void netmon_agent_test(struct netmon_agent *agent);
+* Fix endianess errors
+* Add patch to fix out of tree build
+
+Jonas Bonn (3):
+  Fix out of tree build
+  qmi: add NetworkMonitor interface
+  gobi: create NetworkMonitor atom
+
+ Makefile.am                 |   3 +-
+ drivers/qmimodem/netmon.c   | 286 ++++++++++++++++++++++++++++++++++++++++=
+++++
+ drivers/qmimodem/qmimodem.c |   2 +
+ drivers/qmimodem/qmimodem.h |   3 +
+ plugins/gobi.c              |   5 +-
+ src/common.c                |   2 +-
+ 6 files changed, 298 insertions(+), 3 deletions(-)
+ create mode 100644 drivers/qmimodem/netmon.c
+
 -- =
 
-1.9.1
+2.9.3
 
 
---===============3117761599879219781==--
+--===============7789437736377959152==--
 
