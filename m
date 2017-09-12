@@ -1,53 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============1393530416114305376=="
+Content-Type: multipart/mixed; boundary="===============2434406350523021015=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 0/3] QMI NetworkMonitor
-Date: Tue, 12 Sep 2017 12:53:39 -0500
-Message-ID: <08c48c10-fb17-7990-9eb0-1aba456fc3ac@gmail.com>
-In-Reply-To: <20170912105237.21750-1-jonas@southpole.se>
+From: =?unknown-8bit?b?VG9tw6HFoSDFoGFmYcWZw61r?= <safarik@server.cz>
+Subject: Re: Support for samsung-ipc
+Date: Tue, 12 Sep 2017 23:19:39 +0200
+Message-ID: <54e3ea4a-e6ed-e026-0f56-ac62ca63f5fd@server.cz>
+In-Reply-To: <c8e6ce81-51d0-abc7-0b2a-dd831cab7eff@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1393530416114305376==
+--===============2434406350523021015==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+Hello Denis,
 
-On 09/12/2017 05:52 AM, Jonas Bonn wrote:
-> This is a resubmission of the network-monitor series for QMI modems.
+I noticed that Simon uses also different email on github. So I also
+added it to CC just in case.
+
+I would like to ask other question - there is some ofono driver for ril
+if I understand it correctly. Wouldn't that work with samsung-ril layer?
+
+https://redmine.replicant.us/projects/replicant/wiki/Samsung-RIL
+
+Thanks,
+
+Tomas
+
+On 09/12/2017 07:36 PM, Denis Kenzior wrote:
+> Hi Tomas,
 > =
 
-> Changes in v2:
+> On 09/12/2017 08:24 AM, Tom=C3=A1=C5=A1 =C5=A0afa=C5=99=C3=ADk wrote:
+>> Hello,
+>>
+>> I would like to ask about support for Samsung devices that use IPC
+>> like i9100 (galaxys2). I would like to get it work for postmarketOS
+>> project - http:/wiki.postmarketos.org <http://wiki.postmarketos.org>/
+>>
+>> I found this old post
+>> https://lists.ofono.org/pipermail/ofono/2012-September/013766.html
+>> that send patchset for support via libsamsung-ipc. But I do not see
+>> any samsung driver in current repository.
+>>
+>> Does please anyone have any info about this topic ( is it supported,
+>> was the patchset included, etc. )?
 > =
 
-> * Fix endianess errors
-> * Add patch to fix out of tree build
+> From what I remember there was an initial RFC submission but the
+> licenses were incompatible there was no follow up after that.
 > =
 
-> Jonas Bonn (3):
->    Fix out of tree build
->    qmi: add NetworkMonitor interface
->    gobi: create NetworkMonitor atom
+> Maybe Simon (the original author, CCed) can tell you more..
 > =
 
->   Makefile.am                 |   3 +-
->   drivers/qmimodem/netmon.c   | 286 +++++++++++++++++++++++++++++++++++++=
-+++++++
->   drivers/qmimodem/qmimodem.c |   2 +
->   drivers/qmimodem/qmimodem.h |   3 +
->   plugins/gobi.c              |   5 +-
->   src/common.c                |   2 +-
->   6 files changed, 298 insertions(+), 3 deletions(-)
->   create mode 100644 drivers/qmimodem/netmon.c
-> =
+> Regards,
+> -Denis
 
-
-All three applied, thanks.
-
-Regards,
--Denis
-
---===============1393530416114305376==--
+--===============2434406350523021015==--
 
