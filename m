@@ -1,52 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============1420793356632276587=="
+Content-Type: multipart/mixed; boundary="===============7112150076484694320=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Support for samsung-ipc
-Date: Wed, 13 Sep 2017 10:23:56 -0500
-Message-ID: <9f9bb853-d4cd-6ba9-de65-609e3ff4c7f1@gmail.com>
-In-Reply-To: <54e3ea4a-e6ed-e026-0f56-ac62ca63f5fd@server.cz>
+Date: Wed, 13 Sep 2017 10:25:16 -0500
+Message-ID: <e4fd6239-e04d-32d7-cb20-2c5ce177410f@gmail.com>
+In-Reply-To: <3fa4675f-21a5-6eaf-0d2d-9f89683e902e@server.cz>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1420793356632276587==
+--===============7112150076484694320==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Tomas,
 
-On 09/12/2017 04:19 PM, Tom=C3=A1=C5=A1 =C5=A0afa=C5=99=C3=ADk wrote:
-> Hello Denis,
+On 09/13/2017 07:45 AM, Tom=C3=A1=C5=A1 =C5=A0afa=C5=99=C3=ADk wrote:
+> Hello Denis
+> =
+
+> On 09/12/2017 07:36 PM, Denis Kenzior wrote:
+>>  From what I remember there was an initial RFC submission but the
+>> licenses were incompatible there was no follow up after that.
+> =
+
+> I just checked COPYING in libsamsung-ipc and it is GPLv2
+> =
+
+> https://git.replicant.us/replicant/external_libsamsung-ipc/tree/COPYING
+> =
+
+> Is there still a problem including the patch?
 > =
 
 
-Please no top-posting on this mailing list.
+License wise it would be okay.  But someone still needs to go through =
 
-> I noticed that Simon uses also different email on github. So I also
-> added it to CC just in case.
-> =
-
-> I would like to ask other question - there is some ofono driver for ril
-> if I understand it correctly. Wouldn't that work with samsung-ril layer?
-> =
-
-
-We have tested oFono RIL driver with an Intel vendor RIL.  Other people =
-
-(e.g. Ubuntu and SailFish OS) have used their own non-upstream version =
-
-of the RIL driver on their devices.  I don't see why it wouldn't work, =
-
-but you most likely would require some workarounds.  There is always =
-
-device specific / vendor specific behavior that needs tweaking.
-
-> https://redmine.replicant.us/projects/replicant/wiki/Samsung-RIL
-> =
-
+the submission process, address feedback, etc.
 
 Regards,
 -Denis
 
---===============1420793356632276587==--
+--===============7112150076484694320==--
 
