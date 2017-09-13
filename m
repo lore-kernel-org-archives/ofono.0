@@ -1,365 +1,455 @@
-Content-Type: multipart/mixed; boundary="===============7063194951863847610=="
+Content-Type: multipart/mixed; boundary="===============4512385796746239162=="
 MIME-Version: 1.0
 From: Ankit Navik <ankit.p.navik@intel.com>
-Subject: [PATCH 2/4] ifxmodem: support automatic context activation
-Date: Wed, 13 Sep 2017 07:58:42 +0530
-Message-ID: <1505269724-19622-2-git-send-email-ankit.p.navik@intel.com>
+Subject: [PATCH 3/4] Add support for Intel xmm7xxx series modems
+Date: Wed, 13 Sep 2017 07:58:43 +0530
+Message-ID: <1505269724-19622-3-git-send-email-ankit.p.navik@intel.com>
 In-Reply-To: <1505269724-19622-1-git-send-email-ankit.p.navik@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7063194951863847610==
+--===============4512385796746239162==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add support for automatic context activation by adding read_settings.
-It also adds detach_shutdown to make sure context is cleaned up when
-network registration is lost.
+This adds plugin for xmm7xxx series modems
 ---
- drivers/atmodem/vendor.h        |   1 +
- drivers/ifxmodem/gprs-context.c | 180 +++++++++++++++++++++++++++++++++++-=
-----
- drivers/ifxmodem/ifxmodem.h     |   1 +
- 3 files changed, 163 insertions(+), 19 deletions(-)
+ Makefile.am       |   3 +
+ plugins/xmm7xxx.c | 399 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 402 insertions(+)
+ create mode 100644 plugins/xmm7xxx.c
 
-diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
-index 71a9af7..d52ad52 100644
---- a/drivers/atmodem/vendor.h
-+++ b/drivers/atmodem/vendor.h
-@@ -47,4 +47,5 @@ enum ofono_vendor {
- 	OFONO_VENDOR_UBLOX,
- 	OFONO_VENDOR_UBLOX_TOBY_L2,
- 	OFONO_VENDOR_CINTERION,
-+	OFONO_VENDOR_XMM,
- };
-diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
-t.c
-index 52a3672..7530c97 100644
---- a/drivers/ifxmodem/gprs-context.c
-+++ b/drivers/ifxmodem/gprs-context.c
-@@ -49,6 +49,7 @@
- static const char *none_prefix[] =3D { NULL };
- static const char *xdns_prefix[] =3D { "+XDNS:", NULL };
- static const char *cgpaddr_prefix[] =3D { "+CGPADDR:", NULL };
-+static const char *cgcontrdp_prefix[] =3D { "+CGCONTRDP:", NULL };
+diff --git a/Makefile.am b/Makefile.am
+index c46e85a..070821f 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -507,6 +507,9 @@ builtin_sources +=3D plugins/quectel.c
+ builtin_modules +=3D ublox
+ builtin_sources +=3D plugins/ublox.c
  =
 
- enum state {
- 	STATE_IDLE,
-@@ -59,15 +60,18 @@ enum state {
- =
-
- struct gprs_context_data {
- 	GAtChat *chat;
-+	unsigned int vendor;
- 	unsigned int active_context;
- 	char username[OFONO_GPRS_MAX_USERNAME_LENGTH + 1];
- 	char password[OFONO_GPRS_MAX_PASSWORD_LENGTH + 1];
- 	GAtRawIP *rawip;
- 	enum state state;
- 	enum ofono_gprs_proto proto;
--	char address[32];
--	char dns1[32];
--	char dns2[32];
-+	char address[64];
-+	char gateway[64];
-+	char netmask[64];
-+	char dns1[64];
-+	char dns2[64];
- 	ofono_gprs_context_cb_t cb;
- 	void *cb_data;                                  /* Callback data */
- };
-@@ -257,28 +261,146 @@ error:
- 	failed_setup(gc, NULL, TRUE);
- }
- =
-
--static void activate_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+static void cgcontrdp_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
- {
- 	struct ofono_gprs_context *gc =3D user_data;
-+	struct ofono_modem *modem =3D ofono_gprs_context_get_modem(gc);
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
--	char buf[64];
++builtin_modules +=3D xmm7xxx
++builtin_sources +=3D plugins/xmm7xxx.c
++
+ if BLUETOOTH
+ if BLUEZ4
+ builtin_modules +=3D sap
+diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
+new file mode 100644
+index 0000000..4443d4c
+--- /dev/null
++++ b/plugins/xmm7xxx.c
+@@ -0,0 +1,399 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2017  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <errno.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <fcntl.h>
++#include <termios.h>
++#include <string.h>
++#include <sys/socket.h>
++
++#include <glib.h>
++#include <gatchat.h>
++#include <gattty.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/devinfo.h>
++#include <ofono/netreg.h>
++#include <ofono/sim.h>
++#include <ofono/gprs.h>
++#include <ofono/radio-settings.h>
++#include <ofono/gprs-context.h>
++#include <ofono/stk.h>
++#include <ofono/lte.h>
++
++#include <drivers/atmodem/atutil.h>
++#include <drivers/atmodem/vendor.h>
++
++static const char *none_prefix[] =3D { NULL };
++static const char *xsimstate_prefix[] =3D { "+XSIMSTATE:", NULL };
++
++struct xmm7xxx_data {
++	GAtChat *chat;		/* AT chat */
++	struct ofono_sim *sim;
++	ofono_bool_t have_sim;
++	ofono_bool_t sms_phonebook_added;
++};
++
++static void xmm7xxx_debug(const char *str, void *user_data)
++{
++	const char *prefix =3D user_data;
++
++	ofono_info("%s%s", prefix, str);
++}
++
++static GAtChat *open_device(struct ofono_modem *modem,
++				const char *key, char *debug)
++{
++	const char *device;
++	GAtSyntax *syntax;
++	GIOChannel *channel;
++	GAtChat *chat;
++	GHashTable *options;
++
++	device =3D ofono_modem_get_string(modem, key);
++	if (device =3D=3D NULL)
++		return NULL;
++
++	DBG("%s %s", key, device);
++
++	options =3D g_hash_table_new(g_str_hash, g_str_equal);
++	if (options =3D=3D NULL)
++		return NULL;
++
++	g_hash_table_insert(options, "Baud", "115200");
++	channel =3D g_at_tty_open(device, options);
++	g_hash_table_destroy(options);
++
++	if (channel =3D=3D NULL)
++		return NULL;
++
++	syntax =3D g_at_syntax_new_gsm_permissive();
++	chat =3D g_at_chat_new(channel, syntax);
++	g_at_syntax_unref(syntax);
++	g_io_channel_unref(channel);
++
++	if (chat =3D=3D NULL)
++		return NULL;
++
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(chat, xmm7xxx_debug, debug);
++
++	return chat;
++}
++
++static void switch_sim_state_status(struct ofono_modem *modem, int status)
++{
++	struct xmm7xxx_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p, SIM status: %d", modem, status);
++
++	switch (status) {
++	case 0:	/* SIM not inserted */
++	case 9:	/* SIM removed */
++		if (data->have_sim =3D=3D TRUE) {
++			ofono_sim_inserted_notify(data->sim, FALSE);
++			data->have_sim =3D FALSE;
++			data->sms_phonebook_added =3D FALSE;
++		}
++		break;
++	case 2:	/* SIM inserted, PIN verification not needed - READY */
++	case 3:	/* SIM inserted, PIN verified - READY */
++	case 7:
++		if (data->have_sim =3D=3D FALSE) {
++			ofono_sim_inserted_notify(data->sim, TRUE);
++			data->have_sim =3D TRUE;
++		}
++		break;
++	default:
++		ofono_warn("Unknown SIM state %d received", status);
++		break;
++	}
++}
++
++static void xsimstate_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	int status;
 +	GAtResultIter iter;
 +
-+	const char *laddrnetmask =3D NULL;
-+	const char *gw =3D NULL;
-+	const char *interface;
-+	const char *dns[3];
- =
-
- 	DBG("ok %d", ok);
- =
-
- 	if (!ok) {
--		ofono_error("Unable to activate context");
--		failed_setup(gc, result, FALSE);
-+		struct ofono_error error;
++	DBG("%p", modem);
 +
-+		decode_at_error(&error, g_at_result_final_response(result));
-+		gcd->cb(&error, gcd->cb_data);
-+
- 		return;
- 	}
- =
-
--	sprintf(buf, "AT+CGPADDR=3D%u", gcd->active_context);
--	if (g_at_chat_send(gcd->chat, buf, cgpaddr_prefix,
--					address_cb, gc, NULL) > 0)
 +	g_at_result_iter_init(&iter, result);
 +
-+	while (g_at_result_iter_next(&iter, "+CGCONTRDP:")) {
-+		/* skip cid, bearer_id, apn */
-+		g_at_result_iter_skip_next(&iter);
-+		g_at_result_iter_skip_next(&iter);
-+		g_at_result_iter_skip_next(&iter);
++	if (!g_at_result_iter_next(&iter, "+XSIM:"))
++		return;
 +
-+		if (!g_at_result_iter_next_string(&iter, &laddrnetmask))
-+			break;
++	g_at_result_iter_next_number(&iter, &status);
 +
-+		if (!g_at_result_iter_next_string(&iter, &gw))
-+			break;
++	DBG("status=3D%d\n", status);
 +
-+		if (!g_at_result_iter_next_string(&iter, &dns[0]))
-+			break;
-+
-+		if (!g_at_result_iter_next_string(&iter, &dns[1]))
-+			break;
-+	}
-+
-+	strncpy(gcd->dns1, dns[0], sizeof(gcd->dns1));
-+	strncpy(gcd->dns2, dns[1], sizeof(gcd->dns2));
-+	dns[2] =3D 0;
-+
-+	DBG("DNS: %s, %s\n", gcd->dns1, gcd->dns2);
-+
-+	if (!laddrnetmask || at_util_get_ipv4_address_and_netmask(laddrnetmask,
-+					gcd->address, gcd->netmask) < 0) {
-+		failed_setup(gc, NULL, TRUE);
- 		return;
-+	}
-+
-+	if (gw)
-+		strncpy(gcd->gateway, gw, sizeof(gcd->gateway));
-+
-+	gcd->state =3D STATE_ACTIVE;
-+
-+	DBG("address: %s\n", gcd->address);
-+	DBG("netmask: %s\n", gcd->netmask);
-+	DBG("DNS1: %s\n", gcd->dns1);
-+	DBG("DNS2: %s\n", gcd->dns2);
-+	DBG("Gateway: %s\n", gcd->gateway);
-+
-+	interface =3D ofono_modem_get_string(modem, "NetworkInterface");
-+
-+	ofono_gprs_context_set_interface(gc, interface);
-+	ofono_gprs_context_set_ipv4_address(gc, gcd->address, TRUE);
-+
-+	if (gcd->netmask[0])
-+		ofono_gprs_context_set_ipv4_netmask(gc, gcd->netmask);
-+
-+	if (gcd->gateway[0])
-+		ofono_gprs_context_set_ipv4_gateway(gc, gcd->gateway);
-+
-+	ofono_gprs_context_set_ipv4_dns_servers(gc, dns);
-+
-+	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
++	switch_sim_state_status(modem, status);
 +}
 +
-+static void ifx_read_settings(struct ofono_gprs_context *gc)
++static void xsimstate_query_cb(gboolean ok, GAtResult *result,
++						gpointer user_data)
 +{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	char buf[64];
++	struct ofono_modem *modem =3D user_data;
++	int status, mode;
++	GAtResultIter iter;
 +
-+	gcd->address[0] =3D '\0';
-+	gcd->gateway[0] =3D '\0';
-+	gcd->netmask[0] =3D '\0';
-+	gcd->dns1[0] =3D '\0';
-+	gcd->dns2[0] =3D '\0';
++	DBG("%p", modem);
 +
-+	/* read IP configuration info */
-+	if(gcd->vendor =3D=3D OFONO_VENDOR_XMM) {
-+		snprintf(buf, sizeof(buf), "AT+CGCONTRDP=3D%u", gcd->active_context);
++	if (!ok)
++		return;
 +
-+		if (g_at_chat_send(gcd->chat, buf, cgcontrdp_prefix,
-+					cgcontrdp_cb, gc, NULL) > 0)
-+			return;
-+	} else {
-+		sprintf(buf, "AT+CGPADDR=3D%u", gcd->active_context);
-+		if (g_at_chat_send(gcd->chat, buf, cgpaddr_prefix,
-+						address_cb, gc, NULL) > 0)
-+			return;
-+	}
- =
-
- 	failed_setup(gc, NULL, TRUE);
- }
- =
-
-+static void ifx_gprs_read_settings(struct ofono_gprs_context *gc,
-+					unsigned int cid,
-+					ofono_gprs_context_cb_t cb, void *data)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	DBG("cid %u", cid);
++	g_at_result_iter_init(&iter, result);
 +
-+	gcd->active_context =3D cid;
-+	gcd->cb =3D cb;
-+	gcd->cb_data =3D data;
++	if (!g_at_result_iter_next(&iter, "+XSIMSTATE:"))
++		return;
 +
-+	ifx_read_settings(gc);
++	if (!g_at_result_iter_next_number(&iter, &mode))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &status))
++		return;
++
++	DBG("mode=3D%d, status=3D%d\n", mode, status);
++
++	switch_sim_state_status(modem, status);
 +}
 +
-+static void activate_cb(gboolean ok, GAtResult *result, gpointer user_data)
++static void cfun_enable_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
 +{
-+	struct ofono_gprs_context *gc =3D user_data;
++	struct ofono_modem *modem =3D user_data;
++	struct xmm7xxx_data *data =3D ofono_modem_get_data(modem);
 +
-+	DBG("ok %d", ok);
++	DBG("%p", modem);
 +
 +	if (!ok) {
-+		ofono_error("Unable to activate context");
-+		failed_setup(gc, result, FALSE);
++		g_at_chat_unref(data->chat);
++		data->chat =3D NULL;
++
++		ofono_modem_set_powered(modem, FALSE);
 +		return;
 +	}
 +
-+	ifx_read_settings(gc);
++	/*
++	 * Switch data carrier detect signal off.
++	 * When the DCD is disabled the modem does not hangup anymore
++	 * after the data connection.
++	 */
++	g_at_chat_send(data->chat, "AT&C0", NULL, NULL, NULL, NULL);
++
++	data->have_sim =3D FALSE;
++	data->sms_phonebook_added =3D FALSE;
++
++	ofono_modem_set_powered(modem, TRUE);
++
++	g_at_chat_register(data->chat, "+XSIM:", xsimstate_notify,
++				FALSE, modem, NULL);
++
++	g_at_chat_send(data->chat, "AT+XSIMSTATE=3D1", none_prefix,
++			NULL, NULL, NULL);
++	g_at_chat_send(data->chat, "AT+XSIMSTATE?", xsimstate_prefix,
++			xsimstate_query_cb, modem, NULL);
 +}
 +
- static void setup_cb(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct ofono_gprs_context *gc =3D user_data;
-@@ -387,7 +509,8 @@ static void deactivate_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- 	gcd->active_context =3D 0;
- 	gcd->state =3D STATE_IDLE;
- =
-
--	g_at_chat_resume(gcd->chat);
-+	if (gcd->vendor !=3D OFONO_VENDOR_XMM)
-+		g_at_chat_resume(gcd->chat);
- =
-
- 	CALLBACK_WITH_SUCCESS(gcd->cb, gcd->cb_data);
- }
-@@ -409,11 +532,25 @@ static void ifx_gprs_deactivate_primary(struct ofono_=
-gprs_context *gc,
- 	g_at_rawip_shutdown(gcd->rawip);
- =
-
- 	sprintf(buf, "AT+CGACT=3D0,%u", gcd->active_context);
--	if (g_at_chat_send(chat, buf, none_prefix,
++static int xmm7xxx_enable(struct ofono_modem *modem)
++{
++	struct xmm7xxx_data *data =3D ofono_modem_get_data(modem);
 +
-+	if (gcd->vendor =3D=3D OFONO_VENDOR_XMM) {
-+		if (g_at_chat_send(gcd->chat, buf, none_prefix,
- 				deactivate_cb, gc, NULL) > 0)
--		return;
-+			return;
-+	} else {
-+		if (g_at_chat_send(chat, buf, none_prefix,
-+				deactivate_cb, gc, NULL) > 0)
-+			return;
-+	}
++	DBG("%p", modem);
 +
-+	CALLBACK_WITH_FAILURE(cb, data);
++	data->chat =3D open_device(modem, "Modem", "Modem: ");
++	if (data->chat =3D=3D NULL)
++		return -EIO;
++
++	/*
++	 * Disable command echo and
++	 * enable the Extended Error Result Codes
++	 */
++	g_at_chat_send(data->chat, "ATE0 +CMEE=3D1", none_prefix,
++				NULL, NULL, NULL);
++
++	/* Set phone functionality */
++	g_at_chat_send(data->chat, "AT+CFUN=3D4", none_prefix,
++				cfun_enable_cb, modem, NULL);
++
++	return -EINPROGRESS;
 +}
- =
-
--	CALLBACK_WITH_SUCCESS(cb, data);
-+static void ifx_gprs_detach_shutdown(struct ofono_gprs_context *gc,
-+						unsigned int cid)
++
++static void cfun_disable_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct xmm7xxx_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
++
++	if (ok)
++		ofono_modem_set_powered(modem, FALSE);
++}
++
++static int xmm7xxx_disable(struct ofono_modem *modem)
++{
++	struct xmm7xxx_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_at_chat_cancel_all(data->chat);
++	g_at_chat_unregister_all(data->chat);
++
++	/* Power down modem */
++	g_at_chat_send(data->chat, "AT+CFUN=3D0", none_prefix,
++				cfun_disable_cb, modem, NULL);
++
++	return -EINPROGRESS;
++}
++
++static void xmm7xxx_pre_sim(struct ofono_modem *modem)
++{
++	struct xmm7xxx_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	ofono_devinfo_create(modem, OFONO_VENDOR_IFX, "atmodem", data->chat);
++	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_IFX, "atmodem",
++					data->chat);
++}
++
++static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_modem_online_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++	cb(&error, cbd->data);
++}
++
++static void xmm7xxx_set_online(struct ofono_modem *modem, ofono_bool_t onl=
+ine,
++				ofono_modem_online_cb_t cb, void *user_data)
++{
++	struct xmm7xxx_data *data =3D ofono_modem_get_data(modem);
++	struct cb_data *cbd =3D cb_data_new(cb, user_data);
++	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
++
++	DBG("modem %p %s", modem, online ? "online" : "offline");
++
++	if (g_at_chat_send(data->chat, command, none_prefix,
++					set_online_cb, cbd, g_free) > 0)
++		return;
++
++	CALLBACK_WITH_FAILURE(cb, cbd->data);
++
++	g_free(cbd);
++}
++
++static void xmm7xxx_post_sim(struct ofono_modem *modem)
++{
++	struct xmm7xxx_data *data =3D ofono_modem_get_data(modem);
++
++	ofono_lte_create(modem, "atmodem", data->chat);
++	ofono_radio_settings_create(modem, 0, "xmm7modem", data->chat);
++}
++
++static void xmm7xxx_post_online(struct ofono_modem *modem)
++{
++	struct xmm7xxx_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_gprs *gprs;
++	struct ofono_gprs_context *gc;
++
++	DBG("%p", modem);
++
++	ofono_netreg_create(modem, OFONO_VENDOR_IFX, "atmodem", data->chat);
++
++	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_IFX, "atmodem",
++					data->chat);
++	gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_XMM, "ifxmodem",
++					data->chat);
++
++	if (gprs && gc)
++		ofono_gprs_add_context(gprs, gc);
++}
++
++static int xmm7xxx_probe(struct ofono_modem *modem)
++{
++	struct xmm7xxx_data *data;
++
++	DBG("%p", modem);
++
++	data =3D g_try_new0(struct xmm7xxx_data, 1);
++	if (data =3D=3D NULL)
++		return -ENOMEM;
++
++	ofono_modem_set_data(modem, data);
++
++	return 0;
++}
++
++static void xmm7xxx_remove(struct ofono_modem *modem)
++{
++	struct xmm7xxx_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	ofono_modem_set_data(modem, NULL);
++
++	/* Cleanup after hot-unplug */
++	g_at_chat_unref(data->chat);
++
++	g_free(data);
++}
++
++static struct ofono_modem_driver xmm7xxx_driver =3D {
++	.name		=3D "xmm7xxx",
++	.probe		=3D xmm7xxx_probe,
++	.remove		=3D xmm7xxx_remove,
++	.enable		=3D xmm7xxx_enable,
++	.disable	=3D xmm7xxx_disable,
++	.set_online	=3D xmm7xxx_set_online,
++	.pre_sim	=3D xmm7xxx_pre_sim,
++	.post_sim	=3D xmm7xxx_post_sim,
++	.post_online	=3D xmm7xxx_post_online,
++};
++
++static int xmm7xxx_init(void)
 +{
 +	DBG("");
-+	ifx_gprs_deactivate_primary(gc, cid, NULL, NULL);
- }
- =
-
- static void cgev_notify(GAtResult *result, gpointer user_data)
-@@ -451,14 +588,13 @@ static void cgev_notify(GAtResult *result, gpointer u=
-ser_data)
- =
-
- 		g_at_rawip_unref(gcd->rawip);
- 		gcd->rawip =3D NULL;
-+		g_at_chat_resume(gcd->chat);
- 	}
- =
-
- 	ofono_gprs_context_deactivated(gc, gcd->active_context);
- =
-
- 	gcd->active_context =3D 0;
- 	gcd->state =3D STATE_IDLE;
--
--	g_at_chat_resume(gcd->chat);
- }
- =
-
- static int ifx_gprs_context_probe(struct ofono_gprs_context *gc,
-@@ -475,18 +611,22 @@ static int ifx_gprs_context_probe(struct ofono_gprs_c=
-ontext *gc,
- 		return -ENODEV;
- 	}
- =
-
--	if (g_at_chat_get_slave(chat) =3D=3D NULL)
--		return -EINVAL;
-+	if (vendor !=3D OFONO_VENDOR_XMM) {
-+		if (g_at_chat_get_slave(chat) =3D=3D NULL)
-+			return -EINVAL;
-+	}
- =
-
- 	gcd =3D g_try_new0(struct gprs_context_data, 1);
- 	if (gcd =3D=3D NULL)
- 		return -ENOMEM;
- =
-
-+	gcd->vendor =3D vendor;
- 	gcd->chat =3D g_at_chat_clone(chat);
- =
-
- 	ofono_gprs_context_set_data(gc, gcd);
- =
-
--	chat =3D g_at_chat_get_slave(gcd->chat);
-+	if (vendor !=3D OFONO_VENDOR_XMM)
-+		chat =3D g_at_chat_get_slave(gcd->chat);
- =
-
- 	g_at_chat_register(chat, "+CGEV:", cgev_notify, FALSE, gc, NULL);
- =
-
-@@ -516,6 +656,8 @@ static struct ofono_gprs_context_driver driver =3D {
- 	.remove			=3D ifx_gprs_context_remove,
- 	.activate_primary	=3D ifx_gprs_activate_primary,
- 	.deactivate_primary	=3D ifx_gprs_deactivate_primary,
-+	.read_settings		=3D ifx_gprs_read_settings,
-+	.detach_shutdown	=3D ifx_gprs_detach_shutdown
- };
- =
-
- void ifx_gprs_context_init(void)
-diff --git a/drivers/ifxmodem/ifxmodem.h b/drivers/ifxmodem/ifxmodem.h
-index 43badc9..7f6d870 100644
---- a/drivers/ifxmodem/ifxmodem.h
-+++ b/drivers/ifxmodem/ifxmodem.h
-@@ -20,6 +20,7 @@
-  */
- =
-
- #include <drivers/atmodem/atutil.h>
-+#include <drivers/atmodem/vendor.h>
- =
-
- extern void ifx_voicecall_init(void);
- extern void ifx_voicecall_exit(void);
++
++	return ofono_modem_driver_register(&xmm7xxx_driver);
++}
++
++static void xmm7xxx_exit(void)
++{
++	ofono_modem_driver_unregister(&xmm7xxx_driver);
++}
++
++OFONO_PLUGIN_DEFINE(xmm7xxx, "Intel XMM7xxx driver", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, xmm7xxx_init, xmm7xxx_exit)
 -- =
 
 1.9.1
 
 
---===============7063194951863847610==--
+--===============4512385796746239162==--
 
