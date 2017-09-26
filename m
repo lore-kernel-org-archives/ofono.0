@@ -1,91 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============8357326787982681215=="
+Content-Type: multipart/mixed; boundary="===============6713773480748126769=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 7/7] doc: documentation for SimAuth dbus interfaces
-Date: Thu, 21 Sep 2017 18:02:27 -0500
-Message-ID: <b552baf5-83c1-cb8e-0816-9a43d51c7dbe@gmail.com>
-In-Reply-To: <1506017520-22482-7-git-send-email-james.prestwood@linux.intel.com>
+From: James Prestwood <james.prestwood@linux.intel.com>
+Subject: [PATCH 1/7] sim-auth: prep simauth/dbus headers
+Date: Tue, 26 Sep 2017 09:26:03 -0700
+Message-ID: <1506443169-19755-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8357326787982681215==
+--===============6713773480748126769==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi James,
+Added new dbus interfaces for SimAuth module as well as
+function prototype definitions to simauth header
+---
+ include/dbus.h     |  2 ++
+ include/sim-auth.h | 16 +++++++++++++++-
+ 2 files changed, 17 insertions(+), 1 deletion(-)
 
-On 09/21/2017 01:12 PM, James Prestwood wrote:
-> ---
->   doc/sim-auth-api.txt | 27 +++++++++++++++++++++++++++
->   1 file changed, 27 insertions(+)
->   create mode 100644 doc/sim-auth-api.txt
-> =
+diff --git a/include/dbus.h b/include/dbus.h
+index a6519c7..f0e437c 100644
+--- a/include/dbus.h
++++ b/include/dbus.h
+@@ -58,6 +58,8 @@ extern "C" {
+ #define OFONO_LOCATION_REPORTING_INTERFACE OFONO_SERVICE ".LocationReporti=
+ng"
+ #define OFONO_GNSS_INTERFACE "org.ofono.AssistedSatelliteNavigation"
+ #define OFONO_GNSS_POSR_AGENT_INTERFACE "org.ofono.PositioningRequestAgent"
++#define OFONO_USIM_APPLICATION_INTERFACE "org.ofono.USimApplication"
++#define OFONO_ISIM_APPLICATION_INTERFACE "org.ofono.ISimApplication"
+ #define OFONO_HANDSFREE_INTERFACE OFONO_SERVICE ".Handsfree"
+ #define OFONO_SIRI_INTERFACE OFONO_SERVICE ".Siri"
+ #define OFONO_NETMON_INTERFACE OFONO_SERVICE ".NetworkMonitor"
+diff --git a/include/sim-auth.h b/include/sim-auth.h
+index 0a62adc..b57fe25 100644
+--- a/include/sim-auth.h
++++ b/include/sim-auth.h
+@@ -26,6 +26,8 @@
+ extern "C" {
+ #endif
+ =
 
-> diff --git a/doc/sim-auth-api.txt b/doc/sim-auth-api.txt
-> new file mode 100644
-> index 0000000..466ca3a
-> --- /dev/null
-> +++ b/doc/sim-auth-api.txt
-> @@ -0,0 +1,27 @@
-> +SimAuth USIM application heiarchy [experimental]
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> +
-> +Service		org.ofono
-> +
-> +Interface	org.ofono.USimApplication
-> +Object path	[variable prefix]/{modem0,modem1,...}
-> +
-> +Methods		array{byte},array{byte} GSMAuthenticate(array{byte} rand)
++#include <stdint.h>
++
+ #include <ofono/types.h>
+ =
 
-We like our CamelCase, so GsmAuthenticate
+ struct ofono_sim_auth;
+@@ -34,6 +36,11 @@ typedef void (*ofono_sim_list_apps_cb_t)(const struct of=
+ono_error *error,
+ 					const unsigned char *dataobj,
+ 					int len, void *data);
+ =
 
-> +
-> +			Run the USIM application GSM AUTHENTICATE algorithm
-> +			with the random challenge 'rand'. Returns the derived
-> +			SRES and KC values as two arrays of bytes.
-> +
-> +			Possible Errors: [service].Error.NotSupported
++typedef void (*ofono_sim_open_channel_cb_t)(int session_id, void *data);
++
++typedef void (*ofono_logical_access_cb_t)(const uint8_t *resp,
++		uint16_t len, void *data);
++
+ struct ofono_sim_auth_driver {
+ 	const char *name;
+ 	int (*probe)(struct ofono_sim_auth *sa, unsigned int vendor,
+@@ -41,7 +48,14 @@ struct ofono_sim_auth_driver {
+ 	void (*remove)(struct ofono_sim_auth *sa);
+ =
 
-USim Application can run both the GSM (if service 38 is available) and =
+ 	void (*list_apps)(struct ofono_sim_auth *sa,
+-				ofono_sim_list_apps_cb_t cb, void *data);
++			ofono_sim_list_apps_cb_t cb, void *data);
++	void (*open_channel)(struct ofono_sim_auth *sa,
++			ofono_sim_open_channel_cb_t cb,
++			const void *channel, void *data);
++	void (*close_channel)(struct ofono_sim_auth *sa, int session_id);
++	void (*logical_access)(struct ofono_sim_auth *sa,
++			ofono_logical_access_cb_t cb, int session_id,
++			const uint8_t *pdu, uint16_t len, void *data);
+ };
+ =
 
-3G security context, right?  So there might need to be two methods here:
-	GsmAuthenticate
-	UmtsAuthenticate
+ int ofono_sim_auth_driver_register(const struct ofono_sim_auth_driver *d);
+-- =
 
-> +
-> +Interface	org.ofono.ISimApplication
-> +
-> +Methods		dict UMTSAuthenticate(array{byte} rand, array{byte} autn)
-
-UmtsAuthenticate
-
-> +
-> +			Run the ISIM applications UMTS AUTHENTICATE algorithm
-> +			with 'rand' and 'autn'. A dictionary will be returned
-> +			containing either 'res', 'ck' and 'ik' OR 'auts'.
-
-Also, according to 31.102 the Kc could also be returned.
-
-> +			A dict containing 'auts' signifies there was a sync
-> +			failure.
-
-ISimApplication runs AKA-IMS security context, so maybe 'ImsAuthenticate'?
-
-> +
-> +			Possible Errors: [service].Error.NotSupported
-> =
+2.7.4
 
 
-So to summarize.  USimApplication would have two methods, and =
-
-ISimApplication would have one.  Eventually we can add SimApplication =
-
-for 2G SIMs, but that isn't a priority.
-
-Regards,
--Denis
-
---===============8357326787982681215==--
+--===============6713773480748126769==--
 
