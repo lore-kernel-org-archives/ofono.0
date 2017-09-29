@@ -1,124 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============7574276833247477614=="
+Content-Type: multipart/mixed; boundary="===============1814607623646903410=="
 MIME-Version: 1.0
-From: Clayton Craft <clayton@craftyguy.net>
-Subject: [PATCH] nokia-gpio: do not create links to gpios in /dev/cmt
-Date: Tue, 26 Sep 2017 19:56:07 -0700
-Message-ID: <20170927025607.21224-1-clayton@craftyguy.net>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: [PATCH 1/2] include: Add ofono_modem_get_sim
+Date: Fri, 29 Sep 2017 12:49:07 +0300
+Message-ID: <1506678548-8340-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7574276833247477614==
+--===============1814607623646903410==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The nokia-gpio plugin should not try to create symlinks to relevant gpio
-pins under /dev/cmt, since the location it is looking is no longer
-correct on newer kernels and it might change again in the future. This
-patch removes code from nokia-gpio that tries to create a symlink.
-
-Users will now need to symlink the modem gpios to /dev/cmt themselves.
-On the 4.13 kernel, this can be done by, for example, adding a udev rule
-to:
- # ln -sf /sys/bus/hsi/devices/n900-modem /dev/cmt
 ---
- plugins/nokia-gpio.c | 67 ++++--------------------------------------------=
-----
- 1 file changed, 4 insertions(+), 63 deletions(-)
+ include/modem.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/plugins/nokia-gpio.c b/plugins/nokia-gpio.c
-index 7a93106c..1d014337 100644
---- a/plugins/nokia-gpio.c
-+++ b/plugins/nokia-gpio.c
-@@ -632,74 +632,15 @@ static void phonet_status_cb(GIsiModem *idx, enum GIs=
-iPhonetLinkState state,
+diff --git a/include/modem.h b/include/modem.h
+index e40b23e..c93b3d2 100644
+--- a/include/modem.h
++++ b/include/modem.h
+@@ -29,6 +29,7 @@ extern "C" {
+ #include <ofono/types.h>
  =
 
- static int gpio_probe_links(void)
- {
--	char const *gpiodir =3D "/sys/class/gpio";
- 	char const *cmtdir =3D "/dev/cmt";
--	DIR *gpio;
--	struct dirent *d;
+ struct ofono_modem;
++struct ofono_sim;
  =
 
--	if (file_exists(cmtdir)) {
--		DBG("Using %s", cmtdir);
--		return 0;
--	}
--
--	DBG("Using %s: trying to make links to %s", gpiodir, cmtdir);
--
--	if (!dir_exists(cmtdir)) {
--		if (mkdir(cmtdir, 0755) =3D=3D -1) {
--			DBG("%s: %s", cmtdir, strerror(errno));
--			return -(errno =3D ENODEV);
--		}
--	}
--
--	gpio =3D opendir(gpiodir);
--	if (gpio =3D=3D NULL) {
--		DBG("%s: %s", "gpiodir", strerror(errno));
-+	if (!file_exists(cmtdir)) {
-+		DBG("%s: %s", cmtdir, strerror(errno));
- 		return -(errno =3D ENODEV);
- 	}
+ enum ofono_modem_type {
+ 	OFONO_MODEM_TYPE_HARDWARE =3D 0,
+@@ -80,6 +81,7 @@ void ofono_modem_remove_interface(struct ofono_modem *mod=
+em,
+ 					const char *interface);
  =
 
--	while ((d =3D readdir(gpio)) !=3D NULL) {
--		char nn[PATH_MAX], name[PATH_MAX], from[PATH_MAX], to[PATH_MAX];
--		FILE *nf;
--		size_t len;
--
--		snprintf(nn, sizeof nn, "%s/%s/name", gpiodir, d->d_name);
--
--		nf =3D fopen(nn, "rb");
--		if (nf =3D=3D NULL) {
--			DBG("%s: %s", nn, strerror(errno));
--			continue;
--		}
--
--		len =3D fread(name, sizeof name, 1, nf);
--
--		if (ferror(nf)) {
--			DBG("read from %s: %s", nn, strerror(errno));
--			fclose(nf);
--			continue;
--		}
--
--		fclose(nf);
--
--		if (len < 4)
--			continue;
--
--		name[--len] =3D '\0';
--
--		if (strncmp(name, "cmt_", 4))
--			continue;
--
--		snprintf(from, sizeof from, "%s/%s", gpiodir, d->d_name);
--		snprintf(to, sizeof to, "%s/%s", cmtdir, name);
--
--		if (symlink(from, to) =3D=3D -1)
--			DBG("%s: %s", to, strerror(errno));
--	}
--
--	DBG("%s: %s", "/sys/class/gpio", strerror(errno));
--
--	(void) closedir(gpio);
--
--	return -(errno =3D ENODEV);
-+	DBG("Using %s", cmtdir);
-+	return 0;
- }
+ const char *ofono_modem_get_path(struct ofono_modem *modem);
++struct ofono_sim *ofono_modem_get_sim(struct ofono_modem *modem);
  =
 
- =
-
+ void ofono_modem_set_data(struct ofono_modem *modem, void *data);
+ void *ofono_modem_get_data(struct ofono_modem *modem);
 -- =
 
-2.14.1
+1.9.1
 
 
---===============7574276833247477614==--
+--===============1814607623646903410==--
 
