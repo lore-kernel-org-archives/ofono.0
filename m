@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2315482540257628809=="
+Content-Type: multipart/mixed; boundary="===============8040707002406750121=="
 MIME-Version: 1.0
 From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: [PATCH 3/5] simauth: Added SimAuth class for GSM/UMTS authentication
-Date: Tue, 03 Oct 2017 09:32:36 -0700
-Message-ID: <1507048360-15441-3-git-send-email-james.prestwood@linux.intel.com>
+Subject: [PATCH 3/5] simauth: Added SimAuth class for GSM/UMTS auth
+Date: Tue, 03 Oct 2017 09:32:37 -0700
+Message-ID: <1507048360-15441-4-git-send-email-james.prestwood@linux.intel.com>
 In-Reply-To: <1507048360-15441-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2315482540257628809==
+--===============8040707002406750121==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -580,5 +580,5 @@ index 0000000..eb733f6
 2.7.4
 
 
---===============2315482540257628809==--
+--===============8040707002406750121==--
 
