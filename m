@@ -1,40 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============2541643465540203186=="
+Content-Type: multipart/mixed; boundary="===============6498771079334907357=="
 MIME-Version: 1.0
-From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: [PATCH] phonesim: fixup to remove printf from recent commit
-Date: Wed, 04 Oct 2017 09:52:17 -0700
-Message-ID: <1507135937-12868-1-git-send-email-james.prestwood@linux.intel.com>
+From: Richard =?unknown-8bit?q?R=C3=B6jfors?= <richard.rojfors@gmail.com>
+Subject: [PATCH] ublox: Disable DCD to avoid HUP when leaving data mode.
+Date: Wed, 04 Oct 2017 20:49:30 +0200
+Message-ID: <1507142970.10910.2.camel@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2541643465540203186==
+--===============6498771079334907357==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+The HUP results in errors in gatio which will deref parts
+of the AT channel. This makes it impossible to recover and
+send further AT commands after the HUP.
 ---
- src/phonesim.cpp | 2 --
- 1 file changed, 2 deletions(-)
+ plugins/ublox.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/src/phonesim.cpp b/src/phonesim.cpp
-index cf7d5a1..ec3900a 100644
---- a/src/phonesim.cpp
-+++ b/src/phonesim.cpp
-@@ -630,8 +630,6 @@ SimRules::SimRules( int fd, QObject *p,  const QString&=
- filename, HardwareManipu
-             loadPhoneBook( *n );
+diff --git a/plugins/ublox.c b/plugins/ublox.c
+index 250a5be4..5611ef5c 100644
+--- a/plugins/ublox.c
++++ b/plugins/ublox.c
+@@ -200,6 +200,8 @@ static int ublox_enable(struct ofono_modem *modem)
  =
 
-         } else if ( n->tag =3D=3D "simauth" ) {
--            printf("\n\nPARSING SIMAUTH\n\n");
--
-             _simAuth =3D new SimAuth( this, *n );
-             connect( _simAuth, SIGNAL(send(QString)),
-                     this, SLOT(respond(QString)) );
+ 		g_at_chat_send(data->modem, "ATE0 +CMEE=3D1", none_prefix,
+ 						NULL, NULL, NULL);
++
++		g_at_chat_send(data->modem, "AT&C0", NULL, NULL, NULL, NULL);
+ 	}
+ =
+
+ 	/* The modem can take a while to wake up if just powered on. */
 -- =
 
-2.7.4
+2.11.0
 
-
---===============2541643465540203186==--
+--===============6498771079334907357==--
 
