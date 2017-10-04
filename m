@@ -1,49 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============1025524845022633086=="
+Content-Type: multipart/mixed; boundary="===============0881448355874922140=="
 MIME-Version: 1.0
 From: Ankit Navik <ankit.p.navik@intel.com>
-Subject: [PATCH 3/6] ims: add implementation for IMS atom
-Date: Wed, 04 Oct 2017 10:37:04 +0530
-Message-ID: <1507093627-2118-1-git-send-email-ankit.p.navik@intel.com>
+Subject: [PATCH 4/6] xmm7modem: Add ims atom driver
+Date: Wed, 04 Oct 2017 10:37:05 +0530
+Message-ID: <1507093627-2118-2-git-send-email-ankit.p.navik@intel.com>
+In-Reply-To: <1507093627-2118-1-git-send-email-ankit.p.navik@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1025524845022633086==
+--===============0881448355874922140==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This implementation includes:
-* D-Bus interface
-* interaction with driver
 ---
- Makefile.am |   2 +-
- src/ims.c   | 400 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am                   |   3 +-
+ drivers/xmm7modem/ims.c       | 257 ++++++++++++++++++++++++++++++++++++++=
 ++++
- src/ofono.h |   2 +
- 3 files changed, 403 insertions(+), 1 deletion(-)
- create mode 100644 src/ims.c
+ drivers/xmm7modem/xmm7modem.c |   2 +
+ drivers/xmm7modem/xmm7modem.h |   3 +
+ plugins/xmm7xxx.c             |   1 +
+ 5 files changed, 265 insertions(+), 1 deletion(-)
+ create mode 100755 drivers/xmm7modem/ims.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 165235e..199de08 100644
+index 199de08..1a03229 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -630,7 +630,7 @@ src_ofonod_SOURCES =3D $(builtin_sources) $(gatchat_sou=
-rces) src/ofono.ver \
- 			src/cdma-provision.c src/handsfree.c \
- 			src/handsfree-audio.c src/bluetooth.h \
- 			src/hfp.h src/siri.c \
--			src/netmon.c src/lte.c \
-+			src/netmon.c src/lte.c src/ims.c \
- 			src/netmonagent.c src/netmonagent.h
+@@ -401,7 +401,8 @@ builtin_modules +=3D xmm7modem
+ builtin_sources +=3D drivers/atmodem/atutil.h \
+ 			drivers/xmm7modem/xmm7modem.h \
+ 			drivers/xmm7modem/xmm7modem.c \
+-			drivers/xmm7modem/radio-settings.c
++			drivers/xmm7modem/radio-settings.c \
++			drivers/xmm7modem/ims.c
  =
 
- src_ofonod_LDADD =3D gdbus/libgdbus-internal.la $(builtin_libadd) \
-diff --git a/src/ims.c b/src/ims.c
-new file mode 100644
-index 0000000..fb90dee
+ if PHONESIM
+ builtin_modules +=3D phonesim
+diff --git a/drivers/xmm7modem/ims.c b/drivers/xmm7modem/ims.c
+new file mode 100755
+index 0000000..f9e42c7
 --- /dev/null
-+++ b/src/ims.c
-@@ -0,0 +1,400 @@
++++ b/drivers/xmm7modem/ims.c
+@@ -0,0 +1,257 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -70,408 +70,289 @@ index 0000000..fb90dee
 +#include <config.h>
 +#endif
 +
-+#include <string.h>
++#define _GNU_SOURCE
++#include <stdlib.h>
 +#include <stdio.h>
-+#include <stdint.h>
-+#include <stdarg.h>
++#include <string.h>
 +#include <errno.h>
 +
 +#include <glib.h>
-+#include <gdbus.h>
 +
-+#include "ofono.h"
++#include <ofono/modem.h>
++#include <ofono/log.h>
++#include <ofono/ims.h>
 +
-+#include "common.h"
++#include "gatchat.h"
++#include "gatresult.h"
 +
-+#define VOICE_CAPABLE_FLAG 0x1
-+#define SMS_CAPABLE_FLAG 0x4
++#include "xmm7modem.h"
 +
-+struct ofono_ims {
-+	int reg_info;
-+	int ext_info;
-+	const struct ofono_ims_driver *driver;
-+	void *driver_data;
-+	struct ofono_atom *atom;
-+	DBusMessage *pending;
++static const char *none_prefix[] =3D { NULL };
++static const char *cireg_prefix[] =3D { "+CIREG:", NULL };
++
++struct ims_driver_data {
++	GAtChat *chat;
 +};
 +
-+static GSList *g_drivers =3D NULL;
-+
-+static DBusMessage *ims_get_properties(DBusConnection *conn,
-+					DBusMessage *msg, void *data)
++static void xmm_cireg_cb(gboolean ok, GAtResult *result,
++							gpointer user_data)
 +{
-+	struct ofono_ims *ims =3D data;
-+	DBusMessage *reply;
-+	DBusMessageIter iter;
-+	DBusMessageIter dict;
-+	dbus_bool_t value;
++	struct cb_data *cbd =3D user_data;
++	ofono_ims_status_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++	GAtResultIter iter;
++	int value, reg_info =3D -1, ext_info =3D -1;
 +
-+	reply =3D dbus_message_new_method_return(msg);
-+	if (reply =3D=3D NULL)
-+		return NULL;
++	DBG("ok %d", ok);
 +
-+	dbus_message_iter_init_append(reply, &iter);
++	decode_at_error(&error, g_at_result_final_response(result));
 +
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+					OFONO_PROPERTIES_ARRAY_SIGNATURE,
-+					&dict);
-+
-+	value =3D ims->reg_info ? TRUE : FALSE;
-+	ofono_dbus_dict_append(&dict, "Registered", DBUS_TYPE_BOOLEAN, &value);
-+
-+	if (ims->ext_info !=3D -1) {
-+		value =3D ims->ext_info & VOICE_CAPABLE_FLAG ? TRUE : FALSE;
-+		ofono_dbus_dict_append(&dict, "VoiceCapable",
-+					DBUS_TYPE_BOOLEAN, &value);
-+
-+		value =3D ims->ext_info & SMS_CAPABLE_FLAG ? TRUE : FALSE;
-+		ofono_dbus_dict_append(&dict, "SmsCapable",
-+					DBUS_TYPE_BOOLEAN, &value);
-+	}
-+
-+	dbus_message_iter_close_container(&iter, &dict);
-+
-+	return reply;
-+}
-+
-+static void ims_set_sms_capable(struct ofono_ims *ims, ofono_bool_t status)
-+{
-+	const char *path =3D __ofono_atom_get_path(ims->atom);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	dbus_bool_t new_value =3D status;
-+	dbus_bool_t old_value =3D ims->ext_info & SMS_CAPABLE_FLAG ? TRUE :
-+								FALSE;
-+
-+	if (old_value =3D=3D new_value)
-+		return;
-+
-+	ofono_dbus_signal_property_changed(conn, path,
-+						OFONO_IMS_INTERFACE,
-+						"SmsCapable",
-+						DBUS_TYPE_BOOLEAN,
-+						&new_value);
-+}
-+
-+static void ims_set_voice_capable(struct ofono_ims *ims, ofono_bool_t stat=
-us)
-+{
-+	const char *path =3D __ofono_atom_get_path(ims->atom);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	dbus_bool_t new_value =3D status;
-+	dbus_bool_t old_value =3D ims->ext_info & VOICE_CAPABLE_FLAG ? TRUE :
-+								FALSE;
-+
-+	if (old_value =3D=3D new_value)
-+		return;
-+
-+	ofono_dbus_signal_property_changed(conn, path,
-+						OFONO_IMS_INTERFACE,
-+						"VoiceCapable",
-+						DBUS_TYPE_BOOLEAN,
-+						&new_value);
-+}
-+
-+static void ims_set_registered(struct ofono_ims *ims, ofono_bool_t status)
-+{
-+	const char *path =3D __ofono_atom_get_path(ims->atom);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	dbus_bool_t new_value =3D status;
-+	dbus_bool_t old_value =3D ims->reg_info ? TRUE : FALSE;
-+
-+	if (old_value =3D=3D new_value)
-+		return;
-+
-+	ofono_dbus_signal_property_changed(conn, path,
-+						OFONO_IMS_INTERFACE,
-+						"Registered",
-+						DBUS_TYPE_BOOLEAN,
-+						&new_value);
-+}
-+
-+void ofono_ims_status_notify(struct ofono_ims *ims, int reg_info, int ext_=
-info)
-+{
-+	dbus_bool_t new_reg_info;
-+	dbus_bool_t new_voice_capable, new_sms_capable;
-+
-+	if (ims =3D=3D NULL)
-+		return;
-+
-+	DBG("%s reg_info:%d ext_info:%d", __ofono_atom_get_path(ims->atom),
-+						reg_info, ext_info);
-+
-+	if (ims->ext_info =3D=3D ext_info && ims->reg_info =3D=3D reg_info)
-+		return;
-+
-+	new_reg_info =3D reg_info ? TRUE : FALSE;
-+	ims_set_registered(ims, new_reg_info);
-+
-+	if (ext_info < 0)
-+		goto skip;
-+
-+	new_voice_capable =3D ext_info & VOICE_CAPABLE_FLAG ? TRUE : FALSE;
-+	ims_set_voice_capable(ims, new_voice_capable);
-+
-+	new_sms_capable =3D ext_info & SMS_CAPABLE_FLAG ? TRUE: FALSE;
-+	ims_set_sms_capable(ims, new_sms_capable);
-+
-+skip:
-+	ims->reg_info =3D reg_info;
-+	ims->ext_info =3D ext_info;
-+}
-+
-+static void registration_status_cb(const struct ofono_error *error,
-+						int reg_info, int ext_info,
-+						void *data)
-+{
-+	struct ofono_ims *ims =3D data;
-+
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+		DBG("Error during IMS registration/unregistration");
++	if (!ok) {
++		cb(&error, -1, -1, cbd->data);
 +		return;
 +	}
++
++	g_at_result_iter_init(&iter, result);
++
++	if (g_at_result_iter_next(&iter, "+CIREG:") =3D=3D FALSE)
++		goto error;
++
++	if (g_at_result_iter_next_number(&iter, &value) =3D=3D FALSE)
++		goto error;
++
++	if (g_at_result_iter_next_number(&iter, &reg_info) =3D=3D FALSE)
++		goto error;
++
++	if (reg_info =3D=3D 0)
++		ext_info =3D  -1;
++	else
++		if (g_at_result_iter_next_number(&iter, &ext_info) =3D=3D FALSE)
++			goto error;
++
++	cb(&error, reg_info, ext_info, cbd->data);
++
++	return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, -1, -1, cbd->data);
++}
++
++static void xmm_ims_registration_status(struct ofono_ims *ims,
++					ofono_ims_status_cb_t cb, void *data)
++{
++	struct ims_driver_data *idd =3D ofono_ims_get_data(ims);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++
++	if (g_at_chat_send(idd->chat, "AT+CIREG?", cireg_prefix,
++					xmm_cireg_cb, cbd, g_free) > 0)
++		return;
++
++	CALLBACK_WITH_FAILURE(cb, -1, -1, data);
++	g_free(cbd);
++}
++
++static void xmm_ims_register_cb(gboolean ok, GAtResult *result,
++					gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_ims_register_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	DBG("ok %d", ok);
++
++	decode_at_error(&error, g_at_result_final_response(result));
++	cb(&error, cbd->data);
++}
++
++static void xmm_ims_register(struct ofono_ims *ims,
++					ofono_ims_register_cb_t cb, void *data)
++{
++	struct ims_driver_data *idd =3D ofono_ims_get_data(ims);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++
++	/* We can't do much in case of failure so don't check response. */
++	if (g_at_chat_send(idd->chat, "AT+XIREG=3D1", none_prefix,
++			xmm_ims_register_cb, cbd, g_free) > 0)
++		return;
++
++	CALLBACK_WITH_FAILURE(cb, data);
++	g_free(cbd);
++}
++
++static void xmm_ims_unregister(struct ofono_ims *ims,
++					ofono_ims_register_cb_t cb, void *data)
++{
++	struct ims_driver_data *idd =3D ofono_ims_get_data(ims);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++
++	/* We can't do much in case of failure so don't check response. */
++	if (g_at_chat_send(idd->chat, "AT+XIREG=3D0", none_prefix,
++			xmm_ims_register_cb, cbd, g_free) > 0)
++		return;
++
++	CALLBACK_WITH_FAILURE(cb, data);
++	g_free(cbd);
++}
++
++static void ciregu_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_ims *ims =3D user_data;
++	int reg_info =3D -1, ext_info =3D -1;
++	GAtResultIter iter;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+CIREGU:"))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &reg_info))
++		return;
++
++	if (reg_info =3D=3D 0)
++		ext_info =3D  -1;
++	else
++		if (!g_at_result_iter_next_number(&iter, &ext_info))
++			return;
++
++	DBG("reg_info:%d, ext_info:%d", reg_info, ext_info);
 +
 +	ofono_ims_status_notify(ims, reg_info, ext_info);
 +}
 +
-+static void register_cb(const struct ofono_error *error, void *data)
++static void xmm_cireg_set_cb(gboolean ok, GAtResult *result,
++						gpointer user_data)
 +{
-+	struct ofono_ims *ims =3D data;
-+	DBusMessage *reply;
++	struct ofono_ims *ims =3D user_data;
 +
-+	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
-+		reply =3D dbus_message_new_method_return(ims->pending);
-+	else
-+		reply =3D __ofono_error_failed(ims->pending);
-+
-+	__ofono_dbus_pending_reply(&ims->pending, reply);
-+
-+	if (ims->driver->registration_status =3D=3D NULL)
++	if (!ok) {
++		ofono_ims_remove(ims);
 +		return;
-+
-+	ims->driver->registration_status(ims, registration_status_cb, ims);
-+}
-+
-+static DBusMessage *ofono_ims_send_register(DBusConnection *conn,
-+						DBusMessage *msg, void *data)
-+{
-+	struct ofono_ims *ims =3D data;
-+
-+	if (ims->pending)
-+		return __ofono_error_busy(msg);
-+
-+	if (ims->driver->ims_register =3D=3D NULL)
-+		return __ofono_error_not_implemented(msg);
-+
-+	ims->pending =3D dbus_message_ref(msg);
-+
-+	ims->driver->ims_register(ims, register_cb, ims);
-+
-+	return NULL;
-+}
-+
-+static DBusMessage *ofono_ims_unregister(DBusConnection *conn,
-+						DBusMessage *msg, void *data)
-+{
-+	struct ofono_ims *ims =3D data;
-+
-+	if (ims->pending)
-+		return __ofono_error_busy(msg);
-+
-+	if (ims->driver->ims_unregister =3D=3D NULL)
-+		return __ofono_error_not_implemented(msg);
-+
-+	ims->pending =3D dbus_message_ref(msg);
-+
-+	ims->driver->ims_unregister(ims, register_cb, ims);
-+
-+	return NULL;
-+}
-+
-+static const GDBusMethodTable ims_methods[] =3D {
-+	{ GDBUS_METHOD("GetProperties",
-+			NULL, GDBUS_ARGS({ "properties", "a{sv}" }),
-+			ims_get_properties) },
-+	{ GDBUS_ASYNC_METHOD("Register", NULL, NULL,
-+			ofono_ims_send_register) },
-+	{ GDBUS_ASYNC_METHOD("Unregister", NULL, NULL,
-+			ofono_ims_unregister) },
-+	{ }
-+};
-+
-+static const GDBusSignalTable ims_signals[] =3D {
-+	{ GDBUS_SIGNAL("PropertyChanged",
-+			GDBUS_ARGS({ "name", "s" }, { "value", "v" })) },
-+	{ }
-+};
-+
-+static void ims_atom_remove(struct ofono_atom *atom)
-+{
-+	struct ofono_ims *ims =3D __ofono_atom_get_data(atom);
-+
-+	DBG("atom: %p", atom);
-+
-+	if (ims =3D=3D NULL)
-+		return;
-+
-+	if (ims->driver && ims->driver->remove)
-+		ims->driver->remove(ims);
-+
-+	g_free(ims);
-+}
-+
-+struct ofono_ims *ofono_ims_create(struct ofono_modem *modem,
-+					const char *driver, void *data)
-+{
-+	struct ofono_ims *ims;
-+	GSList *l;
-+
-+	if (driver =3D=3D NULL)
-+		return NULL;
-+
-+	ims =3D g_try_new0(struct ofono_ims, 1);
-+
-+	if (ims =3D=3D NULL)
-+		return NULL;
-+
-+	ims->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_IMS,
-+						ims_atom_remove, ims);
-+
-+	for (l =3D g_drivers; l; l =3D l->next) {
-+		const struct ofono_ims_driver *drv =3D l->data;
-+
-+		if (g_strcmp0(drv->name, driver))
-+			continue;
-+
-+		if (drv->probe(ims, data) < 0)
-+			continue;
-+
-+		ims->driver =3D drv;
-+		break;
 +	}
 +
-+	DBG("IMS atom created");
-+
-+	return ims;
++	ofono_ims_register(ims);
 +}
 +
-+int ofono_ims_driver_register(const struct ofono_ims_driver *d)
++static void cireg_support_cb(gboolean ok, GAtResult *result,
++						gpointer user_data)
 +{
-+	DBG("driver: %p, name: %s", d, d->name);
++	struct ofono_ims *ims =3D user_data;
++	struct ims_driver_data *idd =3D ofono_ims_get_data(ims);
 +
-+	if (d->probe =3D=3D NULL)
-+		return -EINVAL;
++	if (!ok) {
++		ofono_ims_remove(ims);
++		return;
++	}
 +
-+	g_drivers =3D g_slist_prepend(g_drivers, (void *) d);
++	g_at_chat_register(idd->chat, "+CIREGU:", ciregu_notify,
++					FALSE, ims, NULL);
++
++	g_at_chat_send(idd->chat, "AT+CIREG=3D2", none_prefix,
++				xmm_cireg_set_cb, ims, NULL);
++}
++
++static int xmm_ims_probe(struct ofono_ims *ims, void *data)
++{
++	GAtChat *chat =3D data;
++	struct ims_driver_data *idd;
++
++	DBG("at ims probe");
++
++	idd =3D g_try_new0(struct ims_driver_data, 1);
++	if (!idd)
++		return -ENOMEM;
++
++	idd->chat =3D g_at_chat_clone(chat);
++
++	ofono_ims_set_data(ims, idd);
++
++	g_at_chat_send(idd->chat, "AT+CIREG=3D?", cireg_prefix,
++				cireg_support_cb, ims, NULL);
 +
 +	return 0;
 +}
 +
-+void ofono_ims_driver_unregister(const struct ofono_ims_driver *d)
++static void xmm_ims_remove(struct ofono_ims *ims)
 +{
-+	DBG("driver: %p, name: %s", d, d->name);
++	struct ims_driver_data *idd =3D ofono_ims_get_data(ims);
 +
-+	g_drivers =3D g_slist_remove(g_drivers, (void *) d);
++	DBG("at ims remove");
++
++	g_at_chat_unref(idd->chat);
++
++	ofono_ims_set_data(ims, NULL);
++
++	g_free(idd);
 +}
 +
-+static void ims_atom_unregister(struct ofono_atom *atom)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
-+	const char *path =3D __ofono_atom_get_path(atom);
++static struct ofono_ims_driver driver =3D {
++	.name				=3D "xmm7modem",
++	.probe				=3D xmm_ims_probe,
++	.remove				=3D xmm_ims_remove,
++	.ims_register			=3D xmm_ims_register,
++	.ims_unregister			=3D xmm_ims_unregister,
++	.registration_status		=3D xmm_ims_registration_status,
++};
 +
-+	ofono_modem_remove_interface(modem, OFONO_IMS_INTERFACE);
-+	g_dbus_unregister_interface(conn, path, OFONO_IMS_INTERFACE);
++void xmm_ims_init(void)
++{
++	ofono_ims_driver_register(&driver);
 +}
 +
-+static void ofono_ims_finish_register(struct ofono_ims *ims)
++void xmm_ims_exit(void)
 +{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(ims->atom);
-+	const char *path =3D __ofono_atom_get_path(ims->atom);
-+
-+	if (!g_dbus_register_interface(conn, path,
-+				OFONO_IMS_INTERFACE,
-+				ims_methods, ims_signals, NULL,
-+				ims, NULL)) {
-+		ofono_error("could not create %s interface",
-+				OFONO_IMS_INTERFACE);
-+		return;
-+	}
-+
-+	ofono_modem_add_interface(modem, OFONO_IMS_INTERFACE);
-+
-+	__ofono_atom_register(ims->atom, ims_atom_unregister);
++	ofono_ims_driver_unregister(&driver);
 +}
-+
-+static void ims_init_registration_status_cb(const struct ofono_error *erro=
-r,
-+						int reg_info, int ext_info,
-+						void *data)
-+{
-+	struct ofono_ims *ims =3D data;
-+
-+	ofono_ims_finish_register(ims);
-+}
-+
-+void ofono_ims_register(struct ofono_ims *ims)
-+{
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(ims->atom);
-+	struct ofono_sim *sim =3D __ofono_atom_find(OFONO_ATOM_TYPE_SIM, modem);
-+	const char *imsi =3D ofono_sim_get_imsi(sim);
-+
-+	if (imsi =3D=3D NULL) {
-+		ofono_error("No sim atom required for registering IMS atom.");
-+		return;
-+	}
-+
-+	if (ims->driver->registration_status) {
-+		ims->driver->registration_status(ims,
-+					ims_init_registration_status_cb, ims);
-+		return;
-+	}
-+
-+	ofono_ims_finish_register(ims);
-+}
-+
-+void ofono_ims_remove(struct ofono_ims *ims)
-+{
-+	__ofono_atom_free(ims->atom);
-+}
-+
-+void ofono_ims_set_data(struct ofono_ims *ims, void *data)
-+{
-+	ims->driver_data =3D data;
-+}
-+
-+void *ofono_ims_get_data(const struct ofono_ims *ims)
-+{
-+	return ims->driver_data;
-+}
-diff --git a/src/ofono.h b/src/ofono.h
-index a797b7f..0da11a2 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -154,6 +154,7 @@ enum ofono_atom_type {
- 	OFONO_ATOM_TYPE_SIRI,
- 	OFONO_ATOM_TYPE_NETMON,
- 	OFONO_ATOM_TYPE_LTE,
-+	OFONO_ATOM_TYPE_IMS,
- };
+diff --git a/drivers/xmm7modem/xmm7modem.c b/drivers/xmm7modem/xmm7modem.c
+index db1864e..5c08343 100644
+--- a/drivers/xmm7modem/xmm7modem.c
++++ b/drivers/xmm7modem/xmm7modem.c
+@@ -36,6 +36,7 @@
+ static int xmm7modem_init(void)
+ {
+ 	xmm_radio_settings_init();
++	xmm_ims_init();
  =
 
- enum ofono_atom_watch_condition {
-@@ -534,3 +535,4 @@ ofono_bool_t __ofono_private_network_request(ofono_priv=
-ate_network_cb_t cb,
+ 	return 0;
+ }
+@@ -43,6 +44,7 @@ static int xmm7modem_init(void)
+ static void xmm7modem_exit(void)
+ {
+ 	xmm_radio_settings_exit();
++	xmm_ims_exit();
+ }
  =
 
- #include <ofono/netmon.h>
+ OFONO_PLUGIN_DEFINE(xmm7modem, "Intel xmm7xxx series modem driver",
+diff --git a/drivers/xmm7modem/xmm7modem.h b/drivers/xmm7modem/xmm7modem.h
+index 44fa3d6..5f8f172 100644
+--- a/drivers/xmm7modem/xmm7modem.h
++++ b/drivers/xmm7modem/xmm7modem.h
+@@ -25,3 +25,6 @@
+ =
+
+ extern void xmm_radio_settings_init(void);
+ extern void xmm_radio_settings_exit(void);
++
++extern void xmm_ims_init(void);
++extern void xmm_ims_exit(void);
+diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
+index 4443d4c..24b7d31 100644
+--- a/plugins/xmm7xxx.c
++++ b/plugins/xmm7xxx.c
+@@ -48,6 +48,7 @@
+ #include <ofono/gprs-context.h>
+ #include <ofono/stk.h>
  #include <ofono/lte.h>
 +#include <ofono/ims.h>
+ =
+
+ #include <drivers/atmodem/atutil.h>
+ #include <drivers/atmodem/vendor.h>
 -- =
 
 1.9.1
 
 
---===============1025524845022633086==--
+--===============0881448355874922140==--
 
