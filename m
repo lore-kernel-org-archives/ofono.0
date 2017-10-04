@@ -1,40 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============3444279626505067118=="
+Content-Type: multipart/mixed; boundary="===============3094138393699127723=="
 MIME-Version: 1.0
-From: Navik, Ankit P <ankit.p.navik@intel.com>
-Subject: RE: [PATCH 3/6] ims: add implementation for IMS atom
-Date: Wed, 04 Oct 2017 05:57:32 +0000
-Message-ID: <2F886D5F95ED3A47BC8C177EADCD1CC727FCE4AA@BGSMSX104.gar.corp.intel.com>
-In-Reply-To: <1507093627-2118-1-git-send-email-ankit.p.navik@intel.com>
+From: Ankit Navik <ankit.p.navik@intel.com>
+Subject: [PATCH 3/6] ims: add implementation for IMS atom
+Date: Wed, 04 Oct 2017 11:33:12 +0530
+Message-ID: <1507096992-22669-1-git-send-email-ankit.p.navik@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3444279626505067118==
+--===============3094138393699127723==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
-
-Ignore this patch.
-
-Regards, Ankit
-
------Original Message-----
-From: Navik, Ankit P =
-
-Sent: Wednesday, October 4, 2017 10:37 AM
-To: ofono(a)ofono.org
-Cc: Navik, Ankit P <ankit.p.navik@intel.com>
-Subject: [PATCH 3/6] ims: add implementation for IMS atom
 
 This implementation includes:
 * D-Bus interface
 * interaction with driver
 ---
  Makefile.am |   2 +-
- src/ims.c   | 400 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ src/ims.c   | 389 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
  src/ofono.h |   2 +
- 3 files changed, 403 insertions(+), 1 deletion(-)  create mode 100644 src/=
-ims.c
+ 3 files changed, 392 insertions(+), 1 deletion(-)
+ create mode 100644 src/ims.c
 
 diff --git a/Makefile.am b/Makefile.am
 index 165235e..199de08 100644
@@ -50,20 +37,20 @@ rces) src/ofono.ver \
  			src/netmonagent.c src/netmonagent.h
  =
 
- src_ofonod_LDADD =3D gdbus/libgdbus-internal.la $(builtin_libadd) \ diff -=
--git a/src/ims.c b/src/ims.c new file mode 100644 index 0000000..fb90dee
+ src_ofonod_LDADD =3D gdbus/libgdbus-internal.la $(builtin_libadd) \
+diff --git a/src/ims.c b/src/ims.c
+new file mode 100644
+index 0000000..626d5d2
 --- /dev/null
 +++ b/src/ims.c
-@@ -0,0 +1,400 @@
+@@ -0,0 +1,389 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
 + *
 + *  Copyright (C) 2017  Intel Corporation. All rights reserved.
 + *
-+ *  This program is free software; you can redistribute it and/or =
-
-+modify
++ *  This program is free software; you can redistribute it and/or modify
 + *  it under the terms of the GNU General Public License version 2 as
 + *  published by the Free Software Foundation.
 + *
@@ -74,9 +61,8 @@ rces) src/ofono.ver \
 + *
 + *  You should have received a copy of the GNU General Public License
 + *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  =
-
-+02110-1301  USA
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
 + *
 + */
 +
@@ -131,9 +117,7 @@ rces) src/ofono.ver \
 +					&dict);
 +
 +	value =3D ims->reg_info ? TRUE : FALSE;
-+	ofono_dbus_dict_append(&dict, "Registered", DBUS_TYPE_BOOLEAN, =
-
-+&value);
++	ofono_dbus_dict_append(&dict, "Registered", DBUS_TYPE_BOOLEAN, &value);
 +
 +	if (ims->ext_info !=3D -1) {
 +		value =3D ims->ext_info & VOICE_CAPABLE_FLAG ? TRUE : FALSE;
@@ -150,9 +134,8 @@ rces) src/ofono.ver \
 +	return reply;
 +}
 +
-+static void ims_set_sms_capable(struct ofono_ims *ims, ofono_bool_t =
-
-+status) {
++static void ims_set_sms_capable(struct ofono_ims *ims, ofono_bool_t status)
++{
 +	const char *path =3D __ofono_atom_get_path(ims->atom);
 +	DBusConnection *conn =3D ofono_dbus_get_connection();
 +	dbus_bool_t new_value =3D status;
@@ -169,9 +152,9 @@ rces) src/ofono.ver \
 +						&new_value);
 +}
 +
-+static void ims_set_voice_capable(struct ofono_ims *ims, ofono_bool_t =
-
-+status) {
++static void ims_set_voice_capable(struct ofono_ims *ims, ofono_bool_t stat=
+us)
++{
 +	const char *path =3D __ofono_atom_get_path(ims->atom);
 +	DBusConnection *conn =3D ofono_dbus_get_connection();
 +	dbus_bool_t new_value =3D status;
@@ -188,9 +171,8 @@ rces) src/ofono.ver \
 +						&new_value);
 +}
 +
-+static void ims_set_registered(struct ofono_ims *ims, ofono_bool_t =
-
-+status) {
++static void ims_set_registered(struct ofono_ims *ims, ofono_bool_t status)
++{
 +	const char *path =3D __ofono_atom_get_path(ims->atom);
 +	DBusConnection *conn =3D ofono_dbus_get_connection();
 +	dbus_bool_t new_value =3D status;
@@ -206,9 +188,9 @@ rces) src/ofono.ver \
 +						&new_value);
 +}
 +
-+void ofono_ims_status_notify(struct ofono_ims *ims, int reg_info, int =
-
-+ext_info) {
++void ofono_ims_status_notify(struct ofono_ims *ims, int reg_info, int ext_=
+info)
++{
 +	dbus_bool_t new_reg_info;
 +	dbus_bool_t new_voice_capable, new_sms_capable;
 +
@@ -249,9 +231,11 @@ rces) src/ofono.ver \
 +		return;
 +	}
 +
-+	ofono_ims_status_notify(ims, reg_info, ext_info); }
++	ofono_ims_status_notify(ims, reg_info, ext_info);
++}
 +
-+static void register_cb(const struct ofono_error *error, void *data) {
++static void register_cb(const struct ofono_error *error, void *data)
++{
 +	struct ofono_ims *ims =3D data;
 +	DBusMessage *reply;
 +
@@ -265,7 +249,8 @@ rces) src/ofono.ver \
 +	if (ims->driver->registration_status =3D=3D NULL)
 +		return;
 +
-+	ims->driver->registration_status(ims, registration_status_cb, ims); }
++	ims->driver->registration_status(ims, registration_status_cb, ims);
++}
 +
 +static DBusMessage *ofono_ims_send_register(DBusConnection *conn,
 +						DBusMessage *msg, void *data)
@@ -320,7 +305,8 @@ rces) src/ofono.ver \
 +	{ }
 +};
 +
-+static void ims_atom_remove(struct ofono_atom *atom) {
++static void ims_atom_remove(struct ofono_atom *atom)
++{
 +	struct ofono_ims *ims =3D __ofono_atom_get_data(atom);
 +
 +	DBG("atom: %p", atom);
@@ -369,7 +355,8 @@ rces) src/ofono.ver \
 +	return ims;
 +}
 +
-+int ofono_ims_driver_register(const struct ofono_ims_driver *d) {
++int ofono_ims_driver_register(const struct ofono_ims_driver *d)
++{
 +	DBG("driver: %p, name: %s", d, d->name);
 +
 +	if (d->probe =3D=3D NULL)
@@ -380,20 +367,25 @@ rces) src/ofono.ver \
 +	return 0;
 +}
 +
-+void ofono_ims_driver_unregister(const struct ofono_ims_driver *d) {
++void ofono_ims_driver_unregister(const struct ofono_ims_driver *d)
++{
 +	DBG("driver: %p, name: %s", d, d->name);
 +
-+	g_drivers =3D g_slist_remove(g_drivers, (void *) d); }
++	g_drivers =3D g_slist_remove(g_drivers, (void *) d);
++}
 +
-+static void ims_atom_unregister(struct ofono_atom *atom) {
++static void ims_atom_unregister(struct ofono_atom *atom)
++{
 +	DBusConnection *conn =3D ofono_dbus_get_connection();
 +	struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
 +	const char *path =3D __ofono_atom_get_path(atom);
 +
 +	ofono_modem_remove_interface(modem, OFONO_IMS_INTERFACE);
-+	g_dbus_unregister_interface(conn, path, OFONO_IMS_INTERFACE); }
++	g_dbus_unregister_interface(conn, path, OFONO_IMS_INTERFACE);
++}
 +
-+static void ofono_ims_finish_register(struct ofono_ims *ims) {
++static void ofono_ims_finish_register(struct ofono_ims *ims)
++{
 +	DBusConnection *conn =3D ofono_dbus_get_connection();
 +	struct ofono_modem *modem =3D __ofono_atom_get_modem(ims->atom);
 +	const char *path =3D __ofono_atom_get_path(ims->atom);
@@ -409,19 +401,15 @@ rces) src/ofono.ver \
 +
 +	ofono_modem_add_interface(modem, OFONO_IMS_INTERFACE);
 +
-+	__ofono_atom_register(ims->atom, ims_atom_unregister); }
++	if (ims->driver->registration_status)
++		ims->driver->registration_status(ims,
++					registration_status_cb, ims);
 +
-+static void ims_init_registration_status_cb(const struct ofono_error *erro=
-r,
-+						int reg_info, int ext_info,
-+						void *data)
-+{
-+	struct ofono_ims *ims =3D data;
-+
-+	ofono_ims_finish_register(ims);
++	__ofono_atom_register(ims->atom, ims_atom_unregister);
 +}
 +
-+void ofono_ims_register(struct ofono_ims *ims) {
++void ofono_ims_register(struct ofono_ims *ims)
++{
 +	struct ofono_modem *modem =3D __ofono_atom_get_modem(ims->atom);
 +	struct ofono_sim *sim =3D __ofono_atom_find(OFONO_ATOM_TYPE_SIM, modem);
 +	const char *imsi =3D ofono_sim_get_imsi(sim);
@@ -431,24 +419,21 @@ r,
 +		return;
 +	}
 +
-+	if (ims->driver->registration_status) {
-+		ims->driver->registration_status(ims,
-+					ims_init_registration_status_cb, ims);
-+		return;
-+	}
-+
 +	ofono_ims_finish_register(ims);
 +}
 +
-+void ofono_ims_remove(struct ofono_ims *ims) {
++void ofono_ims_remove(struct ofono_ims *ims)
++{
 +	__ofono_atom_free(ims->atom);
 +}
 +
-+void ofono_ims_set_data(struct ofono_ims *ims, void *data) {
++void ofono_ims_set_data(struct ofono_ims *ims, void *data)
++{
 +	ims->driver_data =3D data;
 +}
 +
-+void *ofono_ims_get_data(const struct ofono_ims *ims) {
++void *ofono_ims_get_data(const struct ofono_ims *ims)
++{
 +	return ims->driver_data;
 +}
 diff --git a/src/ofono.h b/src/ofono.h
@@ -471,9 +456,10 @@ ate_network_cb_t cb,
  #include <ofono/netmon.h>
  #include <ofono/lte.h>
 +#include <ofono/ims.h>
---
+-- =
+
 1.9.1
 
 
---===============3444279626505067118==--
+--===============3094138393699127723==--
 
