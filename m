@@ -1,50 +1,112 @@
-Content-Type: multipart/mixed; boundary="===============4614806073556292104=="
+Content-Type: multipart/mixed; boundary="===============3427924869995888033=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/7] sim-auth: implementation of core sim-auth atom
-Date: Tue, 03 Oct 2017 22:33:07 -0500
-Message-ID: <625c0cdb-4877-7e24-0e69-a775911eb110@gmail.com>
-In-Reply-To: <e9e114d5-a809-5892-1736-d58d52709f20@gmail.com>
+From: Ankit Navik <ankit.p.navik@intel.com>
+Subject: [PATCH 1/6] doc: add ims atom documentation
+Date: Wed, 04 Oct 2017 09:12:27 +0530
+Message-ID: <1507088548-25106-1-git-send-email-ankit.p.navik@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4614806073556292104==
+--===============3427924869995888033==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> org.ofono.SimAuthentication on path /modem1
-> =
+---
+ Makefile.am     |  3 ++-
+ doc/ims-api.txt | 60 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 62 insertions(+), 1 deletion(-)
+ create mode 100755 doc/ims-api.txt
 
-> SimAuthentication would have a property with signature 'a{sv}' Applicatio=
-ns
-> =
+diff --git a/Makefile.am b/Makefile.am
+index 5368b61..3ce6d50 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -680,7 +680,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt doc/=
+release-faq.txt \
+ 			doc/networkmonitor-api.txt \
+ 			doc/allowed-apns-api.txt \
+ 			doc/lte-api.txt \
+-			doc/cinterion-hardware-monitor-api.txt
++			doc/cinterion-hardware-monitor-api.txt \
++			doc/ims-api.txt
+ =
+
+ =
+
+ test_scripts =3D test/backtrace \
+diff --git a/doc/ims-api.txt b/doc/ims-api.txt
+new file mode 100755
+index 0000000..4f9a19b
+--- /dev/null
++++ b/doc/ims-api.txt
+@@ -0,0 +1,60 @@
++IpMultimediaSystem Hierarchy
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D
++
++Service		org.ofono
++Interface	org.ofono.IpMultimediaSystem
++Object path	[variable prefix]/{modem0,modem1,...}
++
++
++Methods		dict GetProperties()
++
++			Returns all IpMultimediaSystem configuration properties.
++
++		void SetProperty(string property, variant value)
++
++			Changes the value of the specified property. Only
++			properties that are listed as readwrite are
++			changeable. On success a PropertyChanged signal
++			will be emitted.
++
++			Possible Errors: [service].Error.InProgress
++					 [service].Error.InvalidArguments
++					 [service].Error.Failed
++
++		void Register()
++
++			Attempts to register to IMS. A successful method return
++			indicates that the registration process could be
++			initiated successfully. The actual registration state
++			will be reflected by the 'Registered' property.
++
++			Possible Errors: [service].Error.InProgress
++					 [service].Error.NotImplemented
++
++		void Unregister()
++
++			Attempts to unregister from IMS. A successful method
++			return indicates that the unregistration process could
++			be initiated successfully. The actual unregistration
++			state will be reflected by the 'Registered' property.
++
++			Possible Errors: [service].Error.InProgress
++					 [service].Error.NotImplemented
++
++Signals		PropertyChanged(string property, variant value)
++
++			This signal indicates a changed value of the given
++			property.
++
++Properties 	boolean Registered [readonly]
++
++			Contains the current IMS registration state.
++
++		boolean VoiceCapable [readonly, optional]
++
++			Boolean representing whether voice call transfer over
++			RTP (IMS) is available.
++
++		boolean SmsCapable [readonly, optional]
++
++			Boolean representing whether SMS-over-IMS is available.
+-- =
+
+1.9.1
 
 
-Actually reminds me that all our other interfaces do it using the =
-
-array{object,dict} pattern.
-
-E.g. array{object,dict} GetModems()
-array{object,dict} GetCards()
-array{object,dict} GetContexts()
-
-So we should stick to that.
-
-> where
-> - 'o' Path -> Path to the application, something like /modem1/aid
-
-So this part would just be the 'object' above serving as the key.
-
-> - 's' Type -> Gsm/Umts/Ims.=C2=A0 The interface (USimApplication, =
-
-> ISimApplication, etc) would depend on the type.
-> - 's' Name -> Human readable name
-> =
-
-
-Regards,
--Denis
-
---===============4614806073556292104==--
+--===============3427924869995888033==--
 
