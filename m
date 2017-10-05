@@ -1,42 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============6498771079334907357=="
+Content-Type: multipart/mixed; boundary="===============3053323651705580126=="
 MIME-Version: 1.0
-From: Richard =?unknown-8bit?q?R=C3=B6jfors?= <richard.rojfors@gmail.com>
-Subject: [PATCH] ublox: Disable DCD to avoid HUP when leaving data mode.
-Date: Wed, 04 Oct 2017 20:49:30 +0200
-Message-ID: <1507142970.10910.2.camel@gmail.com>
+From: Harald Welte <laforge@gnumonks.org>
+Subject: Re: [PATCH 1/5] comp128: GSM algorithm (comp128) implementation.
+Date: Thu, 05 Oct 2017 12:16:36 +0800
+Message-ID: <20171005041636.wwefmcrg3cunb6yc@nataraja>
+In-Reply-To: <1507048516-15623-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6498771079334907357==
+--===============3053323651705580126==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The HUP results in errors in gatio which will deref parts
-of the AT channel. This makes it impossible to recover and
-send further AT commands after the HUP.
----
- plugins/ublox.c | 2 ++
- 1 file changed, 2 insertions(+)
+Hi James,
 
-diff --git a/plugins/ublox.c b/plugins/ublox.c
-index 250a5be4..5611ef5c 100644
---- a/plugins/ublox.c
-+++ b/plugins/ublox.c
-@@ -200,6 +200,8 @@ static int ublox_enable(struct ofono_modem *modem)
- =
+there are three COMP128 algorithms: v1, v2 and v3.
 
- 		g_at_chat_send(data->modem, "ATE0 +CMEE=3D1", none_prefix,
- 						NULL, NULL, NULL);
-+
-+		g_at_chat_send(data->modem, "AT&C0", NULL, NULL, NULL, NULL);
- 	}
- =
+The code you're submitting only implements COMP128v1, so I suggest you docu=
+ment
+that in the commit log / subject to avoid any misunderstandings.
 
- 	/* The modem can take a while to wake up if just powered on. */
+Just stating "COMP128" typically refers to the entire family of algorithms.
+
+A GPLv2+ licensed implementation for v2 and v3 can be found at
+http://cgit.osmocom.org/libosmocore/plain/src/gsm/comp in case you ever nee=
+d it.
+
 -- =
 
-2.11.0
+- Harald Welte <laforge@gnumonks.org>           http://laforge.gnumonks.o=
+rg/
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D
+"Privacy in residential applications is a desirable marketing option."
+                                                  (ETSI EN 300 175-7 Ch. A6)
 
---===============6498771079334907357==--
+--===============3053323651705580126==--
 
