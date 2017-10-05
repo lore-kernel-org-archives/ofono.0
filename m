@@ -1,32 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============6059877786282100249=="
+Content-Type: multipart/mixed; boundary="===============8202418641351201315=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] phonesim: fixup to remove printf from recent commit
-Date: Thu, 05 Oct 2017 11:22:03 -0500
-Message-ID: <06de6fed-fcbe-b2da-9ebe-d1b7061739a4@gmail.com>
-In-Reply-To: <1507135937-12868-1-git-send-email-james.prestwood@linux.intel.com>
+Subject: Re: [PATCH 1/2] include: Add ofono_modem_get_sim
+Date: Thu, 05 Oct 2017 11:23:15 -0500
+Message-ID: <55958c89-0704-4d37-1133-aa35485ea204@gmail.com>
+In-Reply-To: <1506678548-8340-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6059877786282100249==
+--===============8202418641351201315==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi James,
+Hi Slava,
 
-On 10/04/2017 11:52 AM, James Prestwood wrote:
+On 09/29/2017 04:49 AM, Slava Monich wrote:
 > ---
->   src/phonesim.cpp | 2 --
->   1 file changed, 2 deletions(-)
+>   include/modem.h | 2 ++
+>   1 file changed, 2 insertions(+)
 > =
 
 
-Applied, thanks.
+Both applied, thanks.
 
 Regards,
 -Denis
 
 
---===============6059877786282100249==--
+--===============8202418641351201315==--
 
