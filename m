@@ -1,42 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============3053323651705580126=="
+Content-Type: multipart/mixed; boundary="===============3452976427644045061=="
 MIME-Version: 1.0
-From: Harald Welte <laforge@gnumonks.org>
-Subject: Re: [PATCH 1/5] comp128: GSM algorithm (comp128) implementation.
-Date: Thu, 05 Oct 2017 12:16:36 +0800
-Message-ID: <20171005041636.wwefmcrg3cunb6yc@nataraja>
-In-Reply-To: <1507048516-15623-1-git-send-email-james.prestwood@linux.intel.com>
+From: John Ernberg <john.ernberg@actia.se>
+Subject: [PATCH] doc: Add missing LTE interface to Interfaces list
+Date: Thu, 05 Oct 2017 07:14:23 +0000
+Message-ID: <1507187659-22157-1-git-send-email-john.ernberg@actia.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3053323651705580126==
+--===============3452976427644045061==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi James,
+From: John Ernberg <john.ernberg@actia.se>
 
-there are three COMP128 algorithms: v1, v2 and v3.
+---
+ doc/modem-api.txt | 1 +
+ 1 file changed, 1 insertion(+)
 
-The code you're submitting only implements COMP128v1, so I suggest you docu=
-ment
-that in the commit log / subject to avoid any misunderstandings.
-
-Just stating "COMP128" typically refers to the entire family of algorithms.
-
-A GPLv2+ licensed implementation for v2 and v3 can be found at
-http://cgit.osmocom.org/libosmocore/plain/src/gsm/comp in case you ever nee=
-d it.
-
+diff --git a/doc/modem-api.txt b/doc/modem-api.txt
+index c0a575f..6462b17 100644
+--- a/doc/modem-api.txt
++++ b/doc/modem-api.txt
+@@ -127,6 +127,7 @@ Properties	boolean Powered [readwrite]
+ 				org.ofono.CallVolume
+ 				org.ofono.CellBroadcast
+ 				org.ofono.Handsfree
++				org.ofono.LongTermEvolution
+ 				org.ofono.LocationReporting
+ 				org.ofono.MessageManager
+ 				org.ofono.MessageWaiting
 -- =
 
-- Harald Welte <laforge@gnumonks.org>           http://laforge.gnumonks.o=
-rg/
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D
-"Privacy in residential applications is a desirable marketing option."
-                                                  (ETSI EN 300 175-7 Ch. A6)
+2.7.4
 
---===============3053323651705580126==--
+--===============3452976427644045061==--
 
