@@ -1,35 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============6261477045265815050=="
+Content-Type: multipart/mixed; boundary="===============8911291978740448549=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/6] doc: add ims atom documentation
-Date: Thu, 05 Oct 2017 11:47:05 -0500
-Message-ID: <3c3671c5-992f-6ec1-cc93-3a29e1fe58f8@gmail.com>
-In-Reply-To: <1507088548-25106-1-git-send-email-ankit.p.navik@intel.com>
+Subject: Re: [PATCH 6/6] test: add scripts to test ims registration
+Date: Thu, 05 Oct 2017 11:48:07 -0500
+Message-ID: <c9504b36-6e57-bf0a-c14a-03bd4881098a@gmail.com>
+In-Reply-To: <1507093627-2118-4-git-send-email-ankit.p.navik@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6261477045265815050==
+--===============8911291978740448549==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Ankit,
 
-On 10/03/2017 10:42 PM, Ankit Navik wrote:
+On 10/04/2017 12:07 AM, Ankit Navik wrote:
 > ---
->   Makefile.am     |  3 ++-
->   doc/ims-api.txt | 60 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   2 files changed, 62 insertions(+), 1 deletion(-)
->   create mode 100755 doc/ims-api.txt
+>   Makefile.am         |  4 +++-
+>   test/ims-register   | 18 ++++++++++++++++++
+>   test/ims-unregister | 18 ++++++++++++++++++
+>   3 files changed, 39 insertions(+), 1 deletion(-)
+>   create mode 100755 test/ims-register
+>   create mode 100755 test/ims-unregister
 > =
 
 
-Patch 1 & 2 applied, thanks.
+Applied, thanks.
 
 Regards,
 -Denis
 
 
---===============6261477045265815050==--
+--===============8911291978740448549==--
 
