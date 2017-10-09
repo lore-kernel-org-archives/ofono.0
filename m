@@ -1,42 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============4491935519026052635=="
+Content-Type: multipart/mixed; boundary="===============8376234518363141335=="
 MIME-Version: 1.0
-From: Ankit Navik <ankit.p.navik@intel.com>
-Subject: [PATCH 5/6] xmm7modem: Add support for ims
-Date: Thu, 05 Oct 2017 22:45:03 +0530
-Message-ID: <1507223703-13827-3-git-send-email-ankit.p.navik@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 3/6] ims: add implementation for IMS atom
+Date: Mon, 09 Oct 2017 11:41:18 -0500
+Message-ID: <e42ef78b-39d8-5076-f64d-f155ab301c4c@gmail.com>
 In-Reply-To: <1507223703-13827-1-git-send-email-ankit.p.navik@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4491935519026052635==
+--===============8376234518363141335==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/xmm7xxx.c | 2 ++
- 1 file changed, 2 insertions(+)
+Hi Ankit,
 
-diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
-index 24b7d31..5cb843b 100644
---- a/plugins/xmm7xxx.c
-+++ b/plugins/xmm7xxx.c
-@@ -341,6 +341,8 @@ static void xmm7xxx_post_online(struct ofono_modem *mod=
-em)
- =
-
- 	if (gprs && gc)
- 		ofono_gprs_add_context(gprs, gc);
-+
-+	ofono_ims_create(modem, "xmm7modem", data->chat);
- }
- =
-
- static int xmm7xxx_probe(struct ofono_modem *modem)
--- =
-
-1.9.1
+On 10/05/2017 12:15 PM, Ankit Navik wrote:
+> This implementation includes:
+> * D-Bus interface
+> * interaction with driver
+> ---
+>   Makefile.am |   2 +-
+>   src/ims.c   | 389 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++++++
+>   src/ofono.h |   2 +
+>   3 files changed, 392 insertions(+), 1 deletion(-)
+>   create mode 100644 src/ims.c
+> =
 
 
---===============4491935519026052635==--
+I applied this patch but reworked it slightly in 2 follow on commits. =
+
+Please review and let me know if I screwed anything up.
+
+Regards,
+-Denis
+
+
+--===============8376234518363141335==--
 
