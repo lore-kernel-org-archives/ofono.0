@@ -1,37 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============5515717249555070120=="
+Content-Type: multipart/mixed; boundary="===============6585701001392732091=="
 MIME-Version: 1.0
-From: Ankit Navik <ankit.p.navik@intel.com>
-Subject: [PATCH] doc: Add IMS interface to Interfaces list
-Date: Mon, 09 Oct 2017 22:38:04 +0530
-Message-ID: <1507568884-19937-1-git-send-email-ankit.p.navik@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] doc: Add IMS interface to Interfaces list
+Date: Mon, 09 Oct 2017 12:07:57 -0500
+Message-ID: <0c1e70ae-63dc-52f8-3188-78c3ffed3c75@gmail.com>
+In-Reply-To: <1507568884-19937-1-git-send-email-ankit.p.navik@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5515717249555070120==
+--===============6585701001392732091==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/modem-api.txt | 1 +
- 1 file changed, 1 insertion(+)
+Hi Ankit,
 
-diff --git a/doc/modem-api.txt b/doc/modem-api.txt
-index 6462b17..89e6191 100644
---- a/doc/modem-api.txt
-+++ b/doc/modem-api.txt
-@@ -127,6 +127,7 @@ Properties	boolean Powered [readwrite]
- 				org.ofono.CallVolume
- 				org.ofono.CellBroadcast
- 				org.ofono.Handsfree
-+				org.ofono.IpMultimediaSystem
- 				org.ofono.LongTermEvolution
- 				org.ofono.LocationReporting
- 				org.ofono.MessageManager
--- =
-
-1.9.1
+On 10/09/2017 12:08 PM, Ankit Navik wrote:
+> ---
+>   doc/modem-api.txt | 1 +
+>   1 file changed, 1 insertion(+)
+> =
 
 
---===============5515717249555070120==--
+Applied, thanks.
+
+Regards,
+-Denis
+
+
+--===============6585701001392732091==--
 
