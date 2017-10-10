@@ -1,103 +1,223 @@
-Content-Type: multipart/mixed; boundary="===============1843778350961369285=="
+Content-Type: multipart/mixed; boundary="===============8652040756848993211=="
 MIME-Version: 1.0
 From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: [PATCHv2 05/11] sim-auth: prep simauth/dbus headers
-Date: Tue, 10 Oct 2017 14:36:14 -0700
-Message-ID: <1507671380-7625-5-git-send-email-james.prestwood@linux.intel.com>
+Subject: [PATCHv2 07/11] atmodem: implemented sim-auth functionality in atmodem
+Date: Tue, 10 Oct 2017 14:36:16 -0700
+Message-ID: <1507671380-7625-7-git-send-email-james.prestwood@linux.intel.com>
 In-Reply-To: <1507671380-7625-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1843778350961369285==
+--===============8652040756848993211==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Added new dbus interfaces for SimAuth module as well as
-function prototype definitions to simauth header.
+Implemented the core API's needed for sim-auth:
 
-org.ofono.SimAuthentication:
-   Interface to hold the auth object to type mapping property
-
-org.ofono.USimApplication:
-   Application with USim functionality (GSM/UMTS auth)
-
-org.ofono.ISimApplication:
-   Application with ISim functionality (IMS auth)
+list_apps: already implemented
+open_channel: Opens a logical channel with +CCHO
+close_channel: Closes logical channel with +CCHC
+logical_access: Access an opened channel with +CGLA
 ---
- include/dbus.h     |  3 +++
- include/sim-auth.h | 19 ++++++++++++++++++-
- 2 files changed, 21 insertions(+), 1 deletion(-)
+ drivers/atmodem/sim-auth.c | 141 +++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 file changed, 141 insertions(+)
 
-diff --git a/include/dbus.h b/include/dbus.h
-index a6519c7..b7d5d39 100644
---- a/include/dbus.h
-+++ b/include/dbus.h
-@@ -58,6 +58,9 @@ extern "C" {
- #define OFONO_LOCATION_REPORTING_INTERFACE OFONO_SERVICE ".LocationReporti=
-ng"
- #define OFONO_GNSS_INTERFACE "org.ofono.AssistedSatelliteNavigation"
- #define OFONO_GNSS_POSR_AGENT_INTERFACE "org.ofono.PositioningRequestAgent"
-+#define OFONO_USIM_APPLICATION_INTERFACE "org.ofono.USimApplication"
-+#define OFONO_ISIM_APPLICATION_INTERFACE "org.ofono.ISimApplication"
-+#define OFONO_SIM_AUTHENTICATION_INTERFACE "org.ofono.SimAuthentication"
- #define OFONO_HANDSFREE_INTERFACE OFONO_SERVICE ".Handsfree"
- #define OFONO_SIRI_INTERFACE OFONO_SERVICE ".Siri"
- #define OFONO_NETMON_INTERFACE OFONO_SERVICE ".NetworkMonitor"
-diff --git a/include/sim-auth.h b/include/sim-auth.h
-index 0a62adc..387a487 100644
---- a/include/sim-auth.h
-+++ b/include/sim-auth.h
-@@ -26,6 +26,8 @@
- extern "C" {
- #endif
+diff --git a/drivers/atmodem/sim-auth.c b/drivers/atmodem/sim-auth.c
+index 271ceed..1cb6f86 100644
+--- a/drivers/atmodem/sim-auth.c
++++ b/drivers/atmodem/sim-auth.c
+@@ -25,6 +25,7 @@
  =
 
-+#include <stdint.h>
-+
- #include <ofono/types.h>
+ #define _GNU_SOURCE
+ #include <string.h>
++#include <stdio.h>
  =
 
- struct ofono_sim_auth;
-@@ -34,6 +36,13 @@ typedef void (*ofono_sim_list_apps_cb_t)(const struct of=
-ono_error *error,
- 					const unsigned char *dataobj,
- 					int len, void *data);
+ #include <glib.h>
  =
 
-+typedef void (*ofono_sim_open_channel_cb_t)(int session_id, void *data);
-+
-+typedef void (*ofono_sim_close_channel_cb_t)(uint8_t success, void *data);
-+
-+typedef void (*ofono_logical_access_cb_t)(const uint8_t *resp,
-+		uint16_t len, void *data);
-+
- struct ofono_sim_auth_driver {
- 	const char *name;
- 	int (*probe)(struct ofono_sim_auth *sa, unsigned int vendor,
-@@ -41,7 +50,15 @@ struct ofono_sim_auth_driver {
- 	void (*remove)(struct ofono_sim_auth *sa);
+@@ -35,6 +36,7 @@
+ #include "gatresult.h"
+ #include "simutil.h"
+ #include "vendor.h"
++#include "util.h"
  =
 
- 	void (*list_apps)(struct ofono_sim_auth *sa,
--				ofono_sim_list_apps_cb_t cb, void *data);
-+			ofono_sim_list_apps_cb_t cb, void *data);
-+	void (*open_channel)(struct ofono_sim_auth *sa,
-+			ofono_sim_open_channel_cb_t cb,
-+			const void *channel, void *data);
-+	void (*close_channel)(struct ofono_sim_auth *sa, int session_id,
-+			ofono_sim_close_channel_cb_t cb, void *data);
-+	void (*logical_access)(struct ofono_sim_auth *sa,
-+			ofono_logical_access_cb_t cb, int session_id,
-+			const uint8_t *pdu, uint16_t len, void *data);
+ #include "atmodem.h"
+ =
+
+@@ -44,6 +46,8 @@ struct sim_auth_data {
  };
  =
 
- int ofono_sim_auth_driver_register(const struct ofono_sim_auth_driver *d);
+ static const char *cuad_prefix[] =3D { "+CUAD:", NULL };
++static const char *ccho_prefix[] =3D { "+CCHO:", NULL };
++static const char *cgla_prefix[] =3D { "+CGLA:", NULL };
+ =
+
+ static void at_discover_apps_cb(gboolean ok, GAtResult *result,
+ 				gpointer user_data)
+@@ -110,6 +114,140 @@ static void at_discover_apps(struct ofono_sim_auth *s=
+a,
+ 	CALLBACK_WITH_FAILURE(cb, NULL, 0, data);
+ }
+ =
+
++static void at_open_channel_cb(gboolean ok, GAtResult *result,
++		gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	GAtResultIter iter;
++	ofono_sim_open_channel_cb_t cb =3D cbd->cb;
++	int session_id =3D -1;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+CCHO:"))
++		goto error;
++
++	if (!g_at_result_iter_next_number(&iter, &session_id))
++		goto error;
++
++	cb(session_id, cbd->data);
++
++	return;
++
++error:
++	cb(-1, cbd->data);
++}
++
++static void at_open_channel(struct ofono_sim_auth *sa,
++		ofono_sim_open_channel_cb_t cb, const void *channel,
++		void *data)
++{
++	struct sim_auth_data *sad =3D ofono_sim_auth_get_data(sa);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char cmd[43];
++	int ret =3D 0;
++
++	strcpy(cmd, "AT+CCHO=3D\"");
++	ret +=3D 9;
++
++	encode_hex_own_buf(channel, 16, 0, cmd + ret);
++	ret +=3D 32;
++
++	strcpy(cmd + ret, "\"");
++
++	if (g_at_chat_send(sad->chat, cmd, ccho_prefix, at_open_channel_cb,
++			cbd, g_free) > 0)
++		return;
++
++	g_free(cbd);
++
++	cb(-1, data);
++}
++
++static void at_close_channel_cb(gboolean ok, GAtResult *result,
++		gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_sim_close_channel_cb_t cb =3D cbd->cb;
++
++	if (cb)
++		cb(ok, cbd->data);
++}
++
++static void at_close_channel(struct ofono_sim_auth *sa, int session_id,
++		ofono_sim_close_channel_cb_t cb, void *data)
++{
++	struct sim_auth_data *sad =3D ofono_sim_auth_get_data(sa);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char cmd[15];
++
++	sprintf(cmd, "AT+CCHC=3D%d", session_id);
++
++	g_at_chat_send(sad->chat, cmd, NULL, at_close_channel_cb, cbd, g_free);
++}
++
++static void logical_access_cb(gboolean ok, GAtResult *result,
++		gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_logical_access_cb_t cb =3D cbd->cb;
++	const char *str_data;
++	uint8_t *raw;
++	gint len =3D 0;
++	GAtResultIter iter;
++
++	if (!ok)
++		goto error;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+CGLA:"))
++		goto error;
++
++	if (!g_at_result_iter_next_number(&iter, &len))
++		goto error;
++
++	if (!g_at_result_iter_next_string(&iter, &str_data))
++		goto error;
++
++	raw =3D alloca(len / 2);
++
++	decode_hex_own_buf(str_data, len, NULL, 0, raw);
++
++	cb(raw, len / 2, cbd->data);
++
++	return;
++
++error:
++	cb(NULL, 0, cbd->data);
++}
++
++static void at_logical_access(struct ofono_sim_auth *sa,
++		ofono_logical_access_cb_t cb, int session_id,
++		const uint8_t *pdu, uint16_t len, void *data)
++
++{
++	struct sim_auth_data *sad =3D ofono_sim_auth_get_data(sa);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	int ret =3D 0;
++	char cmd[(len * 2) + 19];
++
++	ret =3D sprintf(cmd, "AT+CGLA=3D%d,%d,\"", session_id, len * 2);
++
++	encode_hex_own_buf(pdu, len, 0, cmd + ret);
++	ret +=3D len * 2;
++
++	strcpy(cmd + ret, "\"");
++
++	if (g_at_chat_send(sad->chat, cmd, cgla_prefix, logical_access_cb,
++			cbd, g_free) > 0)
++		return;
++
++	g_free(cbd);
++
++	cb(NULL, 0, data);
++}
++
+ static gboolean at_sim_auth_register(gpointer user)
+ {
+ 	struct ofono_sim_auth *sa =3D user;
+@@ -151,6 +289,9 @@ static struct ofono_sim_auth_driver driver =3D {
+ 	.probe		=3D at_sim_auth_probe,
+ 	.remove		=3D at_sim_auth_remove,
+ 	.list_apps	=3D at_discover_apps,
++	.open_channel	=3D at_open_channel,
++	.close_channel	=3D at_close_channel,
++	.logical_access =3D at_logical_access
+ };
+ =
+
+ void at_sim_auth_init(void)
 -- =
 
 2.7.4
 
 
---===============1843778350961369285==--
+--===============8652040756848993211==--
 
