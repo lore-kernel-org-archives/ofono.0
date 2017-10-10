@@ -1,195 +1,154 @@
-Content-Type: multipart/mixed; boundary="===============0582566354531894333=="
+Content-Type: multipart/mixed; boundary="===============0306269365278508448=="
 MIME-Version: 1.0
 From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: [PATCHv2 02/11] simutil: Added authenticate builder/parser API
-Date: Tue, 10 Oct 2017 14:36:11 -0700
-Message-ID: <1507671380-7625-2-git-send-email-james.prestwood@linux.intel.com>
+Subject: [PATCHv2 03/11] unit: add gsm and umts parse/build unit tests
+Date: Tue, 10 Oct 2017 14:36:12 -0700
+Message-ID: <1507671380-7625-3-git-send-email-james.prestwood@linux.intel.com>
 In-Reply-To: <1507671380-7625-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0582566354531894333==
+--===============0306269365278508448==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Used to compose/parse non-TLV formatted authenticate commands
-for GSM and UMTS authentication.
 ---
- src/simutil.c | 130 ++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ unit/test-simutil.c | 105 ++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- src/simutil.h |  14 +++++++
- 2 files changed, 144 insertions(+)
+ 1 file changed, 105 insertions(+)
 
-diff --git a/src/simutil.c b/src/simutil.c
-index f43c2c2..69783bd 100644
---- a/src/simutil.c
-+++ b/src/simutil.c
-@@ -1609,3 +1609,133 @@ error:
- =
-
- 	return NULL;
+diff --git a/unit/test-simutil.c b/unit/test-simutil.c
+index 490e288..b45ae41 100644
+--- a/unit/test-simutil.c
++++ b/unit/test-simutil.c
+@@ -496,6 +496,110 @@ static void test_get_2g_path(void)
+ 	g_assert(!memcmp(path, path1, len));
  }
-+
-+static int build_authenticate(unsigned char *buffer, const unsigned char *=
-rand,
-+		const unsigned char *autn)
-+{
-+	int pos =3D 0;
-+
-+	buffer[pos++] =3D 0x00;
-+	buffer[pos++] =3D 0x88;
-+	buffer[pos++] =3D 0x00;
-+	buffer[pos++] =3D autn ? 0x81 : 0x80;
-+	buffer[pos++] =3D autn ? 0x22 : 0x11;
-+	buffer[pos++] =3D 0x10;
-+	memcpy(buffer + pos, rand, 16);
-+	pos +=3D 16;
-+
-+	if (autn) {
-+		buffer[pos++] =3D 0x10;
-+		memcpy(buffer + pos, autn, 16);
-+		pos +=3D 16;
-+		buffer[pos++] =3D 0x00;
-+	}
-+
-+	return pos;
-+}
-+
-+int sim_build_umts_authenticate(unsigned char *buffer, int len,
-+		const unsigned char *rand, const unsigned char *autn)
-+{
-+	if (len < 40 || !rand || !autn)
-+		return FALSE;
-+
-+	return build_authenticate(buffer, rand, autn);
-+}
-+
-+int sim_build_gsm_authenticate(unsigned char *buffer, int len,
-+		const unsigned char *rand)
-+{
-+	if (len < 22 || !rand)
-+		return FALSE;
-+
-+	return build_authenticate(buffer, rand, NULL);
-+}
-+
-+#include <stdio.h>
-+
-+gboolean sim_parse_umts_authenticate(const unsigned char *buffer,
-+		int len, const unsigned char **res, const unsigned char **ck,
-+		const unsigned char **ik, const unsigned char **auts,
-+		const unsigned char **kc)
-+{
-+	if (len < 18 || !buffer)
-+		return FALSE;
-+
-+	switch (buffer[0]) {
-+	case 0xdb:
-+		/* 'DB' + '08' + RES(16) + '10' + CK(32) + '10' + IK(32) =3D 43 */
-+		if (len < 43)
-+			goto umts_end;
-+
-+		/* success */
-+		if (buffer[1] !=3D 0x08)
-+			goto umts_end;
-+
-+		*res =3D buffer + 2;
-+
-+		if (buffer[10] !=3D 0x10)
-+			goto umts_end;
-+
-+		*ck =3D buffer + 11;
-+
-+		if (buffer[27] !=3D 0x10)
-+			goto umts_end;
-+
-+		*ik =3D buffer + 28;
-+
-+		if (len >=3D 53 && kc) {
-+			if (buffer[44] !=3D 0x08)
-+				goto umts_end;
-+
-+			*kc =3D buffer + 45;
-+		} else {
-+			*kc =3D NULL;
-+		}
-+
-+		*auts =3D NULL;
-+
-+		break;
-+	case 0xdc:
-+		/* 'DB' + '10' + AUTS(16) =3D 18 */
-+		if (len < 18)
-+			goto umts_end;
-+
-+		/* sync error */
-+		if (buffer[1] !=3D 0x10)
-+			goto umts_end;
-+
-+		*auts =3D buffer + 2;
-+
-+		break;
-+	default:
-+		goto umts_end;
-+	}
-+
-+	return TRUE;
-+
-+umts_end:
-+	return FALSE;
-+}
-+
-+gboolean sim_parse_gsm_authenticate(const unsigned char *buffer, int len,
-+		const unsigned char **sres, const unsigned char **kc)
-+{
-+	if (len < 14 || !buffer)
-+		goto gsm_end;
-+
-+	if (buffer[0] !=3D 0x04)
-+		goto gsm_end;
-+
-+	*sres =3D buffer + 1;
-+
-+	if (buffer[5] !=3D 0x08)
-+		goto gsm_end;
-+
-+	*kc =3D buffer + 6;
-+
-+	return TRUE;
-+
-+gsm_end:
-+	return FALSE;
-+}
-diff --git a/src/simutil.h b/src/simutil.h
-index 9984b2c..ece5145 100644
---- a/src/simutil.h
-+++ b/src/simutil.h
-@@ -507,3 +507,17 @@ gboolean sim_cphs_is_active(unsigned char *service_cph=
-s,
- 				enum sim_cphs_service index);
  =
 
- GSList *sim_parse_app_template_entries(const unsigned char *buffer, int le=
-n);
++static void test_auth_build_parse(void)
++{
++	unsigned char auth_cmd[40];
++	const unsigned char rand[16] =3D { 0x00, 0x01, 0x02, 0x03, 0x04,0x05,
++			0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
++			0x0e, 0x0f };
++	const unsigned char sres[4] =3D { 0x00, 0x11, 0x22, 0x33 };
++	const unsigned char *sres_p;
++	const unsigned char kc[8] =3D { 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56,
++			0x78, 0x9a };
++	const unsigned char *kc_p;
++	const unsigned char gsm_success[] =3D { 0x04, 0x00, 0x11, 0x22, 0x33,
++			0x08,0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x9a };
++	const unsigned char autn[16] =3D { 0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a,
++			0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02,
++			0x01, 0x00 };
++	const unsigned char res[8] =3D { 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa,
++			0x11, 0x22 };
++	const unsigned char *res_p;
++	const unsigned char ck[16] =3D { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66,
++			0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff };
++	const unsigned char *ck_p;
++	const unsigned char ik[16] =3D { 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd,
++			0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10 };
++	const unsigned char *ik_p;
++	const unsigned char auts[16] =3D { 0xde, 0xea, 0xbe, 0xef, 0xde, 0xea,
++			0xbe, 0xef, 0xde, 0xea, 0xbe, 0xef, 0xde, 0xea,
++			0xbe, 0xef };
++	const unsigned char *auts_p;
 +
-+int sim_build_umts_authenticate(unsigned char *buffer, int len,
-+		const unsigned char *rand, const unsigned char *autn);
++	const unsigned char umts_success[] =3D { 0xdb, 0x08, 0xff, 0xee, 0xdd,
++			0xcc, 0xbb, 0xaa, 0x11, 0x22, 0x10, 0x00, 0x11, 0x22,
++			0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
++			0xcc, 0xdd, 0xee, 0xff, 0x10, 0x01, 0x23, 0x45, 0x67,
++			0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76,
++			0x54, 0x32, 0x10 };
++	const unsigned char umts_success_kc[] =3D { 0xdb, 0x08, 0xff, 0xee, 0xdd,
++			0xcc, 0xbb, 0xaa, 0x11, 0x22, 0x10, 0x00, 0x11, 0x22,
++			0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
++			0xcc, 0xdd, 0xee, 0xff, 0x10, 0x01, 0x23, 0x45, 0x67,
++			0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76,
++			0x54, 0x32, 0x10, 0x08, 0xab, 0xcd, 0xef, 0x12, 0x34,
++			0x56, 0x78, 0x9a };
++	const unsigned char umts_sync_failure[] =3D { 0xdc, 0x10, 0xde, 0xea,
++			0xbe, 0xef, 0xde, 0xea, 0xbe, 0xef, 0xde, 0xea, 0xbe,
++			0xef, 0xde, 0xea, 0xbe, 0xef };
++	int len =3D 0;
 +
-+int sim_build_gsm_authenticate(unsigned char *buffer, int len,
-+		const unsigned char *rand);
++	/* test GSM auth command */
++	len =3D sim_build_gsm_authenticate(auth_cmd, 40, rand);
 +
-+gboolean sim_parse_umts_authenticate(const unsigned char *buffer,
-+		int len, const unsigned char **res, const unsigned char **ck,
-+		const unsigned char **ik, const unsigned char **auts,
-+		const unsigned char **kc);
++	g_assert(len =3D=3D 22);
++	g_assert(auth_cmd[0] =3D=3D 0x00);
++	g_assert(auth_cmd[1] =3D=3D 0x88);
++	g_assert(auth_cmd[2] =3D=3D 0x00);
++	g_assert(auth_cmd[3] =3D=3D 0x80);
++	g_assert(auth_cmd[4] =3D=3D 0x11);
++	g_assert(auth_cmd[5] =3D=3D 0x10);
++	g_assert(!memcmp(auth_cmd + 6, rand, 16));
 +
-+gboolean sim_parse_gsm_authenticate(const unsigned char *buffer, int len,
-+		const unsigned char **sres, const unsigned char **kc);
++	/* test UMTS auth command */
++	len =3D sim_build_umts_authenticate(auth_cmd, 40, rand, autn);
++
++	g_assert(len =3D=3D 40);
++	g_assert(auth_cmd[0] =3D=3D 0x00);
++	g_assert(auth_cmd[1] =3D=3D 0x88);
++	g_assert(auth_cmd[2] =3D=3D 0x00);
++	g_assert(auth_cmd[3] =3D=3D 0x81);
++	g_assert(auth_cmd[4] =3D=3D 0x22);
++	g_assert(auth_cmd[5] =3D=3D 0x10);
++	g_assert(!memcmp(auth_cmd + 6, rand, 16));
++	g_assert(auth_cmd[22] =3D=3D 0x10);
++	g_assert(!memcmp(auth_cmd + 23, autn, 16));
++
++	/* test GSM parse */
++	g_assert(sim_parse_gsm_authenticate(gsm_success, sizeof(gsm_success),
++			&sres_p, &kc_p));
++	g_assert(!memcmp(sres_p, sres, 4));
++	g_assert(!memcmp(kc_p, kc, 8));
++
++	/* test UMTS success parse, no kc */
++	g_assert(sim_parse_umts_authenticate(umts_success, sizeof(umts_success),
++			&res_p, &ck_p, &ik_p, &auts_p, &kc_p));
++	g_assert(!memcmp(res_p, res, 8));
++	g_assert(!memcmp(ck_p, ck, 16));
++	g_assert(!memcmp(ik_p, ik, 16));
++	g_assert(!auts_p && !kc_p);
++
++	/* test UMTS sync failure */
++	g_assert(sim_parse_umts_authenticate(umts_sync_failure, sizeof(umts_sync_=
+failure),
++			&res_p, &ck_p, &ik_p, &auts_p, &kc_p));
++	g_assert(!memcmp(auts_p, auts, 16));
++
++	/* test UMTS success parse, with kc */
++	g_assert(sim_parse_umts_authenticate(umts_success_kc, sizeof(umts_success=
+_kc),
++			&res_p, &ck_p, &ik_p, &auts_p, &kc_p));
++	g_assert(!memcmp(res_p, res, 8));
++	g_assert(!memcmp(ck_p, ck, 16));
++	g_assert(!memcmp(ik_p, ik, 16));
++	g_assert(!memcmp(kc_p, kc, 8));
++	g_assert(!auts_p);
++
++}
++
+ int main(int argc, char **argv)
+ {
+ 	g_test_init(&argc, &argv, NULL);
+@@ -514,6 +618,7 @@ int main(int argc, char **argv)
+ 			test_application_entry_decode);
+ 	g_test_add_func("/testsimutil/3G path", test_get_3g_path);
+ 	g_test_add_func("/testsimutil/2G path", test_get_2g_path);
++	g_test_add_func("/testsimutil/auth build parse", test_auth_build_parse);
+ =
+
+ 	return g_test_run();
+ }
 -- =
 
 2.7.4
 
 
---===============0582566354531894333==--
+--===============0306269365278508448==--
 
