@@ -1,58 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============7120973286436994223=="
+Content-Type: multipart/mixed; boundary="===============0780178933990647276=="
 MIME-Version: 1.0
 From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: [PATCHv2 08/11] xmm7xxx: add sim-auth driver to xmm7xxx plugin
-Date: Tue, 10 Oct 2017 14:36:17 -0700
-Message-ID: <1507671380-7625-8-git-send-email-james.prestwood@linux.intel.com>
+Subject: [PATCHv2 09/11] phonesim: Added sim-auth to phonesim plugin
+Date: Tue, 10 Oct 2017 14:36:18 -0700
+Message-ID: <1507671380-7625-9-git-send-email-james.prestwood@linux.intel.com>
 In-Reply-To: <1507671380-7625-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7120973286436994223==
+--===============0780178933990647276==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/xmm7xxx.c | 3 +++
- 1 file changed, 3 insertions(+)
+ plugins/phonesim.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/plugins/xmm7xxx.c b/plugins/xmm7xxx.c
-index 4443d4c..50ec3e3 100644
---- a/plugins/xmm7xxx.c
-+++ b/plugins/xmm7xxx.c
-@@ -48,6 +48,7 @@
- #include <ofono/gprs-context.h>
- #include <ofono/stk.h>
- #include <ofono/lte.h>
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index 16bccd5..345c41e 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -61,6 +61,7 @@
+ #include <ofono/gnss.h>
+ #include <ofono/handsfree.h>
+ #include <ofono/siri.h>
 +#include <ofono/sim-auth.h>
  =
 
- #include <drivers/atmodem/atutil.h>
  #include <drivers/atmodem/vendor.h>
-@@ -60,6 +61,7 @@ struct xmm7xxx_data {
+ #include <drivers/atmodem/atutil.h>
+@@ -84,6 +85,7 @@ struct phonesim_data {
+ 	unsigned int hfp_watch;
+ 	int batt_level;
  	struct ofono_sim *sim;
- 	ofono_bool_t have_sim;
- 	ofono_bool_t sms_phonebook_added;
 +	struct ofono_sim_auth *sim_auth;
  };
  =
 
- static void xmm7xxx_debug(const char *str, void *user_data)
-@@ -285,6 +287,7 @@ static void xmm7xxx_pre_sim(struct ofono_modem *modem)
- 	ofono_devinfo_create(modem, OFONO_VENDOR_IFX, "atmodem", data->chat);
- 	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_IFX, "atmodem",
- 					data->chat);
+ struct gprs_context_data {
+@@ -839,6 +841,8 @@ static void phonesim_pre_sim(struct ofono_modem *modem)
+ 		ofono_voicecall_create(modem, 0, "calypsomodem", data->chat);
+ 	else
+ 		ofono_voicecall_create(modem, 0, "atmodem", data->chat);
++
 +	data->sim_auth =3D ofono_sim_auth_create(modem, 0, "atmodem", data->chat);
  }
  =
 
- static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
+ static void phonesim_post_sim(struct ofono_modem *modem)
 -- =
 
 2.7.4
 
 
---===============7120973286436994223==--
+--===============0780178933990647276==--
 
