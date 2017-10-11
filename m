@@ -1,115 +1,141 @@
-Content-Type: multipart/mixed; boundary="===============2166890820867553743=="
+Content-Type: multipart/mixed; boundary="===============6805411917818457661=="
 MIME-Version: 1.0
 From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: [PATCHv4 5/6] test: added tests for GSM/UMTS auth algorithms
-Date: Wed, 11 Oct 2017 16:22:18 -0700
-Message-ID: <1507764139-12915-5-git-send-email-james.prestwood@linux.intel.com>
+Subject: [PATCHv4 6/6] doc: documentation for SimAuth dbus interfaces
+Date: Wed, 11 Oct 2017 16:22:19 -0700
+Message-ID: <1507764139-12915-6-git-send-email-james.prestwood@linux.intel.com>
 In-Reply-To: <1507764139-12915-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2166890820867553743==
+--===============6805411917818457661==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/run-isim-umts-auth | 38 ++++++++++++++++++++++++++++++++++++++
- test/run-usim-gsm-auth  | 36 ++++++++++++++++++++++++++++++++++++
- 2 files changed, 74 insertions(+)
- create mode 100755 test/run-isim-umts-auth
- create mode 100755 test/run-usim-gsm-auth
+ doc/sim-auth-api.txt | 104 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 file changed, 104 insertions(+)
+ create mode 100644 doc/sim-auth-api.txt
 
-diff --git a/test/run-isim-umts-auth b/test/run-isim-umts-auth
-new file mode 100755
-index 0000000..a521425
+diff --git a/doc/sim-auth-api.txt b/doc/sim-auth-api.txt
+new file mode 100644
+index 0000000..e040776
 --- /dev/null
-+++ b/test/run-isim-umts-auth
-@@ -0,0 +1,38 @@
-+#!/usr/bin/python3
++++ b/doc/sim-auth-api.txt
+@@ -0,0 +1,104 @@
++SimAuthentication heiarchy [experimental]
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 +
-+import dbus
-+import sys
++Service		org.ofono
++Interface	org.ofono.SimAuthentication
++Object path	[variable prefix]/{modem0,modem1,...}
 +
-+bus =3D dbus.SystemBus()
++Methods		array{object,dict} GetApplications()
 +
-+if len(sys.argv) =3D=3D 4:
-+	path =3D sys.argv[1]
-+	rand =3D sys.argv[2]
-+	autn =3D sys.argv[3]
++			Get an array of all SIM applications found during
++			discovery. In the format "a{oa{sv}}" where 'o' is
++			the object path for the application e.g.
 +
-+	sim_auth =3D dbus.Interface(bus.get_object('org.ofono', path),
-+							'org.ofono.SimAuthentication')
-+	apps =3D sim_auth.GetApplications()
-+	for i in apps:
-+		if apps[i]['Type'] =3D=3D 'Ims':
-+			ims_path =3D i
++			o =3D "/modem1/A0000000871004FFFFFFFF8906190000"
 +
-+	if not ims_path:
-+		print("No Ims application found")
-+		quit()
++			Each dictionary will contain 'Type' e.g. 'Ims' and
++			'Name' e.g. 'ISim'
 +
-+	isim_auth =3D dbus.Interface(bus.get_object('org.ofono', ims_path),
-+							'org.ofono.ISimApplication')
-+	ret =3D isim_auth.ImsAuthenticate(bytearray.fromhex(rand),
-+								bytearray.fromhex(autn))
++			For each application there will be a corresponding
++			object that matches the path (o). The type will
++			signify which interfaces are under that object (below).
 +
-+	if 'auts' in ret:
-+		print('Sync Failure')
-+		print('AUTS: ' + ''.join('%02x' % x for x in ret['AUTS']))
-+	else:
-+		print('Success')
-+		print('RES: ' +  ''.join('%02x' % x for x in ret['RES']))
-+		print('CK: ' + ''.join('%02x' % x for x in ret['CK']))
-+		print('IK: ' + ''.join('%02x' % x for x in ret['IK']))
-+else:
-+	print("./run-isim-umts-auth <modem> <rand> <autn>")
-diff --git a/test/run-usim-gsm-auth b/test/run-usim-gsm-auth
-new file mode 100755
-index 0000000..b97a557
---- /dev/null
-+++ b/test/run-usim-gsm-auth
-@@ -0,0 +1,36 @@
-+#!/usr/bin/python3
++			type =3D Umts --> org.ofono.USimApplication
++			type =3D Ims  --> org.ofono.ISimApplication
 +
-+import dbus
-+import sys
++SimAuth USIM application heiarchy [experimental]
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 +
-+bus =3D dbus.SystemBus()
++Service		org.ofono
++Interface	org.ofono.USimApplication
++Object path	[variable prefix]/{modem0,modem1,...}/{AID name}
 +
-+if len(sys.argv) < 6 and len(sys.argv) > 2:
-+	path =3D sys.argv[1]
++Methods		dict GetProperties()
 +
-+	rands =3D []
-+	for i in sys.argv[2:]:
-+		rands.append(bytearray.fromhex(i))
++			Returns properties for the USimApplication. See
++			properties section for available properties.
 +
-+	sim_auth =3D dbus.Interface(bus.get_object('org.ofono', path),
-+							'org.ofono.SimAuthentication')
-+	apps =3D sim_auth.GetApplications()
++		array{dict{string, array{byte}}}
++			GsmAuthenticate(array{array{byte}} rands)
 +
-+	for i in apps:
-+		if apps[i]['Type'] =3D=3D 'Umts':
-+			umts_path =3D i
++			Run the USIM application GSM AUTHENTICATE algorithm
++			with N random challenges 'rands'. This should be an
++			array of an array of bytes ("aay"). The number of
++			random challenges is limited to a maximum of 3.
 +
-+	if not umts_path:
-+		print("No Umts application found")
-+		quit()
++			Returns the derived Kc/SRES values as an array of
++			dictionaries. The index of each dictionary matches
++			the index of the rand value in the method call. The
++			keys for each dictionary are "Kc" and "SRES" and both
++			are arrays of bytes.
 +
-+	umts =3D dbus.Interface(bus.get_object('org.ofono', umts_path),
-+						'org.ofono.USimApplication')
-+	av =3D umts.GsmAuthenticate(rands)
++			Possible Errors:
++				[service].Error.NotSupported
++				[service].Error.Busy
 +
-+	for i in av:
-+		print('SRES: ' + ''.join('%02x' % x for x in i['SRES']))
-+		print('KC: ' + ''.join('%02x' % x for x in i['Kc']))
++		dict{string, array{byte}}
++			UmtsAuthenticate(array{byte} rand, array{byte} autn)
 +
-+else:
-+	print("./run-usim-gsm-auth <modem> <rands>...[up to 3]")
++			Run the UMTS AUTHENTICATE algorithm in the 3G
++			context with 'rand' and 'autn'. A dictionary will be
++			returned containing 'RES', 'CK', 'IK' and possibly
++			'Kc' if service 27 is available. If there was a
++			sync error 'AUTS' will be returned.
++
++			Possible Errors: [service].Error.NotSupported
++
++Properties	string Type [readonly]
++
++			Type of application: 'Umts'
++
++		string Name [readonly]
++
++			Human readable name: 'USim'
++
++SimAuth ISIM application heiarchy [experimental]
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++Service		org.ofono
++Interface	org.ofono.ISimApplication
++Object		[variable prefix]/{modem0,modem1,...}/{AID name}
++
++Methods		dict GetProperties()
++
++			Returns properties for the ISimApplication. See
++			the properties section for available properties.
++
++		dict{string, array{byte}
++			ImsAuthenticate(array{byte} rand, array{byte} autn)
++
++			Run the UMTS AUTHENTICATE algorithm in the IMS
++			context with 'rand' and 'autn'. A dictionary will be
++			returned containing 'RES', 'CK', 'IK' and possibly
++			'Kc' if service 27 is available. If there was a
++			sync error 'AUTS' will be returned.
++
++			Possible Errors: [service].Error.NotSupported
++
++Properties	string Type [readonly]
++
++			Type of application: 'Ims'
++
++		string Name [readonly]
++
++			Human readable name: 'ISim'
 -- =
 
 2.7.4
 
 
---===============2166890820867553743==--
+--===============6805411917818457661==--
 
