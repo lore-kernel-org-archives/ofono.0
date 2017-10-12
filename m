@@ -1,141 +1,818 @@
-Content-Type: multipart/mixed; boundary="===============6805411917818457661=="
+Content-Type: multipart/mixed; boundary="===============9213884939538774442=="
 MIME-Version: 1.0
-From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: [PATCHv4 6/6] doc: documentation for SimAuth dbus interfaces
-Date: Wed, 11 Oct 2017 16:22:19 -0700
-Message-ID: <1507764139-12915-6-git-send-email-james.prestwood@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCHv4 1/6] sim-auth: implementation of core sim-auth atom
+Date: Thu, 12 Oct 2017 09:48:44 -0500
+Message-ID: <8c96c654-63f8-01fd-fe28-658355bb656c@gmail.com>
 In-Reply-To: <1507764139-12915-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6805411917818457661==
+--===============9213884939538774442==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/sim-auth-api.txt | 104 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 file changed, 104 insertions(+)
- create mode 100644 doc/sim-auth-api.txt
+Hi James,
 
-diff --git a/doc/sim-auth-api.txt b/doc/sim-auth-api.txt
-new file mode 100644
-index 0000000..e040776
---- /dev/null
-+++ b/doc/sim-auth-api.txt
-@@ -0,0 +1,104 @@
-+SimAuthentication heiarchy [experimental]
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+Service		org.ofono
-+Interface	org.ofono.SimAuthentication
-+Object path	[variable prefix]/{modem0,modem1,...}
-+
-+Methods		array{object,dict} GetApplications()
-+
-+			Get an array of all SIM applications found during
-+			discovery. In the format "a{oa{sv}}" where 'o' is
-+			the object path for the application e.g.
-+
-+			o =3D "/modem1/A0000000871004FFFFFFFF8906190000"
-+
-+			Each dictionary will contain 'Type' e.g. 'Ims' and
-+			'Name' e.g. 'ISim'
-+
-+			For each application there will be a corresponding
-+			object that matches the path (o). The type will
-+			signify which interfaces are under that object (below).
-+
-+			type =3D Umts --> org.ofono.USimApplication
-+			type =3D Ims  --> org.ofono.ISimApplication
-+
-+SimAuth USIM application heiarchy [experimental]
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+Service		org.ofono
-+Interface	org.ofono.USimApplication
-+Object path	[variable prefix]/{modem0,modem1,...}/{AID name}
-+
-+Methods		dict GetProperties()
-+
-+			Returns properties for the USimApplication. See
-+			properties section for available properties.
-+
-+		array{dict{string, array{byte}}}
-+			GsmAuthenticate(array{array{byte}} rands)
-+
-+			Run the USIM application GSM AUTHENTICATE algorithm
-+			with N random challenges 'rands'. This should be an
-+			array of an array of bytes ("aay"). The number of
-+			random challenges is limited to a maximum of 3.
-+
-+			Returns the derived Kc/SRES values as an array of
-+			dictionaries. The index of each dictionary matches
-+			the index of the rand value in the method call. The
-+			keys for each dictionary are "Kc" and "SRES" and both
-+			are arrays of bytes.
-+
-+			Possible Errors:
-+				[service].Error.NotSupported
-+				[service].Error.Busy
-+
-+		dict{string, array{byte}}
-+			UmtsAuthenticate(array{byte} rand, array{byte} autn)
-+
-+			Run the UMTS AUTHENTICATE algorithm in the 3G
-+			context with 'rand' and 'autn'. A dictionary will be
-+			returned containing 'RES', 'CK', 'IK' and possibly
-+			'Kc' if service 27 is available. If there was a
-+			sync error 'AUTS' will be returned.
-+
-+			Possible Errors: [service].Error.NotSupported
-+
-+Properties	string Type [readonly]
-+
-+			Type of application: 'Umts'
-+
-+		string Name [readonly]
-+
-+			Human readable name: 'USim'
-+
-+SimAuth ISIM application heiarchy [experimental]
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+Service		org.ofono
-+Interface	org.ofono.ISimApplication
-+Object		[variable prefix]/{modem0,modem1,...}/{AID name}
-+
-+Methods		dict GetProperties()
-+
-+			Returns properties for the ISimApplication. See
-+			the properties section for available properties.
-+
-+		dict{string, array{byte}
-+			ImsAuthenticate(array{byte} rand, array{byte} autn)
-+
-+			Run the UMTS AUTHENTICATE algorithm in the IMS
-+			context with 'rand' and 'autn'. A dictionary will be
-+			returned containing 'RES', 'CK', 'IK' and possibly
-+			'Kc' if service 27 is available. If there was a
-+			sync error 'AUTS' will be returned.
-+
-+			Possible Errors: [service].Error.NotSupported
-+
-+Properties	string Type [readonly]
-+
-+			Type of application: 'Ims'
-+
-+		string Name [readonly]
-+
-+			Human readable name: 'ISim'
--- =
+On 10/11/2017 06:22 PM, James Prestwood wrote:
+> The sim-auth module atom can now be used for SIM application discovery
+> and authentication. The atom will automatically discover SIM
+> applications available on the SIM and register a new DBus object under
+> the modem, whos name is the AID string e.g.
+> =
 
-2.7.4
+> /modem1/A0000000871004FFFFFFFF8906190000
+> =
+
+> A list of discovered AID object paths and types can be retrieved by
+> calling GetApplications() under the modems (new)
+> org.ofono.SimAuthentication interface which returns "a{oa{sv}}" where
+> =
+
+> o =3D path (e.g. above)
+> =
+
+> and the dictionary contains the following properties:
+> =
+
+> Type: "Umts" or "Ims"
+> Name: "USim" or "ISim"
+> =
+
+> The Type signifies which interfaces the AID object will have:
+> =
+
+> Umts =3D org.ofono.USimApplication
+> Ims =3D org.ofono.ISimApplication
+> =
+
+> These interfaces will contain the supported USIM/ISIM authentication
+> algorithms. Where:
+> =
+
+> org.ofono.USimApplication has:
+>      GetProperties()
+>      GsmAuthenticate()
+>      UmtsAuthenticate()
+> =
+
+> org.ofono.ISimApplication has:
+>      GetProperties()
+>      ImsAuthenticate()
+> ---
+>   src/sim-auth.c | 612 ++++++++++++++++++++++++++++++++++++++++++++++++++=
++++++++
+>   1 file changed, 612 insertions(+)
+> =
+
+> diff --git a/src/sim-auth.c b/src/sim-auth.c
+> index 5d2f075..65a51c3 100644
+> --- a/src/sim-auth.c
+> +++ b/src/sim-auth.c
+> @@ -28,19 +28,104 @@
+>   #include <glib.h>
+>   #include <errno.h>
+>   #include <unistd.h>
+> +#include <gdbus.h>
+> +#include <string.h>
+> +#include <stdio.h>
+>   =
+
+>   #include "ofono.h"
+>   =
+
+>   #include "simutil.h"
+> +#include "util.h"
+> +
+> +#define SIM_AUTH_MAX_RANDS	3
+>   =
+
+>   static GSList *g_drivers =3D NULL;
+>   =
+
+> +/*
+> + * Temporary handle used for the command authentication sequence.
+> + */
+> +struct auth_request {
+> +	/* DBus values for GSM authentication */
+> +	DBusMessage *msg;
+> +	DBusMessage *reply;
+> +	DBusMessageIter iter;
+> +	DBusMessageIter dict;
+> +	/* ID from open_channel */
+> +	int session_id;
+> +	/* list of rands to calculate key (1 if umts =3D=3D 1) */
+> +	void *rands[SIM_AUTH_MAX_RANDS];
+> +	int num_rands;
+> +	/* number of keys that have been returned */
+> +	int cb_count;
+> +	void *autn;
+> +	uint8_t umts : 1;
+> +};
+> +
+>   struct ofono_sim_auth {
+>   	const struct ofono_sim_auth_driver *driver;
+>   	void *driver_data;
+>   	struct ofono_atom *atom;
+> +	GSList *aid_list;
+> +	struct ofono_sim *sim;
+
+You only use sim inside ofono_sim_auth_register.  No point in making it =
+
+a class variable then.
+
+> +	uint8_t gsm_access : 1;
+> +	uint8_t gsm_context : 1;
+> +	struct auth_request *pending;
+>   };
+>   =
+
+> +/*
+> + * Find an application by path. 'path' should be a DBusMessage object pa=
+th.
+> + */
+> +static struct sim_app_record *find_aid_by_path(GSList *aid_list,
+> +		const char *path)
+> +{
+> +	GSList *iter =3D aid_list;
+> +
+
+Why don't you just use strrchr to find the last '/' and use the string =
+
+starting at that position + 1 (e.g. the actual hex-encoded AID) for =
+
+comparisons in the while loop?
+
+> +	while (iter) {
+> +		struct sim_app_record *app =3D iter->data;
+> +		char str[32];
+> +
+> +		encode_hex_own_buf(app->aid, 16, 0, str);
+> +
+> +		if (strstr(path, str))
+
+given above, this could be a simple strcmp
+
+> +			return app;
+> +
+> +		iter =3D g_slist_next(iter);
+> +	}
+> +
+> +	return NULL;
+> +}
+> +
+> +/*
+> + * Free all discovered AID's
+> + */
+> +static void free_apps(struct ofono_sim_auth *sa)
+> +{
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(sa->atom);
+> +	const char *path =3D __ofono_atom_get_path(sa->atom);
+> +	GSList *iter =3D sa->aid_list;
+> +
+> +	while (iter) {
+> +		struct sim_app_record *app =3D iter->data;
+> +
+> +		if (app->type =3D=3D SIM_APP_TYPE_USIM) {
+> +			g_dbus_unregister_interface(conn, path,
+> +					OFONO_USIM_APPLICATION_INTERFACE);
+> +			ofono_modem_remove_interface(modem,
+> +					OFONO_USIM_APPLICATION_INTERFACE);
+
+This interface is not on the modem object, so this isn't needed.  You =
+
+also don't have a corresponding ofono_modem_add_interface in the first =
+
+place.
+
+> +		} else if (app->type =3D=3D SIM_APP_TYPE_ISIM) {
+> +			g_dbus_unregister_interface(conn, path,
+> +					OFONO_ISIM_APPLICATION_INTERFACE);
+> +			ofono_modem_remove_interface(modem,
+> +					OFONO_USIM_APPLICATION_INTERFACE);
+
+Same here
+
+> +		}
+> +
+> +		iter =3D g_slist_next(iter);
+> +	}
+> +
+> +	g_slist_free(sa->aid_list);
+> +}
+> +
+>   int ofono_sim_auth_driver_register(const struct ofono_sim_auth_driver *=
+d)
+>   {
+>   	DBG("driver: %p, name: %s", d, d->name);
+> @@ -76,6 +161,10 @@ static void sim_auth_remove(struct ofono_atom *atom)
+>   	if (sa->driver && sa->driver->remove)
+>   		sa->driver->remove(sa);
+>   =
+
+> +	free_apps(sa);
+> +
+> +	g_free(sa->pending);
+> +
+
+Actually this belongs in sim_auth_unregister.
+
+We have two basic states for the atom:
+
+1. 'created'.  E.g. ofono_atom_create has been called
+2. 'registered' E.g. ofono_atom_register has been called.
+
+Any data structure created after state '2' is entered should be torn =
+
+down in the callback given to __ofono_atom_register.  e.g. =
+
+sim_auth_unregister in this case.
+
+>   	g_free(sa);
+>   }
+>   =
+
+> @@ -113,9 +202,532 @@ struct ofono_sim_auth *ofono_sim_auth_create(struct=
+ ofono_modem *modem,
+>   	return sa;
+>   }
+>   =
+
+> +/*
+> + * appends {oa{sv}} into an existing dict array
+> + */
+> +static void append_dict_application(DBusMessageIter *iter, const char *p=
+ath,
+> +		const char *type, const char *name)
+> +{
+> +	DBusMessageIter array;
+> +
+> +	dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &path);
+> +
+> +	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY, "{sv}", &array);
+> +
+> +	ofono_dbus_dict_append(&array, "Type", DBUS_TYPE_STRING, &type);
+> +	ofono_dbus_dict_append(&array, "Name", DBUS_TYPE_STRING, &name);
+> +
+> +	dbus_message_iter_close_container(iter, &array);
+> +}
+> +
+> +/*
+> + * appends a{say} onto an existing dict array
+> + */
+> +static void append_dict_byte_array(DBusMessageIter *iter, const char *ke=
+y,
+> +		const void *arr, uint32_t len)
+> +{
+> +	DBusMessageIter keyiter;
+> +	DBusMessageIter valueiter;
+> +
+> +	dbus_message_iter_open_container(iter, DBUS_TYPE_DICT_ENTRY, NULL,
+> +			&keyiter);
+> +	dbus_message_iter_append_basic(&keyiter, DBUS_TYPE_STRING, &key);
+> +	dbus_message_iter_open_container(&keyiter, DBUS_TYPE_ARRAY,
+> +			"y", &valueiter);
+> +	dbus_message_iter_append_fixed_array(&valueiter, DBUS_TYPE_BYTE, &arr,
+> +			len);
+> +	dbus_message_iter_close_container(&keyiter, &valueiter);
+> +	dbus_message_iter_close_container(iter, &keyiter);
+> +}
+> +
+> +static void handle_umts(struct ofono_sim_auth *sim, const uint8_t *resp,
+> +		uint16_t len)
+> +{
+> +	DBusMessage *reply =3D NULL;
+> +	DBusMessageIter iter;
+> +	DBusMessageIter dict;
+> +	const uint8_t *res =3D NULL;
+> +	const uint8_t *ck =3D NULL;
+> +	const uint8_t *ik =3D NULL;
+> +	const uint8_t *auts =3D NULL;
+> +	const uint8_t *kc =3D NULL;
+> +
+> +	if (!sim_parse_umts_authenticate(resp, len, &res, &ck, &ik,
+> +			&auts, &kc))
+> +		goto umts_end;
+> +
+> +	reply =3D dbus_message_new_method_return(sim->pending->msg);
+> +
+> +	dbus_message_iter_init_append(reply, &iter);
+> +
+> +	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+> +			"{say}", &dict);
+> +
+> +	if (auts) {
+> +		append_dict_byte_array(&dict, "AUTS", auts, 16);
+> +	} else {
+> +		append_dict_byte_array(&dict, "RES", res, 8);
+> +		append_dict_byte_array(&dict, "CK", ck, 16);
+> +		append_dict_byte_array(&dict, "IK", ik, 16);
+> +		if (kc)
+> +			append_dict_byte_array(&dict, "Kc", kc, 8);
+> +	}
+> +
+> +	dbus_message_iter_close_container(&iter, &dict);
+> +
+> +umts_end:
+> +	if (!reply)
+> +		reply =3D __ofono_error_not_supported(sim->pending->msg);
+> +
+> +	__ofono_dbus_pending_reply(&sim->pending->msg, reply);
+> +
+> +	sim->driver->close_channel(sim, sim->pending->session_id, NULL, NULL);
+> +
+> +	g_free(sim->pending);
+> +	sim->pending =3D NULL;
+> +}
+> +
+> +static void handle_gsm(struct ofono_sim_auth *sim, const uint8_t *resp,
+> +		uint16_t len)
+> +{
+> +	DBusMessageIter iter;
+> +	const uint8_t *sres =3D NULL;
+> +	const uint8_t *kc =3D NULL;
+> +
+> +	if (!sim_parse_gsm_authenticate(resp, len, &sres, &kc))
+> +		goto gsm_end;
+> +
+> +	/* initial iteration, setup the reply message */
+> +	if (sim->pending->cb_count =3D=3D 0) {
+> +		sim->pending->reply =3D dbus_message_new_method_return(
+> +				sim->pending->msg);
+> +
+> +		dbus_message_iter_init_append(sim->pending->reply,
+> +				&sim->pending->iter);
+> +
+> +		dbus_message_iter_open_container(&sim->pending->iter,
+> +				DBUS_TYPE_ARRAY, "a{say}", &sim->pending->dict);
+> +	}
+> +
+> +	/* append the Nth sres/kc byte arrays */
+> +	dbus_message_iter_open_container(&sim->pending->dict, DBUS_TYPE_ARRAY,
+> +			"{say}", &iter);
+> +	append_dict_byte_array(&iter, "SRES", sres, 4);
+> +	append_dict_byte_array(&iter, "Kc", kc, 8);
+> +	dbus_message_iter_close_container(&sim->pending->dict, &iter);
+> +
+> +	sim->pending->cb_count++;
+> +
+> +	/* calculated the number of keys requested, close container */
+> +	if (sim->pending->cb_count =3D=3D sim->pending->num_rands) {
+> +		dbus_message_iter_close_container(&sim->pending->iter,
+> +				&sim->pending->dict);
+> +		goto gsm_end;
+> +	}
+> +
+> +	return;
+> +
+> +gsm_end:
+> +	if (!sim->pending->reply)
+> +		sim->pending->reply =3D __ofono_error_not_supported(
+> +				sim->pending->msg);
+> +
+> +	__ofono_dbus_pending_reply(&sim->pending->msg, sim->pending->reply);
+> +
+> +	sim->driver->close_channel(sim, sim->pending->session_id, NULL, NULL);
+> +
+> +	g_free(sim->pending);
+> +
+> +	sim->pending =3D NULL;
+> +}
+> +
+> +static void logical_access_cb(const struct ofono_error *error,
+> +		const uint8_t *resp, uint16_t len, void *data)
+> +{
+> +	struct ofono_sim_auth *sim =3D data;
+> +
+
+You trigger this 2-3 times (num_rands) in a row in the case of GSM.  If =
+
+one of the callbacks results in an error, what happens to the subsequent =
+
+callbacks (sim->pending has been freed at this point) ?
+
+> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+> +		__ofono_dbus_pending_reply(&sim->pending->msg,
+> +				__ofono_error_failed(sim->pending->msg));
+> +		g_free(sim->pending);
+> +		sim->pending =3D NULL;
+> +		return;
+> +	}
+> +
+> +	if (sim->pending->umts)
+> +		handle_umts(sim, resp, len);
+> +	else
+> +		handle_gsm(sim, resp, len);
+> +}
+> +
+> +static void open_channel_cb(const struct ofono_error *error, int session=
+_id,
+> +		void *data)
+> +{
+> +	struct ofono_sim_auth *sim =3D data;
+> +	int i;
+> +
+> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
+> +		goto error;
+> +
+> +	if (session_id =3D=3D -1)
+> +		goto error;
+> +
+> +	/* save session ID for close_channel() */
+> +	sim->pending->session_id =3D session_id;
+> +
+> +	/*
+> +	 * This will do the logical access num_rand times, providing a new
+> +	 * RAND seed each time. In the UMTS case, num_rands should be 1.
+> +	 */
+> +	for (i =3D 0; i < sim->pending->num_rands; i++) {
+> +		uint8_t auth_cmd[40];
+> +		int len =3D 0;
+> +
+> +		if (sim->pending->umts)
+> +			len =3D sim_build_umts_authenticate(auth_cmd, 40,
+> +					sim->pending->rands[i],
+> +					sim->pending->autn);
+> +		else
+> +			len =3D sim_build_gsm_authenticate(auth_cmd, 40,
+> +					sim->pending->rands[i]);
+> +
+> +		if (!len)
+> +			goto error;
+> +
+> +		sim->driver->logical_access(sim, session_id, auth_cmd, len,
+> +				logical_access_cb, sim);
+> +	}
+> +
+> +	return;
+> +
+> +error:
+> +	__ofono_dbus_pending_reply(&sim->pending->msg,
+> +			__ofono_error_failed(sim->pending->msg));
+> +	g_free(sim->pending);
+> +	sim->pending =3D NULL;
+> +}
+> +
+> +static DBusMessage *usim_gsm_authenticate(DBusConnection *conn,
+> +		DBusMessage *msg, void *data)
+> +{
+> +	struct ofono_sim_auth *sim =3D data;
+> +	DBusMessageIter iter;
+> +	DBusMessageIter array;
+> +	int i;
+> +	struct sim_app_record *app;
+> +
+> +	if (sim->pending)
+> +		return __ofono_error_busy(msg);
+> +
+> +	dbus_message_iter_init(msg, &iter);
+> +
+> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_ARRAY)
+> +		return __ofono_error_not_supported(msg);
+> +
+> +	sim->pending =3D malloc(sizeof(struct auth_request));
+> +	sim->pending->msg =3D dbus_message_ref(msg);
+> +	sim->pending->umts =3D 0;
+> +	sim->pending->cb_count =3D 0;
+> +	sim->pending->num_rands =3D dbus_message_iter_get_element_count(&iter);
+> +
+> +	dbus_message_iter_recurse(&iter, &array);
+> +
+> +	for (i =3D 0; i < sim->pending->num_rands; i++) {
+> +		int nelement;
+> +		DBusMessageIter in;
+> +
+> +		dbus_message_iter_recurse(&array, &in);
+> +
+> +		dbus_message_iter_get_fixed_array(&in, &sim->pending->rands[i],
+> +				&nelement);
+
+Do we need a sanity check that rand is 16 bytes?
+
+> +		dbus_message_iter_next(&array);
+> +	}
+> +
+> +	app =3D find_aid_by_path(sim->aid_list, dbus_message_get_path(msg));
+> +
+> +	sim->driver->open_channel(sim, app->aid, open_channel_cb, sim);
+> +
+> +	return NULL;
+> +}
+> +
+> +static DBusMessage *umts_common(DBusConnection *conn, DBusMessage *msg,
+> +					void *data, enum sim_app_type type)
+> +{
+> +	uint8_t *rand =3D NULL;
+> +	uint8_t *autn =3D NULL;
+> +	uint32_t rlen;
+> +	uint32_t alen;
+> +	struct ofono_sim_auth *sim =3D data;
+> +	struct sim_app_record *app;
+> +
+> +	if (sim->pending)
+> +		return __ofono_error_busy(msg);
+> +
+> +	/* get RAND/AUTN and setup handle args */
+> +	dbus_message_get_args(msg, NULL, DBUS_TYPE_ARRAY,
+> +			DBUS_TYPE_BYTE, &rand, &rlen, DBUS_TYPE_ARRAY,
+> +			DBUS_TYPE_BYTE, &autn, &alen,
+> +			DBUS_TYPE_INVALID);
+
+The return of this method call needs to be checked in case the sent =
+
+message signature doesn't match.
+
+> +
+> +	if (rlen !=3D 16 || alen !=3D 16) {
+> +		g_free(sim->pending);
+> +		sim->pending =3D NULL;
+
+You haven't created sim->pending yet?
+
+> +		return __ofono_error_invalid_args(msg);
+
+This likely should be _invalid_format
+
+> +	}
+> +
+> +	sim->pending =3D g_new0(struct auth_request, 1);
+> +	sim->pending->msg =3D dbus_message_ref(msg);
+> +	sim->pending->rands[0] =3D rand;
+> +	sim->pending->num_rands =3D 1;
+> +	sim->pending->autn =3D autn;
+> +	sim->pending->umts =3D 1;
+> +
+> +	app =3D find_aid_by_path(sim->aid_list, dbus_message_get_path(msg));
+> +
+> +	sim->driver->open_channel(sim, app->aid, open_channel_cb, sim);
+> +
+> +	return NULL;
+> +}
+> +
+> +static DBusMessage *get_applications(DBusConnection *conn,
+> +		DBusMessage *msg, void *data)
+> +{
+> +	struct ofono_sim_auth *sim =3D data;
+> +	const char *path =3D __ofono_atom_get_path(sim->atom);
+> +	int ret;
+> +	char object[strlen(path) + 33];
+> +	DBusMessage *reply;
+> +	DBusMessageIter iter;
+> +	DBusMessageIter array;
+> +	DBusMessageIter dict;
+> +	GSList *aid_iter;
+> +
+> +	if (!sim->aid_list)
+> +		return __ofono_error_busy(msg);
+
+If it is NULL then an empty list should be returned.  Remember we =
+
+register D-Bus interface only after discovery has been performed, so =
+
+get_applications won't be called until then.
+
+> +
+> +	reply =3D dbus_message_new_method_return(msg);
+> +	if (reply =3D=3D NULL)
+> +		return NULL;
+> +
+> +	dbus_message_iter_init_append(reply, &iter);
+> +
+> +	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "{oa{sv}}",
+> +			&array);
+> +
+> +	aid_iter =3D sim->aid_list;
+> +
+> +	while (aid_iter) {
+> +		struct sim_app_record *app =3D aid_iter->data;
+> +
+> +		ret =3D sprintf(object, "%s/", path);
+> +		encode_hex_own_buf(app->aid, 16, 0, object + ret);
+> +
+> +		switch (app->type) {
+> +		case SIM_APP_TYPE_ISIM:
+> +			dbus_message_iter_open_container(&array,
+> +					DBUS_TYPE_DICT_ENTRY, NULL, &dict);
+> +			append_dict_application(&dict, object, "Ims", "ISim");
+> +			dbus_message_iter_close_container(&array, &dict);
+> +
+> +			break;
+> +		case SIM_APP_TYPE_USIM:
+> +			dbus_message_iter_open_container(&array,
+> +					DBUS_TYPE_DICT_ENTRY, NULL, &dict);
+> +			append_dict_application(&dict, object, "Umts", "USim");
+> +			dbus_message_iter_close_container(&array, &dict);
+> +
+> +			break;
+> +		default:
+> +			break;
+> +		}
+> +
+> +		aid_iter =3D g_slist_next(aid_iter);
+> +	}
+> +
+> +	dbus_message_iter_close_container(&iter, &array);
+> +
+> +	return reply;
+> +}
+> +
+> +static DBusMessage *send_properties(DBusConnection *conn, DBusMessage *m=
+sg,
+> +		void *data, const char *type, const char *name)
+> +{
+> +	DBusMessage *reply;
+> +	DBusMessageIter iter;
+> +	DBusMessageIter array;
+> +
+> +	reply =3D dbus_message_new_method_return(msg);
+> +	if (reply =3D=3D NULL)
+> +		return NULL;
+> +
+> +	dbus_message_iter_init_append(reply, &iter);
+> +
+> +	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "{sv}",
+> +				&array);
+> +
+> +	ofono_dbus_dict_append(&array, "Type", DBUS_TYPE_STRING, &type);
+> +	ofono_dbus_dict_append(&array, "Name", DBUS_TYPE_STRING, &name);
+> +
+> +	dbus_message_iter_close_container(&iter, &array);
+> +
+> +	return reply;
+> +}
+> +
+> +static DBusMessage *usim_get_properties(DBusConnection *conn,
+> +		DBusMessage *msg, void *data)
+> +{
+> +	return send_properties(conn, msg, data, "Umts", "USim");
+> +}
+> +
+> +static DBusMessage *isim_get_properties(DBusConnection *conn,
+> +		DBusMessage *msg, void *data)
+> +{
+> +	return send_properties(conn, msg, data, "Ims", "ISim");
+> +}
+> +
+> +static DBusMessage *isim_ims_authenticate(DBusConnection *conn,
+> +		DBusMessage *msg, void *data)
+> +{
+> +	return umts_common(conn, msg, data, SIM_APP_TYPE_ISIM);
+> +}
+> +
+> +static DBusMessage *usim_umts_authenticate(DBusConnection *conn,
+> +		DBusMessage *msg, void *data)
+> +{
+> +	return umts_common(conn, msg, data, SIM_APP_TYPE_USIM);
+> +}
+> +
+> +static const GDBusMethodTable sim_authentication[] =3D {
+> +	{ GDBUS_METHOD("GetApplications",
+> +			NULL,
+> +			GDBUS_ARGS({"applications", "a{oa{sv}}"}),
+> +			get_applications) },
+> +	{ }
+> +};
+> +
+> +static const GDBusMethodTable sim_auth_usim_app[] =3D {
+> +	{ GDBUS_ASYNC_METHOD("GetProperties",
+> +			NULL,
+> +			GDBUS_ARGS({"properties", "a{sv}"}),
+> +			usim_get_properties) },
+> +	{ GDBUS_ASYNC_METHOD("GsmAuthenticate",
+> +			GDBUS_ARGS({"rands", "aay"}),
+> +			GDBUS_ARGS({"keys", "a{say}"}),
+> +			usim_gsm_authenticate) },
+> +	{ GDBUS_ASYNC_METHOD("UmtsAuthenticate",
+> +			GDBUS_ARGS({"rand", "ay"}, {"autn", "ay"}),
+> +			GDBUS_ARGS({"return", "a{sv}"}),
+> +			usim_umts_authenticate) },
+> +	{ }
+> +};
+> +
+> +static const GDBusMethodTable sim_auth_isim_app[] =3D {
+> +	{ GDBUS_ASYNC_METHOD("GetProperties",
+> +			NULL,
+> +			GDBUS_ARGS({"properties", "a{sv}"}),
+> +			isim_get_properties) },
+> +	{ GDBUS_ASYNC_METHOD("ImsAuthenticate",
+> +			GDBUS_ARGS({"rand", "ay"}, {"autn", "ay"}),
+> +			GDBUS_ARGS({"return", "a{sv}"}),
+> +			isim_ims_authenticate) },
+> +	{ }
+> +};
+> +
+> +static void discover_apps_cb(const struct ofono_error *error,
+> +		const unsigned char *dataobj,
+> +		int len, void *data)
+> +{
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +	struct ofono_sim_auth *sim =3D data;
+> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(sim->atom);
+> +	const char *path =3D __ofono_atom_get_path(sim->atom);
+> +	GSList *iter;
+> +	char app_path[strlen(path) + 34];
+> +	int ret;
+> +
+> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
+> +		goto parse_error;
+> +
+> +	sim->aid_list =3D sim_parse_app_template_entries(dataobj, len);
+> +
+> +	if (!sim->aid_list)
+> +		goto parse_error;
+> +
+> +	iter =3D sim->aid_list;
+> +
+> +	ret =3D sprintf(app_path, "%s/", path);
+> +
+> +	while (iter) {
+> +		struct sim_app_record *app =3D iter->data;
+> +
+> +		switch (app->type) {
+> +		case SIM_APP_TYPE_USIM:
+> +			encode_hex_own_buf(app->aid, 16, 0, app_path + ret);
+> +
+> +			app_path[ret + 32] =3D '\0';
+
+encode_hex_own_buf already null terminates the buffer, so this isn't needed
+
+> +
+> +			g_dbus_register_interface(conn, app_path,
+> +					OFONO_USIM_APPLICATION_INTERFACE,
+> +					sim_auth_usim_app, NULL, NULL,
+> +					sim, NULL);
+> +			break;
+> +		case SIM_APP_TYPE_ISIM:
+> +			encode_hex_own_buf(app->aid, 16, 0, app_path + ret);
+> +
+> +			app_path[ret + 32] =3D '\0';
+> +
+
+as above
+
+> +			g_dbus_register_interface(conn, app_path,
+> +					OFONO_ISIM_APPLICATION_INTERFACE,
+> +					sim_auth_isim_app, NULL, NULL,
+> +					sim, NULL);
+> +			break;
+> +		default:
+> +			DBG("Unknown SIM application '%04x'", app->type);
+> +			/*
+> +			 * If we get here, the SIM application was not ISIM
+> +			 * or USIM, skip.
+> +			 */
+> +		}
+> +
+> +		iter =3D g_slist_next(iter);
+> +	}
+> +
+> +	/*
+> +	 * Now SimAuthentication interface can be registered since app
+> +	 * discovery has completed
+> +	 */
+> +	g_dbus_register_interface(conn, path,
+> +			OFONO_SIM_AUTHENTICATION_INTERFACE,
+> +			sim_authentication, NULL, NULL,
+> +			sim, NULL);
+> +	ofono_modem_add_interface(modem,
+> +			OFONO_SIM_AUTHENTICATION_INTERFACE);
+> +
+> +	return;
+> +
+> +parse_error:
+> +	/*
+> +	 * Something went wrong parsing the AID list, it can't be assumed that
+> +	 * any previously parsed AID's are valid so free them all.
+> +	 */
+> +	DBG("Error parsing app list");
+> +}
+> +
+>   void ofono_sim_auth_register(struct ofono_sim_auth *sa)
+>   {
+> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(sa->atom);
+> +
+>   	__ofono_atom_register(sa->atom, sim_auth_unregister);
+> +
+> +	/* Do SIM application discovery, the cb will register DBus ifaces */
+> +	sa->driver->list_apps(sa, discover_apps_cb, sa);
+> +
+> +	sa->sim =3D __ofono_atom_find(OFONO_ATOM_TYPE_SIM, modem);
+> +
+> +	sa->gsm_access =3D __ofono_sim_ust_service_available(sa->sim,
+> +			SIM_UST_SERVICE_GSM_ACCESS);
+> +	sa->gsm_context =3D __ofono_sim_ust_service_available(sa->sim,
+> +			SIM_UST_SERVICE_GSM_SECURITY_CONTEXT);
+>   }
+>   =
+
+>   void ofono_sim_auth_remove(struct ofono_sim_auth *sa)
+> =
 
 
---===============6805411917818457661==--
+Regards,
+-Denis
+
+--===============9213884939538774442==--
 
