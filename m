@@ -1,140 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============7745906469375245491=="
+Content-Type: multipart/mixed; boundary="===============1332582007199039355=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv5 1/4] sim-auth: implementation of core sim-auth atom
-Date: Thu, 12 Oct 2017 15:43:47 -0500
-Message-ID: <e8246e03-2e67-51bd-b4ca-88d5a1cadeb8@gmail.com>
-In-Reply-To: <1507825691-21128-1-git-send-email-james.prestwood@linux.intel.com>
+From: James Prestwood <james.prestwood@linux.intel.com>
+Subject: [PATCH] simauth: fixup adding more dbus return checks
+Date: Fri, 13 Oct 2017 11:21:21 -0700
+Message-ID: <1507918881-28686-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7745906469375245491==
+--===============1332582007199039355==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi James,
+---
+ src/sim-auth.c | 23 +++++++++++++++++------
+ 1 file changed, 17 insertions(+), 6 deletions(-)
 
-On 10/12/2017 11:28 AM, James Prestwood wrote:
-> The sim-auth module atom can now be used for SIM application discovery
-> and authentication. The atom will automatically discover SIM
-> applications available on the SIM and register a new DBus object under
-> the modem, whos name is the AID string e.g.
-> =
+diff --git a/src/sim-auth.c b/src/sim-auth.c
+index b9552b5..90f00c9 100644
+--- a/src/sim-auth.c
++++ b/src/sim-auth.c
+@@ -427,6 +427,7 @@ static DBusMessage *usim_gsm_authenticate(DBusConnectio=
+n *conn,
+ 	DBusMessageIter array;
+ 	int i;
+ 	struct sim_app_record *app;
++	int rands;
+ =
 
-> /modem1/A0000000871004FFFFFFFF8906190000
-> =
+ 	if (sim->pending)
+ 		return __ofono_error_busy(msg);
+@@ -436,11 +437,16 @@ static DBusMessage *usim_gsm_authenticate(DBusConnect=
+ion *conn,
+ 	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_ARRAY)
+ 		return __ofono_error_invalid_format(msg);
+ =
 
-> A list of discovered AID object paths and types can be retrieved by
-> calling GetApplications() under the modems (new)
-> org.ofono.SimAuthentication interface which returns "a{oa{sv}}" where
-> =
++	rands =3D dbus_message_iter_get_element_count(&iter);
++
++	if (rands > 3)
++		return __ofono_error_invalid_format(msg);
++
+ 	sim->pending =3D malloc(sizeof(struct auth_request));
+ 	sim->pending->msg =3D dbus_message_ref(msg);
+ 	sim->pending->umts =3D 0;
+ 	sim->pending->cb_count =3D 0;
+-	sim->pending->num_rands =3D dbus_message_iter_get_element_count(&iter);
++	sim->pending->num_rands =3D rands;
+ =
 
-> o =3D path (e.g. above)
-> =
+ 	dbus_message_iter_recurse(&iter, &array);
+ =
 
-> and the dictionary contains the following properties:
-> =
+@@ -450,14 +456,14 @@ static DBusMessage *usim_gsm_authenticate(DBusConnect=
+ion *conn,
+ =
 
-> Type: "Umts" or "Ims"
-> Name: "USim" or "ISim"
-> =
+ 		dbus_message_iter_recurse(&array, &in);
+ =
 
-> The Type signifies which interfaces the AID object will have:
-> =
++		if (dbus_message_iter_get_arg_type(&in) !=3D DBUS_TYPE_BYTE)
++			goto format_error;
++
+ 		dbus_message_iter_get_fixed_array(&in, &sim->pending->rands[i],
+ 				&nelement);
+ =
 
-> Umts =3D org.ofono.USimApplication
-> Ims =3D org.ofono.ISimApplication
-> =
+-		if (nelement !=3D 16) {
+-			g_free(sim->pending);
+-			sim->pending =3D NULL;
+-			return __ofono_error_invalid_format(msg);
+-		}
++		if (nelement !=3D 16)
++			goto format_error;
+ =
 
-> These interfaces will contain the supported USIM/ISIM authentication
-> algorithms. Where:
-> =
+ 		dbus_message_iter_next(&array);
+ 	}
+@@ -467,6 +473,11 @@ static DBusMessage *usim_gsm_authenticate(DBusConnecti=
+on *conn,
+ 	sim->driver->open_channel(sim, app->aid, open_channel_cb, sim);
+ =
 
-> org.ofono.USimApplication has:
->      GetProperties()
->      GsmAuthenticate()
->      UmtsAuthenticate()
-> =
+ 	return NULL;
++
++format_error:
++	g_free(sim->pending);
++	sim->pending =3D NULL;
++	return __ofono_error_invalid_format(msg);
+ }
+ =
 
-> org.ofono.ISimApplication has:
->      GetProperties()
->      ImsAuthenticate()
-> ---
->   src/sim-auth.c | 628 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   1 file changed, 628 insertions(+)
-> =
+ static DBusMessage *umts_common(DBusConnection *conn, DBusMessage *msg,
+-- =
+
+2.7.4
 
 
-I went ahead and applied all 4 patches.  Can you please send me a fix on =
-
-top for:
-
-<snip>
-
-> +static DBusMessage *usim_gsm_authenticate(DBusConnection *conn,
-> +		DBusMessage *msg, void *data)
-> +{
-> +	struct ofono_sim_auth *sim =3D data;
-> +	DBusMessageIter iter;
-> +	DBusMessageIter array;
-> +	int i;
-> +	struct sim_app_record *app;
-> +
-> +	if (sim->pending)
-> +		return __ofono_error_busy(msg);
-> +
-> +	dbus_message_iter_init(msg, &iter);
-> +
-> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_ARRAY)
-> +		return __ofono_error_invalid_format(msg);
-> +
-> +	sim->pending =3D malloc(sizeof(struct auth_request));
-> +	sim->pending->msg =3D dbus_message_ref(msg);
-> +	sim->pending->umts =3D 0;
-> +	sim->pending->cb_count =3D 0;
-> +	sim->pending->num_rands =3D dbus_message_iter_get_element_count(&iter);
-
-Sanity checking of num_rands isn't present, so...
-
-> +
-> +	dbus_message_iter_recurse(&iter, &array);
-> +
-> +	for (i =3D 0; i < sim->pending->num_rands; i++) {
-> +		int nelement;
-> +		DBusMessageIter in;
-> +
-> +		dbus_message_iter_recurse(&array, &in);
-> +
-> +		dbus_message_iter_get_fixed_array(&in, &sim->pending->rands[i],
-> +				&nelement);
-
-... you can overflow pending->rands memory space.
-
-Also, none of the dbus_message_iter* calls are being sanity checked, so =
-
-you could in theory send an array of strings here, etc...
-
-> +
-> +		if (nelement !=3D 16) {
-> +			g_free(sim->pending);
-> +			sim->pending =3D NULL;
-> +			return __ofono_error_invalid_format(msg);
-> +		}
-> +
-> +		dbus_message_iter_next(&array);
-> +	}
-> +
-> +	app =3D find_aid_by_path(sim->aid_list, dbus_message_get_path(msg));
-> +
-> +	sim->driver->open_channel(sim, app->aid, open_channel_cb, sim);
-> +
-> +	return NULL;
-> +}
-
-Regards,
--Denis
-
---===============7745906469375245491==--
+--===============1332582007199039355==--
 
