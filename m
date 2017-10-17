@@ -1,72 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============9080956026626676391=="
+Content-Type: multipart/mixed; boundary="===============1723513307930210478=="
 MIME-Version: 1.0
-From: Alexander Couzens <lynxis@fe80.eu>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 1/1] qmi: support SMS receive on Quectel EC21
-Date: Tue, 17 Oct 2017 13:41:34 +0200
-Message-ID: <20171017134134.0d70b32e@lazus.yip>
-In-Reply-To: <f8d6bb37-b59b-cea7-5ef9-56b0e7072e14@southpole.se>
+Date: Tue, 17 Oct 2017 09:35:48 -0500
+Message-ID: <4c7306d6-a8da-7bb6-3c58-4019e9079388@gmail.com>
+In-Reply-To: <20171016122048.2405-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9080956026626676391==
+--===============1723513307930210478==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jonas,
 
-> Could you explain what you are trying to do here?  Why would you
-> clear the SMS storage every time the modem powers up?
+On 10/16/2017 07:20 AM, Jonas Bonn wrote:
+> The Quectel EC21 does not provide the SMS PDU on the message event
+> notification.
 > =
 
-> I also don't see that ofono actually supports deleting messages from
-> the modem's storage... if you know how this is supposed to work,
-> please enlighten me.
+> This patch adds a call to 'raw read' on the message ID from the event
+> notification if the event notification does not already contain the
+> message data.
+> =
 
-the Gobi2000 doesn't accept the routes with TRANSFER_AND_ACK nor
-STORAGE_TYPE_NONE.
+> The message data begins with the SMSC length, type, and address so
+> the TPDU length is adjusted accordingly in the raw_read callback.  This
+> differs from the way the raw message data is handled in the case
+> that it is included in the event notification itself.  As I don't have
+> access to any other QMI modem at this time, I'm can not confirm that
+> this difference is reasonable.
+> ---
+>   drivers/qmimodem/sms.c | 57 +++++++++++++++++++++++++++++++++++++++++++=
++++++++
+>   drivers/qmimodem/wms.h |  9 ++++++++
+>   2 files changed, 66 insertions(+)
+> =
 
-Reading out the store is also useful if the modem is receiving any
-SMS while ofono isn't runing. E.g. while booting, the sms would never
-made it to ofono.
 
-I don't know (yet) how the different routes are working in detail. This
-is on my list. But I've faced edge cases when the NV was full, the
-modem rejects receiving any messages, regardless if the modem should
-save it to it.
+Applied, thanks.
 
-Best,
-lynxis
--- =
+Regards,
+-Denis
 
-Alexander Couzens
 
-mail: lynxis(a)fe80.eu
-jabber: lynxis(a)fe80.eu
-mobile: +4915123277221
-gpg: 390D CF78 8BF9 AA50 4F8F  F1E2 C29E 9DA6 A0DF 8604
-
---===============9080956026626676391==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.sig"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KCmlRSXpCQUVCQ2dBZEZpRUVPUTNQZUl2NXFs
-QlBqL0hpd3A2ZHBxRGZoZ1FGQWxubDdHOEFDZ2tRd3A2ZHBxRGYKaGdTWldnLy9hbFRIdU9FNFRO
-Z3UrZWVMeWtvT3NSeDZDRyt1TFJYaTEvSmFYa1gwdnZ0dUd0UWp6bmdXKzZycQp4WHZtWDE2M2hN
-akk3a0ZteUh4cUdLbjlBMVQ1UG85Wi91TS9LeU5CcWQ3YmJUeWJGZHZVa1RlaytBNXVGQ2NGCjY0
-WGVlQy82MStIdGh4QWdkMyt2TUNlWFQwbEN0VlVqb2FUS0psNnJaalhFNkxZWTJsVU1SQVpyTFA2
-Rmxia3QKSFFKTytUbVU4Mi94aUcvMThTTmp5dWpTWVRwREs3N05lNXM2VkM2MStCdC93WmRTSWYz
-TWtWZDJ5UmlDZlZIcwpQN3pXeG1JZk12YU1PWmhJc2ZrajRGOUpEZjNXK0h2OUF4TFYzV1RIMTdD
-WW9Ea25WKy9WSitGLzF2UG9ORkpsCnkvSlFwcHg0K2Z4eE1PdU5JbnhHOGtFUWFtNkhtVHN4eWdV
-UnZKL3VuTjR1T01YdlhONHNMTlNzRU81UlAveVIKUkNGc3BienVTN3FBWGF0dGJoTXIxajhJM1JG
-bGVDK2VPRTk1RENTWHFXZVppenVpK3owU2F1TW1kRlRPM3cycgo3anF4cmtWaFdqbmFuV3BBMDN4
-K0pVYkVKT2Izc053TUVuQU1nZ3U4MUV4ZG1EYmJhY0NxVzFjcXF2T2dndlZpCkNzaGd1bWNTeHdm
-STlGQ0RBYlFvY3ZNcWE5TnBFcFcyNVVMcERDYlZEUjUzU3NHSkdtL3phQW1FRzh3SlpLbkcKNW9B
-VzcvNEJYc2lkcGJ6bStQTkg2KzVNTmNmRkMxb0pJTGNXTHBmdVloWldZaDJCeVhKNlZuK0hub05s
-T3VTdgpuSU9HSUNaYmt6ejFtYjRzTmNpMGNEMDh5SC9zZEtOZ3ZoMGlBVHQvdWZvZXBoOWMvSkE9
-Cj1PWFJ2Ci0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQo=
-
---===============9080956026626676391==--
+--===============1723513307930210478==--
 
