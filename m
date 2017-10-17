@@ -1,49 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============1723513307930210478=="
+Content-Type: multipart/mixed; boundary="===============4996758515587670144=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 1/1] qmi: support SMS receive on Quectel EC21
-Date: Tue, 17 Oct 2017 09:35:48 -0500
-Message-ID: <4c7306d6-a8da-7bb6-3c58-4019e9079388@gmail.com>
-In-Reply-To: <20171016122048.2405-1-jonas@southpole.se>
+Date: Tue, 17 Oct 2017 09:45:10 -0500
+Message-ID: <7f81d809-a990-c8af-df30-9b75337e5be7@gmail.com>
+In-Reply-To: <20171017134134.0d70b32e@lazus.yip>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1723513307930210478==
+--===============4996758515587670144==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
-
-On 10/16/2017 07:20 AM, Jonas Bonn wrote:
-> The Quectel EC21 does not provide the SMS PDU on the message event
-> notification.
+On 10/17/2017 06:41 AM, Alexander Couzens wrote:
+> Hi Jonas,
 > =
 
-> This patch adds a call to 'raw read' on the message ID from the event
-> notification if the event notification does not already contain the
-> message data.
+>> Could you explain what you are trying to do here?  Why would you
+>> clear the SMS storage every time the modem powers up?
+>>
+>> I also don't see that ofono actually supports deleting messages from
+>> the modem's storage... if you know how this is supposed to work,
+>> please enlighten me.
+
+oFono does not manage the message store.  The implicit assumption is =
+
+that all SMS messages are delivered immediately without hitting ME/SMS =
+
+storage.  oFono takes care of notifying the history plugin and sending =
+
+the ACK.
+
+For those devices that don't support immediate delivery it is assumed =
+
+that the sms atom driver takes care of the details.  So on startup the =
+
+driver is supposed to grab all messages from the store, notify the core =
+
+and then delete all of them.  Any subsequent messages that are delivered =
+
+to the store, should be notified up to the core and the storage space freed.
+
+See how the atmodem sms driver does this.  E.g. +CMTI delivery vs +CMT
+
 > =
 
-> The message data begins with the SMSC length, type, and address so
-> the TPDU length is adjusted accordingly in the raw_read callback.  This
-> differs from the way the raw message data is handled in the case
-> that it is included in the event notification itself.  As I don't have
-> access to any other QMI modem at this time, I'm can not confirm that
-> this difference is reasonable.
-> ---
->   drivers/qmimodem/sms.c | 57 +++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   drivers/qmimodem/wms.h |  9 ++++++++
->   2 files changed, 66 insertions(+)
+> the Gobi2000 doesn't accept the routes with TRANSFER_AND_ACK nor
+> STORAGE_TYPE_NONE.
+> =
+
+> Reading out the store is also useful if the modem is receiving any
+> SMS while ofono isn't runing. E.g. while booting, the sms would never
+> made it to ofono.
+
+This is a weird case as the modem should not be in radio on mode anyway. =
+
+  But yes this is possible...
+
+> =
+
+> I don't know (yet) how the different routes are working in detail. This
+> is on my list. But I've faced edge cases when the NV was full, the
+> modem rejects receiving any messages, regardless if the modem should
+> save it to it.
 > =
 
 
-Applied, thanks.
+On an unrelated note, can you guys look at the WIP mbimmodem plugin and =
+
+see if the parsing/building approach taken there is applicable (in some =
+
+modified form) to QMI?  E.g. to simplify the drudgery of building / =
+
+parsing QMI messages.
 
 Regards,
 -Denis
 
-
---===============1723513307930210478==--
+--===============4996758515587670144==--
 
