@@ -1,81 +1,167 @@
-Content-Type: multipart/mixed; boundary="===============1034212372950233977=="
+Content-Type: multipart/mixed; boundary="===============5794057936759828372=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Running ofono on Raspberry Pi and SIM800
-Date: Wed, 18 Oct 2017 11:53:24 -0500
-Message-ID: <080ef647-33b2-c6cd-7a9c-8d0004eecd96@gmail.com>
-In-Reply-To: <84091508344811@web57j.yandex.ru>
+Subject: Re: [PATCH 2/4] voicecallmanager: Handle last number dialled DBUS call
+Date: Wed, 18 Oct 2017 12:03:20 -0500
+Message-ID: <6f9197ca-4bd3-f796-1fa0-034047842c04@gmail.com>
+In-Reply-To: <20171018140427.16143-3-philippe.deswert@nomovok.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1034212372950233977==
+--===============5794057936759828372==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arsenijs,
+Hi Philippe,
 
-Just FYI, we don't top-post on this mailing list.
-
-On 10/18/2017 11:40 AM, Pi=C4=8Dugins Arsenijs wrote:
-> Thank you, that was a great answer. I'll focus on one part for now:
+On 10/18/2017 09:04 AM, Philippe De Swert wrote:
+> Handle the new DialLast method on the voicecallmanager interface
+> ---
+>   src/voicecall.c | 89 ++++++++++++++++++++++++++++++++++++++++++++++++++=
++++++++
+>   1 file changed, 89 insertions(+)
 > =
 
-> Is it possible for me to run ofono from command-line, without involving u=
-dev? I'm asking this because, in my application, I'm using the UART as a de=
-bugging UART for first 30 seconds of phone's boot, then, if there's no acti=
-vity (or other trigger set), I enable the GSM modem and run the GSM backend=
-. Is there a reason why ofono is not capable to be run this way (provided i=
-t's not capable of this)? Is there a way I can just do the setup that udev =
-would normally do, but manually? If so, where should I look for pointers - =
-code, documentation or somewhere else? (doc/sim900-modem.txt? plugins/udevn=
-g.c?)
+> diff --git a/src/voicecall.c b/src/voicecall.c
+> index 2ff9aa15..4eeb6621 100644
+> --- a/src/voicecall.c
+> +++ b/src/voicecall.c
+> @@ -1595,6 +1595,94 @@ static DBusMessage *manager_dial(DBusConnection *c=
+onn,
+>   	return __ofono_error_failed(msg);
+>   }
+>   =
 
-oFono can be started any time you wish.  udev is just normally used to =
+> +static void manager_dial_last_callback(const struct ofono_error *error, =
+void *data)
+> +{
+> +	struct ofono_voicecall *vc =3D data;
+> +	DBusMessage *reply;
+> +	gboolean need_to_emit;
+> +	struct voicecall *v;
+> +
+> +	v =3D dial_handle_result(vc, error, NULL, &need_to_emit);
 
-detect the hardware.  Either via probing the USB bus, or in the case of =
+dial_handle_result is a bit tricky because it handles situations where =
 
-serial devices via external configuration (e.g. udev rules).  Without =
+ATD returns immediately and then the call is notified via an unsolicited =
 
-udev oFono would not know what TTY corresponds to the modem.  E.g. on =
+notification, or ATD returns first.
 
-some platforms it may be ttyS0 and others it would be /dev/ttySAC0, or =
+In the case of +BLDN, I believe HFP spec mandates that BLDN always =
 
-whatever.
+returns first, which means that much of the logic in dial_handle_result =
 
-The oFono plugins / modem drivers are free to do anything they want.  So =
+is not applicable.  It may be better to just perform the necessary logic =
 
-if you want to hardcode the behavior, that is fine.  You can always =
+directly here.
 
-implement your own detection logic.  For example plugins/phonesim.c uses =
+In the current proposal, we will always generate a new call with an =
 
-a config file, plugins/rildev.c uses getenv.  The possibilities are endless.
+empty phone number which will (hopefully) eventually be updated.  I'm =
 
-udev is the preferred approach, other approaches might not be palatable =
+not so sure that this is a great approach, but I can't think of anything =
 
-to upstream.
+better...
 
-In terms of documentation or pointers, it really depends on your =
-
-hardware setup.  If you have a traditional AT command based modem with a =
-
-multiplexer, then take a look at doc/calypso-modem.txt and =
-
-plugins/calypso.c.  This is the modem used on the original Freerunner.
-
-If you have multiplexing handled by the kernel, then the SIM900 docs / =
-
-plugin might be applicable.
-
-> =
-
-> Best regards,
-> Arsenijs.
+> +
+> +	if (v) {
+> +		const char *path =3D voicecall_build_path(vc, v->call);
+> +
+> +		reply =3D dbus_message_new_method_return(vc->pending);
+> +
+> +		dbus_message_append_args(reply, DBUS_TYPE_OBJECT_PATH, &path,
+> +						DBUS_TYPE_INVALID);
+> +	} else {
+> +		reply =3D __ofono_error_failed(vc->pending);
+> +	}
+> +
+> +	__ofono_dbus_pending_reply(&vc->pending, reply);
+> +
+> +	if (need_to_emit)
+> +		voicecalls_emit_call_added(vc, v);
+> +}
+> +
+> +static int voicecall_dial_last(struct ofono_voicecall *vc,
+> +					ofono_voicecall_cb_t cb, void *data)
+> +{
+> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+> +
+> +	if (g_slist_length(vc->call_list) >=3D MAX_VOICE_CALLS)
+> +		return -EPERM;
+> +
+> +	if (ofono_modem_get_online(modem) =3D=3D FALSE)
+> +		return -ENETDOWN;
+> +
+> +	if (vc->driver->dial_last =3D=3D NULL)
+> +		return -ENOTSUP;
+> +
+> +	if (voicecalls_have_incoming(vc))
+> +		return -EBUSY;
+> +
+> +	/* We can't have two dialing/alerting calls, reject outright */
+> +	if (voicecalls_num_connecting(vc) > 0)
+> +		return -EBUSY;
+> +
+> +	if (voicecalls_have_active(vc) && voicecalls_have_held(vc))
+> +		return -EBUSY;
+> +
+> +	vc->driver->dial_last(vc, cb, vc);
+> +
+> +	return 0;
+> +}
+> +
+> +static DBusMessage *manager_dial_last(DBusConnection *conn,
+> +					DBusMessage *msg, void *data)
+> +{
+> +	struct ofono_voicecall *vc =3D data;
+> +	int err;
+> +
+> +	if (vc->pending || vc->dial_req || vc->pending_em)
+> +		return __ofono_error_busy(msg);
+> +
+> +	vc->pending =3D dbus_message_ref(msg);
+> +
+> +	err =3D voicecall_dial_last(vc, manager_dial_last_callback, vc);
+> +
+> +	if (err >=3D 0)
+> +		return NULL;
+> +
+> +	vc->pending =3D NULL;
+> +	dbus_message_unref(msg);
+> +
+> +	switch (err) {
+> +	case -EINVAL:
+> +		return __ofono_error_invalid_format(msg);
+> +
+> +	case -ENETDOWN:
+> +		return __ofono_error_not_available(msg);
+> +
+> +	case -ENOTSUP:
+> +		return __ofono_error_not_implemented(msg);
+> +	}
+> +
+> +	return __ofono_error_failed(msg);
+> +}
+> +
+>   static DBusMessage *manager_transfer(DBusConnection *conn,
+>   					DBusMessage *msg, void *data)
+>   {
+> @@ -2151,6 +2239,7 @@ static const GDBusMethodTable manager_methods[] =3D=
+ {
+>   		GDBUS_ARGS({ "number", "s" }, { "hide_callerid", "s" }),
+>   		GDBUS_ARGS({ "path", "o" }),
+>   		manager_dial) },
+> +	{ GDBUS_ASYNC_METHOD("DialLast", NULL, NULL, manager_dial_last)},
+>   	{ GDBUS_ASYNC_METHOD("Transfer", NULL, NULL, manager_transfer) },
+>   	{ GDBUS_ASYNC_METHOD("SwapCalls",  NULL, NULL, manager_swap_calls) },
+>   	{ GDBUS_ASYNC_METHOD("ReleaseAndAnswer", NULL, NULL,
 > =
 
 
 Regards,
 -Denis
 
---===============1034212372950233977==--
+--===============5794057936759828372==--
 
