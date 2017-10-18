@@ -1,52 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============7792357411713186321=="
+Content-Type: multipart/mixed; boundary="===============3838304904003475659=="
 MIME-Version: 1.0
 From: Philippe De Swert <philippe.deswert@nomovok.com>
-Subject: [PATCH 4/4] doc: Document the new DialLast voicecallmanager API
- addition
-Date: Wed, 18 Oct 2017 17:04:27 +0300
-Message-ID: <20171018140427.16143-5-philippe.deswert@nomovok.com>
+Subject: [PATCH 1/4] include/voicecall : update ofono_voicecall_driver to
+ support call last dialled number
+Date: Wed, 18 Oct 2017 17:04:24 +0300
+Message-ID: <20171018140427.16143-2-philippe.deswert@nomovok.com>
 In-Reply-To: <20171018140427.16143-1-philippe.deswert@nomovok.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7792357411713186321==
+--===============3838304904003475659==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The new DialLast method to call the last dialled number for HFP needs
-to be added to the documentation.
+Add new DBUS method to enable calling the last dialled number.
 ---
- doc/voicecallmanager-api.txt | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ include/voicecall.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index 34a9b25c..7aeb81f7 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -59,6 +59,16 @@ Methods		dict GetProperties()
- 					 [service].Error.NotImplemented
- 					 [service].Error.Failed
- =
-
-+		object DialLast()
-+
-+			Initiates a new outgoing call to the last dialled number.
-+
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
-+
- 		void Transfer()
- =
-
- 			Joins the currently Active (or Outgoing, depending
+diff --git a/include/voicecall.h b/include/voicecall.h
+index 4d0b3886..55beb980 100644
+--- a/include/voicecall.h
++++ b/include/voicecall.h
+@@ -60,6 +60,10 @@ struct ofono_voicecall_driver {
+ 			const struct ofono_phone_number *number,
+ 			enum ofono_clir_option clir, ofono_voicecall_cb_t cb,
+ 			void *data);
++	/* Dials the last number again, this handles the hfp profile last number
++         * dialing with the +BLDN AT command
++         */
++	void (*dial_last)(struct ofono_voicecall *vc, ofono_voicecall_cb_t cb, vo=
+id *data);
+ 	/* Answers an incoming call, this usually corresponds to ATA */
+ 	void (*answer)(struct ofono_voicecall *vc,
+ 			ofono_voicecall_cb_t cb, void *data);
 -- =
 
 2.11.0
 
 
---===============7792357411713186321==--
+--===============3838304904003475659==--
 
