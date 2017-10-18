@@ -1,138 +1,102 @@
-Content-Type: multipart/mixed; boundary="===============5153156424700648297=="
+Content-Type: multipart/mixed; boundary="===============8613003425286744349=="
 MIME-Version: 1.0
-From: Philippe De Swert <philippe.deswert@nomovok.com>
-Subject: [PATCH 2/4] voicecallmanager: Handle last number dialled DBUS call
-Date: Wed, 18 Oct 2017 17:04:25 +0300
-Message-ID: <20171018140427.16143-3-philippe.deswert@nomovok.com>
-In-Reply-To: <20171018140427.16143-1-philippe.deswert@nomovok.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Running ofono on Raspberry Pi and SIM800
+Date: Wed, 18 Oct 2017 11:15:52 -0500
+Message-ID: <ba886c7a-2ca9-3e91-b874-aba57df297d4@gmail.com>
+In-Reply-To: <342291508320198@web43j.yandex.ru>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5153156424700648297==
+--===============8613003425286744349==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Handle the new DialLast method on the voicecallmanager interface
----
- src/voicecall.c | 89 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 file changed, 89 insertions(+)
+Hi Arsenijs,
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 2ff9aa15..4eeb6621 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -1595,6 +1595,94 @@ static DBusMessage *manager_dial(DBusConnection *con=
-n,
- 	return __ofono_error_failed(msg);
- }
- =
+On 10/18/2017 04:49 AM, Pi=C4=8Dugins Arsenijs wrote:
+> Hi!
+> =
 
-+static void manager_dial_last_callback(const struct ofono_error *error, vo=
-id *data)
-+{
-+	struct ofono_voicecall *vc =3D data;
-+	DBusMessage *reply;
-+	gboolean need_to_emit;
-+	struct voicecall *v;
-+
-+	v =3D dial_handle_result(vc, error, NULL, &need_to_emit);
-+
-+	if (v) {
-+		const char *path =3D voicecall_build_path(vc, v->call);
-+
-+		reply =3D dbus_message_new_method_return(vc->pending);
-+
-+		dbus_message_append_args(reply, DBUS_TYPE_OBJECT_PATH, &path,
-+						DBUS_TYPE_INVALID);
-+	} else {
-+		reply =3D __ofono_error_failed(vc->pending);
-+	}
-+
-+	__ofono_dbus_pending_reply(&vc->pending, reply);
-+
-+	if (need_to_emit)
-+		voicecalls_emit_call_added(vc, v);
-+}
-+
-+static int voicecall_dial_last(struct ofono_voicecall *vc,
-+					ofono_voicecall_cb_t cb, void *data)
-+{
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
-+
-+	if (g_slist_length(vc->call_list) >=3D MAX_VOICE_CALLS)
-+		return -EPERM;
-+
-+	if (ofono_modem_get_online(modem) =3D=3D FALSE)
-+		return -ENETDOWN;
-+
-+	if (vc->driver->dial_last =3D=3D NULL)
-+		return -ENOTSUP;
-+
-+	if (voicecalls_have_incoming(vc))
-+		return -EBUSY;
-+
-+	/* We can't have two dialing/alerting calls, reject outright */
-+	if (voicecalls_num_connecting(vc) > 0)
-+		return -EBUSY;
-+
-+	if (voicecalls_have_active(vc) && voicecalls_have_held(vc))
-+		return -EBUSY;
-+
-+	vc->driver->dial_last(vc, cb, vc);
-+
-+	return 0;
-+}
-+
-+static DBusMessage *manager_dial_last(DBusConnection *conn,
-+					DBusMessage *msg, void *data)
-+{
-+	struct ofono_voicecall *vc =3D data;
-+	int err;
-+
-+	if (vc->pending || vc->dial_req || vc->pending_em)
-+		return __ofono_error_busy(msg);
-+
-+	vc->pending =3D dbus_message_ref(msg);
-+
-+	err =3D voicecall_dial_last(vc, manager_dial_last_callback, vc);
-+
-+	if (err >=3D 0)
-+		return NULL;
-+
-+	vc->pending =3D NULL;
-+	dbus_message_unref(msg);
-+
-+	switch (err) {
-+	case -EINVAL:
-+		return __ofono_error_invalid_format(msg);
-+
-+	case -ENETDOWN:
-+		return __ofono_error_not_available(msg);
-+
-+	case -ENOTSUP:
-+		return __ofono_error_not_implemented(msg);
-+	}
-+
-+	return __ofono_error_failed(msg);
-+}
-+
- static DBusMessage *manager_transfer(DBusConnection *conn,
- 					DBusMessage *msg, void *data)
- {
-@@ -2151,6 +2239,7 @@ static const GDBusMethodTable manager_methods[] =3D {
- 		GDBUS_ARGS({ "number", "s" }, { "hide_callerid", "s" }),
- 		GDBUS_ARGS({ "path", "o" }),
- 		manager_dial) },
-+	{ GDBUS_ASYNC_METHOD("DialLast", NULL, NULL, manager_dial_last)},
- 	{ GDBUS_ASYNC_METHOD("Transfer", NULL, NULL, manager_transfer) },
- 	{ GDBUS_ASYNC_METHOD("SwapCalls",  NULL, NULL, manager_swap_calls) },
- 	{ GDBUS_ASYNC_METHOD("ReleaseAndAnswer", NULL, NULL,
--- =
+> I'm interested in running ofono on a Raspberry Pi (BCM2835, 1GHz), connec=
+ted to a SIM800 modem over UART (the stable Pi UART, not the MiniUART). I a=
+lso have RST, DTR and RESET signals connected to the Pi, and for sound I'm =
+using analog audio outputs and inputs of the modem. Basically, I'm talking =
+about using ofono in ZeroPhone project - https://hackaday.io/project/19035 .
+> =
 
-2.11.0
+> For now, I'm interested in 1) notifications about voice call status (not =
+concerning audio for now, as it's handled in hardware) 2) SMS and MMS suppo=
+rt 3) 2G data connections (whatever available connection types are on 2G ne=
+tworks) 4) USSD support. My questions are:
+> =
 
+> 1) Is ofono going to be suitable for my needs? I'm more than OK with usin=
+g DBus and rolling my own user interface to it.
 
---===============5153156424700648297==--
+It supports everything except MMS.  That requires a separate MMS stack =
+
+and is out of scope for oFono.  I don't know of any full-featured open =
+
+source MMS stacks, but I'm probably not paying enough attention.  Maybe =
+
+someone here can give you pointers.
+
+You can take a look at the (now undeveloped) mmsd project to see how the =
+
+MMS stack should interact with oFono:
+
+https://git.kernel.org/pub/scm/network/ofono/mmsd.git/
+
+> 2) How do I run ofono from command-line and tell it to connect to a speci=
+fic serial port and use a specific ofono driver?
+
+You write a driver for it and since it is a serial port modem, use udev =
+
+rules to setup the TTY port accordingly.  See doc/sim900-modem.txt for =
+
+an example.  The device detection magic is inside plugins/udevng.c and =
+
+most modem drivers reside in plugins/*.  See the plugins/sim900.c, it =
+
+may be close enough to the sim800 to get you started.
+
+> 3) Do you foresee any necessary changes to ofono? For example, need to ma=
+ke a sim800-specific driver?
+
+The most likely answer is yes.  All new modems integrated into oFono =
+
+required 'some' vendor/firmware specific handling.  However, it is not =
+
+possible to answer that unless you have the modem control protocol =
+
+specifications in hand.  If it is a standard AT command based modem, =
+
+then the changes should be minimal.
+
+> 4) I see that Sailfish phones are using ofono as the GSM backend. Did the=
+y upstream their changes, or do they have a fork?
+
+They have a fork.
+
+> 5) I'm planning to work with SIM5320 modem in the future, and attempt usi=
+ng its USB connection. I know it creates multiple serial ports, and support=
+s streaming audio over one of them. Does ofono come into play here, does it=
+ have some kind of provisions to convert this kind of audio input/output in=
+to actual sound devices under Linux, or is that usually handled by other so=
+ftware?
+
+oFono does not handle the audio bits.  We can take care of sending the =
+
+necessary AT commands to the device to configure the codec, etc.  But =
+
+the actual audio processing belongs in your audio daemon.  E.g. =
+
+PulseAudio or whatever.
+
+Regards,
+-Denis
+
+--===============8613003425286744349==--
 
