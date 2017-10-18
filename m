@@ -1,49 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============1757955538196932375=="
+Content-Type: multipart/mixed; boundary="===============7878203739461297729=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Pi=C4=8Dugins?= Arsenijs <crimier@yandex.ru>
-Subject: Running ofono on Raspberry Pi and SIM800
-Date: Wed, 18 Oct 2017 12:49:58 +0300
-Message-ID: <342291508320198@web43j.yandex.ru>
-In-Reply-To: <mailman.19.1508266802.24405.ofono@ofono.org>
+From: Philippe De Swert <philippe.deswert@nomovok.com>
+Subject: RFC: Add support for last call dialing
+Date: Wed, 18 Oct 2017 17:04:23 +0300
+Message-ID: <20171018140427.16143-1-philippe.deswert@nomovok.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1757955538196932375==
+--===============7878203739461297729==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+Hello all,
 
-I'm interested in running ofono on a Raspberry Pi (BCM2835, 1GHz), connecte=
-d to a SIM800 modem over UART (the stable Pi UART, not the MiniUART). I als=
-o have RST, DTR and RESET signals connected to the Pi, and for sound I'm us=
-ing analog audio outputs and inputs of the modem. Basically, I'm talking ab=
-out using ofono in ZeroPhone project - https://hackaday.io/project/19035 .
+This is my first ofono patch and I have tried to follow the coding guidelin=
+es etc.
+I did not find support to actually dial the last dialled call that I could =
+use for
+HFP with bluetooth. I did find some references but no method to do so. Thus=
+ I added
+one myself. I took existing code as a guideline to implement this. =
 
-For now, I'm interested in 1) notifications about voice call status (not co=
-ncerning audio for now, as it's handled in hardware) 2) SMS and MMS support=
- 3) 2G data connections (whatever available connection types are on 2G netw=
-orks) 4) USSD support. My questions are:
+This has been tested with several phone models and with the Bluetooth SIG t=
+esting tool.
 
-1) Is ofono going to be suitable for my needs? I'm more than OK with using =
-DBus and rolling my own user interface to it.
-2) How do I run ofono from command-line and tell it to connect to a specifi=
-c serial port and use a specific ofono driver? =
+Comments and corrections welcome.
 
-3) Do you foresee any necessary changes to ofono? For example, need to make=
- a sim800-specific driver?
-4) I see that Sailfish phones are using ofono as the GSM backend. Did they =
-upstream their changes, or do they have a fork?
-5) I'm planning to work with SIM5320 modem in the future, and attempt using=
- its USB connection. I know it creates multiple serial ports, and supports =
-streaming audio over one of them. Does ofono come into play here, does it h=
-ave some kind of provisions to convert this kind of audio input/output into=
- actual sound devices under Linux, or is that usually handled by other soft=
-ware?
+Regards,
 
-Best regards,
-Arsenijs.
+Philippe
 
---===============1757955538196932375==--
+
+--===============7878203739461297729==--
 
