@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============0643846303475698203=="
+Content-Type: multipart/mixed; boundary="===============2370242961564818177=="
 MIME-Version: 1.0
 From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: [PATCH] simauth: Update simauth to handle AUTS parameter
-Date: Fri, 20 Oct 2017 11:20:19 -0700
-Message-ID: <1508523619-4435-1-git-send-email-james.prestwood@linux.intel.com>
+Subject: [PATCHv2] simauth: Update simauth to handle AUTS parameter
+Date: Fri, 20 Oct 2017 11:22:28 -0700
+Message-ID: <1508523748-4621-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0643846303475698203==
+--===============2370242961564818177==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -18,10 +18,10 @@ simauth module. The SIM should have an internal SQN stored
 If not, then generate AUTS and send that back.
 ---
  src/default.xml |  2 +-
- src/simauth.cpp | 78 ++++++++++++++++++++++++++++++++++++++++++-----------=
+ src/simauth.cpp | 77 ++++++++++++++++++++++++++++++++++++++++++-----------=
 ----
  src/simauth.h   |  3 +++
- 3 files changed, 62 insertions(+), 21 deletions(-)
+ 3 files changed, 61 insertions(+), 21 deletions(-)
 
 diff --git a/src/default.xml b/src/default.xml
 index c70b907..39b0216 100644
@@ -42,7 +42,7 @@ FFFFF</aid>
 FFFFF</aid>
  </simauth>
 diff --git a/src/simauth.cpp b/src/simauth.cpp
-index ce8263d..20e011c 100644
+index ce8263d..54184b6 100644
 --- a/src/simauth.cpp
 +++ b/src/simauth.cpp
 @@ -34,6 +34,7 @@ SimAuth::SimAuth( QObject *parent, SimXmlNode& n )
@@ -113,7 +113,7 @@ nd, QString autn,
      // copy out AMF/MAC from AUTN
      memcpy(amf, _autn + 6, 2);
      memcpy(mac, _autn + 8, 8);
-@@ -359,6 +369,47 @@ enum UmtsStatus SimAuth::umtsAuthenticate( QString ran=
+@@ -359,6 +369,46 @@ enum UmtsStatus SimAuth::umtsAuthenticate( QString ran=
 d, QString autn,
      memcpy(in1 + 8, sqn, 6);
      memcpy(in1 + 14, amf, 2);
@@ -121,7 +121,6 @@ d, QString autn,
 
 +    // check if SQNs match
 +    if (memcmp(sqn, sqn_stored, 6)) {
-+        uint8_t ak_star[16];
 +        /*
 +         * f5* outputs AK' (OUT5)
 +         */
@@ -164,7 +163,7 @@ d, QString autn,
          tmp1[(i + 8) % 16] =3D in1[i] ^ opc[i];
  =
 
-@@ -369,22 +420,9 @@ enum UmtsStatus SimAuth::umtsAuthenticate( QString ran=
+@@ -369,22 +419,9 @@ enum UmtsStatus SimAuth::umtsAuthenticate( QString ran=
 d, QString autn,
      /* out1 =3D OUT1 =3D tmp1 ^ opc */
      XOR(out1, tmp1, opc, 16);
@@ -213,5 +212,5 @@ index eb733f6..a66ea52 100644
 2.7.4
 
 
---===============0643846303475698203==--
+--===============2370242961564818177==--
 
