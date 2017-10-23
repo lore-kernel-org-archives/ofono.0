@@ -1,54 +1,178 @@
-Content-Type: multipart/mixed; boundary="===============3977494709360260331=="
+Content-Type: multipart/mixed; boundary="===============8664498135466487092=="
 MIME-Version: 1.0
 From: Slava Monich <slava.monich@jolla.com>
-Subject: Re: [PATCHv2] simauth: fixup adding more dbus return checks
-Date: Mon, 23 Oct 2017 20:55:34 +0300
-Message-ID: <5d4db6a9-8042-aed6-e83b-e0a2af1c1a30@jolla.com>
-In-Reply-To: <1508169980-12627-1-git-send-email-james.prestwood@linux.intel.com>
+Subject: [PATCH] atmodem: Query the list of supported <fac>s from the modem
+Date: Mon, 23 Oct 2017 20:57:38 +0300
+Message-ID: <1508781458-17988-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3977494709360260331==
+--===============8664498135466487092==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi James,
+Not all modems support all <fac>s (particularly, "PS"), let's be polite
+and not ask them for the ones they don't support.
+---
+ drivers/atmodem/sim.c | 69 ++++++++++++++++++++++++++++++++++++++++++-----=
+----
+ 1 file changed, 57 insertions(+), 12 deletions(-)
 
-On 16/10/17 19:06, James Prestwood wrote:
-> ---
->   src/sim-auth.c | 23 +++++++++++++++++------
->   1 file changed, 17 insertions(+), 6 deletions(-)
->
-> diff --git a/src/sim-auth.c b/src/sim-auth.c
-> index b9552b5..9ae5574 100644
-> --- a/src/sim-auth.c
-> +++ b/src/sim-auth.c
-> @@ -427,6 +427,7 @@ static DBusMessage *usim_gsm_authenticate(DBusConnect=
-ion *conn,
->   	DBusMessageIter array;
->   	int i;
->   	struct sim_app_record *app;
-> +	int rands;
->   =
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index 6395a04..effce6e 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -52,6 +52,7 @@ struct sim_data {
+ 	unsigned int vendor;
+ 	guint ready_id;
+ 	struct at_util_sim_state_query *sim_state_query;
++	const char *passwd_fac[OFONO_SIM_PASSWORD_INVALID];
+ };
+ =
 
->   	if (sim->pending)
->   		return __ofono_error_busy(msg);
-> @@ -436,11 +437,16 @@ static DBusMessage *usim_gsm_authenticate(DBusConne=
-ction *conn,
->   	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_ARRAY)
->   		return __ofono_error_invalid_format(msg);
->   =
+ static const char *crsm_prefix[] =3D { "+CRSM:", NULL };
+@@ -1439,7 +1440,7 @@ static void at_lock_unlock_cb(gboolean ok, GAtResult =
+*result,
+ 	cb(&error, cbd->data);
+ }
+ =
 
-> +	rands =3D dbus_message_iter_get_element_count(&iter);
+-static const char *const at_clck_cpwd_fac[] =3D {
++static const char *const at_clck_cpwd_fac[OFONO_SIM_PASSWORD_INVALID] =3D {
+ 	[OFONO_SIM_PASSWORD_SIM_PIN] =3D "SC",
+ 	[OFONO_SIM_PASSWORD_SIM_PIN2] =3D "P2",
+ 	[OFONO_SIM_PASSWORD_PHSIM_PIN] =3D "PS",
+@@ -1459,13 +1460,13 @@ static void at_pin_enable(struct ofono_sim *sim,
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	char buf[64];
+ 	int ret;
+-	unsigned int len =3D sizeof(at_clck_cpwd_fac) / sizeof(*at_clck_cpwd_fac);
+ =
+
+-	if (passwd_type >=3D len || at_clck_cpwd_fac[passwd_type] =3D=3D NULL)
++	if (passwd_type >=3D ARRAY_SIZE(sd->passwd_fac) ||
++				sd->passwd_fac[passwd_type] =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	snprintf(buf, sizeof(buf), "AT+CLCK=3D\"%s\",%i,\"%s\"",
+-			at_clck_cpwd_fac[passwd_type], enable ? 1 : 0, passwd);
++			sd->passwd_fac[passwd_type], enable ? 1 : 0, passwd);
+ =
+
+ 	ret =3D g_at_chat_send(sd->chat, buf, none_prefix,
+ 				at_lock_unlock_cb, cbd, g_free);
+@@ -1490,14 +1491,13 @@ static void at_change_passwd(struct ofono_sim *sim,
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	char buf[64];
+ 	int ret;
+-	unsigned int len =3D sizeof(at_clck_cpwd_fac) / sizeof(*at_clck_cpwd_fac);
+ =
+
+-	if (passwd_type >=3D len ||
+-			at_clck_cpwd_fac[passwd_type] =3D=3D NULL)
++	if (passwd_type >=3D ARRAY_SIZE(sd->passwd_fac) ||
++			sd->passwd_fac[passwd_type] =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	snprintf(buf, sizeof(buf), "AT+CPWD=3D\"%s\",\"%s\",\"%s\"",
+-			at_clck_cpwd_fac[passwd_type], old_passwd, new_passwd);
++			sd->passwd_fac[passwd_type], old_passwd, new_passwd);
+ =
+
+ 	ret =3D g_at_chat_send(sd->chat, buf, none_prefix,
+ 				at_lock_unlock_cb, cbd, g_free);
+@@ -1550,13 +1550,13 @@ static void at_query_clck(struct ofono_sim *sim,
+ 	struct sim_data *sd =3D ofono_sim_get_data(sim);
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	char buf[64];
+-	unsigned int len =3D sizeof(at_clck_cpwd_fac) / sizeof(*at_clck_cpwd_fac);
+ =
+
+-	if (passwd_type >=3D len || at_clck_cpwd_fac[passwd_type] =3D=3D NULL)
++	if (passwd_type >=3D ARRAY_SIZE(sd->passwd_fac) ||
++				sd->passwd_fac[passwd_type] =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	snprintf(buf, sizeof(buf), "AT+CLCK=3D\"%s\",2",
+-			at_clck_cpwd_fac[passwd_type]);
++			sd->passwd_fac[passwd_type]);
+ =
+
+ 	if (g_at_chat_send(sd->chat, buf, clck_prefix,
+ 				at_lock_status_cb, cbd, g_free) > 0)
+@@ -1568,6 +1568,43 @@ error:
+ 	CALLBACK_WITH_FAILURE(cb, -1, data);
+ }
+ =
+
++static void at_clck_query_cb(gboolean ok, GAtResult *result, gpointer user)
++{
++	struct ofono_sim *sim =3D user;
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
++	GAtResultIter iter;
++	const char *fac;
++
++	if (!ok)
++		goto done;
++
++	g_at_result_iter_init(&iter, result);
++
++	/* e.g. +CLCK: ("SC","FD","PN","PU","PP","PC","PF") */
++	if (!g_at_result_iter_next(&iter, "+CLCK:") ||
++				!g_at_result_iter_open_list(&iter))
++		goto done;
++
++	memset(sd->passwd_fac, 0, sizeof(sd->passwd_fac));
++
++	while (g_at_result_iter_next_string(&iter, &fac)) {
++		int i;
++
++		/* Find it in the list of known <fac>s */
++		for (i =3D 0; i < ARRAY_SIZE(at_clck_cpwd_fac); i++) {
++			if (!g_strcmp0(at_clck_cpwd_fac[i], fac)) {
++				DBG("found %s", fac);
++				/* at_clck_cpwd_fac[i] is a static string */
++				sd->passwd_fac[i] =3D at_clck_cpwd_fac[i];
++				break;
++			}
++		}
++	}
++
++done:
++	ofono_sim_register(sim);
++}
++
+ static gboolean at_sim_register(gpointer user)
+ {
+ 	struct ofono_sim *sim =3D user;
+@@ -1591,7 +1628,15 @@ static int at_sim_probe(struct ofono_sim *sim, unsig=
+ned int vendor,
+ 		g_at_chat_send(sd->chat, "AT*EPEE=3D1", NULL, NULL, NULL, NULL);
+ =
+
+ 	ofono_sim_set_data(sim, sd);
+-	g_idle_add(at_sim_register, sim);
++
++	/* The default password -> <fac> map */
++	memcpy(sd->passwd_fac, at_clck_cpwd_fac, sizeof(sd->passwd_fac));
++
++	/* Query supported <fac>s */
++	if (!g_at_chat_send(sd->chat, "AT+CLCK=3D?", clck_prefix,
++					at_clck_query_cb, sim, NULL)) {
++		g_idle_add(at_sim_register, sim);
++	}
+ =
+
+ 	return 0;
+ }
+-- =
+
+1.9.1
 
 
-It appears that dbus_message_iter_get_element_count() requires dbus =
-
-1.9.16 or later, would it be possible to avoid it?
-
-Thanks,
--Slava
-
---===============3977494709360260331==--
+--===============8664498135466487092==--
 
