@@ -1,164 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============5245607744901198249=="
+Content-Type: multipart/mixed; boundary="===============4949484209224580887=="
 MIME-Version: 1.0
 From: Slava Monich <slava.monich@jolla.com>
-Subject: [PATCH v3] atmodem: Query the list of supported <fac>s from the modem
-Date: Mon, 23 Oct 2017 23:52:36 +0300
-Message-ID: <1508791956-25711-1-git-send-email-slava.monich@jolla.com>
-In-Reply-To: <e5088452-35c4-cafa-ae8b-b256120c228b@gmail.com>
+Subject: [PATCH] gatmux: Remove write watch source at shutdown
+Date: Tue, 24 Oct 2017 00:05:36 +0300
+Message-ID: <1508792736-29720-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5245607744901198249==
+--===============4949484209224580887==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Not all modems support all <fac>s (particularly, "PS"), let's be polite
-and not ask them for the ones they don't support.
+Otherwise write_watcher_destroy_notify can be invoked after
+GAtMux has been deallocated which results in write after free:
+
+=3D=3D3952=3D=3D Invalid write of size 4
+=3D=3D3952=3D=3D    at 0xABF54: write_watcher_destroy_notify (gatmux.c:285)
+=3D=3D3952=3D=3D    by 0x4AF21E7: g_source_callback_unref (gmain.c:1561)
+=3D=3D3952=3D=3D    by 0x4AF2E53: g_source_destroy_internal.constprop.8 (gm=
+ain.c:1207)
+=3D=3D3952=3D=3D    by 0x4AF61CF: g_main_dispatch (gmain.c:3177)
+=3D=3D3952=3D=3D    by 0x4AF61CF: g_main_context_dispatch (gmain.c:3769)
+=3D=3D3952=3D=3D    by 0x4AF658F: g_main_loop_run (gmain.c:4034)
+=3D=3D3952=3D=3D    by 0xBDDBB: main (main.c:261)
+=3D=3D3952=3D=3D  Address 0x50c6cb0 is 8 bytes inside a block of size 4,396=
+ free'd
+=3D=3D3952=3D=3D    at 0x4840B28: free (vg_replace_malloc.c:530)
+=3D=3D3952=3D=3D    by 0xACB53: g_at_mux_unref (gatmux.c:642)
+=3D=3D3952=3D=3D  Block was alloc'd at
+=3D=3D3952=3D=3D    at 0x4841BF0: calloc (vg_replace_malloc.c:711)
+=3D=3D3952=3D=3D    by 0xAC9DF: g_at_mux_new (gatmux.c:603)
+=3D=3D3952=3D=3D    by 0xADF2F: g_at_mux_new_gsm0710_basic (gatmux.c:1160)
 ---
- drivers/atmodem/sim.c | 57 ++++++++++++++++++++++++++++++++++++++++-------=
-----
- 1 file changed, 45 insertions(+), 12 deletions(-)
+ gatchat/gatmux.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 6395a04..8665274 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -51,6 +51,7 @@ struct sim_data {
- 	GAtChat *chat;
- 	unsigned int vendor;
- 	guint ready_id;
-+	guint passwd_type_mask;
- 	struct at_util_sim_state_query *sim_state_query;
- };
+diff --git a/gatchat/gatmux.c b/gatchat/gatmux.c
+index 909eca6..d492edb 100644
+--- a/gatchat/gatmux.c
++++ b/gatchat/gatmux.c
+@@ -684,6 +684,9 @@ gboolean g_at_mux_shutdown(GAtMux *mux)
+ 	if (mux->read_watch > 0)
+ 		g_source_remove(mux->read_watch);
  =
 
-@@ -1459,9 +1460,8 @@ static void at_pin_enable(struct ofono_sim *sim,
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[64];
- 	int ret;
--	unsigned int len =3D sizeof(at_clck_cpwd_fac) / sizeof(*at_clck_cpwd_fac);
- =
-
--	if (passwd_type >=3D len || at_clck_cpwd_fac[passwd_type] =3D=3D NULL)
-+	if (!(sd->passwd_type_mask & (1 << passwd_type)))
- 		goto error;
- =
-
- 	snprintf(buf, sizeof(buf), "AT+CLCK=3D\"%s\",%i,\"%s\"",
-@@ -1490,10 +1490,8 @@ static void at_change_passwd(struct ofono_sim *sim,
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[64];
- 	int ret;
--	unsigned int len =3D sizeof(at_clck_cpwd_fac) / sizeof(*at_clck_cpwd_fac);
- =
-
--	if (passwd_type >=3D len ||
--			at_clck_cpwd_fac[passwd_type] =3D=3D NULL)
-+	if (!(sd->passwd_type_mask & (1 << passwd_type)))
- 		goto error;
- =
-
- 	snprintf(buf, sizeof(buf), "AT+CPWD=3D\"%s\",\"%s\",\"%s\"",
-@@ -1550,9 +1548,8 @@ static void at_query_clck(struct ofono_sim *sim,
- 	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[64];
--	unsigned int len =3D sizeof(at_clck_cpwd_fac) / sizeof(*at_clck_cpwd_fac);
- =
-
--	if (passwd_type >=3D len || at_clck_cpwd_fac[passwd_type] =3D=3D NULL)
-+	if (!(sd->passwd_type_mask & (1 << passwd_type)))
- 		goto error;
- =
-
- 	snprintf(buf, sizeof(buf), "AT+CLCK=3D\"%s\",2",
-@@ -1568,13 +1565,42 @@ error:
- 	CALLBACK_WITH_FAILURE(cb, -1, data);
- }
- =
-
--static gboolean at_sim_register(gpointer user)
-+static void at_clck_query_cb(gboolean ok, GAtResult *result, gpointer user)
- {
- 	struct ofono_sim *sim =3D user;
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+	GAtResultIter iter;
-+	const char *fac;
- =
-
--	ofono_sim_register(sim);
-+	if (!ok)
-+		goto done;
++	if (mux->write_watch > 0)
++		g_source_remove(mux->write_watch);
 +
-+	g_at_result_iter_init(&iter, result);
-+
-+	/* e.g. +CLCK: ("SC","FD","PN","PU","PP","PC","PF") */
-+	if (!g_at_result_iter_next(&iter, "+CLCK:") ||
-+				!g_at_result_iter_open_list(&iter))
-+		goto done;
-+
-+	/* Clear the default mask */
-+	sd->passwd_type_mask =3D 0;
- =
-
--	return FALSE;
-+	/* Set the bits for <fac>s that are actually supported */
-+	while (g_at_result_iter_next_string(&iter, &fac)) {
-+		unsigned int i;
-+
-+		/* Find it in the list of known <fac>s */
-+		for (i =3D 0; i < ARRAY_SIZE(at_clck_cpwd_fac); i++) {
-+			if (!g_strcmp0(at_clck_cpwd_fac[i], fac)) {
-+				sd->passwd_type_mask |=3D (1 << i);
-+				DBG("found %s", fac);
-+				break;
-+			}
-+		}
-+	}
-+
-+done:
-+	ofono_sim_register(sim);
- }
- =
-
- static int at_sim_probe(struct ofono_sim *sim, unsigned int vendor,
-@@ -1582,6 +1608,7 @@ static int at_sim_probe(struct ofono_sim *sim, unsign=
-ed int vendor,
- {
- 	GAtChat *chat =3D data;
- 	struct sim_data *sd;
-+	unsigned int i;
- =
-
- 	sd =3D g_new0(struct sim_data, 1);
- 	sd->chat =3D g_at_chat_clone(chat);
-@@ -1591,9 +1618,15 @@ static int at_sim_probe(struct ofono_sim *sim, unsig=
-ned int vendor,
- 		g_at_chat_send(sd->chat, "AT*EPEE=3D1", NULL, NULL, NULL, NULL);
- =
-
- 	ofono_sim_set_data(sim, sd);
--	g_idle_add(at_sim_register, sim);
- =
-
--	return 0;
-+	/* <fac>s supported by default */
-+	for (i =3D 0; i < ARRAY_SIZE(at_clck_cpwd_fac); i++)
-+		if (at_clck_cpwd_fac[i])
-+			sd->passwd_type_mask |=3D (1 << i);
-+
-+	/* Query supported <fac>s */
-+	return g_at_chat_send(sd->chat, "AT+CLCK=3D?", clck_prefix,
-+				at_clck_query_cb, sim, NULL) ? 0 : -1;
- }
- =
-
- static void at_sim_remove(struct ofono_sim *sim)
+ 	for (i =3D 0; i < MAX_CHANNELS; i++) {
+ 		if (mux->dlcs[i] =3D=3D NULL)
+ 			continue;
 -- =
 
 1.9.1
 
 
---===============5245607744901198249==--
+--===============4949484209224580887==--
 
