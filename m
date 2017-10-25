@@ -1,55 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============2997063296525899366=="
+Content-Type: multipart/mixed; boundary="===============8403909284255291412=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Christophe Ronco <c.ronco@kerlink.fr>
 Subject: Re: Ofono 1.21 crashes with Sierra MC7455
-Date: Wed, 25 Oct 2017 10:39:05 -0500
-Message-ID: <8935996d-f4e9-9d6b-2d0b-6639a584c972@gmail.com>
-In-Reply-To: <eb29bb3430f34595a1b99c3c22f31025@de.bosch.com>
+Date: Wed, 25 Oct 2017 18:04:09 +0200
+Message-ID: <56b26950-2bb6-e740-9365-13ac25856226@kerlink.fr>
+In-Reply-To: <8935996d-f4e9-9d6b-2d0b-6639a584c972@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2997063296525899366==
+--===============8403909284255291412==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
 
-On 10/25/2017 07:38 AM, Eswaran Vinothkumar (BEG/PJ-IOT-EL) wrote:
-> Hello,
-> =
+On 10/25/2017 05:39 PM, Denis Kenzior wrote:
+> Hi,
+>
+> On 10/25/2017 07:38 AM, Eswaran Vinothkumar (BEG/PJ-IOT-EL) wrote:
+>> Hello,
+>>
+>> For our next connectivity project we are planning to use Connman =
 
-> For our next connectivity project we are planning to use Connman along =
+>> along with oFono
+>>
+>> The version being used are Connman :1.35 and oFono:1.21
+>>
+>> After system start up, I am seeing that the oFono process gets =
 
-> with oFono
-> =
+>> exited, whenever I try to enable the modem by calling the python =
 
-> The version being used are Connman :1.35 and oFono:1.21
-> =
+>> script enable-modem in the test directory. However, if I restart the =
 
-> After system start up, I am seeing that the oFono process gets exited, =
+>> ofono systemd service, everything works fine.
+>>
+>> I have attached the logs for your reference. Please let me know, if =
 
-> whenever I try to enable the modem by calling the python script =
+>> any further log messages are required.
+>>
+>
+> I see no backtrace in your logs, so there's really nothing to go on =
 
-> enable-modem in the test directory. However, if I restart the ofono =
+> here.=C2=A0 Are you sure its oFono crashing and not systemd simply killin=
+g =
 
-> systemd service, everything works fine.
-> =
+> it for whatever reason?=C2=A0 Can you attach gdb to get the backtrace?
+>
 
-> I have attached the logs for your reference. Please let me know, if any =
+I assume Ofono has been built using Yocto and traces are output using =
 
-> further log messages are required.
-> =
+syslog (because traces look similar to what I have).
+
+I am in the same case here and I never see backtrace when abort occurs. =
+
+I haven't fixed that yet even locally. Usually when I need to debug a =
+
+crash, I deactivate Ofono signal handling, get a core dump and analyze =
+
+the core.
+
+Maybe that can be done here.
 
 
-I see no backtrace in your logs, so there's really nothing to go on =
+Christophe
 
-here.  Are you sure its oFono crashing and not systemd simply killing it =
 
-for whatever reason?  Can you attach gdb to get the backtrace?
 
-Regards,
--Denis
-
---===============2997063296525899366==--
+--===============8403909284255291412==--
 
