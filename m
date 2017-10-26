@@ -1,70 +1,92 @@
-Content-Type: multipart/mixed; boundary="===============8403909284255291412=="
+Content-Type: multipart/mixed; boundary="===============0222150002177079781=="
 MIME-Version: 1.0
-From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: Re: Ofono 1.21 crashes with Sierra MC7455
-Date: Wed, 25 Oct 2017 18:04:09 +0200
-Message-ID: <56b26950-2bb6-e740-9365-13ac25856226@kerlink.fr>
-In-Reply-To: <8935996d-f4e9-9d6b-2d0b-6639a584c972@gmail.com>
+From: Philippe De Swert <philippe.deswert@nomovok.com>
+Subject: Re: [PATCH 2/4] voicecallmanager: Handle last number dialled DBUS call
+Date: Thu, 26 Oct 2017 09:33:22 +0300
+Message-ID: <166b2f17-668d-e010-2865-9149a127035a@nomovok.com>
+In-Reply-To: <6f9197ca-4bd3-f796-1fa0-034047842c04@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8403909284255291412==
+--===============0222150002177079781==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hello Denis,
 
-On 10/25/2017 05:39 PM, Denis Kenzior wrote:
-> Hi,
+Thank you for the quick review!
+
+On 18/10/17 20:03, Denis Kenzior wrote:
+> Hi Philippe,
 >
-> On 10/25/2017 07:38 AM, Eswaran Vinothkumar (BEG/PJ-IOT-EL) wrote:
->> Hello,
->>
->> For our next connectivity project we are planning to use Connman =
+> On 10/18/2017 09:04 AM, Philippe De Swert wrote:
+>> Handle the new DialLast method on the voicecallmanager interface
+>> ---
+>>   src/voicecall.c | 89 =
 
->> along with oFono
+>> +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>>   1 file changed, 89 insertions(+)
 >>
->> The version being used are Connman :1.35 and oFono:1.21
->>
->> After system start up, I am seeing that the oFono process gets =
+>> diff --git a/src/voicecall.c b/src/voicecall.c
+>> index 2ff9aa15..4eeb6621 100644
+>> --- a/src/voicecall.c
+>> +++ b/src/voicecall.c
+>> @@ -1595,6 +1595,94 @@ static DBusMessage =
 
->> exited, whenever I try to enable the modem by calling the python =
+>> *manager_dial(DBusConnection *conn,
+>>       return __ofono_error_failed(msg);
+>>   }
+>>   +static void manager_dial_last_callback(const struct ofono_error =
 
->> script enable-modem in the test directory. However, if I restart the =
-
->> ofono systemd service, everything works fine.
->>
->> I have attached the logs for your reference. Please let me know, if =
-
->> any further log messages are required.
->>
+>> *error, void *data)
+>> +{
+>> +    struct ofono_voicecall *vc =3D data;
+>> +    DBusMessage *reply;
+>> +    gboolean need_to_emit;
+>> +    struct voicecall *v;
+>> +
+>> +    v =3D dial_handle_result(vc, error, NULL, &need_to_emit);
 >
-> I see no backtrace in your logs, so there's really nothing to go on =
+> dial_handle_result is a bit tricky because it handles situations where =
 
-> here.=C2=A0 Are you sure its oFono crashing and not systemd simply killin=
-g =
+> ATD returns immediately and then the call is notified via an =
 
-> it for whatever reason?=C2=A0 Can you attach gdb to get the backtrace?
+> unsolicited notification, or ATD returns first.
 >
+> In the case of +BLDN, I believe HFP spec mandates that BLDN always =
 
-I assume Ofono has been built using Yocto and traces are output using =
+> returns first, which means that much of the logic in =
 
-syslog (because traces look similar to what I have).
+> dial_handle_result is not applicable.  It may be better to just =
 
-I am in the same case here and I never see backtrace when abort occurs. =
+> perform the necessary logic directly here.
+>
+> In the current proposal, we will always generate a new call with an =
 
-I haven't fixed that yet even locally. Usually when I need to debug a =
+> empty phone number which will (hopefully) eventually be updated.  I'm =
 
-crash, I deactivate Ofono signal handling, get a core dump and analyze =
+> not so sure that this is a great approach, but I can't think of =
 
-the core.
+> anything better...
 
-Maybe that can be done here.
+Not sure I understand your comment completely here. So I don't use =
 
+dial_handle_result and just setup a voicecall from the callback =
 
-Christophe
+(voicecall_create)? Or do you mean it is not ideal but acceptable for now?
 
+Regarding your second comment, yes the extra addition of ';' at the end =
 
+should go. Once I know how to deal with your first comment I'll update =
 
---===============8403909284255291412==--
+the patch and send an extra one for memory dialling which is similar to =
+
+these.
+
+Thanks,
+
+Philippe.
+
+--===============0222150002177079781==--
 
