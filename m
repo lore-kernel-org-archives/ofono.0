@@ -1,81 +1,128 @@
-Content-Type: multipart/mixed; boundary="===============1052775970964108860=="
+Content-Type: multipart/mixed; boundary="===============4171768929145992999=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] voicecallmanager: Handle last number dialled DBUS call
-Date: Thu, 26 Oct 2017 10:25:44 -0500
-Message-ID: <18f4afe6-5271-e0e7-ac17-9eddfe9d2dc9@gmail.com>
-In-Reply-To: <166b2f17-668d-e010-2865-9149a127035a@nomovok.com>
+From: Christophe Ronco <c.ronco@kerlink.fr>
+Subject: Re: [PATCH] qmi: remove request when it timeouts
+Date: Thu, 26 Oct 2017 17:36:48 +0200
+Message-ID: <cf5ef8d7-9fd8-58ee-f297-158b764e1e64@kerlink.fr>
+In-Reply-To: <13d9a774-2150-71e1-08e2-ee88556a2ca8@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1052775970964108860==
+--===============4171768929145992999==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi Jonas,
 
->>> +=C2=A0=C2=A0=C2=A0 v =3D dial_handle_result(vc, error, NULL, &need_to_=
-emit);
+
+
+On 10/26/2017 03:04 PM, Jonas Bonn wrote:
+> Hi Christophe,
+>
+> Just a few trivial fixups below.
+>
+> On 10/26/2017 02:44 PM, Christophe Ronco wrote:
+>> When modem does not answer or answers slowly to a discovery request,
+>> a timeout occurs.
+>> In timeout callback, request should be removed from queues to avoid
+>> treating answer if it arrives later.
+>> ---
+>> =C2=A0 drivers/qmimodem/qmi.c | 26 ++++++++++++++++++++++++++
+>> =C2=A0 1 file changed, 26 insertions(+)
 >>
->> dial_handle_result is a bit tricky because it handles situations where =
+>> diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+>> index c538cb9..65263d2 100644
+>> --- a/drivers/qmimodem/qmi.c
+>> +++ b/drivers/qmimodem/qmi.c
+>> @@ -1073,6 +1073,7 @@ struct discover_data {
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 qmi_discover_func_t func;
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 void *user_data;
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 qmi_destroy_func_t destroy;
+>> +=C2=A0=C2=A0=C2=A0 uint8_t tid;
+>
+> This should be uint16_t.
+tid field is set from transaction field in struct qmi_control_hdr. =
 
->> ATD returns immediately and then the call is notified via an =
+transaction is a uint8_t, why do you want tid to be uint16_t?
+To avoid cast in discover_reply?
+>
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 guint timeout;
+>> =C2=A0 };
+>> =C2=A0 @@ -1181,14 +1182,38 @@ static gboolean discover_reply(gpointer =
 
->> unsolicited notification, or ATD returns first.
->>
->> In the case of +BLDN, I believe HFP spec mandates that BLDN always =
+>> user_data)
+>> =C2=A0 {
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct discover_data *data =3D user_data;
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct qmi_device *device =3D data->devic=
+e;
+>> +=C2=A0=C2=A0=C2=A0 unsigned int tid =3D (unsigned int)(data->tid);
+> You don't need the explicit cast here.
+>
+>> +=C2=A0=C2=A0=C2=A0 GList *list;
+>> +=C2=A0=C2=A0=C2=A0 struct qmi_request *req =3D NULL;
+>> =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 data->timeout =3D 0;
+>> =C2=A0 +=C2=A0=C2=A0=C2=A0 /* remove request from queues */
+>> +=C2=A0=C2=A0=C2=A0 if (tid !=3D 0) {
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 list =3D g_queue_find_custom=
+(device->req_queue,
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 GUINT_TO_POINTER(tid), __request_compare);
+>> +
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (list) {
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 req =
+=3D list->data;
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 g_qu=
+eue_delete_link(device->req_queue, list);
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 } else {
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 list=
+ =3D g_queue_find_custom(device->control_queue,
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 GUINT_TO_POINTER(tid), __request_compare);
+>> +
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (=
+list) {
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 req =3D list->data;
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 g_queue_delete_link(device->control_queue,
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 list);
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 }
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 }
+>> +=C2=A0=C2=A0=C2=A0 }
+>> +
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (data->func)
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 data->func(device=
+->version_count,
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 device->version_list, data->user_data);
+>> =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 __qmi_device_discovery_complete(da=
+ta->device, &data->super);
+>> +=C2=A0=C2=A0=C2=A0 __request_free(req, NULL);
+>> =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return FALSE;
+>> =C2=A0 }
+>> @@ -1234,6 +1259,7 @@ bool qmi_device_discover(struct qmi_device =
 
->> returns first, which means that much of the logic in =
+>> *device, qmi_discover_func_t func,
+>> =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 hdr->type =3D 0x00;
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 hdr->transaction =3D device->next_control=
+_tid++;
+>> +=C2=A0=C2=A0=C2=A0 data->tid =3D hdr->transaction;
+>> =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 __request_submit(device, req, hdr-=
+>transaction);
+>
+> /Jonas
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> https://lists.ofono.org/mailman/listinfo/ofono
+>
 
->> dial_handle_result is not applicable.=C2=A0 It may be better to just =
-
->> perform the necessary logic directly here.
->>
->> In the current proposal, we will always generate a new call with an =
-
->> empty phone number which will (hopefully) eventually be updated.=C2=A0 I=
-'m =
-
->> not so sure that this is a great approach, but I can't think of =
-
->> anything better...
-> =
-
-> Not sure I understand your comment completely here. So I don't use =
-
-> dial_handle_result and just setup a voicecall from the callback =
-
-> (voicecall_create)? Or do you mean it is not ideal but acceptable for now?
-
-So in dial_last_callback, instead of calling dial_handle_result, just =
-
-add in the necessary logic from dial_handle_result assuming that the =
-
-BLDN callback is called first.  Commit =
-
-3b951d20f4ae2d6d11b6e7a7485b013aadde050c should make that easier for =
-
-you.  E.g. just call synthethize_outgoing_call inside =
-
-dial_last_callback, reply to the dbus message and emit the signal.
-
-> =
-
-> Regarding your second comment, yes the extra addition of ';' at the end =
-
-> should go. Once I know how to deal with your first comment I'll update =
-
-> the patch and send an extra one for memory dialling which is similar to =
-
-> these.
-> =
+Christophe
 
 
-Sounds good.
-
-Regards,
--Denis
-
---===============1052775970964108860==--
+--===============4171768929145992999==--
 
