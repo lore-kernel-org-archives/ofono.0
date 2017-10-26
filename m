@@ -1,92 +1,223 @@
-Content-Type: multipart/mixed; boundary="===============0222150002177079781=="
+Content-Type: multipart/mixed; boundary="===============4533742251793696267=="
 MIME-Version: 1.0
-From: Philippe De Swert <philippe.deswert@nomovok.com>
-Subject: Re: [PATCH 2/4] voicecallmanager: Handle last number dialled DBUS call
-Date: Thu, 26 Oct 2017 09:33:22 +0300
-Message-ID: <166b2f17-668d-e010-2865-9149a127035a@nomovok.com>
-In-Reply-To: <6f9197ca-4bd3-f796-1fa0-034047842c04@gmail.com>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: Re: Ofono 1.21 crashes with Sierra MC7455
+Date: Thu, 26 Oct 2017 10:11:34 +0200
+Message-ID: <a12d2e9e-39f2-e407-6ed6-662b860399b0@southpole.se>
+In-Reply-To: <eb29bb3430f34595a1b99c3c22f31025@de.bosch.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0222150002177079781==
+--===============4533742251793696267==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Denis,
-
-Thank you for the quick review!
-
-On 18/10/17 20:03, Denis Kenzior wrote:
-> Hi Philippe,
+On 10/25/2017 02:38 PM, Eswaran Vinothkumar (BEG/PJ-IOT-EL) wrote:
 >
-> On 10/18/2017 09:04 AM, Philippe De Swert wrote:
->> Handle the new DialLast method on the voicecallmanager interface
->> ---
->>   src/voicecall.c | 89 =
-
->> +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
->>   1 file changed, 89 insertions(+)
->>
->> diff --git a/src/voicecall.c b/src/voicecall.c
->> index 2ff9aa15..4eeb6621 100644
->> --- a/src/voicecall.c
->> +++ b/src/voicecall.c
->> @@ -1595,6 +1595,94 @@ static DBusMessage =
-
->> *manager_dial(DBusConnection *conn,
->>       return __ofono_error_failed(msg);
->>   }
->>   +static void manager_dial_last_callback(const struct ofono_error =
-
->> *error, void *data)
->> +{
->> +    struct ofono_voicecall *vc =3D data;
->> +    DBusMessage *reply;
->> +    gboolean need_to_emit;
->> +    struct voicecall *v;
->> +
->> +    v =3D dial_handle_result(vc, error, NULL, &need_to_emit);
+> Hello,
 >
-> dial_handle_result is a bit tricky because it handles situations where =
+> For our next connectivity project we are planning to use Connman along =
 
-> ATD returns immediately and then the call is notified via an =
-
-> unsolicited notification, or ATD returns first.
+> with oFono
 >
-> In the case of +BLDN, I believe HFP spec mandates that BLDN always =
-
-> returns first, which means that much of the logic in =
-
-> dial_handle_result is not applicable.  It may be better to just =
-
-> perform the necessary logic directly here.
+> The version being used are Connman :1.35 and oFono:1.21
 >
-> In the current proposal, we will always generate a new call with an =
+> After system start up, I am seeing that the oFono process gets exited, =
 
-> empty phone number which will (hopefully) eventually be updated.  I'm =
+> whenever I try to enable the modem by calling the python script =
 
-> not so sure that this is a great approach, but I can't think of =
+> enable-modem in the test directory. However, if I restart the ofono =
 
-> anything better...
+> systemd service, everything works fine.
+>
 
-Not sure I understand your comment completely here. So I don't use =
+A couple of comments here:
 
-dial_handle_result and just setup a voicecall from the callback =
+i)  You have connman and ofono running via systemd and you're calling =
 
-(voicecall_create)? Or do you mean it is not ideal but acceptable for now?
+enable-modem from the test directory... I don't think this is a robust =
 
-Regarding your second comment, yes the extra addition of ';' at the end =
+way to go about testing things.  Try to simplify by stopping connman and =
 
-should go. Once I know how to deal with your first comment I'll update =
+ofono and running ofono manually from the command line before calling =
 
-the patch and send an extra one for memory dialling which is similar to =
+the test script.
 
-these.
+# systemctl stop connman
+# systemctl stop ofono
+# ofonod -d -n
+# ...../enable-modem
 
-Thanks,
+ii)  When you say "everything works fine", what do you mean?  The test =
 
-Philippe.
+script can run...?
 
---===============0222150002177079781==--
+iii)  There _is_ a race in the gobi module at just the spot that you are =
+
+seeing the crash.  I have seen it many times but haven't taken the time =
+
+to isolate the issue... if I get a moment today, I might take a look at =
+
+it.  I can trigger it by calling enable-modem too early in the ofono's =
+
+startup process... it occurs maybe 1 time in 5 on my setup.
+
+iv)  Like Christophe said, disable ofono's signal handler and enable =
+
+core dumps before running ofono.  The core dump is easier to analyze =
+
+than ofono's backtrace.
+
+/Jonas
+
+> I have attached the logs for your reference. Please let me know, if =
+
+> any further log messages are required.
+>
+> Modem chip. MC7455 from sierra
+>
+> Linux kernel: 4.9.44-fslc+g8f876e1 (freescale)
+>
+> Mit freundlichen Gr=C3=BC=C3=9Fen / Best regards
+> Vinothkumar Eswaran
+>
+>
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> https://lists.ofono.org/mailman/listinfo/ofono
+
+
+
+--===============4533742251793696267==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWw+CiAgPGhlYWQ+CiAgICA8bWV0YSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9d2lu
+ZG93cy0xMjUyIgogICAgICBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiPgogIDwvaGVhZD4KICA8
+Ym9keSBiZ2NvbG9yPSIjRkZGRkZGIiB0ZXh0PSIjMDAwMDAwIj4KICAgIDxkaXYgY2xhc3M9Im1v
+ei1jaXRlLXByZWZpeCI+T24gMTAvMjUvMjAxNyAwMjozOCBQTSwgRXN3YXJhbgogICAgICBWaW5v
+dGhrdW1hciAoQkVHL1BKLUlPVC1FTCkgd3JvdGU6PGJyPgogICAgPC9kaXY+CiAgICA8YmxvY2tx
+dW90ZSBjaXRlPSJtaWQ6ZWIyOWJiMzQzMGYzNDU5NWExYjk5YzNjMjJmMzEwMjVAZGUuYm9zY2gu
+Y29tIgogICAgICB0eXBlPSJjaXRlIj4KICAgICAgPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1U
+eXBlIiBjb250ZW50PSJ0ZXh0L2h0bWw7CiAgICAgICAgY2hhcnNldD13aW5kb3dzLTEyNTIiPgog
+ICAgICA8bWV0YSBuYW1lPSJHZW5lcmF0b3IiIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDE1IChm
+aWx0ZXJlZAogICAgICAgIG1lZGl1bSkiPgogICAgICA8c3R5bGU+PCEtLQovKiBGb250IERlZmlu
+aXRpb25zICovCkBmb250LWZhY2UKCXtmb250LWZhbWlseToiQ2FtYnJpYSBNYXRoIjsKCXBhbm9z
+ZS0xOjIgNCA1IDMgNSA0IDYgMyAyIDQ7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6Q2FsaWJy
+aTsKCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KLyogU3R5bGUgRGVmaW5pdGlvbnMg
+Ki8KcC5Nc29Ob3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJe21hcmdpbjowY207
+CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTEuMHB0OwoJZm9udC1mYW1pbHk6
+IkNhbGlicmkiLHNhbnMtc2VyaWY7fQphOmxpbmssIHNwYW4uTXNvSHlwZXJsaW5rCgl7bXNvLXN0
+eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6IzA1NjNDMTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxp
+bmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlwZXJsaW5rRm9sbG93ZWQKCXttc28tc3R5bGUtcHJp
+b3JpdHk6OTk7Cgljb2xvcjojOTU0RjcyOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNw
+YW4uRS1NYWlsRm9ybWF0dm9ybGFnZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWw7Cglmb250
+LWZhbWlseToiQXJpYWwiLHNhbnMtc2VyaWY7Cgljb2xvcjp3aW5kb3d0ZXh0OwoJZm9udC13ZWln
+aHQ6bm9ybWFsOwoJZm9udC1zdHlsZTpub3JtYWw7fQpzcGFuLkUtTWFpbEZvcm1hdHZvcmxhZ2Ux
+OAoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLXJlcGx5OwoJZm9udC1mYW1pbHk6IkFyaWFsIixz
+YW5zLXNlcmlmOwoJY29sb3I6d2luZG93dGV4dDsKCWZvbnQtd2VpZ2h0Om5vcm1hbDsKCWZvbnQt
+c3R5bGU6bm9ybWFsO30KLk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25s
+eTsKCWZvbnQtc2l6ZToxMC4wcHQ7fQpAcGFnZSBXb3JkU2VjdGlvbjEKCXtzaXplOjYxMi4wcHQg
+NzkyLjBwdDsKCW1hcmdpbjo3Mi4wcHQgNzIuMHB0IDcyLjBwdCA3Mi4wcHQ7fQpkaXYuV29yZFNl
+Y3Rpb24xCgl7cGFnZTpXb3JkU2VjdGlvbjE7fQotLT48L3N0eWxlPjwhLS1baWYgZ3RlIG1zbyA5
+XT48eG1sPgo8bzpzaGFwZWRlZmF1bHRzIHY6ZXh0PSJlZGl0IiBzcGlkbWF4PSIxMDI2IiAvPgo8
+L3htbD48IVtlbmRpZl0tLT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVsYXlvdXQg
+djpleHQ9ImVkaXQiPgo8bzppZG1hcCB2OmV4dD0iZWRpdCIgZGF0YT0iMSIgLz4KPC9vOnNoYXBl
+bGF5b3V0PjwveG1sPjwhW2VuZGlmXS0tPgogICAgICA8ZGl2IGNsYXNzPSJXb3JkU2VjdGlvbjEi
+PgogICAgICAgIDxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuCiAgICAgICAgICAgIHN0eWxlPSJm
+b250LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5OiZxdW90O0FyaWFsJnF1b3Q7LHNhbnMtc2VyaWYi
+PkhlbGxvLDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KICAgICAgICA8cCBjbGFzcz0iTXNvTm9ybWFs
+Ij48c3BhbgogICAgICAgICAgICBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDtmb250LWZhbWlseTom
+cXVvdDtBcmlhbCZxdW90OyxzYW5zLXNlcmlmIj48bzpwPqA8L286cD48L3NwYW4+PC9wPgogICAg
+ICAgIDxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuCiAgICAgICAgICAgIHN0eWxlPSJmb250LXNp
+emU6MTAuMHB0O2ZvbnQtZmFtaWx5OiZxdW90O0FyaWFsJnF1b3Q7LHNhbnMtc2VyaWYiPkZvcgog
+ICAgICAgICAgICBvdXIgbmV4dCBjb25uZWN0aXZpdHkgcHJvamVjdCB3ZSBhcmUgcGxhbm5pbmcg
+dG8gdXNlIENvbm5tYW4KICAgICAgICAgICAgYWxvbmcgd2l0aCBvRm9ubzxvOnA+PC9vOnA+PC9z
+cGFuPjwvcD4KICAgICAgICA8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbgogICAgICAgICAgICBz
+dHlsZT0iZm9udC1zaXplOjEwLjBwdDtmb250LWZhbWlseTomcXVvdDtBcmlhbCZxdW90OyxzYW5z
+LXNlcmlmIj48bzpwPqA8L286cD48L3NwYW4+PC9wPgogICAgICAgIDxwIGNsYXNzPSJNc29Ob3Jt
+YWwiPjxzcGFuCiAgICAgICAgICAgIHN0eWxlPSJmb250LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5
+OiZxdW90O0FyaWFsJnF1b3Q7LHNhbnMtc2VyaWYiPlRoZQogICAgICAgICAgICB2ZXJzaW9uIGJl
+aW5nIHVzZWQgYXJlIENvbm5tYW4gOjEuMzUgYW5kIG9Gb25vOjEuMjE8bzpwPjwvbzpwPjwvc3Bh
+bj48L3A+CiAgICAgICAgPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4KICAgICAgICAgICAgc3R5
+bGU9ImZvbnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6JnF1b3Q7QXJpYWwmcXVvdDssc2Fucy1z
+ZXJpZiI+PG86cD6gPC9vOnA+PC9zcGFuPjwvcD4KICAgICAgICA8cCBjbGFzcz0iTXNvTm9ybWFs
+Ij48c3BhbgogICAgICAgICAgICBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDtmb250LWZhbWlseTom
+cXVvdDtBcmlhbCZxdW90OyxzYW5zLXNlcmlmIj5BZnRlcgogICAgICAgICAgICBzeXN0ZW0gc3Rh
+cnQgdXAsIEkgYW0gc2VlaW5nIHRoYXQgdGhlIG9Gb25vIHByb2Nlc3MgZ2V0cwogICAgICAgICAg
+ICBleGl0ZWQsIHdoZW5ldmVyIEkgdHJ5IHRvIGVuYWJsZSB0aGUgbW9kZW0gYnkgY2FsbGluZyB0
+aGUKICAgICAgICAgICAgcHl0aG9uIHNjcmlwdCBlbmFibGUtbW9kZW0gaW4gdGhlIHRlc3QgZGly
+ZWN0b3J5LiBIb3dldmVyLAogICAgICAgICAgICBpZiBJIHJlc3RhcnQgdGhlIG9mb25vIHN5c3Rl
+bWQgc2VydmljZSwgZXZlcnl0aGluZyB3b3JrcwogICAgICAgICAgICBmaW5lLiA8L3NwYW4+PC9w
+PgogICAgICA8L2Rpdj4KICAgIDwvYmxvY2txdW90ZT4KICAgIDxicj4KICAgIEEgY291cGxlIG9m
+IGNvbW1lbnRzIGhlcmU6PGJyPgogICAgPGJyPgogICAgaSmgIFlvdSBoYXZlIGNvbm5tYW4gYW5k
+IG9mb25vIHJ1bm5pbmcgdmlhIHN5c3RlbWQgYW5kIHlvdSdyZQogICAgY2FsbGluZyBlbmFibGUt
+bW9kZW0gZnJvbSB0aGUgdGVzdCBkaXJlY3RvcnkuLi4gSSBkb24ndCB0aGluayB0aGlzCiAgICBp
+cyBhIHJvYnVzdCB3YXkgdG8gZ28gYWJvdXQgdGVzdGluZyB0aGluZ3MuoCBUcnkgdG8gc2ltcGxp
+ZnkgYnkKICAgIHN0b3BwaW5nIGNvbm5tYW4gYW5kIG9mb25vIGFuZCBydW5uaW5nIG9mb25vIG1h
+bnVhbGx5IGZyb20gdGhlCiAgICBjb21tYW5kIGxpbmUgYmVmb3JlIGNhbGxpbmcgdGhlIHRlc3Qg
+c2NyaXB0Ljxicj4KICAgIDxicj4KICAgICMgc3lzdGVtY3RsIHN0b3AgY29ubm1hbjxicj4KICAg
+ICMgc3lzdGVtY3RsIHN0b3Agb2Zvbm88YnI+CiAgICAjIG9mb25vZCAtZCAtbjxicj4KICAgICMg
+Li4uLi4vZW5hYmxlLW1vZGVtPGJyPgogICAgPGJyPgogICAgaWkpoCBXaGVuIHlvdSBzYXkgImV2
+ZXJ5dGhpbmcgd29ya3MgZmluZSIsIHdoYXQgZG8geW91IG1lYW4/oCBUaGUKICAgIHRlc3Qgc2Ny
+aXB0IGNhbiBydW4uLi4/PGJyPgogICAgPGJyPgogICAgaWlpKaAgVGhlcmUgX2lzXyBhIHJhY2Ug
+aW4gdGhlIGdvYmkgbW9kdWxlIGF0IGp1c3QgdGhlIHNwb3QgdGhhdCB5b3UKICAgIGFyZSBzZWVp
+bmcgdGhlIGNyYXNoLqAgSSBoYXZlIHNlZW4gaXQgbWFueSB0aW1lcyBidXQgaGF2ZW4ndCB0YWtl
+bgogICAgdGhlIHRpbWUgdG8gaXNvbGF0ZSB0aGUgaXNzdWUuLi4gaWYgSSBnZXQgYSBtb21lbnQg
+dG9kYXksIEkgbWlnaHQKICAgIHRha2UgYSBsb29rIGF0IGl0LqAgSSBjYW4gdHJpZ2dlciBpdCBi
+eSBjYWxsaW5nIGVuYWJsZS1tb2RlbSB0b28KICAgIGVhcmx5IGluIHRoZSBvZm9ubydzIHN0YXJ0
+dXAgcHJvY2Vzcy4uLiBpdCBvY2N1cnMgbWF5YmUgMSB0aW1lIGluIDUKICAgIG9uIG15IHNldHVw
+Ljxicj4KICAgIDxicj4KICAgIGl2KaAgTGlrZSBDaHJpc3RvcGhlIHNhaWQsIGRpc2FibGUgb2Zv
+bm8ncyBzaWduYWwgaGFuZGxlciBhbmQgZW5hYmxlCiAgICBjb3JlIGR1bXBzIGJlZm9yZSBydW5u
+aW5nIG9mb25vLqAgVGhlIGNvcmUgZHVtcCBpcyBlYXNpZXIgdG8gYW5hbHl6ZQogICAgdGhhbiBv
+Zm9ubydzIGJhY2t0cmFjZS48YnI+CiAgICA8YnI+CiAgICAvSm9uYXM8YnI+CiAgICA8YnI+CiAg
+ICA8YmxvY2txdW90ZSBjaXRlPSJtaWQ6ZWIyOWJiMzQzMGYzNDU5NWExYjk5YzNjMjJmMzEwMjVA
+ZGUuYm9zY2guY29tIgogICAgICB0eXBlPSJjaXRlIj4KICAgICAgPGRpdiBjbGFzcz0iV29yZFNl
+Y3Rpb24xIj4KICAgICAgICA8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbgogICAgICAgICAgICBz
+dHlsZT0iZm9udC1zaXplOjEwLjBwdDtmb250LWZhbWlseTomcXVvdDtBcmlhbCZxdW90OyxzYW5z
+LXNlcmlmIj48bzpwPjwvbzpwPjwvc3Bhbj48L3A+CiAgICAgICAgPHAgY2xhc3M9Ik1zb05vcm1h
+bCI+PHNwYW4KICAgICAgICAgICAgc3R5bGU9ImZvbnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6
+JnF1b3Q7QXJpYWwmcXVvdDssc2Fucy1zZXJpZiI+PG86cD6gPC9vOnA+PC9zcGFuPjwvcD4KICAg
+ICAgICA8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbgogICAgICAgICAgICBzdHlsZT0iZm9udC1z
+aXplOjEwLjBwdDtmb250LWZhbWlseTomcXVvdDtBcmlhbCZxdW90OyxzYW5zLXNlcmlmIj5JCiAg
+ICAgICAgICAgIGhhdmUgYXR0YWNoZWQgdGhlIGxvZ3MgZm9yIHlvdXIgcmVmZXJlbmNlLiBQbGVh
+c2UgbGV0IG1lCiAgICAgICAgICAgIGtub3csIGlmIGFueSBmdXJ0aGVyIGxvZyBtZXNzYWdlcyBh
+cmUgcmVxdWlyZWQuPG86cD48L286cD48L3NwYW4+PC9wPgogICAgICAgIDxwIGNsYXNzPSJNc29O
+b3JtYWwiPjxzcGFuCiAgICAgICAgICAgIHN0eWxlPSJmb250LXNpemU6MTAuMHB0O2ZvbnQtZmFt
+aWx5OiZxdW90O0FyaWFsJnF1b3Q7LHNhbnMtc2VyaWYiPjxvOnA+oDwvbzpwPjwvc3Bhbj48L3A+
+CiAgICAgICAgPHAgY2xhc3M9Ik1zb05vcm1hbCI+PHNwYW4KICAgICAgICAgICAgc3R5bGU9ImZv
+bnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6JnF1b3Q7QXJpYWwmcXVvdDssc2Fucy1zZXJpZiIK
+ICAgICAgICAgICAgbGFuZz0iREUiPk1vZGVtIGNoaXAuIE1DNzQ1NSBmcm9tIHNpZXJyYTxvOnA+
+PC9vOnA+PC9zcGFuPjwvcD4KICAgICAgICA8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbgogICAg
+ICAgICAgICBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDtmb250LWZhbWlseTomcXVvdDtBcmlhbCZx
+dW90OyxzYW5zLXNlcmlmIgogICAgICAgICAgICBsYW5nPSJERSI+TGludXgga2VybmVsOiA0Ljku
+NDQtZnNsYytnOGY4NzZlMSAoZnJlZXNjYWxlKTxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KICAgICAg
+ICA8cCBjbGFzcz0iTXNvTm9ybWFsIj48c3BhbgogICAgICAgICAgICBzdHlsZT0iZm9udC1zaXpl
+OjEwLjBwdDtmb250LWZhbWlseTomcXVvdDtBcmlhbCZxdW90OyxzYW5zLXNlcmlmIgogICAgICAg
+ICAgICBsYW5nPSJERSI+PG86cD6gPC9vOnA+PC9zcGFuPjwvcD4KICAgICAgICA8cCBjbGFzcz0i
+TXNvTm9ybWFsIj48c3BhbgogICAgICAgICAgICBzdHlsZT0iZm9udC1zaXplOjEwLjBwdDtmb250
+LWZhbWlseTomcXVvdDtBcmlhbCZxdW90OyxzYW5zLXNlcmlmIgogICAgICAgICAgICBsYW5nPSJE
+RSI+PG86cD6gPC9vOnA+PC9zcGFuPjwvcD4KICAgICAgICA8cCBjbGFzcz0iTXNvTm9ybWFsIiBz
+dHlsZT0ibWFyZ2luLWJvdHRvbToxMi4wcHQiPjxzcGFuCnN0eWxlPSJmb250LXNpemU6MTAuMHB0
+O2ZvbnQtZmFtaWx5OiZxdW90O0FyaWFsJnF1b3Q7LHNhbnMtc2VyaWY7Y29sb3I6YmxhY2siCiAg
+ICAgICAgICAgIGxhbmc9IkRFIj5NaXQgZnJldW5kbGljaGVuIEdy/N9lbiAvIEJlc3QgcmVnYXJk
+cwogICAgICAgICAgICA8YnI+CiAgICAgICAgICAgIFZpbm90aGt1bWFyIEVzd2FyYW48YnI+CiAg
+ICAgICAgICAgIDxicj4KICAgICAgICAgIDwvc3Bhbj48c3BhbiBsYW5nPSJERSI+PG86cD48L286
+cD48L3NwYW4+PC9wPgogICAgICAgIDxwIGNsYXNzPSJNc29Ob3JtYWwiPjxzcGFuIGxhbmc9IkRF
+Ij48bzpwPqA8L286cD48L3NwYW4+PC9wPgogICAgICA8L2Rpdj4KICAgICAgPGJyPgogICAgICA8
+ZmllbGRzZXQgY2xhc3M9Im1pbWVBdHRhY2htZW50SGVhZGVyIj48L2ZpZWxkc2V0PgogICAgICA8
+YnI+CiAgICAgIDxwcmUgd3JhcD0iIj5fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fXwpvZm9ubyBtYWlsaW5nIGxpc3QKPGEgY2xhc3M9Im1vei10eHQtbGluay1h
+YmJyZXZpYXRlZCIgaHJlZj0ibWFpbHRvOm9mb25vQG9mb25vLm9yZyI+b2Zvbm9Ab2Zvbm8ub3Jn
+PC9hPgo8YSBjbGFzcz0ibW96LXR4dC1saW5rLWZyZWV0ZXh0IiBocmVmPSJodHRwczovL2xpc3Rz
+Lm9mb25vLm9yZy9tYWlsbWFuL2xpc3RpbmZvL29mb25vIj5odHRwczovL2xpc3RzLm9mb25vLm9y
+Zy9tYWlsbWFuL2xpc3RpbmZvL29mb25vPC9hPgo8L3ByZT4KICAgIDwvYmxvY2txdW90ZT4KICAg
+IDxwPjxicj4KICAgIDwvcD4KICA8L2JvZHk+CjwvaHRtbD4K
+
+--===============4533742251793696267==--
 
