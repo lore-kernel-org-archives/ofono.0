@@ -1,57 +1,98 @@
-Content-Type: multipart/mixed; boundary="===============3297425094554067535=="
+Content-Type: multipart/mixed; boundary="===============2510519460016376000=="
 MIME-Version: 1.0
 From: Christophe Ronco <c.ronco@kerlink.fr>
 Subject: [PATCH] qmi: remove request when it timeouts
-Date: Thu, 26 Oct 2017 14:44:33 +0200
-Message-ID: <1509021874-14953-1-git-send-email-c.ronco@kerlink.fr>
+Date: Thu, 26 Oct 2017 14:44:34 +0200
+Message-ID: <1509021874-14953-2-git-send-email-c.ronco@kerlink.fr>
+In-Reply-To: <1509021874-14953-1-git-send-email-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3297425094554067535==
+--===============2510519460016376000==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Patch proposed to solve problem seen by Eswaran Vinothkumar in thread: Ofon=
-o 1.21 crashes with Sierra MC7455.
-Tested by Jonas Bonn on his setup.
-
-On my side, I did that to solve an Ofono crash seen with this setup:
- - huawei E3372 USB key plugged
- - MC7304
-
-I stop Ofono, power off and on both modems and restart Ofono immediately. S=
-ometimes I see an Ofono crash.
-
-Here is the result of the debug I made:
-When sierra modem reappears, Ofono will ask Modem which service it supports=
-. Usually modem answers quickly.
-
-From traces, here is what happened:
- - Sep 26 14:11:56: modem asks the list of supported services
- - Sep 26 14:12:01: no answer after 5s, modem asks the list of supported se=
-rvices again
- - Sep 26 14:12:03: modem replies to request sent at Sep 26 14:11:56. Ofono=
- crashes during message treatment
-
-Problem is that when a timeout occurs for this type of request, part of the=
- data is released. When answer arrives, this data is used.
-
-I still have the corresponding trace but I don't think it will be very usef=
-ul.
-
-Christophe
-
-Christophe Ronco (1):
-  qmi: remove request when it timeouts
-
+When modem does not answer or answers slowly to a discovery request,
+a timeout occurs.
+In timeout callback, request should be removed from queues to avoid
+treating answer if it arrives later.
+---
  drivers/qmimodem/qmi.c | 26 ++++++++++++++++++++++++++
  1 file changed, 26 insertions(+)
+
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index c538cb9..65263d2 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -1073,6 +1073,7 @@ struct discover_data {
+ 	qmi_discover_func_t func;
+ 	void *user_data;
+ 	qmi_destroy_func_t destroy;
++	uint8_t tid;
+ 	guint timeout;
+ };
+ =
+
+@@ -1181,14 +1182,38 @@ static gboolean discover_reply(gpointer user_data)
+ {
+ 	struct discover_data *data =3D user_data;
+ 	struct qmi_device *device =3D data->device;
++	unsigned int tid =3D (unsigned int)(data->tid);
++	GList *list;
++	struct qmi_request *req =3D NULL;
+ =
+
+ 	data->timeout =3D 0;
+ =
+
++	/* remove request from queues */
++	if (tid !=3D 0) {
++		list =3D g_queue_find_custom(device->req_queue,
++				GUINT_TO_POINTER(tid), __request_compare);
++
++		if (list) {
++			req =3D list->data;
++			g_queue_delete_link(device->req_queue, list);
++		} else {
++			list =3D g_queue_find_custom(device->control_queue,
++				GUINT_TO_POINTER(tid), __request_compare);
++
++			if (list) {
++				req =3D list->data;
++				g_queue_delete_link(device->control_queue,
++								list);
++			}
++		}
++	}
++
+ 	if (data->func)
+ 		data->func(device->version_count,
+ 				device->version_list, data->user_data);
+ =
+
+ 	__qmi_device_discovery_complete(data->device, &data->super);
++	__request_free(req, NULL);
+ =
+
+ 	return FALSE;
+ }
+@@ -1234,6 +1259,7 @@ bool qmi_device_discover(struct qmi_device *device, q=
+mi_discover_func_t func,
+ =
+
+ 	hdr->type =3D 0x00;
+ 	hdr->transaction =3D device->next_control_tid++;
++	data->tid =3D hdr->transaction;
+ =
+
+ 	__request_submit(device, req, hdr->transaction);
+ =
 
 -- =
 
 2.7.4
 
 
---===============3297425094554067535==--
+--===============2510519460016376000==--
 
