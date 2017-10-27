@@ -1,98 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============7810289595410029272=="
+Content-Type: multipart/mixed; boundary="===============1629938251714481925=="
 MIME-Version: 1.0
-From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCH] qmi: remove request when it timeouts
-Date: Fri, 27 Oct 2017 16:37:17 +0200
-Message-ID: <1509115037-18275-2-git-send-email-c.ronco@kerlink.fr>
-In-Reply-To: <1509115037-18275-1-git-send-email-c.ronco@kerlink.fr>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: Re: [PATCH] sim: Move atom registration to the end of
+ ofono_sim_register
+Date: Fri, 27 Oct 2017 18:49:39 +0300
+Message-ID: <96169c0e-74b5-070d-1931-1bd1a6fecc89@jolla.com>
+In-Reply-To: <0e39cdc6-7c4b-c773-0019-69a4849c3527@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7810289595410029272==
+--===============1629938251714481925==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When modem does not answer or answers slowly to a discovery request,
-a timeout occurs.
-In timeout callback, request should be removed from queues to avoid
-treating answer if it arrives later.
----
- drivers/qmimodem/qmi.c | 26 ++++++++++++++++++++++++++
- 1 file changed, 26 insertions(+)
+Hi Denis,
 
-diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index c538cb9..a0632ca 100644
---- a/drivers/qmimodem/qmi.c
-+++ b/drivers/qmimodem/qmi.c
-@@ -1073,6 +1073,7 @@ struct discover_data {
- 	qmi_discover_func_t func;
- 	void *user_data;
- 	qmi_destroy_func_t destroy;
-+	uint8_t tid;
- 	guint timeout;
- };
- =
+On 27/10/17 16:56, Denis Kenzior wrote:
+> Hi Slava,
+>
+> On 10/27/2017 08:15 AM, Slava Monich wrote:
+>> The state needs to be checked prior to calling __ofono_atom_register
+>> because atom registration calls OFONO_ATOM_WATCH_CONDITION_REGISTERED
+>> callbacks each of which may call ofono_sim_inserted_notify. Should
+>> that happen, by the time __ofono_atom_register returns, ofono_sim
+>> will be in OFONO_SIM_STATE_INSERTED state and sim_initialize will
+>> be called twice if the initial state was OFONO_SIM_STATE_NOT_PRESENT.
+>
+> Okay, can you tell me why you would have such a setup? sim_inserted is =
 
-@@ -1181,14 +1182,38 @@ static gboolean discover_reply(gpointer user_data)
- {
- 	struct discover_data *data =3D user_data;
- 	struct qmi_device *device =3D data->device;
-+	unsigned int tid =3D data->tid;
-+	GList *list;
-+	struct qmi_request *req =3D NULL;
- =
+> generally either called from the modem driver or when an unsolicited =
 
- 	data->timeout =3D 0;
- =
+> notification occurs.=C2=A0 Not when the sim atom is registered.
+>
 
-+	/* remove request from queues */
-+	if (tid !=3D 0) {
-+		list =3D g_queue_find_custom(device->req_queue,
-+				GUINT_TO_POINTER(tid), __request_compare);
-+
-+		if (list) {
-+			req =3D list->data;
-+			g_queue_delete_link(device->req_queue, list);
-+		} else {
-+			list =3D g_queue_find_custom(device->control_queue,
-+				GUINT_TO_POINTER(tid), __request_compare);
-+
-+			if (list) {
-+				req =3D list->data;
-+				g_queue_delete_link(device->control_queue,
-+								list);
-+			}
-+		}
-+	}
-+
- 	if (data->func)
- 		data->func(device->version_count,
- 				device->version_list, data->user_data);
- =
+For the reasons too long to explain, I already know the SIM state by the =
 
- 	__qmi_device_discovery_complete(data->device, &data->super);
-+	__request_free(req, NULL);
- =
+time I register the SIM atom (or even the modem). I could work around =
 
- 	return FALSE;
- }
-@@ -1234,6 +1259,7 @@ bool qmi_device_discover(struct qmi_device *device, q=
-mi_discover_func_t func,
- =
+this problem by delaying ofono_sim_inserted_notify call or partially =
 
- 	hdr->type =3D 0x00;
- 	hdr->transaction =3D device->next_control_tid++;
-+	data->tid =3D hdr->transaction;
- =
+duplicating the logic in my modem driver, but if the core can handle my =
 
- 	__request_submit(device, req, hdr->transaction);
- =
+setup, that's even better.
 
--- =
+Thanks,
 
-2.7.4
+-Slava
 
-
---===============7810289595410029272==--
+--===============1629938251714481925==--
 
