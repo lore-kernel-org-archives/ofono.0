@@ -1,52 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============5778417062170945826=="
+Content-Type: multipart/mixed; boundary="===============8076219287458186022=="
 MIME-Version: 1.0
 From: Philippe De Swert <philippe.deswert@nomovok.com>
-Subject: [PATCH V2 4/8] doc: Document the new DialLast voicecallmanager API
- addition
-Date: Tue, 31 Oct 2017 10:39:35 +0200
-Message-ID: <20171031083939.4393-5-philippe.deswert@nomovok.com>
+Subject: [PATCH V2 3/8] hfpmodem: Send last call dialled request
+Date: Tue, 31 Oct 2017 10:39:34 +0200
+Message-ID: <20171031083939.4393-4-philippe.deswert@nomovok.com>
 In-Reply-To: <20171031083939.4393-1-philippe.deswert@nomovok.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5778417062170945826==
+--===============8076219287458186022==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The new DialLast method to call the last dialled number for HFP needs
-to be added to the documentation.
+Handle the last call dialled request and send the required AT+BDLN command
+for bluetooth HFP profile.
 ---
- doc/voicecallmanager-api.txt | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ drivers/hfpmodem/voicecall.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
 
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index 34a9b25c..7aeb81f7 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -59,6 +59,16 @@ Methods		dict GetProperties()
- 					 [service].Error.NotImplemented
- 					 [service].Error.Failed
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index ffdf4b7b..fc5210bb 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -404,6 +404,25 @@ static void hfp_dial(struct ofono_voicecall *vc,
+ 	CALLBACK_WITH_FAILURE(cb, data);
+ }
  =
 
-+		object DialLast()
++static void hfp_dial_last(struct ofono_voicecall *vc, ofono_voicecall_cb_t=
+ cb,
++			void *data)
++{
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[256];
 +
-+			Initiates a new outgoing call to the last dialled number.
++	cbd->user =3D vc;
++	snprintf(buf, sizeof(buf), "AT+BLDN");
 +
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
++	if (g_at_chat_send(vd->chat, buf, none_prefix,
++				atd_cb, cbd, g_free) > 0)
++		return;
 +
- 		void Transfer()
- =
-
- 			Joins the currently Active (or Outgoing, depending
++	g_free(cbd);
++
++	CALLBACK_WITH_FAILURE(cb, data);
++
++}
+ static void hfp_template(const char *cmd, struct ofono_voicecall *vc,
+ 			GAtResultFunc result_cb, unsigned int affected_types,
+ 			ofono_voicecall_cb_t cb, void *data)
+@@ -1268,6 +1287,7 @@ static struct ofono_voicecall_driver driver =3D {
+ 	.probe			=3D hfp_voicecall_probe,
+ 	.remove			=3D hfp_voicecall_remove,
+ 	.dial			=3D hfp_dial,
++	.dial_last		=3D hfp_dial_last,
+ 	.answer			=3D hfp_answer,
+ 	.hangup_active		=3D hfp_hangup,
+ 	.hold_all_active	=3D hfp_hold_all_active,
 -- =
 
 2.14.2
 
 
---===============5778417062170945826==--
+--===============8076219287458186022==--
 
