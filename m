@@ -1,136 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============5423345231459385677=="
+Content-Type: multipart/mixed; boundary="===============7086925712325136897=="
 MIME-Version: 1.0
 From: Philippe De Swert <philippe.deswert@nomovok.com>
-Subject: [PATCH V2 2/8] voicecallmanager: Handle last number dialled DBUS call
-Date: Tue, 31 Oct 2017 10:39:33 +0200
-Message-ID: <20171031083939.4393-3-philippe.deswert@nomovok.com>
+Subject: [PATCH 7/8] hfpmodem: add dialing from memory index
+Date: Tue, 31 Oct 2017 10:39:38 +0200
+Message-ID: <20171031083939.4393-8-philippe.deswert@nomovok.com>
 In-Reply-To: <20171031083939.4393-1-philippe.deswert@nomovok.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5423345231459385677==
+--===============7086925712325136897==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Handle the new DialLast method on the voicecallmanager interface
+Handle the request to dial from a memory index and send the
+correct ATD> sequence
 ---
- src/voicecall.c | 87 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 file changed, 87 insertions(+)
+ drivers/hfpmodem/voicecall.c | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index a8a2bcde..cef36a29 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -1577,6 +1577,92 @@ static DBusMessage *manager_dial(DBusConnection *con=
-n,
- 	return __ofono_error_failed(msg);
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index fc5210bb..f40903c2 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -404,6 +404,28 @@ static void hfp_dial(struct ofono_voicecall *vc,
+ 	CALLBACK_WITH_FAILURE(cb, data);
  }
  =
 
-+static void manager_dial_last_callback(const struct ofono_error *error, vo=
-id *data)
++static void hfp_dial_memory(struct ofono_voicecall *vc,
++			long int memory_location,
++			enum ofono_clir_option clir, ofono_voicecall_cb_t cb,
++			void *data)
 +{
-+	struct ofono_voicecall *vc =3D data;
-+	DBusMessage *reply;
-+	struct voicecall *v;
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[256];
 +
-+	v =3D synthesize_outgoing_call(vc, NULL);
++	cbd->user =3D vc;
++	snprintf(buf, sizeof(buf), "ATD>%ld", memory_location);
 +
-+	if (v) {
-+		const char *path =3D voicecall_build_path(vc, v->call);
++	strcat(buf, ";");
 +
-+		reply =3D dbus_message_new_method_return(vc->pending);
++	if (g_at_chat_send(vd->chat, buf, none_prefix,
++				atd_cb, cbd, g_free) > 0)
++		return;
 +
-+		dbus_message_append_args(reply, DBUS_TYPE_OBJECT_PATH, &path,
-+						DBUS_TYPE_INVALID);
-+	} else {
-+		reply =3D __ofono_error_failed(vc->pending);
-+	}
++	g_free(cbd);
 +
-+	__ofono_dbus_pending_reply(&vc->pending, reply);
-+
-+	voicecalls_emit_call_added(vc, v);
++	CALLBACK_WITH_FAILURE(cb, data);
 +}
-+
-+static int voicecall_dial_last(struct ofono_voicecall *vc,
-+					ofono_voicecall_cb_t cb, void *data)
-+{
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
-+
-+	if (g_slist_length(vc->call_list) >=3D MAX_VOICE_CALLS)
-+		return -EPERM;
-+
-+	if (ofono_modem_get_online(modem) =3D=3D FALSE)
-+		return -ENETDOWN;
-+
-+	if (vc->driver->dial_last =3D=3D NULL)
-+		return -ENOTSUP;
-+
-+	if (voicecalls_have_incoming(vc))
-+		return -EBUSY;
-+
-+	/* We can't have two dialing/alerting calls, reject outright */
-+	if (voicecalls_num_connecting(vc) > 0)
-+		return -EBUSY;
-+
-+	if (voicecalls_have_active(vc) && voicecalls_have_held(vc))
-+		return -EBUSY;
-+
-+	vc->driver->dial_last(vc, cb, vc);
-+
-+	return 0;
-+}
-+
-+static DBusMessage *manager_dial_last(DBusConnection *conn,
-+					DBusMessage *msg, void *data)
-+{
-+	struct ofono_voicecall *vc =3D data;
-+	int err;
-+
-+	if (vc->pending || vc->dial_req || vc->pending_em)
-+		return __ofono_error_busy(msg);
-+
-+	vc->pending =3D dbus_message_ref(msg);
-+
-+	err =3D voicecall_dial_last(vc, manager_dial_last_callback, vc);
-+
-+	if (err >=3D 0)
-+		return NULL;
-+
-+	vc->pending =3D NULL;
-+	dbus_message_unref(msg);
-+
-+	switch (err) {
-+	case -EINVAL:
-+		return __ofono_error_invalid_format(msg);
-+
-+	case -ENETDOWN:
-+		return __ofono_error_not_available(msg);
-+
-+	case -ENOTSUP:
-+		return __ofono_error_not_implemented(msg);
-+	}
-+
-+	return __ofono_error_failed(msg);
-+}
-+
- static DBusMessage *manager_transfer(DBusConnection *conn,
- 					DBusMessage *msg, void *data)
+ static void hfp_dial_last(struct ofono_voicecall *vc, ofono_voicecall_cb_t=
+ cb,
+ 			void *data)
  {
-@@ -2133,6 +2219,7 @@ static const GDBusMethodTable manager_methods[] =3D {
- 		GDBUS_ARGS({ "number", "s" }, { "hide_callerid", "s" }),
- 		GDBUS_ARGS({ "path", "o" }),
- 		manager_dial) },
-+	{ GDBUS_ASYNC_METHOD("DialLast", NULL, NULL, manager_dial_last)},
- 	{ GDBUS_ASYNC_METHOD("Transfer", NULL, NULL, manager_transfer) },
- 	{ GDBUS_ASYNC_METHOD("SwapCalls",  NULL, NULL, manager_swap_calls) },
- 	{ GDBUS_ASYNC_METHOD("ReleaseAndAnswer", NULL, NULL,
+@@ -1287,6 +1309,7 @@ static struct ofono_voicecall_driver driver =3D {
+ 	.probe			=3D hfp_voicecall_probe,
+ 	.remove			=3D hfp_voicecall_remove,
+ 	.dial			=3D hfp_dial,
++	.dial_memory		=3D hfp_dial_memory,
+ 	.dial_last		=3D hfp_dial_last,
+ 	.answer			=3D hfp_answer,
+ 	.hangup_active		=3D hfp_hangup,
 -- =
 
 2.14.2
 
 
---===============5423345231459385677==--
+--===============7086925712325136897==--
 
