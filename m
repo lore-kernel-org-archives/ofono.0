@@ -1,36 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============0596186869092715304=="
+Content-Type: multipart/mixed; boundary="===============4020602401224825748=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] qmi: remove request when it timeouts
-Date: Mon, 30 Oct 2017 09:04:23 -0500
-Message-ID: <7ae9bd7f-93c0-c929-ef97-1182a0c1c7ef@gmail.com>
-In-Reply-To: <1509115037-18275-2-git-send-email-c.ronco@kerlink.fr>
+From: Philippe De Swert <philippe.deswert@nomovok.com>
+Subject: [PATCH V2 1/8] include/voicecall : update ofono_voicecall_driver to
+ support call last dialled number
+Date: Tue, 31 Oct 2017 10:39:32 +0200
+Message-ID: <20171031083939.4393-2-philippe.deswert@nomovok.com>
+In-Reply-To: <20171031083939.4393-1-philippe.deswert@nomovok.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0596186869092715304==
+--===============4020602401224825748==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+Add new DBUS method to enable calling the last dialled number.
+---
+ include/voicecall.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-On 10/27/2017 09:37 AM, Christophe Ronco wrote:
-> When modem does not answer or answers slowly to a discovery request,
-> a timeout occurs.
-> In timeout callback, request should be removed from queues to avoid
-> treating answer if it arrives later.
-> ---
->   drivers/qmimodem/qmi.c | 26 ++++++++++++++++++++++++++
->   1 file changed, 26 insertions(+)
-> =
+diff --git a/include/voicecall.h b/include/voicecall.h
+index eb897e5e..6871a6b5 100644
+--- a/include/voicecall.h
++++ b/include/voicecall.h
+@@ -61,6 +61,10 @@ struct ofono_voicecall_driver {
+ 			const struct ofono_phone_number *number,
+ 			enum ofono_clir_option clir, ofono_voicecall_cb_t cb,
+ 			void *data);
++	/* Dials the last number again, this handles the hfp profile last number
++         * dialing with the +BLDN AT command
++         */
++	void (*dial_last)(struct ofono_voicecall *vc, ofono_voicecall_cb_t cb, vo=
+id *data);
+ 	/* Answers an incoming call, this usually corresponds to ATA */
+ 	void (*answer)(struct ofono_voicecall *vc,
+ 			ofono_voicecall_cb_t cb, void *data);
+-- =
+
+2.14.2
 
 
-Applied, thanks.
-
-Regards,
--Denis
-
-
---===============0596186869092715304==--
+--===============4020602401224825748==--
 
