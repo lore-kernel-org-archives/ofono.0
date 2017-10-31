@@ -1,51 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8552962981816238896=="
+Content-Type: multipart/mixed; boundary="===============8111942743298543655=="
 MIME-Version: 1.0
 From: Philippe De Swert <philippe.deswert@nomovok.com>
-Subject: [PATCH 8/8] doc: Document the new memory dialing method call
-Date: Tue, 31 Oct 2017 10:39:39 +0200
-Message-ID: <20171031083939.4393-9-philippe.deswert@nomovok.com>
+Subject: [PATCH 5/8] include/voicecall.h : Add support for dialing number at a
+ given memory location
+Date: Tue, 31 Oct 2017 10:39:36 +0200
+Message-ID: <20171031083939.4393-6-philippe.deswert@nomovok.com>
 In-Reply-To: <20171031083939.4393-1-philippe.deswert@nomovok.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8552962981816238896==
+--===============8111942743298543655==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The new DialMemory method call needs to be documented so it is clear how
-to use it.
 ---
- doc/voicecallmanager-api.txt | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ include/voicecall.h | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index 7aeb81f7..fabed619 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -59,6 +59,16 @@ Methods		dict GetProperties()
- 					 [service].Error.NotImplemented
- 					 [service].Error.Failed
- =
-
-+		object DialMemory(string memory position, string hide_callerid)
-+
-+			Initiates a new outgoing call to the number in the given memory
-+			position/favourite. For callerid see the Dial method.
-+
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.NotImplemented
-+					 [service].Error.Failed
- 		object DialLast()
- =
-
- 			Initiates a new outgoing call to the last dialled number.
+diff --git a/include/voicecall.h b/include/voicecall.h
+index 6871a6b5..b3d5bc06 100644
+--- a/include/voicecall.h
++++ b/include/voicecall.h
+@@ -61,6 +61,11 @@ struct ofono_voicecall_driver {
+ 			const struct ofono_phone_number *number,
+ 			enum ofono_clir_option clir, ofono_voicecall_cb_t cb,
+ 			void *data);
++	/* dials a number at a given memory location */
++	void (*dial_memory)(struct ofono_voicecall *vc,
++			long int memory_location,
++			enum ofono_clir_option clir, ofono_voicecall_cb_t cb,
++			void *data);
+ 	/* Dials the last number again, this handles the hfp profile last number
+          * dialing with the +BLDN AT command
+          */
 -- =
 
 2.14.2
 
 
---===============8552962981816238896==--
+--===============8111942743298543655==--
 
