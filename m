@@ -1,68 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============8076219287458186022=="
+Content-Type: multipart/mixed; boundary="===============4259800863218124626=="
 MIME-Version: 1.0
 From: Philippe De Swert <philippe.deswert@nomovok.com>
-Subject: [PATCH V2 3/8] hfpmodem: Send last call dialled request
-Date: Tue, 31 Oct 2017 10:39:34 +0200
-Message-ID: <20171031083939.4393-4-philippe.deswert@nomovok.com>
-In-Reply-To: <20171031083939.4393-1-philippe.deswert@nomovok.com>
+Subject: Add support to hfp for dialling last call dialled and from a memory
+ index
+Date: Tue, 31 Oct 2017 10:39:31 +0200
+Message-ID: <20171031083939.4393-1-philippe.deswert@nomovok.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8076219287458186022==
+--===============4259800863218124626==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Handle the last call dialled request and send the required AT+BDLN command
-for bluetooth HFP profile.
----
- drivers/hfpmodem/voicecall.c | 20 ++++++++++++++++++++
- 1 file changed, 20 insertions(+)
+Hello,
 
-diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index ffdf4b7b..fc5210bb 100644
---- a/drivers/hfpmodem/voicecall.c
-+++ b/drivers/hfpmodem/voicecall.c
-@@ -404,6 +404,25 @@ static void hfp_dial(struct ofono_voicecall *vc,
- 	CALLBACK_WITH_FAILURE(cb, data);
- }
- =
+Find here an updated patch series as discussed with Denis for dialing the l=
+ast call
+dialled support for hfp. The second part adds in a similar way support to d=
+ial from
+a memory index.
 
-+static void hfp_dial_last(struct ofono_voicecall *vc, ofono_voicecall_cb_t=
- cb,
-+			void *data)
-+{
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char buf[256];
-+
-+	cbd->user =3D vc;
-+	snprintf(buf, sizeof(buf), "AT+BLDN");
-+
-+	if (g_at_chat_send(vd->chat, buf, none_prefix,
-+				atd_cb, cbd, g_free) > 0)
-+		return;
-+
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+
-+}
- static void hfp_template(const char *cmd, struct ofono_voicecall *vc,
- 			GAtResultFunc result_cb, unsigned int affected_types,
- 			ofono_voicecall_cb_t cb, void *data)
-@@ -1268,6 +1287,7 @@ static struct ofono_voicecall_driver driver =3D {
- 	.probe			=3D hfp_voicecall_probe,
- 	.remove			=3D hfp_voicecall_remove,
- 	.dial			=3D hfp_dial,
-+	.dial_last		=3D hfp_dial_last,
- 	.answer			=3D hfp_answer,
- 	.hangup_active		=3D hfp_hangup,
- 	.hold_all_active	=3D hfp_hold_all_active,
--- =
+Regards,
 
-2.14.2
+Philippe
 
-
---===============8076219287458186022==--
+--===============4259800863218124626==--
 
