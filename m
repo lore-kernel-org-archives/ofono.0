@@ -1,114 +1,128 @@
-Content-Type: multipart/mixed; boundary="===============8149093860732745928=="
+Content-Type: multipart/mixed; boundary="===============1770230650426515265=="
 MIME-Version: 1.0
 From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: [PATCH 7/8] sim: implement create context with AID
-Date: Wed, 01 Nov 2017 10:33:47 -0700
-Message-ID: <1509557628-15121-7-git-send-email-james.prestwood@linux.intel.com>
+Subject: [PATCH 8/8] sim: added NetworkAccessIdentifier to SimManager
+Date: Wed, 01 Nov 2017 10:33:48 -0700
+Message-ID: <1509557628-15121-8-git-send-email-james.prestwood@linux.intel.com>
 In-Reply-To: <1509557628-15121-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8149093860732745928==
+--===============1770230650426515265==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-API to create a sim context for a given AID. This AID based
-context is only relevant for an ISIM application, so during
-AID discovery, if an ISIM is found, a new fs object is
-initialized for the ISIM. If any atom wants to create an
-AID based context for the ISIM AID, the ISIM fs object will
-be used.
+EAP-SIM/AKA/AKA' requires the SIM's NAI to authenticate.
+If available, this can be obtained from the ISIM AID.
+
+If the ISIM AID is found a new AID based context will be
+created and the EFIMPI file will be read from the SIM
+which contains the NAI.
 ---
- src/sim.c | 41 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 41 insertions(+)
+ src/sim.c | 39 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 39 insertions(+)
 
 diff --git a/src/sim.c b/src/sim.c
-index 53eb048..8b466c9 100644
+index 8b466c9..f09c550 100644
 --- a/src/sim.c
 +++ b/src/sim.c
-@@ -122,6 +122,7 @@ struct ofono_sim {
- 	unsigned int cphs_spn_short_watch;
- =
-
- 	struct sim_fs *simfs;
-+	struct sim_fs *simfs_isim;
+@@ -125,6 +125,7 @@ struct ofono_sim {
+ 	struct sim_fs *simfs_isim;
  	struct ofono_sim_context *context;
  	struct ofono_sim_context *early_context;
++	struct ofono_sim_context *isim_context;
  =
 
-@@ -1477,6 +1478,14 @@ static void discover_apps_cb(const struct ofono_erro=
-r *error,
- 		memcpy(&s->record, app, sizeof(struct sim_app_record));
- 		sim->aid_sessions =3D g_slist_prepend(sim->aid_sessions, s);
+ 	unsigned char *iidf_image;
+ 	unsigned int *iidf_watch_ids;
+@@ -136,6 +137,7 @@ struct ofono_sim {
+ 	unsigned int hfp_watch;
  =
 
-+		if (app->type =3D=3D SIM_APP_TYPE_ISIM) {
-+			/*
-+			 * If an ISIM application is found, we should init
-+			 * the FS structure so the ISIM EF's can be accessed.
-+			 */
-+			sim->simfs_isim =3D sim_fs_new(sim, sim->driver);
-+		}
+ 	GSList *aid_sessions;
++	char *nai;
+ };
+ =
+
+ struct msisdn_set_request {
+@@ -407,6 +409,10 @@ static DBusMessage *sim_get_properties(DBusConnection =
+*conn,
+ 		ofono_dbus_dict_append(&dict, "ServiceProviderName",
+ 					DBUS_TYPE_STRING, &sim->spn);
+ =
+
++	if (sim->nai)
++		ofono_dbus_dict_append(&dict, "NetworkAccessIdentifier",
++					DBUS_TYPE_STRING, &sim->nai);
 +
- 		g_free(app);
+ 	fdn =3D sim->fixed_dialing;
+ 	ofono_dbus_dict_append(&dict, "FixedDialing", DBUS_TYPE_BOOLEAN, &fdn);
  =
 
- 		iter =3D g_slist_next(iter);
-@@ -2235,6 +2244,36 @@ struct ofono_sim_context *ofono_sim_context_create(s=
-truct ofono_sim *sim)
- 	return sim_fs_context_new(sim->simfs);
+@@ -1456,6 +1462,25 @@ static void sim_set_ready(struct ofono_sim *sim)
+ 	call_state_watches(sim);
  }
  =
 
-+struct ofono_sim_context *ofono_sim_context_create_isim(
-+		struct ofono_sim *sim)
++static void impi_read_cb(int ok, int total_length, int record,
++		const unsigned char *data,
++		int record_length, void *userdata)
 +{
-+	GSList *iter =3D sim->aid_sessions;
++	struct ofono_sim *sim =3D userdata;
 +
-+	if (sim =3D=3D NULL || sim->simfs_isim =3D=3D NULL)
-+		return NULL;
-+
-+	/*
-+	 * Check if the AID is even valid
-+	 */
-+	while (iter) {
-+		struct sim_app_record *app =3D iter->data;
-+
-+		/*
-+		 * This AID based context is only relevant for an ISIM AID. A
-+		 * USIM application can be accessed with the 'default' FS
-+		 * context API's.
-+		 */
-+		if (app->type =3D=3D SIM_APP_TYPE_ISIM) {
-+			return sim_fs_context_new_with_aid(sim->simfs_isim,
-+					app->aid);
-+		}
-+
-+		iter =3D g_slist_next(iter);
++	if (!ok) {
++		DBG("error reading IMPI");
++		return;
 +	}
 +
-+	return NULL;
++	if (data[0] !=3D 0x80) {
++		DBG("invalid TLV tag 0x%02x", data[0]);
++		return;
++	}
++
++	sim->nai =3D g_strndup((const char *)data + 2, data[1]);
 +}
 +
- void ofono_sim_context_free(struct ofono_sim_context *context)
- {
- 	return sim_fs_context_free(context);
-@@ -3056,6 +3095,8 @@ static void sim_remove(struct ofono_atom *atom)
+ static void discover_apps_cb(const struct ofono_error *error,
+ 		const unsigned char *dataobj,
+ 		int len, void *data)
+@@ -1484,6 +1509,12 @@ static void discover_apps_cb(const struct ofono_erro=
+r *error,
+ 			 * the FS structure so the ISIM EF's can be accessed.
+ 			 */
+ 			sim->simfs_isim =3D sim_fs_new(sim, sim->driver);
++			sim->isim_context =3D ofono_sim_context_create_isim(
++					sim);
++			/* attempt to get the NAI from EFimpi */
++			ofono_sim_read_bytes(sim->isim_context,
++					SIM_ISIM_EFIMPI_FILEID, 0, 255, NULL,
++					0, impi_read_cb, sim);
+ 		}
  =
 
- 	sim_fs_free(sim->simfs);
- 	sim->simfs =3D NULL;
-+	sim_fs_free(sim->simfs_isim);
-+	sim->simfs_isim =3D NULL;
+ 		g_free(app);
+@@ -2547,6 +2578,14 @@ static void sim_free_main_state(struct ofono_sim *si=
+m)
+ 		sim->context =3D NULL;
+ 	}
  =
 
- 	g_free(sim);
++	if (sim->isim_context) {
++		ofono_sim_context_free(sim->isim_context);
++		sim->isim_context =3D NULL;
++	}
++
++	if (sim->nai)
++		g_free(sim->nai);
++
+ 	if (sim->aid_sessions)
+ 		g_slist_free(sim->aid_sessions);
  }
 -- =
 
 2.7.4
 
 
---===============8149093860732745928==--
+--===============1770230650426515265==--
 
