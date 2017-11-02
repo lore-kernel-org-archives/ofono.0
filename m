@@ -1,72 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============0309828768639074812=="
+Content-Type: multipart/mixed; boundary="===============4642515011436255298=="
 MIME-Version: 1.0
-From: Bassem BOUBAKER <bassem.boubaker@actia.fr>
-Subject: RE: Ofono is not generating core dump
-Date: Thu, 02 Nov 2017 11:56:48 +0000
-Message-ID: <AM4PR01MB1873EB735F7AE29561B474739C5C0@AM4PR01MB1873.eurprd01.prod.exchangelabs.com>
-In-Reply-To: <3186ceaa-7d5a-6dcc-7cbc-490480ec9203@southpole.se>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] simutil: Made UMTS/GSM authenticate more consitent
+Date: Thu, 02 Nov 2017 11:38:17 -0500
+Message-ID: <148eaffd-b68c-e813-9d4f-8b3635aab1a4@gmail.com>
+In-Reply-To: <1509557537-15050-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0309828768639074812==
+--===============4642515011436255298==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Good! That worked! I'm able to get my core dump when I commented out the si=
-gnal handling sections under src/main.c and src/log.c.
+Hi James,
 
-I'm wondering, core dump are very useful when debugging. Why not to mainlin=
-e the fact that ofono does it's own backtrace and core dumping at the same =
-time or maybe to choose between one of them.
-
-
-De : Jonas Bonn <jonas@southpole.se>
-Envoy=C3=A9 : jeudi 2 novembre 2017 11:37
-=C3=80 : ofono(a)ofono.org; Bassem BOUBAKER
-Objet : Re: Ofono is not generating core dump
-=C2=A0 =
+On 11/01/2017 12:32 PM, James Prestwood wrote:
+> The Le parameter in the AUTHENTICATE command was not being
+> set for GSM authentication. This did work, but explicitly
+> setting it to 0 as UMTS does was more consitent.
+> ---
+>   src/simutil.c | 3 ++-
+>   1 file changed, 2 insertions(+), 1 deletion(-)
+> =
 
 
-On 11/02/2017 11:35 AM, Bassem BOUBAKER wrote:
-> Hi,
->
-> When trying to trace ofono crushes, I have noticed that it does not gener=
-ate any core dump on my file system.
->
-> I'm sure that the issue is not coming from my system because I have verif=
-ied that my kernel is good for handling core dump when an app crashes.
->
-> Is this related to signal catching from ofono side?
+Applied, thanks.
 
-Yes.
-
-src/main.c sets up signal handling whereby it catches SEG faults and =
-
-does it's own backtrace.=C2=A0 Comment this out of ofono and you'll get you=
-r =
-
-core dumps back!
-
-/Jonas
-
->
->
-> Regards,
-> Bassem.
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> https://lists.ofono.org/mailman/listinfo/ofono
+Regards,
+-Denis
 
 
-ofono Info Page
-lists.ofono.org
-To see the collection of prior postings to the list, visit the ofono Archiv=
-es. Using ofono: To post a message to all the list members, send email ...
-
-
-
-   =20
---===============0309828768639074812==--
+--===============4642515011436255298==--
 
