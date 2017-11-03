@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2782582417460678580=="
+Content-Type: multipart/mixed; boundary="===============6202242167211564752=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH V2 2/8] voicecallmanager: Handle last number dialled DBUS
- call
-Date: Fri, 03 Nov 2017 13:30:48 -0500
-Message-ID: <60b70962-1338-a29a-f8fd-8c4f0abb8818@gmail.com>
-In-Reply-To: <20171031083939.4393-3-philippe.deswert@nomovok.com>
+Subject: Re: [PATCH V2 3/8] hfpmodem: Send last call dialled request
+Date: Fri, 03 Nov 2017 13:32:19 -0500
+Message-ID: <119cf4b4-f2b2-9468-fd70-d455b209dd0f@gmail.com>
+In-Reply-To: <20171031083939.4393-4-philippe.deswert@nomovok.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2782582417460678580==
+--===============6202242167211564752==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,70 +16,53 @@ Content-Transfer-Encoding: quoted-printable
 Hi Philippe,
 
 On 10/31/2017 03:39 AM, Philippe De Swert wrote:
-> Handle the new DialLast method on the voicecallmanager interface
+> Handle the last call dialled request and send the required AT+BDLN command
+> for bluetooth HFP profile.
 > ---
->   src/voicecall.c | 87 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++++
->   1 file changed, 87 insertions(+)
+>   drivers/hfpmodem/voicecall.c | 20 ++++++++++++++++++++
+>   1 file changed, 20 insertions(+)
 > =
 
 
-I went ahead and applied this patch, however:
+Applied with an amendment, see below:
 
-> diff --git a/src/voicecall.c b/src/voicecall.c
-> index a8a2bcde..cef36a29 100644
-> --- a/src/voicecall.c
-> +++ b/src/voicecall.c
-> @@ -1577,6 +1577,92 @@ static DBusMessage *manager_dial(DBusConnection *c=
-onn,
->   	return __ofono_error_failed(msg);
+> diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+> index ffdf4b7b..fc5210bb 100644
+> --- a/drivers/hfpmodem/voicecall.c
+> +++ b/drivers/hfpmodem/voicecall.c
+> @@ -404,6 +404,25 @@ static void hfp_dial(struct ofono_voicecall *vc,
+>   	CALLBACK_WITH_FAILURE(cb, data);
 >   }
 >   =
 
-> +static void manager_dial_last_callback(const struct ofono_error *error, =
-void *data)
+> +static void hfp_dial_last(struct ofono_voicecall *vc, ofono_voicecall_cb=
+_t cb,
+> +			void *data)
 > +{
-> +	struct ofono_voicecall *vc =3D data;
-> +	DBusMessage *reply;
-> +	struct voicecall *v;
+> +	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+> +	struct cb_data *cbd =3D cb_data_new(cb, data);
+> +	char buf[256];
 > +
-
-You were not handling error conditions here.  E.g. if the result of the =
-
-BLDN was an error.
-
-> +	v =3D synthesize_outgoing_call(vc, NULL);
+> +	cbd->user =3D vc;
+> +	snprintf(buf, sizeof(buf), "AT+BLDN");
 > +
-> +	if (v) {
-> +		const char *path =3D voicecall_build_path(vc, v->call);
-> +
-> +		reply =3D dbus_message_new_method_return(vc->pending);
-> +
-> +		dbus_message_append_args(reply, DBUS_TYPE_OBJECT_PATH, &path,
-> +						DBUS_TYPE_INVALID);
-> +	} else {
-> +		reply =3D __ofono_error_failed(vc->pending);
-> +	}
-> +
-> +	__ofono_dbus_pending_reply(&vc->pending, reply);
-> +
-> +	voicecalls_emit_call_added(vc, v);
+> +	if (g_at_chat_send(vd->chat, buf, none_prefix,
 
-Also, in the unlikely case that synthethize_outgoing_call failed, we =
+Since you don't need buf or snprintf here (you can simply send "AT+BLDN" =
 
-should not be trying to emit anything...
+instead of buf), I silently amended the commit to do that.
 
+> +				atd_cb, cbd, g_free) > 0)
+> +		return;
+> +
+> +	g_free(cbd);
+> +
+> +	CALLBACK_WITH_FAILURE(cb, data);
+> +
 > +}
-> +
-
-I fixed this up in a follow on commit =
-
-f58e7685b0078df470300b99cd89fb9b3c45d1c0.  Please check that I didn't =
-
-screw anything up.
 
 Regards,
 -Denis
 
---===============2782582417460678580==--
+--===============6202242167211564752==--
 
