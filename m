@@ -1,156 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============5520884447853782884=="
+Content-Type: multipart/mixed; boundary="===============1151996803177438443=="
 MIME-Version: 1.0
-From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: [PATCHv2] sim: added ImsPrivateIdentity to SimManager
-Date: Mon, 06 Nov 2017 14:37:58 -0800
-Message-ID: <1510007878-6073-1-git-send-email-james.prestwood@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCHv2] sim: added ImsPrivateIdentity to SimManager
+Date: Mon, 06 Nov 2017 17:09:29 -0600
+Message-ID: <de325f83-25f3-53b4-bdf0-0719d9c9778a@gmail.com>
+In-Reply-To: <1510007878-6073-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5520884447853782884==
+--===============1151996803177438443==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If the ISIM AID is found a new AID based context will be
-created and the EFIMPI file will be read from the SIM
-which contains the ImsPrivateIdentity.
----
- src/ofono.h |  2 ++
- src/sim.c   | 44 ++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 46 insertions(+)
+Hi James,
 
-diff --git a/src/ofono.h b/src/ofono.h
-index 007cd13..deb1b7c 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -419,6 +419,8 @@ enum sim_app_type __ofono_sim_session_get_type(
- unsigned char *__ofono_sim_session_get_aid(
- 		struct ofono_sim_aid_session *session);
- =
-
-+const char *__ofono_sim_get_impi(struct ofono_sim *sim);
-+
- #include <ofono/stk.h>
- =
-
- typedef void (*__ofono_sms_sim_download_cb_t)(ofono_bool_t ok,
-diff --git a/src/sim.c b/src/sim.c
-index 23a6395..f623db5 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -126,6 +126,7 @@ struct ofono_sim {
- 	struct sim_fs *simfs_isim;
- 	struct ofono_sim_context *context;
- 	struct ofono_sim_context *early_context;
-+	struct ofono_sim_context *isim_context;
- =
-
- 	unsigned char *iidf_image;
- 	unsigned int *iidf_watch_ids;
-@@ -138,6 +139,7 @@ struct ofono_sim {
- =
-
- 	GSList *aid_sessions;
- 	GSList *aid_list;
-+	char *impi;
- };
- =
-
- struct msisdn_set_request {
-@@ -409,6 +411,10 @@ static DBusMessage *sim_get_properties(DBusConnection =
-*conn,
- 		ofono_dbus_dict_append(&dict, "ServiceProviderName",
- 					DBUS_TYPE_STRING, &sim->spn);
- =
-
-+	if (sim->impi)
-+		ofono_dbus_dict_append(&dict, "ImsPrivateIdentity",
-+					DBUS_TYPE_STRING, &sim->impi);
-+
- 	fdn =3D sim->fixed_dialing;
- 	ofono_dbus_dict_append(&dict, "FixedDialing", DBUS_TYPE_BOOLEAN, &fdn);
- =
-
-@@ -1458,6 +1464,25 @@ static void sim_set_ready(struct ofono_sim *sim)
- 	call_state_watches(sim);
- }
- =
-
-+static void impi_read_cb(int ok, int total_length, int record,
-+		const unsigned char *data,
-+		int record_length, void *userdata)
-+{
-+	struct ofono_sim *sim =3D userdata;
-+
-+	if (!ok) {
-+		DBG("error reading IMPI");
-+		return;
-+	}
-+
-+	if (data[0] !=3D 0x80) {
-+		DBG("invalid TLV tag 0x%02x", data[0]);
-+		return;
-+	}
-+
-+	sim->impi =3D g_strndup((const char *)data + 2, data[1]);
-+}
-+
- static void discover_apps_cb(const struct ofono_error *error,
- 		const unsigned char *dataobj,
- 		int len, void *data)
-@@ -1490,6 +1515,12 @@ static void discover_apps_cb(const struct ofono_erro=
-r *error,
- 			 * the FS structure so the ISIM EF's can be accessed.
- 			 */
- 			sim->simfs_isim =3D sim_fs_new(sim, sim->driver);
-+			sim->isim_context =3D ofono_sim_context_create_isim(
-+					sim);
-+			/* attempt to get the NAI from EFimpi */
-+			ofono_sim_read_bytes(sim->isim_context,
-+					SIM_ISIM_EFIMPI_FILEID, 0, 255, NULL,
-+					0, impi_read_cb, sim);
- 		}
- =
-
- 		iter =3D g_slist_next(iter);
-@@ -2558,6 +2589,14 @@ static void sim_free_main_state(struct ofono_sim *si=
-m)
- 		sim->context =3D NULL;
- 	}
- =
-
-+	if (sim->isim_context) {
-+		ofono_sim_context_free(sim->isim_context);
-+		sim->isim_context =3D NULL;
-+	}
-+
-+	if (sim->impi)
-+		g_free(sim->impi);
-+
- 	if (sim->aid_sessions)
- 		g_slist_free_full(sim->aid_sessions, aid_session_free);
- }
-@@ -3417,6 +3456,11 @@ void __ofono_sim_refresh(struct ofono_sim *sim, GSLi=
-st *file_list,
- 	}
- }
- =
-
-+const char *__ofono_sim_get_impi(struct ofono_sim *sim)
-+{
-+	return sim->impi;
-+}
-+
- static void open_channel_cb(const struct ofono_error *error, int session_i=
-d,
- 		void *data);
- =
-
--- =
-
-2.7.4
+On 11/06/2017 04:37 PM, James Prestwood wrote:
+> If the ISIM AID is found a new AID based context will be
+> created and the EFIMPI file will be read from the SIM
+> which contains the ImsPrivateIdentity.
+> ---
+>   src/ofono.h |  2 ++
+>   src/sim.c   | 44 ++++++++++++++++++++++++++++++++++++++++++++
+>   2 files changed, 46 insertions(+)
+> =
 
 
---===============5520884447853782884==--
+Applied, thanks.
+
+Regards,
+-Denis
+
+
+--===============1151996803177438443==--
 
