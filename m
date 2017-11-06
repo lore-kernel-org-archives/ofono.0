@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============0687702823941892780=="
+Content-Type: multipart/mixed; boundary="===============5692051088609648791=="
 MIME-Version: 1.0
 From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: [PATCHv3] simfs: read files from specific AID's
-Date: Mon, 06 Nov 2017 12:23:14 -0800
-Message-ID: <1509999794-29942-1-git-send-email-james.prestwood@linux.intel.com>
+Subject: [PATCHv4] simfs: read files from specific AID's
+Date: Mon, 06 Nov 2017 13:07:38 -0800
+Message-ID: <1510002458-752-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0687702823941892780==
+--===============5692051088609648791==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,13 +19,13 @@ initialized for a given AID. Using this fs context with
 the existing read file API will read from that AID rather than
 the default ADF.
 ---
- src/simfs.c | 153 ++++++++++++++++++++++++++++++++++++++++++++++++++++++--=
+ src/simfs.c | 170 +++++++++++++++++++++++++++++++++++++++++++++++++++++---=
 ----
  src/simfs.h |   3 ++
- 2 files changed, 141 insertions(+), 15 deletions(-)
+ 2 files changed, 155 insertions(+), 18 deletions(-)
 
 diff --git a/src/simfs.c b/src/simfs.c
-index 37a232a..0818026 100644
+index 37a232a..efee13e 100644
 --- a/src/simfs.c
 +++ b/src/simfs.c
 @@ -74,12 +74,10 @@ struct sim_fs_op {
@@ -47,7 +47,7 @@ index 37a232a..0818026 100644
 
  struct sim_fs {
  	GQueue *op_q;
-@@ -89,8 +87,24 @@ struct sim_fs {
+@@ -89,8 +87,26 @@ struct sim_fs {
  	struct ofono_sim *sim;
  	const struct ofono_sim_driver *driver;
  	GSList *contexts;
@@ -63,8 +63,10 @@ index 37a232a..0818026 100644
 +	struct sim_fs *fs =3D node->context->fs;
 +
 +	/* only release the session if there are no pending reads */
-+	if (fs->session && g_queue_is_empty(fs->op_q))
++	if (fs->session && g_queue_is_empty(fs->op_q)) {
 +		__ofono_sim_remove_session_watch(fs->session, fs->watch_id);
++		fs->watch_id =3D 0;
++	}
 +
 +	g_free(node->buffer);
 +	g_free(node);
@@ -73,7 +75,7 @@ index 37a232a..0818026 100644
  void sim_fs_free(struct sim_fs *fs)
  {
  	if (fs =3D=3D NULL)
-@@ -121,11 +135,6 @@ struct file_watch {
+@@ -121,11 +137,6 @@ struct file_watch {
  	int ef;
  };
  =
@@ -86,7 +88,7 @@ index 37a232a..0818026 100644
  struct sim_fs *sim_fs_new(struct ofono_sim *sim,
  				const struct ofono_sim_driver *driver)
  {
-@@ -156,6 +165,23 @@ struct ofono_sim_context *sim_fs_context_new(struct si=
+@@ -156,6 +167,23 @@ struct ofono_sim_context *sim_fs_context_new(struct si=
 m_fs *fs)
  	return context;
  }
@@ -112,7 +114,7 @@ m_fs *fs)
  void sim_fs_context_free(struct ofono_sim_context *context)
  {
  	struct sim_fs *fs =3D context->fs;
-@@ -805,6 +831,92 @@ error:
+@@ -805,6 +833,92 @@ error:
  	return FALSE;
  }
  =
@@ -206,7 +208,7 @@ m_fs *fs)
  static gboolean sim_fs_op_next(gpointer user_data)
  {
  	struct sim_fs *fs =3D user_data;
-@@ -827,10 +939,15 @@ static gboolean sim_fs_op_next(gpointer user_data)
+@@ -827,10 +941,22 @@ static gboolean sim_fs_op_next(gpointer user_data)
  		if (sim_fs_op_check_cached(fs))
  			return FALSE;
  =
@@ -221,28 +223,43 @@ m_fs *fs)
 +						op->path_len,
 +						sim_fs_op_info_cb, fs);
 +		} else {
-+			fs->watch_id =3D __ofono_sim_add_session_watch(
-+					fs->session, get_session_cb, fs, NULL);
++			if (fs->watch_id)
++				fs->driver->session_read_info(fs->sim,
++						fs->session_id, op->id,
++						op->path, op->path_len,
++						session_read_info_cb, fs);
++			else
++				fs->watch_id =3D __ofono_sim_add_session_watch(
++						fs->session, get_session_cb,
++						fs, NULL);
 +		}
  	} else {
  		switch (op->structure) {
  		case OFONO_SIM_FILE_STRUCTURE_TRANSPARENT:
-@@ -919,6 +1036,12 @@ int sim_fs_read(struct ofono_sim_context *context, in=
+@@ -914,9 +1040,17 @@ int sim_fs_read(struct ofono_sim_context *context, in=
 t id,
- 		return -ENOSYS;
+ 	if (fs->driver =3D=3D NULL)
+ 		return -EINVAL;
+ =
+
+-	if (fs->driver->read_file_info =3D=3D NULL) {
+-		cb(0, 0, 0, NULL, 0, data);
+-		return -ENOSYS;
++	/* check driver support for session based read */
++	if (fs->session) {
++		if (!fs->driver->session_read_info) {
++			cb(0, 0, 0, NULL, 0, data);
++			return -ENOSYS;
++		}
++	} else {
++		if (!fs->driver->read_file_info) {
++			cb(0, 0, 0, NULL, 0, data);
++			return -ENOSYS;
++		}
  	}
  =
 
-+	/* check driver support for session based read */
-+	if (fs->session && !fs->driver->session_read_info) {
-+		cb(0, 0, 0, NULL, 0, data);
-+		return -ENOSYS;
-+	}
-+
  	if (fs->op_q =3D=3D NULL)
- 		fs->op_q =3D g_queue_new();
- =
-
 diff --git a/src/simfs.h b/src/simfs.h
 index bb3ab0f..39af6a3 100644
 --- a/src/simfs.h
@@ -263,5 +280,5 @@ index bb3ab0f..39af6a3 100644
 2.7.4
 
 
---===============0687702823941892780==--
+--===============5692051088609648791==--
 
