@@ -1,111 +1,157 @@
-Content-Type: multipart/mixed; boundary="===============4625667598607052542=="
+Content-Type: multipart/mixed; boundary="===============3205268319295047023=="
 MIME-Version: 1.0
 From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: [PATCH 3/5] sim: implement create ISIM context
-Date: Mon, 06 Nov 2017 09:49:32 -0800
-Message-ID: <1509990574-19950-3-git-send-email-james.prestwood@linux.intel.com>
+Subject: [PATCH 4/5] sim: added ImsPrivateIdentity to SimManager
+Date: Mon, 06 Nov 2017 09:49:33 -0800
+Message-ID: <1509990574-19950-4-git-send-email-james.prestwood@linux.intel.com>
 In-Reply-To: <1509990574-19950-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4625667598607052542==
+--===============3205268319295047023==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-API to create a sim context for the ISIM application, if found.
-During AID discovery, if an ISIM AID is found, a new fs object is
-initialized for the ISIM which will be used for any future
-ISIM context creation.
+If the ISIM AID is found a new AID based context will be
+created and the EFIMPI file will be read from the SIM
+which contains the ImsPrivateIdentity.
 ---
- src/sim.c | 41 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 41 insertions(+)
+ src/ofono.h |  2 ++
+ src/sim.c   | 44 ++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 46 insertions(+)
 
+diff --git a/src/ofono.h b/src/ofono.h
+index 007cd13..7e96c96 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -419,6 +419,8 @@ enum sim_app_type __ofono_sim_session_get_type(
+ unsigned char *__ofono_sim_session_get_aid(
+ 		struct ofono_sim_aid_session *session);
+ =
+
++const char *__ofono_sim_get_ims_private_id(struct ofono_sim *sim);
++
+ #include <ofono/stk.h>
+ =
+
+ typedef void (*__ofono_sms_sim_download_cb_t)(ofono_bool_t ok,
 diff --git a/src/sim.c b/src/sim.c
-index 101914e..23a6395 100644
+index 23a6395..5da11d1 100644
 --- a/src/sim.c
 +++ b/src/sim.c
-@@ -123,6 +123,7 @@ struct ofono_sim {
- 	unsigned int cphs_spn_short_watch;
- =
-
- 	struct sim_fs *simfs;
-+	struct sim_fs *simfs_isim;
+@@ -126,6 +126,7 @@ struct ofono_sim {
+ 	struct sim_fs *simfs_isim;
  	struct ofono_sim_context *context;
  	struct ofono_sim_context *early_context;
++	struct ofono_sim_context *isim_context;
  =
 
-@@ -1483,6 +1484,14 @@ static void discover_apps_cb(const struct ofono_erro=
-r *error,
- 		s->state =3D SESSION_STATE_INACTIVE;
- 		sim->aid_sessions =3D g_slist_prepend(sim->aid_sessions, s);
+ 	unsigned char *iidf_image;
+ 	unsigned int *iidf_watch_ids;
+@@ -138,6 +139,7 @@ struct ofono_sim {
  =
 
-+		if (app->type =3D=3D SIM_APP_TYPE_ISIM) {
-+			/*
-+			 * If an ISIM application is found, we should init
-+			 * the FS structure so the ISIM EF's can be accessed.
-+			 */
-+			sim->simfs_isim =3D sim_fs_new(sim, sim->driver);
-+		}
+ 	GSList *aid_sessions;
+ 	GSList *aid_list;
++	char *ims_identity;
+ };
+ =
+
+ struct msisdn_set_request {
+@@ -409,6 +411,10 @@ static DBusMessage *sim_get_properties(DBusConnection =
+*conn,
+ 		ofono_dbus_dict_append(&dict, "ServiceProviderName",
+ 					DBUS_TYPE_STRING, &sim->spn);
+ =
+
++	if (sim->ims_identity)
++		ofono_dbus_dict_append(&dict, "ImsPrivateIdentity",
++					DBUS_TYPE_STRING, &sim->ims_identity);
 +
- 		iter =3D g_slist_next(iter);
- 	}
- }
-@@ -2237,6 +2246,36 @@ struct ofono_sim_context *ofono_sim_context_create(s=
-truct ofono_sim *sim)
- 	return sim_fs_context_new(sim->simfs);
+ 	fdn =3D sim->fixed_dialing;
+ 	ofono_dbus_dict_append(&dict, "FixedDialing", DBUS_TYPE_BOOLEAN, &fdn);
+ =
+
+@@ -1458,6 +1464,25 @@ static void sim_set_ready(struct ofono_sim *sim)
+ 	call_state_watches(sim);
  }
  =
 
-+struct ofono_sim_context *ofono_sim_context_create_isim(
-+		struct ofono_sim *sim)
++static void impi_read_cb(int ok, int total_length, int record,
++		const unsigned char *data,
++		int record_length, void *userdata)
 +{
-+	GSList *iter =3D sim->aid_sessions;
++	struct ofono_sim *sim =3D userdata;
 +
-+	if (sim =3D=3D NULL || sim->simfs_isim =3D=3D NULL)
-+		return NULL;
-+
-+	/*
-+	 * Check if the AID is even valid
-+	 */
-+	while (iter) {
-+		struct ofono_sim_aid_session *session =3D iter->data;
-+
-+		/*
-+		 * This AID based context is only relevant for an ISIM AID. A
-+		 * USIM application can be accessed with the 'default' FS
-+		 * context API's.
-+		 */
-+		if (session->record->type =3D=3D SIM_APP_TYPE_ISIM) {
-+			return sim_fs_context_new_with_aid(sim->simfs_isim,
-+					session->record->aid);
-+		}
-+
-+		iter =3D g_slist_next(iter);
++	if (!ok) {
++		DBG("error reading IMPI");
++		return;
 +	}
 +
-+	return NULL;
++	if (data[0] !=3D 0x80) {
++		DBG("invalid TLV tag 0x%02x", data[0]);
++		return;
++	}
++
++	sim->ims_identity =3D g_strndup((const char *)data + 2, data[1]);
 +}
 +
- void ofono_sim_context_free(struct ofono_sim_context *context)
- {
- 	return sim_fs_context_free(context);
-@@ -3067,6 +3106,8 @@ static void sim_remove(struct ofono_atom *atom)
+ static void discover_apps_cb(const struct ofono_error *error,
+ 		const unsigned char *dataobj,
+ 		int len, void *data)
+@@ -1490,6 +1515,12 @@ static void discover_apps_cb(const struct ofono_erro=
+r *error,
+ 			 * the FS structure so the ISIM EF's can be accessed.
+ 			 */
+ 			sim->simfs_isim =3D sim_fs_new(sim, sim->driver);
++			sim->isim_context =3D ofono_sim_context_create_isim(
++					sim);
++			/* attempt to get the NAI from EFimpi */
++			ofono_sim_read_bytes(sim->isim_context,
++					SIM_ISIM_EFIMPI_FILEID, 0, 255, NULL,
++					0, impi_read_cb, sim);
+ 		}
  =
 
- 	sim_fs_free(sim->simfs);
- 	sim->simfs =3D NULL;
-+	sim_fs_free(sim->simfs_isim);
-+	sim->simfs_isim =3D NULL;
+ 		iter =3D g_slist_next(iter);
+@@ -2558,6 +2589,14 @@ static void sim_free_main_state(struct ofono_sim *si=
+m)
+ 		sim->context =3D NULL;
+ 	}
  =
 
- 	g_free(sim);
++	if (sim->isim_context) {
++		ofono_sim_context_free(sim->isim_context);
++		sim->isim_context =3D NULL;
++	}
++
++	if (sim->ims_identity)
++		g_free(sim->ims_identity);
++
+ 	if (sim->aid_sessions)
+ 		g_slist_free_full(sim->aid_sessions, aid_session_free);
  }
+@@ -3417,6 +3456,11 @@ void __ofono_sim_refresh(struct ofono_sim *sim, GSLi=
+st *file_list,
+ 	}
+ }
+ =
+
++const char *__ofono_sim_get_ims_private_id(struct ofono_sim *sim)
++{
++	return sim->ims_identity;
++}
++
+ static void open_channel_cb(const struct ofono_error *error, int session_i=
+d,
+ 		void *data);
+ =
+
 -- =
 
 2.7.4
 
 
---===============4625667598607052542==--
+--===============3205268319295047023==--
 
