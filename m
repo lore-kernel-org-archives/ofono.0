@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============5758057514506374626=="
+Content-Type: multipart/mixed; boundary="===============5520884447853782884=="
 MIME-Version: 1.0
 From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: [PATCH] sim: added ImsPrivateIdentity to SimManager
-Date: Mon, 06 Nov 2017 14:32:37 -0800
-Message-ID: <1510007557-3734-1-git-send-email-james.prestwood@linux.intel.com>
+Subject: [PATCHv2] sim: added ImsPrivateIdentity to SimManager
+Date: Mon, 06 Nov 2017 14:37:58 -0800
+Message-ID: <1510007878-6073-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5758057514506374626==
+--===============5520884447853782884==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -36,7 +36,7 @@ index 007cd13..deb1b7c 100644
 
  typedef void (*__ofono_sms_sim_download_cb_t)(ofono_bool_t ok,
 diff --git a/src/sim.c b/src/sim.c
-index 23a6395..6b7e26a 100644
+index 23a6395..f623db5 100644
 --- a/src/sim.c
 +++ b/src/sim.c
 @@ -126,6 +126,7 @@ struct ofono_sim {
@@ -137,7 +137,7 @@ st *file_list,
  }
  =
 
-+const char *__ofono_sim_get_ims_private_id(struct ofono_sim *sim)
++const char *__ofono_sim_get_impi(struct ofono_sim *sim)
 +{
 +	return sim->impi;
 +}
@@ -152,5 +152,5 @@ d,
 2.7.4
 
 
---===============5758057514506374626==--
+--===============5520884447853782884==--
 
