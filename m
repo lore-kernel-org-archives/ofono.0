@@ -1,106 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============4411662198450861137=="
+Content-Type: multipart/mixed; boundary="===============3722477376899602594=="
 MIME-Version: 1.0
-From: Gabriel Lucas <gabriel.lucas@smile.fr>
-Subject: [PATCH v2 1/2] gemalto: add PIN retries support in driver
-Date: Tue, 07 Nov 2017 10:53:10 +0100
-Message-ID: <1510048390-13428-1-git-send-email-gabriel.lucas@smile.fr>
-In-Reply-To: <ae9b1dd3-31be-77e9-3749-fad920be5ebe@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 1/2] gemalto: add PIN retries support in driver
+Date: Tue, 07 Nov 2017 09:59:01 -0600
+Message-ID: <90cf4d2d-6b79-5e34-bc05-2cb51760652b@gmail.com>
+In-Reply-To: <1510048390-13428-1-git-send-email-gabriel.lucas@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4411662198450861137==
+--===============3722477376899602594==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-In SimManager, the Retries property isn't used for gemalto modems.
-The at command AT^SPIC is used to get the remaining retries left
-for the current required password type.
+Hi Gabriel,
 
-This commit adds the implementation in the SIM driver of the retries
-queries.
----
- drivers/atmodem/sim.c | 45 +++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 45 insertions(+)
+On 11/07/2017 03:53 AM, Gabriel Lucas wrote:
+> In SimManager, the Retries property isn't used for gemalto modems.
+> The at command AT^SPIC is used to get the remaining retries left
+> for the current required password type.
+> =
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 7508281..f593a51 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -74,6 +74,7 @@ static const char *upincnt_prefix[] =3D { "+UPINCNT:", NU=
-LL };
- static const char *cuad_prefix[] =3D { "+CUAD:", NULL };
- static const char *ccho_prefix[] =3D { "+CCHO:", NULL };
- static const char *crla_prefix[] =3D { "+CRLA:", NULL };
-+static const char *cinterion_spic_prefix[] =3D { "^SPIC:", NULL };
- static const char *none_prefix[] =3D { NULL };
- =
-
- static void append_file_path(char *buf, const unsigned char *path,
-@@ -1065,6 +1066,45 @@ error:
- 	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
- }
- =
-
-+static void spic_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	struct ofono_sim *sim =3D cbd->user;
-+	ofono_sim_pin_retries_cb_t cb =3D cbd->cb;
-+	const char *final =3D g_at_result_final_response(result);
-+	GAtResultIter iter;
-+	struct ofono_error error;
-+	int retries[OFONO_SIM_PASSWORD_INVALID];
-+	size_t i;
-+	int pin_type =3D ofono_sim_get_password_type(sim);
-+
-+	decode_at_error(&error, final);
-+
-+	if (!ok) {
-+		cb(&error, NULL, cbd->data);
-+		return;
-+	}
-+
-+	for (i =3D 0; i < OFONO_SIM_PASSWORD_INVALID; i++)
-+		retries[i] =3D -1;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "^SPIC:"))
-+		goto error;
-+
-+	if (!g_at_result_iter_next_number(&iter, &retries[pin_type]))
-+		goto error;
-+
-+	DBG("Retry : %d, type : %d", retries[pin_type], pin_type);
-+	cb(&error, retries, cbd->data);
-+
-+	return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
-+}
-+
- static void at_pin_retries_query(struct ofono_sim *sim,
- 					ofono_sim_pin_retries_cb_t cb,
- 					void *data)
-@@ -1137,6 +1177,11 @@ static void at_pin_retries_query(struct ofono_sim *s=
-im,
- 					upincnt_cb, cbd, g_free) > 0)
- 			return;
- 		break;
-+	case OFONO_VENDOR_CINTERION:
-+		if (g_at_chat_send(sd->chat, "AT^SPIC", cinterion_spic_prefix,
-+					spic_cb, cbd, g_free) > 0)
-+			return;
-+		break;
- 	default:
- 		if (g_at_chat_send(sd->chat, "AT+CPINR", cpinr_prefixes,
- 					at_cpinr_cb, cbd, g_free) > 0)
--- =
-
-2.7.4
+> This commit adds the implementation in the SIM driver of the retries
+> queries.
+> ---
+>   drivers/atmodem/sim.c | 45 +++++++++++++++++++++++++++++++++++++++++++++
+>   1 file changed, 45 insertions(+)
+> =
 
 
---===============4411662198450861137==--
+Applied, thanks.
+
+Regards,
+-Denis
+
+
+--===============3722477376899602594==--
 
