@@ -1,34 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============0530722937205999062=="
+Content-Type: multipart/mixed; boundary="===============3446909212592521351=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/4] simfs: Added support for ISim file systems
-Date: Wed, 08 Nov 2017 20:58:09 -0600
-Message-ID: <378fb4d3-6356-8ea9-a2b3-bf32db0ade02@gmail.com>
-In-Reply-To: <1510161833-8867-1-git-send-email-james.prestwood@linux.intel.com>
+From: James Prestwood <james.prestwood@linux.intel.com>
+Subject: [PATCH 1/6] atmodem: removed simauth init
+Date: Thu, 09 Nov 2017 09:17:07 -0800
+Message-ID: <1510247832-19632-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0530722937205999062==
+--===============3446909212592521351==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi James,
+---
+ drivers/atmodem/atmodem.c | 2 --
+ 1 file changed, 2 deletions(-)
 
-On 11/08/2017 11:23 AM, James Prestwood wrote:
-> ---
->   src/simfilesystem.cpp | 100 +++++++++++++++++++++++++++++++++++++++----=
--------
->   src/simfilesystem.h   |  11 +++++-
->   2 files changed, 89 insertions(+), 22 deletions(-)
-> =
+diff --git a/drivers/atmodem/atmodem.c b/drivers/atmodem/atmodem.c
+index 684b228..e0d5ab6 100644
+--- a/drivers/atmodem/atmodem.c
++++ b/drivers/atmodem/atmodem.c
+@@ -50,7 +50,6 @@ static int atmodem_init(void)
+ 	at_call_volume_init();
+ 	at_gprs_init();
+ 	at_gprs_context_init();
+-	at_sim_auth_init();
+ 	at_gnss_init();
+ 	at_lte_init();
+ =
+
+@@ -59,7 +58,6 @@ static int atmodem_init(void)
+ =
+
+ static void atmodem_exit(void)
+ {
+-	at_sim_auth_exit();
+ 	at_stk_exit();
+ 	at_sim_exit();
+ 	at_sms_exit();
+-- =
+
+2.7.4
 
 
-All 4 applied, thanks.
-
-Regards,
--Denis
-
-
---===============0530722937205999062==--
+--===============3446909212592521351==--
 
