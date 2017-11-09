@@ -1,47 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============1700995888125480714=="
+Content-Type: multipart/mixed; boundary="===============0530722937205999062=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] simauth: use new sim atom functionality for simauth
-Date: Wed, 08 Nov 2017 20:54:50 -0600
-Message-ID: <5730eb1c-752c-ff68-65d4-3e0edbc4526d@gmail.com>
-In-Reply-To: <1510162079-9726-1-git-send-email-james.prestwood@linux.intel.com>
+Subject: Re: [PATCH 1/4] simfs: Added support for ISim file systems
+Date: Wed, 08 Nov 2017 20:58:09 -0600
+Message-ID: <378fb4d3-6356-8ea9-a2b3-bf32db0ade02@gmail.com>
+In-Reply-To: <1510161833-8867-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1700995888125480714==
+--===============0530722937205999062==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi James,
 
-On 11/08/2017 11:27 AM, James Prestwood wrote:
-> All the functionality for the simauth driver was moved
-> into the sim atom. This patch transitions the simauth
-> atom to using those API's instead of the simauth driver
-> API's.
-> =
-
-> With this change it made more sense to store each AID
-> as its own object structure so the AID and object path
-> could be re-used rather than generating it on the fly.
-> =
-
-> Renamed the simauth 'sim' variable to 'sa' to keep it
-> consistent now that the simauth structure references
-> the sim atom as 'sim'.
+On 11/08/2017 11:23 AM, James Prestwood wrote:
 > ---
->   src/sim-auth.c | 400 +++++++++++++++++++++++++++++++++-----------------=
+>   src/simfilesystem.cpp | 100 +++++++++++++++++++++++++++++++++++++++----=
 -------
->   1 file changed, 229 insertions(+), 171 deletions(-)
+>   src/simfilesystem.h   |  11 +++++-
+>   2 files changed, 89 insertions(+), 22 deletions(-)
 > =
 
 
-Applied, thanks.
+All 4 applied, thanks.
 
 Regards,
 -Denis
 
 
---===============1700995888125480714==--
+--===============0530722937205999062==--
 
