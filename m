@@ -1,33 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============0135969879548188046=="
+Content-Type: multipart/mixed; boundary="===============6184008579482962661=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] simauth: remove driver API definitions from simauth
- include
-Date: Thu, 09 Nov 2017 11:56:46 -0600
-Message-ID: <0ec714f1-9579-b50e-8821-0ce914786d25@gmail.com>
-In-Reply-To: <1510249937-22427-1-git-send-email-james.prestwood@linux.intel.com>
+From: James Prestwood <james.prestwood@linux.intel.com>
+Subject: [PATCH] watchlist: added macro for notifying with no args
+Date: Tue, 14 Nov 2017 09:24:36 -0800
+Message-ID: <1510680276-1215-1-git-send-email-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0135969879548188046==
+--===============6184008579482962661==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi James,
+The macros currently did not support notifying a watchlist with
+no extra arguments.
+---
+ src/watchlist.h | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
 
-On 11/09/2017 11:52 AM, James Prestwood wrote:
-> ---
->   include/sim-auth.h | 38 +-------------------------------------
->   1 file changed, 1 insertion(+), 37 deletions(-)
-> =
+diff --git a/src/watchlist.h b/src/watchlist.h
+index 737b80d..3d87810 100644
+--- a/src/watchlist.h
++++ b/src/watchlist.h
+@@ -2,7 +2,7 @@
+  *
+  *  Wireless daemon for Linux
+  *
+- *  Copyright (C) 2016  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2016-2017  Intel Corporation. All rights reserved.
+  *
+  *  This library is free software; you can redistribute it and/or
+  *  modify it under the terms of the GNU Lesser General Public
+@@ -92,3 +92,19 @@ void __watchlist_prune_stale(struct watchlist *watchlist=
+);
+ 		if ((watchlist)->stale_items)				\
+ 			__watchlist_prune_stale(watchlist);		\
+ 	} while	(false)
++
++#define WATCHLIST_NOTIFY_NO_ARGS(watchlist, type)			\
++	do {								\
++		const struct l_queue_entry *entry =3D			\
++				l_queue_get_entries((watchlist)->items);\
++									\
++		(watchlist)->in_notify =3D true;				\
++		for (; entry; entry =3D entry->next) {			\
++			struct watchlist_item *item =3D entry->data;	\
++			type t =3D item->notify;				\
++			t(item->notify_data);			\
++		}							\
++		(watchlist)->in_notify =3D false;				\
++		if ((watchlist)->stale_items)				\
++			__watchlist_prune_stale(watchlist);		\
++	} while	(false)
+-- =
+
+2.7.4
 
 
-All three applied, thanks.
-
-Regards,
--Denis
-
-
---===============0135969879548188046==--
+--===============6184008579482962661==--
 
