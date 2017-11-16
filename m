@@ -1,63 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============5567501092097695374=="
+Content-Type: multipart/mixed; boundary="===============7296525666079056007=="
 MIME-Version: 1.0
-From: James Prestwood <james.prestwood@linux.intel.com>
-Subject: Re: [PATCH] watchlist: added macro for notifying with no args
-Date: Tue, 14 Nov 2017 09:25:04 -0800
-Message-ID: <a3549bc2-98f5-e403-67ae-36ecd4106f65@linux.intel.com>
-In-Reply-To: <1510680276-1215-1-git-send-email-james.prestwood@linux.intel.com>
+From: Nicolas ADELL <nicolas.adell@actia.fr>
+Subject: Problem setting up the context
+Date: Thu, 16 Nov 2017 09:27:50 +0000
+Message-ID: <VI1PR0102MB35993442B4E04D2D62FED03A852E0@VI1PR0102MB3599.eurprd01.prod.exchangelabs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5567501092097695374==
+--===============7296525666079056007==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Sorry, did I not mean to send to this list.
+Hi,
 
+I'm facing an issue with oFono when the application is trying to establish =
+a ppp data connection.
 
-On 11/14/2017 09:24 AM, James Prestwood wrote:
-> The macros currently did not support notifying a watchlist with
-> no extra arguments.
-> ---
->   src/watchlist.h | 18 +++++++++++++++++-
->   1 file changed, 17 insertions(+), 1 deletion(-)
->
-> diff --git a/src/watchlist.h b/src/watchlist.h
-> index 737b80d..3d87810 100644
-> --- a/src/watchlist.h
-> +++ b/src/watchlist.h
-> @@ -2,7 +2,7 @@
->    *
->    *  Wireless daemon for Linux
->    *
-> - *  Copyright (C) 2016  Intel Corporation. All rights reserved.
-> + *  Copyright (C) 2016-2017  Intel Corporation. All rights reserved.
->    *
->    *  This library is free software; you can redistribute it and/or
->    *  modify it under the terms of the GNU Lesser General Public
-> @@ -92,3 +92,19 @@ void __watchlist_prune_stale(struct watchlist *watchli=
-st);
->   		if ((watchlist)->stale_items)				\
->   			__watchlist_prune_stale(watchlist);		\
->   	} while	(false)
-> +
-> +#define WATCHLIST_NOTIFY_NO_ARGS(watchlist, type)			\
-> +	do {								\
-> +		const struct l_queue_entry *entry =3D			\
-> +				l_queue_get_entries((watchlist)->items);\
-> +									\
-> +		(watchlist)->in_notify =3D true;				\
-> +		for (; entry; entry =3D entry->next) {			\
-> +			struct watchlist_item *item =3D entry->data;	\
-> +			type t =3D item->notify;				\
-> +			t(item->notify_data);			\
-> +		}							\
-> +		(watchlist)->in_notify =3D false;				\
-> +		if ((watchlist)->stale_items)				\
-> +			__watchlist_prune_stale(watchlist);		\
-> +	} while	(false)
+The context is firstly activated by the application and kept until oFono ge=
+ts an 'NW DETACH' event.
 
+ofonod[758]: App: < \r\n+CGEV: NW DETACH\r\n
+ofonod[758]: gprs.c:cgev_notify() event: NW DETACH
+ofonod[758]: gprs.c:ofono_gprs_detached_notify()
+ofonod[758]: gprs-context.c:at_gprs_detach_shutdown() cid 1
 
---===============5567501092097695374==--
+At that time, oFono attempts to close the link properly.
+
+However, it takes few seconds before getting the state notified as 'CLOSED'=
+ and the 'pppcp_this_layer_finished()' function called.
+
+During this interval, the Packet Domain network registration status is repo=
+rted as registered:
+
+ofonod[758]: gprs.c:cgreg_notify() 5
+ofonod[758]: gprs.c:ofono_gprs_status_notify()
+
+The 'ppp_disconnect()' function is not triggered yet, but the application a=
+ttempts to re-activate the context anyway because the 'Attached' gprs prope=
+rty has been updated and signaled as TRUE.
+
+Then 'ppp_disconnect()' is triggered.
+
+ofonod[758]: gatppp.c:ppp_dead()
+ofonod[758]: gprs-context.c:ppp_disconnect() Reason: 6
+ofonod[758]: gprs.c:pri_activate_callback() 0x5508c8
+ofonod[758]: gprs.c:pri_activate_callback() Activating context failed with =
+error: Unknown error type
+
+At this time the gprs context state equals to "Enabling", due to the latest=
+ appliction request =3D> the 'pri_activate_callback()' callback is executed.
+
+oFono gets a "NO CARRIER" from the modem, but it trigges the 'at_cgdcont_cb=
+()' with error.
+
+=3D> The pri_activate_callback() is called twice with error
+
+ofonod[758]: gprs-context.c:ppp_disconnect()
+ofonod[758]: gprs.c:pri_activate_callback() 0x19b7978
+ofonod[758]: gprs.c:pri_activate_callback() Activating context failed with =
+error: Unknown error type
+ofonod[758]: gprs-context.c:at_cgdcont_cb() ok 0
+ofonod[758]: gprs.c:pri_activate_callback() 0x19b7978
+ofonod[758]: gprs.c:pri_activate_callback() Activating context failed with =
+error: Unknown error type
+
+Because the 'DBusMessage' has been already freed, oFono aborts.
+
+Is there a proper way to prevent this unexpected situation ?
+
+It already tried to catch the 'NO CARRIER' final response without sucess.
+
+Regards,
+Nicolas.
+--===============7296525666079056007==--
 
