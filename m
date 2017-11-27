@@ -1,77 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============7296525666079056007=="
+Content-Type: multipart/mixed; boundary="===============5006139604241746661=="
 MIME-Version: 1.0
-From: Nicolas ADELL <nicolas.adell@actia.fr>
-Subject: Problem setting up the context
-Date: Thu, 16 Nov 2017 09:27:50 +0000
-Message-ID: <VI1PR0102MB35993442B4E04D2D62FED03A852E0@VI1PR0102MB3599.eurprd01.prod.exchangelabs.com>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: [PATCH 1/2] include: Add storage.h
+Date: Mon, 27 Nov 2017 12:31:38 +0200
+Message-ID: <1511778699-32054-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7296525666079056007==
+--===============5006139604241746661==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+To expose ofono directories to dynamically loadable plugins.
+---
+ Makefile.am       |  3 ++-
+ include/storage.h | 32 ++++++++++++++++++++++++++++++++
+ 2 files changed, 34 insertions(+), 1 deletion(-)
+ create mode 100644 include/storage.h
 
-I'm facing an issue with oFono when the application is trying to establish =
-a ppp data connection.
+diff --git a/Makefile.am b/Makefile.am
+index 903630b..f58cc92 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -22,7 +22,8 @@ pkginclude_HEADERS =3D include/log.h include/plugin.h inc=
+lude/history.h \
+ 			include/private-network.h include/cdma-netreg.h \
+ 			include/cdma-provision.h include/handsfree.h \
+ 			include/handsfree-audio.h include/siri.h \
+-			include/netmon.h include/lte.h include/ims.h
++			include/netmon.h include/lte.h include/ims.h \
++			include/storage.h
+ =
 
-The context is firstly activated by the application and kept until oFono ge=
-ts an 'NW DETACH' event.
+ nodist_pkginclude_HEADERS =3D include/version.h
+ =
 
-ofonod[758]: App: < \r\n+CGEV: NW DETACH\r\n
-ofonod[758]: gprs.c:cgev_notify() event: NW DETACH
-ofonod[758]: gprs.c:ofono_gprs_detached_notify()
-ofonod[758]: gprs-context.c:at_gprs_detach_shutdown() cid 1
+diff --git a/include/storage.h b/include/storage.h
+new file mode 100644
+index 0000000..243eb88
+--- /dev/null
++++ b/include/storage.h
+@@ -0,0 +1,32 @@
++/*
++ *
++ *  oFono - Open Telephony stack for Linux
++ *
++ *  Copyright (C) 2017  Jolla Ltd. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ */
++
++#ifndef __OFONO_STORAGE_H
++#define __OFONO_STORAGE_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++const char *ofono_config_dir(void);
++const char *ofono_storage_dir(void);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* __OFONO_STORAGE_H */
+-- =
 
-At that time, oFono attempts to close the link properly.
+1.9.1
 
-However, it takes few seconds before getting the state notified as 'CLOSED'=
- and the 'pppcp_this_layer_finished()' function called.
 
-During this interval, the Packet Domain network registration status is repo=
-rted as registered:
-
-ofonod[758]: gprs.c:cgreg_notify() 5
-ofonod[758]: gprs.c:ofono_gprs_status_notify()
-
-The 'ppp_disconnect()' function is not triggered yet, but the application a=
-ttempts to re-activate the context anyway because the 'Attached' gprs prope=
-rty has been updated and signaled as TRUE.
-
-Then 'ppp_disconnect()' is triggered.
-
-ofonod[758]: gatppp.c:ppp_dead()
-ofonod[758]: gprs-context.c:ppp_disconnect() Reason: 6
-ofonod[758]: gprs.c:pri_activate_callback() 0x5508c8
-ofonod[758]: gprs.c:pri_activate_callback() Activating context failed with =
-error: Unknown error type
-
-At this time the gprs context state equals to "Enabling", due to the latest=
- appliction request =3D> the 'pri_activate_callback()' callback is executed.
-
-oFono gets a "NO CARRIER" from the modem, but it trigges the 'at_cgdcont_cb=
-()' with error.
-
-=3D> The pri_activate_callback() is called twice with error
-
-ofonod[758]: gprs-context.c:ppp_disconnect()
-ofonod[758]: gprs.c:pri_activate_callback() 0x19b7978
-ofonod[758]: gprs.c:pri_activate_callback() Activating context failed with =
-error: Unknown error type
-ofonod[758]: gprs-context.c:at_cgdcont_cb() ok 0
-ofonod[758]: gprs.c:pri_activate_callback() 0x19b7978
-ofonod[758]: gprs.c:pri_activate_callback() Activating context failed with =
-error: Unknown error type
-
-Because the 'DBusMessage' has been already freed, oFono aborts.
-
-Is there a proper way to prevent this unexpected situation ?
-
-It already tried to catch the 'NO CARRIER' final response without sucess.
-
-Regards,
-Nicolas.
---===============7296525666079056007==--
+--===============5006139604241746661==--
 
