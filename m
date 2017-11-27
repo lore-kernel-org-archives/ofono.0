@@ -1,35 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============6440858665511034240=="
+Content-Type: multipart/mixed; boundary="===============0285120244017276859=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] include: Add storage.h
-Date: Mon, 27 Nov 2017 10:00:44 -0600
-Message-ID: <6a41a67d-c55c-1d0f-941d-d0f8bce75bc2@gmail.com>
-In-Reply-To: <1511778699-32054-1-git-send-email-slava.monich@jolla.com>
+Subject: Re: [PATCH] sim-auth: Avoid using dbus_message_iter_get_element_count
+Date: Mon, 27 Nov 2017 10:08:43 -0600
+Message-ID: <da63b6a9-3f66-369f-ea35-9dc1ff276a50@gmail.com>
+In-Reply-To: <1511780804-4383-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6440858665511034240==
+--===============0285120244017276859==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Slava,
 
-On 11/27/2017 04:31 AM, Slava Monich wrote:
-> To expose ofono directories to dynamically loadable plugins.
+On 11/27/2017 05:06 AM, Slava Monich wrote:
+> It's the only thing in ofono that requires dbus 1.9.16 or later and it's
+> not worth it.
+> =
+
+> And don't leak DBusMessage on format error.
 > ---
->   Makefile.am       |  3 ++-
->   include/storage.h | 32 ++++++++++++++++++++++++++++++++
->   2 files changed, 34 insertions(+), 1 deletion(-)
->   create mode 100644 include/storage.h
+>   src/sim-auth.c | 22 +++++++++-------------
+>   1 file changed, 9 insertions(+), 13 deletions(-)
 > =
 
 
-Both applied, thanks.
+Applied, thanks.
 
 Regards,
 -Denis
 
 
---===============6440858665511034240==--
+--===============0285120244017276859==--
 
