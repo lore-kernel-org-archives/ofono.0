@@ -1,37 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============0285120244017276859=="
+Content-Type: multipart/mixed; boundary="===============5308847651154796845=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim-auth: Avoid using dbus_message_iter_get_element_count
-Date: Mon, 27 Nov 2017 10:08:43 -0600
-Message-ID: <da63b6a9-3f66-369f-ea35-9dc1ff276a50@gmail.com>
-In-Reply-To: <1511780804-4383-1-git-send-email-slava.monich@jolla.com>
+From: Alexander Couzens <lynxis@fe80.eu>
+Subject: [PATCH][v2 1/4] qmi/discovery: remove useless code
+Date: Tue, 05 Dec 2017 18:52:34 +0100
+Message-ID: <20171205175237.17399-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0285120244017276859==
+--===============5308847651154796845==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+---
+ drivers/qmimodem/qmi.c | 7 -------
+ 1 file changed, 7 deletions(-)
 
-On 11/27/2017 05:06 AM, Slava Monich wrote:
-> It's the only thing in ofono that requires dbus 1.9.16 or later and it's
-> not worth it.
-> =
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index a0632ca54025..5b29b761686a 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -1161,13 +1161,6 @@ static void discover_callback(uint16_t message, uint=
+16_t length,
+ =
 
-> And don't leak DBusMessage on format error.
-> ---
->   src/sim-auth.c | 22 +++++++++-------------
->   1 file changed, 9 insertions(+), 13 deletions(-)
-> =
+ 	device->version_str =3D strndup(ptr + 1, *((uint8_t *) ptr));
+ =
+
+-	service_list =3D ptr + *((uint8_t *) ptr) + 1;
+-
+-	for (i =3D 0; i < service_list->count; i++) {
+-		if (service_list->services[i].type =3D=3D QMI_SERVICE_CONTROL)
+-			continue;
+-	}
+-
+ done:
+ 	device->version_list =3D list;
+ 	device->version_count =3D count;
+-- =
+
+2.15.1
 
 
-Applied, thanks.
-
-Regards,
--Denis
-
-
---===============0285120244017276859==--
+--===============5308847651154796845==--
 
