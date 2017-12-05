@@ -1,45 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============0223222486549124247=="
+Content-Type: multipart/mixed; boundary="===============2325187556769237797=="
 MIME-Version: 1.0
 From: Alexander Couzens <lynxis@fe80.eu>
-Subject: [PATCH 1/4] network: allow drivers to generate more specific error
- codes
-Date: Tue, 05 Dec 2017 19:20:14 +0100
-Message-ID: <20171205182017.462-1-lynxis@fe80.eu>
+Subject: [PATCH 2/4] qmimodem: add define CALLBACK_WITH_CME_ERROR(cb, err,
+ args..)
+Date: Tue, 05 Dec 2017 19:20:15 +0100
+Message-ID: <20171205182017.462-2-lynxis@fe80.eu>
+In-Reply-To: <20171205182017.462-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0223222486549124247==
+--===============2325187556769237797==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-For certain modems it's not clear if they support all actions or not.
-In such cases use CME errors which allows generate NotSupported
-messages.
 ---
- src/network.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/qmimodem/util.h | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/src/network.c b/src/network.c
-index 6e69b078495f..ae3175d4a7e9 100644
---- a/src/network.c
-+++ b/src/network.c
-@@ -222,7 +222,7 @@ static void register_callback(const struct ofono_error =
-*error, void *data)
- 	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
- 		reply =3D dbus_message_new_method_return(netreg->pending);
- 	else
--		reply =3D __ofono_error_failed(netreg->pending);
-+		reply =3D __ofono_error_from_error(error, netreg->pending);
+diff --git a/drivers/qmimodem/util.h b/drivers/qmimodem/util.h
+index cf053f0fe840..974160234af5 100644
+--- a/drivers/qmimodem/util.h
++++ b/drivers/qmimodem/util.h
+@@ -39,6 +39,15 @@ static inline struct cb_data *cb_data_new(void *cb, void=
+ *data)
+ 	return ret;
+ }
  =
 
- 	__ofono_dbus_pending_reply(&netreg->pending, reply);
- =
-
++#define CALLBACK_WITH_CME_ERROR(cb, err, args...)	\
++	do {						\
++		struct ofono_error cb_e;		\
++		cb_e.type =3D OFONO_ERROR_TYPE_CME;	\
++		cb_e.error =3D err;			\
++							\
++		cb(&cb_e, ##args);			\
++	} while (0)					\
++
+ #define CALLBACK_WITH_FAILURE(cb, args...)		\
+ 	do {						\
+ 		struct ofono_error cb_e;		\
 -- =
 
 2.15.1
 
 
---===============0223222486549124247==--
+--===============2325187556769237797==--
 
