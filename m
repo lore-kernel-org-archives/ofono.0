@@ -1,49 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============2325187556769237797=="
+Content-Type: multipart/mixed; boundary="===============3547705117745150080=="
 MIME-Version: 1.0
 From: Alexander Couzens <lynxis@fe80.eu>
-Subject: [PATCH 2/4] qmimodem: add define CALLBACK_WITH_CME_ERROR(cb, err,
- args..)
-Date: Tue, 05 Dec 2017 19:20:15 +0100
-Message-ID: <20171205182017.462-2-lynxis@fe80.eu>
+Subject: [PATCH 3/4] qmimodem: add translator qmi_error_to_ofono_cme()
+Date: Tue, 05 Dec 2017 19:20:16 +0100
+Message-ID: <20171205182017.462-3-lynxis@fe80.eu>
 In-Reply-To: <20171205182017.462-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2325187556769237797==
+--===============3547705117745150080==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Translates qmi error codes into ofono cme errors
 ---
- drivers/qmimodem/util.h | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ drivers/qmimodem/qmi.c | 11 +++++++++++
+ drivers/qmimodem/qmi.h |  2 ++
+ 2 files changed, 13 insertions(+)
 
-diff --git a/drivers/qmimodem/util.h b/drivers/qmimodem/util.h
-index cf053f0fe840..974160234af5 100644
---- a/drivers/qmimodem/util.h
-+++ b/drivers/qmimodem/util.h
-@@ -39,6 +39,15 @@ static inline struct cb_data *cb_data_new(void *cb, void=
- *data)
- 	return ret;
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index a0632ca54025..90349db61964 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -476,6 +476,17 @@ static const char *__error_to_string(uint16_t error)
+ 	return NULL;
  }
  =
 
-+#define CALLBACK_WITH_CME_ERROR(cb, err, args...)	\
-+	do {						\
-+		struct ofono_error cb_e;		\
-+		cb_e.type =3D OFONO_ERROR_TYPE_CME;	\
-+		cb_e.error =3D err;			\
-+							\
-+		cb(&cb_e, ##args);			\
-+	} while (0)					\
++int qmi_error_to_ofono_cme(int qmi_error) {
++	switch (qmi_error) {
++	case 0x0019:
++		return 4; /* Not Supported */
++	case 0x0052:
++		return 32; /* Access Denied */
++	default:
++		return -1;
++	}
++}
 +
- #define CALLBACK_WITH_FAILURE(cb, args...)		\
- 	do {						\
- 		struct ofono_error cb_e;		\
+ static void __debug_msg(const char dir, const void *buf, size_t len,
+ 				qmi_debug_func_t function, void *user_data)
+ {
+diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+index b4955b40b1fb..4f2d5bdf59c5 100644
+--- a/drivers/qmimodem/qmi.h
++++ b/drivers/qmimodem/qmi.h
+@@ -140,6 +140,8 @@ bool qmi_result_get_uint64(struct qmi_result *result, u=
+int8_t type,
+ 							uint64_t *value);
+ void qmi_result_print_tlvs(struct qmi_result *result);
+ =
+
++int qmi_error_to_ofono_cme(int qmi_error);
++
+ struct qmi_service;
+ =
+
+ typedef void (*qmi_result_func_t)(struct qmi_result *result, void *user_da=
+ta);
 -- =
 
 2.15.1
 
 
---===============2325187556769237797==--
+--===============3547705117745150080==--
 
