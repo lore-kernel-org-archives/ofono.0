@@ -1,64 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============0134600526658754806=="
+Content-Type: multipart/mixed; boundary="===============0223222486549124247=="
 MIME-Version: 1.0
 From: Alexander Couzens <lynxis@fe80.eu>
-Subject: [PATCH][v2 4/4] plugins/gobi: reset the qmi interface when enabling
- the modem
-Date: Tue, 05 Dec 2017 18:52:37 +0100
-Message-ID: <20171205175237.17399-4-lynxis@fe80.eu>
-In-Reply-To: <20171205175237.17399-1-lynxis@fe80.eu>
+Subject: [PATCH 1/4] network: allow drivers to generate more specific error
+ codes
+Date: Tue, 05 Dec 2017 19:20:14 +0100
+Message-ID: <20171205182017.462-1-lynxis@fe80.eu>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0134600526658754806==
+--===============0223222486549124247==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+For certain modems it's not clear if they support all actions or not.
+In such cases use CME errors which allows generate NotSupported
+messages.
 ---
- plugins/gobi.c | 15 +++++++++++++--
- 1 file changed, 13 insertions(+), 2 deletions(-)
+ src/network.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 516b55e9411d..17900010d1db 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -254,6 +254,15 @@ error:
- 	shutdown_device(modem);
- }
+diff --git a/src/network.c b/src/network.c
+index 6e69b078495f..ae3175d4a7e9 100644
+--- a/src/network.c
++++ b/src/network.c
+@@ -222,7 +222,7 @@ static void register_callback(const struct ofono_error =
+*error, void *data)
+ 	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
+ 		reply =3D dbus_message_new_method_return(netreg->pending);
+ 	else
+-		reply =3D __ofono_error_failed(netreg->pending);
++		reply =3D __ofono_error_from_error(error, netreg->pending);
  =
 
-+static void create_shared_dms(void *user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct gobi_data *data =3D ofono_modem_get_data(modem);
-+
-+	qmi_service_create_shared(data->device, QMI_SERVICE_DMS,
-+				  create_dms_cb, modem, NULL);
-+}
-+
- static void discover_cb(uint8_t count, const struct qmi_version *list,
- 							void *user_data)
- {
-@@ -316,8 +325,10 @@ static void discover_cb(uint8_t count, const struct qm=
-i_version *list,
- 		return;
- 	}
+ 	__ofono_dbus_pending_reply(&netreg->pending, reply);
  =
 
--	qmi_service_create_shared(data->device, QMI_SERVICE_DMS,
--						create_dms_cb, modem, NULL);
-+	if (qmi_device_is_sync_supported(data->device))
-+		qmi_device_sync(data->device, create_shared_dms, modem);
-+	else
-+		create_shared_dms(modem);
- }
- =
-
- static int gobi_enable(struct ofono_modem *modem)
 -- =
 
 2.15.1
 
 
---===============0134600526658754806==--
+--===============0223222486549124247==--
 
