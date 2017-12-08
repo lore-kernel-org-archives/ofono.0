@@ -1,167 +1,172 @@
-Content-Type: multipart/mixed; boundary="===============4650387462156835491=="
+Content-Type: multipart/mixed; boundary="===============4511336027454772038=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim: Handle multiple EFpl read completions
-Date: Fri, 08 Dec 2017 08:14:48 -0600
-Message-ID: <39fc4107-7a38-ed25-0863-1f7c9179a9e9@gmail.com>
-In-Reply-To: <1512666576-28999-1-git-send-email-slava.monich@jolla.com>
+Subject: Re: [PATCH 1/7] voicecall: Support clir for last call dialing
+Date: Fri, 08 Dec 2017 08:22:29 -0600
+Message-ID: <cd22972d-8465-d24e-9b63-85648446cce8@gmail.com>
+In-Reply-To: <20171206153604.15080-2-philippedeswert@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4650387462156835491==
+--===============4511336027454772038==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+Hi Philippe,
 
-On 12/07/2017 11:09 AM, Slava Monich wrote:
-> Since sim_efli_efpl_changed() can be invoked several times before
-> completion of SIM reads (which are not cancellable), followed by
-> multiple completions, it's not enough to free old sim->language_prefs
-> in sim_efli_efpl_changed(). The same thing has to be done by
-> sim_efpl_read_cb() to avoid leaking memory e.g. after this
-> sequence of calls:
+On 12/06/2017 09:35 AM, Philippe De Swert wrote:
+> When dialing the last called number we also want to use the caller id (cl=
+ir)
+> settings that are currently used.
 > =
-
->    1. sim_efli_efpl_changed()
->    2. sim_efli_efpl_changed()
->    3. sim_efpl_read_cb()
->    4. sim_efpl_read_cb()
-
-So why don't we just set a flag and ignore the duplicate update if the =
-
-flag is set?
-
-Alternatively, we can always add cancellation support to simfs.
-
-> =
-
-> One such scenario involves __ofono_sim_refresh() calling
-> sim_efli_efpl_changed() first with id=3DSIM_EFPL_FILEID,
-> like this:
-> =
-
->    #0  sim_efli_efpl_changed (id=3D12037)
->    #1  sim_fs_notify_file_watches (id=3D-1)
->    #2  __ofono_sim_refresh (file_list=3D0x0, full_file_change=3D1, naa_in=
-it=3D1)
->    #3  handle_command_refresh ()
->    #4  ofono_stk_proactive_command_handled_notify ()
->    ...
-> =
-
-> and then with id=3D28421 (SIM_EFLI_FILEID), so both files are
-> re-read twice, the second result overwriting the first one
-> and the first one getting lost (leaked). Since SIM reads are
-> asynchronous and take considerable time, I'm quite sure that
-> there are other scenarios as well.
-> =
-
-> In fact it's even better to keep the old sim->language_prefs
-> around until EFpl read is finished, to avoid issuing unnecessary
-> PropertyChanged signal if the second read produces the same
-> result, which it normally does.
-
-Okay, that sounds useful
 
 > ---
->   src/sim.c | 30 ++++++++++++++++++++++++------
->   1 file changed, 24 insertions(+), 6 deletions(-)
+>   doc/voicecallmanager-api.txt |  2 +-
+>   drivers/hfpmodem/voicecall.c |  4 ++--
+>   include/voicecall.h          |  3 ++-
+>   src/voicecall.c              | 18 ++++++++++++++----
+>   4 files changed, 19 insertions(+), 8 deletions(-)
 > =
 
-> diff --git a/src/sim.c b/src/sim.c
-> index 2538c77..2585f06 100644
-> --- a/src/sim.c
-> +++ b/src/sim.c
-> @@ -2081,6 +2081,26 @@ static char **concat_lang_prefs(GSList *a, GSList =
-*b)
->   	return ret;
+
+This patch really needs to be broken up into 4.  See HACKING, =
+
+'Submitting patches'.
+
+> diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
+> index 7aeb81f7..f82a0a10 100644
+> --- a/doc/voicecallmanager-api.txt
+> +++ b/doc/voicecallmanager-api.txt
+> @@ -59,7 +59,7 @@ Methods		dict GetProperties()
+>   					 [service].Error.NotImplemented
+>   					 [service].Error.Failed
+>   =
+
+> -		object DialLast()
+> +		object DialLast(string hide_callerid)
+>   =
+
+>   			Initiates a new outgoing call to the last dialled number.
+>   =
+
+> diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+> index 1e0489c2..a32a3242 100644
+> --- a/drivers/hfpmodem/voicecall.c
+> +++ b/drivers/hfpmodem/voicecall.c
+> @@ -405,8 +405,8 @@ static void hfp_dial(struct ofono_voicecall *vc,
+>   	CALLBACK_WITH_FAILURE(cb, data);
 >   }
 >   =
 
-> +static gboolean strv_equal(char **sv1, char **sv2)
-> +{
-> +	const guint len1 =3D sv1 ? g_strv_length(sv1) : 0;
-> +	const guint len2 =3D sv2 ? g_strv_length(sv2) : 0;
-> +
-> +	if (len1 =3D=3D len2) {
-> +		guint i;
-> +
-> +		for (i =3D 0; i < len1; i++) {
-> +			if (strcmp(sv1[i], sv2[i])) {
-> +				return FALSE;
-> +			}
-> +		}
-> +
-> +		return TRUE;
-> +	}
-> +
-> +	return FALSE;
-> +}
-> +
+> -static void hfp_dial_last(struct ofono_voicecall *vc, ofono_voicecall_cb=
+_t cb,
+> -			void *data)
+> +static void hfp_dial_last(struct ofono_voicecall *vc, enum ofono_clir_op=
+tion clir,
+> +			ofono_voicecall_cb_t cb, void *data)
+>   {
+>   	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+>   	struct cb_data *cbd =3D cb_data_new(cb, data);
 
-This really belongs somewhere else, like maybe util.[ch]
+It doesn't look like you actually implementing the CLIR modifier in the =
 
->   static void sim_efpl_read_cb(int ok, int length, int record,
->   				const unsigned char *data,
->   				int record_length, void *userdata)
-> @@ -2091,6 +2111,7 @@ static void sim_efpl_read_cb(int ok, int length, in=
-t record,
->   	gboolean efli_format =3D TRUE;
->   	GSList *efli =3D NULL;
->   	GSList *efpl =3D NULL;
-> +	char **old_prefs =3D sim->language_prefs;
+driver?  E.g. the 'I' or 'i' suffix business.
+
+I think last time I played with this half the AG implementations didn't =
+
+support the CLIR parameter anyway.
+
+> diff --git a/include/voicecall.h b/include/voicecall.h
+> index 6871a6b5..79a64bb4 100644
+> --- a/include/voicecall.h
+> +++ b/include/voicecall.h
+> @@ -64,7 +64,8 @@ struct ofono_voicecall_driver {
+>   	/* Dials the last number again, this handles the hfp profile last numb=
+er
+>            * dialing with the +BLDN AT command
+>            */
+> -	void (*dial_last)(struct ofono_voicecall *vc, ofono_voicecall_cb_t cb, =
+void *data);
+> +	void (*dial_last)(struct ofono_voicecall *vc, enum ofono_clir_option cl=
+ir,
+> +				ofono_voicecall_cb_t cb, void *data);
+>   	/* Answers an incoming call, this usually corresponds to ATA */
+>   	void (*answer)(struct ofono_voicecall *vc,
+>   			ofono_voicecall_cb_t cb, void *data);
+> diff --git a/src/voicecall.c b/src/voicecall.c
+> index cd9182a1..9f323c6e 100644
+> --- a/src/voicecall.c
+> +++ b/src/voicecall.c
+> @@ -1605,7 +1605,7 @@ error:
+>   					__ofono_error_failed(vc->pending));
+>   }
 >   =
 
->   	if (!ok || length < 2)
->   		goto skip_efpl;
-> @@ -2142,13 +2163,15 @@ skip_efpl:
->   		g_slist_free_full(efpl, g_free);
->   	}
+> -static int voicecall_dial_last(struct ofono_voicecall *vc,
+> +static int voicecall_dial_last(struct ofono_voicecall *vc, enum ofono_cl=
+ir_option clir,
+>   					ofono_voicecall_cb_t cb, void *data)
+>   {
+>   	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+> @@ -1629,7 +1629,7 @@ static int voicecall_dial_last(struct ofono_voiceca=
+ll *vc,
+>   	if (voicecalls_have_active(vc) && voicecalls_have_held(vc))
+>   		return -EBUSY;
 >   =
 
-> -	if (sim->language_prefs !=3D NULL)
-> +	if (!strv_equal(sim->language_prefs, old_prefs))
->   		ofono_dbus_signal_array_property_changed(conn, path,
->   						OFONO_SIM_MANAGER_INTERFACE,
->   						"PreferredLanguages",
->   						DBUS_TYPE_STRING,
->   						&sim->language_prefs);
+> -	vc->driver->dial_last(vc, cb, vc);
+> +	vc->driver->dial_last(vc, clir, cb, vc);
 >   =
 
-> +	g_strfreev(old_prefs);
+>   	return 0;
+>   }
+> @@ -1638,14 +1638,23 @@ static DBusMessage *manager_dial_last(DBusConnect=
+ion *conn,
+>   					DBusMessage *msg, void *data)
+>   {
+>   	struct ofono_voicecall *vc =3D data;
+> +	const char *clirstr;
+> +	enum ofono_clir_option clir;
+>   	int err;
+>   =
+
+>   	if (vc->pending || vc->dial_req || vc->pending_em)
+>   		return __ofono_error_busy(msg);
+>   =
+
+> +	if (dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &clirstr,
+> +						DBUS_TYPE_INVALID) =3D=3D FALSE)
+> +		return __ofono_error_invalid_args(msg);
 > +
->   	/* Proceed with sim initialization if we're not merely updating */
->   	if (!sim->language_prefs_update)
->   		__ofono_sim_recheck_pin(sim);
-> @@ -2200,11 +2223,6 @@ static void sim_efli_efpl_changed(int id, void *us=
-erdata)
->   	if (sim->efli !=3D NULL) /* This shouldn't happen */
->   		return;
+> +	if (clir_string_to_clir(clirstr, &clir) =3D=3D FALSE)
+> +		return __ofono_error_invalid_format(msg);
+> +
+>   	vc->pending =3D dbus_message_ref(msg);
 >   =
 
-> -	if (sim->language_prefs) {
-> -		g_strfreev(sim->language_prefs);
-> -		sim->language_prefs =3D NULL;
-> -	}
-> -
-
-Can we do something like
-if (sim->language_prefs_update)
-	return;
-
-?
-
->   	sim->language_prefs_update =3D true;
+> -	err =3D voicecall_dial_last(vc, manager_dial_last_callback, vc);
+> +	err =3D voicecall_dial_last(vc, clir, manager_dial_last_callback, vc);
 >   =
 
->   	ofono_sim_read(sim->early_context, SIM_EFLI_FILEID,
+>   	if (err >=3D 0)
+>   		return NULL;
+> @@ -2223,7 +2232,8 @@ static const GDBusMethodTable manager_methods[] =3D=
+ {
+>   		GDBUS_ARGS({ "number", "s" }, { "hide_callerid", "s" }),
+>   		GDBUS_ARGS({ "path", "o" }),
+>   		manager_dial) },
+> -	{ GDBUS_ASYNC_METHOD("DialLast", NULL, NULL, manager_dial_last)},
+> +	{ GDBUS_ASYNC_METHOD("DialLast",
+> +		GDBUS_ARGS({ "hide_callerid", "s" }), NULL, manager_dial_last)},
+>   	{ GDBUS_ASYNC_METHOD("Transfer", NULL, NULL, manager_transfer) },
+>   	{ GDBUS_ASYNC_METHOD("SwapCalls",  NULL, NULL, manager_swap_calls) },
+>   	{ GDBUS_ASYNC_METHOD("ReleaseAndAnswer", NULL, NULL,
 > =
 
 
 Regards,
 -Denis
 
---===============4650387462156835491==--
+--===============4511336027454772038==--
 
