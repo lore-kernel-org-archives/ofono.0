@@ -1,190 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============2343654299566775480=="
+Content-Type: multipart/mixed; boundary="===============1371841510012860671=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 5/7] voicecall.c : Add functionality to dial from a memory
- location.
-Date: Fri, 08 Dec 2017 08:30:48 -0600
-Message-ID: <832a79cd-52fc-4071-4037-3c442b5870d2@gmail.com>
-In-Reply-To: <20171206153604.15080-6-philippedeswert@gmail.com>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: Re: [PATCH] sim: Handle multiple EFpl read completions
+Date: Fri, 08 Dec 2017 17:50:28 +0300
+Message-ID: <35c9eada-9f54-f189-3111-75ce20a5408b@jolla.com>
+In-Reply-To: <39fc4107-7a38-ed25-0863-1f7c9179a9e9@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2343654299566775480==
+--===============1371841510012860671==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+On 08/12/17 17:14, Denis Kenzior wrote:
+> ...
+>
+> Can we do something like
+> if (sim->language_prefs_update)
+> =C2=A0=C2=A0=C2=A0=C2=A0return;
+>
+> ?
+>
 
-On 12/06/2017 09:36 AM, Philippe De Swert wrote:
-> Now we can also dial favourites/quick contacts over bluetooth.
-> =
+Yes, of course! Forget this patch then, I'll send a new one.
 
-> ---
->   src/voicecall.c | 72 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-+------
->   1 file changed, 65 insertions(+), 7 deletions(-)
-> =
+Cheers,
+-Slava
 
-> diff --git a/src/voicecall.c b/src/voicecall.c
-> index ed6ea83f..f35047f8 100644
-> --- a/src/voicecall.c
-> +++ b/src/voicecall.c
-> @@ -1607,10 +1607,11 @@ error:
->   					__ofono_error_failed(vc->pending));
->   }
->   =
-
-> -static int voicecall_dial_shortcut(struct ofono_voicecall *vc, enum ofon=
-o_clir_option clir,
-> -					ofono_voicecall_cb_t cb, void *data)
-> +static int voicecall_dial_shortcut(struct ofono_voicecall *vc, const cha=
-r *position,
-> +				enum ofono_clir_option clir, ofono_voicecall_cb_t cb, void *data)
->   {
->   	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
-> +	long int memory_position;
->   =
-
->   	if (g_slist_length(vc->call_list) >=3D MAX_VOICE_CALLS)
->   		return -EPERM;
-> @@ -1618,9 +1619,6 @@ static int voicecall_dial_shortcut(struct ofono_voi=
-cecall *vc, enum ofono_clir_o
->   	if (ofono_modem_get_online(modem) =3D=3D FALSE)
->   		return -ENETDOWN;
->   =
-
-> -	if (vc->driver->dial_last =3D=3D NULL)
-> -		return -ENOTSUP;
-> -
->   	if (voicecalls_have_incoming(vc))
->   		return -EBUSY;
->   =
-
-> @@ -1631,7 +1629,19 @@ static int voicecall_dial_shortcut(struct ofono_vo=
-icecall *vc, enum ofono_clir_o
->   	if (voicecalls_have_active(vc) && voicecalls_have_held(vc))
->   		return -EBUSY;
->   =
-
-> -	vc->driver->dial_last(vc, clir, cb, vc);
-> +	/* when position is not given we dial the last called number */
-> +	if(position =3D=3D NULL) {
-
-not our coding style
-
-> +		if (vc->driver->dial_last =3D=3D NULL)
-> +			return -ENOTSUP;
-> +
-> +		vc->driver->dial_last(vc, clir, cb, vc);
-> +	} else {
-> +		memory_position =3D strtol(position, NULL, 10);
-
-You need to make sure that strtol succeeds, it might be better to =
-
-perform this checking in manager_dial_memory
-
-> +		if(vc->driver->dial_memory =3D=3D NULL )
-> +			return -ENOTSUP;
-> +
-> +		vc->driver->dial_memory(vc, memory_position, clir, cb, vc);
-> +	}
->   =
-
->   	return 0;
->   }
-> @@ -1656,7 +1666,7 @@ static DBusMessage *manager_dial_last(DBusConnectio=
-n *conn,
->   =
-
->   	vc->pending =3D dbus_message_ref(msg);
->   =
-
-> -	err =3D voicecall_dial_shortcut(vc, clir, manager_dial_shortcut_callbac=
-k, vc);
-> +	err =3D voicecall_dial_shortcut(vc, NULL, clir, manager_dial_shortcut_c=
-allback, vc);
->   =
-
->   	if (err >=3D 0)
->   		return NULL;
-> @@ -1678,6 +1688,50 @@ static DBusMessage *manager_dial_last(DBusConnecti=
-on *conn,
->   	return __ofono_error_failed(msg);
->   }
->   =
-
-> +static DBusMessage *manager_dial_memory(DBusConnection *conn,
-> +                                       DBusMessage *msg, void *data)
-> +{
-> +       struct ofono_voicecall *vc =3D data;
-> +       const char *memory_location;
-> +       const char *clirstr;
-> +       enum ofono_clir_option clir;
-> +       int err;
-> +
-> +       if (vc->pending || vc->dial_req || vc->pending_em)
-> +               return __ofono_error_busy(msg);
-> +
-> +       if (dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &memory_lo=
-cation,
-> +                                       DBUS_TYPE_STRING, &clirstr,
-> +                                       DBUS_TYPE_INVALID) =3D=3D FALSE)
-> +               return __ofono_error_invalid_args(msg);
-> +
-> +       if (clir_string_to_clir(clirstr, &clir) =3D=3D FALSE)
-> +               return __ofono_error_invalid_format(msg);
-> +
-> +       vc->pending =3D dbus_message_ref(msg);
-> +
-> +       err =3D voicecall_dial_shortcut(vc, memory_location, clir, manage=
-r_dial_shortcut_callback, vc);
-> +
-> +       if (err >=3D 0)
-> +               return NULL;
-> +
-> +       vc->pending =3D NULL;
-> +       dbus_message_unref(msg);
-> +
-> +       switch (err) {
-> +       case -EINVAL:
-> +               return __ofono_error_invalid_format(msg);
-> +
-> +       case -ENETDOWN:
-> +               return __ofono_error_not_available(msg);
-> +
-> +       case -ENOTSUP:
-> +               return __ofono_error_not_implemented(msg);
-> +       }
-> +
-> +       return __ofono_error_failed(msg);
-> +}
-> +
->   static DBusMessage *manager_transfer(DBusConnection *conn,
->   					DBusMessage *msg, void *data)
->   {
-> @@ -2236,6 +2290,10 @@ static const GDBusMethodTable manager_methods[] =
-=3D {
->   		manager_dial) },
->   	{ GDBUS_ASYNC_METHOD("DialLast",
->   		GDBUS_ARGS({ "hide_callerid", "s" }), NULL, manager_dial_last)},
-> +	{ GDBUS_ASYNC_METHOD("DialMemory",
-> +		GDBUS_ARGS({ "memory_location", "s" },{ "hide_callerid", "s" }),
-
-Why would memory location be a string?  Why not just make it an unsigned =
-
-int32 and make it easy?
-
-> +		NULL,
-> +		manager_dial_memory) },
->   	{ GDBUS_ASYNC_METHOD("Transfer", NULL, NULL, manager_transfer) },
->   	{ GDBUS_ASYNC_METHOD("SwapCalls",  NULL, NULL, manager_swap_calls) },
->   	{ GDBUS_ASYNC_METHOD("ReleaseAndAnswer", NULL, NULL,
-> =
-
-
-Regards,
--Denis
-
---===============2343654299566775480==--
+--===============1371841510012860671==--
 
