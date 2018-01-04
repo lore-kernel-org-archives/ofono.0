@@ -1,64 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============0642616302318094922=="
+Content-Type: multipart/mixed; boundary="===============5218808796232256530=="
 MIME-Version: 1.0
-From: Enrico Sau <enrico.sau@gmail.com>
-Subject: Vendor product extension thoughts
-Date: Thu, 04 Jan 2018 14:01:33 +0100
-Message-ID: <CAH4ZQwuKXyE1wi47d1eO-Jcqcht47OkoV_WO3KUOuCymhQ31Yg@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Vendor product extension thoughts
+Date: Thu, 04 Jan 2018 10:27:19 -0600
+Message-ID: <fea86f8c-9f44-cbbe-74e1-5bee3b4a9633@gmail.com>
+In-Reply-To: <CAH4ZQwuKXyE1wi47d1eO-Jcqcht47OkoV_WO3KUOuCymhQ31Yg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0642616302318094922==
+--===============5218808796232256530==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-=E2=80=8BHello everyone,
+Hi Enrico,
 
-I'm facing what seems to be a limit in ofono implementation.
-I'm working with some Telit modems and some of them have reserved contexts
-which can't be used for data connection.
+On 01/04/2018 07:01 AM, Enrico Sau wrote:
+> =E2=80=8BHello everyone,
+> =
 
-Currently, from telit plugin, I can only send the "vendor" parameter to the
-interface create function and there is no way to specify the product.
+> I'm facing what seems to be a limit in ofono implementation.
+> I'm working with some Telit modems and some of them have reserved =
 
-What you think?
-Did anyone ever have to set different behaviors for different products of
-the same vendor?
+> contexts which can't be used for data connection.
+> =
 
-I'm thinking about different solutions:
-- extend the vendors enum in order to be a vendor/product enum.
-- add a product parameter to the function prototype
-- change the vendor parameter with a structure of two variables
 
-Do you think it would be an improvement?
+Define 'reserved contexts'?  Is it just the context id that is reserved =
 
-P.S. happy new year!
+or the USB port?
 
-Enrico
+> Currently, from telit plugin, I can only send the "vendor" parameter to =
 
---===============0642616302318094922==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+> the interface create function and there is no way to specify the product.
+> =
 
-PGRpdiBkaXI9Imx0ciI+PGRpdiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlm
-IiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+4oCLSGVsbG8gZXZlcnlvbmUsPGJyPjxicj5JJiMzOTtt
-IGZhY2luZyB3aGF0IHNlZW1zIHRvIGJlIGEgbGltaXQgaW4gb2Zvbm8gaW1wbGVtZW50YXRpb24u
-PGJyPkkmIzM5O20gd29ya2luZyB3aXRoIHNvbWUgVGVsaXQgbW9kZW1zIGFuZCBzb21lIG9mIHRo
-ZW0gaGF2ZSByZXNlcnZlZCBjb250ZXh0cyB3aGljaCBjYW4mIzM5O3QgYmUgdXNlZCBmb3IgZGF0
-YSBjb25uZWN0aW9uLjxicj48YnI+Q3VycmVudGx5LCBmcm9tIHRlbGl0IHBsdWdpbiwgSSBjYW4g
-b25seSBzZW5kIHRoZSAmcXVvdDt2ZW5kb3ImcXVvdDsgcGFyYW1ldGVyIHRvIHRoZSBpbnRlcmZh
-Y2UgY3JlYXRlIGZ1bmN0aW9uIGFuZCB0aGVyZSBpcyBubyB3YXkgdG8gc3BlY2lmeSB0aGUgcHJv
-ZHVjdC48YnI+PGJyPldoYXQgeW91IHRoaW5rPzxicj5EaWQgYW55b25lIGV2ZXIgaGF2ZSB0byBz
-ZXQgZGlmZmVyZW50IGJlaGF2aW9ycyBmb3IgZGlmZmVyZW50IHByb2R1Y3RzIG9mIHRoZSBzYW1l
-IHZlbmRvcj88YnI+PGJyPkkmIzM5O20gdGhpbmtpbmcgYWJvdXQgZGlmZmVyZW50IHNvbHV0aW9u
-czo8YnI+LSBleHRlbmQgdGhlIHZlbmRvcnMgZW51bSBpbiBvcmRlciB0byBiZSBhIHZlbmRvci9w
-cm9kdWN0IGVudW0uPGJyPi0gYWRkIGEgcHJvZHVjdCBwYXJhbWV0ZXIgdG8gdGhlIGZ1bmN0aW9u
-IHByb3RvdHlwZTxicj4tIGNoYW5nZSB0aGUgdmVuZG9yIHBhcmFtZXRlciB3aXRoIGEgc3RydWN0
-dXJlIG9mIHR3byB2YXJpYWJsZXM8YnI+PGJyPkRvIHlvdSB0aGluayBpdCB3b3VsZCBiZSBhbiBp
-bXByb3ZlbWVudD88YnI+PGJyPlAuUy4gaGFwcHkgbmV3IHllYXIhPGJyPjxicj5FbnJpY288L2Rp
-dj48L2Rpdj4K
+> What you think?
+> Did anyone ever have to set different behaviors for different products =
 
---===============0642616302318094922==--
+> of the same vendor?
+> =
+
+> I'm thinking about different solutions:
+> - extend the vendors enum in order to be a vendor/product enum.
+
+This can certainly be done, but not preferable.
+
+> - add a product parameter to the function prototype
+
+This would be too invasive.  Are you using the telit gprs-context =
+
+driver?  If so, you'd be better off changing that one to accept a custom =
+
+data structure instead of a GAtChat.  See drivers/hfpmodem for an =
+
+example.  Or write a custom driver for your needs...
+
+> - change the vendor parameter with a structure of two variables
+
+See above
+
+Regards,
+-Denis
+
+--===============5218808796232256530==--
 
