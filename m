@@ -1,50 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============0784693939426878639=="
+Content-Type: multipart/mixed; boundary="===============0642616302318094922=="
 MIME-Version: 1.0
-From: David Ashley <dashxdr@gmail.com>
-Subject: Re: ofono with sim5320 module
-Date: Thu, 21 Dec 2017 16:20:15 -0600
-Message-ID: <CABkE59D-pCVccSW=gFwtzXOMm=m8fQst=Wvk4da_=r0vV0VQoA@mail.gmail.com>
-In-Reply-To: <CABkE59AjrNxZFeGdCzstM8UAka75EbptwjMR3pV5VtWsrjQ_RQ@mail.gmail.com>
+From: Enrico Sau <enrico.sau@gmail.com>
+Subject: Vendor product extension thoughts
+Date: Thu, 04 Jan 2018 14:01:33 +0100
+Message-ID: <CAH4ZQwuKXyE1wi47d1eO-Jcqcht47OkoV_WO3KUOuCymhQ31Yg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0784693939426878639==
+--===============0642616302318094922==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Just for closure since this thread appears high up in google search
-for "sim5320 cmux problem"...
+=E2=80=8BHello everyone,
 
-I got the cmux functionality of the SIM5320 module working reliably,
-outside ofonod, but the answer would apply there (and elsewhere). The
-key is to set the cmux line discipline mtu to 120 bytes (or possibly
-as high as 127 bytes). When the cmux is activated and pppd is spawned
-on one of the virtual serial ports, certain network packets want to
-send a big chunk of data into the TX pipleline, and the SIM5320 cmux
-support can't handle it. The sim5320 never sends more than 120 bytes
-at a time to the virtual serial ports, so that was a clue right
-there...
+I'm facing what seems to be a limit in ofono implementation.
+I'm working with some Telit modems and some of them have reserved contexts
+which can't be used for data connection.
 
-mtu 120 works, up to 126 works. I didn't try 127, but mtu set to 128
-and higher fails.
+Currently, from telit plugin, I can only send the "vendor" parameter to the
+interface create function and there is no way to specify the product.
 
--Dave
+What you think?
+Did anyone ever have to set different behaviors for different products of
+the same vendor?
 
-On 3/8/16, David Ashley <dashxdr@gmail.com> wrote:
-> Well this project seems to be dead. Anyway for what it's worth, the
-> problem turned out to be some difference between the AT+CMUX behavior
-> betwene the sim900 and the sim5320 module. When I tore out all the MUX
-> related code the 3G / internet / ppp aspects all just start working.
->
-> -Dave
->
-> On 3/7/16, David Ashley <dashxdr@gmail.com> wrote:
->> Hello, I'm at my wits' end trying to get ofono working with the
->> sim5320 module. I'm using the plugins/sim900.c module as a starting
->> point. I think the issue has something to do with the difference
->> between the MUX functionality between the 900 and the 5320.
->
+I'm thinking about different solutions:
+- extend the vendors enum in order to be a vendor/product enum.
+- add a product parameter to the function prototype
+- change the vendor parameter with a structure of two variables
 
---===============0784693939426878639==--
+Do you think it would be an improvement?
+
+P.S. happy new year!
+
+Enrico
+
+--===============0642616302318094922==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+PGRpdiBzdHlsZT0iZm9udC1mYW1pbHk6dmVyZGFuYSxzYW5zLXNlcmlm
+IiBjbGFzcz0iZ21haWxfZGVmYXVsdCI+4oCLSGVsbG8gZXZlcnlvbmUsPGJyPjxicj5JJiMzOTtt
+IGZhY2luZyB3aGF0IHNlZW1zIHRvIGJlIGEgbGltaXQgaW4gb2Zvbm8gaW1wbGVtZW50YXRpb24u
+PGJyPkkmIzM5O20gd29ya2luZyB3aXRoIHNvbWUgVGVsaXQgbW9kZW1zIGFuZCBzb21lIG9mIHRo
+ZW0gaGF2ZSByZXNlcnZlZCBjb250ZXh0cyB3aGljaCBjYW4mIzM5O3QgYmUgdXNlZCBmb3IgZGF0
+YSBjb25uZWN0aW9uLjxicj48YnI+Q3VycmVudGx5LCBmcm9tIHRlbGl0IHBsdWdpbiwgSSBjYW4g
+b25seSBzZW5kIHRoZSAmcXVvdDt2ZW5kb3ImcXVvdDsgcGFyYW1ldGVyIHRvIHRoZSBpbnRlcmZh
+Y2UgY3JlYXRlIGZ1bmN0aW9uIGFuZCB0aGVyZSBpcyBubyB3YXkgdG8gc3BlY2lmeSB0aGUgcHJv
+ZHVjdC48YnI+PGJyPldoYXQgeW91IHRoaW5rPzxicj5EaWQgYW55b25lIGV2ZXIgaGF2ZSB0byBz
+ZXQgZGlmZmVyZW50IGJlaGF2aW9ycyBmb3IgZGlmZmVyZW50IHByb2R1Y3RzIG9mIHRoZSBzYW1l
+IHZlbmRvcj88YnI+PGJyPkkmIzM5O20gdGhpbmtpbmcgYWJvdXQgZGlmZmVyZW50IHNvbHV0aW9u
+czo8YnI+LSBleHRlbmQgdGhlIHZlbmRvcnMgZW51bSBpbiBvcmRlciB0byBiZSBhIHZlbmRvci9w
+cm9kdWN0IGVudW0uPGJyPi0gYWRkIGEgcHJvZHVjdCBwYXJhbWV0ZXIgdG8gdGhlIGZ1bmN0aW9u
+IHByb3RvdHlwZTxicj4tIGNoYW5nZSB0aGUgdmVuZG9yIHBhcmFtZXRlciB3aXRoIGEgc3RydWN0
+dXJlIG9mIHR3byB2YXJpYWJsZXM8YnI+PGJyPkRvIHlvdSB0aGluayBpdCB3b3VsZCBiZSBhbiBp
+bXByb3ZlbWVudD88YnI+PGJyPlAuUy4gaGFwcHkgbmV3IHllYXIhPGJyPjxicj5FbnJpY288L2Rp
+dj48L2Rpdj4K
+
+--===============0642616302318094922==--
 
