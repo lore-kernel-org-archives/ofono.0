@@ -1,66 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============8457077261236152109=="
+Content-Type: multipart/mixed; boundary="===============7664416742177431432=="
 MIME-Version: 1.0
-From: Engelbert Torremans <engelbert@torremans.com>
-Subject: Problem with dialstring ##21#
-Date: Tue, 16 Jan 2018 13:50:18 +0100
-Message-ID: <e80f263e-eb06-a0ed-f877-c752cd6e5718@torremans.com>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: Re: Problem with dialstring ##21#
+Date: Tue, 16 Jan 2018 16:09:02 +0200
+Message-ID: <05dc33a3-a7cb-e0a9-75d5-dfde6491522d@jolla.com>
+In-Reply-To: <e80f263e-eb06-a0ed-f877-c752cd6e5718@torremans.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8457077261236152109==
+--===============7664416742177431432==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-All,
+On 16/01/18 14:50, Engelbert Torremans wrote:
+> All,
+>
+> I am looking for some help in trying to fix this problem I am =
 
-I am looking for some help in trying to fix this problem I am =
+> experiencing when using Ofono on a RaspberryPi in "carkit/HFP mode".
+>
+> Currently I can make calls (originate and terminate) and audio is fine =
 
-experiencing when using Ofono on a RaspberryPi in "carkit/HFP mode".
+> in combination with Bluez5 etc. also.
+>
+> But I cannot disable CallForwarding via the dial-number command.
+>
+> Enabling CFU via **21*destination-number# is working fine.
+>
+> Trying to disable CFU via ##21# gives below error. Doing the same via =
 
-Currently I can make calls (originate and terminate) and audio is fine =
+> the keypad on the mobile phone works fine.
 
-in combination with Bluez5 etc. also.
+Are you sure that the number is quoted correctly so that the hash sign =
 
-But I cannot disable CallForwarding via the dial-number command.
+is not interpreted by your shell as a comment? Check with dbus-monitor =
 
-Enabling CFU via **21*destination-number# is working fine.
+what's actually being sent over D-Bus.
 
-Trying to disable CFU via ##21# gives below error. Doing the same via =
+Cheers,
+-Slava
 
-the keypad on the mobile phone works fine.
-
-I have the impression that somwhere this ##21# is not processed =
-
-correctly but where? In ofono or in DBUS or?
-
-Any clues?
-
-Thanks,
-
-Engelbert
-
-pi(a)rpi-x:~/xgen/ofono $ ./dial-number BT-MAC-ADDRESS ##21#
-Using modem /hfp/org/bluez/hci0/dev_BT-MAC-ADDRESS
-Traceback (most recent call last):
- =C2=A0 File "./dial-number", line 40, in <module>
- =C2=A0=C2=A0=C2=A0 path =3D vcm.Dial(number, hide_callerid)
- =C2=A0 File "/usr/lib/python3/dist-packages/dbus/proxies.py", line 70, in =
-
-__call__
- =C2=A0=C2=A0=C2=A0 return self._proxy_method(*args, **keywords)
- =C2=A0 File "/usr/lib/python3/dist-packages/dbus/proxies.py", line 145, in =
-
-__call__
- =C2=A0=C2=A0=C2=A0 **keywords)
- =C2=A0 File "/usr/lib/python3/dist-packages/dbus/connection.py", line 651, =
-
-in call_blocking
- =C2=A0=C2=A0=C2=A0 message, timeout)
-dbus.exceptions.DBusException: org.ofono.Error.InvalidFormat: Argument =
-
-format is not recognized
-
-
---===============8457077261236152109==--
+--===============7664416742177431432==--
 
