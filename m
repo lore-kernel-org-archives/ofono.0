@@ -1,41 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============5263036214788974393=="
+Content-Type: multipart/mixed; boundary="===============5013574986673295703=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] dbus: Use dbus_validate_path
-Date: Thu, 18 Jan 2018 10:54:16 -0600
-Message-ID: <97f4f450-8d03-ea44-0656-0e3854739c85@gmail.com>
-In-Reply-To: <1516294077-16319-1-git-send-email-slava.monich@jolla.com>
+Subject: Re: Huawei MS2131
+Date: Thu, 18 Jan 2018 11:03:29 -0600
+Message-ID: <4383ec18-50d2-1ed2-c9a8-7305b7c155b1@gmail.com>
+In-Reply-To: <1c0a7b68-d2f7-6681-a248-b49404696b58@monom.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5263036214788974393==
+--===============5013574986673295703==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+Hi Daniel,
 
-On 01/18/2018 10:47 AM, Slava Monich wrote:
-> Instead of __ofono_dbus_valid_object_path
-> ---
->   plugins/push-notification.c |  2 +-
->   plugins/smart-messaging.c   |  2 +-
->   src/dbus.c                  | 44 --------------------------------------=
-------
->   src/gnss.c                  |  2 +-
->   src/modem.c                 |  2 +-
->   src/netmon.c                |  2 +-
->   src/ofono.h                 |  2 --
->   src/stk.c                   |  4 ++--
->   8 files changed, 7 insertions(+), 53 deletions(-)
-> =
+On 01/18/2018 06:32 AM, Daniel Wagner wrote:
+> [16:18:50.215180] ofonod[3277]: Modem: < \r\n+CGREG: 1,"03B8","0EA971F9"\=
+r\n
+> [16:18:50.315482] ofonod[3277]: Modem: < \r\n^SRVST: 2\r\n
+> [16:18:50.498603] ofonod[3277]: Modem: < \r\n+CREG: 1,"03B8","0EA971F9"\r=
+\n
+> [16:19:39.357779] ofonod[3277]: Modem: < \r\n+CSQ: 27,99\r\n\r\nOK\r\n
+> [16:19:39.357843] ofonod[3277]: Modem: > AT&C0\r
 
+You do seem to get network registration there at the end, but they only =
 
-Applied, thanks.
+come on the Modem Port which is weird.  Also that last AT&C0 should be =
+
+located right around the same place as the AT&C0 on the PCUI port, not =
+
+much later in the log as it is now.  They're sent at the same time in =
+
+sysinfo_enable_cb.
+
+Something is weird with that hardware, almost like the Modem port isn't =
+
+ready to send commands until much later.  Are you sure you have udevng =
+
+detecting the right AT ports?
 
 Regards,
 -Denis
 
-
---===============5263036214788974393==--
+--===============5013574986673295703==--
 
