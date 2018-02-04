@@ -1,55 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============0777734966563155915=="
+Content-Type: multipart/mixed; boundary="===============4374141268261378097=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: Plugin infrastructure
-Date: Sun, 04 Feb 2018 18:19:16 +0100
-Message-ID: <0238d65e-d24f-06af-7e56-bc33da8b22d6@southpole.se>
+Subject: [PATCH 1/4] build: Install DBus policy in /usr/share/dbus-1/system.d
+Date: Sun, 04 Feb 2018 23:55:47 +0100
+Message-ID: <20180204225550.10977-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0777734966563155915==
+--===============4374141268261378097==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+The default location for DBus policy files should be
+/usr/share/dbus-1/system.d and the corresponding directory under /etc
+should be reserved for administrative changes to default/packaged
+settings.  This removes a dependency of ofono on a populated /etc.
+---
+ configure.ac | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-I was reading through the ofono code and I see that there's a lot of =
+diff --git a/configure.ac b/configure.ac
+index f3148a40..79436adc 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -83,9 +83,9 @@ AC_SUBST(DBUS_LIBS)
+ =
 
-code in place to support external plugins.  As things currently stand, =
+ AC_ARG_WITH(dbusconfdir, AC_HELP_STRING([--with-dbusconfdir=3DPATH],
+ 	[path to D-Bus config directory]), [path_dbusconf=3D${withval}],
+-		[path_dbusconf=3D"`$PKG_CONFIG --variable=3Dsysconfdir dbus-1`"])
++		[path_dbusconf=3D"`$PKG_CONFIG --variable=3Ddatadir dbus-1`"])
+ if (test -z "${path_dbusconf}"); then
+-	DBUS_CONFDIR=3D"${sysconfdir}/dbus-1/system.d"
++	DBUS_CONFDIR=3D"${datadir}/dbus-1/system.d"
+ else
+ 	DBUS_CONFDIR=3D"${path_dbusconf}/dbus-1/system.d"
+ fi
+-- =
 
-however, ofono can only be built with _builtin_ modules, so all this =
+2.14.1
 
-plugin infrastructure is totally unused.  So I had a couple of questions =
 
-about this:
-
-i)  Is there any value in keeping the plugin infrastructure in place? =
-
-...or would an effort to remove it be valued?
-
-ii)  Does anyone actually use the include/exclude module patterns to =
-
-prevent "plugins" (modules) from being automatically loaded?
-
-I could imagine marking all module init/exit functions with GCC =
-
-attributes "constructor/destructor" and have them automatically and =
-
-unconditionally initialized at startup.  This would, however, render the =
-
-exclude pattern option useless...
-
-iii) Of course, using GCC attributes ties the project closer to one =
-
-compiler which gives rise to another question.  What are the platforms =
-
-that Ofono aims to support today?  Just Linux?  Linux and others that =
-
-work by chance by virtue of being compatible?  Others?
-
-Thanks,
-Jonas
-
---===============0777734966563155915==--
+--===============4374141268261378097==--
 
