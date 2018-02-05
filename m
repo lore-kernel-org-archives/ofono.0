@@ -1,48 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============1024539058516662395=="
+Content-Type: multipart/mixed; boundary="===============5179564900644853198=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
+From: Jonas Bonn <jonas@southpole.se>
 Subject: Re: Plugin infrastructure
-Date: Mon, 05 Feb 2018 19:25:38 +0300
-Message-ID: <9c99df54-92ec-6960-9e2e-2c16a21df6ef@jolla.com>
-In-Reply-To: <d13d203d-404a-bd2a-6962-ef973a1b949e@gmail.com>
+Date: Mon, 05 Feb 2018 18:55:41 +0100
+Message-ID: <08031d86-68a6-695d-81a2-d1cb69b7b46f@southpole.se>
+In-Reply-To: <9c99df54-92ec-6960-9e2e-2c16a21df6ef@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1024539058516662395==
+--===============5179564900644853198==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> Hi Jonas,
->
-> On 02/04/2018 11:19 AM, Jonas Bonn wrote:
->> Hi,
+On 02/05/2018 05:25 PM, Slava Monich wrote:
+>> Hi Jonas,
 >>
->> I was reading through the ofono code and I see that there's a lot of =
+>> On 02/04/2018 11:19 AM, Jonas Bonn wrote:
+>>> Hi,
+>>>
+>>> I was reading through the ofono code and I see that there's a lot of =
 
->> code in place to support external plugins.=C2=A0 As things currently =
+>>> code in place to support external plugins.=C2=A0 As things currently =
 
->> stand, however, ofono can only be built with _builtin_ modules, so =
+>>> stand, however, ofono can only be built with _builtin_ modules, so =
 
->> all this plugin infrastructure is totally unused. So I had a couple =
+>>> all this plugin infrastructure is totally unused. So I had a couple =
 
->> of questions about this:
+>>> of questions about this:
+>>>
+>>> i)=C2=A0 Is there any value in keeping the plugin infrastructure in pla=
+ce? =
+
+>>> ...or would an effort to remove it be valued?
 >>
->> i)=C2=A0 Is there any value in keeping the plugin infrastructure in plac=
-e? =
+>> We did (still do?) have external plugins in use...
+> =
 
->> ...or would an effort to remove it be valued?
->
-> We did (still do?) have external plugins in use...
+> Yes, we do!
 
-Yes, we do!
+OK.  If you don't mind a stupid question:  why?  Why not just put these =
 
-If upstream eliminates the plugin system, we would still have to =
+in the ofono tree?
 
-maintain it in our fork. At the moment we are using it more or less as is.
+/Jonas
 
-Cheers,
--Slava
-
---===============1024539058516662395==--
+--===============5179564900644853198==--
 
