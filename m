@@ -1,33 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============7010825078187505864=="
+Content-Type: multipart/mixed; boundary="===============1024539058516662395=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] xmm7modem: drop executable bit from C source file
-Date: Mon, 05 Feb 2018 10:20:23 -0600
-Message-ID: <2c2e2d26-3538-2bc4-ab6a-1ff35b03b717@gmail.com>
-In-Reply-To: <20180204225550.10977-2-jonas@southpole.se>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: Re: Plugin infrastructure
+Date: Mon, 05 Feb 2018 19:25:38 +0300
+Message-ID: <9c99df54-92ec-6960-9e2e-2c16a21df6ef@jolla.com>
+In-Reply-To: <d13d203d-404a-bd2a-6962-ef973a1b949e@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7010825078187505864==
+--===============1024539058516662395==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+> Hi Jonas,
+>
+> On 02/04/2018 11:19 AM, Jonas Bonn wrote:
+>> Hi,
+>>
+>> I was reading through the ofono code and I see that there's a lot of =
 
-On 02/04/2018 04:55 PM, Jonas Bonn wrote:
-> ---
->   drivers/xmm7modem/ims.c | 0
->   1 file changed, 0 insertions(+), 0 deletions(-)
->   mode change 100755 =3D> 100644 drivers/xmm7modem/ims.c
-> =
+>> code in place to support external plugins.=C2=A0 As things currently =
 
+>> stand, however, ofono can only be built with _builtin_ modules, so =
 
-Applied, thanks.
+>> all this plugin infrastructure is totally unused. So I had a couple =
 
-Regards,
--Denis
+>> of questions about this:
+>>
+>> i)=C2=A0 Is there any value in keeping the plugin infrastructure in plac=
+e? =
 
+>> ...or would an effort to remove it be valued?
+>
+> We did (still do?) have external plugins in use...
 
---===============7010825078187505864==--
+Yes, we do!
+
+If upstream eliminates the plugin system, we would still have to =
+
+maintain it in our fork. At the moment we are using it more or less as is.
+
+Cheers,
+-Slava
+
+--===============1024539058516662395==--
 
