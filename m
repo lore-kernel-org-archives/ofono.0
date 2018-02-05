@@ -1,49 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============5179564900644853198=="
+Content-Type: multipart/mixed; boundary="===============0152053616185192580=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
+From: Slava Monich <slava.monich@jolla.com>
 Subject: Re: Plugin infrastructure
-Date: Mon, 05 Feb 2018 18:55:41 +0100
-Message-ID: <08031d86-68a6-695d-81a2-d1cb69b7b46f@southpole.se>
-In-Reply-To: <9c99df54-92ec-6960-9e2e-2c16a21df6ef@jolla.com>
+Date: Mon, 05 Feb 2018 22:04:16 +0300
+Message-ID: <c580e77f-a968-59f4-5203-7ce758551d0a@jolla.com>
+In-Reply-To: <08031d86-68a6-695d-81a2-d1cb69b7b46f@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5179564900644853198==
+--===============0152053616185192580==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 02/05/2018 05:25 PM, Slava Monich wrote:
->> Hi Jonas,
->>
->> On 02/04/2018 11:19 AM, Jonas Bonn wrote:
->>> Hi,
+On 05/02/18 20:55, Jonas Bonn wrote:
+
+> On 02/05/2018 05:25 PM, Slava Monich wrote:
+>>> Hi Jonas,
 >>>
->>> I was reading through the ofono code and I see that there's a lot of =
+>>> On 02/04/2018 11:19 AM, Jonas Bonn wrote:
+>>>> Hi,
+>>>>
+>>>> I was reading through the ofono code and I see that there's a lot =
 
->>> code in place to support external plugins.=C2=A0 As things currently =
+>>>> of code in place to support external plugins.=C2=A0 As things currentl=
+y =
 
->>> stand, however, ofono can only be built with _builtin_ modules, so =
+>>>> stand, however, ofono can only be built with _builtin_ modules, so =
 
->>> all this plugin infrastructure is totally unused. So I had a couple =
+>>>> all this plugin infrastructure is totally unused. So I had a couple =
 
->>> of questions about this:
+>>>> of questions about this:
+>>>>
+>>>> i)=C2=A0 Is there any value in keeping the plugin infrastructure in =
+
+>>>> place? ...or would an effort to remove it be valued?
 >>>
->>> i)=C2=A0 Is there any value in keeping the plugin infrastructure in pla=
-ce? =
-
->>> ...or would an effort to remove it be valued?
+>>> We did (still do?) have external plugins in use...
 >>
->> We did (still do?) have external plugins in use...
-> =
+>> Yes, we do!
+>
+> OK.=C2=A0 If you don't mind a stupid question:=C2=A0 why?=C2=A0 Why not j=
+ust put =
 
-> Yes, we do!
+> these in the ofono tree?
 
-OK.  If you don't mind a stupid question:  why?  Why not just put these =
+Those are of no interest to the general public and not even compatible =
 
-in the ofono tree?
+with the upstream - our fork is slightly different.
 
-/Jonas
+We wanted those to only be installed (pulled in via rpm dependencies) if =
 
---===============5179564900644853198==--
+the corresponding functionality is installed on the phone and =
+
+dynamically loadable plugins fit quite nicely into the picture.
+
+-Slava
+
+
+--===============0152053616185192580==--
 
