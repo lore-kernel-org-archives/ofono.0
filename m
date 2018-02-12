@@ -1,154 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============1085267202508389851=="
+Content-Type: multipart/mixed; boundary="===============1223318999494243072=="
 MIME-Version: 1.0
 From: philippedeswert@gmail.com
-Subject: [PATCH 3/5] voicecall: Add functionality to manager to dial from a
- memory location.
-Date: Mon, 12 Feb 2018 20:37:16 +0200
-Message-ID: <20180212183718.17194-4-philippedeswert@gmail.com>
+Subject: [PATCH 4/5] hfpmodem: Add memory dialling support
+Date: Mon, 12 Feb 2018 20:37:17 +0200
+Message-ID: <20180212183718.17194-5-philippedeswert@gmail.com>
 In-Reply-To: <20180212183718.17194-1-philippedeswert@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1085267202508389851==
+--===============1223318999494243072==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Philippe De Swert <philippedeswert@gmail.com>
 
-Implement functionality to allow to  dial favourites/quick contacts over
-bluetooth.
+Handle the request to dial from a memory index and send the
+correct ATD> sequence to make it happen.
 ---
- src/voicecall.c | 60 +++++++++++++++++++++++++++++++++++++++++++++++++++--=
-----
- 1 file changed, 54 insertions(+), 6 deletions(-)
+ drivers/hfpmodem/voicecall.c | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index eae4b904..d45b3aa2 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -1606,7 +1606,7 @@ error:
- 					__ofono_error_failed(vc->pending));
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index 1e0489c2..1254f235 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -422,6 +422,30 @@ static void hfp_dial_last(struct ofono_voicecall *vc, =
+ofono_voicecall_cb_t cb,
+ 	CALLBACK_WITH_FAILURE(cb, data);
+ =
+
  }
- =
-
--static int voicecall_dial_hfp(struct ofono_voicecall *vc,
-+static int voicecall_dial_hfp(struct ofono_voicecall *vc, unsigned int pos=
-ition,
- 					ofono_voicecall_cb_t cb, void *data)
- {
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
-@@ -1617,9 +1617,6 @@ static int voicecall_dial_hfp(struct ofono_voicecall =
-*vc,
- 	if (ofono_modem_get_online(modem) =3D=3D FALSE)
- 		return -ENETDOWN;
- =
-
--	if (vc->driver->dial_last =3D=3D NULL)
--		return -ENOTSUP;
--
- 	if (voicecalls_have_incoming(vc))
- 		return -EBUSY;
- =
-
-@@ -1630,7 +1627,18 @@ static int voicecall_dial_hfp(struct ofono_voicecall=
- *vc,
- 	if (voicecalls_have_active(vc) && voicecalls_have_held(vc))
- 		return -EBUSY;
- =
-
--	vc->driver->dial_last(vc, cb, vc);
-+	/* when position is not given we dial the last called number */
-+	if(position =3D=3D 0) {
-+		if (vc->driver->dial_last =3D=3D NULL)
-+			return -ENOTSUP;
 +
-+		vc->driver->dial_last(vc, cb, vc);
-+	} else {
-+		if(vc->driver->dial_memory =3D=3D NULL )
-+		return -ENOTSUP;
-+
-+		vc->driver->dial_memory(vc, position, cb, vc);
-+       }
- =
-
- 	return 0;
- }
-@@ -1646,7 +1654,7 @@ static DBusMessage *manager_dial_last(DBusConnection =
-*conn,
- =
-
- 	vc->pending =3D dbus_message_ref(msg);
- =
-
--	err =3D voicecall_dial_hfp(vc, manager_dial_hfp_callback, vc);
-+	err =3D voicecall_dial_hfp(vc, 0, manager_dial_hfp_callback, vc);
- =
-
- 	if (err >=3D 0)
- 		return NULL;
-@@ -1668,6 +1676,44 @@ static DBusMessage *manager_dial_last(DBusConnection=
- *conn,
- 	return __ofono_error_failed(msg);
- }
- =
-
-+static DBusMessage *manager_dial_memory(DBusConnection *conn,
-+                                       DBusMessage *msg, void *data)
++static void hfp_dial_memory(struct ofono_voicecall *vc,
++			unsigned int memory_location, ofono_voicecall_cb_t cb,
++			void *data)
 +{
-+       struct ofono_voicecall *vc =3D data;
-+       int memory_location;
-+       int err;
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[256];
 +
-+       if (vc->pending || vc->dial_req || vc->pending_em)
-+               return __ofono_error_busy(msg);
++	cbd->user =3D vc;
++	DBG("Calling memory location %d\n", memory_location);
++	snprintf(buf, sizeof(buf), "ATD>%d", memory_location);
 +
-+       if (dbus_message_get_args(msg, NULL, DBUS_TYPE_UINT32, &memory_loca=
-tion,
-+                                       DBUS_TYPE_INVALID) =3D=3D FALSE)
-+               return __ofono_error_invalid_args(msg);
++	strcat(buf, ";");
 +
-+       vc->pending =3D dbus_message_ref(msg);
++	if (g_at_chat_send(vd->chat, buf, none_prefix,
++				atd_cb, cbd, g_free) > 0)
++		return;
 +
-+       err =3D voicecall_dial_hfp(vc, memory_location, manager_dial_hfp_ca=
-llback, vc);
-+
-+       if (err >=3D 0)
-+               return NULL;
-+
-+       vc->pending =3D NULL;
-+       dbus_message_unref(msg);
-+
-+       switch (err) {
-+       case -EINVAL:
-+               return __ofono_error_invalid_format(msg);
-+
-+       case -ENETDOWN:
-+               return __ofono_error_not_available(msg);
-+
-+       case -ENOTSUP:
-+               return __ofono_error_not_implemented(msg);
-+       }
-+
-+       return __ofono_error_failed(msg);
++	g_free(cbd);
++	DBG("at_chat_failed");
++	CALLBACK_WITH_FAILURE(cb, data);
 +}
 +
- static DBusMessage *manager_transfer(DBusConnection *conn,
- 					DBusMessage *msg, void *data)
- {
-@@ -2225,6 +2271,8 @@ static const GDBusMethodTable manager_methods[] =3D {
- 		GDBUS_ARGS({ "path", "o" }),
- 		manager_dial) },
- 	{ GDBUS_ASYNC_METHOD("DialLast", NULL, NULL, manager_dial_last)},
-+	{ GDBUS_ASYNC_METHOD("DialMemory",
-+		GDBUS_ARGS({"memory_location", "u" }), NULL, manager_dial_memory) },
- 	{ GDBUS_ASYNC_METHOD("Transfer", NULL, NULL, manager_transfer) },
- 	{ GDBUS_ASYNC_METHOD("SwapCalls",  NULL, NULL, manager_swap_calls) },
- 	{ GDBUS_ASYNC_METHOD("ReleaseAndAnswer", NULL, NULL,
+ static void hfp_template(const char *cmd, struct ofono_voicecall *vc,
+ 			GAtResultFunc result_cb, unsigned int affected_types,
+ 			ofono_voicecall_cb_t cb, void *data)
+@@ -1287,6 +1311,7 @@ static struct ofono_voicecall_driver driver =3D {
+ 	.remove			=3D hfp_voicecall_remove,
+ 	.dial			=3D hfp_dial,
+ 	.dial_last		=3D hfp_dial_last,
++	.dial_memory		=3D hfp_dial_memory,
+ 	.answer			=3D hfp_answer,
+ 	.hangup_active		=3D hfp_hangup,
+ 	.hold_all_active	=3D hfp_hold_all_active,
 -- =
 
 2.11.0
 
 
---===============1085267202508389851==--
+--===============1223318999494243072==--
 
