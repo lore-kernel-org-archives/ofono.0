@@ -1,52 +1,100 @@
-Content-Type: multipart/mixed; boundary="===============7553980254049003794=="
+Content-Type: multipart/mixed; boundary="===============9108817105176371206=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: GPRS Attach/Detach
-Date: Wed, 14 Feb 2018 10:54:43 -0600
-Message-ID: <a1122a66-e232-be39-529a-76540df4494c@gmail.com>
-In-Reply-To: <CAKsXZz2n2Wgy94aNuJa0x643Gc-YQ6OVPJoamMzht0DBM-CmTA@mail.gmail.com>
+Subject: Re: [PATCH] udevng: Add OFONO_PATHNAME property to set modem dbus
+ path name
+Date: Wed, 14 Feb 2018 11:04:37 -0600
+Message-ID: <537fc659-a482-c828-e5aa-fed89350f132@gmail.com>
+In-Reply-To: <20180213195338.30077-1-pespin@sysmocom.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7553980254049003794==
+--===============9108817105176371206==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nikolas,
+Hi Pau,
 
-> I had to remove the `else if (have_active_contexts(gprs) =3D=3D TRUE) { .=
-.. =
+On 02/13/2018 01:53 PM, Pau Espin Pedrol wrote:
+> The current udevng.c implementation sets dbus path names for modems
+> based on type and a number incremented seuqntially for each new modem
+> found. As a result, the dbus path for a given device is non
+> deterministic, since it depends on the devices available during ofono
+> startup.
 
-> }` block because when attached was TRUE i still had active context and i =
-
-> didn't want it to be deactivated.
-
-This particular logic was added in commit:
-154f4aca65b3b419239be75d0def276bd7f4dc8e
+Why should it be deterministic?
 
 > =
 
-> As the comments say it's to mitigate some PPP issues. Should that be the =
+> Furthermore, if a modem crashes and reboots while in operation, then
+> udev will trigger a remove event followed by a create event, and the
+> same modem will now be given a different name (as the sequence number is
+> bigger).
 
-> case for all type of connections? What if my connection is RNDIS and not =
+Yes, and?
 
-> PPP?
+> =
+
+> This is non suitable for systems handling several modems which want to
+> identify them easily based on its path.
 > =
 
 
-Doesn't seem to have anything to do with PPP actually.  Anyway, there =
+This sounds like a very specific non-real world usecase, right?  I mean =
 
-should be no active contexts if we're detached.  Otherwise this will =
+why don't you simply compare the IMEI if you really care?
 
-confuse ConnMan, NetworkManager, etc.  The core tries to work around =
+> This patch introduces a way to be able to set persistent names for
+> specific devices while still permitting previous dynamic naming
+> methodology.
+> =
 
-some of the more common issues, but ultimately the driver needs to make =
+> One can set a persistent name using udev rules for the target device
+> which set the OFONO_PATHNAME env property. If ofono finds this property
+> set, it will use its value as the dbus path name for the modem.
 
-sure the transitions are well behaved.
+I'm hesitant to take this patch as udev logic is already complex and =
+
+this doesn't seem to be relevant for anyone else besides your test system.
+
+> =
+
+> Example:
+> $ cat /etc/udev/rules.d/90-local.rules
+> SUBSYSTEMS=3D=3D"usb", DEVPATH=3D=3D"/devices/pci0000:00/0000:00:1a.0/usb=
+3/3-1/3-1.1/3-1.1.4/3-1.1.4.1/3-1.1.4.1.1", ENV{OFONO_PATHNAME}=3D"foo"
+> =
+
+> $ udevadm info -p /devices/pci0000:00/0000:00:1a.0/usb3/3-1/3-1.1/3-1.1.4=
+/3-1.1.4.1/3-1.1.4.1.1
+> ...
+> E: OFONO_PATHNAME=3Dfoo
+> ...
+> =
+
+> $ mdbus2 -s org.ofono
+> /
+> /bluetooth
+> /bluetooth/profile
+> /bluetooth/profile/dun_gw
+> /bluetooth/profile/hfp_ag
+> /bluetooth/profile/hfp_hf
+> /foo
+
+How are you making sure that dbus path is valid?   ofono_modem_create =
+
+can fail after all...
+
+> /mbm_0
+> ---
+>   plugins/udevng.c | 22 +++++++++++++++-------
+>   1 file changed, 15 insertions(+), 7 deletions(-)
+> =
+
 
 Regards,
 -Denis
 
---===============7553980254049003794==--
+--===============9108817105176371206==--
 
