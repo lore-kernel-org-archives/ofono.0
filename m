@@ -1,29 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============0425931068267413189=="
+Content-Type: multipart/mixed; boundary="===============5720304270826664842=="
 MIME-Version: 1.0
-From: Philippe De Swert <philippedeswert@gmail.com>
-Subject: Re: [PATCH 0/5] Add Bluetooth HFP memory index dialing V3
-Date: Wed, 14 Feb 2018 11:35:25 +0200
-Message-ID: <CAPsFW+Q-f7Y5LVnxYG4xuR-CjiyavR1wcunVjkHR2nd8V3mNAQ@mail.gmail.com>
-In-Reply-To: <d302c14a-f30d-ed0d-1871-ed8d8ff6842e@gmail.com>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: Re: [PATCH 2/4] xmm7modem: drop executable bit from C source file
+Date: Wed, 14 Feb 2018 10:36:43 +0100
+Message-ID: <26453aec-21c7-3dd4-c069-4fa7d27da760@southpole.se>
+In-Reply-To: <2c2e2d26-3538-2bc4-ab6a-1ff35b03b717@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0425931068267413189==
+--===============5720304270826664842==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+On 02/05/2018 05:20 PM, Denis Kenzior wrote:
+> Hi Jonas,
+> =
 
-On 13/02/2018, Denis Kenzior <denkenz@gmail.com> wrote:
-> I went ahead and applied the entire series.  I did fix up a few minor
-> style & whitespace issues.
+> On 02/04/2018 04:55 PM, Jonas Bonn wrote:
+>> ---
+>> =C2=A0 drivers/xmm7modem/ims.c | 0
+>> =C2=A0 1 file changed, 0 insertions(+), 0 deletions(-)
+>> =C2=A0 mode change 100755 =3D> 100644 drivers/xmm7modem/ims.c
+>>
+> =
 
-And the unneeded strcat I forgot to remove ;)
+> Applied, thanks.
 
-Thanks!
+What about the other three patches?  Are they being silently rejected or =
 
-Philippe
+did they just fall off the radar?
 
---===============0425931068267413189==--
+In particular, patch 1/4 is important...
+
+/Jonas
+
+
+> =
+
+> Regards,
+> -Denis
+> =
+
+
+
+--===============5720304270826664842==--
 
