@@ -1,125 +1,145 @@
-Content-Type: multipart/mixed; boundary="===============5899739444671833803=="
+Content-Type: multipart/mixed; boundary="===============5608120423299468723=="
 MIME-Version: 1.0
-From: Pau Espin Pedrol <pespin@sysmocom.de>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] udevng: Add OFONO_PATHNAME property to set modem dbus
  path name
-Date: Wed, 14 Feb 2018 19:15:43 +0100
-Message-ID: <8a76763c-0667-8730-f612-f3c998183cd2@sysmocom.de>
-In-Reply-To: <537fc659-a482-c828-e5aa-fed89350f132@gmail.com>
+Date: Wed, 14 Feb 2018 14:31:29 -0600
+Message-ID: <bc1a28ea-8d0b-6eae-8123-86aaa8873945@gmail.com>
+In-Reply-To: <8a76763c-0667-8730-f612-f3c998183cd2@sysmocom.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5899739444671833803==
+--===============5608120423299468723==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Pau,
 
-On 14/02/18 18:04, Denis Kenzior wrote:
-> =
+> As far as I understand the IMEI is available in =
 
-> This sounds like a very specific non-real world usecase, right?=C2=A0 I m=
-ean =
+> org.ofono.Modem.GetProperties "Serial" property. To be able to access =
 
-> why don't you simply compare the IMEI if you really care?
+> this information, I need to previously power on the modem (SetProperty =
 
-First of all, I like thinking that I'm part of the real world!
+> Powered true), otherwise it doesn't show up.
+> Which means that for an ofono user, it is a requirement to power on the =
 
-As far as I understand the IMEI is available in =
+> modem and thus use it before being able to identify it.
 
-org.ofono.Modem.GetProperties "Serial" property. To be able to access =
+Correct, but why is this a problem?  Under normal circumstances the =
 
-this information, I need to previously power on the modem (SetProperty =
+modems are auto-powered by connman anyway.  That's the only reason that =
 
-Powered true), otherwise it doesn't show up.
-Which means that for an ofono user, it is a requirement to power on the =
-
-modem and thus use it before being able to identify it.
-
-Simple case: Several modems attached to a PC, in order to find the one =
-
-I'm interested in I need to power on all of them and find which one =
-
-matches a given IMEI. Really? Do I need this if I know where is my =
-
-device always physically attached? Are you going through all your =
-
-network interfaces and check against its MAC address to find the one you =
-
-are interested in? Or you configure your network manager based on =
-
-interface names? Would you enjoy it if your enp0s25 interface was =
-
-suddenly named enp1s67? Specially if you have iptables rules, I bet =
-
-that's going to be funny.
-
-More complex case (my scenario): Again, I repeat: To identify a modem, =
-
-as of now, you seem to require to power it on (use it, change its state) =
-
-before identifying it. Now think of a system which has a config file =
-
-with modems available on the system (with its dbus paths) and a =
-
-resources database of modems (and other types of resources) currently in =
-
-use. Now imagine several processes reserving any specific subset of =
-
-modems with specific capabilities (in parallel) against the resources =
-
-database, then using them and among the use cases they power off and =
-
-power them on. Even if you have locking mechanism in the database, it's =
-
-a nightmare, because again, you must use a modem before identifying it, =
-
-meaning you either race condition with other processes using the modem =
-
-you are identifying (eg. by powering it on, or leaving it powered on =
-
-after identifying it, or while powering it off after identifying while =
-
-other process is starting to use it).
-
-Then the easy way: Each modem is assigned a unique persistent path, and =
-
-that's the one always being presented and used. No need to identify it, =
-
-I already know which modem is which. If I have several system setups, I =
-
-can assign same names in all systems for easy use, etc.
-
-So the question should be better: Why should it NOT be deterministic?
-
+oFono doesn't do this automagically.
 
 > =
 
-> How are you making sure that dbus path is valid?=C2=A0=C2=A0 ofono_modem_=
-create =
+> Simple case: Several modems attached to a PC, in order to find the one =
 
-> can fail after all...
+> I'm interested in I need to power on all of them and find which one =
 
-Yes, it can fail while validating the path (dbus_validate_path) which is =
+> matches a given IMEI. Really? Do I need this if I know where is my =
 
-expected if a bad OFONO_PATHMNAME is supplied. If it's fine for you, I =
+> device always physically attached? Are you going through all your =
 
-can add an error message there stating that dbus_validate_path failed =
+> network interfaces and check against its MAC address to find the one you =
 
-and printing the pathname. Agree?
+> are interested in? Or you configure your network manager based on =
 
--- =
+> interface names? Would you enjoy it if your enp0s25 interface was =
 
-- Pau Espin Pedrol <pespin@sysmocom.de>         http://www.sysmocom.de/
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-* sysmocom - systems for mobile communications GmbH
-* Alt-Moabit 93
-* 10559 Berlin, Germany
-* Sitz / Registered office: Berlin, HRB 134158 B
-* Geschaeftsfuehrer / Managing Director: Harald Welte
+> suddenly named enp1s67? Specially if you have iptables rules, I bet =
 
---===============5899739444671833803==--
+> that's going to be funny.
+> =
+
+> More complex case (my scenario): Again, I repeat: To identify a modem, =
+
+> as of now, you seem to require to power it on (use it, change its state) =
+
+> before identifying it. Now think of a system which has a config file =
+
+> with modems available on the system (with its dbus paths) and a =
+
+> resources database of modems (and other types of resources) currently in =
+
+> use. Now imagine several processes reserving any specific subset of =
+
+> modems with specific capabilities (in parallel) against the resources =
+
+> database, then using them and among the use cases they power off and =
+
+> power them on. Even if you have locking mechanism in the database, it's =
+
+> a nightmare, because again, you must use a modem before identifying it, =
+
+> meaning you either race condition with other processes using the modem =
+
+> you are identifying (eg. by powering it on, or leaving it powered on =
+
+> after identifying it, or while powering it off after identifying while =
+
+> other process is starting to use it).
+oFono doesn't expose hardware details, only hardware capabilities.  So I =
+
+understand how this is helpful for your usecase, but I'm not convinced =
+
+this is relevant for what oFono was designed to do.
+
+> =
+
+> Then the easy way: Each modem is assigned a unique persistent path, and =
+
+> that's the one always being presented and used. No need to identify it, =
+
+> I already know which modem is which. If I have several system setups, I =
+
+> can assign same names in all systems for easy use, etc. >
+> So the question should be better: Why should it NOT be deterministic?
+> =
+
+
+In general oFono does not use deterministic paths, the Manager APIs =
+
+should be used to query the list of objects.  In fact the docs even =
+
+specifically state that the modem object path might have a variable =
+
+prefix (e.g. a random number) and that variable prefix can change across =
+
+oFono boots.  This is mainly to encourage UI/client writers to use the =
+
+APIs properly.
+
+We have used hardcoded paths in one or two cases for synthetic test =
+
+cases (e.g. stktest) but those are highly special and not user-visible =
+
+anyhow.
+
+> =
+
+>>
+>> How are you making sure that dbus path is valid?=C2=A0=C2=A0 ofono_modem=
+_create =
+
+>> can fail after all...
+>
+> Yes, it can fail while validating the path (dbus_validate_path) which is =
+
+> expected if a bad OFONO_PATHMNAME is supplied. If it's fine for you, I =
+
+> can add an error message there stating that dbus_validate_path failed =
+
+> and printing the pathname. Agree?
+
+Go ahead and send a V2, I'll let it sit for a week or so to see if =
+
+anyone else gives any feedback.
+
+Regards,
+-Denis
+
+--===============5608120423299468723==--
 
