@@ -1,39 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============9120653844106675413=="
+Content-Type: multipart/mixed; boundary="===============7553980254049003794=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] xmm7modem: drop executable bit from C source file
-Date: Wed, 14 Feb 2018 10:47:31 -0600
-Message-ID: <4e32c4ef-dfba-e3c1-422a-87c65c2e1b39@gmail.com>
-In-Reply-To: <26453aec-21c7-3dd4-c069-4fa7d27da760@southpole.se>
+Subject: Re: GPRS Attach/Detach
+Date: Wed, 14 Feb 2018 10:54:43 -0600
+Message-ID: <a1122a66-e232-be39-529a-76540df4494c@gmail.com>
+In-Reply-To: <CAKsXZz2n2Wgy94aNuJa0x643Gc-YQ6OVPJoamMzht0DBM-CmTA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9120653844106675413==
+--===============7553980254049003794==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+Hi Nikolas,
 
+> I had to remove the `else if (have_active_contexts(gprs) =3D=3D TRUE) { .=
+.. =
 
-> What about the other three patches?=C2=A0 Are they being silently rejecte=
-d or =
+> }` block because when attached was TRUE i still had active context and i =
 
-> did they just fall off the radar?
+> didn't want it to be deactivated.
+
+This particular logic was added in commit:
+154f4aca65b3b419239be75d0def276bd7f4dc8e
+
 > =
 
-> In particular, patch 1/4 is important...
+> As the comments say it's to mitigate some PPP issues. Should that be the =
+
+> case for all type of connections? What if my connection is RNDIS and not =
+
+> PPP?
 > =
 
 
-They're not ignored, but I'm not competent enough to review the build =
+Doesn't seem to have anything to do with PPP actually.  Anyway, there =
 
-system changes.  They need to be acked by Marcel first who can be a bit =
+should be no active contexts if we're detached.  Otherwise this will =
 
-slow to respond.
+confuse ConnMan, NetworkManager, etc.  The core tries to work around =
+
+some of the more common issues, but ultimately the driver needs to make =
+
+sure the transitions are well behaved.
 
 Regards,
 -Denis
 
---===============9120653844106675413==--
+--===============7553980254049003794==--
 
