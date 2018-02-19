@@ -1,59 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============4323319106340823126=="
+Content-Type: multipart/mixed; boundary="===============2591387211058349977=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: [PATCH 3/3] doc: Add SystemPath to Modem interface
-Date: Mon, 19 Feb 2018 16:36:36 +0100
-Message-ID: <ce6ae2ee-8c43-ef67-18a3-01b6436536cf@southpole.se>
-In-Reply-To: <1519052234-13973-4-git-send-email-c.ronco@kerlink.fr>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: GPRS Attach/Detach
+Date: Mon, 19 Feb 2018 10:36:02 -0600
+Message-ID: <8f464053-95f2-99ab-6149-5f6fb23254a7@gmail.com>
+In-Reply-To: <CAKsXZz2w1NeD0KzAdattSEyj6HxG+wdOW4xCM=UzvB34jt-STg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4323319106340823126==
+--===============2591387211058349977==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 02/19/2018 03:57 PM, Christophe Ronco wrote:
-> ---
->   doc/modem-api.txt | 8 ++++++++
->   1 file changed, 8 insertions(+)
+Hi Nikolas,
+
+On 02/19/2018 06:55 AM, Nikolas Sepos wrote:
+> Hello Denis,
 > =
 
-> diff --git a/doc/modem-api.txt b/doc/modem-api.txt
-> index 89e6191..e03c64a 100644
-> --- a/doc/modem-api.txt
-> +++ b/doc/modem-api.txt
-> @@ -95,6 +95,14 @@ Properties	boolean Powered [readwrite]
->   			String representing the software version number of the
->   			modem device.
->   =
+> thank you very much for the reply.
+> =
 
-> +		string SystemPath [readonly, optional]
-> +
-> +			String giving a consistent hardware path for the modem
-> +			device. It will not change in case of reboot of modem
-> +			or ofono.
+>     Doesn't seem to have anything to do with PPP actually.=C2=A0 Anyway,
+>     there should be no active contexts if we're detached.=C2=A0 Otherwise
+>     this will confuse ConnMan, NetworkManager, etc. =
 
-Given that many modems are USB devices, I don't think you can actually =
+> =
 
-promise this.  I can envision a (slightly pathological) hardware design =
+> Aren't ConnMan & NetworkManager get the info regarding modems state etc. =
 
-whereby the presence or absence of an _external_ device at startup may =
+> from ofono? How can this confuse them? (excuse my ignorance)
 
-change the device enumeration order and thereby the syspath...
+The global Attached status as well as whether a particular context is =
 
-/Jonas
+Active are signaled over D-Bus.  There should be no active contexts if =
 
-> +			For modems detected by udev events, gives modem sysfs
-> +			path.
-> +
->   		array{string} Features [readonly]
->   =
+we're detached.  Unfortunately the firmware on many modems does not make =
 
->   			List of currently enabled features. It uses simple
+such guarantees.  So oFono core tries pretty hard to make sure that a =
+
+consistent state is signaled, e.g. no active contexts when detached.
+
+> =
+
+>     The core tries to work around some of the more common issues, but
+>     ultimately the driver needs to make sure the transitions are well
+>     behaved.
+> =
+
+> =
+
+> Shouldn't this behavior=C2=A0 be handled by the drivers directly instead =
+of =
+
+> the core?
 > =
 
 
+Ideally yes, but this is not what you were asking originally.
 
---===============4323319106340823126==--
+Regards,
+-Denis
+
+--===============2591387211058349977==--
 
