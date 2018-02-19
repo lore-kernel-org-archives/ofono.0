@@ -1,52 +1,171 @@
-Content-Type: multipart/mixed; boundary="===============7685185848881329600=="
+Content-Type: multipart/mixed; boundary="===============7826301642603460101=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] doc: Add SystemPath to Modem interface
-Date: Mon, 19 Feb 2018 11:25:54 -0600
-Message-ID: <1c57e6cd-6c6c-b21e-8030-0213cbaf3d7f@gmail.com>
-In-Reply-To: <ce6ae2ee-8c43-ef67-18a3-01b6436536cf@southpole.se>
+From: Nikolas Sepos <nikolas@endocode.com>
+Subject: Re: GPRS Attach/Detach
+Date: Mon, 19 Feb 2018 18:58:51 +0100
+Message-ID: <CAKsXZz13=oZDFHrfL_WDi0ttbw8coGTwF1TQcN9TRn-ZyX4UZg@mail.gmail.com>
+In-Reply-To: <8f464053-95f2-99ab-6149-5f6fb23254a7@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7685185848881329600==
+--===============7826301642603460101==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Denis,
 
->> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 string SystemPath [readonly,=
- optional]
->> +
->> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Stri=
-ng giving a consistent hardware path for the modem
->> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 devi=
-ce. It will not change in case of reboot of modem
->> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 or o=
-fono.
-> =
+thank you again.
 
-> Given that many modems are USB devices, I don't think you can actually =
+All the best,
+Nikolas.
 
-> promise this.=C2=A0 I can envision a (slightly pathological) hardware des=
-ign =
+---
 
-> whereby the presence or absence of an _external_ device at startup may =
+Nikolas Sepos
+DevOps Engineer @ Endocode AG
+nikolas(a)endocode.com
 
-> change the device enumeration order and thereby the syspath...
-> =
+------
+Endocode AG, Br=C3=BCckenstra=C3=9Fe 5A, 10179 Berlin
+info(a)endocode.com | www.endocode.com
 
+Vorstandsvorsitzender: Mirko Boehm
+Vorst=C3=A4nde: Dr. Thomas Fricke, Sebastian Sucker
+Aufsichtsratsvorsitzende: Alexandra Boehm
 
-Right, this can depend on the kernel version also.  I wouldn't claim any =
+Registergericht: Amtsgericht
+Charlottenburg - HRB 150748 B
 
-guarantees at the D-Bus API level as it is outside our control.
+On Mon, Feb 19, 2018 at 5:36 PM, Denis Kenzior <denkenz@gmail.com> wrote:
 
-If someone chooses to use it as a consistent path, then they do it at =
+> Hi Nikolas,
+>
+> On 02/19/2018 06:55 AM, Nikolas Sepos wrote:
+>
+>> Hello Denis,
+>>
+>> thank you very much for the reply.
+>>
+>>     Doesn't seem to have anything to do with PPP actually.  Anyway,
+>>     there should be no active contexts if we're detached.  Otherwise
+>>     this will confuse ConnMan, NetworkManager, etc.
+>> Aren't ConnMan & NetworkManager get the info regarding modems state etc.
+>> from ofono? How can this confuse them? (excuse my ignorance)
+>>
+>
+> The global Attached status as well as whether a particular context is
+> Active are signaled over D-Bus.  There should be no active contexts if
+> we're detached.  Unfortunately the firmware on many modems does not make
+> such guarantees.  So oFono core tries pretty hard to make sure that a
+> consistent state is signaled, e.g. no active contexts when detached.
+>
+>
+>>     The core tries to work around some of the more common issues, but
+>>     ultimately the driver needs to make sure the transitions are well
+>>     behaved.
+>>
+>>
+>> Shouldn't this behavior  be handled by the drivers directly instead of
+>> the core?
+>>
+>>
+> Ideally yes, but this is not what you were asking originally.
+>
+> Regards,
+> -Denis
+>
 
-their own risk.
+--===============7826301642603460101==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-Regards,
--Denis
+PGRpdiBkaXI9Imx0ciI+SGkgRGVuaXMsPGRpdj48YnI+PC9kaXY+PGRpdj50aGFuayB5b3UgYWdh
+aW4uPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5BbGwgdGhlIGJlc3QsPC9kaXY+PGRpdj5OaWtv
+bGFzLjwvZGl2PjwvZGl2PjxkaXYgY2xhc3M9ImdtYWlsX2V4dHJhIj48YnIgY2xlYXI9ImFsbCI+
+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9zaWduYXR1cmUiIGRhdGEtc21hcnRtYWlsPSJnbWFpbF9z
+aWduYXR1cmUiPjxkaXYgZGlyPSJsdHIiPjxkaXY+PGRpdiBkaXI9Imx0ciI+PGRpdj48ZGl2IGRp
+cj0ibHRyIj48ZGl2PjxkaXYgZGlyPSJsdHIiPjxwIGRpcj0ibHRyIiBzdHlsZT0ibGluZS1oZWln
+aHQ6MS4xNTttYXJnaW4tdG9wOjBwdDttYXJnaW4tYm90dG9tOjBwdCI+PHNwYW4gc3R5bGU9ImZv
+bnQtc2l6ZToxM3B4O2ZvbnQtZmFtaWx5OkFyaWFsO2NvbG9yOiMwMDAwMDA7YmFja2dyb3VuZC1j
+b2xvcjp0cmFuc3BhcmVudDtmb250LXdlaWdodDpub3JtYWw7Zm9udC1zdHlsZTpub3JtYWw7Zm9u
+dC12YXJpYW50Om5vcm1hbDt0ZXh0LWRlY29yYXRpb246bm9uZTt2ZXJ0aWNhbC1hbGlnbjpiYXNl
+bGluZSI+LS0tPC9zcGFuPjwvcD48cCBkaXI9Imx0ciIgc3R5bGU9ImxpbmUtaGVpZ2h0OjEuMTU7
+bWFyZ2luLXRvcDowcHQ7bWFyZ2luLWJvdHRvbTowcHQiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6
+MTNweDtmb250LWZhbWlseTpBcmlhbDtjb2xvcjojMDAwMDAwO2JhY2tncm91bmQtY29sb3I6dHJh
+bnNwYXJlbnQ7Zm9udC13ZWlnaHQ6bm9ybWFsO2ZvbnQtc3R5bGU6bm9ybWFsO2ZvbnQtdmFyaWFu
+dDpub3JtYWw7dGV4dC1kZWNvcmF0aW9uOm5vbmU7dmVydGljYWwtYWxpZ246YmFzZWxpbmUiPk5p
+a29sYXMgU2Vwb3M8YnI+RGV2T3BzIEVuZ2luZWVyIEAgRW5kb2NvZGUgQUc8YnI+PGEgaHJlZj0i
+bWFpbHRvOm5pa29sYXNAZW5kb2NvZGUuY29tIiB0YXJnZXQ9Il9ibGFuayI+bmlrb2xhc0BlbmRv
+Y29kZS5jb208L2E+PGJyPjwvc3Bhbj48L3A+PGJyPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTNw
+eDtmb250LWZhbWlseTpBcmlhbDtjb2xvcjojMDAwMDAwO2JhY2tncm91bmQtY29sb3I6dHJhbnNw
+YXJlbnQ7Zm9udC13ZWlnaHQ6bm9ybWFsO2ZvbnQtc3R5bGU6bm9ybWFsO2ZvbnQtdmFyaWFudDpu
+b3JtYWw7dGV4dC1kZWNvcmF0aW9uOm5vbmU7dmVydGljYWwtYWxpZ246YmFzZWxpbmUiPjwvc3Bh
+bj48cCBkaXI9Imx0ciIgc3R5bGU9ImxpbmUtaGVpZ2h0OjEuMTU7bWFyZ2luLXRvcDowcHQ7bWFy
+Z2luLWJvdHRvbTowcHQiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTNweDtmb250LWZhbWlseTpB
+cmlhbDtjb2xvcjojMDAwMDAwO2JhY2tncm91bmQtY29sb3I6dHJhbnNwYXJlbnQ7Zm9udC13ZWln
+aHQ6bm9ybWFsO2ZvbnQtc3R5bGU6bm9ybWFsO2ZvbnQtdmFyaWFudDpub3JtYWw7dGV4dC1kZWNv
+cmF0aW9uOm5vbmU7dmVydGljYWwtYWxpZ246YmFzZWxpbmUiPi0tLS0tLTwvc3Bhbj48L3A+PHNw
+YW4gc3R5bGU9ImZvbnQtc2l6ZToxMi44MDAwMDAxOTA3MzQ5cHgiPkVuZG9jb2RlIEFHLCBCcsO8
+Y2tlbnN0cmHDn2UgNUEsIDEwMTc5IEJlcmxpbjwvc3Bhbj48YnIgc3R5bGU9ImZvbnQtc2l6ZTox
+Mi44MDAwMDAxOTA3MzQ5cHgiPjxhIGhyZWY9Im1haWx0bzppbmZvQGVuZG9jb2RlLmNvbSIgc3R5
+bGU9ImNvbG9yOnJnYigxNyw4NSwyMDQpO2ZvbnQtc2l6ZToxMi44MDAwMDAxOTA3MzQ5cHgiIHRh
+cmdldD0iX2JsYW5rIj5pbmZvQGVuZG9jb2RlLmNvbTwvYT48c3BhbiBzdHlsZT0iZm9udC1zaXpl
+OjEyLjgwMDAwMDE5MDczNDlweCI+wqB8wqA8L3NwYW4+PGEgaHJlZj0iaHR0cDovL3d3dy5lbmRv
+Y29kZS5jb20vIiBzdHlsZT0iY29sb3I6cmdiKDE3LDg1LDIwNCk7Zm9udC1zaXplOjEyLjgwMDAw
+MDE5MDczNDlweCIgdGFyZ2V0PSJfYmxhbmsiPnd3dy5lbmRvY29kZS5jb208L2E+PGJyIHN0eWxl
+PSJmb250LXNpemU6MTIuODAwMDAwMTkwNzM0OXB4Ij48YnIgc3R5bGU9ImZvbnQtc2l6ZToxMi44
+MDAwMDAxOTA3MzQ5cHgiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTIuODAwMDAwMTkwNzM0OXB4
+Ij5Wb3JzdGFuZHN2b3JzaXR6ZW5kZXI6IE1pcmtvIEJvZWhtPC9zcGFuPjxiciBzdHlsZT0iZm9u
+dC1zaXplOjEyLjgwMDAwMDE5MDczNDlweCI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMi44MDAw
+MDAxOTA3MzQ5cHgiPlZvcnN0w6RuZGU6IERyLiBUaG9tYXMgRnJpY2tlLCBTZWJhc3RpYW4gU3Vj
+a2VyPC9zcGFuPjxiciBzdHlsZT0iZm9udC1zaXplOjEyLjgwMDAwMDE5MDczNDlweCI+PHNwYW4g
+c3R5bGU9ImZvbnQtc2l6ZToxMi44MDAwMDAxOTA3MzQ5cHgiPkF1ZnNpY2h0c3JhdHN2b3JzaXR6
+ZW5kZTogQWxleGFuZHJhIEJvZWhtPC9zcGFuPjxiciBzdHlsZT0iZm9udC1zaXplOjEyLjgwMDAw
+MDE5MDczNDlweCI+PGJyIHN0eWxlPSJmb250LXNpemU6MTIuODAwMDAwMTkwNzM0OXB4Ij48c3Bh
+biBzdHlsZT0iZm9udC1zaXplOjEyLjgwMDAwMDE5MDczNDlweCI+UmVnaXN0ZXJnZXJpY2h0OiBB
+bXRzZ2VyaWNodDwvc3Bhbj48YnIgc3R5bGU9ImZvbnQtc2l6ZToxMi44MDAwMDAxOTA3MzQ5cHgi
+PjxzcGFuIHN0eWxlPSJmb250LXNpemU6MTIuODAwMDAwMTkwNzM0OXB4Ij5DaGFybG90dGVuYnVy
+ZyAtIEhSQiAxNTA3NDggQjwvc3Bhbj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEzcHg7Zm9udC1m
+YW1pbHk6QXJpYWw7Y29sb3I6IzAwMDAwMDtiYWNrZ3JvdW5kLWNvbG9yOnRyYW5zcGFyZW50O2Zv
+bnQtd2VpZ2h0Om5vcm1hbDtmb250LXN0eWxlOm5vcm1hbDtmb250LXZhcmlhbnQ6bm9ybWFsO3Rl
+eHQtZGVjb3JhdGlvbjpub25lO3ZlcnRpY2FsLWFsaWduOmJhc2VsaW5lIj48L3NwYW4+PC9kaXY+
+PC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+PC9kaXY+Cjxicj48ZGl2
+IGNsYXNzPSJnbWFpbF9xdW90ZSI+T24gTW9uLCBGZWIgMTksIDIwMTggYXQgNTozNiBQTSwgRGVu
+aXMgS2VuemlvciA8c3BhbiBkaXI9Imx0ciI+Jmx0OzxhIGhyZWY9Im1haWx0bzpkZW5rZW56QGdt
+YWlsLmNvbSIgdGFyZ2V0PSJfYmxhbmsiPmRlbmtlbnpAZ21haWwuY29tPC9hPiZndDs8L3NwYW4+
+IHdyb3RlOjxicj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46
+MCAwIDAgLjhleDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4Ij5I
+aSBOaWtvbGFzLDxzcGFuIGNsYXNzPSIiPjxicj4KPGJyPgpPbiAwMi8xOS8yMDE4IDA2OjU1IEFN
+LCBOaWtvbGFzIFNlcG9zIHdyb3RlOjxicj4KPGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3Rl
+IiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFk
+ZGluZy1sZWZ0OjFleCI+CkhlbGxvIERlbmlzLDxicj4KPGJyPgp0aGFuayB5b3UgdmVyeSBtdWNo
+IGZvciB0aGUgcmVwbHkuPGJyPgo8YnI+CsKgIMKgIERvZXNuJiMzOTt0IHNlZW0gdG8gaGF2ZSBh
+bnl0aGluZyB0byBkbyB3aXRoIFBQUCBhY3R1YWxseS7CoCBBbnl3YXksPGJyPgrCoCDCoCB0aGVy
+ZSBzaG91bGQgYmUgbm8gYWN0aXZlIGNvbnRleHRzIGlmIHdlJiMzOTtyZSBkZXRhY2hlZC7CoCBP
+dGhlcndpc2U8YnI+CsKgIMKgIHRoaXMgd2lsbCBjb25mdXNlIENvbm5NYW4sIE5ldHdvcmtNYW5h
+Z2VyLCBldGMuIDxicj4KQXJlbiYjMzk7dCBDb25uTWFuICZhbXA7IE5ldHdvcmtNYW5hZ2VyIGdl
+dCB0aGUgaW5mbyByZWdhcmRpbmcgbW9kZW1zIHN0YXRlIGV0Yy4gZnJvbSBvZm9ubz8gSG93IGNh
+biB0aGlzIGNvbmZ1c2UgdGhlbT8gKGV4Y3VzZSBteSBpZ25vcmFuY2UpPGJyPgo8L2Jsb2NrcXVv
+dGU+Cjxicj48L3NwYW4+ClRoZSBnbG9iYWwgQXR0YWNoZWQgc3RhdHVzIGFzIHdlbGwgYXMgd2hl
+dGhlciBhIHBhcnRpY3VsYXIgY29udGV4dCBpcyBBY3RpdmUgYXJlIHNpZ25hbGVkIG92ZXIgRC1C
+dXMuwqAgVGhlcmUgc2hvdWxkIGJlIG5vIGFjdGl2ZSBjb250ZXh0cyBpZiB3ZSYjMzk7cmUgZGV0
+YWNoZWQuwqAgVW5mb3J0dW5hdGVseSB0aGUgZmlybXdhcmUgb24gbWFueSBtb2RlbXMgZG9lcyBu
+b3QgbWFrZSBzdWNoIGd1YXJhbnRlZXMuwqAgU28gb0Zvbm8gY29yZSB0cmllcyBwcmV0dHkgaGFy
+ZCB0byBtYWtlIHN1cmUgdGhhdCBhIGNvbnNpc3RlbnQgc3RhdGUgaXMgc2lnbmFsZWQsIGUuZy4g
+bm8gYWN0aXZlIGNvbnRleHRzIHdoZW4gZGV0YWNoZWQuPHNwYW4gY2xhc3M9IiI+PGJyPgo8YnI+
+CjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4
+O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPgo8YnI+CsKgIMKg
+IFRoZSBjb3JlIHRyaWVzIHRvIHdvcmsgYXJvdW5kIHNvbWUgb2YgdGhlIG1vcmUgY29tbW9uIGlz
+c3VlcywgYnV0PGJyPgrCoCDCoCB1bHRpbWF0ZWx5IHRoZSBkcml2ZXIgbmVlZHMgdG8gbWFrZSBz
+dXJlIHRoZSB0cmFuc2l0aW9ucyBhcmUgd2VsbDxicj4KwqAgwqAgYmVoYXZlZC48YnI+Cjxicj4K
+PGJyPgpTaG91bGRuJiMzOTt0IHRoaXMgYmVoYXZpb3LCoCBiZSBoYW5kbGVkIGJ5IHRoZSBkcml2
+ZXJzIGRpcmVjdGx5IGluc3RlYWQgb2YgdGhlIGNvcmU/PGJyPgo8YnI+CjwvYmxvY2txdW90ZT4K
+PGJyPjwvc3Bhbj4KSWRlYWxseSB5ZXMsIGJ1dCB0aGlzIGlzIG5vdCB3aGF0IHlvdSB3ZXJlIGFz
+a2luZyBvcmlnaW5hbGx5Ljxicj4KPGJyPgpSZWdhcmRzLDxicj4KLURlbmlzPGJyPgo8L2Jsb2Nr
+cXVvdGU+PC9kaXY+PGJyPjwvZGl2Pgo=
 
---===============7685185848881329600==--
+--===============7826301642603460101==--
 
