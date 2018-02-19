@@ -1,34 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============6136244388892161930=="
+Content-Type: multipart/mixed; boundary="===============2737308096729742068=="
 MIME-Version: 1.0
 From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCH 0/3] Add SystemPath property to modem interface
-Date: Mon, 19 Feb 2018 15:57:11 +0100
-Message-ID: <1519052234-13973-1-git-send-email-c.ronco@kerlink.fr>
-In-Reply-To: <8bc19fa5-e343-143a-69e4-a76496374106@gmail.com>
+Subject: [PATCH 1/3] udevng: Add modem string SystemPath
+Date: Mon, 19 Feb 2018 15:57:12 +0100
+Message-ID: <1519052234-13973-2-git-send-email-c.ronco@kerlink.fr>
+In-Reply-To: <1519052234-13973-1-git-send-email-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6136244388892161930==
+--===============2737308096729742068==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Here is the patch serie as discussed in this thread of mails.
+---
+ plugins/udevng.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-Christophe Ronco (3):
-  udevng: Add modem string SystemPath
-  modem: Add SystemPath dbus property
-  doc: Add SystemPath to Modem interface
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index 9b78ab4..3c7d99e 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1732,6 +1732,8 @@ static gboolean create_modem(gpointer key, gpointer v=
+alue, gpointer user_data)
+ 			continue;
+ =
 
- doc/modem-api.txt | 8 ++++++++
- plugins/udevng.c  | 2 ++
- src/modem.c       | 6 ++++++
- 3 files changed, 16 insertions(+)
-
+ 		if (driver_list[i].setup(modem) =3D=3D TRUE) {
++			ofono_modem_set_string(modem->modem, "SystemPath",
++								syspath);
+ 			ofono_modem_register(modem->modem);
+ 			return FALSE;
+ 		}
 -- =
 
 2.7.4
 
 
---===============6136244388892161930==--
+--===============2737308096729742068==--
 
