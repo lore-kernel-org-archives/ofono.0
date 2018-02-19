@@ -1,67 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============2591387211058349977=="
+Content-Type: multipart/mixed; boundary="===============9117483739079908485=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: GPRS Attach/Detach
-Date: Mon, 19 Feb 2018 10:36:02 -0600
-Message-ID: <8f464053-95f2-99ab-6149-5f6fb23254a7@gmail.com>
-In-Reply-To: <CAKsXZz2w1NeD0KzAdattSEyj6HxG+wdOW4xCM=UzvB34jt-STg@mail.gmail.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: Issue with service reporting on a 4G modem
+Date: Mon, 19 Feb 2018 18:02:13 +0100
+Message-ID: <c2267ed4-5ae8-e7db-565e-9c694aa138ad@monom.org>
+In-Reply-To: <AM4PR01MB18739E5535492213F423A9719CCB0@AM4PR01MB1873.eurprd01.prod.exchangelabs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2591387211058349977==
+--===============9117483739079908485==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nikolas,
+Hi Bassem,
 
-On 02/19/2018 06:55 AM, Nikolas Sepos wrote:
-> Hello Denis,
+[added ofono mailing list]
+
+On 02/16/2018 11:24 AM, Bassem BOUBAKER wrote:
+> Hello community,
 > =
 
-> thank you very much for the reply.
+> I'm having connman version 1.31 along side with ofono running on my board.
 > =
 
->     Doesn't seem to have anything to do with PPP actually.=C2=A0 Anyway,
->     there should be no active contexts if we're detached.=C2=A0 Otherwise
->     this will confuse ConnMan, NetworkManager, etc. =
-
+> When I activate a context on my 4G modem using ofono, connman creates two=
+ services: one is cellular and the other is ethernet.
 > =
 
-> Aren't ConnMan & NetworkManager get the info regarding modems state etc. =
-
-> from ofono? How can this confuse them? (excuse my ignorance)
-
-The global Attached status as well as whether a particular context is =
-
-Active are signaled over D-Bus.  There should be no active contexts if =
-
-we're detached.  Unfortunately the firmware on many modems does not make =
-
-such guarantees.  So oFono core tries pretty hard to make sure that a =
-
-consistent state is signaled, e.g. no active contexts when detached.
-
+> *AR Wired ethernet_XX_cable
+> *AO XXX cellular_XXX_context1
 > =
 
->     The core tries to work around some of the more common issues, but
->     ultimately the driver needs to make sure the transitions are well
->     behaved.
+> In this case, the ideal state is that connman reports only one cellular t=
+echnology related to the modem.
 > =
 
+> When digging into the logs, I feels like a new ethernet device is enumera=
+ted and connman creates the appropriate service for it.
 > =
 
-> Shouldn't this behavior=C2=A0 be handled by the drivers directly instead =
-of =
+> Knowing that my modem net interface is using "cdc_ether" driver, does any=
+one have an idea about what could be the issue here?
 
-> the core?
-> =
+ From you description I understand that the modem creates an additional =
 
+ethernet interface? Could you post the corresponding logs (or post a =
 
-Ideally yes, but this is not what you were asking originally.
+link to the logs)?
 
-Regards,
--Denis
+I am also not sure what the exact question is. I suspect you want to see =
 
---===============2591387211058349977==--
+only one interface and not two..
+
+Thanks,
+Daniel
+
+--===============9117483739079908485==--
 
