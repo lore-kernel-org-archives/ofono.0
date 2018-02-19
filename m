@@ -1,60 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============9117483739079908485=="
+Content-Type: multipart/mixed; boundary="===============7685185848881329600=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: Issue with service reporting on a 4G modem
-Date: Mon, 19 Feb 2018 18:02:13 +0100
-Message-ID: <c2267ed4-5ae8-e7db-565e-9c694aa138ad@monom.org>
-In-Reply-To: <AM4PR01MB18739E5535492213F423A9719CCB0@AM4PR01MB1873.eurprd01.prod.exchangelabs.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 3/3] doc: Add SystemPath to Modem interface
+Date: Mon, 19 Feb 2018 11:25:54 -0600
+Message-ID: <1c57e6cd-6c6c-b21e-8030-0213cbaf3d7f@gmail.com>
+In-Reply-To: <ce6ae2ee-8c43-ef67-18a3-01b6436536cf@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9117483739079908485==
+--===============7685185848881329600==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bassem,
+Hi,
 
-[added ofono mailing list]
-
-On 02/16/2018 11:24 AM, Bassem BOUBAKER wrote:
-> Hello community,
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 string SystemPath [readonly,=
+ optional]
+>> +
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Stri=
+ng giving a consistent hardware path for the modem
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 devi=
+ce. It will not change in case of reboot of modem
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 or o=
+fono.
 > =
 
-> I'm having connman version 1.31 along side with ofono running on my board.
+> Given that many modems are USB devices, I don't think you can actually =
+
+> promise this.=C2=A0 I can envision a (slightly pathological) hardware des=
+ign =
+
+> whereby the presence or absence of an _external_ device at startup may =
+
+> change the device enumeration order and thereby the syspath...
 > =
 
-> When I activate a context on my 4G modem using ofono, connman creates two=
- services: one is cellular and the other is ethernet.
-> =
 
-> *AR Wired ethernet_XX_cable
-> *AO XXX cellular_XXX_context1
-> =
+Right, this can depend on the kernel version also.  I wouldn't claim any =
 
-> In this case, the ideal state is that connman reports only one cellular t=
-echnology related to the modem.
-> =
+guarantees at the D-Bus API level as it is outside our control.
 
-> When digging into the logs, I feels like a new ethernet device is enumera=
-ted and connman creates the appropriate service for it.
-> =
+If someone chooses to use it as a consistent path, then they do it at =
 
-> Knowing that my modem net interface is using "cdc_ether" driver, does any=
-one have an idea about what could be the issue here?
+their own risk.
 
- From you description I understand that the modem creates an additional =
+Regards,
+-Denis
 
-ethernet interface? Could you post the corresponding logs (or post a =
-
-link to the logs)?
-
-I am also not sure what the exact question is. I suspect you want to see =
-
-only one interface and not two..
-
-Thanks,
-Daniel
-
---===============9117483739079908485==--
+--===============7685185848881329600==--
 
