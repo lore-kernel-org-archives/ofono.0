@@ -1,69 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============3276541648311130512=="
+Content-Type: multipart/mixed; boundary="===============2632103209763090009=="
 MIME-Version: 1.0
-From: Bassem BOUBAKER <bassem.boubaker@actia.fr>
-Subject: RE: Issue with service reporting on a 4G modem
-Date: Tue, 20 Feb 2018 09:44:08 +0000
-Message-ID: <AM4PR01MB18736B32DD3AC54D61D117B19CCF0@AM4PR01MB1873.eurprd01.prod.exchangelabs.com>
-In-Reply-To: <c2267ed4-5ae8-e7db-565e-9c694aa138ad@monom.org>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 0/3] Add SystemPath property to modem interface
+Date: Tue, 20 Feb 2018 11:10:29 -0600
+Message-ID: <1e260e6a-035c-4c5d-fd25-8bc046d03744@gmail.com>
+In-Reply-To: <1519052234-13973-1-git-send-email-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3276541648311130512==
+--===============2632103209763090009==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Daniel,
+Hi Christophe,
 
-Exactly, my modem is creating an additional ethernet interface, and I don't=
- know why.
+On 02/19/2018 08:57 AM, Christophe Ronco wrote:
+> Here is the patch serie as discussed in this thread of mails.
+> =
 
-Please find in the link below the full log of connman.
+> Christophe Ronco (3):
+>    udevng: Add modem string SystemPath
+>    modem: Add SystemPath dbus property
+>    doc: Add SystemPath to Modem interface
+> =
 
-https://ufile.io/dmgbw
+>   doc/modem-api.txt | 8 ++++++++
+>   plugins/udevng.c  | 2 ++
+>   src/modem.c       | 6 ++++++
+>   3 files changed, 16 insertions(+)
+> =
 
-Thanks,
-Bassem.
 
->> Hello community,
->> =
+I went ahead and applied all these (with the updated doc 3/3 patch).
 
->> I'm having connman version 1.31 along side with ofono running on my boar=
-d.
->> =
+Regards,
+-Denis
 
->> When I activate a context on my 4G modem using ofono, connman creates tw=
-o services: one is cellular and the other is ethernet.
->> =
-
->> *AR Wired ethernet_XX_cable
->> *AO XXX cellular_XXX_context1
->> =
-
->> In this case, the ideal state is that connman reports only one cellular =
-technology related to the modem.
->> =
-
->> When digging into the logs, I feels like a new ethernet device is enumer=
-ated and connman creates the appropriate service for it.
->> =
-
->> Knowing that my modem net interface is using "cdc_ether" driver, does an=
-yone have an idea about what could be the issue here?
->
->=C2=A0From you description I understand that the modem creates an addition=
-al =
-
->ethernet interface? Could you post the corresponding logs (or post a =
-
->link to the logs)?
->
->I am also not sure what the exact question is. I suspect you want to see =
-
->only one interface and not two..
->
->Thanks,
->Daniel
-   =20
---===============3276541648311130512==--
+--===============2632103209763090009==--
 
