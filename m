@@ -1,285 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============4724011980507394756=="
+Content-Type: multipart/mixed; boundary="===============7740441013600537647=="
 MIME-Version: 1.0
-From: Mattias =?unknown-8bit?q?M=C3=A5nsson?= <mattias.mansson@verisure.com>
-Subject: Ofono crashes on SIM notifications
-Date: Wed, 28 Feb 2018 10:01:15 +0000
-Message-ID: <HE1PR1001MB1113A47ADBDD840B3527DCB396C70@HE1PR1001MB1113.EURPRD10.PROD.OUTLOOK.COM>
+From: Bassem BOUBAKER <bassem.boubaker@actia.fr>
+Subject: Issue with an URC falling into an AT command response
+Date: Wed, 28 Feb 2018 11:52:07 +0100
+Message-ID: <20180228105207.GA15442@bboubake>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4724011980507394756==
+--===============7740441013600537647==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+Hello Community,
+
+I'm facing an issue with an ofono segfault because of an URC is received be=
+tween the AT command and its response.
+
+Below is my case:
+
+	ofonod[826]: App: > AT^SMONI\r
+	ofonod[826]: App: < \r\n^SREG: 2,0\r\n
+	ofonod[826]: App: < \r\n^SMONI: Searching\r\nSearching\r\n\r\nOK\r\n
+
+The URC ^SREG is captured in the callback function related to handling the =
+response of AT^SMONI.
+
+I have two questions here:
+
+i) how can I isolate only the response of AT^SMONI without nasty hacking th=
+e response cb function.
+
+ii) How can I force ofono to go through the registered callback of the URC =
+^SREG in this particular case.
+
+Any ideas?
 
 
-I'm working with integrating a new Gemalto modem with Ofono and is currentl=
-y working with dynamic SIM card detection. This is not done by any included=
- driver what I can see, so it is possible I have done something wrong. Anyw=
-ay, I am listening to SIM card URCs and when I get one, I call ofono_sim_in=
-serted_notify with the proper state. This seems to work fine at first, but =
-if I do the following, I get a crash:
+
+Thanks,
+Bassem.
 
 
-  1.  Insert SIM
-  2.  Remove SIM
-  3.  Insert SIM
-  4.  Remove SIM
 
 
-In this case I get a SIGABRT in src/sim.c:aid_session_free(). It seems as i=
-t tries to free that list sim->aid_sessions, but it has just been freed bef=
-ore. However, after freeing it the first time, it is never set to NULL, so =
-the second time the NULL check doesn't take it and crash. I tried setting i=
-t to NULL, but then I realized that it is used in __ofono_sim_remove_sessio=
-n_watch() without allocating it again. So it seems that there is a chain of=
- problems. Any ideas?
 
 
-Here is some log (with some additional debug prints in sim.c):
 
-
-ofonod[711]: plugins/verimalto.c:sim_detect_cb() Have SIM: 0
-ofonod[711]: src/sim.c:ofono_sim_inserted_notify() SIM: 0x1336f8
-ofonod[711]: src/modem.c:modem_change_state() old state: 3, new state: 1
-ofonod[711]: src/modem.c:flush_atoms()
-ofonod[711]: src/gprs.c:gprs_context_unregister() 0x13bef8, 0x118588
-ofonod[711]: src/gprs.c:gprs_context_remove() atom: 0x13bf18
-ofonod[711]: drivers/verimaltomodem/gprs-context-wwan.c:verimalto_gprs_cont=
-ext_remove()
-ofonod[711]: drivers/verimaltomodem/netmon.c:verimalto_netmon_remove()
-ofonod[711]: plugins/bluez5.c:bt_unregister_profile() Bluetooth: Unregister=
-ing profile /bluetooth/profile/dun_gw
-ofonod[711]: src/gprs.c:gprs_unregister() 0x118588
-ofonod[711]: src/network.c:__ofono_netreg_remove_status_watch() 0x13d400
-ofonod[711]: src/gprs.c:gprs_remove() atom: 0x1185f0
-ofonod[711]: src/sim.c:ofono_sim_remove_spn_watch() 0x1336f8
-ofonod[711]: src/network.c:netreg_remove() atom: 0x13d468
-ofonod[711]: src/voicecall.c:voicecall_remove() atom: 0x11e430
-ofonod[711]: plugins/push-notification.c:push_notification_cleanup() 0x12ff=
-e8
-ofonod[711]: plugins/smart-messaging.c:smart_messaging_cleanup() 0x119c30
-ofonod[711]: src/sms.c:sms_remove() atom: 0x11e3c8
-ofonod[711]: src/sim.c:sim_free_main_state() Free aid_sessions: 0x139c90, S=
-IM: 0x1336f8
-ofonod[711]: src/sim.c:aid_session_free() session: 0x130c10 session->watche=
-s: 0x1398d0
-ofonod[711]: src/sim.c:aid_session_free() session: 0x13ac20 session->watche=
-s: 0x117340
-ofonod[711]: UnregisterProfile() replied an error: org.freedesktop.DBus.Err=
-or.ServiceUnknown, The name org.bluez was not provided by any .service files
-ofonod[711]: plugins/verimalto.c:sim_detect_cb() Have SIM: 1
-ofonod[711]: src/sim.c:ofono_sim_inserted_notify() SIM: 0x1336f8
-ofonod[711]: Interface org.ofono.AllowedAccessPoints not found on the inter=
-face_list
-ofonod[711]: plugins/verimalto.c:sim_detect_cb() Have SIM: 0
-ofonod[711]: src/sim.c:ofono_sim_inserted_notify() SIM: 0x1336f8
-ofonod[711]: Interface org.ofono.AllowedAccessPoints not found on the inter=
-face_list
-ofonod[711]: src/modem.c:modem_change_state() old state: 1, new state: 1
-ofonod[711]: src/sim.c:sim_free_main_state() Free aid_sessions: 0x139c90, S=
-IM: 0x1336f8
-ofonod[711]: src/sim.c:aid_session_free() session: 0x139cd0 session->watche=
-s: 0x139cc0
-*** Error in `/usr/sbin/ofonod': free(): invalid pointer: 0x00139cc0 **
-Program received signal SIGABRT, Aborted.
-__libc_do_syscall () at ../sysdeps/unix/sysv/linux/arm/libc-do-syscall.S:47
-47 ../sysdeps/unix/sysv/linux/arm/libc-do-syscall.S: No such file or direct=
-ory.
-
-
-It has also crashed in other parts of sim.c as well as in simfs.c, so I'm s=
-tarting to doubt it can really handle spontaneous SIM card notifications...
-
-
-We are currently using Ofono version 1.22.
-
-
-BRs,
-
-Mattias
-
-
---===============4724011980507394756==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWw+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNvbnRlbnQ9InRl
-eHQvaHRtbDsgY2hhcnNldD1pc28tODg1OS0xIj4KPHN0eWxlIHR5cGU9InRleHQvY3NzIiBzdHls
-ZT0iZGlzcGxheTpub25lOyI+PCEtLSBQIHttYXJnaW4tdG9wOjA7bWFyZ2luLWJvdHRvbTowO30g
-LS0+PC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBkaXI9Imx0ciI+CjxkaXYgaWQ9ImRpdnRhZ2RlZmF1
-bHR3cmFwcGVyIiBzdHlsZT0iZm9udC1zaXplOjEycHQ7Y29sb3I6IzAwMDAwMDtmb250LWZhbWls
-eTpDYWxpYnJpLEhlbHZldGljYSxzYW5zLXNlcmlmOyIgZGlyPSJsdHIiPgo8cCBzdHlsZT0ibWFy
-Z2luLXRvcDowO21hcmdpbi1ib3R0b206MCI+PC9wPgo8cCBzdHlsZT0iZm9udC1mYW1pbHk6IENh
-bGlicmksIEhlbHZldGljYSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVtb2ppRm9udDsgZm9udC1zaXpl
-OiAxNnB4OyI+CkhpITwvcD4KPHAgc3R5bGU9ImZvbnQtZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRp
-Y2EsIHNhbnMtc2VyaWYsIHNlcmlmLCBFbW9qaUZvbnQ7IGZvbnQtc2l6ZTogMTZweDsiPgo8YnI+
-CjwvcD4KPHAgc3R5bGU9ImZvbnQtZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2Vy
-aWYsIHNlcmlmLCBFbW9qaUZvbnQ7IGZvbnQtc2l6ZTogMTZweDsiPgpJJ20gd29ya2luZyB3aXRo
-IGludGVncmF0aW5nIGEgbmV3IEdlbWFsdG8gbW9kZW0gd2l0aCBPZm9ubyBhbmQgaXMgY3VycmVu
-dGx5IHdvcmtpbmcgd2l0aCBkeW5hbWljIFNJTSBjYXJkIGRldGVjdGlvbi4gVGhpcyBpcyBub3Qg
-ZG9uZSBieSBhbnkgaW5jbHVkZWQgZHJpdmVyIHdoYXQgSSBjYW4gc2VlLCBzbyBpdCBpcyBwb3Nz
-aWJsZSBJIGhhdmUgZG9uZSBzb21ldGhpbmcgd3JvbmcuIEFueXdheSwgSSBhbSBsaXN0ZW5pbmcg
-dG8gU0lNIGNhcmQgVVJDcwogYW5kIHdoZW4gSSBnZXQgb25lLCBJIGNhbGwgb2Zvbm9fc2ltX2lu
-c2VydGVkX25vdGlmeSB3aXRoIHRoZSBwcm9wZXIgc3RhdGUuIFRoaXMgc2VlbXMgdG8gd29yayBm
-aW5lIGF0IGZpcnN0LCBidXQgaWYgSSBkbyB0aGUgZm9sbG93aW5nLCBJIGdldCBhIGNyYXNoOjwv
-cD4KPHAgc3R5bGU9ImZvbnQtZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYs
-IHNlcmlmLCBFbW9qaUZvbnQ7IGZvbnQtc2l6ZTogMTZweDsiPgo8YnI+CjwvcD4KPHAgc3R5bGU9
-ImZvbnQtZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYsIHNlcmlmLCBFbW9q
-aUZvbnQ7IGZvbnQtc2l6ZTogMTZweDsiPgo8L3A+CjxvbCBzdHlsZT0iZm9udC1mYW1pbHk6IENh
-bGlicmksIEhlbHZldGljYSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVtb2ppRm9udDsgZm9udC1zaXpl
-OiAxNnB4OyBtYXJnaW4tYm90dG9tOiAwcHg7IG1hcmdpbi10b3A6IDBweDsiPgo8bGk+PHNwYW4g
-c3R5bGU9ImZvbnQtc2l6ZTogMTJwdDsiPjwvc3Bhbj5JbnNlcnQgU0lNPC9saT48bGk+UmVtb3Zl
-IFNJTTwvbGk+PGxpPkluc2VydCBTSU08L2xpPjxsaT5SZW1vdmUgU0lNPC9saT48L29sPgo8YnIg
-c3R5bGU9ImZvbnQtZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYsIHNlcmlm
-LCBFbW9qaUZvbnQ7IGZvbnQtc2l6ZTogMTZweDsiPgo8cCBzdHlsZT0iZm9udC1mYW1pbHk6IENh
-bGlicmksIEhlbHZldGljYSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVtb2ppRm9udDsgZm9udC1zaXpl
-OiAxNnB4OyI+CjwvcD4KPHAgc3R5bGU9ImZvbnQtZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2Es
-IHNhbnMtc2VyaWYsIHNlcmlmLCBFbW9qaUZvbnQ7IGZvbnQtc2l6ZTogMTZweDsiPgpJbiB0aGlz
-IGNhc2UgSSBnZXQgYSBTSUdBQlJUIGluIHNyYy9zaW0uYzphaWRfc2Vzc2lvbl9mcmVlKCkuIEl0
-IHNlZW1zIGFzIGl0IHRyaWVzIHRvIGZyZWUgdGhhdCBsaXN0IHNpbS0mZ3Q7YWlkX3Nlc3Npb25z
-LCBidXQgaXQgaGFzIGp1c3QgYmVlbiBmcmVlZCBiZWZvcmUuIEhvd2V2ZXIsIGFmdGVyIGZyZWVp
-bmcgaXQgdGhlIGZpcnN0IHRpbWUsIGl0IGlzIG5ldmVyIHNldCB0byBOVUxMLCBzbyB0aGUgc2Vj
-b25kIHRpbWUgdGhlIE5VTEwgY2hlY2sgZG9lc24ndAogdGFrZSBpdCBhbmQgY3Jhc2guIEkgdHJp
-ZWQgc2V0dGluZyBpdCB0byBOVUxMLCBidXQgdGhlbiBJIHJlYWxpemVkIHRoYXQgaXQgaXMgdXNl
-ZCBpbiBfX29mb25vX3NpbV9yZW1vdmVfc2Vzc2lvbl93YXRjaCgpIHdpdGhvdXQgYWxsb2NhdGlu
-ZyBpdCBhZ2Fpbi4gU28gaXQgc2VlbXMgdGhhdCB0aGVyZSBpcyBhIGNoYWluIG9mIHByb2JsZW1z
-LiBBbnkgaWRlYXM/PC9wPgo8cCBzdHlsZT0iZm9udC1mYW1pbHk6IENhbGlicmksIEhlbHZldGlj
-YSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVtb2ppRm9udDsgZm9udC1zaXplOiAxNnB4OyI+Cjxicj4K
-PC9wPgo8cCBzdHlsZT0iZm9udC1mYW1pbHk6IENhbGlicmksIEhlbHZldGljYSwgc2Fucy1zZXJp
-Ziwgc2VyaWYsIEVtb2ppRm9udDsgZm9udC1zaXplOiAxNnB4OyI+CkhlcmUgaXMgc29tZSBsb2cg
-KHdpdGggc29tZSBhZGRpdGlvbmFsIGRlYnVnIHByaW50cyBpbiBzaW0uYyk6PC9wPgo8cCBzdHls
-ZT0iZm9udC1mYW1pbHk6IENhbGlicmksIEhlbHZldGljYSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVt
-b2ppRm9udDsgZm9udC1zaXplOiAxNnB4OyI+Cjxicj4KPC9wPgo8cCBzdHlsZT0iZm9udC1mYW1p
-bHk6IENhbGlicmksIEhlbHZldGljYSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVtb2ppRm9udDsgZm9u
-dC1zaXplOiAxNnB4OyI+CjwvcD4KPGRpdiBzdHlsZT0iZm9udC1mYW1pbHk6IENhbGlicmksIEhl
-bHZldGljYSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVtb2ppRm9udDsgZm9udC1zaXplOiAxNnB4OyI+
-Cm9mb25vZFs3MTFdOiBwbHVnaW5zL3ZlcmltYWx0by5jOnNpbV9kZXRlY3RfY2IoKSBIYXZlIFNJ
-TTogMDwvZGl2Pgo8ZGl2IHN0eWxlPSJmb250LWZhbWlseTogQ2FsaWJyaSwgSGVsdmV0aWNhLCBz
-YW5zLXNlcmlmLCBzZXJpZiwgRW1vamlGb250OyBmb250LXNpemU6IDE2cHg7Ij4Kb2Zvbm9kWzcx
-MV06IHNyYy9zaW0uYzpvZm9ub19zaW1faW5zZXJ0ZWRfbm90aWZ5KCkgU0lNOiAweDEzMzZmODwv
-ZGl2Pgo8ZGl2IHN0eWxlPSJmb250LWZhbWlseTogQ2FsaWJyaSwgSGVsdmV0aWNhLCBzYW5zLXNl
-cmlmLCBzZXJpZiwgRW1vamlGb250OyBmb250LXNpemU6IDE2cHg7Ij4Kb2Zvbm9kWzcxMV06IHNy
-Yy9tb2RlbS5jOm1vZGVtX2NoYW5nZV9zdGF0ZSgpIG9sZCBzdGF0ZTogMywgbmV3IHN0YXRlOiAx
-PC9kaXY+CjxkaXYgc3R5bGU9ImZvbnQtZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMt
-c2VyaWYsIHNlcmlmLCBFbW9qaUZvbnQ7IGZvbnQtc2l6ZTogMTZweDsiPgpvZm9ub2RbNzExXTog
-c3JjL21vZGVtLmM6Zmx1c2hfYXRvbXMoKSZuYnNwOzwvZGl2Pgo8ZGl2IHN0eWxlPSJmb250LWZh
-bWlseTogQ2FsaWJyaSwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmLCBzZXJpZiwgRW1vamlGb250OyBm
-b250LXNpemU6IDE2cHg7Ij4Kb2Zvbm9kWzcxMV06IHNyYy9ncHJzLmM6Z3Byc19jb250ZXh0X3Vu
-cmVnaXN0ZXIoKSAweDEzYmVmOCwgMHgxMTg1ODg8L2Rpdj4KPGRpdiBzdHlsZT0iZm9udC1mYW1p
-bHk6IENhbGlicmksIEhlbHZldGljYSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVtb2ppRm9udDsgZm9u
-dC1zaXplOiAxNnB4OyI+Cm9mb25vZFs3MTFdOiBzcmMvZ3Bycy5jOmdwcnNfY29udGV4dF9yZW1v
-dmUoKSBhdG9tOiAweDEzYmYxODwvZGl2Pgo8ZGl2IHN0eWxlPSJmb250LWZhbWlseTogQ2FsaWJy
-aSwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmLCBzZXJpZiwgRW1vamlGb250OyBmb250LXNpemU6IDE2
-cHg7Ij4Kb2Zvbm9kWzcxMV06IGRyaXZlcnMvdmVyaW1hbHRvbW9kZW0vZ3Bycy1jb250ZXh0LXd3
-YW4uYzp2ZXJpbWFsdG9fZ3Byc19jb250ZXh0X3JlbW92ZSgpJm5ic3A7PC9kaXY+CjxkaXYgc3R5
-bGU9ImZvbnQtZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYsIHNlcmlmLCBF
-bW9qaUZvbnQ7IGZvbnQtc2l6ZTogMTZweDsiPgpvZm9ub2RbNzExXTogZHJpdmVycy92ZXJpbWFs
-dG9tb2RlbS9uZXRtb24uYzp2ZXJpbWFsdG9fbmV0bW9uX3JlbW92ZSgpJm5ic3A7PC9kaXY+Cjxk
-aXYgc3R5bGU9ImZvbnQtZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYsIHNl
-cmlmLCBFbW9qaUZvbnQ7IGZvbnQtc2l6ZTogMTZweDsiPgpvZm9ub2RbNzExXTogcGx1Z2lucy9i
-bHVlejUuYzpidF91bnJlZ2lzdGVyX3Byb2ZpbGUoKSBCbHVldG9vdGg6IFVucmVnaXN0ZXJpbmcg
-cHJvZmlsZSAvYmx1ZXRvb3RoL3Byb2ZpbGUvZHVuX2d3PC9kaXY+CjxkaXYgc3R5bGU9ImZvbnQt
-ZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYsIHNlcmlmLCBFbW9qaUZvbnQ7
-IGZvbnQtc2l6ZTogMTZweDsiPgpvZm9ub2RbNzExXTogc3JjL2dwcnMuYzpncHJzX3VucmVnaXN0
-ZXIoKSAweDExODU4ODwvZGl2Pgo8ZGl2IHN0eWxlPSJmb250LWZhbWlseTogQ2FsaWJyaSwgSGVs
-dmV0aWNhLCBzYW5zLXNlcmlmLCBzZXJpZiwgRW1vamlGb250OyBmb250LXNpemU6IDE2cHg7Ij4K
-b2Zvbm9kWzcxMV06IHNyYy9uZXR3b3JrLmM6X19vZm9ub19uZXRyZWdfcmVtb3ZlX3N0YXR1c193
-YXRjaCgpIDB4MTNkNDAwPC9kaXY+CjxkaXYgc3R5bGU9ImZvbnQtZmFtaWx5OiBDYWxpYnJpLCBI
-ZWx2ZXRpY2EsIHNhbnMtc2VyaWYsIHNlcmlmLCBFbW9qaUZvbnQ7IGZvbnQtc2l6ZTogMTZweDsi
-PgpvZm9ub2RbNzExXTogc3JjL2dwcnMuYzpncHJzX3JlbW92ZSgpIGF0b206IDB4MTE4NWYwPC9k
-aXY+CjxkaXYgc3R5bGU9ImZvbnQtZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2Vy
-aWYsIHNlcmlmLCBFbW9qaUZvbnQ7IGZvbnQtc2l6ZTogMTZweDsiPgpvZm9ub2RbNzExXTogc3Jj
-L3NpbS5jOm9mb25vX3NpbV9yZW1vdmVfc3BuX3dhdGNoKCkgMHgxMzM2Zjg8L2Rpdj4KPGRpdiBz
-dHlsZT0iZm9udC1mYW1pbHk6IENhbGlicmksIEhlbHZldGljYSwgc2Fucy1zZXJpZiwgc2VyaWYs
-IEVtb2ppRm9udDsgZm9udC1zaXplOiAxNnB4OyI+Cm9mb25vZFs3MTFdOiBzcmMvbmV0d29yay5j
-Om5ldHJlZ19yZW1vdmUoKSBhdG9tOiAweDEzZDQ2ODwvZGl2Pgo8ZGl2IHN0eWxlPSJmb250LWZh
-bWlseTogQ2FsaWJyaSwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmLCBzZXJpZiwgRW1vamlGb250OyBm
-b250LXNpemU6IDE2cHg7Ij4Kb2Zvbm9kWzcxMV06IHNyYy92b2ljZWNhbGwuYzp2b2ljZWNhbGxf
-cmVtb3ZlKCkgYXRvbTogMHgxMWU0MzA8L2Rpdj4KPGRpdiBzdHlsZT0iZm9udC1mYW1pbHk6IENh
-bGlicmksIEhlbHZldGljYSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVtb2ppRm9udDsgZm9udC1zaXpl
-OiAxNnB4OyI+Cm9mb25vZFs3MTFdOiBwbHVnaW5zL3B1c2gtbm90aWZpY2F0aW9uLmM6cHVzaF9u
-b3RpZmljYXRpb25fY2xlYW51cCgpIDB4MTJmZmU4PC9kaXY+CjxkaXYgc3R5bGU9ImZvbnQtZmFt
-aWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYsIHNlcmlmLCBFbW9qaUZvbnQ7IGZv
-bnQtc2l6ZTogMTZweDsiPgpvZm9ub2RbNzExXTogcGx1Z2lucy9zbWFydC1tZXNzYWdpbmcuYzpz
-bWFydF9tZXNzYWdpbmdfY2xlYW51cCgpIDB4MTE5YzMwPC9kaXY+CjxkaXYgc3R5bGU9ImZvbnQt
-ZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYsIHNlcmlmLCBFbW9qaUZvbnQ7
-IGZvbnQtc2l6ZTogMTZweDsiPgpvZm9ub2RbNzExXTogc3JjL3Ntcy5jOnNtc19yZW1vdmUoKSBh
-dG9tOiAweDExZTNjODwvZGl2Pgo8ZGl2IHN0eWxlPSJmb250LWZhbWlseTogQ2FsaWJyaSwgSGVs
-dmV0aWNhLCBzYW5zLXNlcmlmLCBzZXJpZiwgRW1vamlGb250OyBmb250LXNpemU6IDE2cHg7Ij4K
-b2Zvbm9kWzcxMV06IHNyYy9zaW0uYzpzaW1fZnJlZV9tYWluX3N0YXRlKCkgRnJlZSBhaWRfc2Vz
-c2lvbnM6IDB4MTM5YzkwLCBTSU06IDB4MTMzNmY4PC9kaXY+CjxkaXYgc3R5bGU9ImZvbnQtZmFt
-aWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYsIHNlcmlmLCBFbW9qaUZvbnQ7IGZv
-bnQtc2l6ZTogMTZweDsiPgpvZm9ub2RbNzExXTogc3JjL3NpbS5jOmFpZF9zZXNzaW9uX2ZyZWUo
-KSBzZXNzaW9uOiAweDEzMGMxMCBzZXNzaW9uLSZndDt3YXRjaGVzOiAweDEzOThkMDwvZGl2Pgo8
-ZGl2IHN0eWxlPSJmb250LWZhbWlseTogQ2FsaWJyaSwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmLCBz
-ZXJpZiwgRW1vamlGb250OyBmb250LXNpemU6IDE2cHg7Ij4Kb2Zvbm9kWzcxMV06IHNyYy9zaW0u
-YzphaWRfc2Vzc2lvbl9mcmVlKCkgc2Vzc2lvbjogMHgxM2FjMjAgc2Vzc2lvbi0mZ3Q7d2F0Y2hl
-czogMHgxMTczNDA8L2Rpdj4KPGRpdiBzdHlsZT0iZm9udC1mYW1pbHk6IENhbGlicmksIEhlbHZl
-dGljYSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVtb2ppRm9udDsgZm9udC1zaXplOiAxNnB4OyI+Cm9m
-b25vZFs3MTFdOiBVbnJlZ2lzdGVyUHJvZmlsZSgpIHJlcGxpZWQgYW4gZXJyb3I6IG9yZy5mcmVl
-ZGVza3RvcC5EQnVzLkVycm9yLlNlcnZpY2VVbmtub3duLCBUaGUgbmFtZSBvcmcuYmx1ZXogd2Fz
-IG5vdCBwcm92aWRlZCBieSBhbnkgLnNlcnZpY2UgZmlsZXM8L2Rpdj4KPGRpdiBzdHlsZT0iZm9u
-dC1mYW1pbHk6IENhbGlicmksIEhlbHZldGljYSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVtb2ppRm9u
-dDsgZm9udC1zaXplOiAxNnB4OyI+Cm9mb25vZFs3MTFdOiBwbHVnaW5zL3ZlcmltYWx0by5jOnNp
-bV9kZXRlY3RfY2IoKSBIYXZlIFNJTTogMTwvZGl2Pgo8ZGl2IHN0eWxlPSJmb250LWZhbWlseTog
-Q2FsaWJyaSwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmLCBzZXJpZiwgRW1vamlGb250OyBmb250LXNp
-emU6IDE2cHg7Ij4Kb2Zvbm9kWzcxMV06IHNyYy9zaW0uYzpvZm9ub19zaW1faW5zZXJ0ZWRfbm90
-aWZ5KCkgU0lNOiAweDEzMzZmODwvZGl2Pgo8ZGl2IHN0eWxlPSJmb250LWZhbWlseTogQ2FsaWJy
-aSwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmLCBzZXJpZiwgRW1vamlGb250OyBmb250LXNpemU6IDE2
-cHg7Ij4Kb2Zvbm9kWzcxMV06IEludGVyZmFjZSBvcmcub2Zvbm8uQWxsb3dlZEFjY2Vzc1BvaW50
-cyBub3QgZm91bmQgb24gdGhlIGludGVyZmFjZV9saXN0PC9kaXY+CjxkaXYgc3R5bGU9ImZvbnQt
-ZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYsIHNlcmlmLCBFbW9qaUZvbnQ7
-IGZvbnQtc2l6ZTogMTZweDsiPgpvZm9ub2RbNzExXTogcGx1Z2lucy92ZXJpbWFsdG8uYzpzaW1f
-ZGV0ZWN0X2NiKCkgSGF2ZSBTSU06IDA8L2Rpdj4KPGRpdiBzdHlsZT0iZm9udC1mYW1pbHk6IENh
-bGlicmksIEhlbHZldGljYSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVtb2ppRm9udDsgZm9udC1zaXpl
-OiAxNnB4OyI+Cm9mb25vZFs3MTFdOiBzcmMvc2ltLmM6b2Zvbm9fc2ltX2luc2VydGVkX25vdGlm
-eSgpIFNJTTogMHgxMzM2Zjg8L2Rpdj4KPGRpdiBzdHlsZT0iZm9udC1mYW1pbHk6IENhbGlicmks
-IEhlbHZldGljYSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVtb2ppRm9udDsgZm9udC1zaXplOiAxNnB4
-OyI+Cm9mb25vZFs3MTFdOiBJbnRlcmZhY2Ugb3JnLm9mb25vLkFsbG93ZWRBY2Nlc3NQb2ludHMg
-bm90IGZvdW5kIG9uIHRoZSBpbnRlcmZhY2VfbGlzdDwvZGl2Pgo8ZGl2IHN0eWxlPSJmb250LWZh
-bWlseTogQ2FsaWJyaSwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmLCBzZXJpZiwgRW1vamlGb250OyBm
-b250LXNpemU6IDE2cHg7Ij4Kb2Zvbm9kWzcxMV06IHNyYy9tb2RlbS5jOm1vZGVtX2NoYW5nZV9z
-dGF0ZSgpIG9sZCBzdGF0ZTogMSwgbmV3IHN0YXRlOiAxPC9kaXY+CjxkaXYgc3R5bGU9ImZvbnQt
-ZmFtaWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYsIHNlcmlmLCBFbW9qaUZvbnQ7
-IGZvbnQtc2l6ZTogMTZweDsiPgpvZm9ub2RbNzExXTogc3JjL3NpbS5jOnNpbV9mcmVlX21haW5f
-c3RhdGUoKSBGcmVlIGFpZF9zZXNzaW9uczogMHgxMzljOTAsIFNJTTogMHgxMzM2Zjg8L2Rpdj4K
-PGRpdiBzdHlsZT0iZm9udC1mYW1pbHk6IENhbGlicmksIEhlbHZldGljYSwgc2Fucy1zZXJpZiwg
-c2VyaWYsIEVtb2ppRm9udDsgZm9udC1zaXplOiAxNnB4OyI+Cm9mb25vZFs3MTFdOiBzcmMvc2lt
-LmM6YWlkX3Nlc3Npb25fZnJlZSgpIHNlc3Npb246IDB4MTM5Y2QwIHNlc3Npb24tJmd0O3dhdGNo
-ZXM6IDB4MTM5Y2MwPC9kaXY+CjxkaXYgc3R5bGU9ImZvbnQtZmFtaWx5OiBDYWxpYnJpLCBIZWx2
-ZXRpY2EsIHNhbnMtc2VyaWYsIHNlcmlmLCBFbW9qaUZvbnQ7IGZvbnQtc2l6ZTogMTZweDsiPgoq
-KiogRXJyb3IgaW4gYC91c3Ivc2Jpbi9vZm9ub2QnOiBmcmVlKCk6IGludmFsaWQgcG9pbnRlcjog
-MHgwMDEzOWNjMCAqKjwvZGl2Pgo8ZGl2IHN0eWxlPSJmb250LWZhbWlseTogQ2FsaWJyaSwgSGVs
-dmV0aWNhLCBzYW5zLXNlcmlmLCBzZXJpZiwgRW1vamlGb250OyBmb250LXNpemU6IDE2cHg7Ij4K
-UHJvZ3JhbSByZWNlaXZlZCBzaWduYWwgU0lHQUJSVCwgQWJvcnRlZC48L2Rpdj4KPGRpdiBzdHls
-ZT0iZm9udC1mYW1pbHk6IENhbGlicmksIEhlbHZldGljYSwgc2Fucy1zZXJpZiwgc2VyaWYsIEVt
-b2ppRm9udDsgZm9udC1zaXplOiAxNnB4OyI+Cl9fbGliY19kb19zeXNjYWxsICgpIGF0IC4uL3N5
-c2RlcHMvdW5peC9zeXN2L2xpbnV4L2FybS9saWJjLWRvLXN5c2NhbGwuUzo0NzwvZGl2Pgo8ZGl2
-IHN0eWxlPSJmb250LWZhbWlseTogQ2FsaWJyaSwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmLCBzZXJp
-ZiwgRW1vamlGb250OyBmb250LXNpemU6IDE2cHg7Ij4KNDc8c3BhbiBzdHlsZT0id2hpdGUtc3Bh
-Y2U6IHByZTsiPiA8L3NwYW4+Li4vc3lzZGVwcy91bml4L3N5c3YvbGludXgvYXJtL2xpYmMtZG8t
-c3lzY2FsbC5TOiBObyBzdWNoIGZpbGUgb3IgZGlyZWN0b3J5LjwvZGl2Pgo8cCBzdHlsZT0ibWFy
-Z2luLXRvcDowO21hcmdpbi1ib3R0b206MCI+PGJyPgo8L3A+CjxwIHN0eWxlPSJtYXJnaW4tdG9w
-OjA7bWFyZ2luLWJvdHRvbTowIj5JdCBoYXMgYWxzbyBjcmFzaGVkIGluIG90aGVyIHBhcnRzIG9m
-IHNpbS5jIGFzIHdlbGwgYXMgaW4gc2ltZnMuYywgc28gSSdtIHN0YXJ0aW5nIHRvIGRvdWJ0IGl0
-IGNhbiByZWFsbHkgaGFuZGxlIHNwb250YW5lb3VzIFNJTSBjYXJkIG5vdGlmaWNhdGlvbnMuLi4m
-bmJzcDs8L3A+CjxwIHN0eWxlPSJtYXJnaW4tdG9wOjA7bWFyZ2luLWJvdHRvbTowIj48YnI+Cjwv
-cD4KV2UgYXJlIGN1cnJlbnRseSB1c2luZyBPZm9ubyB2ZXJzaW9uIDEuMjIuPGJyIHN0eWxlPSJm
-b250LWZhbWlseTogQ2FsaWJyaSwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmLCBzZXJpZiwgRW1vamlG
-b250OyBmb250LXNpemU6IDE2cHg7Ij4KPHAgc3R5bGU9ImZvbnQtZmFtaWx5OiBDYWxpYnJpLCBI
-ZWx2ZXRpY2EsIHNhbnMtc2VyaWYsIHNlcmlmLCBFbW9qaUZvbnQ7IGZvbnQtc2l6ZTogMTZweDsi
-Pgo8L3A+CjxwIHN0eWxlPSJmb250LWZhbWlseTogQ2FsaWJyaSwgSGVsdmV0aWNhLCBzYW5zLXNl
-cmlmLCBzZXJpZiwgRW1vamlGb250OyBmb250LXNpemU6IDE2cHg7Ij4KPGJyPgo8L3A+CjxwIHN0
-eWxlPSJmb250LWZhbWlseTogQ2FsaWJyaSwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmLCBzZXJpZiwg
-RW1vamlGb250OyBmb250LXNpemU6IDE2cHg7Ij4KQlJzLDwvcD4KPHAgc3R5bGU9ImZvbnQtZmFt
-aWx5OiBDYWxpYnJpLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYsIHNlcmlmLCBFbW9qaUZvbnQ7IGZv
-bnQtc2l6ZTogMTZweDsiPgpNYXR0aWFzPC9wPgo8YnI+CjxwPjwvcD4KPC9kaXY+CjwvYm9keT4K
-PC9odG1sPgo=
-
---===============4724011980507394756==--
+--===============7740441013600537647==--
 
