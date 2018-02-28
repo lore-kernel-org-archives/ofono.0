@@ -1,51 +1,104 @@
-Content-Type: multipart/mixed; boundary="===============7740441013600537647=="
+Content-Type: multipart/mixed; boundary="===============4919060841750742193=="
 MIME-Version: 1.0
-From: Bassem BOUBAKER <bassem.boubaker@actia.fr>
-Subject: Issue with an URC falling into an AT command response
-Date: Wed, 28 Feb 2018 11:52:07 +0100
-Message-ID: <20180228105207.GA15442@bboubake>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Ofono crashes on SIM notifications
+Date: Wed, 28 Feb 2018 11:36:54 -0600
+Message-ID: <6b1e3c28-fc4d-fad1-e99b-2b93989948f7@gmail.com>
+In-Reply-To: <HE1PR1001MB1113A47ADBDD840B3527DCB396C70@HE1PR1001MB1113.EURPRD10.PROD.OUTLOOK.COM>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7740441013600537647==
+--===============4919060841750742193==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Community,
+Hi Mattias,
 
-I'm facing an issue with an ofono segfault because of an URC is received be=
-tween the AT command and its response.
+On 02/28/2018 04:01 AM, Mattias M=C3=A5nsson wrote:
+> Hi!
+> =
 
-Below is my case:
+> =
 
-	ofonod[826]: App: > AT^SMONI\r
-	ofonod[826]: App: < \r\n^SREG: 2,0\r\n
-	ofonod[826]: App: < \r\n^SMONI: Searching\r\nSearching\r\n\r\nOK\r\n
+> I'm working with integrating a new Gemalto modem with Ofono and is =
 
-The URC ^SREG is captured in the callback function related to handling the =
-response of AT^SMONI.
+> currently working with dynamic SIM card detection. This is not done by =
 
-I have two questions here:
+> any included driver what I can see, so it is possible I have done =
 
-i) how can I isolate only the response of AT^SMONI without nasty hacking th=
-e response cb function.
+> something wrong. Anyway, I am listening to SIM card URCs and when I get =
 
-ii) How can I force ofono to go through the registered callback of the URC =
-^SREG in this particular case.
+> one, I call ofono_sim_inserted_notify with the proper state. This seems =
 
-Any ideas?
+> to work fine at first, but if I do the following, I get a crash:
+
+Plenty of drivers support this actually.  plugins/ifx.c for example or =
+
+plugins/phonesim.c
+
+> =
+
+> =
+
+>  1. Insert SIM
+>  2. Remove SIM
+>  3. Insert SIM
+>  4. Remove SIM
+> =
 
 
+So I tested this with phonesim and could replicate the issue easily.  I =
 
-Thanks,
-Bassem.
+pushed a bunch of fixes upstream which takes care of this and some =
+
+memory leaks as well.  These were introduced recently by the =
+
+SimAuthentication API related changes.
+
+> =
+
+> In this case I get a SIGABRT in src/sim.c:aid_session_free(). It seems =
+
+> as it tries to free that list sim->aid_sessions, but it has just been =
+
+> freed before. However, after freeing it the first time, it is never set =
+
+> to NULL, so the second time the NULL check doesn't take it and crash. I =
 
 
+Right, this is the correct fix...
+
+> tried setting it to NULL, but then I realized that it is used in =
+
+> __ofono_sim_remove_session_watch() without allocating it again. So it =
+
+> seems that there is a chain of problems. Any ideas?
+> =
 
 
+This seems fine to me, the session should be re-allocated when =
+
+discover_apps_cb is called after SIM insertion / initialization.
+
+<snip>
+
+> =
+
+> It has also crashed in other parts of sim.c as well as in simfs.c, so =
+
+> I'm starting to doubt it can really handle spontaneous SIM card =
+
+> notifications...
+> =
 
 
+oFono should handle SIM removal / re-insertion just fine.  If you =
 
---===============7740441013600537647==--
+encounter issues, please report these and we'll have them fixed.
+
+Regards,
+-Denis
+
+--===============4919060841750742193==--
 
