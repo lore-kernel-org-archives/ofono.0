@@ -1,96 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============4633527873852477070=="
+Content-Type: multipart/mixed; boundary="===============0530191895912913839=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/4] qmimodem: get LTE default bearer APN from modem
-Date: Thu, 01 Mar 2018 09:27:21 -0600
-Message-ID: <fc01f758-fda3-fd45-dd09-04e519351a30@gmail.com>
-In-Reply-To: <7dd4cdc6-2fb3-7a83-85b3-a6f6046c92e3@southpole.se>
+From: Alexander Couzens <lynxis@fe80.eu>
+Subject: Re: Ofono LTE modems and connman services
+Date: Thu, 01 Mar 2018 16:27:33 +0100
+Message-ID: <20180301162733.298f3eef@lazus.yip>
+In-Reply-To: <e10fa5c9-24ea-3af8-651f-2f43a49670e7@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4633527873852477070==
+--===============0530191895912913839==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jonas,
 
-On 03/01/2018 09:20 AM, Jonas Bonn wrote:
-> On 03/01/2018 04:02 PM, Denis Kenzior wrote:
->> Hi Jonas,
->>
->> On 03/01/2018 04:48 AM, Jonas Bonn wrote:
->>> When an LTE modem registers with the network, a default bearer is
->>> automatically established.=C2=A0 The APN used for this bearer is taken =
-from
->>> whatever default settings the modem has.
->>>
->>> In order to properly set up the ofono context, we need to find out what
->>> APN the modem has used when negotiating this bearer.=C2=A0 Ideally, we =
-would
->>> want to query the 'current settings', but those aren't available until
->>> start_net has been called and that's done in the gprs-context atom.=C2=
-=A0 As
->>> such, we query the 'default settings' here under the assumption that
->>> that's what the modem will have used.
->>
->> I don't recall exactly, but from what I remember the default attach =
+thanks for your patch.
+I'm actually having problem from time to time with ofono (quectel
+ec 20) when using LTE. Ofono has 2 contexts allocated, but it says
+it's detached to packet switched.
 
->> APN is not guaranteed to be honored by the operator.=C2=A0 So the defaul=
-t =
+I hope your patch is fixing this.
 
->> attach settings used for the actual active context might be =
+In the LTE atom, you're setting the profile 1.
+Does it really have to be profile 1. Is the profile 1 a special profile
+which should not be removed?! Or how is it ensured, this can not be
+removed?
 
->> different.=C2=A0 It might be better to query those instead.
-> =
+I'm also asking, because ofono/qmi doesn't really support ipv4, ipv6 and
+dual contexts. For this we need to manage exactly those profiles and
+use them when starting the contexts. Atm requesting an ipv4
+context can result in requesting a Dual context depending if the
+network (SGSN/GGSN) supports it.
 
-> So, this becomes quite messy:
-> =
+Best,
+lynxis
+-- =
 
-> Getting "current settings" does not succeed until after we have called =
+Alexander Couzens
 
-> start_net.=C2=A0 This is done in the gprs-context atom as part of =
+mail: lynxis(a)fe80.eu
+jabber: lynxis(a)fe80.eu
+mobile: +4915123277221
+gpg: 390D CF78 8BF9 AA50 4F8F  F1E2 C29E 9DA6 A0DF 8604
 
-> read_settings() for LTE and shares a bunch of code with =
+--===============0530191895912913839==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.sig"
 
-> activate_primary() that also calls start_net.
-> =
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KCmlRSXpCQUVCQ2dBZEZpRUVPUTNQZUl2NXFs
+QlBqL0hpd3A2ZHBxRGZoZ1FGQWxxWUcrVUFDZ2tRd3A2ZHBxRGYKaGdRZ3dBLy9jLzM0UGk4VEJt
+cytZbFVXbW9rcEFpUXdaQ09vT0dhZ3VCcVcwNm1xRjdqbFFZcG5GYkxMYzhHKwpONlpPbkRiVmVF
+R3dudnh3UVF0SWJSdmpqdlZrUzdIdTJYeXZHUUZMNElXdU5jQXVxdHhXbllXbmRDWHFUT0hJCmxy
+L3BNYzd1a3I3WXVRdU1NdzVRdmp6TW9BY1RsNHlBVzIydWJQTjRiWXF2MzJrYTZ0aUIzRUkzbncr
+UEl5aHoKUkxlSjBNTG5jVUg0WjRKRGxlVjZ3bXhKaEloYVEwb2R0SmM5QUtBQm1lRVpjN3I2Y2xi
+MEpHZXlWeFg0cWx0WApxL1lsODBaelBOUE9GYnd1Yk4zbjFUaVk4U0JRZzhqWmZ5WGU5aHFEQlZu
+Q2dQQUdhdkEyaVd4ZnBkNkxKdG51CmRzc1RvbjRUR2hRQVMzUm51ZkpReWxnNk5tcUJ6ZlI4clo0
+UUFOeVZYUVZoejFZSHdsOVNDZm9jVnNZYVUxdGIKelpPL2Jlc2ZtaUppNXlzVWs4NGVWVCt2T2F5
+RndEbDIrSWlwVk5ERTZza2dWNWkzRS9QS083dnUwN3VoYjlUNApqaTZ1UVVlcmRrTDZHaTFOclFG
+RjZmMXc4dnNLK2toTVNpOEJnbUQ0U2RHL3R6WXVITzUzOStUMzF5OFc5eEJKCkVqWjRFNG9TV2FG
+QTJLSTlMbDZmSjAzRkR6bW90L3pNekdPSmRQenA1MzJ1RXhxUXQvbVZnaEpZbEFmQndlR2kKVDZN
+V1JrWUtrejlZSU1LTU1YQU5JUnlFZFZnR1cxcXg5d21BR21hY2RCSEI5Tml1OEFSKytlQzVieDF0
+V3BVVQpmQlZybXQ2bDRDZFBPMkxma1hXaHhaYWV1VkNVN0tJOTlIcWlsbTJoN1gvZmhxZWtyUlE9
+Cj1DNzgrCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQo=
 
-> We can move the call of start_net to the gprs atom if we must, but we =
-
-> end up duplicating a whole bunch of code.=C2=A0 That's why I wanted to ju=
-st =
-
-> grab the APN from the default settings in the GPRS atom, call =
-
-> cid_activated(), and then wait for read_settings() to be called before =
-
-> invoking start_net and then getting the rest of the settings.
-> =
-
-
-3GPP extended +CGDCONT specifically for this case.  Does QMI have =
-
-anything similar?
-
-> =
-
->>> +=C2=A0=C2=A0=C2=A0 struct qmi_device* dev;
->>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct qmi_service *nas;
->>> +=C2=A0=C2=A0=C2=A0 struct qmi_service *wds;
->>> +=C2=A0=C2=A0=C2=A0 unsigned int last_auto_context_id;
->>
->> Just a nitpick, but why do you have the '*' in different places here?
-> =
-
-> Because I"m terribly inconsistent with my placement of the '*'...
-> =
-
-
-:)
-
-Regards,
--Denis
-
---===============4633527873852477070==--
+--===============0530191895912913839==--
 
