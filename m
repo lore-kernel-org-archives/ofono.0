@@ -1,176 +1,102 @@
-Content-Type: multipart/mixed; boundary="===============2882322617005432692=="
+Content-Type: multipart/mixed; boundary="===============9151847471560948103=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Ofono LTE modems and connman services
-Date: Thu, 01 Mar 2018 10:11:02 -0600
-Message-ID: <5b9c8dc7-630e-9452-9ed8-5a32ea364b55@gmail.com>
-In-Reply-To: <a2d778ca-a4b1-8b49-3c61-e800f3faeca1@southpole.se>
+From: Reinhard Speyerer <rspmn@arcor.de>
+Subject: Re: [PATCH 4/4] qmimodem: get LTE default bearer APN from modem
+Date: Thu, 01 Mar 2018 23:30:16 +0100
+Message-ID: <20180301223015.7bkg2wkzts4e3g7u@arcor.de>
+In-Reply-To: <2b9f8392-6748-ea6d-9725-e5ffd8845d54@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2882322617005432692==
+--===============9151847471560948103==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+On Thu, Mar 01, 2018 at 04:43:22PM +0100, Jonas Bonn wrote:
+> On 03/01/2018 04:27 PM, Denis Kenzior wrote:
+> > Hi Jonas,
+> > =
+
+> > On 03/01/2018 09:20 AM, Jonas Bonn wrote:
+> > > On 03/01/2018 04:02 PM, Denis Kenzior wrote:
+> > > > Hi Jonas,
+> > > > =
+
+> > > > On 03/01/2018 04:48 AM, Jonas Bonn wrote:
+> > > > > When an LTE modem registers with the network, a default bearer is
+> > > > > automatically established.=C2=A0 The APN used for this bearer is =
+taken from
+> > > > > whatever default settings the modem has.
+> > > > > =
+
+> > > > > In order to properly set up the ofono context, we need to find ou=
+t what
+> > > > > APN the modem has used when negotiating this bearer.=C2=A0 Ideall=
+y, we would
+> > > > > want to query the 'current settings', but those aren't available =
+until
+> > > > > start_net has been called and that's done in the gprs-context ato=
+m.=C2=A0 As
+> > > > > such, we query the 'default settings' here under the assumption t=
+hat
+> > > > > that's what the modem will have used.
+> > > > =
+
+> > > > I don't recall exactly, but from what I remember the default
+> > > > attach APN is not guaranteed to be honored by the operator.=C2=A0 So
+> > > > the default attach settings used for the actual active context
+> > > > might be different.=C2=A0 It might be better to query those instead.
+> > > =
+
+> > > So, this becomes quite messy:
+> > > =
+
+> > > Getting "current settings" does not succeed until after we have
+> > > called start_net.=C2=A0 This is done in the gprs-context atom as part=
+ of
+> > > read_settings() for LTE and shares a bunch of code with
+> > > activate_primary() that also calls start_net.
+> > > =
+
+> > > We can move the call of start_net to the gprs atom if we must, but
+> > > we end up duplicating a whole bunch of code.=C2=A0 That's why I wante=
+d to
+> > > just grab the APN from the default settings in the GPRS atom, call
+> > > cid_activated(), and then wait for read_settings() to be called
+> > > before invoking start_net and then getting the rest of the settings.
+> > > =
+
+> > =
+
+> > 3GPP extended +CGDCONT specifically for this case.=C2=A0 Does QMI have
+> > anything similar?
+> =
+
+> Not that I am able to ascertain.  I'm hoping somebody here can tell me wh=
+at
+> that would be...
+> =
+
+> For +CGDCONT you effectively have an event saying that a 'transient' cont=
+ext
+> has been activated.  There's nothing in the QMI protocol that resembles
+> this.  We jsut get "network registered" and then we need to understand th=
+at
+> there's an underlying bearer, call start_net (for whatever reason, despite
+> the net effectively being started already), and then query the settings.
+> The heuristic we have is (network_registered && tech=3D=3DLTE)... if there
+> something better, I'd love to know!
+
 Hi Jonas,
-> =
 
-> This is an explicit UMTS to LTE transition:
-> =
-
-> {RadioSettings} [/quectelqmi_0] TechnologyPreference =3D lte
-
-Okay, so you set the Technology preference and the modem goes into =
-
-disconnect and search mode
-
-> {ConnectionManager} [/quectelqmi_0] Attached =3D False
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D {}
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D False
-> {NetworkRegistration} [/quectelqmi_0] Status =3D searching
-
-So far so good
-
-> {NetworkRegistration} [/quectelqmi_0] Technology =3D lte
-> {NetworkOperator} [/quectelqmi_0/operator/24001] Status =3D available
-> {NetworkRegistration} [/quectelqmi_0] Name =3D
-> {ConnectionManager} [/quectelqmi_0] Attached =3D True
-> {NetworkRegistration} [/quectelqmi_0] Status =3D roaming
-> {NetworkRegistration} [/quectelqmi_0] LocationAreaCode =3D 65534
-> {NetworkRegistration} [/quectelqmi_0] CellId =3D 26710796
-> {NetworkOperator} [/quectelqmi_0/operator/24001] Status =3D current
-> {NetworkRegistration} [/quectelqmi_0] Name =3D 24001
-> {NetworkRegistration} [/quectelqmi_0] MobileCountryCode =3D 240
-> {NetworkRegistration} [/quectelqmi_0] MobileNetworkCode =3D 01
-> {NetworkRegistration} [/quectelqmi_0] Status =3D registered
-> {NetworkRegistration} [/quectelqmi_0] Name =3D Orange F
-> {NetworkOperator} [/quectelqmi_0/operator/24001] Name =3D TELIA
-> {NetworkRegistration} [/quectelqmi_0] Strength =3D 20
-> {NetworkRegistration} [/quectelqmi_0] Name =3D Orange F
-> {NetworkOperator} [/quectelqmi_0/operator/24001] Name =3D 24001
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D { Interface =3D =
-
-> wwp0s20u1i4, Method =3D static, Address =3D 10.172.219.235, Netmask =3D =
-
-> 255.255.255.248, Gateway =3D 10.172.219.236, DomainNameServers =3D =
-
-> 194.51.3.56 194.51.3.56 }
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D True
-> =
-
-
-This actually looks fine.  I do wonder what an actual modem roam looks =
-
-like, without the technology preference interference.
-
-> =
-
-> Here's what connman does effects on the LTE to UMTS transition:
-> =
-
-> {RadioSettings} [/quectelqmi_0] TechnologyPreference =3D umts
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D {}
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D False
-> {ConnectionManager} [/quectelqmi_0] Attached =3D False
-
-So we get detached, okay...
-
-> {NetworkRegistration} [/quectelqmi_0] LocationAreaCode =3D 11
-> {NetworkRegistration} [/quectelqmi_0] CellId =3D 752047
-> {NetworkRegistration} [/quectelqmi_0] Technology =3D umts
-
-Switch technology
-
-> {ConnectionManager} [/quectelqmi_0] Attached =3D True
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D { Interface =3D =
-
-> wwp0s20u1i4, Method =3D static, Address =3D 10.160.218.173, Netmask =3D =
-
-> 255.255.255.252, Gateway =3D 10.160.218.174, DomainNameServers =3D =
-
-> 194.51.3.56 194.51.3.56 }
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D True
-
-Reattach and get our settings back, so far so good...
-
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D {}
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D False
-
-This part looks bizarre, is the modem deactivating the context for some =
-
-reason?
-
-> ^[[F{ConnectionContext} [/quectelqmi_0/context1] Settings =3D { Interface =
-
-> =3D wwp0s20u1i4, Method =3D static, Address =3D 10.167.137.164, Netmask =
-=3D =
-
-> 255.255.255.248, Gateway =3D 10.167.137.165, DomainNameServers =3D =
-
-> 194.51.3.56 194.51.3.56
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D True
-
-And back to active
-
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D {}
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D False
-
-Back to inactive
-
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D { Interface =3D =
-
-> wwp0s20u1i4, Method =3D static, Address =3D 10.173.100.170, Netmask =3D =
-
-> 255.255.255.252, Gateway =3D 10.173.100.169, DomainNameServers =3D =
-
-> 194.51.3.56 194.51.3.56 }
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D True
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D {}
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D False
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D { Interface =3D =
-
-> wwp0s20u1i4, Method =3D static, Address =3D 10.160.115.172, Netmask =3D =
-
-> 255.255.255.248, Gateway =3D 10.160.115.173, DomainNameServers =3D =
-
-> 194.51.3.56 194.51.3.56 }
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D True
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D {}
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D False
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D { Interface =3D =
-
-> wwp0s20u1i4, Method =3D static, Address =3D 10.167.11.161, Netmask =3D =
-
-> 255.255.255.252, Gateway =3D 10.167.11.162, DomainNameServers =3D =
-
-> 194.51.3.56 194.51.3.56 }
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D True
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D {}
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D False
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D { Interface =3D =
-
-> wwp0s20u1i4, Method =3D static, Address =3D 10.173.65.6, Netmask =3D =
-
-> 255.255.255.252, Gateway =3D 10.173.65.5, DomainNameServers =3D 194.51.3.=
-56 =
-
-> 194.51.3.56 }
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D True
-> {ConnectionContext} [/quectelqmi_0/context1] Settings =3D {}
-> {ConnectionContext} [/quectelqmi_0/context1] Active =3D False
-> =
-
-> ....eventually that settles down and the connection is established.
-> =
-
-
-I don't get this part actually.  ConnMan is only activating the context =
-
-right?  What is deactivating it?
+if you only need to know the APN and the IP version assigned by the network
+for the default bearer you could try to use WDSGetLTEAttachParameters
+(WDS msgid 0x0085) instead of using WDSStartNetworkInterface followed by
+WDSGetCurrentSettings.
 
 Regards,
--Denis
+Reinhard
 
---===============2882322617005432692==--
+--===============9151847471560948103==--
 
