@@ -1,52 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============3239751121777357205=="
+Content-Type: multipart/mixed; boundary="===============1587372651058852595=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH 3/4] gobi: add LTE atom
-Date: Thu, 01 Mar 2018 11:48:03 +0100
-Message-ID: <20180301104804.24058-4-jonas@southpole.se>
+Subject: [PATCH 2/4] qmimodem: initialize LTE driver
+Date: Thu, 01 Mar 2018 11:48:02 +0100
+Message-ID: <20180301104804.24058-3-jonas@southpole.se>
 In-Reply-To: <20180301104804.24058-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3239751121777357205==
+--===============1587372651058852595==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This atom needs to be created in post_sim so that the APN can be
-written to the default profile before the modem attempts to use the
-setting to connect to the network.
 ---
- plugins/gobi.c | 3 +++
- 1 file changed, 3 insertions(+)
+ drivers/qmimodem/qmimodem.c | 2 ++
+ drivers/qmimodem/qmimodem.h | 3 +++
+ 2 files changed, 5 insertions(+)
 
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 17900010..e7cf1598 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -43,6 +43,7 @@
- #include <ofono/ussd.h>
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
-+#include <ofono/lte.h>
- #include <ofono/radio-settings.h>
- #include <ofono/location-reporting.h>
- #include <ofono/log.h>
-@@ -483,6 +484,8 @@ static void gobi_post_sim(struct ofono_modem *modem)
+diff --git a/drivers/qmimodem/qmimodem.c b/drivers/qmimodem/qmimodem.c
+index b10ce28c..11e68f2e 100644
+--- a/drivers/qmimodem/qmimodem.c
++++ b/drivers/qmimodem/qmimodem.c
+@@ -39,6 +39,7 @@ static int qmimodem_init(void)
+ 	qmi_ussd_init();
+ 	qmi_gprs_init();
+ 	qmi_gprs_context_init();
++	qmi_lte_init();
+ 	qmi_radio_settings_init();
+ 	qmi_location_reporting_init();
+ 	qmi_netmon_init();
+@@ -51,6 +52,7 @@ static void qmimodem_exit(void)
+ 	qmi_netmon_exit();
+ 	qmi_location_reporting_exit();
+ 	qmi_radio_settings_exit();
++	qmi_lte_exit();
+ 	qmi_gprs_context_exit();
+ 	qmi_gprs_exit();
+ 	qmi_ussd_exit();
+diff --git a/drivers/qmimodem/qmimodem.h b/drivers/qmimodem/qmimodem.h
+index 4b0fad3f..eeb1375a 100644
+--- a/drivers/qmimodem/qmimodem.h
++++ b/drivers/qmimodem/qmimodem.h
+@@ -48,6 +48,9 @@ extern void qmi_gprs_exit(void);
+ extern void qmi_gprs_context_init(void);
+ extern void qmi_gprs_context_exit(void);
  =
 
- 	DBG("%p", modem);
- =
-
-+	ofono_lte_create(modem, "qmimodem", data->device);
++extern void qmi_lte_init(void);
++extern void qmi_lte_exit(void);
 +
- 	if (data->features & GOBI_CAT)
- 		ofono_stk_create(modem, 0, "qmimodem", data->device);
- 	else if (data->features & GOBI_CAT_OLD)
+ extern void qmi_radio_settings_init(void);
+ extern void qmi_radio_settings_exit(void);
+ =
+
 -- =
 
 2.14.1
 
 
---===============3239751121777357205==--
+--===============1587372651058852595==--
 
