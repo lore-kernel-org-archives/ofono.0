@@ -1,96 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============6681420059700493238=="
+Content-Type: multipart/mixed; boundary="===============1886788324911748232=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: Ofono LTE modems and connman services
-Date: Thu, 01 Mar 2018 12:27:42 +0100
-Message-ID: <e10fa5c9-24ea-3af8-651f-2f43a49670e7@southpole.se>
-In-Reply-To: <4a5f9819-3efc-20ed-4080-e958bafabf2a@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/4] qmi: add LTE atom driver
+Date: Thu, 01 Mar 2018 08:50:16 -0600
+Message-ID: <29677724-540d-a05a-1f0a-2ab53261f44b@gmail.com>
+In-Reply-To: <20180301104804.24058-2-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6681420059700493238==
+--===============1886788324911748232==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 02/26/2018 05:12 PM, Denis Kenzior wrote:
-> Hi Jonas,
+Hi Jonas,
+
+On 03/01/2018 04:48 AM, Jonas Bonn wrote:
+> This patch adds an LTE atom for QMI modems.
 > =
 
-> On 02/26/2018 08:37 AM, Jonas Bonn wrote:
->> The question is, what are the expectations here:
->> i)=C2=A0=C2=A0 What does it mean for connman to see two 'internet' conte=
-xts =
-
->> since it sets up two services for them?
->> ii)=C2=A0 How is a modem supposed to roam between LTE and UMTS/GSM netwo=
-rks =
-
->> when one requires an APN and the other does not.
->> iii) Not auto-connecting an LTE modem means not bringing it online; =
-
->> what implications does this have for connman?
->>
->> The above is currently a bit of a confusing mess and both ofono and =
-
->> connman get themselves tied in a knot when the modem switches between =
-
->> LTE and non-LTE techs.=C2=A0 Any guidance on how to approach this would =
-be =
-
->> appreciated.
->>
+> This atom sets the APN that the LTE default bearer should use when
+> establishing its PDP context.  For the Quectel EC21 that I'm testing
+> with, this is effected by setting the APN on profile ID 1 from which the
+> default settings appear to be taken.  As I don't have any other QMI
+> modem to test with, I can not say for sure that all modems work in this
+> manner.
 > =
 
-> The answer is to just fix your oFono driver.
+> Once configured, the default profile settings are used when the
+> modem connects to the network; for this reason, the LTE atom needs
+> to be instantiated in post_sim, before the modem is set online.
+> ---
+>   Makefile.am            |   1 +
+>   drivers/qmimodem/lte.c | 182 ++++++++++++++++++++++++++++++++++++++++++=
++++++++
+>   2 files changed, 183 insertions(+)
+>   create mode 100644 drivers/qmimodem/lte.c
+> =
 
-OK... I fixed my driver. :)  I sent the patches a couple of minutes ago.
 
-With that, things work much better.  connman doesn't choke on network =
+Please merge patch 1 & 2 together, that's how we usually do it anyway.
 
-tech transitions anymore.
+> +struct lte_data {
+> +	struct qmi_service *wds;
+> +	char* apn;
+> +};
 
-There are still issues with connman related to this though:
+Why do you need the apn?  I don't see it used anywhere.  Also not our =
 
-Ofono does something like this on a tech transition to LTE:
+style, should be char *apn.
 
-Active: false
-Attached: false
-...
-Attached: true
-Active: true
+The rest looks fine to me.
 
-When ofono does Attached: true, connman starts trying to set the context =
+Regards,
+-Denis
 
-active which seems to result in InProgress.  connman doesn't seem to =
-
-like the InProgress response and tries again, which ends up pounding the =
-
-modem hard with "set active" messages until read_settings() returns (on =
-
-the modem side) and the modem becomes Active (automatically) for real.
-
-Similarly, on a transition from LTE to 3G, connman also tries to =
-
-activate the context hundreds of times before it settles.  This =
-
-behaviour is harder to understand:  connman has explicitly requested the =
-
-activation here and should know that it's in progress...
-
-What I think might be an issue here is the interplay between Attached =
-
-and Active.  For LTE, Attached and Active are synonymous...(???) =
-
-connman should not be setting Active for these at all.
-
-Could ofono have Active set to true before Attached gets set true for =
-
-the LTE context case so that connman never sees the context as =
-
-Active:false?  Or is there a better way to handle this?
-
-/Jonas
-
---===============6681420059700493238==--
+--===============1886788324911748232==--
 
