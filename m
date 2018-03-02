@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0434693722664439342=="
+Content-Type: multipart/mixed; boundary="===============8195200219906635242=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 1/3] qmi: add LTE atom driver
-Date: Fri, 02 Mar 2018 10:36:05 -0600
-Message-ID: <0bb0e70b-cb10-3828-73da-86442dbf1051@gmail.com>
-In-Reply-To: <20180302151221.18063-2-jonas@southpole.se>
+Subject: Re: [PATCH v2 3/3] qmimodem: get LTE default bearer APN from modem
+Date: Fri, 02 Mar 2018 10:40:21 -0600
+Message-ID: <9ae66995-fdf1-3b71-2d61-56aa330692f6@gmail.com>
+In-Reply-To: <20180302151221.18063-4-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0434693722664439342==
+--===============8195200219906635242==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,77 +16,123 @@ Content-Transfer-Encoding: quoted-printable
 Hi Jonas,
 
 On 03/02/2018 09:12 AM, Jonas Bonn wrote:
-> This patch adds an LTE atom for QMI modems.
+> When an LTE modem registers with the network, a default bearer is
+> automatically established.  The APN used for this bearer is taken from
+> whatever default settings the modem has.
 > =
 
-> This atom sets the APN that the LTE default bearer should use when
-> establishing its PDP context.  This APN needs to be set on the 'default'
-> profile so the atom queries which profile is the default and resets
-> it before allowing the APN to be set.
+> The LTE atom takes cares of setting up the default context/profile with
+> the APN to use.  From there, a default bearer will be established when
+> the modem registers with the network.  This results in a call to 'Get
+> LTE Attach Parameters' which tells us what APN the gateway negotiated
+> with us.
 > =
 
-> Once configured, the default profile settings are used when the
-> modem connects to the network; for this reason, the LTE atom needs
-> to be instantiated in post_sim, before the modem is set online.
+> If we can't get the APN, we do what the AT driver does:  pretend the
+> bearer wasn't established.  This is a reasonable fallback, currently,
+> because connman can't handle zero-length APN's anyway; the previous
+> approach of setting the APN to 'automatic' breaks connman badly when it
+> needs to switch between LTE and non-LTE networks.
 > ---
->   Makefile.am                 |   1 +
->   drivers/qmimodem/lte.c      | 266 +++++++++++++++++++++++++++++++++++++=
-+++++++
->   drivers/qmimodem/qmimodem.c |   2 +
->   drivers/qmimodem/qmimodem.h |   3 +
->   4 files changed, 272 insertions(+)
->   create mode 100644 drivers/qmimodem/lte.c
+>   drivers/qmimodem/gprs.c | 162 +++++++++++++++++++++++++++++++++++++++++=
+++++---
+>   1 file changed, 153 insertions(+), 9 deletions(-)
+> =
 
-So this looks good to me.  Since Reinhard has provided invaluable =
+> diff --git a/drivers/qmimodem/gprs.c b/drivers/qmimodem/gprs.c
+> index a80d55fe..115305df 100644
+> --- a/drivers/qmimodem/gprs.c
+> +++ b/drivers/qmimodem/gprs.c
+> @@ -29,12 +29,16 @@
+>   =
 
-insight into how QMI works in the past and seems to have 'insider' =
+>   #include "qmi.h"
+>   #include "nas.h"
+> +#include "wds.h"
+>   =
 
-knowledge, maybe we can get him to also comment on whether the approach =
+>   #include "src/common.h"
+>   #include "qmimodem.h"
+>   =
 
-is correct (e.g. whether querying / setting the default profile is =
+>   struct gprs_data {
+> +	struct qmi_device* dev;
+>   	struct qmi_service *nas;
+> +	struct qmi_service *wds;
+> +	unsigned int last_auto_context_id;
 
-equivalent to setting the default LTE attach parameters) or if there's =
+'*' inconsistency here
 
-another QMI command that should be used.
+>   };
+>   =
 
-Otherwise a few minor nitpicks below, I can fix these or you can:
+>   static bool extract_ss_info(struct qmi_result *result, int *status, int=
+ *tech)
+> @@ -64,8 +68,124 @@ static bool extract_ss_info(struct qmi_result *result=
+, int *status, int *tech)
+>   	return true;
+>   }
+>   =
 
-<snip>
-
-> +static void reset_profile_cb(struct qmi_result *result, void *user_data)
+> +static void get_lte_attach_param_cb(struct qmi_result *result, void *use=
+r_data)
 > +{
-> +	struct ofono_lte *lte =3D user_data;
+> +	struct ofono_gprs* gprs =3D user_data;
+> +	struct gprs_data *data =3D ofono_gprs_get_data(gprs);
+> +	char* apn =3D NULL;
+
+char *apn;
+
+Do not initialize this unnecessarily, let the compiler & valgrind figure =
+
+out if we have uninitialized variables being used.
+
 > +	uint16_t error;
+> +	uint8_t iptype;
 > +
 > +	DBG("");
 > +
 > +	if (qmi_result_set_error(result, &error)) {
-> +		ofono_error("Reset profile error: %hd", error);
+> +		ofono_error("Failed to query LTE attach params: %hd", error);
+> +		goto noapn;
+> +	}
+> +
+> +	/* APN */
+> +	apn =3D qmi_result_get_string(result, 0x10);
+> +	if (!apn) {
+> +		DBG("Default profile has no APN setting");
+> +		goto noapn;
+> +	}
+> +
+> +	if (qmi_result_get_uint8(result, 0x11, &iptype)) {
+> +		ofono_info("LTE attach IP type: %hhd", iptype);
 > +	}
 
-No {} please
+no {} please
 
 > +
-> +	ofono_lte_register(lte);
+> +	ofono_gprs_cid_activated(gprs, data->last_auto_context_id, apn);
+> +
+
+Are you leaking apn here?
+
+> +	return;
+> +
+> +noapn:
+> +	data->last_auto_context_id =3D 0;
+> +	ofono_error("LTE bearer established but APN not set");
 > +}
 > +
 > +static void get_default_profile_cb(struct qmi_result *result, void *user=
 _data)
 > +{
-> +	struct ofono_lte *lte =3D user_data;
-> +	struct lte_data *ldd =3D ofono_lte_get_data(lte);
+> +	struct ofono_gprs* gprs =3D user_data;
+> +	struct gprs_data *data =3D ofono_gprs_get_data(gprs);
+
+again '*' weirdness
+
 > +	uint16_t error;
 > +	uint8_t index;
-> +	struct qmi_param* param;
-
-*param
-
-> +	struct {
-> +		uint8_t type;
-> +		uint8_t index;
-> +	} __attribute__((packed)) p =3D {
-> +		.type =3D 0, /* 3GPP */
-> +	};
 > +
 > +	DBG("");
 > +
@@ -103,44 +149,26 @@ _data)
 > +
 > +	DBG("Default profile index: %hhd", index);
 > +
-> +	ldd->default_profile =3D index;
+> +	data->last_auto_context_id =3D index;
 > +
-> +	p.index =3D index;
-> +
-> +	param =3D qmi_param_new();
-> +	if (!param)
-> +		goto error;
-> +
-> +	/* Profile selector */
-> +	qmi_param_append(param, 0x01, sizeof(p), &p);
-> +
-> +	/* Reset profile */
-> +	if (qmi_service_send(ldd->wds, 0x4b, param,
-> +				reset_profile_cb, lte, NULL) > 0)
+> +	/* Get LTE Attach Parameters */
+> +	if (qmi_service_send(data->wds, 0x85, NULL,
+> +				get_lte_attach_param_cb, gprs, NULL) > 0)
 > +		return;
 > +
-> +	qmi_param_free(param);
-> +
 > +error:
-> +	ofono_error("Failed to reset profile %hhd", index);
-> +	ofono_lte_register(lte);
-
-Do you actually want to register here still or remove the atom instead?
-
+> +	data->last_auto_context_id =3D 0;
+> +	ofono_error("LTE bearer established but APN not set");
 > +}
 > +
-> +
-
-no double empty lines please
-
-> +static void create_wds_cb(struct qmi_service *service, void *user_data)
+> +/*
+> + * Query the settings in effect on the default bearer.  These may be
+> + * implicit or may even be something other than requested as the gateway
+> + * is allowed to override whatever was requested by the user.
+> + */
+> +static void get_lte_attach_params(struct ofono_gprs* gprs)
 > +{
-> +	struct ofono_lte *lte =3D user_data;
-> +	struct lte_data *ldd =3D ofono_lte_get_data(lte);
-> +	struct qmi_param* param;
-
-*param
-
+> +	struct gprs_data *data =3D ofono_gprs_get_data(gprs);
 > +	struct {
 > +		uint8_t type;
 > +		uint8_t family;
@@ -148,18 +176,22 @@ no double empty lines please
 > +		.type =3D 0,   /* 3GPP */
 > +		.family =3D 0, /* embedded */
 > +	};
+> +	struct qmi_param* param;
 > +
+
+and again
+
 > +	DBG("");
 > +
-> +	if (!service) {
-> +		ofono_error("Failed to request WDS service");
-> +		ofono_lte_remove(lte);
-> +		return;
-> +	}
+> +	if (data->last_auto_context_id !=3D 0)
+> +		return; /* Established or in progress */
 > +
-> +	ldd->wds =3D qmi_service_ref(service);
+> +	/* Set query in progress */
+> +	data->last_auto_context_id =3D -1;
 > +
-> +	/* Query the default profile */
+> +	/* First we query the default profile in order to find out which
+> +	 * context the modem has activated.
+> +	 */
 > +	param =3D qmi_param_new();
 > +	if (!param)
 > +		goto error;
@@ -168,21 +200,29 @@ no double empty lines please
 > +	qmi_param_append(param, 0x1, sizeof(p), &p);
 > +
 > +	/* Get default profile */
-> +	if (qmi_service_send(ldd->wds, 0x49, param,
-> +				get_default_profile_cb, lte, NULL) > 0)
+> +	if (qmi_service_send(data->wds, 0x49, param,
+> +				get_default_profile_cb, gprs, NULL) > 0)
 > +		return;
 > +
 > +	qmi_param_free(param);
 > +
 > +error:
-> +	ofono_error("Failed to query default profile");
-> +	ofono_lte_register(lte);
+> +	ofono_warn("Unable to query LTE APN... will not activate context");
 > +}
+> +
+>   static int handle_ss_info(struct qmi_result *result, struct ofono_gprs =
+*gprs)
+>   {
+> +	struct gprs_data *data =3D ofono_gprs_get_data(gprs);
+>   	int status;
+>   	int tech;
+>   =
 
-<snip>
+
+The rest looks fine.
 
 Regards,
 -Denis
 
---===============0434693722664439342==--
+--===============8195200219906635242==--
 
