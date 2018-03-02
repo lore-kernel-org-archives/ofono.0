@@ -1,52 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============4121502235077196784=="
+Content-Type: multipart/mixed; boundary="===============7589964595427047348=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH v2 2/3] gobi: add LTE atom
-Date: Fri, 02 Mar 2018 16:12:20 +0100
-Message-ID: <20180302151221.18063-3-jonas@southpole.se>
-In-Reply-To: <20180302151221.18063-1-jonas@southpole.se>
+Subject: [PATCH v2 0/3] LTE default bearer APN
+Date: Fri, 02 Mar 2018 16:12:18 +0100
+Message-ID: <20180302151221.18063-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4121502235077196784==
+--===============7589964595427047348==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This atom needs to be created in post_sim so that the APN can be
-written to the default profile before the modem attempts to use the
-setting to connect to the network.
----
- plugins/gobi.c | 3 +++
- 1 file changed, 3 insertions(+)
+Here's a reworked version of my series for getting the APN for LTE
+default bearer.
 
-diff --git a/plugins/gobi.c b/plugins/gobi.c
-index 17900010..e7cf1598 100644
---- a/plugins/gobi.c
-+++ b/plugins/gobi.c
-@@ -43,6 +43,7 @@
- #include <ofono/ussd.h>
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
-+#include <ofono/lte.h>
- #include <ofono/radio-settings.h>
- #include <ofono/location-reporting.h>
- #include <ofono/log.h>
-@@ -483,6 +484,8 @@ static void gobi_post_sim(struct ofono_modem *modem)
- =
+In this version, we use 'Get LTE Attach Parameters' to query the modem
+as to which APN it actually negotiated with the gateway.
 
- 	DBG("%p", modem);
- =
+Furthermore, the LTE atom now queries the default context and resets
+it before allowing the LTE default APN to be set.  This ensures that
+the network attach is reproducible and doesn't depend on context
+settings that the modem may have persisted.
 
-+	ofono_lte_create(modem, "qmimodem", data->device);
-+
- 	if (data->features & GOBI_CAT)
- 		ofono_stk_create(modem, 0, "qmimodem", data->device);
- 	else if (data->features & GOBI_CAT_OLD)
+This patch series provides the ability for QMI modems to set up the
+default APN for LTE.  With that, it removes the string 'automatic' that
+was used as an APN when we previously couldn't determine what the modem
+was using.  With this, connman functions much better across network
+technology transitions.
+
+Jonas Bonn (3):
+  qmi: add LTE atom driver
+  gobi: add LTE atom
+  qmimodem: get LTE default bearer APN from modem
+
+ Makefile.am                 |   1 +
+ drivers/qmimodem/gprs.c     | 162 +++++++++++++++++++++++++--
+ drivers/qmimodem/lte.c      | 266 ++++++++++++++++++++++++++++++++++++++++=
+++++
+ drivers/qmimodem/qmimodem.c |   2 +
+ drivers/qmimodem/qmimodem.h |   3 +
+ plugins/gobi.c              |   3 +
+ 6 files changed, 428 insertions(+), 9 deletions(-)
+ create mode 100644 drivers/qmimodem/lte.c
+
 -- =
 
 2.14.1
 
 
---===============4121502235077196784==--
+--===============7589964595427047348==--
 
