@@ -1,34 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============0513886472389403292=="
+Content-Type: multipart/mixed; boundary="===============4987158797712901970=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH 1/3] qmimodem: release WDS service on GPRS atom removal
-Date: Wed, 07 Mar 2018 15:55:09 +0100
-Message-ID: <20180307145511.21142-2-jonas@southpole.se>
+Subject: [PATCH 2/3] qmimodem: release DMS service on radio-settings atom
+ removal
+Date: Wed, 07 Mar 2018 15:55:10 +0100
+Message-ID: <20180307145511.21142-3-jonas@southpole.se>
 In-Reply-To: <20180307145511.21142-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0513886472389403292==
+--===============4987158797712901970==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/qmimodem/gprs.c | 3 +++
+ drivers/qmimodem/radio-settings.c | 3 +++
  1 file changed, 3 insertions(+)
 
-diff --git a/drivers/qmimodem/gprs.c b/drivers/qmimodem/gprs.c
-index b379b026..db07f310 100644
---- a/drivers/qmimodem/gprs.c
-+++ b/drivers/qmimodem/gprs.c
-@@ -398,6 +398,9 @@ static void qmi_gprs_remove(struct ofono_gprs *gprs)
+diff --git a/drivers/qmimodem/radio-settings.c b/drivers/qmimodem/radio-set=
+tings.c
+index aa8e0d5c..36ad25cf 100644
+--- a/drivers/qmimodem/radio-settings.c
++++ b/drivers/qmimodem/radio-settings.c
+@@ -277,6 +277,9 @@ static void qmi_radio_settings_remove(struct ofono_radi=
+o_settings *rs)
  =
 
- 	ofono_gprs_set_data(gprs, NULL);
+ 	ofono_radio_settings_set_data(rs, NULL);
  =
 
-+	qmi_service_unregister_all(data->wds);
-+	qmi_service_unref(data->wds);
++	qmi_service_unregister_all(data->dms);
++	qmi_service_unref(data->dms);
 +
  	qmi_service_unregister_all(data->nas);
  =
@@ -39,5 +42,5 @@ index b379b026..db07f310 100644
 2.14.1
 
 
---===============0513886472389403292==--
+--===============4987158797712901970==--
 
