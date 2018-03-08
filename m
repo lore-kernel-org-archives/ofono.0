@@ -1,47 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============3832805521611515859=="
+Content-Type: multipart/mixed; boundary="===============7889808512032822004=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/1] doc: Fix documentation for HFP memory dialling
-Date: Wed, 07 Mar 2018 22:20:23 +0100
-Message-ID: <F3D6A125-DA28-4C9A-9C8D-12ED20B13A2C@holtmann.org>
-In-Reply-To: <20180307211814.30527-2-philippedeswert@gmail.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: Ofono LTE modems and connman services
+Date: Thu, 08 Mar 2018 06:49:35 +0100
+Message-ID: <1c5b7a2b-b916-a896-3c6e-48969d9afa94@monom.org>
+In-Reply-To: <cedae6d7-6dcf-5fab-823e-65ffbc8b5ad1@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3832805521611515859==
+--===============7889808512032822004==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Philippe,
+Hi,
 
-> Signed-off-by: Philippe De Swert <philippedeswert@gmail.com>
-
-No signed-off-by please.
-
-> ---
-> doc/voicecallmanager-api.txt | 4 ++--
-> 1 file changed, 2 insertions(+), 2 deletions(-)
+On 03/02/2018 06:15 PM, Denis Kenzior wrote:
+>> A lot of the above comes from my understanding of what connman is trying
+>> to do:=C2=A0 if it sees the state as Attached and has no Active contexts=
+ then
+>> it starts trying to activate the first context.=C2=A0 Ideally, it would =
+never
+>> see an inactive context for LTE, at least not in the Attached state.
+>> However, I may be missing something in my understanding of how this is
+>> intended to work, so any clarification would be appreciated.
 > =
 
-> diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-> index 5c4ce11b..96492ced 100644
-> --- a/doc/voicecallmanager-api.txt
-> +++ b/doc/voicecallmanager-api.txt
-> @@ -69,10 +69,10 @@ Methods		dict GetProperties()
-> 					 [service].Error.NotImplemented
-> 					 [service].Error.Failed
-> =
+> Or it should give up if it sees the InProgress error, but yes it might
+> be that re-ordering messages is the right approach.  Daniel, Marcel?
 
-> -		object DialMemory(string memory position, string hide_callerid)
-> +		object DialMemory(unsigned int memory position)
+I must admit, I am slightly confused. So we have a different behavior =
 
-And there is no unsigned int in D-Bus.
+pattern between UMTS/GSM and LTE networks which expresses itself in the =
 
-Regards
+non ordering of Active and Attached?
 
-Marcel
+Anyway, I don't have anything against ordering the events. Shouldn't be =
 
+to hard to update the plugin.
 
---===============3832805521611515859==--
+Thanks,
+Daniel
+
+--===============7889808512032822004==--
 
