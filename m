@@ -1,86 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============0198717231164451032=="
+Content-Type: multipart/mixed; boundary="===============5415116700123982547=="
 MIME-Version: 1.0
 From: Gabriel Lucas <gabriel.lucas@smile.fr>
-Subject: [PATCH 4/6] gemalto: handle sim is inserted or removed URCs
-Date: Mon, 12 Mar 2018 14:19:26 +0100
-Message-ID: <1520860766-14926-2-git-send-email-gabriel.lucas@smile.fr>
-In-Reply-To: <1520860766-14926-1-git-send-email-gabriel.lucas@smile.fr>
+Subject: LTE atom support for gemalto modem
+Date: Mon, 12 Mar 2018 14:36:58 +0100
+Message-ID: <8e8e60f4-7eda-b8de-f88c-efdf1927f99c@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0198717231164451032==
+--===============5415116700123982547==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Mariem Cherif <mariem.cherif@ardia.com.tn>
+Hi everyone,
 
----
- plugins/gemalto.c | 37 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 37 insertions(+)
+First of all, sorry for having spammed the mailing list with last patch =
 
-diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-index 16ca463..c7fb783 100644
---- a/plugins/gemalto.c
-+++ b/plugins/gemalto.c
-@@ -497,6 +497,36 @@ static void gemalto_set_online(struct ofono_modem *mod=
-em, ofono_bool_t online,
- 	g_free(cbd);
- }
- =
+serie. I thought some hadn't been accepted. Some patches are from =
 
-+static void gemalto_ciev_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_sim *sim =3D user_data;
-+	const char *sim_status =3D "simstatus";
-+	const char *ind_str;
-+	int status;
-+	GAtResultIter iter;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CIEV:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_unquoted_string(&iter, &ind_str))
-+		return;
-+
-+	if (!g_str_equal(sim_status, ind_str))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &status))
-+		return;
-+
-+	DBG("sim status %d", status);
-+	if (status =3D=3D 0) {
-+		ofono_sim_inserted_notify(sim, FALSE);
-+	} else if(status =3D=3D 1) {
-+		ofono_sim_inserted_notify(sim, TRUE);
-+	}
-+}
-+
- static void gemalto_pre_sim(struct ofono_modem *modem)
- {
- 	struct gemalto_data *data =3D ofono_modem_get_data(modem);
-@@ -509,6 +539,13 @@ static void gemalto_pre_sim(struct ofono_modem *modem)
- 	sim =3D ofono_sim_create(modem, OFONO_VENDOR_CINTERION, "atmodem",
- 						data->app);
- =
+Mariem, a colleague, who wasn't in the subscribers before and she was in =
 
-+	/* Register for specific sim status reports */
-+	g_at_chat_register(data->app, "+CIEV:",
-+			gemalto_ciev_notify, FALSE, sim, NULL);
-+
-+	g_at_chat_send(data->app, "AT^SIND=3D\"simstatus\",1", none_prefix,
-+			NULL, NULL, NULL);
-+
- 	if (sim && data->have_sim =3D=3D TRUE)
- 		ofono_sim_inserted_notify(sim, TRUE);
- }
--- =
+the cc: field.
 
-1.9.1
+I've been having a look at the recent LTE atom. I've noticed there was =
+
+no vendor-specific parameter when registering it. I think we might have =
+
+some problem with the atmodem driver as in the =
+
+AT+CGDCONT=3D<context-id>,... command, the context-id starts from 0 on =
+
+some modems and from 1 on other ones (I won't denounce gemalto).
+
+I think adding the vendor ID as a parameter might cause heavy =
+
+modifications so I wanted to have your opinion on how to handle this =
+
+case the simpliest way.
+
+Best Regards,
+
+Gabriel Lucas
 
 
---===============0198717231164451032==--
+--===============5415116700123982547==--
 
