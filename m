@@ -1,36 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============4816447896132517262=="
+Content-Type: multipart/mixed; boundary="===============4599734147228858642=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Wierd behaviour of ofono on MC7455 and Verizon sim card
-Date: Thu, 08 Mar 2018 11:55:45 -0600
-Message-ID: <7e109768-30ae-de91-2acf-7de5a23db3e0@gmail.com>
-In-Reply-To: <4fed9df5a18d4bcebbb8cae4c4861605@de.bosch.com>
+From: Gabriel Lucas <gabriel.lucas@smile.fr>
+Subject: [PATCH 4/6] gemalto: handle sim is inserted or removed URCs
+Date: Mon, 12 Mar 2018 13:57:11 +0100
+Message-ID: <1520859433-14112-5-git-send-email-gabriel.lucas@smile.fr>
+In-Reply-To: <1520859433-14112-1-git-send-email-gabriel.lucas@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4816447896132517262==
+--===============4599734147228858642==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+From: Mariem Cherif <mariem.cherif@ardia.com.tn>
 
-On 03/08/2018 11:47 AM, Eswaran Vinothkumar (BEG/PJ-IOT-EL) wrote:
-> Mar 08 17:14:51 alen-eval-kit ofonod[175]: ../ofono-1.22/drivers/qmimodem=
-/devinfo.c:string_cb()
-> Mar 08 17:14:51 alen-eval-kit ofonod[175]: ../ofono-1.22/drivers/qmimodem=
-/devinfo.c:qmi_query_serial()
-> Mar 08 17:14:51 alen-eval-kit ofonod[175]: ../ofono-1.22/drivers/qmimodem=
-/sim.c:get_card_status_cb()
-> Mar 08 17:14:51 alen-eval-kit ofonod[175]: ../ofono-1.22/src/sim.c:ofono_=
-sim_add_state_watch() 0x198d658
+---
+ plugins/gemalto.c | 37 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
 
-You would have to check the logic inside get_card_status_cb() to figure =
+diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+index 16ca463..c7fb783 100644
+--- a/plugins/gemalto.c
++++ b/plugins/gemalto.c
+@@ -497,6 +497,36 @@ static void gemalto_set_online(struct ofono_modem *mod=
+em, ofono_bool_t online,
+ 	g_free(cbd);
+ }
+ =
 
-out why the sim isn't being detected.
++static void gemalto_ciev_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_sim *sim =3D user_data;
++	const char *sim_status =3D "simstatus";
++	const char *ind_str;
++	int status;
++	GAtResultIter iter;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+CIEV:"))
++		return;
++
++	if (!g_at_result_iter_next_unquoted_string(&iter, &ind_str))
++		return;
++
++	if (!g_str_equal(sim_status, ind_str))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &status))
++		return;
++
++	DBG("sim status %d", status);
++	if (status =3D=3D 0) {
++		ofono_sim_inserted_notify(sim, FALSE);
++	} else if(status =3D=3D 1) {
++		ofono_sim_inserted_notify(sim, TRUE);
++	}
++}
++
+ static void gemalto_pre_sim(struct ofono_modem *modem)
+ {
+ 	struct gemalto_data *data =3D ofono_modem_get_data(modem);
+@@ -509,6 +539,13 @@ static void gemalto_pre_sim(struct ofono_modem *modem)
+ 	sim =3D ofono_sim_create(modem, OFONO_VENDOR_CINTERION, "atmodem",
+ 						data->app);
+ =
 
-Regards,
--Denis
++	/* Register for specific sim status reports */
++	g_at_chat_register(data->app, "+CIEV:",
++			gemalto_ciev_notify, FALSE, sim, NULL);
++
++	g_at_chat_send(data->app, "AT^SIND=3D\"simstatus\",1", none_prefix,
++			NULL, NULL, NULL);
++
+ 	if (sim && data->have_sim =3D=3D TRUE)
+ 		ofono_sim_inserted_notify(sim, TRUE);
+ }
+-- =
 
---===============4816447896132517262==--
+1.9.1
+
+
+--===============4599734147228858642==--
 
