@@ -1,60 +1,113 @@
-Content-Type: multipart/mixed; boundary="===============7975971874572898522=="
+Content-Type: multipart/mixed; boundary="===============0995440379391020524=="
 MIME-Version: 1.0
 From: Gabriel Lucas <gabriel.lucas@smile.fr>
-Subject: [PATCH 5/6] sim: give access to the driver
-Date: Mon, 12 Mar 2018 13:57:12 +0100
-Message-ID: <1520859433-14112-6-git-send-email-gabriel.lucas@smile.fr>
-In-Reply-To: <1520859433-14112-1-git-send-email-gabriel.lucas@smile.fr>
+Subject: [PATCH 3/6] gemalto: acquire the network technology
+Date: Mon, 12 Mar 2018 14:12:42 +0100
+Message-ID: <1520860363-14720-1-git-send-email-gabriel.lucas@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7975971874572898522==
+--===============0995440379391020524==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Mariem Cherif <mariem.cherif@ardia.com.tn>
+
 ---
- include/sim.h | 2 ++
- src/sim.c     | 5 +++++
- 2 files changed, 7 insertions(+)
+ drivers/atmodem/network-registration.c | 45 ++++++++++++++++++++++++++++++=
+++++
+ 1 file changed, 45 insertions(+)
 
-diff --git a/include/sim.h b/include/sim.h
-index fad4c0d..cf679db 100644
---- a/include/sim.h
-+++ b/include/sim.h
-@@ -217,6 +217,8 @@ struct ofono_sim *ofono_sim_create(struct ofono_modem *=
-modem,
- void ofono_sim_register(struct ofono_sim *sim);
- void ofono_sim_remove(struct ofono_sim *sim);
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index a5e2af3..aec9c2d 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -48,6 +48,7 @@ static const char *cops_prefix[] =3D { "+COPS:", NULL };
+ static const char *csq_prefix[] =3D { "+CSQ:", NULL };
+ static const char *cind_prefix[] =3D { "+CIND:", NULL };
+ static const char *cmer_prefix[] =3D { "+CMER:", NULL };
++static const char *smoni_prefix[] =3D { "^SMONI:", "", NULL };
+ static const char *zpas_prefix[] =3D { "+ZPAS:", NULL };
+ static const char *option_tech_prefix[] =3D { "_OCTI:", "_OUWCTI:", NULL };
  =
 
-+const struct ofono_sim_driver* ofono_sim_get_driver(struct ofono_sim *sim);
-+
- void ofono_sim_set_data(struct ofono_sim *sim, void *data);
- void *ofono_sim_get_data(struct ofono_sim *sim);
- =
-
-diff --git a/src/sim.c b/src/sim.c
-index eb9f56a..f56706f 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -3305,6 +3305,11 @@ void ofono_sim_remove(struct ofono_sim *sim)
- 	__ofono_atom_free(sim->atom);
+@@ -178,6 +179,32 @@ static int option_parse_tech(GAtResult *result)
+ 	return tech;
  }
  =
 
-+const struct ofono_sim_driver* ofono_sim_get_driver(struct ofono_sim *sim)
++static int cinterion_parse_tech(GAtResult *result)
 +{
-+	return sim->driver;
++	int tech =3D -1;
++	GAtResultIter iter;
++	GSList *l;
++	g_at_result_iter_init(&iter, result);
++	l =3D result->lines;
++	if (strstr(l->data, "^SMONI: ") !=3D NULL) {
++		gchar **body =3D g_strsplit(l->data, "^SMONI: ", 2);
++		if (*body !=3D NULL) {
++			gchar **data =3D g_strsplit(body[1], ",", 20);
++			if (*data !=3D NULL) {
++				if (g_strcmp0(data[0], "2G") =3D=3D 0) {
++					tech =3D ACCESS_TECHNOLOGY_GSM;
++				} else if (g_strcmp0 (data[0], "3G") =3D=3D 0) {
++					tech =3D ACCESS_TECHNOLOGY_UTRAN;
++				} else if (g_strcmp0 (data[0], "4G") =3D=3D 0) {
++					tech =3D ACCESS_TECHNOLOGY_EUTRAN;
++				}
++			}
++			g_strfreev(body);
++		}
++	}
++	return tech;
 +}
 +
- void ofono_sim_set_data(struct ofono_sim *sim, void *data)
+ static void at_creg_cb(gboolean ok, GAtResult *result, gpointer user_data)
  {
- 	sim->driver_data =3D data;
+ 	struct cb_data *cbd =3D user_data;
+@@ -205,6 +232,18 @@ static void at_creg_cb(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 	cb(&error, status, lac, ci, tech, cbd->data);
+ }
+ =
+
++static void cinterion_query_tech_cb(gboolean ok, GAtResult *result,
++                                              gpointer user_data)
++{
++	struct tech_query *tq =3D user_data;
++	int tech;
++
++	tech =3D cinterion_parse_tech(result);
++
++	ofono_netreg_status_notify(tq->netreg,
++			tq->status, tq->lac, tq->ci, tech);
++}
++
+ static void zte_tech_cb(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+ 	struct cb_data *cbd =3D user_data;
+@@ -1518,6 +1557,12 @@ static void creg_notify(GAtResult *result, gpointer =
+user_data)
+ 					option_query_tech_cb, tq, g_free) > 0)
+ 			return;
+ 		break;
++    case OFONO_VENDOR_CINTERION:
++              if (g_at_chat_send(nd->chat, "AT^SMONI",
++                                      smoni_prefix,
++                                      cinterion_query_tech_cb, tq, g_free)=
+ > 0)
++                      return;
++              break;
+ 	}
+ =
+
+ 	g_free(tq);
 -- =
 
 1.9.1
 
 
---===============7975971874572898522==--
+--===============0995440379391020524==--
 
