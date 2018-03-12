@@ -1,86 +1,114 @@
-Content-Type: multipart/mixed; boundary="===============4936616433041201227=="
+Content-Type: multipart/mixed; boundary="===============7142030436465419677=="
 MIME-Version: 1.0
 From: Gabriel Lucas <gabriel.lucas@smile.fr>
-Subject: [PATCH 1/6] gemalto: add detection of ALS3 modem
-Date: Mon, 12 Mar 2018 13:57:08 +0100
-Message-ID: <1520859433-14112-2-git-send-email-gabriel.lucas@smile.fr>
+Subject: [PATCH 3/6] gemalto: acquire the network technology
+Date: Mon, 12 Mar 2018 13:57:10 +0100
+Message-ID: <1520859433-14112-4-git-send-email-gabriel.lucas@smile.fr>
 In-Reply-To: <1520859433-14112-1-git-send-email-gabriel.lucas@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4936616433041201227==
+--===============7142030436465419677==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The product ID is added to the list of
-modems to be detected by Ofono.
-The gemalto plugin is used to handle the
-ALS3 modem.
----
- plugins/udevng.c | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
+From: Mariem Cherif <mariem.cherif@ardia.com.tn>
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 3c7d99e..d398c6e 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -1132,6 +1132,7 @@ static gboolean setup_gemalto(struct modem_info* mode=
-m)
- 		DBG("%s %s %s %s %s", info->devnode, info->interface,
- 				info->number, info->label, info->subsystem);
+---
+ drivers/atmodem/network-registration.c | 45 ++++++++++++++++++++++++++++++=
+++++
+ 1 file changed, 45 insertions(+)
+
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index a5e2af3..aec9c2d 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -48,6 +48,7 @@ static const char *cops_prefix[] =3D { "+COPS:", NULL };
+ static const char *csq_prefix[] =3D { "+CSQ:", NULL };
+ static const char *cind_prefix[] =3D { "+CIND:", NULL };
+ static const char *cmer_prefix[] =3D { "+CMER:", NULL };
++static const char *smoni_prefix[] =3D { "^SMONI:", "", NULL };
+ static const char *zpas_prefix[] =3D { "+ZPAS:", NULL };
+ static const char *option_tech_prefix[] =3D { "_OCTI:", "_OUWCTI:", NULL };
  =
 
-+		// PHS8-P
- 		if (g_strcmp0(info->interface, "255/255/255") =3D=3D 0) {
- 			if (g_strcmp0(info->number, "01") =3D=3D 0)
- 				gps =3D info->devnode;
-@@ -1144,6 +1145,20 @@ static gboolean setup_gemalto(struct modem_info* mod=
-em)
- 			else if (g_strcmp0(info->subsystem, "usbmisc") =3D=3D 0)
- 				qmi =3D info->devnode;
- 		}
+@@ -178,6 +179,32 @@ static int option_parse_tech(GAtResult *result)
+ 	return tech;
+ }
+ =
+
++static int cinterion_parse_tech(GAtResult *result)
++{
++	int tech =3D -1;
++	GAtResultIter iter;
++	GSList *l;
++	g_at_result_iter_init(&iter, result);
++	l =3D result->lines;
++	if (strstr(l->data, "^SMONI: ") !=3D NULL) {
++		gchar **body =3D g_strsplit(l->data, "^SMONI: ", 2);
++		if (*body !=3D NULL) {
++			gchar **data =3D g_strsplit(body[1], ",", 20);
++			if (*data !=3D NULL) {
++				if (g_strcmp0(data[0], "2G") =3D=3D 0) {
++					tech =3D ACCESS_TECHNOLOGY_GSM;
++				} else if (g_strcmp0 (data[0], "3G") =3D=3D 0) {
++					tech =3D ACCESS_TECHNOLOGY_UTRAN;
++				} else if (g_strcmp0 (data[0], "4G") =3D=3D 0) {
++					tech =3D ACCESS_TECHNOLOGY_EUTRAN;
++				}
++			}
++			g_strfreev(body);
++		}
++	}
++	return tech;
++}
 +
-+		// ALS3
-+		if (g_strcmp0(info->interface, "2/2/1") =3D=3D 0) {
-+			if (g_strcmp0(info->number, "00") =3D=3D 0)
-+				mdm =3D info->devnode;
-+			else if (g_strcmp0(info->number, "02") =3D=3D 0)
-+				app =3D info->devnode;
-+			else if (g_strcmp0(info->number, "04") =3D=3D 0)
-+				gps =3D info->devnode;
-+		}
-+		if (g_strcmp0(info->interface, "2/6/0") =3D=3D 0) {
-+			if (g_strcmp0(info->subsystem, "net") =3D=3D 0)
-+				net =3D info->devnode;
-+		}
+ static void at_creg_cb(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+ 	struct cb_data *cbd =3D user_data;
+@@ -205,6 +232,18 @@ static void at_creg_cb(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 	cb(&error, status, lac, ci, tech, cbd->data);
+ }
+ =
+
++static void cinterion_query_tech_cb(gboolean ok, GAtResult *result,
++                                              gpointer user_data)
++{
++	struct tech_query *tq =3D user_data;
++	int tech;
++
++	tech =3D cinterion_parse_tech(result);
++
++	ofono_netreg_status_notify(tq->netreg,
++			tq->status, tq->lac, tq->ci, tech);
++}
++
+ static void zte_tech_cb(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+ 	struct cb_data *cbd =3D user_data;
+@@ -1518,6 +1557,12 @@ static void creg_notify(GAtResult *result, gpointer =
+user_data)
+ 					option_query_tech_cb, tq, g_free) > 0)
+ 			return;
+ 		break;
++    case OFONO_VENDOR_CINTERION:
++              if (g_at_chat_send(nd->chat, "AT^SMONI",
++                                      smoni_prefix,
++                                      cinterion_query_tech_cb, tq, g_free)=
+ > 0)
++                      return;
++              break;
  	}
  =
 
- 	DBG("application=3D%s gps=3D%s modem=3D%s network=3D%s qmi=3D%s",
-@@ -1156,6 +1171,7 @@ static gboolean setup_gemalto(struct modem_info* mode=
-m)
- 	ofono_modem_set_string(modem->modem, "GPS", gps);
- 	ofono_modem_set_string(modem->modem, "Modem", mdm);
- 	ofono_modem_set_string(modem->modem, "Device", qmi);
-+	ofono_modem_set_string(modem->modem, "Model", modem->model);
- 	ofono_modem_set_string(modem->modem, "NetworkInterface", net);
- =
-
- 	return TRUE;
-@@ -1601,6 +1617,8 @@ static struct {
- 	{ "gemalto",	"option",	"1e2d",	"0053"	},
- 	{ "gemalto",	"cdc_wdm",	"1e2d",	"0053"	},
- 	{ "gemalto",	"qmi_wwan",	"1e2d",	"0053"	},
-+	{ "gemalto",	"cdc_acm",	"1e2d",	"0061"	},
-+	{ "gemalto",	"cdc_ether",	"1e2d",	"0061"	},
- 	{ "telit",	"cdc_ncm",	"1bc7", "0036"	},
- 	{ "telit",	"cdc_acm",	"1bc7", "0036"	},
- 	{ "xmm7xxx",	"cdc_acm",	"8087", "0930"	},
+ 	g_free(tq);
 -- =
 
 1.9.1
 
 
---===============4936616433041201227==--
+--===============7142030436465419677==--
 
