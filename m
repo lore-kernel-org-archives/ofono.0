@@ -1,86 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============4599734147228858642=="
+Content-Type: multipart/mixed; boundary="===============5734240641172098408=="
 MIME-Version: 1.0
 From: Gabriel Lucas <gabriel.lucas@smile.fr>
-Subject: [PATCH 4/6] gemalto: handle sim is inserted or removed URCs
-Date: Mon, 12 Mar 2018 13:57:11 +0100
-Message-ID: <1520859433-14112-5-git-send-email-gabriel.lucas@smile.fr>
-In-Reply-To: <1520859433-14112-1-git-send-email-gabriel.lucas@smile.fr>
+Subject: [PATCH 0/6] gemalto's ALS3 and PHS8P support
+Date: Mon, 12 Mar 2018 13:57:07 +0100
+Message-ID: <1520859433-14112-1-git-send-email-gabriel.lucas@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4599734147228858642==
+--===============5734240641172098408==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Mariem Cherif <mariem.cherif@ardia.com.tn>
+This patch serie bring further support to PHS8P modem
+and the same level of support for ALS3 modem. Here are
+the lists on enhancements:
+- ALS3 is detected by Ofono and uses the gemalto plugin
+- SIM removing and insertion is supported
+- The optional Technology property on NetworkRegistration
+is supported
+- We ensure that the modem is ready to work before
+initializing it
 
----
- plugins/gemalto.c | 37 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 37 insertions(+)
+Some of the enhancements are brought by workarounds because
+of AT command interface limitations
 
-diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-index 16ca463..c7fb783 100644
---- a/plugins/gemalto.c
-+++ b/plugins/gemalto.c
-@@ -497,6 +497,36 @@ static void gemalto_set_online(struct ofono_modem *mod=
-em, ofono_bool_t online,
- 	g_free(cbd);
- }
- =
+Gabriel Lucas (4):
+  gemalto: add detection of ALS3 modem
+  gemalto: support ALS3 in gemalto's plugin
+  sim: give access to the driver
+  gemalto: fix sim reinsertion issue
 
-+static void gemalto_ciev_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_sim *sim =3D user_data;
-+	const char *sim_status =3D "simstatus";
-+	const char *ind_str;
-+	int status;
-+	GAtResultIter iter;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CIEV:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_unquoted_string(&iter, &ind_str))
-+		return;
-+
-+	if (!g_str_equal(sim_status, ind_str))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &status))
-+		return;
-+
-+	DBG("sim status %d", status);
-+	if (status =3D=3D 0) {
-+		ofono_sim_inserted_notify(sim, FALSE);
-+	} else if(status =3D=3D 1) {
-+		ofono_sim_inserted_notify(sim, TRUE);
-+	}
-+}
-+
- static void gemalto_pre_sim(struct ofono_modem *modem)
- {
- 	struct gemalto_data *data =3D ofono_modem_get_data(modem);
-@@ -509,6 +539,13 @@ static void gemalto_pre_sim(struct ofono_modem *modem)
- 	sim =3D ofono_sim_create(modem, OFONO_VENDOR_CINTERION, "atmodem",
- 						data->app);
- =
+Mariem Cherif (2):
+  gemalto: acquire the network technology
+  gemalto: handle sim is inserted or removed URCs
 
-+	/* Register for specific sim status reports */
-+	g_at_chat_register(data->app, "+CIEV:",
-+			gemalto_ciev_notify, FALSE, sim, NULL);
-+
-+	g_at_chat_send(data->app, "AT^SIND=3D\"simstatus\",1", none_prefix,
-+			NULL, NULL, NULL);
-+
- 	if (sim && data->have_sim =3D=3D TRUE)
- 		ofono_sim_inserted_notify(sim, TRUE);
- }
+ drivers/atmodem/network-registration.c |  45 +++++++++
+ include/sim.h                          |   2 +
+ plugins/gemalto.c                      | 169 +++++++++++++++++++++++++++++=
+++--
+ plugins/udevng.c                       |  18 ++++
+ src/sim.c                              |   5 +
+ 5 files changed, 233 insertions(+), 6 deletions(-)
+
 -- =
 
 1.9.1
 
 
---===============4599734147228858642==--
+--===============5734240641172098408==--
 
