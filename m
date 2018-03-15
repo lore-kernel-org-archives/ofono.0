@@ -1,60 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============6358281194837515279=="
+Content-Type: multipart/mixed; boundary="===============5414807636640221696=="
 MIME-Version: 1.0
 From: Gabriel Lucas <gabriel.lucas@smile.fr>
-Subject: [PATCH 5/6] sim: give access to the driver
-Date: Thu, 15 Mar 2018 13:49:29 +0100
-Message-ID: <1521118170-23722-6-git-send-email-gabriel.lucas@smile.fr>
+Subject: [PATCH 6/6] gemalto: fix sim reinsertion issue
+Date: Thu, 15 Mar 2018 13:49:30 +0100
+Message-ID: <1521118170-23722-7-git-send-email-gabriel.lucas@smile.fr>
 In-Reply-To: <1521118170-23722-1-git-send-email-gabriel.lucas@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6358281194837515279==
+--===============5414807636640221696==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+When the SIM card is reinserted in the holder,
+the IRC +CIEV: simstatus,1 is emitted. The problem
+is that the SIM isn't ready when it is received.
+Hence, Ofono fails on CPIN? command and the modem
+cannot be used. This patch make ofono retry the
+CPIN? command until it succeeds.
 ---
- include/sim.h | 2 ++
- src/sim.c     | 5 +++++
- 2 files changed, 7 insertions(+)
+ plugins/gemalto.c | 29 ++++++++++++++++++++++++++++-
+ 1 file changed, 28 insertions(+), 1 deletion(-)
 
-diff --git a/include/sim.h b/include/sim.h
-index fad4c0d..cf679db 100644
---- a/include/sim.h
-+++ b/include/sim.h
-@@ -217,6 +217,8 @@ struct ofono_sim *ofono_sim_create(struct ofono_modem *=
-modem,
- void ofono_sim_register(struct ofono_sim *sim);
- void ofono_sim_remove(struct ofono_sim *sim);
- =
-
-+const struct ofono_sim_driver* ofono_sim_get_driver(struct ofono_sim *sim);
-+
- void ofono_sim_set_data(struct ofono_sim *sim, void *data);
- void *ofono_sim_get_data(struct ofono_sim *sim);
- =
-
-diff --git a/src/sim.c b/src/sim.c
-index eb9f56a..f56706f 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -3305,6 +3305,11 @@ void ofono_sim_remove(struct ofono_sim *sim)
- 	__ofono_atom_free(sim->atom);
+diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+index c7fb783..caa5912 100644
+--- a/plugins/gemalto.c
++++ b/plugins/gemalto.c
+@@ -497,6 +497,33 @@ static void gemalto_set_online(struct ofono_modem *mod=
+em, ofono_bool_t online,
+ 	g_free(cbd);
  }
  =
 
-+const struct ofono_sim_driver* ofono_sim_get_driver(struct ofono_sim *sim)
-+{
-+	return sim->driver;
++static void sim_pin_query_cb(const struct ofono_error *error,
++				enum ofono_sim_password_type pin_type,
++				void *data);
++
++static void gemalto_wait_after_plug(struct ofono_sim *sim) {
++	ofono_sim_get_driver(sim)->query_passwd_state(sim, sim_pin_query_cb, sim);
 +}
 +
- void ofono_sim_set_data(struct ofono_sim *sim, void *data)
++static gboolean cpin_timeout(gpointer sim) {
++	gemalto_wait_after_plug(sim);
++
++	return FALSE;
++}
++
++static void sim_pin_query_cb(const struct ofono_error *error,
++				enum ofono_sim_password_type pin_type,
++				void *data) {
++	struct ofono_sim *sim =3D data;
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		g_timeout_add(50, cpin_timeout, sim);
++	}
++	else {
++		ofono_sim_inserted_notify(sim, TRUE);
++	}
++}
++
+ static void gemalto_ciev_notify(GAtResult *result, gpointer user_data)
  {
- 	sim->driver_data =3D data;
+ 	struct ofono_sim *sim =3D user_data;
+@@ -523,7 +550,7 @@ static void gemalto_ciev_notify(GAtResult *result, gpoi=
+nter user_data)
+ 	if (status =3D=3D 0) {
+ 		ofono_sim_inserted_notify(sim, FALSE);
+ 	} else if(status =3D=3D 1) {
+-		ofono_sim_inserted_notify(sim, TRUE);
++		gemalto_wait_after_plug(sim);
+ 	}
+ }
+ =
+
 -- =
 
 1.9.1
 
 
---===============6358281194837515279==--
+--===============5414807636640221696==--
 
