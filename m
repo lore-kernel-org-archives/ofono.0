@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8670956871807857415=="
+Content-Type: multipart/mixed; boundary="===============0925457554907885486=="
 MIME-Version: 1.0
 From: Gabriel Lucas <gabriel.lucas@smile.fr>
 Subject: [PATCH 2/6] gemalto: support ALS3 in gemalto's plugin
-Date: Fri, 16 Mar 2018 16:59:35 +0100
-Message-ID: <1521215975-19944-1-git-send-email-gabriel.lucas@smile.fr>
-In-Reply-To: <1521215633-19682-1-git-send-email-gabriel.lucas@smile.fr>
+Date: Fri, 16 Mar 2018 17:08:05 +0100
+Message-ID: <1521216485-20499-1-git-send-email-gabriel.lucas@smile.fr>
+In-Reply-To: <1521215975-19944-1-git-send-email-gabriel.lucas@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8670956871807857415==
+--===============0925457554907885486==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -18,12 +18,12 @@ Wait for modem to be ready to start
 initializing it
 Handle LTE
 ---
- plugins/gemalto.c | 106 +++++++++++++++++++++++++++++++++++++++++++++++---=
+ plugins/gemalto.c | 107 ++++++++++++++++++++++++++++++++++++++++++++++++--=
 ----
- 1 file changed, 94 insertions(+), 12 deletions(-)
+ 1 file changed, 95 insertions(+), 12 deletions(-)
 
 diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-index 3739d7b..af50a9b 100644
+index 3739d7b..3fb2904 100644
 --- a/plugins/gemalto.c
 +++ b/plugins/gemalto.c
 @@ -53,6 +53,10 @@
@@ -205,14 +205,15 @@ ta)
  	DBG("%p", modem);
  =
 
-@@ -444,6 +523,9 @@ static void gemalto_post_sim(struct ofono_modem *modem)
+@@ -444,6 +523,10 @@ static void gemalto_post_sim(struct ofono_modem *modem)
  =
 
  	if (gprs && gc)
  		ofono_gprs_add_context(gprs, gc);
 +
 +	if (!g_strcmp0(model, GEMALTO_MODEL_ALS3))
-+		ofono_lte_create(modem, OFONO_VENDOR_CINTERION, "atmodem", data->app);
++		ofono_lte_create(modem, OFONO_VENDOR_CINTERION,
++						"atmodem", data->app);
  }
  =
 
@@ -222,5 +223,5 @@ ta)
 1.9.1
 
 
---===============8670956871807857415==--
+--===============0925457554907885486==--
 
