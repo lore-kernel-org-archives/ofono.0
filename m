@@ -1,36 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============0191331201156673287=="
+Content-Type: multipart/mixed; boundary="===============5308348457216936969=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Fix bug with "PropertyChanged" signals not being emmitted
- by ofono for org.ofono.cdma.NetworkRegistration
-Date: Fri, 16 Mar 2018 10:27:22 -0500
-Message-ID: <c671991f-e7a8-e865-3f32-2c0222d3f323@gmail.com>
-In-Reply-To: <1521213850-13133-1-git-send-email-bassem.boubaker@actia.fr>
+From: Gabriel LUCAS <gabriel.lucas@smile.fr>
+Subject: Re: [PATCH 3/6] gemalto: acquire the network technology
+Date: Fri, 16 Mar 2018 16:30:41 +0100
+Message-ID: <350a9b8abdb2c1034c3889a3de398641@smile.fr>
+In-Reply-To: <d6cb289e-16f9-396d-8085-88910a20ccd7@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0191331201156673287==
+--===============5308348457216936969==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bassem,
+Thanks Denis. My apologies for the unused variable.
 
-On 03/16/2018 10:24 AM, Bassem Boubaker wrote:
-> Signed-off-by: Bassem Boubaker <bassem.boubaker@actia.fr>
+On 2018-03-16 15:27, Denis Kenzior wrote:
 
-We don't use Signed-off-by, so please update your configuration not to =
+> Hi Gabriel, Mariem,
+> =
 
-include this.  I've removed this manually and ...
+> On 03/16/2018 07:59 AM, Gabriel Lucas wrote:
+> =
 
-> ---
->   src/cdma-netreg.c | 2 ++
->   1 file changed, 2 insertions(+)
+>> From: Mariem Cherif <mariem.cherif@ardia.com.tn> ---
+>> drivers/atmodem/network-registration.c | 45
+>> ++++++++++++++++++++++++++++++++++ 1 file changed, 45 insertions(+)
+> =
 
-patch applied, thanks!
+> When applying this patch I got:
+> =
 
-Regards,
--Denis
+> CC drivers/atmodem/network-registration.o
+> drivers/atmodem/network-registration.c: In function
+> 'cinterion_parse_tech':
+> drivers/atmodem/network-registration.c:186:10: error: unused variable
+> 'l' [-Werror=3Dunused-variable]
+> GSList *l;
+> ^
+> drivers/atmodem/network-registration.c: At top level:
+> cc1: error: unrecognized command line option '-Wno-format-truncation'
+> [-Werror]
+> cc1: all warnings being treated as errors
+> =
 
---===============0191331201156673287==--
+> Please make sure you test with --disable-debug --enable-optimization
+> prior to submission so the compiler catches any unused variables.
+
+It seems that my sdk's environment isn't configured to show all =
+
+warnings.
+I'm gonna fix that.
+
+> I went ahead and removed the offending GSList *l declaration and =
+
+> applied
+> this patch. Thanks!
+> =
+
+> Regards,
+> -Denis
+
+Gabriel
+
+--===============5308348457216936969==--
 
