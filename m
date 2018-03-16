@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0317675808913557034=="
+Content-Type: multipart/mixed; boundary="===============8670956871807857415=="
 MIME-Version: 1.0
 From: Gabriel Lucas <gabriel.lucas@smile.fr>
 Subject: [PATCH 2/6] gemalto: support ALS3 in gemalto's plugin
-Date: Fri, 16 Mar 2018 16:53:53 +0100
-Message-ID: <1521215633-19682-1-git-send-email-gabriel.lucas@smile.fr>
-In-Reply-To: <dfdb1740-fa49-61ac-627b-2fe6ba0d3659@gmail.com>
+Date: Fri, 16 Mar 2018 16:59:35 +0100
+Message-ID: <1521215975-19944-1-git-send-email-gabriel.lucas@smile.fr>
+In-Reply-To: <1521215633-19682-1-git-send-email-gabriel.lucas@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0317675808913557034==
+--===============8670956871807857415==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -188,9 +188,9 @@ ta)
 +
 +	/* Try the AT command. If it doesn't work, wait for ^SYSSTART */
 +	data->modem_ready_id =3D g_at_chat_register(data->app, "^SYSSTART",
-+								gemalto_modem_ready, FALSE, modem, NULL);
++				gemalto_modem_ready, FALSE, modem, NULL);
 +	data->trial_cmd_id =3D g_at_chat_send(data->app, "ATE0 AT",
-+								none_prefix, gemalto_at_cb, modem, NULL);
++				none_prefix, gemalto_at_cb, modem, NULL);
  =
 
  	return -EINPROGRESS;
@@ -222,5 +222,5 @@ ta)
 1.9.1
 
 
---===============0317675808913557034==--
+--===============8670956871807857415==--
 
