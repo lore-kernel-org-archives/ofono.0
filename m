@@ -1,41 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============2077871129224913847=="
+Content-Type: multipart/mixed; boundary="===============2296622358953561114=="
 MIME-Version: 1.0
-From: Bassem Boubaker <bassem.boubaker@actia.fr>
-Subject: [PATCH] gemalto: Add more details in setup_gemalto comment
-Date: Fri, 16 Mar 2018 18:21:43 +0100
-Message-ID: <1521220903-20723-1-git-send-email-bassem.boubaker@actia.fr>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] gemalto: Add more details in setup_gemalto comment
+Date: Fri, 16 Mar 2018 12:40:24 -0500
+Message-ID: <5ccc4430-ab34-9373-1f6f-32d14fdba256@gmail.com>
+In-Reply-To: <1521220903-20723-1-git-send-email-bassem.boubaker@actia.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2077871129224913847==
+--===============2296622358953561114==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-	ALS3, PLS8-E and PLS8-X have same vid/pid with same enumeration process
----
- plugins/udevng.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Bassem,
 
-diff --git a/plugins/udevng.c b/plugins/udevng.c
-index 6b5b015..ff5d41a 100644
---- a/plugins/udevng.c
-+++ b/plugins/udevng.c
-@@ -1146,7 +1146,7 @@ static gboolean setup_gemalto(struct modem_info* mode=
-m)
- 				qmi =3D info->devnode;
- 		}
- =
-
--		/* ALS3 */
-+		/* Cinterion ALS3, PLS8-E, PLS8-X */
- 		if (g_strcmp0(info->interface, "2/2/1") =3D=3D 0) {
- 			if (g_strcmp0(info->number, "00") =3D=3D 0)
- 				mdm =3D info->devnode;
--- =
-
-2.7.4
+On 03/16/2018 12:21 PM, Bassem Boubaker wrote:
+> 	ALS3, PLS8-E and PLS8-X have same vid/pid with same enumeration process
+> ---
+>   plugins/udevng.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+> =
 
 
---===============2077871129224913847==--
+Applied, thanks.
+
+Regards,
+-Denis
+
+
+--===============2296622358953561114==--
 
