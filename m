@@ -1,77 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============3896154415000733460=="
+Content-Type: multipart/mixed; boundary="===============6726950606593996705=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/6] gemalto: handle sim is inserted or removed URCs
-Date: Fri, 16 Mar 2018 09:03:22 -0500
-Message-ID: <3a3ffd63-06ca-a9e7-c523-650000dd4b59@gmail.com>
-In-Reply-To: <a6430159-0f4b-277c-9d3d-3c4c8cca6d33@smile.fr>
+Subject: Re: [PATCH 2/6] gemalto: support ALS3 in gemalto's plugin
+Date: Fri, 16 Mar 2018 09:23:19 -0500
+Message-ID: <dfdb1740-fa49-61ac-627b-2fe6ba0d3659@gmail.com>
+In-Reply-To: <8218aab0-70f1-a997-ebd7-3bcea51676ad@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3896154415000733460==
+--===============6726950606593996705==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Gabriel,
 
-On 03/16/2018 08:28 AM, Gabriel Lucas wrote:
-> Hi Denis,
+>>> =C2=A0 { >>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct gemalto_data *data =
+=3D ofono_modem_get_data(modem);
+>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 const char *app, *mdm;
+>>> =C2=A0 -=C2=A0=C2=A0=C2=A0 DBG("%p", modem);
+>>> +=C2=A0=C2=A0=C2=A0 /* Close devices */
+>>> +=C2=A0=C2=A0=C2=A0 g_at_chat_unref(data->mdm);
+>>> +=C2=A0=C2=A0=C2=A0 g_at_chat_unref(data->app);
+>>> +
+>>
+>> Why would you close both devices?=C2=A0 It is unnecessary, especially in =
+
+>> the case that the modem is already up and responding to commands.
+> Because it seems that opening the device while it is not ready leads the =
+
+> driver to a weird state.
+> When the modem becomes ready, I am not able to send any AT command to =
+
+> the APP device.
+> Here is the output:
 > =
 
-> On 15/03/2018 18:26, Denis Kenzior wrote:
->> Hi Gabriel,
->>
->> On 03/15/2018 07:49 AM, Gabriel Lucas wrote:
->>> From: Mariem Cherif <mariem.cherif@ardia.com.tn>
->>>
->>> +=C2=A0=C2=A0=C2=A0 g_at_result_iter_init(&iter, result);
+> ofonod[12826]: src/modem.c:get_modem_property() modem 0x72b750 property =
+
+> Application
+> ofonod[12826]: src/modem.c:get_modem_property() modem 0x72b750 property =
+
+> Modem
+> ofonod[12826]: plugins/gemalto.c:open_device() Opening device /dev/ttyACM1
+> ofonod[12826]: plugins/gemalto.c:open_device() Opening device /dev/ttyACM0
+> ofonod[12826]: plugins/gemalto.c:gemalto_modem_ready()
+> ofonod[12826]: plugins/gemalto.c:gemalto_initialize()
+> ofonod[12826]: src/modem.c:get_modem_property() modem 0x72b750 property =
+
+> Application
+> ofonod[12826]: src/modem.c:get_modem_property() modem 0x72b750 property =
+
+> Modem
+> ofonod[12826]: plugins/gemalto.c:gemalto_hardware_monitor_enable()
+> ofonod[12826]: Mdm> ATE0\r
+> ofonod[12826]: Mdm< ATE0\r\r\nOK\r\n
+> ofonod[12826]: Mdm> AT&C0\r
+> ofonod[12826]: Mdm< \r\n+CME ERROR: operation not supported\r\n
+> ofonod[12826]: src/modem.c:set_powered_timeout() modem: 0x72b750
+> =
+
+> When it is re-opened, it works fine.
+
+So my question was two fold:
+
+1. Why would you open both devices?  Wouldn't opening just one to figure =
+
+out whether the modem is 'ready' or not be enough?
+2. If the modem is ready, why would you close the opened device?  That =
+
+just seems to be a waste of time.
+
+If the device isn't ready then I could see how re-opening the port might =
+
+be required.
+
 >>> +
->>> +=C2=A0=C2=A0=C2=A0 if (!g_at_result_iter_next(&iter, "+CIEV:"))
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return;
->>> +
->>
->> So generally +CIEV indication is an <index>,<value> syntax.
-> We receive this kind of signal: +CIEV: simstatus,<status>.
-> In this code, Mariem is ensuring the index is simstatus.
-> Do you prefer us to use g_at_result_iter_next to handle the index ?
-> Or even to use "+CIEV: simstatus" as prefix in the register function ?
-
-Okay, that makes sense now.  Gemalto should really fix their firmware as =
-
-this syntax is not really correct, but nothing we can do about it now. =
-
-I would stick with the current approach.
-
->>> +=C2=A0=C2=A0=C2=A0 if (!g_at_result_iter_next_unquoted_string(&iter, &=
-ind_str))
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return;
->>
->> Does Gemalto use some other syntax here?=C2=A0 If so, you might want to =
-
->> document a simple example above.
-> I've added a comment
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ofono_sim_inserted_notify(s=
-im, FALSE);
->>> +=C2=A0=C2=A0=C2=A0 } else if(status =3D=3D 1) {
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ofono_sim_inserted_notify(s=
-im, TRUE);
+>>> +=C2=A0=C2=A0=C2=A0 if(!strncmp(model, GEMALTO_MODEL_ALS3, 4)) {
+>>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ofono_lte_create(modem, "at=
+modem", data->app);
 >>> +=C2=A0=C2=A0=C2=A0 }
 >>
->> Okay, but simpler written as ofono_sim_inserted_notify(sim, status);
-> The thing is we don't only receive the status 0 and 1. We also have 4 =
+>> Why strncmp?=C2=A0 No need for {} and there should be a space between if =
 
-> (ALS3) and
-> 5 (ALS3 + PHS8P). Only the first two should be used.
+>> and '('
+> Because strncmp is more secured than strcmp. But if you prefer strcmp or =
 
-In that case I would use a switch/case statement, add a case label =
+> anything else, I'll change it.
 
-/comment for the other possibilities and what they mean and simply use a =
+In this case they're the same and its not like you have user input to =
 
-'break' statement for those.
+worry about here...
 
 Regards,
 -Denis
 
---===============3896154415000733460==--
+--===============6726950606593996705==--
 
