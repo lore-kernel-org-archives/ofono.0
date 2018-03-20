@@ -1,35 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============7140355524700966514=="
+Content-Type: multipart/mixed; boundary="===============2102676768936675008=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Gemalto.c : Make supported modem family name more
- significant
-Date: Mon, 19 Mar 2018 12:12:29 -0500
-Message-ID: <89ae2e24-7dfc-bcbd-801e-6ddc5d3d617e@gmail.com>
-In-Reply-To: <1521478651-24386-1-git-send-email-bassem.boubaker@actia.fr>
+From: Gabriel Lucas <gabriel.lucas@smile.fr>
+Subject: Re: [PATCH 4/6] gemalto: handle sim is inserted or removed URCs
+Date: Tue, 20 Mar 2018 09:37:10 +0100
+Message-ID: <a8c0d0fa-adaf-cca8-da70-997b94a90d08@smile.fr>
+In-Reply-To: <eb26b058-ae40-367a-6fdc-b7e341e75370@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7140355524700966514==
+--===============2102676768936675008==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Bassem,
-
-On 03/19/2018 11:57 AM, Bassem Boubaker wrote:
-> 	Some gemalto modem family share almost the same base except some very sp=
-ecific
-> 	AT command and some hardware changes like ALSx and PXSx family
-> ---
->   plugins/gemalto.c | 5 +++--
->   1 file changed, 3 insertions(+), 2 deletions(-)
-> =
+Hi Denis,
 
 
-I reworded the commit heading slightly and applied this patch.  Thanks!
+On 19/03/2018 18:10, Denis Kenzior wrote:
+> Hi Gabriel, Mariem,
+>
+> On 03/19/2018 11:26 AM, Gabriel Lucas wrote:
+>> From: Mariem Cherif <mariem.cherif@ardia.com.tn>
+>>
+>> ---
+>> =C2=A0 plugins/gemalto.c | 78 =
 
-Regards,
--Denis
+>> ++++++++++++++++++++++++++++++++++++++++++++++++++++---
+>> =C2=A0 1 file changed, 74 insertions(+), 4 deletions(-)
+>>
+>> diff --git a/plugins/gemalto.c b/plugins/gemalto.c
+>> index 5573606..029e09d 100644
+>> --- a/plugins/gemalto.c
+>> +++ b/plugins/gemalto.c
+>> @@ -57,6 +57,8 @@
+>> =C2=A0 #define GEMALTO_MODEL_PHS8P=C2=A0=C2=A0=C2=A0=C2=A0 "0053"
+>> =C2=A0 #define GEMALTO_MODEL_ALS3=C2=A0=C2=A0=C2=A0=C2=A0 "0061"
+>> =C2=A0 +static void gemalto_ciev_notify(GAtResult *result, gpointer =
 
---===============7140355524700966514==--
+>> user_data);
+>> +
+>
+> Please note doc/coding-style.txt item M17.=C2=A0 I silently re-structured =
+
+> this patch to avoid the need for this forward-declaration.
+>
+> Patch has been applied, thanks!
+>
+> Regards,
+> -Denis
+
+Thank you, that's better that way
+
+Best regards,
+Gabriel
+
+--===============2102676768936675008==--
 
