@@ -1,157 +1,95 @@
-Content-Type: multipart/mixed; boundary="===============0465850080669676470=="
+Content-Type: multipart/mixed; boundary="===============4938917151372336988=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [RFC PATCH 09/30] qmi: drop 'head' pointer from request_submit
-Date: Wed, 28 Mar 2018 20:59:55 +0200
-Message-ID: <20180328190016.28509-10-jonas@southpole.se>
+Subject: [RFC PATCH 10/30] qmi: remove unused qmi_service_cancel
+Date: Wed, 28 Mar 2018 20:59:56 +0200
+Message-ID: <20180328190016.28509-11-jonas@southpole.se>
 In-Reply-To: <20180328190016.28509-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0465850080669676470==
+--===============4938917151372336988==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Returning a pointer of the request's header does not serve any
-meaningful purpose anymore, so drop it.
+The function is not used anywhere in the codebase.
 ---
- drivers/qmimodem/qmi.c | 21 +++++++--------------
- 1 file changed, 7 insertions(+), 14 deletions(-)
+ drivers/qmimodem/qmi.c | 41 -----------------------------------------
+ drivers/qmimodem/qmi.h |  1 -
+ 2 files changed, 42 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 2c209d59..2e920abd 100644
+index 2e920abd..6cc858be 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -166,7 +166,7 @@ static int __request_submit(struct qmi_device* device,
- 				uint8_t client, uint16_t message,
- 				const void *data,
- 				uint16_t length, qmi_message_func_t func,
--				void *user_data, void **head)
-+				void *user_data)
- {
- 	struct qmi_request *req;
- 	struct qmi_mux_hdr *hdr;
-@@ -206,8 +206,6 @@ static int __request_submit(struct qmi_device* device,
- 	req->callback =3D func;
- 	req->user_data =3D user_data;
- =
-
--	*head =3D req->buf + QMI_MUX_HDR_SIZE;
--
- 	if (service =3D=3D QMI_SERVICE_CONTROL) {
- 		struct qmi_control_hdr* hdr;
- =
-
-@@ -1245,7 +1243,6 @@ bool qmi_device_discover(struct qmi_device *device, q=
-mi_discover_func_t func,
- 				void *user_data, qmi_destroy_func_t destroy)
- {
- 	struct discover_data *data;
--	struct qmi_control_hdr *hdr;
- =
-
- 	if (!device)
- 		return false;
-@@ -1270,7 +1267,7 @@ bool qmi_device_discover(struct qmi_device *device, q=
-mi_discover_func_t func,
- =
-
- 	__request_submit(device, QMI_SERVICE_CONTROL, 0x00,
- 			QMI_CTL_GET_VERSION_INFO,
--			NULL, 0, discover_callback, data, (void **) &hdr);
-+			NULL, 0, discover_callback, data);
- =
-
- 	data->tid =3D device->next_control_tid - 1;
- 	if (data->tid =3D=3D 0)
-@@ -1287,12 +1284,11 @@ static void release_client(struct qmi_device *devic=
+@@ -2284,47 +2284,6 @@ uint16_t qmi_service_send(struct qmi_service *servic=
 e,
- 				qmi_message_func_t func, void *user_data)
- {
- 	unsigned char release_req[] =3D { 0x01, 0x02, 0x00, type, client_id };
--	struct qmi_control_hdr *hdr;
- =
-
- 	__request_submit(device, QMI_SERVICE_CONTROL, 0x00,
- 			QMI_CTL_RELEASE_CLIENT_ID,
- 			release_req, sizeof(release_req),
--			func, user_data, (void **) &hdr);
-+			func, user_data);
+ 	return 1;
  }
  =
 
- static void shutdown_destroy(gpointer user_data)
-@@ -1369,7 +1365,6 @@ static void qmi_device_sync_callback(uint16_t message=
-, uint16_t length,
- bool qmi_device_sync(struct qmi_device *device,
- 		     qmi_sync_func_t func, void *user_data)
+-bool qmi_service_cancel(struct qmi_service *service, uint16_t id)
+-{
+-	unsigned int tid =3D id;
+-	struct qmi_device *device;
+-	struct qmi_request *req;
+-	GList *list;
+-
+-	if (!service || !tid)
+-		return false;
+-
+-	if (!service->client_id)
+-		return false;
+-
+-	device =3D service->device;
+-	if (!device)
+-		return false;
+-
+-	list =3D g_queue_find_custom(device->req_queue,
+-				GUINT_TO_POINTER(tid), __request_compare);
+-	if (list) {
+-		req =3D list->data;
+-
+-		g_queue_delete_link(device->req_queue, list);
+-	} else {
+-		list =3D g_queue_find_custom(device->service_queue,
+-				GUINT_TO_POINTER(tid), __request_compare);
+-		if (!list)
+-			return false;
+-
+-		req =3D list->data;
+-
+-		g_queue_delete_link(device->service_queue, list);
+-	}
+-
+-	service_send_free(req->user_data);
+-
+-	__request_free(req, NULL);
+-
+-	return true;
+-}
+-
+ static GQueue *remove_client(GQueue *queue, uint8_t client)
  {
--	struct qmi_control_hdr *hdr;
- 	struct sync_data *func_data;
+ 	GQueue *new_queue;
+diff --git a/drivers/qmimodem/qmi.h b/drivers/qmimodem/qmi.h
+index e1801045..bb8eb4a0 100644
+--- a/drivers/qmimodem/qmi.h
++++ b/drivers/qmimodem/qmi.h
+@@ -170,7 +170,6 @@ uint16_t qmi_service_send(struct qmi_service *service,
+ 				uint16_t message, struct qmi_param *param,
+ 				qmi_result_func_t func,
+ 				void *user_data, qmi_destroy_func_t destroy);
+-bool qmi_service_cancel(struct qmi_service *service, uint16_t id);
+ bool qmi_service_cancel_all(struct qmi_service *service);
  =
 
- 	if (!device)
-@@ -1384,7 +1379,7 @@ bool qmi_device_sync(struct qmi_device *device,
- 	__request_submit(device, QMI_SERVICE_CONTROL, 0x00,
- 			QMI_CTL_SYNC,
- 			NULL, 0,
--			qmi_device_sync_callback, func_data, (void **) &hdr);
-+			qmi_device_sync_callback, func_data);
- =
-
- 	return true;
- }
-@@ -1984,7 +1979,6 @@ static void service_create_discover(uint8_t count,
- {
- 	struct service_create_data *data =3D user_data;
- 	struct qmi_device *device =3D data->device;
--	struct qmi_control_hdr *hdr;
- 	unsigned char client_req[] =3D { 0x01, 0x01, 0x00, data->type };
- 	unsigned int i;
- =
-
-@@ -2001,7 +1995,7 @@ static void service_create_discover(uint8_t count,
- 	__request_submit(device, QMI_SERVICE_CONTROL, 0x00,
- 			QMI_CTL_GET_CLIENT_ID,
- 			client_req, sizeof(client_req),
--			service_create_callback, data, (void **) &hdr);
-+			service_create_callback, data);
- }
- =
-
- static bool service_create(struct qmi_device *device, bool shared,
-@@ -2256,7 +2250,6 @@ uint16_t qmi_service_send(struct qmi_service *service,
- {
- 	struct qmi_device *device;
- 	struct service_send_data *data;
--	struct qmi_service_hdr *hdr;
- 	int r;
- =
-
- 	if (!service)
-@@ -2277,11 +2270,11 @@ uint16_t qmi_service_send(struct qmi_service *servi=
-ce,
- 	data->user_data =3D user_data;
- 	data->destroy =3D destroy;
- =
-
--	__request_submit(device, service->type, service->client_id,
-+	r =3D __request_submit(device, service->type, service->client_id,
- 				message,
- 				param ? param->data : NULL,
- 				param ? param->length : 0,
--				service_send_callback, data, (void **) &hdr);
-+				service_send_callback, data);
- =
-
- 	qmi_param_free(param);
- =
-
+ uint16_t qmi_service_register(struct qmi_service *service,
 -- =
 
 2.15.1
 
 
---===============0465850080669676470==--
+--===============4938917151372336988==--
 
