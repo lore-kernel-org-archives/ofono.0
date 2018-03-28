@@ -1,29 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============1592306059091822531=="
+Content-Type: multipart/mixed; boundary="===============3015239010303739186=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 10/30] qmi: remove unused qmi_service_cancel
-Date: Wed, 28 Mar 2018 16:07:10 -0500
-Message-ID: <19fec226-3ce1-7612-0cc7-01c6210df94b@gmail.com>
-In-Reply-To: <20180328190016.28509-11-jonas@southpole.se>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: Re: [RFC PATCH 01/30] qmi: remove unused fields of service_send_data
+Date: Wed, 28 Mar 2018 23:09:00 +0200
+Message-ID: <741a037f-4138-e7a6-88fd-d6e8967b623c@southpole.se>
+In-Reply-To: <d7701932-a878-379f-bd79-009d020cbc8d@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1592306059091822531==
+--===============3015239010303739186==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
 
-On 03/28/2018 01:59 PM, Jonas Bonn wrote:
-> The function is not used anywhere in the codebase.
 
-I think it would be fundamentally wrong to drop this.  Similar =
+On 28/03/18 21:53, Denis Kenzior wrote:
+> Hi Jonas,
+>
+>> @@ -2308,17 +2304,18 @@ uint16_t qmi_service_send(struct qmi_service =
 
-capability is used in other drivers all the time.
+>> *service,
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (!data)
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return 0;
+>> =C2=A0 -=C2=A0=C2=A0=C2=A0 data->service =3D service;
+>> -=C2=A0=C2=A0=C2=A0 data->param =3D param;
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 data->func =3D func;
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 data->user_data =3D user_data;
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 data->destroy =3D destroy;
+>> =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 req =3D __request_alloc(service->t=
+ype, service->client_id,
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 message, QMI_SERVICE_HDR_SIZE,
+>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 data->param ? data->param->data : NULL,
+>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 data->param ? data->param->length : 0,
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 param ? param->data : NULL,
+>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 param ? param->length : 0,
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 service_send_callback, data, (void **) &hdr);
+>> +
+>> +=C2=A0=C2=A0=C2=A0 qmi_param_free(param);
+>> +
+>
+> This looks dangerous.=C2=A0 The problem is that all the qmi code issues =
 
-Regards,
--Denis
+> qmi_param_free in case qmi_service_send failed.=C2=A0 So you have a doubl=
+e =
 
---===============1592306059091822531==--
+> free situation here.
+
+I agree, the patch looks weird.=C2=A0 I was sure this outside of any failur=
+e =
+
+path, but the context in the patch doesn't reflect that. I'll check again.
+
+I can say, though, that I've run this change thousands of iterations and =
+
+I've never hit a double-free...
+
+/Jonas
+
+>
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (!req) {
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 g_free(data);
+>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return 0;
+>>
+>
+> Regards,
+> -Denis
+
+
+--===============3015239010303739186==--
 
