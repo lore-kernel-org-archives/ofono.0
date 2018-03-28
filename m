@@ -1,65 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============2676834671998414703=="
+Content-Type: multipart/mixed; boundary="===============3337470597483966021=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 12/30] qmi: replace GQueues for requests
-Date: Wed, 28 Mar 2018 16:24:48 -0500
-Message-ID: <09b83411-6aaf-348e-3e19-d2f90150648a@gmail.com>
-In-Reply-To: <2f50686d-9be8-726c-987c-abe9c1ce1e44@southpole.se>
+Subject: Re: [RFC PATCH 00/30] QMI rework
+Date: Wed, 28 Mar 2018 16:51:40 -0500
+Message-ID: <3ff1fc64-7169-bc32-b4ba-de7ca1af796d@gmail.com>
+In-Reply-To: <20180328190016.28509-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2676834671998414703==
+--===============3337470597483966021==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jonas,
-> Anyway, please bear with these lists for this cleanup.=C2=A0 When the sha=
-red =
-
-> service cleanup is done, we can return to GQueues if necessary and then =
-
-> we'll have a clearer picture of what the difference is.=C2=A0 As things s=
-tand =
-
-> though, things are complicated enough that the GQueues are just in the wa=
-y.
-
-I'm not introducing Linux lists just to remove them later.  That just =
-
-won't happen :)
 
 > =
 
-> Trying to find a series of small patches through this cleanup hasn't =
+> So, that said, this is my attempt at cleaning up service sharing in the
+> QMI core.  The jist of this is that we switch to a model that looks a
+> bit like file descriptions/descriptors in Linux.  The QMI services
+> obtain a service description which manages their info and the underlying
+> connection (client id) state that the 'shared services' actually share.
 
-> been easy.=C2=A0 The first attempts I did ended up ballooning because whe=
-n =
+So can you save me the trouble of looking through 30 patches and =
 
-> you start trying to make the change in patch 29 you pretty much =
+describe what the end resulting API is going to look like?
 
-> automatically end up with most of the other changes in the preceding 28 =
-
-> patches before this system is operational again... so the alternative to =
-
-> some of these (possibly) oddball patches was one _big_ patch that wasn't =
-
-> reviewable.
+> On top of this service description we provide service descriptors which
+> provide private state.  Requests and notifications are registered on the
+> service descriptor and their lifetimes are tied to it; when the service
+> descriptor is closed (released), the requests and notifications can be
+> cleaned up without affecting other users of the shared unlying
+> description.
 > =
 
 
-I feel your pain :)  I think before you go crazy we should nail down =
+This sounds an awful lot like what GAtChat does.  Except less flexible =
 
-your proposed API semantics and how you want things to look like.  I =
-
-already outlined my vision in a previous email and it sounds like you're =
-
-trying for something completely different.  So the obvious question is =
-
-why are we reinventing the wheel again?
+since you can't unregister or cancel an individual notification/request.
 
 Regards,
 -Denis
 
---===============2676834671998414703==--
+--===============3337470597483966021==--
 
