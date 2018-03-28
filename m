@@ -1,59 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============8489002051549129758=="
+Content-Type: multipart/mixed; boundary="===============2676834671998414703=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 01/30] qmi: remove unused fields of service_send_data
-Date: Wed, 28 Mar 2018 16:18:27 -0500
-Message-ID: <0b6caf33-cf56-1c8d-8b48-bc8b822b319e@gmail.com>
-In-Reply-To: <741a037f-4138-e7a6-88fd-d6e8967b623c@southpole.se>
+Subject: Re: [RFC PATCH 12/30] qmi: replace GQueues for requests
+Date: Wed, 28 Mar 2018 16:24:48 -0500
+Message-ID: <09b83411-6aaf-348e-3e19-d2f90150648a@gmail.com>
+In-Reply-To: <2f50686d-9be8-726c-987c-abe9c1ce1e44@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8489002051549129758==
+--===============2676834671998414703==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jonas,
+> Anyway, please bear with these lists for this cleanup.=C2=A0 When the sha=
+red =
 
->>> +
->>> +=C2=A0=C2=A0=C2=A0 qmi_param_free(param);
->>> +
->>
->> This looks dangerous.=C2=A0 The problem is that all the qmi code issues =
+> service cleanup is done, we can return to GQueues if necessary and then =
 
->> qmi_param_free in case qmi_service_send failed.=C2=A0 So you have a doub=
-le =
+> we'll have a clearer picture of what the difference is.=C2=A0 As things s=
+tand =
 
->> free situation here.
+> though, things are complicated enough that the GQueues are just in the wa=
+y.
+
+I'm not introducing Linux lists just to remove them later.  That just =
+
+won't happen :)
+
 > =
 
-> I agree, the patch looks weird.=C2=A0 I was sure this outside of any fail=
-ure =
+> Trying to find a series of small patches through this cleanup hasn't =
 
-> path, but the context in the patch doesn't reflect that. I'll check again.
+> been easy.=C2=A0 The first attempts I did ended up ballooning because whe=
+n =
+
+> you start trying to make the change in patch 29 you pretty much =
+
+> automatically end up with most of the other changes in the preceding 28 =
+
+> patches before this system is operational again... so the alternative to =
+
+> some of these (possibly) oddball patches was one _big_ patch that wasn't =
+
+> reviewable.
 > =
 
-> I can say, though, that I've run this change thousands of iterations and =
 
-> I've never hit a double-free...
+I feel your pain :)  I think before you go crazy we should nail down =
 
-I believe you.  qmi_service_send probably cannot fail in the current =
+your proposed API semantics and how you want things to look like.  I =
 
-setup.  However, we still need to stick to fundamental API guarantees. =
+already outlined my vision in a previous email and it sounds like you're =
 
-So if the API provides a legitimate failure possibility then it must =
+trying for something completely different.  So the obvious question is =
 
-ensure that failure semantics are clear.  For us that usually means:
-
-- No side effects on error.  E.g. any input parameters are not touched / =
-
-freed / generally messed with.
-- No output parameters are allocated / touched / generally messed with
-
-I have no issue applying this patch if we drop the qmi_param_free bit.
+why are we reinventing the wheel again?
 
 Regards,
 -Denis
 
---===============8489002051549129758==--
+--===============2676834671998414703==--
 
