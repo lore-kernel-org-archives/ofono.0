@@ -1,267 +1,268 @@
-Content-Type: multipart/mixed; boundary="===============1764566515290413405=="
+Content-Type: multipart/mixed; boundary="===============2074405286836192613=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [RFC PATCH 23/30] qmi: use standard endian macros
-Date: Wed, 28 Mar 2018 21:00:09 +0200
-Message-ID: <20180328190016.28509-24-jonas@southpole.se>
+Subject: [RFC PATCH 24/30] qmi: convert version_list to struct list head
+Date: Wed, 28 Mar 2018 21:00:10 +0200
+Message-ID: <20180328190016.28509-25-jonas@southpole.se>
 In-Reply-To: <20180328190016.28509-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1764566515290413405==
+--===============2074405286836192613==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+...and rename to service_info.
+
+As we intend to merge services and their info, we prepare by making sure
+they share a common list structure and rename version_list to
+service_info to make it clear that the struct is now more than just
+version information.
+
+Previoulsy, the version_list memory was allocated as a single chunk
+whereas this patch allocates the service_info structs one-by-one.  This
+shouldn't make any difference as this isn't performance critical in any
+way.
 ---
- drivers/qmimodem/qmi.c | 58 +++++++++++++++++++++++++---------------------=
+ drivers/qmimodem/qmi.c | 72 ++++++++++++++++++++--------------------------=
 ----
- 1 file changed, 29 insertions(+), 29 deletions(-)
+ 1 file changed, 29 insertions(+), 43 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 5178228b..b6280c05 100644
+index b6280c05..fb70861a 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -192,15 +192,15 @@ static int __request_submit(struct qmi_device* device,
- 	hdr =3D req->buf;
+@@ -45,7 +45,8 @@
+ typedef void (*qmi_message_func_t)(uint16_t message, uint16_t length,
+ 					const void *buffer, void *user_data);
  =
 
- 	hdr->frame =3D 0x01;
--	hdr->length =3D GUINT16_TO_LE(req->len - 1);
-+	hdr->length =3D htole16(req->len - 1);
- 	hdr->flags =3D 0x00;
- 	hdr->service =3D service;
- 	hdr->client =3D client;
+-struct qmi_version {
++struct qmi_service_info {
++	struct list_head node;
+ 	uint8_t type;
+ 	uint16_t major;
+ 	uint16_t minor;
+@@ -70,8 +71,7 @@ struct qmi_device {
+ 	uint16_t control_major;
+ 	uint16_t control_minor;
+ 	char *version_str;
+-	struct qmi_version *version_list;
+-	uint8_t version_count;
++	struct list_head service_info;
+ 	struct list_head service_list;
+ 	unsigned int release_users;
+ 	qmi_shutdown_func_t shutdown_func;
+@@ -86,7 +86,7 @@ struct qmi_service {
+ 	struct list_head node;
+ 	int ref_count;
+ 	struct qmi_device *device;
+-	struct qmi_version *info;
++	struct qmi_service_info *info;
+ 	struct list_head notify_list;
+ };
  =
 
- 	msg =3D req->buf + QMI_MUX_HDR_SIZE + headroom;
+@@ -891,6 +891,8 @@ struct qmi_device *qmi_device_new(int fd)
+ 	INIT_LIST_HEAD(&device->control_queue);
+ 	INIT_LIST_HEAD(&device->service_queue);
  =
 
--	msg->message =3D GUINT16_TO_LE(message);
--	msg->length =3D GUINT16_TO_LE(length);
-+	msg->message =3D htole16(message);
-+	msg->length =3D htole16(length);
++	INIT_LIST_HEAD(&device->service_info);
++
+ 	INIT_LIST_HEAD(&device->service_list);
  =
 
- 	if (data && length > 0)
- 		memcpy(req->buf + QMI_MUX_HDR_SIZE + headroom +
-@@ -526,13 +526,13 @@ static void __debug_msg(const char dir, const void *b=
-uf, size_t len,
- 		}
+ 	device->next_control_tid =3D 1;
+@@ -913,6 +915,7 @@ void qmi_device_unref(struct qmi_device *device)
+ {
+ 	struct qmi_request *req, *req_t;
+ 	struct qmi_service *service, *service_t;
++	struct qmi_service_info *info, *info_t;
  =
 
- 		str +=3D sprintf(str, "%s msg=3D%d len=3D%d", type,
--					GUINT16_FROM_LE(msg->message),
--					GUINT16_FROM_LE(msg->length));
-+					le16toh(msg->message),
-+					le16toh(msg->length));
- =
-
- 		str +=3D sprintf(str, " [client=3D%d,type=3D%d,tid=3D%d,len=3D%d]",
- 					hdr->client, ctl->type,
- 					ctl->transaction,
--					GUINT16_FROM_LE(hdr->length));
-+					le16toh(hdr->length));
- 	} else {
- 		const struct qmi_service_hdr *srv;
- 		const char *type;
-@@ -558,13 +558,13 @@ static void __debug_msg(const char dir, const void *b=
-uf, size_t len,
- 		}
- =
-
- 		str +=3D sprintf(str, "%s msg=3D%d len=3D%d", type,
--					GUINT16_FROM_LE(msg->message),
--					GUINT16_FROM_LE(msg->length));
-+					le16toh(msg->message),
-+					le16toh(msg->length));
- =
-
- 		str +=3D sprintf(str, " [client=3D%d,type=3D%d,tid=3D%d,len=3D%d]",
- 					hdr->client, srv->type,
--					GUINT16_FROM_LE(srv->transaction),
--					GUINT16_FROM_LE(hdr->length));
-+					le16toh(srv->transaction),
-+					le16toh(hdr->length));
+ 	if (!device)
+ 		return;
+@@ -968,7 +971,11 @@ void qmi_device_unref(struct qmi_device *device)
  	}
  =
 
- 	function(strbuf, user_data);
-@@ -576,14 +576,14 @@ static void __debug_msg(const char dir, const void *b=
-uf, size_t len,
- 	str +=3D sprintf(str, "      ");
- 	offset =3D 0;
+ 	g_free(device->version_str);
+-	g_free(device->version_list);
++
++	list_for_each_entry_safe(info, info_t, &device->service_info, node) {
++		list_del(&info->node);
++		free(info);
++	}
  =
 
--	while (offset + QMI_TLV_HDR_SIZE < GUINT16_FROM_LE(msg->length)) {
-+	while (offset + QMI_TLV_HDR_SIZE < le16toh(msg->length)) {
- 		const struct qmi_tlv_hdr *tlv =3D ptr + offset;
--		uint16_t tlv_length =3D GUINT16_FROM_LE(tlv->length);
-+		uint16_t tlv_length =3D le16toh(tlv->length);
+ 	if (device->shutting_down)
+ 		device->destroyed =3D true;
+@@ -1038,18 +1045,14 @@ static const void *tlv_get(const void *data, uint16=
+_t size,
+ bool qmi_device_get_service_version(struct qmi_device* device, uint8_t typ=
+e,
+ 					uint16_t *major, uint16_t *minor)
+ {
+-	struct qmi_version* info;
+-	int i;
++	struct qmi_service_info* info;
  =
 
- 		if (tlv->type =3D=3D 0x02 && tlv_length =3D=3D QMI_RESULT_CODE_SIZE) {
- 			const struct qmi_result_code *result =3D ptr + offset +
- 							QMI_TLV_HDR_SIZE;
--			uint16_t error =3D GUINT16_FROM_LE(result->error);
-+			uint16_t error =3D le16toh(result->error);
- 			const char *error_str;
+-	for (i =3D 0, info =3D device->version_list;
+-			i < device->version_count;
+-			i++, info++) {
++	list_for_each_entry(info, &device->service_info, node)
+ 		if (info->type =3D=3D type) {
+ 			*major =3D info->major;
+ 			*minor =3D info->minor;
+ 			return true;
+ 		}
+-	}
  =
 
- 			error_str =3D __error_to_string(error);
-@@ -738,8 +738,8 @@ static void handle_packet(struct qmi_device *device,
- =
-
- 		msg =3D buf + QMI_CONTROL_HDR_SIZE;
- =
-
--		message =3D GUINT16_FROM_LE(msg->message);
--		length =3D GUINT16_FROM_LE(msg->length);
-+		message =3D le16toh(msg->message);
-+		length =3D le16toh(msg->length);
- =
-
- 		data =3D buf + QMI_CONTROL_HDR_SIZE + QMI_MESSAGE_HDR_SIZE;
- =
-
-@@ -763,12 +763,12 @@ static void handle_packet(struct qmi_device *device,
- =
-
- 		msg =3D buf + QMI_SERVICE_HDR_SIZE;
- =
-
--		message =3D GUINT16_FROM_LE(msg->message);
--		length =3D GUINT16_FROM_LE(msg->length);
-+		message =3D le16toh(msg->message);
-+		length =3D le16toh(msg->length);
- =
-
- 		data =3D buf + QMI_SERVICE_HDR_SIZE + QMI_MESSAGE_HDR_SIZE;
- =
-
--		tid =3D GUINT16_FROM_LE(service->transaction);
-+		tid =3D le16toh(service->transaction);
- =
-
- 		if (service->type =3D=3D 0x04) {
- 			handle_indication(device, hdr->service, hdr->client,
-@@ -823,7 +823,7 @@ static gboolean received_data(GIOChannel *channel, GIOC=
-ondition cond,
- 		if (hdr->frame !=3D 0x01 || hdr->flags !=3D 0x80)
- 			break;
- =
-
--		len =3D GUINT16_FROM_LE(hdr->length) + 1;
-+		len =3D le16toh(hdr->length) + 1;
- =
-
- 		/* Check that packet size matches frame size */
- 		if (bytes_read - offset < len)
-@@ -1001,7 +1001,7 @@ void qmi_result_print_tlvs(struct qmi_result *result)
- =
-
- 	while (len > QMI_TLV_HDR_SIZE) {
- 		const struct qmi_tlv_hdr *tlv =3D ptr;
--		uint16_t tlv_length =3D GUINT16_FROM_LE(tlv->length);
-+		uint16_t tlv_length =3D le16toh(tlv->length);
- =
-
- 		DBG("tlv: 0x%02x len 0x%04x", tlv->type, tlv->length);
- =
-
-@@ -1019,7 +1019,7 @@ static const void *tlv_get(const void *data, uint16_t=
- size,
- =
-
- 	while (len > QMI_TLV_HDR_SIZE) {
- 		const struct qmi_tlv_hdr *tlv =3D ptr;
--		uint16_t tlv_length =3D GUINT16_FROM_LE(tlv->length);
-+		uint16_t tlv_length =3D le16toh(tlv->length);
- =
-
- 		if (tlv->type =3D=3D type) {
- 			if (length)
-@@ -1132,9 +1132,9 @@ static void discover_callback(uint16_t message, uint1=
-6_t length,
- =
-
- 	for (i =3D 0; i < service_list->count; i++) {
- 		uint16_t major =3D
--			GUINT16_FROM_LE(service_list->services[i].major);
-+			le16toh(service_list->services[i].major);
- 		uint16_t minor =3D
--			GUINT16_FROM_LE(service_list->services[i].minor);
-+			le16toh(service_list->services[i].minor);
- 		uint8_t type =3D service_list->services[i].type;
- 		const char *name =3D __service_type_to_string(type);
- =
-
-@@ -1578,7 +1578,7 @@ bool qmi_param_append(struct qmi_param *param, uint8_=
-t type,
- 	tlv =3D ptr + param->length;
- =
-
- 	tlv->type =3D type;
--	tlv->length =3D GUINT16_TO_LE(length);
-+	tlv->length =3D htole16(length);
- 	memcpy(tlv->value, data, length);
- =
-
- 	param->data =3D ptr;
-@@ -1769,7 +1769,7 @@ bool qmi_result_get_uint16(struct qmi_result *result,=
- uint8_t type,
- 	memcpy(&tmp, ptr, 2);
- =
-
- 	if (value)
--		*value =3D GUINT16_FROM_LE(tmp);
-+		*value =3D le16toh(tmp);
- =
-
- 	return true;
+ 	return false;
  }
-@@ -1791,7 +1791,7 @@ bool qmi_result_get_uint32(struct qmi_result *result,=
- uint8_t type,
- 	memcpy(&tmp, ptr, 4);
+@@ -1059,16 +1062,11 @@ bool qmi_device_get_service_version(struct qmi_devi=
+ce* device, uint8_t type,
+  */
+ bool qmi_device_has_service(struct qmi_device* device, uint8_t type)
+ {
+-	struct qmi_version* info;
+-	int i;
++	struct qmi_service_info* info;
  =
 
- 	if (value)
--		*value =3D GUINT32_FROM_LE(tmp);
-+		*value =3D le32toh(tmp);
+-	for (i =3D 0, info =3D device->version_list;
+-			i < device->version_count;
+-			i++, info++) {
+-		if (info->type =3D=3D type) {
++	list_for_each_entry(info, &device->service_info, node)
++		if (info->type =3D=3D type)
+ 			return true;
+-		}
+-	}
  =
 
- 	return true;
+ 	return false;
  }
-@@ -1813,7 +1813,7 @@ bool qmi_result_get_uint64(struct qmi_result *result,=
- uint8_t type,
- 	memcpy(&tmp, ptr, 8);
+@@ -1105,13 +1103,9 @@ static void discover_callback(uint16_t message, uint=
+16_t length,
+ 	const struct qmi_service_list *service_list;
+ 	const void *ptr;
+ 	uint16_t len;
+-	struct qmi_version *list;
+-	uint8_t count;
++	struct qmi_service_info *info;
+ 	unsigned int i;
  =
 
- 	if (value)
--		*value =3D GUINT64_FROM_LE(tmp);
-+		*value =3D le64toh(tmp);
- =
-
- 	return true;
- }
-@@ -2128,8 +2128,8 @@ static void service_send_callback(uint16_t message, u=
-int16_t length,
- 	if (len !=3D QMI_RESULT_CODE_SIZE)
+-	count =3D 0;
+-	list =3D NULL;
+-
+ 	result_code =3D tlv_get(buffer, length, 0x02, &len);
+ 	if (!result_code)
+ 		goto done;
+@@ -1126,10 +1120,6 @@ static void discover_callback(uint16_t message, uint=
+16_t length,
+ 	if (len < QMI_SERVICE_LIST_SIZE)
  		goto done;
  =
 
--	result.result =3D GUINT16_FROM_LE(result_code->result);
--	result.error =3D GUINT16_FROM_LE(result_code->error);
-+	result.result =3D le16toh(result_code->result);
-+	result.error =3D le16toh(result_code->error);
+-	list =3D g_try_malloc(sizeof(struct qmi_version) * service_list->count);
+-	if (!list)
+-		goto done;
+-
+ 	for (i =3D 0; i < service_list->count; i++) {
+ 		uint16_t major =3D
+ 			le16toh(service_list->services[i].major);
+@@ -1151,12 +1141,15 @@ static void discover_callback(uint16_t message, uin=
+t16_t length,
+ 			continue;
+ 		}
+ =
+
+-		list[count].type =3D type;
+-		list[count].major =3D major;
+-		list[count].minor =3D minor;
+-		list[count].name =3D name;
++		info =3D calloc(1, sizeof(*info));
++		INIT_LIST_HEAD(&info->node);
+ =
+
+-		count++;
++		info->type =3D type;
++		info->major =3D major;
++		info->minor =3D minor;
++		info->name =3D name;
++
++		list_add_tail(&info->node, &device->service_info);
+ 	}
+ =
+
+ 	ptr =3D tlv_get(buffer, length, 0x10, &len);
+@@ -1166,9 +1159,6 @@ static void discover_callback(uint16_t message, uint1=
+6_t length,
+ 	device->version_str =3D strndup(ptr + 1, *((uint8_t *) ptr));
  =
 
  done:
+-	device->version_list =3D list;
+-	device->version_count =3D count;
+-
  	if (data->func)
+ 		data->func(data->user_data);
+ =
+
+@@ -1208,7 +1198,7 @@ bool qmi_device_discover(struct qmi_device *device, q=
+mi_discover_func_t func,
+ 	data->user_data =3D user_data;
+ 	data->destroy =3D destroy;
+ =
+
+-	if (device->version_list) {
++	if (!list_empty(&device->service_info)) {
+ 		data->timeout =3D g_timeout_add_seconds(0, discover_reply, data);
+ 		return true;
+ 	}
+@@ -1863,9 +1853,8 @@ static void service_create_callback(uint16_t message,=
+ uint16_t length,
+ 	struct qmi_service *service =3D NULL;
+ 	const struct qmi_result_code *result_code;
+ 	const struct qmi_client_id *client_id;
+-	struct qmi_version* info;
++	struct qmi_service_info* info;
+ 	uint16_t len;
+-	int i;
+ =
+
+ 	result_code =3D tlv_get(buffer, length, 0x02, &len);
+ 	if (!result_code)
+@@ -1893,14 +1882,11 @@ static void service_create_callback(uint16_t messag=
+e, uint16_t length,
+ 	service->ref_count =3D 1;
+ 	service->device =3D data->device;
+ =
+
+-	for (i =3D 0, info =3D device->version_list;
+-			i < device->version_count;
+-			i++, info++) {
++	list_for_each_entry(info, &device->service_info, node)
+ 		if (info->type =3D=3D data->type) {
+ 			service->info =3D info;
+ 			break;
+ 		}
+-	}
+ =
+
+ 	service->info->client_id =3D client_id->client;
+ =
+
 -- =
 
 2.15.1
 
 
---===============1764566515290413405==--
+--===============2074405286836192613==--
 
