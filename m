@@ -1,118 +1,129 @@
-Content-Type: multipart/mixed; boundary="===============8237242967840471315=="
+Content-Type: multipart/mixed; boundary="===============1485494259011731847=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [RFC PATCH 00/30] QMI rework
-Date: Wed, 28 Mar 2018 20:59:46 +0200
-Message-ID: <20180328190016.28509-1-jonas@southpole.se>
+Subject: [RFC PATCH 04/30] qmi: request_alloc has no meaningful failure path
+Date: Wed, 28 Mar 2018 20:59:50 +0200
+Message-ID: <20180328190016.28509-5-jonas@southpole.se>
+In-Reply-To: <20180328190016.28509-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8237242967840471315==
+--===============1485494259011731847==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-A couple of weeks ago I submitted a patch to fix an issue with QMI
-modems where the LTE modem in the pre-sim state would prevent requests
-from being cancelled for services created and destroyed in the online
-state.  These uncancelled requests would result in callbacks into
-destroyed atoms and resulting segfaults.  The comment to that patch was
-that the _correct_ fix would be to rework the way QMI handles service
-sharing.
+The only way request_alloc can fail is if one of the memory allocation
+routines fail to allocate memory.  However, Linux memory allocation
+doesn't really fail in this manner; memory can be overcommited and the
+out-of-memory reaper will take care of re-establishing the balance when
+excess memory is actually accessed.
 
-So, that said, this is my attempt at cleaning up service sharing in the
-QMI core.  The jist of this is that we switch to a model that looks a
-bit like file descriptions/descriptors in Linux.  The QMI services
-obtain a service description which manages their info and the underlying
-connection (client id) state that the 'shared services' actually share.
-On top of this service description we provide service descriptors which
-provide private state.  Requests and notifications are registered on the
-service descriptor and their lifetimes are tied to it; when the service
-descriptor is closed (released), the requests and notifications can be
-cleaned up without affecting other users of the shared unlying
-description.
+Given this, request_alloc will never return anything other than success
+and the failure paths will never be exercised.
+---
+ drivers/qmimodem/qmi.c | 32 ++------------------------------
+ 1 file changed, 2 insertions(+), 30 deletions(-)
 
-The patch series is quite long because I tried to do this systematically
-in order to make the changes reviewable.  It turned out to be quite
-messy and it took me a couple of attempts to actually get a sane series
-together.  Everything builds and runs for every patch in the series, BUT
-I am aware that there are some details that are ignored along the way
-that mean that some subtle behavioural changes may be introduced.  By
-the end of the series, though, these issues should mostly have been
-taken care of... so please just bear this in mind when reviewing.
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index 0c95dd18..85ed9ddc 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -171,9 +171,7 @@ static struct qmi_request *__request_alloc(struct qmi_d=
+evice* device,
+ 	struct qmi_message_hdr *msg;
+ 	uint16_t headroom;
+ =
 
-Perhaps controversial so I'll state it upfront:  I've introduced the
-list.h header from the Linux kernel source tree into the project.  I
-really hope this won't be a showstopper... the licensing matches so
-there are no legal issues, in any case.  I included the entire header
-even though just a few macros are actually used... if size is an issue,
-we can pare the file down to about a quarter of its size.
+-	req =3D g_try_new0(struct qmi_request, 1);
+-	if (!req)
+-		return NULL;
++	req =3D calloc(1, sizeof(*req));
+ =
 
-Finally, this is still RFC as I haven't finished reviewing this
-completely, myself.  But I'd be happy to get any feedback now if someone
-has a chance to look at this.
+ 	if (service =3D=3D QMI_SERVICE_CONTROL)
+ 		headroom =3D QMI_CONTROL_HDR_SIZE;
+@@ -182,11 +180,7 @@ static struct qmi_request *__request_alloc(struct qmi_=
+device* device,
+ =
 
-Thanks,
-Jonas
+ 	req->len =3D QMI_MUX_HDR_SIZE + headroom + QMI_MESSAGE_HDR_SIZE + length;
+ =
 
+-	req->buf =3D g_try_malloc(req->len);
+-	if (!req->buf) {
+-		g_free(req);
+-		return NULL;
+-	}
++	req->buf =3D malloc(req->len);
+ =
 
-Jonas Bonn (30):
-  qmi: remove unused fields of service_send_data
-  qmi: remove headroom parameter from req_alloc
-  qmi: unify common request header setup
-  qmi: request_alloc has no meaningful failure path
-  qmi: push request_submit into request_alloc
-  qmi: rename request_alloc to request_submit
-  qmi: figure out request id without accessing header
-  qmi: make qmi_service_send return result
-  qmi: drop 'head' pointer from request_submit
-  qmi: remove unused qmi_service_cancel
-  qmi: remove unused qmi_service_unregister
-  qmi: replace GQueues for requests
-  qmi: assume version_list is up to date
-  qmi: absorb service_create_discover into service_create
-  qmi: drop discovery_queue
-  qmi: make services always shared
-  qmi: switch service_list to list_head type
-  qmi: switch notify_list to list_head type
-  qmi: drop unused struct field
-  qmi: reference version_info from device in services
-  qmi: make version_list private
-  qmi: move client_id to qmi_version
-  qmi: use standard endian macros
-  qmi: convert version_list to struct list head
-  qmi: move service device to service_info
-  qmi: make all services unique instances backed by common description
-  qmi: drop qmi_service_ref function
-  qmi: rename qmi_service_create/unref to open/close
-  qmi: pass service directly to request_submit
-  qmi: add requests to service queue
+ 	req->client =3D client;
+ =
 
- drivers/qmimodem/devinfo.c              |    6 +-
- drivers/qmimodem/gprs-context.c         |   14 +-
- drivers/qmimodem/gprs.c                 |   12 +-
- drivers/qmimodem/list.h                 |  736 ++++++++++++++++++++
- drivers/qmimodem/location-reporting.c   |    6 +-
- drivers/qmimodem/lte.c                  |    6 +-
- drivers/qmimodem/netmon.c               |    6 +-
- drivers/qmimodem/network-registration.c |    6 +-
- drivers/qmimodem/qmi.c                  | 1120 ++++++++++++---------------=
-----
- drivers/qmimodem/qmi.h                  |   27 +-
- drivers/qmimodem/radio-settings.c       |   12 +-
- drivers/qmimodem/sim-legacy.c           |    6 +-
- drivers/qmimodem/sim.c                  |   12 +-
- drivers/qmimodem/sms.c                  |    6 +-
- drivers/qmimodem/ussd.c                 |    6 +-
- drivers/qmimodem/voicecall.c            |    6 +-
- plugins/gobi.c                          |   76 +--
- 17 files changed, 1270 insertions(+), 793 deletions(-)
- create mode 100644 drivers/qmimodem/list.h
+@@ -1280,10 +1274,6 @@ bool qmi_device_discover(struct qmi_device *device, =
+qmi_discover_func_t func,
+ 	req =3D __request_alloc(device, QMI_SERVICE_CONTROL, 0x00,
+ 			QMI_CTL_GET_VERSION_INFO,
+ 			NULL, 0, discover_callback, data, (void **) &hdr);
+-	if (!req) {
+-		g_free(data);
+-		return false;
+-	}
+ =
 
+ 	data->tid =3D hdr->transaction;
+ =
+
+@@ -1307,10 +1297,6 @@ static void release_client(struct qmi_device *device,
+ 			QMI_CTL_RELEASE_CLIENT_ID,
+ 			release_req, sizeof(release_req),
+ 			func, user_data, (void **) &hdr);
+-	if (!req) {
+-		func(0x0000, 0x0000, NULL, user_data);
+-		return;
+-	}
+ =
+
+ 	__request_submit(device, req, hdr->transaction);
+ }
+@@ -2026,15 +2012,6 @@ static void service_create_discover(uint8_t count,
+ 			QMI_CTL_GET_CLIENT_ID,
+ 			client_req, sizeof(client_req),
+ 			service_create_callback, data, (void **) &hdr);
+-	if (!req) {
+-		if (data->timeout > 0)
+-			g_source_remove(data->timeout);
+-
+-		data->timeout =3D g_timeout_add_seconds(0,
+-						service_create_reply, data);
+-		__qmi_device_discovery_started(device, &data->super);
+-		return;
+-	}
+ =
+
+ 	__request_submit(device, req, hdr->transaction);
+ }
+@@ -2320,11 +2297,6 @@ uint16_t qmi_service_send(struct qmi_service *servic=
+e,
+ =
+
+ 	qmi_param_free(param);
+ =
+
+-	if (!req) {
+-		g_free(data);
+-		return 0;
+-	}
+-
+ 	__request_submit(device, req, hdr->transaction);
+ =
+
+ 	return hdr->transaction;
 -- =
 
 2.15.1
 
 
---===============8237242967840471315==--
+--===============1485494259011731847==--
 
