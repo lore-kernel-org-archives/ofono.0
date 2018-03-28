@@ -1,163 +1,161 @@
-Content-Type: multipart/mixed; boundary="===============6204063012927346440=="
+Content-Type: multipart/mixed; boundary="===============4945125299437191104=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [RFC PATCH 29/30] qmi: pass service directly to request_submit
-Date: Wed, 28 Mar 2018 21:00:15 +0200
-Message-ID: <20180328190016.28509-30-jonas@southpole.se>
+Subject: [RFC PATCH 30/30] qmi: add requests to service queue
+Date: Wed, 28 Mar 2018 21:00:16 +0200
+Message-ID: <20180328190016.28509-31-jonas@southpole.se>
 In-Reply-To: <20180328190016.28509-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6204063012927346440==
+--===============4945125299437191104==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-For CTL requests, pass NULL instead.
+Each service description wants to keep its own list of pending requests.
+This allows the requests to be safely and efficently cancelled when the
+service is 'closed'.
 ---
- drivers/qmimodem/qmi.c | 42 +++++++++++++++++++++++++-----------------
- 1 file changed, 25 insertions(+), 17 deletions(-)
+ drivers/qmimodem/qmi.c | 41 +++++++++++++++--------------------------
+ 1 file changed, 15 insertions(+), 26 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 8c1696bf..2286f703 100644
+index 2286f703..921f3205 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -187,8 +187,8 @@ void qmi_free(void *ptr)
- static void wakeup_writer(struct qmi_device *device);
+@@ -110,6 +110,7 @@ struct qmi_device {
+ struct qmi_service {
+ 	struct list_head node;
+ 	struct qmi_service_info *info;
++	struct list_head requests;
+ 	struct list_head notify_list;
+ };
  =
 
- static int __request_submit(struct qmi_device* device,
--				uint8_t service,
--				uint8_t client, uint16_t message,
-+				struct qmi_service *service,
-+				uint16_t message,
- 				const void *data,
- 				uint16_t length, qmi_message_func_t func,
- 				void *user_data)
-@@ -197,28 +197,35 @@ static int __request_submit(struct qmi_device* device,
- 	struct qmi_mux_hdr *hdr;
- 	struct qmi_message_hdr *msg;
- 	uint16_t headroom;
-+	uint8_t type;
-+	uint8_t client_id;
-+
-+	if (service) {
-+		type =3D service->info->type;
-+		client_id =3D service->info->client_id;
-+		headroom =3D QMI_SERVICE_HDR_SIZE;
-+	} else {
-+		type =3D QMI_SERVICE_CONTROL;
-+		client_id =3D 0;
-+		headroom =3D QMI_CONTROL_HDR_SIZE;
-+	}
+@@ -128,6 +129,7 @@ struct qmi_result {
+ =
+
+ struct qmi_request {
+ 	struct list_head node;
++	struct list_head service_node;
+ 	uint16_t tid;
+ 	uint8_t client;
+ 	void *buf;
+@@ -212,6 +214,7 @@ static int __request_submit(struct qmi_device* device,
  =
 
  	req =3D calloc(1, sizeof(*req));
  	INIT_LIST_HEAD(&req->node);
++	INIT_LIST_HEAD(&req->service_node);
  =
 
--	if (service =3D=3D QMI_SERVICE_CONTROL)
--		headroom =3D QMI_CONTROL_HDR_SIZE;
--	else
--		headroom =3D QMI_SERVICE_HDR_SIZE;
--
  	req->len =3D QMI_MUX_HDR_SIZE + headroom + QMI_MESSAGE_HDR_SIZE + length;
  =
 
- 	req->buf =3D malloc(req->len);
- =
-
--	req->client =3D client;
-+	req->client =3D client_id;
- =
-
- 	hdr =3D req->buf;
- =
-
- 	hdr->frame =3D 0x01;
- 	hdr->length =3D htole16(req->len - 1);
- 	hdr->flags =3D 0x00;
--	hdr->service =3D service;
--	hdr->client =3D client;
-+	hdr->service =3D type;
-+	hdr->client =3D client_id;
- =
-
- 	msg =3D req->buf + QMI_MUX_HDR_SIZE + headroom;
- =
-
-@@ -232,7 +239,8 @@ static int __request_submit(struct qmi_device* device,
- 	req->callback =3D func;
- 	req->user_data =3D user_data;
- =
-
--	if (service =3D=3D QMI_SERVICE_CONTROL) {
-+	if (!service) {
-+		/* CTL service */
- 		struct qmi_control_hdr* hdr;
- =
-
- 		hdr =3D req->buf + QMI_MUX_HDR_SIZE;
-@@ -1263,7 +1271,7 @@ bool qmi_device_discover(struct qmi_device *device, q=
-mi_discover_func_t func,
- 		return true;
+@@ -257,6 +260,8 @@ static int __request_submit(struct qmi_device* device,
+ 		if (device->next_service_tid < 256)
+ 			device->next_service_tid =3D 256;
+ 		req->tid =3D hdr->transaction;
++
++		list_add_tail(&req->service_node, &service->requests);
  	}
  =
 
--	__request_submit(device, QMI_SERVICE_CONTROL, 0x00,
-+	__request_submit(device, NULL,
- 			QMI_CTL_GET_VERSION_INFO,
- 			NULL, 0, discover_callback, data);
+ 	list_add_tail(&req->node, &device->req_queue);
+@@ -813,6 +818,7 @@ static void handle_packet(struct qmi_device *device,
+ 			return;
  =
 
-@@ -1276,7 +1284,7 @@ static void release_client(struct qmi_device *device,
+ 		list_del(&req->node);
++		list_del(&req->service_node);
+ 	}
+ =
+
+ 	if (req->callback)
+@@ -995,6 +1001,7 @@ void qmi_device_unref(struct qmi_device *device)
+ 		 * request with a 'destroy' function
+ 		 */
+ 		list_del(&req->node);
++		list_del(&req->service_node);
+ 		g_free(req->buf);
+ 		g_free(req);
+ 	}
+@@ -1004,6 +1011,7 @@ void qmi_device_unref(struct qmi_device *device)
+ 		 * request with a 'destroy' function
+ 		 */
+ 		list_del(&req->node);
++		list_del(&req->service_node);
+ 		g_free(req->buf);
+ 		g_free(req);
+ 	}
+@@ -2021,6 +2029,7 @@ bool qmi_service_open(struct qmi_device *device,
+ =
+
+ 	service =3D calloc(1, sizeof(*service));
+ 	INIT_LIST_HEAD(&service->node);
++	INIT_LIST_HEAD(&service->requests);
+ 	INIT_LIST_HEAD(&service->notify_list);
+ 	service->info =3D info;
+ =
+
+@@ -2194,39 +2203,19 @@ uint16_t qmi_service_send(struct qmi_service *servi=
+ce,
+ =
+
+ bool qmi_service_cancel_all(struct qmi_service *service)
  {
- 	unsigned char release_req[] =3D { 0x01, 0x02, 0x00, type, client_id };
+-	struct qmi_device *device;
+ 	struct qmi_request *req, *req_t;
  =
 
--	__request_submit(device, QMI_SERVICE_CONTROL, 0x00,
-+	__request_submit(device, NULL,
- 			QMI_CTL_RELEASE_CLIENT_ID,
- 			release_req, sizeof(release_req),
- 			func, user_data);
-@@ -1367,7 +1375,7 @@ bool qmi_device_sync(struct qmi_device *device,
- 	func_data->func =3D func;
- 	func_data->user_data =3D user_data;
+ 	if (!service)
+ 		return false;
  =
 
--	__request_submit(device, QMI_SERVICE_CONTROL, 0x00,
-+	__request_submit(device, NULL,
- 			QMI_CTL_SYNC,
- 			NULL, 0,
- 			qmi_device_sync_callback, func_data);
-@@ -1967,7 +1975,7 @@ static bool service_connect(struct service_connect_da=
-ta *data)
+-	if (!service->info->client_id)
+-		return false;
+-
+-	device =3D service->info->device;
+-	if (!device)
+-		return false;
+-
+-	list_for_each_entry_safe(req, req_t, &device->req_queue, node) {
+-		if (req->client =3D=3D service->info->client_id) {
+-			list_del(&req->node);
+-
+-			service_send_free(req->user_data);
+-
+-			g_free(req->buf);
+-			g_free(req);
+-		}
+-	}
+-
+-	list_for_each_entry_safe(req, req_t, &device->service_queue, node) {
+-		if (req->client =3D=3D service->info->client_id) {
+-			list_del(&req->node);
++	list_for_each_entry_safe(req, req_t, &service->requests, service_node) {
++		list_del(&req->node);
++		list_del(&req->service_node);
  =
 
- 	__debug_device(info->device, "service create [type=3D%d]", info->type);
+-			service_send_free(req->user_data);
++		service_send_free(req->user_data);
  =
 
--	__request_submit(info->device, QMI_SERVICE_CONTROL, 0x00,
-+	__request_submit(info->device, NULL,
- 			QMI_CTL_GET_CLIENT_ID,
- 			client_req, sizeof(client_req),
- 			service_connect_callback, info);
-@@ -2169,8 +2177,8 @@ uint16_t qmi_service_send(struct qmi_service *service,
- 	data->user_data =3D user_data;
- 	data->destroy =3D destroy;
+-			g_free(req->buf);
+-			g_free(req);
+-		}
++		g_free(req->buf);
++		g_free(req);
+ 	}
  =
 
--	r =3D __request_submit(device, service->info->type,
--				service->info->client_id,
-+	r =3D __request_submit(device,
-+				service,
- 				message,
- 				param ? param->data : NULL,
- 				param ? param->length : 0,
+ 	return true;
 -- =
 
 2.15.1
 
 
---===============6204063012927346440==--
+--===============4945125299437191104==--
 
