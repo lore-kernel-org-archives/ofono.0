@@ -1,102 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============9015929481531340730=="
+Content-Type: multipart/mixed; boundary="===============4504622532175125418=="
 MIME-Version: 1.0
-From: Gabriel Lucas <gabriel.lucas@smile.fr>
-Subject: Re: SEGFAULT on sim_remove()
-Date: Thu, 29 Mar 2018 13:23:58 +0200
-Message-ID: <8b36867e-e89c-c693-1f3c-6efca0d13933@smile.fr>
-In-Reply-To: <92c03f6f-8ab7-d1a7-07d4-7c8aba94ef2f@smile.fr>
+From: Jonas Bonn <jonas@southpole.se>
+Subject: [PATCH 01/12] qmi: remove unused fields of service_send_data
+Date: Thu, 29 Mar 2018 15:57:50 +0200
+Message-ID: <20180329135801.5981-2-jonas@southpole.se>
+In-Reply-To: <20180329135801.5981-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9015929481531340730==
+--===============4504622532175125418==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+After setting up the request structure, qmi_service_send makes no
+further use of the 'param' and 'service' fields of the service_send_data
+structure.  This patch removes those fields and frees 'param'
+immediately after the request has been allocated and the parameter data
+thereby copied into the send buffer.
+---
+ drivers/qmimodem/qmi.c | 13 +++++--------
+ 1 file changed, 5 insertions(+), 8 deletions(-)
 
-I've been investigating for the reason of the SIGSEGV signal.
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index 257afd0d..caf099b1 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -2238,8 +2238,6 @@ bool qmi_service_get_version(struct qmi_service *serv=
+ice,
+ }
+ =
 
-Valgrind tells me that I'm reading an already-freed sector.
+ struct service_send_data {
+-	struct qmi_service *service;
+-	struct qmi_param *param;
+ 	qmi_result_func_t func;
+ 	void *user_data;
+ 	qmi_destroy_func_t destroy;
+@@ -2250,8 +2248,6 @@ static void service_send_free(struct service_send_dat=
+a *data)
+ 	if (data->destroy)
+ 		data->destroy(data->user_data);
+ =
 
-I've added some debug information in:
+-	qmi_param_free(data->param);
+-
+ 	g_free(data);
+ }
+ =
 
-- src/sim.c:sim_remove: see below
+@@ -2308,22 +2304,23 @@ uint16_t qmi_service_send(struct qmi_service *servi=
+ce,
+ 	if (!data)
+ 		return 0;
+ =
 
-- src/simfs.c:sim_fs_context_free: freed sim_context
+-	data->service =3D service;
+-	data->param =3D param;
+ 	data->func =3D func;
+ 	data->user_data =3D user_data;
+ 	data->destroy =3D destroy;
+ =
 
-- src/simfs.c:sim_fs_op_free: freed sim_fs_op and sim_fs_op::context pointer
+ 	req =3D __request_alloc(service->type, service->client_id,
+ 				message, QMI_SERVICE_HDR_SIZE,
+-				data->param ? data->param->data : NULL,
+-				data->param ? data->param->length : 0,
++				param ? param->data : NULL,
++				param ? param->length : 0,
+ 				service_send_callback, data, (void **) &hdr);
++
+ 	if (!req) {
+ 		g_free(data);
+ 		return 0;
+ 	}
+ =
+
++	qmi_param_free(param);
++
+ 	if (device->next_service_tid < 256)
+ 		device->next_service_tid =3D 256;
+ =
+
+-- =
+
+2.15.1
 
 
-Here is the sim_remove function called when disabling the gemalto's plugin
-
-static void sim_remove(struct ofono_atom *atom)
-{
- =C2=A0=C2=A0=C2=A0 struct ofono_sim *sim =3D __ofono_atom_get_data(atom);
-
- =C2=A0=C2=A0=C2=A0 DBG("atom: %p", atom);
-
- =C2=A0=C2=A0=C2=A0 if (sim =3D=3D NULL)
- =C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0 return;
-
- =C2=A0=C2=A0=C2=A0 if (sim->driver !=3D NULL && sim->driver->remove !=3D N=
-ULL)
- =C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0 sim->driver->remove(sim);
-
- =C2=A0=C2=A0=C2=A0 sim_free_state(sim);
-
- =C2=A0=C2=A0=C2=A0 DBG("simfs"); // added
- =C2=A0=C2=A0=C2=A0 sim_fs_free(sim->simfs);
- =C2=A0=C2=A0=C2=A0 sim->simfs =3D NULL;
- =C2=A0=C2=A0=C2=A0 DBG("simfs_isim"); // added
- =C2=A0=C2=A0=C2=A0 sim_fs_free(sim->simfs_isim);
- =C2=A0=C2=A0=C2=A0 sim->simfs_isim =3D NULL;
-
- =C2=A0=C2=A0=C2=A0 g_free(sim);
-}
-
-I've launched Ofono with valgrind (I've added comments to the logs):
-ofonod[30124]: src/sim.c:sim_remove() atom: 0x4e81d88
-ofonod[30124]: src/simfs.c:sim_fs_context_free() 0x4e868f8
-ofonod[30124]: src/simfs.c:sim_fs_context_free() 0x4ef6a08
-ofonod[30124]: src/simfs.c:sim_fs_op_free() 0x4ef6a08, 0x3c, context: =
-
-0x4eb7fb0
-ofonod[30124]: src/simfs.c:sim_fs_context_free() 0x4ef6b38
-ofonod[30124]: src/simfs.c:sim_fs_op_free() 0x4ef6b38, 0x3c, context: =
-
-0x4eb7fb0
-ofonod[30124]: src/simfs.c:sim_fs_context_free() **0x4eb7fb0** // -> =
-
-This is freed in sim_free_state(sim);
-ofonod[30124]: src/sim.c:sim_remove() simfs // -> Going in =
-
-sim_fs_free(sim->simfs);
-ofonod[30124]: src/simfs.c:sim_fs_free() 0x4e845a8
-ofonod[30124]: src/simfs.c:sim_fs_op_free() 0x4ef67a8, 0x3c, context: =
-
-**0x4eb7fb0** // Already freed
-=3D=3D30124=3D=3D Invalid read of size 4
-=3D=3D30124=3D=3D=C2=A0=C2=A0=C2=A0 at 0xE39A0: sim_fs_op_free (simfs.c:99)=
- // -> line: struct =
-
-sim_fs *fs =3D node->context->fs;
-=3D=3D30124=3D=3D=C2=A0=C2=A0=C2=A0 by 0x48B0303: g_queue_foreach (in =
-
-/usr/lib/libglib-2.0.so.0.3800.2)
-=3D=3D30124=3D=3D=C2=A0 Address **0x4eb7fb0** is 0 bytes inside a block of =
-size 8 free'd
-=3D=3D30124=3D=3D=C2=A0=C2=A0=C2=A0 at 0x4835760: free (in =
-
-/usr/lib/valgrind/vgpreload_memcheck-arm-linux.so)
-=3D=3D30124=3D=3D
-ofonod[30124]: src/sim.c:sim_remove() simfs_isim
-ofonod[30124]: src/simfs.c:sim_fs_free() (nil)
-
-What do you think about this?
-
-Best regards,
-Gabriel
-
---===============9015929481531340730==--
+--===============4504622532175125418==--
 
