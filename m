@@ -1,82 +1,102 @@
-Content-Type: multipart/mixed; boundary="===============7845174026228090398=="
+Content-Type: multipart/mixed; boundary="===============9015929481531340730=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: [RFC PATCH 01/30] qmi: remove unused fields of service_send_data
-Date: Thu, 29 Mar 2018 12:46:03 +0200
-Message-ID: <ca674d4d-d43d-fec7-e146-09d44935571e@southpole.se>
-In-Reply-To: <d7701932-a878-379f-bd79-009d020cbc8d@gmail.com>
+From: Gabriel Lucas <gabriel.lucas@smile.fr>
+Subject: Re: SEGFAULT on sim_remove()
+Date: Thu, 29 Mar 2018 13:23:58 +0200
+Message-ID: <8b36867e-e89c-c693-1f3c-6efca0d13933@smile.fr>
+In-Reply-To: <92c03f6f-8ab7-d1a7-07d4-7c8aba94ef2f@smile.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7845174026228090398==
+--===============9015929481531340730==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
+I've been investigating for the reason of the SIGSEGV signal.
 
-On 28/03/18 21:53, Denis Kenzior wrote:
-> Hi Jonas,
->
->> @@ -2308,17 +2304,18 @@ uint16_t qmi_service_send(struct qmi_service =
+Valgrind tells me that I'm reading an already-freed sector.
 
->> *service,
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (!data)
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return 0;
->> =C2=A0 -=C2=A0=C2=A0=C2=A0 data->service =3D service;
->> -=C2=A0=C2=A0=C2=A0 data->param =3D param;
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 data->func =3D func;
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 data->user_data =3D user_data;
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 data->destroy =3D destroy;
->> =C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 req =3D __request_alloc(service->t=
-ype, service->client_id,
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 message, QMI_SERVICE_HDR_SIZE,
->> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 data->param ? data->param->data : NULL,
->> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 data->param ? data->param->length : 0,
->> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 param ? param->data : NULL,
->> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 param ? param->length : 0,
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 service_send_callback, data, (void **) &hdr);
->> +
->> +=C2=A0=C2=A0=C2=A0 qmi_param_free(param);
->> +
->
-> This looks dangerous.=C2=A0 The problem is that all the qmi code issues =
+I've added some debug information in:
 
-> qmi_param_free in case qmi_service_send failed.=C2=A0 So you have a doubl=
-e =
+- src/sim.c:sim_remove: see below
 
-> free situation here.
->
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (!req) {
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 g_free(data);
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return 0;
->>
->
-So, I checked this again.=C2=A0 The above, as you pointed out, is not right=
-.=C2=A0 =
+- src/simfs.c:sim_fs_context_free: freed sim_context
 
-But just moving the qmi_param_free to the end of the qmi_service_send =
-
-function, just before it returns success, is what this should have =
-
-been.=C2=A0 If the function returns success, the user expects that we free =
-
-param; if we do it there then we don't need the reference into the callback.
-
-I'll fix the patch and resubmit it.
-
-/Jonas
-
-> Regards,
-> -Denis
+- src/simfs.c:sim_fs_op_free: freed sim_fs_op and sim_fs_op::context pointer
 
 
---===============7845174026228090398==--
+Here is the sim_remove function called when disabling the gemalto's plugin
+
+static void sim_remove(struct ofono_atom *atom)
+{
+ =C2=A0=C2=A0=C2=A0 struct ofono_sim *sim =3D __ofono_atom_get_data(atom);
+
+ =C2=A0=C2=A0=C2=A0 DBG("atom: %p", atom);
+
+ =C2=A0=C2=A0=C2=A0 if (sim =3D=3D NULL)
+ =C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0 return;
+
+ =C2=A0=C2=A0=C2=A0 if (sim->driver !=3D NULL && sim->driver->remove !=3D N=
+ULL)
+ =C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0 sim->driver->remove(sim);
+
+ =C2=A0=C2=A0=C2=A0 sim_free_state(sim);
+
+ =C2=A0=C2=A0=C2=A0 DBG("simfs"); // added
+ =C2=A0=C2=A0=C2=A0 sim_fs_free(sim->simfs);
+ =C2=A0=C2=A0=C2=A0 sim->simfs =3D NULL;
+ =C2=A0=C2=A0=C2=A0 DBG("simfs_isim"); // added
+ =C2=A0=C2=A0=C2=A0 sim_fs_free(sim->simfs_isim);
+ =C2=A0=C2=A0=C2=A0 sim->simfs_isim =3D NULL;
+
+ =C2=A0=C2=A0=C2=A0 g_free(sim);
+}
+
+I've launched Ofono with valgrind (I've added comments to the logs):
+ofonod[30124]: src/sim.c:sim_remove() atom: 0x4e81d88
+ofonod[30124]: src/simfs.c:sim_fs_context_free() 0x4e868f8
+ofonod[30124]: src/simfs.c:sim_fs_context_free() 0x4ef6a08
+ofonod[30124]: src/simfs.c:sim_fs_op_free() 0x4ef6a08, 0x3c, context: =
+
+0x4eb7fb0
+ofonod[30124]: src/simfs.c:sim_fs_context_free() 0x4ef6b38
+ofonod[30124]: src/simfs.c:sim_fs_op_free() 0x4ef6b38, 0x3c, context: =
+
+0x4eb7fb0
+ofonod[30124]: src/simfs.c:sim_fs_context_free() **0x4eb7fb0** // -> =
+
+This is freed in sim_free_state(sim);
+ofonod[30124]: src/sim.c:sim_remove() simfs // -> Going in =
+
+sim_fs_free(sim->simfs);
+ofonod[30124]: src/simfs.c:sim_fs_free() 0x4e845a8
+ofonod[30124]: src/simfs.c:sim_fs_op_free() 0x4ef67a8, 0x3c, context: =
+
+**0x4eb7fb0** // Already freed
+=3D=3D30124=3D=3D Invalid read of size 4
+=3D=3D30124=3D=3D=C2=A0=C2=A0=C2=A0 at 0xE39A0: sim_fs_op_free (simfs.c:99)=
+ // -> line: struct =
+
+sim_fs *fs =3D node->context->fs;
+=3D=3D30124=3D=3D=C2=A0=C2=A0=C2=A0 by 0x48B0303: g_queue_foreach (in =
+
+/usr/lib/libglib-2.0.so.0.3800.2)
+=3D=3D30124=3D=3D=C2=A0 Address **0x4eb7fb0** is 0 bytes inside a block of =
+size 8 free'd
+=3D=3D30124=3D=3D=C2=A0=C2=A0=C2=A0 at 0x4835760: free (in =
+
+/usr/lib/valgrind/vgpreload_memcheck-arm-linux.so)
+=3D=3D30124=3D=3D
+ofonod[30124]: src/sim.c:sim_remove() simfs_isim
+ofonod[30124]: src/simfs.c:sim_fs_free() (nil)
+
+What do you think about this?
+
+Best regards,
+Gabriel
+
+--===============9015929481531340730==--
 
