@@ -1,34 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============0360072402817500931=="
+Content-Type: multipart/mixed; boundary="===============0206876859161695417=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 02/12] qmi: remove headroom parameter from req_alloc
-Date: Thu, 29 Mar 2018 09:55:03 -0500
-Message-ID: <08424bae-bcab-a60a-dc03-0e26121e1057@gmail.com>
-In-Reply-To: <20180329135801.5981-3-jonas@southpole.se>
+From: Gabriel Lucas <gabriel.lucas@smile.fr>
+Subject: Re: SEGFAULT on sim_remove()
+Date: Thu, 29 Mar 2018 16:59:14 +0200
+Message-ID: <eb980851-15db-ca47-3edb-6cffc25806cb@smile.fr>
+In-Reply-To: <c2ce50e6-c439-9639-b887-134bb1c0fda7@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0360072402817500931==
+--===============0206876859161695417==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jonas,
+Hi Denis,
 
-On 03/29/2018 08:57 AM, Jonas Bonn wrote:
-> The headroom can be established from the service type, so it's redundant
-> to pass it as a parameter.
-> ---
->   drivers/qmimodem/qmi.c | 18 ++++++++++++------
->   1 file changed, 12 insertions(+), 6 deletions(-)
-> =
+This is fixed!
 
 
-Applied, thanks.
+On 29/03/2018 16:51, Denis Kenzior wrote:
+> Hi Gabriel,
+>>
+>> If you have any idea of the reason, let me know.
+>>
+>
+> commit id 8b8a760644fd99f8df295fe4dbcd23d75da8b171 (now HEAD) should =
 
+> fix this.
+>
+Thank you
 Regards,
--Denis
 
+Gabriel
 
---===============0360072402817500931==--
+--===============0206876859161695417==--
 
