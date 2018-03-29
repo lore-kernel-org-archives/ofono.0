@@ -1,127 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============7833431612916917977=="
+Content-Type: multipart/mixed; boundary="===============6591936402945213907=="
 MIME-Version: 1.0
-From: Jonas Bonn <jonas@southpole.se>
-Subject: Re: [RFC PATCH 00/30] QMI rework
-Date: Thu, 29 Mar 2018 18:43:27 +0200
-Message-ID: <481f4b9b-f771-4ab2-80b6-191b4c7c8097@southpole.se>
-In-Reply-To: <c171551e-8821-a8fa-3a17-7cac511b4020@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 12/12] qmi: use standard endian macros
+Date: Thu, 29 Mar 2018 12:53:06 -0500
+Message-ID: <d825cd9f-02f2-761a-f64a-2b8495604b0f@gmail.com>
+In-Reply-To: <62bc7d95-5651-1f04-99f9-81b338b3549e@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7833431612916917977==
+--===============6591936402945213907==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Jonas,
 
+> But what I really don't get is is what the point is of ell providing =
 
-On 29/03/18 17:55, Denis Kenzior wrote:
->
->> This is effectively the same as what you proposed with a little twist =
+> functionality that's already provided in libc.=C2=A0 GLib did this for =
 
->> (improvement :) ):
->> i)=C2=A0 you wanted to add a list of groups to qmi_service so that group=
-s =
+> portability reasons, but ell targets Linux and that means glibc, uclibc, =
 
->> of notifations/requests could be cancelled independently of other =
+> and musl and they all provide these standard things.=C2=A0 libell as a =
 
->> groups: that what ServiceHandle is above, effectively
-> Note that MBIM doesn't really have a concept of a service that is =
+> complement to libc makes sense; there are aspects of libell that are =
 
-> 'opened'.=C2=A0 It is just a UUID, so having everything sit on the device =
+> _seriously_ awesome.=C2=A0 But l_strdup, endian macros, l_malloc, etc. ar=
+e =
 
-> object and using groups was more convenient.
+> just reinventing the wheel, as you put it yesterday.=C2=A0 As a programme=
+r, I =
 
-I don't know enough about MBIM... the UUID could just live in the =
+> know the semantics of strdup... but now I need to use l_strdup, the =
 
-"shared" object and the service reference like it I've described above, =
+> semantics of which I can't know without checking; this, unfortunately, =
 
-right?
->>
->> qmi_service_create -> qmi_service_open
->> qmi_service_unref -> qmi_service_close
->> ...and we drop qmi_service_ref altogether.
->
-> We're moving away from reference counting for the most part.=C2=A0 It is =
-a =
+> is a good way of scaring people away from your project.
 
-> glib-ness that we never adopted whole-heartedly and is generally =
+Yes, there is a bit of reinvention inside ell.  I would argue it is very =
 
-> pointless in the way oFono is setup.
+tiny actually, contained inside ell/util.h.  Mostly it is to make ell =
 
-Good to know.
+look similar enough to glib so that people feel comfortable using it and =
 
->
->>
->> Even better would probably be qmi_device_open(device, SERVICE_NAME) =
+to make code migration from glib to ell relatively painless and =
 
->> because the services (files) live on the device and that's the =
+straightforward.
 
->> 'object' we are requesting a service be opend on... but whatever.=C2=A0 =
+We are using glib across many large projects (BlueZ, oFono, ConnMan, =
 
->> The naming isn't important.
->
-> I'd just go in the direction of:
->
-> uint32_t qmi_device_service_get/open(device, service, callback)
-> and
-> qmi_service_free()
->
+neard, etc) and ell inside iwd.  The ones using glib will move to ell =
 
-OK.
+eventually.  So familiarity with how stuff works (and looks like) trumps =
 
+everything else.  E.g. it is much easier to just convert g_new to l_new =
 
+than calloc.  Or g_strdup to l_strdup.  And once you wrapped l_new and =
 
-> Note that the above should be cancellable, otherwise you can crash if =
+provided l_free, it just makes sense to add l_malloc.
 
-> the atom driver is removed prior to the callback being called. This is =
+Regards,
+-Denis
 
-> a major issue with the existing implementation actually.
->
-Yes, I saw this, too.
-
-There doesn't seem to be timeouts set on QMI requests either.=C2=A0 That =
-
-should be part of the core protocol handling.=C2=A0 The whole "struct =
-
-discovery" bit of the code seems to be a way of providing timeouts for =
-
-some initial interaction with the device... after that, things are =
-
-expected to just work.
-
->>
->> It doesn't say that anywhere above=C2=A0 Just because I=C2=A0 removed th=
-ose =
-
->> _unused_ functions in a patch doesn't mean they are impossible to =
-
->> provide.=C2=A0 If there was _one_ user of such a function then having th=
-em =
-
->> makes sense, but since they are totally unused they are just untested =
-
->> code.
->>
->
-> We should still have it, there are countless examples where this =
-
-> capability made things much easier to implement certain behavior. The =
-
-> QMI driver might not use this capability now, but you'll be glad you =
-
-> have it when you need it.
-
-Yes, agreed.=C2=A0 I=C2=A0 already added them back in my code... even thoug=
-h they =
-
-don't have users.
-
-/Jonas
->
-> Regards,
-> -Denis
-
-
---===============7833431612916917977==--
+--===============6591936402945213907==--
 
