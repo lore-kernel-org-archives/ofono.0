@@ -1,47 +1,128 @@
-Content-Type: multipart/mixed; boundary="===============5837706082471544461=="
+Content-Type: multipart/mixed; boundary="===============5348533902727483470=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH 00/12] QMI cleanups
-Date: Thu, 29 Mar 2018 15:57:49 +0200
-Message-ID: <20180329135801.5981-1-jonas@southpole.se>
+Subject: [PATCH 04/12] qmi: request_alloc has no meaningful failure path
+Date: Thu, 29 Mar 2018 15:57:53 +0200
+Message-ID: <20180329135801.5981-5-jonas@southpole.se>
+In-Reply-To: <20180329135801.5981-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5837706082471544461==
+--===============5348533902727483470==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Here is a submission of patches that are extracted from yesterday's RFC
-series.  These patches are hopefully reasonably uncontroversial
-as they constitute just cleanups.  That said, they should still be taken
-in the context of yesterday's series:  this series is the foundation for
-the share service changes I want to make.
+The only way request_alloc can fail is if one of the memory allocation
+routines fail to allocate memory.  However, Linux memory allocation
+doesn't really fail in this manner; memory can be overcommited and the
+out-of-memory reaper will take care of re-establishing the balance when
+excess memory is actually accessed.
 
-Jonas Bonn (12):
-  qmi: remove unused fields of service_send_data
-  qmi: remove headroom parameter from req_alloc
-  qmi: unify common request header setup
-  qmi: request_alloc has no meaningful failure path
-  qmi: push request_submit into request_alloc
-  qmi: rename request_alloc to request_submit
-  qmi: figure out request id without accessing header
-  qmi: return request TID for __request_submit
-  qmi: assume version_list is up to date
-  qmi: absorb service_create_discover into service_create
-  qmi: make version_list private
-  qmi: use standard endian macros
+Given this, request_alloc will never return anything other than success
+and the failure paths will never be exercised.
+---
+ drivers/qmimodem/qmi.c | 32 ++------------------------------
+ 1 file changed, 2 insertions(+), 30 deletions(-)
 
- drivers/qmimodem/qmi.c | 331 ++++++++++++++++++++++-----------------------=
-----
- drivers/qmimodem/qmi.h |  14 +--
- plugins/gobi.c         |  68 ++++------
- 3 files changed, 180 insertions(+), 233 deletions(-)
+diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
+index e39befc4..c2962811 100644
+--- a/drivers/qmimodem/qmi.c
++++ b/drivers/qmimodem/qmi.c
+@@ -171,9 +171,7 @@ static struct qmi_request *__request_alloc(struct qmi_d=
+evice* device,
+ 	struct qmi_message_hdr *msg;
+ 	uint16_t headroom;
+ =
 
+-	req =3D g_try_new0(struct qmi_request, 1);
+-	if (!req)
+-		return NULL;
++	req =3D g_new0(struct qmi_request, 1);
+ =
+
+ 	if (service =3D=3D QMI_SERVICE_CONTROL)
+ 		headroom =3D QMI_CONTROL_HDR_SIZE;
+@@ -182,11 +180,7 @@ static struct qmi_request *__request_alloc(struct qmi_=
+device* device,
+ =
+
+ 	req->len =3D QMI_MUX_HDR_SIZE + headroom + QMI_MESSAGE_HDR_SIZE + length;
+ =
+
+-	req->buf =3D g_try_malloc(req->len);
+-	if (!req->buf) {
+-		g_free(req);
+-		return NULL;
+-	}
++	req->buf =3D g_malloc(req->len);
+ =
+
+ 	req->client =3D client;
+ =
+
+@@ -1280,10 +1274,6 @@ bool qmi_device_discover(struct qmi_device *device, =
+qmi_discover_func_t func,
+ 	req =3D __request_alloc(device, QMI_SERVICE_CONTROL, 0x00,
+ 			QMI_CTL_GET_VERSION_INFO,
+ 			NULL, 0, discover_callback, data, (void **) &hdr);
+-	if (!req) {
+-		g_free(data);
+-		return false;
+-	}
+ =
+
+ 	data->tid =3D hdr->transaction;
+ =
+
+@@ -1307,10 +1297,6 @@ static void release_client(struct qmi_device *device,
+ 			QMI_CTL_RELEASE_CLIENT_ID,
+ 			release_req, sizeof(release_req),
+ 			func, user_data, (void **) &hdr);
+-	if (!req) {
+-		func(0x0000, 0x0000, NULL, user_data);
+-		return;
+-	}
+ =
+
+ 	__request_submit(device, req, hdr->transaction);
+ }
+@@ -2026,15 +2012,6 @@ static void service_create_discover(uint8_t count,
+ 			QMI_CTL_GET_CLIENT_ID,
+ 			client_req, sizeof(client_req),
+ 			service_create_callback, data, (void **) &hdr);
+-	if (!req) {
+-		if (data->timeout > 0)
+-			g_source_remove(data->timeout);
+-
+-		data->timeout =3D g_timeout_add_seconds(0,
+-						service_create_reply, data);
+-		__qmi_device_discovery_started(device, &data->super);
+-		return;
+-	}
+ =
+
+ 	__request_submit(device, req, hdr->transaction);
+ }
+@@ -2318,11 +2295,6 @@ uint16_t qmi_service_send(struct qmi_service *servic=
+e,
+ 				param ? param->length : 0,
+ 				service_send_callback, data, (void **) &hdr);
+ =
+
+-	if (!req) {
+-		g_free(data);
+-		return 0;
+-	}
+-
+ 	qmi_param_free(param);
+ =
+
+ 	__request_submit(device, req, hdr->transaction);
 -- =
 
 2.15.1
 
 
---===============5837706082471544461==--
+--===============5348533902727483470==--
 
