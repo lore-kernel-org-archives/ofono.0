@@ -1,66 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============6591936402945213907=="
+Content-Type: multipart/mixed; boundary="===============0600853071707942057=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 12/12] qmi: use standard endian macros
-Date: Thu, 29 Mar 2018 12:53:06 -0500
-Message-ID: <d825cd9f-02f2-761a-f64a-2b8495604b0f@gmail.com>
-In-Reply-To: <62bc7d95-5651-1f04-99f9-81b338b3549e@southpole.se>
+Subject: Re: [RFC PATCH 00/30] QMI rework
+Date: Thu, 29 Mar 2018 13:08:26 -0500
+Message-ID: <40721f1e-bc35-afe4-adc2-17bad2bfb11f@gmail.com>
+In-Reply-To: <481f4b9b-f771-4ab2-80b6-191b4c7c8097@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6591936402945213907==
+--===============0600853071707942057==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jonas,
 
-> But what I really don't get is is what the point is of ell providing =
+>>> This is effectively the same as what you proposed with a little twist =
 
-> functionality that's already provided in libc.=C2=A0 GLib did this for =
+>>> (improvement :) ):
+>>> i)=C2=A0 you wanted to add a list of groups to qmi_service so that grou=
+ps =
 
-> portability reasons, but ell targets Linux and that means glibc, uclibc, =
+>>> of notifations/requests could be cancelled independently of other =
 
-> and musl and they all provide these standard things.=C2=A0 libell as a =
+>>> groups: that what ServiceHandle is above, effectively
+>> Note that MBIM doesn't really have a concept of a service that is =
 
-> complement to libc makes sense; there are aspects of libell that are =
-
-> _seriously_ awesome.=C2=A0 But l_strdup, endian macros, l_malloc, etc. ar=
+>> 'opened'.=C2=A0 It is just a UUID, so having everything sit on the devic=
 e =
 
-> just reinventing the wheel, as you put it yesterday.=C2=A0 As a programme=
-r, I =
+>> object and using groups was more convenient.
+> =
 
-> know the semantics of strdup... but now I need to use l_strdup, the =
+> I don't know enough about MBIM... the UUID could just live in the =
 
-> semantics of which I can't know without checking; this, unfortunately, =
+> "shared" object and the service reference like it I've described above, =
 
-> is a good way of scaring people away from your project.
+> right?
 
-Yes, there is a bit of reinvention inside ell.  I would argue it is very =
+You could, but it didn't seem worthwhile.  Conceptually it looks quite =
 
-tiny actually, contained inside ell/util.h.  Mostly it is to make ell =
+similar to D-Bus where the service UUID is somewhat equivalent to =
 
-look similar enough to glib so that people feel comfortable using it and =
+interface name.  QMI is a bit more involved with client ids, major/minor =
 
-to make code migration from glib to ell relatively painless and =
-
-straightforward.
-
-We are using glib across many large projects (BlueZ, oFono, ConnMan, =
-
-neard, etc) and ell inside iwd.  The ones using glib will move to ell =
-
-eventually.  So familiarity with how stuff works (and looks like) trumps =
-
-everything else.  E.g. it is much easier to just convert g_new to l_new =
-
-than calloc.  Or g_strdup to l_strdup.  And once you wrapped l_new and =
-
-provided l_free, it just makes sense to add l_malloc.
+versions, etc.
 
 Regards,
 -Denis
 
---===============6591936402945213907==--
+--===============0600853071707942057==--
 
