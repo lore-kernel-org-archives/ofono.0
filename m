@@ -1,133 +1,128 @@
-Content-Type: multipart/mixed; boundary="===============4816162036735212191=="
+Content-Type: multipart/mixed; boundary="===============3997252830475718317=="
 MIME-Version: 1.0
 From: Jonas Bonn <jonas@southpole.se>
-Subject: [PATCH 6/6] qmi: make services always shared
-Date: Tue, 03 Apr 2018 16:50:56 +0200
-Message-ID: <20180403145056.25817-6-jonas@southpole.se>
+Subject: [PATCH 2/6] qmi: request_alloc has no meaningful failure path
+Date: Tue, 03 Apr 2018 16:50:52 +0200
+Message-ID: <20180403145056.25817-2-jonas@southpole.se>
 In-Reply-To: <20180403145056.25817-1-jonas@southpole.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4816162036735212191==
+--===============3997252830475718317==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+The only way request_alloc can fail is if one of the memory allocation
+routines fail to allocate memory.  However, Linux memory allocation
+doesn't really fail in this manner; memory can be overcommited and the
+out-of-memory reaper will take care of re-establishing the balance when
+excess memory is actually accessed.
+
+Given this, request_alloc will never return anything other than success
+and the failure paths will never be exercised.
 ---
- drivers/qmimodem/qmi.c | 32 ++++++++++----------------------
- 1 file changed, 10 insertions(+), 22 deletions(-)
+ drivers/qmimodem/qmi.c | 32 ++------------------------------
+ 1 file changed, 2 insertions(+), 30 deletions(-)
 
 diff --git a/drivers/qmimodem/qmi.c b/drivers/qmimodem/qmi.c
-index 0ef84b50..06a4cf4e 100644
+index 436f96a0..a980839b 100644
 --- a/drivers/qmimodem/qmi.c
 +++ b/drivers/qmimodem/qmi.c
-@@ -87,7 +87,6 @@ struct qmi_device {
- struct qmi_service {
- 	int ref_count;
- 	struct qmi_device *device;
--	bool shared;
- 	uint8_t type;
- 	uint16_t major;
- 	uint16_t minor;
-@@ -261,9 +260,6 @@ static gboolean __service_compare_shared(gpointer key, =
-gpointer value,
- 	struct qmi_service *service =3D value;
- 	uint8_t type =3D GPOINTER_TO_UINT(user_data);
+@@ -170,9 +170,7 @@ static struct qmi_request *__request_alloc(uint8_t serv=
+ice,
+ 	struct qmi_message_hdr *msg;
+ 	uint16_t headroom;
  =
 
--	if (!service->shared)
--		return FALSE;
--
- 	if (service->type =3D=3D type)
- 		return TRUE;
+-	req =3D g_try_new0(struct qmi_request, 1);
+-	if (!req)
+-		return NULL;
++	req =3D g_new0(struct qmi_request, 1);
  =
 
-@@ -1936,7 +1932,6 @@ bool qmi_result_get_uint64(struct qmi_result *result,=
- uint8_t type,
- struct service_create_data {
- 	struct discovery super;
- 	struct qmi_device *device;
--	bool shared;
- 	uint8_t type;
- 	uint16_t major;
- 	uint16_t minor;
-@@ -2007,7 +2002,6 @@ static void service_create_callback(uint16_t message,=
- uint16_t length,
- =
-
- 	service->ref_count =3D 1;
- 	service->device =3D data->device;
--	service->shared =3D data->shared;
- =
-
- 	service->type =3D data->type;
- 	service->major =3D data->major;
-@@ -2030,7 +2024,7 @@ done:
- 	__qmi_device_discovery_complete(data->device, &data->super);
- }
- =
-
--static bool service_create(struct qmi_device *device, bool shared,
-+static bool service_create(struct qmi_device *device,
- 				uint8_t type, qmi_create_func_t func,
- 				void *user_data, qmi_destroy_func_t destroy)
- {
-@@ -2048,7 +2042,6 @@ static bool service_create(struct qmi_device *device,=
- bool shared,
- =
-
- 	data->super.destroy =3D service_create_data_free;
- 	data->device =3D device;
--	data->shared =3D shared;
- 	data->type =3D type;
- 	data->func =3D func;
- 	data->user_data =3D user_data;
-@@ -2077,19 +2070,6 @@ static bool service_create(struct qmi_device *device=
-, bool shared,
- 	return true;
- }
- =
-
--bool qmi_service_create(struct qmi_device *device,
--				uint8_t type, qmi_create_func_t func,
--				void *user_data, qmi_destroy_func_t destroy)
--{
--	if (!device || !func)
--		return false;
--
--	if (type =3D=3D QMI_SERVICE_CONTROL)
--		return false;
--
--	return service_create(device, false, type, func, user_data, destroy);
--}
--
- struct service_create_shared_data {
- 	struct discovery super;
- 	struct qmi_service *service;
-@@ -2165,7 +2145,15 @@ bool qmi_service_create_shared(struct qmi_device *de=
+ 	if (service =3D=3D QMI_SERVICE_CONTROL)
+ 		headroom =3D QMI_CONTROL_HDR_SIZE;
+@@ -181,11 +179,7 @@ static struct qmi_request *__request_alloc(uint8_t ser=
 vice,
- 		return 0;
- 	}
  =
 
--	return service_create(device, true, type, func, user_data, destroy);
-+	return service_create(device, type, func, user_data, destroy);
-+}
-+
-+bool qmi_service_create(struct qmi_device *device,
-+				uint8_t type, qmi_create_func_t func,
-+				void *user_data, qmi_destroy_func_t destroy)
-+{
-+	return qmi_service_create_shared(device, type, func,
-+						user_data, destroy);
+ 	req->len =3D QMI_MUX_HDR_SIZE + headroom + QMI_MESSAGE_HDR_SIZE + length;
+ =
+
+-	req->buf =3D g_try_malloc(req->len);
+-	if (!req->buf) {
+-		g_free(req);
+-		return NULL;
+-	}
++	req->buf =3D g_malloc(req->len);
+ =
+
+ 	req->client =3D client;
+ =
+
+@@ -1282,10 +1276,6 @@ bool qmi_device_discover(struct qmi_device *device, =
+qmi_discover_func_t func,
+ 	req =3D __request_alloc(QMI_SERVICE_CONTROL, 0x00,
+ 			QMI_CTL_GET_VERSION_INFO,
+ 			NULL, 0, discover_callback, data, (void **) &hdr);
+-	if (!req) {
+-		g_free(data);
+-		return false;
+-	}
+ =
+
+ 	data->tid =3D hdr->transaction;
+ =
+
+@@ -1309,10 +1299,6 @@ static void release_client(struct qmi_device *device,
+ 			QMI_CTL_RELEASE_CLIENT_ID,
+ 			release_req, sizeof(release_req),
+ 			func, user_data, (void **) &hdr);
+-	if (!req) {
+-		func(0x0000, 0x0000, NULL, user_data);
+-		return;
+-	}
+ =
+
+ 	__request_submit(device, req);
  }
+@@ -2028,15 +2014,6 @@ static void service_create_discover(uint8_t count,
+ 			QMI_CTL_GET_CLIENT_ID,
+ 			client_req, sizeof(client_req),
+ 			service_create_callback, data, (void **) &hdr);
+-	if (!req) {
+-		if (data->timeout > 0)
+-			g_source_remove(data->timeout);
+-
+-		data->timeout =3D g_timeout_add_seconds(0,
+-						service_create_reply, data);
+-		__qmi_device_discovery_started(device, &data->super);
+-		return;
+-	}
  =
 
- static void service_release_callback(uint16_t message, uint16_t length,
+ 	__request_submit(device, req);
+ }
+@@ -2320,11 +2297,6 @@ uint16_t qmi_service_send(struct qmi_service *servic=
+e,
+ 				param ? param->length : 0,
+ 				service_send_callback, data, (void **) &hdr);
+ =
+
+-	if (!req) {
+-		g_free(data);
+-		return 0;
+-	}
+-
+ 	qmi_param_free(param);
+ =
+
+ 	__request_submit(device, req);
 -- =
 
 2.15.1
 
 
---===============4816162036735212191==--
+--===============3997252830475718317==--
 
