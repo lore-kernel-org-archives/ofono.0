@@ -1,62 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============6712323607281598696=="
+Content-Type: multipart/mixed; boundary="===============1537033030621296771=="
 MIME-Version: 1.0
-From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCH 2/2] qmi: report SIM not inserted when unable to get PIN type
-Date: Fri, 13 Apr 2018 15:58:36 +0200
-Message-ID: <1523627916-6684-2-git-send-email-c.ronco@kerlink.fr>
-In-Reply-To: <1523627916-6684-1-git-send-email-c.ronco@kerlink.fr>
+From: Joey Hewitt <joey@joeyhewitt.com>
+Subject: [PATCH 0/2] gobi: support SMD devices (smartphone SoC)
+Date: Sat, 14 Apr 2018 12:02:55 -0600
+Message-ID: <cover.1523728975.git.joey@joeyhewitt.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6712323607281598696==
+--===============1537033030621296771==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/qmimodem/sim.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+These add support for Qualcomm-based smartphone modems.
 
-diff --git a/drivers/qmimodem/sim.c b/drivers/qmimodem/sim.c
-index 6633c13..9aa943b 100644
---- a/drivers/qmimodem/sim.c
-+++ b/drivers/qmimodem/sim.c
-@@ -612,9 +612,10 @@ static void query_passwd_state_cb(struct qmi_result *r=
-esult,
- 	case GET_CARD_STATUS_RESULT_OK:
- 		DBG("passwd state %d", sim_stat.passwd_state);
- 		data->retry_count =3D 0;
--		if (sim_stat.passwd_state =3D=3D OFONO_SIM_PASSWORD_INVALID)
-+		if (sim_stat.passwd_state =3D=3D OFONO_SIM_PASSWORD_INVALID) {
- 			CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
--		else
-+			ofono_sim_inserted_notify(sim, FALSE);
-+		} else
- 			CALLBACK_WITH_SUCCESS(cb, sim_stat.passwd_state,
- 								cbd->data);
- 		break;
-@@ -626,6 +627,7 @@ static void query_passwd_state_cb(struct qmi_result *re=
-sult,
- 							sim_stat.card_state);
- 			data->retry_count =3D 0;
- 			CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-+			ofono_sim_inserted_notify(sim, FALSE);
- 		} else {
- 			DBG("Retry command");
- 			retry_cbd =3D cb_data_new(cb, cbd->data);
-@@ -639,6 +641,7 @@ static void query_passwd_state_cb(struct qmi_result *re=
-sult,
- 		DBG("Command failed");
- 		data->retry_count =3D 0;
- 		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-+		ofono_sim_inserted_notify(sim, FALSE);
- 		break;
- 	}
- }
+The first is fairly straightforward: searching for "rpmsg"-subsystem device=
+s and supporting them in gobi as a serial device. A friend has tested it on=
+ the mainline kernel, with the help of something like `rpmsgexport /dev/rpm=
+sg_ctrl0 DATA5_CNTL` (https://github.com/andersson/rpmsgexport) and then gi=
+ving the created rpmsg node OFONO_DRIVER=3Dgobi property.
+
+The second is uglier, and maybe controversial, since it's for Qualcomm's fo=
+rked kernel. The smdpkt device doesn't support polling for write, so oFono =
+would wait forever on the poll. This would probably be a 5-line fix in the =
+kernel, but there are thousands of kernel forks, so I thought it might be b=
+etter to workaround in oFono. I've tested it on Samsung S4 Mini LTE, runnin=
+g a kernel based on the MSM fork.
+
+Joey Hewitt (2):
+  gobi: support rpmsg device node (SMD channel)
+  gobi/qmi: support smdpkt device (MSM kernel forks)
+
+ drivers/qmimodem/qmi.c | 33 ++++++++++++++++++++++---
+ drivers/qmimodem/qmi.h |  6 ++++-
+ plugins/gobi.c         |  7 ++++--
+ plugins/udevng.c       | 66 +++++++++++++++++++++++++++++-----------------=
+----
+ 4 files changed, 77 insertions(+), 35 deletions(-)
+
 -- =
 
 2.7.4
 
 
---===============6712323607281598696==--
+--===============1537033030621296771==--
 
