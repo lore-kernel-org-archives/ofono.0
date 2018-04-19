@@ -1,51 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============1140711167639674299=="
+Content-Type: multipart/mixed; boundary="===============4312528570958030859=="
 MIME-Version: 1.0
-From: Mark van der Putten <mark.van.der.putten@intemo.com>
-Subject: A small patch for gemalto plugin
-Date: Thu, 19 Apr 2018 09:58:50 +0200
-Message-ID: <6a0fbd9d-ee1f-395c-af7c-529c2cb7b5d0@intemo.com>
+From: Christophe Ronco <c.ronco@kerlink.fr>
+Subject: [PATCH 1/1] SIM detection: Fixing the logical error in using the
+ number of slot and number of application
+Date: Thu, 19 Apr 2018 10:31:45 +0200
+Message-ID: <1524126706-16730-1-git-send-email-c.ronco@kerlink.fr>
+In-Reply-To: <d5d829e1-8d90-b396-9427-30b5980be834@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1140711167639674299==
+--===============4312528570958030859==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From df8af202e8382056be80ce24387bee104bf8f048 Mon Sep 17 00:00:00 2001
-From: Mark van der Putten <mark.van.der.putten@intemo.com>
-Date: Wed, 18 Apr 2018 17:19:01 +0200
-Subject: [PATCH] Signal sim initialized for gemalto plugin
+Hi,
 
-Modem type PLS8-E, firmware 03.017
----
-=C2=A0plugins/gemalto.c | 5 +++++
-=C2=A01 file changed, 5 insertions(+)
+I have a Japanese SIM card which is not detected because of this issue.
+So I would like to see this patch included.
 
-diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-index af02403..ec8174d 100644
---- a/plugins/gemalto.c
-+++ b/plugins/gemalto.c
-@@ -204,6 +204,11 @@ static void gemalto_ciev_notify(GAtResult *result,
-gpointer user_data)
-=C2=A0=C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=
-=C2=A0 =C2=A0=C2=A0=C2=A0 NULL);
-=C2=A0=C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0 break;
-=C2=A0
-+=C2=A0=C2=A0=C2=A0 /* USIM initialization completed. UE has finished readi=
-ng USIM data. */
-+=C2=A0=C2=A0=C2=A0 case 5:
-+=C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ofono_sim_in=
-itialized_notify(sim);
-+=C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0 break;
-+
-=C2=A0=C2=A0=C2=A0=C2=A0 default:
-=C2=A0=C2=A0=C2=A0=C2=A0 =C2=A0=C2=A0=C2=A0 break;
-=C2=A0=C2=A0=C2=A0=C2=A0 }
+Here is a version of the patch using git send-email.
+I don't know how to say that Eswaran Vinothkumar is the author.
+I hope you can fix that.
+
+Best Regards,
+
+Christophe
+
+Christophe Ronco (1):
+  qmi: use right slot and application during SIM detection
+
+ drivers/qmimodem/sim.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
 -- =
 
-2.1.4
+2.7.4
 
 
---===============1140711167639674299==--
+--===============4312528570958030859==--
 
