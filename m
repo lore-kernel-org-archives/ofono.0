@@ -1,36 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7539648087989239279=="
+Content-Type: multipart/mixed; boundary="===============2444929585580522949=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/1] qmi: use right slot and application during SIM
- detection
-Date: Thu, 19 Apr 2018 10:25:14 -0500
-Message-ID: <58dc7a1d-8929-59e6-3698-688b62589a82@gmail.com>
-In-Reply-To: <1524126706-16730-2-git-send-email-c.ronco@kerlink.fr>
+Subject: Re: A small patch for gemalto plugin
+Date: Thu, 19 Apr 2018 10:26:26 -0500
+Message-ID: <1de20f32-5e91-60fa-3554-4c68d2f2e0da@gmail.com>
+In-Reply-To: <6a0fbd9d-ee1f-395c-af7c-529c2cb7b5d0@intemo.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7539648087989239279==
+--===============2444929585580522949==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+Hi Mark,
 
-On 04/19/2018 03:31 AM, Christophe Ronco wrote:
-> Use right slot and application to get card status, PIN status and PIN
-> retries. Without this patch, SIMs where selected application and slot
-> numbers are different are not detected.
+On 04/19/2018 02:58 AM, Mark van der Putten wrote:
+>  From df8af202e8382056be80ce24387bee104bf8f048 Mon Sep 17 00:00:00 2001
+> From: Mark van der Putten <mark.van.der.putten@intemo.com>
+> Date: Wed, 18 Apr 2018 17:19:01 +0200
+> Subject: [PATCH] Signal sim initialized for gemalto plugin
+> =
+
+> Modem type PLS8-E, firmware 03.017
 > ---
->   drivers/qmimodem/sim.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
+>  =C2=A0plugins/gemalto.c | 5 +++++
+>  =C2=A01 file changed, 5 insertions(+)
 > =
 
 
-Applied, thanks.
+This patch doesn't apply.  Any chance you can use git send-email to =
+
+submit this properly?
 
 Regards,
 -Denis
 
-
---===============7539648087989239279==--
+--===============2444929585580522949==--
 
