@@ -1,61 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============8560967127121348387=="
+Content-Type: multipart/mixed; boundary="===============3461357236821482900=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
-Subject: [PATCH] ussd: Don't ignore data from TERMINATED response
-Date: Mon, 23 Apr 2018 18:33:08 +0300
-Message-ID: <1524497588-12079-1-git-send-email-slava.monich@jolla.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] Signal sim initialized for gemalto plugin
+Date: Mon, 23 Apr 2018 13:48:48 -0500
+Message-ID: <13da705e-ab59-74d0-5c0b-a4d8dcb4862f@gmail.com>
+In-Reply-To: <1524153266-24388-1-git-send-email-mark.van.der.putten@intemo.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8560967127121348387==
+--===============3461357236821482900==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Typically responses to USSD requests are coming with status
-zero (NOTIFY) but some are coming with status 2 (TERMINATED).
-If those contain data, the data should be presented to the user.
----
- src/ussd.c | 15 ++++++++++-----
- 1 file changed, 10 insertions(+), 5 deletions(-)
+Hi Mark,
 
-diff --git a/src/ussd.c b/src/ussd.c
-index 84f64c6..f5dd9d9 100644
---- a/src/ussd.c
-+++ b/src/ussd.c
-@@ -417,13 +417,18 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int s=
-tatus, int dcs,
- 	}
- =
+On 04/19/2018 10:54 AM, Mark van der Putten wrote:
+> Modem type PLS8-E, firmware 03.017
+> ---
+>   plugins/gemalto.c | 5 +++++
+>   1 file changed, 5 insertions(+)
 
- 	if (status =3D=3D OFONO_USSD_STATUS_TERMINATED) {
--		ussd_change_state(ussd, USSD_STATE_IDLE);
-+		if (ussd->state =3D=3D USSD_STATE_ACTIVE && data && data_len > 0) {
-+			/* Interpret that as a Notify */
-+			status =3D OFONO_USSD_STATUS_NOTIFY;
-+		} else {
-+			ussd_change_state(ussd, USSD_STATE_IDLE);
- =
+Applied, thanks.
 
--		if (ussd->pending =3D=3D NULL)
--			return;
-+			if (ussd->pending =3D=3D NULL)
-+				return;
- =
-
--		reply =3D __ofono_error_network_terminated(ussd->pending);
--		goto out;
-+			reply =3D __ofono_error_network_terminated(ussd->pending);
-+			goto out;
-+		}
- 	}
- =
-
- 	if (status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED) {
--- =
-
-1.9.1
+Regards,
+-Denis
 
 
---===============8560967127121348387==--
+--===============3461357236821482900==--
 
