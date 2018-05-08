@@ -1,32 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============5848294428219729081=="
+Content-Type: multipart/mixed; boundary="===============8832515315318900537=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] simutil: fix bug when parsing AID type
-Date: Thu, 03 May 2018 17:43:48 -0500
-Message-ID: <b6cfcef7-c36b-afdf-762d-560cc4b8bee4@gmail.com>
-In-Reply-To: <20180503223029.7531-1-james.prestwood@linux.intel.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: AT commands in U0001AT+FOOBAR form
+Date: Tue, 08 May 2018 23:44:07 +0200
+Message-ID: <20180508214407.GA5226@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5848294428219729081==
+--===============8832515315318900537==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi James,
+Hi!
 
-On 05/03/2018 05:30 PM, James Prestwood wrote:
-> ---
->   src/simutil.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
-> =
+I have a motorola droid 4 here; it uses gsm 07.10 multiplex. Over
+that, there are AT commands, but prefixed with serial numbers, in
+U0001AT+FOOBAR form. Corresponding reply then has U0001 prefix, too.
+Has anyone seen that before? Any hints for me trying to add the
+support?
 
+Best regards,
+                                                                        Pav=
+el
+									=
 
-Applied, thanks.
+-- =
 
-Regards,
--Denis
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
+--===============8832515315318900537==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
---===============5848294428219729081==--
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFscnlHaWNBQ2drUU1PZndhcFhiK3ZKN2F3Q2VJODMzZmN4S01yaVpUUjR5MHozWjc0Q2kK
+YklBQW9NVHlPaURUZjEzeDZwSGNRNmxiWlkrdTlMdFYKPU4veUgKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
+
+--===============8832515315318900537==--
 
