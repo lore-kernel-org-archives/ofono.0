@@ -1,60 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============9079387059077899287=="
+Content-Type: multipart/mixed; boundary="===============5083228590426032640=="
 MIME-Version: 1.0
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Incoming sms problem on Motorola Droid 4
-Date: Tue, 08 May 2018 23:51:02 +0200
-Message-ID: <20180508215102.GA5253@amd>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: AT commands in U0001AT+FOOBAR form
+Date: Tue, 08 May 2018 16:58:47 -0500
+Message-ID: <7c430d01-d7e3-8473-03c7-c1bf3eb236c5@gmail.com>
+In-Reply-To: <20180508214407.GA5226@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9079387059077899287==
+--===============5083228590426032640==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+Hi Pavel,
 
-I have problems with incoming SMS. ofono tries to use +CNMI=3D1,2,2,1,0
+On 05/08/2018 04:44 PM, Pavel Machek wrote:
+> Hi!
+> =
 
-> AT+CNMI=3D?
-< +CNMI: (0,1,2),(0,1,2,3),(0,2),(0,1,2),(0,1)
-< OK
-ofonod[3070]: drivers/atmodem/sms.c:build_cnmi_string()
-ofonod[3070]: drivers/atmodem/sms.c:construct_ack_pdu()
-> AT+CNMI=3D1,2,2,1,0
-< OK
-ofonod[3070]: src/network.c:__ofono_netreg_add_status_watch() 0x5bbbf0
+> I have a motorola droid 4 here; it uses gsm 07.10 multiplex. Over
+> that, there are AT commands, but prefixed with serial numbers, in
+> U0001AT+FOOBAR form. Corresponding reply then has U0001 prefix, too.
+> Has anyone seen that before? Any hints for me trying to add the
+> support?
+> =
 
-... unfortunately, with that configuration no messages are comming to
-ofono and the other phone sees them as "delievery failed".
 
-I had some luck with unicsy_demo using AT+CNMI=3D1,2 with text mode (not
-PDU) messages. That works well enough for me.
+I've never seen anything like it.  The 07.10 was explicitly designed so =
 
-Unfortunately, if I force ofono to pass "AT+CNMI=3D1,2", it does not
-work well, either.
+that the AT command processor didn't need to know or care whether it was =
 
-Any ideas how to debug this / what to try?
+connected directly to the serial port or to the multiplexer.  E.g. AT =
 
-Thanks,
+commands should not be modified in any way.
 
-								Pavel
--- =
+Are you use this is a 07.10 multiplexer and not something else?  What is =
 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
+the serial number exactly? Serial number of the multiplexer channel or ?
 
---===============9079387059077899287==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
+I would look into gatchat/gatmux.c and see if you can implement a new =
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
-QUFZRkFscnlHOFlBQ2drUU1PZndhcFhiK3ZKTUhRQ2ZjTEtwdXZNc1VlTCtsd2Q1OHRNRmppWkUK
-bXFJQW5SdWtQRFFNa0pUSFZ6L25VZ0lHTTFja002ZVgKPVFMbTkKLS0tLS1FTkQgUEdQIFNJR05B
-VFVSRS0tLS0tCg==
+GAtMuxDriver specifically for this hardware.
 
---===============9079387059077899287==--
+Regards,
+-Denis
+
+--===============5083228590426032640==--
 
