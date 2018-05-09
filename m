@@ -1,62 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============0709560136087080540=="
+Content-Type: multipart/mixed; boundary="===============7246644736868971419=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Incoming sms problem on Motorola Droid 4
-Date: Wed, 09 May 2018 06:31:33 +0200
-Message-ID: <01DCB5CE-E309-4864-A722-5E5D8723162E@holtmann.org>
-In-Reply-To: <bb8c59dd-db99-f86d-2ca1-ed746809327d@gmail.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: AT commands in U0001AT+FOOBAR form
+Date: Wed, 09 May 2018 08:09:40 +0200
+Message-ID: <20180509060940.GA7488@amd>
+In-Reply-To: <7c430d01-d7e3-8473-03c7-c1bf3eb236c5@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0709560136087080540==
+--===============7246644736868971419==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pavel,
+Hi!
 
->> I have problems with incoming SMS. ofono tries to use +CNMI=3D1,2,2,1,0
->>> AT+CNMI=3D?
->> < +CNMI: (0,1,2),(0,1,2,3),(0,2),(0,1,2),(0,1)
->> < OK
->> ofonod[3070]: drivers/atmodem/sms.c:build_cnmi_string()
->> ofonod[3070]: drivers/atmodem/sms.c:construct_ack_pdu()
->>> AT+CNMI=3D1,2,2,1,0
->> < OK
->> ofonod[3070]: src/network.c:__ofono_netreg_add_status_watch() 0x5bbbf0
->> ... unfortunately, with that configuration no messages are comming to
->> ofono and the other phone sees them as "delievery failed".
+> >I have a motorola droid 4 here; it uses gsm 07.10 multiplex. Over
+> >that, there are AT commands, but prefixed with serial numbers, in
+> >U0001AT+FOOBAR form. Corresponding reply then has U0001 prefix, too.
+> >Has anyone seen that before? Any hints for me trying to add the
+> >support?
+> >
 > =
 
-> So you're saying the modem firmware is lying about supporting all these m=
-odes :)
+> I've never seen anything like it.  The 07.10 was explicitly designed so t=
+hat
+> the AT command processor didn't need to know or care whether it was
+> connected directly to the serial port or to the multiplexer.  E.g. AT
+> commands should not be modified in any way.
 > =
 
->> I had some luck with unicsy_demo using AT+CNMI=3D1,2 with text mode (not
->> PDU) messages. That works well enough for me.
-> =
+> Are you use this is a 07.10 multiplexer and not something else?  What is =
+the
+> serial number exactly? Serial number of the multiplexer channel or ?
 
-> oFono doesn't support text mode=E2=80=A6
+Looks like 07.10 multiplexer...
 
-and it is impossible to support in a sane and complete manner.
+https://github.com/tmlind/droid4-ngsm/
 
->> Unfortunately, if I force ofono to pass "AT+CNMI=3D1,2", it does not
->> work well, either.
-> =
+Serial number seems to be "serial number of command" during normal
+operation.
 
-> You could try using value of '1' for the <mt> parameter and see if the mo=
-dem will route messages to memory first and send a +CMTI indication..
+We may be able to get kernel to strip the extra U1234 stuff.
 
-I remember vaguely that I dealt with a modem that had some issue with the i=
-ndications. Maybe we already have a quirk for that in one of the drivers. S=
-o look for SIMCOM or CINTERION vendor quirks. There are bunch of comments i=
-n drivers/atmodem/sms.c for this. You need to figure out on what level this=
- modem is broken.
+For now I'm using usb interface to the modem, which eats extra power
+but does not have this problem.
 
-Regards
+Best regards,
+									Pavel
+-- =
 
-Marcel
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
+--===============7246644736868971419==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
---===============0709560136087080540==--
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFscnlrS1FBQ2drUU1PZndhcFhiK3ZLM2NBQ2dpRFJvek8wOG9Yamc4azZWZ05TTmtsOFYK
+Nm9jQW4xYTByUXlkRnQrWU5WYmNGLytpdnQ1YnFCZGQKPURKQUwKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
+
+--===============7246644736868971419==--
 
