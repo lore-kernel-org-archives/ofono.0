@@ -1,75 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============5340798919975372156=="
+Content-Type: multipart/mixed; boundary="===============1370282064711959193=="
 MIME-Version: 1.0
-From: Pavel Machek <pavel@ucw.cz>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Incoming sms problem on Motorola Droid 4
-Date: Wed, 09 May 2018 10:48:38 +0200
-Message-ID: <20180509084838.GA14533@amd>
-In-Reply-To: <20180509010324.GA98604@atomide.com>
+Date: Wed, 09 May 2018 08:03:20 -0500
+Message-ID: <04c1e128-9094-cdc0-97f3-abd7cacea1d9@gmail.com>
+In-Reply-To: <20180509081820.GC10423@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5340798919975372156==
+--===============1370282064711959193==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+Hi Pavel,
 
-> > > AT+CNMI=3D1,2,2,1,0
-> > < OK
+<snip>
 
-> Well you can try to see what Android is doing for SMS with:
+> PDU Len 2, strlen 4
+> PDU last char 48
+> 0000^ZCNMA=3D1,2
+> <PR
+> 0000^ZCNMA=3D1,2
+> < +CMS ERROR: 304
+> ofonod[3057]: CNMA acknowledgement failed: Further SMS reception is
+> not guaranteed
+> < +CIEV: 1,4
 > =
 
-> # echo 0x7fffffff > /sys/module/ts27010mux/parameters/debug_level
-> # dmesg | grep ts27010 | grep AT
+> Modem does not like our CNMA acknowledgement. AFAICT, we are sending
 > =
 
-> To send SMS, looks like Android RIL first does:
+> AT+CNMA=3D1,2
+> 0000^Z
+
+That looks correct.  In fact that logic has been working for something =
+
+like 8-9 years, but it doesn't hurt to be paranoid and double check.
+
 > =
 
-> 2 AT+CMGS=3D327 where 327 seems to be the size of the whatever
-> encoded message. Then the next packet to dlci 2 contains the
-> encoded message that is of size 327.
+> If I attempt to do AT+CNMA=3D1, AT+CNMA=3D0 or just plain At=3DCNMA, it d=
+oes
+> not like that, either, but with +CMS ERROR: 500.
 
-Sending SMSes seems to work with ofono.
+CNMA=3D1 is required to work in PDU mode according to 27.005 btw.  How abou=
+t:
 
-> When receiving, mdm6600 sends these on dlci 1:
-> ~+WAKEUP
-> ~+WAKEUP
-> ~+WAKEUP
-> =
+window.open();
+window.throw(modem);
 
-> Then mdm6600 sends this on dlci 9:
-> ~+CMT=3D372
-> =
+Regards,
+-Denis
 
-> And that's probably the incoming SMS size. But I don't see
-> anything for what actually reads the incoming SMS.
-
-That seems to be standard message
-ftp://www.3gpp.org/tsg_t/TSG_T/TSGT_04/Docs/PDFs/TP-99129.pdf .
-
-Do you see AT+CNMI during boot and AT+CNMA after message is received?
-
-Thanks,
-									Pavel
--- =
-
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
-
---===============5340798919975372156==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
-
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
-QUFZRkFscnl0ZVlBQ2drUU1PZndhcFhiK3ZKeHhBQ2ZiM2ZqTXE4dnNPdWFtN3V2dlI1MFVkcC8K
-MjBVQW4zRmdmTENXV1NZeTlnV09xZ0dLcmJLZFIxQUwKPWdEbVEKLS0tLS1FTkQgUEdQIFNJR05B
-VFVSRS0tLS0tCg==
-
---===============5340798919975372156==--
+--===============1370282064711959193==--
 
