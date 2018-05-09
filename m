@@ -1,114 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============8146806000980490720=="
+Content-Type: multipart/mixed; boundary="===============4193959614898323742=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] simple fixes
-Date: Wed, 09 May 2018 09:39:51 -0500
-Message-ID: <1ec82cc3-a5d4-6b31-557c-78f0852cfd6b@gmail.com>
-In-Reply-To: <20180509143356.GA28193@amd>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: Incoming sms problem on Motorola Droid 4
+Date: Wed, 09 May 2018 17:11:04 +0200
+Message-ID: <20180509151103.GB28193@amd>
+In-Reply-To: <04c1e128-9094-cdc0-97f3-abd7cacea1d9@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8146806000980490720==
+--===============4193959614898323742==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pavel,
+Hi!
 
-On 05/09/2018 09:33 AM, Pavel Machek wrote:
-> Fix typo in location-reporting-api.txt.
+> >PDU Len 2, strlen 4
+> >PDU last char 48
+> >0000^ZCNMA=3D1,2
+> ><PR
+> >0000^ZCNMA=3D1,2
+> >< +CMS ERROR: 304
+> >ofonod[3057]: CNMA acknowledgement failed: Further SMS reception is
+> >not guaranteed
+> >< +CIEV: 1,4
+> >
+> >Modem does not like our CNMA acknowledgement. AFAICT, we are sending
+> >
+> >AT+CNMA=3D1,2
+> >0000^Z
 > =
 
-> AFAICT, at_cmt_notify() calls ofono_error even in case stuff is
-> okay. Fix that.
+> That looks correct.  In fact that logic has been working for something li=
+ke
+> 8-9 years, but it doesn't hurt to be paranoid and double check.
+
+Ah. Four zeros somehow looked too simple to me.
+
+> >If I attempt to do AT+CNMA=3D1, AT+CNMA=3D0 or just plain At=3DCNMA, it =
+does
+> >not like that, either, but with +CMS ERROR: 500.
 > =
 
-> Move debug print to more useful place in setup_gobi().
+> CNMA=3D1 is required to work in PDU mode according to 27.005 btw.  How ab=
+out:
 > =
 
-> Explain  "delivery report" parameter in send-sms.
+> window.open();
+> window.throw(modem);
 
-These mostly look fine, but can you do me a favor and read HACKING, =
+Heh :-). Well, there are two phones with reasonable Linux support:
+N900 and Droid 4. N900 can't do voice calls of reasonable
+quality. That leaves Droid 4... so I'd really like it to work.
 
-'Submitting patches' section and break up this patch accordingly?
+Afaict.. In PDU mode we need either +CNMA, which is broken, or CMTI,
+which reports '+CMTI: "ME",-1' which I assume is broken, too.
 
-> =
+Is there chance that '+CMTI: "ME",-1' can be understood as '+CMTI:
+"ME",1' ?
 
-> diff --git a/doc/location-reporting-api.txt b/doc/location-reporting-api.=
-txt
-> index 21e346d4..ff0a35dc 100644
-> --- a/doc/location-reporting-api.txt
-> +++ b/doc/location-reporting-api.txt
-> @@ -13,7 +13,7 @@ Methods		dict GetProperties()
->   		filedescriptor Request()
->   =
+Best regards,
 
->   			Asks to turn ON the NMEA stream and supplies the
-> -			gps device file descriptor. The external cliend should
-> +			gps device file descriptor. The external client should
->   			use the file descriptor to receive the NMEA data.
->   =
+									Pavel
+-- =
 
->   			Possible Errors: [service].Error.InProgress
-> diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
-> index 68b89862..217971e7 100644
-> --- a/drivers/atmodem/sms.c
-> +++ b/drivers/atmodem/sms.c
-> @@ -440,6 +436,8 @@ static void at_cmt_notify(GAtResult *result, gpointer=
- user_data)
->   	if (data->vendor !=3D OFONO_VENDOR_SIMCOM)
->   		at_ack_delivery(sms);
->   =
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
-> +	return;
-> +
->   err:
->   	ofono_error("Unable to parse CMT notification");
->   }
-> diff --git a/plugins/udevng.c b/plugins/udevng.c
-> index ff5d41af..a4b18488 100644
-> --- a/plugins/udevng.c
-> +++ b/plugins/udevng.c
-> @@ -233,10 +233,11 @@ static gboolean setup_gobi(struct modem_info *modem)
->   		}
->   	}
->   =
+--===============4193959614898323742==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
-> +	DBG("qmi=3D%s net=3D%s mdm=3D%s gps=3D%s diag=3D%s", qmi, net, mdm, gps=
-, diag);
-> +	=
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFVUVBUkVD
+QUFZRkFscnpENGNBQ2drUU1PZndhcFhiK3ZMakd3Q1lvZlBacXdoWW1MeHFaMmZ5c2Q3L1ZzcUEK
+VkFDZ21Mc2pnc2JEWkVpbTl3cU9STW5yaXdzcDJWZz0KPVdxMFMKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
 
->   	if (qmi =3D=3D NULL || mdm =3D=3D NULL || net =3D=3D NULL)
->   		return FALSE;
->   =
-
-> -	DBG("qmi=3D%s net=3D%s mdm=3D%s gps=3D%s diag=3D%s", qmi, net, mdm, gps=
-, diag);
->   =
-
->   	ofono_modem_set_string(modem->modem, "Device", qmi);
->   	ofono_modem_set_string(modem->modem, "Modem", mdm);
-> diff --git a/test/send-sms b/test/send-sms
-> index 98808aaf..cabe0652 100755
-> --- a/test/send-sms
-> +++ b/test/send-sms
-> @@ -6,6 +6,7 @@ import dbus
->   if len(sys.argv) < 4:
->   	print("Usage: %s [modem] <to> <message> <delivery report>" %\
->   					(sys.argv[0]))
-> +        print("  where delivery report is 0|1")
-
-Something is funny with indentation here.
-
->   	sys.exit(1)
->   =
-
->   bus =3D dbus.SystemBus()
-> =
-
-
-Regards,
--Denis
-
---===============8146806000980490720==--
+--===============4193959614898323742==--
 
