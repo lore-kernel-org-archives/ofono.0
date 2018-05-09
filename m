@@ -1,72 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============0814713867784419804=="
+Content-Type: multipart/mixed; boundary="===============0709560136087080540=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: Incoming sms problem on Motorola Droid 4
-Date: Tue, 08 May 2018 17:08:25 -0500
-Message-ID: <bb8c59dd-db99-f86d-2ca1-ed746809327d@gmail.com>
-In-Reply-To: <20180508215102.GA5253@amd>
+Date: Wed, 09 May 2018 06:31:33 +0200
+Message-ID: <01DCB5CE-E309-4864-A722-5E5D8723162E@holtmann.org>
+In-Reply-To: <bb8c59dd-db99-f86d-2ca1-ed746809327d@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0814713867784419804==
+--===============0709560136087080540==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pavel,
 
-On 05/08/2018 04:51 PM, Pavel Machek wrote:
-> Hi!
+>> I have problems with incoming SMS. ofono tries to use +CNMI=3D1,2,2,1,0
+>>> AT+CNMI=3D?
+>> < +CNMI: (0,1,2),(0,1,2,3),(0,2),(0,1,2),(0,1)
+>> < OK
+>> ofonod[3070]: drivers/atmodem/sms.c:build_cnmi_string()
+>> ofonod[3070]: drivers/atmodem/sms.c:construct_ack_pdu()
+>>> AT+CNMI=3D1,2,2,1,0
+>> < OK
+>> ofonod[3070]: src/network.c:__ofono_netreg_add_status_watch() 0x5bbbf0
+>> ... unfortunately, with that configuration no messages are comming to
+>> ofono and the other phone sees them as "delievery failed".
 > =
 
-> I have problems with incoming SMS. ofono tries to use +CNMI=3D1,2,2,1,0
+> So you're saying the modem firmware is lying about supporting all these m=
+odes :)
 > =
 
->> AT+CNMI=3D?
-> < +CNMI: (0,1,2),(0,1,2,3),(0,2),(0,1,2),(0,1)
-> < OK
-> ofonod[3070]: drivers/atmodem/sms.c:build_cnmi_string()
-> ofonod[3070]: drivers/atmodem/sms.c:construct_ack_pdu()
->> AT+CNMI=3D1,2,2,1,0
-> < OK
-> ofonod[3070]: src/network.c:__ofono_netreg_add_status_watch() 0x5bbbf0
+>> I had some luck with unicsy_demo using AT+CNMI=3D1,2 with text mode (not
+>> PDU) messages. That works well enough for me.
 > =
 
-> ... unfortunately, with that configuration no messages are comming to
-> ofono and the other phone sees them as "delievery failed".
+> oFono doesn't support text mode=E2=80=A6
 
-So you're saying the modem firmware is lying about supporting all these =
+and it is impossible to support in a sane and complete manner.
 
-modes :)
-
+>> Unfortunately, if I force ofono to pass "AT+CNMI=3D1,2", it does not
+>> work well, either.
 > =
 
-> I had some luck with unicsy_demo using AT+CNMI=3D1,2 with text mode (not
-> PDU) messages. That works well enough for me.
+> You could try using value of '1' for the <mt> parameter and see if the mo=
+dem will route messages to memory first and send a +CMTI indication..
 
-oFono doesn't support text mode...
+I remember vaguely that I dealt with a modem that had some issue with the i=
+ndications. Maybe we already have a quirk for that in one of the drivers. S=
+o look for SIMCOM or CINTERION vendor quirks. There are bunch of comments i=
+n drivers/atmodem/sms.c for this. You need to figure out on what level this=
+ modem is broken.
 
-> =
+Regards
 
-> Unfortunately, if I force ofono to pass "AT+CNMI=3D1,2", it does not
-> work well, either.
-
-You could try using value of '1' for the <mt> parameter and see if the =
-
-modem will route messages to memory first and send a +CMTI indication..
-
-> =
-
-> Any ideas how to debug this / what to try?
-> =
+Marcel
 
 
-I think you have to play with some combinations, not really sure what to =
-
-tell you. Refer to 3GPP 27.005 for details on the SMS related AT commands.
-
-Regards,
--Denis
-
---===============0814713867784419804==--
+--===============0709560136087080540==--
 
