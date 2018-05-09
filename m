@@ -1,96 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============8124794947676308499=="
+Content-Type: multipart/mixed; boundary="===============3277778613830549756=="
 MIME-Version: 1.0
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: Incoming sms problem on Motorola Droid 4
-Date: Wed, 09 May 2018 15:38:21 +0200
-Message-ID: <20180509133821.GA23230@amd>
-In-Reply-To: <20180509133506.GX77069@atomide.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: AT error handling
+Date: Wed, 09 May 2018 08:53:13 -0500
+Message-ID: <f753184a-f54a-3858-dc9a-dbf234fc2ff5@gmail.com>
+In-Reply-To: <AM5PR1001MB1171748B26B24E311D6AB16996990@AM5PR1001MB1171.EURPRD10.PROD.OUTLOOK.COM>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8124794947676308499==
+--===============3277778613830549756==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+Hi Mattias,
 
-> > > > > AT+CNMI=3D1,2,2,1,0
-> > > > < OK
-> > =
+On 05/09/2018 03:28 AM, Mattias M=C3=A5nsson wrote:
+> I have a problem with a modem and USB suspend where the OK from some AT =
 
-> > > Well you can try to see what Android is doing for SMS with:
-> > > =
+> commands are sometimes=C2=A0lost. This will be corrected by the vendor, b=
+ut =
 
-> > > # echo 0x7fffffff > /sys/module/ts27010mux/parameters/debug_level
-> > > # dmesg | grep ts27010 | grep AT
-> > > =
+> it got me wondering how Ofono handles problems like this. As I can see, =
 
-> > > To send SMS, looks like Android RIL first does:
-> > > =
+> there is no timeouts for AT commands that doesn't respond? Or have I =
 
-> > > 2 AT+CMGS=3D327 where 327 seems to be the size of the whatever
-> > > encoded message. Then the next packet to dlci 2 contains the
-> > > encoded message that is of size 327.
-> > =
+> missed something? It seemed to me that Ofono got stuck in the initial =
 
-> > Sending SMSes seems to work with ofono.
-> =
 
-> OK is this over ttyUSB or ngsm port?
+This question comes up periodically.  The answer is that GAtChat does =
 
-ttyUSB. ngsm port behaves too strangely for me.
+not have a built-in mechanism for AT command timeouts.  There are =
 
-> > > When receiving, mdm6600 sends these on dlci 1:
-> > > ~+WAKEUP
-> > > ~+WAKEUP
-> > > ~+WAKEUP
-> > > =
+several reasons for this:
 
-> > > Then mdm6600 sends this on dlci 9:
-> > > ~+CMT=3D372
-> > > =
+1. It is hard to pick a default timeout that will work in most cases. =
 
-> > > And that's probably the incoming SMS size. But I don't see
-> > > anything for what actually reads the incoming SMS.
-> =
+Some commands can take a large amount of time (e.g. COPS operator discovery)
+2. If a timeout does trigger, there's really no way to recover reliably. =
 
-> Hmm it occured to me that maybe the incoming messages are read
-> using QMI over USB.
-> =
+  While ITU v.250 does mention the possibility of command cancelation, =
 
-> > That seems to be standard message
-> > ftp://www.3gpp.org/tsg_t/TSG_T/TSGT_04/Docs/PDFs/TP-99129.pdf .
-> > =
+most firmware simply does not support this or only supports a subset of =
 
-> > Do you see AT+CNMI during boot and AT+CNMA after message is received?
-> =
+commands where this can work.  And even then the behavior can vary =
 
-> I'm only seeing AT+CNMA=3D0,0 on dlci 9 after resume. I think that is
-> used to query for new messages.
-> =
+wildly between implementations.
 
-> No CNMI in my logs it seems. But if QMI over USB is used to read
-> the messages that would explain it only checks for new SMS.
+> setup forever if this happens.=C2=A0In my experience you can't trust that=
+ a =
 
-Thanks for info. No real leads there :-(.
-									Pavel
--- =
 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
+Yep
 
---===============8124794947676308499==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
+> modem will always respond and in that case it might be good to have a =
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
-QUFZRkFscnkrYzBBQ2drUU1PZndhcFhiK3ZJQnlnQ2dydzl5YldPd2Q0L0h0MUR1dEVObjdmRVAK
-WE4wQW4xeUpLaEJLNWdjMXlxdDl6YzZsdTczRmsxOTIKPTh5OFMKLS0tLS1FTkQgUEdQIFNJR05B
-VFVSRS0tLS0tCg==
+> timeout and reset the modem or something like that.
 
---===============8124794947676308499==--
+There's nothing stopping you from implementing a heart-beat check or =
+
+similar logic inside the modem driver itself.  However, the logic of =
+
+'what to do' in case the heart beat stops is quite modem model/firmware =
+
+specific.  This has to be handled by each driver individually.
+
+There's also the possibility that modem firmware itself has a built-in =
+
+heart-beat / crash detector.  This is why ofono_modem_reset was =
+
+introduced and is/was used for modems that have been productized...
+
+Regards,
+-Denis
+
+--===============3277778613830549756==--
 
