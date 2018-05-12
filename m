@@ -1,54 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============6983266395983953096=="
+Content-Type: multipart/mixed; boundary="===============0336148746805822935=="
 MIME-Version: 1.0
-From: Joey Hewitt <joey@joeyhewitt.com>
+From: Harald Welte <laforge@gnumonks.org>
 Subject: Re: Voice calls over qmi was Re: Incoming sms problem on Motorola
  Droid 4
-Date: Fri, 11 May 2018 20:09:53 -0700
-Message-ID: <40c47311-04c7-20ab-7bf9-0228e2ce85fe@joeyhewitt.com>
-In-Reply-To: <5a49a4a1-4f9e-2538-e52f-83cce765a70e@gmail.com>
+Date: Sat, 12 May 2018 09:37:52 +0200
+Message-ID: <20180512073752.GD9313@nataraja>
+In-Reply-To: <5c13ea21-e159-6881-9a4a-8b4071c69289@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6983266395983953096==
+--===============0336148746805822935==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis and Pavel,
+Hi Denis, Pavel, Marcel,
 
- > It looks like the QMI voicecall driver is just a stub with no =
+On Fri, May 11, 2018 at 08:02:01PM -0500, Denis Kenzior wrote:
+> This reminds me... Weren't you the one who mentioned that you got voiceca=
+lls
+> working on QMI devices?  Does that include the circuit switched control
+> operations (e.g. dial, etc) as well?  Any chance that code might be
+> upstream-able?
 
-operations actually implemented.
+let me pull in Alexander "lynxis" Couzens into the loop, he has been doing =
+all
+QMI / ofono related developments for us in the Osmocom project.
 
-I hope I'm not stealing their thunder, but Alexander Couzens at sysmocom =
+My knowledge is that we're testing our network-side stack with voice calls
+related tests (via ofono/QMI) for quite some months, but lynxis would know
+all related details.
 
-seems to be working on implementing it [0]. Last fall, I had =
+As there are no modems that reliably can deliver the actual audio data via =
+USB
+(aside some non-supported outdated experimental firmwares), we're only test=
+ing
+the signaling plane so far.
 
-incoming/outgoing calls in oFono working on my MSM8930-based Android =
+We're building a custom board that contains four PCM bus slaves (at differe=
+nt clocks!)
+in order to pick up the audio/voice data, but this doesn't exist yet.
 
-phone with these patches. You will probably want to revert the =
+See http://laforge.gnumonks.org/blog/20170902-cellular_modems-voice/ for mo=
+re background
+on the user/voice plane.
 
-"NOT_FOR_MERGE" commit(s).
+-- =
 
-I have some rough (outdated?) patches on top of theirs, for DTMF[1], and =
+- Harald Welte <laforge@gnumonks.org>           http://laforge.gnumonks.o=
+rg/
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D
+"Privacy in residential applications is a desirable marketing option."
+                                                  (ETSI EN 300 175-7 Ch. A6)
 
-improving the implementation of release_specific()[2]. (I don't know =
-
-some of the technical details of GSM and QMI, but those changes made =
-
-declining incoming calls work the way I expected.)
-
--Joey
-
-[0] https://git.sysmocom.de/ofono/log/?h=3Dlynxis/master
-[1] =
-
-https://github.com/scintill/android_external_ofono/commit/306a3a6f19546b7b9=
-b6b8df973d75710ce21bc3c
-[2] =
-
-https://github.com/scintill/android_external_ofono/commit/979fce83a1985b8a4=
-3f1b8f49ed746710792375f
-
---===============6983266395983953096==--
+--===============0336148746805822935==--
 
