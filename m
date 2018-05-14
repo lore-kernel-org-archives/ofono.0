@@ -1,34 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8177688590924501695=="
+Content-Type: multipart/mixed; boundary="===============5093694589884154056=="
 MIME-Version: 1.0
 From: Bob Ham <bob.ham@puri.sm>
-Subject: [PATCH 0/2] Fix AT+COLP=1 stalling VoiceCall creation in SIMCom
- SIM7100E
-Date: Mon, 14 May 2018 14:42:27 +0100
-Message-ID: <20180514134229.14050-1-bob.ham@puri.sm>
+Subject: [PATCH 2/2] sim7100: Specify vendor ID while creating voicecall driver
+Date: Mon, 14 May 2018 14:42:29 +0100
+Message-ID: <20180514134229.14050-3-bob.ham@puri.sm>
+In-Reply-To: <20180514134229.14050-1-bob.ham@puri.sm>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8177688590924501695==
+--===============5093694589884154056==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Setting AT+COLP=3D1 on the SIMCom SIM7100E causes oFono to stall and not
-create a new VoiceCall object.  We fix that by adding the SIMCOM
-vendor ID to the list for whom we set AT+COLP=3D0 instead.
+This enables the atmodem voicecall driver to handle SIMCom quirks like
+not setting AT+COLP=3D1.
+---
+ plugins/sim7100.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Bob Ham (2):
-  atmodem: Don't set AT+COLP=3D1 on SIMCom modems
-  sim7100: Specify vendor ID while creating voicecall driver
+diff --git a/plugins/sim7100.c b/plugins/sim7100.c
+index dcd7c9ad..7c7e46d1 100644
+--- a/plugins/sim7100.c
++++ b/plugins/sim7100.c
+@@ -214,7 +214,7 @@ static void sim7100_pre_sim(struct ofono_modem *modem)
+ =
 
- drivers/atmodem/voicecall.c | 1 +
- plugins/sim7100.c           | 2 +-
- 2 files changed, 2 insertions(+), 1 deletion(-)
+ 	ofono_devinfo_create(modem, 0, "atmodem", data->at);
+ 	sim =3D ofono_sim_create(modem, 0, "atmodem", data->at);
+-	ofono_voicecall_create(modem, 0, "atmodem", data->at);
++	ofono_voicecall_create(modem, OFONO_VENDOR_SIMCOM, "atmodem", data->at);
+ =
 
+ 	if (sim)
+ 		ofono_sim_inserted_notify(sim, TRUE);
 -- =
 
 2.11.0
 
 
---===============8177688590924501695==--
+--===============5093694589884154056==--
 
