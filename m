@@ -1,47 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============7879208460054238050=="
+Content-Type: multipart/mixed; boundary="===============8177688590924501695=="
 MIME-Version: 1.0
 From: Bob Ham <bob.ham@puri.sm>
-Subject: [PATCH 1/2] atmodem: Don't set AT+COLP=1 on SIMCom modems
-Date: Mon, 14 May 2018 14:42:28 +0100
-Message-ID: <20180514134229.14050-2-bob.ham@puri.sm>
-In-Reply-To: <20180514134229.14050-1-bob.ham@puri.sm>
+Subject: [PATCH 0/2] Fix AT+COLP=1 stalling VoiceCall creation in SIMCom
+ SIM7100E
+Date: Mon, 14 May 2018 14:42:27 +0100
+Message-ID: <20180514134229.14050-1-bob.ham@puri.sm>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7879208460054238050==
+--===============8177688590924501695==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On the SIMCom SIM7100E, setting AT+COLP=3D1 causes there to be no
-response at all from "ATD...;" commands until the call is answered.
-The results in oFono stalling rather than creating a new VoiceCall
-object.
+Setting AT+COLP=3D1 on the SIMCom SIM7100E causes oFono to stall and not
+create a new VoiceCall object.  We fix that by adding the SIMCOM
+vendor ID to the list for whom we set AT+COLP=3D0 instead.
 
-We fix this by adding SIMCOM to the list of vendors for whom we set
-AT+COLP=3D0 rather than AT+COLP=3D1.
----
+Bob Ham (2):
+  atmodem: Don't set AT+COLP=3D1 on SIMCom modems
+  sim7100: Specify vendor ID while creating voicecall driver
+
  drivers/atmodem/voicecall.c | 1 +
- 1 file changed, 1 insertion(+)
+ plugins/sim7100.c           | 2 +-
+ 2 files changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/atmodem/voicecall.c b/drivers/atmodem/voicecall.c
-index e4c59c26..aa56f1ee 100644
---- a/drivers/atmodem/voicecall.c
-+++ b/drivers/atmodem/voicecall.c
-@@ -1120,6 +1120,7 @@ static int at_voicecall_probe(struct ofono_voicecall =
-*vc, unsigned int vendor,
- =
-
- 	switch (vd->vendor) {
- 	case OFONO_VENDOR_QUALCOMM_MSM:
-+	case OFONO_VENDOR_SIMCOM:
- 		g_at_chat_send(vd->chat, "AT+COLP=3D0", NULL, NULL, NULL, NULL);
- 		break;
- 	default:
 -- =
 
 2.11.0
 
 
---===============7879208460054238050==--
+--===============8177688590924501695==--
 
