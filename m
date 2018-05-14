@@ -1,43 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============5093694589884154056=="
+Content-Type: multipart/mixed; boundary="===============6841716590221866514=="
 MIME-Version: 1.0
-From: Bob Ham <bob.ham@puri.sm>
-Subject: [PATCH 2/2] sim7100: Specify vendor ID while creating voicecall driver
-Date: Mon, 14 May 2018 14:42:29 +0100
-Message-ID: <20180514134229.14050-3-bob.ham@puri.sm>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 0/2] Fix AT+COLP=1 stalling VoiceCall creation in SIMCom
+ SIM7100E
+Date: Mon, 14 May 2018 11:11:45 -0500
+Message-ID: <7955bce6-48d3-89f3-20a7-e5cb1ffca6aa@gmail.com>
 In-Reply-To: <20180514134229.14050-1-bob.ham@puri.sm>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5093694589884154056==
+--===============6841716590221866514==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This enables the atmodem voicecall driver to handle SIMCom quirks like
-not setting AT+COLP=3D1.
----
- plugins/sim7100.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Bob,
 
-diff --git a/plugins/sim7100.c b/plugins/sim7100.c
-index dcd7c9ad..7c7e46d1 100644
---- a/plugins/sim7100.c
-+++ b/plugins/sim7100.c
-@@ -214,7 +214,7 @@ static void sim7100_pre_sim(struct ofono_modem *modem)
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", data->at);
- 	sim =3D ofono_sim_create(modem, 0, "atmodem", data->at);
--	ofono_voicecall_create(modem, 0, "atmodem", data->at);
-+	ofono_voicecall_create(modem, OFONO_VENDOR_SIMCOM, "atmodem", data->at);
- =
-
- 	if (sim)
- 		ofono_sim_inserted_notify(sim, TRUE);
--- =
-
-2.11.0
+On 05/14/2018 08:42 AM, Bob Ham wrote:
+> Setting AT+COLP=3D1 on the SIMCom SIM7100E causes oFono to stall and not
+> create a new VoiceCall object.  We fix that by adding the SIMCOM
+> vendor ID to the list for whom we set AT+COLP=3D0 instead.
+> =
 
 
---===============5093694589884154056==--
+Both applied, thanks.
+
+Regards
+-Denis
+
+
+--===============6841716590221866514==--
 
