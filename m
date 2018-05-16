@@ -1,61 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============1414538196905161165=="
+Content-Type: multipart/mixed; boundary="===============3662949100232540890=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Bob Ham <bob.ham@puri.sm>
 Subject: Re: Voice calls over qmi was Re: Incoming sms problem on Motorola
  Droid 4
-Date: Mon, 14 May 2018 11:19:40 -0500
-Message-ID: <a1e2e766-7b68-8bc7-493e-bf8fec5f24d0@gmail.com>
-In-Reply-To: <20180512161842.7a68dc38@lazus.yip>
+Date: Wed, 16 May 2018 16:10:55 +0100
+Message-ID: <717eeff6-6c39-5475-c3ab-7588cf7e2def@puri.sm>
+In-Reply-To: <20180512073752.GD9313@nataraja>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1414538196905161165==
+--===============3662949100232540890==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alexander, Joey,
+On 12/05/18 08:37, Harald Welte wrote:
 
-On 05/12/2018 09:19 AM, Alexander Couzens wrote:
-> Hi Joey,
-> =
+> As there are no modems that reliably can deliver the actual audio data vi=
+a USB
+> (aside some non-supported outdated experimental firmwares), we're only te=
+sting
+> the signaling plane so far.
 
-> nice to hear, somebody else is using it.
-> =
+Hi Harald,
 
-> The voicecall driver needs to be refactored as Denis already pointed
-> out on the mailinglist before it can go upstream.
+I'm alarmed to see this statement.  Can I ask what you mean here when =
 
-If it wasn't clear from my earlier mail, I would like to see these =
+you say "no modems"? :-)  Do you mean on the market in general?
 
-patches upstreamed.  Do you guys have plans to do so?  I'm happy to =
+I've been using the SIMCom SIM7100E which is specified as supporting =
 
-review/help these along...
+audio data over a USB serial connection.  Unfortunately I've had a lot =
 
-> =
+of trouble getting it to work but I've been collaborating with Stanislav =
 
-> The original idea of the voice_generated.c/h files was to create a
-> prototype how qmi generated files should look like and then write a
-> code generator for it, as the other qmi related projects already do.
+Sinyagin (CC'd) who has a SIM7100E with an earlier firmware and who can =
 
-As you can tell we're not really sold on the whole code generation thing =
+reliably get audio by dd'ing /dev/ttyUSBX.  I'm waiting on our supplier =
 
-here :)  Can we simply stuff all structure definitions into voice.h and =
+to get the same firmware version.
 
-the parsers into qmiutils.[ch].
+There are earlier SIMCom modems with application notes describing how to =
 
-In the past we have parsed fairly complex TLV based objects using a =
-
-common parsing function that took care of the various funny rules and =
-
-corner cases.  Adding support for additional objects was then quite =
-
-trivial.  See src/stkutil.[ch], start at 'parse_dataobj()'.  Perhaps =
-
-this approach might be one for you to consider.
+get audio over USB too, for example the SIM5360.
 
 Regards,
--Denis
 
---===============1414538196905161165==--
+Bob
+
+--===============3662949100232540890==--
 
