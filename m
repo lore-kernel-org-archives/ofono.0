@@ -1,68 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============2820845327244099033=="
+Content-Type: multipart/mixed; boundary="===============8023175449352778896=="
 MIME-Version: 1.0
 From: Harald Welte <laforge@gnumonks.org>
 Subject: Re: Voice calls over qmi was Re: Incoming sms problem on Motorola
  Droid 4
-Date: Wed, 16 May 2018 18:03:33 +0200
-Message-ID: <20180516160333.GZ4369@nataraja>
-In-Reply-To: <CACOYK=g9XepWVFAr8Afb6VpOxN7UOGN71aFyogOq=8+BjAsYFA@mail.gmail.com>
+Date: Wed, 16 May 2018 18:12:27 +0200
+Message-ID: <20180516161227.GA4369@nataraja>
+In-Reply-To: <717eeff6-6c39-5475-c3ab-7588cf7e2def@puri.sm>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2820845327244099033==
+--===============8023175449352778896==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Stanislav,
+Hi Bob,
 
-On Wed, May 16, 2018 at 05:15:07PM +0200, Stanislav Sinyagin wrote:
-> also most mPCIE modems deliver PCI voice over dedicated wires on their
-> mPCIE socket. These wires are standardized as "reserved" and most
-> standard boards with mPCIE don't connect them anywhere.
+On Wed, May 16, 2018 at 04:10:55PM +0100, Bob Ham wrote:
+> On 12/05/18 08:37, Harald Welte wrote:
+> =
 
-This is the "PCM" interface I was referring-to.  This means you need
-a PCM slave interface to interface with it, as the modems typically all
-insist on being a PCM master.  The intention here is that you attach
-some external audio codec IC that converts from the PCM to analog audio.
+> > As there are no modems that reliably can deliver the actual audio data =
+via USB
+> > (aside some non-supported outdated experimental firmwares), we're only =
+testing
+> > the signaling plane so far.
+> =
 
-This means you cannot interface this PCM interface e.g. with standard
-USB-Audio bridge ICs, as all those USB-Audi bridge ICs (basically "USB
-soundcard" ICs) all also only implement the "master" of the PCM
-interface and not the slave.
+> I'm alarmed to see this statement.  Can I ask what you mean here when you
+> say "no modems"? :-)  Do you mean on the market in general?
 
-See http://laforge.gnumonks.org/blog/20170902-cellular_modems-voice/
+I mean on the market in general, yes.  Sure you can find the odd outlier he=
+re or
+there, but overall, I would estimate 90% or more modems do not support audi=
+o in the
+first place, and 98% do not support it over USB.
 
-In the end, you have to use something like the SSC (synchronous serial)
-peripheal of Atmel SAM3/SAM4/... devices, or an XMOS device in order to
-interface with that audio.
+The only "proper" approach I've ever seen was by Sierra Wireless, whose Qua=
+lcomm
+based 3G modems for some time had an experimental firmware branch you could=
+ ask for,
+which would then offer a composite USB device that had an USB audio class d=
+evice
+next to the usual other (cdc-ethernet, AT-command, QMI, MBIM, ...) interfac=
+es.
 
-Needless to say, the lack of a standard for where PCM lines are on mPCIe
-slots means that you cannot build any base board that will interoperate
-with mPCIe modules from different vendors.
+However, that is discontinued and not supported for years, and there is no =
+replacement.
+FAEs are still handing it out on request, though.
 
-> But if you develop your own PCB, you can actually retrieve the voice
-> signal. It just needs a bit of hacking.
+> I've been using the SIMCom SIM7100E which is specified as supporting audio
+> data over a USB serial connection.  Unfortunately I've had a lot of troub=
+le
+> getting it to work but I've been collaborating with Stanislav Sinyagin
+> (CC'd) who has a SIM7100E with an earlier firmware and who can reliably g=
+et
+> audio by dd'ing /dev/ttyUSBX.  I'm waiting on our supplier to get the same
+> firmware version.
 
-The fact that a PCM bus is present on the hardware pins of the mPCIe socket
-or the pads of a LGA module also still doesn't mean that you actually will
-have working audio.
+Which exactly reflects my statement:  It's very hard to get reliable,
+working audio with commitment from a vendor.  Sure, you may find it more
+or less accidentially working for some products in some firmware
+version, but I yet have to find any vendor who would actually say "this
+is a supported feature, we test it before every release, and we will
+maintain it for every future firmware update".
 
-Many modem module maker do not obtain patent licenses for audio/voice, as
-they know/expect their modems are typically only used in machine2machine
-or other data-only applications.
+> There are earlier SIMCom modems with application notes describing how to =
+get
+> audio over USB too, for example the SIM5360.
 
-Finally, even if the firmware and hardware interface is present, in many
-cases the modem manufacturers make you sign a declaration that you will
-only use the voice interface as some kind of "emergency communication"
-only, and not as part of your normal product.  Once again, patent
-licensing differences for voice vs. data-only use cases are to be blamed
-for that.
+Yes, there have always been some (few) modules that offered audio codec
+frames over (usb) serial.  You could find some Gemalto 3G modules that
+also did this.  I find this a horrible hack, and at least on those
+modules wehre I remember it always had some kind of side-effect, like
+you had to give up the [virtual] UART that was normally used for GPS and
+re-purpose that for the codec frames over serial.
 
-Oh, and I'm not even touching the question on whether audio will work in
-circuit-switched 2G/3G only, or whether it will also work with VoLTE,
-and particularly not whether they will do SRVCC, etc.  That adds yet
-another dimension to the problem.
+With most of those modern 4G modems running Linux inside the modem, I
+really cannot understand why none of them goes the extra mile and
+enables a USB audio gadget so it simply shows up as usb-audio device on
+the host.  I mean, USB audio profile is 1990ies... and we have 2018.
+
+While doing reverse engineering on some Qualcomm LE based modems before,
+I saw that the Qualcomm reference source code even appeared to include
+usb-audio composite device capabilities.
 
 Regards,
 	Harald
@@ -77,5 +98,5 @@ rg/
 "Privacy in residential applications is a desirable marketing option."
                                                   (ETSI EN 300 175-7 Ch. A6)
 
---===============2820845327244099033==--
+--===============8023175449352778896==--
 
