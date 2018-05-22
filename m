@@ -1,54 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============8061845843237488313=="
+Content-Type: multipart/mixed; boundary="===============2710030665966298094=="
 MIME-Version: 1.0
-From: Florent Beillonnet <florent.beillonnet@gmail.com>
-Subject: [PATCH 2/2] Rework at_pin_send_puk It seems that the function
- at_pin_send_puk should have been changed along with at_pin_send,
- because it's also refering to the at_pin_send_cb callback See this commit :
- ba9f126716db3ae0bf6a3139088d9657cfb8b851
-Date: Tue, 22 May 2018 13:08:31 +0000
-Message-ID: <1526994511-302-3-git-send-email-florent.beillonnet@ext.actia.fr>
-In-Reply-To: <1526994511-302-1-git-send-email-florent.beillonnet@ext.actia.fr>
+From: James Prestwood <james.prestwood@linux.intel.com>
+Subject: [PATCH] plugins: fixed crash in udevng
+Date: Tue, 22 May 2018 13:35:49 -0700
+Message-ID: <20180522203549.6755-1-james.prestwood@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8061845843237488313==
+--===============2710030665966298094==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+The return value from ofono_modem_register was not being checked. If this f=
+ails
+the modem object is not setup and causes a crash. This was specifically seen
+when using the mbim driver without having configured with mbim support.
+
+Now the modem object gets destroyed properly if the modem registration fail=
+s.
 ---
- drivers/atmodem/sim.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ plugins/udevng.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index ab75b32..10dc800 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -1359,12 +1359,12 @@ static void at_pin_send_puk(struct ofono_sim *sim, =
-const char *puk,
- 	char buf[64];
- 	int ret;
- =
-
--	cbd->user =3D sd;
-+	cbd->user =3D sim;
- =
-
- 	snprintf(buf, sizeof(buf), "AT+CPIN=3D\"%s\",\"%s\"", puk, passwd);
- =
-
- 	ret =3D g_at_chat_send(sd->chat, buf, none_prefix,
--				at_pin_send_cb, cbd, NULL);
-+				at_pin_send_cb, cbd, g_free);
- =
-
- 	memset(buf, 0, sizeof(buf));
- =
-
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index cd56fd56..f4bf61cf 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1802,7 +1802,11 @@ static gboolean create_modem(gpointer key, gpointer =
+value, gpointer user_data)
+ 		if (driver_list[i].setup(modem) =3D=3D TRUE) {
+ 			ofono_modem_set_string(modem->modem, "SystemPath",
+ 								syspath);
+-			ofono_modem_register(modem->modem);
++			if (ofono_modem_register(modem->modem) < 0) {
++				DBG("could not register modem '%s'", modem->driver);
++				return TRUE;
++			}
++
+ 			return FALSE;
+ 		}
+ 	}
 -- =
 
-1.9.1
+2.17.0
 
 
---===============8061845843237488313==--
+--===============2710030665966298094==--
 
