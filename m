@@ -1,54 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============8429207058763372936=="
+Content-Type: multipart/mixed; boundary="===============8061845843237488313=="
 MIME-Version: 1.0
 From: Florent Beillonnet <florent.beillonnet@gmail.com>
-Subject: [PATCH 1/2] Adding the ofono_sim_initialized_notify function after
- ofono_sim_inserted_notify,
- as suggested by Denis Kenzior in this commit :
- 54d56d763e40bc44c99a9b24aa0477bd373ea085
-Date: Tue, 22 May 2018 13:08:30 +0000
-Message-ID: <1526994511-302-2-git-send-email-florent.beillonnet@ext.actia.fr>
+Subject: [PATCH 2/2] Rework at_pin_send_puk It seems that the function
+ at_pin_send_puk should have been changed along with at_pin_send,
+ because it's also refering to the at_pin_send_cb callback See this commit :
+ ba9f126716db3ae0bf6a3139088d9657cfb8b851
+Date: Tue, 22 May 2018 13:08:31 +0000
+Message-ID: <1526994511-302-3-git-send-email-florent.beillonnet@ext.actia.fr>
 In-Reply-To: <1526994511-302-1-git-send-email-florent.beillonnet@ext.actia.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8429207058763372936==
+--===============8061845843237488313==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/gemalto.c | 2 ++
- 1 file changed, 2 insertions(+)
+ drivers/atmodem/sim.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/gemalto.c b/plugins/gemalto.c
-index ec8174d..29e3b09 100644
---- a/plugins/gemalto.c
-+++ b/plugins/gemalto.c
-@@ -160,6 +160,7 @@ static void sim_ready_cb(gboolean present, gpointer use=
-r_data)
- 	DBG("sim present: %d", present);
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index ab75b32..10dc800 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -1359,12 +1359,12 @@ static void at_pin_send_puk(struct ofono_sim *sim, =
+const char *puk,
+ 	char buf[64];
+ 	int ret;
  =
 
- 	ofono_sim_inserted_notify(sim, present);
-+	ofono_sim_initialized_notify(sim);
- }
+-	cbd->user =3D sd;
++	cbd->user =3D sim;
  =
 
- static void gemalto_ciev_notify(GAtResult *result, gpointer user_data)
-@@ -576,6 +577,7 @@ static void gemalto_pre_sim(struct ofono_modem *modem)
+ 	snprintf(buf, sizeof(buf), "AT+CPIN=3D\"%s\",\"%s\"", puk, passwd);
  =
 
- 	if (data->sim && data->have_sim =3D=3D TRUE)
- 		ofono_sim_inserted_notify(data->sim, TRUE);
-+		ofono_sim_initialized_notify(data->sim);
- }
+ 	ret =3D g_at_chat_send(sd->chat, buf, none_prefix,
+-				at_pin_send_cb, cbd, NULL);
++				at_pin_send_cb, cbd, g_free);
  =
 
- static void gemalto_post_sim(struct ofono_modem *modem)
+ 	memset(buf, 0, sizeof(buf));
+ =
+
 -- =
 
 1.9.1
 
 
---===============8429207058763372936==--
+--===============8061845843237488313==--
 
