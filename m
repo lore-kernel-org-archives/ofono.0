@@ -1,33 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============1349285954294263399=="
+Content-Type: multipart/mixed; boundary="===============8008579352872946174=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] udevng: remove vendor ID to make it generic for intel
- modem
-Date: Wed, 23 May 2018 08:56:47 -0500
-Message-ID: <243827a6-7c69-42db-d02d-bfe3d6fdfcae@gmail.com>
-In-Reply-To: <1527053340-1803-1-git-send-email-varun.gargi@intel.com>
+Subject: Re: [PATCH 2/2] Rework at_pin_send_puk It seems that the function
+ at_pin_send_puk should have been changed along with at_pin_send,
+ because it's also refering to the at_pin_send_cb callback See this commit :
+ ba9f126716db3ae0bf6a3139088d9657cfb8b851
+Date: Wed, 23 May 2018 09:05:51 -0500
+Message-ID: <28318a89-b90c-59ba-35d2-75dba83eb10a@gmail.com>
+In-Reply-To: <1526994511-302-3-git-send-email-florent.beillonnet@ext.actia.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1349285954294263399==
+--===============8008579352872946174==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Varun,
+Hi Florent,
 
-On 05/23/2018 12:29 AM, Varun Gargi wrote:
+On 05/22/2018 08:08 AM, Florent Beillonnet wrote:
 > ---
->   plugins/udevng.c | 4 ++--
+>   drivers/atmodem/sim.c | 4 ++--
 >   1 file changed, 2 insertions(+), 2 deletions(-)
 > =
 
 
-Applied, thanks.
+I went ahead and applied this after fixing up the commit header & =
+
+description.  Please see doc/coding-style.txt, item M5 in particular.
+
+Thanks!
 
 Regards,
 -Denis
 
-
---===============1349285954294263399==--
+--===============8008579352872946174==--
 
