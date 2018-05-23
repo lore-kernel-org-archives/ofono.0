@@ -1,41 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============8005083879718589186=="
+Content-Type: multipart/mixed; boundary="===============2582306789635663775=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] plugins: fixed crash in udevng
-Date: Tue, 22 May 2018 15:39:59 -0500
-Message-ID: <6a0f508e-c4d2-997a-712c-87e0ab3bcf56@gmail.com>
-In-Reply-To: <20180522203549.6755-1-james.prestwood@linux.intel.com>
+From: Varun Gargi <varun.gargi@intel.com>
+Subject: [PATCH] udevng: remove vendor ID to make it generic for intel modem
+Date: Wed, 23 May 2018 10:59:00 +0530
+Message-ID: <1527053340-1803-1-git-send-email-varun.gargi@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8005083879718589186==
+--===============2582306789635663775==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi James,
+---
+ plugins/udevng.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-On 05/22/2018 03:35 PM, James Prestwood wrote:
-> The return value from ofono_modem_register was not being checked. If this=
- fails
-> the modem object is not setup and causes a crash. This was specifically s=
-een
-> when using the mbim driver without having configured with mbim support.
-> =
+diff --git a/plugins/udevng.c b/plugins/udevng.c
+index cd56fd5..3bd6ffa 100644
+--- a/plugins/udevng.c
++++ b/plugins/udevng.c
+@@ -1671,8 +1671,8 @@ static struct {
+ 	{ "gemalto",	"cdc_ether",	"1e2d",	"0061"	},
+ 	{ "telit",	"cdc_ncm",	"1bc7", "0036"	},
+ 	{ "telit",	"cdc_acm",	"1bc7", "0036"	},
+-	{ "xmm7xxx",	"cdc_acm",	"8087", "0930"	},
+-	{ "xmm7xxx",	"cdc_ncm",	"8087", "0930"	},
++	{ "xmm7xxx",	"cdc_acm",	"8087"		},
++	{ "xmm7xxx",	"cdc_ncm",	"8087"		},
+ 	{ }
+ };
+ =
 
-> Now the modem object gets destroyed properly if the modem registration fa=
-ils.
-> ---
->   plugins/udevng.c | 6 +++++-
->   1 file changed, 5 insertions(+), 1 deletion(-)
-> =
+-- =
+
+1.9.1
 
 
-Applied, thanks.
-
-Regards,
--Denis
-
-
---===============8005083879718589186==--
+--===============2582306789635663775==--
 
