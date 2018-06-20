@@ -1,69 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============5993931474923596309=="
+Content-Type: multipart/mixed; boundary="===============3339052626993597177=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [BUG] plugins: sim900 support broken for tty port users
-Date: Tue, 19 Jun 2018 11:49:42 -0500
-Message-ID: <3ec50e05-a761-792a-46b3-22d55efe2275@gmail.com>
-In-Reply-To: <525021f65bf87fdac3e954d0cae5e71b@lemonage.de>
+From: Mattias =?unknown-8bit?q?M=C3=A5nsson?= <mattias.mansson@verisure.com>
+Subject: Handling empty row from AT command
+Date: Wed, 20 Jun 2018 07:34:29 +0000
+Message-ID: <AM5PR1001MB11716B2FEF6BCFC4D2E4C45596770@AM5PR1001MB1171.EURPRD10.PROD.OUTLOOK.COM>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5993931474923596309==
+--===============3339052626993597177==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lars,
+I'm integrating a new Cinterion module and have a small issue I haven't bee=
+n able to solve nicely in Ofono. One of their commands responds with a list=
+ of stuff, followed by an OK but also after the OK there is an empty line. =
+Which is of course wrong, but it might not be solved for a while. Using the=
+ g_at_chat_send function with a callback doesn't seem to work then, the cal=
+lback will not be called it seems and I get stuck in the sequence. Can I wi=
+thout modifying the AT parser handle this somehow?
 
-On 06/19/2018 03:19 AM, poeschel(a)lemonage.de wrote:
-> Hi!
-> =
 
-> I think I found a bug.
-> =
+/Mattias
 
-> Commit 1d63b1d35 essentially breaks the sim900 driver for serial port =
+--===============3339052626993597177==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-> users.
+PGh0bWw+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNvbnRlbnQ9InRl
+eHQvaHRtbDsgY2hhcnNldD1pc28tODg1OS0xIj4KPHN0eWxlIHR5cGU9InRleHQvY3NzIiBzdHls
+ZT0iZGlzcGxheTpub25lOyI+PCEtLSBQIHttYXJnaW4tdG9wOjA7bWFyZ2luLWJvdHRvbTowO30g
+LS0+PC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBkaXI9Imx0ciI+CjxkaXYgaWQ9ImRpdnRhZ2RlZmF1
+bHR3cmFwcGVyIiBzdHlsZT0iZm9udC1zaXplOjEycHQ7Y29sb3I6IzAwMDAwMDtmb250LWZhbWls
+eTpDYWxpYnJpLEhlbHZldGljYSxzYW5zLXNlcmlmOyIgZGlyPSJsdHIiPgo8cCBzdHlsZT0ibWFy
+Z2luLXRvcDowO21hcmdpbi1ib3R0b206MCI+SSdtIGludGVncmF0aW5nIGEgbmV3IENpbnRlcmlv
+biBtb2R1bGUgYW5kIGhhdmUgYSBzbWFsbCBpc3N1ZSBJIGhhdmVuJ3QgYmVlbiBhYmxlIHRvIHNv
+bHZlIG5pY2VseSBpbiBPZm9uby4gT25lIG9mIHRoZWlyIGNvbW1hbmRzIHJlc3BvbmRzIHdpdGgg
+YSBsaXN0IG9mIHN0dWZmLCBmb2xsb3dlZCBieSBhbiBPSyBidXQgYWxzbyBhZnRlciB0aGUgT0sg
+dGhlcmUgaXMgYW4gZW1wdHkKIGxpbmUuIFdoaWNoIGlzIG9mIGNvdXJzZSB3cm9uZywgYnV0IGl0
+IG1pZ2h0IG5vdCBiZSBzb2x2ZWQgZm9yIGEgd2hpbGUuJm5ic3A7VXNpbmcgdGhlIGdfYXRfY2hh
+dF9zZW5kIGZ1bmN0aW9uIHdpdGggYSBjYWxsYmFjayBkb2Vzbid0IHNlZW0gdG8gd29yayB0aGVu
+LCB0aGUgY2FsbGJhY2sgd2lsbCBub3QgYmUgY2FsbGVkIGl0IHNlZW1zJm5ic3A7YW5kIEkgZ2V0
+IHN0dWNrIGluIHRoZSBzZXF1ZW5jZS4gQ2FuIEkgd2l0aG91dCBtb2RpZnlpbmcgdGhlIEFUIHBh
+cnNlcgogaGFuZGxlIHRoaXMgc29tZWhvdz88L3A+CjxwIHN0eWxlPSJtYXJnaW4tdG9wOjA7bWFy
+Z2luLWJvdHRvbTowIj48YnI+CjwvcD4KPHAgc3R5bGU9Im1hcmdpbi10b3A6MDttYXJnaW4tYm90
+dG9tOjAiPi9NYXR0aWFzPC9wPgo8L2Rpdj4KPC9ib2R5Pgo8L2h0bWw+Cg==
 
-Right.  This looks like some wires being crossed.  sim900 driver is only =
-
-meant for serial port usage.  So listing it for 'option' isn't correct. =
-
-Also, setup_sim900 was renamed from setup_simcom (introduced in =
-
-f2bfaed17).  Unfortunately I don't think we ever had a simcom driver =
-
-(e.g. plugins/simcom.c) for non-serial SIM COM modems until support for =
-
-SIM 7100 was added.
-
-> It adds a new entry in plugins/udevng.c driver_list with name "sim900".
-> There are two entries with the same name then: The new one which calls
-> the new setup_sim900 function and the old one which wants to call
-> the old setup_serial_modem function. Since driver_list is scanned
-> by name of the driver from top to button, serial driver users don't
-> have a chance to reach the entry with setup_serial_modem anymore.
-> Calling setup_sim900 does not work on a modem that was added through
-> add_serial_device, because the union serial/devices is written a
-> struct serial_device_info * that can not be used as GSList *.
-> Maybe I am missing something, but I think the new driver name in
-> driver_list should be different from the old one.
-
-Right.  I've gone ahead and pushed out =
-
-06f3a85ee3d187888640be71d5dd5293e6970d05 that should fix this.  Please =
-
-let me know if it does.
-
-It may be that the vid/pid "05c6/9000" meant for the simcom driver =
-
-should be handled by sim7100 or some unified simcom driver that handles =
-
-all SIM COM USB devices.
-
-Regards,
--Denis
-
---===============5993931474923596309==--
+--===============3339052626993597177==--
 
