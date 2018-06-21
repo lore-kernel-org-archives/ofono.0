@@ -1,72 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============8893417209242584684=="
+Content-Type: multipart/mixed; boundary="===============3371386254161862231=="
 MIME-Version: 1.0
 From: Slava Monich <slava.monich@jolla.com>
-Subject: [PATCH 09/12] emulator: Use new voicecall enums
-Date: Thu, 21 Jun 2018 20:20:58 +0300
-Message-ID: <1529601661-4856-9-git-send-email-slava.monich@jolla.com>
+Subject: [PATCH 10/12] stk: Use new voicecall enums
+Date: Thu, 21 Jun 2018 20:20:59 +0300
+Message-ID: <1529601661-4856-10-git-send-email-slava.monich@jolla.com>
 In-Reply-To: <1529601661-4856-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8893417209242584684==
+--===============3371386254161862231==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/emulator.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ src/stk.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/src/emulator.c b/src/emulator.c
-index ccb26dc..bda8f35 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -404,9 +404,9 @@ static gboolean notify_ccwa(void *user_data)
- 			!em->ccwa)
- 		goto end;
+diff --git a/src/stk.c b/src/stk.c
+index 9cdf2b1..eb27555 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -1732,7 +1732,7 @@ static void call_setup_connected(struct ofono_call *c=
+all, void *data)
+ 	static struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_FAILURE =
+};
+ 	static unsigned char facility_rejected_result[] =3D { 0x9d };
  =
 
--	c =3D find_call_with_status(em, CALL_STATUS_WAITING);
-+	c =3D find_call_with_status(em, OFONO_CALL_STATUS_WAITING);
+-	if (call =3D=3D NULL || call->status =3D=3D CALL_STATUS_DISCONNECTED) {
++	if (call =3D=3D NULL || call->status =3D=3D OFONO_CALL_STATUS_DISCONNECTE=
+D) {
+ 		memset(&rsp, 0, sizeof(rsp));
  =
 
--	if (c && c->clip_validity =3D=3D CLIP_VALIDITY_VALID) {
-+	if (c && c->clip_validity =3D=3D OFONO_CLIP_VALIDITY_VALID) {
- 		phone =3D phone_number_to_string(&c->phone_number);
- 		sprintf(str, "+CCWA: \"%s\",%d", phone, c->phone_number.type);
- =
-
-@@ -439,19 +439,19 @@ static gboolean notify_ring(void *user_data)
- 	if (!em->clip)
- 		return TRUE;
- =
-
--	c =3D find_call_with_status(em, CALL_STATUS_INCOMING);
-+	c =3D find_call_with_status(em, OFONO_CALL_STATUS_INCOMING);
- =
-
- 	if (c =3D=3D NULL)
- 		return TRUE;
- =
-
- 	switch (c->clip_validity) {
--	case CLIP_VALIDITY_VALID:
-+	case OFONO_CLIP_VALIDITY_VALID:
- 		phone =3D phone_number_to_string(&c->phone_number);
- 		sprintf(str, "+CLIP: \"%s\",%d", phone, c->phone_number.type);
- 		g_at_server_send_unsolicited(em->server, str);
- 		break;
- =
-
--	case CLIP_VALIDITY_WITHHELD:
-+	case OFONO_CLIP_VALIDITY_WITHHELD:
- 		g_at_server_send_unsolicited(em->server, "+CLIP: \"\",128");
- 		break;
+ 		ADD_ERROR_RESULT(rsp.result,
+@@ -1745,7 +1745,7 @@ static void call_setup_connected(struct ofono_call *c=
+all, void *data)
+ 		return;
  	}
+ =
+
+-	if (call->status =3D=3D CALL_STATUS_ACTIVE)
++	if (call->status =3D=3D OFONO_CALL_STATUS_ACTIVE)
+ 		send_simple_response(stk, STK_RESULT_TYPE_SUCCESS);
+ 	else
+ 		send_simple_response(stk, STK_RESULT_TYPE_USER_CANCEL);
 -- =
 
 1.9.1
 
 
---===============8893417209242584684==--
+--===============3371386254161862231==--
 
