@@ -1,114 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============0403343164430138173=="
+Content-Type: multipart/mixed; boundary="===============2090859141211223950=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Developing a SIM800 plugin - further questions
-Date: Thu, 21 Jun 2018 18:54:00 -0500
-Message-ID: <e82fb537-45e4-ab86-517f-bfcd4b6a5147@gmail.com>
-In-Reply-To: <67311529624253@web6g.yandex.ru>
+From: poeschel@lemonage.de
+Subject: Re: [BUG] plugins: sim900 support broken for tty port users
+Date: Fri, 22 Jun 2018 14:45:57 +0200
+Message-ID: <f41b01a5b2d395fcfc0ba98341beaec1@lemonage.de>
+In-Reply-To: <3ec50e05-a761-792a-46b3-22d55efe2275@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0403343164430138173==
+--===============2090859141211223950==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arsenijs,
+> On 06/19/2018 03:19 AM, poeschel(a)lemonage.de wrote:
+>> Hi!
+>> =
 
-On 06/21/2018 06:37 PM, Pi=C4=8Dugins Arsenijs wrote:
-> I'm now working on a SIM800 plugin, specifically, for a UART-connected SI=
-M800
-> and a Raspberry Pi Zero. There are minor adjustments that we need to make=
-, so
-> we've copied the SIM900 plugin to make sure that we can make adjustments =
-in
-> a clean way (and also compare it to a known-working SIM900 setup). I, too=
-, was
-> affected by the latest SIM900-related breakage - right now I'm compiling =
-to check
-> if it's resolved in current git master.
+>> I think I found a bug.
+>> =
 
-How different is sim800 to sim900?  I would hate to have lots of plugins =
+>> Commit 1d63b1d35 essentially breaks the sim900 driver for serial port =
 
-which are only different by a few lines of code...
-
+>> users.
 > =
 
-> Some questions I have are:
+> Right.  This looks like some wires being crossed.  sim900 driver is
+> only meant for serial port usage.  So listing it for 'option' isn't
+> correct. Also, setup_sim900 was renamed from setup_simcom (introduced
+> in f2bfaed17).  Unfortunately I don't think we ever had a simcom
+> driver (e.g. plugins/simcom.c) for non-serial SIM COM modems until
+> support for SIM 7100 was added.
 > =
 
-> - Is it possible to compile a plugin standalone and then only distribute =
-that
-> plugin? I'm wondering because Raspbian repositories already ship ofono, a=
-nd
-> given that ofono already has a plugin infrastructure, it seems counterint=
-uitive
-> to distribute a separate version of ofono through our repositories just b=
-ecause
+>> It adds a new entry in plugins/udevng.c driver_list with name =
 
-You could, but it is usually far more trouble than it is worth.  Just =
-
-get your driver upstream and then upstream maintains and includes it as =
-
-part of official releases going forward.
-
-You also can't really utilize the concept of 'vendor quirks' doing it =
-
-this way.  So your plugin would need to reuse existing atom drivers as =
-
-is or implement a brand new version of them and ship them.
-
-> we've added a plugin. I'm asking because it seems that plugins also need =
-to be
-> hard-coded in the plugins/udevng.c file - so I'd need to recompile ofono =
-even if
-> I compile the plugin separately... or not? (as we're using udev to enable=
- the
-> right plugin, as far as I can tell:
-> https://github.com/ZeroPhone/ofono-config/blob/master/51-ofono.rules) Is =
-it
-> something that could be influenced by the new -p command-line option of o=
-fonod
-> instead? (which I found after compiling git master and running ofonod --h=
-elp).
-
-out-of-tree plugins generally need their own detection logic.  But since =
-
-this is a tty based device, the existing logic would still work...
-
--p/-P options are really meant for developer / debugging.  Ideally =
-
-whatever you do should not depend on the use of these command line options.
-
-> - judging by lsof output, ofono doesn't open the serial port until Powere=
-d is
-> set to true (which is what we need), but does not close the serial port a=
-fter
-> setting Powered to false (which is undesirable for us, since, unfortunate=
-ly,
-> that same port might be used for debugging). Why? Is it something can be
-> influenced by a plugin?
-
-oFono by itself does nothing with serial ports, the drivers do.  So it =
-
-would seem your driver is misbehaving.
-
-> - Latest git master fails to compile on Raspberry Pi, due to
+>> "sim900".
+>> There are two entries with the same name then: The new one which calls
+>> the new setup_sim900 function and the old one which wants to call
+>> the old setup_serial_modem function. Since driver_list is scanned
+>> by name of the driver from top to button, serial driver users don't
+>> have a chance to reach the entry with setup_serial_modem anymore.
+>> Calling setup_sim900 does not work on a modem that was added through
+>> add_serial_device, because the union serial/devices is written a
+>> struct serial_device_info * that can not be used as GSList *.
+>> Maybe I am missing something, but I think the new driver name in
+>> driver_list should be different from the old one.
 > =
 
-> #pragma GCC diagnostic ignored "-Wrestrict"
-> =
+> Right.  I've gone ahead and pushed out
+> 06f3a85ee3d187888640be71d5dd5293e6970d05 that should fix this.  Please
+> let me know if it does.
 
-> in drivers/rilmodem/call-forwarding.c and
-> drivers/rilmodem/network-registration.c . I can provide error output if
-> necessary. Is it something expected?
+I don't see 06f3a85ee3d187888640be71d5dd5293e6970d05 in public git,
+but I guess 08796aa39186568402dd657704151079f1105dae (at the moment
+on top of master) will also do. ;-)
 
-This is the fallout GCC8 support.  Feel free to start a separate thread =
+I tested it. It chooses the right sim900 driver now and does start
+communicating as I would expect it. Unfortunately I can't test much
+more, because I don't own a sim900. Sorry.
 
-and report these in full.
+Thank you for the quick fix,
+Lars
 
-Regards,
--Denis
 
---===============0403343164430138173==--
+--===============2090859141211223950==--
 
