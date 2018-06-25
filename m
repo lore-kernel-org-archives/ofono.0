@@ -1,51 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============7456290226690292161=="
+Content-Type: multipart/mixed; boundary="===============1016710047391488185=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: HE910-G - Can't activate context
-Date: Sun, 24 Jun 2018 15:14:22 -0500
-Message-ID: <fd742276-a2d3-28fc-1dd2-13a03b1bb278@gmail.com>
-In-Reply-To: <CAGyX7WZZGpb7VJgUPDKDwgxpsZH0qSgCzf8=gbq4-HwSXXNo8Q@mail.gmail.com>
+Subject: Re: [PATCH] voicecall: Handle voicecall_dbus_register() return value
+Date: Mon, 25 Jun 2018 10:25:52 -0500
+Message-ID: <024c98e6-c948-6229-dd93-2fee66abb481@gmail.com>
+In-Reply-To: <1529770121-13691-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7456290226690292161==
+--===============1016710047391488185==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jason,
+Hi Slava,
 
-> enable/power the modem through ofono and even register the SIM on the =
-
-> network. From what I can tell, this bug seems to be present in all ofono =
-
-> versions that don't use the he910.c plugin.
-
-Maybe just the newer firmware behaves differently.  I think the people =
-
-who merged the various telit drivers were using LE/UE 910 which is a bit =
-
-newer than the HE910.
-
-> The current problem we are having is that we cannot activate the context =
-
-> with ofono or connman. Any attempt fails with:
+On 06/23/2018 11:08 AM, Slava Monich wrote:
+> FALSE means that struct voicecall passed in as a parameter
+> has been deallocated.
+> ---
+>   src/voicecall.c | 4 +++-
+>   1 file changed, 3 insertions(+), 1 deletion(-)
 > =
 
-> Error activating /telit_1/context1: org.ofono.Error.NotImplemented: =
 
-> Implementation not provided.
+Is there an actual issue you're fixing?  Or is this just a be paranoid =
 
-You might want to enable debugging (-d command line option) and see what =
+patch?
 
-it says.  HE910 uses the 'atmodem' gprs-context driver, which in turn =
+> diff --git a/src/voicecall.c b/src/voicecall.c
+> index e4f6a4c..194b75f 100644
+> --- a/src/voicecall.c
+> +++ b/src/voicecall.c
+> @@ -1391,7 +1391,9 @@ static struct voicecall *synthesize_outgoing_call(s=
+truct ofono_voicecall *vc,
+>   	v->detect_time =3D time(NULL);
+>   =
 
-depends on tun/tap being loaded.  Most likely your kernel is missing =
+>   	DBG("Registering new call: %d", call->id);
+> -	voicecall_dbus_register(v);
+> +
+> +	if (!voicecall_dbus_register(v))
+> +		return NULL;
 
-this functionality or you forgot to load the required module.
+Okay, but you probably also want to release the callid which is being =
+
+held above.
+
+>   =
+
+>   	vc->call_list =3D g_slist_insert_sorted(vc->call_list, v, call_compare=
+);
+>   =
+
+> =
+
 
 Regards,
 -Denis
 
---===============7456290226690292161==--
+--===============1016710047391488185==--
 
