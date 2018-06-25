@@ -1,45 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============7342974146265406245=="
+Content-Type: multipart/mixed; boundary="===============0843194485328525185=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Slava Monich <slava.monich@jolla.com>
 Subject: Re: [PATCH 01/12] include: Expose voicecall related enums to plugins
-Date: Mon, 25 Jun 2018 10:40:44 -0500
-Message-ID: <71ec295d-001b-1f8b-cc67-37cc12fde5fd@gmail.com>
-In-Reply-To: <1529601661-4856-1-git-send-email-slava.monich@jolla.com>
+Date: Mon, 25 Jun 2018 20:32:36 +0300
+Message-ID: <74cffa7f-43f4-bdbc-2be3-066533b99d09@jolla.com>
+In-Reply-To: <71ec295d-001b-1f8b-cc67-37cc12fde5fd@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7342974146265406245==
+--===============0843194485328525185==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+On 25/06/18 18:40, Denis Kenzior wrote:
+> Hi Slava,
+>
+> On 06/21/2018 12:20 PM, Slava Monich wrote:
+>> ---
+>> =C2=A0 include/types.h | 31 +++++++++++++++++++++++++++++++
+>> =C2=A0 1 file changed, 31 insertions(+)
+>>
+>
+> Can you help me understand what is the motivation behind this?=C2=A0 In t=
+he =
 
-On 06/21/2018 12:20 PM, Slava Monich wrote:
-> ---
->   include/types.h | 31 +++++++++++++++++++++++++++++++
->   1 file changed, 31 insertions(+)
-> =
+> past we opted not to expose OFONO enums for well-known values (e.g. =
 
+> those defined in 27.007).
 
-Can you help me understand what is the motivation behind this?  In the =
+Obviously I didn't know that it was a conscious decision. Feel free to =
 
-past we opted not to expose OFONO enums for well-known values (e.g. =
+ignore all those patches then. It's just I have very low tolerance to =
 
-those defined in 27.007).
+duplicate definitions and magic numbers.
 
-Internally oFono uses defines from common.h and builtin drivers can =
+common.h is not available to dynamically loadable plugins built against =
 
-easily access that as well if code clarity is needed.
+ofono devel package.
 
-Also note that certain values (e.g. DISCONNECTED) are not meant to be =
+Also, enum ofono_clir_option (which seems to be a 27.007 thing too) is =
 
-used outside of the core and are not defined by 27.007.  They're special =
+defined in include/types.h which is a bit inconsistent.
 
-cases that are handled by e.g. ofono_voicecall_disconnected.
+Oh well.
 
-Regards,
--Denis
+-S.
 
---===============7342974146265406245==--
+--===============0843194485328525185==--
 
