@@ -1,32 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============6817127375187703446=="
+Content-Type: multipart/mixed; boundary="===============5711121549073877507=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] dbus: Make cme_errors_mapping static const
-Date: Thu, 28 Jun 2018 10:53:00 -0500
-Message-ID: <b5455205-c265-ec95-0756-c688678d7a4b@gmail.com>
-In-Reply-To: <1530201115-8345-1-git-send-email-slava.monich@jolla.com>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: [PATCH 1/3] include: Add OFONO_ERROR_TYPE_ERRNO
+Date: Thu, 28 Jun 2018 19:30:58 +0300
+Message-ID: <1530203460-20552-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6817127375187703446==
+--===============5711121549073877507==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+---
+ include/types.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-On 06/28/2018 10:51 AM, Slava Monich wrote:
-> ---
->   src/dbus.c | 4 ++--
->   1 file changed, 2 insertions(+), 2 deletions(-)
-> =
+diff --git a/include/types.h b/include/types.h
+index 2c64b20..90d8c2c 100644
+--- a/include/types.h
++++ b/include/types.h
+@@ -56,6 +56,7 @@ enum ofono_error_type {
+ 	OFONO_ERROR_TYPE_CEER,
+ 	OFONO_ERROR_TYPE_SIM,
+ 	OFONO_ERROR_TYPE_FAILURE,
++	OFONO_ERROR_TYPE_ERRNO
+ };
+ =
+
+ enum ofono_disconnect_reason {
+-- =
+
+1.9.1
 
 
-Applied, thanks.
-
-Regards,
--Denis
-
-
---===============6817127375187703446==--
+--===============5711121549073877507==--
 
