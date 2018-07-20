@@ -1,54 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============4757551580586119794=="
+Content-Type: multipart/mixed; boundary="===============9081264608725227037=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: no connection after ofono restart while huawei modem connected
-Date: Thu, 19 Jul 2018 11:20:31 -0500
-Message-ID: <fb1bd594-a374-08a9-eae4-db3db745f35e@gmail.com>
-In-Reply-To: <faf6cc59-d31b-54a1-9e51-fa9a97980847@kerlink.fr>
+From: Slava Monich <slava.monich@jolla.com>
+Subject: [PATCH] plugin: Don't unload external plugins too early
+Date: Fri, 20 Jul 2018 20:35:23 +0300
+Message-ID: <1532108123-23886-1-git-send-email-slava.monich@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4757551580586119794==
+--===============9081264608725227037==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+Plugins may reference data structures allocated by each other.
+They all need to be deinitialized first, only then it should be
+safe to unload the libraries.
+---
+ src/plugin.c | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
 
->> The best course of action would be to have modem.disable() issue a
->> CFUN=3D0 equivalent that resets everything properly.=C2=A0 If that's not
->> possible, then a solution along the lines of what you propose is
->> needed. =C2=A0E.g. sending a '+++' in at_gprs_context_remove if the state
->> isn't IDLE.
-> I don't have a document describing AT command supported by MS2372. I use
-> a document describing AT command supported by another Huawei modem. I
-> didn't find any better command than AT+CFUN=3D0 to try to put back PPP
-> channel in command mode.
+diff --git a/src/plugin.c b/src/plugin.c
+index 2c9c619..924a45e 100644
+--- a/src/plugin.c
++++ b/src/plugin.c
+@@ -190,17 +190,26 @@ void __ofono_plugin_cleanup(void)
+ =
 
-Sometimes these modules take an extra reset parameter after the CFUN. =
+ 	DBG("");
+ =
 
-E.g. AT+CFUN=3D0,1 to reset the module completely.  Not sure if this has =
++	/*
++	 * Terminate the plugins but don't unload the libraries yet.
++	 * Plugins may reference data structures allocated by each other.
++	 */
+ 	for (list =3D plugins; list; list =3D list->next) {
+ 		struct ofono_plugin *plugin =3D list->data;
+ =
 
-other implications.  Possibly we can issue a AT+CFUN=3D1,1 or AT+CFUN=3D4,1 =
+ 		if (plugin->active =3D=3D TRUE && plugin->desc->exit)
+ 			plugin->desc->exit();
++	}
++
++	/* Second pass - unload the libraries */
++	for (list =3D plugins; list; list =3D list->next) {
++		struct ofono_plugin *plugin =3D list->data;
+ =
 
-on .enable() that might fix this as well.
+ 		if (plugin->handle)
+ 			dlclose(plugin->handle);
+-
+-		g_free(plugin);
+ 	}
+ =
 
-> I had a look at g_at_ppp_suspend and you are right, there is a guard
-> timeout before sending '+++'. That's why it won't solve my problem.
-> Ofono will die before this command is really sent.
-> So I don't have any better idea than patch I already sent? Should I send
-> a proper patch series with similar content?
+-	g_slist_free(plugins);
++	/* Finally, free the memory */
++	g_slist_free_full(plugins, g_free);
++	plugins =3D NULL;
+ }
+-- =
 
-That's the issue, the guard timeout is supposed to be used after all =
+1.9.1
 
-activity has been stopped and only then should '+++' be sent.  So it =
 
-might be a good idea to put this behind a VENDOR guarded if-statement =
-
-and issue the '+++' directly to the GAtIO without involving GAtPPP at all.
-
-Regards,
--Denis
-
---===============4757551580586119794==--
+--===============9081264608725227037==--
 
