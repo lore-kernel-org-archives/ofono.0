@@ -1,41 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============7629435811393817099=="
+Content-Type: multipart/mixed; boundary="===============1972303840763981019=="
 MIME-Version: 1.0
-From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCH 2/2] huawei: use VENDOR_HUAWEI quirk on gprs context creation
-Date: Wed, 25 Jul 2018 15:45:14 +0200
-Message-ID: <1532526314-32261-2-git-send-email-c.ronco@kerlink.fr>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] atmodem: Add gprs-context quirk for HUAWEI vendor
+Date: Wed, 25 Jul 2018 14:12:22 -0500
+Message-ID: <40d709e1-33c0-23a9-f804-133f79a04ff7@gmail.com>
 In-Reply-To: <1532526314-32261-1-git-send-email-c.ronco@kerlink.fr>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7629435811393817099==
+--===============1972303840763981019==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/huawei.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Christophe,
 
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index f02315d..817ee66 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -875,7 +875,7 @@ static void huawei_post_sim(struct ofono_modem *modem)
- =
-
- 		data->gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_HUAWEI,
- 						"atmodem", data->pcui);
--		data->gc =3D ofono_gprs_context_create(modem, 0,
-+		data->gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_HUAWEI,
- 						"atmodem", data->modem);
- =
-
- 		if (data->gprs && data->gc)
--- =
-
-2.7.4
+On 07/25/2018 08:45 AM, Christophe Ronco wrote:
+> When ofono dies while connected using PPP, modem AT channel is not put
+> back to command mode (tested with HUAWEI modems E3372 and MS2372).
+> If ofono is restarted, it won't be able to connect as it gets no answer
+> to AT commands on this AT channel.
+> This patch adds a quirk to immediately send escape sequence on modem
+> channel when gprs-context atom is removed.
+> ---
+>   drivers/atmodem/gprs-context.c | 9 +++++++++
+>   1 file changed, 9 insertions(+)
+> =
 
 
---===============7629435811393817099==--
+Both applied, thanks.
+
+Regards,
+-Denis
+
+
+--===============1972303840763981019==--
 
