@@ -1,38 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============1972303840763981019=="
+Content-Type: multipart/mixed; boundary="===============6836693261705090625=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] atmodem: Add gprs-context quirk for HUAWEI vendor
-Date: Wed, 25 Jul 2018 14:12:22 -0500
-Message-ID: <40d709e1-33c0-23a9-f804-133f79a04ff7@gmail.com>
-In-Reply-To: <1532526314-32261-1-git-send-email-c.ronco@kerlink.fr>
+From: Giacinto Cifelli <gciofono@gmail.com>
+Subject: atmodem driver cnmi
+Date: Mon, 06 Aug 2018 18:33:19 +0200
+Message-ID: <CAKSBH7EtCB-pzx9pwYZRUqEf+CRTKKOSmA+eaTs8asoJDS+Qsw@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1972303840763981019==
+--===============6836693261705090625==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+Dear all,
 
-On 07/25/2018 08:45 AM, Christophe Ronco wrote:
-> When ofono dies while connected using PPP, modem AT channel is not put
-> back to command mode (tested with HUAWEI modems E3372 and MS2372).
-> If ofono is restarted, it won't be able to connect as it gets no answer
-> to AT commands on this AT channel.
-> This patch adds a quirk to immediately send escape sequence on modem
-> channel when gprs-context atom is removed.
-> ---
->   drivers/atmodem/gprs-context.c | 9 +++++++++
->   1 file changed, 9 insertions(+)
-> =
+I have a question for the function build_cnmi_string() in
+plugins/atmodem/sms.c
 
+The numeric values appear corrupted, like "2310" instead of "2".
 
-Both applied, thanks.
+example, from an excerpt:
+` default:
+/* Sounds like 2 is the sanest mode */
+mode =3D "2310";
+break;
+`
 
-Regards,
--Denis
+Am I missing something, like a post-processing, or some specific
+implementation not compliant with the 3GPP TS_27.005, or there is a problem
+with this function?
 
+thank you,
+Giacinto Cifelli
 
---===============1972303840763981019==--
+--===============6836693261705090625==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBkaXI9Imx0ciI+RGVhciBhbGwsPGRpdj48YnI+PC9kaXY+PGRpdj5JIGhhdmUgYSBxdWVz
+dGlvbiBmb3IgdGhlIGZ1bmN0aW9uIGJ1aWxkX2NubWlfc3RyaW5nKCkgaW4gcGx1Z2lucy9hdG1v
+ZGVtL3Ntcy5jPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5UaGUgbnVtZXJpYyB2YWx1ZXMgYXBw
+ZWFyIGNvcnJ1cHRlZCwgbGlrZSAmcXVvdDsyMzEwJnF1b3Q7IGluc3RlYWQgb2YgJnF1b3Q7MiZx
+dW90Oy48YnI+PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5leGFtcGxlLCBmcm9tIGFuIGV4Y2Vy
+cHQ6PC9kaXY+PGRpdj48ZGl2PmA8c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlIj4JPC9zcGFu
+PmRlZmF1bHQ6PC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlIj4JCTwvc3Bh
+bj4vKiBTb3VuZHMgbGlrZSAyIGlzIHRoZSBzYW5lc3QgbW9kZSAqLzwvZGl2PjxkaXY+PHNwYW4g
+c3R5bGU9IndoaXRlLXNwYWNlOnByZSI+CQk8L3NwYW4+bW9kZSA9ICZxdW90OzIzMTAmcXVvdDs7
+PC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlIj4JCTwvc3Bhbj5icmVhazs8
+L2Rpdj48L2Rpdj48ZGl2PmA8L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PkFtIEkgbWlzc2luZyBz
+b21ldGhpbmcsIGxpa2UgYSBwb3N0LXByb2Nlc3NpbmcsIG9yIHNvbWUgc3BlY2lmaWMgaW1wbGVt
+ZW50YXRpb24gbm90IGNvbXBsaWFudCB3aXRoIHRoZSAzR1BQIFRTXzI3LjAwNSwgb3IgdGhlcmUg
+aXMgYSBwcm9ibGVtIHdpdGggdGhpcyBmdW5jdGlvbj88L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2
+PnRoYW5rIHlvdSw8YnI+R2lhY2ludG8gQ2lmZWxsaTwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+
+PGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjwvZGl2Pgo=
+
+--===============6836693261705090625==--
 
