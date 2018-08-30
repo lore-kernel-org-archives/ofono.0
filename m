@@ -1,43 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============3817871094591307323=="
+Content-Type: multipart/mixed; boundary="===============9107197886946081455=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: dev@rivaretica.com
 Subject: Re: place to intercept BT audio packets?
-Date: Wed, 29 Aug 2018 20:23:34 -0500
-Message-ID: <c395dd5a-7570-3c7f-f9fb-2a3eeebf5c58@gmail.com>
-In-Reply-To: <5B8717CE.9010409@rivaretica.com>
+Date: Wed, 29 Aug 2018 18:30:56 -0700
+Message-ID: <5B8748D0.8090107@rivaretica.com>
+In-Reply-To: <c395dd5a-7570-3c7f-f9fb-2a3eeebf5c58@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3817871094591307323==
+--===============9107197886946081455==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+> This is a fairly complex topic.
 
-On 08/29/2018 05:01 PM, dev(a)rivaretica.com wrote:
-> New to ofono: looking for documentation/pointers that can inform about =
+This is an understatement :)
 
-> the best point in ofono to intercept Bluetooth audio packets from/to =
+Many thanks to all for the feedback! The stream is elusive, but we'll =
 
-> headset to implement custom audio processing (and does audio stream even =
-
-> thread through ofono?).
-> =
+find it sooner or later ...
 
 
-oFono does not process the audio stream, it only sets up the transport. =
 
-The actual packets are processed by PulseAudio or directly routed from =
 
-the sound card to the Bluetooth chip in hardware.
-
-This is a fairly complex topic.  I would ask this question on the BlueZ =
-
-and / or Pulse Audio mailing lists.
-
-Regards,
--Denis
-
---===============3817871094591307323==--
+--===============9107197886946081455==--
 
