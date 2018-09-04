@@ -1,34 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============7183183157735407578=="
+Content-Type: multipart/mixed; boundary="===============5542353572644614866=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Periodic AT commands
-Date: Fri, 31 Aug 2018 10:04:18 -0500
-Message-ID: <eb011945-f8da-9f3f-f512-7a2dfc99a7c4@gmail.com>
-In-Reply-To: <HE1PR1001MB07959520E0073291CD45DB3E960F0@HE1PR1001MB0795.EURPRD10.PROD.OUTLOOK.COM>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: ofono fails to compile on gcc-6.3
+Date: Tue, 04 Sep 2018 11:44:16 +0200
+Message-ID: <20180904094416.GA17297@amd>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7183183157735407578==
+--===============5542353572644614866==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mattias,
+Hi!
 
-On 08/31/2018 04:58 AM, Mattias M=C3=A5nsson wrote:
-> I would like to implement a periodic status check for our modem and =
+I'm getting this:
 
-> wonder if there is any support for this in ofono already. Some way to =
+  CC       drivers/rilmodem/network-registration.o
+  drivers/rilmodem/network-registration.c:40:32: error: unknown option
+  after =E2=80=98#pragma GCC diagnostic=E2=80=99 kind [-Werror=3Dpragmas]
+   #pragma GCC diagnostic ignored "-Wrestrict"
+cc1: error: unrecognized command line option =E2=80=98-Wno-format-truncatio=
+n=E2=80=99
+  [-Werror]
+  cc1: all warnings being treated as errors
 
-> get a periodic callback perhaps, where I could then run a few AT commands.
->
+I commented out #pragma, and this allows compilation to
+continue... until I hit same issue in
+drivers/rilmodem/call-forwarding.c:41:32:
 
-This is easily done with g_timeout_add_seconds or g_timeout_add.  See =
+Best regards,
+									Pavel
+-- =
 
-drivers/atmodem/voicecall.c and search for poll_clcc or so for an example.
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
-Regards,
--Denis
+--===============5542353572644614866==
+Content-Type: application/pgp-signature
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="signature.asc"
 
---===============7183183157735407578==--
+LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEKCmlFWUVBUkVD
+QUFZRkFsdU9VL0FBQ2drUU1PZndhcFhiK3ZLNk53Q2dyWWVkUTBtMU5QNGZWSHFyMEVVaFZ6REgK
+Yyt3QW5SczhaWmZnVkt2NS9ZcS9QaUgyMkFqYTJ1Y00KPWxxTXAKLS0tLS1FTkQgUEdQIFNJR05B
+VFVSRS0tLS0tCg==
+
+--===============5542353572644614866==--
 
