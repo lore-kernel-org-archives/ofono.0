@@ -1,69 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============1991431615636958201=="
+Content-Type: multipart/mixed; boundary="===============2829088502993661544=="
 MIME-Version: 1.0
-From: Mark van der Putten <mark.van.der.putten@intemo.com>
-Subject: Getting gprs context username and password
-Date: Thu, 06 Sep 2018 18:31:11 +0200
-Message-ID: <18999ee1-a1e2-1fe5-4cbc-e8791e531094@intemo.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Getting gprs context username and password
+Date: Thu, 06 Sep 2018 11:43:35 -0500
+Message-ID: <1d1ee058-4491-83d0-a7f3-0052a586e3dd@gmail.com>
+In-Reply-To: <18999ee1-a1e2-1fe5-4cbc-e8791e531094@intemo.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1991431615636958201==
+--===============2829088502993661544==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-In the gemalto plugin (static void gemalto_post_sim(struct ofono_modem
-*modem)) or maybe something sooner in startup phase I would like to
-implement AT^SGAUTH
+Hi Mark,
 
-> AT^SGAUTH specifies the authentication protocol, password and user
-name to be
-> given if a Packet Domain network requires authentication and the
-subscriber
-> uses AT+CGACT for PDP context activation.
+On 09/06/2018 11:31 AM, Mark van der Putten wrote:
+> In the gemalto plugin (static void gemalto_post_sim(struct ofono_modem
+> *modem)) or maybe something sooner in startup phase I would like to
+> implement AT^SGAUTH
 
-Because connecting with lte to this private APN must be done with radius
-authentication.
-Hard coding does the trick, but what would be the correct ofono way to
-execute the following:
+Hmm, are you sure you actually need the AT^SGAUTH?
 
-g_at_chat_send(data->app, "AT^SGAUTH=3D1,2,\"xxx\",\"xxx\"",NULL, NULL,
-NULL, g_free);
+Gemalto is using the atmodem driver.  This driver uses PPP.  Generally =
 
-substituting xxx with username and password.
+any CHAP/PAP authentication is done during PPP negotiation phase, not =
 
-PS gprs context 1 has correct values for:
-[context1]
-Name=3Dgprs
-AccessPointName=3Dprivate.apn
-Username=3Dxxx
-Password=3Dxxx
-AuthenticationMethod=3Dchap
-Type=3Dinternet
-Protocol=3Dip
+via any vendor +FOOAUTH commands (although I think there are a few =
 
+exceptions now)
+
+For modems that use a high-speed interface, the auth parameters are sent =
+
+during context setup phase.  e.g. after +CGDCONT.  See =
+
+drivers/ifxmodem/gprs-context.c setup_cb() for an example.
+
+If you do need the SGAUTH, then the logical place to put it would be =
+
+into drivers/atmodem/gprs-context.c and use a vendor quirk for gemalto. =
+
+E.g. something like:
+
+switch(gcd->vendor) {
+case OFONO_VENDOR_GEMALTO:
+	g_at_chat_send(gcd->chat, "AT^XGAUTH..."....);
+	break;
+}
 
 Regards,
-Mark
+-Denis
 
-Please consider the environment before printing this email. This e-mail, an=
-d any files transmitted with it, is confidential and is intended solely for=
- the use of the person or entity to whom it is addressed. If you have recei=
-ved this e-mail in error, please notify the sender and delete it from your =
-records. On all our offers, sales and deliveries our General Terms of Deliv=
-ery are applicable, excluding all other Terms and Conditions. Our terms hav=
-e been deposited at the Chamber of commerce Eindhoven (The Netherlands), re=
-ference number 17065041, a copy of these terms is enclosed with all quotati=
-ons, a hardcopy also can be send on your request. You can find our General =
-Terms online at https://www.intemo.com/wp-content/uploads/2018/05/FHI-Algem=
-ene-Leveringsvoorwaarden-2014-ENGELS.pdf Op al onze aanbiedingen, verkopen =
-en leveringen zijn, met uitsluiting van alle andere voorwaarden, onze algem=
-ene voorwaarden van toepassing. Deze zijn gedeponeerd bij de Kamer van Koop=
-handel te Eindhoven onder nummer 17065041. Bij iedere offerte hoe ook verzo=
-nden zijn de algemene voorwaarden bijgevoegd, een kopie kan op aanvraag ook=
- per post worden toegezonden. U kunt onze algemene voorwaarden online inzie=
-n op https://www.intemo.com/wp-content/uploads/2018/05/FHI-Algemene-Leverin=
-gsvoorwaarden-2014-NEDERLANDS.pdf
-
---===============1991431615636958201==--
+--===============2829088502993661544==--
 
