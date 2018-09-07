@@ -1,297 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============1626980838820984583=="
+Content-Type: multipart/mixed; boundary="===============6066358381081244507=="
 MIME-Version: 1.0
-From: Christophe Ronco <c.ronco@kerlink.fr>
-Subject: [PATCHV2 1/1] qmimodem: fix roaming status report
-Date: Fri, 07 Sep 2018 16:29:57 +0200
-Message-ID: <1536330597-16693-2-git-send-email-c.ronco@kerlink.fr>
-In-Reply-To: <1536330597-16693-1-git-send-email-c.ronco@kerlink.fr>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: vendor models and options
+Date: Fri, 07 Sep 2018 10:09:32 -0500
+Message-ID: <da763150-e3c8-dfe4-da96-0c4e679f1aa2@gmail.com>
+In-Reply-To: <CAKSBH7GEje3Gc71h1qDDnKineXL8MHtNBwZmyK+VbeJNh+JZaQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1626980838820984583==
+--===============6066358381081244507==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Problem seen with a MC7304 modem and a roaming SIM card.
-Status in org.ofono.NetworkRegistration properties ends up in "registered"
-instead of roaming. Both AT command and qmicli indicates we are roaming.
+Hi Giacinto,
 
-What's happening is the following:
+On 09/07/2018 03:09 AM, Giacinto Cifelli wrote:
+> Dear Denis, all,
+> =
 
-1) first QMI_NAS_SS_INFO_IND indicating we are registered contains a
-QMI_NAS_RESULT_ROAMING_STATUS parameter.
-Parameter inside says we are roaming and qmimidem driver correctly reports
-status NETWORK_REGISTRATION_STATUS_ROAMING.
-2) other QMI_NAS_SS_INFO_IND arrive, saying we are registered without
-QMI_NAS_RESULT_ROAMING_STATUS parameter.
-Driver reports NETWORK_REGISTRATION_STATUS_REGISTERED.
+> while preparing the Gemalto driver, I see that there is a potential =
 
-Extract of traces with QMI binary debug interpreted (as far as I can...):
-a) first "searching" indication
-ofonod[855]: QMI: < 01 3b 00 80 03 01 04 00 00 24 00 2f 00
-29 05 00 d0 00 14 00 00 MCC:208 MNC:20
-22 05 00 01 02 00 01 00 Detailed Service Status:
-                        QMI_NAS_SERVICE_STATUS_LIMITED,
-                        QMI_NAS_NETWORK_SERVICE_DOMAIN_PS, ...
-15 03 00 01 08 01 LTE, no roaming
-12 05 00 d0 00 14 00 00 Current PLMN: MCC:208 MNC:20, no desc
-11 01 00 00
-10 01 00 01 No roaming
-01 06 00 02 02 02 02 01 08 NAS_REGISTRATION_STATE_NOT_REGISTERED_SEARCHING,
-                           CS detached, PS detached, NETWORK_TYPE_3GPP,
-                           QMI_NAS_RADIO_INTERFACE_LTE
-ofonod[855]: QMI: NAS_ind msg=3D36 len=3D47 [client=3D1,type=3D4,tid=3D0,le=
-n=3D59]
-ofonod[855]: QMI: {type=3D41,len=3D5} {type=3D34,len=3D5} {type=3D21,len=3D=
-3}
-             {type=3D18,len=3D5}
-ofonod[855]: QMI: {type=3D17,len=3D1} {type=3D16,len=3D1} {type=3D1,len=3D6}
-ofonod[855]: ofono_netreg_status_notify modem /sierra_0 status 2 lac -1
-             cellid -1 tech 7
+> shortcoming with the vendor structure in the atmodem. I can set =
 
-b) second "searching" indication
-ofonod[855]: QMI: < 01 21 00 80 03 01 04 00 00 24 00 15 00
-22 05 00 03 03 00 01 00 Detailed Service Status:
-                        QMI_NAS_SERVICE_STATUS_LIMITED_REGIONAL, CS_PS, ...
-11 01 00 00
-01 06 00 02 02 02 02 01 08 NAS_REGISTRATION_STATE_NOT_REGISTERED_SEARCHING,
-                           CS detached, PS detached, NETWORK_TYPE_3GPP,
-                           QMI_NAS_RADIO_INTERFACE_LTE
+> OFONO_VENDOR_GEMALTO_model, but this could be a very long list for all =
 
-ofonod[855]: QMI: NAS_ind msg=3D36 len=3D21 [client=3D1,type=3D4,tid=3D0,le=
-n=3D33]
-ofonod[855]: QMI: {type=3D34,len=3D5} {type=3D17,len=3D1} {type=3D1,len=3D6}
+> options to maintain. I see the tendency also for other manufacturers.
+> Would it be ok if I convert the vendor integer in a structure with model =
 
-c) First indication while "registered"
-ofonod[855]: QMI: < 01 5e 00 80 03 01 04 00 00 24 00 52 00
-2a 01 00 00
-29 05 00 d0 00 14 00 00 MCC:208 MNC:20
-28 02 00 15 01 UMTS Primary Scrambling Code
-26 08 00 03 00 00 00 03 00 00 00 CS: all calls allowed,
-                                 PS: all calls allowed
-22 05 00 02 03 00 01 00 Detailed Service Status:
-                        QMI_NAS_SERVICE_STATUS_AVAILABLE, CS_PS, ...
-1e 04 00 f7 00 95 04 CID 3GPP
-1d 02 00 fb 50 LAC 3GPP
-15 03 00 01 05 00 UMTS: roaming
-12 05 00 d0 00 14 00 00 Current PLMN: MCC:208 MNC:20, no desc
-11 04 00 03 03 04 05
-10 01 00 00 ROAMING ON
-01 06 00 01 01 01 02 01 05 NAS_REGISTRATION_STATE_REGISTERED, CS attached,
-                           PS attached, NETWORK_TYPE_3GPP,
-                           QMI_NAS_RADIO_INTERFACE_UMTS
-ofonod[855]: QMI: NAS_ind msg=3D36 len=3D82 [client=3D1,type=3D4,tid=3D0,le=
-n=3D94]
-ofonod[855]: QMI: {type=3D42,len=3D1} {type=3D41,len=3D5} {type=3D40,len=3D=
-2}
-             {type=3D38,len=3D8}
-ofonod[855]: QMI: {type=3D34,len=3D5} {type=3D30,len=3D4} {type=3D29,len=3D=
-2}
-             {type=3D21,len=3D3}
-ofonod[855]: QMI: {type=3D18,len=3D5} {type=3D17,len=3D4} {type=3D16,len=3D=
-1}
-             {type=3D1,len=3D6}
-ofonod[855]: ofono_gprs_status_notify modem /sierra_0 status 1
+> and flags?
+> This would make the current code more compact and clearer.
 
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D> ROAMING status repo=
-rted <=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D
-ofonod[855]: ofono_netreg_status_notify modem /sierra_0 status 5 lac 20731
-             cellid 76873975 tech 2
+Feel free to suggest something more concrete illustrating how your =
 
-d) second indication while "registered"
-ofonod[855]: QMI: < 01 31 00 80 03 01 04 00 00 24 00 25 00
-29 05 00 d0 00 14 00 00 MCC:208 MNC:20
-28 02 00 15 01 UMTS Primary Scrambling Code
-12 05 00 d0 00 14 00 00 Current PLMN: MCC:208 MNC:20, no desc
-11 04 00 03 03 04 05
-01 06 00 01 01 01 02 01 05 NAS_REGISTRATION_STATE_REGISTERED, CS attached,
-                           PS attached, NETWORK_TYPE_3GPP,
-                           QMI_NAS_RADIO_INTERFACE_UMTS
-ofonod[855]: QMI: NAS_ind msg=3D36 len=3D37 [client=3D1,type=3D4,tid=3D0,le=
-n=3D49]
-ofonod[855]: QMI: {type=3D41,len=3D5} {type=3D40,len=3D2} {type=3D18,len=3D=
-5}
-                  {type=3D17,len=3D4}
-ofonod[855]: QMI: {type=3D1,len=3D6}
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D> ROAMING information=
- lost <=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D
-ofonod[855]: ofono_netreg_status_notify modem /sierra_0 status 1 lac -1
-             cellid -1 tech 2
+proposal would result in more compact code.  It seems to me that it =
 
-I can't tell if not having the ROAMING_STATUS parameter in all indication
-is something happening only on MC7304 or if it happens on all "QMI" modems.
+would be quite disruptive, but I always try to have an open mind :)
 
-I have also seen (on MC7430, with a roaming SIM card):
- - first notification indicating status
-QMI_NAS_REGISTRATION_STATE_SEARCHING and roaming ON
- - following notifications indicating status
-QMI_NAS_REGISTRATION_STATE_REGISTERED and no roaming notification
+But of course there are other 'creative' ways we can utilize to handle =
 
-So we must handle roaming information even when not registered.
----
- drivers/qmimodem/network-registration.c | 47 ++++++++++++++++++++++++++++-=
-----
- 1 file changed, 40 insertions(+), 7 deletions(-)
+this as well.
 
-diff --git a/drivers/qmimodem/network-registration.c b/drivers/qmimodem/net=
-work-registration.c
-index 6c1f50b..a1e3ebc 100644
---- a/drivers/qmimodem/network-registration.c
-+++ b/drivers/qmimodem/network-registration.c
-@@ -42,6 +42,13 @@ struct netreg_data {
- 	struct qmi_service *nas;
- 	struct ofono_network_operator operator;
- 	uint8_t current_rat;
-+	bool is_roaming;
-+};
-+
-+enum roaming_status {
-+	ROAMING_STATUS_OFF,
-+	ROAMING_STATUS_ON,
-+	ROAMING_STATUS_NO_CHANGE,
- };
- =
+> =
 
- static bool extract_ss_info_time(
-@@ -78,11 +85,12 @@ static bool extract_ss_info_time(
- =
+> The alternative of cloning the atmodem is less tempting, because then it =
 
- static bool extract_ss_info(struct qmi_result *result, int *status,
- 				int *lac, int *cellid, int *tech,
-+				enum roaming_status *roaming,
- 				struct ofono_network_operator *operator)
- {
- 	const struct qmi_nas_serving_system *ss;
- 	const struct qmi_nas_current_plmn *plmn;
--	uint8_t i, roaming;
-+	uint8_t i, roaming_status;
- 	uint16_t value16, len, opname_len;
- 	uint32_t value32;
- =
+> needs constant monitoring of the atmodem to porting the features in it, =
 
-@@ -104,10 +112,13 @@ static bool extract_ss_info(struct qmi_result *result=
-, int *status,
- 		*tech =3D qmi_nas_rat_to_tech(ss->radio_if[i]);
- 	}
- =
+> or conversely missing features in this general driver. One example is =
 
-+	*roaming =3D ROAMING_STATUS_NO_CHANGE;
- 	if (qmi_result_get_uint8(result, QMI_NAS_RESULT_ROAMING_STATUS,
--								&roaming)) {
--		if (ss->status =3D=3D 1 && roaming =3D=3D 0)
--			*status =3D NETWORK_REGISTRATION_STATUS_ROAMING;
-+							&roaming_status)) {
-+		if (roaming_status =3D=3D 0)
-+			*roaming =3D ROAMING_STATUS_ON;
-+		else if (roaming_status =3D=3D 1)
-+			*roaming =3D ROAMING_STATUS_OFF;
- 	}
- =
+> for the indicators=C2=A0+CGREG/+CEREG/+C5GREG that we are adding in atmod=
+em =
 
- 	if (!operator)
-@@ -149,7 +160,8 @@ static bool extract_ss_info(struct qmi_result *result, =
-int *status,
- 	else
- 		*cellid =3D -1;
- =
+> (gprs.c), instead of the unique=C2=A0+CGREG that doesn't work anymore for=
+ LTE =
 
--	DBG("lac %d cellid %d tech %d", *lac, *cellid, *tech);
-+	DBG("roaming %u lac %d cellid %d tech %d", *roaming, *lac, *cellid,
-+									*tech);
- =
+> (in the 27.007). If I add it in Gemalto driver, it will be missing in =
 
- 	return true;
- }
-@@ -160,16 +172,26 @@ static void ss_info_notify(struct qmi_result *result,=
- void *user_data)
- 	struct ofono_network_time net_time;
- 	struct netreg_data *data =3D ofono_netreg_get_data(netreg);
- 	int status, lac, cellid, tech;
-+	enum roaming_status roaming;
- =
+> the atmodem.
 
- 	DBG("");
- =
+Aren't these commands now standardized?  Why do you need sub-model =
 
- 	if (extract_ss_info_time(result, &net_time))
- 		ofono_netreg_time_notify(netreg, &net_time);
- =
+information to handle this?
 
--	if (!extract_ss_info(result, &status, &lac, &cellid, &tech,
-+	if (!extract_ss_info(result, &status, &lac, &cellid, &tech, &roaming,
- 							&data->operator))
- 		return;
- =
+Either way, it is quite hard to give you any suggestions without seeing =
 
-+	if (roaming =3D=3D ROAMING_STATUS_ON)
-+		data->is_roaming =3D true;
-+	else if (roaming =3D=3D ROAMING_STATUS_OFF)
-+		data->is_roaming =3D false;
-+
-+	if (status =3D=3D QMI_NAS_REGISTRATION_STATE_REGISTERED &&
-+							data->is_roaming)
-+		status =3D NETWORK_REGISTRATION_STATUS_ROAMING;
-+
- 	ofono_netreg_status_notify(netreg, status, lac, cellid, tech);
- }
- =
+concretely what you're trying to do.  Perhaps you want to submit what =
 
-@@ -179,6 +201,7 @@ static void get_ss_info_cb(struct qmi_result *result, v=
-oid *user_data)
- 	ofono_netreg_status_cb_t cb =3D cbd->cb;
- 	struct netreg_data *data =3D cbd->user;
- 	int status, lac, cellid, tech;
-+	enum roaming_status roaming;
- =
+you have (or some subset that illustrates the issues you're having) to =
 
- 	DBG("");
- =
+the mailing list (even if it isn't completely ready, just tag it as =
 
-@@ -187,12 +210,21 @@ static void get_ss_info_cb(struct qmi_result *result,=
- void *user_data)
- 		return;
- 	}
- =
+'RFC') and then I can give you more concrete feedback.
 
--	if (!extract_ss_info(result, &status, &lac, &cellid, &tech,
-+	if (!extract_ss_info(result, &status, &lac, &cellid, &tech, &roaming,
- 							&data->operator)) {
- 		CALLBACK_WITH_FAILURE(cb, -1, -1, -1, -1, cbd->data);
- 		return;
- 	}
- =
+Regards,
+-Denis
 
-+	if (roaming =3D=3D ROAMING_STATUS_ON)
-+		data->is_roaming =3D true;
-+	else if (roaming =3D=3D ROAMING_STATUS_OFF)
-+		data->is_roaming =3D false;
-+
-+	if (status =3D=3D QMI_NAS_REGISTRATION_STATE_REGISTERED &&
-+							data->is_roaming)
-+		status =3D NETWORK_REGISTRATION_STATUS_ROAMING;
-+
- 	CALLBACK_WITH_SUCCESS(cb, status, lac, cellid, tech, cbd->data);
- }
- =
-
-@@ -580,6 +612,7 @@ static int qmi_netreg_probe(struct ofono_netreg *netreg,
- 	data->operator.tech =3D -1;
- =
-
- 	data->current_rat =3D QMI_NAS_NETWORK_RAT_NO_CHANGE;
-+	data->is_roaming =3D false;
- =
-
- 	ofono_netreg_set_data(netreg, data);
- =
-
--- =
-
-2.7.4
-
-
---===============1626980838820984583==--
+--===============6066358381081244507==--
 
