@@ -1,66 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============9017727734264383979=="
+Content-Type: multipart/mixed; boundary="===============8648143049385582342=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Slava Monich <slava.monich@jolla.com>
 Subject: Re: [PATCH] atmodem: add LTE state for AT+CREG
-Date: Mon, 10 Sep 2018 13:41:04 -0500
-Message-ID: <7684c5c6-1746-e7b0-64ab-bc3efb80d692@gmail.com>
-In-Reply-To: <bff18af6-efd5-2b1d-34bb-984918e313a5@jolla.com>
+Date: Mon, 10 Sep 2018 22:56:43 +0300
+Message-ID: <4706dbb3-cbba-7151-264c-898060bf08c7@jolla.com>
+In-Reply-To: <7684c5c6-1746-e7b0-64ab-bc3efb80d692@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9017727734264383979==
+--===============8648143049385582342==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+Hi Denis,
+> Hi Slava,
+>
+> On 09/10/2018 01:26 PM, Slava Monich wrote:
+>> Hi Anirudh, Denis at al.
+>>
+>>> @@ -669,6 +669,10 @@ const char *registration_status_to_string(int =
 
-On 09/10/2018 01:26 PM, Slava Monich wrote:
-> Hi Anirudh, Denis at al.
-> =
+>>> status)
+>>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "unknown=
+";
+>>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_ROAMIN=
+G:
+>>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "roaming=
+";
+>>>> +=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_REGISTERED_EUTRAN:
+>>>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "registered lte";
+>>>> +=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_ROAMING_EUTRAN:
+>>>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "roaming lte";
+>>
+>> What would be the difference between "roaming lte" and "roaming" (or =
 
->> @@ -669,6 +669,10 @@ const char *registration_status_to_string(int =
+>> "registered lte" vs "registered") from the viewpoint of D-Bus API =
 
->> status)
->>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "unknown";
->>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_ROAMING:
->>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "roaming";
->>> +=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_REGISTERED_EUTRAN:
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "registered lte";
->>> +=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_ROAMING_EUTRAN:
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "roaming lte";
-> =
+>> clients? In other words, what would e.g. dialer do differently =
 
-> What's would be the difference between "roaming lte" and "roaming" (or =
+>> depending on whether registration status is "registered lte" or just =
 
-> "registered lte" vs "registered") from the viewpoint of D-Bus API =
+>> "registered"? Is it worth the API break? The existing clients won't =
 
-> clients? In other words, what would e.g. dialer do differently depending =
+>> know how to handle the new values until they (clients) get updated.
+>>
+>
+> I agree.=C2=A0 That is why I suggested a separate Property for this (and =
 
-> on whether registration status is "registered lte" or just "registered"? =
+> the CSFB case from 27.007) instead of modifying the Status property =
 
-> Is it worth the API break? The existing clients won't know how to handle =
+> directly.
+>
+> E.g. REGISTERED_SMS_EUTRAN would map to Status=3D"registered" and =
 
-> the new values until they (clients) get updated.
-> =
+> SmsOnly=3DFalse.=C2=A0 ROAMING_SMS_EUTRAN would map to Status=3D"roaming"=
+ and =
 
+> SmsOnly=3DTrue.
+>
+> I assume that the Dialer can ignore this as the modem will fall back =
 
-I agree.  That is why I suggested a separate Property for this (and the =
+> to 3G in case of a call?=C2=A0 Someone feel free to educate me.
 
-CSFB case from 27.007) instead of modifying the Status property directly.
+The modems I dealt with do drop to 3G for voice calls. Once voice call =
 
-E.g. REGISTERED_SMS_EUTRAN would map to Status=3D"registered" and =
+terminates, they switch back to LTE (well, most of the time). Dialler =
 
-SmsOnly=3DFalse.  ROAMING_SMS_EUTRAN would map to Status=3D"roaming" and =
+(at least our dialler) doesn't care about access technology.
 
-SmsOnly=3DTrue.
+Just a thought - could the presence of org.ofono.VoiceCallManager and =
 
-I assume that the Dialer can ignore this as the modem will fall back to =
+org.ofono.MessageManager interfaces be used to indicate whether voice =
 
-3G in case of a call?  Someone feel free to educate me.
+calls and/or messaging is available? That wouldn't require any D-Bus API =
 
-Regards,
--Denis
+changes at all.
 
---===============9017727734264383979==--
+Cheers,
+-Slava
+
+--===============8648143049385582342==--
 
