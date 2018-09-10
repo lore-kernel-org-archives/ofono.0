@@ -1,45 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============4504567919200860377=="
+Content-Type: multipart/mixed; boundary="===============9017727734264383979=="
 MIME-Version: 1.0
-From: Slava Monich <slava.monich@jolla.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] atmodem: add LTE state for AT+CREG
-Date: Mon, 10 Sep 2018 21:26:46 +0300
-Message-ID: <bff18af6-efd5-2b1d-34bb-984918e313a5@jolla.com>
-In-Reply-To: <23e0fa81-a354-ce26-b2ed-0b8a36aac630@gmail.com>
+Date: Mon, 10 Sep 2018 13:41:04 -0500
+Message-ID: <7684c5c6-1746-e7b0-64ab-bc3efb80d692@gmail.com>
+In-Reply-To: <bff18af6-efd5-2b1d-34bb-984918e313a5@jolla.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4504567919200860377==
+--===============9017727734264383979==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Anirudh, Denis at al.
+Hi Slava,
 
-> @@ -669,6 +669,10 @@ const char *registration_status_to_string(int =
+On 09/10/2018 01:26 PM, Slava Monich wrote:
+> Hi Anirudh, Denis at al.
+> =
 
-> status)
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "unknown";
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_ROAMING:
->> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "roaming";
->> +=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_REGISTERED_EUTRAN:
->> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "registered lte";
->> +=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_ROAMING_EUTRAN:
->> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "roaming lte";
+>> @@ -669,6 +669,10 @@ const char *registration_status_to_string(int =
 
-What's would be the difference between "roaming lte" and "roaming" (or =
+>> status)
+>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "unknown";
+>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_ROAMING:
+>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "roaming";
+>>> +=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_REGISTERED_EUTRAN:
+>>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "registered lte";
+>>> +=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_ROAMING_EUTRAN:
+>>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "roaming lte";
+> =
 
-"registered lte" vs "registered") from the viewpoint of D-Bus API =
+> What's would be the difference between "roaming lte" and "roaming" (or =
 
-clients? In other words, what would e.g. dialer do differently depending =
+> "registered lte" vs "registered") from the viewpoint of D-Bus API =
 
-on whether registration status is "registered lte" or just "registered"? =
+> clients? In other words, what would e.g. dialer do differently depending =
 
-Is it worth the API break? The existing clients won't know how to handle =
+> on whether registration status is "registered lte" or just "registered"? =
 
-the new values until they (clients) get updated.
+> Is it worth the API break? The existing clients won't know how to handle =
 
-Cheers,
--Slava
+> the new values until they (clients) get updated.
+> =
 
---===============4504567919200860377==--
+
+I agree.  That is why I suggested a separate Property for this (and the =
+
+CSFB case from 27.007) instead of modifying the Status property directly.
+
+E.g. REGISTERED_SMS_EUTRAN would map to Status=3D"registered" and =
+
+SmsOnly=3DFalse.  ROAMING_SMS_EUTRAN would map to Status=3D"roaming" and =
+
+SmsOnly=3DTrue.
+
+I assume that the Dialer can ignore this as the modem will fall back to =
+
+3G in case of a call?  Someone feel free to educate me.
+
+Regards,
+-Denis
+
+--===============9017727734264383979==--
 
