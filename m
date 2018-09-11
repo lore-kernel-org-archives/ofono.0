@@ -1,113 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============2932929802585232246=="
+Content-Type: multipart/mixed; boundary="===============0218135268008760489=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] atmodem: add LTE state for AT+CREG
-Date: Mon, 10 Sep 2018 15:07:40 -0500
-Message-ID: <e0f7cb04-5635-4b5c-63a1-68bdea32cd53@gmail.com>
-In-Reply-To: <4706dbb3-cbba-7151-264c-898060bf08c7@jolla.com>
+From: Anirudh Gargi <anirudh.gargi@intel.com>
+Subject: [PATCH] sms: fix send sms in case of lte registration
+Date: Tue, 11 Sep 2018 09:22:25 +0530
+Message-ID: <1536637945-31075-1-git-send-email-anirudh.gargi@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2932929802585232246==
+--===============0218135268008760489==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+CREG status 6 and 7 added in network registration status, sms atom
+to consider new states also.
+---
+ src/common.h | 14 ++++++++------
+ src/sms.c    |  2 ++
+ 2 files changed, 10 insertions(+), 6 deletions(-)
 
-On 09/10/2018 02:56 PM, Slava Monich wrote:
-> Hi Denis,
->> Hi Slava,
->>
->> On 09/10/2018 01:26 PM, Slava Monich wrote:
->>> Hi Anirudh, Denis at al.
->>>
->>>> @@ -669,6 +669,10 @@ const char *registration_status_to_string(int =
+diff --git a/src/common.h b/src/common.h
+index 1b6b01d..b826228 100644
+--- a/src/common.h
++++ b/src/common.h
+@@ -37,12 +37,14 @@ enum access_technology {
+ =
 
->>>> status)
->>>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "unknow=
-n";
->>>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_ROAMI=
-NG:
->>>>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "roamin=
-g";
->>>>> +=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_REGISTERED_EUTRA=
-N:
->>>>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "registered lte";
->>>>> +=C2=A0=C2=A0=C2=A0 case NETWORK_REGISTRATION_STATUS_ROAMING_EUTRAN:
->>>>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return "roaming lte";
->>>
->>> What would be the difference between "roaming lte" and "roaming" (or =
+ /* 27.007 Section 7.2 <stat> */
+ enum network_registration_status {
+-	NETWORK_REGISTRATION_STATUS_NOT_REGISTERED =3D	0,
+-	NETWORK_REGISTRATION_STATUS_REGISTERED =3D	1,
+-	NETWORK_REGISTRATION_STATUS_SEARCHING =3D		2,
+-	NETWORK_REGISTRATION_STATUS_DENIED =3D		3,
+-	NETWORK_REGISTRATION_STATUS_UNKNOWN =3D		4,
+-	NETWORK_REGISTRATION_STATUS_ROAMING =3D		5,
++	NETWORK_REGISTRATION_STATUS_NOT_REGISTERED =3D		0,
++	NETWORK_REGISTRATION_STATUS_REGISTERED =3D		1,
++	NETWORK_REGISTRATION_STATUS_SEARCHING =3D			2,
++	NETWORK_REGISTRATION_STATUS_DENIED =3D			3,
++	NETWORK_REGISTRATION_STATUS_UNKNOWN =3D			4,
++	NETWORK_REGISTRATION_STATUS_ROAMING =3D			5,
++	NETWORK_REGISTRATION_STATUS_REGISTERED_SMS_EUTRAN =3D	6,
++	NETWORK_REGISTRATION_STATUS_ROAMING_SMS_EUTRAN =3D 	7,
+ };
+ =
 
->>> "registered lte" vs "registered") from the viewpoint of D-Bus API =
+ /* 27.007 Section 7.3 <stat> */
+diff --git a/src/sms.c b/src/sms.c
+index b86158e..c604e05 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -782,6 +782,8 @@ static void netreg_status_watch(int status, int lac, in=
+t ci, int tech,
+ 	switch (status) {
+ 	case NETWORK_REGISTRATION_STATUS_REGISTERED:
+ 	case NETWORK_REGISTRATION_STATUS_ROAMING:
++	case NETWORK_REGISTRATION_STATUS_REGISTERED_SMS_EUTRAN:
++	case NETWORK_REGISTRATION_STATUS_ROAMING_SMS_EUTRAN:
+ 		sms->registered =3D TRUE;
+ 		break;
+ 	default:
+-- =
 
->>> clients? In other words, what would e.g. dialer do differently =
-
->>> depending on whether registration status is "registered lte" or just =
-
->>> "registered"? Is it worth the API break? The existing clients won't =
-
->>> know how to handle the new values until they (clients) get updated.
->>>
->>
->> I agree.=C2=A0 That is why I suggested a separate Property for this (and =
-
->> the CSFB case from 27.007) instead of modifying the Status property =
-
->> directly.
->>
->> E.g. REGISTERED_SMS_EUTRAN would map to Status=3D"registered" and =
-
->> SmsOnly=3DFalse.=C2=A0 ROAMING_SMS_EUTRAN would map to Status=3D"roaming=
-" and =
-
->> SmsOnly=3DTrue.
->>
->> I assume that the Dialer can ignore this as the modem will fall back =
-
->> to 3G in case of a call?=C2=A0 Someone feel free to educate me.
-> =
-
-> The modems I dealt with do drop to 3G for voice calls. Once voice call =
-
-> terminates, they switch back to LTE (well, most of the time). Dialler =
-
-> (at least our dialler) doesn't care about access technology.
-
-That is what I've seen as well.  But these are pre-VoLTE devices most =
-
-likely.  VoLTE might act differently.
-
-> =
-
-> Just a thought - could the presence of org.ofono.VoiceCallManager and =
-
-> org.ofono.MessageManager interfaces be used to indicate whether voice =
-
-> calls and/or messaging is available? That wouldn't require any D-Bus API =
-
-> changes at all.
-> =
+2.7.4
 
 
-VoiceCallManager should always be available since you still need to make =
-
-Emergency Calls.  There might be some really weird legacy devices which =
-
-were Data-Only, but those aren't really the focus of oFono anyway.
-
-What I assume is happening in 27.007 is that registration states 6/9 & =
-
-7/10 allows one to discern whether Circuit Switched Fallback would be =
-
-triggered.  I assume if the device (& network) is VoLTE capable, then =
-
-you'd see state 9/10, 6/7 otherwise.  Perhaps all 4 states should be =
-
-combined into a single CircuitSwitchedFallback property instead...
-
-Regards,
--Denis
-
---===============2932929802585232246==--
+--===============0218135268008760489==--
 
