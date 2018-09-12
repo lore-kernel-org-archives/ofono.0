@@ -1,75 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============1055186634998110306=="
+Content-Type: multipart/mixed; boundary="===============8257666179322041946=="
 MIME-Version: 1.0
-From: Anirudh Gargi <anirudh.gargi@intel.com>
-Subject: [PATCH] atmodem: add AT+CREG handling for lte status
-Date: Tue, 11 Sep 2018 14:02:36 +0530
-Message-ID: <1536654756-394-1-git-send-email-anirudh.gargi@intel.com>
+From: Frank Vasquez <frankv@helium.com>
+Subject: ublox TOBY-R200
+Date: Wed, 12 Sep 2018 15:41:16 -0700
+Message-ID: <CAFJydPUsTRmFcP+34bCe_YufRh-atSmmeY5TOPDts+XDbGKf_A@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1055186634998110306==
+--===============8257666179322041946==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-added CREG 'status' 6 and 7 for sms only registered state on E-UTRAN
-for  CREG cmd reply callback and URC notfiy.
----
- drivers/atmodem/network-registration.c | 14 ++++++++++++--
- 1 file changed, 12 insertions(+), 2 deletions(-)
+Greetings,
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index 0854cd1..c0ec8c7 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -228,6 +228,10 @@ static void at_creg_cb(gboolean ok, GAtResult *result,=
- gpointer user_data)
- 	if ((status =3D=3D 1 || status =3D=3D 5) && (tech =3D=3D -1))
- 		tech =3D nd->tech;
- =
+I have an embedded device with a ublox TOBY-R200 on it.  I want to use
+connman to manage any cellular connection on that modem since connman is
+already managing ethernet and wifi connectivity.  oFono seems like the best
+option.  I see that there is already a ublox plugin for oFono but I don't
+think the TOBY-R200 is supported.  The cell module is soldered onto the
+board and appears as a USB device.
 
-+	/* Handle EUTRAN cases */
-+	if ((status =3D=3D 6 || status =3D=3D 7) && (tech =3D=3D -1))
-+		tech =3D ACCESS_TECHNOLOGY_EUTRAN;
-+
- 	cb(&error, status, lac, ci, tech, cbd->data);
- }
- =
+[    6.519190] usb 1-1: New USB device strings: Mfr=3D1, Product=3D2,
+SerialNumber=3D3
+[    6.519197] usb 1-1: Product: u-blox Cellular Module
+[    6.519204] usb 1-1: Manufacturer: u-blox
+[    6.519211] usb 1-1: SerialNumber: 352848080392646
 
-@@ -1522,8 +1526,11 @@ static void creg_notify(GAtResult *result, gpointer =
-user_data)
- 				&lac, &ci, &tech, nd->vendor) =3D=3D FALSE)
- 		return;
- =
+I can send AT commands to the modem over /dev/ttyACM0.
 
--	if (status !=3D 1 && status !=3D 5)
--		goto notify;
-+	/* Not camped case */
-+	if (status !=3D 1 && status !=3D 5) {
-+		if (status !=3D 6 && status !=3D 7)
-+			goto notify;
-+	}
- =
+Cheers,
+Frank
 
- 	tq =3D g_try_new0(struct tech_query, 1);
- 	if (tq =3D=3D NULL)
-@@ -1569,6 +1576,9 @@ static void creg_notify(GAtResult *result, gpointer u=
-ser_data)
- 	if ((status =3D=3D 1 || status =3D=3D 5) && tech =3D=3D -1)
- 		tech =3D nd->tech;
- =
+--===============8257666179322041946==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-+	if ((status =3D=3D 6 || status =3D=3D 7) && tech =3D=3D -1)
-+		tech =3D ACCESS_TECHNOLOGY_EUTRAN;
-+
- notify:
- 	ofono_netreg_status_notify(netreg, status, lac, ci, tech);
- }
--- =
+PGRpdiBkaXI9Imx0ciI+PGRpdiBkaXI9Imx0ciI+R3JlZXRpbmdzLDxkaXY+PGJyPjwvZGl2Pjxk
+aXY+SSBoYXZlIGFuIGVtYmVkZGVkIGRldmljZSB3aXRoIGEgdWJsb3ggVE9CWS1SMjAwIG9uIGl0
+LsKgIEkgd2FudCB0byB1c2UgY29ubm1hbiB0byBtYW5hZ2UgYW55IGNlbGx1bGFyIGNvbm5lY3Rp
+b24gb24gdGhhdCBtb2RlbSBzaW5jZSBjb25ubWFuIGlzIGFscmVhZHkgbWFuYWdpbmcgZXRoZXJu
+ZXQgYW5kIHdpZmkgY29ubmVjdGl2aXR5LsKgIG9Gb25vIHNlZW1zIGxpa2UgdGhlIGJlc3Qgb3B0
+aW9uLsKgIEkgc2VlIHRoYXQgdGhlcmUgaXMgYWxyZWFkeSBhIHVibG94IHBsdWdpbiBmb3Igb0Zv
+bm8gYnV0IEkgZG9uJiMzOTt0IHRoaW5rIHRoZSBUT0JZLVIyMDAgaXMgc3VwcG9ydGVkLsKgIFRo
+ZSBjZWxsIG1vZHVsZSBpcyBzb2xkZXJlZCBvbnRvIHRoZSBib2FyZCBhbmQgYXBwZWFycyBhcyBh
+IFVTQiBkZXZpY2UuPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj48ZGl2PlvCoCDCoCA2LjUxOTE5
+MF0gdXNiIDEtMTogTmV3IFVTQiBkZXZpY2Ugc3RyaW5nczogTWZyPTEsIFByb2R1Y3Q9MiwgU2Vy
+aWFsTnVtYmVyPTM8L2Rpdj48ZGl2PlvCoCDCoCA2LjUxOTE5N10gdXNiIDEtMTogUHJvZHVjdDog
+dS1ibG94IENlbGx1bGFyIE1vZHVsZTwvZGl2PjxkaXY+W8KgIMKgIDYuNTE5MjA0XSB1c2IgMS0x
+OiBNYW51ZmFjdHVyZXI6IHUtYmxveDwvZGl2PjxkaXY+W8KgIMKgIDYuNTE5MjExXSB1c2IgMS0x
+OiBTZXJpYWxOdW1iZXI6IDM1Mjg0ODA4MDM5MjY0NjwvZGl2PjwvZGl2PjxkaXY+PGJyPjwvZGl2
+PjxkaXY+SSBjYW4gc2VuZCBBVCBjb21tYW5kcyB0byB0aGUgbW9kZW0gb3ZlciAvZGV2L3R0eUFD
+TTAuPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5DaGVlcnMsPC9kaXY+PGRpdj5GcmFuazwvZGl2
+PjwvZGl2PjwvZGl2Pgo=
 
-2.7.4
-
-
---===============1055186634998110306==--
+--===============8257666179322041946==--
 
