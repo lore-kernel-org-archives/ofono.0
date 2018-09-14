@@ -1,323 +1,130 @@
-Content-Type: multipart/mixed; boundary="===============5931812796149134772=="
+Content-Type: multipart/mixed; boundary="===============6356031810885690473=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: vendor models and options
-Date: Fri, 14 Sep 2018 13:48:11 +0200
-Message-ID: <CAKSBH7EapnjrN2c6J-M9zFS5kYL9rbYRjKRw6LJHiEEjYkBTiQ@mail.gmail.com>
-In-Reply-To: <da763150-e3c8-dfe4-da96-0c4e679f1aa2@gmail.com>
+Date: Fri, 14 Sep 2018 01:00:38 -0500
+Message-ID: <a89fd0a7-4cf7-5292-ffba-00422e0589f3@gmail.com>
+In-Reply-To: <CAKSBH7EapnjrN2c6J-M9zFS5kYL9rbYRjKRw6LJHiEEjYkBTiQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5931812796149134772==
+--===============6356031810885690473==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-hi Denis,
+Hi Giacinto,
 
-this is the structure I would like to propose:
+So first of all, please stop top-posting on this mailing list.  All =
 
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D in drivers/atmodem/vendor.h:
+comments should be in-line.
 
-enum ofono_vendor {
-OFONO_VENDOR_GENERIC =3D 0,
-OFONO_VENDOR_CALYPSO,
-OFONO_VENDOR_IFX,
-OFONO_VENDOR_STE,
-OFONO_VENDOR_MBM,
-OFONO_VENDOR_GOBI,
-OFONO_VENDOR_QUALCOMM,
-OFONO_VENDOR_HSO,
-OFONO_VENDOR_ZTE,
-OFONO_VENDOR_HUAWEI,
-OFONO_VENDOR_SIERRA,
-OFONO_VENDOR_NOVATEL,
-OFONO_VENDOR_WAVECOM,
-OFONO_VENDOR_NOKIA,
-OFONO_VENDOR_PHONESIM,
-OFONO_VENDOR_TELIT,
-OFONO_VENDOR_SPEEDUP,
-OFONO_VENDOR_SAMSUNG,
-OFONO_VENDOR_SIMCOM,
-OFONO_VENDOR_ICERA,
-OFONO_VENDOR_ALCATEL,
-OFONO_VENDOR_QUECTEL,
-OFONO_VENDOR_UBLOX,
-OFONO_VENDOR_GEMALTO,
-OFONO_VENDOR_XMM,
-};
+> enum gemalto_auth_type {
+> OV_GEMALTO_AUTH_CGAUTH =3D 0,
 
+CGAUTH is a release 11 feature and should be simply probed for in the =
 
-enum gemalto_auth_type {
-OV_GEMALTO_AUTH_CGAUTH =3D 0,
-OV_GEMALTO_AUTH_SGAUTH_PWD_USER =3D 1,
-OV_GEMALTO_AUTH_SGAUTH_USER_PWD =3D 2,
-};
+gprs-context initialization procedure, similar to how we test for =
 
-struct ov_gemalto {
-enum gemalto_auth_type auth;
-gboolean vts_with_quotes;
-};
++CGDATA support.
 
+> OV_GEMALTO_AUTH_SGAUTH_PWD_USER =3D 1,
+> OV_GEMALTO_AUTH_SGAUTH_USER_PWD =3D 2,
 
-struct ov_quectel {
-gboolean use_qtrpin;
-};
+You will need to explain the difference between SGAUTH 1 & 2 to me.  Is =
 
-struct ov_simcom {
-gboolean use_atd99;
-};
+it the parameter order that is different between firmware versions? =
 
-struct ov_ublox {
-gboolean toby_l2;
-};
+Can't these simply be queried properly using AT^SGAUTH=3D?
 
-struct ov_wavecom {
-gboolean short_cpms;
-};
+> };
 
-struct ofono_vendor_parameters {
-enum ofono_vendor vendor;
-unsigned int model;
-union {
-struct ov_gemalto gemalto;
-struct ov_quectel quelctel;
-struct ov_simcom simcom;
-struct ov_ublox ublox;
-struct ov_wavecom wavecom;
-};
-};
+So are you introducing a new gprs-context driver for gemalto or using =
 
-extern struct ofono_vendor_parameters ov_generic;
+these for the 'atmodem' driver?
+
+> =
+
+> struct ov_gemalto {
+> enum gemalto_auth_type auth;
+> gboolean vts_with_quotes;
+
+Sheesh, your firmware guys somehow managed to screw up the VTS command =
+
+syntax?  That command has been in there for 20 years...
+
+Anyhow, I strongly discourage you from modifying the atmodem voicecall.c =
+
+driver.  Every vendor should have voice call state reporting commands =
+
+that are far superior to the AT+CLCC polling we do in the 'atmodem' =
+
+voicecall.c driver.  So it should be fairly trivial to probe for +VTS =
+
+syntax there.
+
+Worst case you can use ofono_modem_set_* family to set a particular =
+
+modem specific property which can be available to all atom drivers via =
+
+ofono_modem_get_*.  So this VTS syntax can be handled that way.
+
+> };
+> =
 
 
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D in drivers/atmodem/atmodem.c:
+<snip>
 
-struct ofono_vendor_parameters ov_generic =3D {
-OFONO_VENDOR_GENERIC, 0
-};
+> =
+
+> and then change the *_create() functions to use 'struct =
+
+> ofono_vendor_parameters *' instead of 'unsigned int vendor', with =
+
+> default &ov_generic.
+> =
+
+> In the example above, I have shown differences for the various Gemalto =
+
+> authentication commands (3 options), that=C2=A0 cross with the options fo=
+r VTS.
+> And then most of the settings are common for Gemalto models (currently =
+
+> factored with the vendor=3DOFONO_VENDOR_CINTERION).
+> If=C2=A0 tomorrow I have to declare models for these simple settings, I h=
+ave =
+
+> to add at least 6 with the current system, and having a full driver just =
+
+> because of these two AT commands seems needless.
+
+No, this is all completely unneeded as far as I'm concerned.  If you =
+
+want to use +CGAUTH, then just probe it properly and don't pass a vendor =
+
+at all.  The VTS stuff I already covered.
+
+> =
+
+> The code would be simplified because in general in a switch there will =
+
+> be only 1 vendor, with the current system there would be 6.
+> =
+
+> Is it ok if I update the code with this vendor system? I will have to =
+
+> submit the entire tree, not by subdirectories, to have a consistent and =
+
+> compiling commit.
+> =
 
 
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+Right now I'm completely unconvinced that such an invasive change is =
 
-and then change the *_create() functions to use 'struct
-ofono_vendor_parameters *' instead of 'unsigned int vendor', with default
-&ov_generic.
-
-In the example above, I have shown differences for the various Gemalto
-authentication commands (3 options), that  cross with the options for VTS.
-And then most of the settings are common for Gemalto models (currently
-factored with the vendor=3DOFONO_VENDOR_CINTERION).
-If  tomorrow I have to declare models for these simple settings, I have to
-add at least 6 with the current system, and having a full driver just
-because of these two AT commands seems needless.
-
-The code would be simplified because in general in a switch there will be
-only 1 vendor, with the current system there would be 6.
-
-Is it ok if I update the code with this vendor system? I will have to
-submit the entire tree, not by subdirectories, to have a consistent and
-compiling commit.
+warranted.  So no, please don't do this.
 
 Regards,
-Giacinto
+-Denis
 
-
-
-
-
-
-
-
-On Fri, Sep 7, 2018 at 5:09 PM Denis Kenzior <denkenz@gmail.com> wrote:
-
-> Hi Giacinto,
->
-> On 09/07/2018 03:09 AM, Giacinto Cifelli wrote:
-> > Dear Denis, all,
-> >
-> > while preparing the Gemalto driver, I see that there is a potential
-> > shortcoming with the vendor structure in the atmodem. I can set
-> > OFONO_VENDOR_GEMALTO_model, but this could be a very long list for all
-> > options to maintain. I see the tendency also for other manufacturers.
-> > Would it be ok if I convert the vendor integer in a structure with model
-> > and flags?
-> > This would make the current code more compact and clearer.
->
-> Feel free to suggest something more concrete illustrating how your
-> proposal would result in more compact code.  It seems to me that it
-> would be quite disruptive, but I always try to have an open mind :)
->
-> But of course there are other 'creative' ways we can utilize to handle
-> this as well.
->
-> >
-> > The alternative of cloning the atmodem is less tempting, because then it
-> > needs constant monitoring of the atmodem to porting the features in it,
-> > or conversely missing features in this general driver. One example is
-> > for the indicators +CGREG/+CEREG/+C5GREG that we are adding in atmodem
-> > (gprs.c), instead of the unique +CGREG that doesn't work anymore for LTE
-> > (in the 27.007). If I add it in Gemalto driver, it will be missing in
-> > the atmodem.
->
-> Aren't these commands now standardized?  Why do you need sub-model
-> information to handle this?
->
-> Either way, it is quite hard to give you any suggestions without seeing
-> concretely what you're trying to do.  Perhaps you want to submit what
-> you have (or some subset that illustrates the issues you're having) to
-> the mailing list (even if it isn't completely ready, just tag it as
-> 'RFC') and then I can give you more concrete feedback.
->
-> Regards,
-> -Denis
->
-
---===============5931812796149134772==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGRpdiBkaXI9Imx0ciI+PGRpdiBkaXI9Imx0ciI+PGRpdiBkaXI9Imx0ciI+PGRpdiBkaXI9Imx0
-ciI+aGkgRGVuaXMsPGRpdj48YnI+PC9kaXY+PGRpdj50aGlzIGlzIHRoZSBzdHJ1Y3R1cmUgSSB3
-b3VsZCBsaWtlIHRvIHByb3Bvc2U6PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj49PT09PT09PT09
-PSBpbiBkcml2ZXJzL2F0bW9kZW0vdmVuZG9yLmg6PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj48
-ZGl2PmVudW0gb2Zvbm9fdmVuZG9yIHs8L2Rpdj48ZGl2PjxzcGFuIHN0eWxlPSJ3aGl0ZS1zcGFj
-ZTpwcmUtd3JhcCI+CTwvc3Bhbj5PRk9OT19WRU5ET1JfR0VORVJJQyA9IDAsPC9kaXY+PGRpdj48
-c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3NwYW4+T0ZPTk9fVkVORE9SX0NB
-TFlQU08sPC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3Nw
-YW4+T0ZPTk9fVkVORE9SX0lGWCw8L2Rpdj48ZGl2PjxzcGFuIHN0eWxlPSJ3aGl0ZS1zcGFjZTpw
-cmUtd3JhcCI+CTwvc3Bhbj5PRk9OT19WRU5ET1JfU1RFLDwvZGl2PjxkaXY+PHNwYW4gc3R5bGU9
-IndoaXRlLXNwYWNlOnByZS13cmFwIj4JPC9zcGFuPk9GT05PX1ZFTkRPUl9NQk0sPC9kaXY+PGRp
-dj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3NwYW4+T0ZPTk9fVkVORE9S
-X0dPQkksPC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3Nw
-YW4+T0ZPTk9fVkVORE9SX1FVQUxDT01NLDwvZGl2PjxkaXY+PHNwYW4gc3R5bGU9IndoaXRlLXNw
-YWNlOnByZS13cmFwIj4JPC9zcGFuPk9GT05PX1ZFTkRPUl9IU08sPC9kaXY+PGRpdj48c3BhbiBz
-dHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3NwYW4+T0ZPTk9fVkVORE9SX1pURSw8L2Rp
-dj48ZGl2PjxzcGFuIHN0eWxlPSJ3aGl0ZS1zcGFjZTpwcmUtd3JhcCI+CTwvc3Bhbj5PRk9OT19W
-RU5ET1JfSFVBV0VJLDwvZGl2PjxkaXY+PHNwYW4gc3R5bGU9IndoaXRlLXNwYWNlOnByZS13cmFw
-Ij4JPC9zcGFuPk9GT05PX1ZFTkRPUl9TSUVSUkEsPC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hp
-dGUtc3BhY2U6cHJlLXdyYXAiPgk8L3NwYW4+T0ZPTk9fVkVORE9SX05PVkFURUwsPC9kaXY+PGRp
-dj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3NwYW4+T0ZPTk9fVkVORE9S
-X1dBVkVDT00sPC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8
-L3NwYW4+T0ZPTk9fVkVORE9SX05PS0lBLDwvZGl2PjxkaXY+PHNwYW4gc3R5bGU9IndoaXRlLXNw
-YWNlOnByZS13cmFwIj4JPC9zcGFuPk9GT05PX1ZFTkRPUl9QSE9ORVNJTSw8L2Rpdj48ZGl2Pjxz
-cGFuIHN0eWxlPSJ3aGl0ZS1zcGFjZTpwcmUtd3JhcCI+CTwvc3Bhbj5PRk9OT19WRU5ET1JfVEVM
-SVQsPC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3NwYW4+
-T0ZPTk9fVkVORE9SX1NQRUVEVVAsPC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6
-cHJlLXdyYXAiPgk8L3NwYW4+T0ZPTk9fVkVORE9SX1NBTVNVTkcsPC9kaXY+PGRpdj48c3BhbiBz
-dHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3NwYW4+T0ZPTk9fVkVORE9SX1NJTUNPTSw8
-L2Rpdj48ZGl2PjxzcGFuIHN0eWxlPSJ3aGl0ZS1zcGFjZTpwcmUtd3JhcCI+CTwvc3Bhbj5PRk9O
-T19WRU5ET1JfSUNFUkEsPC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdy
-YXAiPgk8L3NwYW4+T0ZPTk9fVkVORE9SX0FMQ0FURUwsPC9kaXY+PGRpdj48c3BhbiBzdHlsZT0i
-d2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3NwYW4+T0ZPTk9fVkVORE9SX1FVRUNURUwsPC9kaXY+
-PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3NwYW4+T0ZPTk9fVkVO
-RE9SX1VCTE9YLDwvZGl2PjxkaXY+PHNwYW4gc3R5bGU9IndoaXRlLXNwYWNlOnByZS13cmFwIj4J
-PC9zcGFuPk9GT05PX1ZFTkRPUl9HRU1BTFRPLDwvZGl2PjxkaXY+PHNwYW4gc3R5bGU9IndoaXRl
-LXNwYWNlOnByZS13cmFwIj4JPC9zcGFuPk9GT05PX1ZFTkRPUl9YTU0sPC9kaXY+PGRpdj59Ozwv
-ZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+ZW51bSBnZW1hbHRvX2F1dGhf
-dHlwZSB7PC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3Nw
-YW4+T1ZfR0VNQUxUT19BVVRIX0NHQVVUSCA9IDAsPC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hp
-dGUtc3BhY2U6cHJlLXdyYXAiPgk8L3NwYW4+T1ZfR0VNQUxUT19BVVRIX1NHQVVUSF9QV0RfVVNF
-UiA9IDEsPC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3Nw
-YW4+T1ZfR0VNQUxUT19BVVRIX1NHQVVUSF9VU0VSX1BXRCA9IDIsPC9kaXY+PGRpdj59OzwvZGl2
-PjxkaXY+PGJyPjwvZGl2PjxkaXY+c3RydWN0IG92X2dlbWFsdG8gezwvZGl2PjxkaXY+PHNwYW4g
-c3R5bGU9IndoaXRlLXNwYWNlOnByZS13cmFwIj4JPC9zcGFuPmVudW0gZ2VtYWx0b19hdXRoX3R5
-cGUgYXV0aDs8L2Rpdj48ZGl2PjxzcGFuIHN0eWxlPSJ3aGl0ZS1zcGFjZTpwcmUtd3JhcCI+CTwv
-c3Bhbj5nYm9vbGVhbiB2dHNfd2l0aF9xdW90ZXM7PC9kaXY+PGRpdj59OzwvZGl2PjxkaXY+PGJy
-PjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+c3RydWN0IG92X3F1ZWN0ZWwgezwvZGl2PjxkaXY+
-PHNwYW4gc3R5bGU9IndoaXRlLXNwYWNlOnByZS13cmFwIj4JPC9zcGFuPmdib29sZWFuIHVzZV9x
-dHJwaW47PC9kaXY+PGRpdj59OzwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+c3RydWN0IG92X3Np
-bWNvbSB7PC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3Nw
-YW4+Z2Jvb2xlYW4gdXNlX2F0ZDk5OzwvZGl2PjxkaXY+fTs8L2Rpdj48ZGl2Pjxicj48L2Rpdj48
-ZGl2PnN0cnVjdCBvdl91YmxveCB7PC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6
-cHJlLXdyYXAiPgk8L3NwYW4+Z2Jvb2xlYW4gdG9ieV9sMjs8L2Rpdj48ZGl2Pn07PC9kaXY+PGRp
-dj48YnI+PC9kaXY+PGRpdj5zdHJ1Y3Qgb3Zfd2F2ZWNvbSB7PC9kaXY+PGRpdj48c3BhbiBzdHls
-ZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3NwYW4+Z2Jvb2xlYW4gc2hvcnRfY3Btczs8L2Rp
-dj48ZGl2Pn07PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5zdHJ1Y3Qgb2Zvbm9fdmVuZG9yX3Bh
-cmFtZXRlcnMgezwvZGl2PjxkaXY+PHNwYW4gc3R5bGU9IndoaXRlLXNwYWNlOnByZS13cmFwIj4J
-PC9zcGFuPmVudW0gb2Zvbm9fdmVuZG9yIHZlbmRvcjs8L2Rpdj48ZGl2PjxzcGFuIHN0eWxlPSJ3
-aGl0ZS1zcGFjZTpwcmUtd3JhcCI+CTwvc3Bhbj51bnNpZ25lZCBpbnQgbW9kZWw7PC9kaXY+PGRp
-dj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgk8L3NwYW4+dW5pb24gezwvZGl2
-PjxkaXY+PHNwYW4gc3R5bGU9IndoaXRlLXNwYWNlOnByZS13cmFwIj4JCTwvc3Bhbj5zdHJ1Y3Qg
-b3ZfZ2VtYWx0byBnZW1hbHRvOzwvZGl2PjxkaXY+PHNwYW4gc3R5bGU9IndoaXRlLXNwYWNlOnBy
-ZS13cmFwIj4JCTwvc3Bhbj5zdHJ1Y3Qgb3ZfcXVlY3RlbCBxdWVsY3RlbDs8L2Rpdj48ZGl2Pjxz
-cGFuIHN0eWxlPSJ3aGl0ZS1zcGFjZTpwcmUtd3JhcCI+CQk8L3NwYW4+c3RydWN0IG92X3NpbWNv
-bSBzaW1jb207PC9kaXY+PGRpdj48c3BhbiBzdHlsZT0id2hpdGUtc3BhY2U6cHJlLXdyYXAiPgkJ
-PC9zcGFuPnN0cnVjdCBvdl91YmxveCB1YmxveDs8L2Rpdj48ZGl2PjxzcGFuIHN0eWxlPSJ3aGl0
-ZS1zcGFjZTpwcmUtd3JhcCI+CQk8L3NwYW4+c3RydWN0IG92X3dhdmVjb20gd2F2ZWNvbTs8L2Rp
-dj48ZGl2PjxzcGFuIHN0eWxlPSJ3aGl0ZS1zcGFjZTpwcmUtd3JhcCI+CTwvc3Bhbj59OzwvZGl2
-PjxkaXY+fTs8L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PmV4dGVybiBzdHJ1Y3Qgb2Zvbm9fdmVu
-ZG9yX3BhcmFtZXRlcnMgb3ZfZ2VuZXJpYzs8L2Rpdj48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2
-Pjxicj48L2Rpdj48ZGl2PjxkaXY+PT09PT09PT09PT0gaW4gZHJpdmVycy9hdG1vZGVtL2F0bW9k
-ZW0uYzo8L2Rpdj48YnIgY2xhc3M9Im1fNTU3MzE0NTUwMjQ3NjIzMTExM2dtYWlsLUFwcGxlLWlu
-dGVyY2hhbmdlLW5ld2xpbmUiPjwvZGl2PjxkaXY+PGRpdj5zdHJ1Y3Qgb2Zvbm9fdmVuZG9yX3Bh
-cmFtZXRlcnMgb3ZfZ2VuZXJpYyA9IHs8L2Rpdj48ZGl2PjxzcGFuIHN0eWxlPSJ3aGl0ZS1zcGFj
-ZTpwcmUtd3JhcCI+CTwvc3Bhbj5PRk9OT19WRU5ET1JfR0VORVJJQywgMDwvZGl2PjxkaXY+fTs8
-L2Rpdj48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2Pj09PT09PT09PT08
-L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PmFuZCB0aGVuIGNoYW5nZSB0aGUgKl9jcmVhdGUoKSBm
-dW5jdGlvbnMgdG8gdXNlICYjMzk7c3RydWN0IG9mb25vX3ZlbmRvcl9wYXJhbWV0ZXJzIComIzM5
-OyBpbnN0ZWFkIG9mICYjMzk7dW5zaWduZWQgaW50IHZlbmRvciYjMzk7LCB3aXRoIGRlZmF1bHQg
-JmFtcDtvdl9nZW5lcmljLjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+SW4gdGhlIGV4YW1wbGUg
-YWJvdmUsIEkgaGF2ZSBzaG93biBkaWZmZXJlbmNlcyBmb3IgdGhlIHZhcmlvdXMgR2VtYWx0byBh
-dXRoZW50aWNhdGlvbiBjb21tYW5kcyAoMyBvcHRpb25zKSwgdGhhdMKgIGNyb3NzIHdpdGggdGhl
-IG9wdGlvbnMgZm9yIFZUUy48L2Rpdj48ZGl2PkFuZCB0aGVuIG1vc3Qgb2YgdGhlIHNldHRpbmdz
-IGFyZSBjb21tb24gZm9yIEdlbWFsdG8gbW9kZWxzIChjdXJyZW50bHkgZmFjdG9yZWQgd2l0aCB0
-aGUgdmVuZG9yPU9GT05PX1ZFTkRPUl9DSU5URVJJT04pLjwvZGl2PjxkaXY+SWbCoCB0b21vcnJv
-dyBJIGhhdmUgdG8gZGVjbGFyZSBtb2RlbHMgZm9yIHRoZXNlIHNpbXBsZSBzZXR0aW5ncywgSSBo
-YXZlIHRvIGFkZCBhdCBsZWFzdCA2IHdpdGggdGhlIGN1cnJlbnQgc3lzdGVtLCBhbmQgaGF2aW5n
-IGEgZnVsbCBkcml2ZXIganVzdCBiZWNhdXNlIG9mIHRoZXNlIHR3byBBVCBjb21tYW5kcyBzZWVt
-cyBuZWVkbGVzcy48YnI+PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5UaGUgY29kZSB3b3VsZCBi
-ZSBzaW1wbGlmaWVkIGJlY2F1c2UgaW4gZ2VuZXJhbCBpbiBhIHN3aXRjaCB0aGVyZSB3aWxsIGJl
-IG9ubHkgMSB2ZW5kb3IsIHdpdGggdGhlIGN1cnJlbnQgc3lzdGVtIHRoZXJlIHdvdWxkIGJlIDYu
-PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5JcyBpdCBvayBpZiBJIHVwZGF0ZSB0aGUgY29kZSB3
-aXRoIHRoaXMgdmVuZG9yIHN5c3RlbT8gSSB3aWxsIGhhdmUgdG8gc3VibWl0IHRoZSBlbnRpcmUg
-dHJlZSwgbm90IGJ5IHN1YmRpcmVjdG9yaWVzLCB0byBoYXZlIGEgY29uc2lzdGVudCBhbmQgY29t
-cGlsaW5nIGNvbW1pdC48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PlJlZ2FyZHMsPC9kaXY+PGRp
-dj5HaWFjaW50bzwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJyPjwv
-ZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxkaXY+PGJy
-PjwvZGl2PjwvZGl2PjwvZGl2PjwvZGl2PjwvZGl2Pjxicj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90
-ZSI+PGRpdiBkaXI9Imx0ciI+T24gRnJpLCBTZXAgNywgMjAxOCBhdCA1OjA5IFBNIERlbmlzIEtl
-bnppb3IgJmx0OzxhIGhyZWY9Im1haWx0bzpkZW5rZW56QGdtYWlsLmNvbSIgdGFyZ2V0PSJfYmxh
-bmsiPmRlbmtlbnpAZ21haWwuY29tPC9hPiZndDsgd3JvdGU6PGJyPjwvZGl2PjxibG9ja3F1b3Rl
-IGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRlci1sZWZ0
-OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPkhpIEdpYWNpbnRvLDxicj4KPGJyPgpP
-biAwOS8wNy8yMDE4IDAzOjA5IEFNLCBHaWFjaW50byBDaWZlbGxpIHdyb3RlOjxicj4KJmd0OyBE
-ZWFyIERlbmlzLCBhbGwsPGJyPgomZ3Q7IDxicj4KJmd0OyB3aGlsZSBwcmVwYXJpbmcgdGhlIEdl
-bWFsdG8gZHJpdmVyLCBJIHNlZSB0aGF0IHRoZXJlIGlzIGEgcG90ZW50aWFsIDxicj4KJmd0OyBz
-aG9ydGNvbWluZyB3aXRoIHRoZSB2ZW5kb3Igc3RydWN0dXJlIGluIHRoZSBhdG1vZGVtLiBJIGNh
-biBzZXQgPGJyPgomZ3Q7IE9GT05PX1ZFTkRPUl9HRU1BTFRPX21vZGVsLCBidXQgdGhpcyBjb3Vs
-ZCBiZSBhIHZlcnkgbG9uZyBsaXN0IGZvciBhbGwgPGJyPgomZ3Q7IG9wdGlvbnMgdG8gbWFpbnRh
-aW4uIEkgc2VlIHRoZSB0ZW5kZW5jeSBhbHNvIGZvciBvdGhlciBtYW51ZmFjdHVyZXJzLjxicj4K
-Jmd0OyBXb3VsZCBpdCBiZSBvayBpZiBJIGNvbnZlcnQgdGhlIHZlbmRvciBpbnRlZ2VyIGluIGEg
-c3RydWN0dXJlIHdpdGggbW9kZWwgPGJyPgomZ3Q7IGFuZCBmbGFncz88YnI+CiZndDsgVGhpcyB3
-b3VsZCBtYWtlIHRoZSBjdXJyZW50IGNvZGUgbW9yZSBjb21wYWN0IGFuZCBjbGVhcmVyLjxicj4K
-PGJyPgpGZWVsIGZyZWUgdG8gc3VnZ2VzdCBzb21ldGhpbmcgbW9yZSBjb25jcmV0ZSBpbGx1c3Ry
-YXRpbmcgaG93IHlvdXIgPGJyPgpwcm9wb3NhbCB3b3VsZCByZXN1bHQgaW4gbW9yZSBjb21wYWN0
-IGNvZGUuwqAgSXQgc2VlbXMgdG8gbWUgdGhhdCBpdCA8YnI+CndvdWxkIGJlIHF1aXRlIGRpc3J1
-cHRpdmUsIGJ1dCBJIGFsd2F5cyB0cnkgdG8gaGF2ZSBhbiBvcGVuIG1pbmQgOik8YnI+Cjxicj4K
-QnV0IG9mIGNvdXJzZSB0aGVyZSBhcmUgb3RoZXIgJiMzOTtjcmVhdGl2ZSYjMzk7IHdheXMgd2Ug
-Y2FuIHV0aWxpemUgdG8gaGFuZGxlIDxicj4KdGhpcyBhcyB3ZWxsLjxicj4KPGJyPgomZ3Q7IDxi
-cj4KJmd0OyBUaGUgYWx0ZXJuYXRpdmUgb2YgY2xvbmluZyB0aGUgYXRtb2RlbSBpcyBsZXNzIHRl
-bXB0aW5nLCBiZWNhdXNlIHRoZW4gaXQgPGJyPgomZ3Q7IG5lZWRzIGNvbnN0YW50IG1vbml0b3Jp
-bmcgb2YgdGhlIGF0bW9kZW0gdG8gcG9ydGluZyB0aGUgZmVhdHVyZXMgaW4gaXQsIDxicj4KJmd0
-OyBvciBjb252ZXJzZWx5IG1pc3NpbmcgZmVhdHVyZXMgaW4gdGhpcyBnZW5lcmFsIGRyaXZlci4g
-T25lIGV4YW1wbGUgaXMgPGJyPgomZ3Q7IGZvciB0aGUgaW5kaWNhdG9yc8KgK0NHUkVHLytDRVJF
-Ry8rQzVHUkVHIHRoYXQgd2UgYXJlIGFkZGluZyBpbiBhdG1vZGVtIDxicj4KJmd0OyAoZ3Bycy5j
-KSwgaW5zdGVhZCBvZiB0aGUgdW5pcXVlwqArQ0dSRUcgdGhhdCBkb2VzbiYjMzk7dCB3b3JrIGFu
-eW1vcmUgZm9yIExURSA8YnI+CiZndDsgKGluIHRoZSAyNy4wMDcpLiBJZiBJIGFkZCBpdCBpbiBH
-ZW1hbHRvIGRyaXZlciwgaXQgd2lsbCBiZSBtaXNzaW5nIGluIDxicj4KJmd0OyB0aGUgYXRtb2Rl
-bS48YnI+Cjxicj4KQXJlbiYjMzk7dCB0aGVzZSBjb21tYW5kcyBub3cgc3RhbmRhcmRpemVkP8Kg
-IFdoeSBkbyB5b3UgbmVlZCBzdWItbW9kZWwgPGJyPgppbmZvcm1hdGlvbiB0byBoYW5kbGUgdGhp
-cz88YnI+Cjxicj4KRWl0aGVyIHdheSwgaXQgaXMgcXVpdGUgaGFyZCB0byBnaXZlIHlvdSBhbnkg
-c3VnZ2VzdGlvbnMgd2l0aG91dCBzZWVpbmcgPGJyPgpjb25jcmV0ZWx5IHdoYXQgeW91JiMzOTty
-ZSB0cnlpbmcgdG8gZG8uwqAgUGVyaGFwcyB5b3Ugd2FudCB0byBzdWJtaXQgd2hhdCA8YnI+Cnlv
-dSBoYXZlIChvciBzb21lIHN1YnNldCB0aGF0IGlsbHVzdHJhdGVzIHRoZSBpc3N1ZXMgeW91JiMz
-OTtyZSBoYXZpbmcpIHRvIDxicj4KdGhlIG1haWxpbmcgbGlzdCAoZXZlbiBpZiBpdCBpc24mIzM5
-O3QgY29tcGxldGVseSByZWFkeSwganVzdCB0YWcgaXQgYXMgPGJyPgomIzM5O1JGQyYjMzk7KSBh
-bmQgdGhlbiBJIGNhbiBnaXZlIHlvdSBtb3JlIGNvbmNyZXRlIGZlZWRiYWNrLjxicj4KPGJyPgpS
-ZWdhcmRzLDxicj4KLURlbmlzPGJyPgo8L2Jsb2NrcXVvdGU+PC9kaXY+Cg==
-
---===============5931812796149134772==--
+--===============6356031810885690473==--
 
