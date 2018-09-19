@@ -1,63 +1,108 @@
-Content-Type: multipart/mixed; boundary="===============5529645900336688777=="
+Content-Type: multipart/mixed; boundary="===============5877882888862421161=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Pi=C4=8Dugins?= Arsenijs <crimier@yandex.ru>
-Subject: Re: [PATCH 3/3] sim800: adding documentation to inform about the udev
- rule the user must add
-Date: Wed, 19 Sep 2018 22:27:36 +0300
-Message-ID: <2040951537385256@sas1-46c84f197234.qloud-c.yandex.net>
-In-Reply-To: <20180919192501.GA3536@turing>
+From: Clement Viel <vielclement@gmail.com>
+Subject: Re: [PATCH 1/3] sim800: adding support for Simcom SIM800 modem
+Date: Wed, 19 Sep 2018 21:45:31 +0200
+Message-ID: <20180919194531.GB3536@turing>
+In-Reply-To: <8f8dea50-577d-fa93-509a-3a8103a7fff5@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5529645900336688777==
+--===============5877882888862421161==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+On Wed, Sep 19, 2018 at 11:51:26AM -0500, Denis Kenzior wrote:
 
---===============5529645900336688777==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+Hi,
 
-PGRpdj4mZ3Q7K1RvIGVuYWJsZSBTSU05MDAgbW9kdWxlIHN1cHBvcnQgeW91IG5lZWQgdG8gcHV0
-IHRoZSBmb2xsb3dpbmc8L2Rpdj48ZGl2PsKgPC9kaXY+PGRpdj5CVFcsIHRoZXJlJ3MgYSB0eXBv
-IGluIHlvdXIgZG9jdW1lbnRhdGlvbiBwYXRjaCAtIHlvdSdyZSBzdGlsbDwvZGl2PjxkaXY+bWVu
-dGlvbmluZyAiU0lNOTAwIiBpbiB0aGUgZGVzY3JpcHRpb24uPC9kaXY+PGRpdj7CoDwvZGl2Pjxk
-aXY+Q2hlZXJzITxiciAvPkFyc2VuaWpzPC9kaXY+PGRpdj7CoDwvZGl2PjxkaXY+MTkuMDkuMjAx
-OCwgMjI6MjUsICJDbGVtZW50IFZpZWwiICZsdDt2aWVsY2xlbWVudEBnbWFpbC5jb20mZ3Q7Ojwv
-ZGl2PjxibG9ja3F1b3RlIHR5cGU9ImNpdGUiPjxwPk9uIFdlZCwgU2VwIDE5LCAyMDE4IGF0IDEx
-OjQzOjQ5QU0gLTA1MDAsIERlbmlzIEtlbnppb3Igd3JvdGU6PC9wPjxibG9ja3F1b3RlPsKgSGks
-PGJyIC8+PGJyIC8+wqBPbiAwOS8xOC8yMDE4IDAzOjM2IFBNLCBDbMOpbWVudFZpZWwgd3JvdGU6
-PGJyIC8+wqAmZ3Q7RnJvbTogY2xlbSAmbHQ7PGEgZGF0YS1leHRlcm5hbD0idHJ1ZSIgaHJlZj0i
-bWFpbHRvOnZpZWxjbGVtZW50QGdtYWlsLmNvbSI+dmllbGNsZW1lbnRAZ21haWwuY29tPC9hPiZn
-dDs8YnIgLz48YnIgLz7CoENhbiB5b3UgZml4IHlvdXIgQXV0aG9yIGluZm9ybWF0aW9uIChzZWUg
-QVVUSE9SUyBmb3IgYW4gZXhhbXBsZSkuIE90aGVyd2lzZTxiciAvPsKgSSBjYW5ub3QgdGFrZSB0
-aGVzZS4uLjwvYmxvY2txdW90ZT48cD48YnIgLz5ZZXAsIEknbGwgZG8gaXQgdGhlIHJpZ2h0IHdh
-eTxiciAvPsKgPC9wPsKgPGJsb2NrcXVvdGU+wqAmZ3Q7PGJyIC8+wqAmZ3Q7LS0tPGJyIC8+wqAm
-Z3Q7IGRvYy9zaW04MDAtbW9kZW0udHh0IHwgNyArKysrKysrPGJyIC8+wqAmZ3Q7IDEgZmlsZSBj
-aGFuZ2VkLCA3IGluc2VydGlvbnMoKyk8YnIgLz7CoCZndDsgY3JlYXRlIG1vZGUgMTAwNjQ0IGRv
-Yy9zaW04MDAtbW9kZW0udHh0PGJyIC8+wqAmZ3Q7PGJyIC8+wqAmZ3Q7ZGlmZiAtLWdpdCBhL2Rv
-Yy9zaW04MDAtbW9kZW0udHh0IGIvZG9jL3NpbTgwMC1tb2RlbS50eHQ8YnIgLz7CoCZndDtuZXcg
-ZmlsZSBtb2RlIDEwMDY0NDxiciAvPsKgJmd0O2luZGV4IDxzcGFuPjAwMDAwMDA8L3NwYW4+Li48
-c3Bhbj42NzMxODc5PC9zcGFuPjxiciAvPsKgJmd0Oy0tLSAvZGV2L251bGw8YnIgLz7CoCZndDsr
-KysgYi9kb2Mvc2ltODAwLW1vZGVtLnR4dDxiciAvPsKgJmd0O0BAIC0wLDAgKzEsNyBAQDxiciAv
-PsKgJmd0OytTSU04MDAgbW9kZW0gdXNhZ2U8YnIgLz7CoCZndDsrPT09PT09PT09PT09PT09PT09
-PTxiciAvPsKgJmd0Oys8YnIgLz7CoCZndDsrVG8gZW5hYmxlIFNJTTkwMCBtb2R1bGUgc3VwcG9y
-dCB5b3UgbmVlZCB0byBwdXQgdGhlIGZvbGxvd2luZzxiciAvPsKgJmd0Oyt1ZGV2IHJ1bGUgaW50
-byBhcHByb3ByaWF0ZSBmaWxlIGluIC97ZXRjLGxpYn0vdWRldi9ydWxlcy5kOjxiciAvPsKgJmd0
-Oys8YnIgLz7CoCZndDsrS0VSTkVMPT0idHR5VVNCMCIsIEVOVntPRk9OT19EUklWRVJ9PSJzaW04
-MDAiPGJyIC8+wqAmZ3Q7PGJyIC8+PGJyIC8+wqBTbyBzaW04MDAgaXMgYSBzZXJpYWwgZGV2aWNl
-IHJpZ2h0PyBJIHRha2UgaXQgeW91J3JlIHJ1bm5pbmcgaXQgZnJvbSBhPGJyIC8+wqBzZXJpYWwg
-Y29udmVydGVyIGhlcmU/PC9ibG9ja3F1b3RlPjxwPjxiciAvPlllcywgdGhlcmUgaXMgYSBjb252
-ZXJ0ZXIuIEkgbGV0ICJ0dHlVU0IwIiBhcyB0aGUgc3RhcnRlciBraXQgcHJvdmlkZWQgYnkgU2lt
-Q29tIGNvbWVzIHdpdGggYSBjb252ZXJ0ZXIuPGJyIC8+wqA8L3A+wqA8cD48YnIgLz7CoDwvcD48
-YmxvY2txdW90ZT7CoFJlZ2FyZHMsPGJyIC8+wqAtRGVuaXM8L2Jsb2NrcXVvdGU+PHA+X19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX188YnIgLz5vZm9ubyBtYWls
-aW5nIGxpc3Q8YnIgLz48YSBkYXRhLWV4dGVybmFsPSJ0cnVlIiBocmVmPSJtYWlsdG86b2Zvbm9A
-b2Zvbm8ub3JnIj5vZm9ub0BvZm9uby5vcmc8L2E+PGJyIC8+PGEgaHJlZj0iaHR0cHM6Ly9saXN0
-cy5vZm9uby5vcmcvbWFpbG1hbi9saXN0aW5mby9vZm9ubyI+aHR0cHM6Ly9saXN0cy5vZm9uby5v
-cmcvbWFpbG1hbi9saXN0aW5mby9vZm9ubzwvYT48L3A+PC9ibG9ja3F1b3RlPg==
---===============5529645900336688777==--
+> Hi,
+> =
+
+> On 09/18/2018 03:36 PM, Cl=C3=A9mentViel wrote:
+> >From: clem <vielclement@gmail.com>
+> >
+> =
+
+> You might want to describe how this is different from sim900 that it
+> warrants a fully separate driver?
+> =
+
+> If there are only minor differences, then this can be handled via UDEV
+> attributes or querying +CGMM, etc.
+> =
+
+> >---
+> >  Makefile.am      |   4 +
+> >  plugins/sim800.c | 424 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++++++
+> >  2 files changed, 428 insertions(+)
+> >  create mode 100644 plugins/sim800.c
+> >
+
+I guess I went straightforward and because sim800 wasn't supported I wanted=
+ to add it as a plugin.
+Sim800 is really close from sim900, in fact theey are compatible. But becau=
+se sim800 series are newer.
+sim800 have more AT commands than sim900  so maybe the compatibility won't =
+be complete if the two drivers are merged...
+
+
+> =
+
+> <snip>
+> =
+
+> >+
+> >+static void sim800_post_sim(struct ofono_modem *modem)
+> >+{
+> >+	struct sim800_data *data =3D ofono_modem_get_data(modem);
+> >+	struct ofono_gprs *gprs;
+> >+	struct ofono_gprs_context *gc;
+> >+
+> >+	DBG("%p", modem);
+> >+
+> >+	/* Dirty Hack : give some time to sim800 for multiplexing
+> >+	 *				to be effective and avoid VOICE_DLC to be
+> >+	 *				flooded thus leading to a "famine" situation
+> >+	 */
+> >+
+> >+	sleep(2);
+> =
+
+> No sleeps inside plugins.  That blocks the entire daemon and we can't have
+> that.  How does this help you anyway?  GAtChat is a queue, so only 1 comm=
+and
+> is outstanding at a time.
+
+Yep that's why the "Dirty Hack" comment, I'll try another trick, there is a=
+n URC that we can trigger on.
+
+> =
+
+> >+	ofono_sms_create(modem, OFONO_VENDOR_SIMCOM, "atmodem",
+> >+						data->dlcs[SMS_DLC]);
+> >+
+> >+
+> >+	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->dlcs[GPRS_DLC]);
+> >+	if (gprs =3D=3D NULL)
+> >+		return;
+> >+
+> >+	gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_SIMCOM,
+> >+					"atmodem", data->dlcs[GPRS_DLC]);
+> >+	if (gc)
+> >+		ofono_gprs_add_context(gprs, gc);
+> >+}
+> >+
+> =
+
+> Regards,
+> -Denis
+
+Regards =
+
+Clement
+
+--===============5877882888862421161==--
 
