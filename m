@@ -1,69 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============5837814797261478773=="
+Content-Type: multipart/mixed; boundary="===============5529645900336688777=="
 MIME-Version: 1.0
-From: Clement Viel <vielclement@gmail.com>
+From: =?unknown-8bit?q?Pi=C4=8Dugins?= Arsenijs <crimier@yandex.ru>
 Subject: Re: [PATCH 3/3] sim800: adding documentation to inform about the udev
  rule the user must add
-Date: Wed, 19 Sep 2018 21:25:02 +0200
-Message-ID: <20180919192501.GA3536@turing>
-In-Reply-To: <bc5638ae-f6f3-2a2a-9af2-3d9bf0405a3e@gmail.com>
+Date: Wed, 19 Sep 2018 22:27:36 +0300
+Message-ID: <2040951537385256@sas1-46c84f197234.qloud-c.yandex.net>
+In-Reply-To: <20180919192501.GA3536@turing>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5837814797261478773==
+--===============5529645900336688777==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Sep 19, 2018 at 11:43:49AM -0500, Denis Kenzior wrote:
-> Hi,
-> =
 
-> On 09/18/2018 03:36 PM, Cl=C3=A9mentViel wrote:
-> >From: clem <vielclement@gmail.com>
-> =
+--===============5529645900336688777==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-> Can you fix your Author information (see AUTHORS for an example). Otherwi=
-se
-> I cannot take these...
-
-Yep, I'll do it the right way
-
-> =
-
-> >
-> >---
-> >  doc/sim800-modem.txt | 7 +++++++
-> >  1 file changed, 7 insertions(+)
-> >  create mode 100644 doc/sim800-modem.txt
-> >
-> >diff --git a/doc/sim800-modem.txt b/doc/sim800-modem.txt
-> >new file mode 100644
-> >index 0000000..6731879
-> >--- /dev/null
-> >+++ b/doc/sim800-modem.txt
-> >@@ -0,0 +1,7 @@
-> >+SIM800 modem usage
-> >+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> >+
-> >+To enable SIM900 module support you need to put the following
-> >+udev rule into appropriate file in /{etc,lib}/udev/rules.d:
-> >+
-> >+KERNEL=3D=3D"ttyUSB0", ENV{OFONO_DRIVER}=3D"sim800"
-> >
-> =
-
-> So sim800 is a serial device right?  I take it you're running it from a
-> serial converter here?
-
-Yes, there is a converter. I let "ttyUSB0" as the starter kit provided by S=
-imCom comes with a converter.
-
-> =
-
-
-
-> Regards,
-> -Denis
-
---===============5837814797261478773==--
+PGRpdj4mZ3Q7K1RvIGVuYWJsZSBTSU05MDAgbW9kdWxlIHN1cHBvcnQgeW91IG5lZWQgdG8gcHV0
+IHRoZSBmb2xsb3dpbmc8L2Rpdj48ZGl2PsKgPC9kaXY+PGRpdj5CVFcsIHRoZXJlJ3MgYSB0eXBv
+IGluIHlvdXIgZG9jdW1lbnRhdGlvbiBwYXRjaCAtIHlvdSdyZSBzdGlsbDwvZGl2PjxkaXY+bWVu
+dGlvbmluZyAiU0lNOTAwIiBpbiB0aGUgZGVzY3JpcHRpb24uPC9kaXY+PGRpdj7CoDwvZGl2Pjxk
+aXY+Q2hlZXJzITxiciAvPkFyc2VuaWpzPC9kaXY+PGRpdj7CoDwvZGl2PjxkaXY+MTkuMDkuMjAx
+OCwgMjI6MjUsICJDbGVtZW50IFZpZWwiICZsdDt2aWVsY2xlbWVudEBnbWFpbC5jb20mZ3Q7Ojwv
+ZGl2PjxibG9ja3F1b3RlIHR5cGU9ImNpdGUiPjxwPk9uIFdlZCwgU2VwIDE5LCAyMDE4IGF0IDEx
+OjQzOjQ5QU0gLTA1MDAsIERlbmlzIEtlbnppb3Igd3JvdGU6PC9wPjxibG9ja3F1b3RlPsKgSGks
+PGJyIC8+PGJyIC8+wqBPbiAwOS8xOC8yMDE4IDAzOjM2IFBNLCBDbMOpbWVudFZpZWwgd3JvdGU6
+PGJyIC8+wqAmZ3Q7RnJvbTogY2xlbSAmbHQ7PGEgZGF0YS1leHRlcm5hbD0idHJ1ZSIgaHJlZj0i
+bWFpbHRvOnZpZWxjbGVtZW50QGdtYWlsLmNvbSI+dmllbGNsZW1lbnRAZ21haWwuY29tPC9hPiZn
+dDs8YnIgLz48YnIgLz7CoENhbiB5b3UgZml4IHlvdXIgQXV0aG9yIGluZm9ybWF0aW9uIChzZWUg
+QVVUSE9SUyBmb3IgYW4gZXhhbXBsZSkuIE90aGVyd2lzZTxiciAvPsKgSSBjYW5ub3QgdGFrZSB0
+aGVzZS4uLjwvYmxvY2txdW90ZT48cD48YnIgLz5ZZXAsIEknbGwgZG8gaXQgdGhlIHJpZ2h0IHdh
+eTxiciAvPsKgPC9wPsKgPGJsb2NrcXVvdGU+wqAmZ3Q7PGJyIC8+wqAmZ3Q7LS0tPGJyIC8+wqAm
+Z3Q7IGRvYy9zaW04MDAtbW9kZW0udHh0IHwgNyArKysrKysrPGJyIC8+wqAmZ3Q7IDEgZmlsZSBj
+aGFuZ2VkLCA3IGluc2VydGlvbnMoKyk8YnIgLz7CoCZndDsgY3JlYXRlIG1vZGUgMTAwNjQ0IGRv
+Yy9zaW04MDAtbW9kZW0udHh0PGJyIC8+wqAmZ3Q7PGJyIC8+wqAmZ3Q7ZGlmZiAtLWdpdCBhL2Rv
+Yy9zaW04MDAtbW9kZW0udHh0IGIvZG9jL3NpbTgwMC1tb2RlbS50eHQ8YnIgLz7CoCZndDtuZXcg
+ZmlsZSBtb2RlIDEwMDY0NDxiciAvPsKgJmd0O2luZGV4IDxzcGFuPjAwMDAwMDA8L3NwYW4+Li48
+c3Bhbj42NzMxODc5PC9zcGFuPjxiciAvPsKgJmd0Oy0tLSAvZGV2L251bGw8YnIgLz7CoCZndDsr
+KysgYi9kb2Mvc2ltODAwLW1vZGVtLnR4dDxiciAvPsKgJmd0O0BAIC0wLDAgKzEsNyBAQDxiciAv
+PsKgJmd0OytTSU04MDAgbW9kZW0gdXNhZ2U8YnIgLz7CoCZndDsrPT09PT09PT09PT09PT09PT09
+PTxiciAvPsKgJmd0Oys8YnIgLz7CoCZndDsrVG8gZW5hYmxlIFNJTTkwMCBtb2R1bGUgc3VwcG9y
+dCB5b3UgbmVlZCB0byBwdXQgdGhlIGZvbGxvd2luZzxiciAvPsKgJmd0Oyt1ZGV2IHJ1bGUgaW50
+byBhcHByb3ByaWF0ZSBmaWxlIGluIC97ZXRjLGxpYn0vdWRldi9ydWxlcy5kOjxiciAvPsKgJmd0
+Oys8YnIgLz7CoCZndDsrS0VSTkVMPT0idHR5VVNCMCIsIEVOVntPRk9OT19EUklWRVJ9PSJzaW04
+MDAiPGJyIC8+wqAmZ3Q7PGJyIC8+PGJyIC8+wqBTbyBzaW04MDAgaXMgYSBzZXJpYWwgZGV2aWNl
+IHJpZ2h0PyBJIHRha2UgaXQgeW91J3JlIHJ1bm5pbmcgaXQgZnJvbSBhPGJyIC8+wqBzZXJpYWwg
+Y29udmVydGVyIGhlcmU/PC9ibG9ja3F1b3RlPjxwPjxiciAvPlllcywgdGhlcmUgaXMgYSBjb252
+ZXJ0ZXIuIEkgbGV0ICJ0dHlVU0IwIiBhcyB0aGUgc3RhcnRlciBraXQgcHJvdmlkZWQgYnkgU2lt
+Q29tIGNvbWVzIHdpdGggYSBjb252ZXJ0ZXIuPGJyIC8+wqA8L3A+wqA8cD48YnIgLz7CoDwvcD48
+YmxvY2txdW90ZT7CoFJlZ2FyZHMsPGJyIC8+wqAtRGVuaXM8L2Jsb2NrcXVvdGU+PHA+X19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX188YnIgLz5vZm9ubyBtYWls
+aW5nIGxpc3Q8YnIgLz48YSBkYXRhLWV4dGVybmFsPSJ0cnVlIiBocmVmPSJtYWlsdG86b2Zvbm9A
+b2Zvbm8ub3JnIj5vZm9ub0BvZm9uby5vcmc8L2E+PGJyIC8+PGEgaHJlZj0iaHR0cHM6Ly9saXN0
+cy5vZm9uby5vcmcvbWFpbG1hbi9saXN0aW5mby9vZm9ubyI+aHR0cHM6Ly9saXN0cy5vZm9uby5v
+cmcvbWFpbG1hbi9saXN0aW5mby9vZm9ubzwvYT48L3A+PC9ibG9ja3F1b3RlPg==
+--===============5529645900336688777==--
 
