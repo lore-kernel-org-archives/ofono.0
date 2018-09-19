@@ -1,128 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============0453925590987028697=="
+Content-Type: multipart/mixed; boundary="===============3963760706817985600=="
 MIME-Version: 1.0
-From: Giacinto Cifelli <gciofono@gmail.com>
-Subject: Re: [PATCH 1/7] extended support for LTE and NR. Some minor fixes.
- part 1 of 7
-Date: Wed, 19 Sep 2018 18:58:54 +0200
-Message-ID: <CAKSBH7FArA-k3LVpH7qkAFO3dYcqs8-Ftj5f1d7Y6-uau8ir-g@mail.gmail.com>
-In-Reply-To: <15b88dc7-f0bc-67c7-3963-5339f4c45613@jolla.com>
+From: =?unknown-8bit?q?Pi=C4=8Dugins?= Arsenijs <crimier@yandex.ru>
+Subject: Re: [PATCH 1/3] sim800: adding support for Simcom SIM800 modem
+Date: Wed, 19 Sep 2018 20:03:27 +0300
+Message-ID: <2048901537376607@iva4-031ea4da33a1.qloud-c.yandex.net>
+In-Reply-To: <8f8dea50-577d-fa93-509a-3a8103a7fff5@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0453925590987028697==
+--===============3963760706817985600==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Sep 19, 2018 at 6:54 PM Slava Monich <slava.monich@jolla.com> wro=
-te:
 
-> On 19/09/18 19:32, Denis Kenzior wrote:
-> > Hi Slava,
-> >
-> >> Anything in include is external API. We do maintain not just
-> >> out-of-tree, but binary plugins. Backward (binary!) compatibility a
-> >> must for us. Please do not break it.
-> >
-> > That is why we have 'OFONO_API_SUBJECT_TO_CHANGE' as a reminder. We
-> > mean it.  D-Bus API is stable, we never made any guarantees about the
-> > internal APIs.
-> >
->
-> I understand that! It makes things easier for you guys.
->
-> But we had to avoid certain compile-time dependencies in ofono, and a
-> straightforward (and perhaps the only) way to achieve that was to use
-> binary plugins. For us plugin API is not subject to change (plugins
-> don't necessarily get upgraded together with ofono), meaning more
-> changes between our fork and upstream in case if upstream breaks it,
-> more maintenance work and more room for errors. Obviously, I would like
-> to keep differences to a minimum.
->
-> I'm just humbly asking - if there's a way to keep plugin API backward
-> compatible, please do it that way. There is at least one person in the
-> world who would appreciate it.
->
->
-Hi Slava,
-
-this special case will not be backward compatible.
-This enum for the authentication methods is handled through switch/cases in
-the code, and some of them miss default. so an additional value will give
-an unpredictable behavior (depending also on how the switch has been
-optimized by the compiler).
-
-Do you think it still makes sense to add an OFONO_GPRS_AUTH_METHOD_ANY ?
-It looks like Denis will not take it anyway if it is not explained clearly
-what it is for and how it is used. I have to say, I cannot see its benefit
-either.
-
-
-> Cheers,
-> -Slava
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> https://lists.ofono.org/mailman/listinfo/ofono
-
-
-BR,
-Giacinto
-
---===============0453925590987028697==
+--===============3963760706817985600==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PGRpdiBkaXI9Imx0ciI+PGJyPjxicj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+PGRpdiBkaXI9
-Imx0ciI+T24gV2VkLCBTZXAgMTksIDIwMTggYXQgNjo1NCBQTSBTbGF2YSBNb25pY2ggJmx0Ozxh
-IGhyZWY9Im1haWx0bzpzbGF2YS5tb25pY2hAam9sbGEuY29tIj5zbGF2YS5tb25pY2hAam9sbGEu
-Y29tPC9hPiZndDsgd3JvdGU6PGJyPjwvZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90
-ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3Bh
-ZGRpbmctbGVmdDoxZXgiPk9uIDE5LzA5LzE4IDE5OjMyLCBEZW5pcyBLZW56aW9yIHdyb3RlOjxi
-cj4KJmd0OyBIaSBTbGF2YSw8YnI+CiZndDs8YnI+CiZndDsmZ3Q7IEFueXRoaW5nIGluIGluY2x1
-ZGUgaXMgZXh0ZXJuYWwgQVBJLiBXZSBkbyBtYWludGFpbiBub3QganVzdCA8YnI+CiZndDsmZ3Q7
-IG91dC1vZi10cmVlLCBidXQgYmluYXJ5IHBsdWdpbnMuIEJhY2t3YXJkIChiaW5hcnkhKSBjb21w
-YXRpYmlsaXR5IGEgPGJyPgomZ3Q7Jmd0OyBtdXN0IGZvciB1cy4gUGxlYXNlIGRvIG5vdCBicmVh
-ayBpdC48YnI+CiZndDs8YnI+CiZndDsgVGhhdCBpcyB3aHkgd2UgaGF2ZSAmIzM5O09GT05PX0FQ
-SV9TVUJKRUNUX1RPX0NIQU5HRSYjMzk7IGFzIGEgcmVtaW5kZXIuIFdlIDxicj4KJmd0OyBtZWFu
-IGl0LsKgIEQtQnVzIEFQSSBpcyBzdGFibGUsIHdlIG5ldmVyIG1hZGUgYW55IGd1YXJhbnRlZXMg
-YWJvdXQgdGhlIDxicj4KJmd0OyBpbnRlcm5hbCBBUElzLjxicj4KJmd0Ozxicj4KPGJyPgpJIHVu
-ZGVyc3RhbmQgdGhhdCEgSXQgbWFrZXMgdGhpbmdzIGVhc2llciBmb3IgeW91IGd1eXMuPGJyPgo8
-YnI+CkJ1dCB3ZSBoYWQgdG8gYXZvaWQgY2VydGFpbiBjb21waWxlLXRpbWUgZGVwZW5kZW5jaWVz
-IGluIG9mb25vLCBhbmQgYSA8YnI+CnN0cmFpZ2h0Zm9yd2FyZCAoYW5kIHBlcmhhcHMgdGhlIG9u
-bHkpIHdheSB0byBhY2hpZXZlIHRoYXQgd2FzIHRvIHVzZSA8YnI+CmJpbmFyeSBwbHVnaW5zLiBG
-b3IgdXMgcGx1Z2luIEFQSSBpcyBub3Qgc3ViamVjdCB0byBjaGFuZ2UgKHBsdWdpbnMgPGJyPgpk
-b24mIzM5O3QgbmVjZXNzYXJpbHkgZ2V0IHVwZ3JhZGVkIHRvZ2V0aGVyIHdpdGggb2Zvbm8pLCBt
-ZWFuaW5nIG1vcmUgPGJyPgpjaGFuZ2VzIGJldHdlZW4gb3VyIGZvcmsgYW5kIHVwc3RyZWFtIGlu
-IGNhc2UgaWYgdXBzdHJlYW0gYnJlYWtzIGl0LCA8YnI+Cm1vcmUgbWFpbnRlbmFuY2Ugd29yayBh
-bmQgbW9yZSByb29tIGZvciBlcnJvcnMuIE9idmlvdXNseSwgSSB3b3VsZCBsaWtlIDxicj4KdG8g
-a2VlcCBkaWZmZXJlbmNlcyB0byBhIG1pbmltdW0uPGJyPgo8YnI+CkkmIzM5O20ganVzdCBodW1i
-bHkgYXNraW5nIC0gaWYgdGhlcmUmIzM5O3MgYSB3YXkgdG8ga2VlcCBwbHVnaW4gQVBJIGJhY2t3
-YXJkIDxicj4KY29tcGF0aWJsZSwgcGxlYXNlIGRvIGl0IHRoYXQgd2F5LiBUaGVyZSBpcyBhdCBs
-ZWFzdCBvbmUgcGVyc29uIGluIHRoZSA8YnI+CndvcmxkIHdobyB3b3VsZCBhcHByZWNpYXRlIGl0
-Ljxicj4KPGJyPjwvYmxvY2txdW90ZT48ZGl2Pjxicj48L2Rpdj48ZGl2PkhpIFNsYXZhLDwvZGl2
-PjxkaXY+PGJyPjwvZGl2PjxkaXY+dGhpcyBzcGVjaWFsIGNhc2Ugd2lsbCBub3QgYmUgYmFja3dh
-cmQgY29tcGF0aWJsZS48L2Rpdj48ZGl2PlRoaXMgZW51bSBmb3IgdGhlIGF1dGhlbnRpY2F0aW9u
-IG1ldGhvZHMgaXMgaGFuZGxlZCB0aHJvdWdoIHN3aXRjaC9jYXNlcyBpbiB0aGUgY29kZSwgYW5k
-IHNvbWUgb2YgdGhlbSBtaXNzIGRlZmF1bHQuIHNvIGFuIGFkZGl0aW9uYWwgdmFsdWUgd2lsbCBn
-aXZlIGFuIHVucHJlZGljdGFibGUgYmVoYXZpb3IgKGRlcGVuZGluZyBhbHNvIG9uIGhvdyB0aGUg
-c3dpdGNoIGhhcyBiZWVuIG9wdGltaXplZCBieSB0aGUgY29tcGlsZXIpLjwvZGl2PjxkaXY+PGJy
-PjwvZGl2PjxkaXY+RG8geW91IHRoaW5rIGl0IHN0aWxsIG1ha2VzIHNlbnNlIHRvIGFkZCBhbiBP
-Rk9OT19HUFJTX0FVVEhfTUVUSE9EX0FOWSA/PC9kaXY+PGRpdj5JdCBsb29rcyBsaWtlIERlbmlz
-IHdpbGwgbm90IHRha2UgaXQgYW55d2F5IGlmIGl0IGlzIG5vdCBleHBsYWluZWQgY2xlYXJseSB3
-aGF0IGl0IGlzIGZvciBhbmQgaG93IGl0IGlzIHVzZWQuIEkgaGF2ZSB0byBzYXksIEkgY2Fubm90
-IHNlZSBpdHMgYmVuZWZpdCBlaXRoZXIuPC9kaXY+PGRpdj7CoDwvZGl2PjxibG9ja3F1b3RlIGNs
-YXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRlci1sZWZ0OjFw
-eCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDoxZXgiPgpDaGVlcnMsPGJyPgotU2xhdmE8YnI+Cl9f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fPGJyPgpvZm9ubyBt
-YWlsaW5nIGxpc3Q8YnI+CjxhIGhyZWY9Im1haWx0bzpvZm9ub0BvZm9uby5vcmciIHRhcmdldD0i
-X2JsYW5rIj5vZm9ub0BvZm9uby5vcmc8L2E+PGJyPgo8YSBocmVmPSJodHRwczovL2xpc3RzLm9m
-b25vLm9yZy9tYWlsbWFuL2xpc3RpbmZvL29mb25vIiByZWw9Im5vcmVmZXJyZXIiIHRhcmdldD0i
-X2JsYW5rIj5odHRwczovL2xpc3RzLm9mb25vLm9yZy9tYWlsbWFuL2xpc3RpbmZvL29mb25vPC9h
-PjwvYmxvY2txdW90ZT48ZGl2Pjxicj48L2Rpdj48ZGl2PkJSLDxicj5HaWFjaW50bzwvZGl2Pjxk
-aXY+wqA8L2Rpdj48L2Rpdj48L2Rpdj4K
-
---===============0453925590987028697==--
+PGRpdj5IZWxsbyE8L2Rpdj48ZGl2PsKgPC9kaXY+PGRpdj4mZ3Q7IFlvdSBtaWdodCB3YW50IHRv
+IGRlc2NyaWJlIGhvdyB0aGlzIGlzIGRpZmZlcmVudCBmcm9tIHNpbTkwMCB0aGF0IGl0PGJyIC8+
+Jmd0OyB3YXJyYW50cyBhIGZ1bGx5IHNlcGFyYXRlIGRyaXZlcj88L2Rpdj48ZGl2PsKgPC9kaXY+
+PGRpdj5JJ3ZlIHRyaWVkIHRvIGFwcGx5IHRoaXMgcGF0Y2ggeWVzdGVyZGF5IGV2ZW5pbmcgKHNp
+bmNlIEkgdG9vIGFtPC9kaXY+PGRpdj5pbnRlcmVzdGVkIGluIFNJTTgwMCBpbnRlZ3JhdGlvbikg
+YW5kIHRyaWVkIHRvIGFwcGx5IGl0LCBwYXRjaCAyPC9kaXY+PGRpdj5kb2Vzbid0IGFwcGx5IG9u
+IGN1cnJlbnQgbWFzdGVyIGZvciBzb21lIHJlYXNvbi4gSGVyZSdzIGEgZGlmZjwvZGl2PjxkaXY+
+YmV0d2VlbiBjdXJyZW50IFNJTTkwMCBhbmQgdGhpcyBTSU04MDA6PC9kaXY+PGRpdj48YSBocmVm
+PSJodHRwczovL21hdHJpeC5vcmcvX21hdHJpeC9tZWRpYS92MS9kb3dubG9hZC9tYXRyaXgub3Jn
+L0txRHhiY3VZTHhyY2NlVWZSb3J4WWd1cyIgZGF0YS1leHRlcm5hbD0idHJ1ZSI+aHR0cHM6Ly9t
+YXRyaXgub3JnL19tYXRyaXgvbWVkaWEvdjEvZG93bmxvYWQvbWF0cml4Lm9yZy9LcUR4YmN1WUx4
+cmNjZVVmUm9yeFlndXM8L2E+PC9kaXY+PGRpdj7CoDwvZGl2PjxkaXY+dGw7ZHI6IGFwYXJ0IGZy
+b208L2Rpdj48ZGl2PsKgPC9kaXY+PGRpdj4tIGFkZGluZyBwaG9uZWJvb2sgc3VwcG9ydCAodHdv
+IGxpbmVzLCBJIGRvbid0IHVuZGVyc3RhbmQgaXQgcXVpdGUgeWV0KTwvZGl2PjxkaXY+LSB0aGUg
+c2xlZXAoKSBoYWNrPC9kaXY+PGRpdj4tIGEgY29tbWVudCBjbGFyaWZ5aW5nIGEgcHJvYmxlbSB3
+aXRoIHNvbWUgdW5rbm93biB2ZXJzaW9uIG9mIGZpcm13YXJlPC9kaXY+PGRpdj4tIERCRygpIGxv
+ZyBjYWxsczwvZGl2PjxkaXY+LSBzaW05MDAgPSZndDsgc2ltODAwIHJlbmFtaW5nPC9kaXY+PGRp
+dj7CoDwvZGl2PjxkaXY+aXQncyBubyBkaWZmZXJlbnQgdGhhbiBjdXJyZW50IFNJTTkwMCBkcml2
+ZXIuIFVuZm9ydHVuYXRlbHksIHRoYXQ8L2Rpdj48ZGl2PmRvZXNuJ3Qgc29sdmUgdGhlIHByb2Js
+ZW1zIEknbSBwZXJzb25hbGx5IGV4cGVyaWVuY2luZyAoaGFuZyBvbjwvZGl2PjxkaXY+Q0ZVTiwg
+Zm9yIG9uZSkuPC9kaXY+PGRpdj7CoDwvZGl2PjxkaXY+Q2hlZXJzITxiciAvPkFyc2VuaWpzPC9k
+aXY+PGRpdj7CoDwvZGl2PjxkaXY+MTkuMDkuMjAxOCwgMTk6NTEsICJEZW5pcyBLZW56aW9yIiAm
+bHQ7ZGVua2VuekBnbWFpbC5jb20mZ3Q7OjwvZGl2PjxibG9ja3F1b3RlIHR5cGU9ImNpdGUiPjxw
+PkhpLDxiciAvPjxiciAvPk9uIDA5LzE4LzIwMTggMDM6MzYgUE0sIENsw6ltZW50VmllbCB3cm90
+ZTo8L3A+PGJsb2NrcXVvdGU+wqBGcm9tOiBjbGVtICZsdDs8YSBkYXRhLWV4dGVybmFsPSJ0cnVl
+IiBocmVmPSJtYWlsdG86dmllbGNsZW1lbnRAZ21haWwuY29tIj52aWVsY2xlbWVudEBnbWFpbC5j
+b208L2E+Jmd0OzxiciAvPsKgPC9ibG9ja3F1b3RlPjxwPjxiciAvPllvdSBtaWdodCB3YW50IHRv
+IGRlc2NyaWJlIGhvdyB0aGlzIGlzIGRpZmZlcmVudCBmcm9tIHNpbTkwMCB0aGF0IGl0PGJyIC8+
+d2FycmFudHMgYSBmdWxseSBzZXBhcmF0ZSBkcml2ZXI/PGJyIC8+PGJyIC8+SWYgdGhlcmUgYXJl
+IG9ubHkgbWlub3IgZGlmZmVyZW5jZXMsIHRoZW4gdGhpcyBjYW4gYmUgaGFuZGxlZCB2aWEgVURF
+VjxiciAvPmF0dHJpYnV0ZXMgb3IgcXVlcnlpbmcgK0NHTU0sIGV0Yy48YnIgLz7CoDwvcD48Ymxv
+Y2txdW90ZT7CoC0tLTxiciAvPsKgwqDCoE1ha2VmaWxlLmFtIHwgNCArPGJyIC8+wqDCoMKgcGx1
+Z2lucy9zaW04MDAuYyB8IDQyNCArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKysrKysrKysrPGJyIC8+wqDCoMKgMiBmaWxlcyBjaGFuZ2VkLCA0MjggaW5zZXJ0
+aW9ucygrKTxiciAvPsKgwqDCoGNyZWF0ZSBtb2RlIDEwMDY0NCBwbHVnaW5zL3NpbTgwMC5jPGJy
+IC8+wqA8L2Jsb2NrcXVvdGU+PHA+PGJyIC8+Jmx0O3NuaXAmZ3Q7PGJyIC8+wqA8L3A+PGJsb2Nr
+cXVvdGU+wqArPGJyIC8+wqArc3RhdGljIHZvaWQgc2ltODAwX3Bvc3Rfc2ltKHN0cnVjdCBvZm9u
+b19tb2RlbSAqbW9kZW0pPGJyIC8+wqArezxiciAvPsKgKyBzdHJ1Y3Qgc2ltODAwX2RhdGEgKmRh
+dGEgPSBvZm9ub19tb2RlbV9nZXRfZGF0YShtb2RlbSk7PGJyIC8+wqArIHN0cnVjdCBvZm9ub19n
+cHJzICpncHJzOzxiciAvPsKgKyBzdHJ1Y3Qgb2Zvbm9fZ3Byc19jb250ZXh0ICpnYzs8YnIgLz7C
+oCs8YnIgLz7CoCsgREJHKCIlcCIsIG1vZGVtKTs8YnIgLz7CoCs8YnIgLz7CoCsgLyogRGlydHkg
+SGFjayA6IGdpdmUgc29tZSB0aW1lIHRvIHNpbTgwMCBmb3IgbXVsdGlwbGV4aW5nPGJyIC8+wqAr
+ICogdG8gYmUgZWZmZWN0aXZlIGFuZCBhdm9pZCBWT0lDRV9ETEMgdG8gYmU8YnIgLz7CoCsgKiBm
+bG9vZGVkIHRodXMgbGVhZGluZyB0byBhICJmYW1pbmUiIHNpdHVhdGlvbjxiciAvPsKgKyAqLzxi
+ciAvPsKgKzxiciAvPsKgKyBzbGVlcCgyKTs8L2Jsb2NrcXVvdGU+PHA+PGJyIC8+Tm8gc2xlZXBz
+IGluc2lkZSBwbHVnaW5zLiBUaGF0IGJsb2NrcyB0aGUgZW50aXJlIGRhZW1vbiBhbmQgd2UgY2Fu
+J3Q8YnIgLz5oYXZlIHRoYXQuIEhvdyBkb2VzIHRoaXMgaGVscCB5b3UgYW55d2F5PyBHQXRDaGF0
+IGlzIGEgcXVldWUsIHNvIG9ubHk8YnIgLz4xIGNvbW1hbmQgaXMgb3V0c3RhbmRpbmcgYXQgYSB0
+aW1lLjxiciAvPsKgPC9wPjxibG9ja3F1b3RlPsKgKyBvZm9ub19zbXNfY3JlYXRlKG1vZGVtLCBP
+Rk9OT19WRU5ET1JfU0lNQ09NLCAiYXRtb2RlbSIsPGJyIC8+wqArIGRhdGEtJmd0O2RsY3NbU01T
+X0RMQ10pOzxiciAvPsKgKzxiciAvPsKgKzxiciAvPsKgKyBncHJzID0gb2Zvbm9fZ3Byc19jcmVh
+dGUobW9kZW0sIDAsICJhdG1vZGVtIiwgZGF0YS0mZ3Q7ZGxjc1tHUFJTX0RMQ10pOzxiciAvPsKg
+KyBpZiAoZ3BycyA9PSBOVUxMKTxiciAvPsKgKyByZXR1cm47PGJyIC8+wqArPGJyIC8+wqArIGdj
+ID0gb2Zvbm9fZ3Byc19jb250ZXh0X2NyZWF0ZShtb2RlbSwgT0ZPTk9fVkVORE9SX1NJTUNPTSw8
+YnIgLz7CoCsgImF0bW9kZW0iLCBkYXRhLSZndDtkbGNzW0dQUlNfRExDXSk7PGJyIC8+wqArIGlm
+IChnYyk8YnIgLz7CoCsgb2Zvbm9fZ3Byc19hZGRfY29udGV4dChncHJzLCBnYyk7PGJyIC8+wqAr
+fTxiciAvPsKgKzwvYmxvY2txdW90ZT48cD48YnIgLz5SZWdhcmRzLDxiciAvPi1EZW5pczxiciAv
+Pl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fPGJyIC8+b2Zv
+bm8gbWFpbGluZyBsaXN0PGJyIC8+PGEgZGF0YS1leHRlcm5hbD0idHJ1ZSIgaHJlZj0ibWFpbHRv
+Om9mb25vQG9mb25vLm9yZyI+b2Zvbm9Ab2Zvbm8ub3JnPC9hPjxiciAvPjxhIGhyZWY9Imh0dHBz
+Oi8vbGlzdHMub2Zvbm8ub3JnL21haWxtYW4vbGlzdGluZm8vb2Zvbm8iPmh0dHBzOi8vbGlzdHMu
+b2Zvbm8ub3JnL21haWxtYW4vbGlzdGluZm8vb2Zvbm88L2E+PC9wPjwvYmxvY2txdW90ZT4=
+--===============3963760706817985600==--
 
